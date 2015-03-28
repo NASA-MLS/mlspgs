@@ -196,31 +196,31 @@ module MLSAuxData
 
   logical, parameter :: DEBUG = .false.
 
-interface Build_MLSAuxData
-  module procedure Build_MLSAuxData_Character
-  module procedure Build_MLSAuxData_Double, &
-       Build_MLSAuxData_Double_1d, Build_MLSAuxData_Double_2d
-  module procedure Build_MLSAuxData_Double_3d
-  module procedure Build_MLSAuxData_Real, Build_MLSAuxData_Real_1d, & 
-       Build_MLSAuxData_Real_2d
-  module procedure Build_MLSAuxData_Real_3d
-  module procedure Build_MLSAuxData_Integer, Build_MLSAuxData_Integer_1d, & 
-       Build_MLSAuxData_Integer_2d
-  module procedure Build_MLSAuxData_Integer_3d
-end interface
+  interface Build_MLSAuxData
+    module procedure Build_MLSAuxData_Character
+    module procedure Build_MLSAuxData_Double, &
+         Build_MLSAuxData_Double_1d, Build_MLSAuxData_Double_2d
+    module procedure Build_MLSAuxData_Double_3d
+    module procedure Build_MLSAuxData_Real, Build_MLSAuxData_Real_1d, & 
+         Build_MLSAuxData_Real_2d
+    module procedure Build_MLSAuxData_Real_3d
+    module procedure Build_MLSAuxData_Integer, Build_MLSAuxData_Integer_1d, & 
+         Build_MLSAuxData_Integer_2d
+    module procedure Build_MLSAuxData_Integer_3d
+  end interface
 
-interface Recall_MLSAuxData
-  module procedure Recall_MLSAuxData_Character
-  module procedure Recall_MLSAuxData_Double, &
-       Recall_MLSAuxData_Double_1d, Recall_MLSAuxData_Double_2d
-  module procedure Recall_MLSAuxData_Double_3d
-  module procedure Recall_MLSAuxData_Real, Recall_MLSAuxData_Real_1d, & 
-       Recall_MLSAuxData_Real_2d
-  module procedure Recall_MLSAuxData_Real_3d
-  module procedure Recall_MLSAuxData_Integer, Recall_MLSAuxData_Integer_1d, & 
-       Recall_MLSAuxData_Integer_2d
-  module procedure Recall_MLSAuxData_Integer_3d
-end interface
+  interface Recall_MLSAuxData
+    module procedure Recall_MLSAuxData_Character
+    module procedure Recall_MLSAuxData_Double, &
+         Recall_MLSAuxData_Double_1d, Recall_MLSAuxData_Double_2d
+    module procedure Recall_MLSAuxData_Double_3d
+    module procedure Recall_MLSAuxData_Real, Recall_MLSAuxData_Real_1d, & 
+         Recall_MLSAuxData_Real_2d
+    module procedure Recall_MLSAuxData_Real_3d
+    module procedure Recall_MLSAuxData_Integer, Recall_MLSAuxData_Integer_1d, & 
+         Recall_MLSAuxData_Integer_2d
+    module procedure Recall_MLSAuxData_Integer_3d
+  end interface
 
 contains ! ============================ MODULE PROCEDURES ====================
 !-------------------------------------------------------AddMLSAuxDataToDatabase
@@ -229,6 +229,7 @@ contains ! ============================ MODULE PROCEDURES ====================
   ! Returns the size of the array.
     
     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
 
     type (MLSAuxData_T), dimension(:), pointer :: database
     type (MLSAuxData_T), intent(in) :: item
@@ -245,8 +246,10 @@ contains ! ============================ MODULE PROCEDURES ====================
   subroutine DestroyMLSAuxDataDatabase ( database )
   ! Deallocates the elements of array of MLSAuxData_T and then the array.
     use Allocate_Deallocate, only: Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     type (MLSAuxData_T), dimension(:), pointer :: database
     ! Local variables
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: index, s, status
 
     if ( associated(database) ) then
@@ -254,8 +257,10 @@ contains ! ============================ MODULE PROCEDURES ====================
           call  Deallocate_MLSAuxData( database(index) )
        end do
        s = size(database) * storage_size(database) / 8
+       addr = 0
+       if ( s > 0 ) addr = transfer(c_loc(database(1)), addr)
        deallocate ( database, stat=status )
-       call test_deallocate ( status, ModuleName, "database", s )
+       call test_deallocate ( status, ModuleName, "database", s, address=addr )
     end if
 
   end subroutine DestroyMLSAuxDataDatabase
@@ -263,37 +268,59 @@ contains ! ============================ MODULE PROCEDURES ====================
  subroutine Allocate_MLSAuxData( name, data_type, dims, MLSData  )
     ! This should be called when allocating a MLSAuxData structure.
     use Allocate_Deallocate, only: Test_Allocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     type( MLSAuxData_T ), intent(inout) :: MLSData
     integer, dimension(3), intent(in) :: dims
     character (len=*), intent(in) :: name, data_type
     ! internal variables
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: status
 
     MLSData%name        = trim(name) 
     MLSData%type_name   = trim(data_type)
 
-    if ( data_type .eq. 'real') then
-       allocate(MLSData%RealField(dims(1),dims(2),dims(3)), stat=status)
-       call test_allocate ( status, ModuleName, "MLSData%RealField", &
-         & uBounds = dims(1:3), elementSize = storage_size(MLSData%RealField) / 8 )
+    if ( data_type == 'real') then
+      allocate(MLSData%RealField(dims(1),dims(2),dims(3)), stat=status)
+      addr = 0
+      if ( status == 0 ) then
+        addr = transfer(c_loc(MLSData%RealField(1,1,1)), addr)
+      end if
+      call test_allocate ( status, ModuleName, "MLSData%RealField", &
+        & uBounds = dims(1:3), elementSize = storage_size(MLSData%RealField) / 8, &
+        & address=addr )
     end if
 
-    if ( data_type .eq. 'double') then
-       allocate(MLSData%DpField(dims(1),dims(2),dims(3)), stat=status)
-       call test_allocate ( status, ModuleName, "MLSData%DpField", &
-         & uBounds = dims(1:3), elementSize = storage_size(MLSData%DpField) / 8 )
+    if ( data_type == 'double') then
+      allocate(MLSData%DpField(dims(1),dims(2),dims(3)), stat=status)
+      addr = 0
+      if ( status == 0 ) then
+        addr = transfer(c_loc(MLSData%DpField(1,1,1)), addr)
+      end if
+      call test_allocate ( status, ModuleName, "MLSData%DpField", &
+        & uBounds = dims(1:3), elementSize = storage_size(MLSData%DpField) / 8, &
+        & address=addr )
     end if
 
-    if ( data_type .eq. 'integer') then
-       allocate(MLSData%IntField(dims(1),dims(2),dims(3)), stat=status)
-       call test_allocate ( status, ModuleName, "MLSData%IntField", &
-         & uBounds = dims(1:3), elementSize = storage_size(MLSData%IntField) / 8 )
+    if ( data_type == 'integer') then
+      addr = 0
+      if ( status == 0 ) then
+        addr = transfer(c_loc(MLSData%IntField(1,1,1)), addr)
+      end if
+      allocate(MLSData%IntField(dims(1),dims(2),dims(3)), stat=status)
+      call test_allocate ( status, ModuleName, "MLSData%IntField", &
+        & uBounds = dims(1:3), elementSize = storage_size(MLSData%IntField) / 8, &
+        & address=addr )
     end if
 
-    if ( data_type .eq. 'character') then
-       allocate(MLSData%CharField(dims(1),dims(2),dims(3)), stat=status)
-       call test_allocate ( status, ModuleName, "MLSData%CharField", &
-         & uBounds = dims(1:3), elementSize = storage_size(MLSData%CharField) / 8 )
+    if ( data_type == 'character') then
+      allocate(MLSData%CharField(dims(1),dims(2),dims(3)), stat=status)
+      addr = 0
+      if ( status == 0 ) then
+!         addr = transfer(c_loc(MLSData%CharField(1,1,1)), addr)
+      end if
+      call test_allocate ( status, ModuleName, "MLSData%CharField", &
+        & uBounds = dims(1:3), elementSize = storage_size(MLSData%CharField) / 8, &
+        & address=addr )
     end if
 
  end subroutine Allocate_MLSAuxData
@@ -301,68 +328,88 @@ contains ! ============================ MODULE PROCEDURES ====================
  subroutine Deallocate_MLSAuxData( MLSAuxData )
     ! This should be called when deallocating a MLSAuxData structure.
     use Allocate_Deallocate, only: Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     type( MLSAuxData_T ), intent(inout) :: MLSAuxData
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: s, status
 
     if (associated(MLSAuxData%RealField)) then
       s = size(MLSAuxData%RealField) * storage_size(MLSAuxData%RealField) / 8
+      addr = 0
+      if ( s > 0 ) addr = transfer(c_loc(MLSAuxData%RealField(1,1,1)), addr)
       deallocate(MLSAuxData%RealField, stat=status)
       call test_deallocate ( status, ModuleName, &
-        & ' MLSAuxData%RealField in ' // trim(MLSAuxData%name), s )
+        & ' MLSAuxData%RealField in ' // trim(MLSAuxData%name), s, address=addr )
     end if
 
     if (associated(MLSAuxData%IntField)) then 
       s = size(MLSAuxData%IntField) * storage_size(MLSAuxData%IntField) / 8
+      addr = 0
+      if ( s > 0 ) addr = transfer(c_loc(MLSAuxData%IntField(1,1,1)), addr)
       deallocate(MLSAuxData%IntField, stat=status)
       call test_deallocate ( status, ModuleName, &
-        & ' MLSAuxData%IntField in ' // trim(MLSAuxData%name), s )
+        & ' MLSAuxData%IntField in ' // trim(MLSAuxData%name), s, address=addr )
     end if
 
     if (associated(MLSAuxData%CharField)) then 
       s = size(MLSAuxData%CharField) * storage_size(MLSAuxData%CharField) / 8
+      addr = 0
+!       if ( s > 0 ) addr = transfer(c_loc(MLSAuxData%CharField(1,1,1)), addr)
       deallocate(MLSAuxData%CharField, stat=status)
       call test_deallocate ( status, ModuleName, &
-        & ' MLSAuxData%CharField in ' // trim(MLSAuxData%name), s )
+        & ' MLSAuxData%CharField in ' // trim(MLSAuxData%name), s, address=addr )
     end if
 
     if (associated(MLSAuxData%DpField)) then 
       s = size(MLSAuxData%DpField) * storage_size(MLSAuxData%DpField) / 8
-      if ( s < 1 ) return
+      addr = 0
+      if ( s > 0 ) addr = transfer(c_loc(MLSAuxData%DpField(1,1,1)), addr)
       deallocate(MLSAuxData%DpField, stat=status)
       call test_deallocate ( status, ModuleName, &
-        & ' MLSAuxData%DpField in ' // trim(MLSAuxData%name), s )
+        & ' MLSAuxData%DpField in ' // trim(MLSAuxData%name), s, address=addr )
     end if
 
     if (associated(MLSAuxData%FrequencyCoordinates)) then 
       s = size(MLSAuxData%FrequencyCoordinates) * &
         & storage_size(MLSAuxData%FrequencyCoordinates) / 8
+      addr = 0
+      if ( s > 0 ) addr = transfer(c_loc(MLSAuxData%FrequencyCoordinates(1)), addr)
       deallocate(MLSAuxData%FrequencyCoordinates, stat=status)
       call test_deallocate ( status, ModuleName, &
-        & ' MLSAuxData%FrequencyCoordinates in ' // trim(MLSAuxData%name), s )
+        & ' MLSAuxData%FrequencyCoordinates in ' // trim(MLSAuxData%name), s, &
+        & address=addr )
     end if
 
     if (associated(MLSAuxData%VerticalCoordinates)) then 
       s = size(MLSAuxData%VerticalCoordinates) * &
         & storage_size(MLSAuxData%VerticalCoordinates) / 8
+      addr = 0
+      if ( s > 0 ) addr = transfer(c_loc(MLSAuxData%VerticalCoordinates(1)), addr)
       deallocate(MLSAuxData%VerticalCoordinates, stat=status)
       call test_deallocate ( status, ModuleName, &
-        & ' MLSAuxData%VerticalCoordinates in ' // trim(MLSAuxData%name), s )
+        & ' MLSAuxData%VerticalCoordinates in ' // trim(MLSAuxData%name), s, &
+        & address=addr )
     end if
 
     if (associated(MLSAuxData%HorizontalCoordinates)) then 
       s = size(MLSAuxData%HorizontalCoordinates) * &
         & storage_size(MLSAuxData%HorizontalCoordinates) / 8
+      addr = 0
+      if ( s > 0 ) addr = transfer(c_loc(MLSAuxData%HorizontalCoordinates(1)), addr)
       deallocate(MLSAuxData%HorizontalCoordinates, stat=status)
       call test_deallocate ( status, ModuleName, &
-        & ' MLSAuxData%HorizontalCoordinates in ' // trim(MLSAuxData%name), s )
+        & ' MLSAuxData%HorizontalCoordinates in ' // trim(MLSAuxData%name), s, &
+        & address=addr )
     end if
 
     if (associated(MLSAuxData%Dimensions)) then 
       s = size(MLSAuxData%Dimensions) * &
         & storage_size(MLSAuxData%Dimensions) / 8
+      addr = 0
+!       if ( s > 0 ) addr = transfer(c_loc(MLSAuxData%Dimensions(1)), addr)
       deallocate(MLSAuxData%Dimensions, stat=status)
       call test_deallocate ( status, ModuleName, &
-        & ' MLSAuxData%Dimensions in ' // trim(MLSAuxData%name), s )
+        & ' MLSAuxData%Dimensions in ' // trim(MLSAuxData%name), s, address=addr )
     end if
 
  end subroutine Deallocate_MLSAuxData
@@ -381,9 +428,7 @@ contains ! ============================ MODULE PROCEDURES ====================
     integer :: error
     logical :: attribenabled
 
-    dims(1) = 1
-    dims(2) = 1
-    dims(3) = 1
+    dims = 1
 
     call deallocate_mlsauxdata(MLSData)
     call Allocate_MLSAuxData(trim(dataset%name),&
@@ -396,7 +441,7 @@ contains ! ============================ MODULE PROCEDURES ====================
 
     attribenabled = .false.
     if (present(lastIndex)) then 
-       if (lastIndex .eq. 1) then 
+       if (lastIndex == 1) then 
           if (present (disable_attrib)) then
              attribenabled = .false.
           else
@@ -431,9 +476,7 @@ contains ! ============================ MODULE PROCEDURES ====================
     integer :: error
     logical :: attribenabled
 
-    dims(1) = 1
-    dims(2) = 1
-    dims(3) = 1
+    dims = 1
 
     call deallocate_mlsauxdata(MLSData)
 
@@ -447,7 +490,7 @@ contains ! ============================ MODULE PROCEDURES ====================
 
     attribenabled = .false.
     if ( present (lastIndex)) then
-       if (lastIndex .eq. 1) then 
+       if (lastIndex == 1) then 
           if (present (disable_attrib)) then
              attribenabled = .false.
           else
@@ -484,9 +527,7 @@ contains ! ============================ MODULE PROCEDURES ====================
     integer :: error
     logical :: attribenabled
 
-    dims(1) = 1
-    dims(2) = 1
-    dims(3) = 1
+    dims = 1
 
     call deallocate_mlsauxdata(MLSData)
     call Allocate_MLSAuxData(trim(dataset%name),& 
@@ -499,7 +540,7 @@ contains ! ============================ MODULE PROCEDURES ====================
 
     attribenabled = .false.
     if ( present(lastIndex) ) then
-       if (lastIndex .eq. 1) then 
+       if (lastIndex == 1) then 
           if (present (disable_attrib)) then
              attribenabled = .false.
           else
@@ -532,9 +573,7 @@ contains ! ============================ MODULE PROCEDURES ====================
     integer :: error
     logical :: attribenabled
 
-    dims(1) = 1
-    dims(2) = 1
-    dims(3) = 1
+    dims = 1
 
     call deallocate_mlsauxdata(MLSData)
     call Allocate_MLSAuxData(trim(dataset%name),& 
@@ -546,7 +585,7 @@ contains ! ============================ MODULE PROCEDURES ====================
 
     attribenabled = .false.
     if ( present (lastIndex) ) then 
-        if (lastIndex .eq. 1) then 
+        if (lastIndex == 1) then 
           if (present (disable_attrib)) then
              attribenabled = .false.
           else
@@ -594,9 +633,7 @@ contains ! ============================ MODULE PROCEDURES ====================
     call Allocate_MLSAuxData(trim(dataset%name),& 
          trim(dataset%data_type),dim_array,MLSData)
 
-    do i = 1, dim_array(1)
-       MLSData%RealField(i,1,1) = real_data(i) 
-    end do
+    MLSData%RealField(1:dim_array(1),1,1) = real_data(1:dim_array(1)) 
 
     if ( present(lastIndex)) then 
        MLSData%rank = 2
@@ -608,7 +645,7 @@ contains ! ============================ MODULE PROCEDURES ====================
 
     attribenabled = .false.
     if ( present(lastIndex)) then
-       if (lastIndex .eq. 1) then 
+       if (lastIndex == 1) then 
           if (present (disable_attrib)) then
              attribenabled = .false.
           else
@@ -657,9 +694,7 @@ contains ! ============================ MODULE PROCEDURES ====================
     call Allocate_MLSAuxData(trim(dataset%name),& 
          trim(dataset%data_type),dim_array,MLSData)
 
-    do i = 1, dim_array(1)
-       MLSData%DpField(i,1,1) = double_data(i) 
-    end do
+    MLSData%DpField(1:dim_array(1),1,1) = double_data(1:dim_array(1)) 
 
     if ( present (lastIndex) ) then 
        MLSData%rank = 2
@@ -671,7 +706,7 @@ contains ! ============================ MODULE PROCEDURES ====================
 
     attribenabled = .false.
     if ( present(lastIndex)) then
-       if (lastIndex .eq. 1) then 
+       if (lastIndex == 1) then 
           if (present (disable_attrib)) then
              attribenabled = .false.
           else
@@ -719,9 +754,7 @@ contains ! ============================ MODULE PROCEDURES ====================
     call Allocate_MLSAuxData(trim(dataset%name),& 
          trim(dataset%data_type),dim_array,MLSData)
 
-    do i = 1, dim_array(1)
-       MLSData%IntField(i,1,1) = integer_data(i) 
-    end do
+    MLSData%IntField(1:dim_array(1),1,1) = integer_data(1:dim_array(1)) 
 
     if (present (lastIndex) ) then
        MLSData%rank = 2 
@@ -733,7 +766,7 @@ contains ! ============================ MODULE PROCEDURES ====================
 
     attribenabled = .false.
     if ( present(lastIndex)) then
-       if (lastIndex .eq. 1) then 
+       if (lastIndex == 1) then 
           if (present (disable_attrib)) then
              attribenabled = .false.
           else
@@ -765,7 +798,7 @@ contains ! ============================ MODULE PROCEDURES ====================
 
     type( MLSAuxData_T ) :: MLSData
     integer, dimension(3) :: dim_array
-    integer :: i,j,error
+    integer :: i,error
     logical :: attribenabled
 
     dim_array = 1
@@ -781,11 +814,8 @@ contains ! ============================ MODULE PROCEDURES ====================
     call Allocate_MLSAuxData(trim(dataset%name),& 
          trim(dataset%data_type),dim_array,MLSData)
 
-    do j = 1, dim_array(2)
-       do i = 1, dim_array(1)
-          MLSData%RealField(i,j,1) = real_data(i,j) 
-       end do
-    end do
+    MLSData%RealField(1:dim_array(1),1:dim_array(2),1) = &
+      & real_data(1:dim_array(1),1:dim_array(2))
 
     if (present (lastIndex) ) then 
        MLSData%rank = 3
@@ -800,7 +830,7 @@ contains ! ============================ MODULE PROCEDURES ====================
     end if
     attribenabled = .false.
     if (present (lastIndex) ) then 
-       if (lastIndex .eq. 1) then 
+       if (lastIndex == 1) then 
           if (present (disable_attrib)) then
              attribenabled = .false.
           else
@@ -832,7 +862,7 @@ contains ! ============================ MODULE PROCEDURES ====================
 
     type( MLSAuxData_T ) :: MLSData
     integer, dimension(3) :: dim_array
-    integer :: i,j,error
+    integer :: i,error
     logical :: attribenabled
 
     dim_array = 1
@@ -848,11 +878,8 @@ contains ! ============================ MODULE PROCEDURES ====================
     call Allocate_MLSAuxData(trim(dataset%name),& 
          trim(dataset%data_type),dim_array,MLSData)
 
-    do j = 1, dim_array(2)
-       do i = 1, dim_array(1)
-          MLSData%DpField(i,j,1) = double_data(i,j) 
-       end do
-    end do
+    MLSData%DpField(1:dim_array(1),1:dim_array(2),1) = &
+      & double_data(1:dim_array(1),1:dim_array(2))
 
     if (present (lastIndex) ) then 
        MLSData%rank = 3
@@ -867,7 +894,7 @@ contains ! ============================ MODULE PROCEDURES ====================
     end if
     attribenabled = .false.
     if (present (lastIndex) ) then
-       if (lastIndex .eq. 1) then 
+       if (lastIndex == 1) then 
           if (present (disable_attrib)) then
              attribenabled = .false.
           else
@@ -899,7 +926,7 @@ contains ! ============================ MODULE PROCEDURES ====================
 
     type( MLSAuxData_T ) :: MLSData
     integer, dimension(3) :: dim_array
-    integer :: i,j,error
+    integer :: i,error
     logical :: attribenabled
 
     dim_array = 1
@@ -915,11 +942,8 @@ contains ! ============================ MODULE PROCEDURES ====================
     call Allocate_MLSAuxData(trim(dataset%name),& 
          trim(dataset%data_type),dim_array,MLSData)
 
-    do j = 1, dim_array(2)
-       do i = 1, dim_array(1)
-          MLSData%IntField(i,j,1) = integer_data(i,j) 
-       end do
-    end do
+    MLSData%IntField(1:dim_array(1),1:dim_array(2),1) = &
+      & integer_data(1:dim_array(1),1:dim_array(2))
 
     if (present (lastIndex)) then 
        MLSData%rank = 3
@@ -931,7 +955,7 @@ contains ! ============================ MODULE PROCEDURES ====================
 
     attribenabled = .false.
     if (present (lastIndex)) then
-       if (lastIndex .eq. 1) then 
+       if (lastIndex == 1) then 
           if (present (disable_attrib)) then
              attribenabled = .false.
           else
@@ -961,7 +985,7 @@ contains ! ============================ MODULE PROCEDURES ====================
 
     type( MLSAuxData_T ) :: MLSData
     integer, dimension(3) :: dim_array
-    integer :: i,j,k,error
+    integer :: i,error
 
     dim_array = 1
     if (present(dims) ) then
@@ -978,13 +1002,8 @@ contains ! ============================ MODULE PROCEDURES ====================
 
     MLSData%rank = 3
 
-    do k = 1, dim_array(3)
-       do j = 1, dim_array(2)
-          do i = 1, dim_array(1)
-             MLSData%RealField(i,j,k) = real_data(i,j,k) 
-          end do
-       end do
-    end do
+    MLSData%RealField(1:dim_array(1),1:dim_array(2),1:dim_array(3)) = &
+      & real_data(1:dim_array(1),1:dim_array(2),1:dim_array(3))
 
     call CopyFromDataProducts (dataset, MLSData)
 
@@ -1010,7 +1029,7 @@ contains ! ============================ MODULE PROCEDURES ====================
 
     type( MLSAuxData_T ) :: MLSData
     integer, dimension(3) :: dim_array
-    integer :: i,j,k,error
+    integer :: i,error
 
     dim_array = 1
     if (present(dims) ) then
@@ -1027,13 +1046,8 @@ contains ! ============================ MODULE PROCEDURES ====================
 
     MLSData%rank = 3
 
-    do k = 1, dim_array(3)
-       do j = 1, dim_array(2)
-          do i = 1, dim_array(1)
-             MLSData%DpField(i,j,k) = double_data(i,j,k) 
-          end do
-       end do
-    end do
+    MLSData%DpField(1:dim_array(1),1:dim_array(2),1:dim_array(3)) = &
+      & double_data(1:dim_array(1),1:dim_array(2),1:dim_array(3))
 
     call CopyFromDataProducts (dataset, MLSData)
     if ( MLSData%name == "R1A:118.B22D:PT.S0.DACS-4 precision"  .and. DEBUG ) then
@@ -1057,7 +1071,7 @@ contains ! ============================ MODULE PROCEDURES ====================
 
     type( MLSAuxData_T ) :: MLSData
     integer, dimension(3) :: dim_array
-    integer :: i,j,k,error
+    integer :: i,error
 
     dim_array = 1
     if (present(dims) ) then
@@ -1074,13 +1088,8 @@ contains ! ============================ MODULE PROCEDURES ====================
 
     MLSData%rank = 3
 
-    do k = 1, dim_array(3)
-       do j = 1, dim_array(2)
-          do i = 1, dim_array(1)
-             MLSData%IntField(i,j,k) = integer_data(i,j,k) 
-          end do
-       end do
-    end do
+    MLSData%IntField(1:dim_array(1),1:dim_array(2),1:dim_array(3)) = &
+      & integer_data(1:dim_array(1),1:dim_array(2),1:dim_array(3))
 
     call CopyFromDataProducts (dataset, MLSData)
 
@@ -1094,18 +1103,18 @@ contains ! ============================ MODULE PROCEDURES ====================
  subroutine Recall_MLSAuxData_Character( file_id, dataset, char_data, &
       char_length)
     use Allocate_Deallocate, only: Test_Allocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     type( DataProducts_T ), intent(inout) :: dataset
     character (len=*), intent(inout) :: char_data
     integer, intent(in) :: char_length
     integer(hid_t), intent(in) :: file_id
 
     type( MLSAuxData_T ) :: MLSData
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer, dimension(3) :: dims
     integer :: error, status
 
-    dims(1) = 1
-    dims(2) = 1
-    dims(3) = 1
+    dims = 1
 
     call deallocate_mlsauxdata(MLSData)
     call Allocate_MLSAuxData(trim(dataset%name),&
@@ -1114,12 +1123,15 @@ contains ! ============================ MODULE PROCEDURES ====================
     call Read_MLSAuxData(file_id, trim(dataset%name), &
          trim(dataset%data_type), MLSData, error, read_attributes=.true.)
 
-    if (error .eq. 0) then 
+    if (error == 0) then 
        char_data = MLSData%CharField(1,1,1) 
 
        allocate(dataset%Dimensions(1), stat=status)
+       addr = 0
+!        if ( status == 0 ) addr = transfer(c_loc(dataset%Dimensions(1)), addr)
        call test_allocate ( status, ModuleName, "dataset%Dimensions", &
-         & ubounds = 1, elementSize = storage_size(dataset%Dimensions) / 8 )
+         & ubounds = 1, elementSize = storage_size(dataset%Dimensions) / 8, &
+         & address=addr )
        call CopyToDataProducts (MLSData, dataset)
 
     else 
@@ -1132,17 +1144,17 @@ contains ! ============================ MODULE PROCEDURES ====================
 !------------------------------------------------------------------------------
  subroutine Recall_MLSAuxData_Integer( file_id, dataset, int_data )
     use Allocate_Deallocate, only: Test_Allocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     type( DataProducts_T ), intent(inout) :: dataset
     integer, intent(inout) :: int_data
     integer(hid_t), intent(in) :: file_id
 
     type( MLSAuxData_T ) :: MLSData
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer, dimension(3) :: dims
     integer :: error, status
 
-    dims(1) = 1
-    dims(2) = 1
-    dims(3) = 1
+    dims = 1
 
     call deallocate_mlsauxdata(MLSData)
     call Allocate_MLSAuxData(trim(dataset%name),& 
@@ -1151,12 +1163,15 @@ contains ! ============================ MODULE PROCEDURES ====================
     call Read_MLSAuxData(file_id, trim(dataset%name), &
          trim(dataset%data_type),MLSData, error, read_attributes=.true.)
 
-    if (error .eq. 0) then 
+    if (error == 0) then 
        int_data = MLSData%IntField(1,1,1)
 
        allocate(dataset%Dimensions(1), stat=status)
+       addr = 0
+!        if ( status == 0 ) addr = transfer(c_loc(dataset%Dimensions(1)), addr)
        call test_allocate ( status, ModuleName, "dataset%Dimensions", &
-         & ubounds = 1, elementSize = storage_size(dataset%Dimensions) / 8 )
+         & ubounds = 1, elementSize = storage_size(dataset%Dimensions) / 8, &
+         & address=addr )
        call CopyToDataProducts(MLSData, dataset)
 
     else 
@@ -1169,17 +1184,17 @@ contains ! ============================ MODULE PROCEDURES ====================
 !------------------------------------------------------------------------------
  subroutine Recall_MLSAuxData_Real(file_id,dataset,real_data)
     use Allocate_Deallocate, only: Test_Allocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     type( DataProducts_T ), intent(inout) :: dataset
     real, intent(inout) :: real_data
     integer(hid_t), intent(in) :: file_id
 
     type( MLSAuxData_T ) :: MLSData
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer, dimension(3) :: dims
     integer :: error, status
 
-    dims(1) = 1
-    dims(2) = 1
-    dims(3) = 1
+    dims = 1
 
     call deallocate_mlsauxdata(MLSData)
     call Allocate_MLSAuxData(trim(dataset%name),& 
@@ -1187,12 +1202,15 @@ contains ! ============================ MODULE PROCEDURES ====================
 
     call Read_MLSAuxData(file_id, trim(dataset%name), &
          trim(dataset%data_type),MLSData, error, read_attributes=.true.)
-    if (error .eq. 0) then 
+    if (error == 0) then 
        real_data = MLSData%RealField(1,1,1)
 
        allocate(dataset%Dimensions(1), stat=status)
+       addr = 0
+!        if ( status == 0 ) addr = transfer(c_loc(dataset%Dimensions(1)), addr)
        call test_allocate ( status, ModuleName, "dataset%Dimensions", &
-         & ubounds = 1, elementSize = storage_size(dataset%Dimensions) / 8 )
+         & ubounds = 1, elementSize = storage_size(dataset%Dimensions) / 8, &
+         & address=addr )
        call CopyToDataProducts(MLSData, dataset)
 
     else
@@ -1204,17 +1222,17 @@ contains ! ============================ MODULE PROCEDURES ====================
 !------------------------------------------------------------------------------
  subroutine Recall_MLSAuxData_Double( file_id, dataset, double_data)
     use Allocate_Deallocate, only: Test_Allocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     type( DataProducts_T ), intent(inout) :: dataset
     real(r8), intent(inout) :: double_data
     integer(hid_t), intent(in) :: file_id
 
     type( MLSAuxData_T ) :: MLSData
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer, dimension(3) :: dims
     integer :: error, status
 
-    dims(1) = 1
-    dims(2) = 1
-    dims(3) = 1
+    dims = 1
 
     call deallocate_mlsauxdata(MLSData)
     call Allocate_MLSAuxData(trim(dataset%name),& 
@@ -1222,11 +1240,14 @@ contains ! ============================ MODULE PROCEDURES ====================
     call Read_MLSAuxData(file_id, trim(dataset%name), &
          trim(dataset%data_type),MLSData, error, read_attributes=.true.)
 
-    if (error .eq. 0) then 
+    if (error == 0) then 
        double_data = MLSData%DpField(1,1,1)
        allocate(dataset%Dimensions(1), stat=status)
+       addr = 0
+!        if ( status == 0 ) addr = transfer(c_loc(dataset%Dimensions(1)), addr)
        call test_allocate ( status, ModuleName, "dataset%Dimensions", &
-         & ubounds = 1, elementSize = storage_size(dataset%Dimensions) / 8 )
+         & ubounds = 1, elementSize = storage_size(dataset%Dimensions) / 8, &
+         & address=addr )
        call CopyToDataProducts(MLSData, dataset)
     else
        call MLSMessage(MLSMSG_Error, ModuleName, & 
@@ -1239,21 +1260,21 @@ contains ! ============================ MODULE PROCEDURES ====================
  subroutine Recall_MLSAuxData_Real_1d( file_id, dataset, real_data, & 
       firstIndex, lastIndex)
     use Allocate_Deallocate, only: Test_Allocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     type( DataProducts_T ), intent(inout) :: dataset
     real, dimension(:), intent(inout) :: real_data
     integer, intent(in), optional :: firstIndex, lastIndex
     integer(hid_t), intent(in) :: file_id
 
     type( MLSAuxData_T ) :: MLSData
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer, dimension(3) :: dim_array
     integer :: i,error, status, i_first, i_last
 
-    do i=1,3
-       dim_array(i) = 1
-    end do
+    dim_array = 1
 
     do i=1,size(shape(real_data))
-       dim_array(i) = size(real_data,i)
+      dim_array(i) = size(real_data,i)
     end do
 
     call deallocate_mlsauxdata(MLSData)
@@ -1262,7 +1283,7 @@ contains ! ============================ MODULE PROCEDURES ====================
     call Read_MLSAuxData(file_id, trim(dataset%name), &
          trim(dataset%data_type),MLSData, error, read_attributes=.true.)
 
-    if (error .eq. 0) then
+    if (error == 0) then
 
        if (present (firstIndex) .and. present (lastIndex) ) then
           i_first = firstIndex
@@ -1273,14 +1294,14 @@ contains ! ============================ MODULE PROCEDURES ====================
        end if
 
        allocate(dataset%Dimensions(MLSData%rank), stat=status)
+       addr = 0
+!        if ( status == 0 ) addr = transfer(c_loc(dataset%Dimensions(1)), addr)
        call test_allocate ( status, ModuleName, "dataset%Dimensions", &
          & ubounds = MLSData%rank, &
-         & elementSize = storage_size(dataset%Dimensions) / 8 )
+         & elementSize = storage_size(dataset%Dimensions) / 8, address=addr )
        call CopyToDataProducts(MLSData, dataset)
 
-       do i = i_first, i_last
-          real_data(i) = MLSData%RealField(i,1,1)  
-       end do
+       real_data(i_first:i_last) = MLSData%RealField(i_first:i_last,1,1)  
 
     else
        call MLSMessage(MLSMSG_Error, ModuleName, & 
@@ -1293,18 +1314,18 @@ contains ! ============================ MODULE PROCEDURES ====================
  subroutine Recall_MLSAuxData_Double_1d(file_id, dataset, double_data, & 
       firstIndex, lastIndex)
     use Allocate_Deallocate, only: Test_Allocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     type( DataProducts_T ), intent(inout) :: dataset
     real(r8), dimension(:), intent(inout) :: double_data
     integer, intent(in), optional :: firstIndex, lastIndex
     integer(hid_t), intent(in) :: file_id
 
     type( MLSAuxData_T ) :: MLSData
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer, dimension(3) :: dim_array
     integer :: i,error, status, i_first, i_last
 
-    do i=1,3
-       dim_array(i) = 1
-    end do
+    dim_array = 1
 
     do i=1,size(shape(double_data))
        dim_array(i) = size(double_data,i)
@@ -1317,7 +1338,7 @@ contains ! ============================ MODULE PROCEDURES ====================
     call Read_MLSAuxData(file_id, trim(dataset%name), &
          trim(dataset%data_type),MLSData, error, read_attributes=.true.)
 
-    if (error /= 0) then 
+    if (error == 0) then 
 
        if (present (firstIndex) .and. present (lastIndex) ) then
           i_first = firstIndex
@@ -1328,9 +1349,11 @@ contains ! ============================ MODULE PROCEDURES ====================
        end if
 
        allocate(dataset%Dimensions(MLSData%rank), stat=status)
+       addr = 0
+!        if ( status == 0 ) addr = transfer(c_loc(dataset%Dimensions(1)), addr)
        call test_allocate ( status, ModuleName, "dataset%Dimensions", &
          & ubounds = MLSData%rank, &
-         & elementSize = storage_size(dataset%Dimensions) / 8 )
+         & elementSize = storage_size(dataset%Dimensions) / 8, address=addr )
        call CopyToDataProducts(MLSData, dataset)
 
        do i = i_first, i_last
@@ -1349,18 +1372,18 @@ contains ! ============================ MODULE PROCEDURES ====================
  subroutine Recall_MLSAuxData_Integer_1d(file_id,dataset,integer_data, &
       firstIndex, lastIndex)
     use Allocate_Deallocate, only: Test_Allocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     type( DataProducts_T ), intent(inout) :: dataset
     integer, dimension(:), intent(inout) :: integer_data
     integer, intent(in), optional :: firstIndex, lastIndex
     integer(hid_t), intent(in) :: file_id
 
     type( MLSAuxData_T ) :: MLSData
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer, dimension(3) :: dim_array
     integer :: i,error,status,i_first,i_last
 
-    do i=1,3
-       dim_array(i) = 1
-    end do
+    dim_array = 1
 
     do i=1,size(shape(integer_data))
        dim_array(i) = size(integer_data,i)
@@ -1373,7 +1396,7 @@ contains ! ============================ MODULE PROCEDURES ====================
     call Read_MLSAuxData(file_id, trim(dataset%name), &
          trim(dataset%data_type),MLSData, error, read_attributes=.true.)
 
-    if (error .eq. 0) then
+    if (error == 0) then
        if (present (firstIndex) .and. present (lastIndex) ) then
           i_first = firstIndex
           i_last  = lastIndex
@@ -1386,9 +1409,11 @@ contains ! ============================ MODULE PROCEDURES ====================
        end do
 
        allocate(dataset%Dimensions(MLSData%rank), stat=status)
+       addr = 0
+!        if ( status == 0 ) addr = transfer(c_loc(dataset%Dimensions(1)), addr)
        call test_allocate ( status, ModuleName, "dataset%Dimensions", &
          & ubounds = MLSData%rank, &
-         & elementSize = storage_size(dataset%Dimensions) / 8 )
+         & elementSize = storage_size(dataset%Dimensions) / 8, address=addr )
        call CopyToDataProducts(MLSData, dataset)
 
     else
@@ -1402,18 +1427,19 @@ contains ! ============================ MODULE PROCEDURES ====================
  subroutine Recall_MLSAuxData_Real_2d( file_id, dataset, real_data, & 
       firstIndex, lastIndex)
     use Allocate_Deallocate, only: Test_Allocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     type( DataProducts_T ), intent(inout) :: dataset
     real, dimension(:,:), intent(inout) :: real_data
     integer, intent(in), optional :: firstIndex, lastIndex
     integer(hid_t), intent(in) :: file_id
 
     type( MLSAuxData_T ) :: MLSData
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer, dimension(3) :: dim_array
-    integer :: i,j,error,status,j_first,j_last
+    integer :: i,error,status,j_first,j_last
 
-    do i=1,3
-       dim_array(i) = 1
-    end do
+    dim_array = 1
+
     do i=1,size(shape(real_data))
        dim_array(i) = size(real_data,i)
     end do
@@ -1424,7 +1450,7 @@ contains ! ============================ MODULE PROCEDURES ====================
 
     call Read_MLSAuxData(file_id, trim(dataset%name), &
          trim(dataset%data_type),MLSData, error, read_attributes=.true.)
-    if (error .eq. 0) then 
+    if (error == 0) then 
 
        if (present (firstIndex) .and. present (lastIndex) ) then
           j_first = firstIndex
@@ -1434,16 +1460,15 @@ contains ! ============================ MODULE PROCEDURES ====================
           j_last  = dim_array(2)
        end if
 
-       do j = j_first, j_last
-          do i = 1, dim_array(1)
-             real_data(i,j) = MLSData%RealField(i,j,1) 
-          end do
-       end do
+       real_data(1:dim_array(1),j_first:j_last) = &
+         & MLSData%RealField(1:dim_array(1),j_first:j_last,1) 
 
        allocate(dataset%Dimensions(MLSData%rank), stat=status)
+       addr = 0
+!        if ( status == 0 ) addr = transfer(c_loc(dataset%Dimensions(1)), addr)
        call test_allocate ( status, ModuleName, "dataset%Dimensions", &
          & ubounds = MLSData%rank, &
-         & elementSize = storage_size(dataset%Dimensions) / 8 )
+         & elementSize = storage_size(dataset%Dimensions) / 8, address=addr )
        call CopyToDataProducts(MLSData, dataset)
 
     else
@@ -1457,18 +1482,19 @@ contains ! ============================ MODULE PROCEDURES ====================
  subroutine Recall_MLSAuxData_Double_2d( file_id, dataset, double_data,& 
       firstIndex, lastIndex)
     use Allocate_Deallocate, only: Test_Allocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     type( DataProducts_T ), intent(inout) :: dataset
     real(r8), dimension(:,:), intent(inout) :: double_data
     integer, intent(in), optional :: firstIndex, lastIndex
     integer(hid_t), intent(in) :: file_id
 
     type( MLSAuxData_T ) :: MLSData
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer, dimension(3) :: dim_array
-    integer :: i,j,error,status,j_first,j_last
+    integer :: i,error,status,j_first,j_last
 
-    do i=1,3
-       dim_array(i) = 1
-    end do
+    dim_array = 1
+
     do i=1,size(shape(double_data))
        dim_array(i) = size(double_data,i)
     end do
@@ -1479,7 +1505,7 @@ contains ! ============================ MODULE PROCEDURES ====================
 
     call Read_MLSAuxData(file_id, trim(dataset%name), &
          trim(dataset%data_type), MLSData, error, read_attributes=.true.)
-    if (error .eq. 0) then
+    if (error == 0) then
 
        if (present (firstIndex) .and. present (lastIndex) ) then
           j_first = firstIndex
@@ -1489,16 +1515,15 @@ contains ! ============================ MODULE PROCEDURES ====================
           j_last  = dim_array(2)
        end if
 
-       do j = j_first, j_last
-          do i = 1, dim_array(1)
-             double_data(i,j) = MLSData%DpField(i,j,1) 
-          end do
-       end do
+       double_data(1:dim_array(1),j_first:j_last) = &
+         & MLSData%DpField(1:dim_array(1),j_first:j_last,1) 
 
        allocate(dataset%Dimensions(MLSData%rank), stat=status)
+       addr = 0
+!        if ( status == 0 ) addr = transfer(c_loc(dataset%Dimensions(1)), addr)
        call test_allocate ( status, ModuleName, "dataset%Dimensions", &
          & ubounds = MLSData%rank, &
-         & elementSize = storage_size(dataset%Dimensions) / 8 )
+         & elementSize = storage_size(dataset%Dimensions) / 8, address=addr )
        call CopyToDataProducts(MLSData, dataset)
 
     else
@@ -1511,18 +1536,19 @@ contains ! ============================ MODULE PROCEDURES ====================
  subroutine Recall_MLSAuxData_Integer_2d( file_id, dataset, integer_data, &
       firstIndex, lastIndex)
     use Allocate_Deallocate, only: Test_Allocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     type( DataProducts_T ), intent(inout) :: dataset
     integer, dimension(:,:), intent(inout) :: integer_data
     integer, intent(in), optional :: firstIndex, lastIndex
     integer(hid_t), intent(in) :: file_id
 
     type( MLSAuxData_T ) :: MLSData
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer, dimension(3) :: dim_array
-    integer :: i,j,error, status,j_first, j_last
+    integer :: i,error, status,j_first, j_last
 
-    do i=1,3
-       dim_array(i) = 1
-    end do
+    dim_array = 1
+
     do i=1,size(shape(integer_data))
        dim_array(i) = size(integer_data,i)
     end do
@@ -1533,7 +1559,7 @@ contains ! ============================ MODULE PROCEDURES ====================
 
     call Read_MLSAuxData(file_id, trim(dataset%name), &
          trim(dataset%data_type), MLSData, error, read_attributes=.true.)
-    if (error .eq. 0) then
+    if (error == 0) then
 
        if (present (firstIndex) .and. present (lastIndex) ) then
           j_first = firstIndex
@@ -1543,16 +1569,15 @@ contains ! ============================ MODULE PROCEDURES ====================
           j_last  = dim_array(2)
        end if
 
-       do j = j_first, j_last
-          do i = 1, dim_array(1)
-             integer_data(i,j) = MLSData%IntField(i,j,1)  
-          end do
-       end do
+       integer_data(1:dim_array(1),j_first:j_last) = &
+         & MLSData%IntField(1:dim_array(1),j_first:j_last,1) 
 
        allocate(dataset%Dimensions(MLSData%rank), stat=status)
+       addr = 0
+!        if ( status == 0 ) addr = transfer(c_loc(dataset%Dimensions(1)), addr)
        call test_allocate ( status, ModuleName, "dataset%Dimensions", &
          & ubounds = MLSData%rank, &
-         & elementSize = storage_size(dataset%Dimensions) / 8 )
+         & elementSize = storage_size(dataset%Dimensions) / 8, address=addr )
        call CopyToDataProducts(MLSData, dataset)
 
     else
@@ -1565,6 +1590,7 @@ contains ! ============================ MODULE PROCEDURES ====================
  subroutine Recall_MLSAuxData_Real_3d( file_id, dataset, real_data, & 
       firstIndex, lastIndex)
     use Allocate_Deallocate, only: Test_Allocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     type( DataProducts_T ), intent(inout) :: dataset
     real, dimension(:,:,:), intent(inout) :: real_data
     integer(hid_t), intent(in) :: file_id
@@ -1572,11 +1598,11 @@ contains ! ============================ MODULE PROCEDURES ====================
 
     type( MLSAuxData_T ) :: MLSData
     integer, dimension(3) :: dim_array
-    integer :: i,j,k,error, status,k_first, k_last
+    integer(c_intptr_t) :: Addr         ! For tracing
+    integer :: i,error, status,k_first, k_last
 
-    do i=1,3
-       dim_array(i) = 1
-    end do
+    dim_array = 1
+
     do i=1,size(shape(real_data))
        dim_array(i) = size(real_data,i)
     end do
@@ -1588,7 +1614,7 @@ contains ! ============================ MODULE PROCEDURES ====================
     call Read_MLSAuxData(file_id, trim(dataset%name), &
          trim(dataset%data_type), MLSData, error, read_attributes=.true.)
 
-    if (error .eq. 0) then
+    if (error == 0) then
 
        if (present (firstIndex) .and. present (lastIndex) ) then
           k_first = firstIndex
@@ -1598,17 +1624,15 @@ contains ! ============================ MODULE PROCEDURES ====================
           k_last  = dim_array(3)
        end if
 
-       do k = k_first, k_last
-          do j = 1, dim_array(2)
-             do i = 1, dim_array(1)
-                real_data(i,j,k) = MLSData%RealField(i,j,k)  
-             end do
-          end do
-       end do
+       real_data(1:dim_array(1),1:dim_array(2),1:dim_array(3)) = &
+         & MLSData%RealField(1:dim_array(1),1:dim_array(2),1:dim_array(3))
 
        allocate(dataset%Dimensions(3), stat=status)
+       addr = 0
+!        if ( status == 0 ) addr = transfer(c_loc(dataset%Dimensions(1)), addr)
        call test_allocate ( status, ModuleName, "dataset%Dimensions", &
-         & ubounds = 3, elementSize = storage_size(dataset%Dimensions) / 8 )
+         & ubounds = 3, elementSize = storage_size(dataset%Dimensions) / 8, &
+         & address=addr )
        call CopyToDataProducts(MLSData, dataset)
 
     else
@@ -1621,18 +1645,19 @@ contains ! ============================ MODULE PROCEDURES ====================
  subroutine Recall_MLSAuxData_Double_3d( file_id, dataset, double_data, &
       firstIndex, lastIndex)
     use Allocate_Deallocate, only: Test_Allocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     type( DataProducts_T ), intent(inout) :: dataset
     real(r8), dimension(:,:,:), intent(inout) :: double_data
     integer(hid_t), intent(in) :: file_id
     integer, intent(in), optional :: firstIndex, lastIndex
 
     type( MLSAuxData_T ) :: MLSData
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer, dimension(3) :: dim_array
-    integer :: i,j,k,error, status,k_first, k_last
+    integer :: i,error, status,k_first, k_last
 
-    do i=1,3
-       dim_array(i) = 1
-    end do
+    dim_array = 1
+
     do i=1,size(shape(double_data))
        dim_array(i) = size(double_data,i)
     end do
@@ -1642,7 +1667,7 @@ contains ! ============================ MODULE PROCEDURES ====================
          trim(dataset%data_type),dim_array,MLSData)
     call Read_MLSAuxData(file_id, trim(dataset%name), &
          trim(dataset%data_type), MLSData, error, read_attributes=.true.)
-    if (error .eq. 0) then
+    if (error == 0) then
 
        if (present (firstIndex) .and. present (lastIndex) ) then
           k_first = firstIndex
@@ -1652,17 +1677,15 @@ contains ! ============================ MODULE PROCEDURES ====================
           k_last  = dim_array(3)
        end if
 
-       do k = k_first, k_last
-          do j = 1, dim_array(2)
-             do i = 1, dim_array(1)
-                double_data(i,j,k) = MLSData%DpField(i,j,k) 
-             end do
-          end do
-       end do
+       double_data(1:dim_array(1),1:dim_array(2),1:dim_array(3)) = &
+         & MLSData%DpField(1:dim_array(1),1:dim_array(2),1:dim_array(3))
 
        allocate(dataset%Dimensions(3), stat=status)
+       addr = 0
+!        if ( status == 0 ) addr = transfer(c_loc(dataset%Dimensions(1)), addr)
        call test_allocate ( status, ModuleName, "dataset%Dimensions", &
-         & ubounds = 3, elementSize = storage_size(dataset%Dimensions) / 8 )
+         & ubounds = 3, elementSize = storage_size(dataset%Dimensions) / 8, &
+         & address=addr )
        call CopyToDataProducts(MLSData, dataset)
 
     else
@@ -1674,18 +1697,19 @@ contains ! ============================ MODULE PROCEDURES ====================
   subroutine Recall_MLSAuxData_Integer_3d(file_id,dataset,integer_data, &
        firstIndex, lastIndex)
     use Allocate_Deallocate, only: Test_Allocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     type( DataProducts_T ), intent(inout) :: dataset
     integer, dimension(:,:,:), intent(inout) :: integer_data
     integer(hid_t), intent(in) :: file_id
     integer, intent(in), optional :: firstIndex, lastIndex
 
     type( MLSAuxData_T ) :: MLSData
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer, dimension(3) :: dim_array
-    integer :: i,j,k,error,status,k_first, k_last
+    integer :: i,error,status,k_first, k_last
 
-    do i=1,3
-       dim_array(i) = 1
-    end do
+    dim_array = 1
+
     do i=1,size(shape(integer_data))
        dim_array(i) = size(integer_data,i)
     end do
@@ -1696,7 +1720,7 @@ contains ! ============================ MODULE PROCEDURES ====================
 
     call Read_MLSAuxData(file_id, trim(dataset%name), &
          trim(dataset%data_type), MLSData, error, read_attributes=.true.)
-    if (error .eq. 0) then
+    if (error == 0) then
 
        if (present (firstIndex) .and. present (lastIndex) ) then
           k_first = firstIndex
@@ -1705,20 +1729,18 @@ contains ! ============================ MODULE PROCEDURES ====================
           k_first = 1
           k_last  = dim_array(3)
        end if
-!
+
        ! dump the data into the array.
-!
-       do k = k_first, k_last
-          do j = 1, dim_array(2)
-             do i = 1, dim_array(1)
-                integer_data(i,j,k) = MLSData%IntField(i,j,k)  
-             end do
-          end do
-       end do
+
+       integer_data(1:dim_array(1),1:dim_array(2),1:dim_array(3)) = &
+         & MLSData%IntField(1:dim_array(1),1:dim_array(2),1:dim_array(3))
 
        allocate(dataset%Dimensions(3), stat=status)
+       addr = 0
+!        if ( status == 0 ) addr = transfer(c_loc(dataset%Dimensions(1)), addr)
        call test_allocate ( status, ModuleName, "dataset%Dimensions", &
-         & ubounds = 3, elementSize = storage_size(dataset%Dimensions) / 8 )
+         & ubounds = 3, elementSize = storage_size(dataset%Dimensions) / 8, &
+         & address=addr )
        call CopyToDataProducts(MLSData, dataset)
 
     else
@@ -1865,7 +1887,7 @@ contains ! ============================ MODULE PROCEDURES ====================
                 if (h5error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
                      H5_ERROR_PROPERTY_CHUNK_SET // trim(MLSAuxData%name) )
 
-                if (trim(MLSAuxData%type_name).ne.'character') then
+                if (trim(MLSAuxData%type_name)/='character') then
 
                    call h5dcreate_f(file_id,trim(MLSAuxData%name),type_id,&
                         dspace_id, dset_id,h5error,cparms)
@@ -2405,7 +2427,7 @@ contains ! ============================ MODULE PROCEDURES ====================
     integer(hsize_t), dimension(7) :: dims
     integer(hsize_t), dimension(3) :: chunk_dims, dims_create, maxdims, start
     integer(hid_t) :: cparms, dset_id, dspace_id, type_id, memspace
-    integer        :: rank, h5error, i, j, k, status
+    integer        :: rank, h5error, i, status
 !
     logical :: myRead_attributes, is_integer, is_real, is_double, & 
          is_character, is_int32, is_float32, is_float64
@@ -2540,13 +2562,8 @@ contains ! ============================ MODULE PROCEDURES ====================
           call h5dread_f(dset_id,type_id,& 
                real_buffer,dims,h5error, memspace, dspace_id)
 
-          do k = FirstIndex, LastIndex
-             do j = 1, dims(2)
-                do i = 1, dims(1)
-                   MLSAuxData%RealField(i,j,k) = real_buffer(i,j,k)
-                end do
-             end do
-          end do
+          MLSAuxData%RealField(1:dims(1),1:dims(2),firstIndex:lastIndex) = &
+            & real_buffer(1:dims(1),1:dims(2),firstIndex:lastIndex)
 
           if (allocated(real_buffer)) then 
              deallocate(real_buffer, stat=status)
@@ -2560,13 +2577,9 @@ contains ! ============================ MODULE PROCEDURES ====================
 
           call h5dread_f(dset_id,type_id,& 
                double_buffer,dims,h5error, memspace, dspace_id)
-          do k = FirstIndex, LastIndex
-             do j = 1, dims(2)
-                do i = 1, dims(1)
-                   MLSAuxData%DpField(i,j,k) = double_buffer(i,j,k)
-                end do
-             end do
-          end do
+
+          MLSAuxData%DpField(1:dims(1),1:dims(2),firstIndex:lastIndex) = &
+            & double_buffer(1:dims(1),1:dims(2),firstIndex:lastIndex)
 
           if (allocated(double_buffer)) then 
              deallocate(double_buffer, stat=status)
@@ -2579,13 +2592,9 @@ contains ! ============================ MODULE PROCEDURES ====================
 
           call h5dread_f(dset_id,type_id,& 
                integer_buffer,dims,h5error, memspace, dspace_id)
-          do k = FirstIndex, LastIndex
-             do j = 1, dims(2)
-                do i = 1, dims(1)
-                   MLSAuxData%IntField(i,j,k) = integer_buffer(i,j,k)
-                end do
-             end do
-          end do
+
+          MLSAuxData%IntField(1:dims(1),1:dims(2),firstIndex:lastIndex) = &
+            & integer_buffer(1:dims(1),1:dims(2),firstIndex:lastIndex)
 
           if (allocated(integer_buffer)) then 
              deallocate(integer_buffer, stat=status)
@@ -2598,13 +2607,9 @@ contains ! ============================ MODULE PROCEDURES ====================
 
           call h5dread_f(dset_id,type_id,& 
                character_buffer,dims,h5error, memspace, dspace_id)
-          do k = FirstIndex, LastIndex
-             do j = 1, dims(2)
-                do i = 1, dims(1)
-                   MLSAuxData%CharField(i,j,k) = character_buffer(i,j,k)
-                end do
-             end do
-          end do
+
+          MLSAuxData%CharField(1:dims(1),1:dims(2),firstIndex:lastIndex) = &
+            & character_buffer(1:dims(1),1:dims(2),firstIndex:lastIndex)
 
           if (allocated(character_buffer)) then 
              deallocate(character_buffer, stat=status)
@@ -2830,7 +2835,7 @@ contains ! ============================ MODULE PROCEDURES ====================
                ModuleName, "Fill value " // TRIM (MLSAuxData%name))
        end if
 
-       if (trim(MLSAuxData%type_name).ne.'character') then
+       if (trim(MLSAuxData%type_name)/='character') then
 
           call h5dcreate_f (file_id, trim(MLSAuxData%name), &
                type_id, dspace_id, dset_id, h5error, cparms)
@@ -3080,8 +3085,10 @@ contains ! ============================ MODULE PROCEDURES ====================
     ! FrequencyCoordinates, VerticalCoordinates, or HorizontalCoordinates.
     ! -haley n-
     use Allocate_Deallocate, only: Test_Allocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     type( MLSAuxData_T ), intent(inout) :: MLSAuxData
     type( DataProducts_T ), intent(in) :: dataset
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: i, status, length
 
     if (associated(MLSAuxData%Dimensions)) &
@@ -3106,9 +3113,11 @@ contains ! ============================ MODULE PROCEDURES ====================
 
     if (associated(dataset%Dimensions)) then 
        allocate(MLSAuxData%Dimensions(MLSAuxData%rank), stat=status)
+       addr = 0
+!        if ( status == 0 ) addr = transfer(c_loc(MLSAuxData%Dimensions(1)), addr)
        call test_allocate ( status, ModuleName, "MLSAuxData%Dimensions", &
          & uBounds = MLSAuxData%rank, &
-         & elementSize = storage_size(MLSAuxData%Dimensions ) / 8 )
+         & elementSize = storage_size(MLSAuxData%Dimensions ) / 8, address=addr )
        !MLSAuxData%rank should be less than or equal to the size of dataset%Dimensions,
        !but just to be on the safe size, I'll get the min size of the 2. -haley n-
         do i = 1, min(size(dataset%Dimensions), size(MLSAuxData%Dimensions))
@@ -3119,37 +3128,45 @@ contains ! ============================ MODULE PROCEDURES ====================
     if (associated(dataset%FrequencyCoordinates)) then
        length = size(dataset%FrequencyCoordinates)
        allocate(MLSAuxData%FrequencyCoordinates(length), stat=status)
+       addr = 0
+       if ( status == 0 ) then
+         if ( length>0 ) addr = transfer(c_loc(MLSAuxData%FrequencyCoordinates(1)), addr)
+       end if
        call test_allocate ( status, ModuleName, "MLSAuxData%FrequencyCoordinates", &
          & uBounds = length, &
-         & elementSize = storage_size(MLSAuxData%FrequencyCoordinates) / 8 )
-       do i = 1, length
-         MLSAuxData%FrequencyCoordinates(i) = &
-           & dataset%FrequencyCoordinates(i)
-       end do
+         & elementSize = storage_size(MLSAuxData%FrequencyCoordinates) / 8, &
+         & address=addr )
+       MLSAuxData%FrequencyCoordinates(1:length) = &
+           & dataset%FrequencyCoordinates(1:length)
     end if
 
     if (associated(dataset%VerticalCoordinates)) then
        length = size(dataset%VerticalCoordinates)
        allocate(MLSAuxData%VerticalCoordinates(length), stat=status)
+       addr = 0
+       if ( status == 0 ) then
+         if ( length>0 ) addr = transfer(c_loc(MLSAuxData%VerticalCoordinates(1)), addr)
+       end if
        call test_allocate ( status, ModuleName, "MLSAuxData%VerticalCoordinates", &
          & uBounds = length, &
-         & elementSize = storage_size(MLSAuxData%VerticalCoordinates) / 8 )
-       do i = 1, length
-         MLSAuxData%VerticalCoordinates(i) = &
-           & dataset%VerticalCoordinates(i)
-       end do
+         & elementSize = storage_size(MLSAuxData%VerticalCoordinates) / 8, &
+         & address=addr )
+       MLSAuxData%VerticalCoordinates(1:length) = &
+           & dataset%VerticalCoordinates(1:length)
     end if
 
     if (associated(dataset%HorizontalCoordinates)) then
        length = size(dataset%HorizontalCoordinates)
-       allocate(MLSAuxData%HorizontalCoordinates(length), stat=status) 
+       allocate(MLSAuxData%HorizontalCoordinates(length), stat=status)
+       addr = 0
+       if ( status == 0 ) then
+         if ( length>0 ) addr = transfer(c_loc(MLSAuxData%HorizontalCoordinates(1)), addr)
+       end if
        call test_allocate ( status, ModuleName, "MLSAuxData%HorizontalCoordinates", &
          & uBounds = length, &
          & elementSize = storage_size(MLSAuxData%HorizontalCoordinates) / 8 )
-       do i = 1, length
-         MLSAuxData%HorizontalCoordinates(i) = &
-           & dataset%HorizontalCoordinates(i)
-       end do
+       MLSAuxData%HorizontalCoordinates(1:length) = &
+           & dataset%HorizontalCoordinates(1:length)
     end if
 
   end subroutine CopyFromDataProducts
@@ -3160,28 +3177,24 @@ contains ! ============================ MODULE PROCEDURES ====================
     integer :: i
 
     if (associated(MLSAuxData%Dimensions) ) then
-       do i = 1, size(MLSAuxData%Dimensions)
-          dataset%Dimensions(i) = '                    '
-          dataset%Dimensions(i) = trim(MLSAuxData%Dimensions(i))
-       end do
+      do i = 1, size(MLSAuxData%Dimensions)
+        dataset%Dimensions(i) = trim(MLSAuxData%Dimensions(i))
+      end do
     end if
 
-    if (associated(MLSAuxData%FrequencyCoordinates) ) then 
-       do i = 1, size(MLSAuxData%FrequencyCoordinates)
-          dataset%FrequencyCoordinates(i) = MLSAuxData%FrequencyCoordinates(i)
-       end do 
+    if (associated(MLSAuxData%FrequencyCoordinates) ) then
+      i = size(MLSAuxData%FrequencyCoordinates)
+      dataset%FrequencyCoordinates(1:i) = MLSAuxData%FrequencyCoordinates(1:i)
     end if
 
-    if (associated(MLSAuxData%VerticalCoordinates) ) then 
-       do i = 1, size(MLSAuxData%VerticalCoordinates)
-          dataset%VerticalCoordinates(i) = MLSAuxData%VerticalCoordinates(i)
-       end do 
+    if (associated(MLSAuxData%VerticalCoordinates) ) then
+      i = size(MLSAuxData%VerticalCoordinates)
+      dataset%VerticalCoordinates(1:i) = MLSAuxData%VerticalCoordinates(1:i)
     end if
 
-    if (associated(MLSAuxData%HorizontalCoordinates) ) then 
-       do i = 1, size(MLSAuxData%HorizontalCoordinates)
-        dataset%HorizontalCoordinates(i) = MLSAuxData%HorizontalCoordinates(i)
-       end do 
+    if (associated(MLSAuxData%HorizontalCoordinates) ) then
+      i = size(MLSAuxData%HorizontalCoordinates)
+      dataset%HorizontalCoordinates(1:i) = MLSAuxData%HorizontalCoordinates(1:i)
     end if
 
   end subroutine CopyToDataProducts
@@ -3199,6 +3212,11 @@ contains ! ============================ MODULE PROCEDURES ====================
 end module MLSAuxData
 
 ! $Log$
+! Revision 2.35  2015/03/28 01:12:53  vsnyder
+! Some spiffing.
+! Added stuff to trace allocate/deallocate addresses -- mostly commented out
+! because NAG build 1017 doesn't yet allow arrays as arguments to C_LOC.
+!
 ! Revision 2.34  2015/01/21 19:27:07  pwagner
 ! Repaired faulty deallocation
 !
