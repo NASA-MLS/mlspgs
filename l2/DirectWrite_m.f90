@@ -31,18 +31,18 @@ module DirectWrite_m  ! alternative to Join/OutputAndClose methods
   use MLSCommon, only: defaultUndefinedValue, Interval_T, MLSFile_T, &
     & inRange
   use MLSKinds, only: rv
-  use MLSMessagemodule, only: MLSmessage, MLSmsg_error, MLSmsg_warning
-  use MLSFiles, only: hdfversion_4, hdfversion_5, dump, MLS_exists, &
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
+  use MLSFiles, only: hdfversion_4, hdfversion_5, dump, MLS_Exists, &
     & MLS_closefile, MLS_openfile
   use MLSFinds, only: findfirst
   use MLSHDFEOS, only: MLS_swath_in_file
-  use MLSL2options, only: writefileattributes
+  use MLSL2Options, only: writeFileAttributes
   use MLSStringlists, only: switchdetail
   use output_m, only: blanks, output
   use PCFHdr, only: GlobalAttributes
   use string_table, only: get_string
   use toggles, only: switches
-  use vectorsmodule, only: vector_t, vectorvalue_t, dump
+  use vectorsModule, only: vector_t, vectorValue_t, dump
 
   implicit none
   private
@@ -151,7 +151,7 @@ contains ! ======================= Public Procedures =========================
 
   ! ------------------------------------------- DirectWriteVector_EveryQuantity --------
   subroutine DirectWriteVector_EveryQuantity ( File, Vector, &
-    & chunkNo, options )
+    & chunkNo, options, rank )
 
     ! Purpose:
     ! Write plain hdf-formatted files ala l2aux for datasets that
@@ -166,6 +166,7 @@ contains ! ======================= Public Procedures =========================
     type(MLSFile_T)               :: File
     integer, intent(in)           :: CHUNKNO      ! Index into chunks
     character(len=*), intent(in), optional :: options
+    integer, intent(in), optional :: rank
     ! Local parameters
     integer                       :: j
     logical                       :: nameQtyByTemplate
@@ -194,7 +195,7 @@ contains ! ======================= Public Procedures =========================
         sdName = 'Quantity ' // trim(sdName)
       endif
       call DirectWrite_Quantity ( File, quantity, sdName, &
-        & chunkNo, options )
+        & chunkNo, options, rank )
     enddo
   end subroutine DirectWriteVector_EveryQuantity
 
@@ -940,13 +941,10 @@ contains ! ======================= Public Procedures =========================
   !         ...
   
   subroutine DirectWrite_Quantity ( File, quantity, qtyName, &
-    & chunkNo, options )
+    & chunkNo, options, rank )
 
     use HDF5, only: H5GCLOSE_F, H5GCreate_F, H5GOPEN_F
-    use INTRINSIC, only: L_NONE
-    use L2AUXDATA, only:  L2AUXDATA_T, PHASENAMEATTRIBUTES, &
-      & DESTROYL2AUXCONTENTS, &
-      & SETUPNEWL2AUXRECORD, WRITEL2AUXATTRIBUTES
+    use INTRINSIC, only: L_NONE, Lit_Indices
     use MLSHDF5, only: ISHDF5GroupPRESENT, ISHDF5DSPRESENT, &
       & MAKEHDF5ATTRIBUTE, SAVEASHDF5DS
     use MLSSTRINGS, only: WRITEINTSTOCHARS
@@ -956,6 +954,7 @@ contains ! ======================= Public Procedures =========================
     type(MLSFile_T)                :: File
     integer, intent(in) :: CHUNKNO      ! Index into chunks
     character(len=*), intent(in), optional :: options
+    integer, intent(in), optional :: rank
 
     ! Local variables
     logical :: addQtyAttributes
@@ -963,23 +962,19 @@ contains ! ======================= Public Procedures =========================
     ! logical :: attributes_there
     integer :: first_maf
     integer :: grp_id
-    type (L2AUXData_T) :: l2aux
-    integer :: last_maf
-    logical :: mySingle
-    integer :: NODIMS                   ! Also index of maf dimension
-    integer :: Num_qty_values
+    integer :: myRank
     character(len=8) :: chunkStr        ! '1', '2', ..
     integer :: returnStatus
-    integer :: SIZES(3)                 ! HDF array sizes
-    integer :: START(3)                 ! HDF array starting position
-    integer :: STRIDE(3)                ! HDF array stride
-    integer :: total_DS_size
-    logical, parameter :: MAYCOLLAPSEDIMS = .false.
     ! logical, parameter :: DEEBUG = .true.
     logical :: verbose
 
     ! executable code
     verbose = BeVerbose ( 'direct', -1 )
+    myRank = 2
+    if ( present(rank) ) then
+      if ( rank > 0 .and. rank < 5 ) myRank = rank
+      ! call outputNamedValue ( 'input rank', rank )
+    endif
     call writeIntsToChars ( chunkNo, chunkStr )
     chunkStr = adjustl ( chunkStr )
     ! Create or access the SD
@@ -992,6 +987,7 @@ contains ! ======================= Public Procedures =========================
     if ( .not. already_There ) then
       call outputNamedValue( '  creating file', trim(File%name) )
       call h5GCreate_f ( File%fileID%f_id, qtyName, grp_id, returnStatus )
+      call writeQuantityAttributes ( grp_id, quantity )
     else
       call h5GOpen_f ( File%fileID%f_id, qtyName, grp_id, returnStatus )
     endif
@@ -999,7 +995,19 @@ contains ! ======================= Public Procedures =========================
     call h5GCreate_f ( File%fileID%grp_id, chunkStr, grp_id, returnStatus )
     ! Begin the writes
     ! Values
-    call SaveAsHDF5DS( grp_id, 'values', quantity%values )
+    ! call outputNamedValue ( 'rank', myRank )
+    select case ( myRank )
+    case ( 1 )
+      call SaveAsHDF5DS( grp_id, 'values', quantity%value1 )
+    case ( 2 )
+      call SaveAsHDF5DS( grp_id, 'values', quantity%values )
+    case ( 3 )
+      call SaveAsHDF5DS( grp_id, 'values', quantity%value3 )
+    case ( 4 )
+      call SaveAsHDF5DS( grp_id, 'values', quantity%value4 )
+    case default
+      call SaveAsHDF5DS( grp_id, 'values', quantity%values )
+    end select
     ! Geolocations
     call SaveAsHDF5DS( grp_id, 'surfs', quantity%template%surfs )
     if ( associated(quantity%template%Geolocation) ) &
@@ -1024,6 +1032,38 @@ contains ! ======================= Public Procedures =========================
     call h5GClose_f ( File%fileID%grp_id, returnStatus )
 
     call mls_CloseFile( File )
+  contains
+    subroutine writeQuantityAttributes ( locID, quantity )
+      ! Args
+      integer, intent(in) :: locID
+      type (VectorValue_T), intent(in) :: QUANTITY
+      ! Local variables
+      character(len=80) :: str
+      ! Executable
+      call get_string( lit_indices(quantity%template%quantityType ), str, strip=.true. )
+      call MakeHDF5Attribute ( locID, 'type', str )
+
+      call MakeHDF5Attribute ( locID, 'NoSurfs', quantity%template%NoSurfs )
+      call MakeHDF5Attribute ( locID, 'NoChans', quantity%template%NoChans )
+      call MakeHDF5Attribute ( locID, 'NoCrossTrack', quantity%template%NoCrossTrack )
+      call MakeHDF5Attribute ( locID, 'coherent', quantity%template%coherent )
+      call MakeHDF5Attribute ( locID, 'stacked', quantity%template%stacked )
+      call MakeHDF5Attribute ( locID, 'regular', quantity%template%regular )
+      call MakeHDF5Attribute ( locID, 'minorFrame', quantity%template%minorFrame )
+      call MakeHDF5Attribute ( locID, 'majorFrame', quantity%template%majorFrame )
+      call MakeHDF5Attribute ( locID, 'logBasis', quantity%template%logBasis )
+      call MakeHDF5Attribute ( locID, 'minValue', quantity%template%minValue )
+      call MakeHDF5Attribute ( locID, 'badValue', quantity%template%badValue )
+
+      call get_string( lit_indices(quantity%template%unit ), str, strip=.true. )
+      call MakeHDF5Attribute ( locID, 'unit', str )
+      call get_string( lit_indices(quantity%template%verticalCoordinate ), str, strip=.true. )
+      call MakeHDF5Attribute ( locID, 'verticalCoordinate', str )
+      call get_string( lit_indices(quantity%template%horizontalCoordinate ), str, strip=.true. )
+      call MakeHDF5Attribute ( locID, 'horizontalCoordinate', str )
+      call get_string( lit_indices(quantity%template%latitudeCoordinate ), str, strip=.true. )
+      call MakeHDF5Attribute ( locID, 'latitudeCoordinate', str )
+    end subroutine writeQuantityAttributes
   end subroutine DirectWrite_Quantity
 
   !------------------------------------------  DumpDirectDB  -----
@@ -1482,6 +1522,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.69  2015/03/31 21:01:57  pwagner
+! rank is a new field for DirectWrite-ing quantity values as, say, rank3; now write qty attributes, too
+!
 ! Revision 2.68  2015/03/28 02:30:58  vsnyder
 ! Added stuff to trace allocate/deallocate addresses.  Paul added
 ! DirectWriteQuantity stuff.
