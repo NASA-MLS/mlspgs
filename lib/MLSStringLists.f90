@@ -2260,15 +2260,16 @@ contains
   ! For which see comment above
   
   ! Notes:
-  ! (1) if the string list is "*" then
+  ! (1) if the string list is absent then the test option is automatically absent
+  ! (2) if the string list is "*" then
   ! the test option is automatically present (would you like to override that?)
-  ! (2) Why don't you let the '[]' pair that set off args be
+  ! (3) Why don't you let the '[]' pair that set off args be
   ! overridden, say by other optional args?
   
   function optionDetail( inList, single_option, multi_option, &
     & pattern, delims ) RESULT (detail)
     ! Dummy arguments
-    character (len=*), intent(in)             :: inlist
+    character (len=*), optional, intent(in)   :: inlist
     character (len=1), optional, intent(in)   :: single_option
     character (len=*), optional, intent(in)   :: multi_option
     integer, optional, intent(in)             :: pattern
@@ -2290,6 +2291,8 @@ contains
       & (/ '--', '--', '- ', '--' , '--' /)
 
     ! Executable code
+    detail = 'no'
+    if ( .not. present(inList) ) return
     test_option = char(0) ! NULL
     test_multi = char(0) ! NULL
     if ( present(single_option) ) test_option = single_option
@@ -2300,7 +2303,6 @@ contains
     if ( present(pattern) .and. &
       & any(myPattern == (/0, 1, 2, 3, 4 /)) &  ! accept legal values only
       & ) myPattern = pattern
-    detail = 'no'
     if ( adjustl(inList) == '*' ) then
       detail = 'yes'
       return
@@ -4452,6 +4454,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.67  2015/03/31 22:11:25  pwagner
+! All args to optionDetail are optional now
+!
 ! Revision 2.66  2014/08/19 23:15:16  vsnyder
 ! Added SeparatorLocation argument to GetStringElement
 !
