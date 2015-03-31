@@ -1272,6 +1272,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_AscDescMode, vectorQuantity(), &
              begin, f+f_precision, vectorQuantity(), &
              begin, f+f_quality, vectorQuantity(), &
+             begin, f+f_rank, numeric(phyq_dimensionless), &
              begin, f+f_single, boolean(), &
              begin, f+f_source, vectorQuantity(), &
              begin, f+f_status, vectorQuantity(), &
@@ -1996,6 +1997,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.610  2015/03/31 21:00:32  pwagner
+! rank is a new field for DirectWrite-ing quantity values as, say, rank3
+!
 ! Revision 2.609  2015/03/28 02:55:04  vsnyder
 ! Paul added Quantity to t_OutputType.  Deleted Azimuth from t_QuantityType.
 ! Added f_Truncate -- should have been save -- to s_Forge.  Added
