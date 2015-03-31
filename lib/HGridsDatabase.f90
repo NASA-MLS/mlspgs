@@ -41,6 +41,7 @@ module HGridsDatabase                   ! Horizontal grid information
     integer :: noProfsLowerOverlap = 0 ! Number of profiles in the lower overlap
     integer :: noProfsUpperOverlap = 0 ! Number of profiles in the upper overlap
     integer :: Type                    ! L_Explicit, L_Fixed ...
+    logical :: forbidOverspill     = .false.   
 
     ! This is the maf number passing nearest to the grid point
     integer, dimension(:), pointer    :: maf         => NULL()
@@ -224,8 +225,9 @@ contains ! =========== Public procedures ===================================
 
   ! ------------------------------------------------  DUMP_A_HGRID  -----
   subroutine DUMP_a_HGRID ( aHGRID )
+    use dates_module, only: tai93s2hid 
     use Intrinsic, only: lit_indices
-    use output_m, only: newLine, output
+    use output_m, only: blanks, newLine, output
     use string_table, only: display_string
     type(hGrid_T), intent(in) :: aHGRID
     integer :: IERR
@@ -244,20 +246,29 @@ contains ! =========== Public procedures ===================================
       call output ( aHgrid%noProfsUpperOverlap, before=' upperOverlap = ', advance='no' )
       call output ( ' masterCoordinate = ' )
       if ( aHgrid%masterCoordinate == 0 ) then
-        call output ( '0' )
+        call output ( '0', advance='yes' )
       else
-        call display_string ( lit_indices(aHgrid%masterCoordinate) )
+        call display_string ( lit_indices(aHgrid%masterCoordinate), advance='yes' )
       end if
       call display_string ( lit_indices(aHgrid%type), before=' type = ', advance='yes' )
       call output ( ' prof       phi       geodLat           lon', advance='no' )
-      call output ( '          time     solarTime   solarZenith', advance='no' )
+      call output ( '      hours in day     solarTime   solarZenith', advance='no' )
       call output ( '      losAngle  nearest maf', advance='yes' )
       do j = 1, aHgrid%noProfs
+        if ( &                                                      
+          & ( aHgrid%noProfsLowerOverlap > 0  .and. &               
+          & j == aHgrid%noProfsLowerOverlap + 1 ) &                 
+          & .or. &                                                  
+          & ( aHgrid%noProfsUpperOverlap > 0 .and. &                
+          & aHgrid%noProfs - j == aHgrid%noProfsUpperOverlap - 1 ) &
+          & ) &                                                     
+          & call blanks( 80, fillChar='-', advance='yes' )          
         call output ( j, places=5 )
         call output ( aHgrid%phi(1,j), '(1x,1pg13.6)' )
         call output ( aHgrid%geodLat(1,j), '(1x,1pg13.6)' )
         call output ( aHgrid%lon(1,j), '(1x,1pg13.6)' )
-        call output ( aHgrid%time(1,j), '(1x,1pg13.6)' )
+        call output ( tai93s2hid( &                                       
+  &           aHgrid%time(1,j), leapsec=.true. ), '(1x,1pg13.6)' )
         call output ( aHgrid%solarTime(1,j), '(1x,1pg13.6)' )
         call output ( aHgrid%solarZenith(1,j), '(1x,1pg13.6)' )
         call output ( aHgrid%losAngle(1,j), '(1x,1pg13.6)', advance='no' )
@@ -344,6 +355,9 @@ contains ! =========== Public procedures ===================================
 end module HGridsDatabase
 
 ! $Log$
+! Revision 2.17  2015/03/31 21:03:55  pwagner
+! ForbidOverspill now a field of HGrid; improved Dump
+!
 ! Revision 2.16  2015/03/28 01:03:12  vsnyder
 ! Added type component.  Made geolocation components contiguous so they can
 ! be rank-remapping pointer targets.
