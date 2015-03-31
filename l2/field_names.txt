@@ -361,6 +361,7 @@ quantityNames
 quantityType
 
 radianceQuantity
+rank
 ratioQuantity
 referenceMIF
 refGPHPrecisionquantity
@@ -531,6 +532,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.255  2015/03/31 21:00:15  pwagner
+# rank is a new field for DirectWrite-ing quantity values as, say, rank3
+#
 # Revision 2.254  2015/03/28 02:52:15  vsnyder
 # Added truncate field to Forge -- maybe should have been save
 #
