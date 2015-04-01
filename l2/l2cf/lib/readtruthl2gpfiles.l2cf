@@ -25,6 +25,23 @@ begin ReadApriori
   !define(l2gpInputSpecies,{BrO,CH3CN,CO,ClO,GPH,H2O,HCN,HCl,HNO3,HO2,HOCl,N2O,O3,OH,RHI,SO2,Temperature})
   })
 
+  ;; --------------------------------------- Simulation series s8 ---
+  !ifelse(!simulationSeries,{s8},{
+  !define(readTruthL2GP,{l2gpTruth$1Input: l2gp, $
+    file='!inpathtruthl2gp/MLS-Aura_L2GP-$1_s8!simulationVersion--t_!day.he4'!nl})
+
+  !define(mostL2GPSpecies,{BrO,CH3Cl,CH3CN,CH3COCH3,CH3OH,CO,ClO,GPH,HCN,HCl,HNO3,HO2,HOCl,IWC,N2O,O3,OH,PSD,RHI,SO2,Temperature})
+  !forall(readTruthL2GP,!mostL2GPSpecies)
+
+  !ifdef(flagUseCloudH2O,{!dnl
+  l2gpTruthH2OInput: l2gp, $
+    file='!inpathtruthl2gp/MLS-Aura_L2GP-H2O-cld_s8!simulationVersion--t_!day.he4'!nl},{!dnl
+  l2gpTruthH2OInput: l2gp, $
+    file='!inpathtruthl2gp/MLS-Aura_L2GP-H2O_s8!simulationVersion--t_!day.he4'!nl})
+
+  !define(l2gpInputSpecies,{!mostL2GPSpecies,H2O})
+  })
+
   ;; --------------------------------------- Simulation series s7 ---
   !ifelse(!simulationSeries,{s7},{
   !define(readTruthL2GP,{l2gpTruth$1Input: l2gp, $
