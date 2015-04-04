@@ -41,7 +41,6 @@
     if ( d == 1 ) then
       avgDiff = ( oldY(top,:) - oldY(bot,:) ) / ( oldX(top) - oldX(bot) )
     else ! d == 2
-print '(a,2(1x,i0))', 'Shape(OldY) ', shape(oldY)
       avgDiff = ( oldY(:,top) - oldY(:,bot) ) / ( oldX(top) - oldX(bot) )
     end if
 
@@ -77,6 +76,9 @@ print '(a,2(1x,i0))', 'Shape(OldY) ', shape(oldY)
     end if
 
 ! $Log$
+! Revision 2.2  2015/04/04 00:50:06  vsnyder
+! Remove debugging print
+!
 ! Revision 2.1  2015/04/04 00:49:48  vsnyder
 ! Initial commit
 !
