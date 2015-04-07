@@ -74,6 +74,8 @@ module MLSNumerics              ! Some low level numerical stuff
 ! IFApproximate            Compute integral using UnifDiscreteFn
 ! InterpolateArraySetup    Compute coefficients for InterpolateUsingSetup
 ! InterpolateArrayTeardown Deallocate tables created by InterpolateArraySetup
+! InterpolateExtrapolate   Like InterpolateValues, but extrapolate using
+!                            average slope instead of slope at the end.
 ! Interpolate_Regular_To_Irregular 2D - to - 2D interpolation using composite
 !                          1D interpolation
 ! InterpolateValues        Interpolate for new y value(s):
@@ -149,17 +151,18 @@ module MLSNumerics              ! Some low level numerical stuff
 ! multidimensional arrays up to rank 3. In a scalar context A and B may be scalars
 ! === (end of api) ===
 
-  public :: BATTLESHIP, BIVARIATELINEARINTERPOLATION
-  public :: CLOSESTELEMENT
-  public :: DESTROY, DFDXAPPROXIMATE, D2FDX2APPROXIMATE, DUMP
-  public :: FAPPROXIMATE, FILLLOOKUPTABLE, FINDINRANGE, FINVAPPROXIMATE
-  public :: HUNT, HUNTBOX, HUNTRANGE, IFAPPROXIMATE
-  public :: INTERPOLATEARRAYSETUP, INTERPOLATEARRAYTEARDOWN, INTERPOLATEVALUES
-  public :: Interpolate_Regular_To_Irregular, INTERPOLATE_2D_COMPOSITE
-  public :: LINEARINTERPOLATE
-  public :: PUREHUNT
-  public :: SETUP, SIMPSONS, SIMPSONSSUB, SolveQuadratic
-  public :: USELOOKUPTABLE
+  public :: Battleship, BivariateLinearInterpolation
+  public :: ClosestElement
+  public :: Destroy, dFdXApproximate, d2FdX2Approximate, Dump
+  public :: FApproximate, FillLookupTable, FindInRange, FinvApproximate
+  public :: Hunt, HuntBox, HuntRange, IfApproximate
+  public :: InterpolateArraySetup, InterpolateArrayTeardown
+  public :: InterpolateExtrapolate, InterpolateValues
+  public :: Interpolate_Regular_To_Irregular, Interpolate_2D_Composite
+  public :: LinearInterpolate
+  public :: PureHunt
+  public :: Setup, Simpsons, SimpsonsSub, SolveQuadratic
+  public :: UseLookupTable
 
   type, public :: Coefficients_R4
     private
@@ -412,6 +415,10 @@ module MLSNumerics              ! Some low level numerical stuff
 
   interface InterpolateArraySetup
     module procedure InterpolateArraySetup_r4, InterpolateArraySetup_r8
+  end interface
+
+  interface InterpolateExtrapolate
+    module procedure InterpolateExtrapolate_d, InterpolateExtrapolate_s
   end interface
 
   interface Interpolate_Regular_To_Irregular
@@ -1772,6 +1779,44 @@ contains
 
   end subroutine InterpolateArrayTeardown_r8
 
+! -------------------------------------  InterpolateExtrapolate_d  -----
+
+  subroutine InterpolateExtrapolate_d ( OldX, OldY, NewX, NewY, Second )
+
+    ! Interpolate ( OldX(:), OldY(:,:) ) to ( NewX(:), NewY(:,:) ), where
+    ! the dimension upon which to interpolate is merge(2,1,second)
+    ! Extrapolate outside the range of OldX using the average slope, not
+    ! the slope nearest the end where NewX is outside the range of OldX.
+
+    integer, parameter :: RK = kind(0.0d0)
+    real(rk), intent(in) :: OldX(:), OldY(:,:), NewX(:)
+    real(rk), intent(out) :: NewY(:,:)
+    logical, intent(in) :: Second
+    type(coefficients_r8) :: Coeffs
+
+    include 'InterpolateExtrapolate.f9h'
+
+  end subroutine InterpolateExtrapolate_d
+
+! -------------------------------------  InterpolateExtrapolate_s  -----
+
+  subroutine InterpolateExtrapolate_s ( OldX, OldY, NewX, NewY, Second )
+
+    ! Interpolate ( OldX(:), OldY(:,:) ) to ( NewX(:), NewY(:,:) ), where
+    ! the dimension upon which to interpolate is merge(2,1,second)
+    ! Extrapolate outside the range of OldX using the average slope, not
+    ! the slope nearest the end where NewX is outside the range of OldX.
+
+    integer, parameter :: RK = kind(0.0e0)
+    real(rk), intent(in) :: OldX(:), OldY(:,:), NewX(:)
+    real(rk), intent(out) :: NewY(:,:)
+    logical, intent(in) :: Second
+    type(coefficients_r4) :: Coeffs
+
+    include 'InterpolateExtrapolate.f9h'
+
+  end subroutine InterpolateExtrapolate_s
+
 ! -----------------------------------------  InterpolateScalar_r4  -----
 
 ! This subroutine is a scalar wrapper for the array one.
@@ -2578,6 +2623,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.84  2015/04/07 02:47:30  vsnyder
+! Add InterpolateExtrapolate
+!
 ! Revision 2.83  2015/03/28 01:49:22  vsnyder
 ! Moved Cross to Cross_m module
 !
