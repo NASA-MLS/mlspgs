@@ -48,36 +48,38 @@ contains ! =====     Public Procedures     =============================
     & DirectDataBase, chunkNo, chunks, FWModelConfig, filedatabase, HGrids, &
     & Matrices, Hessians )
     ! Imports
-    use allocate_deallocate, only: test_allocate
-    use chunks_m, only: mlschunk_t
-    use directwrite_m, only: directdata_t
-    use dumpcommand_m, only: dumpcommand, &
-      & mlscase, mlsendselect, mlsselect, mlsselecting, skip
-    use forwardmodelconfig, only: forwardmodelconfig_t
-    use hessianmodule_1, only: hessian_t
-    use hgridsdatabase, only: hgrid_t
-    use init_tables_module, only: s_l2gp, s_l2aux, s_time, s_directwrite, &
+
+    use Allocate_Deallocate, only: Test_Allocate
+    use Chunks_m, only: MLSChunk_t
+    use DirectWrite_m, only: DirectData_t
+    use Dumpcommand_m, only: dumpcommand, &
+      & MLSCase, MLSEndSelect, MLSSelect, MLSSelecting, Skip
+    use ForwardModelConfig, only: ForwardModelConfig_t
+    use HessianModule_1, only: Hessian_t
+    use HGridsDatabase, only: HGrid_t
+    use Init_Tables_Module, only: s_l2gp, s_l2aux, s_time, s_directwrite, &
       & s_endselect, s_case, s_diff, s_dump, s_label, s_select, s_skip
-    use l2gpdata, only: l2gpdata_t
-    use l2auxdata, only: l2auxdata_t
-    use l2parinfo, only: parallel, waitfordirectwritepermission
-    use lexer_core, only: print_source
-    use matrixmodule_1, only: matrix_database_t
+    use L2GPData, only: L2GPData_t
+    use L2AuxData, only: l2AuxData_t
+    use L2ParInfo, only: Parallel, WaitForDirectWritePermission
+    use Lexer_core, only: Print_Source
+    use MatrixModule_1, only: Matrix_Database_t
     use MLSCommon, only: MLSFile_t
-    use MLSL2options, only: checkpaths, l2cfnode, &
-      & skipdirectwrites, specialDumpFile, MLSMessage
-    use MLSL2timings, only: section_times, total_times, &
-      & add_to_directwrite_timing, add_to_section_timing
+    use MLSL2options, only: CheckPaths, L2CFNode, &
+      & SkipDirectWrites, SpecialDumpFile, MLSMessage
+    use MLSL2timings, only: Section_Times, Total_Times, &
+      & Add_to_DirectWrite_Timing, Add_to_Section_Timing
     use MLSMessagemodule, only: MLSMSG_Error
-    use moretree, only: get_label_and_spec, get_spec_id
-    use next_tree_node_m, only: init_next_tree_node, next_tree_node, &
-      & next_tree_node_state
-    use output_m, only: output, revertoutput, switchoutput
-    use toggles, only: gen, toggle, switches
-    use tree, only: where_at => where
-    use time_m, only: time_now
-    use trace_m, only: trace_begin, trace_end
-    use vectorsModule, only: vector_t
+    use MoreTree, only: Get_Label_and_Spec, Get_Spec_Id
+    use Next_Tree_Node_m, only: Init_Next_Tree_Node, Next_Tree_Node, &
+      & Next_Tree_Node_State
+    use Output_m, only: Output, RevertOutput, SwitchOutput
+    use Toggles, only: Gen, Toggle, Switches
+    use Tree, only: Where_at => Where
+    use Time_m, only: Time_Now
+    use Trace_m, only: Trace_Begin, Trace_End
+    use VectorsModule, only: Vector_t
+
     ! Dummy arguments
     integer, intent(in) :: ROOT    ! Of the JOIN section in the AST
     type (Vector_T), dimension(:), pointer :: vectors
@@ -609,8 +611,8 @@ contains ! =====     Public Procedures     =============================
         call expr ( subtree(2,son), exprUnits, exprValue )
         if ( exprUnits(1) /= phyq_dimensionless ) &
           & call Announce_error ( son, NO_ERROR_CODE, &
-          & 'No units allowed for rank: just integer 1, 2, or 3')
-        rank = exprValue(1)
+          & 'No units allowed for rank: just integer 0..4')
+        rank = nint(exprValue(1))
         ! call outputnamedValue ( 'rank field', rank )
       case ( f_single )
         single = get_boolean ( son )
@@ -2277,6 +2279,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.164  2015/04/07 02:53:50  vsnyder
+! Correct error message about units for RANK, some cannonball polishing
+!
 ! Revision 2.163  2015/03/31 21:01:07  pwagner
 ! rank is a new field for DirectWrite-ing quantity values as, say, rank3
 !
