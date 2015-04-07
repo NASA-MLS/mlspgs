@@ -69,7 +69,7 @@ module QuantityTemplates         ! Quantities within vectors
     integer :: NoInstances     ! Number of along-track horizontal instances in
                                ! this quantity
     integer :: NoSurfs         ! Number of surfaces per instance
-    integer :: NoChans         ! Number of channels
+    integer :: NoChans = 1     ! Number of channels
     integer :: NoCrossTrack = 1! Number of cross-track horizontal instances in
                                ! this quantity (from xGrid)
 
@@ -153,12 +153,12 @@ module QuantityTemplates         ! Quantities within vectors
     ! unstacked one.  Phi is either taken from or derived from Geolocation.
 
     ! These other coordinates are dimensioned in the same manner as Phi:
-    real(rt), contiguous, pointer :: GeodLat(:,:) => NULL()     ! Degrees
-    real(rt), contiguous, pointer :: Lon(:,:) => NULL()         ! Degrees
-    real(rt), contiguous, pointer :: Time(:,:) => NULL() ! Seconds since EPOCH
-    real(rt), contiguous, pointer :: SolarTime(:,:) => NULL()
-    real(rt), contiguous, pointer :: SolarZenith(:,:) => NULL() ! Degrees
-    real(rt), contiguous, pointer :: LosAngle(:,:) => NULL()    ! Degrees
+    real(rt), pointer :: GeodLat(:,:) => NULL()     ! Degrees
+    real(rt), pointer :: Lon(:,:) => NULL()         ! Degrees
+    real(rt), pointer :: Time(:,:) => NULL() ! Seconds since EPOCH
+    real(rt), pointer :: SolarTime(:,:) => NULL()
+    real(rt), pointer :: SolarZenith(:,:) => NULL() ! Degrees
+    real(rt), pointer :: LosAngle(:,:) => NULL()    ! Degrees
 
     ! GeodLat1 and Lon1 are the ones that are allocated.  The extents are the
     ! number of surfaces (for unstacked quantities) or 1 (for stacked
@@ -617,7 +617,7 @@ contains
       call output ( quantity_template%fGridIndex, advance='yes' )
     end if
     call myDisplayString ( lit_indices(quantity_template%frequencyCoordinate), &
-      & before=   ' frequency coordinate = ', advance='yes' )
+      & before=   '      frequency coordinate = ', advance='yes' )
     if ( quantity_template%radiometer /= 0 .and. .not. myNoL2CF ) then
       call output ( '      Radiometer = ' )
       call GetRadiometerName ( quantity_template%radiometer, str )
@@ -1780,6 +1780,18 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.89  2015/03/28 01:40:45  vsnyder
+! Added NoCrossTrack.  Added Unit (for values).  Added xGridIndex.  Added
+! 1-d and 3-d geolocation quantities; made them contiguous.  Added
+! LatitudeCoordinate (geocentric or geodetic).  Added CrossAngles.  Checked
+! pointer components before copying them in CopyQuantityTemplate.  Added
+! CreateGeolocationFields.  Fiddled with shared HGrids, but probably didn't
+! improve anything.  Spiffed a dump, dump units, dump CrossAngles, dump
+! LatitudeCorrdinate.  Adjusted QuantitiesAreCompatible to allow different
+! types if requested.  Added NoCrossTrack to SetupNewQuantityTemplate.
+! Added stuff to trace allocate/deallocate addresses -- some commented out
+! because NAG build 1017 doesn't yet allow arrays as arguments to C_LOC.
+!
 ! Revision 2.88  2014/10/29 23:04:29  vsnyder
 ! Specified units of several components
 !
