@@ -948,6 +948,7 @@ contains ! ======================= Public Procedures =========================
     use MLSHDF5, only: ISHDF5GroupPRESENT, ISHDF5DSPRESENT, &
       & MAKEHDF5ATTRIBUTE, SAVEASHDF5DS
     use MLSSTRINGS, only: WRITEINTSTOCHARS
+    use String_Table, only: Get_String
     ! Args:
     type (VectorValue_T), intent(in) :: QUANTITY
     character(len=*), intent(in) :: qtyName       ! Name of qty in output file
@@ -963,8 +964,9 @@ contains ! ======================= Public Procedures =========================
     integer :: first_maf
     integer :: grp_id
     integer :: myRank
-    character(len=8) :: chunkStr        ! '1', '2', ..
+    character(len=127) :: chunkStr ! chunk number '1', '2', .., then a temp later
     integer :: returnStatus
+    integer :: TrueRank ! of the quantity's value
     ! logical, parameter :: DEEBUG = .true.
     logical :: verbose
 
@@ -996,6 +998,17 @@ contains ! ======================= Public Procedures =========================
     ! Begin the writes
     ! Values
     ! call outputNamedValue ( 'rank', myRank )
+    trueRank = count(shape(quantity%value4)>1)
+    if ( myRank <= 0 ) then
+      myRank = trueRank
+    else if ( trueRank > myRank ) then
+      chunkStr = "Actual rank of Value"
+      if ( quantity%template%name > 0 ) &
+        & call get_string ( quantity%template%name, chunkStr(len_trim(chunkStr)+2:) )
+      write ( chunkStr(len_trim(chunkStr)+1:), '(1x,3(a,i0))' ) " is ", trueRank, &
+        & " but the specified rank is ", myRank, ".  Are you sure this is what you want?"
+      call MLSMessage ( MLSMSG_Warning, moduleName, chunkStr )
+    end if
     select case ( myRank )
     case ( 1 )
       call SaveAsHDF5DS( grp_id, 'values', quantity%value1 )
@@ -1063,6 +1076,8 @@ contains ! ======================= Public Procedures =========================
       call MakeHDF5Attribute ( locID, 'horizontalCoordinate', str )
       call get_string( lit_indices(quantity%template%latitudeCoordinate ), str, strip=.true. )
       call MakeHDF5Attribute ( locID, 'latitudeCoordinate', str )
+      call get_string( lit_indices(quantity%template%frequencyCoordinate ), str, strip=.true. )
+      call MakeHDF5Attribute ( locID, 'frequencyCoordinate', str )
     end subroutine writeQuantityAttributes
   end subroutine DirectWrite_Quantity
 
@@ -1522,6 +1537,10 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.70  2015/04/07 02:56:29  vsnyder
+! Add warning about rank being wrong in DirectWrite_Quantity.  Add ability to
+! detect rank if requested rank is <= 0.  Add FrequencyCoordinate.
+!
 ! Revision 2.69  2015/03/31 21:01:57  pwagner
 ! rank is a new field for DirectWrite-ing quantity values as, say, rank3; now write qty attributes, too
 !
