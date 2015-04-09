@@ -48,7 +48,7 @@ module DirectWrite_m  ! alternative to Join/OutputAndClose methods
   private
   public :: DirectData_T, &
     & AddDirectToDatabase, &
-    & DestroyDirectDatabase, DirectWrite, Dump, &
+    & DestroyDirectDatabase, DirectRead, DirectWrite, Dump, &
     & ExpandDirectDB, ExpandSDNames, FileNameToID, &
     & SetupNewDirect
 
@@ -57,6 +57,10 @@ module DirectWrite_m  ! alternative to Join/OutputAndClose methods
        "$RCSfile$"
   private :: not_used_here 
 !---------------------------------------------------------------------------
+
+  interface DirectRead
+    module procedure DirectRead_Quantity
+  end interface
 
   interface DirectWrite
     module procedure DirectWrite_L2Aux_MF
@@ -149,6 +153,109 @@ contains ! ======================= Public Procedures =========================
     call trace_end ( "DestroyDirectDatabase", cond=toggle(gen) )
   end subroutine DestroyDirectDatabase
 
+  ! ------------------------------------------ DirectRead_Quantity --------
+  ! We Read the quantity from a file, chunk by chunk, overlaps and all
+  ! E.g., the qtyname is 'Q', and we have written chunks 1 and 2. Thus the
+  ! file layout must be
+  ! /
+  !   Q/
+  !     1/
+  !       values
+  !       lons
+  !       lats
+  !         ...
+  !     2/
+  !       values
+  !       lons
+  !       lats
+  !         ...
+  
+  subroutine DirectRead_Quantity ( File, quantity, qtyName, &
+    & chunkNo, options, rank )
+
+    use hdf5, only: h5gclose_f, h5gcreate_f, h5gopen_f
+    use intrinsic, only: l_none, lit_indices
+    use MLSHDF5, only: isHDF5GroupPresent, isHDF5DSPresent, &
+      & getHDF5DSRank, loadFromHDF5DS
+    use MLSStrings, only: writeintstochars
+    ! Args:
+    type (VectorValue_T), intent(in) :: QUANTITY
+    character(len=*), intent(in) :: qtyName       ! Name of qty in output file
+    type(MLSFile_T)                :: File
+    integer, intent(in) :: CHUNKNO      ! Index into chunks
+    character(len=*), intent(in), optional :: options
+    integer, intent(in), optional :: rank
+
+    ! Local variables
+    logical :: already_there
+    integer :: first_maf
+    integer :: grp_id
+    integer :: itsRank
+    integer :: myRank
+    character(len=8) :: chunkStr        ! '1', '2', ..
+    integer :: returnStatus
+    ! logical, parameter :: DEEBUG = .true.
+    logical :: verbose
+
+    ! executable code
+    verbose = BeVerbose ( 'direct', -1 )
+    myRank = 0
+    if ( present(rank) ) then
+      if ( rank > 0 .and. rank < 5 ) myRank = rank
+      ! call outputNamedValue ( 'input rank', rank )
+    endif
+    call WriteIntsToChars ( chunkNo, chunkStr )
+    chunkStr = adjustl ( chunkStr )
+    ! Create or access the SD
+    already_There = mls_exists( File%name ) == 0
+    if ( .not. already_There ) then
+      call outputNamedValue( '  Sorry, file not found', trim(File%name) )
+      return
+    endif
+    call mls_openFile ( File, returnStatus )
+    if ( returnStatus /= 0 )  then
+      call Dump( File )
+      call outputNamedValue( '  Sorry, unable to open file', trim(File%name) )
+      return
+    endif
+    already_there = IsHDF5GroupPresent( File%fileID%f_id, trim(qtyName) )
+    if ( .not. already_There ) then
+      call Dump( File )
+      call outputNamedValue( '  Sorry, quantity not found in file', trim(qtyName) )
+      return
+    else
+      call h5GOpen_f ( File%fileID%f_id, qtyName, grp_id, returnStatus )
+    endif
+    File%fileID%grp_id = grp_id
+    call h5GOpen_f ( File%fileID%grp_id, chunkStr, grp_id, returnStatus )
+    ! Begin the Reads
+    ! Values
+    ! call outputNamedValue ( 'rank', myRank )
+    call GetHDF5DSRank ( grp_id, 'values', itsRank )
+    if ( myRank > 0 .and. myRank /= itsRank ) &
+      & call MLSMessage ( MLSMSG_Warning, ModuleName // '%DirectRead', &
+      & 'ranks differ for ' // trim(qtyName), &
+      & MLSFile=File )
+    select case ( myRank )
+    case ( 1 )
+      call LoadFromHDF5DS ( grp_id, 'values', quantity%value1 )
+    case ( 2 )
+      call LoadFromHDF5DS ( grp_id, 'values', quantity%values )
+    case ( 3 )
+      call LoadFromHDF5DS ( grp_id, 'values', quantity%value3 )
+    case ( 4 )
+      call LoadFromHDF5DS ( grp_id, 'values', quantity%value4 )
+    case default
+      call LoadFromHDF5DS ( grp_id, 'values', quantity%values )
+    end select
+    ! Geolocations
+    ! Close everything up
+    call h5GClose_f ( grp_id, returnStatus )
+    call h5GClose_f ( File%fileID%grp_id, returnStatus )
+
+    call mls_CloseFile( File )
+  end subroutine DirectRead_Quantity
+
   ! ------------------------------------------- DirectWriteVector_EveryQuantity --------
   subroutine DirectWriteVector_EveryQuantity ( File, Vector, &
     & chunkNo, options, rank )
@@ -160,7 +267,7 @@ contains ! ======================= Public Procedures =========================
     
     ! Despite the name the routine takes vector quantities, not l2aux ones
     ! It dooes so an entrire vector's worth of vector quantities
-    use MLSSTRINGS, only: WRITEINTSTOCHARS
+    use MLSStrings, only: writeIntsToChars
     ! Args:
     type (Vector_T), intent(in)   :: VECTOR
     type(MLSFile_T)               :: File
@@ -209,7 +316,7 @@ contains ! ======================= Public Procedures =========================
     ! Notes and limitations:
     ! Why don't you also supply an entire vector's worth of
     ! precision, quality, etc.?
-    use HGRIDSDATABASE, only: HGRID_T
+    use HGridsDatabase, only: HGrid_t
     ! Args:
     type(MLSFile_T)               :: L2GPFile
     type (Vector_T), intent(in)   :: VECTOR
@@ -252,11 +359,11 @@ contains ! ======================= Public Procedures =========================
     ! status            status
     ! Convergence       Convergence
     ! AscDescMode       AscDescMode
-    use HDF, only: DFACC_CREATE, DFACC_RDONLY, DFACC_RDWR
-    use HGRIDSDATABASE, only: HGRID_T
-    use L2GPDATA, only: L2GPDATA_T, &
-      & APPENDL2GPDATA, DESTROYL2GPCONTENTS, DUMP
-    use READAPRIORI, only: WRITEAPRIORIATTRIBUTES
+    use hdf, only: dfacc_create, dfacc_rdonly, dfacc_rdwr
+    use hgridsdatabase, only: hgrid_t
+    use L2GPData, only: L2GPData_t, &
+      & appendL2GPData, destroyL2GPContents, dump
+    use readApriori, only: writeAPrioriAttributes
     ! Args:
     type(MLSFile_T)               :: L2GPFile
     type (VectorValue_T), intent(in) :: QUANTITY
@@ -401,9 +508,9 @@ contains ! ======================= Public Procedures =========================
     
     ! Despite the name the routine takes vector quantities, not l2aux ones
     ! It dooes so an entrire vector's worth of vector quantities
-    use CHUNKS_M, only: MLSCHUNK_T
-    use FORWARDMODELCONFIG, only: FORWARDMODELCONFIG_T
-    use MLSSTRINGS, only: WRITEINTSTOCHARS
+    use chunks_m, only: MLSChunk_t
+    use forwardModelConfig, only: forwardModelConfig_t
+    use MLSStrings, only: writeIntsToChars
     ! Args:
     type(ForwardModelConfig_T), dimension(:), pointer :: FWModelConfig
     type (Vector_T), intent(in)   :: VECTOR
@@ -461,10 +568,10 @@ contains ! ======================= Public Procedures =========================
     ! so instead write them out chunk-by-chunk
     
     ! Despite the name the routine takes vector quantities, not l2aux ones
-    use CHUNKS_M, only: MLSCHUNK_T
-    use CHUNKDIVIDE_M, only: CHUNKDIVIDECONFIG
-    use FORWARDMODELCONFIG, only: FORWARDMODELCONFIG_T
-    use HDF, only: DFACC_RDonly
+    use chunks_m, only: MLSChunk_t
+    use chunkDivide_m, only: chunkDivideConfig
+    use forwardModelConfig, only: forwardModelConfig_t
+    use hdf, only: dfacc_rdonly
 
     ! Args:
     type(ForwardModelConfig_T), dimension(:), pointer :: FWModelConfig
@@ -591,11 +698,11 @@ contains ! ======================= Public Procedures =========================
   subroutine DirectWrite_L2Aux_MF_hdf4 ( quantity, sdName, L2AUXFile, &
     & chunkNo, chunks, lowerOverlap, upperOverlap )
 
-    use CHUNKS_M, only: MLSCHUNK_T
-    use HDF, only: SFN2INDEX, SFSELECT, SFCREATE, &
-      & SFENDACC, DFNT_FLOAT32, SFWDATA_F90
-    use INTRINSIC, only: L_NONE
-    use MLSKINDS, only: R4, R8
+    use chunks_m, only: MLSChunk_t
+    use hdf, only: sfn2index, sfselect, sfcreate, &
+      & sfendacc, dfnt_float32, sfwdata_f90
+    use intrinsic, only: l_none
+    use mlskinds, only: r4, r8
 
     ! Args:
     type (VectorValue_T), intent(in) :: QUANTITY
@@ -698,20 +805,20 @@ contains ! ======================= Public Procedures =========================
     & chunkNo, chunks, FWModelConfig, &
     & lowerOverlap, upperOverlap, single, options )
 
-    use CHUNKS_M, only: MLSCHUNK_T
-    use CHUNKDIVIDE_M, only: CHUNKDIVIDECONFIG
-    use FORWARDMODELCONFIG, only: FORWARDMODELCONFIG_T
-    use FORWARDMODELSUPPORT, only: SHOWFWDMODELNAMES
-    use HDF5, only: H5GCLOSE_F, H5GOPEN_F
-    use INTRINSIC, only: L_NONE
-    use L2AUXDATA, only:  L2AUXDATA_T, PHASENAMEATTRIBUTES, &
-      & DESTROYL2AUXCONTENTS, &
-      & SETUPNEWL2AUXRECORD, WRITEL2AUXATTRIBUTES
-    use MLSHDF5, only: ISHDF5ATTRIBUTEPRESENT, ISHDF5DSPRESENT, &
-      & MAKEHDF5ATTRIBUTE, SAVEASHDF5DS
-    use MLSL2TIMINGS, only: SHOWTIMINGNAMES
-    use PCFHDR, only: H5_WRITEMLSFILEATTR, H5_WRITEGLOBALATTR
-    use QUANTITYTEMPLATES, only: WRITEATTRIBUTES
+    use chunks_m, only: MLSChunk_t
+    use chunkDivide_m, only: chunkdivideconfig
+    use forwardModelConfig, only: forwardmodelconfig_t
+    use forwardModelSupport, only: showfwdmodelnames
+    use hdf5, only: h5gclose_f, h5gopen_f
+    use intrinsic, only: l_none
+    use L2Auxdata, only:  l2auxdata_t, phasenameattributes, &
+      & destroyl2auxcontents, &
+      & setupnewl2auxrecord, writel2auxattributes
+    use MLSHDF5, only: ishdf5attributepresent, ishdf5dspresent, &
+      & makehdf5attribute, saveashdf5ds
+    use MLSL2Timings, only: showTimingNames
+    use PCFHdr, only: h5_writemlsfileattr, h5_writeglobalattr
+    use quantityTemplates, only: writeAttributes
 
     ! Args:
     type (VectorValue_T), intent(in) :: QUANTITY
@@ -943,11 +1050,11 @@ contains ! ======================= Public Procedures =========================
   subroutine DirectWrite_Quantity ( File, quantity, qtyName, &
     & chunkNo, options, rank )
 
-    use HDF5, only: H5GCLOSE_F, H5GCreate_F, H5GOPEN_F
-    use INTRINSIC, only: L_NONE, Lit_Indices
-    use MLSHDF5, only: ISHDF5GroupPRESENT, ISHDF5DSPRESENT, &
-      & MAKEHDF5ATTRIBUTE, SAVEASHDF5DS
-    use MLSSTRINGS, only: WRITEINTSTOCHARS
+    use HDF5, only: h5gclose_f, h5gcreate_f, h5gopen_f
+    use intrinsic, only: l_none, lit_indices
+    use MLSHDF5, only: ishdf5grouppresent, ishdf5dspresent, &
+      & makehdf5attribute, saveashdf5ds
+    use MLSSTrings, only: writeintstochars
     use String_Table, only: Get_String
     ! Args:
     type (VectorValue_T), intent(in) :: QUANTITY
@@ -1494,8 +1601,8 @@ contains ! ======================= Public Procedures =========================
   ! ---------------------------------------------  ANNOUNCE_ERROR  -----
   subroutine ANNOUNCE_ERROR ( Where, Full_message, Code, Penalty )
 
-    use LEXER_CORE, only: PRINT_SOURCE
-    use TREE, only: WHERE_AT=>WHERE
+    use lexer_core, only: print_source
+    use tree, only: where_at=>where
 
     ! Args:
     integer, intent(in) :: Where   ! Tree node where error was noticed
@@ -1537,6 +1644,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.71  2015/04/09 22:19:59  pwagner
+! We may DirectRead a quantity type
+!
 ! Revision 2.70  2015/04/07 02:56:29  vsnyder
 ! Add warning about rank being wrong in DirectWrite_Quantity.  Add ability to
 ! detect rank if requested rank is <= 0.  Add FrequencyCoordinate.
