@@ -1150,7 +1150,7 @@ contains
       & f_hessian, f_hgrid, f_igrf, &
       & f_l2pc, f_lines, f_mark, f_mask, f_matrix, f_memory, &
       & f_mietables, f_options, f_pfadata, f_pfafiles, f_pfanum, f_pfastru, &
-      & f_phasename, f_pointinggrids, f_quantity, f_reset, &
+      & f_phasename, f_pointinggrids, f_quantity, f_rank, f_reset, &
       & f_signals,  f_spectroscopy, f_stack, f_start, f_stop, f_stride, &
       & f_stopwitherror, f_surface, f_template, f_text, f_tgrid, f_time, &
       & F_TotalMatrixSizes, F_TotalVectorSizes, f_variable, &
@@ -1256,6 +1256,7 @@ contains
     type (VectorValue_T), pointer :: QTY1, QTY2
     type (VectorValue_T) :: VectorValue
     logical :: reset
+    integer :: rank
     integer :: Son
     integer, dimension(3) :: START, COUNT, STRIDE, BLOCK
     integer :: STARTNODE
@@ -1315,6 +1316,7 @@ contains
 
     clean = .false.
     reset = .false.
+    rank = 0
     start = 0
     count = 0
     stride = 0
@@ -1605,6 +1607,9 @@ contains
         details = nint(values(1)) - DetailReduction
         ! call outputnamedValue( 'DetailReduction', DetailReduction )
         ! call outputnamedValue( 'Details', details )
+      case ( f_rank )
+        call expr ( gson, units, values )
+        rank = nint(values(1))
       case ( f_reset )
         reset = get_boolean(son)
       case ( f_start, f_count, f_stride, f_block ) ! For selecting hyperslab
@@ -1833,8 +1838,22 @@ contains
               call dump ( qty1, details=details, &
                 & vector=vectors(vectorIndex), options=optionsString )
             else if ( index(optionsString, '1') > 0 ) then
-              call dump ( qty1%values, 'quantity values', &
-                & options=optionsString )
+              call outputnamedValue ( 'rank field', rank )
+              call outputnamedValue ( 'shape(value3)', shape(qty1%value3) )
+              select case ( rank )
+              case ( 1 )
+                call dump ( qty1%value1, 'quantity values', &
+                  & options=optionsString )
+              case ( 3 )
+                call dump ( qty1%value3, 'quantity values', &
+                  & options=optionsString )
+              case ( 4 )
+                call dump ( qty1%value4, 'quantity values', &
+                  & options=optionsString )
+              case default
+                call dump ( qty1%values, 'quantity values', &
+                  & options=optionsString )
+              end select
             else if ( index(optionsString, '0') > 0 ) then
               call dump ( qty1%template, details=details )
             else
@@ -2023,6 +2042,7 @@ contains
           end do
           if ( doStretchier ) text = stretch( text, options='-a' )
           if ( doStretch ) text = stretch( text )
+          call outputNow ! the text
         end do ! k
       case ( f_tGrid )
         if ( details < -2 ) cycle
@@ -2815,6 +2835,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.121  2015/04/09 21:00:32  pwagner
+! rank may be specified for Dump command; restored printing Dumped text field
+!
 ! Revision 2.120  2015/02/27 23:13:52  pwagner
 ! May Dump global attributes
 !
