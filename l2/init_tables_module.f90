@@ -1255,6 +1255,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_interpolate, boolean(), &
              begin, f+f_options, string(), &
              begin, f+f_quantity, vectorQuantity(), &
+             begin, f+f_rank, numeric(phyq_dimensionless), &
              begin, f+f_sdname, string(), &
              begin, f+f_spread, boolean(), &
              begin, f+f_type, field_type(t_outputType,req=req), &
@@ -1550,6 +1551,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_pfaNum, numeric(phyq_dimensionless), &
              begin, f+f_pfaStru, boolean(), &
              begin, f+f_phaseName, boolean(), &
+             begin, f+f_rank, numeric(phyq_dimensionless), &
              begin, f+f_pointingGrids, boolean() /), &
              continue=.true. )
     call make_tree ( (/ & ! Continuing for s_dump...
@@ -1997,6 +1999,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.611  2015/04/09 20:53:22  pwagner
+! rank may be specified for Dump and DirectRead commands
+!
 ! Revision 2.610  2015/03/31 21:00:32  pwagner
 ! rank is a new field for DirectWrite-ing quantity values as, say, rank3
 !
