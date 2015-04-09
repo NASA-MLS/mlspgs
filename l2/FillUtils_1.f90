@@ -6514,7 +6514,7 @@ contains ! =====     Public Procedures     =============================
       end if
       if ( .not. DoVGridsMatch ( qty, fieldECR ) ) then
         call Announce_Error ( key, no_error_code, &
-          & 'Field and result quantity must have matching hGrids' )
+          & 'Field and result quantity must have matching vGrids' )
         go to 9
       end if
 
@@ -7461,6 +7461,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.104  2015/04/09 01:12:32  vsnyder
+! Correct message about mismatched vGrid in RotateMagneticField
+!
 ! Revision 2.103  2015/03/28 02:41:45  vsnyder
 ! Got IsMonotonic from Monotone instead of MLSFillValues.  Added support
 ! for cross-track grids.  Use Norm2 to normalize LOS.  Specify whether
