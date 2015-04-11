@@ -15,46 +15,84 @@
 !    & badValue, missingRegions, dyByDx, dNewByDOld, skipNewY, IntYdX )
 
     character :: ExtrapolateMethod
-    integer :: Ind, NoNew, NoOld
+    integer :: D, I, Ind, NoNew, NoOld
+    real(rk), pointer :: My_dyByDx(:), My_IntYdX(:)
+    target :: dyByDx, IntYdX
 
     noNew = size(newX,1)
     noOld = size(oldX,1)
+    d = 1
+    if ( present(second) ) d = merge(2,1,second)
 
     ! Special case where only one input point
     if ( noOld == 1 ) then
       extrapolateMethod="A"
       if ( present(extrapolate)) extrapolateMethod=Capitalize(extrapolate(1:1))
 
-      ! If extrapolating allowed or clamped, out values same as in
-      if ( extrapolateMethod=="A" .or. extrapolateMethod=="C" ) then
-        do ind = 1, noNew
-          newY(ind,:) = oldY(1,:)
-        end do
-        ! Note these next two aren't totally gracefull with respect to 
-        ! the missingRegions flag.
-        if ( present(dyByDx) ) dyByDx = 0.0_rk
-      else
-        ! Else extrapolation forbidden
-        do ind = 1, noNew
-          if ( newX(ind) == oldX(1) ) then
+      if ( d == 1 ) then
+        ! If extrapolating allowed or clamped, out values same as in
+        if ( extrapolateMethod=="A" .or. extrapolateMethod=="C" ) then
+          do ind = 1, noNew
             newY(ind,:) = oldY(1,:)
-            if ( present(dyByDx) ) dyByDx = 0.0_rk
-          else
-            newY(ind,:) = badValue
-            if ( present(dyByDx) ) dyByDx = badValue
-          end if
-        end do
+          end do
+          ! Note these next two aren't totally graceful with respect to 
+          ! the missingRegions flag.
+          if ( present(dyByDx) ) dyByDx = 0.0_rk
+        else
+          ! Else extrapolation forbidden
+          do ind = 1, noNew
+            if ( newX(ind) == oldX(1) ) then
+              newY(ind,:) = oldY(1,:)
+              if ( present(dyByDx) ) dyByDx = 0.0_rk
+            else
+              newY(ind,:) = badValue
+              if ( present(dyByDx) ) dyByDx = badValue
+            end if
+          end do
+        end if
+      else
+        ! If extrapolating allowed or clamped, out values same as in
+        if ( extrapolateMethod=="A" .or. extrapolateMethod=="C" ) then
+          do ind = 1, noNew
+            newY(:,ind) = oldY(:,1)
+          end do
+          ! Note these next two aren't totally graceful with respect to 
+          ! the missingRegions flag.
+          if ( present(dyByDx) ) dyByDx = 0.0_rk
+        else
+          ! Else extrapolation forbidden
+          do ind = 1, noNew
+            if ( newX(ind) == oldX(1) ) then
+              newY(:,ind) = oldY(:,1)
+              if ( present(dyByDx) ) dyByDx = 0.0_rk
+            else
+              newY(:,ind) = badValue
+              if ( present(dyByDx) ) dyByDx = badValue
+            end if
+          end do
+        end if
       end if
       return
     end if
 
     ! Calculate the coefficients
     call interpolateArraySetup ( oldX, newX, method, coeffs, extrapolate, &
-      size(oldY,2), present(dyByDx), dNewByDOld, present(intYdX) )
+      size(oldY,3-d), present(dyByDx), dNewByDOld, present(intYdX) )
 
     ! Do the interpolation
-    call interpolateValues ( coeffs, oldX, oldY, newX, newY, &
-      & method, extrapolate, badValue, missingRegions, dyByDx, skipNewY, intYdX )
+    if ( d == 1 ) then
+      call interpolateValues ( coeffs, oldX, oldY, newX, newY, &
+        & method, extrapolate, badValue, missingRegions, dyByDx, skipNewY, intYdX )
+    else
+      nullify ( my_dyByDx, my_intYdX )
+      do i = 1, size(newY,1)
+        if ( present(dyByDx) ) my_dyByDx => dyByDx(i,:)
+        if ( present(intYdX) ) my_intYdX => intYdX(i,:)
+        call interpolateValues ( coeffs, oldX, oldY(i,:), newX, newY(i,:), &
+          & method, extrapolate, badValue, missingRegions, my_dyByDx, &
+          & skipNewY, my_intYdX )
+      end do
+    end if
 
     ! Dispose of the coefficients
     call interpolateArrayTeardown ( coeffs )
@@ -62,6 +100,9 @@
 ! end subroutine InterpolateArray_r*
 
 ! $Log$
+! Revision 1.7  2005/08/03 16:34:20  pwagner
+! InterpolateArray optionally finds antiderivatives
+!
 ! Revision 1.6  2005/06/22 20:03:55  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
