@@ -55,7 +55,7 @@ module Hydrostatic_m
 ! Outputs
 
     real(rp), intent(out) :: t_grid(:)  ! temperatures on z_grid
-    real(rp), intent(out) :: h_grid(:)  ! heights on z_grid
+    real(rp), intent(out) :: h_grid(:)  ! heights on z_grid (km)
     real(rp), intent(out) :: dhidzi(:)  ! dh/dz on z_grid
 
     real(rp), optional, intent(out) :: dhidtq(:,:) ! dh/dt on z_grid assuming
@@ -256,7 +256,7 @@ module Hydrostatic_m
     real(rp), intent(in) :: h_ref       ! reference geopotential height in km
 ! Outputs
 
-    real(rp), intent(out) :: h_grid(:)  ! heights on z_grid
+    real(rp), intent(out) :: h_grid(:)  ! heights on z_grid (km)
 
 ! Internal stuff
 
@@ -415,6 +415,9 @@ module Hydrostatic_m
 end module Hydrostatic_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.24  2014/09/05 21:12:31  vsnyder
+! Get kinds from MLSKinds instead of MLSCommon.  Add more tracing.
+!
 ! Revision 2.23  2013/06/12 02:26:27  vsnyder
 ! Cruft removal
 !

@@ -48,7 +48,7 @@ contains
 ! Outputs:
 
   real(rp), intent(out):: t_grid(:,:)    ! Computed temperatures
-  real(rp), intent(out):: h_grid(:,:)    ! Computed heights
+  real(rp), intent(out):: h_grid(:,:)    ! Computed heights (km)
   real(rp), intent(out):: dhidzij(:,:)   ! Derivative of height wrt zeta
   real(rp), optional, intent(out):: dhidtlm(:,:,:) ! Derivative of height wrt
                             ! temps on output phi grid
@@ -123,6 +123,9 @@ contains
 end module Two_D_Hydrostatic_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.21  2015/03/28 02:12:13  vsnyder
+! Use Orbit_Plane_Minor_Axis_sq from Geometry
+!
 ! Revision 2.20  2014/09/05 21:28:07  vsnyder
 ! Cannonball polishing
 !
