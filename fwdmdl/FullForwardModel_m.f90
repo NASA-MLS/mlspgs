@@ -101,6 +101,7 @@ contains
     integer :: Sv_T_len         ! Number of t_phi*t_zeta in the window
     integer :: Nlvl             ! Number of levels in coarse zeta grid
     integer :: NO_TAN_HTS       ! Number of tangent heights
+    integer :: Print_Mag        ! For debugging output
     integer :: SURFACETANGENTINDEX  ! Index in tangent grid of earth's
                                     ! surface
     integer :: MAXVERT          ! Number of points in gl-refined vertical grid:
@@ -252,6 +253,8 @@ contains
         & quantityType=l_magneticField, config=fwdModelConf ), fmStat%maf, &
         & phitan, fwdModelConf, .false.,                                   &
         & across=abs(azimuth) > azimuth_tol )
+      print_mag = switchDetail(switches, 'MagGrid')
+      if ( print_mag > -1 ) call dump ( grids_mag, 'Grids_Mag', print_mag )
     else
       call emptyGrids_t ( grids_mag ) ! Allocate components with zero size
     end if
@@ -616,9 +619,9 @@ contains
     real(rp) :: DTanh_DT_F(max_f)     ! 1/tanh1_f d/dT tanh1_f
     real(rp) :: dTScat_df(s_ts*max_c,size(grids_f%values))   ! on coarse path w.r.t. SVE
     real(rp) :: dTScat_dT(s_ts*max_c,size(grids_tmp%values)) ! on coarse path w.r.t. SVE
-    real(rp) :: H_PATH(max_f)         ! Heights on path
-    real(rp) :: H_PATH_C(max_c)       ! H_PATH on coarse grid
-    real(rp) :: H_PATH_F(max_f)       ! H_PATH on fine grid
+    real(rp) :: H_PATH(max_f)         ! Heights on path (km)
+    real(rp) :: H_PATH_C(max_c)       ! H_PATH on coarse grid (km)
+    real(rp) :: H_PATH_F(max_f)       ! H_PATH on fine grid (km)
     real(rp) :: INCOPTDEPTH(max_c)    ! Incremental Optical depth on coarse grid
     real(rp) :: More_H_Path(max_new), More_Phi_Path(max_new), More_Z_Path(max_new)
     real(rp) :: N_PATH_C(max_c)       ! Refractive index - 1 on coarse path
@@ -684,7 +687,7 @@ contains
     real(rp) :: ETA_ZXP_T_C(max_c,s_t*sv_t_len)    ! ETA_ZXP_T on coarse grid
     real(rp) :: ETA_ZXP_V(max_f,size(grids_v%values)) ! Eta_z x Eta_p for V
     real(rp) :: ETA_ZXP_W(max_f,size(grids_w%values)) ! Eta_z x Eta_p for W
-    real(rp) :: H_GLGRID(maxVert,no_sv_p_t)        ! H on glGrid surfs
+    real(rp) :: H_GLGRID(maxVert,no_sv_p_t)        ! H on glGrid surfs (km)
     real(rp) :: IWC_PATH(max_f,max(max(s_i,s_ts),s_ts)) ! IWC on path
     real(rp), target :: MAG_PATH(s_p*max_f,4)      ! Magnetic field on path
     real(rp), target :: RAD_AVG_PATH(max_c,s_pfa*noUsedChannels) ! Freq. Avgd.
@@ -4335,6 +4338,7 @@ contains
         h => mag_path(1:npf,4)    ! magnitude of magnetic field
 
         if ( print_Mag ) then
+          call dump ( h_path(1:npf), 'Path height (km)', options=clean )
           call dump ( h, 'H', options=clean )
           call dump ( ct, 'Cos(theta)', options=clean )
           call dump ( stcp, 'Sin(theta) Cos(phi)', options=clean )
@@ -4786,6 +4790,11 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.353  2015/03/28 02:16:24  vsnyder
+! Compute the viewing azimuth to determine whether cross-track viewing is
+! taking place.  Use Orbit_Plane_Minor_Axis_sq from Geometry.  Use 3-d
+! Value field for ECRtoFOV array.  Use Norm2 to normalize Mag_Path.
+!
 ! Revision 2.352  2014/09/05 20:49:32  vsnyder
 ! Avoid reference to undefined array elements
 !
