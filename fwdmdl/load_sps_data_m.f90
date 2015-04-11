@@ -439,7 +439,7 @@ contains
   ! Fill in the size information for the II'th element of Grids_x
 
     use ForwardModelConfig, only: ForwardModelConfig_t
-    use Intrinsic, only: l_Vmr
+    use Intrinsic, only: L_GeodAltitude, L_Vmr
     use ManipulateVectorQuantities, only: FindInstanceWindow
     use VectorsModule, only: VectorValue_T
 
@@ -481,7 +481,9 @@ contains
       kf = qty%template%noChans ! == 1 if qty%template%frequencyCoordinate == l_none
     end if
 
-    kz = qty%template%noSurfs
+    kz = qty%template%noSurfs * &
+       & merge(1,size(qty%template%lon), &
+              &  qty%template%verticalCoordinate /= l_geodAltitude )
 
     grids_x%l_f(ii) = grids_x%l_f(ii-1) + kf
     grids_x%l_p(ii) = grids_x%l_p(ii-1) + kp
@@ -505,8 +507,11 @@ contains
   ! Fill the zeta, phi, freq. basis and value components for the II'th
   ! "molecule" in Grids_x.
 
-    use Intrinsic, only: L_Channel, L_IntermediateFrequency
+    use Geometry, only: To_Cart
+    use Intrinsic, only: L_Channel, L_geocAltitude, L_geodAltitude, &
+      & L_IntermediateFrequency, L_Zeta
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use MoreMessage, only: MLSMessage
     use Molecules, only: L_CloudIce, L_H2O
     use Constants, only: Deg2Rad
     use VectorsModule, only: VectorValue_T, M_FullDerivatives
@@ -522,9 +527,10 @@ contains
     real(rp), intent(in), optional :: Phi_Offset ! Radians
     logical, intent(in), optional :: Across ! Viewing angle is not in orbit plane
 
-    integer :: I, KF, KZ, PF, PP, PV, PZ, QF, QP, QV, QZ, WF, WS
+    integer :: I, J, K, KF, KZ, L, N, PF, PP, PV, PZ, QF, QP, QV, QZ, WF, WS
     logical :: MyAcross
     logical :: PackFrq ! Need to pack the frequency "dimension"
+    real(rp) :: XYZ(3)   ! Geocentric Cartesian coordinates (km)
 
     pf = Grids_x%l_f(ii-1)
     pp = Grids_x%l_p(ii-1)
@@ -544,7 +550,32 @@ contains
     myAcross = .false.
     if ( present(across) ) myAcross = across
 
-    Grids_x%zet_basis(pz+1:qz) = qty%template%surfs(1:kz,1)
+    select case ( qty%template%verticalCoordinate )
+    case ( l_geocAltitude ) ! This will be used for interpolation with
+                            ! H_Path, which is in kilometers, not meters
+      Grids_x%zet_basis(pz+1:qz) = qty%template%surfs(1:kz,1) / 1000.0
+    case ( l_geodAltitude ) ! This will be used for interpolation with
+                            ! H_Path, which is in kilometers, not meters
+      n = pz
+      do i = 1, qty%template%noSurfs
+        l = min(i,size(qty%template%geodLat3,1))
+        do j = 1, qty%template%noInstances
+          do k = 1, qty%template%noCrossTrack
+            n = n + 1
+            call to_cart ( [ qty%template%geodLat3(l,j,k), qty%template%lon3(l,j,k), &
+                           & qty%template%surfs(i,j)/1000.0 ], xyz, km=.true. )
+            Grids_x%zet_basis(n) = norm2(xyz)
+          end do
+        end do
+      end do
+    case ( l_zeta )
+      Grids_x%zet_basis(pz+1:qz) = qty%template%surfs(1:kz,1)
+    case default
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unexpected vertical coordinate for quantity $S', &
+        & datum=[qty%template%name] )
+    end select
+
     if ( myAcross ) then
       Grids_x%phi_basis(pp+1:qp) = qty%template%crossAngles
     else
@@ -559,7 +590,8 @@ contains
       if ( qty%template%frequencyCoordinate /= l_intermediateFrequency .and. &
          & qty%template%frequencyCoordinate /= l_channel ) &
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Unexpected frequency coordinate for quantity' )
+        & 'Unexpected frequency coordinate for quantity $S', &
+        & datum=[qty%template%name] )
       Grids_x%frq_basis(pf+1:qf) = qty%template%frequencies
     else
       Grids_x%frq_basis(pf+1:qf) = 0.0
@@ -818,6 +850,11 @@ contains
 end module LOAD_SPS_DATA_M
 
 ! $Log$
+! Revision 2.93  2015/03/28 02:10:58  vsnyder
+! Changed order of arguments to Fill_Grids_1 and Load_One_Item_Grid.
+! Added "across" argument to Fill_Grids_1 and Fill_Grids_2 for cross-track
+! viewing.
+!
 ! Revision 2.92  2014/08/01 01:03:45  vsnyder
 ! Eliminate unreferenced USE name
 !
