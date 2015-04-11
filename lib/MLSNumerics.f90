@@ -1656,14 +1656,14 @@ contains
   !   missingRegions will probably slow the code down, as will extrapolate=B
 
   subroutine InterpolateArray_r4 ( oldX, oldY, newX, newY, method, extrapolate, &
-    & badValue, missingRegions, dyByDx, dNewByDOld, skipNewY, IntYdX )
+    & badValue, missingRegions, dyByDx, dNewByDOld, skipNewY, IntYdX, Second )
     integer, parameter :: RK = kind(0.0e0)
 
     ! Dummy arguments
     real(rk), dimension(:), intent(IN) :: oldX
-    real(rk), dimension(:,:), intent(IN) :: oldY
+    real(rk), dimension(:,:), intent(IN) :: oldY   ! See Second argument below
     real(rk), dimension(:), intent(IN) :: newX
-    real(rk), dimension(:,:), intent(OUT) :: newY
+    real(rk), dimension(:,:), intent(OUT) :: newY  ! See Second argument below
 
     character (len=*), intent(in) :: method ! See comments above
     character (len=*), optional, intent(in) :: extrapolate ! See comments above
@@ -1674,6 +1674,9 @@ contains
     logical, optional, intent(in) :: SKIPNEWY ! Don't compute newY
     real(rk), dimension(:,:), optional, intent(out) :: IntYdX ! Antiderivative
                                               ! of Y at X
+    logical, optional, intent(in) :: Second   ! Interpolate on the second
+                                              ! dimension of OldY, NewY, default
+                                              ! false.
 
     type(coefficients_r4) :: Coeffs
 
@@ -1684,14 +1687,14 @@ contains
 ! ------------------------------------------  InterpolateArray_r8  -----
 
   subroutine InterpolateArray_r8 ( oldX, oldY, newX, newY, method, extrapolate, &
-    & badValue, missingRegions, dyByDx, dNewByDOld, skipNewY, IntYdX )
+    & badValue, missingRegions, dyByDx, dNewByDOld, skipNewY, IntYdX, Second )
     integer, parameter :: RK = kind(0.0d0)
 
     ! Dummy arguments
     real(rk), dimension(:), intent(IN) :: oldX
-    real(rk), dimension(:,:), intent(IN) :: oldY
+    real(rk), dimension(:,:), intent(IN) :: oldY   ! See Second argument below
     real(rk), dimension(:), intent(IN) :: newX
-    real(rk), dimension(:,:), intent(OUT) :: newY
+    real(rk), dimension(:,:), intent(OUT) :: newY  ! See Second argument below
 
     character (len=*), intent(in) :: method ! See comments above
     character (len=*), optional, intent(in) :: extrapolate ! See comments above
@@ -1702,6 +1705,9 @@ contains
     logical, optional, intent(in) :: SKIPNEWY ! Don't compute newY
     real(rk), dimension(:,:), optional, intent(out) :: IntYdX ! Antiderivative
                                               ! of Y at X
+    logical, optional, intent(in) :: Second   ! Interpolate on the second
+                                              ! dimension of OldY, NewY, default
+                                              ! false.
 
     type(coefficients_r8) :: Coeffs
 
@@ -1926,15 +1932,16 @@ contains
 ! -------------------------------------  InterpolateUsingSetup_r4  -----
 
   subroutine InterpolateUsingSetup_r4 ( coeffs, oldX, oldY, newX, newY, &
-    & method, extrapolate, badValue, missingRegions, dyByDx, skipNewY, IntYdX )
+    & method, extrapolate, badValue, missingRegions, dyByDx, skipNewY, IntYdX, &
+    & Second )
     integer, parameter :: RK = kind(0.0e0)
 
     ! Dummy arguments
     type(coefficients_r4), intent(in) :: Coeffs
     real(rk), dimension(:), intent(in) :: oldX
-    real(rk), dimension(:,:), intent(in) :: oldY
+    real(rk), dimension(:,:), intent(in) :: oldY   ! See Second argument below
     real(rk), dimension(:), intent(in) :: newX
-    real(rk), dimension(:,:), intent(out) :: newY
+    real(rk), dimension(:,:), intent(out) :: newY  ! See Second argument below
 
     character (len=*), intent(in) :: method ! See comments above
     character (len=*), optional, intent(in) :: extrapolate ! See comments above
@@ -1944,6 +1951,9 @@ contains
     logical, optional, intent(in) :: SKIPNEWY ! Don't compute newY
     real(rk), dimension(:,:), optional, intent(out) :: IntYdX ! Antiderivative
                                               ! of Y at X
+    logical, optional, intent(in) :: Second   ! Interpolate on the second
+                                              ! dimension of OldY, NewY, default
+                                              ! false.
 
     include "InterpolateUsingSetup.f9h"
 
@@ -1952,15 +1962,16 @@ contains
 ! -------------------------------------  InterpolateUsingSetup_r8  -----
 
   subroutine InterpolateUsingSetup_r8 ( coeffs, oldX, oldY, newX, newY, &
-    & method, extrapolate, badValue, missingRegions, dyByDx, skipNewY, IntYdX )
+    & method, extrapolate, badValue, missingRegions, dyByDx, skipNewY, IntYdX, &
+    & Second )
     integer, parameter :: RK = kind(0.0d0)
 
     ! Dummy arguments
     type(coefficients_r8), intent(in) :: Coeffs
     real(rk), dimension(:), intent(in) :: oldX
-    real(rk), dimension(:,:), intent(in) :: oldY
+    real(rk), dimension(:,:), intent(in) :: oldY   ! See Second argument below
     real(rk), dimension(:), intent(in) :: newX
-    real(rk), dimension(:,:), intent(out) :: newY
+    real(rk), dimension(:,:), intent(out) :: newY  ! See Second argument below
 
     character (len=*), intent(in) :: method ! See comments above
     character (len=*), optional, intent(in) :: extrapolate ! See comments above
@@ -1970,6 +1981,9 @@ contains
     logical, optional, intent(in) :: SKIPNEWY ! Don't compute newY
     real(rk), dimension(:,:), optional, intent(out) :: IntYdX ! Antiderivative
                                               ! of Y at X
+    logical, optional, intent(in) :: Second   ! Interpolate on the second
+                                              ! dimension of OldY, NewY, default
+                                              ! false.
 
     include "InterpolateUsingSetup.f9h"
 
@@ -1981,7 +1995,7 @@ contains
 
     ! Given ZOld on coordinates (XOld x YOld), interpolate to (XNew,YNew)
     ! to give ZNew.  ZOld must have shape (size(xOld),size(yOld)), while
-    ! XNew, YNew and ZNew must have the same shape.
+    ! XNew, YNew and ZNew must have the same shapes.
 
     integer, parameter :: RK = kind(1.0e0)
     real(rk), intent(in) :: XOld(:)
@@ -2001,7 +2015,7 @@ contains
 
     ! Given ZOld on coordinates (XOld x YOld), interpolate to (XNew,YNew)
     ! to give ZNew.  ZOld must have shape (size(xOld),size(yOld)), while
-    ! XNew, YNew and ZNew must have the same shape.
+    ! XNew, YNew and ZNew must have the same shapes.
 
     integer, parameter :: RK = kind(1.0d0)
     real(rk), intent(in) :: XOld(:)
@@ -2623,6 +2637,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.85  2015/04/11 01:28:25  vsnyder
+! Add 'Second' argument to several routines
+!
 ! Revision 2.84  2015/04/07 02:47:30  vsnyder
 ! Add InterpolateExtrapolate
 !
