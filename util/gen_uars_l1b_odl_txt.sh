@@ -35,7 +35,7 @@ filename=`$split_path -f $filein`
 filepath=`$split_path -p $filein`
 
 LocalVersionID=`echo $filename | perl -nle 'print $1 if /-([a-z0-9]+)_/' `
-echo $filename | perl -nle 'print $1 if /-([a-z0-9]+)_/' 
+#echo $filename | perl -nle 'print $1 if /-([a-z0-9]+)_/' 
 
 # L1BOA or L1BRAD?
 L1BOA=`echo $filename | grep L1BOA`
@@ -87,12 +87,6 @@ DayNightFlag=Both
 QAPercentMissingData=0
 QAPercentOutofBoundsData=0
 QAPercentInterpolatedData=0
-AutomaticQualityFlag=Passed
-AutomaticQualityFlagExplanation=Validated
-OperationalQualityFlag=Not Investigated
-OperationalQualityFlagExplanation=Not Investigated
-ScienceQualityFlag=Inferred Passed
-ScienceQualityFlagExplanation=Validated, see http://disc.gsfc.nasa.gov/UARS/MLS/ for quality document
 ParameterName=Orbit/attitude and tangent point
 ReprocessingPlanned=further update anticipated using enhanced PGE
 InputPointer=Found at /PCF
@@ -128,6 +122,9 @@ EOF
 
 
 # $Log$
+# Revision 1.3  2015/01/06 18:08:53  pwagner
+# Revised default attribute values; added abstract.txt and attributes.txt mechanisms
+#
 # Revision 1.2  2014/11/25 01:06:28  pwagner
 # Correctly set missing or erroneous metadata values
 #
