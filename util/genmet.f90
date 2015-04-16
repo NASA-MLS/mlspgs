@@ -115,7 +115,12 @@ program genmet ! generate .met and .xml files from hdf files
   !print*,'  at the location= ',trim(physical_filename(:indx-1)),""
   !print *,' '
 
+  version = 1
+  status = PGS_PC_GetReference (MCF_FILE, version, Filename)
+  call MLSMessage(MLSMSG_Info, ModuleName, "MCF FILE." // trim(Filename))
+
   Filename = trim(physical_filename(indx:))
+  call MLSMessage(MLSMSG_Info, ModuleName, "HDF FILE." // trim(Filename))
 
   !print*,'HDF_FILE = ',HDF_FILE,' input file = ',trim(physical_filename)
   !print*,'MCF_FILE = ',MCF_FILE,' for the met file prototype'
@@ -129,6 +134,7 @@ program genmet ! generate .met and .xml files from hdf files
   version=1
   status = PGS_PC_GetReference (ODL_FILE, version, ODL_filename)
 
+  call MLSMessage(MLSMSG_Info, ModuleName, "ODL FILE." // trim(ODL_filename))
   !print *,'ODL_FILE = ',ODL_FILE,' odl_txt = ',trim(ODL_filename)
   !print *,' '
 
@@ -148,6 +154,7 @@ program genmet ! generate .met and .xml files from hdf files
         Reason = 0
         read(value_str,'(I20)',iostat=Reason) ivalue
         if ( Reason == 0 ) then   ! value is integer number
+            errmsg = 'integer'
             status = pgs_met_setAttr_i(groups(INVENTORY), &
                       & trim(name_str), ivalue)
             if ( status /= PGS_S_SUCCESS ) then
@@ -161,6 +168,7 @@ program genmet ! generate .met and .xml files from hdf files
             iloc = INDEX(value_str,'-')
             if ( Reason /= 0 .or. &
                  & (iloc .gt. 1 .and. iloc .lt. len(value_str))) then 
+            errmsg = 'string'
                status = pgs_met_setAttr_s(groups(INVENTORY), &
                       & trim(name_str), trim(value_str))
                if ( status /= PGS_S_SUCCESS ) then
@@ -168,6 +176,7 @@ program genmet ! generate .met and .xml files from hdf files
                       & trim(name_str)//'.1', trim(value_str))
                endif
             else   ! value is float number
+            errmsg = 'float'
                status = pgs_met_setAttr_d(groups(INVENTORY), &
                       & trim(name_str), fvalue)
                if (status /= PGS_S_SUCCESS ) then
@@ -179,6 +188,8 @@ program genmet ! generate .met and .xml files from hdf files
 
         !print*,' Set ',trim(name_str),' = ',trim(value_str)
 
+        call MLSMessage( MLSMSG_Info, ModuleName, trim(name_str) // &
+          & ' = ' // trim(value_str) // ' (' // trim(errmsg) // ')' )
         ! Check to see if pgs_setAttr writing is success
         if ( status /= PGS_S_SUCCESS ) then
            call MLSMessage(MLSMSG_Warning, ModuleName, &
@@ -242,3 +253,6 @@ end program genmet
 !=================================
 
 ! $Log$
+! Revision 1.1  2014/06/12 22:19:36  quyen
+! tool to generate .met and .xml files
+!
