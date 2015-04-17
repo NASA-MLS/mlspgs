@@ -14,6 +14,7 @@ program l2auxdump ! dumps datasets, attributes from L2AUX files
 !=================================
 
    use allocate_deallocate, only: allocate_test, deallocate_test
+   use dates_module, only: tai93s2hid
    use dump_0, only: defaultmaxlon, dump, dumpdumpoptions, intplaces
    use HDF, only: dfacc_read
    use HDF5, only: h5fis_hdf5_f, h5gclose_f, h5gopen_f
@@ -65,6 +66,7 @@ program l2auxdump ! dumps datasets, attributes from L2AUX files
     logical             :: anyNaNs            = .false. ! Just say if any NaNs
     logical             :: timereads          = .false. ! Just time how long to read
     logical             :: radiances          = .false.
+    logical             :: TAI                = .false.
     logical             :: useFillValue       = .false.
     character(len=16)   :: dumpOptions        = ' '
     character(len=128)  :: DSName      = '' ! Extra dataset if attributes under one
@@ -149,7 +151,7 @@ program l2auxdump ! dumps datasets, attributes from L2AUX files
     if ( options%verbose .or. n_filenames > 1 ) then
       print *, 'Reading from: ', trim(filenames(i))
     endif
-    if ( .not. options%radiances ) then
+    if ( .not. ( options%radiances .or. options%TAI ) ) then
       sdfid1 = mls_sfstart( filenames(i), DFACC_READ, hdfVersion=hdfVersion )
       if ( sdfid1 == -1 ) then
         call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -157,7 +159,8 @@ program l2auxdump ! dumps datasets, attributes from L2AUX files
       end if
     end if
     if ( options%datasets /= ' ' ) then
-      if ( options%radiances .or. options%timereads .or. options%anyNaNs ) then
+      if ( options%radiances .or.  options%TAI .or. &
+        & options%timereads .or. options%anyNaNs ) then
         call dumpradiances ( filenames(i), hdfVersion, options )
         sdfid1 = mls_sfstart( filenames(i), DFACC_READ, hdfVersion=hdfVersion )
       elseif ( options%useFillValue ) then
@@ -202,6 +205,7 @@ contains
      print *, 'say if any NaNs?    ', options%anyNaNs
      print *, 'just time reads?    ', options%timereads
      print *, 'radiances only    ? ', options%radiances
+     print *, 'TAI only          ? ', options%TAI
      print *, 'useFillValue  ?     ', options%useFillValue
      print *, 'root                ', trim_safe(options%root)
      print *, 'fillValue           ', options%fillValue
@@ -305,6 +309,9 @@ contains
       else if ( filename(1:5) == '-radi' ) then
         options%radiances = .true.
         exit
+      else if ( filename(1:4) == '-TAI' ) then
+        options%TAI = .true.
+        exit
       else if ( filename(1:3) == '-rd ' ) then
         call getarg ( i+1+hp, options%DSName )
         i = i + 1
@@ -356,6 +363,7 @@ contains
       write (*,*) '          -NaN            => just say if there are any NaNs'
       write (*,*) '          -t              => just time reads'
       write (*,*) '          -radiances      => show radiances only'
+      write (*,*) '          -TAI            => show TAI times only'
       write (*,*) '          -o opts         => pass opts to dump routines'
       write (*,*) '                          e.g., "-rs" to dump only rms, stats'
       write (*,*) '                          e.g., "?" to list available ones'
@@ -422,7 +430,6 @@ contains
       if ( index(options%dumpOptions, 'r') > 0 ) which = 'rms'
       if ( index(options%dumpOptions, 's') > 0 ) which = catLists( which, 'max,min,mean,stddev' )
     endif 
-    the_hdfVersion = HDFVERSION_5
     the_hdfVersion = hdfVersion
     file_exists = ( mls_exists(trim(File1)) == 0 )
     if ( .not. file_exists ) then
@@ -451,7 +458,9 @@ contains
     endif
 
     isl1boa = (index(trim(mysdList), 'GHz/') > 0)
-    if ( isl1boa .and. .not. (options%timereads .or. options%anyNaNs) ) then
+    if ( isl1boa .and. .not. &
+      & ( options%timereads .or. options%anyNaNs .or. options%TAI ) &
+      & ) then
       call MLSMessage ( MLSMSG_Warning, ModuleName, &
         & 'l1boa file contains no radiances ' // trim(File1) )
       return
@@ -475,6 +484,7 @@ contains
     do i = 1, noSds
       call GetStringElement (trim(mysdList), sdName, i, countEmpty )
       if ( index( lowercase(trim(sdName)), PRECISIONSUFFIX ) > 0 ) cycle
+      if ( options%TAI .and. index( lowercase(trim(sdName)), 'tai' ) < 1 ) cycle
       iPrec = StringElementNum( mysdList, trim(sdName) // PRECISIONSUFFIX, &
         & countEmpty )
       if ( iPrec < 1 .and. .not. isL1BOA ) cycle
@@ -527,6 +537,8 @@ contains
         endif
         cycle
       endif
+      ! Convert tai93s to hours-in-day
+      if ( options%TAI ) L1bRadiance%DpField = tai93s2hid( L1bRadiance%DpField )
       shp = shape(L1bRadiance%DpField)
       if ( any( indexes(options%dumpOptions, (/ 'r', 's' /) ) > 0 ) )  then
       elseif ( options%useFillValue ) then
@@ -535,24 +547,27 @@ contains
       else
         call dump( L1bRadiance%DpField, name=trim(sdName), &
           & options=options%dumpOptions )
-        call dump( L1bPrecision%DpField, name=trim(sdName) // precisionSuffix, &
+        if ( associated(L1bPrecision%DpField) ) &
+          &  call dump( L1bPrecision%DpField, name=trim(sdName) // precisionSuffix, &
           & options=options%dumpOptions )
       endif
       L1BStat%count = 0
-      print *, 'About to reshape radiances'
+      if ( options%verbose ) print *, 'About to reshape radiances'
       call allocate_test ( radiances, product(shp), 'radiances', ModuleName )
       radiances = reshape( L1bRadiance%DpField, (/ product(shp) /) )
       call DeallocateL1BData ( l1bRadiance )
-      print *, 'About to reshape precisions'
-      call allocate_test ( precisions, product(shp), 'precisions', ModuleName )
-      precisions = reshape( L1bPrecision%DpField, (/ product(shp) /) )
-      call DeallocateL1BData ( l1bPrecision )
-      print *, 'About to call statistics'
-      call statistics(&
-        & radiances, &
-        & L1BStat, &
-        & precision=precisions )
-      call dump ( L1BStat, which )
+      if ( associated(L1bPrecision%DpField) ) then
+        if ( options%verbose ) print *, 'About to reshape precisions'
+        call allocate_test ( precisions, product(shp), 'precisions', ModuleName )
+        precisions = reshape( L1bPrecision%DpField, (/ product(shp) /) )
+        call DeallocateL1BData ( l1bPrecision )
+        if ( options%verbose ) print *, 'About to call statistics'
+        call statistics(&
+          & radiances, &
+          & L1BStat, &
+          & precision=precisions )
+        call dump ( L1BStat, which )
+      endif
       call deallocate_test ( radiances, 'radiances', ModuleName )
       call deallocate_test ( precisions, 'precisions', ModuleName )
     enddo
@@ -587,6 +602,9 @@ end program l2auxdump
 !==================
 
 ! $Log$
+! Revision 1.18  2015/01/24 00:06:03  pwagner
+! Added commandline option to detect NaNs lin l1b files
+!
 ! Revision 1.17  2014/03/07 21:47:21  pwagner
 ! Name_Len changed to nameLen; got from MLSCommon
 !
