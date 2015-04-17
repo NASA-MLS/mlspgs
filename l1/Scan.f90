@@ -13,13 +13,15 @@
 MODULE Scan
 !===============================================================================
 
-   USE MLSCommon
-   USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Warning, ReportTKStatus
-   USE SDPToolkit, only: spacecraftid, earthModel
+   use MLSCommon, only: r8
+   use MLSMessageModule, only: MLSMessage, MLSMSG_Warning, ReportTKStatus
+   use SDPToolkit, only: spacecraftid, earthModel, &
+     & Pgs_csc_eciToECR, &
+     & Pgs_csc_geoToECR, Pgs_csc_ecrToECI
 
-   IMPLICIT NONE
+   implicit none
 
-   PRIVATE
+   private
 
    PUBLIC :: Scan_guess, Scan_start
 
@@ -62,11 +64,11 @@ CONTAINS
 
       INTEGER, PARAMETER :: numValues = 1
 
-      REAL(r8), PARAMETER :: time_offset = 0.0
+      REAL(r8), Dimension(1), PARAMETER :: time_offset = 0.0
 
 ! Functions
 
-      INTEGER :: Pgs_csc_scToECI, Pgs_csc_eciToECR
+      INTEGER :: Pgs_csc_scToECI
 
 ! Variables
 
@@ -122,12 +124,12 @@ CONTAINS
 
       INTEGER, PARAMETER :: numValues = 1
 
-      REAL(r8), PARAMETER :: time_offset = 0.0
+      REAL(r8), Dimension(1), PARAMETER :: time_offset = 0.0
 
 ! Functions
 
       INTEGER :: Pgs_csc_grazingRay
-      INTEGER :: Pgs_csc_geoToECR, Pgs_csc_ecrToECI, Pgs_csc_eciToSc
+      INTEGER :: Pgs_csc_eciToSc
 
 ! Variables
 
@@ -203,6 +205,9 @@ END MODULE Scan
 !==============
 
 ! $Log$
+! Revision 2.7  2015/01/23 17:50:17  pwagner
+! SDPToolkit indispensible for level 1; why not use it instead of Constants?
+!
 ! Revision 2.6  2015/01/22 23:34:04  vsnyder
 ! Get constants from Constants module instead of SDPToolkit
 !
