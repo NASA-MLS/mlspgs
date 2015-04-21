@@ -117,7 +117,7 @@ contains ! ============= Public procedures ===================================
 
   ! Calculate TAI time at start of frame:
 
-    call frame_TAI ( limb_oa, secTAI93, asciiUTC, n_days, forgedSecs )
+    call frame_TAI ( limb_oa, secTAI93, asciiUTC, n_days, forgedSecs  )
 
     emls_oa%MAFStartTimeTAI= sectai93 - forgedSecs
 
@@ -314,7 +314,7 @@ contains ! ============= Public procedures ===================================
   !{ Calculate LosVel.  Let $T$ be the tangent position in ECI, and $\omega$
   !  the Earth's angular rotation velocity. Then the tangent velocity, in ECI,
   !  is $V_t = \omega [ -T_y, T_x, 0 ]^T$.
-  !  Let $S$ be the spacecraft position in ECI.  Then the line-of-sight vector
+  !  Let $S$ be the spacecraft position in ECI.  Then the line-of-sight vector,
   !  in ECI, is
   !  $L = T - S$.  Let $V_s$ be the spacecraft velocity in ECI and $\alpha$
   !  be the angle between $V_s$ and the normal to the scan plane.  Then the
@@ -419,13 +419,15 @@ contains ! ============= Public procedures ===================================
         write (forgedasciiutc, fmt= &
          '(i4, "-", i3.3, "T", i2.2, ":", i2.2, ":", f9.6, "Z", TL10, i2.2)') &
          year-n_years, mod(yrdoy, 1000), hrs, mins, secs, int(secs)  ! force leading 0's
-        forgedsecs = secondsBetween2UTCs ( forgedasciiutc, myAsciiUTC )
+         forgedsecs = secondsBetween2UTCs ( forgedasciiutc, myAsciiUTC )
       else if ( n_days > 0 ) then
         forgedsecs = n_days * 24 * 3600
       else
         forgedsecs = 0.d0
       end if
     end if
+
+! print '(a,i0)', 'ForgedSecs ', forgedSecs
 
     if ( present(asciiUTC) ) asciiUTC = myAsciiUTC
 
@@ -444,6 +446,9 @@ contains ! ============= Public procedures ===================================
 end module uars_to_emls_oa_m
 
 ! $Log$
+! Revision 1.7  2015/01/24 02:09:16  vsnyder
+! MIF resolve most quantities
+!
 ! Revision 1.6  2015/01/22 02:18:56  vsnyder
 ! PGS_Interfaces.f90
 !
