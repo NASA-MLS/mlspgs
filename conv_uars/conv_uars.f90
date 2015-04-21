@@ -20,10 +20,11 @@ program Conv_UARS
   use MLSKinds, only: R8
   use Output_UARS_L1B, only: OutputL1B_OA, OutputL1B_Rad
   use Rad_File_Contents, only: Lvl1_Hdr_t, Limb_Hdr_t, Limb_Stat_t, Limb_Rad_t, &
-                             & Limb_OA_t
+                             & Limb_OA_t, Pad_t
   use Set_Attributes_m, only: Set_Attributes
-  use SwapEndian, only: SwapBig
-  use Swap_OA_Rec_m, only: Swap_OA_Rec
+  use Swap_OA_Rec_m, only: Swap_Limb_Hdr_Rec, Swap_Limb_Stat_Rec, &
+                         & Swap_Lvl1_Hdr_Rec, Swap_Rad_Rec, Swap_OA_Rec
+  use UARS_Dumps, only: Show_Time
   use UARS_to_EMLS_OA_m, only: EarthEllipseTag, Frame_TAI, NoMIFs
 
   implicit NONE
@@ -36,7 +37,7 @@ program Conv_UARS
   ! Is the input file name stored as an attribute in the output file?
   logical, parameter :: Input_File_Attrib = .true.
 
-  integer, parameter :: In_Unit=101, InLen=14336/4, HDFversion=5
+  integer, parameter :: In_Unit=101, HDFversion=5
   character (len=FileNameLen) :: Arg
   character (len=FileNameLen) :: InFile='uars.dat'
   character (len=FileNameLen) :: OA_File='OA.h5'
@@ -46,6 +47,7 @@ program Conv_UARS
   integer :: Error
   integer :: Grp_ID  ! of root directory of output file
   integer :: I
+  integer :: InLen
   integer :: MAF1    ! First MAF, default 1
   integer :: MAFn    ! Last MAF, default from header
   integer :: MAFno
@@ -66,6 +68,7 @@ program Conv_UARS
   type(limb_stat_t) :: Limb_Stat(0:1)
   type(limb_rad_t) :: Limb_Rad(0:1)
   type(limb_oa_t) :: Limb_OA(0:1)
+  type(pad_t) :: Pad
 
   character (len=17) :: UTC_Time
   character (len=25) :: AsciiUTC(0:1)
@@ -88,8 +91,11 @@ program Conv_UARS
 
   noargs = COMMAND_ARGUMENT_COUNT()
   if (noargs == 0) then
-    print *, 'No input file provided.'
-    print *, 'Using defaults...'
+    print '(a)', 'No input file provided.'
+    print '(2a)', 'Using defaults: Input ', trim(inFile)
+    print '(2a)', 'output directory      ', trim(out_dir)
+    print '(2a)', 'output OA file        ', trim(oa_file)
+    print '(2a)', 'output Rad file       ', trim(rad_file)
   else
     i = 1
 
@@ -129,13 +135,7 @@ program Conv_UARS
         i = i + 1
         call GET_COMMAND_ARGUMENT (i, out_dir)  ! next argument for out dir
       case ('-h', '--help')
-        call GET_COMMAND_ARGUMENT ( 0, arg )
-        print '(a)', 'usage: ' // trim(arg) // ' [options] input_file' 
-        print '(a)', '      options' 
-        print '(a)', '  -b n_days         backdate converted files in time by n_days' 
-        print '(a)', '  -M MAF1 MAFn      MAF range to process'
-        print '(a)', '  -o output_dir     write converted files to output_dir' 
-        print '(a)', '  -h                print help' 
+        call usage
         go to 9
       end select
       i = i + 1   ! Next argument
@@ -148,6 +148,8 @@ program Conv_UARS
   ! like zeroes, but is it just padding or do some records contain
   ! something useful there?
 
+  inquire ( iolength = inlen ) &
+    & limb_hdr(0), limb_stat(0), limb_rad(0), limb_oa(0), pad
   open ( unit=in_unit, file=infile, status="OLD", form="UNFORMATTED", &
        & access="DIRECT", recl=inlen, iostat=error )
 
@@ -162,17 +164,13 @@ program Conv_UARS
 
     read (unit=in_unit, rec=recno) lvl1_hdr
 
+    if ( lvl1_hdr%rec_type /= 'H' ) then
+      print '(a,i0,3a)', 'Something is wrong.  Record ', i, &
+                       & ' is not type H.  Type is "', lvl1_hdr%rec_type, '"'
+      stop
+    end if
     ! convert to little endian as needed:
-
-    lvl1_hdr%recordno = SwapBig (lvl1_hdr%recordno)
-    do i = 1, 2
-      lvl1_hdr%write_time(i) = SwapBig (lvl1_hdr%write_time(i))
-      lvl1_hdr%start_time(i) = SwapBig (lvl1_hdr%start_time(i))
-      lvl1_hdr%stop_time(i) = SwapBig (lvl1_hdr%stop_time(i))
-    end do
-    lvl1_hdr%nummmaf = SwapBig (lvl1_hdr%nummmaf)
-    lvl1_hdr%uars_day = SwapBig (lvl1_hdr%uars_day)
-    lvl1_hdr%mls_status_day = SwapBig (lvl1_hdr%mls_status_day)
+    call swap_lvl1_hdr_rec ( lvl1_hdr )
 
   end do
 
@@ -193,22 +191,23 @@ program Conv_UARS
 
   recno = nummmaf / 2
   read ( unit=in_unit, rec=recno ) limb_hdr(0)
-  yrdoy = SwapBig (limb_hdr(0)%mmaf_time(1)) - n_days ! This lets us backdate the files; e.g., for sids
+  call Swap_Limb_Hdr_Rec ( limb_hdr(0) )
+  yrdoy = limb_hdr(0)%mmaf_time(1) - n_days ! This lets us backdate the files; e.g., for sids
 
   if ( noargs > 0 ) then   ! use passed input for setting outputs
     year = yrdoy / 1000 + 1900
     doy = mod (yrdoy, 1000)
     write (yrdoy_str, '(i4.4, "d", i3.3)') year, doy
-    print *, 'yrdoy, year, doy, str: ', yrdoy, year, doy, yrdoy_str
+!     print '(a,1x,i0,1x,a)', 'yrdoy str: ', yrdoy, yrdoy_str
 
     Rad_File = TRIM(out_dir) // '/MLS-UARS_L1BRAD_' // yrdoy_str // '.h5'
     OA_File = TRIM(out_dir) // '/MLS-UARS_L1BOA_' // yrdoy_str // '.h5'
   end if
 
-  write( 6, '(a)' ) 'infile: ' // trim(infile)
-  write( 6, '(a)' ) 'rad file: ' // trim(Rad_File)
-  write( 6, '(a)' ) 'OA file: ' // trim(OA_File)
-  print *, 'n days backdated: ', n_days
+  print '(a)',    'infile: ' // trim(infile)
+  print '(a)',    'rad file: ' // trim(Rad_File)
+  print '(a)',    'OA file: ' // trim(OA_File)
+  print '(a,1x,i0)', 'n days backdated:      ', n_days
 
   ! Open output RAD and OA HDF files:
 
@@ -233,12 +232,13 @@ program Conv_UARS
 
   ! print stuff
 
-  print *, 'UARS day', lvl1_hdr%uars_day
-  print *, 'Start time: ', lvl1_hdr%start_time
-  print *, 'Stop time:  ', lvl1_hdr%stop_time
-  print *, 'yrdoy: ', yrdoy
-
-  print *, 'nummmaf: ', nummmaf
+  print '(a,1x,i0)',         'UARS day:              ', lvl1_hdr%uars_day
+  print '(a,2(1x,i0),1x,a)', 'Start time:            ', lvl1_hdr%start_time, &
+    & show_time ( lvl1_hdr%start_time )
+  print '(a,2(1x,i0),1x,a)', 'Stop time:             ', lvl1_hdr%stop_time, &
+    & show_time ( lvl1_hdr%stop_time )
+  print '(a,2(1x,i0))',      'nummmaf:               ', nummmaf
+  print '(a,2(1x,i0))',      'mafs:                  ', MAF1, MAFn
   ! read and convert data:
 
   MAFno = MAF1 - 1
@@ -246,7 +246,16 @@ program Conv_UARS
   w = 0
   read ( unit=in_unit, rec=MAF1+3 ) &
     & limb_hdr(w), limb_stat(w), limb_rad(w), limb_oa(w)
-  ! swap all OA bytes:
+
+  if ( limb_hdr(w)%rec_type /= 'D' ) then
+    print '(a,i0,3a)', 'Something is wrong.  Record ', MAF1+3, &
+                     & ' is not type D.  Type is "', limb_hdr(w)%rec_type, '"'
+    stop
+  end if
+  ! convert to little endian as needed:
+  call swap_limb_hdr_rec ( limb_hdr(w) )
+  call swap_limb_stat_rec ( limb_stat(w) )
+  call swap_rad_rec ( limb_rad(w) )
   call swap_OA_rec ( limb_oa(w) )
 
   vel_ECI(:,w) = limb_oa(w)%sat_vel
@@ -261,10 +270,18 @@ program Conv_UARS
     ! Calculate the change in velocity vector angle.
     ! This is used to rotate the ECR velocity vectors for each MIF.  If there
     ! is no next record, use the difference of the last two records.
-    if ( recno < nummmaf ) then
+    if ( recno < nummmaf+3 ) then
       read ( unit=in_unit, rec=recno+1 ) &
         & limb_hdr(1-w), limb_stat(1-w), limb_rad(1-w), limb_oa(1-w)
-      ! swap all OA bytes:
+      if ( limb_hdr(1-w)%rec_type /= 'D' ) then
+        print '(a,i0,3a)', 'Something is wrong.  Record ', recno, &
+                         & ' is not type D.  Type is "', limb_hdr(1-w)%rec_type, '"'
+        stop
+      end if
+      ! convert to little endian as needed:
+      call swap_limb_hdr_rec ( limb_hdr(1-w) )
+      call swap_limb_stat_rec ( limb_stat(1-w) )
+      call swap_rad_rec ( limb_rad(1-w) )
       call swap_OA_rec ( limb_oa(1-w) )
 
       vel_ECI(:,1-w) = limb_oa(1-w)%sat_vel
@@ -285,8 +302,6 @@ program Conv_UARS
 
   end do
 
-  print *, 'mafs: ', MAF1, MAFn
-
   close (in_unit)
 
   call MLS_closeFile (rad_sd_id, HDFversion=HDFversion)
@@ -303,7 +318,6 @@ contains
 
     use OA_File_Contents, only: EMLS_OA_t
     use SDPToolkit, only: PGS_TD_UTCtoTAI
-    use SwapEndian, only: SwapShort
     use Time_m, only: MS_to_HMS
     use UARS_to_EMLS_OA_m, only: UARS_to_EMLS_OA
 
@@ -327,30 +341,7 @@ contains
     character (len=*), parameter :: &
       DateFmt = "(I4, '-', I3.3, 'T', I2.2, ':', I2.2, ':', I2.2)"
 
-    ! convert to little endian as needed:
-    limb_hdr%recordno = SwapBig (limb_hdr%recordno)
-    limb_hdr%mmafno = SwapBig (limb_hdr%mmafno)
-    do i = 1, 2
-       limb_hdr%mmaf_time(i) = SwapBig (limb_hdr%mmaf_time(i)) ! - n_days
-    end do
-    do i = 1, 16
-       limb_stat%prd_temps(i) = SwapBig (limb_stat%prd_temps(i))
-    end do
-    limb_stat%maneuver_stat = SwapBig (limb_stat%maneuver_stat)
-    limb_stat%mls_status = SwapBig (limb_stat%mls_status)
-    do i = 1, 90
-        limb_stat%wall_mmaf(i) = SwapShort (limb_stat%wall_mmaf(i))
-    end do
-
     ! convert radiances:
-
-    do k = 1, 32         ! MIF number
-      do j = 1, 2        ! radiance/error
-        do i = 1, 90     ! radiometer and channel
-          limb_rad%rad_l1(i,j,k) = SwapShort (limb_rad%rad_l1(i,j,k))
-        end do
-      end do
-    end do
 
     rad = limb_rad%rad_l1(:,1,:)
     prec = limb_rad%rad_l1(:,2,:)
@@ -381,14 +372,32 @@ contains
 
     ! convert to EMLS OA:
 
-    call UARS_to_EMLS_OA ( n_days, limb_oa, emls_oa, &
-      & dVI, dVIN )
+    call UARS_to_EMLS_OA ( n_days, limb_oa, emls_oa, dVI, dVIN )
 
     ! write to OA file:
 
     call OutputL1B_OA ( oa_sd_id, mafno, limb_hdr%mmafno, limb_oa, emls_oa )
 
   end subroutine Process_One_MAF
+
+  subroutine Usage
+    character(255) :: Line
+    call get_command_argument ( 0, line )
+    print '(3a)', 'Usage: ', trim(line), ' [options] [input [output directory]]'
+    print '( a)', ' Options: -b n_days           => number of days to backdate'
+    print '( a)', '          --backdate n_days   => number of days to backdate'
+    print '( a)', '          -M first last       => MAFs to run'
+    print '( a)', '          --MAF first last    => MAFs to run'
+    print '( a)', '          -o output_dir       => output directory'
+    print '( a)', '          --outdir output_dir => output directory'
+    print '( a)', '          -h                  => print help'
+    print '( a)', '          --help              => print help'
+    print '( a)', ' Defaults: options: None'
+    print '(2a)', '  input file:       ', trim(inFile)
+    print '(2a)', '  output directory: ', trim(out_dir)
+    print '(2a)', '  OA file:          ', trim(oa_file)
+    print '(2a)', '  RAD file:         ', trim(rad_file)
+  end subroutine Usage
 
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
@@ -403,6 +412,9 @@ contains
 end program Conv_UARS
 
 ! $Log$
+! Revision 1.6  2015/01/24 02:09:16  vsnyder
+! MIF resolve most quantities
+!
 ! Revision 1.5  2015/01/22 02:18:56  vsnyder
 ! PGS_Interfaces.f90
 !
