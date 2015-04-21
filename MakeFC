@@ -803,7 +803,7 @@ CondenseLeakLog: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/CondenseLeakLog.f90
 	-C $(MLSCFILE) $(MLSBIN)/$@.f90
 
 # In case the conv_uars directory contains more than one main program
-CONVSRCS_BARE =  $(shell ${REECHO} -dirn $(CONFDIR)/conv_uars/ -excl UARS_Record_Len.f90)
+CONVSRCS_BARE =  $(shell ${REECHO} -dirn $(CONFDIR)/conv_uars/ -excl Dump_UARS_File.f90)
 CONVSRCS = $(shell ${REECHO} -nf -prefixn=$(CONFDIR)/conv_uars/ ${CONVSRCS_BARE})
 conv_uars: $(CONFDIR)/$(MLSCFILE) $(CONVSRCS) utctotai
 	echo $(CONVSRCS)
@@ -814,11 +814,11 @@ conv_uars: $(CONFDIR)/$(MLSCFILE) $(CONVSRCS) utctotai
 
 UARSRECL_BARE =  $(shell ${REECHO} -dirn $(CONFDIR)/conv_uars/ -excl conv_uars.f90)
 UARSRECL = $(shell ${REECHO} -nf -prefixn=$(CONFDIR)/conv_uars/ ${UARSRECL_BARE})
-uars_record_len: $(CONFDIR)/$(MLSCFILE) $(UARSRECL) utctotai
+Dump_UARS_File: $(CONFDIR)/$(MLSCFILE) $(UARSRECL) utctotai
 	echo $(UARSRECL)
 	echo $(UARSRECL_BARE)
 	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
-          -c $(MLSCONFG) -p $@ -M $(MAKE) -O short_name=uars_record_len_main -m lib \
+          -c $(MLSCONFG) -p $@ -M $(MAKE) -O short_name=Dump_UARS_File_main -m lib \
           -C $(MLSCFILE) $(UARSRECL) 
 
 dateconverter: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/dateconverter.f90 l1--itm
@@ -1384,6 +1384,9 @@ tools: chunktimes checkpvmup compare dateconverter \
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.152  2015/04/18 00:24:01  pwagner
+# Able to store two separate main programs in conv_uars
+#
 # Revision 1.151  2015/01/07 00:50:40  pwagner
 # Repaired build of moonscan
 #
