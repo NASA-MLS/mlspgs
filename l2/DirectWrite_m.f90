@@ -173,13 +173,15 @@ contains ! ======================= Public Procedures =========================
   subroutine DirectRead_Quantity ( File, quantity, qtyName, &
     & chunkNo, options, rank )
 
-    use hdf5, only: h5gclose_f, h5gcreate_f, h5gopen_f
-    use intrinsic, only: l_none, lit_indices
-    use MLSHDF5, only: isHDF5GroupPresent, isHDF5DSPresent, &
+    use dates_module, only: tai93s2hid
+    use dump_0, only: dump
+    use hdf5, only: h5gclose_f, h5gopen_f
+    use MLSHDF5, only: GetHDF5Attribute, isHDF5GroupPresent, &
       & getHDF5DSRank, loadFromHDF5DS
-    use MLSStrings, only: writeintstochars
+    use MLSStringLists, only: optionDetail
+    use MLSStrings, only: writeIntsToChars
     ! Args:
-    type (VectorValue_T), intent(in) :: QUANTITY
+    type (VectorValue_T), intent(inout) :: QUANTITY
     character(len=*), intent(in) :: qtyName       ! Name of qty in output file
     type(MLSFile_T)                :: File
     integer, intent(in) :: CHUNKNO      ! Index into chunks
@@ -188,7 +190,7 @@ contains ! ======================= Public Procedures =========================
 
     ! Local variables
     logical :: already_there
-    integer :: first_maf
+    logical :: geolocations
     integer :: grp_id
     integer :: itsRank
     integer :: myRank
@@ -204,6 +206,8 @@ contains ! ======================= Public Procedures =========================
       if ( rank > 0 .and. rank < 5 ) myRank = rank
       ! call outputNamedValue ( 'input rank', rank )
     endif
+    geolocations = optionDetail ( options, 'g' ) /= 'no'
+    
     call WriteIntsToChars ( chunkNo, chunkStr )
     chunkStr = adjustl ( chunkStr )
     ! Create or access the SD
@@ -249,11 +253,85 @@ contains ! ======================= Public Procedures =========================
       call LoadFromHDF5DS ( grp_id, 'values', quantity%values )
     end select
     ! Geolocations
+    if ( geolocations ) then
+      call readQuantityAttributes ( quantity )
+      call LoadFromHDF5DS( grp_id, 'surfs      ', quantity%template%surfs       )
+      if ( associated(quantity%template%Geolocation) ) &
+      & call LoadFromHDF5DS( grp_id, 'Geolocation  ', quantity%template%Geolocation )
+      if ( associated(quantity%template%Phi) ) &
+      & call LoadFromHDF5DS( grp_id, 'Phi          ', quantity%template%Phi         )
+      call LoadFromHDF5DS( grp_id, 'GeodLat        ', quantity%template%GeodLat     )
+      call LoadFromHDF5DS( grp_id, 'Lon            ', quantity%template%Lon         )
+      call LoadFromHDF5DS( grp_id, 'Time           ', quantity%template%Time        )
+      call LoadFromHDF5DS( grp_id, 'SolarTime      ', quantity%template%SolarTime   )
+      call LoadFromHDF5DS( grp_id, 'SolarZenith    ', quantity%template%SolarZenith )
+      call LoadFromHDF5DS( grp_id, 'LosAngle       ', quantity%template%LosAngle    )
+      if ( associated(quantity%template%CrossAngles) ) &
+      & call LoadFromHDF5DS( grp_id, 'CrossAngles    ', quantity%template%CrossAngles   )
+      if ( associated(quantity%template%Frequencies) ) &
+      & call LoadFromHDF5DS( grp_id, 'Frequencies    ', quantity%template%Frequencies  )
+      if ( associated(quantity%template%ChanInds) ) &
+      & call LoadFromHDF5DS( grp_id, 'ChanInds       ', quantity%template%ChanInds   )
+      if ( verbose ) then
+        call dump( quantity%template%surfs        , 'surfs        ' )
+        if ( associated(quantity%template%Geolocation) ) &
+        & call dump( quantity%template%Geolocation, 'Geolocation  '  )
+        if ( associated(quantity%template%Phi) ) &
+        & call dump( quantity%template%Phi, 'Phi          '          )
+        call dump( quantity%template%GeodLat     , 'GeodLat        ' )
+        call dump( quantity%template%Lon         , 'Lon            ' )
+        call dump( &
+        &  tai93s2hid( quantity%template%Time, leapsec=.true. ) &
+        &                                        , 'Time (hid)     ' )
+        call dump( quantity%template%SolarTime   , 'SolarTime      ' )
+        call dump( quantity%template%SolarZenith , 'SolarZenith    ' )
+        call dump( quantity%template%LosAngle    , 'LosAngle       ' )
+        if ( associated(quantity%template%CrossAngles) ) &
+        & call dump( quantity%template%CrossAngles  , 'CrossAngles    ' )
+        if ( associated(quantity%template%Frequencies) ) &
+        & call dump( quantity%template%Frequencies, 'Frequencies    '  )
+        if ( associated(quantity%template%ChanInds) ) &
+        & call dump( quantity%template%ChanInds  , 'ChanInds       '  )
+      endif
+    endif
     ! Close everything up
     call h5GClose_f ( grp_id, returnStatus )
     call h5GClose_f ( File%fileID%grp_id, returnStatus )
 
     call mls_CloseFile( File )
+  contains
+    subroutine readQuantityAttributes ( quantity )
+      ! Args
+      type (VectorValue_T), intent(inout) :: QUANTITY
+      ! Local variables
+      character(len=80) :: str
+      ! Executable
+      ! call get_string( lit_indices(quantity%template%quantityType ), str, strip=.true. )
+      ! call GetHDF5Attribute ( File, 'type', str )
+
+      call GetHDF5Attribute ( File, 'NoSurfs', quantity%template%NoSurfs )
+      call GetHDF5Attribute ( File, 'NoChans', quantity%template%NoChans )
+      call GetHDF5Attribute ( File, 'NoCrossTrack', quantity%template%NoCrossTrack )
+      call GetHDF5Attribute ( File, 'coherent', quantity%template%coherent )
+      call GetHDF5Attribute ( File, 'stacked', quantity%template%stacked )
+      call GetHDF5Attribute ( File, 'regular', quantity%template%regular )
+      call GetHDF5Attribute ( File, 'minorFrame', quantity%template%minorFrame )
+      call GetHDF5Attribute ( File, 'majorFrame', quantity%template%majorFrame )
+      call GetHDF5Attribute ( File, 'logBasis', quantity%template%logBasis )
+      call GetHDF5Attribute ( File, 'minValue', quantity%template%minValue )
+      call GetHDF5Attribute ( File, 'badValue', quantity%template%badValue )
+
+      ! call get_string( lit_indices(quantity%template%unit ), str, strip=.true. )
+      ! call GetHDF5Attribute ( File, 'unit', str )
+      ! call get_string( lit_indices(quantity%template%verticalCoordinate ), str, strip=.true. )
+      ! call GetHDF5Attribute ( File, 'verticalCoordinate', str )
+      ! call get_string( lit_indices(quantity%template%horizontalCoordinate ), str, strip=.true. )
+      ! call GetHDF5Attribute ( File, 'horizontalCoordinate', str )
+      ! call get_string( lit_indices(quantity%template%latitudeCoordinate ), str, strip=.true. )
+      ! call GetHDF5Attribute ( File, 'latitudeCoordinate', str )
+      ! call get_string( lit_indices(quantity%template%frequencyCoordinate ), str, strip=.true. )
+      ! call GetHDF5Attribute ( File, 'frequencyCoordinate', str )
+    end subroutine readQuantityAttributes
   end subroutine DirectRead_Quantity
 
   ! ------------------------------------------- DirectWriteVector_EveryQuantity --------
@@ -1051,8 +1129,8 @@ contains ! ======================= Public Procedures =========================
     & chunkNo, options, rank )
 
     use HDF5, only: h5gclose_f, h5gcreate_f, h5gopen_f
-    use intrinsic, only: l_none, lit_indices
-    use MLSHDF5, only: ishdf5grouppresent, ishdf5dspresent, &
+    use intrinsic, only: lit_indices
+    use MLSHDF5, only: ishdf5grouppresent, &
       & makehdf5attribute, saveashdf5ds
     use MLSSTrings, only: writeintstochars
     use String_Table, only: Get_String
@@ -1065,10 +1143,8 @@ contains ! ======================= Public Procedures =========================
     integer, intent(in), optional :: rank
 
     ! Local variables
-    logical :: addQtyAttributes
     logical :: already_there
     ! logical :: attributes_there
-    integer :: first_maf
     integer :: grp_id
     integer :: myRank
     character(len=127) :: chunkStr ! chunk number '1', '2', .., then a temp later
@@ -1094,7 +1170,7 @@ contains ! ======================= Public Procedures =========================
     call mls_openFile ( File, returnStatus )
     already_there = IsHDF5GroupPresent( File%fileID%f_id, trim(qtyName) )
     if ( .not. already_There ) then
-      call outputNamedValue( '  creating file', trim(File%name) )
+      if ( verbose ) call outputNamedValue( '  creating file', trim(File%name) )
       call h5GCreate_f ( File%fileID%f_id, qtyName, grp_id, returnStatus )
       call writeQuantityAttributes ( grp_id, quantity )
     else
@@ -1330,7 +1406,6 @@ contains ! ======================= Public Procedures =========================
     integer :: i
     integer :: newsize
     character(len=80), dimension(:), pointer :: sdNames
-    integer :: status
     ! Check if the sdName already there
     ! print *, 'Check if the sdName already there'
     nullify ( sdNames )
@@ -1644,6 +1719,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.72  2015/04/21 17:53:03  pwagner
+! May DirectRead quantity geolocations
+!
 ! Revision 2.71  2015/04/09 22:19:59  pwagner
 ! We may DirectRead a quantity type
 !
