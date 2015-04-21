@@ -9,11 +9,26 @@
 ! export authority as may be required before exporting such information to
 ! foreign countries or providing access to foreign persons.
 
-MODULE rad_file_contents
+module Rad_File_Contents
 
-IMPLICIT NONE
+implicit NONE
 
-TYPE lvl1_hdr_t
+public
+
+! The first three records of a UARS file are Lvl1_Hdr_T records
+
+! The Lvl1_Hdr_T component NumMAF gives the number of MAFs.  The remaining
+! NumMAF records (usually 1328), consist of
+! Limb_Hdr_T, Limb_Stat_T, Limb_Rad_T, Limb_OA_T, Pad
+
+! Every record is 14336 bytes, but the record size for purposes of the OPEN
+! statement might be measured in bytes or 32-bit words or some other unit,
+! depending upon the processor, so
+!   INQUIRE ( IOLENGTH = inlen ) limb_hdr, limb_stat, limb_rad, limb_oa, pad
+! ought to be used to get the record length in units appropriate to the
+! processor.
+
+type :: lvl1_hdr_t ! 48 bytes, in a record by itself
    sequence
    character (len=1) :: rec_type
    character (len=1) :: qualifier
@@ -26,9 +41,9 @@ TYPE lvl1_hdr_t
    integer :: start_time(2)
    integer :: stop_time(2)
    integer :: mls_status_day
-END TYPE
+end type
 
-TYPE limb_hdr_t
+type :: limb_hdr_t ! 20 bytes
    sequence
    character (len=1) :: rec_type
    character (len=1) :: band_bank
@@ -36,9 +51,9 @@ TYPE limb_hdr_t
    integer :: recordno
    integer :: mmaf_time(2)
    integer :: mmafno
-END TYPE
+end type
 
-TYPE limb_stat_t
+type :: limb_stat_t ! 652 bytes
    sequence
    real :: prd_temps(16)
    integer :: dgap_mmaf
@@ -51,14 +66,14 @@ TYPE limb_stat_t
    character (len=1) :: mmaf_stat
    logical(kind=1) :: hga_interfer
    character (len=1) :: hga_pad(2)
-END TYPE
+end type
 
-TYPE limb_rad_t
+type :: limb_rad_t ! 11520 bytes
    sequence
    integer(kind=2) :: rad_l1(90,2,32)
-END TYPE
+end type
 
-TYPE limb_oa_t
+type :: limb_oa_t ! 1784 bytes
    sequence
    logical(kind=1) :: ptg_fov_bo_diag_map(7)
    character (len=1) :: ptg_fov_pad
@@ -104,12 +119,19 @@ TYPE limb_oa_t
    real :: trans_inst2eci(3,3)
    real :: ypr(3)
    real :: ypr_rate(3)
+end type
 
-END TYPE
+type :: Pad_T ! 360 bytes
+   sequence
+   character(360) :: Pad
+end type Pad_T
 
-END MODULE rad_file_contents
+end module Rad_File_Contents
 
 ! $Log$
+! Revision 1.3  2015/01/22 02:18:56  vsnyder
+! PGS_Interfaces.f90
+!
 ! Revision 1.2  2014/12/11 00:48:51  vsnyder
 ! Move external procedures into modules.  Add copyright and CVS lines.
 ! Compute MIF geolocation (except height) for SC.  Compute MIF-resolved
