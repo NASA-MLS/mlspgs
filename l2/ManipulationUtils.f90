@@ -13,29 +13,29 @@
 module ManipulationUtils        ! operations to manipulate quantities
   !=============================================================================
 
-  use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
-  use DATES_MODULE, only: TAI93S2HID
-  use DUMP_0, only: DUMP
-  use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
-  use MLSKINDS, only: RV
-  use MLSL2OPTIONS, only: MLSMESSAGE
-  use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_WARNING
-  use MLSFINDS, only: FINDFIRST, FINDLAST, FINDNEXT
-  use MLSSTATS1, only: MLSCOUNT, MLSMIN, MLSMAX, MLSMEAN, MLSMEDIAN, &
-    & MLSRMS, MLSSTDDEV
-  use MLSSTRINGLISTS, only: ARRAY2LIST, CATLISTS, GETSTRINGELEMENT, &
-    & LIST2ARRAY, NUMSTRINGELEMENTS, &
-    & REPLACESUBSTRING
-  use MLSSTRINGS, only: INDEXES, LOWERCASE, NCOPIES, SPLITNEST, STRETCH
-  use OUTPUT_M, only: OUTPUT
-  use VECTORSMODULE, only: VECTORVALUE_T, M_FILL, RESHAPEVECTORVALUE
+  use allocate_deallocate, only: allocate_test, deallocate_test
+  use dates_module, only: tai93s2hid
+  use dump_0, only: dump
+  use highoutput, only: outputNamedValue
+  use MLSKinds, only: rv
+  use MLSL2Options, only: MLSMessage
+  use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning
+  use MLSFinds, only: findFirst, findLast, findNext
+  use MLSStats1, only: MLScount, MLSmin, MLSmax, MLSmean, MLSmedian, &
+    & MLSRms, MLSstddev
+  use MLSStringLists, only: array2List, catLists, getStringElement, &
+    & list2Array, numStringElements, &
+    & replaceSubstring
+  use MLSStrings, only: indexes, lowerCase, nCopies, splitNest, stretch
+  use output_m, only: output
+  use vectorsModule, only: vectorValue_t, m_fill, reshapeVectorValue
   ! This module allows us to do algebraic operations on vector quantities
   ! saving the result in a vector quantity
-  ! See also Algebra Module (though I never got that to work--paw)
+  ! See also Algebra Module (though I never got Algebra to work--paw)
 
   implicit none
   private
-  public :: MANIPULATE
+  public :: manipulate
 
 ! === (start of toc) ===
 ! Manipulate     Apply manipulation encoded in a string m to fill quantity
@@ -60,7 +60,7 @@ module ManipulationUtils        ! operations to manipulate quantities
 
   logical, parameter :: COUNTEMPTY = .true.
   logical, parameter :: DEEBUG     = .false.                 ! Usually FALSE
-  integer, parameter :: MAXSTRLISTLENGTH = 128
+  integer, parameter :: MAXSTRLISTLENGTH = 128               ! Is this enough?
   integer, parameter, public :: NO_ERROR_CODE = 0
 
 contains ! =====     Public Procedures     =============================
@@ -107,14 +107,15 @@ contains ! =====     Public Procedures     =============================
     character(len=MAXSTRLISTLENGTH) :: part2
     character(len=MAXSTRLISTLENGTH) :: part3
     character(len=4) :: vchar
-    integer, parameter :: NFUNNAMES = 25
+    integer, parameter :: NFUNNAMES = 26
     character(len=8), dimension(NFUNNAMES) :: FUNCOLONS
     character(len=8), dimension(NFUNNAMES), parameter :: FUNNAMES = &
       & (/ 'stddev  ', 'rms     ', 'median  ', 'mean    ', 'max     ', &
       &    'min     ', 'count   ', 'slip    ', 'shift   ', 'channel ', &
       &    'surface ', 'instance', 'height  ', 'lon     ', 'lat     ', &
       &    'sza     ', 'map     ', 'log10   ', 'log     ', 'ln      ', &
-      &    'exp     ', 'ifpos   ', 'ifneg   ', 'sign    ', 'abs     ' /)
+      &    'exp     ', 'ifpos   ', 'ifneg   ', 'sign    ', 'abs     ' ,&
+      &    'trunc   '/)
       
     ! logical, parameter :: DEEBUG = .true.
     ! Executable
@@ -813,6 +814,8 @@ contains ! =====     Public Procedures     =============================
             where ( part%values /= 0._rv )
               newone%values = sign(1._rv, part%values)
             end where
+        case ('trunc')
+            newone%values = aint(part%values)
         case ('ifpos')
             where ( part%values > 0._rv )
               newone%values = 1._rv
@@ -1336,7 +1339,7 @@ contains ! =====     Public Procedures     =============================
   end subroutine ParensForAll
 
   function isBalanced ( str ) result ( itIs )
-    use MLSSTRINGS, only: NCOPIES
+    use MLSStrings, only: ncopies
     ! Are numbers of '(' and ')' in str equal?
     character(len=*), intent(in) :: str
     logical                      :: itIs
@@ -1379,6 +1382,9 @@ end module ManipulationUtils
 
 !
 ! $Log$
+! Revision 2.16  2015/04/21 17:49:38  pwagner
+! Added trunc() function
+!
 ! Revision 2.15  2015/03/28 02:48:36  vsnyder
 ! Added stuff to trace allocate/deallocate addresses
 !
