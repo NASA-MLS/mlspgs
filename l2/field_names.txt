@@ -312,6 +312,7 @@ noiseBandwidth
 noise
 noMagneticField
 noMIFs
+noPCFid
 normQty
 noSlaves
 nscatteringangles
@@ -532,6 +533,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.256  2015/04/21 17:43:33  pwagner
+# May DirectRead, DirectWrite files with /noPCFid even when usingPCF
+#
 # Revision 2.255  2015/03/31 21:00:15  pwagner
 # rank is a new field for DirectWrite-ing quantity values as, say, rank3
 #
