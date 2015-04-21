@@ -14,7 +14,8 @@ module Swap_OA_Rec_m
   implicit NONE
   private
 
-  public :: Swap_OA_Rec
+  public :: Swap_Limb_Hdr_Rec, Swap_Lvl1_Hdr_Rec, Swap_OA_Rec
+  public :: Swap_Limb_Stat_Rec, Swap_Rad_Rec
 
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -24,11 +25,75 @@ module Swap_OA_Rec_m
 
 contains ! ============= Public procedures ===================================
 
+  subroutine Swap_Limb_Hdr_Rec ( Limb_Hdr )
+
+    use Rad_File_Contents, only: Limb_Hdr_t
+    use SwapEndian, only: SwapBig
+
+    type(limb_hdr_t), intent(inout) :: Limb_Hdr
+
+    integer :: I
+
+    ! convert to little endian as needed:
+    limb_hdr%recordno = SwapBig (limb_hdr%recordno)
+    limb_hdr%mmafno = SwapBig (limb_hdr%mmafno)
+    do i = 1, 2
+       limb_hdr%mmaf_time(i) = SwapBig (limb_hdr%mmaf_time(i)) ! - n_days
+    end do
+
+  end subroutine Swap_Limb_Hdr_Rec
+
+  subroutine Swap_Lvl1_Hdr_Rec ( Lvl1_Hdr )
+
+    use Rad_File_Contents, only: Lvl1_Hdr_t
+    use SwapEndian, only: SwapBig
+
+    type(lvl1_hdr_t), intent(inout) :: Lvl1_Hdr
+
+    integer :: I
+
+    ! convert to little endian as needed:
+
+    lvl1_hdr%recordno = SwapBig (lvl1_hdr%recordno)
+    do i = 1, 2
+      lvl1_hdr%write_time(i) = SwapBig (lvl1_hdr%write_time(i))
+      lvl1_hdr%start_time(i) = SwapBig (lvl1_hdr%start_time(i))
+      lvl1_hdr%stop_time(i) = SwapBig (lvl1_hdr%stop_time(i))
+    end do
+    lvl1_hdr%nummmaf = SwapBig (lvl1_hdr%nummmaf)
+    lvl1_hdr%uars_day = SwapBig (lvl1_hdr%uars_day)
+    lvl1_hdr%mls_status_day = SwapBig (lvl1_hdr%mls_status_day)
+
+  end subroutine Swap_Lvl1_Hdr_Rec
+
+  subroutine Swap_Limb_Stat_Rec ( Limb_Stat )
+
+    use Rad_File_Contents, only: Limb_Stat_t
+    use SwapEndian, only: SwapBig, SwapShort
+
+    type(limb_stat_t), intent(inout) :: Limb_Stat
+
+    integer :: I
+
+    ! convert to little endian as needed:
+    do i = 1, 16
+       limb_stat%prd_temps(i) = SwapBig (limb_stat%prd_temps(i))
+    end do
+    limb_stat%dgap_mmaf = SwapBig ( limb_stat%dgap_mmaf )
+    limb_stat%maneuver_stat = SwapBig (limb_stat%maneuver_stat)
+    limb_stat%mls_status = SwapBig (limb_stat%mls_status)
+    do i = 1, 90
+        limb_stat%wall_mmaf(i) = SwapShort (limb_stat%wall_mmaf(i))
+        limb_stat%window_red_refs(i) = SwapShort (limb_stat%window_red_refs(i))
+        limb_stat%window_red_sz(i) = SwapShort (limb_stat%window_red_sz(i))
+    end do
+
+  end subroutine Swap_Limb_Stat_Rec
 
   subroutine Swap_OA_Rec ( Limb_OA )
 
-    USE Rad_File_Contents, only : limb_oa_t
-    USE SwapEndian, only: SwapBig
+    use Rad_File_Contents, only: limb_oa_t
+    use SwapEndian, only: SwapBig
 
     type(limb_oa_t), intent(inout) :: Limb_OA
 
@@ -88,10 +153,31 @@ contains ! ============= Public procedures ===================================
     do i = 1, 3
        do j = 1, 3
           limb_oa%trans_inst2eci(i,j) = SwapBig(limb_oa%trans_inst2eci(i,j))
-       enddo
-    enddo
+       end do
+    end do
 
   end subroutine Swap_OA_Rec
+
+  subroutine Swap_Rad_Rec ( Limb_Rad )
+
+    use Rad_File_Contents, only: Limb_Rad_t
+    use SwapEndian, only: SwapShort
+
+    type(limb_rad_t), intent(inout) :: Limb_Rad
+
+    integer :: I, J, K
+
+    ! convert to little endian as needed:
+
+    do k = 1, 32         ! MIF number
+      do j = 1, 2        ! radiance/error
+        do i = 1, 90     ! radiometer and channel
+          limb_rad%rad_l1(i,j,k) = SwapShort ( limb_rad%rad_l1(i,j,k) )
+        end do
+      end do
+    end do
+
+  end subroutine Swap_Rad_Rec
 
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
@@ -106,3 +192,8 @@ contains ! ============= Public procedures ===================================
 end module Swap_OA_Rec_m
 
 ! $Log$
+! Revision 1.2  2014/12/11 00:48:51  vsnyder
+! Move external procedures into modules.  Add copyright and CVS lines.
+! Compute MIF geolocation (except height) for SC.  Compute MIF-resolved
+! SC velocity.  Some cannonball polishing.
+!
