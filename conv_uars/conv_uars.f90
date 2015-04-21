@@ -207,7 +207,7 @@ program Conv_UARS
   print '(a)',    'infile: ' // trim(infile)
   print '(a)',    'rad file: ' // trim(Rad_File)
   print '(a)',    'OA file: ' // trim(OA_File)
-  print '(a,1x,i0)', 'n days backdated:      ', n_days
+  print '(a,1x,i0)', 'num. days backdated:   ', n_days
 
   ! Open output RAD and OA HDF files:
 
@@ -228,6 +228,7 @@ program Conv_UARS
   if ( input_file_attrib ) then
     call h5gopen_f ( oa_sd_id, '/', grp_id, stat )
     call MakeHDF5Attribute(grp_id, 'InputFileName', trim(infile), .true.)
+    call h5gclose_f ( grp_id, stat )
   end if
 
   ! print stuff
@@ -412,6 +413,11 @@ contains
 end program Conv_UARS
 
 ! $Log$
+! Revision 1.7  2015/04/21 01:18:54  vsnyder
+! Use swap routines in Swap_OA_Rec_m.  Get record size using INQUIRE with
+! IOLENGTH=.  Spiff some printing.  Print usage with -h or --help option.
+! Check record types.  Calculate highest record number properly.
+!
 ! Revision 1.6  2015/01/24 02:09:16  vsnyder
 ! MIF resolve most quantities
 !

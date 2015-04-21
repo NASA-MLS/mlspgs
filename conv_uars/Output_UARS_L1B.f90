@@ -41,7 +41,7 @@ contains
     use MLSKinds, only: R8
     use Rad_File_Contents, only: Limb_Hdr_t
 
-   ! This subroutine writes an MAF's worth of data to the L1BRad F file
+   ! This subroutine writes a MAF's worth of data to the L1BRad File
 
     integer, intent(in) :: sdId, noMAF, counterMAF
     real, intent(in) :: rad(15,6,32), prec(15,6,32)
@@ -134,8 +134,10 @@ contains
 
   subroutine OutputL1B_OA (sdId, noMAF, counterMAF, Limb_OA, EMLS_OA )
 
-    ! This subroutine writes an MAF's worth of data to the L1B OA file
+    ! This subroutine writes a MAF's worth of data to the L1B OA file
 
+    use HDF5, only:  H5GClose_f, H5GOpen_f
+    use MLSHDF5, only: MakeHDF5Attribute
     use MLSKinds, only: R8
     use oa_file_contents, only: emls_oa_t
     use rad_file_contents, only: limb_oa_t
@@ -145,6 +147,7 @@ contains
     type(limb_oa_t), intent(in) :: Limb_OA
     type(emls_oa_t), intent(in) :: EMLS_OA
 
+    integer :: Grp_Id
     integer :: status
 
     type (DataProducts_T) :: dataset
@@ -253,6 +256,33 @@ contains
 
     call Deallocate_DataProducts (dataset)
 
+    ! Now attributes for some component units
+    call h5gopen_f ( sdId, '/GHz', grp_id, status )
+    call MakeHDF5Attribute ( grp_id, 'GeocLat_units',       'deg'  )
+    call MakeHDF5Attribute ( grp_id, 'GeodLat_units',       'deg'  )
+    call MakeHDF5Attribute ( grp_id, 'GeodAng_units',       'deg'  )
+    call MakeHDF5Attribute ( grp_id, 'Lon_units',           'deg'  )
+    call MakeHDF5Attribute ( grp_id, 'GeocAlt_units',       'm'    )
+    call MakeHDF5Attribute ( grp_id, 'GeodAlt_units',       'm'    )
+    call MakeHDF5Attribute ( grp_id, 'LosAngle_units',      'deg'  )
+    call MakeHDF5Attribute ( grp_id, 'LosVel_units',        'm/s'  )
+    call MakeHDF5Attribute ( grp_id, 'OrbY_units',          'm'    )
+    call MakeHDF5Attribute ( grp_id, 'ECI_units',           'm'    )
+    call MakeHDF5Attribute ( grp_id, 'ECR_units',           'm'    )
+    call h5gclose_f ( grp_id, status )
+    call h5gopen_f ( sdId, '/sc', grp_id, status )
+    call MakeHDF5Attribute ( grp_id, 'OrbIncl_units',       'deg'  )
+    call MakeHDF5Attribute ( grp_id, 'Sc_Lon_units',        'deg'  )
+    call MakeHDF5Attribute ( grp_id, 'Sc_GeocLat_units',    'deg'  )
+    call MakeHDF5Attribute ( grp_id, 'Sc_GeodLat_units',    'deg'  )
+    call MakeHDF5Attribute ( grp_id, 'Sc_GeocAlt_units',    'm'    )
+    call MakeHDF5Attribute ( grp_id, 'Sc_GeodAlt_units',    'm'    )
+    call MakeHDF5Attribute ( grp_id, 'ECI_units',           'm'    )
+    call MakeHDF5Attribute ( grp_id, 'ECR_units',           'm'    )
+    call MakeHDF5Attribute ( grp_id, 'VelECI_units',        'm/s'  )
+    call MakeHDF5Attribute ( grp_id, 'VelECR_units',        'm/s'  )
+    call h5gclose_f ( grp_id, status )
+
   end subroutine OutputL1B_OA
 
 !--------------------------- end bloc --------------------------------------
@@ -268,3 +298,8 @@ contains
 end module Output_UARS_L1B
 
 ! $Log$
+! Revision 1.2  2014/12/11 00:48:51  vsnyder
+! Move external procedures into modules.  Add copyright and CVS lines.
+! Compute MIF geolocation (except height) for SC.  Compute MIF-resolved
+! SC velocity.  Some cannonball polishing.
+!
