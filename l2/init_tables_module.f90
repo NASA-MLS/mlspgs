@@ -134,8 +134,7 @@ module INIT_TABLES_MODULE
 ! The NAG compiler will generate code that has memory problems
   integer, parameter :: S_ANYGOODRADIANCES   = last_Spectroscopy_Spec + 1
   integer, parameter :: S_ANYGOODVALUES      = s_anygoodradiances + 1
-  integer, parameter :: S_APRIORI            = s_anygoodvalues + 1
-  integer, parameter :: S_BINSELECTOR        = s_apriori + 1
+  integer, parameter :: S_BINSELECTOR        = s_anygoodvalues + 1
   integer, parameter :: S_BOOLEAN            = s_binSelector + 1
   integer, parameter :: S_CASE               = s_boolean + 1
   integer, parameter :: S_CATCHWARNING       = s_case + 1
@@ -351,7 +350,6 @@ contains ! =====     Public procedures     =============================
     ! put in by init_MLSSignals.
     spec_indices(s_anygoodradiances) =       add_ident ( 'anyGoodRadiances' )
     spec_indices(s_anygoodvalues) =          add_ident ( 'anyGoodValues' )
-    spec_indices(s_apriori) =                add_ident ( 'apriori' )
     spec_indices(s_binSelector) =            add_ident ( 'binSelector' )
     spec_indices(s_Boolean) =                add_ident ( 'boolean' )
     spec_indices(s_case) =                   add_ident ( 'case' )
@@ -632,6 +630,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_file, string(), &
              begin, f+f_missingValue, numeric(), &
              begin, f+f_field, string(), &
+             begin, f+f_noPCFid, boolean(), &
              begin, f+f_origin, field_type(t_griddedOrigin), &
              begin, f+f_sum, boolean(), &
              np+n_spec_def, &
@@ -672,6 +671,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_file, string(), &
              begin, f+f_grid, field_spec(s_gridded), &
              begin, f+f_missingValue, numeric(), &
+             begin, f+f_noPCFid, boolean(), &
              begin, f+f_field, string(), &
              begin, f+f_origin, field_type(t_griddedOrigin), &
              begin, f+f_sum, boolean(), &
@@ -1251,8 +1251,10 @@ contains ! =====     Public procedures     =============================
       begin, s+s_directRead, &
              begin, f+f_bin, string(), &
              begin, f+f_file, string(), &
+             begin, f+f_geolocation, boolean(), &
              begin, f+f_hdfVersion, numeric(phyq_dimensionless,req=req), &
              begin, f+f_interpolate, boolean(), &
+             begin, f+f_noPCFid, boolean(), &
              begin, f+f_options, string(), &
              begin, f+f_quantity, vectorQuantity(), &
              begin, f+f_rank, numeric(phyq_dimensionless), &
@@ -1269,6 +1271,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_file, string(), &
              begin, f+f_hdfVersion, numeric(phyq_dimensionless,req=req), &
              begin, f+f_lowerOverlap, boolean(), &
+             begin, f+f_noPCFid, boolean(), &
              begin, f+f_options, string(), &
              begin, f+f_AscDescMode, vectorQuantity(), &
              begin, f+f_precision, vectorQuantity(), &
@@ -1999,6 +2002,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.612  2015/04/21 17:44:27  pwagner
+! May DirectRead, DirectWrite files with /noPCFid even when usingPCF; may DirectRead qty geolocations
+!
 ! Revision 2.611  2015/04/09 20:53:22  pwagner
 ! rank may be specified for Dump and DirectRead commands
 !
