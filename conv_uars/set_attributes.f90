@@ -48,7 +48,7 @@ contains ! ============= Public procedures ===================================
     ! convert DOY to Month, Day:
 
     call calend ( year, doy, month, day )
-    print *, 'year, doy, month, day: ', year, doy, month, day
+    print '(a,4(1x,i0))', 'year, doy, month, day: ', year, doy, month, day
 
     ! convert start millisecs to HMS:
 
@@ -98,3 +98,8 @@ contains ! ============= Public procedures ===================================
 end module Set_Attributes_m
 
 ! $Log$
+! Revision 1.2  2014/12/11 00:48:51  vsnyder
+! Move external procedures into modules.  Add copyright and CVS lines.
+! Compute MIF geolocation (except height) for SC.  Compute MIF-resolved
+! SC velocity.  Some cannonball polishing.
+!
