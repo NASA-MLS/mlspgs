@@ -124,7 +124,7 @@ contains ! =====     Public Procedures     =============================
       & f_lengthscale, f_logspace, f_losqty, f_lowbound, f_lsb, f_lsbfraction, &
       & f_manipulation, f_matrix, f_maxiterations, f_maxvalue, f_measurements, &
       & f_method, f_minnormqty, f_minvalue, f_model, f_multiplier, &
-      & f_nofinegrid, f_noise, f_noisebandwidth, f_normqty, &
+      & f_nofinegrid, f_noise, f_noisebandwidth, f_noPCFid, f_normqty, &
       & f_offsetamount, f_options, f_orbitinclination, f_phitan, &
       & f_phiwindow, f_phizero, f_precision, f_precisionfactor, &
       & f_profile, f_profilevalues, f_ptanquantity, &
@@ -464,6 +464,7 @@ contains ! =====     Public Procedures     =============================
     integer :: NOFINEGRID               ! no of fine grids for cloud extinction calculation
     integer :: NOISEQTYINDEX
     integer :: NOISEVECTORINDEX
+    logical :: noPCFid                  ! Obey file='..' w/o recourse to PCF
     integer :: NORMQTYINDEX
     integer :: NORMVECTORINDEX
     integer :: NOSNOOPEDMATRICES        ! No matrices to snoop
@@ -622,6 +623,7 @@ contains ! =====     Public Procedures     =============================
       minValueUnit = 0
       MissingGMAO = .false.
       logSpace = .false.
+      noPCFid = .false.
       options = ' '
       resetSeed = .false.
       refract = .false.
@@ -1253,6 +1255,7 @@ contains ! =====     Public Procedures     =============================
       integer :: file                     ! Index into string table
       integer :: fileType
       character(len=8) :: fileTypeStr
+      logical :: geolocation
       integer :: gson
       ! integer :: hdfversion
       logical :: interpolate
@@ -1262,6 +1265,7 @@ contains ! =====     Public Procedures     =============================
       logical :: spread
       type (vector_T), pointer :: Vector
       ! Loop over the instructions to the directRead command
+      geolocation= .false.
       got = .false.
       ! hdfVersion = DEFAULT_HDFVERSION_READ
       file = 0
@@ -1303,6 +1307,8 @@ contains ! =====     Public Procedures     =============================
         case ( f_file )
           file = sub_rosa(gson)
           if ( DEEBUG ) call outputNamedValue ( 'Processing file field', file )
+        case ( f_geolocation )
+            geolocation = get_boolean ( gson )
         case ( f_options )
           if ( DEEBUG ) call output ( 'Begin Processing options field', advance='yes' )
           call get_string ( sub_rosa(gson), options, strip=.true. )
@@ -1313,6 +1319,8 @@ contains ! =====     Public Procedures     =============================
           if ( DEEBUG ) call output ( 'Processing sdName field', advance='yes' )
         case ( f_interpolate )
             interpolate = get_boolean ( gson )
+        case ( f_noPCFid )
+            noPCFid = get_boolean ( gson )
         case ( f_rank )
           call expr ( gson, exprUnits, exprValue )
           if ( exprUnits(1) /= phyq_dimensionless ) &
@@ -1329,6 +1337,7 @@ contains ! =====     Public Procedures     =============================
           if ( DEEBUG ) call output ( 'Processing type field', advance='yes' )
         end select
       end do
+      if ( geolocation ) options = trim(options) // 'g'
       if ( DEEBUG ) call output ( 'Done processing fields', advance='yes' )
       if ( .not. got(f_file) ) call Announce_error ( key, 0, 'No file supplied' )
       if ( .not. got(f_type) ) call Announce_error ( key, 0, 'No type supplied' )
@@ -3096,20 +3105,21 @@ contains ! =====     Public Procedures     =============================
       call outputNamedValue( 'About to get_string for file type', lit_indices(fileType) )
       call get_string ( lit_indices(fileType), fileTypeStr, strip=.true. )
       call outputNamedValue( 'Result', fileTypeStr )
-      if ( TOOLKIT .and. index (fileName, '/') < 1 ) then
+      if ( noPCFid ) then
+        ! Already have fileName; must trust it's OK and not just a fragment
+      elseif ( TOOLKIT .and. index (fileName, '/') < 1 ) then
         mypcfEndCode = pcfCode
         if ( present(pcfEndCode) ) mypcfEndCode = pcfEndCode
         if ( fileName == ' ' ) then
-          returnStatus = Pgs_pc_getReference(pcfCode, version, &
-            & fileName)
+          returnStatus = Pgs_pc_getReference( pcfCode, version, fileName )
           lun = pcfCode
         else
           PCFFileName = fileName
           call split_path_name ( PCFFileName, path, fileName )
-          lun = GetPCFromRef(fileName, pcfCode, &
+          lun = GetPCFromRef( fileName, pcfCode, &
             & mypcfEndCode, &
             & TOOLKIT, returnStatus, Version, DEEBUG, &
-            & exactName=PCFFileName)
+            & exactName=PCFFileName )
           if ( returnStatus /= 0 ) then
             call Announce_Error ( 0, son, extraMessage=MSG )
           else
@@ -3160,6 +3170,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.450  2015/04/21 17:48:08  pwagner
+! May DirectRead, DirectWrite files with /noPCFid even when usingPCF; may DirectRead qty geolocations
+!
 ! Revision 2.449  2015/04/09 22:18:58  pwagner
 ! We may DirectRead a quantity type
 !
