@@ -54,6 +54,9 @@ endif
 #----------------------- Build instructions
 
 $(PROG):  $(PROG_prereqs)
+	if [ ! -f Calibration.f9h ]; then \
+          cp Calibration-normal.f9h Calibration.f9h; \
+        fi
 	@cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) \
         UNPREFXDPTHS="$(ADD2PATHS)" ;\
         return_status=`expr $$?` ; \
@@ -165,6 +168,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl1
 
 # $Log$
+# Revision 2.60  2015/04/23 23:04:37  pwagner
+# Should fix problem with first checkout before Calibration.f9h initialized
+#
 # Revision 2.59  2015/04/23 17:46:27  whdaffer
 # removed Makefile
 #
