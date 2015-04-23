@@ -44,6 +44,7 @@ vpath %.mod ./
 vpath %.o ./
 vpath %.f90 ../ $(srclib)
 vpath %.f9h ../ $(srclib)
+vpath %.F9H ../ $(srclib)
 vpath %.f ../
 vpath %.c ../
 
@@ -139,15 +140,16 @@ MLSL0SN MLSL1log MLSL1G MLSL1T: $(ALLOBJS) \
      $(mlspack_dir)/libmlspack.a $(libdir)/libmls.a $(PVM_OBJS) \
      $(CONFDIR)/$(MLSCFILE) \
      $(MODULES)
-		@if [ "$(MODULES)" != "" -a "$(MARK_ALL_AS_UPTODATE)" = "yes" ]; then \
-		 $(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -fyes ; \
-		fi
-		@echo "$(pvm_message)"
-		@echo "$(blas_message)"
-		@echo "$(lapack_message)"
-		@echo "$(hdf5_message)"
-		@echo "$(mlspack_message)"
-		@cat fftw_link_message | sed 's/3\[dm\]/1/'
+	@if [ "$(MODULES)" != "" -a "$(MARK_ALL_AS_UPTODATE)" = "yes" ]; then \
+	 $(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -fyes ; \
+	fi
+	@echo "$(pvm_message)"
+	@echo "$(blas_message)"
+	@echo "$(lapack_message)"
+	@echo "$(hdf5_message)"
+	@echo "$(mlspack_message)"
+	@cat fftw_link_message | sed 's/3\[dm\]/1/'
+
 	$(FC) $(LDOPTS) -o $@ $(ALLOBJS) $@.o $(PVM_OBJS) \
    -L${libdir} -lmls \
         $(utctotai_linker_line) \
@@ -173,11 +175,11 @@ clean:
 	rm -f *.o *.mod mlsl1
 
 mark_all_as_uptodate:
-		@if [ "$(MODULES)" != "" -a "$(MARK_ALL_AS_UPTODATE)" != "no" ]; then \
+	@if [ "$(MODULES)" != "" -a "$(MARK_ALL_AS_UPTODATE)" != "no" ]; then \
 		 $(UTILDIR)/mark_as_uptodate.sh -T mlsl0sn -T mlsl1log -T mlsl1g -T mlsl1t \
-       -M $(MAKE) $(MARKING_ARG) \
-       $(libdir) ; \
-		fi
+	       -M $(MAKE) $(MARKING_ARG) \
+		$(libdir) ; \
+	fi
 
 tar:
 	rm -f l1.tgz
@@ -192,6 +194,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.41  2014/05/27 18:45:53  pwagner
+# Define TESTSDIR
+#
 # Revision 1.40  2010/08/27 20:57:16  pwagner
 # Uses optional HDF*INC Makefile variables
 #
