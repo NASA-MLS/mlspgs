@@ -120,7 +120,8 @@ $(S)/lit_parm.f9h $(S)/lit_add.f9h: $(S)/lit_names.txt $(INSTALLDIR)/init_gen
           -j lit_names.txt \
           $(S)/lit_parm.f9h $(S)/lit_add.f9h lit_indices
 
-endif
+endif # short_name == l2
+
 #	l3
 
 l2interface.mod:
@@ -197,7 +198,7 @@ ieee_arithmetic.mod: ieee_arithmetic.f90
 
 intrinsic.o: $(S)/lit_parm.f9h $(S)/lit_add.f9h
 
-endif
+endif # end short_name == lib
 
 NOUNASS := $(shell echo ${DUSTY} | sed 's/\(--chk [aesx,]*\),u\([aesx,]*\)/\1\2/')
 
@@ -223,7 +224,9 @@ ncep_dao.o: ncep_dao.mod
 	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
    -T ncep_dao.o ncep_dao.mod 
 
-else
+else # end ifndef CASCADE
+# i.e. CASCADE IS defined
+
 #	l1
 
 CalibWeightsFlags.o: $(S)/CalibWeightsFlags.f90
@@ -277,7 +280,7 @@ $(S)/lit_parm.f9h $(S)/lit_add.f9h: $(S)/lit_names.txt $(INSTALLDIR)/init_gen
           -j lit_names.txt \
           $(S)/lit_parm.f9h $(S)/lit_add.f9h lit_indices
 
-endif
+endif # end short_name==l2
 #	l3
 
 L2Interface.o: $(S)/L2Interface.f90
@@ -305,6 +308,7 @@ L3MZDiag.o: $(S)/L3MZDiag.f90
 
 L3MMDiag.o: $(S)/L3MMDiag.f90
 	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3MMDiag.f90 $(FAFTER)
+
 
 # Custom build commands for some modules
 
@@ -339,7 +343,7 @@ $(srclib)/Parser_L2CF.f9h: $(UTILDIR)/lr/l2cf.grm $(INSTALLDIR)/lr
           $(UTILDIR)/lr/l2cf.grm \
           $(srclib)/Parser_L2CF.f9h $(UTILDIR)/lr/l2cf.lls $(LRAFTER)
 
-endif
+endif # end short_name == lib
 
 NOUNASS := $(shell echo ${FOPTS} | sed 's/\(--chk [aesx,]*\),u\([aesx,]*\)/\1\2/')
 
@@ -356,8 +360,8 @@ string_table.o:
 ncep_dao.o:
 	$(FC) -c $(NOUNASS) $(INC_PATHS) $(S)/ncep_dao.f90 $(FAFTER)
 
-endif
-endif
+endif  # end CASCADE
+endif  # END not doc
 
 # Some custom builds for the doc subdirectory
 ifeq ($(short_name),doc)
@@ -436,8 +440,11 @@ wvs-095.dvi: wvs-095.tex wvs-095-eta.eps
 wvs-095.pdf: wvs-095.tex wvs-095-eta.pdf
 #	pdflatex wvs-095
 #	pdflatex wvs-095
-endif
+endif # end shortn_name == doc
 # $Log$
+# Revision 1.16  2014/06/16 20:27:21  pwagner
+# Fixed bug in building lr
+#
 # Revision 1.15  2014/05/24 00:23:52  vsnyder
 # Make Parser_L2CF.f9h in the right place
 #
