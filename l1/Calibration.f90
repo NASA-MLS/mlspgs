@@ -78,9 +78,17 @@ MODULE Calibration ! Calibration data and routines
      TYPE (ChanLogical_T), DIMENSION(:), POINTER :: LimbAltFlag
   END TYPE MAFdata_T
 
-  !! Calibration window:
+! #if (defined MOONSCAN)
+! #if (defined MOONSCAN_WINMAFS)
+!   INTEGER, PARAMETER :: WinMAFs = MOONSCAN_WINMAFS     ! user defined WinMAFs	
+! #else
+!   INTEGER, PARAMETER :: WinMAFs = 10     ! default moonscan WinMAFs	
+! #endif
+! #else
+!   INTEGER, PARAMETER :: WinMAFs = 6     ! default L1 WinMAFs	
+! #endif
 
-  INTEGER, PARAMETER :: WinMAFs = 6     ! current window size in MAFs
+  include "Calibration.f9h"
 
   TYPE CalWin_T
      INTEGER :: size        ! size in MAFs
@@ -203,6 +211,7 @@ CONTAINS
     INTEGER :: i, last_cal_index, n
     REAL(r8) :: MIFno
 
+    PRINT *,'WinMAFs = ',WinMAFs
     IF (ANY (CalWin%MAFdata%WeightsFlags%recomp_MAF)) THEN
        PRINT *, 'win flags: ', CalWin%MAFdata%WeightsFlags
        PRINT *, 'cal type: ', CalWin%MAFdata%CalType
@@ -981,6 +990,9 @@ END MODULE Calibration
 !=============================================================================
 
 ! $Log$
+! Revision 2.21  2015/04/23 17:46:27  whdaffer
+! removed Makefile
+!
 ! Revision 2.20  2015/01/13 18:37:37  pwagner
 ! Changed lower bounds on pointer to match LimbAltFlag
 !
