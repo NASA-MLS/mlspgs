@@ -557,7 +557,7 @@ doc:
 doc--api:
 	@echo "api for each of $(SUBDIRS)"; \
 	 for dir in $(SUBDIRS); do \
-   	echo " "; echo '           * * * ' "api for $$dir" ' * * *'; \
+	echo " "; echo '           * * * ' "api for $$dir" ' * * *'; \
 	  $(MLSBIN)/add_idents.sh -api -id -n -d $$dir -suf .f90 -suf .f -suf .c; \
 	done; \
 	echo " "; echo '           * * * ' "api for srclib" ' * * *'; \
@@ -566,10 +566,10 @@ doc--api:
 doc--toc:
 	@echo "toc for each of $(SUBDIRS)"; \
 	 for dir in $(SUBDIRS); do \
-   	echo " "; echo '           * * * ' "toc for $$dir" ' * * *'; \
+	echo " "; echo '           * * * ' "toc for $$dir" ' * * *'; \
 	  $(MLSBIN)/add_idents.sh -toc -id -n -d $$dir -suf .f90 -suf .f -suf .c; \
 	done; \
-   	echo " "; echo '           * * * ' "toc for srclib" ' * * *'; \
+	echo " "; echo '           * * * ' "toc for srclib" ' * * *'; \
 	  $(MLSBIN)/add_idents.sh -toc -id -n -d srclib -suf .f9h -suf .f90
 
 help--Makefile:
@@ -653,7 +653,7 @@ install: $(LEVELS)
 		;; \
 	"l2") \
 			if [ -f $$dir/$(MLSCONFG)/mls$$dir ] ; then \
-      	  mv $$dir/$(MLSCONFG)/mls$$dir $(INSTALLDIR) ; \
+	mv $$dir/$(MLSCONFG)/mls$$dir $(INSTALLDIR) ; \
             rm -f $(INSTALLDIR)/mls$$dir.sh ; \
 	         sed "s=mlsxxyyzz=mls$$dir=; s=mlsbbiinn=$(INSTALLDIR)=; \
               s=mlshhoommee=$(MLSHOME)=; s=mlseexxttrraa==; \
@@ -694,7 +694,7 @@ install: $(LEVELS)
 		;; \
 	*) \
 			if [ -f $$dir/$(MLSCONFG)/mls$$dir ] ; then \
-      	  mv $$dir/$(MLSCONFG)/mls$$dir $(INSTALLDIR) ; \
+	mv $$dir/$(MLSCONFG)/mls$$dir $(INSTALLDIR) ; \
             rm -f $(INSTALLDIR)/mls$$dir.sh ; \
 	         sed "s=mlsxxyyzz=mls$$dir=; s=mlsbbiinn=$(INSTALLDIR)=; \
               s=mlshhoommee=$(MLSHOME)=; s=mlseexxttrraa==" \
@@ -981,14 +981,25 @@ MLS_h5ls: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/MLS_h5ls.f90 l1--itm
 
 # This gathers all the hackery-quackery required to build
 # a special version of level 1 for processing moonscan dates in one place
-# (1) preserve the standard, non-moonscan versions of level 1 pges and source files
-# (2) create a standalone installation directory for the moonscan versions of l1
+#
+# (1) preserve the standard, non-moonscan versions of level 1 pges and
+# source files
+#
+# (2) create a standalone installation directory for the moonscan
+# versions of l1
+#
+#
+#
+
 moonscan: $(CONFDIR)/$(MLSCFILE) install-l1
 	/bin/rm -fr $(INSTALLDIR)-moonscan $(INSTALLDIR)-original
 	cp -r $(INSTALLDIR) $(INSTALLDIR)-original
+	@echo Making moonscan L1, copying Calibration-moonscan.f9h to Calibration.f9h
 	cd l1; \
-	mv Calibration.f90 Calibration.f90-original; \
-	sed  's/WinMAFs = 6/WinMAFs = 10/' Calibration.f90-original > Calibration.f90
+	cp -f Calibration-moonscan.f9h Calibration.f9h; \
+	touch Calibration.f9h
+
+
 	$(MAKE) -f $(MakeFName) install-l1
 	mv $(INSTALLDIR)/mlsl1.sh $(INSTALLDIR)/mlsl1.sh-original
 	sed  '/MLSBIN=/ a\
@@ -997,9 +1008,10 @@ moonscan: $(CONFDIR)/$(MLSCFILE) install-l1
 	chmod a+x $(INSTALLDIR)/mlsl1.sh
 	mv $(INSTALLDIR) $(INSTALLDIR)-moonscan
 	mv $(INSTALLDIR)-original $(INSTALLDIR)
+	@echo Done making moonscan L1, copying Calibration-normal.f9h to Calibration.f9h
 	cd l1; \
-	mv Calibration.f90-original Calibration.f90
-	
+	cp -f Calibration-normal.f9h Calibration.f9h;
+
 
 #lib/$(MLSCONFG)/parser.o: lr
 #	$(MAKE) -C lib parser.o
@@ -1199,7 +1211,7 @@ substarg: substars
 	@echo "... then GNUtarring them"; \
 	rm -f ../mlspgs_subs.tgz ;\
 	$(TAR) -cvzf ../mlspgs_subs.tgz *.tar
-	
+
 # For internal use
 
 internaladd_copy:
@@ -1384,6 +1396,9 @@ tools: chunktimes checkpvmup compare dateconverter \
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.153  2015/04/21 17:39:57  pwagner
+# Builds successfully with new sources in conv_uars
+#
 # Revision 1.152  2015/04/18 00:24:01  pwagner
 # Able to store two separate main programs in conv_uars
 #
