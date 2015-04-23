@@ -44,7 +44,6 @@ vpath %.mod ./
 vpath %.o ./
 vpath %.f90 ../ $(srclib)
 vpath %.f9h ../ $(srclib)
-vpath %.F9H ../ $(srclib)
 vpath %.f ../
 vpath %.c ../
 
@@ -194,6 +193,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.42  2015/04/23 17:46:27  whdaffer
+# removed Makefile
+#
 # Revision 1.41  2014/05/27 18:45:53  pwagner
 # Define TESTSDIR
 #
