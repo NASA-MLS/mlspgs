@@ -42,7 +42,7 @@ DRIVERS_PREFXD := $(shell ${REECHO} -prefix=-do $(DRIVERS))
 
 #These modules require custom builds, so omit build commands from dependencies
 CUSTOM_BUILDS=OutputL1B.f90 OutputL1B_HDF4.f90 EngTbls.f90 \
-  CalibWeightsFlags.f90 L1LogUtils.f90
+  CalibWeightsFlags.f90 L1LogUtils.f90 
 CUSTOM_PREFXD := $(shell ${REECHO} -prefix=-db $(CUSTOM_BUILDS))
 
 ifdef HDF5INC
@@ -165,6 +165,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl1
 
 # $Log$
+# Revision 2.59  2015/04/23 17:46:27  whdaffer
+# removed Makefile
+#
 # Revision 2.58  2010/10/12 22:24:29  pwagner
 # Uses Makefile.h from srclib
 #
