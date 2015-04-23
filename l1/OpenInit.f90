@@ -1068,6 +1068,10 @@ CONTAINS
   SUBROUTINE LoadChanDefaults (unit, deflt_dat, stat)
 !=============================================================================
 
+    ! Used to load the defaults from the default gain and channel zeros files
+    ! (typically named IF-zeros.tbl and deflt-gains.tbl, currently residing in
+    ! /data/emls/l1cal)
+
     USE MLSL1Common, ONLY: Chan_R_T, WFNum
 
     INTEGER :: unit, stat
@@ -1088,6 +1092,12 @@ CONTAINS
     ENDDO
 
 ! read data
+
+! This routine assumes that the data is arranged as FB in FB number order
+! (i.e. all 25 channels for FB 1, followed by all 25 channels for FB 2, ... up
+! to FB 19), followed by MB in order, (again all 11 channels for MB 1, then 11
+! channels for MB2, etc) followed by the WF. If the file isn't arranged that
+! way, the data won't be arranged correctly.
 
     i = 1
     chan_type = "FB"
@@ -1140,6 +1150,9 @@ END MODULE OpenInit
 !=============================================================================
 
 ! $Log$
+! Revision 2.32  2015/04/23 17:46:27  whdaffer
+! removed Makefile
+!
 ! Revision 2.31  2015/01/21 19:31:23  pwagner
 ! Fortran unit must not be -1
 !
