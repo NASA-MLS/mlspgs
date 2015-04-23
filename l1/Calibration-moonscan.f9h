@@ -1,0 +1,2 @@
+  !! Moonscan L1 runs
+  INTEGER, PARAMETER :: WinMAFs = 10     ! window size in MAFs for  `moonscan' run
