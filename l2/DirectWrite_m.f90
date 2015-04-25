@@ -1133,6 +1133,7 @@ contains ! ======================= Public Procedures =========================
     use MLSHDF5, only: ishdf5grouppresent, &
       & makehdf5attribute, saveashdf5ds
     use MLSSTrings, only: writeintstochars
+    use MoreMessage, only: MLSMessage
     use String_Table, only: Get_String
     ! Args:
     type (VectorValue_T), intent(in) :: QUANTITY
@@ -1147,7 +1148,7 @@ contains ! ======================= Public Procedures =========================
     ! logical :: attributes_there
     integer :: grp_id
     integer :: myRank
-    character(len=127) :: chunkStr ! chunk number '1', '2', .., then a temp later
+    character(len=10) :: chunkStr ! chunk number '1', '2', ..,
     integer :: returnStatus
     integer :: TrueRank ! of the quantity's value
     ! logical, parameter :: DEEBUG = .true.
@@ -1185,12 +1186,9 @@ contains ! ======================= Public Procedures =========================
     if ( myRank <= 0 ) then
       myRank = trueRank
     else if ( trueRank > myRank ) then
-      chunkStr = "Actual rank of Value"
-      if ( quantity%template%name > 0 ) &
-        & call get_string ( quantity%template%name, chunkStr(len_trim(chunkStr)+2:) )
-      write ( chunkStr(len_trim(chunkStr)+1:), '(1x,3(a,i0))' ) " is ", trueRank, &
-        & " but the specified rank is ", myRank, ".  Are you sure this is what you want?"
-      call MLSMessage ( MLSMSG_Warning, moduleName, chunkStr )
+      call MLSMessage ( MLSMSG_Warning, moduleName, "Actual rank of Value $S is " // &
+        & " $D but the specified rank is $D.  Are you sure this is what you want?", &
+        & datum=[ quantity%template%name, trueRank, myRank] )
     end if
     select case ( myRank )
     case ( 1 )
@@ -1719,6 +1717,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.73  2015/04/25 02:10:36  vsnyder
+! Spiff a message
+!
 ! Revision 2.72  2015/04/21 17:53:03  pwagner
 ! May DirectRead quantity geolocations
 !
