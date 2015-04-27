@@ -172,6 +172,7 @@ CONTAINS
     window_MAFs = L1Config%Calib%CalWindow
     MIFsPerMAF = L1Config%Calib%MIFsPerMAF
     last_MIF = MIFsPerMAF - 1
+    PRINT *,'WinMAFs = ',WinMAFs
     IF (window_MAFs > winMAFs) THEN
        CALL MLSMessage (MLSMSG_Error, ModuleName, &
             "CalWindow greater than MAX size - resize winMAFs and " // &
@@ -211,7 +212,6 @@ CONTAINS
     INTEGER :: i, last_cal_index, n
     REAL(r8) :: MIFno
 
-    PRINT *,'WinMAFs = ',WinMAFs
     IF (ANY (CalWin%MAFdata%WeightsFlags%recomp_MAF)) THEN
        PRINT *, 'win flags: ', CalWin%MAFdata%WeightsFlags
        PRINT *, 'cal type: ', CalWin%MAFdata%CalType
@@ -990,6 +990,9 @@ END MODULE Calibration
 !=============================================================================
 
 ! $Log$
+! Revision 2.22  2015/04/27 20:25:18  whdaffer
+! Moved print WinMAFs statement to InitCalibWindow
+!
 ! Revision 2.21  2015/04/23 17:46:27  whdaffer
 ! removed Makefile
 !
