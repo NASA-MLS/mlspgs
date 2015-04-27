@@ -998,10 +998,8 @@ moonscan: $(CONFDIR)/$(MLSCFILE) install-l1
 	cd l1; \
 	cp -f Calibration-moonscan.f9h Calibration.f9h; \
 	touch Calibration.f9h
-
-
-	$(MAKE) -f $(MakeFName) install-l1
 	mv $(INSTALLDIR)/mlsl1.sh $(INSTALLDIR)/mlsl1.sh-original
+	$(MAKE) -f $(MakeFName) install-l1
 	sed  '/MLSBIN=/ a\
 	MLSBIN=$$MLSBIN-moonscan\
 	' $(INSTALLDIR)/mlsl1.sh-original > $(INSTALLDIR)/mlsl1.sh
@@ -1396,6 +1394,9 @@ tools: chunktimes checkpvmup compare dateconverter \
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.154  2015/04/23 17:52:31  whdaffer
+# Small changes to how L1 moonscan builds are done.
+#
 # Revision 1.153  2015/04/21 17:39:57  pwagner
 # Builds successfully with new sources in conv_uars
 #
