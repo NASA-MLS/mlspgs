@@ -78,16 +78,9 @@ MODULE Calibration ! Calibration data and routines
      TYPE (ChanLogical_T), DIMENSION(:), POINTER :: LimbAltFlag
   END TYPE MAFdata_T
 
-! #if (defined MOONSCAN)
-! #if (defined MOONSCAN_WINMAFS)
-!   INTEGER, PARAMETER :: WinMAFs = MOONSCAN_WINMAFS     ! user defined WinMAFs	
-! #else
-!   INTEGER, PARAMETER :: WinMAFs = 10     ! default moonscan WinMAFs	
-! #endif
-! #else
-!   INTEGER, PARAMETER :: WinMAFs = 6     ! default L1 WinMAFs	
-! #endif
-
+  ! Defines WinMAFs. If building a moonscan, it will use
+  ! Calibration-moonscan.f9h (WinMAFs=10), otherwise it will use
+  ! Calibration-normal.f9h (WinMAFs=6)
   include "Calibration.f9h"
 
   TYPE CalWin_T
@@ -990,6 +983,10 @@ END MODULE Calibration
 !=============================================================================
 
 ! $Log$
+! Revision 2.23  2015/04/27 20:27:56  whdaffer
+! Removed obsolete preprocessor commands. Added a bit of documentation
+! about Calibration.f90
+!
 ! Revision 2.22  2015/04/27 20:25:18  whdaffer
 ! Moved print WinMAFs statement to InitCalibWindow
 !
