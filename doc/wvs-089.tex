@@ -5,8 +5,8 @@
 \topmargin -0.25in
 \textheight 9in
 
-\newcommand{\docname}{\bf wvs-089r2}
-\newcommand{\docdate}{24 May 2010}
+\newcommand{\docname}{\bf wvs-089r4}
+\newcommand{\docdate}{30 September 2015}
 
 \usepackage{graphicx}
 
@@ -80,7 +80,10 @@ Reference: \>\h{wvs-066}, \h{wvs-076}
 \parindent 0pt \parskip 6pt
 \vspace{-10pt}
 
-Denote the reference orbit geodetic angle $\phi$ by $\phi_i$.
+Denote a reference orbit geodetic angle $\phi$ by $\phi_i$.  If the atmosphere
+is not horizontally homogeneous along the orbit path, it might be desirable to
+compute TScat tables for different values of $\phi$, for example, to accomodate
+tables for different latitudes.
 
 The scattering points in the set $\{S_{jk}\}$, in the orbit plane, are on a
 grid specified by $\{\phi_j\} \times \{\zeta_k\}$, where $\{\phi_j\}$ are orbit
@@ -95,7 +98,7 @@ The points in the set $\{A_{mn}\}$, also in the orbit plane, include points in
 addition to $\{S_{jk}\}$, on a grid specified by $\{\phi_m\} \times
 \{\zeta_n\}$.
 
-{\includegraphics[scale=0.90]{./wvs-089-pic}}
+{\includegraphics[scale=0.85]{./wvs-089-pic}}
 
 $P_{jk}(\xi)$ is the Mie phase function, evaluated for IWC and T at $S_{jk}$;
 $\xi = 0$ at the reference horizon.
@@ -114,7 +117,6 @@ convolved with the Mie phase function, is
 
 The derivative of phase-convolved radiance at $S_{jk}$ with respect to some
 quantity $x_{mn}$ at $A_{mn}$ is
-
 
 \begin{equation}\label{two}
 \frac{\partial\overline{I}_{ijk}}{\partial x_{mn}} =
@@ -139,11 +141,21 @@ Otherwise $\frac{\partial P_{jk}(\xi)}{\partial x_{mn}} = 0$, and Equation
   \frac{\partial I_{ijk}(\xi)}{\partial x_{mn}} P_{jk}(\xi)\, \text{d} \xi \,.
 \end{equation}
 
+In comments within the {\tt TScatSupport} module, terms of the form
+$\frac{\partial}{\partial f^k_i}$ and $\frac{\partial}{\partial f^k_{lm}}$
+appear.  The superscript $k$ refers to a species.  The subscript $i$
+refers to a position on the path (black circles in the figure).  The
+subscripts $lm$ refer to positions in the solution field ($A_{mn}$ in the
+figure).
+
 \label{lastpage}
 \end{document}
 % $Id$
 
 % $Log$
+% Revision 1.4  2010/05/28 23:09:11  vsnyder
+% Remove graphics extension so latex or pdflatex can select it
+%
 % Revision 1.3  2010/05/25 03:00:29  vsnyder
 % Added description of dependence of derivatives upon atmospheric properties
 %
