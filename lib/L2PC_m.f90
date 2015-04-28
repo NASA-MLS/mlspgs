@@ -17,52 +17,52 @@ module L2PC_m
   ! files.  The first version dealt with ascii files, but later versions
   ! must be HDF5.
 
-  use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
-  use DUMP_0, only: DUMP
-  use HESSIANMODULE_0, only: HESSIANELEMENT_T, &
-    & H_ABSENT, H_SPARSE, H_FULL, H_UNKNOWN, &
-    & CREATEBLOCK, DESTROYBLOCK
-  use HESSIANMODULE_1, only: HESSIAN_T, &
-    & COPYHESSIANVALUE, CREATEBLOCK, CREATEEMPTYHESSIAN, DESTROYHESSIAN
-  use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
-  use INTRINSIC, only: L_ADOPTED, L_CHANNEL, L_GEODALTITUDE, L_NONE, L_VMR, &
-    & L_RADIANCE, L_NONE, L_INTERMEDIATEFREQUENCY, L_LATITUDE, L_FIELDAZIMUTH, &
-    & L_ROWS, L_COLUMNS, L_COLUMNABUNDANCE, L_TEMPERATURE, L_TSCAT, &
-    & L_ISOTOPERATIO, L_CALSIDEBANDFRACTION, L_LIMBSIDEBANDFRACTION, &
-    & L_OPTICALDEPTH, L_ELEVOFFSET, &
-    & LIT_INDICES, &
-    & PHYQ_COLMABUNDANCE, PHYQ_DIMENSIONLESS, PHYQ_PCTRHI, &
-    & PHYQ_TEMPERATURE, PHYQ_VMR
-  use MANIPULATEVECTORQUANTITIES, only: DOVECTORSMATCH
-  use MATRIXMODULE_0, only: M_ABSENT, M_BANDED, M_COLUMN_SPARSE, M_FULL, &
-    & MATRIXELEMENT_T, M_UNKNOWN, DESTROYBLOCK
-  use MATRIXMODULE_1, only: MATRIX_T, MATRIX_DATABASE_T, &
-    & COPYMATRIXVALUE, CREATEBLOCK, CREATEEMPTYMATRIX, &
-    & DESTROYMATRIX, DUMP, DUMP_STRUCT, &
-    & FINDBLOCK, GETACTUALMATRIXFROMDATABASE
-  use MLSCOMMON, only: MLSFILE_T
-  use MLSFILES, only: DUMPMLSFILE => DUMP
-  use MLSKINDS, only: R8, R4
-  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING
-  use MLSFINDS, only: FINDFIRST
-  use MLSSIGNALS_M, only: GETSIGNALNAME
-  use MLSSTRINGLISTS, only: OPTIONDETAIL, SWITCHDETAIL
-  use MLSSTRINGS, only: WRITEINTSTOCHARS
-  use MOLECULES, only: ISEXTINCTION, L_RHI
-  use MORETREE, only: GETLITINDEXFROMSTRING, GETSTRINGINDEXFROMSTRING
-  use OUTPUT_M, only: NEWLINE, OUTPUT
-  use PARSE_SIGNAL_M, only: PARSE_SIGNAL
-  use QUANTITYTEMPLATES, only: QUANTITYTEMPLATE_T, &
-    & ADDQUANTITYTEMPLATETODATABASE, COPYQUANTITYTEMPLATE, &
-    & DESTROYQUANTITYTEMPLATECONTENTS, INFLATEQUANTITYTEMPLATEDATABASE, &
-    & NULLIFYQUANTITYTEMPLATE, SETUPNEWQUANTITYTEMPLATE
-  use STRING_TABLE, only: DISPLAY_STRING, GET_STRING
-  use TOGGLES, only: SWITCHES
-  use TREE, only: DECORATION, NSONS, SUBTREE
-  use VECTORSMODULE, only: VECTORTEMPLATE_T, VECTOR_T, &
-    & ASSIGNMENT(=), ADDVECTORTEMPLATETODATABASE, &
-    & ADDVECTORTODATABASE, CONSTRUCTVECTORTEMPLATE, COPYVECTOR, CREATEVECTOR, &
-    & DESTROYVECTORINFO, DUMP, NULLIFYVECTORTEMPLATE
+  use allocate_deallocate, only: allocate_test, deallocate_test
+  use dump_0, only: dump
+  use hessianmodule_0, only: hessianelement_t, &
+    & h_absent, h_sparse, h_full, h_unknown, &
+    & createblock, destroyblock
+  use hessianmodule_1, only: hessian_t, &
+    & copyhessianvalue, createblock, createemptyhessian, destroyhessian
+  use highoutput, only: outputnamedvalue
+  use intrinsic, only: l_adopted, l_channel, l_geodaltitude, l_none, l_vmr, &
+    & l_radiance, l_none, l_intermediatefrequency, l_latitude, l_fieldazimuth, &
+    & l_rows, l_columns, l_columnabundance, l_temperature, l_tscat, &
+    & l_isotoperatio, l_calsidebandfraction, l_limbsidebandfraction, &
+    & l_opticaldepth, l_elevoffset, &
+    & lit_indices, &
+    & phyq_colmabundance, phyq_dimensionless, phyq_pctrhi, &
+    & phyq_temperature, phyq_vmr
+  use manipulatevectorquantities, only: dovectorsmatch
+  use matrixmodule_0, only: m_absent, m_banded, m_column_sparse, m_full, &
+    & matrixelement_t, m_unknown, destroyblock
+  use matrixmodule_1, only: matrix_t, matrix_database_t, &
+    & copymatrixvalue, createblock, createemptymatrix, &
+    & destroymatrix, dump, dump_struct, &
+    & findblock, getactualmatrixfromdatabase
+  use MLSCommon, only: mlsfile_t
+  use MLSFiles, only: dumpmlsfile => dump
+  use MLSKinds, only: r8, r4
+  use MLSMessagemodule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
+  use MLSFinds, only: findfirst
+  use MLSSignals_m, only: getsignalname
+  use MLSStringlists, only: optiondetail, switchdetail
+  use MLSStrings, only: writeintstochars
+  use molecules, only: isextinction, l_rhi
+  use moretree, only: getlitindexfromstring, getstringindexfromstring
+  use output_m, only: newline, output
+  use parse_signal_m, only: parse_signal
+  use quantitytemplates, only: quantitytemplate_t, &
+    & addquantitytemplatetodatabase, copyquantitytemplate, &
+    & destroyquantitytemplatecontents, inflatequantitytemplatedatabase, &
+    & nullifyquantitytemplate, setupnewquantitytemplate
+  use string_table, only: display_string, get_string
+  use toggles, only: switches
+  use tree, only: decoration, nsons, subtree
+  use vectorsmodule, only: vectortemplate_t, vector_t, &
+    & assignment(=), addvectortemplatetodatabase, &
+    & addvectortodatabase, constructvectortemplate, copyvector, createvector, &
+    & destroyvectorinfo, dump, nullifyvectortemplate
 
   implicit none
   private
@@ -417,6 +417,7 @@ contains ! ============= Public Procedures ==========================
   subroutine DiffL2PCFiles ( L2PCFile1, L2PCFile2, details, options )
     ! This subroutine Diffs an l2pc to stdout
     ! assuming it was read already
+    use output_m, only: output
 
     ! Dummy arguments
     type (MLSFile_T), intent(inout) :: L2PCFile1, L2PCFile2
@@ -425,28 +426,27 @@ contains ! ============= Public Procedures ==========================
     !                                        ! -2 Skip all but size
     !                                        ! >0 Diff even multi-dim arrays
     !                                        ! Default 0
-    character(len=*), intent(in), optional :: options ! any of {mh*b[]}
+    character(len=*), intent(in), optional :: options ! any of {jh*b[]}
                                              ! D: read files before Diffing
-                                             ! m: Diff only matrices
+                                             ! j: Diff only matrices
                                              ! h: Diff only hessians
                                              ! *: Diff matrices and hessians
                                              ! b[HCN]: Diff only HCN blocks
                                              ! default is *
     ! Local variables
+    logical :: different
     integer :: i
     integer, dimension(MAXNBINS) :: indices1
     integer, dimension(MAXNBINS) :: indices2
     logical :: mustRead
     integer :: nBins1
     integer :: nBins2
+    logical :: silent
     logical :: verbose
     ! Executable
-    mustRead = .false.
-    verbose = .false.
-    if ( present(options) ) then
-      mustRead = (optionDetail(options, 'D' ) == 'yes' )
-      verbose = (optionDetail(options, 'v' ) == 'yes' )
-    endif
+    mustRead = (optionDetail(options, 'D' ) == 'yes' )
+    verbose = (optionDetail(options, 'v' ) == 'yes' )
+    silent = (optionDetail(options, 'm' ) == 'yes' )
     if ( verbose ) call outputNamedValue( 'options', options )
     if ( verbose ) call outputNamedValue( 'mustRead', mustRead )
     if ( mustRead ) then
@@ -466,46 +466,63 @@ contains ! ============= Public Procedures ==========================
     call getNBinsInFile ( L2PCFile1, indices1, nBins1 )
     call getNBinsInFile ( L2PCFile2, indices2, nBins2 )
     if ( verbose ) call outputNamedValue( 'nBins1', nBins1 )
+    if ( verbose ) call outputNamedValue( 'indices1', indices1 )
     if ( verbose ) call outputNamedValue( 'nBins2', nBins2 )
+    if ( verbose ) call outputNamedValue( 'indices2', indices2 )
+    different = .false.
     do i=1, min( nBins1, nBins2 )
-      call newline
+      if ( .not. silent ) call newline
       if ( verbose ) call outputNamedValue( 'file index', i )
       call DiffL2PCs( L2PCDataBase(indices1(i)), L2PCDataBase(indices2(i)), &
-        & details, options )
+        & details, options, different )
     enddo
+    if ( different ) then
+      call output( 'These L2PC files differ', advance='yes' )
+    elseif ( silent ) then
+      call output( 'These L2PC files do not differ', advance='yes' )
+    endif
   end subroutine DiffL2PCFiles
 
   ! --------------------------------------- DiffL2PCs ---------------
-  subroutine DiffL2PCs ( L2pc1, L2pc2, details, options )
+  subroutine DiffL2PCs ( L2pc1, L2pc2, details, options, different )
     ! This subroutine diffs two l2pcs
 
-    use HESSIANMODULE_1, only: DIFF
-    use MATRIXMODULE_1, only: DIFF
+    use hessianModule_1, only: Diff
+    use matrixModule_1, only: Diff
+    use MLSStrings, only: Delete
 
     ! Dummy arguments
     type (l2pc_t), intent(inout) :: L2pc1, l2pc2
     integer, intent(in), optional :: DETAILS ! passed to Vector and Matrix dumps
-    character(len=*), intent(in), optional :: options ! any of {mh*b[]}
-                                             ! m: dump only matrices
+    character(len=*), intent(in), optional :: options ! any of {jh*b[]}
+                                             ! j: dump only matrices
                                              ! h: dump only hessians
                                              ! *: dump matrices and hessians
                                              ! b[HCN]: dump only HCN blocks
                                              ! default is *
+    logical, intent(inout), optional :: different ! Are matrices different?
     ! Local variables
+    character(len=16) :: audible
     logical :: dumpHessians
     logical :: dumpJacobians
+    logical :: itsDifferent
     integer :: myDetails
-    logical :: verbose
+    logical :: silent                        ! if opttions contain 'm'
+    logical :: verbose                       ! if opttions contain 'b'
     ! Executable code
     myDetails = 0
     if ( present(details) ) myDetails = details
     dumpHessians = .true.
     dumpJacobians = .true.
     verbose = .false.
+    silent = .false.
+    audible = ' '
     if ( present(options) ) then
       dumpHessians = optionDetail( options, 'h' ) == 'yes'
-      dumpJacobians = optionDetail( options, 'm' ) == 'yes'
+      dumpJacobians = optionDetail( options, 'j' ) == 'yes'
       verbose = (optionDetail(options, 'v' ) == 'yes' )
+      silent = (optionDetail(options, 'm' ) == 'yes' )
+      audible = Delete ( options, 'm' )
       if ( verbose ) then
         call outputNamedValue( 'options', trim(options) )
         call outputNamedValue( 'dumpJacobians', dumpJacobians )
@@ -513,28 +530,43 @@ contains ! ============= Public Procedures ==========================
       endif
     endif
     if ( verbose ) call outputNamedValue( 'myDetails', myDetails )
-    call output( '- Diffing L2PCs -', advance='yes' )
-    if ( l2pc1%name > 0 ) then
-      call display_string ( l2pc1%name, before='name: ' )
-      call output ( l2pc1%name, before=' (', after=')', advance='yes' )
-    else
-      call output( '*** Uh-oh, name not found in string table', advance='yes' )
+    if ( .not. silent ) then
+      call output( '- Diffing L2PCs -', advance='yes' )
+      call NameThoseBins
+      if ( verbose ) call outputNamedValue( 'l2pc1%goth', l2pc1%goth )
+      if ( verbose ) call outputNamedValue( 'l2pc2%goth', l2pc2%goth )
     endif
-    if ( l2pc2%name > 0 ) then
-      call display_string ( l2pc2%name, before='name: ' )
-      call output ( l2pc2%name, before=' (', after=')', advance='yes' )
-    else
-      call output( '*** Uh-oh, name not found in string table', advance='yes' )
+    itsDifferent = .false.
+    if ( dumpJacobians ) then
+      call diff ( l2pc1%j, l2pc2%j, &
+        & details, options=options, different=itsDifferent )
+      if ( silent .and. itsDifferent ) &
+        & call diff ( l2pc1%j, l2pc2%j, details, options=audible )
     endif
-    
-    if ( verbose ) call outputNamedValue( 'l2pc1%goth', l2pc1%goth )
-    if ( verbose ) call outputNamedValue( 'l2pc2%goth', l2pc2%goth )
-    if ( dumpJacobians ) &
-      & call diff ( l2pc1%j, l2pc2%j, details )
 
     if ( l2pc1%goth .and. dumpHessians ) &
-      & call diff ( l2pc1%h, l2pc2%h, details, options )
+      & call diff ( l2pc1%h, l2pc2%h, details, options=options )
+    if ( present(different) ) different = different .or. itsDifferent
+    if ( silent .and. .not. itsDifferent ) then
+      call NameThoseBins
+      call output( 'These L2PC bins do not differ', advance='yes' )
+    endif
+  contains
+    subroutine NameThoseBins
+      if ( l2pc1%name > 0 ) then
+        call display_string ( l2pc1%name, before='name: ' )
+        call output ( l2pc1%name, before=' (', after=')', advance='yes' )
+      else
+        call output( '*** Uh-oh, name not found in string table', advance='yes' )
+      endif
+      if ( l2pc2%name > 0 ) then
+        call display_string ( l2pc2%name, before='name: ' )
+        call output ( l2pc2%name, before=' (', after=')', advance='yes' )
+      else
+        call output( '*** Uh-oh, name not found in string table', advance='yes' )
+      endif
 
+    end subroutine NameThoseBins
   end subroutine DiffL2PCs
 
   ! --------------------------------------- DumpL2PCDatabase ---------------
@@ -612,8 +644,8 @@ contains ! ============= Public Procedures ==========================
   subroutine DumpOneL2PC ( L2pc, details, ONLYTHESEBLOCKS, options )
     ! This subroutine dumps an l2pc to stdout
 
-    use HESSIANMODULE_1, only: DUMP, DUMP_LAYOUT
-    use MatrixModule_1, only: DUMP_LAYOUT
+    use hessianModule_1, only: dump, dump_layout
+    use MatrixModule_1, only: dump_layout
 
     ! Dummy arguments
     type (l2pc_t), intent(in), target :: L2pc
@@ -897,9 +929,9 @@ contains ! ============= Public Procedures ==========================
   ! --------------------------------------------- OutputHDF5L2PC
   subroutine OutputHDF5L2PC ( filename, matrices, hessians, &
     & quantitiesNode, secondDerivNode, packed, dontPack )
-  use HDF5, only: H5FCREATE_F, H5FCLOSE_F, H5F_ACC_TRUNC_F
-  use MLSSTRINGLISTS, only: CATLISTS
-  use TREE, only: SUB_ROSA
+  use hdf5, only: h5fcreate_f, h5fclose_f, h5f_acc_trunc_f
+  use MLSSTringLists, only: catLists
+  use tree, only: sub_rosa
     character (len=*), intent(in) :: FILENAME
     type (Matrix_Database_T), dimension(:), pointer :: MATRICES
     type (Hessian_T), dimension(:), pointer :: HESSIANS
@@ -976,10 +1008,10 @@ contains ! ============= Public Procedures ==========================
   ! --------------------------------------- WriteOneHDF5L2PC -----------
   subroutine WriteOneHDF5L2PC ( JACOBIAN, fileID, packed, dontPack, &
     & hessian, onlyTheseBlocks )
-    use HESSIANMODULE_0, only: OPTIMIZEBLOCK
-    use HDF5, only: H5GCLOSE_F, H5GCREATE_F
-    use MLSKINDS, only: RM
-    use MLSHDF5, only: MAKEHDF5ATTRIBUTE, SAVEASHDF5DS
+    use hessianModule_0, only: optimizeBlock
+    use HDF5, only: h5gclose_f, h5gcreate_f
+    use MLSKinds, only: rm
+    use MLSHdf5, only: makeHDF5Attribute, saveAsHDF5DS
     ! This subroutine writes an l2pc to a file in hdf5 format
 
     ! Dummy arguments
@@ -1236,7 +1268,7 @@ contains ! ============= Public Procedures ==========================
   subroutine DestroyL2PCInfoDatabase
 
     use Allocate_Deallocate, only: Test_Deallocate
-    use HDF5, only: H5FCLOSE_F, H5GCLOSE_F, H5ESET_AUTO_F
+    use HDF5, only: H5FClose_f, H5GClose_f, H5ESet_Auto_f
     use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
 
     ! Local variables
@@ -1404,9 +1436,9 @@ contains ! ============= Public Procedures ==========================
 
   ! --------------------------------------- Populate L2PCBin --------
   subroutine PopulateL2PCBin ( bin, IgnoreHessian )
-    use HDF5, only: HSIZE_T, H5GCLOSE_F, H5GOPEN_F, H5GGET_OBJ_INFO_IDX_F, &
-        & H5GN_MEMBERS_F
-    use MLSHDF5, only: GETHDF5ATTRIBUTE, GETHDF5DSDIMS, LOADFROMHDF5DS
+    use HDF5, only: hsize_t, h5gclose_f, h5gopen_f, h5gget_obj_info_idx_f, &
+        & h5gn_members_f
+    use MLSHDF5, only: getHDF5Attribute, getHDF5DSDims, loadFromHDF5DS
 
     integer, intent(in) :: BIN ! The bin index to populate
     logical, intent(in), optional :: IgnoreHessian
@@ -1594,12 +1626,12 @@ contains ! ============= Public Procedures ==========================
 
   ! --------------------------------------- ReadCompleteHDF5L2PCFile -------
   subroutine ReadCompleteHDF5L2PCFile ( MLSFile, Where, Shallow )
-    use HDF, only: DFACC_RDONLY
-    use HDF5, only: H5GN_MEMBERS_F
-    use INTRINSIC, only: L_HDF
-    use MLSFILES, only: HDFVERSION_5, MLS_OPENFILE
-    use Trace_M, only: TRACE_BEGIN, TRACE_END
-    use Toggles, only: TOGGLE, GEN
+    use HDF, only: DFAcc_rdonly
+    use HDF5, only: H5GN_Members_f
+    use intrinsic, only: l_hdf
+    use MLSFiles, only: HDFVersion_5, MLS_Openfile
+    use Trace_M, only: trace_begin, trace_end
+    use Toggles, only: toggle, gen
     type (MLSFile_T), intent(inout)   :: MLSFile
     integer, intent(in) :: Where ! In the L2CF tree, for tracing
     logical, optional   :: Shallow
@@ -1679,9 +1711,9 @@ contains ! ============= Public Procedures ==========================
 
   ! --------------------------------------- ReadOneHDF5L2PCRecord ------------
   subroutine ReadOneHDF5L2PCRecord ( l2pc, MLSFile, l2pcIndex, shallow, info )
-    use HDF5, only: H5GCLOSE_F, H5GOPEN_F, H5GGET_OBJ_INFO_IDX_F, &
-      & H5GN_MEMBERS_F
-    use MLSHDF5, only: GETHDF5ATTRIBUTE, LOADFROMHDF5DS
+    use HDF5, only: H5GClose_f, h5gopen_f, h5gget_obj_info_idx_f, &
+      & h5gn_members_f
+    use MLSHDF5, only: GetHDF5Attribute, loadFromHDF5DS
     type ( L2pc_t ), intent(out), target :: L2PC
     type (MLSFile_T), intent(inout)   :: MLSFile
     ! integer, intent(in) :: FILEID       ! HDF5 ID of input file
@@ -1957,10 +1989,10 @@ contains ! ============= Public Procedures ==========================
 
   ! --------------------------------------- ReadOneVectorFromHDF5 ------
   subroutine ReadOneVectorFromHDF5 ( MLSFile, name, vector )
-    use HDF5, only: H5GCLOSE_F, H5GOPEN_F, H5GGET_OBJ_INFO_IDX_F
-    use MLSHDF5, only: GETHDF5ATTRIBUTE, ISHDF5ATTRIBUTEPRESENT, &
-      & ISHDF5DSPRESENT, LOADFROMHDF5DS
-    use MLSSIGNALS_M, only: RADIOMETERS, SIGNALS
+    use HDF5, only: H5GClose_f, h5gopen_f, h5gget_obj_info_idx_f
+    use MLSHDF5, only: GETHDF5Attribute, isHDF5AttributePresent, &
+      & isHDF5DSPresent, loadFromHDF5DS
+    use MLSSignals_m, only: radiometers, signals
     ! Read a vector from an l2pc HDF5 and adds it to internal databases.
     ! Dummy arguments
     type (MLSFile_T) :: MLSFile
@@ -2247,9 +2279,9 @@ contains ! ============= Public Procedures ==========================
 
   ! --------------------------------------- WriteVectorAsHDF5L2PC ----------
   subroutine WriteVectorAsHDF5L2PC ( location, vector, name, packInfo )
-    use HDF5, only: H5GCLOSE_F, H5GCREATE_F
-    use MLSHDF5, only: MAKEHDF5ATTRIBUTE, SAVEASHDF5DS
-    use MLSSIGNALS_M, only: RADIOMETERS
+    use HDF5, only: H5GClose_f, h5gcreate_f
+    use MLSHDF5, only: MakeHDF5Attribute, saveasHDF5DS
+    use mlssignals_m, only: radiometers
     integer, intent(in) :: LOCATION     ! The HDF5 location for the vector
     type (Vector_T), intent(in), target :: VECTOR ! The vector to write
     character(len=*), intent(in) :: NAME ! Name for vector
@@ -2389,6 +2421,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.130  2015/04/28 23:59:52  pwagner
+! Diffs made more manageable
+!
 ! Revision 2.129  2015/03/28 01:10:03  vsnyder
 ! Added stuff to trace allocate/deallocate addresses
 !
