@@ -1633,13 +1633,25 @@ contains ! =====     Public Procedures     =============================
     myFields = DEFAULTFIELDS
     skipGeos = .false.
     if ( present(fields) ) myFields = fields
-    if ( DEEBUG ) then
+                                                                              
+    if ( present ( options ) ) then                                           
+      if ( DEEBUG ) call output( 'options: ' // trim(options), advance='yes' )
+      badChunks = (index(options, 'i' ) > 0) .and. badChunks                  
+      diffGeosMeanBadChunks = ( index(options, 'd') > 0 )                     
+      skipGeos = ( index(options, 'g') > 0 )                                  
+    else                                                                      
+      badChunks = .false.                                                     
+    endif                                                                     
+
+    if ( DEEBUG ) then                                                        
       call output( 'myDetails: ', advance='no' )
       call output( myDetails, advance='yes' )
       call output( 'mySilent: ', advance='no' )
       call output( mySilent, advance='yes' )
       call output( 'myFields: ', advance='no' )
-      call output( myFields, advance='yes' )
+      call output( myFields, advance='yes' )   
+      call output( 'skipGeos: ', advance='no' )
+      call output( skipGeos, advance='yes' )   
     endif
     if ( myFields == '*' .or. lowercase(myFields) == 'all' ) &
       & myFields = DEFAULTFIELDS
@@ -1710,13 +1722,6 @@ contains ! =====     Public Procedures     =============================
       & .or. &
       & any( IsFillValue ( l2gp2%l2gpValue, l2gp2%MissingValue ) ) &
       & )
-    if ( present ( options ) ) then
-      badChunks = (index(options, 'i' ) > 0) .and. badChunks
-      diffGeosMeanBadChunks = ( index(options, 'd') > 0 )
-      skipGeos = ( index(options, 'g') > 0 )
-    else
-      badChunks = .false.
-    endif
     ! OK, we'll try what you suggest
     call SetupNewL2GPRecord ( l2gp2Temp, proto=l2gp2 )
     l2gp2Temp%status = l2gp2%status
@@ -5238,6 +5243,10 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.211  2015/03/28 01:09:22  vsnyder
+! Made DescendingRange a parameter.
+! Added stuff to trace allocate/deallocate addresses.
+!
 ! Revision 2.210  2015/02/27 23:57:55  pwagner
 ! Take pains to ensure HostName is not blank
 !
