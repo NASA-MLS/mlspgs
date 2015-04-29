@@ -195,7 +195,7 @@ Fill, quantity=apriori.refGPH,$
   ;; Fill the magnetic field.
 !ifdef(flagMagneticFieldOnHeightGrid,{!dnl
   Fill, quantity=apriori.magneticField, method=magneticModel, $
-    scVelECR=apriori.scVelECR, geocAltitudeQuantity=apriori.tngtGeocAltGHz
+    GPHquantity=apriori.gph
   Fill, quantity=apriori.fieldAzimuth, method=rotateField, $
     fieldECR=apriori.magneticField, ecrToFOV=apriori.ecrToFOV
   Fill, quantity=apriori.fieldElevation, method=rotateField, $
@@ -782,6 +782,9 @@ end Fill
 !include(writeapriori.l2cf)
 !divert(-1)
 ;$Log$
+;Revision 1.160  2015/03/27 18:00:52  pwagner
+;Preparing for new magneticField
+;
 ;Revision 1.159  2014/06/03 22:17:10  pwagner
 ;May destroy mergedTemperature after use to conservee memory
 ;
