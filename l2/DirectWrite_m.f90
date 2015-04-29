@@ -1125,8 +1125,8 @@ contains ! ======================= Public Procedures =========================
   !       lats
   !         ...
   
-  subroutine DirectWrite_Quantity ( File, quantity, qtyName, &
-    & chunkNo, options, rank )
+  subroutine DirectWrite_Quantity ( File, Quantity, QtyName, &
+    & ChunkNo, Options, Rank )
 
     use HDF5, only: h5gclose_f, h5gcreate_f, h5gopen_f
     use intrinsic, only: lit_indices
@@ -1136,12 +1136,12 @@ contains ! ======================= Public Procedures =========================
     use MoreMessage, only: MLSMessage
     use String_Table, only: Get_String
     ! Args:
-    type (VectorValue_T), intent(in) :: QUANTITY
-    character(len=*), intent(in) :: qtyName       ! Name of qty in output file
-    type(MLSFile_T)                :: File
-    integer, intent(in) :: CHUNKNO      ! Index into chunks
-    character(len=*), intent(in), optional :: options
-    integer, intent(in), optional :: rank
+    type(MLSFile_T)                  :: File
+    type (VectorValue_T), intent(in) :: Quantity
+    character(len=*), intent(in)     :: QtyName  ! Name of qty in output file
+    integer, intent(in)              :: ChunkNo  ! Index into chunks
+    character(len=*), intent(in), optional :: Options
+    integer, intent(in), optional    :: Rank
 
     ! Local variables
     logical :: already_there
@@ -1158,16 +1158,16 @@ contains ! ======================= Public Procedures =========================
     verbose = BeVerbose ( 'direct', -1 )
     myRank = 2
     if ( present(rank) ) then
-      if ( rank > 0 .and. rank < 5 ) myRank = rank
+      if ( rank < 5 ) myRank = rank
       ! call outputNamedValue ( 'input rank', rank )
-    endif
+    end if
     call writeIntsToChars ( chunkNo, chunkStr )
     chunkStr = adjustl ( chunkStr )
     ! Create or access the SD
     already_There = mls_exists( File%name ) == 0
     if ( .not. already_There ) then
       call outputNamedValue( '  creating file', trim(File%name) )
-    endif
+    end if
     call mls_openFile ( File, returnStatus )
     already_there = IsHDF5GroupPresent( File%fileID%f_id, trim(qtyName) )
     if ( .not. already_There ) then
@@ -1176,18 +1176,19 @@ contains ! ======================= Public Procedures =========================
       call writeQuantityAttributes ( grp_id, quantity )
     else
       call h5GOpen_f ( File%fileID%f_id, qtyName, grp_id, returnStatus )
-    endif
+    end if
     File%fileID%grp_id = grp_id
     call h5GCreate_f ( File%fileID%grp_id, chunkStr, grp_id, returnStatus )
     ! Begin the writes
     ! Values
     ! call outputNamedValue ( 'rank', myRank )
-    trueRank = count(shape(quantity%value4)>1)
+    trueRank = 2 + merge(1,0,quantity%template%noChans>1) + &
+             &     merge(1,0,quantity%template%noCrossTrack>1)
     if ( myRank <= 0 ) then
       myRank = trueRank
     else if ( trueRank > myRank ) then
-      call MLSMessage ( MLSMSG_Warning, moduleName, "Actual rank of Value $S is " // &
-        & " $D but the specified rank is $D.  Are you sure this is what you want?", &
+      call MLSMessage ( MLSMSG_Warning, moduleName, "Actual rank of Value %S is " // &
+        & " %D but the specified rank is %D.  Are you sure this is what you want?", &
         & datum=[ quantity%template%name, trueRank, myRank] )
     end if
     select case ( myRank )
@@ -1717,6 +1718,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.74  2015/04/29 01:15:09  vsnyder
+! Calculate TrueRank correctly, allow to use it if rank<0
+!
 ! Revision 2.73  2015/04/25 02:10:36  vsnyder
 ! Spiff a message
 !
