@@ -302,11 +302,11 @@ contains ! ============================ MODULE PROCEDURES ====================
     end if
 
     if ( data_type == 'integer') then
+      allocate(MLSData%IntField(dims(1),dims(2),dims(3)), stat=status)
       addr = 0
       if ( status == 0 ) then
         addr = transfer(c_loc(MLSData%IntField(1,1,1)), addr)
       end if
-      allocate(MLSData%IntField(dims(1),dims(2),dims(3)), stat=status)
       call test_allocate ( status, ModuleName, "MLSData%IntField", &
         & uBounds = dims(1:3), elementSize = storage_size(MLSData%IntField) / 8, &
         & address=addr )
@@ -3212,6 +3212,9 @@ contains ! ============================ MODULE PROCEDURES ====================
 end module MLSAuxData
 
 ! $Log$
+! Revision 2.36  2015/04/29 00:52:16  vsnyder
+! Allocate MLSData%IntField before attempting to compute its address
+!
 ! Revision 2.35  2015/03/28 01:12:53  vsnyder
 ! Some spiffing.
 ! Added stuff to trace allocate/deallocate addresses -- mostly commented out
