@@ -29,44 +29,44 @@ module Magnetic_Field_Quantity
 
 contains
 
-  subroutine Get_Magnetic_Field_Qty_Geoc ( Qty, GeocAltitudeQuantity, &
-    & ScVelQuantity, MAF )
+  subroutine Get_Magnetic_Field_Qty_Geoc ( Qty, ScVelQuantity, &
+    & GeocAltitudeQuantity, GPHQuantity )
 
   ! Compute the magnetic field at the geolocations given by Qty (lat,lon,surfs).
-  ! Determine the viewing plane defined by GeocAltitudeQuantity and
-  ! ScVelQuantity. If that is not the same as the orbit plane, compute the
-  ! magnetic field at across-track positions given by
-  ! Qty%Template%CrossAngles. Put the values in Qty%Value4.
+  ! Compute the orbit plane determined by the velocity and geolocation in
+  ! ScVelQuantity. Determine the viewing plane defined by GeocAltitudeQuantity
+  ! and ScVelQuantity. If that is not the same as the orbit plane, compute the
+  ! magnetic field at across-track positions given by Qty%Template%CrossAngles.
+  ! Put the values in Qty%Value4.
 
+  ! We assume that the quantity types have been checked, that the relationship
+  ! between the magnetic field's vertical coordinate and the existence of the
+  ! other quantities has been checked, and that the relationship between the
+  ! existence, number, and values of cross-angles and the existence of the other
+  ! quantities has been checked.
+
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+    use Cross_m, only: Cross ! Vector cross product
     use ForwardModelGeometry, only: Compute_Viewing_Plane
-    use Geometry, only: ERad, SecPerYear, To_Cart, To_XYZ
-    use IGRF_Int, only: Feldc, FeldCof
-    use Intrinsic, only: L_GeocAltitude, L_GeodAltitude, L_Gauss
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use MLSStringLists, only: SwitchDetail
-    use QuantityTemplates, only: Epoch, RT
+    use QuantityTemplates, only: RT
     use Toggles, only: Emit, Levels, Switches, Toggle
     use Trace_m, only: Trace_Begin, Trace_End
-    use VectorsModule, only: Dump, VectorValue_T
+    use VectorsModule, only: VectorValue_T
 
     type (vectorValue_t), intent(inout) :: Qty
-    type (vectorValue_t), intent(in) :: GeocAltitudeQuantity
-    type (vectorValue_t), intent(in) :: ScVelQuantity
-    integer, intent(in), optional :: MAF ! to use for GPH quantity
+    type (vectorValue_t), intent(in), optional :: ScVelQuantity
+    type (vectorValue_t), intent(in), optional :: GeocAltitudeQuantity ! tangent
+    type (vectorValue_t), intent(in), optional :: GPHQuantity
 
-    real :: B(3)                      ! Magnetic field
-    integer :: Cross                  ! Index for cross-track angle
-    integer, save :: Details = -10    ! From switchDetails('gmag')
-    integer :: Instance               ! Loop counter
-    integer :: InstanceOr1            ! Index
-    integer :: MAF1, MAFn             ! MAFs to do
-    integer :: Me = -1                ! String index for tracing
+    real :: B(3)                       ! Magnetic field
+    integer, save :: Details = -10     ! From switchDetails('gmag')
+    integer :: Me = -1                 ! String index for tracing
     character(len=8), save :: Options = ''
-    integer :: Surf                   ! Loop counter
-    integer :: SurfOr1                ! Index
-    real    :: XYZ(3)                 ! ECR equivalent of (lat,lon,height),
-                                      ! first an unit vector, then in units of
-                                      ! ERad.
+    integer :: Stat                    ! From allocate or deallocate
+    real(rt), allocatable :: XYZs(:,:,:,:) ! Geocentric Cartesian coordinates
+                                       ! in viewing plane.
+                                       ! 3 X instances X surfs X cross angles
 
     call trace_begin ( me, 'Get_Magnetic_Field_Qty_Geoc', &
       & cond=levels(emit) > 1 )
@@ -76,110 +76,77 @@ contains
       if ( switchDetail(switches,'clean') > -1 ) options = '-c'
     end if
 
-    if ( qty%template%verticalCoordinate /= l_geocAltitude .and. &
-       & qty%template%verticalCoordinate /= l_geodAltitude ) then
-      call MLSMessage ( MLSMSG_Error, moduleName, &
-        & 'Magnetic field vertical coordinate is not geodetic or geocentric altitude' )
-      return ! Hopefully, we don't get here
-    end if
+    allocate ( xyzs ( 3, &                     ! XYZ
+                    & size(qty%value4,2),   &  ! NoSurfs
+                    & size(qty%value4,3),   &  ! NoInstances of 1
+                    & size(qty%value4,4) ), &  ! NoCrossAngles
+                    & stat=stat )
+    call test_allocate ( stat, moduleName, 'XYZs' )
+    
+    call compute_viewing_plane ( Qty, ScVelQuantity, GeocAltitudeQuantity, &
+      gphQuantity, XYZs )
 
-    MAF1 = 1; MAFn = qty%template%noInstances
-    if ( present(MAF) ) then
-      MAF1 = MAF; MAFn = MAF
-    end if
-    call compute_viewing_plane ( Qty, GeocAltitudeQuantity, ScVelQuantity, &
-      MAF1, MAFn )
+    call get_magnetic_field_qty_XYZ ( Qty, XYZs )
 
-    ! Assume the time is close enough to constant that one call to
-    ! FELDCOF is accurate enough.
-
-    call feldcof ( real(qty%template%time(1,1)/secPerYear + epoch) )
-
-    do instance = MAF1, MAFn
-      instanceOr1 = merge ( 1, instance, qty%template%coherent )
-      do surf = 1, qty%template%noSurfs
-        surfOr1 = merge ( 1, surf, qty%template%stacked )
-        do cross = 1, qty%template%noCrossTrack
-          if ( qty%template%verticalCoordinate == l_geocAltitude ) then
-            ! Convert lat(deg), lon(deg) to an unit vector in ECR.
-            xyz = to_xyz ( qty%template%geodLat3(surfOr1,instance,cross), &
-                         & qty%template%lon3(surfOr1,instance,cross) )
-            ! Make the length of XYZ the geocentric altitude in units of ERad.
-            xyz = xyz * qty%template%surfs(surf,instanceOr1) / ( 1.0e3 * ERad )
-          else ! Assume the vertical coordinate is geodetic altitude in meters.
-            ! To_Cart wants altitude in km above sea level.
-            ! Qty%Template%Surfs is in meters.
-            ! It produces a vector with a length in units of the Earth radius.
-            call to_cart ( real( [ qty%template%geodLat3(surfOr1,instance,cross), &
-                                 & qty%template%lon3(surfOr1,instance,cross), &
-                                 & qty%template%surfs(surf,instanceOr1) / 1.0e3 ] ), &
-                                 & xyz )
-          end if
-          ! Compute the field at and w.r.t. cartesian coordinates in XYZ.
-          call feldc ( xyz, b )
-          ! The first dimension of value3 is field components, not channels.
-          qty%value4 ( 1:3, surf, instance, cross ) = b
-        end do
-      end do
-    end do
-    if ( details > -1 ) call dump ( qty, details=details, options=options )
-    qty%template%unit = l_gauss
+    deallocate ( xyzs, stat=stat )
+    call test_deallocate ( stat, moduleName, 'XYZs' )
 
     call trace_end ( 'Get_Magnetic_Field_Qty_Geoc', cond=levels(emit) > 1 )
 
   end subroutine Get_Magnetic_Field_Qty_Geoc
 
-  subroutine Get_Magnetic_Field_Qty_XYZ ( Qty, XYZ )
+  subroutine Get_Magnetic_Field_Qty_XYZ ( Qty, XYZs )
 
-  ! Compute the magnetic field at the geolocations given by XYZ, and
+  ! Compute the magnetic field at the geolocations given by XYZs, and
   ! put the values in Qty%Value3.
 
-    use Geometry, only: SecPerYear
+    use Geometry, only: ERad, SecPerYear
     use IGRF_Int, only: Feldc, FeldCof
+    use Intrinsic, only: L_Gauss
     use MLSStringLists, only: SwitchDetail
-    use QuantityTemplates, only: Epoch
+    use QuantityTemplates, only: Epoch, RT
     use Toggles, only: Emit, Levels, Switches, Toggle
     use Trace_m, only: Trace_Begin, Trace_End
     use VectorsModule, only: Dump, VectorValue_T
 
     type (vectorValue_t), intent(inout) :: Qty
-    real, intent(in) :: XYZ(3,size(qty%value3,2),size(qty%value3,3))
+    ! Cartesian ECR coordinates, meters:
+    real(rt), intent(in) :: XYZs(3,size(qty%value4,2),size(qty%value4,3),size(qty%value4,4))
 
-    real :: B(3)                      ! Magnetic field
-    integer, save :: Details = -10    ! From switchDetails('gmag')
-    integer :: INSTANCE               ! Loop counter
-    integer :: Me = -1                ! String index for tracing
+    integer :: Across                  ! Loop counter for cross-track angles
+    real :: B(3)                       ! Magnetic field
+    integer, save :: Details = -10     ! From switchDetails('gmag')
+    integer :: Inst                    ! Loop counter for instances
+    integer :: Me = -1                 ! String index for tracing
     character(len=8), save :: Options = ''
-    integer :: SURF                   ! Loop counter
-    integer :: SURFOR1                ! Index
+    integer :: Surf                    ! Loop counter for surfaces
+
+    real, parameter :: EradM = Erad * 1000.0 ! Average Earth radius, meters
 
     call trace_begin ( me, 'Get_Magnetic_Field_Qty_XYZ', &
       & cond=levels(emit) > 1 )
-
-    if ( details < -1 ) then ! only once
-      details = switchDetail(switches,'gmag')
-      if ( switchDetail(switches,'clean') > -1 ) options = '-c'
-    end if
 
     ! Assume the time is close enough to constant that one call to
     ! FELDCOF is accurate enough.
 
     call feldcof ( real(qty%template%time(1,1)/secPerYear + epoch) )
 
-    do instance = 1, qty%template%noInstances
-      do surf = 1, qty%template%noSurfs
-        if ( qty%template%stacked ) then
-          surfOr1 = 1
-        else
-          surfOr1 = surf
-        end if
-        ! Compute the field at and w.r.t. cartesian coordinates in XYZ.
-        call feldc ( xyz(1:3,surfOr1,instance), b )
-        ! The first dimension of value3 is field components, not channels.
-        qty%value3 ( 1:3, surf, instance) = b
+    do across = 1, size(xyzs,4)
+      do inst = 1, size(xyzs,3)
+        do surf = 1, size(xyzs,2)
+          ! Compute the field at and w.r.t. cartesian coordinates in xyzs.
+          call feldc ( real(xyzs(:3,surf,inst,across))/eRadM, b )
+          ! The first dimension of value3 is field components, not channels.
+          qty%value4 ( 1:3, surf, inst, across ) = b
+        end do
       end do
     end do
+    qty%template%unit = l_gauss
 
+    if ( details < -1 ) then ! only once
+      details = switchDetail(switches,'gmag')
+      if ( switchDetail(switches,'clean') > -1 ) options = '-c'
+    end if
     if ( details > -1 ) call dump ( qty, details=details, options=options )
 
     call trace_end ( 'Get_Magnetic_Field_Qty_XYZ', cond=levels(emit) > 1 )
@@ -200,6 +167,9 @@ contains
 end module Magnetic_Field_Quantity
 
 ! $Log$
+! Revision 2.6  2015/04/29 01:23:08  vsnyder
+! Coordinates now given as XYZ, not taken from the magnetic field quantity
+!
 ! Revision 2.5  2015/04/08 01:55:13  vsnyder
 ! Check for geocentric or geodetic altitude vertical coordinate
 !
