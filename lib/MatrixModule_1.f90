@@ -2714,10 +2714,15 @@ contains ! =====     Public Procedures     =============================
   end subroutine DestroyRCInfo
 
   ! ------------------------------------------------  Diff_Matrices  -----
-  subroutine Diff_Matrices ( Matrix1, Matrix2, Details, clean )
+  subroutine Diff_Matrices ( Matrix1, Matrix2, Details, clean, &
+    & options, different )
     use Lexer_core, only: PRINT_SOURCE
+    use MLSStringLists, only: optionDetail
+    use output_m, only: resumeOutput, suspendOutput
     type(Matrix_T), intent(in) :: Matrix1, Matrix2
     integer, intent(in), optional :: Details   ! Print details, default 1
+    character(len=*), intent(in), optional :: options
+    logical, intent(inout), optional :: different ! Are matrices different?
     !  <= -3 => no details,
     !  -2..0 => Just the name, size and where created
     !  == -1 => Structure of blocks but not their values
@@ -2728,10 +2733,16 @@ contains ! =====     Public Procedures     =============================
     integer :: I, J                ! Subscripts, loop inductors
     integer :: MY_DETAILS          ! True if DETAILS is absent, else DETAILS
     logical :: SKIPPEDSOMEBLOCKS
+    logical :: silent
     ! Executable
     my_details = 1
     if ( present(details) ) my_details = details
     if ( my_details <= -3 ) return
+    silent = .false.
+    if ( present (options) ) then
+      silent = (optionDetail(options, 'm' ) == 'yes' )
+    endif
+    if ( silent ) call suspendOutput
     if ( matrix1%name > 0 .and. matrix2%name > 0 ) then
       call output ( 'Diffing ' )
       call display_string ( matrix1%name )
@@ -2752,6 +2763,7 @@ contains ! =====     Public Procedures     =============================
     ! Check that the two matrices match somehow
     if ( matrix1%col%nb /= matrix1%col%nb .or. matrix1%row%nb /= matrix2%row%nb ) then
       call output ( 'the matrices have different shapes', advance='yes' )
+      if ( present(different) ) different = .true.
       return
     endif
     skippedsomeblocks = .false.
@@ -2761,6 +2773,7 @@ contains ! =====     Public Procedures     =============================
           call output ( 'the matrices at (i,j) ')
           call output( (/ i,j /) )
           call output( 'are of different kinds', advance='yes' )
+          if ( present(different) ) different = .true.
           if ( my_details < 1 ) cycle
           call outputNamedValue( 'kind(matrix1)', &
             & GetMatrixKindString(matrix1%block(i,j)%kind) )
@@ -2802,10 +2815,12 @@ contains ! =====     Public Procedures     =============================
         else
           call output ( '', advance='yes' )
           call Diff ( matrix1%block(i,j), matrix2%block(i,j), &
-            & details=my_details, clean=clean )
+            & details=my_details, clean=clean, &
+            & options=options, different=different )
         end if
       end do
     end do
+    if ( silent ) call resumeOutput
   end subroutine Diff_Matrices
 
   ! --------------------------------------------------  Dump_Linf  -----
@@ -3176,6 +3191,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.141  2015/04/29 00:00:43  pwagner
+! Diffs made more manageable
+!
 ! Revision 2.140  2015/03/28 01:20:39  vsnyder
 ! Added stuff to trace allocate/deallocate addresses
 !
