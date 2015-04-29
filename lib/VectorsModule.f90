@@ -2141,6 +2141,17 @@ contains ! =====     Public Procedures     =============================
     end if
     if ( .not. index(myOptions, '1') > 0 &
       & .and. .not. index(myOptions, '2') > 0 ) then
+      if ( qty%template%quantityType == l_vmr ) then
+        call output ( '    molecule: ')
+        if ( qty%template%molecule < 1 ) then
+          call output ( '    (no database entry for this quantity) ' )
+        else
+          call display_string ( lit_indices(qty%template%molecule) )
+        end if
+      else if ( qty%template%quantityType > 0 ) then
+        call output( '    Quantity type: ', advance='no' )
+        call display_string ( lit_indices(qty%template%quantityType), advance='yes' )
+      end if
       call output ( qty%template%noChans, before='    noChans = ' )
       call output ( qty%template%noSurfs, before=' noSurfs = ' )
       call output ( qty%template%noInstances, before=' noInstances = ')
@@ -2153,17 +2164,6 @@ contains ! =====     Public Procedures     =============================
         call output ( '    (no name in the database for this quantity) ', advance='yes')
       else
         call display_string ( signals(qty%template%signal)%name, advance='yes' )
-      end if
-      if ( qty%template%quantityType == l_vmr ) then
-        call output ( '    molecule: ')
-        if ( qty%template%molecule < 1 ) then
-          call output ( '    (no database entry for this quantity) ' )
-        else
-          call display_string ( lit_indices(qty%template%molecule) )
-        end if
-      else if ( qty%template%quantityType > 0 ) then
-        call output( 'Quantity type: ', advance='no' )
-        call display_string ( lit_indices(qty%template%quantityType), advance='yes' )
       end if
       call output ( '    instrumentmodule: ')
       if ( qty%template%instrumentModule < 1 ) then
@@ -3371,6 +3371,10 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.196  2015/03/28 01:47:29  vsnyder
+! Added 4-d Values and Mask.  Additional dimension extent is NoCrossTrack.
+! Added stuff to trace allocate/deallocate addresses.
+!
 ! Revision 2.195  2014/11/08 01:05:15  pwagner
 ! CreateVectorValue relies on DestroyVectorQuantityValue to deallocate its values
 !

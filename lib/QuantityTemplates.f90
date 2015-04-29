@@ -155,7 +155,7 @@ module QuantityTemplates         ! Quantities within vectors
     ! These other coordinates are dimensioned in the same manner as Phi:
     real(rt), pointer :: GeodLat(:,:) => NULL()     ! Degrees
     real(rt), pointer :: Lon(:,:) => NULL()         ! Degrees
-    real(rt), pointer :: Time(:,:) => NULL() ! Seconds since EPOCH
+    real(rt), pointer :: Time(:,:) => NULL()        ! Seconds since EPOCH
     real(rt), pointer :: SolarTime(:,:) => NULL()
     real(rt), pointer :: SolarZenith(:,:) => NULL() ! Degrees
     real(rt), pointer :: LosAngle(:,:) => NULL()    ! Degrees
@@ -558,8 +558,8 @@ contains
     if ( present(what) ) call output ( ' ' // trim(what) )
     call newline
     call output ( quantity_template%noInstances,  before='      NoInstances = ' )
-    call output ( quantity_template%noChans,      before=' noChans = ' )
     call output ( quantity_template%noSurfs,      before=' NoSurfs = ' )
+    call output ( quantity_template%noChans,      before=' NoChans = ' )
     call output ( quantity_template%noCrossTrack, before=' NoCrossTrack = ', advance='yes' )
     call output ( '      ' )
     if ( .not. quantity_template%coherent ) call output ( 'in' )
@@ -609,15 +609,16 @@ contains
     end if
     if ( .not. myNoL2CF .and. quantity_template%verticalCoordinate > 0 ) &
       & call myDisplayString ( lit_indices(quantity_template%verticalCoordinate), &
-      & before=' vertical coordinate = ', advance='yes' )
+      & before=' vertical coordinate = ' )
+    call newLine
     call output ( '      sharedFGrid = ' )
     call output ( quantity_template%sharedFGrid, advance='no' )
     if ( quantity_template%sharedFGrid ) then
       call output ( ' fGridIndex = ' )
-      call output ( quantity_template%fGridIndex, advance='yes' )
+      call output ( quantity_template%fGridIndex )
     end if
     call myDisplayString ( lit_indices(quantity_template%frequencyCoordinate), &
-      & before=   '      frequency coordinate = ', advance='yes' )
+      & before=   ' frequency coordinate = ', advance='yes' )
     if ( quantity_template%radiometer /= 0 .and. .not. myNoL2CF ) then
       call output ( '      Radiometer = ' )
       call GetRadiometerName ( quantity_template%radiometer, str )
@@ -1780,6 +1781,11 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.90  2015/04/07 02:51:50  vsnyder
+! Remove CONTIGUOUS attribute from 2-D geolocation components.  Non-
+! contiguous sections of them are targets in ConstructMajorFrameQuantity in
+! ConstructQuantityTemplates.
+!
 ! Revision 2.89  2015/03/28 01:40:45  vsnyder
 ! Added NoCrossTrack.  Added Unit (for values).  Added xGridIndex.  Added
 ! 1-d and 3-d geolocation quantities; made them contiguous.  Added
