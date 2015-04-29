@@ -21,8 +21,8 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
   use Dot_m, only: Dot
   use Dump_0, only: Diff, Dump
-  use GEMM_m, only: GEMM
-  use GEMV_m, only: GEMV
+  use gemm_m, only: gemm
+  use gemv_m, only: gemv
   use MLSKinds, only: RM, R4, R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
   use Output_m, only: Output
@@ -3537,32 +3537,49 @@ contains ! =====     Public Procedures     =============================
 
   ! ------------------------------------------- Diff_matrix_Blocks -----
   subroutine Diff_matrix_Blocks ( matrix_block1, matrix_block2, &
-    & Details, Bounds, Clean )
+    & Details, Bounds, Clean, options, different )
+    use MLSStringLists, only: optionDetail
     type(MatrixElement_T), intent(in) :: matrix_block1, matrix_block2
     integer, intent(in), optional :: Details ! Print details, 0 => minimal,
                                              ! 1 => values, default 1
     integer, intent(in), optional :: BOUNDS(4) ! Diff only Bounds(1):Bounds(2)
                                                !        X  Bounds(3):Bounds(4)
     logical, intent(in), optional :: CLEAN   ! print \size
-
+    character(len=*), intent(in), optional :: options
+    logical, intent(inout), optional :: different ! Are blocks different?
+    ! Internal variables
+    logical :: silent
+    ! Executable
+    Silent = (optionDetail( options, 'm' ) == 'yes' )
     if ( matrix_block1%nRows /= matrix_block2%nRows .or. &
       & matrix_block1%nCols /= matrix_block2%nCols ) then
       call output ( 'the matrix blocks have different shapes', advance='yes' )
-      return
+      if ( present(different) ) different = .true.
+     return
     endif
-    call output ( ' has ' )
-    call output ( matrix_block1%nRows, after=' Rows, ' )
-    call output ( matrix_block1%nCols, after = ' Columns, ' )
+    if ( .not. silent ) then
+      call output ( ' has ' )
+      call output ( matrix_block1%nRows, after=' Rows, ' )
+      call output ( matrix_block1%nCols, after = ' Columns, ' )
+    endif
     if ( matrix_block1%kind /= matrix_block2%kind ) then
       call output ( 'the matrix blocks are of different kind', advance='yes' )
+      if ( present(different) ) different = .true.
       return
     endif
     select case ( matrix_block1%kind )
     case ( m_absent )
-      call output ( 'Absent, therefore the matrix blocks are equal' )
+      if ( .not. silent ) call output ( 'Absent, therefore the matrix blocks are equal' )
     case default
+      if ( silent ) then
+        if ( all( &
+          & matrix_block1%values == matrix_block1%values ) ) return
+        call output ( ' blocks differ ', advance='yes' )
+        if ( present(different) ) different = .true.
+        return
+      endif
       call diff ( matrix_block1%values, 'matrix 1 block ', &
-        & matrix_block2%values, 'matrix 2 block ' )
+        & matrix_block2%values, 'matrix 2 block ', options=options )
     end select
 
   end subroutine Diff_matrix_Blocks
@@ -3720,6 +3737,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.21  2015/04/29 00:03:09  pwagner
+! Diffs made more manageable
+!
 ! Revision 2.20  2014/10/08 19:19:39  vsnyder
 ! Add comments about not wanting a final subroutine for Matrix_T.  Also
 ! some cannonball polishing.
