@@ -22,7 +22,7 @@ program L2Q
     & machinenamelen, getmachinenames, &
     & dump, addmachinetodatabase
   use machine ! at least hp for command lines, and maybe getarg, too
-  use mlscommon, only: filenamelen
+  use MLSCommon, only: fileNameLen
   use MLSL2Options, only: current_version_id
   use MLSMessageModule, only: MLSMessage, MLSMessageConfig, MLSMessageExit, &
     & MLSMSG_Allocate, MLSMSG_DeAllocate, MLSMSG_Debug, MLSMSG_Error, &
@@ -40,7 +40,7 @@ program L2Q
     & pvmf90unpack, pvmfpstat, &
     & pvmfsend, pvmfnotify, pvmtaskexit, &
     & pvmffreebuf
-  use Sort_M, only: SORT
+  use Sort_M, only: Sort
   use Time_M, only: Time_Now, time_config
   use toggles, only: gen, levels, &
     & toggle
@@ -2327,6 +2327,7 @@ contains
     ! This function removes a master data type from a database of said types,
     ! creating a new database if it doesn't exist.  The result value is
     ! the reduced size
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
 
     ! Dummy arguments
     type (master_t), dimension(:), pointer :: DATABASE
@@ -2410,6 +2411,9 @@ contains
 end program L2Q
 
 ! $Log$
+! Revision 1.37  2014/09/22 18:02:10  pwagner
+! Corrected to conform with new add/rmItemFromDatabase
+!
 ! Revision 1.36  2014/01/09 00:31:26  pwagner
 ! Some procedures formerly in output_m now got from highOutput
 !
