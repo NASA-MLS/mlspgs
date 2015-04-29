@@ -12,8 +12,8 @@ module heights_module
 ! foreign countries or providing access to foreign persons.
 
   ! This module provides conversions from geodetic (geometric height above
-  ! earth surface) to geopotential height (above geoid). 
-  ! Formulae taken from  "Theoretical basis for EOS-MLS geopotential 
+  ! earth surface) to geopotential height (above geoid).
+  ! Formulae taken from  "Theoretical basis for EOS-MLS geopotential
   ! and scan calculations" by N. J. Livesey
 
 
@@ -34,18 +34,19 @@ module heights_module
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
-  private :: not_used_here 
+  private :: not_used_here
 !---------------------------------------------------------------------------
 
 contains
 
   ! ------------------------------------------------  geom_to_gph  -----
   function geom_to_gph ( geom_height, lat_geoc, lat_geod ) result (gph)
-    ! Converts geometric height above the geoid to  geopotential height
-    ! This applies Equation 40 in "Theoretical basis for EOS-MLS geopotential 
+    ! Converts geometric height in meters above the geoid to geopotential
+    ! height in meters above the geoid.
+    ! This applies Equation 40 in "Theoretical basis for EOS-MLS geopotential
     ! and scan calculations" by N. J. Livesey
-    ! If I have got this right, the difference between the two heights is 
-    ! piffling at ground level, going to about 1km at 80km. 
+    ! If I have got this right, the difference between the two heights is
+    ! piffling at ground level, going to about 1km at 80km.
 
     !----Argument----!
     real(kind=r8), intent(in) :: geom_height ! above geoid
@@ -57,21 +58,21 @@ contains
     !---------Executable statements-------!
 
     if ( present(lat_geoc) .and. present(lat_geod) ) then
-       call MLSMessage ( MLSMSG_Warning, ModuleName, &
-            "in function geom_to_gph,"// &
-            "Both geometric and geodetic lats supplied: using geometric" )
-       lat = lat_geoc
+      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+           "in function geom_to_gph,"// &
+           "Both geometric and geodetic lats supplied: using geometric" )
+      lat = lat_geoc
     else if ( present(lat_geoc) ) then
-       lat = lat_geoc
+      lat = lat_geoc
     else if ( present(lat_geod) ) then
-       lat = rad2deg * geodToGeocLat(lat_geod)
+      lat = rad2deg * geodToGeocLat(lat_geod)
     else
-       call MLSMessage ( MLSMSG_Warning, ModuleName, &
-            "in function geom_to_gph, Called with no latitude - assuming 45deg N" )
-       lat = 45.0_r8
+      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+           "in function geom_to_gph, Called with no latitude - assuming 45deg N" )
+      lat = 45.0_r8
     end if
 
-    sinlat = sin(lat_geoc*deg2rad)**2
+    sinlat = sin(lat*deg2rad)**2
     coslat = 1.0_r8 - sinlat
 
     !{ Calculate height of Earth's surface at given geocentric latitude $\beta$
@@ -112,10 +113,11 @@ contains
 
   ! ------------------------------------------------  gph_to_geom  -----
   function gph_to_geom ( gph, lat_geoc, lat_geod ) result (geom_height)
-    ! This converts Geopotential height (GPH) back to geometric height
-    ! We use a yucky secant-method iteration mainly out of idleness -- 
-    ! we can't be bothered to invert the function analytically. Of course, 
-    ! the present hack has the advantage that gph_to_geom and geom_to_gph 
+    ! This converts Geopotential height (GPH) in meters above the geoid
+    ! back to geometric height in meters above the geoid.
+    ! We use a yucky secant-method iteration mainly out of idleness --
+    ! we can't be bothered to invert the function analytically. Of course,
+    ! the present hack has the advantage that gph_to_geom and geom_to_gph
     ! are always consistent with each other.
     ! Tests suggest that the secant method converges after either 3 or 4
     ! iterations over the 0-100km range.
@@ -126,40 +128,38 @@ contains
     !----Function result----!
     real(kind=r8)::geom_height
     !---Local variabules---!
-    real(kind=r8),parameter:: accuracy=0.001 
+    real(kind=r8),parameter:: accuracy=0.001
     real(kind=r8)::geom1,geom2,newgeom,dgph1,dgph2,lat
     !---------Executable statements-------!
 
     if ( present(lat_geoc) .and. present(lat_geod) ) then
-       call MLSMessage ( MLSMSG_Warning, ModuleName, &
-            "in function gph_to_geom,"// &
-            "Both geometric and geodetic lats supplied: using geometric" )
-       lat = lat_geoc
+      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+           "in function gph_to_geom,"// &
+           "Both geometric and geodetic lats supplied: using geometric" )
+      lat = lat_geoc
     else if ( present(lat_geoc) ) then
-       lat = lat_geoc
+      lat = lat_geoc
     else if ( present(lat_geod) ) then
-       lat = rad2deg * geodToGeocLat(lat_geod)
+      lat = rad2deg * geodToGeocLat(lat_geod)
     else
-       call MLSMessage ( MLSMSG_Warning, ModuleName, &
-            "in function gph_to_geom, heights_module"// &
-            "Called with no latitude - assuming 45deg N" )
-       lat = 45.0_r8
+      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+           "in function gph_to_geom, heights_module"// &
+           "Called with no latitude - assuming 45deg N" )
+      lat = 45.0_r8
     end if
 
     geom1 = gph
     geom2 = gph+1.0
     dgph1 = geom_to_gph(geom1,lat)-gph
-    secantloop:do 
+  secantloop: do
       dgph2 = geom_to_gph(geom2,lat)-gph
-      newgeom =  geom1 - dgph1*(geom2-geom1)/(dgph2-dgph1)
-      !     print*,geom1,geom2,newgeom
+      newgeom = geom1 - dgph1*(geom2-geom1)/(dgph2-dgph1)
       if ( abs(newgeom-geom2) < accuracy ) then
          exit secantloop
       end if
       geom1 = geom2
       dgph1 = dgph2
       geom2 = newgeom
-
     end do secantloop
     geom_height = newgeom
 
@@ -178,6 +178,9 @@ contains
 end module heights_module
 
 ! $Log$
+! Revision 2.10  2015/03/28 01:57:03  vsnyder
+! Deleted Lat_geod_to_geoc (its functionality is in Geometry).
+!
 ! Revision 2.9  2013/05/02 00:17:48  vsnyder
 ! LaTeX corrections, but it doesn't matter because nobody uses this module
 !
