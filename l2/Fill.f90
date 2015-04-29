@@ -86,7 +86,7 @@ contains ! =====     Public Procedures     =============================
       & qtyfromfile, vectorfromfile, announce_error, &
       ! codes for announce_error:
       & badestnoisefill, badgeocaltitudequantity, badisotopefill, &
-      & badlosgridfill, badlosvelfill, badrefgphquantity, &
+      & badlosgridfill, badlosvelfill, badrefgphquantity, badgphquantity, &
       & badrefractfill, badscvelecrquantity, badtemperaturequantity, &
       & bothfractionandlength, missingfield, &
       & needgeocaltitude, needh2o, needorbitinclination, &
@@ -2584,11 +2584,8 @@ contains ! =====     Public Procedures     =============================
           & azEl=.true. )
 
       case ( l_magneticModel ) ! --------------------- Magnetic Model --
-        nullify ( geocAltitudeQuantity, scVelQuantity )
-        if ( .not. got ( f_geocAltitudeQuantity ) ) then
-          call Announce_Error ( key, no_Error_Code, &
-            & 'Need geocentric altitude for magnetic model' )
-        else
+        nullify ( geocAltitudeQuantity, gphQuantity, scVelQuantity )
+        if ( got ( f_geocAltitudeQuantity ) ) then
           geocAltitudeQuantity => GetVectorQtyByTemplateIndex( &
             & vectors(geocAltitudeVectorIndex), geocAltitudeQuantityIndex)
           if ( geocAltitudeQuantity%template%quantityType /= l_tngtgeocAlt ) then
@@ -2596,21 +2593,44 @@ contains ! =====     Public Procedures     =============================
             nullify ( geocAltitudeQuantity )
           end if
         end if
-        if ( .not. got ( f_scVelECR ) ) then
-          call Announce_Error ( key, no_Error_Code, &
-            & 'Spacecraft Velocity ECR needed for magnetic model' )
-        else
+        if ( got ( f_GPHQuantity ) ) then
+          gphQuantity => GetVectorQtyByTemplateIndex( &
+            & vectors(GPHVectorIndex), GPHQuantityIndex)
+          if ( gphQuantity%template%quantityType /= l_gph ) then
+            call Announce_Error ( key, badGPHQuantity )
+            nullify ( gphQuantity )
+          end if
+        end if
+        if ( got ( f_scVelECR ) ) then
           scVelQuantity => GetVectorQtyByTemplateIndex( &
             & vectors(scVelVectorIndex), scVelQuantityIndex)
           if ( scVelQuantity%template%quantityType /= l_scVelECR ) then
-            call Announce_Error ( key, BadScVelECRQuantity )
+            call Announce_Error ( key, badScVelECRQuantity )
             nullify ( scVelQuantity )
           end if
         end if
-        if ( associated ( geocAltitudeQuantity ) .and. &
-           & associated ( scVelQuantity ) ) &
-             & call UsingMagneticModel ( quantity, geocAltitudeQuantity, &
-                                       & scVelQuantity, key )
+! This ought to work.  I don't know why ifort 15.0.2.164 gets a seg fault if
+! gphQuantity is not associated.
+!         if ( associated(gphQuantity) .or. &
+!            & ( associated(scVelQuantity) .and. associated(geocAltitudeQuantity) ) ) then
+!           call UsingMagneticModel ( quantity, key, scVelQuantity, &
+!                                   & geocAltitudeQuantity, gphQuantity )
+        if ( associated(gphQuantity) ) then
+          if ( associated(scVelQuantity) .and. associated(geocAltitudeQuantity) ) then
+            call UsingMagneticModel ( quantity, key, scVelQuantity, &
+                                    & geocAltitudeQuantity, gphQuantity )
+          else
+            call UsingMagneticModel ( quantity, key, gphQuantity=gphQuantity )
+          end if
+        else if ( associated(scVelQuantity) .and. associated(geocAltitudeQuantity) ) then
+          call UsingMagneticModel ( quantity, key, scVelQuantity, &
+                                  & geocAltitudeQuantity)
+        else
+          call Announce_Error ( key, no_Error_Code, &
+            & 'Need either geopotential height quantity, or ' // &
+            & 'tangent geocentric altitude and spacecraft ECR ' // &
+            & 'velocity quantities, for magnetic model' )
+        end if
 
       case ( l_modifyTemplate )
         shp = 0
@@ -3170,6 +3190,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.451  2015/04/29 01:18:41  vsnyder
+! Correct reference to UsingMagneticModel
+!
 ! Revision 2.450  2015/04/21 17:48:08  pwagner
 ! May DirectRead, DirectWrite files with /noPCFid even when usingPCF; may DirectRead qty geolocations
 !
