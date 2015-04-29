@@ -17,13 +17,12 @@ module ForwardModelGeometry
   implicit none
   private
 
-  public :: Compute_Viewing_Plane
-  public :: Get_Quantity_XYZ
+  public :: Compute_Viewing_Plane, Height_From_Zeta
   public :: Viewing_Azimuth, Viewing_Azimuth_Qty, Viewing_Azimuth_Vec
 
   ! If abs(viewing_azimuth(...)) < Azimuth_Tol, assuming the viewing
   ! plane is the orbit plane.
-  real, parameter, public :: Azimuth_Tol = 0.01
+  real, parameter, public :: Azimuth_Tol = 0.05 ! 3 degrees
 
   interface Viewing_Azimuth
     module procedure Viewing_Azimuth_Qty, Viewing_Azimuth_Vec
@@ -37,165 +36,321 @@ module ForwardModelGeometry
 
 contains ! ============= Public Procedures ==========================
 
-  subroutine Compute_Viewing_Plane ( Qty, TpGeocAlt, ScVelECR, FirstMAF, LastMAF )
-    ! Compute Geocentric (!) latitude, longitude, and height for Qty for the
-    ! specified MAFs (or all MAFs).  If Qty's NoCrossTrack field is <= 1, or the
-    ! Viewing_Azimuth is zero (or close to zero), nothing is done here. Qty is
-    ! assumed to be stacked and coherent, i.e., the GeodLat and Lon components
-    ! will be the same for all surfaces in each instance, and they will be
-    ! assumed to have been computed in the orbit plane by their HGrid.
+  subroutine Compute_Viewing_Plane ( Qty, ScVelECR, TpGeocAlt, GPHQuantity, &
+                                   & XYZs, RefMif )
 
-    ! Otherwise, Qty cannot be stacked, should be coherent, and the GeodLat
-    ! and Lon values are computed here for each surface and instance.
-    
-    ! In either case, the Surfs component is specified by a VGrid with a
-    ! vertical coordinate of GeocAltitude (in meters).
+  ! Compute Geocentric (!) latitude, longitude, and height for Qty.
 
+  ! We assume that the quantity types and the units of their values have been
+  ! checked, that the relationship between the magnetic field's vertical
+  ! coordinate and the existence of the other quantities has been checked, that
+  ! ScVelECR and TpGeocAlt are either both present or both absent, and that the
+  ! relationship between the existence, number, and values of cross-angles and
+  ! the existence of the other quantities has been checked.  See
+  ! UsingMagneticModel in FillUtils_1.
+
+    use Allocate_Deallocate, only: Test_Allocate
     use Constants, only: Deg2Rad, Rad2Deg
     use Cross_m, only: Cross
-    use Geometry, only: GeodToGeocLat, To_XYZ, XYZ_To_Geod
-    use Intrinsic, only: L_Geocentric, L_Geodetic, L_GeodAltitude
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-    use MLSNumerics, only: InterpolateValues
-    use Monotone, only: Get_Monotone
-    use QuantityTemplates, only: QuantitiesAreCompatible, RT
+    use Dump_0, only: Dump
+    use Geometry, only: GeodToGeocAlt, GeodToGeocLat, To_XYZ, XYZ_To_Geod
+    use Intrinsic, only: L_Geocentric, L_Geodetic, L_GeodAltitude, L_Zeta
+    use MLSNumerics, only: InterpolateExtrapolate_d
+    use MLSStringlists, only: SwitchDetail
+    use Monotone, only: Longest_Monotone_Subsequence
+    use QuantityTemplates, only: CreateGeolocationFields, Dump, RT
+    use Quantity_Geometry, only: XYZ
     use Rotation_m, only: Rotate_3d
+    use Toggles, only: Emit, Levels, Switches, Toggle
+    use Trace_m, only: Trace_Begin, Trace_End
     use VectorsModule, only: VectorValue_t
 
-    type(vectorValue_t), intent(inout) :: Qty    ! To get geolocation computed
-    type(vectorValue_t), intent(in) :: TpGeocAlt ! Tangent geolocation, not alt
-    type(vectorValue_t), intent(in) :: ScVelECR  ! For SC geolocation, not vel
-    integer, intent(in), optional :: FirstMAF    ! Default 1
-    integer, intent(in), optional :: LastMAF     ! Default Qty%Template%NoInstances;
-                                                 ! not used if FirstMAF is absent.
+    type(vectorValue_t), intent(inout) :: Qty   ! To get geolocation computed
+    type(vectorValue_t), intent(in), optional :: ScVelECR  ! For SC geolocation,
+                                                ! not velocity
+    type(vectorValue_t), intent(in), optional :: TpGeocAlt ! Tangent geolocation,
+                                                ! and altitude
+    type(vectorValue_t), intent(in), optional :: GPHQuantity ! Geopotential height,
+                                                ! a proxy for altitude and used to
+                                                ! calculate height from zeta
+    real(rt), intent(out) :: XYZs(:,:,:,:)      ! Geocentric Cartesian coordinates
+                                                ! of Qty%Value4.
+                                                ! 3 X surfs X instances X cross
+    integer, intent(in), optional :: RefMif     ! MIF at which profile will be
+                                                ! computed, default middle one,
+                                                ! to choose TpGeocAlt instance.
 
-    real(rt) :: Alt(min(tpGeocAlt%template%noSurfs, &
-                   & scVelECR%template%noSurfs))! Geocentric altitude on LOS
-    real(rt) :: Geod(3)                         ! Lat, Lon, Height from XYZ_To_Geod
-    integer :: I                                ! Cross-track angle index
-    real(rt) :: Lat(size(alt))                  ! Geocentric (!) latitude on LOS
-    real(rt) :: Lon(size(alt))                  ! Longitude on LOS
-    integer :: MAF, MAF1, MAFn                  ! MAF indices
+    logical :: Across                           ! Viewing across the orbit track
+    real(rt), allocatable :: Alt(:)             ! Geocentric altitude on LOS
+    integer :: C                                ! Cross-track angle index
+    integer, allocatable :: Dec(:)              ! Decreasing sequence indices
+    integer :: Detail                           ! Dump level
+    real(rt) :: Geod(3)                         ! Geodetic Lat, Lon (degrees),
+                                                ! Altitude (meters)
+    real(rt), allocatable :: Heights(:,:)       ! Meters, geocentric altitude
+    integer, allocatable :: Inc(:)              ! Increasing sequence indices
+    integer :: Inst                             ! Second subscript for lat, lon
+    integer :: InstOr1                          ! Second subscript for surfs
+    integer :: Me = -1                          ! String index, for tracing
     integer :: MIF                              ! MIF index
-    integer :: M1, M2                           ! Equivalenced to StartStop
+    integer :: MyRefMIF                         ! RefMIF or middle one
     real(rt) :: N(3)                            ! Normal to SC-TP plane
-    real(rt) :: R(3)                            ! TP rotated in TP-SC plane
-    integer :: S                                ! Select which way to pack Alt
+    real(rt), allocatable :: R(:,:)             ! TP rotated in TP-SC plane
+    integer :: S                                ! Surface index in magnetic field
     real(rt) :: SC_XYZ(3)                       ! Spacecraft position
     real(rt) :: Sec_x                           ! Secant of cross-track angle
-    integer :: StartStop(2)                     ! Ends of monotone altitude seq
+    integer, allocatable :: Seq(:)              ! Increasing or decreasing
+                                                ! sequence indices, => Inc or Dec
+    integer :: Stat                             ! From Allocate
+    integer :: SurfOr1                          ! First subscript for Lat, Lon
     real(rt) :: TP_XYZ(3)                       ! Tangent point position
 
-    equivalence ( StartStop(1), M1 ), ( StartStop(2), M2 )
+    call trace_begin ( me, 'Compute_Viewing_Plane', &
+      & cond=toggle(emit) .and. levels(emit) > 1 ) ! set by -f command-line switch
 
-    if ( qty%template%noCrossTrack <= 1 ) return ! Nothing needs doing
+    across = associated(qty%template%crossAngles)
+    if ( across ) &
+      & across = abs(viewing_azimuth ( tpGeocAlt, scVelECR, 1 )) > azimuth_tol
 
-    MAF1 = 1; MAFn = qty%template%NoInstances
-    if ( present(firstMAF) ) then
-      MAF1 = firstMAF
-      if ( present(lastMAF) ) MAFn = max(MAF1,lastMAF)
-    end if
+    detail = switchDetail ( switches, 'plane' )
 
-    if ( abs(viewing_azimuth ( tpGeocAlt, scVelECR, 1, MAF1 )) < azimuth_tol ) &
-      & return ! Nothing needs doing
-
-    if ( qty%template%stacked ) then
-      call MLSMessage ( MLSMSG_Error, moduleName, &
-        "Cross-track viewing quantity cannot be stacked" )
-      return ! Hopefully we don't get here
-    end if
-
-    if ( .not. quantitiesAreCompatible ( tpGeocAlt%template, ScVelECR%template, &
-                                       & differentTypeOK=.true. ) ) then
-      call MLSMessage ( MLSMSG_Error, moduleName, &
-        "Quantities are not compatible in Compute_Viewing_Plane" )
-      return ! Hopefully we don't get here
-    end if
-
-    do MAF = MAF1, MAFn
-      do i = 1, qty%template%noCrossTrack
-        sec_x = 1.0 / cos(qty%template%crossAngles(i)*deg2rad)
-        do MIF = 1, size(alt,1)
-          ! Get SC and TP positions for MIF MIF
-          ! Notice that SC_XYZ, TP_XYZ, and N do not depend upon I.  We could
-          ! exchange the loop order, and hoist them out of the inner loop, at
-          ! the expense of making Alt, Lat, and Lon two-dimensional arrays.
-          ! The result of geodToGeocLat is in RADIANS!  To_XYZ wants DEGREES!
-          sc_xyz = to_xyz ( geodToGeocLat(ScVelECR%template%geodLat(MIF,MAF))*rad2Deg, &
-                          & ScVelECR%template%lon(MIF,MAF) )
-          tp_xyz = to_xyz ( geodToGeocLat(tpGeocAlt%template%geodLat(MIF,MAF))*rad2Deg, &
-                          & tpGeocAlt%template%lon(MIF,MAF) )
-          ! Compute normal to SC-TP plane (doesn't need to be unit normal).
-          ! The tangent-point position vector will be rotated in the SC-TP plane
-          ! (about this vector) toward or away from the spacecraft position.
-          n = cross(sc_xyz, tp_xyz )
-          ! Rotate TP toward SC in TP-SC plane (about N) by CrossAngles(i) degrees
-          call rotate_3d ( tp_xyz, qty%template%crossAngles(i) * deg2rad, n, r )
-          lat(MIF) = asin(r(3)) * rad2deg
-          lon(MIF) = atan2(r(2),r(1)) * rad2deg
-          ! Compute the geocentric altitude at the rotated position.
-          alt(MIF) = tpGeocAlt%value3(1,MIF,MAF) * sec_x
-          ! Convert to geodetic coordinates if necessary
-          if ( qty%template%verticalCoordinate == l_geodAltitude ) then
-            geod = xyz_to_geod ( r * alt(MIF) )
-            lat(MIF) = geod(1) * rad2deg
-            lon(MIF) = geod(2) * rad2deg
-            alt(MIF) = geod(3)
-          end if
+    if ( qty%template%verticalCoordinate == l_zeta ) then
+      ! Get the geodetic altitude corresponding to each zeta in the
+      ! magnetic field quantity.
+      ! Hopefully, we got here from FillUtils_1%UsingMagneticModel, where
+      ! it is verified that if the magnetic field's vertical coordinate
+      ! is zeta, then GphQuantity is provided, and that GphQuantity has
+      ! the same number of instances, at the same geolocations, as the
+      ! magnetic field quantity.
+      call height_from_zeta ( qty, gphQuantity, heights )
+    else ! the geocentric or geodetic heights are in the magnetic field quantity
+      ! Eventually, this explicit allocation will not be necessary.
+      ! As of 2015-04-22, ifort 15.0.2.164 requires a command-line option to
+      ! make the standard-conforming automatic allocation work.
+      allocate ( heights(size(qty%template%surfs,1),size(qty%template%surfs,2)), &
+        & stat=stat )
+      call test_allocate ( stat, moduleName, 'Heights' )
+      heights = qty%template%surfs ! heights allocated automatically someday
+      if ( qty%template%verticalCoordinate == l_geodAltitude ) then
+        ! We know that if the vertical coordinate is zeta, then tpGeocAlt is
+        ! not present, and we will therefore get XYZs from the quantity template
+        ! using Quantity_Geometry%XYZ.  This wants geodetic altitudes, so don't
+        ! convert them to geocentric heights.
+        ! Convert geodetic altitude to geocentric height
+        do inst = 1, size(heights,2)
+          do s = 1, size(heights,1)
+            surfOr1 = merge(1,s,qty%template%stacked)
+            heights(s,inst) = geodToGeocAlt ( [ qty%template%geodLat(surfOr1,inst), &
+                                              & qty%template%lon(surfOr1,inst), &
+                                              & heights(s,inst) ] )
+          end do
         end do
-        ! Interpolate Latitude and Longitude at the rotated position using
-        ! linear interpolation on Altitude at the rotated position to altitude
-        ! in Qty.  Only use the monotone part of the altitude.
-        startStop = get_monotone ( alt )
-        call interpolateValues ( alt(m1:m2), lat(m1:m2), &
-          & qty%template%surfs(:,1), qty%template%geodLat(:,i), &
-          & method='L', extrapolate='C' )
-        call interpolateValues ( alt(m1:m2), lon(m1:m2), &
-          & qty%template%surfs(:,1), qty%template%lon(:,i), &
-          & method='L', extrapolate='C' )
-      end do
-    end do
-    qty%template%latitudeCoordinate = l_geocentric
-    if ( qty%template%verticalCoordinate == l_geodAltitude ) &
-      & qty%template%latitudeCoordinate = l_geodetic
+      end if
+    end if
+
+    if ( detail > 2 ) call dump ( heights, name='Heights' )
+
+    if ( present(tpGeocAlt) ) then
+      ! Make the magnetic field quantity incoherent and unstacked.
+      ! Re-create the latitude and longitude arrays and re-compute their values.
+      qty%template%coherent = .false.
+      qty%template%stacked = .false.
+      call createGeolocationFields ( qty%template, qty%template%noSurfs, 'MagneticField' )
+
+      if ( qty%template%verticalCoordinate == l_zeta ) then
+        ! Actually, we don't get here if called by FillUtils_1%UsingMagneticModel
+        ! because it prohibits zeta and tpGeocAlt to coexist.
+        if ( present(refMIF) ) then
+          myRefMIF = refMIF
+        else
+          myRefMIF = tpGeocAlt%template%noSurfs / 2
+        end if
+        ! Determine the instance of GphQuantity nearest to MyRefMif of tpGeocAlt.
+      end if
+
+      ! Hopefully, we got here from FillUtils_1%UsingMagneticModel, where
+      ! it is verified that if TpGeocAlt is provided, then so is ScVelECR,
+      ! and that they have the same numbers of instances and surfaces.
+      allocate ( Alt(tpGeocAlt%template%noSurfs), stat=stat )
+      call test_allocate ( stat, moduleName, 'Alt' )
+      allocate ( r(3,tpGeocAlt%template%noSurfs), stat=stat )
+      call test_allocate ( stat, moduleName, 'R' )
+
+      do inst = 1, qty%template%NoInstances
+        instOr1 = merge(1,inst,qty%template%coherent)
+        ! Use only the monotone part of the tangent-point altitudes
+        call longest_monotone_subsequence ( tpGeocAlt%value3(1,:,inst), inc )
+        call longest_monotone_subsequence ( tpGeocAlt%value3(1,:,inst), dec, -1 )
+        if ( size(inc) >= size(dec) ) then
+          call move_alloc ( inc, seq )
+          deallocate ( dec )
+        else
+          call move_alloc ( dec, seq )
+          deallocate ( inc )
+        end if
+        do c = 1, qty%template%noCrossTrack
+          if ( associated(qty%template%crossAngles) ) then
+            sec_x = 1.0 / cos(qty%template%crossAngles(c)*deg2rad)
+          else
+            sec_x = 1.0
+          end if
+          do MIF = 1, size(seq)
+            ! Get SC and TP positions for seq(MIF) in geocentric Cartesian
+            ! coordinates. Notice that SC_XYZ, TP_XYZ, and N do not depend upon C. 
+            ! We could exchange the loop order, and hoist them out of the inner
+            ! loop, at the expense of making Alt and R two-dimensional arrays.
+            ! The result of geodToGeocLat is in RADIANS!  To_XYZ wants DEGREES!
+            sc_xyz = to_xyz ( geodToGeocLat(ScVelECR%template%geodLat(seq(MIF),inst))*rad2Deg, &
+                            & ScVelECR%template%lon(seq(MIF),inst) )
+            tp_xyz = to_xyz ( geodToGeocLat(tpGeocAlt%template%geodLat(seq(MIF),inst))*rad2Deg, &
+                            & tpGeocAlt%template%lon(seq(MIF),inst) )
+            ! Compute normal to SC-TP plane (doesn't need to be unit normal).
+            n = cross(sc_xyz, tp_xyz )
+            ! Rotate TP toward or away from SC in the TP-SC plane (i.e., about N)
+            ! by CrossAngles(c) degrees, giving R in geocentric Cartesian
+            ! coordinates.  TP_xyz is a unit vector, so R is also.
+            if ( associated(qty%template%crossAngles) ) then
+              call rotate_3d ( tp_xyz, qty%template%crossAngles(c) * deg2rad, n, &
+                             & r(:3,seq(MIF)) )
+            else ! The cross-angle is assumed to be zero if there isn't one.
+              r(:3,seq(MIF)) = tp_xyz
+            end if
+            ! Compute the geocentric altitude at the rotated position, and
+            ! extend R to that length.
+            alt(seq(MIF)) = tpGeocAlt%value3(1,seq(MIF),inst) * sec_x
+            r(:3,seq(MIF)) = r(:3,seq(MIF)) * alt(seq(MIF))
+          end do ! MIF
+          ! Interpolate Cartesian ECR coordinates, in meters, at the rotated
+          ! position using linear interpolation and extrapolation on Altitude
+          ! at the rotated position to the altitude in Qty.  Only use the
+          ! monotone part of the rotated-position altitudes.  Extrapolate
+          ! outside the range of Alt using the average slope of R(i,:).
+          ! This might not be exactly correct in geodetic coordinates, but it
+          ! ought to be close enough.
+          call interpolateExtrapolate_d ( alt(seq), r(:,seq), &
+            & heights(:,instOr1), xyzs(:,:,instOr1,c), second=.true. )
+          if ( qty%template%verticalCoordinate == l_geodAltitude .or. &
+             & qty%template%verticalCoordinate == l_zeta ) then
+            qty%template%latitudeCoordinate = l_geodetic
+            ! Get geodetic latitude
+            do s = 1, size(qty%template%geodLat3,1)
+              geod = xyz_to_geod ( xyzs(:,s,instOr1,c) )
+              qty%template%geodLat3(s,inst,c) = geod(1) * rad2deg
+            end do
+          else ! qty%template%verticalCoordinate == l_geocAltitude
+            ! Get geocentric latitude
+            qty%template%latitudeCoordinate = l_geocentric
+            qty%template%geodLat3(:,inst,c) = &
+              & asin(xyzs(3,:,instOr1,c) / norm2(xyzs(:,:,instOr1,c),1)) * rad2deg
+          end if
+          ! Get longitude
+          do s = 1, size(qty%template%lon3,1)
+            qty%template%lon3(s,inst,c) = &
+              & atan2(xyzs(2,s,instOr1,c),xyzs(1,s,instOr1,c)) * rad2deg
+          end do
+        end do ! c = 1, qty%template%noCrossTrack
+        deallocate ( seq )
+      end do ! inst = 1, qty%template%NoInstances
+    else ! Use the geolocations already in the magnetic field quantity.
+      ! Since we have no TpGeocAlt and presumably no ScVelECR, the viewing
+      ! plane must be the orbit plane.  It's easy to compute XYZ from the
+      ! geolocations in the magnetic field quantity template.
+      xyzs(:,:,:,1) = xyz(qty%template, heights)
+    end if
+
+    if ( detail > 2 ) call dump ( xyzs, name='XYZs' )
+
+    if ( detail > -1 ) call dump ( qty%template, details=detail, &
+      & what='In Compute_Viewing_Plane' )
+
+    call trace_end ( 'Compute_Viewing_Plane', &
+      & cond=toggle(emit) .and. levels(emit) > 1 )
+
   end subroutine Compute_Viewing_Plane
 
-  function Get_Quantity_XYZ ( FwdModelIn, FwdModelExtra, QtyType, Config, &
-    & MIF, MAF, InstrumentModule ) result (XYZ)
-    ! Get the geocentric coordinates, as an unit vector in ECR, for the
-    ! specified quantity and specified MIF (if provided) or MIF #1, and the
-    ! specified MAF (if provided) or MAF #1.
-    use Constants, only: Rad2Deg
-    use ForwardModelConfig, only: ForwardModelConfig_T
-    use ForwardModelVectorTools, only: GetQuantityForForwardModel
-    use Geometry, only: GeodToGeocLat, To_XYZ
+  subroutine Height_From_Zeta ( Qty, GPHQuantity, Heights )
+    ! Compute an array of geopotential heights in meters that correspond to
+    ! Qty%Surfs in zeta.  These are roughly similar to geodetic altitudes, but
+    ! depend upon the temperature profile by way of zeta's dependence upon
+    ! temperature.  Then convert them to geodetic altitudes.
+
+    use Allocate_Deallocate, only: Test_Allocate
+    use Intrinsic, only: L_GeodAltitude, L_Zeta
+    use Heights_Module, only: GPH_to_Geom
+    use Intrinsic, only: L_Zeta
+    use MLSMessageModule, only : MLSMessage, MLSMSG_Error
+    use MLSNumerics, only: InterpolateValues
     use QuantityTemplates, only: RT
-    use VectorsModule, only: Vector_t, VectorValue_t
+    use Toggles, only: Emit, Levels, Switches, Toggle
+    use Trace_m, only: Trace_Begin, Trace_End
+    use VectorsModule, only: VectorValue_t
 
-    type(vector_t), intent(in) :: FwdModelIn
-    type(vector_t), intent(in), optional :: FwdModelExtra
-    integer, intent(in) :: QtyType
-    type(forwardModelConfig_t), intent(in), optional :: Config
-    integer, intent(in), optional :: MIF
-    integer, intent(in), optional :: MAF
-    integer, intent(in), optional :: InstrumentModule
-    real(rt) :: XYZ(3)
+    type (VectorValue_T), intent(in) :: Qty
+    type (VectorValue_T), intent(in) :: GPHQuantity
+    real(rt), intent(out), allocatable :: Heights(:,:) ! meters, geodetic
+      ! altitude, same shape as Qty%Surfs (NoSurfs x NoInstances or 1)
 
-    integer :: MyMAF, MyMIF
-    type(vectorValue_t), pointer :: Qty
+    integer :: IQ, IG, JQ, NQ, NG, SurfOr1, Stat
+    integer :: Me = -1                          ! String index, for tracing
 
-    myMAF = 1
-    if ( present(MAF) ) myMAF = MAF
-    myMIF = 1
-    if ( present(MIF) ) myMIF = MIF
+    call trace_begin ( me, 'Height_From_Zeta', &
+      & cond=toggle(emit) .and. levels(emit) > 1 ) ! set by -f command-line switch
 
-    qty => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
-        & quantityType=qtyType, config=config, &
-        & instrumentModule=InstrumentModule )
-    xyz = to_xyz ( geodToGeocLat(qty%template%geodLat(myMIF,myMAF))*rad2Deg, &
-                 & qty%template%lon(myMIF,myMAF) )
+    if ( qty%template%verticalCoordinate /= l_zeta ) then
+      call MLSMessage ( MLSMSG_Error, moduleName, &
+        & 'Height requested for zeta, but vertical coordinate is not zeta' )
+      return ! Hopefully, we don't get here
+    end if
 
-  end function Get_Quantity_XYZ
+    if ( gphQuantity%template%verticalCoordinate /= l_zeta ) then
+      call MLSMessage ( MLSMSG_Error, moduleName, &
+        & 'GPHQuantity vertical coordinate is not zeta' )
+      return ! Hopefully, we don't get here
+    end if
+
+    nq = size(qty%template%surfs,1)
+    ng = size(gphQuantity%template%surfs,1)
+
+    if ( nq > 1 .and. ng > 1 .and. ng /= nq .or. nq == 1 .and. ng > 1 ) then
+      call MLSMessage ( MLSMSG_Error, moduleName, &
+        & 'Numbers of instances of Qty and GHPQuantity not compatible ' // &
+        & 'in Height_From_Zeta' )
+      return ! Hopefully, we don't get here
+    end if
+
+    allocate ( heights(nq,size(qty%template%surfs,2)), stat=stat )
+    call test_allocate ( stat, moduleName, 'Heights' )
+
+    do iq = 1, nq
+      ig = merge(iq,1,ng>1)
+      call interpolateValues ( gphQuantity%template%surfs(ig,:), &
+                             & gphQuantity%values(ig,:), &
+                             & qty%template%surfs(iq,:), heights(iq,:), &
+                             & method='L' )
+    end do
+
+    if ( qty%template%verticalCoordinate == l_geodAltitude ) then
+      do jq = 1, size(qty%template%surfs,2)
+        surfOr1 = merge(1,jq,qty%template%stacked)
+        do iq = 1, nq
+          heights(iq,jq) = gph_to_geom ( heights(iq,jq), &
+                                       & lat_geod=qty%template%geodLat(surfOr1,jq) )
+        end do
+      end do
+    else ! qty%template%verticalCoordinate == l_geocAltitude
+      do jq = 1, size(qty%template%surfs,2)
+        surfOr1 = merge(1,jq,qty%template%stacked)
+        do iq = 1, nq
+          heights(iq,jq) = gph_to_geom ( heights(iq,jq), &
+                                       & lat_geoc=qty%template%geodLat(surfOr1,jq) )
+        end do
+      end do
+    end if
+
+    call trace_end ( 'Height_From_Zeta', &
+      & cond=toggle(emit) .and. levels(emit) > 1 )
+
+  end subroutine Height_From_Zeta
 
   function Viewing_Azimuth_Qty ( TpGeocAlt, ScVelECR, MIF, MAF ) &
     & result ( Viewing_Azimuth_Rad )
@@ -242,7 +397,7 @@ contains ! ============= Public Procedures ==========================
     tp_n = cross(sc_xyz,tp_xyz,norm=.true.)
 
     ! Compute the angle (Radians!) between the planes' normals
-    viewing_azimuth_rad = acos(dot_product(sc_n,tp_n))
+    viewing_azimuth_rad = acos(abs(dot_product(sc_n,tp_n)))
 
   end function Viewing_Azimuth_Qty
 
@@ -298,6 +453,9 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelGeometry
 
 ! $Log$
+! Revision 2.2  2015/04/29 02:08:39  vsnyder
+! Don't convert heights to geocentric if vertical is zeta
+!
 ! Revision 2.1  2015/03/29 18:48:46  vsnyder
 ! Initial commit
 !
