@@ -49,8 +49,8 @@ contains ! =====     Public Procedures     =============================
 
   ! -----------------------------------  CreateHGridFromMLSCFInfo  -----
   type(hGrid_T) function CreateHGridFromMLSCFInfo &
-    & ( name, root, filedatabase, l2gpDatabase, processingRange, chunk, &
-    & onlyComputingOffsets ) result ( hGrid )
+    & ( name, root, filedatabase, l2gpDatabase, &
+    & processingRange, chunk, onlyComputingOffsets ) result ( hGrid )
 
     use chunks_m, only: MLSChunk_t
     use dates_module, only: tai93s2hid
@@ -198,66 +198,66 @@ contains ! =====     Public Procedures     =============================
       got_field(field_index) = .true.
 
       select case ( field_index )
-      case ( f_type )
+      case ( f_type ) ! Required
         hGridType = decoration(subtree(2,son))
       case ( f_coordinate )
         hGrid%masterCoordinate = decoration(subtree(2,son))
-      case ( f_module )
-        instrumentModule = sub_rosa(subtree(2,son))
-        call get_string ( instrumentModule , instrumentModuleName )
+      case ( f_date )
+        date = sub_rosa(subtree(2,son))
       case  ( f_extendible )
         extendible = get_boolean ( fieldValue )
       case  ( f_forbidOverspill )
         forbidOverspill = get_boolean ( fieldValue )
+      case ( f_fraction )
+        call expr ( subtree(2,son), expr_units, expr_value )
+        fraction = expr_value(1)
       case ( f_height )
         call expr ( subtree(2,son), expr_units, expr_value )
         height = expr_value(1)
-      case ( f_mif )
+      case ( f_insetOverlaps )
+        insetOverlaps = get_boolean ( fieldValue )
+      case ( f_interpolationFactor )
         call expr ( subtree(2,son), expr_units, expr_value )
-        mif = nint(expr_value(1))
+        interpolationFactor = expr_value(1)
+      case ( f_geodAngle )
+        geodAngleNode = son
+      case ( f_geodLat )
+        geodLatNode = son
+      case ( f_inclination )
+        call expr (subtree ( 2, son), expr_units, expr_value )
+        incline = expr_value(1) !??? Never used
+      case ( f_lon )
+        lonNode = son
+      case ( f_losAngle )
+        losAngleNode = son
       case ( f_maxLowerOverlap )
         call expr ( subtree(2,son), expr_units, expr_value )
         maxLowerOverlap = nint(expr_value(1))
       case ( f_maxUpperOverlap )
         call expr ( subtree(2,son), expr_units, expr_value )
         maxUpperOverlap = nint(expr_value(1))
-      case ( f_fraction )
+      case ( f_mif )
         call expr ( subtree(2,son), expr_units, expr_value )
-        fraction = expr_value(1)
-      case ( f_insetOverlaps )
-        insetOverlaps = get_boolean ( fieldValue )
-      case ( f_interpolationFactor )
-        call expr ( subtree(2,son), expr_units, expr_value )
-        interpolationFactor = expr_value(1)
-      case ( f_spacing )
-        call expr ( subtree(2,son), expr_units, expr_value )
-        spacing = expr_value(1)
+        mif = nint(expr_value(1))
+      case ( f_module )
+        instrumentModule = sub_rosa(subtree(2,son))
+        call get_string ( instrumentModule , instrumentModuleName )
       case ( f_origin )
         call expr ( subtree(2,son), expr_units, expr_value )
         origin = expr_value(1)
-      case ( f_geodAngle )
-        geodAngleNode = son
-      case ( f_geodLat )
-        geodLatNode = son
-      case ( f_losAngle )
-        losAngleNode = son
-      case ( f_lon )
-        lonNode = son
       case ( f_single )
         single = get_boolean ( fieldValue )
       case ( f_solarTime )
         solarTimeNode = son
       case ( f_solarZenith )
         solarZenithNode = son
-      case ( f_time )
-        timeNode = son
-      case ( f_date )
-        date = sub_rosa(subtree(2,son))
       case ( f_sourceL2gp )
         l2gp => l2gpDatabase(decoration(decoration(subtree(2,son))))
-      case ( f_inclination )
-        call expr (subtree ( 2, son), expr_units, expr_value )
-        incline = expr_value(1) !??? Never used
+      case ( f_spacing )
+        call expr ( subtree(2,son), expr_units, expr_value )
+        spacing = expr_value(1)
+      case ( f_time )
+        timeNode = son
       case default ! Can't get here if tree_checker works correctly
       end select
     end do
@@ -283,27 +283,12 @@ contains ! =====     Public Procedures     =============================
           & instrumentModuleName, mif, maxLowerOverlap, maxUpperOverlap, hGrid )
       end if
 
-    case ( l_explicit ) ! ----------------- Explicit ------------------
+    case ( l_explicit ) ! ---------------------- Explicit --------------
       call CreateExplicitHGrid ( son, date, geodAngleNode, geodLatNode, &
         & solarTimeNode, solarZenithNode, lonNode, losAngleNode, &
         & processingRange%startTime, timeNode, hGrid )
 
-    case ( l_regular ) ! ----------------------- Regular --------------
-      if (.not. got_field(f_module) ) then
-        call announce_error ( root, NoModule )
-      else if ( .not. all(got_field((/f_spacing, f_origin/)))) then
-        call announce_error ( root, NoSpacingOrigin )
-      else if (.not. NEED_L1BFILES ) then
-        call announce_error ( root, NoL1BFILES )
-      else
-        call CreateRegularHGrid ( filedatabase, processingRange, chunk, &
-          & spacing, origin, trim(instrumentModuleName), extendible, &
-          & forbidOverspill, &
-          & maxLowerOverlap, maxUpperOverlap, insetOverlaps, single, hGrid, &
-          & onlyComputingOffsets )
-      end if
-
-    case ( l_l2gp) ! -------------------- L2GP ------------------------
+    case ( l_l2gp) ! --------------------------- L2GP ------------------
       
       ! Get the time from the l1b file
       l1bItemName = AssembleL1BQtyName ( "MAFStartTimeTAI", hdfVersion, .false. )
@@ -333,6 +318,22 @@ contains ! =====     Public Procedures     =============================
       hGrid%losAngle(1,:) =    l2gp%losAngle(a:b)
 
       call deallocateL1BData ( l1bField ) ! Avoid memory leaks
+
+    case ( l_regular ) ! ----------------------- Regular ---------------
+      if ( .not. got_field(f_module) ) then
+        call announce_error ( root, NoModule )
+      else if ( .not. all(got_field((/f_spacing, f_origin/)))) then
+        call announce_error ( root, NoSpacingOrigin )
+      else if (.not. NEED_L1BFILES ) then
+        call announce_error ( root, NoL1BFILES )
+      else
+        call CreateRegularHGrid ( filedatabase, processingRange, chunk, &
+          & spacing, origin, trim(instrumentModuleName), extendible, &
+          & forbidOverspill, &
+          & maxLowerOverlap, maxUpperOverlap, insetOverlaps, single, hGrid, &
+          & onlyComputingOffsets )
+      end if
+
     end select
     
     ! Find nearest maf based on time
@@ -645,6 +646,7 @@ contains ! =====     Public Procedures     =============================
       if ( .not. got_field(f_mif) ) call announce_error ( root, noMIF )
     case ( l_mif )
       ! ??? Does something go here?
+      ! ??? Probably not, since L_MIF isn't in hGridType in init_tables_module
     end select
 
     if ( hGridType /= l_Fixed ) then
@@ -2164,28 +2166,28 @@ contains ! =====     Public Procedures     =============================
     ! This routine goes through the L2CF up to an Output section to accumulate
     ! HGrid sizes from the Construct sections, and through the L1 file to work
     ! out how big each HGrid is going to be
-    use allocate_deallocate, only: allocate_test, deallocate_test, &
+    use Allocate_deallocate, only: allocate_test, deallocate_test, &
       & Test_Allocate, Test_Deallocate
-    use chunks_m, only: mlschunk_t
-    use chunkDivide_m, only: chunkDivideConfig
-    use dump_0, only: dump
+    use Chunks_m, only: mlschunk_t
+    use ChunkDivide_m, only: chunkDivideConfig
+    use Dump_0, only: dump
     use HGridsDatabase, only: HGrid_t, destroyHGridContents, dump
-    use highOutput, only: beVerbose, letsDebug, outputNamedValue
-    use init_tables_module, only: z_construct, s_hgrid, z_output
+    use HighOutput, only: beVerbose, letsDebug, outputNamedValue
+    use Init_tables_module, only: z_construct, s_hgrid, z_output
     use L2GPdata, only: l2gpdata_t
     use MLSCommon, only: mlsfile_t, tai93_range_t
     use MLSKinds, only: rk => r8
     use MLSL2Options, only: specialDumpFile
-    use moretree, only: get_spec_id
+    use Moretree, only: get_spec_id
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use MLSStringLists, only: switchDetail
     use Next_Tree_Node_m, only: Init_Next_Tree_Node, Next_Tree_Node, &
       & Next_Tree_Node_State
-    use output_m, only: blanks, output, revertOutput, switchOutput
-    use toggles, only: gen, levels, switches, toggle
-    use trace_m, only: trace_begin, trace_end
-    use tree, only: subtree, node_id, decoration
-    use tree_types, only: n_named
+    use Output_m, only: blanks, output, revertOutput, switchOutput
+    use Toggles, only: gen, levels, switches, toggle
+    use Trace_m, only: trace_begin, trace_end
+    use Tree, only: subtree, node_id, decoration
+    use Tree_types, only: n_named
     ! Dummy arguments
     integer, intent(in) :: Root         ! of the entire tree
     integer, intent(in) :: First_Section ! First subtree after definitions
@@ -2254,8 +2256,9 @@ contains ! =====     Public Procedures     =============================
                   dummyHGrid = CreateHGridFromMLSCFInfo ( 0, key, filedatabase, l2gpDatabase, &
                     & processingRange, chunks(chunk), onlyComputingOffsets=.true. )
                   if ( HGrid ==1 ) &
-                    & firstHGrid(chunk) = CreateHGridFromMLSCFInfo ( 0, key, filedatabase, l2gpDatabase, &
-                    & processingRange, chunks(chunk), onlyComputingOffsets=.true. )
+                    & firstHGrid(chunk) = CreateHGridFromMLSCFInfo ( 0, key, filedatabase, &
+                    & l2gpDatabase, processingRange, chunks(chunk), &
+                    & onlyComputingOffsets=.true. )
                   if ( chunk == 1 ) then
                     LowerOverlaps(hGrid) = dummyHGrid%noProfsLowerOverlap
                     if ( ChunkDivideConfig%allowPriorOverlaps .and. .false. ) then
@@ -2744,6 +2747,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.122  2015/04/29 01:16:34  vsnyder
+! Cosmetic changes
+!
 ! Revision 2.121  2015/03/28 02:45:56  vsnyder
 ! Get IsMonotonic from Monotone instead of MLSFillValues.  Save HGrid type.
 !
