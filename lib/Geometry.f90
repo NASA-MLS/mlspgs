@@ -14,7 +14,7 @@ module Geometry
   ! This module contains some geometry routines and constants common to the
   ! forward model and the scan model.
 
-  use Constants, only: Pi
+  use Constants, only: Deg2Rad, Pi, Rad2Deg
   use MLSKinds, only: R8, RP
 
   implicit NONE
@@ -26,7 +26,7 @@ module Geometry
   public :: GM, G0, J2, J4, SecPerYear, W, MaxRefraction
 
   ! Procedures
-  public :: GeocToGeodLat, GeodToGeocLat, Get_R_Eq
+  public :: GeocToGeodLat, GeodToGeocAlt, GeodToGeocLat, Get_R_Eq
   public :: Orbit_Plane_Minor_Axis_sq, To_Cart, To_XYZ
   public :: XYZ_to_Geod, XYZ_to_Geod_Bowring, XYZ_to_Geod_Fukushima
 
@@ -78,6 +78,10 @@ module Geometry
 
   interface GeocToGeodLat
     module procedure GeocToGeodLat_D, GeocToGeodLat_S
+  end interface
+
+  interface GeodToGeocAlt
+    module procedure GeodToGeocAlt_D, GeodToGeocAlt_S
   end interface
 
   interface GeodToGeocLat
@@ -138,8 +142,6 @@ contains
   !  Use the relation $\mu = \tan^{-1} \frac{f^2 \sin\lambda}{\cos\lambda}$,
   !  where $f$ is the ratio of the equatorial to polar Earth radii.
 
-    use Constants, only: Deg2Rad, Rad2Deg
-
     double precision, intent(in) :: geocLat
 
     double precision :: Lat ! Geocentric latitude in radians
@@ -158,8 +160,6 @@ contains
   !  Use the relation $\mu = \tan^{-1} \frac{f^2 \sin\lambda}{\cos\lambda}$,
   !  where $f$ is the ratio of the equatorial to polar Earth radii.
 
-    use Constants, only: Deg2Rad, Rad2Deg
-
     real, intent(in) :: geocLat
 
     real :: Lat ! Geocentric latitude in radians
@@ -170,6 +170,43 @@ contains
 
   end function GeocToGeodLat_S
 
+  ! --------------------------------------------  GeodToGeocAlt_D  -----
+  double precision function GeodToGeocAlt_D ( Where ) result ( GeocAlt )
+
+  ! Convert geodetic altitude in meters to geocentric height in meters
+
+    ! Arguments
+    double precision, intent(in) :: Where(3) ! Lat(degrees), Lon(Degrees),
+                                             ! Geodetic height (Meters)
+
+    double precision :: XYZ(3)               ! Cartesian ECR in km
+
+    ! To_Cart wants height in km, and returns XYZ in km
+    call to_cart ( [ where(1), where(2), where(3)/1000.0 ], xyz, km=.true. )
+
+    geocAlt = 1000.0 * norm2(xyz)
+
+  end function GeodToGeocAlt_D
+
+  ! --------------------------------------------  GeodToGeocAlt_S  -----
+  double precision function GeodToGeocAlt_S ( Where ) result ( GeocAlt )
+
+  ! Convert geodetic altitude in meters to geocentric height in meters
+
+    ! Arguments
+    real, intent(in) :: Where(3)             ! Lat(degrees), Lon(Degrees),
+                                             ! Geodetic height (Meters)
+
+    real :: XYZ(3)                           ! Cartesian ECR in km
+
+    ! To_Cart wants height in km, and returns XYZ in km
+    call to_cart ( [ where(1), where(2), where(3)/1000.0 ], xyz, km=.true. )
+
+    geocAlt = 1000.0 * norm2(xyz)
+
+  end function GeodToGeocAlt_S
+
+
   ! --------------------------------------------  GeodToGeocLat_D  -----
   double precision elemental function GeodToGeocLat_D ( GeodLat ) result ( GeocLat )
 
@@ -177,8 +214,6 @@ contains
   !  $\lambda$ (IN RADIANS!)
   !  Use the relation $\lambda = \tan^{-1} \frac{\sin\mu}{f^2 \cos\mu}$,
   !  where $f$ is the ratio of the equatorial to polar Earth radii.
-
-    use Constants, only: Deg2Rad
 
     ! Arguments
     double precision, intent(in) :: GeodLat
@@ -198,8 +233,6 @@ contains
   !  $\lambda$ (IN RADIANS!)
   !  Use the relation $\lambda = \tan^{-1} \frac{\sin\mu}{f^2 \cos\mu}$,
   !  where $f$ is the ratio of the equatorial to polar Earth radii.
-
-    use Constants, only: Deg2Rad
 
     ! Arguments
     real, intent(in) :: GeodLat
@@ -302,7 +335,7 @@ contains
   ! above sea level), to Cartesian coordinates.  The units are ERAD (see
   ! above) unless KM is present and true, in which case the units are
   ! kilometers.
-    use Constants, only: Deg2Rad
+
     integer, parameter :: RK = kind(0.0d0)
     real(rk), intent(in) :: WHERE(3) ! Latitude (degrees north),
                                      ! Longitude (degrees east),
@@ -323,7 +356,7 @@ contains
   ! above sea level), to Cartesian coordinates.  The units are ERAD (see
   ! above) unless KM is present and true, in which case the units are
   ! kilometers.
-    use Constants, only: Deg2Rad
+
     integer, parameter :: RK = kind(0.0e0)
     real(rk), intent(in) :: WHERE(3) ! Latitude (degrees north),
                                      ! Longitude (degrees east),
@@ -342,7 +375,7 @@ contains
   pure function To_XYZ_D ( Lat, Lon, Radians ) result ( XYZ )
     ! Convert north geocentric Lat (default degrees) and east Lon
     ! (default degrees) to a unit vector in ECR.
-    use Constants, only: Deg2Rad
+
     double precision, intent(in) :: Lat, Lon
     logical, intent(in), optional :: Radians
     double precision :: XYZ(3)
@@ -366,7 +399,7 @@ contains
   pure function To_XYZ_S ( Lat, Lon, Radians ) result ( XYZ )
     ! Convert north geocentric Lat (default degrees) and east Lon
     ! (default degrees) to a unit vector in ECR.
-    use Constants, only: Deg2Rad
+
     real, intent(in) :: Lat, Lon
     logical, intent(in), optional :: Radians
     real :: XYZ(3)
@@ -513,6 +546,9 @@ contains
 end module Geometry
 
 ! $Log$
+! Revision 2.24  2015/04/29 00:54:52  vsnyder
+! Add GeodToGeocAlt
+!
 ! Revision 2.23  2015/03/28 02:58:05  vsnyder
 ! Added Earth_Axis_Ratio
 !
