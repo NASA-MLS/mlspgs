@@ -34,16 +34,18 @@ module Quantity_Geometry
 
 contains
 
-  function XYZ_ECR_1 ( Qty, Surf, Inst ) result ( XYZ )
+  function XYZ_ECR_1 ( Qty, Surf, Inst, Height ) result ( XYZ )
     ! Get Cartesian ECR coordinates, in meters, for one surface and instance.
 
     use Geometry, only: To_Cart, To_XYZ
-    use Intrinsic, only: L_Geocentric, L_GeocAltitude, L_Geodetic, L_GeodAltitude
+    use Intrinsic, only: L_Geocentric, L_GeocAltitude, L_Geodetic, &
+      & L_GeodAltitude, L_Zeta
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use QuantityTemplates, only: QuantityTemplate_t, RT
 
     type(quantityTemplate_t), intent(in) :: Qty
     integer, intent(in) :: Surf, Inst
+    real(rt), intent(in), optional :: Height ! Geodetic meters, used iff zeta
     real(rt) :: XYZ(3)
 
     integer :: InstOr1
@@ -63,29 +65,37 @@ contains
       xyz = xyz * qty%surfs(surf,instOr1)
     case ( l_geodAltitude )
       if ( qty%latitudeCoordinate == l_geocentric ) &
-        call MLSMessage ( MLSMSG_Error, moduleName, &
+        & call MLSMessage ( MLSMSG_Error, moduleName, &
           & 'Geodetic altitude with geocentric latitude not supported')
       call to_cart ( [ qty%geodLat(surfOr1,inst), qty%lon(surfOr1,inst), &
-                    &   qty%surfs(surf,instOr1) ], xyz, km=.true. )
+                   &   qty%surfs(surf,instOr1)/1000.0 ], xyz, km=.true. )
       xyz = xyz * 1000.0_rt ! Convert km to m
+    case ( l_zeta )
+      if ( .not. present(height) ) &
+        & call MLSMessage ( MLSMSG_Error, moduleName, &
+          & 'Vertical coordinate is zeta but height is not provided' )
+      call to_cart ( [ qty%geodLat(surfOr1,inst), qty%lon(surfOr1,inst), &
+                   &   height/1000.0 ], xyz, km=.true. )
     case default
       call MLSMessage ( MLSMSG_Error, moduleName, &
-        & 'Vertical coordinate other than geocentric or geodetic not supported' )
+        & 'Vertical coordinate other than geocentric, geodetic, or zeta not supported' )
     end select
 
   end function XYZ_ECR_1
 
-  function XYZ_ECR_All ( Qty ) result ( XYZ )
+  function XYZ_ECR_All ( Qty, Heights  ) result ( XYZ)
     ! Get Cartesian ECR coordinates, in meters, for all surfaces and instances.
 
     use Allocate_Deallocate, only: Test_Allocate
     use Geometry, only: To_Cart, To_XYZ
-    use Intrinsic, only: L_Geocentric, L_GeocAltitude, L_Geodetic, L_GeodAltitude
+    use Intrinsic, only: L_Geocentric, L_GeocAltitude, L_Geodetic, &
+      & L_GeodAltitude, L_Zeta
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use QuantityTemplates, only: QuantityTemplate_t, RT
 
     type(quantityTemplate_t), intent(in) :: Qty
     real(rt), allocatable :: XYZ(:,:,:) ! 3 x noSurfs x noInstances
+    real(rt), intent(in), optional :: Heights(:,:) ! Geodetic meters, used iff zeta
 
     integer :: Inst, InstOr1
     integer :: Surf, SurfOr1
@@ -122,14 +132,29 @@ contains
           surfOr1 = merge ( 1, surf, qty%stacked )
           call to_cart ( [ qty%geodLat(surfOr1,inst), &
                        &   qty%lon(surfOr1,inst), &
-                       &   qty%surfs(surf,instOr1) ], &
+                       &   qty%surfs(surf,instOr1)/1000.0 ], &
+                       & xyz(:,surf,inst), km=.true. )
+          xyz(:,surf,inst) = xyz(:,surf,inst) * 1000.0_rt ! Convert km to m
+        end do
+      end do
+    case ( l_zeta )
+      if ( .not. present(heights) ) &
+        & call MLSMessage ( MLSMSG_Error, moduleName, &
+          & 'Vertical coordinate is zeta but heights are not provided' )
+      do inst = 1, qty%noInstances
+        instOr1 = merge ( 1, inst, qty%coherent )
+        do surf = 1, qty%noSurfs
+          surfOr1 = merge ( 1, surf, qty%stacked )
+          call to_cart ( [ qty%geodLat(surfOr1,inst), &
+                       &   qty%lon(surfOr1,inst), &
+                       &   heights(surf,instOr1)/1000.0 ], &
                        & xyz(:,surf,inst), km=.true. )
           xyz(:,surf,inst) = xyz(:,surf,inst) * 1000.0_rt ! Convert km to m
         end do
       end do
     case default
       call MLSMessage ( MLSMSG_Error, moduleName, &
-        & 'Vertical coordinate other than geocentric or geodetic not supported' )
+        & 'Vertical coordinate other than geocentric, geodetic, or zeta not supported' )
     end select
 
   end function XYZ_ECR_All
@@ -147,6 +172,9 @@ contains
 end module Quantity_Geometry
 
 ! $Log$
+! Revision 2.2  2015/04/29 01:21:21  vsnyder
+! Add ability to compute XYZ if vertical is zeta
+!
 ! Revision 2.1  2015/04/25 02:04:57  vsnyder
 ! Initial commit
 !
