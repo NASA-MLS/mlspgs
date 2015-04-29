@@ -157,7 +157,10 @@ module MLSNumerics              ! Some low level numerical stuff
   public :: FApproximate, FillLookupTable, FindInRange, FinvApproximate
   public :: Hunt, HuntBox, HuntRange, IfApproximate
   public :: InterpolateArraySetup, InterpolateArrayTeardown
-  public :: InterpolateExtrapolate, InterpolateValues
+  public :: InterpolateExtrapolate
+  public :: InterpolateExtrapolate_d, InterpolateExtrapolate_s
+  public :: InterpolateScalar_r4, InterpolateScalar_r8
+  public :: InterpolateValues
   public :: Interpolate_Regular_To_Irregular, Interpolate_2D_Composite
   public :: LinearInterpolate
   public :: PureHunt
@@ -2637,6 +2640,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.86  2015/04/29 00:53:01  vsnyder
+! Make some specific procedures public
+!
 ! Revision 2.85  2015/04/11 01:28:25  vsnyder
 ! Add 'Second' argument to several routines
 !
