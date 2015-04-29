@@ -32,7 +32,7 @@ module FillUtils_1                     ! Procedures used by Fill
     & L_DOBSONUNITS, L_DU, &
     & L_ECRTOFOV, &
     & L_FIELDAZIMUTH, L_FIELDELEVATION, L_FIELDSTRENGTH, &
-    & L_GeocAltitude, L_GPH, &
+    & L_GeocAltitude, L_Geocentric, L_GeodAltitude, L_Geodetic, L_GPH, &
     & L_HEIGHT, L_ISOTOPERATIO, &
     & L_L1BMAFBASELINE, L_L1BMIF_TAI, &
     & L_LIMBSIDEBANDFRACTION, L_LOSVEL, &
@@ -156,7 +156,8 @@ module FillUtils_1                     ! Procedures used by Fill
   integer, parameter, public :: BadGeocAltitudeQuantity = NotSPD + 1
   integer, parameter, public :: BadTemperatureQuantity = badGeocAltitudeQuantity + 1
   integer, parameter, public :: BadREFGPHQuantity = badTemperatureQuantity + 1
-  integer, parameter, public :: BadScVelECRQuantity = badREFGPHQuantity + 1
+  integer, parameter, public :: BadGPHQuantity = badREFGPHQuantity + 1
+  integer, parameter, public :: BadScVelECRQuantity = badGPHQuantity + 1
   integer, parameter, public :: Miscellaneous_err = BadScVelECRQuantity + 1
   integer, parameter, public :: ErrorReadingL1B = miscellaneous_err + 1
   integer, parameter, public :: NeedTempREFGPH = errorReadingL1B + 1
@@ -322,12 +323,14 @@ contains ! =====     Public Procedures     =============================
         call output ( " information for los velocity is incomplete/incorrect", advance='yes' )
       case ( badIsotopeFill )
         call output ( " information for isotope fill is incomplete/incorrect", advance='yes' )
+      case ( badGPHQuantity )
+        call output ( " GPHQuantity is not GPH", advance='yes' )
       case ( badREFGPHQuantity )
         call output ( " refGPHQuantity is not refGPH", advance='yes' )
       case ( badRefractFill )
         call output ( " phiTan refract fill is missing information", advance='yes' )
       case ( BadScVelECRQuantity )
-        call output ( " ScVelECR quantity is not ScVelECR", advance='yes' )
+        call output ( " scVelQuantity quantity is not scVelQuantity", advance='yes' )
       case ( badTemperatureQuantity )
         call output ( " temperatureQuantity is not temperature", advance='yes' )
       case ( bothFractionAndLength )
@@ -4433,14 +4436,15 @@ contains ! =====     Public Procedures     =============================
     end subroutine FromL2AUX
 
     ! ---------------------------------------  UsingMagneticModel  -----
-    subroutine UsingMagneticModel ( qty, GeocAltitudeQuantity, ScVelQuantity, &
-                                  & key, MAF )
+    subroutine UsingMagneticModel ( Qty, Key, ScVelQuantity, GeocAltitudeQuantity, &
+                                  & GPHQuantity )
       use Magnetic_Field_Quantity, only: Get_Magnetic_Field_Quantity
+      use QuantityTemplates, only: QuantitiesAreCompatible
       type (VectorValue_T), intent(inout) :: Qty
-      type (VectorValue_T), intent(in) :: GeocAltitudeQuantity ! (MIF quantity)
-      type (VectorValue_T), intent(in) :: ScVelQuantity        ! (MIF quantity)
-      integer, intent(in) :: KEY
-      integer, intent(in), optional :: MAF ! to use for Qty quantity
+      integer, intent(in) :: Key
+      type (VectorValue_T), intent(in), optional :: ScVelQuantity        ! MIF quantity
+      type (VectorValue_T), intent(in), optional :: GeocAltitudeQuantity ! MIF quantity
+      type (VectorValue_T), intent(in), optional :: GPHQuantity
 
       logical :: Error
       integer :: Me = -1                   ! String index for trace
@@ -4449,6 +4453,7 @@ contains ! =====     Public Procedures     =============================
       call trace_begin ( me, 'FillUtils_1.UsingMagneticModel', key, &
         & cond=toggle(gen) .and. levels(gen) > 1 )
 
+      ! Check a bunch of stuff.
       error = .false.
       if ( .not. ValidateVectorQuantity ( qty, quantityType=(/l_magneticField/), &
         & frequencyCoordinate=(/ l_xyz /) ) ) then
@@ -4456,22 +4461,94 @@ contains ! =====     Public Procedures     =============================
           & 'Magnetic field quantity does not describe magnetic field' )
         error = .true.
       end if
-      if ( .not. ValidateVectorQuantity ( geocAltitudeQuantity, &
-           & quantityType=(/l_tngtgeocAlt/), frequencyCoordinate=(/ l_none /), &
-           & verticalCoordinate=(/l_geocAltitude/) ) ) then
+      if ( qty%template%verticalCoordinate /= l_geocAltitude .and. &
+         & qty%template%verticalCoordinate /= l_geodAltitude .and. &
+         & qty%template%verticalCoordinate /= l_zeta ) then
         call Announce_Error ( key, no_error_code, &
-          & 'GeocAltitude quantity does not describe geocentric altitude' )
+          & 'Magnetic field vertical coordinate is not geocentric ' // &
+          & 'or geodetic altitude, or zeta' )
         error = .true.
       end if
-      if ( .not. ValidateVectorQuantity ( scVelQuantity, &
-           & quantityType=(/l_scVelECR/), frequencyCoordinate=(/ l_xyz /) ) ) then
+      if ( qty%template%verticalCoordinate == l_zeta ) then
+        if ( .not. present(gphQuantity) ) then
+          call Announce_Error ( key, no_error_code, &
+            & 'GPH quantity is required if magnetic field vertical ' // &
+            & 'coordinate is zeta' )
+          error = .true.
+        end if
+        if ( present(geocAltitudeQuantity) ) then
+          call Announce_Error ( key, no_error_code, &
+            & 'Cross-track viewing and zeta magnetic field vertical ' // &
+            & 'coordinate are incompatible' )
+          error = .true.
+        end if
+      end if
+      if ( present(scVelQuantity) ) then
+        if ( .not. ValidateVectorQuantity ( scVelQuantity, &
+             & quantityType=(/l_scVelECR/), frequencyCoordinate=(/ l_xyz /) ) ) then
+          call Announce_Error ( key, no_error_code, &
+            & 'scVelQuantity quantity does not describe spacecraft velocity in ECR' )
+          error = .true.
+        end if
+      end if
+      if ( present(geocAltitudeQuantity) ) then
+        if ( .not. ValidateVectorQuantity ( geocAltitudeQuantity, &
+             & quantityType=(/l_tngtgeocAlt/), frequencyCoordinate=(/ l_none /), &
+             & verticalCoordinate=(/l_geocAltitude/) ) ) then
+          call Announce_Error ( key, no_error_code, &
+            & 'GeocAltitude quantity does not describe geocentric altitude' )
+          error = .true.
+        end if
+        if ( geocAltitudeQuantity%template%noInstances /= qty%template%noInstances ) then
+          call Announce_Error ( key, no_error_code, &
+            & 'GeocAltitude quantity and magnetic field quantity have ' // &
+            & 'different numbers of instances' )
+          error = .true.
+        end if
+      end if
+      if ( present(gphQuantity) ) then
+        if ( .not. ValidateVectorQuantity ( gphQuantity, &
+             & quantityType=(/l_gph/) ) ) then
+          call Announce_Error ( key, no_error_code, &
+            & 'GPH quantity does not describe geopotential height' )
+          error = .true.
+        end if
+      end if
+      if ( present(scVelQuantity) .neqv. present(geocAltitudeQuantity) ) then
         call Announce_Error ( key, no_error_code, &
-          & 'ScVelECR quantity does not describe spacecraft velocity in ECR' )
+          & 'Only one of spacecraft velocity or geocentric altitude quantity ' // &
+          & 'is specified; both are needed.' )
         error = .true.
+      end if
+      if ( present(scVelQuantity) .and. present(geocAltitudeQuantity) ) then
+        if ( .not. quantitiesAreCompatible ( scVelQuantity%template, geocAltitudeQuantity%template, &
+                                           & differentTypeOK=.true. ) ) then
+          call MLSMessage ( MLSMSG_Error, moduleName, &
+            & "Spacecraft velocity and tangent altitude quantities are not " // &
+            & "compatible" )
+          error = .true.
+        end if
+      end if
+      if ( associated(qty%template%crossAngles) ) then
+        if ( any( qty%template%crossAngles /= 0.0 ) ) then
+          ! Magnetic field is in a viewing plane that is not the orbit plane
+          if ( .not. present(scVelQuantity) .or. &
+             & .not. present(geocAltitudeQuantity) ) then
+            call Announce_Error ( key, no_error_code, &
+              & 'Magnetic field has cross angles but spacecraft velocity ' // &
+              & 'or tangent geocentric height quantity is not provided' )
+            error = .true.
+          end if
+          if ( qty%template%stacked ) then
+            call MLSMessage ( MLSMSG_Error, moduleName, &
+              & "Cross-track magnetic field quantity cannot be stacked" )
+            error = .true.
+          end if
+        end if
       end if
 
       if ( .not. error ) call get_Magnetic_Field_Quantity ( qty, &
-        & geocAltitudeQuantity, scVelQuantity, MAF )
+        & scVelQuantity, geocAltitudeQuantity, gphQuantity )
 
       call trace_end ( cond=toggle(gen) .and. levels(gen) > 1 )
 
@@ -7461,6 +7538,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.105  2015/04/29 01:17:52  vsnyder
+! Add lots of checking in UsingMagneticModel
+!
 ! Revision 2.104  2015/04/09 01:12:32  vsnyder
 ! Correct message about mismatched vGrid in RotateMagneticField
 !
