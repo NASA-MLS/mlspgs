@@ -222,9 +222,12 @@ contains
       write (*,*) '  character  meaning                                       '
       write (*,*) '     ---     -------                                       '
       write (*,*) '      H       show rank, shape of array                    '
+      write (*,*) '      h       diff hessian tensors                         '
+      write (*,*) '      j       diff jacobian matrices                       '
       write (*,*) '      b       table of % vs. amount of differences (pdf)   '
       write (*,*) '      c       clean                                        '
       write (*,*) '      g       gaps                                         '
+      write (*,*) '      m       mute (print only if different)               '
       write (*,*) '      r       rms -- min, max, etc. of differences         '
       write (*,*) '      s       stats -- number of differences               '
       write (*,*) '      p       transpose                                    '
@@ -260,6 +263,9 @@ end program l2pcdiff
 !==================
 
 ! $Log$
+! Revision 1.3  2014/01/09 00:31:26  pwagner
+! Some procedures formerly in output_m now got from highOutput
+!
 ! Revision 1.2  2013/08/23 02:51:48  vsnyder
 ! Move PrintItOut to PrintIt_m
 !
