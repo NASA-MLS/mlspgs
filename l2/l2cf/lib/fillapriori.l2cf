@@ -195,7 +195,7 @@ Fill, quantity=apriori.refGPH,$
   ;; Fill the magnetic field.
 !ifdef(flagMagneticFieldOnHeightGrid,{!dnl
   Fill, quantity=apriori.magneticField, method=magneticModel, $
-    GPHquantity=apriori.gph
+    scVelECR=apriori.scVelECR, geocAltitudeQuantity=apriori.tngtGeocAltGHz
   Fill, quantity=apriori.fieldAzimuth, method=rotateField, $
     fieldECR=apriori.magneticField, ecrToFOV=apriori.ecrToFOV
   Fill, quantity=apriori.fieldElevation, method=rotateField, $
@@ -204,7 +204,7 @@ Fill, quantity=apriori.refGPH,$
     fieldECR=apriori.magneticField, ecrToFOV=apriori.ecrToFOV
   },{
   Fill, quantity=apriori.magneticField, method=magneticModel, $
-    scVelECR=apriori.scVelECR, geocAltitudeQuantity=apriori.tngtGeocAltGHz
+    GPHquantity=apriori.gph
   Fill, quantity=apriori.fieldAzimuth, method=rotateField, $
     fieldECR=apriori.magneticField, ecrToFOV=apriori.ecrToFOV
   Fill, quantity=apriori.fieldElevation, method=rotateField, $
@@ -782,6 +782,9 @@ end Fill
 !include(writeapriori.l2cf)
 !divert(-1)
 ;$Log$
+;Revision 1.161  2015/04/29 18:20:45  pwagner
+;Restored partial backward compatibility
+;
 ;Revision 1.160  2015/03/27 18:00:52  pwagner
 ;Preparing for new magneticField
 ;

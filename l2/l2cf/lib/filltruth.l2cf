@@ -105,7 +105,7 @@ begin Fill
   ;; Fill the magnetic field.
 !ifdef(flagMagneticFieldOnHeightGrid,{!dnl
   Fill, quantity=truth.magneticField, method=magneticModel, $
-    GPHquantity=truth.gph
+    scVelECR=truth.scVelECR, geocAltitudeQuantity=truth.tngtGeocAltGHz
   Fill, quantity=truth.fieldAzimuth, method=rotateField, $
     fieldECR=truth.magneticField, ecrToFOV=truth.ecrToFOV
   Fill, quantity=truth.fieldElevation, method=rotateField, $
@@ -114,7 +114,7 @@ begin Fill
     fieldECR=truth.magneticField, ecrToFOV=truth.ecrToFOV
   },{
   Fill, quantity=truth.magneticField, method=magneticModel, $
-    scVelECR=truth.scVelECR, geocAltitudeQuantity=truth.tngtGeocAltGHz
+    GPHquantity=truth.gph
   Fill, quantity=truth.fieldAzimuth, method=rotateField, $
     fieldECR=truth.magneticField, ecrToFOV=truth.ecrToFOV
   Fill, quantity=truth.fieldElevation, method=rotateField, $
@@ -128,6 +128,9 @@ begin Fill
 end Fill
 !divert(-1)
 ; $Log$
+; Revision 1.29  2015/04/29 18:21:00  pwagner
+; Restored partial backward compatibility
+;
 ; Revision 1.28  2015/03/27 18:01:55  pwagner
 ; Preparing for new magneticField
 ;
