@@ -37,7 +37,8 @@ contains
   function XYZ_ECR_1 ( Qty, Surf, Inst, Height ) result ( XYZ )
     ! Get Cartesian ECR coordinates, in meters, for one surface and instance.
 
-    use Geometry, only: To_Cart, To_XYZ
+    use Constants, only: Rad2Deg
+    use Geometry, only: GeocToGeodLat, GeodToGeocLat, To_Cart, To_XYZ
     use Intrinsic, only: L_Geocentric, L_GeocAltitude, L_Geodetic, &
       & L_GeodAltitude, L_Zeta
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
@@ -49,6 +50,7 @@ contains
     real(rt) :: XYZ(3)
 
     integer :: InstOr1
+    real(rt) :: Lat
     integer :: SurfOr1
 
     instOr1 = merge ( 1, inst, qty%coherent )
@@ -56,25 +58,34 @@ contains
 
     select case ( qty%verticalCoordinate )
     case ( l_geocAltitude )
-      if ( qty%latitudeCoordinate == l_geodetic ) &
-        call MLSMessage ( MLSMSG_Error, moduleName, &
-          & 'Geocentric altitude with geodetic latitude not supported')
+      if ( qty%latitudeCoordinate == l_geodetic ) then
+        lat = geodToGeocLat(qty%geodLat(surfOr1,inst))*rad2deg
+      else
+        lat = qty%geodLat(surfOr1,inst)
+      end if
       ! Get a unit vector in the right direction
-      xyz = to_xyz ( qty%geodLat(surfOr1,inst), qty%lon(surfOr1,inst) )
+      xyz = to_xyz ( lat, qty%lon(surfOr1,inst) )
       ! Extend it to the correct altitude
       xyz = xyz * qty%surfs(surf,instOr1)
     case ( l_geodAltitude )
-      if ( qty%latitudeCoordinate == l_geocentric ) &
-        & call MLSMessage ( MLSMSG_Error, moduleName, &
-          & 'Geodetic altitude with geocentric latitude not supported')
-      call to_cart ( [ qty%geodLat(surfOr1,inst), qty%lon(surfOr1,inst), &
+      if ( qty%latitudeCoordinate == l_geocentric ) then
+        lat = geocToGeodLat(qty%geodLat(surfOr1,inst))
+      else
+        lat = qty%geodLat(surfOr1,inst)
+      end if
+      call to_cart ( [ lat, qty%lon(surfOr1,inst), &
                    &   qty%surfs(surf,instOr1)/1000.0 ], xyz, km=.true. )
       xyz = xyz * 1000.0_rt ! Convert km to m
     case ( l_zeta )
       if ( .not. present(height) ) &
         & call MLSMessage ( MLSMSG_Error, moduleName, &
           & 'Vertical coordinate is zeta but height is not provided' )
-      call to_cart ( [ qty%geodLat(surfOr1,inst), qty%lon(surfOr1,inst), &
+      if ( qty%latitudeCoordinate == l_geocentric ) then
+        lat = geocToGeodLat(qty%geodLat(surfOr1,inst))
+      else
+        lat = qty%geodLat(surfOr1,inst)
+      end if
+      call to_cart ( [ lat, qty%lon(surfOr1,inst), &
                    &   height/1000.0 ], xyz, km=.true. )
     case default
       call MLSMessage ( MLSMSG_Error, moduleName, &
@@ -87,7 +98,8 @@ contains
     ! Get Cartesian ECR coordinates, in meters, for all surfaces and instances.
 
     use Allocate_Deallocate, only: Test_Allocate
-    use Geometry, only: To_Cart, To_XYZ
+    use Constants, only: Rad2Deg
+    use Geometry, only: GeocToGeodLat, GeodToGeocLat, To_Cart, To_XYZ
     use Intrinsic, only: L_Geocentric, L_GeocAltitude, L_Geodetic, &
       & L_GeodAltitude, L_Zeta
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
@@ -98,6 +110,7 @@ contains
     real(rt), intent(in), optional :: Heights(:,:) ! Geodetic meters, used iff zeta
 
     integer :: Inst, InstOr1
+    real(rt) :: Lat
     integer :: Surf, SurfOr1
     integer :: Stat
 
@@ -109,29 +122,32 @@ contains
 
     select case ( qty%verticalCoordinate )
     case ( l_geocAltitude )
-      if ( qty%latitudeCoordinate == l_geodetic ) &
-        call MLSMessage ( MLSMSG_Error, moduleName, &
-          & 'Geocentric altitude with geodetic latitude not supported')
       do inst = 1, qty%noInstances
         instOr1 = merge ( 1, inst, qty%coherent )
         do surf = 1, qty%noSurfs
           surfOr1 = merge ( 1, surf, qty%stacked )
+          if ( qty%latitudeCoordinate == l_geodetic ) then
+            lat = geodToGeocLat(qty%geodLat(surfOr1,inst))*rad2deg
+          else
+            lat = qty%geodLat(surfOr1,inst)
+          end if
           ! Get a unit vector in the right direction
-          xyz(:,surf,inst) = to_xyz ( qty%geodLat(surfOr1,inst), qty%lon(surfOr1,inst) )
+          xyz(:,surf,inst) = to_xyz ( lat, qty%lon(surfOr1,inst) )
           ! Extend it to the correct altitude
           xyz(:,surf,inst) = xyz(:,surf,inst) * qty%surfs(surf,instOr1)
         end do
       end do
     case ( l_geodAltitude )
-      if ( qty%latitudeCoordinate == l_geocentric ) &
-        call MLSMessage ( MLSMSG_Error, moduleName, &
-          & 'Geodetic altitude with geocentric latitude not supported')
       do inst = 1, qty%noInstances
         instOr1 = merge ( 1, inst, qty%coherent )
         do surf = 1, qty%noSurfs
           surfOr1 = merge ( 1, surf, qty%stacked )
-          call to_cart ( [ qty%geodLat(surfOr1,inst), &
-                       &   qty%lon(surfOr1,inst), &
+          if ( qty%latitudeCoordinate == l_geocentric ) then
+            lat = geocToGeodLat(qty%geodLat(surfOr1,inst))
+          else
+            lat = qty%geodLat(surfOr1,inst)
+          end if
+          call to_cart ( [ lat, qty%lon(surfOr1,inst), &
                        &   qty%surfs(surf,instOr1)/1000.0 ], &
                        & xyz(:,surf,inst), km=.true. )
           xyz(:,surf,inst) = xyz(:,surf,inst) * 1000.0_rt ! Convert km to m
@@ -145,8 +161,12 @@ contains
         instOr1 = merge ( 1, inst, qty%coherent )
         do surf = 1, qty%noSurfs
           surfOr1 = merge ( 1, surf, qty%stacked )
-          call to_cart ( [ qty%geodLat(surfOr1,inst), &
-                       &   qty%lon(surfOr1,inst), &
+          if ( qty%latitudeCoordinate == l_geocentric ) then
+            lat = geocToGeodLat(qty%geodLat(surfOr1,inst))
+          else
+            lat = qty%geodLat(surfOr1,inst)
+          end if
+          call to_cart ( [ lat, qty%lon(surfOr1,inst), &
                        &   heights(surf,instOr1)/1000.0 ], &
                        & xyz(:,surf,inst), km=.true. )
           xyz(:,surf,inst) = xyz(:,surf,inst) * 1000.0_rt ! Convert km to m
@@ -172,6 +192,9 @@ contains
 end module Quantity_Geometry
 
 ! $Log$
+! Revision 2.3  2015/04/30 02:55:35  vsnyder
+! Allow geocentric altitude/latitude to coexist with geodetic latitude/altitude
+!
 ! Revision 2.2  2015/04/29 01:21:21  vsnyder
 ! Add ability to compute XYZ if vertical is zeta
 !
