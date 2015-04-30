@@ -2626,10 +2626,7 @@ contains ! =====     Public Procedures     =============================
           call UsingMagneticModel ( quantity, key, scVelQuantity, &
                                   & geocAltitudeQuantity)
         else
-          call Announce_Error ( key, no_Error_Code, &
-            & 'Need either geopotential height quantity, or ' // &
-            & 'tangent geocentric altitude and spacecraft ECR ' // &
-            & 'velocity quantities, for magnetic model' )
+          call UsingMagneticModel ( quantity, key )
         end if
 
       case ( l_modifyTemplate )
@@ -3190,6 +3187,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.452  2015/04/30 02:54:31  vsnyder
+! Allow to run the magnetic model without ScVelECR and TngtGeocAlt
+!
 ! Revision 2.451  2015/04/29 01:18:41  vsnyder
 ! Correct reference to UsingMagneticModel
 !
