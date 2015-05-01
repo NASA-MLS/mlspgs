@@ -403,7 +403,8 @@ contains
     use GET_ETA_MATRIX_M, only: ETA_D_T ! TYPE FOR ETA STRUCT
     use Get_IEEE_NaN_m, only: Fill_IEEE_NaN
     use HESSIANMODULE_1, only: HESSIAN_T
-    use INTRINSIC, only: L_A, L_RADIANCE, L_TSCAT, L_VMR
+    use INTRINSIC, only: L_A, L_GeocAltitude, L_GeodAltitude, &
+      & L_RADIANCE, L_TSCAT, L_VMR, L_Zeta
     use LOAD_SPS_DATA_M, only: DESTROYGRIDS_T, DUMP, GRIDS_T
     use MATRIXMODULE_1, only: MATRIX_T
     use MLSKINDS, only: R4, R8, RP, RV
@@ -4299,8 +4300,16 @@ contains
       ! Special path quantities for Polarized (magnetic) model
       if ( FwdModelConf%polarized ) then
 
-        call comp_eta_docalc_no_frq ( grids_mag, h_path(1:npf), &
-          &  phi_path(1:npf), eta_mag_zp(1:npf,:), tan_pt=tan_pt_f )
+        select case ( grids_mag%z_coord(1) ) ! grids_mag is a one-quantity grid
+        case ( l_geocAltitude, l_geodAltitude )
+          ! load_sps_data_m%Fill_Grids_2 has converted geodetic altitude
+          ! to geocentric altitude, and converted either one to km.
+          call comp_eta_docalc_no_frq ( grids_mag, h_path(1:npf), &
+            &  phi_path(1:npf), eta_mag_zp(1:npf,:), tan_pt=tan_pt_f )
+        case ( l_zeta )
+          call comp_eta_docalc_no_frq ( grids_mag, z_path(1:npf), &
+            &  phi_path(1:npf), eta_mag_zp(1:npf,:), tan_pt=tan_pt_f )
+        end select
 
         ! Compute the first three components of MAG_PATH
         call comp_sps_path ( grids_mag, 1, eta_mag_zp(1:npf,:), &
@@ -4790,6 +4799,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.354  2015/04/11 01:26:03  vsnyder
+! Add more dumps, add (km) to comments about h_path and h_glgrid
+!
 ! Revision 2.353  2015/03/28 02:16:24  vsnyder
 ! Compute the viewing azimuth to determine whether cross-track viewing is
 ! taking place.  Use Orbit_Plane_Minor_Axis_sq from Geometry.  Use 3-d
