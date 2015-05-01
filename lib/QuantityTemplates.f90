@@ -557,9 +557,9 @@ contains
     end if
     if ( present(what) ) call output ( ' ' // trim(what) )
     call newline
-    call output ( quantity_template%noInstances,  before='      NoInstances = ' )
+    call output ( quantity_template%noChans,      before='      NoChans = ' )
     call output ( quantity_template%noSurfs,      before=' NoSurfs = ' )
-    call output ( quantity_template%noChans,      before=' NoChans = ' )
+    call output ( quantity_template%noInstances,  before=' NoInstances = ' )
     call output ( quantity_template%noCrossTrack, before=' NoCrossTrack = ', advance='yes' )
     call output ( '      ' )
     if ( .not. quantity_template%coherent ) call output ( 'in' )
@@ -1781,6 +1781,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.91  2015/04/29 00:53:28  vsnyder
+! Spiff the dump
+!
 ! Revision 2.90  2015/04/07 02:51:50  vsnyder
 ! Remove CONTIGUOUS attribute from 2-D geolocation components.  Non-
 ! contiguous sections of them are targets in ConstructMajorFrameQuantity in

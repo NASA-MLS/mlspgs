@@ -2167,15 +2167,27 @@ contains ! =====     Public Procedures     =============================
       end if
       call output ( '    instrumentmodule: ')
       if ( qty%template%instrumentModule < 1 ) then
-        call output ( '    (no database entry for this quantity) ' )
+        call output ( '    (no database entry for this quantity)', advance='yes' )
       else
-        call display_string ( modules(qty%template%instrumentModule)%name )
+        call display_string ( modules(qty%template%instrumentModule)%name, advance='yes' )
       end if
-      call output ( qty%template%instrumentmodule, before=' = ', advance='yes')
-      call output ( '    Minor Frame? (t/f): ')
-      call output ( qty%template%minorframe )
-      call output ( ' Major Frame? (t/f): ')
-      call output ( qty%template%majorframe, advance='yes' )
+      call output ( '    ' )
+      if ( .not. qty%template%coherent ) call output ( 'in' )
+      call output ( 'coherent ' )
+      if ( .not. qty%template%stacked ) call output ( 'non' )
+      call output ( 'stacked ' )
+      if ( .not. qty%template%regular ) call output ( 'ir' )
+      call output ( 'regular ' )
+      if ( qty%template%logBasis ) then
+        call output ('log-')
+      else
+        call output ('linear-')
+      end if
+      call output ('basis ' )
+      call output ( trim(merge('   ','non',qty%template%minorFrame)) // &
+        & 'minorFrame' )
+      call output ( ' ' // trim(merge('   ','non',qty%template%majorFrame)) // &
+      & 'majorFrame', advance='yes' )
       if ( size(qty%values) > 0 ) then
         call output ( '    values array size is ' )
         if ( size(qty%value3,1) > 1 ) then
@@ -3371,6 +3383,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.197  2015/04/29 00:53:56  vsnyder
+! Spiff the dump
+!
 ! Revision 2.196  2015/03/28 01:47:29  vsnyder
 ! Added 4-d Values and Mask.  Additional dimension extent is NoCrossTrack.
 ! Added stuff to trace allocate/deallocate addresses.
