@@ -34,6 +34,7 @@ module LOAD_SPS_DATA_M
     integer,  pointer :: windowfinish(:) => null()! horizontal ending index
 !                                                  from l2gp
     integer,  pointer :: mol(:) => null() ! Qty molecule, l_...
+    integer,  pointer :: Z_coord(:)       ! l_geo[cd]Altitude, l_zeta
     ! Which column of dBeta_path_df to use for each molecule.
     ! Molecule beta is not dependent upon mixing ratio if zero.
     ! Only nonzero where derivatives for molecules with mixing-ratio-dependent
@@ -254,6 +255,7 @@ contains
        end if
 
        call create_grids_2 ( grids_x )
+
        call fill_grids_2 ( grids_x, 1, qty, setDerivFlags, across=across )
 
     end if
@@ -405,6 +407,7 @@ contains
                        & ModuleName )
     call allocate_test ( Grids_x%lin_log, n, 'lin_log', ModuleName )
     call allocate_test ( Grids_x%min_val, n, 'min_val', ModuleName )
+    call allocate_test ( Grids_x%z_coord, n, 'Grids_x%z_coord', ModuleName )
 
   end subroutine Create_Grids_1
 
@@ -481,14 +484,19 @@ contains
       kf = qty%template%noChans ! == 1 if qty%template%frequencyCoordinate == l_none
     end if
 
-    kz = qty%template%noSurfs * &
-       & merge(1,size(qty%template%lon), &
-              &  qty%template%verticalCoordinate /= l_geodAltitude )
+    kz = qty%template%noSurfs
 
     grids_x%l_f(ii) = grids_x%l_f(ii-1) + kf
     grids_x%l_p(ii) = grids_x%l_p(ii-1) + kp
     grids_x%l_v(ii) = grids_x%l_v(ii-1) + kz * kp * kf
-    grids_x%l_z(ii) = grids_x%l_z(ii-1) + kz
+    grids_x%z_coord(ii) = qty%template%verticalCoordinate
+    if ( grids_x%z_coord(ii) == l_geodAltitude ) then
+      ! geodetic altitude will be converted to geocentric, which will
+      ! have a different altitude for each latitude
+      grids_x%l_z(ii) = grids_x%l_z(ii-1) + kz * kp
+    else
+      grids_x%l_z(ii) = grids_x%l_z(ii-1) + kz
+    end if
     grids_x%p_len = grids_x%p_len + kz * kp
     grids_x%mol(ii) = qty%template%molecule
     grids_x%qty(ii) = qty%template%quantityType
@@ -527,7 +535,8 @@ contains
     real(rp), intent(in), optional :: Phi_Offset ! Radians
     logical, intent(in), optional :: Across ! Viewing angle is not in orbit plane
 
-    integer :: I, J, K, KF, KZ, L, N, PF, PP, PV, PZ, QF, QP, QV, QZ, WF, WS
+    integer :: I, J, K, KF, KV, KZ, L, N, PF, PP, PV, PZ, QF, QP, QV, QZ, WF, WS
+    integer :: InstOr1
     logical :: MyAcross
     logical :: PackFrq ! Need to pack the frequency "dimension"
     real(rp) :: XYZ(3)   ! Geocentric Cartesian coordinates (km)
@@ -542,8 +551,9 @@ contains
     qv = Grids_x%l_v(ii)
     qz = Grids_x%l_z(ii)
 
-    kz = qz - pz
     kf = qf - pf
+    kv = qv - pv
+    kz = qz - pz
     ws = Grids_x%windowStart(ii)
     wf = Grids_x%windowFinish(ii)
 
@@ -559,11 +569,12 @@ contains
       n = pz
       do i = 1, qty%template%noSurfs
         l = min(i,size(qty%template%geodLat3,1))
-        do j = 1, qty%template%noInstances
+        do j = ws, wf
+          instOr1 = merge(1,j,qty%template%coherent)
           do k = 1, qty%template%noCrossTrack
             n = n + 1
             call to_cart ( [ qty%template%geodLat3(l,j,k), qty%template%lon3(l,j,k), &
-                           & qty%template%surfs(i,j)/1000.0 ], xyz, km=.true. )
+                           & qty%template%surfs(i,instOr1)/1000.0 ], xyz, km=.true. )
             Grids_x%zet_basis(n) = norm2(xyz)
           end do
         end do
@@ -612,8 +623,7 @@ contains
                                       & (/qv-pv/))
     else ! All the values
       ! qv - pv == (wf - ws + 1) * kf * kz here
-      Grids_x%values(pv+1:qv) = reshape(qty%values(1:kf*kz,ws:wf), &
-                                      & (/qv-pv/))
+      Grids_x%values(pv+1:qv) = qty%value1(1:kv)
     end if
     !  mixing ratio values are manipulated if it's log basis
     Grids_x%lin_log(ii) = qty%template%logBasis
@@ -726,6 +736,7 @@ contains
     call allocate_test(grids_x%phi_basis,0,'grids_x%phi_basis',modulename)
     call allocate_test(grids_x%values,0,'grids_x%values',modulename)
     call allocate_test(grids_x%deriv_flags,0,'grids_x%deriv_flags',modulename)
+    call allocate_test(grids_x%z_coord,0,'grids_x%z_coord',modulename)
 
   end subroutine EmptyGrids_t
 
@@ -754,6 +765,7 @@ contains
     call deallocate_test(grids_x%phi_basis,'Grids_x%phi_basis',modulename)
     call deallocate_test(grids_x%values,'Grids_x%values',modulename)
     call deallocate_test(grids_x%deriv_flags,'Grids_x%deriv_flags',modulename)
+    call deallocate_test(grids_x%z_coord,'Grids_x%z_coord',modulename)
 
   end subroutine DestroyGrids_t
 
@@ -811,6 +823,9 @@ contains
           & before=' quantity: ' )
         w = w + string_length(lit_indices(the_grid%qty(i))) + len(' quantity: ')
       end if
+      call display_string ( lit_indices(the_grid%z_coord(i)), &
+        & before=' vertical coordinate: ' )
+      w = w + string_length(lit_indices(the_grid%z_coord(i))) + len(' vertical coordinate:: ')
       if ( the_grid%where_dBeta_df(i) > 0 ) then
         call output ( the_grid%where_dBeta_df(i), before=' dBeta_df at ' )
         w = w + 2 + len(' dBeta_df at ')
@@ -821,10 +836,10 @@ contains
     call dump ( the_grid%l_z(1:), 'The_grid%l_z' )
     call dump ( the_grid%l_p(1:), 'The_grid%l_p' )
     call dump ( the_grid%l_v(1:), 'The_grid%l_v' )
+    call dump ( the_grid%windowStart, 'The_grid%WindowStart' )
+    call dump ( the_grid%windowFinish, 'The_grid%WindowFinish' )
+    call dump ( the_grid%lin_log, 'The_grid%Lin_Log' )
     if ( myDetails > 0 ) then
-      call dump ( the_grid%windowStart, 'The_grid%WindowStart' )
-      call dump ( the_grid%windowFinish, 'The_grid%WindowFinish' )
-      call dump ( the_grid%lin_log, 'The_grid%Lin_Log' )
       call dump ( the_grid%min_val, 'The_grid%Min_Val' )
       call dump ( the_grid%frq_basis, 'The_grid%Frq_Basis' )
       call dump ( the_grid%zet_basis, 'The_grid%Zet_Basis' )
@@ -850,6 +865,9 @@ contains
 end module LOAD_SPS_DATA_M
 
 ! $Log$
+! Revision 2.94  2015/04/11 01:26:44  vsnyder
+! Convert altitudes to geocentric km if not zeta
+!
 ! Revision 2.93  2015/03/28 02:10:58  vsnyder
 ! Changed order of arguments to Fill_Grids_1 and Load_One_Item_Grid.
 ! Added "across" argument to Fill_Grids_1 and Fill_Grids_2 for cross-track
