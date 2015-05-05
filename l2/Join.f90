@@ -392,8 +392,9 @@ contains ! =====     Public Procedures     =============================
     use hdf, only: dfacc_create, dfacc_rdwr
     use hgridsdatabase, only: hgrid_t
     use highoutput, only: outputnamedvalue
-    use init_tables_module, only: f_convergence, f_file, f_hdfversion, &
-      & f_loweroverlap, f_options, f_ascdescmode, f_precision, f_quality, f_rank, &
+    use init_tables_module, only: f_ascdescmode, f_convergence, f_file, &
+      & f_hdfversion, f_loweroverlap, f_noPCFid, f_options, f_precision, &
+      & f_quality, f_rank, &
       & f_single, f_source, f_status, f_type, f_upperoverlap, f_vector, &
       & field_first, field_last
     use init_tables_module, only: l_l2gp, l_l2aux, l_l2dgg, l_l2fwm, &
@@ -493,6 +494,7 @@ contains ! =====     Public Procedures     =============================
     character(len=16) :: OPTIONS
     integer :: AscDescModeVECTOR
     integer :: AscDescModeQTYINDX
+    logical :: noPCFid
     integer :: OUTPUTTYPE               ! l_l2gp, l_l2aux, l_l2fwm, l_l2dgg
     character(len=8) :: OUTPUTTYPESTR   ! 'l2gp', 'l2aux', etc.
     character(len=1024) :: PATH         ! path/file_base
@@ -556,6 +558,7 @@ contains ! =====     Public Procedures     =============================
     filename = 'undefined'
     lowerOverlap = .false.
     got = .false.
+    noPCFid = .false.
     options = ' '
     outputType=0
     outputtypestr = 'unknown'
@@ -595,6 +598,8 @@ contains ! =====     Public Procedures     =============================
           & call Announce_error ( son, NO_ERROR_CODE, &
           & 'No units allowed for hdfVersion: just integer 4 or 5')
         hdfVersion = exprValue(1)
+      case ( f_noPCFid )
+        noPCFid = get_boolean ( son )
       case ( f_options )
         call get_string ( sub_rosa(subtree(2,son)), options, strip=.true. )
       case ( f_file )
@@ -933,6 +938,8 @@ contains ! =====     Public Procedures     =============================
       else if ( .not. isnewdirect ) then
         Filename = thisDirect%fileName
         Handle = thisDirect%Handle
+      else if ( noPCFid ) then
+        Handle = -2
       else if ( .not. TOOLKIT ) then
         Handle = -1
       else if ( any ( outputType == (/ l_l2gp /) ) ) then
@@ -2279,6 +2286,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.165  2015/05/05 16:47:25  pwagner
+! /noPCFid allows us to DirectWrite to files not named in PCF
+!
 ! Revision 2.164  2015/04/07 02:53:50  vsnyder
 ! Correct error message about units for RANK, some cannonball polishing
 !
