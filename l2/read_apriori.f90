@@ -17,7 +17,7 @@ module ReadAPriori
   use highOutput, only: outputNamedValue
   use init_tables_module, only: f_auraInstrument, &
     & f_date, f_dimlist, f_downsample, &
-    & f_field, f_file, f_grid, f_HDFVersion, f_missingvalue, &
+    & f_field, f_file, f_grid, f_HDFVersion, f_missingvalue, f_noPCFid, &
     & f_origin, f_quantitytype, f_sdname, f_deferReading, f_sum, f_swath, &
     & field_first, field_last, &
     & l_climatology, l_dao, l_geos5, l_geos5_7, l_gloria, &
@@ -143,15 +143,15 @@ contains ! =====     Public Procedures     =============================
 
   subroutine Read_apriori ( Root, L2GPDatabase, L2auxDatabase, GriddedDatabase, &
     & fileDataBase )
-    use dumpcommand_m, only: booleanfromformula, MLScase, MLSendselect, &
-      & MLSselect, MLSselecting, skip
-    use griddeddata, only: griddeddata_t, dump
+    use dumpCommand_m, only: booleanFromFormula, MLSCase, MLSEndSelect, &
+      & MLSSelect, MLSSelecting, skip
+    use griddedData, only: griddedData_t, dump
     use init_tables_module, only: s_boolean, s_case, s_endselect, &
       & s_select, s_skip
-    use l2auxdata, only: l2auxdata_t, dump
-    use l2gpdata, only: l2gpdata_t, dump
-    use MLSl2timings, only: section_times
-    use moretree, only: get_label_and_spec, get_spec_id
+    use L2AUXData, only: L2AUXData_t, dump
+    use L2GPData, only: L2GPData_t, dump
+    use MLSL2Timings, only: section_times
+    use moreTree, only: get_label_and_spec, get_spec_id
     use next_tree_node_m, only: next_tree_node, next_tree_node_state
     use trace_m, only: trace_begin, trace_end
     use tree, only: decorate
@@ -271,22 +271,22 @@ contains ! =====     Public Procedures     =============================
     & LastHeightPCF  , &
     & LastNCEPPCF     &
       )
-    use chunkdivide_m, only: chunkdivideconfig
-    use dumpcommand_m, only: dumpcommand
-    use griddeddata, only: rgr, griddeddata_t, v_is_eta, v_is_pressure, &
-      & addgriddeddatatodatabase, copygrid, &
-      & destroygriddeddata, downsamplegriddeddata, dump, &
-      & setupnewgriddeddata
-    use l2auxdata, only: l2auxdata_t, addl2auxtodatabase, &
-      &                  readl2auxdata, dump
-    use l2gpdata, only: l2gpdata_t, &
-      & addl2gptodatabase, readl2gpdata, dump
-    use moretree, only: get_label_and_spec, get_spec_id
-    use ncep_dao, only: read_climatology, readgriddeddata, readgloriafile
-    use surfaceheight_m, only: open_surface_height_file, &
-      & read_surface_height_file, close_surface_height_file
+    use ChunkDivide_m, only: chunkDivideConfig
+    use Dumpcommand_m, only: dumpcommand
+    use GriddedData, only: rgr, griddedData_t, v_is_eta, v_is_pressure, &
+      & AddGriddedDataToDatabase, copyGrid, &
+      & DestroyGriddedData, downSampleGriddedData, dump, &
+      & Setupnewgriddeddata
+    use L2AUXData, only: L2AUXdata_t, addL2AUXtodatabase, &
+      &                  readL2AUXdata, dump
+    use L2GPdata, only: l2GPdata_t, &
+      & Addl2GPtodatabase, readl2GPdata, dump
+    use Moretree, only: get_label_and_spec, get_spec_id
+    use Ncep_dao, only: read_climatology, readgriddeddata, readgloriafile
+    use Surfaceheight_m, only: open_surface_height_file, &
+      & Read_surface_height_file, close_surface_height_file
     use Toggles, only: Gen, Levels, Toggle
-    use Trace_m, only: TRACE_BEGIN, TRACE_END
+    use Trace_m, only: trace_begin, trace_end
 
     ! Dummy arguments
     integer, intent(in) :: ROOT    ! Of the Read a priori section in the AST
@@ -345,6 +345,7 @@ contains ! =====     Public Procedures     =============================
     character(len=16) :: litDescription
     integer :: Me = -1             ! String index for trace
     real(rgr) ::    missingValue = 0.
+    logical :: noPCFid
     integer :: NOSWATHS                 ! In an input file
     character(len=FileNameLen) :: path   ! path of actual literal file name
     type (MLSFile_T), pointer :: pL2AUXFile
@@ -393,6 +394,7 @@ contains ! =====     Public Procedures     =============================
     verbose = ( Details > -3 )
     downsample = .false.
     deferReading = .false.
+    noPCFid = .false.
     sumDelp = .false.
     fileName = 0
     gridIndex = 0
@@ -429,6 +431,8 @@ contains ! =====     Public Procedures     =============================
           & call Announce_error ( field, &                               
             & 'No units allowed for hdfVersion: just integer 4 or 5')  
         hdfVersion = value(1)                                          
+      case ( f_noPCFid )
+        noPCFid = get_boolean(field)
       case ( f_origin )
         griddedOrigin = decoration(subtree(2,field))
       case ( f_quantityType )
@@ -489,7 +493,7 @@ contains ! =====     Public Procedures     =============================
         & call get_string ( swathName, swathNameString, strip=.true. )
 
       ! If we were given only a strand of the filename, expand it
-      if ( TOOLKIT ) then
+      if ( TOOLKIT .and. .not. noPCFid ) then
         call split_path_name(FileNameString, path, SubString)
         LastAprioriPCF = GetPCFromRef(SubString, mlspcf_l2apriori_start, &
         & mlspcf_l2apriori_end, &                                     
@@ -576,7 +580,7 @@ contains ! =====     Public Procedures     =============================
 
     case ( s_l2aux )
 
-      if ( TOOLKIT ) then
+      if ( TOOLKIT .and. .not. noPCFid ) then
         call split_path_name(FileNameString, path, SubString)
         LastAprioriPCF = GetPCFromRef(SubString, mlspcf_l2apriori_start, &
         & mlspcf_l2apriori_end, &                                     
@@ -655,7 +659,7 @@ contains ! =====     Public Procedures     =============================
         end if
         call get_pcf_id ( fileNameString, path, subString, l2apriori_version, &
           & mlspcf_l2ncep_start, mlspcf_l2ncep_end, description, got(f_file), &
-          & LastNCEPPCF, returnStatus )
+          & LastNCEPPCF, returnStatus, noPCFid )
         FileIndex = InitializeMLSFile(GriddedFile, content = 'gridded', &
           & name=FilenameString, shortName=shortFileName, &
           & type=l_hdfeos, access=DFACC_RDONLY, hdfVersion=HDFVERSION_4, &
@@ -701,7 +705,7 @@ contains ! =====     Public Procedures     =============================
       case ( l_dao ) ! ---------------------------- GMAO Data (GEOS4)
         call get_pcf_id ( fileNameString, path, subString, l2apriori_version, &
           & mlspcf_l2dao_start, mlspcf_l2dao_end, 'dao', got(f_file), &
-          & LastDAOPCF, returnStatus )
+          & LastDAOPCF, returnStatus, noPCFid )
         FileIndex = InitializeMLSFile(GriddedFile, content = 'gridded', &
           & name=FilenameString, shortName=shortFileName, &
           & type=l_hdfeos, access=DFACC_RDONLY, hdfVersion=HDFVERSION_4, &
@@ -775,7 +779,7 @@ contains ! =====     Public Procedures     =============================
       case ( l_geos5, l_geos5_7, l_merra ) ! ------------ GMAO Data (GEOS5*)
         call get_pcf_id ( fileNameString, path, subString, l2apriori_version, &
           & mlspcf_l2geos5_start, mlspcf_l2geos5_end, 'geos5', got(f_file), &
-          & LastGEOS5PCF, returnStatus )
+          & LastGEOS5PCF, returnStatus, noPCFid )
         if (griddedOrigin == l_geos5_7) then ! since geos5_7 is HDF5
             FileIndex = InitializeMLSFile(GriddedFile, content='gridded', &
             name=FilenameString, shortName=shortFileName, &
@@ -888,7 +892,7 @@ contains ! =====     Public Procedures     =============================
       case ( l_gloria ) ! ------------------------- Data in Gloria's UARS format
         call get_pcf_id ( fileNameString, path, subString, l2apriori_version, &
           & mlspcf_l2clim_start, mlspcf_l2clim_end, 'gloria', got(f_file), &
-          & LastClimPCF, returnStatus )
+          & LastClimPCF, returnStatus, noPCFid )
         if ( TOOLKIT .and. returnStatus /= PGS_S_SUCCESS ) then
           call announce_error ( son, &
             & 'PCF number not found to supply' // &
@@ -911,7 +915,7 @@ contains ! =====     Public Procedures     =============================
         ! Identify file (maybe from PCF if no name given)
         call get_pcf_id ( fileNameString, path, subString, l2apriori_version, &
           & mlspcf_l2clim_start, mlspcf_l2clim_end, 'climatology', got(f_file), &
-          & LastClimPCF, returnStatus )
+          & LastClimPCF, returnStatus, noPCFid )
         if ( TOOLKIT .and. returnStatus /= PGS_S_SUCCESS ) then
           call announce_error ( son, &
             & 'PCF number not found to supply' // &
@@ -967,7 +971,7 @@ contains ! =====     Public Procedures     =============================
         call get_pcf_id ( fileNameString, path, subString, l2apriori_version, &
           & mlspcf_surfaceHeight_start, mlspcf_surfaceHeight_end, &
           & 'surfaceHeight', got(f_file), &
-          & lastHeightPCF, returnStatus )
+          & lastHeightPCF, returnStatus, noPCFid )
         if ( TOOLKIT .and. returnStatus /= PGS_S_SUCCESS ) then
           call announce_error ( son, &
             & 'PCF number not found to supply' // &
@@ -1009,10 +1013,10 @@ contains ! =====     Public Procedures     =============================
 
   contains
     subroutine Get_PCF_Id ( FileNameString, Path, SubString, L2Apriori_Version, &
-      & FirstPCF, LastPCF, Description, GotFile, PCF_Id, ReturnStatus )
-      use mlsfiles, only: getpcfromref, split_path_name
-      use mlsl2options, only: toolkit
-      use sdptoolkit, only: pgs_pc_getreference, pgs_s_success
+      & FirstPCF, LastPCF, Description, GotFile, PCF_Id, ReturnStatus, noPCFid )
+      use MLSFiles, only: getpcfromref, split_path_name
+      use MLSL2Options, only: toolkit
+      use SDPToolkit, only: pgs_pc_getreference, pgs_s_success
 
       ! Args
       character(len=*), intent(inout) :: FileNameString
@@ -1023,6 +1027,7 @@ contains ! =====     Public Procedures     =============================
       logical, intent(in) :: GotFile
       integer, intent(inout) :: PCF_Id
       integer, intent(out) :: ReturnStatus
+      logical, intent(in) :: noPCFid
       ! Local variables
       integer :: Me = -1       ! String index for trace
       integer :: PCFBottom
@@ -1044,7 +1049,7 @@ contains ! =====     Public Procedures     =============================
         pcf_id = getPCFromRef ( subString, PCFBottom, lastPCF, TOOLKIT, &
           &                     returnStatus, l2Apriori_Version, DEBUG, &
           &                     exactName = fileNameString )
-      else if ( TOOLKIT ) then
+      else if ( TOOLKIT .and. .not. noPCFid ) then
         do pcf_id = PCFBottom, lastPCF
           returnStatus = Pgs_pc_getReference(pcf_id, L2apriori_version, &
                 & fileNameString)
@@ -1180,7 +1185,7 @@ contains ! =====     Public Procedures     =============================
     ! Write info about what apriori files were used
     ! Storing them as hdfeos5 attributes
     use HDFEOS5, only: MLS_Chartype
-    use MLSHDFEOS, only: MLS_EHWRGlatt, MLS_ISGlatt
+    use MLSHDFEOS, only: MLS_EHWRGlatt, MLS_IsGlatt
     ! Args
     integer, intent(in) :: fileID
     integer, intent(in) :: hdfVersion  ! Must be 5 to work properly
@@ -1367,6 +1372,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.110  2015/05/05 18:15:47  pwagner
+! /noPCFid field allows us to read from files not named in PCF
+!
 ! Revision 2.109  2014/10/07 00:08:45  pwagner
 ! Higher details level of debug now required for most printing
 !
