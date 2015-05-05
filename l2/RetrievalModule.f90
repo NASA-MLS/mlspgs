@@ -383,7 +383,7 @@ repeat_loop: do ! RepeatLoop
           extendedAverage = .false.
           hRegQuants = 0
           hRegWeights = 0
-          nullify ( hRegWeightVec )
+          nullify ( lowBound, highBound, hRegWeightVec )
           initLambda = defaultInitLambda
           lambdaMin = defaultLambdaMin
           maxJacobians = defaultMaxJ
@@ -1021,20 +1021,21 @@ repeat_loop: do ! RepeatLoop
       ! beyond Bound.  "Which" specifies either "low" or "high"
 
       !{ Let $D$ be $|\delta \mathbf{x}|$, where $\delta \mathbf{x}$ is
-      ! given by Dx, let $b_i$ and $x_i$ be components of Bound and X.
-      ! Let $d_i$ be such that $x_i + \frac{d_i}D \delta x_i$ is not beyond
-      ! a bound.  That is, $d_i$ is such that $d_i \cos \theta_i = x_i -
+      ! given by Dx, let $b_i$ and $x_i$ be components of Bound and X. Let
+      ! $d_i$ be such that $x_i + \frac{|d_i|}D \delta x_i$ is not beyond
+      ! a bound.  That is, $d_i$ is such that $|d_i| \cos \theta_i = x_i -
       ! b_i$, where $\theta_i$ is the angle between $\delta \mathbf{x}$
       ! and the normal to the $i^{th}$ constraint surface.  Since the
       ! constraints are bounds, we have $\cos \theta_i = \frac{\delta
-      ! x_i}D$.  $\mu$ is the smallest value of $\frac{d_i}D = \frac{x_i-b_i}
-      ! {\delta x_i}$.  If we check the components one at a time, each one
-      ! using the most recently computed $\mu$, we don't need a divide for
-      ! each check, and we don't need a {\tt min} operation.
-      ! However, if we are already at the bounds, and the next step
-      ! wants to keep going beyond the bounds, then $\mu$ will be
-      ! really small.  In this case $\mu < \mu_{\text{min}}$ we revert
-      ! to a straight element-by-element modification of $\delta x_i$.
+      ! x_i}D$.  $\mu$ is the smallest value of $\frac{|d_i|}D =
+      ! \left|\frac{x_i-b_i} {\delta x_i}\right|$.  If we check the
+      ! components one at a time, each one using the most recently
+      ! computed $\mu$, we don't need a divide for each check, and we
+      ! don't need a {\tt min} operation. However, if we are already at
+      ! the bounds, and the next step wants to keep going beyond the
+      ! bounds, then $\mu$ will be really small.  In this case $\mu <
+      ! \mu_{\text{min}}$ we revert to a straight element-by-element
+      ! modification of $\delta x_i$.
 
       real(rv), intent(inout) :: Mu
       type(vector_T), intent(inout) :: Bound, X, Dx
@@ -1067,9 +1068,9 @@ repeat_loop: do ! RepeatLoop
                   if ( x%quantities(iq)%values(ivx,ivy) + &
                     &  mu * dx%quantities(iq)%values(ivx,ivy) < &
                     &  bound%quantities(iq)%values(ivx,ivy) ) &
-                      & mu = ( bound%quantities(iq)%values(ivx,ivy) - &
-                      &        x%quantities(iq)%values(ivx,ivy) ) &
-                      &      / dx%quantities(iq)%values(ivx,ivy)
+                      & mu = abs( ( bound%quantities(iq)%values(ivx,ivy) - &
+                      &             x%quantities(iq)%values(ivx,ivy) ) &
+                      &           / dx%quantities(iq)%values(ivx,ivy) )
                 end if
               end do
             end do
@@ -1079,9 +1080,9 @@ repeat_loop: do ! RepeatLoop
                 if ( x%quantities(iq)%values(ivx,ivy) + &
                   &  mu * dx%quantities(iq)%values(ivx,ivy) < &
                   &  bound%quantities(iq)%values(ivx,ivy) ) &
-                    & mu = ( bound%quantities(iq)%values(ivx,ivy) - &
-                    &        x%quantities(iq)%values(ivx,ivy) ) &
-                    &      / dx%quantities(iq)%values(ivx,ivy)
+                    & mu = abs( ( bound%quantities(iq)%values(ivx,ivy) - &
+                    &             x%quantities(iq)%values(ivx,ivy) ) &
+                    &           / dx%quantities(iq)%values(ivx,ivy) )
               end do
             end do
           end if
@@ -1095,9 +1096,9 @@ repeat_loop: do ! RepeatLoop
                   if ( x%quantities(iq)%values(ivx,ivy) + &
                     &  mu * dx%quantities(iq)%values(ivx,ivy) > &
                     &  bound%quantities(iq)%values(ivx,ivy) ) &
-                      & mu = ( bound%quantities(iq)%values(ivx,ivy) - &
-                      &        x%quantities(iq)%values(ivx,ivy) ) &
-                      &      / dx%quantities(iq)%values(ivx,ivy)
+                      & mu = abs( ( bound%quantities(iq)%values(ivx,ivy) - &
+                      &             x%quantities(iq)%values(ivx,ivy) ) &
+                      &           / dx%quantities(iq)%values(ivx,ivy) )
                 end if
               end do
             end do
@@ -1107,9 +1108,9 @@ repeat_loop: do ! RepeatLoop
                 if ( x%quantities(iq)%values(ivx,ivy) + &
                   &  mu * dx%quantities(iq)%values(ivx,ivy) > &
                   &  bound%quantities(iq)%values(ivx,ivy) ) &
-                    & mu = ( bound%quantities(iq)%values(ivx,ivy) - &
-                    &        x%quantities(iq)%values(ivx,ivy) ) &
-                    &      / dx%quantities(iq)%values(ivx,ivy)
+                    & mu = abs( ( bound%quantities(iq)%values(ivx,ivy) - &
+                    &             x%quantities(iq)%values(ivx,ivy) ) &
+                    &           / dx%quantities(iq)%values(ivx,ivy) )
               end do
             end do
           end if
@@ -1180,6 +1181,8 @@ repeat_loop: do ! RepeatLoop
             end if
           end do
         end if
+      else if ( mu > 1.0 ) then ! in case dx(...) is very small
+        mu = 1.0
       end if
 
       ! Let's keep this check in, just in case muMin has not been set.
@@ -2995,6 +2998,9 @@ NEWT: do ! Newton iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.356  2015/05/05 00:12:47  vsnyder
+! Make sure 0 < mu <= 1 in BoundMove
+!
 ! Revision 2.355  2014/09/30 02:15:19  vsnyder
 ! Don't put the Tikhonov matrix in the matrix database.  Add some commented-
 ! out stuff that might be useful if we turn on matrix finalizers.
