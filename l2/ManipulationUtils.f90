@@ -13,22 +13,22 @@
 module ManipulationUtils        ! operations to manipulate quantities
   !=============================================================================
 
-  use allocate_deallocate, only: allocate_test, deallocate_test
-  use dates_module, only: tai93s2hid
-  use dump_0, only: dump
-  use highoutput, only: outputNamedValue
+  use Allocate_deallocate, only: allocate_test, deallocate_test
+  use Dates_module, only: tai93s2hid
+  use Dump_0, only: dump
+  use HighOutput, only: outputNamedValue
   use MLSKinds, only: rv
   use MLSL2Options, only: MLSMessage
   use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning
   use MLSFinds, only: findFirst, findLast, findNext
-  use MLSStats1, only: MLScount, MLSmin, MLSmax, MLSmean, MLSmedian, &
-    & MLSRms, MLSstddev
+  use MLSStats1, only: MLSCount, MLSMin, MLSMax, MLSMean, MLSMedian, &
+    & MLSRMS, MLSstddev
   use MLSStringLists, only: array2List, catLists, getStringElement, &
-    & list2Array, numStringElements, &
-    & replaceSubstring
+    & List2Array, numStringElements, &
+    & ReplaceSubstring
   use MLSStrings, only: indexes, lowerCase, nCopies, splitNest, stretch
-  use output_m, only: output
-  use vectorsModule, only: vectorValue_t, m_fill, reshapeVectorValue
+  use Output_m, only: output
+  use VectorsModule, only: vectorValue_t, m_fill, reshapeVectorValue
   ! This module allows us to do algebraic operations on vector quantities
   ! saving the result in a vector quantity
   ! See also Algebra Module (though I never got Algebra to work--paw)
@@ -60,7 +60,7 @@ module ManipulationUtils        ! operations to manipulate quantities
 
   logical, parameter :: COUNTEMPTY = .true.
   logical, parameter :: DEEBUG     = .false.                 ! Usually FALSE
-  integer, parameter :: MAXSTRLISTLENGTH = 128               ! Is this enough?
+  integer, parameter, public :: MAXMANIPULATIONLEN = 128     ! Is this enough?
   integer, parameter, public :: NO_ERROR_CODE = 0
 
 contains ! =====     Public Procedures     =============================
@@ -96,16 +96,16 @@ contains ! =====     Public Procedures     =============================
 
     ! Internal variables
     logical :: ALREADYVALPARENS
-    character (len=MAXSTRLISTLENGTH) :: mstr ! manipulation being manipulated
+    character (len=MAXMANIPULATIONLEN) :: mstr ! manipulation being manipulated
     integer, parameter :: MAXNESTINGS=64 ! Max number of '(..)' pairs
-    character(len=MAXSTRLISTLENGTH) :: collapsedstr
+    character(len=MAXMANIPULATIONLEN) :: collapsedstr
     integer :: IFUN
     integer :: level
     logical :: MAPFUNCTION
     integer :: np ! number of primitives
-    character(len=MAXSTRLISTLENGTH) :: part1
-    character(len=MAXSTRLISTLENGTH) :: part2
-    character(len=MAXSTRLISTLENGTH) :: part3
+    character(len=MAXMANIPULATIONLEN) :: part1
+    character(len=MAXMANIPULATIONLEN) :: part2
+    character(len=MAXMANIPULATIONLEN) :: part3
     character(len=4) :: vchar
     integer, parameter :: NFUNNAMES = 26
     character(len=8), dimension(NFUNNAMES) :: FUNCOLONS
@@ -1149,7 +1149,7 @@ contains ! =====     Public Procedures     =============================
     ! args
     character(len=*), intent(in)           :: part1
     character(len=*), intent(in)           :: part2
-    character(len=MAXSTRLISTLENGTH)        :: str
+    character(len=MAXMANIPULATIONLEN)        :: str
     ! internal variables
     character(len=1), dimension(9), parameter :: ops = &
       &          (/ '+', '-', '*', '/' , '(', ')', '^', '<', '>' /)
@@ -1382,6 +1382,9 @@ end module ManipulationUtils
 
 !
 ! $Log$
+! Revision 2.17  2015/05/05 17:47:04  pwagner
+! MAXMANIPULATIONLEN made public
+!
 ! Revision 2.16  2015/04/21 17:49:38  pwagner
 ! Added trunc() function
 !
