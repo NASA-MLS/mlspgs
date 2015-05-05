@@ -121,7 +121,6 @@ contains ! =====     Public Procedures     =============================
     logical :: EXTENDIBLE               ! If set don't lose profiles between chunks
     integer :: FIELD                    ! Subtree index of "field" node
     integer :: FIELD_INDEX              ! F_..., see Init_Tables_Module
-    logical :: FORBIDOVERSPILL          ! If set don't allow overlaps beyond L1B
     integer :: GEODANGLENODE            ! Tree node
     integer :: GEODLATNODE            ! Tree node
     logical :: GOT_FIELD(field_first:field_last)
@@ -171,7 +170,6 @@ contains ! =====     Public Procedures     =============================
     got_field = .false.
     interpolationFactor = 1.0
     extendible = .false.
-    forbidOverspill = .false.
     maxLowerOverlap = -1
     maxUpperOverlap = -1
     insetOverlaps = .false.
@@ -207,7 +205,7 @@ contains ! =====     Public Procedures     =============================
       case  ( f_extendible )
         extendible = get_boolean ( fieldValue )
       case  ( f_forbidOverspill )
-        forbidOverspill = get_boolean ( fieldValue )
+        hGrid%forbidOverspill = get_boolean ( fieldValue )
       case ( f_fraction )
         call expr ( subtree(2,son), expr_units, expr_value )
         fraction = expr_value(1)
@@ -329,7 +327,6 @@ contains ! =====     Public Procedures     =============================
       else
         call CreateRegularHGrid ( filedatabase, processingRange, chunk, &
           & spacing, origin, trim(instrumentModuleName), extendible, &
-          & forbidOverspill, &
           & maxLowerOverlap, maxUpperOverlap, insetOverlaps, single, hGrid, &
           & onlyComputingOffsets )
       end if
@@ -843,7 +840,7 @@ contains ! =====     Public Procedures     =============================
 
   ! -----------------------------------------  CreateRegularHGrid  -----
   subroutine CreateRegularHGrid ( filedatabase, processingRange, chunk, &
-    & spacing, origin, instrumentModuleName, extendible, forbidOverspill, &
+    & spacing, origin, instrumentModuleName, extendible, &
     & maxLowerOverlap, maxUpperOverlap, insetOverlaps, single, hGrid, &
     & onlyComputingOffsets )
 
@@ -888,7 +885,6 @@ contains ! =====     Public Procedures     =============================
     real(rk), intent(in) :: ORIGIN
     character (len=*), intent(in) :: INSTRUMENTMODULENAME
     logical, intent(in) :: EXTENDIBLE
-    logical, intent(in) :: FORBIDOVERSPILL
     integer, intent(in) :: MAXLOWEROVERLAP
     integer, intent(in) :: MAXUPPEROVERLAP
     logical, intent(in) :: INSETOVERLAPS
@@ -1157,7 +1153,7 @@ contains ! =====     Public Procedures     =============================
       call output ( ' extendible: ' )
       call output ( extendible, advance='yes' )
       call output ( ' forbidoverspill: ' )
-      call output ( forbidoverspill, advance='yes' )
+      call output ( hGrid%forbidoverspill, advance='yes' )
       call output ( ' allowPriorOverlaps: ' )
       call output ( ChunkDivideConfig%allowPriorOverlaps, advance='yes' )
       call output ( ' allowPostOverlaps: ' )
@@ -1370,7 +1366,7 @@ contains ! =====     Public Procedures     =============================
     ! important for runs using sids L2GP data which has hard limits (would
     ! crash Fill otherwise).  However, it's not important for other runs, so is
     ! optional.
-    if ( forbidOverspill ) then
+    if ( hGrid%forbidOverspill ) then
       call Hunt ( hGrid%time(1,:), processingRange%startTime, &
         & firstProfInRun, allowTopValue=.true., allowBelowValue=.true. )
       if ( deebughere ) then
@@ -2333,17 +2329,17 @@ contains ! =====     Public Procedures     =============================
         sum3 = sum3 + chunks(chunk)%hGridOffsets(3)
       end do
       call output ( "Total number of profiles" , advance='yes')
-      call output ( sum1 , advance='no' )
-      call output ( sum2 , advance='no' )
-      call output ( sum3 , advance='yes' )
+      call output ( (/ sum1, sum2, sum3 /), advance='yes' )
     end if
     ! Now accumulate hGridOffsets which currently contains the number
     ! of non-overlap profiles each chunk/hGrid.  After this it will contain
     ! the accumulated number.  This is equivalent to storing the
     ! index of the last profile in each chunk.
+    if ( verbose ) call output( (/ 1, chunks(1)%hGridOffsets(1) /), advance='yes' )
     do chunk = 2, size ( chunks )
       chunks(chunk)%hGridOffsets = chunks(chunk)%hGridOffsets + &
         & chunks(chunk-1)%hGridOffsets
+      if ( verbose ) call output( (/ chunk, chunks(chunk)%hGridOffsets(1) /), advance='yes' )
     end do
     ! Now fill (i.e. spread) the hGridTotals array
     do chunk = 1, size ( chunks )
@@ -2356,12 +2352,14 @@ contains ! =====     Public Procedures     =============================
       chunks(chunk)%hGridOffsets = chunks(chunk-1)%hGridOffsets
     end do
     chunks(1)%hGridOffsets = 0
-    if ( DEEBUG ) then
+    if ( DEEBUG .or. verbose ) then
       call output ( 'chunks(1)%hGridOffsets: ', advance='no' )
       call output ( chunks(1)%hGridOffsets, advance='yes' )
     end if
     if ( ChunkDivideConfig%allowPriorOverlaps .and. &
-      & chunks(1)%noMAFsLowerOverlap > 0 ) then
+      & chunks(1)%noMAFsLowerOverlap > 0 .and. firstHGrid(1)%forbidOverspill ) then
+      ! This dubious sequence disallows the very Prior overlaps you pretended to
+      ! allow
       call dump( LowerOverlaps, 'LowerOverlaps' )
       chunks(1)%hGridOffsets = 0
       do chunk=1, size(chunks)
@@ -2557,6 +2555,9 @@ contains ! =====     Public Procedures     =============================
     call output( 'First, last profiles', advance='no' )
     call blanks( 6 )
     call output ( (/firstProfile, lastProfile/), advance='yes' )
+    if ( lastProfile > chunk%hGridTotals(1) ) then
+      call output ( 'Uh-oh, last profile beyond chunk grand total', advance='yes' )
+    endif
     ! Must reset profile first, last prfile numbers
     ! before using them as indexes into HGrid
     firstProfIndx = firstProfile - chunk%HGridOffsets(1)
@@ -2747,6 +2748,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.123  2015/05/05 16:45:13  pwagner
+! Merged changes in branch v4.21
+!
 ! Revision 2.122  2015/04/29 01:16:34  vsnyder
 ! Cosmetic changes
 !
