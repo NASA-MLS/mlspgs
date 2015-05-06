@@ -13,13 +13,13 @@
 module MLSStringLists               ! Module to treat string lists
 !=============================================================================
 
-  use PRINTIT_M, only: MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
-    & MLSMSG_ERROR, MLSMSG_WARNING, PRINTITOUT
-  use MLSCOMMON, only: BAREFNLEN
-  use MLSFINDS, only: FINDFIRST
-  use MLSSTRINGS, only: CAPITALIZE, LOWERCASE, NCOPIES, &
-    & READINTSFROMCHARS, REPLACE, REVERSE, &
-    & SPLITDETAILS, SPLITNEST, STREQ, TRIM_SAFE, WRITEINTSTOCHARS
+  use Printit_m, only: MLSMSG_allocate, MLSMSG_deallocate, &
+    & MLSMSG_error, MLSMSG_warning, printitout
+  use MLSCommon, only: bareFNLen
+  use MLSFinds, only: findFirst
+  use MLSStrings, only: capitalize, lowerCase, nCopies, &
+    & ReadIntsFromChars, replace, reverse, &
+    & SplitDetails, splitNest, streq, trim_safe, writeIntsToChars
 
   implicit none
   private
@@ -1522,7 +1522,7 @@ contains
     inSize=SIZE(ints)
     allocate (duplicate(inSize), STAT=status)
     if (status /= 0) CALL myMessage(MLSMSG_Error,ModuleName, &
-         & MLSMSG_Allocate//"duplicate")
+         & MLSMSG_Allocate//"duplicate in GetUniqueInts")
     if ( present(extra) ) then
       extraSize=size(extra)
       howManyMax = inSize
@@ -1561,7 +1561,7 @@ contains
     noUnique=count(.NOT. duplicate)
 
     if (noUnique>SIZE(outs)) CALL myMessage(MLSMSG_Error,ModuleName, &
-         & "outs too small")
+         & "outs too small in GetUniqueInts")
 
     if ( noUnique > 0 ) then
       j=1
@@ -1784,7 +1784,7 @@ contains
     if (noUnique>SIZE(outList)) CALL myMessage(MLSMSG_Error,ModuleName, &
          & "outList too small")
     if (len(outList)<len(List)) CALL myMessage(MLSMSG_Error,ModuleName, &
-         & "outList strings to small")
+         & "outList strings too small")
     outList=""
 
     ! print *, 'NoUnique: ', noUnique
@@ -2230,7 +2230,7 @@ contains
   ! if patterns is present, it determines whether options must be preceded
   ! by an '-' and how args are to be denoted
   ! Recognized values of pattern are
-  ! 0: '-ab[arg] --xyz=arg' means  (default)
+  ! 0: '-ab[arg] --xyz=arg' means  '(default)'
   !    may catenate single-char single_options; any arg is surrounded by "[]"
   !    multiple-char multi_option preceded by '--'; any arg set off by "="
   ! 1: '-a -b arg --xyz=arg' means 
@@ -3885,7 +3885,6 @@ contains
   end function SwitchDetail
 
   ! ------------------------------------------------  unquote  -----
-  ! function unquote(str, quotes, cquotes, strict, stripany, extract) &
   function unquote( str, quotes, cquotes, options ) &
     & result ( outstr )
     ! function that removes a single pair of surrounding quotes from string
@@ -4454,6 +4453,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.68  2015/05/06 20:46:11  pwagner
+! Repaired some error msgs
+!
 ! Revision 2.67  2015/03/31 22:11:25  pwagner
 ! All args to optionDetail are optional now
 !
