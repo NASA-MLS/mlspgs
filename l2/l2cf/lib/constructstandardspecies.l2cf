@@ -1,5 +1,19 @@
-; This l2cf segment is useful for constructing `standard' species.
-; It will make heavy use of m4 to (hopefully) simplify things.
+; This l2cf fragment is useful for constructing `standard' species.
+;$Id$
+
+; The preliminary phase in which we 
+; (a) set up templates for our vector quantities
+; (b) read climatology
+; (c) read and merge meteorology (if any)
+; (d) set smoothing and bounds on the state variables to be retrieved
+; (e) set special calibration parameters we call "lesser" state variables
+; (f) read radiances and anything else
+; ===================================================================
+; ==================================================================== Phase: APriori
+; ===================================================================
+begin Fill
+  APriori: Phase
+end Fill
 
   ;; This special hGrid is defined here for convenience
 begin Construct
@@ -810,3 +824,6 @@ begin Fill
   tempVectorPrecision: Vector, template=stateTemplate
   tempVectorDiagnostics: Vector, template=otherDiagnosticsTemplate
 end Fill
+!divert(-1)
+;$Log$
+!divert!dnl
