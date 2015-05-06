@@ -458,6 +458,7 @@ contains ! =====     Public Procedures     =============================
     else
       MLSMessageConfig%Info = phaseString
     endif
+    MLSMessageConfig%Warning = MLSMessageConfig%Info
     if ( silent ) then
       call suspendOutput
     else
@@ -1016,6 +1017,9 @@ END MODULE MLSL2Timings
 
 !
 ! $Log$
+! Revision 2.60  2015/05/06 20:48:14  pwagner
+! Slaves prefix Warnings or worse with phase and chunk num
+!
 ! Revision 2.59  2014/09/29 20:50:03  pwagner
 ! Summarizes sys memory usagee by phase
 !
