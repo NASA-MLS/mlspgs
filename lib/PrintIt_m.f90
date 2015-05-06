@@ -13,15 +13,15 @@
 module PrintIt_m
 
   ! use ISO_FORTRAN_ENV, only: ERROR_UNIT, OUTPUT_UNIT
-  use MACHINE, only: CRASH_BURN, EXIT_WITH_STATUS, NEVERCRASH
-  use MLSCOMMON, only: MLSFILE_T
-  use SDPToolkit, only: USESDPTOOLKIT, PGS_SMF_GENERATESTATUSREPORT
+  use Machine, only: crash_burn, exit_with_status, neverCrash
+  use MLSCommon, only: MLSFile_t
+  use SDPToolkit, only: useSDPToolkit, pgs_smf_generateStatusReport
 
   implicit none
   private
 
-  public :: ASSEMBLEFULLLINE, GET_CONFIG, LOGUNITNAME, PRINTITOUT
-  public :: SET_CONFIG, SNIPRCSFROM
+  public :: assembleFullLine, get_config, logUnitName, printItOut
+  public :: set_config, snipRCSFrom
 
   ! These apply if we don't log messages to a Fortran unit number
   ! other than Error_Unit or Output_Unit
@@ -87,6 +87,10 @@ module PrintIt_m
     ! informative, like Phase names
     character (len=prefixLen) :: Info   &
       &                                = ''      ! What (else) to call Info
+    ! Anything else you would like to prefix Warning or Error messages with,
+    ! like Phase names?
+    character (len=prefixLen) :: Warning   &
+      &                                = ''      ! What (else) to call Info
     logical :: useToolkit              = .true.
     integer :: MaxModuleNameLength     = 32      ! Abbreviate longer name
     integer :: MaxSeverityNameLength   = 8       ! Abbreviate longer severity
@@ -101,6 +105,9 @@ module PrintIt_m
     logical :: AsciifyMessages = .true.
     integer :: Severity_To_Quit = 0
     logical :: UseDefaultFormatStdout = .false.
+    
+    ! Temporarily skip using Toolkit (if we ever were)
+    ! logical :: adHocPrintToStdout = .false.
   end type MLSMessageConfig_T
 
   ! This variable describes the configuration
@@ -135,7 +142,7 @@ contains
   ! Assemble the full line out of 
   ! (1) A severity level
   ! (2) The module name
-  ! (3) Whatever message we're asked to repeat
+  ! (3) Whatever message we're asked to repeat (%Info? %Warning?)
   subroutine AssembleFullLine( Severity, ModuleNameIn, Message, &
     & line, line_len )
     integer, intent(in)           :: Severity ! e.g. MLSMSG_Error
@@ -156,9 +163,14 @@ contains
           line = trim(line) // ':' // &
             & trim(SeverityNamesFun(MLSMSG_Severity_so_far))
         endif
+        ! Do we prefix with MLSMessageConfig%Info
         if ( severity == MLSMSG_Info .and. &
           & len_trim(MLSMessageConfig%Info) > 0 ) &
           & line = trim(line) // ' ' // MLSMessageConfig%Info
+        ! Do we prefix with MLSMessageConfig%Warning
+        if ( severity > MLSMSG_Info .and. &
+          & len_trim(MLSMessageConfig%Warning) > 0 ) &
+          & line = trim(line) // ' ' // MLSMessageConfig%Warning
       else
         line = 'Unknown'
       end if
@@ -221,15 +233,17 @@ contains
   end function LogUnitName
 
   ! -------------------------------------------------  PrintItOut  -----
-  subroutine PrintItOut ( INLINE, SEVERITY, LINE_LEN, NOPREFIX, EXITSTATUS, NOEXIT  )
-    ! In any way we're asked
+  subroutine PrintItOut ( inLine, severity, &
+    & line_len, noPrefix, exitStatus, noExit  )
+    ! In any way we're asked .. print inLine
+    ! After that, maybe exit with status or worse
     ! Args
-    character(len=*), intent(in) :: INLINE
-    integer, intent(in) :: SEVERITY
-    integer, optional, intent(in) :: LINE_LEN
-    logical, optional, intent(in) :: NOPREFIX
-    integer, intent(in), optional :: EXITSTATUS
-    logical, optional, intent(in) :: NOEXIT
+    character(len=*), intent(in)  :: inLine      ! What to print
+    integer, intent(in)           :: severity    ! Tell me Doc, how bad is it?
+    integer, optional, intent(in) :: line_len    ! If different from (len(inLine)
+    logical, optional, intent(in) :: noPrefix    ! Don't add any prefix
+    integer, intent(in), optional :: exitStatus  ! Exit with this status
+    logical, optional, intent(in) :: noExit      ! No, just return no matter what
     ! Local variables
     character(len=len(inline)) :: Line
     logical :: log_it
@@ -412,6 +426,9 @@ contains
 end module PrintIt_m
 
 ! $Log$
+! Revision 2.8  2015/05/06 20:40:49  pwagner
+! May prefix Warnings or worse with, e.g., phase and chunk num
+!
 ! Revision 2.7  2013/09/09 18:36:58  pwagner
 ! Workaround for ifort v12 internal compiler error
 !
