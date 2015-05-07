@@ -12,10 +12,10 @@
 !=============================================================================
 module ReadAPriori
 
-  use expr_m, only: expr
-  use hdf, only: dfacc_rdonly
-  use highOutput, only: outputNamedValue
-  use init_tables_module, only: f_auraInstrument, &
+  use Expr_m, only: expr
+  use HDF, only: dfacc_rdonly
+  use HighOutput, only: outputNamedValue
+  use Init_tables_module, only: f_auraInstrument, &
     & f_date, f_dimlist, f_downsample, &
     & f_field, f_file, f_grid, f_HDFVersion, f_missingvalue, f_noPCFid, &
     & f_origin, f_quantitytype, f_sdname, f_deferReading, f_sum, f_swath, &
@@ -23,35 +23,35 @@ module ReadAPriori
     & l_climatology, l_dao, l_geos5, l_geos5_7, l_gloria, &
     & l_merra, l_ncep, l_none, l_strat, l_surfaceheight, &
     & s_diff, s_dump, s_gridded, s_l2aux, s_l2gp, s_readGriddedData
-  use intrinsic, only: l_ascii, l_binary, l_hdfeos, l_hdf, l_swath, &
+  use Intrinsic, only: l_ascii, l_binary, l_hdfeos, l_hdf, l_swath, &
     & phyq_dimensionless
   use L2GPData, only: maxSwathNamesBufSize
-  use lexer_core, only: print_source
+  use Lexer_core, only: print_source
   use MLSCommon, only: filenamelen, MLSfile_t
   use MLSFiles, only: filenotfound, &
-    & hdfversion_4, hdfversion_5, wildCardHDFVersion, &
-    & addfiletodatabase, MLS_closefile, dump, getpcfromref, initializeMLSFile, &
-    & MLS_hdf_version, MLS_inqswath, MLS_openfile, split_path_name
-  use MLSl2Options, only: checkPaths, default_hdfversion_read, l2cfnode, &
-    & runtimeValues, specialDumpFile, toolkit, &
-    & dumpMacros, MLSMessage
+    & HDFVersion_4, HDFVersion_5, wildCardHDFVersion, &
+    & AddFileToDatabase, MLS_CloseFile, dump, getPCFromRef, initializeMLSFile, &
+    & MLS_HDF_Version, MLS_inqswath, MLS_openfile, split_path_name
+  use MLSl2Options, only: checkPaths, default_HDFVersion_read, L2CFNode, &
+    & RuntimeValues, specialDumpFile, toolkit, &
+    & DumpMacros, MLSMessage
   use MLSMessagemodule, only: MLSMsg_error, MLSMsg_warning
-  use MLSPcf2, only: &
-    & MLSPcf_l2apriori_start, MLSPcf_l2apriori_end, &
-    & MLSPcf_l2clim_start, MLSPcf_l2clim_end, &
-    & MLSPcf_l2dao_start, MLSPcf_l2dao_end, &
-    & MLSPcf_l2geos5_start, MLSPcf_l2geos5_end, &
-    & MLSPcf_l2ncep_start, MLSPcf_l2ncep_end, &
-    & MLSPcf_surfaceheight_start, MLSPcf_surfaceheight_end
-  use MLSStringlists, only: catLists, GetHashElement, switchDetail
+  use MLSPCF2, only: &
+    & MLSPCF_l2apriori_start, MLSPCF_l2apriori_end, &
+    & MLSPCF_l2clim_start, MLSPCF_l2clim_end, &
+    & MLSPCF_l2dao_start, MLSPCF_l2dao_end, &
+    & MLSPCF_l2geos5_start, MLSPCF_l2geos5_end, &
+    & MLSPCF_l2ncep_start, MLSPCF_l2ncep_end, &
+    & MLSPCF_surfaceheight_start, MLSPCF_surfaceheight_end
+  use MLSStringLists, only: catLists, GetHashElement, switchDetail
   use MLSStrings, only: lowercase
-  use moreTree, only: get_boolean
-  use output_m, only: blanks, output, revertOutput, switchOutput
+  use MoreTree, only: get_boolean
+  use Output_m, only: blanks, output, revertOutput, switchOutput
   use PCFHdr, only: GlobalAttributes
   use SDPToolkit, only: pgs_s_success
-  use string_table, only: get_string
-  use toggles, only: gen, switches, toggle
-  use tree, only: decorate, decoration, nsons, &
+  use String_table, only: get_string
+  use Toggles, only: gen, switches, toggle
+  use Tree, only: decorate, decoration, nsons, &
     &             sub_rosa, subtree, dump_tree_node, where
 
   implicit none
@@ -916,6 +916,9 @@ contains ! =====     Public Procedures     =============================
         call get_pcf_id ( fileNameString, path, subString, l2apriori_version, &
           & mlspcf_l2clim_start, mlspcf_l2clim_end, 'climatology', got(f_file), &
           & LastClimPCF, returnStatus, noPCFid )
+        call outputnamedValue ( 'fileNameString', trim(fileNameString) )
+        call outputnamedValue ( 'noPCFid', noPCFid )
+        call outputnamedValue ( 'returnStatus', returnStatus )
         if ( TOOLKIT .and. returnStatus /= PGS_S_SUCCESS ) then
           call announce_error ( son, &
             & 'PCF number not found to supply' // &
@@ -1044,7 +1047,7 @@ contains ! =====     Public Procedures     =============================
       ! call outputNamedValue ( 'got file?', gotFile )
       ! call output('PCFBottom, lastPCF: ')
       ! call output( (/ PCFBottom, lastPCF /), advance='yes' )
-      if ( TOOLKIT .and. gotFile ) then
+      if ( TOOLKIT .and. gotFile .and. .not. noPCFid ) then
         call split_path_name ( fileNameString, path, subString )
         pcf_id = getPCFromRef ( subString, PCFBottom, lastPCF, TOOLKIT, &
           &                     returnStatus, l2Apriori_Version, DEBUG, &
@@ -1372,6 +1375,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.111  2015/05/07 20:16:50  pwagner
+! Fixed error affecting noPCFid
+!
 ! Revision 2.110  2015/05/05 18:15:47  pwagner
 ! /noPCFid field allows us to read from files not named in PCF
 !
