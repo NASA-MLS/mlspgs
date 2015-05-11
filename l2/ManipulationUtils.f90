@@ -134,7 +134,11 @@ contains ! =====     Public Procedures     =============================
     call markDigits( lowerCase(mstr), collapsedstr )
     if ( DEEBUG ) call outputNamedValue( 'collapsedstr', collapsedstr )
 
+    ! 1st--make sure spaces surround each operator
     mstr = collapsedstr
+    call stretchOperators ( mstr )
+
+    mstr = lowercase(mstr)
     ! Replace 'e-' with 'e_' to avoid splitting fortran numeric notation
     call ReplaceSubString( mstr, collapsedstr, 'e-', 'e_', &
       & which='all', no_trim=.true. )
@@ -153,40 +157,6 @@ contains ! =====     Public Procedures     =============================
 
     ! 1st--make sure spaces surround each operator
     ! (It takes two steps for each to avoid threat of infinite loop)
-    call ReplaceSubString( mstr, collapsedstr, '+', ' & ', &
-      & which='all', no_trim=.true. )
-    call ReplaceSubString( collapsedstr, mstr, '&', '+', &
-      & which='all', no_trim=.true. )
-
-    call ReplaceSubString( mstr, collapsedstr, '*', ' & ', &
-      & which='all', no_trim=.true. )
-    call ReplaceSubString( collapsedstr, mstr, '&', '*', &
-      & which='all', no_trim=.true. )
-
-    call ReplaceSubString( mstr, collapsedstr, '-', ' & ', &
-      & which='all', no_trim=.true. )
-    call ReplaceSubString( collapsedstr, mstr, '&', '-', &
-      & which='all', no_trim=.true. )
-
-    call ReplaceSubString( mstr, collapsedstr, '/', ' & ', &
-      & which='all', no_trim=.true. )
-    call ReplaceSubString( collapsedstr, mstr, '&', '/', &
-      & which='all', no_trim=.true. )
-
-    call ReplaceSubString( mstr, collapsedstr, '<', ' & ', &
-      & which='all', no_trim=.true. )
-    call ReplaceSubString( collapsedstr, mstr, '&', '<', &
-      & which='all', no_trim=.true. )
-
-    call ReplaceSubString( mstr, collapsedstr, '>', ' & ', &
-      & which='all', no_trim=.true. )
-    call ReplaceSubString( collapsedstr, mstr, '&', '>', &
-      & which='all', no_trim=.true. )
-
-    call ReplaceSubString( mstr, collapsedstr, '^', ' & ', &
-      & which='all', no_trim=.true. )
-    call ReplaceSubString( collapsedstr, mstr, '&', '^', &
-      & which='all', no_trim=.true. )
 
     collapsedstr = lowerCase(mstr)
     if ( DEEBUG ) call outputNamedValue( 'collapsedstr', collapsedstr )
@@ -513,9 +483,9 @@ contains ! =====     Public Procedures     =============================
     ! Now undo change by reverting all '+-'
     ! (including any that may have been split by parentheses
     call ReplaceSubString( collapsedstr, temp, '+-', ' -', &
-      & which='all', no_trim=.false. )
+      & which='all', no_trim=.true. )
     call ReplaceSubString( temp, collapsedstr, '+(-', '-(', &
-      & which='all', no_trim=.false. )
+      & which='all', no_trim=.true. )
 
     call ReplaceSubString( collapsedstr, temp, '+<', '<', &
       & which='all', no_trim=.false. )
@@ -529,7 +499,51 @@ contains ! =====     Public Procedures     =============================
     call ReplaceSubString( collapsedstr, temp, '+', ' +', &
       & which='all', no_trim=.false. )
     collapsedstr = temp
+    call stretchOperators ( collapsedstr )
   end subroutine reorderPrecedence
+  
+  subroutine stretchOperators ( str )
+    ! 1st--make sure spaces surround each operator
+    ! (It takes two steps for each to avoid threat of infinite loop)
+    character(len=*), intent(inout) :: str
+    character(len=maxManipulationLen) :: tempStr
+    ! Executable
+    call ReplaceSubString( str, tempStr, '+', ' & ', &
+      & which='all', no_trim=.true. )
+    call ReplaceSubString( tempStr, str, '&', '+', &
+      & which='all', no_trim=.true. )
+
+    call ReplaceSubString( str, tempStr, '*', ' & ', &
+      & which='all', no_trim=.true. )
+    call ReplaceSubString( tempStr, str, '&', '*', &
+      & which='all', no_trim=.true. )
+
+    call ReplaceSubString( str, tempStr, '-', ' & ', &
+      & which='all', no_trim=.true. )
+    call ReplaceSubString( tempStr, str, '&', '-', &
+      & which='all', no_trim=.true. )
+
+    call ReplaceSubString( str, tempStr, '/', ' & ', &
+      & which='all', no_trim=.true. )
+    call ReplaceSubString( tempStr, str, '&', '/', &
+      & which='all', no_trim=.true. )
+
+    call ReplaceSubString( str, tempStr, '<', ' & ', &
+      & which='all', no_trim=.true. )
+    call ReplaceSubString( tempStr, str, '&', '<', &
+      & which='all', no_trim=.true. )
+
+    call ReplaceSubString( str, tempStr, '>', ' & ', &
+      & which='all', no_trim=.true. )
+    call ReplaceSubString( tempStr, str, '&', '>', &
+      & which='all', no_trim=.true. )
+
+    call ReplaceSubString( str, tempStr, '^', ' & ', &
+      & which='all', no_trim=.true. )
+    call ReplaceSubString( tempStr, str, '&', '^', &
+      & which='all', no_trim=.true. )
+  end subroutine stretchOperators
+  
 
   subroutine destroyPrimitives(primitives)
     ! deallocate all the arrays we created
@@ -1382,6 +1396,9 @@ end module ManipulationUtils
 
 !
 ! $Log$
+! Revision 2.18  2015/05/11 17:57:17  pwagner
+! Repaired another parsing error
+!
 ! Revision 2.17  2015/05/05 17:47:04  pwagner
 ! MAXMANIPULATIONLEN made public
 !
