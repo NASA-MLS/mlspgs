@@ -34,7 +34,7 @@ module LOAD_SPS_DATA_M
     integer,  pointer :: windowfinish(:) => null()! horizontal ending index
 !                                                  from l2gp
     integer,  pointer :: mol(:) => null() ! Qty molecule, l_...
-    integer,  pointer :: Z_coord(:)       ! l_geo[cd]Altitude, l_zeta
+    integer,  pointer :: Z_coord(:) => null() ! l_geo[cd]Altitude, l_zeta
     ! Which column of dBeta_path_df to use for each molecule.
     ! Molecule beta is not dependent upon mixing ratio if zero.
     ! Only nonzero where derivatives for molecules with mixing-ratio-dependent
@@ -865,6 +865,9 @@ contains
 end module LOAD_SPS_DATA_M
 
 ! $Log$
+! Revision 2.95  2015/05/01 02:08:10  vsnyder
+! Compute dimensions correctly for geodetic-altitude magnetic fields
+!
 ! Revision 2.94  2015/04/11 01:26:44  vsnyder
 ! Convert altitudes to geocentric km if not zeta
 !
