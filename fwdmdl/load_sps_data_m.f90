@@ -535,7 +535,8 @@ contains
     real(rp), intent(in), optional :: Phi_Offset ! Radians
     logical, intent(in), optional :: Across ! Viewing angle is not in orbit plane
 
-    integer :: I, J, K, KF, KV, KZ, L, N, PF, PP, PV, PZ, QF, QP, QV, QZ, WF, WS
+    integer :: I, J, J1, J2, K, K1, K2, KF, KV, KZ, L, N, PF, PP, PV, PZ
+    integer :: QF, QP, QV, QZ, WF, WS
     integer :: InstOr1
     logical :: MyAcross
     logical :: PackFrq ! Need to pack the frequency "dimension"
@@ -567,11 +568,28 @@ contains
     case ( l_geodAltitude ) ! This will be used for interpolation with
                             ! H_Path, which is in kilometers, not meters
       n = pz
+      if ( myAcross ) then
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      !!!!!                                                              !!!!!
+      !!!!! There is an implicit assumption here that if we are doing    !!!!!
+      !!!!! Cross-track viewing, there's only one MAF in the window!     !!!!!
+      !!!!!                                                              !!!!!
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        j1 = 1
+        j2 = 1
+        k1 = ws
+        k2 = wf
+      else
+        j1 = ws
+        j2 = wf
+        k1 = 1
+        k2 = 1
+      end if
       do i = 1, qty%template%noSurfs
-        l = min(i,size(qty%template%geodLat3,1))
-        do j = ws, wf
+        l = merge(1,i,qty%template%stacked)
+        do j = j1, j2
           instOr1 = merge(1,j,qty%template%coherent)
-          do k = 1, qty%template%noCrossTrack
+          do k = k1, k2
             n = n + 1
             call to_cart ( [ qty%template%geodLat3(l,j,k), qty%template%lon3(l,j,k), &
                            & qty%template%surfs(i,instOr1)/1000.0 ], xyz, km=.true. )
@@ -588,7 +606,11 @@ contains
     end select
 
     if ( myAcross ) then
-      Grids_x%phi_basis(pp+1:qp) = qty%template%crossAngles
+      if ( associated(qty%template%crossAngles) ) then
+        Grids_x%phi_basis(pp+1:qp) = qty%template%crossAngles
+      else
+        Grids_x%phi_basis(pp+1:qp) = 0
+      end if
     else
       if ( present(phi_offset) ) then
         Grids_x%phi_basis(pp+1:qp) = qty%template%phi(1,ws:wf)*Deg2Rad + phi_offset
@@ -619,6 +641,7 @@ contains
           &                   ws:wf ), &
           &       (/qv-pv/) )
     else if ( myAcross ) then
+      kz = kz / ( wf - ws + 1 ) ! Z and cross-angles conflated if myAcross
       Grids_x%values(pv+1:qv) = reshape(qty%value4(1:kf,1:kz,1,ws:wf), &
                                       & (/qv-pv/))
     else ! All the values
@@ -865,6 +888,9 @@ contains
 end module LOAD_SPS_DATA_M
 
 ! $Log$
+! Revision 2.96  2015/05/12 20:53:07  vsnyder
+! Default initialize Z_Coord component to NULL
+!
 ! Revision 2.95  2015/05/01 02:08:10  vsnyder
 ! Compute dimensions correctly for geodetic-altitude magnetic fields
 !
