@@ -152,6 +152,7 @@ module DNWT_MODULE
     real(rk) :: DXNL = 0.0 ! L2 Norm of last candidate DX -- intent(out)
     real(rk) :: FNMIN      ! L2 Norm of F not in column space of the Jacobian
     real(rk) :: FNORM      ! L2 Norm of F at current X
+    real(rk) :: FNORMB     ! L2 Norm of F at best X
     real(rk) :: GDX        ! dot_product( Gradient, "Candidate DX" )
     real(rk) :: GFAC       ! Amount of best gradient to use for DX
     real(rk) :: GRADN      ! L2 norm of Gradient
@@ -895,7 +896,8 @@ contains
 ! Store best X, the gradient, and other constants used if a
 ! return needs to be made to the best X
 
-  735 ifl = nf_best
+  735 aj%fnormb = aj%fnorm
+      ifl = nf_best
       nflag = ifl
       return
 
@@ -1389,6 +1391,9 @@ contains
 end module DNWT_MODULE
 
 ! $Log$
+! Revision 2.53  2015/05/15 23:41:01  vsnyder
+! Add FNORMB to AJ
+!
 ! Revision 2.52  2012/09/13 18:06:56  vsnyder
 ! Add SQMIN to AJ structure, allow convergence with nonzero lambda
 !
