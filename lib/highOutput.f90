@@ -15,27 +15,29 @@ module HIGHOUTPUT
   
   ! See also dump_0 and output_m
   
-  use dates_module, only:  buildCalendar, daysInMonth, &
-    & reformatdate, reformatTime, utc_to_yyyymmdd
-  use machine, only: crash_burn, exit_with_status, nevercrash
+  use Dates_module, only:  buildCalendar, daysInMonth, &
+    & Reformatdate, reformatTime, utc_to_yyyymmdd
+  use Machine, only: crash_burn, exit_with_status, nevercrash
   use MLSCommon, only: MLSDebug, MLSVerbose
   use MLSFinds, only: findfirst
   use MLSStringlists, only: expandStringRange, getStringElement, &
-    & List2array, nCharsInFormat, numStringElements, switchDetail, wrap
+    & List2Array, nCharsInFormat, numStringElements, switchDetail, wrap
   use MLSStrings, only: lowercase, ncopies, &
-    & trim_safe, writeIntsToChars
-  use output_m, only: blanks, getOutputStatus, newline, output, &
-    & output_ => output_char_nocr, &
-    & restoreSettings, &
-    & outputOptions, outputoptions_t, stampOptions, stampOptions_t, &
-    & timeStampOptions, timeStampOptions_t, &
-    & bothPrUnit, invalidPrUnit, msglogPrUnit, outputlinesPrUnit, stdoutPrUnit
-  use printit_m, only: assembleFullLine, get_config, &
-    & MLSMsg_crash, MLSMsg_debug, &
-    & MLSMsg_severity_to_quit, &
-    & MLSMsg_warning, &
-    & printitOut, MLSMessageConfig
-  use toggles, only: switches
+    & Trim_safe, writeIntsToChars
+  use Output_m, only: Advance_is_yes_or_no, blanks, getOutputStatus, &
+    & Newline, &
+    & Output, Output_ => output_char_nocr, &
+    & RestoreSettings, &
+    & OutputOptions, outputOptions_t, stampOptions, stampOptions_t, &
+    & TimeStampOptions, timeStampOptions_t, &
+    & BothPrUnit, invalidPrUnit, MSGLogPrUnit, &
+    & OutputLines, outputLinesPrUnit, stdoutPrUnit
+  use Printit_m, only: assembleFullLine, get_config, &
+    & MLSMSG_Crash, MLSMSG_Debug, &
+    & MLSMSG_Severity_to_quit, &
+    & MLSMSG_Warning, &
+    & PrintitOut, MLSMessageConfig
+  use Toggles, only: switches
   implicit none
   private
 
@@ -43,6 +45,7 @@ module HIGHOUTPUT
 !     c o n t e n t s
 !     - - - - - - - -
 !     (subroutines and functions)
+! addRow                   add name, value row to a 2-d table of cells
 ! alignToFit               align printed argument to fit column range
 ! banner                   surround message with stars and stripes; e.g.,
 !                            *-----------------------------------------------*
@@ -69,12 +72,14 @@ module HIGHOUTPUT
 ! restoreSettings          restore default settings for output, stamps, tabs
 ! setStamp                 set stamp to be added to every output automatically
 ! setTabs                  set tab stops (to be used by tab)
+! startTable               initialize a 2-d table of cells to be output later
 ! tab                      move to next tab stop
 ! timestamp                print argument with a timestamp manually
 !                            (both stdout and logged output)
 ! === (end of toc) ===
 
 ! === (start of api) ===
+! addRow ( char* name, value )
 ! alignToFit ( char* chars, int columnRange(2), char alignment, [int skips] )
 ! banner ( char* chars, [int columnRange(2)], [char alignment], [int skips] )
 ! log BeVerbose ( char* switch, threshold )
@@ -102,13 +107,14 @@ module HIGHOUTPUT
 ! outputNamedValue ( char* name, value, [char* advance],
 !          [char colon], [char fillChar], [char* Before], [char* After], 
 !          [integer tabn], [integer tabc], [integer taba], log dont_stamp] )
-! outputTable ( array(:,:), [char sep], [char border], [int cellWidth],
+! outputTable ( [array(:,:)], [char sep], [char border], [int cellWidth],
 !          [char interior], [char headliner], [char alignment] )
 ! resetTabs ( [int tabs(:)] )
 ! restoreSettings ( [log useToolkit] )
 ! setStamp ( [char* textCode], [log post], [int interval],
 !          [log showTime], [char* dateFormat], [char* timeFormat] )
 ! setTabs ( [char* Range], [int tabs(:)] )
+! startTable
 ! tab ( [int tabn], [char* fillChar] )
 ! timeStamp ( char* chars, [char* advance], [char* from_where], 
 !          [log dont_log], [char* log_chars], [char* insteadOfBlank],
@@ -131,19 +137,28 @@ module HIGHOUTPUT
 !
 ! To understand the codes for dateformat and timeFormat, see the dates_module
 ! 
-  public :: alignToFit, &
+  public :: addRow, alignToFit, &
     & banner, beVerbose, blanksToColumn, blanksToTab, &
     & dump, dumpSize, dumpTabs, getStamp, headLine, &
     & letsDebug, nextColumn, nextTab, numNeedsFormat, numToChars, &
     & output_date_and_time, outputCalendar, outputList, outputTable, &
     & outputNamedValue, &
     & resetTabs, restoreSettings, &
-    & setStamp, setTabs, tab, timeStamp
+    & setStamp, setTabs, startTable, tab, timeStamp
 
   ! These types made public because the class instances are public
   public :: outputOptions_T
   public :: stampOptions_T
   public :: timeStampOptions_T
+
+  interface addRow
+    module procedure addRow_character
+    module procedure addRow_complex
+    module procedure addRow_dbl_array, addRow_double
+    module procedure addRow_int_array, addRow_integer
+    module procedure addRow_log_array, addRow_logical
+    module procedure addRow_sngl_array, addRow_single
+  end interface
 
   interface ALIGNTOFIT
     module procedure aligntofit_chars, aligntofit_double, aligntofit_single
@@ -198,10 +213,15 @@ module HIGHOUTPUT
   end interface
   
   integer, parameter :: MAXCELLSIZE = 128 ! How many chars can 1 cell hold
+  ! Used for automatic assembly of a table to be neatly formatted and output
+  ! The table holds two columns:
+  ! names and values  
+  character(len=MAXCELLSIZE), dimension(:,:), pointer :: cellDatabase => null()
+
   ! We can use the OutputLines mechanism for user-controlled
   ! buffering, filtering, grep-ing, or whatever
-  integer, parameter :: MAXOUTPUTLINESLEN = 2048 ! How many chars it can hold
-  character(len=MAXOUTPUTLINESLEN), public, save     :: OUTPUTLINES = ' '
+  ! integer, parameter :: MAXOUTPUTLINESLEN = 2048 ! How many chars it can hold
+  ! character(len=MAXOUTPUTLINESLEN), public, save     :: OUTPUTLINES = ' '
 
   integer, private, parameter :: MAXNUMTABSTOPS = 24
   integer, save, private :: WRAPPASTCOLNUM = 0  ! Don't print beyond (if > 0)
@@ -227,6 +247,73 @@ module HIGHOUTPUT
 !---------------------------------------------------------------------------
 
 contains
+
+  ! ----------------------------------------------  addRow  -----
+  ! This family of routines adds a paired name and value
+  ! as a new row to the cellDatabase
+  
+  ! later to be printed as a neatly-formatted table to stdout
+  ! By means of optional args you can create a line like
+  ! *   name                   value   *
+  subroutine addRow_character ( name, value )
+    character(len=*), intent(in)          :: name
+    character(len=*), intent(in)          :: value
+    include 'addRow.f9h'
+  end subroutine addRow_character
+
+  subroutine addRow_complex ( name, value )
+    character(len=*), intent(in)          :: name
+    complex, intent(in)                   :: value
+    include 'addRow.f9h'
+  end subroutine addRow_complex
+
+  subroutine addRow_double ( name, value )
+    character(len=*), intent(in)          :: name
+    double precision, intent(in)                   :: value
+    include 'addRow.f9h'
+  end subroutine addRow_double
+
+  subroutine addRow_dbl_array ( name, value )
+    character(len=*), intent(in)          :: name
+    double precision, dimension(:), intent(in)     :: value
+    include 'addRow.f9h'
+  end subroutine addRow_dbl_array
+
+  subroutine addRow_int_array ( name, value )
+    character(len=*), intent(in)          :: name
+    integer, dimension(:), intent(in)     :: value
+    include 'addRow.f9h'
+  end subroutine addRow_int_array
+
+  subroutine addRow_integer ( name, value )
+    character(len=*), intent(in)          :: name
+    integer, intent(in)                   :: value
+    include 'addRow.f9h'
+  end subroutine addRow_integer
+
+  subroutine addRow_log_array ( name, value )
+    character(len=*), intent(in)          :: name
+    logical, dimension(:), intent(in)     :: value
+    include 'addRow.f9h'
+  end subroutine addRow_log_array
+
+  subroutine addRow_logical ( name, value )
+    character(len=*), intent(in)          :: name
+    logical, intent(in)                   :: value
+    include 'addRow.f9h'
+  end subroutine addRow_logical
+
+  subroutine addRow_single ( name, value )
+    character(len=*), intent(in)          :: name
+    real, intent(in)                      :: value
+    include 'addRow.f9h'
+  end subroutine addRow_single
+
+  subroutine addRow_sngl_array ( name, value )
+    character(len=*), intent(in)          :: name
+    real, dimension(:), intent(in)     :: value
+    include 'addRow.f9h'
+  end subroutine addRow_sngl_array
 
   ! -----------------------------------------------------  ALIGNTOFIT  -----
   ! Align chars to fit within column range
@@ -1416,23 +1503,25 @@ contains
   end subroutine output_nvp_sngl_array
 
   ! ----------------------------------------------  outputTable  -----
-  ! This family of routines outputs a 2d character array as a table
+  ! Outputs a 2d character array as a table
   ! Optionally, 
-  ! (1)  the table can have a character separating cells, and another 
+  ! (1)  you may supply the arry; otherwise, dellDatabase will be used
+  ! (2)  the table can have a character separating cells, and another 
   !      marking its outer borders
-  ! (2)  the minimum cell width can be set; otherwise
+  ! (3)  the minimum cell width can be set; otherwise
   !      it is computed based on the trimmed lengths of each column
-  ! (3)  the alignment within each cell can be set; otherwise
+  ! (4)  the alignment within each cell can be set; otherwise
   !      it is flushed left, i.e. 'L'
-  ! (4)  each row can be separated by an interior wall of characters;
+  ! (5)  each row can be separated by an interior wall of characters;
   !      by default they are consecutive
   !      a special value of interior, null (achar(0)) inserts an empty line
-  ! (5)  the first row can be treated as special, and separated from the second
+  ! (6)  the first row can be treated as special, and separated from the second
   !      by a wall of special headliner characters
   subroutine outputTable ( array, sep, border, cellWidth, &
     & interior, headliner, alignment )
     ! Args
-    character(len=*), dimension(:,:), intent(in)   :: array
+    character(len=*), dimension(:,:), optional, intent(in)   &
+      &                                            :: array
     character(len=1), optional, intent(in)         :: sep       ! between cols
     character(len=1), optional, intent(in)         :: border    ! outside
     integer, optional, intent(in)                  :: cellWidth
@@ -1440,85 +1529,19 @@ contains
     character(len=1), optional, intent(in)         :: headliner ! 1st row are headers
     character(len=1), optional, intent(in)         :: alignment ! L, R, or C
     ! Local variables
-    character(len=MAXCELLSIZE)                     :: cell
-    integer                                        :: i
-    integer                                        :: j
-    integer                                        :: left
-    integer                                        :: minWidth
-    character(len=1)                               :: myAlignment
-    character(len=1)                               :: myBorder
-    character(len=1)                               :: mySep
-    character(len=1)                               :: myHeadliner
-    character(len=1)                               :: myInterior
-    integer                                        :: right
-    integer, dimension(size(array,2))              :: widths
-    integer, parameter                             :: leftPadding = 1
-    integer, parameter                             :: rightPadding = 1
-    integer                                        :: totalWidth
+    integer                                        :: status
     ! Executable
-    minWidth = 3 ! Don't know why, but this works
-    if ( present(cellWidth) ) minWidth = cellWidth
-
-    mySep = ' '
-    if ( present(sep) ) mySep = sep
-    myBorder = ' '
-    if ( present(border) ) myBorder = border
-    myInterior = ' '
-    if ( present(Interior) ) myInterior = Interior
-    
-    myHeadliner = myInterior
-    if ( present(headliner) ) myHeadliner = headliner
-    
-    myAlignment = 'L'
-    if ( present(alignment) ) myAlignment = alignment
-
-    ! 1st, compute total table width
-    widths = minWidth
-    totalWidth = 3
-    do j=1, size(array,2)
-      widths(j) = maxval( len_trim(array(:,j)) )
-      widths(j) = max( widths(j), minWidth )
-      totalWidth = totalWidth + widths(j) + leftPadding + rightPadding
-      if ( j > 1 .and. j < size(array,2) ) totalWidth = totalWidth + 1
-    enddo
-    if ( len_trim(myBorder) > 0 ) &
-      & call output( repeat( myBorder, totalWidth ), advance='yes' )
-    do i=1, size(array,1)
-      right = 0
-      if ( len_trim(myBorder) > 0 ) then
-        call output( myBorder, advance='no' )
-        right = right + 1
-      endif
-      do j=1, size(array,2)
-        left = right + 1 + leftPadding
-        right = left + widths(j) ! Don't know why, but this works
-        call alignToFit ( trim(array(i,j)), (/ left, right /), myAlignment )
-        call blanks ( rightPadding )
-        if ( len_trim(mySep) > 0 .and. j < size(array,2) ) then
-          call output( mySep, advance='no' )
-          right = right + 1
-        endif
-      enddo
-      if ( len_trim(myBorder) > 0 ) then
-        call blanksToColumn( totalWidth )
-        call output( myBorder, advance='yes' )
-      else
-        call newLine
-      endif
-      ! Interior cell walls or headliners
-      if ( len_trim(myheadliner) > 0 .and. i == 1 .and. &
-        & myheadliner /= achar(0) ) then
-        call output( repeat( myheadliner, totalWidth ), advance='yes' )
-      elseif ( myInterior == achar(0) .and. i < size(array,1) ) then
-        call output( myBorder, advance='no' )
-        call blanksToColumn( totalWidth )
-        call output( myBorder, advance='yes' )
-      elseif ( len_trim(myInterior) > 0 .and. i < size(array,1) ) then
-        call output( repeat( myInterior, totalWidth ), advance='yes' )
-      endif
-    enddo
-    if ( len_trim(myBorder) > 0 ) &
-      & call output( repeat( myBorder, totalWidth ), advance='yes' )
+    if ( present( array ) ) then
+      call outputTableArray ( array, sep, border, cellWidth, &
+        & interior, headliner, alignment )
+    elseif ( .not. associated ( cellDatabase ) ) then
+      call banner ( 'Empty table' )
+    else
+      call outputTableArray ( cellDatabase, sep, border, cellWidth, &
+        & interior, headliner, alignment )
+      deallocate( cellDatabase, stat=status )
+      nullify( cellDatabase )
+    endif
   end subroutine outputTable
 
   ! ----------------------------------------------  resetTabs  -----
@@ -1579,6 +1602,33 @@ contains
       call ExpandStringRange ( '5-120+5', TABSTOPS )
     end if
   end subroutine setTabs
+
+  ! ----------------------------------------------  startTable  -----
+  ! Set up a table, iniotially empty. Subsequent calls to AddRow will
+  ! add a new row, consisting of two columns: 
+  ! the name field and the value field
+  ! Optionally, 
+  ! (1)  the table can have a character separating cells, and another 
+  !      marking its outer borders
+  ! (2)  the minimum cell width can be set; otherwise
+  !      it is computed based on the trimmed lengths of each column
+  ! (3)  the alignment within each cell can be set; otherwise
+  !      it is flushed left, i.e. 'L'
+  ! (4)  each row can be separated by an interior wall of characters;
+  !      by default they are consecutive
+  !      a special value of interior, null (achar(0)) inserts an empty line
+  ! (5)  the first row can be treated as special, and separated from the second
+  !      by a wall of special headliner characters
+  subroutine startTable 
+    ! Internal variables
+    integer :: status
+    if ( associated( cellDatabase ) ) &
+      & deallocate( cellDatabase, stat=status )
+    if ( status /= 0 ) call myMessage ( MLSMSG_Warning, 'startTable', &
+      & 'Unable to deallocate celldatabase' )
+    nullify ( cellDatabase )
+    outputLines = ' '
+  end subroutine startTable
 
   ! ------------------------------------------------  timeStamp  -----
   ! time-stamp output on demand, not automatic:
@@ -1705,45 +1755,37 @@ contains
   end subroutine timeStamp_logical
 
   ! ------------------ Private procedures -------------------------
-  ! .......................................  Advance_is_yes_or_no  .....
-  function Advance_is_yes_or_no ( str ) result ( outstr )
-    ! takes '[Yy]...' or '[Nn..] and returns 'yes' or 'no' respectively
-    ! also does the same with '[Tt]..' and '[Ff]..'
-    ! leaves all other patterns unchanged, but truncated to three
-    ! characters.  Returns 'no' if the argument is absent.
-    
-    ! We are allowing its argument str to do multiple duties by being
-    ! composed of multiple space-separated arguments, e.g. 
-    ! 'arg1 [arg2] .. [argn]'
-    ! (1) the first arg1 is treated as before, basically 'yes' or 'no'
-    ! (2) arg2 and beyond will introduce extra options to the
-    ! output command, eventually simplifying it to just
-    !   call output( something, [advance='arg1 [arg2] .. [argn]' )
-    !--------Argument--------!
-    character (len=*), intent(in), optional :: Str
-    character (len=3) :: Outstr
-
-    !----------Local vars----------!
-    character (len=*), parameter :: yeses = 'YyTt'
-    character (len=*), parameter :: nose = 'NnFf'
-    integer :: kSpace
-
-    if ( .not. present(str)  ) then
-      outstr = outputoptions%advanceDefault ! 'no'
-      return
-    end if
-
-    outstr = adjustl(str)
-    kSpace = index( outstr, ' ' )
-    if ( kSpace > 1 ) outstr = outstr(:kSpace) ! To snip off arg2 ..
-    if ( index( yeses, outstr(:1)) > 0  ) then
-      outstr = 'yes'
-    else if ( index( nose, outstr(:1)) > 0  ) then
-      outstr = 'no'
+  ! .............................................  addItemToDatabase  .....
+  ! Add an additional row to end of cellDatabase
+  integer function addItemToDatabase ( database, item )
+    ! Args
+    character(len=*), dimension(:,:), pointer  :: database
+    character(len=*), dimension(2)             :: item
+    ! Local variables
+    integer :: newSize
+    integer :: status
+    character(len=MAXCELLSIZE), dimension(:,:), pointer  &
+      &                                        :: tempDatabase
+    !This include causes real trouble if you are compiling in a different 
+    !directory.
+    if ( associated(database) ) then ! tree_checker prevents duplicate names
+      newSize = SIZE(database,1) + 1
     else
-      outstr = str
+      newSize = 1
     end if
-  end function Advance_is_yes_or_no
+    allocate ( tempDatabase(newSize,2), STAT=status )
+    if ( newSize>1 ) tempDatabase(1:newSize-1,:) = database
+    if ( associated(database) ) then
+      deallocate ( database, stat=status )
+    end if
+    database => tempDatabase
+    database(newSize,:) = ' '
+    database(newSize,:) = adjustl(item)
+
+    ! include "addItemToDatabase.f9h" 
+
+    addItemToDatabase = newSize
+  end function addItemToDatabase
 
   ! .............................................  getOption  .....
   ! This family of subroutines parses a multipart advance arg into
@@ -1784,30 +1826,6 @@ contains
     kFlag = index( arg, trim(flag) )
     val = ( kFlag > 0 )
   end subroutine getOption_log
-
-  ! ------------------------------------  SeparateElements  -----
-  ! insert blanks or separator between consecutive elements while outputting
-  subroutine SeparateElements (i, n )
-    ! Args
-    integer, intent(in) :: i ! Element number
-    integer, intent(in) :: n ! Number of elements
-    ! Executable
-    if ( i >= n ) return
-    if ( wrappastcolnum > 0 .and. getOutputStatus( 'column' ) >= wrappastcolnum ) then
-      call newLine
-      return
-    end if
-    if ( wrappastcolnum == 0 .and. &
-      & mod(i, outputOptions%nArrayElmntsPerLine) == 0 ) then
-      call output_ ( '', advance='yes', DONT_STAMP=.true. )
-      return
-    end if
-    if ( len_trim(outputOptions%arrayElmntSeparator) > 0 ) then
-      call output_( outputOptions%arrayElmntSeparator, advance='no' )
-    else
-      call blanks ( outputOptions%nBlanksBtwnElmnts, advance='no' )
-    end if
-  end subroutine SeparateElements
 
   ! ------------------------------------  myMessage  -----
   subroutine myMessage_old ( severity, name, line, advance )
@@ -1906,49 +1924,135 @@ contains
     end if
   end subroutine myMessage
 
-  ! ........................................  whatSDNeedsFormat
-  ! parse inFormat which might be
-  ! (1) absent, in which case format=sdNeedsFormat and dotm='.6'
-  ! (2) '(*)', in which case format=sdNeedsFormat and dotm='.6'
-  ! (3) '(*.m)', in which case format=(sdNeedsFragment //'.m') and dotm='.m'
-  subroutine whatSDNeedsFormat ( format, dotm, inFormat )
-    character(len=*), optional, intent(in)  :: inFormat
-    character(len=*), intent(out)           :: format
-    character(len=*), intent(out)           :: dotm
-    integer :: dot
-    if ( .not. present(inFormat) ) then
-      format = sdNeedsFormat
-      dotm = '.6'
-    else if ( index(inFormat, '.') < 1 ) then
-      format = sdNeedsFormat
-      dotm = '.6'
-    else
-      ! Must find integer after '.'
-      dot = index( inFormat, '.' )
-      dotm = inFormat(dot:dot+1)
-      format = trim(sdNeedsFragment) // trim(dotm) // ')'
-    end if
-  end subroutine whatSDNeedsFormat
-
-  ! ----------------------------------------------  stretch  -----
-  function stretch( arg, skips ) result(chars)
-  ! stretch input arg by inserting skips number of spaces
-  ! between each pair of consecutive characters
-  ! Args
-    character(len=*), intent(in)      :: arg
-    integer, intent(in)               :: skips
-    character(len=(1+skips)*len(arg)) :: chars
-    ! Internal variables
-    integer :: i, k
+  ! ----------------------------------------------  outputTableArray  -----
+  ! outputs a 2d character array as a table
+  ! Optionally, 
+  ! (1)  the table can have a character separating cells, and another 
+  !      marking its outer borders
+  ! (2)  the minimum cell width can be set; otherwise
+  !      it is computed based on the trimmed lengths of each column
+  ! (3)  the alignment within each cell can be set; otherwise
+  !      it is flushed left, i.e. 'L'
+  ! (4)  each row can be separated by an interior wall of characters;
+  !      by default they are consecutive
+  !      a special value of interior, null (achar(0)) inserts an empty line
+  ! (5)  the first row can be treated as special, and separated from the second
+  !      by a wall of special headliner characters
+  subroutine outputTableArray ( array, sep, border, cellWidth, &
+    & interior, headliner, alignment )
+    ! Args
+    character(len=*), dimension(:,:),intent(in)    :: array
+    character(len=1), optional, intent(in)         :: sep       ! between cols
+    character(len=1), optional, intent(in)         :: border    ! outside
+    integer, optional, intent(in)                  :: cellWidth
+    character(len=1), optional, intent(in)         :: interior  ! between rows
+    character(len=1), optional, intent(in)         :: headliner ! 1st row are headers
+    character(len=1), optional, intent(in)         :: alignment ! L, R, or C
+    ! Local variables
+    character(len=MAXCELLSIZE)                     :: cell
+    integer                                        :: i
+    integer                                        :: j
+    integer                                        :: left
+    integer                                        :: minWidth
+    character(len=1)                               :: myAlignment
+    character(len=1)                               :: myBorder
+    character(len=1)                               :: mySep
+    character(len=1)                               :: myHeadliner
+    character(len=1)                               :: myInterior
+    integer                                        :: right
+    integer, dimension(size(array,2))              :: widths
+    integer, parameter                             :: leftPadding = 1
+    integer, parameter                             :: rightPadding = 1
+    integer                                        :: totalWidth
     ! Executable
-    chars = ' '
-    if ( len_trim(arg) < 1 ) return
-    do i=1, len_trim(arg)
-      ! E.g., if skips==1, k ~ 1 3 5 7 ..
-      k = 1 + (skips+1)*(i-1)
-      chars(k:k) = arg(i:i)
-    end do
-  end function stretch
+    minWidth = 3 ! Don't know why, but this works
+    if ( present(cellWidth) ) minWidth = cellWidth
+
+    mySep = ' '
+    if ( present(sep) ) mySep = sep
+    myBorder = ' '
+    if ( present(border) ) myBorder = border
+    myInterior = ' '
+    if ( present(Interior) ) myInterior = Interior
+    
+    myHeadliner = myInterior
+    if ( present(headliner) ) myHeadliner = headliner
+    
+    myAlignment = 'L'
+    if ( present(alignment) ) myAlignment = alignment
+
+    ! 1st, compute total table width
+    widths = minWidth
+    totalWidth = 3
+    do j=1, size(array,2)
+      widths(j) = maxval( len_trim(array(:,j)) )
+      widths(j) = max( widths(j), minWidth )
+      totalWidth = totalWidth + widths(j) + leftPadding + rightPadding
+      if ( j > 1 .and. j < size(array,2) ) totalWidth = totalWidth + 1
+    enddo
+    if ( len_trim(myBorder) > 0 ) &
+      & call output( repeat( myBorder, totalWidth ), advance='yes' )
+    do i=1, size(array,1)
+      right = 0
+      if ( len_trim(myBorder) > 0 ) then
+        call output( myBorder, advance='no' )
+        right = right + 1
+      endif
+      do j=1, size(array,2)
+        left = right + 1 + leftPadding
+        right = left + widths(j) ! Don't know why, but this works
+        call alignToFit ( trim(array(i,j)), (/ left, right /), myAlignment )
+        call blanks ( rightPadding )
+        if ( len_trim(mySep) > 0 .and. j < size(array,2) ) then
+          call output( mySep, advance='no' )
+          right = right + 1
+        endif
+      enddo
+      if ( len_trim(myBorder) > 0 ) then
+        call blanksToColumn( totalWidth )
+        call output( myBorder, advance='yes' )
+      else
+        call newLine
+      endif
+      ! Interior cell walls or headliners
+      if ( len_trim(myheadliner) > 0 .and. i == 1 .and. &
+        & myheadliner /= achar(0) ) then
+        call output( repeat( myheadliner, totalWidth ), advance='yes' )
+      elseif ( myInterior == achar(0) .and. i < size(array,1) ) then
+        call output( myBorder, advance='no' )
+        call blanksToColumn( totalWidth )
+        call output( myBorder, advance='yes' )
+      elseif ( len_trim(myInterior) > 0 .and. i < size(array,1) ) then
+        call output( repeat( myInterior, totalWidth ), advance='yes' )
+      endif
+    enddo
+    if ( len_trim(myBorder) > 0 ) &
+      & call output( repeat( myBorder, totalWidth ), advance='yes' )
+  end subroutine outputTableArray
+
+  ! ------------------------------------  SeparateElements  -----
+  ! insert blanks or separator between consecutive elements while outputting
+  subroutine SeparateElements (i, n )
+    ! Args
+    integer, intent(in) :: i ! Element number
+    integer, intent(in) :: n ! Number of elements
+    ! Executable
+    if ( i >= n ) return
+    if ( wrappastcolnum > 0 .and. getOutputStatus( 'column' ) >= wrappastcolnum ) then
+      call newLine
+      return
+    end if
+    if ( wrappastcolnum == 0 .and. &
+      & mod(i, outputOptions%nArrayElmntsPerLine) == 0 ) then
+      call output_ ( '', advance='yes', DONT_STAMP=.true. )
+      return
+    end if
+    if ( len_trim(outputOptions%arrayElmntSeparator) > 0 ) then
+      call output_( outputOptions%arrayElmntSeparator, advance='no' )
+    else
+      call blanks ( outputOptions%nBlanksBtwnElmnts, advance='no' )
+    end if
+  end subroutine SeparateElements
 
   ! ----------------------------------------------  stamp  -----
   function stamp( chars )
@@ -1990,6 +2094,50 @@ contains
     
   end function stamp 
 
+  ! ----------------------------------------------  stretch  -----
+  function stretch( arg, skips ) result(chars)
+  ! stretch input arg by inserting skips number of spaces
+  ! between each pair of consecutive characters
+  ! Args
+    character(len=*), intent(in)      :: arg
+    integer, intent(in)               :: skips
+    character(len=(1+skips)*len(arg)) :: chars
+    ! Internal variables
+    integer :: i, k
+    ! Executable
+    chars = ' '
+    if ( len_trim(arg) < 1 ) return
+    do i=1, len_trim(arg)
+      ! E.g., if skips==1, k ~ 1 3 5 7 ..
+      k = 1 + (skips+1)*(i-1)
+      chars(k:k) = arg(i:i)
+    end do
+  end function stretch
+
+  ! ........................................  whatSDNeedsFormat
+  ! parse inFormat which might be
+  ! (1) absent, in which case format=sdNeedsFormat and dotm='.6'
+  ! (2) '(*)', in which case format=sdNeedsFormat and dotm='.6'
+  ! (3) '(*.m)', in which case format=(sdNeedsFragment //'.m') and dotm='.m'
+  subroutine whatSDNeedsFormat ( format, dotm, inFormat )
+    character(len=*), optional, intent(in)  :: inFormat
+    character(len=*), intent(out)           :: format
+    character(len=*), intent(out)           :: dotm
+    integer :: dot
+    if ( .not. present(inFormat) ) then
+      format = sdNeedsFormat
+      dotm = '.6'
+    else if ( index(inFormat, '.') < 1 ) then
+      format = sdNeedsFormat
+      dotm = '.6'
+    else
+      ! Must find integer after '.'
+      dot = index( inFormat, '.' )
+      dotm = inFormat(dot:dot+1)
+      format = trim(sdNeedsFragment) // trim(dotm) // ')'
+    end if
+  end subroutine whatSDNeedsFormat
+
   ! ..............................................  not_used_here  .....
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
@@ -2004,6 +2152,9 @@ contains
 end module HIGHOUTPUT
 
 ! $Log$
+! Revision 2.9  2015/05/18 17:42:50  pwagner
+! addRow and startTable maintains an internal Table for outputTable to output
+!
 ! Revision 2.8  2015/02/24 23:32:22  pwagner
 ! Make sure rightpadding defined in headLine
 !
