@@ -117,9 +117,11 @@ module OUTPUT_M
   integer, save, private :: OLDUNIT = -1 ! Previous Unit for output.
   logical, save, private :: OLDUNITSTILLOPEN = .TRUE.
 
-  public :: addToIndent, blanks, flushOutputLines, getOutputStatus, newline, &
-    & output, output_char_nocr, resetIndent, restoreSettings, &
-    & resumeOutput, revertOutput, suspendOutput, switchOutput
+  public :: addToIndent, Advance_is_yes_or_no, blanks, flushOutputLines, &
+    & getOutputStatus, newline, &
+    & output, output_char_nocr, &
+    & resetIndent, restoreSettings, resumeOutput, revertOutput, &
+    & suspendOutput, switchOutput
 
   ! These types made public because the class instances are public
   public :: outputOptions_t
@@ -527,15 +529,16 @@ contains
     ! print *, 'outputOptions%prUnit: ', outputOptions%prUnit
     ! print *, 'outputOptions%prUnitLiteral: ', outputOptions%prUnitLiteral
     ! Do any special orders apply to this output?
-    if ( outputOptions%prUnitLiteral ) then
-      write( outputOptions%prUnit, '(a)', advance=my_adv ) chars
-      ! print *, chars
-      go to 9
-    elseif ( outputOptions%prunit ==  OUTPUTLINESPRUNIT ) then
+    if ( outputOptions%prunit ==  OUTPUTLINESPRUNIT ) then
       ! Append to outputLines; maybe print later on
       call append_chars( outputLines, chars )
-        if ( my_adv == 'yes' ) &
-          call append_chars( outputLines, achar(outputOptions%NewLineVal) )
+      if ( my_adv == 'yes' ) &
+        &  call append_chars( outputLines, achar(outputOptions%NewLineVal) )
+      ! print *, 'Appending to outputlines; now ', trim(outputLines)
+      go to 9
+    elseif ( outputOptions%prUnitLiteral ) then
+      write( outputOptions%prUnit, '(a)', advance=my_adv ) chars
+      ! print *, chars
       go to 9
     elseif ( SWITCHTOSTDOUT ) then
       write( *, '(a)', advance=my_adv ) chars
@@ -1457,6 +1460,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.121  2015/05/18 17:40:03  pwagner
+! Made Advance_is_yes_or_no public; reordered where to print
+!
 ! Revision 2.120  2015/03/06 21:37:42  pwagner
 ! "%n" in output string could trigger unintended new line; fixed
 !
