@@ -1,5 +1,19 @@
-; This l2cf segment is useful for constructing `standard' species.
-; It will make heavy use of m4 to (hopefully) simplify things.
+; This l2cf fragment is useful for constructing `standard' species.
+;$Id$
+
+; The preliminary phase in which we 
+; (a) set up templates for our vector quantities
+; (b) read climatology
+; (c) read and merge meteorology (if any)
+; (d) set smoothing and bounds on the state variables to be retrieved
+; (e) set special calibration parameters we call "lesser" state variables
+; (f) read radiances and anything else
+; ===================================================================
+; ==================================================================== Phase: APriori
+; ===================================================================
+begin Fill
+  APriori: Phase
+end Fill
 
   ;; This special hGrid is defined here for convenience
 begin Construct
@@ -445,17 +459,36 @@ begin Construct
 
   ;; ----------------------------------------- Other minor stuff
 
+  !ifdef(flagMagneticFieldOnHeightGrid,!dnl
+  {
+  CrossGrid: hGrid, type=explicit, $
+    geodangle=[-3.0 degrees, -1.5 degrees, 0 degrees, 1.5 degrees, 3.0 degrees]
+  magneticField: quantity, type=magneticField, vGrid=vGridMag, $
+    hGrid=hGridStandard !ifdef(flagUseXGrid,{, xGrid=crossGrid, stacked=false})
+  fieldAzimuth: quantity, type=fieldAzimuth, vGrid=vGridMag, $
+    hGrid=hGridStandard !ifdef(flagUseXGrid,{, xGrid=crossGrid, stacked=false})
+  fieldElevation: quantity, type=fieldElevation, vGrid=vGridMag, $
+    hGrid=hGridStandard !ifdef(flagUseXGrid,{, xGrid=crossGrid, stacked=false})
+  fieldStrength: quantity, type=fieldStrength, vGrid=vGridMag, $
+    hGrid=hGridStandard !ifdef(flagUseXGrid,{, xGrid=crossGrid, stacked=false})
+
+  tngtGeocAltGHz: Quantity, type=tngtGeocAlt, module=GHz, $
+   coordinate=geocAltitude
+  },{
   magneticField: quantity, type=magneticField, vGrid=vGridStandard, hGrid=hGridStandard
   fieldAzimuth: quantity, type=fieldAzimuth, vGrid=vGridStandard, hGrid=hGridStandard
   fieldElevation: quantity, type=fieldElevation, vGrid=vGridStandard, hGrid=hGridStandard
   fieldStrength: quantity, type=fieldStrength, vGrid=vGridStandard, hGrid=hGridStandard
+
+  tngtGeocAltGHz: Quantity, type=tngtGeocAlt, module=GHz, $
+   coordinate=geocAltitude
+  })
 
   earthReflectivity: quantity, type=earthRefl
   orbitInclination: Quantity, type=orbitInclination, module=SC
   spaceRadiance: quantity, type=spaceRadiance
 
   scGeocAlt: Quantity, type=scGeocAlt, module=SC
-  tngtGeocAltGHz: Quantity, type=tngtGeocAlt, module=GHz
 
   scECI: quantity, type=scECI, module=SC
   tngtECIGHz: quantity, type=tngtECI, module=GHz

@@ -629,7 +629,7 @@ dtR3B9: Quantity, type=singleChannelRadiance, signal='R3:240.B9F:CO'
   !forall(constructRetrievalDiagnostic,!allRetrievalDiagnostics)
   !define(outputRetrievalDiagnostics,{!tidyList( $
     dnwt_chiSqNorm, dnwt_chiSqMinNorm, dnwt_chiSqRatio, dnwt_count, $
-    jacobian_rows, jacobian_cols, dnwt_flag, dnwt_sq, dnwt_sqt)})
+    jacobian_rows, jacobian_cols, dnwt_flag, dnwt_sq, dnwt_sqt, numJ)})
 
   ;; ----------------------------------------- Other minor stuff
 
@@ -826,4 +826,7 @@ begin Fill
 end Fill
 !divert(-1)
 ;$Log$
+;Revision 1.128  2015/05/06 20:20:57  pwagner
+;Added Phase marking, mission statement
+;
 !divert!dnl
