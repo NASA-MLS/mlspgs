@@ -196,12 +196,12 @@ Fill, quantity=apriori.refGPH,$
 !ifdef(flagMagneticFieldOnHeightGrid,{!dnl
   Fill, quantity=apriori.magneticField, method=magneticModel, $
     scVelECR=apriori.scVelECR, geocAltitudeQuantity=apriori.tngtGeocAltGHz
-  Fill, quantity=apriori.fieldAzimuth, method=rotateField, $
-    fieldECR=apriori.magneticField, ecrToFOV=apriori.ecrToFOV
-  Fill, quantity=apriori.fieldElevation, method=rotateField, $
-    fieldECR=apriori.magneticField, ecrToFOV=apriori.ecrToFOV
-  Fill, quantity=apriori.fieldStrength, method=rotateField, $
-    fieldECR=apriori.magneticField, ecrToFOV=apriori.ecrToFOV
+  ;;;Fill, quantity=apriori.fieldAzimuth, method=rotateField, $
+  ;;;  fieldECR=apriori.magneticField, ecrToFOV=apriori.ecrToFOV
+  ;;;Fill, quantity=apriori.fieldElevation, method=rotateField, $
+  ;;;  fieldECR=apriori.magneticField, ecrToFOV=apriori.ecrToFOV
+  ;;;Fill, quantity=apriori.fieldStrength, method=rotateField, $
+  ;;;  fieldECR=apriori.magneticField, ecrToFOV=apriori.ecrToFOV
   },{
   Fill, quantity=apriori.magneticField, method=magneticModel, $
     GPHquantity=apriori.gph
@@ -782,6 +782,9 @@ end Fill
 !include(writeapriori.l2cf)
 !divert(-1)
 ;$Log$
+;Revision 1.162  2015/04/30 17:30:03  pwagner
+;Sense of flagMagneticFieldOnHeightGrid was reversed; fixed
+;
 ;Revision 1.161  2015/04/29 18:20:45  pwagner
 ;Restored partial backward compatibility
 ;
