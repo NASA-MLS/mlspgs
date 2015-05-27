@@ -295,7 +295,7 @@ contains ! =========== Public procedures ===================================
 
   ! ---------------------------------------- FindClosestMatch ---
   integer function FindClosestMatch ( reference, sought, instance )
-    use MLSNUMERICS, only: HUNT
+    use Hunt_m, only: HUNT
     ! Given a sought quantity, 
     ! the profile in reference is found
     ! that is closest to profile 'instance' in sought quantity
@@ -355,6 +355,9 @@ contains ! =========== Public procedures ===================================
 end module HGridsDatabase
 
 ! $Log$
+! Revision 2.18  2015/05/27 22:39:39  vsnyder
+! Get Hunt from Hunt_m to avoid circular dependence
+!
 ! Revision 2.17  2015/03/31 21:03:55  pwagner
 ! ForbidOverspill now a field of HGrid; improved Dump
 !
