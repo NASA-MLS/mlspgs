@@ -9,6 +9,7 @@
    !define(geos5PFile1,{})!define(geos5PFile2,{})!define(geos5PFile3,{})!define(geos5PFile4,{})
    !define(geos5PFile5,{})!define(geos5PFile6,{})!define(geos5PFile7,{})!define(geos5PFile8,{})
    !define(geos5TFileN,{})!define(geos5PFileN,{})
+   !define(getgeos59dateStrings,{})
    },{
     !define(geos5Day1,{!TrimLastChar(!esyscmd(dateconverter -o yyyymmdd "!day"))})
     !define(geos5Day2,{!TrimLastChar(!esyscmd(dateconverter +1 -o yyyymmdd "!day"))})
@@ -26,26 +27,41 @@
       !define(geos5PFileN,{, file='!inpathmerrapn/MERRA300.prod.assim.inst6_3d_ana_Nv.!geos5Day2.hdf'})
       !define(geos5TFile5,{})!define(geos5TFile6,{})!define(geos5TFile7,{})!define(geos5TFile8,{})
       !define(geos5PFile5,{})!define(geos5PFile6,{})!define(geos5PFile7,{})!define(geos5PFile8,{})
-    },{!ifelse(!gmaovsn,{572},{!dnl
-      !ifdef(geos5Head,{},{!define(geos5Head,{D57I3NVASMMLS.ops.asm.inst3_3d_asm_Nv.geos592})})
-      !define(geos5TFile1,{, file='!inpathgeos5dd/!geos5Head.!gmaovsn.!geos5Day1_0000.V01.nc4'})
-      !define(geos5TFile2,{, file='!inpathgeos5dd/!geos5Head.!gmaovsn.!geos5Day1_0300.V01.nc4'})
-      !define(geos5TFile3,{, file='!inpathgeos5dd/!geos5Head.!gmaovsn.!geos5Day1_0600.V01.nc4'})
-      !define(geos5TFile4,{, file='!inpathgeos5dd/!geos5Head.!gmaovsn.!geos5Day1_0900.V01.nc4'})
-      !define(geos5TFile5,{, file='!inpathgeos5dd/!geos5Head.!gmaovsn.!geos5Day1_1200.V01.nc4'})
-      !define(geos5TFile6,{, file='!inpathgeos5dd/!geos5Head.!gmaovsn.!geos5Day1_1500.V01.nc4'})
-      !define(geos5TFile7,{, file='!inpathgeos5dd/!geos5Head.!gmaovsn.!geos5Day1_1800.V01.nc4'})
-      !define(geos5TFile8,{, file='!inpathgeos5dd/!geos5Head.!gmaovsn.!geos5Day1_2100.V01.nc4'})
-      !define(geos5TFileN,{, file='!inpathgeos5dn/!geos5Head.!gmaovsn.!geos5Day2_0000.V01.nc4'})
-      !define(geos5PFile1,{, file='!inpathgeos5dd/!geos5Head.!gmaovsn.!geos5Day1_0000.V01.nc4'})
-      !define(geos5PFile2,{, file='!inpathgeos5dd/!geos5Head.!gmaovsn.!geos5Day1_0300.V01.nc4'})
-      !define(geos5PFile3,{, file='!inpathgeos5dd/!geos5Head.!gmaovsn.!geos5Day1_0600.V01.nc4'})
-      !define(geos5PFile4,{, file='!inpathgeos5dd/!geos5Head.!gmaovsn.!geos5Day1_0900.V01.nc4'})
-      !define(geos5PFile5,{, file='!inpathgeos5dd/!geos5Head.!gmaovsn.!geos5Day1_1200.V01.nc4'})
-      !define(geos5PFile6,{, file='!inpathgeos5dd/!geos5Head.!gmaovsn.!geos5Day1_1500.V01.nc4'})
-      !define(geos5PFile7,{, file='!inpathgeos5dd/!geos5Head.!gmaovsn.!geos5Day1_1800.V01.nc4'})
-      !define(geos5PFile8,{, file='!inpathgeos5dd/!geos5Head.!gmaovsn.!geos5Day1_2100.V01.nc4'})
-      !define(geos5PFileN,{, file='!inpathgeos5dn/!geos5Head.!gmaovsn.!geos5Day2_0000.V01.nc4'})
+    },{!ifelse(!gmaovsn,{DFPITI},{!dnl
+      !ifdef(geos5Head,{},{!define(geos5Head,{DFPITI3NVASMMLS.rpit2.asm.inst3_3d_asm_Nv.GEOS591})})
+      !define(geos5TFile1,{, file='!inpathgeos5pd/!geos5Head.!geos5Day1_0000.V01.nc4'})
+      !define(geos5TFile2,{, file='!inpathgeos5pd/!geos5Head.!geos5Day1_0300.V01.nc4'})
+      !define(geos5TFile3,{, file='!inpathgeos5pd/!geos5Head.!geos5Day1_0600.V01.nc4'})
+      !define(geos5TFile4,{, file='!inpathgeos5pd/!geos5Head.!geos5Day1_0900.V01.nc4'})
+      !define(geos5TFile5,{, file='!inpathgeos5pd/!geos5Head.!geos5Day1_1200.V01.nc4'})
+      !define(geos5TFile6,{, file='!inpathgeos5pd/!geos5Head.!geos5Day1_1500.V01.nc4'})
+      !define(geos5TFile7,{, file='!inpathgeos5pd/!geos5Head.!geos5Day1_1800.V01.nc4'})
+      !define(geos5TFile8,{, file='!inpathgeos5pd/!geos5Head.!geos5Day1_2100.V01.nc4'})
+      !define(geos5TFileN,{, file='!inpathgeos5pn/!geos5Head.!geos5Day2_0000.V01.nc4'})
+      !define(geos5PFile1,{, file='!inpathgeos5pd/!geos5Head.!geos5Day1_0000.V01.nc4'})
+      !define(geos5PFile2,{, file='!inpathgeos5pd/!geos5Head.!geos5Day1_0300.V01.nc4'})
+      !define(geos5PFile3,{, file='!inpathgeos5pd/!geos5Head.!geos5Day1_0600.V01.nc4'})
+      !define(geos5PFile4,{, file='!inpathgeos5pd/!geos5Head.!geos5Day1_0900.V01.nc4'})
+      !define(geos5PFile5,{, file='!inpathgeos5pd/!geos5Head.!geos5Day1_1200.V01.nc4'})
+      !define(geos5PFile6,{, file='!inpathgeos5pd/!geos5Head.!geos5Day1_1500.V01.nc4'})
+      !define(geos5PFile7,{, file='!inpathgeos5pd/!geos5Head.!geos5Day1_1800.V01.nc4'})
+      !define(geos5PFile8,{, file='!inpathgeos5pd/!geos5Head.!geos5Day1_2100.V01.nc4'})
+      !define(geos5PFileN,{, file='!inpathgeos5pn/!geos5Head.!geos5Day2_0000.V01.nc4'})
+      !define(setgeos59dateStrings,{!dnl
+      !ProcessParVal(g59dateString,$@)!dnl
+      !define(getgeos59dateStrings,{, file=!g59dateString$1})
+      })
+      !setgeos59dateStrings(1='!inpathgeos5pd/!geos5Head.!geos5Day1_0000.V01.nc4')
+      !setgeos59dateStrings(2='!inpathgeos5pd/!geos5Head.!geos5Day1_0300.V01.nc4')
+      !setgeos59dateStrings(3='!inpathgeos5pd/!geos5Head.!geos5Day1_0600.V01.nc4')
+      !setgeos59dateStrings(4='!inpathgeos5pd/!geos5Head.!geos5Day1_0900.V01.nc4')
+      !setgeos59dateStrings(5='!inpathgeos5pd/!geos5Head.!geos5Day1_1200.V01.nc4')
+      !setgeos59dateStrings(6='!inpathgeos5pd/!geos5Head.!geos5Day1_1500.V01.nc4')
+      !setgeos59dateStrings(7='!inpathgeos5pd/!geos5Head.!geos5Day1_1800.V01.nc4')
+      !setgeos59dateStrings(8='!inpathgeos5pd/!geos5Head.!geos5Day1_2100.V01.nc4')
+      !setgeos59dateStrings(Next='!inpathgeos5pd/!geos5Head.!geos5Day2_0000.V01.nc4')
+      !define(g59dateStringNext,{'!inpathgeos5pd/!geos5Head.!geos5Day2_0000.V01.nc4'})
+      !define(getgeos59dateStrings,{, file=!g59dateString$1})
     },{!dnl
       !ifdef(geos5Head,{},{!define(geos5Head,{DAS.ops.asm.tavg3d})})
       !define(geos5TFile1,{, file='!inpathgeos5dd/!geos5Head_dyn_v.!gmaovsn.!geos5Day1_0000.V01.hdf'})
@@ -313,28 +329,25 @@ end MergeGrids
 !setgeos59dates(1='00:00:00',2='03:00:00',3='06:00:00',4='09:00:00')
 !setgeos59dates(5='12:00:00',6='15:00:00',7='18:00:00',8='21:00:00',Next='00:00:00')
 
-!define(setgeos59dateStrings,{!dnl
-!ProcessParVal(g59dateString,$@)!dnl
-})
-!setgeos59dateStrings(1='_0000.V01',2='_0300.V01',3='_0600.V01',4='_0900.V01')
-!setgeos59dateStrings(5='_1200.V01',6='_1500.V01',7='_1800.V01',8='_2100.V01',Next='_0000.V01')
+
+;!setgeos59dateStrings(1='_0000.V01',2='_0300.V01',3='_0600.V01',4='_0900.V01')
+;!setgeos59dateStrings(5='_1200.V01',6='_1500.V01',7='_1800.V01',8='_2100.V01',Next='_0000.V01')
 
 !define(g59dateNext,{'00:00:00'})
-!define(g59dateStringNext,{'_0000.V01'})
+;!define(g59dateStringNext,{'_0000.V01'})
 !define(geos5TFileNext,{!geos5TFileN})
 !define(geos5PFileNext,{!geos5PFileN})
 !define(getgeos59dates,{!g59date$1})
-!define(getgeos59dateStrings,{!g59dateString})
 
 !define(readgeos59TPAndConvert,{
 
 begin ReadApriori
   readGriddedData, grid=gmaoTemperatureInput$1, origin=geos5_7, field='T', $
-    dimList='XDim,YDim,Height,Time' , date=!getgeos59dates($1) !geos5TFile1
+    dimList='XDim,YDim,Height,Time' , date=!getgeos59dates($1) !getgeos59dateStrings($1)
 end ReadApriori
 begin ReadApriori
   readGriddedData, grid=gmaoPressureInput$1, origin=geos5_7, field='PL', $
-    dimList='XDim,YDim,Height,Time' , date=!getgeos59dates($1) !geos5PFile1
+    dimList='XDim,YDim,Height,Time' , date=!getgeos59dates($1) !getgeos59dateStrings($1)
 end ReadApriori
 begin MergeGrids
 !ifelse($1,{5}, {!dnl
@@ -407,6 +420,9 @@ begin MergeGrids
 end MergeGrids
 
 ;$Log$
+;Revision 1.2  2014/06/11 20:10:26  pwagner
+;To reduce memory footprint with geos59, Merge first, then Concatenate
+;
 ;Revision 1.1  2014/06/04 19:02:04  pwagner
 ;First commit
 ;
