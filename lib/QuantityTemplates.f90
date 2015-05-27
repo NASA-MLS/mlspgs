@@ -19,9 +19,10 @@ module QuantityTemplates         ! Quantities within vectors
   use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
   use DUMP_0, only: DUMP
   use EXPR_M, only: EXPR_CHECK
+  use HGridsDatabase, only: HGrid_T
   use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
-  use INTRINSIC, only: L_DL, L_Geocentric, L_Geodetic, L_None, L_PhiTan, L_VMR, &
-    & LIT_INDICES, PHYQ_Angle, PHYQ_Dimensionless, PHYQ_Frequency, PHYQ_Time
+  use INTRINSIC, only: L_DL, L_Geodetic, L_None, L_PhiTan, L_VMR, LIT_INDICES, &
+    & PHYQ_Angle, PHYQ_Dimensionless, PHYQ_Frequency, PHYQ_Time
   use MLSFILLVALUES, only: RERANK
   use MLSKINDS, only: RT => R8 ! RT is "kind of Real components of template"
   use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING
@@ -38,9 +39,11 @@ module QuantityTemplates         ! Quantities within vectors
   public :: EPOCH, QuantityTemplate_T, RT
   public :: AddQuantityTemplateToDatabase, InflateQuantityTemplateDatabase
   public :: CheckIntegrity, CopyQuantityTemplate, CreateGeolocationFields, &
-    & DestroyQuantityTemplateContents, DestroyQuantityTemplateDatabase, &
-    & Dump, ModifyQuantityTemplate, NullifyQuantityTemplate, &
-    & QuantitiesAreCompatible, SetupNewQuantityTemplate, WriteAttributes
+    & CreateLatitudeFields, CreateLongitudeFields, &
+    & DestroyGeolocationFields, DestroyQuantityTemplateContents, &
+    & DestroyQuantityTemplateDatabase, Dump, ModifyQuantityTemplate, &
+    & NullifyQuantityTemplate, PointQuantityToHGrid, QuantitiesAreCompatible, &
+    & SetupNewQuantityTemplate, WriteAttributes
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -130,8 +133,8 @@ module QuantityTemplates         ! Quantities within vectors
     integer :: grandTotalInstances      ! Total number of instances in destination output file
     ! for example MAF index, or profile index.
     integer :: hGridIndex               ! Index of any hGrid used
+    type(hGrid_t), pointer :: The_HGrid => NULL()
     integer :: instanceOffset           ! Ind of 1st non overlapped instance in output
-    logical :: sharedHGrid              ! Set if horiz coord is a pointer not a copy
     integer :: xGridIndex = 0           ! Index of any xGrid used
 
     ! First subscript values for GeoLocation component
@@ -339,7 +342,6 @@ contains
     z%sharedVGrid                  = a%sharedVGrid            
     z%vGridIndex                   = a%vGridIndex             
     z%xGridIndex                   = a%xGridIndex             
-    z%sharedHGrid                  = a%sharedHGrid             
     z%horizontalCoordinate         = a%horizontalCoordinate             
     z%hGridIndex                   = a%hGridIndex              
     z%instanceOffset               = a%instanceOffset                    
@@ -384,6 +386,21 @@ contains
     integer, intent(in) :: NoSurfsToAllocate
     character(len=*), intent(in) :: What
 
+    call createLatitudeFields ( Qty, NoSurfsToAllocate, What )
+    call createLongitudeFields ( Qty, NoSurfsToAllocate, What )
+
+  end subroutine CreateGeolocationFields
+
+  ! ---------------------------------------  CreateLatitudeFields  -----
+  subroutine CreateLatitudeFields ( Qty, NoSurfsToAllocate, What )
+    ! Allocate Qty%GeodLat1.  Create rank-remapped pointers to
+    ! Qty%GeodLat, and Qty%GeodLat3.
+    use Pointer_Rank_Remapping, only: REMAP
+
+    type (QuantityTemplate_T), intent(inout) :: QTY
+    integer, intent(in) :: NoSurfsToAllocate
+    character(len=*), intent(in) :: What
+
     integer :: NumAlloc
 
     numAlloc = noSurfsToAllocate * qty%noInstances * qty%noCrossTrack
@@ -393,14 +410,42 @@ contains
       & [ noSurfsToAllocate, qty%noInstances * qty%noCrossTrack ] )
     call remap ( qty%geodLat1, qty%geodLat3, &
       & [ noSurfsToAllocate, qty%noInstances, qty%noCrossTrack ] )
+  end subroutine CreateLatitudeFields
+
+  ! --------------------------------------  CreateLongitudeFields  -----
+  subroutine CreateLongitudeFields ( Qty, NoSurfsToAllocate, What )
+    ! Allocate Qty%Lon1.  Create rank-remapped pointers to
+    ! Qty%Lon, and Qty%Lon3.
+    use Pointer_Rank_Remapping, only: REMAP
+
+    type (QuantityTemplate_T), intent(inout) :: QTY
+    integer, intent(in) :: NoSurfsToAllocate
+    character(len=*), intent(in) :: What
+
+    integer :: NumAlloc
+
+    numAlloc = noSurfsToAllocate * qty%noInstances * qty%noCrossTrack
     call allocate_test ( qty%lon1, numAlloc, trim(what) // "%lon1", &
       & moduleName )
     call remap ( qty%lon1, qty%lon, &
       & [ noSurfsToAllocate, qty%noInstances * qty%noCrossTrack ] )
     call remap ( qty%lon1, qty%lon3, &
       & [ noSurfsToAllocate, qty%noInstances, qty%noCrossTrack ] )
+  end subroutine CreateLongitudeFields
 
-  end subroutine CreateGeolocationFields
+  ! -----------------------------------  DestroyGeolocationFields  -----
+  subroutine DestroyGeolocationFields ( Qty )
+    ! Deallocate the latitude and longitude fields if the hGrid is
+    ! not shared, or if it is shared and there are cross angles,
+    ! else nullify them.
+    use Allocate_Deallocate, only: Deallocate_Test
+    type (QuantityTemplate_T), intent(inout) :: QTY
+
+    call deallocate_test ( qty%geodLat1, 'Qty%GeodLat1', moduleName )
+    call deallocate_test ( qty%lon, 'Qty%Lon', moduleName )
+    nullify ( qty%geodLat, qty%geodLat3, qty%lon, qty%lon3 )
+
+  end subroutine DestroyGeolocationFields
 
   ! ----------------------------  DestroyQuantityTemplateContents  -----
   subroutine DestroyQuantityTemplateContents ( qty )
@@ -429,53 +474,30 @@ contains
       call deallocate_test ( qty%surfs, trim(what) // "%surfs", ModuleName )
     end if
 
-    if ( qty%sharedHGrid ) then
+    nullify ( qty%the_hGrid )
 
-      if ( qty%noCrossTrack > 1 ) then
-        call deallocate_test ( qty%lon1, trim(what) // '%geodLat1', ModuleName )
-        call deallocate_test ( qty%geodLat1, trim(what) // '%geodLat1', ModuleName )
-        if ( verbose ) call output( 'About to deallocate lons', advance='yes' )
-        call deallocate_test ( qty%lon1, trim(what) // '%lon1', ModuleName )
-      end if
-
-      ! ------------ This ought to be true but apparently isn't ------------
-      ! If the quantity isn't stacked, an empty Phi array is allocated, even
-      ! if hGrids are shared.  Its size is zero, but it doesn't hurt to
-      ! deallocate it.
-      ! --------------------------------------------------------------------
-!       if ( .not. qty%stacked ) &
-!         & call deallocate_test ( qty%phi, trim(what) // '%phi', ModuleName )
-
-      nullify ( qty%geodLat1, qty%geodLat, qty%geodLat3, &
-              & qty%lon1, qty%lon, qty%lon3, qty%time, qty%solarTime, &
-              & qty%solarZenith, qty%losAngle, qty%crossAngles )
-
-    else
-
-      ! If not stacked, there is no Phi.
-      if ( qty%stacked ) then
-        if ( verbose ) call output( 'About to deallocate stacked phi', advance='yes' )
-        call deallocate_test ( qty%phi, trim(what) // '%phi', ModuleName )
-      end if
-      if ( verbose ) call output( 'About to deallocate geosdlat', advance='yes' )
-      call deallocate_test ( qty%geodLat1, trim(what) // '%geodLat', ModuleName )
-      if ( verbose ) call output( 'About to deallocate lons', advance='yes' )
-      call deallocate_test ( qty%lon1, trim(what) // '%lon', ModuleName )
-      if ( verbose ) call output( 'About to deallocate times', advance='yes' )
-      call deallocate_test ( qty%time, trim(what) // '%time', ModuleName )
-      if ( verbose ) call output( 'About to deallocate solartime', advance='yes' )
-      call deallocate_test ( qty%solarTime, trim(what) // '%solarTime', ModuleName )
-      if ( verbose ) call output( 'About to deallocate solarzenits', advance='yes' )
-      call deallocate_test ( qty%solarZenith, trim(what) // '%solarZenith', ModuleName )
-      if ( verbose ) call output( 'About to deallocate losangle', advance='yes' )
-      call deallocate_test ( qty%losAngle, trim(what) // '%losAngle', ModuleName )
-      if ( verbose ) call output( 'About to deallocate crossAngles', advance='yes' )
-      call deallocate_test ( qty%crossAngles, trim(what) // '%crossAngles', ModuleName )
-
-      ! Nullify the remapped ones.
-      nullify ( qty%geodLat, qty%geodLat3, qty%lon, qty%lon3 )
-
+    ! If not stacked, there is no Phi.
+    if ( qty%stacked ) then
+      if ( verbose ) call output( 'About to deallocate stacked phi', advance='yes' )
+      call deallocate_test ( qty%phi, trim(what) // '%phi', ModuleName )
     end if
+    if ( verbose ) call output( 'About to deallocate geosdlat', advance='yes' )
+    call deallocate_test ( qty%geodLat1, trim(what) // '%geodLat1', ModuleName )
+    if ( verbose ) call output( 'About to deallocate lons', advance='yes' )
+    call deallocate_test ( qty%lon1, trim(what) // '%lon1', ModuleName )
+    if ( verbose ) call output( 'About to deallocate times', advance='yes' )
+    call deallocate_test ( qty%time, trim(what) // '%time', ModuleName )
+    if ( verbose ) call output( 'About to deallocate solartime', advance='yes' )
+    call deallocate_test ( qty%solarTime, trim(what) // '%solarTime', ModuleName )
+    if ( verbose ) call output( 'About to deallocate solarzenits', advance='yes' )
+    call deallocate_test ( qty%solarZenith, trim(what) // '%solarZenith', ModuleName )
+    if ( verbose ) call output( 'About to deallocate losangle', advance='yes' )
+    call deallocate_test ( qty%losAngle, trim(what) // '%losAngle', ModuleName )
+    if ( verbose ) call output( 'About to deallocate crossAngles', advance='yes' )
+    call deallocate_test ( qty%crossAngles, trim(what) // '%crossAngles', ModuleName )
+
+    ! Nullify the remapped ones.
+    nullify ( qty%geodLat, qty%geodLat3, qty%lon, qty%lon3 )
 
     if ( .not. qty%sharedFGrid ) then
       if ( verbose ) call output( 'About to deallocate chanInds', advance='yes' )
@@ -484,6 +506,8 @@ contains
       call deallocate_test ( qty%channels, trim(what) // "%channels", ModuleName )
       if ( verbose ) call output( 'About to deallocate freqs', advance='yes' )
       call deallocate_test ( qty%frequencies, trim(what) // "%frequencies", ModuleName )
+    else
+      nullify ( qty%chanInds, qty%channels, qty%frequencies )
     end if
 
     if ( .not. qty%regular ) then
@@ -491,6 +515,8 @@ contains
       call deallocate_test ( qty%surfIndex, trim(what) // "%surfIndex", ModuleName )
       if ( verbose ) call output( 'About to deallocate chanindex', advance='yes' )
       call deallocate_test ( qty%chanIndex, trim(what) // '%chanIndex', ModuleName )
+    else
+      nullify ( qty%surfIndex, qty%chanIndex )
     end if
 
   end subroutine DestroyQuantityTemplateContents
@@ -594,12 +620,8 @@ contains
       & before=   '      horizontal coordinate = ' )
     call myDisplayString ( lit_indices(quantity_template%latitudeCoordinate), &
       & before=' latitude coordinate = ', advance='yes' )
-    call output ( '      sharedHGrid = ' )
-    call output ( quantity_template%sharedHGrid, advance='no' )
-    if ( quantity_template%sharedHGrid ) then
-      call output ( quantity_template%hGridIndex, before=' hGridIndex = ' )
-      call output ( quantity_template%xGridIndex, before=' xGridIndex = ' )
-    end if
+    call output ( quantity_template%hGridIndex, before='      hGridIndex = ' )
+    call output ( quantity_template%xGridIndex, before=' xGridIndex = ' )
     call newline
     call output ( '      sharedVGrid = ' )
     call output ( quantity_template%sharedVGrid, advance='no' )
@@ -639,7 +661,7 @@ contains
     end if
     if ( myDetails > 0 ) then
       if ( quantity_template%signal /= 0 ) then
-        call output ( '   Signal ' )
+        call output ( '      Signal ' )
         call output ( quantity_template%signal )
         call output ( ':', advance='yes' )
         if ( associated(quantity_template%channels) ) then
@@ -649,29 +671,18 @@ contains
           call dump ( signals(quantity_template%signal) )
         end if
       end if
-      if ( associated(quantity_template%phi) ) &
-        & call dump ( quantity_template%phi,           '      Phi = ' )
-      if ( associated(quantity_template%surfs) ) &
-        & call dump ( quantity_template%surfs,         '      Surfs = ' )
+      call maybe_dump_2_rt ( quantity_template%phi, 'Phi' )
+      call maybe_dump_2_rt ( quantity_template%surfs, 'Surfs' )
       if ( myDetails > 1 ) then
-        if ( associated(quantity_template%surfIndex) ) &
-          & call dump ( quantity_template%surfIndex,   '      SurfIndex = ' )
-        if ( associated(quantity_template%chanIndex) ) &
-          & call dump ( quantity_template%chanIndex,   '      ChanIndex = ' )
-        if ( associated(quantity_template%geodLat3) ) &
-          & call dump ( quantity_template%geodLat3,    '      GeodLat = ' )
-        if ( associated(quantity_template%lon3) ) &
-          & call dump ( quantity_template%lon3,        '      Lon = ' )
-        if ( associated(quantity_template%time) ) &
-          & call dump ( quantity_template%time,        '      Time = ' )
-        if ( associated(quantity_template%solarTime) ) &
-          & call dump ( quantity_template%solarTime,   '      SolarTime = ' )
-        if ( associated(quantity_template%solarZenith) ) &
-          & call dump ( quantity_template%solarZenith, '      SolarZenith = ' )
-        if ( associated(quantity_template%losAngle) ) &
-          & call dump ( quantity_template%losAngle,    '      LosAngle = ' )
-        if ( associated(quantity_template%crossAngles) ) &
-          call dump ( quantity_template%crossAngles, name='      CrossAngles' )
+        call maybe_dump_2_I ( quantity_template%surfIndex, 'SurfIndex' )
+        call maybe_dump_2_I ( quantity_template%chanIndex, 'ChanIndex' )
+        call maybe_dump_3_rt ( quantity_template%geodLat3, 'GeodLat' )
+        call maybe_dump_3_rt ( quantity_template%lon3, 'Lon' )
+        call maybe_dump_2_rt ( quantity_template%time, 'Time' )
+        call maybe_dump_2_rt ( quantity_template%solarTime, 'SolarTime' )
+        call maybe_dump_2_rt ( quantity_template%solarZenith, 'SolarZenith' )
+        call maybe_dump_2_rt ( quantity_template%losAngle, 'LosAngle' )
+        call maybe_dump_1_rt ( quantity_template%crossAngles, 'CrossAngles' )
       end if
       if ( associated(quantity_template%frequencies)  .and. .not. myNoL2CF ) then
         call myDisplayString ( lit_indices(quantity_template%frequencyCoordinate), &
@@ -683,6 +694,49 @@ contains
         & call myDisplayString ( lit_indices(quantity_template%frequencyCoordinate), &
           & before='      FrequencyCoordinate = ', advance='yes' )
     end if
+  
+  contains
+  
+    subroutine Maybe_Dump_2_I ( Array, Name )
+      integer, intent(in), pointer :: Array(:,:)
+      character(*), intent(in) :: Name
+      if ( associated(array) ) then
+        call dump ( array, '      ' // trim(name) // ' = ' )
+      else
+        call output ( '      No ' // trim(name), advance='yes' )
+      end if
+    end subroutine Maybe_Dump_2_I
+
+    subroutine Maybe_Dump_1_RT ( Array, Name )
+      real(rt), intent(in), pointer :: Array(:)
+      character(*), intent(in) :: Name
+      if ( associated(array) ) then
+        call dump ( array, '      ' // trim(name) // ' = ' )
+      else
+        call output ( '      No ' // trim(name), advance='yes' )
+      end if
+    end subroutine Maybe_Dump_1_RT
+
+    subroutine Maybe_Dump_2_RT ( Array, Name )
+      real(rt), intent(in), pointer :: Array(:,:)
+      character(*), intent(in) :: Name
+      if ( associated(array) ) then
+        call dump ( array, '      ' // trim(name) // ' = ' )
+      else
+        call output ( '      No ' // trim(name), advance='yes' )
+      end if
+    end subroutine Maybe_Dump_2_RT
+  
+    subroutine Maybe_Dump_3_RT ( Array, Name )
+      real(rt), intent(in), pointer :: Array(:,:,:)
+      character(*), intent(in) :: Name
+      if ( associated(array) ) then
+        call dump ( array, '      ' // trim(name) // ' = ' )
+      else
+        call output ( '      No ' // trim(name), advance='yes' )
+      end if
+    end subroutine Maybe_Dump_3_RT
+
   end subroutine DUMP_QUANTITY_TEMPLATE
 
   ! ------------------------------------  DUMP_QUANTITY_TEMPLATES  -----
@@ -776,20 +830,20 @@ contains
       call myValuesToField( z%phi, SHP, VALUESNODE, spread, phyq_angle )
     case ( 'geodlat' )
       if ( any(shape(z%geodlat) /= shp) ) then
-        call deallocate_test( z%geodLat, 'template geodLat', &
+        call deallocate_test( z%geodLat1, 'template geodLat', &
           & ModuleName // 'ModifyQuantityTemplate_allocate' )
-        call allocate_test ( z%geodLat, shp(1), shp(2), &
-          & "template geodLat", &
-          & ModuleName // 'ModifyQuantityTemplate_allocate' )
+        nullify ( z%geodLat, z%geodLat3 )
+        call createLatitudeFields ( z, size(z%the_hGrid%geodLat,1), &
+          & 'ModifyQuantityTemplate' )
       end if
       call myValuesToField( z%geodLat, SHP, VALUESNODE, spread, phyq_angle )
     case ( 'lon' )
       if ( any(shape(z%lon) /= shp) ) then
-        call deallocate_test( z%lon, 'template lon', &
+        call deallocate_test( z%lon1, 'template lon', &
           & ModuleName // 'ModifyQuantityTemplate_allocate' )
-        call allocate_test ( z%lon, shp(1), shp(2), &
-          & "template lon", &
-          & ModuleName // 'ModifyQuantityTemplate_allocate' )
+        nullify ( z%lon, z%lon3 )
+        call createLongitudeFields ( z, size(z%the_hGrid%Lon,1), &
+          & 'ModifyQuantityTemplate' )
       end if
       call myValuesToField( z%lon, SHP, VALUESNODE, spread, phyq_angle )
     case ( 'time' )
@@ -995,6 +1049,69 @@ contains
 
   end subroutine NullifyQuantityTemplate
 
+  ! ---------------------------------------  PointQuantityToHGrid  -----
+  subroutine PointQuantityToHGrid ( Qty )
+
+  ! This routine associates HGrid information into an already defined quantity,
+  ! except that if Qty%NoCrossTrack > 1, it creates a copy.
+
+    use HGridsDatabase, only: HGrid_T
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
+    use MoreMessage, only: MLSMessage
+    use Toggles, only: Gen, Levels, Toggle
+    use Trace_m, only: Trace_Begin, Trace_End
+
+    ! Dummy argument
+    type (QuantityTemplate_T), intent(inout) :: Qty
+
+    ! Local variables
+    integer :: I
+    integer :: Me = -1                  ! String index for trace
+    type (hGrid_T), pointer :: HGrid
+
+    ! Executable code
+
+    call trace_begin ( me, "PointQuantityToHGrid", &
+      & cond=toggle(gen) .and. levels(gen) > 2 )
+
+    hGrid => qty%the_hGrid
+
+    if ( qty%noInstances/=hGrid%noProfs ) call MLSMessage ( MLSMSG_Error,&
+      & ModuleName, "Size of HGrid not compatible with size of quantity" )
+
+    if ( qty%stacked ) then
+      qty%phi => hGrid%phi
+      call CreateGeolocationFields ( qty, size(hGrid%geodLat,1), 'Qty' )
+      do i = 1, qty%noCrossTrack
+        qty%geodLat3(:,:,i) = hGrid%geodLat
+        qty%lon3(:,:,i) = hGrid%lon
+      end do
+    else
+      call CreateGeolocationFields ( qty, qty%noSurfs, 'Qty' )
+      nullify ( qty%phi )
+!       This results in a "double free or corruption" termination:
+!       call allocate_test ( qty%phi, 0, 0, 'qty%phi(1,1)', ModuleName )
+      if ( qty%name /= 0 ) then
+        call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        & "Cannot copy hGrids into unstacked quantity %S" // &
+        & "; assume Lat, Lon computed somehow; hope nobody needs Phi", qty%name)
+      else
+        call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          & "Cannot copy hGrids into unstacked quantities; assume Lat, Lon computed somehow; hope nobody needs Phi")
+      end if
+    end if
+    qty%time => hGrid%time
+    qty%solarTime => hGrid%solarTime
+    qty%solarZenith => hGrid%solarZenith
+    qty%losAngle => hGrid%losAngle
+    qty%noInstancesLowerOverlap = hGrid%noProfsLowerOverlap
+    qty%noInstancesUpperOverlap = hGrid%noProfsUpperOverlap
+
+    call trace_end ( "PointQuantityToHGrid", &
+      & cond=toggle(gen) .and. levels(gen) > 2 )
+
+  end subroutine PointQuantityToHGrid
+
   ! ------------------------------------  QuantitiesAreCompatible  -----
   logical function QuantitiesAreCompatible ( Qty_1, Qty_2, DifferentTypeOK )
     type(quantityTemplate_t), intent(in) :: Qty_1, Qty_2
@@ -1074,7 +1191,7 @@ contains
   subroutine SetupNewQuantityTemplate ( qty, noInstances, noSurfs, &
     & noChans, coherent, stacked, regular, instanceLen, noCrossTrack, &
     & minorFrame, majorFrame, &
-    & sharedVGrid, sharedHGrid, sharedFGrid, badValue )
+    & sharedVGrid, sharedFGrid, badValue )
 
     use Intrinsic, only: L_Dimensionless
 
@@ -1097,7 +1214,6 @@ contains
     logical, intent(in), optional :: minorFrame
     logical, intent(in), optional :: majorFrame
     logical, intent(in), optional :: sharedVGrid
-    logical, intent(in), optional :: sharedHGrid
     logical, intent(in), optional :: sharedFGrid
     real(rt), intent(in), optional :: badValue
 
@@ -1135,7 +1251,6 @@ contains
     qty%sharedVGrid = .false.
     qty%vGridIndex = 0
     qty%xGridIndex = 0
-    qty%sharedHGrid = .false.
     qty%horizontalCoordinate = l_phiTan
     qty%hGridIndex = 0
     qty%instanceOffset = 0
@@ -1159,7 +1274,6 @@ contains
     if ( present (minorFrame) )   qty%minorFrame = minorFrame
     if ( present (majorFrame) )   qty%majorFrame = majorFrame
     if ( present (sharedVGrid) )  qty%sharedVGrid = sharedVGrid
-    if ( present (sharedHGrid) )  qty%sharedHGrid = sharedHGrid
     if ( present (sharedFGrid) )  qty%sharedFGrid = sharedFGrid
     if ( present (badValue) )     qty%badValue = badValue
 
@@ -1213,27 +1327,21 @@ contains
 
     ! Now the horizontal coordinates
 
-    if ( qty%sharedHGrid ) then
-      nullify ( qty%phi, qty%geodLat, qty%geodLat1, qty%geodLat3, &
-        & qty%lon, qty%lon1, qty%lon3, qty%crossAngles, qty%time, &
-        & qty%solarTime, qty%solarZenith, qty%losAngle )
-    else
-      call allocate_test ( qty%crossAngles, qty%noCrossTrack, &
-        & trim(what) // "%crossAngles", ModuleName )
-      qty%crossAngles = 0.0 ! In case there actually is no xGrid
-      call allocate_test ( qty%phi, noSurfsToAllocate, qty%noInstances, &
-        & trim(what) // "%phi", ModuleName )
-      ! Create GeodLat and Lon fields.
-      call createGeolocationFields ( qty, noSurfsToAllocate, what )
-      call allocate_test ( qty%time, noSurfsToAllocate, qty%noInstances, &
-        & trim(what) // "%time", ModuleName )
-      call allocate_test ( qty%solarTime, noSurfsToAllocate, qty%noInstances, &
-        & trim(what) // "%solarTime", ModuleName )
-      call allocate_test ( qty%solarZenith, noSurfsToAllocate, qty%noInstances, &
-        & trim(what) // "%solarZenith", ModuleName )
-      call allocate_test ( qty%losAngle, noSurfsToAllocate, qty%noInstances, &
-        & trim(what) // "%losAngle", ModuleName )
-    end if
+    call allocate_test ( qty%crossAngles, qty%noCrossTrack, &
+      & trim(what) // "%crossAngles", ModuleName )
+    qty%crossAngles = 0.0 ! In case there actually is no xGrid
+    call allocate_test ( qty%phi, noSurfsToAllocate, qty%noInstances, &
+      & trim(what) // "%phi", ModuleName )
+    ! Create GeodLat and Lon fields.
+    call createGeolocationFields ( qty, noSurfsToAllocate, what )
+    call allocate_test ( qty%time, noSurfsToAllocate, qty%noInstances, &
+      & trim(what) // "%time", ModuleName )
+    call allocate_test ( qty%solarTime, noSurfsToAllocate, qty%noInstances, &
+      & trim(what) // "%solarTime", ModuleName )
+    call allocate_test ( qty%solarZenith, noSurfsToAllocate, qty%noInstances, &
+      & trim(what) // "%solarZenith", ModuleName )
+    call allocate_test ( qty%losAngle, noSurfsToAllocate, qty%noInstances, &
+      & trim(what) // "%losAngle", ModuleName )
 
     if ( .not. qty%regular ) then        !
       call allocate_test ( qty%surfIndex, qty%instanceLen, qty%noInstances, &
@@ -1781,6 +1889,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.92  2015/05/01 02:09:28  vsnyder
+! Spiff a dump
+!
 ! Revision 2.91  2015/04/29 00:53:28  vsnyder
 ! Spiff the dump
 !
