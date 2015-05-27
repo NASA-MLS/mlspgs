@@ -51,6 +51,21 @@ function readfname_LID {
    echo $fname
 }
 
+# Convert the binary-formatted uars data file to hdf 
+# suitable for the mlspgs software
+call_convert(){
+   # Setup the toolkit environment
+   . $PGSHOME/bin/linux/pgs-dev-env.ksh 
+
+   # export variables for executing the conv_uars tool
+   export FLIB_DVT_BUFFER=0
+   export PGSMEM_USESHM=NO
+   export PGE_BINARY_DIR
+   export PGE_SCRIPT_DIR
+   export PGE_ROOT
+   $conv_uars_PGE $UARS_File -o $TEMP_DIR   > $CONV_UARS_LOG
+}
+
 # Generate the xml and xml files from executing the genmet routine
 # Usage: call_genmet genmet PCF hd_file odl_txt mcf_file
 call_genmet(){
@@ -136,7 +151,12 @@ fi
 # Execute convert UARS program to generate L1BOA and L1BRAD
 CONV_UARS_LOG=./conv_uars_log_$$.txt
 /bin/rm -f $CONV_UARS_LOG
-$conv_uars_PGE $UARS_File -o $TEMP_DIR   > $CONV_UARS_LOG
+
+# The bare pge command silently failed for strange reasons,
+# yielding product files with erroneous data
+#$conv_uars_PGE $UARS_File -o $TEMP_DIR   > $CONV_UARS_LOG
+#/users/pwagner/l1tests/conv_uars/do-testnopcf.sh $conv_uars_PGE $UARS_File -o $TEMP_DIR   > $CONV_UARS_LOG
+call_convert
 conv_stat=$?
 if [ $conv_stat != 0 ] ; then
    echo "ERROR: the conv_uars program failed with error code is $conv_stat"
@@ -177,6 +197,9 @@ call_genmet $genmet_PGE $PCF $L1BRAD $ODL_L1BRAD_File $MCF_L1BRAD_File
 /bin/rm -rf $TEMP_DIR
 
 # $Log$
+# Revision 1.2  2014/11/25 01:07:17  pwagner
+#  Fixed errors in obtaining names of temporary l1b files
+#
 # Revision 1.1  2014/06/24 20:16:41  quyen
 # tool to execute conv_uars program and generate the corresponding .met/.xml files
 #
