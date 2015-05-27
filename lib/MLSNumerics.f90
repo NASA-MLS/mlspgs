@@ -16,6 +16,7 @@ module MLSNumerics              ! Some low level numerical stuff
   use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
   use DUMP_0, only : DUMP, SELFDIFF
   use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
+  use Hunt_M, only: Hunt, HuntBox, HuntRange, PureHunt
   use MATRIXMODULE_0, only: CREATEBLOCK, M_ABSENT, MATRIXELEMENT_T, SPARSIFY
   use MLSCOMMON, only : UNDEFINEDVALUE
   use MLSFILLVALUES, only: ISFILLVALUE, REPLACEFILLVALUES, RERANK
@@ -399,19 +400,6 @@ module MLSNumerics              ! Some low level numerical stuff
     module procedure FindInRange_int, FindInRange_r4, FindInRange_r8
   end interface
 
-  interface Hunt
-    module procedure HuntArray_r8, HuntArray_r4
-    module procedure HuntScalar_r8, HuntScalar_r4
-  end interface
-
-  interface HuntBox
-    module procedure HuntBox_r4, HuntBox_r8
-  end interface
-
-  interface HuntRange
-    module procedure HuntRange_int, HuntRange_r4, HuntRange_r8
-  end interface
-
   interface IFApproximate
     module procedure IFApproximate_r4, IFApproximate_r8
   end interface
@@ -458,10 +446,6 @@ module MLSNumerics              ! Some low level numerical stuff
 
   interface psimpsons
     module procedure psimpsons_r4, psimpsons_r8
-  end interface
-
-  interface purehunt
-    module procedure purehunt_r4, purehunt_r8
   end interface
 
   interface reposit
@@ -1411,155 +1395,6 @@ contains
     include 'FindInRange.f9h'
   end subroutine FindInRange_r8
 
-! -------------------------------------------------  HuntArray_r4  -----
-
-  ! This routine does the classic hunt the value kind of thing.  This
-  ! does the hunt/bisect implemention a la Numerical Recipes.  List must
-  ! be monotonically increasing or decreasing. There is no such
-  ! requirement for values.
-
-  subroutine HuntArray_r4 ( list, values, indices, start, allowTopValue, &
-    & allowBelowValue, nearest, logSpace, fail )
-    use ieee_arithmetic, only: IEEE_Is_NaN
-    integer, parameter :: RK = kind(0.0e0)
-
-    ! Dummy arguments
-    real(rk), dimension(:), intent(in) :: list ! List to search
-    real(rk), dimension(:), intent(in) :: values ! Values to search for
-    integer, dimension(:), intent(out) :: indices ! list(indices) <= values
-      !                                               <= list(indices+1)
-      !                                      1 <= indices < N unless
-      !                                      allowTopValue or allowBelowValue
-    integer, optional, intent(in) :: start ! Optional start index
-    logical, optional, intent(in) :: allowTopValue ! Can return N
-    logical, optional, intent(in) :: allowBelowValue ! Can return 0
-    logical, optional, intent(in) :: nearest ! Choose nearest value not one below
-    logical, optional, intent(in) :: logSpace ! Choose nearest based on log space
-    logical, optional, intent(out) :: Fail    ! True for failure
-
-    include "HuntArray.f9h"
-  end subroutine HuntArray_r4
-
-! -------------------------------------------------  HuntArray_r8  -----
-
-  subroutine HuntArray_r8 ( list, values, indices, start, allowTopValue, &
-    & allowBelowValue, nearest, logSpace, fail )
-    use ieee_arithmetic, only: IEEE_Is_NaN
-    integer, parameter :: RK = kind(0.0d0)
-
-    ! Dummy arguments
-    real(rk), dimension(:), intent(in) :: list ! List to search
-    real(rk), dimension(:), intent(in) :: values ! Values to search for
-    integer, dimension(:), intent(out) :: indices ! list(indices) <= values
-      !                                               <= list(indices+1)
-    integer, optional, intent(in) :: start ! Optional start index
-    logical, optional, intent(in) :: allowTopValue ! Can return N
-    logical, optional, intent(in) :: allowBelowValue ! Can return 0
-    logical, optional, intent(in) :: nearest ! Choose nearest value not one below
-    logical, optional, intent(in) :: logSpace ! Choose nearest based on log space
-    logical, optional, intent(out) :: Fail    ! True for failure
-
-    include "HuntArray.f9h"
-  end subroutine HuntArray_r8
-
-! ------------------------------------------------  HuntScalar_r4  -----
-
-  ! This routine is a scalar wrapper for the above one
-
-  subroutine HuntScalar_r4 (list, value, index, start, allowTopValue, &
-    & allowBelowValue, nearest, logSpace )
-    integer, parameter :: RK = kind(0.0e0)
-
-    ! Dummy arguments
-    real(rk), dimension(:), intent(in) :: list ! List to search
-    real(rk), intent(in) :: value ! Value to search for
-    integer, intent(out) :: index ! list(index) <= value <= list(index+1)
-    integer, intent(in), optional :: start ! Optional start index
-    logical, optional, intent(in) :: allowTopValue ! Can return N
-    logical, optional, intent(in) :: allowBelowValue ! Can return 0
-    logical, optional, intent(in) :: nearest ! Choose nearest value instead
-    logical, optional, intent(in) :: logSpace ! Choose nearest based on log space
-
-    ! Local variables
-
-    integer, dimension(1) :: indices ! To pass to HuntArray
-
-    call Hunt ( list, (/ value /), indices, start, &
-      & allowTopValue, allowBelowValue, nearest, logSpace )
-    index = indices(1)
-  end subroutine HuntScalar_r4
-
-! ------------------------------------------------  HuntScalar_r8  -----
-
-  subroutine HuntScalar_r8 (list, value, index, start, allowTopValue, &
-    & allowBelowValue, nearest, logSpace )
-    integer, parameter :: RK = kind(0.0d0)
-
-    ! Dummy arguments
-    real(rk), dimension(:), intent(in) :: list ! List to search
-    real(rk), intent(in) :: value ! Value to search for
-    integer, intent(out) :: index ! list(index) <= value <= list(index+1)
-    integer, intent(in), optional :: start ! Optional start index
-    logical, optional, intent(in) :: allowTopValue ! Can return N
-    logical, optional, intent(in) :: allowBelowValue ! Can return 0
-    logical, optional, intent(in) :: nearest ! Choose nearest value instead
-    logical, optional, intent(in) :: logSpace ! Choose nearest based on log space
-
-    ! Local variables
-
-    integer, dimension(1) :: indices ! To pass to HuntArray
-
-    call Hunt ( list, (/ value /), indices, start, &
-      & allowTopValue, allowBelowValue, nearest, logSpace )
-    index = indices(1)
-  end subroutine HuntScalar_r8
-
-  ! ----------------------------------------------------  HuntBox  -----
-  ! A binary search routine with a hunt procedure, to start from last known
-  ! location (if 0 < JLO < N) or from the begining otherwise.
-  subroutine HuntBox_r4 ( GRIDPOINTS, MGRIDPOINTS, COORDS, INDICES, VERTICES )
-    integer, parameter :: RK = kind(0.0e0)
-    include 'HuntBox.f9h'
-  end subroutine HuntBox_r4
-
-  subroutine HuntBox_r8 ( GRIDPOINTS, MGRIDPOINTS, COORDS, INDICES, VERTICES )
-    integer, parameter :: RK = kind(0.0d0)
-    include 'HuntBox.f9h'
-  end subroutine HuntBox_r8
-
-! ----------------------------------------------------  HuntRange  -----
-! This family of subroutines search not for a single index
-! but for a range within which all list elements
-! lie within a range of values, inclusive
-! If none, return (/ 0, 0 /)
-! Special interpretation: inclusive means
-! if vrange(1) == vrange(2), any values of list also == vrange
-! are within that range
-! As with other Hunts, list must be monotonic
-  subroutine HuntRange_int ( list, vrange, irange, options )
-    integer, parameter :: RK = kind(0.0e0)
-    ! Dummy args
-    integer, dimension(:) :: list
-    integer, dimension(2) :: vrange
-    include 'HuntRange.f9h'
-  end subroutine HuntRange_int
-
-  subroutine HuntRange_r4 ( list, vrange, irange, options )
-    integer, parameter :: RK = kind(0.0e0)
-    ! Dummy args
-    real(rk), dimension(:) :: list
-    real(rk), dimension(2) :: vrange
-    include 'HuntRange.f9h'
-  end subroutine HuntRange_r4
-
-  subroutine HuntRange_r8 ( list, vrange, irange, options )
-    integer, parameter :: RK = kind(0.0d0)
-    ! Dummy args
-    real(rk), dimension(:) :: list
-    real(rk), dimension(2) :: vrange
-    include 'HuntRange.f9h'
-  end subroutine HuntRange_r8
-
 ! ------------------------------------------------  IFApproximate  -----
 
   ! This family of routines use a uniDiscFunction to approximate a 
@@ -2159,19 +1994,6 @@ contains
     include "LinearInterpolate_4d.f9h"
   end function LinearInterpolate_4d_r8
 
-  ! ---------------------------------------------------  PureHunt  -----
-  ! A binary search routine with a hunt procedure, to start from last known
-  ! location (if 0 < JLO < N) or from the begining otherwise.
-  pure subroutine purehunt_r4 ( ELEMENT, ARRAY, N, JLO, JHI )
-    integer, parameter :: RK = kind(0.0e0)
-    include 'hunt.f9h'
-  end subroutine purehunt_r4
-
-  pure subroutine purehunt_r8 ( ELEMENT, ARRAY, N, JLO, JHI )
-    integer, parameter :: RK = kind(0.0d0)
-    include 'hunt.f9h'
-  end subroutine purehunt_r8
-
 ! --------------------------------------------------------  SetUp  -----
 
   ! This family of routines sets up a uniDiscFunction of the appropriate type
@@ -2640,6 +2462,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.87  2015/05/27 22:42:15  vsnyder
+! Move Hunt-related stuff to Hunt_m to eliminate circular dependence
+!
 ! Revision 2.86  2015/04/29 00:53:01  vsnyder
 ! Make some specific procedures public
 !
