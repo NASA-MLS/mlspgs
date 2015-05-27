@@ -141,21 +141,24 @@
   
   ! Note the following limitations:
   ! Each name must be shorter than (MAXSTACKNAMELEN+1) chars.
-  ! Strung together, all the names must not exceed 2048 characters in length
-  integer, parameter    ::    MAXSTACKNAMELEN = 64
-  type, public :: MLSCallStack_t
-    character(len=2048) :: Txt ! All the names, strung together
-    integer :: Ind(0:100) = 0  ! Ind(i) is end of ith name
+  ! Strung together, all the names must not exceed MaxTotalStackLen
+  ! characters in length
+  integer, parameter    ::    MaxStackNameLen = 64
+  integer, parameter :: MaxTotalStackLen = 2048
+  integer, parameter :: MaxStackDepth = 100
+  type :: MLSCallStack_t
+    character(len=maxTotalStackLen) :: Txt ! All the names, strung together
+    integer :: Ind(0:maxStackDepth) = 0  ! Ind(i) is end of ith name
     integer :: Top = 0         ! Top of the stack, index into Ind
     ! The next two apply only inside MLSCallStack procedures
     logical :: silent  = .false. ! E.g., in case it becomes corrupted
     logical :: verbose = .false.
     ! These dbs affect other modules, letting us store and restore
     ! the amount of extra printing each equires
-    logical, dimension(:), pointer :: verboseDB => null()
-    logical, dimension(:), pointer :: debugDB   => null()
+    logical :: verboseDB(1:maxStackDepth) = .false.
+    logical :: debugDB(1:maxStackDepth) = .false.
   end type MLSCallStack_t
-  type(MLSCallStack_t), public, save :: MLSCALLSTACK
+  type(MLSCallStack_t), save :: MLSCallStack
   
   ! Public procedures
   public :: BUMMER, DUMPCONFIG, RESTORECONFIG, SETCONFIG
@@ -492,45 +495,41 @@ contains
     case ( 'dump' )
       call dumpStack
     case ( 'dumpdb', 'dumpDB' )
-      if ( associated(  MLSCallStack%debugDB) ) then
-        call dump( 'db', charValue='debug' )
-        do i=1, size(MLSCallStack%debugDB)
-          write( myName, '(i2)' ) i
-          call dump( trim(myName), logValue=MLSCallStack%debugDB(i) )
-        enddo
-      end if
-      if ( associated(  MLSCallStack%verboseDB) ) then
-        call dump( 'db', charValue='verbose' )
-        do i=1, size(MLSCallStack%verboseDB)
-          write( myName, '(i2)' ) i
-          call dump( trim(myName), logValue=MLSCallStack%verboseDB(i) )
-        enddo
-      end if
+      call dump( 'db', charValue='debug' )
+      do i = 1, MLSCallStack%top
+        write( myName, '(i2)' ) i
+        call dump( trim(myName), logValue=MLSCallStack%debugDB(i) )
+      end do
+      call dump( 'db', charValue='verbose' )
+      do i = 1, MLSCallStack%top
+        write( myName, '(i2)' ) i
+        call dump( trim(myName), logValue=MLSCallStack%verboseDB(i) )
+      end do
     case ( 'print', 'rprint' )
       if ( MLSCallStack%top < 0 ) then
         call printItOut ( '.. Stack Underflow', MLSMSG_info )
       else if ( MLSCallStack%top == 0 ) then
         call printItOut ( '.. Stack Empty', MLSMSG_info )
-      else if ( MLSCallStack%top > ubound(MLSCallStack%ind,1) ) then
+      else if ( MLSCallStack%top > maxStackDepth ) then
         call printItOut ( '.. Stack Overflow', MLSMSG_info )
       else if ( command == 'print' ) then
         call printItOut ( MLSCallStack%txt(: &
-          & MLSCallStack%ind(min(MLSCallStack%top,ubound(MLSCallStack%ind,1)))), MLSMSG_info )
+          & MLSCallStack%ind(min(MLSCallStack%top,maxStackDepth))), MLSMSG_info )
       else if ( command == 'rprint' ) then
         MLSCallStack = InvertStack( MLSCallStack )
         call printItOut ( MLSCallStack%txt(: &
-          & MLSCallStack%ind(min(MLSCallStack%top,ubound(MLSCallStack%ind,1)))), MLSMSG_info )
+          & MLSCallStack%ind(min(MLSCallStack%top,maxStackDepth))), MLSMSG_info )
         MLSCallStack = InvertStack( MLSCallStack )
       end if
     case ( 'depth' )
       write( myName, '(i8)' ) MLSCallStack%top
       if ( present(name) ) name = myName
     case ( 'length' )
-      write( myName, '(i8)' ) MLSCallStack%ind(min(MLSCallStack%top,ubound(MLSCallStack%ind,1)))
+      write( myName, '(i8)' ) MLSCallStack%ind(min(MLSCallStack%top,maxStackDepth))
       if ( present(name) ) name = myName
     case ( 'remain' )
       write( myName, '(i8)' ) len(MLSCallStack%txt) - &
-        & MLSCallStack%ind(min(MLSCallStack%top,ubound(MLSCallStack%ind,1)))
+        & MLSCallStack%ind(min(MLSCallStack%top,maxStackDepth))
       if ( present(name) ) name = myName
     ! "r"-versions of the usual commands act on the Inverted CallStack
     case ( 'rpop', 'rtop' )
@@ -549,9 +548,9 @@ contains
       call dumpStack
       MLSCallStack = InvertStack( MLSCallStack )
     case ( 'verbosedb', 'verboseDB' )
-      if ( associated(MLSCallStack%verboseDB) ) MLSCallStack%verboseDB = myLValue
+      MLSCallStack%verboseDB = myLValue
     case ( 'debugdb', 'debugDB' )
-      if ( associated(MLSCallStack%debugDB) ) MLSCallStack%debugDB = myLValue
+      MLSCallStack%debugDB = myLValue
     case default
       ! Unrecognized command--we'll ignore it
       if ( present(name) ) name = "What?"
@@ -570,19 +569,17 @@ contains
       if ( present(name) ) then
         if ( oldSize < 0 ) then
           name = "Stack underflow"
-        else if ( oldSize >= ubound(MLSCallStack%ind,1) ) then
+        else if ( oldSize >= maxStackDepth ) then
           name = "Stack overflow"
         else
           ! name = MLSCallStack%txt(MLSCallStack%ind(oldSize)+1: &
           !                        MLSCallStack%ind(oldSize+1))
-          m = min(oldSize,ubound(MLSCallStack%ind,1)) + 1
+          m = min(oldSize,maxStackDepth) + 1
           name = MLSCallStack%txt(MLSCallStack%ind(m-2)+1: &
                                     MLSCallStack%ind(m-1))
         end if
       end if
-      if ( .not. associated(MLSCallStack%verboseDB) ) return
-      oldSize = min( oldSize, size(MLSCallStack%verboseDB) )
-      newSize = RmLogicalFromDatabase( MLSCallStack%verboseDB, oldSize )
+      newSize = max(oldsize-1,1)
       if ( MLSVerboseSticky ) then
         ! nothing--keep existing MLSVerbose
       else if ( newSize > 0 ) then
@@ -590,7 +587,6 @@ contains
       else
         MLSVerbose = .false.
       end if
-      newSize = RmLogicalFromDatabase( MLSCallStack%debugDB, oldSize )
       if ( MLSDebugSticky ) then
         ! nothing--keep existing MLSDebug
       else if ( newSize > 0 ) then
@@ -598,14 +594,6 @@ contains
       else
         MLSDebug   = .false.
       end if
-     !  call PrintItOut ( 'After PopStack ', MLSMSG_Info )
-     !  call dump ( 'newSize ', intValue=MLSCallStack%top - 1 )
-     !  if ( associated(MLSCallStack%verboseDB) ) then
-     !    call dump ( 'size(MLSCallStack%verboseDB) ', intValue=size(MLSCallStack%verboseDB) )
-     !    call dump ( 'size(MLSCallStack%debugDB) ', intValue=size(MLSCallStack%debugDB) )
-     !  else
-     !    call PrintItOut ( 'verbose and debug dbs not associated ', MLSMSG_Info )
-     !  end if
     end subroutine PopStack
 
     subroutine PushStack ( myname )
@@ -616,24 +604,18 @@ contains
       ! Executable
       oldSize = MLSCallStack%top
       MLSCallStack%top = max(oldSize + 1, 1) ! MAX in case it underflowed earlier
-      newSize = AddLogicalToDatabase( MLSCallStack%verboseDB, MLSVerbose )
-      newSize = AddLogicalToDatabase( MLSCallStack%debugDB, MLSDebug )
       newSize = MLSCallStack%top
       myName = snipRCSFrom ( myName )
       m = len_trim(myName)
-      if ( newSize > ubound(MLSCallStack%ind,1) ) then
+      if ( newSize > MaxStackDepth ) then
         call dumpStack ( adjustl(myName(:m)) )
         MLSCallStack%silent = .true.
       else
         MLSCallStack%ind(newSize) = MLSCallStack%ind(newSize-1) + m
         MLSCallStack%txt(MLSCallStack%ind(newSize-1)+1:) = myName(:m) ! clear the rest
+        MLSCallStack%verboseDB(newSize) = MLSVerbose
+        MLSCallStack%debugDB(newSize) = MLSDebug
       end if
-      ! MLSCallStack%top = min( MLSCallStack%top, newSize )
-     !  call PrintItOut ( 'After PushStack ' // trim(myname), MLSMSG_Info )
-     !  call dump ( 'oldSize ', intValue=oldSize )
-     !  call dump ( 'newSize ', intValue=MLSCallStack%top )
-     !  call dump ( 'size(MLSCallStack%verboseDB) ', intValue=size(MLSCallStack%verboseDB) )
-     !  call dump ( 'size(MLSCallStack%debugDB) ', intValue=size(MLSCallStack%debugDB) )
     end subroutine PushStack
 
     subroutine DumpStack ( What )
@@ -647,12 +629,12 @@ contains
       else if ( MLSCallStack%top == 0 ) then
         call printItOut ( '.. Stack Empty', MLSMSG_info )
       else
-        do m = 1, min(MLSCallStack%top,ubound(MLSCallStack%ind,1))
+        do m = 1, min(MLSCallStack%top,maxStackDepth)
           call printItOut ( '.. ' // &
             & MLSCallStack%txt(MLSCallStack%ind(m-1)+1: &
                                MLSCallStack%ind(m)), MLSMSG_info )
         end do
-        if ( MLSCallStack%top > ubound(MLSCallStack%ind,1) ) then
+        if ( MLSCallStack%top > maxStackDepth ) then
           if ( present(what) ) then
             call printItOut ( '.. Stack Overflow when pushing ' // what, &
             & MLSMSG_info )
@@ -684,7 +666,7 @@ contains
       if ( Stack%top <= 0 ) return
       stackDepth = Stack%top
       do i = 1, stackDepth
-        m = min(Stack%top,ubound(Stack%ind,1)) + 1
+        m = min(Stack%top,maxStackDepth) + 1
         name = Stack%txt(Stack%ind(m-2)+1: &
                                   Stack%ind(m-1))
         Stack%top = Stack%top - 1
@@ -992,77 +974,6 @@ contains
   end subroutine SummarizeWarnings
 
   ! Private procedures
-  ! ------------------------------------------  AddLogicalToDatabase  -----
-  integer function AddLogicalToDatabase ( Database, Item )
-    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
-    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
-    logical, dimension(:), pointer :: Database
-    logical, intent(in) :: Item
-
-    ! Local variables
-    logical, dimension(:), pointer :: tempDatabase
-
-    include "addItemToDatabase.f9h"
-
-    AddLogicalToDatabase = newSize
-  end function AddLogicalToDatabase
-
-  ! ------------------------------------------  RmLogicalFromDatabase  -----
-  integer function RmLogicalFromDatabase ( Database, itemIndex )
-    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
-    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
-    logical, dimension(:), pointer :: Database
-    integer, intent(in) :: itemIndex   ! Index of item
-
-    ! Local variables
-    logical, dimension(:), pointer :: tempDatabase
-    logical, parameter :: okToDeallocEmptyDB = .true.
-
-    integer(c_intptr_t) :: Addr         ! For tracing
-    integer :: newSize, s, status
-    integer :: i
-    ! Executable code
-    newSize=0
-    if ( .not. associated(database) ) then
-      call MLSMessageStd ( MLSMSG_Error, ModuleName, &
-        & "Attempt to remove item from an empty database")
-    else if ( size(database) < itemIndex .or. itemIndex < 1) then
-      call dump ( 'size(database) ', intValue=size(database) )
-      call dump ( 'itemIndex ', intValue=itemIndex )
-      call MLSMessageStd ( MLSMSG_Error, ModuleName, &
-        & "Attempt to remove an item not found in database")
-    else if ( size(database) == 1) then
-      if ( okToDeallocEmptyDB ) then
-        s = storage_size(database) / 8
-        addr = transfer(c_loc(database(1)), addr)
-        deallocate ( database, stat=status )
-        call test_deallocate ( status, ModuleName, "database", s, address=addr )
-      end if
-    else
-      allocate(tempDatabase(SIZE(database)-1), STAT=status)
-      addr = 0
-      if ( status == 0 ) then
-        if ( size(tempDatabase) > 0 ) addr = transfer(c_loc(tempDatabase(1)), addr)
-      end if
-      call test_allocate ( status, ModuleName, "tempDatabase", &
-        & uBounds = SIZE(database)-1, elementSize = storage_size(tempDatabase) / 8, &
-        & address=addr )
-      do i = 1, SIZE(database)
-        if ( i /= itemIndex ) then
-          newSize = newSize + 1
-          tempDatabase(newSize) = database(i)
-        end if
-      end do
-      s = size(database) * storage_size(database) / 8
-      addr = 0
-      if ( s > 0 ) addr = transfer(c_loc(database(1)), addr)
-      deallocate ( database, stat=status )
-      call test_deallocate ( status, ModuleName, "database", s, address=addr )
-      database => tempDatabase
-    end if
-
-    RmLogicalFromDatabase = newSize
-  end function RmLogicalFromDatabase
 
   ! ---------------------------------------------------  dumpFile  -----
   subroutine dumpFile ( MLSFile  )
@@ -1208,6 +1119,12 @@ contains
 
 !
 ! $Log$
+! Revision 2.38  2015/05/27 22:44:15  vsnyder
+! Use fixed-size arrays for verboseDB and debugDB rather than pointers to
+! variable size arrays.  NAG had been complaining that these pointers'
+! targets were somehow associated with other pointers, and that deallocating
+! them here resulted in dangling pointers elsewhere.
+!
 ! Revision 2.37  2015/03/28 01:14:28  vsnyder
 ! Added stuff to trace allocate/deallocate addresses
 !
