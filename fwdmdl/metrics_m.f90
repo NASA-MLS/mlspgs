@@ -70,10 +70,13 @@ contains
 
     ! inputs:
 
-    real(rp), intent(in) :: Phi_t      ! orbit projected tangent geodetic angle
+    real(rp), intent(in) :: Phi_t      ! orbit projected tangent geodetic angle,
+                                       ! degrees
     real(rp), intent(in) :: P_basis(:) ! horizontal temperature representation
-                                       ! basis
-    real(rp), intent(in) :: H_ref(:,:) ! heights by fine zeta and p_basis
+                                       ! basis, degrees
+    real(rp), intent(in) :: H_ref(:,:) ! heights by fine zeta and p_basis,
+                                       ! referenced to equivalent circular earth
+                                       ! center, km
     integer, intent(in) :: Tan_ind_f   ! Index of tangent in H_Ref, which is on
                                        ! fine Zeta grid
 
@@ -81,9 +84,13 @@ contains
     real(rp), intent(out) :: H_Surf    ! Height of the pressure reference
                                        ! surface at Phi_t -- interpolated in
                                        ! Surf_Height if present(Surf_Height)
-                                       ! else interpolated in row 1 of H_REF.
+                                       ! else interpolated in row 1 of H_REF,
+                                       ! referenced to equivalent circular earth
+                                       ! center, km
     real(rp), intent(out) :: H_Tan     ! Tangent height above H_Surf (negative
-    !                                  ! for Earth-intersecting rays)
+    !                                  ! for Earth-intersecting rays),
+                                       ! referenced to equivalent circular earth
+                                       ! center, km
 
     ! optional inputs
     ! We have Z_Ref, Tan_Press and Surf_Temp if the pointing is below the
@@ -96,8 +103,8 @@ contains
                                        ! above mean sea level (whatever that
                                        ! means) on P_Basis.
 
-    integer :: First, Last           ! Nonzeros in Eta_T
-    real(rp) :: ETA_T(size(p_basis)) ! Interpolating coefficients
+    integer :: First, Last             ! Nonzeros in Eta_T
+    real(rp) :: ETA_T(size(p_basis))   ! Interpolating coefficients
 
     ! Get interpolating coefficients (eta_t) from p_basis to phi_t
     call get_eta_sparse ( p_basis, phi_t, eta_t, first, last )
@@ -168,34 +175,35 @@ contains
 
     real(rp), intent(in) :: Phi_t      ! Orbit projected tangent geodetic angle
     integer, intent(in) :: Tan_ind     ! Tangent height index, 1 = center of
-    !                                     longest path
+    !                                    longest path
     real(rp), intent(in) :: P_basis(:) ! Horizontal temperature representation
-    !                                     basis
-    real(rp), intent(in) :: H_ref(:,:) ! Heights by z_ref and p_basis
+    !                                    basis, degrees
+    real(rp), intent(in) :: H_ref(:,:) ! Heights by z_ref and p_basis, km
     real(rp), intent(in) :: H_Surf     ! Height of the pressure reference
-    !                                     surface z_ref(1) above R_eq at phi_t
+    !                                    surface z_ref(1) above R_eq at phi_t, km
     real(rp), intent(in) :: Tan_Ht_s   ! Tangent height above H_Surf -- negative
-    !                                     for Earth-intersecting ray
+    !                                    for Earth-intersecting ray, km
     real(rp), intent(in) :: Z_ref(:)   ! -log pressures (zetas) for which
-    !                                     heights/temps are needed.  Only used
-    !                                     where H/Phi iteration fails.
+    !                                    heights/temps are needed.  Only used
+    !                                    where H/Phi iteration fails.
     real(rp), intent(in) :: R_Eq       ! Equivalent circular earth radius of
-    !                                     true surface at Phi_T
+    !                                    true surface at Phi_T, km
 
     ! outputs:
-    real(rp), intent(out) :: Req_s       ! H_Surf + R_Eq, Equivalent circular
-    !                                      earth radius of pressure reference
-    !                                      surface at Phi_T
+    real(rp), intent(out) :: Req_s     ! H_Surf + R_Eq, Equivalent circular
+    !                                    earth radius of pressure reference
+    !                                    surface at Phi_T, km
     integer, intent(out) :: Vert_Inds(:) ! What to use in h_ref, 1:n_path
-    real(rp), intent(out) :: H_grid(:)   ! computed heights, referenced to Earth center
-    real(rp), intent(out) :: P_grid(:)   ! computed phi's
+    real(rp), intent(out) :: H_grid(:) ! computed heights, referenced to
+                                       ! equivalent circular Earth center, km
+    real(rp), intent(out) :: P_grid(:) ! computed phi's, degrees
 
     ! optional inputs
     real(rp), optional, intent(in) :: H_Tol ! Height tolerance in kilometers
-                                         ! for convergence of phi/h iteration
-    logical, optional, intent(in) :: Forward   ! for subsurface rays, indicates
-                                         ! xi >= xi_sub (see Generate_TScat in
-                                         ! FullForwardModel)
+                                       ! for convergence of phi/h iteration
+    logical, optional, intent(in) :: Forward  ! for subsurface rays, indicates
+                                       ! xi >= xi_sub (see Generate_TScat in
+                                       ! FullForwardModel)
 
     ! Local variables.
     integer :: Do_Dumps    ! <0 = no dump, >=0 = dump, >0 = stop
@@ -589,9 +597,7 @@ path: do i = i1, i2
     use MLSKinds, only: RP
     use Output_m, only: OUTPUT
 
-    real(rp), intent(in) :: P_Basis(:) ! Coordinates for H_Ref.  Actually 1:2,
-                                       ! but we don't want to force copy-in if
-                                       ! the actual argument isn't contiguous.
+    real(rp), intent(in) :: P_Basis(2) ! Coordinates for H_Ref.
     real(rp), intent(in) :: Phi_Offset ! Offset from center of path.  Either the
                                        ! tangent point if the ray is not an
                                        ! Earth-intersecting ray, or the tangent
@@ -599,18 +605,19 @@ path: do i = i1, i2
                                        ! and the tangent point for the reflected
                                        ! ray on the other side.
     real(rp), intent(in) :: Phi_Sign   ! Which way from tangent?
-    real(rp), intent(in) :: H_Ref(:)   ! Height reference.  Actually 1:2,
-                                       ! but we don't want to force copy-in if
-                                       ! the actual argument isn't contiguous.
+    real(rp), intent(in) :: H_Ref(2)   ! Height reference.
+      ! A, B and C are coefficients of a quadratic approximation to the solution
     real(rp), intent(in) :: A          ! (p_basis(2)-p_basis(1)) * tan_ht
     real(rp), intent(in) :: B          ! -(h_ref(2) - h_ref(1))
     real(rp), intent(in) :: C          ! -(h_ref(1)-h_surf) * (p_basis(2)-phi_t)
                                        ! +(h_ref(2)-h_surf) * (p_basis(1)-phi_t)
                                        ! +(p_basis(2)-p_basis(1)) * h_tan
-      ! A, B and C are coefficients of a quadratic approximation to the solution
-    real(rp), intent(in) :: Tan_Ht     ! From center, H_Tan + r_eq
-    real(rp), intent(in) :: R_eq       ! From center of equivalent circular earth
-    real(rp), intent(in) :: Tol        ! Height tolerance for Newton convergence
+    real(rp), intent(in) :: Tan_Ht     ! From equivalent circular Earth center,
+                                       ! H_Tan + r_eq, km
+    real(rp), intent(in) :: R_eq       ! From center of equivalent circular
+                                       ! earth, km
+    real(rp), intent(in) :: Tol        ! Height tolerance for Newton convergence,
+                                       ! km
     logical, intent(in) :: Inside      ! P_Basis(2) is not the last one in the grid
     real(rp), intent(inout) :: H_Grid  ! H solution, inout in case there is none
     real(rp), intent(out) :: Phi       ! Phi solution
@@ -628,7 +635,7 @@ path: do i = i1, i2
     real(rp) :: P, P2  ! Candidate solution, p^2
     real(rp) :: P_Grid ! Candidate phi solution
     real(rp) :: Secm1  ! Sec(p) - 1
-    real(rp) :: Secp   ! 1/Cos(p), to compute SecM1 when p > p8Tol
+    real(rp) :: Secp   ! Sec(p) = 1/Cos(p), to compute SecM1 when p > p8Tol
 
     ! Coefficients in expansion of Sec(phi)-1 = c2*phi^2 + c4*phi^4 ...
     ! At phi-phi_t = 0.2 radians and tan_ht = 6400 km, this gives 56 cm accuracy
@@ -641,7 +648,7 @@ path: do i = i1, i2
     real(rp), parameter :: P8Tol = 0.2
 
     ! For debugging output
-    real(rp) :: DD(10)
+    real(rp) :: DD(merge(0,10,debug))
 
     if ( stat == order ) stat = no_sol
     outside = .false.
@@ -1124,6 +1131,9 @@ path: do i = i1, i2
 end module Metrics_m
 
 ! $Log$
+! Revision 2.73  2013/06/12 02:32:30  vsnyder
+! Cruft removal
+!
 ! Revision 2.72  2013/05/21 23:55:14  vsnyder
 ! Compute No_Bad_Fits correctly, revise dump switches
 !
