@@ -4302,9 +4302,12 @@ contains
 
         select case ( grids_mag%z_coord(1) ) ! grids_mag is a one-quantity grid
         case ( l_geocAltitude, l_geodAltitude )
-          ! load_sps_data_m%Fill_Grids_2 has converted geodetic altitude
-          ! to geocentric altitude, and converted either one to km.
-          call comp_eta_docalc_no_frq ( grids_mag, h_path(1:npf), &
+          ! load_sps_data_m%Fill_Grids_2 has converted geocentric height
+          ! to geodetic altitude above the geoid, and converted to km.
+          ! H_Path is km above the equivalent Earth center, so subtract R_Eq
+          ! to get it on the same basis as Grids_Mag%zet_basis, which is
+          ! altitude in km here, not zeta.
+          call comp_eta_docalc_no_frq ( grids_mag, h_path(1:npf) - r_eq, &
             &  phi_path(1:npf), eta_mag_zp(1:npf,:), tan_pt=tan_pt_f )
         case ( l_zeta )
           call comp_eta_docalc_no_frq ( grids_mag, z_path(1:npf), &
@@ -4799,6 +4802,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.355  2015/05/01 02:08:36  vsnyder
+! Interpolate in height or zeta for magnetic field
+!
 ! Revision 2.354  2015/04/11 01:26:03  vsnyder
 ! Add more dumps, add (km) to comments about h_path and h_glgrid
 !
