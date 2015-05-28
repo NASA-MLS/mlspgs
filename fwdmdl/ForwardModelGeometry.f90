@@ -37,7 +37,7 @@ module ForwardModelGeometry
 contains ! ============= Public Procedures ==========================
 
   subroutine Compute_Viewing_Plane ( Qty, ScVelECR, TpGeocAlt, GPHQuantity, &
-                                   & XYZs, RefMif )
+                                   & XYZs )
 
   ! Compute Geocentric (!) latitude, longitude, and height for Qty.
 
@@ -58,7 +58,8 @@ contains ! ============= Public Procedures ==========================
     use MLSNumerics, only: InterpolateExtrapolate_d
     use MLSStringlists, only: SwitchDetail
     use Monotone, only: Longest_Monotone_Subsequence
-    use QuantityTemplates, only: CreateGeolocationFields, Dump, RT
+    use QuantityTemplates, only: CreateGeolocationFields, &
+      & DestroyGeolocationFields, Dump, PointQuantityToHGrid, RT
     use Quantity_Geometry, only: XYZ
     use Rotation_m, only: Rotate_3d
     use Toggles, only: Emit, Levels, Switches, Toggle
@@ -76,9 +77,6 @@ contains ! ============= Public Procedures ==========================
     real(rt), intent(out) :: XYZs(:,:,:,:)      ! Geocentric Cartesian coordinates
                                                 ! of Qty%Value4.
                                                 ! 3 X surfs X instances X cross
-    integer, intent(in), optional :: RefMif     ! MIF at which profile will be
-                                                ! computed, default middle one,
-                                                ! to choose TpGeocAlt instance.
 
     logical :: Across                           ! Viewing across the orbit track
     real(rt), allocatable :: Alt(:)             ! Geocentric altitude on LOS
@@ -93,7 +91,6 @@ contains ! ============= Public Procedures ==========================
     integer :: InstOr1                          ! Second subscript for surfs
     integer :: Me = -1                          ! String index, for tracing
     integer :: MIF                              ! MIF index
-    integer :: MyRefMIF                         ! RefMIF or middle one
     real(rt) :: N(3)                            ! Normal to SC-TP plane
     real(rt), allocatable :: R(:,:)             ! TP rotated in TP-SC plane
     integer :: S                                ! Surface index in magnetic field
@@ -156,17 +153,6 @@ contains ! ============= Public Procedures ==========================
       qty%template%coherent = .false.
       qty%template%stacked = .false.
       call createGeolocationFields ( qty%template, qty%template%noSurfs, 'MagneticField' )
-
-      if ( qty%template%verticalCoordinate == l_zeta ) then
-        ! Actually, we don't get here if called by FillUtils_1%UsingMagneticModel
-        ! because it prohibits zeta and tpGeocAlt to coexist.
-        if ( present(refMIF) ) then
-          myRefMIF = refMIF
-        else
-          myRefMIF = tpGeocAlt%template%noSurfs / 2
-        end if
-        ! Determine the instance of GphQuantity nearest to MyRefMif of tpGeocAlt.
-      end if
 
       ! Hopefully, we got here from FillUtils_1%UsingMagneticModel, where
       ! it is verified that if TpGeocAlt is provided, then so is ScVelECR,
@@ -255,6 +241,10 @@ contains ! ============= Public Procedures ==========================
       ! Since we have no TpGeocAlt and presumably no ScVelECR, the viewing
       ! plane must be the orbit plane.  It's easy to compute XYZ from the
       ! geolocations in the magnetic field quantity template.
+      call destroyGeolocationFields ( qty%template )
+      qty%template%stacked = .true.
+      qty%template%coherent = .true.
+      call pointQuantityToHGrid ( qty%template )
       xyzs(:,:,:,1) = xyz(qty%template, heights)
     end if
 
@@ -281,7 +271,7 @@ contains ! ============= Public Procedures ==========================
     use MLSMessageModule, only : MLSMessage, MLSMSG_Error
     use MLSNumerics, only: InterpolateValues
     use QuantityTemplates, only: RT
-    use Toggles, only: Emit, Levels, Switches, Toggle
+    use Toggles, only: Emit, Levels, Toggle
     use Trace_m, only: Trace_Begin, Trace_End
     use VectorsModule, only: VectorValue_t
 
@@ -363,6 +353,8 @@ contains ! ============= Public Procedures ==========================
     use Cross_m, only: Cross
     use Geometry, only: GeodToGeocLat, To_XYZ
     use QuantityTemplates, only: RT
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Warning
+    use MoreMessage, only: MLSMessage
     use VectorsModule, only: VectorValue_t
 
     type(vectorValue_t), intent(in) :: TpGeocAlt   ! Tangent point, for geolocation
@@ -372,6 +364,7 @@ contains ! ============= Public Procedures ==========================
     real(rt) :: Viewing_Azimuth_Rad
 
     integer :: MyMAF, MyMIF
+    real(rt) :: N1, N2                       ! Norm of a 3-vector
     real(rt) :: SCVel_XYZ(3)                 ! Unit vector in velocity direction
     real(rt) :: SC_N(3)                      ! Normal to Velocity x Position plane
     real(rt) :: SC_XYZ(3)                    ! Spacecraft position, ECR
@@ -386,8 +379,19 @@ contains ! ============= Public Procedures ==========================
     ! Get position and velocity vectors
     sc_xyz = to_xyz ( geodToGeocLat(scVelECR%template%geodLat(myMIF,myMAF))*rad2Deg, &
                     & scVelECR%template%lon(myMIF,myMAF) )
+    n1 = norm2(sc_xyz)
     scVel_XYZ = scVelECR%value4(:,myMIF,myMAF,1)
-    scVel_XYZ = scVel_XYZ / norm2(scVel_XYZ)
+    n2 = norm2(scVel_XYZ)
+    if ( n1 < 1.0 .or. n2 < 1.0 ) then
+      call MLSMessage ( MLSMSG_Warning, moduleName, &
+        & "Either position or velocity in %S quantity apparently not filled.", &
+        & scVelECR%template%name )
+      call MLSMessage ( MLSMSG_Warning, moduleName, &
+        & "Zero used for viewing azimuth.  Hope that's OK." )
+      viewing_azimuth_rad = 0.0
+      return
+    end if
+    scVel_XYZ = scVel_XYZ / n2
     tp_xyz = to_xyz ( geodToGeocLat(tpGeocAlt%template%geodLat(myMIF,myMAF))*rad2Deg, &
                     & tpGeocAlt%template%lon(myMIF,myMAF) )
 
@@ -421,14 +425,8 @@ contains ! ============= Public Procedures ==========================
     integer, intent(in), optional :: MAF
     real(rt) :: Viewing_Azimuth_Rad
 
-    integer :: MyMAF, MyMIF
     type(vectorValue_t), pointer :: SCVelECR ! Spacecraft Velocity, ECR
     type(vectorValue_t), pointer :: TpGeocAlt ! Tangent point
-
-    myMAF = 1
-    if ( present(MAF) ) myMAF = MAF
-    myMIF = 1
-    if ( present(MIF) ) myMIF = MIF
 
     ! Get quantities
     scVelECR => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
@@ -453,6 +451,9 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelGeometry
 
 ! $Log$
+! Revision 2.3  2015/05/28 23:08:58  vsnyder
+! Eliminate RefMIF, check that ScVelECR geolocation is filled
+!
 ! Revision 2.2  2015/04/29 02:08:39  vsnyder
 ! Don't convert heights to geocentric if vertical is zeta
 !
