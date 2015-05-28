@@ -448,7 +448,7 @@ contains
   ! Fill in the size information for the II'th element of Grids_x
 
     use ForwardModelConfig, only: ForwardModelConfig_t
-    use Intrinsic, only: L_GeodAltitude, L_Vmr
+    use Intrinsic, only: L_Vmr
     use ManipulateVectorQuantities, only: FindInstanceWindow
     use VectorsModule, only: VectorValue_T
 
@@ -907,6 +907,12 @@ contains
 end module LOAD_SPS_DATA_M
 
 ! $Log$
+! Revision 2.98  2015/05/28 23:12:37  vsnyder
+! Finish removing assumption that geodetic-height magnetic field will be
+! unstacked.  Add some checking.  Convert geocentric height in meters
+! to geodetic height in km, and convert geodetic height in meters to km,
+! because that's what's used for interpolation in the full forward model.
+!
 ! Revision 2.97  2015/05/15 23:40:02  vsnyder
 ! More work on cross-track indexing kludges
 !
