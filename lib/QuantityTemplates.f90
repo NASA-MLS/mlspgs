@@ -442,7 +442,7 @@ contains
     type (QuantityTemplate_T), intent(inout) :: QTY
 
     call deallocate_test ( qty%geodLat1, 'Qty%GeodLat1', moduleName )
-    call deallocate_test ( qty%lon, 'Qty%Lon', moduleName )
+    call deallocate_test ( qty%lon1, 'Qty%Lon', moduleName )
     nullify ( qty%geodLat, qty%geodLat3, qty%lon, qty%lon3 )
 
   end subroutine DestroyGeolocationFields
@@ -1889,6 +1889,10 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.93  2015/05/27 22:41:46  vsnyder
+! Move PointQuantityToHGrid here from HGridDatabase.  Eliminate shared
+! HGrids.
+!
 ! Revision 2.92  2015/05/01 02:09:28  vsnyder
 ! Spiff a dump
 !
