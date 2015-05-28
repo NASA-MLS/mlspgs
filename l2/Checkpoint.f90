@@ -42,7 +42,6 @@ module Checkpoint
     integer :: verticalCoordinate
     logical :: sharedVGrid
     integer :: vGridIndex
-    logical :: sharedHGrid             
     integer :: hGridIndex              
     integer :: instanceOffset          
     integer :: grandTotalInstances     
@@ -175,7 +174,6 @@ contains
       templateStuff%verticalCoordinate      /= QuantityTemplate%verticalCoordinate .or. &
       templateStuff%sharedVGrid         .neqv. QuantityTemplate%sharedVGrid      .or. &
       templateStuff%vGridIndex              /= QuantityTemplate%vGridIndex       .or. &
-      templateStuff%sharedHGrid         .neqv. QuantityTemplate%sharedHGrid      .or. &
       templateStuff%hGridIndex              /= QuantityTemplate%hGridIndex       .or. &
       templateStuff%instanceOffset          /= QuantityTemplate%instanceOffset   .or. &
       templateStuff%grandTotalInstances     /= QuantityTemplate%grandTotalInstances .or. &
@@ -504,7 +502,6 @@ contains
       templateStuff%verticalCoordinate      = vector%quantities(i)%template%verticalCoordinate
       templateStuff%sharedVGrid             = vector%quantities(i)%template%sharedVGrid
       templateStuff%vGridIndex              = vector%quantities(i)%template%vGridIndex
-      templateStuff%sharedHGrid             = vector%quantities(i)%template%sharedHGrid
       templateStuff%hGridIndex              = vector%quantities(i)%template%hGridIndex
       templateStuff%instanceOffset          = vector%quantities(i)%template%instanceOffset
       templateStuff%grandTotalInstances     = vector%quantities(i)%template%grandTotalInstances
@@ -651,6 +648,9 @@ contains
 end module Checkpoint
 
 ! $Log$
+! Revision 2.6  2015/05/28 18:24:11  vsnyder
+! Remove shared HGrid
+!
 ! Revision 2.5  2014/01/11 01:44:18  vsnyder
 ! Decruftification
 !
