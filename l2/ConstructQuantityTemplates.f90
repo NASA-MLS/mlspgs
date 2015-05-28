@@ -90,9 +90,8 @@ contains ! ============= Public procedures ===================================
       & GETRADIOMETERFROMSIGNAL, GETSIGNAL, SIGNAL_T, ISMODULESPACECRAFT
     use MoreTree, only: Get_Boolean
     use PARSE_SIGNAL_M, only: PARSE_SIGNAL
-    use QUANTITYTEMPLATES, only: QUANTITYTEMPLATE_T, &
-      & SETUPNEWQUANTITYTEMPLATE, &
-      & NULLIFYQUANTITYTEMPLATE
+    use QUANTITYTEMPLATES, only: NULLIFYQUANTITYTEMPLATE, PointQuantityToHGrid, &
+      & QUANTITYTEMPLATE_T, SETUPNEWQUANTITYTEMPLATE
     use STRING_TABLE, only: GET_STRING
     use TOGGLES, only: GEN, LEVELS, TOGGLE
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
@@ -420,13 +419,14 @@ contains ! ============= Public procedures ===================================
       call SetupNewQuantityTemplate ( qty, noInstances=noInstances, &
         & noSurfs=noSurfs, coherent=.true., stacked=stacked, regular=.true.,&
         & noChans=noChans, noCrossTrack=noCrossTrack, &
-        & sharedVGrid=.true., sharedHGrid=.true., sharedFGrid=.true. )
+        & sharedVGrid=.true., sharedFGrid=.true. )
 
       ! Setup the horizontal coordinates
       if ( got(f_hGrid) ) then
+        qty%the_hGrid => hGrids(hGridIndex)
         qty%hGridIndex = hGridIndex
         qty%xGridIndex = xGridIndex
-        call PointQuantityToHGrid ( hGrids(hGridIndex), chunk, qty )
+        call PointQuantityToHGrid ( qty )
       else
         call SetupEmptyHGridForQuantity ( qty )
       end if
@@ -463,13 +463,9 @@ contains ! ============= Public procedures ===================================
     ! Setup the cross-track coordinates
     nullify ( qty%crossAngles )
     if ( xGridIndex /= 0 ) then
-      if ( qty%sharedHGrid ) then
-        qty%crossAngles => hGrids(xGridIndex)%phi(1,:)
-      else
-        call allocate_test ( qty%crossAngles, size(hGrids(xGridIndex)%phi,2), &
-          & 'qty%crossAngles', moduleName )
-        qty%crossAngles = hGrids(xGridIndex)%phi(1,:)
-      end if
+      call allocate_test ( qty%crossAngles, size(hGrids(xGridIndex)%phi,2), &
+        & 'qty%crossAngles', moduleName )
+      qty%crossAngles = hGrids(xGridIndex)%phi(1,:)
     end if
 
     ! Fill the frequency information if appropriate
@@ -618,7 +614,6 @@ contains ! ============= Public procedures ===================================
           & 'You must supply NoChans to reuse geolocation information' )
       ! We have geolocation information, setup the quantity as a clone of that.
       qty = mifGeolocation(instrumentModule)
-      qty%sharedHGrid = .true.
       qty%sharedVGrid = .true.
       if ( present ( regular ) ) qty%regular = regular
       qty%noChans = noChans
@@ -792,12 +787,11 @@ contains ! ============= Public procedures ===================================
   end subroutine ConstructMinorFrameQuantity
 
   ! ------------------------------------ ForgeMinorFrames --------------
-  subroutine ForgeMinorFrames ( root, chunk, mifGeolocation )
+  subroutine ForgeMinorFrames ( root, mifGeolocation )
     ! This routine is used when we're in the mode of creating l2pc files
     ! and we want to invent a set of minor frame quantities with no
     ! reference to the l1 files
 
-    use CHUNKS_M, only: MLSCHUNK_T
     use EXPR_M, only: EXPR
     use INIT_TABLES_MODULE, only: F_GEODALT, F_GEODANGLE, F_MODULE, F_NOMIFS, &
       & F_SOLARTIME, F_SOLARZENITH, F_Truncate
@@ -814,7 +808,6 @@ contains ! ============= Public procedures ===================================
 
     ! Dummy arguments
     integer, intent(in) :: ROOT         ! Tree vertex
-    type (MLSChunk_T), intent(in) :: CHUNK ! This chunk
     type (QuantityTemplate_T), dimension(:), intent(inout) :: MIFGEOLOCATION
 
     ! Local variables
@@ -1104,7 +1097,8 @@ contains ! ============= Public procedures ===================================
     & mifGeolocation, NoCrossTrack )
     ! Dummy arguments
     use CHUNKS_M, only: MLSCHUNK_T
-    use QUANTITYTEMPLATES, only: QUANTITYTEMPLATE_T, SETUPNEWQUANTITYTEMPLATE
+    use QUANTITYTEMPLATES, only: CreateGeolocationFields, QUANTITYTEMPLATE_T, &
+      & SETUPNEWQUANTITYTEMPLATE
     use TOGGLES, only: GEN, LEVELS, TOGGLE
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
 
@@ -1128,13 +1122,14 @@ contains ! ============= Public procedures ===================================
     call SetupNewQuantityTemplate ( qty, noInstances=source%noInstances, &
       & noSurfs=1, coherent=.true., stacked=.true., regular=.true., &
       & noChans=noChans, noCrossTrack=noCrossTrack, &
-      & sharedHGrid=.true., sharedVGrid=.true. )
+      & sharedVGrid=.true. )
     call SetupEmptyVGridForQuantity ( qty )
     ! In some rare cases, e.g. non-Aura satellite data, source may be a dud
     if ( associated(source%phi) ) then
+      call createGeolocationFields ( qty, qty%noSurfs, 'Qty' )
+      qty%geodLat = source%geodLat(1:1,:)
+      qty%lon = source%lon(1:1,:)
       qty%phi => source%phi(1:1,:)
-      qty%geodLat => source%geodLat(1:1,:)
-      qty%lon => source%lon(1:1,:)
       qty%time => source%time(1:1,:)
       qty%solarTime => source%solarTime(1:1,:)
       qty%solarZenith => source%solarZenith(1:1,:)
@@ -1443,85 +1438,6 @@ contains ! ============= Public procedures ===================================
     
   end subroutine InitQuantityTemplates
 
-  ! ----------------------------------  PointQuantityToHGrid  -----
-  subroutine PointQuantityToHGrid ( hGrid, chunk, qty )
-
-  ! This routine associates HGrid information into an already defined quantity,
-  ! except that if Qty%NoCrossTrack > 1, it creates a copy.
-
-    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST
-    use CHUNKS_M, only: MLSCHUNK_T
-    use HGRIDSDATABASE, only: HGRID_T
-    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_Warning
-    use QUANTITYTEMPLATES, only: CreateGeolocationFields, QUANTITYTEMPLATE_T
-    use String_Table, only: Get_String
-    use TOGGLES, only: GEN, LEVELS, TOGGLE
-    use TRACE_M, only: TRACE_BEGIN, TRACE_END
-
-    ! Dummy arguments
-    type (hGrid_T), intent(in) :: HGRID
-    type (MLSChunk_T), intent(in) :: Chunk
-    type (QuantityTemplate_T), intent(inout) :: QTY
-
-    ! Local variables
-    integer :: I
-    integer :: Me = -1                  ! String index for trace
-    character(127) :: QtyName
-
-    ! Executable code
-
-    call trace_begin ( me, "PointQuantityToHGrid", &
-      & cond=toggle(gen) .and. levels(gen) > 2 )
-
-    if ( qty%noInstances/=hGrid%noProfs ) call MLSMessage ( MLSMSG_Error,&
-      & ModuleName, "Size of HGrid not compatible with size of quantity" )
-
-    if ( qty%stacked ) then
-      qty%phi => hGrid%phi
-      if ( qty%noCrossTrack > 1 ) then
-        call CreateGeolocationFields ( qty, size(hGrid%geodLat,1), 'Qty' )
-        do i = 1, qty%noCrossTrack
-          qty%geodLat3(:,:,i) = hGrid%geodLat
-          qty%lon3(:,:,i) = hGrid%lon
-        end do
-      else
-        qty%geodLat => hGrid%geodLat
-        qty%lon => hGrid%lon
-        qty%geodLat1(1:hGrid%noProfs) => hGrid%geodLat(1,1:hGrid%noProfs)
-        qty%geodLat3(1:1,1:hGrid%noProfs,1:1) => hGrid%geodLat(1,1:hGrid%noProfs)
-        qty%lon1(1:hGrid%noProfs) => hGrid%lon(1,1:hGrid%noProfs)
-        qty%lon3(1:1,1:hGrid%noProfs,1:1) => hGrid%lon(1,1:hGrid%noProfs)
-      end if
-    else
-      call CreateGeolocationFields ( qty, qty%noSurfs, 'Qty' )
-      nullify ( qty%phi )
-!       This results in a "double free or corruption" termination:
-!       call allocate_test ( qty%phi, 0, 0, 'qty%phi(1,1)', ModuleName )
-      if ( qty%name /= 0 ) then
-        call get_string ( qty%name, qtyName )
-        call MLSMessage ( MLSMSG_Warning, ModuleName, &
-        & "Cannot copy hGrids into unstacked quantity " // &
-        & trim(qtyName) // &
-        & "; assume Lat, Lon computed somehow; hope nobody needs Phi")
-      else
-        call MLSMessage ( MLSMSG_Warning, ModuleName, &
-          & "Cannot copy hGrids into unstacked quantities; assume Lat, Lon computed somehow; hope nobody needs Phi")
-      end if
-    end if
-    qty%time => hGrid%time
-    qty%solarTime => hGrid%solarTime
-    qty%solarZenith => hGrid%solarZenith
-    qty%losAngle => hGrid%losAngle
-    qty%noInstancesLowerOverlap = hGrid%noProfsLowerOverlap
-    qty%noInstancesUpperOverlap = hGrid%noProfsUpperOverlap
-    ! if ( ChunkDivideConfig%allowPriorOverlaps .and. chunk%chunkNumber == 1 ) &
-    !  & qty%noInstancesLowerOverlap = 0
-
-    call trace_end ( "PointQuantityToHGrid", &
-      & cond=toggle(gen) .and. levels(gen) > 2 )
-
-  end subroutine PointQuantityToHGrid
-
   ! ---------------------------------- SetupEmptyHGridForQuantity
   subroutine SetupEmptyHGridForQuantity ( qty ) 
     use Allocate_Deallocate, only: ALLOCATE_TEST
@@ -1530,10 +1446,11 @@ contains ! ============= Public procedures ===================================
     ! Dummy arguments
     type ( QuantityTemplate_T ), intent(inout) :: QTY
     ! Executable code
-    qty%sharedHGrid = .false.
     qty%hGridIndex = 0
+    qty%xGridIndex = 0
+    ! Lest we deallocate a database entry:
     nullify( qty%frequencies, qty%geodLat, qty%lon, qty%time, qty%solarTime, &
-      & qty%solarZenith, qty%losAngle, qty%crossAngles ) ! Lest we deallocate a database entry
+      & qty%solarZenith, qty%losAngle, qty%crossAngles, qty%the_hGrid )
     call allocate_test ( qty%phi, 1, 1, 'qty%phi(1,1)', ModuleName )
     call allocate_test ( qty%geodLat1, 1, 'qty%geodLat1(1)', ModuleName )
     call remap ( qty%geodLat1, qty%geodLat, [ 1, 1 ] )
@@ -1585,6 +1502,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.179  2015/05/28 18:25:16  vsnyder
+! Eliminate shared HGrid, get PointQuantityToHGrid from QuantityTemplates
+!
 ! Revision 2.178  2015/03/28 02:29:39  vsnyder
 ! Added P_MustBeGeocalt, Coordinate, NoCrossTrack, Stacked, xGridIndex,
 ! xGrid, noCrossTrack, tracing, scGeodLat, scLon.  Support cross-track grids.
