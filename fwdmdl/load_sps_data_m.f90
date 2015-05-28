@@ -195,6 +195,7 @@ contains
   ! quantity in it.
 
     use ForwardModelConfig, only: ForwardModelConfig_t
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use VectorsModule, only: VectorValue_T
 
     type(grids_t), intent(out) :: Grids_X
@@ -207,9 +208,11 @@ contains
     logical, intent(in), optional :: Across ! Viewing angle is not in orbit plane
 
     type(vectorValue_t) :: QtyStuff
-    logical :: MyFlag
+    logical :: MyAcross, MyFlag
     integer :: ii, no_ang
 
+    myAcross = .false.
+    if ( present(across) ) myAcross = across
     myFlag = .false.
     if ( present(SetTscatFlag) ) myFlag = SetTscatFlag
 
@@ -248,10 +251,13 @@ contains
        if ( present(phitan) ) then
          call fill_grids_1 ( grids_x, 1, qty, maf, phitan, fwdModelConf, &
            & across=across )
+       else if ( myAcross ) then
+         call MLSMessage ( MLSMSG_Error, moduleName, &
+           & 'Cross-track viewing needs PhiTan quantity' )
        else
          ! Use the whole phi space for the window
          call fill_grids_1 ( grids_x, 1, qty, maf, &
-           & ws=1, wf=size(qty%template%phi,2), across=across )
+           & ws=1, wf=size(qty%template%phi,2) )
        end if
 
        call create_grids_2 ( grids_x )
@@ -450,7 +456,7 @@ contains
     integer, intent(in) :: II
     type (vectorValue_T), intent(in) :: QTY     ! An arbitrary vector quantity
     integer, intent(in) :: MAF
-    type (vectorValue_T), intent(in), optional :: PHITAN  ! Tangent geodAngle component of
+    type (vectorValue_T), intent(in), optional :: PHITAN  ! Tangent geodAngle
     type(forwardModelConfig_T), intent(in), optional :: FwdModelConf
     integer, intent(in), optional :: Ws, Wf ! Explicit window start, finish
     logical, intent(in), optional :: Across ! Viewing angle is not in orbit plane
@@ -490,13 +496,7 @@ contains
     grids_x%l_p(ii) = grids_x%l_p(ii-1) + kp
     grids_x%l_v(ii) = grids_x%l_v(ii-1) + kz * kp * kf
     grids_x%z_coord(ii) = qty%template%verticalCoordinate
-    if ( grids_x%z_coord(ii) == l_geodAltitude ) then
-      ! geodetic altitude will be converted to geocentric, which will
-      ! have a different altitude for each latitude
-      grids_x%l_z(ii) = grids_x%l_z(ii-1) + kz * kp
-    else
-      grids_x%l_z(ii) = grids_x%l_z(ii-1) + kz
-    end if
+    grids_x%l_z(ii) = grids_x%l_z(ii-1) + kz
     grids_x%p_len = grids_x%p_len + kz * kp
     grids_x%mol(ii) = qty%template%molecule
     grids_x%qty(ii) = qty%template%quantityType
@@ -511,11 +511,12 @@ contains
   end subroutine Fill_Grids_1
 
   ! -----------------------------------------------  Fill_Grids_2  -----
-  subroutine Fill_Grids_2 ( Grids_x, II, Qty, SetDerivFlags, Phi_Offset, Across )
+  subroutine Fill_Grids_2 ( Grids_x, II, Qty, SetDerivFlags, Phi_Offset, &
+    & Across, PhiTan )
   ! Fill the zeta, phi, freq. basis and value components for the II'th
   ! "molecule" in Grids_x.
 
-    use Geometry, only: To_Cart
+    use Geometry, only: To_XYZ, XYZ_to_Geod
     use Intrinsic, only: L_Channel, L_geocAltitude, L_geodAltitude, &
       & L_IntermediateFrequency, L_Zeta
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
@@ -534,13 +535,14 @@ contains
     logical, intent(in), optional :: SetDerivFlags
     real(rp), intent(in), optional :: Phi_Offset ! Radians
     logical, intent(in), optional :: Across ! Viewing angle is not in orbit plane
+    type (vectorValue_T), intent(in), optional :: PHITAN  ! Tangent geodAngle
 
     integer :: I, J, J1, J2, K, K1, K2, KF, KV, KZ, L, N, PF, PP, PV, PZ
     integer :: QF, QP, QV, QZ, WF, WS
     integer :: InstOr1
     logical :: MyAcross
-    logical :: PackFrq ! Need to pack the frequency "dimension"
-    real(rp) :: XYZ(3)   ! Geocentric Cartesian coordinates (km)
+    logical :: PackFrq    ! Need to pack the frequency "dimension"
+    real(rp) :: Geod(3)   ! Geodetic coordinates lat (deg), lon(deg), alt (m)
 
     pf = Grids_x%l_f(ii-1)
     pp = Grids_x%l_p(ii-1)
@@ -563,10 +565,11 @@ contains
 
     select case ( qty%template%verticalCoordinate )
     case ( l_geocAltitude ) ! This will be used for interpolation with
-                            ! H_Path, which is in kilometers, not meters
-      Grids_x%zet_basis(pz+1:qz) = qty%template%surfs(1:kz,1) / 1000.0
-    case ( l_geodAltitude ) ! This will be used for interpolation with
-                            ! H_Path, which is in kilometers, not meters
+                            ! H_Path, which is in geodetic height measured
+                            ! from the center of the equivalent circular
+                            ! Earth, in kilometers, not meters.  We don't add
+                            ! the equivalent circular Earth radius here, not
+                            ! least because we don't know it yet.
       n = pz
       if ( myAcross ) then
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -591,12 +594,18 @@ contains
           instOr1 = merge(1,j,qty%template%coherent)
           do k = k1, k2
             n = n + 1
-            call to_cart ( [ qty%template%geodLat3(l,j,k), qty%template%lon3(l,j,k), &
-                           & qty%template%surfs(i,instOr1)/1000.0 ], xyz, km=.true. )
-            Grids_x%zet_basis(n) = norm2(xyz)
+            ! Get geodetic coordinates equivalent to geocentric coordinates
+            geod = xyz_to_geod ( to_xyz ( qty%template%geodLat3(l,j,k), &
+                                        & qty%template%lon3(l,j,k) ) * &
+                                        & qty%template%surfs(i,instOr1) )
+            ! Get height above the geoid in kilometers
+            Grids_x%zet_basis(n) = geod(3)/1000.0
           end do
         end do
       end do
+    case ( l_geodAltitude ) ! This will be used for interpolation with
+                            ! H_Path, which is in kilometers, not meters
+      Grids_x%zet_basis(pz+1:qz) = qty%template%surfs(1:kz,1) / 1000.0
     case ( l_zeta )
       Grids_x%zet_basis(pz+1:qz) = qty%template%surfs(1:kz,1)
     case default
@@ -607,9 +616,19 @@ contains
 
     if ( myAcross ) then
       if ( associated(qty%template%crossAngles) ) then
-        Grids_x%phi_basis(pp+1:qp) = qty%template%crossAngles
+        if ( phitan%template%noInstances == 1 ) then
+          Grids_x%phi_basis(pp+1:qp) = qty%template%crossAngles + &
+                                       phitan%template%phi(1,1)
+        else if ( phitan%template%noInstances == phitan%template%noCrossTrack ) then
+          Grids_x%phi_basis(pp+1:qp) = qty%template%crossAngles + &
+                                       phitan%template%phi(1,:)
+        else
+          call MLSMessage ( MLSMSG_Error, moduleName, &
+            & 'Number of instances of PhiTan /= number of cross angles' )
+        end if
       else
-        Grids_x%phi_basis(pp+1:qp) = 0
+        ! Assume qty%template%crossAngles would have been zero
+        Grids_x%phi_basis(pp+1:qp) = phitan%template%phi(1,1)
       end if
     else
       if ( present(phi_offset) ) then
@@ -888,6 +907,9 @@ contains
 end module LOAD_SPS_DATA_M
 
 ! $Log$
+! Revision 2.97  2015/05/15 23:40:02  vsnyder
+! More work on cross-track indexing kludges
+!
 ! Revision 2.96  2015/05/12 20:53:07  vsnyder
 ! Default initialize Z_Coord component to NULL
 !
