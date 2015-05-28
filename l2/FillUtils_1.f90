@@ -32,7 +32,7 @@ module FillUtils_1                     ! Procedures used by Fill
     & l_dobsonunits, l_du, &
     & l_ecrtofov, &
     & l_fieldazimuth, l_fieldelevation, l_fieldstrength, &
-    & l_geocaltitude, l_geocentric, l_geodaltitude, l_geodetic, l_GPH, &
+    & l_geocaltitude, l_geodaltitude, l_GPH, &
     & l_height, l_isotoperatio, &
     & l_l1bmafbaseline, l_l1bmif_tai, &
     & l_limbsidebandfraction, l_losvel, &
@@ -2430,7 +2430,7 @@ contains ! =====     Public Procedures     =============================
       integer, dimension(2) :: resolutionList
       integer :: STATUS
       integer, dimension(2) :: COMPLETEDATA
-      integer, external :: PGS_DEM_GETQUALITYDATA, PGS_DEM_GETSIZE, PGS_DEM_SORTMODELS
+      integer, external :: PGS_DEM_GETQUALITYDATA ! , PGS_DEM_GETSIZE, PGS_DEM_SORTMODELS
 
       ! Executable code
       call trace_begin ( me, 'FillUtils_1.GeoidData', 0, &
@@ -7518,6 +7518,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.107  2015/05/28 18:26:48  vsnyder
+! Remove unreferenced USE names and external declarations
+!
 ! Revision 2.106  2015/05/05 17:44:01  pwagner
 ! Use MAXMANIPULATIONLEN from manipulationUtils; lots of unsetting allcaps
 !
