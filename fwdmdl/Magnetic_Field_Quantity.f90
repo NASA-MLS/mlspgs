@@ -46,11 +46,9 @@ contains
   ! quantities has been checked.
 
     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
-    use Cross_m, only: Cross ! Vector cross product
     use ForwardModelGeometry, only: Compute_Viewing_Plane
-    use MLSStringLists, only: SwitchDetail
     use QuantityTemplates, only: RT
-    use Toggles, only: Emit, Levels, Switches, Toggle
+    use Toggles, only: Emit, Levels
     use Trace_m, only: Trace_Begin, Trace_End
     use VectorsModule, only: VectorValue_T
 
@@ -59,10 +57,7 @@ contains
     type (vectorValue_t), intent(in), optional :: GeocAltitudeQuantity ! tangent
     type (vectorValue_t), intent(in), optional :: GPHQuantity
 
-    real :: B(3)                       ! Magnetic field
-    integer, save :: Details = -10     ! From switchDetails('gmag')
     integer :: Me = -1                 ! String index for tracing
-    character(len=8), save :: Options = ''
     integer :: Stat                    ! From allocate or deallocate
     real(rt), allocatable :: XYZs(:,:,:,:) ! Geocentric Cartesian coordinates
                                        ! in viewing plane.
@@ -70,11 +65,6 @@ contains
 
     call trace_begin ( me, 'Get_Magnetic_Field_Qty_Geoc', &
       & cond=levels(emit) > 1 )
-
-    if ( details < -1 ) then ! only once
-      details = switchDetail(switches,'gmag')
-      if ( switchDetail(switches,'clean') > -1 ) options = '-c'
-    end if
 
     allocate ( xyzs ( 3, &                     ! XYZ
                     & size(qty%value4,2),   &  ! NoSurfs
@@ -105,7 +95,7 @@ contains
     use Intrinsic, only: L_Gauss
     use MLSStringLists, only: SwitchDetail
     use QuantityTemplates, only: Epoch, RT
-    use Toggles, only: Emit, Levels, Switches, Toggle
+    use Toggles, only: Emit, Levels, Switches
     use Trace_m, only: Trace_Begin, Trace_End
     use VectorsModule, only: Dump, VectorValue_T
 
@@ -167,6 +157,9 @@ contains
 end module Magnetic_Field_Quantity
 
 ! $Log$
+! Revision 2.7  2015/05/28 23:15:18  vsnyder
+! Fiddle with tracing
+!
 ! Revision 2.6  2015/04/29 01:23:08  vsnyder
 ! Coordinates now given as XYZ, not taken from the magnetic field quantity
 !
