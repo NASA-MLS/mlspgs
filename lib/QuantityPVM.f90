@@ -209,30 +209,31 @@ contains ! ================================== Module procedures ============
 
   ! ---------------------------------- PVMReceiveQuantity ---------------------
   subroutine PVMReceiveQuantity ( QT, values, tid, justUnpack, mifGeolocation )
-    use Allocate_Deallocate, only: ALLOCATE_TEST
-    use QuantityTemplates, only: QUANTITYTEMPLATE_T, SETUPNEWQUANTITYTEMPLATE
-    use VectorsModule, only: CREATEMASK, CreateVectorValue, VectorValue_T
+    use Allocate_Deallocate, only: Allocate_Test
+    use QuantityTemplates, only: CreateGeolocationFields, QuantityTemplate_T, &
+      & SetupNewQuantityTemplate
+    use VectorsModule, only: CreateMask, CreateVectorValue, VectorValue_T
     type (QuantityTemplate_T), intent(out) :: QT ! Template for quantity
     ! It's not inout, because then setupNewQuantityTemplate would deallocate
     ! the pointer components.  But the actual argument is put into a database
     ! using a shallow copy, so cleaning it up would clobber a database item.
     type (VectorValue_T), optional :: VALUES ! Quantity to receive
     integer, intent(in), optional :: TID ! Task to get it from
-    logical, intent(in), optional :: JUSTUNPACK ! Just unpack from existing buffer
-    type (QuantityTemplate_T), dimension(:), intent(in), optional :: MIFGEOLOCATION
+    logical, intent(in), optional :: JustUnpack ! Just unpack from existing buffer
+    type (QuantityTemplate_T), dimension(:), intent(in), optional :: MIFGeolocation
 
     ! Local variables
-    integer :: BUFFERID                 ! From pvm
-    integer :: INFO                     ! Flag
+    integer :: BufferID                 ! From pvm
+    integer :: Info                     ! Flag
     integer :: I4(4)                    ! Unpacked stuff
     integer :: I7(7)                    ! Unpacked stuff
     logical :: L2(2)                    ! Unpacked stuff
     logical :: L6(6)                    ! Unpacked stuff
-    logical :: FLAG(1)                  ! To unpack
-    character(len=132) :: WORD          ! Result of PVMIDLUnpack etc.
-    logical :: MYJUSTUNPACK             ! Copy of justUnPack
-    logical :: NOVALUES                 ! No values sent
-    logical :: NOMASK                   ! No mask sent
+    logical :: Flag(1)                  ! To unpack
+    character(len=132) :: Word          ! Result of PVMIDLUnpack etc.
+    logical :: MyJusTunpack             ! Copy of justUnPack
+    logical :: NoValues                 ! No values sent
+    logical :: NoMask                   ! No mask sent
 
     ! Executable code
 
@@ -333,16 +334,16 @@ contains ! ================================== Module procedures ============
       if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking losAngle" )
 
     else
-      ! If it's minor frame and we've got mif geolocation information just point to that.
+      call createGeolocationFields ( qt, &
+        & mifGeolocation(qt%instrumentModule)%noSurfs, &
+        & 'PVMReceiveQuantity' )
+      ! If it's minor frame and we've got mif geolocation information just
+      ! point to that (except don't point share latitude and longitude).
       if ( qt%minorFrame ) then
         qt%surfs => mifGeolocation(qt%instrumentModule)%surfs
         qt%phi => mifGeolocation(qt%instrumentModule)%phi
-        qt%geodLat1 => mifGeolocation(qt%instrumentModule)%geodLat1
-        qt%geodLat => mifGeolocation(qt%instrumentModule)%geodLat
-        qt%geodLat3 => mifGeolocation(qt%instrumentModule)%geodLat3
-        qt%lon1 => mifGeolocation(qt%instrumentModule)%lon1
-        qt%lon => mifGeolocation(qt%instrumentModule)%lon
-        qt%lon3 => mifGeolocation(qt%instrumentModule)%lon3
+        qt%geodLat1 = mifGeolocation(qt%instrumentModule)%geodLat1
+        qt%lon1 = mifGeolocation(qt%instrumentModule)%lon1
         qt%time => mifGeolocation(qt%instrumentModule)%time
         qt%solarTime => mifGeolocation(qt%instrumentModule)%solarTime
         qt%solarZenith => mifGeolocation(qt%instrumentModule)%solarZenith
@@ -350,12 +351,8 @@ contains ! ================================== Module procedures ============
       if ( qt%majorFrame ) then
         nullify ( qt%surfs )
         qt%phi => mifGeolocation(qt%instrumentModule)%phi(1:1,:)
-        qt%geodLat1 => mifGeolocation(qt%instrumentModule)%geodLat1
-        qt%geodLat => mifGeolocation(qt%instrumentModule)%geodLat(1:1,:)
-        qt%geodLat3 => mifGeolocation(qt%instrumentModule)%geodLat3(1:1,:,:)
-        qt%lon1 => mifGeolocation(qt%instrumentModule)%lon1
-        qt%lon => mifGeolocation(qt%instrumentModule)%lon(1:1,:)
-        qt%lon3 => mifGeolocation(qt%instrumentModule)%lon3(1:1,:,:)
+        qt%geodLat1 = mifGeolocation(qt%instrumentModule)%geodLat1
+        qt%lon1 = mifGeolocation(qt%instrumentModule)%lon1
         qt%time => mifGeolocation(qt%instrumentModule)%time(1:1,:)
         qt%solarTime => mifGeolocation(qt%instrumentModule)%solarTime(1:1,:)
         qt%solarZenith => mifGeolocation(qt%instrumentModule)%solarZenith(1:1,:)
@@ -432,6 +429,9 @@ contains ! ================================== Module procedures ============
 end module QuantityPVM
 
 ! $Log$
+! Revision 2.27  2015/05/29 00:34:47  vsnyder
+! Eliminate shared latitude and longitude fields
+!
 ! Revision 2.26  2015/03/28 01:48:23  vsnyder
 ! Added support for 1-D and 3-D geolocation arrays
 !
