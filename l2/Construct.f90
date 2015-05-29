@@ -187,7 +187,7 @@ contains ! =====     Public Procedures     =============================
           & vectorTemplates, forwardModelConfigs=forwardModelConfigDatabase, &
           & hGrids=hGrids, griddedDataBase=griddedDataBase )
       case ( s_forge )
-        call ForgeMinorFrames ( key, chunk, mifGeolocation )
+        call ForgeMinorFrames ( key, mifGeolocation )
       case ( s_forwardModel )
         call decorate ( key, AddForwardModelConfigToDatabase ( &
           & forwardModelConfigDatabase, &
@@ -290,6 +290,9 @@ END MODULE Construct
 
 !
 ! $Log$
+! Revision 2.73  2015/05/29 17:48:44  vsnyder
+! Remove 'chunk' argument from MIFGeolocation
+!
 ! Revision 2.72  2014/01/11 01:44:18  vsnyder
 ! Decruftification
 !
