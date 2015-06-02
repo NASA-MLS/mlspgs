@@ -27,6 +27,10 @@ module Pointer_Rank_Remapping
     module procedure Remap_2d_Char, Remap_2d_Double, Remap_2d_Real
     module procedure Remap_3d_Char, Remap_3d_Double, Remap_3d_Real
     module procedure Remap_4d_Char, Remap_4d_Double, Remap_4d_Real
+  ! For an allocatable, target argument
+    module procedure RemapA_2d_Char, RemapA_2d_Double, RemapA_2d_Real
+    module procedure RemapA_3d_Char, RemapA_3d_Double, RemapA_3d_Real
+    module procedure RemapA_4d_Char, RemapA_4d_Double, RemapA_4d_Real
   end interface
 
   !---------------------------- RCS Ident Info -------------------------------
@@ -304,6 +308,261 @@ b(1:one,1:two,1:three) => a
 
   end subroutine Remap_4d_Real
 
+  subroutine RemapA_2d_Char ( A, B, TheShape, Lbounds )
+    character, allocatable, target :: A(:)
+    character, pointer :: B(:,:)
+    integer, intent(in) :: TheShape(2)
+    integer, intent(in), optional :: Lbounds(2)
+integer :: One, Two ! A kludge to get around a NAG runtime-check bug
+#ifdef CMAP
+    type(c_ptr) :: C
+    c = c_loc(a(1))
+    call c_f_pointer ( c, b, theShape )
+#ifdef LBOUND
+    if ( present(lbounds) ) b(lbounds(1):,lbounds(2):) => b
+#else
+    if ( present(lbounds) ) call MLSMessage ( MLSMSG_Crash, &
+      & "Pointer low bounds setting not supported by compiler version", &
+      & moduleName )
+#endif
+#else
+    if ( present(lbounds) ) then
+      b(lbounds(1):theShape(1),lbounds(2):theShape(2)) => a
+    else
+!      b(1:theShape(1),1:theShape(2)) => a
+! This is a replacement to get around a bug in NAG 5.2(723)
+one = theShape(1)
+two = theShape(2)
+b(1:one,1:two) => a
+    end if
+#endif
+
+  end subroutine RemapA_2d_Char
+
+  subroutine RemapA_2d_Double ( A, B, TheShape, Lbounds )
+    integer, parameter :: RK = kind(1.0d0)
+    real(rk), allocatable, target :: A(:)
+    real(rk), pointer :: B(:,:)
+    integer, intent(in) :: TheShape(2)
+    integer, intent(in), optional :: Lbounds(2)
+    if ( present(lbounds) ) then
+      b(lbounds(1):theShape(1),lbounds(2):theShape(2)) => a
+    else
+      b(1:theShape(1),1:theShape(2)) => a
+    end if
+
+  end subroutine RemapA_2d_Double
+
+  subroutine RemapA_2d_Real ( A, B, TheShape, Lbounds )
+    integer, parameter :: RK = kind(1.0e0)
+    real(rk), allocatable, target :: A(:)
+    real(rk), pointer :: B(:,:)
+    integer, intent(in) :: TheShape(2)
+    integer, intent(in), optional :: Lbounds(2)
+integer :: One, Two ! A kludge to get around a NAG runtime-check bug
+#ifdef CMAP
+    type(c_ptr) :: C
+    c = c_loc(a(1))
+    call c_f_pointer ( c, b, theShape )
+#ifdef LBOUND
+    if ( present(lbounds) ) b(lbounds(1):,lbounds(2):) => b
+#else
+    if ( present(lbounds) ) call MLSMessage ( MLSMSG_Crash, &
+      & "Pointer low bounds setting not supported by compiler version", &
+      & moduleName )
+#endif
+#else
+    if ( present(lbounds) ) then
+      b(lbounds(1):theShape(1),lbounds(2):theShape(2)) => a
+    else
+!      b(1:theShape(1),1:theShape(2)) => a
+! This is a replacement to get around a bug in NAG 5.2(723)
+one = theShape(1)
+two = theShape(2)
+b(1:one,1:two) => a
+    end if
+#endif
+
+  end subroutine RemapA_2d_Real
+
+  subroutine RemapA_3d_Char ( A, B, TheShape, Lbounds )
+    character, allocatable, target :: A(:)
+    character, pointer :: B(:,:,:)
+    integer, intent(in) :: TheShape(3)
+    integer, intent(in), optional :: Lbounds(3)
+integer :: One, Two, Three ! A kludge to get around a NAG runtime-check bug
+#ifdef CMAP
+    type(c_ptr) :: C
+    c = c_loc(a(1))
+    call c_f_pointer ( c, b, theShape )
+#ifdef LBOUND
+    if ( present(lbounds) ) b(lbounds(1):,lbounds(2):,lbounds(3):) => b
+#else
+    if ( present(lbounds) ) call MLSMessage ( MLSMSG_Crash, &
+      & "Pointer low bounds setting not supported by compiler version", &
+      & moduleName )
+#endif
+#else
+    if ( present(lbounds) ) then
+      b(lbounds(1):theShape(1),lbounds(2):theShape(2),lbounds(3):theShape(3)) => a
+    else
+!      b(1:theShape(1),1:theShape(2),1:theShape(3)) => a
+! This is a replacement to get around a bug in NAG 5.2(723)
+one = theShape(1)
+two = theShape(2)
+three = theShape(3)
+b(1:one,1:two,1:three) => a
+    end if
+#endif
+
+  end subroutine RemapA_3d_Char
+
+  subroutine RemapA_3d_Double ( A, B, TheShape, Lbounds )
+    integer, parameter :: RK = kind(1.0d0)
+    real(rk), allocatable, target :: A(:)
+    real(rk), pointer :: B(:,:,:)
+    integer, intent(in) :: TheShape(3)
+    integer, intent(in), optional :: Lbounds(3)
+integer :: One, Two, Three ! A kludge to get around a NAG runtime-check bug
+#ifdef CMAP
+    type(c_ptr) :: C
+    c = c_loc(a(1))
+    call c_f_pointer ( c, b, theShape )
+#ifdef LBOUND
+    if ( present(lbounds) ) b(lbounds(1):,lbounds(2):,lbounds(3):) => b
+#else
+    if ( present(lbounds) ) call MLSMessage ( MLSMSG_Crash, &
+      & "Pointer low bounds setting not supported by compiler version", &
+      & moduleName )
+#endif
+#else
+    if ( present(lbounds) ) then
+      b(lbounds(1):theShape(1),lbounds(2):theShape(2),lbounds(3):theShape(3)) => a
+    else
+!      b(1:theShape(1),1:theShape(2),1:theShape(3)) => a
+! This is a replacement to get around a bug in NAG 5.2(723)
+one = theShape(1)
+two = theShape(2)
+three = theShape(3)
+b(1:one,1:two,1:three) => a
+    end if
+#endif
+
+  end subroutine RemapA_3d_Double
+
+  subroutine RemapA_3d_Real ( A, B, TheShape, Lbounds )
+    integer, parameter :: RK = kind(1.0e0)
+    real(rk), allocatable, target :: A(:)
+    real(rk), pointer :: B(:,:,:)
+    integer, intent(in) :: TheShape(3)
+    integer, intent(in), optional :: Lbounds(3)
+integer :: One, Two, Three ! A kludge to get around a NAG runtime-check bug
+#ifdef CMAP
+    type(c_ptr) :: C
+    c = c_loc(a(1))
+    call c_f_pointer ( c, b, theShape )
+#ifdef LBOUND
+    if ( present(lbounds) ) b(lbounds(1):,lbounds(2):,lbounds(3):) => b
+#else
+    if ( present(lbounds) ) call MLSMessage ( MLSMSG_Crash, &
+      & "Pointer low bounds setting not supported by compiler version", &
+      & moduleName )
+#endif
+#else
+    if ( present(lbounds) ) then
+      b(lbounds(1):theShape(1),lbounds(2):theShape(2),lbounds(3):theShape(3)) => a
+    else
+!      b(1:theShape(1),1:theShape(2),1:theShape(3)) => a
+! This is a replacement to get around a bug in NAG 5.2(723)
+one = theShape(1)
+two = theShape(2)
+three = theShape(3)
+b(1:one,1:two,1:three) => a
+    end if
+#endif
+
+  end subroutine RemapA_3d_Real
+
+  subroutine RemapA_4d_Char ( A, B, TheShape, Lbounds )
+    character, allocatable, target :: A(:)
+    character, pointer :: B(:,:,:,:)
+    integer, intent(in) :: TheShape(4)
+    integer, intent(in), optional :: Lbounds(4)
+#ifdef CMAP
+    type(c_ptr) :: C
+    c = c_loc(a(1))
+    call c_f_pointer ( c, b, theShape )
+#ifdef LBOUND
+    if ( present(lbounds) ) b(lbounds(1):,lbounds(2):,lbounds(3):,lbounds(4):) => b
+#else
+    if ( present(lbounds) ) call MLSMessage ( MLSMSG_Crash, &
+      & "Pointer low bounds setting not supported by compiler version", &
+      & moduleName )
+#endif
+#else
+    if ( present(lbounds) ) then
+      b(lbounds(1):theShape(1),lbounds(2):theShape(2),lbounds(3):theShape(3),lbounds(4):theShape(4)) => a
+    else
+      b(1:theShape(1),1:theShape(2),1:theShape(3),1:theShape(4)) => a
+    end if
+#endif
+
+  end subroutine RemapA_4d_Char
+
+  subroutine RemapA_4d_Double ( A, B, TheShape, Lbounds )
+    integer, parameter :: RK = kind(1.0d0)
+    real(rk), allocatable, target :: A(:)
+    real(rk), pointer :: B(:,:,:,:)
+    integer, intent(in) :: TheShape(4)
+    integer, intent(in), optional :: Lbounds(4)
+#ifdef CMAP
+    type(c_ptr) :: C
+    c = c_loc(a(1))
+    call c_f_pointer ( c, b, theShape )
+#ifdef LBOUND
+    if ( present(lbounds) ) b(lbounds(1):,lbounds(2):,lbounds(3):,lbounds(4):) => b
+#else
+    if ( present(lbounds) ) call MLSMessage ( MLSMSG_Crash, &
+      & "Pointer low bounds setting not supported by compiler version", &
+      & moduleName )
+#endif
+#else
+    if ( present(lbounds) ) then
+      b(lbounds(1):theShape(1),lbounds(2):theShape(2),lbounds(3):theShape(3),lbounds(4):theShape(4)) => a
+    else
+      b(1:theShape(1),1:theShape(2),1:theShape(3),1:theShape(4)) => a
+    end if
+#endif
+
+  end subroutine RemapA_4d_Double
+
+  subroutine RemapA_4d_Real ( A, B, TheShape, Lbounds )
+    integer, parameter :: RK = kind(1.0e0)
+    real(rk), allocatable, target :: A(:)
+    real(rk), pointer :: B(:,:,:,:)
+    integer, intent(in) :: TheShape(4)
+    integer, intent(in), optional :: Lbounds(4)
+#ifdef CMAP
+    type(c_ptr) :: C
+    c = c_loc(a(1))
+    call c_f_pointer ( c, b, theShape )
+#ifdef LBOUND
+    if ( present(lbounds) ) b(lbounds(1):,lbounds(2):,lbounds(3):,lbounds(4):) => b
+#else
+    if ( present(lbounds) ) call MLSMessage ( MLSMSG_Crash, &
+      & "Pointer low bounds setting not supported by compiler version", &
+      & moduleName )
+#endif
+#else
+    if ( present(lbounds) ) then
+      b(lbounds(1):theShape(1),lbounds(2):theShape(2),lbounds(3):theShape(3),lbounds(4):theShape(4)) => a
+    else
+      b(1:theShape(1),1:theShape(2),1:theShape(3),1:theShape(4)) => a
+    end if
+#endif
+
+  end subroutine RemapA_4d_Real
+
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
   character (len=*), parameter :: IdParm = &
@@ -317,6 +576,9 @@ b(1:one,1:two,1:three) => a
 end module Pointer_Rank_Remapping
 
 ! $Log$
+! Revision 2.4  2015/06/02 23:54:31  vsnyder
+! Provide for remapping allocatable arrays
+!
 ! Revision 2.3  2012/07/19 03:39:20  vsnyder
 ! Replace 'shape' by 'theShape', work around a bug in NAG 5.2(723)
 !
