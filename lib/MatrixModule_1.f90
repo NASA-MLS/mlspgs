@@ -1334,32 +1334,28 @@ contains ! =====     Public Procedures     =============================
     use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     type(matrix_database_T), intent(inout) :: Database
     integer(c_intptr_t) :: Addr         ! For tracing
-    integer :: S, Status  ! from deallocate
+    integer :: Status  ! from deallocate
 
     if ( associated(database%matrix) ) then
       call destroyMatrix ( database%matrix )
-      s = storage_size(database%matrix) / 8
       addr = transfer(c_loc(database%matrix), addr)
       deallocate ( database%matrix, stat=status )
       call test_deallocate ( status, moduleName, 'PlainMatrix', &
         & storage_size(database%matrix) / 8, address=addr )
     else if ( associated(database%cholesky) ) then
       call destroyMatrix ( database%cholesky%m )
-      s = storage_size(database%cholesky%m ) / 8
       addr = transfer(c_loc(database%cholesky%m), addr)
       deallocate ( database%cholesky, stat=status )
       call test_deallocate ( status, moduleName, 'CholeskyMatrix', &
         & storage_size(database%cholesky%m) / 8, address=addr )
     else if ( associated(database%kronecker) ) then
       call destroyMatrix ( database%kronecker%m )
-      s = storage_size(database%kronecker%m ) / 8
       addr = transfer(c_loc(database%kronecker%m), addr)
       deallocate ( database%kronecker, stat=status )
       call test_deallocate ( status, moduleName, 'KroneckerMatrix', &
         & storage_size(database%kronecker%m) / 8, address=addr )
     else if ( associated(database%spd) ) then
       call destroyMatrix ( database%spd%m )
-      s = storage_size(database%spd%m ) / 8
       addr = transfer(c_loc(database%spd%m), addr)
       deallocate ( database%spd, stat=status )
       call test_deallocate ( status, moduleName, 'SPDMatrix', &
@@ -3191,6 +3187,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.142  2015/06/02 23:53:36  vsnyder
+! Remove unreferenced variable
+!
 ! Revision 2.141  2015/04/29 00:00:43  pwagner
 ! Diffs made more manageable
 !
