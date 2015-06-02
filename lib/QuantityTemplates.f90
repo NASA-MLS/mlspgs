@@ -156,27 +156,12 @@ module QuantityTemplates         ! Quantities within vectors
     ! unstacked one.  Phi is either taken from or derived from Geolocation.
 
     ! These other coordinates are dimensioned in the same manner as Phi:
-    real(rt), pointer :: GeodLat(:,:) => NULL()     ! Degrees
-    real(rt), pointer :: Lon(:,:) => NULL()         ! Degrees
+    real(rt), pointer, contiguous :: GeodLat(:,:) => NULL()  ! Degrees
+    real(rt), pointer, contiguous :: Lon(:,:) => NULL()      ! Degrees
     real(rt), pointer :: Time(:,:) => NULL()        ! Seconds since EPOCH
     real(rt), pointer :: SolarTime(:,:) => NULL()
     real(rt), pointer :: SolarZenith(:,:) => NULL() ! Degrees
     real(rt), pointer :: LosAngle(:,:) => NULL()    ! Degrees
-
-    ! GeodLat1 and Lon1 are the ones that are allocated.  The extents are the
-    ! number of surfaces (for unstacked quantities) or 1 (for stacked
-    ! quantities), times the number of instances, times the size of xGrid.
-    ! GeodLat, Lon, GeodLat3, and Lon3 are then rank remapped pointers
-    ! associated with GeodLat1 and Lon1.  The third extent of GeodLat3 and
-    ! Lon3 is 1, or the size of xGrid if there is one.  If there is an xGrid,
-    ! the second extent of GeodLat and Lon is the number of instances times
-    ! the size of xGrid, with subscript values in the second dimension
-    ! corresponding to positions in the xGrid separated by the number of
-    ! instances (using GeodLat3 and Lon3 would be much simpler).
-    real(rt), contiguous, pointer :: GeodLat1(:) => NULL()      ! Degrees
-    real(rt), contiguous, pointer :: Lon1(:) => NULL()          ! Degrees
-    real(rt), contiguous, pointer :: GeodLat3(:,:,:) => NULL()  ! Degrees
-    real(rt), contiguous, pointer :: Lon3(:,:,:) => NULL()      ! Degrees
 
     ! Notwithstanding that the name of the latitude coordinate is GeodLat,
     ! it is sometimes geocentric latitude.  LatitudeCoordinate is either
@@ -228,6 +213,11 @@ module QuantityTemplates         ! Quantities within vectors
     integer, dimension(:,:), pointer :: surfIndex => NULL()
     integer, dimension(:,:), pointer :: chanIndex => NULL()
     ! These are actually dimensioned (instanceLen, noInstances)
+  contains
+    procedure :: GeodLat3 => GetLat3
+    procedure :: Lon3 => GetLon3
+    procedure :: PutLat3
+    procedure :: PutLon3
   end type QuantityTemplate_T
 
   interface DUMP
@@ -378,9 +368,7 @@ contains
 
   ! ------------------------------------  CreateGeolocationFields  -----
   subroutine CreateGeolocationFields ( Qty, NoSurfsToAllocate, What )
-    ! Allocate Qty%GeodLat1 and Qty%Lon1.  Create rank-remapped pointers to
-    ! Qty%GeodLat, Qty%Lon, Qty%GeodLat3, and Qty%Lon3.
-    use Pointer_Rank_Remapping, only: REMAP
+    ! Allocate Qty%GeodLat and Qty%Lon.
 
     type (QuantityTemplate_T), intent(inout) :: QTY
     integer, intent(in) :: NoSurfsToAllocate
@@ -393,9 +381,7 @@ contains
 
   ! ---------------------------------------  CreateLatitudeFields  -----
   subroutine CreateLatitudeFields ( Qty, NoSurfsToAllocate, What )
-    ! Allocate Qty%GeodLat1.  Create rank-remapped pointers to
-    ! Qty%GeodLat, and Qty%GeodLat3.
-    use Pointer_Rank_Remapping, only: REMAP
+    ! Allocate Qty%GeodLat.
 
     type (QuantityTemplate_T), intent(inout) :: QTY
     integer, intent(in) :: NoSurfsToAllocate
@@ -403,20 +389,15 @@ contains
 
     integer :: NumAlloc
 
-    numAlloc = noSurfsToAllocate * qty%noInstances * qty%noCrossTrack
-    call allocate_test ( qty%geodLat1, numAlloc, trim(what) // "%geodLat1", &
+    numAlloc = qty%noInstances * qty%noCrossTrack
+    call allocate_test ( qty%geodLat, noSurfsToAllocate, numAlloc, trim(what) // "%geodLat", &
       & moduleName )
-    call remap ( qty%geodLat1, qty%geodLat, &
-      & [ noSurfsToAllocate, qty%noInstances * qty%noCrossTrack ] )
-    call remap ( qty%geodLat1, qty%geodLat3, &
-      & [ noSurfsToAllocate, qty%noInstances, qty%noCrossTrack ] )
+
   end subroutine CreateLatitudeFields
 
   ! --------------------------------------  CreateLongitudeFields  -----
   subroutine CreateLongitudeFields ( Qty, NoSurfsToAllocate, What )
-    ! Allocate Qty%Lon1.  Create rank-remapped pointers to
-    ! Qty%Lon, and Qty%Lon3.
-    use Pointer_Rank_Remapping, only: REMAP
+    ! Allocate Qty%Lon.
 
     type (QuantityTemplate_T), intent(inout) :: QTY
     integer, intent(in) :: NoSurfsToAllocate
@@ -424,13 +405,10 @@ contains
 
     integer :: NumAlloc
 
-    numAlloc = noSurfsToAllocate * qty%noInstances * qty%noCrossTrack
-    call allocate_test ( qty%lon1, numAlloc, trim(what) // "%lon1", &
+    numAlloc = qty%noInstances * qty%noCrossTrack
+    call allocate_test ( qty%lon, noSurfsToAllocate, numAlloc, trim(what) // "%lon", &
       & moduleName )
-    call remap ( qty%lon1, qty%lon, &
-      & [ noSurfsToAllocate, qty%noInstances * qty%noCrossTrack ] )
-    call remap ( qty%lon1, qty%lon3, &
-      & [ noSurfsToAllocate, qty%noInstances, qty%noCrossTrack ] )
+
   end subroutine CreateLongitudeFields
 
   ! -----------------------------------  DestroyGeolocationFields  -----
@@ -441,9 +419,8 @@ contains
     use Allocate_Deallocate, only: Deallocate_Test
     type (QuantityTemplate_T), intent(inout) :: QTY
 
-    call deallocate_test ( qty%geodLat1, 'Qty%GeodLat1', moduleName )
-    call deallocate_test ( qty%lon1, 'Qty%Lon', moduleName )
-    nullify ( qty%geodLat, qty%geodLat3, qty%lon, qty%lon3 )
+    call deallocate_test ( qty%geodLat, 'Qty%GeodLat', moduleName )
+    call deallocate_test ( qty%lon, 'Qty%Lon', moduleName )
 
   end subroutine DestroyGeolocationFields
 
@@ -482,9 +459,9 @@ contains
       call deallocate_test ( qty%phi, trim(what) // '%phi', ModuleName )
     end if
     if ( verbose ) call output( 'About to deallocate geosdlat', advance='yes' )
-    call deallocate_test ( qty%geodLat1, trim(what) // '%geodLat1', ModuleName )
+    call deallocate_test ( qty%geodLat, trim(what) // '%geodLat', ModuleName )
     if ( verbose ) call output( 'About to deallocate lons', advance='yes' )
-    call deallocate_test ( qty%lon1, trim(what) // '%lon1', ModuleName )
+    call deallocate_test ( qty%lon, trim(what) // '%lon', ModuleName )
     if ( verbose ) call output( 'About to deallocate times', advance='yes' )
     call deallocate_test ( qty%time, trim(what) // '%time', ModuleName )
     if ( verbose ) call output( 'About to deallocate solartime', advance='yes' )
@@ -495,9 +472,6 @@ contains
     call deallocate_test ( qty%losAngle, trim(what) // '%losAngle', ModuleName )
     if ( verbose ) call output( 'About to deallocate crossAngles', advance='yes' )
     call deallocate_test ( qty%crossAngles, trim(what) // '%crossAngles', ModuleName )
-
-    ! Nullify the remapped ones.
-    nullify ( qty%geodLat, qty%geodLat3, qty%lon, qty%lon3 )
 
     if ( .not. qty%sharedFGrid ) then
       if ( verbose ) call output( 'About to deallocate chanInds', advance='yes' )
@@ -550,13 +524,13 @@ contains
   end subroutine DestroyQuantityTemplateDatabase
 
   ! -------------------------------------  DUMP_QUANTITY_TEMPLATE  -----
-  subroutine DUMP_QUANTITY_TEMPLATE ( QUANTITY_TEMPLATE, DETAILS, NOL2CF, What )
+  subroutine DUMP_QUANTITY_TEMPLATE ( Qty, DETAILS, NOL2CF, What )
 
     use MLSSIGNALS_M, only: SIGNALS, DUMP, GETRADIOMETERNAME, GETMODULENAME
     use OUTPUT_M, only: NEWLINE
     use VGRIDSDATABASE, only: DUMP
 
-    type(QuantityTemplate_T), intent(in) :: QUANTITY_TEMPLATE
+    type(QuantityTemplate_T), intent(in) :: Qty
     integer, intent(in), optional :: DETAILS ! <= 0 => Don't dump arrays
                                              ! >0   => Do signal, phi, surfs
                                              !         and frequency
@@ -574,124 +548,136 @@ contains
     myNoL2CF = switchDetail(switches, 'nl2cf') > -1 ! .false.
     if ( present(NoL2CF) ) myNoL2CF = NoL2CF
     call output ( ' Name = ' )
-    call myDisplayString ( quantity_template%name )
-    if ( .not. myNoL2CF .and. quantity_template%quantityType > 0 ) then
+    call myDisplayString ( qty%name )
+    if ( .not. myNoL2CF .and. qty%quantityType > 0 ) then
       call output ( ' quantityType = ' )
-      call myDisplayString ( lit_indices(quantity_template%quantityType) )
+      call myDisplayString ( lit_indices(qty%quantityType) )
     else
       call output ( ' unknown quantityType' )
     end if
     if ( present(what) ) call output ( ' ' // trim(what) )
     call newline
-    call output ( quantity_template%noChans,      before='      NoChans = ' )
-    call output ( quantity_template%noSurfs,      before=' NoSurfs = ' )
-    call output ( quantity_template%noInstances,  before=' NoInstances = ' )
-    call output ( quantity_template%noCrossTrack, before=' NoCrossTrack = ', advance='yes' )
+    call output ( qty%noChans,      before='      NoChans = ' )
+    call output ( qty%noSurfs,      before=' NoSurfs = ' )
+    call output ( qty%noInstances,  before=' NoInstances = ' )
+    call output ( qty%noCrossTrack, before=' NoCrossTrack = ', advance='yes' )
     call output ( '      ' )
-    if ( .not. quantity_template%coherent ) call output ( 'in' )
+    if ( .not. qty%coherent ) call output ( 'in' )
     call output ( 'coherent ' )
-    if ( .not. quantity_template%stacked ) call output ( 'non' )
+    if ( .not. qty%stacked ) call output ( 'non' )
     call output ( 'stacked ' )
-    if ( .not. quantity_template%regular ) call output ( 'ir' )
+    if ( .not. qty%regular ) call output ( 'ir' )
     call output ( 'regular ' )
-    if ( quantity_template%logBasis ) then
+    if ( qty%logBasis ) then
       call output ('log-')
     else
       call output ('linear-')
     end if
     call output ('basis ' )
-    call output ( trim(merge('   ','non',quantity_template%minorFrame)) // &
+    call output ( trim(merge('   ','non',qty%minorFrame)) // &
       & 'minorFrame' )
-    call output ( ' ' // trim(merge('   ','non',quantity_template%majorFrame)) // &
+    call output ( ' ' // trim(merge('   ','non',qty%majorFrame)) // &
       & 'majorFrame', advance='yes' )
     call output ( '      NoInstancesLowerOverlap = ' )
-    call output ( quantity_template%noInstancesLowerOverlap )
+    call output ( qty%noInstancesLowerOverlap )
     call output ( ' NoInstancesUpperOverlap = ' )
-    call output ( quantity_template%noInstancesUpperOverlap, advance='yes' )
-    if ( .not. myNoL2CF .and. quantity_template%unit > 0 ) then
-      call myDisplayString ( lit_indices(quantity_template%unit), &
+    call output ( qty%noInstancesUpperOverlap, advance='yes' )
+    if ( .not. myNoL2CF .and. qty%unit > 0 ) then
+      call myDisplayString ( lit_indices(qty%unit), &
         & before='      Unit = ' )
     end if
-    call output ( quantity_template%badValue, before=' BadValue = ' )
+    call output ( qty%badValue, before=' BadValue = ' )
     call output ( ' InstanceLen = ' )
-    call output ( quantity_template%InstanceLen, advance='yes' )
-    if ( .not. myNoL2CF .and. quantity_template%horizontalCoordinate > 0 ) &
-      & call myDisplayString ( lit_indices(quantity_template%horizontalCoordinate), &
+    call output ( qty%InstanceLen, advance='yes' )
+    if ( .not. myNoL2CF .and. qty%horizontalCoordinate > 0 ) &
+      & call myDisplayString ( lit_indices(qty%horizontalCoordinate), &
       & before=   '      horizontal coordinate = ' )
-    call myDisplayString ( lit_indices(quantity_template%latitudeCoordinate), &
+    call myDisplayString ( lit_indices(qty%latitudeCoordinate), &
       & before=' latitude coordinate = ', advance='yes' )
-    call output ( quantity_template%hGridIndex, before='      hGridIndex = ' )
-    call output ( quantity_template%xGridIndex, before=' xGridIndex = ' )
+    call output ( qty%hGridIndex, before='      hGridIndex = ' )
+    call output ( qty%xGridIndex, before=' xGridIndex = ' )
     call newline
     call output ( '      sharedVGrid = ' )
-    call output ( quantity_template%sharedVGrid, advance='no' )
-    if ( quantity_template%sharedVGrid ) then
+    call output ( qty%sharedVGrid, advance='no' )
+    if ( qty%sharedVGrid ) then
       call output ( ' vGridIndex = ' )
-      call output ( quantity_template%vGridIndex )
+      call output ( qty%vGridIndex )
     end if
-    if ( .not. myNoL2CF .and. quantity_template%verticalCoordinate > 0 ) &
-      & call myDisplayString ( lit_indices(quantity_template%verticalCoordinate), &
+    if ( .not. myNoL2CF .and. qty%verticalCoordinate > 0 ) &
+      & call myDisplayString ( lit_indices(qty%verticalCoordinate), &
       & before=' vertical coordinate = ' )
     call newLine
     call output ( '      sharedFGrid = ' )
-    call output ( quantity_template%sharedFGrid, advance='no' )
-    if ( quantity_template%sharedFGrid ) then
+    call output ( qty%sharedFGrid, advance='no' )
+    if ( qty%sharedFGrid ) then
       call output ( ' fGridIndex = ' )
-      call output ( quantity_template%fGridIndex )
+      call output ( qty%fGridIndex )
     end if
-    call myDisplayString ( lit_indices(quantity_template%frequencyCoordinate), &
+    call myDisplayString ( lit_indices(qty%frequencyCoordinate), &
       & before=   ' frequency coordinate = ', advance='yes' )
-    if ( quantity_template%radiometer /= 0 .and. .not. myNoL2CF ) then
+    if ( qty%radiometer /= 0 .and. .not. myNoL2CF ) then
       call output ( '      Radiometer = ' )
-      call GetRadiometerName ( quantity_template%radiometer, str )
+      call GetRadiometerName ( qty%radiometer, str )
       call output ( trim(str), advance='yes' )
     end if
     if ( .not. myNoL2CF ) then
       call output ( '     ' )
-      if ( quantity_template%quantityType == l_vmr ) then
+      if ( qty%quantityType == l_vmr ) then
         call output ( ' Molecule = ' )
-        call myDisplayString ( lit_indices(quantity_template%molecule) )
+        call myDisplayString ( lit_indices(qty%molecule) )
       end if
-      if ( quantity_template%instrumentModule /= 0 ) then
+      if ( qty%instrumentModule /= 0 ) then
         call output ( ' Instrument Module = ' )
-        call GetModuleName ( quantity_template%instrumentModule, str )
+        call GetModuleName ( qty%instrumentModule, str )
         call output ( trim(str) )
       end if
       call newLine
     end if
     if ( myDetails > 0 ) then
-      if ( quantity_template%signal /= 0 ) then
+      if ( qty%signal /= 0 ) then
         call output ( '      Signal ' )
-        call output ( quantity_template%signal )
+        call output ( qty%signal )
         call output ( ':', advance='yes' )
-        if ( associated(quantity_template%channels) ) then
-          call dump ( signals(quantity_template%signal), &
-            & otherChannels=quantity_template%channels )
+        if ( associated(qty%channels) ) then
+          call dump ( signals(qty%signal), &
+            & otherChannels=qty%channels )
         else
-          call dump ( signals(quantity_template%signal) )
+          call dump ( signals(qty%signal) )
         end if
       end if
-      call maybe_dump_2_rt ( quantity_template%phi, 'Phi' )
-      call maybe_dump_2_rt ( quantity_template%surfs, 'Surfs' )
+      call maybe_dump_2_rt ( qty%phi, 'Phi' )
+      call maybe_dump_2_rt ( qty%surfs, 'Surfs' )
       if ( myDetails > 1 ) then
-        call maybe_dump_2_I ( quantity_template%surfIndex, 'SurfIndex' )
-        call maybe_dump_2_I ( quantity_template%chanIndex, 'ChanIndex' )
-        call maybe_dump_3_rt ( quantity_template%geodLat3, 'GeodLat' )
-        call maybe_dump_3_rt ( quantity_template%lon3, 'Lon' )
-        call maybe_dump_2_rt ( quantity_template%time, 'Time' )
-        call maybe_dump_2_rt ( quantity_template%solarTime, 'SolarTime' )
-        call maybe_dump_2_rt ( quantity_template%solarZenith, 'SolarZenith' )
-        call maybe_dump_2_rt ( quantity_template%losAngle, 'LosAngle' )
-        call maybe_dump_1_rt ( quantity_template%crossAngles, 'CrossAngles' )
+        call maybe_dump_2_I ( qty%surfIndex, 'SurfIndex' )
+        call maybe_dump_2_I ( qty%chanIndex, 'ChanIndex' )
+        if ( associated(qty%geodlat) ) then
+          call dump ( reshape ( qty%geodlat, &
+            & [ size(qty%geodLat,1),qty%noInstances,qty%noCrossTrack] ), &
+            & '      GeodLat = ' )
+        else
+          call output ( '      No GeodLat' )
+        end if
+        if ( associated(qty%lon) ) then
+          call dump ( reshape ( qty%lon, &
+            & [ size(qty%geodLat,1),qty%noInstances,qty%noCrossTrack] ), &
+            & '      Lon = ' )
+        else
+          call output ( '      No Lon' )
+        end if
+        call maybe_dump_2_rt ( qty%time, 'Time' )
+        call maybe_dump_2_rt ( qty%solarTime, 'SolarTime' )
+        call maybe_dump_2_rt ( qty%solarZenith, 'SolarZenith' )
+        call maybe_dump_2_rt ( qty%losAngle, 'LosAngle' )
+        call maybe_dump_1_rt ( qty%crossAngles, 'CrossAngles' )
       end if
-      if ( associated(quantity_template%frequencies)  .and. .not. myNoL2CF ) then
-        call myDisplayString ( lit_indices(quantity_template%frequencyCoordinate), &
+      if ( associated(qty%frequencies)  .and. .not. myNoL2CF ) then
+        call myDisplayString ( lit_indices(qty%frequencyCoordinate), &
           & before='      FrequencyCoordinate = ', advance='yes' )
-        call dump ( quantity_template%frequencies, ' Frequencies = ' )
+        call dump ( qty%frequencies, ' Frequencies = ' )
       end if
     else
-      if ( associated(quantity_template%frequencies)  .and. .not. myNoL2CF ) &
-        & call myDisplayString ( lit_indices(quantity_template%frequencyCoordinate), &
+      if ( associated(qty%frequencies)  .and. .not. myNoL2CF ) &
+        & call myDisplayString ( lit_indices(qty%frequencyCoordinate), &
           & before='      FrequencyCoordinate = ', advance='yes' )
     end if
   
@@ -726,16 +712,6 @@ contains
         call output ( '      No ' // trim(name), advance='yes' )
       end if
     end subroutine Maybe_Dump_2_RT
-  
-    subroutine Maybe_Dump_3_RT ( Array, Name )
-      real(rt), intent(in), pointer :: Array(:,:,:)
-      character(*), intent(in) :: Name
-      if ( associated(array) ) then
-        call dump ( array, '      ' // trim(name) // ' = ' )
-      else
-        call output ( '      No ' // trim(name), advance='yes' )
-      end if
-    end subroutine Maybe_Dump_3_RT
 
   end subroutine DUMP_QUANTITY_TEMPLATE
 
@@ -830,18 +806,16 @@ contains
       call myValuesToField( z%phi, SHP, VALUESNODE, spread, phyq_angle )
     case ( 'geodlat' )
       if ( any(shape(z%geodlat) /= shp) ) then
-        call deallocate_test( z%geodLat1, 'template geodLat', &
-          & ModuleName // 'ModifyQuantityTemplate_allocate' )
-        nullify ( z%geodLat, z%geodLat3 )
+        call deallocate_test( z%geodLat, 'template geodLat', &
+          & ModuleName // '%ModifyQuantityTemplate_allocate' )
         call createLatitudeFields ( z, size(z%the_hGrid%geodLat,1), &
           & 'ModifyQuantityTemplate' )
       end if
       call myValuesToField( z%geodLat, SHP, VALUESNODE, spread, phyq_angle )
     case ( 'lon' )
       if ( any(shape(z%lon) /= shp) ) then
-        call deallocate_test( z%lon1, 'template lon', &
-          & ModuleName // 'ModifyQuantityTemplate_allocate' )
-        nullify ( z%lon, z%lon3 )
+        call deallocate_test( z%lon, 'template lon', &
+          & ModuleName // '%ModifyQuantityTemplate_allocate' )
         call createLongitudeFields ( z, size(z%the_hGrid%Lon,1), &
           & 'ModifyQuantityTemplate' )
       end if
@@ -1065,7 +1039,7 @@ contains
     type (QuantityTemplate_T), intent(inout) :: Qty
 
     ! Local variables
-    integer :: I
+    integer :: I, J, K
     integer :: Me = -1                  ! String index for trace
     type (hGrid_T), pointer :: HGrid
 
@@ -1082,9 +1056,13 @@ contains
     if ( qty%stacked ) then
       qty%phi => hGrid%phi
       call CreateGeolocationFields ( qty, size(hGrid%geodLat,1), 'Qty' )
-      do i = 1, qty%noCrossTrack
-        qty%geodLat3(:,:,i) = hGrid%geodLat
-        qty%lon3(:,:,i) = hGrid%lon
+      do k = 1, qty%noCrossTrack
+        do j = 1, size(qty%geodLat,2)
+          do i = 1, size(qty%geodLat,1)
+            call qty%putLat3 ( i, j, k, real(hGrid%geodLat(i,j),rt) )
+            call qty%putLon3 ( i, j, k, real(hGrid%lon(i,j),rt) )
+          end do
+        end do
       end do
     else
       call CreateGeolocationFields ( qty, qty%noSurfs, 'Qty' )
@@ -1422,7 +1400,8 @@ contains
       & call MakeHDF5Attribute ( dsID, name, 'surfs', qt%surfs(:,1) )
   end subroutine WriteAttributes_QuantityTemplate
 
-  ! --------- Private procedures ---
+  ! =====      Private procedures     ==================================
+
   ! ----------------------------  CheckIntegrity_QuantityTemplate  -----
   logical function CheckIntegrity_QuantityTemplate ( qty, noError )
     type (QuantityTemplate_T), intent(in) :: QTY
@@ -1704,6 +1683,30 @@ contains
     
   end subroutine GetHDF5AttrAsStrID
 
+  ! ----------------------------------------------------  GetLat3  -----
+  pure real(rt) function GetLat3 ( Qty, Surf, Inst, CrossIndex )
+    ! This is intended to be used only as a type-bound function with a
+    ! binding named GeodLat3.  It's OK to use a surface index without
+    ! checking whether the quantity is stacked -- it's done here.
+    class(quantityTemplate_t), intent(in) :: Qty
+    integer, intent(in) :: Surf, Inst, CrossIndex
+    integer :: SurfOr1
+    surfOr1 = merge(1,surf,qty%stacked)
+    getLat3 = qty%geodlat(surfOr1, inst + qty%noInstances * ( crossIndex - 1 ) )
+  end function GetLat3
+
+  ! ----------------------------------------------------  GetLon3  -----
+  pure real(rt) function GetLon3 ( Qty, Surf, Inst, CrossIndex )
+    ! This is intended to be used only as a type-bound function with a
+    ! binding named Lon3.  It's OK to use a surface index without
+    ! checking whether the quantity is stacked -- it's done here.
+    class(quantityTemplate_t), intent(in) :: Qty
+    integer, intent(in) :: Surf, Inst, CrossIndex
+    integer :: SurfOr1
+    surfOr1 = merge(1,surf,qty%stacked)
+    getLon3 = qty%lon(surfOr1, inst + qty%noInstances * ( crossIndex - 1 ) )
+  end function GetLon3
+
   ! --------------------------------------------  myDisplayString  -----
   subroutine myDisplayString ( index, advance, before )
     ! Given a string index, display the string or an error message
@@ -1873,6 +1876,32 @@ contains
     end do
   end subroutine myValuesToField_2d_dble
 
+  ! ----------------------------------------------------  PutLat3  -----
+  pure subroutine PutLat3 ( Qty, Surf, Inst, CrossIndex, Lat )
+    ! Store a latitude as if the GeodLat component were a rank-3 array
+    ! with extents (surfs,insts,cross).  It's OK to use a surface index
+    ! without checking whether the quantity is stacked -- that's done here.
+    class(quantityTemplate_t), intent(inout) :: Qty
+    integer, intent(in) :: Surf, Inst, CrossIndex
+    real(rt), intent(in) :: Lat
+    integer :: SurfOr1
+    surfOr1 = merge(1,surf,qty%stacked)
+    qty%geodlat(surfOr1, inst + qty%noInstances * ( crossIndex - 1 ) ) = lat
+  end subroutine PutLat3
+
+  ! ----------------------------------------------------  PutLon3  -----
+  pure subroutine PutLon3 ( Qty, Surf, Inst, CrossIndex, Lon )
+    ! Store a Lonitude as if the Lon component were a rank-3 array
+    ! with extents (surfs,insts,cross).  It's OK to use a surface index
+    ! without checking whether the quantity is stacked -- that's done here.
+    class(quantityTemplate_t), intent(inout) :: Qty
+    integer, intent(in) :: Surf, Inst, CrossIndex
+    real(rt), intent(in) :: Lon
+    integer :: SurfOr1
+    surfOr1 = merge(1,surf,qty%stacked)
+    qty%lon(surfOr1, inst + qty%noInstances * ( crossIndex - 1 ) ) = lon
+  end subroutine PutLon3
+
 !=============================================================================
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
@@ -1889,6 +1918,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.94  2015/05/28 20:32:40  vsnyder
+! Deallocate the correct component in DestroyGeolocationFields
+!
 ! Revision 2.93  2015/05/27 22:41:46  vsnyder
 ! Move PointQuantityToHGrid here from HGridDatabase.  Eliminate shared
 ! HGrids.
