@@ -9,7 +9,7 @@
 ! export authority as may be required before exporting such information to
 ! foreign countries or providing access to foreign persons.
 
-module LOAD_SPS_DATA_M
+module Load_SPS_Data_M
 
   use MLSCommon, only: R8, RP
 
@@ -262,7 +262,8 @@ contains
 
        call create_grids_2 ( grids_x )
 
-       call fill_grids_2 ( grids_x, 1, qty, setDerivFlags, across=across )
+       call fill_grids_2 ( grids_x, 1, qty, setDerivFlags, across=across, &
+         & phitan=phitan )
 
     end if
 
@@ -904,9 +905,12 @@ contains
   end function not_used_here
 !---------------------------------------------------------------------------
 
-end module LOAD_SPS_DATA_M
+end module Load_SPS_Data_M
 
 ! $Log$
+! Revision 2.99  2015/05/28 23:21:38  vsnyder
+! Remove unreferenced USE name
+!
 ! Revision 2.98  2015/05/28 23:12:37  vsnyder
 ! Finish removing assumption that geodetic-height magnetic field will be
 ! unstacked.  Add some checking.  Convert geocentric height in meters
