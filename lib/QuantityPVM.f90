@@ -338,12 +338,12 @@ contains ! ================================== Module procedures ============
         & mifGeolocation(qt%instrumentModule)%noSurfs, &
         & 'PVMReceiveQuantity' )
       ! If it's minor frame and we've got mif geolocation information just
-      ! point to that (except don't point share latitude and longitude).
+      ! point to that (except don't share latitude and longitude).
       if ( qt%minorFrame ) then
         qt%surfs => mifGeolocation(qt%instrumentModule)%surfs
         qt%phi => mifGeolocation(qt%instrumentModule)%phi
-        qt%geodLat1 = mifGeolocation(qt%instrumentModule)%geodLat1
-        qt%lon1 = mifGeolocation(qt%instrumentModule)%lon1
+        qt%geodLat = mifGeolocation(qt%instrumentModule)%geodLat
+        qt%lon = mifGeolocation(qt%instrumentModule)%lon
         qt%time => mifGeolocation(qt%instrumentModule)%time
         qt%solarTime => mifGeolocation(qt%instrumentModule)%solarTime
         qt%solarZenith => mifGeolocation(qt%instrumentModule)%solarZenith
@@ -351,8 +351,8 @@ contains ! ================================== Module procedures ============
       if ( qt%majorFrame ) then
         nullify ( qt%surfs )
         qt%phi => mifGeolocation(qt%instrumentModule)%phi(1:1,:)
-        qt%geodLat1 = mifGeolocation(qt%instrumentModule)%geodLat1
-        qt%lon1 = mifGeolocation(qt%instrumentModule)%lon1
+        qt%geodLat = mifGeolocation(qt%instrumentModule)%geodLat
+        qt%lon = mifGeolocation(qt%instrumentModule)%lon
         qt%time => mifGeolocation(qt%instrumentModule)%time(1:1,:)
         qt%solarTime => mifGeolocation(qt%instrumentModule)%solarTime(1:1,:)
         qt%solarZenith => mifGeolocation(qt%instrumentModule)%solarZenith(1:1,:)
@@ -429,6 +429,9 @@ contains ! ================================== Module procedures ============
 end module QuantityPVM
 
 ! $Log$
+! Revision 2.28  2015/06/02 23:55:11  vsnyder
+! Eliminated pointer rank remapping for lat and lon
+!
 ! Revision 2.27  2015/05/29 00:34:47  vsnyder
 ! Eliminate shared latitude and longitude fields
 !
