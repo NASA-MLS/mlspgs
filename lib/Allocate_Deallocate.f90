@@ -39,96 +39,111 @@ module Allocate_Deallocate
   implicit NONE
   private
 
-  public :: BYTE_SIZE, BYTES, ALLOCATE_TEST, DEALLOCATE_TEST, DEALLOC_STATUS, & 
+  public :: Byte_Size, BYTES, Allocate_Test, Deallocate_Test, DEALLOC_STATUS, & 
     & SET_GARBAGE_COLLECTION, REPORTALLOCATEDEALLOCATE, &
     & Same_Shape, Test_Allocate, Test_Deallocate
 
-  interface ALLOCATE_TEST
+  interface Allocate_Test
     ! For separate scalar arguments for bounds
-    module procedure ALLOCATE_TEST_CHARACTER_1D, ALLOCATE_TEST_CHARACTER_2D
-    module procedure ALLOCATE_TEST_CHARACTER_3D
-    module procedure ALLOCATE_TEST_COMPLEX_1D, ALLOCATE_TEST_COMPLEX_2D
-    module procedure ALLOCATE_TEST_COMPLEX_3D
-    module procedure ALLOCATE_TEST_DCOMPLEX_1D, ALLOCATE_TEST_DCOMPLEX_2D
-    module procedure ALLOCATE_TEST_DCOMPLEX_3D
-    module procedure ALLOCATE_TEST_INTEGER_1D, ALLOCATE_TEST_INTEGER_2D
-    module procedure ALLOCATE_TEST_INTEGER_3D, ALLOCATE_TEST_INTEGER_4D
-    module procedure ALLOCATE_TEST_LOGICAL_1D, ALLOCATE_TEST_LOGICAL_2D
-    module procedure ALLOCATE_TEST_LOGICAL_3D
-    module procedure ALLOCATE_TEST_REALR4_1D, ALLOCATE_TEST_REALR4_2D
-    module procedure ALLOCATE_TEST_REALR4_3D, ALLOCATE_TEST_REALR4_4D
-    module procedure ALLOCATE_TEST_REALR8_1D, ALLOCATE_TEST_REALR8_2D
-    module procedure ALLOCATE_TEST_REALR8_3D, ALLOCATE_TEST_REALR8_4D
+    module procedure Allocate_Test_Character_1D, Allocate_Test_Character_2D
+    module procedure Allocate_Test_Character_3D
+    module procedure Allocate_Test_Complex_1D, Allocate_Test_Complex_2D
+    module procedure Allocate_Test_Complex_3D
+    module procedure Allocate_Test_DComplex_1D, Allocate_Test_DComplex_2D
+    module procedure Allocate_Test_DComplex_3D
+    module procedure Allocate_Test_Integer_1D, Allocate_Test_Integer_2D
+    module procedure Allocate_Test_Integer_3D, Allocate_Test_Integer_4D
+    module procedure Allocate_Test_Logical_1D, Allocate_Test_Logical_2D
+    module procedure Allocate_Test_Logical_3D
+    module procedure Allocate_Test_RealR4_1D, Allocate_Test_RealR4_2D
+    module procedure Allocate_Test_RealR4_3D, Allocate_Test_RealR4_4D
+    module procedure Allocate_Test_RealR8_1D, Allocate_Test_RealR8_2D
+    module procedure Allocate_Test_RealR8_3D, Allocate_Test_RealR8_4D
+    ! For allocatable instead of pointer, with scalar arguments for bounds
+    module procedure AllocateA_Test_RealR4_1D, AllocateA_Test_RealR4_2D
+    module procedure AllocateA_Test_RealR4_3D, AllocateA_Test_RealR4_4D
+    module procedure AllocateA_Test_RealR8_1D, AllocateA_Test_RealR8_2D
+    module procedure AllocateA_Test_RealR8_3D, AllocateA_Test_RealR8_4D
     ! For array arguments for bounds
-    module procedure ALLOCATE_TEST_CHARACTER_2D_A, ALLOCATE_TEST_CHARACTER_3D_A
-    module procedure ALLOCATE_TEST_COMPLEX_2D_A, ALLOCATE_TEST_COMPLEX_3D_A
-    module procedure ALLOCATE_TEST_DCOMPLEX_2D_A, ALLOCATE_TEST_DCOMPLEX_3D_A
-    module procedure ALLOCATE_TEST_INTEGER_2D_A
-    module procedure ALLOCATE_TEST_INTEGER_3D_A, ALLOCATE_TEST_INTEGER_4D_A
-    module procedure ALLOCATE_TEST_LOGICAL_2D_A, ALLOCATE_TEST_LOGICAL_3D_A
-    module procedure ALLOCATE_TEST_REALR4_2D_A
-    module procedure ALLOCATE_TEST_REALR4_3D_A, ALLOCATE_TEST_REALR4_4D_A
-    module procedure ALLOCATE_TEST_REALR8_2D_A
-    module procedure ALLOCATE_TEST_REALR8_3D_A, ALLOCATE_TEST_REALR8_4D_A
+    module procedure Allocate_Test_Character_2D_A, Allocate_Test_Character_3D_A
+    module procedure Allocate_Test_Complex_2D_A, Allocate_Test_Complex_3D_A
+    module procedure Allocate_Test_DComplex_2D_A, Allocate_Test_DComplex_3D_A
+    module procedure Allocate_Test_Integer_2D_A
+    module procedure Allocate_Test_Integer_3D_A, Allocate_Test_Integer_4D_A
+    module procedure Allocate_Test_Logical_2D_A, Allocate_Test_Logical_3D_A
+    module procedure Allocate_Test_RealR4_2D_A
+    module procedure Allocate_Test_RealR4_3D_A, Allocate_Test_RealR4_4D_A
+    module procedure Allocate_Test_RealR8_2D_A
+    module procedure Allocate_Test_RealR8_3D_A, Allocate_Test_RealR8_4D_A
+    ! For allocatable instead of pointer, with array arguments for bounds
+    module procedure AllocateA_Test_RealR4_2D_A
+    module procedure AllocateA_Test_RealR4_3D_A, AllocateA_Test_RealR4_4D_A
+    module procedure AllocateA_Test_RealR8_2D_A
+    module procedure AllocateA_Test_RealR8_3D_A, AllocateA_Test_RealR8_4D_A
   end interface
 
-  interface DEALLOCATE_TEST
-    module procedure DEALLOCATE_TEST_CHARACTER_1D, DEALLOCATE_TEST_CHARACTER_2D
-    module procedure DEALLOCATE_TEST_CHARACTER_3D
-    module procedure DEALLOCATE_TEST_COMPLEX_1D, DEALLOCATE_TEST_COMPLEX_2D
-    module procedure DEALLOCATE_TEST_COMPLEX_3D
-    module procedure DEALLOCATE_TEST_DCOMPLEX_1D, DEALLOCATE_TEST_DCOMPLEX_2D
-    module procedure DEALLOCATE_TEST_DCOMPLEX_3D
-    module procedure DEALLOCATE_TEST_INTEGER_1D, DEALLOCATE_TEST_INTEGER_2D
-    module procedure DEALLOCATE_TEST_INTEGER_3D, DEALLOCATE_TEST_INTEGER_4D
-    module procedure DEALLOCATE_TEST_LOGICAL_1D, DEALLOCATE_TEST_LOGICAL_2D
-    module procedure DEALLOCATE_TEST_LOGICAL_3D
-    module procedure DEALLOCATE_TEST_REALR4_1D, DEALLOCATE_TEST_REALR4_2D
-    module procedure DEALLOCATE_TEST_REALR4_3D, DEALLOCATE_TEST_REALR4_4D
-    module procedure DEALLOCATE_TEST_REALR8_1D, DEALLOCATE_TEST_REALR8_2D
-    module procedure DEALLOCATE_TEST_REALR8_3D, DEALLOCATE_TEST_REALR8_4D
+  interface Deallocate_Test
+    module procedure Deallocate_Test_Character_1D, Deallocate_Test_Character_2D
+    module procedure Deallocate_Test_Character_3D
+    module procedure Deallocate_Test_Complex_1D, Deallocate_Test_Complex_2D
+    module procedure Deallocate_Test_Complex_3D
+    module procedure Deallocate_Test_DComplex_1D, Deallocate_Test_DComplex_2D
+    module procedure Deallocate_Test_DComplex_3D
+    module procedure Deallocate_Test_Integer_1D, Deallocate_Test_Integer_2D
+    module procedure Deallocate_Test_Integer_3D, Deallocate_Test_Integer_4D
+    module procedure Deallocate_Test_Logical_1D, Deallocate_Test_Logical_2D
+    module procedure Deallocate_Test_Logical_3D
+    module procedure Deallocate_Test_RealR4_1D, Deallocate_Test_RealR4_2D
+    module procedure Deallocate_Test_RealR4_3D, Deallocate_Test_RealR4_4D
+    module procedure Deallocate_Test_RealR8_1D, Deallocate_Test_RealR8_2D
+    module procedure Deallocate_Test_RealR8_3D, Deallocate_Test_RealR8_4D
+    ! For allocatable instead of pointer argument
+    module procedure DeallocateA_Test_RealR4_1D, DeallocateA_Test_RealR4_2D
+    module procedure DeallocateA_Test_RealR4_3D, DeallocateA_Test_RealR4_4D
+    module procedure DeallocateA_Test_RealR8_1D, DeallocateA_Test_RealR8_2D
+    module procedure DeallocateA_Test_RealR8_3D, DeallocateA_Test_RealR8_4D
   end interface
 
   ! Size in bytes of an array
-  interface BYTE_SIZE
-    module procedure BYTE_SIZE_CHARACTER_1D, BYTE_SIZE_CHARACTER_2D
-    module procedure BYTE_SIZE_CHARACTER_3D
-    module procedure BYTE_SIZE_COMPLEX_1D, BYTE_SIZE_COMPLEX_2D
-    module procedure BYTE_SIZE_COMPLEX_3D
-    module procedure BYTE_SIZE_DCOMPLEX_1D, BYTE_SIZE_DCOMPLEX_2D
-    module procedure BYTE_SIZE_DCOMPLEX_3D
-    module procedure BYTE_SIZE_INTEGER_1D, BYTE_SIZE_INTEGER_2D
-    module procedure BYTE_SIZE_INTEGER_3D, BYTE_SIZE_INTEGER_4D
-    module procedure BYTE_SIZE_LOGICAL_1D, BYTE_SIZE_LOGICAL_2D
-    module procedure BYTE_SIZE_LOGICAL_3D
-    module procedure BYTE_SIZE_REALR4_1D, BYTE_SIZE_REALR4_2D
-    module procedure BYTE_SIZE_REALR4_3D, BYTE_SIZE_REALR4_4D
-    module procedure BYTE_SIZE_REALR4_5D, BYTE_SIZE_REALR4_6D
-    module procedure BYTE_SIZE_REALR8_1D, BYTE_SIZE_REALR8_2D
-    module procedure BYTE_SIZE_REALR8_3D, BYTE_SIZE_REALR8_4D
-    module procedure BYTE_SIZE_REALR8_5D, BYTE_SIZE_REALR8_6D
+  interface Byte_Size
+    module procedure Byte_Size_Character_1D, Byte_Size_Character_2D
+    module procedure Byte_Size_Character_3D
+    module procedure Byte_Size_Complex_1D, Byte_Size_Complex_2D
+    module procedure Byte_Size_Complex_3D
+    module procedure Byte_Size_DComplex_1D, Byte_Size_DComplex_2D
+    module procedure Byte_Size_DComplex_3D
+    module procedure Byte_Size_Integer_1D, Byte_Size_Integer_2D
+    module procedure Byte_Size_Integer_3D, Byte_Size_Integer_4D
+    module procedure Byte_Size_Logical_1D, Byte_Size_Logical_2D
+    module procedure Byte_Size_Logical_3D
+    module procedure Byte_Size_RealR4_1D, Byte_Size_RealR4_2D
+    module procedure Byte_Size_RealR4_3D, Byte_Size_RealR4_4D
+    module procedure Byte_Size_RealR4_5D, Byte_Size_RealR4_6D
+    module procedure Byte_Size_RealR8_1D, Byte_Size_RealR8_2D
+    module procedure Byte_Size_RealR8_3D, Byte_Size_RealR8_4D
+    module procedure Byte_Size_RealR8_5D, Byte_Size_RealR8_6D
   end interface
 
   ! Size in bytes of a scalar; includes character length
   interface BYTES
-    module procedure BYTES_CHARACTER_1D, BYTES_CHARACTER_2D
-    module procedure BYTES_CHARACTER_3D
-    module procedure BYTES_COMPLEX_1D, BYTES_COMPLEX_2D, BYTES_COMPLEX_3D
-    module procedure BYTES_DCOMPLEX_1D, BYTES_DCOMPLEX_2D, BYTES_DCOMPLEX_3D
-    module procedure BYTES_INTEGER_1D, BYTES_INTEGER_2D
-    module procedure BYTES_INTEGER_3D, BYTES_INTEGER_4D
-    module procedure BYTES_LOGICAL_1D, BYTES_LOGICAL_2D, BYTES_LOGICAL_3D
-    module procedure BYTES_REALR4_1D, BYTES_REALR4_2D
-    module procedure BYTES_REALR4_3D, BYTES_REALR4_4D
-    module procedure BYTES_REALR4_5D, BYTES_REALR4_6D
-    module procedure BYTES_REALR8_1D, BYTES_REALR8_2D
-    module procedure BYTES_REALR8_3D, BYTES_REALR8_4D
-    module procedure BYTES_REALR8_5D, BYTES_REALR8_6D
+    module procedure Bytes_Character_1D, Bytes_Character_2D
+    module procedure Bytes_Character_3D
+    module procedure Bytes_Complex_1D, Bytes_Complex_2D, Bytes_Complex_3D
+    module procedure Bytes_DComplex_1D, Bytes_DComplex_2D, Bytes_DComplex_3D
+    module procedure Bytes_Integer_1D, Bytes_Integer_2D
+    module procedure Bytes_Integer_3D, Bytes_Integer_4D
+    module procedure Bytes_Logical_1D, Bytes_Logical_2D, Bytes_Logical_3D
+    module procedure Bytes_RealR4_1D, Bytes_RealR4_2D
+    module procedure Bytes_RealR4_3D, Bytes_RealR4_4D
+    module procedure Bytes_RealR4_5D, Bytes_RealR4_6D
+    module procedure Bytes_RealR8_1D, Bytes_RealR8_2D
+    module procedure Bytes_RealR8_3D, Bytes_RealR8_4D
+    module procedure Bytes_RealR8_5D, Bytes_RealR8_6D
   end interface
 
   interface ReportAllocateDeallocate
     module procedure ReportAllocateDeallocate_ints
-    module procedure ReportAllocateDeallocate_real
+    module procedure ReportAllocateDeallocate_Real
   end interface
 
   ! subroutine Same_Shape ( Ref, New, ItsName, ModuleName )
@@ -141,34 +156,34 @@ module Allocate_Deallocate
   ! The reason to put TheShape at the end is so as not to have a generic
   ! conflict with the integer versions.
   interface Same_Shape
-    module procedure Same_Shape_CHARACTER_1D, Same_Shape_CHARACTER_2D
-    module procedure Same_Shape_CHARACTER_3D
-    module procedure Same_Shape_COMPLEX_1D, Same_Shape_COMPLEX_2D
-    module procedure Same_Shape_COMPLEX_3D
-    module procedure Same_Shape_DCOMPLEX_1D, Same_Shape_DCOMPLEX_2D
-    module procedure Same_Shape_DCOMPLEX_3D
-    module procedure Same_Shape_INTEGER_1D, Same_Shape_INTEGER_2D
-    module procedure Same_Shape_INTEGER_3D, Same_Shape_INTEGER_4D
-    module procedure Same_Shape_LOGICAL_1D, Same_Shape_LOGICAL_2D
-    module procedure Same_Shape_LOGICAL_3D
-    module procedure Same_Shape_REALR4_1D, Same_Shape_REALR4_2D
-    module procedure Same_Shape_REALR4_3D, Same_Shape_REALR4_4D
-    module procedure Same_Shape_REALR8_1D, Same_Shape_REALR8_2D
-    module procedure Same_Shape_REALR8_3D, Same_Shape_REALR8_4D
-    module procedure Same_Shape_CHARACTER_1D_A, Same_Shape_CHARACTER_2D_A
-    module procedure Same_Shape_CHARACTER_3D_A
-    module procedure Same_Shape_COMPLEX_1D_A, Same_Shape_COMPLEX_2D_A
-    module procedure Same_Shape_COMPLEX_3D_A
-    module procedure Same_Shape_DCOMPLEX_1D_A, Same_Shape_DCOMPLEX_2D_A
-    module procedure Same_Shape_DCOMPLEX_3D_A
-    module procedure Same_Shape_INTEGER_1D_A, Same_Shape_INTEGER_2D_A
-    module procedure Same_Shape_INTEGER_3D_A, Same_Shape_INTEGER_4D_A
-    module procedure Same_Shape_LOGICAL_1D_A, Same_Shape_LOGICAL_2D_A
-    module procedure Same_Shape_LOGICAL_3D_A
-    module procedure Same_Shape_REALR4_1D_A, Same_Shape_REALR4_2D_A
-    module procedure Same_Shape_REALR4_3D_A, Same_Shape_REALR4_4D_A
-    module procedure Same_Shape_REALR8_1D_A, Same_Shape_REALR8_2D_A
-    module procedure Same_Shape_REALR8_3D_A, Same_Shape_REALR8_4D_A
+    module procedure Same_Shape_Character_1D, Same_Shape_Character_2D
+    module procedure Same_Shape_Character_3D
+    module procedure Same_Shape_Complex_1D, Same_Shape_Complex_2D
+    module procedure Same_Shape_Complex_3D
+    module procedure Same_Shape_DComplex_1D, Same_Shape_DComplex_2D
+    module procedure Same_Shape_DComplex_3D
+    module procedure Same_Shape_Integer_1D, Same_Shape_Integer_2D
+    module procedure Same_Shape_Integer_3D, Same_Shape_Integer_4D
+    module procedure Same_Shape_Logical_1D, Same_Shape_Logical_2D
+    module procedure Same_Shape_Logical_3D
+    module procedure Same_Shape_RealR4_1D, Same_Shape_RealR4_2D
+    module procedure Same_Shape_RealR4_3D, Same_Shape_RealR4_4D
+    module procedure Same_Shape_RealR8_1D, Same_Shape_RealR8_2D
+    module procedure Same_Shape_RealR8_3D, Same_Shape_RealR8_4D
+    module procedure Same_Shape_Character_1D_A, Same_Shape_Character_2D_A
+    module procedure Same_Shape_Character_3D_A
+    module procedure Same_Shape_Complex_1D_A, Same_Shape_Complex_2D_A
+    module procedure Same_Shape_Complex_3D_A
+    module procedure Same_Shape_DComplex_1D_A, Same_Shape_DComplex_2D_A
+    module procedure Same_Shape_DComplex_3D_A
+    module procedure Same_Shape_Integer_1D_A, Same_Shape_Integer_2D_A
+    module procedure Same_Shape_Integer_3D_A, Same_Shape_Integer_4D_A
+    module procedure Same_Shape_Logical_1D_A, Same_Shape_Logical_2D_A
+    module procedure Same_Shape_Logical_3D_A
+    module procedure Same_Shape_RealR4_1D_A, Same_Shape_RealR4_2D_A
+    module procedure Same_Shape_RealR4_3D_A, Same_Shape_RealR4_4D_A
+    module procedure Same_Shape_RealR8_1D_A, Same_Shape_RealR8_2D_A
+    module procedure Same_Shape_RealR8_3D_A, Same_Shape_RealR8_4D_A
   end interface
 
   interface Test_Allocate
@@ -229,8 +244,8 @@ contains
     call ReportAllocateDeallocate( name, moduleName, real(noBytes), bounds )
   end subroutine ReportAllocateDeallocate_ints
 
-  !-----------------------------------   ReportAllocateDeallocate_real  -----
-  subroutine ReportAllocateDeallocate_real ( name, moduleName, noBytes, bounds )
+  !-----------------------------------   ReportAllocateDeallocate_Real  -----
+  subroutine ReportAllocateDeallocate_Real ( name, moduleName, noBytes, bounds )
     use OUTPUT_M, only: OUTPUT
     use HIGHOUTPUT, only: DUMPSIZE
     ! Dummy arguments
@@ -262,7 +277,7 @@ contains
     end if
     call output ( ' total ' )
     call DumpSize ( noBytesAllocated, advance='yes' )
-  end subroutine ReportAllocateDeallocate_real
+  end subroutine ReportAllocateDeallocate_Real
 
   ! -------------------------------------  Set_garbage_collection  -----
   subroutine Set_garbage_collection ( setting )
@@ -935,6 +950,217 @@ contains
        & .not. present(fill) ) &
          & to_allocate = IEEE_Value ( to_allocate, IEEE_Signaling_NaN )
   end subroutine Allocate_Test_RealR4_4d_a
+
+  ! For allocatable instead of pointer To_Allocate
+  ! ------------------------------------  Allocate_Test_RealR8_1d  -----
+  subroutine AllocateA_Test_RealR8_1d ( To_Allocate, Dim1, &
+    & ItsName, ModuleName, LowBound, Fill )
+    double precision, allocatable, dimension(:) :: To_Allocate
+    integer, intent(in) :: Dim1    ! Upper bound of first dim. of To_Allocate
+    character(len=*), intent(in) :: ItsName, ModuleName
+    integer, intent(in), optional :: LowBound     ! Lower bound, default 1
+    double precision, intent(in), optional :: Fill
+    double precision, parameter :: Default = 0.0d0
+    include "Allocate_Test_1D.f9h"
+    if ( InitRealNaN .and. IEEE_Support_DataType(to_allocate) .and. &
+       & .not. present(fill) ) &
+         & to_allocate = IEEE_Value ( to_allocate, IEEE_Signaling_NaN )
+  end subroutine AllocateA_Test_RealR8_1d
+  ! ------------------------------------  AllocateA_Test_RealR8_2d  -----
+  subroutine AllocateA_Test_RealR8_2d ( To_Allocate, Dim1, Dim2, &
+    & ItsName, ModuleName, Low1, Low2, Fill )
+    double precision, allocatable, dimension(:,:) :: To_Allocate
+    integer, intent(in) :: Dim1    ! Upper bound of first dim. of To_Allocate
+    integer, intent(in) :: Dim2    ! Upper bound of second dim. of To_Allocate
+    character(len=*), intent(in) :: ItsName, ModuleName
+    integer, intent(in), optional :: Low1, Low2 ! Low bounds for dimensions
+    double precision, intent(in), optional :: Fill
+    double precision, parameter :: Default = 0.0d0
+    include "Allocate_Test_2D.f9h"
+    if ( InitRealNaN .and. IEEE_Support_DataType(to_allocate) .and. &
+       & .not. present(fill) ) &
+         & to_allocate = IEEE_Value ( to_allocate, IEEE_Signaling_NaN )
+  end subroutine AllocateA_Test_RealR8_2d
+  ! ----------------------------------  AllocateA_Test_RealR8_2d_a  -----
+  subroutine AllocateA_Test_RealR8_2d_a ( To_Allocate, Dim, &
+    & ItsName, ModuleName, Low, Fill )
+    double precision, allocatable, dimension(:,:) :: To_Allocate
+    integer, intent(in) :: Dim(2)  ! Upper bounds of To_Allocate
+    character(len=*), intent(in) :: ItsName, ModuleName
+    integer, intent(in), optional :: Low(2) ! Low bounds for dimensions
+    double precision, intent(in), optional :: Fill
+    double precision, parameter :: Default = 0.0d0
+    include "Allocate_Test_2D_a.f9h"
+    if ( InitRealNaN .and. IEEE_Support_DataType(to_allocate) .and. &
+       & .not. present(fill) ) &
+         & to_allocate = IEEE_Value ( to_allocate, IEEE_Signaling_NaN )
+  end subroutine AllocateA_Test_RealR8_2d_a
+  ! ------------------------------------  AllocateA_Test_RealR8_3d  -----
+  subroutine AllocateA_Test_RealR8_3d ( To_Allocate, Dim1, Dim2, Dim3, &
+    & ItsName, ModuleName, Low1, Low2, Low3, Fill )
+    double precision, allocatable, dimension(:,:,:) :: To_Allocate
+    integer, intent(in) :: Dim1    ! Upper bound of first dim. of To_Allocate
+    integer, intent(in) :: Dim2    ! Upper bound of second dim. of To_Allocate
+    integer, intent(in) :: Dim3    ! Upper bound of third dim. of To_Allocate
+    character(len=*), intent(in) :: ItsName, ModuleName
+    integer, intent(in), optional :: Low1, Low2, Low3 ! Low bounds for dimensions
+    double precision, intent(in), optional :: Fill
+    double precision, parameter :: Default = 0.0d0
+    include "Allocate_Test_3D.f9h"
+    if ( InitRealNaN .and. IEEE_Support_DataType(to_allocate) .and. &
+       & .not. present(fill) ) &
+         & to_allocate = IEEE_Value ( to_allocate, IEEE_Signaling_NaN )
+  end subroutine AllocateA_Test_RealR8_3d
+  ! ----------------------------------  AllocateA_Test_RealR8_3d_a  -----
+  subroutine AllocateA_Test_RealR8_3d_a ( To_Allocate, Dim, &
+    & ItsName, ModuleName, Low, Fill )
+    double precision, allocatable, dimension(:,:,:) :: To_Allocate
+    integer, intent(in) :: Dim(3)  ! Upper bounds of To_Allocate
+    character(len=*), intent(in) :: ItsName, ModuleName
+    integer, intent(in), optional :: Low(3) ! Low bounds for dimensions
+    double precision, intent(in), optional :: Fill
+    double precision, parameter :: Default = 0.0d0
+    include "Allocate_Test_3D_a.f9h"
+    if ( InitRealNaN .and. IEEE_Support_DataType(to_allocate) .and. &
+       & .not. present(fill) ) &
+         & to_allocate = IEEE_Value ( to_allocate, IEEE_Signaling_NaN )
+  end subroutine AllocateA_Test_RealR8_3d_a
+  ! ------------------------------------  AllocateA_Test_RealR8_4d  -----
+  subroutine AllocateA_Test_RealR8_4d ( To_Allocate, Dim1, Dim2, Dim3, Dim4, &
+    & ItsName, ModuleName, Low1, Low2, Low3, Low4, Fill )
+    double precision, allocatable, dimension(:,:,:,:) :: To_Allocate
+    integer, intent(in) :: Dim1    ! Upper bound of first dim. of To_Allocate
+    integer, intent(in) :: Dim2    ! Upper bound of second dim. of To_Allocate
+    integer, intent(in) :: Dim3    ! Upper bound of third dim. of To_Allocate
+    integer, intent(in) :: Dim4    ! Upper bound of fourth dim. of To_Allocate
+    character(len=*), intent(in) :: ItsName, ModuleName
+    integer, intent(in), optional :: Low1, Low2, Low3, Low4 ! Low bounds for dimensions
+    double precision, intent(in), optional :: Fill
+    double precision, parameter :: Default = 0.0d0
+    include "Allocate_Test_4D.f9h"
+    if ( InitRealNaN .and. IEEE_Support_DataType(to_allocate) .and. &
+       & .not. present(fill) ) &
+         & to_allocate = IEEE_Value ( to_allocate, IEEE_Signaling_NaN )
+  end subroutine AllocateA_Test_RealR8_4d
+  ! ----------------------------------  AllocateA_Test_RealR8_4d_a  -----
+  subroutine AllocateA_Test_RealR8_4d_a ( To_Allocate, Dim, &
+    & ItsName, ModuleName, Low, Fill )
+    double precision, allocatable, dimension(:,:,:,:) :: To_Allocate
+    integer, intent(in) :: Dim(4)  ! Upper bounds of To_Allocate
+    character(len=*), intent(in) :: ItsName, ModuleName
+    integer, intent(in), optional :: Low(4) ! Low bounds for dimensions
+    double precision, intent(in), optional :: Fill
+    double precision, parameter :: Default = 0.0d0
+    include "Allocate_Test_4D_a.f9h"
+    if ( InitRealNaN .and. IEEE_Support_DataType(to_allocate) .and. &
+       & .not. present(fill) ) &
+         & to_allocate = IEEE_Value ( to_allocate, IEEE_Signaling_NaN )
+  end subroutine AllocateA_Test_RealR8_4d_a
+  ! --------------------------------------  Allocate_Test_RealR4_1d  -----
+  subroutine AllocateA_Test_RealR4_1d ( To_Allocate, Dim1, &
+    & ItsName, ModuleName, LowBound, Fill )
+    real, allocatable, dimension(:) :: To_Allocate
+    integer, intent(in) :: Dim1    ! Upper bound of first dim. of To_Allocate
+    character(len=*), intent(in) :: ItsName, ModuleName
+    integer, intent(in), optional :: LowBound     ! Lower bound, default 1
+    real, intent(in), optional :: Fill
+    real, parameter :: Default = 0.0
+    include "Allocate_Test_1D.f9h"
+    if ( InitRealNaN .and. IEEE_Support_DataType(to_allocate) .and. &
+       & .not. present(fill) ) &
+         & to_allocate = IEEE_Value ( to_allocate, IEEE_Signaling_NaN )
+  end subroutine AllocateA_Test_RealR4_1d
+  ! --------------------------------------  AllocateA_Test_RealR4_2d  -----
+  subroutine AllocateA_Test_RealR4_2d ( To_Allocate, Dim1, Dim2, &
+    & ItsName, ModuleName, Low1, Low2, Fill )
+    real, allocatable, dimension(:,:) :: To_Allocate
+    integer, intent(in) :: Dim1    ! Upper bound of first dim. of To_Allocate
+    integer, intent(in) :: Dim2    ! Upper bound of second dim. of To_Allocate
+    character(len=*), intent(in) :: ItsName, ModuleName
+    integer, intent(in), optional :: Low1, Low2 ! Low bounds for dimensions
+    real, intent(in), optional :: Fill
+    real, parameter :: Default = 0.0
+    include "Allocate_Test_2D.f9h"
+    if ( InitRealNaN .and. IEEE_Support_DataType(to_allocate) .and. &
+       & .not. present(fill) ) &
+         & to_allocate = IEEE_Value ( to_allocate, IEEE_Signaling_NaN )
+  end subroutine AllocateA_Test_RealR4_2d
+  ! ------------------------------------  AllocateA_Test_RealR4_2d_a  -----
+  subroutine AllocateA_Test_RealR4_2d_a ( To_Allocate, Dim, &
+    & ItsName, ModuleName, Low, Fill )
+    real, allocatable, dimension(:,:) :: To_Allocate
+    integer, intent(in) :: Dim(2)  ! Upper bounds of To_Allocate
+    character(len=*), intent(in) :: ItsName, ModuleName
+    integer, intent(in), optional :: Low(2) ! Low bounds, default 1
+    real, intent(in), optional :: Fill
+    real, parameter :: Default = 0.0
+    include "Allocate_Test_2D_a.f9h"
+    if ( InitRealNaN .and. IEEE_Support_DataType(to_allocate) .and. &
+       & .not. present(fill) ) &
+         & to_allocate = IEEE_Value ( to_allocate, IEEE_Signaling_NaN )
+  end subroutine AllocateA_Test_RealR4_2d_a
+  ! ------------------------------------  AllocateA_Test_RealR4_3d  -----
+  subroutine AllocateA_Test_RealR4_3d ( To_Allocate, Dim1, Dim2, Dim3, &
+    & ItsName, ModuleName, Low1, Low2, Low3, Fill )
+    real, allocatable, dimension(:,:,:) :: To_Allocate
+    integer, intent(in) :: Dim1    ! Upper bound of first dim. of To_Allocate
+    integer, intent(in) :: Dim2    ! Upper bound of second dim. of To_Allocate
+    integer, intent(in) :: Dim3    ! Upper bound of third dim. of To_Allocate
+    character(len=*), intent(in) :: ItsName, ModuleName
+    integer, intent(in), optional :: Low1, Low2, Low3 ! Low bounds for dimensions
+    real, intent(in), optional :: Fill
+    real, parameter :: Default = 0.0
+    include "Allocate_Test_3D.f9h"
+    if ( InitRealNaN .and. IEEE_Support_DataType(to_allocate) .and. &
+       & .not. present(fill) ) &
+         & to_allocate = IEEE_Value ( to_allocate, IEEE_Signaling_NaN )
+  end subroutine AllocateA_Test_RealR4_3d
+  ! ------------------------------------  AllocateA_Test_RealR4_3d_a  -----
+  subroutine AllocateA_Test_RealR4_3d_a ( To_Allocate, Dim, &
+    & ItsName, ModuleName, Low, Fill )
+    real, allocatable, dimension(:,:,:) :: To_Allocate
+    integer, intent(in) :: Dim(3)  ! Upper bounds of To_Allocate
+    character(len=*), intent(in) :: ItsName, ModuleName
+    integer, intent(in), optional :: Low(3) ! Low bounds, default 1
+    real, intent(in), optional :: Fill
+    real, parameter :: Default = 0.0
+    include "Allocate_Test_3D_a.f9h"
+    if ( InitRealNaN .and. IEEE_Support_DataType(to_allocate) .and. &
+       & .not. present(fill) ) &
+         & to_allocate = IEEE_Value ( to_allocate, IEEE_Signaling_NaN )
+  end subroutine AllocateA_Test_RealR4_3d_a
+  ! ------------------------------------  AllocateA_Test_RealR4_4d  -----
+  subroutine AllocateA_Test_RealR4_4d ( To_Allocate, Dim1, Dim2, Dim3, Dim4, &
+    & ItsName, ModuleName, Low1, Low2, Low3, Low4, Fill )
+    real, allocatable, dimension(:,:,:,:) :: To_Allocate
+    integer, intent(in) :: Dim1    ! Upper bound of first dim. of To_Allocate
+    integer, intent(in) :: Dim2    ! Upper bound of second dim. of To_Allocate
+    integer, intent(in) :: Dim3    ! Upper bound of third dim. of To_Allocate
+    integer, intent(in) :: Dim4    ! Upper bound of fourth dim. of To_Allocate
+    character(len=*), intent(in) :: ItsName, ModuleName
+    integer, intent(in), optional :: Low1, Low2, Low3, Low4 ! Low bounds for dimensions
+    real, intent(in), optional :: Fill
+    real, parameter :: Default = 0.0
+    include "Allocate_Test_4D.f9h"
+    if ( InitRealNaN .and. IEEE_Support_DataType(to_allocate) .and. &
+       & .not. present(fill) ) &
+         & to_allocate = IEEE_Value ( to_allocate, IEEE_Signaling_NaN )
+  end subroutine AllocateA_Test_RealR4_4d
+  ! ------------------------------------  AllocateA_Test_RealR4_4d_a  -----
+  subroutine AllocateA_Test_RealR4_4d_a ( To_Allocate, Dim, &
+    & ItsName, ModuleName, Low, Fill )
+    real, allocatable, dimension(:,:,:,:) :: To_Allocate
+    integer, intent(in) :: Dim(4)  ! Upper bounds of To_Allocate
+    character(len=*), intent(in) :: ItsName, ModuleName
+    integer, intent(in), optional :: Low(4) ! Low bounds, default 1
+    real, intent(in), optional :: Fill
+    real, parameter :: Default = 0.0
+    include "Allocate_Test_4D_a.f9h"
+    if ( InitRealNaN .and. IEEE_Support_DataType(to_allocate) .and. &
+       & .not. present(fill) ) &
+         & to_allocate = IEEE_Value ( to_allocate, IEEE_Signaling_NaN )
+  end subroutine AllocateA_Test_RealR4_4d_a
+
   ! -------------------------------  Deallocate_Test_Character_1d  -----
   subroutine Deallocate_Test_Character_1d ( To_Deallocate, ItsName, ModuleName )
     character(len=*), pointer, dimension(:) :: To_Deallocate
@@ -1056,270 +1282,313 @@ contains
     include "Deallocate_Test.f9h"
   end subroutine Deallocate_Test_RealR4_4d
 
+! For allocatable instead of pointer arguments
+
+  ! ----------------------------------  DeallocateA_Test_RealR8_1d  -----
+  subroutine DeallocateA_Test_RealR8_1d ( To_Deallocate, ItsName, ModuleName )
+    double precision, allocatable, dimension(:) :: To_Deallocate
+    include "DeallocateA_Test.f9h"
+  end subroutine DeallocateA_Test_RealR8_1d
+  ! ----------------------------------  DeallocateA_Test_RealR8_2d  -----
+  subroutine DeallocateA_Test_RealR8_2d ( To_Deallocate, ItsName, ModuleName )
+    double precision, allocatable, dimension(:,:) :: To_Deallocate
+    include "DeallocateA_Test.f9h"
+  end subroutine DeallocateA_Test_RealR8_2d
+  ! ----------------------------------  DeallocateA_Test_RealR8_3d  -----
+  subroutine DeallocateA_Test_RealR8_3d ( To_Deallocate, ItsName, ModuleName )
+    double precision, allocatable, dimension(:,:,:) :: To_Deallocate
+    include "DeallocateA_Test.f9h"
+  end subroutine DeallocateA_Test_RealR8_3d
+  ! ----------------------------------  DeallocateA_Test_RealR8_4d  -----
+  subroutine DeallocateA_Test_RealR8_4d ( To_Deallocate, ItsName, ModuleName )
+    double precision, allocatable, dimension(:,:,:,:) :: To_Deallocate
+    include "DeallocateA_Test.f9h"
+  end subroutine DeallocateA_Test_RealR8_4d
+  ! ------------------------------------  DeallocateA_Test_RealR4_1d  -----
+  subroutine DeallocateA_Test_RealR4_1d ( To_Deallocate, ItsName, ModuleName )
+    real, allocatable, dimension(:) :: To_Deallocate
+    include "DeallocateA_Test.f9h"
+  end subroutine DeallocateA_Test_RealR4_1d
+  ! ------------------------------------  DeallocateA_Test_RealR4_2d  -----
+  subroutine DeallocateA_Test_RealR4_2d ( To_Deallocate, ItsName, ModuleName )
+    real, allocatable, dimension(:,:) :: To_Deallocate
+    include "DeallocateA_Test.f9h"
+  end subroutine DeallocateA_Test_RealR4_2d
+  ! ----------------------------------  DeallocateA_Test_RealR4_3d  -----
+  subroutine DeallocateA_Test_RealR4_3d ( To_Deallocate, ItsName, ModuleName )
+    real, allocatable, dimension(:,:,:) :: To_Deallocate
+    include "DeallocateA_Test.f9h"
+  end subroutine DeallocateA_Test_RealR4_3d
+  ! ----------------------------------  DeallocateA_Test_RealR4_4d  -----
+  subroutine DeallocateA_Test_RealR4_4d ( To_Deallocate, ItsName, ModuleName )
+    real, allocatable, dimension(:,:,:,:) :: To_Deallocate
+    include "DeallocateA_Test.f9h"
+  end subroutine DeallocateA_Test_RealR4_4d
+
   ! --------------------------------------------  Bytes functions  -----
-  integer function BYTE_SIZE_CHARACTER_1D ( A ) result ( BYTE_SIZE )
+  integer function Byte_Size_Character_1D ( A ) result ( Byte_Size )
     character(len=*), intent(in) :: A(:)
     byte_size = bytes(a) * size(a)
-  end function BYTE_SIZE_CHARACTER_1D
-  integer function BYTE_SIZE_CHARACTER_2D ( A ) result ( BYTE_SIZE )
+  end function Byte_Size_Character_1D
+  integer function Byte_Size_Character_2D ( A ) result ( Byte_Size )
     character(len=*), intent(in) :: A(:,:)
     byte_size = bytes(a) * size(a)
-  end function BYTE_SIZE_CHARACTER_2D
-  integer function BYTE_SIZE_CHARACTER_3D ( A ) result ( BYTE_SIZE )
+  end function Byte_Size_Character_2D
+  integer function Byte_Size_Character_3D ( A ) result ( Byte_Size )
     character(*), intent(in) :: A(:,:,:)
     byte_size = bytes(a) * size(a)
-  end function BYTE_SIZE_CHARACTER_3D
-  integer function BYTE_SIZE_COMPLEX_1D ( A ) result ( BYTE_SIZE )
+  end function Byte_Size_Character_3D
+  integer function Byte_Size_Complex_1D ( A ) result ( Byte_Size )
     complex, intent(in) :: A(:)
     byte_size = bytes(a) * size(a)
-  end function BYTE_SIZE_COMPLEX_1D
-  integer function BYTE_SIZE_COMPLEX_2D ( A ) result ( BYTE_SIZE )
+  end function Byte_Size_Complex_1D
+  integer function Byte_Size_Complex_2D ( A ) result ( Byte_Size )
     complex, intent(in) :: A(:,:)
     byte_size = bytes(a) * size(a)
-  end function BYTE_SIZE_COMPLEX_2D
-  integer function BYTE_SIZE_COMPLEX_3D ( A ) result ( BYTE_SIZE )
+  end function Byte_Size_Complex_2D
+  integer function Byte_Size_Complex_3D ( A ) result ( Byte_Size )
     complex, intent(in) :: A(:,:,:)
     byte_size = bytes(a) * size(a)
-  end function BYTE_SIZE_COMPLEX_3D
-  integer function BYTE_SIZE_DCOMPLEX_1D ( A ) result ( BYTE_SIZE )
+  end function Byte_Size_Complex_3D
+  integer function Byte_Size_DComplex_1D ( A ) result ( Byte_Size )
     complex(kind(0.0d0)), intent(in) :: A(:)
     byte_size = bytes(a) * size(a)
-  end function BYTE_SIZE_DCOMPLEX_1D
-  integer function BYTE_SIZE_DCOMPLEX_2D ( A ) result ( BYTE_SIZE )
+  end function Byte_Size_DComplex_1D
+  integer function Byte_Size_DComplex_2D ( A ) result ( Byte_Size )
     complex(kind(0.0d0)), intent(in) :: A(:,:)
     byte_size = bytes(a) * size(a)
-  end function BYTE_SIZE_DCOMPLEX_2D
-  integer function BYTE_SIZE_DCOMPLEX_3D ( A ) result ( BYTE_SIZE )
+  end function Byte_Size_DComplex_2D
+  integer function Byte_Size_DComplex_3D ( A ) result ( Byte_Size )
     complex(kind(0.0d0)), intent(in) :: A(:,:,:)
     byte_size = bytes(a) * size(a)
-  end function BYTE_SIZE_DCOMPLEX_3D
-  integer function BYTE_SIZE_INTEGER_1D ( A ) result ( BYTE_SIZE )
+  end function Byte_Size_DComplex_3D
+  integer function Byte_Size_Integer_1D ( A ) result ( Byte_Size )
     integer, intent(in) :: A(:)
     byte_size = bytes(a) * size(a)
-  end function BYTE_SIZE_INTEGER_1D
-  integer function BYTE_SIZE_INTEGER_2D ( A ) result ( BYTE_SIZE )
+  end function Byte_Size_Integer_1D
+  integer function Byte_Size_Integer_2D ( A ) result ( Byte_Size )
     integer, intent(in) :: A(:,:)
     byte_size = bytes(a) * size(a)
-  end function BYTE_SIZE_INTEGER_2D
-  integer function BYTE_SIZE_INTEGER_3D ( A ) result ( BYTE_SIZE )
+  end function Byte_Size_Integer_2D
+  integer function Byte_Size_Integer_3D ( A ) result ( Byte_Size )
     integer, intent(in) :: A(:,:,:)
     byte_size = bytes(a) * size(a)
-  end function BYTE_SIZE_INTEGER_3D
-  integer function BYTE_SIZE_INTEGER_4D ( A ) result ( BYTE_SIZE )
+  end function Byte_Size_Integer_3D
+  integer function Byte_Size_Integer_4D ( A ) result ( Byte_Size )
     integer, intent(in) :: A(:,:,:,:)
     byte_size = bytes(a) * size(a)
-  end function BYTE_SIZE_INTEGER_4D
-  integer function BYTE_SIZE_LOGICAL_1D ( A ) result ( BYTE_SIZE )
+  end function Byte_Size_Integer_4D
+  integer function Byte_Size_Logical_1D ( A ) result ( Byte_Size )
     logical, intent(in) :: A(:)
     byte_size = bytes(a) * size(a)
-  end function BYTE_SIZE_LOGICAL_1D
-  integer function BYTE_SIZE_LOGICAL_2D ( A ) result ( BYTE_SIZE )
+  end function Byte_Size_Logical_1D
+  integer function Byte_Size_Logical_2D ( A ) result ( Byte_Size )
     logical, intent(in) :: A(:,:)
     byte_size = bytes(a) * size(a)
-  end function BYTE_SIZE_LOGICAL_2D
-  integer function BYTE_SIZE_LOGICAL_3D ( A ) result ( BYTE_SIZE )
+  end function Byte_Size_Logical_2D
+  integer function Byte_Size_Logical_3D ( A ) result ( Byte_Size )
     logical, intent(in) :: A(:,:,:)
     byte_size = bytes(a) * size(a)
-  end function BYTE_SIZE_LOGICAL_3D
-  integer function BYTE_SIZE_REALR4_1D ( A ) result ( BYTE_SIZE )
+  end function Byte_Size_Logical_3D
+  integer function Byte_Size_RealR4_1D ( A ) result ( Byte_Size )
     real, intent(in) :: A(:)
     byte_size = bytes(a) * size(a)
-  end function BYTE_SIZE_REALR4_1D
-  integer function BYTE_SIZE_REALR4_2D ( A ) result ( BYTE_SIZE )
+  end function Byte_Size_RealR4_1D
+  integer function Byte_Size_RealR4_2D ( A ) result ( Byte_Size )
     real, intent(in) :: A(:,:)
     byte_size = bytes(a) * size(a)
-  end function BYTE_SIZE_REALR4_2D
-  integer function BYTE_SIZE_REALR4_3D ( A ) result ( BYTE_SIZE )
+  end function Byte_Size_RealR4_2D
+  integer function Byte_Size_RealR4_3D ( A ) result ( Byte_Size )
     real, intent(in) :: A(:,:,:)
     byte_size = bytes(a) * size(a)
-  end function BYTE_SIZE_REALR4_3D
-  integer function BYTE_SIZE_REALR4_4D ( A ) result ( BYTE_SIZE )
+  end function Byte_Size_RealR4_3D
+  integer function Byte_Size_RealR4_4D ( A ) result ( Byte_Size )
     real, intent(in) :: A(:,:,:,:)
     byte_size = bytes(a) * size(a)
-  end function BYTE_SIZE_REALR4_4D
-  integer function BYTE_SIZE_REALR4_5D ( A ) result ( BYTE_SIZE )
+  end function Byte_Size_RealR4_4D
+  integer function Byte_Size_RealR4_5D ( A ) result ( Byte_Size )
     real, intent(in) :: A(:,:,:,:,:)
     byte_size = bytes(a) * size(a)
-  end function BYTE_SIZE_REALR4_5D
-  integer function BYTE_SIZE_REALR4_6D ( A ) result ( BYTE_SIZE )
+  end function Byte_Size_RealR4_5D
+  integer function Byte_Size_RealR4_6D ( A ) result ( Byte_Size )
     real, intent(in) :: A(:,:,:,:,:,:)
     byte_size = bytes(a) * size(a)
-  end function BYTE_SIZE_REALR4_6D
-  integer function BYTE_SIZE_REALR8_1D ( A ) result ( BYTE_SIZE )
+  end function Byte_Size_RealR4_6D
+  integer function Byte_Size_RealR8_1D ( A ) result ( Byte_Size )
     double precision, intent(in) :: A(:)
     byte_size = bytes(a) * size(a)
-  end function BYTE_SIZE_REALR8_1D
-  integer function BYTE_SIZE_REALR8_2D ( A ) result ( BYTE_SIZE )
+  end function Byte_Size_RealR8_1D
+  integer function Byte_Size_RealR8_2D ( A ) result ( Byte_Size )
     double precision, intent(in) :: A(:,:)
     byte_size = bytes(a) * size(a)
-  end function BYTE_SIZE_REALR8_2D
-  integer function BYTE_SIZE_REALR8_3D ( A ) result ( BYTE_SIZE )
+  end function Byte_Size_RealR8_2D
+  integer function Byte_Size_RealR8_3D ( A ) result ( Byte_Size )
     double precision, intent(in) :: A(:,:,:)
     byte_size = bytes(a) * size(a)
-  end function BYTE_SIZE_REALR8_3D
-  integer function BYTE_SIZE_REALR8_4D ( A ) result ( BYTE_SIZE )
+  end function Byte_Size_RealR8_3D
+  integer function Byte_Size_RealR8_4D ( A ) result ( Byte_Size )
     double precision, intent(in) :: A(:,:,:,:)
     byte_size = bytes(a) * size(a)
-  end function BYTE_SIZE_REALR8_4D
-  integer function BYTE_SIZE_REALR8_5D ( A ) result ( BYTE_SIZE )
+  end function Byte_Size_RealR8_4D
+  integer function Byte_Size_RealR8_5D ( A ) result ( Byte_Size )
     double precision, intent(in) :: A(:,:,:,:,:)
     byte_size = bytes(a) * size(a)
-  end function BYTE_SIZE_REALR8_5D
-  integer function BYTE_SIZE_REALR8_6D ( A ) result ( BYTE_SIZE )
+  end function Byte_Size_RealR8_5D
+  integer function Byte_Size_RealR8_6D ( A ) result ( Byte_Size )
     double precision, intent(in) :: A(:,:,:,:,:,:)
     byte_size = bytes(a) * size(a)
-  end function BYTE_SIZE_REALR8_6D
+  end function Byte_Size_RealR8_6D
 
   !??? We'd prefer to use storage_size(a) but Intel 13.0.1 complains ???
-  integer function BYTES_CHARACTER_1D ( A ) result ( BYTES )
+  integer function Bytes_Character_1D ( A ) result ( BYTES )
     character(len=*), intent(in) :: A(:)
     character, parameter :: B = '' ! Intel 13.0.1 doesn't like storage_size(a)
     ! When Intel is happy with storage_size(a), DO NOT multiply by len(a)!
     ! Storage_Size includes character length.
     bytes = ( ( storage_size(b) + 7 ) / 8 ) * len(a)
 !     bytes = ( ( storage_size(a) + 7 ) / 8 )
-  end function BYTES_CHARACTER_1D
-  integer function BYTES_CHARACTER_2D ( A ) result ( BYTES )
+  end function Bytes_Character_1D
+  integer function Bytes_Character_2D ( A ) result ( BYTES )
     character(len=*), intent(in) :: A(:,:)
     character, parameter :: B = '' ! Intel 13.0.1 doesn't like storage_size(a)
     ! When Intel is happy with storage_size(a), DO NOT multiply by len(a)!
     ! Storage_Size includes character length.
     bytes = ( ( storage_size(b) + 7 ) / 8 ) * len(a)
 !     bytes = ( ( storage_size(a) + 7 ) / 8 )
-  end function BYTES_CHARACTER_2D
-  integer function BYTES_CHARACTER_3D ( A ) result ( BYTES )
+  end function Bytes_Character_2D
+  integer function Bytes_Character_3D ( A ) result ( BYTES )
     character(len=*), intent(in) :: A(:,:,:)
     character, parameter :: B = '' ! Intel 13.0.1 doesn't like storage_size(a)
     ! When Intel is happy with storage_size(a), DO NOT multiply by len(a)!
     ! Storage_Size includes character length.
     bytes = ( ( storage_size(b) + 7 ) / 8 ) * len(a)
 !     bytes = ( ( storage_size(a) + 7 ) / 8 )
-  end function BYTES_CHARACTER_3D
-  integer function BYTES_COMPLEX_1D ( A ) result ( BYTES )
+  end function Bytes_Character_3D
+  integer function Bytes_Complex_1D ( A ) result ( BYTES )
     complex, intent(in) :: A(:)
     complex, parameter :: B = (0.0,0.0) ! Intel 13.0.1 doesn't like storage_size(a)
     bytes = ( ( storage_size(b) + 7 ) / 8 )
-  end function BYTES_COMPLEX_1D
-  integer function BYTES_COMPLEX_2D ( A ) result ( BYTES )
+  end function Bytes_Complex_1D
+  integer function Bytes_Complex_2D ( A ) result ( BYTES )
     complex, intent(in) :: A(:,:)
     complex, parameter :: B = (0.0,0.0) ! Intel 13.0.1 doesn't like storage_size(a)
     bytes = ( ( storage_size(b) + 7 ) / 8 )
-  end function BYTES_COMPLEX_2D
-  integer function BYTES_COMPLEX_3D ( A ) result ( BYTES )
+  end function Bytes_Complex_2D
+  integer function Bytes_Complex_3D ( A ) result ( BYTES )
     complex, intent(in) :: A(:,:,:)
     complex, parameter :: B = (0.0,0.0) ! Intel 13.0.1 doesn't like storage_size(a)
     bytes = ( ( storage_size(b) + 7 ) / 8 )
-  end function BYTES_COMPLEX_3D
-  integer function BYTES_DCOMPLEX_1D ( A ) result ( BYTES )
+  end function Bytes_Complex_3D
+  integer function Bytes_DComplex_1D ( A ) result ( BYTES )
     complex(kind(0.0d0)), intent(in) :: A(:)
     complex(kind(0.0d0)), parameter :: B = (0.0d0,0.0d0) ! Intel 13.0.1 doesn't like storage_size(a)
     bytes = ( ( storage_size(b) + 7 ) / 8 )
-  end function BYTES_DCOMPLEX_1D
-  integer function BYTES_DCOMPLEX_2D ( A ) result ( BYTES )
+  end function Bytes_DComplex_1D
+  integer function Bytes_DComplex_2D ( A ) result ( BYTES )
     complex(kind(0.0d0)), intent(in) :: A(:,:)
     complex(kind(0.0d0)), parameter :: B = (0.0d0,0.0d0) ! Intel 13.0.1 doesn't like storage_size(a)
     bytes = ( ( storage_size(b) + 7 ) / 8 )
-  end function BYTES_DCOMPLEX_2D
-  integer function BYTES_DCOMPLEX_3D ( A ) result ( BYTES )
+  end function Bytes_DComplex_2D
+  integer function Bytes_DComplex_3D ( A ) result ( BYTES )
     complex(kind(0.0d0)), intent(in) :: A(:,:,:)
     complex(kind(0.0d0)), parameter :: B = (0.0d0,0.0d0) ! Intel 13.0.1 doesn't like storage_size(a)
     bytes = ( ( storage_size(b) + 7 ) / 8 )
-  end function BYTES_DCOMPLEX_3D
-  integer function BYTES_INTEGER_1D ( A ) result ( BYTES )
+  end function Bytes_DComplex_3D
+  integer function Bytes_Integer_1D ( A ) result ( BYTES )
     integer, intent(in) :: A(:)
     integer, parameter :: B = 0 ! Intel 13.0.1 doesn't like storage_size(a)
     bytes = ( ( storage_size(b) + 7 ) / 8 )
-  end function BYTES_INTEGER_1D
-  integer function BYTES_INTEGER_2D ( A ) result ( BYTES )
+  end function Bytes_Integer_1D
+  integer function Bytes_Integer_2D ( A ) result ( BYTES )
     integer, intent(in) :: A(:,:)
     integer, parameter :: B = 0 ! Intel 13.0.1 doesn't like storage_size(a)
     bytes = ( ( storage_size(b) + 7 ) / 8 )
-  end function BYTES_INTEGER_2D
-  integer function BYTES_INTEGER_3D ( A ) result ( BYTES )
+  end function Bytes_Integer_2D
+  integer function Bytes_Integer_3D ( A ) result ( BYTES )
     integer, intent(in) :: A(:,:,:)
     integer, parameter :: B = 0 ! Intel 13.0.1 doesn't like storage_size(a)
     bytes = ( ( storage_size(b) + 7 ) / 8 )
-  end function BYTES_INTEGER_3D
-  integer function BYTES_INTEGER_4D ( A ) result ( BYTES )
+  end function Bytes_Integer_3D
+  integer function Bytes_Integer_4D ( A ) result ( BYTES )
     integer, intent(in) :: A(:,:,:,:)
     integer, parameter :: B = 0 ! Intel 13.0.1 doesn't like storage_size(a)
     bytes = ( ( storage_size(b) + 7 ) / 8 )
-  end function BYTES_INTEGER_4D
-  integer function BYTES_LOGICAL_1D ( A ) result ( BYTES )
+  end function Bytes_Integer_4D
+  integer function Bytes_Logical_1D ( A ) result ( BYTES )
     logical, intent(in) :: A(:)
     logical, parameter :: B = .false. ! Intel 13.0.1 doesn't like storage_size(a)
     bytes = ( ( storage_size(b) + 7 ) / 8 )
-  end function BYTES_LOGICAL_1D
-  integer function BYTES_LOGICAL_2D ( A ) result ( BYTES )
+  end function Bytes_Logical_1D
+  integer function Bytes_Logical_2D ( A ) result ( BYTES )
     logical, intent(in) :: A(:,:)
     logical, parameter :: B = .false. ! Intel 13.0.1 doesn't like storage_size(a)
     bytes = ( ( storage_size(b) + 7 ) / 8 )
-  end function BYTES_LOGICAL_2D
-  integer function BYTES_LOGICAL_3D ( A ) result ( BYTES )
+  end function Bytes_Logical_2D
+  integer function Bytes_Logical_3D ( A ) result ( BYTES )
     logical, intent(in) :: A(:,:,:)
     logical, parameter :: B = .false. ! Intel 13.0.1 doesn't like storage_size(a)
     bytes = ( ( storage_size(b) + 7 ) / 8 )
-  end function BYTES_LOGICAL_3D
-  integer function BYTES_REALR4_1D ( A ) result ( BYTES )
+  end function Bytes_Logical_3D
+  integer function Bytes_RealR4_1D ( A ) result ( BYTES )
     real, intent(in) :: A(:)
     real, parameter :: B = 0.0 ! Intel 13.0.1 doesn't like storage_size(a)
     bytes = ( ( storage_size(b) + 7 ) / 8 )
-  end function BYTES_REALR4_1D
-  integer function BYTES_REALR4_2D ( A ) result ( BYTES )
+  end function Bytes_RealR4_1D
+  integer function Bytes_RealR4_2D ( A ) result ( BYTES )
     real, intent(in) :: A(:,:)
     real, parameter :: B = 0.0 ! Intel 13.0.1 doesn't like storage_size(a)
     bytes = ( ( storage_size(b) + 7 ) / 8 )
-  end function BYTES_REALR4_2D
-  integer function BYTES_REALR4_3D ( A ) result ( BYTES )
+  end function Bytes_RealR4_2D
+  integer function Bytes_RealR4_3D ( A ) result ( BYTES )
     real, intent(in) :: A(:,:,:)
     real, parameter :: B = 0.0 ! Intel 13.0.1 doesn't like storage_size(a)
     bytes = ( ( storage_size(b) + 7 ) / 8 )
-  end function BYTES_REALR4_3D
-  integer function BYTES_REALR4_4D ( A ) result ( BYTES )
+  end function Bytes_RealR4_3D
+  integer function Bytes_RealR4_4D ( A ) result ( BYTES )
     real, intent(in) :: A(:,:,:,:)
     real, parameter :: B = 0.0 ! Intel 13.0.1 doesn't like storage_size(a)
     bytes = ( ( storage_size(b) + 7 ) / 8 )
-  end function BYTES_REALR4_4D
-  integer function BYTES_REALR4_5D ( A ) result ( BYTES )
+  end function Bytes_RealR4_4D
+  integer function Bytes_RealR4_5D ( A ) result ( BYTES )
     real, intent(in) :: A(:,:,:,:,:)
     real, parameter :: B = 0.0 ! Intel 13.0.1 doesn't like storage_size(a)
     bytes = ( ( storage_size(b) + 7 ) / 8 )
-  end function BYTES_REALR4_5D
-  integer function BYTES_REALR4_6D ( A ) result ( BYTES )
+  end function Bytes_RealR4_5D
+  integer function Bytes_RealR4_6D ( A ) result ( BYTES )
     real, intent(in) :: A(:,:,:,:,:,:)
     real, parameter :: B = 0.0 ! Intel 13.0.1 doesn't like storage_size(a)
     bytes = ( ( storage_size(b) + 7 ) / 8 )
-  end function BYTES_REALR4_6D
-  integer function BYTES_REALR8_1D ( A ) result ( BYTES )
+  end function Bytes_RealR4_6D
+  integer function Bytes_RealR8_1D ( A ) result ( BYTES )
     double precision, intent(in) :: A(:)
     double precision, parameter :: B = 0.0d0 ! Intel 13.0.1 doesn't like storage_size(a)
     bytes = ( ( storage_size(b) + 7 ) / 8 )
-  end function BYTES_REALR8_1D
-  integer function BYTES_REALR8_2D ( A ) result ( BYTES )
+  end function Bytes_RealR8_1D
+  integer function Bytes_RealR8_2D ( A ) result ( BYTES )
     double precision, intent(in) :: A(:,:)
     double precision, parameter :: B = 0.0d0 ! Intel 13.0.1 doesn't like storage_size(a)
     bytes = ( ( storage_size(b) + 7 ) / 8 )
-  end function BYTES_REALR8_2D
-  integer function BYTES_REALR8_3D ( A ) result ( BYTES )
+  end function Bytes_RealR8_2D
+  integer function Bytes_RealR8_3D ( A ) result ( BYTES )
     double precision, intent(in) :: A(:,:,:)
     double precision, parameter :: B = 0.0d0 ! Intel 13.0.1 doesn't like storage_size(a)
     bytes = ( ( storage_size(b) + 7 ) / 8 )
-  end function BYTES_REALR8_3D
-  integer function BYTES_REALR8_4D ( A ) result ( BYTES )
+  end function Bytes_RealR8_3D
+  integer function Bytes_RealR8_4D ( A ) result ( BYTES )
     double precision, intent(in) :: A(:,:,:,:)
     double precision, parameter :: B = 0.0d0 ! Intel 13.0.1 doesn't like storage_size(a)
     bytes = ( ( storage_size(b) + 7 ) / 8 )
-  end function BYTES_REALR8_4D
-  integer function BYTES_REALR8_5D ( A ) result ( BYTES )
+  end function Bytes_RealR8_4D
+  integer function Bytes_RealR8_5D ( A ) result ( BYTES )
     double precision, intent(in) :: A(:,:,:,:,:)
     double precision, parameter :: B = 0.0d0 ! Intel 13.0.1 doesn't like storage_size(a)
     bytes = ( ( storage_size(b) + 7 ) / 8 )
-  end function BYTES_REALR8_5D
-  integer function BYTES_REALR8_6D ( A ) result ( BYTES )
+  end function Bytes_RealR8_5D
+  integer function Bytes_RealR8_6D ( A ) result ( BYTES )
     double precision, intent(in) :: A(:,:,:,:,:,:)
     double precision, parameter :: B = 0.0d0 ! Intel 13.0.1 doesn't like storage_size(a)
     bytes = ( ( storage_size(b) + 7 ) / 8 )
-  end function BYTES_REALR8_6D
+  end function Bytes_RealR8_6D
 
   ! --------------------------------------------------  myMessage  -----
   subroutine myMessage ( severity, name, line )
@@ -1658,6 +1927,9 @@ contains
 end module Allocate_Deallocate
 
 ! $Log$
+! Revision 2.50  2015/06/02 23:51:40  vsnyder
+! Routines for allocatable arrays
+!
 ! Revision 2.49  2015/03/27 01:10:38  vsnyder
 ! Log allocated/deallocated entity's address, if provided
 !
@@ -1694,7 +1966,7 @@ end module Allocate_Deallocate
 ! Repair a couple of harmless but ugly blunders
 !
 ! Revision 2.38  2013/06/12 02:17:03  vsnyder
-! Add and use BYTES and BYTE_SIZE
+! Add and use BYTES and Byte_Size
 !
 ! Revision 2.37  2011/03/02 01:59:07  vsnyder
 ! Make lbounds and ubounds arguments of Test_Allocate optional
