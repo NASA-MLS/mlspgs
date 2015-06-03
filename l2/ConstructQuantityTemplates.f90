@@ -545,7 +545,7 @@ contains ! ============= Public procedures ===================================
 
     ! Dummy arguments
     integer, intent(in) :: instrumentModule  ! Database index
-    type (QuantityTemplate_T) :: qty ! Resulting quantity
+    type (QuantityTemplate_T), intent(inout) :: qty ! Resulting quantity
     integer, intent(in), optional :: noChans
     logical, intent(in), optional :: regular
     integer, intent(in), optional :: instanceLen
@@ -1452,12 +1452,8 @@ contains ! ============= Public procedures ===================================
     nullify( qty%frequencies, qty%geodLat, qty%lon, qty%time, qty%solarTime, &
       & qty%solarZenith, qty%losAngle, qty%crossAngles, qty%the_hGrid )
     call allocate_test ( qty%phi, 1, 1, 'qty%phi(1,1)', ModuleName )
-    call allocate_test ( qty%geodLat1, 1, 'qty%geodLat1(1)', ModuleName )
-    call remap ( qty%geodLat1, qty%geodLat, [ 1, 1 ] )
-    call remap ( qty%geodLat1, qty%geodLat3, [ 1, 1, 1 ] )
-    call allocate_test ( qty%lon1, 1, 'qty%lon1(1)', ModuleName )
-    call remap ( qty%lon1, qty%lon, [ 1, 1 ] )
-    call remap ( qty%lon1, qty%lon3, [ 1, 1, 1 ] )
+    call allocate_test ( qty%geodLat, 1, 1, 'qty%geodLat(1,1)', ModuleName )
+    call allocate_test ( qty%lon, 1, 1, 'qty%lon1(1,1)', ModuleName )
     call allocate_test ( qty%time, 1, 1, 'qty%time(1,1)', ModuleName )
     call allocate_test ( qty%solarTime, 1, 1, 'qty%solarTime(1,1)', ModuleName )
     call allocate_test ( qty%solarZenith, 1, 1, 'qty%solarZenith(1,1)', ModuleName )
@@ -1502,6 +1498,10 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.180  2015/06/03 00:01:51  vsnyder
+! Allocate rank-2 latitude and longitude, instead of rank-1 ones and then
+! remapping to rank-2 and rank-3.
+!
 ! Revision 2.179  2015/05/28 18:25:16  vsnyder
 ! Eliminate shared HGrid, get PointQuantityToHGrid from QuantityTemplates
 !
