@@ -52,13 +52,13 @@ module INIT_TABLES_MODULE
   !        names below.
   private :: ADD_IDENT
   private :: Field_Spec, Field_Spec_Array, Field_Spec_1, Field_Spec_2
-  private :: Field_Spec_3
+  private :: Field_Spec_3, Field_Spec_4
   private :: Field_Type, Field_Type_Array, Field_Type_1, Field_Type_2
   private :: INIT_SPECTROSCOPY, Node
 
   interface Field_Spec
-    module procedure Field_Spec_Array, Field_Spec_1, Field_Spec_2
-    module procedure Field_Spec_3
+    module procedure Field_Spec_1, Field_Spec_2
+    module procedure Field_Spec_3, Field_Spec_4
   end interface
 
   interface Field_Type
@@ -726,8 +726,8 @@ contains ! =====     Public procedures     =============================
     call make_tree ( (/ &  ! Must be AFTER S_Gridded, S_Concatenate, S_Merge,
                            ! and S_ConvertEtaToP
       begin, s+s_delete, &
-             begin, f+f_grid, field_spec((/ s_gridded,s_concatenate,s_merge, &
-                                       &  s_ConvertEtaToP /) ), &
+             begin, f+f_grid, field_spec( s_gridded, s_concatenate, s_merge, &
+                                       &  s_ConvertEtaToP ), &
              nadp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_chunkDivide, &
@@ -1045,8 +1045,8 @@ contains ! =====     Public procedures     =============================
              begin, f+f_sourceQuantity, vectorQuantity(), &
              begin, f+f_sourceL2GP, field_spec(s_l2gp), &
              begin, f+f_sourceL2AUX, field_spec(s_l2aux), &
-             begin, f+f_sourceGrid, field_spec((/ s_gridded,s_merge,s_concatenate, &
-                                             &  s_ConvertEtaToP,s_WMOTrop /) ), &
+             begin, f+f_sourceGrid, field_spec( s_gridded,s_merge,s_concatenate, &
+                                             &  s_ConvertEtaToP ), &
              begin, f+f_sourceVGrid, field_spec(s_vGrid), &
              begin, f+f_spread, boolean(), &
              begin, f+f_start, numeric(phyq_dimensionless), &
@@ -1183,8 +1183,8 @@ contains ! =====     Public procedures     =============================
              begin, f+f_allMatrices, boolean(), &
              begin, f+f_allVectors, boolean(), &
              begin, f+f_Boolean, field_spec(s_Boolean), &
-             begin, f+f_grid, field_spec((/ s_gridded,s_concatenate,s_merge, &
-                                       &  s_ConvertEtaToP /) ), &
+             begin, f+f_grid, field_spec( s_gridded, s_concatenate, s_merge, &
+                                       &  s_ConvertEtaToP ), &
              begin, f+f_matrix, field_spec(s_matrix), &
              begin, f+f_vector, field_spec(s_vector), &
              np+n_spec_def /) )
@@ -1322,8 +1322,8 @@ contains ! =====     Public procedures     =============================
              begin, f+f_moleculeSecondDerivatives, field_type(t_molecule), &
              begin, f+f_overlaps, field_spec(s_l2aux,s_l2gp), &
              begin, f+f_packed, boolean(), &
-             begin, f+f_quantities, field_spec((/ s_l2aux,s_l2gp,s_matrix, &
-                                             &  s_hessian,s_directWrite /) ), &
+             begin, f+f_quantities, field_spec( s_l2aux,s_l2gp,s_matrix, &
+                                             &  s_hessian ), &
              begin, f+f_type, field_type(t_outputType,req=req), &
              begin, f+f_writeCounterMAF, boolean(), &
              ndp+n_spec_def /) )
@@ -1495,8 +1495,8 @@ contains ! =====     Public procedures     =============================
              begin, f+f_stop, boolean(), &
              begin, f+f_stopWithError, boolean(), &
              begin, f+f_text, string(), &
-             begin, f+f_Grid, field_spec((/ s_gridded,s_merge,s_Concatenate, &
-                                       &  s_ConvertEtaToP,s_wmoTrop /) ), &
+             begin, f+f_Grid, field_spec( s_gridded, s_merge, s_Concatenate, &
+                                       &  s_ConvertEtaToP ), &
              np+n_spec_def /) )
     call make_tree ( (/ & ! Must be AFTER s_forwardModel,s_hGrid,s_pfaData,
         begin, s+s_dump, & ! s_makePFA,s_vector,s_vectorTemplate, etc.
@@ -1534,8 +1534,8 @@ contains ! =====     Public procedures     =============================
              begin, f+f_filterShapes, boolean(), &
              begin, f+f_forwardModel, field_spec(s_forwardModel), &
              begin, f+f_globalAttributes, boolean(), &
-             begin, f+f_Grid, field_spec((/ s_gridded,s_merge,s_Concatenate, &
-                                       &  s_ConvertEtaToP,s_wmoTrop /) ), &
+             begin, f+f_Grid, field_spec( s_gridded, s_merge, s_Concatenate, &
+                                       &  s_ConvertEtaToP ), &
              begin, f+f_hGrid, field_spec(s_hgrid)/) , &
              continue=.true. )
     call make_tree ( (/ & ! Continuing for s_dump...
@@ -1941,6 +1941,18 @@ contains ! =====     Public procedures     =============================
                    &  node(req,scalar)+n_field_spec /)
   end function Field_Spec_3
 
+  ! -----------------------------------------------  Field_Spec_4  -----
+  pure function Field_Spec_4 ( Spec1, Spec2, Spec3, Spec4, Req, Scalar )
+    ! Declare field-spec field
+    use TREE_TYPES, only: N_FIELD_SPEC
+    integer, intent(in) :: Spec1, Spec2, Spec3, Spec4 ! S_...
+    logical, intent(in), optional :: Req       ! Field is required if true
+    logical, intent(in), optional :: Scalar    ! Field is scalar if true
+    integer :: Field_Spec_4(5)
+    field_spec_4 = (/ s+spec1, s+spec2, s+spec3,  s+spec4, &
+                   &  node(req,scalar)+n_field_spec /)
+  end function Field_Spec_4
+
   ! -------------------------------------------  Field_Type_Array  -----
   pure function Field_Type_Array ( Type, Req )
     ! Declare field-Type field
@@ -2002,6 +2014,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.613  2015/06/03 23:10:09  pwagner
+! NAG hated Field_Spec_Array; workaround
+!
 ! Revision 2.612  2015/04/21 17:44:27  pwagner
 ! May DirectRead, DirectWrite files with /noPCFid even when usingPCF; may DirectRead qty geolocations
 !
