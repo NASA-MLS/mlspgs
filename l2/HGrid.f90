@@ -2393,9 +2393,14 @@ contains ! =====     Public Procedures     =============================
         & advance='yes')
       do chunk = 1, size ( chunks )
         call outputnamedValue( 'chunk', chunk )
-        call CompareWithChunk( chunks(chunk), &
-          & chunks(min(size ( chunks ), chunk+1)), firstHGrid(chunk), &
-          & MAFStartTimeTAI, GeodAngle, GeodAlt, GeodLat, SolarTime )
+        if ( firstHGrid(chunk)%noProfs < 1 ) then
+          call output ( '(No profiles in this chunk', advance='yes' )
+        else
+          call outputnamedValue( 'chunk', chunk )
+          call CompareWithChunk( chunks(chunk), &
+            & chunks(min(size ( chunks ), chunk+1)), firstHGrid(chunk), &
+            & MAFStartTimeTAI, GeodAngle, GeodAlt, GeodLat, SolarTime )
+        endif
       end do
       call deAllocate_Test ( MAFStartTimeTAI, 'MAFStartTimeTAI', ModuleName )
       call deAllocate_Test ( GeodAngle      , 'GHz/GeodAngle  ', ModuleName )
@@ -2533,8 +2538,8 @@ contains ! =====     Public Procedures     =============================
     call output( 'First, last MAFs (then times)', advance='no' )
     call blanks( 20 )
     call output ( (/chunk%firstMAFIndex, chunk%lastMAFIndex/), advance='no' )
-    call gethid( MAFStartTimeTAI ( chunk%firstMAFIndex  ), leapsec=.true. , hid=firstVal )
-    call gethid( MAFStartTimeTAI ( chunk%lastMAFIndex ), leapsec=.true. , hid=lastVal  )
+    call gethid( MAFStartTimeTAI ( chunk%firstMAFIndex + 1 ), leapsec=.true. , hid=firstVal )
+    call gethid( MAFStartTimeTAI ( chunk%lastMAFIndex + 1 ), leapsec=.true. , hid=lastVal  )
     call output ( firstVal, format='(f9.4)', advance='no' )
     call blanks ( 3 )
     call output ( lastVal, format='(f9.4)', advance='no' )
@@ -2576,8 +2581,8 @@ contains ! =====     Public Procedures     =============================
     call output( 'First, last MAFs matching grid (then times)', advance='no' )
     call blanks( 6 )
     call output ( (/lowMAF, highMAF/), advance='no' )
-    call gethid( MAFStartTimeTAI ( lowMAF  ), leapsec=.true. , hid=firstVal )
-    call gethid( MAFStartTimeTAI ( highMAF ), leapsec=.true. , hid=lastVal  )
+    call gethid( MAFStartTimeTAI ( lowMAF + 1 ), leapsec=.true. , hid=firstVal )
+    call gethid( MAFStartTimeTAI ( highMAF + 1 ), leapsec=.true. , hid=lastVal  )
     call output ( firstVal, format='(f9.4)', advance='no' )
     call blanks ( 3 )
     call output ( lastVal, format='(f9.4)', advance='no' )
@@ -2600,8 +2605,8 @@ contains ! =====     Public Procedures     =============================
     call blanksToColumn( 46 )
     call output( 'Last', advance='yes' )
     ! Time
-    call gethid( MAFStartTimeTAI ( firstMAF ), leapsec=.true. , hid=firstVal )
-    call gethid( MAFStartTimeTAI ( lastMAF  ), leapsec=.true. , hid=lastVal  )
+    call gethid( MAFStartTimeTAI ( firstMAF + 1 ), leapsec=.true. , hid=firstVal )
+    call gethid( MAFStartTimeTAI ( lastMAF + 1 ), leapsec=.true. , hid=lastVal  )
     call output ( firstVal, format='(f9.4)', advance='no' )
     call blanks ( 3 )
     call output ( lastVal, format='(f9.4)', advance='no' )
@@ -2615,8 +2620,8 @@ contains ! =====     Public Procedures     =============================
     call output( 'hours in day', advance='yes' )
 
     ! GeodAngle
-    firstVal = GeodAngle ( firstMAF )
-    lastVal  = GeodAngle ( lastMAF )
+    firstVal = GeodAngle ( firstMAF + 1 )
+    lastVal  = GeodAngle ( lastMAF + 1 )
     call output ( firstVal, format='(f9.4)', advance='no' )
     call blanks ( 3 )
     call output ( lastVal, format='(f9.4)', advance='no' )
@@ -2630,8 +2635,8 @@ contains ! =====     Public Procedures     =============================
     call output( 'geodangle', advance='yes' )
 
     ! geodLat
-    firstVal = geodLat ( firstMAF )
-    lastVal  = geodLat ( lastMAF )
+    firstVal = geodLat ( firstMAF + 1 )
+    lastVal  = geodLat ( lastMAF + 1 )
     call output ( firstVal, format='(f9.4)', advance='no' )
     call blanks ( 3 )
     call output ( lastVal, format='(f9.4)', advance='no' )
@@ -2645,8 +2650,8 @@ contains ! =====     Public Procedures     =============================
     call output( 'geodLat', advance='yes' )
 
     ! SolarTime
-    firstVal = SolarTime ( firstMAF )
-    lastVal  = SolarTime ( lastMAF )
+    firstVal = SolarTime ( firstMAF + 1 )
+    lastVal  = SolarTime ( lastMAF + 1 )
     call output ( firstVal, format='(f9.4)', advance='no' )
     call blanks ( 3 )
     call output ( lastVal, format='(f9.4)', advance='no' )
@@ -2748,6 +2753,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.124  2015/06/03 23:10:51  pwagner
+! Prevent certain crashes
+!
 ! Revision 2.123  2015/05/05 16:45:13  pwagner
 ! Merged changes in branch v4.21
 !
