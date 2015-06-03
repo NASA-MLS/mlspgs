@@ -219,20 +219,22 @@ contains ! ============= Public Procedures ==========================
              & qty%template%verticalCoordinate == l_zeta ) then
             qty%template%latitudeCoordinate = l_geodetic
             ! Get geodetic latitude
-            do s = 1, size(qty%template%geodLat3,1)
+            do s = 1, merge(1,qty%template%noSurfs,qty%template%stacked)
               geod = xyz_to_geod ( xyzs(:,s,instOr1,c) )
-              qty%template%geodLat3(s,inst,c) = geod(1) * rad2deg
+              call qty%template%putLat3 ( s, inst, c, geod(1) * rad2deg )
             end do
           else ! qty%template%verticalCoordinate == l_geocAltitude
             ! Get geocentric latitude
             qty%template%latitudeCoordinate = l_geocentric
-            qty%template%geodLat3(:,inst,c) = &
-              & asin(xyzs(3,:,instOr1,c) / norm2(xyzs(:,:,instOr1,c),1)) * rad2deg
+            do s = 1, merge(1,qty%template%noSurfs,qty%template%stacked)
+              call qty%template%putLat3 ( s, inst, c, &
+                & asin(xyzs(3,s,instOr1,c) / norm2(xyzs(:,s,instOr1,c),1)) * rad2deg )
+            end do
           end if
           ! Get longitude
-          do s = 1, size(qty%template%lon3,1)
-            qty%template%lon3(s,inst,c) = &
-              & atan2(xyzs(2,s,instOr1,c),xyzs(1,s,instOr1,c)) * rad2deg
+          do s = 1, size(qty%template%lon,1)
+            call qty%template%putLon3 ( s, inst, c, &
+              & atan2(xyzs(2,s,instOr1,c),xyzs(1,s,instOr1,c)) * rad2deg )
           end do
         end do ! c = 1, qty%template%noCrossTrack
         deallocate ( seq )
@@ -451,6 +453,10 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelGeometry
 
 ! $Log$
+! Revision 2.4  2015/06/03 00:00:32  vsnyder
+! Use type-bound procedures to do rank-3 reference and update for latitude
+! and longitude, instead of using rank-remapped pointers.
+!
 ! Revision 2.3  2015/05/28 23:08:58  vsnyder
 ! Eliminate RefMIF, check that ScVelECR geolocation is filled
 !
