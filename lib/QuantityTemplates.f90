@@ -417,8 +417,9 @@ contains
     ! not shared, or if it is shared and there are cross angles,
     ! else nullify them.
     use Allocate_Deallocate, only: Deallocate_Test
+    ! Args
     type (QuantityTemplate_T), intent(inout) :: QTY
-
+    ! Executable
     call deallocate_test ( qty%geodLat, 'Qty%GeodLat', moduleName )
     call deallocate_test ( qty%lon, 'Qty%Lon', moduleName )
 
@@ -426,14 +427,26 @@ contains
 
   ! ----------------------------  DestroyQuantityTemplateContents  -----
   subroutine DestroyQuantityTemplateContents ( qty )
+    use string_table, only: get_string, how_many_strings
     ! Dummy argument
     type (QuantityTemplate_T), intent(inout) :: QTY
-
+    ! Local variables
+    character (len=80) :: typeStr
     logical :: Verbose
     character(63) :: What
 
     ! Executable code
-    verbose = ( switchDetail(switches, 'qtmp' ) > -1 )
+    verbose = ( switchDetail(switches, 'qtmp' ) > -1 .or. switchDetail(switches, 'destroy' ) > -1 )
+    ! May not destroy GeoLocations (until we discover why not)
+    if ( qty%quantityType < 1 ) return
+    call get_string( lit_indices(qty%quantityType), typeStr )
+    if ( lowercase( typeStr ) == 'geolocation' ) then
+      call output( 'Unable to destroy this geoLocation quantity', advance='yes' )
+      return
+    elseif ( lowercase( typeStr ) == 'lostransfunc' ) then
+      call output( 'Unable to destroy this LOSTransFunc quantity', advance='yes' )
+      return
+    endif
     if ( verbose ) then
       call dump( qty )
       call output( 'About to destroy this quantity', advance='yes' )
@@ -445,6 +458,11 @@ contains
     else
       what = ''
     end if
+    if ( index( lowercase( what ), 'phitan' ) > 0 .or. &
+      & index( lowercase( what ), 'mif' ) > 0 ) then
+      call output( 'Unable to destroy this particular quantity', advance='yes' )
+      return
+    endif
 
     if ( .not. qty%sharedVGrid ) then
       if ( verbose ) call output( 'About to deallocate surfs', advance='yes' )
@@ -497,6 +515,7 @@ contains
 
   ! ----------------------------  DestroyQuantityTemplateDatabase  -----
   subroutine DestroyQuantityTemplateDatabase ( database )
+    use output_m, only: blanks, newLine
     ! Dummy argument
 
     use Allocate_Deallocate, only: Test_Deallocate
@@ -509,10 +528,17 @@ contains
     logical :: verbose
 
     ! Executable code
-    verbose = ( switchDetail(switches, 'qtmp' ) > -1 )
+    verbose = ( switchDetail(switches, 'qtmp' ) > -1 .or. switchDetail(switches, 'destroy' ) > -1 )
     if ( associated(database) ) then
       if ( verbose ) call outputNamedValue( 'size(qty db)', size ( database ) )
       do qtyIndex = 1, size ( database )
+        if ( verbose ) then
+          call blanks ( 9, FillChar = '-', advance='no' )
+          call output ( ' Quantity index ', advance='no' )
+          call output ( qtyIndex, advance='no' )
+          call blanks ( 1, advance='no' )
+          call blanks ( 9, FillChar = '-', advance='yes' )
+        endif
         call DestroyQuantityTemplateContents ( database(qtyIndex) )
       end do
       s = size(database) * storage_size(database) / 8
@@ -527,7 +553,7 @@ contains
   subroutine DUMP_QUANTITY_TEMPLATE ( Qty, DETAILS, NOL2CF, What )
 
     use MLSSIGNALS_M, only: SIGNALS, DUMP, GETRADIOMETERNAME, GETMODULENAME
-    use OUTPUT_M, only: NEWLINE
+    use output_m, only: blanks, newLine
     use VGRIDSDATABASE, only: DUMP
 
     type(QuantityTemplate_T), intent(in) :: Qty
@@ -539,9 +565,10 @@ contains
     logical, intent(in), optional :: NOL2CF  ! if TRUE => Don't dump L2-specific
                                              !  stuff
     character(*), intent(in), optional :: What ! In case you want to label it
+    ! Local variables
     integer :: MyDetails
-    character (len=80) :: Str
     logical :: myNoL2CF
+    character (len=80) :: Str
 
     myDetails = 1
     if ( present(details) ) myDetails = details
@@ -1918,6 +1945,10 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.95  2015/06/02 23:53:00  vsnyder
+! Add type-bound procedures to do rank-3 reference and update for latitude
+! and longitude, instead of using rank-remapped pointers.
+!
 ! Revision 2.94  2015/05/28 20:32:40  vsnyder
 ! Deallocate the correct component in DestroyGeolocationFields
 !
