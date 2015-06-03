@@ -4843,6 +4843,11 @@ contains ! =====     Public Procedures     =============================
         & flag=l1bError, firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
         & NeverFail= .true., &
         & dontPad=DONTPAD )
+      if ( .not. associated( L1BData%dpField ) ) then
+        call trace_end ( 'FillUtils_1.WithAscOrDesc', &
+          & cond=toggle(gen) .and. levels(gen) > 1 )
+        return
+      endif
       noSurfs = quantity%template%noSurfs
       ! Work out vertical coordinate if needed
       if ( associated ( ptanQuantity ) .and. .not. Quantity%template%minorFrame ) then
@@ -7518,6 +7523,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.108  2015/06/03 00:35:36  pwagner
+! Should only use sc/VelECI if it is found in l1boa
+!
 ! Revision 2.107  2015/05/28 18:26:48  vsnyder
 ! Remove unreferenced USE names and external declarations
 !
