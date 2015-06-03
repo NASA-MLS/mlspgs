@@ -266,10 +266,10 @@ contains ! =====     Public Procedures     =============================
 
     if ( verbose ) call output( 'About to destroy vectortemplate db', advance='yes' )
     call destroyVectorTemplateDatabase ( vectorTemplates )
-    if ( verbose ) call output( 'About to destroy quantitytemplate db', advance='yes' )
-    call destroyQuantityTemplateDatabase ( quantityTemplatesBase )
-    if ( verbose ) call output( 'About to destroy mifGeolocation db', advance='yes' )
-    call destroyQuantityTemplateDatabase ( mifGeolocation )
+    if ( verbose ) call output( 'Failed to destroy quantitytemplate db', advance='yes' )
+    ! call destroyQuantityTemplateDatabase ( quantityTemplatesBase )
+    if ( verbose ) call output( 'Failed to destroy mifGeolocation db', advance='yes' )
+    ! call destroyQuantityTemplateDatabase ( mifGeolocation )
     if ( verbose ) call output( 'About to destroy hGrid db', advance='yes' )
     call destroyHGridDatabase ( hGrids )
   end subroutine MLSL2DeConstruct
@@ -290,6 +290,9 @@ END MODULE Construct
 
 !
 ! $Log$
+! Revision 2.74  2015/06/03 23:11:45  pwagner
+! Crudely bypass destroyQuantityTemplateDatabase to avoid end-of-run crashes
+!
 ! Revision 2.73  2015/05/29 17:48:44  vsnyder
 ! Remove 'chunk' argument from MIFGeolocation
 !
