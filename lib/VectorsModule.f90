@@ -294,45 +294,44 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   type VectorValue_T
     type (QuantityTemplate_T) :: TEMPLATE ! Template for this quantity.
     integer :: Index = 0          ! Index of this quantity in the vector database
-    real(rv), dimension(:), pointer :: VALUE1 => NULL() ! The dimension of
-    ! VALUE1 is Frequencies (or 1) * Vertical Coordinates or MIF (or 1) *
-    ! Horizontal Instances (scan or profile or 1) * Cross-track instances. 
-    ! These are taken from (template%noChans * template%noSurfs *
-    ! template%noInstances).  This is the one that's allocated and
-    ! deallocated.
-    real(rv), dimension(:,:), pointer :: VALUES => NULL() ! The dimensions of
-    ! VALUES are Frequencies (or 1) * Vertical Coordinates or MIF (or 1), and
-    ! Horizontal Instances (scan or profile or 1) * Cross-track instances. 
-    ! These are taken from (template%noChans * template%noSurfs,
+    real(rv), dimension(:), pointer, contiguous :: VALUE1 => NULL() ! The
+    ! dimension of VALUE1 is Frequencies (or 1) * Vertical Coordinates or MIF
+    ! (or 1) * Horizontal Instances (scan or profile or 1) * Cross-track
+    ! instances.  These are taken from (template%noChans * template%noSurfs *
+    ! template%noInstances).  This is the one that's allocated and deallocated.
+    real(rv), dimension(:,:), pointer, contiguous :: VALUES => NULL() ! The
+    ! dimensions of VALUES are Frequencies (or 1) * Vertical Coordinates or MIF
+    ! (or 1), and Horizontal Instances (scan or profile or 1) * Cross-track
+    ! instances.  These are taken from (template%noChans * template%noSurfs,
     ! template%noInstances).  This is a rank remapping of VALUE1.
-    real(rv), dimension(:,:,:), pointer :: VALUE3 => NULL() ! The dimensions
-    ! of VALUE3 are Frequencies, Vertical Coordinates or MIF, and Horizontal
-    ! Instances (MAF or profile or 1) * Cross-track instances.  These are
-    ! taken from template%noChans, template%noSurfs, and
+    real(rv), dimension(:,:,:), pointer, contiguous :: VALUE3 => NULL() ! The
+    ! dimensions of VALUE3 are Frequencies, Vertical Coordinates or MIF, and
+    ! Horizontal Instances (MAF or profile or 1) * Cross-track instances.  These
+    ! are taken from template%noChans, template%noSurfs, and
     ! template%noInstances.  This is a rank remapping of VALUE1.
-    real(rv), dimension(:,:,:,:), pointer :: VALUE4 => NULL() ! The dimensions
-    ! of VALUE3 are Frequencies, Vertical Coordinates or MIF, Horizontal
-    ! Instances (MAF or profile or 1), and Cross-track instances.  These are
-    ! taken from template%noChans, template%noSurfs, and
+    real(rv), dimension(:,:,:,:), pointer, contiguous :: VALUE4 => NULL() ! The
+    ! dimensions of VALUE3 are Frequencies, Vertical Coordinates or MIF,
+    ! Horizontal Instances (MAF or profile or 1), and Cross-track instances. 
+    ! These are taken from template%noChans, template%noSurfs, and
     ! template%noInstances.  This is a rank remapping of VALUE1.
-    character, dimension(:), pointer :: MASK1 => NULL() ! MASK1 is the
-    ! array that is allocated and deallocated.  MASK and MASK3 are rank
+    character, dimension(:), pointer, contiguous :: MASK1 => NULL() ! MASK1 is
+    ! the array that is allocated and deallocated.  MASK and MASK3 are rank
     ! remappings of MASK1.
-    character, dimension(:,:), pointer :: MASK => NULL() ! MASK is used to
-    ! control whether elements of vectors are of interest. If MASK is not
-    ! associated, every element is of interest.  Otherwise,the dimensions of
-    ! MASK are the same as VALUES.  Bits of MASK(i,j) are used to determine
-    ! what is not interesting.  Zero means something about VALUES(i,j) is
+    character, dimension(:,:), pointer, contiguous :: MASK => NULL() ! MASK is
+    ! used to control whether elements of vectors are of interest. If MASK is
+    ! not associated, every element is of interest.  Otherwise,the dimensions of
+    ! MASK are the same as VALUES.  Bits of MASK(i,j) are used to determine what
+    ! is not interesting.  Zero means something about VALUES(i,j) is
     ! interesting, and one means it is not.  The low-order bit is used for
     ! linear algebra.  Other bits can be used for other purposes.
     ! Actually the mask bits are gotten at from the ichar(mask)
     ! Inversely, given the integer representation of the bits, we get the mask
     ! by mask = char(int).  This is a rank remapping of MASK1.
-    character, dimension(:,:,:), pointer :: MASK3 => NULL() ! This is used
-    ! for masking VALUE3, and has the same dimensions.  This is a rank
+    character, dimension(:,:,:), pointer, contiguous :: MASK3 => NULL() ! This
+    ! is used for masking VALUE3, and has the same dimensions.  This is a rank
     ! remapping of MASK1.
-    character, dimension(:,:,:,:), pointer :: MASK4 => NULL() ! This is used
-    ! for masking VALUE4, and has the same dimensions.  This is a rank
+    character, dimension(:,:,:,:), pointer, contiguous :: MASK4 => NULL() ! This
+    ! is used for masking VALUE4, and has the same dimensions.  This is a rank
     ! remapping of MASK1.
     integer :: Label = 0        ! An optional label for this to be used as for
     ! example a swath name.  Often used in conjunction with the 'batch'
@@ -2063,6 +2062,8 @@ contains ! =====     Public Procedures     =============================
   ! ---------------------------------------  Dump_Vector_Quantity  -----
   subroutine Dump_Vector_Quantity ( Qty, Details, Name, Vector, Options )
 
+    use Pointer_Rank_Remapping, only: Remap
+
     type (VectorValue_T), intent(in) :: QTY
     integer, intent(in), optional :: DETAILS ! <0  => Name only
     !                                        ! <-1 => No newline after name
@@ -2086,6 +2087,8 @@ contains ! =====     Public Procedures     =============================
     character(len=8) :: myOptions
     integer :: nUnique
     integer, dimension(1000) :: uniqueVals
+    real(rv), pointer :: value4(:,:,:,:) ! Remapping of Qty%values
+
     ! Executable
     myDetails = 1
     if ( present(details) ) myDetails = details
@@ -2190,14 +2193,15 @@ contains ! =====     Public Procedures     =============================
       & 'majorFrame', advance='yes' )
       if ( size(qty%values) > 0 ) then
         call output ( '    values array size is ' )
-        if ( size(qty%value3,1) > 1 ) then
-          call output ( size(qty%value4,1) )
+        if ( qty%template%noChans > 1 ) then
+          call output ( qty%template%noChans )
           call output ( 'x' )
         end if
-        call output ( size(qty%value4,2) )
-        call output ( size(qty%value4,3), before='x' )
-        if ( size(qty%value4,4) > 1 ) call output ( size(qty%value4,4), before='x' )
-        call output ( size(qty%value3), before=' = ' )
+        call output ( qty%template%noSurfs )
+        call output ( qty%template%noInstances, before='x' )
+        if ( qty%template%noCrossTrack > 1 ) &
+          & call output ( qty%template%noCrossTrack, before='x' )
+        call output ( size(qty%values), before=' = ' )
       else
         call output ( '    values array size is 0' )
       end if
@@ -2206,7 +2210,12 @@ contains ! =====     Public Procedures     =============================
       call output( 'values array is not associated', advance='yes' )
     else if ( myDetails > 0 ) then
       call newLine
-      call dump ( qty%value4, '  Elements = ', options=options )
+      call remap ( qty%values, value4, &
+        & [ qty%template%noChans, qty%template%noSurfs, &
+        &   qty%template%noInstances, qty%template%noCrossTrack ] )
+    ! value4(1:qty%template%noChans,1:qty%template%noSurfs, &
+    !       &1:qty%template%noInstances,1:qty%template%noCrossTrack) => qty%values
+      call dump ( value4, '  Elements = ', options=options )
       if ( associated(qty%mask) ) then
         call dump ( ichar(qty%mask), name='  Mask(hex) =', &
           & format='(z3.2)', width = 20 )
@@ -2294,6 +2303,8 @@ contains ! =====     Public Procedures     =============================
   ! This function returns a pointer to the information about one quantity
   ! within a vector.
 
+    use Pointer_Rank_Remapping, only: Remap
+
     ! Dummy arguments
     type(VectorValue_T), pointer :: Quantity
     integer, dimension(:), intent(in) :: start
@@ -2303,20 +2314,37 @@ contains ! =====     Public Procedures     =============================
 
     ! Result
     type(VectorValue_T) :: GatherVectorQuantity
+
+    ! Internal
+    real(rv), pointer :: GV1(:), QV1(:), GV3(:,:,:), QV3(:,:,:)
+
     ! Executable
     call CloneVectorQuantity( GatherVectorQuantity, quantity )
     call DestroyVectorQuantityValue( GatherVectorQuantity, destroyMask=.true., &
       & destroyTemplate=.false. )
     select case( size(count) )
     case (1)
-      call ExtractArray ( GatherVectorQuantity%value1, quantity%value1, &
-        & start, count, stride, block, options='-a' )
+    ! qv1(1:size(quantity%values)) => quantity%values
+      call remap ( quantity%values, qv1, size(quantity%values) )
+      call ExtractArray ( gv1, qv1, start, count, stride, block, options='-a' )
+      GatherVectorQuantity%values(1:quantity%template%noChans*quantity%template%noSurfs, &
+        & 1:quantity%template%noInstances*quantity%template%noCrossTrack) => gv1
     case (2)
       call ExtractArray ( GatherVectorQuantity%values, quantity%values, &
         & start, count, stride, block, options='-a' )
     case (3)
-      call ExtractArray ( GatherVectorQuantity%value3, quantity%value3, &
-        & start, count, stride, block, options='-a' )
+    ! qv3(1:quantity%template%noChans,1:quantity%template%noSurfs, &
+    !    &1:quantity%template%noInstances*quantity%template%noCrossTrack) => &
+    !    & quantity%values
+      call remap ( quantity%values, qv3, [ quantity%template%noChans, &
+        & quantity%template%noSurfs, &
+        & quantity%template%noInstances*quantity%template%noCrossTrack ] )
+      call ExtractArray ( gv3, qv3, start, count, stride, block, options='-a' )
+    ! GatherVectorQuantity%values(1:quantity%template%noChans*quantity%template%noSurfs, &
+    !  1:quantity%template%noInstances*quantity%template%noCrossTrack) => gv3
+      call remap ( gv3, GatherVectorQuantity%values, &
+        & [ quantity%template%noChans*quantity%template%noSurfs, &
+        &   quantity%template%noInstances*quantity%template%noCrossTrack ] )
     case default
       call MLSMessage ( MLSMSG_Error, &
         & ModuleName, "GatherVectorQuantity can handle only count sized 1, 2, or 3" )
@@ -3383,6 +3411,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.198  2015/05/01 02:09:28  vsnyder
+! Spiff a dump
+!
 ! Revision 2.197  2015/04/29 00:53:56  vsnyder
 ! Spiff the dump
 !
