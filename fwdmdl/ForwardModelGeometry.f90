@@ -49,7 +49,7 @@ contains ! ============= Public Procedures ==========================
   ! the existence of the other quantities has been checked.  See
   ! UsingMagneticModel in FillUtils_1.
 
-    use Allocate_Deallocate, only: Test_Allocate
+    use Allocate_Deallocate, only: Allocate_Test
     use Constants, only: Deg2Rad, Rad2Deg
     use Cross_m, only: Cross
     use Dump_0, only: Dump
@@ -72,8 +72,8 @@ contains ! ============= Public Procedures ==========================
     type(vectorValue_t), intent(in), optional :: TpGeocAlt ! Tangent geolocation,
                                                 ! and altitude
     type(vectorValue_t), intent(in), optional :: GPHQuantity ! Geopotential height,
-                                                ! a proxy for altitude and used to
-                                                ! calculate height from zeta
+                                                ! a proxy for altitude and used
+                                                ! to calculate height from zeta
     real(rt), intent(out) :: XYZs(:,:,:,:)      ! Geocentric Cartesian coordinates
                                                 ! of Qty%Value4.
                                                 ! 3 X surfs X instances X cross
@@ -98,7 +98,6 @@ contains ! ============= Public Procedures ==========================
     real(rt) :: Sec_x                           ! Secant of cross-track angle
     integer, allocatable :: Seq(:)              ! Increasing or decreasing
                                                 ! sequence indices, => Inc or Dec
-    integer :: Stat                             ! From Allocate
     integer :: SurfOr1                          ! First subscript for Lat, Lon
     real(rt) :: TP_XYZ(3)                       ! Tangent point position
 
@@ -124,9 +123,8 @@ contains ! ============= Public Procedures ==========================
       ! Eventually, this explicit allocation will not be necessary.
       ! As of 2015-04-22, ifort 15.0.2.164 requires a command-line option to
       ! make the standard-conforming automatic allocation work.
-      allocate ( heights(size(qty%template%surfs,1),size(qty%template%surfs,2)), &
-        & stat=stat )
-      call test_allocate ( stat, moduleName, 'Heights' )
+      call allocate_test ( heights, size(qty%template%surfs,1), size(qty%template%surfs,2), &
+        & moduleName, 'Heights' )
       heights = qty%template%surfs ! heights allocated automatically someday
       if ( qty%template%verticalCoordinate == l_geodAltitude ) then
         ! We know that if the vertical coordinate is zeta, then tpGeocAlt is
@@ -157,10 +155,8 @@ contains ! ============= Public Procedures ==========================
       ! Hopefully, we got here from FillUtils_1%UsingMagneticModel, where
       ! it is verified that if TpGeocAlt is provided, then so is ScVelECR,
       ! and that they have the same numbers of instances and surfaces.
-      allocate ( Alt(tpGeocAlt%template%noSurfs), stat=stat )
-      call test_allocate ( stat, moduleName, 'Alt' )
-      allocate ( r(3,tpGeocAlt%template%noSurfs), stat=stat )
-      call test_allocate ( stat, moduleName, 'R' )
+      call allocate_test ( Alt, tpGeocAlt%template%noSurfs, moduleName, 'Alt' )
+      call allocate_test ( r, 3, tpGeocAlt%template%noSurfs, moduleName, 'R' )
 
       do inst = 1, qty%template%NoInstances
         instOr1 = merge(1,inst,qty%template%coherent)
@@ -266,7 +262,7 @@ contains ! ============= Public Procedures ==========================
     ! depend upon the temperature profile by way of zeta's dependence upon
     ! temperature.  Then convert them to geodetic altitudes.
 
-    use Allocate_Deallocate, only: Test_Allocate
+    use Allocate_Deallocate, only: Allocate_Test
     use Intrinsic, only: L_GeodAltitude, L_Zeta
     use Heights_Module, only: GPH_to_Geom
     use Intrinsic, only: L_Zeta
@@ -282,7 +278,7 @@ contains ! ============= Public Procedures ==========================
     real(rt), intent(out), allocatable :: Heights(:,:) ! meters, geodetic
       ! altitude, same shape as Qty%Surfs (NoSurfs x NoInstances or 1)
 
-    integer :: IQ, IG, JQ, NQ, NG, SurfOr1, Stat
+    integer :: IQ, IG, JQ, NQ, NG, SurfOr1
     integer :: Me = -1                          ! String index, for tracing
 
     call trace_begin ( me, 'Height_From_Zeta', &
@@ -310,8 +306,8 @@ contains ! ============= Public Procedures ==========================
       return ! Hopefully, we don't get here
     end if
 
-    allocate ( heights(nq,size(qty%template%surfs,2)), stat=stat )
-    call test_allocate ( stat, moduleName, 'Heights' )
+    call allocate_test ( heights, nq, size(qty%template%surfs,2), moduleName, &
+                       & 'Heights' )
 
     do iq = 1, nq
       ig = merge(iq,1,ng>1)
@@ -453,6 +449,9 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelGeometry
 
 ! $Log$
+! Revision 2.5  2015/06/04 03:13:40  vsnyder
+! Make Surfs component of quantity template allocatable
+!
 ! Revision 2.4  2015/06/03 00:00:32  vsnyder
 ! Use type-bound procedures to do rank-3 reference and update for latitude
 ! and longitude, instead of using rank-remapped pointers.
