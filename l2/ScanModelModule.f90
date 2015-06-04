@@ -649,10 +649,12 @@ contains ! =============== Subroutines and functions ==========================
     ! several iterations until a good match is achieved.
 
     ! Dummy arguments
+    ! Temp and H2O have the target attribute so we can take a pointer to
+    ! their %template%surfs components.
     type (VectorValue_T), intent(inout) :: PTAN ! Tangent pressure sv. component
-    type (VectorValue_T), intent(in) :: TEMP    ! Temperature
+    type (VectorValue_T), intent(in), target :: TEMP    ! Temperature
     type (VectorValue_T), intent(in) :: REFGPH  ! Reference GPH
-    type (VectorValue_T), intent(in) :: H2O     ! H2O
+    type (VectorValue_T), intent(in), target :: H2O     ! H2O
     type (VectorValue_T), intent(in) :: GEOCALT ! L1B Tp Geoc alt.
     integer, intent(IN) :: MAXITERATIONS        ! Number of iterations to use
 
@@ -2116,6 +2118,9 @@ contains ! =============== Subroutines and functions ==========================
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.82  2015/06/04 03:14:14  vsnyder
+! Make Surfs component of quantity template allocatable
+!
 ! Revision 2.81  2014/07/18 23:17:59  pwagner
 ! Aimed for consistency in names passed to allocate_test
 !
