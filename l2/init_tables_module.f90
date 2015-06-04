@@ -52,13 +52,13 @@ module INIT_TABLES_MODULE
   !        names below.
   private :: ADD_IDENT
   private :: Field_Spec, Field_Spec_Array, Field_Spec_1, Field_Spec_2
-  private :: Field_Spec_3, Field_Spec_4
+  private :: Field_Spec_3, Field_Spec_4, Field_Spec_5
   private :: Field_Type, Field_Type_Array, Field_Type_1, Field_Type_2
   private :: INIT_SPECTROSCOPY, Node
 
   interface Field_Spec
     module procedure Field_Spec_1, Field_Spec_2
-    module procedure Field_Spec_3, Field_Spec_4
+    module procedure Field_Spec_3, Field_Spec_4, Field_Spec_5
   end interface
 
   interface Field_Type
@@ -1045,8 +1045,8 @@ contains ! =====     Public procedures     =============================
              begin, f+f_sourceQuantity, vectorQuantity(), &
              begin, f+f_sourceL2GP, field_spec(s_l2gp), &
              begin, f+f_sourceL2AUX, field_spec(s_l2aux), &
-             begin, f+f_sourceGrid, field_spec( s_gridded,s_merge,s_concatenate, &
-                                             &  s_ConvertEtaToP ), &
+             begin, f+f_sourceGrid, field_spec( s_gridded, s_merge, s_concatenate, &
+                                             &  s_ConvertEtaToP, s_wmoTrop ), &
              begin, f+f_sourceVGrid, field_spec(s_vGrid), &
              begin, f+f_spread, boolean(), &
              begin, f+f_start, numeric(phyq_dimensionless), &
@@ -1953,6 +1953,18 @@ contains ! =====     Public procedures     =============================
                    &  node(req,scalar)+n_field_spec /)
   end function Field_Spec_4
 
+  ! -----------------------------------------------  Field_Spec_5  -----
+  pure function Field_Spec_5 ( Spec1, Spec2, Spec3, Spec4, Spec5, Req, Scalar )
+    ! Declare field-spec field
+    use TREE_TYPES, only: N_FIELD_SPEC
+    integer, intent(in) :: Spec1, Spec2, Spec3, Spec4, Spec5 ! S_...
+    logical, intent(in), optional :: Req       ! Field is required if true
+    logical, intent(in), optional :: Scalar    ! Field is scalar if true
+    integer :: Field_Spec_5(6)
+    field_spec_5 = (/ s+spec1, s+spec2, s+spec3,  s+spec4,  s+spec5, &
+                   &  node(req,scalar)+n_field_spec /)
+  end function Field_Spec_5
+
   ! -------------------------------------------  Field_Type_Array  -----
   pure function Field_Type_Array ( Type, Req )
     ! Declare field-Type field
@@ -2014,6 +2026,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.614  2015/06/04 00:52:11  pwagner
+! Needed wmoTrop among perissible sourceGrid in Fill
+!
 ! Revision 2.613  2015/06/03 23:10:09  pwagner
 ! NAG hated Field_Spec_Array; workaround
 !
