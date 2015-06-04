@@ -189,10 +189,10 @@ contains
       templateStuff%molecule                /= QuantityTemplate%molecule ) return
 
     if ( &
-      templateStuff%AssociatedSurfs       .neqv. associated(QuantityTemplate%surfs) .or. &
+      templateStuff%AssociatedSurfs       .neqv. allocated(QuantityTemplate%surfs) .or. &
       templateStuff%AssociatedPhi         .neqv. associated(QuantityTemplate%phi) .or. &
-      templateStuff%AssociatedGeodLat     .neqv. associated(QuantityTemplate%geodLat) .or. &
-      templateStuff%AssociatedLon         .neqv. associated(QuantityTemplate%lon) .or. &
+      templateStuff%AssociatedGeodLat     .neqv. allocated(QuantityTemplate%geodLat) .or. &
+      templateStuff%AssociatedLon         .neqv. allocated(QuantityTemplate%lon) .or. &
       templateStuff%AssociatedTime        .neqv. associated(QuantityTemplate%time) .or. &
       templateStuff%AssociatedSolarTime   .neqv. associated(QuantityTemplate%solarTime) .or. &
       templateStuff%AssociatedSolarZenith .neqv. associated(QuantityTemplate%solarZenith) .or. &
@@ -515,10 +515,10 @@ contains
       templateStuff%radiometer              = vector%quantities(i)%template%radiometer
       templateStuff%reflector               = vector%quantities(i)%template%reflector
       templateStuff%molecule                = vector%quantities(i)%template%molecule
-      templateStuff%AssociatedSurfs         = associated(vector%quantities(i)%template%surfs)
+      templateStuff%AssociatedSurfs         = allocated(vector%quantities(i)%template%surfs)
       templateStuff%AssociatedPhi           = associated(vector%quantities(i)%template%phi)
-      templateStuff%AssociatedGeodLat       = associated(vector%quantities(i)%template%geodLat)
-      templateStuff%AssociatedLon           = associated(vector%quantities(i)%template%lon)
+      templateStuff%AssociatedGeodLat       = allocated(vector%quantities(i)%template%geodLat)
+      templateStuff%AssociatedLon           = allocated(vector%quantities(i)%template%lon)
       templateStuff%AssociatedTime          = associated(vector%quantities(i)%template%time)
       templateStuff%AssociatedSolarTime     = associated(vector%quantities(i)%template%solarTime)
       templateStuff%AssociatedSolarZenith   = associated(vector%quantities(i)%template%solarZenith)
@@ -648,6 +648,9 @@ contains
 end module Checkpoint
 
 ! $Log$
+! Revision 2.7  2015/06/04 03:14:14  vsnyder
+! Make Surfs component of quantity template allocatable
+!
 ! Revision 2.6  2015/05/28 18:24:11  vsnyder
 ! Remove shared HGrid
 !
