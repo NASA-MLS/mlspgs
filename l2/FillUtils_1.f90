@@ -3593,8 +3593,11 @@ contains ! =====     Public Procedures     =============================
       & ignoreTemplate, ptan )
       use MLSNumerics, only: Interpolate_Regular_To_Irregular
       use VectorsModule, only: CreateVectorValue
-      type (VectorValue_T), intent(inout) :: QTY
-      type (VectorValue_T), intent(in) :: SOURCE
+      ! Arguments
+      ! Source and Qty have the target attribute so that we can take pointers
+      ! to their %template%surfs components
+      type (VectorValue_T), intent(inout), target :: QTY
+      type (VectorValue_T), intent(in), target :: SOURCE
       integer, intent(in) :: KEY
       logical, intent(in) :: IGNORETEMPLATE
       type (VectorValue_T), optional :: PTAN ! press. values
@@ -4819,7 +4822,7 @@ contains ! =====     Public Procedures     =============================
       type (VectorValue_T), pointer              :: PtanQuantity
       ! Local variables
       integer                                    :: heightMAF
-      real(r8), dimension(:,:), pointer :: HEIGHTS ! might be ptan.
+      real(r8), dimension(:,:), allocatable :: HEIGHTS ! might be ptan.
       integer                                    :: I
       integer, dimension(1)                      :: indices
       integer                                    :: l1bError
@@ -4850,13 +4853,12 @@ contains ! =====     Public Procedures     =============================
       endif
       noSurfs = quantity%template%noSurfs
       ! Work out vertical coordinate if needed
+      call Allocate_test ( Heights, ptanQuantity%template%nosurfs, &
+        & ptanQuantity%template%noinstances, 'Heights', ModuleName )
       if ( associated ( ptanQuantity ) .and. .not. Quantity%template%minorFrame ) then
-        nullify ( Heights )
-        call Allocate_test ( Heights, ptanQuantity%template%nosurfs, &
-          & ptanQuantity%template%noinstances, 'Heights', ModuleName )
         Heights = ptanQuantity%values
       else
-        Heights => Quantity%template%surfs
+        Heights = Quantity%template%surfs
       endif
       do i=1, quantity%template%noInstances
         maf = Hgrids(quantity%template%hGridIndex)%maf(i)
@@ -5408,9 +5410,12 @@ contains ! =====     Public Procedures     =============================
 
       use HFTI_M, only: HFTI
 
+      ! Arguments
+      ! SourceQuantity has the target attribute so that we can take a
+      ! pointer to SourceQuantity%template%surfs
       integer, intent(in) :: KEY        ! Tree node
       type (VectorValue_T), intent(inout) :: QUANTITY
-      type (VectorValue_T), intent(in) :: SOURCEQUANTITY
+      type (VectorValue_T), intent(in), target :: SOURCEQUANTITY
       type (VectorValue_T), pointer :: PTANQUANTITY
       integer, intent(in) :: CHANNEL
       integer, intent(in) :: METHOD
@@ -5863,7 +5868,10 @@ contains ! =====     Public Procedures     =============================
       ! Another gotcha: interpolate using only the quantity's heights at its first
       ! instance, then spread out to all other instances
       ! Should we let the user override this?
-      type (VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
+      !
+      ! Quantity has the target attribute so that we can take a pointer to
+      ! Quantity%template%surfs.
+      type (VectorValue_T), intent(inout), target :: QUANTITY ! Quantity to fill
       real(r8), dimension(:), intent(in) :: INHEIGHTS ! Supplied heights
       real(r8), dimension(:), intent(in) :: INVALUES
       integer, intent(in) :: INSTANCESNODE ! Tree node for instances
@@ -6176,9 +6184,12 @@ contains ! =====     Public Procedures     =============================
       ! a typically incoherent one.  The bins are centered horizontally
       ! on the profiles in quantity, but vertically the bins run between one
       ! surface and the next one up.
+      !
+      ! SourceQuantity has the target attribute so that we can take a pointer
+      ! to SourceQuantity%template%surfs.
       integer, intent(in) :: KEY        ! Tree node
       type (VectorValue_T), intent(inout) :: QUANTITY
-      type (VectorValue_T), intent(in) :: SOURCEQUANTITY
+      type (VectorValue_T), intent(in), target :: SOURCEQUANTITY
       type (VectorValue_T), pointer :: PTANQUANTITY
       integer, intent(in) :: CHANNEL
       integer, intent(in) :: METHOD
@@ -7394,7 +7405,7 @@ contains ! =====     Public Procedures     =============================
         endif
         if ( spread ) then
           quantity%values = values(1,1,1)
-        elseif ( interpolate .and. associated(quantity%template%surfs) ) then
+        elseif ( interpolate .and. allocated(quantity%template%surfs) ) then
           ! Must we interpolate according to surface heights?
           call h5dOpen_f ( MLSFile%fileID%f_id, trim(name), &
             & MLSFile%fileID%sd_id, status)
@@ -7523,6 +7534,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.109  2015/06/04 03:19:36  vsnyder
+! Make the Surfs component of quantity templates allocatable
+!
 ! Revision 2.108  2015/06/03 00:35:36  pwagner
 ! Should only use sc/VelECI if it is found in l1boa
 !
