@@ -119,13 +119,17 @@ module QuantityTemplates         ! Quantities within vectors
                                   ! defined in Init_Tables_Module.
     logical :: sharedVGrid        ! Set if surfs is a pointer not a copy
     integer :: vGridIndex         ! Index of any vGrid used
-    real(rt), dimension(:,:), pointer :: surfs => NULL()
 
-    ! This is dimensioned (noSurfs,1) for coherent quantities and
+    ! Surfs is dimensioned (noSurfs,1) for coherent quantities and
     ! (noSurfs, noInstances) for incoherent ones.  Pretending the values are
-    ! dimensioned (noChans, noSurfs, noInstances), the SURFS coordinate
-    ! for the (:,i,j) values is surfs(i,1) for a coherent quantity or
+    ! dimensioned (noChans, noSurfs, noInstances), or
+    ! (noChans, noSurfs, noInstances, noCrossTrack), the SURFS coordinate
+    ! for the (:,i,j,:) values is surfs(i,1) for a coherent quantity or
     ! surfs(i,j) for an incoherent one.
+    ! Surfs is allocatable instead of a pointer because the quantity template
+    ! is copied into the vector value, not targeted therein.  If the VGrid
+    ! is shared, deallocating a pointer would result in a dangling pointer.
+    real(rt), allocatable :: Surfs(:,:)
 
     ! Horizontal coordinates in the orbit plane.
     integer :: horizontalCoordinate = l_phiTan ! The horizontal coordinate used.
@@ -155,13 +159,17 @@ module QuantityTemplates         ! Quantities within vectors
     ! (i,j) value is phi(1,j) for a stacked quantity and phi(i,j) for an
     ! unstacked one.  Phi is either taken from or derived from Geolocation.
 
-    ! These other coordinates are dimensioned in the same manner as Phi:
-    real(rt), pointer, contiguous :: GeodLat(:,:) => NULL()  ! Degrees
-    real(rt), pointer, contiguous :: Lon(:,:) => NULL()      ! Degrees
-    real(rt), pointer :: Time(:,:) => NULL()        ! Seconds since EPOCH
+    ! These other coordinates are dimensioned in the same manner as Phi.
+    ! GeodLat and Lon are allocatable instead of pointers because the
+    ! quantity template is copied into the vector value, not targeted
+    ! therein.  If geolocations are computed, as for the magnetic field,
+    ! if they were pointers the result would be dangling pointers.
+    real(rt), allocatable :: GeodLat(:,:)            ! Degrees
+    real(rt), allocatable :: Lon(:,:)                ! Degrees
+    real(rt), pointer :: Time(:,:) => NULL()         ! Seconds since EPOCH
     real(rt), pointer :: SolarTime(:,:) => NULL()
-    real(rt), pointer :: SolarZenith(:,:) => NULL() ! Degrees
-    real(rt), pointer :: LosAngle(:,:) => NULL()    ! Degrees
+    real(rt), pointer :: SolarZenith(:,:) => NULL()  ! Degrees
+    real(rt), pointer :: LosAngle(:,:) => NULL()     ! Degrees
 
     ! Notwithstanding that the name of the latitude coordinate is GeodLat,
     ! it is sometimes geocentric latitude.  LatitudeCoordinate is either
@@ -348,10 +356,10 @@ contains
     z%molecule                     = a%molecule        
 
     ! Next, arrays
-    if ( associated(z%surfs)       .and. associated(a%surfs) )       z%surfs =       a%surfs
+    if ( allocated(z%surfs)        .and. allocated(a%surfs) )       z%surfs =       a%surfs
     if ( associated(z%phi)         .and. associated(a%phi) )         z%phi =         a%phi
-    if ( associated(z%geodLat)     .and. associated(a%geodLat) )     z%geodLat =     a%geodLat
-    if ( associated(z%lon)         .and. associated(a%lon) )         z%lon =         a%lon
+    if ( allocated(z%geodLat)      .and. allocated(a%geodLat) )      z%geodLat =     a%geodLat
+    if ( allocated(z%lon)          .and. allocated(a%lon) )          z%lon =         a%lon
     if ( associated(z%time)        .and. associated(a%time) )        z%time =        a%time
     if ( associated(z%solarTime)   .and. associated(a%solarTime) )   z%solarTime =   a%solarTime
     if ( associated(z%solarZenith) .and. associated(a%solarZenith) ) z%solarZenith = a%solarZenith
@@ -376,6 +384,7 @@ contains
 
     call createLatitudeFields ( Qty, NoSurfsToAllocate, What )
     call createLongitudeFields ( Qty, NoSurfsToAllocate, What )
+    call createSurfsFields ( Qty, What )
 
   end subroutine CreateGeolocationFields
 
@@ -411,11 +420,24 @@ contains
 
   end subroutine CreateLongitudeFields
 
+  ! ------------------------------------------  CreateSurfsFields  -----
+  subroutine CreateSurfsFields ( Qty, What )
+    ! Allocate Qty%Surfs
+
+    type (QuantityTemplate_T), intent(inout) :: QTY
+    character(len=*), intent(in) :: What
+
+    call allocate_test ( qty%surfs, qty%noSurfs, &
+      & merge(1,qty%noInstances,qty%coherent), moduleName, &
+      & trim(what) // "%surfs" )
+
+  end subroutine CreateSurfsFields
+
   ! -----------------------------------  DestroyGeolocationFields  -----
   subroutine DestroyGeolocationFields ( Qty )
-    ! Deallocate the latitude and longitude fields if the hGrid is
-    ! not shared, or if it is shared and there are cross angles,
-    ! else nullify them.
+    ! Deallocate the latitude and longitude fields.  They are no longer
+    ! shared with corresponding fields of HGrids, so we don't need to worry
+    ! about shared HGrids here.
     use Allocate_Deallocate, only: Deallocate_Test
     ! Args
     type (QuantityTemplate_T), intent(inout) :: QTY
@@ -673,18 +695,22 @@ contains
         end if
       end if
       call maybe_dump_2_rt ( qty%phi, 'Phi' )
-      call maybe_dump_2_rt ( qty%surfs, 'Surfs' )
+      if ( allocated(qty%surfs) ) then
+        call dump ( qty%surfs, 'Surfs' )
+      else
+        call output ( '      No Surfs' )
+      end if
       if ( myDetails > 1 ) then
         call maybe_dump_2_I ( qty%surfIndex, 'SurfIndex' )
         call maybe_dump_2_I ( qty%chanIndex, 'ChanIndex' )
-        if ( associated(qty%geodlat) ) then
+        if ( allocated(qty%geodlat) ) then
           call dump ( reshape ( qty%geodlat, &
             & [ size(qty%geodLat,1),qty%noInstances,qty%noCrossTrack] ), &
             & '      GeodLat = ' )
         else
           call output ( '      No GeodLat' )
         end if
-        if ( associated(qty%lon) ) then
+        if ( allocated(qty%lon) ) then
           call dump ( reshape ( qty%lon, &
             & [ size(qty%geodLat,1),qty%noInstances,qty%noCrossTrack] ), &
             & '      Lon = ' )
@@ -1323,9 +1349,7 @@ contains
     end if
 
     ! First the vertical coordinates
-    if ( qty%sharedVGrid ) then
-      nullify ( qty%surfs )
-    else
+    if ( .not. qty%sharedVGrid ) then
       call allocate_test ( qty%surfs, qty%noSurfs, noInstancesToAllocate, &
         & trim(what) // "%surfs", ModuleName )
     end if
@@ -1423,7 +1447,7 @@ contains
       call MakeHDF5Attribute ( dsID, name, 'signal', str )
     end if
     ! Should we always write these, or only when specifically requested?
-    if ( associated(qt%surfs) ) &
+    if ( allocated(qt%surfs) ) &
       & call MakeHDF5Attribute ( dsID, name, 'surfs', qt%surfs(:,1) )
   end subroutine WriteAttributes_QuantityTemplate
 
@@ -1520,7 +1544,7 @@ contains
 
     ! Check the arrays are associated.  Note these have to be errors, as later
     ! tests will fail otherwise.
-    if ( .not. associated ( qty%surfs ) ) then
+    if ( .not. allocated ( qty%surfs ) ) then
       call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'The quantity template '//trim(name)// ' does not have surfs associated' )
       CheckIntegrity_QuantityTemplate = .false.
@@ -1532,12 +1556,12 @@ contains
       CheckIntegrity_QuantityTemplate = .false.
     end if
 
-    if ( .not. associated ( qty%geodLat ) ) then
+    if ( .not. allocated ( qty%geodLat ) ) then
       call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'The quantity template '//trim(name)// ' does not have geodLat associated' )
       CheckIntegrity_QuantityTemplate = .false.
     end if
-    if ( .not. associated ( qty%lon ) ) then
+    if ( .not. allocated ( qty%lon ) ) then
       call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'The quantity template '//trim(name)// ' does not have lon associated' )
       CheckIntegrity_QuantityTemplate = .false.
@@ -1945,6 +1969,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.96  2015/06/03 23:09:00  pwagner
+! Tried to prevent end-of-run crashes
+!
 ! Revision 2.95  2015/06/02 23:53:00  vsnyder
 ! Add type-bound procedures to do rank-3 reference and update for latitude
 ! and longitude, instead of using rank-remapped pointers.
