@@ -961,7 +961,7 @@ contains
     integer, intent(in), optional :: LowBound     ! Lower bound, default 1
     double precision, intent(in), optional :: Fill
     double precision, parameter :: Default = 0.0d0
-    include "Allocate_Test_1D.f9h"
+    include "AllocateA_Test_1D.f9h"
     if ( InitRealNaN .and. IEEE_Support_DataType(to_allocate) .and. &
        & .not. present(fill) ) &
          & to_allocate = IEEE_Value ( to_allocate, IEEE_Signaling_NaN )
@@ -976,7 +976,7 @@ contains
     integer, intent(in), optional :: Low1, Low2 ! Low bounds for dimensions
     double precision, intent(in), optional :: Fill
     double precision, parameter :: Default = 0.0d0
-    include "Allocate_Test_2D.f9h"
+    include "AllocateA_Test_2D.f9h"
     if ( InitRealNaN .and. IEEE_Support_DataType(to_allocate) .and. &
        & .not. present(fill) ) &
          & to_allocate = IEEE_Value ( to_allocate, IEEE_Signaling_NaN )
@@ -990,7 +990,7 @@ contains
     integer, intent(in), optional :: Low(2) ! Low bounds for dimensions
     double precision, intent(in), optional :: Fill
     double precision, parameter :: Default = 0.0d0
-    include "Allocate_Test_2D_a.f9h"
+    include "AllocateA_Test_2D_a.f9h"
     if ( InitRealNaN .and. IEEE_Support_DataType(to_allocate) .and. &
        & .not. present(fill) ) &
          & to_allocate = IEEE_Value ( to_allocate, IEEE_Signaling_NaN )
@@ -1006,7 +1006,7 @@ contains
     integer, intent(in), optional :: Low1, Low2, Low3 ! Low bounds for dimensions
     double precision, intent(in), optional :: Fill
     double precision, parameter :: Default = 0.0d0
-    include "Allocate_Test_3D.f9h"
+    include "AllocateA_Test_3D.f9h"
     if ( InitRealNaN .and. IEEE_Support_DataType(to_allocate) .and. &
        & .not. present(fill) ) &
          & to_allocate = IEEE_Value ( to_allocate, IEEE_Signaling_NaN )
@@ -1020,7 +1020,7 @@ contains
     integer, intent(in), optional :: Low(3) ! Low bounds for dimensions
     double precision, intent(in), optional :: Fill
     double precision, parameter :: Default = 0.0d0
-    include "Allocate_Test_3D_a.f9h"
+    include "AllocateA_Test_3D_a.f9h"
     if ( InitRealNaN .and. IEEE_Support_DataType(to_allocate) .and. &
        & .not. present(fill) ) &
          & to_allocate = IEEE_Value ( to_allocate, IEEE_Signaling_NaN )
@@ -1037,7 +1037,7 @@ contains
     integer, intent(in), optional :: Low1, Low2, Low3, Low4 ! Low bounds for dimensions
     double precision, intent(in), optional :: Fill
     double precision, parameter :: Default = 0.0d0
-    include "Allocate_Test_4D.f9h"
+    include "AllocateA_Test_4D.f9h"
     if ( InitRealNaN .and. IEEE_Support_DataType(to_allocate) .and. &
        & .not. present(fill) ) &
          & to_allocate = IEEE_Value ( to_allocate, IEEE_Signaling_NaN )
@@ -1051,7 +1051,7 @@ contains
     integer, intent(in), optional :: Low(4) ! Low bounds for dimensions
     double precision, intent(in), optional :: Fill
     double precision, parameter :: Default = 0.0d0
-    include "Allocate_Test_4D_a.f9h"
+    include "AllocateA_Test_4D_a.f9h"
     if ( InitRealNaN .and. IEEE_Support_DataType(to_allocate) .and. &
        & .not. present(fill) ) &
          & to_allocate = IEEE_Value ( to_allocate, IEEE_Signaling_NaN )
@@ -1065,7 +1065,7 @@ contains
     integer, intent(in), optional :: LowBound     ! Lower bound, default 1
     real, intent(in), optional :: Fill
     real, parameter :: Default = 0.0
-    include "Allocate_Test_1D.f9h"
+    include "AllocateA_Test_1D.f9h"
     if ( InitRealNaN .and. IEEE_Support_DataType(to_allocate) .and. &
        & .not. present(fill) ) &
          & to_allocate = IEEE_Value ( to_allocate, IEEE_Signaling_NaN )
@@ -1080,7 +1080,7 @@ contains
     integer, intent(in), optional :: Low1, Low2 ! Low bounds for dimensions
     real, intent(in), optional :: Fill
     real, parameter :: Default = 0.0
-    include "Allocate_Test_2D.f9h"
+    include "AllocateA_Test_2D.f9h"
     if ( InitRealNaN .and. IEEE_Support_DataType(to_allocate) .and. &
        & .not. present(fill) ) &
          & to_allocate = IEEE_Value ( to_allocate, IEEE_Signaling_NaN )
@@ -1094,7 +1094,7 @@ contains
     integer, intent(in), optional :: Low(2) ! Low bounds, default 1
     real, intent(in), optional :: Fill
     real, parameter :: Default = 0.0
-    include "Allocate_Test_2D_a.f9h"
+    include "AllocateA_Test_2D_a.f9h"
     if ( InitRealNaN .and. IEEE_Support_DataType(to_allocate) .and. &
        & .not. present(fill) ) &
          & to_allocate = IEEE_Value ( to_allocate, IEEE_Signaling_NaN )
@@ -1110,7 +1110,7 @@ contains
     integer, intent(in), optional :: Low1, Low2, Low3 ! Low bounds for dimensions
     real, intent(in), optional :: Fill
     real, parameter :: Default = 0.0
-    include "Allocate_Test_3D.f9h"
+    include "AllocateA_Test_3D.f9h"
     if ( InitRealNaN .and. IEEE_Support_DataType(to_allocate) .and. &
        & .not. present(fill) ) &
          & to_allocate = IEEE_Value ( to_allocate, IEEE_Signaling_NaN )
@@ -1124,7 +1124,7 @@ contains
     integer, intent(in), optional :: Low(3) ! Low bounds, default 1
     real, intent(in), optional :: Fill
     real, parameter :: Default = 0.0
-    include "Allocate_Test_3D_a.f9h"
+    include "AllocateA_Test_3D_a.f9h"
     if ( InitRealNaN .and. IEEE_Support_DataType(to_allocate) .and. &
        & .not. present(fill) ) &
          & to_allocate = IEEE_Value ( to_allocate, IEEE_Signaling_NaN )
@@ -1141,7 +1141,7 @@ contains
     integer, intent(in), optional :: Low1, Low2, Low3, Low4 ! Low bounds for dimensions
     real, intent(in), optional :: Fill
     real, parameter :: Default = 0.0
-    include "Allocate_Test_4D.f9h"
+    include "AllocateA_Test_4D.f9h"
     if ( InitRealNaN .and. IEEE_Support_DataType(to_allocate) .and. &
        & .not. present(fill) ) &
          & to_allocate = IEEE_Value ( to_allocate, IEEE_Signaling_NaN )
@@ -1155,7 +1155,7 @@ contains
     integer, intent(in), optional :: Low(4) ! Low bounds, default 1
     real, intent(in), optional :: Fill
     real, parameter :: Default = 0.0
-    include "Allocate_Test_4D_a.f9h"
+    include "AllocateA_Test_4D_a.f9h"
     if ( InitRealNaN .and. IEEE_Support_DataType(to_allocate) .and. &
        & .not. present(fill) ) &
          & to_allocate = IEEE_Value ( to_allocate, IEEE_Signaling_NaN )
@@ -1927,6 +1927,9 @@ contains
 end module Allocate_Deallocate
 
 ! $Log$
+! Revision 2.51  2015/06/04 01:55:17  vsnyder
+! Don't reallocate if bounds are the same
+!
 ! Revision 2.50  2015/06/02 23:51:40  vsnyder
 ! Routines for allocatable arrays
 !
