@@ -3670,6 +3670,7 @@ contains ! =====     Public Procedures     =============================
     deeBugHere = DEEBUG ! .or. .true.
     nullify ( realFreq, realSurf, realProf, real3 )
     hdfVersion = L2GPFile%hdfVersion
+    flddims = 0
     ! Don't fail when trying to read an mls-specific field 
     ! if the file is from another Aura instrument
     dontfail = (HMOT /= 'M')
@@ -3733,7 +3734,6 @@ contains ! =====     Public Procedures     =============================
       ! HE5_SWdiminfo returns 1 instead of the right answer.
       status = HE5_swfldinfo(swid, trim(DF_Name), rank, hflddims, &
         & numberType, dimlist, maxdimlist)
-      flddims = hflddims
       call GetHashElement (dimlist, &
        & maxdimlist, 'nTimes', &
        & maxDimName, .false.)
@@ -3742,7 +3742,10 @@ contains ! =====     Public Procedures     =============================
       if ( deeBugHere ) print *, 'maxdimlist: ', trim(maxdimlist)
       if ( maxDimName == 'Unlim' ) then
         status = StringElementNum(dimlist, 'nTimes', .false.)
-        if ( status > 0 .and. status <= rank ) size = max(size, flddims(status))
+        if ( status > 0 .and. status <= rank ) then
+          flddims(1:rank) = hflddims(1:rank)
+          size = max(size, flddims(status))
+        endif
       endif
     endif
     l2gp%nTimes = size
@@ -5243,6 +5246,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.212  2015/04/28 16:21:11  pwagner
+! Fixed some things in Diffing
+!
 ! Revision 2.211  2015/03/28 01:09:22  vsnyder
 ! Made DescendingRange a parameter.
 ! Added stuff to trace allocate/deallocate addresses.
