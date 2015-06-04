@@ -340,7 +340,7 @@ contains ! ================================== Module procedures ============
       ! If it's minor frame and we've got mif geolocation information just
       ! point to that (except don't share latitude and longitude).
       if ( qt%minorFrame ) then
-        qt%surfs => mifGeolocation(qt%instrumentModule)%surfs
+        qt%surfs = mifGeolocation(qt%instrumentModule)%surfs
         qt%phi => mifGeolocation(qt%instrumentModule)%phi
         qt%geodLat = mifGeolocation(qt%instrumentModule)%geodLat
         qt%lon = mifGeolocation(qt%instrumentModule)%lon
@@ -349,7 +349,6 @@ contains ! ================================== Module procedures ============
         qt%solarZenith => mifGeolocation(qt%instrumentModule)%solarZenith
       end if
       if ( qt%majorFrame ) then
-        nullify ( qt%surfs )
         qt%phi => mifGeolocation(qt%instrumentModule)%phi(1:1,:)
         qt%geodLat = mifGeolocation(qt%instrumentModule)%geodLat
         qt%lon = mifGeolocation(qt%instrumentModule)%lon
@@ -429,6 +428,9 @@ contains ! ================================== Module procedures ============
 end module QuantityPVM
 
 ! $Log$
+! Revision 2.29  2015/06/04 03:13:16  vsnyder
+! Make Surfs component of quantity template allocatable
+!
 ! Revision 2.28  2015/06/02 23:55:11  vsnyder
 ! Eliminated pointer rank remapping for lat and lon
 !
