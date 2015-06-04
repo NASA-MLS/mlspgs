@@ -454,7 +454,7 @@ contains ! ============= Public procedures ===================================
       if ( got (f_vGrid) ) then
         qty%vGridIndex = vGridIndex
         qty%verticalCoordinate = vGrids(vGridIndex)%verticalCoordinate
-        qty%surfs => vGrids(vGridIndex)%surfs
+        qty%surfs = vGrids(vGridIndex)%surfs
       else
         call SetupEmptyVGridForQuantity ( qty )
       end if
@@ -1449,7 +1449,7 @@ contains ! ============= Public procedures ===================================
     qty%hGridIndex = 0
     qty%xGridIndex = 0
     ! Lest we deallocate a database entry:
-    nullify( qty%frequencies, qty%geodLat, qty%lon, qty%time, qty%solarTime, &
+    nullify( qty%frequencies, qty%time, qty%solarTime, &
       & qty%solarZenith, qty%losAngle, qty%crossAngles, qty%the_hGrid )
     call allocate_test ( qty%phi, 1, 1, 'qty%phi(1,1)', ModuleName )
     call allocate_test ( qty%geodLat, 1, 1, 'qty%geodLat(1,1)', ModuleName )
@@ -1480,7 +1480,6 @@ contains ! ============= Public procedures ===================================
     qty%sharedVGrid = .false.
     qty%vGridIndex = 0
     qty%verticalCoordinate = l_none
-    nullify(qty%surfs) ! Lest we deallocate a database entry
     call Allocate_test ( qty%surfs, 1, 1, 'qty%surfs(1,1)', ModuleName )
     qty%surfs = 0. ! We used to have impossible values for bnd. prs.
   end subroutine SetupEmptyVGridForQuantity
@@ -1498,6 +1497,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.181  2015/06/04 03:14:14  vsnyder
+! Make Surfs component of quantity template allocatable
+!
 ! Revision 2.180  2015/06/03 00:01:51  vsnyder
 ! Allocate rank-2 latitude and longitude, instead of rank-1 ones and then
 ! remapping to rank-2 and rank-3.
