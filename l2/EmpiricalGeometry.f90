@@ -11,6 +11,8 @@
 
 module EmpiricalGeometry                ! For empirically obtaining orbit information
 
+  use HGridsdatabase, only: HGrid_T, HGridGeolocations_T, HGridGeolocations, &
+    & L1BGeolocation, L1BSubsample
   use MLSKinds, only: R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
 
@@ -162,7 +164,6 @@ contains ! ========================= Public Procedures ====================
   end subroutine
 
   ! ------------------------------------------  ChooseOptimumLon0  -----
-  ! subroutine ChooseOptimumLon0 ( l1bInfo, chunk )
   subroutine ChooseOptimumLon0 ( filedatabase, chunk )
 
     use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
@@ -177,6 +178,7 @@ contains ! ========================= Public Procedures ====================
     type (MLSChunk_T), intent(in) :: CHUNK ! This chunk
 
     ! Local variables
+    double precision, dimension(:), pointer :: FullArray
     type (L1BData_T) :: tpGeodAngle     ! From L1B
     type (L1BData_T) :: tpLon           ! From L1B
     integer :: NOMAFS                   ! From ReadL1B
@@ -200,18 +202,24 @@ contains ! ========================= Public Procedures ====================
     ! Now we want to establish the value of lon0
     nullify ( testPhi, testLon, guessLon )
     l1bItemName = AssembleL1BQtyName ( "GHz.tpGeodAngle", hdfVersion, .false. )
-    call ReadL1BData ( L1BFile, trim(l1bItemName), tpGeodAngle, noMAFs, flag, &
-      & firstMAF = chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex)
-    call Allocate_test ( testPhi, noMAFs, 'testPhi', ModuleName )
-    testPhi = tpGeodAngle%DpField(1,1,:)
-    call DeallocateL1BData ( tpGeodAngle )
+    ! call ReadL1BData ( L1BFile, trim(l1bItemName), tpGeodAngle, noMAFs, flag, &
+    !  & firstMAF = chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex)
+    call L1BGeoLocation ( filedatabase, "tpGeodAngle", fullArray )
+    call L1BSubsample ( chunk, FullArray, values=testPhi )
+    ! call Allocate_test ( testPhi, noMAFs, 'testPhi', ModuleName )
+    ! testPhi = tpGeodAngle%DpField(1,1,:)
+    ! call DeallocateL1BData ( tpGeodAngle )
+    call Deallocate_test ( fullArray, 'fullArray', ModuleName )
 
     l1bItemName = AssembleL1BQtyName ( "GHz.tpLon", hdfVersion, .false. )
-    call ReadL1BData ( L1BFile, trim(l1bItemName), tpLon, noMAFs, flag, &
-      & firstMAF = chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex )
-    call Allocate_test ( testLon, noMAFs, 'testLon', ModuleName )
-    testLon = tpLon%DpField(1,1,:)
-    call DeallocateL1BData ( tpLon )
+    call L1BGeoLocation ( filedatabase, "tpLon", fullArray )
+    call L1BSubsample ( chunk, FullArray, values=testLon )
+    call Deallocate_test ( fullArray, 'fullArray', ModuleName )
+    ! call ReadL1BData ( L1BFile, trim(l1bItemName), tpLon, noMAFs, flag, &
+    !  & firstMAF = chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex )
+    ! call Allocate_test ( testLon, noMAFs, 'testLon', ModuleName )
+    ! testLon = tpLon%DpField(1,1,:)
+    ! call DeallocateL1BData ( tpLon )
 
     call Allocate_test ( guessLon, size(testLon), 'guessLon', ModuleName )
 
@@ -254,6 +262,9 @@ contains ! ========================= Public Procedures ====================
 end module EmpiricalGeometry
 
 ! $Log$
+! Revision 2.24  2015/06/19 00:37:56  pwagner
+! Changed to avoid reading L1BOA
+!
 ! Revision 2.23  2014/09/05 00:51:39  vsnyder
 ! Add DestroyEmpiricalGeometry, some cannonball polishing
 !
