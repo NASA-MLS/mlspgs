@@ -1236,19 +1236,27 @@ contains ! =====     Public Procedures     =============================
 
     ! Local Variables:
     integer(c_intptr_t) :: Addr         ! For tracing
+    character(len=80)   :: nameStr
     integer :: S, STATUS
-
+    logical, parameter :: deeBug = .false.
     ! Executable code
-
+    nameStr = ' '
+    if ( vector%name > 0 ) &
+      & call get_string ( vector%name, nameStr )
+    if ( deeBug .and. len_trim(nameStr) > 0 ) &
+      & call output ( 'Destroying Vector ' // trim(nameStr), advance='yes' )
     vector%name = 0
     vector%where = where_t(0,0)
 
     if ( .not. associated(vector%quantities) ) return
+    if ( deeBug ) call output ( 'Destroying VectorValue', advance='yes' )
     call destroyVectorValue ( vector )
+    if ( deeBug ) call output ( 'Destroying VectorMask', advance='yes' )
     call destroyVectorMask ( vector )
     s = size(vector%quantities) * storage_size(vector%quantities) / 8
     addr = 0
     if ( s > 0 ) addr = transfer(c_loc(vector%quantities(1)), addr)
+    if ( deeBug ) call output ( 'Deallocating its quantities', advance='yes' )
     deallocate ( vector%quantities, stat=status )
     call test_deallocate ( status, moduleName, 'vector%quantities', s, address=addr )
   end subroutine DestroyVectorInfo
@@ -3411,6 +3419,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.199  2015/06/04 01:57:16  vsnyder
+! Add contiguous attribute, avoid using remapped values
+!
 ! Revision 2.198  2015/05/01 02:09:28  vsnyder
 ! Spiff a dump
 !
