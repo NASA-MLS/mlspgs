@@ -52,7 +52,7 @@ contains ! ====     Public Procedures     ==============================
     use griddeddata, only: griddeddata_t, destroygriddeddatadatabase, dump
     use hessianmodule_1, only: destroyhessiandatabase, hessian_t
     use hgridsdatabase, only: hgrid_t
-    use hgrid, only: computeallhgridoffsets
+    use hgrid, only: computeallhgridoffsets, DestroyHGridGeoLocations
     use highoutput, only: getstamp, setstamp
     use init_tables_module, only: l_chisqchan, l_chisqmmaf, l_chisqmmif,  &
       & section_first, section_last, &
@@ -544,11 +544,17 @@ subtrees:   do
 
   contains
 
+    ! Housekeeping
+    ! Fortran compilers are good at garbage collection
+    ! Nonetheless, we make a stab at it ourselves, hoping to
+    ! avoid memory leaks
     subroutine FinishUp ( Early )
       ! Deallocate and utterly destroy all the arrays we allocated
+      ! Some are known to us, ebing arrays of user-defined datatypes
+      ! These we try to deallocate first
       use filtershapes_m, only: destroy_filter_shapes_database, &
         & destroy_dacs_filter_database
-      logical, intent(in), optional :: Early
+      logical, intent(in), optional :: Early ! If so, can't deallocate everything
       ! Local variables
       logical :: myEarly
       integer :: numChunks
@@ -612,10 +618,13 @@ subtrees:   do
 
       call SummarizeWarnings
       call CloseParallel(numChunks, early)
+      ! Let's try to deallocate all the module-scope pointers
+      ! trusting each module to know what they are
       if ( parallel%slave .and. .not. slavesCleanUpSelves ) return
       if ( .not. (myEarly .or. skipRetrieval .or. checkPaths) ) then
         call trace_begin ( 'Destroying databases', cond=toggle(gen) )
         if ( parallel%slave ) then
+          ! Some things a slave can safely destroy
           call destroyChunkDatabase ( chunks )
           ! call destroy_Ant_Patterns_database
           call destroy_DACS_Filter_Database
@@ -634,7 +643,9 @@ subtrees:   do
           call destroyVGridDatabase ( vGrids )
           call destroyFGridDatabase ( fGrids )
         else
+          ! Others only a master can safely destroy
           call destroyChunkDatabase ( chunks )
+          call DestroyHGridGeoLocations
           call destroy_Ant_Patterns_database
           call destroy_DACS_Filter_Database
           call destroy_Filter_Shapes_Database
@@ -694,6 +705,9 @@ subtrees:   do
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.196  2014/10/07 00:22:32  pwagner
+! -gn doesnt automatically dump chunks
+!
 ! Revision 2.195  2014/09/05 01:28:14  vsnyder
 ! Add some tracing, remove unreferenced USSE name
 !
