@@ -17,10 +17,11 @@ module HGridsDatabase                   ! Horizontal grid information
   implicit none
   private
 
-  public :: HGrid_T
-  public :: ADDHGRIDTODATABASE, CREATEEMPTYHGRID, DESTROYHGRIDCONTENTS, &
-    & DESTROYHGRIDDATABASE, DUMP, FINDCLOSESTMATCH, NULLIFYHGRID, &
-    & TRIMHGRID
+  public :: HGrid_T, HGridGeolocations_T, HGridGeolocations
+  public :: addHGridtodatabase, copyHGrid, createEmptyHGrid, destroyHGridContents, &
+    & destroyHGridDatabase, Dump, findClosestMatch, &
+    & L1BGeoLocation, L1BSubsample, nullifyHGrid, &
+    & trimHGrid
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -35,13 +36,13 @@ module HGridsDatabase                   ! Horizontal grid information
   ! This is the main datatype, an HGrid.
 
   type HGrid_T
-    integer :: Name = 0                ! String index of name.            
-    integer :: masterCoordinate = l_GeodAngle ! Its lit index;
+    integer :: Name                 = 0    ! String index of name.            
+    integer :: masterCoordinate     = l_GeodAngle ! Its lit index;
     integer :: noProfs                 ! Number of profiles in this grid  
-    integer :: noProfsLowerOverlap = 0 ! Number of profiles in the lower overlap
-    integer :: noProfsUpperOverlap = 0 ! Number of profiles in the upper overlap
+    integer :: noProfsLowerOverlap  = 0 ! Number of profiles in the lower overlap
+    integer :: noProfsUpperOverlap  = 0 ! Number of profiles in the upper overlap
     integer :: Type                    ! L_Explicit, L_Fixed ...
-    logical :: forbidOverspill     = .false.   
+    logical :: forbidOverspill      = .false.   
 
     ! This is the maf number passing nearest to the grid point
     integer, dimension(:), pointer    :: maf         => NULL()
@@ -54,6 +55,22 @@ module HGridsDatabase                   ! Horizontal grid information
     real(r8), contiguous, pointer :: solarZenith(:,:) => NULL()
     real(r8), contiguous, pointer :: losAngle(:,:)    => NULL()
   end type HGrid_T
+
+  ! Put here all the 
+  ! l1boa quantities that we don't wish to read again and again and again ..
+  type HGridGeolocations_T
+    double precision, dimension(:,:), pointer :: MAFStartTimeTAI => null()
+    double precision, dimension(:,:), pointer :: Orbincl         => null()
+    double precision, dimension(:,:), pointer :: GHzGeodAngle    => null()
+    double precision, dimension(:,:), pointer :: GHzGeodAlt      => null()
+    double precision, dimension(:,:), pointer :: GHzGeodLat      => null()
+    double precision, dimension(:,:), pointer :: GHzLosAngle     => null()
+    double precision, dimension(:,:), pointer :: GHzLon          => null()
+    double precision, dimension(:,:), pointer :: GHzSolarTime    => null()
+    double precision, dimension(:,:), pointer :: GHzSolarZenith  => null()
+  end type HGridGeolocations_T
+  
+  type(HGridGeolocations_T), save :: HGridGeolocations
 
   interface DUMP
     module procedure DUMP_a_HGRID
@@ -79,6 +96,54 @@ contains ! =========== Public procedures ===================================
 
     AddHGridToDatabase = newSize
   end function AddHGridToDatabase
+
+  ! -------------------------------------------  copyHGrid  -----
+  ! Copy all fields from aGrid to hGrid
+  ! Allocates all the pointer components, so a full copy results
+  ! allowing you to destroy agrid afterwards
+  subroutine copyHGrid ( aGrid, hGrid )
+    ! Just does allocates etc.
+
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST
+
+    type (HGrid_T), intent(in)  :: AGRID
+    type (HGrid_T), intent(out) :: HGRID
+
+    ! Executable code
+    hGrid%Name                 = aGrid%Name               
+    hGrid%masterCoordinate     = aGrid%masterCoordinate   
+    hGrid%noProfs              = aGrid%noProfs            
+    hGrid%noProfsLowerOverlap  = aGrid%noProfsLowerOverlap
+    hGrid%noProfsUpperOverlap  = aGrid%noProfsUpperOverlap
+    hGrid%Type                 = aGrid%Type               
+    hGrid%forbidOverspill      = aGrid%forbidOverspill    
+
+    call Allocate_Test ( hGrid%maf, hGrid%noProfs, &
+      & 'hGrid%maf', ModuleName )
+    call Allocate_Test ( hGrid%phi, 1, hGrid%noProfs, &
+      & 'hGrid%phi', ModuleName )
+    call Allocate_Test ( hGrid%geodLat, 1, hGrid%noProfs, &
+      & 'hGrid%geodLat', ModuleName )
+    call Allocate_Test ( hGrid%lon, 1, hGrid%noProfs, &
+      & 'hGrid%lon', ModuleName )
+    call Allocate_Test ( hGrid%time, 1, hGrid%noProfs, &
+      & 'hGrid%time', ModuleName )
+    call Allocate_Test ( hGrid%solarTime, 1, hGrid%noProfs, &
+      & 'hGrid%solarTime', ModuleName )
+    call Allocate_Test ( hGrid%solarZenith, 1, hGrid%noProfs, &
+      & 'hGrid%solarZenith', ModuleName )
+    call Allocate_Test ( hGrid%losAngle, 1, hGrid%noProfs, &
+      & 'hGrid%losAngle', ModuleName )
+
+    hGrid%maf          = aGrid%maf
+    hGrid%phi          = aGrid%phi        
+    hGrid%geodLat      = aGrid%geodLat    
+    hGrid%lon          = aGrid%lon        
+    hGrid%time         = aGrid%time       
+    hGrid%solarTime    = aGrid%solarTime  
+    hGrid%solarZenith  = aGrid%solarZenith
+    hGrid%losAngle     = aGrid%losAngle   
+  end subroutine copyHGrid
 
   ! -------------------------------------------  CreateEmptyHGrid  -----
   subroutine CreateEmptyHGrid ( hGrid )
@@ -107,6 +172,224 @@ contains ! =========== Public procedures ===================================
       & 'hGrid%losAngle', ModuleName )
 
   end subroutine CreateEmptyHGrid
+
+  ! ---------------------------------------------  L1BGeoLocation  -----
+  ! Read the approprriate geolocations from the l1boa file.
+  ! The first time through, read from the l1boa, and store in the
+  ! appropriate component of HGridGeolocations.
+  ! In all subsequent times, simply copy the stored values.
+  
+  ! We check for stored values by whether the component is associated
+  subroutine L1BGeoLocation ( filedatabase, name, values, values2d )
+
+    use allocate_deallocate, only: allocate_test
+    use HighOutput, only: outputNamedValue
+    use L1BData, only: deallocateL1BData, L1BData_t, readL1BData, &
+      & assembleL1BQtyName
+    use MLSCommon, only: MLSfile_t
+    use MLSFiles, only: getMLSfilebytype
+    use MLSKinds, only: rk => r8
+    use MLSstrings, only: lowercase
+    ! Args
+    type (MLSFile_T), dimension(:), pointer     :: fileDatabase
+    character(len=*), intent(in)                :: name
+    real(rk), dimension(:), pointer, optional   :: values
+    real(rk), dimension(:,:), pointer, optional :: values2d
+    ! Local variables
+    type (L1BData_T) :: l1bField ! L1B data
+    integer                               :: hdfVersion
+    type (MLSFile_T), pointer             :: L1BFile
+    character(len=64)                     :: l1bItemName
+    integer                               :: noFreqs
+    integer                               :: noMAFs
+    character(len=64)                     :: readItemName
+    integer                               :: status
+    logical, parameter                    :: DeeBug = .false.
+    ! Executable
+    l1bItemName = adjustl(lowercase(name))
+    ! Sometimes we're called as GHz/Name; othertimes as tpName
+    if ( l1bItemName(1:2) == 'tp' ) l1bItemName = 'ghz/' // l1bItemName(3:)
+    if ( l1bItemName(1:2) == 'sc' ) l1bItemName = 'sc/' // l1bItemName(3:)
+    ! `1st--check if we have already read this from the l1boa file
+    if ( DeeBug ) call outputnamedValue( 'name', name )
+    if ( DeeBug ) call outputnamedValue( 'l1bItemName (before select case)', l1bItemName )
+    select case (l1bItemName)
+    case ('mafstarttimetai')
+      if ( associated ( HGridGeolocations%MAFStartTimeTAI ) ) then
+        call recallValues( HGridGeolocations%MAFStartTimeTAI, values, values2d )
+        return
+      endif
+    case ('sc/orbincl')
+      if ( associated ( HGridGeolocations%OrbIncl ) ) then
+        call recallValues( HGridGeolocations%OrbIncl, values, values2d )
+        return
+      endif
+    case ('ghz/geodangle   ')
+      if ( associated ( HGridGeolocations%GHzGeodAngle ) ) then
+        call recallValues( HGridGeolocations%GHzGeodAngle, values, values2d )
+        return
+      endif
+    case ('ghz/geodalt     ')
+      if ( associated ( HGridGeolocations%GHzGeodAlt ) ) then
+        call recallValues( HGridGeolocations%GHzGeodAlt, values, values2d )
+        return
+      endif
+    case ('ghz/geodlat     ')
+      if ( associated ( HGridGeolocations%GHzGeodLat ) ) then
+        call recallValues( HGridGeolocations%GHzGeodLat, values, values2d )
+        return
+      endif
+    case ('ghz/solartime   ')
+      if ( associated ( HGridGeolocations%GHzSolarTime ) ) then
+        call recallValues( HGridGeolocations%GHzSolarTime, values, values2d )
+        return
+      endif
+    case ('ghz/solarzenith   ')
+      if ( associated ( HGridGeolocations%GHzSolarZenith ) ) then
+        call recallValues( HGridGeolocations%GHzSolarZenith, values, values2d )
+        return
+      endif
+    case ('ghz/losangle   ')
+      if ( associated ( HGridGeolocations%GHzlosAngle ) ) then
+        call recallValues( HGridGeolocations%GHzlosAngle, values, values2d )
+        return
+      endif
+    case ('ghz/lon   ')
+      if ( associated ( HGridGeolocations%GHzlon ) ) then
+        call recallValues( HGridGeolocations%GHzlon, values, values2d )
+        return
+      endif
+    end select
+    ! If we got here, 
+    ! it was because we hadn't read and saved the proper data type
+    L1BFile => GetMLSFileByType( filedatabase, content='l1boa' )
+    hdfversion = L1BFile%HDFVersion
+    if ( DeeBug ) call outputnamedValue( 'name', name )
+    if ( DeeBug ) call outputnamedValue( '1st l1bitemname', l1bitemname )
+    if ( index( lowercase(name), 'ghz') > 0 ) then
+      readItemName = "/" // adjustl(Name)
+    elseif ( index( name, 'tp') > 0 ) then
+      ! l1bItemName = AssembleL1BQtyName ( 'GHz.' // Name, hdfVersion, .false. )
+      readItemName = AssembleL1BQtyName ( 'GHz.' // Name, hdfVersion, .false. )
+    else
+      readItemName = AssembleL1BQtyName ( Name, hdfVersion, .false. )
+    endif
+    if ( DeeBug ) call outputnamedValue( '2nd readItemName', readItemName )
+    call ReadL1BData ( L1BFile, readItemName, l1bField, noMAFs, status )
+    noFreqs = size(l1bField%dpField,2)
+    if ( present(values) ) then
+      nullify(values)
+      call Allocate_test ( values, noMAFs, 'values of ' // trim(name), ModuleName )
+      values = l1bField%dpField(1,1,:)
+    endif
+    if ( present(values2d) ) then
+      nullify(values2d)
+      call Allocate_test ( values2d, noFreqs, noMAFs, '2d values of ' // trim(name), ModuleName )
+      values2d = l1bField%dpField(1,:,:)
+    endif
+    ! Now before leaving, save these values for the future,
+    ! eliminating the need to read the same dataset each time through
+    select case (lowercase(l1bItemName))
+    case ('mafstarttimetai')
+      call Allocate_test ( HGridGeolocations%MAFStartTimeTAI, noFreqs, noMAFs, &
+        & '2d values of ' // trim(name), ModuleName )
+      HGridGeolocations%MAFStartTimeTAI = l1bField%dpField(1,:,:)
+    case ('ghz/geodangle   ')
+      call Allocate_test ( HGridGeolocations%GHzGeodAngle, noFreqs, noMAFs, &
+        & '2d values of ' // trim(name), ModuleName )
+      HGridGeolocations%GHzGeodAngle = l1bField%dpField(1,:,:)
+    case ('ghz/geodalt     ')
+      call Allocate_test ( HGridGeolocations%GHzGeodAlt, noFreqs, noMAFs, &
+        & '2d values of ' // trim(name), ModuleName )
+      HGridGeolocations%GHzGeodAlt = l1bField%dpField(1,:,:)
+    case ('ghz/geodlat     ')
+      call Allocate_test ( HGridGeolocations%GHzGeodLat, noFreqs, noMAFs, &
+        & '2d values of ' // trim(name), ModuleName )
+      HGridGeolocations%GHzGeodLat = l1bField%dpField(1,:,:)
+    case ('ghz/losangle   ')
+      call Allocate_test ( HGridGeolocations%GHzlosangle, noFreqs, noMAFs, &
+        & '2d values of ' // trim(name), ModuleName )
+      HGridGeolocations%GHzlosangle = l1bField%dpField(1,:,:)
+    case ('ghz/lon   ')
+      call Allocate_test ( HGridGeolocations%GHzlon, noFreqs, noMAFs, &
+        & '2d values of ' // trim(name), ModuleName )
+      HGridGeolocations%GHzlon = l1bField%dpField(1,:,:)
+    case ('sc/orbincl   ')
+      call Allocate_test ( HGridGeolocations%orbincl, noFreqs, noMAFs, &
+        & '2d values of ' // trim(name), ModuleName )
+      HGridGeolocations%orbincl = l1bField%dpField(1,:,:)
+    case ('ghz/solartime   ')
+      call Allocate_test ( HGridGeolocations%GHzSolarTime, noFreqs, noMAFs, &
+        & '2d values of ' // trim(name), ModuleName )
+      HGridGeolocations%GHzSolarTime = l1bField%dpField(1,:,:)
+    case ('ghz/solarzenith   ')
+      call Allocate_test ( HGridGeolocations%GHzsolarzenith, noFreqs, noMAFs, &
+        & '2d values of ' // trim(name), ModuleName )
+      HGridGeolocations%GHzsolarzenith = l1bField%dpField(1,:,:)
+    end select
+    call deallocateL1BData ( l1bField ) ! Avoid memory leaks
+  contains
+    subroutine recallValues( array, values, values2d )
+      ! Args
+      double precision, dimension(:,:)            :: array
+      real(rk), dimension(:), pointer, optional   :: values
+      real(rk), dimension(:,:), pointer, optional :: values2d
+      ! Internal variables
+      integer :: noFreqs
+      integer :: noMAFs
+      ! Executable
+      noFreqs = size( array, 1 )
+      noMAFs = size( array, 2 )
+      if ( present(values) ) then
+        nullify(values)
+        call Allocate_test ( values, noMAFs, 'values of array', ModuleName )
+        values = array(1,:)
+      endif
+      if ( present(values2d) ) then
+        nullify(values2d)
+        call Allocate_test ( values2d, noFreqs, noMAFs, '2d values of array', &
+          & ModuleName )
+        values2d = array(:,:)
+      endif
+    end subroutine recallValues
+  end subroutine L1BGeoLocation
+
+  ! ---------------------------------------------  L1BSubsample  -----
+  ! Pull out just the array elements corresponding to startMAF and LastMAF
+  subroutine L1BSubsample ( chunk, fullArray, fullArray2d, values, values2d )
+    use allocate_deallocate, only: allocate_test
+    use MLSCommon, only: MLSChunk_t
+    use MLSKinds, only: rk => r8
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    ! Args
+    type(MLSChunk_t), intent(in)                 :: chunk
+    real(rk), dimension(:), optional             :: fullArray
+    real(rk), dimension(:,:), optional           :: fullArray2d
+    real(rk), dimension(:), pointer, optional    :: values
+    real(rk), dimension(:,:), pointer, optional  :: values2d
+    ! Local variables
+    integer :: noFreqs
+    integer :: noChunkMAFs
+    ! Executable
+    noChunkMAFs = chunk%firstMAFIndex - chunk%lastMAFIndex + 1
+    if ( present(values) ) then
+      if ( .not. present(fullArray) )  &
+        & call MLSMessage ( MLSMSG_Error, trim(ModuleName) // 'L1BSubsample', &
+        & 'need FullArray' )
+      nullify(values)
+      call Allocate_test ( values, noChunkMAFs, 'values of array', ModuleName )
+      values = fullArray ( chunk%firstMAFIndex+1:chunk%lastMAFIndex+1 )
+    endif
+    if ( present(values2d) ) then
+      noFreqs = size(fullArray2d, 1)
+      if ( .not. present(fullArray2d) )  &
+        & call MLSMessage ( MLSMSG_Error, trim(ModuleName) // 'L1BSubsample', &
+        & 'need FullArray2d' )
+      nullify(values2d)
+      call Allocate_test ( values2d, noFreqs, noChunkMAFs, '2d values of array', ModuleName )
+      values2d = fullArray2d ( :, chunk%firstMAFIndex+1:chunk%lastMAFIndex+1 )
+    endif
+  end subroutine L1BSubsample
 
   ! -------------------------------------------------  TrimHGrid  ------
   subroutine TrimHGrid ( hGrid, side, NOTODELETE )
@@ -295,7 +578,9 @@ contains ! =========== Public procedures ===================================
 
   ! ---------------------------------------- FindClosestMatch ---
   integer function FindClosestMatch ( reference, sought, instance )
-    use Hunt_m, only: HUNT
+    use HighOutput, only: OutputNamedValue
+    use Hunt_m, only: Hunt
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     ! Given a sought quantity, 
     ! the profile in reference is found
     ! that is closest to profile 'instance' in sought quantity
@@ -320,7 +605,22 @@ contains ! =========== Public procedures ===================================
     lowGuess = max ( firstGuess-1, 1 )
     highGuess = min ( firstGuess+1, size(reference) )
     bestCost = 0.0
+    call outputNamedValue( 'lowGuess', lowGuess )
+    call outputNamedValue( 'highGuess', highGuess )
+    call outputNamedValue( 'instance', instance )
     do firstGuess = lowGuess, highGuess
+      if ( firstGuess < lbound(reference, 1) .or. firstGuess > ubound(reference, 1) ) then
+        call outputNamedValue( 'bound(reference)', (/ lbound(reference), lbound(reference) /) )
+        call outputNamedValue( 'firstGuess', firstGuess )
+        call MLSMessage ( &
+          & MLSMSG_Error, ModuleName, 'firstGuess outside range' )
+      elseif ( instance < lbound(sought, 2 ) .or. instance > ubound(sought, 2 ) ) then
+        call outputNamedValue( 'lbound(sought)', lbound(sought) )
+        call outputNamedValue( 'ubound(sought)', ubound(sought) )
+        call outputNamedValue( 'instance', instance )
+        call MLSMessage ( &
+          & MLSMSG_Error, ModuleName, 'instance outside range' )
+      endif
       cost = sum ( abs ( reference(firstGuess) - sought(:,instance) ) )
       if ( ( firstGuess == lowGuess ) .or. ( cost < bestCost ) ) then
         bestGuess = firstGuess
@@ -355,6 +655,9 @@ contains ! =========== Public procedures ===================================
 end module HGridsDatabase
 
 ! $Log$
+! Revision 2.19  2015/06/19 00:34:19  pwagner
+! Many changes to speed up computing HGrid offsets
+!
 ! Revision 2.18  2015/05/27 22:39:39  vsnyder
 ! Get Hunt from Hunt_m to avoid circular dependence
 !
