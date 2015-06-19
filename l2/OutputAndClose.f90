@@ -16,19 +16,19 @@ module OutputAndClose ! outputs all data from the Join module to the
 
 !==============================================================================
 
-  use hdf, only: dfacc_rdonly, dfacc_rdwr
-  use highOutput, only: letsDebug, outputNamedValue
-  use MLSFiles, only: hdfversion_5, addinitializemlsfile, dump, &
-    & getmlsfilebyname, getmlsfilebytype, getpcfromref, &
-    & mls_closefile, mls_exists, mls_inqswath, mls_openfile, &
-    & mls_sfstart, mls_sfend, &
-    & split_path_name, unsplitname
+  use HDF, only: dfacc_rdonly, dfacc_rdwr
+  use HighOutput, only: letsDebug, outputNamedValue
+  use MLSFiles, only: hdfversion_5, addInitializeMLSFile, dump, &
+    & GetMLSFileByName, getMLSFileByType, getPCFromRef, &
+    & MLS_Closefile, mls_exists, mls_inqswath, mls_openfile, &
+    & MLS_SFStart, mls_sfend, &
+    & Split_path_name, unSplitName
   use MLSHDF5, only: GetHDF5Attribute, MakeHDF5Attribute
   use MLSL2Options, only: checkpaths, &
-    & default_hdfversion_write, l2cfnode, &
-    & specialdumpfile, skipdirectwrites, toolkit, MLSMessage, writefileattributes
-  use MLSMessagemodule, only: MLSMsg_error, MLSMsg_info, MLSMsg_warning
-  use string_table, only: display_string, get_string
+    & Default_HDFVersion_write, l2cfnode, &
+    & SpecialDumpFile, skipDirectwrites, toolkit, MLSMessage, writeFileAttributes
+  use MLSMessagemodule, only: MLSMSG_Error, MLSMSG_Info, MLSMSG_Warning
+  use String_table, only: display_string, get_string
 
   implicit none
   private
@@ -537,8 +537,8 @@ contains ! =====     Public Procedures     =============================
     use allocate_deallocate, only: deallocate_test, allocate_test
     use init_tables_module, only: l_l2dgg, l_quantity
     use intrinsic, only: l_swath, l_hdf
-    use mlscommon, only: l2metadata_t
-    use l2gpdata, only: l2gpnamelen, maxswathnamesbufsize
+    use MLSCommon, only: l2metadata_t
+    use L2GPData, only: L2GPNamelen, maxswathnamesbufsize
     use MLSHDF5, only: getallhdf5dsnames
     use MLSPCF2, only: MLSPCF_l2dgm_end, MLSPCF_l2dgm_start, MLSPCF_l2gp_end, &
       & MLSPCF_l2gp_start, MLSPCF_l2dgg_start, MLSPCF_l2dgg_end, &
@@ -771,7 +771,7 @@ contains ! =====     Public Procedures     =============================
 
     use lexer_core, only: print_source
     use output_m, only: output
-    use TREE, only: Where_At => Where
+    use tree, only: Where_At => Where
 
     integer, intent(in) :: Where   ! Tree node where error was noticed
     character(LEN=*), intent(in) :: Full_Message
@@ -828,8 +828,8 @@ contains ! =====     Public Procedures     =============================
     use moretree, only: get_boolean
     use output_m, only: output
     use PCFHdr, only: globalattributes, &
-      & h5_writeglobalattr, he5_writemlsfileattr, he5_writeglobalattr
-    use readapriori, only: readaprioriattributes, writeaprioriattributes
+      & h5_writeglobalattr, he5_writeMLSFileattr, he5_writeGlobalAttr
+    use readAPriori, only: readAPrioriattributes, writeAPrioriAttributes
     use toggles, only: switches
     use tree, only: decoration, nsons, subtree, sub_rosa
     ! Args
@@ -1077,6 +1077,7 @@ contains ! =====     Public Procedures     =============================
       formattype = l_hdf
       ! Note that we haven't yet implemented repair stuff for l2aux
       ! So crashed chunks remain crashed chunks
+      call Dump( inputFile )
       if ( input_type /= output_type ) then
         ! So far we only allow copying text files
         if ( .not. any( input_type == (/ l_ascii, l_l2cf /) ) ) then
@@ -1084,7 +1085,8 @@ contains ! =====     Public Procedures     =============================
           & 'Unable to copy to l2aux file file type for' // trim(inputPhysicalFilename) )
           return
         endif
-        call CopyTextFileToHDF ( file_base, DEBUG, filedatabase, inputFile )
+        if ( mls_exists( inputFile%Name ) == 0 ) &
+          & call CopyTextFileToHDF ( file_base, DEBUG, filedatabase, inputFile )
       else
         call cpL2AUXData( inputFile, &
           & outputFile, create2=create, &
@@ -1375,16 +1377,16 @@ contains ! =====     Public Procedures     =============================
   subroutine OutputL2AUX ( key, fileName, DEBUG, writeCounterMAF, &
     & filedatabase, l2auxDatabase )
     ! Do the work of outputting specified l2aux data to a named file
-    use INIT_TABLES_MODULE, only: F_OVERLAPS, F_QUANTITIES
-    use INTRINSIC, only: L_HDF
-    use L2AUXDATA, only: L2AUXDATA_T, WRITEL2AUXDATA
-    use L2GPDATA, only: L2GPNAMELEN
-    use MLSCOMMON, only: MLSFILE_T, FILENAMELEN, L2METADATA_T
-    use MLSPCF2, only: MLSPCF_L2DGM_START, MLSPCF_L2DGM_END
-    use MLSSTRINGLISTS, only: SWITCHDETAIL
-    use SDPTOOLKIT, only: PGS_S_SUCCESS
-    use TOGGLES, only: SWITCHES
-    use TREE, only: DECORATION, NSONS, SUBTREE
+    use init_tables_module, only: f_overlaps, f_quantities
+    use intrinsic, only: l_hdf
+    use L2AUXData, only: L2AUXData_t, writeL2AUXData
+    use L2GPdata, only: L2GPNamelen
+    use MLSCommon, only: MLSFile_t, fileNamelen, l2metadata_t
+    use MLSPcf2, only: mlspcf_l2dgm_start, mlspcf_l2dgm_end
+    use MLSStringLists, only: switchDetail
+    use SDPToolkit, only: pgs_s_success
+    use toggles, only: switches
+    use tree, only: decoration, nsons, subtree
     ! Args
     integer, intent(in)                     :: key ! tree node
     character(len=*), intent(inout)         :: fileName ! according to l2cf
@@ -1498,11 +1500,11 @@ contains ! =====     Public Procedures     =============================
   subroutine CopyTextFileToHDF ( fileName, DEBUG, filedatabase, inputFile )
     ! Do the work of copying the text file to a named file
     ! If inputFile omitted, copy the l2cf
-    use INTRINSIC, only: L_HDF
-    use MLSCOMMON, only: MLSFILE_T, FILENAMELEN
-    use MLSHDF5, only: SAVEASHDF5DS
-    use MLSPCF2, only: MLSPCF_L2DGM_START, MLSPCF_L2DGM_END
-    use OUTPUT_M, only: OUTPUT
+    use intrinsic, only: l_hdf
+    use MLSCommon, only: MLSFile_t, fileNameLen
+    use MLSHDF5, only: saveashdf5ds
+    use MLSPCF2, only: mlspcf_l2dgm_start, mlspcf_l2dgm_end
+    use output_m, only: output
     ! Args
     character(len=*), intent(inout)         :: fileName ! according to l2cf
     logical, intent(in)                     :: DEBUG ! Print lots?
@@ -1705,10 +1707,10 @@ contains ! =====     Public Procedures     =============================
 
   ! ---------------------------------------------  writeHGridComponents  -----
   subroutine writeHGridComponents ( fileName, HGrid )
-    use HDFEOS5, only: HE5_SWCLOSE, HE5_SWOPEN, &
-      & HE5F_ACC_RDWR, HE5T_NATIVE_INT, HE5T_NATIVE_DOUBLE
-    use HGRIDSDATABASE, only: HGRID_T
-    use MLSHDFEOS, only: HE5_EHWRGLATT, HSIZE, MLS_ISGLATT
+    use HDFEOS5, only: he5_swclose, he5_swopen, &
+      & he5f_acc_rdwr, he5t_native_int, he5t_native_double
+    use HGridsDatabase, only: hgrid_t
+    use MLSHDFEOS, only: he5_ehwrglatt, hsize, mls_isglatt
     ! Args
     character(len=*), intent(in) :: fileName
     type(HGrid_T)                :: HGrid
@@ -2130,6 +2132,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.192  2015/06/19 20:54:56  pwagner
+! Avoid Copying text file if it does not exist
+!
 ! Revision 2.191  2015/03/28 02:50:35  vsnyder
 ! Paul added checking for Quantity type in DirectWrite
 !
