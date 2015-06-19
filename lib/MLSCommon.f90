@@ -88,6 +88,7 @@ module MLSCommon                ! Common definitions for the MLS software
   
   ! User-defined datatypes
   public :: FileIDs_T
+  public :: MLSChunk_T
   public :: MLSFile_T
   public :: MLSFill_T
   public :: L1BInfo_T
@@ -203,6 +204,26 @@ module MLSCommon                ! Common definitions for the MLS software
   end type Interval_T
 
   ! --------------------------------------------------------------------------
+
+  ! This datatype defines the `chunks' into which the input dataset is split
+
+  ! Moved here from Chunks_m module
+  type MLSChunk_T
+    logical :: abandoned = .false. ! Did we abandon this chunk's retrieval?
+    integer :: firstMAFIndex = -1  ! Index of first MAF in the chunk
+    integer :: lastMAFIndex = -1   ! Index of last MAF in the chunk
+    integer :: noMAFsLowerOverlap = 0 ! Number of MAFs in the lower overlap region
+    integer :: noMAFsUpperOverlap = 0 ! Number of MAFs in the upper overlap region
+    integer :: chunkNumber        = -1             ! Index of this chunk
+    integer, dimension(:), pointer :: HGridOffsets => NULL()
+    ! This for each chunk is the index of the first non-overlapped profile in 
+    ! each hGrid into the relevant output (l2gp?) file.
+    integer, dimension(:), pointer :: HGridTotals => NULL()
+    ! This is somewhat repetetive.  It's the total number of profiles in
+    ! the output hGrid.  It's only really used in parallel runs.
+    real(rp) :: phiStart = 0. ! for use by regular HGrid
+    real(rp) :: phiEnd   = 0.
+  end type MLSChunk_T
 
   ! Moved here from MLSFiles module
   ! Information describing the files used by the mls software
@@ -490,6 +511,9 @@ end module MLSCommon
 
 !
 ! $Log$
+! Revision 2.45  2015/06/19 00:32:38  pwagner
+! Moved MLSChunk_T here
+!
 ! Revision 2.44  2014/12/10 19:11:11  pwagner
 ! f.p. inRange now includes its endpoints like integer interface
 !
