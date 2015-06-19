@@ -13,6 +13,7 @@
 module Chunks_m
 !=============================================================================
 
+  use MLSCommon, only: MLSChunk_T
   use MLSKINDS, only: RP
   implicit none
   private
@@ -23,25 +24,6 @@ module Chunks_m
        "$RCSfile$"
   private :: not_used_here 
 !---------------------------------------------------------------------------
-
-  ! This datatype defines the `chunks' into which the input dataset is split
-
-  type MLSChunk_T
-    logical :: abandoned = .false. ! Did we abandon this chunk's retrieval?
-    integer :: firstMAFIndex = -1  ! Index of first MAF in the chunk
-    integer :: lastMAFIndex = -1   ! Index of last MAF in the chunk
-    integer :: noMAFsLowerOverlap = 0 ! Number of MAFs in the lower overlap region
-    integer :: noMAFsUpperOverlap = 0 ! Number of MAFs in the upper overlap region
-    integer :: chunkNumber        = -1             ! Index of this chunk
-    integer, dimension(:), pointer :: HGridOffsets => NULL()
-    ! This for each chunk is the index of the first non-overlapped profile in 
-    ! each hGrid into the relevant output (l2gp?) file.
-    integer, dimension(:), pointer :: HGridTotals => NULL()
-    ! This is somewhat repetetive.  It's the total number of profiles in
-    ! the output hGrid.  It's only really used in parallel runs.
-    real(rp) :: phiStart = 0. ! for use by regular HGrid
-    real(rp) :: phiEnd   = 0.
-  end type MLSChunk_T
 
   interface DUMP
     module procedure Dump_Chunks, Dump_one_chunk
@@ -125,6 +107,9 @@ contains ! =====     Private Procedures     ============================
 end module Chunks_m
 
 ! $Log$
+! Revision 2.9  2015/06/19 00:36:39  pwagner
+! Moved MLSChunk_T to MLSCommon in lib
+!
 ! Revision 2.8  2012/06/21 00:40:28  pwagner
 ! Added phi start and end to be used someday by HGrid
 !
