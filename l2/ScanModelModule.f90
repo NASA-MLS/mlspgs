@@ -23,36 +23,38 @@ module ScanModelModule          ! Scan model and associated calculations
   ! vector.  This was never used in UMLS V5, and so it is not clear that it
   ! will ever be required.
 
-  use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
-  use CONSTANTS, only: DEG2RAD, LN10, PI
-  use FORWARDMODELCONFIG, only: FORWARDMODELCONFIG_T
-  use FORWARDMODELINTERMEDIATE, only:  FORWARDMODELSTATUS_T
-  use FORWARDMODELVECTORTOOLS, only: GETQUANTITYFORFORWARDMODEL
-  use GEOMETRY, only: EARTHRADA, EARTHRADB, EARTHSURFACEGPH, GEODTOGEOCLAT, &
-    & G0, GM, J2, J4, OMEGA => W, MAXREFRACTION
-  use INIT_TABLES_MODULE, only: L_REFGPH, L_ZETA
-  use INTRINSIC, only: L_HEIGHTOFFSET, L_NONE, L_PTAN, L_SCANRESIDUAL, &
-    & L_TEMPERATURE, L_TNGTGEOCALT, L_VMR, L_PHITAN, L_ORBITINCLINATION, &
-    & PHYQ_LENGTH
-  use MANIPULATEVECTORQUANTITIES, only: FINDCLOSESTINSTANCES, &
-    & FINDINSTANCEWINDOW
-  use MATRIXMODULE_0, only: DESTROYBLOCK, MATRIXELEMENT_T, M_ABSENT, &
-    & M_FULL, UPDATEDIAGONAL
-  use MATRIXMODULE_1, only: CREATEBLOCK, FINDBLOCK, MATRIX_T, &
-    & CREATEEMPTYMATRIX, DESTROYMATRIX, CLEARMATRIX
-  use MLSKINDS, only: R8, RP, RV
-  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING
-  use MLSNUMERICS, only : HUNT, INTERPOLATEVALUES
-  use MLSSTRINGLISTS, only: SWITCHDETAIL
-  use MOLECULES, only: L_H2O
-  use REFRACTION_M, only: REFRACTIVE_INDEX, REFRATERM, REFRBTERM
-  use TOGGLES, only: EMIT, TOGGLE, SWITCHES
-  use TRACE_M, only: TRACE_BEGIN, TRACE_END
-  use VECTORSMODULE, only : VALIDATEVECTORQUANTITY, &
-    & VECTOR_T, VECTORTEMPLATE_T, VECTORVALUE_T, CREATEVECTOR, &
-    & CONSTRUCTVECTORTEMPLATE, DESTROYVECTORINFO
+  use Allocate_deallocate, only: allocate_test, deallocate_test
+  use Constants, only: deg2rad, ln10, pi
+  use ForwardModelConfig, only: forwardmodelconfig_t
+  use ForwardModelIntermediate, only:  forwardmodelstatus_t
+  use ForwardModelVectortools, only: getquantityforforwardmodel
+  use Geometry, only: earthrada, earthradb, earthsurfacegph, geodtogeoclat, &
+    & G0, gm, j2, j4, omega => w, maxrefraction
+  use Init_tables_module, only: l_refgph, l_zeta
+  use Intrinsic, only: l_heightoffset, l_none, l_ptan, l_scanresidual, &
+    & L_temperature, l_tngtgeocalt, l_vmr, l_phitan, l_orbitinclination, &
+    & Phyq_length
+  use ManipulateVectorQuantities, only: findClosestInstances, &
+    & Findinstancewindow
+  use MatrixModule_0, only: destroyBlock, matrixElement_t, m_absent, &
+    & M_full, updateDiagonal
+  use MatrixModule_1, only: createBlock, findBlock, matrix_t, &
+    & CreateEmptyMatrix, destroyMatrix, clearMatrix
+  use MLSKinds, only: r8, rp, rv
+  use MLSMessagemodule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
+  use MLSNumerics, only : hunt, interpolateValues
+  use MLSStringLists, only: switcHdetail
+  use Molecules, only: l_h2o
+  use Output_m, only: output
+  use QuantityTemplates, only: dump
+  use Refraction_m, only: refractive_index, refraterm, refrbterm
+  use Toggles, only: emit, toggle, switches
+  use Trace_m, only: trace_begin, trace_end
+  use VectorsModule, only : validatevectorquantity, &
+    & Vector_t, vectortemplate_t, vectorvalue_t, createvector, &
+    & Constructvectortemplate, destroyvectorinfo
 
-  implicit NONE
+  implicit none
 
   private
 
@@ -81,6 +83,7 @@ module ScanModelModule          ! Scan model and associated calculations
 !---------------------------------------------------------------------------
 
   ! Define various constants etc.
+  logical, parameter :: deeBug = .false.
   
   ! Some terms to do with refraction
   
@@ -91,7 +94,7 @@ contains ! =============== Subroutines and functions ==========================
   ! -----------------------------  DestroyForwardModelIntemediate  -----
   subroutine DestroyForwardModelIntermediate
 
-    use Allocate_Deallocate, only: DEALLOCATE_TEST
+    use Allocate_Deallocate, only: Deallocate_test
 
     ! Exectuable code
 
@@ -106,10 +109,10 @@ contains ! =============== Subroutines and functions ==========================
     ! that a 2d forward model must consider
     ! for the range of mafs [maf1, maf2]
   subroutine DumpInstanceWindows ( STATE, EXTRA, MAF1, MAF2, FMCONF, DETAILS )
-    use DUMP_0, only: DUMP
-    use FORWARDMODELCONFIG, only: DUMP
-    use MLSSTRINGS, only: WRITEINTSTOCHARS
-    use HIGHOUTPUT, only: HEADLINE, OUTPUTNAMEDVALUE
+    use Dump_0, only: dump
+    use ForwardModelConfig, only: dump
+    use Mlsstrings, only: writeintstochars
+    use Highoutput, only: headline, outputnamedvalue
     ! Args
     type (Vector_T), intent(in) :: STATE ! The state vector
     type (Vector_T), intent(in) :: EXTRA ! Other stuff in the state vector
@@ -159,8 +162,8 @@ contains ! =============== Subroutines and functions ==========================
   subroutine GetBasisGPH ( temp, refGPH, gph, R, RT, belowRef )
     ! This function takes a state vector, containing one and only one
     ! temperature and reference geopotential height quantity, and returns
-    use PHYSICS, only: BOLTZ
-    use TRACE_M, only: TRACE_BEGIN, TRACE_END
+    use Physics, only: boltz
+    use Trace_m, only: trace_begin, trace_end
 
     ! Dummy arguments
     type (VectorValue_T), intent(IN) :: TEMP ! The temperature field
@@ -303,8 +306,9 @@ contains ! =============== Subroutines and functions ==========================
     ! This function takes a state vector, containing one and only one
     ! temperature and reference geopotential height precisions, and
     ! returns the GPH precision.
-    use PHYSICS, only: BOLTZ
-    use TRACE_M, only: TRACE_BEGIN, TRACE_END
+    use HighOutput, only: headLine, outputNamedValue
+    use Physics, only: boltz
+    use Trace_m, only: trace_begin, trace_end
 
     ! Dummy arguments
     type (VectorValue_T), intent(IN) :: TEMPPREC ! The temperature precision
@@ -366,6 +370,7 @@ contains ! =============== Subroutines and functions ==========================
     integer, dimension( size(GPHPREC, 1), size(GPHPREC, 2) ) &
       &       :: ITSSIGN                ! < 0 if tempprec or refgphprec are
 
+    if ( DeeBug ) call output( 'Now in GetGPHPrecision', advance='yes' )
     call trace_begin ( me, 'GetGPHPrecision', cond=.false. )
     ! Check that we get the right kinds of quantities
     if ( ( .not. ValidateVectorQuantity( tempPrec,&
@@ -386,6 +391,11 @@ contains ! =============== Subroutines and functions ==========================
     ! basis point.
 
     ! To do this we get a gas constant for all the temperature basis points
+    if ( DeeBug )  then
+      call Dump( tempPrec%template )
+      call Dump( refGPHPrec%template )
+      call output( 'Now the main calculation', advance='yes' )
+    endif
     logP= tempPrec%template%surfs(:,1)
 
 !    basisCutoff= -gasM1 / (2*gasM2) ! Set a threshold value
@@ -440,7 +450,19 @@ contains ! =============== Subroutines and functions ==========================
 
     ! The refGPH derivative is easy!
     dgph_drefGPH = 1.0
-
+    if ( DeeBug ) then
+      call output( 'Transform the Temp, refGPH precision to GPH precision', advance='yes' )
+      call outputNamedValue ( 'shape(tempPrec)', shape(tempPrec%values) )
+      call outputNamedValue ( 'shape(refGPHPrec)', shape(refGPHPrec%values) )
+      call outputNamedValue ( 'shape(GPHPrec)', shape(GPHPrec) )
+      call outputNamedValue ( 'shape(ITSSIGN)', shape(ITSSIGN) )
+      call outputNamedValue ( 'shape(GPHPrec2)', shape(GPHPrec2) )
+      call outputNamedValue ( 'shape(dgph_dT)', shape(dgph_dT) )
+      call outputNamedValue ( 'noInstances', tempPrec%template%noInstances )
+      call outputNamedValue ( 'noSurfs', tempPrec%template%noSurfs )
+      call outputNamedValue ( 'myBelowRef', myBelowRef )
+      call Dump( tempPrec%values, 'temperature precision' )
+    endif
     !  Transform the temperature, refGPH precision to GPH precision
     GPHPrec2 = 0.0
     ITSSIGN  = 1
@@ -453,11 +475,25 @@ contains ! =============== Subroutines and functions ==========================
         & ( dgph_drefGPH(:,instance) * refGPHPrec%values(1,instance) )**2
       if ( refGPHPrec%values(1,instance) < 0._rv ) then
         ITSSIGN(:, instance) = -1
+      elseif ( all( tempPrec%values(:,instance) >= 0._rv ) ) then
+        ! ITSS already 1
+      elseif ( refGPHPrec%values(1,instance) >= 0._rv ) then
+        do surf = 1, myBelowRef
+          if ( any( tempPrec%values(surf:myBelowRef, instance) < 0._rv ) ) &
+              & ITSSIGN(surf, instance) = -1
+        enddo
+        do surf = myBelowRef+1, tempPrec%template%noSurfs
+          if ( any( tempPrec%values(myBelowRef:surf, instance) < 0._rv ) ) &
+            ITSSIGN(surf, instance) = -1
+        enddo
       else
         do surf = 1, tempPrec%template%noSurfs
           ! On which side of the reference surface are we?
           if ( surf < myBelowRef ) then
             if ( any( tempPrec%values(surf:myBelowRef, instance) < 0._rv ) ) &
+              & ITSSIGN(surf, instance) = -1
+          elseif ( surf == myBelowRef ) then
+            if ( tempPrec%values(surf, instance) < 0._rv ) &
               & ITSSIGN(surf, instance) = -1
           elseif ( &
             & any( tempPrec%values(myBelowRef:surf, instance) < 0._rv ) ) then
@@ -465,12 +501,9 @@ contains ! =============== Subroutines and functions ==========================
           endif
         end do
       endif
-
-    ! This displayed excessive zeal--it turned all precisions negative
-    ! if ( refGPHPrec%values(1,instance) < 0._rv .or. &
-    !   & any( tempPrec%values(1:tempPrec%template%noSurfs,instance) < 0._rv ) ) &
-    !   & ITSSIGN(:, instance) = -1
     end do
+
+    if ( DeeBug ) call output( 'Finish the calculation', advance='yes' )
     do surf = 1, tempPrec%template%noSurfs
       GPHPrec2a(surf,:) = sum ( &
         & dgph_dT(surf,:,:) * tempPrec%values(:,:) * &
@@ -494,9 +527,9 @@ contains ! =============== Subroutines and functions ==========================
     ! new 2D scan model 'backwards'
     ! Dummy arguments
 
-    use DUMP_0, only: DUMP
-    use OUTPUT_M, only: OUTPUT
-    use QUANTITYTEMPLATES, only: QUANTITYTEMPLATE_T
+    use Dump_0, only: dump
+    use Output_m, only: output
+    use Quantitytemplates, only: quantityTemplate_t
 
     type (VectorValue_T), intent(inout) :: PTAN ! Tangent pressure sv. component
     type (VectorValue_T), intent(in) :: TEMP ! Temperature
@@ -1489,11 +1522,11 @@ contains ! =============== Subroutines and functions ==========================
   subroutine TwoDScanForwardModel ( fmConf, state, extra, fwmOut, &
   & fmStat, jacobian, chunkNo )
 
-    use GET_ETA_MATRIX_M, only: GET_ETA_SPARSE
-    use OUTPUT_M, only: BLANKS, OUTPUT
-    use PHYSICS, only: BOLTZ
-    use PIQ_INT_M, only: PIQ_INT
-    use TIME_M, only: TIME_NOW
+    use Get_eta_matrix_m, only: get_eta_sparse
+    use Output_m, only: blanks, output
+    use Physics, only: boltz
+    use Piq_int_m, only: piq_int
+    use Time_m, only: time_now
 
   ! This is a two D version of ScanForwardModel
   ! inputs
@@ -2118,6 +2151,9 @@ contains ! =============== Subroutines and functions ==========================
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.83  2015/06/19 21:15:50  pwagner
+! Maneuvers around calculation of ITSS; buggy NAG sometimes segment faults here
+!
 ! Revision 2.82  2015/06/04 03:14:14  vsnyder
 ! Make Surfs component of quantity template allocatable
 !
