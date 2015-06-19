@@ -190,6 +190,10 @@ contains
       FindOneClosestInstance = FindClosestMatch ( &
         & referenceQuantity%template%time(1,:), &
         & seek, instance )
+    elseif ( .not. associated(referenceQuantity%template%phi) ) then
+      call Dump ( referenceQuantity%template )
+      call MLSMessage ( &
+        & MLSMSG_Error, ModuleName, 'phi not associated' )
     else
       FindOneClosestInstance = FindClosestMatch ( &
         & referenceQuantity%template%phi(1,:), &
@@ -665,6 +669,9 @@ contains
 end module ManipulateVectorQuantities
   
 ! $Log$
+! Revision 2.48  2015/06/19 00:11:01  pwagner
+! Intercept and print if about to use unassociated phi in FindOneClosestInstance
+!
 ! Revision 2.47  2015/02/05 21:43:08  vsnyder
 ! Don't use Phi for unstacked quantities
 !
