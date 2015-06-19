@@ -371,7 +371,7 @@ contains ! =========== Public procedures ===================================
     integer :: noFreqs
     integer :: noChunkMAFs
     ! Executable
-    noChunkMAFs = chunk%firstMAFIndex - chunk%lastMAFIndex + 1
+    noChunkMAFs = chunk%lastMAFIndex - chunk%firstMAFIndex + 1
     if ( present(values) ) then
       if ( .not. present(fullArray) )  &
         & call MLSMessage ( MLSMSG_Error, trim(ModuleName) // 'L1BSubsample', &
@@ -655,6 +655,9 @@ contains ! =========== Public procedures ===================================
 end module HGridsDatabase
 
 ! $Log$
+! Revision 2.20  2015/06/19 20:35:06  pwagner
+! Fixed mixup in defining noChunkMAFs
+!
 ! Revision 2.19  2015/06/19 00:34:19  pwagner
 ! Many changes to speed up computing HGrid offsets
 !
