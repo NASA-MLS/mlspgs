@@ -22,7 +22,8 @@ module dates_module
   use MLSFinds,         only: findFirst
   use MLSStringlists,   only: getStringElement, numStringElements
   use MLSStrings,       only: capitalize, charToInt, depunctuate, &
-    & indexes, isAlphabet, lowercase, splitWords, writeIntsToChars
+    & indexes, isAlphabet, lowercase, reverse_trim, readIntsFromChars, &
+    & splitWords, writeIntsToChars
   use printit_m, only: MLSMSG_Warning, printItOut
 
   implicit none
@@ -77,6 +78,7 @@ module dates_module
 ! days_in_year       how many days in (leap, normal) year
 ! eudtf2cal          yyyyddd -> cal date
 ! eudtf2daysince     eudtf -> days since starting date
+! FromUARSDate       Converts a uars date, e.g. 'd0007' to yyyy-mm-dd
 ! gethid             like tai93s2hid but neither pure nor a function (what?)
 ! hoursbetween2utcs  How many hours between 2 date-times
 ! hoursinday         How many hours since the start of the day
@@ -98,6 +100,7 @@ module dates_module
 ! tai93s2hid         tai (s, not days) -> hours-in-day
 ! tai93s2utc         tai (s, not days) -> yyyy-mm-ddThh:mm:ss.sss (i.e. "B" format)
 ! timeForm           Determines what format time is in
+! toUARSDate         Converts yyyy-mm-dd to a uars date, e.g. 'd0007'
 ! utc_to_date        Returns date portion from dateTtime; e.g. yyyy-dddThh:mm:ss
 ! utc_to_time        Returns time portion from dateTtime; e.g. yyyy-dddThh:mm:ss
 ! utc_to_yyyymmdd    Parses yyyy-mm-ddThh:mm:ss.sss or yyyy-dddThh:mm:ss.sss
@@ -272,11 +275,12 @@ module dates_module
     & cal2eudtf, ccsds2tai, ccsds2eudtf, ccsdsa2b, ccsdsb2a, &
     & dai_to_yyyymmdd, dateform, datesbetween2utcs, dayofweek, &
     & daysbetween2utcs, daysinmonth, daysince2eudtf, days_in_year, &
-    & eudtf2cal, eudtf2daysince, gethid, hoursbetween2utcs, hoursinday, &
+    & eudtf2cal, eudtf2daysince, FromUARSDate, gethid, &
+    & hoursbetween2utcs, hoursinday, &
     & lastday, nextmoon, precedesutc, reformatdate, reformattime, &
     & resetstartingdate, restorestartingdate, &
     & secondsbetween2utcs, secondsinday, splitdatetime, &
-    & tai2ccsds, tai93s2hid, tai93s2utc, timeform, &
+    & tai2ccsds, tai93s2hid, tai93s2utc, timeform, toUARSDate, &
     & utcform, utc_to_date, utc_to_time, utc_to_yyyymmdd, utc2tai93s, &
     & yyyydoy_to_mmdd, yyyymmdd_to_dai, yyyymmdd_to_doy
 
@@ -409,7 +413,7 @@ module dates_module
   ! the first is for the tai format
   character(len=16)            :: TAIStartingDate   = '1993-01-01'
   ! the second is for our internal MLSdate_Time format
-  character(len=*), parameter  :: MLSStartingDate   = '2001-01-01'
+  character(len=16)            :: MLSStartingDate   = '2001-01-01'
   
   ! This is a private type used only internally
   ! Note we don't bother with leap seconds
@@ -420,8 +424,11 @@ module dates_module
     integer :: dai = 0                  ! days after 1 Jan 2001
     double precision :: seconds = 0.00  ! seconds after midnight
     integer :: LeapSeconds = 0          ! optional leap seconds to be added
+    ! character(len=16) :: startingDate = MLSStartingDate
   end type MLSDATE_TIME_T
   
+  ! This will be the starting date for all MLSDate_Time_T
+  character(len=16), save :: DTStartingDates = '2001-01-01'
   ! This accounts for the number of days between the dates
   ! '1993-01-01' and '2001-01-01':
   ! 6 non-leap years and 2 leap years
@@ -614,7 +621,7 @@ contains
     character(len=16)            :: yyyymmdd
     ! Executable
     datetimeRdcd = datetime
-    call reducedatetime( datetimeRdcd, leapsec )
+    call reduceDatetime( datetimeRdcd, leapsec )
     ! print *, 'After reduction, dateTime&seconds, leap ', dateTime%seconds, dateTime%leapseconds
     ! call dump ( datetimeRdcd )
     ! Now convert to our internal representations
@@ -637,16 +644,19 @@ contains
   end function datetime2utc
 
   ! Reset the starting date
-  subroutine resetStartingDate ( newDate )
-    character(len=*), intent(in) :: newDate
+  subroutine resetStartingDate ( newTAIDate, newMLSDate )
+    character(len=*), optional, intent(in) :: newTAIDate
+    character(len=*), optional, intent(in) :: newMLSDate
     ! print *, 'Resetting starting date to ' // newdate
-    TAIStartingDate = newDate
-    DAI93TODAI01 = daysbetween2utcs( newDate, MLSStartingDate )
+    if ( present(newTAIDate) ) TAIStartingDate = newTAIDate
+    if ( present(newMLSDate) ) MLSStartingDate = newMLSDate
+    DAI93TODAI01 = daysbetween2utcs( TAIStartingDate, MLSStartingDate )
   end subroutine resetStartingDate
 
   ! Restore the starting date
   subroutine RestoreStartingDate
     TAIStartingDate = '19930101'
+    MLSStartingDate = '20010101'
     DAI93TODAI01 = 6*365 + 2*366
   end subroutine RestoreStartingDate
 
@@ -840,7 +850,7 @@ contains
     character(len=32)                         :: daiStr
     character(len=32)                         :: secondsStr
     ! Executable
-    print *, "MLSDate_Time: "
+    print *, "MLSDate_Time: (initialized at " // trim(MLSStartingDate) // ') '
     if ( present(name) ) then
       print *, trim(name)
     endif
@@ -1231,7 +1241,7 @@ contains
    else
       mystartingDate=MLSStartingDate
    endif
-   call utc_to_yyyymmdd_ints(mystartingDate, ErrTyp, yyyy, mm, dd, nodash=.true.)
+   call utc_to_yyyymmdd_ints(mystartingDate, ErrTyp, yyyy, mm, dd, nodash=.false.)
    if ( dai < 0 ) return
    call yyyymmdd_to_doy_str(mystartingDate, doy1)
    ! Here's what we do:
@@ -1243,6 +1253,7 @@ contains
    ! If the result is less than the number of days in that year
    ! Then compute mm and dd for yyyy-(doy1+dai)
    mydai = dai
+   ! print *, 'mydai, yyyy at start ', mydai, yyyy
    do
      if ( mydai + doy1 <= days_in_year(yyyy) ) exit
      ! What we said we'd do
@@ -1251,6 +1262,7 @@ contains
      doy1 = 1
      mydai = mydai - loss
    enddo
+   ! print *, 'mydai, yyyy at finish ', mydai, yyyy
    ! Now convert from doy to mmdd
    doy1 = 0 ! How many days into year yyyy added by prior months
    do mm=1, 12
@@ -1476,8 +1488,8 @@ contains
     earlier = ( hhmmss2seconds(hhmmss1) < hhmmss2seconds(hhmmss2) )
   end function precedesutc
 
-  ! ---------------------------------------------  reducedatetime  -----
-  pure subroutine reducedatetime( datetime, leapsec )
+  ! ---------------------------------------------  reduceDatetime  -----
+  pure subroutine reduceDatetime( datetime, leapsec )
     ! Reduces the seconds field of a datetime to a permissible value
     ! possibly adjusting the dai field in compensation
     ! If leapsec is present, and TRUE, account for leapseconds
@@ -1514,7 +1526,7 @@ contains
     endif
     datetime%seconds = seconds
     datetime%dai = dai
-  end subroutine reducedatetime
+  end subroutine reduceDatetime
 
   ! --------------------------------------------------  reFormatDate  -----
   function reFormatDate(date, fromForm, toForm, options) result(reFormat)
@@ -1917,6 +1929,73 @@ contains
    
   end subroutine splitDateTime
 
+  ! ---------------------------------------------  FromUARSdate  -----
+  ! Converts yyyy-mm-dd From uars date format, e.g. 'd0007'
+  subroutine FromUARSdate( uars, utc, leapsec )
+    character(len=*), intent(in)   :: uars
+    character(len=*), intent(out)  :: utc
+    logical, optional, intent(in)  :: leapsec
+    !----local -----!
+    type(MLSDATE_TIME_T)           :: datetime
+    type(MLSDATE_TIME_T)           :: fiducialdatetime
+    integer                        :: dai
+    character(len=16)              :: daiStr
+    integer                        :: ErrTyp
+    character(len=64)              :: temp
+    character(len=16)              :: timeStr
+    ! Executable
+    call splitDateTime( uars, ErrTyp, daiStr, timeStr )
+    ! Now we must find the offset in days, knowing that 
+    ! 1991d261 was 'd0007'
+    fiducialdatetime = utc2datetime( '1991d261' )
+    ! call Dump ( fiducialdatetime, '1991d261 fiducial' )
+    
+    ! Check that we can invert utc2datetime
+    temp = datetime2utc( fiducialdatetime )
+    ! print *, 'Inverting, the utc for fiducialdatetime is ', trim(temp)
+    call readIntsFromChars ( daiStr, dai, ignore='*' )
+    ! print *, 'daiStr, dai ', daiStr, dai
+    datetime%dai = dai - 7 + fiducialdatetime%dai
+    ! call Dump( dateTime, 'daiStr convrted' )
+    temp = datetime2utc(datetime)
+    call splitDateTime( temp, ErrTyp, utc, daiStr )
+    ! print *, 'utc: ', utc
+    ! print *, 'daiStr: ', daiStr
+    if ( len_trim(timeStr) > 0 ) utc = trim(utc) // 'T' // trim(timeStr)
+  end subroutine FromUARSdate
+
+  ! ---------------------------------------------  toUARSdate  -----
+  ! Converts yyyy-mm-dd to uars date format, e.g. 'd0007'
+  subroutine toUARSdate( utc, uars, leapsec )
+    character(len=*), intent(in)   :: utc
+    character(len=*), intent(out)  :: uars
+    logical, optional, intent(in)  :: leapsec
+    !----local -----!
+    type(MLSDATE_TIME_T)           :: datetime
+    type(MLSDATE_TIME_T)           :: fiducialdatetime
+    integer                        :: dai
+    integer                        :: ErrTyp
+    character(len=16)              :: daiStr
+    character(len=16)              :: timeStr
+    character(len=16)              :: rtSiad
+    ! integer :: THEDAY
+    ! Executable
+    dateTime = utc2datetime( utc )
+    call splitDateTime( utc, ErrTyp, daiStr, timeStr )
+    ! call dump ( dateTime )
+    ! Now we must find the offset in days, knowing that 
+    ! 1991d261 was 'd0007'
+    fiducialdatetime = utc2datetime( '1991d261' )
+    dai = 7 + datetime%dai - fiducialdatetime%dai
+    ! The following trick should result in a string exactly 5 chars long
+    ! 'd' + '0..0' + dai
+    call WriteIntsToChars ( dai, daiStr )
+    daiStr = '00000000' // trim(daiStr)
+    rtSiad = reverse_trim( daiStr )
+    uars = 'd' // reverse_trim( rtSiad(1:4) )
+    if ( len_trim(timeStr) > 0 ) uars = trim(uars) // 'T' // trim(timeStr)
+  end subroutine toUARSdate
+
   ! ---------------------------------------------  utc_to_date  -----
   subroutine utc_to_date(str, ErrTyp, date, &
     & strict, utcAt0z)
@@ -2063,6 +2142,7 @@ contains
     character(len=NameLen) :: yyyy
     character(len=NameLen) :: mm
     character(len=NameLen) :: dd
+    character(len=NameLen) :: doy
     character(LEN=*), parameter :: time_conversion='(I4)'
     logical :: mystrict
     logical :: mynodash
@@ -2092,15 +2172,28 @@ contains
    endif
          
    call utc_to_date(str, ErrTyp, date, strict= .true.)
+   mynodash = mynodash .or. index( date, ' -' ) < 1
+
+   ! print *, ' '
+   ! print *, 'str, mystrict, mynodash, date, ErrTyp ', &
+   !  & trim(str), ' ', mystrict, mynodash, ' ', trim(date), ' ', ErrTyp
+   
    if ( ErrTyp /= 0 ) then
      if ( .not. mystrict ) ErrTyp = 0
      return
    endif
    if ( myNoDash ) then
-     yyyy = date(1:4)
-     mm = date(5:6)
-     dd = date(7:8)
      utc_format = 'n'
+     yyyy = date(1:4)
+     if ( index(date, 'd') < 1 ) then
+       mm = date(5:6)
+       dd = date(7:8)
+     else
+       doy = date(6:8)
+       call yyyydoy_to_yyyymmdd_str( yyyy, doy, date )
+       mm = date(5:6)
+       dd = date(7:8)
+     endif
    else
      call GetStringElement(trim(date), yyyy, 1, countEmpty=countEmpty, inseparator=dash)
      if ( &
@@ -2116,6 +2209,8 @@ contains
    
    ErrTyp=0
    
+   ! print *, 'utc_format, yyyy, mm, dd ', &
+   !  & trim(utc_format), ' ', trim(yyyy), ' ', trim(mm), ' ', trim(dd)
    ! Convert to value
    if(yyyy /= ' ') then
       read(yyyy, time_conversion, iostat=ErrTyp) year
@@ -2146,6 +2241,7 @@ contains
    if(dd /= ' ') then
       read(dd, time_conversion, iostat=ErrTyp) day
    endif
+   ! print *, 'month, day', month, day
 
    if(ErrTyp /= 0) then
       return
@@ -2348,10 +2444,11 @@ contains
    else
       mystartingDate=MLSStartingDate
    endif
-   call utc_to_yyyymmdd_ints(mystartingDate, ErrTyp, yyyy1, mm1, dd1, nodash=.true.)
+   call utc_to_yyyymmdd_ints(mystartingDate, ErrTyp, yyyy1, mm1, dd1, nodash=.false.)
    call yyyymmdd_to_doy_str(mystartingDate, doy1)
    call yyyymmdd_to_doy_ints(yyyy, mm, dd, doy2)
    ! print *, 'doy1, doy2, yyyy1, yyyy ', doy1, doy2, yyyy1, yyyy
+   ! print *, 'days between ', yyyy1, doy1, ' and ', yyyy, mm, dd, doy2
    yyyy2 = yyyy
    daiNegative = yyyy1 > yyyy2
    if ( daiNegative ) then
@@ -2840,6 +2937,9 @@ contains
 
 end module dates_module
 ! $Log$
+! Revision 2.36  2015/02/27 23:10:06  pwagner
+! Corrected tai93s2datetime; added gethid
+!
 ! Revision 2.35  2015/01/21 00:49:47  pwagner
 ! Added 2015 leap second
 !

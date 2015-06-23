@@ -13,15 +13,15 @@
 program dateconverter
 !=================================
 
-   use DATES_MODULE, only: ADDDAYSTOUTC, ADDHOURSTOUTC, ADDSECONDSTOUTC, &
-     & DATEFORM, DAYOFWEEK, HOURSINDAY, &
-     & REFORMATDATE, RESETSTARTINGDATE, SECONDSINDAY, SPLITDATETIME, &
-     & TAI93S2UTC, YYYYMMDD_TO_DAI
-   use MACHINE, only: HP, GETARG
-   use MLSSTRINGLISTS, only: EXPANDSTRINGRANGE
-   use MLSSTRINGS, only: LOWERCASE, NCOPIES, READNUMSFROMCHARS
+   use Dates_module, only: addDaysToUTC, addHoursToUTC, addSecondsToUTC, &
+     & Dateform, dayOfWeek, fromUARSDate, hoursInDay, &
+     & ReformatDate, resetStartingDate, secondsInDay, splitDateTime, &
+     & Tai93s2utc, toUARSDate, yyyymmdd_to_dai
+   use Machine, only: hp, getarg
+   use MLSStringLists, only: expandStringRange
+   use MLSStrings, only: lowercase, ncopies, readNumsFromChars
 
-   IMPLICIT NONE
+   implicit none
 
 !------------------- RCS Ident Info -----------------------
    CHARACTER(LEN=130) :: Id = &                                                    
@@ -40,7 +40,7 @@ program dateconverter
   type options_T
     integer     :: offset = 0                  ! How many days to add/subtract
     integer     :: hoursOffset = 0             ! How many hours to add/subtract
-    integer :: weekdayLength= 0     ! how many chars to output day-of-week
+    integer     :: weekdayLength= 0     ! how many chars to output day-of-week
     double precision :: secondsOffset = 0.d0   ! How many seconds to add/subtract
     logical     :: leapsec = .false.           ! account for leap seconds?
     logical     :: utcFormat = .false.         ! output date+time?
@@ -85,6 +85,7 @@ program dateconverter
    double precision              :: tai
    character (LEN=MAXLISTLENGTH) :: time
    character (LEN=MAXLISTLENGTH) :: toForm
+   character (LEN=MAXLISTLENGTH) :: uars_date
    character (LEN=16           ) :: weekday
   ! Executable
   do      ! Loop over options
@@ -109,9 +110,17 @@ program dateconverter
   do i=1, n_dates
     if ( .not. doThisDate(i)) cycle
     date = dates(i)
+    if ( options%verbose ) print *, 'Input was ', trim(date)
     fromForm = options%inputFormat
     if ( len_trim(options%inputFormat) < 1 ) fromForm = dateForm(date)
-    if ( options%inputFormat == 'tai' ) then
+    if ( index(lowercase(options%inputFormat), 'uars' ) > 0 ) then
+      call resetStartingdate( newMLSDate='1980-01-01' )
+      call splitDateTime ( date, ErrTyp, uars_date, converted_time )
+      call FromUARSDate( uars_date, intermediate_date )
+      date = intermediate_date
+      print *, 'uars_date: ', uars_date
+      print *, 'date: ', date
+    elseif ( options%inputFormat == 'tai' ) then
       call readNumsFromChars ( date, tai )
       ! print *, 'tai: ', tai
       !if ( options%leapsec ) then
@@ -137,6 +146,9 @@ program dateconverter
       toForm = 'yyyy-Doy'
       if ( index(lowercase(options%outputFormat), 'b' ) > 0 ) toForm = 'yyyy-mm-dd'
       options%utcFormat = .true.
+    elseif ( index(lowercase(options%outputFormat), 'uars' ) > 0 ) then
+      ! Convert the date to its uars format; e.g. 'd0007'
+      toForm = 'uars'
     elseif ( options%outputFormat /= ' ' ) then
       toForm = options%outputFormat
     elseif ( index(lowercase(fromForm), 'doy') > 0 ) then
@@ -145,8 +157,8 @@ program dateconverter
       toForm = DOYFORMAT
     endif
     if ( options%verbose ) then
-      print *, 'Input was ', trim(date)
       print *, 'Input format was ', trim(fromForm)
+      print *, 'We parsed it as ', trim(date)
       print *, 'Output format is ', trim(toForm)
       print *, 'input time is ', trim(options%inputTime)
       print *, 'Offset days is ', options%offset
@@ -155,12 +167,21 @@ program dateconverter
     endif
     
     ! Process date
-    ! First: two special codes
+    ! First: three special codes
     if ( index(options%outputFormat, 'sec') > 0 ) then
       if ( index(date, 'T') < 1 ) date = 'T' // date
       seconds = secondsinday(date)
       write(*,'(f9.1, " s")') seconds
       cycle
+    elseif ( index(lowercase(options%outputFormat), 'uars' ) > 0 ) then
+      ! Convert the date to its uars format; e.g. 'd0007'
+      call resetStartingdate( newMLSDate='1980-01-01' )
+      call splitDateTime ( date, ErrTyp, converted_date, converted_time )
+      intermediate_date = reFormatDate( converted_date, &
+        & fromForm=trim(fromForm), toForm='yyyymmdd' )
+      call ToUARSDate( intermediate_date, converted_date )
+      if ( len_trim(converted_time) > 0 ) &
+        & converted_date = trim(converted_date) // 'T' // adjustl(Time)
     elseif ( index(options%outputFormat, 'hour') > 0 ) then
       if ( index(date, 'T') < 1 ) date = 'T' // date
       hours = hoursinday(date)
@@ -350,6 +371,7 @@ contains
       write (*,*) '                    prints 14.66667'
       write (*,*) ' -i format   => input format'
       write (*,*) '               by default attempt to auto-recognize'
+      write (*,*) '               special codes:'
       write (*,*) '               if format is "tai", treat input as '
       write (*,*) '               (double-precision) seconds since'
       write (*,*) '               1993-01-01T00:00:00'
@@ -387,6 +409,9 @@ END PROGRAM dateconverter
 !==================
 
 ! $Log$
+! Revision 1.8  2014/03/05 20:16:04  pwagner
+! New -leapsec option accounts for leap seconds
+!
 ! Revision 1.7  2013/08/14 17:26:38  pwagner
 ! Added -R comdline option to handle dates before Jan 1 1993
 !
