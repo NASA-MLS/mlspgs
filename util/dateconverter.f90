@@ -118,8 +118,8 @@ program dateconverter
       call splitDateTime ( date, ErrTyp, uars_date, converted_time )
       call FromUARSDate( uars_date, intermediate_date )
       date = intermediate_date
-      print *, 'uars_date: ', uars_date
-      print *, 'date: ', date
+      if ( options%debug ) print *, 'uars_date: ', uars_date
+      if ( options%debug ) print *, 'date: ', date
     elseif ( options%inputFormat == 'tai' ) then
       call readNumsFromChars ( date, tai )
       ! print *, 'tai: ', tai
@@ -173,6 +173,11 @@ program dateconverter
       seconds = secondsinday(date)
       write(*,'(f9.1, " s")') seconds
       cycle
+    elseif ( index(lowercase(options%inputFormat), 'uars' ) > 0 ) then
+      ! Convert the date to its uars format; e.g. 'd0007'
+      call resetStartingdate( newMLSDate='1980-01-01' )
+      converted_date = reFormatDate(date, &
+        & fromForm='yyyy-mm-dd', toForm=trim(toForm))
     elseif ( index(lowercase(options%outputFormat), 'uars' ) > 0 ) then
       ! Convert the date to its uars format; e.g. 'd0007'
       call resetStartingdate( newMLSDate='1980-01-01' )
@@ -409,6 +414,9 @@ END PROGRAM dateconverter
 !==================
 
 ! $Log$
+! Revision 1.9  2015/06/23 23:54:16  pwagner
+! Can canvert to and from uars dates
+!
 ! Revision 1.8  2014/03/05 20:16:04  pwagner
 ! New -leapsec option accounts for leap seconds
 !
