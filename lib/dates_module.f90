@@ -22,8 +22,8 @@ module dates_module
   use MLSFinds,         only: findFirst
   use MLSStringlists,   only: getStringElement, numStringElements
   use MLSStrings,       only: capitalize, charToInt, depunctuate, &
-    & indexes, isAlphabet, lowercase, reverse_trim, readIntsFromChars, &
-    & splitWords, writeIntsToChars
+    & indexes, isAlphabet, isDigits, lowercase, &
+    & reverse_trim, readIntsFromChars, splitWords, writeIntsToChars
   use printit_m, only: MLSMSG_Warning, printItOut
 
   implicit none
@@ -2173,10 +2173,14 @@ contains
          
    call utc_to_date(str, ErrTyp, date, strict= .true.)
    mynodash = mynodash .or. index( date, ' -' ) < 1
+   
+   ! A trick! If date is non-numerical, e.g. '(undefined)', we
+   ! will process it as if it was yyyy-mm-dd
+   if ( .not. isDigits(str(1:4) ) ) mynodash = .false.
 
    ! print *, ' '
    ! print *, 'str, mystrict, mynodash, date, ErrTyp ', &
-   !  & trim(str), ' ', mystrict, mynodash, ' ', trim(date), ' ', ErrTyp
+   ! & trim(str), ' ', mystrict, mynodash, ' ', trim(date), ' ', ErrTyp
    
    if ( ErrTyp /= 0 ) then
      if ( .not. mystrict ) ErrTyp = 0
@@ -2937,6 +2941,9 @@ contains
 
 end module dates_module
 ! $Log$
+! Revision 2.37  2015/06/23 23:53:42  pwagner
+! Can canvert to and from uars dates
+!
 ! Revision 2.36  2015/02/27 23:10:06  pwagner
 ! Corrected tai93s2datetime; added gethid
 !
