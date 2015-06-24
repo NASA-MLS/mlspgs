@@ -2444,6 +2444,13 @@ contains ! ===================================== Public Procedures =====
 
       ! Delete any zero length or all overlapped chunks
       call PruneChunks ( chunks )
+      if ( .not. associated(chunks) ) then
+        call MLSMessage ( MLSMSG_Error, moduleName, &
+          & 'No chunks remaining after we pruned them for bad radiances; bad day?' )
+      elseif ( size(chunks) < 1 ) then
+        call MLSMessage ( MLSMSG_Error, moduleName, &
+          & 'No chunks remaining after we pruned them for bad radiances; bad day?' )
+      endif
 
       if ( swLevel > -1 ) then
         call output ( 'Before dealing with obstructions', advance='yes' )
@@ -2667,6 +2674,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.118  2015/06/24 18:01:56  pwagner
+! Halt with useful error message if no radiances, instead of vanishing in puff of smoke
+!
 ! Revision 2.117  2015/03/28 02:19:01  vsnyder
 ! Added shallow destruction to DestroyChunkDatabase.  Got IsMonotonic from
 ! Monotone instead of MLSFillValues.
