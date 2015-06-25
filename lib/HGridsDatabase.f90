@@ -594,6 +594,7 @@ contains ! =========== Public procedures ===================================
     integer :: LOWGUESS                 ! A guessed index
     real(r8) :: BESTCOST                ! A cost for a guess
     real(r8) :: COST                    ! A cost for a guess
+    logical, parameter                    :: DeeBug = .false.
 
     ! Executable code
     ! Get starting Guess from Hunt
@@ -605,9 +606,11 @@ contains ! =========== Public procedures ===================================
     lowGuess = max ( firstGuess-1, 1 )
     highGuess = min ( firstGuess+1, size(reference) )
     bestCost = 0.0
-    call outputNamedValue( 'lowGuess', lowGuess )
-    call outputNamedValue( 'highGuess', highGuess )
-    call outputNamedValue( 'instance', instance )
+    if ( DeeBug ) then
+      call outputNamedValue( 'lowGuess', lowGuess )
+      call outputNamedValue( 'highGuess', highGuess )
+      call outputNamedValue( 'instance', instance )
+    endif
     do firstGuess = lowGuess, highGuess
       if ( firstGuess < lbound(reference, 1) .or. firstGuess > ubound(reference, 1) ) then
         call outputNamedValue( 'bound(reference)', (/ lbound(reference), lbound(reference) /) )
@@ -655,6 +658,9 @@ contains ! =========== Public procedures ===================================
 end module HGridsDatabase
 
 ! $Log$
+! Revision 2.21  2015/06/25 00:37:52  pwagner
+! Stop printing low and high Guesses
+!
 ! Revision 2.20  2015/06/19 20:35:06  pwagner
 ! Fixed mixup in defining noChunkMAFs
 !
