@@ -1241,7 +1241,7 @@ contains
    else
       mystartingDate=MLSStartingDate
    endif
-   call utc_to_yyyymmdd_ints(mystartingDate, ErrTyp, yyyy, mm, dd, nodash=.false.)
+   call utc_to_yyyymmdd_ints(mystartingDate, ErrTyp, yyyy, mm, dd, nodash=.true.)
    if ( dai < 0 ) return
    call yyyymmdd_to_doy_str(mystartingDate, doy1)
    ! Here's what we do:
@@ -2172,15 +2172,17 @@ contains
    endif
          
    call utc_to_date(str, ErrTyp, date, strict= .true.)
-   mynodash = mynodash .or. index( date, ' -' ) < 1
+   ! mynodash = mynodash .or. index( date, ' -' ) < 1
    
    ! A trick! If date is non-numerical, e.g. '(undefined)', we
    ! will process it as if it was yyyy-mm-dd
    if ( .not. isDigits(str(1:4) ) ) mynodash = .false.
+   if ( mynodash ) mynodash = index( date, '-' ) < 1
+   if ( str(5:5) == 'd' ) mynodash = .true.
 
    ! print *, ' '
    ! print *, 'str, mystrict, mynodash, date, ErrTyp ', &
-   ! & trim(str), ' ', mystrict, mynodash, ' ', trim(date), ' ', ErrTyp
+   !   & trim(str), ' ', mystrict, mynodash, ' ', trim(date), ' ', ErrTyp
    
    if ( ErrTyp /= 0 ) then
      if ( .not. mystrict ) ErrTyp = 0
@@ -2214,7 +2216,7 @@ contains
    ErrTyp=0
    
    ! print *, 'utc_format, yyyy, mm, dd ', &
-   !  & trim(utc_format), ' ', trim(yyyy), ' ', trim(mm), ' ', trim(dd)
+   !   & trim(utc_format), ' ', trim(yyyy), ' ', trim(mm), ' ', trim(dd)
    ! Convert to value
    if(yyyy /= ' ') then
       read(yyyy, time_conversion, iostat=ErrTyp) year
@@ -2448,7 +2450,7 @@ contains
    else
       mystartingDate=MLSStartingDate
    endif
-   call utc_to_yyyymmdd_ints(mystartingDate, ErrTyp, yyyy1, mm1, dd1, nodash=.false.)
+   call utc_to_yyyymmdd_ints(mystartingDate, ErrTyp, yyyy1, mm1, dd1, nodash=.true.)
    call yyyymmdd_to_doy_str(mystartingDate, doy1)
    call yyyymmdd_to_doy_ints(yyyy, mm, dd, doy2)
    ! print *, 'doy1, doy2, yyyy1, yyyy ', doy1, doy2, yyyy1, yyyy
@@ -2879,19 +2881,25 @@ contains
   end function s2hhmmss
 
   ! ---------------------------------------------  utc2datetime  -----
-  function utc2datetime(utc) result(datetime)
+  function utc2datetime(arg) result(datetime)
     ! Given a utc return an mlsDate_Time_T
     ! Args
-    character(len=*), intent(in) :: utc
+    character(len=*), intent(in) :: arg
     type(MLSDATE_TIME_T)         :: datetime
     ! Internal
-    integer             :: day
+    integer                      :: day
     integer                      :: ErrTyp
     character(len=16)            :: hhmmss
-    integer             :: month
-    integer             :: year
+    character(len=32)            :: utc
+    integer                      :: month
+    integer                      :: year
     ! Executable
-    ! print *, 'utc: ', trim(utc)
+    ! print *, 'utc: ', trim(arg)
+    ! Beware of formats like yyyymmdd
+    utc = arg
+    if ( index(arg, '-') < 1 ) then
+      if ( isDigits(arg) ) utc = arg(1:4) // '-' // arg(5:6) // '-' // arg(7:8)
+    endif
     call utc_to_yyyymmdd_ints( utc, ErrTyp, year, month, day )
     call utc_to_time( utc, ErrTyp, hhmmss )
     ! print *, 'year, month, day: ', year, month, day
@@ -2899,7 +2907,7 @@ contains
     ! Now convert to our internal representations
     call yyyymmdd_to_dai_ints( year, month, day, datetime%dai )
     datetime%seconds = hhmmss2seconds(hhmmss)
-    ! call dumpDateTime(datetime, 'From utc2datetime')
+    ! call dump(datetime, 'From utc2datetime')
     dateTime%leapSeconds = HowManyleapSeconds ( datetime%dai )
   end function utc2datetime
 
@@ -2941,6 +2949,9 @@ contains
 
 end module dates_module
 ! $Log$
+! Revision 2.38  2015/06/24 18:00:22  pwagner
+! A workaround, fixing gold brick, until better solution found
+!
 ! Revision 2.37  2015/06/23 23:53:42  pwagner
 ! Can canvert to and from uars dates
 !
