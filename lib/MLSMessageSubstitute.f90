@@ -13,20 +13,20 @@
 module MLSMessageModule         ! Basic messaging for the MLSPGS suite
 !==============================================================================
 
-  use CALL_STACK_M, only: DUMP_STACK
-  use HighOutput, only: Banner
-  use MACHINE, only: CRASH_BURN, EXIT_WITH_STATUS, NEVERCRASH
-  use MLSCOMMON, only: MLSFILE_T, MLSDEBUG, MLSVERBOSE, &
-    & MLSDEBUGSTICKY, MLSVERBOSESTICKY
-  use MLSSTRINGS, only: CAPITALIZE
-  use PRINTIT_M, only: ASSEMBLEFULLLINE, GET_CONFIG, LOGUNITNAME, PREFIXLEN, &
-    & MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
-    & MLSMSG_CRASH, MLSMSG_DEBUG, MLSMSG_ERROR, MLSMSG_INFO, MLSMSG_SUCCESS, &
-    & MLSMSG_TESTWARNING, MLSMSG_WARNING, MLSMESSAGECONFIG_T, &
-    & DEFAULTLOGUNIT, INVALIDLOGUNIT, PREFIXLEN, &
-    & PRINTITOUT, SNIPRCSFROM, &
-    & STDOUTLOGUNIT, MLSMESSAGECONFIG, &
-    & MLSMSG_SEVERITY_SO_FAR, MLSMSG_SEVERITY_TO_QUIT, MLSMSG_SEVERITY_TO_WALKBACK
+  use Call_stack_m, only: dump_stack
+  use Highoutput, only: banner
+  use Machine, only: crash_burn_rude=>crash_burn, exit_with_status, nevercrash
+  use MLSCommon, only: MLSFile_t, MLSDebug, MLSVerbose, &
+    & MLSDebugsticky, MLSVerboseSticky, dontCrashHere
+  use MLSStrings, only: capitalize
+  use Printit_m, only: assembleFullLine, get_config, logUnitName, prefixLen, &
+    & MLSMSG_allocate, MLSMSG_deallocate, &
+    & MLSMSG_crash, MLSMSG_debug, MLSMSG_error, MLSMSG_info, MLSMSG_success, &
+    & MLSMSG_testwarning, MLSMSG_warning, MLSMessageconfig_t, &
+    & Defaultlogunit, invalidlogunit, prefixlen, &
+    & Printitout, sniprcsfrom, &
+    & Stdoutlogunit, MLSMessageconfig, &
+    & MLSMSG_severity_so_far, MLSMSG_severity_to_quit, MLSMSG_severity_to_walkback
   implicit none
 
   private
@@ -142,6 +142,9 @@ end module MLSMessageModule
 
 !
 ! $Log$
+! Revision 2.17  2015/06/30 18:41:29  pwagner
+! Added a conditional crash_burn
+!
 ! Revision 2.16  2014/04/22 16:29:33  pwagner
 ! Added bummer--writes error message as an eye-catching banner
 !
