@@ -13,23 +13,23 @@
 module MLSMessageModule         ! Basic messaging for the MLSPGS suite
 !==============================================================================
 
-  use CALL_STACK_M, only: DUMP_STACK ! Used in MLSMessage.f9h, but not here
+  use Call_stack_m, only: dump_stack ! used in mlsmessage.f9h, but not here
                                      ! but... the makefile maker can't see it
-                                     ! in MLSMessage.f9h
-  use HighOutput, only: Banner
-  use MACHINE, only: CRASH_BURN, EXIT_WITH_STATUS, NEVERCRASH
-  use MLSCOMMON, only: MLSFILE_T, MLSDEBUG, MLSVERBOSE, &
-    & MLSDEBUGSTICKY, MLSVERBOSESTICKY
-  use MLSSTRINGS, only: CAPITALIZE
-  use PRINTIT_M, only: ASSEMBLEFULLLINE, GET_CONFIG, LOGUNITNAME, PREFIXLEN, &
-    & MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
-    & MLSMSG_CRASH, MLSMSG_DEBUG, MLSMSG_ERROR, MLSMSG_INFO, MLSMSG_SUCCESS, &
-    & MLSMSG_TESTWARNING, MLSMSG_WARNING, MLSMESSAGECONFIG_T, &
-    & DEFAULTLOGUNIT, INVALIDLOGUNIT, PREFIXLEN, &
-    & PRINTITOUT, SNIPRCSFROM, &
-    & STDOUTLOGUNIT, MLSMESSAGECONFIG, &
-    & MLSMSG_SEVERITY_SO_FAR, MLSMSG_SEVERITY_TO_QUIT, MLSMSG_SEVERITY_TO_WALKBACK
-  use SDPTOOLKIT, only: PGS_S_SUCCESS
+                                     ! in mlsmessage.f9h
+  use Highoutput, only: banner
+  use Machine, only: crash_burn_rude=>crash_burn, exit_with_status, nevercrash
+  use MLSCommon, only: mlsfile_t, mlsdebug, mlsverbose, &
+    & MLSDebugsticky, MLSVerboseSticky, dontCrashHere
+  use MLSStrings, only: capitalize
+  use Printit_m, only: assembleFullLine, get_config, logUnitName, prefixLen, &
+    & MLSMSG_allocate, MLSMSG_deallocate, &
+    & MLSMSG_crash, MLSMSG_debug, MLSMSG_error, MLSMSG_info, MLSMSG_success, &
+    & MLSMSG_testwarning, MLSMSG_warning, MLSMessageconfig_t, &
+    & Defaultlogunit, invalidlogunit, prefixlen, &
+    & Printitout, sniprcsfrom, &
+    & Stdoutlogunit, MLSMEssageconfig, &
+    & MLSMSG_severity_so_far, MLSMSG_severity_to_quit, MLSMSG_severity_to_walkback
+  use Sdptoolkit, only: pgs_s_success
 
   implicit none
   private
@@ -195,6 +195,9 @@ end module MLSMessageModule
 
 !
 ! $Log$
+! Revision 2.50  2015/06/30 18:41:05  pwagner
+! Added a conditional crash_burn
+!
 ! Revision 2.49  2014/04/22 16:29:16  pwagner
 ! Added bummer--writes error message as an eye-catching banner
 !
