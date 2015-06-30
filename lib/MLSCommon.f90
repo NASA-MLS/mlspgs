@@ -15,6 +15,7 @@ module MLSCommon                ! Common definitions for the MLS software
 
   use ieee_arithmetic, only: ieee_is_finite, ieee_is_nan
   use MLSKinds ! everything
+  use MLSStrings,  only: lowercase
 
   implicit none
   private
@@ -62,6 +63,7 @@ module MLSCommon                ! Common definitions for the MLS software
 !               Retain value of MLSDebug thoughout pahse
 
 !     (subroutines and functions)
+! dontCrashHere May we skip otherwise obligatory crash in named modules?
 ! inRange       does an argument lie within a specified range or interval
 ! is_what_ieee  is an argument a specified ieee type
 ! === (end of toc) ===                                                   
@@ -83,6 +85,7 @@ module MLSCommon                ! Common definitions for the MLS software
   ! We also put in these functions.
   ! Should they be relocated to other modules? Where?
 
+  public :: dontCrashHere
   public :: inRange
   public :: is_what_ieee
   
@@ -149,6 +152,7 @@ module MLSCommon                ! Common definitions for the MLS software
   integer, parameter :: DEBUGNAMESLEN = 256
   character(len=DEBUGNAMESLEN), public, save :: MLSNamesAreDebug   = ' '
   character(len=DEBUGNAMESLEN), public, save :: MLSNamesAreVerbose = ' '
+  character(len=DEBUGNAMESLEN), public, save :: MLSNamesDontCrash = ' '
   ! Because we'd like not to always drag the SDPToolkit with us
   ! everywhere we go
   integer, private, parameter :: PGSd_PC_FILE_PATH_MAX = 1024
@@ -312,6 +316,17 @@ module MLSCommon                ! Common definitions for the MLS software
   type(MLSFill_T), public, save, dimension(:), pointer :: MLSFills => null()
 
   contains
+
+  ! May we skip otherwise obligatory crashes in named modules?
+  ! We decide on the basis of whether the mocule
+  logical function dontCrashHere( arg )
+    character(len=8), intent(in) :: arg
+    ! Executable
+    dontCrashHere = .false.
+    if ( len_trim(MLSNamesDontCrash ) < 1 ) return
+    if ( len_trim(arg) < 1 ) return
+    dontCrashHere = index( lowercase(MLSNamesDontCrash), lowercase(trim(arg)) ) > 0
+  end function dontCrashHere
 
   ! This family of functions returns TRUE for arg(s) within the given range
   ! Like FindInRange, the range includes its endpoints;
@@ -511,6 +526,9 @@ end module MLSCommon
 
 !
 ! $Log$
+! Revision 2.46  2015/06/30 18:39:10  pwagner
+! May keep list of module names to exempt from annoying crashes
+!
 ! Revision 2.45  2015/06/19 00:32:38  pwagner
 ! Moved MLSChunk_T here
 !
