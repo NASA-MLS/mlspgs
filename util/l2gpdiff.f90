@@ -13,16 +13,15 @@
 program l2gpdiff ! show diffs between swaths in two different files
 !=================================
 
-   use dump_0, only: dumpTableSide, rmsFormat
-   use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
-   use L2GPData, only: Diff, MAXSWATHNAMESBUFSIZE
-   use MACHINE, only: HP, GETARG
+   use Dump_0, only: dumpDumpOptions, dumpTableSide, rmsFormat
+   use HighOutput, only: outputNamedValue
+   use L2GPData, only: Diff, maxSwathNamesBufSize
+   use Machine, only: hp, getarg
    use MLSFiles, only: mls_exists, HDFVERSION_5, MLS_INQSWATH
-   use MLSHDF5, only: mls_h5open, mls_h5close
-   use MLSMessageModule, only: MLSMessageConfig
+   use MLSHDF5, only: MLS_H5Open, MLS_H5Close
    use MLSStringLists, only: catLists, ExpandStringRange
    use MLSStrings, only: WriteIntsToChars
-   use output_m, only: resumeOutput, suspendOutput, output
+   use Output_m, only: resumeOutput, suspendOutput, output
    use PrintIt_m, only: Set_Config
    use Time_M, only: Time_Now, time_config
    
@@ -75,7 +74,6 @@ program l2gpdiff ! show diffs between swaths in two different files
 
   integer, parameter                      :: MAXFILES = 100
   integer, parameter                      :: MAXNCHUNKS = 50
-  character(len=*), parameter             :: SWATHPREFIX='R3:240.B25D:CO.S1.DACS-1 chisqBinned Core'
 
   integer, dimension(MAXNCHUNKS)          :: chunks
   ! character(len=8)                        :: dumpOptions
@@ -144,6 +142,7 @@ program l2gpdiff ! show diffs between swaths in two different files
   if ( options%table ) options%dumpOptions = trim(options%dumpOptions) // 'b'
   if ( options%verbose ) options%dumpOptions = trim(options%dumpOptions) // 'v'
   call time_now ( t1 )
+  print *, 'dumpOptions: ', trim(options%dumpOptions)
   do i = 2, n_filenames, 2
     call time_now ( tFile )
     if ( options%verbose ) then
@@ -276,6 +275,10 @@ contains
         exit
       else if ( filename(1:3) == '-d ' ) then
         call getarg ( i+1+hp, options%dumpOptions )
+        if ( index( options%dumpOptions, '?' ) > 0 ) then
+          call DumpDumpOptions( "?" )
+          stop
+        endif
         i = i + 1
         exit
       else if ( filename(1:4) == '-deb' ) then
@@ -375,6 +378,7 @@ contains
       write (*,*) '               =>   diff only at pressures p1,p2,..'
       write (*,*) '   -D details  => level of details to show'
       write (*,*) '   -d options  => pass options to dump routines'
+      write (*,*) '                  e.g., "?" to list available ones'
       write (*,*) '   -force      => force diff even if swath names differ'
       write (*,*) '   -s1 "swath1,swath2,.."'
       write (*,*) '               =>   diff only swath1,swath2,..'
@@ -428,6 +432,9 @@ end program l2gpdiff
 !==================
 
 ! $Log$
+! Revision 1.21  2014/01/09 00:31:26  pwagner
+! Some procedures formerly in output_m now got from highOutput
+!
 ! Revision 1.20  2013/08/23 02:51:48  vsnyder
 ! Move PrintItOut to PrintIt_m
 !
