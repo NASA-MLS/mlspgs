@@ -17,52 +17,52 @@ module L2PC_m
   ! files.  The first version dealt with ascii files, but later versions
   ! must be HDF5.
 
-  use allocate_deallocate, only: allocate_test, deallocate_test
-  use dump_0, only: dump
-  use hessianmodule_0, only: hessianelement_t, &
-    & h_absent, h_sparse, h_full, h_unknown, &
-    & createblock, destroyblock
-  use hessianmodule_1, only: hessian_t, &
-    & copyhessianvalue, createblock, createemptyhessian, destroyhessian
-  use highoutput, only: outputnamedvalue
-  use intrinsic, only: l_adopted, l_channel, l_geodaltitude, l_none, l_vmr, &
-    & l_radiance, l_none, l_intermediatefrequency, l_latitude, l_fieldazimuth, &
-    & l_rows, l_columns, l_columnabundance, l_temperature, l_tscat, &
-    & l_isotoperatio, l_calsidebandfraction, l_limbsidebandfraction, &
-    & l_opticaldepth, l_elevoffset, &
-    & lit_indices, &
-    & phyq_colmabundance, phyq_dimensionless, phyq_pctrhi, &
-    & phyq_temperature, phyq_vmr
-  use manipulatevectorquantities, only: dovectorsmatch
-  use matrixmodule_0, only: m_absent, m_banded, m_column_sparse, m_full, &
-    & matrixelement_t, m_unknown, destroyblock
-  use matrixmodule_1, only: matrix_t, matrix_database_t, &
-    & copymatrixvalue, createblock, createemptymatrix, &
-    & destroymatrix, dump, dump_struct, &
-    & findblock, getactualmatrixfromdatabase
-  use MLSCommon, only: mlsfile_t
-  use MLSFiles, only: dumpmlsfile => dump
+  use Allocate_deallocate, only: allocate_test, deallocate_test
+  use Dump_0, only: dump
+  use HessianModule_0, only: hessianElement_t, &
+    & H_absent, h_sparse, h_full, h_unknown, &
+    & Createblock, destroyblock
+  use HessianModule_1, only: hessian_t, &
+    & Copyhessianvalue, createblock, createemptyhessian, destroyhessian
+  use Highoutput, only: outputnamedvalue
+  use Intrinsic, only: l_adopted, l_channel, l_geodaltitude, l_none, l_vmr, &
+    & L_radiance, l_none, l_intermediatefrequency, l_latitude, l_fieldazimuth, &
+    & L_rows, l_columns, l_columnabundance, l_temperature, l_tscat, &
+    & L_isotoperatio, l_calsidebandfraction, l_limbsidebandfraction, &
+    & L_opticaldepth, l_elevoffset, &
+    & Lit_indices, &
+    & Phyq_colmabundance, phyq_dimensionless, phyq_pctrhi, &
+    & Phyq_temperature, phyq_vmr
+  use Manipulatevectorquantities, only: dovectorsmatch
+  use MatrixModule_0, only: m_absent, m_banded, m_column_sparse, m_full, &
+    & MatrixElement_t, m_unknown, destroyblock
+  use MatrixModule_1, only: matrix_t, matrix_database_t, &
+    & CopyMatrixValue, createBlock, createEmptyMatrix, &
+    & DestroyMatrix, dump, dump_struct, &
+    & FindBlock, getActualMatrixFromDatabase
+  use MLSCommon, only: MLSFile_t
+  use MLSFiles, only: dumpMLSFile => dump
   use MLSKinds, only: r8, r4
   use MLSMessagemodule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
   use MLSFinds, only: findfirst
   use MLSSignals_m, only: getsignalname
   use MLSStringlists, only: optiondetail, switchdetail
   use MLSStrings, only: writeintstochars
-  use molecules, only: isextinction, l_rhi
-  use moretree, only: getlitindexfromstring, getstringindexfromstring
-  use output_m, only: newline, output
-  use parse_signal_m, only: parse_signal
-  use quantitytemplates, only: quantitytemplate_t, &
-    & addquantitytemplatetodatabase, copyquantitytemplate, &
-    & destroyquantitytemplatecontents, inflatequantitytemplatedatabase, &
-    & nullifyquantitytemplate, setupnewquantitytemplate
-  use string_table, only: display_string, get_string
-  use toggles, only: switches
-  use tree, only: decoration, nsons, subtree
-  use vectorsmodule, only: vectortemplate_t, vector_t, &
-    & assignment(=), addvectortemplatetodatabase, &
-    & addvectortodatabase, constructvectortemplate, copyvector, createvector, &
-    & destroyvectorinfo, dump, nullifyvectortemplate
+  use Molecules, only: isextinction, l_rhi
+  use Moretree, only: getlitindexfromstring, getstringindexfromstring
+  use Output_m, only: newline, output
+  use Parse_signal_m, only: parse_signal
+  use Quantitytemplates, only: quantitytemplate_t, &
+    & Addquantitytemplatetodatabase, copyquantitytemplate, &
+    & Destroyquantitytemplatecontents, inflatequantitytemplatedatabase, &
+    & Nullifyquantitytemplate, setupnewquantitytemplate
+  use String_table, only: display_string, getString => get_string
+  use Toggles, only: switches
+  use Tree, only: decoration, nsons, subtree
+  use Vectorsmodule, only: vectortemplate_t, vector_t, &
+    & Assignment(=), addvectortemplatetodatabase, &
+    & Addvectortodatabase, constructvectortemplate, copyvector, createvector, &
+    & Destroyvectorinfo, dump, nullifyvectortemplate
 
   implicit none
   private
@@ -153,6 +153,25 @@ module L2PC_m
 !---------------------------------------------------------------------------
 
 contains ! ============= Public Procedures ==========================
+
+  subroutine get_string ( STRING, STRING_TEXT, CAP, STRIP, NOERROR, IERR, &
+    & START, END )
+  ! because get_string has the pernicious habit of bombing 
+  ! if presented with 0 as its arg
+  ! Args
+    integer, intent(in) :: STRING
+    character(len=*), intent(out) :: STRING_TEXT
+    logical, intent(in), optional :: CAP
+    logical, intent(in), optional :: STRIP
+    logical, intent(in), optional :: NOERROR
+    integer, intent(out), optional :: IERR
+    integer, intent(in), optional :: START
+    integer, intent(in), optional :: END
+  string_text = 'undefined'
+  if ( string > 0 ) &
+    & call getString( STRING, STRING_TEXT, CAP, STRIP, NOERROR, IERR, &
+    & START, END )
+  end subroutine get_string
 
   ! ------------------------------------ AddBinSelectorToDatabase --
   integer function AddBinSelectorToDatabase ( database, item )
@@ -2358,7 +2377,12 @@ contains ! ============= Public Procedures ==========================
         if ( associated ( qt%frequencies ) ) &
           & call SaveAsHDF5DS ( qID, 'frequencies', qt%frequencies )
         ! Write out the values
-        call SaveAsHDF5DS ( qID, 'values', vector%quantities(quantity)%values )
+        if ( .not. associated(vector%quantities(quantity)%values) ) then
+          call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          & 'values field not associated for this block'  // trim(qName) )
+        else
+          call SaveAsHDF5DS ( qID, 'values', vector%quantities(quantity)%values )
+        endif
         ! Close the group
         call h5gClose_f ( qID, status )
         if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -2421,6 +2445,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.131  2015/06/30 18:38:12  pwagner
+! Should not crash just because some string not in table
+!
 ! Revision 2.130  2015/04/28 23:59:52  pwagner
 ! Diffs made more manageable
 !
