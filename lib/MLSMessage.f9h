@@ -38,6 +38,7 @@
 
 !     (subroutines and functions)
 ! bummer                   print error message with eye-catching effects
+! crash_burn               crash and burn unless called from an exempt module
 ! dumpConfig               dump configuration
 ! restoreConfig            restore configuration to its default state
 ! MLSMessage               main messaging routine
@@ -59,6 +60,7 @@
 ! bummer ( char* chars, &
 !  [int columnRange(2)], [char alignment], [int skips], &
 !  [int severity] )
+! crash_burn ( [char* module_name] )
 ! dumpConfig ( [MLSMessageConfig_T config] )
 ! restoreConfig
 ! MLSMessage ( int Severity, char* ModuleNameIn, char* Message, 
@@ -161,12 +163,12 @@
   type(MLSCallStack_t), save :: MLSCallStack
   
   ! Public procedures
-  public :: BUMMER, DUMPCONFIG, RESTORECONFIG, SETCONFIG
-  public :: MLSMESSAGE, MLSMESSAGE_, MLSMESSAGESETUP
-  public :: MLSMESSAGEEXIT, MLSMESSAGEINQUIRE, MLSMESSAGEINTERNALFILE
-  public :: MLSMESSAGECLOSE, MLSMESSAGERESET, PVMERRORMESSAGE
-  public :: REPORTTKSTATUS
-  public :: MLSMESSAGECALLS, STOPWITHERRORMSG, SUMMARIZEWARNINGS
+  public :: bummer, crash_burn, dumpconfig, restoreconfig, setconfig
+  public :: MLSMessage, MLSMessage_, MLSMessagesetup
+  public :: MLSMessageexit, MLSMessageinquire, MLSMessageinternalfile
+  public :: MLSMessageclose, MLSMessagereset, pvmerrormessage
+  public :: reporttkstatus
+  public :: MLSMessagecalls, stopwitherrormsg, summarizewarnings
 
   interface MLSMESSAGE
     module procedure MLSMESSAGE_
@@ -220,8 +222,19 @@ contains
                   & '(See error message above)' )
   end subroutine bummer_chararray
 
-  ! ------------------------------------------------  DumpConfig  -----
+  ! ------------------------------------------------  Crash_Burn  -----
+  ! crash, burn unless ..
+  subroutine Crash_Burn( name )
+    ! arg
+    character(len=*), optional, intent(in) :: name
+    ! Internal args
+    character(len=prefixLen) :: myName
+    myName = '(undefined)'
+    if ( present(name) ) myName = name
+    if ( .not. dontCrashHere(myName) ) call crash_burn_rude
+  end subroutine Crash_Burn
 
+  ! ------------------------------------------------  DumpConfig  -----
   ! dump the configuration
 
   subroutine DumpConfig( config )
@@ -1119,6 +1132,9 @@ contains
 
 !
 ! $Log$
+! Revision 2.39  2015/06/30 18:40:26  pwagner
+! Added a conditional crash_burn
+!
 ! Revision 2.38  2015/05/27 22:44:15  vsnyder
 ! Use fixed-size arrays for verboseDB and debugDB rather than pointers to
 ! variable size arrays.  NAG had been complaining that these pointers'
