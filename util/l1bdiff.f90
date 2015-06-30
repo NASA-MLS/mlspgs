@@ -13,27 +13,28 @@
 program l1bdiff ! diffs two l1b or L2AUX files
 !=================================
 
-   use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
-   use Dump_0, only: DIFFRMSMEANSRMS, RMSFORMAT, DIFF, DUMP, SELFDIFF
-   use Hdf, only: DFACC_CREATE, DFACC_READ
-   use HDF5, only: H5FIS_HDF5_F, &
-     & H5GCLOSE_F, H5GOPEN_F, H5GCREATE_F
-   use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
-   use L1BData, only: L1BDATA_T, NAMELEN, &
-     & CONTRACTL1BDATA, DEALLOCATEL1BDATA, DIFF, READL1BDATA
-   use MACHINE, only: HP, GETARG
-   use MLSFiles, only: FILENOTFOUND, WILDCARDHDFVERSION, &
-     & MLS_EXISTS, MLS_HDF_VERSION, MLS_SFSTART, MLS_SFEND, &
-     & HDFVERSION_5
-   use MLSHDF5, only: GETALLHDF5DSNAMES, MLS_H5OPEN, MLS_H5CLOSE
-   use MLSKinds, only: R8
-   use MLSMessageModule, only: MLSMSG_ERROR, MLSMSG_WARNING, &
-     & MLSMESSAGE
-   use MLSStringLists, only: GETSTRINGELEMENT, NUMSTRINGELEMENTS
-   use MLSStrings, only: REPLACE, STREQ, WRITEINTSTOCHARS
-   use output_m, only: RESUMEOUTPUT, SUSPENDOUTPUT, OUTPUT
-   use PrintIt_m, only: SET_CONFIG
-   use Time_M, only: TIME_NOW, TIME_CONFIG
+   use Allocate_deallocate, only: allocate_test, deallocate_test
+   use Dump_0, only: diffRMSMeansrms, RMSFormat, &
+     & Diff, dump, dumpDumpOptions, selfDiff
+   use HDF, only: dfacc_create, dfacc_read
+   use HDF5, only: h5fis_HDF5_f, &
+     & H5gclose_f, h5gopen_f, h5gcreate_f
+   use Highoutput, only: outputnamedvalue
+   use L1bdata, only: L1BData_t, namelen, &
+     & ContractL1BData, deallocateL1BData, diff, readL1Bdata
+   use Machine, only: hp, getarg
+   use MLSFiles, only: fileNotFound, wildcardHDFVersion, &
+     & MLS_exists, MLS_HDF_version, MLS_sfstart, MLS_sfend, &
+     & HDFVersion_5
+   use MLSHDF5, only: getAllHDF5DSNames, MLS_h5open, MLS_h5close
+   use MLSKinds, only: r8
+   use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning, &
+     & MLSMessage
+   use MLSStringLists, only: getStringElement, numStringElements
+   use MLSStrings, only: replace, streq, writeIntsToChars
+   use Output_m, only: resumeOutput, suspendOutput, output
+   use Printit_m, only: set_config
+   use Time_m, only: time_now, time_config
 
    implicit none
 
@@ -86,11 +87,10 @@ program l1bdiff ! diffs two l1b or L2AUX files
   integer, parameter ::          MAXDS = 300
   integer, parameter ::          MAXSDNAMESBUFSIZE = MAXDS*namelen
   integer, parameter ::          MAXFILES = 100
-  logical ::                     columnsOnly
   ! character(len=8)   ::          options%dumpOptions
   character(len=255) ::          filename          ! input filename
   character(len=255), dimension(MAXFILES) :: filenames
-  integer     ::                 i, status, error ! Counting indices & Error flags
+  integer     ::                 i, error ! Counting indices & Error flags
   logical     ::                 is_hdf5
   integer ::                     maf1, maf2
   character (len=MAXSDNAMESBUFSIZE) :: mySdList
@@ -131,7 +131,7 @@ program l1bdiff ! diffs two l1b or L2AUX files
   endif
   if ( options%rms ) rmsFormat = '(1pe9.2)'
   if ( options%silent ) call suspendOutput
-  options%dumpOptions = '-'
+  ! options%dumpOptions = '-'
   if ( options%rms ) options%dumpOptions = trim(options%dumpOptions) // 'r'
   if ( options%stats ) options%dumpOptions = trim(options%dumpOptions) // 's'
   if ( options%unique ) options%dumpOptions = trim(options%dumpOptions) // 'u'
@@ -224,6 +224,10 @@ contains
         exit
       elseif ( filename(1:5) == '-opt ' ) then
         call getarg ( i+1+hp, options%dumpOptions )
+        if ( index( options%dumpOptions, '?' ) > 0 ) then
+          call DumpDumpOptions( "?" )
+          stop
+        endif
         i = i + 1
         exit
       elseif ( filename(1:6) == '-self ' ) then
@@ -307,6 +311,7 @@ contains
       write (*,*) '                  diff 1/2 of channels (so DACS wont crash)'
       write (*,*) '   -hdf version=> hdf version (default is 5)'
       write (*,*) '   -opt opts   => pass opts to dump routines'
+      write (*,*) '                  e.g., "?" to list available ones'
       write (*,*) '   -silent     => switch on silent mode'
       write (*,*) '                 (printing only if diffs found)'
       write (*,*) '   -unique     => dump only unique elements'
@@ -827,17 +832,16 @@ contains
         endif
       endif
       call DeallocateL1BData ( l1bData )
-      cycle
     enddo
-	 call h5gClose_f (grpID, status)
+    call h5gClose_f (grpID, status)
     if ( status /= 0 .and. .not. options%silent ) then
-	   call MLSMessage ( MLSMSG_Warning, ModuleName, &
-       & 'Unable to close group in l2aux file: ' // trim(File1) // ' after diffing' )
+      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+      & 'Unable to close group in l2aux file: ' // trim(File1) // ' after diffing' )
     endif
 	 status = mls_sfend(sdfid1, hdfVersion=the_hdfVersion)
     if ( status /= 0 ) &
-      call MLSMessage ( MLSMSG_Error, ModuleName, &
-       & "Unable to close L2aux file: " // trim(File1) // ' after diffing')
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & "Unable to close L2aux file: " // trim(File1) // ' after diffing')
   end subroutine mySelfDiff
 
 !------------------------- print_string ---------------------
@@ -851,6 +855,9 @@ end program l1bdiff
 !==================
 
 ! $Log$
+! Revision 1.30  2014/03/07 21:43:27  pwagner
+! Name_Len changed to nameLen; got from MLSCommon
+!
 ! Revision 1.29  2014/01/09 00:31:26  pwagner
 ! Some procedures formerly in output_m now got from highOutput
 !
