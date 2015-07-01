@@ -142,7 +142,7 @@ program l2gpdiff ! show diffs between swaths in two different files
   if ( options%table ) options%dumpOptions = trim(options%dumpOptions) // 'b'
   if ( options%verbose ) options%dumpOptions = trim(options%dumpOptions) // 'v'
   call time_now ( t1 )
-  print *, 'dumpOptions: ', trim(options%dumpOptions)
+  ! print *, 'dumpOptions: ', trim(options%dumpOptions)
   do i = 2, n_filenames, 2
     call time_now ( tFile )
     if ( options%verbose ) then
@@ -432,6 +432,9 @@ end program l2gpdiff
 !==================
 
 ! $Log$
+! Revision 1.22  2015/06/30 18:52:02  pwagner
+! -d '?' now dumps available dump otions
+!
 ! Revision 1.21  2014/01/09 00:31:26  pwagner
 ! Some procedures formerly in output_m now got from highOutput
 !
