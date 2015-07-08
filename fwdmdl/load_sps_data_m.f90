@@ -109,10 +109,6 @@ contains
 
     call create_grids_1 ( Grids_x, no_mol )
 
-    grids_x%min_val = -huge(0.0_r8)
-
-    grids_x%p_len = 0
-
     do mol = 1, no_mol
 
       if ( .not. associated(qtyStuff(mol)%qty) ) then
@@ -223,8 +219,6 @@ contains
        qtyStuff%template = qty%template     ! having same template as temp
 
        call create_grids_1 ( grids_x, no_ang )
-       grids_x%min_val = -huge(0.0_r8)
-       grids_x%p_len = 0
 
        do ii = 1, no_ang
          call fill_grids_1 ( grids_x, ii, qtyStuff, maf, phitan, fwdModelConf )
@@ -253,7 +247,7 @@ contains
            & across=across )
        else if ( myAcross ) then
          call MLSMessage ( MLSMSG_Error, moduleName, &
-           & 'Cross-track viewing needs PhiTan quantity' )
+         & 'Cross-track viewing needs PhiTan quantity' )
        else
          ! Use the whole phi space for the window
          call fill_grids_1 ( grids_x, 1, qty, maf, &
@@ -276,11 +270,11 @@ contains
 
     use Intrinsic, only: l_clear_110RH_below_top, l_clear_0RH
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-    use MLSNumerics, only: HUNT
+    use MLSNumerics, only: Hunt
     use RHIFromH2O, only: RHIFromH2O_Factor
     use ForwardModelConfig, only: ForwardModelConfig_t
-    use VectorsModule, only: VECTORVALUE_T
-    use MLSFillValues, only: ESSENTIALLYEQUAL
+    use VectorsModule, only: VectorValue_T
+    use MLSFillValues, only: EssentiallyEqual
     use Constants, only: Deg2Rad
 
     type (ForwardModelConfig_T) ,intent(in) :: FWDMODELCONF
@@ -415,6 +409,8 @@ contains
     call allocate_test ( Grids_x%lin_log, n, 'lin_log', ModuleName )
     call allocate_test ( Grids_x%min_val, n, 'min_val', ModuleName )
     call allocate_test ( Grids_x%z_coord, n, 'Grids_x%z_coord', ModuleName )
+ 
+    grids_x%min_val = -huge(0.0_r8)
 
   end subroutine Create_Grids_1
 
@@ -473,7 +469,7 @@ contains
     if ( myAcross ) then
       grids_x%windowStart(ii) = 1
       grids_x%windowFinish(ii) = qty%template%noCrossTrack
-    else
+    else 
       if ( present(ws) ) then ! assume present(wf) as well
         grids_x%windowStart(ii) = ws
         grids_x%windowFinish(ii) = wf
@@ -517,13 +513,13 @@ contains
   ! Fill the zeta, phi, freq. basis and value components for the II'th
   ! "molecule" in Grids_x.
 
+    use Constants, only: Deg2Rad
     use Geometry, only: To_XYZ, XYZ_to_Geod
     use Intrinsic, only: L_Channel, L_geocAltitude, L_geodAltitude, &
       & L_IntermediateFrequency, L_Zeta
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-    use MoreMessage, only: MLSMessage
     use Molecules, only: L_CloudIce, L_H2O
-    use Constants, only: Deg2Rad
+    use MoreMessage, only: MLSMessage
     use VectorsModule, only: VectorValue_T, M_FullDerivatives
 
     ! For which molecules do we compute dBeta_df?
@@ -542,9 +538,9 @@ contains
     integer :: QF, QP, QV, QZ, WF, WS
     integer :: InstOr1
     logical :: MyAcross
-    logical :: PackFrq    ! Need to pack the frequency "dimension"
+    logical :: PackFrq ! Need to pack the frequency "dimension"
     real(rp) :: Geod(3)   ! Geodetic coordinates lat (deg), lon(deg), alt (m)
-
+    
     pf = Grids_x%l_f(ii-1)
     pp = Grids_x%l_p(ii-1)
     pv = Grids_x%l_v(ii-1)
@@ -661,12 +657,21 @@ contains
           &                   ws:wf ), &
           &       (/qv-pv/) )
     else if ( myAcross ) then
-      kz = kz / ( wf - ws + 1 ) ! Z and cross-angles conflated if myAcross
-      Grids_x%values(pv+1:qv) = reshape(qty%value4(1:kf,1:kz,1,ws:wf), &
-                                      & (/qv-pv/))
+      ! qv - pv == (wf - ws + 1) * kf * kz here
+!       ????? I don't know why this doesn't work ?????
+!       ????? Something different might be       ?????
+!       ????? needed in the "across" case anyway ?????
+!       Grids_x%values(pv+1:qv) = reshape(qty%value4(1:kf,1:kz,1,ws:wf), &
+!                                       & (/qv-pv/))
+        Grids_x%values(pv+1:qv) = reshape(qty%values(1:kf*kz,ws:wf), &
+                                         & (/qv-pv/))
     else ! All the values
       ! qv - pv == (wf - ws + 1) * kf * kz here
-      Grids_x%values(pv+1:qv) = qty%value1(1:kv)
+!       ????? I don't know why this doesn't work ?????
+!       Grids_x%values(pv+1:qv) = reshape(qty%value4(1:kf,1:kz,1,ws:wf), &
+!                                       & (/qv-pv/))
+      Grids_x%values(pv+1:qv) = reshape(qty%values(1:kf*kz,ws:wf), &
+                                      & (/qv-pv/))
     end if
     !  mixing ratio values are manipulated if it's log basis
     Grids_x%lin_log(ii) = qty%template%logBasis
@@ -905,35 +910,9 @@ contains
   end function not_used_here
 !---------------------------------------------------------------------------
 
-end module Load_SPS_Data_M
+end module LOAD_SPS_DATA_M
 
 ! $Log$
-! Revision 2.99  2015/05/28 23:21:38  vsnyder
-! Remove unreferenced USE name
-!
-! Revision 2.98  2015/05/28 23:12:37  vsnyder
-! Finish removing assumption that geodetic-height magnetic field will be
-! unstacked.  Add some checking.  Convert geocentric height in meters
-! to geodetic height in km, and convert geodetic height in meters to km,
-! because that's what's used for interpolation in the full forward model.
-!
-! Revision 2.97  2015/05/15 23:40:02  vsnyder
-! More work on cross-track indexing kludges
-!
-! Revision 2.96  2015/05/12 20:53:07  vsnyder
-! Default initialize Z_Coord component to NULL
-!
-! Revision 2.95  2015/05/01 02:08:10  vsnyder
-! Compute dimensions correctly for geodetic-altitude magnetic fields
-!
-! Revision 2.94  2015/04/11 01:26:44  vsnyder
-! Convert altitudes to geocentric km if not zeta
-!
-! Revision 2.93  2015/03/28 02:10:58  vsnyder
-! Changed order of arguments to Fill_Grids_1 and Load_One_Item_Grid.
-! Added "across" argument to Fill_Grids_1 and Fill_Grids_2 for cross-track
-! viewing.
-!
 ! Revision 2.92  2014/08/01 01:03:45  vsnyder
 ! Eliminate unreferenced USE name
 !
