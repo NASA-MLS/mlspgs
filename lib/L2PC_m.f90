@@ -56,7 +56,8 @@ module L2PC_m
     & Addquantitytemplatetodatabase, copyquantitytemplate, &
     & Destroyquantitytemplatecontents, inflatequantitytemplatedatabase, &
     & Nullifyquantitytemplate, setupnewquantitytemplate
-  use String_table, only: display_string, getString => get_string
+  use String_table, only: display_string, getString => get_string, &
+    & isStringInTable
   use Toggles, only: switches
   use Tree, only: decoration, nsons, subtree
   use Vectorsmodule, only: vectortemplate_t, vector_t, &
@@ -168,7 +169,7 @@ contains ! ============= Public Procedures ==========================
     integer, intent(in), optional :: START
     integer, intent(in), optional :: END
   string_text = 'undefined'
-  if ( string > 0 ) &
+  if ( isStringInTable(string) ) &
     & call getString( STRING, STRING_TEXT, CAP, STRIP, NOERROR, IERR, &
     & START, END )
   end subroutine get_string
@@ -2445,6 +2446,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.132  2015/07/14 23:23:52  pwagner
+! Use more robust isStringInTable
+!
 ! Revision 2.131  2015/06/30 18:38:12  pwagner
 ! Should not crash just because some string not in table
 !
