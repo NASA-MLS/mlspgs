@@ -14,7 +14,9 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
 !=============================================================================
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
   use BitStuff, only: DumpBitNames
+  use Constants, only: Deg2Rad
   use Dump_0, only: diff, diff_fun, dump
+  use Geometry, only: EarthRadA
   use HDF, only: dfacc_rdonly, dfacc_read, dfacc_create, dfacc_rdwr, &
     & Dfnt_float32, dfnt_int32, dfnt_float64
   use Highoutput, only: outputnamedvalue
@@ -2451,6 +2453,7 @@ contains ! =====     Public Procedures     =============================
     character(len=Len(DATA_FIELDS)+Len(GEO_FIELDS)) :: myFields
     integer :: nUnique
     logical :: skipGeos
+    real(rgp), dimension(:), pointer :: spacing
     integer, dimension(1000) :: uniqueVals
 
     ! Executable code
@@ -2555,6 +2558,28 @@ contains ! =====     Public Procedures     =============================
         & width=width, options=options )
         call deallocate_test ( hoursInDay, &
           & 'hoursInDay', ModuleName )
+      endif
+
+      if ( showMe(myDetails > -1, myFields, 'spacing') ) then
+        nullify( spacing )
+        call allocate_test ( spacing, l2gp%nTimes-1, &
+          & 'spacing', ModuleName )
+        spacing = 0.
+        do i=1, l2gp%nTimes - 1
+          spacing(i) = EarthRadA * sqrt ( &
+            & (sin(Deg2Rad*l2gp%latitude(i+1)) - sin(Deg2Rad*l2gp%latitude(i)))**2 &
+            & + &
+            & (cos(Deg2Rad*l2gp%latitude(i+1))*cos(Deg2Rad*l2gp%longitude(i+1)) &
+            & - cos(Deg2Rad*l2gp%latitude(i))*cos(Deg2Rad*l2gp%longitude(i)))**2 &
+            & + &
+            & (cos(Deg2Rad*l2gp%latitude(i+1))*sin(Deg2Rad*l2gp%longitude(i+1)) &
+            & - cos(Deg2Rad*l2gp%latitude(i))*sin(Deg2Rad*l2gp%longitude(i)))**2 &
+            & )
+        enddo
+        call dump ( spacing, 'spacing (in m):', FillValue=FillValueGP, &
+        & width=width, options=options )
+        call deallocate_test ( spacing, &
+          & 'spacing', ModuleName )
       endif
 
       if ( showMe(myDetails > -1, myFields, 'chunkNumber') ) &
@@ -5246,6 +5271,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.213  2015/06/04 17:05:35  pwagner
+! Fixed bug causing integer overflow in integer type conversion
+!
 ! Revision 2.212  2015/04/28 16:21:11  pwagner
 ! Fixed some things in Diffing
 !
