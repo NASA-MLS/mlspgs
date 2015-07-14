@@ -183,13 +183,17 @@ contains ! =========== Public procedures ===================================
   subroutine L1BGeoLocation ( filedatabase, name, values, values2d )
 
     use allocate_deallocate, only: allocate_test
+    use dump_0, only: dump
     use HighOutput, only: outputNamedValue
     use L1BData, only: deallocateL1BData, L1BData_t, readL1BData, &
       & assembleL1BQtyName
     use MLSCommon, only: MLSfile_t
     use MLSFiles, only: getMLSfilebytype
+    use MLSFillValues, only: isFillValue, Monotonize
     use MLSKinds, only: rk => r8
-    use MLSstrings, only: lowercase
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Warning
+    use MLSStrings, only: lowercase
+    use output_m, only: output
     ! Args
     type (MLSFile_T), dimension(:), pointer     :: fileDatabase
     character(len=*), intent(in)                :: name
@@ -276,6 +280,13 @@ contains ! =========== Public procedures ===================================
     endif
     if ( DeeBug ) call outputnamedValue( '2nd readItemName', readItemName )
     call ReadL1BData ( L1BFile, readItemName, l1bField, noMAFs, status )
+    if ( any(isFillValue(l1bField%dpField) ) ) then
+      call output( 'Fill values among ' // trim(readItemName), advance='yes' )
+      call MLSMessage ( MLSMSG_Warning, trim(ModuleName) // 'L1BGeoLocation', &
+        & 'Required monotonization' )
+      call Monotonize( l1bField%dpField )
+      ! call dump( l1bField%dpField, 'l1bField%dpField' )
+    endif
     noFreqs = size(l1bField%dpField,2)
     if ( present(values) ) then
       nullify(values)
@@ -658,6 +669,9 @@ contains ! =========== Public procedures ===================================
 end module HGridsDatabase
 
 ! $Log$
+! Revision 2.22  2015/07/14 23:22:27  pwagner
+! Prevent insertion of Fill values in L1BGeolocations when gaps occur in counterMAF
+!
 ! Revision 2.21  2015/06/25 00:37:52  pwagner
 ! Stop printing low and high Guesses
 !
