@@ -1189,6 +1189,46 @@ contains ! ============================ MODULE PROCEDURES ======================
     IsL1BGappy = .false.
   end function IsL1BGappy
 
+  ! -------------------------------------------------  showL1BGaps  -----
+  subroutine showL1BGaps ( l1bData, ignoreGlobalAttrs )
+    ! Look for gaps in l1bData, returning true if any found
+  use PCFHdr, only: GLOBALATTRIBUTES
+
+    ! Dummy arguments
+    type (L1BData_T), intent(in) :: l1bData
+    logical, optional, intent(in) :: ignoreGlobalAttrs  ! defaults to checking
+    ! Internal variables
+    logical :: skipGACHecks
+    integer :: i
+    integer :: nextMAF
+    integer :: maxCtrMAF
+    integer :: minCtrMAF
+    ! Executable
+    skipGACHecks = .false.
+    if ( present(ignoreGlobalAttrs) ) skipGACHecks = ignoreGlobalAttrs
+    if ( .not. skipGACHecks ) then
+      maxCtrMAF = maxval(l1BData%counterMAF)
+      minCtrMAF = myminval(l1BData%counterMAF)
+      if ( maxCtrMAF < GlobalAttributes%LastMAFCtr ) &
+        & call outputnamedValue( 'maxCtrMAF, LastMAFCtr', &
+        &                      (/ maxCtrMAF, GlobalAttributes%LastMAFCtr /) )
+      if ( minCtrMAF > GlobalAttributes%FirstMAFCtr ) &
+        & call outputnamedValue( 'minCtrMAF, FirstMAFCtr', &
+        &                      (/ minCtrMAF, GlobalAttributes%FirstMAFCtr /) )
+    end if
+    ! Search for interior gaps
+    nextMAF = minCtrMAF
+    do i=1, size(l1BData%counterMAF)
+      if ( nextMAF /= l1BData%counterMAF(i)) exit
+      nextMAF = nextMAF + 1
+    end do
+    if ( i > size(l1BData%counterMAF) ) then
+      call output( 'No interior gaps found in counterMAF array', advance='yes' )
+    else
+      call outputNamedValue( 'First counterMAF gap found at MAF ', i )
+    endif
+  end subroutine showL1BGaps
+
   !--------------------------------------------------  L1BOASetup  -----
   subroutine L1boaSetup ( root, filedatabase, F_FILE, hdfVersion )
     ! Take file name from l2cf, open, and add new file to filedatabase
@@ -1616,6 +1656,7 @@ contains ! ============================ MODULE PROCEDURES ======================
   subroutine ReadL1BData_MLSFile ( L1BFile, QuantityName, L1bData, NoMAFs, Flag, &
     & FirstMAF, LastMAF, NEVERFAIL, dontPad, L2AUX )
 
+    use MLSFillValues, only: isFillValue
     use PCFHdr, only: GLOBALATTRIBUTES
     use TOGGLES, only: GEN, LEVELS, SWITCHES, TOGGLE
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
@@ -1688,6 +1729,12 @@ contains ! ============================ MODULE PROCEDURES ======================
       end if
     end if
     isScalar = ( l1bData%noMAFs < 2 ) ! There may be a better way to decide
+    if ( index(QuantityName, 'Angle') > 0 .and. DEEBUG ) then
+      call outputnamedValue( 'isScalar', isScalar )
+      call outputnamedValue( 'myDontPad', myDontPad )
+      call outputnamedValue( 'IsL1BGappy(l1bData)', IsL1BGappy(l1bData) )
+      if ( IsL1BGappy(l1bData) ) call showL1BGaps( l1bData )
+    endif
     if ( myDontPad .or. flag /= 0 .or. isScalar .or. &
       & (GlobalAttributes%FirstMAFCtr > GlobalAttributes%LastMAFCtr) ) go to 9
     if ( .not. IsL1BGappy(l1bData) ) go to 9
@@ -1715,6 +1762,11 @@ contains ! ============================ MODULE PROCEDURES ======================
       go to 9
     end if
     call BadPadL1BData(l1bdataTmp, l1bData, GlobalAttributes%FirstMAFCtr, NoMAFs)
+    if ( index(QuantityName, 'Angle') > 0 .and. DEEBUG ) then
+      call output( 'Gone through padding', advance='yes' )
+      call outputnamedValue( 'Fills in new l1bdata?', any(isFillValue(l1bdata%dpField)) )
+      call outputnamedValue( 'Fills in l1bdataTmp?', any(isFillValue(l1bdataTmp%dpField)) )
+    endif
     call deallocatel1bData(l1bdataTmp)
     if ( .not. present(firstMAF) .and. .not. present(lastMAF) ) go to 9
     ! Need to contract padded l1bdata to just those MAFs requested
@@ -2020,6 +2072,7 @@ contains ! ============================ MODULE PROCEDURES ======================
   subroutine ReadL1BData_MF_hdf5 ( L1BFile, QuantityName, L1bData, NoMAFs, &
     & Flag, FirstMAF, LastMAF, NEVERFAIL, L2AUX )
     use Allocate_Deallocate, only: Test_Allocate
+    use MLSFillValues, only: isFillValue
     use HDF5, only: HSIZE_T
     use MLSHDF5, only: ISHDF5DSPRESENT, LOADFROMHDF5DS, &
       & GETHDF5DSRANK, GETHDF5DSDIMS, GETHDF5DSQTYPE
@@ -2261,6 +2314,14 @@ contains ! ============================ MODULE PROCEDURES ======================
         call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%DpField(:,:,1))
       end if
       l1bdata%data_type = 'double'
+      if ( index(QuantityName, 'Angle') < 1 .or. .true. ) then
+      elseif ( any(isFillValue(l1bData%dpField) ) ) then
+        call output( 'Fill values among 2d real l1bdata', advance='yes' )
+        call outputNamedValue( 'shape(l1bData%dpField)', shape(l1bData%dpField) )
+        call dump( l1bData%dpField, 'l1bData%dpField' )
+      else
+        call output( '2d real l1bdata ' // trim(QuantityName) // 'are clean', advance='yes' )
+      endif
     case ('real3')
       call allocate_test ( l1bData%DpField, dims(1), dims(2), l1bData%noMAFs, &
         & "l1bData%DpField", moduleName )
@@ -2268,8 +2329,16 @@ contains ! ============================ MODULE PROCEDURES ======================
         call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%DpField, &
           & (/0,0,MAFoffset/), (/dims(1),dims(2),l1bData%noMAFs/) )
       else
-        call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%DpField)
+        call output( '3d real l1bdata ' // trim(QuantityName) // 'are clean', advance='yes' )
       end if
+      if ( index(QuantityName, 'Angle') < 1 .or. .true. ) then
+      elseif ( any(isFillValue(l1bData%dpField) ) ) then
+        call output( 'Fill values among 3d real l1bdata', advance='yes' )
+        call outputNamedValue( 'shape(l1bData%dpField)', shape(l1bData%dpField) )
+        call dump( l1bData%dpField, 'l1bData%dpField' )
+      else
+        call output( '3d real l1bdata are clean', advance='yes' )
+      endif
       l1bdata%data_type = 'double'
     case ('real4')
       call allocate_test ( l1bData%DpField, dims(1)*dims(2), dims(3), l1bData%noMAFs, &
@@ -2421,6 +2490,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     !   not sure which so we'll code for either; uh-oh, looking like it's (b))
     ! Arguments
     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+    use MLSFillValues, only: IsFillValue
     type(l1bdata_t), intent(inout) :: L1BDATA ! Result
     ! Local variables
     character(len=MaxCharFieldLen), &
@@ -2438,6 +2508,8 @@ contains ! ============================ MODULE PROCEDURES ======================
 !     & source = (/ 2, 3, 1, 1, 3, 2, 3, 1, 2 /), &  ! This transposed desired
     integer                              :: status   ! result (don't know why)
     logical, parameter           :: DEEBUG = .FALSE.
+    logical                      :: FillInNew
+    logical                      :: FillInOld
     character(len=1), parameter  :: method = 'b'
     integer                      :: mord
     integer                      :: S ! Size in bytes of object to deallocate
@@ -2487,6 +2559,7 @@ contains ! ============================ MODULE PROCEDURES ======================
         & 'unassociated')
       old_shape = shape(l1bData%DpField)
       new_shape(3) = old_shape(l1bData%TrueRank)
+      FillInOld = any(isFillValue(l1bData%DpField))
       if ( l1bData%TrueRank == 2 ) new_shape(mord) = old_shape(1)
       allocate(DpField(new_shape(1), new_shape(2), new_shape(3)), stat=status)
       call test_allocate ( status, moduleName, trim(l1bData%data_type), &
@@ -2497,6 +2570,15 @@ contains ! ============================ MODULE PROCEDURES ======================
       deallocate(l1bData%DpField, stat=status)
       call test_deallocate ( status, moduleName, trim(l1bData%data_type), s )
       l1bData%DpField => DpField
+      FillInNew = any(isFillValue(l1bData%DpField))
+      if ( (FillInOld .neqv. FillInNew) .and. DEEBUG ) then
+        call outputNamedValue( 'Fill values before reshaping', FillInOld )
+        call outputNamedValue( 'Fill values after reshaping', FillInNew )
+        call outputNamedValue( 'old shape', old_shape )
+        call outputNamedValue( 'new shape', new_shape )
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Sorry--reshape_for_hdf4 has iuntroduced or removed Fill values')
+      endif
       if ( DEEBUG ) then
         print *, 'old_shape: ', old_shape
         print *, 'new_shape: ', new_shape
@@ -2716,6 +2798,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.104  2015/07/14 23:19:32  pwagner
+! May debug case where gap in counterMAF causes Fill values in dp Field
+!
 ! Revision 2.103  2015/03/28 01:07:53  vsnyder
 ! Changed the kind of dims to allow using ALlocate_Test.  Some spiffing.
 ! Added stuff to trace allocate/deallocate addresses -- mostly commented out
