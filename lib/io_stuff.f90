@@ -22,6 +22,7 @@ module IO_STUFF
   public :: get_nLines
   public :: read_stdin
   public :: read_textFile
+  public :: truncate_textFile
   public :: write_textFile
 
 ! === (start of toc) ===                                                 
@@ -29,11 +30,12 @@ module IO_STUFF
 !     - - - - - - - -                                                    
 
 !     (subroutines and functions)
-! get_lun        Find a Fortran logical unit number that's not in use.
-! get_nLines     Find how many lines are in a text file
-! read_stdin     Read standard input into characters scalar or array
-! read_textfile  Read contents of a textfile into characters scalar or array
-! write_textfile Write characters scalar or array out to a textfile
+! get_lun           Find a Fortran logical unit number that's not in use.
+! get_nLines        Find how many lines are in a text file
+! read_stdin        Read standard input into characters scalar or array
+! read_textfile     Read contents of a textfile into characters scalar or array
+! truncate_textFile          Delete contents of a text file
+! write_textfile    Write characters scalar or array out to a textfile
 ! === (end of toc) ===
 
 ! === (start of api) ===
@@ -42,6 +44,7 @@ module IO_STUFF
 ! read_stdin( str string, [int maxLineLen], [int nLines] )
 ! read_textfile( char* File, str string, [int maxLineLen], [int nLines] )
 ! write_textfile( char* File, str string, [int maxLineLen], [int nLines] )
+! truncate_textFile( str string )
 ! str can be any of
 ! character(len=*)                 a scalar character string of any length
 ! character(len=*), dimension(:)   a 1d character array of any length
@@ -496,6 +499,15 @@ contains
     if ( present(nLines) ) nLines = recrd
   end subroutine READ_TEXTFILE_sca
   
+  !------------------ truncate_textFile
+  subroutine truncate_textFile( filename )
+    character(len=*), intent(in) :: filename
+    integer :: unitnum
+    call get_lun( unitnum )
+    open( unit=unitnum, file=filename, form='formatted', status='replace' )
+    close( unitnum )
+  end subroutine truncate_textFile
+
   !------------------ write_textfile
   ! We assume line feeds are already in string
   subroutine write_TEXTFILE_arr ( File, string )
@@ -629,6 +641,9 @@ contains
 end module IO_STUFF
 
 ! $Log$
+! Revision 2.21  2015/07/14 23:10:56  pwagner
+! Added a routine to truncate_textFile
+!
 ! Revision 2.20  2014/07/31 20:19:08  pwagner
 ! Improved comments; get_nLines returns 0 for an empty file, and -1 if cant open
 !
