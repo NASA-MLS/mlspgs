@@ -1125,8 +1125,11 @@ contains ! ======================= Public Procedures =========================
   !       lats
   !         ...
   
+  ! Alternative use: we may instead the contents of an input file as if it
+  ! contained the quantity values
+  !
   subroutine DirectWrite_Quantity ( File, Quantity, QtyName, &
-    & ChunkNo, Options, Rank )
+    & ChunkNo, Options, Rank, inputFile )
 
     use HDF5, only: h5gclose_f, h5gcreate_f, h5gopen_f
     use intrinsic, only: lit_indices
@@ -1142,6 +1145,7 @@ contains ! ======================= Public Procedures =========================
     integer, intent(in)              :: ChunkNo  ! Index into chunks
     character(len=*), intent(in), optional :: Options
     integer, intent(in), optional    :: Rank
+    character(len=*), intent(in), optional :: inputFile
 
     ! Local variables
     logical :: already_there
@@ -1181,28 +1185,36 @@ contains ! ======================= Public Procedures =========================
     call h5GCreate_f ( File%fileID%grp_id, chunkStr, grp_id, returnStatus )
     ! Begin the writes
     ! Values
-    ! call outputNamedValue ( 'rank', myRank )
-    trueRank = 2 + merge(1,0,quantity%template%noChans>1) + &
-             &     merge(1,0,quantity%template%noCrossTrack>1)
-    if ( myRank <= 0 ) then
-      myRank = trueRank
-    else if ( trueRank > myRank ) then
-      call MLSMessage ( MLSMSG_Warning, moduleName, "Actual rank of Value %S is " // &
-        & " %D but the specified rank is %D.  Are you sure this is what you want?", &
-        & datum=[ quantity%template%name, trueRank, myRank] )
-    end if
-    select case ( myRank )
-    case ( 1 )
-      call SaveAsHDF5DS( grp_id, 'values', quantity%value1 )
-    case ( 2 )
-      call SaveAsHDF5DS( grp_id, 'values', quantity%values )
-    case ( 3 )
-      call SaveAsHDF5DS( grp_id, 'values', quantity%value3 )
-    case ( 4 )
-      call SaveAsHDF5DS( grp_id, 'values', quantity%value4 )
-    case default
-      call SaveAsHDF5DS( grp_id, 'values', quantity%values )
-    end select
+    ! Are we getting the values from an input file?
+    if ( present(inputFile) ) then
+      call outputnamedValue( 'inputFile', trim(inputFile) )
+      call SaveAsHDF5DS ( inputFile, grp_id, &
+        & 'values', maxLineLen=4096, fromNull='@' )
+    else
+    
+      ! call outputNamedValue ( 'rank', myRank )
+      trueRank = 2 + merge(1,0,quantity%template%noChans>1) + &
+               &     merge(1,0,quantity%template%noCrossTrack>1)
+      if ( myRank <= 0 ) then
+        myRank = trueRank
+      else if ( trueRank > myRank ) then
+        call MLSMessage ( MLSMSG_Warning, moduleName, "Actual rank of Value %S is " // &
+          & " %D but the specified rank is %D.  Are you sure this is what you want?", &
+          & datum=[ quantity%template%name, trueRank, myRank] )
+      end if
+      select case ( myRank )
+      case ( 1 )
+        call SaveAsHDF5DS( grp_id, 'values', quantity%value1 )
+      case ( 2 )
+        call SaveAsHDF5DS( grp_id, 'values', quantity%values )
+      case ( 3 )
+        call SaveAsHDF5DS( grp_id, 'values', quantity%value3 )
+      case ( 4 )
+        call SaveAsHDF5DS( grp_id, 'values', quantity%value4 )
+      case default
+        call SaveAsHDF5DS( grp_id, 'values', quantity%values )
+      end select
+    endif
     ! Geolocations
     call SaveAsHDF5DS( grp_id, 'surfs', quantity%template%surfs )
     if ( associated(quantity%template%Geolocation) ) &
@@ -1718,6 +1730,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.75  2015/07/14 23:32:01  pwagner
+! label and inputFile fields in DirectWrite
+!
 ! Revision 2.74  2015/04/29 01:15:09  vsnyder
 ! Calculate TrueRank correctly, allow to use it if rank<0
 !
