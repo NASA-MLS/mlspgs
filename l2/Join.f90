@@ -393,8 +393,9 @@ contains ! =====     Public Procedures     =============================
     use hgridsdatabase, only: hgrid_t
     use highoutput, only: outputnamedvalue
     use init_tables_module, only: f_ascdescmode, f_convergence, f_file, &
-      & f_hdfversion, f_loweroverlap, f_noPCFid, f_options, f_precision, &
-      & f_quality, f_rank, &
+      & f_hdfversion, f_inputFile, &
+      & f_label, f_loweroverlap, f_noPCFid, f_options, &
+      & f_precision, f_prefixSignal, f_quality, f_rank, &
       & f_single, f_source, f_status, f_type, f_upperoverlap, f_vector, &
       & field_first, field_last
     use init_tables_module, only: l_l2gp, l_l2aux, l_l2dgg, l_l2fwm, &
@@ -406,20 +407,23 @@ contains ! =====     Public Procedures     =============================
     use MLSFiles, only: hdfversion_5, &
       & addinitializemlsfile, dump, getmlsfilebyname, getpcfromref, &
       & mls_closefile, mls_openfile, split_path_name
+    use MLSFinds, only: findfirst, findnext
     use MLSHdfeos, only: mls_swath_in_file
     use MLSKinds, only: r8
-    use MLSL2options, only: checkpaths, &
-      & defAult_hdfversion_write, patch, skipdirectwrites, toolkit
-    use MLSMessagemodule, only: mlsmessage, mlsmsg_error, mlsmsg_warning
-    use MLSPCF2, ONLY: MLSPCF_L2GP_START, MLSPCF_L2GP_END, &
-      & MLSPCF_L2DGM_START, MLSPCF_L2DGM_END, MLSPCF_L2FWM_FULL_START, &
-      & MLSPCF_L2FWM_FULL_END, &
-      & MLSPCF_L2DGG_START, MLSPCF_L2DGG_END
-    use MLSFinds, only: findfirst, findnext
+    use MLSL2Options, only: checkPaths, &
+      & default_HDFVersion_Write, patch, skipDirectWrites, toolkit
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
+    use MLSPCF2, only: MLSPCF_l2gp_start, MLSPCF_l2gp_end, &
+      & MLSPCF_l2dgm_start, MLSPCF_l2dgm_end, MLSPCF_l2fwm_full_start, &
+      & MLSPCF_l2fwm_full_end, &
+      & MLSPCF_l2dgg_start, MLSPCF_l2dgg_end
+    use MLSSignals_m, only: getsignalname
     use moretree, only: get_field_id, get_boolean
     use output_m, only: blanks, output
     use outputandclose, only: add_metadata
     use string_table, only: display_string, get_string
+    use symbol_table, only: enter_terminal
+    use symbol_types, only: t_string
     use time_m, only: time_now
     use toggles, only: gen, toggle, switches
     use trace_m, only: trace_begin, trace_end
@@ -476,9 +480,13 @@ contains ! =====     Public Procedures     =============================
     character(len=1024) :: HDFNAME      ! Output swath/sd name
     integer :: HDFNAMEINDEX             ! String index for output name
     integer :: HDFVERSION               ! 4 or 5
+    character(len=1024) :: inputFile    ! Input full filename
+    integer :: i
     logical :: ISNEWDIRECT              ! TRUE if not already in database
     integer :: KEYNO                    ! Loop counter, field in l2cf line
     integer :: l2gp_Version
+    integer :: labelId                ! No. things to output
+    character(len=1024) :: LABELSTR     ! The label itself
     logical :: lowerOverlap
     ! integer :: LASTFIELDINDEX           ! Type of previous field in l2cf line
     integer :: Me = -1                  ! String index for trace
@@ -500,6 +508,7 @@ contains ! =====     Public Procedures     =============================
     character(len=1024) :: PATH         ! path/file_base
     integer :: PCBottom
     integer :: PCTop
+    logical :: prefixSignal
     integer :: Rank
     integer :: RETURNSTATUS
     logical :: SINGLE
@@ -520,6 +529,7 @@ contains ! =====     Public Procedures     =============================
     integer, dimension(:), pointer :: STATUSVECTORS ! Indices
     integer, dimension(:), pointer :: STATUSQUANTITIES ! Indices
     integer, dimension(:), pointer :: DIRECTFILES ! Indices
+    integer, dimension(:), pointer :: Labels ! Indices
     type(VectorValue_T), pointer :: CONVERGQTY ! The quantities convergence ratio
     type(VectorValue_T), pointer :: QTY ! The quantity
     type(VectorValue_T), pointer :: PRECQTY ! The quantities precision
@@ -532,7 +542,7 @@ contains ! =====     Public Procedures     =============================
     type(L2Metadata_T) :: l2metaData
 
     ! Executable code
-    DEEBUG = ( switchDetail(switches, 'direct') > -1 ) ! .or. SKIPDIRECTWRITES
+    DEEBUG = ( switchDetail(switches, 'direct') > 0 ) ! .or. SKIPDIRECTWRITES
     SKIPDGG = ( switchDetail(switches, 'skipdgg') > -1 )
     SKIPDGM = ( switchDetail(switches, 'skipdgm') > -1 )
     nullify(thisDirect)
@@ -556,6 +566,7 @@ contains ! =====     Public Procedures     =============================
     error = 0
     file = 0
     filename = 'undefined'
+    inputFile = 'undefined'
     lowerOverlap = .false.
     got = .false.
     noPCFid = .false.
@@ -605,6 +616,8 @@ contains ! =====     Public Procedures     =============================
       case ( f_file )
         file = sub_rosa(subtree(2,son))
         if ( present(namedFile) ) namedFile = .true.
+      case ( f_inputfile )
+        call get_string ( sub_rosa(subtree(2,son)), inputfile, strip=.true. )
       case ( f_type )
         outputType = decoration(subtree(2,son))
         call get_string ( lit_indices(outputType), outputTypeStr, strip=.true. )
@@ -612,6 +625,8 @@ contains ! =====     Public Procedures     =============================
         lowerOverlap = get_boolean ( son )
       case ( f_upperOverlap )
         upperOverlap = get_boolean ( son )
+      case ( f_prefixSignal )
+        prefixSignal = get_boolean ( son )
       case ( f_rank )
         call expr ( subtree(2,son), exprUnits, exprValue )
         if ( exprUnits(1) /= phyq_dimensionless ) &
@@ -636,7 +651,7 @@ contains ! =====     Public Procedures     =============================
       & qualityVectors, qualityQuantities, &
       & convergQuantities, convergVectors, &
       & statusVectors, statusQuantities, &
-      & precisionVectors, precisionQuantities, directFiles )
+      & precisionVectors, precisionQuantities, directFiles, labels )
     call Allocate_test ( sourceVectors, noSources, 'sourceVectors', ModuleName )
     call Allocate_test ( sourceQuantities, noSources, 'sourceQuantities', &
       &  ModuleName, Fill=-1 )
@@ -658,8 +673,11 @@ contains ! =====     Public Procedures     =============================
       &  ModuleName, Fill=0 )
     call Allocate_test ( directFiles, noSources, 'directFiles', &
       &  ModuleName, Fill=0 )
+    call Allocate_test ( labels, noSources, 'directFiles', &
+      &  ModuleName, Fill=0 )
     ! Go round again and identify each quantity, work out what kind of file
     ! we're talking about
+    labelId = 0
     source = 0
     do keyNo = 2, nsons(node)
       l2gp_Version = 1
@@ -702,6 +720,9 @@ contains ! =====     Public Procedures     =============================
       case ( f_vector )
         source = source + 1
         sourceVectors(source) = decoration(decoration(subtree(2,son)))
+      case ( f_label )
+        labelId = labelId + 1
+        labels(labelId) = sub_rosa(subtree(2,son))
       case default
       end select
     end do
@@ -797,6 +818,32 @@ contains ! =====     Public Procedures     =============================
       return
     endif
 
+    ! Label quantities if we supplied labels on the command line
+    if ( checkpaths ) then
+      ! No, don't label if just messing around
+    elseif ( prefixSignal .and. labelId > 0 ) then
+      ! All sources have the same label suffix
+      ! They differ only in which signal string they begin with
+      do i=1, noSources
+        qty => GetVectorQtyByTemplateIndex ( vectors(sourceVectors(i)), sourceQuantities(i) )
+        if ( qty%template%signal == 0 ) then
+          call Announce_Error ( node, no_error_code, &
+            & 'The quantity has no signal so prefixSignal is not appropriate' )
+          cycle
+        end if
+        call GetSignalName ( qty%template%signal, labelStr, &
+          & sideband=qty%template%sideband )
+        call Get_String( labels(1), labelStr(len_trim(labelStr)+1:), strip=.true. )
+        ! Now get an index for this possibly new name which may include the signal
+        qty%label = enter_terminal ( trim(labelStr), t_string, caseSensitive=.true. )
+      enddo
+    else
+      ! Each label corresponds to a source
+      do i=1, labelId
+        qty => GetVectorQtyByTemplateIndex ( vectors(sourceVectors(i)), sourceQuantities(i) )
+        qty%label = labels(i)
+      enddo
+    endif
     ! Distribute sources among available DirectWrite files if filename undefined
     if ( distributingSources ) then
        call DistributeSources
@@ -1269,24 +1316,36 @@ contains ! =====     Public Procedures     =============================
             filetype=l_swath
           end if
         case ( l_l2aux, l_l2fwm, l_hdf )
-          ! Call the l2aux sd write routine.  This should write the 
-          ! non-overlapped portion of qty (with possibly precision in precQty)
-          ! into the l2aux sd named 'hdfName' starting at profile 
-          ! qty%template%instanceOffset ( + 1 ? )
-          ! Note sure about the +1 in this case, probably depends whether it's a
-          ! minor frame quantity or not.  This mixed zero/one indexing is becoming
-          ! a real pain.  I wish I never went down that road!
-          call DirectWrite ( directFile, qty, precQty, hdfName, &
-            & chunkNo, chunks, FWModelConfig, &
-            & lowerOverlap=lowerOverlap, upperOverlap=upperOverlap, &
-            & single=single, options=options )
+          if ( got(f_inputFile) ) then
+            ! Write the ascii file as if it contained the quantity's values
+            call DirectWrite ( directFile, qty, hdfName, &
+              & chunkNo, options=options, rank=rank, inputFile=inputFile  )
+          else
+            ! Call the l2aux sd write routine.  This should write the 
+            ! non-overlapped portion of qty (with possibly precision in precQty)
+            ! into the l2aux sd named 'hdfName' starting at profile 
+            ! qty%template%instanceOffset ( + 1 ? )
+            ! Note sure about the +1 in this case, probably depends whether it's a
+            ! minor frame quantity or not.  This mixed zero/one indexing is becoming
+            ! a real pain.  I wish I never went down that road!
+            call DirectWrite ( directFile, qty, precQty, hdfName, &
+              & chunkNo, chunks, FWModelConfig, &
+              & lowerOverlap=lowerOverlap, upperOverlap=upperOverlap, &
+              & single=single, options=options )
+          endif
           NumOutput = NumOutput + 1
           filetype=l_hdf
         case ( l_quantity )
-          ! Write the quantity with all its geolocations
-          ! call outputnamedValue( 'Calling DirectWrite with rank', rank )
-          call DirectWrite ( directFile, qty, hdfName, &
-            & chunkNo, options=options, rank=rank )
+          if ( got(f_inputFile) ) then
+            ! Write the ascii file as if it contained the quantity's values
+            call DirectWrite ( directFile, qty, hdfName, &
+              & chunkNo, options=options, rank=rank, inputFile=inputFile  )
+          else
+            ! Write the quantity with all its geolocations
+            ! call outputnamedValue( 'Calling DirectWrite with rank', rank )
+            call DirectWrite ( directFile, qty, hdfName, &
+              & chunkNo, options=options, rank=rank )
+          endif
           NumOutput = NumOutput + 1
           filetype=l_quantity
         case default
@@ -1508,9 +1567,10 @@ contains ! =====     Public Procedures     =============================
 
   ! ------------------------------------------------ LabelVectorQuantity -----
   subroutine LabelVectorQuantity ( node, vectors )
+    use highOutput, only: outputNamedValue
     use init_tables_module, only: f_label, f_prefixsignal, &
       & f_quantity, f_vector
-    use MLSSignals_m, only: getsignalname
+    use MLSSignals_m, only: getSignalName
     use moretree, only: get_field_id, get_boolean
     use symbol_table, only: enter_terminal
     use symbol_types, only: t_string
@@ -2286,6 +2346,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.166  2015/07/14 23:31:16  pwagner
+! label and inputFile fields in DirectWrite
+!
 ! Revision 2.165  2015/05/05 16:47:25  pwagner
 ! /noPCFid allows us to DirectWrite to files not named in PCF
 !
