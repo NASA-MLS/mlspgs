@@ -17,7 +17,7 @@ module DumpCommand_M
 
   use highOutput, only: banner, beVerbose, headLine, &
     & numToChars, outputNamedValue
-  use output_m, only: blanks, newLine, output
+  use output_m, only: blanks, newLine, output, revertOutput, switchOutput
   implicit none
   private
 
@@ -1145,18 +1145,20 @@ contains
       & f_block, f_boolean, &
       & f_callstack, f_chunkdivide, f_chunknumber, f_clean, &
       & f_commandline, f_count, f_crashburn, &
-      & f_details, f_dacsfiltershapes, &
+      & f_details, f_dacsfiltershapes, f_dumpFile, &
       & f_file, f_filtershapes, f_forwardmodel, f_globalAttributes, f_grid, &
       & f_hessian, f_hgrid, f_igrf, &
       & f_l2pc, f_lines, f_mark, f_mask, f_matrix, f_memory, &
       & f_mietables, f_options, f_pfadata, f_pfafiles, f_pfanum, f_pfastru, &
       & f_phasename, f_pointinggrids, f_quantity, f_rank, f_reset, &
       & f_signals,  f_spectroscopy, f_stack, f_start, f_stop, f_stride, &
-      & f_stopwitherror, f_surface, f_template, f_text, f_tgrid, f_time, &
+      & f_stopwitherror, f_surface, &
+      & f_template, f_text, f_tgrid, f_time, f_truncate, &
       & F_TotalMatrixSizes, F_TotalVectorSizes, f_variable, &
       & f_vector, f_vectormask, f_vgrid, &
       & s_diff, s_dump, s_quantity, s_vectortemplate, &
       & field_first, field_last
+    use io_stuff, only: truncate_textFile
     use l2parinfo, only: parallel, closeparallel
     use l2pc_m, only: l2pcdatabase, dumpl2pc => dump
     use lexer_core, only: get_where, where_t
@@ -1263,6 +1265,7 @@ contains
     character(20) :: TempText
     type(time_t) :: Time
     character(10) :: TimeOfDay
+    logical :: truncate
     type (vector_T), pointer  :: Vector
     integer :: VectorIndex
     integer :: VectorIndex2
@@ -1315,6 +1318,7 @@ contains
     end if
 
     clean = .false.
+    truncate = .false.
     reset = .false.
     rank = 0
     start = 0
@@ -1559,6 +1563,12 @@ contains
             end if
           end select
         end if
+      case ( f_dumpFile )
+        call get_string ( sub_rosa(gson), booleanString, strip=.true. )
+        if ( truncate ) call truncate_textFile( booleanString )
+        call switchOutput ( booleanString )
+      case ( f_truncate )
+        truncate = get_boolean(son)
       case ( f_Boolean )
         call get_string ( sub_rosa(gson), booleanString, strip=.true. )
         booleanString = lowerCase(booleanString)
@@ -1838,8 +1848,10 @@ contains
               call dump ( qty1, details=details, &
                 & vector=vectors(vectorIndex), options=optionsString )
             else if ( index(optionsString, '1') > 0 ) then
-              call outputnamedValue ( 'rank field', rank )
-              call outputnamedValue ( 'shape(value3)', shape(qty1%value3) )
+              if ( verbose ) then
+                call outputnamedValue ( 'rank field', rank )
+                call outputnamedValue ( 'shape(value3)', shape(qty1%value3) )
+              endif
               select case ( rank )
               case ( 1 )
                 call dump ( qty1%value1, 'quantity values', &
@@ -2084,6 +2096,7 @@ contains
         end do
       end select
     end do
+    if ( got(f_dumpFile) ) call revertOutput
 
     call trace_end ( 'DumpCommand', cond=toggle(gen) )
 
@@ -2835,6 +2848,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.122  2015/07/14 23:32:47  pwagner
+! may divert Dump commands to named dumpFile; /truncate field
+!
 ! Revision 2.121  2015/04/09 21:00:32  pwagner
 ! rank may be specified for Dump command; restored printing Dumped text field
 !
