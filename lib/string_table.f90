@@ -13,27 +13,27 @@ module STRING_TABLE
 
 ! String table module for compiler
 
-  use HASH, only: HASH_LOOKUP => LOOKUP_AND_INSERT, HASH_FOUND => FOUND, &
-                  INSERTED, HASH_FULL => FULL, HASH_NOT_KEY => NOT_KEY, &
-                  HASH_BAD_LOC => BAD_LOC, HASH_EMPTY => EMPTY
-  use IO_STUFF, only: GET_LUN
-  use MACHINE, only: CRASH_BURN, IO_ERROR
-  use OUTPUT_M, only: BLANKS, OUTPUT
-  use PRINTIT_M, only: MLSMSG_DEALLOCATE, MLSMSG_ALLOCATE, MLSMSG_ERROR, &
-                       PRINTITOUT
+  use hash, only: hash_lookup => lookup_and_insert, hash_found => found, &
+                  inserted, hash_full => full, hash_not_key => not_key, &
+                  hash_bad_loc => bad_loc, hash_empty => empty
+  use io_stuff, only: get_lun
+  use machine, only: crash_burn, io_error
+  use output_m, only: blanks, output
+  use printIt_m, only: MLSMSG_Deallocate, MLSMSG_Allocate, MLSMSG_Error, &
+                       printItOut
   implicit NONE
   private
 
   ! Public procedures
-  public :: ADD_CHAR, ADD_INCLUDE_DIRECTORY, ADDINUNIT, ALLOCATE_CHAR_TABLE
-  public :: ALLOCATE_HASH_TABLE, ALLOCATE_STRING_TABLE, CLEAR_STRING
-  public :: COMPARE_STRINGS, CREATE_STRING, DESTROY_CHAR_TABLE
-  public :: DESTROY_HASH_TABLE, DESTROY_STRING_TABLE, DISPLAY_STRING
-  public :: DISPLAY_STRING_LIST, DUMP_INUNIT_STACK, ENTER_STRING, FIND_FILE
-  public :: FLOAT_VALUE, GET_CHAR, GET_STRING, HOW_MANY_STRINGS, INCLUDE_STACK_TOP
-  public :: INDEX, INIT_STRING_TABLE, INDEX_IN_STRING, LEN, LOOKUP
-  public :: LOOKUP_AND_INSERT, NEW_LINE, NUMERICAL_VALUE, OPEN_INCLUDE, OPEN_INPUT
-  public :: STRING_LENGTH, STRING_TABLE_SIZE, UNGET_CHAR
+  public :: add_char, add_include_directory, addinunit, allocate_char_table
+  public :: allocate_hash_table, allocate_string_table, clear_string
+  public :: compare_strings, create_string, destroy_char_table
+  public :: destroy_hash_table, destroy_string_table, display_string
+  public :: display_string_list, dump_inunit_stack, enter_string, find_file
+  public :: float_value, get_char, get_string, how_many_strings, include_stack_top
+  public :: index, init_string_table, index_in_string, isStringInTable, len, lookup
+  public :: lookup_and_insert, new_line, numerical_value, open_include, open_input
+  public :: string_length, string_table_size, unget_char
 
   ! Public variables and named constants
   public :: Do_Listing, EOF, EOL, Includes, Source_Line, Source_Column
@@ -1152,7 +1152,7 @@ contains
     integer, intent(in) :: STRING
     integer, intent(out), optional :: IERR
     character(len=*), intent(in) :: ROUTINE
-    if ( string < 1 .or. string > nstring ) then
+    if ( .not. isStringInTable(string) ) then
       if ( present(ierr) ) then
         ierr=1
         return
@@ -1169,6 +1169,14 @@ contains
     if ( present(ierr) ) ierr=0
     return
   end subroutine TEST_STRING
+
+  logical function isStringInTable ( string )
+  ! Test whether STRING is within bounds.  If not, use ROUTINE to emit
+  ! an error message.
+  ! Unless IERR is present, in which case set IERR and return
+    integer, intent(in) :: STRING
+    isStringInTable = .not. ( string < 1 .or. string > nstring ) 
+  end function isStringInTable
 
   ! Add another file for the tree to read from
   subroutine AddInUnit (inunit)
@@ -1244,6 +1252,9 @@ contains
 end module STRING_TABLE
 
 ! $Log$
+! Revision 2.45  2015/07/14 23:15:43  pwagner
+! Added isStringInTable so outside modules can check first
+!
 ! Revision 2.44  2014/03/15 00:08:03  vsnyder
 ! Return the allocated upper bound from string_table_size, unless if it's
 ! not allocated return -1.  Simplify routines to double the character and
