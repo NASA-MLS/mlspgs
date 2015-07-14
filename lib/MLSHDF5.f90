@@ -3438,13 +3438,15 @@ contains ! ======================= Public Procedures =========================
   end subroutine SaveAsHDF5DS_chararr2
 
   ! --------------------------------------  SaveAsHDF5DS_textFile  -----
-  subroutine SaveAsHDF5DS_textFile ( textFile, locID, name, maxLineLen )
+  subroutine SaveAsHDF5DS_textFile ( textFile, locID, name, &
+    & maxLineLen, fromNull )
     use IO_STUFF, only: read_textFile
     ! This routine writes the contents of a textfile as a char-valued dataset
     integer, intent(in) :: LOCID           ! Where to place it (group/file)
     character (len=*), intent(in) :: NAME  ! Name for this dataset
     character (len=*), intent(in) :: textFile ! Name of the textfile
     integer, optional, intent(in) :: maxLineLen
+    character(len=1), optional, intent(in) :: fromNull
 
     ! Local variables
     integer :: Me = -1                  ! String index for trace cacheing
@@ -3456,16 +3458,19 @@ contains ! ======================= Public Procedures =========================
     integer(hid_t) :: s_type_id
     integer(hid_t) :: type_id
     character(LEN=MAXTEXTSIZE)              :: value
+    character(len=1) :: wasNull
 
     ! Executable code
     call trace_begin ( me, 'SaveAsHDF5DS_textFile', cond=.false. )
     myMaxLineLen = DFLTMAXLINELENGTH
     if ( present(maxLineLen) ) myMaxLineLen = maxLineLen
+    wasNull = char(32) ! blank space
+    if ( present(fromNull) ) wasNull = fromNull
     ! Try to read the textfile
     value = ' '
     call read_textFile( trim(textFile), value, myMaxLineLen )
     ! Unfortunately, a lot of null characters sneak into this
-    value = Replace( value, char(0), char(32) ) ! Replace null with space
+    value = Replace( value, char(0), wasNull ) ! Replace null with wasNull
     
     ! Create the dataspace
     shp = 1
@@ -5696,6 +5701,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.132  2015/07/14 23:17:17  pwagner
+! May specify how to replace nulls in text file saved as DS
+!
 ! Revision 2.131  2014/12/09 01:25:30  pwagner
 ! Comment-out a debugging print
 !
