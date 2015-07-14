@@ -111,27 +111,28 @@ module VectorsModule            ! Vectors in the MLS PGS suite
 
   ! --------------------------------------------------------------------------
 
-  use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST, TEST_ALLOCATE, &
-    & TEST_DEALLOCATE
-  use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
-  use BITSTUFF, only: DUMPBITNAMES, ISBITSET
-  use DUMP_0, only: DIFF, DUMP
-  use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
-  use INTRINSIC, only: LIT_INDICES, PHYQ_INVALID, L_VMR
-  use LEXER_CORE, only: WHERE_T
-  use MLSFILLVALUES, only: EXTRACTARRAY
-  use MLSFINDS, only: FINDFIRST, FINDUNIQUE
-  use MLSKINDS, only: R8, RV
-  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMESSAGECONFIG, MLSMSG_ERROR, &
-    & MLSMSG_WARNING
-  use MLSSIGNALS_M, only: MODULES, SIGNALS, GETSIGNALNAME
-  use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT
-  use QUANTITYTEMPLATES, only: QUANTITYTEMPLATE_T, CHECKINTEGRITY, &
-    & COPYQUANTITYTEMPLATE, DESTROYQUANTITYTEMPLATECONTENTS, DUMP, &
-    & NULLIFYQUANTITYTEMPLATE
-  use STRING_TABLE, only: DISPLAY_STRING, GET_STRING, STRING_LENGTH
-  use SYMBOL_TABLE, only: ENTER_TERMINAL
-  use SYMBOL_TYPES, only: T_IDENTIFIER
+  use allocate_deallocate, only: allocate_test, deallocate_test, test_allocate, &
+    & test_deallocate
+  use, intrinsic :: iso_c_binding, only: c_intptr_t, c_loc
+  use bitStuff, only: dumpBitNames, isBitSet
+  use dump_0, only: diff, dump
+  use highOutput, only: outputNamedValue
+  use intrinsic, only: lit_indices, phyq_invalid, l_vmr
+  use lexer_core, only: where_t
+  use MLSFillValues, only: extractArray
+  use MLSFinds, only: findFirst, findUnique
+  use MLSKinds, only: r8, rv
+  use MLSMessageModule, only: MLSMessage, MLSMessageConfig, MLSMSG_Error, &
+    & MLSMSG_Warning
+  use MLSSignals_m, only: modules, signals, getSignalName
+  use output_m, only: blanks, newline, output
+  use quantityTemplates, only: quantityTemplate_t, checkIntegrity, &
+    & copyQuantityTemplate, destroyQuantityTemplateContents, dump, &
+    & nullifyQuantityTemplate
+  use string_table, only: display_string, get_string_rude=>get_string, &
+    & isStringInTable, string_length
+  use symbol_table, only: enter_terminal
+  use symbol_types, only: t_identifier
 
   implicit none
   private
@@ -2457,7 +2458,7 @@ contains ! =====     Public Procedures     =============================
     GetVectorQtyByTemplateIndex => NULL()
     if ( .not. associated ( vector%quantities ) ) then
       msg = "Reference to the vector "
-      call get_string ( vector%name, msg(len_trim(msg):len(msg)), strip=.true. )
+      call get_string ( vector%name, msg(len_trim(msg)+2:len(msg)), strip=.true. )
       msg = trim ( msg ) // " which has been destroyed" 
       call MLSMessage ( MLSMSG_Error, ModuleName, trim(msg) )
     end if
@@ -3403,6 +3404,25 @@ contains ! =====     Public Procedures     =============================
     end do
   end subroutine
 
+  subroutine get_string ( STRING, STRING_TEXT, CAP, STRIP, NOERROR, IERR, &
+    & START, END )
+  ! because get_string has the pernicious habit of bombing 
+  ! if presented with 0 as its arg
+  ! Args
+    integer, intent(in) :: STRING
+    character(len=*), intent(out) :: STRING_TEXT
+    logical, intent(in), optional :: CAP
+    logical, intent(in), optional :: STRIP
+    logical, intent(in), optional :: NOERROR
+    integer, intent(out), optional :: IERR
+    integer, intent(in), optional :: START
+    integer, intent(in), optional :: END
+  string_text = 'undefined'
+  if ( isStringInTable(string) ) &
+    & call get_String_Rude( STRING, STRING_TEXT, CAP, STRIP, NOERROR, IERR, &
+    & START, END )
+  end subroutine get_string
+
 !=======================================================================
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
@@ -3419,6 +3439,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.200  2015/06/19 00:35:49  pwagner
+! Setup quick changes to print when destroying vectors
+!
 ! Revision 2.199  2015/06/04 01:57:16  vsnyder
 ! Add contiguous attribute, avoid using remapped values
 !
