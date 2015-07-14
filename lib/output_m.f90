@@ -717,9 +717,11 @@ contains
   end subroutine OUTPUT_CHAR_NOCR_INDENTED
 
   ! ------------------------------------------  OUTPUT_CHAR_ARRAY  -----
-  subroutine OUTPUT_CHAR_ARRAY ( CHARS, ADVANCE, INSTEADOFBLANK, NEWLINEVAL )
+  subroutine OUTPUT_CHAR_ARRAY ( CHARS, ADVANCE_AFTER_EACH, ADVANCE, &
+    & INSTEADOFBLANK, NEWLINEVAL )
   ! Output CHARS to PRUNIT.
     character(len=*), intent(in) :: CHARS(:)
+    character(len=*), intent(in), optional :: ADVANCE_AFTER_EACH
     character(len=*), intent(in), optional :: ADVANCE
     character(len=*), intent(in), optional :: INSTEADOFBLANK ! What to output
     integer, intent(in), optional :: NEWLINEVAL ! What char val to treat as <cr>
@@ -728,8 +730,10 @@ contains
     ! Executable
     do i = 1, size(chars)
       call output ( chars(i), &
-        & insteadofblank=insteadofblank, newLineVal=newLineVal )
-      if ( len(chars(1)) > 1 ) call SeparateElements( i, size(chars) )
+        & insteadofblank=insteadofblank, &
+        & newLineVal=newLineVal, advance=ADVANCE_AFTER_EACH )
+      if ( len(chars(1)) > 1 .and. .not. present(ADVANCE_AFTER_EACH) ) &
+        & call SeparateElements( i, size(chars) )
     end do
     if ( present(advance)  ) then
       call output_ ( '', advance=advance )
@@ -1115,8 +1119,6 @@ contains
       call output_( 'Unable to Revert output--old unit not open', advance='yes' )
       return
     end if
-    call output_( 'Reverting output to unit: ', advance='no' )
-    call output( OLDUNIT, advance='yes' )
     if ( outputOptions%prunit > 0 ) then
       inquire( unit=outputOptions%prunit, opened=itsOpen )
       if ( itsOpen ) then
@@ -1124,6 +1126,8 @@ contains
       end if
     end if
     outputOptions%prunit = OLDUNIT    
+    call output_( 'Reverting output to unit: ', advance='no' )
+    call output( OLDUNIT, advance='yes' )
 
   end subroutine revertOutput
 
@@ -1460,6 +1464,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.122  2015/07/14 23:26:54  pwagner
+! New advance_after_each arg to output of char arry; note that Reverting output now appears in old unit, e.g. stdout
+!
 ! Revision 2.121  2015/05/18 17:40:03  pwagner
 ! Made Advance_is_yes_or_no public; reordered where to print
 !
