@@ -897,7 +897,7 @@ contains ! =====     Public Procedures     =============================
       & assembleL1BQtyName
     use MLSCommon, only: mlsfile_t, namelen, tai93_range_t
     use MLSFiles, only: hdfversion_5, dump, getmlsfilebytype
-    use MLSFillvalues, only: Monotonize
+    use MLSFillvalues, only: isFillValue, Monotonize
     use MLSHdf5, only: ishdf5attributeinfile
     use MLSKinds, only: rk => r8
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
@@ -1037,6 +1037,12 @@ contains ! =====     Public Procedures     =============================
     !  & 'l1boa file nullified during read' )
     call L1BGeoLocation ( filedatabase, "tpGeodAngle", fullArray, FullArray2d )
     call L1BSubsample ( chunk, fullArray, fullArray2d, GeodAngle, GeodAngle2d )
+    if ( any(isFillValue(FullArray2d) ) ) then
+      call output( 'Fill values among full array', advance='yes' )
+    endif
+    if ( any(isFillValue(GeodAngle2d) ) ) then
+      call output( 'Fill values among reduced array', advance='yes' )
+    endif
     noMAFs = chunk%lastMAFIndex - chunk%firstMAFIndex + 1
     noMIFs = size(GeodAngle2d(:,1))
     if ( verbose ) then
@@ -1298,7 +1304,7 @@ contains ! =====     Public Procedures     =============================
     ! Now correct for longitude and convert to hours
     hGrid%solarTime = 24.0 * ( hGrid%solarTime + hGrid%lon/360.0 )
     hGrid%solarTime = modulo ( hGrid%solarTime, 24.0_rk )
-    call output ( 'Content with l1boa solartime', advance='yes' )
+    if ( deebughere ) call output ( 'Content with l1boa solartime', advance='yes' )
 
     ! Solar zenith
     ! l1bItemName = AssembleL1BQtyName ( instrumentModuleName//".tpSolarZenith", &
@@ -1448,18 +1454,18 @@ contains ! =====     Public Procedures     =============================
     ! Now deal with the user requests
     if ( single ) then
        ! Set up for no overlaps
-       call outputNamedValue( 'Before TrimHGrid', hGrid%noProfs )
+       if ( verbose ) call outputNamedValue( 'Before TrimHGrid', hGrid%noProfs )
        hGrid%noProfsLowerOverlap = 0
        hGrid%noProfsUpperOverlap = 0
        ! Delete all but the 'center' profile
        extra = hGrid%noProfs - 1
        left = extra / 2
        right = extra - left
-       call outputNamedValue( 'left, right', (/ left, right /) )
+       if ( verbose ) call outputNamedValue( 'left, right', (/ left, right /) )
        if ( left > 0 ) call TrimHGrid ( hGrid, -1, left )
        if ( right > 0 ) call TrimHGrid ( hGrid, 1, right )
     else if (hgrid%noProfs > 1) then
-       call outputNamedValue( 'Before TrimHGrid', hGrid%noProfs )
+       if ( verbose ) call outputNamedValue( 'Before TrimHGrid', hGrid%noProfs )
        if ( maxLowerOverlap >= 0 .and. &
           & ( hGrid%noProfsLowerOverlap > maxLowerOverlap ) ) then
           call outputNamedValue( 'Lower overlap too big', hGrid%noProfs )
@@ -1934,7 +1940,7 @@ contains ! =====     Public Procedures     =============================
               if ( DEEBUG ) &
                 & call dump(dummyHGrid)
               call DestroyHGridContents ( dummyHGrid )
-              call sayTime ( 'Dumping and destroying this HGrid' )
+              if ( verbose ) call sayTime ( 'Dumping and destroying this HGrid' )
               call time_now( t1 )
               hGrid = hGrid + 1
             end if
@@ -2402,6 +2408,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.126  2015/07/14 23:34:22  pwagner
+! May easily debug cases when gaps in counterMAF
+!
 ! Revision 2.125  2015/06/19 21:12:44  pwagner
 ! Sped up Computing HGrid offsets
 !
