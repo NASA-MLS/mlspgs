@@ -1270,8 +1270,10 @@ contains ! =====     Public procedures     =============================
              begin, f+f_convergence, vectorQuantity(), &
              begin, f+f_file, string(), &
              begin, f+f_hdfVersion, numeric(phyq_dimensionless,req=req), &
+             begin, f+f_inputFile, string(req), &
              begin, f+f_lowerOverlap, boolean(), &
              begin, f+f_noPCFid, boolean(), &
+             begin, f+f_label, string(), &
              begin, f+f_options, string(), &
              begin, f+f_AscDescMode, vectorQuantity(), &
              begin, f+f_precision, vectorQuantity(), &
@@ -1530,6 +1532,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_crashBurn, boolean(), &
              begin, f+f_DACSfilterShapes, boolean(), &
              begin, f+f_details, numeric(phyq_dimensionless), &
+             begin, f+f_dumpFile, string(), &
              begin, f+f_file, string(), &
              begin, f+f_filterShapes, boolean(), &
              begin, f+f_forwardModel, field_spec(s_forwardModel), &
@@ -1573,6 +1576,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_tGrid, field_spec(s_tGrid), &
              begin, f+f_totalMatrixSizes, boolean(), &
              begin, f+f_totalVectorSizes, boolean(), &
+             begin, f+f_truncate, boolean(), &
              begin, f+f_variable, n+n_variable_ref, &
              begin, f+f_vector, field_spec(s_vector), &
              begin, f+f_vectorMask, field_spec(s_vector), &
@@ -2026,6 +2030,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.615  2015/07/14 23:29:50  pwagner
+! may divert Dump commands to named dumpFile; /truncate field; label and inputFile fields in DirectWrite
+!
 ! Revision 2.614  2015/06/04 00:52:11  pwagner
 ! Needed wmoTrop among perissible sourceGrid in Fill
 !
