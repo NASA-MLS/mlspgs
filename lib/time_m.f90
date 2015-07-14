@@ -57,6 +57,7 @@ module TIME_M
 !                          (2) s since midnight if wall clock time
 !                          (3) s since 1st call to time_now (so 1st returns 0)
 ! wait                     Wait for supplied interval to elapse
+! wait_for_event           Wait for an event to occur
 ! === (end of toc) ===
 
 ! === (start of api) ===
@@ -68,6 +69,9 @@ module TIME_M
 ! set_starttime ( real values(8) )
 ! time_now ( float t, [int invalues(8)] )
 ! wait ( float t, [int err] )
+! wait_for_event ( integer function event, int id, [int err] )
+! wait_for_event ( logical function event, int id )
+! wait_for_event ( logical function event, int id(:), theId )
 !
 ! Note:
 ! float means either real or double precision types
@@ -76,7 +80,7 @@ module TIME_M
    & INIT_RETRY, MS_to_HMS, RETRY, RETRY_SUCCESS, SET_STARTTIME, &
    & TIME_NOW, TIME_NOW_D, TIME_NOW_S, &
    & TOO_MANY_RETRIES, TRY_AGAIN, &
-   & WAIT
+   & WAIT, WAIT_FOR_EVENT
 
   interface TIME_NOW
     module procedure TIME_NOW_D
@@ -88,6 +92,12 @@ module TIME_M
     module procedure WAIT_S
   end interface
 
+  interface WAIT_FOR_EVENT
+    module procedure wait_for_event_int
+    module procedure wait_for_event_log
+    module procedure wait_for_events
+  end interface
+
   ! This is the time configuration type
   public :: time_config_t
   type time_config_t
@@ -96,8 +106,7 @@ module TIME_M
     ! Divide by this before returning time_now or waiting
     integer          :: time_divisor = 1  
     logical          :: use_wall_clock = .false.
-    logical          :: wait_means_sleep = .true.
-    integer          :: wait_loop_limits = 100
+    integer          :: wait_time = 100 ! How many mus to sleep waiting for event
     logical          :: wallClockIsElapsedFromStart = .true. ! return 0 for 1st call
   end type time_config_t
 
@@ -296,6 +305,68 @@ contains
     include "wait.f9h"
   end subroutine WAIT_S
 
+  ! ------------ wait_for_event ---------------
+  ! This family waits for an "event" to occur. The occurrence is signaled
+  ! by either
+  ! (a) an integer-valued function returning 0 for sucess; or
+  ! (b) a logical-valued function returning true
+  ! The specific event can be picked out by the argument "id"
+  subroutine wait_for_event_int ( event, id, err )
+    integer, optional, intent(out)     :: err
+    integer, intent(in)                :: id
+    interface
+      integer function event ( id )
+        integer, intent(in) :: id
+      end function event
+    end interface
+    do
+      call Usleep( int(time_config%wait_time*MICROSPERS/time_config%time_divisor) )
+      select case ( event(id) )
+      case ( SUCCESSFUL_DEFAULT )
+        exit
+      case ( FAILED_DEFAULT )
+        if ( present(err) ) err = 1
+        exit
+      ! case default
+        ! nothing--just keep looping
+      end select
+    enddo
+  end subroutine wait_for_event_int
+
+  subroutine wait_for_event_log ( event, id )
+    integer, intent(in)                :: id
+    interface
+      logical function event ( id )
+        integer, intent(in) :: id
+      end function event
+    end interface
+    do
+      call Usleep( int(time_config%wait_time*MICROSPERS/time_config%time_divisor) )
+      if ( event(id) ) exit
+    enddo
+  end subroutine wait_for_event_log
+
+  subroutine wait_for_events ( event, id, theID )
+    ! This lets you wait for any one of a possible number of events
+    integer, dimension(:), intent(in)   :: id
+    integer, intent(out)                :: theID
+    interface
+      logical function event ( id )
+        integer, intent(in) :: id
+      end function event
+    end interface
+    ! Internal variables
+    ! integer                             :: i
+    ! Executable
+    do
+      call Usleep( int(time_config%wait_time*MICROSPERS/time_config%time_divisor) )
+      idLoop: do theID=1, size(id)
+        if ( event(id(theID)) ) exit idLoop
+      enddo idLoop
+      if ( theID <= size(id) ) exit
+    enddo
+  end subroutine wait_for_events
+
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
   character (len=*), parameter :: IdParm = &
@@ -309,6 +380,9 @@ contains
 end module TIME_M
 
 !$Log$
+!Revision 2.16  2015/07/14 23:12:20  pwagner
+!Added family of routines to wait for events
+!
 !Revision 2.15  2014/12/09 00:26:01  vsnyder
 !Add MS_to_HMS
 !
