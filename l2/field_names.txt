@@ -142,6 +142,7 @@ dontLatch
 dontMask
 dontPack
 downsample
+dumpFile
 dumpQuantities # of X during Newton iteration
 
 earthRadius
@@ -533,6 +534,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.257  2015/07/14 23:27:44  pwagner
+# may divert Dump commands to named dumpFile
+#
 # Revision 2.256  2015/04/21 17:43:33  pwagner
 # May DirectRead, DirectWrite files with /noPCFid even when usingPCF
 #
