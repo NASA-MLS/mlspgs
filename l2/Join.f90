@@ -727,6 +727,33 @@ contains ! =====     Public Procedures     =============================
       end select
     end do
 
+    ! Label quantities if we supplied labels on the command line
+    if ( checkpaths ) then
+      ! No, don't label if just messing around
+    elseif ( prefixSignal .and. labelId > 0 ) then
+      ! All sources have the same label suffix
+      ! They differ only in which signal string they begin with
+      do i=1, noSources
+        qty => GetVectorQtyByTemplateIndex ( vectors(sourceVectors(i)), sourceQuantities(i) )
+        if ( qty%template%signal == 0 ) then
+          call Announce_Error ( node, no_error_code, &
+            & 'The quantity has no signal so prefixSignal is not appropriate' )
+          cycle
+        end if
+        call GetSignalName ( qty%template%signal, labelStr, &
+          & sideband=qty%template%sideband )
+        call Get_String( labels(1), labelStr(len_trim(labelStr)+1:), strip=.true. )
+        ! Now get an index for this possibly new name which may include the signal
+        qty%label = enter_terminal ( trim(labelStr), t_string, caseSensitive=.true. )
+      enddo
+    else
+      ! Each label corresponds to a source
+      do i=1, labelId
+        qty => GetVectorQtyByTemplateIndex ( vectors(sourceVectors(i)), sourceQuantities(i) )
+        qty%label = labels(i)
+      enddo
+    endif
+
     ! if ( .not. (SKIPDIRECTWRITES .or. checkpaths) ) then
     if ( .not. checkpaths ) then
     ! Now go through and do some sanity checking
@@ -818,32 +845,6 @@ contains ! =====     Public Procedures     =============================
       return
     endif
 
-    ! Label quantities if we supplied labels on the command line
-    if ( checkpaths ) then
-      ! No, don't label if just messing around
-    elseif ( prefixSignal .and. labelId > 0 ) then
-      ! All sources have the same label suffix
-      ! They differ only in which signal string they begin with
-      do i=1, noSources
-        qty => GetVectorQtyByTemplateIndex ( vectors(sourceVectors(i)), sourceQuantities(i) )
-        if ( qty%template%signal == 0 ) then
-          call Announce_Error ( node, no_error_code, &
-            & 'The quantity has no signal so prefixSignal is not appropriate' )
-          cycle
-        end if
-        call GetSignalName ( qty%template%signal, labelStr, &
-          & sideband=qty%template%sideband )
-        call Get_String( labels(1), labelStr(len_trim(labelStr)+1:), strip=.true. )
-        ! Now get an index for this possibly new name which may include the signal
-        qty%label = enter_terminal ( trim(labelStr), t_string, caseSensitive=.true. )
-      enddo
-    else
-      ! Each label corresponds to a source
-      do i=1, labelId
-        qty => GetVectorQtyByTemplateIndex ( vectors(sourceVectors(i)), sourceQuantities(i) )
-        qty%label = labels(i)
-      enddo
-    endif
     ! Distribute sources among available DirectWrite files if filename undefined
     if ( distributingSources ) then
        call DistributeSources
@@ -1554,8 +1555,8 @@ contains ! =====     Public Procedures     =============================
       select case ( type1 )
       case ( l_l2gp, l_l2dgg )
         match = any ( type2 == (/ l_l2gp, l_l2dgg /) )
-      case ( l_l2aux, l_hdf )
-        match = any ( type2 == (/ l_l2aux, l_hdf /) )
+      case ( l_l2aux, l_hdf, l_quantity )
+        match = any ( type2 == (/ l_l2aux, l_hdf, l_quantity /) )
       case ( l_l2fwm )
         match = any ( type2 == (/ l_l2fwm, l_hdf /) )
       case default
@@ -2346,6 +2347,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.167  2015/07/15 17:09:05  pwagner
+! Fixed some bugs related to label field in DirectWWrite commands
+!
 ! Revision 2.166  2015/07/14 23:31:16  pwagner
 ! label and inputFile fields in DirectWrite
 !
