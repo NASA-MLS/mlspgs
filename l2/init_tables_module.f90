@@ -34,17 +34,17 @@ module INIT_TABLES_MODULE
   use Init_MLSSignals_m ! Everything. Init_MLSSignals, Field_First,
     ! Last_Signal_Field, Spec_First, Last_Signal_Spec, Numerous S_....
   use Init_Spectroscopy_m ! Everything.
-  use INTRINSIC ! Everything. ADD_IDENT, BEGIN, D, F, FIRST_LIT,
+  use Intrinsic ! Everything. ADD_IDENT, BEGIN, D, F, FIRST_LIT,
     ! INIT_INTRINSIC, L, L_<several>, LAST_INTRINSIC_LIT,
     ! N, NADP, ND, NDP, NO_CHECK_EQ, NP, NR, P, S, T, <all>_INDICES,
     ! T_BOOLEAN, T_FIRST, T_LAST_INTRINSIC, T_NUMERIC, T_NUMERIC_RANGE,
     ! T_STRING,s_TIME and Z are used here, but everything is included so
     ! that it can be gotten by USE INIT_TABLES_MODULE.
-  use MOLECULES ! Everything.
-  use Units, only: INIT_UNITS
+  use Molecules ! Everything.
+  use Units, only: init_units
   ! We're adding the following use statements to clue the makefiles'
   ! dependency calculator for srclib's tree_checker
-  use TREE, only: BUILD_TREE, PUSH_PSEUDO_TERMINAL
+  use Tree, only: build_tree, push_pseudo_terminal
   
   implicit none
 
@@ -267,9 +267,9 @@ contains ! =====     Public procedures     =============================
 
     ! "Tree" is here because "make depends" can't see it in make_tree
     ! (because of the "include"):
-    use TREE, only:
-    use TREE_TYPES, only: N_DOT, N_DT_DEF, N_FIELD_TYPE, N_NAME_DEF, &
-                          N_OR, N_SECTION, N_SPEC_DEF, N_VARIABLE_REF
+    use Tree, only:
+    use Tree_types, only: n_dot, n_dt_def, n_field_type, n_name_def, &
+                          n_or, n_section, n_spec_def, n_variable_ref
 
     logical, parameter :: Empty = .true.  ! To specify fields allowed to be empty
     logical, parameter :: Req = .true.    ! To specify required fields
@@ -1270,7 +1270,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_convergence, vectorQuantity(), &
              begin, f+f_file, string(), &
              begin, f+f_hdfVersion, numeric(phyq_dimensionless,req=req), &
-             begin, f+f_inputFile, string(req), &
+             begin, f+f_inputFile, string(), &
              begin, f+f_lowerOverlap, boolean(), &
              begin, f+f_noPCFid, boolean(), &
              begin, f+f_label, string(), &
@@ -1903,7 +1903,7 @@ contains ! =====     Public procedures     =============================
   ! -------------------------------------------  Field_Spec_Array  -----
   pure function Field_Spec_Array ( Spec, Req, Scalar )
     ! Declare field-spec field
-    use TREE_TYPES, only: N_FIELD_SPEC
+    use Tree_types, only: n_field_spec
     integer, intent(in) :: Spec(:)          ! S_...
     logical, intent(in), optional :: Req    ! Field is required if true
     logical, intent(in), optional :: Scalar ! Field is scalar if true
@@ -1914,7 +1914,7 @@ contains ! =====     Public procedures     =============================
   ! -----------------------------------------------  Field_Spec_1  -----
   pure function Field_Spec_1 ( Spec, Req, Scalar )
     ! Declare field-spec field
-    use TREE_TYPES, only: N_FIELD_SPEC
+    use Tree_types, only: n_field_spec
     integer, intent(in) :: Spec             ! S_...
     logical, intent(in), optional :: Req    ! Field is required if true
     logical, intent(in), optional :: Scalar ! Field is scalar if true
@@ -1925,7 +1925,7 @@ contains ! =====     Public procedures     =============================
   ! -----------------------------------------------  Field_Spec_2  -----
   pure function Field_Spec_2 ( Spec1, Spec2, Req, Scalar )
     ! Declare field-spec field
-    use TREE_TYPES, only: N_FIELD_SPEC
+    use Tree_types, only: n_field_spec
     integer, intent(in) :: Spec1, Spec2     ! S_...
     logical, intent(in), optional :: Req    ! Field is required if true
     logical, intent(in), optional :: Scalar ! Field is scalar if true
@@ -1936,7 +1936,7 @@ contains ! =====     Public procedures     =============================
   ! -----------------------------------------------  Field_Spec_3  -----
   pure function Field_Spec_3 ( Spec1, Spec2, Spec3, Req, Scalar )
     ! Declare field-spec field
-    use TREE_TYPES, only: N_FIELD_SPEC
+    use Tree_types, only: n_field_spec
     integer, intent(in) :: Spec1, Spec2, Spec3 ! S_...
     logical, intent(in), optional :: Req       ! Field is required if true
     logical, intent(in), optional :: Scalar    ! Field is scalar if true
@@ -1948,7 +1948,7 @@ contains ! =====     Public procedures     =============================
   ! -----------------------------------------------  Field_Spec_4  -----
   pure function Field_Spec_4 ( Spec1, Spec2, Spec3, Spec4, Req, Scalar )
     ! Declare field-spec field
-    use TREE_TYPES, only: N_FIELD_SPEC
+    use Tree_types, only: n_field_spec
     integer, intent(in) :: Spec1, Spec2, Spec3, Spec4 ! S_...
     logical, intent(in), optional :: Req       ! Field is required if true
     logical, intent(in), optional :: Scalar    ! Field is scalar if true
@@ -1960,7 +1960,7 @@ contains ! =====     Public procedures     =============================
   ! -----------------------------------------------  Field_Spec_5  -----
   pure function Field_Spec_5 ( Spec1, Spec2, Spec3, Spec4, Spec5, Req, Scalar )
     ! Declare field-spec field
-    use TREE_TYPES, only: N_FIELD_SPEC
+    use Tree_types, only: n_field_spec
     integer, intent(in) :: Spec1, Spec2, Spec3, Spec4, Spec5 ! S_...
     logical, intent(in), optional :: Req       ! Field is required if true
     logical, intent(in), optional :: Scalar    ! Field is scalar if true
@@ -1972,7 +1972,7 @@ contains ! =====     Public procedures     =============================
   ! -------------------------------------------  Field_Type_Array  -----
   pure function Field_Type_Array ( Type, Req )
     ! Declare field-Type field
-    use TREE_TYPES, only: N_FIELD_TYPE
+    use Tree_types, only: n_field_type
     integer, intent(in) :: Type(:)          ! T_...
     logical, intent(in), optional :: Req    ! Field is required if true
     integer :: Field_Type_Array(1+size(Type))
@@ -1982,7 +1982,7 @@ contains ! =====     Public procedures     =============================
   ! -----------------------------------------------  Field_Type_1  -----
   pure function Field_Type_1 ( Type, Req, Empty )
     ! Declare field-Type field
-    use TREE_TYPES, only: N_FIELD_TYPE
+    use Tree_types, only: n_field_type
     integer, intent(in) :: Type             ! T_...
     logical, intent(in), optional :: Req    ! Field is required if true
     logical, intent(in), optional :: Empty  ! Empty is OK if true
@@ -1993,7 +1993,7 @@ contains ! =====     Public procedures     =============================
   ! -----------------------------------------------  Field_Type_2  -----
   pure function Field_Type_2 ( Type1, Type2, Req )
     ! Declare field-Type field
-    use TREE_TYPES, only: N_FIELD_TYPE
+    use Tree_types, only: n_field_type
     integer, intent(in) :: Type1, Type2     ! T_...
     logical, intent(in), optional :: Req    ! Field is required if true
     integer :: Field_Type_2(3)
@@ -2030,6 +2030,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.616  2015/07/15 17:06:45  pwagner
+! inputFile not a required field to DirectWrite
+!
 ! Revision 2.615  2015/07/14 23:29:50  pwagner
 ! may divert Dump commands to named dumpFile; /truncate field; label and inputFile fields in DirectWrite
 !
