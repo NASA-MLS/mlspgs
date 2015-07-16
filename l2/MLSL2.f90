@@ -45,7 +45,7 @@ program MLSL2
     & toolkit, totaltimes, processoptions, &
     & checkl2cf, checkleak, countchunks, do_dump, dump_tree, l2cf_unit, &
     & numswitches, originalcmds, recl, &
-    & sectionstoskip, showdefaults, slavemaf, timing, uniqueID
+    & sectionstoskip, showdefaults, slavemaf, stopAfterSection, timing, uniqueID
   use MLSL2Timings, only: run_start_time, section_times, total_times, &
     & add_to_section_timing, dump_section_timings
   use MLSMessagemodule, only: MLSMessage, MLSMsg_debug, &
@@ -730,6 +730,10 @@ contains
         call outputNamedValue ( 'Note file', noteFile, advance='yes', &
         & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       end if
+      if ( len_trim(stopAfterSection) > 0 ) then
+        call outputNamedValue ( 'Stop after section', trim_safe(stopAfterSection), advance='yes', &
+          & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
+      endif
       call outputNamedValue ( 'Preflight check paths?', checkPaths, advance='yes', &
         & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       call outputNamedValue ( 'Need L1B files?', NEED_L1BFILES, advance='yes', &
@@ -835,6 +839,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.213  2015/07/16 22:13:15  pwagner
+! Dump of settings says whether it will stop after a named section
+!
 ! Revision 2.212  2014/12/10 23:04:54  pwagner
 ! Removed unused stuff
 !
