@@ -812,7 +812,11 @@ cmds: do
           i = i + 1
           call getNextArg ( i, optsFile )
           call get_nLines ( optsFile, nLines )
-          ! call outputnamedValue( 'nLines', nLines )
+          if ( nLines < 0 ) then
+            print *, 'Sorry, unable to open opts file ' // trim(optsFile)
+            call MLSMessage( MLSMSG_Error, ModuleName, &
+            & 'Sorry, unable to open opts file ' // trim(optsFile) )
+          endif
           call allocate_test ( optLines, nLines, 'optLines', &
             & trim(ModuleName) // 'processLine' )
           optLines = ' '
@@ -1297,6 +1301,9 @@ end module MLSL2Options
 
 !
 ! $Log$
+! Revision 2.102  2015/07/16 20:51:08  pwagner
+! Should quit if cant open optsFile
+!
 ! Revision 2.101  2015/03/05 18:11:04  pwagner
 ! Some commandline options were being truncated in parseNameValue; fixed
 !
