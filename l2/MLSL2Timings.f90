@@ -314,6 +314,11 @@ contains ! =====     Public Procedures     =============================
     if ( present(t1) ) call time_now ( t1 )
     if ( present(now_stop) ) then
       now_stop = ( lowerCase(section_name) == lowercase(stopAfterSection) )
+      if ( len_trim(stopAfterSection) > 0 .and. MLSverbose ) then
+        print *, trim(stopAfterSection), ' is section to stop after'
+        print *, trim(section_name), ' is section we just finished'
+        print *, ' Stop now? ', now_stop
+      endif
     endif
   end subroutine add_to_section_timing
 
@@ -1017,6 +1022,9 @@ END MODULE MLSL2Timings
 
 !
 ! $Log$
+! Revision 2.61  2015/07/16 22:11:24  pwagner
+! Will print calculation of now_stop if verbose
+!
 ! Revision 2.60  2015/05/06 20:48:14  pwagner
 ! Slaves prefix Warnings or worse with phase and chunk num
 !
