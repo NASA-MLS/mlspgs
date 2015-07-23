@@ -22,7 +22,7 @@ module QuantityTemplates         ! Quantities within vectors
   use HGridsDatabase, only: HGrid_T
   use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
   use INTRINSIC, only: L_DL, L_Geodetic, L_None, L_PhiTan, L_VMR, LIT_INDICES, &
-    & PHYQ_Angle, PHYQ_Dimensionless, PHYQ_Frequency, PHYQ_Time
+    & PHYQ_Angle, PHYQ_Dimensionless, PHYQ_Frequency, PHYQ_Indices, PHYQ_Time
   use MLSFILLVALUES, only: RERANK
   use MLSKINDS, only: RT => R8 ! RT is "kind of Real components of template"
   use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING
@@ -632,7 +632,7 @@ contains
     call output ( ' NoInstancesUpperOverlap = ' )
     call output ( qty%noInstancesUpperOverlap, advance='yes' )
     if ( .not. myNoL2CF .and. qty%unit > 0 ) then
-      call myDisplayString ( lit_indices(qty%unit), &
+      call myDisplayString ( phyq_indices(qty%unit), &
         & before='      Unit = ' )
     end if
     call output ( qty%badValue, before=' BadValue = ' )
@@ -1176,7 +1176,7 @@ contains
     ! Most or all of the character-valued attributes are to be stored in the 
     ! quantity template as string table indexes or other indexes, e.g. signals
     ! Therefore we must do a bit of table lookups
-    use Declaration_Table, only: Decls, Get_Decl, Units_Name
+    use Declaration_Table, only: Decls, Get_Decl, Phys_Unit_Name
     use Intrinsic, only: L_Dimensionless
     use MLSHDF5, only: GETHDF5ATTRIBUTE
     use MLSSIGNALS_M, only: GETRADIOMETERINDEX, GETMODULEINDEX, &
@@ -1201,8 +1201,8 @@ contains
     call GetHDF5Attribute ( dsID, 'minorFrame    ', qt%minorFrame     )
     call GetHDF5Attribute ( dsID, 'badValue    ', qt%badValue     )
     call GetHDF5Attribute ( dsID, 'tempQtyUnit', str )
-    decl = get_decl ( str, units_name )
-    if ( decl%type == units_name ) then
+    decl = get_decl ( str, phys_unit_name )
+    if ( decl%type == phys_unit_name ) then
       qt%unit = decl%tree
     else ! ??? Should we emit an error message here ???
       qt%unit = l_dimensionless
@@ -1969,6 +1969,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.97  2015/06/04 03:13:16  vsnyder
+! Make Surfs component of quantity template allocatable
+!
 ! Revision 2.96  2015/06/03 23:09:00  pwagner
 ! Tried to prevent end-of-run crashes
 !
