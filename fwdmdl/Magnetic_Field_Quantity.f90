@@ -92,7 +92,7 @@ contains
 
     use Geometry, only: ERad, SecPerYear
     use IGRF_Int, only: Feldc, FeldCof
-    use Intrinsic, only: L_Gauss
+    use Intrinsic, only: PHYQ_Gauss
     use MLSStringLists, only: SwitchDetail
     use QuantityTemplates, only: Epoch, RT
     use Toggles, only: Emit, Levels, Switches
@@ -131,7 +131,7 @@ contains
         end do
       end do
     end do
-    qty%template%unit = l_gauss
+    qty%template%unit = phyq_gauss
 
     if ( details < -1 ) then ! only once
       details = switchDetail(switches,'gmag')
@@ -157,6 +157,9 @@ contains
 end module Magnetic_Field_Quantity
 
 ! $Log$
+! Revision 2.8  2015/07/23 23:44:47  vsnyder
+! qty%template%unit should be phyq_gauss, not l_gauss
+!
 ! Revision 2.7  2015/05/28 23:15:18  vsnyder
 ! Fiddle with tracing
 !
