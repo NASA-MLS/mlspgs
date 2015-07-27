@@ -466,6 +466,9 @@ contains ! ============= Public procedures ===================================
       call allocate_test ( qty%crossAngles, size(hGrids(xGridIndex)%phi,2), &
         & 'qty%crossAngles', moduleName )
       qty%crossAngles = hGrids(xGridIndex)%phi(1,:)
+    else
+      call allocate_test ( qty%crossAngles, 1, 'qty%crossAngles', moduleName )
+      qty%crossAngles = 0.0
     end if
 
     ! Fill the frequency information if appropriate
@@ -1497,6 +1500,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.182  2015/07/27 22:28:06  vsnyder
+! Make cross angles always associated, with value zero if there's no xGrid
+!
 ! Revision 2.181  2015/06/04 03:14:14  vsnyder
 ! Make Surfs component of quantity template allocatable
 !
