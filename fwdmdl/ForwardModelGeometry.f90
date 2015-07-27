@@ -58,6 +58,7 @@ contains ! ============= Public Procedures ==========================
     use MLSNumerics, only: InterpolateExtrapolate_d
     use MLSStringlists, only: SwitchDetail
     use Monotone, only: Longest_Monotone_Subsequence
+    use Output_m, only: Output
     use QuantityTemplates, only: CreateGeolocationFields, &
       & DestroyGeolocationFields, Dump, PointQuantityToHGrid, RT
     use Quantity_Geometry, only: XYZ
@@ -104,9 +105,9 @@ contains ! ============= Public Procedures ==========================
     call trace_begin ( me, 'Compute_Viewing_Plane', &
       & cond=toggle(emit) .and. levels(emit) > 1 ) ! set by -f command-line switch
 
-    across = associated(qty%template%crossAngles)
-    if ( across ) &
-      & across = abs(viewing_azimuth ( tpGeocAlt, scVelECR, 1 )) > azimuth_tol
+    across = any(qty%template%crossAngles /= 0.0)
+    if ( across .and. present(tpGeocAlt) ) &
+        & across = abs(viewing_azimuth ( tpGeocAlt, scVelECR, 1 )) > azimuth_tol
 
     detail = switchDetail ( switches, 'plane' )
 
@@ -171,11 +172,7 @@ contains ! ============= Public Procedures ==========================
           deallocate ( inc )
         end if
         do c = 1, qty%template%noCrossTrack
-          if ( associated(qty%template%crossAngles) ) then
-            sec_x = 1.0 / cos(qty%template%crossAngles(c)*deg2rad)
-          else
-            sec_x = 1.0
-          end if
+          sec_x = 1.0 / cos(qty%template%crossAngles(c)*deg2rad)
           do MIF = 1, size(seq)
             ! Get SC and TP positions for seq(MIF) in geocentric Cartesian
             ! coordinates. Notice that SC_XYZ, TP_XYZ, and N do not depend upon C. 
@@ -191,10 +188,10 @@ contains ! ============= Public Procedures ==========================
             ! Rotate TP toward or away from SC in the TP-SC plane (i.e., about N)
             ! by CrossAngles(c) degrees, giving R in geocentric Cartesian
             ! coordinates.  TP_xyz is a unit vector, so R is also.
-            if ( associated(qty%template%crossAngles) ) then
+            if ( across ) then
               call rotate_3d ( tp_xyz, qty%template%crossAngles(c) * deg2rad, n, &
                              & r(:3,seq(MIF)) )
-            else ! The cross-angle is assumed to be zero if there isn't one.
+            else ! The cross-angle is zero or viewing is in the orbit plane.
               r(:3,seq(MIF)) = tp_xyz
             end if
             ! Compute the geocentric altitude at the rotated position, and
@@ -232,6 +229,10 @@ contains ! ============= Public Procedures ==========================
             call qty%template%putLon3 ( s, inst, c, &
               & atan2(xyzs(2,s,instOr1,c),xyzs(1,s,instOr1,c)) * rad2deg )
           end do
+          if ( detail > 2 ) then
+            call output ( c, before='R(' )
+            call dump ( r(:,seq), name=')' )
+          end if
         end do ! c = 1, qty%template%noCrossTrack
         deallocate ( seq )
       end do ! inst = 1, qty%template%NoInstances
@@ -449,6 +450,9 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelGeometry
 
 ! $Log$
+! Revision 2.6  2015/07/27 22:30:12  vsnyder
+! Use nonzero crossAngles instead of associated crossAngles to set 'across'
+!
 ! Revision 2.5  2015/06/04 03:13:40  vsnyder
 ! Make Surfs component of quantity template allocatable
 !
