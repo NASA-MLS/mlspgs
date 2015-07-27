@@ -27,6 +27,7 @@ module Load_SPS_Data_M
     integer,  pointer :: l_f(:) => null() ! Last entry in frq_basis per sps
     integer,  pointer :: l_z(:) => null() ! Last entry in zet_basis per sps
     integer,  pointer :: l_p(:) => null() ! Last entry in phi_basis per sps
+    integer,  pointer :: l_x(:) => null() ! Last entry in cross angles per sps
     integer,  pointer :: l_v(:) => null() ! Last entry in values per sps
     integer :: P_Len = 0 ! \sum_{i=1}^n (l_z(i)-l_z(i-1))*(l_p(i)-l_p(i-1))
     integer,  pointer :: windowstart(:) => null()! horizontal starting index
@@ -51,6 +52,8 @@ module Load_SPS_Data_M
 !                                                 molecules
     real(rp), pointer :: phi_basis(:) => null() ! phi  grid entries for all
 !                                                 molecules
+    real(rp), pointer :: cross_angles(:) => null() ! cross-angles  grid entries
+!                                                 for all molecules
     real(rp), pointer :: values(:) => null()    ! species values (eg vmr).
 !     This is really a three-dimensional quantity dimensioned frequency
 !     (or 1) X zeta (or 1) X phi (or 1), taken in Fortran's column-major
@@ -169,8 +172,7 @@ contains
           &                 fwdModelConf )
       else
         ! Use the whole phi space for the window
-        call fill_grids_1 ( grids_x, qty, vector%quantities(qty), &
-          & maf, ws=1, wf=size(vector%quantities(qty)%template%phi,2) )
+        call fill_grids_1 ( grids_x, qty, vector%quantities(qty), maf )
       end if
     end do
 
@@ -205,7 +207,7 @@ contains
 
     type(vectorValue_t) :: QtyStuff
     logical :: MyAcross, MyFlag
-    integer :: ii, no_ang
+    integer :: II, No_Ang
 
     myAcross = .false.
     if ( present(across) ) myAcross = across
@@ -243,15 +245,13 @@ contains
        call create_grids_1 ( grids_x, 1 )
 
        if ( present(phitan) ) then
-         call fill_grids_1 ( grids_x, 1, qty, maf, phitan, fwdModelConf, &
-           & across=across )
+         call fill_grids_1 ( grids_x, 1, qty, maf, phitan, fwdModelConf )
        else if ( myAcross ) then
          call MLSMessage ( MLSMSG_Error, moduleName, &
          & 'Cross-track viewing needs PhiTan quantity' )
        else
          ! Use the whole phi space for the window
-         call fill_grids_1 ( grids_x, 1, qty, maf, &
-           & ws=1, wf=size(qty%template%phi,2) )
+         call fill_grids_1 ( grids_x, 1, qty, maf )
        end if
 
        call create_grids_2 ( grids_x )
@@ -388,6 +388,7 @@ contains
     call allocate_test ( Grids_x%l_z, n, 'Grids_x%l_z', ModuleName, lowBound=0 )
     call allocate_test ( Grids_x%l_p, n, 'Grids_x%l_p', ModuleName, lowBound=0 )
     call allocate_test ( Grids_x%l_f, n, 'Grids_x%l_f', ModuleName, lowBound=0 )
+    call allocate_test ( Grids_x%l_x, n, 'Grids_x%l_f', ModuleName, lowBound=0 )
     call allocate_test ( Grids_x%l_v, n, 'Grids_x%l_v', ModuleName, lowBound=0 )
     call allocate_test ( Grids_x%mol, n, 'Grids_x%mol', ModuleName )
     call allocate_test ( Grids_x%qty, n, 'Grids_x%qty', ModuleName )
@@ -397,6 +398,7 @@ contains
     grids_x%l_z(0) = 0
     grids_x%l_p(0) = 0
     grids_x%l_f(0) = 0
+    grids_x%l_x(0) = 0
     grids_x%l_v(0) = 0
     grids_x%p_len = 0
     grids_x%mol = 0
@@ -432,6 +434,8 @@ contains
                        & ModuleName )
     call allocate_test ( Grids_x%frq_basis, Grids_x%l_f(n), 'Grids_x%frq_basis', &
                        & ModuleName )
+    call allocate_test ( Grids_x%cross_angles, Grids_x%l_x(n), 'Grids_x%cross_angles', &
+                       & ModuleName )
     call allocate_test ( Grids_x%values, Grids_x%l_v(n), 'Grids_x%values', &
                        & ModuleName )
     call allocate_test ( Grids_x%deriv_flags, Grids_x%l_v(n), 'Grids_x%deriv_flags', &
@@ -440,8 +444,7 @@ contains
   end subroutine Create_Grids_2
 
   ! -----------------------------------------------  Fill_Grids_1  -----
-  subroutine Fill_Grids_1 ( Grids_x, II, Qty, Maf, Phitan, FwdModelConf, &
-                          & Ws, Wf, Across )
+  subroutine Fill_Grids_1 ( Grids_x, II, Qty, Maf, Phitan, FwdModelConf )
   ! Fill in the size information for the II'th element of Grids_x
 
     use ForwardModelConfig, only: ForwardModelConfig_t
@@ -455,31 +458,21 @@ contains
     integer, intent(in) :: MAF
     type (vectorValue_T), intent(in), optional :: PHITAN  ! Tangent geodAngle
     type(forwardModelConfig_T), intent(in), optional :: FwdModelConf
-    integer, intent(in), optional :: Ws, Wf ! Explicit window start, finish
-    logical, intent(in), optional :: Across ! Viewing angle is not in orbit plane
 
-    integer :: KF, KP, KZ
-    logical :: MyAcross
+    integer :: KF, KP, KX, KZ
 
     grids_x%names(ii) = qty%template%name
 
-    myAcross = .false.
-    if ( present(across) ) myAcross = across
-
-    if ( myAcross ) then
+    if ( present(phitan) ) then
+      call FindInstanceWindow ( qty, phitan, maf, fwdModelConf%phiWindow, &
+        & fwdModelConf%windowUnits, grids_x%windowStart(ii), grids_x%windowFinish(ii) )
+    else ! Use the whole phi space for the window
       grids_x%windowStart(ii) = 1
-      grids_x%windowFinish(ii) = qty%template%noCrossTrack
-    else 
-      if ( present(ws) ) then ! assume present(wf) as well
-        grids_x%windowStart(ii) = ws
-        grids_x%windowFinish(ii) = wf
-      else
-        call FindInstanceWindow ( qty, phitan, maf, fwdModelConf%phiWindow, &
-          & fwdModelConf%windowUnits, grids_x%windowStart(ii), grids_x%windowFinish(ii) )
-      end if
+      grids_x%windowFinish(ii) = size(qty%template%phi,2)
     end if
 
     kp = grids_x%windowFinish(ii) - grids_x%windowStart(ii) + 1
+    kx = qty%template%noCrossTrack
 
     if ( associated(qty%template%frequencies) ) then
       kf = size(qty%template%frequencies)
@@ -491,7 +484,8 @@ contains
 
     grids_x%l_f(ii) = grids_x%l_f(ii-1) + kf
     grids_x%l_p(ii) = grids_x%l_p(ii-1) + kp
-    grids_x%l_v(ii) = grids_x%l_v(ii-1) + kz * kp * kf
+    grids_x%l_x(ii) = grids_x%l_x(ii-1) + kx
+    grids_x%l_v(ii) = grids_x%l_v(ii-1) + kz * kp * kf * kx
     grids_x%z_coord(ii) = qty%template%verticalCoordinate
     grids_x%l_z(ii) = grids_x%l_z(ii-1) + kz
     grids_x%p_len = grids_x%p_len + kz * kp
@@ -534,8 +528,8 @@ contains
     logical, intent(in), optional :: Across ! Viewing angle is not in orbit plane
     type (vectorValue_T), intent(in), optional :: PHITAN  ! Tangent geodAngle
 
-    integer :: I, J, J1, J2, K, K1, K2, KF, KV, KZ, L, N, PF, PP, PV, PZ
-    integer :: QF, QP, QV, QZ, WF, WS
+    integer :: I, J, K,  KF, KV, KX, KZ, L, N, PF, PP, PV, PX, PZ
+    integer :: QF, QP, QV, QX, QZ, WF, WS
     integer :: InstOr1
     logical :: MyAcross
     logical :: PackFrq ! Need to pack the frequency "dimension"
@@ -544,14 +538,17 @@ contains
     pf = Grids_x%l_f(ii-1)
     pp = Grids_x%l_p(ii-1)
     pv = Grids_x%l_v(ii-1)
+    px = grids_x%l_x(ii-1)
     pz = Grids_x%l_z(ii-1)
 
     qf = Grids_x%l_f(ii)
     qp = Grids_x%l_p(ii)
     qv = Grids_x%l_v(ii)
+    qx = Grids_x%l_x(ii)
     qz = Grids_x%l_z(ii)
 
     kf = qf - pf
+    kx = qx - px
     kv = qv - pv
     kz = qz - pz
     ws = Grids_x%windowStart(ii)
@@ -568,28 +565,11 @@ contains
                             ! the equivalent circular Earth radius here, not
                             ! least because we don't know it yet.
       n = pz
-      if ( myAcross ) then
-      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      !!!!!                                                              !!!!!
-      !!!!! There is an implicit assumption here that if we are doing    !!!!!
-      !!!!! Cross-track viewing, there's only one MAF in the window!     !!!!!
-      !!!!!                                                              !!!!!
-      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        j1 = 1
-        j2 = 1
-        k1 = ws
-        k2 = wf
-      else
-        j1 = ws
-        j2 = wf
-        k1 = 1
-        k2 = 1
-      end if
       do i = 1, qty%template%noSurfs
         l = merge(1,i,qty%template%stacked)
-        do j = j1, j2
+        do j = ws, wf
           instOr1 = merge(1,j,qty%template%coherent)
-          do k = k1, k2
+          do k = px+1, qx
             n = n + 1
             ! Get geodetic coordinates equivalent to geocentric coordinates
             geod = xyz_to_geod ( to_xyz ( qty%template%geodLat3(l,j,k), &
@@ -612,20 +592,19 @@ contains
     end select
 
     if ( myAcross ) then
-      if ( associated(qty%template%crossAngles) ) then
-        if ( phitan%template%noInstances == 1 ) then
-          Grids_x%phi_basis(pp+1:qp) = qty%template%crossAngles + &
-                                       phitan%template%phi(1,1)
-        else if ( phitan%template%noInstances == phitan%template%noCrossTrack ) then
-          Grids_x%phi_basis(pp+1:qp) = qty%template%crossAngles + &
-                                       phitan%template%phi(1,:)
-        else
-          call MLSMessage ( MLSMSG_Error, moduleName, &
-            & 'Number of instances of PhiTan /= number of cross angles' )
-        end if
+      if ( phitan%template%noInstances == 1 ) then
+        Grids_x%phi_basis(pp+1:qp) = qty%template%crossAngles + &
+                                     phitan%template%phi(1,1)
+      else if ( phitan%template%noInstances == phitan%template%noCrossTrack ) then
+        Grids_x%phi_basis(pp+1:qp) = qty%template%crossAngles + &
+                                     phitan%template%phi(1,:)
+      else if ( qty%template%noCrossTrack == 1 ) then
+        Grids_x%phi_basis(pp+1:qp) = qty%template%crossAngles(1) + &
+                                     phitan%template%phi(1,:)
       else
-        ! Assume qty%template%crossAngles would have been zero
-        Grids_x%phi_basis(pp+1:qp) = phitan%template%phi(1,1)
+        call MLSMessage ( MLSMSG_Error, moduleName, &
+          & 'Number of instances of PhiTan /= number of cross angles ' // &
+          & 'number of cross angles /= 1' )
       end if
     else
       if ( present(phi_offset) ) then
@@ -634,6 +613,7 @@ contains
         Grids_x%phi_basis(pp+1:qp) = qty%template%phi(1,ws:wf)*Deg2Rad
       end if
     end if
+    grids_x%cross_angles(px+1:qx) = qty%template%crossAngles
 
     if ( associated ( qty%template%frequencies ) ) then
       if ( qty%template%frequencyCoordinate /= l_intermediateFrequency .and. &
@@ -656,21 +636,10 @@ contains
           &                         (/ ( qty%template%channels, i = 1, kz ) /) ), &
           &                   ws:wf ), &
           &       (/qv-pv/) )
-    else if ( myAcross ) then
-      ! qv - pv == (wf - ws + 1) * kf * kz here
-!       ????? I don't know why this doesn't work ?????
-!       ????? Something different might be       ?????
-!       ????? needed in the "across" case anyway ?????
-!       Grids_x%values(pv+1:qv) = reshape(qty%value4(1:kf,1:kz,1,ws:wf), &
-!                                       & (/qv-pv/))
-        Grids_x%values(pv+1:qv) = reshape(qty%values(1:kf*kz,ws:wf), &
-                                         & (/qv-pv/))
     else ! All the values
       ! qv - pv == (wf - ws + 1) * kf * kz here
-!       ????? I don't know why this doesn't work ?????
-!       Grids_x%values(pv+1:qv) = reshape(qty%value4(1:kf,1:kz,1,ws:wf), &
-!                                       & (/qv-pv/))
-      Grids_x%values(pv+1:qv) = reshape(qty%values(1:kf*kz,ws:wf), &
+      ! shape(qty%value4) = [ freqs, zetas, instances, cross-angles ]
+      Grids_x%values(pv+1:qv) = reshape(qty%value4(1:kf,1:kz,ws:wf,1:kx), &
                                       & (/qv-pv/))
     end if
     !  mixing ratio values are manipulated if it's log basis
@@ -770,6 +739,7 @@ contains
     call allocate_test(grids_x%l_f,0,'grids_x%l_f',modulename)
     call allocate_test(grids_x%l_z,0,'grids_x%l_z',modulename)
     call allocate_test(grids_x%l_p,0,'grids_x%l_p',modulename)
+    call allocate_test(grids_x%l_x,0,'grids_x%l_x',modulename)
     call allocate_test(grids_x%l_v,0,'grids_x%l_v',modulename)
     call allocate_test(grids_x%windowstart,0,'grids_x%windowstart',modulename)
     call allocate_test(grids_x%windowfinish,0,'grids_x%windowfinish',modulename)
@@ -782,6 +752,7 @@ contains
     call allocate_test(grids_x%frq_basis,0,'grids_x%frq_basis',modulename)
     call allocate_test(grids_x%zet_basis,0,'grids_x%zet_basis',modulename)
     call allocate_test(grids_x%phi_basis,0,'grids_x%phi_basis',modulename)
+    call allocate_test(grids_x%cross_angles,0,'grids_x%cross_angles',modulename)
     call allocate_test(grids_x%values,0,'grids_x%values',modulename)
     call allocate_test(grids_x%deriv_flags,0,'grids_x%deriv_flags',modulename)
     call allocate_test(grids_x%z_coord,0,'grids_x%z_coord',modulename)
@@ -799,6 +770,7 @@ contains
     call deallocate_test(grids_x%l_f,'Grids_x%l_f',modulename)
     call deallocate_test(grids_x%l_z,'Grids_x%l_z',modulename)
     call deallocate_test(grids_x%l_p,'Grids_x%l_p',modulename)
+    call deallocate_test(grids_x%l_x,'Grids_x%l_p',modulename)
     call deallocate_test(grids_x%l_v,'Grids_x%l_v',modulename)
     call deallocate_test(grids_x%windowstart,'Grids_x%windowstart',modulename)
     call deallocate_test(grids_x%windowfinish,'Grids_x%windowfinish',modulename)
@@ -811,6 +783,7 @@ contains
     call deallocate_test(grids_x%frq_basis,'Grids_x%frq_basis',modulename)
     call deallocate_test(grids_x%zet_basis,'Grids_x%zet_basis',modulename)
     call deallocate_test(grids_x%phi_basis,'Grids_x%phi_basis',modulename)
+    call deallocate_test(grids_x%cross_angles,'Grids_x%cross_angles',modulename)
     call deallocate_test(grids_x%values,'Grids_x%values',modulename)
     call deallocate_test(grids_x%deriv_flags,'Grids_x%deriv_flags',modulename)
     call deallocate_test(grids_x%z_coord,'Grids_x%z_coord',modulename)
@@ -883,6 +856,7 @@ contains
     call dump ( the_grid%l_f(1:), 'The_grid%l_f' )
     call dump ( the_grid%l_z(1:), 'The_grid%l_z' )
     call dump ( the_grid%l_p(1:), 'The_grid%l_p' )
+    call dump ( the_grid%l_x(1:), 'The_grid%l_x' )
     call dump ( the_grid%l_v(1:), 'The_grid%l_v' )
     call dump ( the_grid%windowStart, 'The_grid%WindowStart' )
     call dump ( the_grid%windowFinish, 'The_grid%WindowFinish' )
@@ -892,6 +866,7 @@ contains
       call dump ( the_grid%frq_basis, 'The_grid%Frq_Basis' )
       call dump ( the_grid%zet_basis, 'The_grid%Zet_Basis' )
       call dump ( rad2deg*the_grid%phi_basis, 'The_grid%Phi_Basis (degrees)' )
+      call dump ( the_grid%cross_angles, 'The_grid%Cross_Angles' )
       if ( myDetails > 1 ) then
         call dump ( the_grid%values, 'The_grid%Values' )
         call dump ( the_grid%deriv_flags, 'The_grid%Deriv_Flags' )
@@ -913,6 +888,9 @@ contains
 end module LOAD_SPS_DATA_M
 
 ! $Log$
+! Revision 2.101  2015/07/08 01:25:35  vsnyder
+! Repair? problem with values being shifted
+!
 ! Revision 2.92  2014/08/01 01:03:45  vsnyder
 ! Eliminate unreferenced USE name
 !
