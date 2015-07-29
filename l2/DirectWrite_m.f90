@@ -258,7 +258,7 @@ contains ! ======================= Public Procedures =========================
       call LoadFromHDF5DS( grp_id, 'surfs      ', quantity%template%surfs       )
       if ( associated(quantity%template%Geolocation) ) &
       & call LoadFromHDF5DS( grp_id, 'Geolocation  ', quantity%template%Geolocation )
-      if ( associated(quantity%template%Phi) ) &
+      if ( allocated(quantity%template%Phi) ) &
       & call LoadFromHDF5DS( grp_id, 'Phi          ', quantity%template%Phi         )
       call LoadFromHDF5DS( grp_id, 'GeodLat        ', quantity%template%GeodLat     )
       call LoadFromHDF5DS( grp_id, 'Lon            ', quantity%template%Lon         )
@@ -276,7 +276,7 @@ contains ! ======================= Public Procedures =========================
         call dump( quantity%template%surfs        , 'surfs        ' )
         if ( associated(quantity%template%Geolocation) ) &
         & call dump( quantity%template%Geolocation, 'Geolocation  '  )
-        if ( associated(quantity%template%Phi) ) &
+        if ( allocated(quantity%template%Phi) ) &
         & call dump( quantity%template%Phi, 'Phi          '          )
         call dump( quantity%template%GeodLat     , 'GeodLat        ' )
         call dump( quantity%template%Lon         , 'Lon            ' )
@@ -1219,7 +1219,7 @@ contains ! ======================= Public Procedures =========================
     call SaveAsHDF5DS( grp_id, 'surfs', quantity%template%surfs )
     if ( associated(quantity%template%Geolocation) ) &
   & call SaveAsHDF5DS( grp_id, 'Geolocation', quantity%template%Geolocation )
-    if ( associated(quantity%template%Phi) ) &
+    if ( allocated(quantity%template%Phi) ) &
   & call SaveAsHDF5DS( grp_id, 'Phi        ', quantity%template%Phi         )
     call SaveAsHDF5DS( grp_id, 'GeodLat    ', quantity%template%GeodLat     )
     call SaveAsHDF5DS( grp_id, 'Lon        ', quantity%template%Lon         )
@@ -1604,7 +1604,7 @@ contains ! ======================= Public Procedures =========================
     l2gp%losAngle(firstProfile:lastProfile) = &
       & quantity%template%losAngle(1,useFirstInstance:useLastInstance)
     ! If the quantity isn't stacked, Phi is meaningless, and has zero size.
-    if ( associated(quantity%template%phi) .and. quantity%template%stacked ) then
+    if ( allocated(quantity%template%phi) .and. quantity%template%stacked ) then
       l2gp%geodAngle(firstProfile:lastProfile) = &
         & quantity%template%phi(1,useFirstInstance:useLastInstance)
     else
@@ -1730,6 +1730,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.76  2015/07/29 00:29:54  vsnyder
+! Convert Phi from pointer to allocatable
+!
 ! Revision 2.75  2015/07/14 23:32:01  pwagner
 ! label and inputFile fields in DirectWrite
 !
