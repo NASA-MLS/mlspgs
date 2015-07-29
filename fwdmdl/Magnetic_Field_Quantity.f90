@@ -68,7 +68,7 @@ contains
 
     allocate ( xyzs ( 3, &                     ! XYZ
                     & size(qty%value4,2),   &  ! NoSurfs
-                    & size(qty%value4,3),   &  ! NoInstances of 1
+                    & size(qty%value4,3),   &  ! NoInstances or 1
                     & size(qty%value4,4) ), &  ! NoCrossAngles
                     & stat=stat )
     call test_allocate ( stat, moduleName, 'XYZs' )
@@ -157,6 +157,9 @@ contains
 end module Magnetic_Field_Quantity
 
 ! $Log$
+! Revision 2.9  2015/07/29 00:28:36  vsnyder
+! Repair a comment
+!
 ! Revision 2.8  2015/07/23 23:44:47  vsnyder
 ! qty%template%unit should be phyq_gauss, not l_gauss
 !
