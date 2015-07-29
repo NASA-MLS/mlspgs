@@ -155,7 +155,7 @@ contains
     ! This returns the instance index into a stacked quantity for the
     ! instance 'closest' to the given instance in an unstacked one
     type (VectorValue_T), intent(in) :: referenceQuantity ! e.g. temperature
-    type (VectorValue_T), intent(in) :: soughtQuantity ! e.g. ptan, radiance
+    type (VectorValue_T), intent(in), target :: soughtQuantity ! e.g. ptan, radiance
     integer, intent(in) :: instance
     logical, intent(in), optional :: USEVALUE ! For phiTan as sought quantity
 
@@ -180,7 +180,7 @@ contains
         call MLSMessage ( MLSMSG_Error, ModuleName, &
           & 'Cannot use useValue option for non phiTan quantities' )
       end if
-    elseif ( horizontalCoordinate == l_time ) then
+    else if ( horizontalCoordinate == l_time ) then
       seek => soughtQuantity%template%time
     else
       seek => soughtQuantity%template%phi
@@ -190,15 +190,16 @@ contains
       FindOneClosestInstance = FindClosestMatch ( &
         & referenceQuantity%template%time(1,:), &
         & seek, instance )
-    elseif ( .not. associated(referenceQuantity%template%phi) ) then
-      call Dump ( referenceQuantity%template )
-      call MLSMessage ( &
-        & MLSMSG_Error, ModuleName, 'phi not associated' )
-    else
+    else if ( allocated(referenceQuantity%template%phi) ) then
       FindOneClosestInstance = FindClosestMatch ( &
         & referenceQuantity%template%phi(1,:), &
         & seek, instance )
-    endif
+    else
+      call Dump ( referenceQuantity%template )
+      call MLSMessage ( &
+        & MLSMSG_Error, ModuleName, &
+        & 'phi is not allocated and horizontal coordinate is not time' )
+    end if
   end function FindOneClosestInstance
 
   ! --------------------------------------- FindInstanceWindow ---------
@@ -378,9 +379,9 @@ contains
 
     if ( .not. mySpacingOnly ) then
       if ( a%template%noInstances /= b%template%noInstances ) return
-      if ( .not. ( associated(a%template%phi) .eqv. &
-                 & associated(b%template%phi) ) ) return
-      if ( associated(a%template%phi) ) then
+      if ( .not. ( allocated(a%template%phi) .eqv. &
+                 & allocated(b%template%phi) ) ) return
+      if ( allocated(a%template%phi) ) then
         if ( any(abs(a%template%phi - &
           &          b%template%phi) > PhiTol) ) return
       end if
@@ -669,6 +670,9 @@ contains
 end module ManipulateVectorQuantities
   
 ! $Log$
+! Revision 2.49  2015/07/29 00:27:28  vsnyder
+! Convert Phi from pointer to allocated
+!
 ! Revision 2.48  2015/06/19 00:11:01  pwagner
 ! Intercept and print if about to use unassociated phi in FindOneClosestInstance
 !
