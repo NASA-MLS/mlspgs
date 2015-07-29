@@ -811,7 +811,7 @@ contains ! ============= Public procedures ===================================
 
     ! Dummy arguments
     integer, intent(in) :: ROOT         ! Tree vertex
-    type (QuantityTemplate_T), dimension(:), intent(inout) :: MIFGEOLOCATION
+    type (QuantityTemplate_T), intent(inout), target :: MIFGEOLOCATION(:)
 
     ! Local variables
     integer :: GEODANGLENODE            ! Tree vertex
@@ -1127,12 +1127,12 @@ contains ! ============= Public procedures ===================================
       & noChans=noChans, noCrossTrack=noCrossTrack, &
       & sharedVGrid=.true. )
     call SetupEmptyVGridForQuantity ( qty )
-    ! In some rare cases, e.g. non-Aura satellite data, source may be a dud
-    if ( associated(source%phi) ) then
+    ! In some rare cases, e.g. non-Aura satellite data, source might be a dud
+    if ( allocated(source%phi) ) then
       call createGeolocationFields ( qty, qty%noSurfs, 'Qty' )
       qty%geodLat = source%geodLat(1:1,:)
       qty%lon = source%lon(1:1,:)
-      qty%phi => source%phi(1:1,:)
+      qty%phi = source%phi(1:1,:)
       qty%time => source%time(1:1,:)
       qty%solarTime => source%solarTime(1:1,:)
       qty%solarZenith => source%solarZenith(1:1,:)
@@ -1500,6 +1500,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.183  2015/07/29 00:29:54  vsnyder
+! Convert Phi from pointer to allocatable
+!
 ! Revision 2.182  2015/07/27 22:28:06  vsnyder
 ! Make cross angles always associated, with value zero if there's no xGrid
 !
