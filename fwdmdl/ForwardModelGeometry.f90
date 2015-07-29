@@ -55,7 +55,7 @@ contains ! ============= Public Procedures ==========================
     use Dump_0, only: Dump
     use Geometry, only: GeodToGeocAlt, GeodToGeocLat, To_XYZ, XYZ_To_Geod
     use Intrinsic, only: L_Geocentric, L_Geodetic, L_GeodAltitude, L_Zeta
-    use MLSNumerics, only: InterpolateExtrapolate_d
+    use MLSNumerics, only: InterpolateExtrapolate
     use MLSStringlists, only: SwitchDetail
     use Monotone, only: Longest_Monotone_Subsequence
     use Output_m, only: Output
@@ -79,28 +79,31 @@ contains ! ============= Public Procedures ==========================
                                                 ! of Qty%Value4.
                                                 ! 3 X surfs X instances X cross
 
-    logical :: Across                           ! Viewing across the orbit track
-    real(rt), allocatable :: Alt(:)             ! Geocentric altitude on LOS
-    integer :: C                                ! Cross-track angle index
-    integer, allocatable :: Dec(:)              ! Decreasing sequence indices
-    integer :: Detail                           ! Dump level
-    real(rt) :: Geod(3)                         ! Geodetic Lat, Lon (degrees),
-                                                ! Altitude (meters)
-    real(rt), allocatable :: Heights(:,:)       ! Meters, geocentric altitude
-    integer, allocatable :: Inc(:)              ! Increasing sequence indices
-    integer :: Inst                             ! Second subscript for lat, lon
-    integer :: InstOr1                          ! Second subscript for surfs
-    integer :: Me = -1                          ! String index, for tracing
-    integer :: MIF                              ! MIF index
-    real(rt) :: N(3)                            ! Normal to SC-TP plane
-    real(rt), allocatable :: R(:,:)             ! TP rotated in TP-SC plane
-    integer :: S                                ! Surface index in magnetic field
-    real(rt) :: SC_XYZ(3)                       ! Spacecraft position
-    real(rt) :: Sec_x                           ! Secant of cross-track angle
-    integer, allocatable :: Seq(:)              ! Increasing or decreasing
-                                                ! sequence indices, => Inc or Dec
-    integer :: SurfOr1                          ! First subscript for Lat, Lon
-    real(rt) :: TP_XYZ(3)                       ! Tangent point position
+    logical :: Across                     ! Viewing across the orbit track
+    real(rt), allocatable :: Alt(:)       ! Geocentric altitude on LOS
+    integer :: C                          ! Cross-track angle index
+    integer, allocatable :: Dec(:)        ! Decreasing sequence indices
+    integer :: Detail                     ! Dump level
+    real(rt) :: Geod(3)                   ! Geodetic Lat, Lon (degrees),
+                                          ! Altitude (meters)
+    real(rt), allocatable :: Heights(:,:) ! Meters, geocentric altitude
+    integer, allocatable :: Inc(:)        ! Increasing sequence indices
+    integer :: Inst                       ! Second subscript for lat, lon
+    integer :: InstOr1                    ! Second subscript for surfs
+    integer :: Me = -1                    ! String index, for tracing
+    integer :: MIF                        ! MIF index
+    real(rt) :: N(3)                      ! Normal to SC-TP plane
+    integer :: P                          ! Index in crossAngles at which to
+                                          ! compute phi -- the one with the
+                                          ! smallest absolute value.
+    real(rt), allocatable :: R(:,:)       ! TP rotated in TP-SC plane
+    integer :: S                          ! Surface index in magnetic field
+    real(rt) :: SC_XYZ(3)                 ! Spacecraft position
+    real(rt) :: Sec_x                     ! Secant of cross-track angle
+    integer, allocatable :: Seq(:)        ! Increasing or decreasing
+                                          ! sequence indices, => Inc or Dec
+    integer :: SurfOr1                    ! First subscript for Lat, Lon
+    real(rt) :: TP_XYZ(3)                 ! Tangent point position
 
     call trace_begin ( me, 'Compute_Viewing_Plane', &
       & cond=toggle(emit) .and. levels(emit) > 1 ) ! set by -f command-line switch
@@ -153,12 +156,19 @@ contains ! ============= Public Procedures ==========================
       qty%template%stacked = .false.
       call createGeolocationFields ( qty%template, qty%template%noSurfs, 'MagneticField' )
 
+      ! Re-allocate phi to (noSurfs, noInstances).  If the magnetic field
+      ! quantity was originally coherent, it was (noSurfs,1).  If it was
+      ! stacked and coherent, it was (1,1).
+      call allocate_test ( qty%template%phi, qty%template%noSurfs, &
+        & qty%template%noInstances, moduleName, 'Phi' )
+
       ! Hopefully, we got here from FillUtils_1%UsingMagneticModel, where
       ! it is verified that if TpGeocAlt is provided, then so is ScVelECR,
       ! and that they have the same numbers of instances and surfaces.
       call allocate_test ( Alt, tpGeocAlt%template%noSurfs, moduleName, 'Alt' )
       call allocate_test ( r, 3, tpGeocAlt%template%noSurfs, moduleName, 'R' )
 
+      p = minloc(abs(qty%template%crossAngles),1)
       do inst = 1, qty%template%NoInstances
         instOr1 = merge(1,inst,qty%template%coherent)
         ! Use only the monotone part of the tangent-point altitudes
@@ -199,6 +209,15 @@ contains ! ============= Public Procedures ==========================
             alt(seq(MIF)) = tpGeocAlt%value3(1,seq(MIF),inst) * sec_x
             r(:3,seq(MIF)) = r(:3,seq(MIF)) * alt(seq(MIF))
           end do ! MIF
+          ! Compute Phi for the cross-angle nearest zero by interpolating
+          ! phi from tpGeocAlt in height.  Compute it only for one
+          ! instance if the quantity is coherent.
+          if ( c == p .and. instOr1 == inst ) then
+            call interpolateExtrapolate ( alt(seq), &
+              & tpGeocAlt%template%phi(seq,instOr1), &
+              & heights(:,instOr1), qty%template%phi(:,instOr1), &
+              & second=.false. )
+          end if
           ! Interpolate Cartesian ECR coordinates, in meters, at the rotated
           ! position using linear interpolation and extrapolation on Altitude
           ! at the rotated position to the altitude in Qty.  Only use the
@@ -206,7 +225,7 @@ contains ! ============= Public Procedures ==========================
           ! outside the range of Alt using the average slope of R(i,:).
           ! This might not be exactly correct in geodetic coordinates, but it
           ! ought to be close enough.
-          call interpolateExtrapolate_d ( alt(seq), r(:,seq), &
+          call interpolateExtrapolate ( alt(seq), r(:,seq), &
             & heights(:,instOr1), xyzs(:,:,instOr1,c), second=.true. )
           if ( qty%template%verticalCoordinate == l_geodAltitude .or. &
              & qty%template%verticalCoordinate == l_zeta ) then
@@ -450,6 +469,9 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelGeometry
 
 ! $Log$
+! Revision 2.7  2015/07/29 00:28:15  vsnyder
+! Compute Phi
+!
 ! Revision 2.6  2015/07/27 22:30:12  vsnyder
 ! Use nonzero crossAngles instead of associated crossAngles to set 'across'
 !
