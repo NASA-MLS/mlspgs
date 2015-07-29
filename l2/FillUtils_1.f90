@@ -6596,7 +6596,7 @@ contains ! =====     Public Procedures     =============================
         ! (first MIF is probably close enough to all the others to be useful).
         maf = 1
         ! If the template isn't stacked, Phi is meaningless, and has zero size.
-        if ( associated(qty%template%phi) .and. qty%template%stacked ) &
+        if ( allocated(qty%template%phi) .and. qty%template%stacked ) &
           & maf = minloc ( abs ( qty%template%phi(1,instance) - &
             & ecrToFOV%template%phi(1,:) ) )
         ! Dimensions of ECRtoFOV%value3 are ( chans, surfs, instances*cross angles ).
@@ -7534,6 +7534,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.110  2015/07/29 00:29:54  vsnyder
+! Convert Phi from pointer to allocatable
+!
 ! Revision 2.109  2015/06/04 03:19:36  vsnyder
 ! Make the Surfs component of quantity templates allocatable
 !
