@@ -409,7 +409,8 @@ module MLSNumerics              ! Some low level numerical stuff
   end interface
 
   interface InterpolateExtrapolate
-    module procedure InterpolateExtrapolate_d, InterpolateExtrapolate_s
+    module procedure InterpolateExtrapolate_d, InterpolateExtrapolate_d_1
+    module procedure InterpolateExtrapolate_s, InterpolateExtrapolate_s_1
   end interface
 
   interface Interpolate_Regular_To_Irregular
@@ -1628,7 +1629,7 @@ contains
   subroutine InterpolateExtrapolate_d ( OldX, OldY, NewX, NewY, Second )
 
     ! Interpolate ( OldX(:), OldY(:,:) ) to ( NewX(:), NewY(:,:) ), where
-    ! the dimension upon which to interpolate is merge(2,1,second)
+    ! the dimension upon which to interpolate is merge(2,1,second).
     ! Extrapolate outside the range of OldX using the average slope, not
     ! the slope nearest the end where NewX is outside the range of OldX.
 
@@ -1642,12 +1643,30 @@ contains
 
   end subroutine InterpolateExtrapolate_d
 
+! -----------------------------------  InterpolateExtrapolate_d_1  -----
+
+  subroutine InterpolateExtrapolate_d_1 ( OldX, OldY, NewX, NewY, Second )
+
+    ! Interpolate ( OldX(:), OldY(:) ) to ( NewX(:), NewY(:) ).
+    ! Extrapolate outside the range of OldX using the average slope, not
+    ! the slope nearest the end where NewX is outside the range of OldX.
+
+    integer, parameter :: RK = kind(0.0d0)
+    real(rk), intent(in) :: OldX(:), OldY(:), NewX(:)
+    real(rk), intent(out) :: NewY(:)
+    logical, intent(in) :: Second
+    type(coefficients_r8) :: Coeffs
+
+    include 'InterpolateExtrapolate_1.f9h'
+
+  end subroutine InterpolateExtrapolate_d_1
+
 ! -------------------------------------  InterpolateExtrapolate_s  -----
 
   subroutine InterpolateExtrapolate_s ( OldX, OldY, NewX, NewY, Second )
 
     ! Interpolate ( OldX(:), OldY(:,:) ) to ( NewX(:), NewY(:,:) ), where
-    ! the dimension upon which to interpolate is merge(2,1,second)
+    ! the dimension upon which to interpolate is merge(2,1,second).
     ! Extrapolate outside the range of OldX using the average slope, not
     ! the slope nearest the end where NewX is outside the range of OldX.
 
@@ -1660,6 +1679,24 @@ contains
     include 'InterpolateExtrapolate.f9h'
 
   end subroutine InterpolateExtrapolate_s
+
+! -----------------------------------  InterpolateExtrapolate_s_1  -----
+
+  subroutine InterpolateExtrapolate_s_1 ( OldX, OldY, NewX, NewY, Second )
+
+    ! Interpolate ( OldX(:), OldY(:) ) to ( NewX(:), NewY(:) ).
+    ! Extrapolate outside the range of OldX using the average slope, not
+    ! the slope nearest the end where NewX is outside the range of OldX.
+
+    integer, parameter :: RK = kind(0.0e0)
+    real(rk), intent(in) :: OldX(:), OldY(:), NewX(:)
+    real(rk), intent(out) :: NewY(:)
+    logical, intent(in) :: Second
+    type(coefficients_r4) :: Coeffs
+
+    include 'InterpolateExtrapolate_1.f9h'
+
+  end subroutine InterpolateExtrapolate_s_1
 
 ! -----------------------------------------  InterpolateScalar_r4  -----
 
@@ -2462,6 +2499,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.88  2015/07/29 00:24:05  vsnyder
+! Add InterpolateExtrapolate_[sd]_1
+!
 ! Revision 2.87  2015/05/27 22:42:15  vsnyder
 ! Move Hunt-related stuff to Hunt_m to eliminate circular dependence
 !
