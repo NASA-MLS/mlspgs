@@ -152,7 +152,7 @@ module QuantityTemplates         ! Quantities within vectors
     ! geolocation(*,i,j) for an unstacked one.  The "*" is taken from either
     ! the OrbitCoordinateIndex or LOSCoordinateIndex component.
 
-    real(rt), dimension(:,:), pointer :: Phi => NULL() ! Degrees
+    real(rt), allocatable :: Phi(:,:)   ! Degrees
 
     ! Phi is dimensioned (1, noInstances) for stacked quantities and
     ! (noSurfs, noInstances) for unstacked ones.  The PHI coordinate for the
@@ -356,8 +356,8 @@ contains
     z%molecule                     = a%molecule        
 
     ! Next, arrays
-    if ( allocated(z%surfs)        .and. allocated(a%surfs) )       z%surfs =       a%surfs
-    if ( associated(z%phi)         .and. associated(a%phi) )         z%phi =         a%phi
+    if ( allocated(z%surfs)        .and. allocated(a%surfs) )        z%surfs =       a%surfs
+    if ( allocated(z%phi)          .and. allocated(a%phi) )          z%phi =         a%phi
     if ( allocated(z%geodLat)      .and. allocated(a%geodLat) )      z%geodLat =     a%geodLat
     if ( allocated(z%lon)          .and. allocated(a%lon) )          z%lon =         a%lon
     if ( associated(z%time)        .and. associated(a%time) )        z%time =        a%time
@@ -694,7 +694,14 @@ contains
           call dump ( signals(qty%signal) )
         end if
       end if
-      call maybe_dump_2_rt ( qty%phi, 'Phi' )
+      if ( allocated(qty%phi) ) then
+        call dump ( reshape ( qty%phi, &
+          & [ size(qty%geodLat,1),qty%noInstances] ), &
+          & '      Phi = ' )
+      else
+        call output ( '      No Phi' )
+      end if
+
       if ( allocated(qty%surfs) ) then
         call dump ( qty%surfs, 'Surfs' )
       else
@@ -1107,7 +1114,7 @@ contains
       & ModuleName, "Size of HGrid not compatible with size of quantity" )
 
     if ( qty%stacked ) then
-      qty%phi => hGrid%phi
+      qty%phi = hGrid%phi
       call CreateGeolocationFields ( qty, size(hGrid%geodLat,1), 'Qty' )
       do k = 1, qty%noCrossTrack
         do j = 1, size(qty%geodLat,2)
@@ -1119,16 +1126,16 @@ contains
       end do
     else
       call CreateGeolocationFields ( qty, qty%noSurfs, 'Qty' )
-      nullify ( qty%phi )
-!       This results in a "double free or corruption" termination:
-!       call allocate_test ( qty%phi, 0, 0, 'qty%phi(1,1)', ModuleName )
+      call allocate_test ( qty%phi, qty%noSurfs, qty%noInstances, 'qty%phi', &
+        & ModuleName )
       if ( qty%name /= 0 ) then
         call MLSMessage ( MLSMSG_Warning, ModuleName, &
         & "Cannot copy hGrids into unstacked quantity %S" // &
-        & "; assume Lat, Lon computed somehow; hope nobody needs Phi", qty%name)
+        & "; assume Lat, Lon, Phi computed somehow.", qty%name)
       else
         call MLSMessage ( MLSMSG_Warning, ModuleName, &
-          & "Cannot copy hGrids into unstacked quantities; assume Lat, Lon computed somehow; hope nobody needs Phi")
+          & "Cannot copy hGrids into unstacked quantities " // &
+          & "; assume Lat, Lon, Phi computed somehow.")
       end if
     end if
     qty%time => hGrid%time
@@ -1550,9 +1557,9 @@ contains
       CheckIntegrity_QuantityTemplate = .false.
     end if
 
-    if ( .not. associated ( qty%phi ) ) then
+    if ( .not. allocated ( qty%phi ) ) then
       call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'The quantity template '//trim(name)// ' does not have phi associated' )
+        & 'The quantity template '//trim(name)// ' does not have phi allocated' )
       CheckIntegrity_QuantityTemplate = .false.
     end if
 
@@ -1969,6 +1976,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.98  2015/07/23 23:45:57  vsnyder
+! qty%unit should be index in phyq_indices, not in lit_indices
+!
 ! Revision 2.97  2015/06/04 03:13:16  vsnyder
 ! Make Surfs component of quantity template allocatable
 !
