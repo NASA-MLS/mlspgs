@@ -16,22 +16,22 @@ module QuantityTemplates         ! Quantities within vectors
   ! This module defines the `quantities' that make up vectors and their
   ! template information.
 
-  use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
-  use DUMP_0, only: DUMP
-  use EXPR_M, only: EXPR_CHECK
-  use HGridsDatabase, only: HGrid_T
-  use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
-  use INTRINSIC, only: L_DL, L_Geodetic, L_None, L_PhiTan, L_VMR, LIT_INDICES, &
-    & PHYQ_Angle, PHYQ_Dimensionless, PHYQ_Frequency, PHYQ_Indices, PHYQ_Time
-  use MLSFILLVALUES, only: RERANK
-  use MLSKINDS, only: RT => R8 ! RT is "kind of Real components of template"
-  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING
-  use MLSFINDS, only: FINDFIRST
-  use MLSSTRINGLISTS, only: SWITCHDETAIL
-  use MLSSTRINGS, only: LOWERCASE, WRITEINTSTOCHARS
-  use OUTPUT_M, only: OUTPUT
-  use TOGGLES, only: SWITCHES
-  use TREE, only: NSONS, SUBTREE
+  use allocate_deallocate, only: allocate_test, deallocate_test
+  use dump_0, only: dump
+  use expr_m, only: expr_check
+  use hGridsDatabase, only: hgrid_t
+  use highOutput, only: outputNamedValue
+  use intrinsic, only: l_dl, l_geodetic, l_none, l_phitan, l_vmr, lit_indices, &
+    & phyq_angle, phyq_dimensionless, phyq_frequency, phyq_indices, phyq_time
+  use MLSFillValues, only: rerank
+  use MLSKinds, only: rt => r8 ! rt is "kind of real components of template"
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
+  use MLSFinds, only: findfirst
+  use MLSStringLists, only: switchDetail
+  use MLSStrings, only: lowercase, writeIntsToChars
+  use output_m, only: output
+  use toggles, only: switches
+  use tree, only: nsons, subtree
 
   implicit none
   private
@@ -574,9 +574,9 @@ contains
   ! -------------------------------------  DUMP_QUANTITY_TEMPLATE  -----
   subroutine DUMP_QUANTITY_TEMPLATE ( Qty, DETAILS, NOL2CF, What )
 
-    use MLSSIGNALS_M, only: SIGNALS, DUMP, GETRADIOMETERNAME, GETMODULENAME
+    use MLSSignals_m, only: signals, dump, getRadiometerName, getModuleName
     use output_m, only: blanks, newLine
-    use VGRIDSDATABASE, only: DUMP
+    use vGridsDatabase, only: dump
 
     type(QuantityTemplate_T), intent(in) :: Qty
     integer, intent(in), optional :: DETAILS ! <= 0 => Don't dump arrays
@@ -606,11 +606,14 @@ contains
     end if
     if ( present(what) ) call output ( ' ' // trim(what) )
     call newline
-    call output ( qty%noChans,      before='      NoChans = ' )
-    call output ( qty%noSurfs,      before=' NoSurfs = ' )
-    call output ( qty%noInstances,  before=' NoInstances = ' )
-    call output ( qty%noCrossTrack, before=' NoCrossTrack = ', advance='yes' )
-    call output ( '      ' )
+    call Blanks( 5 )
+    call output ( qty%noChans,              before=' NoChans = ' )
+    call output ( qty%noSurfs,              before=' NoSurfs = ' )
+    call output ( qty%noInstances,          before=' NoInstances = ' )
+    call output ( qty%grandtotalinstances,  before=' grandtotalinstances = ' )
+    call output ( qty%noCrossTrack,         before=' NoCrossTrack = ' )
+    call newLine
+    call Blanks( 5 )
     if ( .not. qty%coherent ) call output ( 'in' )
     call output ( 'coherent ' )
     if ( .not. qty%stacked ) call output ( 'non' )
@@ -1185,9 +1188,9 @@ contains
     ! Therefore we must do a bit of table lookups
     use Declaration_Table, only: Decls, Get_Decl, Phys_Unit_Name
     use Intrinsic, only: L_Dimensionless
-    use MLSHDF5, only: GETHDF5ATTRIBUTE
-    use MLSSIGNALS_M, only: GETRADIOMETERINDEX, GETMODULEINDEX, &
-      & GETSIGNALINDEX
+    use MLSHDF5, only: getHDF5Attribute
+    use MLSSignals_m, only: getRadiometerIndex, getModuleIndex, &
+      & getSignalIndex
 
     ! Arguments
     integer, intent(in) :: dsID
@@ -1395,9 +1398,9 @@ contains
   subroutine WriteAttributes_QuantityTemplate ( dsID, NAME, &
     & QT, NOL2CF )
 
-    use MLSHDF5, only: MAKEHDF5ATTRIBUTE
-    use MLSSIGNALS_M, only: GETRADIOMETERNAME, GETMODULENAME, &
-      & GETSIGNALNAME
+    use MLSHDF5, only: makeHDF5Attribute
+    use MLSSignals_m, only: getRadiometerName, getModuleName, &
+      & getSignalName
 
     ! Arguments
     integer, intent(in) :: dsID
@@ -1698,9 +1701,9 @@ contains
     ! Given a DS, File or GroupID, find the character-valued attribute
     ! for the attribute named attrName of the dataset name
     ! Look up its id in the lit indices and return that id as LitID
-    use INTRINSIC, only: FIRST_LIT, LAST_AUTO_LIT
-    use MLSHDF5, only: GETHDF5ATTRIBUTE
-    use STRING_TABLE, only: ADD_CHAR, LOOKUP
+    use intrinsic, only: first_lit, last_auto_lit
+    use MLSHDF5, only: getHDF5Attribute
+    use string_table, only: add_char, lookup
     ! Args
     integer, intent(in)           :: dsID      ! dataset, file or group ID
     character(len=*), intent(in)  :: attrName  ! attribute name
@@ -1724,9 +1727,9 @@ contains
     ! Given a DS, File or GroupID, find the character-valued attribute
     ! for the attribute named attrName of the dataset name
     ! Look up its id in the string table and return that id as strID
-    use MLSHDF5, only: GETHDF5ATTRIBUTE
-    use STRING_TABLE, only: ADD_CHAR, LOOKUP
-    use TREE_TYPES, only: ADD_CHAR
+    use MLSHDF5, only: getHDF5Attribute
+    use string_table, only: add_char, lookup
+    use tree_types, only: add_char
     ! Args
     integer, intent(in)           :: dsID      ! dataset, file or group ID
     character(len=*), intent(in)  :: attrName  ! attribute name
@@ -1768,7 +1771,7 @@ contains
   ! --------------------------------------------  myDisplayString  -----
   subroutine myDisplayString ( index, advance, before )
     ! Given a string index, display the string or an error message
-    use String_Table, only: DISPLAY_STRING, HOW_MANY_STRINGS
+    use String_Table, only: display_string, how_many_strings
     integer, intent(in) :: index
     character(len=*), intent(in), optional :: advance
     character(len=*), intent(in), optional :: before
@@ -1788,7 +1791,7 @@ contains
   ! ------------------------------------------------  myGetString  -----
   subroutine myGetString ( index, what, strip )
     ! Given a string index, Get the string or an error message
-    use STRING_TABLE, only: GET_STRING, HOW_MANY_STRINGS
+    use string_table, only: get_string, how_many_strings
     integer, intent(in)           :: index
     character(len=*), intent(out) :: what
     logical, intent(in), optional :: strip
@@ -1976,6 +1979,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.99  2015/07/29 00:27:28  vsnyder
+! Convert Phi from pointer to allocated
+!
 ! Revision 2.98  2015/07/23 23:45:57  vsnyder
 ! qty%unit should be index in phyq_indices, not in lit_indices
 !
