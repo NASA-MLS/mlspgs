@@ -24,16 +24,16 @@ module L1BData
   use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
   use intrinsic, only: l_HDF
   use lexer_core, only: print_source
-  use MLScommon, only: MLSfile_t, &
-    & undefinedValue, fileNameLen, nameLen
-  use MLSfiles, only: filenotfound, HDFversion_4, HDFversion_5, &
+  use MLSCommon, only: MLSfile_t, &
+    & unDefinedValue, fileNameLen, nameLen
+  use MLSFiles, only: filenotfound, HDFversion_4, HDFversion_5, &
     & addFileToDatabase, initializeMLSfile, &
     & MLS_openFile, MLS_closeFile
-  use MLSkinds, only: r4, r8
-  use MLSmessagemodule, only: MLSmsg_error, &
-    & MLSmsg_l1bread, MLSmsg_warning, MLSmessage
-  use MLSstrings, only: indexes, streq
-  use MLSstringLists, only: numStringElements, switchDetail
+  use MLSKinds, only: r4, r8
+  use MLSMessagemodule, only: MLSmsg_error, &
+    & MLSMsg_l1bread, MLSmsg_warning, MLSmessage
+  use MLSStrings, only: indexes, streq
+  use MLSStringLists, only: numStringElements, switchDetail
   use moretree, only: get_field_id
   use output_m, only: output
   use string_table, only: get_string
@@ -2073,12 +2073,11 @@ contains ! ============================ MODULE PROCEDURES ======================
     & Flag, FirstMAF, LastMAF, NEVERFAIL, L2AUX )
     use Allocate_Deallocate, only: Test_Allocate
     use MLSFillValues, only: isFillValue
-    use HDF5, only: HSIZE_T
-    use MLSHDF5, only: ISHDF5DSPRESENT, LOADFROMHDF5DS, &
-      & GETHDF5DSRANK, GETHDF5DSDIMS, GETHDF5DSQTYPE
-    use TOGGLES, only: GEN, LEVELS, TOGGLE
-    use TRACE_M, only: TRACE_BEGIN, TRACE_END
-! use MLSAuxData, only: MLSAuxData_T, Read_MLSAuxData, Deallocate_MLSAuxData
+    use HDF5, only: hsize_t
+    use MLSHDF5, only: isHDF5DSPresent, loadFromHDF5DS, &
+      & getHDF5DSRank, getHDF5DSDims, getHDF5DSQType
+    use toggles, only: gen, levels, toggle
+    use trace_m, only: trace_begin, trace_end
 
     ! Dummy arguments
     character(len=*), intent(in)   :: QUANTITYNAME ! Name of SD to read
@@ -2149,7 +2148,10 @@ contains ! ============================ MODULE PROCEDURES ======================
     ! print*, ' Find Qtype, rank and dimensions of QuantityName ', trim(QuantityName)
     call GetHDF5DSRank(L1FileHandle, QuantityName, rank)
     l1bData%TrueRank = rank
-    allocate ( dims(rank), Hdims(rank), maxDims(rank) )
+    allocate ( dims(rank), Hdims(rank), maxDims(rank), stat=status )
+    if ( status /= 0 ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Could not allocate dims in ReadL1BData_MF_hdf5' )
     call GetHDF5DSDims(L1FileHandle, QuantityName, Hdims, maxDims)
     dims = Hdims
     call GetHDF5DSQType ( L1FileHandle, QuantityName, Qtype )
@@ -2329,7 +2331,7 @@ contains ! ============================ MODULE PROCEDURES ======================
         call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%DpField, &
           & (/0,0,MAFoffset/), (/dims(1),dims(2),l1bData%noMAFs/) )
       else
-        call output( '3d real l1bdata ' // trim(QuantityName) // 'are clean', advance='yes' )
+         call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%DpField)
       end if
       if ( index(QuantityName, 'Angle') < 1 .or. .true. ) then
       elseif ( any(isFillValue(l1bData%dpField) ) ) then
@@ -2798,6 +2800,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.105  2015/07/31 20:40:34  pwagner
+! Fixed error added with last commit
+!
 ! Revision 2.104  2015/07/14 23:19:32  pwagner
 ! May debug case where gap in counterMAF causes Fill values in dp Field
 !
