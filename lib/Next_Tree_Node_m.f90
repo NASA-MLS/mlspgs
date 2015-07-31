@@ -14,7 +14,7 @@ module Next_Tree_Node_m
   implicit NONE
   private
 
-  public :: Init_Next_Tree_Node
+  public :: Dump, Init_Next_Tree_Node, IsStateNull
   public :: Next_Tree_Node, Next_Tree_Node_State, Traverse_Tree
 
   ! Values of Ancestors%what
@@ -35,6 +35,11 @@ module Next_Tree_Node_m
     type(ancestors_t), allocatable :: Ancestors(:)
   end type Next_Tree_Node_State
   
+  interface Dump
+    module procedure Dump_ancestor
+    module procedure Dump_Next_Tree_Node
+  end interface
+  
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
@@ -42,6 +47,51 @@ module Next_Tree_Node_m
 !---------------------------------------------------------------------------
 
 contains ! ====     Procedures     =====================================
+
+  subroutine Dump_ancestor ( ancestor )
+    use highOutput, only: startTable, addRow, outputTable
+    type(Ancestors_t), intent(in) :: ancestor ! What to Dump
+    ! Internal variables
+    ! Executable
+    call startTable
+    call addRow ( 'Root     ', ancestor%Root      )
+    call addRow ( 'Subtree  ', ancestor%Subtree   )
+    call addRow ( 'What     ', ancestor%What      )
+    call addRow ( 'Current  ', ancestor%Current   )
+    call addRow ( 'Last     ', ancestor%Last      )
+    call addRow ( 'Step     ', ancestor%Step      )
+    call outputTable ( sep='|', border='-', &
+      & Interior=achar(0), headliner='*' )
+  end subroutine Dump_ancestor
+
+  subroutine Dump_Next_Tree_Node ( State, Name )
+    use highOutput, only: banner
+    use Output_m, only: output
+    type(next_Tree_Node_State), intent(in) :: State ! What to Dump
+    character(len=*), optional, intent(in) :: name
+    ! Internal variables
+    integer :: i
+    character(len=16) :: myName
+    ! Executable
+    myName = 'state'
+    if ( present(name) ) myName = name
+    if ( .not. allocated(state%ancestors) ) then
+      call output( trim(myname) // ' ancestors not yet allocated', advance='yes' )
+      return
+    endif
+    call banner ( 'Dump of next tree node datatype (' // trim(myName) // ')' )
+    do i=1, size(state%ancestors)
+      call Dump_ancestor( state%ancestors(i) )
+    enddo
+  end subroutine Dump_Next_Tree_Node
+
+  logical function isStateNull ( State )
+    type(next_Tree_Node_State), intent(in) :: State ! What to Dump
+    ! Internal variables
+    integer :: i
+    ! Executable
+    isStateNull = .not. allocated(state%ancestors)
+  end function isStateNull
 
   subroutine Init_Next_Tree_Node ( State )
     type(next_Tree_Node_State), intent(out) :: State ! Default initialization
@@ -524,6 +574,9 @@ contains ! ====     Procedures     =====================================
 end module Next_Tree_Node_m
 
 ! $Log$
+! Revision 2.7  2015/07/31 20:41:29  pwagner
+! Added Dump, isStateNull
+!
 ! Revision 2.6  2014/09/05 18:37:00  vsnyder
 ! Measure memory usage in bytes instead of Memory_Units
 !
