@@ -7384,7 +7384,7 @@ contains ! =====     Public Procedures     =============================
       case ('l2aux')
         if ( spread ) call Announce_Error ( key, no_Error_Code, &
           &   'Unable to use spread when filling from L2AUX file' )
-        call ReadL2AUXData ( MLSFile, name, quantity%template%quantityType, L2AUX )
+        call ReadL2AUXData ( MLSFile, name, L2AUX, quantity%template%quantityType )
         call FromL2AUX( quantity, L2AUX, status )
         call DestroyL2AUXContents ( L2AUX )
       case ('swath', 'l2gp')
@@ -7534,6 +7534,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.111  2015/08/03 21:43:25  pwagner
+! Made quantityType optional in call to ReadL2AUXData
+!
 ! Revision 2.110  2015/07/29 00:29:54  vsnyder
 ! Convert Phi from pointer to allocatable
 !
