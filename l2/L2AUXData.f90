@@ -11,45 +11,45 @@
 
 module L2AUXData                 ! Data types for storing L2AUX data internally
 
-  use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
-  use DUMP_0, only: DUMP
-  use HDF, only: DFACC_CREATE, DFACC_RDonly, DFACC_RDWR, DFNT_FLOAT32, &
-    & DFNT_INT32, SFCREATE, SFDIMID, SFENDACC, SFGDINFO, SFGINFO, &
-    & SFN2INDEX, SFRDATA_F90, SFSDMNAME, SFSDSCALE, SFSELECT, SFWDATA_F90
-  use INIT_TABLES_MODULE, only: L_BASELINE, L_CHANNEL, L_CHISQCHAN, &
-    & L_CHISQMMAF, L_CHISQMMIF, L_CHUNK, L_CLOUDEXTINCTION, &
-    & L_CLOUDINDUCEDRADIANCE, L_CLOUDRADSENSITIVITY, L_CLOUDWATER, &
-    & L_DNWT_AJN, L_DNWT_AXMAX, L_DNWT_CAIT, L_DNWT_CHISQMINNORM, &
-    & L_DNWT_CHISQNORM, L_DNWT_DIAG, L_DNWT_DXDX, L_DNWT_DXDXL, &
-    & L_DNWT_DXN, L_DNWT_DXNL, L_DNWT_FLAG, L_DNWT_FNMIN, L_DNWT_FNORM, &
-    & L_DNWT_GDX, L_DNWT_GFAC, L_DNWT_GRADN, L_DNWT_SQ, L_DNWT_SQT, &
-    & L_EFFECTIVEOPTICALDEPTH, L_ELEVOFFSET, L_FREQUENCY, L_GEODANGLE, &
-    & L_HEIGHT, L_HEIGHTOFFSET, L_INTERMEDIATEFREQUENCY, L_ITERATION, &
-    & L_JACOBIAN_COLS, L_JACOBIAN_ROWS, L_LIMBSIDEBANDFRACTION, &
-    & L_LOSTRANSFUNC, L_LOSVEL, L_LSBFREQUENCY, L_MAF, &
-    & L_MASSMEANDIAMETERICE, L_MASSMEANDIAMETERWATER, L_MIF, &
-    & L_MIFEXTINCTION, L_MIFEXTINCTIONV2, L_NOISEBANDWIDTH, L_NONE, &
-    & L_NORADSPERMIF, L_NUMJ, L_OPTICALDEPTH, L_ORBITINCLINATION, L_AscDescMode, &
-    & L_PHASETIMING, L_PHITAN, L_PRESSURE, L_PTAN, L_RADIANCE, &
-    & L_REFLSPILL, L_REFLTEMP, L_SCANRESIDUAL, L_SCECI, L_SCGEOCALT, &
-    & L_SCVELECI, L_SCVELECR, L_SINGLECHANNELRADIANCE, L_SIZEDISTRIBUTION, &
-    & L_SPACERADIANCE, L_STRAYRADIANCE, L_SURFACETYPE, &
-    & L_SYSTEMTEMPERATURE, L_TNGTECI, L_TNGTGEOCALT, L_TNGTGEODALT, &
-    & L_TOTALEXTINCTION, L_USBFREQUENCY, L_VMR, L_XYZ
-  use INTRINSIC, only: L_HDF, LIT_INDICES
-  use LEXER_CORE, only: PRINT_SOURCE
-  use MLSCOMMON, only: DEFAULTUNDEFINEDVALUE, MLSFILE_T
-  use MLSKINDS, only: R8, R4
-  use MLSL2OPTIONS, only: DEFAULT_HDFVERSION_READ, DEFAULT_HDFVERSION_WRITE
-  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
-    & MLSMSG_ERROR, MLSMSG_WARNING
-  use MLSSIGNALS_M, only: GETMODULENAME, MODULES
-  use MLSSTRINGS, only: LOWERCASE
-  use MLSSTRINGLISTS, only: ARRAY2LIST, GETSTRINGELEMENT, LIST2ARRAY, &
-    & NUMSTRINGELEMENTS, STRINGELEMENT
-  use OUTPUT_M, only: OUTPUT
-  use QUANTITYTEMPLATES, only: QUANTITYTEMPLATE_T
-  use STRING_TABLE, only: GET_STRING, DISPLAY_STRING
+  use allocate_deallocate, only: allocate_test, deallocate_test
+  use dump_0, only: dump
+  use hdf, only: dfacc_create, dfacc_rdonly, dfacc_rdwr, dfnt_float32, &
+    & dfnt_int32, sfcreate, sfdimid, sfendacc, sfgdinfo, sfginfo, &
+    & sfn2index, sfrdata_f90, sfsdmname, sfsdscale, sfselect, sfwdata_f90
+  use init_tables_module, only: l_baseline, l_channel, l_chisqchan, &
+    & l_chisqmmaf, l_chisqmmif, l_chunk, l_cloudextinction, &
+    & l_cloudinducedradiance, l_cloudradsensitivity, l_cloudwater, &
+    & l_dnwt_ajn, l_dnwt_axmax, l_dnwt_cait, l_dnwt_chisqminnorm, &
+    & l_dnwt_chisqnorm, l_dnwt_diag, l_dnwt_dxdx, l_dnwt_dxdxl, &
+    & l_dnwt_dxn, l_dnwt_dxnl, l_dnwt_flag, l_dnwt_fnmin, l_dnwt_fnorm, &
+    & l_dnwt_gdx, l_dnwt_gfac, l_dnwt_gradn, l_dnwt_sq, l_dnwt_sqt, &
+    & l_effectiveopticaldepth, l_elevoffset, l_frequency, l_geodangle, &
+    & l_height, l_heightoffset, l_intermediatefrequency, l_iteration, &
+    & l_jacobian_cols, l_jacobian_rows, l_limbsidebandfraction, &
+    & l_lostransfunc, l_losvel, l_lsbfrequency, l_maf, &
+    & l_massmeandiameterice, l_massmeandiameterwater, l_mif, &
+    & l_mifextinction, l_mifextinctionv2, l_noisebandwidth, l_none, &
+    & l_noradspermif, l_numj, l_opticaldepth, l_orbitinclination, l_ascdescmode, &
+    & l_phasetiming, l_phitan, l_pressure, l_ptan, l_radiance, &
+    & l_reflspill, l_refltemp, l_scanresidual, l_sceci, l_scgeocalt, &
+    & l_scveleci, l_scvelecr, l_singlechannelradiance, l_sizedistribution, &
+    & l_spaceradiance, l_strayradiance, l_surfacetype, &
+    & l_systemtemperature, l_tngteci, l_tngtgeocalt, l_tngtgeodalt, &
+    & l_totalextinction, l_usbfrequency, l_vmr, l_xyz
+  use intrinsic, only: l_hdf, lit_indices
+  use lexer_core, only: print_source
+  use MLSCommon, only: defaultUndefinedValue, MLSFile_t
+  use MLSKinds, only: r8, r4
+  use MLSL2options, only: default_hdfversion_read, default_hdfversion_write
+  use MLSMessagemodule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Deallocate, &
+    & MLSMSG_Error, MLSMSG_Warning
+  use MLSSignals_m, only: getModuleName, modules
+  use MLSStrings, only: lowercase
+  use MLSStringLists, only: array2List, getStringElement, list2Array, &
+    & numStringElements, stringElement
+  use output_m, only: output
+  use quantityTemplates, only: quantityTemplate_t
+  use string_table, only: get_string, display_string
 
   implicit none
 
@@ -68,7 +68,7 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
 ! DestroyL2AUXContents            Deallocates all the arrays for one l2aux
 ! DestroyL2AUXDatabase            Deallocates all the arrays for entire database
 ! Dump                            Prints info on one quantity or entire database
-! ResizeL2AUXData          Expands an l2aux quantity to take more profiles
+! ResizeL2AUXData                 Expands an l2aux quantity to take more profiles
 ! ReadL2AUXData                   Reads an l2aux quantity from a file
 ! SetupNewL2AUXRecord             Allocates the arrays for an l2aux quantity
 ! WriteL2AUXData                  Writes an l2aux quantity to a file
@@ -176,7 +176,7 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
   end type L2AUXData_T
 
   ! How long may the list of sd names grow (~80 x max num. of sds/file)
-  integer, public, parameter :: MAXNUMSDPERFILE = 200
+  integer, public, parameter :: MAXNUMSDPERFILE = 500
   integer, public, parameter :: MAXSDNAMESBUFSIZE = 80*MAXNUMSDPERFILE
   
   ! One quantity is recognized, but not copied, the other uncrecognized
@@ -189,8 +189,8 @@ contains ! =====     Public Procedures     =============================
 
   subroutine cpL2AUXData_MLSFile(L2AUXFile1, L2AUXFile2, &
     & create2, sdList, rename, options)
-    use MLSFILES, only: ARETHESAMEFILE
-    use MLSHDF5, only: GETALLHDF5DSNAMES
+    use MLSFiles, only: areTheSameFile
+    use MLSHdf5, only: getAllHDF5DSNames
     !-------------------------------------------------------------------
 
     ! Given file names file1 and file2,
@@ -271,7 +271,7 @@ contains ! =====     Public Procedures     =============================
               & 'Unrecognized quantity type for sd:' // trim(sdName) )
         cycle
       end if
-      call ReadL2AUXData ( L2AUXFile1, trim(sdName), QuantityType, l2aux, &
+      call ReadL2AUXData ( L2AUXFile1, trim(sdName), l2aux, QuantityType, &
            & checkDimNames=.false. )
       ! Write the filled l2aux to file2
       ! print *, 'writing ', trim(sdName)
@@ -287,12 +287,12 @@ contains ! =====     Public Procedures     =============================
 
   subroutine cpL2AUXData_Name(file1, file2, create2, hdfVersion, sdList, rename, &
     & options)
-    use Hdf, only: DFACC_READ, DFACC_RDWR
-    use HDF5, only: H5GCLOSE_F, H5GOPEN_F, H5DOPEN_F, H5DCLOSE_F
-    use MLSFILES, only: FILENOTFOUND, WILDCARDHDFVERSION, &
-      & MLS_EXISTS, MLS_HDF_VERSION, MLS_SFSTART, MLS_SFEND
-    use MLSHDF5, only: GETALLHDF5DSNAMES, GETHDF5ATTRIBUTE, &
-      & ISHDF5ATTRIBUTEPRESENT
+    use HDF, only: dfacc_read, dfacc_rdwr
+    use HDF5, only: h5gclose_f, h5gopen_f, h5dopen_f, h5dclose_f
+    use MLSFiles, only: fileNotFound, wildCardHDFVersion, &
+      & MLS_exists, mls_hdf_version, mls_sfstart, mls_sfend
+    use MLSHdf5, only: getAllHDF5DSNames, getHDF5Attribute, &
+      & isHDF5AttributePresent
     !-------------------------------------------------------------------
 
     ! Given file names file1 and file2,
@@ -426,7 +426,7 @@ contains ! =====     Public Procedures     =============================
               & 'Unrecognized quantity type for sd:' // trim(sdName) )
         cycle
       end if
-      call ReadL2AUXData ( sdfid1, trim(sdName), QuantityType, l2aux, &
+      call ReadL2AUXData ( sdfid1, trim(sdName), l2aux, QuantityType, &
            & checkDimNames=.false., hdfVersion=hdfVersion )
       if ( renameSwaths ) sdName = StringElement ( rename, i, countEmpty )
       ! Write the filled l2aux to file2
@@ -800,10 +800,10 @@ contains ! =====     Public Procedures     =============================
   end subroutine Dump_L2AUX
     
   !-----------------------------------------------  ReadL2AUXData_FileHandle  -----
-  subroutine ReadL2AUXData_FileHandle(sd_id, quantityname, quantityType, l2aux, &
-    & firstProf, lastProf, checkDimNames, hdfVersion)
+  subroutine ReadL2AUXData_FileHandle( sd_id, quantityname, l2aux, inQuantityType, &
+    & firstProf, lastProf, checkDimNames, hdfVersion )
 
-  use MLSFiles, only: INITIALIZEMLSFILE
+  use MLSFiles, only: initializeMLSFile
 
     ! This routine reads an l2aux file, returning a filled data structure
     ! and the number of profiles read.
@@ -812,36 +812,43 @@ contains ! =====     Public Procedures     =============================
 
     character (LEN=*), intent(IN) :: quantityname ! Name of L2AUX quantity = sdname in writing routine
     integer, intent(IN) :: sd_id ! Returned by sfstart before calling us
-    integer, intent(in) :: QuantityType ! Lit index
+    integer, intent(in), optional :: inQuantityType ! Lit index
     integer, intent(IN), optional :: firstProf, lastProf ! Defaults to first and last
     type( L2AUXData_T ), intent(OUT) :: l2aux ! Result
     logical, optional, intent(in) :: checkDimNames
     integer, intent(in), optional :: hdfVersion
     ! Local variables
     integer :: myhdfVersion
+    integer :: QuantityType
     type( MLSFile_T ), target  :: l2auxFile
     type( MLSFile_T ), pointer :: l2auxPointer
     integer :: status
     ! Executable code
     myhdfVersion = default_hdfversion_read
     if ( present(hdfVersion) ) myhdfVersion = hdfVersion
+    if ( present(inQuantityType) ) then
+      QuantityType = inQuantityType
+    else
+      QuantityType = GetQuantityTypeFromName(trim(quantityname))
+    endif
     status = InitializeMLSFile(l2auxFile, type=l_hdf, access=DFACC_RDONLY, &
       & content='l2aux', name='unknown', hdfVersion=myhdfVersion)
     l2auxFile%FileID%f_id = sd_id
     l2auxFile%stillOpen = .true.
     l2auxPointer => l2auxFile
-    call ReadL2AUXData(l2auxPointer, quantityname, quantityType, l2aux, firstProf, lastProf, &
-      & checkDimNames)
+    if ( deebug ) print *, 'About to call ReadL2AUXData_MLSFile'
+    call ReadL2AUXData( l2auxPointer, quantityname, l2aux, &
+      & quantityType, firstProf, lastProf, checkDimNames )
 
   end subroutine ReadL2AUXData_FileHandle
 
   !-----------------------------------------------  ReadL2AUXData_MLSFile  -----
-  subroutine ReadL2AUXData_MLSFile(L2AUXFile, quantityname, quantityType, l2aux,&
+  subroutine ReadL2AUXData_MLSFile(L2AUXFile, quantityname, l2aux, inQuantityType, &
     & firstProf, lastProf, checkDimNames)
 
-    use MLSFiles, only: HDFVERSION_4, HDFVERSION_5, &
-      & MLS_CLOSEFILE, MLS_OPENFILE
-    use TRACE_M, only: TRACE_BEGIN, TRACE_END
+    use MLSFiles, only: HDFVersion_4, HDFVersion_5, &
+      & mls_closefile, mls_openfile
+    use trace_m, only: trace_begin, trace_end
 
     ! This routine reads an l2aux file, returning a filled data structure
     ! and the number of profiles read.
@@ -850,7 +857,7 @@ contains ! =====     Public Procedures     =============================
 
     character (LEN=*), intent(IN) :: quantityname ! Name of L2AUX quantity = sdname in writing routine
     type(MLSFile_T), pointer      :: L2AUXFile
-    integer, intent(in) :: QuantityType ! Lit index
+    integer, intent(in), optional :: inQuantityType ! Lit index
     integer, intent(IN), optional :: firstProf, lastProf ! Defaults to first and last
     type( L2AUXData_T ), intent(OUT) :: l2aux ! Result
     logical, optional, intent(in) :: checkDimNames
@@ -859,10 +866,16 @@ contains ! =====     Public Procedures     =============================
     logical :: alreadyOpen
     integer :: Me = -1                  ! String index for trace cacheing
     integer :: returnStatus
+    integer :: QuantityType
 
     ! Executable code
     call trace_begin ( me, 'ReadL2AUXData_MLSFile', cond=.false. )
     returnStatus = 0
+    if ( present(inQuantityType) ) then
+      QuantityType = inQuantityType
+    else
+      QuantityType = GetQuantityTypeFromName(trim(quantityname))
+    endif
     alreadyOpen = L2AUXFile%stillOpen
     if ( L2AUXFile%access == DFACC_CREATE ) then
       call MLSMessage(MLSMSG_Error, trim(ModuleName) // ' ReadL2AUXData_MLSFile', &
@@ -874,6 +887,7 @@ contains ! =====     Public Procedures     =============================
         call MLSMessage(MLSMSG_Error, ModuleName, &
         & 'Unable to open l2aux file for reading', MLSFile=L2AUXFile)
     end if
+    if ( deebug ) print *, 'Must choose to read based on ', L2AUXFile%hdfVersion
     select case (L2AUXFile%hdfVersion)
     case (HDFVERSION_4)
       call ReadL2AUXData_MF_hdf4(L2AUXFile, quantityname, quantityType, l2aux, &
@@ -1049,7 +1063,7 @@ contains ! =====     Public Procedures     =============================
   ! -----------------------------------------  ReadL2AUXData_MF_hdf5  -----
   subroutine ReadL2AUXData_MF_hdf5(L2AUXFile, quantityname, quantityType, l2aux, &
     & firstProf, lastProf, checkDimNames)
-    use L1BData, only: L1BDATA_T, READL1BDATA
+    use L1BData, only: L1BData_T, readL1BData
 
     ! This routine reads an l2aux file, returning a filled data structure and the
     ! number of profiles read.
@@ -1086,7 +1100,8 @@ contains ! =====     Public Procedures     =============================
       & // trim(QuantityName) // ' (perhaps too unlike a radiance)', MLSFile=L2AUXFile )
 
     dim_families(1) = l_channel                      
-    data_dim_sizes = shape(L1BDATA1%DpField)          
+    data_dim_sizes = shape(L1BDATA1%DpField)
+    if ( deebug ) print *, 'shape(L1BDATA1%DpField): ', shape(L1BDATA1%DpField)
     dim_families(2) = l_mif                          
     dim_families(3) = l_maf                          
     call SetupNewl2auxRecord ( l2aux, inputDimFamilies=dim_families, &
@@ -1105,7 +1120,7 @@ contains ! =====     Public Procedures     =============================
   subroutine WriteL2AUXData_FileHandle(l2aux, sd_id, returnStatus, sdName, &
     & NoMAFS, WriteCounterMAF, DimNames, Reuse_dimNames, hdfVersion)
 
-  use MLSFiles, only: INITIALIZEMLSFILE
+  use MLSFiles, only: initializemlsfile
 
   ! Write l2aux to the file with l2FileHandle
   ! Optionally, write a bogus CounterMAF sd so the
@@ -1142,9 +1157,9 @@ contains ! =====     Public Procedures     =============================
   subroutine WriteL2AUXData_MLSFile(l2aux, L2AUXFile, returnStatus, sdName, &
     & NoMAFS, WriteCounterMAF, DimNames, Reuse_dimNames)
 
-    use MLSFiles, only: HDFVERSION_4, HDFVERSION_5, &
-      & MLS_CLOSEFILE, MLS_OPENFILE
-    use TRACE_M, only: TRACE_BEGIN, TRACE_END
+    use MLSFiles, only: hdfversion_4, hdfversion_5, &
+      & mls_closefile, mls_openfile
+    use trace_m, only: trace_begin, trace_end
 
   ! Write l2aux to the file with l2FileHandle
   ! Optionally, write a bogus CounterMAF sd so the
@@ -1203,12 +1218,12 @@ contains ! =====     Public Procedures     =============================
   ! resulting file can masquerade as an l1BRad
   ! (Note that this bogus sd should only be written once for each file;
   !  also note the attempt to convert l2aux%values to KIND of l1b radiances)
-    use HDF5, only: H5GCLOSE_F, H5GOPEN_F
-    use MLS_DATAPRODUCTS, only: DATAPRODUCTS_T
-    use MLSAUXDATA, only: BUILD_MLSAUXDATA
-    use MLSHDF5, only: ISHDF5ATTRIBUTEPRESENT, MAKEHDF5ATTRIBUTE, SAVEASHDF5DS
-    use MLSL2TIMINGS, only: SHOWTIMINGNAMES
-    use PCFHDR, only: H5_WRITEGLOBALATTR
+    use HDF5, only: h5gclose_f, h5gopen_f
+    use MLS_Dataproducts, only: dataproducts_t
+    use MLSAUXdata, only: build_MLSAUXData
+    use MLSHDF5, only: ishdf5attributepresent, makeHDF5Attribute, saveAsHDF5DS
+    use MLSL2Timings, only: showTimingNames
+    use PCFHDR, only: h5_writeGlobalAttr
 
     type (L2AUXData_T), intent(inout) :: L2AUX
     type(MLSFile_T)                :: L2AUXFile
@@ -1491,7 +1506,7 @@ contains ! =====     Public Procedures     =============================
 
   ! ---------------------------------------  WriteL2AUXAttributes  -----
   subroutine WriteL2AUXAttributes ( L2FileHandle, l2aux, name)
-    use MLSHDF5, only: MAKEHDF5ATTRIBUTE
+    use MLSHDF5, only: makeHDF5Attribute
     ! Writes the pertinent attributes for an l2aux
     ! Arguments
     integer, intent(in) :: L2FileHandle
@@ -1916,8 +1931,8 @@ contains ! =====     Public Procedures     =============================
 
   ! ---------------------------------------------  ANNOUNCE_ERROR  -----
   subroutine ANNOUNCE_ERROR ( WHERE, full_message, CODE, L2AUXFile )
-    use MLSFiles, only: DUMP
-    use TREE, only: Where_At => Where
+    use MLSFiles, only: Dump
+    use Tree, only: Where_At => Where
     integer, intent(in) :: WHERE   ! Tree node where error was noticed
     character(LEN=*), intent(in)    :: full_message
     integer, intent(in), optional :: CODE    ! Code for error message
@@ -1960,6 +1975,9 @@ end module L2AUXData
 
 
 ! $Log$
+! Revision 2.97  2015/08/03 21:43:03  pwagner
+! Made quantityType optional in call to ReadL2AUXData
+!
 ! Revision 2.96  2015/03/28 02:47:33  vsnyder
 ! Added stuff to trace allocate/deallocate addresses
 !
