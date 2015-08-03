@@ -608,8 +608,9 @@ contains ! =====     Public Procedures     =============================
       l2Index = AddL2AUXToDatabase( L2AUXDatabase, l2aux )
       call decorate ( key, l2Index )
       pL2AUXFile => filedatabase(FileIndex)
-      call ReadL2AUXData ( pL2AUXFile, sdNameString, quantityType, &
+      call ReadL2AUXData ( pL2AUXFile, sdNameString, &
         & L2AUXDatabase(l2Index), &
+        & quantityType, &
         & checkDimNames=.false. )
 
       ! if( switchDetail(switches, 'apr') > -1 ) then
@@ -1375,6 +1376,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.112  2015/08/03 21:43:50  pwagner
+! Made quantityType optional in call to ReadL2AUXData
+!
 ! Revision 2.111  2015/05/07 20:16:50  pwagner
 ! Fixed error affecting noPCFid
 !
