@@ -32,81 +32,82 @@ contains ! ====     Public Procedures     ==============================
   subroutine WALK_TREE_TO_DO_MLS_L2 ( ROOT, ERROR_FLAG, FIRST_SECTION, &
     & COUNTCHUNKS, FILEDATABASE, SECTIONSTOSKIP )
 
-    use algebra_m, only: algebra
-    use allocate_deallocate, only: allocate_test, deallocate_test
-    use antennapatterns_m, only: destroy_ant_patterns_database
-    use chunkdivide_m, only: chunkdivide, destroychunkdatabase
-    use chunks_m, only: dump, MLSchunk_t
-    use construct, only: MLSl2construct, MLSl2deconstruct, &
-      & constructmifgeolocation
-    use directwrite_m, only: directdata_t, destroydirectdatabase
-    use dump_0, only: dump
-    use empiricalgeometry, only: forgetoptimumlon0
-    use fgrid, only: fgrid_t, destroyfgriddatabase, dump
-    use fill, only: MLSl2fill
-    use forwardmodelconfig, only: forwardmodelconfig_t, &
-      & destroyfwmconfigdatabase, &
-      & stripforwardmodelconfigdatabase
-    use forwardmodelsupport, only: printforwardmodeltiming
-    use global_settings, only: set_global_settings
-    use griddeddata, only: griddeddata_t, destroygriddeddatadatabase, dump
-    use hessianmodule_1, only: destroyhessiandatabase, hessian_t
-    use hgridsdatabase, only: hgrid_t
-    use hgrid, only: computeallhgridoffsets, DestroyHGridGeoLocations
-    use highoutput, only: getstamp, setstamp
-    use init_tables_module, only: l_chisqchan, l_chisqmmaf, l_chisqmmif,  &
-      & section_first, section_last, &
-      & z_algebra, z_chunkdivide,  z_construct, z_fill, z_globalsettings, &
-      & z_join, z_mergegrids, z_MLSsignals, z_output, z_readapriori,      &
-      & z_retrieve, z_spectroscopy
-    use intrinsic, only: section_indices
-    use join, only: MLSl2join
-    use l2auxdata, only: destroyl2auxdatabase, l2auxdata_t, dump
-    use l2fwmparallel, only: l2fwmslavetask, launchfwmslaves
-    use l2gpdata, only: destroyl2gpdatabase, l2gpdata_t, dump
-    use l2parallel, only: getchunkinfofrommaster, l2mastertask
-    use l2parinfo, only: parallel, closeparallel
-    use l2pc_m, only: destroyl2pcdatabase, destroybinselectordatabase
-    use l2pcbins_m, only: flushlockedbins
-    use matrixmodule_1, only: destroymatrixdatabase, matrix_database_t
-    use mergegridsmodule, only: mergegrids
-    use MLScommon, only: tai93_range_t, MLSfile_t
-    use MLSl2options, only: aura_l1bfiles, checkpaths, currentchunknumber, &
-      & l2cfnode, need_l1bfiles, &
-      & skipdirectwrites, skipdirectwritesoriginal, &
-      & skipretrieval, slavescleanupselves, specialdumpfile, stopaftersection, &
-      & MLSmessage, toolkit
-    use MLSmessagemodule, only: MLSmsg_allocate, MLSmsg_info, &
-      & MLSmsg_error, summarizewarnings
-    use MLSpcf2, only: MLSpcf_spectroscopy_end
-    use MLSfinds, only: findfirst
-    use MLSsignals_m, only: bands, destroybanddatabase, destroymoduledatabase, &
-      & destroyradiometerdatabase, destroysignaldatabase, &
-      & destroyspectrometertypedatabase, isspacecraftaura, &
-      & MLSsignals, modules, radiometers, &
-      & signals, spectrometertypes
-    use MLSstringlists, only: expandstringrange, isinlist, switchdetail
-    use MLSstrings, only: lowercase
-    use MLSl2timings, only: add_to_section_timing, total_times
-    use next_tree_node_m, only: next_tree_node, next_tree_node_state
-    use open_init, only: openandinitialize
-    use outputandclose, only: output_close
-    use output_m, only: blanks, output, &
-      & resumeoutput, revertoutput, switchoutput
-    use pointinggrid_m, only: destroy_pointing_grid_database
-    use quantitytemplates, only: quantitytemplate_t
-    use readapriori, only: read_apriori
-    use retrievalmodule, only: retrieve
-    use spectroscopycatalog_m, only: destroy_line_database, &
-      & destroy_spectcat_database, spectroscopy
-    use string_table, only: get_string
-    use time_m, only: time_now
-    use toggles, only: gen, levels, switches, toggle
-    use trace_m, only: trace_begin, trace_end
-    use tree, only: decoration, nsons, subtree
-    use vectorsmodule, only: destroyvectordatabase, dump_vectors, &
-      & vector_t, vectortemplate_t
-    use vgridsdatabase, only: destroyvgriddatabase, vgrids
+    use Algebra_m, only: algebra
+    use Allocate_deallocate, only: allocate_test, deallocate_test
+    use Antennapatterns_m, only: destroy_ant_patterns_database
+    use Chunkdivide_m, only: chunkdivide, destroychunkdatabase
+    use Chunks_m, only: dump, MLSchunk_t
+    use Construct, only: MLSl2construct, MLSl2deconstruct, &
+      & Constructmifgeolocation
+    use DirectWrite_m, only: directdata_t, destroydirectdatabase
+    use Dump_0, only: dump
+    use Empiricalgeometry, only: forgetoptimumlon0
+    use Fgrid, only: fgrid_t, destroyfgriddatabase, dump
+    use Fill, only: MLSl2fill
+    use Forwardmodelconfig, only: forwardmodelconfig_t, &
+      & Destroyfwmconfigdatabase, &
+      & Stripforwardmodelconfigdatabase
+    use Forwardmodelsupport, only: printforwardmodeltiming
+    use Global_settings, only: set_global_settings
+    use Griddeddata, only: griddeddata_t, destroygriddeddatadatabase, dump
+    use Hessianmodule_1, only: destroyhessiandatabase, hessian_t
+    use Hgridsdatabase, only: hgrid_t
+    use Hgrid, only: computeallhgridoffsets, DestroyHGridGeoLocations
+    use HighOutput, only: beVerbose, outputNamedValue, getstamp, setstamp
+    use Init_tables_module, only: l_chisqchan, l_chisqmmaf, l_chisqmmif,  &
+      & Section_first, section_last, &
+      & Z_algebra, z_chunkdivide,  z_construct, z_fill, z_globalsettings, &
+      & Z_join, z_mergegrids, z_MLSsignals, z_output, z_readapriori,      &
+      & Z_retrieve, z_spectroscopy
+    use Intrinsic, only: section_indices
+    use Join, only: MLSl2join
+    use L2auxdata, only: destroyl2auxdatabase, l2auxdata_t, dump
+    use L2fwmparallel, only: l2fwmslavetask, launchfwmslaves
+    use L2gpdata, only: destroyl2gpdatabase, l2gpdata_t, dump
+    use L2parallel, only: getchunkinfofrommaster, l2mastertask
+    use L2parinfo, only: parallel, closeparallel
+    use L2pc_m, only: destroyl2pcdatabase, destroybinselectordatabase
+    use L2pcbins_m, only: flushlockedbins
+    use Matrixmodule_1, only: destroymatrixdatabase, matrix_database_t
+    use Mergegridsmodule, only: mergegrids
+    use MLSCommon, only: tai93_range_t, MLSfile_t
+    use MLSL2Options, only: aura_l1bfiles, checkpaths, currentchunknumber, &
+      & L2cfnode, need_l1bfiles, &
+      & Skipdirectwrites, skipdirectwritesoriginal, &
+      & Skipretrieval, slavescleanupselves, specialdumpfile, stopaftersection, &
+      & MLSMessage, toolkit
+    use MLSMessageModule, only: MLSMSG_Allocate, MLSMSG_Info, &
+      & MLSMsg_error, summarizewarnings
+    use MLSPCF2, only: MLSpcf_spectroscopy_end
+    use MLSFinds, only: findfirst
+    use MLSSignals_m, only: bands, destroybanddatabase, destroymoduledatabase, &
+      & Destroyradiometerdatabase, destroysignaldatabase, &
+      & Destroyspectrometertypedatabase, isspacecraftaura, &
+      & MLSSignals, modules, radiometers, &
+      & Signals, spectrometertypes
+    use MLSStringlists, only: expandstringrange, isinlist, switchdetail
+    use MLSStrings, only: lowercase
+    use MLSL2Timings, only: add_to_section_timing, total_times
+    use Next_tree_node_m, only: dump, isStateNull, &
+      & Next_tree_node, next_tree_node_state
+    use Open_init, only: openandinitialize
+    use Outputandclose, only: output_close
+    use Output_m, only: blanks, output, &
+      & Resumeoutput, revertoutput, switchoutput
+    use PointingGrid_m, only: destroy_pointing_grid_database
+    use QuantityTemplates, only: quantitytemplate_t
+    use ReadApriori, only: read_apriori
+    use RetrievalModule, only: retrieve
+    use SpectroscopyCatalog_m, only: destroy_line_database, &
+      & Destroy_spectcat_database, spectroscopy
+    use String_table, only: get_string
+    use Time_m, only: time_now
+    use Toggles, only: gen, levels, switches, toggle
+    use Trace_m, only: trace_begin, trace_end
+    use Tree, only: decoration, nsons, subtree
+    use VectorsModule, only: destroyVectorDatabase, dump_vectors, &
+      & Vector_t, vectorTemplate_t
+    use VgridsDatabase, only: destroyVGridDatabase, vgrids
 
     integer, intent(in) ::     ROOT        ! Root of the abstract syntax tree
     integer, intent(out) ::    ERROR_FLAG  ! Nonzero means failure
@@ -153,6 +154,7 @@ contains ! ====     Public Procedures     ==============================
     real    ::                                   t1, t2, tChunk
     character(len=24) ::                         textCode
     type (Vector_T), dimension(:), pointer ::    Vectors
+    logical :: verbose
     logical :: warnOnDestroy        ! Whether to warn before destroying dbs
 
     ! Arguments for Construct not declared above:
@@ -161,6 +163,7 @@ contains ! ====     Public Procedures     ==============================
     type (VectorTemplate_T), dimension(:), pointer :: VectorTemplates
 
     ! Executable
+    verbose = BeVerbose ( 'walk', -1 )
     call trace_begin ( me, 'WALK_TREE_TO_DO_MLS_L2', &
       & subtree(first_section,root), index=first_section, cond=toggle(gen) )
     call time_now ( t1 )
@@ -203,6 +206,7 @@ contains ! ====     Public Procedures     ==============================
     ! -----------------------------------------------------
     ! ----------------------------------------------------- Loop over tree
 
+    chunkNo = 0
     ! Now loop over the sections in the tree
     do
       save1 = state
@@ -222,6 +226,7 @@ contains ! ====     Public Procedures     ==============================
 
         ! -------------------------------------------------------- Init sections
       case ( z_globalsettings )
+        if ( verbose ) call Dump ( state, 'at globalsttings' )
         call set_global_settings ( son, forwardModelConfigDatabase, &
           & filedatabase, fGrids, l2gpDatabase, DirectDatabase, processingRange )
         call add_to_section_timing ( 'global_settings', t1, now_stop )
@@ -230,6 +235,7 @@ contains ! ====     Public Procedures     ==============================
           return
         end if
       case ( z_mlsSignals )
+        if ( verbose ) call Dump ( state, 'at mlsSignals' )
         call MLSSignals ( son )
         if ( switchDetail(switches,'tps') > -1 ) then
           ! call test_parse_signals
@@ -247,6 +253,7 @@ contains ! ====     Public Procedures     ==============================
           return
         end if
       case ( z_spectroscopy )
+        if ( verbose ) call Dump ( state, 'at spectroscopy' )
         call spectroscopy ( son, &
           & TOOLKIT, mlspcf_spectroscopy_end, fileDatabase )
         call add_to_section_timing ( 'spectroscopy', t1, now_stop )
@@ -255,6 +262,7 @@ contains ! ====     Public Procedures     ==============================
           return
         end if
       case ( z_readapriori )
+        if ( verbose ) call Dump ( state, 'at readapriori' )
         if ( .not. ( stopBeforeChunkLoop .or. parallel%master ) ) &
           & call read_apriori ( son , &
           & l2gpDatabase, l2auxDatabase, griddedDataBase, fileDataBase )
@@ -278,6 +286,7 @@ contains ! ====     Public Procedures     ==============================
           return
         end if
       case ( z_chunkdivide )
+        if ( verbose ) call Dump ( state, 'at chunkdivide' )
         if ( parallel%slave .and. .not. parallel%fwmParallel ) then
           call GetChunkInfoFromMaster ( chunks, chunkNo )
           firstChunk = chunkNo
@@ -320,6 +329,7 @@ contains ! ====     Public Procedures     ==============================
         ! ---------------------------------------------------- Chunk processing
         ! Now construct, fill, join and retrieve live inside the 'chunk loop'
       case ( z_construct, z_fill, z_join, z_retrieve )
+        if ( verbose ) call Dump ( state, 'at other' )
         ! Do special stuff in some parallel cases, or where there are
         ! no chunks.
         if ( .not. associated(chunks) ) then
@@ -386,12 +396,13 @@ contains ! ====     Public Procedures     ==============================
             & COMPLAINIFSKIPPEDEVERYCHUNK ) &
               & call MLSMessage ( MLSMSG_Error, ModuleName, &
               & 'We have skipped every chunk' )
+          if ( verbose ) call Dump( save1, 'save1' )
           do chunkNo = firstChunk, lastChunk ! --------------------- Chunk loop
             state = save1 ! Back up so first repeated section is next
             call resumeOutput ! In case the last phase was  silent
             if ( chunksSkipped(chunkNo) ) cycle
             call time_now ( tChunk )
-            if ( switchDetail(switches,'chu') > -1 ) then
+            if ( switchDetail(switches,'chu') > -1 .or. verbose ) then
               call output ( " ================ Starting processing for chunk " )
               call output ( chunkNo )
               call output ( " ================ ", advance='yes' )
@@ -406,6 +417,7 @@ subtrees:   do
               ! in the outer loop
               save2 = state ! before advancing to section below
               son = next_tree_node(root,state)
+              if ( verbose ) call Dump ( state, 'inner state' )
               if ( son == 0 ) exit subtrees
               L2CFNODE = son
               section_index = decoration(subtree(1,son))
@@ -705,6 +717,9 @@ subtrees:   do
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.197  2015/06/19 20:40:04  pwagner
+! Explicitly destroy HGrid gelocations if a master
+!
 ! Revision 2.196  2014/10/07 00:22:32  pwagner
 ! -gn doesnt automatically dump chunks
 !
