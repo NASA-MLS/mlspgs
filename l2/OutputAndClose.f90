@@ -544,9 +544,9 @@ contains ! =====     Public Procedures     =============================
       & MLSPCF_l2gp_start, MLSPCF_l2dgg_start, MLSPCF_l2dgg_end, &
       & MLSPCF_mcf_l2dgm_start, MLSPCF_mcf_l2dgg_start, &
       & MLSPCF_mcf_l2gp_start
-    use MLSStringLists, only: list2array, numstringelements
+    use MLSStringLists, only: getHashElement, list2array, numStringElements
     use output_m, only: output
-    use writemetadata, only: populate_metadata_std, &
+    use writeMetadata, only: L2PCF, populate_metadata_std, &
       & populate_metadata_oth, get_l2gp_mcf
   ! Deal with metadata--1st for direct write, but later for all cases
   integer, intent(in) :: node
@@ -600,7 +600,10 @@ contains ! =====     Public Procedures     =============================
          & .true., returnStatus, Version, DEBUG, &
          & exactName=PhysicalFilename)
        l2gp_mcf = l2dgg_mcf
-       l2metaData%doiIdentifier = '10.5067/AURA/MLS/DATA2006'
+       call GetHashElement ( l2pcf%spec_keys, l2pcf%spec_doinames      , &
+          & 'dgg', l2metaData%doiIdentifier, .TRUE. )
+       if ( len_trim(l2metaData%doiIdentifier) < 1 ) &
+         & l2metaData%doiIdentifier = '10.5067/AURA/MLS/DATA2006'
      else
        FileHandle = GetPCFromRef(file_base, mlspcf_l2gp_start, &
          & mlspcf_l2gp_end, &
@@ -707,12 +710,15 @@ contains ! =====     Public Procedures     =============================
          end do
        endif
      endif
+     call GetHashElement ( l2pcf%spec_keys, l2pcf%spec_doinames      , &
+          & 'dgm', l2metaData%doiIdentifier, .TRUE. )
+     if ( len_trim(l2metaData%doiIdentifier) < 1 ) &
+       & l2metaData%doiIdentifier = '10.5067/AURA/MLS/DATA2007'
      call populate_metadata_oth &
        & ( FileHandle, l2aux_mcf, &
        & numquantitiesperfile, QuantityNames, l2metaData, &
        & hdfVersion=hdfVersion, metadata_error=metadata_error, &
        & filetype=filetype  )
-       l2metaData%doiIdentifier = '10.5067/AURA/MLS/DATA2007'
   case ( l_quantity )
     call MLSMessage( MLSMSG_Warning, ModuleName, &
       & "Unable to add metadata for the file type of "&
@@ -2132,6 +2138,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.193  2015/08/03 21:45:22  pwagner
+! Attempt to get dois for dgg and dgm like other prod names
+!
 ! Revision 2.192  2015/06/19 20:54:56  pwagner
 ! Avoid Copying text file if it does not exist
 !
