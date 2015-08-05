@@ -22,7 +22,15 @@ module cfm          ! callable forward model
    use Chunks_m, only: MLSChunk_T
    use CFM_IO_M, only: Read_Spectroscopy, ReadDACSFilterShapes, &
                      ReadAntennaPatterns, ReadFilterShapes, &
-                     ReadPointingGrids, ReadPFAFile, ReadHDF5L2PC
+                     ReadPointingGrids, ReadPFAFile, ReadHDF5L2PC, &
+                     Read_ptan, Write_To_File1, Write_To_File2, & ! Added by Pranjit Saha
+                     read_H5inputdata, & ! Added by Zheng Qu
+                     read_txtinputdata, & ! Added by Zheng Qu
+                     Write_To_HDF5, Write2HDF5, &  ! Added by Zheng Qu
+                     Copy_RadianceJacobian, path_join,  & ! Added by Zheng Qu
+                     Filter_RadianceJacobian, log_inputdata, & ! Added by Zheng Qu
+                     runLogFileUnit, errorLogFileUnit, runlog, & ! Added by Zheng Qu
+                        errlog, openLogFiles  ! Added by Zheng Qu
    use CFM_Matrix_M, only: CreatePlainMatrix
    use PFADatabase_m, only: Destroy_PFADataBase
    use L2PC_m, only: DestroyL2PCDatabase
@@ -65,7 +73,9 @@ module cfm          ! callable forward model
    use Hdf, only: DFACC_RDONLY
    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning, &
                                MLSMSG_Debug, MLSMSG_Info, MLSMSG_Crash, &
-                               MLSMSG_Success
+                               MLSMSG_Success, MLSMessageSetup, & 
+                               MLSMessageClose , MLSMessageExit
+
    use MatrixModule_1, only: Matrix_T, Dump, DestroyMatrix
 
    implicit none
@@ -88,6 +98,10 @@ contains
 end module cfm
 
 ! $Log$
+! Revision 1.25  2011/12/25 03:39:06  honghanh
+! Fix cloning and memory cleanup method
+! in forwardmodel2 subroutines.
+!
 ! Revision 1.24  2011/12/15 16:53:24  honghanh
 ! Correct the name of CreateMLSValue_EarthReflectivity
 !
