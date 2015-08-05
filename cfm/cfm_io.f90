@@ -141,7 +141,25 @@ module CFM_IO_M
        end subroutine openLogFiles
 
        !--------------------
-       
+       ! As coded, this works only with the Intel compiler
+       ! NAG generates a compile-time error, complaining about
+       ! the field named "DIRECTORY".
+       ! To repair it properly, we must relocate the function to
+       ! lib/machines.machine.f90
+       ! where the version for Intel, as written above, and a
+       ! separate version for NAG can be located. The NAG
+       ! version would be       
+       !   subroutine validate_path(path, modulename, varname)
+       !       implicit none
+       !       character(len=*), intent(in) :: path, modulename, varname
+       !       logical :: existsd, existsf
+       !        
+       !       inquire( DIRECTORY=trim(path), exist=existsd )
+       !       if (.NOT. (existsd .OR. existsf)) then
+       !            call errlog ( moduleName, &
+       !         &(/'Path '//trim(varname)//'='//trim(path)//' is not a valid path!'/)) 
+       !       endif
+       !   end subroutine validate_path
        subroutine validate_path(path, modulename, varname)
            implicit none
            character(len=*), intent(in) :: path, modulename, varname
@@ -723,7 +741,7 @@ module CFM_IO_M
       integer, parameter :: strlen=512, nfiles=5
       character(len=strlen) :: MLS_Files(nfiles)
       character(len=6) :: MLS_Files_missing(4) = &
-                (/'L1BOA', 'L1BRAD', 'L2GP', 'L2DGM'/)
+                (/'L1BOA ', 'L1BRAD', 'L2GP  ', 'L2DGM '/)
       character(len=10) :: YYYYDDD 
       
 

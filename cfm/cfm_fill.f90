@@ -211,7 +211,7 @@ module CFM_Fill_m
         use MLSNumerics, only: InterpolateValues, Hunt
         use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
 
-        type(VectorValue_T), intent(inout) :: quantity
+        type(VectorValue_T), intent(inout), target :: quantity
         logical, intent(in) :: dontMask
         real(r8), dimension(:), intent(in) :: heights
         real(r8), dimension(:), intent(in) :: values
@@ -392,6 +392,9 @@ module CFM_Fill_m
 end module
 
 ! $Log$
+! Revision 1.16  2013/07/26 16:48:15  pwagner
+! Consistent with removal of SCVEL
+!
 ! Revision 1.15  2013/07/10 17:51:24  pwagner
 ! Changed to be consistent with FromL1B api
 !

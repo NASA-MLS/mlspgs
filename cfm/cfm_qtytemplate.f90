@@ -206,9 +206,11 @@ module CFM_QuantityTemplate_m
       qty%fGridIndex = 0 ! we're not getting fgrid from fgridDatabase
       qty%hGridIndex = 0 ! we're not getting hgrid from hgridDatabase
       qty%vGridIndex = 0 ! we're not getting vgrid from vgridDatabase
+      qty%xGridIndex = 0
       qty%logBasis = .false.
       qty%minValue = -huge(0.0_r8)
       qty%molecule = 0
+      qty%horizontalCoordinate = l_phiTan
       noChans = 1
       qty%frequencyCoordinate = l_none
       radiometer = 0
@@ -226,7 +228,6 @@ module CFM_QuantityTemplate_m
       ! Because some quantities are provided by MLS, and some are supplied
       ! by GMAO, right now for simplicity, let's not share the grids
       qty%sharedVGrid = .false.
-      qty%sharedHGrid = .false.
       qty%sharedFGrid = .false.
       qty%badValue = huge(0.0_r8)   !Default bad value
       ! These field are not used in cfm
@@ -464,17 +465,19 @@ module CFM_QuantityTemplate_m
     ! Dummy arguments
     type ( QuantityTemplate_T ), intent(inout) :: QTY
     ! Executable code
-    qty%sharedHGrid = .false.
     qty%hGridIndex = 0
-    nullify( qty%frequencies, qty%geodLat, qty%lon, qty%time, qty%solarTime, &
-      & qty%solarZenith, qty%losAngle ) ! Lest we deallocate a database entry
-    call Allocate_test ( qty%phi, 1, 1, 'qty%phi(1,1)', ModuleName )
-    call Allocate_test ( qty%geodLat, 1, 1, 'qty%geodLat(1,1)', ModuleName )
-    call Allocate_test ( qty%lon, 1, 1, 'qty%lon(1,1)', ModuleName )
-    call Allocate_test ( qty%time, 1, 1, 'qty%time(1,1)', ModuleName )
-    call Allocate_test ( qty%solarTime, 1, 1, 'qty%solarTime(1,1)', ModuleName )
-    call Allocate_test ( qty%solarZenith, 1, 1, 'qty%solarZenith(1,1)', ModuleName )
-    call Allocate_test ( qty%losAngle, 1, 1, 'qty%losAngle(1,1)', ModuleName )
+    qty%xGridIndex = 0
+    ! Lest we deallocate a database entry:
+    nullify( qty%frequencies, qty%time, qty%solarTime, &
+      & qty%solarZenith, qty%losAngle, qty%crossAngles, qty%the_hGrid )
+    call allocate_test ( qty%phi, 1, 1, 'qty%phi(1,1)', ModuleName )
+    call allocate_test ( qty%geodLat, 1, 1, 'qty%geodLat(1,1)', ModuleName )
+    call allocate_test ( qty%lon, 1, 1, 'qty%lon1(1,1)', ModuleName )
+    call allocate_test ( qty%time, 1, 1, 'qty%time(1,1)', ModuleName )
+    call allocate_test ( qty%solarTime, 1, 1, 'qty%solarTime(1,1)', ModuleName )
+    call allocate_test ( qty%solarZenith, 1, 1, 'qty%solarZenith(1,1)', ModuleName )
+    call allocate_test ( qty%losAngle, 1, 1, 'qty%losAngle(1,1)', ModuleName )
+    call allocate_test ( qty%crossAngles, 1, 'qty%crossAngles(1)', ModuleName )
     qty%phi = 0.0
     qty%geodLat = 0.0
     qty%lon = 0.0
@@ -482,6 +485,7 @@ module CFM_QuantityTemplate_m
     qty%solarTime = 0.0
     qty%solarZenith = 0.0
     qty%losAngle = 0.0
+    qty%crossAngles = 0.0
   end subroutine SetupEmptyHGridForQuantity
 
   ! ---------------------------------- SetupEmptyVGridForQuantity
@@ -492,7 +496,6 @@ module CFM_QuantityTemplate_m
     qty%sharedVGrid = .false.
     qty%vGridIndex = 0
     qty%verticalCoordinate = l_none
-    nullify(qty%surfs) ! Lest we deallocate a database entry
     call Allocate_test ( qty%surfs, 1, 1, 'qty%surfs(1,1)', ModuleName )
     qty%surfs = 0. ! We used to have impossible values for bnd. prs.
   end subroutine SetupEmptyVGridForQuantity
@@ -536,7 +539,7 @@ module CFM_QuantityTemplate_m
 
      call SetupNewQuantityTemplate ( qty, noInstances=noMafs, &
       & noSurfs=1, coherent=.true., stacked=.true., regular=.true., &
-      & noChans=noChans, sharedHGrid=.false., sharedVGrid=.false. )
+      & noChans=noChans, sharedVGrid=.false. )
      call SetupEmptyVGridForQuantity(qty)
 
      qty%majorFrame = .true.
@@ -681,6 +684,9 @@ module CFM_QuantityTemplate_m
 end module
 
 ! $Log$
+! Revision 1.24  2013/07/26 16:48:15  pwagner
+! Consistent with removal of SCVEL
+!
 ! Revision 1.23  2011/12/23 22:56:12  honghanh
 ! Add AutoFillVector call to ForwardModel2 subroutine,
 ! to automatically add and fill isotope ratio in beta group
