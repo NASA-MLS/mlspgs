@@ -13,19 +13,19 @@
 program l2gpcat ! catenates split L2GPData files, e.g. dgg
 !=================================
 
-   use dump_0, only: DUMP
-   use Hdf, only: DFACC_CREATE
+   use dump_0, only: Dump
+   use Hdf, only: DFACC_CREATE, DFACC_RDONLY
    use HDF5, only: h5fis_hdf5_f   
    use Intrinsic, only: l_swath
    use L2GPData, only: L2GPData_T, L2GPNameLen, MAXSWATHNAMESBUFSIZE, RGP, &
      & AppendL2GPData, cpL2GPData, DestroyL2GPContents, ExtractL2GPRecord, &
      & ReadL2GPData, WriteL2GPData
-   use MACHINE, only: HP, GETARG
+   use Machine, only: hp, getarg
    use MLSCommon, only: MLSFile_t, L2Metadata_T
-   use MLSFiles, only: mls_exists, &
-     & HDFVERSION_4, HDFVERSION_5, MLS_INQSWATH, InitializeMLSFile
+   use MLSFiles, only: mls_exists, mls_closeFile, mls_openFile, &
+     & HDFVersion_4, HDFVersion_5, MLS_InqSwath, InitializeMLSFile
    use MLSHDF5, only: mls_h5open, mls_h5close
-   use MLSFinds, only: FindFirst
+   use MLSFinds, only: FindFirst, FindLast
    use MLSStringLists, only: catLists, GetStringElement, &
      & Intersection, NumStringElements, RemoveElemFromList, &
      & StringElement, StringElementNum
@@ -60,6 +60,7 @@ program l2gpcat ! catenates split L2GPData files, e.g. dgg
     logical ::               append   = .false.         ! append swaths with same name
     logical ::               catenate = .false.         ! catenate swaths with same name
     logical ::               columnsOnly = .false.
+    logical ::               ignoreFills = .false.      ! catenate swaths with same name
     logical ::               noDupSwaths = .false.      ! cp 1st, ignore rest   
     character(len=3) ::      convert= ' '               ! e.g., '425'
     character(len=255) ::    swathNames = ' '           ! which swaths to copy
@@ -79,6 +80,7 @@ program l2gpcat ! catenates split L2GPData files, e.g. dgg
   logical, parameter ::          DEEBUG = .false.
   character(len=255) :: filename          ! input filename
   character(len=255), dimension(MAXFILES) :: filenames
+  type(MLSFile_T), dimension(MAXFILES)    :: L2GPFiles
   integer            :: n_filenames
   integer     ::  i, j, status, error ! Counting indices & Error flags
   integer     :: elem
@@ -209,10 +211,128 @@ contains
       enddo
 
     enddo
-
   end subroutine append_swaths
 
 !------------------------- catenate_swaths ---------------------
+  subroutine catenate_swaths
+    if ( options%ignoreFills ) then
+      call catenate_non_Fills
+    else
+      call catenate_trimming_overlaps
+    endif
+  end subroutine catenate_swaths
+
+!------------------------- catenate_non_Fills ---------------------
+! catenate the profiles not containing Fills
+! In terms of the profile numbers, we will 
+! write starting with N+1 and continue up to M
+! So, if a represents values already in the file, and 
+! b represents value we will overwrite, then after overwriting we will have
+
+! a[1]   ..  a[N] b[k] b[k+1] .. b[M] a[M+1] ..
+! <---   N   --->  <---   M-k+1  --->
+
+  subroutine catenate_non_Fills
+    ! Internal variables
+    integer :: j
+    integer :: jj
+    integer :: k
+    integer :: kLopOff
+    type(L2GPData_T) :: l2gp
+    type( MLSFile_T ) :: l2gpFile
+    integer, parameter :: MAXNUMPROFS = 3500
+    integer :: numProfs
+    integer :: numTotProfs
+    type(L2GPData_T) :: ol2gp
+    real(rgp), dimension(MAXNUMPROFS) :: a
+    real(rgp), dimension(MAXNUMPROFS) :: b
+    integer :: l2FileHandle
+    integer :: N ! last profile number of a
+    integer :: M ! size of b
+    integer :: status
+    logical :: wroteAlready
+    real(rgp), parameter :: eps = 0.01_rgp
+    ! Executable
+    a = 0.
+    b = 0.
+    if ( options%verbose ) print *, 'Catenate l2gp data to: ', &
+      & trim(options%outputFile)
+    numswathssofar = mls_InqSwath ( filenames(1), SwathList, listSize, &
+           & hdfVersion=HDFVERSION_5)
+    if ( DEEBUG ) then
+      print *, 'swaths in file'
+      print *, trim(swathList)
+    endif
+    if ( options%swathNames /= ' ' ) then
+      swathList1 = swathList
+      swathList = Intersection( options%swathNames, swathList1 )
+    endif
+    status = InitializeMLSFile( l2gpFile, type=l_swath, access=DFACC_CREATE, &
+      & content='l2gp', name='unknown', hdfVersion=HDFVERSION_5 )
+    l2gpFile%name = options%outputFile
+    l2gpFile%stillOpen = .false.
+    call mls_openFile( L2GPFile, Status )
+    l2FileHandle = l2gpFile%FileID%f_id
+
+    do i=1, n_filenames
+      status = InitializeMLSFile( L2GPFiles(i), type=l_swath, access=DFACC_RDONLY, &
+        & content='l2gp', name=filenames(i), hdfVersion=HDFVERSION_5 )
+      L2GPFiles(i)%name = filenames(i)
+      L2GPFiles(i)%stillOpen = .false.
+      call mls_openFile( L2GPFiles(i), Status )
+    enddo
+
+    call GetStringElement( swathList, swath, 1, countEmpty )
+    do jj=1, NumStringElements( swathList, countEmpty )
+      call GetStringElement( swathList, swath, jj, countEmpty )
+      call time_now ( tFile )
+      if ( options%verbose ) print *, 'Catenating swath: ', trim(swath)
+      N = 0
+      M = 0
+      wroteAlready = .false.
+      numTotProfs = 0
+      do i=1, n_filenames
+        if ( options%verbose ) print *, 'Reading from: ', trim(filenames(i))
+        if ( i == 1 ) then
+          call ReadL2GPData( L2GPFiles(i)%FileID%f_id, swath, ol2gp, numProfs )
+          cycle
+        endif
+        call ReadL2GPData( L2GPFiles(i)%FileID%f_id, swath, l2gp, numProfs )
+        ! We will use ChunkNumbers to determine N and M
+        N = FindFirst( l2gp%chunkNumber > 0 ) - 1
+        M = FindLast( l2gp%chunkNumber > 0 )
+        ol2gp%latitude       (N+1:M)     = l2gp%latitude       (N+1:M)
+        ol2gp%longitude      (N+1:M)     = l2gp%longitude      (N+1:M)
+        ol2gp%solarTime      (N+1:M)     = l2gp%solarTime      (N+1:M)
+        ol2gp%solarZenith    (N+1:M)     = l2gp%solarZenith    (N+1:M)
+        ol2gp%losAngle       (N+1:M)     = l2gp%losAngle       (N+1:M)
+        ol2gp%geodAngle      (N+1:M)     = l2gp%geodAngle      (N+1:M)
+        ol2gp%time           (N+1:M)     = l2gp%time           (N+1:M)
+
+        ol2gp%chunkNumber    (N+1:M)     = l2gp%chunkNumber      (N+1:M)
+        ol2gp%status         (N+1:M)     = l2gp%status           (N+1:M)
+        ol2gp%quality        (N+1:M)     = l2gp%quality          (N+1:M)
+        ol2gp%convergence    (N+1:M)     = l2gp%convergence      (N+1:M)  
+        ol2gp%AscDescMode    (N+1:M)     = l2gp%AscDescMode      (N+1:M)  
+
+        ol2gp%l2gpValue      (:,:,N+1:M) = l2gp%l2gpValue        (:,:,N+1:M)    
+        ol2gp%l2gpPrecision  (:,:,N+1:M) = l2gp%l2gpPrecision    (:,:,N+1:M)    
+
+        call DestroyL2GPContents( l2gp )
+      enddo
+      call sayTime('Reading this swath', tFile)
+      call WriteL2GPData ( ol2gp, l2FileHandle, swath )
+      call sayTime('Writing this swath', tFile)
+      call DestroyL2GPContents( ol2gp )
+    enddo
+    call mls_closeFile( L2GPFile, Status )
+    do i=1, n_filenames
+      call mls_closeFile( L2GPFiles(i), Status )
+    enddo
+    call sayTime('catenating all swaths')
+  end subroutine catenate_non_Fills
+
+!------------------------- catenate_trimming_overlaps ---------------------
 ! Identify and trim overlaps as follows:
 ! let {a1 a2 .. aN} be an array of geodetic angles in one
 ! swath while {b1 b2 .. bM} is an array in the next swath
@@ -220,7 +340,7 @@ contains
 ! let k be the 1st b s.t. (b - a[N]) > eps
 ! Then keeping the a array values in the overlap region will result in
 !
-! a[1]   ..  a[N] b[k] b[k+1] .. b[M]
+! a[1]   ..  a[N] b[k] b[k+1] .. b[M] a[M+1] ..
 ! <---   N   --->  <---   M-k+1  --->
 
 ! A later wrinkle:
@@ -229,7 +349,7 @@ contains
 ! a[1]   ..  a[N-kL] b[k-kL] b[kL+1] .. b[M]
 ! <---   N-kL   --->  <---   M-k+kL+1  --->
 
-  subroutine catenate_swaths
+  subroutine catenate_trimming_overlaps
     ! Internal variables
     integer :: j
     integer :: jj
@@ -363,7 +483,7 @@ contains
       call sayTime('catenating this swath', tFile)
     enddo
     call sayTime('catenating all swaths')
-  end subroutine catenate_swaths
+  end subroutine catenate_trimming_overlaps
 
 !------------------------- copy_swaths ---------------------
   subroutine copy_swaths
@@ -489,6 +609,9 @@ contains
       elseif ( filename(1:4) == '-cat' ) then
         options%catenate = .true.
         exit
+      elseif ( filename(1:4) == '-ign' ) then
+        options%ignoreFills = .true.
+        exit
       elseif ( filename(1:3) == '-no' ) then
         options%noDupSwaths = .true.
         exit
@@ -565,6 +688,7 @@ contains
       write (*,*) '   -v            => switch on verbose mode'
       write (*,*) '   -append       => append or overwrite swaths with same name'
       write (*,*) '   -cat          => catenate swaths with same name'
+      write (*,*) '   -ignoreFills  => ignore profiles with Fill Values'
       write (*,*) '   -nodup        => if dup swath names, cp 1st only'
       write (*,*) '   -freqs m n    => keep only freqs in range m n'
       write (*,*) '   -levels m n   => keep only levels in range m n'
@@ -606,6 +730,9 @@ end program L2GPcat
 !==================
 
 ! $Log$
+! Revision 1.19  2014/09/12 22:22:14  pwagner
+! Fixed sense errors in len_trim tests
+!
 ! Revision 1.18  2014/09/12 00:04:08  pwagner
 ! Added -append commandline option to overwrite swath values in target file
 !

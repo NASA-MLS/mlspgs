@@ -14,14 +14,19 @@ program L2AUXcat ! catenates split L2AUX files, e.g. dgm
 !=================================
 
    use Dump_0, only: DUMP
-   use Hdf, only: DFACC_CREATE, DFACC_RDWR, DFACC_READ
+   use Hdf, only: DFACC_Create, DFACC_RDWR, DFACC_Read, DFACC_RDOnly
    use HDF5, only: h5fis_hdf5_f
    use HDFEOS5, only: HE5T_NATIVE_CHAR
-   use L2AUXData, only: L2AUXDATA_T, MAXSDNAMESBUFSIZE, &
-     & cpL2AUXData, WriteL2AUXData
-   use MACHINE, only: HP, GETARG
-   use MLSFiles, only: HDFVERSION_5
+   use Intrinsic, only: l_hdf
+   use L2AUXData, only: L2AUXData_t, maxSDNamesBufSize, &
+     & cpL2AUXData, destroyL2AUXContents, readL2AUXData, WriteL2AUXData
+   use machine, only: hp, getarg
+   use MLSFiles, only: HDFVERSION_5, Dump, InitializeMLSFile, &
+     & MLS_OpenFile, MLS_CloseFile
+   use MLSFinds, only: FindFirst, FindLast
+   use MLSCommon, only: MLSFile_T, defaultUndefinedValue
    use MLSHDF5, only: GetAllHDF5DSNames, mls_h5open, mls_h5close
+   use MLSKinds, only: r8
    use MLSMessageModule, only: MLSMessageConfig
    use MLSStringLists, only: catLists, GetStringElement, &
      & Intersection, NumStringElements, &
@@ -58,6 +63,7 @@ program L2AUXcat ! catenates split L2AUX files, e.g. dgm
     logical     :: verbose = .false.
     character(len=255) :: outputFile= 'default.h5'        ! output filename
     logical ::          noDupDSNames = .false.            ! cp 1st, ignore rest
+    logical ::          ignoreFills  = .false.
     logical     :: list = .false.
     character(len=255) ::    DSNames = ' '              ! which datasets to copy
     character(len=255) ::    rename = ' '               ! how to rename them
@@ -68,7 +74,7 @@ program L2AUXcat ! catenates split L2AUX files, e.g. dgm
 
   logical, parameter :: COUNTEMPTY = .false.
   logical     :: createdYet
-  logical, parameter :: DEEBUG = .false.
+  logical, parameter :: DEEBUG = .true.
   character(len=255) :: filename          ! input filename
   integer            :: n_filenames
   integer     ::  i, j, status, error ! Counting indices & Error flags
@@ -101,69 +107,211 @@ program L2AUXcat ! catenates split L2AUX files, e.g. dgm
      n_filenames = n_filenames + 1
      options%filenames(n_filenames) = filename
   enddo
-  createdYet = .false.
+  call time_now ( t1 )
   if ( n_filenames == 0 ) then
     if ( options%verbose ) print *, 'Sorry no input files supplied'
+  elseif ( options%list ) then
+    do i=1, n_filenames
+      print *, 'DS Names in: ', trim(options%filenames(i))
+      call GetAllHDF5DSNames (trim(options%filenames(i)), '/', mysdList)
+      call dump(mysdList, 'DS names')
+    enddo
+  elseif ( options%ignoreFills ) then
+    call catenate_non_Fills
   else
-    call time_now ( t1 )
-    if ( options%verbose .and. .not. options%list) print *, 'Copy l2aux data to: ', trim(options%outputFile)
+    call catenate_all
+  endif
+  if ( .not. options%list ) call sayTime('copying all files')
+  call mls_h5close(error)
+contains
+
+!------------------------- catenate_non_Fills ---------------------
+! catenate the MAFs not containing Fills
+! In terms of the MAF numbers, we will 
+! write starting with N+1 and continue up to M
+! So, if a represents values already in the file, and 
+! b represents value we will overwrite, then after overwriting we will have
+
+! a[1]   ..  a[N] b[k] b[k+1] .. b[M] a[M+1] ..
+! <---   N   --->  <---   M-k+1  --->
+
+  subroutine catenate_non_Fills
+    ! Internal variables
+    integer :: j
+    integer :: jj
+    integer :: k
+    integer :: kLopOff
+    type(l2auxData_T) :: l2aux
+    type( MLSFile_T ) :: l2auxFile
+    type(MLSFile_T), dimension(MAXFILES)    :: L2AUXFiles
+    integer, parameter :: MAXNUMPROFS = 3500
+    integer :: numProfs
+    integer :: numTotProfs
+    type(l2auxData_T) :: ol2aux
+    integer :: l2FileHandle
+    integer :: N ! last profile number of a
+    integer :: M ! size of b
+    real(r8) :: MissingValue
+    integer :: status
+    logical :: wroteAlready
+    integer, parameter :: FORBDIMS = 10
+    character(len=42), dimension(FORBDIMS), parameter :: forbiddens = (/ &
+      & 'HDFEOS INFORMATION/coremetadata.0        ', &
+      & 'HDFEOS INFORMATION/xmlmetadata           ', &
+      & 'PCF                                      ', &
+      & 'chunk number                             ', &
+      & 'leap seconds                             ', &
+      & 'master.ident                             ', &
+      & 'phase timing                             ', & 
+      & 'section timing                           ', & 
+      & 'solar zenith                             ', & 
+      & 'utc pole                                 ' /)
+      
+    ! Executable
+    MissingValue = real(defaultUndefinedValue, r8)
+    if ( options%verbose ) print *, 'Catenate l2aux data to: ', &
+      & trim(options%outputFile)
+    if ( DEEBUG ) then
+      print *, 'files to concatenate'
+      do i=1, n_filenames
+        print *, trim(options%filenames(i))
+      enddo
+    endif
+    call GetAllHDF5DSNames ( trim(options%filenames(1)), '/', mysdList )
+    if ( DEEBUG ) then
+      print *, 'datasets in file'
+      print *, trim(mysdList)
+    endif
+    if ( options%DSNames /= ' ' ) then
+      tempSdList = mysdList
+      mysdList = Intersection( options%DSNames, tempSdList )
+      if ( mysdList == ' ' ) return
+    endif
+    status = InitializeMLSFile( l2auxFile, type=l_hdf, access=DFACC_CREATE, &
+      & content='l2aux', name='unknown', hdfVersion=HDFVERSION_5 )
+    l2auxFile%name = options%outputFile
+    l2auxFile%stillOpen = .false.
+    call mls_openFile( l2auxFile, Status )
+    if ( status /= 0 ) then
+      print *, 'Unable to open trim(options%outputFile'
+      stop
+    endif
+    l2FileHandle = l2auxFile%FileID%f_id
+
+    do i=1, n_filenames
+      status = InitializeMLSFile( l2auxFiles(i), type=l_hdf, access=DFACC_RDONLY, &
+        & content='l2aux', name=options%filenames(i), hdfVersion=HDFVERSION_5 )
+      l2auxFiles(i)%name = options%filenames(i)
+      l2auxFiles(i)%stillOpen = .false.
+      call mls_openFile( l2auxFiles(i), Status )
+      if ( status /= 0 ) then
+        print *, 'Unable to open trim(options%filenames(i)'
+        stop
+      endif
+      call Dump( l2auxFiles(i), details=1 )
+    enddo
+
+    do jj=1, NumStringElements( mysdList, countEmpty )
+      call GetStringElement( mysdList, sdName, jj, countEmpty )
+      sdName = adjustl(sdName)
+      call time_now ( tFile )
+      ! Must skip forbidden datasets
+      if ( any(trim(sdName) == forbiddens) ) cycle
+      if ( trim(sdName) == 'HDFEOS INFORMATION/coremetadata.0' ) then
+        print *, trim(sdName)
+        print *, trim(forbiddens(1))
+        print *, trim(sdName) == trim(forbiddens(1))
+        stop
+      endif
+      if ( options%verbose ) print *, 'Catenating dataset: ', trim(sdName)
+      N = 0
+      M = 0
+      wroteAlready = .false.
+      numTotProfs = 0
+      do i=1, n_filenames
+        if ( options%verbose ) print *, 'Reading from: ', trim(options%filenames(i))
+        if ( i == 1 ) then
+          call Readl2auxData( l2auxFiles(i)%FileID%f_id, trim(sdName), ol2aux, &
+            & hdfVersion=HDFVERSION_5 )
+          print *, 'shape l2auxvalues (after reading): ', shape(ol2aux%values)
+          cycle
+        endif
+        call Readl2auxData( l2auxFiles(i)%FileID%f_id, trim(sdName), l2aux, &
+          & hdfVersion=HDFVERSION_5)
+        ! We will use ChunkNumbers to determine N and M
+        N = FindFirst( l2aux%values(1,1,:) /= MissingValue ) - 1
+        M = FindLast( l2aux%values(1,1,:) /= MissingValue )
+        ol2aux%values      (:,:,N+1:M) = l2aux%values        (:,:,N+1:M)    
+
+        call Destroyl2auxContents( l2aux )
+      enddo
+      call sayTime('Reading this dataset', tFile)
+      ! print *, 'shape l2auxvalues (before writing): ', shape(ol2aux%values)
+      call Writel2auxData ( ol2aux, l2FileHandle, status, sdName, &
+        & hdfVersion=HDFVERSION_5 )
+      call sayTime('Writing this dataset', tFile)
+      call Destroyl2auxContents( ol2aux )
+    enddo
+    call mls_closeFile( l2auxFile, Status )
+    do i=1, n_filenames
+      call mls_closeFile( l2auxFiles(i), Status )
+    enddo
+    call sayTime( 'catenating all datasets' )
+  end subroutine catenate_non_Fills
+
+  ! Copy l2aux data from one of the filenames to the outputFile
+  ! Copy all the MAFs
+  subroutine catenate_all
+    createdYet = .false.
+    if ( options%verbose ) print *, 'Copy l2aux data to: ', trim(options%outputFile)
     numdsetssofar = 0
     sdListAll = ''
     do i=1, n_filenames
       call time_now ( tFile )
-      if ( options%list ) then
-        print *, 'DS Names in: ', trim(options%filenames(i))
-        call GetAllHDF5DSNames (trim(options%filenames(i)), '/', mysdList)
-        call dump(mysdList, 'DS names')
-      else
-        if ( options%verbose ) then
-          print *, 'Copying from: ', trim(options%filenames(i))
-        endif
-        if ( options%noDupDSNames.or. options%DSNames /= ' ' ) then
-          call GetAllHDF5DSNames (trim(options%filenames(i)), '/', mysdList)
-          numdsets = NumStringElements(trim(mysdList), COUNTEMPTY)
-          if ( options%DSNames /= ' ' ) then
-            tempSdList = mysdList
-            mysdList = Intersection( options%DSNames, tempSdList )
-            if ( mysdList == ' ' ) cycle
-            rename = ' '
-            do j=1, NumStringElements( mysdList, countEmpty )
-              call GetStringElement( mysdList, sdName, j, countEmpty )
-              elem = StringElementNum( options%DSNames, sdName, countEmpty )
-              rename = catLists( rename, &
-                & StringElement( options%rename, elem, countempty ) )
-            enddo
-          elseif ( numdsetssofar > 0 ) then
-            ! Remove any duplicates
-            do j=1, numdsetssofar
-              call GetStringElement(sdListAll, sdName, j, countEmpty)
-              tempSdList = mysdList
-              call RemoveElemFromList (tempSdList, mysdList, trim(sdName))
-            enddo
-            if ( DEEBUG ) then
-              print *, 'sds to cp'
-              print *, trim(mysdList)
-            endif
-          endif
-          call cpL2AUXData( trim(options%filenames(i)), &
-          & trim(options%outputFile), create2=.not. createdYet, &
-          & hdfVersion=HDFVERSION_5, sdList=mysdList, rename=rename )
-          tempSdList = sdListAll
-          sdListAll = catlists(tempSdList, mysdList)
-          numdsetssofar = NumStringElements(sdListAll, countEmpty)
-        else
-          call cpL2AUXData(trim(options%filenames(i)), &
-          & trim(options%outputFile), create2=.not. createdYet, &
-          & hdfVersion=HDFVERSION_5)
-        endif
-        call sayTime('copying this file', tFile)
-        createdYet = .true.
+      if ( options%verbose ) then
+        print *, 'Copying from: ', trim(options%filenames(i))
       endif
+      if ( options%noDupDSNames.or. options%DSNames /= ' ' ) then
+        call GetAllHDF5DSNames (trim(options%filenames(i)), '/', mysdList)
+        numdsets = NumStringElements(trim(mysdList), COUNTEMPTY)
+        if ( options%DSNames /= ' ' ) then
+          tempSdList = mysdList
+          mysdList = Intersection( options%DSNames, tempSdList )
+          if ( mysdList == ' ' ) cycle
+          rename = ' '
+          do j=1, NumStringElements( mysdList, countEmpty )
+            call GetStringElement( mysdList, sdName, j, countEmpty )
+            elem = StringElementNum( options%DSNames, sdName, countEmpty )
+            rename = catLists( rename, &
+              & StringElement( options%rename, elem, countempty ) )
+          enddo
+        elseif ( numdsetssofar > 0 ) then
+          ! Remove any duplicates
+          do j=1, numdsetssofar
+            call GetStringElement(sdListAll, sdName, j, countEmpty)
+            tempSdList = mysdList
+            call RemoveElemFromList (tempSdList, mysdList, trim(sdName))
+          enddo
+          if ( DEEBUG ) then
+            print *, 'sds to cp'
+            print *, trim(mysdList)
+          endif
+        endif
+        call cpL2AUXData( trim(options%filenames(i)), &
+        & trim(options%outputFile), create2=.not. createdYet, &
+        & hdfVersion=HDFVERSION_5, sdList=mysdList, rename=rename )
+        tempSdList = sdListAll
+        sdListAll = catlists(tempSdList, mysdList)
+        numdsetssofar = NumStringElements(sdListAll, countEmpty)
+      else
+        call cpL2AUXData(trim(options%filenames(i)), &
+        & trim(options%outputFile), create2=.not. createdYet, &
+        & hdfVersion=HDFVERSION_5)
+      endif
+      call sayTime('copying this file', tFile)
+      createdYet = .true.
     enddo
-    if ( .not. options%list ) call sayTime('copying all files')
-  endif
-  call mls_h5close(error)
-contains
+  end subroutine catenate_all
 !------------------------- get_filename ---------------------
     subroutine get_filename(filename, n_filenames, options)
     ! Added for command-line processing
@@ -191,6 +339,9 @@ contains
         exit
       elseif ( filename(1:3) == '-l ' ) then
         options%list = .true.
+        exit
+      elseif ( filename(1:4) == '-ign' ) then
+        options%ignoreFills = .true.
         exit
       elseif ( filename(1:3) == '-no' ) then
         options%noDupDSNames = .true.
@@ -237,6 +388,7 @@ contains
       write (*,*) '          -o ofile    => copy data sets to ofile'
       write (*,*) '          -v          => switch on verbose mode'
       write (*,*) '          -l          => just list l2aux names in files'
+      write (*,*) '          -ign        => ignore MAFs with Fill Values'
       write (*,*) '          -nodup      => if dup dataset names, cp 1st only'
       write (*,*) '          -h          => print brief help'
       write (*,*) '          -s name1,name2,..'
@@ -265,6 +417,9 @@ end program L2AUXcat
 !==================
 
 ! $Log$
+! Revision 1.5  2013/08/23 02:51:47  vsnyder
+! Move PrintItOut to PrintIt_m
+!
 ! Revision 1.4  2006/05/19 22:48:30  pwagner
 ! May rename copied SDs
 !
