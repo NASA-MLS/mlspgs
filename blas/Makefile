@@ -1,0 +1,177 @@
+#	Makefile
+#
+#  Lost? Type 'cd ../; make help -f MakeFC' from this directory
+#
+# Copyright 2005, by the California Institute of Technology. ALL
+# RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+# commercial use must be negotiated with the Office of Technology Transfer
+# at the California Institute of Technology.
+
+# This software may be subject to U.S. export control laws. By accepting this
+# software, the user agrees to comply with all applicable U.S. export laws and
+# regulations. User has the responsibility to obtain export licenses, or other
+# export authority as may be required before exporting such information to
+# foreign countries or providing access to foreign persons.
+
+# "$Id$"
+
+short_name=blas
+
+PROG=libmlspack.a
+
+# We store all the common Makefile things in one shared file
+SRCLIB=../srclib
+-include $(SRCLIB)/Makefile.h
+
+# This will set our MLS platform, compiler. etc.
+# w/o complaining if it does nor exist yet
+-include $(CONFDIR)/$(MLSCFILE)
+
+OMIT_SRCS := $(OMIT) xerbla.f
+
+ifdef BLAS
+   OMIT_SRCS := $(OMIT_SRCS) dot_intrinsic.f90
+else
+ifeq ($(LIB_BLAS),f95)
+   OMIT_SRCS := $(OMIT_SRCS) dot_external_m.f90
+else
+   OMIT_SRCS := $(OMIT_SRCS) dot_intrinsic.f90
+endif
+endif
+
+ifdef LAPACK
+   OMIT_SRCS := $(OMIT_SRCS) dgemm_intrinsic.f90 sgemm_intrinsic.f90 \
+                 dgemv_intrinsic.f90 sgemv_intrinsic.f90
+endif
+
+OMIT_PREFXD := $(shell ${REECHO} -prefix=-d $(OMIT_SRCS))
+
+#----------------------- Build instructions
+
+$(PROG): $(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG)
+	@cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) ; \
+        return_status=`expr $$?` ; \
+        if [ $$return_status != "0" ]; then \
+		     exit 2 ; \
+        elif [ "$(MARK_ALL_AS_UPTODATE)" != "no" ]; then \
+		     $(MAKE) mark_all_as_uptodate \
+           MARK_ALL_AS_UPTODATE= ;\
+         fi
+
+.PHONY: configure depends clean tar tarz targ mostlyclean \
+	all libmlspack.a ghostbuster update
+
+tar:
+
+configure:
+	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -p "$(MLSPLAT)" -cf "$(MLSCFILE)" \
+          $(RECFG)
+
+$(CONFDIR)/$(MLSCFILE):
+	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -p "$(MLSPLAT)" -cf "$(MLSCFILE)" \
+          $(RECFG)
+
+$(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/$(MLSCFILE)
+	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -p "$(MLSPLAT)" -cf "$(MLSCFILE)" -nc  \
+          $(RECFG)
+
+depends:
+	$(MLSBIN)/makemakedep.sh -p $(PLATFORMS)/$(MLSCONFG)/Makefile.dep \
+   $(OMIT_PREFXD) $(UP_OR_LOW)
+
+ghostbuster:
+	$(MLSBIN)/ghostbuster.sh -lib $(OMIT_PREFXD) \
+      $(PLATFORMS)/$(MLSCONFG) ./ $(srclib)
+
+internalupdate:
+	@echo "Updating the Makefile in `pwd`/$(MLSCONFG)"; \
+	  PLATFORMS=$(PLATFORMS) ; \
+     m_option="" ; \
+	  $(MLSBIN)/updatemf.sh -pc $$PLATFORMS \
+     -cf "$(CONFDIR)/$(MLSCFILE)" $$m_option; \
+
+update:
+	@cd .. ; \
+   $(MAKE) update SUBDIRS=blas tests_sub_dirs=
+
+mostlyclean:
+	@echo "Cleaning directory $(MLSCONFG)" ; \
+	if [ "$(MLSCONFG)" != "" ] ; then  \
+		echo "Deleting $(MLSCONFG) files" ; \
+		rm -f $(PLATFORMS)/$(MLSCONFG)/* ; \
+	fi ; \
+	if [ -d "$(PLATFORMS)/$(MLSCONFG)" ] ; then  \
+		echo "Deleting $(MLSCONFG) directory" ; \
+		rmdir $(PLATFORMS)/$(MLSCONFG) ; \
+	fi ; \
+	rm -f Make.dep.*
+
+clean:
+	@echo "Cleaning objects from directory $(MLSCONFG)" ; \
+	if [ "$(MLSCONFG)" != "" ] ; then  \
+		echo "Deleting $(MLSCONFG) files" ; \
+		rm -f $(PLATFORMS)/$(MLSCONFG)/*.[ao] ; \
+		rm -f $(PLATFORMS)/$(MLSCONFG)/*.mod ; \
+	fi; \
+	rm -f Make.dep.*
+
+tar:
+	rm -f ../lib.tar
+	@echo "tar-ing libmlspack"; \
+	$(TAR) hcvf ../libmlspack.tar * --exclude CVS\
+	--exclude Make.dep\* --exclude blas/NAG.\* --exclude blas/LF95.\*
+
+tarz: tar
+	@echo "... then gzipping it"; \
+	cd ..; rm -f libmlspack.tgz; gzip libmlspack.tar; mv libmlspack.tar.gz libmlspack.tgz
+
+targ:
+	rm -f ../libmlspack.tgz
+	$(TAR) hcvzf ../libmlspack.tgz * --exclude \*.o --exclude \*.mod
+
+# $Log$
+# Revision 1.14  2010/10/12 22:25:02  pwagner
+# Uses Makefile.h from srclib
+#
+# Revision 1.13  2008/07/11 23:59:19  pwagner
+# 1st changes to get sunstudio to link mlsl2
+#
+# Revision 1.12  2008/04/22 17:21:19  pwagner
+# CASCADE no longer affects where Makefile.dep goes
+#
+# Revision 1.11  2007/05/31 18:31:02  pwagner
+# Added Absoft to list of tested compilers
+#
+# Revision 1.10  2007/04/13 20:15:18  pwagner
+# Changes in line with Intel v9.1
+#
+# Revision 1.9  2006/03/27 19:20:10  pwagner
+# Makefile.dep now stored with objects
+#
+# Revision 1.8  2005/06/23 23:02:30  pwagner
+# Reworded Copyright statement
+#
+# Revision 1.7  2003/04/30 23:04:55  pwagner
+# Now lets you make update in each subdirectory
+#
+# Revision 1.6  2002/09/24 18:12:00  pwagner
+# Uses unique names for temp files
+#
+# Revision 1.5  2002/09/06 22:57:54  pwagner
+# sdot.f and cdot.f no longer excluded from libmlspack
+#
+# Revision 1.4  2002/05/02 00:16:32  pwagner
+# depends now creates Makefile.nodep, too
+#
+# Revision 1.3  2002/01/15 00:40:18  pwagner
+# Now uses user-settable OMIT and internal OMIT_SRCS and OMIT_PREFIXD variables
+#
+# Revision 1.2  2001/11/15 00:11:47  pwagner
+# Rename library to libmlspack.a; fixed OMIT_SRCS
+#
+# Revision 1.1  2001/11/13 23:01:42  pwagner
+# First commit
+#
