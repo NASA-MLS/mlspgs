@@ -32,7 +32,7 @@ PROG_prereqs := $(CONFDIR)/$(MLSCFILE) \
    $(INSTALLDIR)/libutctotai.a
 
 #Any sources to explicitly exclude from dependency list?
-OMIT_SRCS := $(OMIT) MLSL1.f90
+OMIT_SRCS := $(OMIT) MLSL1.f90 test_streq.f90
 
 OMIT_PREFXD := $(shell ${REECHO} -prefix=-d $(OMIT_SRCS))
 
@@ -55,8 +55,11 @@ endif
 
 $(PROG):  $(PROG_prereqs)
 	if [ ! -f Calibration.f9h ]; then \
+          pwd; \
+          ls Calibration*.f9h;\
           cp Calibration-normal.f9h Calibration.f9h; \
-        fi
+        fi; \
+	grep WinMAFs Calibration.f9h
 	@cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) \
         UNPREFXDPTHS="$(ADD2PATHS)" ;\
         return_status=`expr $$?` ; \
@@ -168,6 +171,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl1
 
 # $Log$
+# Revision 2.61  2015/08/10 22:26:38  pwagner
+# Last Changes before switching over entirely to makefile
+#
 # Revision 2.60  2015/04/23 23:04:37  pwagner
 # Should fix problem with first checkout before Calibration.f9h initialized
 #
