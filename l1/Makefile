@@ -2,235 +2,90 @@
 #
 #  Lost? Type 'cd ../; make help -f MakeFC' from this directory
 #
-# Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
-# U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+# Copyright 2005, by the California Institute of Technology. ALL
+# RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+# commercial use must be negotiated with the Office of Technology Transfer
+# at the California Institute of Technology.
+
+# This software may be subject to U.S. export control laws. By accepting this
+# software, the user agrees to comply with all applicable U.S. export laws and
+# regulations. User has the responsibility to obtain export licenses, or other
+# export authority as may be required before exporting such information to
+# foreign countries or providing access to foreign persons.
 
 # "$Id$"
 
-# ---------------------- The name of this file (is the right-hand-side below)
-MakeFName = MakeFC
+short_name=l1
 
-# where to store .configure
-CONFDIR=..
+PROG=mlsl1log mlsl1g mlsl1t mlsl0sn
 
-ifdef MLSINSTALLDIR
-   INSTALLDIR=$(MLSINSTALLDIR)
-else
-   INSTALLDIR=$(CONFDIR)/bin/$(MLSCONFG)
-endif
-
-# ---------------------- Paths to special directories
-# This is where this Makefile is located
-# Also beginning path for all relative paths defined below; e.g. CONFDIR
-# This assumes therefore that you have summoned this via
-#    cd $(MLSHOME)
-#    make
-# otherwise the following definition will fail
-# You might try something like
-#    make -f mlspgs/Makefile MLSHOME=$HOME/mlspgs
-# but this has not been tested.
-# Anyway, why would you want to
-# make things more difficult?
-MLSHOME := $(shell pwd)
-
-# where configure and makemakedep.sh are stored
-MLSBIN=../util
-
-# where sources for libmls.a are stored
-libmls_sources=../lib
-
-# where objects and libmls.a are stored
-libmls_objs=$(libmls_sources)/$(MLSCONFG)
-
-# where sources (but not OBJS) shared with l3, etc. are stored
-srclib=../srclib
-
-# where sources (but not OBJS) shared with l3, etc. are stored
-blaslib=../blas
-
-# where sources (but not OBJS) used for hdf5 file versions are stored
-he5lib=../he5lib
-
-# where he5 objects and libhe5.a are stored
-he5lib_objs=$(he5lib)/$(MLSCONFG)
-
-# where the platforms directory is
-PLATFORMS = .
-
-# This is the default name of the configure file
-# It may be overridden for multiple platforms, special options, etc.
-ifdef HOSTMLSCFILE
-   MLSCFILE=$(HOSTMLSCFILE)
-else
-   MLSCFILE=.configure
-endif
+# We store all the common Makefile things in one shared file
+SRCLIB=../srclib
+-include $(SRCLIB)/Makefile.h
 
 # This will set our MLS platform, compiler. etc.
 # w/o complaining if it does nor exist yet
 -include $(CONFDIR)/$(MLSCFILE)
 
-# All the implicit pattern-matching involving suffixes
-# will be done in the uniquely-named sub-directories, not here--so
-.SUFFIXES:
-
-# This will filter out globbed file expansions that fail
-# e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
-REECHO=$(MLSBIN)/reecho.sh
-
-# This is in case tar doesn't summon GNU tar, you may still use it via
-# something like
-#    make -f MakeFC tar_sips TAR=/usr/local/gnu/bin/tar
-TAR=tar
-
-SHELL = /bin/sh
-
-#--------------- Target definitions
-# $PROG          -- automatic; built when target is not specified
-
-#                           (functional)
-# configure      -- runs mlsconfigure to (re)set compiler, platform, paths
-#                  also (re)creates uniquely-named sub-sub-directories
-#                  with custom Makefiles where *.o, *.mod, etc. built
-# depends        -- runs makemakedep.sh to calculate dependencies
-# mostlyclean    -- deletes uniquely-named sub-sub-directories
-# clean          -- deletes only *.o, *.mod from sub-subs
-# tar            -- creates a directory archive suitable for distribution
-#
-
-#----------------------------------------------------------
-#wildcard seems to no longer work right (maybe some change to our suns?)
-libmls_f90 := $(shell ${REECHO} $(libmls_sources)/*.f $(libmls_sources)/*.f90 \
-  $(libmls_sources)/*.f9h $(srclib)/*.f9h $(libmls_sources)/*.c \
-  $(libmls_sources)/lit_names.txt)
-blaslib_f := $(shell ${REECHO} $(blaslib)/*.c $(blaslib)/*.f $(blaslib)/*.f90 \
-  $(blaslib)/*.f9h $(srclib)/*.f9h)
-he5lib_f := $(shell ${REECHO} $(he5lib)/*.c $(he5lib)/*.f $(he5lib)/*.f90)
-machinelib := $(libmls_sources)/machines/$(MLSCONFG)/
-machine_f := $(shell ${REECHO} $(machinelib)/*.c $(machinelib)/*.f \
-  $(machinelib)/*.f90)
-
 PROG_prereqs := $(CONFDIR)/$(MLSCFILE) \
    $(PLATFORMS)/$(MLSCONFG) $(libmls_objs)/libmls.a \
    $(INSTALLDIR)/libutctotai.a
 
-ifdef HDFVERSIONS
-   PROG_prereqs := $(PROG_prereqs) $(he5lib_objs)/libhe5.a
-   ADD2PATHS := $(ADD2PATHS) ../$(he5lib)/$(MLSCONFG) \
-   $(HDF5)/../fortran/src $(HDF5)/../include
-#   ADD2PATHS := $(ADD2PATHS) ../$(he5lib)/$(MLSCONFG)
-endif
-
-ifndef DONTBUILDPREQS
-ifdef BLAS
-   LIB_prereqs=$(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
-   $(machine_f) \
-   $(REECHO) $(libmls_objs)
-else
-   LIB_prereqs=$(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
-   $(machine_f) \
-   $(blaslib_f) $(REECHO) $(libmls_objs)
-endif
-HE5_LIB_prereqs=$(libmls_objs)/libmls.a $(he5lib_f)
-endif
-
 #Any sources to explicitly exclude from dependency list?
-OMIT_SRCS := $(OMIT) MLSL1.f90
-
-PROG=mlsl1log mlsl1g mlsl1t mlsl1boa
-# PROG=mlsl1
+OMIT_SRCS := $(OMIT) MLSL1.f90 test_streq.f90
 
 OMIT_PREFXD := $(shell ${REECHO} -prefix=-d $(OMIT_SRCS))
 
 #These are the source files for the drivers; they should be excluded from OBJS
-DRIVERS=MLSL1G.f90 MLSL1log.f90 MLSL1T.f90 MLSL1BOA.f90
+DRIVERS=MLSL1G.f90 MLSL1log.f90 MLSL1T.f90 MLSL0SN.f90
 DRIVERS_PREFXD := $(shell ${REECHO} -prefix=-do $(DRIVERS))
 
-#CASCADE determines whether to create/use .mod dependencies:
-#if CASCADE, use older .o dependencies, which entail cascades
-#of massive recompilation
-#These are configurations for which I have tested CASCADE-avoidance
-CAN_AVOID="NAG.Linux LF95.Linux NAG.Sun Sun.Sun"
-#CAN_AVOID=""
-ifndef CASCADE
-  WE_CAN := $(shell echo $(CAN_AVOID) | grep $(MLSF95).$(MLSPLAT))
-ifndef WE_CAN
-  CASCADE := yes
-endif
-endif
-
-ifdef WE_CAN
-NOHUNTING := yes
-endif
 #These modules require custom builds, so omit build commands from dependencies
-CUSTOM_BUILDS=OutputL1B.f90 OutputL1B_HDF4.f90 EngTbls.f90
+CUSTOM_BUILDS=OutputL1B.f90 OutputL1B_HDF4.f90 EngTbls.f90 \
+  CalibWeightsFlags.f90 L1LogUtils.f90 
 CUSTOM_PREFXD := $(shell ${REECHO} -prefix=-db $(CUSTOM_BUILDS))
-ifeq ($(MLSF95),Abs)
-  UP_OR_LOW := -mod UPPER
+
+ifdef HDF5INC
+   ADD2PATHS := $(ADD2PATHS) $(HDF5INC)
 else
-  UP_OR_LOW := -mod lower
-endif
-
-#MARK_ALL_AS_UPTODATE determines whether, on rebuilding any module,
-#all modules, rebuilt or not, should be marked as up to date
-#ifndef MARK_ALL_AS_UPTODATE
-#  MARK_ALL_AS_UPTODATE := $(shell echo $(CAN_AVOID) | grep $(MLSF95).$(MLSPLAT))
-#endif
-
-#NOCLEANING determines value of RECFG passed to mlsconfigure script
-#RECFG determines whether changing .configure triggers deleting
-#existing sub-directory, and thus recompiling every source file
-#Set NOCLEANING to "yes" if you want to preserve existing compiled objects
-#even when changing .configure file
-ifdef NOCLEANING
-   RECFG = -nd
+   ADD2PATHS := $(ADD2PATHS) $(HDF5)/../fortran/src $(HDF5)/../include
 endif
 
 #----------------------- Build instructions
 
 $(PROG):  $(PROG_prereqs)
+	if [ ! -f Calibration.f9h ]; then \
+          pwd; \
+          ls Calibration*.f9h;\
+          cp Calibration-normal.f9h Calibration.f9h; \
+        fi; \
+	grep WinMAFs Calibration.f9h
 	@cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) \
-        UNPREFXDPTHS="$(ADD2PATHS) $(HDF5)/../fortran/src $(HDF5)/../include" ;\
+        UNPREFXDPTHS="$(ADD2PATHS)" ;\
         return_status=`expr $$?` ; \
         if [ $$return_status != "0" ]; then \
 		     exit 2 ; \
-        elif [ "$(WE_CAN)" != "" -a "$(MARK_ALL_AS_UPTODATE)" != "no" ]; then \
+        elif [ "$(MARK_ALL_AS_UPTODATE)" != "no" ]; then \
 		     $(MAKE) mark_all_as_uptodate \
            UNPREFXDPTHS="$(ADD2PATHS)" MARK_ALL_AS_UPTODATE= ;\
          fi
 
-# $(PLATFORMS)/$(MLSCONFG)/$(PROG): $(PROG)
+$(PLATFORMS)/$(MLSCONFG)/mlsl0sn \
 $(PLATFORMS)/$(MLSCONFG)/mlsl1log \
 $(PLATFORMS)/$(MLSCONFG)/mlslg \
 $(PLATFORMS)/$(MLSCONFG)/mlsl1t : $(PROG)
 	@cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) \
-        UNPREFXDPTHS="$(ADD2PATHS) $(HDF5)/../fortran/src $(HDF5)/../include" ;\
+        UNPREFXDPTHS="$(ADD2PATHS)" ;\
         return_status=`expr $$?` ; \
         if [ $$return_status != "0" ]; then \
 		     exit 2 ; \
-        elif [ "$(WE_CAN)" != "" -a "$(MARK_ALL_AS_UPTODATE)" != "no" ]; then \
+        elif [ "$(MARK_ALL_AS_UPTODATE)" != "no" ]; then \
 		     $(MAKE) mark_all_as_uptodate \
            UNPREFXDPTHS="$(ADD2PATHS)" MARK_ALL_AS_UPTODATE= ;\
          fi
 
-$(libmls_objs)/libmls.a: $(LIB_prereqs)
-	@if [ "$(NOHUNTING)" != "" ] ; then \
-	   rm -f $(libmls_objs)/libmls.a ; \
-	fi ; \
-	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources) \
-     MARK_ALL_AS_UPTODATE=no DONTBUILDPREQS=TRUE
-
-$(he5lib_objs)/libhe5.a: $(HE5_LIB_prereqs)
-	@if [ "$(NOHUNTING)" != "" ] ; then \
-	   rm -f $(he5lib_objs)/libhe5.a ; \
-	fi ; \
-	$(MAKE) -f $(MakeFName) libhe5.a -C $(he5lib) \
-     MARK_ALL_AS_UPTODATE=no DONTBUILDPREQS=TRUE
-
-$(INSTALLDIR)/libutctotai.a:
-	$(MAKE) -f $(MakeFName) utctotai -C $(CONFDIR)
-
 .PHONY: clean configure depends depends--mod ghostbuster install \
-  internalsaymake internalupdate mlsl1log mlsl1g mlsl1t mostlyclean \
+  internalupdate mlsl0sn mlsl1log mlsl1g mlsl1t mostlyclean \
   tar targ tarz update
 
 tar:
@@ -251,16 +106,6 @@ $(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/$(MLSCFILE)
           $(RECFG)
 
 depends:
-ifdef CASCADE
-	$(MLSBIN)/makemakedep.sh -nodep -p Makefile.nodep \
-      $(OMIT_PREFXD) $(DRIVERS_PREFXD)
-	$(MLSBIN)/makemakedep.sh $(OMIT_PREFXD) $(DRIVERS_PREFXD) \
-      $(libmls_sources) $(srclib) 
-else
-	$(MAKE) depends--mod
-endif
-
-depends--mod:
 	$(MLSBIN)/makemakedep.sh -p $(PLATFORMS)/$(MLSCONFG)/Makefile.dep \
     $(OMIT_PREFXD) $(DRIVERS_PREFXD) $(UP_OR_LOW) $(CUSTOM_PREFXD) \
 	    $(libmls_sources) $(srclib)
@@ -294,11 +139,7 @@ clean:
 	fi
 	rm -f Make.dep.*
 
-internalsaymake:
-	@echo "Copying or linking MakeFC to Makefile in ./" ; \
-	cp MakeFC Makefile
-
-internalupdate: internalsaymake
+internalupdate: 
 	@echo "Updating the Makefile in ./"; \
     m_option="-machine" ; \
 		$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
@@ -307,28 +148,8 @@ internalupdate: internalsaymake
 
 # install $(PROG) into $(INSTALLDIR)
 install: $(PROG)
-	@echo "Installing $(PROG) into $(INSTALLDIR)"; \
-	if [ ! -d $(INSTALLDIR) ] ; then \
-	   $(MLSBIN)/mkpath.sh $(INSTALLDIR) ; \
-	fi ; \
-	if [ -f $(PLATFORMS)/$(MLSCONFG)/mlsl1log ] ; then \
-	   mv $(PLATFORMS)/$(MLSCONFG)/mlsl1boa $(INSTALLDIR) ; \
-	fi ; \
-	if [ -f $(PLATFORMS)/$(MLSCONFG)/mlsl1log ] ; then \
-	   mv $(PLATFORMS)/$(MLSCONFG)/mlsl1log $(INSTALLDIR) ; \
-	fi ; \
-	if [ -f $(PLATFORMS)/$(MLSCONFG)/mlsl1t ] ; then \
-	   mv $(PLATFORMS)/$(MLSCONFG)/mlsl1t $(INSTALLDIR) ; \
-	fi ; \
-	if [ -f $(PLATFORMS)/$(MLSCONFG)/mlsl1g ] ; then \
-	   mv $(PLATFORMS)/$(MLSCONFG)/mlsl1g $(INSTALLDIR) ; \
-      rm -f $(INSTALLDIR)/mlsl1.sh ; \
-	   sed "s=mlsxxyyzz_1=mlsl1log=; s=mlsxxyyzz_2=mlsl1g=; \
-        s=mlsxxyyzz_3=mlsl1t=; s=mlsbbiinn=$(INSTALLDIR)=; \
-        s=mlshhoommee=$(MLSHOME)=; s=mlseexxttrraa==" \
-        $(MLSBIN)/mlsl1prog.sh > $(INSTALLDIR)/mlsl1.sh ; \
-      chmod a+x $(INSTALLDIR)/mlsl1.sh ; \
-	fi
+	@cd .. ; \
+   $(MAKE) install LEVELS=l1
 
 tar:
 	rm -f ../$(PROG).tar
@@ -346,8 +167,44 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl1
 
 # $Log$
-# Revision 2.6  2004/08/12 13:51:50  perun
-# Version 1.44 commit
+# Revision 2.60  2015/04/23 23:04:37  pwagner
+# Should fix problem with first checkout before Calibration.f9h initialized
+#
+# Revision 2.59  2015/04/23 17:46:27  whdaffer
+# removed Makefile
+#
+# Revision 2.58  2010/10/12 22:24:29  pwagner
+# Uses Makefile.h from srclib
+#
+# Revision 2.57  2010/08/27 20:56:39  pwagner
+# Uses optional HDF*INC Makefile variables
+#
+# Revision 2.56  2008/07/11 23:59:19  pwagner
+# 1st changes to get sunstudio to link mlsl2
+#
+# Revision 2.55  2008/04/22 17:20:21  pwagner
+# CASCADE no longer affects where Makefile.dep goes
+#
+# Revision 2.54  2007/05/31 18:31:02  pwagner
+# Added Absoft to list of tested compilers
+#
+# Revision 2.53  2007/04/13 20:15:18  pwagner
+# Changes in line with Intel v9.1
+#
+# Revision 2.52  2006/04/01 01:11:58  pwagner
+# Moved installation commands to ../MakeFC
+#
+# Revision 2.51  2006/03/28 21:54:33  pwagner
+# Must turn off optimization to work around Lahey bug
+#
+# Revision 2.50  2006/03/27 19:18:30  pwagner
+# Added new pge mlsl0sn to store switch settings
+#
+# Revision 2.49  2005/08/25 19:21:58  pwagner
+# Removed MLSL1BOA as target
+#
+# Revision 2.48  2005/06/23 23:02:30  pwagner
+# Reworded Copyright statement
 #
 # Revision 2.47  2004/03/30 00:21:50  pwagner
 # Take care that lib is rebuilt after changes in machines directory
