@@ -13,7 +13,7 @@
 #
 # "$Id$"
 
-MakeFName = MakeFC
+MakeFName = Makefile
 
 # where to store .configure
 CONFDIR=../..
@@ -143,6 +143,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude test
 
 # $Log$
+# Revision 1.5  2005/06/23 22:10:41  pwagner
+# Reworded Copyright statement
+#
 # Revision 1.4  2003/04/30 23:04:55  pwagner
 # Now lets you make update in each subdirectory
 #

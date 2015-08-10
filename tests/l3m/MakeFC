@@ -22,7 +22,7 @@
 
 # "$Id$"
 
-MakeFName = MakeFC
+MakeFName = Makefile
 
 # where to store .configure
 CONFDIR=../..
@@ -182,6 +182,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude test
 
 # $Log$
+# Revision 1.7  2010/08/27 20:56:39  pwagner
+# Uses optional HDF*INC Makefile variables
+#
 # Revision 1.6  2005/06/23 22:10:41  pwagner
 # Reworded Copyright statement
 #

@@ -42,7 +42,7 @@
 # From there look in the subdirectories named 'dvi' and 'pdf'
 # --------------- End icfm help
 # ---------------------- The name of this file (is the right-hand-side below)
-MakeFName = MakeFC
+MakeFName = Makefile
 # If the right-hand-side is not Makefile
 # then to make mls with this file you must instead  of bare "make" use
 #     make -f $(MakeFName)
@@ -219,6 +219,9 @@ update: internalupdate
 
 # ========================================================================
 # $Log$
+# Revision 1.20  2014/11/21 21:20:00  pwagner
+# OMIT_SRCS now got from tex.omitted
+#
 # Revision 1.19  2013/08/07 18:55:20  pwagner
 # omits wvs-004.tex
 #
