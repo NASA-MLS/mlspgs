@@ -13,7 +13,7 @@
 # foreign countries or providing access to foreign persons.
 
 # ---------------------- The name of this file (is the right-hand-side below)
-MakeFName = MakeFC
+MakeFName = Makefile
 # If the right-hand-side is not Makefile
 # then to make mls with this file you must instead  of bare "make" use
 #     make -f $(MakeFName)
@@ -96,7 +96,6 @@ clean:
 	rm -fr *.dvi *.pdf $(DVIDIR) $(PDFDIR) ${AUX} ${BBL} cfm
 
 depends:
-	$(MAKE) -f $(MakeFName) internalupdate
 	$(UTILDIR)/makemakedep.sh -s tex -o dvi -p Makefile.dep.1 -S cfm.tex \
      -i '\\input\{([^)]+)}' \
      $(OMIT_PREFXD) $(OMIT_PREFXD_REV)
@@ -114,21 +113,20 @@ depends:
 	if [ ! -d $(LOGDIR) ] ; then \
 	  		mkdir $(LOGDIR) ;\
 			fi
-internalupdate:
-	cp MakeFC Makefile
-	rm -f *.toc
-
 tar:
 	rm -f cfm.tgz
 	tar hcvzf cfm.tgz * --exclude \*.dvi --exclude \*.pdf --exclude cfm
 
-update: internalupdate
+update: 
 	$(MAKE) -f $(MakeFName) depends
 
-.PHONY: all clean depends internalupdate tar update cfm \
+.PHONY: all clean depends tar update cfm \
 
 # ========================================================================
 # $Log$
+# Revision 1.1  2015/08/11 00:19:55  pwagner
+# After switching away from MakeFC
+#
 # Revision 1.4  2011/05/25 20:34:42  pwagner
 # CONFDIR reverted to point to grandparent directory
 #
