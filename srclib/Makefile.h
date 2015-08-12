@@ -18,7 +18,7 @@
 # "$Id$"
 
 # ---------------------- The name of this file (is the right-hand-side below)
-MakeFName = MakeFC
+MakeFName = Makefile
 
 # ---------------------- Paths to special directories
 # where to store .configure
@@ -49,6 +49,9 @@ l2_objs=$(l2_sources)/$(MLSCONFG)
 
 # where sources for libmls.a are stored
 libmls_sources=$(CONFDIR)/lib
+
+# where machine.f90 and possibly other compiler-specific sources are stored
+MACH_DIR=$(CONFDIR)/lib/machines/$(MLSCONFG)
 
 # where sources for lr are stored
 lr_sources=$(MLSBIN)/lr
@@ -180,7 +183,7 @@ ifdef DONTBUILDPREQS
 else
   BLAS_PREQS := $(blaslib_f) $(libblas_objs)/Makefile
   LIB_prereqs=$(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
-     $(machine_f) \
+     $(libmls_objs)/machine.o \
      $(libblas_objs)/libmlspack.a $(REECHO) $(libmls_objs)/Makefile \
      $(TABLES_DIR)/sps_cross_ref_table.txt
   FM_LIB_prereqs=$(libfwdmdl_f90) $(libmls_objs)/libmls.a \
@@ -204,6 +207,10 @@ $(PROG): $(MakeFName)
 
 $(libblas_objs)/libmlspack.a: $(BLAS_PREQS)
 	$(MAKE) -f $(MakeFName) libmlspack.a -C $(blaslib) $(UPTODATEMARKS)
+
+$(libmls_objs)/machine.o: $(MACH_DIR)/machine.f90
+	echo Makefile.h $(MAKE) machine.o -C $(libmls_objs) $(UPTODATEMARKS)
+	$(MAKE) machine.o -C $(libmls_objs) $(UPTODATEMARKS)
 
 $(libmls_objs)/libmls.a: $(LIB_prereqs) $(INSTALLDIR)/lr 
 	echo Makefile.h $(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources) $(UPTODATEMARKS)
@@ -235,6 +242,9 @@ $(INSTALLDIR)/libutctotai.a:
 	$(MAKE) -f $(MakeFName) utctotai -C $(CONFDIR) $(UPTODATEMARKS)
 
 # $Log$
+# Revision 1.10  2014/01/22 18:23:13  pwagner
+# More changes, bug fixes
+#
 # Revision 1.9  2013/12/03 00:21:35  pwagner
 # Now depends on l2cf.grm, too
 #
