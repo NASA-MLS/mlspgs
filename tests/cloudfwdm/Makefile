@@ -39,35 +39,14 @@ libmls_objs=$(libmls_sources)/$(MLSCONFG)
 # where sources (but not OBJS) shared with l3, etc. are stored
 srclib=../../srclib
 
-# where sources (but not OBJS) shared with l3, etc. are stored
-blaslib=../../blas
-
-# where blas objects and libmlspack.a are stored
-libblas_objs=$(blaslib)/$(MLSCONFG)
-
 # where sources for the forward model are stored
 libfwdmdl_sources=../../fwdmdl
 
 # where forward model objects and libfwdmdl.a are stored
 libfwdmdl_objs=$(libfwdmdl_sources)/$(MLSCONFG)
 
-# where sources for the forward model are stored
+# where sources for libmls.a are stored
 libcloud_sources=../../cloudfwdm
-
-# where forward model objects and libfwdmdl.a are stored
-libcloud_objs=$(libcloud_sources)/$(MLSCONFG)
-
-# where sources for the cfm model are stored
-libcfm_sources=../../cfm
-
-# where cfm model objects and libfwdmdl.a are stored
-libcfm_objs=$(libcfm_sources)/$(MLSCONFG)
-
-# where sources for the cfm are stored
-#cfm_sources=../../cfm
-
-# where cfm objects are stored
-#cfm_objs=$(cfm_sources)/$(MLSCONFG)
 
 # where the platforms directory is
 PLATFORMS = .
@@ -91,7 +70,7 @@ UNIQUE_NAME=$(MLSBIN)/unique_name.sh
 
 # This is in case tar doesn't summon GNU tar, you may still use it via
 # something like
-#    make -f MakeFC tar_sips TAR=/usr/local/gnu/bin/tar
+#    make tar_sips TAR=/usr/local/gnu/bin/tar
 TAR=tar
 
 SHELL = /bin/sh
@@ -110,33 +89,21 @@ SHELL = /bin/sh
 #
 
 #----------------------------------------------------------
+#wildcard seems to no longer work right (maybe some change to our suns?)
 libmls_f90 := $(shell ${REECHO} $(libmls_sources)/*.f $(libmls_sources)/*.f90 $(libmls_sources)/*.c)
-blaslib_f := $(shell ${REECHO} $(blaslib)/*.c $(blaslib)/*.f $(blaslib)/*.f90)
 libfwdmdl_f90 := $(shell ${REECHO} $(libfwdmdl_sources)/*.c $(libfwdmdl_sources)/*.f $(libfwdmdl_sources)/*.f90)
-libcloud_f90 := $(shell ${REECHO} $(libcloud_sources)/*.f90 $(libcloud_sources)/*.f $(libcloud_sources)/*.c)
-libcfm_f90 := $(shell ${REECHO} $(libcfm_sources)/*.f90 $(libcfm_sources)/*.f $(libcfm_sources)/*.c)
-testscfm_f90 := $(shell ${REECHO} *.f90)
+blaslib_f := $(shell ${REECHO} $(blaslib)/*.c $(blaslib)/*.f $(blaslib)/*.f90)
 
-# In the long run just evict the stuff that assumes l2_NEEDS_fwdmdl is undefined
-l2_NEEDS_fwdmdl = true
-
-#Where else to look for USEd and INCLUDED files to add to dependency list
-depends_where:=$(libmls_sources) $(srclib) \
-  $(libfwdmdl_sources) $(libcloud_sources)                      
-PROG_prereqs:=$(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG) \
-  $(libmls_objs)/libmls.a \
-  $(libfwdmdl_objs)/libfwdmdl.a \
-  $(libcloud_objs)/libcloud.a  \
-  $(libcfm_objs)/libcfm_all.a  $(testscfm_f90)                                
-
-LIB_prereqs=$(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
+ifdef BLAS
+   LIB_prereqs=$(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
+   $(libmls_sources)/machines/$(MLSCONFG)/machine.f90
+else
+   LIB_prereqs=$(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
    $(libmls_sources)/machines/$(MLSCONFG)/machine.f90 \
-   $(libblas_objs)/libmlspack.a $(REECHO)
+   $(blaslib_f)
+endif
 
-OMIT_SRCS := $(OMIT) 
-PROG=all
-
-OMIT_PREFXD := $(shell ${REECHO} -prefix=-d $(OMIT_SRCS))
+PROG=test
 
 ifdef HDF5INC
    ADD2PATHS := $(ADD2PATHS) $(HDF5INC)
@@ -146,35 +113,15 @@ endif
 
 #----------------------- Build instructions
 
-$(PROG): $(PROG_prereqs)
-	PROGS=`echo $(testscfm_f90) | sed 's/.f90//g'` ;\
-	for program in $$PROGS ; do \
-	  cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $$program \
-      	 UNPREFXDPTHS="$(ADD2PATHS)"; \
-	  cd ../; \
-	done
+$(PROG): $(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG) \
+        $(libmls_objs)/libmls.a $(libfwdmdl_objs)/libfwdmdl.a
+		cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) UNPREFXDPTHS="$(ADD2PATHS)"
 
-show:
-	  cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) show
-
-$(libblas_objs)/libmlspack.a: $(blaslib_f) \
-   $(libblas_objs)
-	$(MAKE) -f $(MakeFName) libmlspack.a -C $(blaslib)
+$(libfwdmdl_objs)/libfwdmdl.a: $(libfwdmdl_f90) $(libmls_objs)/libmls.a 
+	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources)
 
 $(libmls_objs)/libmls.a: $(LIB_prereqs)
 	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources)
-
-$(libfwdmdl_objs)/libfwdmdl.a: $(libfwdmdl_f90) $(libmls_objs)/libmls.a \
-               $(CONFDIR)/$(MLSCFILE)
-	$(MAKE) -f $(MakeFName) libfwdmdl.a -C $(libfwdmdl_sources)
-
-$(libcloud_objs)/libcloud.a: $(libcloud_f90) $(libmls_objs)/libmls.a \
-               $(libfwdmdl_objs)/libfwdmdl.a $(CONFDIR)/$(MLSCFILE)
-	$(MAKE) -f $(MakeFName) libcloud.a -C $(libcloud_sources)
-
-$(libcfm_objs)/libcfm_all.a: $(libcfm_f90) $(libmls_objs)/libmls.a \
-               $(libfwdmdl_objs)/libfwdmdl.a $(libcloud_objs)/libcloud.a $(CONFDIR)/$(MLSCFILE)
-	$(MAKE) -f $(MakeFName) install-fullcfm -C ../..
 
 .PHONY: configure depends clean tar mostlyclean tarz targ test ghostbuster update
 
@@ -194,16 +141,16 @@ $(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/$(MLSCFILE)
 
 depends:
 	temp_name_1=`${UNIQUE_NAME} 1` ;\
-	$(MLSBIN)/makemakedep.sh  -p $$temp_name_1 \
-     $(OMIT_PREFXD) $(depends_where) ; \
+	$(MLSBIN)/makemakedep.sh -p $$temp_name_1 \
+        $(libmls_sources) $(srclib) $(libfwdmdl_sources) ; \
      mv $$temp_name_1 Makefile.dep
 
 ghostbuster:
-	echo $(MLSBIN)/ghostbuster.sh -lib $(PLATFORMS)/$(MLSCONFG) ./ $(srclib)
+	$(MLSBIN)/ghostbuster.sh $(PLATFORMS)/$(MLSCONFG) ./ $(srclib)
 
 update:
 	@cd ../.. ; \
-   $(MAKE) update SUBDIRS= tests_sub_dirs=tests/cfm
+   $(MAKE) update SUBDIRS= tests_sub_dirs=tests/cloudfwdm
 
 mostlyclean:
 	@echo "Cleaning directory $(MLSCONFG)" ; \
@@ -228,7 +175,7 @@ clean:
 
 tar:
 	rm -f ../$(PROG).tar
-	@echo "tar-ing cfm"; \
+	@echo "tar-ing l3"; \
 	$(TAR) hcvf ../$(PROG).tar * --exclude CVS\
 	--exclude Make.dep\* --exclude NAG.\* --exclude LF95.\*
 
@@ -241,12 +188,34 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude test
 
 # $Log$
-# Revision 1.3  2010/08/27 20:56:39  pwagner
+# Revision 1.10  2010/08/27 20:56:39  pwagner
 # Uses optional HDF*INC Makefile variables
 #
-# Revision 1.2  2010/07/14 20:50:22  pwagner
-# Builds every program matching pattern .f90
+# Revision 1.9  2005/06/23 22:10:40  pwagner
+# Reworded Copyright statement
 #
-# Revision 1.1  2010/07/09 21:28:46  pwagner
+# Revision 1.8  2003/04/30 23:04:55  pwagner
+# Now lets you make update in each subdirectory
+#
+# Revision 1.7  2002/09/25 23:25:43  pwagner
+# Uses unique names for temp files
+#
+# Revision 1.6  2002/07/24 20:32:47  pwagner
+# Changes to support hdf5/hdfeos5
+#
+# Revision 1.5  2001/10/12 00:11:36  pwagner
+# Now finds modules up in owndir
+#
+# Revision 1.4  2001/08/13 18:09:08  pwagner
+# replaced shell echo -> shell {REECHO}
+#
+# Revision 1.3  2001/07/02 23:29:07  pwagner
+# Tiny fixes
+#
+# Revision 1.2  2001/07/02 22:39:55  pwagner
+# Fixed erroneous path to fwdmdl
+#
+# Revision 1.1  2001/07/02 18:45:39  pwagner
 # First commit
 #
+
