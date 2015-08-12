@@ -18,33 +18,35 @@ module PCFHdr
 ! It might have been better named PCFHdrAndGlobalAttributes
 ! or split off global attribute stuff into a separate module
 
-   use DATES_MODULE, only: UTC_TO_DATE, UTC_TO_YYYYMMDD, UTCFORM
-   use HDF, only: DFACC_RDWR, DFACC_WRITE, AN_FILE_DESC
-   use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
-   use INTRINSIC, only: L_HDFEOS, L_HDF, L_SWATH
-   use MLSCOMMON, only: FILENAMELEN, MLSFILE_T, NAMELEN
-   use MLSFILES, only: GETPCFROMREF, HDFVERSION_4, HDFVERSION_5, &
-     & INITIALIZEMLSFILE, MLS_CLOSEFILE, MLS_OPENFILE, MLS_OpenFile, MLS_CloseFile
-   use MLSKINDS, only: R8
-   use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_FILEOPEN, &
-     & MLSMSG_WARNING
-   use MLSSTRINGS, only: LOWERCASE
-   use OUTPUT_M, only: OUTPUT
-   use SDPTOOLKIT, only: PGSD_PC_UREF_LENGTH_MAX, PGS_S_SUCCESS, &
-     & PGSD_MET_GROUP_NAME_L, PGS_IO_GEN_CLOSEF, PGS_IO_GEN_OPENF, &
-     & PGSD_IO_GEN_RDIRUNF, PGS_PC_GETREFERENCE, &
-     & PGS_TD_ASCIITIME_ATOB, PGS_TD_ASCIITIME_BTOA, &
-     & useSDPTOOLKIT, MAX_ORBITS
+! See Background below for background and suggestion
+
+   use Dates_module, only: utc_to_date, utc_to_yyyymmdd, utcform
+   use HDF, only: dfacc_rdwr, dfacc_write, an_file_desc
+   use HighOutput, only: outputNamedValue
+   use Intrinsic, only: l_hdfeos, l_hdf, l_swath
+   use MLSCommon, only: filenamelen, mlsfile_t, filenamelen, namelen
+   use MLSFiles, only: getPCFromRef, hdfversion_4, hdfversion_5, &
+     & IniTializeMLSFile, mls_closefile, mls_openfile, mls_openfile, mls_closefile
+   use MLSKinds, only: r8
+   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Fileopen, &
+     & MLSMSG_Warning
+   use MLSStrings, only: lowercase
+   use Output_m, only: output
+   use Sdptoolkit, only: pgsd_pc_uref_length_max, pgs_s_success, &
+     & Pgsd_met_group_name_l, pgs_io_gen_closef, pgs_io_gen_openf, &
+     & Pgsd_io_gen_rdirunf, pgs_pc_getreference, &
+     & Pgs_td_asciitime_atob, pgs_td_asciitime_btoa, &
+     & Usesdptoolkit, max_orbits
    implicit none
-   public :: GLOBALATTRIBUTES_T, &
-     & CREATEPCFANNOTATION, DUMPGLOBALATTRIBUTES,  &
-     & FILLTAI93ATTRIBUTE, &
-     & H5_READMLSFILEATTR, HE5_READMLSFILEATTR, &
-     & H5_WRITEGLOBALATTR, HE5_WRITEGLOBALATTR, HE5_READGLOBALATTR, &
-     & H5_WRITEMLSFILEATTR, HE5_WRITEMLSFILEATTR, &
-     & INPUTINPUTPOINTER, WRITEINPUTPOINTER, &
-     & WRITELEAPSECHDFEOSATTR, WRITELEAPSECHDF5DS, WRITEPCF2HDR, &
-     & WRITEUTCPOLEHDFEOSATTR, WRITEUTCPOLEHDF5DS
+   public :: globalAttributes_t, &
+     & createPCFAnnotation, dumpGlobalAttributes,  &
+     & fillTAI93Attribute, &
+     & h5_readGlobalAttr, h5_readMLSFileAttr, he5_readMLSFileAttr, &
+     & h5_writeGlobalAttr, he5_writeglobalAttr, he5_readGlobalAttr, &
+     & h5_writeMLSFileAttr, he5_writeMLSFileAttr, &
+     & inputInputPointer, writeInputPointer, &
+     & writeLeapSecHDFEOSAttr, writeLeapSecHDF5DS, writePCF2Hdr, &
+     & writeUTCPoleHDFEOSAttr, writeUTCPoleHDF5DS
    private
 
 ! === (start of toc) ===                                                 
@@ -64,6 +66,7 @@ module PCFHdr
 ! dumpGlobalAttributes     dumps the global attributes
 ! FillTAI93Attribute       Fill the TAI93 component of the global attribute 
 !                           based on theStartUTC component
+! h5_readglobalattr        reads the global attributes from an hdf5-formatted file
 ! h5_writeglobalattr       writes the global attributes to an hdf5-formatted file
 ! he5_writeglobalattr      writes the global attributes to an hdfeos5-formatted file
 ! he5_readglobalattr       reads the global attributes from an hdfeos5-formatted file
@@ -89,12 +92,19 @@ module PCFHdr
 
 ! Contents:
 
-! Remarks:  This module contains subroutines for writing the PCF as an 
-! annotation to HDF files. (obsolete)
-! It also contains the two routines that prepare and write the input pointer
-! to metadata
-! and the routines for writing attributes to the various files requiring them
+! Background:  This module still contains subroutines for writing the PCF as an 
+! annotation to HDF files, a use now mostly obsolete.
+! Thus its inappropriate name.
+
+! It also contains 
+! (a) two routines that prepare and write the input pointer
+! to metadata, still used by Level 1
+! (b) routines for reading and writing file-level attributes
 ! in particular hdfeos5 and plain hdf5
+
+! Suggestion:
+! Create a brrand new module, named something like GlobalAttributes.f90
+! and move the non-obsolete procedures and datatypes there.
   integer, parameter, public :: INPUTPTR_STRING_LENGTH = PGSd_PC_UREF_LENGTH_MAX
   integer, parameter, public :: GA_VALUE_LENGTH = 40
   integer, parameter, public :: MiscNotesLENGTH = 4096
@@ -107,12 +117,13 @@ module PCFHdr
   character(len=*), parameter, private :: HDFINPTPTRVALUE = 'Found at ' // &
     & '/PCF'
   character(len=*), parameter, private :: DEFAULTPROCESSLEVEL = 'L2'
-  ! logical, parameter, private          :: SKIPDOIPRODLOC      = .false.
+
   ! No MAF number can ever be this big (as in L1BData module)
   integer, parameter :: BIGGESTMAFCTR = huge(0)/2
 
-   ! May get some of these from MLSLibOptions? 
+   ! May we get some of these from a new module, e.g. MLSLibOptions? 
   type GlobalAttributes_T
+    character(len=FileNameLen) :: FileAttributesCopiedFrom = ' '
     integer :: OrbNum(max_orbits)
     real(r8) :: OrbPeriod(max_orbits)
     integer, pointer, dimension(:,:) :: OrbNumDays => Null()
@@ -126,12 +137,20 @@ module PCFHdr
     character(len=GA_VALUE_LENGTH) :: EndUTC = ''
     character(len=GA_VALUE_LENGTH) :: DOI = '' ! E.g., '10.5083/AURA/MLS/DATA201'
     character(len=GA_VALUE_LENGTH) :: productionLoc = ' '
-    integer :: GranuleMonth                  = 0
-    integer :: GranuleDay                    = 0
-    integer :: GranuleYear                   = 0
-    real(r8) :: TAI93At0zOfGranule           = 0.d0
-    integer :: FirstMAFCtr                   = BIGGESTMAFCTR
-    integer :: LastMAFCtr                    = 0
+    integer                        :: GranuleMonth                  = 0
+    integer                        :: GranuleDay                    = 0
+    integer                        :: GranuleYear                   = 0
+    real(r8)                       :: TAI93At0zOfGranule            = 0.d0
+    integer                        :: FirstMAFCtr                   = BIGGESTMAFCTR
+    integer                        :: LastMAFCtr                    = 0
+    character(len=GA_VALUE_LENGTH) :: PhaseNames                    = ' '
+    character(len=GA_VALUE_LENGTH) :: ForwardModelNames             = ''
+    character(len=GA_VALUE_LENGTH) :: ProductionLocation            = ''
+    integer                        :: NumCompletedChunks            = 0
+    integer                        :: NumFailedChunks               = 0
+    character(len=GA_VALUE_LENGTH) :: FailedChunks                  = 'MLS Aura'
+    character(len=GA_VALUE_LENGTH) :: FailedMachines                = ''
+    character(len=GA_VALUE_LENGTH) :: FailedMsgs                    = ''
   end type GlobalAttributes_T
 
   ! This variable describes the global attributes
@@ -234,10 +253,18 @@ contains
       call outputNamedValue ( 'Granule year:' ,GlobalAttributes%GranuleYear )
       call outputNamedValue ( 'Granule day of year:', DayOfYear )
       call outputNamedValue ( 'Equator crossing time (tai93):', GlobalAttributes%TAI93At0zOfGranule )
+      call outputNamedValue ( 'FirstMAFCtr:', GlobalAttributes%FirstMAFCtr )
+      call outputNamedValue ( 'LastMAFCtr:', GlobalAttributes%LastMAFCtr )
+      call outputNamedValue ( 'NumCompletedChunks:', GlobalAttributes%NumCompletedChunks )
+      call outputNamedValue ( 'NumFailedChunks:', GlobalAttributes%NumFailedChunks )
+      call output ('FailedChunks: '      // trim(         GlobalAttributes%FailedChunks        ), advance='yes' )
+      call output ('FailedMachines: '    // trim(         GlobalAttributes%FailedMachines      ), advance='yes' )
+      call output ('FailedMsgs: '        // trim(         GlobalAttributes%FailedMsgs          ), advance='yes' )
+      call output ('FileAttributesCopiedFrom: ' // trim(  GlobalAttributes%FileAttributesCopiedFrom ), advance='yes' )
    end SUBROUTINE dumpGlobalAttributes
 
 !----------------------------------------
-   SUBROUTINE FillTAI93Attribute (LeapSecFileName)
+   SUBROUTINE FillTAI93Attribute ( LeapSecFileName )
 !----------------------------------------
 
     use SDPTOOLKIT, only: MLS_UTCTOTAI, PGS_TD_UTCTOTAI
@@ -283,11 +310,11 @@ contains
 !------------------------------------
 
 !------------------------------------------------------------
-   SUBROUTINE h5_readMLSFileAttr (MLSFile)
+   SUBROUTINE h5_readMLSFileAttr ( MLSFile )
 !------------------------------------------------------------
 
-      use HDF5, only: H5GCLOSE_F, H5GOPEN_F
-      use MLSHDF5, only: GETHDF5ATTRIBUTE, ISHDF5ATTRIBUTEPRESENT
+      use HDF5, only: H5GClose_f, H5GOpen_f
+      use MLSHDF5, only: GetHDF5Attribute, IsHDF5AttributePresent
 ! Brief description of subroutine
 ! This subroutine reads the components of an MLSFile_t 
 ! as attributes from an hdf5-formatted file
@@ -402,11 +429,73 @@ contains
 !------------------------------------------------------------
 
 !------------------------------------------------------------
+   SUBROUTINE h5_ReadGlobalAttr ( MLSFile )
+!------------------------------------------------------------
+
+      use HDF5, only: H5GClose_f, H5GOpen_f
+      use MLSHDF5, only: GetHDF5Attribute, IsHDF5AttributePresent
+! Brief description of subroutine
+! Reads the global attributes from an hdf5-formatted file
+! It finds them at the root '/' group level
+
+! Arguments
+
+      type(MLSFile_T)       :: MLSFile
+! Local variables
+      logical :: copiedFromAnEarlerFile
+      integer :: fileID
+      integer :: grp_id
+      integer :: status
+      integer, dimension(2) :: ints
+
+      ! Executable code
+      if ( .not. MLSFile%stillOpen ) then
+        call MLS_OpenFile( MLSFile )
+      endif
+      fileID = MLSFile%FileID%f_id
+      if ( IsHDF5AttributePresent( '/', fileID, 'InstrumentName') ) &
+        & return
+      copiedFromAnEarlerFile = &
+        & IsHDF5AttributePresent( '/', fileID, 'FileAttributesCopiedFrom' )
+      call h5gopen_f(fileID, '/', grp_id, status)
+      MLSFile%FileID%grp_id = grp_id
+
+      call GetHDF5Attribute( MLSFile, 'InstrumentName        ', GlobalAttributes%InstrumentName        )
+      call GetHDF5Attribute( MLSFile, 'ProcessLevel          ', GlobalAttributes%ProcessLevel          )
+      call GetHDF5Attribute( MLSFile, 'HostName              ', GlobalAttributes%HostName              )
+      call GetHDF5Attribute( MLSFile, 'PGEVersion            ', GlobalAttributes%PGEVersion            )
+      call GetHDF5Attribute( MLSFile, 'StartUTC              ', GlobalAttributes%StartUTC              )
+      call GetHDF5Attribute( MLSFile, 'EndUTC                ', GlobalAttributes%EndUTC                )
+      call GetHDF5Attribute( MLSFile, 'productionLoc         ', GlobalAttributes%productionLoc         )
+      call GetHDF5Attribute( MLSFile, 'GranuleMonth          ', GlobalAttributes%GranuleMonth          )
+      call GetHDF5Attribute( MLSFile, 'GranuleDay            ', GlobalAttributes%GranuleDay            )
+      call GetHDF5Attribute( MLSFile, 'GranuleYear           ', GlobalAttributes%GranuleYear           )
+      call GetHDF5Attribute( MLSFile, 'TAI93At0zOfGranule    ', GlobalAttributes%TAI93At0zOfGranule    )
+      call GetHDF5Attribute( MLSFile, 'FirstMAFCtr           ', GlobalAttributes%FirstMAFCtr           )
+      call GetHDF5Attribute( MLSFile, 'LastMAFCtr            ', GlobalAttributes%LastMAFCtr            )
+      call GetHDF5Attribute( MLSFile, 'PhaseNames            ', GlobalAttributes%PhaseNames            )
+      call GetHDF5Attribute( MLSFile, 'ForwardModelNames     ', GlobalAttributes%ForwardModelNames     )
+      call GetHDF5Attribute( MLSFile, 'MiscNotes             ', GlobalAttributes%MiscNotes             )
+      call GetHDF5Attribute( MLSFile, 'identifier_product_DOI', GlobalAttributes%DOI                   )
+      call GetHDF5Attribute( MLSFile, 'ProductionLocation    ', GlobalAttributes%ProductionLocation    )
+      call GetHDF5Attribute( MLSFile, 'NumCompletedChunks    ', GlobalAttributes%NumCompletedChunks    )
+      call GetHDF5Attribute( MLSFile, 'NumFailedChunks       ', GlobalAttributes%NumFailedChunks       )
+      call GetHDF5Attribute( MLSFile, 'FailedChunks          ', GlobalAttributes%FailedChunks          )
+      call GetHDF5Attribute( MLSFile, 'FailedMachines        ', GlobalAttributes%FailedMachines        )
+      call GetHDF5Attribute( MLSFile, 'FailedMsgs            ', GlobalAttributes%FailedMsgs            )
+
+      call h5gclose_f(grp_id, status)
+
+!------------------------------------------------------------
+   END SUBROUTINE h5_ReadGlobalAttr
+!------------------------------------------------------------
+
+!------------------------------------------------------------
    SUBROUTINE h5_writeglobalattr_fileID ( fileID, skip_if_already_there, DOI )
 !------------------------------------------------------------
 
-      use HDF5, only:  H5GCLOSE_F, H5GOPEN_F
-      use MLSHDF5, only: ISHDF5ATTRIBUTEPRESENT, MAKEHDF5ATTRIBUTE
+      use HDF5, only: H5GClose_f, H5GOpen_f
+      use MLSHDF5, only: MakeHDF5Attribute, IsHDF5AttributePresent
       ! Brief description of subroutine
       ! This subroutine writes the global attributes for an hdf5-formatted file
       ! It does so at the root '/' group level
@@ -430,7 +519,7 @@ contains
         call output( 'Writing global attributes', advance='yes' )
         call dumpGlobalAttributes
       endif
-      myDOI = .false.
+      myDOI = len_trim(GlobalAttributes%FileAttributesCopiedFrom) > 0 ! .false.
       if ( present(DOI) ) myDOI=DOI
       my_skip = .false.
       if ( present(skip_if_already_there) ) my_skip=skip_if_already_there
@@ -463,7 +552,9 @@ contains
        & 'StartUTC', GlobalAttributes%StartUTC, .true.)
       call MakeHDF5Attribute(grp_id, &
        & 'EndUTC', GlobalAttributes%EndUTC, .true.)
-      if ( GlobalAttributes%GranuleDay < 1 ) return
+      if ( GlobalAttributes%GranuleDay < 1 &
+        & .and. &
+        & (len_trim(GlobalAttributes%FileAttributesCopiedFrom) < 1 ) ) return
       call MakeHDF5Attribute(grp_id, &
        & 'GranuleMonth', GranuleMonth_fun() , .true.)
       call MakeHDF5Attribute(grp_id, &
@@ -479,6 +570,10 @@ contains
          & 'FirstMAF', GlobalAttributes%FirstMAFCtr, .true.)
         call MakeHDF5Attribute(grp_id, &
          & 'LastMAF', GlobalAttributes%LastMAFCtr, .true.)
+      endif
+      if ( len_trim(GlobalAttributes%FileAttributesCopiedFrom) > 0 ) then
+        call MakeHDF5Attribute(grp_id, &
+         & 'FileAttributesCopiedFrom', GlobalAttributes%FileAttributesCopiedFrom, .true.)
       endif
       ! We don't write these here (the master would insert an erroneous value)
       ! Instead we write them during DirectWrite operations
@@ -1660,6 +1755,9 @@ end module PCFHdr
 !================
 
 !# $Log$
+!# Revision 2.67  2015/08/12 20:36:38  pwagner
+!# Added some missing global attrs; added h5_readGlobalAttr
+!#
 !# Revision 2.66  2015/02/27 23:57:21  pwagner
 !# Take pains to ensure HostName is not blank
 !#
