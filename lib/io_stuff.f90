@@ -31,15 +31,16 @@ module IO_STUFF
 
 !     (subroutines and functions)
 ! get_lun           Find a Fortran logical unit number that's not in use.
+!                     Fortran 2008 allows use of newunit= field in open
 ! get_nLines        Find how many lines are in a text file
 ! read_stdin        Read standard input into characters scalar or array
 ! read_textfile     Read contents of a textfile into characters scalar or array
-! truncate_textFile          Delete contents of a text file
+! truncate_textFile Delete contents of a text file
 ! write_textfile    Write characters scalar or array out to a textfile
 ! === (end of toc) ===
 
 ! === (start of api) ===
-! get_lun( int lun, [log msg] )
+! get_lun( int lun, [log msg], [int bottom], [int top] )
 ! get_nLines( char* File, int nLines, [int maxLineLen] )
 ! read_stdin( str string, [int maxLineLen], [int nLines] )
 ! read_textfile( char* File, str string, [int maxLineLen], [int nLines] )
@@ -92,6 +93,12 @@ contains
 
   subroutine GET_LUN ( LUN, MSG, BOTTOM, TOP )
     ! Find a Fortran logical unit number that's not in use.
+    ! In Fortran 2008, this can be replaced by use of the newunit field in open
+    ! E.g., instead of
+    !    call get_lun ( lun )
+    !    open ( unit=lun, file=.. )
+    ! you can simply
+    !    open ( newunit=lun, file=.. )
     ! Args
     integer, intent(out)          :: LUN    ! The logical unit number
     logical, intent(in), optional :: MSG ! Print failure message? (default: T)
@@ -497,6 +504,7 @@ contains
       string(i:i) = achar(13)
     enddo
     if ( present(nLines) ) nLines = recrd
+    close( UNIT=lun, iostat=status )
   end subroutine READ_TEXTFILE_sca
   
   !------------------ truncate_textFile
@@ -641,6 +649,9 @@ contains
 end module IO_STUFF
 
 ! $Log$
+! Revision 2.22  2015/08/12 20:20:54  pwagner
+! A needed close staement had been omitted from READ_TEXTFILE_sca; fixed
+!
 ! Revision 2.21  2015/07/14 23:10:56  pwagner
 ! Added a routine to truncate_textFile
 !
