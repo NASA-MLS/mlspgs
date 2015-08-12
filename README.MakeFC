@@ -20,17 +20,17 @@
 # related documents:
 #  mlspgs.tgz        an archive containing this file and mls software sources
 #  BEFORE.mls        a self-reading guide to prerequisites to the software
-#  build-nag         a script to build all prerequisite libraries and mls 
-#                     software; also build-lahey, build-ifc, etc.
+#  build             a script to build all prerequisite libraries and mls 
+#                     software
 
         more << EOF
 MakeFC--A configurable Makefile in mlspgs
 
 NOTE
 It is possible that you won't need to read this document. If you obtained the
-mls software as part of a shrinkwrap package, look there for the files
-build-xxx (where xxx might be "nag"), env.linux, and f90. After judiciously
-editing these, just cd to their directory and type "build-xxx".
+mls software as part of a shrinkwrap package, look there for the files build,
+env.linux, and f90. After judiciously editing these, just cd to their directory
+and type "build".
 
 SUMMARY
 To build the mls software, on many different combinations of compiler/
@@ -49,14 +49,13 @@ magnitude in the case of ATLAS)
  (8) LAPACK--another linear algebra library
 
 Then, from the "top" level simply type
-  make -f MakeFC update
+  make update
 and you'll be asked to respond to some questions about your compiler, platform,
 and where the various libraries are installed. Then the software will be built.
 You may quit out of this now and try it out, perhaps coming back later if you
-are curious or if something goes wrong. The reasons for putting each of the
-two parts "-f MakeFC" and "update" this first time are explained below, but the
-point is that after this first time, you will usually be able to make do with
-just "make".
+are curious or if something goes wrong. The reasons for the "update" this first
+time are explained below, but the point is that after this first time, you will
+usually be able to make do with just "make".
 
 You might prefer to copy someone else's .configure file before doing this--it
 will save you having to type in the many paths in answer to the questions
@@ -66,7 +65,7 @@ if you build this as part of a shrinkwrap package, creating a correct
 
 For more information on obtaining and installing the SDP Toolkit, PVM, and the
 FFTW libraries, see BEFORE.mls which should be in the same directory as this
-file. Or else type 'make -f MakeFC firsthelp'.
+file. Or else type 'make firsthelp'.
 
 CONTENTS
 I     SUMMARY
@@ -106,15 +105,9 @@ that worked for someone else, plus trial and error. An alternative is to
 create a configurable Makefile or series of such files that will work,
 at least most of the time. This is what has been done with mls software.
 
-The configurable Makefile is MakeFC. It is found in the mlspgs directory. The
-name MakeFC was chosen as unlikely to conflict with other Makefiles. An
-unfortunate consequence of this decision is that to use it to build the
-software, the "make" command must be accompanied by the "-f MakeFC" the first
-time it is used. After that, however, "make" alone suffices. E.g., the usual
-way becomes
-         make
-This will automatically build lib and mlsln where n={1,2,3,3m}. To build other
-parts see the section BUILDING ONLY PARTS OF THE SOFTWARE below.
+The configurable Makefile is found in the mlspgs directory. It will
+automatically build lib and mlsln where n={1,2,3,3m}. To build other parts see
+the section BUILDING ONLY PARTS OF THE SOFTWARE below.
 
 To simplify things the set of directories {blas, l1, l2, l3, l3m, lib, fwdmdl,
 cloudfwdm, cfm, idlcfm} will be henceforth called simply the "mlslevels".
@@ -133,7 +126,7 @@ directories:
 
    mlspgs/     mlspgs/util/    mlspgs/mlslevels/   mlspgs/srclib
    ------      ------------       ----------        -----------
-   MakeFC      mlsconfigure         MakeFC        (shared
+   Makfile      mlsconfigure         Makfile        (shared
 BEFORE.mls    makemakedep.sh     Makefile.dep       source
 README.MakeFC  f90makedep.pl      platforms/*          files)
               f90ghostfiles.pl                     Makefile.dep
@@ -142,7 +135,7 @@ README.MakeFC  f90makedep.pl      platforms/*          files)
 
 BUILDING THE SOFTWARE
 Then to make the mls software, including all mlslevels, from the top level of
-the mlspgs directory, enter the command "make -f MakeFC update". This should
+the mlspgs directory, enter the command "make update". This should
 launch util/mlsconfigure. It will first query you for your compiler 
 (NAG, Lahey, G95, Intel, Absoft) and for your platform/OS (only three
 choices available: Sun, SGI, or Linux). You'll also be offered the chance to
@@ -273,7 +266,7 @@ or to do the update
 You may either develop the habit of typing this kind of long command every time
 you invoke make, or you may avail yourself of an environment variable to do
 this. That environment variable may even be able to keep track of which platform
-you are currently using and thus automatically direct MakeFC to the appropriate
+you are currently using and thus automatically direct make to the appropriate
 .configure file.
 
 If you use the c shell, you can set the variable HOSTMLSCFILE with
@@ -380,9 +373,6 @@ help--scripts
              prints some details on the scripts used by the Makefiles
 help--toolkit  
              how to set paths for the mandatory libraries
-makefile     makes a new symbolic link from MakeFC to Makefile
-             at the top level as well as each of the subdirectories;
-             useful for older archives before the link became automatic
 
   If the target is entered exactly as shown below, the
   resulting archive will be an uncompressed .tar file; but with:
@@ -413,11 +403,6 @@ include statement is a file of compiler settings specific to the NAG compiler.
 As make proceeds to build the prerequisites of the final program, the
 binaries, .o and .mod files, and end products, e.g. libmls.a or mlsl2, are
 all placed in MLSCONFG.
-
-Another step make takes at its first invocation is to copy MakeFC to a new file
-named Makefile. If a file named Makefile already exists, it is renamed
-Makefile.old. That is why subsequent uses of make can omit the "-f MakeFC"
-part.
 
 Also, in subsequent uses, .configure already exists, so make simply executes
 any commands needed to build the end products if any prerequisites are newer.
@@ -499,49 +484,17 @@ The only combinations of compiler.platform/OS provided for so far are
   NAG.SGI
   Sun.Sun
 
-32-bit vs. 64-bit
-Some of our desktops are now running in 64-bit mode. To see whether the
-machine you're currently logged into is 64-bit or not, try typing
- uname -i
-If it is 64-bit, you will see the line
- x86_64
-returned. If it is 32-bit, you will see
- i386
-instead.
-
-The way 32-bit vs. 64-bit impacts building mlspgs will be spelled out in
-detail.
-
-First of all, we built only one 64-bit toolkit, and that is for the
-Intel compiler ifort v11. Users fonder of Lahey, NAG, or earlier
-versions of the Intel compiler must build mlspgs only on 32-bit
-platforms. 
-
-While executables built with v11 produce results close to but different
-from v10, we neglect them and have used v11 in all v3.20 development
-tests except ME-01-003 and -004.
-
-The .configure for the 64-bit toolkit is in 
-/software/toolkit/ifc11-64/.configure
-
-You can copy it to your mlspgs directory, perhaps renaming it to
-something more memorable like .configure-ifc11-64.
-
-Incidentally, it uses the internal ieee_arithmetic support rather than
-the one in machines/IFC.Linux.
-
 Now we list some prohibitions to keep in mind:
-(1) Do not use the same .configure file to build somethimes with ifort
-v10 and other times with ifort v11. Treat them as two different
-compilers.
+(1) Do not use the same .configure file to build with different versions of
+ifort. Treat them as two different compilers.
 (2) Do not use the same .configure to build sometimes on 64-bit
 platforms and other times on 32-bit platforms. Keep the .configure file
 names, and their MLSCONFG=name subdirectories, distinct.
 (3) Do not use the same .configure while switching between internal
 ieee_arithmetic support and that supplied in machines/IFC.Linux.
 
-Although I have claimed otherwise, you are not able to successfully both
-build and run 32-bit executables on 64-bit platforms.
+Although I have elsewhere claimed otherwise, you are not able to successfully
+both build and run 32-bit executables on 64-bit platforms.
 
 Can you run 32-bit executables on 64-bit platforms if they were built on
 32-bit platforms? It depends. Definitely not if the executable was
@@ -568,16 +521,13 @@ version, or compiler options never changed, then you should never have to do a
 "make clean". If any of the conditions above are violated, then the answer
 changes from "never" to "it depends".
 
-Sometimes after doing a cvs update, especially if there has been a lot of
-active coding and cvs committing, the next make will exit complaining about an
-illegal separator.  This is usually the result of cvs "merging" your copy of
+Sometimes after doing a cvs update, especially if there has been a lot of active
+coding and cvs committing, the next make will exit complaining about an illegal
+separator.  This is usually the result of cvs "merging" your copy of
 Makefile.dep with one it has archived.  The solution is to do a "make update"
-from the top mlspgs level.  It is also possible for MakeFC itself to get messed
-up in this way -- the above cures will not work  in this case. You may be able
-to fix the problem by deleting MakeFC and doing a CVS update to fetch a new
-copy. Similarly, one of the scripts hidden away in the util directory
-may become corrupted by merge conflicts during a cvs update. In this case, too,
-deleting the scripts and a fresh cvs update may fix the problem.
+from the top mlspgs level. Similarly, one of the scripts hidden away in the util
+directory may become corrupted by merge conflicts during a cvs update. In this
+case, too, deleting the scripts and a fresh cvs update may fix the problem.
 
 Another cause of a hotly complaining make is using a make that is not gnu
 compliant. If your gnu make is not the default make on your system, then please
@@ -796,11 +746,11 @@ MLSINSTALLDIR      install puts all the executables here instead of
 EXAMPLE OF A .configure FILE
 #	.configure for mls
 USEMYFC=yes
-FC=/usr/local/intel/11.1/056/bin/intel64/ifort
+FC=/usr/local/bin/ifort-v14
 MLSF95=IFC
 MLSPLAT=Linux
-MLSCONFG=IFC.Linux.ifc11-64
-MLSTKROOT=/software/toolkit/ifc11-64
+MLSCONFG=IFC.Linux
+MLSTKROOT=/software/toolkit/ifc14
 PGSINC=${MLSTKROOT}/toolkit/include
 PGSTK=${MLSTKROOT}/toolkit/lib/linux
 HDFEOS=${MLSTKROOT}/hdfeos/lib/linux
@@ -822,34 +772,39 @@ COPTS=-D H5_USE_16_API
 FOPTS=-vec-report0 -traceback -xSSSe3
 LDOPTS=-static -xSSSe3
 REECHOMACHOPTS=-excl ieee_arithmetic.f90
-export MLSF95
-export MLSPLAT
-export MLSCONFG
-export PGSINC
-export PGSTK
-export HDFEOS
-export HDFEOS5
-export HDF
-export HDF5
-export GCTP
-export PGSLIB
+PRE=-D${MLSF95}
+export MLSF95    
+export MLSPLAT   
+export MLSCONFG  
+export PGSINC    
+export PGSTK     
+export HDFEOS    
+export HDFEOS5   
+export HDF       
+export HDF5      
+export GCTP      
+export PGSLIB    
 export HDFEOS_LIB
-export HDFLIB
-export BLAS
-export LIB_BLAS
-export LAPACK
+export HDFLIB    
+export BLAS      
+export LIB_BLAS  
+export LAPACK    
 export LIB_LAPACK
-export PVM_ROOT
-export PVM_ARCH
-export FFTW_ROOT
-export COPTS
-export FOPTS
-export LDOPTS
+export PVM_ROOT  
+export PVM_ARCH  
+export FFTW_ROOT 
+export COPTS     
+export FOPTS     
+export LDOPTS    
+export PRE       
 
--pw                           2000-Oct-24 to 2010-Aug-27
+-pw                           2000-Oct-24 to 2015-Aug-11
 EOF
 exit
 # $Log$
+# Revision 1.43  2012/06/19 23:24:55  pwagner
+# Brought up to date; mention idlcfm, NOF2003
+#
 # Revision 1.42  2010/08/28 00:48:04  pwagner
 # Includes latest canonical variables, e.g. HDF5INC
 #
