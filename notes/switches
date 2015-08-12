@@ -163,7 +163,7 @@ Switches (set by -S option in mlsl2's command line):
  TScat   => Print TScat matrix
  vir     => Dump 'virgin' matrix (before forming KTK)
  xvec    => 'X' vector during Newton iteration
- walk    => trace walkback on every warning message
+ walk    => trace walkback on every warning message; dump state in tree_walker
  zdet    => Print while determining min(zeta)
  zmor    => Add more zeta points
  ZMOR    => Print while adding more zeta points
@@ -220,6 +220,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.93  2015/03/28 02:57:10  vsnyder
+ Added gmag and mag
+
  Revision 1.92  2015/02/05 21:37:20  vsnyder
  Add 'node'
 
