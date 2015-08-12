@@ -147,7 +147,7 @@ SHELL = /bin/sh
 # --------------- MakeFC help
 # Usage: make target SETTING=value
 # Special 1st time usage (assuming no .configure file)
-#    make -f MakeFC update
+#    make update
 
 # --------------- Target definitions
 #            (code sub-directories of mlspgs excluding util, sandbox)
@@ -207,8 +207,6 @@ SHELL = /bin/sh
 #                    also create shell script in INSTALLDIR for the program
 #                    where ln is one of {l1 l2 l3 l3d l3m nrt}
 # install-nrt    -- build near-real time executables, script, move to INSTALLDIR
-# makefile       -- allows you to summon this custom Makefile with shorter
-#                    "make" rather than laborious "make -f $(MakeFName)"
 # mostlyclean    -- deletes uniquely-named sub-sub-directories
 # partialclean   -- deletes only *.o, *.mod from sub-subs
 # tools          -- build and install programs in the list below
@@ -322,7 +320,6 @@ SHELL = /bin/sh
 # internaladd_copy   Print notice that (previous value) of COPY_NUMBER increment
 # internaldepends    Recalculates dependencies
 # internalupdate     Updates the Makefile in each MLSCONFG; then internaldepends
-# internalreset_copy Resets COPY_NUMBER to 0
 
 #----------------------------------------------------------
 # LEVELS is the list of automatic targets; i.e.
@@ -386,7 +383,7 @@ TAR=tar
 tests_sub_dirs := $(shell ${REECHO} -d -excl tests/CVS tests/*)
 sids_l1boa := sids/l1boa
   
-# This determines the command which MakeFC transmits to each of the
+# This determines the command which make transmits to each of the
 # SUBDIRS when you invoke it with "make update":
 # likely candidates are "depends" or "depends ghostbuster"
 SUBDIRS_UPDATE = depends ghostbuster
@@ -1057,16 +1054,6 @@ WrapList: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/WrapList.f90
    -c $(MLSCONFG) -p $@ -M $(MAKE) \
 	-C $(MLSCFILE) $(MLSBIN)/$@.f90
 
-# allow user to forego "-f MakeFC" nonsense
-makefile:
-	@if [ $(COPY_NUMBER) -lt $(MAX_COPIES) ] ; then \
-		$(MAKE) -f $(MakeFName) internaladd_copy ; \
-	else  \
-		echo "Resetting copy number from  $(COPY_NUMBER) to 1"; \
-		$(MAKE) -f $(MakeFName) internalcleanup ; \
-	fi
-#	@$(MAKE) -f $(MakeFName) internalsaymake
-
 update:
 	@if [ $(COPY_NUMBER) -lt $(MAX_COPIES) ] ; then \
 		$(MAKE) -f $(MakeFName) internaladd_copy ; \
@@ -1233,7 +1220,6 @@ internalcleanup:
 	 		cd ../..; \
 		fi; \
 	done
-	$(MAKE) -f $(MakeFName) internalreset_copy ; \
 
 ghostbuster:
 	@echo "Busting ghosts for $(SUBDIRS)"; \
@@ -1286,15 +1272,11 @@ internalupdate:
 		cd .. ; \
 	done
 
-internalreset_copy:
-	@echo "MakeFC copy number reset from $(COPY_NUMBER) to 0"
-
 internalmftests:
 	@if [ "$(tests_sub_dirs)" = "" -o "$(JUSTSUBDIRS)" != "" ] ; then \
      exit 0 ; \
    fi ; \
-   echo "Copying or linking MakeFC to Makefile in $(tests_sub_dirs)"; \
-	echo "(and updating the Makefile in each $(MLSCONFG) )"; \
+	echo "updating the Makefile in each $(MLSCONFG) "; \
 	 for dir in $(tests_sub_dirs); do \
 	 	if [ -d $$dir ] ; then \
 	  		cd $$dir; \
@@ -1305,7 +1287,7 @@ internalmftests:
 	done; \
 	if [ -d "$(sids_l1boa)" ] ; then \
      cd "$(sids_l1boa)"; \
-     $(MAKE) -f $(MakeFName) update; \
+     $(MAKE) update; \
    fi
 
 show_copy:
@@ -1352,8 +1334,8 @@ tools: chunktimes checkpvmup compare dateconverter \
   install install-all install-cfm install-fullcfm \
   install-l1 install-l2 install-l3 install-l3d install-l3m install-nrt \
   internalcleanup internaldepends internalmftests \
-  internaladd_copy internalreset_copy show_copy internalupdate levels l2q \
-  makefile mostlyclean partialclean Spartacus $(SUBDIRS) subdirs\
+  internaladd_copy show_copy internalupdate levels l2q \
+  mostlyclean partialclean Spartacus $(SUBDIRS) subdirs\
   substar substarz substarg substars tar targ tarz update\
   checkpvmup chunktimes CondenseLeakLog end_stmts f90tex Goldbrick_More \
   heconvert h5subset h5cat hl init_gen killmaster \
@@ -1366,6 +1348,9 @@ tools: chunktimes checkpvmup compare dateconverter \
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.5  2015/08/10 23:12:27  pwagner
+# After switching away from MakeFC
+#
 # Revision 1.155  2015/04/27 21:03:39  whdaffer
 # Moved copy of compile specific bin directories with make install-l1
 #
