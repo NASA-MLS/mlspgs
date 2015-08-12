@@ -10,6 +10,10 @@
 ! foreign countries or providing access to foreign persons.
 
 module MACHINE
+! Useful functions and procedures that should be part of the Fortran standard.
+! In a few cases they have in fact been made part of a later standard, but
+! languish here still for backward ciompatibility.
+
 ! This file must be preprocessed through a makefile
 ! containing sed commands to snip out offending lines
 ! (delimited by BAD_MATCH) depending upon whether to build 
@@ -40,7 +44,7 @@ module MACHINE
   character(LEN=1) :: FILSEP = '/'      ! '/' for Unix, '\' for DOS or NT
   integer, parameter :: HP = 0          ! Offset for first argument for GETARG
 
-  public :: CRASH_BURN
+  public :: CRASH_BURN, Is_a_Directory
 
   interface IO_ERROR; module procedure IO_ERROR_; end interface
   private IO_ERROR_
@@ -121,6 +125,14 @@ contains
     write (*,*) 'Error status code =', iostat
     return
   end subroutine IO_ERROR_
+
+  ! --------------------------------------------------  is_a_directory  -----
+  ! Return TRUE if path is a directory
+  ! Unfortunately, also returns TRUE if path is an ordinary file
+  logical  function is_a_directory ( path )
+    character(len=*), intent(in) :: path
+    inquire( file=trim(path), exist=is_a_directory )
+  end function is_a_directory
 
   ! -----------------------------------------------------  GETARG  -----
   subroutine GETARG ( ARGNUM, ARGVAL )
@@ -415,20 +427,40 @@ contains
 
   end subroutine print_iostat_msg_NAG
 
-  ! ----------------------------------------------  SHELL_COMMAND  -----
-  subroutine SHELL_COMMAND ( Command, Status, Error )
+  ! --------------------------------------------------  SHELL_COMMAND  -----
+  ! Request Shell to execute ommand
+  ! May optionally return
+  ! Status             an integer to indicate status
+  ! Error              an integer to indicate an error
+  ! cmd_output         a character string to hold the result (e.g. from 'cat file')
+  subroutine SHELL_COMMAND ( Command, Status, Error, cmd_output )
   ! Submit a character variable to the system as a shell command.
 
     character(len=*), intent(in) :: Command  ! The command
     integer, intent(out), optional :: Status ! Its status, if the system
                                         !  has such a concept, else zero
-    integer, intent(out), optional :: Error  ! Status of the routine to submit
+    integer, intent(out), optional :: Error  ! Error flag of the routine to submit
                                         ! the command, if the system has
                                         ! such a concept, else zero
 
+    character(len=*), intent(out), optional :: cmd_output  ! The command's output
     integer :: MyError, MyStatus
-
-    call system ( command, myStatus, myError)
+    integer :: RmError, RmStatus
+    character(len=*), parameter :: tempfile = '/tmp/cmd_output.txt'
+    ! Executable
+    if ( present(cmd_output) ) then
+      cmd_output = ' '
+      ! Does /tmp exist?
+      if ( is_a_directory( '/tmp' ) ) then
+        call system ( command // '> ' // tempfile, myStatus, myError )
+        call read_textfile( tempfile, cmd_output )
+        call system ( 'rm -f ' // tempfile, RmStatus, RmError ) ! Housekeeping
+      else
+        call system ( command, myStatus, myError )
+      endif
+    else
+      call system ( command, myStatus, myError )
+    endif
     if ( present(error) ) error = myError
     if ( present(status) ) status = myStatus
   end subroutine SHELL_COMMAND
@@ -526,6 +558,56 @@ contains
   end function MLS_HOWMANY_GC
 !---------- End no -gc section
 
+  subroutine READ_TEXTFILE ( File, string )
+  ! read a textfile into a single string
+  ! Stolen mustly from io_stuff in lib
+    character(len=*), intent(in)  :: File ! its path and name
+    character(len=*), intent(inout) :: string    ! its contents
+    ! Internal variables
+    character(len=1), dimension(len(string)) :: cArray
+    integer :: i
+    integer :: lun
+    integer :: pos
+    integer :: recrd
+    integer :: status
+    character(len=12) :: xfmt
+    character(len=8) :: xlen
+    ! Executable
+    ! What format do we use for reading each line?
+    xfmt = '(128a1)' ! This is the default; if lines are larger supply maxLineLen
+    write( xlen, '(i8)' ) len(string)
+    if ( index(xlen, '*') < 1 ) xfmt = '(' // trim(adjustl(xlen)) // 'a1)'
+    ! Try to read the textfile
+    open( newunit=lun, form='formatted', &
+      & file=trim(File), status='old', iostat=status )
+    if ( status /= 0 ) then
+      write(*,*) 'IO_STUFF%READ_TEXTFILE_ARR-E- Unable to open textfile ' // &
+        & trim(File)
+      return
+    endif
+    recrd = 0
+    ! print *, 'xfmt: ', xfmt
+    i = 0
+    do
+      status = 0
+      carray = achar( 0 )
+      read( UNIT=lun, fmt=xfmt, eor=50, end=500, err=50, advance='no' ) cArray
+500   status = -1
+50    if ( status /= 0 ) exit
+      ! print *, cArray
+      recrd = recrd + 1
+      oneLine: do pos=1, len(string) - 1
+        if ( any(carray(pos:pos+1) == achar(0)) ) exit oneLine
+        i = min(i + 1, len(string))
+        string(i:i) = carray(pos)
+       enddo oneLine
+      i = min(i + 1, len(string))
+      string(i:i) = achar(13)
+    enddo
+    close ( lun )
+  end subroutine READ_TEXTFILE
+  
+ 
   ! ----------------------------------------------  not_used_here  -----
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
@@ -540,6 +622,9 @@ contains
 end module MACHINE
 
 ! $Log$
+! Revision 1.12  2009/06/23 19:58:53  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 1.11  2005/06/22 20:26:22  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
