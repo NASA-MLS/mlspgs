@@ -1,3 +1,0 @@
-! Deallocates memory allocated by ReadPointingGrids
-subroutine Destroy_Pointing_Grid_Database
-end subroutine
