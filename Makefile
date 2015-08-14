@@ -992,6 +992,7 @@ moonscan: $(CONFDIR)/$(MLSCFILE) install-l1
 	@echo Making moonscan L1, copying Calibration-moonscan.f9h to Calibration.f9h
 	cd l1; \
 	cp -f Calibration-moonscan.f9h Calibration.f9h; \
+	grep -nH WinMAFs Calibration.f9h; \
 	touch Calibration.f9h
 	mv $(INSTALLDIR)/mlsl1.sh $(INSTALLDIR)/mlsl1.sh-original
 	$(MAKE) -f $(MakeFName) install-l1
@@ -1003,7 +1004,8 @@ moonscan: $(CONFDIR)/$(MLSCFILE) install-l1
 	mv $(INSTALLDIR)-original $(INSTALLDIR)
 	@echo Done making moonscan L1, copying Calibration-normal.f9h to Calibration.f9h
 	cd l1; \
-	cp -f Calibration-normal.f9h Calibration.f9h;
+	cp -f Calibration-normal.f9h Calibration.f9h; \
+	grep -nH WinMAFs Calibration.f9h;
 
 
 #lib/$(MLSCONFG)/parser.o: lr
@@ -1348,6 +1350,9 @@ tools: chunktimes checkpvmup compare dateconverter \
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.6  2015/08/12 18:10:34  pwagner
+# Fixed some errors in make update
+#
 # Revision 1.5  2015/08/10 23:12:27  pwagner
 # After switching away from MakeFC
 #
