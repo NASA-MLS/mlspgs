@@ -31,7 +31,10 @@ PROG_prereqs := $(CONFDIR)/$(MLSCFILE) \
    $(PLATFORMS)/$(MLSCONFG) $(libmls_objs)/libmls.a \
    $(INSTALLDIR)/libutctotai.a
 
-#Any sources to explicitly exclude from dependency list?
+# Any sources to explicitly exclude from dependency list?  Include any
+# source files that have a 'program' statement in them in this line. If
+# you don't do this your first l1 link will fail with the opaque error
+# message that there are multiple "'mains' defined"
 OMIT_SRCS := $(OMIT) MLSL1.f90 test_streq.f90
 
 OMIT_PREFXD := $(shell ${REECHO} -prefix=-d $(OMIT_SRCS))
@@ -167,6 +170,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl1
 
 # $Log$
+# Revision 2.9  2015/08/10 23:15:57  pwagner
+# *** empty log message ***
+#
 # Revision 2.60  2015/04/23 23:04:37  pwagner
 # Should fix problem with first checkout before Calibration.f9h initialized
 #
