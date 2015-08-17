@@ -45,7 +45,9 @@ program server
     type (ForwardModelConfig_T), pointer :: ForwardModelConfigDatabase(:)
     logical :: locked = .false.
     logical :: initStages(P_LAST - 1) = .false.
-
+    ! These aren't really needed, but the program doesn't know that
+    character(len=27) :: startTime = "2009-040T00:00:00.0000"
+    character(len=27) :: endTime = "2009-040T00:00:00.9999"
     ! executable
     MLSMessageConfig%logFileUnit = -1
     MLSMessageConfig%useToolkit = .false.
@@ -601,6 +603,9 @@ program server
 end program
 
 ! $Log$
+! Revision 1.7  2014/06/19 18:15:42  pwagner
+! Now compatible with new parser api
+!
 ! Revision 1.6  2012/01/09 22:57:39  pwagner
 ! Worked around ifc 12 bug; workaround a vector template problem
 !
