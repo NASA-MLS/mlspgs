@@ -105,11 +105,11 @@ module IDLCFM2_m
         l29(P_FCOORD) = l29(P_FREQUENCIES)
         l29(P_NOCHANS) = template%noChans == 0
         l29(P_NOSURFS) = template%noSurfs == 0
-        l29(P_SURFS) = associated(template%surfs) .and. size(template%surfs) .gt. 0
+        l29(P_SURFS) = allocated(template%surfs) .and. size(template%surfs) .gt. 0
         l29(P_VCOORD) = l29(P_SURFS)
-        l29(P_PHI) = associated(template%phi) .and. size(template%phi) .gt. 0
-        l29(P_GEODLAT) = associated(template%geodlat) .and. size(template%geodlat) .gt. 0
-        l29(P_LONGITUDE) = associated(template%lon) .and. size(template%lon) .gt. 0
+        l29(P_PHI) = allocated(template%phi) .and. size(template%phi) .gt. 0
+        l29(P_GEODLAT) = allocated(template%geodlat) .and. size(template%geodlat) .gt. 0
+        l29(P_LONGITUDE) = allocated(template%lon) .and. size(template%lon) .gt. 0
         l29(P_LOSANGLE) = associated(template%losAngle) .and. size(template%losangle) .gt. 0
         l29(P_SOLARZENITH) = associated(template%solarZenith) .and. size(template%solarzenith) .gt. 0
         l29(P_SOLARTIME) = associated(template%solarTime) .and. size(template%solartime) .gt. 0
@@ -738,19 +738,16 @@ module IDLCFM2_m
                 nullify(qt%frequencies)
             endif
 
-            if (associated(qt%phi)) then
+            if (allocated(qt%phi)) then
                 deallocate(qt%phi)
-                nullify(qt%phi)
             endif
 
-            if (associated(qt%geodlat)) then
+            if (allocated(qt%geodlat)) then
                 deallocate(qt%geodlat)
-                nullify(qt%geodlat)
             endif
 
-            if (associated(qt%lon)) then
+            if (allocated(qt%lon)) then
                 deallocate(qt%lon)
-                nullify(qt%lon)
             endif
 
             if (associated(qt%losangle)) then
@@ -773,9 +770,8 @@ module IDLCFM2_m
                 nullify(qt%time)
             endif
 
-            if (associated(qt%surfs)) then
+            if (allocated(qt%surfs)) then
                 deallocate(qt%surfs)
-                nullify(qt%surfs)
             endif
 
             if (associated(values)) then
@@ -815,8 +811,7 @@ module IDLCFM2_m
         template%verticalCoordinate = l_none
         template%sharedVGrid = .false.
         template%vGridIndex = 0
-        nullify(template%surfs, template%phi, template%geodlat)
-        nullify(template%lon, template%time, template%solartime)
+        nullify(template%time, template%solartime)
         nullify(template%solarzenith, template%losangle)
         nullify(template%chaninds, template%channels, template%frequencies)
         template%fgridindex = 0
@@ -957,6 +952,9 @@ module IDLCFM2_m
 end module
 
 ! $Log$
+! Revision 1.8  2012/01/09 22:36:54  pwagner
+! Workaround for ifc 12 bug
+!
 ! Revision 1.7  2012/01/03 17:21:25  honghanh
 ! Remove unused variables, and incorporate changes from
 ! lit_parm and Molecules_M
