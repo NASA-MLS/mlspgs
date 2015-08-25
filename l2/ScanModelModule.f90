@@ -538,10 +538,10 @@ contains ! =============== Subroutines and functions ==========================
     type (VectorValue_T), intent(in) :: ORBINCL ! Inclination
     type (VectorValue_T), intent(in) :: PHITAN ! Tangent phi
     type (VectorValue_T), intent(in) :: GEOCALT ! L1B Tp Geoc alt.
-    integer, intent(IN) :: MAXITERATIONS ! Number of iterations to use
-    real(r8), intent(in) :: PHIWINDOW   ! For 2D or not
-    integer, intent(in) :: PHIWINDOWUNITS
-    integer, intent(in), optional :: chunkNo
+    integer, intent(IN) :: MaxIterations ! Number of iterations to use
+    real(r8), intent(in) :: PhiWindow(2)   ! For 2D or not
+    integer, intent(in) :: PhiWindowUnits
+    integer, intent(in), optional :: ChunkNo
 
     ! Local parameters
     integer, parameter :: NoQtys = 8
@@ -1673,19 +1673,12 @@ contains ! =============== Subroutines and functions ==========================
     if ( timing ) call sayTime ( 'Finding instance windows' )
     call time_now ( t1 )
   ! convert phitan into geocentric latitude
-    CALL ALLOCATE_TEST(earthradc,ptan%template%nosurfs,'earthradc',modulename)
     CALL ALLOCATE_TEST(earth_radius,ptan%template%nosurfs,'earth_radius', &
     & modulename)
     CALL ALLOCATE_TEST(eff_earth_radius,ptan%template%nosurfs, &
     & 'eff_earth_radius', modulename)
     CALL ALLOCATE_TEST(g_ref,ptan%template%nosurfs,'g_ref',modulename)
-    CALL ALLOCATE_TEST(red_phi_t,ptan%template%nosurfs,'red_phi_t',modulename)
-    CALL ALLOCATE_TEST(sinphi2,ptan%template%nosurfs,'sinphi2',modulename)
-    CALL ALLOCATE_TEST(cosphi2,ptan%template%nosurfs,'cosphi2',modulename)
-    CALL ALLOCATE_TEST(sinlat2,ptan%template%nosurfs,'sinlat2',modulename)
     CALL ALLOCATE_TEST(coslat2,ptan%template%nosurfs,'coslat2',modulename)
-    CALL ALLOCATE_TEST(sinbeta,ptan%template%nosurfs,'sinbeta',modulename)
-    CALL ALLOCATE_TEST(geoclats,ptan%template%nosurfs,'geoclats',modulename)
     CALL ALLOCATE_TEST(p2,ptan%template%nosurfs,'p2',modulename)
     CALL ALLOCATE_TEST(p4,ptan%template%nosurfs,'p4',modulename)
     CALL ALLOCATE_TEST(ratio2,ptan%template%nosurfs,'ratio2',modulename)
@@ -1693,6 +1686,13 @@ contains ! =============== Subroutines and functions ==========================
     CALL ALLOCATE_TEST(l1refalt,ptan%template%nosurfs,'l1refalt',modulename)
     CALL ALLOCATE_TEST(refgeomalt_denom,ptan%template%nosurfs, &
       & 'refgeomalt_denom',modulename)
+    CALL ALLOCATE_TEST(sinbeta,ptan%template%nosurfs,'sinbeta',modulename)
+    CALL ALLOCATE_TEST(geoclats,ptan%template%nosurfs,'geoclats',modulename)
+    CALL ALLOCATE_TEST(sinlat2,ptan%template%nosurfs,'sinlat2',modulename)
+    CALL ALLOCATE_TEST(cosphi2,ptan%template%nosurfs,'cosphi2',modulename)
+    CALL ALLOCATE_TEST(sinphi2,ptan%template%nosurfs,'sinphi2',modulename)
+    CALL ALLOCATE_TEST(red_phi_t,ptan%template%nosurfs,'red_phi_t',modulename)
+    CALL ALLOCATE_TEST(earthradc,ptan%template%nosurfs,'earthradc',modulename)
     sinbeta = sin(deg2rad*orbincline%values(1:ptan%template%noSurfs,fmStat%maf))
     earthradc = (earthrada*earthradb)**2 / &
       & ( (earthRada**2 - earthRadb**2) * sinbeta**2 + earthRadb**2) ! in meters
@@ -2151,6 +2151,11 @@ contains ! =============== Subroutines and functions ==========================
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.84  2015/08/25 17:35:56  vsnyder
+! PhiWindow is a tuple, with the first element specifying the angles or
+! number of profiles/MAFs before the tangent point, and the second
+! specifying the angles or number after.
+!
 ! Revision 2.83  2015/06/19 21:15:50  pwagner
 ! Maneuvers around calculation of ITSS; buggy NAG sometimes segment faults here
 !
