@@ -205,7 +205,7 @@ contains ! ====     Public Procedures     ==============================
     ! Pop the stack.  If Before or Where are present, dump the top frame first.
 
     use Allocate_Deallocate, only: NoBytesAllocated
-    use Output_m, only: Newline, Output
+    use Output_m, only: FlushOutputLines, Newline, Output
     use HighOutput, only: DumpSize
     use Memory_m, only: Memory_Used
     use String_Table, only: Display_String
@@ -286,6 +286,7 @@ contains ! ====     Public Procedures     ==============================
           & call dumpSize ( noBytesAllocated, before = ' to ' )
       end if
       call newLine
+      call flushOutputLines ! unbuffer even if unbuffered not requested
     end if
 
     if ( haveStack ) then
@@ -467,6 +468,9 @@ contains ! ====     Public Procedures     ==============================
 end module Call_Stack_m
 
 ! $Log$
+! Revision 2.29  2015/08/25 18:37:38  vsnyder
+! Call FlushOutputLines at the end of PopStack
+!
 ! Revision 2.28  2014/10/06 23:06:49  vsnyder
 ! Shorten memory change trace line
 !
