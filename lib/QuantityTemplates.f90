@@ -706,7 +706,7 @@ contains
       end if
 
       if ( allocated(qty%surfs) ) then
-        call dump ( qty%surfs, '      Surfs' )
+        call dump ( qty%surfs, '      Surfs = ' )
       else
         call output ( '      No Surfs' )
       end if
@@ -1979,6 +1979,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.101  2015/08/21 01:00:47  vsnyder
+! Spiff a dump
+!
 ! Revision 2.100  2015/07/31 20:42:22  pwagner
 ! Improved Dump
 !
