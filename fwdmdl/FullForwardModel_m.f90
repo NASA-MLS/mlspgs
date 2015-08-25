@@ -3107,6 +3107,7 @@ contains
       integer :: NGL                 ! Total # of GL points = Size(gl_inds)
       integer :: P_Stop              ! Where to stop in polarized case
       logical :: PFA_or_not_pol      ! PFA .or. .not. fwdModelConf%polarized
+      real(rp) :: PhiWindowRadians
       integer :: RadInL2PC           ! Which TScat radiance in L2PC to use
       complex(rp) :: RAD_POL(2,2)    ! polarized radiance output of mcrt for one freq and pointing
         ! (-1,:,:) are Sigma_-, (0,:,:) are Pi, (+1,:,:) are Sigma_+
@@ -3301,7 +3302,7 @@ contains
           ! again if not needed.
           if ( Mie_frq_index /= prev_Mie_frq_ind ) then
             call interpolate_Mie ( Mie_frq_index, eta_T_path_c,           &
-              & eta_IWC_path_c, atmos_der, temp_der,  &
+              & eta_IWC_path_c, atmos_der, temp_der,                      &
               & beta_c_e_path_c(:npc), beta_c_s_path_c(:npc),             &
               & dBeta_c_a_dIWC_path_c(:npc), dBeta_c_s_dIWC_path_c(:npc), &
               & dBeta_c_a_dT_path_c(:npc), dBeta_c_s_dT_path_c(:npc) )
@@ -3311,13 +3312,16 @@ contains
           w0_path_c = beta_c_s_path_c(:npc) / ( alpha_path_c + beta_c_e_path_c(:npc) )
 
           call Get_TScat_Setup ( fwdModelConf, FwdModelIn, FwdModelExtra, &
-           &                     FwdModelOut, Sideband, Frq, MAF, Phitan, &
+           &                     FwdModelOut, Sideband, Frq, MAF, phiTan, &
            &                     L2PC, RadInL2PC, dX, TScat, Grids_TScat )
 
           ! Get TScat and derivatives on the path from the L2PC model
-          call Get_TScat ( fwdModelIn, fwdModelExtra, &
-            &              deg2rad*fwdModelConf%phiWindow, MAF, phitan, frq,   &
-            &              z_coarse, phi_path_c, tan_pt_c, grids_f,            &
+          phiWindowRadians = deg2rad * &
+            & ( maxval(phiTan%values(:,windowFinish)) - &
+            &   minval(phiTan%values(:,windowStart)) )
+          call Get_TScat ( fwdModelIn, fwdModelExtra,                          &
+            &              phiWindowRadians, MAF, phiTan,                      &
+            &              frq, z_coarse, phi_path_c, tan_pt_c, grids_f,       &
             &              L2PC, dX, TScat, radInL2PC, grids_TScat, tt_path_c, &
             &              atmos_der, temp_der, dTScat_df, dTScat_dT )
 
@@ -4802,6 +4806,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.356  2015/05/28 23:22:44  vsnyder
+! Use height above geoid for interpolating the magnetic field to the path.
+!
 ! Revision 2.355  2015/05/01 02:08:36  vsnyder
 ! Interpolate in height or zeta for magnetic field
 !
