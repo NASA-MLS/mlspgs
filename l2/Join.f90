@@ -65,11 +65,11 @@ contains ! =====     Public Procedures     =============================
     use Lexer_core, only: Print_Source
     use MatrixModule_1, only: Matrix_Database_t
     use MLSCommon, only: MLSFile_t
-    use MLSL2options, only: CheckPaths, L2CFNode, &
+    use MLSL2Options, only: CheckPaths, L2CFNode, &
       & SkipDirectWrites, SpecialDumpFile, MLSMessage
-    use MLSL2timings, only: Section_Times, Total_Times, &
+    use MLSL2Timings, only: Section_Times, Total_Times, &
       & Add_to_DirectWrite_Timing, Add_to_Section_Timing
-    use MLSMessagemodule, only: MLSMSG_Error
+    use MLSMessageModule, only: MLSMSG_Error
     use MoreTree, only: Get_Label_and_Spec, Get_Spec_Id
     use Next_Tree_Node_m, only: Init_Next_Tree_Node, Next_Tree_Node, &
       & Next_Tree_Node_State
@@ -383,31 +383,31 @@ contains ! =====     Public Procedures     =============================
     ! Imports
     use allocate_deallocate, only: allocate_test, deallocate_test
     use chunks_m, only: mlschunk_t
-    use directwrite_m, only: directdata_t, &
-      & directwrite, dump, &
-      & expanddirectdb, expandsdnames, filenametoid
+    use directWrite_m, only: directData_t, &
+      & directWrite, dump, &
+      & expandDirectdb, expandSDNames, fileNameToID
     use dump_0, only: dump
     use expr_m, only: expr
-    use forwardmodelconfig, only: forwardmodelconfig_t
+    use forwardModelConfig, only: forwardModelConfig_t
     use hdf, only: dfacc_create, dfacc_rdwr
-    use hgridsdatabase, only: hgrid_t
-    use highoutput, only: outputnamedvalue
-    use init_tables_module, only: f_ascdescmode, f_convergence, f_file, &
-      & f_hdfversion, f_inputFile, &
-      & f_label, f_loweroverlap, f_noPCFid, f_options, &
+    use HGridsDatabase, only: HGrid_t
+    use highOutput, only: outputNamedValue
+    use init_tables_module, only: f_ascDescMode, f_convergence, f_file, &
+      & f_hdfVersion, f_inputFile, &
+      & f_label, f_lowerOverlap, f_noPCFid, f_options, &
       & f_precision, f_prefixSignal, f_quality, f_rank, &
-      & f_single, f_source, f_status, f_type, f_upperoverlap, f_vector, &
+      & f_single, f_source, f_status, f_type, f_upperOverlap, f_vector, &
       & field_first, field_last
     use init_tables_module, only: l_l2gp, l_l2aux, l_l2dgg, l_l2fwm, &
       & l_pressure, l_quantity, l_zeta
     use intrinsic, only: l_none, l_hdf, l_swath, lit_indices, phyq_dimensionless
-    use l2parinfo, only: parallel, logdirectwriterequest, finisheddirectwrite
-    use manipulatevectorquantities, only: dohgridsmatch
-    use MLSCommon, only: filenamelen, mlsfile_t, l2metadata_t
-    use MLSFiles, only: hdfversion_5, &
-      & addinitializemlsfile, dump, getmlsfilebyname, getpcfromref, &
-      & mls_closefile, mls_openfile, split_path_name
-    use MLSFinds, only: findfirst, findnext
+    use l2parinfo, only: parallel, logDirectwriteRequest, finishedDirectwrite
+    use manipulateVectorQuantities, only: doHGridsMatch
+    use MLSCommon, only: fileNameLen, MLSFile_t, l2Metadata_t
+    use MLSFiles, only: HDFVersion_5, &
+      & addInitializeMLSFile, dump, getMLSFileByName, getPCFromRef, &
+      & mls_CloseFile, mls_OpenFile, split_path_name
+    use MLSFinds, only: findFirst, findNext
     use MLSHdfeos, only: mls_swath_in_file
     use MLSKinds, only: r8
     use MLSL2Options, only: checkPaths, &
@@ -420,7 +420,7 @@ contains ! =====     Public Procedures     =============================
     use MLSSignals_m, only: getsignalname
     use moretree, only: get_field_id, get_boolean
     use output_m, only: blanks, output
-    use outputandclose, only: add_metadata
+    use outputAndClose, only: add_metadata
     use string_table, only: display_string, get_string
     use symbol_table, only: enter_terminal
     use symbol_types, only: t_string
@@ -428,8 +428,8 @@ contains ! =====     Public Procedures     =============================
     use toggles, only: gen, toggle, switches
     use trace_m, only: trace_begin, trace_end
     use tree, only: decoration, nsons, sub_rosa, subtree
-    use vectorsmodule, only: vector_t, vectorvalue_t, validatevectorquantity, &
-      & getvectorqtybytemplateindex
+    use vectorsModule, only: vector_t, vectorValue_t, validateVectorQuantity, &
+      & getVectorQtyByTemplateIndex
     ! Dummy arguments
     integer, intent(in) :: NODE         ! Of the JOIN section in the AST
     integer, intent(in) :: TICKET       ! Ticket number from master
@@ -570,6 +570,7 @@ contains ! =====     Public Procedures     =============================
     lowerOverlap = .false.
     got = .false.
     noPCFid = .false.
+    prefixSignal = .false.
     options = ' '
     outputType=0
     outputtypestr = 'unknown'
@@ -2347,6 +2348,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.168  2015/08/25 21:56:34  pwagner
+! Had failed to give prefixSignal a default value; now FALSE
+!
 ! Revision 2.167  2015/07/15 17:09:05  pwagner
 ! Fixed some bugs related to label field in DirectWWrite commands
 !
