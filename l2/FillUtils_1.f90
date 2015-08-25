@@ -134,7 +134,8 @@ module FillUtils_1                     ! Procedures used by Fill
   integer, parameter, public :: MissingField = cantFromL1B + 1
 
   ! More Error codes relating to Vector
-  integer, parameter, public :: NumChansisZero = missingField + 1
+  integer, parameter, public :: NegativePhiWindow = missingField + 1
+  integer, parameter, public :: NumChansisZero = negativePhiWindow + 1
   integer, parameter, public :: NoSourceGridGiven= numChansisZero + 1
   integer, parameter, public :: NoSourceL2GPGiven= noSourceGridGiven + 1
   integer, parameter, public :: NoSourceL2AUXGiven= noSourceL2GPGiven + 1
@@ -377,6 +378,8 @@ contains ! =====     Public Procedures     =============================
         call output ( " fill needs OrbitalInclination.", advance='yes' )
       case ( needTempREFGPH )
         call output ( " needs temperatureQuantity and refGPHquantity.", advance='yes' )
+      case ( negativePhiWindow )
+        call output ( " has a negative value for phiWindow.", advance='yes' )
       case ( no_Error_Code ) ! Handled at the bottom
       case ( noExplicitValuesGiven )
         call output ( " explicit fill requires explicit values.", advance='yes' )
@@ -4589,9 +4592,9 @@ contains ! =====     Public Procedures     =============================
       type (VectorValue_T), pointer :: ORBITINCLINATIONQUANTITY
       type (VectorValue_T), pointer :: PHITANQUANTITY
       type (VectorValue_T), pointer :: GEOCALTITUDEQUANTITY
-      integer, intent(in) :: MAXITERATIONS
-      real(r8), intent(in) :: PHIWINDOW
-      integer, intent(in) :: PHIWINDOWUNITS
+      integer, intent(in) :: MaxIterations
+      real(r8), intent(in) :: PhiWindow(2)
+      integer, intent(in) :: PhiWindowUnits
       integer, intent(in), optional :: chunkNo
       ! H2OQuantity and GeocAltitudeQuantity have to be pointers
       ! as they may be absent.
@@ -7534,6 +7537,11 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.112  2015/08/25 17:33:42  vsnyder
+! PhiWindow is a tuple, with the first element specifying the angles or
+! number of profiles/MAFs before the tangent point, and the second
+! specifying the angles or number after.
+!
 ! Revision 2.111  2015/08/03 21:43:25  pwagner
 ! Made quantityType optional in call to ReadL2AUXData
 !
