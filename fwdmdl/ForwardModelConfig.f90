@@ -196,7 +196,8 @@ module ForwardModelConfig
     ! Now the reals
     real (r8) :: FrqTol               ! MHz, how close to desired frequency must
                                       ! Mie table be?
-    real (r8) :: PhiWindow            ! Window size for examining stuff
+    real (r8) :: PhiWindow(2)         ! Window for examining stuff; (1) before
+                                      ! tangent point, (2) after tangent point
     real (r8) :: Tolerance            ! Accuracy desired when choosing approximations
     real :: sum_DeltaTime = 0.0       ! sum of delta time calling FullForwardModel 
     real :: sum_squareDeltaTime = 0.0 ! sum of the square of delta times calling FullForwardModel 
@@ -898,7 +899,7 @@ contains
     logical :: FLAG                     ! A flag from the sender
     integer, dimension(ISMAX) :: IS     ! Temporary array, for integer scalars
     logical, dimension(LSMAX) :: LS     ! Temporary array, for logical scalars
-    real(r8), dimension(2) :: RS        ! Temporary array, for real scalars
+    real(r8), dimension(3) :: RS        ! Temporary array, for reals
     integer :: I                        ! Loop counter
     integer :: N                        ! Array size
 
@@ -974,7 +975,8 @@ contains
     ! Now the real scalars
     call PVMIDLUnpack ( rs, msg = "Unpacking fwmConfig reals" )
     i = 1
-    config%phiWindow = rs(i) ; i = i + 1
+    config%phiWindow(1) = rs(i) ; i = i + 1
+    config%phiWindow(2) = rs(i) ; i = i + 1
     config%tolerance = rs(i) ; i = i + 1
 
     ! ------- The rest are arrays and/or types
@@ -1414,7 +1416,8 @@ contains
       end if
     end if
     ! Real scalars
-    call output ( config%PhiWindow, before='  PhiWindow: ' )
+    call output ( config%PhiWindow(1), before='  PhiWindow: ' )
+    call output ( config%PhiWindow(2), before=' ' )
     call display_string ( phyq_indices(config%windowUnits), before=' ', advance='yes' )
     call output ( config%Tolerance, before='  Tolerance: ', advance='yes' )
     ! Bin selectors
@@ -1544,6 +1547,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.134  2015/03/28 01:59:22  vsnyder
+! Added stuff to trace allocate/deallocate addresses
+!
 ! Revision 2.133  2014/09/29 20:25:58  vsnyder
 ! Add No_Magnetic_Field to config
 !
