@@ -487,7 +487,7 @@ contains
     grids_x%l_x(ii) = grids_x%l_x(ii-1) + kx
     grids_x%l_v(ii) = grids_x%l_v(ii-1) + kz * kp * kf * kx
     grids_x%z_coord(ii) = qty%template%verticalCoordinate
-    grids_x%l_z(ii) = grids_x%l_z(ii-1) + kz
+    grids_x%l_z(ii) = grids_x%l_z(ii-1) + kz * kx
     grids_x%p_len = grids_x%p_len + kz * kp
     grids_x%mol(ii) = qty%template%molecule
     grids_x%qty(ii) = qty%template%quantityType
@@ -565,11 +565,12 @@ contains
                             ! the equivalent circular Earth radius here, not
                             ! least because we don't know it yet.
       n = pz
-      do i = 1, qty%template%noSurfs
-        l = merge(1,i,qty%template%stacked)
+      ! The order for zet_basis is surfs (fastest), instances, cross angles
+      do k = px+1, qx
         do j = ws, wf
           instOr1 = merge(1,j,qty%template%coherent)
-          do k = px+1, qx
+          do i = 1, qty%template%noSurfs
+            l = merge(1,i,qty%template%stacked)
             n = n + 1
             ! Get geodetic coordinates equivalent to geocentric coordinates
             geod = xyz_to_geod ( to_xyz ( qty%template%geodLat3(l,j,k), &
@@ -638,8 +639,9 @@ contains
           &       (/qv-pv/) )
     else ! All the values
       ! qv - pv == (wf - ws + 1) * kf * kz here
+      ! kz = noSurfs * noCrossTrack here
       ! shape(qty%value4) = [ freqs, zetas, instances, cross-angles ]
-      Grids_x%values(pv+1:qv) = reshape(qty%value4(1:kf,1:kz,ws:wf,1:kx), &
+      Grids_x%values(pv+1:qv) = reshape(qty%value4(1:kf,1:kz/kx,ws:wf,1:kx), &
                                       & (/qv-pv/))
     end if
     !  mixing ratio values are manipulated if it's log basis
@@ -805,7 +807,7 @@ contains
     integer, intent(in), optional :: Details ! <= 0 => don't dump bases
                                              ! <= 1 => don't dump values, default 0
 
-    integer :: I, L, MyDetails, W
+    integer :: I, MyDetails
 
     myDetails = 0
     if ( present(details) ) myDetails = details
@@ -816,43 +818,29 @@ contains
       call output ( name, advance='no' )
     end if
     call output ( the_grid%p_len, before = ', P_Len = ', advance='yes' )
-    call output ( 'Molecules:' )
-    w = len('Molecules:')
+    call output ( 'Molecules:', advance='yes' )
     do i = 1, size(the_grid%names)
+      call output ( i )
       if ( the_grid%names(i) > 0 ) then
-        l = string_length(the_grid%names(i)) + 1
+        call display_string ( the_grid%names(i), before=': ' )
       else
-        l = 2
-      end if
-      if ( w + l > 100 ) then ! Will the line be overly filled?
-        call newLine
-        w = 0
-      end if
-      w = w + l
-      if ( the_grid%names(i) > 0 ) then
-        call display_string ( the_grid%names(i), before=' ' )
-      else
-        call output ( ' ?' )
+        call output ( ': ?' )
       end if
       if ( the_grid%mol(i) > 0 ) then
         call display_string ( lit_indices(the_grid%mol(i)), &
           & before=' molecule: ' )
-        w = w + string_length(lit_indices(the_grid%mol(i))) + len(' molecule: ')
       end if
       if ( the_grid%qty(i) > 0 ) then
         call display_string ( lit_indices(the_grid%qty(i)), &
           & before=' quantity: ' )
-        w = w + string_length(lit_indices(the_grid%qty(i))) + len(' quantity: ')
       end if
       call display_string ( lit_indices(the_grid%z_coord(i)), &
         & before=' vertical coordinate: ' )
-      w = w + string_length(lit_indices(the_grid%z_coord(i))) + len(' vertical coordinate:: ')
       if ( the_grid%where_dBeta_df(i) > 0 ) then
         call output ( the_grid%where_dBeta_df(i), before=' dBeta_df at ' )
-        w = w + 2 + len(' dBeta_df at ')
       end if
+      call newLine
     end do
-    call newLine
     call dump ( the_grid%l_f(1:), 'The_grid%l_f' )
     call dump ( the_grid%l_z(1:), 'The_grid%l_z' )
     call dump ( the_grid%l_p(1:), 'The_grid%l_p' )
@@ -864,11 +852,47 @@ contains
     if ( myDetails > 0 ) then
       call dump ( the_grid%min_val, 'The_grid%Min_Val' )
       call dump ( the_grid%frq_basis, 'The_grid%Frq_Basis' )
-      call dump ( the_grid%zet_basis, 'The_grid%Zet_Basis' )
       call dump ( rad2deg*the_grid%phi_basis, 'The_grid%Phi_Basis (degrees)' )
       call dump ( the_grid%cross_angles, 'The_grid%Cross_Angles' )
+      do i = 1, size(the_grid%names)
+        call output ( i, before='The_grid%Zet_Basis(' )
+        if ( the_grid%names(i) > 0 ) then
+          call display_string ( the_grid%names(i), before='=' )
+        else if ( the_grid%mol(i) > 0 ) then
+          call display_string ( lit_indices(the_grid%mol(i)), before='=' )
+        else if ( the_grid%qty(i) > 0 ) then
+          call display_string ( lit_indices(the_grid%qty(i)), before='=' )
+        end if
+        call output ( (the_grid%l_z(i)-the_grid%l_z(i-1))/ &
+                      (the_grid%l_x(i)-the_grid%l_x(i-1)), &
+          & before=') surfs,insts,cross (' )
+        call output ( the_grid%l_p(i)-the_grid%l_p(i-1), before=',' )
+        call output ( the_grid%l_x(i)-the_grid%l_x(i-1), before=',', &
+                    & after=')', advance='yes' )
+        call dump ( the_grid%zet_basis(the_grid%l_z(i-1)+1:the_grid%l_z(i)), &
+          & lbound=the_grid%l_z(i-1)+1 )
+      end do
       if ( myDetails > 1 ) then
-        call dump ( the_grid%values, 'The_grid%Values' )
+        do i = 1, size(the_grid%names)
+          call output ( i, before='The_grid%Values(' )
+          if ( the_grid%names(i) > 0 ) then
+            call display_string ( the_grid%names(i), before='=' )
+          else if ( the_grid%mol(i) > 0 ) then
+            call display_string ( lit_indices(the_grid%mol(i)), before='=' )
+          else if ( the_grid%qty(i) > 0 ) then
+            call display_string ( lit_indices(the_grid%qty(i)), &
+              & before='=' )
+          end if
+          call output ( the_grid%l_f(i)-the_grid%l_f(i-1), &
+            & before=') freqs,surfs,insts,cross (' )
+          call output ( (the_grid%l_z(i)-the_grid%l_z(i-1))/ &
+                        (the_grid%l_x(i)-the_grid%l_x(i-1)), before=',' )
+          call output ( the_grid%l_p(i)-the_grid%l_p(i-1), before=',' )
+          call output ( the_grid%l_x(i)-the_grid%l_x(i-1), before=',', &
+                      & after=')', advance='yes' )
+          call dump ( the_grid%values(the_grid%l_v(i-1)+1:the_grid%l_v(i)), &
+            lbound=the_grid%l_v(i-1)+1 )
+        end do
         call dump ( the_grid%deriv_flags, 'The_grid%Deriv_Flags' )
       end if
     end if
@@ -888,6 +912,12 @@ contains
 end module LOAD_SPS_DATA_M
 
 ! $Log$
+! Revision 2.102  2015/07/27 22:37:22  vsnyder
+! Store crossAngles in grids_t instead of conflating with phi.  Use absence
+! of PhiTan to indicate the phi window is all available phi's.  Remove the
+! assumption that if there are cross angles, there's only one profile.  Do
+! not fake using WS and WF for crossAngles bounds.
+!
 ! Revision 2.101  2015/07/08 01:25:35  vsnyder
 ! Repair? problem with values being shifted
 !
