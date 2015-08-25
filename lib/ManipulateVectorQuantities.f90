@@ -149,20 +149,18 @@ contains
 
   ! ---------------------------------------- FindOneClosestInstance -----
   integer function FindOneClosestInstance ( referenceQuantity, &
-    soughtQuantity, instance, useValue )
-    use hGridsDatabase, only: findClosestMatch
-    use Intrinsic, only: l_time
+    soughtQuantity, instance )
+    use hGridsDatabase, only: FindClosestMatch
+    use Intrinsic, only: L_Time
     ! This returns the instance index into a stacked quantity for the
     ! instance 'closest' to the given instance in an unstacked one
-    type (VectorValue_T), intent(in) :: referenceQuantity ! e.g. temperature
-    type (VectorValue_T), intent(in), target :: soughtQuantity ! e.g. ptan, radiance
-    integer, intent(in) :: instance
-    logical, intent(in), optional :: USEVALUE ! For phiTan as sought quantity
+    type (VectorValue_T), intent(in) :: ReferenceQuantity ! e.g. temperature
+    type (VectorValue_T), intent(in), target :: SoughtQuantity ! e.g. ptan, radiance
+    integer, intent(in) :: Instance
 
     ! Local variables
     integer :: horizontalCoordinate
-    logical :: myUseValue
-    real (r8), dimension(:,:), pointer :: SEEK ! The thing to look for
+    real (r8), dimension(:,:), pointer :: Seek ! The thing to look for
 
     ! Executable:
     horizontalCoordinate = referenceQuantity%template%horizontalCoordinate
@@ -170,16 +168,9 @@ contains
 
     ! First we'll do a hunt to get ourselves in the right area.  Might as
     ! well start looking where we think that will be.
-    myUseValue = .false.
-    if ( present(useValue) ) myUseValue = useValue
 
-    if ( myUseValue ) then
-      if ( soughtQuantity%template%quantityType == l_phiTan ) then
-        seek => soughtQuantity%values
-      else
-        call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & 'Cannot use useValue option for non phiTan quantities' )
-      end if
+    if ( soughtQuantity%template%quantityType == l_phiTan ) then
+      seek => soughtQuantity%values
     else if ( horizontalCoordinate == l_time ) then
       seek => soughtQuantity%template%time
     else
@@ -196,24 +187,24 @@ contains
         & seek, instance )
     else
       call Dump ( referenceQuantity%template )
-      call MLSMessage ( &
-        & MLSMSG_Error, ModuleName, &
-        & 'phi is not allocated and horizontal coordinate is not time' )
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'In FindOneClosestInstance, reference phi is not allocated and ' // &
+        & 'horizontal coordinate is not time' )
     end if
   end function FindOneClosestInstance
 
   ! --------------------------------------- FindInstanceWindow ---------
-  subroutine FindInstanceWindow ( quantity, phiTan, maf, phiWindow, &
-    & windowUnits, windowStart, windowFinish )
+  subroutine FindInstanceWindow ( Quantity, PhiTan, MAF, PhiWindow, &
+    & WindowUnits, WindowStart, WindowFinish )
     ! This returns the start and end of a window into a quantity such as
     ! temperature for a given instance of a minor frame quantity
-    type (VectorValue_T), intent(in) :: QUANTITY ! Quantity e.g. temperature
-    type (VectorValue_T), intent(in) :: PHITAN ! Phitan information
-    integer, intent(in) :: MAF          ! Major frame sought
-    real (r8), intent(in) :: PHIWINDOW  ! Window size input
-    integer, intent(in) :: WINDOWUNITS
-    integer, intent(out) :: WINDOWSTART ! Output window start
-    integer, intent(out) :: WINDOWFINISH ! Output window finish
+    type (VectorValue_T), intent(in) :: Quantity ! Quantity e.g. temperature
+    type (VectorValue_T), intent(in) :: PhiTan ! Phitan information
+    integer, intent(in) :: MAF            ! Major frame sought
+    real (r8), intent(in) :: PhiWindow(2) ! Window size before and after PhiTan
+    integer, intent(in) :: WindowUnits    ! PHYQ_Angle or PHYQ_Profiles
+    integer, intent(out) :: WindowStart   ! Output window start
+    integer, intent(out) :: WindowFinish  ! Output window finish
 
     ! Internal variables
     integer :: CLOSESTINSTANCE
@@ -222,31 +213,26 @@ contains
 
     ! Executable code
     call trace_begin ( me, 'FindInstanceWindow', cond=.false. )
-    if ( phiWindow == 0.0_r8 ) then
-      ! Just return closest instances
-      closestInstance = FindOneClosestInstance ( quantity, phiTan, maf, &
-        & useValue=.true. )
-      windowStart = closestInstance
-      windowFinish = closestInstance
-    else if ( windowUnits == PHYQ_Profiles ) then
-      ! Return n profiles either side of the closest instance
-      closestInstance = FindOneClosestInstance ( quantity, phiTan, maf, &
-        & useValue=.true. )
-      windowStart = max ( 1, closestInstance - nint ( (phiWindow-1)/2 ) )
+    ! WindowUnits was checked to be either PHYQ_Profiles or PHYQ_Angle.
+    ! If WindowUnits had been given as 0 or 0:0, the closest instance will be
+    ! chosen.
+    if ( windowUnits == PHYQ_Profiles ) then
+      ! Set the window start : window end so that there are phiWindow(1) 
+      ! profiles before the closest instance, and phiWindow(2) after the
+      ! closest instance.
+      closestInstance = FindOneClosestInstance ( quantity, phiTan, maf )
+      windowStart = max ( 1, closestInstance - nint ( phiWindow(1) ) )
       windowFinish = min ( quantity%template%noInstances, &
-        & closestInstance + nint ( (phiWindow-1)/2 ) )
-    else if ( windowUnits == PHYQ_Angle ) then
-      phiMin = minval ( phiTan%values(:,maf) ) - phiWindow/2.0
-      phiMax = maxval ( phiTan%values(:,maf) ) + phiWindow/2.0
+        & closestInstance + nint ( phiWindow(2) ) )
+    else ! windowUnits == PHYQ_Angle
+      phiMin = minval ( phiTan%values(:,maf) ) - phiWindow(1)
+      phiMax = maxval ( phiTan%values(:,maf) ) + phiWindow(2)
       call Hunt ( quantity%template%phi(1,:), phiMin, windowStart, &
         & allowTopValue=.true. )
       call Hunt ( quantity%template%phi(1,:), phiMax, windowFinish, &
         & allowTopValue=.true. )
       windowStart = max ( 1, windowStart - 1 )
       windowFinish = min ( quantity%template%noInstances, windowFinish + 1 )
-    else
-      call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Invalid units for window specification' )
     end if
     call trace_end ( cond=.false. )
   end subroutine FindInstanceWindow
@@ -670,6 +656,13 @@ contains
 end module ManipulateVectorQuantities
   
 ! $Log$
+! Revision 2.50  2015/08/25 17:16:07  vsnyder
+! In FindOneClosestInstance, determine whether to use the value or
+! geolocation depending upon whether the type is PhiTan; eliminate the
+! UseValue dummy argument.  In FindInstanceWindow, allow PhiWindow to be
+! a tuple, with the first element giving the number of profiles/MAFs before
+! the tangent point, and the second giving the number after.
+!
 ! Revision 2.49  2015/07/29 00:27:28  vsnyder
 ! Convert Phi from pointer to allocated
 !
