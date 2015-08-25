@@ -89,8 +89,8 @@ contains ! =====     Public Procedures     =============================
       & badlosgridfill, badlosvelfill, badrefgphquantity, badgphquantity, &
       & badrefractfill, badscvelecrquantity, badtemperaturequantity, &
       & bothfractionandlength, missingfield, &
-      & needgeocaltitude, needh2o, needorbitinclination, &
-      & needtemprefgph, nocodefor, no_error_code, noexplicitvaluesgiven, &
+      & needgeocaltitude, needh2o, needorbitinclination, needtemprefgph, &
+      & negativePhiWindow, nocodefor, no_error_code, noexplicitvaluesgiven, &
       & nosourcegridgiven, nosourcel2auxgiven, nosourcel2gpgiven, &
       & notimplemented, notplain, notspd, &
       & wrongunits
@@ -366,6 +366,7 @@ contains ! =====     Public Procedures     =============================
     logical :: EXACT                    ! Set STATUS to value exactly, don't OR bits
     logical :: EXCLUDEBELOWBOTTOM       ! If set in binmax/binmin does not consider stuff below bottom
     character(len=16)  :: explicitUnit  ! E.g., DU
+    integer :: Expr_Type                ! From expr
     logical :: Extinction               ! Flag for cloud extinction calculation
     integer :: FIELDINDEX               ! Entry in tree
     integer :: FieldValue               ! Value of a field in the L2CF
@@ -475,7 +476,7 @@ contains ! =====     Public Procedures     =============================
     integer :: ORBITINCLINATIONQUANTITYINDEX ! In the quantities database
     integer :: PHITANVECTORINDEX        ! In the vector database
     integer :: PHITANQUANTITYINDEX      ! In the quantities database
-    real(r8) :: PHIWINDOW               ! For hydrostatic ptan guesser
+    real(r8) :: PHIWINDOW(2)            ! For hydrostatic ptan guesser
     real(r8) :: PHIZERO                 ! For hydrostatic ptan guesser
     integer :: PHIWINDOWUNITS           ! For hydrostatic ptan guesser
     real(r8) :: PRECISIONFACTOR         ! For setting -ve error bars
@@ -641,7 +642,7 @@ contains ! =====     Public Procedures     =============================
       precisionFactor = 0.5
       offsetAmount = 1000.0             ! Default to 1000K
       profile = -1
-      phiWindow = 4
+      phiWindow = [ 1, 2 ] ! One before tangent, two after
       phiWindowUnits = phyq_angle
       phiZero = 0.0
       quadrature = .false.
@@ -1388,13 +1389,13 @@ contains ! =====     Public Procedures     =============================
     ! ----------------------------------------------  FillCommand  -----
     subroutine FillCommand
     ! Now we're on actual Fill instructions.
-      use Declaration_Table, only: BASE_UNIT
+      use Declaration_Table, only: Base_Unit, Range
 !     use DUMP_0, only: DUMP
-      use init_tables_module, only: l_none
-      use intrinsic, only: lit_indices, t_boolean, t_numeric
-      use string_table, only: display_string
-      use vector_qty_expr_m, only: dot, vector_qty_expr
-      use vectorsmodule, only: destroyvectorquantitymask, destroyvectorquantityvalue, &
+      use Init_tables_module, only: L_None
+      use Intrinsic, only: lit_indices, t_boolean, t_numeric
+      use String_table, only: display_string
+      use Vector_qty_expr_m, only: dot, vector_qty_expr
+      use Vectorsmodule, only: destroyvectorquantitymask, destroyvectorquantityvalue, &
         & Dump_Vector_Quantity
       double precision :: Number
       integer :: Stat
@@ -1674,12 +1675,32 @@ contains ! =====     Public Procedures     =============================
           PhitanVectorIndex = decoration(decoration(subtree(1,gson)))
           PhitanQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
         case ( f_phiWindow )
-          call expr_check ( gson , unitAsArray, valueAsArray, &
-            & (/ PHYQ_Profiles, PHYQ_Angle /), unitsError )
-          if ( unitsError ) call Announce_error ( subtree(j,key), wrongUnits, &
+          call expr ( gson, unitAsArray, valueAsArray, expr_type )
+          phiWindow = valueAsArray
+          if ( any ( phiWindow < 0 ) ) &
+            & call Announce_error ( gson, negativePhiWindow )
+          ! Make sure the window units are profiles or angle.  Allow one of
+          ! them to be dimensionless if it's a range.
+          if ( expr_type /= range ) unitAsArray(2) = unitAsArray(1)
+          if ( unitAsArray(1) == PHYQ_Dimensionless ) unitAsArray(1) = unitAsArray(2)
+          if ( unitAsArray(2) == PHYQ_Dimensionless ) unitAsArray(2) = unitAsArray(1)
+          if ( unitAsArray(1) /= unitAsArray(2) .or. &
+            & all ( unitAsArray(1) /= (/ PHYQ_Profiles, PHYQ_Angle /) ) ) &
+            & call Announce_Error ( gson, wrongUnits, &
             & extraInfo=(/unitAsArray(1), PHYQ_Profiles, PHYQ_Angle/) )
-          phiWindow = valueAsArray(1)
           phiWindowUnits = unitAsArray(1)
+          if ( expr_type /= range ) then ! only one valueAsArray was given
+            if ( phiWindowUnits == PHYQ_Angle ) then
+              ! Assume a symmetric window
+              phiWindow(1) = 0.5 * valueAsArray(1)
+              phiWindow(2) = phiWindow(1)
+            else ! phiWindowUnits == PHYQ_Profiles
+              ! Center the window with valueAsArray(1) total profiles.
+              ! If even, put one more before the tangent than after it.
+              phiWindow(2) = nint(valueAsArray(1)-1)/2 ! after tangent point
+              phiWindow(1) = max(nint(valueAsArray(1)) - phiWindow(2) - 1,0.0_r8) ! before
+            end if
+          end if
         case ( f_phiZero )
           call expr ( gson , unitAsArray, valueAsArray )
           phiZero = valueAsArray(1)
@@ -3187,6 +3208,16 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.453  2015/08/25 17:32:53  vsnyder
+! PhiWindow is a tuple, with the first element specifying the angles or
+! number of profiles/MAFs before the tangent point, and the second
+! specifying the angles or number after.  Set its default to [1,2] instead
+! of 4.  Check that the units are either angles or profiles.  If it's input
+! as a tuple, allow one to be dimensionless.  If it's not a tuple, and its
+! units are profiles, it specifies the total number of profiles; put (n-1)/2
+! before and the rest after after, with one more before if n is even.  If
+! it's not a tuple and its units are angles, put half before and half after.
+!
 ! Revision 2.452  2015/04/30 02:54:31  vsnyder
 ! Allow to run the magnetic model without ScVelECR and TngtGeocAlt
 !
