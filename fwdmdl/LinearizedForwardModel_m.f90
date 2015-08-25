@@ -113,8 +113,8 @@ contains ! =====     Public Procedures     =============================
     use FORWARDMODELINTERMEDIATE, only: FORWARDMODELSTATUS_T
     use FORWARDMODELVECTORTOOLS, only: GETQUANTITYFORFORWARDMODEL
     use HESSIANMODULE_1, only: MULTIPLY
-    use INTRINSIC, only: L_RADIANCE, L_TEMPERATURE, L_PTAN, L_VMR, &
-      & L_LIMBSIDEBANDFRACTION, L_OPTICALDEPTH
+    use INTRINSIC, only: L_LIMBSIDEBANDFRACTION, L_OPTICALDEPTH, &
+      & L_PTAN, L_RADIANCE, L_TEMPERATURE, L_VMR, PHYQ_Angle
     use L2PC_M, only: L2PC_T, L2PCDATABASE, POPULATEL2PCBIN
     use L2PCBINS_M, only: FINDMATCHFORL2PCQ, SELECTL2PCBINS
     use MANIPULATEVECTORQUANTITIES, only: FINDONECLOSESTINSTANCE
@@ -378,10 +378,6 @@ contains ! =====     Public Procedures     =============================
             & advance='yes' )
         end if
 
-        ! OK, we're legit, let's get going.
-        instanceLen = l2pcQ%template%instanceLen
-        closestInstance = FindOneClosestInstance ( stateQ, radiance, maf )
-
         ! Do we need derivatives for this?
         doDerivatives = present(jacobian) .and. foundInFirst
         if ( doDerivatives ) then
@@ -399,27 +395,38 @@ contains ! =====     Public Procedures     =============================
           end select
         end if
 
-        ! Loop over profiles
+        ! OK, we're legit, let's get going.
+        instanceLen = l2pcQ%template%instanceLen
+        closestInstance = FindOneClosestInstance ( stateQ, radiance, maf )
+
+        ! Loop over profiles.
+        ! Assumes l2pcQ is stacked.
         center = l2pcQ%template%noInstances/2 + 1
         do xStarInstance = 1, l2pcQ%template%noInstances
           ! Identify this instance in state
-          if ( fmConf%phiWindow == 0.0 ) then
+          if ( sum(fmConf%phiWindow) == 0.0 ) then
             ! If 0, user wants 1D, always choose the closest instance
             deltaInstance = 0
           else
-            deltaInstance = xStarInstance - center
             ! Try to fit within phiWindow
-            phiWindowLoop: do
-              deltaPhi = l2pcQ%template%phi(1,center+deltaInstance) - &
-                & l2pcQ%template%phi(1,center)
-              if ( deltaPhi > fmConf%phiWindow ) then
-                deltaInstance = deltaInstance - 1
-              else if ( deltaPhi < -fmConf%phiWindow ) then
-                deltaInstance = deltaInstance + 1
-              else
-                exit phiWindowLoop
-              end if
-            end do phiWindowLoop
+            deltaInstance = xStarInstance - center
+            if ( fmConf%windowUnits == PHYQ_Angle ) then
+              phiWindowLoop: do
+                deltaPhi = l2pcQ%template%phi(1,center+deltaInstance) - &
+                  & l2pcQ%template%phi(1,center)
+                if ( deltaPhi > fmConf%phiWindow(2) ) then
+                  deltaInstance = deltaInstance - 1
+                else if ( deltaPhi < -fmConf%phiWindow(1) ) then
+                  deltaInstance = deltaInstance + 1
+                else
+                  exit phiWindowLoop
+                end if
+              end do phiWindowLoop
+            else ! fmConf%windowUnits == PHYQ_Profiles
+              deltaInstance = max ( -nint(fmConf%phiWindow(1)), &
+                                  & min ( nint(fmConf%phiWindow(2)), &
+                                        & deltaInstance ) )
+            end if
           end if
 
           xInstance = closestInstance + deltaInstance
@@ -798,6 +805,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.90  2013/08/30 03:56:23  vsnyder
+! Revise use of trace_begin and trace_end
+!
 ! Revision 2.89  2013/08/12 23:48:09  pwagner
 ! FindSomethings moved to MLSFinds module
 !
