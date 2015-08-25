@@ -371,7 +371,7 @@ contains ! ============= Public Procedures ==========================
     use Cross_m, only: Cross
     use Geometry, only: GeodToGeocLat, To_XYZ
     use QuantityTemplates, only: RT
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Warning
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
     use MoreMessage, only: MLSMessage
     use VectorsModule, only: VectorValue_t
 
@@ -394,13 +394,18 @@ contains ! ============= Public Procedures ==========================
     myMIF = 1
     if ( present(MIF) ) myMIF = MIF
 
+    if ( myMIF < 1 .or. myMIF > size(scVelECR%template%geodLat,1) ) &
+      call MLSMessage ( MLSMSG_Error, moduleName, 'MIF out of range' )
+    if ( myMAF < 1 .or. myMAF > size(scVelECR%template%geodLat,2) ) &
+      call MLSMessage ( MLSMSG_Error, moduleName, 'MAF out of range' )
+
     ! Get position and velocity vectors
     sc_xyz = to_xyz ( geodToGeocLat(scVelECR%template%geodLat(myMIF,myMAF))*rad2Deg, &
                     & scVelECR%template%lon(myMIF,myMAF) )
     n1 = norm2(sc_xyz)
     scVel_XYZ = scVelECR%value4(:,myMIF,myMAF,1)
     n2 = norm2(scVel_XYZ)
-    if ( n1 < 1.0 .or. n2 < 1.0 ) then
+    if ( n1 < 0.5 .or. n2 < 0.5 ) then
       call MLSMessage ( MLSMSG_Warning, moduleName, &
         & "Either position or velocity in %S quantity apparently not filled.", &
         & scVelECR%template%name )
@@ -409,6 +414,7 @@ contains ! ============= Public Procedures ==========================
       viewing_azimuth_rad = 0.0
       return
     end if
+    ! sc_xyz is already a unit vector.
     scVel_XYZ = scVel_XYZ / n2
     tp_xyz = to_xyz ( geodToGeocLat(tpGeocAlt%template%geodLat(myMIF,myMAF))*rad2Deg, &
                     & tpGeocAlt%template%lon(myMIF,myMAF) )
@@ -469,6 +475,12 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelGeometry
 
 ! $Log$
+! Revision 2.8  2015/08/25 18:40:45  vsnyder
+! Check MIF and MAF range.  Use 0.5 instead of 1.0 as threshold for unfilled
+! scVelECR position or value.  The position is calculated from lat and lon
+! (there is no height), and its norm sometimes comes out a tiny bit less than
+! 1.0.
+!
 ! Revision 2.7  2015/07/29 00:28:15  vsnyder
 ! Compute Phi
 !
