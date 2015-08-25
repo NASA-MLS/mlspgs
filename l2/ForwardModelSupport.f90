@@ -50,7 +50,8 @@ module ForwardModelSupport
   integer, parameter :: LineParamTwice         = LineNotMolecule + 1
   integer, parameter :: MIFTransformation_signals = LineParamTwice + 1
   integer, parameter :: NeedBothXYStar         = MIFTransformation_signals + 1
-  integer, parameter :: Nested                 = NeedBothXYStar + 1
+  integer, parameter :: NegativePhiWindow      = NeedBothXYStar + 1
+  integer, parameter :: Nested                 = NegativePhiWindow + 1
   integer, parameter :: NoArray                = Nested + 1
   integer, parameter :: NoBetaGroup            = NoArray + 1
   integer, parameter :: NoMolecule             = NoBetaGroup + 1
@@ -375,7 +376,7 @@ contains ! =====     Public Procedures     =============================
 
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test, &
       & Test_Allocate
-    use Declaration_Table, only: Value_t
+    use Declaration_Table, only: Range, Value_t
     use EXPR_M, only: EXPR
     use FORWARDMODELCONFIG, only: DUMP, FORWARDMODELCONFIG_T, &
       & LINECENTER, LINEWIDTH, LINEWIDTH_TDEP, &
@@ -399,7 +400,8 @@ contains ! =====     Public Procedures     =============================
       & F_SPECT_DER, F_SWITCHINGMIRROR, F_TANGENTGRID, F_TEMP_DER, F_TOLERANCE, &
       & F_TRANSFORMMIFEXTINCTION, F_TRANSFORMMIFRHI, F_TSCATMIF, F_TYPE, &
       & F_USBLBLMOLECULES, F_USBPFAMOLECULES, F_useTSCAT, F_XSTAR, F_YSTAR
-    use INTRINSIC, only: L_NONE, L_CLEAR, PHYQ_ANGLE, PHYQ_PROFILES
+    use INTRINSIC, only: L_NONE, L_CLEAR, PHYQ_Angle, PHYQ_Dimensionless, &
+      & PHYQ_Profiles
     use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     use L2PC_M, only: BINSELECTORS, DEFAULTSELECTOR_LATITUDE, CREATEDEFAULTBINSELECTORS
     use MLSKINDS, only: R8
@@ -428,6 +430,7 @@ contains ! =====     Public Procedures     =============================
     integer :: B                        ! Index of a beta group
     logical, dimension(:), pointer :: Channels   ! From Parse_Signal
     integer :: DerivTree                ! Tree index of f_MoleculeDerivatives
+    integer :: Expr_Type                ! Type of PhiWindow, num_value or range
     integer :: Expr_Units(2)            ! Units of value returned by EXPR
     integer :: Field                    ! Field index -- f_something
     integer :: Found                    ! Where something is found in a list
@@ -504,7 +507,7 @@ contains ! =====     Public Procedures     =============================
     info%num_azimuth_angles = 8
     info%num_scattering_angles = 16
     info%num_size_bins = 40
-    info%phiwindow = 5
+    info%phiwindow = [ 2, 2 ] ! profiles before and after tangent point
     info%no_magnetic_field = .false.
     info%polarized = .false.
     info%refract = switchDetail(switches,'norf') < 0 ! Default .true.
@@ -622,11 +625,31 @@ contains ! =====     Public Procedures     =============================
       case ( f_pathNorm )
         info%do_path_norm = get_boolean(son)
       case ( f_phiWindow )
-        call expr ( subtree(2,son), expr_units, value )
-        info%phiWindow = value(1)
-        if ( all ( expr_units(1) /= (/ PHYQ_Profiles, PHYQ_Angle /) ) ) &
+        call expr ( subtree(2,son), expr_units, value, expr_type )
+        info%phiWindow = value
+        if ( any(value < 0) ) &
+          & call AnnounceError ( NegativePhiWindow, son )
+        ! Make sure the window units are profiles or angle.  Allow one of
+        ! them to be dimensionless if it's a range.
+        if ( expr_type /= range ) expr_units(2) = expr_units(1)
+        if ( expr_units(1) == PHYQ_Dimensionless ) expr_units(1) = expr_units(2)
+        if ( expr_units(2) == PHYQ_Dimensionless ) expr_units(2) = expr_units(1)
+        if ( expr_units(1) /= expr_units(2) .or. &
+          & all ( expr_units(1) /= (/ PHYQ_Profiles, PHYQ_Angle /) ) ) &
           & call AnnounceError ( WrongUnitsForWindow, son )
         info%windowUnits = expr_units(1)
+        if ( expr_type /= range ) then ! only one value was given
+          if ( info%windowUnits == PHYQ_Angle ) then
+            ! Assume a symmetric window
+            info%phiWindow(1) = 0.5 * value(1)
+            info%phiWindow(2) = info%phiWindow(1)
+          else ! info%windowUnits == PHYQ_Profiles
+            ! Center the window with value(1) total profiles.
+            ! If even, put one more before the tangent than after it.
+            info%phiWindow(2) = nint(value(1)-1)/2 ! after tangent point
+            info%phiWindow(1) = max(nint(value(1)) - info%phiWindow(2) - 1,0.0_r8) ! before
+          end if
+        end if
       case ( f_noMagneticField )
         info%no_magnetic_field = get_boolean(son)
       case ( f_polarized )
@@ -1458,6 +1481,8 @@ op:     do j = 2, nsons(theTree)
     case ( NeedBothXYStar )
       call output ( 'X/YStar must either be both present or both absent', &
         & advance='yes' )
+    case ( NegativePhiWindow )
+      call output ( 'PhiWindow is not allowed to be negative', advance='yes' )
     case ( Nested )
       call output ( 'Group within group is not allowed', advance='yes' )
     case ( NoArray )
@@ -1524,6 +1549,17 @@ op:     do j = 2, nsons(theTree)
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.181  2015/08/25 17:35:10  vsnyder
+! PhiWindow is a tuple, with the first element specifying the angles or
+! number of profiles/MAFs before the tangent point, and the second
+! specifying the angles or number after.  Set its default to [2,2] instead
+! of 5.  Check that the units are either angles or profiles.  If it's input
+! as a tuple, allow one to be dimensionless.  If it's not a tuple, and its
+! units are profiles, it specifies the total number of profiles; put (n-1)/2
+! before and the rest after after, with one more before if n is even.  If
+! it's not a tuple and its units are angles, put half before and half after.
+! Don't allow either element to be negative.  Zero indicates a 1-D problem.
+!
 ! Revision 2.180  2015/03/28 02:42:19  vsnyder
 ! Added stuff to trace allocate/deallocate addresses
 !
