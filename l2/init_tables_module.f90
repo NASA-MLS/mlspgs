@@ -1011,7 +1011,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_orbitInclination, vectorQuantity() /), &
              continue=.true. )
     call make_tree ( (/ & ! Continuing for s_fill...
-             begin, f+f_phiWindow, numeric(), & ! phyq_profiles, phyq_angle
+             begin, f+f_phiWindow, numeric_or_range(), & ! phyq_profiles, phyq_angle
              begin, f+f_phiZero, numeric(phyq_angle), &
              begin, f+f_precision, vectorQuantity(), &
              begin, f+f_precisionFactor, numeric(phyq_dimensionless), &
@@ -1423,7 +1423,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_nsizebins, numeric(phyq_dimensionless) /) )
     call make_tree ( (/ &
              begin, f+f_pathNorm, boolean(), &
-             begin, f+f_phiWindow, numeric(), & ! [phyq_angle, phyq_profiles]
+             begin, f+f_phiWindow, numeric_or_range(), & ! [phyq_angle, phyq_profiles]
              begin, f+f_polarized, boolean(), &
              begin, f+f_referenceMIF, numeric(phyq_dimensionless), &
              begin, f+f_refract, boolean(), &
@@ -2030,6 +2030,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.617  2015/08/25 17:27:16  vsnyder
+! Allow PhiWindow to be a number or a range
+!
 ! Revision 2.616  2015/07/15 17:06:45  pwagner
 ! inputFile not a required field to DirectWrite
 !
