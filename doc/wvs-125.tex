@@ -12,7 +12,7 @@
 \topmargin -0.5in
 \textheight 9in
 
-\newcommand{\docname}{wvs-125}
+\newcommand{\docname}{wvs-125r1}
 \newcommand{\docdate}{24 August 2015}
 
 \ifx\pdfoutput\undefined
@@ -98,7 +98,8 @@ A unit must be specified, and must be either {\tt degrees}, {\tt radians},
 or {\tt profiles}.  If a tuple is specified, either both must have the
 same units, or one may be dimensionless.
 
-None of the values may be negative.  Zero or 0:0 indicates a 1-D problem.
+None of the values may be negative.  Zero or 0:0 (with units) indicates a
+1-D problem.
 
 If a tuple is specified, and its units are {\tt profiles}, the first
 element specifies the number of profiles before the tangent point, and the
@@ -110,7 +111,7 @@ angle after.
 
 If a single number $n$ is specified, and its units are {\tt profiles},
 $\lfloor(n-1)/2\rfloor$ profiles are put after the tangent point, and the
-rest after.  For odd $n$, the effect is to put the same number before and
+rest before.  For odd $n$, the effect is to put the same number before and
 after.  For even $n$ the effect is to put one more before than after.
 
 If a single number $\phi$ is specified, and its units are angles, $\phi/2$
@@ -123,3 +124,6 @@ degrees are put before the tangent point, and $\phi/2$ are put after.
 % $Id$
 
 % $Log$
+% Revision 1.2  2015/08/25 17:48:50  vsnyder
+% Add CVS log line
+%
