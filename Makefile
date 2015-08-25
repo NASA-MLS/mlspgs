@@ -1282,6 +1282,7 @@ internalmftests:
 	 for dir in $(tests_sub_dirs); do \
 	 	if [ -d $$dir ] ; then \
 	  		cd $$dir; \
+                        $(MAKE) $(SUBDIRS_UPDATE); \
 		../../$(MLSBIN)/updatemf.sh -pc "$(PLATFORMS)" \
          -cf "../../$(CONFDIR)/$(MLSCFILE)" ; \
 	 		cd ../..; \
@@ -1350,6 +1351,9 @@ tools: chunktimes checkpvmup compare dateconverter \
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.7  2015/08/14 20:00:32  whdaffer
+# two small mods that Paul's fixes missed having to do with make moonscan
+#
 # Revision 1.6  2015/08/12 18:10:34  pwagner
 # Fixed some errors in make update
 #
