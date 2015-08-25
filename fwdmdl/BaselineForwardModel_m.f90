@@ -242,7 +242,7 @@ contains ! ======================================== BaselineForwardModel ======
       
       if ( .not. minorFrameBasis ) then
         ! Unless phiWindow is exactly 0.0 then do 2D calculation
-        if ( fwdModelConf%phiWindow /= 0.0 ) then
+        if ( sum(fwdModelConf%phiWindow) /= 0.0 ) then
           call Hunt ( baseline%template%phi(1,:), ptan%template%phi(:,maf), inst0 )
           inst1 = min ( inst0+1, baseline%template%noInstances )
           where ( inst1 /= inst0 )
@@ -526,6 +526,11 @@ contains ! ======================================== BaselineForwardModel ======
 end module BaselineForwardModel_m
   
 ! $Log$
+! Revision 2.34  2015/08/25 17:20:20  vsnyder
+! PhiWindow is a tuple with the first element specifying the angles or number
+! of profiles/MAFs before the tangent point, and the second specifying the
+! number after.  The sum being zero indicates a 1-D problem.
+!
 ! Revision 2.33  2014/08/06 23:24:20  vsnyder
 ! Remove USE for MLSMSG_Allocate, which was not used.  Remove declaration
 ! of unused local variable.
