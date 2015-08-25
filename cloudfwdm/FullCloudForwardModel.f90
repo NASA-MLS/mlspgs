@@ -97,7 +97,8 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
                        & L_TEMPERATURE,                                        &
                        & L_TOTALEXTINCTION,                                    &
                        & L_VMR,                                                &
-                       & LIT_INDICES
+                       & LIT_INDICES,                                          &
+                       & PHYQ_Profiles
 
     use Molecules, only: L_CLOUDICE
 
@@ -927,12 +928,14 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
         ! we use 100 times better resolution to compute weighting functions
         !-------------------------------------------------------------------
         nfine = 100
-        nNear = ForwardModelConfig%phiWindow         ! default = 5
+        if ( ForwardModelConfig%windowUnits /= PHYQ_Profiles ) &
+          & call MLSMessage ( MLSMSG_Error, moduleName, &
+            & 'Phi window units for full cloud forward model must be profiles' )
+        nNear = sum(ForwardModelConfig%phiWindow)+1         ! default = 5
         ! only nearest instances are mattered
-          minInst = instance - (nNear-1)/2
-          maxInst = instance + (nNear-1)/2
-           if ( minInst < 1 ) minInst = 1
-           if ( maxInst > noInstances ) maxInst = noInstances
+        minInst = max ( 1, instance - nint(ForwardModelConfig%phiWindow(1)) )
+        maxInst = min ( instance + nint(ForwardModelConfig%phiWindow(2)), &
+                      & noInstances )
 
         allocate( phi_fine(nfine*nNear), stat=status )
         allocate( z_fine(nfine*nNear), stat=status )
@@ -1124,6 +1127,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.142  2011/07/29 01:47:07  vsnyder
+! Make CloudIce a molecule
+!
 ! Revision 1.141  2009/06/23 18:26:19  pwagner
 ! Prevent Intel from optimizing ident string away
 !
