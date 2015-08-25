@@ -12,10 +12,10 @@
 module OUTPUT_M
 
   ! Normal level printing and formatting
-  
+
   ! See also dump_0 and printit_m
   ! For higher-level procedures, see highOutput
-  
+
   use dates_module, only:reformatDate, reformatTime
   use machine, only: crash_burn, exit_with_status, neverCrash
   use MLSCommon, only: filenamelen, finite_signal, &
@@ -185,7 +185,7 @@ module OUTPUT_M
     character(len=1)  :: arrayElmntSeparator = ' '
     character(len=27) :: parentName = "$RCSfile$"
   end type
-  
+
   type(outputOptions_T), public, save :: OUTPUTOPTIONS
 
   ! This is the type for configuring whether and how to automatically stamp
@@ -205,7 +205,7 @@ module OUTPUT_M
     integer :: interval = 1 ! 1 means stamp every line; n means every nth line
     character(len=8) :: TIMESTAMPSTYLE = 'post' ! 'pre' or 'post'
   end type
-  
+
   type(stampOptions_T), public, save :: STAMPOPTIONS ! Could leave this private
 
   ! This is the type for configuring how the timeStamp stamps its lines)
@@ -218,7 +218,7 @@ module OUTPUT_M
     character(len=16) :: timeFormat = 'hh:mm:ss'
     character(len=8) :: TIMESTAMPSTYLE = 'post' ! 'pre' or 'post'
   end type
-  
+
   type(timeStampOptions_T), public, save :: TIMESTAMPOPTIONS ! Could leave this private
 
   ! Private parameters
@@ -335,6 +335,7 @@ contains
   ! print or log OutputLines
   ! then reset to ''
   subroutine flushOutputLines ( prUnit )
+    use, intrinsic :: ISO_Fortran_Env, only: Output_Unit
     ! Args
     integer, optional, intent(in) :: prUnit ! How do you want 'em?
     ! Local arguments
@@ -343,23 +344,17 @@ contains
     integer :: oldPrUnit
     ! Executable
     myPrUnit = -1 ! By default, just print to stdout
-    if ( present(prUnit) ) myprUnit = prUnit
+    if ( present(prUnit) ) myPrUnit = prUnit
     oldprUnit = outputOptions%prUnit
-    outputOptions%prUnit = myprUnit
+    outputOptions%prUnit = myPrUnit
     kNull = index( OutputLines, achar(0), back=.true. )
-    if ( kNull < 2 ) then
-      ! OutputLines hasn't been defined yet
-      return
-    elseif ( kNull > len(OutputLines) ) then
-      ! Something very wrong
-      return
-    else
-      call output( OutputLines(1:kNull-1) )
-    endif
-    outputOptions%prUnit = oldPrUnit
+    if ( kNull >= 2 .and. kNull <= len(OutputLines) ) &
+      & call output( OutputLines(1:kNull-1) )
     OutputLines = ' '
+    flush ( merge ( output_Unit, outputOptions%prUnit, outputOptions%prUnit < 0 ) )
+    outputOptions%prUnit = oldPrUnit
   end subroutine flushOutputLines
-  
+
   ! ---------------------------------------------- getOutputStatus
   ! Returns certain normally private data
   ! intended for modules like highOutput and maybe some others
@@ -385,7 +380,7 @@ contains
       status = merge(1, 0, silentRunning)
     endif
   end function getOutputStatus
-    
+
   ! ----------------------------------------------  isOutputSuspended  -----
   logical function isOutputSuspended ()
   ! Have we suspended outputting to PRUNIT?
@@ -651,7 +646,7 @@ contains
           & advance=my_adv )
       end if
     end if
-    
+
     ! print *, 'alreadyLogged: ', alreadyLogged
     ! print *, 'theUnit: ', theUnit
     if ( (outputOptions%prunit <= 0 .and. .not. outputOptions%prunitLiteral) &
@@ -1193,7 +1188,7 @@ contains
     ! also does the same with '[Tt]..' and '[Ff]..'
     ! leaves all other patterns unchanged, but truncated to three
     ! characters.  Returns 'no' if the argument is absent.
-    
+
     ! We are allowing its argument str to do multiple duties by being
     ! composed of multiple space-separated arguments, e.g. 
     ! 'arg1 [arg2] .. [argn]'
@@ -1297,7 +1292,7 @@ contains
 
     ! Print a message (unless printing is suppressed).  If it has %[Nn]
     ! in it, replace that with newline.
-    
+
     ! We use defaultNewLineCode instead of '%n' because there were some
     ! circumstances where we actally printed '%n'; e.g., 
     ! 'hGrid%noProfsUpperOverlap'
@@ -1447,7 +1442,7 @@ contains
         c = trim(b) // ' ' // a
       end if
     end function catStrings
-    
+
   end function stamp 
 
   ! ..............................................  not_used_here  .....
@@ -1464,6 +1459,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.123  2015/08/25 18:36:56  vsnyder
+! Add a FLUSH statement to FlushOutputLines
+!
 ! Revision 2.122  2015/07/14 23:26:54  pwagner
 ! New advance_after_each arg to output of char arry; note that Reverting output now appears in old unit, e.g. stdout
 !
