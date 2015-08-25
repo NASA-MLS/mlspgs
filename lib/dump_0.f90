@@ -1033,12 +1033,16 @@ contains
       call output ( array(1), advance='yes' )
     else if ( all(array .eqv. .true.) ) then
       call name_and_size ( name, myClean, size(array) )
-      call output ( ': all ', advance='no' )
+      call output ( '(' )
+      if ( present(lbound) ) call output ( lbound )
+      call output ( ':) all ', advance='no' )
       call output( trim(arrayShapeToString(shape(array))), advance='no' )
       call output( ' values are T', advance='yes' )
     else if ( all(array .eqv. .false.) ) then
       call name_and_size ( name, myClean, size(array) )
-      call output ( ': all ', advance='no' )
+      call output ( '(' )
+      if ( present(lbound) ) call output ( lbound )
+      call output ( ':) all ', advance='no' )
       call output( trim(arrayShapeToString(shape(array))), advance='no' )
       call output( ' values are F', advance='yes' )
     elseif ( myGaps ) then
@@ -3414,6 +3418,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.133  2015/08/25 18:38:27  vsnyder
+! Include LBOUND in 'all values are the same' dumps
+!
 ! Revision 2.132  2015/01/29 01:23:29  vsnyder
 ! Make sure MyFillValue has a value before references
 !
