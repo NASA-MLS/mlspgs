@@ -51,7 +51,9 @@ module OUTPUT_M
 ! timeStampOptions         how to stamp when calling timeStamp
 
 !     (subroutines and functions)
+! Advance_is_yes_or_no     parse advance=.. field
 ! addToIndent              add to the number of blanks indented; subtract if < 0
+! Beep                     print message to error_unit
 ! blanks                   print specified number of blanks [or fill chars]
 ! flushOutputLines         print the current outputLines; then reset to ''
 ! getOutputStatus          returns normally private data
@@ -69,6 +71,8 @@ module OUTPUT_M
 ! === (end of toc) ===
 
 ! === (start of api) ===
+! char* Advance_is_yes_or_no ( [char* chars] )
+! Beep ( [char* chars] )
 ! blanks ( int n_blanks, [char fillChar], [char* advance] )
 ! flushOutputLines ( [int prUnit] )
 ! int getOutputStatus( char* name )
@@ -82,6 +86,10 @@ module OUTPUT_M
 ! output ( value, [char* format], [char* advance],
 !          [char* Before], [char* After] )
 !       where value can be any numerical type, either scalar or 1-d array
+!       advance may be
+!       'y[es]', 't[rue]'  advance to next line after printing
+!       'n[o]', 'f[alse]'  don't advance to next line after printing
+!       'stderr'  print to stderr instead of default
 ! resumeOutput
 ! revertOutput
 ! restoreSettings ( [log useToolkit] )
@@ -102,6 +110,7 @@ module OUTPUT_M
 ! 
   ! Where to output?
   ! These apply if we don't output to a fortran unit number (which is > 0)
+  ! See also Beep command, and advance='stderr'
   integer, parameter, public :: INVALIDPRUNIT      = 0
   integer, parameter, public :: STDOUTPRUNIT       = INVALIDPRUNIT - 1
   integer, parameter, public :: MSGLOGPRUNIT       = STDOUTPRUNIT - 1
@@ -117,8 +126,8 @@ module OUTPUT_M
   integer, save, private :: OLDUNIT = -1 ! Previous Unit for output.
   logical, save, private :: OLDUNITSTILLOPEN = .TRUE.
 
-  public :: addToIndent, Advance_is_yes_or_no, blanks, flushOutputLines, &
-    & getOutputStatus, newline, &
+  public :: addToIndent, Advance_is_yes_or_no, Beep, blanks, &
+    & flushOutputLines, getOutputStatus, newline, &
     & output, output_char_nocr, &
     & resetIndent, restoreSettings, resumeOutput, revertOutput, &
     & suspendOutput, switchOutput
@@ -267,6 +276,65 @@ contains
   ! Reset Indent back to 0
     indentBy = 0
   end subroutine resetIndent
+
+  ! .......................................  Advance_is_yes_or_no  .....
+  function Advance_is_yes_or_no ( str ) result ( outstr )
+    ! takes '[Yy]...' or '[Nn..] and returns 'yes' or 'no' respectively
+    ! also does the same with '[Tt]..' and '[Ff]..'
+    ! leaves all other patterns unchanged, but truncated to 4
+    ! characters.  Returns 'no' if the argument is absent.
+    
+    ! 'stderr' or just 'err' is special case--we return it as 'beep'
+
+    ! (The following comments are either untrue or unwise, possibly both)
+    ! We are allowing the argument str to do multiple duties by being
+    ! composed of multiple space-separated arguments, e.g. 
+    ! 'arg1 [arg2] .. [argn]'
+    ! (1) the first arg1 is treated as before, basically 'yes' or 'no' or 'beep'
+    ! (2) arg2 and beyond will introduce extra options to the
+    ! output command, eventually simplifying it to just
+    !   call output( something, [advance='arg1 [arg2] .. [argn]' )
+    !--------Argument--------!
+    character (len=*), intent(in), optional :: Str
+    character (len=4) :: Outstr
+
+    !----------Local vars----------!
+    character (len=*), parameter :: yeses = 'YyTt'
+    character (len=*), parameter :: nose = 'NnFf'
+    integer :: kSpace
+
+    if ( .not. present(str)  ) then
+      outstr = outputoptions%advanceDefault ! 'no'
+      return
+    end if
+
+    outstr = adjustl(str)
+    kSpace = index( outstr, ' ' )
+    if ( kSpace > 1 ) outstr = outstr(:kSpace) ! To snip off arg2 ..
+    if ( index( yeses, outstr(:1)) > 0  ) then
+      outstr = 'yes'
+    else if ( index( nose, outstr(:1)) > 0  ) then
+      outstr = 'no'
+    else if ( index( lowercase(outstr), 'err' ) > 0  ) then
+      outstr = 'beep'
+    else if ( index( lowercase(outstr), 'stde' ) > 0  ) then
+      outstr = 'beep'
+    else
+      outstr = str
+    end if
+  end function Advance_is_yes_or_no
+
+  ! -----------------------------------------------------  Beep  -----
+  subroutine Beep ( chars )
+    use, intrinsic :: ISO_Fortran_Env, only: Error_Unit
+  ! Print chars to stderr
+    character(len=*), intent(in), optional :: chars
+    if ( present(chars) ) then
+      write( Error_Unit, * ) trim(chars)
+    else
+      write( Error_Unit, * ) 'Beep'
+    endif
+  end subroutine Beep
 
   ! -----------------------------------------------------  BLANKS  -----
   subroutine BLANKS ( N_BLANKS, FILLCHAR, ADVANCE, DONT_STAMP )
@@ -462,7 +530,7 @@ contains
     character(len=*), intent(in), optional :: INSTEADOFBLANK ! What to output
     logical, intent(in), optional          :: DONT_STAMP ! Prevent double-stamping
     !
-    character(len=3) :: MY_ADV
+    character(len=4) :: MY_ADV
     ! Executable
     my_adv = Advance_is_yes_or_no(advance)
     atLineStart = (my_adv == 'yes')
@@ -482,11 +550,12 @@ contains
     ! The workhorse
     ! We have taken care of linefeeds, indents, and numeric conversions
     ! so now we do one of
-    ! (1) go silent if we are skipping all output
-    ! (2) write to a file unit if PrUnit is to be taken literally
-    ! (3) append to our accumulated outputLines if we are deferring output
-    ! (4) print immediately if we have been switched to stdout
-    ! (5) wade through a thicket of sub-choices involving possibly
+    ! (1) print to stderr if advance = 'stderr' or 'beep'
+    ! (2) go silent if we are skipping all output
+    ! (3) write to a file unit if PrUnit is to be taken literally
+    ! (4) append to our accumulated outputLines if we are deferring output
+    ! (5) print immediately if we have been switched to stdout
+    ! (6) wade through a thicket of sub-choices involving possibly
     !     (a) time stamps, either individually or grouped
     !     (b) logging, either instead of printing or in addition
     ! -------------------------------------------------------------------
@@ -509,7 +578,7 @@ contains
     character(len=max(16,len(chars)+1)) :: the_chars
     logical :: my_dont_log
     logical :: my_dont_stamp
-    character(len=3) :: MY_ADV
+    character(len=4) :: MY_ADV
     integer :: n_chars
     integer :: n_stamp ! How much of stamped_chars to print
     logical :: stamp_header
@@ -519,8 +588,13 @@ contains
     ! Executable
     n_chars = len(chars)
     alreadyLogged = .false.
-    if ( SILENTRUNNING ) go to 9 ! When we skip all output
     my_adv = Advance_is_yes_or_no(advance)
+    ! Print to stderr instead?
+    if ( my_adv == 'beep' ) then
+      call Beep( chars )
+      return
+    endif
+    if ( SILENTRUNNING ) go to 9 ! When we skip all output
     ! print *, 'outputOptions%prUnit: ', outputOptions%prUnit
     ! print *, 'outputOptions%prUnitLiteral: ', outputOptions%prUnitLiteral
     ! Do any special orders apply to this output?
@@ -1182,46 +1256,6 @@ contains
   end subroutine switchOutput
 
   ! ------------------ Private procedures -------------------------
-  ! .......................................  Advance_is_yes_or_no  .....
-  function Advance_is_yes_or_no ( str ) result ( outstr )
-    ! takes '[Yy]...' or '[Nn..] and returns 'yes' or 'no' respectively
-    ! also does the same with '[Tt]..' and '[Ff]..'
-    ! leaves all other patterns unchanged, but truncated to three
-    ! characters.  Returns 'no' if the argument is absent.
-
-    ! We are allowing its argument str to do multiple duties by being
-    ! composed of multiple space-separated arguments, e.g. 
-    ! 'arg1 [arg2] .. [argn]'
-    ! (1) the first arg1 is treated as before, basically 'yes' or 'no'
-    ! (2) arg2 and beyond will introduce extra options to the
-    ! output command, eventually simplifying it to just
-    !   call output( something, [advance='arg1 [arg2] .. [argn]' )
-    !--------Argument--------!
-    character (len=*), intent(in), optional :: Str
-    character (len=3) :: Outstr
-
-    !----------Local vars----------!
-    character (len=*), parameter :: yeses = 'YyTt'
-    character (len=*), parameter :: nose = 'NnFf'
-    integer :: kSpace
-
-    if ( .not. present(str)  ) then
-      outstr = outputoptions%advanceDefault ! 'no'
-      return
-    end if
-
-    outstr = adjustl(str)
-    kSpace = index( outstr, ' ' )
-    if ( kSpace > 1 ) outstr = outstr(:kSpace) ! To snip off arg2 ..
-    if ( index( yeses, outstr(:1)) > 0  ) then
-      outstr = 'yes'
-    else if ( index( nose, outstr(:1)) > 0  ) then
-      outstr = 'no'
-    else
-      outstr = str
-    end if
-  end function Advance_is_yes_or_no
-
   ! .............................................  getOption  .....
   ! This family of subroutines parses a multipart advance arg into
   ! its components, returning an appropriate value
@@ -1379,7 +1413,7 @@ contains
     character(len=len(BlankSpace)) :: b
     integer :: I    ! Blanks to write in next WRITE statement
     integer :: N    ! Blanks remaining to write
-    character(len=3) :: MY_ADV
+    character(len=4) :: MY_ADV
     ! Executable
     my_adv = Advance_is_yes_or_no(advance)
     if ( n_blanks < 1 ) then
@@ -1459,6 +1493,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.124  2015/08/26 23:25:11  pwagner
+! Added Beep and advance='stderr' to print to stderr
+!
 ! Revision 2.123  2015/08/25 18:36:56  vsnyder
 ! Add a FLUSH statement to FlushOutputLines
 !
