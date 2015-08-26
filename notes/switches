@@ -70,7 +70,7 @@ Switches (set by -S option in mlsl2's command line):
  gmag[n] => Print generated magnetic field quantity with detail level n
  grid    => Announce as mlsl2 Creates, Destroys, Merges gridded data
  gridd   => Dump gridded database
- grids   => Dump Forward Model grids
+ Grids   => Dump Forward Model grids
  gvec    => Dump gradient vector during Newton iteration
  help    => Display this screen (or "?")
  hess    => Intermediate steps while computing Hessians
@@ -220,6 +220,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.94  2015/08/12 20:55:05  pwagner
+ Expands role of -Swalk switch
+
  Revision 1.93  2015/03/28 02:57:10  vsnyder
  Added gmag and mag
 
