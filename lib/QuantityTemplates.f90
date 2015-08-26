@@ -613,23 +613,14 @@ contains
     call output ( qty%grandtotalinstances,  before=' grandtotalinstances = ' )
     call output ( qty%noCrossTrack,         before=' NoCrossTrack = ' )
     call newLine
-    call Blanks( 5 )
-    if ( .not. qty%coherent ) call output ( 'in' )
-    call output ( 'coherent ' )
-    if ( .not. qty%stacked ) call output ( 'non' )
-    call output ( 'stacked ' )
-    if ( .not. qty%regular ) call output ( 'ir' )
-    call output ( 'regular ' )
-    if ( qty%logBasis ) then
-      call output ('log-')
-    else
-      call output ('linear-')
-    end if
-    call output ('basis ' )
-    call output ( trim(merge('   ','non',qty%minorFrame)) // &
-      & 'minorFrame' )
-    call output ( ' ' // trim(merge('   ','non',qty%majorFrame)) // &
-      & 'majorFrame', advance='yes' )
+    call Blanks( 6 )
+    call output ( trim(merge('  ','in',qty%coherent)) // 'coherent ' )
+    call output ( trim(merge('   ','non',qty%stacked)) // 'stacked ' )
+    call output ( trim(merge('  ','ir',qty%regular)) // 'regular ' )
+    call output ( trim(merge('log-   ','linear-',qty%logBasis)) // 'basis ' )
+    call output ( trim(merge('   ','non',qty%minorFrame)) // 'minorFrame ' )
+    call output ( trim(merge('   ','non',qty%majorFrame)) // 'majorFrame', &
+      & advance='yes' )
     call output ( '      NoInstancesLowerOverlap = ' )
     call output ( qty%noInstancesLowerOverlap )
     call output ( ' NoInstancesUpperOverlap = ' )
@@ -1979,6 +1970,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.102  2015/08/25 18:36:03  vsnyder
+! More dump spiffing
+!
 ! Revision 2.101  2015/08/21 01:00:47  vsnyder
 ! Spiff a dump
 !
