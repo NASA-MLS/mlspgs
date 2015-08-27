@@ -360,7 +360,8 @@ module CFM_Fill_m
         type(VectorValue_T), intent(in) :: geocentricAltitude
 
         call Get2DHydrostaticTangentPressure(ptan, temperature, refGPH, &
-        h2o, orbitInclination, phitan, geocentricAltitude, 4, 0.0_r8, phyq_angle)
+        & h2o, orbitInclination, phitan, geocentricAltitude, 4, &
+        & (/ 0.0_r8, 0.0_r8 /), phyq_angle)
     end subroutine
 
     ! Applies baseline quantity to a radiance quantity or applies noise
@@ -392,6 +393,9 @@ module CFM_Fill_m
 end module
 
 ! $Log$
+! Revision 1.17  2015/08/05 20:21:29  pwagner
+! Modified to compile properly with v4
+!
 ! Revision 1.16  2013/07/26 16:48:15  pwagner
 ! Consistent with removal of SCVEL
 !
