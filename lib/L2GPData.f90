@@ -3733,7 +3733,8 @@ contains ! =====     Public Procedures     =============================
       nDims = swinqdims(swid, list, dims)
     else
       nDims = HE5_SWinqdims(swid, list, hdims)
-      dims = hdims
+      dims(1:nDims) = hdims(1:nDims)
+      dims(nDims+1:) = 0 ! Just to make sure they're defined, not junk
       nFlds = HE5_SWinqdflds( swid, fieldlist, ranks, types )
       ReadingConvergence = isInList( lowerCase(fieldList), 'convergence', '-fc' )
       ReadingAscDescMode = isInList( lowerCase(fieldList), 'AscDescMode ', '-fc' )
@@ -5271,6 +5272,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.214  2015/07/14 23:13:21  pwagner
+! Added computation of interprofile geolocation spacings
+!
 ! Revision 2.213  2015/06/04 17:05:35  pwagner
 ! Fixed bug causing integer overflow in integer type conversion
 !
