@@ -626,7 +626,7 @@ contains
     call output ( ' NoInstancesUpperOverlap = ' )
     call output ( qty%noInstancesUpperOverlap, advance='yes' )
     if ( .not. myNoL2CF .and. qty%unit > 0 ) then
-      call myDisplayString ( phyq_indices(qty%unit), &
+      call myDisplayString ( lit_indices(qty%unit), &
         & before='      Unit = ' )
     end if
     call output ( qty%badValue, before=' BadValue = ' )
@@ -1970,6 +1970,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.103  2015/08/26 01:08:17  vsnyder
+! Yet more dump spiffing
+!
 ! Revision 2.102  2015/08/25 18:36:03  vsnyder
 ! More dump spiffing
 !
