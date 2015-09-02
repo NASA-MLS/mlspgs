@@ -11,8 +11,8 @@
 
 module GLOBAL_SETTINGS
 
-  use MLSCOMMON, only: FILENAMELEN
-  use HIGHOUTPUT, only: BEVERBOSE, OUTPUTCALENDAR, OUTPUTNAMEDVALUE
+  use MLSCommon, only: fileNameLen
+  use highOutput, only: beVerbose, outputCalendar, outputNamedValue
 
   implicit none
 
@@ -70,19 +70,19 @@ contains
   ! Return -1 if something goes wrong
   ! Remember--MAFs start at 0, not 1
   function L1MAFToL2Profile ( MAF, fileDatabase ) result( profile )
-    use L1BDATA, only: L1BDATA_T, &
-      & ASSEMBLEL1BQTYNAME, DEALLOCATEL1BDATA, &
-      & READL1BDATA 
-    use L2GPData, only: L2GPDATA_T, L2GPNAMELEN, MAXSWATHNAMESBUFSIZE, &
-      & READL2GPDATA, DESTROYL2GPCONTENTS
-    use MLSCOMMON, only: MLSFILE_T, NAMELEN
-    use MLSFILES, only: HDFVERSION_5, &
-      & MLS_INQSWATH, GETMLSFILEBYTYPE
-    use MLSKINDS, only: R8
-    use MLSMESSAGEMODULE, only: MLSMESSAGE, &
-      & MLSMSG_WARNING
-    use MLSNumerics, only: CLOSESTELEMENT
-    use MLSStringLists, only: GETSTRINGELEMENT
+    use L1BData, only: L1BData_t, &
+      & assembleL1BQtyName, deallocateL1BData, &
+      & readL1BData 
+    use L2GPData, only: L2GPData_t, L2GPNameLen, maxSwathNamesBufSize, &
+      & readL2GPData, destroyL2GPContents
+    use MLSCommon, only: MLSFile_t, namelen
+    use MLSFiles, only: hdfversion_5, &
+      & MLS_inqswath, getmlsfilebytype
+    use MLSKinds, only: r8
+    use MLSMessageModule, only: MLSMessage, &
+      & MLSMSG_Warning
+    use MLSNumerics, only: closestElement
+    use MLSStringLists, only: getStringElement
     ! Args
     integer, intent(in) :: MAF
     type (MLSFile_T), pointer :: FILEDATABASE(:)
@@ -134,20 +134,20 @@ contains
   ! Return -1 if something goes wrong
   ! Remember--MAFs start at 0, not 1
   function L2ProfileToL1MAF ( profile, fileDatabase ) result( MAF )
-    use DUMP_0, only: DUMP
-    use L1BDATA, only: L1BDATA_T, namelen, &
-      & ASSEMBLEL1BQTYNAME, DEALLOCATEL1BDATA, &
-      & READL1BDATA 
-    use L2GPData, only: L2GPDATA_T, L2GPNAMELEN, MAXSWATHNAMESBUFSIZE, &
-      & READL2GPDATA, DESTROYL2GPCONTENTS
-    use MLSCOMMON, only: MLSFILE_T
-    use MLSFILES, only: HDFVERSION_5, &
-      & MLS_INQSWATH, GETMLSFILEBYTYPE
-    use MLSKINDS, only: R8
-    use MLSMESSAGEMODULE, only: MLSMESSAGE, &
-      & MLSMSG_WARNING
-    use MLSNumerics, only: CLOSESTELEMENT
-    use MLSStringLists, only: GETSTRINGELEMENT
+    use dump_0, only: dump
+    use l1bdata, only: l1bdata_t, namelen, &
+      & assemblel1bqtyname, deallocatel1bdata, &
+      & readl1bdata 
+    use L2GPData, only: L2GPData_t, L2GPNameLen, maxSwathNamesBufSize, &
+      & readL2GPData, destroyL2GPContents
+    use MLSCommon, only: mlsfile_t
+    use MLSFiles, only: hdfversion_5, &
+      & MLS_inqswath, getmlsfilebytype
+    use MLSKinds, only: r8
+    use MLSMessageModule, only: MLSMessage, &
+      & MLSMSG_Warning
+    use MLSNumerics, only: closestElement
+    use MLSStringLists, only: getStringElement
     ! Args
     integer, intent(in) :: profile
     type (MLSFile_T), pointer :: FILEDATABASE(:)
@@ -207,80 +207,80 @@ contains
   subroutine SET_GLOBAL_SETTINGS ( ROOT, FORWARDMODELCONFIGDATABASE, &
     & FILEDATABASE, FGRIDS, L2GPDATABASE, DIRECTDATABASE, PROCESSINGRANGE )
 
-    use BITSTUFF, only: ISBITSET
-    use DATES_MODULE, only: PRECEDESUTC, RESETSTARTINGDATE, SECONDSBETWEEN2UTCS, &
-      & UTC2TAI93S, UTC_TO_YYYYMMDD
-    use Declaration_Table, only: NAMED_VALUE, REDECLARE, STR_VALUE
-    use DIRECTWRITE_M, only: DIRECTDATA_T, &
-      & ADDDIRECTTODATABASE, DUMP, SETUPNEWDIRECT
-    use DUMPCOMMAND_M, only: DUMPCOMMAND
-    use EMPIRICALGEOMETRY, only: INITEMPIRICALGEOMETRY
-    use FGRID, only: ADDFGRIDTODATABASE, CREATEFGRIDFROMMLSCFINFO, DUMP, FGRID_T
-    use FORWARDMODELCONFIG, only: ADDFORWARDMODELCONFIGTODATABASE, DUMP, &
-      & FORWARDMODELCONFIG_T
-    use FORWARDMODELSUPPORT, only: CONSTRUCTFORWARDMODELCONFIG, &
-      & FORWARDMODELGLOBALSETUP, CREATEBINSELECTORFROMMLSCFINFO
-    use HDF, only: DFACC_CREATE
-    use IGRF_INT, only: Read_GH
-    use INIT_TABLES_MODULE, only: F_FILE, F_TYPE, &
-      & L_L2GP, L_L2DGG, L_L2FWM, &
-      & PARM_INDICES, &
-      & FIRST_PARM, LAST_PARM, P_BRIGHTOBJECTS, &
-      & P_CYCLE, P_ENDTIME, P_IGRF_FILE, P_INSTRUMENT, &
-      & P_LEAPSECFILE, P_OUTPUT_VERSION_STRING, P_PFAFILE, P_STARTTIME, &
-      & S_BINSELECTOR, S_DIRECTWRITEFILE, S_DUMP, S_EMPIRICALGEOMETRY, &
-      & S_FGRID, S_FLUSHPFA, S_FORWARDMODEL, S_FORWARDMODELGLOBAL, &
-      & S_L1BOA, S_L1BRAD, S_L2PARSF, S_MAKEPFA, S_PFADATA, S_READPFA, &
-      & S_TGRID, S_TIME, S_VGRID, S_WRITEPFA
-    use INTRINSIC, only: L_HDF, L_SWATH, SPEC_INDICES
-    use L1BDATA, only: L1BDATA_T, NAMELEN, PRECISIONSUFFIX, &
-      & ASSEMBLEL1BQTYNAME, DEALLOCATEL1BDATA, DUMP, FINDMAXMAF, &
-      & L1BRADSETUP, L1BOASETUP, READL1BATTRIBUTE, READL1BDATA 
-    use L2GPDATA, only: L2GPDATA_T
-    use L2PC_M, only: ADDBINSELECTORTODATABASE, BINSELECTORS
-    use MLSCOMMON, only: MLSFILE_T, NAMELEN, &
-      & TAI93_RANGE_T
-    use MLSFILES, only: FILENOTFOUND, HDFVERSION_5, &
-      & ADDFILETODATABASE, GETPCFROMREF, GETMLSFILEBYNAME, GETMLSFILEBYTYPE, &
-      & INITIALIZEMLSFILE, MLS_CLOSEFILE, MLS_OPENFILE, SPLIT_PATH_NAME
-    use MLSKINDS, only: R8
-    use MLSL2OPTIONS, only: CHECKPATHS, L2CFNODE, LEVEL1_HDFVERSION, &
-      & NEED_L1BFILES, SPECIALDUMPFILE, STOPAFTERSECTION, TOOLKIT, &
-      & MLSMESSAGE
-    use MLSL2TIMINGS, only: SECTION_TIMES, TOTAL_TIMES
-    use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_WARNING
-    use MLSPCF2, only: MLSPCF_L2GP_START, MLSPCF_L2GP_END, &
-      & MLSPCF_L2DGM_START, MLSPCF_L2DGM_END, MLSPCF_L2FWM_FULL_START, &
-      & MLSPCF_L2FWM_FULL_END, &
-      & MLSPCF_L2DGG_START, MLSPCF_L2DGG_END
-    use MLSSTRINGS, only: HHMMSS_VALUE, LOWERCASE, TRIM_SAFE
-    use MLSSTRINGLISTS, only: ARRAY2LIST, CATLISTS, SWITCHDETAIL, &
-      & NUMSTRINGELEMENTS, STRINGELEMENT
-    use MLSSIGNALS_M, only: INSTRUMENT
-    use MORETREE, only: GET_FIELD_ID, GET_LABEL_AND_SPEC, GET_SPEC_ID, &
-      & STARTERRORMESSAGE
-    use Next_Tree_Node_m, only: NEXT_TREE_NODE, NEXT_TREE_NODE_STATE
-    use OUTPUT_M, only: BLANKS, OUTPUT, &
-      & REVERTOUTPUT, SWITCHOUTPUT
-    use PFADATA_M, only: GET_PFADATA_FROM_L2CF, FLUSH_PFADATA, MAKE_PFADATA, &
-      & READ_PFADATA, WRITE_PFADATA
-    use PFADATABASE_M, only: PROCESS_PFA_FILE
-    use PCFHDR, only: GLOBALATTRIBUTES, FILLTAI93ATTRIBUTE
-    use READAPRIORI, only: APRIORIFILES
-    use SDPTOOLKIT, only: MAX_ORBITS, MLS_UTCTOTAI, &
-      & PGSd_DEM_30ARC, PGSd_DEM_90ARC, &
-      & PGSd_DEM_ELEV, PGSd_DEM_WATER_LAND, &
-      & PGS_DEM_OPEN
-    use STRING_TABLE, only: DISPLAY_STRING, GET_STRING
-    use TIME_M, only: TIME_NOW
-    use TOGGLES, only: GEN, SWITCHES, TOGGLE
-    use TRACE_M, only: TRACE_BEGIN, TRACE_END
-    use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, SUB_ROSA, SUBTREE, &
-      & DUMP_TREE_NODE
-    use TREE_TYPES, only: N_EQUAL
-    use VGRID, only: CREATEVGRIDFROMMLSCFINFO
-    use VGRIDSDATABASE, only: ADDVGRIDTODATABASE, VGRIDS
-    use WRITEMETADATA, only: L2PCF
+    use bitStuff, only: isBitSet
+    use dates_module, only: precedesUTC, resetStartingDate, secondsBetween2UTCs, &
+      & utc2tai93s, utc_to_yyyymmdd
+    use declaration_table, only: named_value, redeclare, str_value
+    use directWrite_m, only: directData_t, &
+      & addDirectToDatabase, dump, setupNewDirect
+    use dumpCommand_m, only: dumpCommand
+    use empiricalGeometry, only: initEmpiricalGeometry
+    use FGrid, only: addFGridToDatabase, createFGridFromMLSCFInfo, dump, fgrid_t
+    use forwardModelConfig, only: addForwardModelConfigToDatabase, dump, &
+      & forwardModelConfig_t
+    use forwardModelSupport, only: constructForwardModelConfig, &
+      & forwardModelGlobalsetup, createBinSelectorFromMLSCFInfo
+    use hdf, only: dfacc_create
+    use igrf_int, only: read_gh
+    use init_tables_module, only: f_file, f_type, &
+      & l_l2gp, l_l2dgg, l_l2fwm, &
+      & parm_indices, &
+      & first_parm, last_parm, p_brightobjects, &
+      & p_cycle, p_endtime, p_igrf_file, p_instrument, &
+      & p_leapsecfile, p_output_version_string, p_pfafile, p_starttime, &
+      & s_binselector, s_directwritefile, s_dump, s_empiricalgeometry, &
+      & s_fgrid, s_flushpfa, s_forwardmodel, s_forwardmodelglobal, &
+      & s_l1boa, s_l1brad, s_l2parsf, s_makepfa, s_pfadata, s_readpfa, &
+      & s_tgrid, s_time, s_vgrid, s_writepfa
+    use intrinsic, only: l_hdf, l_swath, spec_indices
+    use L1BData, only: L1BData_t, namelen, precisionSuffix, &
+      & assemblel1bqtyname, deallocateL1BData, dump, findmaxmaf, &
+      & L1BRadsetup, L1BOASetup, readL1BAttribute, readL1BData 
+    use L2GPData, only: L2GPData_t
+    use L2PC_m, only: addbinselectortodatabase, binselectors
+    use MLSCommon, only: mlsfile_t, nameLen, &
+      & tai93_range_t
+    use MLSFiles, only: filenotfound, hdfversion_5, &
+      & addfiletodatabase, getpcfromref, getmlsfilebyname, getmlsfilebytype, &
+      & initializemlsfile, mls_closefile, mls_openfile, split_path_name
+    use MLSKinds, only: r8
+    use MLSL2Options, only: checkPaths, L2CFNode, level1_HDFVersion, &
+      & need_L1BFiles, specialDumpFile, stopAfterSection, toolkit, &
+      & MLSMessage
+    use MLSL2timings, only: section_times, total_times
+    use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning
+    use MLSPCF2, only: MLSPCF_l2gp_start, MLSPCF_l2gp_end, &
+      & MLSPCF_l2dgm_start, MLSPCF_l2dgm_end, MLSPCF_l2fwm_full_start, &
+      & MLSPCF_l2fwm_full_end, &
+      & MLSPCF_l2dgg_start, MLSPCF_l2dgg_end
+    use MLSStrings, only: hhmmss_value, lowerCase, trim_safe
+    use MLSStringLists, only: array2List, catLists, switchDetail, &
+      & numStringElements, stringElement
+    use MLSSignals_m, only: instrument
+    use moreTree, only: get_field_id, get_label_and_spec, get_spec_id, &
+      & startErrorMessage
+    use next_tree_node_m, only: next_tree_node, next_tree_node_state
+    use output_m, only: blanks, output, &
+      & revertOutput, switchOutput
+    use PFAData_m, only: get_PFAData_from_l2cf, flush_PFAData, make_PFAData, &
+      & read_PFAData, write_PFAData
+    use PFADatabase_m, only: process_pfa_file
+    use pcfhdr, only: globalattributes, filltai93attribute
+    use readAPriori, only: APrioriFiles
+    use sdptoolkit, only: max_orbits, mls_utctotai, &
+      & pgsd_dem_30arc, pgsd_dem_90arc, &
+      & pgsd_dem_elev, pgsd_dem_water_land, &
+      & pgs_dem_open, pgs_s_success
+    use string_table, only: display_string, get_string
+    use time_m, only: time_now
+    use toggles, only: gen, switches, toggle
+    use trace_m, only: trace_begin, trace_end
+    use tree, only: decorate, decoration, node_id, nsons, sub_rosa, subtree, &
+      & dump_tree_node
+    use tree_types, only: n_equal
+    use VGrid, only: createVGridFromMLSCFInfo
+    use VGridsDatabase, only: addVGridToDatabase, VGrids
+    use writeMetadata, only: l2pcf
 
     ! placed non-alphabetically due to Lahey internal compiler error
     ! (How much longer must we endure these onerous work-arounds?)
@@ -387,7 +387,11 @@ contains
       layerList(2) = PGSd_DEM_WATER_LAND
       status = PGS_DEM_Open ( resolutionList, numResolutions, &
         & layerList, numLayers )
-      if ( verbose ) call outputNamedValue( 'PGS_DEM_Open status', status )
+      if ( verbose .or. status /= PGS_S_SUCCESS ) &
+        & call outputNamedValue( 'PGS_DEM_Open status', status )
+      if ( status /= PGS_S_SUCCESS )  call announce_error( 0, &
+        & '*** Error: Unable to open Digital Elevation Model (DEM) files;' // &
+        & ' missing from PCF? ***', just_a_warning = .false.)
     end if
 
     do
@@ -1350,6 +1354,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.160  2014/03/31 23:50:47  pwagner
+! Let tai93 times become negative
+!
 ! Revision 2.159  2014/03/26 17:49:05  pwagner
 ! Fixed old bugs when startTime, endTime omitted
 !
