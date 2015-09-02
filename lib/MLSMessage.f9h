@@ -994,7 +994,7 @@ contains
     type(MLSFile_T) :: MLSFile
     integer, parameter :: SEVERE = MLSMSG_Error
     ! Executable code
-    call printitout ( 'MLS File Info: ', MLSMSG_Error )                                  
+    call printitout ( 'MLS File Info: ', MLSMSG_Info )                                  
     call dump ( '(name) ', charValue=trim(MLSFile%Name))                                  
     call dump ( 'short name ', charValue=trim(MLSFile%shortName))                                  
     call dump ( '    Type (int)   : ', MLSFile%Type)
@@ -1132,6 +1132,9 @@ contains
 
 !
 ! $Log$
+! Revision 2.40  2015/09/02 23:15:52  pwagner
+! Fixed bug that prevented dumping last MLSFile
+!
 ! Revision 2.39  2015/06/30 18:40:26  pwagner
 ! Added a conditional crash_burn
 !
