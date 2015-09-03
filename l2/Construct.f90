@@ -38,7 +38,8 @@ contains ! =====     Public Procedures     =============================
     ! quantities saving file IO and memory.
     use CHUNKS_M, only: MLSCHUNK_T
     use CONSTRUCTQUANTITYTEMPLATES, only: CONSTRUCTMINORFRAMEQUANTITY
-    use QUANTITYTEMPLATES, only: QUANTITYTEMPLATE_T
+    use highOutput, only: BeVerbose, outputNamedValue
+    use QUANTITYTEMPLATES, only: Dump, QUANTITYTEMPLATE_T
     use MLSCOMMON, only: MLSFILE_T
     use MLSSIGNALS_M, only: MODULES
     use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_ALLOCATE, &
@@ -51,7 +52,9 @@ contains ! =====     Public Procedures     =============================
     ! Local variables
     integer :: INSTRUMENTMODULEINDEX    ! Loop counter
     integer :: STATUS                   ! Flag
+    logical :: verbose
 
+    verbose = BeVerbose( 'qtmp', 0 )
     if ( .not. associated ( mifGeolocation ) ) then
       ! Don't overwrite it if we already have it, e.g. from previous construct
       ! or forge.
@@ -65,6 +68,7 @@ contains ! =====     Public Procedures     =============================
           call ConstructMinorFrameQuantity ( instrumentModuleIndex, &
           mifGeolocation(instrumentModuleIndex), &
           filedatabase=filedatabase, chunk=chunk)
+          if ( verbose ) call Dump( mifGeolocation(instrumentModuleIndex) )
         end do
       else
         mifGeolocation%noSurfs = 0
@@ -290,6 +294,9 @@ END MODULE Construct
 
 !
 ! $Log$
+! Revision 2.75  2015/09/03 20:33:43  pwagner
+! -Sqtmpn for n gt 0 dumps mifGeolocation for each minor fram qty
+!
 ! Revision 2.74  2015/06/03 23:11:45  pwagner
 ! Crudely bypass destroyQuantityTemplateDatabase to avoid end-of-run crashes
 !
