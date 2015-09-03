@@ -122,6 +122,7 @@ contains ! ====     Public Procedures     ==============================
     type (MLSChunk_T), dimension(:), pointer ::  Chunks  ! of data
     logical, dimension(:), pointer :: CHUNKSSKIPPED => null() ! Don't do these
     integer                                   :: details
+    logical                                   :: doneWithChunks
     type (DirectData_T), dimension(:), pointer :: DirectDatabase
     type (FGrid_T), dimension(:), pointer ::     FGrids
     ! Forward model configurations:
@@ -207,6 +208,7 @@ contains ! ====     Public Procedures     ==============================
     ! ----------------------------------------------------- Loop over tree
 
     chunkNo = 0
+    doneWithChunks = .false.
     ! Now loop over the sections in the tree
     do
       save1 = state
@@ -329,6 +331,7 @@ contains ! ====     Public Procedures     ==============================
         ! ---------------------------------------------------- Chunk processing
         ! Now construct, fill, join and retrieve live inside the 'chunk loop'
       case ( z_construct, z_fill, z_join, z_retrieve )
+        if ( doneWithChunks ) cycle
         if ( verbose ) call Dump ( state, 'at other' )
         ! Do special stuff in some parallel cases, or where there are
         ! no chunks.
@@ -343,7 +346,9 @@ contains ! ====     Public Procedures     ==============================
           & ( parallel%master .and. .not. parallel%fwmParallel ) .or. &
           & ( parallel%slave .and. parallel%fwmParallel ) ) then
           if ( parallel%master .and. .not. parallel%fwmParallel ) then
+            call outputNamedValue( 'Calling L2MasterTask with num chunks ', size(chunks) )
             call L2MasterTask ( chunks )
+            doneWithChunks = .true.
             call add_to_section_timing ( 'master', t1, now_stop )
             cycle
           end if
@@ -509,6 +514,7 @@ subtrees:   do
               return
             end if
           end do ! ---------------------------------- End of chunk loop
+          doneWithChunks = .true.
           state = save2
           ! Continue the outer loop after the last section processed in
           ! the chunk loop
@@ -717,6 +723,9 @@ subtrees:   do
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.198  2015/08/03 21:46:59  pwagner
+! May debug Next_tree_node_m calls
+!
 ! Revision 2.197  2015/06/19 20:40:04  pwagner
 ! Explicitly destroy HGrid gelocations if a master
 !
