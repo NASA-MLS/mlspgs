@@ -19,29 +19,30 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   use Geometry, only: EarthRadA
   use HDF, only: dfacc_rdonly, dfacc_read, dfacc_create, dfacc_rdwr, &
     & Dfnt_float32, dfnt_int32, dfnt_float64
-  use Highoutput, only: outputnamedvalue
+  use HighOutput, only: beVerbose, outputNamedValue
   use Intrinsic ! "units" type literals, beginning with l_
-  use MLSCommon, only: defaultundefinedvalue, interval_T, &
-    & MLSFile_t, l2metadata_t
-  use MLSFiles, only: filenotfound, &
+  use MLSCommon, only: defaultUndefinedValue, interval_T, &
+    & MLSFile_t, L2Metadata_t
+  use MLSFiles, only: FileNotFound, &
     & HDFVersion_4, HDFversion_5, wildcardHDFversion, &
-    & Dump, initializeMLSfile, MLS_closefile, MLS_exists, MLS_openfile, &
-    & MLS_HDF_version, MLS_inqswath, MLS_openfile, MLS_closefile
+    & Dump, initializeMLSFile, MLS_closeFile, MLS_exists, MLS_openFile, &
+    & MLS_HDF_version, MLS_inqswath
   use MLSKinds, only: r4, r8, rt
-  use MLSFillvalues, only: extractarray, gatherarray, &
-    & Isfillvalue, replacefillvalues
-  use MLSHDFeos, only: hsize
+  use MLSFillValues, only: extractArray, gatherArray, &
+    & IsfillValue, replacefillValues
+  use MLSHDFEOS, only: HSize
   use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning, MLSMessage
-  use MLSNumerics, only: findinrange
-  use MLSFinds, only: findfirst, findlast, findunique
-  use MLSSets, only: findintersection, intersection
+  use MLSNumerics, only: findInRange
+  use MLSFinds, only: findFirst, findLast, findUnique
+  use MLSSets, only: findIntersection, intersection
   use MLSStrings, only: capitalize, lowercase
-  use MLSStringLists, only: extractsubstring, &
-    & Gethashelement, getstringelement, getuniquelist, &
-    & List2array, numstringelements, removelistfromlist, replacesubstring, &
-    & Stringelementnum, switchdetail
-  use Output_m, only: blanks, output, resumeoutput, suspendoutput
+  use MLSStringLists, only: extractSubstring, &
+    & GetHashElement, getStringElement, getUniqueList, &
+    & List2Array, numStringElements, removeListFromList, replaceSubstring, &
+    & StringElementNum, switchDetail
+  use Output_m, only: blanks, output, resumeOutput, suspendOutput
   use String_table, only: display_string
+  use Time_M, only: Time_Now
   use Trace_m, only: trace_begin, trace_end
 
   implicit none
@@ -344,6 +345,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   ! Print debugging stuff?
   logical, parameter :: DEEBUG = .false.  
   logical, parameter ::SWATHLEVELMISSINGVALUE = .false. ! Make it swath attr?
+  real :: t1, t2
 
 contains ! =====     Public Procedures     =============================
 
@@ -464,12 +466,16 @@ contains ! =====     Public Procedures     =============================
     integer :: numProfs
     integer :: status
     logical :: swath_exists
+    logical :: timing
+    real :: tFile ! How long have we been fooling with this file?
     type (L2GPData_T) :: totall2gp
     ! logical, parameter :: DEEBUG = .false.
 
     ! Executable code
     call trace_begin ( me, 'AppendL2GPData_MLSFile', cond=.false. )
+    call time_now ( tFile )
     status = 0
+    timing = DEEBUG .or. BeVerbose( 'l2gp', 2 )
 
     if (present(lastProfile)) then
       myLastProfile = lastProfile 
@@ -486,6 +492,8 @@ contains ! =====     Public Procedures     =============================
         call MLSMessage(MLSMSG_Error, ModuleName, &
         & 'Unable to open l2gp file', MLSFile=L2GPFile)
     endif
+    if ( timing ) call sayTime( 'Opening file ' // trim(L2GPFile%name), tFile )
+    tFile = t2
     if ( L2GPFile%access == DFACC_RDONLY )  &
       & call MLSMessage(MLSMSG_Error, ModuleName, &
       & 'l2gp file is rdonly', MLSFile=L2GPFile)
@@ -495,6 +503,8 @@ contains ! =====     Public Procedures     =============================
     swath_exists = mls_swath_in_file( L2GPFile%name, myswathName, &
       & L2GPFile%HdfVersion )
 
+    if ( timing ) call sayTime( 'Checking that swath exists', tFile )
+    tFile = t2
     if ( swath_exists .and. MUSTGUARDAGIANSTHDFEOSBUG ) then
       if(DEEBUG) print *, 'OK, swath already exists'
       ! We must guard against a bug in HDF-EOS that prevents appending more
@@ -512,6 +522,8 @@ contains ! =====     Public Procedures     =============================
         if(DEEBUG) call outputNamedValue( 'AppendL2GPData expanded', totall2gp%nTimes )
       endif
       call DestroyL2GPContents ( totall2gp )
+      if ( timing ) call sayTime( 'Guarding against HDFEOS error', tFile )
+      tFile = t2
     elseif ( swath_exists ) then
       if(DEEBUG) print *, 'OK, swath already exists, but HDFEOS bug no longer scares us'
     else
@@ -573,14 +585,20 @@ contains ! =====     Public Procedures     =============================
       ! l2gp%nTimes = max(myLastProfile - offset + 1, 1)
       call OutputL2GP_writeGeo_MF (l2gp, l2GPFile, &
         & myswathName, offset)
+      if ( timing ) call sayTime( 'Writing geolocations', tFile )
+      tFile = t2
       call OutputL2GP_writeData_MF (l2gp, l2GPFile, &
         & myswathName, offset)
+      if ( timing ) call sayTime( 'Writing data', tFile )
+      tFile = t2
       select case ( L2GPFile%HDFVersion )
       case ( HDFVERSION_4 )
       case ( HDFVERSION_5 )
         if ( .not. swath_exists .and. APPENDSWRITEATTRIBUTES) then
           call OutputL2GP_attributes_MF (l2gp, l2GPFile, swathName)
           call SetL2GP_aliases_MF (l2gp, l2GPFile, swathName)
+          if ( timing ) call sayTime( 'Writing attributes', tFile )
+          tFile = t2
         end if
       case default
         call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -1178,8 +1196,13 @@ contains ! =====     Public Procedures     =============================
       if ( noSwaths < 1 ) then
         call MLSMessage ( MLSMSG_Warning, ModuleName, &
               & 'No swaths after excluding ' )
-        call outputNamedValue( 'exclude', trim(exclude) )
-        call outputNamedValue( 'mySwathList', trim(mySwathList) )
+        call dump( trim(exclude) , 'exclude these' )
+        call dump( trim(mySwathList) , 'original SwathList' )
+        call dump( trim(myrename) , 'remaining' )
+        if ( DEEBUG ) then
+          call output( 'Lets do it elem-by-elm', advance='yes' )
+          call RemoveListFromList( mySwathList, myrename, exclude, options='-v' )
+        endif
         call MLS_CloseFile( MLSFile1 )
         call MLS_CloseFile( MLSFile2 )
         return
@@ -3656,6 +3679,7 @@ contains ! =====     Public Procedures     =============================
 
     ! Local Parameters
     character (LEN=*), parameter :: MLSMSG_INPUT = 'Error in input argument '
+    integer, parameter           :: MAXDIMSIZE = 4
     ! Local Variables
     character (len=80) :: DF_Name
     character (len=80) :: DF_Precision
@@ -3673,9 +3697,9 @@ contains ! =====     Public Procedures     =============================
     integer(kind=size_t), dimension(7) :: hflddims
     character (LEN=480) :: msr
 
-    integer, dimension(4) :: dims
+    integer, dimension(MAXDIMSIZE) :: dims
     integer :: first, freq, lev, nDims, nFlds, size, swid, status
-    integer(kind=size_t), dimension(4) :: hdims
+    integer(kind=size_t), dimension(MAXDIMSIZE) :: hdims
     integer :: Me = -1                  ! String index for trace cacheing
     integer :: nFreqs, nLevels, nTimes, nFreqsOr1, nLevelsOr1, myNumProfs
     integer, dimension(3) :: start, stride, edge
@@ -3733,8 +3757,8 @@ contains ! =====     Public Procedures     =============================
       nDims = swinqdims(swid, list, dims)
     else
       nDims = HE5_SWinqdims(swid, list, hdims)
-      dims(1:nDims) = hdims(1:nDims)
-      dims(nDims+1:) = 0 ! Just to make sure they're defined, not junk
+      dims(1:nDims) = hdims(1:nDims)                                  
+      if ( nDims < MAXDIMSIZE ) dims(nDims+1:) = 0 ! Just to make sure they're defined, not junk
       nFlds = HE5_SWinqdflds( swid, fieldlist, ranks, types )
       ReadingConvergence = isInList( lowerCase(fieldList), 'convergence', '-fc' )
       ReadingAscDescMode = isInList( lowerCase(fieldList), 'AscDescMode ', '-fc' )
@@ -4444,6 +4468,7 @@ contains ! =====     Public Procedures     =============================
     integer :: start(3), stride(3), edge(3)
     integer :: swid
     integer :: hdfVersion
+    real :: tFile ! How long have we been fooling with this file?
     
 
     ! Begin
@@ -4466,12 +4491,15 @@ contains ! =====     Public Procedures     =============================
     edge(1) = l2gp%nFreqs
     edge(2) = l2gp%nLevels
     edge(3) = l2gp%nTimes
+    call time_now ( tFile )
     if (DEEBUG) then
       call output( 'Writing data now ' // trim(name), advance='yes' )
       call outputNamedValue( 'stride, start, edge', (/ stride(3), start(3), edge(3) /) )
       call outputNamedValue( 'shape(Geod. Angle', shape(l2gp%geodAngle) )
     endif
     swid = mls_SWattach (L2GPFile, name)
+    if ( DEEBUG ) call sayTime( 'Attaching swath ' // trim(name), tFile )
+    tFile = t2
     if ( l2gp%nFreqs > 0 ) then
        ! Value and Precision are 3-D fields
        if (DEEBUG) print *, 'start, stride, edge ', start, stride, edge
@@ -4484,22 +4512,32 @@ contains ! =====     Public Procedures     =============================
             & reshape(l2gp%l2gpPrecision, edge), &
             & hdfVersion=hdfVersion )
 
+       if ( DEEBUG ) call sayTime( 'Witing 3d values and precision', tFile )
+       tFile = t2
     else if ( l2gp%nLevels > 0 ) then
        ! Value and Precision are 2-D fields
       
        if (DEEBUG) print *, 'start, stride, edge: ', start(2:3), stride(2:3), edge(2:3)
        status = mls_SWwrfld( swid, 'L2gpValue', start(2:3), stride(2:3), &
             edge(2:3), l2gp%l2gpValue(1,:,:), hdfVersion=hdfVersion)
+       if ( DEEBUG ) call sayTime( 'Witing 2d values', tFile )
+       tFile = t2
        status = mls_SWwrfld( swid, 'L2gpPrecision', start(2:3), stride(2:3), &
             edge(2:3), l2gp%l2gpPrecision(1,:,:), hdfVersion=hdfVersion)
+       if ( DEEBUG ) call sayTime( 'Witing 2d precision', tFile )
+       tFile = t2
     else
 
        ! Value and Precision are 1-D fields
        if (DEEBUG) print *, 'start, stride, edge: ', start(3), stride(3), edge(3)
        status = mls_SWwrfld( swid, 'L2gpValue', start(3:3), stride(3:3), edge(3:3), &
             real(l2gp%l2gpValue(1,1,:) ), hdfVersion=hdfVersion)
+       if ( DEEBUG ) call sayTime( 'Witing 1d values', tFile )
+       tFile = t2
        status = mls_SWwrfld( swid, 'L2gpPrecision', start(3:3), stride(3:3), edge(3:3), &
             real(l2gp%l2gpPrecision(1,1,:) ), hdfVersion=hdfVersion)
+       if ( DEEBUG ) call sayTime( 'Witing 1d precision', tFile )
+       tFile = t2
     end if
 
     ! 1-D status & quality fields
@@ -4516,6 +4554,8 @@ contains ! =====     Public Procedures     =============================
     status = mls_SWwrfld(swid, 'AscDescMode ', start(3:3), stride(3:3), edge(3:3), &
          l2gp%AscDescMode, hdfVersion=hdfVersion)
 
+    if ( DEEBUG ) call sayTime( 'Witing 1d status, Quality, Asc/Desc', tFile )
+    tFile = t2
     !     Detach from the swath interface.
     status = mls_SWdetach(swid, hdfVersion=hdfVersion)
     if(DEEBUG) print *, 'Detached from swid ', swid
@@ -5255,6 +5295,21 @@ contains ! =====     Public Procedures     =============================
     endif
   end function TimeToHoursInDay
 
+!------------------------- SayTime ---------------------
+  subroutine SayTime ( What, startTime )
+    character(len=*), intent(in) :: What
+    real, intent(in), optional :: startTime
+    real :: myt1
+    if ( present(startTime) ) then
+      myt1 = startTime
+    else
+      myt1 = t1
+    endif
+    call time_now ( t2 )
+    call output ( "Timing for " // what // " = " )
+    call output ( dble(t2 - myt1), advance = 'yes' )
+  end subroutine SayTime
+
 !=============================================================================
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
@@ -5272,6 +5327,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.215  2015/08/29 00:42:00  vsnyder
+! Don't copy undefined data, even if it won't be used
+!
 ! Revision 2.214  2015/07/14 23:13:21  pwagner
 ! Added computation of interprofile geolocation spacings
 !
