@@ -2782,10 +2782,10 @@ contains
     ! outList = unique_list(len(elem)+1:)
     ! The following is evidence of poor programming habits
     ! (As if any more evidence was needed)
-    if ( unique_list(len(elem)+1:len(elem)+1) == separator ) then
-      outList = unique_list(len(elem)+2:)
+    if ( unique_list(len_trim(elem)+1:len_trim(elem)+1) == separator ) then
+      outList = unique_list(len_trim(elem)+2:)
     else
-      outList = unique_list(len(elem)+1:)
+      outList = unique_list(len_trim(elem)+1:)
     endif
   end subroutine RemoveElemFromList
 
@@ -2905,20 +2905,28 @@ contains
     integer :: numElems
     character(len=len(inList)+1) :: temp_list
     character(len=len(inList)+1) :: temp_list2
+    logical :: verbose
     !----------Executable part----------!
     myOptions = ' '
     if ( present(options) ) myOptions = options
     myCountEmpty = index( myOptions, 'e' ) > 0  ! .true.
+    verbose = index( myOptions, 'v' ) > 0  ! .true.
     ! if ( present(countEmpty) ) myCountEmpty = countEmpty
     outList = inList
     if ( len_trim(exclude) < 1 .or. len_trim(inList) < 1 ) return
     numElems = NumStringElements( exclude, myCountEmpty, inseparator )
+    if ( verbose ) print *, 'numElems in exclude ', numElems
     if ( numElems < 1 ) return
     temp_list = inList
     do i=1, numElems
       call GetStringElement( exclude, elem, i, myCountEmpty, inseparator )
       call RemoveElemFromList( temp_list, temp_list2, elem, &
         & inseparator, options )
+      if ( verbose ) then
+        print *, 'After excluding ' // trim(elem)
+        print *, 'list was ' // trim(temp_list)
+        print *, 'now ' // trim(temp_list2)
+      endif
       temp_list = temp_list2
     enddo
     outList = temp_list
@@ -4453,6 +4461,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.69  2015/09/03 20:22:21  pwagner
+! Fixed error in RemoveElemFromList
+!
 ! Revision 2.68  2015/05/06 20:46:11  pwagner
 ! Repaired some error msgs
 !
