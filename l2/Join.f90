@@ -57,6 +57,7 @@ contains ! =====     Public Procedures     =============================
     use ForwardModelConfig, only: ForwardModelConfig_t
     use HessianModule_1, only: Hessian_t
     use HGridsDatabase, only: HGrid_t
+    use highOutput, only: beVerbose, letsDebug, outputNamedValue
     use Init_Tables_Module, only: s_l2gp, s_l2aux, s_time, s_directwrite, &
       & s_endselect, s_case, s_diff, s_dump, s_label, s_select, s_skip
     use L2GPData, only: L2GPData_t
@@ -73,7 +74,7 @@ contains ! =====     Public Procedures     =============================
     use MoreTree, only: Get_Label_and_Spec, Get_Spec_Id
     use Next_Tree_Node_m, only: Init_Next_Tree_Node, Next_Tree_Node, &
       & Next_Tree_Node_State
-    use Output_m, only: Output, RevertOutput, SwitchOutput
+    use Output_m, only: Blanks, Output, RevertOutput, SwitchOutput
     use Toggles, only: Gen, Toggle, Switches
     use Tree, only: Where_at => Where
     use Time_m, only: Time_Now
@@ -113,6 +114,7 @@ contains ! =====     Public Procedures     =============================
     integer :: NODIRECTWRITES           ! Array size
     integer :: NODIRECTWRITESCOMPLETED  ! Counter
     integer :: NOEXTRAWRITES            ! Correction to NODIRECTWRITES
+    character(len=16) :: outputTyp
     integer :: PASS                     ! Loop counter
     integer :: SON                      ! Tree node
     integer :: SPECID                   ! Type of l2cf line this is
@@ -124,11 +126,14 @@ contains ! =====     Public Procedures     =============================
     logical :: TIMING                   ! Flag
     real :: T1                          ! Time we started
     real :: T2                          ! Time we finished
+    real :: timeSpentWaiting
     logical :: namedFile                ! set true if DirectWrite named file
     logical :: DEEBUG
+    logical :: verbose
     
     ! Executable code
-    DEEBUG = ( switchDetail(switches, 'direct') > -1 )!  .or. .true.
+    DEEBUG = LetsDebug ( 'direct', 0 )
+    verbose = BeVerbose( 'direct', -1 )
     call trace_begin ( me, "MLSL2Join", root, cond=toggle(gen) )
     timing = section_times
     if ( timing ) call time_now ( t1 )
@@ -164,7 +169,8 @@ contains ! =====     Public Procedures     =============================
         call WaitForDirectWritePermission ( directWriteNodeGranted, ticket, &
           & theFile, createFile )
         call time_now ( dwt22 )
-        if ( dwt22-dwt2 > timeReasonable ) then
+        timeSpentWaiting = dwt22-dwt2
+        if ( timeSpentWaiting > timeReasonable ) then
           call output('Unreasonable time waiting for permission', advance='yes')
         endif
         if ( parallel%verbosity > 0 ) then
@@ -250,7 +256,7 @@ contains ! =====     Public Procedures     =============================
                     & trim(DirectDataBase(dbIndex)%fileNameBase)
                   call DirectWriteCommand ( son, ticket, vectors, &
                     & DirectdataBase, filedatabase, &
-                    & chunkNo, chunks, FWModelConfig, HGrids, &
+                    & chunkNo, chunks, outputTyp, FWModelConfig, HGrids, &
                     & theFile=DirectDataBase(dbIndex)%fileNameBase, &
                     & namedFile=namedFile )
                   if ( namedFile ) exit
@@ -258,7 +264,7 @@ contains ! =====     Public Procedures     =============================
               else
                 call DirectWriteCommand ( son, ticket, vectors, &
                   & DirectdataBase, filedatabase, &
-                  & chunkNo, chunks, FWModelConfig, HGrids )
+                  & chunkNo, chunks, outputTyp, FWModelConfig, HGrids )
               end if
               call add_to_directwrite_timing ( 'writing', dwt2)
             end if
@@ -270,8 +276,8 @@ contains ! =====     Public Procedures     =============================
             if(DEEBUG)print*,'Calling direct write to do a setup'
             call DirectWriteCommand ( son, ticket, vectors, &
               & DirectdataBase, fileDatabase,  &
-              & chunkNo, chunks, FWModelConfig, HGrids, makeRequest=.true., &
-              & NoExtraWrites=noExtraWrites )
+              & chunkNo, chunks, outputTyp, FWModelConfig, HGrids, &
+              & makeRequest=.true., NoExtraWrites=noExtraWrites )
             noDirectWrites = noDirectWrites + noExtraWrites
           else
             ! On the later passes we do the actual direct write we've been
@@ -285,7 +291,8 @@ contains ! =====     Public Procedures     =============================
               if(DEEBUG)print*,'the file ', trim(theFile)
               call DirectWriteCommand ( son, ticket, vectors, &
                 & DirectdataBase, filedatabase, &
-                & chunkNo, chunks, FWModelConfig, HGrids, create=createFile, &
+                & chunkNo, chunks, outputTyp, FWModelConfig, HGrids, &
+                & create=createFile, &
                 & theFile=theFile )
               call time_now(dwt22)
               if ( dwt22-dwt2 > timeReasonable .and. &
@@ -296,7 +303,13 @@ contains ! =====     Public Procedures     =============================
                 call output('File: ', advance='no')
                 call output(trim(theFile), advance='yes')
               endif
-              call add_to_directwrite_timing ( 'writing', dwt2)
+              if ( verbose ) then
+                call sayJustThisTime ( 'Completing this DW, ' // &
+                  & trim(outputTyp), dwt2 )
+                call outputNamedValue( 'Waiting time', TimeSpentWaiting )
+                call outputNamedValue( 'File name', trim(theFile) )
+              endif
+              call add_to_directwrite_timing ( 'writing', dwt2 )
               noDirectWritesCompleted = noDirectWritesCompleted + 1
               ! If that was the last one then bail out
               if(DEEBUG)print*,'noDirectWritesCompleted: ', noDirectWritesCompleted, &
@@ -339,7 +352,21 @@ contains ! =====     Public Procedures     =============================
     if ( timing ) call sayTime
 
   contains
-    ! Private procedure
+    ! Private procedures
+    subroutine SayJustThisTime ( ForWhat, t1 )
+      ! Args
+      character(len=*), intent(in) :: ForWhat
+      real, intent(in) :: t1
+      ! Internal variables
+      real             :: t2
+      ! Executable
+      call time_now ( t2 )
+      call output ( "Timing for ", advance='no' )
+      call output ( trim(ForWhat), advance='no' )
+      call blanks ( 1 )
+      call output ( dble(t2 - t1), advance = 'yes' )
+    end subroutine SayJustThisTime
+
     subroutine SayTime
       call time_now ( t2 )
       if ( total_times ) then
@@ -378,7 +405,8 @@ contains ! =====     Public Procedures     =============================
   !     i.e., swaths go to DGG files, hdf datasets to DGM files
   subroutine DirectWriteCommand ( node, ticket, vectors, &
     & DirectDataBase, fileDatabase, &
-    & chunkNo, chunks, FWModelConfig, HGrids, makeRequest, create, theFile, &
+    & chunkNo, chunks, outputTypeStr, &
+    & FWModelConfig, HGrids, makeRequest, create, theFile, &
     & noExtraWrites, namedFile )
     ! Imports
     use allocate_deallocate, only: allocate_test, deallocate_test
@@ -440,6 +468,7 @@ contains ! =====     Public Procedures     =============================
     type (HGrid_T), dimension(:), pointer ::     HGrids
     integer, intent(in) :: CHUNKNO
     type (MLSChunk_T), dimension(:), intent(in) :: CHUNKS
+    character(len=*), intent(out) :: OUTPUTTYPESTR   ! 'l2gp', 'l2aux', etc.
     ! The next 3 args are used in the multi-pass followed by each slave:
     ! 1st pass just counts up requests to write
     ! 2nd pass just logs requests to write
@@ -504,7 +533,6 @@ contains ! =====     Public Procedures     =============================
     integer :: AscDescModeQTYINDX
     logical :: noPCFid
     integer :: OUTPUTTYPE               ! l_l2gp, l_l2aux, l_l2fwm, l_l2dgg
-    character(len=8) :: OUTPUTTYPESTR   ! 'l2gp', 'l2aux', etc.
     character(len=1024) :: PATH         ! path/file_base
     integer :: PCBottom
     integer :: PCTop
@@ -545,6 +573,7 @@ contains ! =====     Public Procedures     =============================
     DEEBUG = ( switchDetail(switches, 'direct') > 0 ) ! .or. SKIPDIRECTWRITES
     SKIPDGG = ( switchDetail(switches, 'skipdgg') > -1 )
     SKIPDGM = ( switchDetail(switches, 'skipdgm') > -1 )
+    outputTypeStr = 'unknown'
     nullify(thisDirect)
 
     call trace_begin ( me, "DirectWriteCommand", node, &
@@ -2348,6 +2377,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.169  2015/09/10 17:49:19  pwagner
+! Verbose now times DirectWrites
+!
 ! Revision 2.168  2015/08/25 21:56:34  pwagner
 ! Had failed to give prefixSignal a default value; now FALSE
 !
