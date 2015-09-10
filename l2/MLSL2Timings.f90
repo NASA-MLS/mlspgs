@@ -800,14 +800,6 @@ contains ! =====     Public Procedures     =============================
     & countEmpty) > 0)
   if ( sections .and. .not. FINISHEDSECTIONTIMES ) then
     ! A trick:
-    ! Adjust Join section timing to exclude directwrite timings
-    ! (otherwise they would be counted twice)
-    joinElem = StringElementNum(section_names, 'join', countEmpty)
-    dwElem = StringElementNum(section_names, 'directwrite', countEmpty)
-    if ( joinElem > 0 .and. dwElem > 0 ) section_timings(joinElem) = &
-      &         section_timings(joinElem) - section_timings(dwElem)
-
-    ! Another trick:
     ! The DirectWrite section doesn't automatically include the waiting time
     ! (due to lazy coding in Join) so add it in now
     elem = StringElementNum(directwrite_names, 'waiting', countEmpty)
@@ -815,6 +807,17 @@ contains ! =====     Public Procedures     =============================
       & section_timings(num_section_times+num_retrieval_times+elem)
     FINISHEDSECTIONTIMES = .true.
     sections = .false.
+    ! Another trick:
+    ! Adjust Join section timing to exclude directwrite timings
+    ! (otherwise they would be counted twice)
+    joinElem = StringElementNum(section_names, 'join', countEmpty)
+    dwElem = StringElementNum(section_names, 'directwrite', countEmpty)
+    if ( joinElem > 0 .and. dwElem > 0 ) then
+      call outputnamedValue( 'section_timings(joinElem)', section_timings(joinElem) )
+      call outputnamedValue( 'section_timings(dwElem)', section_timings(dwElem) )
+      section_timings(joinElem) = &
+      &         section_timings(joinElem) - section_timings(dwElem)
+    endif
   endif
   if ( sections ) status = max(status, 1)
 
@@ -1022,6 +1025,9 @@ END MODULE MLSL2Timings
 
 !
 ! $Log$
+! Revision 2.62  2015/09/10 17:50:35  pwagner
+! Fixed bug counting DirectWrite timing twice
+!
 ! Revision 2.61  2015/07/16 22:11:24  pwagner
 ! Will print calculation of now_stop if verbose
 !
