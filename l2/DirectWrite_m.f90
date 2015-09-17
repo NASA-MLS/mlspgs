@@ -66,6 +66,7 @@ module DirectWrite_m  ! alternative to Join/OutputAndClose methods
     module procedure DirectWrite_L2Aux_MF
     module procedure DirectWrite_L2GP_MF
     module procedure DirectWrite_Quantity
+    module procedure DirectWriteVector_L2GP_MF
     module procedure DirectWriteVector_L2Aux_MF
     module procedure DirectWriteVector_EveryQuantity
   end interface
@@ -387,7 +388,7 @@ contains ! ======================= Public Procedures =========================
   ! ------------------------------------------ DirectWriteVector_L2GP_MF --------
   subroutine DirectWriteVector_L2GP_MF ( L2gpFile, &
     & vector, &
-    & chunkNo, HGrids, createSwath, lowerOverlap, upperOverlap )
+    & chunkNo, HGrids, createSwath, lowerOverlap, upperOverlap, maxChunkSize )
 
     ! Purpose:
     ! Write out all the quantities in a vector as swaths to an hdfeos file
@@ -403,6 +404,7 @@ contains ! ======================= Public Procedures =========================
     logical, intent(in), optional :: createSwath
     logical, intent(in), optional :: lowerOverlap
     logical, intent(in), optional :: upperOverlap
+    integer, intent(in), optional :: maxChunkSize
     ! Local variables
     integer                       :: j
     type (VectorValue_T), pointer :: QUANTITY
@@ -419,14 +421,16 @@ contains ! ======================= Public Procedures =========================
       call get_string( quantity%template%name, sdname )
       call DirectWrite_L2GP_MF ( L2gpFile, &
         & quantity, precision, quality, status, Convergence, AscDescMode, &
-        & sdName, chunkNo, HGrids, createSwath, lowerOverlap, upperOverlap )
+        & sdName, chunkNo, HGrids, createSwath, lowerOverlap, upperOverlap, &
+        & maxChunkSize )
     enddo
   end subroutine DirectWriteVector_L2GP_MF
 
   ! ------------------------------------------ DirectWrite_L2GP_MF --------
   subroutine DirectWrite_L2GP_MF ( L2gpFile, &
     & quantity, precision, quality, status, Convergence, AscDescMode, &
-    & sdName, chunkNo, HGrids, createSwath, lowerOverlap, upperOverlap )
+    & sdName, chunkNo, HGrids, createSwath, lowerOverlap, upperOverlap, &
+    & maxChunkSize )
 
     ! Purpose:
     ! Write a swath to an hdfeos file composed of 
@@ -456,6 +460,7 @@ contains ! ======================= Public Procedures =========================
     logical, intent(in), optional :: createSwath
     logical, intent(in), optional :: lowerOverlap
     logical, intent(in), optional :: upperOverlap
+    integer, intent(in), optional :: maxChunkSize
     ! Local variables
     logical :: DeeBug
     logical :: alreadyThere
@@ -566,7 +571,8 @@ contains ! ======================= Public Procedures =========================
     call usleep ( delay ) ! Should we make this parallel%delay?
     call AppendL2GPData( l2gp, l2gpFile, &
       & sdName, offset, lastprofile=lastInstance, &
-      & TotNumProfs=TotalProfs, createSwath=createSwath )
+      & TotNumProfs=TotalProfs, createSwath=createSwath, &
+      & maxChunkSize=maxChunkSize )
     if ( L2GPFile%access == DFACC_CREATE ) L2GPFile%access = DFACC_RDWR
     call writeAPrioriAttributes( l2gpFile, dontreplace=.true. )
     if ( switchDetail(switches, 'l2gp') > -1 ) call dump(l2gp)
@@ -1730,6 +1736,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.77  2015/09/17 23:24:50  pwagner
+! Passes Max chunk size for l2gp DirectWrites
+!
 ! Revision 2.76  2015/07/29 00:29:54  vsnyder
 ! Convert Phi from pointer to allocatable
 !
