@@ -179,7 +179,7 @@ contains ! =====     Public Procedures     =============================
       & s_filldiagonal, s_flagcloud, s_flushl2pcbins, s_flushpfa, s_hessian, &
       & s_load, s_matrix,  s_negativeprecision, s_phase, s_populatel2pcbin, &
       & s_reevaluate, s_repeat, s_restrictrange, &
-      & s_select, s_skip, s_snoop, s_streamlinehessian, s_subset, &
+      & s_select, s_changeSettings, s_skip, s_snoop, s_streamlinehessian, s_subset, &
       & s_time, s_transfer, s_updatemask, s_vector
     ! now some arrays
     use intrinsic, only: lit_indices, &
@@ -1028,6 +1028,10 @@ contains ! =====     Public Procedures     =============================
       case ( s_phase ) ! ===============================  Phase ==
         ! Set the name for this phase
         call addPhaseToPhaseNames ( vectorname, key )
+
+      case ( s_changeSettings ) ! ===============================  changeSettings ==
+        ! Change settings for this phase
+        call addPhaseToPhaseNames ( 0, key )
 
       case ( s_transfer ) ! ===============================  Transfer ==
         ! Here we're on a transfer instruction
@@ -2288,8 +2292,8 @@ contains ! =====     Public Procedures     =============================
 
       case ( l_gphPrecision) ! -------------  GPH precision  -----
         ! Need a tempPrecision and a refgphPrecision quantity
-        if ( .not.all(got( (/ f_refGPHPrecisionQuantity, f_tempPrecisionQuantity /))) ) &
-          call Announce_Error ( key,needTempREFGPH )
+        if ( .not. all(got( (/ f_refGPHPrecisionQuantity, f_tempPrecisionQuantity /))) ) &
+          call Announce_Error ( key, needTempREFGPH )
 
         tempPrecisionQuantity => GetVectorQtyByTemplateIndex( &
           &  vectors(tempPrecisionVectorIndex), tempPrecisionQuantityIndex)
@@ -2307,7 +2311,6 @@ contains ! =====     Public Procedures     =============================
       case ( l_gridded ) ! ------------  Fill from gridded data  -----
         if ( .not. got(f_sourceGrid) ) &
           & call Announce_Error ( key, noSourceGridGiven )
-        ! call output( 'Filling quantity from grid', advance='yes' )
         call FromGrid &
           & ( quantity, griddedDataBase(gridIndex), allowMissing, errorCode )
         ! call outputNamedValue( 'error code', errorCode )
@@ -3208,6 +3211,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.454  2015/09/17 23:16:15  pwagner
+! Added changeSettings command
+!
 ! Revision 2.453  2015/08/25 17:32:53  vsnyder
 ! PhiWindow is a tuple, with the first element specifying the angles or
 ! number of profiles/MAFs before the tangent point, and the second
