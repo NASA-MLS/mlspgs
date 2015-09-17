@@ -139,7 +139,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_CASE               = s_boolean + 1
   integer, parameter :: S_CATCHWARNING       = s_case + 1
   integer, parameter :: S_CATENATE           = s_catchwarning + 1
-  integer, parameter :: S_CHECKPOINT         = s_catenate + 1
+  integer, parameter :: S_CHANGESETTINGS     = s_catenate + 1
+  integer, parameter :: S_CHECKPOINT         = s_changeSettings + 1
   integer, parameter :: S_CHUNKDIVIDE        = s_checkpoint + 1
   integer, parameter :: S_COLUMNSCALE        = s_chunkDivide + 1
   integer, parameter :: S_COMBINECHANNELS    = s_columnScale + 1
@@ -355,6 +356,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_case) =                   add_ident ( 'case' )
     spec_indices(s_catchwarning) =           add_ident ( 'catchwarning' )
     spec_indices(s_catenate) =               add_ident ( 'catenate' )
+    spec_indices(s_changeSettings) =         add_ident ( 'changeSettings' )
     spec_indices(s_checkpoint) =             add_ident ( 'checkpoint' )
     spec_indices(s_chunkDivide) =            add_ident ( 'chunkDivide' )
     spec_indices(s_columnScale) =            add_ident ( 'columnScale' )
@@ -847,7 +849,21 @@ contains ! =====     Public procedures     =============================
              begin, f+f_molecules, field_type(t_molecule), &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
+      begin, s+s_changeSettings, & ! Ignores rest of stuff
+             begin, f+f_additional, boolean(), &
+             begin, f+f_debug, boolean(), &
+             begin, f+f_options, string(), &
+             begin, f+f_silent, boolean(), &
+             begin, f+f_skipDirectWrites, boolean(), &
+             begin, f+f_skipDirectWritesif, field_spec(s_Boolean), &
+             begin, f+f_skipRetrieval, boolean(), &
+             begin, f+f_skipRetrievalif, field_spec(s_Boolean), &
+             begin, f+f_stamp, boolean(), &
+             begin, f+f_verbose, boolean(), &
+             ndp+n_spec_def /) )
+    call make_tree ( (/ &
       begin, s+s_phase, & ! Ignores rest of stuff
+             begin, f+f_additional, boolean(), &
              begin, f+f_debug, boolean(), &
              begin, f+f_options, string(), &
              begin, f+f_silent, boolean(), &
@@ -1790,7 +1806,7 @@ contains ! =====     Public procedures     =============================
       begin, z+z_construct, s+s_anyGoodRadiances, s+s_anyGoodValues, &
              s+s_Boolean, s+s_catchWarning, s+s_compare, s+s_dump, &
              s+s_forge, s+s_forwardModel, s+s_hgrid, s+s_phase, s+s_quantity, &
-             s+s_reevaluate, s+s_snoop, s+s_time, s+s_vectortemplate, &
+             s+s_reevaluate, s+s_changeSettings, s+s_snoop, s+s_time, s+s_vectortemplate, &
              n+n_section /) )
     call make_tree ( (/ &
       begin, z+z_fill, &
@@ -1800,8 +1816,8 @@ contains ! =====     Public procedures     =============================
              s+s_fill, s+s_fillCovariance, &
              s+s_fillDiagonal, s+s_flagcloud, s+s_flushL2PCBins, s+s_flushPFA, &
              s+s_hessian, s+s_load, s+s_matrix, s+s_negativePrecision, &
-             s+s_phase, s+s_populateL2PCBin, &
-             s+s_reevaluate, s+s_repeat, s+s_restrictRange, s+s_select, &
+             s+s_phase, s+s_populateL2PCBin, s+s_reevaluate, &
+             s+s_repeat, s+s_restrictRange, s+s_select, s+s_changeSettings, &
              s+s_skip, s+s_snoop, s+s_streamlineHessian, s+s_subset, &
              s+s_time, s+s_transfer, s+s_updateMask, s+s_vector, n+n_section, &
       begin, z+z_retrieve, s+s_anyGoodValues, s+s_case, s+s_catchWarning, &
@@ -2030,6 +2046,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.618  2015/09/17 22:58:54  pwagner
+! Added changeSettings command
+!
 ! Revision 2.617  2015/08/25 17:27:16  vsnyder
 ! Allow PhiWindow to be a number or a range
 !
