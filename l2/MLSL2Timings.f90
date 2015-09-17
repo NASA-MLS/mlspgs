@@ -328,6 +328,11 @@ contains ! =====     Public Procedures     =============================
   ! to hold timing info
   ! set options controllable by runtime flags, like whther
   ! to skip retrievals, skip directwrites, verboseness, etc.
+  
+  ! This may be called in response to either
+  ! name: phase, ..
+  ! or
+  ! setPhase, ..
   subroutine addPhaseToPhaseNames ( name, root )
     ! Dummy arguments
     integer, intent(in) :: NAME               ! String index of name
@@ -417,8 +422,10 @@ contains ! =====     Public Procedures     =============================
       case default ! Can't get here if tree_checker works correctly
       end select
     end do
-    call get_string(name, phaseString)
-    currentPhaseName = phaseString
+    if ( name > 0 ) then
+      call get_string(name, phaseString)
+      currentPhaseName = phaseString
+    endif
     ! Restore settings if last one overwrote them (unless additional)
     if ( LASTPHASEOVERWROTEOPTS .and. .not. additional ) then
       call restoredefaults
@@ -452,7 +459,7 @@ contains ! =====     Public Procedures     =============================
       LASTPHASEOVERWROTEOPTS = .true.
     endif
     
-    if ( RESTARTWARNINGS ) call MLSMessageReset( Warnings=.true. )
+    if ( RESTARTWARNINGS .and. name > 0 ) call MLSMessageReset( Warnings=.true. )
     ! This will cause Warnings and Errors to print the phase name
     ! where they occurred
     ! and, if we're a slave, the Chunk number
@@ -460,10 +467,10 @@ contains ! =====     Public Procedures     =============================
       write(chunkString, '(i3)') parallel%ChunkNo
       MLSMessageConfig%Info = trim(phaseString) // ' (' // &
         & trim(adjustl(chunkString)) // ') '
-    else
+    elseif ( name > 0 ) then
       MLSMessageConfig%Info = phaseString
     endif
-    MLSMessageConfig%Warning = MLSMessageConfig%Info
+    if ( name > 0 ) MLSMessageConfig%Warning = MLSMessageConfig%Info
     if ( silent ) then
       call suspendOutput
     else
@@ -480,13 +487,7 @@ contains ! =====     Public Procedures     =============================
       interval = 1 ! stamp every line with time, phase name
     endif
     
-    if ( stamp .and. .false. ) then ! Not planning to use this idea any longer
-      call setStamp( textcode=phaseString(1:24), showTime=.true., &
-        & interval=interval )
-    else
-      ! Possibly undo stamp added by prior phase
-      call setStamp( textcode=' ', showTime=.false. )
-    endif
+    if ( name < 1 ) return
     call add_to_phase_timing( trim(phaseString) )
     call outputNamedValue( 'Resetting to 0 sys_memory which was', sys_memory_max )
     sys_memory_max     = 0.0
@@ -798,6 +799,8 @@ contains ! =====     Public Procedures     =============================
     & countEmpty) > 0)
   phases = (StringElementNum('all,both,phases', trim(LowerCase(which)), &
     & countEmpty) > 0)
+  joinElem = StringElementNum(section_names, 'join', countEmpty)
+  dwElem = StringElementNum(section_names, 'directwrite', countEmpty)
   if ( sections .and. .not. FINISHEDSECTIONTIMES ) then
     ! A trick:
     ! The DirectWrite section doesn't automatically include the waiting time
@@ -810,8 +813,6 @@ contains ! =====     Public Procedures     =============================
     ! Another trick:
     ! Adjust Join section timing to exclude directwrite timings
     ! (otherwise they would be counted twice)
-    joinElem = StringElementNum(section_names, 'join', countEmpty)
-    dwElem = StringElementNum(section_names, 'directwrite', countEmpty)
     if ( joinElem > 0 .and. dwElem > 0 ) then
       call outputnamedValue( 'section_timings(joinElem)', section_timings(joinElem) )
       call outputnamedValue( 'section_timings(dwElem)', section_timings(dwElem) )
@@ -1025,6 +1026,9 @@ END MODULE MLSL2Timings
 
 !
 ! $Log$
+! Revision 2.63  2015/09/17 23:18:28  pwagner
+! Repaired bug using currentPhaseName before being defined; addPhaseToPhaseNames can now be called with name=0
+!
 ! Revision 2.62  2015/09/10 17:50:35  pwagner
 ! Fixed bug counting DirectWrite timing twice
 !
