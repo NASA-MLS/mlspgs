@@ -439,7 +439,8 @@ contains ! =====     Public Procedures     =============================
     use MLSHdfeos, only: mls_swath_in_file
     use MLSKinds, only: r8
     use MLSL2Options, only: checkPaths, &
-      & default_HDFVersion_Write, patch, skipDirectWrites, toolkit
+      & default_HDFVersion_Write, maxChunkSize, patch, skipDirectWrites, &
+      & toolkit
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
     use MLSPCF2, only: MLSPCF_l2gp_start, MLSPCF_l2gp_end, &
       & MLSPCF_l2dgm_start, MLSPCF_l2dgm_end, MLSPCF_l2fwm_full_start, &
@@ -1214,9 +1215,10 @@ contains ! =====     Public Procedures     =============================
           select case ( outputType )
           case ( l_l2gp, l_l2dgg )
             call DirectWrite ( directFile, vector, &
-              & chunkNo, chunks, FWModelConfig, &
-              & lowerOverlap=lowerOverlap, upperOverlap=upperOverlap, &
-              & single=single, options=options )
+            & chunkNo, HGrids, &
+            & createSwath=createthisswath, &
+            & lowerOverlap=lowerOverlap, upperOverlap=upperOverlap, &
+            & maxChunkSize=maxChunkSize )
           case ( l_l2aux, l_l2fwm, l_hdf )
             call DirectWrite ( directFile, vector, &
               & chunkNo, chunks, FWModelConfig, &
@@ -1326,7 +1328,8 @@ contains ! =====     Public Procedures     =============================
             & qty, precQty, qualityQty, statusQty, convergQty, AscDescModeQty, &
             & hdfName, chunkNo, HGrids, &
             & createSwath=createthisswath, &
-            & lowerOverlap=lowerOverlap, upperOverlap=upperOverlap )
+            & lowerOverlap=lowerOverlap, upperOverlap=upperOverlap, &
+            & maxChunkSize=maxChunkSize )
           if ( createthisswath ) then
             if ( directFile%stillOpen ) &
               & call mls_closeFile(directFile, errorType)
@@ -1338,7 +1341,8 @@ contains ! =====     Public Procedures     =============================
               & qty, precQty, qualityQty, statusQty, convergQty, AscDescModeQty, &
               & hdfName, chunkNo, HGrids, &
               & createSwath=createthisswath, &
-              & lowerOverlap=lowerOverlap, upperOverlap=upperOverlap )
+              & lowerOverlap=lowerOverlap, upperOverlap=upperOverlap, &
+              & maxChunkSize=maxChunkSize )
           endif
           NumOutput= NumOutput + 1
           if ( outputType == l_l2dgg ) then
@@ -2377,6 +2381,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.170  2015/09/17 23:24:30  pwagner
+! Passes Max chunk size for l2gp DirectWrites
+!
 ! Revision 2.169  2015/09/10 17:49:19  pwagner
 ! Verbose now times DirectWrites
 !
