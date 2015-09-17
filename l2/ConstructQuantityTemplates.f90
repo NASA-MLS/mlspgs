@@ -77,12 +77,14 @@ contains ! ============= Public procedures ===================================
     use EXPR_M, only: EXPR
     use FGRID, only: FGRID_T
     use HGRIDSDATABASE, only: HGRID_T
+    use highOutput, only: outputNamedValue
     use init_tables_module, only:  f_badValue, f_coordinate, f_fGrid, f_hGrid, &
       & f_irregular, f_keepChannels, f_logBasis, f_minValue, f_module, &
       & f_molecule, f_radiometer, f_reflector, f_sgrid, f_signal, f_stacked, &
       & f_type, f_vgrid, f_xgrid, field_first, field_last, l_channel, &
       & l_explicit, l_geocAltitude, l_lostransfunc, l_matrix3x3, l_none, &
       & l_phitan, l_true, l_xyz, l_zeta
+    use intrinsic, only: phyq_indices
     use MLSCOMMON, only: MLSFILE_T
     use MLSKINDS, only: RK => R8
     use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING
@@ -528,6 +530,8 @@ contains ! ============= Public procedures ===================================
     & filedatabase, chunk, mifGeolocation )
 
     use CHUNKS_M, only: MLSCHUNK_T
+    use Dump_0, only: Dump
+    use highOutput, only: BeVerbose, LetsDebug, outputNamedValue
     use INIT_TABLES_MODULE, only: L_GEODALTITUDE, L_NONE
     use L1BDATA, only: L1BDATA_T, READL1BDATA, DEALLOCATEL1BDATA, &
       & ASSEMBLEL1BQTYNAME
@@ -540,7 +544,8 @@ contains ! ============= Public procedures ===================================
     use MLSSIGNALS_M, only:  ISMODULESPACECRAFT, GETMODULENAME
     use MLSSTRINGLISTS, only: SWITCHDETAIL
     use OUTPUT_M, only: OUTPUT
-    use QUANTITYTEMPLATES, only: QUANTITYTEMPLATE_T, SETUPNEWQUANTITYTEMPLATE
+    use QUANTITYTEMPLATES, only: QUANTITYTEMPLATE_T, &
+      & Dump, SETUPNEWQUANTITYTEMPLATE
     use TOGGLES, only: Gen, Levels, SWITCHES, Toggle
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
 
@@ -597,6 +602,8 @@ contains ! ============= Public procedures ===================================
     integer :: hdfVersion, l1bFlag, l1bItem, noMAFs, mafIndex, mifIndex
     integer :: Me = -1      ! For tracing
     logical :: MissingOK
+    logical :: verbose
+    logical :: verboser
     integer :: Start, Stop  ! For reading L1B quantities, depending upon whether
                             ! they're for the instrument or the tangent point
 
@@ -608,13 +615,19 @@ contains ! ============= Public procedures ===================================
     call trace_begin ( me, "ConstructMinorFrameQuantity", &
       & cond=toggle(gen) .and. levels(gen) > 2 )
 
-    MissingOK = .not. AURA_L1BFILES
+    MissingOK = .false. ! .not. AURA_L1BFILES
+    verbose = BeVerbose( 'qtmp', -1 )
+    verboser = LetsDebug( 'qtmp', 0 )
 
     if ( present(mifGeolocation) ) then
       ! -------------------------------------- Got mifGeolocation ------------
       if ( .not. (present(noChans)) ) &
          call MLSMessage ( MLSMSG_Error, ModuleName, &
           & 'You must supply NoChans to reuse geolocation information' )
+      if ( verboser ) then
+        call output( 'Dump of mifGeolocation; provides lat, etc.', advance = 'yes' )
+        call Dump ( mifGeolocation(instrumentModule) )
+      endif
       ! We have geolocation information, setup the quantity as a clone of that.
       qty = mifGeolocation(instrumentModule)
       qty%sharedVGrid = .true.
@@ -641,6 +654,10 @@ contains ! ============= Public procedures ===================================
         l1bItemName = TRIM(l1bItemName) // "." // "tpGeodAlt"
       end if
       l1bItemName = AssembleL1BQtyName ( l1bItemName, hdfVersion, .false. )
+      if ( verbose ) then
+        call outputnamedValue ( 'firstMAFIndex', chunk%firstMAFIndex )
+        call outputnamedValue ( 'lastMAFIndex', chunk%lastMAFIndex )
+      endif
 
       call ReadL1BData ( L1BFile, l1bItemName, l1bField, noMAFs, &
         & l1bFlag, firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
@@ -653,6 +670,10 @@ contains ! ============= Public procedures ===================================
           & MLSMSG_L1BRead//l1bItemName )
         ! return
       end if
+      if ( verbose ) then
+        call outputnamedValue ( 'noMAFs', noMAFs )
+        call outputnamedValue ( 'l1bFlag', l1bFlag )
+      endif
 
       qty%name = 0
       call SetupNewQuantityTemplate ( qty, noInstances=noMAFs, &
@@ -666,7 +687,7 @@ contains ! ============= Public procedures ===================================
       ! Now we're going to fill in the hGrid information
       qty%instanceOffset = chunk%firstMAFIndex + chunk%noMAFsLowerOverlap
       qty%grandTotalInstances = 0
-      if ( switchDetail(switches,'qtmp') > -1 ) then
+      if ( verbose ) then
         call output ( "Instance offset for minor frame quantity is:" )
         call output ( qty%instanceOffset, advance='yes' )
       end if
@@ -724,6 +745,7 @@ contains ! ============= Public procedures ===================================
 
         ! Read it from the l1boa file
         l1bItemName = AssembleL1BQtyName ( l1bItemName, hdfVersion, .false. )
+        if ( verbose ) call outputnamedValue ( 'l1bItemName', trim(l1bItemName) )
         call ReadL1BData ( L1BFile, l1bItemName, l1bField, noMAFs, &
           & l1bFlag, firstMAF=chunk%firstMafIndex, &
           & lastMAF=chunk%lastMafIndex, neverfail=MissingOK )
@@ -768,6 +790,7 @@ contains ! ============= Public procedures ===================================
           call MLSMessage ( MLSMSG_Error, ModuleName, &
           & "No code to read L1B item " // trim(L1bItemsToRead(l1bItem)%name) )
         end select
+        if ( verbose ) call dump( l1bField%dpField(1,:,:) )
 
         call DeallocateL1BData ( l1bField )
       end do                          ! Loop over l1b quantities
@@ -1500,6 +1523,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.184  2015/09/17 23:21:08  pwagner
+! Turning on verbose(r) prints more now in ConstructMinorFrameQuantity
+!
 ! Revision 2.183  2015/07/29 00:29:54  vsnyder
 ! Convert Phi from pointer to allocatable
 !
