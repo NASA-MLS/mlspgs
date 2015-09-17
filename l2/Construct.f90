@@ -36,14 +36,14 @@ contains ! =====     Public Procedures     =============================
     ! information for the GHz and THz modules.  The software can then
     ! point to these for geolocation information for all minor frame
     ! quantities saving file IO and memory.
-    use CHUNKS_M, only: MLSCHUNK_T
-    use CONSTRUCTQUANTITYTEMPLATES, only: CONSTRUCTMINORFRAMEQUANTITY
+    use chunks_m, only: MLSChunk_t
+    use constructQuantityTemplates, only: constructMinorFrameQuantity
     use highOutput, only: BeVerbose, outputNamedValue
-    use QUANTITYTEMPLATES, only: Dump, QUANTITYTEMPLATE_T
-    use MLSCOMMON, only: MLSFILE_T
-    use MLSSIGNALS_M, only: MODULES
-    use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_ALLOCATE, &
-      & MLSMESSAGE
+    use quantityTemplates, only: Dump, quantityTemplate_t
+    use MLSCommon, only: MLSFile_t
+    use MLSL2Options, only: MLSMessage
+    use MLSSignals_m, only: modules
+    use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Allocate
 
     type (QuantityTemplate_T), dimension(:), pointer :: mifGeolocation
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
@@ -85,42 +85,42 @@ contains ! =====     Public Procedures     =============================
 
   ! This is the `main' subroutine for this module
 
-    use CHUNKS_M, only: MLSCHUNK_T
-    use CONSTRUCTQUANTITYTEMPLATES, only: &
-      & CREATEQTYTEMPLATEFROMMLSCFINFO, FORGEMINORFRAMES
-    use CONSTRUCTVECTORTEMPLATES, only: CREATEVECTEMPLATEFROMMLSCFINFO
-    use DUMPCOMMAND_M, only: BOOLEANFROMANYGOODRADIANCES, &
-      & BOOLEANFROMANYGOODVALUES, &
-      & BOOLEANFROMCATCHWARNING, BOOLEANFROMCOMPARINGQTYS, BOOLEANFROMFORMULA, &
-      & DUMPCOMMAND
-    use FGRID, only: FGRID_T
-    use FORWARDMODELCONFIG, only: ADDFORWARDMODELCONFIGTODATABASE, &
-      & FORWARDMODELCONFIG_T
-    use FORWARDMODELSUPPORT, only: CONSTRUCTFORWARDMODELCONFIG
-    use GRIDDEDDATA, only: GRIDDEDDATA_T
-    use HGRIDSDATABASE, only: ADDHGRIDTODATABASE, HGRID_T
-    use HGRID, only: CREATEHGRIDFROMMLSCFINFO
-    use INIT_TABLES_MODULE, only: S_ANYGOODVALUES, S_ANYGOODRADIANCES, &
-      & S_BOOLEAN, S_CATCHWARNING, S_COMPARE, S_DUMP, &
-      & S_FORGE, S_FORWARDMODEL, S_HGRID, &
-      & S_PHASE, S_QUANTITY, S_REEVALUATE, S_TIME, S_VECTORTEMPLATE
-    use L2GPDATA, only: L2GPDATA_T
-    use MLSCOMMON, only: MLSFILE_T, TAI93_RANGE_T
-    use MLSL2OPTIONS, only: L2CFNODE, NEED_L1BFILES, SPECIALDUMPFILE
-    use MLSL2TIMINGS, only: SECTION_TIMES, TOTAL_TIMES, ADDPHASETOPHASENAMES
-    use MLSMESSAGEMODULE, only: MLSMESSAGERESET
-    use MORETREE, only: Get_Label_And_Spec, GET_SPEC_ID
+    use chunks_m, only: mlschunk_t
+    use constructQuantityTemplates, only: &
+      & createQtyTemplateFromMLSCFInfo, forgeMinorFrames
+    use constructVectorTemplates, only: createVecTemplateFromMLSCFInfo
+    use dumpCommand_m, only: booleanFromanyGoodRadiances, &
+      & booleanFromAnyGoodValues, &
+      & booleanFromCatchWarning, booleanFromComparingQtys, booleanFromFormula, &
+      & dumpCommand
+    use fgrid, only: fgrid_t
+    use forwardModelConfig, only: addForwardModelConfigToDatabase, &
+      & forwardModelConfig_t
+    use forwardModelSupport, only: constructForwardModelConfig
+    use griddedData, only: griddedData_t
+    use HGridsDatabase, only: addHGridToDatabase, HGrid_t
+    use HGrid, only: createHGridFromMLSCFInfo
+    use init_tables_module, only: s_anygoodvalues, s_anygoodradiances, &
+      & s_boolean, s_catchwarning, s_compare, s_dump, &
+      & s_forge, s_forwardmodel, s_hgrid, &
+      & s_phase, s_quantity, s_reevaluate, s_changesettings, s_time, s_vectortemplate
+    use L2GPdata, only: L2GPData_t
+    use MLSCommon, only: MLSFile_t, tai93_range_t
+    use MLSL2Options, only: l2cfnode, need_l1bfiles, specialDumpFile
+    use MLSL2Timings, only: section_times, total_times, addphaseToPhaseNames
+    use MLSMessageModule, only: MLSMessageReset
+    use moretree, only: get_label_and_spec, get_spec_id
     use Next_Tree_Node_m, only: Next_Tree_Node, Next_Tree_Node_State
-    use OUTPUT_M, only: BLANKS, OUTPUT, &
-      & REVERTOUTPUT, SWITCHOUTPUT
-    use QUANTITYTEMPLATES, only: ADDQUANTITYTEMPLATETODATABASE, &
-      & QUANTITYTEMPLATE_T
-    use TIME_M, only: TIME_NOW
-    use TOGGLES, only: GEN, LEVELS, TOGGLE
-    use TRACE_M, only: TRACE_BEGIN, TRACE_END
-    use TREE, only: DECORATE
-    use VECTORSMODULE, only: ADDVECTORTEMPLATETODATABASE, &
-      & VECTOR_T, VECTORTEMPLATE_T
+    use output_m, only: blanks, output, &
+      & revertOutput, switchOutput
+    use quantityTemplates, only: addQuantityTemplateToDatabase, &
+      & quantityTemplate_t
+    use time_m, only: time_now
+    use toggles, only: gen, levels, toggle
+    use trace_m, only: trace_begin, trace_end
+    use tree, only: decorate
+    use vectorsModule, only: addVectorTemplateToDatabase, &
+      & vector_t, vectorTemplate_t
 
     ! Dummy arguments
     integer, intent(in) :: ROOT    ! Root of the tree for the Construct section
@@ -202,6 +202,8 @@ contains ! =====     Public Procedures     =============================
           & processingRange, chunk ) ) )
       case ( s_phase )
         call addPhaseToPhaseNames ( name, key )
+      case ( s_changeSettings )
+        call addPhaseToPhaseNames ( 0, key )
 
       case ( s_quantity )
         call decorate ( key, AddQuantityTemplateToDatabase ( &
@@ -251,13 +253,13 @@ contains ! =====     Public Procedures     =============================
 
   ! DeConstruct the Quantity and Vector template databases.
 
-    use HGRIDSDATABASE, only: DESTROYHGRIDDATABASE, HGRID_T
-    use MLSSTRINGLISTS, only: SWITCHDETAIL
-    use OUTPUT_M, only: OUTPUT
-    use QUANTITYTEMPLATES, only: DESTROYQUANTITYTEMPLATEDATABASE, &
-      & QUANTITYTEMPLATE_T
-    use TOGGLES, only: SWITCHES
-    use VECTORSMODULE, only: DESTROYVECTORTEMPLATEDATABASE, VECTORTEMPLATE_T
+    use HGridsDatabase, only: destroyHGridDatabase, HGrid_t
+    use MLSStringLists, only: switchdetail
+    use output_m, only: output
+    use quantityTemplates, only: destroyQuantityTemplateDatabase, &
+      & quantityTemplate_t
+    use toggles, only: switches
+    use vectorsModule, only: destroyVectorTemplateDatabase, vectorTemplate_t
 
     type (QuantityTemplate_T), dimension(:), pointer :: quantityTemplatesBase
     type (VectorTemplate_T), dimension(:), pointer :: vectorTemplates
@@ -294,6 +296,9 @@ END MODULE Construct
 
 !
 ! $Log$
+! Revision 2.76  2015/09/17 23:15:19  pwagner
+! Added changeSettings command
+!
 ! Revision 2.75  2015/09/03 20:33:43  pwagner
 ! -Sqtmpn for n gt 0 dumps mifGeolocation for each minor fram qty
 !
