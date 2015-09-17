@@ -513,7 +513,7 @@ contains ! =====     Public Procedures     =============================
   ! ------------------------------------------  AssignVectorValue  -----
   subroutine AssignVectorValue ( Z, X )
   ! Turn off assignment for vector quantities
-    use MLSMESSAGEMODULE, only: MLSMSG_CRASH, MLSMESSAGE
+    use MLSMEssageModule, only: MLSMSG_Crash, MLSMessage
     type(VectorValue_T), intent(inout) :: Z
     type(VectorValue_T), intent(in) :: X
     call MLSMessage ( MLSMSG_Crash, moduleName, "Assigning VectorValue_T is a no-no" )
@@ -743,7 +743,7 @@ contains ! =====     Public Procedures     =============================
   ! Check whether a vector quantity has any NaNs in any of its VALUES, returning
   ! TRUE if so.
   ! This doesn't check the quantity templates.
-    use IEEE_ARITHMETIC, only: IEEE_IS_NAN
+    use ieee_arithmetic, only: ieee_is_nan
     type (VectorValue_t), intent(in) :: VectorQuantity
     integer, intent(in) :: Print ! <= 0 => No printing
                                  !  > 0 => Call dump with details = print - 1
@@ -1113,8 +1113,8 @@ contains ! =====     Public Procedures     =============================
     & highBound, lowBound, noValues, where ) &
     & result ( vector )
 
-    use TOGGLES, only: GEN, LEVELS, TOGGLE
-    use TRACE_M, only: TRACE_BEGIN, TRACE_END
+    use toggles, only: gen, levels, toggle
+    use trace_m, only: trace_begin, trace_end
 
   ! This routine creates an empty vector according to a given template
   ! Its mask is not allocated.  Use CreateMask if one is needed.
@@ -1622,8 +1622,8 @@ contains ! =====     Public Procedures     =============================
   contains
     ! - - - - - - - - - - -  OutputNiceSurface
     subroutine OutputNiceSurface ( value, coordinate )
-      use intrinsic, only: L_ANGLE, L_GEODALTITUDE, L_GPH, L_NONE, &
-        & L_PRESSURE, L_THETA, L_ZETA
+      use intrinsic, only: l_angle, l_geodaltitude, l_gph, l_none, &
+        & l_pressure, l_theta, l_zeta
       real(r8), intent(in) :: VALUE
       integer, intent(in) :: COORDINATE
       ! Executable code
@@ -1680,8 +1680,8 @@ contains ! =====     Public Procedures     =============================
   !                   only if bit NOT set at all heights, channels
   !
   subroutine DumpQuantityMask ( VECTORQUANTITY, DETAILS, OPTIONS )
-    use MLSSTRINGLISTS, only: EXPANDSTRINGRANGE, OPTIONDETAIL
-    use MLSSTRINGS, only: READNUMSFROMCHARS
+    use MLSStringLists, only: expandStringRange, optionDetail
+    use MLSStrings, only: readNumsFromChars
     type (VectorValue_T), intent(in)       :: VectorQuantity
     integer, intent(in), optional          :: DETAILS ! if < 0 just dump summary
     character(len=*), optional, intent(in) :: options
@@ -1865,7 +1865,7 @@ contains ! =====     Public Procedures     =============================
     & COHERENT, STACKED, REGULAR, MINORFRAME, MAJORFRAME, &
     & THENDITCHAFTERDUMP, CLEAN )
 
-    use Lexer_Core, only: PRINT_SOURCE
+    use Lexer_Core, only: print_source
 
     ! dump quantities in vector according to whether they match
     ! all of the optional args: name, ..,majorframe
@@ -2252,7 +2252,7 @@ contains ! =====     Public Procedures     =============================
 
   ! ---------------------------------------  Dump_Vector_Template  -----
   subroutine Dump_Vector_Template ( VECTOR_TEMPLATE, DETAILS, QUANTITIES )
-    use QuantityTemplates, only: DUMP
+    use QuantityTemplates, only: dump
     type(VectorTemplate_T), intent(in) :: VECTOR_TEMPLATE
     integer, intent(in), optional :: DETAILS ! <= 0 => Don't dump arrays
                                              ! > 0  => Do dump arrays
@@ -2466,6 +2466,9 @@ contains ! =====     Public Procedures     =============================
     if ( myIndexInVector /= 0 ) &
       & GetVectorQtyByTemplateIndex => &
       &   vector%quantities(myIndexInVector)
+    if ( myIndexInVector > size(vector%quantities) ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'index returned by FindFirst too big' )
     if ( present ( indexInVector ) ) indexInVector = myIndexInVector
   end function GetVectorQtyByTemplateIndex
 
@@ -2508,7 +2511,7 @@ contains ! =====     Public Procedures     =============================
 
   function GetVectorQuantityIndexByName_char ( VECTOR, QUANTITYNAME, &
     & NOERR ) result( index )
-    use MLSSTRINGS, only: LOWERCASE
+    use MLSStrings, only: lowercase
 
   ! Given a quantity name, this function returns the index
   ! of the quantity within the vector matching that name.
@@ -2554,8 +2557,8 @@ contains ! =====     Public Procedures     =============================
   ! specified type, as well as the specified molecule and/or radiometer
   ! index, is returned.
 
-    use MLSSignals_m, only: GETRADIOMETERNAME
-    use MOLECULES, only: ISEXTINCTION
+    use MLSSignals_m, only: getRadiometerName
+    use molecules, only: isExtinction
 
     ! Dummy arguments
     type (Vector_T), intent(in) :: VECTOR
@@ -2891,7 +2894,7 @@ contains ! =====     Public Procedures     =============================
 
   ! --------------------------------------------  RemapVectorMask  -----
   subroutine RemapVectorMask ( Value )
-    use Pointer_Rank_Remapping, only: REMAP
+    use Pointer_Rank_Remapping, only: remap
     type ( vectorValue_t ) :: Value
     call remap ( value%mask1, value%mask, &
       & (/ value%template%noChans *     &
@@ -2912,7 +2915,7 @@ contains ! =====     Public Procedures     =============================
 
   ! -------------------------------------------  RemapVectorValue  -----
   subroutine RemapVectorValue ( Value )
-    use Pointer_Rank_Remapping, only: REMAP
+    use Pointer_Rank_Remapping, only: remap
     type ( vectorValue_t ) :: Value
     call remap ( value%value1, value%values, &
       & (/ value%template%noChans *     &
@@ -3439,6 +3442,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.201  2015/07/14 23:20:47  pwagner
+! Prevent more crashes due to get_string
+!
 ! Revision 2.200  2015/06/19 00:35:49  pwagner
 ! Setup quick changes to print when destroying vectors
 !
