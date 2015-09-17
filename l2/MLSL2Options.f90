@@ -66,7 +66,7 @@ module MLSL2Options              !  Options and Settings for the MLSL2 program
   ! id to print out in response to "--version" command-line option    
   integer, parameter                        :: versIDLen = 32
   character(LEN=versIDLen), dimension(2)    :: current_version_id = (/ &
-    & 'v4.20 swdev team               ' , & 
+    & 'v4.23 swdev team               ' , & 
     & 'See license terms for copyright'/)
   character(LEN=32)    :: uniqueID                    = ' '
      
@@ -173,6 +173,7 @@ module MLSL2Options              !  Options and Settings for the MLSL2 program
   integer :: L2CFNODE        = 0        ! Line #, Col # of L2CF being executed
   integer :: NUMSWITCHES
   integer :: RECL            = 20000    ! Record length for l2cf (but see --recl opt)
+  integer :: MaxChunkSize    = 21     ! Max chunk size for l2gp DirectWrites
   character(len=128) :: SECTIONSTOSKIP = ''
   logical :: SECTIONTIMES    = .false.  ! Show times in each section
   logical :: TOTALTIMES      = .false.  ! Show total times from start
@@ -1301,6 +1302,9 @@ end module MLSL2Options
 
 !
 ! $Log$
+! Revision 2.103  2015/09/17 23:22:46  pwagner
+! Now give default value to MaxChunkSize for l2gp DirectWrites
+!
 ! Revision 2.102  2015/07/16 20:51:08  pwagner
 ! Should quit if cant open optsFile
 !
