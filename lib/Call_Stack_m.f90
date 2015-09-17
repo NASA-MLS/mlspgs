@@ -79,7 +79,7 @@ contains ! ====     Public Procedures     ==============================
     use Output_m, only: Output
     use HighOutput, only: DumpSize
     use String_Table, only: Display_String
-    use Tree, only: Where_At=>Where
+    use Tree, only: Node_in_tree, Where_At=>Where
 
     logical, intent(in), optional :: Top   ! Dump only the top frame
     character(len=*), intent(in), optional :: Before ! first thing output
@@ -164,9 +164,11 @@ contains ! ====     Public Procedures     ==============================
       if ( present(stringIndex) ) then
         if ( stringIndex > 0 ) call display_string ( stringIndex, before=' ' )
       end if
-      if ( myWhere .and. stack(depth)%tree > 0 ) then
+      if ( myWhere .and. node_in_tree(stack(depth)%tree) ) then
         call output ( stack(depth)%tree, before=', tree at ' )
         call print_source ( where_at(stack(depth)%tree), before=', ' )
+      elseif ( myWhere ) then
+        call output (' (tree reference outside range) ' )
       end if
       if ( mySysSize ) call output ( sys_memory_convert*stack(depth)%sys_memory, &
         & before = ' Sys_Memory (' // sys_memory_ch // '): ' )
@@ -468,6 +470,9 @@ contains ! ====     Public Procedures     ==============================
 end module Call_Stack_m
 
 ! $Log$
+! Revision 2.30  2015/09/17 22:48:50  pwagner
+! Will now catch error where tree ref outside bounds
+!
 ! Revision 2.29  2015/08/25 18:37:38  vsnyder
 ! Call FlushOutputLines at the end of PopStack
 !
