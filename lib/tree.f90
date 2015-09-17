@@ -11,16 +11,16 @@
 
 module TREE
 
-  use ERROR_HANDLER, only: COMPILER, ERROR_INTRO
-  use MACHINE, only: IO_ERROR
-  use PRINTIT_M, only: PRINTITOUT, MLSMSG_ERROR
-  use OUTPUT_M, only: NEWLINE, OUTPUT
-  use STRING_TABLE, only: DISPLAY_STRING, GET_STRING, LOOKUP_AND_INSERT
-  use SYMBOL_TABLE, only: SET_SYMBOL, SYMBOL
-  use SYMBOL_TYPES, only: TREENODE
-  use TOGGLES, only: CON, TOGGLE
-  use TREE_TYPES, only: FIRST_TREE_NODE, LAST_TREE_NODE, N_NULL, TREE_INIT, &
-    & TREE_MAP
+  use error_handler, only: compiler, error_intro
+  use machine, only: io_error
+  use printIt_m, only: printItOut, MLSMSG_Error
+  use output_m, only: newline, output
+  use string_table, only: display_string, get_string, lookup_and_insert
+  use symbol_table, only: set_symbol, symbol
+  use symbol_types, only: treeNode
+  use toggles, only: con, toggle
+  use tree_types, only: first_tree_node, last_tree_node, n_null, tree_init, &
+    & tree_map
   implicit NONE
   private
 
@@ -28,7 +28,7 @@ module TREE
   public :: DEALLOCATE_TREE, DECORATE, DECORATION, DECORATION_TX_TX, DELETE_TREE
   public :: DELETE_TREE_STACK, DUMP_STACK, DUMP_TOP_STACK, DUMP_TOP_STACK_NAME
   public :: DUMP_TREE_NODE, DUMP_TREE_NODE_NAME, GET_TREE_NODE_NAME, INIT_TREE
-  public :: INSERT_NODE, NODE_ID, NODE_KIND, NSONS, POP, PRINT_SUBTREE
+  public :: INSERT_NODE, NODE_ID, NODE_IN_TREE, NODE_KIND, NSONS, POP, PRINT_SUBTREE
   public :: PUSH_PSEUDO_TERMINAL, REPLACE_SONS, SOURCE_REF, STACK_FILE
   public :: STACK_SOURCE_REF,STACK_SUB_ROSA, STACK_SUBTREE, STACK_SUBTREE_TX
   public :: SUB_ROSA, SUBTREE, THE_FILE, TREE_NODE_NAME,TREE_TEXT, TX, WHERE
@@ -583,6 +583,13 @@ contains
     node_id = the_tree(where%i) % node
   end function NODE_ID_TX
 
+  function Node_in_tree ( Tree ) result ( inside )
+  ! Return TRUE if the node num is a valid index into the tree array
+    integer, intent(in) :: Tree ! Tree node index tested
+    logical :: inside
+    inside = ( Tree >= lbound(the_tree, 1) .and. Tree <= ubound(the_tree, 1) )
+  end function Node_in_tree
+
   pure integer function NODE_KIND_I ( WHERE ) result ( Node_Kind )
   ! Return the kind of the tree node at WHERE
     integer, intent(in) :: WHERE
@@ -1040,6 +1047,9 @@ contains
 end module TREE
 
 ! $Log$
+! Revision 2.32  2015/09/17 22:47:29  pwagner
+! Added Node_in_tree
+!
 ! Revision 2.31  2014/05/30 02:43:38  vsnyder
 ! Improve no_more_sons error message
 !
