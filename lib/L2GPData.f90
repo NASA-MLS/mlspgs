@@ -180,7 +180,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
 
   ! TRUE means we can avoid using unlimited dimension and its time penalty
   logical, public            :: AVOIDUNLIMITEDDIMS         = .true.
-  logical, public            :: MUSTGUARDAGIANSTHDFEOSBUG  = .true.
+  logical, public            :: MUSTGUARDAGIANSTHDFEOSBUG  = .false.
   logical, public            :: WRITEMASTERSFILEATTRIBUTES = .true.
 
   integer, parameter :: CHARATTRLEN = 255   ! was GA_VALUE_LENGTH
@@ -505,8 +505,10 @@ contains ! =====     Public Procedures     =============================
 
     if ( timing ) call sayTime( 'Checking that swath exists', tFile )
     tFile = t2
-    if ( swath_exists .and. MUSTGUARDAGIANSTHDFEOSBUG ) then
-      if(DEEBUG) print *, 'OK, swath already exists'
+    if ( swath_exists .and. &
+      & ( MUSTGUARDAGIANSTHDFEOSBUG .or. .not. present(maxChunkSize) ) &
+      & ) then
+      if(DEEBUG) print *, 'Swath already exists--guarding against hdfeos bug'
       ! We must guard against a bug in HDF-EOS that prevents appending more
       ! profiles to a swath than already exist
       call ReadL2GPData( L2GPFile, myswathName, totall2gp, numProfs, &
@@ -520,6 +522,8 @@ contains ! =====     Public Procedures     =============================
         if(DEEBUG) call outputNamedValue( 'expanded', totall2gp%nTimes )
         call ExpandL2GPDataInFile( L2GPFile, myswathName, totall2gp )
         if(DEEBUG) call outputNamedValue( 'AppendL2GPData expanded', totall2gp%nTimes )
+      elseif(DEEBUG) then
+         print *, 'Swath already has enough profiles'
       endif
       call DestroyL2GPContents ( totall2gp )
       if ( timing ) call sayTime( 'Guarding against HDFEOS error', tFile )
@@ -5327,6 +5331,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.216  2015/09/03 20:26:59  pwagner
+! verbose shows timings in AppendL2GPData
+!
 ! Revision 2.215  2015/08/29 00:42:00  vsnyder
 ! Don't copy undefined data, even if it won't be used
 !
