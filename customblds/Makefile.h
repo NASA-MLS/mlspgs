@@ -440,8 +440,23 @@ wvs-095.dvi: wvs-095.tex wvs-095-eta.eps
 wvs-095.pdf: wvs-095.tex wvs-095-eta.pdf
 #	pdflatex wvs-095
 #	pdflatex wvs-095
+
+wvs-126.dvi: wvs-126.tex wvs-126-1.eps
+
+wvs-126.pdf: wvs-126.tex wvs-126-1.pdf
+
+wvs-126-1.eps: wvs-126-1.obj
+	tgif -print -eps -page 1 -color wvs-126-1.obj
+
+wvs-126-1.pdf: wvs-126-1.obj
+	tgif -print -pdf -page 1 -color wvs-126-1.obj
+
 endif # end shortn_name == doc
 # $Log$
+# Revision 1.17  2015/04/23 17:51:38  whdaffer
+# Added some comments to make the conditional includes a little easier
+# to understand
+#
 # Revision 1.16  2014/06/16 20:27:21  pwagner
 # Fixed bug in building lr
 #
