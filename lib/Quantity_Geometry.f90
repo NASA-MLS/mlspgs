@@ -34,7 +34,7 @@ module Quantity_Geometry
 
 contains
 
-  function XYZ_ECR_1 ( Qty, Surf, Inst, Height ) result ( XYZ )
+  function XYZ_ECR_1 ( Qty, Surf, Inst, Height, Cross ) result ( XYZ )
     ! Get Cartesian ECR coordinates, in meters, for one surface and instance.
 
     use Constants, only: Rad2Deg
@@ -47,11 +47,16 @@ contains
     type(quantityTemplate_t), intent(in) :: Qty
     integer, intent(in) :: Surf, Inst
     real(rt), intent(in), optional :: Height ! Geodetic meters, used iff zeta
+    integer, intent(in), optional :: Cross
     real(rt) :: XYZ(3)
 
+    integer :: C
     integer :: InstOr1
     real(rt) :: Lat
     integer :: SurfOr1
+
+    c = 1
+    if ( present(cross) ) c = cross
 
     instOr1 = merge ( 1, inst, qty%coherent )
     surfOr1 = merge ( 1, surf, qty%stacked )
@@ -59,21 +64,21 @@ contains
     select case ( qty%verticalCoordinate )
     case ( l_geocAltitude )
       if ( qty%latitudeCoordinate == l_geodetic ) then
-        lat = geodToGeocLat(qty%geodLat(surfOr1,inst))*rad2deg
+        lat = geodToGeocLat(qty%geodLat3(surfOr1,inst,c))*rad2deg
       else
-        lat = qty%geodLat(surfOr1,inst)
+        lat = qty%geodLat3(surfOr1,inst,c)
       end if
       ! Get a unit vector in the right direction
-      xyz = to_xyz ( lat, qty%lon(surfOr1,inst) )
+      xyz = to_xyz ( lat, qty%lon3(surfOr1,inst,c) )
       ! Extend it to the correct altitude
       xyz = xyz * qty%surfs(surf,instOr1)
     case ( l_geodAltitude )
       if ( qty%latitudeCoordinate == l_geocentric ) then
-        lat = geocToGeodLat(qty%geodLat(surfOr1,inst))
+        lat = geocToGeodLat(qty%geodLat3(surfOr1,inst,c))
       else
-        lat = qty%geodLat(surfOr1,inst)
+        lat = qty%geodLat3(surfOr1,inst,c)
       end if
-      call to_cart ( [ lat, qty%lon(surfOr1,inst), &
+      call to_cart ( [ lat, qty%lon3(surfOr1,inst,c), &
                    &   qty%surfs(surf,instOr1)/1000.0 ], xyz, km=.true. )
       xyz = xyz * 1000.0_rt ! Convert km to m
     case ( l_zeta )
@@ -81,11 +86,11 @@ contains
         & call MLSMessage ( MLSMSG_Error, moduleName, &
           & 'Vertical coordinate is zeta but height is not provided' )
       if ( qty%latitudeCoordinate == l_geocentric ) then
-        lat = geocToGeodLat(qty%geodLat(surfOr1,inst))
+        lat = geocToGeodLat(qty%geodLat3(surfOr1,inst,c))
       else
-        lat = qty%geodLat(surfOr1,inst)
+        lat = qty%geodLat3(surfOr1,inst,c)
       end if
-      call to_cart ( [ lat, qty%lon(surfOr1,inst), &
+      call to_cart ( [ lat, qty%lon3(surfOr1,inst,c), &
                    &   height/1000.0 ], xyz, km=.true. )
     case default
       call MLSMessage ( MLSMSG_Error, moduleName, &
@@ -94,10 +99,10 @@ contains
 
   end function XYZ_ECR_1
 
-  function XYZ_ECR_All ( Qty, Heights  ) result ( XYZ)
+  function XYZ_ECR_All ( Qty, Heights, Cross  ) result ( XYZ)
     ! Get Cartesian ECR coordinates, in meters, for all surfaces and instances.
 
-    use Allocate_Deallocate, only: Test_Allocate
+    use Allocate_Deallocate, only: Allocate_Test
     use Constants, only: Rad2Deg
     use Geometry, only: GeocToGeodLat, GeodToGeocLat, To_Cart, To_XYZ
     use Intrinsic, only: L_Geocentric, L_GeocAltitude, L_Geodetic, &
@@ -108,17 +113,17 @@ contains
     type(quantityTemplate_t), intent(in) :: Qty
     real(rt), allocatable :: XYZ(:,:,:) ! 3 x noSurfs x noInstances
     real(rt), intent(in), optional :: Heights(:,:) ! Geodetic meters, used iff zeta
+    integer, intent(in), optional :: Cross
 
+    integer :: C
     integer :: Inst, InstOr1
     real(rt) :: Lat
     integer :: Surf, SurfOr1
-    integer :: Stat
 
-    instOr1 = size(qty%surfs,2)    ! merge ( 1, qty%noInstances, qty%coherent )
-    surfOr1 = size(qty%geodLat,1)  ! merge ( 1, qty%noSurfs, qty%stacked )
+    c = 1
+    if ( present(cross) ) c = cross
 
-    allocate ( xyz(3,qty%noSurfs, qty%noInstances), stat=stat )
-    call test_allocate ( stat, moduleName, 'XYZ' )
+    call allocate_test ( xyz, 3, qty%noSurfs, qty%noInstances, moduleName, 'XYZ' )
 
     select case ( qty%verticalCoordinate )
     case ( l_geocAltitude )
@@ -127,12 +132,12 @@ contains
         do surf = 1, qty%noSurfs
           surfOr1 = merge ( 1, surf, qty%stacked )
           if ( qty%latitudeCoordinate == l_geodetic ) then
-            lat = geodToGeocLat(qty%geodLat(surfOr1,inst))*rad2deg
+            lat = geodToGeocLat(qty%geodLat3(surfOr1,inst,c))*rad2deg
           else
-            lat = qty%geodLat(surfOr1,inst)
+            lat = qty%geodLat3(surfOr1,inst,c)
           end if
           ! Get a unit vector in the right direction
-          xyz(:,surf,inst) = to_xyz ( lat, qty%lon(surfOr1,inst) )
+          xyz(:,surf,inst) = to_xyz ( lat, qty%lon3(surfOr1,inst,c) )
           ! Extend it to the correct altitude
           xyz(:,surf,inst) = xyz(:,surf,inst) * qty%surfs(surf,instOr1)
         end do
@@ -143,11 +148,11 @@ contains
         do surf = 1, qty%noSurfs
           surfOr1 = merge ( 1, surf, qty%stacked )
           if ( qty%latitudeCoordinate == l_geocentric ) then
-            lat = geocToGeodLat(qty%geodLat(surfOr1,inst))
+            lat = geocToGeodLat(qty%geodLat3(surfOr1,inst,c))
           else
-            lat = qty%geodLat(surfOr1,inst)
+            lat = qty%geodLat3(surfOr1,inst,c)
           end if
-          call to_cart ( [ lat, qty%lon(surfOr1,inst), &
+          call to_cart ( [ lat, qty%lon3(surfOr1,inst,c), &
                        &   qty%surfs(surf,instOr1)/1000.0 ], &
                        & xyz(:,surf,inst), km=.true. )
           xyz(:,surf,inst) = xyz(:,surf,inst) * 1000.0_rt ! Convert km to m
@@ -162,11 +167,11 @@ contains
         do surf = 1, qty%noSurfs
           surfOr1 = merge ( 1, surf, qty%stacked )
           if ( qty%latitudeCoordinate == l_geocentric ) then
-            lat = geocToGeodLat(qty%geodLat(surfOr1,inst))
+            lat = geocToGeodLat(qty%geodLat3(surfOr1,inst,c))
           else
-            lat = qty%geodLat(surfOr1,inst)
+            lat = qty%geodLat3(surfOr1,inst,c)
           end if
-          call to_cart ( [ lat, qty%lon(surfOr1,inst), &
+          call to_cart ( [ lat, qty%lon3(surfOr1,inst,c), &
                        &   heights(surf,instOr1)/1000.0 ], &
                        & xyz(:,surf,inst), km=.true. )
           xyz(:,surf,inst) = xyz(:,surf,inst) * 1000.0_rt ! Convert km to m
@@ -192,6 +197,9 @@ contains
 end module Quantity_Geometry
 
 ! $Log$
+! Revision 2.4  2015/09/22 23:13:19  vsnyder
+! Add a cross-track coordinate index
+!
 ! Revision 2.3  2015/04/30 02:55:35  vsnyder
 ! Allow geocentric altitude/latitude to coexist with geodetic latitude/altitude
 !
