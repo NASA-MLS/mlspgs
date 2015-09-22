@@ -87,6 +87,7 @@ GHz
 gm3              # gm / meter^3
 gph
 gph_precision
+GHzAzim
 
 hdf
 hdfeos
@@ -192,6 +193,7 @@ s
 scanResidual
 scatteringAngle # for TScat calculations
 scECI
+scECR
 scGeocAlt
 scVelECI
 scVelECR
@@ -241,6 +243,9 @@ zonalavg
 temperature
 
 # $Log$
+# Revision 2.68  2015/09/22 01:55:58  vsnyder
+# Add GHzAzim, ScECR
+#
 # Revision 2.67  2015/03/28 00:55:37  vsnyder
 # Remove azimuth
 #
