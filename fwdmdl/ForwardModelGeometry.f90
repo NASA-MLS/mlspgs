@@ -37,17 +37,17 @@ module ForwardModelGeometry
 contains ! ============= Public Procedures ==========================
 
   subroutine Compute_Viewing_Plane ( Qty, ScVelECR, TpGeocAlt, GPHQuantity, &
-                                   & XYZs )
+                                   & XYZs, Regular, ReferenceMIF )
 
   ! Compute Geocentric (!) latitude, longitude, and height for Qty.
 
   ! We assume that the quantity types and the units of their values have been
-  ! checked, that the relationship between the magnetic field's vertical
-  ! coordinate and the existence of the other quantities has been checked, that
-  ! ScVelECR and TpGeocAlt are either both present or both absent, and that the
-  ! relationship between the existence, number, and values of cross-angles and
-  ! the existence of the other quantities has been checked.  See
-  ! UsingMagneticModel in FillUtils_1.
+  ! checked, that the relationship between the Qty's vertical coordinate and
+  ! the existence of the other quantities has been checked, that ScVelECR and
+  ! TpGeocAlt are either both present or both absent, and that the relationship
+  ! between the existence, number, and values of cross-angles and the existence
+  ! of the other quantities has been checked.  See UsingMagneticModel in
+  ! FillUtils_1.
 
     use Allocate_Deallocate, only: Allocate_Test
     use Constants, only: Deg2Rad, Rad2Deg
@@ -78,6 +78,8 @@ contains ! ============= Public Procedures ==========================
     real(rt), intent(out) :: XYZs(:,:,:,:)      ! Geocentric Cartesian coordinates
                                                 ! of Qty%Value4.
                                                 ! 3 X surfs X instances X cross
+    logical, intent(in), optional :: Regular    ! coherent and stacked
+    integer, intent(in), optional :: ReferenceMIF
 
     logical :: Across                     ! Viewing across the orbit track
     real(rt), allocatable :: Alt(:)       ! Geocentric altitude on LOS
@@ -92,21 +94,27 @@ contains ! ============= Public Procedures ==========================
     integer :: InstOr1                    ! Second subscript for surfs
     integer :: Me = -1                    ! String index, for tracing
     integer :: MIF                        ! MIF index
+    logical :: MyRegular                  ! Coherent and stacked
     real(rt) :: N(3)                      ! Normal to SC-TP plane
     integer :: P                          ! Index in crossAngles at which to
                                           ! compute phi -- the one with the
                                           ! smallest absolute value.
+    real(rt), allocatable :: In_Phi(:,:)  ! from qty%template%phi
     real(rt), allocatable :: R(:,:)       ! TP rotated in TP-SC plane
-    integer :: S                          ! Surface index in magnetic field
+    integer :: S                          ! Surface index in Qty
     real(rt) :: SC_XYZ(3)                 ! Spacecraft position
     real(rt) :: Sec_x                     ! Secant of cross-track angle
     integer, allocatable :: Seq(:)        ! Increasing or decreasing
                                           ! sequence indices, => Inc or Dec
     integer :: SurfOr1                    ! First subscript for Lat, Lon
     real(rt) :: TP_XYZ(3)                 ! Tangent point position
+    real(rt) :: V(3)                      ! ECR Geolocation
 
     call trace_begin ( me, 'Compute_Viewing_Plane', &
       & cond=toggle(emit) .and. levels(emit) > 1 ) ! set by -f command-line switch
+
+    myRegular = .false.
+    if ( present(regular) ) myRegular = regular
 
     across = any(qty%template%crossAngles /= 0.0)
     if ( across .and. present(tpGeocAlt) ) &
@@ -115,15 +123,13 @@ contains ! ============= Public Procedures ==========================
     detail = switchDetail ( switches, 'plane' )
 
     if ( qty%template%verticalCoordinate == l_zeta ) then
-      ! Get the geodetic altitude corresponding to each zeta in the
-      ! magnetic field quantity.
-      ! Hopefully, we got here from FillUtils_1%UsingMagneticModel, where
-      ! it is verified that if the magnetic field's vertical coordinate
-      ! is zeta, then GphQuantity is provided, and that GphQuantity has
-      ! the same number of instances, at the same geolocations, as the
-      ! magnetic field quantity.
+      ! Get the geodetic altitude corresponding to each zeta in Qty.
+      ! Hopefully, we got here from FillUtils_1%UsingMagneticModel, where it
+      ! is verified that if Qty's vertical coordinate is zeta, that
+      ! GphQuantity is provided, and that GphQuantity has the same number of
+      ! instances, at the same geolocations, as Qty.
       call height_from_zeta ( qty, gphQuantity, heights )
-    else ! the geocentric or geodetic heights are in the magnetic field quantity
+    else ! the geocentric or geodetic heights are in Qty
       ! Eventually, this explicit allocation will not be necessary.
       ! As of 2015-04-22, ifort 15.0.2.164 requires a command-line option to
       ! make the standard-conforming automatic allocation work.
@@ -147,18 +153,22 @@ contains ! ============= Public Procedures ==========================
       end if
     end if
 
-    if ( detail > 2 ) call dump ( heights, name='Heights' )
+    if ( detail > 3 ) then
+      call dump ( heights, name='Heights' )
+      if ( detail > 4 ) call dump ( qty%template, details=detail, &
+        & what='Early in Compute_Viewing_Plane' )
+    end if
 
-    if ( present(tpGeocAlt) ) then
-      ! Make the magnetic field quantity incoherent and unstacked.
+    if ( present(tpGeocAlt) .and. .not. myRegular ) then
+      ! Make Qty incoherent and unstacked.
       ! Re-create the latitude and longitude arrays and re-compute their values.
       qty%template%coherent = .false.
       qty%template%stacked = .false.
       call createGeolocationFields ( qty%template, qty%template%noSurfs, 'MagneticField' )
 
-      ! Re-allocate phi to (noSurfs, noInstances).  If the magnetic field
-      ! quantity was originally coherent, it was (noSurfs,1).  If it was
-      ! stacked and coherent, it was (1,1).
+      ! Re-allocate phi to (noSurfs, noInstances).  If Qty was originally
+      ! coherent, it was (noSurfs,1).  If it was stacked and coherent, it was
+      ! (1,1).
       call allocate_test ( qty%template%phi, qty%template%noSurfs, &
         & qty%template%noInstances, moduleName, 'Phi' )
 
@@ -248,17 +258,67 @@ contains ! ============= Public Procedures ==========================
             call qty%template%putLon3 ( s, inst, c, &
               & atan2(xyzs(2,s,instOr1,c),xyzs(1,s,instOr1,c)) * rad2deg )
           end do
-          if ( detail > 2 ) then
+          if ( detail > 3 ) then
             call output ( c, before='R(' )
             call dump ( r(:,seq), name=')' )
           end if
         end do ! c = 1, qty%template%noCrossTrack
         deallocate ( seq )
       end do ! inst = 1, qty%template%NoInstances
-    else ! Use the geolocations already in the magnetic field quantity.
+    else if ( present(tpGeocAlt) .and. myRegular ) then
+      ! Create a 3D stacked and coherent (i.e., regular rectangular) grid.
+      ! It's then easy to compute XYZ from the geolocations in Qty's template.
+      call destroyGeolocationFields ( qty%template )
+      qty%template%stacked = .true.
+      qty%template%coherent = .true.
+      if ( .not. across ) then
+        ! Viewing plane is the orbit plane.  Assume no cross angles.
+        call pointQuantityToHGrid ( qty%template )
+        xyzs(:,:,:,1) = xyz(qty%template, heights)
+      else
+        call allocate_test ( in_phi, 1, qty%template%noInstances, &
+          & moduleName, 'In_Phi' )
+        in_phi = qty%template%phi
+        call createGeolocationFields ( qty%template, 1, 'Qty', Phi=.true. )
+        MIF = tpGeocAlt%template%noSurfs / 2
+        if ( present(referenceMIF) ) MIF = referenceMIF
+        do inst = 1, qty%template%NoInstances
+          ! Compute the normal to the plane defined by tpGeocAlt and scVelECR
+          ! at MIF
+          sc_xyz = to_xyz ( geodToGeocLat(ScVelECR%template%geodLat(MIF,inst))*rad2Deg, &
+                          & ScVelECR%template%lon(MIF,inst) )
+          tp_xyz = to_xyz ( geodToGeocLat(tpGeocAlt%template%geodLat(MIF,inst))*rad2Deg, &
+                          & tpGeocAlt%template%lon(MIF,inst) )
+          tp_xyz = tp_xyz / norm2(tp_xyz)
+          ! Compute unit normal to SC-TP plane.  The ECR coordinate of one node is
+          ! is (n(2), -n(1), 0).  Use that node as the zero for phi.
+          n = cross ( sc_xyz, tp_xyz, norm=.true. )
+          do c = 1, qty%template%noCrossTrack
+            ! Compute geolocations and a coordinate in the viewing plane that
+            ! is an angle at the center of the earth between the above-computed
+            ! node and the tangent point position, rotated in the plane
+            ! containing the tangent point and spacecraft at the reference MIF.
+            call rotate_3d ( tp_xyz, qty%template%crossAngles(c) * deg2rad, n, v )
+            call qty%template%putLat3 ( 1, inst, c, asin(v(3)) * rad2deg )
+            call qty%template%putLon3 ( 1, inst, c, atan2(v(2),v(1)) * rad2deg )
+!             Don't do this!  It measures phi along the great circle containing
+!             the tangent point and spacecraft, from one of its equator crossings,
+!             but the forward model wants phi to come from the hGrid.
+!             call qty%template%putPhi3 ( 1, inst, c, &
+!               & acos(dot_product(v(1:2),[n(2),-n(1)])) * rad2deg )
+            call qty%template%putPhi3 ( 1, inst, c, &
+              & in_phi(1,inst) + qty%template%crossAngles(c) ) 
+            do s = 1, size(heights,1)
+              xyzs(:,s,inst,c) = xyz(qty%template, s, inst, heights(s,inst),c )
+            end do
+          end do ! c = 1, qty%template%noCrossTrack
+        end do ! inst = 1, qty%template%NoInstances
+      end if
+      ! Use the geolocations in Qty. 
+    else ! Use the geolocations already in Qty.
       ! Since we have no TpGeocAlt and presumably no ScVelECR, the viewing
       ! plane must be the orbit plane.  It's easy to compute XYZ from the
-      ! geolocations in the magnetic field quantity template.
+      ! geolocations in Qty.
       call destroyGeolocationFields ( qty%template )
       qty%template%stacked = .true.
       qty%template%coherent = .true.
@@ -266,7 +326,7 @@ contains ! ============= Public Procedures ==========================
       xyzs(:,:,:,1) = xyz(qty%template, heights)
     end if
 
-    if ( detail > 2 ) call dump ( xyzs, name='XYZs' )
+    if ( detail > 1 ) call dump ( xyzs, name='XYZs' )
 
     if ( detail > -1 ) call dump ( qty%template, details=detail, &
       & what='In Compute_Viewing_Plane' )
@@ -370,9 +430,12 @@ contains ! ============= Public Procedures ==========================
     use Constants, only: Rad2Deg
     use Cross_m, only: Cross
     use Geometry, only: GeodToGeocLat, To_XYZ
+    use MLSStringLists, only: SwitchDetail
+    use Output_m, only: Output
     use QuantityTemplates, only: RT
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
     use MoreMessage, only: MLSMessage
+    use Toggles, only: Switches
     use VectorsModule, only: VectorValue_t
 
     type(vectorValue_t), intent(in) :: TpGeocAlt   ! Tangent point, for geolocation
@@ -412,7 +475,7 @@ contains ! ============= Public Procedures ==========================
       call MLSMessage ( MLSMSG_Warning, moduleName, &
         & "Zero used for viewing azimuth.  Hope that's OK." )
       viewing_azimuth_rad = 0.0
-      return
+      go to 9
     end if
     ! sc_xyz is already a unit vector.
     scVel_XYZ = scVel_XYZ / n2
@@ -426,6 +489,11 @@ contains ! ============= Public Procedures ==========================
 
     ! Compute the angle (Radians!) between the planes' normals
     viewing_azimuth_rad = acos(abs(dot_product(sc_n,tp_n)))
+
+9   continue
+    if ( switchDetail(switches,'Azimuth') > -1 ) &
+      & call output ( rad2deg*viewing_azimuth_rad, before='Azimuth ', &
+        & after=' degrees', advance='yes' )
 
   end function Viewing_Azimuth_Qty
 
@@ -475,6 +543,9 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelGeometry
 
 ! $Log$
+! Revision 2.9  2015/09/22 23:22:20  vsnyder
+! Add a reference MIF index; add option to require stacked and coherent
+!
 ! Revision 2.8  2015/08/25 18:40:45  vsnyder
 ! Check MIF and MAF range.  Use 0.5 instead of 1.0 as threshold for unfilled
 ! scVelECR position or value.  The position is calculated from lat and lon
