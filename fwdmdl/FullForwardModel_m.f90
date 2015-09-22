@@ -42,28 +42,30 @@ contains
   ! This gets a little bit of data and then computes the sizes for quantities
   ! in the full forward model proper, FullForwardModelAuto.
 
-    use ALLOCATE_DEALLOCATE, only: DEALLOCATE_TEST
-    use COMPUTE_Z_PSIG_M, only: COMPUTE_Z_PSIG
-    use FORWARDMODELCONFIG, only: DUMP, FORWARDMODELCONFIG_T
+    use Allocate_Deallocate, only: Deallocate_Test
+    use Compute_Z_PSIG_M, only: Compute_Z_PSIG
+    use Constants, only: Rad2Deg
+    use ForwardModelConfig, only: Dump, ForwardModelConfig_T
     use ForwardModelGeometry, only: Azimuth_Tol, Viewing_Azimuth
-    use FORWARDMODELINTERMEDIATE, only: FORWARDMODELSTATUS_T
-    use FORWARDMODELVECTORTOOLS, only: GETQUANTITYFORFORWARDMODEL
-    use GET_SPECIES_DATA_M, only:  GET_SPECIES_DATA
-    use HESSIANMODULE_1, only: HESSIAN_T
-    use INTRINSIC, only: LIT_INDICES, L_MAGNETICFIELD, &
-      & L_PHITAN, L_PTAN, L_TEMPERATURE, L_TSCAT, L_VMR
-    use LOAD_SPS_DATA_M, only: DESTROYGRIDS_T, DUMP, EMPTYGRIDS_T, GRIDS_T, &
-      & LOAD_ONE_ITEM_GRID, LOAD_SPS_DATA
-    use MATRIXMODULE_1, only: MATRIX_T
-    use MLSKINDS, only: RP
-    use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_WARNING
-    use MLSSTRINGLISTS, only: SWITCHDETAIL
-    use MOLECULES, only: L_CLOUDICE
-    use MOREMESSAGE, only: MLSMESSAGE
+    use ForwardModelIntermediate, only: ForwardModelStatus_T
+    use ForwardModelVectorTools, only: GetQuantityForForwardModel
+    use Get_Species_Data_M, only:  Get_Species_Data
+    use HessianModule_1, only: Hessian_T
+    use Intrinsic, only: Lit_Indices, L_GeodAltitude, L_MagneticField, &
+      & L_PhiTan, L_PTan, L_Temperature, L_TScat, L_VMR, L_Zeta
+    use Load_SPS_Data_M, only: DestroyGrids_T, Dump, EmptyGrids_T, Grids_T, &
+      & Load_One_Item_Grid, Load_SPS_Data
+    use MatrixModule_1, only: Matrix_T
+    use MLSKinds, only: RP
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
+    use MLSStringLists, only: SwitchDetail
+    use Molecules, only: L_CloudIce
+    use MoreMessage, only: MLSMessage
+    use Output_m, only: Output
     use Tangent_Pressures_m, only: Tangent_Pressures
-    use TOGGLES, only: EMIT, SWITCHES, TOGGLE
-    use TRACE_M, only: TRACE_BEGIN, TRACE_END
-    use VECTORSMODULE, only: VECTOR_T, VECTORVALUE_T
+    use Toggles, only: Emit, Switches, Toggle
+    use Trace_M, only: Trace_Begin, Trace_End
+    use VectorsModule, only: Vector_T, VectorValue_T
 
     type(forwardModelConfig_T), intent(inout) :: FwdModelConf
     type(vector_T), intent(in) ::  FwdModelIn, FwdModelExtra
@@ -89,9 +91,10 @@ contains
     type (Grids_T) :: Grids_v   ! All the spectroscopy(V) coordinates
     type (Grids_T) :: Grids_w   ! All the spectroscopy(W) coordinates
     type (VectorValue_T), pointer :: CloudIce ! Ice water content
-    type (VectorValue_T), pointer :: PHITAN ! Tangent geodAngle component of state vector
-    type (VectorValue_T), pointer :: PTAN   ! Tangent pressure component of state vector
-    type (VectorValue_T), pointer :: TEMP   ! Temperature component of state vector
+    type (VectorValue_T), pointer :: MagField ! Magnetic field
+    type (VectorValue_T), pointer :: PhiTan ! Tangent geodAngle component of state vector
+    type (VectorValue_T), pointer :: PTan   ! Tangent pressure component of state vector
+    type (VectorValue_T), pointer :: Temp   ! Temperature component of state vector
     integer :: Dump_Conf        ! for debugging, from -Sfmconf
     integer :: K                ! Loop inductor and subscript
     integer :: No_Mol           ! Number of molecules
@@ -102,15 +105,15 @@ contains
     integer :: Nlvl             ! Number of levels in coarse zeta grid
     integer :: NO_TAN_HTS       ! Number of tangent heights
     integer :: Print_Mag        ! For debugging output
-    integer :: SURFACETANGENTINDEX  ! Index in tangent grid of earth's
+    integer :: SurfaceTangentIndex  ! Index in tangent grid of earth's
                                     ! surface
-    integer :: MAXVERT          ! Number of points in gl-refined vertical grid:
+    integer :: MaxVert          ! Number of points in gl-refined vertical grid:
                                 ! (NLVL-1) * (NG+1) + 1, i.e., 1 + NG
                                 ! per level, except the last,
                                 ! where there's no GL space.
-    integer :: MAX_C            ! Length of longest possible coarse path,
+    integer :: Max_C            ! Length of longest possible coarse path,
                                 ! Z_PSIG & Min Zeta & surface Zeta
-    integer :: MAX_F            ! Length of longest possible fine path
+    integer :: Max_F            ! Length of longest possible fine path
                                 ! (all npf<max_f)
     integer :: Me = -1          ! String index for trace
     integer :: S_A  ! Multiplier for atmos derivative sizes, 0 or 1
@@ -126,9 +129,9 @@ contains
     integer :: S_TS ! Multiplier for using TScat tables, 0 or 1
 
     ! Flags for various derivatives
-    logical :: atmos_der, atmos_second_der, ptan_der, spect_der
+    logical :: Atmos_Der, Atmos_Second_Der, PTan_Der, Spect_Der
     logical :: Spect_Der_Center, Spect_Der_Width, Spect_Der_Width_TDep
-    logical :: temp_der, temp_in_first
+    logical :: Temp_Der, Temp_In_First
     ! What severity is not having derivative in "first" state vector?
     integer, parameter :: DerivativeMissingFromState = MLSMSG_Error
 
@@ -187,7 +190,7 @@ contains
     atmos_second_der = present (hessian ) .and. FwdModelConf%atmos_second_der
 
     ! Determine where we can compute derivatives.  We know for sure we have
-    ! a place to put them if fwdModelConf%beta_group%qty%foundInFirst, but
+    ! a place to put them if fwdModelConf%Beta_group%qty%foundInFirst, but
     ! we also have a place to put them otherwise if ExtraJacobian is present
     ! and there's a column there for it.
 
@@ -248,13 +251,24 @@ contains
       ! Compute the viewing azimuth angle
       azimuth = viewing_azimuth ( FwdModelIn, FwdModelExtra, FwdModelConf, &
                                 & MIF=1, MAF=fmstat%maf )
-      call load_one_item_grid ( grids_mag, &
-        & GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra,          &
-        & quantityType=l_magneticField, config=fwdModelConf ), fmStat%maf, &
-        & phitan, fwdModelConf, .false.,                                   &
-        & across=abs(azimuth) > azimuth_tol )
+      magField => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra,          &
+        & quantityType=l_magneticField, config=fwdModelConf )
+      if ( .not. (magField%template%stacked .and. magField%template%coherent) ) &
+        & call MLSMessage ( MLSMSG_Error, moduleName, &
+          & 'Magnetic field is not stacked and coherent' )
+      if ( magField%template%verticalCoordinate /= l_geodAltitude .and. &
+           magField%template%verticalCoordinate /= l_zeta ) &
+        & call MLSMessage ( MLSMSG_Error, moduleName, &
+          & 'Magnetic field vertical coordinate is not geodetic altitude or zeta' )
+      call load_one_item_grid ( grids_mag, magField, fmStat%maf, phitan, &
+        & fwdModelConf, .false., across=abs(azimuth) > azimuth_tol )
       print_mag = switchDetail(switches, 'MagGrid')
-      if ( print_mag > -1 ) call dump ( grids_mag, 'Grids_Mag', print_mag )
+      if ( print_mag > -1 ) then
+        if ( switchDetail(switches, 'Azimuth') < 0 ) & ! viewing_azimuth didn't print it
+          & call output ( rad2deg*azimuth, before='Azimuth ', &
+            & after=' degrees', advance='yes' )
+        call dump ( grids_mag, 'Grids_Mag', print_mag )
+      end if
     else
       call emptyGrids_t ( grids_mag ) ! Allocate components with zero size
     end if
@@ -302,7 +316,7 @@ contains
     call load_sps_data ( FwdModelConf, phitan, fmStat%maf, grids_n, &
       & qtyStuffIn=fwdModelConf%lineWidth_TDep%qty )
 
-    if ( switchDetail(switches,'grids') > -1 ) then ! dump the grids
+    if ( switchDetail(switches,'Grids') > -1 ) then ! dump the grids
       call dump ( grids_f, "Grids_f", details=9 )
       call dump ( grids_tmp, "Grids_tmp", details=9 )
       if ( size(fwdModelConf%lineCenter) > 0 ) call dump ( grids_v )
@@ -385,47 +399,47 @@ contains
   ! work arrays are automatic arrays, instead of being explicitly allocated
   ! and deallocated.
 
-    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
-    use COMP_ETA_DOCALC_NO_FRQ_M, only: COMP_ETA_DOCALC_NO_FRQ
-    use COMP_SPS_PATH_FRQ_M, only: COMP_SPS_PATH, COMP_SPS_PATH_FRQ, &
-    ! & COMP_SPS_PATH_FRQ_NZ, &
-      & COMP_SPS_PATH_NO_FRQ, COMP_1_SPS_PATH_NO_FRQ
-    use COMPUTE_GL_GRID_M, only: COMPUTE_GL_GRID
-    use CONSTANTS, only: DEG2RAD, RAD2DEG
-    use DUMP_0, only: DUMP
-    use FILTERSHAPES_M, only: DACSFILTERSHAPES, FILTERSHAPES
-    use FORWARDMODELCONFIG, only: BETA_GROUP_T, CHANNELS_T, &
-      & FORWARDMODELCONFIG_T, LINECENTER, LINEWIDTH, LINEWIDTH_TDEP
-    use FORWARDMODELINTERMEDIATE, only: FORWARDMODELSTATUS_T, &
-                                    &   B_PTG_ANGLES, B_REFRACTION
-    use FORWARDMODELVECTORTOOLS, only: GETQUANTITYFORFORWARDMODEL
-    use GEOMETRY, only: GET_R_EQ
-    use GET_ETA_MATRIX_M, only: ETA_D_T ! TYPE FOR ETA STRUCT
+    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+    use Comp_ETA_DoCalc_No_Frq_M, only: Comp_ETA_DoCalc_No_Frq
+    use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_Frq, &
+    ! & Comp_SPS_Path_Frq_NZ, &
+      & Comp_SPS_Path_No_Frq, Comp_1_SPS_Path_No_Frq
+    use Compute_GL_Grid_M, only: Compute_GL_Grid
+    use CONSTANTS, only: Deg2Rad, Rad2Deg
+    use Dump_0, only: Dump
+    use FilterShapes_M, only: DACSFilterShapes, FilterShapes
+    use ForwardModelConfig, only: Beta_Group_T, Channels_T, &
+      & ForwardModelConfig_T, LineCenter, LineWidth, LineWidth_TDep
+    use ForwardModelIntermediate, only: ForwardModelStatus_T, &
+                                    &   B_Ptg_Angles, B_Refraction
+    use ForwardModelVectorTools, only: GetQuantityForForwardModel
+    use Geometry, only: Get_R_EQ
+    use Get_ETA_Matrix_M, only: ETA_D_T ! TYPE FOR ETA STRUCT
     use Get_IEEE_NaN_m, only: Fill_IEEE_NaN
-    use HESSIANMODULE_1, only: HESSIAN_T
-    use INTRINSIC, only: L_A, L_GeocAltitude, L_GeodAltitude, &
-      & L_RADIANCE, L_TSCAT, L_VMR, L_Zeta
-    use LOAD_SPS_DATA_M, only: DESTROYGRIDS_T, DUMP, GRIDS_T
-    use MATRIXMODULE_1, only: MATRIX_T
-    use MLSKINDS, only: R4, R8, RP, RV
-    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING
-    use MLSNUMERICS, only: HUNT, INTERPOLATEVALUES, PUREHUNT
-    use MLSSIGNALS_M, only: ARESIGNALSSUPERSET, GETNAMEOFSIGNAL, MATCHSIGNAL, &
-      & RADIOMETERS, SIGNAL_T
-    use MLSSTRINGLISTS, only: SWITCHDETAIL
-    use MOLECULES, only: L_H2O, L_N2O, L_O3
-    use OUTPUT_M, only: OUTPUT
-    use PATH_CONTRIB_M, only: GET_GL_INDS
-    use PHYSICS, only: SPEEDOFLIGHT
-    use POINTINGGRID_M, only: POINTINGGRIDS, POINTINGGRID_T
-    use SLABS_SW_M, only: ALLOCATESLABS, DESTROYCOMPLETESLABS, SLABS_STRUCT
-    use TAU_M, only: DESTROY_TAU, DUMP, TAU_T
-    use TOGGLES, only: EMIT, LEVELS, SWITCHES, TOGGLE
-    use TRACE_M, only: TRACE_BEGIN, TRACE_END
-    use TSCAT_SUPPORT_M, ONLY: TSCAT_GEN_SETUP
-    use TWO_D_HYDROSTATIC_M, only: TWO_D_HYDROSTATIC
-    use VECTORSMODULE, only: DestroyVectorQuantityValue, &
-      & GETVECTORQUANTITYBYTYPE, VECTOR_T, VECTORVALUE_T
+    use HessianModule_1, only: Hessian_T
+    use Intrinsic, only: L_A, L_GeocAltitude, L_GeodAltitude, &
+      & L_Radiance, L_TScat, L_VMR, L_Zeta
+    use Load_SPS_Data_M, only: DestroyGrids_T, Dump, Grids_T
+    use MatrixModule_1, only: Matrix_T
+    use MLSKinds, only: R4, R8, RP, RV
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
+    use MLSNumerics, only: Hunt, InterpolateValues, PureHunt
+    use MLSSignals_M, only: AreSignalsSuperset, GetNameOfSignal, MatchSignal, &
+      & Radiometers, Signal_T
+    use MLSStringLists, only: SwitchDetail
+    use Molecules, only: L_H2O, L_N2O, L_O3
+    use Output_M, only: Output
+    use Path_Contrib_M, only: Get_GL_Inds
+    use Physics, only: SpeedOfLight
+    use PointingGrid_M, only: PointingGrids, PointingGrid_T
+    use SLABS_SW_M, only: AllocateSLABS, DestroyCompleteSLABS, SLABS_Struct
+    use TAU_M, only: Destroy_TAU, Dump, TAU_T
+    use Toggles, only: Emit, Levels, Switches, Toggle
+    use Trace_M, only: Trace_Begin, Trace_End
+    use TScat_Support_M, ONLY: TScat_Gen_Setup
+    use Two_D_Hydrostatic_M, only: Two_D_Hydrostatic
+    use VectorsModule, only: DestroyVectorQuantityValue, &
+      & GetVectorQuantityByType, Vector_T, VectorValue_T
 
     type(forwardModelConfig_T), intent(inout) :: FwdModelConf
     type(vector_T), intent(in) ::  FwdModelIn, FwdModelExtra
@@ -434,7 +448,7 @@ contains
     real(rp), intent(in) :: Z_PSIG(:)       ! Surfs from Temperature, tangent
                                             ! grid and species grids, sans
                                             ! duplicates.
-    real(rp), intent(in) :: TAN_PRESS(:)    ! Pressures corresponding to Z_PSIG
+    real(rp), intent(in) :: TAN_Press(:)    ! Pressures corresponding to Z_PSIG
     type (Grids_T), intent(inout) :: Grids_tmp ! All the coordinates for TEMP,
                                             ! inout for cloud model to change
                                             ! supersat
@@ -442,29 +456,29 @@ contains
                                             ! inout for cloud model to change
                                             ! supersat
     type (Grids_T), intent(in) :: Grids_IWC ! All the coordinates for IWC
-    type (Grids_T), intent(in) :: Grids_mag ! All the coordinates for Magnetic field
+    type (Grids_T), intent(in) :: Grids_Mag ! All the coordinates for Magnetic field
     type (Grids_T), intent(in) :: Grids_n   ! All the spectroscopy(N) coordinates
     type (Grids_T), intent(in) :: Grids_v   ! All the spectroscopy(V) coordinates
     type (Grids_T), intent(in) :: Grids_w   ! All the spectroscopy(W) coordinates
-    type (VectorValue_T), intent(in) :: PTAN ! Tangent pressure component of state vector
-    type (VectorValue_T), intent(in) :: PHITAN ! Tangent geodAngle component of state vector
-    type (VectorValue_T), intent(in) :: TEMP ! Temperature component of state vector
+    type (VectorValue_T), intent(in) :: PTan ! Tangent pressure component of state vector
+    type (VectorValue_T), intent(in) :: PhiTan ! Tangent geodAngle component of state vector
+    type (VectorValue_T), intent(in) :: Temp ! Temperature component of state vector
     integer, intent(in) :: No_Mol           ! Number of molecules
     integer, intent(in) :: NoUsedChannels   ! Number of channels used
     integer, intent(in) :: No_sv_p_T        ! number of phi basis for temperature
     integer, intent(in) :: N_T_zeta         ! Number of zetas for temperature
     integer, intent(in) :: Sv_T_len         ! Number of t_phi*t_zeta in the window
     integer, intent(in) :: Nlvl             ! Number of levels in coarse zeta grid
-    integer, intent(in) :: NO_TAN_HTS       ! Number of tangent heights
-    integer, intent(in) :: SURFACETANGENTINDEX ! Index in tangent grid of
+    integer, intent(in) :: No_Tan_Hts       ! Number of tangent heights
+    integer, intent(in) :: SurfaceTangentIndex ! Index in tangent grid of
                                             ! earth's surface
-    integer, intent(in) :: MAX_C            ! Length of longest possible coarse path
-    integer, intent(in) :: MAXVERT          ! Number of points in gl-refined vertical grid:
+    integer, intent(in) :: Max_C            ! Length of longest possible coarse path
+    integer, intent(in) :: MaxVert          ! Number of points in gl-refined vertical grid:
                                             ! (NLVL-1) * (NG+1) + 1, i.e., 1 + NG
                                             ! per level, except the last,
                                             ! where there's no GL space.
-    integer, intent(in) :: MAX_F            ! Length of longest possible path (all npf<max_f)
-    logical, intent(in) :: PTAN_Der
+    integer, intent(in) :: Max_F            ! Length of longest possible path (all npf<max_f)
+    logical, intent(in) :: PTan_Der
     integer, intent(in) :: S_T  ! Multiplier for temp derivative sizes, 0 or 1
     integer, intent(in) :: S_A  ! Multiplier for atmos derivative sizes, 0 or 1
     integer, intent(in) :: S_H  ! Multiplier for atmos second derivative sizes, 0 or 1
@@ -487,14 +501,14 @@ contains
     type(hessian_T), intent(inout), optional :: Hessian
 
     ! Now define local variables, group by type and then
-    ! alphabetically
+    ! Alphabetically
 
-    integer :: CHANNEL            ! A Loop counter
+    integer :: Channel            ! A Loop counter
     integer :: Dump_Rad_Pol       ! Dump intermediate values in Rad_Tran_Pol
     integer :: Frq_Avg_Sel        ! Summarizes combinations of PFA, LBL,
                                   ! Frequency averaging and derivatives.
                                   ! See Frequency_Average below.
-    integer :: FRQ_I              ! Frequency loop index
+    integer :: Frq_I              ! Frequency loop index
     integer :: H2O_Ind            ! Grids_f%S_Ind(L_H2O) = index of H2O in Grids_f
     integer :: IER                ! Status flag from allocates
     integer :: I                  ! Loop index and other uses.
@@ -512,9 +526,9 @@ contains
                                   ! P_Path(min_index+1), else min zeta is at
                                   ! or too close to the tangent
     integer :: N_More             ! Effective size of More_*_Path
-    integer :: NGLMAX             ! NGL if all panels need GL
-    integer :: NOFREQS            ! Number of frequencies for a pointing
-    integer :: NOUSEDDACS         ! Number of different DACS in this run.
+    integer :: NGLMax             ! NGL if all panels need GL
+    integer :: NoFreqs            ! Number of frequencies for a pointing
+    integer :: NoUsedDACS         ! Number of different DACS in this run.
     integer :: NPC                ! Length of coarse path
     integer :: NPF                ! Length of a gl path
     integer :: NZ_IF              ! Effective size of Z_GLgrid and cohorts
@@ -522,17 +536,17 @@ contains
                                   ! nz_ig <= size(z_psig)+2
     integer :: Prev_Mie_Frq_Ind   ! From a previous execution of One_Frequency
     integer :: PTG_I              ! Loop counter for the pointings
-    integer :: SIDEBAND           ! Either zero or from firstSignal
-    integer :: SIGIND             ! Signal index, loop counter
+    integer :: Sideband           ! Either zero or from firstSignal
+    integer :: SigInd             ! Signal index, loop counter
     integer :: SV_I               ! Loop index and other uses .
     integer :: SX                 ! 1 = LSB, 2 = USB
-    integer :: TAN_IND_C          ! Index of tangent point in coarse zeta ref grid
-    integer :: TAN_IND_F          ! Index of tangent point in fine zeta ref grid
-    integer :: TAN_PT_C           ! Index of tangent point in coarse path
-    integer :: TAN_PT_F           ! Index of tangent point in fine path
-    integer :: THISSIDEBAND       ! Loop counter for sidebands, -1 = LSB, +1 = USB
-    integer :: WINDOWFINISH       ! End of temperature `window'
-    integer :: WINDOWSTART        ! Start of temperature `window'
+    integer :: Tan_Ind_C          ! Index of tangent point in coarse zeta ref grid
+    integer :: Tan_Ind_F          ! Index of tangent point in fine zeta ref grid
+    integer :: Tan_Pt_C           ! Index of tangent point in coarse path
+    integer :: Tan_Pt_F           ! Index of tangent point in fine path
+    integer :: ThisSideband       ! Loop counter for sidebands, -1 = LSB, +1 = USB
+    integer :: WindowFinish       ! End of temperature `window'
+    integer :: WindowStart        ! Start of temperature `window'
 
     integer :: Nspec              ! No of species for cloud model
 
@@ -568,11 +582,11 @@ contains
 
     character (len=127) :: SigName      ! Name of a Signal
 
-    integer, target :: C_INDS_B(max_c)  ! Base array for C_INDS
-    integer, target :: CG_INDS_B(max_c) ! Base array for CG_INDS
-    integer :: F_INDS(max_c*ng)         ! Indices on fine grid
-    integer, target :: GL_INDS_B(max_c*ng) ! Base array for GL_INDS
-    integer :: GRIDS(no_tan_hts)        ! Indices in ptgGrid for each tangent
+    integer, target :: C_Inds_B(max_c)  ! Base array for C_INDS
+    integer, target :: CG_Inds_B(max_c) ! Base array for CG_INDS
+    integer :: F_Inds(max_c*ng)         ! Indices on fine grid
+    integer, target :: GL_Inds_B(max_c*ng) ! Base array for GL_INDS
+    integer :: Grids(no_tan_hts)        ! Indices in ptgGrid for each tangent
     integer :: IPSD(s_i*max_f)
     integer :: nz_d_delta_df(s_a*max_c,size(grids_f%values)) ! nonzeros in
                                         ! d_delta_df
@@ -582,129 +596,129 @@ contains
                                         ! H_Glgrid etc.
 
     ! Cloud arrays are on the same grids as temperature
-    logical :: DO_CALC_Tscat(max_f,s_i*size(grids_tmp%values)) ! 'Avoid zeros' indicator
-    logical :: DO_CALC_Salb(max_f,s_i*size(grids_tmp%values))  ! 'Avoid zeros' indicator
-    logical :: DO_CALC_cext(max_f,s_i*size(grids_tmp%values))  ! 'Avoid zeros' indicator
-    logical :: DO_CALC_Tscat_ZP(max_f,s_i*grids_tmp%p_len)     ! 'Avoid zeros' indicator
-    logical :: DO_CALC_Salb_ZP(max_f,s_i*grids_tmp%p_len)      ! 'Avoid zeros' indicator
-    logical :: DO_CALC_Cext_ZP(max_f,s_i*grids_tmp%p_len)      ! 'Avoid zeros' indicator
+    logical :: Do_Calc_Tscat(max_f,s_i*size(grids_tmp%values)) ! 'Avoid zeros' indicator
+    logical :: Do_Calc_Salb(max_f,s_i*size(grids_tmp%values))  ! 'Avoid zeros' indicator
+    logical :: Do_Calc_cext(max_f,s_i*size(grids_tmp%values))  ! 'Avoid zeros' indicator
+    logical :: Do_Calc_Tscat_ZP(max_f,s_i*grids_tmp%p_len)     ! 'Avoid zeros' indicator
+    logical :: Do_Calc_Salb_ZP(max_f,s_i*grids_tmp%p_len)      ! 'Avoid zeros' indicator
+    logical :: Do_Calc_Cext_ZP(max_f,s_i*grids_tmp%p_len)      ! 'Avoid zeros' indicator
 
-    real(r8), parameter :: FRQ_0 = 0.0_r8     ! Fake for comp_sps_path_frq
+    real(r8), parameter :: Frq_0 = 0.0_r8     ! Fake for comp_sps_Path_frq
 
     real(r8) :: WC(s_i*fwdModelConf%no_cloud_species, max_f)
     real(r8) :: Scat_ang(s_i*fwdModelConf%num_scattering_angles)
 
-    real(rp) :: ALPHA_PATH_C(max_c)   ! coarse grid absorption coefficient
-    real(rp) :: ALPHA_PATH_F(max_f)   ! fine grid absorption coefficient
+    real(rp) :: Alpha_Path_C(max_c)   ! coarse grid absorption coefficient
+    real(rp) :: Alpha_Path_F(max_f)   ! fine grid absorption coefficient
     real(rp) :: B(max_c)              ! Planck radiation function
-    real(rp) :: BETA_PATH_cloud_C(s_i*max_c) ! Beta on path coarse
-    real(rp) :: Beta_c_e_path_c(s_ts*max_c)  ! Beta_c_e on coarse path
-    real(rp) :: Beta_c_s_path_c(s_ts*max_c)  ! Beta_c_s on coarse path
+    real(rp) :: Beta_Path_cloud_C(s_i*max_c) ! Beta on path coarse
+    real(rp) :: Beta_c_e_Path_c(s_ts*max_c)  ! Beta_c_e on coarse path
+    real(rp) :: Beta_c_s_Path_c(s_ts*max_c)  ! Beta_c_s on coarse path
     real(r8), target :: ChannelCenters(noUsedChannels) ! for PFA or non-frequency-averaging
-!   real(rp) :: DALPHA_DT_PATH_C(max_c)   ! dAlpha/dT on coarse grid
-    real(rp) :: DALPHA_DT_PATH_F(max_f)   ! dAlpha/dT on fine grid
+!   real(rp) :: DAlpha_DT_Path_C(max_c)   ! dAlpha/dT on coarse grid
+    real(rp) :: DAlpha_DT_Path_F(max_f)   ! dAlpha/dT on fine grid
     real(rp) :: DEL_S(max_c)          ! Integration lengths along coarse path,
                                       !  (2:npc-1)
-    real(rp) :: DEL_ZETA(max_c)       ! Integration lengths in Zeta coords
+    real(rp) :: DEL_Zeta(max_c)       ! Integration lengths in Zeta coords
                                       !  along coarse path, (2:npc-1)
-    real(rp) :: dBeta_c_a_dIWC_path_C(s_ts*max_c)  ! on coarse path
-    real(rp) :: dBeta_c_s_dIWC_path_C(s_ts*max_c)  ! on coarse path
-    real(rp) :: dBeta_c_a_dT_path_C(s_ts*max_c)    ! on coarse path
-    real(rp) :: dBeta_c_s_dT_path_C(s_ts*max_c)    ! on coarse path
-    real(rp) :: DHDZ_PATH(max_f)      ! dH/dZ on fine path (1:npf)
-    real(rp) :: DHDZ_GW_PATH(max_f)   ! dH/dZ * GW on fine path (1:npf)
-    real(rp) :: DSDH_PATH(max_f)      ! dS/dH on fine path (1:tan_pt_f-1,tan_pt_f+ngp1+1:npf)
+    real(rp) :: dBeta_c_a_dIWC_Path_C(s_ts*max_c)  ! on coarse path
+    real(rp) :: dBeta_c_s_dIWC_Path_C(s_ts*max_c)  ! on coarse path
+    real(rp) :: dBeta_c_a_dT_Path_C(s_ts*max_c)    ! on coarse path
+    real(rp) :: dBeta_c_s_dT_Path_C(s_ts*max_c)    ! on coarse path
+    real(rp) :: DHDZ_Path(max_f)      ! dH/dZ on fine path (1:npf)
+    real(rp) :: DHDZ_GW_Path(max_f)   ! dH/dZ * GW on fine path (1:npf)
+    real(rp) :: DSDH_Path(max_f)      ! dS/dH on fine path (1:tan_pt_f-1,tan_pt_f+ngp1+1:npf)
     real(rp) :: DSDZ_C(max_c)         ! ds/dH * dH/dZ on coarse path (1:tan_pt_c-1,tan_pt_c+2:npc)
-    real(rp) :: DSDZ_GW_PATH(max_f)   ! ds/dH * dH/dZ * GW on path
+    real(rp) :: DSDZ_GW_Path(max_f)   ! ds/dH * dH/dZ * GW on path
     real(rp) :: DTanh_DT_C(max_c)     ! 1/tanh1_c d/dT tanh1_c
     real(rp) :: DTanh_DT_F(max_f)     ! 1/tanh1_f d/dT tanh1_f
     real(rp) :: dTScat_df(s_ts*max_c,size(grids_f%values))   ! on coarse path w.r.t. SVE
     real(rp) :: dTScat_dT(s_ts*max_c,size(grids_tmp%values)) ! on coarse path w.r.t. SVE
-    real(rp) :: H_PATH(max_f)         ! Heights on path (km)
-    real(rp) :: H_PATH_C(max_c)       ! H_PATH on coarse grid (km)
-    real(rp) :: H_PATH_F(max_f)       ! H_PATH on fine grid (km)
-    real(rp) :: INCOPTDEPTH(max_c)    ! Incremental Optical depth on coarse grid
+    real(rp) :: H_Path(max_f)         ! Heights on path (km)
+    real(rp) :: H_Path_C(max_c)       ! H_Path on coarse grid (km)
+    real(rp) :: H_Path_F(max_f)       ! H_Path on fine grid (km)
+    real(rp) :: IncOptDepth(max_c)    ! Incremental Optical depth on coarse grid
     real(rp) :: More_H_Path(max_new), More_Phi_Path(max_new), More_Z_Path(max_new)
-    real(rp) :: N_PATH_C(max_c)       ! Refractive index - 1 on coarse path
-    real(rp) :: N_PATH_F(max_f)       ! Refractive index - 1 on fine path
-    real(rp), target :: PHI_PATH(max_f) ! Phi's on fine path, Radians
+    real(rp) :: N_Path_C(max_c)       ! Refractive index - 1 on coarse path
+    real(rp) :: N_Path_F(max_f)       ! Refractive index - 1 on fine path
+    real(rp), target :: Phi_Path(max_f) ! Phi's on fine path, Radians
     real(rp), pointer :: Phi_Path_c(:)  ! Phi on the coarse path
-    real(rp) :: P_PATH(max_f)         ! Pressure on path
-    real(rp) :: PTG_ANGLES(no_tan_hts)
-    real(rp) :: REF_CORR(max_c)       ! Refraction correction
-    real(rp) :: TAN_DH_DT(s_t*sv_t_len) ! dH/dT at Tangent
-    real(rp) :: TANH1_C(max_c)        ! tanh(0.5 h nu / k T)
-    real(rp) :: TANH1_F(max_f)        ! tanh1 on fine grid
-    real(rp) :: T_PATH(max_f)         ! Temperatures on path
-    real(rp) :: T_PATH_C(max_c)       ! T_PATH on coarse grid
-    real(rp) :: T_PATH_F(max_f)       ! T_PATH on fine grid
-    real(rp) :: TT_PATH_C(max(s_i,s_ts)*max_c)  ! TScat on path coarse
-    real(rp) :: W0_PATH_C(max(s_i,s_ts)*max_c)  ! w0 on path coarse
-    real(rp) :: Z_COARSE(max_c)       ! Z_PSIG & Z_min & surface zeta on path
-    real(rp) :: Z_GLGRID(maxvert)     ! Zeta on initial glGrid surfs
-    real(rp) :: Z_PATH(max_f)         ! Zeta on fine grid path tangent grid and
+    real(rp) :: P_Path(max_f)         ! Pressure on path
+    real(rp) :: Ptg_Angles(no_tan_hts)
+    real(rp) :: Ref_Corr(max_c)       ! Refraction correction
+    real(rp) :: Tan_dH_dT(s_t*sv_t_len) ! dH/dT at Tangent
+    real(rp) :: Tanh1_C(max_c)        ! tanh(0.5 h nu / k T)
+    real(rp) :: Tanh1_F(max_f)        ! tanh1 on fine grid
+    real(rp) :: T_Path(max_f)         ! Temperatures on path
+    real(rp) :: T_Path_C(max_c)       ! T_Path on coarse grid
+    real(rp) :: T_Path_F(max_f)       ! T_Path on fine grid
+    real(rp) :: TT_Path_C(max(s_i,s_ts)*max_c)  ! TScat on path coarse
+    real(rp) :: W0_Path_C(max(s_i,s_ts)*max_c)  ! w0 on path coarse
+    real(rp) :: Z_Coarse(max_c)       ! Z_PSIG & Z_min & surface zeta on path
+    real(rp) :: Z_GLGrid(maxvert)     ! Zeta on initial glGrid surfs
+    real(rp) :: Z_Path(max_f)         ! Zeta on fine grid path tangent grid and
                                       ! species grids, sans duplicates.
-    ! BETA_PATH_C has a frequency dimension.  It is d_Alpha/dVMR, which is
+    ! Beta_Path_C has a frequency dimension.  It is d_Alpha/dVMR, which is
     ! needed to compute d_W0/dVMR.
-!   real(rp) :: BETA_PATH_C(max_c,no_mol)          ! on path coarse
-    real(rp) :: BETA_PATH_F(max_f,no_mol)          ! on path fine
-    real(rp) :: D_DELTA_DF(max_c,s_a*size(grids_f%values)) ! Incremental
+!   real(rp) :: Beta_Path_C(max_c,no_mol)          ! on path coarse
+    real(rp) :: Beta_Path_F(max_f,no_mol)          ! on path fine
+    real(rp) :: D_Delta_dF(max_c,s_a*size(grids_f%values)) ! Incremental
                                       ! opacity derivative; computed in drad_tran_df
                                       ! and is used to get_d_deltau_pol_df.  Path x SVE.
-    real(rp) :: D2_DELTA_DF2(max_c,size(grids_f%values),s_h*size(grids_f%values))
+    real(rp) :: D2_Delta_dF2(max_c,size(grids_f%values),s_h*size(grids_f%values))
                                       ! Incremental opacity second derivative.
                                       ! Path x SVE x SVE.
     real(rp) :: D_T_SCR_dT(max_c,s_t*sv_t_len)     ! D Delta_B in some notes
                                       ! coarse path x state-vector-components
     real(rp) :: D2X_DXDT(no_tan_hts,s_t*sv_t_len)    ! (No_tan_hts, nz*np)
-    real(rp) :: DALPHA_DF_PATH_C(max_c,s_a*no_mol)   ! on coarse path
-    real(rp) :: DALPHA_DF_PATH_F(max_f,s_a*no_mol)   ! on GL path
-    real(rp) :: D2ALPHA_DF2_PATH_C(max_c,s_h*no_mol) ! on coarse path
-    real(rp) :: D2ALPHA_DF2_PATH_F(max_f,s_h*no_mol) ! on GL path
+    real(rp) :: DAlpha_DF_Path_C(max_c,s_a*no_mol)   ! on coarse path
+    real(rp) :: DAlpha_DF_Path_F(max_f,s_a*no_mol)   ! on GL path
+    real(rp) :: D2Alpha_DF2_Path_C(max_c,s_h*no_mol) ! on coarse path
+    real(rp) :: D2Alpha_DF2_Path_F(max_f,s_h*no_mol) ! on GL path
     real(rp) :: DB_DF(s_ts*max(s_a,s_t)*max_c)       ! dB / d one f on the path, for TScat
-    real(rp) :: DBETA_DF_PATH_C(max_c,count(grids_f%where_dBeta_df /= 0))
-    real(rp) :: DBETA_DF_PATH_F(max_f,count(grids_f%where_dBeta_df /= 0))
-    real(rp) :: DBETA_DIWC_PATH_C(max_c,s_tg*no_mol) ! dBeta_dIWC on coarse grid
-    real(rp) :: DBETA_DIWC_PATH_F(max_f,s_tg*no_mol) ! dBeta_dIWC on fine grid
-    real(rp) :: DBETA_DN_PATH_C(max_c,s_td*size(fwdModelConf%lineWidth_TDep)) ! dBeta_dn on coarse grid
-    real(rp) :: DBETA_DN_PATH_F(max_f,s_td*size(fwdModelConf%lineWidth_TDep)) ! dBeta_dn on fine grid
-    real(rp) :: DBETA_DT_PATH_C(max_c,s_t*no_mol)  ! dBeta_dT on coarse grid
-    real(rp) :: DBETA_DT_PATH_F(max_f,s_t*no_mol)  ! dBeta_dT on fine grid
-    real(rp) :: DBETA_DV_PATH_C(max_c,s_lc*size(fwdModelConf%lineCenter)) ! dBeta_dv on coarse grid
-    real(rp) :: DBETA_DV_PATH_F(max_f,s_lc*size(fwdModelConf%lineCenter)) ! dBeta_dv on fine grid
-    real(rp) :: DBETA_DW_PATH_C(max_c,s_lw*size(fwdModelConf%lineWidth)) ! dBeta_dw on coarse grid
-    real(rp) :: DBETA_DW_PATH_F(max_f,s_lw*size(fwdModelConf%lineWidth)) ! dBeta_dw on fine grid
-    real(rp) :: DH_DT_PATH(max_f,s_t*sv_t_len)     ! dH/dT on path
-    real(rp) :: DH_DT_PATH_C(max_c,s_t*sv_t_len)   ! DH_DT_PATH on coarse grid
-    real(rp) :: DH_DT_PATH_F(max_f,s_t*sv_t_len)   ! DH_DT_PATH on fine grid
-    real(rp) :: DHDZ_GLGRID(maxVert,no_sv_p_t) ! dH/dZ on glGrid surfs
+    real(rp) :: DBeta_DF_Path_C(max_c,count(grids_f%where_dBeta_df /= 0))
+    real(rp) :: DBeta_DF_Path_F(max_f,count(grids_f%where_dBeta_df /= 0))
+    real(rp) :: DBeta_DIWC_Path_C(max_c,s_tg*no_mol) ! dBeta_dIWC on coarse grid
+    real(rp) :: DBeta_DIWC_Path_F(max_f,s_tg*no_mol) ! dBeta_dIWC on fine grid
+    real(rp) :: DBeta_DN_Path_C(max_c,s_td*size(fwdModelConf%lineWidth_TDep)) ! dBeta_dn on coarse grid
+    real(rp) :: DBeta_DN_Path_F(max_f,s_td*size(fwdModelConf%lineWidth_TDep)) ! dBeta_dn on fine grid
+    real(rp) :: DBeta_DT_Path_C(max_c,s_t*no_mol)  ! dBeta_dT on coarse grid
+    real(rp) :: DBeta_DT_Path_F(max_f,s_t*no_mol)  ! dBeta_dT on fine grid
+    real(rp) :: DBeta_DV_Path_C(max_c,s_lc*size(fwdModelConf%lineCenter)) ! dBeta_dv on coarse grid
+    real(rp) :: DBeta_DV_Path_F(max_f,s_lc*size(fwdModelConf%lineCenter)) ! dBeta_dv on fine grid
+    real(rp) :: DBeta_DW_Path_C(max_c,s_lw*size(fwdModelConf%lineWidth)) ! dBeta_dw on coarse grid
+    real(rp) :: DBeta_DW_Path_F(max_f,s_lw*size(fwdModelConf%lineWidth)) ! dBeta_dw on fine grid
+    real(rp) :: DH_DT_Path(max_f,s_t*sv_t_len)     ! dH/dT on path
+    real(rp) :: DH_DT_Path_C(max_c,s_t*sv_t_len)   ! DH_DT_Path on coarse grid
+    real(rp) :: DH_DT_Path_F(max_f,s_t*sv_t_len)   ! DH_DT_Path on fine grid
+    real(rp) :: DHDZ_GLGrid(maxVert,no_sv_p_t) ! dH/dZ on glGrid surfs
     real(rp) :: DX_DT(no_tan_hts,s_t*sv_t_len)     ! (No_tan_hts, nz*np)
     real(rp) :: ETA_FZP(max_f,size(grids_f%values)) ! Eta_z x Eta_p * Eta_f
     real(rp) :: ETA_IWC_ZP(max_f,max(s_i,s_ts)*grids_iwc%p_len)
-    real(rp) :: ETA_Mag_ZP(max_f,grids_mag%p_len)  ! Eta_z x Eta_p
+    real(rp) :: ETA_Mag_ZP(max_f,grids_mag%p_len)  ! Eta_z x Eta_p x Eta_x
     real(rp) :: ETA_ZP(max_f,grids_f%p_len)        ! Eta_z x Eta_p
     real(rp) :: ETA_ZXP_N(max_f,size(grids_n%values)) ! Eta_z x Eta_p for N
     real(rp) :: ETA_ZXP_T(max_f,s_t*sv_t_len)      ! Eta_t_z x Eta_t_p
     real(rp) :: ETA_ZXP_T_C(max_c,s_t*sv_t_len)    ! ETA_ZXP_T on coarse grid
     real(rp) :: ETA_ZXP_V(max_f,size(grids_v%values)) ! Eta_z x Eta_p for V
     real(rp) :: ETA_ZXP_W(max_f,size(grids_w%values)) ! Eta_z x Eta_p for W
-    real(rp) :: H_GLGRID(maxVert,no_sv_p_t)        ! H on glGrid surfs (km)
-    real(rp) :: IWC_PATH(max_f,max(max(s_i,s_ts),s_ts)) ! IWC on path
-    real(rp), target :: MAG_PATH(s_p*max_f,4)      ! Magnetic field on path
-    real(rp), target :: RAD_AVG_PATH(max_c,s_pfa*noUsedChannels) ! Freq. Avgd.
+    real(rp) :: H_GLGrid(maxVert,no_sv_p_t)        ! H on glGrid surfs (km)
+    real(rp) :: IWC_Path(max_f,max(max(s_i,s_ts),s_ts)) ! IWC on path
+    real(rp), target :: Mag_Path(s_p*max_f,4)      ! Magnetic field on path
+    real(rp), target :: Rad_Avg_Path(max_c,s_pfa*noUsedChannels) ! Freq. Avgd.
                                                    ! LBL radiance along the path
-    real(rp) :: RADIANCES(noUsedChannels,no_tan_hts) ! (noChans,Nptg)
+    real(rp) :: Radiances(noUsedChannels,no_tan_hts) ! (noChans,Nptg)
 !     real(rp) :: RADIANCES_DIFF(noUsedChannels,no_tan_hts) ! (noChans,Nptg)     ! IGOR
-    real(rp) :: SPECT_N_PATH(max_f,size(fwdModelConf%lineWidth_TDep)) ! Line Width Temperature Dependence
-    real(rp) :: SPECT_V_PATH(max_f,size(fwdModelConf%lineCenter)) ! Line Center
-    real(rp) :: SPECT_W_PATH(max_f,size(fwdModelConf%lineWidth)) ! Line Width
-    real(rp) :: SPS_PATH(max_f,no_mol)             ! species on path
-    real(rp) :: SPS_PATH_C(max_c,no_mol)           ! species on coarse path
-    real(rp) :: SPS_PATH_F(max_f,no_mol)           ! species on GL path
-    real(rp) :: TT_PATH(max_f,max(s_i,s_ts))       ! TScat on path along the LOS
-    real(rp) :: T_GLGRID(maxVert,no_sv_p_t)        ! Temp on glGrid surfs
-    real(rp) :: T_SCRIPT_PFA(max_c,s_pfa*noUsedChannels) ! Delta_B in some notes
-    real(r8) :: VMRARRAY(s_i*n_t_zeta,no_mol)      ! The VMRs for H2O, O3, N2
+    real(rp) :: Spect_N_Path(max_f,size(fwdModelConf%lineWidth_TDep)) ! Line Width Temperature Dependence
+    real(rp) :: Spect_V_Path(max_f,size(fwdModelConf%lineCenter)) ! Line Center
+    real(rp) :: Spect_W_Path(max_f,size(fwdModelConf%lineWidth)) ! Line Width
+    real(rp) :: SPS_Path(max_f,no_mol)             ! species on path
+    real(rp) :: SPS_Path_C(max_c,no_mol)           ! species on coarse path
+    real(rp) :: SPS_Path_F(max_f,no_mol)           ! species on GL path
+    real(rp) :: TT_Path(max_f,max(s_i,s_ts))       ! TScat on path along the LOS
+    real(rp) :: T_GLGrid(maxVert,no_sv_p_t)        ! Temp on glGrid surfs
+    real(rp) :: T_Script_PFA(max_c,s_pfa*noUsedChannels) ! Delta_B in some notes
+    real(r8) :: VMRArray(s_i*n_t_zeta,no_mol)      ! The VMRs for H2O, O3, N2
 
     ! Temporary space for DACS radiances if we're doing frequency averaging
     ! and there are any LBL molecules and any derivatives are calculated
@@ -723,58 +737,58 @@ contains
                             & lbound(DACsStaging2,2):ubound(DACsStaging2,2), &
                             & size(fwdModelConf%usedDACSSignals)                )
 
-    real(rp), target :: DH_DT_GLGRID(maxVert,n_t_zeta,s_t*no_sv_p_t)
+    real(rp), target :: DH_DT_GLGrid(maxVert,n_t_zeta,s_t*no_sv_p_t)
 
-    complex(rp) :: D_RAD_POL_DF(2,2,s_p*s_a*size(grids_f%values)) ! From mcrt_der
-    complex(rp) :: D_RAD_POL_DT(2,2,s_p*s_t*sv_t_len) ! From mcrt_der
-    complex(rp) :: ALPHA_PATH_POLARIZED(-1:1,s_p*max_c)
-    complex(rp) :: ALPHA_PATH_POLARIZED_F(-1:1,s_p*max_f)
-    complex(rp) :: dALPHA_dT_POLARIZED_PATH_C(-1:1,s_p*s_t*max_c)
-    complex(rp) :: dALPHA_dT_POLARIZED_PATH_F(-1:1,s_p*s_t*max_f)
-    complex(rp) :: BETA_PATH_POLARIZED(-1:1,s_p*max_c,no_mol)
-    complex(rp) :: BETA_PATH_POLARIZED_F(-1:1,s_p*max_f,no_mol)
-    complex(rp) :: dBETA_dT_POLARIZED_PATH_C(-1:1,s_p*s_t*max_c,no_mol)
-    complex(rp) :: dBETA_dT_POLARIZED_PATH_F(-1:1,s_p*s_t*2*max_f,no_mol)
+    complex(rp) :: D_Rad_Pol_dF(2,2,s_p*s_a*size(grids_f%values)) ! From mcrt_der
+    complex(rp) :: D_Rad_Pol_dT(2,2,s_p*s_t*sv_t_len) ! From mcrt_der
+    complex(rp) :: Alpha_Path_Polarized(-1:1,s_p*max_c)
+    complex(rp) :: Alpha_Path_Polarized_F(-1:1,s_p*max_f)
+    complex(rp) :: dAlpha_dT_Polarized_Path_C(-1:1,s_p*s_t*max_c)
+    complex(rp) :: dAlpha_dT_Polarized_Path_F(-1:1,s_p*s_t*max_f)
+    complex(rp) :: Beta_Path_Polarized(-1:1,s_p*max_c,no_mol)
+    complex(rp) :: Beta_Path_Polarized_F(-1:1,s_p*max_f,no_mol)
+    complex(rp) :: dBeta_dT_Polarized_Path_C(-1:1,s_p*s_t*max_c,no_mol)
+    complex(rp) :: dBeta_dT_Polarized_Path_F(-1:1,s_p*s_t*2*max_f,no_mol)
     complex(rp) :: DE_DF(2,2,s_p*s_a*max_c,size(grids_f%values)) ! DE/Df in Michael's notes
     complex(rp) :: DE_DT(2,2,s_p*s_t*max_c,sv_t_len) ! DE/DT in Michael's notes
-    complex(rp) :: DELTAU_POL(2,2,s_p*max_c) ! E in Michael's notes
+    complex(rp) :: DelTAU_POL(2,2,s_p*max_c) ! E in Michael's notes
 !   complex(rp) :: DINCOPTDEPTH_POL_DT(2,2,s_p*s_t*max_c) ! D Incoptdepth_Pol / DT
-!   complex(rp) :: GL_DELTA_POLARIZED(-1:1,s_p*max_f)
-    complex(rp) :: INCOPTDEPTH_POL(2,2,s_p*max_c)
-    complex(rp) :: PROD_POL(2,2,s_p*max_c)   ! P in Michael's notes
-    complex(rp) :: TAU_POL(2,2,s_p*max_c)    ! Tau in Michael's notes
+!   complex(rp) :: GL_DELTA_Polarized(-1:1,s_p*max_f)
+    complex(rp) :: IncOptDepth_Pol(2,2,s_p*max_c)
+    complex(rp) :: Prod_Pol(2,2,s_p*max_c)   ! P in Michael's notes
+    complex(rp) :: Tau_Pol(2,2,s_p*max_c)    ! Tau in Michael's notes
 
-    real(rp) :: EST_SCGEOCALT(no_tan_hts) ! Est S/C geocentric altitude /m
-    real(rp) :: EST_LOS_VEL(no_tan_hts)   ! Est S/C line-of-sight velocity M/S
-    real(rp) :: TAN_D2H_DHDT(s_t*sv_t_len)
-    real(rp) :: TAN_PHI(no_tan_hts)
+    real(rp) :: Est_ScGeocAlt(no_tan_hts) ! Est S/C geocentric altitude /m
+    real(rp) :: Est_LOS_Vel(no_tan_hts)   ! Est S/C line-of-sight velocity M/S
+    real(rp) :: Tan_D2H_DHDT(s_t*sv_t_len)
+    real(rp) :: Tan_Phi(no_tan_hts)
     real(rp) :: DDHIDHIDTL0(maxVert,n_t_zeta,s_t*no_sv_p_t)
     ! Frequency-averaged derivatives
     ! Channels x pointings x grid values == frequencies x surfaces x instances x molecules:
-    real(r4) :: K_ATMOS(noUsedChannels,no_tan_hts,s_a*size(grids_f%values))
-    real(r4) :: H_ATMOS(noUsedChannels,no_tan_hts,s_h*size(grids_f%values),s_h*size(grids_f%values))
+    real(r4) :: K_Atmos(noUsedChannels,no_tan_hts,s_a*size(grids_f%values))
+    real(r4) :: H_Atmos(noUsedChannels,no_tan_hts,s_h*size(grids_f%values),s_h*size(grids_f%values))
     ! Channels x pointings x grid values == frequencies x surfaces x instances x molecules:
-    real(r4) :: K_SPECT_DN(noUsedChannels,no_tan_hts,s_td*size(grids_n%values))
-    real(r4) :: K_SPECT_DV(noUsedChannels,no_tan_hts,s_lc*size(grids_v%values))
-    real(r4) :: K_SPECT_DW(noUsedChannels,no_tan_hts,s_lw*size(grids_w%values))
-    real(r4) :: K_TEMP(noUsedChannels,no_tan_hts,s_t*sv_t_len)
+    real(r4) :: K_Spect_DN(noUsedChannels,no_tan_hts,s_td*size(grids_n%values))
+    real(r4) :: K_Spect_DV(noUsedChannels,no_tan_hts,s_lc*size(grids_v%values))
+    real(r4) :: K_Spect_DW(noUsedChannels,no_tan_hts,s_lw*size(grids_w%values))
+    real(r4) :: K_Temp(noUsedChannels,no_tan_hts,s_t*sv_t_len)
 
     logical :: DO_GL(max_c)       ! GL indicator
-    logical :: T_der_path_flags(s_t*max_f) ! a flag that tells where an
+    logical :: T_der_Path_flags(s_t*max_f) ! a flag that tells where an
       ! absorption coefficient is needed for a temperature derivative.
       ! Only useful when subsetting temperature derivatives.
 
     ! 'Avoid zeros' indicators
-    logical :: DO_CALC_FZP(max_f, size(grids_f%values))
-    logical :: DO_CALC_HYD(max_f, sv_t_len)
-    logical :: DO_CALC_HYD_C(max_c, sv_t_len)  ! DO_CALC_HYD on coarse grid
-    logical :: DO_CALC_N(max_f, size(grids_n%values) ) ! on entire grid
-    logical :: DO_CALC_T(max_f, sv_t_len)
-    logical :: DO_CALC_T_C(max_c, sv_t_len)    ! DO_CALC_T on coarse grid
-    logical :: DO_CALC_T_F(max_f, sv_t_len)    ! DO_CALC_T on fine grid
-    logical :: DO_CALC_V(max_f, size(grids_v%values) ) ! on entire grid
-    logical :: DO_CALC_W(max_f, size(grids_w%values) ) ! on entire grid
-    logical :: DO_CALC_ZP(max_f,grids_f%p_len) ! same shape as eta_zp
+    logical :: Do_Calc_FZP(max_f, size(grids_f%values))
+    logical :: Do_Calc_Hyd(max_f, sv_t_len)
+    logical :: Do_Calc_Hyd_C(max_c, sv_t_len)  ! DO_Calc_HYD on coarse grid
+    logical :: Do_Calc_N(max_f, size(grids_n%values) ) ! on entire grid
+    logical :: Do_Calc_T(max_f, sv_t_len)
+    logical :: Do_Calc_T_C(max_c, sv_t_len)    ! DO_Calc_T on coarse grid
+    logical :: Do_Calc_T_F(max_f, sv_t_len)    ! DO_Calc_T on fine grid
+    logical :: Do_Calc_V(max_f, size(grids_v%values) ) ! on entire grid
+    logical :: Do_Calc_W(max_f, size(grids_w%values) ) ! on entire grid
+    logical :: Do_Calc_ZP(max_f,grids_f%p_len) ! same shape as eta_zp
 
     integer :: NZ_ZP(size(eta_zp,1),size(eta_zp,2)) ! same shape as eta_zp
     integer :: NNZ_ZP(size(eta_zp,2))               ! number of columns of eta_zp
@@ -786,14 +800,14 @@ contains
     integer :: NZ_ZXP_T_C(max_c,s_t*sv_t_len)       ! same shape as Eta_zxp_t_c
     integer :: NNZ_ZXP_T_C(s_t*sv_t_len)            ! number of columns of Eta_zxp_t
 
-    integer, pointer :: C_INDS(:)   ! Indices on coarse grid
+    integer, pointer :: C_Inds(:)        ! Indices on coarse grid
     integer, pointer :: LineCenter_IX(:) ! Where are line center offsets?
     integer, pointer :: LineWidth_IX(:)  ! Where are line width offsets?
     integer, pointer :: LineWidth_TDep_IX(:)  ! Where are line width TDep offsets?
-    integer, pointer :: USEDDACSSIGNALS(:) ! Indices in FwdModelConf of signals
-                                    ! for our dacs
+    integer, pointer :: UsedDACSsignals(:) ! Indices in FwdModelConf of signals
+                                         ! for our dacs
 
-    real(rp) :: E_RFLTY       ! Earth reflectivity at given tan. point
+    real(rp) :: E_Rflty       ! Earth reflectivity at given tan. point
     real(rp) :: H_Surf        ! Height above earth surface of first (usually
                               ! zeta=-3) surface
     real(rp) :: Min_Zeta      ! Minimum zeta along the path
@@ -803,10 +817,10 @@ contains
 
     real(rp), pointer :: CT(:)           ! Cos(Theta), where theta
       ! is the angle between the line of sight and magnetic field vectors.
-    real(r8), pointer :: FREQUENCIES(:)  ! Frequencies to compute for
+    real(r8), pointer :: Frequencies(:)  ! Frequencies to compute for
     real(rp), pointer :: H(:)            ! Magnetic field on path, in
                                          ! IFOVPP
-    real(rp), pointer :: RADV(:)         ! Radiances for 1 pointing on
+    real(rp), pointer :: RadV(:)         ! Radiances for 1 pointing on
                                          ! Freq_Grid
     real(rp), pointer :: STCP(:)         ! Sin(Theta) Cos(Phi) where
       ! theta is as for CT and phi (for this purpose only) is the angle
@@ -823,41 +837,41 @@ contains
     real(rp) :: ETA_Salb_ZP(max_f,s_i*grids_tmp%p_len)
     real(rp) :: ETA_Cext(max_f,s_i*size(grids_tmp%values))
     real(rp) :: ETA_Cext_ZP(max_f,s_i*grids_tmp%p_len)
-    real(rp) :: Cext_PATH(max_f,s_i)    ! Cloud extinction on path
-    real(rp) :: Salb_PATH(max_f,s_i)    ! Single Scattering Albedo on path
-    real(rp) :: Tscat_PATH(max_f,s_i*fwdModelConf%num_scattering_angles) ! TScat on path
+    real(rp) :: Cext_Path(max_f,s_i)    ! Cloud extinction on path
+    real(rp) :: Salb_Path(max_f,s_i)    ! Single Scattering Albedo on path
+    real(rp) :: Tscat_Path(max_f,s_i*fwdModelConf%num_scattering_angles) ! TScat on path
 
     ! dAlpha/dT on coarse grid, which is needed to compute d_W0/dT
-    real(rp), pointer :: DALPHA_DT_PATH_C(:,:) ! (max_c,max_frq)
+    real(rp), pointer :: DAlpha_DT_Path_C(:,:) ! (max_c,max_frq)
     ! Beta on path coarse, which is needed to compute d_W0/dVMR
-    real(rp), pointer :: BETA_PATH_C(:,:,:)! (max_c,no_mol,max_frq)
+    real(rp), pointer :: Beta_Path_C(:,:,:)! (max_c,no_mol,max_frq)
     ! Incremental opacity derivatives, Path X SVE:
-    real(rp), pointer :: INC_RAD_PATH(:,:) ! Incremental radiance along the path
-    real(rp), pointer :: K_ATMOS_FRQ(:,:)  ! dI/dVMR, ptg.frq X vmr-SV
-    real(rp), pointer :: K_SPECT_DN_FRQ(:,:) ! ****
-    real(rp), pointer :: K_SPECT_DV_FRQ(:,:) ! ****
-    real(rp), pointer :: K_SPECT_DW_FRQ(:,:) ! ****
-    real(rp), pointer :: K_TEMP_FRQ(:,:)   ! dI/dT, ptg.frq X T-SV
+    real(rp), pointer :: INC_RAD_Path(:,:) ! Incremental radiance along the path
+    real(rp), pointer :: K_Atmos_FRQ(:,:)  ! dI/dVMR, ptg.frq X vmr-SV
+    real(rp), pointer :: K_Spect_DN_FRQ(:,:) ! ****
+    real(rp), pointer :: K_Spect_DV_FRQ(:,:) ! ****
+    real(rp), pointer :: K_Spect_DW_FRQ(:,:) ! ****
+    real(rp), pointer :: K_Temp_FRQ(:,:)   ! dI/dT, ptg.frq X T-SV
     real(rp), pointer :: T_SCRIPT_LBL(:,:) ! Delta_B in some notes, Path X Frq
-    real(rp), pointer :: H_ATMOS_FRQ(:,:,:)  ! d2I/(dVMRq dVMRr), ptg.frq X vmr-SVq X vmr-SVr
+    real(rp), pointer :: H_Atmos_FRQ(:,:,:)  ! d2I/(dVMRq dVMRr), ptg.frq X vmr-SVq X vmr-SVr
 
     ! Used only to schlep from Convolution_Setup to Convolution
     real(rp) :: DH_DZ_OUT(ptan%template%nosurfs)
     real(rp) :: DX_DH_OUT(ptan%template%nosurfs)
-    real(rp) :: DXDT_SURFACE(1,s_t*sv_t_len)
+    real(rp) :: DXDT_Surface(1,s_t*sv_t_len)
     real(rp) :: DXDT_TAN(ptan%template%nosurfs,s_t*sv_t_len)
     real(rv), pointer :: L1BMIF_TAI(:,:)   ! MIF Times
-    real(rv), pointer :: MIFDEADTIME(:,:)  ! Not collecting data
-    real(rp) :: surf_angle(1)
+    real(rv), pointer :: MIFDeadTime(:,:)  ! Not collecting data
+    real(rp) :: Surf_Angle(1)
     real(rp) :: TAN_CHI_OUT(ptan%template%nosurfs)
 
-    real(rp) :: earthradc_sq ! (minor axis of orbit plane projected Earth ellipse)**2
+    real(rp) :: EarthRadC_sq ! (minor axis of orbit plane projected Earth ellipse)**2
 
 ! *** Beta & Molecules grouping variables:
     type (Beta_Group_T), pointer :: Beta_Group(:) ! from FwdModelConf%Beta_Group
 
     ! Interpolation factors for Temperature and IWC (not geometric interpolation
-    ! factors) to put Mie beta_c_a and beta_c_s into path
+    ! factors) to put Mie Beta_c_a and Beta_c_s into path
     type (Eta_d_t), dimension(s_ts*max_c) :: Eta_IWC_path_C, Eta_T_path_C
 
 ! Channel information from the signals database as specified by fwdModelConf
@@ -867,28 +881,28 @@ contains
     type (Grids_T) :: Grids_Salb ! All the coordinates for single scattering albedo
     type (Grids_T) :: Grids_Cext ! All the coordinates for cloud extinction
 
-    type (PointingGrid_T), pointer :: WHICHPOINTINGGRID ! Pointing grids for one signal
+    type (PointingGrid_T), pointer :: WhichPointingGrid ! Pointing grids for one signal
 
-    type (Signal_T), pointer :: FIRSTSIGNAL        ! The first signal we're dealing with
+    type (Signal_T), pointer :: FirstSignal        ! The first signal we're dealing with
 
     type (Slabs_Struct), dimension(:,:), pointer :: GL_SLABS ! Freq. indep. stuff
 
     type (Tau_T) :: Tau_LBL, Tau_PFA
 
-    type (VectorValue_T), pointer :: BOUNDARYPRESSURE
-    type (VectorValue_T), pointer :: EARTHREFL     ! Earth reflectivity
+    type (VectorValue_T), pointer :: BoundaryPressure
+    type (VectorValue_T), pointer :: EarthRefl     ! Earth reflectivity
     type (VectorValue_T), pointer :: ECRtoFOV      ! Rotation matrices
     type (VectorValue_T), pointer :: F             ! An arbitrary species
     type (VectorValue_T), pointer :: GPH           ! Geopotential height
     type (VectorValue_T), pointer :: IWC           ! IWC at scattering points, for TScat gen.
-    type (VectorValue_T), pointer :: LOSVEL        ! Line of sight velocity
-    type (VectorValue_T), pointer :: ORBINCLINE    ! Orbital inclination
-    type (VectorValue_T), pointer :: REFGPH        ! Reference geopotential height
+    type (VectorValue_T), pointer :: LOSVel        ! Line of sight velocity
+    type (VectorValue_T), pointer :: OrbIncline    ! Orbital inclination
+    type (VectorValue_T), pointer :: RefGPH        ! Reference geopotential height
     type (VectorValue_T), pointer :: ScatteringAngles ! for TScat computation
-    type (VectorValue_T), pointer :: SCGEOCALT     ! S/C geocentric altitude /m
-    type (VectorValue_T), pointer :: SPACERADIANCE ! Emission from space
+    type (VectorValue_T), pointer :: SCGeocAlt     ! S/C geocentric altitude /m
+    type (VectorValue_T), pointer :: SpaceRadiance ! Emission from space
     type (VectorValue_T), pointer :: SurfaceHeight ! km above mean sea level
-    type (VectorValue_T), pointer :: THISRADIANCE  ! A radiance vector quantity
+    type (VectorValue_T), pointer :: ThisRadiance  ! A radiance vector quantity
 
 !  The 'all_radiometers grid file' approach variables declaration:
 
@@ -912,7 +926,7 @@ contains
       call fill_IEEE_NaN ( e_rflty, h_surf, min_zeta, min_phi, vel_rel, &
         & earthradc_sq, max_ch_freq_grid, min_ch_freq_grid )
       ! Rank 1 RP:
-      call fill_IEEE_NaN ( alpha_path_c, alpha_path_f, b, &
+      call fill_IEEE_NaN ( Alpha_path_c, Alpha_path_f, b, &
         & beta_path_cloud_c, beta_c_e_path_c, beta_c_s_path_c, &
         & dAlpha_dT_path_f, del_s, del_zeta, dBeta_c_a_dIWC_path_C, &
         & dBeta_c_s_dIWC_path_C, dBeta_c_a_dT_path_C, dBeta_c_s_dT_path_C, &
@@ -930,11 +944,11 @@ contains
       call fill_IEEE_NaN ( Scat_ang, channelCenters )
       ! Rank 2 RP:
       call fill_IEEE_NaN ( dTScat_df, dTScat_dT, beta_path_f, d_delta_df, &
-        & d_t_scr_dT, d2x_dxdT, dalpha_df_path_c, dalpha_df_path_f, &
-        & d2alpha_df2_path_c, d2alpha_df2_path_f, dbeta_df_path_c, &
-        & dbeta_df_path_f, dbeta_dIWC_path_c, dbeta_dIWC_path_f, &
-        & dbeta_dn_path_c, dbeta_dn_path_f, dbeta_dT_path_c, dbeta_dT_path_f, &
-        & dbeta_dv_path_c, dbeta_dv_path_f, dbeta_dw_path_c, dbeta_dw_path_f, &
+        & d_t_scr_dT, d2x_dxdT, dAlpha_df_path_c, dAlpha_df_path_f, &
+        & d2Alpha_df2_path_c, d2Alpha_df2_path_f, dBeta_df_path_c, &
+        & dBeta_df_path_f, dBeta_dIWC_path_c, dBeta_dIWC_path_f, &
+        & dBeta_dn_path_c, dBeta_dn_path_f, dBeta_dT_path_c, dBeta_dT_path_f, &
+        & dBeta_dv_path_c, dBeta_dv_path_f, dBeta_dw_path_c, dBeta_dw_path_f, &
         & dh_dT_path, dh_dT_path_c, dh_dT_path_f )
       call fill_IEEE_NaN ( dhdz_glgrid, dx_dT, eta_fzp, eta_IWC_zp, eta_mag_zp, &
         & eta_zp, eta_zxp_n, eta_zxp_T, eta_zxp_T_c, eta_zxp_T, eta_zxp_v, &
@@ -1320,7 +1334,7 @@ contains
       ! Start sorting out stuff from state vector ------------------------------
 
       ! Identify the appropriate state vector components
-      ! VMRS are in beta_group%qty, gotten by get_species_data
+      ! VMRS are in Beta_group%qty, gotten by get_species_data
       gph => GetQuantityForForwardModel (fwdModelIn, fwdModelExtra, &
         & quantityType=l_gph, config=fwdModelConf )
       earthRefl => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
@@ -3034,27 +3048,27 @@ contains
       ! purposes:  The array sizes are implicit, so we don't need explicitly
       ! to mention them, and the pointer attribute gets stripped during the
       ! trip through the CALL statement -- hopefully thereby helping optimizers.
-      use CS_EXPMAT_M, only: CS_EXPMAT
-      use DO_T_SCRIPT_M, only: TWO_D_T_SCRIPT, TWO_D_T_SCRIPT_CLOUD
-      use D_T_SCRIPT_DTNP_M, only: DT_SCRIPT_DT
-      use DUMP_PATH_M, only: DUMP_PATH, SPS_LIST
-      use GET_BETA_PATH_M, only: GET_BETA_PATH, GET_BETA_PATH_CLOUD, &
-        & GET_BETA_PATH_PFA, GET_BETA_PATH_POLARIZED
-      use GET_DALPHA_DF_M, only: GET_DALPHA_DF, GET_D2ALPHA_DF2
-      use GET_D_DELTAU_POL_M, only: GET_D_DELTAU_POL_DF, GET_D_DELTAU_POL_DT
-      use GET_ETA_MATRIX_M, only: SELECT_NZ_LIST
-      use INTERPOLATE_MIE_M, only: INTERPOLATE_MIE
-      use LOAD_SPS_DATA_M, only:  LOAD_ONE_ITEM_GRID
-      USE L2PC_M, ONLY: L2PC_T
-      use MCRT_M, only: MCRT_DER
-      use OPACITY_M, only: OPACITY
-      use PATH_CONTRIB_M, only: PATH_CONTRIB
+      use CS_EXPMAT_m, only: CS_EXPMAT
+      use DO_T_SCRIPT_m, only: TWO_D_T_SCRIPT, TWO_D_T_SCRIPT_CLOUD
+      use D_T_SCRIPT_DTNP_m, only: DT_SCRIPT_DT
+      use Dump_Path_m, only: Dump_Path, SPS_List
+      use Get_Beta_Path_m, only: GET_Beta_Path, GET_Beta_Path_CLOUD, &
+        & Get_Beta_Path_PFA, GET_Beta_Path_POLARIZED
+      use Get_DAlpha_DF_m, only: GET_DAlpha_DF, GET_D2Alpha_DF2
+      use Get_D_Deltau_Pol_m, only: GET_D_DELTAU_POL_DF, GET_D_DELTAU_POL_DT
+      use GET_ETA_MATRIX_m, only: SELECT_NZ_LIST
+      use INTERPOLATE_MIE_m, only: INTERPOLATE_MIE
+      use LOAD_SPS_DATA_m, only:  LOAD_ONE_ITEM_GRID
+      USE L2PC_m, ONLY: L2PC_T
+      use MCRT_m, only: MCRT_DER
+      use OPACITY_m, only: OPACITY
+      use Path_Contrib_m, only: Path_Contrib
       use PHYSICS, only: H_OVER_K
-      use RAD_TRAN_M, only: RAD_TRAN_POL, DRAD_TRAN_DF, &
+      use RAD_TRAN_m, only: RAD_TRAN_POL, DRAD_TRAN_DF, &
         & D2RAD_TRAN_DF2, DRAD_TRAN_DT, DRAD_TRAN_DX
       use SCATSOURCEFUNC, only: T_SCAT, INTERP_TSCAT
-      use TAU_M, only: GET_TAU
-      USE TSCAT_SUPPORT_M, ONLY: GET_DB_DT, GET_TSCAT, GET_TSCAT_SETUP, &
+      use TAU_m, only: GET_TAU
+      USE TSCAT_SUPPORT_m, ONLY: GET_DB_DT, GET_TSCAT, GET_TSCAT_SETUP, &
         & GET_TSCAT_TEARDOWN, MIE_FREQ_INDEX
 
       integer, intent(in) :: Ptg_i        ! Pointing index
@@ -3085,8 +3099,8 @@ contains
       real(rp), intent(out) :: W0_Path_c(:) ! w0 on coarse path
       real(rp), intent(in) :: Z_Path(:)   ! -Log10(Pressures) along complete path
       integer, intent(in) :: I_Start, I_End ! Bounds for coarse path integration
-      ! INC_RAD_PATH is (out) if .not. PFA, and (inout) if PFA
-      real(rp), intent(inout) :: INC_RAD_PATH(:) ! Incremental radiance along the path
+      ! INC_RAD_Path is (out) if .not. PFA, and (inout) if PFA
+      real(rp), intent(inout) :: Inc_Rad_Path(:) ! Incremental radiance along the path
       real(rp), intent(out) :: RadV       ! Radiance
       real(rp), intent(out) :: dAlpha_dT_Path_c(:) ! dAlpha/dT on coarse path
       real(rp), intent(out) :: H_ATMOS_FRQ(:,:) ! d2I/(dVMRq dVMRr), ptg.frq X vmr-SVq X vmr-SVr
@@ -3155,8 +3169,8 @@ contains
       if ( pfa ) then
         call get_beta_path_PFA ( frq, frq_i, z_path, c_inds, t_path_c, &
           & beta_group, sx, vel_rel, sps_path, beta_path_c,            &
-          & t_der_path_flags, dbeta_dT_path_c, dbeta_dw_path_c,        &
-          & dbeta_dn_path_c, dbeta_dv_path_c, dbeta_dIWC_path_c )
+          & t_der_path_flags, dBeta_dT_path_c, dBeta_dw_path_c,        &
+          & dBeta_dn_path_c, dBeta_dv_path_c, dBeta_dIWC_path_c )
       else
         frqhk = 0.5_r8 * frq * h_over_k    ! h nu / 2 k
         tanh1_c = tanh( frqhk / t_path_c ) ! tanh ( h nu / 2 k T )
@@ -3166,8 +3180,8 @@ contains
         call get_beta_path ( Frq, firstSignal%lo, p_path, t_path_c,      &
           &  tanh1_c, beta_group, sx, fwdModelConf%polarized, gl_slabs,  &
           &  c_inds, beta_path_c, t_der_path_flags,                      &
-          &  dTanh_dT_c, vel_rel, dbeta_dT_path_c, dbeta_dw_path_c,      &
-          &  dbeta_dn_path_c, dbeta_dv_path_c, dBeta_df_path_c,          &
+          &  dTanh_dT_c, vel_rel, dBeta_dT_path_c, dBeta_dw_path_c,      &
+          &  dBeta_dn_path_c, dBeta_dv_path_c, dBeta_df_path_c,          &
           &  grids_f%where_dBeta_df, sps_path(:npf,:) )
       end if
 
@@ -3283,7 +3297,7 @@ contains
         !{ {\tt incoptdepth} is $\Delta \delta_{s\rightarrow s-1} =
         !  \int_{\zeta_i}^{\zeta_{i-1}} G(\zeta) \frac{\text{d}s}{\text{d}h}
         !    \frac{\text{d}h}{\text{d}\zeta} \text{d} \zeta$ where
-        !  $G(\zeta)$ is {\tt alpha_path_c}, which is approximated
+        !  $G(\zeta)$ is {\tt Alpha_path_c}, which is approximated
         !  here by the rectangle rule, \emph{viz.}
         !  $\Delta \delta_{i\rightarrow i-1} \approx G(\zeta_i) \delta s_i$.
 
@@ -3308,7 +3322,7 @@ contains
               & dBeta_c_a_dT_path_c(:npc), dBeta_c_s_dT_path_c(:npc) )
             prev_Mie_frq_ind = Mie_frq_index
           end if
-          ! Ignore contribution of PFA alpha to w0.
+          ! Ignore contribution of PFA Alpha to w0.
           w0_path_c = beta_c_s_path_c(:npc) / ( alpha_path_c + beta_c_e_path_c(:npc) )
 
           call Get_TScat_Setup ( fwdModelConf, FwdModelIn, FwdModelExtra, &
@@ -3368,7 +3382,7 @@ contains
         ! the hope a clever compiler will do better optimization with
         ! a constant extent.
         ! Add contributions from nonpolarized molecules 1/4 1/2 1/4
-        ! to alpha here
+        ! to Alpha here
 
         do j = 1, npc
           alpha_path_polarized(-1:1,j) = &
@@ -3384,8 +3398,8 @@ contains
 
         ! We don't add unpolarized incremental optical depth to diagonal
         ! of polarized incremental optical depth because we added the
-        ! scalar alpha_path to the sigma-, pi and sigma+ parts of
-        ! alpha_path_polarized above.  If we did add it here, we would
+        ! scalar Alpha_path to the sigma-, pi and sigma+ parts of
+        ! Alpha_path_polarized above.  If we did add it here, we would
         ! need 0.5 factors to scale unpolarized "power absorption" to
         ! get "field absorption"
 
@@ -3408,7 +3422,7 @@ contains
       !{ We want $\Delta \delta_{s\rightarrow s-1} =
       ! \int_{\zeta_i}^{\zeta_{i-1}} G(\zeta) \frac{\text{d}s}{\text{d}h}
       !   \frac{\text{d}h}{\text{d}\zeta} \text{d} \zeta$ where
-      ! $G(\zeta)$ is {\tt alpha_path_c}, but $\frac{\text{d}s}{\text{d}h}$
+      ! $G(\zeta)$ is {\tt Alpha_path_c}, but $\frac{\text{d}s}{\text{d}h}$
       ! is singular at the tangent point, so we compute
       ! $\Delta \delta_{s\rightarrow s-1} = G(\zeta_i) \delta s_i +
       ! \int_{\zeta_i}^{\zeta_{i-1}} \left(G(\zeta)-G(\zeta_i)\right)
@@ -3442,8 +3456,8 @@ contains
 
         call get_beta_path_PFA ( frq, frq_i, z_path, gl_inds, t_path_f(:ngl), &
           & beta_group, sx, vel_rel, sps_path, beta_path_f(:ngl,:),           &
-          & t_der_path_flags, dbeta_dT_path_f, dbeta_dw_path_f,               &
-          & dbeta_dn_path_f, dbeta_dv_path_f, dbeta_dIWC_path_f )
+          & t_der_path_flags, dBeta_dT_path_f, dBeta_dw_path_f,               &
+          & dBeta_dn_path_f, dBeta_dv_path_f, dBeta_dIWC_path_f )
 
       else
 
@@ -3453,7 +3467,7 @@ contains
           & dTanh_dT_f(1:ngl) = frqhk / t_path_f(1:ngl)**2 * &
             & ( tanh1_f(1:ngl) - 1.0_rp / tanh1_f(1:ngl) )
 
-        ! The derivatives that get_beta_path computes depend on which
+        ! The derivatives that get_Beta_path computes depend on which
         ! derivative arrays are allocated, not which ones are present.
         ! This avoids having multiple paths through the code, each with a
         ! different set of optional arguments.
@@ -3461,8 +3475,8 @@ contains
         call get_beta_path ( Frq, firstSignal%lo, p_path, t_path_f(:ngl),     &
           & tanh1_f(1:ngl), beta_group, sx, fwdModelConf%polarized, gl_slabs, &
           & gl_inds, beta_path_f(:ngl,:), t_der_path_flags, dTanh_dT_f,       &
-          & vel_rel, dbeta_dT_path_f, dbeta_dw_path_f, dbeta_dn_path_f,       &
-          & dbeta_dv_path_f, dbeta_df_path_f, grids_f%where_dBeta_df,         &
+          & vel_rel, dBeta_dT_path_f, dBeta_dw_path_f, dBeta_dn_path_f,       &
+          & dBeta_dv_path_f, dBeta_df_path_f, grids_f%where_dBeta_df,         &
           & sps_path )
 
       end if ! .not. pfa
@@ -3554,19 +3568,19 @@ contains
         ! the hope a clever compiler will do better optimization with
         ! a constant extent.
         ! Add contributions from nonpolarized molecules 1/4 1/2 1/4
-        ! to alpha here.
+        ! to Alpha here.
         do j = 1, ngl
           alpha_path_polarized_f(-1:1,j) = &
             & matmul( beta_path_polarized_f(-1:1,j,:), &
             &         sps_path_f(j,:) ) * tanh1_f(j) &
-            & + 0.25 * alpha_path_f(j)
+            & + 0.25 * Alpha_path_f(j)
           alpha_path_polarized_f(0,j) = alpha_path_polarized_f(0,j) +               &
             & 0.25 * alpha_path_f(j)
         end do
 
         call rad_tran_pol ( tan_pt_c, gl_inds, cg_inds, e_rflty, del_zeta,        &
           & alpha_path_polarized(:,1:npc), ref_corr, incoptdepth_pol(:,:,1:npc),  &
-          & deltau_pol(:,:,1:npc), alpha_path_polarized_f(:,1:ngl), dsdz_gw_path, &
+          & deltau_pol(:,:,1:npc), Alpha_path_polarized_f(:,1:ngl), dsdz_gw_path, &
           & ct, stcp, stsp, t_script, dump_rad_pol, prod_pol(:,:,1:npc),          &
           & tau_pol(:,:,1:npc), rad_pol, p_stop )
 
@@ -3810,7 +3824,7 @@ contains
           if ( spect_der_width ) &
             & call drad_tran_dx ( gl_inds, del_zeta, grids_w, eta_zxp_w,   &
               &  sps_path, fwdModelConf%lineWidth%beta(sx), do_calc_w,     &
-              &  dbeta_dw_path_c, dbeta_dw_path_f, do_gl, del_s, ref_corr, &
+              &  dBeta_dw_path_c, dBeta_dw_path_f, do_gl, del_s, ref_corr, &
               &  dhdz_gw_path, inc_rad_path, tan_pt_c, i_stop, k_spect_dw_frq )
 
           ! Spectroscopic derivative  wrt: N
@@ -3818,7 +3832,7 @@ contains
           if ( spect_der_width_TDep ) &
             & call drad_tran_dx ( gl_inds, del_zeta, grids_n, eta_zxp_n,    &
               &  sps_path, fwdModelConf%lineWidth_tDep%beta(sx), do_calc_n, &
-              &  dbeta_dn_path_c, dbeta_dn_path_f, do_gl, del_s, ref_corr,  &
+              &  dBeta_dn_path_c, dBeta_dn_path_f, do_gl, del_s, ref_corr,  &
               &  dhdz_gw_path, inc_rad_path, tan_pt_c, i_stop, k_spect_dn_frq )
 
           ! Spectroscopic derivative  wrt: Nu0
@@ -3826,7 +3840,7 @@ contains
           if ( spect_der_center ) &
             & call drad_tran_dx ( gl_inds, del_zeta, grids_v, eta_zxp_v,   &
               &  sps_path, fwdModelConf%lineCenter%beta(sx), do_calc_v,    &
-              &  dbeta_dv_path_c, dbeta_dv_path_f, do_gl, del_s, ref_corr, &
+              &  dBeta_dv_path_c, dBeta_dv_path_f, do_gl, del_s, ref_corr, &
               &  dhdz_gw_path, inc_rad_path, tan_pt_c, i_stop, k_spect_dv_frq )
 
         end if
@@ -4290,7 +4304,7 @@ contains
         call comp_eta_docalc_no_frq ( grids_IWC, z_path(1:npf), &
           &  phi_path(1:npf), eta_IWC_zp(1:npf,:), tan_pt=tan_pt_f )
 
-        ! Compute IWC_PATH
+        ! Compute IWC_Path
         call comp_sps_path_no_frq ( Grids_IWC, eta_IWC_zp(1:npf,:), &
           & iwc_path(1:npf,:) )
         if ( fwdModelConf%Incl_Cld ) then
@@ -4318,7 +4332,7 @@ contains
             &  phi_path(1:npf), eta_mag_zp(1:npf,:), tan_pt=tan_pt_f )
         end select
 
-        ! Compute the first three components of MAG_PATH
+        ! Compute the first three components of MAG_Path
         call comp_sps_path ( grids_mag, 1, eta_mag_zp(1:npf,:), &
           & mag_path(1:npf,1:3) )
 
@@ -4806,6 +4820,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.357  2015/08/25 17:23:05  vsnyder
+! Compute PhiWindow in radians for TScat
+!
 ! Revision 2.356  2015/05/28 23:22:44  vsnyder
 ! Use height above geoid for interpolating the magnetic field to the path.
 !
@@ -4913,8 +4930,8 @@ end module FullForwardModel_m
 ! IWC_S.  More dumps.
 !
 ! Revision 2.325  2011/07/21 20:48:38  honghanh
-! Fix an array-index-out-of-bound bug by fixing the declaration fo DBETA_DF_PATH_C
-! and DBETA_DF_PATH_F
+! Fix an array-index-out-of-bound bug by fixing the declaration fo DBeta_DF_Path_C
+! and DBeta_DF_Path_F
 !
 ! Revision 2.324  2011/07/08 18:19:35  yanovsky
 ! Use get_d2Alpha_df2
@@ -4985,7 +5002,7 @@ end module FullForwardModel_m
 ! Also, some other stuff inching toward TScat processing.
 !
 ! Revision 2.305  2010/06/12 01:30:54  vsnyder
-! Give frequency dimension to alpha_path_c and beta_path_c.  Make
+! Give frequency dimension to Alpha_path_c and Beta_path_c.  Make
 ! Frequency_Loop the body of the frequency loop instead of doing the
 ! loop in it.  Pass in lower-dimensional sections of several arrays,
 ! with the section selected according to the frequency loop index.
@@ -5012,7 +5029,7 @@ end module FullForwardModel_m
 ! Move USEs into closer proximity to references.  Get cloudIce as vmr if it
 ! isn't available as a quantityType.  Create TScat stuff with zero size if
 ! not doing TScat table generation.  Get index of Cloud_A if there is one.
-! Provide that betas for Cloud_A and Cloud_S depend upon IWC mixing ratio.
+! Provide that Betas for Cloud_A and Cloud_S depend upon IWC mixing ratio.
 ! Calculate TScat derivatives (still not complete).  Don't compute TScat
 ! or derivatives where there's no IWC.  Don't use the logIWC quantity type.
 ! During TScat table computation, interpolate P to pointing angles rather
@@ -5246,7 +5263,7 @@ end module FullForwardModel_m
 ! Got rid of DerivedFromForwardModel component of config
 !
 ! Revision 2.227  2004/11/01 20:26:35  vsnyder
-! Reorganization of representation for molecules and beta groups; PFA may be broken for now
+! Reorganization of representation for molecules and Beta groups; PFA may be broken for now
 !
 ! Revision 2.226  2004/10/13 01:08:27  vsnyder
 ! Moved some checking to ForwardModelSupport
@@ -5261,7 +5278,7 @@ end module FullForwardModel_m
 ! add mif dependent los vel correction-wgr
 !
 ! Revision 2.222  2004/09/04 01:50:30  vsnyder
-! get_beta_path_m.f90
+! get_Beta_path_m.f90
 !
 ! Revision 2.221  2004/09/01 01:48:27  vsnyder
 ! Status flags, more work on PFA
@@ -5330,7 +5347,7 @@ end module FullForwardModel_m
 ! Revision 2.200  2004/03/27 03:35:27  vsnyder
 ! Add pointer to catalog in slabs_struct.  Use it so as not to need to drag
 ! line centers and line widths around.  Write slabs_lines and slabswint_lines
-! to get sum of beta over all lines; put slabs_struct instead of its components
+! to get sum of Beta over all lines; put slabs_struct instead of its components
 ! in the calling sequence.
 !
 ! Revision 2.199  2004/03/20 04:05:50  vsnyder
@@ -5369,7 +5386,7 @@ end module FullForwardModel_m
 ! add scat_alb
 !
 ! Revision 2.187  2003/11/24 22:10:14  vsnyder
-! Multiply beta_path_polarized_f by tanh1_f if derivatives needed
+! Multiply Beta_path_polarized_f by tanh1_f if derivatives needed
 !
 ! Revision 2.186  2003/11/20 17:33:50  pwagner
 ! Nullify some things otherwise left unassociated
@@ -5440,8 +5457,8 @@ end module FullForwardModel_m
 !
 ! Revision 2.164  2003/08/12 18:22:10  michael
 ! Contribution of scalar molecules to polarized absorption is now added to
-! coarse grid alpha_path_polarized (1/4 1/2 1/4) instead of to diagonal of
-! incoptdepth_pol.  This make alpha_path_polarized correct for later use
+! coarse grid Alpha_path_polarized (1/4 1/2 1/4) instead of to diagonal of
+! incoptdepth_pol.  This make Alpha_path_polarized correct for later use
 ! in gl corrections.
 !
 ! Revision 2.163  2003/07/15 23:07:21  vsnyder
@@ -5503,7 +5520,7 @@ end module FullForwardModel_m
 ! done in Construct.  Futzing.
 !
 ! Revision 2.145  2003/06/13 00:00:27  vsnyder
-! Move multiplication of beta_path by tanh into FullForwardModel
+! Move multiplication of Beta_path by tanh into FullForwardModel
 !
 ! Revision 2.144  2003/06/10 15:06:54  bill
 ! fixed polarized t-derivs
@@ -5590,7 +5607,7 @@ end module FullForwardModel_m
 ! Cosmetic changes
 !
 ! Revision 2.126.2.25  2003/03/22 04:03:04  vsnyder
-! Move Beta_Group_T and Dump_Beta_Group from get_beta_path to Get_Species_Data
+! Move Beta_Group_T and Dump_Beta_Group from get_Beta_path to Get_Species_Data
 !
 ! Revision 2.126.2.24  2003/03/22 02:48:53  vsnyder
 ! Interpolate the magnetic field onto the path
@@ -5631,7 +5648,7 @@ end module FullForwardModel_m
 ! add grids_tscat
 !
 ! Revision 2.126.2.11  2003/02/24 23:40:31  jonathan
-! change input for get_beta_path_cloud
+! change input for get_Beta_path_cloud
 !
 ! Revision 2.126.2.10  2003/02/24 23:26:43  jonathan
 ! change temp_supersat to temp_prof
@@ -5658,13 +5675,13 @@ end module FullForwardModel_m
 ! add singl. scat. albedo W0, ph funct PHH
 !
 ! Revision 2.126.2.2  2003/02/13 22:26:18  jonathan
-! changes dimension for beta_path_cloud also delocate it
+! changes dimension for Beta_path_cloud also delocate it
 !
 ! Revision 2.126.2.1  2003/02/13 17:35:01  bill
-! fixes gl_ind bug and interfaces to get_beta
+! fixes gl_ind bug and interfaces to get_Beta
 !
 ! Revision 2.126  2003/02/11 00:48:18  jonathan
-! changes made after adding get_beta_path_cloud
+! changes made after adding get_Beta_path_cloud
 !
 ! Revision 2.125  2003/02/08 01:03:00  livesey
 ! Bug fix in call to rad_tran
@@ -5690,7 +5707,7 @@ end module FullForwardModel_m
 ! Add in many stuff to deal with clouds CloudIce, iwc_path, etc
 !
 ! Revision 2.118  2003/02/03 23:18:43  vsnyder
-! Squash a bug in deallocating beta_path_polarized
+! Squash a bug in deallocating Beta_path_polarized
 !
 ! Revision 2.117  2003/02/03 22:58:17  vsnyder
 ! Plug a memory leak, delete gl_ndx, some polarized stuff
@@ -5702,16 +5719,16 @@ end module FullForwardModel_m
 ! Plug a bunch of memory leaks
 !
 ! Revision 2.114  2003/01/31 17:53:39  jonathan
-! change z_path to z_path_c in passing to get_beta_path
+! change z_path to z_path_c in passing to get_Beta_path
 !
 ! Revision 2.113  2003/01/31 17:15:49  jonathan
-! add Inc_Cld to get_beta_path
+! add Inc_Cld to get_Beta_path
 !
 ! Revision 2.112  2003/01/31 01:53:01  vsnyder
 ! Move array temps to arrays explicitly allocated outside the loop
 !
 ! Revision 2.111  2003/01/30 00:16:35  jonathan
-! add z_path to get_beta_path
+! add z_path to get_Beta_path
 !
 ! Revision 2.110  2003/01/26 04:42:42  livesey
 ! Added profiles/angle options for phiWindow
