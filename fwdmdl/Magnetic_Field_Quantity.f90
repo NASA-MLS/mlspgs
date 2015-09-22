@@ -30,7 +30,7 @@ module Magnetic_Field_Quantity
 contains
 
   subroutine Get_Magnetic_Field_Qty_Geoc ( Qty, ScVelQuantity, &
-    & GeocAltitudeQuantity, GPHQuantity )
+    & GeocAltitudeQuantity, GPHQuantity, Regular, ReferenceMIF )
 
   ! Compute the magnetic field at the geolocations given by Qty (lat,lon,surfs).
   ! Compute the orbit plane determined by the velocity and geolocation in
@@ -56,6 +56,8 @@ contains
     type (vectorValue_t), intent(in), optional :: ScVelQuantity
     type (vectorValue_t), intent(in), optional :: GeocAltitudeQuantity ! tangent
     type (vectorValue_t), intent(in), optional :: GPHQuantity
+    logical, intent(in), optional :: Regular ! coherent and stacked, default false
+    integer, intent(in), optional :: ReferenceMIF ! Used only if Regular
 
     integer :: Me = -1                 ! String index for tracing
     integer :: Stat                    ! From allocate or deallocate
@@ -74,7 +76,7 @@ contains
     call test_allocate ( stat, moduleName, 'XYZs' )
     
     call compute_viewing_plane ( Qty, ScVelQuantity, GeocAltitudeQuantity, &
-      gphQuantity, XYZs )
+      gphQuantity, XYZs, regular, referenceMIF )
 
     call get_magnetic_field_qty_XYZ ( Qty, XYZs )
 
@@ -157,6 +159,9 @@ contains
 end module Magnetic_Field_Quantity
 
 ! $Log$
+! Revision 2.10  2015/09/22 23:20:38  vsnyder
+! Add a reference MIF number
+!
 ! Revision 2.9  2015/07/29 00:28:36  vsnyder
 ! Repair a comment
 !
