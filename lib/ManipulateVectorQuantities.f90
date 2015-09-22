@@ -21,9 +21,8 @@ module ManipulateVectorQuantities ! Various routines for manipulating vectors
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
   use VECTORSMODULE, only: VECTORVALUE_T, VECTOR_T, DUMP
   use INTRINSIC, only: L_CALSIDEBANDFRACTION, L_CHANNEL, L_COLUMNABUNDANCE, &
-    & L_ISOTOPERATIO, L_PHITAN, L_NONE, &
-    & L_VMR, L_RADIANCE, L_LIMBSIDEBANDFRACTION, L_TSCAT, &
-    & PHYQ_ANGLE, PHYQ_PROFILES
+    & L_ISOTOPERATIO, L_LIMBSIDEBANDFRACTION, L_NONE, L_PHITAN, L_RADIANCE, &
+    & L_TSCAT, L_VMR, PHYQ_PROFILES
 
   implicit none
 
@@ -656,6 +655,9 @@ contains
 end module ManipulateVectorQuantities
   
 ! $Log$
+! Revision 2.51  2015/09/22 23:12:19  vsnyder
+! Remove unused PHYQ_Angle USE reference
+!
 ! Revision 2.50  2015/08/25 17:16:07  vsnyder
 ! In FindOneClosestInstance, determine whether to use the value or
 ! geolocation depending upon whether the type is PhiTan; eliminate the
