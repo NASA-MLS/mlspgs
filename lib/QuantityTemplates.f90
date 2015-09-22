@@ -120,15 +120,16 @@ module QuantityTemplates         ! Quantities within vectors
     logical :: sharedVGrid        ! Set if surfs is a pointer not a copy
     integer :: vGridIndex         ! Index of any vGrid used
 
-    ! Surfs is dimensioned (noSurfs,1) for coherent quantities and
-    ! (noSurfs, noInstances) for incoherent ones.  Pretending the values are
-    ! dimensioned (noChans, noSurfs, noInstances), or
+    ! Surfs is dimensioned (noSurfs,noCrossTrack) for coherent quantities and
+    ! (noSurfs, noInstances*noCrossTrack) for incoherent ones.  Pretending the
+    ! values are dimensioned (noChans, noSurfs, noInstances), or
     ! (noChans, noSurfs, noInstances, noCrossTrack), the SURFS coordinate
     ! for the (:,i,j,:) values is surfs(i,1) for a coherent quantity or
     ! surfs(i,j) for an incoherent one.
     ! Surfs is allocatable instead of a pointer because the quantity template
     ! is copied into the vector value, not targeted therein.  If the VGrid
     ! is shared, deallocating a pointer would result in a dangling pointer.
+    ! If noCrossTrack > 1, use the Surfs3 function to access it.
     real(rt), allocatable :: Surfs(:,:)
 
     ! Horizontal coordinates in the orbit plane.
@@ -154,10 +155,11 @@ module QuantityTemplates         ! Quantities within vectors
 
     real(rt), allocatable :: Phi(:,:)   ! Degrees
 
-    ! Phi is dimensioned (1, noInstances) for stacked quantities and
-    ! (noSurfs, noInstances) for unstacked ones.  The PHI coordinate for the
-    ! (i,j) value is phi(1,j) for a stacked quantity and phi(i,j) for an
-    ! unstacked one.  Phi is either taken from or derived from Geolocation.
+    ! Phi is dimensioned (1, noInstances*noCrossTrack) for stacked quantities
+    ! and (noSurfs, noInstances*noCrossTrack) for unstacked ones.  The PHI
+    ! coordinate for the (i,j) value is phi(1,j) for a stacked quantity and
+    ! phi(i,j) for an unstacked one.  Phi is either taken from or derived from
+    ! Geolocation.  If noCrossTrack > 1, use the Phi3 function to access it.
 
     ! These other coordinates are dimensioned in the same manner as Phi.
     ! GeodLat and Lon are allocatable instead of pointers because the
@@ -224,8 +226,12 @@ module QuantityTemplates         ! Quantities within vectors
   contains
     procedure :: GeodLat3 => GetLat3
     procedure :: Lon3 => GetLon3
+    procedure :: Phi3 => GetPhi3
     procedure :: PutLat3
     procedure :: PutLon3
+    procedure :: PutPhi3
+    procedure :: PutSurfs3
+    procedure :: Surfs3 => GetSurfs3
   end type QuantityTemplate_T
 
   interface DUMP
@@ -375,16 +381,20 @@ contains
   end subroutine CopyQuantityTemplate
 
   ! ------------------------------------  CreateGeolocationFields  -----
-  subroutine CreateGeolocationFields ( Qty, NoSurfsToAllocate, What )
+  subroutine CreateGeolocationFields ( Qty, NoSurfsToAllocate, What, Phi )
     ! Allocate Qty%GeodLat and Qty%Lon.
 
     type (QuantityTemplate_T), intent(inout) :: QTY
     integer, intent(in) :: NoSurfsToAllocate
     character(len=*), intent(in) :: What
+    logical, intent(in), optional :: Phi
 
     call createLatitudeFields ( Qty, NoSurfsToAllocate, What )
     call createLongitudeFields ( Qty, NoSurfsToAllocate, What )
     call createSurfsFields ( Qty, What )
+    if ( present(phi) ) then
+      if ( phi ) call createPhiFields ( Qty, What )
+    end if
 
   end subroutine CreateGeolocationFields
 
@@ -420,6 +430,18 @@ contains
 
   end subroutine CreateLongitudeFields
 
+  ! ------------------------------------------  CreatePhiFields  -----
+  subroutine CreatePhiFields ( Qty, What )
+    ! Allocate Qty%Phi
+
+    type (QuantityTemplate_T), intent(inout) :: QTY
+    character(len=*), intent(in) :: What
+
+    call allocate_test ( qty%phi, merge(1,qty%noSurfs,qty%stacked), &
+      & qty%noInstances*qty%noCrossTrack, moduleName, trim(what) // "%Phi" )
+
+  end subroutine CreatePhiFields
+
   ! ------------------------------------------  CreateSurfsFields  -----
   subroutine CreateSurfsFields ( Qty, What )
     ! Allocate Qty%Surfs
@@ -449,7 +471,7 @@ contains
 
   ! ----------------------------  DestroyQuantityTemplateContents  -----
   subroutine DestroyQuantityTemplateContents ( qty )
-    use string_table, only: get_string, how_many_strings
+    use string_table, only: get_string
     ! Dummy argument
     type (QuantityTemplate_T), intent(inout) :: QTY
     ! Local variables
@@ -537,7 +559,7 @@ contains
 
   ! ----------------------------  DestroyQuantityTemplateDatabase  -----
   subroutine DestroyQuantityTemplateDatabase ( database )
-    use output_m, only: blanks, newLine
+    use output_m, only: blanks
     ! Dummy argument
 
     use Allocate_Deallocate, only: Test_Deallocate
@@ -555,10 +577,10 @@ contains
       if ( verbose ) call outputNamedValue( 'size(qty db)', size ( database ) )
       do qtyIndex = 1, size ( database )
         if ( verbose ) then
-          call blanks ( 9, FillChar = '-', advance='no' )
-          call output ( ' Quantity index ', advance='no' )
-          call output ( qtyIndex, advance='no' )
-          call blanks ( 1, advance='no' )
+          call blanks ( 9, FillChar = '-' )
+          call output ( ' Quantity index ' )
+          call output ( qtyIndex )
+          call blanks ( 1 )
           call blanks ( 9, FillChar = '-', advance='yes' )
         endif
         call DestroyQuantityTemplateContents ( database(qtyIndex) )
@@ -575,7 +597,7 @@ contains
   subroutine DUMP_QUANTITY_TEMPLATE ( Qty, DETAILS, NOL2CF, What )
 
     use MLSSignals_m, only: signals, dump, getRadiometerName, getModuleName
-    use output_m, only: blanks, newLine
+    use Output_m, only: blanks, newLine
     use vGridsDatabase, only: dump
 
     type(QuantityTemplate_T), intent(in) :: Qty
@@ -626,8 +648,7 @@ contains
     call output ( ' NoInstancesUpperOverlap = ' )
     call output ( qty%noInstancesUpperOverlap, advance='yes' )
     if ( .not. myNoL2CF .and. qty%unit > 0 ) then
-      call myDisplayString ( lit_indices(qty%unit), &
-        & before='      Unit = ' )
+      call myDisplayString ( phyq_indices(qty%unit), before='      Unit = ' )
     end if
     call output ( qty%badValue, before=' BadValue = ' )
     call output ( ' InstanceLen = ' )
@@ -640,8 +661,7 @@ contains
     call output ( qty%hGridIndex, before='      hGridIndex = ' )
     call output ( qty%xGridIndex, before=' xGridIndex = ' )
     call newline
-    call output ( '      sharedVGrid = ' )
-    call output ( qty%sharedVGrid, advance='no' )
+    call output ( qty%sharedVGrid, before='      sharedVGrid = ' )
     if ( qty%sharedVGrid ) then
       call output ( ' vGridIndex = ' )
       call output ( qty%vGridIndex )
@@ -650,8 +670,7 @@ contains
       & call myDisplayString ( lit_indices(qty%verticalCoordinate), &
       & before=' vertical coordinate = ' )
     call newLine
-    call output ( '      sharedFGrid = ' )
-    call output ( qty%sharedFGrid, advance='no' )
+    call output ( qty%sharedFGrid, before='      sharedFGrid = ' )
     if ( qty%sharedFGrid ) then
       call output ( ' fGridIndex = ' )
       call output ( qty%fGridIndex )
@@ -689,9 +708,15 @@ contains
         end if
       end if
       if ( allocated(qty%phi) ) then
-        call dump ( reshape ( qty%phi, &
-          & [ size(qty%geodLat,1),qty%noInstances] ), &
-          & '      Phi = ' )
+        if ( qty%noCrossTrack == 1 ) then
+          call dump ( reshape ( qty%phi, &
+            & [ size(qty%geodLat,1),qty%noInstances] ), &
+            & '      Phi = ' )
+        else
+          call dump ( reshape ( qty%phi, &
+            & [ size(qty%geodLat,1),qty%noInstances,qty%noCrossTrack] ), &
+            & '      Phi = ' )
+        end if
       else
         call output ( '      No Phi' )
       end if
@@ -1107,11 +1132,23 @@ contains
     if ( qty%noInstances/=hGrid%noProfs ) call MLSMessage ( MLSMSG_Error,&
       & ModuleName, "Size of HGrid not compatible with size of quantity" )
 
+    call allocate_test ( qty%phi, merge(1,qty%noSurfs, qty%stacked), &
+      & qty%noInstances*qty%noCrossTrack, 'qty%phi', ModuleName )
     if ( qty%stacked ) then
-      qty%phi = hGrid%phi
+      if ( qty%noCrossTrack == 1 ) then
+        qty%phi(:,:) = hGrid%phi
+      else
+        do k = 1, qty%noCrossTrack
+          do j = 1, size(hGrid%phi,2)
+            do i = 1, size(hGrid%phi,1)
+              call qty%putPhi3 ( i, j, k, hGrid%phi(i,j) )
+            end do
+          end do
+        end do
+      end if
       call CreateGeolocationFields ( qty, size(hGrid%geodLat,1), 'Qty' )
       do k = 1, qty%noCrossTrack
-        do j = 1, size(qty%geodLat,2)
+        do j = 1, qty%noInstances ! size(qty%geodLat,2) would include cross-track
           do i = 1, size(qty%geodLat,1)
             call qty%putLat3 ( i, j, k, real(hGrid%geodLat(i,j),rt) )
             call qty%putLon3 ( i, j, k, real(hGrid%lon(i,j),rt) )
@@ -1120,8 +1157,6 @@ contains
       end do
     else
       call CreateGeolocationFields ( qty, qty%noSurfs, 'Qty' )
-      call allocate_test ( qty%phi, qty%noSurfs, qty%noInstances, 'qty%phi', &
-        & ModuleName )
       if ( qty%name /= 0 ) then
         call MLSMessage ( MLSMSG_Warning, ModuleName, &
         & "Cannot copy hGrids into unstacked quantity %S" // &
@@ -1759,6 +1794,30 @@ contains
     getLon3 = qty%lon(surfOr1, inst + qty%noInstances * ( crossIndex - 1 ) )
   end function GetLon3
 
+  ! ----------------------------------------------------  GetPhi3  -----
+  pure real(rt) function GetPhi3 ( Qty, Surf, Inst, CrossIndex )
+    ! This is intended to be used only as a type-bound function with a
+    ! binding named Phi3.  It's OK to use a surface index without
+    ! checking whether the quantity is stacked -- it's done here.
+    class(quantityTemplate_t), intent(in) :: Qty
+    integer, intent(in) :: Surf, Inst, CrossIndex
+    integer :: SurfOr1
+    surfOr1 = merge(1,surf,qty%stacked)
+    getPhi3 = qty%phi(surfOr1, inst + qty%noInstances * ( crossIndex - 1 ) )
+  end function GetPhi3
+
+  ! --------------------------------------------------  GetSurfs3  -----
+  pure real(rt) function GetSurfs3 ( Qty, Surf, Inst, CrossIndex )
+    ! This is intended to be used only as a type-bound function with a
+    ! binding named Surfs3.  It's OK to use a surface index without
+    ! checking whether the quantity is stacked -- it's done here.
+    class(quantityTemplate_t), intent(in) :: Qty
+    integer, intent(in) :: Surf, Inst, CrossIndex
+    integer :: SurfOr1
+    surfOr1 = merge(1,surf,qty%stacked)
+    getSurfs3 = qty%Surfs(surfOr1, inst + qty%noInstances * ( crossIndex - 1 ) )
+  end function GetSurfs3
+
   ! --------------------------------------------  myDisplayString  -----
   subroutine myDisplayString ( index, advance, before )
     ! Given a string index, display the string or an error message
@@ -1954,6 +2013,32 @@ contains
     qty%lon(surfOr1, inst + qty%noInstances * ( crossIndex - 1 ) ) = lon
   end subroutine PutLon3
 
+  ! ----------------------------------------------------  PutPhi3  -----
+  pure subroutine PutPhi3 ( Qty, Surf, Inst, CrossIndex, Phi )
+    ! Store a Phi angle as if the Phi component were a rank-3 array
+    ! with extents (surfs,insts,cross).  It's OK to use a surface index
+    ! without checking whether the quantity is stacked -- that's done here.
+    class(quantityTemplate_t), intent(inout) :: Qty
+    integer, intent(in) :: Surf, Inst, CrossIndex
+    real(rt), intent(in) :: Phi
+    integer :: SurfOr1
+    surfOr1 = merge(1,surf,qty%stacked)
+    qty%phi(surfOr1, inst + qty%noInstances * ( crossIndex - 1 ) ) = phi
+  end subroutine PutPhi3
+
+  ! ----------------------------------------------------  PutSurfs3  -----
+  pure subroutine PutSurfs3 ( Qty, Surf, Inst, CrossIndex, SurfValue )
+    ! Store a Surfs angle as if the Surfs component were a rank-3 array
+    ! with extents (surfs,insts,cross).  It's OK to use a surface index
+    ! without checking whether the quantity is stacked -- that's done here.
+    class(quantityTemplate_t), intent(inout) :: Qty
+    integer, intent(in) :: Surf, Inst, CrossIndex
+    real(rt), intent(in) :: SurfValue
+    integer :: SurfOr1
+    surfOr1 = merge(1,surf,qty%stacked)
+    qty%surfs(surfOr1, inst + qty%noInstances * ( crossIndex - 1 ) ) = surfValue
+  end subroutine PutSurfs3
+
 !=============================================================================
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
@@ -1970,6 +2055,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.104  2015/08/31 17:26:04  pwagner
+! Fixed error in displaying qty%unit
+!
 ! Revision 2.103  2015/08/26 01:08:17  vsnyder
 ! Yet more dump spiffing
 !
