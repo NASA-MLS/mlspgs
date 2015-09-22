@@ -42,6 +42,7 @@ module Fill                     ! Create vectors and fill them.
 !---------------------------------------------------------------------------
 
   logical, parameter :: USEREICHLER = .true.
+
 contains ! =====     Public Procedures     =============================
 
   !---------------------------------------------------  MLSL2Fill  -----
@@ -62,7 +63,7 @@ contains ! =====     Public Procedures     =============================
       & dumpcommand, initializerepeat, nextrepeat, &
       & mlscase, mlsendselect, mlsselect, mlsselecting, &
       & repeat=>skip, skip
-    use expr_m, only: expr, expr_check
+    use expr_m, only: expr
     use fillUtils_1, only: addgaussiannoise, applybaseline, autofillvector, &
       & computetotalpower, derivativeofsource, fillcovariance, &
       & extractsinglechannel, fillerror, fromanother, fromgrid, &
@@ -130,9 +131,9 @@ contains ! =====     Public Procedures     =============================
       & f_profile, f_profilevalues, f_ptanquantity, &
       & f_quadrature, f_quantity, f_quantitynames, &
       & f_radiancequantity, f_ratioquantity, &
-      & f_refract, f_refgphquantity, f_refgphprecisionquantity, f_resetseed, &
-      & f_rhiprecisionquantity, f_rhiquantity, f_rank, f_rows, f_scale, &
-      & f_scaleinsts, f_scaleratio, f_scalesurfs, f_sceci, &
+      & f_refract, f_refgphquantity, f_refgphprecisionquantity, f_referenceMIF, &
+      & f_regular, f_resetseed, f_rhiprecisionquantity, f_rhiquantity, f_rank, &
+      & f_rows, f_scale, f_scaleinsts, f_scaleratio, f_scalesurfs, f_sceci, &
       & f_scvel, f_scveleci, f_scvelecr, f_sdname, f_seed, f_skipmask, &
       & f_source, f_sourcegrid, f_sourcel2aux, f_sourcel2gp, &
       & f_sourcequantity, f_sourcevgrid, f_spread, f_start, f_status, f_stride, &
@@ -543,7 +544,6 @@ contains ! =====     Public Procedures     =============================
     integer :: TOTALPOWERQUANTITYINDEX    ! In the quantities database
     integer :: TOTALPOWERVECTORINDEX      ! In the vector database
     integer, dimension(2) :: UNITASARRAY ! From expr
-    logical :: UNITSERROR               ! From expr
     integer :: USBVECTORINDEX           ! Inddex in vector database
     integer :: USBQUANTITYINDEX         ! Inddex in vector database
     integer :: USBFRACTIONVECTORINDEX   ! Index in vector database
@@ -1414,6 +1414,9 @@ contains ! =====     Public Procedures     =============================
       integer :: NOSURFS
       integer, dimension(3) :: START, COUNT, STRIDE, BLOCK
       logical :: QTYWASMASKED
+      real(kind(valueAsArray)) :: ReferenceMIF
+      integer :: ReferenceMIFunits
+      logical :: Regular  ! Magnetif field is coherent and stacked
       type(vectorValue_T) :: TEMPQUANTITY  ! For storing original qty's mask
       integer :: TheUnits
       ! Executable
@@ -1424,6 +1427,9 @@ contains ! =====     Public Procedures     =============================
       geolocation = l_none
       got = .false.
       multiplier = 1.
+      referenceMIF = 1
+      referenceMIFunits = PHYQ_Dimensionless
+      regular = .false.
       start = 0
       count = 0
       stride = 0
@@ -1727,6 +1733,12 @@ contains ! =====     Public Procedures     =============================
         case ( f_refGPHPrecisionQuantity ) ! For GPH precision
           refGPHPrecisionVectorIndex = decoration(decoration(subtree(1,gson)))
           refGPHPrecisionQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+        case ( f_referenceMIF )
+          call expr ( gson, unitAsArray, valueAsArray, expr_type )
+          referenceMIF = valueAsArray(1)
+          referenceMIFunits = unitAsArray(1)
+        case ( f_regular )
+          regular = get_boolean ( gson )
         case ( f_resetSeed )
           resetSeed = get_boolean ( gson )
         case ( f_rhiPrecisionQuantity ) ! For converting to h2o precision
@@ -2640,15 +2652,26 @@ contains ! =====     Public Procedures     =============================
 !           call UsingMagneticModel ( quantity, key, scVelQuantity, &
 !                                   & geocAltitudeQuantity, gphQuantity )
         if ( associated(gphQuantity) ) then
+          if ( .not. got(f_referenceMIF) ) then
+            referenceMIF = gphQuantity%template%noSurfs / 2
+            referenceMIFunits = PHYQ_Dimensionless
+          end if
           if ( associated(scVelQuantity) .and. associated(geocAltitudeQuantity) ) then
             call UsingMagneticModel ( quantity, key, scVelQuantity, &
-                                    & geocAltitudeQuantity, gphQuantity )
+                                    & geocAltitudeQuantity, gphQuantity, &
+                                    & regular=regular, referenceMIF=referenceMIF, &
+                                    & referenceMIFunits=referenceMIFunits )
           else
-            call UsingMagneticModel ( quantity, key, gphQuantity=gphQuantity )
+            call UsingMagneticModel ( quantity, key, gphQuantity=gphQuantity, &
+                                    & regular=regular, referenceMIF=referenceMIF, &
+                                    & referenceMIFunits=referenceMIFunits )
           end if
         else if ( associated(scVelQuantity) .and. associated(geocAltitudeQuantity) ) then
+          if ( .not. got(f_referenceMIF) ) &
+            & referenceMIF = scVelQuantity%template%noSurfs / 2
           call UsingMagneticModel ( quantity, key, scVelQuantity, &
-                                  & geocAltitudeQuantity)
+                                  & geocAltitudeQuantity, &
+                                  & regular=regular, referenceMIF=referenceMIF )
         else
           call UsingMagneticModel ( quantity, key )
         end if
@@ -3211,6 +3234,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.455  2015/09/22 23:39:05  vsnyder
+! Add ReferenceMIF and Regular fields
+!
 ! Revision 2.454  2015/09/17 23:16:15  pwagner
 ! Added changeSettings command
 !
