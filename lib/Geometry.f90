@@ -173,11 +173,11 @@ contains
   ! --------------------------------------------  GeodToGeocAlt_D  -----
   double precision function GeodToGeocAlt_D ( Where ) result ( GeocAlt )
 
-  ! Convert geodetic altitude in meters to geocentric height in meters
+  ! Convert geodetic altitude in meters above sea level to geocentric height in meters
 
     ! Arguments
-    double precision, intent(in) :: Where(3) ! Lat(degrees), Lon(Degrees),
-                                             ! Geodetic height (Meters)
+    double precision, intent(in) :: Where(3) ! Geod. Lat(degrees), Lon(Degrees),
+                                             ! Geod. height (Meters) above sea level
 
     double precision :: XYZ(3)               ! Cartesian ECR in km
 
@@ -191,11 +191,11 @@ contains
   ! --------------------------------------------  GeodToGeocAlt_S  -----
   double precision function GeodToGeocAlt_S ( Where ) result ( GeocAlt )
 
-  ! Convert geodetic altitude in meters to geocentric height in meters
+  ! Convert geodetic altitude in meters above sea level to geocentric height in meters
 
     ! Arguments
-    real, intent(in) :: Where(3)             ! Lat(degrees), Lon(Degrees),
-                                             ! Geodetic height (Meters)
+    real, intent(in) :: Where(3)             ! Geod. Lat(degrees), Lon(Degrees),
+                                             ! Geod. height (Meters) above sea level
 
     real :: XYZ(3)                           ! Cartesian ECR in km
 
@@ -546,6 +546,9 @@ contains
 end module Geometry
 
 ! $Log$
+! Revision 2.25  2015/09/22 23:05:06  vsnyder
+! Correct some comments about geodetic vs geocentric latitudes
+!
 ! Revision 2.24  2015/04/29 00:54:52  vsnyder
 ! Add GeodToGeocAlt
 !
