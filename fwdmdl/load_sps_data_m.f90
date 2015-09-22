@@ -29,13 +29,16 @@ module Load_SPS_Data_M
     integer,  pointer :: l_p(:) => null() ! Last entry in phi_basis per sps
     integer,  pointer :: l_x(:) => null() ! Last entry in cross angles per sps
     integer,  pointer :: l_v(:) => null() ! Last entry in values per sps
-    integer :: P_Len = 0 ! \sum_{i=1}^n (l_z(i)-l_z(i-1))*(l_p(i)-l_p(i-1))
+    integer :: P_Len = 0 ! \sum_{i=1}^n (l_z(i)-l_z(i-1))*(l_p(i)-l_p(i-1))*
+                         !              (l_x(i)-l_x(i-1))
     integer,  pointer :: windowstart(:) => null()! horizontal starting index
 !                                                  from l2gp
     integer,  pointer :: windowfinish(:) => null()! horizontal ending index
 !                                                  from l2gp
     integer,  pointer :: mol(:) => null() ! Qty molecule, l_...
-    integer,  pointer :: Z_coord(:) => null() ! l_geo[cd]Altitude, l_zeta
+    integer,  pointer :: Z_coord(:) => null()  ! l_geo[cd]Altitude, l_zeta
+    logical,  pointer :: Coherent(:) => null() ! From each Qty template
+    logical,  pointer :: Stacked(:) => null()  ! From each Qty template
     ! Which column of dBeta_path_df to use for each molecule.
     ! Molecule beta is not dependent upon mixing ratio if zero.
     ! Only nonzero where derivatives for molecules with mixing-ratio-dependent
@@ -51,13 +54,13 @@ module Load_SPS_Data_M
     real(rp), pointer :: zet_basis(:) => null() ! zeta grid entries for all
 !                                                 molecules
     real(rp), pointer :: phi_basis(:) => null() ! phi  grid entries for all
-!                                                 molecules
+!                                                 molecules, radians
     real(rp), pointer :: cross_angles(:) => null() ! cross-angles  grid entries
-!                                                 for all molecules
+!                                                 for all molecules, degrees
     real(rp), pointer :: values(:) => null()    ! species values (eg vmr).
-!     This is really a three-dimensional quantity dimensioned frequency
-!     (or 1) X zeta (or 1) X phi (or 1), taken in Fortran's column-major
-!     array-element order.
+!     This is really a four-dimensional quantity dimensioned frequency
+!     (or 1) X zeta (or 1) X phi (or 1) X Cross, taken in Fortran's column-
+!     major array-element order.
     logical,  pointer :: deriv_flags(:) => null() ! flags to do derivatives,
 !     corresponding to the values component.
 
@@ -209,6 +212,10 @@ contains
     logical :: MyAcross, MyFlag
     integer :: II, No_Ang
 
+    if ( .not. qty%template%stacked .or. .not. qty%template%coherent ) &
+      & call MLSMessage ( MLSMSG_Error, moduleName, &
+         & 'Cannot load a quantity that is unstacked or incoherent' )
+
     myAcross = .false.
     if ( present(across) ) myAcross = across
     myFlag = .false.
@@ -256,8 +263,7 @@ contains
 
        call create_grids_2 ( grids_x )
 
-       call fill_grids_2 ( grids_x, 1, qty, setDerivFlags, across=across, &
-         & phitan=phitan )
+       call fill_grids_2 ( grids_x, 1, qty, setDerivFlags, phitan=phitan )
 
     end if
 
@@ -411,7 +417,9 @@ contains
     call allocate_test ( Grids_x%lin_log, n, 'lin_log', ModuleName )
     call allocate_test ( Grids_x%min_val, n, 'min_val', ModuleName )
     call allocate_test ( Grids_x%z_coord, n, 'Grids_x%z_coord', ModuleName )
- 
+    call allocate_test ( Grids_x%coherent, n, 'Grids_x%coherent', ModuleName )
+    call allocate_test ( Grids_x%stacked, n, 'Grids_x%stacked', ModuleName )
+
     grids_x%min_val = -huge(0.0_r8)
 
   end subroutine Create_Grids_1
@@ -450,6 +458,7 @@ contains
     use ForwardModelConfig, only: ForwardModelConfig_t
     use Intrinsic, only: L_Vmr
     use ManipulateVectorQuantities, only: FindInstanceWindow
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use VectorsModule, only: VectorValue_T
 
     type(grids_T), intent(inout) :: Grids_x
@@ -461,6 +470,10 @@ contains
 
     integer :: KF, KP, KX, KZ
 
+    if ( .not. qty%template%stacked .or. .not. qty%template%coherent ) &
+      & call MLSMessage ( MLSMSG_Error, moduleName, &
+         & 'Cannot load a quantity that is unstacked or incoherent' )
+
     grids_x%names(ii) = qty%template%name
 
     if ( present(phitan) ) then
@@ -471,7 +484,10 @@ contains
       grids_x%windowFinish(ii) = size(qty%template%phi,2)
     end if
 
+    kz = qty%template%noSurfs
+
     kp = grids_x%windowFinish(ii) - grids_x%windowStart(ii) + 1
+
     kx = qty%template%noCrossTrack
 
     if ( associated(qty%template%frequencies) ) then
@@ -480,17 +496,18 @@ contains
       kf = qty%template%noChans ! == 1 if qty%template%frequencyCoordinate == l_none
     end if
 
-    kz = qty%template%noSurfs
-
     grids_x%l_f(ii) = grids_x%l_f(ii-1) + kf
-    grids_x%l_p(ii) = grids_x%l_p(ii-1) + kp
+    grids_x%l_p(ii) = grids_x%l_p(ii-1) + &
+                    &   kp * merge(1,kz,qty%template%stacked) * kx
     grids_x%l_x(ii) = grids_x%l_x(ii-1) + kx
-    grids_x%l_v(ii) = grids_x%l_v(ii-1) + kz * kp * kf * kx
+    grids_x%l_v(ii) = grids_x%l_v(ii-1) + kf * kz * kp * kx
     grids_x%z_coord(ii) = qty%template%verticalCoordinate
-    grids_x%l_z(ii) = grids_x%l_z(ii-1) + kz * kx
-    grids_x%p_len = grids_x%p_len + kz * kp
+    grids_x%l_z(ii) = grids_x%l_z(ii-1) + kz * merge(1,kx,qty%template%stacked)
+    grids_x%p_len = grids_x%p_len + kz * kp * kx
     grids_x%mol(ii) = qty%template%molecule
     grids_x%qty(ii) = qty%template%quantityType
+    grids_x%coherent(ii) = qty%template%coherent
+    grids_x%stacked(ii) = qty%template%stacked
 
     ! Remember positions of molecules in grids_x
     if ( qty%template%quantityType == l_vmr ) &
@@ -503,7 +520,7 @@ contains
 
   ! -----------------------------------------------  Fill_Grids_2  -----
   subroutine Fill_Grids_2 ( Grids_x, II, Qty, SetDerivFlags, Phi_Offset, &
-    & Across, PhiTan )
+    & PhiTan )
   ! Fill the zeta, phi, freq. basis and value components for the II'th
   ! "molecule" in Grids_x.
 
@@ -522,16 +539,15 @@ contains
 
     type(grids_t), intent(inout) :: Grids_x
     integer, intent(in) :: II
+    real(r8), pointer :: P3(:,:,:) ! Rank 3 pointer to grids_x%phi_basis(pp+1:qp)
     type(vectorValue_T), intent(in) :: QTY     ! An arbitrary vector quantity
     logical, intent(in), optional :: SetDerivFlags
     real(rp), intent(in), optional :: Phi_Offset ! Radians
-    logical, intent(in), optional :: Across ! Viewing angle is not in orbit plane
     type (vectorValue_T), intent(in), optional :: PHITAN  ! Tangent geodAngle
 
-    integer :: I, J, K,  KF, KV, KX, KZ, L, N, PF, PP, PV, PX, PZ
+    integer :: I, J, K, KF, KP, KX, KZ, L, N, PF, PP, PV, PX, PZ
     integer :: QF, QP, QV, QX, QZ, WF, WS
     integer :: InstOr1
-    logical :: MyAcross
     logical :: PackFrq ! Need to pack the frequency "dimension"
     real(rp) :: Geod(3)   ! Geodetic coordinates lat (deg), lon(deg), alt (m)
     
@@ -549,13 +565,10 @@ contains
 
     kf = qf - pf
     kx = qx - px
-    kv = qv - pv
     kz = qz - pz
     ws = Grids_x%windowStart(ii)
     wf = Grids_x%windowFinish(ii)
-
-    myAcross = .false.
-    if ( present(across) ) myAcross = across
+    kp = wf - ws + 1
 
     select case ( qty%template%verticalCoordinate )
     case ( l_geocAltitude ) ! This will be used for interpolation with
@@ -592,28 +605,15 @@ contains
         & datum=[qty%template%name] )
     end select
 
-    if ( myAcross ) then
-      if ( phitan%template%noInstances == 1 ) then
-        Grids_x%phi_basis(pp+1:qp) = qty%template%crossAngles + &
-                                     phitan%template%phi(1,1)
-      else if ( phitan%template%noInstances == phitan%template%noCrossTrack ) then
-        Grids_x%phi_basis(pp+1:qp) = qty%template%crossAngles + &
-                                     phitan%template%phi(1,:)
-      else if ( qty%template%noCrossTrack == 1 ) then
-        Grids_x%phi_basis(pp+1:qp) = qty%template%crossAngles(1) + &
-                                     phitan%template%phi(1,:)
-      else
-        call MLSMessage ( MLSMSG_Error, moduleName, &
-          & 'Number of instances of PhiTan /= number of cross angles ' // &
-          & 'number of cross angles /= 1' )
-      end if
-    else
-      if ( present(phi_offset) ) then
-        Grids_x%phi_basis(pp+1:qp) = qty%template%phi(1,ws:wf)*Deg2Rad + phi_offset
-      else
-        Grids_x%phi_basis(pp+1:qp) = qty%template%phi(1,ws:wf)*Deg2Rad
-      end if
-    end if
+    p3(1:size(qty%template%phi,1),1:kp,1:kx) => Grids_x%phi_basis(pp+1:qp)
+
+    do i = 1, kx
+      p3(:,:,i) = (qty%template%phi(:,ws:wf) + qty%template%crossAngles(i)) * Deg2Rad
+    end do
+
+    if ( present(phi_offset) ) &
+      & Grids_x%phi_basis(pp+1:qp) = Grids_x%phi_basis(pp+1:qp) + phi_offset
+
     grids_x%cross_angles(px+1:qx) = qty%template%crossAngles
 
     if ( associated ( qty%template%frequencies ) ) then
@@ -641,7 +641,7 @@ contains
       ! qv - pv == (wf - ws + 1) * kf * kz here
       ! kz = noSurfs * noCrossTrack here
       ! shape(qty%value4) = [ freqs, zetas, instances, cross-angles ]
-      Grids_x%values(pv+1:qv) = reshape(qty%value4(1:kf,1:kz/kx,ws:wf,1:kx), &
+      Grids_x%values(pv+1:qv) = reshape(qty%value4(1:kf,1:kz,ws:wf,1:kx), &
                                       & (/qv-pv/))
     end if
     !  mixing ratio values are manipulated if it's log basis
@@ -758,6 +758,8 @@ contains
     call allocate_test(grids_x%values,0,'grids_x%values',modulename)
     call allocate_test(grids_x%deriv_flags,0,'grids_x%deriv_flags',modulename)
     call allocate_test(grids_x%z_coord,0,'grids_x%z_coord',modulename)
+    call allocate_test(grids_x%coherent,0,'grids_x%coherent',modulename)
+    call allocate_test(grids_x%stacked,0,'grids_x%stacked',modulename)
 
   end subroutine EmptyGrids_t
 
@@ -789,6 +791,8 @@ contains
     call deallocate_test(grids_x%values,'Grids_x%values',modulename)
     call deallocate_test(grids_x%deriv_flags,'Grids_x%deriv_flags',modulename)
     call deallocate_test(grids_x%z_coord,'Grids_x%z_coord',modulename)
+    call deallocate_test(grids_x%coherent,'Grids_x%coherent',modulename)
+    call deallocate_test(grids_x%stacked,'Grids_x%stacked',modulename)
 
   end subroutine DestroyGrids_t
 
@@ -800,14 +804,14 @@ contains
     use Dump_0, only: Dump
     use Intrinsic, only: lit_indices
     use Output_M, only: NewLine, Output
-    use String_Table, only: Display_String, String_Length
+    use String_Table, only: Display_String
 
     type(grids_t), intent(in) :: The_Grid
     character(len=*), intent(in), optional :: Name
-    integer, intent(in), optional :: Details ! <= 0 => don't dump bases
-                                             ! <= 1 => don't dump values, default 0
+    integer, intent(in), optional :: Details ! <= 0 => don't dump bases (default)
+                                             ! <= 1 => don't dump values
 
-    integer :: I, MyDetails
+    integer :: I, KX, MyDetails, NZG, NZV, W
 
     myDetails = 0
     if ( present(details) ) myDetails = details
@@ -852,50 +856,70 @@ contains
     if ( myDetails > 0 ) then
       call dump ( the_grid%min_val, 'The_grid%Min_Val' )
       call dump ( the_grid%frq_basis, 'The_grid%Frq_Basis' )
-      call dump ( rad2deg*the_grid%phi_basis, 'The_grid%Phi_Basis (degrees)' )
-      call dump ( the_grid%cross_angles, 'The_grid%Cross_Angles' )
+      call dump ( the_grid%coherent, 'The_grid%Coherent' )
+      call dump ( the_grid%stacked, 'The_grid%Stacked' )
       do i = 1, size(the_grid%names)
-        call output ( i, before='The_grid%Zet_Basis(' )
-        if ( the_grid%names(i) > 0 ) then
-          call display_string ( the_grid%names(i), before='=' )
-        else if ( the_grid%mol(i) > 0 ) then
-          call display_string ( lit_indices(the_grid%mol(i)), before='=' )
-        else if ( the_grid%qty(i) > 0 ) then
-          call display_string ( lit_indices(the_grid%qty(i)), before='=' )
-        end if
-        call output ( (the_grid%l_z(i)-the_grid%l_z(i-1))/ &
-                      (the_grid%l_x(i)-the_grid%l_x(i-1)), &
-          & before=') surfs,insts,cross (' )
-        call output ( the_grid%l_p(i)-the_grid%l_p(i-1), before=',' )
+        kx = the_grid%l_x(i) - the_grid%l_x(i-1)
+        ! NZ for geolocation fields:
+        nzg = merge(1,(the_grid%l_z(i)-the_grid%l_z(i-1))/kx,the_grid%stacked(i))
+        ! NZ for values fields:
+        nzv = (the_grid%l_z(i)-the_grid%l_z(i-1))/merge(1,kx,the_grid%stacked(i))
+        w = the_grid%windowFinish(i) - the_grid%windowStart(i) + 1
+        call output ( i, before='The_grid%Phi_Basis(' )
+        call dump_what
+        call output ( nzg, before=') surfs,insts,cross (' )
+        call output ( w, before=',' )
         call output ( the_grid%l_x(i)-the_grid%l_x(i-1), before=',', &
-                    & after=')', advance='yes' )
+                    & after=') (degrees)', advance='yes' )
+        call dump ( rad2deg*the_grid%phi_basis(the_grid%l_p(i-1)+1: &
+                                             & the_grid%l_p(i)), &
+                  & lbound=the_grid%l_p(i-1)+1 )
+        call output ( i, before='The_grid%Cross_Angles(' )
+        call dump_what
+        call output ( kx, before=') cross (', after=') (degrees)', advance='yes' )
+        call dump ( the_grid%cross_angles(the_grid%l_x(i-1)+1:the_grid%l_x(i)), &
+                  & lbound=the_grid%l_x(i-1)+1 )
+        call output ( i, before='The_grid%Zet_Basis(' )
+        call dump_what
+        call output ( nzv, before=') surfs,insts,cross (' )
+        call output ( w, before=',' )
+        call output ( merge(1,kx,the_grid%stacked(i)), before=',', after=')', advance='yes' )
         call dump ( the_grid%zet_basis(the_grid%l_z(i-1)+1:the_grid%l_z(i)), &
           & lbound=the_grid%l_z(i-1)+1 )
+        if ( myDetails > 1 ) then
+           call output ( i, before='The_grid%Values(' )
+           call dump_what
+           call output ( the_grid%l_f(i)-the_grid%l_f(i-1), &
+             & before=') freqs,surfs,insts,cross (' )
+           call output ( nzv, before=',' )
+           call output ( w, before=',' )
+           call output ( kx, before=',', after=')', advance='yes' )
+           call dump ( the_grid%values(the_grid%l_v(i-1)+1:the_grid%l_v(i)), &
+             lbound=the_grid%l_v(i-1)+1 )
+           call output ( i, before='The_grid%deriv_flags(' )
+           call dump_what
+           call output ( the_grid%l_f(i)-the_grid%l_f(i-1), &
+             & before=') freqs,surfs,insts,cross (' )
+           call output ( nzv, before=',' )
+           call output ( w, before=',' )
+           call output ( kx, before=',', after=')', advance='yes' )
+           call dump ( the_grid%deriv_flags(the_grid%l_v(i-1)+1:the_grid%l_v(i)), &
+             lbound=the_grid%l_v(i-1)+1 )
+        end if
       end do
-      if ( myDetails > 1 ) then
-        do i = 1, size(the_grid%names)
-          call output ( i, before='The_grid%Values(' )
-          if ( the_grid%names(i) > 0 ) then
-            call display_string ( the_grid%names(i), before='=' )
-          else if ( the_grid%mol(i) > 0 ) then
-            call display_string ( lit_indices(the_grid%mol(i)), before='=' )
-          else if ( the_grid%qty(i) > 0 ) then
-            call display_string ( lit_indices(the_grid%qty(i)), &
-              & before='=' )
-          end if
-          call output ( the_grid%l_f(i)-the_grid%l_f(i-1), &
-            & before=') freqs,surfs,insts,cross (' )
-          call output ( (the_grid%l_z(i)-the_grid%l_z(i-1))/ &
-                        (the_grid%l_x(i)-the_grid%l_x(i-1)), before=',' )
-          call output ( the_grid%l_p(i)-the_grid%l_p(i-1), before=',' )
-          call output ( the_grid%l_x(i)-the_grid%l_x(i-1), before=',', &
-                      & after=')', advance='yes' )
-          call dump ( the_grid%values(the_grid%l_v(i-1)+1:the_grid%l_v(i)), &
-            lbound=the_grid%l_v(i-1)+1 )
-        end do
-        call dump ( the_grid%deriv_flags, 'The_grid%Deriv_Flags' )
-      end if
     end if
+
+  contains
+    subroutine Dump_What
+      if ( the_grid%names(i) > 0 ) then
+        call display_string ( the_grid%names(i), before='=' )
+      else if ( the_grid%mol(i) > 0 ) then
+        call display_string ( lit_indices(the_grid%mol(i)), before='=' )
+      else if ( the_grid%qty(i) > 0 ) then
+        call display_string ( lit_indices(the_grid%qty(i)), &
+          & before='=' )
+      end if
+    end subroutine Dump_What
 
   end subroutine Dump_Grids
 
@@ -912,6 +936,10 @@ contains
 end module LOAD_SPS_DATA_M
 
 ! $Log$
+! Revision 2.103  2015/08/25 18:42:03  vsnyder
+! Filling zet_basis and values was still getting subscript bounds errors.
+! Hopefully, that's repaired now.  The Grids_t dump is improved.
+!
 ! Revision 2.102  2015/07/27 22:37:22  vsnyder
 ! Store crossAngles in grids_t instead of conflating with phi.  Use absence
 ! of PhiTan to indicate the phi window is all available phi's.  Remove the
