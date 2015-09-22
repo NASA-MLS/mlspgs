@@ -270,6 +270,7 @@ manipulation
 mark # CPU time mark for dump command
 mask
 matrix
+maxAddDiag # number of times to increase diagonal of failed Cholesky
 maxGap
 maxIterations
 maxJ # Maximum number of Jacobian evaluations in Retrieve
@@ -374,6 +375,7 @@ regAfter
 regApriori               ! Regularization is to apriori, not zero
 regOrders
 regQuants
+regular                  ! Magnetic field fill is stacked and coherent
 regWeights
 regWeightVec
 removeQuantities
@@ -534,6 +536,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.258  2015/09/22 01:58:21  vsnyder
+# Add Regular fill field
+#
 # Revision 2.257  2015/07/14 23:27:44  pwagner
 # may divert Dump commands to named dumpFile
 #
