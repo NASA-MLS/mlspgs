@@ -124,7 +124,8 @@ contains
 
       n_z = z_indb - z_inda
       n_p = p_indb - p_inda
-      n_v = n_z * n_p
+      ! n_z already has n_p in it if the quantity is not stacked
+      n_v = n_z * merge ( n_p, 1, grids_x%stacked(sps_i) )
 
       v_indb = v_inda + n_v
 
@@ -249,6 +250,9 @@ contains
 end module Comp_Eta_Docalc_No_Frq_m
 
 ! $Log$
+! Revision 2.19  2015/09/22 23:19:55  vsnyder
+! Consequences of cross-track stuff in load_sps_data
+!
 ! Revision 2.18  2014/08/01 01:03:19  vsnyder
 ! Clear only nonzeros, change Eta_ZP from out to inout
 !
