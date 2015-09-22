@@ -544,7 +544,7 @@ contains ! =====     Public procedures     =============================
              l+l_extinctionv2, l+l_fieldAzimuth, l+l_fieldElevation, &
              l+l_fieldStrength, l+l_fwdModelMean, l+l_fwdModelStdDev, &
              l+l_fwdModelTiming, l+l_geodAltitude, l+l_geolocation, &
-             l+l_gph, l+l_heightOffset, l+l_isotopeRatio, l+l_IWC, &
+             l+l_gph, l+l_GHzAzim, l+l_heightOffset, l+l_isotopeRatio, l+l_IWC, &
              l+l_jacobian_cols, l+l_jacobian_rows, l+l_l1bMAFBaseline, &
              l+l_l1bMIF_TAI, l+l_limbSidebandFraction, l+l_lineCenter, &
              l+l_lineWidth, l+l_lineWidth_tDep, l+l_losTransFunc, &
@@ -558,7 +558,7 @@ contains ! =====     Public procedures     =============================
              l+l_phaseTiming, l+l_phiTan, l+l_ptan, l+l_quality, l+l_radiance, &
              l+l_reflrefl, l+l_reflspill, l+l_refltemp, l+l_refltrans, &
              l+l_refGPH, l+l_rhi, l+l_scanResidual, l+l_scatteringAngle, &
-             l+l_scECI, l+l_scGeocAlt, l+l_scVelECI, l+l_scVelECR, &
+             l+l_scECI, l+l_scECR, l+l_scGeocAlt, l+l_scVelECI, l+l_scVelECR, &
              l+l_singleChannelRadiance, l+l_sizedistribution, &
              l+l_spaceRadiance, l+l_status, l+l_strayRadiance, &
              l+l_surfaceHeight, l+l_surfacetype, l+l_systemTemperature, &
@@ -1042,6 +1042,8 @@ contains ! =====     Public procedures     =============================
              begin, f+f_refract, boolean(), &
              begin, f+f_refGPHQuantity, vectorQuantity(), &
              begin, f+f_refGPHPrecisionQuantity, vectorQuantity(), &
+             begin, f+f_referenceMIF, numeric(), & ! dimless or length
+             begin, f+f_regular, boolean(), &
              begin, f+f_resetSeed, boolean(), &
              begin, f+f_rhiPrecisionQuantity, vectorQuantity(), &
              begin, f+f_rhiQuantity, vectorQuantity() /), &
@@ -1648,6 +1650,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_lambda, numeric(phyq_dimensionless), &
              begin, f+f_lambdaMin, numeric(phyq_dimensionless), &
              begin, f+f_lowBound, field_spec(s_vector), &
+             begin, f+f_maxAddDiag, numeric(phyq_dimensionless), &
              begin, f+f_maxJ, numeric(phyq_dimensionless), &
              begin, f+f_measurements, field_spec(s_vector,req=req), &
              begin, f+f_measurementSD, field_spec(s_vector), &
@@ -2046,6 +2049,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.619  2015/09/22 01:56:51  vsnyder
+! Add GHzAzim and ScECR quantity types, ReferenceMIF and Regular fill fields
+!
 ! Revision 2.618  2015/09/17 22:58:54  pwagner
 ! Added changeSettings command
 !
