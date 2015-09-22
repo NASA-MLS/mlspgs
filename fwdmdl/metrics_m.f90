@@ -11,15 +11,15 @@
 
 module Metrics_m
 
-  use CONSTANTS, only: RAD2DEG
-  use MLSKINDS, only: RP
+  use Constants, only: Rad2Deg
+  use MLSKinds, only: RP
 
   implicit NONE
   private
   public :: Height_Metrics, More_Metrics, Solve_H_Phi, Tangent_Metrics
   public :: More_Points
 
-  ! Values for stat argument to/from Solve_H_Phi:
+  ! Values for Stat argument to/from Solve_H_Phi:
   integer, parameter, public :: No_sol = 0  ! No solution
   integer, parameter, public :: NaN_sol = 1 ! No solution -- NaN
   integer, parameter, public :: Order = 2   ! No solution -- Phi out of order
@@ -44,7 +44,7 @@ module Metrics_m
   logical, parameter :: ComplexDebug = .true. .and. debug
   ! For debugging output format:
   ! logical, parameter :: Clean = .false.
-  character(len=4), parameter :: options=' '
+  character(len=4), parameter :: Options=' '
   real, parameter :: Ang = rad2deg ! degrees
 ! real, parameter :: Ang = 1.0     ! .not. degrees
   character(*), parameter :: Fmt = '( i4,i2,i4,f12.5,f10.3,a )'
@@ -177,7 +177,7 @@ contains
     integer, intent(in) :: Tan_ind     ! Tangent height index, 1 = center of
     !                                    longest path
     real(rp), intent(in) :: P_basis(:) ! Horizontal temperature representation
-    !                                    basis, degrees
+    !                                    basis, radians
     real(rp), intent(in) :: H_ref(:,:) ! Heights by z_ref and p_basis, km
     real(rp), intent(in) :: H_Surf     ! Height of the pressure reference
     !                                    surface z_ref(1) above R_eq at phi_t, km
@@ -196,7 +196,7 @@ contains
     integer, intent(out) :: Vert_Inds(:) ! What to use in h_ref, 1:n_path
     real(rp), intent(out) :: H_grid(:) ! computed heights, referenced to
                                        ! equivalent circular Earth center, km
-    real(rp), intent(out) :: P_grid(:) ! computed phi's, degrees
+    real(rp), intent(out) :: P_grid(:) ! computed phi's, radians
 
     ! optional inputs
     real(rp), optional, intent(in) :: H_Tol ! Height tolerance in kilometers
@@ -549,6 +549,7 @@ path: do i = i1, i2
       if ( h_phi_dump < 0 ) &
         & call dump ( rad2deg*p_basis, name='p_basis (degrees)', format='(f14.6)', options=options )
       call dump ( h_grid, name='h_grid', format='(f14.6)', options=options )
+      if ( do_dumps >= 1 ) call dump ( z_ref, name='z_ref', options=options )
     end if
 
   contains
@@ -1131,6 +1132,9 @@ path: do i = i1, i2
 end module Metrics_m
 
 ! $Log$
+! Revision 2.74  2015/05/28 23:14:42  vsnyder
+! Add units in comments about variables
+!
 ! Revision 2.73  2013/06/12 02:32:30  vsnyder
 ! Cruft removal
 !
