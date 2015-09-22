@@ -32,7 +32,7 @@ module FillUtils_1                     ! Procedures used by Fill
     & l_dobsonunits, l_du, &
     & l_ecrtofov, &
     & l_fieldazimuth, l_fieldelevation, l_fieldstrength, &
-    & l_geocaltitude, l_geodaltitude, l_GPH, &
+    & l_geocaltitude, l_geodaltitude, l_GPH, l_GHzAzim, &
     & l_height, l_isotoperatio, &
     & l_l1bmafbaseline, l_l1bmif_tai, &
     & l_limbsidebandfraction, l_losvel, &
@@ -43,15 +43,15 @@ module FillUtils_1                     ! Procedures used by Fill
     & l_pressure, l_ptan,  l_quality, &
     & l_radiance, l_refGPH, &
     & l_refltemp, &
-    & l_sceci, l_scgeocalt, l_scveleci, l_scvelecr, &
+    & l_sceci, l_scecr, l_scgeocalt, l_scveleci, l_scvelecr, &
     & l_singlechannelradiance, &
     & l_status, l_surfacetype, l_systemtemperature, &
     & l_temperature, l_time, l_tngteci, l_tngtgeodalt, &
     & l_tngtgeocalt, l_totalpowerweight, l_vmr, &
     & l_xyz, l_zeta
   use Intrinsic, only: field_indices, lit_indices, &
-    & phyq_dimensionless, phyq_indices, phyq_invalid, phyq_temperature, &
-    & phyq_length, phyq_pressure, phyq_zeta, phyq_angle
+    & phyq_angle, phyq_dimensionless, phyq_indices, phyq_invalid, &
+    & phyq_length, phyq_pressure, phyq_temperature, phyq_zeta
   use L1BData, only: deallocateL1BData, dump, getl1bfile, L1BData_t, &
     & precisionsuffix, readL1BData, assemblel1bqtyname
   use L2GPData, only: L2GPData_t, readL2GPData, destroyL2GPcontents
@@ -4106,7 +4106,9 @@ contains ! =====     Public Procedures     =============================
     subroutine FromL1B ( ROOT, QUANTITY, CHUNK, FILEDATABASE, &
       & ISPRECISION, SUFFIX, GEOLOCATION, PRECISIONQUANTITY, BOMask )
       use BitStuff, only: negativeIfBitPatternSet
-      use Init_Tables_Module, only: l_geocentric, l_geodetic, l_none
+      use Geometry, only: GeocToGeodLat, GeodToGeocAlt
+      use Init_Tables_Module, only: l_geocAltitude, l_geocentric, l_geodetic, &
+        & l_none
       integer, intent(in)                        :: ROOT
       type (VectorValue_T), INTENT(INOUT)        :: QUANTITY
       type (MLSChunk_T), INTENT(IN)              :: CHUNK
@@ -4118,19 +4120,23 @@ contains ! =====     Public Procedures     =============================
       integer, intent(in), optional              :: BOMask ! A pattern of bits--
                                               ! set prec. neg. if matched
       ! Local variables
-      integer                               :: BO_error
-      type (L1BData_T)                      :: BO_stat
-      integer                               :: channel
-      character (len=132)                   :: MODULENAMESTRING
-      character (len=132)                   :: NAMESTRING
-      integer                               :: FLAG, NOMAFS, maxMIFs
-      type (L1BData_T)                      :: L1BDATA
-      type (MLSFile_T), pointer             :: L1BFile
-      type (MLSFile_T), pointer             :: L1BOAFile
-      integer                               :: COLUMN
-      integer :: Me = -1                    ! String index for trace
-      integer                               :: myBOMask
-      integer                               :: ROW
+      integer                   :: BO_error
+      type (L1BData_T)          :: BO_stat
+      integer                   :: channel
+      character (len=132)       :: MODULENAMESTRING
+      character (len=132)       :: NAMESTRING
+      integer                   :: FLAG, NOMAFS, maxMIFs
+      integer                   :: I, J, K
+      type (L1BData_T)          :: L1BDATA
+      type (MLSFile_T), pointer :: L1BFile
+      type (MLSFile_T), pointer :: L1BOAFile
+      real(kind(quantity%template%geodLat)) :: Lat
+      integer                   :: COLUMN
+      integer                   :: Me = -1 ! String index for trace
+      integer                   :: myBOMask
+      integer                   :: NG ! geolocations = noSurfs * noCrossTrack =
+                                      ! instanceLen / noChans
+      integer                   :: ROW
       ! Executable code
       call trace_begin ( me, 'FillUtils_1.FromL1B', root, &
         & cond=toggle(gen) .and. levels(gen) > 1 )
@@ -4146,6 +4152,10 @@ contains ! =====     Public Procedures     =============================
         call GetModuleName( quantity%template%instrumentModule, nameString )
         nameString = AssembleL1BQtyName('ECRtoFOV', L1BOAFile%HDFVersion, .TRUE., &
           & trim(nameString))
+      case ( l_GHzAzim )
+        call GetModuleName ( quantity%template%instrumentModule, nameString )
+        nameString = AssembleL1BQtyName ('azimAngle', L1BOAFile%HDFVersion, .TRUE., &
+          & trim(nameString) )
       case ( l_L1BMAFBaseline )
         call GetSignalName ( quantity%template%signal, nameString, &
           & sideband=quantity%template%sideband, noChannels=.TRUE. )
@@ -4175,6 +4185,8 @@ contains ! =====     Public Procedures     =============================
         nameString = AssembleL1BQtyName(nameString, L1BOAFile%HDFVersion, .FALSE.)
       case ( l_scECI )
         nameString = AssembleL1BQtyName('ECI', L1BOAFile%HDFVersion, .FALSE., 'sc')
+      case ( l_scECR )
+        nameString = AssembleL1BQtyName('ECR', L1BOAFile%HDFVersion, .FALSE., 'sc')
       case ( l_scGeocAlt )
         nameString = AssembleL1BQtyName('GeocAlt', L1BOAFile%HDFVersion, .FALSE., &
           & 'sc')
@@ -4339,6 +4351,7 @@ contains ! =====     Public Procedures     =============================
       end if
 
       if ( geolocation /= l_none ) then
+        ng = quantity%template%noSurfs * quantity%template%noCrossTrack
         select case ( geolocation )
         case ( l_geocentric )
           call GetModuleName( quantity%template%instrumentModule,nameString )
@@ -4348,7 +4361,7 @@ contains ! =====     Public Procedures     =============================
             & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
             & NeverFail=.false., dontPad=DONTPAD )
           quantity%template%geodLat = RESHAPE(L1BData%dpField, &
-          & (/ quantity%template%instanceLen, quantity%template%noInstances /) )
+            & (/ ng, quantity%template%noInstances /) )
           quantity%template%latitudeCoordinate = l_geocentric
         case ( l_geodetic )
           call GetModuleName( quantity%template%instrumentModule,nameString )
@@ -4358,7 +4371,7 @@ contains ! =====     Public Procedures     =============================
             & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
             & NeverFail=.false., dontPad=DONTPAD )
           quantity%template%geodLat = RESHAPE(L1BData%dpField, &
-          & (/ quantity%template%instanceLen, quantity%template%noInstances /) )
+            & (/ ng, quantity%template%noInstances /) )
           quantity%template%latitudeCoordinate = l_geodetic
         end select
         call GetModuleName( quantity%template%instrumentModule,nameString )
@@ -4368,7 +4381,21 @@ contains ! =====     Public Procedures     =============================
           & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
           & NeverFail=.false., dontPad=DONTPAD )
         quantity%template%Lon = RESHAPE(L1BData%dpField, &
-        & (/ quantity%template%instanceLen, quantity%template%noInstances /) )
+        & (/ ng, quantity%template%noInstances /) )
+      end if
+
+      if ( quantity%template%verticalCoordinate == l_geocAltitude ) then
+        ! L1B quantity's surfs field is geodetic altitude.  Convert it.
+        do i = 1, quantity%template%noSurfs
+          k = merge(1,i,quantity%template%stacked)
+          do j = 1, size(quantity%template%surfs,2)
+            lat = quantity%template%geodLat(k,j)
+            if ( quantity%template%latitudeCoordinate == l_geocentric ) &
+              & lat = geocToGeodLat ( lat ) ! GeodToGeocAlt wants geodetic latitude
+            quantity%template%surfs(i,j) = geodToGeocAlt ( &
+              & [ lat, quantity%template%lon(k,j), quantity%template%surfs(i,j) ] )
+          end do
+        end do
       end if
 
       if ( BeVerbose( 'l1bfill', 0 ) ) call Dump( L1BData )
@@ -4423,17 +4450,29 @@ contains ! =====     Public Procedures     =============================
 
     ! ---------------------------------------  UsingMagneticModel  -----
     subroutine UsingMagneticModel ( Qty, Key, ScVelQuantity, GeocAltitudeQuantity, &
-                                  & GPHQuantity )
+                                  & GPHQuantity, Regular, ReferenceMIF, &
+                                  & ReferenceMIFunits )
+
+      use Hunt_m, only: Hunt
       use Magnetic_Field_Quantity, only: Get_Magnetic_Field_Quantity
+      use Monotone, only: Longest_Monotone_Subsequence
       use QuantityTemplates, only: QuantitiesAreCompatible
       type (VectorValue_T), intent(inout) :: Qty
       integer, intent(in) :: Key
       type (VectorValue_T), intent(in), optional :: ScVelQuantity        ! MIF quantity
       type (VectorValue_T), intent(in), optional :: GeocAltitudeQuantity ! MIF quantity
       type (VectorValue_T), intent(in), optional :: GPHQuantity
-
+      logical, intent(in), optional :: Regular ! coherent and stacked
+      real(r8), intent(in), optional :: ReferenceMIF
+      integer, intent(in), optional :: ReferenceMIFunits ! Dimless or height
+ 
+      integer, allocatable :: Dec(:)       ! Decreasing sequence indices
       logical :: Error
+      integer, allocatable :: Inc(:)       ! Increasing sequence indices
       integer :: Me = -1                   ! String index for trace
+      integer :: ReferenceMIFnumber
+      integer, allocatable :: Seq(:)       ! Increasing or decreasing
+                                           ! sequence indices, => Inc or Dec
 
       ! Executable code
       call trace_begin ( me, 'FillUtils_1.UsingMagneticModel', key, &
@@ -4441,6 +4480,43 @@ contains ! =====     Public Procedures     =============================
 
       ! Check a bunch of stuff.
       error = .false.
+      if ( present(referenceMIFunits) ) then ! Assume present(ReferenceMIF)
+        if ( referenceMIFunits == phyq_length ) then
+          if ( present(geocAltitudeQuantity) ) then
+            ! Use only the monotone part of the tangent-point altitudes
+            call longest_monotone_subsequence ( geocAltitudeQuantity%template%surfs(:,1), inc )
+            call longest_monotone_subsequence ( geocAltitudeQuantity%template%surfs(:,1), dec, -1 )
+            if ( size(inc) >= size(dec) ) then
+              call move_alloc ( inc, seq )
+              deallocate ( dec )
+            else
+              call move_alloc ( dec, seq )
+              deallocate ( inc )
+            end if
+            call hunt ( geocAltitudeQuantity%template%surfs(seq,1), referenceMIF, &
+              & referenceMIFnumber )
+            referenceMIFnumber = seq(referenceMIFnumber)
+            deallocate ( seq )
+          else
+            call Announce_Error ( key, no_error_code, &
+              & 'Reference MIF for magnetic field is height but geocentric ' // & 
+              & 'altitude quantity is not provided' )
+            error = .true.
+          end if
+        else if ( referenceMIFunits == phyq_dimensionless ) then
+          referenceMIFnumber = nint(referenceMIF)
+        else ! neither dimensionless or height
+          call Announce_Error ( key, no_error_code, &
+            & 'Reference MIF for magnetic field is not unitless or height' )
+            error = .true.
+        end if
+      else if ( present(geocAltitudeQuantity) ) then
+        referenceMIFnumber = geocAltitudeQuantity%template%noSurfs / 2
+      else if ( present(scVelQuantity) ) then
+        referenceMIFnumber = scVelQuantity%template%noSurfs / 2
+      else ! GPHQuantity is not a minor frame quantity; can't get referenceMIFnumber
+        referenceMIFnumber = 1
+      end if
       if ( .not. ValidateVectorQuantity ( qty, quantityType=(/l_magneticField/), &
         & frequencyCoordinate=(/ l_xyz /) ) ) then
         call Announce_Error ( key, no_error_code, &
@@ -4454,6 +4530,14 @@ contains ! =====     Public Procedures     =============================
           & 'Magnetic field vertical coordinate is not geocentric ' // &
           & 'or geodetic altitude, or zeta' )
         error = .true.
+      end if
+      if ( present(regular) ) then
+        if ( regular .and. qty%template%verticalCoordinate == l_geocAltitude ) then
+          call Announce_Error ( key, no_error_code, &
+            & 'Regular magnetic field cannot have geocentric altitude vertical ' // &
+            & 'coordinate because the forward model wants a geodetic coordinate' )
+          error = .true.
+        end if
       end if
       if ( qty%template%verticalCoordinate == l_zeta ) then
         if ( .not. present(GPHQuantity) ) then
@@ -4525,16 +4609,22 @@ contains ! =====     Public Procedures     =============================
               & 'or tangent geocentric height quantity is not provided' )
             error = .true.
           end if
-          if ( qty%template%stacked ) then
+          if ( qty%template%stacked .and. &
+             & qty%template%verticalCoordinate == l_geocAltitude ) then
+            ! Geocentric altitude gets converted to geodetic altitude
+            ! which is different for every latitude, and therefore not
+            ! stacked.
             call MLSMessage ( MLSMSG_Error, moduleName, &
-              & "Cross-track magnetic field quantity cannot be stacked" )
+              & "Cross-track magnetic field quantity with geocentric " // &
+              & "altitude vertical coordinate cannot be stacked" )
             error = .true.
           end if
         end if
       end if
 
       if ( .not. error ) call get_Magnetic_Field_Quantity ( qty, &
-        & scVelQuantity, geocAltitudeQuantity, GPHQuantity )
+        & scVelQuantity, geocAltitudeQuantity, GPHQuantity, regular, &
+        & referenceMIFNumber )
 
       call trace_end ( cond=toggle(gen) .and. levels(gen) > 1 )
 
@@ -7537,6 +7627,10 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.113  2015/09/22 23:42:05  vsnyder
+! Add GHzAzim and ScECR quantities.  Add ReferenceMIF.  Convert Surfs to
+! geocentric altitude if that's the specified vertical coordinate.
+!
 ! Revision 2.112  2015/08/25 17:33:42  vsnyder
 ! PhiWindow is a tuple, with the first element specifying the angles or
 ! number of profiles/MAFs before the tangent point, and the second
