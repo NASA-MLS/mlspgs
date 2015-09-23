@@ -224,9 +224,14 @@ module QuantityTemplates         ! Quantities within vectors
     integer, dimension(:,:), pointer :: chanIndex => NULL()
     ! These are actually dimensioned (instanceLen, noInstances)
   contains
+    procedure :: GeocLat => GetGeocLat
+    procedure :: GeocLat3 => GetGeocLat3
     procedure :: GeodLat3 => GetLat3
     procedure :: Lon3 => GetLon3
     procedure :: Phi3 => GetPhi3
+    procedure :: PutGeocLat
+    procedure :: PutGeocLat3
+    procedure :: PutLat
     procedure :: PutLat3
     procedure :: PutLon3
     procedure :: PutPhi3
@@ -1770,23 +1775,68 @@ contains
     
   end subroutine GetHDF5AttrAsStrID
 
-  ! ----------------------------------------------------  GetLat3  -----
-  pure real(rt) function GetLat3 ( Qty, Surf, Inst, CrossIndex )
+  ! -------------------------------------------------  GetGeocLat  -----
+  pure real(rt) function GetGeocLat ( Qty, Surf, Inst )
+    ! Return the geocentric latitude in degrees.
     ! This is intended to be used only as a type-bound function with a
-    ! binding named GeodLat3.  It's OK to use a surface index without
-    ! checking whether the quantity is stacked -- it's done here.
+    ! binding named GeocLat.  It's OK to use a surface index without
+    ! checking whether the quantity is stacked -- it's checked here.
+    use Constants, only: Rad2Deg
+    use Geometry, only: GeodToGeocLat
+    class(quantityTemplate_t), intent(in) :: Qty
+    integer, intent(in) :: Surf, Inst
+    integer :: SurfOr1
+    surfOr1 = merge(1,surf,qty%stacked)
+    if ( qty%latitudeCoordinate == l_geodetic ) then
+      getGeocLat = geodToGeocLat ( qty%geodlat(surfOr1, inst ) ) * rad2deg
+    else
+      getGeocLat = qty%geodlat(surfOr1, inst )
+    end if
+  end function GetGeocLat
+
+  ! ------------------------------------------------  GetGeocLat3  -----
+  pure real(rt) function GetGeocLat3 ( Qty, Surf, Inst, CrossIndex )
+    ! Return the geocentric latitude in degrees.
+    ! This is intended to be used only as a type-bound function with a
+    ! binding named GeocLat.  It's OK to use a surface index without
+    ! checking whether the quantity is stacked -- it's checked here.
+    use Constants, only: Rad2Deg
+    use Geometry, only: GeodToGeocLat
     class(quantityTemplate_t), intent(in) :: Qty
     integer, intent(in) :: Surf, Inst, CrossIndex
     integer :: SurfOr1
     surfOr1 = merge(1,surf,qty%stacked)
-    getLat3 = qty%geodlat(surfOr1, inst + qty%noInstances * ( crossIndex - 1 ) )
+    if ( qty%latitudeCoordinate == l_geodetic ) then
+      getGeocLat3 = geodToGeocLat ( qty%geodlat(surfOr1, &
+        & inst + qty%noInstances * ( crossIndex - 1 ) ) ) * rad2deg
+    else
+      getGeocLat3 = qty%geodlat(surfOr1, inst + qty%noInstances * ( crossIndex - 1 ) )
+    end if
+  end function GetGeocLat3
+
+  ! ----------------------------------------------------  GetLat3  -----
+  pure real(rt) function GetLat3 ( Qty, Surf, Inst, CrossIndex )
+    ! Return the geodetic latitude in degrees.
+    ! This is intended to be used only as a type-bound function with a
+    ! binding named GeodLat3.  It's OK to use a surface index without
+    ! checking whether the quantity is stacked -- it's checked here.
+    use Geometry, only: GeocToGeodLat
+    class(quantityTemplate_t), intent(in) :: Qty
+    integer, intent(in) :: Surf, Inst, CrossIndex
+    integer :: SurfOr1
+    surfOr1 = merge(1,surf,qty%stacked)
+    if ( qty%latitudeCoordinate == l_geodetic ) then
+      getLat3 = qty%geodlat(surfOr1, inst + qty%noInstances * ( crossIndex - 1 ) )
+    else
+      getLat3 = geocToGeodLat ( qty%geodlat(surfOr1, inst + qty%noInstances * ( crossIndex - 1 ) ) )
+    end if
   end function GetLat3
 
   ! ----------------------------------------------------  GetLon3  -----
   pure real(rt) function GetLon3 ( Qty, Surf, Inst, CrossIndex )
     ! This is intended to be used only as a type-bound function with a
     ! binding named Lon3.  It's OK to use a surface index without
-    ! checking whether the quantity is stacked -- it's done here.
+    ! checking whether the quantity is stacked -- it's checked here.
     class(quantityTemplate_t), intent(in) :: Qty
     integer, intent(in) :: Surf, Inst, CrossIndex
     integer :: SurfOr1
@@ -1798,7 +1848,7 @@ contains
   pure real(rt) function GetPhi3 ( Qty, Surf, Inst, CrossIndex )
     ! This is intended to be used only as a type-bound function with a
     ! binding named Phi3.  It's OK to use a surface index without
-    ! checking whether the quantity is stacked -- it's done here.
+    ! checking whether the quantity is stacked -- it's checked here.
     class(quantityTemplate_t), intent(in) :: Qty
     integer, intent(in) :: Surf, Inst, CrossIndex
     integer :: SurfOr1
@@ -1810,7 +1860,7 @@ contains
   pure real(rt) function GetSurfs3 ( Qty, Surf, Inst, CrossIndex )
     ! This is intended to be used only as a type-bound function with a
     ! binding named Surfs3.  It's OK to use a surface index without
-    ! checking whether the quantity is stacked -- it's done here.
+    ! checking whether the quantity is stacked -- it's checked here.
     class(quantityTemplate_t), intent(in) :: Qty
     integer, intent(in) :: Surf, Inst, CrossIndex
     integer :: SurfOr1
@@ -1987,24 +2037,87 @@ contains
     end do
   end subroutine myValuesToField_2d_dble
 
-  ! ----------------------------------------------------  PutLat3  -----
-  pure subroutine PutLat3 ( Qty, Surf, Inst, CrossIndex, Lat )
-    ! Store a latitude as if the GeodLat component were a rank-3 array
-    ! with extents (surfs,insts,cross).  It's OK to use a surface index
-    ! without checking whether the quantity is stacked -- that's done here.
+  ! -------------------------------------------------  PutGeocLat  -----
+  pure subroutine PutGeocLat ( Qty, Surf, Inst, Lat )
+    ! Store a geocentric latitude as if the GeodLat component were a rank-3
+    ! array with extents (surfs,insts,cross).  It's OK to use a surface index
+    ! without checking whether the quantity is stacked -- it's checked here.
+    use Geometry, only: GeocToGeodLat
     class(quantityTemplate_t), intent(inout) :: Qty
-    integer, intent(in) :: Surf, Inst, CrossIndex
-    real(rt), intent(in) :: Lat
+    integer, intent(in) :: Surf, Inst
+    real(rt), intent(in) :: Lat ! geocentric, degrees
     integer :: SurfOr1
     surfOr1 = merge(1,surf,qty%stacked)
-    qty%geodlat(surfOr1, inst + qty%noInstances * ( crossIndex - 1 ) ) = lat
+    if ( qty%latitudeCoordinate == l_geodetic ) then
+      qty%geodlat(surfOr1, inst ) = geocToGeodLat ( lat )
+    else
+      qty%geodlat(surfOr1, inst ) = lat
+    end if
+  end subroutine PutGeocLat
+
+  ! ------------------------------------------------  PutGeocLat3  -----
+  pure subroutine PutGeocLat3 ( Qty, Surf, Inst, CrossIndex, Lat )
+    ! Store a geocentric latitude as if the GeodLat component were a rank-3
+    ! array with extents (surfs,insts,cross).  It's OK to use a surface index
+    ! without checking whether the quantity is stacked -- it's checked here.
+    use Geometry, only: GeocToGeodLat
+    class(quantityTemplate_t), intent(inout) :: Qty
+    integer, intent(in) :: Surf, Inst, CrossIndex
+    real(rt), intent(in) :: Lat ! geocentric, degrees
+    integer :: SurfOr1
+    surfOr1 = merge(1,surf,qty%stacked)
+    if ( qty%latitudeCoordinate == l_geodetic ) then
+      qty%geodlat(surfOr1, inst + qty%noInstances * ( crossIndex - 1 ) ) = &
+        & geocToGeodLat ( lat )
+    else
+      qty%geodlat(surfOr1, inst + qty%noInstances * ( crossIndex - 1 ) ) = lat
+    end if
+  end subroutine PutGeocLat3
+
+  ! -----------------------------------------------------  PutLat  -----
+  pure subroutine PutLat ( Qty, Surf, Inst, Lat )
+    ! Store a geodetic latitude as if the GeodLat component were a rank-3 array
+    ! with extents (surfs,insts,cross).  It's OK to use a surface index
+    ! without checking whether the quantity is stacked -- it's checked here.
+    use Constants, only: Rad2Deg
+    use Geometry, only: GeocToGeodLat
+    class(quantityTemplate_t), intent(inout) :: Qty
+    integer, intent(in) :: Surf, Inst
+    real(rt), intent(in) :: Lat ! degrees
+    integer :: SurfOr1
+    surfOr1 = merge(1,surf,qty%stacked)
+    if ( qty%latitudeCoordinate == l_geodetic ) then
+      qty%geodlat(surfOr1, inst ) = lat
+    else
+      qty%geodlat(surfOr1, inst ) = geocToGeodLat ( lat ) * rad2deg
+    end if
+  end subroutine PutLat
+
+  ! ----------------------------------------------------  PutLat3  -----
+  pure subroutine PutLat3 ( Qty, Surf, Inst, CrossIndex, Lat )
+    ! Store a geodetic latitude as if the GeodLat component were a rank-3 array
+    ! with extents (surfs,insts,cross).  It's OK to use a surface index
+    ! without checking whether the quantity is stacked -- it's checked here.
+    use Constants, only: Rad2Deg
+    use Geometry, only: GeocToGeodLat
+    class(quantityTemplate_t), intent(inout) :: Qty
+    integer, intent(in) :: Surf, Inst, CrossIndex
+    real(rt), intent(in) :: Lat ! degrees
+    integer :: SurfOr1
+    surfOr1 = merge(1,surf,qty%stacked)
+    if ( qty%latitudeCoordinate == l_geodetic ) then
+      qty%geodlat(surfOr1, inst + qty%noInstances * ( crossIndex - 1 ) ) = lat
+    else
+      qty%geodlat(surfOr1, inst + qty%noInstances * ( crossIndex - 1 ) ) = &
+        & geocToGeodLat ( lat ) * rad2deg
+    end if
   end subroutine PutLat3
 
   ! ----------------------------------------------------  PutLon3  -----
   pure subroutine PutLon3 ( Qty, Surf, Inst, CrossIndex, Lon )
     ! Store a Lonitude as if the Lon component were a rank-3 array
     ! with extents (surfs,insts,cross).  It's OK to use a surface index
-    ! without checking whether the quantity is stacked -- that's done here.
+    ! without checking whether the quantity is stacked -- it's checked here.
     class(quantityTemplate_t), intent(inout) :: Qty
     integer, intent(in) :: Surf, Inst, CrossIndex
     real(rt), intent(in) :: Lon
@@ -2017,7 +2130,7 @@ contains
   pure subroutine PutPhi3 ( Qty, Surf, Inst, CrossIndex, Phi )
     ! Store a Phi angle as if the Phi component were a rank-3 array
     ! with extents (surfs,insts,cross).  It's OK to use a surface index
-    ! without checking whether the quantity is stacked -- that's done here.
+    ! without checking whether the quantity is stacked -- it's checked here.
     class(quantityTemplate_t), intent(inout) :: Qty
     integer, intent(in) :: Surf, Inst, CrossIndex
     real(rt), intent(in) :: Phi
@@ -2030,7 +2143,7 @@ contains
   pure subroutine PutSurfs3 ( Qty, Surf, Inst, CrossIndex, SurfValue )
     ! Store a Surfs angle as if the Surfs component were a rank-3 array
     ! with extents (surfs,insts,cross).  It's OK to use a surface index
-    ! without checking whether the quantity is stacked -- that's done here.
+    ! without checking whether the quantity is stacked -- it's checked here.
     class(quantityTemplate_t), intent(inout) :: Qty
     integer, intent(in) :: Surf, Inst, CrossIndex
     real(rt), intent(in) :: SurfValue
@@ -2055,6 +2168,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.105  2015/09/22 23:15:01  vsnyder
+! Add 3D Phi and Surfs, spiff the dump
+!
 ! Revision 2.104  2015/08/31 17:26:04  pwagner
 ! Fixed error in displaying qty%unit
 !
