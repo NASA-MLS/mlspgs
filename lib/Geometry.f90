@@ -155,7 +155,7 @@ contains
   ! --------------------------------------------  GeocToGeodLat_S  -----
   real elemental function GeocToGeodLat_S ( geocLat ) result ( GeodLat )
 
-  !{ Convert a geocentric latitude $\lambda$ to a geodetic one $\mu$. both
+  !{ Convert a geocentric latitude $\lambda$ to a geodetic one $\mu$, both
   !  in degrees.
   !  Use the relation $\mu = \tan^{-1} \frac{f^2 \sin\lambda}{\cos\lambda}$,
   !  where $f$ is the ratio of the equatorial to polar Earth radii.
@@ -546,6 +546,9 @@ contains
 end module Geometry
 
 ! $Log$
+! Revision 2.26  2015/09/23 22:37:01  vsnyder
+! Correct a comment
+!
 ! Revision 2.25  2015/09/22 23:05:06  vsnyder
 ! Correct some comments about geodetic vs geocentric latitudes
 !
