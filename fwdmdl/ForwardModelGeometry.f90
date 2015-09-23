@@ -282,12 +282,13 @@ contains ! ============= Public Procedures ==========================
         call createGeolocationFields ( qty%template, 1, 'Qty', Phi=.true. )
         MIF = tpGeocAlt%template%noSurfs / 2
         if ( present(referenceMIF) ) MIF = referenceMIF
+        if ( detail > 3 ) call output ( MIF, before='Using reference MIF ', advance='yes' )
         do inst = 1, qty%template%NoInstances
           ! Compute the normal to the plane defined by tpGeocAlt and scVelECR
           ! at MIF
-          sc_xyz = to_xyz ( geodToGeocLat(ScVelECR%template%geodLat(MIF,inst))*rad2Deg, &
+          sc_xyz = to_xyz ( ScVelECR%template%geocLat(MIF,inst), &
                           & ScVelECR%template%lon(MIF,inst) )
-          tp_xyz = to_xyz ( geodToGeocLat(tpGeocAlt%template%geodLat(MIF,inst))*rad2Deg, &
+          tp_xyz = to_xyz ( tpGeocAlt%template%geocLat(MIF,inst), &
                           & tpGeocAlt%template%lon(MIF,inst) )
           tp_xyz = tp_xyz / norm2(tp_xyz)
           ! Compute unit normal to SC-TP plane.  The ECR coordinate of one node is
@@ -299,7 +300,7 @@ contains ! ============= Public Procedures ==========================
             ! node and the tangent point position, rotated in the plane
             ! containing the tangent point and spacecraft at the reference MIF.
             call rotate_3d ( tp_xyz, qty%template%crossAngles(c) * deg2rad, n, v )
-            call qty%template%putLat3 ( 1, inst, c, asin(v(3)) * rad2deg )
+            call qty%template%putGeocLat3 ( 1, inst, c, asin(v(3)) * rad2deg )
             call qty%template%putLon3 ( 1, inst, c, atan2(v(2),v(1)) * rad2deg )
 !             Don't do this!  It measures phi along the great circle containing
 !             the tangent point and spacecraft, from one of its equator crossings,
@@ -543,6 +544,12 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelGeometry
 
 ! $Log$
+! Revision 2.10  2015/09/23 22:42:02  vsnyder
+! Use type-bound procedures to access geocentric latitude from the quantity
+! template.  This corrects a mistake in the imputed latitude of the
+! generated viewing plane, which was stored as geocentric latitude
+! notwithstanding the value of the template's LatitudeCoordinate.
+!
 ! Revision 2.9  2015/09/22 23:22:20  vsnyder
 ! Add a reference MIF index; add option to require stacked and coherent
 !
