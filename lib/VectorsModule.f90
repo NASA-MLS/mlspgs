@@ -2463,7 +2463,8 @@ contains ! =====     Public Procedures     =============================
       call MLSMessage ( MLSMSG_Error, ModuleName, trim(msg) )
     end if
     myIndexInVector = FindFirst ( vector%template%quantities, quantityIndex )
-    if ( myIndexInVector /= 0 ) &
+    if ( myIndexInVector > 0 .and. &
+      & myIndexInVector <= ubound(vector%quantities, 1) ) &
       & GetVectorQtyByTemplateIndex => &
       &   vector%quantities(myIndexInVector)
     if ( myIndexInVector > size(vector%quantities) ) &
@@ -3442,6 +3443,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.202  2015/09/17 22:55:23  pwagner
+! Will now complain, quit in GetVectorQtyByTemplateIndex if index too big
+!
 ! Revision 2.201  2015/07/14 23:20:47  pwagner
 ! Prevent more crashes due to get_string
 !
