@@ -81,7 +81,8 @@ module HIGHOUTPUT
 ! === (start of api) ===
 ! addRow ( char* name, value )
 ! alignToFit ( char* chars, int columnRange(2), char alignment, [int skips] )
-! banner ( char* chars, [int columnRange(2)], [char alignment], [int skips] )
+! banner ( char* chars, [int columnRange(2)], [char alignment], [int skips], 
+!    [int lineLength], [char mode], [char pattern] )
 ! log BeVerbose ( char* switch, threshold )
 ! blanksToColumn ( int column, [char fillChar], [char* advance] )
 ! blanksToTab ( [int tabn], [char* fillChar] )
@@ -439,7 +440,7 @@ contains
   ! a character array, or else a longer character scalar and
   ! supply LineLength for the routine to wrap at word boundaries
   subroutine BANNER_CHARS ( chars, &
-    & columnRange, alignment, skips, lineLength, mode )
+    & columnRange, alignment, skips, lineLength, mode, pattern )
     character(len=*), intent(in)                :: CHARS
     ! If columnRange(1) < 1, just use starting columns; otherwise move to
     integer, dimension(2), optional, intent(in) :: COLUMNRANGE
@@ -447,10 +448,12 @@ contains
     integer, optional, intent(in)               :: SKIPS ! How many spaces between chars
     integer, optional, intent(in)               :: LINELENGTH
     character (len=*), optional, intent(in)     :: mode ! if not 'hard'
+    character (len=1), optional, intent(in)     :: pattern ! if not stripes
     !
     ! Internal variables
     integer :: addedLines
     character(len=1)      :: myAlignment
+    character(len=1)      :: myFillChar
     integer, dimension(2) :: myColumnRange
     integer :: lineLen, mySkips,  padding
     character(len=2*len(chars))      :: wrappedChars
@@ -461,6 +464,8 @@ contains
     if ( present(alignment) ) myAlignment = alignment
     mySkips = 0
     if ( present(skips) ) mySkips = skips
+    myFillChar = '-'
+    if ( present(pattern) ) myFillChar = pattern
     if ( present(LineLength) ) then
       ! We will wrap the input to fit within LineLength, but remembering
       ! the stars and padding
@@ -471,7 +476,7 @@ contains
       lines = ' '
       call List2Array( wrappedChars, lines, &
         & countEmpty=.true., inseparator=achar(0) )
-      call banner( lines, alignment=alignment )
+      call banner( lines, alignment=alignment, pattern=pattern )
       deallocate(lines)
       return
     else if ( present(columnRange) ) then
@@ -493,7 +498,7 @@ contains
     end if
     ! Top border
     call output( '*' )
-    call blanks ( lineLen-2, FillChar='-' )
+    call blanks ( lineLen-2, FillChar=myFillChar )
     call output( '*', advance = 'yes' )
     ! Left star, then message, then right star
     call output( '*' )
@@ -502,28 +507,33 @@ contains
     call output( '*', advance = 'yes' )
     ! Bottom border
     call output( '*' )
-    call blanks ( lineLen-2, FillChar='-' )
+    call blanks ( lineLen-2, FillChar=myFillChar )
     call output( '*', advance = 'yes' )
   end subroutine BANNER_CHARS
 
-  subroutine BANNER_CHARARRAY ( CHARARRAY, COLUMNRANGE, ALIGNMENT, SKIPS )
+  subroutine BANNER_CHARARRAY ( charArray, &
+    & columnRange, alignment, skips, pattern )
     character(len=*), dimension(:), intent(in)  :: CHARARRAY
     ! If columnRange(1) < 1, just use starting columns; otherwise move to
     integer, dimension(2), optional, intent(in) :: COLUMNRANGE
     character(len=1), intent(in), optional      :: ALIGNMENT ! L, R, C, or J
     integer, optional, intent(in)               :: SKIPS ! How many spaces between chars
+    character (len=1), optional, intent(in)     :: pattern ! if not stripes
     !
     ! Internal variables
     integer :: i
     ! Internal variables
     character(len=1)      :: myAlignment
     integer, dimension(2) :: myColumnRange
+    character(len=1)      :: myFillChar
     integer :: lineLen, mySkips,  padding
     ! Executable
     myAlignment = 'C'
     if ( present(alignment) ) myAlignment = alignment
     mySkips = 0
     if ( present(skips) ) mySkips = skips
+    myFillChar = '-'
+    if ( present(pattern) ) myFillChar = pattern
     if ( present(columnRange) ) then
       myColumnRange = columnRange
     else
@@ -543,7 +553,7 @@ contains
     LineLen = padding + myColumnRange(2) - 1
     ! Top border
     call output( '*' )
-    call blanks ( lineLen-2, FillChar='-' )
+    call blanks ( lineLen-2, FillChar=myFillChar )
     call output( '*', advance = 'yes' )
     do i = 1, size(chararray)
       ! Left star, then message, then right star
@@ -554,7 +564,7 @@ contains
     end do
     ! Bottom border
     call output( '*' )
-    call blanks ( lineLen-2, FillChar='-' )
+    call blanks ( lineLen-2, FillChar=myFillChar )
     call output( '*', advance = 'yes' )
   end subroutine BANNER_CHARARRAY
 
@@ -643,7 +653,7 @@ contains
       & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
     call outputNamedValue ( 'buffered?', options%buffered, advance='yes', &
       & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-    call outputNamedValue ( 'skip MLSMsg logging?', options%SKIPMLSMSGLOGGING, advance='yes', &
+    call outputNamedValue ( 'skip MLSMSG logging?', options%SKIPMLSMSGLOGGING, advance='yes', &
       & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
     call outputNamedValue ( 'log Parent Name?', options%logParent, advance='yes', &
       & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
@@ -1604,7 +1614,7 @@ contains
   end subroutine setTabs
 
   ! ----------------------------------------------  startTable  -----
-  ! Set up a table, iniotially empty. Subsequent calls to AddRow will
+  ! Set up a table, initially empty. Subsequent calls to AddRow will
   ! add a new row, consisting of two columns: 
   ! the name field and the value field
   ! Optionally, 
@@ -2152,6 +2162,9 @@ contains
 end module HIGHOUTPUT
 
 ! $Log$
+! Revision 2.10  2015/09/24 18:50:41  pwagner
+! May choose different pattern for stripes in banner
+!
 ! Revision 2.9  2015/05/18 17:42:50  pwagner
 ! addRow and startTable maintains an internal Table for outputTable to output
 !
