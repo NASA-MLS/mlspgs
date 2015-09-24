@@ -43,7 +43,7 @@ module ScanModelModule          ! Scan model and associated calculations
   use MLSKinds, only: r8, rp, rv
   use MLSMessagemodule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
   use MLSNumerics, only : hunt, interpolateValues
-  use MLSStringLists, only: switcHdetail
+  use MLSStringLists, only: switchDetail
   use Molecules, only: l_h2o
   use Output_m, only: output
   use QuantityTemplates, only: dump
@@ -111,8 +111,8 @@ contains ! =============== Subroutines and functions ==========================
   subroutine DumpInstanceWindows ( STATE, EXTRA, MAF1, MAF2, FMCONF, DETAILS )
     use Dump_0, only: dump
     use ForwardModelConfig, only: dump
-    use Mlsstrings, only: writeintstochars
-    use Highoutput, only: headline, outputnamedvalue
+    use MLSStrings, only: writeIntsToChars
+    use HighOutput, only: headLine, outputNamedValue
     ! Args
     type (Vector_T), intent(in) :: STATE ! The state vector
     type (Vector_T), intent(in) :: EXTRA ! Other stuff in the state vector
@@ -306,7 +306,7 @@ contains ! =============== Subroutines and functions ==========================
     ! This function takes a state vector, containing one and only one
     ! temperature and reference geopotential height precisions, and
     ! returns the GPH precision.
-    use HighOutput, only: headLine, outputNamedValue
+    use HighOutput, only: outputNamedValue
     use Physics, only: boltz
     use Trace_m, only: trace_begin, trace_end
 
@@ -355,6 +355,8 @@ contains ! =============== Subroutines and functions ==========================
       & tempPrec%template%noInstances) :: GPHPREC2 ! squared PGH precision
     real (r8), dimension(tempPrec%template%noSurfs, &
       & tempPrec%template%noInstances) :: GPHPREC2A ! squared PGH precision (alt)
+    ! We usee this next to avoid segment faulting due to bug in NAG compiler
+    real (r8), dimension(tempPrec%template%noSurfs) :: TPrecVals ! T Precision
 
     integer :: Me = -1                  ! String index for trace cacheing
 
@@ -367,9 +369,13 @@ contains ! =============== Subroutines and functions ==========================
 !    real (r8) :: BASISCUTOFF            ! Threshold level for gas constant
     real (r8) :: REFLOGP                ! Log p of pressure reference surface
     real (r8) :: BASISGAP               ! Space between adjacent surfaces
-    integer, dimension( size(GPHPREC, 1), size(GPHPREC, 2) ) &
+    integer, dimension( max(1,size(GPHPREC, 1)), max(1,size(GPHPREC, 2)) ) &
       &       :: ITSSIGN                ! < 0 if tempprec or refgphprec are
+    integer, save :: TimesHere = 0
+    logical :: DEEBUG
 
+    TimesHere = TimesHere + 1
+    DEEBUG = .false. ! ( TimesHere > 1 )
     if ( DeeBug ) call output( 'Now in GetGPHPrecision', advance='yes' )
     call trace_begin ( me, 'GetGPHPrecision', cond=.false. )
     ! Check that we get the right kinds of quantities
@@ -458,6 +464,7 @@ contains ! =============== Subroutines and functions ==========================
       call outputNamedValue ( 'shape(ITSSIGN)', shape(ITSSIGN) )
       call outputNamedValue ( 'shape(GPHPrec2)', shape(GPHPrec2) )
       call outputNamedValue ( 'shape(dgph_dT)', shape(dgph_dT) )
+      call outputNamedValue ( 'shape(dgph_drefGPH)', shape(dgph_drefGPH) )
       call outputNamedValue ( 'noInstances', tempPrec%template%noInstances )
       call outputNamedValue ( 'noSurfs', tempPrec%template%noSurfs )
       call outputNamedValue ( 'myBelowRef', myBelowRef )
@@ -467,42 +474,71 @@ contains ! =============== Subroutines and functions ==========================
     GPHPrec2 = 0.0
     ITSSIGN  = 1
     do instance = 1, tempPrec%template%noInstances
+      TPrecVals = tempPrec%values(:,instance)
       do surf = 1, tempPrec%template%noSurfs
         GPHPrec2(:,instance) = GPHPrec2(:,instance) + &
-          & ( dgph_dT(:,surf,instance) * tempPrec%values(surf,instance) )**2
+          & ( dgph_dT(:,surf,instance) * TPrecVals(surf) )**2
       end do
       GPHPrec2(:,instance) = GPHPrec2(:,instance) + &
         & ( dgph_drefGPH(:,instance) * refGPHPrec%values(1,instance) )**2
+      if ( DeeBug ) then
+        call outputnamedValue ( 'instance', instance )
+        call outputnamedValue ( 'refGPHPrec%values(1,instance)', refGPHPrec%values(1,instance) )
+        call outputnamedValue ( ' all( TPrecVals >= 0._rv',  all( TPrecVals >= 0._rv) )
+      endif
       if ( refGPHPrec%values(1,instance) < 0._rv ) then
         ITSSIGN(:, instance) = -1
-      elseif ( all( tempPrec%values(:,instance) >= 0._rv ) ) then
+      elseif ( all( TPrecVals >= 0._rv ) ) then
         ! ITSS already 1
       elseif ( refGPHPrec%values(1,instance) >= 0._rv ) then
-        do surf = 1, myBelowRef
-          if ( any( tempPrec%values(surf:myBelowRef, instance) < 0._rv ) ) &
-              & ITSSIGN(surf, instance) = -1
-        enddo
-        do surf = myBelowRef+1, tempPrec%template%noSurfs
-          if ( any( tempPrec%values(myBelowRef:surf, instance) < 0._rv ) ) &
-            ITSSIGN(surf, instance) = -1
-        enddo
+        if ( DeeBug ) then
+          call outputnamedValue ( 'myBelowRef', myBelowRef )
+          call outputnamedValue ( 'tempPrec%template%noSurfs', tempPrec%template%noSurfs )
+          call outputnamedValue ( 'any( TPrecVals < 0._rv )', any( TPrecVals < 0._rv ) )
+          call outputnamedValue ( 'shape( TPrecVals(myBelowRef:myBelowRef))', &
+            & shape( TPrecVals(myBelowRef:myBelowRef)) )
+        endif
+        if ( any( TPrecVals < 0._rv ) ) then
+          if ( DeeBug ) then
+            call outputnamedValue( 'shape', shape(TPrecVals(1:myBelowRef)))
+            call outputnamedValue( 'value', TPrecVals(1:myBelowRef))
+          endif
+          do surf = 1, myBelowRef
+            ! if ( any( tempPrec%values(surf:myBelowRef, instance) < 0._rv ) ) &
+            !    & ITSSIGN(surf, instance) = -1
+            ITSSIGN(surf, instance) = sign ( 1.d0, minval(TPrecVals(surf:myBelowRef)) )
+          enddo
+          do surf = myBelowRef+1, tempPrec%template%noSurfs
+            if ( any( TPrecVals(myBelowRef:surf) < 0._rv ) ) &
+              ITSSIGN(surf, instance) = -1
+          enddo
+        endif
       else
+        if ( DeeBug ) then
+          call output( 'in else clause', advance='yes' )
+          call outputnamedValue ( 'myBelowRef', myBelowRef )
+          call outputnamedValue ( 'tempPrec%template%noSurfs', tempPrec%template%noSurfs )
+        endif
         do surf = 1, tempPrec%template%noSurfs
           ! On which side of the reference surface are we?
           if ( surf < myBelowRef ) then
-            if ( any( tempPrec%values(surf:myBelowRef, instance) < 0._rv ) ) &
+            if ( any( TPrecVals(surf:myBelowRef) < 0._rv ) ) &
               & ITSSIGN(surf, instance) = -1
           elseif ( surf == myBelowRef ) then
-            if ( tempPrec%values(surf, instance) < 0._rv ) &
+            if ( TPrecVals(surf) < 0._rv ) &
               & ITSSIGN(surf, instance) = -1
           elseif ( &
-            & any( tempPrec%values(myBelowRef:surf, instance) < 0._rv ) ) then
+            & any( TPrecVals(myBelowRef:surf) < 0._rv ) ) then
             ITSSIGN(surf, instance) = -1
           endif
         end do
       endif
     end do
 
+    ! if ( TimesHere > 1 ) then
+    !  call output( '2nd time, so quitting', advance='yes' )
+    !  stop
+    ! endif
     if ( DeeBug ) call output( 'Finish the calculation', advance='yes' )
     do surf = 1, tempPrec%template%noSurfs
       GPHPrec2a(surf,:) = sum ( &
@@ -2151,6 +2187,9 @@ contains ! =============== Subroutines and functions ==========================
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.85  2015/09/24 22:06:36  pwagner
+! Code around segment fault due to NAG bug
+!
 ! Revision 2.84  2015/08/25 17:35:56  vsnyder
 ! PhiWindow is a tuple, with the first element specifying the angles or
 ! number of profiles/MAFs before the tangent point, and the second
