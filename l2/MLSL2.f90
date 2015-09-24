@@ -34,7 +34,7 @@ program MLSL2
   use MLSHDF5, only: MLS_h5open, MLS_h5close
   use MLSL2Options, only: allocFile, checkPaths, current_version_id, &
     & default_hdfversion_read, default_hdfversion_write, &
-    & level1_hdfversion, aura_l1bfiles, need_l1bfiles, &
+    & level1_hdfversion, aura_l1bfiles, maxChunkSize, need_l1bfiles, &
     & normal_exit_status, noteFile, output_print_unit, &
     & patch, quit_error_threshold, restartWarnings, &
     & sectionTimes, sectionTimingUnits, sharedPCF, & ! sips_version, &
@@ -789,6 +789,8 @@ contains
         & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       call outputNamedValue ( 'Default hdfeos version on writes', default_hdfversion_write, advance='yes', &
         & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
+      call outputNamedValue ( 'Max Chunk size Appended to l2gp files', maxChunkSize, advance='yes', &
+        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       end if
       if ( len_trim(AllocFile%Name) > 0 ) then
         call outputNamedValue ( 'Log Allocates to', trim(AllocFile%Name), advance='yes', &
@@ -839,6 +841,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.214  2015/09/24 22:07:57  pwagner
+! Dump_settings shows max chunk size appended to l2gp files
+!
 ! Revision 2.213  2015/07/16 22:13:15  pwagner
 ! Dump of settings says whether it will stop after a named section
 !
