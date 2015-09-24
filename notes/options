@@ -84,6 +84,8 @@ Note: use "-T2" and not "--T2" because -T2 has one 'letter'
     can list a machine more than once (e.g. for SMP slaves)
     One can also append, after a colon, a colon separated range
     of slaves within that file to use.
+  --maxChunkSize[ ]<amount> assume no chunk larger than <amount>
+      default is 21
   --maxFailuresPerChunk[ ]<amount> abandon any chunk after <amount> failures
       scf default is 10; sips default is 1; 1 means allow no failures
   --maxFailuresPerMachine[ ]<amount> mark bad any machine after <amount> failures
@@ -167,6 +169,9 @@ by the equal-signs -- stuff outside that space, like these
 comments, will be ignored when responding to mlsl2 -?)
 
  $Log$
+ Revision 1.70  2015/03/10 00:23:47  pwagner
+ Note that HostName defaults to ProductionLocation
+
  Revision 1.69  2014/09/05 00:34:35  vsnyder
  Add [#] to -A, -a and -d options.  Add -E and --stdout error.  Delete
  -pID.  Change description of --pidf (ought to be renamed).
