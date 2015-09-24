@@ -17,7 +17,7 @@ module DumpCommand_M
 
   use highOutput, only: banner, beVerbose, headLine, &
     & numToChars, outputNamedValue
-  use output_m, only: blanks, newLine, output, revertOutput, switchOutput
+  use output_m, only: Beep, blanks, newLine, output, revertOutput, switchOutput
   implicit none
   private
 
@@ -124,6 +124,7 @@ module DumpCommand_M
   character(len=MAXRESULTLEN), save :: selectLabel  = ' '
 
   character(len=255) :: Text
+  logical :: toStderr
   integer, save :: TotalMemory1 = 0   ! For memory usage, in kB
   integer, save :: TotalMemory2 = 0   ! For memory usage, in kB
   real, save :: T1 = 0.               ! For timing
@@ -1330,6 +1331,7 @@ contains
     details = 0 - DetailReduction
     OPTIONSSTRING = '-'
     got= .false.
+    toStderr = .false.
     asBanner = .false.
     asHeadLine = .false.
     doStretch = .false.
@@ -1904,6 +1906,7 @@ contains
         call get_string ( sub_rosa(gson), optionsString, strip=.true. )
         ! optionsString = lowerCase(optionsString)
         ! call outputNamedValue( 'options', trim(optionsString) )
+        toStderr = optionDetail( optionsString, 'e', 'Err' ) == 'yes'
         asBanner = optionDetail( optionsString, 'B', 'Banner' ) == 'yes'
         headLineChars = optionDetail( optionsString, 'H', 'Headline' )
         asHeadline =  headLineChars /= 'no'
@@ -1965,6 +1968,7 @@ contains
         !     B            print as a banner
         !     H            print as a headine
         !     H[c]         print as a headine with character "c" instead of *
+        !     e            print ot stderr
         !     s            s-t-r-e-t-c-h
         !     S            s t r e t c h
         !   L[nn]          use nn for line length
@@ -2761,6 +2765,8 @@ contains
       else
         call banner( trim(asciify( text, how='snip' )) )
       endif
+    elseif ( toStderr ) then
+      call Beep ( trim(text) )
     else
       call output ( trim(text), advance='yes' )
     endif
@@ -2848,6 +2854,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.123  2015/09/24 22:10:17  pwagner
+! Dump command may optionally direct text to stderr
+!
 ! Revision 2.122  2015/07/14 23:32:47  pwagner
 ! may divert Dump commands to named dumpFile; /truncate field
 !
