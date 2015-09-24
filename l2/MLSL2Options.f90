@@ -723,6 +723,18 @@ cmds: do
           word = '--slave'
           write ( word(len_trim(word)+1:), * ) parallel%myTid
           call AccumulateSlaveArguments(word)
+        else if ( line(3+n:14+n) == 'maxchunksize' ) then
+          if ( line(15+n:) /= ' ' ) then
+            line(:14+n) = ' '
+          else
+            i = i + 1
+            call myNextArgument( i, inLine, entireLine, line )
+          end if
+          read ( line, *, iostat=status ) maxChunkSize
+          if ( status /= 0 ) then
+            call io_error ( "After --maxChunkSize option", status, line )
+            stop
+          end if
         else if ( line(3+n:21+n) == 'maxfailuresperchunk' ) then
           if ( line(22+n:) /= ' ' ) then
             line(:21+n) = ' '
@@ -1302,6 +1314,9 @@ end module MLSL2Options
 
 !
 ! $Log$
+! Revision 2.104  2015/09/24 22:08:34  pwagner
+! Added --maxChunkSize option
+!
 ! Revision 2.103  2015/09/17 23:22:46  pwagner
 ! Now give default value to MaxChunkSize for l2gp DirectWrites
 !
