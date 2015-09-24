@@ -65,6 +65,8 @@ module OUTPUT_M
 ! revertOutput             revert output to file used before switchOutput
 !                           if you will revert, keepOldUnitOpen when switching
 ! resumeOutput             resume output
+! setFillPattern           set a special Fill pattern 
+!                           (that can be used in call to blanks, banner, etc.)
 ! suspendOutput            suspend output
 ! switchOutput             switch output to a new named file, 
 !                            or else to 'stdout'
@@ -93,6 +95,7 @@ module OUTPUT_M
 ! resumeOutput
 ! revertOutput
 ! restoreSettings ( [log useToolkit] )
+! setFillPattern ( pattern, [fillChar] )
 ! suspendOutput
 ! switchOutput ( char* filename, [int unit] )
 ! === (end of api) ===
@@ -130,7 +133,7 @@ module OUTPUT_M
     & flushOutputLines, getOutputStatus, newline, &
     & output, output_char_nocr, &
     & resetIndent, restoreSettings, resumeOutput, revertOutput, &
-    & suspendOutput, switchOutput
+    & setFillPattern, suspendOutput, switchOutput
 
   ! These types made public because the class instances are public
   public :: outputOptions_t
@@ -158,6 +161,7 @@ module OUTPUT_M
 
   ! We can use the OutputLines mechanism for user-controlled
   ! buffering, filtering, grep-ing, or whatever
+  integer, parameter :: numPatterns = 13 ! How many special patterns may we store
   integer, parameter :: MAXOUTPUTLINESLEN = 2048 ! How many chars it can hold
   character(len=MAXOUTPUTLINESLEN), public, save     :: OUTPUTLINES = ' '
 
@@ -175,19 +179,23 @@ module OUTPUT_M
     logical :: prUnitLiteral       = .false. ! output to prUnit even if < 0
     logical :: skipMLSMsgLogging   = .false.
     logical :: usePatternedBlanks  = .true. ! Use patterns for special fillChars
-    character(len=9) :: specialFillChars = '123456789'
-    character(len=9) :: lineupFillChars =  'ynnnnynnn' ! whether they line up
-    character(len=16), dimension(9) :: patterns = (/ & ! on consecutive lines
-      &  '(. )            ' , &
-      &  '(. .)           ' , &
-      &  '(.  .)          ' , &
-      &  '(.   .)         ' , &
-      &  '(.. ..)         ' , &
-      &  '(- )            ' , &
-      &  '(- -)           ' , &
-      &  '(-  -)          ' , &
-      &  '(- .. )         ' /)
-      !   12345678901234567890
+    character(len=numPatterns) :: specialFillChars = '0123456789ABC'
+    character(len=numPatterns) :: lineupFillChars =  'yynnnnynnnyyn' ! whether they line up
+    character(len=16), dimension(numPatterns) :: patterns = (/ & ! on consecutive lines
+                                            &  '                ' , &
+                                            &  '(. )            ' , &
+                                            &  '(. .)           ' , &
+                                            &  '(.  .)          ' , &
+                                            &  '(.   .)         ' , &
+                                            &  '(.. ..)         ' , &
+                                            &  '(- )            ' , &
+                                            &  '(- -)           ' , &
+                                            &  '(-  -)          ' , &
+                                            &  '(- .. )         ' , &
+                                            &  '(= )            ' , &
+                                            &  '(~ )            ' , &
+                                            &  '(= ~ )          ' /)
+                                            !   12345678901234567890
     character(len=FileNameLen) :: name = 'stdout'
     character(len=3)  :: advanceDefault = 'no' ! if advance=.. missing
     character(len=12) :: sdFormatDefault = '*' ! * means default format spec
@@ -350,6 +358,7 @@ contains
     integer :: numSoFar
     character(len=16) :: pattern
     integer :: patternLength
+    character(len=1) :: patternChar
     integer :: patternNum
     integer :: theRest
     ! Executable
@@ -358,7 +367,7 @@ contains
         & index(outputOptions%specialFillChars, FILLCHAR) > 0 ) then
         ! We need to try to fit our called-for pattern into n_blanks
         ! The 1st question is, how many times could it be done?
-        read(fillChar, *) patternNum
+        patternNum = index( outputOptions%specialFillChars, FillChar )
         pattern = outputOptions%patterns(patternNum)
         ! The pattern length (adjusted for enclosing parentheses)
         patternLength = len_trim(pattern) - 2
@@ -1129,8 +1138,9 @@ contains
     outputOptions%SKIPMLSMSGLOGGING    = .false.
     outputOptions%logParent            = .false.
     outputOptions%usePatternedBlanks   = .true. 
-    outputOptions%specialFillChars     = '123456789'
+    outputOptions%specialFillChars     = '0123456789ABC'
     outputOptions%patterns             = (/ & ! on consecutive lines
+                                            &  '                ' , &
                                             &  '(. )            ' , &
                                             &  '(. .)           ' , &
                                             &  '(.  .)          ' , &
@@ -1139,7 +1149,10 @@ contains
                                             &  '(- )            ' , &
                                             &  '(- -)           ' , &
                                             &  '(-  -)          ' , &
-                                            &  '(- .. )         ' /)
+                                            &  '(- .. )         ' , &
+                                            &  '(= )            ' , &
+                                            &  '(~ )            ' , &
+                                            &  '(= ~)           ' /)
                                             !   12345678901234567890
     outputOptions%name                 = 'stdout'
     outputOptions%advanceDefault       = 'no'
@@ -1199,6 +1212,23 @@ contains
     call output( OLDUNIT, advance='yes' )
 
   end subroutine revertOutput
+
+  ! ----------------------------------------------  setFillPattern  -----
+  subroutine setFillPattern ( pattern, fillChar )
+  ! Set a special Fill pattern that can be used in a call to blanks
+  ! e.g., by call blanks, FillChar='0' )
+    character(len=1), optional, intent(in) :: fillChar
+    character(len=*), optional, intent(in) :: pattern
+    ! Local variables
+    integer :: patternNum
+    ! Executable
+    patternNum = 1
+    if ( present(fillChar) ) &
+      & patternNum = index( outputOptions%specialFillChars, fillChar )
+    outputOptions%patterns(patternNum) = pattern
+    if ( index( pattern, '(' ) < 1 ) &
+      & outputOptions%patterns(patternNum) = '(' // pattern // ')'
+  end subroutine setFillPattern
 
   ! ----------------------------------------------  suspendOutput  -----
   subroutine suspendOutput 
@@ -1493,6 +1523,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.125  2015/09/24 18:52:28  pwagner
+! Expanded special Fill patterns; allow user to set own special pattern '0'
+!
 ! Revision 2.124  2015/08/26 23:25:11  pwagner
 ! Added Beep and advance='stderr' to print to stderr
 !
