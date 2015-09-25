@@ -70,8 +70,8 @@ module FillUtils_1                     ! Procedures used by Fill
   use MLSFillvalues, only: isFillValue, isFinite, &
     & Monotonize, removeFillValues
   use MLSKinds, only: r4, r8, rm, rp, rv
-  use MLSL2options, only: aura_l1bfiles, l2cfnode, MLSMessage, toolkit
-  use MLSMessagemodule, only: MLSMSG_error, MLSMSG_warning
+  use MLSL2options, only: aura_l1bfiles, l2cfnode, toolkit
+  use MLSMessagemodule, only: MLSMessage, MLSMSG_error, MLSMSG_warning
   use MLSNumerics, only: coefficients_r8, interpolateArraySetup, &
     & InterpolateArrayTeardown, interpolateValues, hunt
   use MLSFinds, only: findFirst, findLast
@@ -4384,23 +4384,9 @@ contains ! =====     Public Procedures     =============================
         & (/ ng, quantity%template%noInstances /) )
       end if
 
-      if ( quantity%template%verticalCoordinate == l_geocAltitude ) then
-        ! L1B quantity's surfs field is geodetic altitude.  Convert it.
-        do i = 1, quantity%template%noSurfs
-          k = merge(1,i,quantity%template%stacked)
-          do j = 1, size(quantity%template%surfs,2)
-            lat = quantity%template%geodLat(k,j)
-            if ( quantity%template%latitudeCoordinate == l_geocentric ) &
-              & lat = geocToGeodLat ( lat ) ! GeodToGeocAlt wants geodetic latitude
-            quantity%template%surfs(i,j) = geodToGeocAlt ( &
-              & [ lat, quantity%template%lon(k,j), quantity%template%surfs(i,j) ] )
-          end do
-        end do
-      end if
-
       if ( BeVerbose( 'l1bfill', 0 ) ) call Dump( L1BData )
-      call DeallocateL1BData(L1BData)
-    9 call trace_end ( 'FillUtils_1.FromL1B', &
+    9 call DeallocateL1BData(L1BData) ! Done by finalizer, but this can't hurt
+      call trace_end ( 'FillUtils_1.FromL1B', &
         & cond=toggle(gen) .and. levels(gen) > 1 )
     end subroutine FromL1B
 
@@ -4456,7 +4442,8 @@ contains ! =====     Public Procedures     =============================
       use Hunt_m, only: Hunt
       use Magnetic_Field_Quantity, only: Get_Magnetic_Field_Quantity
       use Monotone, only: Longest_Monotone_Subsequence
-      use QuantityTemplates, only: QuantitiesAreCompatible
+      use MoreMessage, only: MLSMessage
+      use QuantityTemplates, only: QuantitiesAreCompatible, RT
       type (VectorValue_T), intent(inout) :: Qty
       integer, intent(in) :: Key
       type (VectorValue_T), intent(in), optional :: ScVelQuantity        ! MIF quantity
@@ -4466,13 +4453,14 @@ contains ! =====     Public Procedures     =============================
       real(r8), intent(in), optional :: ReferenceMIF
       integer, intent(in), optional :: ReferenceMIFunits ! Dimless or height
  
-      integer, allocatable :: Dec(:)       ! Decreasing sequence indices
+      integer, allocatable :: Dec(:)  ! Decreasing sequence indices
       logical :: Error
-      integer, allocatable :: Inc(:)       ! Increasing sequence indices
-      integer :: Me = -1                   ! String index for trace
+      integer, allocatable :: Inc(:)  ! Increasing sequence indices
+      real(rt) :: MaxV, MinV          ! Max, Min of geocAltitudeQuantity's Surfs
+      integer :: Me = -1              ! String index for trace
       integer :: ReferenceMIFnumber
-      integer, allocatable :: Seq(:)       ! Increasing or decreasing
-                                           ! sequence indices, => Inc or Dec
+      integer, allocatable :: Seq(:)  ! Increasing or decreasing
+                                      ! sequence indices, => Inc or Dec
 
       ! Executable code
       call trace_begin ( me, 'FillUtils_1.UsingMagneticModel', key, &
@@ -4496,6 +4484,22 @@ contains ! =====     Public Procedures     =============================
             call hunt ( geocAltitudeQuantity%template%surfs(seq,1), referenceMIF, &
               & referenceMIFnumber )
             referenceMIFnumber = seq(referenceMIFnumber)
+            maxv = maxval(geocAltitudeQuantity%template%surfs(seq,1))
+            minv = minval(geocAltitudeQuantity%template%surfs(seq,1))
+            if ( minv - referenceMIF > 2.0 * ( maxv - minv ) .or. &
+               & referenceMIF - maxv > 2.0 * ( maxv - minv ) ) &
+              call MLSMessage ( MLSMSG_Warning, moduleName, &
+                & 'ReferenceMIF = %R is far outside the range %R ... %R of the ' // &
+                & 'vertical coordinate of the tangent point geocentric height ', &
+                & datum = [ referenceMIF, minv, maxv ] )
+            if ( switchDetail ( switches, 'plane' ) > 1 ) then
+              call output ( referenceMIFnumber, &
+                & before='Reference MIF number ' )
+             
+              call output ( referenceMIF, before=' chosen using height ' )
+              call output ( minv, before=' from range ' )
+              call output ( maxv, before=' ... ', advance='yes' )
+            end if
             deallocate ( seq )
           else
             call Announce_Error ( key, no_error_code, &
@@ -7627,6 +7631,11 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.114  2015/09/25 02:15:26  vsnyder
+! Remove conversion of surfs to geocentric if the vertical coordinate is
+! geocentric altitude, because ConstructQuantityTemplates now reads the
+! appropriate altitude from the L1BOA file.
+!
 ! Revision 2.113  2015/09/22 23:42:05  vsnyder
 ! Add GHzAzim and ScECR quantities.  Add ReferenceMIF.  Convert Surfs to
 ! geocentric altitude if that's the specified vertical coordinate.
