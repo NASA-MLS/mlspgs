@@ -318,6 +318,13 @@ while [ "$more_opts" = "yes" ] ; do
        echo "$otheropts" >> $LOGFILE
        shift
        ;;
+    --maxChun* )
+       otheropts=`add_option "$otheropts" "$1 $2"`
+       echo "Adding arguments to set max chunk size: $1 $2" >> $LOGFILE
+       echo "$otheropts" >> $LOGFILE
+       shift
+       shift
+       ;;
     --maxFailuresPerCh* )
        otheropts=`add_option "$otheropts" "$1 $2"`
        echo "Adding arguments to set max failures per chunk: $1 $2" >> $LOGFILE
@@ -510,6 +517,9 @@ do_the_call $all_my_opts
 exit 0
 
 # $Log$
+# Revision 1.13  2014/11/06 01:52:18  pwagner
+# Now add_option with auxiliary args pairwise
+#
 # Revision 1.12  2014/09/29 22:34:29  pwagner
 # Should run in background correctly now
 #
