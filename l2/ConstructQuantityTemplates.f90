@@ -400,12 +400,12 @@ contains ! ============= Public procedures ===================================
     ! Now do the setup for the different families of quantities
     if ( isMinorFrame ) then
       ! Setup a minor frame quantity
+      if ( got(f_coordinate) ) qty%verticalCoordinate = coordinate
+      qty%quantityType = quantityType
       call ConstructMinorFrameQuantity ( instrumentModule, qty, &
         noChans=noChans, noCrossTrack=noCrossTrack, filedatabase=filedatabase, &
         chunk=chunk, mifGeolocation=mifGeolocation, &
         regular=regular )
-      if ( got(f_coordinate ) ) qty%verticalCoordinate = coordinate
-      qty%quantityType = quantityType
     else if ( properties(p_majorFrame) ) then
       ! Setup a major frame quantity
       call ConstructMajorFrameQuantity ( chunk, instrumentModule, &
@@ -532,7 +532,7 @@ contains ! ============= Public procedures ===================================
     use CHUNKS_M, only: MLSCHUNK_T
     use Dump_0, only: Dump
     use highOutput, only: BeVerbose, LetsDebug, outputNamedValue
-    use INIT_TABLES_MODULE, only: L_GEODALTITUDE, L_NONE
+    use INIT_TABLES_MODULE, only: L_GeocAltitude, L_GeodAltitude, L_None
     use L1BDATA, only: L1BDATA_T, READL1BDATA, DEALLOCATEL1BDATA, &
       & ASSEMBLEL1BQTYNAME
     use MLSCOMMON, only: MLSFILE_T, NAMELEN
@@ -597,15 +597,16 @@ contains ! ============= Public procedures ===================================
     ! Local variables
 
     type (L1BData_T) :: l1bField
-    type (MLSFile_T), pointer             :: L1BFile
+    type (MLSFile_T), pointer :: L1BFile
     character (len=NameLen) :: l1bItemName
     integer :: hdfVersion, l1bFlag, l1bItem, noMAFs, mafIndex, mifIndex
     integer :: Me = -1      ! For tracing
     logical :: MissingOK
-    logical :: verbose
-    logical :: verboser
     integer :: Start, Stop  ! For reading L1B quantities, depending upon whether
                             ! they're for the instrument or the tangent point
+    logical :: UseMIFGeolocation
+    logical :: verbose
+    logical :: verboser
 
     ! Executable code. There are basically two cases here. If we have a
     ! MIFGeolocation argument this conveys all the geolocation for this
@@ -619,8 +620,13 @@ contains ! ============= Public procedures ===================================
     verbose = BeVerbose( 'qtmp', -1 )
     verboser = LetsDebug( 'qtmp', 0 )
 
-    if ( present(mifGeolocation) ) then
-      ! -------------------------------------- Got mifGeolocation ------------
+    useMIFGeolocation = present(mifGeolocation)
+    if ( useMIFGeolocation ) &
+      & useMIFGeolocation = mifGeolocation(instrumentModule)%verticalCoordinate == &
+                            qty%verticalCoordinate
+
+    if ( useMIFGeolocation ) then
+      ! --  Got mifGeolocation and vertical coordinates match --
       if ( .not. (present(noChans)) ) &
          call MLSMessage ( MLSMSG_Error, ModuleName, &
           & 'You must supply NoChans to reuse geolocation information' )
@@ -640,18 +646,20 @@ contains ! ============= Public procedures ===================================
       end if
 
     else if (present(chunk) .and. present(filedatabase)) then
-      ! ------------------------------------ Not Got mifGeolocation -----
-      ! We have no geolocation information, we have to read it ourselves
-      ! from the L1BOA file.
+      ! --  Not Got mifGeolocation or vertical coordinates do not match  --
+      ! We have no geolocation information, or we don't want to use it.
+      ! We have to read it ourselves from the L1BOA file.
 
-      ! First we read xxGeodalt to get the size of the quantity.
+      ! First we read xxGeodalt to get the number of MAFs, and the surfs
       L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
       hdfversion = L1BFile%HDFVersion
       if ( IsModuleSpacecraft(instrumentModule) ) then
-        l1bItemName = 'scGeocAlt' 
+        l1bItemName = merge("scGeodAlt","scGeocAlt", &
+                           &qty%verticalCoordinate==l_geodAltitude)
       else
         call GetModuleName ( instrumentModule, l1bItemName )
-        l1bItemName = TRIM(l1bItemName) // "." // "tpGeodAlt"
+        l1bItemName = TRIM(l1bItemName) // "." // &
+          & merge("tpGeodAlt","tpGeocAlt",qty%verticalCoordinate==l_geodAltitude)
       end if
       l1bItemName = AssembleL1BQtyName ( l1bItemName, hdfVersion, .false. )
       if ( verbose ) then
@@ -680,7 +688,7 @@ contains ! ============= Public procedures ===================================
         & noSurfs=l1bField%maxMIFs, noChans=noChans, &
         & noCrossTrack=noCrossTrack, coherent=.false., &
         & stacked=.false., regular=regular, instanceLen=instanceLen, &
-        & minorFrame=.true. )
+        & minorFrame=.true., verticalCoordinate=qty%verticalCoordinate )
       qty%noInstancesLowerOverlap = chunk%noMAFsLowerOverlap
       qty%noInstancesUpperOverlap = chunk%noMAFsUpperOverlap
 
@@ -700,7 +708,6 @@ contains ! ============= Public procedures ===================================
         start = firstSCitem
         stop = lastSCitem
         ! Zero out stuff that we don't read.  See L1bItemsToRead above.
-        qty%surfs = 0.0
         qty%phi = 0.0
         qty%time = 0.0
         qty%solarTime = 0.0
@@ -709,29 +716,13 @@ contains ! ============= Public procedures ===================================
       else
         start = lastSCitem + 1
         stop = lastL1Bitem
-
-        call GetModuleName ( instrumentModule, l1bItemName )
-        l1bItemName = TRIM(l1bItemName) // "." // "tpGeodAlt"
-
-        l1bItemName = AssembleL1BQtyName ( l1bItemName, hdfVersion, .false. )
-        call ReadL1BData ( L1BFile, l1bItemName, l1bField, noMAFs, &
-          & l1bFlag, firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
-          & neverfail=MissingOK )
-        if ( l1bFlag /= 0 .and. .not. MissingOK ) then
-          call MLSMessage ( MLSMSG_Error, ModuleName, &
-            & MLSMSG_L1BRead//l1bItemName )
-        elseif ( l1bFlag /= 0 ) then
-          call MLSMessage ( MLSMSG_Warning, ModuleName, &
-            & MLSMSG_L1BRead//l1bItemName )
-          return
-        endif
-
-        ! Now we're going to deal with a VGrid for this quantity
-        qty%verticalCoordinate = l_geodAltitude
-        qty%surfs = l1bField%dpField(1,:,:)  ! Vert coord is tpGeodAlt read above.
-
-        call DeallocateL1BData(l1bfield)
       end if
+
+      ! Now we're going to deal with a VGrid for this quantity.
+      ! This is either the scGeocAlt or tpGeo[cd]Alt read above
+      qty%surfs = l1bField%dpField(1,:,:)
+
+      call DeallocateL1BData ( l1bField )
 
       do l1bItem = start, stop
         ! Get the name of the item to read
@@ -1525,6 +1516,11 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.186  2015/09/25 02:16:20  vsnyder
+! Preserve the quantity template vertical coordinate.  Read the appropriate
+! kind of altitude quantity from the L1BOA file, depending on the quantity
+! template's vertical coordinate.
+!
 ! Revision 2.185  2015/09/22 01:57:57  vsnyder
 ! Add GHzAzim and ScECR quantity types
 !
