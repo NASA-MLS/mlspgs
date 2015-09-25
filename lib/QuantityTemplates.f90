@@ -21,8 +21,9 @@ module QuantityTemplates         ! Quantities within vectors
   use expr_m, only: expr_check
   use hGridsDatabase, only: hgrid_t
   use highOutput, only: outputNamedValue
-  use intrinsic, only: l_dl, l_geodetic, l_none, l_phitan, l_vmr, lit_indices, &
-    & phyq_angle, phyq_dimensionless, phyq_frequency, phyq_indices, phyq_time
+  use intrinsic, only: l_dl, l_geodetic, l_geodAltitude, l_none, l_phitan, &
+    & l_vmr, lit_indices, phyq_angle, phyq_dimensionless, phyq_frequency, &
+    & phyq_indices, phyq_time
   use MLSFillValues, only: rerank
   use MLSKinds, only: rt => r8 ! rt is "kind of real components of template"
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
@@ -114,9 +115,9 @@ module QuantityTemplates         ! Quantities within vectors
     integer :: instanceLen
 
     ! Vertical coordinate
-    integer :: verticalCoordinate ! The vertical coordinate used.  These
-                                  ! are l_lits of the type t_VGridCoord
-                                  ! defined in Init_Tables_Module.
+    integer :: verticalCoordinate=l_geodAltitude ! The vertical coordinate
+                                  ! used.  These are l_lits of the type
+                                  ! t_VGridCoord defined in Init_Tables_Module.
     logical :: sharedVGrid        ! Set if surfs is a pointer not a copy
     integer :: vGridIndex         ! Index of any vGrid used
 
@@ -1263,7 +1264,7 @@ contains
   subroutine SetupNewQuantityTemplate ( qty, noInstances, noSurfs, &
     & noChans, coherent, stacked, regular, instanceLen, noCrossTrack, &
     & minorFrame, majorFrame, &
-    & sharedVGrid, sharedFGrid, badValue )
+    & sharedVGrid, sharedFGrid, badValue, verticalCoordinate )
 
     use Intrinsic, only: L_Dimensionless
 
@@ -1288,6 +1289,8 @@ contains
     logical, intent(in), optional :: sharedVGrid
     logical, intent(in), optional :: sharedFGrid
     real(rt), intent(in), optional :: badValue
+    integer, intent(in), optional, value :: verticalCoordinate ! VALUE in case
+                                        ! actual arg is qty%verticalCoordinate
 
     ! Local variables
     integer :: noSurfsToAllocate        ! For allocations
@@ -1338,16 +1341,17 @@ contains
     qty%molecule = 0
 
     ! Now, see if the user asked for modifications to this
-    if ( present (noChans) )      qty%noChans = noChans
-    if ( present (noInstances) )  qty%noInstances = noInstances
-    if ( present (noSurfs) )      qty%noSurfs = noSurfs
-    if ( present (noCrossTrack) ) qty%noCrossTrack = noCrossTrack
-    if ( present (regular) )      qty%regular = regular
-    if ( present (minorFrame) )   qty%minorFrame = minorFrame
-    if ( present (majorFrame) )   qty%majorFrame = majorFrame
-    if ( present (sharedVGrid) )  qty%sharedVGrid = sharedVGrid
-    if ( present (sharedFGrid) )  qty%sharedFGrid = sharedFGrid
-    if ( present (badValue) )     qty%badValue = badValue
+    if ( present (noChans) )            qty%noChans = noChans
+    if ( present (noInstances) )        qty%noInstances = noInstances
+    if ( present (noSurfs) )            qty%noSurfs = noSurfs
+    if ( present (noCrossTrack) )       qty%noCrossTrack = noCrossTrack
+    if ( present (regular) )            qty%regular = regular
+    if ( present (minorFrame) )         qty%minorFrame = minorFrame
+    if ( present (majorFrame) )         qty%majorFrame = majorFrame
+    if ( present (sharedVGrid) )        qty%sharedVGrid = sharedVGrid
+    if ( present (sharedFGrid) )        qty%sharedFGrid = sharedFGrid
+    if ( present (badValue) )           qty%badValue = badValue
+    if ( present (verticalCoordinate) ) qty%verticalCoordinate = verticalCoordinate
 
     if ( qty%minorFrame ) then
       if ( present(coherent) ) then
@@ -2168,6 +2172,13 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.106  2015/09/23 22:39:09  vsnyder
+! Add type-bound procedures to access and store latitude as either
+! geocentric or geodetic latitude, except for the rank-2 GeodLat
+! component.  Whether the latter is geocentric or geodetic still depends
+! upon the value of the LatitudeCoordinate component, which users are
+! expected to examine.
+!
 ! Revision 2.105  2015/09/22 23:15:01  vsnyder
 ! Add 3D Phi and Surfs, spiff the dump
 !
