@@ -2671,7 +2671,8 @@ contains ! =====     Public Procedures     =============================
             & referenceMIF = scVelQuantity%template%noSurfs / 2
           call UsingMagneticModel ( quantity, key, scVelQuantity, &
                                   & geocAltitudeQuantity, &
-                                  & regular=regular, referenceMIF=referenceMIF )
+                                  & regular=regular, referenceMIF=referenceMIF, &
+                                  & referenceMIFunits=referenceMIFunits )
         else
           call UsingMagneticModel ( quantity, key )
         end if
@@ -3234,6 +3235,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.456  2015/09/25 02:13:26  vsnyder
+! Add ReferenceMIFUnits to call to UsingMagneticModel
+!
 ! Revision 2.455  2015/09/22 23:39:05  vsnyder
 ! Add ReferenceMIF and Regular fields
 !
