@@ -12,8 +12,8 @@
 \topmargin -0.5in
 \textheight 9in
 
-\newcommand{\docname}{wvs-123}
-\newcommand{\docdate}{28 April 2015}
+\newcommand{\docname}{wvs-123r1}
+\newcommand{\docdate}{28 September 2015}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
@@ -103,9 +103,15 @@ if the tangent point is in the orbit plane and there are no nonzero
 values for the cross-angles field.  Otherwise, it is calculated at
 positions specified by its {\tt hGrid} and {\tt vGrid} fields.
 
+There was a time when the horizontal grid of the magnetic field quantity
+could not be shared, but this is no longer required.  The latitude,
+longitude, and surfaces fields of quantity templates are now allocatable,
+not pointers.  This  means there is a separate one in each quantity
+template, not just one that is referenced by several pointers.
+
 \begin{itemize}
 
-\item The vertical co{\"o}rdinate of the magnetic field must be {\tt
+\item The vertical co\"ordinate of the magnetic field must be {\tt
   zeta}, geodetic altitude ({\tt geodAltitude}), or geocentric height
   ({\tt geocAltitude}).
 
@@ -124,20 +130,43 @@ positions specified by its {\tt hGrid} and {\tt vGrid} fields.
   tangent point is actually in the orbit plane.  Either both must be
   provided, or neither can be provided.
 
-  The horizontal grid of the magnetic field quantity
-  {\large\bfseries\sffamily MUST NOT} be shared!
+  There is a boolean {\tt regular} field in the {\tt fill} statement that
+  only has meaning when filling the magnetic field, and then only if the
+  tangent point geocentric altitude is provided.  If the {\tt regular}
+  field is false, the magnetic field positions are calculated by rotating
+  the MAF according to the {\tt xGrid} angles.  The positions are within
+  the ruled surface defined by the lines connecting the spacecraft
+  position to tangent points.  This magnetic field can be dumped or
+  written using {\tt DirectWrite}, but the forward model cannot use it. 
 
-  The {\tt ForwardModelGeometry} geometry calculation used by the {\tt
-  fill} statement reallocates the latitude and longitude components of
-  the magnetic field quantity template, and calculates values for them! 
-  If the vertical co{\"o}rdinate is geocentric altitude, the computed
-  latitude is geocentric latitude; otherwise it is geodetic latitude.
+  If the {\tt regular} field is true (which can be specified using {\tt
+  /regular}), a stacked and coherent quantity is created.  The zero
+  cross-angle position is at some MIF of the MAF nearest to the profile. 
+  This reference MIF can be specified by the {\tt ReferenceMIF} field of
+  the {\tt fill} command, which is only relevent to this case.  If no
+  reference MIF is specified, the middle MIF is used.  If one is specified
+  without units, it is assumed to be a MIF number.  Otherwise, the units
+  must be length (e.g. {\tt km}), and the vertical co\"ordinate for the
+  magnetic field must be geodetic altitude.  The field is then calculated on
+  vertical profiles rotated from the reference position according to the
+  {\tt xGrid}.
 
-\item If the vertical co{\"o}rdinate of the magnetic field is {\tt
+  In both these cases, the {\tt ForwardModelGeometry} geometry calculation
+  used by the {\tt fill} statement reallocates the latitude and longitude
+  components of the magnetic field quantity template, and calculates
+  values for them. If the vertical co\"ordinate is geocentric altitude,
+  the computed latitude is geocentric latitude; otherwise it is geodetic
+  latitude.
+
+  If the tangent point geocentric altitude is not provided, the magnetic
+  field is computed using the grid originally specified in the magnetic
+  field quantity.
+
+\item If the vertical co\"ordinate of the magnetic field is {\tt
   zeta}, a GPH quantity must be provided in the {\tt fill} statement,
   and a tangent point geocentric altitude quantity ({\tt
   geocAltitudeQuantity}) cannot be provided in the {\tt fill} statement.
-  That is, a {\tt zeta} vertical co{\"o}rdinate cannot be used with
+  That is, a {\tt zeta} vertical co\"ordinate cannot be used with
   cross-track viewing.
 
   We cannot calculate the geolocations of the positions in the magnetic
@@ -147,11 +176,10 @@ positions specified by its {\tt hGrid} and {\tt vGrid} fields.
   have been computed.
 
 \item The numbers of instances of the magnetic field quantity and the
-  tangent point geocentric altitude quantity ({\tt
-  geocAltitudeQuantity}) must be equal.  The tangent point geocentric
-  altitude is a minor-frame quantity, and the magnetic field is a
-  profile quantity.  If we ever want to process more than one MAF per
-  chunk, this problem must be addressed.
+  tangent point geocentric altitude quantity ({\tt geocAltitudeQuantity})
+  must be equal.  The tangent point geocentric altitude is a minor-frame
+  quantity, and the magnetic field is a profile quantity.  If we ever want
+  to process more than one MAF per chunk, this problem must be addressed.
 
 \item If the magnetic field quantity has a cross-angles grid ({\tt
   xGrid}) and any of the angles are not zero, then both a tangent point
@@ -161,6 +189,24 @@ positions specified by its {\tt hGrid} and {\tt vGrid} fields.
 
 \end{itemize}
 
+Here are some examples:
+
+{\tt\begin{verbatim}
+
+  vGridMag: vGrid, type=Linear, coordinate=geodAltitude, $
+    start=-10 km, stop=150 km, number=17
+
+  CrossGrid: hGrid, type=explicit, $
+    geodangle=[-3.0 degrees, -1.5 degrees, 0 degrees, 1.5 degrees, 3.0 degrees]
+
+  magneticField: quantity, type=magneticField, vGrid=vGridMag, $
+    hGrid=hGridStandard, xGrid=crossGrid, stacked=true
+
+  Fill, quantity=apriori.magneticField, method=magneticModel, $
+    scVelECR=apriori.scVelECR, geocAltitudeQuantity=apriori.tngtGeocAltGHz, $
+    /regular, referenceMIF=112km
+\end{verbatim}}
+
 \label{lastpage}
 \vspace*{-0.1in} % Somehow, this causes lastpage to be defined
 \end{document}
@@ -168,3 +214,6 @@ positions specified by its {\tt hGrid} and {\tt vGrid} fields.
 % $Id$
 
 % $Log$
+% Revision 1.1  2015/04/30 17:48:12  vsnyder
+% Initial commit
+%
