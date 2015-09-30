@@ -230,7 +230,8 @@ contains ! =====     Public Procedures     =============================
         if ( associated(DirectDatabase) &
           & .and. .not. SKIPDIRECTWRITES ) then
           call output( ' unsplitting dgg/dgm files', advance='yes' )
-          call unsplitFiles ( DirectDatabase, FileDatabase, usingOldSubmit, debug )
+          call unsplitFiles ( key, DirectDatabase, FileDatabase, HGrids, &
+            & usingOldSubmit, debug )
         end if
       case ( s_sleep ) ! ============ Sleep ==========
         delay = 1000 ! defaults to 1000 microseconds
@@ -820,6 +821,7 @@ contains ! =====     Public Procedures     =============================
       & f_swath, f_toattribute, f_type, &
       & field_first, field_last, &
       & l_l2aux, l_l2cf, l_l2dgg, l_l2gp
+    use highOutput, only: outputnamedValue
     use intrinsic, only: l_ascii, l_swath, l_hdf, lit_indices
     use l2auxdata, only: cpl2auxdata
     use l2gpdata, only: avoidunlimiteddims, &
@@ -860,9 +862,12 @@ contains ! =====     Public Procedures     =============================
     type(MLSFile_T), pointer :: inputFile
     character (len=FileNameLen) :: INPUTFILE_BASE    ! From the inputfile= field
     character (len=FileNameLen) :: inputPhysicalFilename
+    character (len=MAXSWATHNAMESBUFSIZE) :: inSwathList
+    character (len=MAXSWATHNAMESBUFSIZE) :: outSwathList
     type (L2Metadata_T) :: l2metaData ! L2GP metadata 
     integer :: listSize
     integer :: Metadata_error
+    integer :: numSwaths
     logical :: newFile                  ! is this file new?
     integer :: noGapsHGIndex = 0
     integer :: noSwaths
@@ -1083,7 +1088,7 @@ contains ! =====     Public Procedures     =============================
       formattype = l_hdf
       ! Note that we haven't yet implemented repair stuff for l2aux
       ! So crashed chunks remain crashed chunks
-      call Dump( inputFile )
+      if ( DEBUG ) call Dump( inputFile )
       if ( input_type /= output_type ) then
         ! So far we only allow copying text files
         if ( .not. any( input_type == (/ l_ascii, l_l2cf /) ) ) then
@@ -1133,6 +1138,22 @@ contains ! =====     Public Procedures     =============================
           & notUnlimited=avoidUnlimitedDims, andGlAttributes=COPYGLOBALATTRIBUTES, &
           & HGrid=HGrids(HGridIndex), options=optionsString )
       else
+        if ( DEBUG ) then
+          call output( 'input file', advance='yes' )
+          call dump( inputFile )
+          call output( 'output file', advance='yes' )
+          call dump( outputFile )
+          numSwaths = mls_InqSwath ( inputfile%name, inSwathList, listSize, &
+             & hdfVersion=hdfVersion )
+          call outputNamedValue ( 'input swaths', trim(inSwathList) )
+          numSwaths = mls_InqSwath ( outputfile%name, outSwathList, listSize, &
+             & hdfVersion=hdfVersion )
+          call outputNamedValue ( 'output swaths', trim(outSwathList) )
+          numSwaths = mls_InqSwath ( PhysicalFilename, outSwathList, listSize, &
+             & hdfVersion=hdfVersion )
+          call outputNamedValue ( 'output swaths', trim(outSwathList) )
+          call outputNamedValue ( 'swath', trim(sdList) )
+        endif
         call cpL2GPData( l2metaData, inputfile, &
           & outputfile, create2=create, &
           & swathList=trim(sdList), rename=rename, &
@@ -1781,7 +1802,8 @@ contains ! =====     Public Procedures     =============================
   end subroutine returnFullFileName
 
   ! ---------------------------------------------  unsplitFiles  -----
-  subroutine unsplitFiles ( DirectDatabase, FileDatabase, usingSubmit, debug )
+  subroutine unsplitFiles ( key, DirectDatabase, FileDatabase, HGrids, &
+    & usingSubmit, debug )
     ! Catenate any split Direct Writes of dgg/dgm files
     ! Also write various types of metadata
     ! We assume hdfVersion is 5
@@ -1789,8 +1811,12 @@ contains ! =====     Public Procedures     =============================
     use chunkdivide_m, only: obstructions
     use directwrite_m, only: directdata_t, dump
     use hdf5, only: h5gclose_f, h5gopen_f
+    use HGridsdatabase, only: HGrid_t, dump
     use init_tables_module, only: l_l2aux, l_l2dgg
-    use intrinsic, only: l_swath, l_hdf
+    use init_tables_module, only: f_file, f_hgrid, &
+      & field_first, field_last, &
+      & f_type, f_repairGeolocations
+    use intrinsic, only: l_swath, l_hdf, lit_indices
     use l2auxdata, only: cpl2auxdata, phasenameattributes
     use l2gpdata, only: avoidunlimiteddims, &
       & maxswathnamesbufsize, cpl2gpdata
@@ -1802,6 +1828,7 @@ contains ! =====     Public Procedures     =============================
     use MLSFinds, only: findfirst, findnext
     use MLSStringlists, only: array2list, switchdetail
     use MLSStrings, only: trim_safe
+    use moretree, only: get_boolean
     use output_m, only: blanks, output
     use pcfhdr, only: globalattributes, &
       & h5_writemlsfileattr, h5_writeglobalattr, &
@@ -1810,31 +1837,43 @@ contains ! =====     Public Procedures     =============================
       & writeutcpolehdfeosattr, writeutcpolehdf5ds
     use readapriori, only: readaprioriattributes, writeaprioriattributes
     use toggles, only: switches
+    use tree, only: decoration, nsons, subtree, sub_rosa
     ! Arguments
+    integer, intent(in)                        :: key
     type (DirectData_T), dimension(:), pointer :: DirectDatabase
-    type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
-    logical, intent(in) :: debug
-    logical, intent(in) :: USINGSUBMIT              ! Set if using the submit mechanism
+    type (MLSFile_T), dimension(:), pointer    :: FILEDATABASE
+    type (HGrid_T), dimension(:), pointer      :: HGrids
+    logical, intent(in)                        :: debug
+    logical, intent(in)                        :: USINGSUBMIT ! Set if using the submit mechanism
     ! Local variables
     logical, parameter :: ALWAYSFILTERSWATHS = .true. ! Set Status to 'crashed'
     logical :: create2                                ! If geolocs contain Fills
     integer :: DB_index
+    integer :: FIELD_INDEX              ! F_... field code
+    integer :: FIELD_NO                 ! Index of assign vertex sons of Key
+    integer :: FIELDVALUE               ! For get_boolean
     character (len=FileNameLen) :: FILE_BASE    ! From the FILE= field
     integer :: FILEID
+    logical, dimension(field_first:field_last) :: GOT ! Fields
     integer :: GRP_ID
+    integer :: GSON                     ! Son of Son -- an assign node
+    integer :: HGridIndex
     type(MLSFile_T), pointer :: inputFile
     character (len=FileNameLen) :: L2auxPhysicalFilename
     integer :: L2gpFileHandle, L2gp_Version
     character (len=FileNameLen) :: L2gpPhysicalFilename
     integer :: listSize
     logical :: madeFile
-    logical, parameter :: NEVERDUPSWATHNAMES = .true. ! Skip cp if dup
+    ! logical, parameter :: NEVERDUPSWATHNAMES = .true. ! Skip cp if dup
     integer :: numswaths
     integer :: obst
     integer, dimension(:,:), pointer :: obstruction_mafs => null()
     character(len=8) :: options
     type(MLSFile_T), pointer :: outputFile
+    character(len=8) :: outputTypeStr
+    integer :: output_type
     character (len=MAXSWATHNAMESBUFSIZE) :: outsdList
+    logical :: RepairGeolocations
     integer :: ReturnStatus
     integer :: SDFID                ! File handle
     character (len=MAXSWATHNAMESBUFSIZE) :: sdList
@@ -1844,6 +1883,31 @@ contains ! =====     Public Procedures     =============================
     options = ' '
     if ( ALWAYSFILTERSWATHS ) options = '-f'
     if ( debug ) call dump(DirectDatabase)
+    got = .false.
+    HGridIndex = 0
+    do field_no = 2, nsons(key)       ! Skip the command name
+      gson = subtree(field_no, key)   ! An assign node
+      if ( nsons(gson) > 1 ) then
+        fieldValue = decoration(subtree(2,gson)) ! The field's value
+      else
+        fieldValue = gson
+      end if
+      field_index = decoration(subtree(1,gson))
+      got(field_index) = .true.
+      select case ( field_index )   ! Field name
+      case ( f_file )
+        call get_string ( sub_rosa(subtree(2,gson)), file_base, strip=.true. )
+      case ( f_hgrid )
+        HGridIndex = decoration(fieldValue)
+        if ( DEBUG ) print *, 'HGridIndex: ', HGridIndex
+      case ( f_type )
+        output_type = decoration(subtree(2,gson))
+        call get_string ( lit_indices(output_Type), outputTypeStr, strip=.true. )
+      case ( f_repairGeolocations )
+        repairGeolocations = get_boolean ( fieldValue )
+      case default                  ! Everything else processed later
+      end select
+    end do
     ! Any dgg eligible for being catenated
     DB_index = findFirst( DirectDatabase%autoType, l_l2dgg )
     if ( findNext(DirectDatabase%autoType, l_l2dgg, DB_index) > 0 ) then
@@ -1897,18 +1961,21 @@ contains ! =====     Public Procedures     =============================
         if ( CHECKPATHS ) cycle
         madeFile = .true.
         inputFile%access = DFACC_RDONLY
-        if ( NEVERDUPSWATHNAMES ) then
+        if ( repairGeoLocations .and. got(f_HGrid) ) then
           numswaths = mls_InqSwath ( &
             & outputFile%Name, outsdList, listSize, &
             & hdfVersion=HDFVERSION_5 )
+          call outputnamedvalue( 'numswaths', numswaths )
+          call outputnamedvalue( 'listSize', listSize )
+          call outputnamedvalue( 'len_trim(outsdList)', len_trim(outsdList) )
           call cpL2GPData( l2metaData, inputFile, &
             & outputFile, exclude=outsdList, create2=create2, &
             & notUnlimited=avoidUnlimitedDims, &
             & andGlAttributes=COPYGLOBALATTRIBUTES, &
-            & options=options )
+            & HGrid=HGrids(HGridIndex), options=trim(options) // 'r' )
         else
           call cpL2GPData( l2metaData, inputFile, &
-            & outputFile, create2=create2, &
+            & outputFile, exclude=outsdList, create2=create2, &
             & notUnlimited=avoidUnlimitedDims, &
             & andGlAttributes=COPYGLOBALATTRIBUTES, &
             & options=options )
@@ -2138,6 +2205,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.194  2015/09/30 23:02:27  pwagner
+! Catenate can repair geoLocations
+!
 ! Revision 2.193  2015/08/03 21:45:22  pwagner
 ! Attempt to get dois for dgg and dgm like other prod names
 !
