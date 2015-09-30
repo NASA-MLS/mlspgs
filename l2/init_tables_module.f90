@@ -1231,6 +1231,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_precision, field_spec(s_vector,req=req), &
              begin, f+f_aprioriPrecision, field_spec(s_vector,req=req), &
              begin, f+f_precisionFactor, numeric(phyq_dimensionless), &
+             begin, f+f_noZeros, boolean(), &
              ndp+n_spec_def /) )
     call make_tree( (/ &
       begin, s+s_fillCovariance, & ! Must be AFTER s_vector and s_matrix
@@ -1324,7 +1325,9 @@ contains ! =====     Public procedures     =============================
     call make_tree ( (/ &
       begin, s+s_catenate, &  ! Must be AFTER s_l2aux and s_l2gp
              begin, f+f_file, string(), &
+             begin, f+f_hGrid, field_spec(s_hgrid), &
              begin, f+f_type, field_type(t_outputType), &
+             begin, f+f_repairGeolocations, boolean(), &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_sleep, &  ! Must be AFTER s_l2aux and s_l2gp
@@ -2049,6 +2052,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.620  2015/09/30 20:32:06  pwagner
+! With /noZeros field negativePrecision command now resets 0 to -1; Catenate can repair geoLocations
+!
 ! Revision 2.619  2015/09/22 01:56:51  vsnyder
 ! Add GHzAzim and ScECR quantity types, ReferenceMIF and Regular fill fields
 !
