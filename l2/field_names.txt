@@ -317,6 +317,7 @@ noMIFs
 noPCFid
 normQty
 noSlaves
+noZeros
 nscatteringangles
 nsizebins
 number
@@ -536,6 +537,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.259  2015/09/30 20:31:10  pwagner
+# With /noZeros field negativePrecision command now resets 0 to -1
+#
 # Revision 2.258  2015/09/22 01:58:21  vsnyder
 # Add Regular fill field
 #
