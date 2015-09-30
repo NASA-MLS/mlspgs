@@ -126,7 +126,7 @@ contains ! =====     Public Procedures     =============================
       & f_manipulation, f_matrix, f_maxiterations, f_maxvalue, f_measurements, &
       & f_method, f_minnormqty, f_minvalue, f_model, f_multiplier, &
       & f_nofinegrid, f_noise, f_noisebandwidth, f_noPCFid, f_normqty, &
-      & f_offsetamount, f_options, f_orbitinclination, f_phitan, &
+      & f_noZeros, f_offsetamount, f_options, f_orbitinclination, f_phitan, &
       & f_phiwindow, f_phizero, f_precision, f_precisionfactor, &
       & f_profile, f_profilevalues, f_ptanquantity, &
       & f_quadrature, f_quantity, f_quantitynames, &
@@ -467,6 +467,7 @@ contains ! =====     Public Procedures     =============================
     integer :: NOISEQTYINDEX
     integer :: NOISEVECTORINDEX
     logical :: noPCFid                  ! Obey file='..' w/o recourse to PCF
+    logical :: noZeros                  ! Don't allow 0-valued Precisions
     integer :: NORMQTYINDEX
     integer :: NORMVECTORINDEX
     integer :: NOSNOOPEDMATRICES        ! No matrices to snoop
@@ -625,6 +626,7 @@ contains ! =====     Public Procedures     =============================
       MissingGMAO = .false.
       logSpace = .false.
       noPCFid = .false.
+      noZeros = .false.
       options = ' '
       resetSeed = .false.
       refract = .false.
@@ -1005,6 +1007,8 @@ contains ! =====     Public Procedures     =============================
             precisionVectorIndex = decoration(fieldValue)
           case ( f_aprioriPrecision )
             aprPrecVctrIndex =  decoration(fieldValue)
+          case ( f_noZeros )
+            noZeros = get_boolean ( gson )
           case ( f_precisionFactor )
             call expr ( gson , unitAsArray, valueAsArray )
             precisionFactor = valueAsArray(1)
@@ -1021,6 +1025,11 @@ contains ! =====     Public Procedures     =============================
               & vectors(aprPrecVctrIndex)%quantities(j)%values * precisionFactor )
               vectors(precisionVectorIndex)%quantities(j)%values = &
                 & - vectors(precisionVectorIndex)%quantities(j)%values
+            end where
+            if ( .not. noZeros ) cycle
+            ! Enforce noZeros by resetting all 0 to -1
+            where ( vectors(precisionVectorIndex)%quantities(j)%values == 0._rv )
+              vectors(precisionVectorIndex)%quantities(j)%values = -1._rv
             end where
           end do
         end if
@@ -3235,6 +3244,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.457  2015/09/30 20:32:36  pwagner
+! With /noZeros field negativePrecision command now resets 0 to -1
+!
 ! Revision 2.456  2015/09/25 02:13:26  vsnyder
 ! Add ReferenceMIFUnits to call to UsingMagneticModel
 !
