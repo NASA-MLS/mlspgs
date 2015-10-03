@@ -395,7 +395,11 @@ contains ! ===================================== Public Procedures =====
       chunks(chunk)%chunkNumber = chunk
     end do
 
-    if ( swLevel > 0 ) call dump ( chunks )
+    if ( swLevel > 0 ) then
+      call dump ( chunks )
+    else
+      call outputnamedValue( 'Number of chunks', size(chunks) )
+    endif
     if ( specialDumpFile /= ' ' ) call revertOutput
     call trace_end ( "ChunkDivide", cond=toggle(gen) )
 
@@ -2674,6 +2678,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.119  2015/10/03 00:31:01  pwagner
+! Will now show number of chunks
+!
 ! Revision 2.118  2015/06/24 18:01:56  pwagner
 ! Halt with useful error message if no radiances, instead of vanishing in puff of smoke
 !
