@@ -4461,13 +4461,14 @@ contains ! =====     Public Procedures     =============================
       integer :: ReferenceMIFnumber
       integer, allocatable :: Seq(:)  ! Increasing or decreasing
                                       ! sequence indices, => Inc or Dec
-
+      logical :: verbose
       ! Executable code
       call trace_begin ( me, 'FillUtils_1.UsingMagneticModel', key, &
         & cond=toggle(gen) .and. levels(gen) > 1 )
 
       ! Check a bunch of stuff.
       error = .false.
+      verbose = .true. ! beVerbose( 'what?', 1 )
       if ( present(referenceMIFunits) ) then ! Assume present(ReferenceMIF)
         if ( referenceMIFunits == phyq_length ) then
           if ( present(geocAltitudeQuantity) ) then
@@ -4499,6 +4500,8 @@ contains ! =====     Public Procedures     =============================
               call output ( referenceMIF, before=' chosen using height ' )
               call output ( minv, before=' from range ' )
               call output ( maxv, before=' ... ', advance='yes' )
+            elseif ( verbose ) then
+              call outputNamedValue ( 'Reference MIF number', referenceMIFnumber )
             end if
             deallocate ( seq )
           else
@@ -4509,6 +4512,7 @@ contains ! =====     Public Procedures     =============================
           end if
         else if ( referenceMIFunits == phyq_dimensionless ) then
           referenceMIFnumber = nint(referenceMIF)
+          if ( verbose ) call outputNamedValue ( 'Reference MIF number', referenceMIFnumber )
         else ! neither dimensionless or height
           call Announce_Error ( key, no_error_code, &
             & 'Reference MIF for magnetic field is not unitless or height' )
@@ -7631,6 +7635,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.115  2015/10/03 00:28:06  pwagner
+! May print Reference MIF number if verbose
+!
 ! Revision 2.114  2015/09/25 02:15:26  vsnyder
 ! Remove conversion of surfs to geocentric if the vertical coordinate is
 ! geocentric altitude, because ConstructQuantityTemplates now reads the
