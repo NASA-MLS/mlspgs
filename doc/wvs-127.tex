@@ -1,0 +1,685 @@
+\documentclass[11pt]{article}
+\usepackage{alltt}
+\usepackage[fleqn]{amsmath}
+\usepackage{floatflt}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage[strings]{underscore}
+\usepackage{wasysym}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9in
+
+\newcommand{\docname}{wvs-127}
+\newcommand{\docdate}{2 October 2015}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+    \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\bf\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\bf\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Nathaniel, Bill, Paul\\
+Subject: \>Representing state vector quantities and line of sight geometry\\
+From: \>Van Snyder\\
+References: \h{wvs-093}, \h{wvs-100}, \h{wvs-101}\>
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-20pt}
+
+\section*{Introduction}
+
+In {\tt mlsl2} at present, the representation of state vector quanties is
+rigidly tied to the two-dimensional geometry of the orbit plane.
+
+There is only one horizontal co\"ordinate, called $\phi$, which is an
+angular co\"ordinate in the orbit plane.  The vertical co\"ordinate had
+been limited to $\zeta = -\log_{10} P$, but it can now be $\zeta$,
+geocentric height measured from the center of the earth, or geodetic
+altitude measured from the Earth ellipsoid surface.
+
+The state vector representation allows for scattered data, but the forward
+model is only prepared to use data on a rectangular grid that is called
+\emph{stacked} and \emph{coherent}:  The vertical lines of the grid are
+exactly vertical -- not even tilted let alone jagged lines, i.e., every
+point on each line has the same longitude and latitude, and all vertical
+lines have the same set of vertical co\"ordinates.  This makes it easy to
+interpolate simply by forming the product of two linear interpolations. 
+That this limitation existed but was not appreciated caused significant
+delay by attempting to use a magnetic field that was not calculated on
+this sort of rigidly constrained grid.
+
+That the state vector allows for both kinds of representations causes
+complication.  The set of horizontal co\"ordinates $\phi$ is represented
+as a two-dimensional array, but for stacked quantities the first extent is
+one because it has the same value at every vertical position.  Similarly,
+the set of vertical co\"ordinates $\zeta$ is represented as a
+two-dimensional array, but for coherent quantities the second extent is
+one because it has the same value at every horizontal position.  The
+forward model assumes stacked and coherent representation, so it doesn't
+check, but procedures that need to manipulate geolocation more generally
+need to check.
+
+The path on which the radiative-transfer is integrated is assumed to be in
+the orbit plane.  It is characterized by the $\phi$ co\"ordinate of one
+instance (i.e., vertical profile) of the temperature state vector
+quantity, and the $\zeta$ co\"ordinate of one tangent point on that
+profile.  The set of $\zeta$ co\"ordinates for which the forward model
+constructs integration paths is the union of the sets of $\zeta$
+co\"ordinates for all state vector quantities, together with interspersed
+points for Gauss-Legendre quadrature.  This is called the \emph{fine
+grid}.  The relationship between $\zeta$ and height is calculated using an
+assumption of hydrostatic equilibrium.  Therefore, the value of $\zeta$
+corresponding to each height depends upon all temperatures at lower
+heights.
+
+For one path, the relationship between $\zeta$ on the fine grid, $\phi$,
+and the height $h$ for each $\zeta$, is calculated by a Newton iteration
+in the {\tt metrics} module.
+
+The non-scattering radiative transfer equation is initially formulated as
+
+\begin{equation}
+\frac{\text{d}I}{\text{d}s} + \alpha(\mathbf{f},T) I(s) =
+  \alpha(\mathbf{f},T) B(T)
+\end{equation}
+
+where $\mathbf{f}$ is the set of constituent mixing ratios, $\alpha =
+\sum_k \beta^k$ is the absorption cross section, $\beta^k$ is the
+absorption coefficient for the $k^{\text{th}}$ species, and $B = \frac{h
+\nu}{k} \exp\left(\frac{h\nu}{kT}-1 \right)^{-1}$ is the Planck black-body
+radiation function.  The $\mathbf{f}$ and $T$ quantities depend upon $s$,
+which has been suppressed for clarity.  The $\mathbf{f}$ and $T$
+quantities from the state vector are interpolated onto the path of
+integration using
+
+
+\begin{equation}\label{two}
+f^k(s) = \sum_i \mu^k_i(s) f^k_i \text{ and }
+T(s) = \sum_i \mu^T_i(s) T_i
+\end{equation}
+
+where $\mu^k_i(s)$ and $\mu^T_i(s)$ are interpolation coefficients from
+the geolocation of the $i^\text{th}$ state vector element for the
+$k^\text{th}$ species or temperature to the point $s$ on the path of
+integration, and $f^k_i$ and $T_i$ are state vector element values.
+
+The radiative transfer equation is then integrated in $\zeta$
+co\"ordinates using the chain rule
+
+\begin{equation}\label{transfer}
+\frac{\text{d}s}{\text{d}h} \frac{\text{d}h}{\text{d}\zeta} \left[
+ \frac{\text{d}I}{\text{d}s} +
+  \alpha(\mathbf{f},T) I \right] =
+   \frac{\text{d}s}{\text{d}h} \frac{\text{d}h}{\text{d}\zeta}\,
+   \alpha(\mathbf{f},T) B(T)
+\end{equation}
+
+Derivatives necessary to solve for mixing ratios and temperatures using a
+Newton method are calculated by differentiating Equation (\ref{transfer})
+with respect to $f^k_i$ and $T_i$, and solving for $\frac{\partial
+I}{\partial f^k_i}$ and $\frac{\partial I}{\partial T_i}$:
+
+\begin{equation}\begin{split}\label{four}
+\frac{\text{d}s}{\text{d}h} \frac{\text{d}h}{\text{d}\zeta} \left[
+ \frac{\text{d}}{\text{d}s} \frac{\partial I}{\partial f^k_i} +
+   \alpha(\mathbf{f},T) \frac{\partial I}{\partial f^k_i} \right]
+ = \,&
+   \frac{\text{d}s}{\text{d}h} \frac{\text{d}h}{\text{d}\zeta}
+   \frac{\partial\alpha(\mathbf{f},T)}{\partial f^k_i}
+   \left(B(T) - I \right) \\
+ = \,&
+   \frac{\text{d}s}{\text{d}h} \frac{\text{d}h}{\text{d}\zeta}
+   \frac{\partial\alpha(\mathbf{f},T)}{\partial f^k}
+   \frac{\partial f^k(s)}{\partial f^k_i}
+   \left(B(T) - I \right) \\
+ = \,&
+   \frac{\text{d}s}{\text{d}h} \frac{\text{d}h}{\text{d}\zeta}
+    \beta^k(s) \mu^k_i(s) \left(B(T) - I \right) \\
+\end{split}\end{equation}
+
+where the second step uses the chain rule, and the last step uses Equation
+(\ref{two}) and assumes $\alpha(\mathbf{f},T) = \sum_k \beta^k(s) f^k(s)$
+(which isn't always true), and
+
+\begin{equation}\begin{split}\label{five}
+\frac{\text{d}s}{\text{d}h} \frac{\text{d}h}{\text{d}\zeta} \left[
+ \frac{\text{d}}{\text{d}s} \frac{\partial I}{\partial T_i} +
+   \alpha(\mathbf{f},T) \frac{\partial I}{\partial T_i} \right]
+   = \,&
+   \frac{\text{d}s}{\text{d}h} \frac{\text{d}h}{\text{d}\zeta} \left[
+   \frac{\partial\alpha(\mathbf{f},T)}{\partial T}
+    \left( B(T) - I \right) + \alpha(\mathbf{f},T)
+     \frac{\partial B(T)}{\partial T} \right] \mu^T_i(s) + \\
+   \,& \frac{\text{d}s}{\text{d}h}
+         \frac{\partial^2 h}{\partial \zeta \partial T} \left[
+          \alpha(\mathbf{f},T) B(T) -
+          \frac{\text{d}I}{\text{d}s} - \alpha(\mathbf{f},T) I(s)
+          \right] \mu^T_i(s) \\
+\end{split}\end{equation}
+
+where the chain rule has been used as in Equation (\ref{four}), and
+$\mu^T_i(s) = \frac{\partial T(s)}{\partial T_i}$ is the interpolation
+coefficient from the geolocation for the $i^\text{th}$ state vector
+element for temperature to the point $s$ on the path of integration, from
+Equation (\ref{two}).  See \h{wvs-100} for further details of the
+derivation of Equations ((\ref{four}) and (\ref{five}).
+
+The $\frac{\text{d}s}{\text{d}h}$ term introduces a square-root
+singularity at the tangent point.  The $\frac{\text{d}^2 h}{\partial \zeta
+\partial T}$ term causes derivatives with respect to temperature along the
+path, and ultimately the derivative of radiance with respect to
+temperature, to depend upon all temperatures below the path of
+integration, thereby enlarging the Jacobian matrix.  The derivatives along
+the path with respect to all other state vector quantities depend only
+upon the four nearest state vector quantity values and positions.
+
+\section*{What the forward model needs}
+
+The forward model needs four things:
+
+\begin{enumerate}
+\item a representation of state vector quantities,
+\item a representation of the path of integration,
+\item a method to interpolate state vector quantities from their
+      geolocations onto the path of integration, and
+\item the interpolation weights, $\mu$, in Equations (\ref{two}),
+      (\ref{four}), and (\ref{five}) above.
+\end{enumerate}
+
+\section*{State vector and integration path representations}
+
+For each quantity, as far as the retrieval process is concerned, the state
+vector is a one-dimensional quantity.  Geophysically, it might be a
+four-dimensional quantity, with three dimensions corresponding to
+geolocations, and a fourth dimension for components it might have if it is
+a vector field (such as components of a magnetic field).  The geophysical
+interpretation of the organization of state vector quantities should be an
+abstraction.  Neither the forward model nor any other parts of {\tt mlsl2}
+should depend upon that interpretation.
+
+Values of state vector quantities should be represented by one-dimensional
+arrays.  Their representations should be exposed, for efficient reference
+and updating by the retrieval process.
+
+Corresponding to each element of the state vector, there is a geolocation.
+The representation of geolocation for each state vector quantity should be
+an abstraction.  Neither the forward model nor any other parts of {\tt
+mlsl2} should depend upon the details of the representation.  There might
+be more than one representation of state vector geolocations.  The
+relationship between ordinal positions of state vector elements and the
+representation(s) of their geolocations should be an abstraction.  Neither
+the forward model nor any other parts of {\tt mlsl2} should depend upon
+those relationships.  Once a representation is created, however, there is
+an implicit assumption that the relationship between geolocations and the
+ordinal positions of values in their one-dimensional representation in the
+state vector does not change.  An abstraction will be necessary to
+separate horizontal Tikhonov regularization from vertical Tikhonov
+regularization.  If \emph{horizontal} is a two-dimensional quantity, and
+is not represented by a rectangular grid, it is either necessary to
+restrict horizontal Tikhonov regularization to first order, or develop a
+two-dimensional regularization scheme.
+
+The values of geophysical quantities $\mathbf{f}$ and $T$ along the path
+of integration are only needed during integration along the path.  These
+are inherently one-dimensional quantities, and can be represented within
+the forward model as one-dimensional arrays, or as a two-dimensional array
+where the extent of one dimension is the length of the path and the extent
+of the other dimension is the number of elements of $\mathbf{f}$, plus one
+more for $T$.
+
+The representation of geolocations of points along the path of integration
+is only needed in the forward model, for purposes of interpolating state
+vector quantities from their geolocations to geolocations along the path. 
+The forward model should be usable in several geometrical situations, for
+example:
+
+\begin{itemize}
+\item viewing restricted to the orbit plane (AURA),
+\item viewing at some some fixed direction with respect to the orbit plane
+      but pretending the scan is instantaneous so that the locus of
+      tangent points is a vertical line (UARS),
+\item taking instrument motion into consideration so that the lines that
+      connect instrument positions to tangent points form a ruled surface
+      that is not necessarily vertical, and not necessarily a plane if the
+      scan rate is not constant (UARS), or
+\item arbitrary integration paths in three dimensions (A-SMLS).
+\end{itemize}
+
+The representation of geolocations of points along the path of integration
+should therefore be an abstraction.  The forward model should not depend
+upon the implementation of that abstraction.  The path might be specified
+by two positions, e.g.,  the instrument location and either the tangent
+point or the Earth-surface intersection, or as a position, and a line
+through that position with specified orientation.  The path position and
+orientation should be represented by an abstraction.  The forward model
+should not depend upon the implementation details of that abstraction.
+
+\section*{Geolocation representations}
+\subsection*{Single geolocation}
+
+There are many possibilities to represent geolocation of a single point:
+
+\begin{itemize}
+\item Earth Centered Rotating (ECR), with various units for lengths (ECI
+      is probably not needed).
+\item Longitude, Latitude, and Altitude, with variations
+      \begin{itemize}
+      \item Longitude, geocentric latitude, and geocentric height measured
+            from the center of the Earth.
+      \item Longitude, geodetic latitude, and geodetic altitude
+            measured from the surface of the average Earth ellipsoid.
+      \item Longitude, geodetic latitude, and geodetic altitude measured
+            from the center of an hypothetical spherical Earth tangent to
+            the real Earth at the specified longitude and latitude and
+            having the same meridional curvature as the real Earth at that
+            specified longitude and latitude, with geodetic altitude
+            measured from the center of that hypothetical spherical Earth.
+       \end{itemize}
+\item Anglular distance from a reference (e.g., the equator) along a
+      specific great circle or small circle.  For EMLS, this is the $\phi$
+      co\"ordinate.
+\end{itemize}
+
+\subsection*{Collections of geolocations}
+
+The integration path is inherently a one-dimensional quantity.  The set of
+geolocations of points on that path can and should be represented by a
+one-dimensional array of single-point geolocations.
+
+A state vector quantity might have one-, two-, or three-dimensional
+geolocation.  A planar two-dimensional geolocation might be a tesselation
+of rectangles (more generally, quadrilaterals) or triangles.  The former
+might be represented by the Cartesian product of two one-dimensional sets
+of co\"ordinates, producing a rectangular grid, or in one direction all
+points have the same co\"ordinate while in the other direction they do
+not, or each point might have co\"ordinates independent of its neighbors.
+
+Representing a collection of geolocations that lie on a two-dimensional
+surface that is composed of lines that are not in a plane necessarily
+requires either three co\"ordinates for each point, or a representation of
+the position and orientation of a line, and then a co\"ordinate along each
+line for each point on that line.  In either case, methods bound to that
+representation should be aware that the represented geometric object is
+(part of) the surface of a polyhedron.
+
+A three-dimensional geolocation might be a tesselation of rectangular
+parallelepipeds (more generally, hexahedrons) or tetrahedrons, or a
+collection of prisms for which a cross section in a plane orthogonal to
+their longitudinal axes (almost certainly the vertical direction) would be
+a two-dimensional triangular tesselation.  In the rectangular
+parallelepiped case, the geolocations of points might be represented by
+the Cartesian product of three one-dimensional sets of co\"ordinates. 
+More generally, in the hexahedral case, one or two of the dimensions might
+be independent from the others.  In the prism case, the vertical
+co\"ordinates might be specified by the altitudes of planes, or the
+vertical co\"ordinate on each vertical line might be independent from the
+others, but there would be the same number of co\"ordinates on each line.
+
+In all cases, given the geolocation of a point, it is possible to
+determine in which region of the collection that point lies, and from that
+to interpolate values to that point, and produce an interpolation weight
+and index for each of the points surrounding the point, or to determine
+that the point is outside the region.  In the three-dimensional case, an
+exterior point is either within
+
+\begin{itemize}
+
+\item a semi-infinite rectangular prism having a boundary that is a face
+      of the region, in which case an interpolated value within that face
+      is used,
+
+\item a semi-infinite wedge having one boundary that is an edge of the
+      region, two boundaries that are faces of prisms orthogonal to
+      adjacent faces, and two triangular boundaries joining the faces of
+      adjacent prisms, in which case an interpolated value along the edge
+      is used, or
+
+\item a semi-infinite conical polyhedron having a corner that is an
+      exterior point of the region and all other boundaries are the
+      triangular faces of wedges, in which case the value at the single
+      point of contact with the region is used.
+
+\end{itemize}
+
+If the grid consists of rectangular parallelepipeds, only the first case
+occurs.  In the two-dimensional case, an exterior point is either within a
+
+\begin{itemize}
+
+\item semi-infinite rectangle having a boundary that is an edge of the
+      region, in which case an interpolated value along the edge is used,
+      or a
+
+\item semi-infite triangle having a corner that is an exterior point of
+      the region, in which case the value at the single point of contact
+      with the region is used.
+
+\end{itemize}
+
+If the grid is rectangular, only the first case occurs.
+
+\section*{Operations on geolocation representations}
+
+A representation abstraction needs at least the following operations
+(frequently called methods).
+
+\begin{itemize}
+
+\item Create a representation:  Accept a description of geolocations and
+create a representation object.  It is necessary to accept both an
+absolute specification of geolocations, e.g., a worldwide grid, and a
+description of one that is to be created relative to a specified position
+and orientation, e.g., an aircraft position and heading.
+
+At present MLS can create a two-dimensional representation from {\tt
+vGrid} and {\tt hGrid} specifications, or by reading from {\tt l1boa}
+files.  The former produces a stacked and coherent rectangular grid for
+which the horizontal co\"ordinates are represented both by angular
+position within the orbit plane, and by latitudes and longitudes; latitude
+can be geocentric or geodetic.  The vertical co\"ordinate can be $\zeta$,
+geocentric height, or geodetic height.
+
+The latter produces an unstacked incoherent representation, in which
+profiles are not vertical, and therefore each point on a profile has
+different horizontal co\"ordinates, and the sets of vertical co\"ordinates
+on different profiles are not necessarily identical.  Nonetheless, the
+numbers of vertical co\"ordinates on every profile are the same.  Although
+the grid could be considered to consist of quadrilaterals that are not
+rectangles, this is not necessary, as it is never necessary to interpolate
+these quantities.
+
+Both cases are represented by the same datatype, with flags to distinguish
+them.  Arrays of orbit angle, latitude, longitude, and height are
+two-dimensional, but are interpreted as one-dimensional in the stacked and
+coherent case.  The object components are exposed and are either
+referenced or manipulated in many places throughout the program.
+
+Three-dimensional representations will be necessary.  For state
+vector-like quantities these might have pseudo-rectangular latitude and
+longitude horizontal co\"ordinates (which converge to a degenerate state
+at the poles) with stacked profiles at each vertex, and coherent vertical
+co\"ordinates.  From a mathematical point of view these can be regarded as
+rectangular parallelepipeds.  Rather than regularly-spaced latitude and
+longitude horizontal co\"ordinates, a roughly equal-area system, for
+example as used in weather models, might be used.  The horizontal mesh
+might be considered to be a quadrilateral tesselation, or a triangular
+tesselation.  In the future, a requirement for an entirely irregular
+tetrahedral tesselation might arise, and planning the organization of the
+abstraction should take care not to make this a difficult extension.
+
+For measurement quantities these might consist of collections of lines
+that are approximately vertical (EMLS), approximately diagonal (UARS,
+A-SMLS), or approximately horizontal (an instrument that scans
+horizontally faster than vertically).  For such representations, it is
+probably not worthwhile to try to interpret sets of points on different
+lines as boundaries of polygons or polyhedra, as interpolation within
+space is not needed from these quantities.  Geolocations of these objects
+are used only to compute the relationship between the viewing direction
+(i.e., the imputed antenna orientation) and the path of integration, for
+purposes of antenna convolution.
+
+For integration paths, one-dimensional representations are necessary. 
+Although the represented object is fundamentally one dimensional, the
+co\"ordinates of each point are nonetheless located in a three-dimensional
+space, and need to be represented using three co\"ordinates.  To account
+for refraction, the integration path might not be a straight line.
+
+In all cases, there shall be an enumeration of the positions represented,
+so that values can be placed into correspondence with geolocations.  Once
+a geolocation representation is constructed, there must be an assumption
+that the enumeration does not change, so that state vector values can be
+inserted and updated efficiently.
+
+\item Retrieve geolocation: Given an index, retrieve the geolocation of
+that point.  It should be possible to represent the externally produced
+geolocation in a system that is independent from the internal
+representation of that geolocation.  For example, MLS quantities are
+represented using latitude, longitude and height, or orbit angle and
+height, but the IGRF magnetic field model needs Cartesian ECR
+co\"ordinates whose unit of length is the average Earth radius.  The
+method should be elemental so that it can produce several geolocations
+from several indices.  Related methods: Retrieve only geocentric or
+geodetic latitude or height, retrieve only longitude.
+
+\item Retrieve index: Given a geolocation, return the index of that point
+within the representation.  The purpose of this method is to determine
+where to place values in the value or derivative representation, but
+hopefully it is not frequently used -- for efficiency reasons.  In
+general, one should know apriori the relationships between geolocations
+and value indices.  In the regular case, there might be a specification
+that the vertical co\"ordinate varies most quickly, then one horizontal
+co\"ordinate, then the other.  For the entirely incoherent system, the
+index ought to correspond to the order in which the geolocations are
+provided to the method that created the representation.  The method should
+be elemental so that it can produce several indices from several
+geolocations.
+
+\item Interpolate: Accept geolocations and values in one system and
+geolocations in another system, and provide estimated values in the second
+system, and optionally provide indices of geolocations in the first
+system, and interpolation weights $\mu_i$ at those indices in the first
+system that are used to compute estimates of values in the second system. 
+For example, if we want $\frac{\partial \alpha}{\partial f^k_i}$, we need
+$\frac{\partial \alpha}{\partial f^k}$ as in Equation (\ref{four}) and
+$\frac{\partial f^k}{\partial f^k_i} = \mu(s)^k_i$ from Equation
+(\ref{two}) to produce Equation (\ref{five}).
+
+\item Convert: Accept geolocations in one system and produce geolocations
+in a different system.  Accept an entire geolocation representation in one
+system and produce an equivalent one in a different system.  E.g., convert
+from (longitude, geocentric latitude, geocentric height) to Cartesian ECR.
+
+\item Retrieve adjacency lists: Given a representation, retrieve lists of
+indices of vertices that are vertically or horizontally adjacent, for
+purposes of inserting Tikhonov regularization into the retrieval
+equations.
+
+\end{itemize}
+
+\section*{Fortran implementation}
+
+There are several possibilities for Fortran implementation.
+
+Each quantity necessarily has data, that should be represented by an
+object of derived type.
+
+Independently of their geolocations, state vector quantity values can be
+enumerated.  Therefore, the values can and should be represented by a
+single one-dimensional component.
+
+Different techniques to represent geolocations for each abstraction might
+be implemented by multiple allocatable components within a single
+derived-type object, with some being allocated and others not, depending
+upon which representation is in use.  Alternatively, an abstraction might
+be represented by a base type, with each different implementation
+represented by an extension of that type.  In the former case, variables
+that represent an abstraction would all have the same derived type.  For
+the latter case, variables might be polymorphic and have a declared type
+that is the same as the base type and a dynamic type that depends upon the
+particular representation.
+
+Operations on geolocation representations should be type-bound
+procedures.  Since the representation of a geolocation presented to a
+method might be different from the internal representation an abstraction
+uses for geolocation, and there might be several such representations that
+could be presented to a method, the method should be represented by a
+collection of specific procedures bound to a single generic identifier.
+
+If polymorphic representation is used, the base type should be an abstract
+type (meaning that objects of that type cannot be instantiated), with
+deferred bindings for each method (meaning that only interfaces, but not
+procedure implementations, are provided).  Each extension type would then
+be required to provide specific bindings for each method.
+
+For each collection, there are two independent representation
+considerations:
+
+\begin{itemize}
+
+\item The relationship between points within the collection of
+      geolocations, e.g.
+
+      \begin{itemize}
+
+      \item a coherent and stacked grid in two dimensions, i.e.,
+            rectangular,
+
+      \item a rectangular grid in the horizontal dimension with coherent
+            vertical co\"ordinates, i.e., a rectangular parallelepiped
+            grid,
+
+      \item an irregular horizontal grid that is a triangular tesselation
+            with coherent vertical co\"ordinates, i.e., rectangular prisms
+            with triangular bases,
+
+      \item an entirely irregular grid that is a tetrahedral tesselation,
+            or
+
+      \item an incoherent and unstacked collection of lines, with no
+            attempt to construct polygons or polyhedra joining the points
+            on them, and therefore no possibility to interpolate values
+            from them.  There are three possibilities here:
+
+            \begin{itemize}
+
+            \item straight lines, e.g., unrefracted lines of sight,
+
+            \item refracted lines of sight, or
+            
+            \item loci of tangent points of single scans that are not
+                  known to be at a uniform rate, and
+
+            \end{itemize}
+
+      \end{itemize}
+
+\item The representation of individual geolocations e.g.,
+
+      \begin{itemize}
+
+      \item Cartesian ECR (ECI is probably not needed),
+
+      \item longitude, geodetic latitude, geodetic height above Earth
+            ellipse,
+
+      \item longitude, geodetic latitude, geodetic height measured from
+            the center of an hypothetical spherical Earth that is tangent
+            to the Earth ellipse at the specified longitude and latitude
+            and has the same curvature as the meridional curvature of the
+            Earth ellipse at that point,
+
+      \item longitude, geocentric latitude, geocentric height,
+
+      \item inclination and longitude of a node of intersection of a plane
+            passing through the center of the Earth, with angular distance
+            at the center of the Earth measured in that plane from the
+            same node, and height measured from
+
+            \begin{itemize}
+
+            \item the surface of the Earth ellipse and normal to it (it's
+                  not obvious that this direction is within the plane, so
+                  this system might not be feasible),
+
+            \item the edge of a circle tangent to the Earth's surface in
+                  the plane, and having the same curvature as the Earth in
+                  that plane at that tangent point, in the direction
+                  normal to the Earth's surface at that tangent point,
+
+            \item the center of that circle, or
+
+            \item the center of the Earth.
+
+            \end{itemize}
+
+      \end{itemize}
+
+\end{itemize}
+
+For some quantities, it might be necessary or at least desirable to retain
+the time (in seconds since an agreed epoch), the solar time, the solar
+zenith angle, and the angle between the line of sight and the orbit
+tangent.  The latter makes sense only if lines of sight are in the orbit
+plane; it needs a different definition for more general viewing
+geometries, e.g., $90^\circ$ less than the angle between the line of sight
+and the normal to the orbit at the instrument position, which is the
+complement of the angle between the line of sight and the instrument
+position if the orbit is circular.
+
+Using a nonpolymorphic representation, the distinction between these cases
+would be represented by values of components (e.g., how latitude and
+height are measured, variety of grid), and which entities are allocated
+(e.g., ECR co\"ordinates).
+
+Using a polymorphic representation, the several representations of
+relationships between geolocations would be extensions of an abstract base
+type.  The several systems of individual geolocations might independently
+be represented by an abstract base type and extensions of it, or by a
+single type that has latitude, longitude, and height components together
+with components to indicate how latitude and height are measured, with ECR
+co\"ordinates either represented or derived as needed.
+
+\label{lastpage}
+\vspace*{-0.1in} % Somehow, this causes lastpage to be defined
+\end{document}
+
+% $Id$
+
+% $Log$
