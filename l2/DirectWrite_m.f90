@@ -25,8 +25,8 @@ module DirectWrite_m  ! alternative to Join/OutputAndClose methods
     ! so instead write them out chunk-by-chunk
 
   use allocate_deallocate, only: allocate_test
-  use highoutput, only: beVerbose, LetsDebug, outputNamedValue
-  use init_tables_module, only: l_pressure, l_zeta, &
+  use highOutput, only: beVerbose, LetsDebug, outputNamedValue
+  use init_tables_module, only: l_geodAltitude, l_pressure, l_zeta, &
     & l_l2gp, l_l2aux, l_l2dgg, l_l2fwm
   use MLSCommon, only: defaultUndefinedValue, Interval_T, MLSFile_T, &
     & inRange
@@ -37,7 +37,7 @@ module DirectWrite_m  ! alternative to Join/OutputAndClose methods
   use MLSFinds, only: findfirst
   use MLSHDFEOS, only: MLS_swath_in_file
   use MLSL2Options, only: writeFileAttributes
-  use MLSStringlists, only: switchdetail
+  use MLSStringLists, only: switchDetail
   use output_m, only: blanks, output
   use PCFHdr, only: GlobalAttributes
   use string_table, only: get_string
@@ -441,8 +441,8 @@ contains ! ======================= Public Procedures =========================
     ! status            status
     ! Convergence       Convergence
     ! AscDescMode       AscDescMode
-    use hdf, only: dfacc_create, dfacc_rdonly, dfacc_rdwr
-    use hgridsdatabase, only: hgrid_t
+    use HDF, only: dfacc_create, dfacc_rdonly, dfacc_rdwr
+    use HGridsDatabase, only: hgrid_t
     use L2GPData, only: L2GPData_t, &
       & appendL2GPData, destroyL2GPContents, dump
     use readApriori, only: writeAPrioriAttributes
@@ -1141,8 +1141,9 @@ contains ! ======================= Public Procedures =========================
     use intrinsic, only: lit_indices
     use MLSHDF5, only: ishdf5grouppresent, &
       & makehdf5attribute, saveashdf5ds
+    use MLSL2Options, only: MLSMessage
     use MLSSTrings, only: writeintstochars
-    use MoreMessage, only: MLSMessage
+    use MoreMessage, only: MoreMLSMessage => MLSMessage
     use String_Table, only: Get_String
     ! Args:
     type(MLSFile_T)                  :: File
@@ -1183,17 +1184,26 @@ contains ! ======================= Public Procedures =========================
     if ( .not. already_There ) then
       if ( verbose ) call outputNamedValue( '  creating file', trim(File%name) )
       call h5GCreate_f ( File%fileID%f_id, qtyName, grp_id, returnStatus )
+      if ( returnStatus /= 0 ) &
+        & call MLSMessage(MLSMSG_Error, ModuleName, &
+        & 'Unable to create group ' // trim(qtyName), MLSFile=File )
       call writeQuantityAttributes ( grp_id, quantity )
     else
       call h5GOpen_f ( File%fileID%f_id, qtyName, grp_id, returnStatus )
+      if ( returnStatus /= 0 ) &
+        & call MLSMessage(MLSMSG_Error, ModuleName, &
+        & 'Unable to open group ' // trim(qtyName), MLSFile=File )
     end if
     File%fileID%grp_id = grp_id
     call h5GCreate_f ( File%fileID%grp_id, chunkStr, grp_id, returnStatus )
+    if ( returnStatus /= 0 ) &
+      & call MLSMessage(MLSMSG_Error, ModuleName, &
+      & 'Unable to create group ' // trim(chunkStr), MLSFile=File )
     ! Begin the writes
     ! Values
     ! Are we getting the values from an input file?
     if ( present(inputFile) ) then
-      call outputnamedValue( 'inputFile', trim(inputFile) )
+      if ( verbose ) call outputNamedValue( 'inputFile', trim(inputFile) )
       call SaveAsHDF5DS ( inputFile, grp_id, &
         & 'values', maxLineLen=4096, fromNull='@' )
     else
@@ -1204,7 +1214,7 @@ contains ! ======================= Public Procedures =========================
       if ( myRank <= 0 ) then
         myRank = trueRank
       else if ( trueRank > myRank ) then
-        call MLSMessage ( MLSMSG_Warning, moduleName, "Actual rank of Value %S is " // &
+        call MoreMLSMessage ( MLSMSG_Warning, moduleName, "Actual rank of Value %S is " // &
           & " %D but the specified rank is %D.  Are you sure this is what you want?", &
           & datum=[ quantity%template%name, trueRank, myRank] )
       end if
@@ -1242,7 +1252,13 @@ contains ! ======================= Public Procedures =========================
     
     ! Close everything up
     call h5GClose_f ( grp_id, returnStatus )
+    if ( returnStatus /= 0 ) &
+      & call MLSMessage(MLSMSG_Error, ModuleName, &
+      & 'Unable to close chunk group ' // trim(chunkStr), MLSFile=File )
     call h5GClose_f ( File%fileID%grp_id, returnStatus )
+    if ( returnStatus /= 0 ) &
+      & call MLSMessage(MLSMSG_Error, ModuleName, &
+      & 'Unable to close qty group ' // trim(qtyName), MLSFile=File )
 
     call mls_CloseFile( File )
   contains
@@ -1554,16 +1570,17 @@ contains ! ======================= Public Procedures =========================
     ! noOutputInstances = useLastInstance-useFirstInstance+1
     ! Now create an empty L2GP record with this dimension
 
-    if (any(quantity%template%verticalCoordinate == (/l_Pressure, l_Zeta /) )) then
+    if (any(quantity%template%verticalCoordinate == &
+      & (/l_Pressure, l_Zeta, l_geodAltitude /) )) then
       noSurfsInL2GP = quantity%template%noSurfs
     else
       noSurfsInL2GP = 0
     end if
 
     if ( quantity%template%frequencyCoordinate == l_None) then
-       noFreqsInL2GP=0
+       noFreqsInL2GP = 0
     else
-       noFreqsInL2GP=quantity%template%noChans
+       noFreqsInL2GP = quantity%template%noChans
     end if
     
     if ( present(offset) ) then
@@ -1736,6 +1753,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.78  2015/10/06 17:37:05  pwagner
+! Added more error checking; allow for altitude vertical coordinate
+!
 ! Revision 2.77  2015/09/17 23:24:50  pwagner
 ! Passes Max chunk size for l2gp DirectWrites
 !
