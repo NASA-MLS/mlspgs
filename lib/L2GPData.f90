@@ -345,7 +345,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   ! Print debugging stuff?
   logical, parameter :: DEEBUG = .false.  
   logical, parameter ::SWATHLEVELMISSINGVALUE = .false. ! Make it swath attr?
-  real :: t1, t2
+  real :: t2
 
 contains ! =====     Public Procedures     =============================
 
@@ -5302,16 +5302,10 @@ contains ! =====     Public Procedures     =============================
 !------------------------- SayTime ---------------------
   subroutine SayTime ( What, startTime )
     character(len=*), intent(in) :: What
-    real, intent(in), optional :: startTime
-    real :: myt1
-    if ( present(startTime) ) then
-      myt1 = startTime
-    else
-      myt1 = t1
-    endif
+    real, intent(in)             :: startTime
     call time_now ( t2 )
     call output ( "Timing for " // what // " = " )
-    call output ( dble(t2 - myt1), advance = 'yes' )
+    call output ( dble(t2 - startTime), advance = 'yes' )
   end subroutine SayTime
 
 !=============================================================================
@@ -5331,6 +5325,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.217  2015/09/17 22:57:09  pwagner
+! Guards against hdfeos bug in AppendL2GPData only if max chunk size not present
+!
 ! Revision 2.216  2015/09/03 20:26:59  pwagner
 ! verbose shows timings in AppendL2GPData
 !
