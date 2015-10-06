@@ -7,6 +7,16 @@ begin Fill
   DirectRead, Vector=elevOffset, hdfVersion=5, type=hdf, $
     file='!ElevOffsetHDF'
   Transfer, source=elevOffset, destination=apriori
+},{
+  ;; -------------------------------------------------- Elev offsets
+ 
+  ;; This macro below fills <x>Elev for radiometer <x> with the value
+  ;; given in the macro !elev<x>
+  !define(fillElevOffset,{Fill, quantity=apriori.elev$1, method=explicit, $
+    explicitValues=!NegElevation$1!nl})
+
+  ;; Call that macro for all radiometers
+  !ifdef(flagPreV14Configuration,{},{!forall(fillElevOffset,!allBandLSBs,!allBandUSBs)})
 })
 
 !ifdef(flagIsotopeRatioFromFile, {
