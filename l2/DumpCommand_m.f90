@@ -1579,11 +1579,14 @@ contains
           & trim(booleanString) // 'n', label, countEmpty, &
           & inseparator=runTimeValues%sep )
         if ( label == runTimeValues%sep ) then
-          call output( trim(booleanString) // ' = ', advance='no' )
+          ! Do we s[kip] the key?
+          if ( index( 's', optionsString ) < 1 ) &
+            & call output( trim(booleanString) // ' = ', advance='no' )
           call GetHashElement( runTimeValues%lkeys, runTimeValues%lvalues, &
             & booleanString, label, countEmpty, &
             & inseparator=runTimeValues%sep )
-          call output( label, advance='yes' )
+          text = label
+          call outputNow
         else
           ! OK, we're asked to dump an array-valued one
           call readIntsFromChars ( label, n )
@@ -1968,7 +1971,7 @@ contains
         !     B            print as a banner
         !     H            print as a headine
         !     H[c]         print as a headine with character "c" instead of *
-        !     e            print ot stderr
+        !     e            print to stderr
         !     s            s-t-r-e-t-c-h
         !     S            s t r e t c h
         !   L[nn]          use nn for line length
@@ -2854,6 +2857,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.124  2015/10/06 00:23:48  pwagner
+! When Dumping runtime Boolean, options='s' skips printing key
+!
 ! Revision 2.123  2015/09/24 22:10:17  pwagner
 ! Dump command may optionally direct text to stderr
 !
