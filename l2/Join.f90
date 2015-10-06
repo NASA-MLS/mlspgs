@@ -427,7 +427,7 @@ contains ! =====     Public Procedures     =============================
       & f_single, f_source, f_status, f_type, f_upperOverlap, f_vector, &
       & field_first, field_last
     use init_tables_module, only: l_l2gp, l_l2aux, l_l2dgg, l_l2fwm, &
-      & l_pressure, l_quantity, l_zeta
+      & l_magneticField, l_pressure, l_quantity, l_zeta
     use intrinsic, only: l_none, l_hdf, l_swath, lit_indices, phyq_dimensionless
     use l2parinfo, only: parallel, logDirectwriteRequest, finishedDirectwrite
     use manipulateVectorQuantities, only: doHGridsMatch
@@ -847,13 +847,13 @@ contains ! =====     Public Procedures     =============================
         & verticalCoordinate = (/ l_pressure, l_zeta, l_none/), &
         & minorFrame=.false., majorFrame=.false. ) ) then
         expectedType = l_l2gp
+      elseif ( qty%template%quantityType == l_magneticField ) then
+        expectedType = l_quantity
       else
         expectedType = l_l2aux
       end if
       if ( outputType /= expectedType .and. .not. &
         & ( outputType == l_l2dgg .and. expectedType == l_l2gp ) &
-        &                           .and. .not.  &
-        & ( outputType == l_quantity ) &
         &                           .and. .not.  &
         & ( outputType == l_l2fwm .and. expectedType == l_l2aux ) ) then
         call output ( "Offending quantity " )
@@ -2345,7 +2345,7 @@ contains ! =====     Public Procedures     =============================
 
     myPenalty = 1
     if ( present(penalty) ) myPenalty = penalty
-    error = max(error,myPenalty)
+    error = max( error, myPenalty )
 
     call output ( '***** At ' )
     if ( where > 0 ) then
@@ -2356,14 +2356,14 @@ contains ! =====     Public Procedures     =============================
     call output ( ': ' )
     select case ( code )
       case ( NotAllowed )
-        call output('Field ')
-        call display_string(field_indices(fieldIndex))
-        call output(' is not allowed in this context',advance='yes')
+        call output( 'Field ' )
+        call display_string( field_indices(fieldIndex) )
+        call output( ' is not allowed in this context',advance='yes' )
       case default
         call output ( " command caused an unrecognized programming error", advance='yes' )
     end select
     if ( present(ExtraMessage) ) then
-      call output(ExtraMessage, advance='yes')
+      call output( ExtraMessage, advance='yes' )
     end if
   end subroutine ANNOUNCE_ERROR
 
@@ -2381,6 +2381,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.171  2015/10/06 00:26:37  pwagner
+! magneticField belongs in type=quantity DirectWrite file
+!
 ! Revision 2.170  2015/09/17 23:24:30  pwagner
 ! Passes Max chunk size for l2gp DirectWrites
 !
