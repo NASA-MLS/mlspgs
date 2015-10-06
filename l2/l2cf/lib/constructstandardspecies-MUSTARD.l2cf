@@ -464,13 +464,13 @@ begin Construct
   CrossGrid: hGrid, type=explicit, $
     geodangle=[-3.0 degrees, -1.5 degrees, 0 degrees, 1.5 degrees, 3.0 degrees]
   magneticField: quantity, type=magneticField, vGrid=vGridMag, $
-    hGrid=hGridStandard !ifdef(flagUseXGrid,{, xGrid=crossGrid, stacked=false})
+    hGrid=hGridStandard !ifdef(flagUseXGrid,{, xGrid=crossGrid, stacked=true})
   fieldAzimuth: quantity, type=fieldAzimuth, vGrid=vGridMag, $
-    hGrid=hGridStandard !ifdef(flagUseXGrid,{, xGrid=crossGrid, stacked=false})
+    hGrid=hGridStandard !ifdef(flagUseXGrid,{, xGrid=crossGrid, stacked=true})
   fieldElevation: quantity, type=fieldElevation, vGrid=vGridMag, $
-    hGrid=hGridStandard !ifdef(flagUseXGrid,{, xGrid=crossGrid, stacked=false})
+    hGrid=hGridStandard !ifdef(flagUseXGrid,{, xGrid=crossGrid, stacked=true})
   fieldStrength: quantity, type=fieldStrength, vGrid=vGridMag, $
-    hGrid=hGridStandard !ifdef(flagUseXGrid,{, xGrid=crossGrid, stacked=false})
+    hGrid=hGridStandard !ifdef(flagUseXGrid,{, xGrid=crossGrid, stacked=true})
 
   tngtGeocAltGHz: Quantity, type=tngtGeocAlt, module=GHz, $
    coordinate=geocAltitude
