@@ -22,39 +22,39 @@ program MLSL2
   use io_stuff, only: write_textFile
   use intrinsic, only: get_type, l_ascii, l_tkgen, lit_indices
   use L2GPData, only: avoidUnlimitedDims
-  use L2ParInfo, only: parallel, initparallel, accumulateslavearguments, &
-    & transmitslavearguments
+  use L2ParInfo, only: parallel, initParallel, accumulateSlaveArguments, &
+    & transmitSlaveArguments
   use leakcheck_m, only: leakcheck
   use lexer_core, only: init_lexer
   use machine, only: getarg, hp, io_error
-  use MLScommon, only: MLSFile_t, MLSNamesAreDebug, MLSnamesAreVerbose
+  use MLSCommon, only: MLSFile_t, MLSNamesAreDebug, MLSnamesAreVerbose
   use MLSFiles, only: filestringtable, &
     & addFileToDatabase, deallocate_filedatabase, dump, &
     & initializeMLSfile, MLS_openfile, MLS_closefile
   use MLSHDF5, only: MLS_h5open, MLS_h5close
-  use MLSL2Options, only: allocFile, checkPaths, current_version_id, &
-    & default_hdfversion_read, default_hdfversion_write, &
-    & level1_hdfversion, aura_l1bfiles, maxChunkSize, need_l1bfiles, &
-    & normal_exit_status, noteFile, output_print_unit, &
-    & patch, quit_error_threshold, restartWarnings, &
-    & sectionTimes, sectionTimingUnits, sharedPCF, & ! sips_version, &
-    & skipDirectWrites, skipDirectWritesOriginal, slavesCleanUpSelves, &
-    & skipRetrieval, skipretrievaloriginal, &
-    & specialdumpfile, statefilledbyskippedretrievals, &
-    & stopaftersection, stopwitherror, &
-    & toolkit, totaltimes, processoptions, &
-    & checkl2cf, checkleak, countchunks, do_dump, dump_tree, l2cf_unit, &
-    & numswitches, originalcmds, recl, &
-    & sectionstoskip, showdefaults, slavemaf, stopAfterSection, timing, uniqueID
+  use MLSL2Options, only: allocFile, aura_l1bfiles, &
+    & checkl2cf, checkleak, checkPaths, countchunks, current_version_id, &
+    & default_hdfversion_read, default_hdfversion_write, do_dump, dump_tree, &
+    & l2cf_unit, level1_hdfversion, maxChunkSize, need_l1bfiles, &
+    & normal_exit_status, noteFile, numSwitches, &
+    & originalCmds, output_print_unit, &
+    & patch, processOptions, quit_error_threshold, &
+    & recl, restartWarnings, runtimeValues, &
+    & sectionsToSkip, sectionTimes, sectionTimingUnits, &
+    & sharedPCF, showDefaults, & ! sips_version, &
+    & skipDirectWrites, skipDirectWritesOriginal, &
+    & skipRetrieval, skipRetrievalOriginal, slavesCleanUpSelves, slaveMAF, &
+    & specialDumpFile, stateFilledBySkippedRetrievals, &
+    & stopAfterSection, stopWithError, &
+    & timing, toolkit, totaltimes, uniqueID
   use MLSL2Timings, only: run_start_time, section_times, total_times, &
     & add_to_section_timing, dump_section_timings
-  use MLSMessagemodule, only: MLSMessage, MLSMsg_debug, &
-    & MLSMessageconfig, MLSMsg_error, MLSMsg_severity_to_quit, &
-    & MLSMsg_success, MLSMsg_warning, dumpconfig, MLSMessageexit
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Debug, &
+    & MLSMessageConfig, MLSMSG_Error, MLSMSG_Severity_to_quit, &
+    & MLSMSG_Success, MLSMSG_Warning, dumpConfig, MLSMessageExit
   use MLSPCF2 ! everything
   use MLSStrings, only: trim_safe
-  use MLSStringlists, only: expandstringrange, &
-    & switchdetail
+  use MLSStringLists, only: expandstringrange, PutHashElement, switchdetail
   use output_m, only: blanks, output, &
     & invalidprunit, msglogprunit, outputoptions, stampoptions, stdoutprunit
   use parser, only: clean_up_parser, configuration
@@ -382,6 +382,11 @@ program MLSL2
     MLSL2CF%FileID%f_id = -1
   else
     inunit = MLSL2CF%FileID%f_id
+    ! We will store the l2cf file name in the Boolean 'l2cf'
+    call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
+      & 'l2cf', MLSL2CF%name, &
+      & countEmpty=.true., &
+      & inseparator=runTimeValues%sep )
   end if
   if (inunit /= -1) call AddInUnit(inunit)
   numfiles = AddFileToDataBase(filedatabase, MLSL2CF)
@@ -841,6 +846,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.215  2015/10/06 00:22:09  pwagner
+! Automatically store l2cf name in runtime Boolean 'l2cf'
+!
 ! Revision 2.214  2015/09/24 22:07:57  pwagner
 ! Dump_settings shows max chunk size appended to l2gp files
 !
