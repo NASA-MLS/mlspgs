@@ -91,7 +91,13 @@ begin Fill
     !ifdef(flagStrict1D,{phiWindow=0 profiles},{phiWindow=13 profiles})
 
   ;; Dump, details=1, options='1', quantity=truth.ptanGHz, /stop
-  ;; Fill the magnetic field.
+  ;; Re-Fill the magnetic field. We already got it from apriori
+  ;; but the gph may have changed
+!ifdef(flagMagneticFieldOnHeightGrid,{!dnl
+  Fill, quantity=truth.magneticField, method=magneticModel, $
+    scVelECR=truth.scVelECR, geocAltitudeQuantity=truth.tngtGeocAltGHz, $
+    /regular, referenceMIF=!referenceHeight
+  },{
   Fill, quantity=truth.magneticField, method=magneticModel, $
     GPHquantity=truth.gph
   Fill, quantity=truth.fieldAzimuth, method=rotateField, $
@@ -100,12 +106,16 @@ begin Fill
     fieldECR=truth.magneticField, ecrToFOV=truth.ecrToFOV
   Fill, quantity=truth.fieldStrength, method=rotateField, $
     fieldECR=truth.magneticField, ecrToFOV=truth.ecrToFOV
+  })
   
   })
 
 end Fill
 !divert(-1)
 ; $Log$
+; Revision 1.2  2014/11/19 21:32:13  pwagner
+; Removed outmoded azimuth quantity type
+;
 ; Revision 1.1  2014/10/08 19:03:38  pwagner
 ; First commit
 ;

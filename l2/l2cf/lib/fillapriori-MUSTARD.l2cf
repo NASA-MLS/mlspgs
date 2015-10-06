@@ -34,7 +34,7 @@ begin Fill
   ;; Now invoke it for all relevant species
   !forall(fillWithClimatology,!allClimatologicalSpecies)
   
-!ifdef(flagOverwriteWithWACCM,{
+!ifdef(flagOverwriterefGPHWithWACCM,{
   ;; For the UARS instrument, we require non-zero apriori refGPH
   ;; which will be used later, incidentally
   !fillWithClimatology(refGPH)
@@ -191,7 +191,8 @@ Fill, quantity=apriori.refGPH,$
   ;; Fill the magnetic field.
 !ifdef(flagMagneticFieldOnHeightGrid,{!dnl
   Fill, quantity=apriori.magneticField, method=magneticModel, $
-    scVelECR=apriori.scVelECR, geocAltitudeQuantity=apriori.tngtGeocAltGHz
+    scVelECR=apriori.scVelECR, geocAltitudeQuantity=apriori.tngtGeocAltGHz, $
+    /regular, referenceMIF=!referenceHeight
   ;;;Fill, quantity=apriori.fieldAzimuth, method=rotateField, $
   ;;;  fieldECR=apriori.magneticField, ecrToFOV=apriori.ecrToFOV
   ;;;Fill, quantity=apriori.fieldElevation, method=rotateField, $
@@ -643,6 +644,9 @@ end Fill
 !include(writeapriori.l2cf)
 !divert(-1)
 ;$Log$
+;Revision 1.5  2015/05/19 20:57:24  pwagner
+;Restored Fill of magneticField
+;
 ;Revision 1.4  2015/05/18 17:48:53  pwagner
 ;Should not Fill magneticField for MUSTARD
 ;
