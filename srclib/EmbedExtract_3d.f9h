@@ -20,7 +20,7 @@
     integer, dimension(:), intent(in)     :: block
     character(len=*), intent(in), optional :: options
     ! Local variables
-    integer :: i, j, k, ii, jj, kk, n1, n2, n3, m1, m2, m3
+    integer :: i, j, k, ii, jj, kk, n1, n2, n3, m1, m2, m3, n1b, m1b
     character(len=4) :: myOptions
     ! Executable
     myOptions = ''
@@ -37,11 +37,11 @@
               do j=1, block(2)
                 n2 = start(2) - 1 + (JJ-1)*stride(2) + j
                 m2 = (JJ-1)*block(2) + j
-                do i=1, block(1)
-                  n1 = start(1) - 1 + (II-1)*stride(1) + i
-                  m1 = (II-1)*block(1) + i
-                  array(n1, n2, n3) = slab(m1, m2, m3)
-                enddo
+                n1 = start(1) - 1 + (II-1)*stride(1) + 1
+                n1b = start(1) - 1 + (II-1)*stride(1) + block(1)
+                m1 = (II-1)*block(1) + 1
+                m1b = (II-1)*block(1) + block(1)
+                array(n1:n1b, n2, n3) = slab(m1:m1b, m2, m3)
               enddo
             enddo
           enddo
@@ -62,11 +62,11 @@
               do j=1, block(2)
                 n2 = start(2) - 1 + (JJ-1)*stride(2) + j
                 m2 = (JJ-1)*block(2) + j
-                do i=1, block(1)
-                  n1 = start(1) - 1 + (II-1)*stride(1) + i
-                  m1 = (II-1)*block(1) + i
-                  slab(m1, m2, m3) = array(n1, n2, n3)
-                enddo
+                n1 = start(1) - 1 + (II-1)*stride(1) + 1
+                n1b = start(1) - 1 + (II-1)*stride(1) + block(1)
+                m1 = (II-1)*block(1) + 1
+                m1b = (II-1)*block(1) + block(1)
+                slab(m1:m1b, m2, m3) = array(n1:n1b, n2, n3)
               enddo
             enddo
           enddo
@@ -77,6 +77,9 @@
       & ModuleName, "direction neither embedding nor extracting" )
     end select
 ! $Log$
+! Revision 1.5  2014/09/04 23:52:32  vsnyder
+! Add allocate/deallocate size tracking
+!
 ! Revision 1.4  2014/07/25 21:44:53  pwagner
 ! Fixed bugs in 3rd index m3
 !
