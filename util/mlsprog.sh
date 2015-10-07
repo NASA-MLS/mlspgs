@@ -59,6 +59,23 @@ extant_files()
    echo $extant_files_result
 }
 
+run_prog()
+{
+  echo $BIN_DIR/$MLSPROG $EXTRA_OPTIONS "$@"
+  if [ -f $BIN_DIR/license.txt ]
+  then
+    cat $BIN_DIR/license.txt
+  fi
+  if [ "$STDERRFILE" != "" ]
+  then
+    $BIN_DIR/$MLSPROG $EXTRA_OPTIONS "$@" 2> "$STDERRFILE"
+  else
+    $BIN_DIR/$MLSPROG $EXTRA_OPTIONS "$@"
+  fi
+  return_status=`expr $?`
+  H5REPACK=$BIN_DIR/h5repack
+}
+
 #------------------------------- Main Program ------------
 
 #****************************************************************
@@ -107,34 +124,15 @@ is_absolute=`echo "$MLSBIN" | grep '^\/'`
 
 if [ "$PGE_BINARY_DIR" != "" ]
 then
-   echo $PGE_BINARY_DIR/$MLSPROG $EXTRA_OPTIONS "$@"
-   if [ -f $PGE_BINARY_DIR/license.txt ]
-   then
-     cat $PGE_BINARY_DIR/license.txt
-   fi
-   $PGE_BINARY_DIR/$MLSPROG $EXTRA_OPTIONS "$@"
-   return_status=`expr $?`
-   H5REPACK=$PGE_BINARY_DIR/h5repack
+  BIN_DIR=$PGE_BINARY_DIR
 elif [ "$is_absolute" = "" ]
 then
-   echo $MLSHOME/$MLSBIN/$MLSPROG $EXTRA_OPTIONS "$@"
-   if [ -f $MLSHOME/$MLSBIN/license.txt ]
-   then
-     cat $MLSHOME/$MLSBIN/license.txt
-   fi
-   $MLSHOME/$MLSBIN/$MLSPROG $EXTRA_OPTIONS "$@"
-   return_status=`expr $?`
-   H5REPACK=$MLSHOME/$MLSBIN/h5repack
+  BIN_DIR=$MLSHOME/$MLSBIN
 else
-   echo $MLSBIN/$MLSPROG $EXTRA_OPTIONS "$@"
-   if [ -f $MLSBIN/license.txt ]
-   then
-     cat $MLSBIN/license.txt
-   fi
-   $MLSBIN/$MLSPROG $EXTRA_OPTIONS "$@"
-   return_status=`expr $?`
-   H5REPACK=$MLSBIN/h5repack
+  BIN_DIR=$MLSBIN
 fi
+
+run_prog
 
 # Last chance to find h5repack
 if [ ! -x "$H5REPACK" ]
@@ -182,6 +180,9 @@ else
 fi
 
 # $Log$
+# Revision 1.10  2012/02/15 18:12:06  pwagner
+# Offer last chance to find h5repack in HDFTOOLS directory
+#
 # Revision 1.9  2009/04/18 00:51:24  pwagner
 # May use environment variable OTHEROPTS in command line options
 #
