@@ -226,7 +226,7 @@ fi
 
 # Now we launch the master task itself to set everything in motion
 $PGE_BINARY --pge $slave_script --ntk --master $PVM_HOSTS_INFO \
-  --idents "$IDENTFILE" $otheropts $l2cf
+  --idents "$IDENTFILE" $otheropts $l2cf 2> $JOBDIR/master.l2cfname
 
 # Save return status
 return_status=`expr $?`
@@ -312,6 +312,9 @@ else
 fi
 
 # $Log$
+# Revision 1.8  2013/10/29 16:58:37  pwagner
+# May set environment variable PGE_BINARY
+#
 # Revision 1.7  2013/09/04 17:44:45  pwagner
 # Replaced '--cat' cmdline option; 'Catenate' now an Output section command
 #

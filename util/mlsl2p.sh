@@ -232,7 +232,7 @@ ulimit -a
 # If a problem, disclosed by exit status, exit before starting big run
 if [ "$CHECKPATHS" = "yes" ]
 then
-  $PGE_BINARY --checkPaths --tk $otheropts
+  $PGE_BINARY --checkPaths --tk $otheropts 2> $JOBDIR/master.l2cfname
   return_status=`expr $?`
   if [ $return_status != $NORMAL_STATUS ]
   then
@@ -383,6 +383,9 @@ else
 fi
 
 # $Log$
+# Revision 1.29  2014/08/14 00:51:17  pwagner
+# Creates mlsl2p log file
+#
 # Revision 1.28  2014/04/02 23:07:10  pwagner
 # Pass HOSTNAME on commandline to use in metadata
 #
