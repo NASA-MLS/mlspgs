@@ -41,6 +41,7 @@ MODULE SnoopMLSL1 ! Snoop-ify MLS L1
     & PVMF90UNPACK, PVMTASKEXIT, PVMFNOTIFY, PVMFSEND
   use PVMIDL, only:  PVMIDLPACK, PVMIDLSEND, PVMIDLUNPACK
   use TOGGLES, only: SWITCHES
+  USE MLSL1Common, ONLY: FileNameLen
 
   ! use STRING_TABLE, only: GET_STRING, DISPLAY_STRING
   ! use SYMBOL_TABLE, only: ENTER_TERMINAL
@@ -202,7 +203,7 @@ contains
     ! Now the more mundane items
     integer :: BYTES
     integer :: BUFFERID, INFO           ! Flags and ids from PVM
-    !character (len=132) :: COMMENT      ! Comment field to snoop command
+    !character (len=FileNameLen) :: COMMENT      ! Comment field to snoop command
     integer :: I                        ! Loop inductor, subtree index
     integer :: INUM                     ! Index in group
     character (len=132) :: LINE         ! Line of text received
@@ -583,7 +584,7 @@ contains
     integer :: BUFFERID              ! For PVM
     INTEGER :: nArr1, nArr2, nTotArr ! Nummber of arrays supplied
     integer :: INFO                  ! Flag from PVM
-    CHARACTER(len=256) :: name
+    CHARACTER(len=FileNameLen) :: name
 
     ! Executable code
     nArr1=SIZE(Offerings1) 

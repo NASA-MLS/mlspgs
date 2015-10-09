@@ -78,12 +78,23 @@ CONTAINS
       REAL(r8) :: eci(3), sc(3)
       REAL(r8) :: eciV(6), ecrV(6)
 
+      !<whd> 
+      ! 
+      ! Take an arbitrary vector in SC coordinates (here, it's
+      ! one which makes a 30deg angle with the X-axis of the SC in the
+      ! XZ plane. I have _no_ idea why that's useful unless the antenna
+      ! scans in the XZ plane, but that's what the code does
+      ! below. Rick Cofield confirms that the antenna scans in the XZ
+      ! plane of the spacecraft.
+      ! </whd>
+
       angle = Deg2Rad * 30
 
       sc(1) = COS(angle)
       sc(2) = 0.0
       sc(3) = SIN(angle)
 
+      !<whd>Convert to ECI (Earth Centered Inertial)</whd>
       returnStatus = Pgs_csc_scToECI (spacecraftid, numValues, asciiUTC, &
            time_offset, sc, eci)
       CALL ReportTKStatus (returnStatus, ModuleName, errmsg)
@@ -91,12 +102,16 @@ CONTAINS
       eciV(1:3) = eci
       eciV(4:6) = 0.0
 
+      !<whd>Convert ECI to ECR (Earth Centered Rotating)</whd>
       returnStatus = Pgs_csc_eciToECR (numValues, asciiUTC, time_offset, &
            eciV, ecrV)
       CALL ReportTKStatus (returnStatus, ModuleName, errmsg)
 
 ! Truncate velocity portion of ECR view vector
 
+      !<whd> The PGS returns 6 component vectors, the first 3 of which
+      !are postion and the last velocity. Here we don't care about
+      !velocity </whd>
       viewECR = ecrV(1:3)
 
    END SUBROUTINE Scan_guess
@@ -152,6 +167,7 @@ CONTAINS
       DO i = 1, 8
 
          IF (ABS(missAltitude - initAlt) < 1.0) THEN
+           !<whd> Missed by less than 1 meter! Done! </whd>
             converge = 1
             EXIT
          ENDIF
@@ -160,8 +176,10 @@ CONTAINS
               earthModel, ecr)
          CALL ReportTKStatus (returnStatus, ModuleName, errmsg)
 
+         !<whd> Calculate new guess for the line-of-sight vector </whd>
          ray = ecr - posECR
 
+         !<whd> Calculate new grazing ray and missAltitude</whd>
          returnStatus = Pgs_csc_grazingRay(earthModel, posECR, ray, &
               latitude, longitude, missAltitude, slantRange, posNear, posSurf)
          CALL ReportTKStatus (returnStatus, ModuleName, errmsg)
@@ -205,6 +223,9 @@ END MODULE Scan
 !==============
 
 ! $Log$
+! Revision 2.8  2015/04/17 22:54:37  pwagner
+! Fixed small number of interface errors NAG complained about
+!
 ! Revision 2.7  2015/01/23 17:50:17  pwagner
 ! SDPToolkit indispensible for level 1; why not use it instead of Constants?
 !

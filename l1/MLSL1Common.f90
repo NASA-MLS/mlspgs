@@ -199,7 +199,7 @@ MODULE MLSL1Common              ! Common data types for the MLSL1 program
   REAL, PARAMETER :: DEG24 = 360.0 * 2.0**(-24)
 
 !! Switching mirror position ranges (L, S, T1, T2)
-
+!! 'L'imb, 'S'pace, 'T1' = 'primary' target, 'T2' = 'secondary' target
   TYPE SwMir_Range_T
      CHARACTER(len=1) :: pos
      REAL :: low_angle, high_angle
@@ -235,9 +235,21 @@ MODULE MLSL1Common              ! Common data types for the MLSL1 program
 !! Band switches and associated filter bank numbers
 
   INTEGER :: BandSwitch(5) = (/ 0, 0, 0, 0, 0 /)
+
+  !! <whd> SwitchBank lists the number that output of each switch goes to, as a
+  !! function of switch number ...
+  !!
+  !! SwitchBank(1) => DACS-1
+  !! SwitchBank(2) => FB25-3
+  !! SwitchBank(3) => FB25-8
+  !! SwitchBank(4) => FB25-12
+  !! SwitchBank(5) => FB25-15
+  !! 
+  !! What's on the input side of that switch is another matter
+  !! </whd>
   INTEGER, PARAMETER :: SwitchBank(5) = (/ 1, 3, 8, 12, 15 /)
 
-!! Bandwidths for all channels
+!! Bandwidths for all channels (in Hz?)
 
   REAL, PARAMETER, PRIVATE :: FB_BW(FBchans) = (/ &
        110.0, 110.0, 110.0, 74.0, 74.0, 74.0, 55.0, 37.0, 28.0, 18.4, 14.0, &
@@ -297,6 +309,9 @@ END MODULE MLSL1Common
 !=============================================================================
 
 ! $Log$
+! Revision 2.19  2011/06/07 18:57:36  perun
+! Add another Side B switching mirror table uploaded on 2011 DOY 153 at 19:10.
+!
 ! Revision 2.18  2006/03/24 15:11:50  perun
 ! Add ChanLogical_T, ChanInt_T, MaxAlts, SC_YPR and THz_GeodAlt
 !
