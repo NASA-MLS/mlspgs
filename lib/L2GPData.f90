@@ -473,6 +473,7 @@ contains ! =====     Public Procedures     =============================
 
     ! Executable code
     call trace_begin ( me, 'AppendL2GPData_MLSFile', cond=.false. )
+    ! call Dump ( l2gp%chunkNumber, 'Appending l2gp%chunkNumber' )
     call time_now ( tFile )
     status = 0
     timing = DEEBUG .or. BeVerbose( 'l2gp', 2 )
@@ -587,6 +588,8 @@ contains ! =====     Public Procedures     =============================
     else
       ! actual_ntimes = l2gp%nTimes
       ! l2gp%nTimes = max(myLastProfile - offset + 1, 1)
+      if ( all(l2gp%chunkNumber == -999) ) &
+        & call output( 'all chunk numbers are -999', advance='yes' )
       call OutputL2GP_writeGeo_MF (l2gp, l2GPFile, &
         & myswathName, offset)
       if ( timing ) call sayTime( 'Writing geolocations', tFile )
@@ -863,8 +866,8 @@ contains ! =====     Public Procedures     =============================
   ! vector quantity
 
   subroutine ConvertL2GPToQuantity ( l2gp, Quantity )
-    use quantitytemplates, only: setupnewquantitytemplate
-    use vectorsmodule, only: vectorvalue_t, createvectorvalue
+    use quantityTemplates, only: setUpNewQuantityTemplate
+    use vectorsModule, only: vectorValue_t, createVectorValue
     ! Dummy arguments
     type (L2GPData_T), intent(in)   ::     l2gp
     type (VectorValue_T), intent(out)  ::  Quantity
@@ -916,6 +919,7 @@ contains ! =====     Public Procedures     =============================
     character (len=*), optional, intent(in) :: options ! E.g., '-v'
 
     ! Local variables
+    integer :: chunk
     logical, parameter            :: countEmpty = .true.
     logical :: filter
     integer :: i
@@ -972,6 +976,8 @@ contains ! =====     Public Procedures     =============================
       if ( DEEBUG ) print *, 'Reading swath from file: ', trim(swath)
       call ReadL2GPData ( file1, trim(swath), l2gp, &
            & hdfVersion=hdfVersion1, ReadData=ReadData )
+      if ( all(l2gp%chunkNumber == -999) ) &
+        & call output( 'all chunk numbers are -999', advance='yes' )
       if ( DEEBUG ) then
         print *, 'Writing swath to file: ', trim(swath)
         print *, 'l2gp%nFreqs:  ', l2gp%nFreqs
@@ -979,9 +985,14 @@ contains ! =====     Public Procedures     =============================
         print *, 'l2gp%nTimes:  ', l2gp%nTimes
         print *, 'shape(l2gp%l2gpvalue):  ', shape(l2gp%l2gpvalue)
       endif
+      ! call dump ( l2gp%chunkNumber, 'chunkNumber as Read' )
+      ! chunk = FindFirst( l2gp%chunkNumber /= -999 )
+      ! call outputNamedValue ( 'index of non-Fill chunkNumber', chunk )
       ! Possibly repair or filter l2gp
       if ( repair ) call RepairL2GP( l2gp, HGrid, options=options )
       if ( filter ) call FilterL2GP( l2gp )
+      if ( all(l2gp%chunkNumber == -999) ) &
+        & call output( 'After repair and filtering, all chunk numbers are -999', advance='yes' )
       ! Possibly extract a reduced l2pg
       if ( present(rFreqs) .or. present(rLevels) .or. present(rTimes) ) then
         if ( present(rFreqs) ) then
@@ -1009,6 +1020,9 @@ contains ! =====     Public Procedures     =============================
         call DestroyL2GPContents ( reducedl2gp )
       else
       ! Write the filled l2gp to file2
+        ! call dump ( l2gp%chunkNumber, 'chunkNumber as Written' )
+        ! chunk = FindFirst( l2gp%chunkNumber /= -999 )
+        ! call outputNamedValue ( 'index of non-Fill chunkNumber', chunk )
         call WriteL2GPData(l2gp, file2, trim(swath2), hdfVersion=hdfVersion2, &
           & notUnlimited=notUnlimited)
       endif
@@ -1037,9 +1051,9 @@ contains ! =====     Public Procedures     =============================
     ! If file2 doesn't exist yet, or if create2 is TRUE, it'll create it
     ! Optionally repairs l2gpdata
 
-    use hgridsdatabase, only: hgrid_t
-    use pcfhdr, only: globalattributes_t, globalattributes, &
-      & dumpglobalattributes, he5_readglobalattr, he5_writeglobalattr
+    use HGridsDatabase, only: hgrid_t
+    use PCfhdr, only: globalAttributes_t, globalAttributes, &
+      & dumpGlobalAttributes, HE5_Readglobalattr, HE5_Writeglobalattr
     ! Arguments
 
     type (L2Metadata_T) :: l2metaData
@@ -2469,7 +2483,6 @@ contains ! =====     Public Procedures     =============================
     character(len=*), intent(in), optional :: options ! Passed dumping arrays
 
     ! Local variables
-    integer :: ChunkFillValue
     real(r8) :: FillValue
     real(rgp) :: FillValueGP
     real(rgp), dimension(:), pointer :: hoursInDay
@@ -2503,7 +2516,6 @@ contains ! =====     Public Procedures     =============================
     if ( present(options) ) skipGeos = ( index(options, 'g') > 0 )
     FillValue = real(l2gp%MissingValue, r8)
     FillValueGP = l2gp%MissingValue
-    ChunkFillValue = int(l2gp%MissingValue)
     if ( showMe(.true., myFields, 'swathname') ) then
       call output ( 'L2GP Data: (swath name) ')
       call output ( trim(l2gp%name) )
@@ -2682,10 +2694,10 @@ contains ! =====     Public Procedures     =============================
   !----------------------------------------  DumpL2GP_attributes_hdf5  -----
   subroutine DumpL2GP_attributes_hdf5( l2FileHandle, l2gp, swathName )
 
-  use HDFEOS5, only: he5t_native_real, he5t_native_double
-  use HE5_SWAPI, only: he5_swrdattr, he5_swrdlattr
-  use MLSHDFEOS, only: mls_swattach, mls_swdetach, he5_ehrdglatt
-  use PCFHdr, only:  globalAttributes_t, he5_readGlobalAttr
+  use HDFEOS5, only: HE5T_Native_real, HE5T_Native_double
+  use HE5_SWAPI, only: HE5_SWRdattr, HE5_SWRdlattr
+  use MLSHDFEOS, only: MLS_SWAttach, MLS_SWDetach, HE5_EHRdglatt
+  use PCFHdr, only:  globalAttributes_t, HE5_ReadGlobalAttr
     ! Brief description of subroutine
     ! This subroutine dumps the attributes for an l2gp
     ! These include
@@ -2733,7 +2745,6 @@ contains ! =====     Public Procedures     =============================
 
     integer :: field
     logical :: isColumnAmt
-    integer :: rgp_type
     integer :: status
     integer :: swid
     character(len=CHARATTRLEN), dimension(NumGeolocFields) :: theTitles
@@ -2753,11 +2764,7 @@ contains ! =====     Public Procedures     =============================
     endif
     call output ( 'L2GP Attributes: (swath name) ')
     call output ( trim(name), advance='yes' )
-    if ( rgp == r4 ) then
-      rgp_type = HE5T_NATIVE_REAL
-    elseif ( rgp == r8 ) then
-      rgp_type = HE5T_NATIVE_DOUBLE
-    else
+    if ( any( rgp /= (/ r4, r8 /) ) ) then
       call MLSMessage ( MLSMSG_Error, ModuleName, & 
         & 'Attributes have unrecognized numeric data type; should be r4 or r8')
     endif
@@ -3522,7 +3529,6 @@ contains ! =====     Public Procedures     =============================
 
     ! Local
     integer :: myhdfVersion
-    character :: my_hmot
     integer :: status
     type( MLSFile_T ) :: l2gpFile
     
@@ -3532,7 +3538,6 @@ contains ! =====     Public Procedures     =============================
     else
       myhdfVersion = L2GPDEFAULT_HDFVERSION
     endif
-    my_hmot = 'M'
     status = InitializeMLSFile(l2gpFile, type=l_swath, access=DFACC_RDONLY, &
       & content='l2gp', name='unknown', hdfVersion=myhdfVersion)
     l2gpFile%FileID%f_id = l2FileHandle
@@ -3659,10 +3664,10 @@ contains ! =====     Public Procedures     =============================
 
   subroutine ReadL2GPData_MF_hdf(L2GPFile, swathname, l2gp, HMOT, &
     & numProfs, firstProf, lastProf, ReadData)
-  use HDFeos, only: swinqdims
-  use HDFeos5, only: he5_swinqdims, he5_swinqdflds, he5_swfldinfo
-  use MLSHDFeos, only: MLS_swattach, MLS_swdetach, MLS_swdiminfo, MLS_swrdfld
-  use MLSstringlists, only: isinlist
+  use HDFEOS, only: SWInqdims
+  use HDFEOS5, only: HE5_SWInqdims, HE5_SWInqdflds, HE5_SWFldinfo
+  use MLSHDFEOS, only: MLS_SWAttach, MLS_SWDetach, MLS_SWDiminfo, MLS_SWRdfld
+  use MLSStringLists, only: isInList
   use HDF5, only: size_t
     !------------------------------------------------------------------------
 
@@ -4071,8 +4076,7 @@ contains ! =====     Public Procedures     =============================
       & content='l2gp', name='unknown', hdfVersion=myhdfVersion)
     l2gpFile%FileID%f_id = l2FileHandle
     l2gpFile%stillOpen = .true.
-    call WriteL2GPData(l2gp, l2gpFile, &
-    & swathName, notUnlimited)
+    call WriteL2GPData( l2gp, l2gpFile, swathName, notUnlimited )
 
   end subroutine writeL2GPData_fileID
 
@@ -4080,9 +4084,9 @@ contains ! =====     Public Procedures     =============================
   subroutine OutputL2GP_createFile_MF (l2gp, L2GPFile, &
     & swathName, nLevels, notUnlimited, compressTimes)
 
-  use HDFEOS5, only: HE5S_UNLIMITED_F
-  use MLSHDFEOS, only: MLS_SWDETACH, &
-    & MLS_SWCREATE, MLS_DFLDSETUP, MLS_GFLDSETUP, MLS_SWDEFDIM
+  use HDFEOS5, only: HE5S_Unlimited_f
+  use MLSHDFEOS, only: MLS_SWDetach, &
+    & MLS_Swcreate, MLS_DFldsetup, MLS_GFldsetup, MLS_SWDefdim
     ! Brief description of subroutine
     ! This subroutine sets up the structural definitions in an empty L2GP file.
 
@@ -4096,7 +4100,6 @@ contains ! =====     Public Procedures     =============================
 
     ! Variables
 
-    character (len=480) :: MSR
     character (len=132) :: NAME   ! From l2gp%name
     character (len=32) :: MYDIM1, MYDIM12, MYDIM123
 
@@ -4144,8 +4147,10 @@ contains ! =====     Public Procedures     =============================
     ! swid = mls_SWcreate(L2GPFile%FileID%f_id, trim(name), &
     swid = mls_SWcreate(L2GPFile, trim(name) )
     if ( swid == -1 ) then
-       msr = 'Failed to create swath ' // TRIM(name) &
-        & // ' (maybe has the same name as another swath in this file?)'
+       call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & 'Failed to create swath ' // TRIM(name) &
+        & // ' (maybe has the same name as another swath in this file?)', &
+            & MLSFile=L2GPFile )
     end if
 
     ! Define dimensions
@@ -4349,7 +4354,7 @@ contains ! =====     Public Procedures     =============================
   subroutine OutputL2GP_writeGeo_MF (l2gp, L2GPFile, &
     & swathName,offset)
 
-  use MLSHDFEOS, only: MLS_SWATTACH, MLS_SWDETACH, MLS_SWWRFLD
+  use MLSHDFEOS, only: MLS_SWAttach, MLS_SWDetach, MLS_SWWrfld
     ! Brief description of subroutine
     ! This subroutine writes the geolocation fields to an L2GP output file.
 
@@ -4363,7 +4368,7 @@ contains ! =====     Public Procedures     =============================
     ! Variables
 
     character (len=132) :: name ! Either swathName or l2gp%name
-    
+    integer :: chunk
     integer :: status, swid,myOffset
     integer :: start(2), stride(2), edge(2)
     integer :: hdfVersion
@@ -4417,6 +4422,9 @@ contains ! =====     Public Procedures     =============================
     status = mls_SWwrfld(swid, 'OrbitGeodeticAngle', start, stride, edge, &
          real(l2gp%geodAngle), hdfVersion=hdfVersion)
 
+    ! call outputNamedValue ( 'Writing chunk number ', l2gp%chunkNumber )
+    ! chunk = FindFirst( l2gp%chunkNumber /= -999 )
+    ! call outputNamedValue ( 'index of non-Fill chunkNumber', chunk )
     status = mls_SWwrfld(swid, 'ChunkNumber', start, stride, edge, &
          l2gp%chunkNumber, hdfVersion=hdfVersion)
 
@@ -4450,7 +4458,7 @@ contains ! =====     Public Procedures     =============================
   subroutine OutputL2GP_writeData_MF(l2gp, L2GPFile, &
     & swathName,offset)
 
-  use MLSHDFEOS, only: MLS_SWATTACH, MLS_SWDETACH, MLS_SWWRFLD
+  use MLSHDFEOS, only: MLS_SWAttach, MLS_SWDetach, MLS_SWWrfld
     ! Brief description of subroutine
     ! This subroutine writes the data fields to an L2GP output file.
     ! For now, you have to write all of l2gp, but you can choose to write
@@ -4578,12 +4586,12 @@ contains ! =====     Public Procedures     =============================
   !----------------------------------------  OutputL2GP_attributes_MF  -----
   subroutine OutputL2GP_attributes_MF(l2gp, L2GPFile, swathName)
 
-  use HDFEOS5, only: HE5T_NATIVE_INT, HE5T_NATIVE_REAL, HE5T_NATIVE_DOUBLE, &
-    & MLS_CHARTYPE
-  use HE5_SWAPI, only: HE5_SWWRATTR, HE5_SWWRLATTR
-  use MLSHDFEOS, only: MLS_ISGLATT, &
-    & MLS_SWATTACH, MLS_SWDETACH, MLS_SWWRATTR, MLS_SWWRLATTR
-  use PCFHDR, only:  HE5_WRITEGLOBALATTR
+  use HDFEOS5, only: HE5T_Native_int, HE5T_Native_real, HE5T_Native_double, &
+    & MLS_Chartype
+  use HE5_SWAPI, only: HE5_SWWrattr, HE5_SWWrlattr
+  use MLSHDFEOS, only: MLS_ISGlatt, &
+    & MLS_SWAttach, MLS_SWDetach, MLS_SWWrattr, MLS_SWWrlattr
+  use PCFHDR, only:  HE5_Writeglobalattr
     ! Brief description of subroutine
     ! This subroutine writes the attributes for an l2gp
     ! These include
@@ -4892,14 +4900,13 @@ contains ! =====     Public Procedures     =============================
     ! Internal variables
     character(len=128) :: myFields
     character (len=8) :: myOptions
-    logical :: verbose
 
     ! Executable code
     myFields = GEO_FIELDS ! '*' ! would mean values or geolocations
     if ( present(fields) ) myFields = lowercase(fields)
     myOptions = ' '
     if ( present(options) ) myOptions = options
-    verbose = ( index(myOptions, 'v') > 0 )
+    ! verbose = ( index(myOptions, 'v') > 0 )
     select case (trim(myFields))
     case ('value')
       myFields = lowercase(DATA_FIELDS) ! 'l2gpvalue, l2gpPrecision, status, quality'
@@ -4981,14 +4988,13 @@ contains ! =====     Public Procedures     =============================
     ! Internal variables
     character(len=128) :: myFields
     character (len=8) :: myOptions
-    logical :: verbose
 
     ! Executable code
     myFields = '*'
     if ( present(fields) ) myFields = lowercase(fields)
     myOptions = ' '
     if ( present(options) ) myOptions = options
-    verbose = ( index(myOptions, 'v') > 0 )
+    ! verbose = ( index(myOptions, 'v') > 0 )
     select case (trim(myFields))
     case ('value')
       myFields = lowercase(DATA_FIELDS) ! 'l2gpvalue, l2gpPrecision, status, quality'
@@ -5325,6 +5331,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.218  2015/10/06 00:20:53  pwagner
+! Removed unused code
+!
 ! Revision 2.217  2015/09/17 22:57:09  pwagner
 ! Guards against hdfeos bug in AppendL2GPData only if max chunk size not present
 !
