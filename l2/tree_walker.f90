@@ -45,15 +45,16 @@ contains ! ====     Public Procedures     ==============================
     use Fgrid, only: fgrid_t, destroyfgriddatabase, dump
     use Fill, only: MLSl2fill
     use Forwardmodelconfig, only: forwardmodelconfig_t, &
-      & Destroyfwmconfigdatabase, &
-      & Stripforwardmodelconfigdatabase
-    use Forwardmodelsupport, only: printforwardmodeltiming
+      & DestroyFwmConfigDatabase, &
+      & StripForwardModelConfigDatabase
+    use Forwardmodelsupport, only: printForwardModelTiming
     use Global_settings, only: set_global_settings
     use Griddeddata, only: griddeddata_t, destroygriddeddatadatabase, dump
     use Hessianmodule_1, only: destroyhessiandatabase, hessian_t
     use Hgridsdatabase, only: hgrid_t
-    use Hgrid, only: computeallhgridoffsets, DestroyHGridGeoLocations
-    use HighOutput, only: beVerbose, outputNamedValue, getstamp, setstamp
+    use Hgrid, only: computeAllHGridOffsets, DestroyHGridGeoLocations
+    use HighOutput, only: beVerbose, getStamp, headLine, outputNamedValue, &
+      & setStamp
     use Init_tables_module, only: l_chisqchan, l_chisqmmaf, l_chisqmmif,  &
       & Section_first, section_last, &
       & Z_algebra, z_chunkdivide,  z_construct, z_fill, z_globalsettings, &
@@ -61,14 +62,14 @@ contains ! ====     Public Procedures     ==============================
       & Z_retrieve, z_spectroscopy
     use Intrinsic, only: section_indices
     use Join, only: MLSl2join
-    use L2auxdata, only: destroyl2auxdatabase, l2auxdata_t, dump
-    use L2fwmparallel, only: l2fwmslavetask, launchfwmslaves
-    use L2gpdata, only: destroyl2gpdatabase, l2gpdata_t, dump
-    use L2parallel, only: getchunkinfofrommaster, l2mastertask
-    use L2parinfo, only: parallel, closeparallel
-    use L2pc_m, only: destroyl2pcdatabase, destroybinselectordatabase
-    use L2pcbins_m, only: flushlockedbins
-    use Matrixmodule_1, only: destroymatrixdatabase, matrix_database_t
+    use L2AUXData, only: destroyl2auxdatabase, l2auxdata_t, dump
+    use L2FWMParallel, only: L2FWMSlaveTask, launchFWMSlaves
+    use L2GPData, only: destroyL2GPDatabase, L2GPData_t, dump
+    use L2Parallel, only: getChunkInfoFromMaster, L2MasterTask
+    use L2Parinfo, only: parallel, closeparallel
+    use L2PC_m, only: destroyL2PCDatabase, destroyBinSelectorDatabase
+    use L2PCBins_m, only: flushlockedbins
+    use MatrixModule_1, only: destroymatrixdatabase, matrix_database_t
     use Mergegridsmodule, only: mergegrids
     use MLSCommon, only: tai93_range_t, MLSfile_t
     use MLSL2Options, only: aura_l1bfiles, checkpaths, currentchunknumber, &
@@ -88,7 +89,7 @@ contains ! ====     Public Procedures     ==============================
     use MLSStringlists, only: expandstringrange, isinlist, switchdetail
     use MLSStrings, only: lowercase
     use MLSL2Timings, only: add_to_section_timing, total_times
-    use Next_tree_node_m, only: dump, isStateNull, &
+    use Next_tree_node_m, only: dump, &
       & Next_tree_node, next_tree_node_state
     use Open_init, only: openandinitialize
     use Outputandclose, only: output_close
@@ -102,7 +103,7 @@ contains ! ====     Public Procedures     ==============================
       & Destroy_spectcat_database, spectroscopy
     use String_table, only: get_string
     use Time_m, only: time_now
-    use Toggles, only: gen, levels, switches, toggle
+    use Toggles, only: gen, switches, toggle
     use Trace_m, only: trace_begin, trace_end
     use Tree, only: decoration, nsons, subtree
     use VectorsModule, only: destroyVectorDatabase, dump_vectors, &
@@ -133,7 +134,6 @@ contains ! ====     Public Procedures     ==============================
       & pointer ::                               GriddedDataBase
     type (Hessian_T), dimension(:), pointer ::   Hessians
     type (HGrid_T), dimension(:), pointer ::     HGrids
-    integer ::                                   HOWMANY ! Nsons(Root)
     integer ::                                   I       ! Loop inductors
     integer, dimension(1) :: ICHUNKS
     integer ::                                   LASTCHUNK ! For chunk loop
@@ -144,7 +144,6 @@ contains ! ====     Public Procedures     ==============================
     integer :: Me = -1                           ! String index for trace
     logical ::                                   now_stop
     type (TAI93_Range_T) ::                      ProcessingRange  ! Data processing range
-    logical ::                                   REDUCEDCHUNKS
     integer ::                                   section_index
     character(len=32) ::                         section_name
     logical ::                                   showTime
@@ -190,7 +189,6 @@ contains ! ====     Public Procedures     ==============================
       & index('global_setting,chunk_divide', &
       & lowercase( trim(stopAfterSection) ) ) > 0 )
     stopBeforeChunkLoop = ( stopBeforeChunkLoop .and. stopAfterSection /= ' ' )
-    reducedChunks      = .false.
     skipSections = .false.
     do i = section_first, section_last
       call get_string ( section_indices(i), section_name, strip=.true. )
@@ -202,7 +200,6 @@ contains ! ====     Public Procedures     ==============================
       call finishUp ( .true. )
       return
     end if
-    howmany = nsons(root)
 
     ! -----------------------------------------------------
     ! ----------------------------------------------------- Loop over tree
@@ -440,6 +437,12 @@ subtrees:   do
                   & fGrids, hGrids, l2gpDatabase, forwardModelConfigDatabase, &
                   & griddedDataBase, mifGeolocation )
                 call add_to_section_timing ( 'construct', t1, now_stop )
+                if ( associated(hGrids) ) then
+                  if ( HGrids(1)%noProfs < 1 ) then
+                    call headLine ( 'No profiles, so skipping this chunk' )
+                    exit subtrees
+                  endif
+                endif
               case ( z_fill )
                 if ( .not. checkPaths ) then 
                   call MLSL2Fill ( son, filedatabase, griddedDataBase, &
@@ -723,6 +726,9 @@ subtrees:   do
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.199  2015/09/03 20:29:47  pwagner
+! We were calling L2MasterTask more than once; fixed
+!
 ! Revision 2.198  2015/08/03 21:46:59  pwagner
 ! May debug Next_tree_node_m calls
 !
