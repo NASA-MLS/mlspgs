@@ -814,8 +814,6 @@ contains ! =====     Public Procedures     =============================
     ! Adjust Join section timing to exclude directwrite timings
     ! (otherwise they would be counted twice)
     if ( joinElem > 0 .and. dwElem > 0 ) then
-      call outputnamedValue( 'section_timings(joinElem)', section_timings(joinElem) )
-      call outputnamedValue( 'section_timings(dwElem)', section_timings(dwElem) )
       section_timings(joinElem) = &
       &         section_timings(joinElem) - section_timings(dwElem)
     endif
@@ -1026,6 +1024,9 @@ END MODULE MLSL2Timings
 
 !
 ! $Log$
+! Revision 2.64  2015/10/13 23:50:05  pwagner
+! Delete unneeded debug printing
+!
 ! Revision 2.63  2015/09/17 23:18:28  pwagner
 ! Repaired bug using currentPhaseName before being defined; addPhaseToPhaseNames can now be called with name=0
 !
