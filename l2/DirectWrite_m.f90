@@ -347,6 +347,7 @@ contains ! ======================= Public Procedures =========================
     ! Despite the name the routine takes vector quantities, not l2aux ones
     ! It dooes so an entrire vector's worth of vector quantities
     use MLSStrings, only: writeIntsToChars
+    use string_table, only: get_string
     ! Args:
     type (Vector_T), intent(in)   :: VECTOR
     type(MLSFile_T)               :: File
@@ -476,6 +477,7 @@ contains ! ======================= Public Procedures =========================
     ! Executable
     verbose = BeVerbose ( 'direct', -1 )
     deebug = LetsDebug ( 'direct', 0 )
+    if ( verbose ) call outputNamedValue ('DW ChunkNo', ChunkNo )
     if ( present(createSwath) ) then
       alreadyThere = mls_exists( L2GPFile%name ) == 0
       if ( .not. alreadyThere .and. verbose ) &
@@ -568,6 +570,7 @@ contains ! ======================= Public Procedures =========================
       call output(quantity%template%grandTotalInstances, advance='yes')
     endif
     if ( verbose ) call outputNamedValue( 'DW L2GP qty name', trim(sdName) )
+    if ( verbose ) call dump( l2gp%chunkNumber, 'Appending chunkNumber' )
     call usleep ( delay ) ! Should we make this parallel%delay?
     call AppendL2GPData( l2gp, l2gpFile, &
       & sdName, offset, lastprofile=lastInstance, &
@@ -1144,7 +1147,6 @@ contains ! ======================= Public Procedures =========================
     use MLSL2Options, only: MLSMessage
     use MLSSTrings, only: writeintstochars
     use MoreMessage, only: MoreMLSMessage => MLSMessage
-    use String_Table, only: Get_String
     ! Args:
     type(MLSFile_T)                  :: File
     type (VectorValue_T), intent(in) :: Quantity
@@ -1511,16 +1513,17 @@ contains ! ======================= Public Procedures =========================
 
 ! =====     Private Procedures     =====================================
   ! ---------------------------------------------  vectorValue_to_l2gp  -----
-  subroutine vectorValue_to_l2gp ( QUANTITY, &
+  subroutine vectorValue_to_l2gp ( quantity, &
     & precision, quality, status, convergence, AscDescMode, &
-    & l2gp, &
-    & name, chunkNo, HGrids, offset, firstInstance, lastInstance )
+    & l2gp, name, chunkNo, HGrids, offset, firstInstance, lastInstance )
+    use Dump_0, only: Dump
     use HGridsDatabase, only: HGrid_T
-    use intrinsic, only: l_none
+    use intrinsic, only: l_none, lit_indices
     use L2GPData, only: descendingRange, L2GPData_T, RGP, &
       & setupNewL2GPRecord
+    use QuantityTemplates, only: Dump
     ! Args:
-    type (VectorValue_T), intent(in) :: QUANTITY
+    type (VectorValue_T), intent(in) :: quantity
     type (VectorValue_T), pointer    :: precision
     type (VectorValue_T), pointer    :: quality
     type (VectorValue_T), pointer    :: status
@@ -1593,10 +1596,19 @@ contains ! ======================= Public Procedures =========================
     if ( DEEBUG ) print *, 'noFreqsInL2GP, noSurfsInL2GP, lastProfile: ', noFreqsInL2GP, noSurfsInL2GP, lastProfile
     call SetupNewl2gpRecord ( l2gp, noFreqsInL2GP, noSurfsInL2GP, lastProfile )
     ! Setup the standard stuff, only pressure as it turns out.
-    if ( quantity%template%verticalCoordinate == l_Pressure ) &
-      & l2gp%pressures = quantity%template%surfs(:,1)
-    if ( quantity%template%verticalCoordinate == l_Zeta ) &
-      & l2gp%pressures = 10.0**(-quantity%template%surfs(:,1))
+    select case ( quantity%template%verticalCoordinate )
+    case ( l_Pressure ) 
+      l2gp%pressures = quantity%template%surfs(:,1)
+    case ( l_Zeta ) 
+      l2gp%pressures = 10.0**(-quantity%template%surfs(:,1))
+    case default
+      call get_string( lit_indices(quantity%template%verticalCoordinate ), l2gp%verticalCoordinate, strip=.true. )      
+      if ( noSurfsInL2GP > 0 ) l2gp%pressures = quantity%template%surfs(:,1)
+      call MLSMessage( MLSMSG_Warning, ModuleName, &
+        & 'Converting qty with non-pressure vertical coordinate ' // l2gp%verticalCoordinate )
+      if ( verbose ) call dump( l2gp%pressures, 'vertical coordinates' )
+      if ( deebug  ) call dump( quantity%template )
+    end select
     ! It inherits its quantity type from the quantity template
     l2gp%quantityType=quantity%template%quantityType
     ! Do something about frequency
@@ -1635,7 +1647,11 @@ contains ! ======================= Public Procedures =========================
     end if
     l2gp%time(firstProfile:lastProfile) = &
       & quantity%template%time(1,useFirstInstance:useLastInstance)
-    l2gp%chunkNumber(firstProfile:lastProfile)=chunkNo
+    l2gp%chunkNumber(firstProfile:lastProfile) = chunkNo
+    if ( verbose ) then
+      call outputNamedValue( 'firstProfile, lastProfile', (/firstProfile, lastProfile /) )
+      call outputNamedValue( 'chunkNos', l2gp%chunkNumber(firstProfile:lastProfile) )
+    endif
 
     ! Now the various data quantities.
 
@@ -1705,6 +1721,8 @@ contains ! ======================= Public Procedures =========================
       call outputNamedValue ( 'lons', l2gp%longitude(firstProfile:lastProfile) )
       call outputNamedValue ( 'lats', l2gp%latitude(firstProfile:lastProfile) )
     endif
+    if ( all(l2gp%chunkNumber == -999) ) &
+      & call output( 'all converted chunk numbers are -999', advance='yes' )
   end subroutine vectorValue_to_l2gp
 
   ! ---------------------------------------------  ANNOUNCE_ERROR  -----
@@ -1753,6 +1771,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.79  2015/10/14 23:24:46  pwagner
+! Cope better with l2gp qty with non-pressure vertical coordinate
+!
 ! Revision 2.78  2015/10/06 17:37:05  pwagner
 ! Added more error checking; allow for altitude vertical coordinate
 !
