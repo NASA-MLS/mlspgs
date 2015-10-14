@@ -157,6 +157,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
 ! if the options is present and contains the following characters:
 !   character         meaning
 !      ---            -------
+!       c              repair geolcations of bad chunks
 !       d              treat differing geolcations as bad chunks
 !       f              filter profiles with FillValues by marking as crashed
 !       g              skip diff or dump of geolcations
@@ -5060,12 +5061,19 @@ contains ! =====     Public Procedures     =============================
     ! This routine repairs l2gp1 using values from HGrid
     ! wherever the first has fillvalues
     
-    ! Thew optional arg fields will determine which fields this applies to:
+    ! The optional arg fields will determine which fields this applies to:
     ! value                  fields
     ! -----                  ------
     ! '*' (or missing)    all
     ! 'latitude,time'     latitude, time
     ! 'geolocation'       geolocations (all)
+    
+    ! If the optional arg options contains
+    ! value       effect
+    ! -----       ------
+    !   v        verbose
+    !   d        DEEBUG
+    !   c        forcibly repair any geolocations whose chunk number is -999
 
     ! Dummy arguments
     type (L2GPData_T), intent(inout) :: L2GP
@@ -5075,11 +5083,12 @@ contains ! =====     Public Procedures     =============================
     character (len=*), optional, intent(in) :: options ! E.g., '-v'
     ! Internal variables
     ! logical, parameter :: DEEBUG = .false.
-    integer :: HGp1 ! Effective starting HGrid profile
-    integer :: HGpn ! Effective ending HGrid profile
+    logical            :: force
+    integer            :: HGp1 ! Effective starting HGrid profile
+    integer            :: HGpn ! Effective ending HGrid profile
     character(len=128) :: myFields
-    character (len=8) :: myOptions
-    logical :: verbose
+    character (len=8)  :: myOptions
+    logical            :: verbose
     ! Executable code
     myFields = '*'
     if ( present(fields) ) myFields = lowercase(fields)
@@ -5091,6 +5100,7 @@ contains ! =====     Public Procedures     =============================
     else
       HGp1 = 1 + HGrid%noProfsLowerOverlap ! 2  ! No longer assume we're not offset; was 1
     endif
+    force = ( index(myOptions, 'c') > 0 )
     ! Check that we've calculated array sizes correectly
     ! In particular, useable profiles matched HGrid and l2gp
     if ( size(hgrid%geodLat(1,HGp1:)) < size(l2gp%latitude) ) then
@@ -5131,6 +5141,18 @@ contains ! =====     Public Procedures     =============================
       call output(shape(l2gp%latitude), advance='yes')
       call output('shape HGrid%phi(1,HGp1:HGpn): ')
       call output(shape(HGrid%phi(1,HGp1:HGpn)), advance='yes')
+    endif
+    
+    if ( force ) then
+      where ( l2gp%chunkNumber == -999 )
+        l2gp%latitude      = l2gp%MissingValue
+        l2gp%longitude     = l2gp%MissingValue
+        l2gp%solartime     = l2gp%MissingValue
+        l2gp%solarzenith   = l2gp%MissingValue
+        l2gp%losangle      = l2gp%MissingValue
+        l2gp%geodAngle     = l2gp%MissingValue
+        l2gp%time          = l2gp%MissingValue
+      endwhere
     endif
 
     select case (trim(myFields))
@@ -5331,6 +5353,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.219  2015/10/13 23:48:28  pwagner
+! Warn if all chunkNumbers are FillValues; exit with error if asked to create a swath with preexisting name
+!
 ! Revision 2.218  2015/10/06 00:20:53  pwagner
 ! Removed unused code
 !
