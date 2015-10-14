@@ -74,20 +74,18 @@ contains ! =====     Public Procedures     =============================
       & field_first, field_last, &
       & l_explicit, l_fixed, l_fractional, l_height, &
       & l_l2gp, l_regular
-    use L1BData, only: deallocateL1BData, L1BData_t, readL1BData, &
-      & assembleL1BQtyName
     use L2GPData, only: L2GPData_t
     use MLSCommon, only: MLSfile_t, namelen, tai93_range_t
     use MLSFiles, only: getMLSfilebytype
     use MLSKinds, only: rk => r8
     use MLSL2options, only: need_L1Bfiles
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSmsg_L1Bread
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use MLSNumerics, only: hunt
     use MLSStringLists, only: switchDetail
     use moretree, only: get_boolean
-    use Output_m, only: blanks, output
+    use Output_m, only: output
     use string_table, only: get_string
-    use time_m, only: begin, finish, time_now, time_config
+    use time_m, only: time_now
     use toggles, only: gen, levels, switches, toggle
     use trace_m, only: trace_begin, trace_end
     use tree, only: decoration, nsons, sub_rosa, subtree
@@ -119,9 +117,6 @@ contains ! =====     Public Procedures     =============================
     integer :: keyNo                    ! Entry in the mlscf line
     integer :: fieldValue               ! Node in the tree
 
-    type (L1BData_T) :: l1bField ! L1B data
-
-    real(rk) :: incline                 ! Orbital inclination / degrees
     real(rk) :: MINTIME, MAXTIME        ! Span for a chunk
     logical :: MYSUPPRESSGEOMETRYDUMP
     integer, dimension(2) :: PROFRANGE  ! Profile range
@@ -131,12 +126,10 @@ contains ! =====     Public Procedures     =============================
     integer :: FIELD                    ! Subtree index of "field" node
     integer :: FIELD_INDEX              ! F_..., see Init_Tables_Module
     double precision, dimension(:), pointer :: FullArray
-    double precision, dimension(:,:), pointer :: FullArray2d
     integer :: GEODANGLENODE            ! Tree node
     integer :: GEODLATNODE            ! Tree node
     logical :: GOT_FIELD(field_first:field_last)
     logical :: INSETOVERLAPS            ! Flag
-    integer :: L1BFLAG
     integer :: LONNODE                  ! Tree node
     integer :: LOSANGLENODE             ! Tree node
     integer :: MAXLOWEROVERLAP          ! For some hGrids
@@ -153,8 +146,6 @@ contains ! =====     Public Procedures     =============================
 
     character (len=NameLen) :: InstrumentModuleName
 
-    integer ::  hdfVersion
-    character(len=NameLen) :: l1bItemName
     type (MLSFile_T), pointer             :: L1BFile
 
     ! Executable code
@@ -178,7 +169,6 @@ contains ! =====     Public Procedures     =============================
       & call MLSMessage ( MLSMSG_Error, ModuleName // '/' &
       & // 'CreateHGridFromMLSCFInfo', &
       & "Didn't I warn you about not having an L1BOA file?" )
-    hdfversion = L1BFile%HDFVersion
 
     call nullifyHGrid ( hgrid ) ! for Sun's rubbish compiler
     
@@ -240,7 +230,7 @@ contains ! =====     Public Procedures     =============================
         geodLatNode = son
       case ( f_inclination )
         call expr (subtree ( 2, son), expr_units, expr_value )
-        incline = expr_value(1) !??? Never used
+        ! incline = expr_value(1) !??? Never used
       case ( f_lon )
         lonNode = son
       case ( f_losAngle )
@@ -309,13 +299,6 @@ contains ! =====     Public Procedures     =============================
       
         if ( verbose ) call output ( 'Creating L2GP-Based HGrid', advance='yes' )
       ! Get the time from the l1b file
-      ! l1bItemName = AssembleL1BQtyName ( "MAFStartTimeTAI", hdfVersion, .false. )
-      ! call ReadL1BData ( L1BFile, l1bItemName, l1bField, noMAFs, &
-      !   & l1bFlag, firstMAF=chunk%firstMAFIndex, &
-      !  & lastMAF=chunk%lastMAFIndex, &
-      !  & dontPad=DONTPAD )
-      ! if ( l1bFlag==-1) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      !  & MLSMSG_L1BRead//"MAFStartTimeTAI" )
       call L1BGeoLocation ( filedatabase, "MAFStartTimeTAI", fullArray )
       call L1BSubsample ( chunk, FullArray, values=TAI )
       minTime = TAI(1) ! l1bField%dpField(1,1,1)
@@ -358,11 +341,6 @@ contains ! =====     Public Procedures     =============================
     end select
     
     ! Find nearest maf based on time
-    ! l1bItemName = AssembleL1BQtyName ( "MAFStartTimeTAI", hdfVersion, .false. )
-    ! call ReadL1BData ( L1BFile, l1bItemName, l1bField, noMAFs, &
-    !  & l1bFlag, &
-    !  & firstMAF=chunk%firstMAFIndex, &
-    !  & lastMAF=chunk%lastMAFIndex, dontPad=DONTPAD )
     call L1BGeoLocation ( filedatabase, "MAFStartTimeTAI", fullArray )
     call L1BSubsample ( chunk, fullArray, values=TAI )
     call Hunt ( TAI, hgrid%time(1,:), hgrid%maf, &
@@ -888,22 +866,17 @@ contains ! =====     Public Procedures     =============================
     use chunkdivide_m, only: chunkdivideconfig
     use chunks_m, only: MLSChunk_t, dump
     use constants, only: deg2rad, rad2deg
-    use dates_module, only: utc_to_time
-    use dump_0, only: diff, dump, selfdiff
+    use dump_0, only: dump, selfdiff
     use empiricalgeometry, only: empiricallongitude, chooseoptimumlon0
     use hgridsDatabase, only: createemptyhgrid, hgrid_t, trimhgrid, findclosestmatch
     use highOutput, only: letsDebug, outputNamedValue
-    use L1BData, only: deallocateL1BData, L1BData_t, readL1BData, &
-      & assembleL1BQtyName
-    use MLSCommon, only: mlsfile_t, namelen, tai93_range_t
-    use MLSFiles, only: hdfversion_5, dump, getmlsfilebytype
+    use MLSCommon, only: mlsfile_t, tai93_range_t
+    use MLSFiles, only: Dump, getMLSFileByType
     use MLSFillvalues, only: isFillValue, Monotonize
-    use MLSHdf5, only: ishdf5attributeinfile
     use MLSKinds, only: rk => r8
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
     use MLSNumerics, only: hunt, interpolatevalues, solvequadratic
     use MLSStringlists, only: switchdetail
-    use MLSStrings, only: hhmmss_value
     use Monotone, only: IsMonotonic
     use output_m, only: output
     use string_table, only: display_string
@@ -937,15 +910,11 @@ contains ! =====     Public Procedures     =============================
     integer :: EXTRA                    ! How many profiles over 1 are we
     real(rk) :: FIRST                   ! First point in of hGrid
     integer :: FIRSTPROFINRUN           ! Index of first profile in processing time
-    integer :: FLAG                     ! From ReadL1B
     double precision, dimension(:), pointer :: FullArray
     double precision, dimension(:,:), pointer :: FullArray2d
-    integer ::  hdfVersion
     integer :: I                        ! Loop counter
     real(rk) :: INCLINE                 ! Mean orbital inclination
-    type (L1BData_T) :: L1BFIELD        ! A field read from L1 file
     type (MLSFile_T), pointer             :: L1BFile
-    character(len=NameLen) :: l1bItemName
     integer :: LASTPROFINRUN            ! Index of last profile in processing time
     real(rk) :: LAST                    ! Last point in hGrid
     integer :: LEFT                     ! How many profiles to delete from the LHS in single
@@ -957,16 +926,12 @@ contains ! =====     Public Procedures     =============================
     real(rk) :: MINANGLELASTMAF         ! Gives 'range' of last maf
     integer :: N                        ! Guess at number of profiles
     integer :: NOMAFS                   ! How many in chunk
-    integer :: NOMAFSINFILE             ! From ReadL1B
     integer :: NOMIFS
     real(rk) :: NEXTANGLE               ! First non ovl. MAF for next chunk
-    real(rk), dimension(:,:), pointer :: OldMethodValues ! For comparing with
-    logical :: PreV2Oh                  ! Old way (mean) or new (apparent)?
     integer :: RIGHT                     ! How many profiles to delete from the RHS in single
     double precision, dimension(:), pointer :: GeodAngle
     double precision, dimension(:,:), pointer :: GeodAngle2d
     double precision, dimension(:), pointer :: LosAngle
-    double precision, dimension(:,:), pointer :: LosAngle2d
     double precision, dimension(:), pointer :: scOrbIncl
     double precision, dimension(:), pointer :: SolarZenith
     double precision, dimension(:,:), pointer :: SolarZenith2d
@@ -986,13 +951,12 @@ contains ! =====     Public Procedures     =============================
     deebug = LetsDebug ( 'hgrid', 1 )
     call trace_begin ( me, "CreateRegularHGrid", &
       & cond=toggle(gen) .and. levels(gen) > 1 .and. .not. computingOffsets )
-    nullify(OldMethodValues)
     deebughere = deebug .or. ( switchDetail(switches, 'hgrid') > 0 ) ! e.g., 'hgrid1' 
-    warnIfNoProfs = .false.
+    warnIfNoProfs = single ! .false.
     verbose = deebughere
     if ( present(onlyComputingOffsets) ) then
       verbose = .not. onlyComputingOffsets
-      warnIfNoProfs = onlyComputingOffsets
+      warnIfNoProfs = warnIfNoProfs .or. onlyComputingOffsets
       deebughere = deebug .or. ( switchDetail(switches, 'hgrid') > 1 ) ! e.g., 'hgrid2' 
       ! verbose = verbose .or. deebughere
     end if
@@ -1013,13 +977,7 @@ contains ! =====     Public Procedures     =============================
     L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
     if ( .not. associated(L1BFile) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'l1boa file not in database' )
-    hdfversion = L1BFile%HDFVersion
-    if ( ( L1BFile%hdfVersion == HDFVERSION_5 ) .and. .false. ) then
-      PreV2Oh = .not. IsHDF5AttributeInFile(L1BFile%name, 'BO_name')
-    else
-      PreV2Oh= .true.
-    end if
-    ! call outputNamedValue ( 'PreV2Oh', PreV2Oh )
+
     ! Setup the empircal geometry estimate of lon0
     ! (it makes sure it's not done twice
     call ChooseOptimumLon0 ( filedatabase, chunk )
@@ -1027,14 +985,6 @@ contains ! =====     Public Procedures     =============================
     ! First we're going to work out the geodetic angle range
     ! Read an extra MAF if possible, as we may use it later
     ! when computing the overlaps.
-    ! l1bItemName = AssembleL1BQtyName ( instrumentModuleName//".tpGeodAngle", &
-    !  & hdfVersion, .false. )
-    ! call ReadL1BData ( L1BFile, l1bItemName, &
-    !  & l1bField, noMAFsInFile, flag, &
-    !  & firstMAF=chunk%firstMAFIndex, &
-    !  & lastMAF=chunk%lastMAFIndex+1, dontPad=.true. )
-    ! if ( .not. associated(L1BFile) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-    !  & 'l1boa file nullified during read' )
     call L1BGeoLocation ( filedatabase, "tpGeodAngle", fullArray, FullArray2d )
     call L1BSubsample ( chunk, fullArray, fullArray2d, GeodAngle, GeodAngle2d )
     if ( any(isFillValue(FullArray2d) ) ) then
@@ -1233,15 +1183,6 @@ contains ! =====     Public Procedures     =============================
     ! l1bItemName = AssembleL1BQtyName ( "scOrbIncl", hdfVersion, .false. )
     if ( .not. associated(L1BFile) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'l1boa file not in database' )
-    ! print *, 'About to try to read ', trim(l1bItemName)
-    ! call dump(L1BFile)
-    ! call ReadL1BData ( L1BFile, l1bItemName, &
-    !  & l1bField, noMAFs, flag, &
-    !  & firstMAF=chunk%firstMAFIndex, &
-    !  & lastMAF=chunk%lastMAFIndex, &
-    !  & dontPad=.true. )
-    !if ( .not. associated(L1BFile) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-    !  & 'l1boa file nullified in read' )
     call L1BGeoLocation ( filedatabase, "scOrbIncl", fullArray )
     call L1BSubsample ( chunk, FullArray, values=scOrbIncl )
     if ( deebughere ) then
@@ -1261,13 +1202,6 @@ contains ! =====     Public Procedures     =============================
     ! Now longitude
     call EmpiricalLongitude ( hGrid%phi(1,:), hGrid%lon(1,:) )
 
-    ! Now time, because this is important to get right, I'm going to put in
-    ! special code for the case where the chunk is of length one.
-    ! l1bItemName = AssembleL1BQtyName ( "MAFStartTimeTAI", hdfVersion, .false. )
-    ! call ReadL1BData ( L1BFile, l1bItemName, &
-    !  & l1bField, noMAFs, flag, &
-    !  & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
-    !  & dontPad=.true. )
     call L1BGeoLocation ( filedatabase, "MAFStartTimeTAI", fullArray )
     call L1BSubsample ( chunk, FullArray, values=TAI )
     if ( deebughere ) then
@@ -1292,7 +1226,6 @@ contains ! =====     Public Procedures     =============================
       call dump( mif1GeodAngle, 'before' )
       call dump( HGrid%phi(1,:), 'after' )
     end if
-    ! call DeallocateL1BData ( l1bField )
     call Deallocate_test ( fullArray, 'fullArray', ModuleName )
     call Deallocate_test ( TAI, 'TAI', ModuleName )
       
@@ -1307,12 +1240,6 @@ contains ! =====     Public Procedures     =============================
     if ( deebughere ) call output ( 'Content with l1boa solartime', advance='yes' )
 
     ! Solar zenith
-    ! l1bItemName = AssembleL1BQtyName ( instrumentModuleName//".tpSolarZenith", &
-    !  & hdfVersion, .false. )
-    ! call ReadL1BData ( L1BFile, l1bItemName, &
-    !  & l1bField, noMAFs, flag, &
-    !  & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
-    !  & dontPad=.true. )
     call L1BGeoLocation ( filedatabase, "tpSolarZenith", fullArray, fullArray2d )
     call L1BSubsample ( chunk, FullArray, fullArray2d, SolarZenith, SolarZenith2d )
     if ( deebughere ) then
@@ -1327,20 +1254,12 @@ contains ! =====     Public Procedures     =============================
       call dump( hGrid%solarZenith(1,:), "SolarZenith" // &
         & ' (after interpolating)' )
     end if
-    ! call DeallocateL1BData ( l1bField )
     call Deallocate_test ( fullArray, 'fullArray', ModuleName )
     call Deallocate_test ( SolarZenith, 'SolarZenith', ModuleName )
     call Deallocate_test ( fullArray2d, 'fullArray2d', ModuleName )
     call Deallocate_test ( SolarZenith2d, 'SolarZenith2d', ModuleName )
 
     ! Line of sight angle
-    ! This we'll have to do with straight interpolation
-    ! l1bItemName = AssembleL1BQtyName ( instrumentModuleName//".tpLosAngle", &
-    !  & hdfVersion, .false. )
-    ! call ReadL1BData ( L1BFile, l1bItemName, &
-    !  & l1bField, noMAFs, flag, &
-    !  & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
-    !  & dontPad=.true. )
     call L1BGeoLocation ( filedatabase, "tpLosAngle", fullArray )
     call L1BSubsample ( chunk, FullArray, values=LosAngle )
     if ( deebughere ) then
@@ -1352,7 +1271,6 @@ contains ! =====     Public Procedures     =============================
     if ( deebughere ) then
       call dump( hGrid%losAngle(1,:), 'LosAngle' // ' (after interpolating)')
     end if
-    ! call DeallocateL1BData ( l1bField )
     call Deallocate_test ( fullArray, 'fullArray', ModuleName )
     call Deallocate_test ( LosAngle, 'LosAngle', ModuleName )
     hGrid%losAngle = modulo ( hGrid%losAngle, 360.0_rk )
@@ -1482,6 +1400,7 @@ contains ! =====     Public Procedures     =============================
     end if
 
     if ( hGrid%noProfs == 0 ) then
+      call dump(chunk)
       if ( warnIfNoProfs ) then
         call MLSMessage ( MLSMSG_Warning, ModuleName, 'No profiles in hGrid' )
       else
@@ -1500,7 +1419,6 @@ contains ! =====     Public Procedures     =============================
     end if
 
     ! That's it
-    ! call DeallocateL1BData ( l1bField ) ! Belt and Suspenders
     call Deallocate_test ( mif1GeodAngle, 'mif1GeodAngle', ModuleName )
     call Deallocate_test ( allGeodAngle, 'allGeodAngle', ModuleName )
 
@@ -1786,9 +1704,8 @@ contains ! =====     Public Procedures     =============================
     ! This routine goes through the L2CF up to an Output section to accumulate
     ! HGrid sizes from the Construct sections, and through the L1 file to work
     ! out how big each HGrid is going to be
-    use Allocate_deallocate, only: allocate_test, deallocate_test, &
-      & Test_Allocate, Test_Deallocate
-    use Chunks_m, only: mlschunk_t
+    use Allocate_deallocate, only: allocate_test, deallocate_test
+    use Chunks_m, only: MLSChunk_t
     use ChunkDivide_m, only: chunkDivideConfig
     use Dump_0, only: dump
     use HGridsDatabase, only: HGrid_t, copyHGrid, destroyHGridContents, Dump
@@ -1800,12 +1717,11 @@ contains ! =====     Public Procedures     =============================
     use MLSL2Options, only: specialDumpFile
     use Moretree, only: get_spec_id
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-    use MLSStringLists, only: switchDetail
     use Next_Tree_Node_m, only: Init_Next_Tree_Node, Next_Tree_Node, &
       & Next_Tree_Node_State
     use Output_m, only: blanks, output, revertOutput, switchOutput
-    use time_m, only: begin, finish, time_now, time_config
-    use Toggles, only: gen, levels, switches, toggle
+    use time_m, only: time_now
+    use Toggles, only: gen, toggle
     use Trace_m, only: trace_begin, trace_end
     use Tree, only: subtree, node_id, decoration
     use Tree_types, only: n_named
@@ -1837,7 +1753,6 @@ contains ! =====     Public Procedures     =============================
     integer, dimension(:), pointer :: LowerOverlaps => null()
     integer :: nkeys
     integer :: nsections
-    integer :: status
     logical :: verbose
     real(rk), dimension(:), pointer :: MAFStartTimeTAI, OrbIncl, &
       & GeodAngle, GeodAlt, GeodLat, Lon, LosAngle, SolarTime, SolarZenith
@@ -2179,9 +2094,8 @@ contains ! =====     Public Procedures     =============================
   subroutine CompareWithChunk ( chunk, nextChunk, hgrid, &
     & MAFStartTimeTAI, GeodAngle, GeodAlt, GeodLat, SolarTime )
 
-    use chunks_m, only: mlschunk_t, dump
-    use dates_module, only: gethid, tai93s2hid
-    use dump_0, only: dump
+    use chunks_m, only: mlschunk_t
+    use dates_module, only: gethid
     use HGridsDatabase, only: HGrid_T
     use highOutput, only: blanksToColumn, outputNamedValue
     use MLSKinds, only: rk => r8
@@ -2264,9 +2178,6 @@ contains ! =====     Public Procedures     =============================
     call blanksToColumn( 48 )
     call output( 'HGrid', advance='yes' )
 
-    ! call output( 'HGrid times', advance='yes' )
-    ! call dump( tai93s2hid(hGrid%time(1,:)), 'times' )
-    ! stop    
     call blanksToColumn( 4 )
     call output( 'First', advance='no' )
     call blanksToColumn( 18 )
@@ -2380,7 +2291,7 @@ contains ! =====     Public Procedures     =============================
 
   subroutine SayTime ( What )
     use Output_m, only: blanks, output
-    use time_m, only: begin, finish, time_now, time_config
+    use time_m, only: time_now
     character(len=*), intent(in) :: What
     call time_now ( t2 )
     call output ( "Timing for " // what // " = " )
@@ -2408,6 +2319,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.127  2015/10/14 23:23:01  pwagner
+! Warn instead of crashing if no profiles in chunk; housekeeping
+!
 ! Revision 2.126  2015/07/14 23:34:22  pwagner
 ! May easily debug cases when gaps in counterMAF
 !
