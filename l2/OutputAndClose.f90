@@ -153,7 +153,6 @@ contains ! =====     Public Procedures     =============================
     integer :: Metadata_error
     character (len=32) :: meta_name     ! From the metaName= field
     integer :: NAME                     ! string index of label on output
-    type (HGrid_T), target :: newHGrid
     type (HGrid_T), pointer :: newHGridp
     integer :: NODE
     integer :: noGapsHGIndex = 0
@@ -268,7 +267,7 @@ contains ! =====     Public Procedures     =============================
       case ( s_diff, s_dump )
         call dumpCommand ( key, griddedDataBase=griddedDataBase, &
           & FiledataBase=FileDataBase, MatrixdataBase=matrices, &
-          & Hessiandatabase=Hessians )
+          & Hessiandatabase=Hessians, HGrids=HGrids )
       case ( s_isSwathEmpty )
         if ( checkPaths ) cycle
         call decorate ( key, BooleanFromEmptySwath ( key ) )
@@ -282,19 +281,16 @@ contains ! =====     Public Procedures     =============================
       case ( s_HGrid )
         if ( specialDumpFile /= ' ' ) &
           & call switchOutput( specialDumpFile, keepOldUnitOpen=.true. )
-        newHGrid = CreateHGridFromMLSCFInfo ( name, key, filedatabase, l2gpDatabase, &
-          & processingRange, allChunks )
+        call decorate ( key, AddHGridToDatabase ( hGrids, CreateHGridFromMLSCFInfo ( name, key, filedatabase, l2gpDatabase, &
+          & processingRange, allChunks ) ) )
         if ( DEBUG ) print *, 'Before dealing with obstructions'
-        newHGridp => newHGrid 
+        newHGridp => hGrids(1) 
         if ( DEBUG ) call dump(newHGridp)
-        noGapsHGIndex = AddHGridToDatabase ( hGrids, newHGridp )
-        newHGridp => newHGrid  ! newHGrid takes due notice of obstructions
         if ( associated(obstructions) ) &
           & call DealWithObstructions( newHGridp, obstructions, DestroyOld = .false. )
         ! Don't skip the lower overlap profiles if ChunkDivide included them
         if ( ChunkDivideConfig%allowPriorOverlaps ) &
           & newHGridp%noProfsLowerOverlap = 0
-        call decorate ( key, AddHGridToDatabase ( hGrids, newHGridp ) )
         if ( specialDumpFile /= ' ' ) &
           & call revertOutput
 
@@ -1082,7 +1078,7 @@ contains ! =====     Public Procedures     =============================
     if ( CHECKPATHS ) return
 
     if ( DEBUG ) call dump( inputFile, details=2 )
-    if ( repairGeoLocations ) optionsString = trim(optionsString) // 'r'
+    if ( repairGeoLocations ) optionsString = trim(optionsString) // 'cr'
     select case ( output_type )
     case ( l_l2aux ) ! --------------------- Copying to l2aux files -----
       formattype = l_hdf
@@ -1882,6 +1878,7 @@ contains ! =====     Public Procedures     =============================
     ! Executable
     options = ' '
     if ( ALWAYSFILTERSWATHS ) options = '-f'
+    repairGeolocations = .false.
     if ( debug ) call dump(DirectDatabase)
     got = .false.
     HGridIndex = 0
@@ -1965,14 +1962,16 @@ contains ! =====     Public Procedures     =============================
           numswaths = mls_InqSwath ( &
             & outputFile%Name, outsdList, listSize, &
             & hdfVersion=HDFVERSION_5 )
-          call outputnamedvalue( 'numswaths', numswaths )
-          call outputnamedvalue( 'listSize', listSize )
-          call outputnamedvalue( 'len_trim(outsdList)', len_trim(outsdList) )
+          if ( DEBUG ) then
+            call outputnamedvalue( 'numswaths', numswaths )
+            call outputnamedvalue( 'listSize', listSize )
+            call outputnamedvalue( 'len_trim(outsdList)', len_trim(outsdList) )
+          end if
           call cpL2GPData( l2metaData, inputFile, &
             & outputFile, exclude=outsdList, create2=create2, &
             & notUnlimited=avoidUnlimitedDims, &
             & andGlAttributes=COPYGLOBALATTRIBUTES, &
-            & HGrid=HGrids(HGridIndex), options=trim(options) // 'r' )
+            & HGrid=HGrids(HGridIndex), options=trim(options) // 'cr' )
         else
           call cpL2GPData( l2metaData, inputFile, &
             & outputFile, exclude=outsdList, create2=create2, &
@@ -2205,6 +2204,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.195  2015/10/15 23:07:54  pwagner
+! If /repairGeolocations , repair also any with chunknumber = -999
+!
 ! Revision 2.194  2015/09/30 23:02:27  pwagner
 ! Catenate can repair geoLocations
 !
