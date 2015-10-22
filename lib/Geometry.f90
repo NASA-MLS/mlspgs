@@ -27,7 +27,7 @@ module Geometry
 
   ! Procedures
   public :: GeocToGeodLat, GeodToGeocAlt, GeodToGeocLat, Get_R_Eq
-  public :: Orbit_Plane_Minor_Axis_sq, To_Cart, To_XYZ
+  public :: Great_Circle_Points, Orbit_Plane_Minor_Axis_sq, To_Cart, To_XYZ
   public :: XYZ_to_Geod, XYZ_to_Geod_Bowring, XYZ_to_Geod_Fukushima
 
   ! Earth dimensions.
@@ -86,6 +86,10 @@ module Geometry
 
   interface GeodToGeocLat
     module procedure GeodToGeocLat_D, GeodToGeocLat_S
+  end interface
+
+  interface Great_Circle_Points
+    module procedure Great_Circle_Points_D, Great_Circle_Points_S
   end interface
 
   interface Orbit_Plane_Minor_Axis_sq
@@ -277,6 +281,40 @@ contains
 
   end function Get_R_Eq
 
+! ----------------------------------------  Great_Circle_Points_D  -----
+
+  subroutine Great_Circle_Points_D ( Lon1, GeocLat1, Lon2, GeocLat2, Phi, Lon, GeocLat )
+  ! Compute longitude and geocentric latitude of points on the great circle
+  ! defined by R1 and R2, with Phi(1) at R1, and subsequent points along the
+  ! great circle spaced at |Phi(n)-Phi(1)|.
+    use Cross_m, only: Cross
+    use Rotation_m, only: Rotate_3d
+    integer, parameter :: RK = kind(0.0d0)
+    real(rk), intent(in) :: Lon1, GeocLat1, Lon2, GeocLat2
+    real(rk), intent(in) :: Phi(:)         ! Along-track angles, degrees
+    real(rk), intent(out) :: Lon(:)        ! Longitude, degrees
+    real(rk), intent(out) :: GeocLat(:)    ! Geocentric latitude, degrees
+    include "Great_Circle_Points.f9h"
+  end subroutine Great_Circle_Points_D
+
+! ----------------------------------------  Great_Circle_Points_S  -----
+
+  subroutine Great_Circle_Points_S ( Lon1, GeocLat1, Lon2, GeocLat2, Phi, Lon, GeocLat )
+  ! Compute longitude and geocentric latitude of points on the great circle
+  ! defined by R1 and R2, with Phi(1) at R1, and subsequent points along the
+  ! great circle spaced at |Phi(n)-Phi(1)|.
+    use Cross_m, only: Cross
+    use Rotation_m, only: Rotate_3d
+    integer, parameter :: RK = kind(0.0e0)
+    real(rk), intent(in) :: Lon1, GeocLat1, Lon2, GeocLat2
+    real(rk), intent(in) :: Phi(:)         ! Along-track angles, degrees
+    real(rk), intent(out) :: Lon(:)        ! Longitude, degrees
+    real(rk), intent(out) :: GeocLat(:)    ! Geocentric latitude, degrees
+    include "Great_Circle_Points.f9h"
+  end subroutine Great_Circle_Points_S
+
+! ----------------------------------  Orbit_Plane_Minor_Axis_sq_D  -----
+
   !{ Compute the square of the minor axis of orbit plane projected Earth
   !  ellipse $c$, where
   !  $c^2 = \frac{a^2\,b^2}{a^2 \sin^2 \beta + b^2 \cos^2 \beta} =
@@ -284,8 +322,6 @@ contains
   !         \frac{b^2}{1 - e^2 \cos^2 \beta}$ where $e^2$ is the square of
   !         the eccentricity, given by $1 - \frac{b^2}{a^2}$.
   !  This is Equation (5.3) in the 19 August 2004 ATBD JPL D-18130.
-
-! ----------------------------------  Orbit_Plane_Minor_Axis_sq_D  -----
 
   pure function Orbit_Plane_Minor_Axis_sq_D ( Beta ) result ( Csq )
     integer, parameter :: RK = kind(0.0d0)
@@ -295,6 +331,8 @@ contains
     csq = EarthRadB**2 / ( 1.0_rk - Eccentricity_sq * cos(beta)**2 )
   end function Orbit_Plane_Minor_Axis_sq_D
 
+! ----------------------------------  Orbit_Plane_Minor_Axis_sq_S  -----
+
   pure function Orbit_Plane_Minor_Axis_sq_S ( Beta ) result ( Csq )
     integer, parameter :: RK = kind(0.0e0)
     real(rk), intent(in) :: Beta  ! Orbit inclination, radians
@@ -303,7 +341,9 @@ contains
     csq = EarthRadB**2 / ( 1.0_rk - Eccentricity_sq * cos(beta)**2 )
   end function Orbit_Plane_Minor_Axis_sq_S
 
-  !{ Converting geodetic Latitude (DEGREES!), Longitude (DEGREES!), and Height
+  ! --------------------------------------------------  To_Cart_D  -----
+
+  !{ Convert geodetic Latitude (DEGREES!), Longitude (DEGREES!), and Height
   !  (km) above the mean Earth ellipsoid (mean sea level), to Cartesian
   !  coordinates in an Earth-Centered-Rotating frame:
   !  %
@@ -329,7 +369,6 @@ contains
   !  The units of the results here ($X$, $Y$, and $Z$) are average Earth
   !  radii (see the constant {\tt ERAD} above), or km.
 
-  ! --------------------------------------------------  To_Cart_D  -----
   subroutine To_Cart_D ( WHERE, CART, CT, ST, CP, SP, KM )
   ! Convert Geodetic latitude and longitude (degrees), and altitude (km
   ! above sea level), to Cartesian coordinates.  The units are ERAD (see
@@ -546,6 +585,9 @@ contains
 end module Geometry
 
 ! $Log$
+! Revision 2.27  2015/10/22 20:16:11  vsnyder
+! Add Great_Circle_Points
+!
 ! Revision 2.26  2015/09/23 22:37:01  vsnyder
 ! Correct a comment
 !
