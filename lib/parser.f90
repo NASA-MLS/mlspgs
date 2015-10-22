@@ -171,10 +171,16 @@ contains ! ====     Procedures     =====================================
 ! -------------------------------------------  Catastrophic_Error  -----
     subroutine Catastrophic_Error ( text, The_Token, State, Nonterminal )
       use MLSMessageModule, only: MLSMessage, MLSMSG_Crash
+      use String_Table, only: Display_String
       character(len=*), intent(in):: text
       type(token), intent(in), optional  :: The_Token
       integer, intent(in), optional :: State, Nonterminal
-      call output ( '***** Catastrophic Error *****', advance='yes' )
+      if ( present(the_token) ) then
+        call print_source ( the_token%where, &
+          & before='***** Catastrophic Error ***** ', advance='yes' )
+      else
+        call output ( '***** Catastrophic Error *****', advance='yes' )
+      end if
       if ( present(state) ) &
         & call output ( state, before='The current state is ', advance='yes' )
       if ( present(nonterminal) ) &
@@ -182,7 +188,10 @@ contains ! ====     Procedures     =====================================
           & advance='yes' )
       if ( present(the_token) ) then
         call output ( 'Next token is ' )
-        call dump_symbol_class ( the_token%class, advance='yes' )
+        call dump_symbol_class ( the_token%class )
+        if ( the_token%pseudo .and. the_token%string_index > 0 ) &
+          & call display_string ( the_token%string_index, before=' ' )
+        call newLine
       end if
       call MLSMessage ( MLSMSG_Crash, moduleName, trim(text) )
       stop 666
@@ -618,6 +627,9 @@ contains ! ====     Procedures     =====================================
 end module PARSER
 
 ! $Log$
+! Revision 2.35  2015/10/22 23:50:49  vsnyder
+! Announce where bad token has confused the parser
+!
 ! Revision 2.34  2014/09/05 00:28:52  vsnyder
 ! Correct wrong units for allocation size tracking
 !
