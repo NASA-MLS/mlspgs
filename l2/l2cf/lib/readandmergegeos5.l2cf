@@ -97,7 +97,7 @@ begin MergeGrids
   !forall( convertEtaToPGPH,1,2,3,4,Next)
 
   mergedGPH: Concatenate, $
-    grid=[geos5ConvertedGPH1, geos5ConvertedGPH2, $
+    sourceGrid=[geos5ConvertedGPH1, geos5ConvertedGPH2, $
     geos5ConvertedGPH3, geos5ConvertedGPH4, geos5ConvertedGPHNext]
   delete, grid=geos5ConvertedGPH1
   delete, grid=geos5ConvertedGPH2
@@ -118,7 +118,7 @@ begin MergeGrids
   !forall( convertEtaToP,1,2,3,4,Next)
 
   geos5Concatenate: Concatenate, $
-    grid=[geos5Converted1, geos5Converted2, $
+    sourceGrid=[geos5Converted1, geos5Converted2, $
     geos5Converted3, geos5Converted4, geos5ConvertedNext]
   delete, grid=geos5Converted1
   delete, grid=geos5Converted2
