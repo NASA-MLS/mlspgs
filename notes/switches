@@ -67,7 +67,7 @@ Switches (set by -S option in mlsl2's command line):
  geos5   => Show geos5_7 meteorology fields as they are read
  glo[n]  => Global settings, info on l1b files 
  glob    => Show when Bright Object in FOV affects radiance precision
- gmag[n] => Print generated magnetic field quantity with detail level n
+ gMag[n] => Print generated magnetic field quantity with detail level n
  grid    => Announce as mlsl2 Creates, Destroys, Merges gridded data
  gridd   => Dump gridded database
  Grids   => Dump Forward Model grids
@@ -220,6 +220,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.95  2015/08/26 00:48:06  vsnyder
+ Change Forward Model grids dump from grids to Grids
+
  Revision 1.94  2015/08/12 20:55:05  pwagner
  Expands role of -Swalk switch
 
