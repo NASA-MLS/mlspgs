@@ -85,6 +85,7 @@ contains ! ====     Procedures     =====================================
     ! table
     if ( .not. allocated(work) ) then
 
+      ! Compute debug flags
       show_stack = mod(levels(par),2) /= 0
       show_state = mod(levels(par)/2,2) /= 0
       machine = mod(levels(par)/4,2) /= 0
@@ -102,7 +103,7 @@ contains ! ====     Procedures     =====================================
 
     prev_error = 0              ! Line number of previous error
     sp = 0
-    newsta = abs(t%tran(1))       ! The LR generator likes to put the <SOG>
+    newsta = abs(t%tran(1))     ! The LR generator likes to put the <SOG>
                                 ! symbol before the goal symbol.  The lexer
                                 ! doesn't produce this symbol before the first
                                 ! input.  Putting the parser in the state
@@ -126,10 +127,12 @@ contains ! ====     Procedures     =====================================
           need = .false.
         end if
         ! Decide what to do
-        if ( map(the_token%class) <= 0 .or. map(the_token%class) > t%nterms ) &
-          & call catastrophic_error ( 'No vocabulary index mapping for', the_token )
-        voc = work(nowsta,map(the_token%class))
-        if ( voc > 0 ) then
+        if ( map(the_token%class) <= 0 .or. map(the_token%class) > t%nterms ) then
+          voc = 0 ! Syntax error, token isn't even in terminal alphabet
+        else
+          voc = work(nowsta,map(the_token%class))
+        end if
+        if ( voc > 0 ) then ! a transition to state voc.
           newsta = voc
           if ( the_token%pseudo ) then
             call push_pseudo_terminal ( the_token%string_index, &
@@ -144,7 +147,7 @@ contains ! ====     Procedures     =====================================
           end if
           call transition ( .false. )
           need = .true.        ! Consume the token
-        else if ( voc < 0 ) then
+        else if ( voc < 0 ) then ! a reduction by production -voc
           call reduce_production ( -voc )
         else ! Syntax error
          call no_transition
@@ -627,6 +630,10 @@ contains ! ====     Procedures     =====================================
 end module PARSER
 
 ! $Log$
+! Revision 2.36  2015/10/27 21:58:53  vsnyder
+! Handle a symbol that is not in the terminal alphabet as a syntax error, and
+! try to recover, rather than as a crash-burn catastrophic error.
+!
 ! Revision 2.35  2015/10/22 23:50:49  vsnyder
 ! Announce where bad token has confused the parser
 !
