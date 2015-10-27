@@ -107,7 +107,7 @@ contains
 
     integer :: Across                  ! Loop counter for cross-track angles
     real :: B(3)                       ! Magnetic field
-    integer, save :: Details = -10     ! From switchDetails('gmag')
+    integer, save :: Details = -10     ! From switchDetails('gMag')
     integer :: Inst                    ! Loop counter for instances
     integer :: Me = -1                 ! String index for tracing
     character(len=8), save :: Options = ''
@@ -136,7 +136,7 @@ contains
     qty%template%unit = phyq_gauss
 
     if ( details < -1 ) then ! only once
-      details = switchDetail(switches,'gmag')
+      details = switchDetail(switches,'gMag')
       if ( switchDetail(switches,'clean') > -1 ) options = '-c'
     end if
     if ( details > -1 ) call dump ( qty, details=details, options=options )
@@ -159,6 +159,10 @@ contains
 end module Magnetic_Field_Quantity
 
 ! $Log$
+! Revision 2.11  2015/10/27 23:03:30  vsnyder
+! Change dump switch from gmag to gMag because mag causes the forward model
+! to dump the magnetic field along the integration path.
+!
 ! Revision 2.10  2015/09/22 23:20:38  vsnyder
 ! Add a reference MIF number
 !
