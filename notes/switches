@@ -92,7 +92,9 @@ Switches (set by -S option in mlsl2's command line):
  lblb[n] => Units digit >0 -> dump line-by-line Betas, >1 also T, tanh, P
             tens digit >0 dump zeta instead of P, n>99 stop after first dump 
  log[n]  => Print most Log file messages only to stdout, not toolkit log
- mag     => Print magnetic field and its coordinates in full forward model
+ mag[n]  => Print magnetic field and its coordinates in full forward model
+            and(n,1) /= 0 prints all components; and(n,2) /= 0 prints Eta
+ MagGrid => Magnetic field grid structure as loaded into forward model
  mach    => Machine names (that can be enslaved by master task)
  mas     => Activities between the PVM master task and slave task
  mcf     => Dump lines read from MCF to create metadata control group db or
@@ -220,6 +222,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.96  2015/10/27 23:04:01  vsnyder
+ Replace gmag with gMag to avoid conflict with forward model
+
  Revision 1.95  2015/08/26 00:48:06  vsnyder
  Change Forward Model grids dump from grids to Grids
 
