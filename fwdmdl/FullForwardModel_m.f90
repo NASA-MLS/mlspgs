@@ -561,7 +561,7 @@ contains
     logical :: Print_Frq          ! For debugging, from -Sffrq
     logical :: Print_Incopt       ! For debugging, from -Sincp
     logical :: Print_IncRad       ! For debugging, from -Sincr
-    logical :: Print_Mag          ! For debugging, from -Smag
+    integer :: Print_Mag          ! For debugging, from -Smag#
     logical :: Print_More_Points  ! Print if Do_More_Points finds more, from -SZMOR
     integer :: Print_Path         ! Nicer format than Print_Incopt, for few molecules
     logical :: Print_Ptg          ! For debugging, from -Sptg
@@ -987,7 +987,7 @@ contains
     print_Frq = switchDetail(switches, 'ffrq' ) > -1
     print_Incopt = switchDetail(switches, 'incp' ) > -1
     print_IncRad = switchDetail(switches, 'incr' ) > -1
-    print_Mag = switchDetail(switches, 'mag') > -1
+    print_Mag = switchDetail(switches, 'mag')
     print_Ptg = switchDetail(switches, 'ptg') > -1
     print_path = switchDetail(switches, 'path')
     print_Rad = switchDetail(switches, 'rad')
@@ -4367,12 +4367,19 @@ contains
         stsp => mag_path(1:npf,2) ! sin(theta) sin(phi)
         h => mag_path(1:npf,4)    ! magnitude of magnetic field
 
-        if ( print_Mag ) then
+        if ( print_Mag > -1 ) then
+          call output ( maf, before='ECR to FOV matrix for MAF ' )
+          call output ( mif, before=' and MIF ', advance='yes' )
+          call dump ( rot, '', options=clean )
           call dump ( h_path(1:npf), 'Path height (km)', options=clean )
           call dump ( h, 'H', options=clean )
           call dump ( ct, 'Cos(theta)', options=clean )
           call dump ( stcp, 'Sin(theta) Cos(phi)', options=clean )
           call dump ( stsp, 'Sin(theta) Sin(phi)', options=clean )
+          if ( iand(print_Mag,1) > 0 ) &
+            & call dump ( mag_path(1:npf,1:3), 'Mag_Path', options=clean )
+          if ( iand(print_Mag,2) > 0 ) &
+            & call dump ( eta_mag_zp(1:npf,:), 'Eta_Mag_zp', options=clean )
         end if
 
       end if
@@ -4820,6 +4827,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.358  2015/09/22 23:37:26  vsnyder
+! Add 3D magnetic field
+!
 ! Revision 2.357  2015/08/25 17:23:05  vsnyder
 ! Compute PhiWindow in radians for TScat
 !
