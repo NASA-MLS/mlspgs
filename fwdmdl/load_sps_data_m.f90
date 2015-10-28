@@ -483,6 +483,9 @@ contains
       grids_x%windowStart(ii) = 1
       grids_x%windowFinish(ii) = size(qty%template%phi,2)
     end if
+    if ( grids_x%windowStart(ii) > grids_x%windowStart(ii) ) &
+      & call MLSMessage ( MLSMSG_Error, moduleName, &
+        & 'Why is windowStart greater than windowFinish?' )
 
     kz = qty%template%noSurfs
 
@@ -936,6 +939,9 @@ contains
 end module LOAD_SPS_DATA_M
 
 ! $Log$
+! Revision 2.104  2015/09/22 23:18:23  vsnyder
+! Add a cross-track horizontal coordinate; spiff the dump
+!
 ! Revision 2.103  2015/08/25 18:42:03  vsnyder
 ! Filling zet_basis and values was still getting subscript bounds errors.
 ! Hopefully, that's repaired now.  The Grids_t dump is improved.
