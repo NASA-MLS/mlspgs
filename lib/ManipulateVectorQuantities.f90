@@ -216,11 +216,12 @@ contains
     ! If WindowUnits had been given as 0 or 0:0, the closest instance will be
     ! chosen.
     if ( windowUnits == PHYQ_Profiles ) then
-      ! Set the window start : window end so that there are phiWindow(1) 
+      ! Set the window start : window finish so that there are phiWindow(1) 
       ! profiles before the closest instance, and phiWindow(2) after the
       ! closest instance.
       closestInstance = FindOneClosestInstance ( quantity, phiTan, maf )
-      windowStart = max ( 1, closestInstance - nint ( phiWindow(1) ) )
+      windowStart = min ( quantity%template%noInstances, &
+        & max ( 1, closestInstance - nint ( phiWindow(1) ) ) )
       windowFinish = min ( quantity%template%noInstances, &
         & closestInstance + nint ( phiWindow(2) ) )
     else ! windowUnits == PHYQ_Angle
@@ -230,8 +231,10 @@ contains
         & allowTopValue=.true. )
       call Hunt ( quantity%template%phi(1,:), phiMax, windowFinish, &
         & allowTopValue=.true. )
-      windowStart = max ( 1, windowStart - 1 )
-      windowFinish = min ( quantity%template%noInstances, windowFinish + 1 )
+      windowStart = min ( quantity%template%noInstances, &
+        & max ( 1, windowStart - 1 ) )
+      windowFinish = min ( quantity%template%noInstances, &
+        & max ( 1, windowFinish + 1 ) )
     end if
     call trace_end ( cond=.false. )
   end subroutine FindInstanceWindow
@@ -655,6 +658,9 @@ contains
 end module ManipulateVectorQuantities
   
 ! $Log$
+! Revision 2.52  2015/10/28 00:36:39  vsnyder
+! Confine WindowStart:WindowFinish with 1:noInstances
+!
 ! Revision 2.51  2015/09/22 23:12:19  vsnyder
 ! Remove unused PHYQ_Angle USE reference
 !
