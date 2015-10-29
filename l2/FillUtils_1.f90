@@ -4439,8 +4439,12 @@ contains ! =====     Public Procedures     =============================
                                   & GPHQuantity, Regular, ReferenceMIF, &
                                   & ReferenceMIFunits )
 
+      use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+      use Geometry, only: EarthRadA, To_Cart, To_XYZ, XYZ_to_Geod
       use Hunt_m, only: Hunt
+      use Intrinsic, only: L_Geodetic
       use Magnetic_Field_Quantity, only: Get_Magnetic_Field_Quantity
+      use MLSMessageModule, only: MLSMSG_info
       use Monotone, only: Longest_Monotone_Subsequence
       use MoreMessage, only: MLSMessage
       use QuantityTemplates, only: QuantitiesAreCompatible, RT
@@ -4455,12 +4459,16 @@ contains ! =====     Public Procedures     =============================
  
       integer, allocatable :: Dec(:)  ! Decreasing sequence indices
       logical :: Error
+      real(rt) :: Geod(3)             ! [lat radians, lon radians, ht meters]
+      integer :: I
       integer, allocatable :: Inc(:)  ! Increasing sequence indices
       real(rt) :: MaxV, MinV          ! Max, Min of geocAltitudeQuantity's Surfs
       integer :: Me = -1              ! String index for trace
       integer :: ReferenceMIFnumber
       integer, allocatable :: Seq(:)  ! Increasing or decreasing
                                       ! sequence indices, => Inc or Dec
+      real(rt), allocatable  :: Surfs(:) ! Either geocentric or geodetic
+      real(rt) :: XYZ(3)              ! ECR for geocAltitudeQuantity%template
       logical :: verbose
       ! Executable code
       call trace_begin ( me, 'FillUtils_1.UsingMagneticModel', key, &
@@ -4482,28 +4490,57 @@ contains ! =====     Public Procedures     =============================
               call move_alloc ( dec, seq )
               deallocate ( inc )
             end if
-            call hunt ( geocAltitudeQuantity%template%surfs(seq,1), referenceMIF, &
-              & referenceMIFnumber )
-            referenceMIFnumber = seq(referenceMIFnumber)
-            maxv = maxval(geocAltitudeQuantity%template%surfs(seq,1))
-            minv = minval(geocAltitudeQuantity%template%surfs(seq,1))
-            if ( minv - referenceMIF > 2.0 * ( maxv - minv ) .or. &
-               & referenceMIF - maxv > 2.0 * ( maxv - minv ) ) &
-              call MLSMessage ( MLSMSG_Warning, moduleName, &
-                & 'ReferenceMIF = %R is far outside the range %R ... %R of the ' // &
-                & 'vertical coordinate of the tangent point geocentric height ', &
-                & datum = [ referenceMIF, minv, maxv ] )
+            call allocate_test ( surfs, size(seq), 'Surfs', moduleName )
+            if ( referenceMIF < 0.5 * EarthRadA .and. &
+               & geocAltitudeQuantity%template%verticalCoordinate /= l_geodAltitude ) then
+              ! referenceMIF is assumed to be geodetic height.  Convert
+              ! geocAltitudeQuantity%template%surfs to geodetic height.
+              call MLSMessage ( MLSMSG_Info, moduleName, &
+                & 'ReferenceMIF = %R is less half than Earth radius ' // &
+                & 'and is therefore assumed to be geodetic height.', &
+                & datum = referenceMIF )
+              do i = 1, size(surfs)
+                ! Convert [lat, lon, ht] to ECR
+                if ( geocAltitudeQuantity%template%latitudeCoordinate == l_geodetic ) then
+                  call to_cart ( [ geocAltitudeQuantity%template%geodLat(seq(i),1), &
+                                 & geocAltitudeQuantity%template%lon(seq(i),1), &
+                                 & geocAltitudeQuantity%template%surfs(seq(i),1) ], &
+                                 & xyz, km=.true. )
+                else ! geocentric latitude
+                  xyz = to_xyz ( geocAltitudeQuantity%template%geodLat(seq(i),1), &
+                               & geocAltitudeQuantity%template%lon(seq(i),1) )
+                  xyz = xyz * geocAltitudeQuantity%template%surfs(seq(i),1)
+                end if
+                ! Convert ECR to [geod lat, lon, geod ht]
+                geod = xyz_to_geod ( xyz )
+                surfs(i) = geod(3) ! Geodetic altitude
+              end do
+            else
+              surfs(:) = geocAltitudeQuantity%template%surfs(seq,1)
+            end if
+            ! Find the MIF with the desired altitude
+            call hunt ( surfs, referenceMIF, referenceMIFnumber )
+            maxv = maxval(surfs)
+            minv = minval(surfs)
             if ( switchDetail ( switches, 'plane' ) > 1 ) then
-              call output ( referenceMIFnumber, &
-                & before='Reference MIF number ' )
-             
+              call output ( seq(referenceMIFnumber), &
+                & before='Height at reference MIF number ' )
+              call output ( surfs(referenceMIFnumber), before=' = ' )
               call output ( referenceMIF, before=' chosen using height ' )
               call output ( minv, before=' from range ' )
               call output ( maxv, before=' ... ', advance='yes' )
             elseif ( verbose ) then
               call outputNamedValue ( 'Reference MIF number', referenceMIFnumber )
             end if
+            referenceMIFnumber = seq(referenceMIFnumber)
+            if ( minv - referenceMIF > 2.0 * ( maxv - minv ) .or. &
+               & referenceMIF - maxv > 2.0 * ( maxv - minv ) ) &
+              call MLSMessage ( MLSMSG_Warning, moduleName, &
+                & 'ReferenceMIF = %R is far outside the range %R ... %R of the ' // &
+                & 'vertical coordinate of the tangent point geocentric height ', &
+                & datum = [ referenceMIF, minv, maxv ] )
             deallocate ( seq )
+            call deallocate_test ( surfs, 'Surfs', moduleName )
           else
             call Announce_Error ( key, no_error_code, &
               & 'Reference MIF for magnetic field is height but geocentric ' // & 
@@ -7635,6 +7672,13 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.116  2015/10/29 00:55:27  vsnyder
+! If the units of the referenceMIF are length, and its value is less than
+! half EarthRadA, assume it's a geodetic height.  If so, and the tangent
+! point vertical coordinate is geocentric height, create an array of
+! geodetic heights from the first MAF in which to choose a reference MIF
+! number.
+!
 ! Revision 2.115  2015/10/03 00:28:06  pwagner
 ! May print Reference MIF number if verbose
 !
