@@ -65,6 +65,33 @@ extant_files()
    echo $extant_files_result
 }
 
+#------------------------------- hide_files ------------
+#
+# Hide files when something goes awry
+# usage: hide_files arg1 [arg2] ..
+
+hide_files()
+{
+   hide_files_result=
+   # Trivial case ($# = 0)
+   if [ "$1" != "" ]
+   then
+      for file
+      do
+         if [ -f "$file" ]
+         then
+               hide_files_result="$hide_files_result $file"
+         fi
+      done
+   fi
+   echo $hide_files_result
+   if [ ! -d hidden ]
+   then
+     mkdir hidden
+   fi
+   mv $hide_files_result hidden
+}
+
 #------------------------------- Main Program ------------
 
 #****************************************************************
@@ -148,6 +175,7 @@ then
 fi
 
 H5REPACK=$PGE_BINARY_DIR/h5repack
+MISALIGNMENT=$PGE_BINARY_DIR/misalignment
 masterlog="${JOBDIR}/exec_log/process.stdout"
 if [ "$MASTERLOG" != "" ]
 then
@@ -304,6 +332,21 @@ then
   done
 fi
 
+# Check products for misaligned geolocations
+# If they are found to be misaligned, set return_status to 99
+if [ -x "$MISALIGNMENT" ]
+then
+  a=`$MISALIGNMENT -silent *L2GP-DGG_*.he5`
+  if [ "$a" != "" ]
+  then
+    echo $a
+    echo "Misalignment detected"
+    echo hide_files *.he5 *.met *.xml *.h5
+    hide_files *.he5 *.met *.xml *.h5
+    return_status=99
+  fi
+fi
+
 if [ $return_status != $NORMAL_STATUS ]
 then
    exit 1
@@ -312,6 +355,9 @@ else
 fi
 
 # $Log$
+# Revision 1.9  2015/10/07 22:56:29  pwagner
+# Automtically writes out l2cf name to master.l2cfname
+#
 # Revision 1.8  2013/10/29 16:58:37  pwagner
 # May set environment variable PGE_BINARY
 #

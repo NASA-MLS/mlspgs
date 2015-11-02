@@ -61,19 +61,24 @@ extant_files()
 
 run_prog()
 {
-  echo $BIN_DIR/$MLSPROG $EXTRA_OPTIONS "$@"
+  if [ "$PGE_BINARY" = "" ]
+  then
+    PGE_BINARY=$BIN_DIR/$MLSPROG
+  fi
+  echo $PGE_BINARY $EXTRA_OPTIONS "$@"
   if [ -f $BIN_DIR/license.txt ]
   then
     cat $BIN_DIR/license.txt
   fi
   if [ "$STDERRFILE" != "" ]
   then
-    $BIN_DIR/$MLSPROG $EXTRA_OPTIONS "$@" 2> "$STDERRFILE"
+    $PGE_BINARY $EXTRA_OPTIONS "$@" 2> "$STDERRFILE"
   else
-    $BIN_DIR/$MLSPROG $EXTRA_OPTIONS "$@"
+    $PGE_BINARY $EXTRA_OPTIONS "$@"
   fi
   return_status=`expr $?`
   H5REPACK=$BIN_DIR/h5repack
+  MISALIGNMENT=$BIN_DIR/misalignment
 }
 
 #------------------------------- Main Program ------------
@@ -132,7 +137,7 @@ else
   BIN_DIR=$MLSBIN
 fi
 
-run_prog
+run_prog $@
 
 # Last chance to find h5repack
 if [ ! -x "$H5REPACK" ]
@@ -172,6 +177,35 @@ then
   done
 fi
 
+# Check products for misaligned geolocations
+# If they are found to be misaligned, set return_status to 99
+if [ -x "$MISALIGNMENT" ]
+then
+  files=`extant_files *L2GP-DGG_*.he5`
+  if [ "$files" = "" ]
+  then
+    if [ -d "outputs" ]
+    then
+      cd "outputs"
+      files=`extant_files *L2GP-DGG_*.he5`
+    fi
+  fi
+  a=""
+  if [ "$files" != "" ]
+  then
+    echo $MISALIGNMENT -silent *L2GP-DGG_*.he5
+    $MISALIGNMENT -silent *L2GP-DGG_*.he5
+    a=`$MISALIGNMENT -silent *L2GP-DGG_*.he5`
+  fi
+  if [ "$a" != "" ]
+  then
+    echo $a
+    return_status=99
+  fi
+fi
+
+echo "return_status $return_status"
+
 if [ $return_status != $NORMAL_STATUS ]
 then
    exit 1
@@ -180,6 +214,9 @@ else
 fi
 
 # $Log$
+# Revision 1.11  2015/10/07 22:58:42  pwagner
+# Automtically stores stderr to STDERRFILE; housekeeping
+#
 # Revision 1.10  2012/02/15 18:12:06  pwagner
 # Offer last chance to find h5repack in HDFTOOLS directory
 #
