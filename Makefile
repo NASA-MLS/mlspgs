@@ -244,6 +244,7 @@ SHELL = /bin/sh
 # l2q            
 # lr
 # machineok      
+# misalignment      
 # Mie_Tables
 # Mie_Tables_nohdf
 # MLS_h5ls       
@@ -371,7 +372,7 @@ SUBDIRS := $(shell ${REECHO} -d blas lib $(LEVELS) $(OTHER_SUBDIRS))
 # because they are outside mlspgs
 EVERYTHING = $(SUBDIRS)  srclib \
    util sids tables notes tests scripts \
-   cfm doc idlcfm \
+   cfm conv_uars doc idlcfm \
    $(MakeFName) README.$(MakeFName) BEFORE.mls license.txt
      
 # This is in case tar doesn't summon GNU tar, you may still use it via
@@ -969,6 +970,11 @@ Mie_Tables_nohdf: $(CONFDIR)/$(MLSCFILE) $(MIE)/Mie_Tables.f90 l1--itm
    -c $(MLSCONFG) -p $@ -M $(MAKE) -m fwdmdl \
 	-C $(MLSCFILE) $(MIESOURCESWOHDF)
 
+misalignment: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/misalignment.f90 l1--itm
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) -m lib \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
+
 MLS_h5ls: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/MLS_h5ls.f90 l1--itm
 	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
    -c $(MLSCONFG) -p $@ -M $(MAKE) -m lib \
@@ -1325,7 +1331,7 @@ tools: chunktimes checkpvmup compare dateconverter \
   l1bdiff l1bdump l1h5subset \
   l2auxcat l2auxchi l2auxdump l2gpcat l2gpdiff l2gpdump \
   l2pcdiff l2pcdump l2q lr \
-  machineok Spartacus tellMasterToQuit WordSplit wrapLines
+  machineok misalignment Spartacus tellMasterToQuit WordSplit wrapLines
 
 .PHONY: all configure clean clean_config conv_uars\
   configure_pvm configure_fopts configure_full configure_help configure_subdirs\
@@ -1344,13 +1350,16 @@ tools: chunktimes checkpvmup compare dateconverter \
   heconvert h5subset h5cat hl init_gen killmaster \
   l1bdiff l1bdump l1h5subset \
   l2auxcat l2auxchi l2auxdump l2gpcat l2gpdiff l2gpdump l2pcdump lr \
-  machineok Mie_Tables Mie_Tables_nohdf MLS_h5ls moonscan UnwrapList utctotai \
-  tellMasterToQuit \
+  machineok Mie_Tables Mie_Tables_nohdf misalignment MLS_h5ls moonscan \
+  tellMasterToQuit UnwrapList utctotai \
   WordSplit wrapLines WrapList tools
   
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.8  2015/08/25 21:55:33  pwagner
+# Omitted make depends, ghostbuster from internalmftests; restored
+#
 # Revision 1.7  2015/08/14 20:00:32  whdaffer
 # two small mods that Paul's fixes missed having to do with make moonscan
 #
