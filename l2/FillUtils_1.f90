@@ -4480,9 +4480,37 @@ contains ! =====     Public Procedures     =============================
       if ( present(referenceMIFunits) ) then ! Assume present(ReferenceMIF)
         if ( referenceMIFunits == phyq_length ) then
           if ( present(geocAltitudeQuantity) ) then
+            call allocate_test ( surfs, geocAltitudeQuantity%template%noSurfs, 'Surfs', moduleName )
+            if ( referenceMIF < 0.5 * EarthRadA .and. &
+               & geocAltitudeQuantity%template%verticalCoordinate /= l_geodAltitude ) then
+              ! referenceMIF is assumed to be geodetic height.  Convert
+              ! geocAltitudeQuantity%template%surfs to geodetic height.
+              do i = 1, geocAltitudeQuantity%template%noSurfs
+                ! Convert [lat, lon, ht] to ECR
+                if ( geocAltitudeQuantity%template%latitudeCoordinate == l_geodetic ) then
+                  call to_cart ( [ geocAltitudeQuantity%template%geodLat(i,1), &
+                                 & geocAltitudeQuantity%template%lon(i,1), &
+                                 & geocAltitudeQuantity%template%surfs(i,1) ], &
+                                 & xyz, km=.true. )
+                else ! geocentric latitude
+                  xyz = to_xyz ( geocAltitudeQuantity%template%geodLat(i,1), &
+                               & geocAltitudeQuantity%template%lon(i,1) )
+                  xyz = xyz * geocAltitudeQuantity%template%surfs(i,1)
+                end if
+                ! Convert ECR to [geod lat, lon, geod ht]
+                geod = xyz_to_geod ( xyz )
+                surfs(i) = geod(3) ! Geodetic altitude
+              end do
+            else
+              call MLSMessage ( MLSMSG_Info, moduleName, &
+                & 'ReferenceMIF = %R is greater than half than Earth radius ' // &
+                & 'and is therefore assumed to be geocentric height.', &
+                & datum = referenceMIF )
+              surfs(:) = geocAltitudeQuantity%template%surfs(:,1)
+            end if
             ! Use only the monotone part of the tangent-point altitudes
-            call longest_monotone_subsequence ( geocAltitudeQuantity%template%surfs(:,1), inc )
-            call longest_monotone_subsequence ( geocAltitudeQuantity%template%surfs(:,1), dec, -1 )
+            call longest_monotone_subsequence ( surfs, inc )
+            call longest_monotone_subsequence ( surfs, dec, -1 )
             if ( size(inc) >= size(dec) ) then
               call move_alloc ( inc, seq )
               deallocate ( dec )
@@ -4490,42 +4518,14 @@ contains ! =====     Public Procedures     =============================
               call move_alloc ( dec, seq )
               deallocate ( inc )
             end if
-            call allocate_test ( surfs, size(seq), 'Surfs', moduleName )
-            if ( referenceMIF < 0.5 * EarthRadA .and. &
-               & geocAltitudeQuantity%template%verticalCoordinate /= l_geodAltitude ) then
-              ! referenceMIF is assumed to be geodetic height.  Convert
-              ! geocAltitudeQuantity%template%surfs to geodetic height.
-              call MLSMessage ( MLSMSG_Info, moduleName, &
-                & 'ReferenceMIF = %R is less half than Earth radius ' // &
-                & 'and is therefore assumed to be geodetic height.', &
-                & datum = referenceMIF )
-              do i = 1, size(surfs)
-                ! Convert [lat, lon, ht] to ECR
-                if ( geocAltitudeQuantity%template%latitudeCoordinate == l_geodetic ) then
-                  call to_cart ( [ geocAltitudeQuantity%template%geodLat(seq(i),1), &
-                                 & geocAltitudeQuantity%template%lon(seq(i),1), &
-                                 & geocAltitudeQuantity%template%surfs(seq(i),1) ], &
-                                 & xyz, km=.true. )
-                else ! geocentric latitude
-                  xyz = to_xyz ( geocAltitudeQuantity%template%geodLat(seq(i),1), &
-                               & geocAltitudeQuantity%template%lon(seq(i),1) )
-                  xyz = xyz * geocAltitudeQuantity%template%surfs(seq(i),1)
-                end if
-                ! Convert ECR to [geod lat, lon, geod ht]
-                geod = xyz_to_geod ( xyz )
-                surfs(i) = geod(3) ! Geodetic altitude
-              end do
-            else
-              surfs(:) = geocAltitudeQuantity%template%surfs(seq,1)
-            end if
             ! Find the MIF with the desired altitude
-            call hunt ( surfs, referenceMIF, referenceMIFnumber )
-            maxv = maxval(surfs)
-            minv = minval(surfs)
+            call hunt ( surfs(seq), referenceMIF, referenceMIFnumber )
+            maxv = maxval(surfs(seq))
+            minv = minval(surfs(seq))
             if ( switchDetail ( switches, 'plane' ) > 1 ) then
               call output ( seq(referenceMIFnumber), &
                 & before='Height at reference MIF number ' )
-              call output ( surfs(referenceMIFnumber), before=' = ' )
+              call output ( surfs(seq(referenceMIFnumber)), before=' = ' )
               call output ( referenceMIF, before=' chosen using height ' )
               call output ( minv, before=' from range ' )
               call output ( maxv, before=' ... ', advance='yes' )
@@ -7672,6 +7672,11 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.117  2015/11/11 23:25:32  vsnyder
+! Compute the longest monotone subsequence of altitudes after converting
+! from geocentric to geodetic, instead of before, for purposes of determining
+! the reference MIF number.
+!
 ! Revision 2.116  2015/10/29 00:55:27  vsnyder
 ! If the units of the referenceMIF are length, and its value is less than
 ! half EarthRadA, assume it's a geodetic height.  If so, and the tangent
