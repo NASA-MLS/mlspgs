@@ -81,8 +81,6 @@ contains
     real(rk), intent(in) :: XQ, YQ     ! Coordinates to which to interpolate
     real(rk), intent(out) :: W(3)      ! Interpolation coefficients
     integer :: I, J                    ! Subscripts
-    real(rk) :: DX, DY                 ! Edge vector components
-    real(rk) :: P1, P2                 ! Intermediate results
     do i = 1, 3
       j = mod(i,3) + 1
       w(6-i-j) = (x(j) - x(i)) * ( yq - y(i) ) - (y(j) - y(i)) * ( xq - x(i) )
@@ -104,6 +102,9 @@ contains
 end module Triangle_Interpolate_m
 
 ! $Log$
+! Revision 2.2  2015/11/12 20:45:38  vsnyder
+! Remove unused declarations
+!
 ! Revision 2.1  2015/11/12 20:14:18  vsnyder
 ! Initial commit
 !
