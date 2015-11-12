@@ -1,0 +1,276 @@
+\documentclass[11pt]{article}
+\usepackage{alltt}
+\usepackage[fleqn]{amsmath}
+\usepackage{floatflt}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage[strings]{underscore}
+\usepackage{wasysym}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9in
+
+\newcommand{\docname}{wvs-128}
+\newcommand{\docdate}{11 November 2015}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+    \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\bf\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\bf\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Nathaniel, Bill, Paul\\
+Subject: \>Quaternary Triagular Mesh\\
+From: \>Van Snyder\\
+References: \>\h{wvs-127}
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-20pt}
+
+\section*{Introduction}
+
+In {\bf A Hierarchical Coordinate System for Geoprocessing and
+Cartography}, Geoffrey Dutton described a method to develop a mesh on a
+sphere that has the property that, as the mesh is refined, the ratio of
+the area of the largest facet to the area of the smallest facet is bounded
+by about 11/6.
+
+The method begins by inscribing an octahedron within the sphere.  If the
+edges of the octahedron are projected onto the sphere, they divide the
+surface into eight triangular facets, called \emph{octants}.
+
+To develop smaller facets, each facet is divided into four triangles by
+joining the midpoints of the edges of the larger facet.  Therefore, at all
+levels of refinement, facets are triangles.  Then, the boundary points and
+edges of the new facets are projected to the surface of the sphere. 
+Here's a picture from Dutton's book, showing subdivision to the fourth
+level:
+
+\hfil\includegraphics[scale=0.6]{wvs-128-QTM-1}\hfill
+
+By construction, the number of facets at level $l$, where level one is the
+initial octahedron, is $f_l = 8\times4^{l-1} = 2^{2l+1}$.  Because smaller
+facets are formed by bisecting each edge, the number of vertices is $v_l =
+v_{l-1}+e_{l-1}$.  From Euler's formula for polyhedra, $e_l = f_l + v_l -
+2$.  Solving these equations, we have $v_l = 2^{2l}+2$ and $e_l = 3 \times
+2^{2l}$.  Counting the poles and equator the vertices are on $2^l+1$
+equally-spaced parallels of latitude.  Along the $k^{\text{th}}$ parallel
+from each pole, vertices are at $4 k$ equally-spaced longitudes.
+
+The identifier of a facet consists of its octant number, followed by a
+sequence of two-bit numbers that describe which sub-facet of a larger
+facet contains the next smaller facet.  Since each two-bit number can be
+considered to be a base-four digit, or quaternary digit, and every facet
+is a triangle, the system is called a \emph{Quaternary Triangular Mesh},
+or \emph{QTM}.  The octant number, followed by the sequence of quaternary
+digits, is called a \emph{QTM ID}.
+
+Within a binary QTM ID, the octant number is represented by a four-bit
+number in the range $8\cdots15$.  This allows to determine unambiguously
+how many digits are in the representation, and thereby the resolution of
+the facet.  Using a four-bit octant number and a two-bit facet number
+allows the identifiers for facets of a mesh subdivided up to thirteen
+times to be represented within a 31-bit integer.  At thirteen
+subdivisions, the length of an edge of a facet is bounded by 1.2
+kilometers.  This ought to be adequate for MLS.  If not, 63-bit integers
+could be used, allowing 29 subdivisions, at which the resolution is 4
+centimeters.
+
+\section*{ZOT projection, facet numbering, and vertex numbering}
+
+Dutton developed a simple way, called the \emph{Zenithial OrthoTriangular}
+projection, or ZOT projection, to compute positions within a QTM.  Here's
+an example of a ZOT projection of a refinement of QTM to levels 2 and 3,
+from Dutton's book:
+
+\hfil\includegraphics[scale=0.675]{wvs-128-QTM-2}\hfill
+
+The heavy lines are edges of the octahedron.  The outer boundary consists
+of southern hemisphere meridians, and the halves of each outer boundary
+are aliased.  For example, the points labeled 3 on the top edge are the
+same point.  The north pole is the center.  The south pole is the outer
+corners.  The equator is the inscribed square with diagonal edges. 
+Diagonal lines are parallels of latitude.  The narrow lines are boundaries
+of the level-2 refinement.  Dashed lines are boundaries of the level-3
+refinement.
+
+Vertices of the mesh are not uniquely identified.  At each level of
+refinement, they are assigned a \emph{basis number} in the range
+$1\cdots3$.  Initially, the poles are assigned 1, the 0$^\circ$ and
+180$^\circ$ equatorial vertices of the octahedron are assigned 2, and the
+90$^\circ$ and 270$^\circ$ vertices are assigned 3.  Thereafter, as each
+edge is bisected, the basis number of the midpoint is $B_n = 6 - ( B_a +
+B_b )$, where $B_a$ and $B_b$ are the basis numbers of the end points. 
+The QTM ID of each facet at level 1 is its octant number.  When a facet is
+subdivided, the QTM ID of the central facet is the QTM ID of the parent
+facet, with zero appended.  The QTM ID of each other facet is the QTM ID
+of the parent facet, with the basis number of the vertex opposite the
+common edge appended.
+
+In the ZOT projection, every triangle in the mesh is an isosceles right
+triangle.  The right angle is called the \emph{polar angle} because it is
+always nearest one of the poles of the sphere.  One edge incident on the
+pole node is horizontal, and the other is vertical.
+
+ZOT coordinates are in the range $-1\cdots1$, with the north pole at
+$(0,0)$, and the south pole at $(\pm1,\pm1)$.  The mapping from longitude
+and latitude to ZOT coordinates is done in the $\ell_1$ metric, and is
+best described by reference to the function {\tt Geo_to_ZOT} in the module
+{\tt QTM_m}.  To compute the QTM ID containing a point, one computes the
+ZOT coordinates of the point, and uses its octant number as the initial
+QTM ID.  If the level of facet identified does not have sufficient
+resolution, the identity of a sub-facet is determined by computing the
+distances $dx$ and $dy$ of the $x$ and $y$ ZOT coordinates from the pole
+node.  Let the length of a horizontal or vertical edge of a facet be $s$.
+If $|dx| + |dy| < s/2$, append the basis number of the pole node to the
+QTM ID of the parent facet.  Otherwise if either $|dx| > s/2$ or $|dy| >
+s/2$ append the basis number of the $x$ or $y$ node respectively. 
+Otherwise, append zero.  If $|dx| > s/2$ and $|dy| > s/2$, you made a
+mistake along the way and you're working in the wrong facet.  No square
+roots or trigonometric functions are needed.  The process is repeated if
+the size of the facet is not sufficiently small.  The number of
+repetitions is equal to the degree of refinement of the mesh.
+
+\hfil\includegraphics{wvs-128-QTM-3}\hfill
+
+\section*{Using QTM in MLS}
+
+Since the linear extent of a facet is roughly 20,000/$2^l$ km, a
+refinement level of 7 (156 km) would be appropriate to Aura MLS.  A finer
+refinement might be appropriate to A-SMLS.
+
+In MLS, every vertex in the mesh needs to be uniquely identified because a
+sequential index of a vertex in the mesh is used to calculate a column
+subscript in the Jacobian, and a subscript in the state vector.  Dutton's
+QTM method provides unique identifiers for every facet.  Each vertex that
+is not a vertex of the octahedron is a member of six facets, while each
+vertex of the octahedron is a member of four facets.
+
+The centroid of each facet is uniquely identified by the QTM ID.  If
+centroids of facets that share an edge are connected, the result is a dual
+mesh, in which each facet is hexagonal, except at the vertices of the
+icosahedron, where each facet is square.  Each hexagon could then be
+divided into four triangles, and each square into two triangles.  A vertex
+within a QTM facet is within one of three facets of the dual mesh.
+
+An alternative to a dual mesh is to identify vertices uniquely by only one
+of the identifiers of the QTM facets of which it is a member.  One
+candidate is to identify a vertex of the mesh by the QTM ID of one of the
+facets of which it is a polar node.  For all vertices other than the
+poles, the vertex at the polar angle is a member of two facets.  The QTM
+ID of the facet that has the polar angle at a more northern latitude than
+its other vertices is unique, except along the meriodonal edges of the
+octahedron, i.e., where the longitude mod 90 is zero, or the $x$ or $y$
+ZOT coordinate is zero; in this case, a simple choice would be to use the
+one with the even (or odd) octant number.  The poles could be identified
+by the facet with the smallest octant number.  The QTM ID, sans octant
+number, of the facets surrounding the poles always consist of quaternary
+digits having the value 1, so the poles would be identified by QTM IDs
+$11\cdots1$ and $51\cdots1$.
+
+An alternative either to a dual mesh or using a QTM ID for a vertex is to
+index the vertices, starting with the north pole being vertex one, then
+counting from the prime meridian eastward around each parallel of
+latitude.  In the southern hemisphere (excluding the equator) use the same
+scheme with negative indices.  Let $h = 2^{l-1}$.  The index of the last
+vertex on the equator would be $q = 4h(2h+1)+1$.  At the $k^{\text{th}}$
+parallel of latitude counted from the pole, with $k \leq h$ ($k < h$ in
+the southern hemisphere), the absolute values of the vertex indices would
+be in the range $[2k(k-1)+2, 2k(k+1)+1]$.  If the vertex number is $n$ and
+$2k(k-1)+2 \leq |n| \leq 2k(k+1)+1$, the latitude is $90^\circ \left( 1 -
+\frac{k}{h}\right)$ with the sign of the vertex index, and the east
+longitude is $90^\circ ( |n| - 2k(k-1) - 2 ) / k$.
+
+Each of these methods allows a fast search for the triangle containing a
+given coordinate and the indices of the surrounding vertices, and
+therefore their coordinates.
+
+As each vertex in the QTM is identified, it would be assigned a
+consecutive serial number, which is in turn used to compute a column
+subscript in the Jacobian, and a subscript in the state vector.
+
+Once one has identified a triangle and its vertices, interpolation to a
+point within it is easy:  One computes the normalized barycentric
+coordinates of the point.  The interpolation coefficients are those
+coordinates.  The barycentric coordinates of a point are its orthogonal
+distances to the edges of the triangle in which it appears.  Barycentric
+coordinates are normalized by dividing each one by the sum of all three.
+
+The {\tt mlsl2} program will not be used to retrieve atmospheric state
+over the entire Earth: At a refinement level of 7 (159 km) there would be
+16,386 profiles.  Solving for 20 quantities on 72 levels, there would be
+23,595,840 columns in the Jacobian.  Therefore, a smaller mesh will be
+constructed.  For A-SMLS, a grid could be constructed consisting of a
+swath having the instrument path along its center, and a width such that
+the longest line-of-sight extends to a specified altitude, say 100 km.  An
+``interesting'' region would be defined by a polygon.  On a sphere, the
+concepts of ``inside'' and ``outside'' of a polygon are ambiguous, so an
+additional point defined to be inside the polygon is necessary.  Having
+the polygon and a point defined to be within it, determining whether
+another point is within the polygon, or constructing a set of points
+within the polygon, is not terribly difficult.  A dense set of points
+within that swath would then be used to compute QTM IDs, with a hash table
+used to discover duplicates.  QTM vertices within the interesting region
+of the mesh would thereby be identified.
+
+\label{lastpage}
+\vspace*{-0.1in} % Somehow, this causes lastpage to be defined
+\end{document}
+
+% $Id$
