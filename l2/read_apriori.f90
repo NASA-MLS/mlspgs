@@ -74,6 +74,8 @@ module ReadAPriori
 !     (subroutines and functions)
 ! dumpAPrioriAttributes       dump types and names of apriori files used
 ! processOneAprioriFile       read one apriori file into a gridded data type
+! processOneL2AUXFile         read one l2aux file into a gridded data type
+! processOneL2GPFile          read one l2gp file into a gridded data type
 ! read_apriori                entry point for apriori section; process l2cf
 ! readAPrioriAttributes       read attributes from a file to which they were written
 ! writeAPrioriAttributes      write as attributes info about apriori files used
@@ -81,18 +83,19 @@ module ReadAPriori
 
 
 
-  public ::  APRIORIFILES, APRIORIFILES_T, &
-    & DUMPAPRIORIATTRIBUTES, PROCESSONEAPRIORIFILE, &
-    & READ_APRIORI, READAPRIORIATTRIBUTES, &
-    & WRITEAPRIORIATTRIBUTES
+  public ::  aprioriFiles, aprioriFiles_t, &
+    & dumpAPrioriAttributes, processOneAPrioriFile, &
+    & processOneL2AUXFile, processOneL2GPFile, &
+    & read_apriori, readAPrioriAttributes, &
+    & writeAPrioriAttributes
   private ::  announce_error
   logical, parameter :: countEmpty = .true. ! Except where overriden locally
   integer, private :: ERROR
   integer, private, parameter :: MAXNUMFILES = 20
 
    ! What a priori files did we read? 
-   ! (This is very wasteful of memory--let's change it
-   ! so that it one field is needed)
+   ! (This is very wasteful of memory--can we change it
+   ! so that just one field is needed/)
   type APrioriFiles_T
     character (len=MAXNUMFILES*FileNameLen) :: l2gp =  ''
     character (len=MAXNUMFILES*FileNameLen) :: l2aux = ''
@@ -341,6 +344,7 @@ contains ! =====     Public Procedures     =============================
     type (MLSFile_T) :: L2GPFile
     integer :: L2Index             ! In the l2gp or l2aux database
     integer :: L2Name              ! Sub-rosa index of L2[aux/gp] label
+!     integer :: lastAPrioriVersion
     integer :: LISTSIZE                 ! Size of string from SWInqSwath
     character(len=16) :: litDescription
     integer :: Me = -1             ! String index for trace
@@ -491,66 +495,11 @@ contains ! =====     Public Procedures     =============================
       swathNameString=''
       if ( got(f_swath) ) &
         & call get_string ( swathName, swathNameString, strip=.true. )
-
-      ! If we were given only a strand of the filename, expand it
-      if ( TOOLKIT .and. .not. noPCFid ) then
-        call split_path_name(FileNameString, path, SubString)
-        LastAprioriPCF = GetPCFromRef(SubString, mlspcf_l2apriori_start, &
-        & mlspcf_l2apriori_end, &                                     
-        & TOOLKIT, returnStatus, l2apriori_Version, DEBUG, &  
-        & exactName=FileNameString)                             
-      end if
-      hdfVersion = mls_hdf_version(FilenameString)
-
-      FileIndex = InitializeMLSFile(L2GPFile, content = 'l2gp', &
-        & name=FilenameString, shortName=shortFileName, &
-        & type=l_swath, access=DFACC_RDONLY, hdfVersion=hdfVersion, &
-        & PCBottom=mlspcf_l2apriori_start, PCTop=mlspcf_l2apriori_end)
-      L2GPFile%PCFId = LastAprioriPCF
-      FileIndex = AddFileToDataBase(filedatabase, L2GPFile)
-      ! If we didn't get a name get the first swath name in the file
-      if ( len_trim(swathNameString) == 0 ) then
-        allSwathNames = ''
-        noSwaths = mls_InqSwath ( fileNameString, allSwathNames, listSize, &
-         & hdfVersion=hdfVersion)
-        if ( listSize == FILENOTFOUND ) then
-          call MLSMessage ( MLSMSG_Error, ModuleName, &
-            & 'File not found; make sure the name and path are correct' &
-            & // trim(fileNameString), MLSFile=L2GPFile )
-        else if ( listSize < 1 ) then
-          call MLSMessage ( MLSMSG_Error, ModuleName, &
-            & 'Failed to determine swath names, perhaps none in file ' &
-            & // trim(fileNameString), MLSFile=L2GPFile )
-        else if ( listSize < len(allSwathNames) ) then
-          commaPos = index ( allSwathNames, ',' )
-          if ( commaPos == 0 ) then
-            commaPos = len_trim(allSwathNames)
-          else if ( commaPos == 1 ) then
-            call MLSMessage ( MLSMSG_Error, ModuleName, &
-            & 'Failed to determine swath name, allswathnames begin with , ' &
-            & // trim(fileNameString), MLSFile=L2GPFile )
-          else
-            commaPos = commaPos - 1
-          end if
-          swathNameString = allSwathNames ( 1:commaPos )
-        else
-          call MLSMessage ( MLSMSG_Error, ModuleName, &
-            & 'Failed to determine swath names, string too long.' &
-            & // trim(fileNameString), MLSFile=L2GPFile )
-        end if
-      end if
-      if ( swathNameString == ' ' ) then
-        call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & 'Failed to determine swath name, obscure error on ' &
-          & // trim(fileNameString), MLSFile=L2GPFile )
-      end if
-
-      ! Read the swath
-      if ( HMOT /= ' ' ) then
-        call ReadL2GPData ( L2GPFile, swathNameString, l2gp, HMOT=HMOT )
-      else
-        call ReadL2GPData ( L2GPFile, swathNameString, l2gp )
-      end if
+      call processOneL2GPFile ( FileNameString, swathNameString, &
+        & noPCFid, mlspcf_l2apriori_start, mlspcf_l2apriori_end, &
+        & LastAprioriPCF, HMOT, Debug, &
+        & L2GP, L2GPFile )
+      FileIndex = AddFileToDataBase( filedatabase, L2GPFile )
 
       if( Debug ) then
         if ( specialDumpFile /= ' ' ) &
@@ -561,8 +510,8 @@ contains ! =====     Public Procedures     =============================
       end if
 
       if( switchDetail(switches, 'pro') > -1 ) then                            
-         call announce_success(FilenameString, 'l2gp', &                    
-         & swathNameString, MLSFile=L2GPFile)    
+         call announce_success( FilenameString, 'l2gp', &                    
+         & swathNameString, MLSFile=L2GPFile )    
       end if
       apriorifiles%l2gp = catlists(apriorifiles%l2gp, trim(FilenameString))
 
@@ -580,39 +529,22 @@ contains ! =====     Public Procedures     =============================
 
     case ( s_l2aux )
 
-      if ( TOOLKIT .and. .not. noPCFid ) then
-        call split_path_name(FileNameString, path, SubString)
-        LastAprioriPCF = GetPCFromRef(SubString, mlspcf_l2apriori_start, &
-        & mlspcf_l2apriori_end, &                                     
-        & TOOLKIT, returnStatus, l2apriori_Version, DEBUG, &  
-        & exactName=FileNameString)                             
-      end if
       if ( .not. all(got((/f_sdName, f_file, f_quantityType /)))) &
         & call announce_error ( son, &
           & 'file/sd name must both be specified in read a priori' )
-
       call get_string ( sdName, sdNameString )
       sdNameString = sdNameString(2:LEN_TRIM(sdNameString)-1)
 
-      hdfVersion = mls_hdf_version(FilenameString)
-      FileIndex = InitializeMLSFile(L2AUXFile, content = 'l2aux', &
-        & name=FilenameString, shortName=shortFileName, &
-        & type=l_hdf, access=DFACC_RDONLY, hdfVersion=hdfVersion, &
-        & PCBottom=mlspcf_l2apriori_start, PCTop=mlspcf_l2apriori_end)
-      ! call mls_openFile(L2AUXFile, returnStatus)
-      L2AUXFile%PCFId = LastAprioriPCF
 
-      FileIndex = AddFileToDataBase(filedatabase, L2AUXFile)
       l2aux%name = l2Name
 
       l2Index = AddL2AUXToDatabase( L2AUXDatabase, l2aux )
-      call decorate ( key, l2Index )
-      pL2AUXFile => filedatabase(FileIndex)
-      call ReadL2AUXData ( pL2AUXFile, sdNameString, &
-        & L2AUXDatabase(l2Index), &
-        & quantityType, &
-        & checkDimNames=.false. )
+      call processOneL2AUXFile ( FileNameString, sdNameString, &
+        & noPCFid, mlspcf_l2apriori_start, mlspcf_l2apriori_end, quantityType, &
+        & LastAprioriPCF, Debug, &
+        & L2AUXDatabase(l2Index), L2AUXFile, fileDatabase )
 
+      call decorate ( key, l2Index )
       ! if( switchDetail(switches, 'apr') > -1 ) then
       if( Debug ) then
         if ( specialDumpFile /= ' ' ) &
@@ -660,7 +592,7 @@ contains ! =====     Public Procedures     =============================
         end if
         call get_pcf_id ( fileNameString, path, subString, l2apriori_version, &
           & mlspcf_l2ncep_start, mlspcf_l2ncep_end, description, got(f_file), &
-          & LastNCEPPCF, returnStatus, noPCFid )
+          & LastNCEPPCF, returnStatus, noPCFid, verbose, debug )
         FileIndex = InitializeMLSFile(GriddedFile, content = 'gridded', &
           & name=FilenameString, shortName=shortFileName, &
           & type=l_hdfeos, access=DFACC_RDONLY, hdfVersion=HDFVERSION_4, &
@@ -706,7 +638,7 @@ contains ! =====     Public Procedures     =============================
       case ( l_dao ) ! ---------------------------- GMAO Data (GEOS4)
         call get_pcf_id ( fileNameString, path, subString, l2apriori_version, &
           & mlspcf_l2dao_start, mlspcf_l2dao_end, 'dao', got(f_file), &
-          & LastDAOPCF, returnStatus, noPCFid )
+          & LastDAOPCF, returnStatus, noPCFid, verbose, debug )
         FileIndex = InitializeMLSFile(GriddedFile, content = 'gridded', &
           & name=FilenameString, shortName=shortFileName, &
           & type=l_hdfeos, access=DFACC_RDONLY, hdfVersion=HDFVERSION_4, &
@@ -780,7 +712,7 @@ contains ! =====     Public Procedures     =============================
       case ( l_geos5, l_geos5_7, l_merra ) ! ------------ GMAO Data (GEOS5*)
         call get_pcf_id ( fileNameString, path, subString, l2apriori_version, &
           & mlspcf_l2geos5_start, mlspcf_l2geos5_end, 'geos5', got(f_file), &
-          & LastGEOS5PCF, returnStatus, noPCFid )
+          & LastGEOS5PCF, returnStatus, noPCFid, verbose, debug )
         if (griddedOrigin == l_geos5_7) then ! since geos5_7 is HDF5
             FileIndex = InitializeMLSFile(GriddedFile, content='gridded', &
             name=FilenameString, shortName=shortFileName, &
@@ -893,7 +825,7 @@ contains ! =====     Public Procedures     =============================
       case ( l_gloria ) ! ------------------------- Data in Gloria's UARS format
         call get_pcf_id ( fileNameString, path, subString, l2apriori_version, &
           & mlspcf_l2clim_start, mlspcf_l2clim_end, 'gloria', got(f_file), &
-          & LastClimPCF, returnStatus, noPCFid )
+          & LastClimPCF, returnStatus, noPCFid, verbose, debug )
         if ( TOOLKIT .and. returnStatus /= PGS_S_SUCCESS ) then
           call announce_error ( son, &
             & 'PCF number not found to supply' // &
@@ -916,7 +848,7 @@ contains ! =====     Public Procedures     =============================
         ! Identify file (maybe from PCF if no name given)
         call get_pcf_id ( fileNameString, path, subString, l2apriori_version, &
           & mlspcf_l2clim_start, mlspcf_l2clim_end, 'climatology', got(f_file), &
-          & LastClimPCF, returnStatus, noPCFid )
+          & LastClimPCF, returnStatus, noPCFid, verbose, debug )
         call outputnamedValue ( 'fileNameString', trim(fileNameString) )
         call outputnamedValue ( 'noPCFid', noPCFid )
         call outputnamedValue ( 'returnStatus', returnStatus )
@@ -975,7 +907,7 @@ contains ! =====     Public Procedures     =============================
         call get_pcf_id ( fileNameString, path, subString, l2apriori_version, &
           & mlspcf_surfaceHeight_start, mlspcf_surfaceHeight_end, &
           & 'surfaceHeight', got(f_file), &
-          & lastHeightPCF, returnStatus, noPCFid )
+          & lastHeightPCF, returnStatus, noPCFid, verbose, debug )
         if ( TOOLKIT .and. returnStatus /= PGS_S_SUCCESS ) then
           call announce_error ( son, &
             & 'PCF number not found to supply' // &
@@ -1015,12 +947,165 @@ contains ! =====     Public Procedures     =============================
     call trace_end ( "processOneAprioriFile", &
       & cond=toggle(gen) .and. levels(gen) > 0 )
 
-  contains
+  end subroutine processOneAprioriFile
+
+  subroutine processOneL2AUXFile ( FileNameString, sdNameString, &
+    & noPCFid, PCBottom, PCTop, quantityType, &
+    & LastAprioriPCF, Debug, &
+    & L2AUX, L2AUXFile, fileDatabase )
+   use L2AUXData, only: L2AUXdata_t, addL2AUXtodatabase, &
+    &                  readL2AUXdata, dump
+   ! Process an a priori l2gp
+    ! Args:
+    character(len=FileNameLen)              :: FileNameString   ! actual literal file name
+    character(len=FileNameLen)              :: sdNameString ! actual literal swath name
+    logical, intent(in)                     :: noPCFid
+    integer, intent(in)                     :: PCBottom
+    integer, intent(in)                     :: PCTop
+    integer, intent(in)                     :: QUANTITYTYPE  ! Lit index of quantity type
+    integer, intent(inout)                  :: LastAprioriPCF
+    logical, intent(in)                     :: Debug
+    type (L2AUXData_T), intent(inout)       :: L2AUX
+    type (MLSFile_T)                        :: L2AUXFile
+    type (MLSFile_T), dimension(:), pointer :: FILEDATABASE
+    ! Internal variables
+    integer :: FileIndex
+    integer :: hdfVersion               ! 4 or 5 (corresp. to hdf4 or hdf5)
+    integer :: L2apriori_version               ! 4 or 5 (corresp. to hdf4 or hdf5)
+    integer :: L2Index             ! In the l2gp or l2aux database
+
+    character(len=FileNameLen) :: path   ! path of actual literal file name
+    type (MLSFile_T), pointer :: pL2AUXFile
+    integer :: ReturnStatus
+    character(len=FileNameLen) :: ShortFileName
+    character(len=FileNameLen) :: subString   ! file name w/o path
+
+    if ( TOOLKIT .and. .not. noPCFid ) then
+      call split_path_name( FileNameString, path, SubString )
+      LastAprioriPCF = GetPCFromRef( SubString, mlspcf_l2apriori_start, &
+      & mlspcf_l2apriori_end, &                                     
+      & TOOLKIT, returnStatus, l2apriori_Version, DEBUG, &  
+      & exactName=FileNameString )                             
+    end if
+    hdfVersion = mls_hdf_version(FilenameString)
+    FileIndex = InitializeMLSFile( L2AUXFile, content = 'l2aux', &
+      & name=FilenameString, shortName=shortFileName, &
+      & type=l_hdf, access=DFACC_RDONLY, hdfVersion=hdfVersion, &
+      & PCBottom=mlspcf_l2apriori_start, PCTop=mlspcf_l2apriori_end )
+    ! call mls_openFile(L2AUXFile, returnStatus)
+    L2AUXFile%PCFId = LastAprioriPCF
+    FileIndex = AddFileToDataBase( filedatabase, L2AUXFile )
+    pL2AUXFile => filedatabase(FileIndex)
+    call ReadL2AUXData ( pL2AUXFile, sdNameString, &
+      & L2AUX, &
+      & quantityType, &
+      & checkDimNames=.false. )
+
+  end subroutine processOneL2AUXFile
+
+  subroutine processOneL2GPFile ( FileNameString, swathNameString, &
+    & noPCFid, PCBottom, PCTop, &
+    & LastAprioriPCF, HMOT, Debug, &
+    & L2GP, L2GPFile )
+    ! Process an a priori l2gp
+    use L2GPdata, only: l2GPdata_t, &
+      & readl2GPdata, dump
+    ! Args:
+    character(len=FileNameLen)     :: FileNameString   ! actual literal file name
+    character(len=FileNameLen)     :: SWATHNAMESTRING ! actual literal swath name
+    logical, intent(in)            :: noPCFid
+    integer, intent(in)            :: PCBottom
+    integer, intent(in)            :: PCTop
+    integer, intent(inout)         :: LastAprioriPCF
+!    integer, intent(inout)         :: LastAprioriVersion
+    character, intent(in)          :: HMOT           ! 'H', 'M', 'O', or 'T'
+    logical, intent(in)            :: Debug
+    type (L2GPData_T), intent(out) :: L2GP
+    type (MLSFile_T) :: L2GPFile
+    ! Internal variables
+    character(len=MAXSWATHNAMESBUFSIZE) :: ALLSWATHNAMES ! Buffer to get info back.
+    integer :: COMMAPOS                 ! For parsing string
+    integer :: FileIndex
+    integer :: hdfVersion               ! 4 or 5 (corresp. to hdf4 or hdf5)
+    integer :: L2apriori_version               ! 4 or 5 (corresp. to hdf4 or hdf5)
+    integer :: LISTSIZE                 ! Size of string from SWInqSwath
+    integer :: NOSWATHS                 ! In an input file
+    character(len=FileNameLen) :: path   ! path of actual literal file name
+    integer :: ReturnStatus
+    character(len=FileNameLen) :: ShortFileName
+    character(len=FileNameLen) :: subString   ! file name w/o path
+
+    ! If we were given only a strand of the filename, expand it
+    L2apriori_version = 1
+    if ( TOOLKIT .and. .not. noPCFid ) then
+      call split_path_name( FileNameString, path, SubString )
+      LastAprioriPCF = GetPCFromRef( SubString, mlspcf_l2apriori_start, &
+      & mlspcf_l2apriori_end, &                                     
+      & TOOLKIT, returnStatus, l2apriori_Version, DEBUG, &  
+      & exactName=FileNameString )                             
+    end if
+    hdfVersion = mls_hdf_version(FilenameString)
+
+    FileIndex = InitializeMLSFile( L2GPFile, content = 'l2gp', &
+      & name=FilenameString, shortName=shortFileName, &
+      & type=l_swath, access=DFACC_RDONLY, hdfVersion=hdfVersion, &
+      & PCBottom=PCBottom, PCTop=PCTop )
+    L2GPFile%PCFId = LastAprioriPCF
+    ! If we didn't get a name get the first swath name in the file
+    if ( len_trim(swathNameString) == 0 ) then
+      allSwathNames = ''
+      noSwaths = mls_InqSwath ( fileNameString, allSwathNames, listSize, &
+       & hdfVersion=hdfVersion )
+      if ( listSize == FILENOTFOUND ) then
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'File not found; make sure the name and path are correct' &
+          & // trim(fileNameString), MLSFile=L2GPFile )
+      else if ( listSize < 1 ) then
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Failed to determine swath names, perhaps none in file ' &
+          & // trim(fileNameString), MLSFile=L2GPFile )
+      else if ( listSize < len(allSwathNames) ) then
+        commaPos = index ( allSwathNames, ',' )
+        if ( commaPos == 0 ) then
+          commaPos = len_trim(allSwathNames)
+        else if ( commaPos == 1 ) then
+          call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Failed to determine swath name, allswathnames begin with , ' &
+          & // trim(fileNameString), MLSFile=L2GPFile )
+        else
+          commaPos = commaPos - 1
+        end if
+        swathNameString = allSwathNames ( 1:commaPos )
+      else
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Failed to determine swath names, string too long.' &
+          & // trim(fileNameString), MLSFile=L2GPFile )
+      end if
+    end if
+    if ( swathNameString == ' ' ) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Failed to determine swath name, obscure error on ' &
+        & // trim(fileNameString), MLSFile=L2GPFile )
+    end if
+
+    ! Read the swath
+    if ( HMOT /= ' ' ) then
+      call ReadL2GPData ( L2GPFile, swathNameString, l2gp, HMOT=HMOT )
+    else
+      call ReadL2GPData ( L2GPFile, swathNameString, l2gp )
+    end if
+  end subroutine processOneL2GPFile
+
+  ! =========== Private ============
+
     subroutine Get_PCF_Id ( FileNameString, Path, SubString, L2Apriori_Version, &
-      & FirstPCF, LastPCF, Description, GotFile, PCF_Id, ReturnStatus, noPCFid )
+      & FirstPCF, LastPCF, Description, GotFile, PCF_Id, ReturnStatus, noPCFid, &
+      & verbose, debug )
       use MLSFiles, only: getpcfromref, split_path_name
       use MLSL2Options, only: toolkit
       use SDPToolkit, only: pgs_pc_getreference, pgs_s_success
+      use Toggles, only: Gen, Levels, Toggle
+      use Trace_m, only: trace_begin, trace_end
 
       ! Args
       character(len=*), intent(inout) :: FileNameString
@@ -1032,6 +1117,8 @@ contains ! =====     Public Procedures     =============================
       integer, intent(inout) :: PCF_Id
       integer, intent(out) :: ReturnStatus
       logical, intent(in) :: noPCFid
+      logical, intent(in) :: verbose
+      logical, intent(in) :: debug
       ! Local variables
       integer :: Me = -1       ! String index for trace
       integer :: PCFBottom
@@ -1044,6 +1131,7 @@ contains ! =====     Public Procedures     =============================
         PCFBottom = PCF_Id + 1 ! This must be the last PCF id we found
       end if
 
+      ! Now parse file and field names
       ! call outputNamedValue ( 'fileNameString', trim(fileNameString) )
       ! call outputNamedValue ( 'got file?', gotFile )
       ! call output('PCFBottom, lastPCF: ')
@@ -1068,10 +1156,6 @@ contains ! =====     Public Procedures     =============================
       call trace_end ( "Get_PCF_Id", &
         & cond=toggle(gen) .and. levels(gen) > 1 )
     end subroutine Get_PCF_Id
-
-  end subroutine processOneAprioriFile
-
-  ! =========== Private ============
 
   ! ------------------------------------------  readAPrioriAttributes_MF  -----
   subroutine readAPrioriAttributes_MF ( MLSFile )
@@ -1376,6 +1460,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.113  2015/11/17 21:28:07  pwagner
+! Made public processOneL2AUXFile and processOneL2GPFile
+!
 ! Revision 2.112  2015/08/03 21:43:50  pwagner
 ! Made quantityType optional in call to ReadL2AUXData
 !
