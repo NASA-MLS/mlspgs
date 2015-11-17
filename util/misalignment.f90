@@ -18,12 +18,13 @@ program misalignment
    use L2GPData, only: L2GPdata_t, MAXSWATHNAMESBUFSIZE, &
      & destroyL2GPContents, readL2GPData
    use Machine, only: hp, getarg
+   use MLSCommon, only: defaultUndefinedValue
    use MLSFiles, only: mls_exists, HDFVERSION_5, MLS_INQSWATH
    use MLSFinds, only: FindFirst
    use MLSHDF5, only: MLS_H5Open, MLS_H5Close
    use MLSHDFEOS, only: MLS_swath_in_file
    use MLSStrings, only: WriteIntsToChars
-   use Output_m, only: resumeOutput, suspendOutput, output
+   use Output_m, only: beebeep => beep, resumeOutput, suspendOutput, output
    use PrintIt_m, only: Set_Config
    use Time_M, only: Time_Now, time_config
    
@@ -44,8 +45,8 @@ program misalignment
 
 ! Then run it
 ! IFC.Linux/test [options] [input files]
-  character(len=*), parameter :: swath1 = 'refGPH-InitPtan'
-  character(len=*), parameter :: swath2 = 'O3-StdProd'
+  character(len=*), parameter :: swath1 = 'Temperature-InitPtan'
+  character(len=*), parameter :: swath2 = 'O3-StdProd' 
   integer, parameter ::          MAXFIELDSLENGTH = 256
 
   type options_T
@@ -143,6 +144,7 @@ contains
         & .not. MLS_swath_in_file( filename, options%swath2, HDFVERSION_5 ) ) return
       call ReadL2GPData( filename, options%swath1, l2gp1 )
       call ReadL2GPData( filename, options%swath2, l2gp2 )
+      call Zap (l2gp1, l2gp2 )
       if ( options%verbose ) &
         & print *, 'Checking ' // trim(options%swath1) // &
         &          ' and '     // trim(options%swath2)
@@ -153,8 +155,8 @@ contains
       if ( .not. all( l2gp1%solarTime    == l2gp2%solarTime   ) ) call beep( 'solarTime   ', alignment )
       if ( .not. all( l2gp1%solarZenith  == l2gp2%solarZenith ) ) call beep( 'solarZenith ', alignment )
       if ( .not. all( l2gp1%losAngle     == l2gp2%losAngle    ) ) call beep( 'losAngle    ', alignment )
-      if ( .not. all( l2gp1%geodAngle    == l2gp2%geodAngle   ) ) call beep( 'geodAngle   ', alignment )
       if ( .not. all( l2gp1%time         == l2gp2%time        ) ) call beep( 'time        ', alignment )
+      ! if ( .not. all( l2gp1%geodAngle    == l2gp2%geodAngle   ) ) call beep( 'geodAngle   ', alignment )
       if ( .not. alignment .and. options%verbose ) then
         print *, 'latitude     ', count( l2gp1%latitude      /= l2gp2%latitude     )
         print *, 'longitude    ', count( l2gp1%longitude     /= l2gp2%longitude    )
@@ -165,14 +167,14 @@ contains
         print *, 'time         ', count( l2gp1%time          /= l2gp2%time         )
         print *, '1st          ', FindFirst( l2gp1%latitude      /= l2gp2%latitude     )
       endif
-      call destroyL2GPContents ( l2gp1 )
-      call destroyL2GPContents ( l2gp2 )
       if ( options%silent .and. .not. alignment ) &
         & print *, trim(filename), 'is misaligned'
       if ( options%verbose .and. alignment ) &
         & print *, trim(filename), 'is aligned'
       if ( .not. alignment ) numDiffs = numDiffs + &
         & count( l2gp1%latitude      /= l2gp2%latitude     )
+      call destroyL2GPContents ( l2gp1 )
+      call destroyL2GPContents ( l2gp2 )
     end subroutine DiffThese
 
 !------------------------- beep ---------------------
@@ -186,6 +188,42 @@ contains
       print *, 'geolocation ', trim(geolocation)
     end subroutine beep
 
+!------------------------- Zap ---------------------
+    subroutine Zap( l2gp1, l2gp2 )
+      ! set to Fill values geolocations associated with invalid profiles
+      ! Args
+      type(L2GPData_T) :: l2gp1
+      type(L2GPData_T) :: l2gp2
+      ! Internal variables
+      logical :: badProfile
+      integer :: profile
+      logical :: zapped
+      ! Executable
+      zapped = .false.
+      do profile=1, l2gp1%nTimes
+        badProfile = mod( l2gp1%Status(profile), 2 ) /= 0
+        badProfile = badProfile .or. mod( l2gp2%Status(profile), 2 ) /= 0
+        badProfile = badProfile .or. all( l2gp1%l2gpPrecision(:,:,profile) <= 0. )
+        badProfile = badProfile .or. all( l2gp2%l2gpPrecision(:,:,profile) <= 0. )
+        if ( .not. badProfile ) cycle
+        zapped = .true.
+        ! Bad profile, so must zap geolocations
+        l2gp1%latitude   (profile)     = defaultUndefinedValue
+        l2gp1%longitude  (profile)     = defaultUndefinedValue
+        l2gp1%time       (profile)     = defaultUndefinedValue
+        l2gp1%losAngle   (profile)     = defaultUndefinedValue
+        l2gp1%solarTime  (profile)     = defaultUndefinedValue
+        l2gp1%solarZenith(profile)     = defaultUndefinedValue
+
+        l2gp2%latitude   (profile)     = defaultUndefinedValue
+        l2gp2%longitude  (profile)     = defaultUndefinedValue
+        l2gp2%time       (profile)     = defaultUndefinedValue
+        l2gp2%losAngle   (profile)     = defaultUndefinedValue
+        l2gp2%solarTime  (profile)     = defaultUndefinedValue
+        l2gp2%solarZenith(profile)     = defaultUndefinedValue
+      enddo
+      ! if ( zapped ) call beebeep( 'Zapped!' )
+    end subroutine Zap
 !------------------------- get_filename ---------------------
     subroutine get_filename(filename, options)
     ! Added for command-line processing
@@ -262,7 +300,7 @@ contains
       & ' optionally restrict diffs to certain fields, chunks, etc.'
       write (*,*) ' Options: -f filename => add filename to list of filenames'
       write (*,*) '                  (can do the same w/o the -f)'
-      write (*,*) '  -s1 swath1  =>   use swath1 as reference (default is refGPH-InitPtan)'
+      write (*,*) '  -s1 swath1  =>   use swath1 as reference (default is Temperature-InitPtan)'
       write (*,*) '  -s2 swath2  =>   check swaths against ref (default is O3-StdProd)'
       write (*,*) '  -v          => switch on verbose mode'
       write (*,*) '  -silent     => switch on silent mode'
@@ -300,3 +338,6 @@ end program misalignment
 !==================
 
 ! $Log$
+! Revision 1.1  2015/11/03 17:31:00  pwagner
+! First commit
+!
