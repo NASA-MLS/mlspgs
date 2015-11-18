@@ -1,6 +1,6 @@
 #	Makefile
 #
-#  Lost? Type 'make help -f MakeFC' from the directory where you see this file
+#  Lost? Type 'make help' from the directory where you see this file
 #
 # Copyright 2005, by the California Institute of Technology. ALL
 # RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
@@ -38,7 +38,7 @@ SCRIPTS = scripts
 MAX_COPIES = 1
 ONE = 1
 
-# This keeps track of the number of times MakeFC -> Makefile
+# This keeps track of the number of times "make update" has been done
 USE_internal_copynum = no
 
 ifeq ($(USE_internal_copynum),yes)
@@ -73,7 +73,7 @@ else
    INSTALLDIR=$(CONFDIR)/bin/$(MLSCONFG)
 endif
 
-# --------------- scripts help
+# --------------- scriptshelp
 # util is the subdirectory
 # where the following utility scripts 
 # (necessary to build the mls software) are stored
@@ -82,7 +82,8 @@ endif
 #                          (2) Prints toc/api for source files
 #   batch_hcnvrt.sh        Convert a group of hdfeos2 files to hdfeos5
 #                            using heconvert
-#   build_f90_in_misc.sh   Build a c or Fortran program
+#   build_f90_in_misc.sh   Build a c or Fortran program optionally USEing
+#                             mlspgs modules
 #   f90GhostFiles.pl       Used by ghostbuster.sh   
 #   f90makedep.pl          Used by makemakedep.sh
 #   ghostbuster.sh         Deletes orphaned .o, .mod files from deceased sources
@@ -91,16 +92,18 @@ endif
 #   mark_as_uptodate.sh    Marks files uptodate to forestall recompilations
 #   missing_ident.sh       (1) Prints files missing $id, $rcs lines
 #                          (2) Those not appearing in executable's ident id/rcs
-#   mkpath.sh       Creates a directory, and any yet uncreated parents
-#   mlsconfigure           Configures Makefiles for building mlks software
-#   mlsprog.sh             sh wrapper to assure exit condition is "1" if probs
+#   mkpath.sh              Creates a directory, and any yet uncreated parents
+#   mlsconfigure           Configures Makefiles for building mlspgs software
+#   mlsprog.sh, mlsnrt.sh, mlsl2pntk.sh, mlsl2p.sh, mlsnrtl2only.sh, mlsl1prog.sh            
+#   slavetmpltntk.sh, slavetmplt.sh
+#                          wrapper scripts for binary executables
 #   newAifBdiff.sh         Precompiler to forestall recompilations
 #   reecho.sh              Filter list of args to remove bogus ones
 #   split_path.sh          Splits path/name into "path name"
 #   unique_name.sh         Make a unique name
 #   updatemf.sh            Updates Makefile in object file directory
 #   uptodate.make          Ensure that custom machine files are up-to-date
-#   which_fftw.sh          Construct correct fftw link lines for levels 1, 3
+#   which_fftw.sh          Construct correct fftw link lines
 #
 #  More info on some of these scripts is available via
 #  Command                      for help on 
@@ -110,7 +113,7 @@ endif
 #  make help--mlsconfigure      mlsconfigure
 #  make help--reecho            reecho.sh
 #  (or in general for help on "script.sh" try the command "util/script.sh -h")
-# --------------- End scripts help
+# --------------- End scriptshelp
 
 MIE=Mie
 MLSBIN=util
@@ -144,7 +147,7 @@ SRCLIB=srclib
 
 SHELL = /bin/sh
 
-# --------------- MakeFC help
+# --------------- Makefile help
 # Usage: make target SETTING=value
 # Special 1st time usage (assuming no .configure file)
 #    make update
@@ -177,8 +180,9 @@ SHELL = /bin/sh
 #                   where *.o, *.mod, lib*.a, mlsl*, etc. built
 # depends        -- runs makemakedep.sh to calculate dependencies
 # disthelp       -- prints README.MakeFC--a long file
-# doc--api       -- prints every available api
-# doc--toc       -- prints every available toc
+# doc            -- builds .dvi and .pdf for .tex files in doc
+# doc--api       -- prints every available api for Fortran modiles
+# doc--toc       -- prints every available toc for Fortran modiles
 # firsthelp      -- prints BEFORE.mls--lists prerequisites for mls software
 # ghostbuster    -- removes orphaned .o, .mod files from uniquely-named ssds
 #                   also deletes haunted library files
@@ -222,6 +226,7 @@ SHELL = /bin/sh
 # CondenseLeakLog
 # dateconverter  
 # end_stmts      
+# extinctionmaker      
 # f90tex         
 # h5cat          
 # Goldbrick_More
@@ -310,7 +315,7 @@ SHELL = /bin/sh
 # EXTRA_PATHS        Extra directories to be searched for .h, .f9h, or .mod
 #                    files while compiling
 #
-# --------------- End MakeFC help
+# --------------- End Makefile help
 
 #             internal targets
 # Note that the above list of targets is supplemented by
@@ -573,7 +578,7 @@ help--Makefile:
 		| sed -n 's/^..//p' | sed '1 d; $$ d'
 
 help--scripts:
-	@sed -n '/'$(SCRIPTS)' help/,/End '$(SCRIPTS)' help/ p' $(CONFDIR)/$(MakeFName) \
+	@sed -n '/'$(SCRIPTS)'help/,/End '$(SCRIPTS)'help/ p' $(CONFDIR)/$(MakeFName) \
 		| sed -n 's/^..//p' | sed '1 d; $$ d'
 
 disthelp:
@@ -825,6 +830,11 @@ dateconverter: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/dateconverter.f90 l1--itm
 end_stmts: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/end_stmts.f90
 	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
    -c $(MLSCONFG) -p $@ -M $(MAKE) \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
+
+extinctionmaker: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/extinctionmaker.f90 l2
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) -m l2 \
 	-C $(MLSCFILE) $(MLSBIN)/$@.f90
 
 f90tex: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/f90tex.f90
@@ -1206,7 +1216,7 @@ substarg: substars
 # For internal use
 
 internaladd_copy:
-	@echo "MakeFC copy number $(COPY_NUMBER) incremented by 1"
+	@echo "updating copy number $(COPY_NUMBER) incremented by 1"
 
 # Automatically called to keep number of files Make.dep.nn under MAX_COPIES
 internalcleanup:
@@ -1300,7 +1310,7 @@ internalmftests:
    fi
 
 show_copy:
-	@echo "MakeFC copy number $(COPY_NUMBER)"
+	@echo "updated copy number $(COPY_NUMBER)"
 
 #----------------------- Bare target dependencies
 
@@ -1324,8 +1334,8 @@ install-all: install tools install-cfm install-fullcfm install-idlcfm
 
 update:
 
-# Make most the source-file tools in the util directory
-tools: chunktimes checkpvmup compare dateconverter \
+# Make these source-file tools in the util directory
+tools: chunktimes checkpvmup compare dateconverter extinctionmaker \
   heconvert h5subset h5cat hl Goldbrick_More \
   killmaster \
   l1bdiff l1bdump l1h5subset \
@@ -1336,9 +1346,9 @@ tools: chunktimes checkpvmup compare dateconverter \
 .PHONY: all configure clean clean_config conv_uars\
   configure_pvm configure_fopts configure_full configure_help configure_subdirs\
   dateconverter depends distclean disttar distarz distarg disthelp \
-  doc doc--api doc--toc \
+  doc doc--api doc--toc extinctionmaker \
   firsthelp  ghostbuster help--brief help--convert help--depends help--fopts\
-  help help--ghostbuster help--mlsconfigure help--Makefile help--platform\
+  help help--ghostbuster help--mlsconfigure --platform\
   help--pvm help--reecho help--scripts help--toolkit \
   install install-all install-cfm install-fullcfm \
   install-l1 install-l2 install-l3 install-l3d install-l3m install-nrt \
@@ -1357,6 +1367,9 @@ tools: chunktimes checkpvmup compare dateconverter \
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.9  2015/11/04 19:25:17  pwagner
+# Can build misalignment; EVERYTHINg includes conv_uars
+#
 # Revision 1.8  2015/08/25 21:55:33  pwagner
 # Omitted make depends, ghostbuster from internalmftests; restored
 #
