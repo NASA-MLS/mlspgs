@@ -53,11 +53,11 @@ UserPrompt()
     if [ "$AUTO_REPLY" = 1 ] ; then
       user_response='y'
     elif [ "$BRAND" = "linux" ] ; then
-	/bin/echo -n "$* " > /dev/tty
-    read user_response
+      /bin/echo -n "$* " > /dev/tty
+      read user_response
     else
-	echo "$* \\c" > /dev/tty
-    read user_response
+      echo "$* \\c" > /dev/tty
+      read user_response
     fi
 }
 
@@ -91,12 +91,12 @@ get_unique_name()
    # Is $HOST defined?
       if [ "$HOST" != "" ]
       then
-         our_host_name="$HOST"
+        our_host_name="$HOST"
       elif [ "$HOSTNAME" != "" ]
       then
-         our_host_name="$HOSTNAME"
+        our_host_name="$HOSTNAME"
       else
-         our_host_name="host"
+        our_host_name="host"
       fi
     #  echo $our_host_name
    # if in form host.moon.planet.star.. extract host
@@ -123,10 +123,10 @@ extant_files()
    then
       for file
       do
-         if [ -f "$file" ]
-         then
-               extant_files_result="$extant_files_result $file"
-         fi
+        if [ -f "$file" ]
+        then
+          extant_files_result="$extant_files_result $file"
+        fi
       done
    fi
 }
@@ -138,7 +138,7 @@ extant_files()
 #                  * * * Main Program  * * *                    *
 #                                                               *
 #                                                               *
-#	The entry point where control is given to the script         *
+#  The entry point where control is given to the script         *
 #****************************************************************
 # Bug: -d file_name only ignores files in current directory
 #         instead of every directory searched for sources
@@ -173,24 +173,24 @@ fi
 # Do we have write permission in the current working directory
 if [ -w "`pwd`" ]
 then
-	f90suffix=".f90"
-	if [ -d "$dsuffix" ] ; then
-		if [ $TRY_CLEANUP = "1" ] ; then
-         extant_files "$dsuffix"/*
-         if [ "$extant_files_result" != "" ]
-         then
-			   mv "$dsuffix"/* .
-         fi
-			rmdir "$dsuffix"
-		else
-			echo "Sorry--$dsuffix already exists"
-			echo "Aborting new Makefile.dep"
-                exit
+  f90suffix=".f90"
+  if [ -d "$dsuffix" ] ; then
+    if [ $TRY_CLEANUP = "1" ] ; then
+      extant_files "$dsuffix"/*
+      if [ "$extant_files_result" != "" ]
+      then
+      mv "$dsuffix"/* .
       fi
+      rmdir "$dsuffix"
+    else
+      echo "Sorry--$dsuffix already exists"
+      echo "Aborting new Makefile.dep"
+      exit
     fi
-    mkdir "$dsuffix"
+  fi
+  mkdir "$dsuffix"
 else
-	f90suffix="$dsuffix"
+  f90suffix="$dsuffix"
 fi
 
 me="$0"
@@ -205,33 +205,33 @@ while [ "$more_opts" = "yes" ] ; do
     case "$1" in
 
     -d )
-	    if [ -f "$2" ]
+      if [ -f "$2" ]
        then
-	       if [ "$f90suffix" != "$dsuffix" ]
-          then
-	          mv "$2" "$dsuffix"
-	       else
-	          echo "$2 wrongly added to dependency lists"
-                            wrong_list="$wrong_list $2"
-	       fi
+         if [ "$f90suffix" != "$dsuffix" ]
+         then
+           mv "$2" "$dsuffix"
+         else
+           echo "$2 wrongly added to dependency lists"
+           wrong_list="$wrong_list $2"
+         fi
        fi
        shift
-	    shift
+       shift
        ;;
     -lib )
        rm_any_libs="yes"
        shift
-	    ;;
+       ;;
     -perl )
        PERL="$2"
        shift
-	    shift
+       shift
        ;;
     -h | -help )
        sed -n '/'$my_name' help/,/End '$my_name' help/ p' $me \
            | sed -n 's/^.//p' | sed '1 d; $ d'
        exit
-	    ;;
+       ;;
 
     * )
        more_opts="no"
@@ -239,78 +239,85 @@ while [ "$more_opts" = "yes" ] ; do
     esac
 done
 
-	if [ $# -lt "2" ]
-	then
-		echo " Usage: ghostbuster.sh arg1 arg2 [arg3 ..] "
-		echo " rm ghosts from the binary directory (arg1)"
-		echo " where ghosts are defined as .o and .mod-suffixed"
-		echo " files for which no corresponding source file currently"
-		echo " exists in any of the source directories (arg2 ..)"
-      exit
-	fi
+if [ $# -lt "2" ]
+then
+  echo " Usage: ghostbuster.sh arg1 arg2 [arg3 ..] "
+  echo " rm ghosts from the binary directory (arg1)"
+  echo " where ghosts are defined as .o and .mod-suffixed"
+  echo " files for which no corresponding source file currently"
+  echo " exists in any of the source directories (arg2 ..)"
+  exit
+elif [ ! -d "$1" ]
+then
+  echo "binary dorectories have yet to be created"
+  exit
+fi
 
-	if [ $PRINT_TOO_MUCH = "1" ]
-	then
-		echo " using f90GhostFiles.pl to find ghosts "
-	fi
+if [ $PRINT_TOO_MUCH = "1" ]
+then
+  echo " using f90GhostFiles.pl to find ghosts "
+fi
 
-	#
-	# Prefix f90GhostFiles.pl with the path to util
-        # this assumes f90GhostFiles.pl is in same dir as this script
-	the_GHOSTFINDER="`echo $0 | sed 's/ghostbuster.sh/f90GhostFiles.pl/'`"
-	if [ $PRINT_TOO_MUCH = "1" ]
-	then
-		echo " Your perl is $PERL "
-	fi
+#
+# Prefix f90GhostFiles.pl with the path to util
+      # this assumes f90GhostFiles.pl is in same dir as this script
+the_GHOSTFINDER="`echo $0 | sed 's/ghostbuster.sh/f90GhostFiles.pl/'`"
+if [ $PRINT_TOO_MUCH = "1" ]
+then
+  echo " Your perl is $PERL "
+fi
 
-	if [ "$DEBUG" = "1" ]
-	then
-      echo "About to call $the_GHOSTFINDER $@"
-      echo "from directory `pwd`"
-   fi
-	the_ghosts=`$PERL $the_GHOSTFINDER "$@"`
+if [ "$DEBUG" = "1" ]
+then
+    echo "About to call $the_GHOSTFINDER $@"
+    echo "from directory `pwd`"
+ fi
+the_ghosts=`$PERL $the_GHOSTFINDER "$@"`
 
-   from_here=`pwd`
-	if [ "$DEBUG" = "1" ]
-	then
-   	if [ "$the_ghosts" != "" ]
-	   then
-         	echo cd "$1"
-         	echo "rm -f $the_ghosts"
-	        if [ "$rm_any_libs" = "yes" ]
-	        then
-             echo	"rm -f *.a"
-   	    fi
-          echo cd "$from_here"
-      else
-         	echo "Sorry, the ghosts are away--may I take a message?"
-	   fi
-      exit
-	fi
+from_here=`pwd`
+if [ "$DEBUG" = "1" ]
+then
+  if [ "$the_ghosts" != "" ]
+  then
+    echo cd "$1"
+    echo "rm -f $the_ghosts"
+    if [ "$rm_any_libs" = "yes" ]
+    then
+       echo  "rm -f *.a"
+    fi
+    echo cd "$from_here"
+  else
+    echo "Sorry, the ghosts are away--may I take a message?"
+  fi
+    exit
+fi
 
-	if [ "$the_ghosts" != "" ]
-	then
-        	cd "$1"
-        	rm -f $the_ghosts
-	   if [ "$rm_any_libs" = "yes" ]
-	   then
-        	rm -f *.a
-   	fi
-      cd "$from_here"
-	fi
+if [ "$the_ghosts" != "" ]
+then
+  cd "$1"
+  rm -f $the_ghosts
+  if [ "$rm_any_libs" = "yes" ]
+  then
+    rm -f *.a
+  fi
+  cd "$from_here"
+fi
 #         clean up
 # renamed or hidden files
 if [ -w "$dsuffix" ]
 then
-         extant_files "$dsuffix"/*
-   if [ "$extant_files_result" != "" ]
-	then
-        	mv "$dsuffix"/* .
-	fi
-   rmdir "$dsuffix"
+  extant_files "$dsuffix"/*
+  if [ "$extant_files_result" != "" ]
+  then
+    mv "$dsuffix"/* .
+  fi
+  rmdir "$dsuffix"
 fi
 exit
 # $Log$
+# Revision 1.12  2005/06/23 22:20:45  pwagner
+# Reworded Copyright statement
+#
 # Revision 1.11  2004/11/03 19:09:33  pwagner
 # perl scripts now get launched via perl rather than as stand-alone executables
 #
