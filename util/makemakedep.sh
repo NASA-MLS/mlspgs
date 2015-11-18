@@ -113,15 +113,15 @@
 
 Exclude()
 {
-	if [ -f "$1" ]
+  if [ -f "$1" ]
    then
-	   if [ "$f90suffix" != "$dsuffix" ]
-      then
-	      mv "$1" "$dsuffix"
-	   else
-	      echo "$1 wrongly added to dependency lists"
+     if [ "$f90suffix" != "$dsuffix" ]
+     then
+        mv "$1" "$dsuffix"
+     else
+        echo "$1 wrongly added to dependency lists"
                         wrong_list="$wrong_list $1"
-	   fi
+     fi
    fi
 }
 
@@ -202,7 +202,7 @@ extant_files()
 #                  * * * Main Program  * * *                    *
 #                                                               *
 #                                                               *
-#	The entry point where control is given to the script         *
+#  The entry point where control is given to the script         *
 #****************************************************************
 #this version uses either of the two depmakers
 #to trace dependencies based on USEs and INCLUDEs (or none at all):
@@ -238,24 +238,24 @@ EXCLUDE_TEMPFILES=1
 # Do we have write permission in the current working directory
 if [ -w "`pwd`" ]
 then
-	f90suffix=".f90"
-	if [ -d "$dsuffix" ] ; then
-		if [ $TRY_CLEANUP = "1" ] ; then
-         extant_files "$dsuffix"/*
-         if [ "$extant_files_result" != "" ]
-         then
-			   mv "$dsuffix"/* .
-         fi
-			rmdir "$dsuffix"
-		else
-			echo "Sorry--$dsuffix already exists"
-			echo "Aborting new Makefile.dep"
-                exit
+  f90suffix=".f90"
+  if [ -d "$dsuffix" ] ; then
+    if [ $TRY_CLEANUP = "1" ] ; then
+      extant_files "$dsuffix"/*
+      if [ "$extant_files_result" != "" ]
+      then
+        mv "$dsuffix"/* .
       fi
+      rmdir "$dsuffix"
+    else
+      echo "Sorry--$dsuffix already exists"
+      echo "Aborting new Makefile.dep"
+      exit
     fi
-    mkdir "$dsuffix"
+  fi
+  mkdir "$dsuffix"
 else
-	f90suffix="$dsuffix"
+  f90suffix="$dsuffix"
 fi
 
 # The initial settings are
@@ -312,79 +312,79 @@ while [ "$more_opts" = "yes" ] ; do
        ;;
 #                  Rename or hide excluded files so they !~= %.f90
     -d )
-	    var=`Exclude $2`
+      var=`Exclude $2`
        shift
-	    shift
+      shift
        ;;
     -dddd )
-	    if [ -f "$2" ]
+      if [ -f "$2" ]
        then
-	       if [ "$f90suffix" != "$dsuffix" ]
+         if [ "$f90suffix" != "$dsuffix" ]
           then
 #            mv "$2" "`echo $2 | sed 's/'$f90suffix'/'$dsuffix'/'`"
-	          mv "$2" "$dsuffix"
-	       else
-	          echo "$2 wrongly added to dependency lists"
+            mv "$2" "$dsuffix"
+         else
+            echo "$2 wrongly added to dependency lists"
                             wrong_list="$wrong_list $2"
-	       fi
+         fi
        fi
        shift
-	    shift
+      shift
        ;;
     -db )
        dont_build_list="$1 $2 $dont_build_list"
        shift
-	    shift
+      shift
        ;;
     -do )
        excl_from_objs_list="-excl $2 $excl_from_objs_list"
        shift
-	    shift
+      shift
        ;;
     -p )
        dep_file="$2"
        shift
-	    shift
+      shift
        ;;
     -perl )
        PERL="$2"
        shift
-	    shift
+      shift
        ;;
     -i )
-	    regexp="$2"
+      regexp="$2"
        shift
-	    shift
+      shift
        ;;
     -S )
-	    source_file="$2"
+      source_file="$2"
        shift
-	    shift
+      shift
        ;;
     -s )
-	    s_pattern="$2"
+      s_pattern="$2"
        shift
-	    shift
+      shift
        orthodox="no"
        include_f90="no"
        include_f77="no"
        include_c="no"
        ;;
     -nodep )
-	    DEPMAKER=0
+      DEPMAKER=0
        shift
        ;;
     -o )
-	    o_pattern="$2"
+      o_pattern="$2"
        shift
-	    shift
+      shift
        orthodox="no"
        ;;
     -h | -help )
        sed -n '/'$my_name' help/,/End '$my_name' help/ p' $me \
            | sed -n 's/^.//p' | sed '1 d; $ d'
        exit
-	;;
+  ;;
 
     * )
        more_opts="no"
@@ -422,19 +422,19 @@ fi
 #   Rename or remove older Makefile.dep if one already exists
 if [ -f "$dep_file" ]
 then
-	if [ $ACT_COURTEOUS = "1" ]
-	then
-		if [ $PRINT_TOO_MUCH = "1" ]
-		then
-			echo "Renaming older $dep_file Make.dep.n"
-		fi
-		name=Make.dep.`ls -1 Make*.dep* | wc -l`
-		cname=`echo $name | sed 's/ //'g`
-		mv $dep_file $cname
-    else
-      chmod u+w "$dep_file"
-      rm -f "$dep_file"
-	fi
+  if [ $ACT_COURTEOUS = "1" ]
+  then
+    if [ $PRINT_TOO_MUCH = "1" ]
+    then
+      echo "Renaming older $dep_file Make.dep.n"
+    fi
+    name=Make.dep.`ls -1 Make*.dep* | wc -l`
+    cname=`echo $name | sed 's/ //'g`
+    mv $dep_file $cname
+  else
+    chmod u+w "$dep_file"
+    rm -f "$dep_file"
+  fi
 fi
 
 #                Create Makefile.dep; write 1st line
@@ -449,8 +449,8 @@ fi
 #Warn of files wrongly added to dependency lists
 if [ "$wrong_list" != "" ]
 then
-	echo "#Delete the following files from the dependency lists:" >> $dep_file
-        echo "#$wrong_list" >> $dep_file
+  echo "#Delete the following files from the dependency lists:" >> $dep_file
+  echo "#$wrong_list" >> $dep_file
 fi
 #The following may be useful in rare circumstances to include special macros
 #but violates assertion that Makefile.dep includes only dependency info
@@ -459,11 +459,11 @@ fi
 #
 if [ -f Makefile.mac ]
 then
-	if [ $PRINT_TOO_MUCH = "1" ]
-	then
-		echo "Including special macro definitions from Makefile.mac"
-	fi
-	echo "include ../Makefile.mac"  >> $dep_file
+  if [ $PRINT_TOO_MUCH = "1" ]
+  then
+    echo "Including special macro definitions from Makefile.mac"
+  fi
+  echo "include ../Makefile.mac"  >> $dep_file
 fi
 
 #  Now write the OBJS list
@@ -511,53 +511,52 @@ then
   echo "#(Not tracing dependencies)" >> $dep_file
   echo "#End of simplified Makefile.dep" >> $dep_file
 else
-	#
-	# use f90makedep.pl to calculate dependencies
-	if [ $PRINT_TOO_MUCH = "1" ]
-	then
-		echo " using f90makedep.pl to calculate dependencies "
-	fi
-	echo "# using f90makedep.pl to calculate dependencies "  >> $dep_file
-	#
-	# Prefix f90makedep.pl with the path to util
+  #
+  # use f90makedep.pl to calculate dependencies
+  if [ $PRINT_TOO_MUCH = "1" ]
+  then
+    echo " using f90makedep.pl to calculate dependencies "
+  fi
+  echo "# using f90makedep.pl to calculate dependencies "  >> $dep_file
+  #
+  # Prefix f90makedep.pl with the path to util
    # this assumes f90makedep.pl is in same dir as this script
-	the_DEPMAKER="`echo $0 | sed 's/makemakedep.sh/f90makedep.pl/'`"
-	if [ $PRINT_TOO_MUCH = "1" ]
-	then
-		echo " Your perl is $PERL "
-	fi
+  the_DEPMAKER="`echo $0 | sed 's/makemakedep.sh/f90makedep.pl/'`"
+  if [ $PRINT_TOO_MUCH = "1" ]
+  then
+    echo " Your perl is $PERL "
+  fi
 
-#	f90makedep.pl >> Makefile.dep
 #  tack on the dont_build_list if non-empty
-   if [ "$dont_build_list" != "" ] ; then
-     the_DEPMAKER="$the_DEPMAKER $dont_build_list"
-   fi
+  if [ "$dont_build_list" != "" ] ; then
+    the_DEPMAKER="$the_DEPMAKER $dont_build_list"
+  fi
 
 #  tack on the source_file if non-empty
-   if [ "$source_file" != "" ] ; then
-     the_DEPMAKER="$the_DEPMAKER -S $source_file"
-   fi
+  if [ "$source_file" != "" ] ; then
+    the_DEPMAKER="$the_DEPMAKER -S $source_file"
+  fi
 
 #  tack on the regexp if non-empty
-   if [ "$regexp" != "" ] ; then
-     the_DEPMAKER="$the_DEPMAKER -i $regexp"
-   fi
+  if [ "$regexp" != "" ] ; then
+    the_DEPMAKER="$the_DEPMAKER -i $regexp"
+  fi
 
-   if [ "$orthodox" = "yes" ]
-   then
-	   if [ $PRINT_TOO_MUCH = "1" ]
-	   then
-         $PERL $the_DEPMAKER "$@"
-      fi
-      $PERL $the_DEPMAKER "$@" >> $dep_file
-   else
-      echo $PERL $the_DEPMAKER -s "$s_pattern" -o "$o_pattern"
-	   if [ $PRINT_TOO_MUCH = "1" ]
-	   then
-         $PERL $the_DEPMAKER -s "$s_pattern" -o "$o_pattern"
-      fi
-      $PERL $the_DEPMAKER -s "$s_pattern" -o "$o_pattern" >> $dep_file
-   fi
+  if [ "$orthodox" = "yes" ]
+  then
+    if [ $PRINT_TOO_MUCH = "1" ]
+    then
+        $PERL $the_DEPMAKER "$@"
+    fi
+    $PERL $the_DEPMAKER "$@" >> $dep_file
+  else
+    echo $PERL $the_DEPMAKER -s "$s_pattern" -o "$o_pattern"
+    if [ $PRINT_TOO_MUCH = "1" ]
+    then
+      $PERL $the_DEPMAKER -s "$s_pattern" -o "$o_pattern"
+    fi
+    $PERL $the_DEPMAKER -s "$s_pattern" -o "$o_pattern" >> $dep_file
+  fi
 fi
 echo " "  >> $dep_file
 echo "#End of Makefile.dep" >> $dep_file
@@ -567,17 +566,21 @@ echo " "  >> $dep_file
 # renamed or hidden files
 if [ -w "$dsuffix" ]
 then
-	moved_files_list="$dsuffix"/*
-	moved_files=`echo $moved_files_list`
-#	the above will expand the wild card * if dsuffix is non-empty
-	if [ "$moved_files" != "$dsuffix/*" ]
-	then
-        	mv "$dsuffix"/* .
-	fi
-   rmdir "$dsuffix"
+  moved_files_list="$dsuffix"/*
+  moved_files=`echo $moved_files_list`
+  a=`echo $moved_files | sed -n '/\*/p'`
+#  the above will expand the wild card * if dsuffix is non-empty
+  if [ "$a" = "" ]
+  then
+    mv "$dsuffix"/* .
+  fi
+  rmdir "$dsuffix"
 fi
 exit
 # $Log$
+# Revision 1.29  2010/01/05 01:53:04  pwagner
+# More usefule with LaTeX files
+#
 # Revision 1.28  2006/02/23 20:25:16  pwagner
 # Should exclude temp files whose names start with tilde
 #
