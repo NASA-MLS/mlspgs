@@ -451,8 +451,27 @@ wvs-126-1.eps: wvs-126-1.obj
 wvs-126-1.pdf: wvs-126-1.obj
 	tgif -print -pdf -page 1 -color wvs-126-1.obj
 
+wvs-128.dvi: wvs-128.tex wvs-128-QTM-2.eps wvs-128-QTM-3.eps
+
+wvs-128.pdf: wvs-128.tex wvs-128-QTM-2.pdf wvs-128-QTM-3.pdf
+
+wvs-128-QTM-2.eps: wvs-128-QTM-2.obj
+	tgif -print -eps -page 1 -color wvs-128-QTM-2.obj
+
+wvs-128-QTM-2.pdf: wvs-128-QTM-2.obj
+	tgif -print -pdf -page 1 -color wvs-128-QTM-2.obj
+
+wvs-128-QTM-3.eps: wvs-128-QTM-3.obj
+	tgif -print -eps -page 1 -color wvs-128-QTM-3.obj
+
+wvs-128-QTM-3.pdf: wvs-128-QTM-3.obj
+	tgif -print -pdf -page 1 -color wvs-128-QTM-3.obj
+
 endif # end shortn_name == doc
 # $Log$
+# Revision 1.18  2015/09/18 23:38:34  pwagner
+# Added custom builds for wvs-126.tex
+#
 # Revision 1.17  2015/04/23 17:51:38  whdaffer
 # Added some comments to make the conditional includes a little easier
 # to understand
