@@ -91,12 +91,13 @@ contains ! =====     Public Procedures     =============================
       & l_l2aux, l_l2cf, l_l2dgg, l_l2gp, l_l2pc, &
       & s_boolean, s_case, s_catenate, s_copy, &
       & s_destroy, s_diff, s_dump, s_dumpblocks, &
-      & s_endselect, s_hgrid, s_isswathempty, s_output, &
+      & s_endselect, s_hgrid, s_isswathempty, s_l2gp, s_output, &
       & s_reevaluate, s_select, s_skip, s_sleep, s_time, s_writeFileAttribute
     use intrinsic, only: lit_indices
-    use L2AuxData, only: l2auxdata_t
-    use L2GPData, only: l2gpdata_t, writemastersfileattributes
-    use L2PC_m, only: outputhdf5l2pc
+    use L2AuxData, only: L2AUXData_t
+    use L2GPData, only: L2GPData_t, &
+      & AddL2GPToDatabase, writemastersfileattributes
+    use L2PC_m, only: outputHDF5L2PC
     use L2ParInfo, only: parallel
     use matrixModule_1, only: matrix_database_t
     use matrixTools, only: dumpblocks
@@ -293,6 +294,10 @@ contains ! =====     Public Procedures     =============================
           & newHGridp%noProfsLowerOverlap = 0
         if ( specialDumpFile /= ' ' ) &
           & call revertOutput
+
+      case ( s_l2gp )
+        call decorate ( key, AddL2GPToDatabase ( L2GPDatabase, &
+          & CreateAndReadL2GP ( name, key, filedatabase ) ) )
 
       case ( s_output )
         do field_no = 2, nsons(key)       ! Skip the command name
@@ -526,6 +531,97 @@ contains ! =====     Public Procedures     =============================
 
   end subroutine Output_Close
 
+  ! ---------------------------------------------  CreateAndReadL2GP  -----
+  function CreateAndReadL2GP ( name, key, filedatabase ) result(l2gp)
+    ! Read and store l2gp data type from a file
+    use Init_tables_module, only: f_auraInstrument, &
+      & f_date, f_dimlist, f_downsample, &
+      & f_field, f_file, f_grid, f_HDFVersion, f_missingvalue, f_noPCFid, &
+      & f_origin, f_quantitytype, f_sdname, f_deferReading, f_sum, f_swath, &
+      & field_first, field_last, &
+      & l_climatology, l_dao, l_geos5, l_geos5_7, l_gloria, &
+      & l_merra, l_ncep, l_none, l_strat, l_surfaceheight, &
+      & s_diff, s_dump, s_gridded, s_l2aux, s_l2gp, s_readGriddedData
+    use L2GPdata, only: l2GPdata_t, &
+      & Addl2GPtodatabase, readl2GPdata, dump
+    use MLSCommon, only: filenamelen, MLSfile_t
+    use MLSFiles, only: filenotfound, &
+      & HDFVersion_4, HDFVersion_5, wildCardHDFVersion, &
+      & AddFileToDatabase, MLS_CloseFile, dump, getPCFromRef, initializeMLSFile, &
+      & MLS_HDF_Version, MLS_inqswath, MLS_openfile, split_path_name
+    use MLSPCF2, only: &
+      & MLSPCF_l2apriori_start, MLSPCF_l2apriori_end, &
+      & MLSPCF_l2clim_start, MLSPCF_l2clim_end, &
+      & MLSPCF_l2dao_start, MLSPCF_l2dao_end, &
+      & MLSPCF_l2geos5_start, MLSPCF_l2geos5_end, &
+      & MLSPCF_l2ncep_start, MLSPCF_l2ncep_end, &
+      & MLSPCF_surfaceheight_start, MLSPCF_surfaceheight_end
+    use MoreTree, only: get_boolean
+    use readapriori, only: processOneL2GPFile
+    use Tree, only: decorate, decoration, nsons, &
+      &             sub_rosa, subtree, dump_tree_node, where
+    ! Args
+    integer, intent(in)             :: name
+    integer, intent(in)             :: key
+    type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
+    type (L2GPData_T)               :: L2GP
+    ! Internal variables
+    integer                         :: field
+    integer                         :: fieldIndex
+    integer                         :: FileIndex
+    integer                         :: FileName    ! Sub-rosa index of name in file='name'
+    character(len=FileNameLen)      :: FileNameString ! actual literal file name
+    logical, dimension(field_first:field_last) :: GOT
+    integer                         :: j
+    type (MLSFile_T)                :: L2GPFile
+    integer                         :: LastAprioriPCF      ! l2gp or l2aux  apriori
+    logical                         :: noPCFid
+    integer                         :: ReturnStatus
+    integer                         :: SdName  ! sub-rosa index of name in sdName='name'
+    character(len=FileNameLen)      :: SDNAMESTRING ! actual literal sdName
+    character(len=FileNameLen)      :: ShortFileName
+    integer                         :: son
+    integer                         :: SwathName        ! sub-rosa index of name in swath='name'
+    character(len=FileNameLen)      :: SWATHNAMESTRING ! actual literal swath name
+    ! Executable
+    LastAprioriPCF = mlspcf_l2apriori_start - 1
+    got = .false.
+    noPCFid = .false.
+    do j = 2, nsons(key)
+      field = subtree(j,key)
+      L2CFNODE = field
+      fieldIndex = decoration(subtree(1,field))
+      got(fieldIndex) = .true.
+      select case ( fieldIndex )
+      case ( f_file )
+        fileName = sub_rosa(subtree(2,field))
+      case ( f_noPCFid )
+        noPCFid = get_boolean(field)
+      case ( f_sdname )
+        sdname = sub_rosa(subtree(2,field))
+      case ( f_swath )
+        swathName = sub_rosa(subtree(2,field))
+      end select
+    end do
+    if ( got(f_file) ) then
+      call get_string ( FileName, fileNameString, strip=.true. )
+    else
+      fileNameString = ''
+    end if
+    shortFileName = fileNameString
+    if ( .not. got(f_file) ) &
+      & call announce_error ( son, &
+        & 'Filename name must be specified to read an l2gp' )
+    swathNameString=''
+    if ( got(f_swath) ) &
+      & call get_string ( swathName, swathNameString, strip=.true. )
+    call processOneL2GPFile ( FileNameString, swathNameString, &
+      & noPCFid, mlspcf_l2apriori_start, mlspcf_l2apriori_end, &
+      & LastAprioriPCF, ' ', .false., &
+      & L2GP, L2GPFile )
+    FileIndex = AddFileToDataBase( filedatabase, L2GPFile )
+  end function CreateAndReadL2GP
+    
   ! ---------------------------------------------  add_metadata  -----
   subroutine add_metadata ( node, fileName, l2metaData, &
     & hdfVersion, filetype, metadata_error, &
@@ -2204,6 +2300,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.196  2015/11/19 23:57:23  pwagner
+! Now able to read from L2GP file
+!
 ! Revision 2.195  2015/10/15 23:07:54  pwagner
 ! If /repairGeolocations , repair also any with chunknumber = -999
 !
