@@ -35,7 +35,8 @@ module QTM_m
   ! bindings are public.
 
   ! Procedures:
-  public :: Dump, Dump_Stack, Geo_To_Zot, Init_Stack, QTM_Decode
+  public :: Dump, Dump_QID, Dump_Stack, Expand_ZOT, Geo_To_ZOT, High_Bit_Index, &
+    & Init_Stack, QTM_Decode
 
   interface Dump
     module procedure Dump_Stack
@@ -45,25 +46,37 @@ module QTM_m
   public :: RG
 
   integer, parameter :: Bits = ceiling ( digits(0) * log10(radix(0)+0.0d0) / log10(2.0) )
-  integer, parameter, public :: QTM_Depth = (bits-3)/2
-  ! QTM_Depth = 14 for 31-bit integers gives 610 meter edge on smallest facet
+  integer, parameter, public :: QTM_Depth = (bits-4)/2
+  ! QTM_Depth = 13 for 31-bit integers gives 1220 meter edge on smallest facet
 
   ! Kind of QTM facet ID
   integer, parameter, public :: QK = &
     & selected_int_kind(floor(log10(2.0_rg) * (2 * QTM_depth + 3)))
 
+  ! Convert 1 + ZOT coordinate to an integer
+  real(rg), parameter, public :: Scale_ZOT_x = 2.0_rg**(QTM_depth-1)
+  real(rg), parameter, public :: Scale_ZOT_y = 2.0_rg**(2*QTM_depth)
+  ! Convert an integer to 1 + a ZOT coordinate
+  real(rg), parameter, public :: UnScale_ZOT_x = 2.0_rg**(1-QTM_depth)
+  real(rg), parameter, public :: UnScale_ZOT_y = 2.0_rg**(-QTM_depth)
+
   ! Zenithial Ortho Triangular (ZOT) Projection coordinates
   type :: ZOT_t
     real(rg) :: X, Y
   contains
+    procedure :: Condense_ZOT
     procedure :: Get_Octant
     procedure :: QTM_Encode
-    procedure :: Zot_To_Geo
+    procedure :: ZOT_To_Geo
+    procedure :: ZOT_eq
+    generic :: Operator ( == ) => ZOT_eq
+    procedure :: ZOT_ne
+    generic :: Operator ( /= ) => ZOT_ne
   end type ZOT_t
 
   type :: Stack_t
     integer :: top(8:15) = 0 ! Top frame for each octant
-    type(zot_t), dimension(qtm_depth,8:15) :: ZP, ZX, ZY
+    type(zot_t), dimension(3,qtm_depth,8:15) :: Z
     integer, dimension(qtm_depth,8:15) :: XNode, YNode
     integer(qk) :: QID(qtm_depth,8:15) = -1 ! -1 => stack needs to be initialized
   contains
@@ -83,6 +96,44 @@ module QTM_m
 !---------------------------------------------------------------------------
 
 contains
+
+  pure integer(qk) function Condense_ZOT ( Z )
+    !{ ZOT coordinates are in the range $[-1,+1]$.  At a refinement level of
+    !  $l$, there are $2^l$ equally spaced values of each coordinate, with a
+    !  spacing of $2^{l-1}$.  Since a QTM ID is bounded by $2^{2l+3}$, the
+    !  integer $2^{q-1}(1+x) + 2^{2q}(1+y)$, where $q=${\tt QTM_depth}, is an
+    !  unique identifier for a ZOT coordinate that fits in one integer of
+    !  kind QK.  To avoid aliases, use $|x|$ if $|y|=1$ and use $|y|$ if
+    !  $|x|=1$.
+
+    class(zot_t), intent(in) :: Z
+    real(rg) :: X, Y ! Disambiguated ZOT coordinates in 0 .. 2
+    ! Disambiguate ZOT coordinates and put them in 0 .. 2
+    x = merge(z%x,abs(z%x),abs(z%y)/=1.0_rg) + 1.0_rg
+    y = merge(z%y,abs(z%y),abs(z%x)/=1.0_rg) + 1.0_rg
+    ! Convert disambiguated ZOT coordinates to integers, and combine them
+    condense_ZOT = int( x * scale_zot_x ) + int ( y * scale_zot_y )
+  end function Condense_ZOT 
+
+  subroutine Dump_QID ( QID, Before, After, Advance )
+    use Output_m, only: Output
+    integer(qk), intent(in) :: QID
+    character(*), intent(in), optional :: Before, After, Advance
+    integer :: H
+    if ( present(before) ) call output ( before )
+    if ( qid < 8 ) then
+      call output ( qid, format='(z0)', before=' Improper octant number ' )
+    else
+      h = high_bit_index ( QID ) - 4
+      call output ( int(shiftr(qid,h)) - 7 ) ! Octant number
+      do while ( h /= 0 )
+        h = h - 2
+        call output ( iand(int(shiftr(qid,h)),3) )
+      end do
+      if ( present(after) ) call output ( after )
+    end if
+    call output ( "", advance )
+  end subroutine Dump_QID
 
   subroutine Dump_Stack ( Stack, Oct, Top, Advance, Head )
     use Output_m, only: Output
@@ -116,9 +167,9 @@ contains
         yn = stack%yNode(i,o)
         pn = 6 - ( xn + yn )
         write ( line, '(i3,4(i3,2f10.5),i3)' ) i, &
-          & pn, stack%zp(i,o), &
-          & xn, stack%zx(i,o), &
-          & yn, stack%zy(i,o)
+          & pn, stack%z(pn,i,o), &
+          & xn, stack%z(xn,i,o), &
+          & yn, stack%z(yn,i,o)
         l = len_trim(line) + 4
         if ( myTop ) then
           write ( line(l:), '(99i0)' ) stack%qid(1,o)-7, &
@@ -133,8 +184,17 @@ contains
     end do
   end subroutine Dump_Stack
 
-  pure &
-  type(zot_t) function Geo_To_Zot ( Geo ) result ( Z )
+  type(zot_t) pure function Expand_ZOT ( IZ ) result ( Z )
+    integer(qk), intent(in) :: IZ
+    integer(qk) :: IX, IY
+    integer, parameter :: Mask = 2**QTM_depth - 1
+    ix = iand(iz,mask)
+    iy = shiftr(iz,QTM_depth)
+    z = zot_t ( ix * unscale_ZOT_x - 1.0_rg, iy * unscale_ZOT_y - 1.0_rg )
+  end function Expand_ZOT
+
+  pure elemental &
+  type(zot_t) function Geo_To_ZOT ( Geo ) result ( Z )
     ! Given longitude and latitude (degrees), compute ZOT coordinates.
     class(h_t), intent(in) :: Geo ! Longitude and latitude; doesn't matter
                                   ! whether latitude is geocentric or geodetic
@@ -165,11 +225,14 @@ contains
     if ( lon > 90.0 .and. lon <= 270.0 ) z%y = -z%y
     ! Negate X value in left half of ZOT space
     if ( lon > 180.0 ) z%x = -z%x
-  end function Geo_To_Zot
+  end function Geo_To_ZOT
 
   pure &
   integer function Get_Octant ( Z ) result ( Oct )
-    ! Return the octant 7..15 occupied by any Z, or an error code -1..-15
+    ! Return the octant 8..15 occupied by any Z, or an error code -1..-15.
+    ! This is 7 more than the octant number as defined by Dutton, so that
+    ! the high-order nonzero bit of a QID is always 3 bits to the left the
+    ! low-order bit of the QID.
     class(zot_t), intent(in) :: Z
     integer :: Error
     error = 0
@@ -201,6 +264,13 @@ contains
     end if
   end function Get_Octant
 
+  pure integer function High_Bit_Index ( Q ) result ( H )
+    integer(qk), intent(in) :: Q
+    do h = 1, bit_size(q)
+      if ( shiftr(q,h) == 0 ) return
+    end do
+  end function High_Bit_Index
+
   pure &
   subroutine Init_Stack ( Stack, Octant )
     type(stack_t), intent(out) :: Stack
@@ -214,7 +284,7 @@ contains
     type(zot_t), parameter :: zYNode(8:15) = &
       & [ zot_t( 0.0, 1.0), zot_t( 0.0,-1.0), zot_t( 0.0,-1.0), zot_t( 0.0, 1.0), &
       &   zot_t( 1.0, 0.0), zot_t( 1.0, 0.0), zot_t(-1.0, 0.0), zot_t(-1.0, 0.0) ]
-    integer :: Ix, Iy, Oct, Oct1, Octn
+    integer :: Nx, Ny, Oct, Oct1, Octn
     oct1 = 8
     octn = 15
     if ( present(octant) ) then
@@ -226,21 +296,19 @@ contains
       stack%qid(1,oct) = oct ! First QTM digit is octant number
       ! Octant polenodes' IDs are always == 1, so do not need to be stored
       ! We do need, however, to store the pole coordinates
-      iy = ( oct - 8 ) / 4 + 1    ! 1 for northern hemisphere, 2 for southern
-      ix = 3 - iy                 ! 2 for northern hemisphere, 1 for southern
-      stack%xnode(1,oct) = ix + 1 ! x-node basis number
-      stack%ynode(1,oct) = iy + 1 ! y-node basis number
+      ny = ( oct - 8 ) / 4 + 2    ! 2 for northern hemisphere, 3 for southern
+      nx = 5 - ny                 ! 3 for northern hemisphere, 2 for southern
+      stack%xnode(1,oct) = nx     ! x-node basis number
+      stack%ynode(1,oct) = ny     ! y-node basis number
       ! Now that nodes are numbered, install coordinates for them
-      stack%zp(1,oct)  = zPoleNode(oct)
-      stack%zx(1,oct) = zXnode(oct)
-      stack%zy(1,oct) = zYnode(oct)
+      stack%z(6-nx-ny,1,oct) = zPoleNode(oct)
+      stack%z(nx,1,oct) = zXNode(oct)
+      stack%z(ny,1,oct) = zYNode(oct)
       ! Fill the remaining stack frames with values indicating uninitialized
       stack%qid(2:,oct) = 9
       stack%xnode(2:,oct) = 0
       stack%ynode(2:,oct) = 0
-      stack%zp(2:,oct) = zot_t ( 0.0, 0.0 )
-      stack%zx(2:,oct) = zot_t ( 0.0, 0.0 )
-      stack%zy(2:,oct) = zot_t ( 0.0, 0.0 )
+      stack%z(:,2:,oct) = zot_t ( 0.0, 0.0 )
     end do
     stack%top = 1
   end subroutine Init_Stack
@@ -254,8 +322,7 @@ contains
     integer :: SP ! Stack pointer, default TOP of QL is not present
     sp = s%top(oct)
     if ( present(ql) ) sp = ql
-    z = zot_t ( ( s%zp(sp,oct)%x + s%zx(sp,oct)%x + s%zy(sp,oct)%x ) / 3.0, &
-              & ( s%zp(sp,oct)%y + s%zx(sp,oct)%y + s%zy(sp,oct)%y ) / 3.0 )
+    z = zot_t ( ( sum(s%z(:,sp,oct)%x) ) / 3.0, ( sum(s%z(:,sp,oct)%y) ) / 3.0 )
   end function C_ZOT
 
   ! Get ZOT coordinates of pole node
@@ -265,9 +332,11 @@ contains
     integer, intent(in) :: Oct ! Octant
     integer, intent(in), optional :: QL  ! Stack pointer, default top
     integer :: SP ! Stack pointer, default TOP of QL is not present
+    integer :: NP
     sp = s%top(oct)
     if ( present(ql) ) sp = ql
-    z = s%zp(sp,oct)
+    np = 6 - ( s%xNode(sp,oct) + s%yNode(sp,oct) )
+    z = s%z(np,sp,oct)
   end function P_ZOT
 
   ! Get ZOT coordinates of X node
@@ -279,7 +348,7 @@ contains
     integer :: SP ! Stack pointer, default TOP of QL is not present
     sp = s%top(oct)
     if ( present(ql) ) sp = ql
-    z = s%zx(sp,oct)
+    z = s%z(s%xNode(sp,oct),sp,oct)
   end function X_ZOT
 
   ! Get ZOT coordinates of Y node
@@ -291,7 +360,7 @@ contains
     integer :: SP ! Stack pointer, default TOP of QL is not present
     sp = s%top(oct)
     if ( present(ql) ) sp = ql
-    z = s%zy(sp,oct)
+    z = s%z(s%yNode(sp,oct),sp,oct)
   end function Y_ZOT
 
   pure &
@@ -326,7 +395,7 @@ contains
       ny = stack%ynode(ql,oct)
       np = 6 - ( nx + ny ) ! polenode ID
       ! Retrieve ZOT x,y of polenode from level QL of stack
-      pn = stack%zp(ql,oct)
+      pn = stack%z(np,ql,oct)
       if ( h == 0 ) exit
       dz = 0.5 * dz
       ql = ql + 1
@@ -336,17 +405,10 @@ contains
         if ( present(lastMatch) ) lastMatch = ql
       else
         sameLoc = .false.
-        call MakeStackConsistent ( Stack, QL, nP, pn, nX, nY, Oct, Node )
+        call MakeStackConsistent ( Stack, ql, nP, pn, nX, nY, oct, node )
       end if
       stack%top(oct) = ql
     end do
-  contains
-    pure integer function High_Bit_Index ( Q ) result ( H )
-      integer(qk), intent(in) :: Q
-      do h = 1, bit_size(q)
-        if ( shiftr(q,h) == 0 ) return
-      end do
-    end function High_Bit_Index
   end subroutine QTM_Decode
 
   integer(qk) function QTM_Encode ( Z, Tol, Oct, Stack, LastMatch )
@@ -382,7 +444,7 @@ contains
       ny = stack%ynode(ql,oct)
       np = 6 - ( nx + ny ) ! polenode ID
       ! Retrieve ZOT x,y of polenode from level QL of stack
-      pn = stack%zp(ql,oct)
+      pn = stack%z(np,ql,oct)
       dz = 0.5 * dz ! Halve closeness criterion
       ! Compute displacement of Z from polenode
       dx = abs(z%x - pn%x)
@@ -412,27 +474,29 @@ contains
     end do
   end function QTM_Encode
 
-  pure &
-  function Zot_To_Geo ( Z, Geodetic ) result ( Geo )
+  pure elemental &
+  logical function ZOT_eq ( Z1, Z2 )
+    class(zot_t), intent(in) :: Z1
+    class(zot_t), intent(in) :: Z2
+    zot_eq = z1%x == z2%x .and. z1%y == z2%y
+  end function ZOT_eq
+
+  pure elemental &
+  logical function ZOT_ne ( Z1, Z2 )
+    class(zot_t), intent(in) :: Z1
+    class(zot_t), intent(in) :: Z2
+    zot_ne = z1%x /= z2%x .or. z1%y /= z2%y
+  end function ZOT_ne
+
+  pure elemental &
+  function ZOT_To_Geo ( Z ) result ( Geo )
     ! Given ZOT coordinate, compute longitude and latitude (degrees)
     class(zot_t), intent(in) :: Z
-    class(h_t), allocatable :: Geo
-    logical, intent(in), optional :: Geodetic ! Default geocentric
+    type(h_t) :: Geo
     ! It doesn't matter whether the latitude is geocentric or geodetic;
-    ! the same value is produced.  The difference is which type gets
-    ! allocated for the result, i.e., what kind of latitude you want it
-    ! to be called.  This is needed because function result types do not
-    ! participate in generic resolution.
+    ! the same value is produced.
     real(rg) :: dx, dxy, dy
     integer :: Oct
-    logical :: MyGeod
-    myGeod = .false.
-    if ( present(geodetic) ) myGeod = geodetic
-    if ( myGeod ) then
-      allocate ( h_geod :: geo )
-    else
-      allocate ( h_geoc :: geo )
-    end if
     ! Assume |z%x| <= 1.0 and |z%y| <= 1.0
     oct = z%get_octant() - 7 ! 8..15 => 1..8
     dx = abs(z%x)
@@ -462,7 +526,7 @@ contains
     geo%lon = geo%lon + mod((mod(oct,4)-1) * 90, 360)
     ! Negate west longitudes
     if ( geo%lon > 180.0 ) geo%lon = geo%lon - 360.0
-  end function Zot_To_Geo
+  end function ZOT_To_Geo
 
   pure &
   subroutine MakeStackConsistent ( Stack, QL, Np, Pn, Nx, Ny, Oct, Node )
@@ -475,24 +539,24 @@ contains
     integer, intent(in) :: Node        ! QID to put into the stack if inconsistent
     integer :: Temp
     type(zot_t) :: Xn, Yn
-    xn = stack%zx(ql-1,oct)
-    yn = stack%zy(ql-1,oct)
+    xn = stack%z(nx,ql-1,oct)
+    yn = stack%z(ny,ql-1,oct)
     ! Copy Pn%[xy], Xn%[xy], Yn%[xy] to next level, overriding
     ! those values for the two nonselected nodes
     if ( node /= np ) then ! Pole shifts to hypotenuse median
-      stack%zp(ql,oct) = zot_t ( (xn%x + yn%x) / 2, (xn%y + yn%y) / 2 )
+      stack%z(np,ql,oct) = zot_t ( (xn%x + yn%x) / 2, (xn%y + yn%y) / 2 )
     else
-      stack%zp(ql,oct) = pn
+      stack%z(np,ql,oct) = pn
     end if
     if ( node /= ny ) then ! Y node shifts to pole-x median
-      stack%zy(ql,oct) = zot_t ( (xn%x + pn%x) / 2, pn%y )
+      stack%z(ny,ql,oct) = zot_t ( (xn%x + pn%x) / 2, pn%y )
     else
-      stack%zy(ql,oct) = yn
+      stack%z(ny,ql,oct) = yn
     end if
     if ( node /= nx ) then ! X node shifts to pole-y median
-      stack%zx(ql,oct) = zot_t ( pn%x, (yn%y + pn%y) / 2 )
+      stack%z(nx,ql,oct) = zot_t ( pn%x, (yn%y + pn%y) / 2 )
     else
-      stack%zx(ql,oct) = xn
+      stack%z(nx,ql,oct) = xn
     end if
     ! Renumber nodes for new level
     if ( node == nx ) then ! swap ny and np, but np is not needed again
@@ -524,6 +588,13 @@ contains
 end module QTM_m
 
 ! $Log$
+! Revision 2.2  2015/12/01 02:56:00  vsnyder
+! Add Dump_QID, Expand_ZOT, High_Bit_Index, Condense_ZOT, ZOT_eq, ZOT_ne.
+! Change octant from 0..7 to 8..15 to make high bit index unambiguous.
+! Change QTM_Depth from 14 to 13 because octant is four bits, not 3.
+! Change stack's ZOT from ZP, ZX, ZY to Z(3) to correct errors in
+! Make_Stack_Consistent.
+!
 ! Revision 2.1  2015/11/13 19:45:12  vsnyder
 ! Initial commit
 !
