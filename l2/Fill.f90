@@ -76,7 +76,7 @@ contains ! =====     Public Procedures     =============================
       & gphprecision, fromisotope, fromasciifile, rotatemagneticfield, &
       & explicit, froml1b, &
       & froml2aux, usingmagneticmodel, &
-      & frominterpolatedqty, fromlosgrid, &
+      & frominterpolatedqty, fromlosgrid, NearestProfiles, &
       & bymanipulation, manipulatevectors, withreflectortemperature, &
       & withascordesc, withreichlerwmotp, &
       & withwmotropopause, withbinresults, withboxcarfunction, &
@@ -117,7 +117,7 @@ contains ! =====     Public Procedures     =============================
       & f_fraction, f_fromprecision, &
       & f_geocaltitudequantity, f_geolocation, f_gphquantity, &
       & f_height, f_heightrange, f_hessian, &
-      & f_highbound, f_h2oquantity, f_h2oprecisionquantity, &
+      & f_highbound, f_h2oquantity, f_h2oprecisionquantity, f_hGrid, &
       & f_ifmissinggmao, &
       & f_ignorenegative, f_ignoregeolocation, f_ignoretemplate, f_ignorezero, &
       & f_instances, f_integrationtime, f_internalvgrid, &
@@ -1413,7 +1413,9 @@ contains ! =====     Public Procedures     =============================
       double precision :: Number
       integer :: Stat
       logical, parameter :: DONTPAD = .false.
+      integer :: fieldValue
       integer :: Geolocation
+      integer :: hGridIndex
       integer :: I
       integer :: JJ
       integer :: L1BFLAG
@@ -1435,6 +1437,7 @@ contains ! =====     Public Procedures     =============================
       dimList = 'c' ! defaults to shift or slip by channel, or surface if noFreqs < 2
       geolocation = l_none
       got = .false.
+      hGridIndex = 0
       multiplier = 1.
       referenceMIF = 1
       referenceMIFunits = PHYQ_Dimensionless
@@ -1445,6 +1448,11 @@ contains ! =====     Public Procedures     =============================
       block = 0
       do j = 2, nsons(key)
         gson = subtree(j,key) ! The argument
+        if ( nsons(gson) > 1 ) then
+          fieldValue = decoration(subtree(2,gson)) ! The field's value
+        else
+          fieldValue = gson
+        end if
         fieldIndex = get_field_id(gson)
         if ( nsons(gson) > 1) gson = subtree(2,gson) ! Now value of said argument
         got(fieldIndex)=.TRUE.
@@ -1582,6 +1590,8 @@ contains ! =====     Public Procedures     =============================
             call Announce_Error ( key, no_Error_Code, &
             & 'invalid heightRange: ' // trim(heightRange) )
           end select
+        case ( f_hGrid )   ! For geoLocation
+          hGridIndex = decoration(fieldValue)
         case ( f_ignoreZero )
           ignoreZero = get_boolean ( gson )
         case ( f_ignoreGeolocation ) ! For l2gp etc. fill
@@ -2260,6 +2270,14 @@ contains ! =====     Public Procedures     =============================
           quantity%values = quantity%template%surfs
         case ( 'time' )
           quantity%values = quantity%template%time
+        ! Try to infer the profile number corresponding to each maf
+        case ( 'profile' )
+          if ( .not. got(f_hgrid) )  &
+            & call Announce_error ( key, no_Error_Code,'hGrid not supplied' )
+          call NearestProfiles ( &
+            & quantity, HGrids(hgridIndex), &
+            & Chunks(ChunkNo)%HGridOffsets(hgridIndex) &
+            & )
         case default
           ! We will try to read it from the l1boa file--hope you named it properly
           L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
@@ -3244,6 +3262,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.458  2015/12/01 21:19:57  pwagner
+! May Fill with nearest profile number
+!
 ! Revision 2.457  2015/09/30 20:32:36  pwagner
 ! With /noZeros field negativePrecision command now resets 0 to -1
 !
