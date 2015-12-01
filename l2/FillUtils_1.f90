@@ -178,28 +178,28 @@ module FillUtils_1                     ! Procedures used by Fill
 
   logical :: UNITSERROR               ! From expr
 
-  public :: ADDGAUSSIANNOISE, APPLYBASELINE, AUTOFILLVECTOR, &
-      & COMPUTETOTALPOWER, DEALLOCATESTUFF, &
-      & EXTRACTSINGLECHANNEL, FILLCOVARIANCE, FROMANOTHER, FROMGRID, &
-      & FROML2GP, FROMPROFILE, GATHER, GEOIDDATA, LOSVELOCITY, &
-      & CHISQCHAN, CHISQMMAF, CHISQMMIF, CHISQRATIO, &
-      & COLABUNDANCE, DERIVATIVEOFSOURCE, FOLDEDRADIANCE, PHITANWITHREFRACTION, &
-      & IWCFROMEXTINCTION, RHiFROMORTOH2O, NORADSPERMIF, &
-      & RHiPRECISIONFROMORTOH2O, WITHESTNOISE, &
-      & Hydrostatically_GPH, Hydrostatically_PTan, FROMSPLITSIDEBAND, &
-      & GPHPRECISION, FROMISOTOPE, FROMASCIIFILE, ROTATEMAGNETICFIELD, &
-      & EXPLICIT, FROML1B, &
-      & FROML2AUX, USINGMAGNETICMODEL, &
-      & FROMINTERPOLATEDQTY, FROMLOSGRID, &
-      & BYMANIPULATION, MANIPULATEVECTORS, WITHREFLECTORTEMPERATURE, &
-      & WITHASCORDESC, WITHREICHLERWMOTP, &
-      & WITHWMOTROPOPAUSE, WITHBINRESULTS, WITHBOXCARFUNCTION, &
-      & STATUSQUANTITY, QUALITYFROMCHISQ, CONVERGENCEFROMCHISQ, &
-      & USINGLEASTSQUARES, OFFSETRADIANCEQUANTITY, RESETUNUSEDRADIANCES, &
-      & SCALEOVERLAPS, SCATTER, SPREADCHANNELFILL, &
-      & TRANSFERVECTORS, TRANSFERVECTORSBYMETHOD, &
-      & UNCOMPRESSRADIANCE, &
-      & ANNOUNCE_ERROR, QTYFROMFILE, VECTORFROMFILE
+  public :: addGaussianNoise, applyBaseline, autoFillVector, &
+      & computeTotalpower, deallocatestuff, &
+      & extractsinglechannel, fillcovariance, fromanother, fromgrid, &
+      & froml2gp, fromprofile, gather, geoiddata, losvelocity, &
+      & chisqchan, chisqmmaf, chisqmmif, chisqratio, &
+      & colabundance, derivativeofsource, foldedradiance, phitanwithrefraction, &
+      & iwcfromextinction, rhifromortoh2o, noradspermif, &
+      & rhiprecisionfromortoh2o, withestnoise, &
+      & Hydrostatically_GPH, Hydrostatically_PTan, fromSplitSideband, &
+      & GPHPrecision, fromIsotope, fromAsciiFile, rotateMagneticField, &
+      & explicit, froml1b, &
+      & froml2aux, usingmagneticmodel, &
+      & frominterpolatedqty, fromlosgrid, &
+      & bymanipulation, manipulatevectors, NearestProfiles, &
+      & withreflectortemperature, withascordesc, withreichlerwmotp, &
+      & withwmotropopause, withbinresults, withboxcarfunction, &
+      & statusquantity, qualityfromchisq, convergencefromchisq, &
+      & usingleastsquares, offsetradiancequantity, resetunusedradiances, &
+      & scaleoverlaps, scatter, spreadchannelfill, &
+      & transfervectors, transfervectorsbymethod, &
+      & uncompressradiance, &
+      & announce_error, qtyfromfile, vectorfromfile
 
   interface FromProfile
     module procedure FromProfile_node, FromProfile_values
@@ -568,6 +568,31 @@ contains ! =====     Public Procedures     =============================
       ! call Deallocate_test ( Zetad, 'Zetad', ModuleName )
       call Deallocate_test ( Zetai, 'Zetai', ModuleName )
     end subroutine DeallocateStuff
+
+    !--------------------------------------------------  NearestProfiles  -----
+    subroutine NearestProfiles ( quantity, HGrid, ProfileOffset )
+    use HGridsDatabase, only: HGrid_T
+
+      ! This routine is called from MLSL2Fill to fill values of
+      ! a maf-based quantity with the nearest profile indexes
+      ! Method:
+      ! There is a maf array already in HGrid
+      ! We just need to invert it
+      ! Dummy arguments
+      type (VectorValue_T), intent(inout) :: QUANTITY ! The quantity to fill
+      type (HGrid_T)                      :: HGrid
+      integer, intent(in)                 :: ProfileOffset
+      ! Internal variables
+      integer :: i
+      integer :: profile
+      ! Executable
+      quantity%values = -999.
+      do i=1, quantity%template%noInstances
+        profile = FindFirst ( HGrid%maf, i )
+        if ( profile > 0 ) quantity%values(:, i) = profile + ProfileOffset
+      enddo
+      
+    end subroutine NearestProfiles
 
     !--------------------------------------------------  Explicit  -----
     subroutine Explicit ( quantity, valuesNode, spreadFlag, force, &
@@ -7672,6 +7697,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.118  2015/12/01 21:19:57  pwagner
+! May Fill with nearest profile number
+!
 ! Revision 2.117  2015/11/11 23:25:32  vsnyder
 ! Compute the longest monotone subsequence of altitudes after converting
 ! from geocentric to geodetic, instead of before, for purposes of determining
