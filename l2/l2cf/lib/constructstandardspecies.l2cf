@@ -633,8 +633,9 @@ dtR3B9: Quantity, type=singleChannelRadiance, signal='R3:240.B9F:CO'
 
   ;; ----------------------------------------- Other minor stuff
 
-  !ifdef(flagMagneticFieldOnHeightGrid,!dnl
-  {
+;  !ifdef(flagMagneticFieldOnHeightGrid,!dnl
+  !ifelse(!substr(!MagneticFieldGrid,0,3), {Alt},
+  {!dnl
   CrossGrid: hGrid, type=explicit, $
     geodangle=[-3.0 degrees, -1.5 degrees, 0 degrees, 1.5 degrees, 3.0 degrees]
   magneticField: quantity, type=magneticField, vGrid=vGridMag, $
@@ -810,9 +811,10 @@ begin Construct
   chunkNumMMAF: quantity, type=geolocation, module= GHz
   geodLatMMAF: quantity, type=geolocation, module= GHz
   solarZenithMMAF: quantity, type=geolocation, module= GHz
+  ProfileNum: quantity, type=geolocation, module= GHz
   timingTemplate: VectorTemplate, quantities = [ $
-    phaseTiming, sectionTiming, chunkNumMMAF, geodLatMMAF, solarZenithMMAF $
-    ]
+    phaseTiming, sectionTiming, chunkNumMMAF, geodLatMMAF, solarZenithMMAF, $
+    ProfileNum ]
 
 end Construct
   ; These temporary vectors, which must be declared
@@ -826,6 +828,9 @@ begin Fill
 end Fill
 !divert(-1)
 ;$Log$
+;Revision 1.129  2015/05/18 17:47:07  pwagner
+;Added APriori phase marker; more use of flagMagneticFieldOnHeightGrid
+;
 ;Revision 1.128  2015/05/06 20:20:57  pwagner
 ;Added Phase marking, mission statement
 ;

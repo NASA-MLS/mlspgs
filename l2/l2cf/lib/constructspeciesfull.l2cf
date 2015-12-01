@@ -798,9 +798,10 @@ begin Construct
   chunkNumMMAF: quantity, type=geolocation, module= GHz
   geodLatMMAF: quantity, type=geolocation, module= GHz
   solarZenithMMAF: quantity, type=geolocation, module= GHz
+  ProfileNum: quantity, type=geolocation, module= GHz
   timingTemplate: VectorTemplate, quantities = [ $
-    phaseTiming, sectionTiming, chunkNumMMAF, geodLatMMAF, solarZenithMMAF $
-    ]
+    phaseTiming, sectionTiming, chunkNumMMAF, geodLatMMAF, solarZenithMMAF, $
+    ProfileNum ]
 
 end Construct
   ; These temporary vectors, which must be declared
@@ -814,6 +815,9 @@ begin Fill
 end Fill
 !divert(-1)
 ;$Log$
+;Revision 1.6  2015/10/06 17:38:36  pwagner
+;restored missing baselineMIFBand17
+;
 ;Revision 1.5  2015/05/06 20:20:15  pwagner
 ;Added Phase marking, mission statement
 ;
