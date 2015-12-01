@@ -27,7 +27,7 @@ module Geolocation_0
   private :: not_used_here
 !---------------------------------------------------------------------------
 
-  type, abstract :: H_t ! For horizontal (lat/lon) grids; can't instantiate it
+  type :: H_t           ! For horizontal (lat/lon) grids, geoc/geod unspecified
     real(rg) :: Lon     ! Degrees
     real(rg) :: Lat     ! Degrees
   end type H_t 
@@ -120,6 +120,9 @@ contains
 end module Geolocation_0
 
 ! $Log$
+! Revision 2.2  2015/12/01 21:05:03  vsnyder
+! Make H_t non-abstract
+!
 ! Revision 2.1  2015/11/14 18:02:36  vsnyder
 ! Initial commit
 !
