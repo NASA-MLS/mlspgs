@@ -992,6 +992,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_heightRange, string()/),  &
              continue=.true. )
     call make_tree ( (/ & ! Continuing for s_fill...
+             begin, f+f_hGrid, field_spec(s_hgrid), &
              begin, f+f_ifMissingGMAO, boolean(), &
              begin, f+f_ignoreGeolocation, boolean(), &
              begin, f+f_ignoreNegative, boolean(), &
@@ -2052,6 +2053,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.621  2015/12/01 21:19:57  pwagner
+! May Fill with nearest profile number
+!
 ! Revision 2.620  2015/09/30 20:32:06  pwagner
 ! With /noZeros field negativePrecision command now resets 0 to -1; Catenate can repair geoLocations
 !
