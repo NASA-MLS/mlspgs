@@ -207,17 +207,17 @@ while [ "$more_opts" = "yes" ] ; do
 done
 
 # Do we need to split the log files?
-nlogs=`echo $1/* | wc -w`
+nlogs=`echo $1/*.log | wc -w`
 if [ "$verbose" = "yes" ]
 then
   echo "number of log files $nlogs"
 fi
 
-if [ "$nlogs" = 1 -a "$1/*" = "$1/mlsl2.log" ]
+if [ "$nlogs" = 1 -a "$1/*.log" = "$1/mlsl2.log" ]
 then
-  echo "Splitting already-catenated logfiles $1/*"
+  echo "Splitting already-catenated logfiles $1/*.log"
   ls $1
-  time usedir=`uncat_logs $1/*`
+  time usedir=`uncat_logs $1/*.log`
   execute $SCANNER $usedir xxx $2 $3 $version
   if [ "$TIDYUPAFTER" = "1" ]
   then
@@ -229,6 +229,9 @@ else
 fi
 exit 0
 # $Log$
+# Revision 1.3  2013/12/05 00:24:03  pwagner
+# Added verbose option; explain why mlsl2 version matters
+#
 # Revision 1.2  2012/07/03 15:20:41  pwagner
 # Fixed bug confusing single chunk with result of cat
 #
