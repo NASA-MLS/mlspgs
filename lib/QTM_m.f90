@@ -122,7 +122,7 @@ contains
     integer :: H
     if ( present(before) ) call output ( before )
     if ( qid < 8 ) then
-      call output ( qid, format='(z0)', before=' Improper octant number ' )
+      call output ( qid, format='(z0)' )
     else
       h = high_bit_index ( QID ) - 4
       call output ( int(shiftr(qid,h)) - 7 ) ! Octant number
@@ -588,6 +588,9 @@ contains
 end module QTM_m
 
 ! $Log$
+! Revision 2.3  2015/12/07 20:13:07  vsnyder
+! Simplify Dump_QID
+!
 ! Revision 2.2  2015/12/01 02:56:00  vsnyder
 ! Add Dump_QID, Expand_ZOT, High_Bit_Index, Condense_ZOT, ZOT_eq, ZOT_ne.
 ! Change octant from 0..7 to 8..15 to make high bit index unambiguous.
