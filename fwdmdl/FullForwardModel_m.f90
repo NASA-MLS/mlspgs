@@ -3985,6 +3985,7 @@ contains
         &  req_s, vert_inds(1:npf), h_path(1:npf), phi_path(1:npf),  & ! out
         &  forward=forward )                                           ! opt
       tan_ht = tan_ht_s + req_s
+      phi_path_c => phi_path(1:npf:ngp1)
 
       ! If we're integrating from a scattering point, find where it is.
       if ( present(scat_zeta) ) then
@@ -4827,6 +4828,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.359  2015/10/28 00:34:13  vsnyder
+! Add more magnetic field-related dumps
+!
 ! Revision 2.358  2015/09/22 23:37:26  vsnyder
 ! Add 3D magnetic field
 !
