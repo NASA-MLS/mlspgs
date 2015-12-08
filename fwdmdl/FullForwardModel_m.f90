@@ -3507,7 +3507,7 @@ contains
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         call get_tau ( frq_i, gl_inds, cg_inds, i_start, e_rflty,  &
-          & del_zeta, alpha_path_c, ref_corr, incoptdepth(:i_end), &
+          & del_zeta, alpha_path_c, ref_corr(:i_end), incoptdepth(:i_end), &
           & tan_pt_c, alpha_path_f(1:ngl), dsdz_gw_path, tau )
         i_stop = tau%i_stop(frq_i)
 
@@ -4828,6 +4828,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.360  2015/12/08 19:13:08  vsnyder
+! Define pointer association status of Phi_Path_C immediately after Height_Metrics
+!
 ! Revision 2.359  2015/10/28 00:34:13  vsnyder
 ! Add more magnetic field-related dumps
 !
