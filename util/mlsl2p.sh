@@ -184,7 +184,7 @@ NETCDFAUGMENT=$PGE_BINARY_DIR/aug_hdfeos5
 MISALIGNMENT=$PGE_BINARY_DIR/misalignment
 if [ ! -x "$H5REPACK" ]
 then
-  H5REPACK=$MLSTOOLS/H5REPACK
+  H5REPACK=$MLSTOOLS/h5repack
 fi
 if [ ! -x "$NETCDFAUGMENT" ]
 then
@@ -407,11 +407,12 @@ then
   done
 fi
 
+file=`extant_files *L2GP-DGG_*.he5`
 # Check products for misaligned geolocations
 # If they are found to be misaligned, set return_status to 99
-if [ -x "$MISALIGNMENT" ]
+if [ -x "$MISALIGNMENT" -a "$file" != "" ]
 then
-  a=`$MISALIGNMENT -silent *L2GP-DGG_*.he5`
+  a=`$MISALIGNMENT -silent $file`
   if [ "$a" != "" ]
   then
     echo $a
@@ -430,6 +431,9 @@ else
 fi
 
 # $Log$
+# Revision 1.31  2015/11/02 23:21:18  pwagner
+# Now checks for mialigned geolocations
+#
 # Revision 1.30  2015/10/07 22:56:07  pwagner
 # Automtically writes out l2cf name to master.l2cfname
 #
