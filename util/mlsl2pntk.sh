@@ -176,6 +176,14 @@ fi
 
 H5REPACK=$PGE_BINARY_DIR/h5repack
 MISALIGNMENT=$PGE_BINARY_DIR/misalignment
+if [ ! -x "$H5REPACK" ]
+then
+  H5REPACK=$MLSTOOLS/h5repack
+fi
+if [ ! -x "$MISALIGNMENT" ]
+then
+  MISALIGNMENT=$MLSTOOLS/misalignment
+fi
 masterlog="${JOBDIR}/exec_log/process.stdout"
 if [ "$MASTERLOG" != "" ]
 then
@@ -334,9 +342,10 @@ fi
 
 # Check products for misaligned geolocations
 # If they are found to be misaligned, set return_status to 99
-if [ -x "$MISALIGNMENT" ]
+file=`extant_files *L2GP-DGG_*.he5`
+if [ -x "$MISALIGNMENT" -a "$file" != "" ]
 then
-  a=`$MISALIGNMENT -silent *L2GP-DGG_*.he5`
+  a=`$MISALIGNMENT -silent $file`
   if [ "$a" != "" ]
   then
     echo $a
@@ -355,6 +364,9 @@ else
 fi
 
 # $Log$
+# Revision 1.10  2015/11/02 23:21:43  pwagner
+# Now checks for mialigned geolocations
+#
 # Revision 1.9  2015/10/07 22:56:29  pwagner
 # Automtically writes out l2cf name to master.l2cfname
 #
