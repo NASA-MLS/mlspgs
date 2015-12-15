@@ -13,8 +13,8 @@
 \topmargin -0.5in
 \textheight 9in
 
-\newcommand{\docname}{wvs-128r1}
-\newcommand{\docdate}{2 December 2015}
+\newcommand{\docname}{wvs-128r2}
+\newcommand{\docdate}{15 December 2015}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
@@ -139,7 +139,7 @@ centimeters.
 Dutton developed a simple way, called the \emph{Zenithial OrthoTriangular}
 projection, or ZOT projection, to compute positions within a QTM.
 
-\begin{figure}[h]
+\begin{figure}[h]\label{Two}
 \hfil\includegraphics[scale=0.675]{wvs-128-QTM-2}\hfill
 \caption{ZOT projections of refinements to levels 2 and 3, from Dutton's
 book}\label{Fig-2}
@@ -150,9 +150,13 @@ of southern hemisphere meridians of the octahedron, and the halves of each
 outer boundary are aliased.  For example, the points labeled 3 on the top
 edge are the same point.  The north pole is the center.  The south pole is
 the outer corners.  The equator is the inscribed square with diagonal
-edges.  Diagonal lines are parallels of latitude.  The narrow lines are
-boundaries of the level-2 refinement.  Dashed lines are boundaries of the
-level-3 refinement.
+edges.  Diagonal lines are parallels of latitude.  Meridians in each
+octant are straight lines from the pole to the equator.  For example, the
+22.5$^\circ$ meridian would be a line from the north pole (center) to the
+point where facets 120 and 520 meet, and thence to the south pole (top
+right corner).  The only meridians shown in Figure \ref{Two} are edges of
+the original octahedron.  The narrow lines are boundaries of the level-2
+refinement.  Dashed lines are boundaries of the level-3 refinement.
 
 Vertices of the mesh are not uniquely identified (see Section
 \ref{vertices}).  At each level of refinement, they are assigned a
@@ -165,8 +169,9 @@ numbers of the end points.  The QID of each facet at level 1 is its octant
 number.  When a facet is subdivided, the QID of the central facet is the
 QID of the parent facet, with zero appended.  The QID of each other facet
 is the QID of the parent facet, with the basis number of the vertex
-opposite the common edge appended.  This is also the basis number of the
-vertex of the larger facet that is a vertex of the smaller facet.
+opposite the edge in common with the central facet appended.  This is also
+the basis number of the vertex of the larger facet that is a vertex of the
+smaller facet.
 
 In the ZOT projection, every triangle in the mesh is an isosceles right
 triangle.  The right angle is called the \emph{polar angle} because it is
@@ -305,7 +310,7 @@ identified, a hash table could be used to eliminate duplicates.  QTM
 vertices within the interesting region of the mesh could thereby be
 given serial numbers.
 
-To construct a QTM for MLS
+To construct and use a QTM for MLS
 
 \begin{enumerate}
 
@@ -326,67 +331,55 @@ To construct a QTM for MLS
       edge of any polygon intersects an edge of the facet, and the level
       of refinement is not sufficient, refine that facet.
 
-\item When a facet is constructed, determine whether its vertices that are
-      within the polygon are already in the set of vertices that are
-      geolocations within a polygon.  If not, add them to the set and
-      assign serial numbers to them.  The serial number of a vertex is
-      then used to compute a column subscript in the Jacobian, and a
-      subscript in the state vector.
+\item When a facet is constructed, add its vertices that are within the
+      polygon to the set of vertices that are geolocations for the state
+      vector.  If the facet is at the specified refinement level, and it
+      has any points in the polygon, add all its points to the set. 
+      Points of the QTM that surround the polygon are in the set so that
+      it is possible to interpolate to any point within the polygon or on
+      its boundary.  Use a hash table to avoid duplicates.  The serial
+      number of a vertex is then used to compute a column subscript in the
+      Jacobian, and a subscript in the state vector.
 
 \item Retain a quadtree that describes the QTM, with serial numbers of
       geolocations within the area of interest at each vertex, and zero as
       the serial number for vertices that are outside the area of
       interest.
 
-\item There are values at vertices, taken from the state vector, only for
-      points within the polygon.  Therefore, the number of vertices of a
-      facet for which we have values could be in the range $0\cdots3$.  In
-      one dimension (i.e., vertically in the orbit plane), our practice is
-      to use constant extrapolation outside the region.  In two
-      dimensions, a point outside the polygon might be close to vertices
-      of the polygon that have different values, i.e., ``constant
-      extrapolation'' isn't uniquely defined.  Therefore, to get values at
-      all vertices, do the following:
+\item When a value is needed at a point specified by its longitude and
+      latitude, determine its ZOT co\"ordinates, and from those determine
+      its QID to the desired level of refinement.  Then use digits of the
+      QID to traverse the QTM tree to find the facet.  The cost of both of
+      these steps is proportional to the level of refinement, not the size
+      of the QTM.  When the facet is found, the vertex of the QTM tree
+      includes the serial numbers of its vertices, if it has any vertices
+      within the polygon, or at least one missing serial number if it has
+      no vertices within the polygon.
 
-      {\tt\parskip 3pt
-      Specify values at all vertices of the facet that are within the
-      polygon using values from the state vector.
+      If the specified point is within a facet that has serial numbers for
+      its vertices, use interpolation.  Otherwise use extrapolation.
 
-      call get_values ( facet )
-      }
-      
-      where {\tt get_values} is
+      In one dimension (either along-track or vertically in the orbit
+      plane), our practice is to use constant extrapolation outside the
+      region.  In two dimensions, a point outside the polygon might be
+      close to vertices of the polygon that have different values, i.e.,
+      ``constant extrapolation'' isn't uniquely defined. 
 
-      {\tt\parskip 3pt
-      recursive subroutine get_values ( facet )
+      Attempting to assign values to all vertices of facets outside the
+      polygon, so that it is possible to interpolate to points within
+      them, doesn't work because an edge of a larger facet might include
+      vertices of several smaller facets.
 
-      \hspace*{0.1in}if there are values at all three vertices, return.
-
-      \hspace*{0.1in}if there are values at two vertices,\\
-        \hspace*{0.2in}assign a value at the third vertex that is the
-        average of the other two.
-
-      \hspace*{0.2in}return.
-
-      \hspace*{0.1in}choose an unexamined adjacent facet in the direction
-        of the polygon.
-
-      \hspace*{0.1in}call get_values ( new facet )
-
-      \hspace*{0.1in}assign values to vertices that do not have values if
-      they are vertices\\
-      \hspace*{0.1in}of the new facet (which has values at every vertex).
-
-      end
-      }
-
-\item When it is necessary to interpolate in the QTM to a point, specified
-      by its longitude and latitude, determine its ZOT co\"ordinates, and
-      from those determine its QID to the desired level of refinement. 
-      Then use digits of the QID to traverse the QTM tree to find the
-      facet.  The cost of both of these steps is proportional to the level
-      of refinement, not the size of the QTM.  When the facet is found,
-      the vertex of the QTM tree identifies the vertices of the facet.
+      To extrapolate outside the polygon, construct lines through the
+      desired point that are perpendicular to each edge of the polygon,
+      until edges are found such that the constructed line intersects an
+      edge between its end points, and the line does not intersect another
+      edge at a point nearer to the specified point.  There might be more
+      than one if the polygon is not convex.  Interpolate to those
+      intersections and use the sum of those values, each one weighted by
+      its distance from the desired point, divided by the sum of their
+      distances.  If there is no such edge, use the value at the polygon
+      vertex nearest to the specified point.
 
 \end{enumerate}
 
@@ -471,6 +464,9 @@ and
 % $Id$
 
 % $Log$
+% Revision 1.2  2015/12/02 02:00:07  vsnyder
+% A bunch of clarifications
+%
 % Revision 1.1  2015/11/11 16:46:58  vsnyder
 % Initial commit
 %
