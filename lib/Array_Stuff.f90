@@ -28,43 +28,66 @@ module Array_Stuff
 
 contains
 
-  pure integer function Element_Position ( Lbounds, Ubounds, Subscripts )
+  pure integer function Element_Position ( Subscripts, Ubounds, Lbounds )
     ! Compute position in array element order from subscripts.
-    integer, intent(in), contiguous :: Lbounds(:)
-    integer, intent(in) :: Ubounds(size(lbounds))
-    integer, intent(in) :: Subscripts(size(lbounds))
+    integer, intent(in), contiguous :: Subscripts(:)
+    integer, intent(in) :: Ubounds(size(subscripts))
+    integer, intent(in), optional :: Lbounds(size(subscripts))
     integer :: D
     integer :: I
     element_position = 0
-    do i = size(lbounds), 1, -1
-      d = ubounds(i) - lbounds(i) + 1
-      if ( d <= 0 ) then
-        element_position = 0
-        return
-      end if
-      element_position = element_position * d + subscripts(i) - lbounds(i)
-    end do
+    if ( present(lbounds) ) then
+      do i = size(subscripts), 1, -1
+        d = ubounds(i) - lbounds(i) + 1
+        if ( d <= 0 ) then
+          element_position = 0
+          return
+        end if
+        element_position = element_position * d + subscripts(i) - lbounds(i)
+      end do
+    else ! Assume lbounds = [1, 1, ...]
+      do i = size(subscripts), 1, -1
+        d = ubounds(i)
+        if ( d <= 0 ) then
+          element_position = 0
+          return
+        end if
+        element_position = element_position * d + subscripts(i) - 1
+      end do
+    end if
     element_position = element_position + 1
     
   end function Element_Position
 
-  pure integer function Subscripts ( Lbounds, Ubounds, Element_Position )
+  pure integer function Subscripts ( Element_Position, Ubounds, Lbounds )
     ! Compute subscripts from position in array element order.
-    integer, intent(in), contiguous :: Lbounds(:)
-    integer, intent(in) :: Ubounds(size(lbounds))
     integer, intent(in) :: Element_Position
-    dimension :: Subscripts(size(lbounds))
+    integer, intent(in), contiguous :: Ubounds(:)
+    integer, intent(in), optional :: Lbounds(size(ubounds))
+    dimension :: Subscripts(size(ubounds))
     integer :: D, E, I
     e = element_position - 1
-    do i = 1, size(lbounds)
-      d = ubounds(i) - lbounds(i) + 1
-      if ( d <= 0 ) then
-        subscripts = lbounds - 1
-        return
-      end if
-      subscripts(i) = mod(e,d) + lbounds(i)
-      e = e / d
-    end do
+    if ( present(lbounds) ) then
+      do i = 1, size(ubounds)
+        d = ubounds(i) - lbounds(i) + 1
+        if ( d <= 0 ) then
+          subscripts = lbounds - 1
+          return
+        end if
+        subscripts(i) = mod(e,d) + lbounds(i)
+        e = e / d
+      end do
+    else
+      do i = 1, size(ubounds)
+        d = ubounds(i)
+        if ( d <= 0 ) then
+          subscripts = lbounds - 1
+          return
+        end if
+        subscripts(i) = mod(e,d) + 1
+        e = e / d
+      end do
+    end if
   end function Subscripts
 
 !=============================================================================
@@ -81,6 +104,9 @@ contains
 end module Array_Stuff
 
 ! $Log$
+! Revision 2.2  2015/12/30 23:16:57  vsnyder
+! Make Lbounds optional and last
+!
 ! Revision 2.1  2015/12/30 22:14:37  vsnyder
 ! Initial commit
 !
