@@ -72,7 +72,8 @@ contains
       j = mod(i,3) + 1
       w(6-i-j) = (x(j) - x(i)) * ( yq - y(i) ) - (y(j) - y(i)) * ( xq - x(i) )
     end do
-    w = w / sum(w)
+    if ( .not. any(w >= 0) ) w = -w    ! faster than all(w < 0)
+    w = w / sum(abs(w))
   end subroutine Triangle_Interpolate_d
 
   subroutine Triangle_Interpolate_s ( X, Y, XQ, YQ, W )
@@ -85,7 +86,8 @@ contains
       j = mod(i,3) + 1
       w(6-i-j) = (x(j) - x(i)) * ( yq - y(i) ) - (y(j) - y(i)) * ( xq - x(i) )
     end do
-    w = w / sum(w)
+    if ( .not. any(w >= 0) ) w = -w    ! faster than all(w < 0)
+    w = w / sum(abs(w))
   end subroutine Triangle_Interpolate_s
 
 !=============================================================================
@@ -102,6 +104,9 @@ contains
 end module Triangle_Interpolate_m
 
 ! $Log$
+! Revision 2.3  2015/12/30 23:53:39  vsnyder
+! Correct calculation of negative weights for outside points
+!
 ! Revision 2.2  2015/11/12 20:45:38  vsnyder
 ! Remove unused declarations
 !
