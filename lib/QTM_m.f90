@@ -29,14 +29,14 @@ module QTM_m
   private
 
   ! Types:
-  public :: ZOT_t, Stack_t
+  public :: Stack_t, ZOT_t, ZOT_V_t
   public :: H_t, H_Geoc, H_Geod ! From Geolocation_0 module
   ! Most procedures are type bound.  The specific and generic
   ! bindings are public.
 
   ! Procedures:
-  public :: Dump, Dump_QID, Dump_Stack, Expand_ZOT, Geo_To_ZOT, High_Bit_Index, &
-    & Init_Stack, QTM_Decode
+  public :: Dump, Dump_QID, Dump_Stack, Expand_ZOT, Geo_To_ZOT, Get_Octant, &
+    & High_Bit_Index, Init_Stack, QTM_Decode
 
   interface Dump
     module procedure Dump_Stack
@@ -66,7 +66,10 @@ module QTM_m
   contains
     procedure :: Condense_ZOT
     procedure :: Get_Octant
-    procedure :: QTM_Encode
+    procedure :: QTM_Encode_Level
+    procedure :: QTM_Encode_Tol
+    generic :: QTM_Encode => QTM_Encode_Level
+    generic :: QTM_Encode => QTM_Encode_Tol
     procedure :: ZOT_To_Geo
     procedure :: ZOT_eq
     generic :: Operator ( == ) => ZOT_eq
@@ -74,11 +77,15 @@ module QTM_m
     generic :: Operator ( /= ) => ZOT_ne
   end type ZOT_t
 
+  type, extends(ZOT_t) :: ZOT_V_t ! ZOT plus a vertical coordinate
+    real(rg) :: V
+  end type ZOT_V_t
+
   type :: Stack_t
     integer :: top(8:15) = 0 ! Top frame for each octant
     type(zot_t), dimension(3,qtm_depth,8:15) :: Z
     integer, dimension(qtm_depth,8:15) :: XNode, YNode
-    integer(qk) :: QID(qtm_depth,8:15) = -1 ! -1 => stack needs to be initialized
+    integer(qk) :: QID(qtm_depth,8:15) = -1 ! -1 => stack needs initialization
   contains
     procedure :: C_ZOT ! get ZOT coordinates of centroid
     procedure :: P_ZOT ! get ZOT coordinates of pole node
@@ -97,7 +104,8 @@ module QTM_m
 
 contains
 
-  pure integer(qk) function Condense_ZOT ( Z )
+  pure elemental &
+  integer(qk) function Condense_ZOT ( Z )
     !{ ZOT coordinates are in the range $[-1,+1]$.  At a refinement level of
     !  $l$, there are $2^l$ equally spaced values of each coordinate, with a
     !  spacing of $2^{l-1}$.  Since a QTM ID is bounded by $2^{2l+3}$, the
@@ -184,7 +192,8 @@ contains
     end do
   end subroutine Dump_Stack
 
-  type(zot_t) pure function Expand_ZOT ( IZ ) result ( Z )
+  pure elemental &
+  type(zot_t) function Expand_ZOT ( IZ ) result ( Z )
     integer(qk), intent(in) :: IZ
     integer(qk) :: IX, IY
     integer, parameter :: Mask = 2**QTM_depth - 1
@@ -196,7 +205,7 @@ contains
   pure elemental &
   type(zot_t) function Geo_To_ZOT ( Geo ) result ( Z )
     ! Given longitude and latitude (degrees), compute ZOT coordinates.
-    class(h_t), intent(in) :: Geo ! Longitude and latitude; doesn't matter
+    class(h_t), intent(in) :: Geo ! Longitude and latitude; it doesn't matter
                                   ! whether latitude is geocentric or geodetic
     real(rg) :: Lon, Dxy, Temp
     integer :: LonInt
@@ -227,7 +236,7 @@ contains
     if ( lon > 180.0 ) z%x = -z%x
   end function Geo_To_ZOT
 
-  pure &
+  pure elemental &
   integer function Get_Octant ( Z ) result ( Oct )
     ! Return the octant 8..15 occupied by any Z, or an error code -1..-15.
     ! This is 7 more than the octant number as defined by Dutton, so that
@@ -264,7 +273,8 @@ contains
     end if
   end function Get_Octant
 
-  pure integer function High_Bit_Index ( Q ) result ( H )
+  pure elemental &
+  integer function High_Bit_Index ( Q ) result ( H )
     integer(qk), intent(in) :: Q
     do h = 1, bit_size(q)
       if ( shiftr(q,h) == 0 ) return
@@ -314,7 +324,7 @@ contains
   end subroutine Init_Stack
 
   ! Get ZOT coordinates of centroid
-  pure &
+  pure elemental &
   type(zot_t) function C_ZOT ( S, Oct, QL ) result ( Z )
     class(stack_t), intent(in) :: S
     integer, intent(in) :: Oct ! Octant
@@ -326,7 +336,7 @@ contains
   end function C_ZOT
 
   ! Get ZOT coordinates of pole node
-  pure &
+  pure elemental &
   type(zot_t) function P_ZOT ( S, Oct, QL ) result ( Z )
     class(stack_t), intent(in) :: S
     integer, intent(in) :: Oct ! Octant
@@ -340,7 +350,7 @@ contains
   end function P_ZOT
 
   ! Get ZOT coordinates of X node
-  pure &
+  pure elemental &
   type(zot_t) function X_ZOT ( S, Oct, QL ) result ( Z )
     class(stack_t), intent(in) :: S
     integer, intent(in) :: Oct ! Octant
@@ -352,7 +362,7 @@ contains
   end function X_ZOT
 
   ! Get ZOT coordinates of Y node
-  pure &
+  pure elemental &
   type(zot_t) function Y_ZOT ( S, Oct, QL ) result ( Z )
     class(stack_t), intent(in) :: S
     integer, intent(in) :: Oct ! Octant
@@ -363,7 +373,7 @@ contains
     z = s%z(s%yNode(sp,oct),sp,oct)
   end function Y_ZOT
 
-  pure &
+  pure elemental &
   subroutine QTM_Decode ( QID, Stack, LastMatch )
     ! Compute ZOT coordinates of a specified node of the facet identified by QID
     ! and leave them in the top frame of the stack.
@@ -411,7 +421,25 @@ contains
     end do
   end subroutine QTM_Decode
 
-  integer(qk) function QTM_Encode ( Z, Tol, Oct, Stack, LastMatch )
+! pure & ! Cannot be pure because Stack is intent(inout)
+  integer(qk) function QTM_Encode_Level ( Z, Level, Stack, Oct, LastMatch )
+    ! Get the QTM ID corresponding to Z.  Its digits are put on the stack.
+    ! The octant is the four bits of the result value that begin with the
+    ! highest-order nonzero bit.
+    ! The remaining digits are taken from the stack, bottom up, and
+    ! occupy two bits in the result.
+    ! If the result is negative, its value is the error indicator from
+    ! Get_Octant
+    class(zot_t), intent(in) :: Z ! Assume z%x and z%y in -1 ... +1
+    integer, intent(in) :: Level  ! Tol is 2**(-Level)
+    type(stack_t), intent(inout) :: Stack
+    integer, intent(out), optional :: Oct       ! Octant containing Z
+    integer, intent(out), optional :: LastMatch ! Stack depth of last match
+    qtm_encode_level = z%QTM_Encode ( 2.0_rg**(1-level), stack, oct, lastMatch )
+  end function QTM_Encode_Level
+
+! pure & ! Cannot be pure because Stack is intent(inout)
+  integer(qk) function QTM_Encode_Tol ( Z, Tol, Stack, Oct, LastMatch )
     ! Get the QTM ID corresponding to Z.  Its digits are put on the stack.
     ! The octant is the four bits of the result value that begin with the
     ! highest-order nonzero bit.
@@ -421,30 +449,31 @@ contains
     ! Get_Octant
     class(zot_t), intent(in) :: Z ! Assume z%x and z%y in -1 ... +1
     real(rg), intent(in) :: Tol   ! Assume tol is in 2**(-QTM_Depth) ... 1
-    integer, intent(out) :: Oct   ! Octant containing Z
     type(stack_t), intent(inout) :: Stack
+    integer, intent(out), optional :: Oct       ! Octant containing Z
     integer, intent(out), optional :: LastMatch ! Stack depth of last match
     real(rg) :: Dx, Dy, Dz
     type(zot_t) :: Pn
-    integer :: Node, Np, Nx, Ny, QL
+    integer :: My_Oct, Node, Np, Nx, Ny, QL
     logical :: SameLoc
-    oct = z%get_octant()
-    if ( oct < 0 ) then
+    my_oct = z%get_octant()
+    if ( present(oct) ) oct = my_oct
+    if ( my_oct < 0 ) then
       ! Z is defective.  z%x or z%y is outside the range -1 ... +1
-      qtm_encode = oct
+      qtm_encode_tol = my_oct
       return
     end if
-    if ( oct /= stack%qid(1,oct) ) call init_stack ( stack, oct )
+    if ( my_oct /= stack%qid(1,my_oct) ) call init_stack ( stack, my_oct )
     ql = 1           ! Initial QTM level
     sameLoc = .true. ! Initial flag indicating stack validity
     dz = 1.0         ! Initial ZOT x,y edge length for octant
     do while ( dz > tol .and. QL < size(stack%qid,1) )
       ! Get IDs (1,2,3) of X- and Y- nodes (nx,ny) from level QL of stack
-      nx = stack%xnode(ql,oct)
-      ny = stack%ynode(ql,oct)
+      nx = stack%xnode(ql,my_oct)
+      ny = stack%ynode(ql,my_oct)
       np = 6 - ( nx + ny ) ! polenode ID
       ! Retrieve ZOT x,y of polenode from level QL of stack
-      pn = stack%z(np,ql,oct)
+      pn = stack%z(np,ql,my_oct)
       dz = 0.5 * dz ! Halve closeness criterion
       ! Compute displacement of Z from polenode
       dx = abs(z%x - pn%x)
@@ -460,19 +489,19 @@ contains
       end if
       ql = ql + 1
       ! Is stack state consistent at this level?
-      if ( sameLoc .and. ql <= stack%top(oct) .and. stack%qid(ql,oct) == node ) then
+      if ( sameLoc .and. ql <= stack%top(my_oct) .and. stack%qid(ql,my_oct) == node ) then
         if ( present(lastMatch) ) lastMatch = ql
       else
         sameLoc = .false.
-        call MakeStackConsistent ( Stack, QL, nP, pn, nX, nY, Oct, Node )
+        call MakeStackConsistent ( Stack, QL, nP, pn, nX, nY, my_oct, Node )
       end if
-      stack%top(oct) = ql
+      stack%top(my_oct) = ql
     end do
-    QTM_Encode = oct
-    do ql = 2, stack%top(oct)
-      QTM_Encode = 4 * QTM_Encode + stack%qid(ql,oct)
+    QTM_Encode_tol = my_oct
+    do ql = 2, stack%top(my_oct)
+      QTM_Encode_tol = 4 * QTM_Encode_tol + stack%qid(ql,my_oct)
     end do
-  end function QTM_Encode
+  end function QTM_Encode_Tol
 
   pure elemental &
   logical function ZOT_eq ( Z1, Z2 )
@@ -588,6 +617,12 @@ contains
 end module QTM_m
 
 ! $Log$
+! Revision 2.4  2015/12/30 23:50:20  vsnyder
+! Make Get_Octant public (not just type bound).  Add ZOT_V_t.  Change name
+! of QTM_Encode to QTM_Encode_Tol and add QTM_Encode_Level.  Make procedures
+! pure and elemental where possible, and add comments to explain why it's
+! not possible in two cases.
+!
 ! Revision 2.3  2015/12/07 20:13:07  vsnyder
 ! Simplify Dump_QID
 !
