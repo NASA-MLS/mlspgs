@@ -58,7 +58,7 @@ module Geolocation_0
     real(rg) :: D       ! Degrees
   end type Lon_t
 
-  type, abstract :: V_t ! For vertical grids; can't instantiate it
+  type :: V_t           ! For vertical grids of unspecified type
     real(rg) :: V       ! Geocentric (meters), geodetic (meters), or zeta
   end type V_t
 
@@ -75,10 +75,11 @@ module Geolocation_0
                         ! the coordinate system is stacked
   end type V_zeta
 
-  ! For irregular grids, where H and V are expected to have the same extents
-  type, abstract :: H_V_t
-    real(rg) :: Lon     ! Degrees
-    real(rg) :: Lat     ! Degrees
+  ! For irregular grids, or lines of sight, where H and V are expected to
+  ! have the same extents
+  type, extends(h_t) :: H_V_t
+  ! real(rg) :: Lon     ! Degrees
+  ! real(rg) :: Lat     ! Degrees
     real(rg) :: V       ! Meters or zeta
   end type H_V_t
 
@@ -120,6 +121,9 @@ contains
 end module Geolocation_0
 
 ! $Log$
+! Revision 2.3  2015/12/31 00:04:14  vsnyder
+! Make V_t and H_V_t nonabstract
+!
 ! Revision 2.2  2015/12/01 21:05:03  vsnyder
 ! Make H_t non-abstract
 !
