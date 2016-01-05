@@ -276,7 +276,7 @@ then
   # This sleep is to give slave tasks extra time to complete stdout
   sleep 20
   JOBSTATSFILE="$JOBDIR/phases.stats"
-  l2cf=`grep -i l2cf $masterlog | head -1 | awk '{print $9}'`
+  l2cf=`grep -i 'Level 2 configuration file' $masterlog | head -1 | awk '{print $11}'`
   $PGE_SCRIPT_DIR/jobstat-sips.sh -S $PGE_BINARY_DIR/mlsqlog-scan-sips.py \
     -t $PGE_SCRIPT_DIR/split_path.sh ${JOBDIR}/pvmlog "$l2cf" "$masterlog" \
     > "$JOBSTATSFILE"
@@ -364,6 +364,9 @@ else
 fi
 
 # $Log$
+# Revision 1.11  2015/12/09 01:32:41  pwagner
+# Tries harder to find h5repack and misalignment; fix small bug
+#
 # Revision 1.10  2015/11/02 23:21:43  pwagner
 # Now checks for mialigned geolocations
 #
