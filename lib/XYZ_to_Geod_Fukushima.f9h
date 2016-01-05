@@ -19,7 +19,6 @@
   real(rk), parameter :: Ec = Earth_Axis_Ratio ! b/a
   ! Square of first eccentricity = 1 - a^2/b^2
   real(rk), parameter :: E2 = Eccentricity_Sq
-  real(rk), parameter :: E2B = ( a - b ) * ( a + b ) ! a^2 - b^2 = - e^2 * b^2
   real(rk), parameter :: Tol = tiny(1.0_rk)**(1.0/3.0) / A
   integer, parameter :: MaxIt = 1  ! Maximum number of iterations.  In Journal
                                    ! of Geodesy (2006) 79: 689-693, Fukushima
@@ -78,6 +77,9 @@
 ! $Id$
 
 ! $Log$
+! Revision 2.3  2016/01/05 21:42:26  vsnyder
+! Remove unused named constant E2B
+!
 ! Revision 2.2  2015/02/05 21:46:58  vsnyder
 ! Revise convergence test
 !
