@@ -193,25 +193,21 @@ Fill, quantity=apriori.refGPH,$
   }) ;; End if gotClimatology
 
   ;; Fill the magnetic field.
-!ifdef(flagMagneticFieldOnHeightGrid,{!dnl
-  Fill, quantity=apriori.magneticField, method=magneticModel, $
+
+!ifelse(!MagneticFieldGrid, {Altitude}, {!dnl 
+  Fill, quantity=apriori.magneticField, method=magneticModel 
+   }, !MagneticFieldGrid, {AltitudeUnstacked},{!dnl 
+    Fill, quantity=apriori.magneticField, method=magneticModel, $
     scVelECR=apriori.scVelECR, geocAltitudeQuantity=apriori.tngtGeocAltGHz
-  ;;;Fill, quantity=apriori.fieldAzimuth, method=rotateField, $
-  ;;;  fieldECR=apriori.magneticField, ecrToFOV=apriori.ecrToFOV
-  ;;;Fill, quantity=apriori.fieldElevation, method=rotateField, $
-  ;;;  fieldECR=apriori.magneticField, ecrToFOV=apriori.ecrToFOV
-  ;;;Fill, quantity=apriori.fieldStrength, method=rotateField, $
-  ;;;  fieldECR=apriori.magneticField, ecrToFOV=apriori.ecrToFOV
-  },{
+    },{!dnl ;Default method is Theta
   Fill, quantity=apriori.magneticField, method=magneticModel, $
-    GPHquantity=apriori.gph
+   GPHquantity=apriori.gph
   Fill, quantity=apriori.fieldAzimuth, method=rotateField, $
     fieldECR=apriori.magneticField, ecrToFOV=apriori.ecrToFOV
   Fill, quantity=apriori.fieldElevation, method=rotateField, $
     fieldECR=apriori.magneticField, ecrToFOV=apriori.ecrToFOV
   Fill, quantity=apriori.fieldStrength, method=rotateField, $
-    fieldECR=apriori.magneticField, ecrToFOV=apriori.ecrToFOV
-  })
+    fieldECR=apriori.magneticField, ecrToFOV=apriori.ecrToFOV})
     
   ;; Adjust tropospheric HCN per HCP message 2013 May 16
   Fill, quantity=apriori.hcn, method=explicit, explicitValues=0.22 ppbv, $
@@ -782,6 +778,9 @@ end Fill
 !include(writeapriori.l2cf)
 !divert(-1)
 ;$Log$
+;Revision 1.163  2015/05/19 22:43:16  pwagner
+;Cant Fill fieldAzimuth, ct. if MagneticFieldOnHeightGrid
+;
 ;Revision 1.162  2015/04/30 17:30:03  pwagner
 ;Sense of flagMagneticFieldOnHeightGrid was reversed; fixed
 ;
