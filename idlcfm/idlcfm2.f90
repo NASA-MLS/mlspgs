@@ -6,6 +6,7 @@ module IDLCFM2_m
     use MorePVM, only: PVMUnpackStringIndex, PVMUnpackLitIndex
     use MLSMessageModule, only: PVMERRORMESSAGE
     use Allocate_Deallocate, only: Deallocate_test
+    use VectorsModule, only: RemapVectorMask, RemapVectorValue
 
     implicit none
     private
@@ -129,7 +130,8 @@ module IDLCFM2_m
         endif
     end subroutine
 
-    subroutine ICFMReceiveQuantity ( QT, values, mask, tid, callrecv)
+    ! subroutine ICFMReceiveQuantity ( QT, values, mask, tid, callrecv)
+    subroutine ICFMReceiveQuantity ( QT, value1, mask1, tid, callrecv)
         use MLSCommon, only: R8
         use QuantityTemplates, only: QUANTITYTEMPLATE_T
         use ConstructQuantityTemplates, only: firstProperty, lastProperty, &
@@ -144,8 +146,8 @@ module IDLCFM2_m
         ! It's not inout, because then setupNewQuantityTemplate would deallocate
         ! the pointer components.  But the actual argument is put into a database
         ! using a shallow copy, so cleaning it up would clobber a database item.
-        real (r8), dimension(:,:), pointer :: VALUES ! Values for quantity
-        character, dimension(:,:), pointer :: MASK ! Mask
+        real (r8), dimension(:), pointer :: VALUE1 ! Values for quantity
+        character, dimension(:), pointer :: MASK1 ! Mask
         integer, intent(in), optional :: TID ! Task to get it from
         logical, optional, intent(in) :: callrecv !true if this subroutine should call PVMFRecv, default is false
 
@@ -194,7 +196,7 @@ module IDLCFM2_m
 
         ! Executable code
         ! First, sanitize our input
-        if (associated(values) .or. associated(mask)) then
+        if (associated(value1) .or. associated(mask1)) then
             call output(MLSMSG_Error, &
             "'values' and 'mask' parameters must be nullified before receiving quantity")
             return
@@ -438,6 +440,20 @@ module IDLCFM2_m
             endif
 !            print *, "phi ", qt%phi
             hshape = shape(qt%phi)
+            ! None of the idl procedures know about cross angles yet, so they
+            ! won't be sending us any news about that geolocation until
+            ! someone goes in and educates the idl procedures
+            ! in 
+            ! mlspgs/idlcfm/idl
+            ! For now we resort to the following hackery-quackery
+            allocate(qt%crossAngles(1), stat=info)
+            if (info /= 0) then
+                call output (MLSMSG_Error, "Out of memory")
+                call clearout
+                return
+            endif
+            qt%crossAngles = 0.
+            qt%noCrossTrack = 1
         endif
 
         if (l29(P_GEODLAT)) then
@@ -628,13 +644,13 @@ module IDLCFM2_m
         endif
 
         if (l29(P_VALUE)) then
-            allocate( values(qt%instanceLen, qt%noInstances), stat=info)
+            allocate( value1(qt%instanceLen*qt%noInstances), stat=info)
             if (info /= 0) then
                 call output(MLSMSG_Error, "Out of machine")
                 call clearout
                 return
             endif
-            call PVMIDLUnpack ( values, info, doreshape=.true. )
+            call PVMIDLUnpack ( value1, info )
             if ( info /= 0 ) then
                 call PVMErrorMessage ( info, "unpacking values" )
                 call clearout
@@ -645,14 +661,14 @@ module IDLCFM2_m
 
         ! need to fix this later to match the call to values
         if (l29(P_MASK)) then
-            allocate(mask(size(values,1), size(values,2)), stat=info)
+            allocate(mask1(size(value1)), stat=info)
             if (info /= 0) then
                 call output(MLSMSG_Error, "Out of memory")
                 call clearout
                 return
             endif
-            mask = char(0) ! All vector elements are interesting
-            call PVMIDLUnpack(mask, info, doreshape=.true.)
+            mask1 = char(0) ! All vector elements are interesting
+            call PVMIDLUnpack(mask1, info)
             if ( info /= 0 ) then
                 call PVMErrorMessage ( info, "unpacking mask" )
                 call clearout
@@ -742,6 +758,10 @@ module IDLCFM2_m
                 deallocate(qt%phi)
             endif
 
+            if (associated(qt%crossAngles)) then
+                deallocate(qt%crossAngles)
+            endif
+
             if (allocated(qt%geodlat)) then
                 deallocate(qt%geodlat)
             endif
@@ -774,14 +794,14 @@ module IDLCFM2_m
                 deallocate(qt%surfs)
             endif
 
-            if (associated(values)) then
-                deallocate(values)
-                nullify(values)
+            if (associated(value1)) then
+                deallocate(value1)
+                nullify(value1)
             endif
 
-            if (associated(mask)) then
-                deallocate(mask)
-                nullify(mask)
+            if (associated(mask1)) then
+                deallocate(mask1)
+                nullify(mask1)
             endif
         end subroutine
     end subroutine
@@ -796,6 +816,7 @@ module IDLCFM2_m
         template%noInstances = 1
         template%noSurfs = 1
         template%noChans = 1
+        template%NoCrossTrack = 1
         template%coherent = .true.
         template%stacked = .true.
         template%regular = .true. ! we don't have irregular quantities
@@ -811,7 +832,7 @@ module IDLCFM2_m
         template%verticalCoordinate = l_none
         template%sharedVGrid = .false.
         template%vGridIndex = 0
-        nullify(template%time, template%solartime)
+        nullify(template%time, template%solartime, template%crossAngles)
         nullify(template%solarzenith, template%losangle)
         nullify(template%chaninds, template%channels, template%frequencies)
         template%fgridindex = 0
@@ -891,14 +912,14 @@ module IDLCFM2_m
             call PVMErrorMessage ( info, "unpacking name" )
             return
         endif
-!        print *, "name ", vec%name
+        print *, "name ", vec%name
 
         call PVMIDLUnpack(numQty, info)
         if ( info /= 0 ) then
             call PVMErrorMessage ( info, "unpacking number of quantities" )
             return
         endif
-!        print *, "numQty ", numQty
+        print *, "numQty ", numQty
 
         if (numQty == 0) return
 
@@ -916,7 +937,12 @@ module IDLCFM2_m
         endif
 
         do i=1, numQty
-            call ICFMReceiveQuantity(vec%quantities(i)%template, vec%quantities(i)%values, vec%quantities(i)%mask)
+            call ICFMReceiveQuantity ( vec%quantities(i)%template, &
+              & vec%quantities(i)%value1, vec%quantities(i)%mask1 )
+            if ( associated(vec%quantities(i)%value1) ) &
+              & call remapVectorValue ( vec%quantities(i) )
+            if ( associated(vec%quantities(i)%mask1) ) &
+              & call remapVectorMask ( vec%quantities(i) )
             vec%quantities(i)%index = i
             j = AddQuantityTemplateToDatabase(qtydb, vec%quantities(i)%template)
             template(i) = j
@@ -952,6 +978,9 @@ module IDLCFM2_m
 end module
 
 ! $Log$
+! Revision 1.9  2015/08/17 18:21:27  pwagner
+! Changed to reflect loss of pointiness by some qty template components
+!
 ! Revision 1.8  2012/01/09 22:36:54  pwagner
 ! Workaround for ifc 12 bug
 !
