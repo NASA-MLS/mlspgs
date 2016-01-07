@@ -436,6 +436,8 @@ module CFM_QuantityTemplate_m
 
     call allocate_test(qty%phi, size(hGrid%phi,1), size(hGrid%phi,2), &
     "qty%phi", moduleName)
+    call allocate_test(qty%crossAngles, 1, &
+    "qty%crossAngles", moduleName)
     call allocate_test(qty%geodLat, size(hGrid%geodLat,1), size(hGrid%geodLat,2), &
     "qty%geodLat", moduleName)
     call allocate_test(qty%lon, size(hGrid%lon,1), size(hGrid%lon,2), &
@@ -449,6 +451,7 @@ module CFM_QuantityTemplate_m
     call allocate_test(qty%losAngle, size(hGrid%losAngle,1), &
     size(hGrid%losAngle,2), "qty%losAngle", moduleName)
     qty%phi = hGrid%phi
+    qty%crossAngles = 0.
     qty%geodLat = hGrid%geodLat
     qty%lon = hGrid%lon
     qty%time = hGrid%time
@@ -457,6 +460,7 @@ module CFM_QuantityTemplate_m
     qty%losAngle = hGrid%losAngle
     qty%noInstancesLowerOverlap = hGrid%noProfsLowerOverlap
     qty%noInstancesUpperOverlap = hGrid%noProfsUpperOverlap
+    qty%noCrossTrack = 1
 
   end subroutine PointQuantityToHGrid
 
@@ -684,6 +688,9 @@ module CFM_QuantityTemplate_m
 end module
 
 ! $Log$
+! Revision 1.25  2015/08/05 20:21:29  pwagner
+! Modified to compile properly with v4
+!
 ! Revision 1.24  2013/07/26 16:48:15  pwagner
 ! Consistent with removal of SCVEL
 !
