@@ -3,7 +3,8 @@ program server
     use CFM
     use CFM, only: QUANTITYTEMPLATE_T
     use IDLCFM2_m
-    use MLSCommon, only: r8
+    use MLSKinds, only: r8
+    use MLSL2Options, only: TOOLKIT
     use DECLARATION_TABLE, only: ALLOCATE_DECL, DEALLOCATE_DECL
     use TREE, only: ALLOCATE_TREE, DEALLOCATE_TREE
     use SYMBOL_TABLE, only: DESTROY_SYMBOL_TABLE
@@ -51,6 +52,7 @@ program server
     ! executable
     MLSMessageConfig%logFileUnit = -1
     MLSMessageConfig%useToolkit = .false.
+    TOOLKIT = .false.
     ! set this so the program will never quit unless receiving SIGINT
     ! from the operating system
     MLSMSG_Severity_to_quit = MLSMSG_Crash
@@ -603,6 +605,9 @@ program server
 end program
 
 ! $Log$
+! Revision 1.8  2015/08/17 18:22:10  pwagner
+! cfm no longer supplies start, endTimes
+!
 ! Revision 1.7  2014/06/19 18:15:42  pwagner
 ! Now compatible with new parser api
 !
