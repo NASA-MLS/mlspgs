@@ -209,6 +209,7 @@ contains ! =========== Public procedures ===================================
     character(len=64)                     :: readItemName
     integer                               :: status
     logical, parameter                    :: DeeBug = .false.
+    logical                               :: verbose
     ! Executable
     l1bItemName = adjustl(lowercase(name))
     ! Sometimes we're called as GHz/Name; othertimes as tpName
@@ -280,11 +281,15 @@ contains ! =========== Public procedures ===================================
     endif
     if ( DeeBug ) call outputnamedValue( '2nd readItemName', readItemName )
     call ReadL1BData ( L1BFile, readItemName, l1bField, noMAFs, status )
-    if ( any(isFillValue(l1bField%dpField) ) ) then
+    if ( any(isFillValue(l1bField%dpField) ) .and. &
+      & trim(readItemname) /= '/GHz/Lon') then
       call output( 'Fill values among ' // trim(readItemName), advance='yes' )
       call MLSMessage ( MLSMSG_Warning, trim(ModuleName) // 'L1BGeoLocation', &
         & 'Required monotonization' )
+      verbose = ( trim(readItemname) == '/GHz/Lon' ) 
+      if ( verbose ) call dump( l1bField%dpField, 'lons before monotony' )
       call Monotonize( l1bField%dpField )
+      if ( verbose ) call dump( l1bField%dpField, 'lons after monotony' )
       ! call dump( l1bField%dpField, 'l1bField%dpField' )
     endif
     noFreqs = size(l1bField%dpField,2)
@@ -669,6 +674,9 @@ contains ! =========== Public procedures ===================================
 end module HGridsDatabase
 
 ! $Log$
+! Revision 2.23  2016/01/11 23:12:58  pwagner
+! Skip Attempting to monotonize longitudes containing Fills
+!
 ! Revision 2.22  2015/07/14 23:22:27  pwagner
 ! Prevent insertion of Fill values in L1BGeolocations when gaps occur in counterMAF
 !
