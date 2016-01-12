@@ -56,7 +56,7 @@ module MLSL2Options              !  Options and Settings for the MLSL2 program
 
   ! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
   ! The following should be TRUE if run with level 1 as a single PGE
-  ! sharing a single PCF
+  ! sharing a single PCF; i.e., for the near real-time (nrt)
   ! (in which case we need to move some of the "mobile" PCF ids)
   logical :: SHAREDPCF                               =  .false. 
 
@@ -156,10 +156,6 @@ module MLSL2Options              !  Options and Settings for the MLSL2 program
   logical            :: MLSL2DEBUG                    = .false.               
   ! --------------------------------------------------------------------------
 
-  ! This is the type to store runtime Booleans set and used by the l2cf
-  integer, parameter :: RTVSTRINGLENGTH               = 1024
-  integer, parameter :: RTVARRAYLENGTH                = 128
-  
   character(len=2048) :: command_line ! All the opts
   character(len=2048) :: ORIGINALCMDS ! As set when executed
   ! The following will be used only by MLSL2
@@ -182,14 +178,14 @@ module MLSL2Options              !  Options and Settings for the MLSL2 program
   logical :: TIMING          = .false.  ! -T option is set
   ! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-  ! The following list of public procedures is for convenience only
-  public :: dumpMacros
-  public :: MLSMessage
-  public :: processOptions
-  public :: removeRuntimeBoolean
-  public :: restoreDefaults
-  integer, private :: i ! For loop constructor below
+  ! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+  ! This is the type to store runtime Booleans set and used by the l2cf
+  ! We sometimes call these runtime values or runtime macros
 
+  ! Suggestion: settle on a standard name and use it exclusively
+  integer, parameter :: RTVSTRINGLENGTH               = 1024
+  integer, parameter :: RTVARRAYLENGTH                = 128
+  
   type :: runTimeValues_T
     character(len=1)                   :: sep = achar(0)
     ! Two arrays bound as a {keys=>values} hash
@@ -202,6 +198,14 @@ module MLSL2Options              !  Options and Settings for the MLSL2 program
   type(runTimeValues_T), save :: runTimeValues
   type (MLSFile_T), save      :: AllocFile
 
+  ! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+  ! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+  ! Not used yet; the polymorphic type introduced in Fortran 2003
+  ! may be a better solution.
+  ! The basic idea is to be able to pass an object of any of the datatypes
+  ! level 2 knows about. We might do this during a call to MLSMessage, say,
+  ! if an anomalous instance is detected
   type :: dbItem_T
     ! This stores a generic level 2 datatype indexed by the database indx
     ! and with the type specified by dbType
@@ -236,7 +240,16 @@ module MLSL2Options              !  Options and Settings for the MLSL2 program
   integer, parameter :: DB_Vector             = DB_Matrix             + 1
   integer, parameter :: DB_QuantityTemplate   = DB_Vector             + 1
   integer, parameter :: DB_VectorTemplate     = DB_QuantityTemplate   + 1
+  ! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
   
+  ! The following list of public procedures is for convenience only
+  public :: dumpMacros
+  public :: MLSMessage
+  public :: processOptions
+  public :: removeRuntimeBoolean
+  public :: restoreDefaults
+  integer, private :: i ! For loop constructor below
+
   logical, private, parameter :: countEmpty = .true. ! Except where overriden locally
   
 !=============================================================================
@@ -1147,9 +1160,12 @@ jloop:do while ( j < len_trim(line) )
         valu = '-V' // valu
         call ProcessLine( trim(valu), filename, exitLoop, entireLine=.true. )
         return
+      endif
 
       ! Standard cases: either single-character or multi-character
-      elseif ( len_trim(name ) < 2 ) then
+      ! If false, prefix name with 'n'
+      if ( valu == 'false' ) name = 'n' // name
+      if ( len_trim(name ) < 2 ) then
         ! single-character options
         name = '-' // name
       elseif ( isDigits(name(2:) ) ) then
@@ -1159,15 +1175,13 @@ jloop:do while ( j < len_trim(line) )
         ! multi-character options
         name = '--' // name
       endif
-      if ( valu == 'true' ) then
+      if ( any( valu == (/ 'true ', 'false' /) ) ) then
         ! print *, 'processing cmdline option ', trim(name)
         call ProcessLine( trim(name), filename, exitLoop, entireLine=.true. )
-      elseif ( valu == 'false' ) then
-        ! print *, 'processing cmdline option ', trim('n' // name)
-        call ProcessLine( trim('n' // name), filename, exitLoop, entireLine=.true. )
       else
         ! print *, 'processing cmdline option ', trim(name) // ' ' // trim(valu)
-        call ProcessLine( trim(name) // ' ' // trim(valu), filename, exitLoop, entireLine=.true. )
+        call ProcessLine( trim(name) // ' ' // trim(valu), filename, exitLoop, &
+          & entireLine=.true. )
       endif
     end subroutine parseNameValue
     
@@ -1314,6 +1328,9 @@ end module MLSL2Options
 
 !
 ! $Log$
+! Revision 2.105  2016/01/12 00:51:35  pwagner
+! Repair error in treating 'name=false' option
+!
 ! Revision 2.104  2015/09/24 22:08:34  pwagner
 ! Added --maxChunkSize option
 !
