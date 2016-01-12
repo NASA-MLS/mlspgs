@@ -330,7 +330,8 @@ module DUMP_0
   ! E.g., '-crt' turns on CLEAN, RMS, and TRIM
   character(len=8), public, save :: DEFAULTDIFFOPTIONS = ' '
   character(len=8), public, save :: DEFAULTDUMPOPTIONS = ' '
-  integer, public, save          :: DEFAULTMAXLON = 128
+  integer, public, save          :: DEFAULTMAXLON      = 128
+  integer, public, save          :: DEFAULTWIDTH       = 10
   character(len=8), public, save :: DUMPTABLESIDE      = 'top'
   logical, public, save ::   DIFFRMSMEANSRMS           = .false.
   logical, public, save ::   DONTDUMPIFALLEQUAL        = .true.
@@ -800,7 +801,7 @@ contains
     call theDumpBegins ( options )
     myFillValue = ' '
     if ( present(FillValue) ) myFillValue = FillValue
-    MyWidth = 10
+    MyWidth = DEFAULTWIDTH ! 10
     if ( present(width) ) MyWidth = width
 
     lon = len(array(1))
@@ -2840,6 +2841,7 @@ contains
     DEFAULTDIFFOPTIONS        = ' '
     DEFAULTDUMPOPTIONS        = ' '
     DEFAULTMAXLON             = 128
+    DEFAULTWIDTH              = 10
     DUMPTABLESIDE             = 'top'
     DIFFRMSMEANSRMS           = .false.
     DONTDUMPIFALLEQUAL        = .true.
@@ -3418,6 +3420,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.134  2016/01/12 00:46:51  pwagner
+! May override DEFAULTWIDTH when dumping char array
+!
 ! Revision 2.133  2015/08/25 18:38:27  vsnyder
 ! Include LBOUND in 'all values are the same' dumps
 !
