@@ -15,7 +15,8 @@ program l2auxdump ! dumps datasets, attributes from L2AUX files
 
    use allocate_deallocate, only: allocate_test, deallocate_test
    use dates_module, only: tai93s2hid
-   use dump_0, only: defaultmaxlon, dump, dumpdumpoptions, intplaces
+   use dump_0, only: defaultmaxlon, defaultwidth, dump, dumpdumpoptions, &
+     & intplaces
    use HDF, only: dfacc_read
    use HDF5, only: h5fis_hdf5_f, h5gclose_f, h5gopen_f
    use highoutput, only: dump
@@ -78,6 +79,7 @@ program l2auxdump ! dumps datasets, attributes from L2AUX files
     real                :: fillValue  = 0.e0
     integer             :: firstMAF = -1
     integer             :: lastMAF = -1
+    integer             :: width = 10
   end type options_T
   
   type ( options_T ) :: options
@@ -212,6 +214,7 @@ contains
      print *, 'fillValueRelation   ', options%fillValueRelation
      print *, 'first maf           ', options%firstMAF
      print *, 'last maf            ', options%lastMAF
+     print *, 'width               ', options%width
      print *, 'DSName              ', trim_safe(options%DSName)
      print *, 'attributes          ', trim_safe(options%attributes)
      print *, 'datasets            ', trim_safe(options%datasets)
@@ -287,6 +290,12 @@ contains
         read(number, *) options%lastMAF
         i = i + 1
         exit
+      else if ( filename(1:4) == '-w ' ) then
+        call getarg ( i+1+hp, number )
+        read(number, *) options%width
+        defaultWidth = options%width
+        i = i + 1
+        exit
       else if ( filename(1:4) == '-fv ' ) then
         call getarg ( i+1+hp, number )
         read(number, *) options%fillValue
@@ -357,6 +366,7 @@ contains
       write (*,*) ' Options: -f filename     => add filename to list of filenames'
       write (*,*) '                           (can do the same w/o the -f)'
       write (*,*) '          -v              => switch on verbose mode'
+      write (*,*) '          -w width        => use width when dumping char arrays'
       write (*,*) '          -la             => just list attribute names in files'
       write (*,*) '          -ls             => just list sd names in files'
       write (*,*) '          -skip list      => skip dumping the SDs in list'
@@ -602,6 +612,9 @@ end program l2auxdump
 !==================
 
 ! $Log$
+! Revision 1.19  2015/04/17 23:03:03  pwagner
+! Added -TAI option to convert tai93s to hours-in-day
+!
 ! Revision 1.18  2015/01/24 00:06:03  pwagner
 ! Added commandline option to detect NaNs lin l1b files
 !
