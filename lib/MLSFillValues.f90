@@ -13,16 +13,16 @@
 module MLSFillValues              ! Some FillValue-related stuff
 !=============================================================================
 
-  use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
-  use IEEE_ARITHMETIC, only: ISFINITE => IEEE_IS_FINITE, ISNAN => IEEE_IS_NAN, &
-    & IEEE_IS_FINITE, IEEE_IS_NAN
-  use MLSCOMMON, only: FILL_SIGNAL, INF_SIGNAL, NAN_SIGNAL, UNDEFINEDVALUE, &
-    & IS_WHAT_IEEE, MLSFill_T, MLSFILLS
-  use MLSKINDS ! EVERYTHING
-  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
-  use MLSFINDS, only: FINDALL, FINDFIRST, FINDLAST
-  use MLSSTRINGLISTS, only: EXTRACTSUBSTRING 
-  use MLSSTRINGS, only: LOWERCASE
+  use allocate_deallocate, only: allocate_test, deallocate_test
+  use ieee_arithmetic, only: isFinite => ieee_is_finite, isNaN => ieee_is_NaN, &
+    & ieee_is_finite, ieee_is_NaN
+  use MLSCommon, only: fill_signal, inf_signal, NaN_signal, undefinedvalue, &
+    & is_what_ieee, MLSFill_t, MLSFills
+  use MLSKinds ! everything
+  use MLSMessageModule, only: mlsmessage, mlsmsg_error
+  use MLSFinds, only: findAll, findFirst, findLast
+  use MLSStringLists, only: extractSubstring 
+  use MLSStrings, only: lowercase
 
   implicit none
 
@@ -53,18 +53,19 @@ module MLSFillValues              ! Some FillValue-related stuff
 ! (1) fill values
 ! (2) embedding/extracting blocs of elements
 ! (3) monotonic increasing or decreasing arrays
-! (4) Some miscellaneous procedures identifying Finite, Nan, or Inf, quantities
+! (4) Some miscellaneous procedures identifying Finite, NaN, or Inf, quantities
 ! (All but (1) should perhaps be relocated into other modules)
 
-! Fill values are values in an array which have been marked as to be ignored
+! Fill values are values in an array which have been so marked as to be ignored
 ! Sometimes they are preassigned values, as with mls hdf[eos] datasets
 ! where we use -999.99
-! Sometimes they values given explicitly to mark where an agorithm failed
-! or a an excursion outside its region of validity was detected
+! Sometimes we give them values explicitly to mark where an agorithm failed
+! or where a an excursion outside its region of validity was detected
 ! Sometimes we simply want to consider only non-zero values
 
 ! Could we generalize this to mark as Fill values any values above or
 ! below a threshold, or whose absolute value is above a threshold?
+
 ! === (start of toc) ===                                                 
 !     c o n t e n t s
 !     - - - - - - - -
@@ -102,12 +103,13 @@ module MLSFillValues              ! Some FillValue-related stuff
 !                     returning a new array smaller in size
 ! ReorderFillValues Reorders FillValue entries at the end of an array
 ! ReplaceFillValues Replaces FillValue entries in an array
+!                     either by interpolating or stutter the non-Fill values
 ! Repopulate        Restores non-zero values in presumably
 !                     sparse array to their proper locations
 ! RoundUpOrDown     Rounds an arg up or down depending on fraction
 ! WhereAreTheFills  Find which array elements are Fill values
 ! WhereAreTheInfs   Find which array elements are Inf
-! WhereAreTheNans   Find which array elements are NaN
+! WhereAreTheNaNs   Find which array elements are NaN
 ! === (end of toc) ===                                                   
 
 ! === (start of api) ===
@@ -377,23 +379,24 @@ module MLSFillValues              ! Some FillValue-related stuff
   ! where obviously 100000 is an arbitrary number
   ! Should we study this more carefully?
   real, parameter, private :: FILLVALUETOLERANCE = 0.2 ! Poss. could make it 1
-  integer, parameter       :: MAXDEPOPULATED = 1000000
-  character(len=3), save :: NaNString = 'NaN'
-  character(len=3), save :: InfString = 'Inf'
-  logical, parameter ::   DEEBUG = .false.
+  integer, parameter       :: MAXDEPOPULATED     = 1000000
+  character(len=3), save   :: NaNString          = 'NaN'
+  character(len=3), save   :: InfString          = 'Inf'
+  logical, parameter       :: DEEBUG             = .false.
+  logical, save            :: DONTINTERPOLATE    = .false. ! If true, stutter
 
 contains
 
   !-------------------------------------------  `  -----
   integer function AddFillValueToDatabase( FillValue, &
-    & tol, condition, YOURDATABASE )
+    & tol, condition, yourDatabase )
 
     ! This function adds an FillValue data type to a database of said types,
     ! creating a new database if it doesn't exist.  The result value is
     ! the size -- where FillValue is put.
 
     ! Dummy arguments
-    type (MLSFill_T), dimension(:), optional, pointer :: YOURDATABASE
+    type (MLSFill_T), dimension(:), optional, pointer :: yourDatabase
     real(r8), optional, intent(in)                    :: tol
     real(r8), intent(in)                              :: FillValue
     character(len=*), optional, intent(in)            :: condition
@@ -416,20 +419,20 @@ contains
   end function AddFillValueToDatabase
 
   !-------------------------------------------  `  -----
-  integer function addMLSFillTypeToDatabase( ITEM, YOURDATABASE )
+  integer function addMLSFillTypeToDatabase( ITEM, yourDatabase )
 
     ! This function adds an MLSFill data type to a database of said types,
     ! creating a new database if it doesn't exist.  The result value is
     ! the size -- where MLSFill is put.
 
     ! Dummy arguments
-    type (MLSFill_T), dimension(:), optional, pointer :: YOURDATABASE
+    type (MLSFill_T), dimension(:), optional, pointer :: yourDatabase
     type (MLSFill_T), intent(in) :: ITEM
 
     ! Executable
     if ( present(yourDatabase) ) then
-      addMLSFillTypeToDatabase = AddMLSFillToDefinite( item, yourdatabase )
-      ! call dump( yourdatabase )
+      addMLSFillTypeToDatabase = AddMLSFillToDefinite( item, yourDatabase )
+      ! call dump( yourDatabase )
     else
       addMLSFillTypeToDatabase = AddMLSFillToDefinite( item, MLSFills )
       ! call dump( MLSFills )
@@ -1367,11 +1370,11 @@ contains
   ! This family of routines checks to see if an arg is Infinite
   elemental logical function IsInfinite_REAL ( A ) result( Infinite )
     real, intent(in) :: A
-    Infinite = .not. ( ieee_is_finite(a) .or. ieee_is_nan(a) )
+    Infinite = .not. ( ieee_is_finite(a) .or. ieee_is_NaN(a) )
   end function isInfinite_real
   elemental logical function IsInfinite_DOUBLE ( A ) result( Infinite )
     double precision, intent(in) :: A
-    Infinite = .not. ( ieee_is_finite(a) .or. ieee_is_nan(a) )
+    Infinite = .not. ( ieee_is_finite(a) .or. ieee_is_NaN(a) )
   end function isInfinite_DOUBLE
   elemental logical function IsInfinite_INTEGER ( A ) result( Infinite )
     integer, intent(in) :: A
@@ -3093,6 +3096,9 @@ end module MLSFillValues
 
 !
 ! $Log$
+! Revision 2.35  2016/01/13 00:45:44  pwagner
+! May optionally stutter instead of interpolate
+!
 ! Revision 2.34  2015/03/28 01:49:59  vsnyder
 ! Moved IsMonotonic to Monotone module
 !
