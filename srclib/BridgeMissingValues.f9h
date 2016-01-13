@@ -11,6 +11,11 @@
 
 ! $Id$
 !  subroutine BridgeMissingValues_1dr4(values, MissingValue)
+!     The basic idea is to bridge missing data by interpolating across the
+!     chasm
+!     There will be some cases where that won't work, e.g. longitudes
+!     so we allow the option DONTINTERPOLATE
+!     If set, we just stutter the last non-Fill value
 !     ! Args
 !     real(r4), dimension(:), intent(inout) :: values
 !     real(r4), intent(in), optional        :: missingValue
@@ -30,9 +35,24 @@
     if ( .not. any(IsFillValue(values, myMissingValue) ) ) return
     x1 = myMissingValue
     i1 = 0
+    if ( DONTINTERPOLATE .and. IsFillValue(values(1)) ) then
+      ! If the first value is a Fill, we can't choose the previous value, 
+      ! because there isn't one
+      ! So we'll choose the next non-Fill
+      i1 = FindFirst( .not. IsFillValue(values) )
+      if ( i1 > 0 ) x1 = values(i1)
+    endif
     bridging = .false.
     do i=1, size(values)
-      if ( bridging ) then
+      if ( DONTINTERPOLATE ) then
+        if ( IsFillValue(values(i)) ) then
+          if ( i == 1 ) then
+            values(i) = x1
+          else
+            values(i) = values(i-1)
+          endif
+        endif
+      elseif ( bridging ) then
         if ( IsFillValue(values(i)) ) cycle
         i2 = i
         x2 = values(i)
@@ -53,6 +73,9 @@
 !  end subroutine BridgeMissingValues_1dr4
 
 ! $Log$
+! Revision 1.2  2008/01/07 21:40:10  pwagner
+! Replace DEFAULTUNDEFINEDVALUE with user-settable undefinedValue
+!
 ! Revision 1.1  2005/08/05 20:31:22  pwagner
 ! First commit
 !
