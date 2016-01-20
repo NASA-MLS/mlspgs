@@ -14,7 +14,7 @@ module MLSStringLists               ! Module to treat string lists
 !=============================================================================
 
   use Printit_m, only: MLSMSG_allocate, MLSMSG_deallocate, &
-    & MLSMSG_error, MLSMSG_warning, printitout
+    & MLSMSG_Error, MLSMSG_Warning, printItOut
   use MLSCommon, only: bareFNLen
   use MLSFinds, only: findFirst
   use MLSStrings, only: capitalize, lowerCase, nCopies, &
@@ -118,7 +118,7 @@ module MLSStringLists               ! Module to treat string lists
 !   & [char* options])
 ! GetUniqueStrings (char* inList(:), char* outList(:), int noUnique, 
 !   [char* extra(:)], [char* fillValue], [char* options])
-! char* intersection (char* str1, char* str2)
+! char* intersection ( char* str1, char* str2, [char* options] )
 ! log IsInList(strlist stringList, char* string, [char* options])
 ! List2Array (strlist inList, char* outArray(:), log countEmpty,
 !   [char inseparator], [log IgnoreLeadingSpaces])
@@ -258,20 +258,20 @@ module MLSStringLists               ! Module to treat string lists
 !     first w/o the extra arg, and the second time with the extra arg
 ! === (end of api) ===
 
-  public :: ARRAY2LIST, BOOLEANVALUE, BUILDHASH, CATLISTS, &
-   & EVALUATEFORMULA, EXPANDSTRINGRANGE, EXTRACTSUBSTRING, &
-   & GETHASHELEMENT, GETSTRINGELEMENT, &
-   & GETUNIQUEINTS, GETUNIQUESTRINGS, GETUNIQUELIST, &
-   & INSERTHASHELEMENT, INTERSECTION, ISINLIST, &
-   & LIST2ARRAY, LOOPOVERFORMULA, LISTMATCHES, &
-   & NCHARSINFORMAT, NUMSTRINGELEMENTS, &
-   & OPTIONDETAIL, PARSEOPTIONS, PUTHASHELEMENT, READINTSFROMLIST, &
-   & REMOVEELEMFROMLIST, REMOVELISTFROMLIST, REMOVENUMFROMLIST, &
-   & REMOVEHASHARRAY, REMOVEHASHELEMENT, REMOVESWITCHFROMLIST, &
-   & REPLACESUBSTRING, REVERSELIST, REVERSESTRINGS, &
-   & SNIPLIST, SORTARRAY, SORTLIST, STRINGELEMENT, STRINGELEMENTNUM, &
-   & SWITCHDETAIL, &
-   & UNQUOTE, WRAP
+  public :: array2List, booleanValue, buildHash, catLists, &
+   & evaluateFormula, expandStringRange, extractSubstring, &
+   & getHashElement, getStringElement, &
+   & getUniqueInts, getUniqueStrings, getUniqueList, &
+   & insertHashElement, intersection, isInList, &
+   & list2Array, loopOverFormula, listMatches, &
+   & nCharsInFormat, numStringElements, &
+   & optionDetail, parseOptions, putHashElement, readIntsFromList, &
+   & removeElemFromList, removeListFromList, removeNumFromList, &
+   & removeHashArray, removeHashElement, removeSwitchFromList, &
+   & replaceSubstring, reverseList, reverseStrings, &
+   & snipList, sortArray, sortList, stringElement, stringElementNum, &
+   & switchDetail, &
+   & unquote, wrap
 
   interface BooleanValue
     module procedure BooleanValue_log, BooleanValue_str
@@ -1898,14 +1898,17 @@ contains
   end subroutine INSERTHASHELEMENT
 
   ! -------------------------------------------------  Intersection  -----
-  function Intersection (STR1, STR2) result (OUTSTR)
+  function Intersection ( str1, str2, options ) result ( outstr )
     ! return intersection of 2 string lists, blank means empty set
     ! E.g., given str1 = 'a,b,c' and str2 = 'd,e,f,c,a'
     ! returns 'a,c'
+    ! options
+    ! '-w' combined with wildcard '*' lets 'a*' match any string 'a..'
     !--------Argument--------!
-    character (len=*), intent(in) :: STR1
-    character (len=*), intent(in) :: STR2
-    character (len=len(str1)+len(str2)+1) :: OUTSTR
+    character (len=*), intent(in)                 :: str1
+    character (len=*), intent(in)                 :: str2
+    character (len=*), optional, intent(in)       :: options
+    character (len=len(str1)+len(str2)+1)         :: outstr
 
     !----------Local vars----------!
     logical, parameter :: countEmpty = .true.
@@ -1929,7 +1932,7 @@ contains
     outstr = ' '
     do i=1, n1
       call GetStringElement( uniq1, elem, i, countEmpty )
-      if ( IsInList( uniq2, trim(elem) ) ) &
+      if ( IsInList( uniq2, trim(elem), options) ) &
         & outstr = catLists( outstr, elem )
     enddo
 
@@ -1948,7 +1951,7 @@ contains
   ! Special cases:
   ! string == ' '      => always FALSE
   ! stringList == ' '  => always FALSE
-  function IsInList(stringList, string, options) result(itIs)
+  function IsInList( stringList, string, options ) result(itIs)
     ! Dummy arguments
     character (len=*), intent(in)                 :: stringlist
     character (len=*), intent(in)                 :: string
@@ -4461,6 +4464,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.70  2016/01/20 00:20:44  pwagner
+! Added optional arg options to Intersection to allow wildcard matches
+!
 ! Revision 2.69  2015/09/03 20:22:21  pwagner
 ! Fixed error in RemoveElemFromList
 !
