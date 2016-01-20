@@ -23,51 +23,51 @@ module MLSHDF5
   ! This note, like the Lahey compiler, is deprecated in our current
   ! software. We will resume alphabetizing the used module names.
 
-  use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
-  use DUMP_0, only: DOPT_LACONIC, DOPT_RMS, DOPT_STATS, &
-    & DUMP, DUMPNAMEDVALUES
-  use HDF, only: DFACC_RDONLY
-  use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
-  use INTRINSIC, only: L_HDF
-  use MLSCOMMON, only: MLSFILE_T
-  use MLSDATAINFO, only: MLSDATAINFO_T, QUERY_MLSDATA
-  use MLSFILES, only: HDFVERSION_5, INITIALIZEMLSFILE, MLS_OPENFILE
-  use MLSKINDS, only: R8
-  use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_WARNING, MLSMESSAGE
-  use MLSFINDS, only: FINDFIRST
-  use MLSSTRINGLISTS, only: CATLISTS, ISINLIST, &
-    & GETSTRINGELEMENT, NUMSTRINGELEMENTS, STRINGELEMENT
-  use MLSStrings, only: indexes, lowerCase, replace, trim_safe
-  use OUTPUT_M, only: NEWLINE, OUTPUT
-  use TRACE_M, only: TRACE_BEGIN, TRACE_END
-  ! LETS BREAK DOWN OUR use, PARAMETERS FIRST
-  use HDF5, only: H5F_ACC_RDonly_F, H5F_ACC_RDWR_F, &
-    & H5P_DATASET_CREATE_F, &
-    & H5SIS_SIMPLE_F, & ! H5SOFFSET_SIMPLE_F, &
-    & H5S_SCALAR_F, H5S_SELECT_SET_F, H5S_UNLIMITED_F, &
-    & H5T_IEEE_F32LE, H5T_IEEE_F64LE, H5T_IEEE_F64LE, &
-    & H5T_NATIVE_DOUBLE, H5T_NATIVE_REAL, H5T_STD_I32LE, &
-    & H5T_NATIVE_CHARACTER, H5T_NATIVE_INTEGER, H5T_STRING, H5T_STRING_F, &
-    & HID_T, HSIZE_T, SIZE_T
-  ! NOW ROUTINES
-  use HDF5, only: H5ACLOSE_F, H5ACREATE_F, &
-    & H5AGET_NAME_F, H5AGET_NUM_ATTRS_F, &
-    & H5AGET_SPACE_F, H5AGET_TYPE_F, H5AOPEN_IDX_F, H5AOPEN_NAME_F, &
-    & H5AREAD_F, H5AWRITE_F, H5ADELETE_F, &
-    & H5DCREATE_F, H5DEXTEND_F, H5DGET_SPACE_F, H5DGET_TYPE_F, H5DOPEN_F, &
-    & H5DREAD_F, H5DWRITE_F, H5DCLOSE_F, H5DGET_CREATE_PLIST_F, &
-    & H5ESET_AUTO_F, &
-    & H5FOPEN_F, H5FCLOSE_F, &
-    & H5GOPEN_F, H5GCLOSE_F, &
-    & H5PCREATE_F, H5PSET_CHUNK_F, H5PSET_FILL_VALUE_F, &
-    & H5PGET_CHUNK_F, H5PGET_FILL_VALUE_F, &
-    & H5SCLOSE_F, &
-    & H5SCREATE_F, H5SCREATE_SIMPLE_F, H5SGET_SIMPLE_EXTENT_NDIMS_F, &
-    & H5SGET_SIMPLE_EXTENT_DIMS_F, H5SSELECT_HYPERSLAB_F, &
-    & H5TCLOSE_F, H5TCOPY_F, H5TEQUAL_F, H5TGET_CLASS_F, H5TGET_SIZE_F, &
-    & H5TSET_SIZE_F
+  use Allocate_deallocate, only: allocate_test, deallocate_test
+  use Dump_0, only: dopt_laconic, dopt_rms, dopt_stats, &
+    & Dump, dumpnamedvalues
+  use Hdf, only: dfacc_rdonly
+  use HighOutput, only: outputNamedValue
+  use Intrinsic, only: l_hdf
+  use MLSCommon, only: mlsfile_t
+  use MLSDataInfo, only: mlsdatainfo_t, query_mlsdata
+  use MLSFiles, only: hdfversion_5, initializemlsfile, mls_openfile
+  use MLSKinds, only: r8
+  use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning, MLSMessage
+  use MLSFinds, only: findFirst
+  use MLSStringLists, only: catLists, isInList, &
+    & Getstringelement, Intersection, numStringElements, stringElement
+  use Mlsstrings, only: indexes, lowercase, replace, trim_safe
+  use Output_m, only: newline, output
+  use Trace_m, only: trace_begin, trace_end
+  ! leTs break down our use, parameters first
+  use Hdf5, only: h5f_acc_rdonly_f, h5f_acc_rdwr_f, &
+    & H5p_dataset_create_f, &
+    & H5sis_simple_f, & ! h5soffset_simple_f, &
+    & H5s_scalar_f, h5s_select_set_f, h5s_unlimited_f, &
+    & H5t_ieee_f32le, h5t_ieee_f64le, h5t_ieee_f64le, &
+    & H5t_native_double, h5t_native_real, h5t_std_i32le, &
+    & H5t_native_character, h5t_native_integer, h5t_string, h5t_string_f, &
+    & Hid_t, hsize_t, size_t
+  ! noW routines
+  use Hdf5, only: h5aclose_f, h5acreate_f, &
+    & H5aget_name_f, h5aget_num_attrs_f, &
+    & H5aget_space_f, h5aget_type_f, h5aopen_idx_f, h5aopen_name_f, &
+    & H5aread_f, h5awrite_f, h5adelete_f, &
+    & H5dcreate_f, h5dextend_f, h5dget_space_f, h5dget_type_f, h5dopen_f, &
+    & H5dread_f, h5dwrite_f, h5dclose_f, h5dget_create_plist_f, &
+    & H5eset_auto_f, &
+    & H5fopen_f, h5fclose_f, &
+    & H5gopen_f, h5gclose_f, &
+    & H5pcreate_f, h5pset_chunk_f, h5pset_fill_value_f, &
+    & H5pget_chunk_f, h5pget_fill_value_f, &
+    & H5sclose_f, &
+    & H5screate_f, h5screate_simple_f, h5sget_simple_extent_ndims_f, &
+    & H5sget_simple_extent_dims_f, h5sselect_hyperslab_f, &
+    & H5tclose_f, h5tcopy_f, h5tequal_f, h5tget_class_f, h5tget_size_f, &
+    & H5tset_size_f
 
-  implicit NONE
+  implicit none
   private
 
   public :: CpHDF5Attribute, CpHDF5GlAttribute, &
@@ -561,7 +561,7 @@ contains ! ======================= Public Procedures =========================
     character(len=*), intent(in)            :: groupName ! datasets in group
     character (len=*), intent(in), optional :: NAMES   ! only these names
     real, intent(in), optional              :: fillValue ! Show % = fill
-    character(len=*), intent(in), optional :: options
+    character(len=*), intent(in), optional  :: options
 
     ! Local variables
     integer :: ch
@@ -585,6 +585,7 @@ contains ! ======================= Public Procedures =========================
     integer :: k
     integer :: m
     integer :: Me = -1                  ! String index for trace cacheing
+    character(len=MAXNDSNAMES*MAXNAMELEN) :: matches
     character(len=MAXNDSNAMES*MAXNAMELEN) :: myNames
     character(len=128) :: name
     character(len=128) :: namePrinted
@@ -592,6 +593,7 @@ contains ! ======================= Public Procedures =========================
     integer :: numDS
     character(len=16) :: Qtype
     integer :: rank
+    character(len=MAXNDSNAMES*MAXNAMELEN) :: sdNames
     logical :: skipCharValues
     integer :: spaceID
     integer :: status
@@ -608,7 +610,16 @@ contains ! ======================= Public Procedures =========================
       & skipCharValues = any( indexes(options, (/dopt_rms, dopt_stats/)) > 0 )
     myNames = '*' ! Wildcard means 'all'
     if ( present(names) ) myNames = names
-    if ( myNames == '*' ) call GetAllHDF5DSNames ( locID, groupName, myNames )
+    call GetAllHDF5DSNames ( locID, groupName, sdNames )
+    ! Did we ask for any datasets by name? With wildcard?
+    ! print *, 'sdNames: ', trim(sdNames)
+    ! print *, 'Names:   ', trim(Names)
+    if ( myNames == '*' ) then
+      myNames = sdNames
+    elseif( index( myNames, '*') > 0 ) then
+      myNames = Intersection( sdNames, myNames, options='-w' )
+    endif
+    ! print *, 'Intersection:   ', trim(myNames)
     dontPrintName = .false.
     if ( present(options) ) dontPrintName = index(options, dopt_laconic) > 0
     numDS = NumStringElements ( myNames, countEmpty )
@@ -5701,6 +5712,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.133  2016/01/20 00:23:09  pwagner
+! Added wildcard matches to DumpHDF5DS
+!
 ! Revision 2.132  2015/07/14 23:17:17  pwagner
 ! May specify how to replace nulls in text file saved as DS
 !
