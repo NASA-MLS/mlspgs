@@ -31,10 +31,10 @@ program l2auxdump ! dumps datasets, attributes from L2AUX files
    use MLSHdf5, only: maxndsnames, dumphdf5attributes, dumphdf5ds, &
      & getallhdf5attrnames, getallhdf5dsnames, &
      & MLS_h5open, mls_h5close
-   use MLSMessagemodule, only: mlsmsg_error, mlsmsg_warning, &
+   use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning, &
      & MLSMessage
    use MLSStats1, only: fillvaluerelation, stat_t, dump, statistics
-   use MLSStringlists, only: catlists, getstringelement, &
+   use MLSStringLists, only: catlists, getstringelement, Intersection, &
      & numStringelements, stringelementnum
    use MLSStrings, only: indexes, lowercase, streq, trim_safe
    use output_m, only: output, switchOutput
@@ -163,7 +163,7 @@ program l2auxdump ! dumps datasets, attributes from L2AUX files
     if ( options%datasets /= ' ' ) then
       if ( options%radiances .or.  options%TAI .or. &
         & options%timereads .or. options%anyNaNs ) then
-        call dumpradiances ( filenames(i), hdfVersion, options )
+        call dumpRadiances ( filenames(i), hdfVersion, options )
         sdfid1 = mls_sfstart( filenames(i), DFACC_READ, hdfVersion=hdfVersion )
       elseif ( options%useFillValue ) then
         call DumpHDF5DS ( sdfid1, trim(options%root), trim(options%datasets), &
@@ -363,37 +363,39 @@ contains
       & 'Usage:l2auxdump [options] [filenames]'
       write (*,*) &
       & ' If no filenames supplied, you will be prompted to supply one'
-      write (*,*) ' Options: -f filename     => add filename to list of filenames'
-      write (*,*) '                           (can do the same w/o the -f)'
-      write (*,*) '          -v              => switch on verbose mode'
-      write (*,*) '          -w width        => use width when dumping char arrays'
-      write (*,*) '          -la             => just list attribute names in files'
-      write (*,*) '          -ls             => just list sd names in files'
-      write (*,*) '          -skip list      => skip dumping the SDs in list'
-      write (*,*) '          -NaN            => just say if there are any NaNs'
-      write (*,*) '          -t              => just time reads'
-      write (*,*) '          -radiances      => show radiances only'
-      write (*,*) '          -TAI            => show TAI times only'
-      write (*,*) '          -o opts         => pass opts to dump routines'
-      write (*,*) '                          e.g., "-rs" to dump only rms, stats'
-      write (*,*) '                          e.g., "?" to list available ones'
-      write (*,*) '          -r root         => limit to group based at root'
-      write (*,*) '                             (default is "/")'
-      write (*,*) '          -rd DSName      => limit attributes to root/DSName'
-      write (*,*) '                             (default is group attributes at root)'
-      write (*,*) '          -first maf1     => read l1b starting with maf1'
-      write (*,*) '          -last maf1      => read l1b ending with maf1'
-      write (*,*) '          -fv value       => filter rms, % around value'
-      write (*,*) '          -fvr relation   => one of {"=","<",">"}'
-      write (*,*) '                              we filter values standing in'
-      write (*,*) '                              this relation with fillValue'
-      write (*,*) '          -A              => dump all attributes'
-      write (*,*) '          -D              => dump all datasets (default)'
-      write (*,*) '          -nA             => do not dump attributes (default)'
-      write (*,*) '          -nD             => do not dump datasets'
-      write (*,*) '          -a a1,a2,..     => dump just attributes named a1,a2,..'
-      write (*,*) '          -d d1,d2,..     => dump just datasets named a1,a2,..'
-      write (*,*) '          -h              => print brief help'
+      write (*,*) ' Options:'
+      write (*,*) '  -f filename     => add filename to list of filenames'
+      write (*,*) '                   (can do the same w/o the -f)'
+      write (*,*) '  -v              => switch on verbose mode'
+      write (*,*) '  -w width        => use width when dumping char arrays'
+      write (*,*) '  -la             => just list attribute names in files'
+      write (*,*) '  -ls             => just list sd names in files'
+      write (*,*) '  -skip list      => skip dumping the SDs in list'
+      write (*,*) '  -NaN            => just say if there are any NaNs'
+      write (*,*) '  -t              => just time reads'
+      write (*,*) '  -radiances      => show radiances only'
+      write (*,*) '  -TAI            => show TAI times only'
+      write (*,*) '  -o opts         => pass opts to dump routines'
+      write (*,*) '                  e.g., "-rs" to dump only rms, stats'
+      write (*,*) '                  e.g., "?" to list available ones'
+      write (*,*) '  -r root         => limit to group based at root'
+      write (*,*) '                     (default is "/")'
+      write (*,*) '  -rd DSName      => limit attributes to root/DSName'
+      write (*,*) '                     (default is group attributes at root)'
+      write (*,*) '  -first maf1     => read l1b starting with maf1'
+      write (*,*) '  -last maf1      => read l1b ending with maf1'
+      write (*,*) '  -fv value       => filter rms, % around value'
+      write (*,*) '  -fvr relation   => one of {"=","<",">"}'
+      write (*,*) '                      we filter values standing in'
+      write (*,*) '                      this relation with fillValue'
+      write (*,*) '  -A              => dump all attributes'
+      write (*,*) '  -D              => dump all datasets (default)'
+      write (*,*) '  -nA             => do not dump attributes (default)'
+      write (*,*) '  -nD             => do not dump datasets'
+      write (*,*) '  -a a1,a2,..     => dump just attributes named a1,a2,..'
+      write (*,*) '  -d d1,d2,..     => dump just datasets named a1,a2,..'
+      write (*,*) '                 (may use \* as wild card)'
+      write (*,*) '  -h              => print brief help'
       stop
   end subroutine print_help
 
@@ -408,29 +410,30 @@ contains
 
     ! Arguments
 
-    character (len=*), intent(in) :: file1 ! Name of file
-    integer, intent(in)           :: hdfVersion
-    type ( options_T )            :: options
+    character (len=*), intent(in)     :: file1 ! Name of file
+    integer, intent(in)               :: hdfVersion
+    type ( options_T )                :: options
 
     ! Local
-    logical, parameter            :: countEmpty = .true.
-    logical :: file_exists
-    integer :: grpid
-    integer :: i
-    integer :: iPrec
-    logical :: isl1boa
-    type(l1bdata_t) :: L1BPrecision  ! Result
-    type(l1bdata_t) :: L1BRadiance   ! Result
-    type(Stat_T) :: L1BStat
+    logical, parameter                :: countEmpty = .true.
+    logical                           :: file_exists
+    integer                           :: grpid
+    integer                           :: i
+    integer                           :: iPrec
+    logical                           :: isl1boa
+    type(l1bdata_t)                   :: L1BPrecision  ! Result
+    type(l1bdata_t)                   :: L1BRadiance   ! Result
+    type(Stat_T)                      :: L1BStat
+    character (len=MAXSDNAMESBUFSIZE) :: matches
     character (len=MAXSDNAMESBUFSIZE) :: mySdList
-    integer :: NoMAFs
-    integer :: noSds
-    integer :: sdfid1
-    character (len=80) :: sdName
-    integer, dimension(3) :: shp
-    integer :: status
-    integer :: the_hdfVersion
-    character (len=80) :: which
+    integer                           :: NoMAFs
+    integer                           :: noSds
+    integer                           :: sdfid1
+    character (len=80)                :: sdName
+    integer, dimension(3)             :: shp
+    integer                           :: status
+    integer                           :: the_hdfVersion
+    character (len=80)                :: which
     
     ! Executable code
     if ( .not. any( indexes(options%dumpOptions, (/ 'r', 's' /) ) > 0 ) )  then
@@ -498,11 +501,21 @@ contains
       iPrec = StringElementNum( mysdList, trim(sdName) // PRECISIONSUFFIX, &
         & countEmpty )
       if ( iPrec < 1 .and. .not. isL1BOA ) cycle
+      ! We won't try to dump metadata or obvious non-radiance data
       if ( any( &
         & streq( &
         & (/ 'PCF ', 'meta', 'l2cf', 'utcp', 'leap', 'LCF ' /), &
         & sdname, options='-Pw' ) ) .or. &
         &  index(options%skipList, trim(sdName)) > 0 ) cycle
+      ! Did we ask for any datasets by name? With wildcard?
+      if ( len_trim(options%datasets) > 1 .and. &
+        & index( options%datasets, '*' ) > 0 ) then
+        matches = Intersection( trim(sdName), trim(options%datasets), options='-w' )
+        if ( len_trim(matches) < 1 ) cycle
+      elseif ( options%datasets /= '*' ) then
+        status = stringElementNum(options%datasets, trim(sdName), countEmpty)
+        if ( status < 1 ) cycle
+      endif
       ! Allocate and fill l2aux
       if ( options%verbose ) print *, 'About to read ', trim(sdName)
       if ( options%firstMAF > -1 ) then
@@ -612,6 +625,9 @@ end program l2auxdump
 !==================
 
 ! $Log$
+! Revision 1.20  2016/01/12 00:52:12  pwagner
+! May override DEFAULTWIDTH when dumping char array
+!
 ! Revision 1.19  2015/04/17 23:03:03  pwagner
 ! Added -TAI option to convert tai93s to hours-in-day
 !
