@@ -20,9 +20,9 @@ PROGRAM L2GPDump ! dumps L2GPData files
    use HDF5, only: h5fclose_f, h5gopen_f, h5gclose_f, h5fis_hdf5_f   
    use highoutput, only: outputnamedvalue
    use intrinsic, only: l_swath
-   use l2gpdata, only: l2gpdata_t, l2gpnamelen, maxswathnamesbufsize, rgp, &
-     & contractl2gprecord, dump, dumprange, readl2gpdata, destroyl2gpcontents, &
-     & setupnewl2gprecord
+   use L2GPdata, only: L2GPdata_t, L2GPnamelen, maxswathnamesbufsize, rgp, &
+     & contractL2GPrecord, dump, dumprange, readL2GPdata, destroyL2GPcontents, &
+     & setupnewL2GPrecord
    use machine, only: hp, getarg
    use MLSCommon, only: MLSfile_t
    use MLSFiles, only: hdfversion_5, initializeMLSfile, MLS_inqswath, &
@@ -30,10 +30,10 @@ PROGRAM L2GPDump ! dumps L2GPData files
    use MLSFillvalues, only: isNaN
    use MLSHdf5, only: MLS_h5open, MLS_h5close
    use MLSHdfeos, only: MLS_isglatt, he5_ehrdglatt
-   use MLSMessagemodule, only: MLSmsg_error, MLSmsg_warning, &
+   use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning, &
      & MLSMessage
-   use MLSStringlists, only: catlists, expandstringrange, &
-     & getstringelement, numstringelements, readintsfromlist, &
+   use MLSStringLists, only: catlists, expandstringrange, &
+     & getstringelement, Intersection, numstringelements, readintsfromlist, &
      & stringelement, stringelementnum
    use MLSStrings, only: lowercase, readnumsfromchars
    use output_m, only: blanks, newline, output, &
@@ -68,7 +68,7 @@ PROGRAM L2GPDump ! dumps L2GPData files
      logical ::             debug = .true.
      logical ::             verbose = .false.
      logical ::             senseInquiry = .true.
-     logical             :: anyNaNs = .false. ! Just say if any NaNs
+     logical ::             anyNaNs = .false. ! Just say if any NaNs
      integer ::             details = 1
      integer ::             width = 5
      logical ::             columnsOnly = .false.
@@ -80,6 +80,7 @@ PROGRAM L2GPDump ! dumps L2GPData files
      character(len=255) ::  fields = ''
      character(len=255) ::  swaths = '*' ! wildcard, meaning all swaths
      character(len=255) ::  geoBoxNames = '' ! which geolocation names to box
+     character(len=8)   ::  precCutoffRelation = 'above'
      integer            ::  nGeoBoxDims = 0
      real, dimension(4) ::  geoBoxLowBound
      real, dimension(4) ::  geoBoxHiBound
@@ -146,7 +147,7 @@ PROGRAM L2GPDump ! dumps L2GPData files
       & options%QualityCutOff, 'below' )
     if ( options%PrecisionCutOff > -1. ) &
       & call showPercentages( numTest(3), numGoodPrec, 'precision', &
-      & options%PrecisionCutOff, 'above' )
+      & options%PrecisionCutOff, options%precCutoffRelation )
     if ( options%statusBits ) call showStatusPct
     call ShowSummary
   endif
@@ -263,6 +264,9 @@ contains
         call getarg ( i+1+hp, argstr )
         read( argstr, * ) options%qualityCutOff
         i = i + 1
+      else if ( filename(1:5) == '-rel' ) then
+        call getarg ( i+1+hp, options%precCutoffRelation )
+        i = i + 1
       else if ( filename(1:3) == '-s ' ) then
         call getarg ( i+1+hp, options%swaths )
         i = i + 1
@@ -300,47 +304,56 @@ contains
       & ' If no filenames supplied, you will be prompted to supply one'
       write (*,*) &
       & ' optionally restrict dumps to certain fields, chunks, etc.'
-      write (*,*) ' Options: -f filename => use filename'
-      write (*,*) '          -h          => print brief help'
-      write (*,*) '          -chunks cl  => dump only chunks named in cl'
-      write (*,*) '          -geo name lo,hi  '
-      write (*,*) '                      => dump only geobox low <= geo <= hi'
-      write (*,*) '                      where geo in {latitude, longitude, time, pressure}'
-      write (*,*) '                      (may be repeated)'
-      write (*,*) '                      if hi < lo then dump is outside geobox'
-      write (*,*) '          -d opts     => pass opts to dump routines'
-      write (*,*) '                          e.g., "-rs" to dump only rms, stats'
-      write (*,*) '                          e.g., "?" to list available ones'
-      write (*,*) '          -format form=> format output using form'
-      write (*,*) '          -[n]inqattr attr'
-      write (*,*) '                      => print only if attribute attr [not] present'
-      write (*,*) '          -[n]inqds ds'
-      write (*,*) '                      => print only if dataset ds [not] present'
-      write (*,*) '          -NaN        => just say if there are any NaNs'
-      write (*,*) '          -l list     => dump only fields named in list'
-      write (*,*) '          -s slist    => dump only swaths named in slist'
-      write (*,*) '          -c          => dump only column abundances'
-      write (*,*) '          -a          => dump attributes, too'
-      write (*,*) '          -v          => verbose'
-      write (*,*) '          -w width    => dump with width items on each line'
-      write (*,*) '     (details level)'
-      write (*,*) '          -0          => dump only scalars, 1-d array'
-      write (*,*) '          -1          => dump only scalars'
-      write (*,*) '          -2          => dump only swath names'
+      write (*,*) ' Options:'
+      write (*,*) ' -f filename => use filename'
+      write (*,*) ' -h          => print brief help'
+      write (*,*) ' -chunks cl  => dump only chunks named in cl'
+      write (*,*) ' -geo name lo,hi  '
+      write (*,*) '             => dump only geobox low <= geo <= hi'
+      write (*,*) '             where geo can be one of'
+      write (*,*) '              {latitude, longitude, time, pressure}'
+      write (*,*) '             (may be repeated)'
+      write (*,*) '             if hi < lo then dump is outside geobox'
+      write (*,*) ' -d opts     => pass opts to dump routines'
+      write (*,*) '                 e.g., "-rs" to dump only rms, stats'
+      write (*,*) '                 e.g., "?" to list available opts'
+      write (*,*) ' -format form=> format output using form'
+      write (*,*) ' -[n]inqattr attr'
+      write (*,*) '             => print only if attribute attr [not] present'
+      write (*,*) ' -[n]inqds ds'
+      write (*,*) '             => print only if dataset ds [not] present'
+      write (*,*) ' -NaN        => just say if there are any NaNs'
+      write (*,*) ' -l list     => dump only fields named in list'
+      write (*,*) ' -s slist    => dump only swaths named in slist'
+      write (*,*) '                (may use \* as wild card)'
+      write (*,*) ' -c          => dump only column abundances'
+      write (*,*) ' -a          => dump attributes, too'
+      write (*,*) ' -v          => verbose'
+      write (*,*) ' -w width    => dump with width items on each line'
+      write (*,*) ' (details level)'
+      write (*,*) ' -0          => dump only scalars, 1-d array'
+      write (*,*) ' -1          => dump only scalars'
+      write (*,*) ' -2          => dump only swath names'
 
-      write (*,*) '    (The following options print only summaries)'
-      write (*,*) '          -conv x     => show % nonconverged by x cutoff'
-      write (*,*) '          -prec x     => show % with precision > x cutoff'
-      write (*,*) '          -qual x     => show % with quality < x cutoff'
-      write (*,*) '          -status     => show % with various status bits set'
-      write (*,*) '          -m[erge]    => merge data from all files (dont)'
+      write (*,*) ' (The following options print only summaries)'
+      write (*,*) ' -conv x     => show % nonconverged by x cutoff'
+      write (*,*) ' -prec x     => show % with precision > x cutoff'
+      write (*,*) ' -qual x     => show % with quality < x cutoff'
+      write (*,*) ' -status     => show % with various status bits set'
+      write (*,*) ' -rel "eq"   => show % with precision = x cutoff'
+      write (*,*) ' -rel "statuseven" '
+      write (*,*) '             => show % with precision = x cutoff'
+      write (*,*) '                and with status even'
+      write (*,*) ' -m[erge]    => merge data from all files (dont)'
 
       write (*,*) '    (Notes)'
-      write (*,*) ' (1) by default, dumps all fields in all swaths, but not attributes'
+      write (*,*) ' (1) by default, dumps all fields in all swaths,'
+      write (*,*) '     but not attributes'
       write (*,*) ' (2) by default, detail level is -1'
       write (*,*) ' (3) details levels, -l options are all mutually exclusive'
       write (*,*) ' (4) the list of chunks may include the range operator "-"'
-      write (*,*) ' (5) -conv, -qual, -prec, and -status all turn off detailed dumps'
+      write (*,*) ' (5) -conv, -qual, -prec, and -status'
+      write (*,*) '     all turn off detailed dumps'
       stop
   end subroutine print_help
   
@@ -427,13 +440,14 @@ contains
     ! Local variables
     logical, parameter            :: countEmpty = .true.
     integer :: File1
-    integer :: i
-    integer :: listsize
-    type (L2GPData_T) :: l2gp
-    type(MLSFile_T)                :: MLSFile
-    integer :: noSwaths
-    integer :: status
-    character (len=L2GPNameLen) :: swath
+    integer                              :: i
+    integer                              :: listsize
+    type (L2GPData_T)                    :: l2gp
+    character (len=MAXSWATHNAMESBUFSIZE) :: matches
+    type(MLSFile_T)                      :: MLSFile
+    integer                              :: noSwaths
+    integer                              :: status
+    character (len=L2GPNameLen)          :: swath
     character (len=MAXSWATHNAMESBUFSIZE) :: SwathList
     ! Get swath list
     noSwaths = mls_InqSwath ( filename, SwathList, listSize, &
@@ -455,7 +469,13 @@ contains
     do i = 1, noSwaths
       call GetStringElement (trim(swathList), swath, i, countEmpty )
       ! Is this one of the swaths we wished to dump?
-      if ( options%swaths /= '*' ) then
+      ! Have we used a 'wild card' (*) to match swath names?
+      ! AA bare wild card matches any string
+      if ( len_trim(options%swaths) > 1 .and. &
+        & index( options%swaths, '*' ) > 0 ) then
+        matches = Intersection( trim(swath), trim(options%swaths), options='-w' )
+        if ( len_trim(matches) < 1 ) cycle
+      elseif ( options%swaths /= '*' ) then
         status = stringElementNum(options%swaths, trim(swath), countEmpty)
         if ( status < 1 ) cycle
       endif
@@ -467,7 +487,7 @@ contains
       if ( options%attributesToo ) then
         call MLS_OpenFile( MLSFile )
         file1 = MLSFile%FileID%f_id
-        call dump(file1, l2gp)
+        call dump( file1, l2gp )
         ! call output( 'Trying to find Ascend(+1)Descend(-1) attribute', advance='yes' )
         if ( mls_isglatt ( file1, 'Ascend(+1)Descend(-1)' ) ) then
           ! call output( 'Found it!', advance='yes' )
@@ -566,12 +586,27 @@ contains
            & mod(l2gp%status(i), 2) > 0 ) cycle
          numGoodPrec = numGoodPrec + &
            & l2gp%nLevels*max(1, l2gp%nFreqs)
-         numTest(3) = numTest(3) + &
-           & count( l2gp%l2gpPrecision(:,:,i) > options%PrecisionCutOff )
+         if ( options%precCutoffRelation == 'above' ) then
+           numTest(3) = numTest(3) + &
+             & count( l2gp%l2gpPrecision(:,:,i) > options%PrecisionCutOff )
+         elseif ( options%precCutoffRelation == 'below' ) then
+           numTest(3) = numTest(3) + &
+             & count( l2gp%l2gpPrecision(:,:,i) < options%PrecisionCutOff )
+         elseif ( options%precCutoffRelation == 'statuseven' ) then
+           numTest(3) = numTest(3) + &
+             & count( &
+             & l2gp%l2gpPrecision(:,:,i) == options%PrecisionCutOff &
+             & .and. &
+             & mod(l2gp%status(i), 2) < 1 &
+             & )
+         else
+           numTest(3) = numTest(3) + &
+             & count( l2gp%l2gpPrecision(:,:,i) == options%PrecisionCutOff )
+         endif
        enddo
        if ( .not. options%merge ) &
          & call showPercentages( numTest(3), numGoodPrec, 'precision', &
-         & options%PrecisionCutOff, 'above' )
+         & options%PrecisionCutOff, options%precCutoffRelation )
      endif
      ! numGood = count( .not. ( negativePrec .or. &
      !   & (mod(l2gp%status, 2) > 0) ) )
@@ -650,20 +685,20 @@ contains
      endif
    end subroutine myDump
 
-   subroutine showPercentages( numTest, numGood, name, CutOff, aorb )
+   subroutine showPercentages( numTest, numGood, name, CutOff, relat )
      ! output % figures derived from numTest/numGood
      ! Args
      real, intent(in)    ::          numTest
      integer, intent(in) ::          numGood
      real, intent(in) ::             cutOff
      character(len=*), intent(in) :: name
-     character(len=*), intent(in) :: aorb ! 'above' or 'below'
+     character(len=*), intent(in) :: relat ! 'above' or 'below' or 'equal'
      ! Internal variables
      ! Executable
      call output( '% ' )
      call output( trim(name) )
      call blanks(2)
-     call output( aorb )
+     call output( relat )
      call blanks(2)
      call output( cutOff )
      call blanks(1)
@@ -728,6 +763,9 @@ end program L2GPDump
 !==================
 
 ! $Log$
+! Revision 1.19  2015/01/30 21:05:34  pwagner
+! Added commandline option to detect NaNs in l2gp files
+!
 ! Revision 1.18  2014/07/21 23:09:32  pwagner
 ! Added option -d '?'
 !
