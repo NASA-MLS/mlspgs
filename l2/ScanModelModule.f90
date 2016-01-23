@@ -29,7 +29,7 @@ module ScanModelModule          ! Scan model and associated calculations
   use ForwardModelIntermediate, only:  forwardmodelstatus_t
   use ForwardModelVectortools, only: getquantityforforwardmodel
   use Geometry, only: earthrada, earthradb, earthsurfacegph, geodtogeoclat, &
-    & G0, gm, j2, j4, omega => w, maxrefraction
+    & G0, gm, j2, j4, omega => w
   use Init_tables_module, only: l_refgph, l_zeta
   use Intrinsic, only: l_heightoffset, l_none, l_ptan, l_scanresidual, &
     & L_temperature, l_tngtgeocalt, l_vmr, l_phitan, l_orbitinclination, &
@@ -40,14 +40,15 @@ module ScanModelModule          ! Scan model and associated calculations
     & M_full, updateDiagonal
   use MatrixModule_1, only: createBlock, findBlock, matrix_t, &
     & CreateEmptyMatrix, destroyMatrix, clearMatrix
-  use MLSKinds, only: r8, rp, rv
+  use MLSKinds, only: R8, RP, RV
   use MLSMessagemodule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
   use MLSNumerics, only : hunt, interpolateValues
   use MLSStringLists, only: switchDetail
   use Molecules, only: l_h2o
   use Output_m, only: output
   use QuantityTemplates, only: dump
-  use Refraction_m, only: refractive_index, refraterm, refrbterm
+  use Refraction_m, only: MaxRefraction, Refractive_Index, &
+    & Refractive_Index_Deriv, Refractive_Index_f
   use Toggles, only: emit, toggle, switches
   use Trace_m, only: trace_begin, trace_end
   use VectorsModule, only : validatevectorquantity, &
@@ -58,10 +59,10 @@ module ScanModelModule          ! Scan model and associated calculations
 
   private
 
-  public :: DESTROYFORWARDMODELINTERMEDIATE, DUMPINSTANCEWINDOWS, &
-    & GETBASISGPH, GETGPHPRECISION, &
-    & GETHYDROSTATICTANGENTPRESSURE, GET2DHYDROSTATICTANGENTPRESSURE,      &
-    & SCANFORWARDMODEL, TWODSCANFORWARDMODEL
+  public :: DestroyForwardModelIntermediate, DumpInstanceWindows, &
+    & GetBasisGPH, GetGPHPrecision, &
+    & GetHydrostaticTangentPressure, Get2DHydrostaticTangentPressure,      &
+    & ScanForwardModel, TwoDScanForwardModel
 
   type, private :: ForwardModelIntermediate_T
 
@@ -87,7 +88,8 @@ module ScanModelModule          ! Scan model and associated calculations
   
   ! Some terms to do with refraction
   
-  real (r8), parameter :: MAXPRESSURE = 1400.0 ! /mb Don't allow very large pressures
+  real (r8), parameter :: MaxPressure = 1400.0 ! /mb Don't allow very large pressures
+  real (r8), parameter :: MinZeta = log10(maxPressure)
 
 contains ! =============== Subroutines and functions ==========================
 
@@ -822,7 +824,7 @@ contains ! =============== Subroutines and functions ==========================
       "geometricGPH", ModuleName )
     call Allocate_Test ( n, ptan%template%noSurfs, "n", ModuleName )
     call Allocate_Test ( pointingH2O, ptan%template%noSurfs, "pointingH2O", ModuleName )
-    call Allocate_Test ( pointingpres, ptan%template%noSurfs, "pointingpres", ModuleName )
+    call Allocate_Test ( pointingPres, ptan%template%noSurfs, "pointingpres", ModuleName )
     call Allocate_Test ( pointingTemp, ptan%template%noSurfs, "pointingTemp", ModuleName )
     call Allocate_Test ( ratio2, ptan%template%noSurfs, "ratio2", ModuleName )
     call Allocate_Test ( ratio4, ptan%template%noSurfs, "ratio4", ModuleName )
@@ -887,12 +889,11 @@ contains ! =============== Subroutines and functions ==========================
         pointingH2O = max(pointingH2O, 0.0_r8)
         where ( geocAlt%values(:,maf) /= geocAlt%template%badValue )
 
-          pointingpres = min(10**(-ptanVals), maxPressure)
+          pointingPres = min(10**(-ptanVals), maxPressure)
 
-          n=( (refrATerm*pointingpres) / pointingTemp ) * &
-            & (1.0 + refrBTerm*pointingH2O/pointingTemp)
+          n = refractive_index_f ( pointingPres, pointingTemp, pointingH2O )
 
-          n=min(n,maxRefraction) ! Forbid stupidly large values of n           
+          n = min(n,maxRefraction) ! Forbid stupidly large values of n
 
           ! Now we're going to compute refracted geocentric altitudes
           refractedGeocAlt=geocAlt%values(:,maf)/(1.0+n)
@@ -1105,47 +1106,48 @@ contains ! =============== Subroutines and functions ==========================
       real (r8) :: BASISMINUS             ! Index
       real (r8) :: BASISPLUS              ! Index
 
-      integer, dimension(noMifs) :: POINTTEMPLAYER ! Pointing layer
-      integer, dimension(noMifs) :: POINTH2OLAYER ! Pointing layer
-      integer, dimension(noMafs) :: CLOSESTTEMPPROFILES
-      integer, dimension(noMafs) :: CLOSESTH2OPROFILES
+      integer, dimension(noMifs) :: PointTempLayer ! Pointing layer
+      integer, dimension(noMifs) :: PointH2OLayer  ! Pointing layer
+      integer, dimension(noMafs) :: ClosestTempProfiles
+      integer, dimension(noMafs) :: ClosestH2OProfiles
 
-      real (r8), dimension(noMifs) :: DH2OBYDPTAN ! Derivative
-      real (r8), dimension(noMifs) :: DHYDROSGPHBYDPTAN ! Derivative
-      real (r8), dimension(noMifs) :: DL1GPHBYDHEIGHTOFFSET ! Derivative
-      real (r8), dimension(noMifs) :: DL1GPHBYDL1REFRGEOCALT ! Derivative
-      real (r8), dimension(noMifs) :: DL1GPHBYDPTAN ! Derivative
-      real (r8), dimension(noMifs) :: DL1GPHBYDTEMPLOWER ! Derivative
-      real (r8), dimension(noMifs) :: DL1GPHBYDTEMPUPPER ! Derivative
-      real (r8), dimension(noMifs) :: DL1REFRGEOCALTBYDHEIGHTOFFSET ! Derivative
-      real (r8), dimension(noMifs) :: DL1REFRGEOCALTBYDN ! Derivative
-      real (r8), dimension(noMifs) :: DL1REFRGEOCALTBYDPTAN ! Derivative
-      real (r8), dimension(noMifs) :: DL1REFRGEOCALTBYDTEMPLOWER ! Derivative
-      real (r8), dimension(noMifs) :: DL1REFRGEOCALTBYDTEMPUPPER ! Derivative
-      real (r8), dimension(noMifs) :: DNBYDPTAN ! Derivative
-      real (r8), dimension(noMifs) :: DNBYDTEMPLOWER ! Derivative
-      real (r8), dimension(noMifs) :: DNBYDTEMPUPPER ! Derivative
-      real (r8), dimension(noMifs) :: DTEMPBYDPTAN ! Derivative
-      real (r8), dimension(noMifs) :: GEOCLAT ! TP GeocLat
-      real (r8), dimension(noMifs) :: H2OBASISGAP ! Basis spacing
-      real (r8), dimension(noMifs) :: H2OLOWERWEIGHT ! Weight
-      real (r8), dimension(noMifs) :: H2OUPPERWEIGHT ! Weight    
-      real (r8), dimension(noMifs) :: HYDROSGPH ! GPH from hydrostatic calc.
+      real (r8), dimension(noMifs) :: DH2OByDPtan ! Derivative
+      real (r8), dimension(noMifs) :: DHydrosGPHByDPtan ! Derivative
+      real (r8), dimension(noMifs) :: DL1GPHByDHeightOffset ! Derivative
+      real (r8), dimension(noMifs) :: DL1GPHByDL1RefrGeocAlt ! Derivative
+      real (r8), dimension(noMifs) :: DL1GPHByDPtan ! Derivative
+      real (r8), dimension(noMifs) :: DL1GPHByDtempLower ! Derivative
+      real (r8), dimension(noMifs) :: DL1GPHByDtempUpper ! Derivative
+      real (r8), dimension(noMifs) :: DL1RefrGeocAltByDHeightOffset ! Derivative
+      real (r8), dimension(noMifs) :: DL1refrGeocAltByDn ! Derivative
+      real (r8), dimension(noMifs) :: DL1RefrGeocAltByDptan ! Derivative
+      real (r8), dimension(noMifs) :: DL1RefrGeocAltByDtempLower ! Derivative
+      real (r8), dimension(noMifs) :: DL1RefrGeocAltByDtempUpper ! Derivative
+      real (r8), dimension(noMifs) :: dnByDH2O  ! Derivative
+      real (r8), dimension(noMifs) :: DnByDPtan ! Derivative
+      real (r8), dimension(noMifs) :: DnByDTemp ! Derivative
+      real (r8), dimension(noMifs) :: DnByDTempLower ! Derivative
+      real (r8), dimension(noMifs) :: DnByDTempUpper ! Derivative
+      real (r8), dimension(noMifs) :: DTempByDPtan ! Derivative
+      real (r8), dimension(noMifs) :: GeocLat ! TP GeocLat
+      real (r8), dimension(noMifs) :: H2OBasisGap ! Basis spacing
+      real (r8), dimension(noMifs) :: H2OLowerWeight ! Weight
+      real (r8), dimension(noMifs) :: H2OUpperWeight ! Weight    
+      real (r8), dimension(noMifs) :: HydrosGPH ! GPH from hydrostatic calc.
       real (r8), dimension(noMifs) :: L1GPH ! Geometric geopotential
-      real (r8), dimension(noMifs) :: L1REFRGEOCALT ! Refracted geocentric alt
+      real (r8), dimension(noMifs) :: L1RefrGeocAlt ! Refracted geocentric alt
       real (r8), dimension(noMifs) :: N ! Refractive index - 1
       real (r8), dimension(noMifs) :: P2 ! Polynomial term
       real (r8), dimension(noMifs) :: P4 ! Polynomial term
-      real (r8), dimension(noMifs) :: POINTINGH2O ! tangent h2o.
-      real (r8), dimension(noMifs) :: POINTINGPRES ! tangent pressure.
-      real (r8), dimension(noMifs) :: POINTINGTEMP ! tangent temp.
-      real (r8), dimension(noMifs) :: POVERTSQUARED ! As name implies
-      real (r8), dimension(noMifs) :: RATIO2 ! For geopotential calculation
-      real (r8), dimension(noMifs) :: RATIO4 ! For geopotential calculation
+      real (r8), dimension(noMifs) :: PointingH2O ! tangent h2o.
+      real (r8), dimension(noMifs) :: PointingPres ! tangent pressure.
+      real (r8), dimension(noMifs) :: PointingTemp ! tangent temp.
+      real (r8), dimension(noMifs) :: Ratio2 ! For geopotential calculation
+      real (r8), dimension(noMifs) :: Ratio4 ! For geopotential calculation
       real (r8), dimension(noMifs) :: S2 ! sin^2 geocLat
-      real (r8), dimension(noMifs) :: TEMPBASISGAP ! Basis spacing
-      real (r8), dimension(noMifs) :: TEMPLOWERWEIGHT ! Weight
-      real (r8), dimension(noMifs) :: TEMPUPPERWEIGHT ! Weight
+      real (r8), dimension(noMifs) :: TempBasisGap ! Basis spacing
+      real (r8), dimension(noMifs) :: TempLowerWeight ! Weight
+      real (r8), dimension(noMifs) :: TempUpperWeight ! Weight
 
       ! These are all dimensioned noMIFs
       real (r8), dimension(:), pointer :: BASISGPH ! From ifm
@@ -1235,10 +1237,10 @@ contains ! =============== Subroutines and functions ==========================
       endwhere
 
       where (ptanVals>=h2oBasis(1) .and. ptanVals<h2oBasis(h2o%template%noSurfs))
-        dH2oByDPTan = ( h2oVals(pointH2oLayer+1) - h2oVals(pointH2oLayer) ) / &
+        dH2OByDPTan = ( h2oVals(pointH2oLayer+1) - h2oVals(pointH2oLayer) ) / &
           & h2oBasisGap
       elsewhere
-        dH2oByDPTan = 0.0_r8
+        dH2OByDPTan = 0.0_r8
       endwhere
 
       ! Now get interpolated temperature and H2O
@@ -1250,34 +1252,46 @@ contains ! =============== Subroutines and functions ==========================
       ! Get pointing pressure in mb
       pointingPres = min(10.0_r8**(-ptanVals), maxPressure)
 
-      ! Now get the refractive index n
-      n=refrATerm/(pointingTemp/pointingPres) * &
-        & (1.0+refrBterm*pointingH2O/pointingTemp)
+      ! Now get the refractive index and its derivatives w.r.t. temperature
+      ! and H2O.
+      call refractive_index_deriv ( pointingPres, pointingTemp, pointingH2O, &
+        & n, dnByDTemp, dnByDH2O )
 
-      ! Get its derivatives wrt temp, and ptan (ignore h2o)
-      pOverTSquared=pointingPres/(pointingTemp**2)
-
-      dNByDPtan=n*(-LN10-dTempByDPtan/pointingTemp)+ &
-        & (refrBTerm*refrATerm*pOverTSquared) * &
-        & (dH2OByDPtan-(pointingH2O/pointingTemp)*dTempByDPtan)
-
-      dNByDTempLower=-(tempLowerWeight*refrATerm) * &
-        & pOverTSquared*(1+2*refrBTerm*pointingH2O/pointingTemp)
-      dNByDTempUpper=-(tempUpperWeight*refrATerm) * &
-        & pOverTSquared*(1+2*refrBTerm*pointingH2O/pointingTemp)
-
-      ! Now if n is too big limit it and set derivatives to zero
       where ( n > maxRefraction )
-        n=maxRefraction
+        ! Where n is too big limit it and set derivatives to zero
+        n = maxRefraction
+        dNByDPtan = 0.0
         dNByDTempLower = 0.0
         dNByDTempUpper = 0.0
-        dNByDPtan = 0.0
+      elsewhere ! ( n <= maxRefraction )
+        !{ Compute derivative of the refractive index w.r.t.\ PTan ($\zeta$).\\
+        !  $\frac{\text{d} n}{\text{d} \zeta} =
+        !   \frac{\text{d} n}{\text{d} P}
+        !   \frac{\text{d} P}{\text{d} \zeta} =
+        !   \left( \frac{n}P +
+        !   \frac{\text{d} n}{\text{d} T} \frac{\text{d} T}{\text{d} P} +
+        !   \frac{\text{d} n}{\text{d} \mathbf{f}_{\text{H}_2\text{O}}}
+        !   \frac{\text{d} \mathbf{f}_{\text{H}_2\text{O}}}{\text{d} P} \right)
+        !   \frac{\text{d} P}{\text{d} \zeta} =
+        !   \frac{n}P \frac{\text{d} P}{\text{d} \zeta} +
+        !   \frac{\text{d} n}{\text{d} T} \frac{\text{d} T}{\text{d} \zeta} +
+        !   \frac{\text{d} n}{\text{d} \mathbf{f}_{\text{H}_2\text{O}}}
+        !   \frac{\text{d} \mathbf{f}_{\text{H}_2\text{O}}}{\text{d} \zeta}$. \\
+        !  Since $\frac{\text{d} P}{\text{d} \zeta} = - P \ln 10$, we have
+        !  $\frac{\text{d} n}{\text{d} \zeta} = -n \ln 10 +
+        !   \frac{\text{d} n}{\text{d} T} \frac{\text{d} T}{\text{d} \zeta} +
+        !   \frac{\text{d} n}{\text{d} \mathbf{f}_{\text{H}_2\text{O}}}
+        !   \frac{\text{d} \mathbf{f}_{\text{H}_2\text{O}}}{\text{d} \zeta}$ 
+        
+        dnBydPTan = -n * ln10 + dnByDTemp * dTempByDPTan + dnByDH2O * dH2OByDPTan
+        ! Compute derivatives w.r.t. temperature at lower and upper layers.
+        dNByDTempLower = tempLowerWeight * dnByDTemp
+        dNByDTempLower = tempUpperWeight * dnByDTemp
       end where
 
-      ! Do similar things for high pressure cases
-      where ( 10.0_r8**(-ptanVals) > maxPressure )
-        dNByDPtan=0.0
-      end where
+      ! Set derivatives w.r.t. pressure to zero for high pressure cases
+    ! where ( 10**(-ptanVals) > maxPressure ) dNByDPtan=0.0
+      where ( ptanVals < minZeta ) dNByDPtan=0.0
 
       ! Now from this calculate the refracted geocentric altitudes
       l1RefrGeocAlt= ( l1Alt%values(:,maf) + htOff ) / (1.0+n)
@@ -2187,6 +2201,10 @@ contains ! =============== Subroutines and functions ==========================
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.86  2016/01/23 02:59:18  vsnyder
+! Get MexRefraction from refraction_m, not geometry.  Get refractive index
+! derivatives from refraction_m instead of computing them here.  Add LaTeX.
+!
 ! Revision 2.85  2015/09/24 22:06:36  pwagner
 ! Code around segment fault due to NAG bug
 !
