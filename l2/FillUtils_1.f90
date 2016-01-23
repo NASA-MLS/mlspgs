@@ -4465,7 +4465,7 @@ contains ! =====     Public Procedures     =============================
                                   & ReferenceMIFunits )
 
       use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
-      use Geometry, only: EarthRadA, To_Cart, To_XYZ, XYZ_to_Geod
+      use Geometry, only: EarthRadA, GeodToECRm, GeocToECRu, XYZ_to_Geod
       use Hunt_m, only: Hunt
       use Intrinsic, only: L_Geodetic
       use Magnetic_Field_Quantity, only: Get_Magnetic_Field_Quantity
@@ -4511,16 +4511,16 @@ contains ! =====     Public Procedures     =============================
               ! referenceMIF is assumed to be geodetic height.  Convert
               ! geocAltitudeQuantity%template%surfs to geodetic height.
               do i = 1, geocAltitudeQuantity%template%noSurfs
-                ! Convert [lat, lon, ht] to ECR
+                ! Convert [lat, lon, ht] to ECR in meters
                 if ( geocAltitudeQuantity%template%latitudeCoordinate == l_geodetic ) then
-                  call to_cart ( [ geocAltitudeQuantity%template%geodLat(i,1), &
-                                 & geocAltitudeQuantity%template%lon(i,1), &
-                                 & geocAltitudeQuantity%template%surfs(i,1) ], &
-                                 & xyz, km=.true. )
+                  xyz = geodToECRm ( [ geocAltitudeQuantity%template%geodLat(i,1), &
+                                     & geocAltitudeQuantity%template%lon(i,1), &
+                                     & geocAltitudeQuantity%template%surfs(i,1) ] )
                 else ! geocentric latitude
-                  xyz = to_xyz ( geocAltitudeQuantity%template%geodLat(i,1), &
-                               & geocAltitudeQuantity%template%lon(i,1) )
-                  xyz = xyz * geocAltitudeQuantity%template%surfs(i,1)
+                  ! GeocToECRu gets an ECR unit vector
+                  xyz = geocToECRu ( geocAltitudeQuantity%template%geodLat(i,1), &
+                                   & geocAltitudeQuantity%template%lon(i,1) ) * &
+                                   & geocAltitudeQuantity%template%surfs(i,1)
                 end if
                 ! Convert ECR to [geod lat, lon, geod ht]
                 geod = xyz_to_geod ( xyz )
@@ -7697,6 +7697,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.119  2016/01/23 02:56:37  vsnyder
+! Replace To_Cart with GeodToECRm, To_XYZ with GeodToECRu
+!
 ! Revision 2.118  2015/12/01 21:19:57  pwagner
 ! May Fill with nearest profile number
 !
