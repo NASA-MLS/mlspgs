@@ -130,10 +130,12 @@ Switches (set by -S option in mlsl2's command line):
  pfag    => Show PFA table generation progress
  pguess  => Iterations of the pressure guesser
  phase[n]=> Announce phases (e.g., Core) as they begin
-            n = 1 => make the announcement as a banner
+             n = 1 => make the announcement as a banner
  plane[n]=> Compute viewing plane n>1 ECR, n>2 reference MIF, n>3 heights and
-            tangent point vectors rotated in viewing plane, n>4 input template
+             tangent point vectors rotated in viewing plane, n>4 input template
  point   => Pointing grids
+ polr[n] => Print polarized radiances,
+             n>0 => print pointing #, n>1 print frequency
  pro[n]  => Proclaim each product file l2gp, l2aux, l2dgg, l2pc, meta output
              and each file l2gp, l1brad, ncep, dao input; dump filedatabase
  psct[n] => Print TScat table generation
@@ -224,6 +226,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.98  2015/10/28 19:22:25  vsnyder
+ Add plane
+
  Revision 1.97  2015/10/28 00:33:21  vsnyder
  Add description of levels for mag.  Add MagGrid.
 
