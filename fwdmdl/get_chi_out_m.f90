@@ -33,9 +33,8 @@ contains
     use Get_eta_matrix_m, only: Get_eta_sparse
     use Load_sps_data_m, only: Grids_T
     use MLSCommon, only: RP
-    use Refraction_m, only: Refractive_index
+    use Refraction_m, only: MaxRefraction, Refractive_index
     use Two_d_hydrostatic_m, only: Two_d_hydrostatic
-    use Geometry, only: MaxRefraction
 
 ! Inputs
 
@@ -139,7 +138,7 @@ contains
 ! compute refractive index depending on h2o
 
       call refractive_index ( 10.0**(-zetatan), t_tan_out, n_tan_out, &
-                          & h2o_path=h2o_tan_out )
+                            & h2o_path=h2o_tan_out )
       n_tan_out = min ( n_tan_out, maxRefraction )
 
     else
@@ -193,6 +192,9 @@ contains
 end module Get_Chi_Out_m
 
 ! $Log$
+! Revision 2.22  2016/01/23 02:53:49  vsnyder
+! Get MaxRefraction from refraction_m instead of geometry
+!
 ! Revision 2.21  2009/06/23 18:26:11  pwagner
 ! Prevent Intel from optimizing ident string away
 !
