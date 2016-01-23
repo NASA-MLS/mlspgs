@@ -1633,18 +1633,20 @@ contains
 
   ! Geocentric height, meters from the Earth center
   real(rg) function GeocV ( G, I, J, K )
-    use Geometry, only: To_Cart
     class(geolocation_t), intent(in) :: G
     integer, intent(in) :: I
     integer, intent(in), optional :: J
     integer, intent(in), optional :: K
-    real(rg) :: Cart(3)
+    type(h_v_geoc) :: Geoc
+    type(h_v_geod) :: Geod
     if ( g%coherent ) then
       if ( associated(g%geocV1) ) then
         GeocV = g%geocV1(k)
       else if ( associated(g%geodV1) ) then
-        call to_cart([g%geodLat1(k),g%lon1(k),g%geodV1(k)/1000.0_rg],cart,km=.true.)
-        GeocV = norm2(cart) * 1000.0_rg
+        ! Convert [ longitude, geodetic latitude, geodetic height ] to geocentric.
+        geod = h_v_geod ( lon=g%lon1(k), lat=g%geodLat1(k), v=g%geodV1(k) )
+        geoc = geod%geocV()
+        GeocV = geoc%v
       else ! must be Zeta
         ! We would need the hydrostatic model to get geodV from Zeta, after
         ! which we could get GeocV from geodV
@@ -1664,10 +1666,10 @@ contains
           GeocV = g%geocV1(i)
         end if
       else if ( associated(g%geodV1) ) then
-        ! Convert [ longitude, geodetic latitude, geodetic height] to ECR.
-        ! To_Cart wants height in km, not meters.
-        call to_cart([g%geodLat(i,j,k),g%lon(i,j,k),g%geodV(i,j,k)/1000.0_rg],cart,km=.true.)
-        GeocV = norm2(cart) * 1000.0_rg ! To_Cart provides coordinates in km
+        ! Convert [ longitude, geodetic latitude, geodetic height ] to geocentric.
+        geod = h_v_geod ( lon=g%lon(i,j,k), lat=g%geodLat(i,j,k), v=g%geodV(i,j,k) )
+        geoc = geod%geocV()
+        GeocV = geoc%v
       else if ( associated(g%p1) ) then ! ECR
         GeocV = norm2(g%ecr(i,j,k))
       else ! must be Zeta
@@ -1776,7 +1778,7 @@ contains
 
   ! ECR coordinates, meters
   function ECR ( G, I, J, K )
-    use Geometry, only: To_Cart, To_XYZ
+    use Geometry, only: GeodToECRm, GeocToECRu
     class(geolocation_t), intent(in) :: G
     integer, intent(in) :: I            ! Lon index if Cartesian, or
                                         ! Lat index if J is not present
@@ -1796,12 +1798,11 @@ contains
         ecr = g%p1(i)%xyz
       end if
     else if ( associated(g%geodV1) ) then
-      ! Convert [ longitude, geodetic latitude, geodetic height] to ECR
-      call to_cart ( [ g%lon(i,j,k), g%geodLat(i,j,k), g%geodV(i,j,k)/1000.0_rg],ecr,km=.true.)
-      ecr = ecr * 1000.0_rg ! to_cart output is in km, not meters
+      ! Convert [ longitude, geodetic latitude, geodetic height] to ECR (meters)
+      ecr = geodToECRm ( [ g%lon(i,j,k), g%geodLat(i,j,k), g%geodV(i,j,k) ] )
     else if ( associated(g%geocV1) ) then
       ! Convert [ longitude, geocentric latitude, geocentric height] to ECR
-      ecr = to_xyz(g%geocLat(i,j,k),g%lon(i,j,k))*g%geocV(i,j,k)
+      ecr = GeocToECRu ( g%geocLat(i,j,k),g%lon(i,j,k) ) * g%geocV(i,j,k)
     else
       ecr = [-huge(0.0_rg),-huge(0.0_rg),-huge(0.0_rg)]
     end if
@@ -2099,8 +2100,8 @@ contains
   end subroutine Destroy_G_P1
 
 ! impure elemental &
-  subroutine Explicit_Destroy_G ( G )
-    class(geolocation_t), intent(out) :: G ! Intent(out) causes Destroy_G
+  subroutine Explicit_Destroy_G (Not_Used )
+    class(geolocation_t), intent(out) :: Not_Used ! Intent(out) causes Destroy_G
   end subroutine Explicit_Destroy_G
 
 !=============================================================================
@@ -2117,6 +2118,9 @@ contains
 end module Geolocation_m
 
 ! $Log$
+! Revision 2.2  2016/01/23 02:47:33  vsnyder
+! Use geolocation types and type-bound procedures from Geolocation_0
+!
 ! Revision 2.1  2015/11/14 18:02:37  vsnyder
 ! Initial commit
 !

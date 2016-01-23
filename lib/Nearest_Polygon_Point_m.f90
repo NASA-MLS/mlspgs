@@ -150,7 +150,7 @@ contains
   ! the first one.
   integer function Nearest_Polygon_Vertex_Geod ( Point, Polygon ) result ( N )
     use Geolocation_0, only: H_Geod, H_t, RG
-    use Geometry, only: To_Cart
+    use Geometry, only: GeodToECRm
     type(h_geod), intent(in) :: Point
     class(h_t), intent(in) :: Polygon(:) ! Assumed also to be geodetic
     real(rg) :: D         ! Dot product of Pt_ECR and V_ECR
@@ -158,11 +158,11 @@ contains
     integer :: I
     real(rg) :: Pt_ECR(3) ! Cartesian (ECR) coordinates corresponding to Point
     real(rg) :: V_ECR(3)  ! Cartesian (ECR) coordinates corresponding to a vertex
-    call to_cart ( [ point%lat, point%lon, 0.0_rg ], pt_ECR )
+    pt_ECR = GeodToECRm ( [ point%lat, point%lon, 0.0_rg ] )
     pt_ECR = pt_ECR / norm2(pt_ECR) ! Make it a unit vector
     d_max = -2
     do i = 1, size(polygon)
-      call to_cart ( [ polygon(i)%lat, polygon(i)%lon, 0.0_rg ], v_ECR )
+      v_ECR = GeodToECRm ( [ polygon(i)%lat, polygon(i)%lon, 0.0_rg ] )
       v_ECR = v_ECR / norm2(v_ECR)
       d = dot_product ( v_ECR, pt_ECR )
       if ( d > d_max ) then
@@ -231,6 +231,9 @@ contains
 end module Nearest_Polygon_Point_m
 
 ! $Log$
+! Revision 2.2  2016/01/23 02:48:09  vsnyder
+! Replace To_Cart with GeodToECRm
+!
 ! Revision 2.1  2015/12/31 00:03:23  vsnyder
 ! Initial Commit
 !
