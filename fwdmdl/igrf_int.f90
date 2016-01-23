@@ -25,8 +25,8 @@ module IGRF_INT
 
   implicit NONE
   private
-  public :: DUMP_GH, FELDCOF, FELDC, FELDG, FINDB0, IGRF_SUB, READ_GH
-  public :: SHELLC, SHELLG
+  public :: Dump_GH, FeldCof, FeldC, FeldCM, FeldG, FindB0, IGRF_Sub, Read_GH
+!   public :: ShellC, ShellCM, ShellG
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -49,6 +49,14 @@ module IGRF_INT
 ! Coefficients read from IGRF files
 
   type(gh_t), save, pointer :: GHS(:) => NULL()
+
+! Earth radius (km) from GHS for the year for which FELDCOF was called:
+
+  real, save :: ERAD = 6371.200 ! Default in case FELDCOF has not been called.
+
+! Earth radius (m) from GHS for the year for which FELDCOF was called:
+
+  real, save :: ERADM = 6371200.0 ! Default in case FELDCOF has not been called.
 
 ! G(M)    Normalized field coefficients (see FELDCOF)
 !         Size = NMAX*(NMAX+2)+1
@@ -557,6 +565,43 @@ o:  do n = 3, size(p,2)-1
 
   end subroutine SHELLC
 
+  ! ----------------------------------------------------  SHELLCM  -----
+  subroutine SHELLCM ( XI, DIMO, FL, ICODE, B0 )
+  !--------------------------------------------------------------------
+  ! Calculate L-value for specified cartesian coordinates
+  ! and geomagnetic field model.
+  !-----------------------------------------------------------------------
+  ! REF: G. KLUGE, European Space Operations Center, Internal note
+  !      NO. 67, 1970.
+  !      G. KLUGE, Computer Physics Communications 3, 31-35, 1972
+  !--------------------------------------------------------------------
+  !  Input:
+  !          XI(3)  Cartesian coordinates in meters    
+  !                  X-axis pointing to equator at 0 longitude           
+  !                  Y-axis pointing to equator at 90 long.              
+  !                  Z-axis pointing to north pole                       
+  !          DIMO   Dipole moment in Gauss (normalized to earth radius)
+
+  !          Module variable
+  !          H(144)     Field model coefficients adjusted for SHELLG
+  !-----------------------------------------------------------------------
+  !  Output: FL           L-value
+  !          ICODE        =1 Normal completion
+  !                       =2 Unphysical conjugate point (FL meaningless)
+  !                       =3 Shell parameter greater than limit up to
+  !                          which accurate calculation is required;
+  !                          approximation is used.
+  !          B0           Magnetic field strength in Gauss
+  !-----------------------------------------------------------------------
+    real, intent(in) :: XI(3), DIMO
+    real, intent(out) :: FL
+    integer, intent(out), optional :: ICODE
+    real, intent(out), optional :: B0
+
+    call shellc ( xi / eradm, dimo, fl, icode, b0 )
+
+  end subroutine SHELLCM
+
   ! ------------------------------------------------------  FELDG  -----
   subroutine FELDG ( WHERE, BNORTH, BEAST, BDOWN, BABS )
   !-------------------------------------------------------------------
@@ -617,6 +662,23 @@ o:  do n = 3, size(p,2)-1
     b(3) = t*(h(2)-s*v(3))
   end subroutine FELDC
 
+  ! -----------------------------------------------------  FELDCM  -----
+  subroutine FELDCM ( V, B )
+
+  !  Input:       V(3)  Cartesian coordinates in meters
+  !                       X-axis pointing to equator at 0 longitude
+  !                       Y-axis pointing to equator at 90 long.
+  !                       Z-axis pointing to north pole
+  !  Output:      B(3)  Components of the magnetic field with respect to
+  !                     cartesian coordinates
+
+    real, intent(in) :: V(3)
+    real, intent(out) :: B(3)
+
+    call feldc ( v / eradm, b )
+
+  end subroutine FELDCM
+
   ! ----------------------------------------------------  FELDCOF  -----
   subroutine FELDCOF ( YEAR, DIMO )
   !------------------------------------------------------------------------
@@ -664,10 +726,17 @@ o:  do n = 3, size(p,2)-1
 !-- Determine IGRF coefficients for year
     if ( l < numye ) then
       call intershc ( year, ghs(l), ghs(l+1), nmax, gha )
+      ! Interpolate earth radius used -- probably the same for both
+      ! years, but why take a chance?
+      erad = ( ( ghs(l+1)%year - year ) * ghs(l)%erad + &
+             & ( year - ghs(l)%year ) * ghs(l+1)%erad ) / &
+           & ( ghs(l+1)%year - ghs(l)%year )
     else ! l == numye
       ! Assume ghs(numye) is time derivatives, not coefficients.
       call extrashc ( year, ghs(l), ghs(l+1), nmax, gha )
+      erad = ghs(l+1)%erad
     end if
+    eradm = 1000.0 * erad ! Earth radius used, in meters
 !-- Determine magnetic dipole moment and coeffiecients G
     f0 = 0.0d0
     do j = 1, 3
@@ -977,6 +1046,9 @@ o:  do n = 3, size(p,2)-1
 end module IGRF_INT
 
 ! $Log$
+! Revision 2.13  2016/01/23 02:51:35  vsnyder
+! Add procedures that want coordinates in meters instead of ERad
+!
 ! Revision 2.12  2015/03/28 02:07:25  vsnyder
 ! Added stuff to trace allocate/deallocate addresses
 !
