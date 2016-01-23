@@ -15,70 +15,38 @@ module Geometry
   ! forward model and the scan model.
 
   use Constants, only: Deg2Rad, Pi, Rad2Deg
-  use MLSKinds, only: R8, RP
+  use Earth_Constants, only: Earth_Axis_Ratio, Earth_Axis_Ratio_Squared, &
+    & EarthRadA, EarthRadB, EarthSurfaceGPH, Eccentricity_Sq, &
+    & GM, G0, J2, J4, SecPerYear, W
+  use MLSKinds, only: RP
 
   implicit NONE
   private
 
-  ! Constants
+  ! Constants gotten from Earth_Constants
   public :: Earth_Axis_Ratio, Earth_Axis_Ratio_Squared ! a^2/b^2
   public :: EarthRadA, EarthRadB, EarthSurfaceGPH, Eccentricity_Sq, ERad
-  public :: GM, G0, J2, J4, SecPerYear, W, MaxRefraction
+  public :: GM, G0, J2, J4, SecPerYear, W
 
   ! Procedures
-  public :: GeocToGeodLat, GeodToGeocAlt, GeodToGeocLat, Get_R_Eq
-  public :: Great_Circle_Points, Orbit_Plane_Minor_Axis_sq, To_Cart, To_XYZ
-  public :: XYZ_to_Geod, XYZ_to_Geod_Bowring, XYZ_to_Geod_Fukushima
+  public :: GeocToECRu, GeocToGeodLat, GeodToECRm, GeodToGeocAlt
+  public :: GeodToGeocLat, Get_R_Eq, Great_Circle_Points
+  public :: Orbit_Plane_Minor_Axis_sq, To_Cart, To_XYZ, XYZ_to_Geod
+  public :: XYZ_to_Geod_Bowring, XYZ_to_Geod_Fukushima
 
-  ! Earth dimensions.
-
-  real(r8), parameter :: EarthRadA = 6378137.0_r8    ! Semi-Major axis in m
-  real(r8), parameter :: EarthRadB = 6356752.3141_r8 ! Semi-Minor axis in m
-  real(r8), parameter :: Earth_Axis_Ratio = EarthRadB / EarthRadA
-  real(r8), parameter :: Earth_Axis_Ratio_Squared = Earth_Axis_Ratio**2
-  real(r8), parameter :: Eccentricity_Sq = &
-    & 1.0_r8 - Earth_Axis_Ratio_Squared ! 1 - b**2 / a**2
-
-  ! Gravity-related terms.
-
-  ! IUGG (International Union of Geodesy and Geodynamics) 1999 values from
-  ! http://www.gfy.ku.dk/~iag/Travaux_99/sc3.htm (part III)
-
-  ! Geocentric Earth gravitational constant, including Earth's atmosphere
-
-! real(rp), parameter :: GM = 3.986004418e14_rp ! m^3/sec^2 (IUGG 1999 value)
-  real(rp), parameter :: GM = 3.98600436e14_rp  ! m^3/sec^2
-
-  ! Mean equatorial gravity
-
-  real(r8), parameter :: G0 = 9.80665           ! Nominal little g ms-2
-! real(r8), parameter :: G0 = 9.7803278         ! IUGG 1999 value
-
-  ! Stokes second- and fourth-degree zonal harmonics
-
-  real(rp), parameter :: J2 = 0.0010826256_rp   ! 1980 reference geoid value
-! real(rp), parameter :: J2 = 0.0010826359_rp   ! IUGG 1999 value
-  real(rp), parameter :: J4 = -.0000023709122_rp  ! 1980 reference geoid value
-
-  ! earth rotational velocity.
-
-  real(rp), parameter :: W = 7.292115e-05_rp    ! rad/sec
-
-  ! Earth surface geopotential height.
-
-  real(r8), parameter :: EarthSurfaceGPH = 6387182.265_r8 ! meters
-
-  ! Seconds per tropical year, 1994-1998, based on orbital elements by
-  ! Laskar.  See http://scienceworld.wolfram.com/astronomy/TropicalYear.html
-
-  real(r8), parameter :: SecPerYear = 365.242190_r8 * 86400.0_r8
-
-  ! This is the maximum amount of refraction allowed
-  real(r8), parameter :: MaxRefraction = 0.0004 ! Add one to get refractive index
+  interface GeocToECRu ! Convert longitude and geocentric latitude
+                       ! (both in degrees ) to an unit vector in ECR.
+    module procedure To_XYZ_D, To_XYZ_S
+  end interface
 
   interface GeocToGeodLat
     module procedure GeocToGeodLat_D, GeocToGeodLat_S
   end interface
+
+  ! Convert geodetic coordinates to ECR in meters
+  interface GeodToECRm
+    module procedure GeodToECRm_D, GeodToECRm_S
+  end interface GeodToECRm
 
   interface GeodToGeocAlt
     module procedure GeodToGeocAlt_D, GeodToGeocAlt_S
@@ -174,6 +142,81 @@ contains
 
   end function GeocToGeodLat_S
 
+  ! -----------------------------------------------  GeodToECRm_D  -----
+
+  !{ Convert geodetic coordinates Latitude (DEGREES!), Longitude (DEGREES!)
+  !  and meters above the mean Earth ellipsoid (mean sea level), to ECR
+  !  coordinates in meters:
+    !  %
+  !  \begin{equation*}\begin{split}
+  !  X =\,& (N(\theta)+h) \cos\theta \cos\phi \\
+  !  Y =\,& (N(\theta)+h) \cos\theta \sin\phi \\
+  !  Z =\,& (N(\theta)(1-e^2)+h) \sin\theta \\
+  !  \end{split}\end{equation*}
+  !  %
+  !  where $\theta$ is geodetic Latitude (DEGREES!), $\phi$ is Longitude
+  !  (DEGREES!), $h$ is height above mean sea level (km), $e^2 = 1 -
+  !  \frac{b^2}{a^2} = 1 - ( 1 - f )^2$ is the eccentricity, $b$ is the
+  !  semi-minor axis (polar radius), $f = 1 - \frac{b}a$ is the inverse of
+  !  flattening, $a$ is the semi-major exis (equatorial radius), and
+  !  %
+  !  \begin{equation*}
+  !  N(\theta) = \frac{a}{\sqrt{1-e^2 \sin^2 \theta}} =
+  !              \frac{a^2}{\sqrt{a^2 \cos^2 \theta + b^2 \sin^2 \theta}} =
+  !              \frac{a^2}d \,.
+  !  \end{equation*}
+  !  is the distance along the normal from the surface to the polar axis.
+
+  pure function GeodToECRm_D ( Geod ) result ( ECR )
+    integer, parameter :: RK = kind(0.0d0)
+    real(rk), intent(in) :: Geod(3) ! Latitude (degrees north),
+                                    ! Longitude (degrees east),
+                                    ! Altitude (meters above sea level)
+    real(rk) :: ECR(3)              ! X, Y, Z in meters from the Earth center
+    real(rk), parameter :: AQUAD = EarthRadA**2 ! m**2
+    real(rk), parameter :: BQUAD = EarthRadB**2 ! m**2
+    real(rk) :: D
+    real(rk) :: MyCT ! Cos(theta) (lat)
+    real(rk) :: MyLat, MyLon
+    real(rk) :: MyST ! Sin(theta) (lat)
+    real(rk) :: Rho
+    myLat = geod(1) * deg2rad
+    myLon = geod(2) * deg2rad
+    myst = sin(myLat)
+    myct = cos(myLat)
+    d = sqrt(aquad*myct*myct + bquad*myst*myst)
+!   d = sqrt(aquad-(aquad-bquad)*myst*myst)
+    ECR(3) = ( geod(3) + bquad/d ) * mySt
+    rho = ( geod(3) + aquad/d ) * myCt
+    ECR(1) = rho * cos(myLon)
+    ECR(2) = rho * sin(myLon)
+  end function GeodToECRm_D
+
+  pure function GeodToECRm_S ( Geod ) result ( ECR )
+    integer, parameter :: RK = kind(0.0e0)
+    real(rk), intent(in) :: Geod(3) ! Latitude (degrees north),
+                                    ! Longitude (degrees east),
+                                    ! Altitude (meters above sea level)
+    real(rk) :: ECR(3)              ! X, Y, Z in meters from the Earth center
+    real(rk), parameter :: AQUAD = EarthRadA**2 ! m**2
+    real(rk), parameter :: BQUAD = EarthRadB**2 ! m**2
+    real(rk) :: D
+    real(rk) :: MyCT ! Cos(theta) (lat)
+    real(rk) :: MyLat, MyLon
+    real(rk) :: MyST ! Sin(theta) (lat)
+    real(rk) :: Rho
+    myLat = geod(1) * deg2rad
+    myLon = geod(2) * deg2rad
+    myst = sin(myLat)
+    myct = cos(myLat)
+    d = sqrt(aquad*myct*myct + bquad*myst*myst)
+!   d = sqrt(aquad-(aquad-bquad)*myst*myst)
+    ECR(3) = ( geod(3) + bquad/d ) * mySt
+    rho = ( geod(3) + aquad/d ) * myCt
+    ECR(1) = rho * cos(myLon)
+    ECR(2) = rho * sin(myLon)
+  end function GeodToECRm_S
+
   ! --------------------------------------------  GeodToGeocAlt_D  -----
   double precision function GeodToGeocAlt_D ( Where ) result ( GeocAlt )
 
@@ -183,12 +226,8 @@ contains
     double precision, intent(in) :: Where(3) ! Geod. Lat(degrees), Lon(Degrees),
                                              ! Geod. height (Meters) above sea level
 
-    double precision :: XYZ(3)               ! Cartesian ECR in km
-
-    ! To_Cart wants height in km, and returns XYZ in km
-    call to_cart ( [ where(1), where(2), where(3)/1000.0 ], xyz, km=.true. )
-
-    geocAlt = 1000.0 * norm2(xyz)
+    ! Get length of ECR vector in meters
+    geocAlt = norm2( geodToECRm ( [ where(1), where(2), where(3) ] ) )
 
   end function GeodToGeocAlt_D
 
@@ -201,12 +240,8 @@ contains
     real, intent(in) :: Where(3)             ! Geod. Lat(degrees), Lon(Degrees),
                                              ! Geod. height (Meters) above sea level
 
-    real :: XYZ(3)                           ! Cartesian ECR in km
-
-    ! To_Cart wants height in km, and returns XYZ in km
-    call to_cart ( [ where(1), where(2), where(3)/1000.0 ], xyz, km=.true. )
-
-    geocAlt = 1000.0 * norm2(xyz)
+    ! Get length of ECR vector in meters
+    geocAlt = norm2( geodToECRm ( [ where(1), where(2), where(3) ] ) )
 
   end function GeodToGeocAlt_S
 
@@ -585,6 +620,9 @@ contains
 end module Geometry
 
 ! $Log$
+! Revision 2.28  2016/01/23 02:45:27  vsnyder
+! Add GeodToECRm (meters); get constants from Earth_Constants
+!
 ! Revision 2.27  2015/10/22 20:16:11  vsnyder
 ! Add Great_Circle_Points
 !
