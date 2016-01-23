@@ -428,11 +428,11 @@ contains
       & Radiometers, Signal_T
     use MLSStringLists, only: SwitchDetail
     use Molecules, only: L_H2O, L_N2O, L_O3
-    use Output_M, only: Output
+    use Output_M, only: NewLine, Output
     use Path_Contrib_M, only: Get_GL_Inds
     use Physics, only: SpeedOfLight
     use PointingGrid_M, only: PointingGrids, PointingGrid_T
-    use SLABS_SW_M, only: AllocateSLABS, DestroyCompleteSLABS, SLABS_Struct
+    use Slabs_sw_m, only: AllocateSLABS, DestroyCompleteSLABS, SLABS_Struct
     use TAU_M, only: Destroy_TAU, Dump, TAU_T
     use Toggles, only: Emit, Levels, Switches, Toggle
     use Trace_M, only: Trace_Begin, Trace_End
@@ -564,6 +564,9 @@ contains
     integer :: Print_Mag          ! For debugging, from -Smag#
     logical :: Print_More_Points  ! Print if Do_More_Points finds more, from -SZMOR
     integer :: Print_Path         ! Nicer format than Print_Incopt, for few molecules
+    integer :: Print_Pol_Rad      ! For debugging, from -Spolr[n]
+                                  ! n>0 => print pointing number
+                                  ! n>1 => print frequency
     logical :: Print_Ptg          ! For debugging, from -Sptg
     integer :: Print_Rad          ! For debugging, from -Srad
     logical :: Print_Seez         ! For debugging, from -Sseez
@@ -988,6 +991,7 @@ contains
     print_Incopt = switchDetail(switches, 'incp' ) > -1
     print_IncRad = switchDetail(switches, 'incr' ) > -1
     print_Mag = switchDetail(switches, 'mag')
+    print_Pol_Rad = switchDetail(switches, 'polr')
     print_Ptg = switchDetail(switches, 'ptg') > -1
     print_path = switchDetail(switches, 'path')
     print_Rad = switchDetail(switches, 'rad')
@@ -2401,7 +2405,6 @@ contains
         & INTERPOLATEARRAYTEARDOWN
       use MLSSIGNALS_M, only: GETNAMEOFSIGNAL
       use MOLECULES, only: L_CLOUDICE
-      use OUTPUT_M, only: NEWLINE
       use READ_MIE_M, only: DP_DIWC, DP_DT, F_S, IWC_S, P, T_S, THETA_S
       use SORT_M, only: SORTP
       use TSCAT_SUPPORT_M, only: INTERPOLATE_P_TO_THETA_E
@@ -3599,6 +3602,21 @@ contains
           call Announce_Error ( 'exp(incoptdepth_pol) failed' )
         end if
 
+        if ( print_pol_rad > -1 ) then
+          call output ( 'Radiance' )
+          do j = 1, 2
+            do i = 1, 2
+              call output ( i, before=' (' )
+              call output ( j, before=',' )
+              call output ( real(rad_pol(i,j)), before=' (' )
+              call output ( aimag(rad_pol(i,j)), before=',', after=')' )
+            end do
+          end do
+          if ( print_pol_rad > 0 ) call output ( ptg_i, before=' Pointing ' )
+          if ( print_pol_rad > 1 ) call output ( frq_i, before=' Frequency ' )
+          call newLine
+        end if
+
         if ( radiometers(firstSignal%radiometer)%polarization == l_a ) then
           radV = real(rad_pol(1,1))
         else
@@ -3857,19 +3875,18 @@ contains
       & Use_R_Eq, Scat_Zeta, Scat_Phi, Scat_Ht, Xi, Scat_Index, Scat_Tan_Ht,     &
       & Forward, Rev, Which )
 
-      use ADD_POINTS_M, only: ADD_POINTS
-      use CONSTANTS, only: PI
-      use GEOMETRY, only: MAXREFRACTION
-      use GET_CHI_ANGLES_M, only: GET_CHI_ANGLES
-      use GET_ETA_MATRIX_M, only: GET_ETA_STRU
+      use Add_Points_M, only: Add_Points
+      use Constants, only: PI
+      use Get_Chi_Angles_M, only: Get_Chi_Angles
+      use Get_Eta_Matrix_M, only: Get_Eta_Stru
       use GLNP, only: GW, NG
-      use METRICS_M, only: HEIGHT_METRICS, MORE_METRICS, MORE_POINTS, &
-        & TANGENT_METRICS
-      use MIN_ZETA_M, only: GET_MIN_ZETA
-      use PHI_REFRACTIVE_CORRECTION_M, only: PHI_REFRACTIVE_CORRECTION
-      use READ_MIE_M, only: IWC_S, T_S
-      use REFRACTION_M, only: REFRACTIVE_INDEX, COMP_REFCOR
-      use SLABS_SW_M, only: GET_GL_SLABS_ARRAYS
+      use Metrics_M, only: Height_Metrics, More_Metrics, More_Points, &
+        & Tangent_Metrics
+      use Min_Zeta_M, only: Get_Min_Zeta
+      use Phi_Refractive_Correction_M, only: Phi_Refractive_Correction
+      use Read_Mie_M, only: IWC_S, T_S
+      use Refraction_M, only: Comp_Refcor, MaxRefraction, Refractive_Index
+      use Slabs_sw_M, only: Get_GL_SLABS_Arrays
 
       integer, intent(in) :: Ptg_i     ! Pointing index
       real(rp), intent(in) :: Vel_Rel  ! Vel_z / speedOfLight
@@ -4828,6 +4845,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.361  2015/12/08 23:23:42  vsnyder
+! Put bound (:i_end) on Ref_Corr in call to Get_Tau
+!
 ! Revision 2.360  2015/12/08 19:13:08  vsnyder
 ! Define pointer association status of Phi_Path_C immediately after Height_Metrics
 !
