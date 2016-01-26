@@ -24,8 +24,8 @@ module Generate_QTM_m
   implicit NONE
   private
 
-  public :: Dump, Dump_QTM, Dump_QTM_Tree, Generate_QTM, Polygon_To_ZOT, &
-          & QTM_node_t, QTM_Tree_t, Cross_Meridian
+  public :: Cross_Meridian, Dump, Dump_QTM, Dump_QTM_Tree, Generate_QTM, &
+          & Polygon_To_ZOT, QTM_node_t, QTM_Tree_t
 
   ! One facet of a QTM:
   type :: QTM_Node_t
@@ -747,6 +747,9 @@ contains
 end module Generate_QTM_m
 
 ! $Log$
+! Revision 2.2  2016/01/26 19:55:08  vsnyder
+! Cannonball polishing
+!
 ! Revision 2.1  2015/12/31 00:01:36  vsnyder
 ! Initial commit
 !
