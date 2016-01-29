@@ -35,6 +35,13 @@ module STRING_TABLE
   public :: lookup_and_insert, new_line, numerical_value, open_include, open_input
   public :: string_length, string_table_size, unget_char
 
+  ! Public procedure pointers.  Use this to find whether a file exists, get
+  ! its full name, and inquire whether it is already open, using something
+  ! other than INQUIRE and OPEN statements directly.
+  ! This initialization doesn't work with nagfor 1052 or ifort 15.0.2
+  ! procedure(Find_File), pointer :: Find_A_File => Find_File
+  procedure(Find_File), pointer, public :: Find_A_File => null()
+
   ! Public variables and named constants
   public :: Do_Listing, EOF, EOL, Includes, Source_Line, Source_Column
 
@@ -420,15 +427,32 @@ contains
     enter_string = nstring
   end function ENTER_STRING
   ! ============================================     Find_File     =====
-  subroutine Find_File ( Directories, File_Name, Exist, Full_Text )
+  subroutine Find_File ( Directories, File_Name, Exist, Full_Text, Opened, &
+                       & Unit, Stat )
   ! Look for File_Name in directories.  If it is found, set Exist=true
   ! and put its full text in Full_Text, otherwise set Exist=false.
-    integer, intent(in) :: Directories(:) ! String indices
-    integer, intent(in) :: File_Name      ! String index
+    integer, intent(in) :: Directories(:)   ! String indices
+    integer, intent(in) :: File_Name        ! String index
     logical, intent(out) :: Exist
     character(len=*), intent(out) :: Full_Text
+    logical, intent(out) :: Opened          ! "The file is already open"
+    integer, intent(out), optional  :: Unit ! An unused unit number
+    integer, intent(out), optional :: Stat
     logical :: Change
     integer :: I, L
+    integer :: MyUnit
+
+    ! No point in working hard on this if there aren't any available units
+    call get_lun ( myUnit )   ! get an unused I/O unit number
+    if ( myUnit < 0 ) then    ! no LUNs available
+      if ( present(stat) ) then
+        stat = myUnit
+        return
+      end if
+      call output ( 'STRING_TABLE%OPEN_INPUT-E- Unable to get LUN', advance='yes' )
+      call crash_burn
+    end if
+
     exist = .false.
     call get_string ( file_name, full_text, strip=.true. )
     inquire ( file=full_text, exist=exist )
@@ -470,6 +494,13 @@ contains
       full_text = full_text(3:)
     end do
     inquire ( file=full_text, exist=exist )
+    opened = .false.
+    if ( exist ) inquire ( file=full_text, opened=opened )
+    if ( present(unit) ) then
+      unit = myUnit
+    else
+      call AddInUnit(myUnit)
+    end if
   end subroutine Find_File
  ! ===========================================     FLOAT_VALUE     =====
   double precision function FLOAT_VALUE ( STRING )
@@ -784,6 +815,7 @@ contains
     ! Assume maximum include path name is 254.
     character(len=strings(file_name) - strings(file_name-1)+255) :: MyName
     integer :: MyStat
+    logical :: Opened ! "The file is already open"
     type(inunit_stack_t), allocatable :: Temp_Stack(:)
 
     myStat = 0
@@ -810,7 +842,14 @@ contains
     end if
     ! Look for the file name in the directory list
     if ( .not. allocated(includes) ) allocate ( includes(1:0) ) ! Assume it worked
-    call find_file ( includes, file_name, exist, myName )
+    ! When the procedure pointer initialization works, we won't need this test
+    if ( associated(find_a_file) ) then
+      call find_a_file ( includes, file_name, exist, myName, &
+                       & opened, inunit_stack(inunit_stack_ptr)%unit )
+    else
+      call find_file ( includes, file_name, exist, myName, &
+                     & opened, inunit_stack(inunit_stack_ptr)%unit )
+    end if
     if ( .not. exist ) then
       call display_string ( file_name, &
         & before= 'STRING_TABLE%OPEN_INCLUDE-E- the include file "', strip=.true. )
@@ -818,13 +857,13 @@ contains
       call crash_burn
       return
     end if
-    myFile = create_string ( trim(myName) )
-    if ( any(inunit_stack(:inunit_stack_ptr)%file == myFile) ) then
+    if ( opened )  then
+      ! Not allowed to open a file with more than one unit
       call loop
       return
     end if
-    inquire ( file=myName, opened=exist )
-    if ( exist )  then
+    myFile = create_string ( trim(myName) )
+    if ( any(inunit_stack(:inunit_stack_ptr)%file == myFile) ) then
       call loop
       return
     end if
@@ -832,7 +871,8 @@ contains
     inunit_stack(inunit_stack_ptr)%file = myFile
     inunit_stack(inunit_stack_ptr)%line = source_line
     inunit_stack(inunit_stack_ptr)%column = source_column
-    call open_input ( myName, stat=stat, unit=inunit_stack(inunit_stack_ptr)%unit )
+    call open_input ( myName, unit=inunit_stack(inunit_stack_ptr)%unit, &
+                    & stat=stat )
   contains
     subroutine Loop
       call display_string ( myFile, &
@@ -846,39 +886,24 @@ contains
     end subroutine Loop
   end subroutine Open_Include
   ! ===========================================     OPEN_INPUT     =====
-  subroutine OPEN_INPUT ( FILE_NAME, STAT, UNIT )
+  subroutine OPEN_INPUT ( FILE_NAME, UNIT, STAT )
   ! Open the file given by FILE_NAME for input.  If it can't be opened and
   ! STAT is present, return the status.  If it can't be opened and STAT is
-  ! absent, ask the user for it.  If Unit is not present, add it to the
-  ! input unit queue using AddInUnit.
+  ! absent, ask the user for it.
     character(len=*), intent(in) :: FILE_NAME
+    integer, intent(in) :: UNIT
     integer, optional, intent(out) :: STAT
-    integer, optional, intent(out) :: UNIT ! Use this instead of AddInUnit
 
-    integer :: IOSTAT, inunit
+    integer :: IOSTAT
     character(max(file_name_len,len(file_name))) :: MY_FILE
 
-    call get_lun ( inunit )   ! get an unused I/O unit number
-    if ( inunit < 0 ) then    ! no LUNs available
-      if ( present(stat) ) then
-        stat = inunit
-        return
-      end if
-      call output ( 'STRING_TABLE%OPEN_INPUT-E- Unable to get LUN', advance='yes' )
-      call crash_burn
-    end if
     my_file = file_name
     do
-      open ( inunit, file=my_file, status='OLD', access='SEQUENTIAL', &
+      open ( unit, file=my_file, status='OLD', access='SEQUENTIAL', &
              form='FORMATTED', iostat=iostat )
       if ( iostat == 0 ) then
         at_eof = .false.
         source_line = 0
-        if ( present(unit) ) then
-          unit = inunit
-        else
-          call AddInUnit(inunit)
-        end if
         return
       end if
       if ( present(stat) ) then
@@ -1178,7 +1203,7 @@ contains
     isStringInTable = .not. ( string < 1 .or. string > nstring ) 
   end function isStringInTable
 
-  ! Add another file for the tree to read from
+  ! Add another unit to read from
   subroutine AddInUnit (inunit)
     integer, intent(in) :: inunit
     integer, dimension(:), pointer :: temp_inunits
@@ -1252,6 +1277,9 @@ contains
 end module STRING_TABLE
 
 ! $Log$
+! Revision 2.46  2016/01/29 01:10:49  vsnyder
+! Add procedure pointer to get full name of include from PCF
+!
 ! Revision 2.45  2015/07/14 23:15:43  pwagner
 ! Added isStringInTable so outside modules can check first
 !
