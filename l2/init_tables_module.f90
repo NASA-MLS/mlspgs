@@ -1580,7 +1580,8 @@ contains ! =====     Public procedures     =============================
              begin, f+f_pfaStru, boolean(), &
              begin, f+f_phaseName, boolean(), &
              begin, f+f_rank, numeric(phyq_dimensionless), &
-             begin, f+f_pointingGrids, boolean() /), &
+             begin, f+f_pointingGrids, boolean(), &
+             begin, f+f_polygon, boolean() /), &
              continue=.true. )
     call make_tree ( (/ & ! Continuing for s_dump...
              begin, f+f_reset, boolean(), &
@@ -1613,6 +1614,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_MieTables, string(), &
              begin, f+f_PFAFiles, string(), &
              begin, f+f_pointingGrids, string(), &
+             begin, f+f_polygon, string(), &
              np+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_directWriteFile, &
@@ -2053,6 +2055,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.622  2016/01/29 01:09:24  vsnyder
+! Add polygon file to ForwardModelGlobal and Polygon switch to Dump
+!
 ! Revision 2.621  2015/12/01 21:19:57  pwagner
 ! May Fill with nearest profile number
 !
