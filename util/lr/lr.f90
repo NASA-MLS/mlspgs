@@ -19,6 +19,7 @@ program LR
   use Declare_Vocabulary_m, only: Declare_Vocabulary
   use Flatten_m, only: Flatten
   use Generate_Table, only: GENTAB
+  use io_stuff, only: get_lun
   use Lexer_Core, only: Init_Lexer
   use Lists, only: Lists_Init
   use Output_m, only: Output, OutputOptions
@@ -28,7 +29,7 @@ program LR
   use Print_Set, only: PNTSET
   use Print_The_Grammar_m, only: Print_The_Grammar
   use Print_The_Vocabulary_m, only: Print_The_Vocabulary ! Also sorts it
-  use String_Table, only: Open_Input
+  use String_Table, only: AddInUnit, Open_Input
   use Symbol_Table, only: Dump_Symbol_Table
   use Tables, only: Actions, Productions, Prod_Ind, Vocab
   use Toggles, only: GEN, Levels, LEX, PAR, Switches, TAB, Toggle
@@ -44,6 +45,7 @@ program LR
   integer :: Depth = 0     ! For dumping the abstract syntax tree
   logical :: Error = .false. ! Somebody detected an error
   integer :: I, J          ! Loop indices
+  integer :: input_unit
   character(1023) :: IOMSG ! From Open
   integer :: IOSTAT        ! From Open
   character(1023) :: Line  ! From command line
@@ -128,7 +130,9 @@ program LR
   if ( line(1:1) == ' ' ) call usage
 
   ! Open input file
-  call open_input ( line )
+  call get_lun( input_unit )
+  call open_input ( line, unit=input_unit )
+  call AddInUnit( input_unit )
 
   ! Open output table file
   call get_command_argument ( i+1, table )
@@ -298,6 +302,10 @@ contains
 end program LR
 
 ! $Log$
+! Revision 1.10  2014/08/06 20:54:00  vsnyder
+! Simplify test for producing table file.  Print version with usage.
+! Add -V option to print version.
+!
 ! Revision 1.9  2014/08/06 19:37:04  pwagner
 ! Fixed some of the bugs added in last revision
 !
