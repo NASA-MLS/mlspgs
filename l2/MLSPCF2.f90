@@ -97,6 +97,9 @@ MODULE MLSPCF2
    INTEGER, PARAMETER :: mlspcf_mobile_l1b_oa_start = 21110
    INTEGER, PARAMETER :: mlspcf_mobile_l1b_oa_end = 21139
    !
+   INTEGER, PARAMETER :: mlspcf_polygon_start = 21150
+   INTEGER, PARAMETER :: mlspcf_polygon_end = 21150
+   !
    INTEGER, PARAMETER :: mlspcf_l2ncep_start = 21900
    INTEGER, PARAMETER :: mlspcf_l2ncep_end = 21999
    !
@@ -148,6 +151,9 @@ contains
 END MODULE MLSPCF2
 
 ! $Log$
+! Revision 2.27  2016/01/29 00:48:54  pwagner
+! Added Polygon file
+!
 ! Revision 2.26  2014/03/26 17:45:49  pwagner
 ! Added ProductionLocation, identifier_product_DOI to attributes
 !
