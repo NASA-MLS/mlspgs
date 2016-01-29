@@ -242,7 +242,7 @@ contains
     if ( verbose ) then
       call output( trim(nameString) // ' = ', advance='no' )
       call output( tvalue, advance='yes' )
-    endif
+    end if
     call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
       & lowercase(trim(nameString)), BooleanToString(tvalue), &
       & countEmpty=countEmpty, &
@@ -336,7 +336,7 @@ contains
     if ( verbose ) then
       call output( trim(nameString) // ' = ', advance='no' )
       call output( tvalue, advance='yes' )
-    endif
+    end if
     call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
       & lowercase(trim(nameString)), BooleanToString(tvalue), &
       & countEmpty=countEmpty, &
@@ -403,7 +403,7 @@ contains
     if ( verbose ) then
       call outputNamedValue( 'message to match', message )
       call outputNamedValue( 'LastWarningMsg', LastWarningMsg )
-    endif
+    end if
     if ( len_trim(LastWarningMsg) < 1 ) then
       tvalue = .false.
     else if ( len_trim(message) < 1 ) then
@@ -417,7 +417,7 @@ contains
     if ( verbose ) then
       call output( trim(nameString) // ' = ', advance='no' )
       call output( tvalue, advance='yes' )
-    endif
+    end if
     call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
       & lowercase(trim(nameString)), BooleanToString(tvalue), &
       & countEmpty=countEmpty, &
@@ -597,7 +597,7 @@ contains
     if ( verbose ) then
       call output( trim(nameString) // ' = ', advance='no' )
       call output( tvalue, advance='yes' )
-    endif
+    end if
     call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
       & lowercase(trim(nameString)), BooleanToString(tvalue), &
       & countEmpty=countEmpty, &
@@ -720,7 +720,7 @@ contains
       call output( trim(nameString) // ' = ', advance='no' )
       call output( tvalue, advance='yes' )
       if ( verboser ) call dump( grid, details=-2 )
-    endif
+    end if
     call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
       & lowercase(trim(nameString)), BooleanToString(tvalue), &
       & countEmpty=countEmpty, &
@@ -834,15 +834,15 @@ contains
         call dump( negativePrec, 'num surfs with prec < 0' )
         call dump( oddStatus, 'num surfs with odd status' )
         call outputNamedValue ( 'empty swath?', tvalue )
-      endif
+      end if
       call deallocate_test( negativePrec, 'negativePrec', ModuleName )
       call deallocate_test( oddStatus, 'oddStatus', ModuleName )
       call DestroyL2GPContents ( l2gp )
-    endif
+    end if
     if ( verbose ) then
       call output( trim(nameString) // ' = ', advance='no' )
       call output( tvalue, advance='yes' )
-    endif
+    end if
     call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
       & lowercase(trim(nameString)), BooleanToString(tvalue), &
       & countEmpty=countEmpty, &
@@ -853,7 +853,7 @@ contains
       & call dumpBooleans
   end function BooleanFromEmptySwath
 
-  ! ------------------------------------- BooleanFromFormula --
+  ! ------------------------------------------- BooleanFromFormula -----
   function BooleanFromFormula ( name, root, vectors ) result( size )
     ! Called either when a Boolean is first declared
     ! syntax:
@@ -1007,7 +1007,7 @@ contains
     if ( evaluate .and. got(f_formula) ) then
       formula = EvaluateTermwise( formula )
       if ( verbose ) call outputNamedValue ( 'formula', trim(formula) )
-    endif
+    end if
     if ( got(f_formula) ) then
       ! Are we in the middle of a Repeat loop? If so, replace each "${n}" with
       ! "${count}"
@@ -1023,11 +1023,11 @@ contains
       if ( verboser ) call outputNamedValue ( 'formula (2nd)', trim(formula) )
       formula =  EvaluateExplicitly( formula )
       if ( verboser ) call outputNamedValue ( 'formula (3rd)', trim(formula) )
-    endif
+    end if
     nvalues = 0
     if ( got(f_values) ) then
       nvalues = nsons(value_field)-1
-    endif
+    end if
     if ( nvalues == 1 ) then
       ! We just treat this as a normal definition or reevaluation of
       ! the named Boolean treated as a scalar
@@ -1054,7 +1054,7 @@ contains
       if ( verboser ) then
         call outputnamedValue( 'keyString', trim(keyString) )
         call outputnamedValue( 'BooleanString', trim(BooleanString) )
-      endif
+      end if
       ! see also how the Repeat command treats the values field
       do j=2, nvalues+1
         call writeIntsToChars( j-1, keyString )
@@ -1063,7 +1063,7 @@ contains
         if ( verboser ) then
           call outputnamedValue( 'keyString', trim(keyString) )
           call outputnamedValue( 'BooleanString', trim(BooleanString) )
-        endif
+        end if
         call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
           & keyString, booleanString, &
           & countEmpty=countEmpty, &
@@ -1079,12 +1079,12 @@ contains
         aQuantity => aTarget
         aQuantity%template = tTemplate
         call CreateVectorValue ( aQuantity, 'a' )
-      endif
+      end if
       call CloneVectorQuantity ( tQuantity, aQuantity )
       if ( verboser ) then
         call output( trim(nameString) // ' = ', advance='no' )
         call output( trim(formula), advance='yes' )
-      endif
+      end if
       call Manipulate( tQuantity, AQuantity, BQuantity, C, formula, &
         & .false., '' )
       formula = numToChars ( tQuantity%values(1,1) )
@@ -1098,7 +1098,7 @@ contains
       if ( verboser ) then
         call output( trim(nameString) // ' = ', advance='no' )
         call output( trim(formula), advance='yes' )
-      endif
+      end if
       call insertHashElement ( nameString, formula, &
         & runTimeValues%lkeys, runTimeValues%lvalues, &
         & inseparator=runTimeValues%sep )
@@ -1106,11 +1106,11 @@ contains
       if ( verboser ) then
         call output( trim(nameString) // ' = ', advance='no' )
         call output( tvalue, advance='yes' )
-      endif
+      end if
       call insertHashElement ( nameString, BooleanToString(tvalue), &
         & runTimeValues%lkeys, runTimeValues%lvalues, &
         & inseparator=runTimeValues%sep )
-    endif
+    end if
     size = NumStringElements( runTimeValues%lkeys, countEmpty=countEmpty, &
       & inseparator=runTimeValues%sep )
     if ( verbose ) &
@@ -1151,7 +1151,7 @@ contains
       & f_hessian, f_hgrid, f_igrf, &
       & f_l2pc, f_lines, f_mark, f_mask, f_matrix, f_memory, &
       & f_mietables, f_options, f_pfadata, f_pfafiles, f_pfanum, f_pfastru, &
-      & f_phasename, f_pointinggrids, f_quantity, f_rank, f_reset, &
+      & f_phasename, f_pointinggrids, F_Polygon, f_quantity, f_rank, f_reset, &
       & f_signals,  f_spectroscopy, f_stack, f_start, f_stop, f_stride, &
       & f_stopwitherror, f_surface, &
       & f_template, f_text, f_tgrid, f_time, f_truncate, &
@@ -1186,6 +1186,7 @@ contains
     use pfadatabase_m, only: dump, dump_pfadatabase, dump_pfafiledatabase, &
       & dump_pfastructure, pfadata
     use pointingGrid_m, only: dump_pointing_grid_database
+    use Polygon_m, only: Dump_Polygon_Database
     use quantityTemplates, only: dump, quantityTemplate_t
     use read_mie_m, only: dump_mie
     use spectroscopyCatalog_m, only: catalog, dump, dump_lines_database, lines
@@ -1296,7 +1297,7 @@ contains
     HaveHessians = present(HessianDatabase)
     if ( HaveHessians ) then
       if ( associated(HessianDatabase) ) HaveHessians = size(HessianDatabase) > 0
-    endif
+    end if
     haveHGrids = present(hGrids)
     if ( haveHGrids ) haveHGrids = associated(hGrids)
     haveMatrices = present(MatrixDatabase)
@@ -1357,7 +1358,7 @@ contains
         & f_callStack, f_chunkDivide, f_chunkNumber, f_commandLine, f_crashBurn, &
         & f_DACSfilterShapes, f_filterShapes, f_globalAttributes, f_igrf, f_memory, &
         & f_MieTables, f_pfaFiles, f_pfaStru, f_phaseName, f_pointingGrids, &
-        & f_stop, f_stopWithError, f_time, f_totalMatrixSizes, &
+        & f_polygon, f_stop, f_stopWithError, f_time, f_totalMatrixSizes, &
         & f_totalVectorSizes )
         if ( get_boolean(son) ) then
           select case ( fieldIndex )
@@ -1440,7 +1441,7 @@ contains
                 call output('Checking getRadiometerIndex for R3', advance='yes' )
                 call getRadiometerIndex('R3', i )
                 if ( i > 0 ) call dump( radiometers(i) )
-              endif
+              end if
             else
               call announceError ( son, noRadiometers )
             end if
@@ -1510,12 +1511,14 @@ contains
             call outputNamedValue ( 'phase name', currentphaseName )
           case ( f_pointingGrids )
             call dump_pointing_grid_database ( son )
+          case ( f_polygon )
+            call dump_polygon_database
           case ( f_stop )
             call finish ( 'ending mlsl2' )
             if ( switchDetail(switches, 'time') >= 0 ) then
               call output('(Now for the timings summary)', advance='yes')
               call dump_section_timings
-            endif
+            end if
             if ( NORMAL_EXIT_STATUS /= 0 .and. .not. parallel%slave ) then
               call get_where ( where_at, farewell, &
                 & before="Program stopped with normal status by /stop field on DUMP statement at ", &
@@ -1532,12 +1535,12 @@ contains
                 & before="Program stopped by /stop field on DUMP statement at ", &
                 & after="." )
               call MLSMessageExit( farewell=farewell )
-            endif
+            end if
           case ( f_stopWithError )
             if ( switchDetail(switches, 'time') >= 0 ) then
               call output('(Now for the timings summary)', advance='yes')
               call dump_section_timings
-            endif
+            end if
             call get_where ( where_at, farewell, &
               & before="Program stopped by /stopWithError field on DUMP statement at ", &
                 & after="." )
@@ -1610,10 +1613,10 @@ contains
               if ( QuantityIndex > 0 ) then
                 Quantity => GetVectorQuantity( vector, QuantityIndex )
                 call dump( Quantity )
-              endif
-            endif
+              end if
+            end if
           enddo
-        endif
+        end if
       case ( f_clean )
         clean = get_boolean(son)
         if ( clean ) optionsString = trim(optionsString) // 'c'
@@ -1689,7 +1692,7 @@ contains
               vectorIndex2 = decoration(decoration(gson))
             else
               vectorIndex = decoration(decoration(gson))
-            endif
+            end if
             if ( DiffOrDump == s_diff ) then
               rmsFormat = '(1pe8.1)'
               if ( gotFirst ) &
@@ -1703,7 +1706,7 @@ contains
               call output ( ' GriddedData: ' )
               call dump ( &
                 & griddedDataBase(vectorIndex), details , options=optionsString )
-            endif
+            end if
           end do
         else
           call announceError ( gson, noGriddedData )
@@ -1726,7 +1729,7 @@ contains
               hessianIndex2 = -decoration(decoration(gson))
             else
               hessianIndex = -decoration(decoration(gson))
-            endif
+            end if
             if ( DiffOrDump == s_diff ) then
               call diff ( HessianDatabase(hessianIndex), &
                 &         HessianDatabase(hessianIndex2), details=details, &
@@ -1734,7 +1737,7 @@ contains
             else
               call dump ( HessianDatabase(hessianIndex), details=details, &
                 & options=optionsString )
-            endif
+            end if
           end do
           gotFirst = DiffOrDump == s_diff
         else
@@ -1800,8 +1803,8 @@ contains
                   & qty1, &
                   & qty2, &
                   & options=optionsString )
-              endif
-            endif
+              end if
+            end if
             rmsFormat = '*'
           else if ( fieldIndex == f_mask ) then
             if ( got(f_details) ) &
@@ -1824,7 +1827,7 @@ contains
                 call outputNamedValue( 'count(1:rank)', count(1:hSlabRank) )
                 call outputNamedValue( 'stride(1:rank)', stride(1:hSlabRank) )
                 call outputNamedValue( 'block(1:rank)', block(1:hSlabRank) )
-              endif
+              end if
               VectorValue = GatherVectorQuantity( qty1, &
                 & start(1:hSlabRank), count(1:hSlabRank), &
                 & stride(1:hSlabRank), block(1:hSlabRank) )
@@ -1856,7 +1859,7 @@ contains
               if ( verbose ) then
                 call outputnamedValue ( 'rank field', rank )
                 call outputnamedValue ( 'shape(value3)', shape(qty1%value3) )
-              endif
+              end if
               select case ( rank )
               case ( 1 )
                 call dump ( qty1%value1, 'quantity values', &
@@ -2191,7 +2194,7 @@ contains
     if ( MLSSelectedAlready ) then
       call trace_end ( 'MLSCase', cond=toggle(gen) )
       return
-    endif
+    end if
     optionsString = ' '
     do j = 2, nsons(root)
       son = subtree(j,root) ! The argument
@@ -2221,11 +2224,11 @@ contains
     else
       ! The streq function is a generalized string '=='
       MLSSelecting = .not. streq( label, selectLabel, optionsString )
-    endif
+    end if
     if ( verbose ) then
       call output( 'MLSCase label = ', advance='no' )
       call output( trim(label), advance='yes' )
-    endif
+    end if
     ! We must store whether we have ever had a match
     MLSSelectedAlready = MLSSelectedAlready .or. .not. MLSSelecting
     call trace_end ( 'MLSCase', cond=toggle(gen) )
@@ -2280,7 +2283,7 @@ contains
     if ( verbose ) then
       call output( 'Selecting label = ', advance='no' )
       call output( trim(label), advance='yes' )
-    endif
+    end if
     selectLabel = lowerCase(label)
     MLSSelecting = .true.
     call trace_end ( 'MLSSelect', cond=toggle(gen) )
@@ -2393,7 +2396,7 @@ contains
           call output( 'Calling BooleanValue', advance='yes' )
           call output( runTimeValues%lkeys, advance='yes' )
           call output( runTimeValues%lvalues, advance='yes' )
-        endif
+        end if
         skip = BooleanValue ( trim(booleanString), &
           & runTimeValues%lkeys, runTimeValues%lvalues, runTimeValues%sep )
       case ( f_formula )
@@ -2408,7 +2411,7 @@ contains
       if ( verboser .and. len_trim(booleanString) > 0 ) then
         call output( trim(booleanString) // ' = ', advance='no' )
         call output( skip, advance='yes' )
-      endif
+      end if
       if ( skip ) &
         & call output( '(Skipping rest of this section)', advance='yes' )
     end do
@@ -2449,7 +2452,7 @@ contains
             & countEmpty=countEmpty, &
             & inseparator=runTimeValues%sep )
         enddo
-      endif
+      end if
     end if
     call trace_end ( myName, cond=toggle(gen) )
   end function Skip
@@ -2548,20 +2551,20 @@ contains
       if ( verbose ) then
         call outputnamedvalue('lhs', trim(lhs) )
         call outputnamedvalue('rhs', trim(rhs) )
-      endif
+      end if
       lhs = Evaluator(lowercase(adjustl(lhs)))
       rhs = Evaluator(lowercase(adjustl(rhs)))
       if ( verbose ) then
         call outputnamedvalue('lhs', trim(lhs) )
         call outputnamedvalue('rhs', trim(rhs) )
-      endif
+      end if
       call readNumsFromChars ( lhs, x )
       call readNumsFromChars ( rhs, y )
       bvalue = ( x < y )
       if ( verbose ) then
         call outputNamedValue( 'x', x )
         call outputNamedValue( 'y', y )
-      endif
+      end if
       return
     elseif ( index(formula, ">") > 1 ) then
       if ( verbose ) call output( 'Have ">"', advance='yes' )
@@ -2576,7 +2579,7 @@ contains
       if ( verbose ) then
         call outputNamedValue( 'x', x )
         call outputNamedValue( 'y', y )
-      endif
+      end if
       bvalue = ( x > y )
       return
     else
@@ -2584,13 +2587,13 @@ contains
         call output( 'Calling BooleanValue', advance='yes' )
         call output( runTimeValues%lkeys, advance='yes' )
         call output( runTimeValues%lvalues, advance='yes' )
-      endif
+      end if
       bvalue = BooleanValue ( trim(formula), &
         & runTimeValues%lkeys, runTimeValues%lvalues, runTimeValues%sep )
       if ( verbose ) &
         & call outputnamedvalue( trim(formula) // 'evaluates', bvalue )
       return
-    endif
+    end if
     rhs = lowercase(adjustl(rhs))
     ! OK, so now let's try to make sense of the lhs
     ! Note the necessary type conversions for some variables
@@ -2601,7 +2604,7 @@ contains
     if ( verbose ) then
       call outputnamedvalue('lhs', trim(lhs) )
       call outputnamedvalue('rhs', trim(rhs) )
-    endif
+    end if
     if ( reverse ) bvalue = .not. bvalue  ! If we meant not equal
   end function myBooleanValue
 
@@ -2761,18 +2764,18 @@ contains
         call headLine( trim(text), &
           & Before=headLineChars(1:1), After=headLineChars(1:1), &
           & fillChar='-' )
-      endif
+      end if
     elseif ( asBanner ) then
       if ( lineLength > 0 ) then
         call banner( trim(asciify( text, how='snip' )), linelength=lineLength )
       else
         call banner( trim(asciify( text, how='snip' )) )
-      endif
+      end if
     elseif ( toStderr ) then
       call Beep ( trim(text) )
     else
       call output ( trim(text), advance='yes' )
-    endif
+    end if
   end subroutine outputNow
 
   ! -----------------------------------------  returnFullFileName  -----
@@ -2821,7 +2824,7 @@ contains
       call outputLater ( TotalMemory2 - TotalMemory1, advance = 'no' )
       call insertSpace
       call outputLater ( ")", advance='no' )
-    endif
+    end if
     call outputNow
   end subroutine SayMemory
 
@@ -2840,7 +2843,7 @@ contains
       call outputLater ( t2 - t1, advance = 'no' )
       call insertSpace
       call outputLater ( ")", advance='no' )
-    endif
+    end if
     call outputNow
   end subroutine SayTime
 
@@ -2857,6 +2860,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.125  2016/01/29 01:10:07  vsnyder
+! Add polygon to Dump
+!
 ! Revision 2.124  2015/10/06 00:23:48  pwagner
 ! When Dumping runtime Boolean, options='s' skips printing key
 !
