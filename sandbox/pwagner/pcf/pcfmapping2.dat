@@ -42,16 +42,17 @@ baseIndex=2000
 ;  param: <name> 1
 ; where 1 is the increment between PCF numbers for each parameter
 ;
-l2_param: InputVersion    1
-          PGEVersion      1
-          Cycle           1
-          CCSDSStartId    1
-          CCSDSEndId      1
-          spec_keys       1
-          spec_hash       1
-          switches        1
-          col_spec_keys   1
-          col_spec_hash   1
+l2_param: InputVersion        1
+          PGEVersion          1
+          Cycle               1
+          CCSDSStartId        1
+          CCSDSEndId          1
+          spec_keys           1
+          spec_mcfnames       1
+          switches            1
+          col_spec_keys       1
+          col_spec_mcfnames   1
+          col_spec_doinames   1
 ;
 ; Each entry will create a line in the MLSPCF2.f90 module like this
 ;
@@ -168,6 +169,13 @@ mobile_l1b_rad: MLS-Aura_L1B_RADF_V${VERSION}-C${CYCLE}_${DATE}.dat   30
 mobile_l1b_oa: MLS-Aura_L1B_OA_V${VERSION}-C${CYCLE}_${DATE}.dat   30
 ;
 ; ----------------------------------------------------------------------------
+; Polygon file
+; An optional file to input geolocations used by the QTM generator
+baseIndex=21150
+;
+polygon: MLS-Aura_L2POLY_V${VERSION}-C${CYCLE}_${DATE}.txt    1
+;
+; ----------------------------------------------------------------------------
 ; NON-MLS APRIORI FILES
 ; Here is where I relocated ncep, dao, climatology
 baseIndex=21900
@@ -267,6 +275,9 @@ mobile_mcf_l2dgm: ML2DGM.001.MCF   1
 l3: eof   1
 ;
 ; $Log$
+; Revision 1.2  2012/04/05 18:35:49  pwagner
+; Added ids for magnetic field and other params
+;
 ; Revision 1.1  2008/05/09 00:38:24  pwagner
 ; First commit
 ;
