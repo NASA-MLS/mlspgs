@@ -350,6 +350,7 @@ phiWindow
 phiZero
 pointingGrids
 polarized
+polygon
 precision
 precisionFactor
 prefixSignal
@@ -537,6 +538,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.260  2016/01/29 01:08:57  vsnyder
+# Add Polygon
+#
 # Revision 2.259  2015/09/30 20:31:10  pwagner
 # With /noZeros field negativePrecision command now resets 0 to -1
 #
