@@ -81,13 +81,15 @@ contains ! =====     Public Procedures     =============================
       & READ_FILTER_SHAPES_FILE, READ_DACS_FILTER_SHAPES_FILE, &
       & CLOSE_FILTER_SHAPES_FILE
     use INIT_TABLES_MODULE, only: F_ANTENNAPATTERNS, F_DACSFILTERSHAPES, &
-      & F_FILTERSHAPES, F_L2PC, F_MIETABLES, F_PFAFILES, F_POINTINGGRIDS
+      & F_FILTERSHAPES, F_L2PC, F_MIETABLES, F_PFAFILES, F_POINTINGGRIDS, &
+      & F_Polygon
     use INTRINSIC, only: L_ASCII, L_HDF
     use L2PARINFO, only: PARALLEL
     use L2PC_M, only: READCOMPLETEHDF5L2PCFILE
     use MLSCOMMON, only: MLSFILE_T
     use MLSPCF2, only: MLSPCF_ANTPATS_START, MLSPCF_FILTSHPS_START, &
       &          MLSPCF_DACSFLTSH_START, MLSPCF_PTGGRIDS_START, &
+      &          MLSPCF_Polygon_Start, &
       &          MLSPCF_L2PC_START, MLSPCF_L2PC_END, &
       &          MLSPCF_MIETABLES_START, &
       &          MLSPCF_PFA_START, MLSPCF_PFA_END
@@ -95,6 +97,8 @@ contains ! =====     Public Procedures     =============================
     use PFADATABASE_M, only: PROCESS_PFA_FILE
     use POINTINGGRID_M, only: CLOSE_POINTING_GRID_FILE, &
       & OPEN_POINTING_GRID_FILE, READ_POINTING_GRID_FILE
+    use Polygon_m, only: Close_Polygon_File, Open_Polygon_File, &
+      & Read_Polygon_File
     use READ_MIE_M, only: READ_MIE
     use TOGGLES, only: GEN, LEVELS, TOGGLE
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
@@ -197,6 +201,15 @@ contains ! =====     Public Procedures     =============================
           call open_pointing_grid_file ( fileName, lun )
           call read_pointing_grid_file ( lun, subtree(j,son) )
           call close_pointing_grid_file ( lun )
+        end do
+      case ( f_polygon )
+        do j = 2, nsons(son)
+          call get_file_name ( mlspcf_polygon_start, &
+            & get_field_id(son), filedatabase, MLSFile, &
+            & 'Polygon File not found in PCF' )
+          call open_polygon_file ( fileName, lun )
+          call read_polygon_file ( lun, subtree(j,son) )
+          call close_polygon_file ( lun )
         end do
       case default
         ! Can't get here if the type checker worked
@@ -1549,6 +1562,9 @@ op:     do j = 2, nsons(theTree)
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.182  2016/01/29 01:09:51  vsnyder
+! Add polygon file reader to ForwardModelGlobal
+!
 ! Revision 2.181  2015/08/25 17:35:10  vsnyder
 ! PhiWindow is a tuple, with the first element specifying the angles or
 ! number of profiles/MAFs before the tangent point, and the second
