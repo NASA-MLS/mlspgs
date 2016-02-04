@@ -1,20 +1,24 @@
 program server
-    use QuantityPVM
     use CFM
     use CFM, only: QUANTITYTEMPLATE_T
-    use IDLCFM2_m
+    use DECLARATION_TABLE, only: ALLOCATE_DECL, DEALLOCATE_DECL
+    use EmpiricalGeometry, only: CFM_InitEmpiricalGeometry
+    use H5LIB, ONLY: h5open_f, h5close_f
+    use IDLCFM2_m, only: QTYMSGTAG, &
+      & SIG_CLEANUP, SIG_DIE, SIG_FWDMDL, SIG_SETUP, SIG_VECTOR, &
+      & ICFMReceiveVector, ICFMReceiveQuantity, ICFMSendVector
+    use io_stuff, only: write_textfile
+    use MatrixTools, only: PVMSendMatrix
     use MLSKinds, only: r8
     use MLSL2Options, only: TOOLKIT
-    use DECLARATION_TABLE, only: ALLOCATE_DECL, DEALLOCATE_DECL
-    use TREE, only: ALLOCATE_TREE, DEALLOCATE_TREE
-    use SYMBOL_TABLE, only: DESTROY_SYMBOL_TABLE
     use MLSMessageModule, only: MLSMessageConfig, PVMERRORMESSAGE, &
                                 MLSMSG_Severity_to_quit
-    use PVMIDL, only: PVMIDLUNPACK
+    use MLSStrings, only: WriteIntsToChars
     use PVM, only: PVMFRECV, PVMFBUFINFO
-    use H5LIB, ONLY: h5open_f, h5close_f
-    use EmpiricalGeometry, only: CFM_InitEmpiricalGeometry
-    use MatrixTools, only: PVMSendMatrix
+    use PVMIDL, only: PVMIDLUNPACK
+    use QuantityPVM
+    use SYMBOL_TABLE, only: DESTROY_SYMBOL_TABLE
+    use TREE, only: ALLOCATE_TREE, DEALLOCATE_TREE
 
     implicit none
 
@@ -43,12 +47,14 @@ program server
 
     integer :: tid, info, bufid, bytes, msgtag, cid
     integer :: reqcode
+    character(len=16) :: tidChars
     type (ForwardModelConfig_T), pointer :: ForwardModelConfigDatabase(:)
     logical :: locked = .false.
     logical :: initStages(P_LAST - 1) = .false.
     ! These aren't really needed, but the program doesn't know that
     character(len=27) :: startTime = "2009-040T00:00:00.0000"
     character(len=27) :: endTime = "2009-040T00:00:00.9999"
+    character(len=*), parameter :: tidFileName = "tid.txt"
     ! executable
     MLSMessageConfig%logFileUnit = -1
     MLSMessageConfig%useToolkit = .false.
@@ -65,6 +71,8 @@ program server
     endif
 
     print *, "Server start with tid ", tid
+    call WriteIntsToChars ( tid, tidChars )
+    call write_textfile ( tidFileName, trim(tidChars) )
 
     do while (.true.)
         reqcode = -1 ! init to some number that is not one of the signals
@@ -80,12 +88,16 @@ program server
             cycle
         endif
         print *, "cid is ", cid
+        print *, "reqcode is ", reqcode
 
         select case (reqcode)
         case (SIG_SETUP)
             call ICFM_Setup (info)
         case (SIG_CLEANUP)
             call ICFM_Cleanup
+        case (SIG_DIE)
+            call ICFM_Cleanup
+            exit
         case (SIG_FWDMDL)
             call ICFM_ForwardModel (cid, info)
         case (SIG_VECTOR)
@@ -378,7 +390,7 @@ program server
         ! Reset EmpiricalGeometry because something is allocated
         if (initstages(P_INITEG)) call CFM_ResetEmpiricalGeometry
 
-        ! Have to call this, after we stops using HDF5 library
+        ! Have to call this, after we stop using HDF5 library
         if (initstages(P_INITHDF5)) then 
             call h5close_f (error)
             if (error /= 0) print *, "Error in finishing up hdf5 library"
@@ -605,6 +617,9 @@ program server
 end program
 
 ! $Log$
+! Revision 1.9  2016/01/07 18:26:27  pwagner
+! Will not need toolkit panoply, so do not try to
+!
 ! Revision 1.8  2015/08/17 18:22:10  pwagner
 ! cfm no longer supplies start, endTimes
 !
