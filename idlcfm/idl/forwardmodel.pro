@@ -1,10 +1,12 @@
 ; This subroutine utilize some subroutines in AtGod
+; Use pvm to send input, receive output, and contact
+; the Fortran library's Forward Model server (addressable by its tid)
 pro ForwardModel, tid, info, mafNo, state, stateExtra, outputTemplate, output, jacobian=jacobian, doDerivative=doDerivative
     if keyword_set(doDerivative) then doDerivative = 1L else doDerivative = 0L
 
     bufid = pvm_initsend()
 
-    pvm_pack_idltypeinfo, 2L
+    pvm_pack_idltypeinfo, 2L ;sig_fwdmdl
     pvm_pack_idlvariable, 2L
 
     icfm_sendvector, state, /packonly
@@ -33,3 +35,4 @@ pro ForwardModel, tid, info, mafNo, state, stateExtra, outputTemplate, output, j
     msgtag = 202L ; different for receiving matrix
     if doDerivative then icfm_receivematrix, jacobian, tid, msgtag
 end
+; $Log$
