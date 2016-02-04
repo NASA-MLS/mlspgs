@@ -1,11 +1,12 @@
 module IDLCFM2_m
+    use Allocate_Deallocate, only: Deallocate_test
     use CFM
     use CFM, only: QUANTITYTEMPLATE_T
     use PVMIDL, only: PVMIDLPACK, PVMIDLUNPACK
     use PVM, only: PVMFRECV, PVMFINITSEND, PVMDATADEFAULT
     use MorePVM, only: PVMUnpackStringIndex, PVMUnpackLitIndex
     use MLSMessageModule, only: PVMERRORMESSAGE
-    use Allocate_Deallocate, only: Deallocate_test
+    use QuantityTemplates, only: SetupNewQuantityTemplate, CopyQuantityTemplate
     use VectorsModule, only: RemapVectorMask, RemapVectorValue
 
     implicit none
@@ -20,12 +21,42 @@ module IDLCFM2_m
     ! Local parameters
     integer, parameter, public :: QTYMSGTAG = 200
 
-    integer, parameter, public :: SIG_SETUP = 0
+    integer, parameter, public :: SIG_SETUP   = 0
     integer, parameter, public :: SIG_CLEANUP = 1
-    integer, parameter, public :: SIG_FWDMDL = 2
+    integer, parameter, public :: SIG_FWDMDL  = 2
+    integer, parameter, public :: SIG_VECTOR  = 3
+    integer, parameter, public :: SIG_DIE     = 4
 
     ! These methods are to help with debugging effort
-    integer, parameter, public :: SIG_VECTOR = 3
+    integer, parameter :: P_NAME                    = 1
+    integer, parameter :: P_TYPE                    = 2
+    integer, parameter :: P_OFFSET                  = 3
+    integer, parameter :: P_COHERENT                = 4
+    integer, parameter :: P_STACKED                 = 5
+    integer, parameter :: P_LOGBASIS                = 6
+    integer, parameter :: P_MINVALUE                = 7
+    integer, parameter :: P_BADVALUE                = 8
+    integer, parameter :: P_MOLECULE                = 9
+    integer, parameter :: P_MODULE                  = 10
+    integer, parameter :: P_SIGNAL                  = 11
+    integer, parameter :: P_RADIOMETER              = 12
+    integer, parameter :: P_FREQUENCIES             = 13
+    integer, parameter :: P_FCOORD                  = 14
+    integer, parameter :: P_NOCHANS                 = 15
+    integer, parameter :: P_SURFS                   = 16
+    integer, parameter :: P_VCOORD                  = 17
+    integer, parameter :: P_NOSURFS                 = 18
+    integer, parameter :: P_PHI                     = 19
+    integer, parameter :: P_GEODLAT                 = 20
+    integer, parameter :: P_LONGITUDE               = 21
+    integer, parameter :: P_LOSANGLE                = 22
+    integer, parameter :: P_SOLARZENITH             = 23
+    integer, parameter :: P_SOLARTIME               = 24
+    integer, parameter :: P_TIME                    = 25
+    integer, parameter :: P_NOPROFS                 = 26
+    integer, parameter :: P_INSTANCELEN             = 27
+    integer, parameter :: P_VALUE                   = 28
+    integer, parameter :: P_MASK                    = 29
 
     contains
 !--------------------------- end bloc --------------------------------------
@@ -48,37 +79,8 @@ module IDLCFM2_m
 
         logical :: mycallsend = .true.
         integer :: bufid
-        logical :: l29(28)
+        logical :: l29(29)
         type(QuantityTemplate_T) :: template
-
-        integer, parameter :: P_NAME = 1
-        integer, parameter :: P_TYPE = 2
-        integer, parameter :: P_OFFSET = 3
-        integer, parameter :: P_COHERENT = 4
-        integer, parameter :: P_LOGBASIS = 5
-        integer, parameter :: P_MINVALUE = 6
-        integer, parameter :: P_BADVALUE = 7
-        integer, parameter :: P_MOLECULE = 8
-        integer, parameter :: P_MODULE = 9
-        integer, parameter :: P_SIGNAL = 10
-        integer, parameter :: P_RADIOMETER = 11
-        integer, parameter :: P_FREQUENCIES = 12
-        integer, parameter :: P_FCOORD = 13
-        integer, parameter :: P_NOCHANS = 14
-        integer, parameter :: P_SURFS = 15
-        integer, parameter :: P_VCOORD = 16
-        integer, parameter :: P_NOSURFS = 17
-        integer, parameter :: P_PHI = 18
-        integer, parameter :: P_GEODLAT = 19
-        integer, parameter :: P_LONGITUDE = 20
-        integer, parameter :: P_LOSANGLE = 21
-        integer, parameter :: P_SOLARZENITH = 22
-        integer, parameter :: P_SOLARTIME = 23
-        integer, parameter :: P_TIME = 24
-        integer, parameter :: P_NOPROFS = 25
-        integer, parameter :: P_INSTANCELEN = 26
-        integer, parameter :: P_VALUE = 27
-        integer, parameter :: P_MASK = 28
 
         if (present(callsend) .and. .not. callsend) mycallsend = .false.
 
@@ -128,7 +130,7 @@ module IDLCFM2_m
             call PVMFSend ( tid, QtyMsgTag, info )
             if ( info /= 0 ) call PVMErrorMessage ( info, "sending vector value" )
         endif
-    end subroutine
+    end subroutine ICFMSendQuantity
 
     ! subroutine ICFMReceiveQuantity ( QT, values, mask, tid, callrecv)
     subroutine ICFMReceiveQuantity ( QT, value1, mask1, tid, callrecv)
@@ -151,40 +153,10 @@ module IDLCFM2_m
         integer, intent(in), optional :: TID ! Task to get it from
         logical, optional, intent(in) :: callrecv !true if this subroutine should call PVMFRecv, default is false
 
-        integer, parameter :: P_NAME = 1
-        integer, parameter :: P_TYPE = P_NAME + 1
-        integer, parameter :: P_OFFSET = P_TYPE + 1
-        integer, parameter :: P_COHERENT = P_OFFSET + 1
-        integer, parameter :: P_STACKED = P_COHERENT + 1
-        integer, parameter :: P_LOGBASIS = P_STACKED + 1
-        integer, parameter :: P_MINVALUE = P_LOGBASIS + 1
-        integer, parameter :: P_BADVALUE = P_MINVALUE + 1
-        integer, parameter :: P_MOLECULE = P_BADVALUE + 1
-        integer, parameter :: P_MODULE = P_MOLECULE + 1
-        integer, parameter :: P_SIGNAL = P_MODULE + 1
-        integer, parameter :: P_RADIOMETER = P_SIGNAL + 1
-        integer, parameter :: P_FREQUENCIES = P_RADIOMETER + 1
-        integer, parameter :: P_FCOORD = P_FREQUENCIES + 1
-        integer, parameter :: P_NOCHANS = P_FCOORD + 1
-        integer, parameter :: P_SURFS = P_NOCHANS + 1
-        integer, parameter :: P_VCOORD = P_SURFS + 1
-        integer, parameter :: P_NOSURFS = P_VCOORD + 1
-        integer, parameter :: P_PHI = P_NOSURFS + 1
-        integer, parameter :: P_GEODLAT = P_PHI + 1
-        integer, parameter :: P_LONGITUDE = P_GEODLAT + 1
-        integer, parameter :: P_LOSANGLE = P_LONGITUDE + 1
-        integer, parameter :: P_SOLARZENITH = P_LOSANGLE + 1
-        integer, parameter :: P_SOLARTIME = P_SOLARZENITH + 1
-        integer, parameter :: P_TIME = P_SOLARTIME + 1
-        integer, parameter :: P_NOPROFS = P_TIME + 1
-        integer, parameter :: P_INSTANCELEN = P_NOPROFS + 1
-        integer, parameter :: P_VALUE = P_INSTANCELEN + 1
-        integer, parameter :: P_MASK = P_VALUE + 1
-        integer, parameter :: P_LAST = P_MASK + 1
-
         ! Local variables
         integer :: BUFFERID                 ! From pvm
         integer :: INFO                     ! Flag
+        integer, parameter :: P_LAST = P_MASK + 1
         logical :: l29(P_LAST - 1)
         logical :: PROPERTIES(firstProperty : lastProperty) ! Properties for this quantity type
         character(len=32) :: signalString
@@ -803,8 +775,8 @@ module IDLCFM2_m
                 deallocate(mask1)
                 nullify(mask1)
             endif
-        end subroutine
-    end subroutine
+        end subroutine clearout
+    end subroutine ICFMReceiveQuantity
 
     subroutine InitializeQuantityTemplate (template)
         ! This function is to initialize a template
@@ -846,7 +818,7 @@ module IDLCFM2_m
         template%reflector = 0
         template%molecule = 0
         nullify(template%surfindex, template%chanIndex)
-    end subroutine
+    end subroutine InitializeQuantityTemplate
 
     subroutine ICFMSendVector (vec, tid, info)
         use QuantityPVM, only: PVMSendQuantity
@@ -874,7 +846,7 @@ module IDLCFM2_m
 
         call PVMFSend ( tid, QtyMsgTag, info )
         if ( info /= 0 ) call PVMErrorMessage ( info, "sending vector values" )
-    end subroutine
+    end subroutine ICFMSendVector
 
     subroutine ICFMReceiveVector ( vec, qtydb, tid, callrecv)
         type(Vector_T), intent(out) :: vec
@@ -973,11 +945,14 @@ module IDLCFM2_m
         case default
             print *, "unknown: ", msg
         end select
-    end subroutine
+    end subroutine output
 
 end module
 
 ! $Log$
+! Revision 1.10  2016/01/07 17:56:06  pwagner
+! Reflects new crossAngles, pointer remapping
+!
 ! Revision 1.9  2015/08/17 18:21:27  pwagner
 ! Changed to reflect loss of pointiness by some qty template components
 !
