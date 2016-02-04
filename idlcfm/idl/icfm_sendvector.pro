@@ -3,7 +3,7 @@ pro icfm_sendvector, vector, tid=tid, info=info, packonly=packonly
 
     if n_elements(packonly) eq 0 then begin
         bufid = pvm_initsend()
-        pvm_pack_idltypeinfo, 3L
+        pvm_pack_idltypeinfo, 3L ;sig_vector
         pvm_pack_idlvariable, 3L
     endif 
 
@@ -29,3 +29,4 @@ pro icfm_sendvector, vector, tid=tid, info=info, packonly=packonly
         else info = pvm_mcast(tids=tid, msgtag=msgtag)
     endif
 end
+; $Log$
