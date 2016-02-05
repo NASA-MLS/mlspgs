@@ -13,8 +13,8 @@
 \topmargin -0.5in
 \textheight 9in
 
-\newcommand{\docname}{wvs-128r2}
-\newcommand{\docdate}{15 December 2015}
+\newcommand{\docname}{wvs-128r3}
+\newcommand{\docdate}{17 December 2015}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
@@ -85,7 +85,7 @@ References: \>\h{wvs-127}
 
 \section{Introduction}
 
-In {\bf A Hierarchical co\"ordinate System for Geoprocessing and
+In {\bf A Hierarchical Coordinate System for Geoprocessing and
 Cartography}, Geoffrey Dutton described a method to develop a mesh on a
 sphere that has the property that, as the mesh is refined, the ratio of
 the area of the largest facet to the area of the smallest facet is bounded
@@ -162,8 +162,8 @@ Vertices of the mesh are not uniquely identified (see Section
 \ref{vertices}).  At each level of refinement, they are assigned a
 \emph{basis number} in the range $1\cdots3$.  Initially, the poles are
 assigned 1, the 0$^\circ$ and 180$^\circ$ equatorial vertices of the
-octahedron are assigned 3, and the 90$^\circ$ and 270$^\circ$ vertices are
-assigned 2.  Thereafter, as each edge is bisected, the basis number of the
+octahedron are assigned 2, and the 90$^\circ$ and 270$^\circ$ vertices are
+assigned 3.  Thereafter, as each edge is bisected, the basis number of the
 midpoint is $B_n = 6 - ( B_a + B_b )$, where $B_a$ and $B_b$ are the basis
 numbers of the end points.  The QID of each facet at level 1 is its octant
 number.  When a facet is subdivided, the QID of the central facet is the
@@ -288,11 +288,6 @@ refinement level of 7 (156 km or 1.4$^\circ$) would be appropriate to SMLS
 if it has roughtly the same orbit and same scan rates as Aura MLS.  A
 finer refinement might be appropriate to A-SMLS.
 
-Once one has identified a triangle and its vertices, interpolation to a
-point within it is easy:  One computes the normalized barycentric
-co\"ordinates (Section \ref{Barycentric}) of the point.  The interpolation
-coefficients are those co\"ordinates.
-
 The {\tt mlsl2} program will not be used to retrieve atmospheric state
 over the entire Earth: At a refinement level of 7 (159 km) there would be
 16,386 profiles.  Solving for 20 quantities on 72 levels, there would be
@@ -318,28 +313,24 @@ To construct and use a QTM for MLS
       a point inside it.  The polygon could, but should not, have holes,
       and it need not be convex.  Following steps are carried out in the
       ZOT projection, so if a polygon has an edge that crosses a
-      southern-hemisphere meridian of the original octahedron, decompose
-      the polygon into several that do not have this property. Only one
-      ``inside'' point is needed.  Remember that in Figure \ref{Fig-2},
-      the outside edges of the ZOT projection square are
-      southern-hemisphere meridians of the original octagon.  Therefore,
-      in the ZOT projection, a polygon that crossed one of these meridians
-      would not be closed; it would be two (or more) open polygons.
+      southern-hemisphere meridian of the original octahedron, add edges
+      in the ZOT projection along the crossed meridian to join the aliased
+      points.
 
 \item Construct the QTM top down, starting with level 1.  If the facet has
-      a point in any polygon, or a polygon has a point in the facet, or an
-      edge of any polygon intersects an edge of the facet, and the level
-      of refinement is not sufficient, refine that facet.
+      a point in the polygon, or the polygon has a point in the facet, or
+      an edge of the polygon intersects an edge of the facet, and the
+      level of refinement is not sufficient, refine that facet.
 
-\item When a facet is constructed, add its vertices that are within the
-      polygon to the set of vertices that are geolocations for the state
-      vector.  If the facet is at the specified refinement level, and it
-      has any points in the polygon, add all its points to the set. 
-      Points of the QTM that surround the polygon are in the set so that
-      it is possible to interpolate to any point within the polygon or on
-      its boundary.  Use a hash table to avoid duplicates.  The serial
-      number of a vertex is then used to compute a column subscript in the
-      Jacobian, and a subscript in the state vector.
+\item \label{step3} When a facet is constructed, add its vertices that are
+      within the polygon to the set of vertices that are geolocations for
+      the state vector.  If the facet is at the specified refinement
+      level, and it has any points in the polygon, add all its points to
+      the set.  Points of the QTM that surround the polygon are in the set
+      so that it is possible to interpolate to any point within the
+      polygon or on its boundary.  Use a hash table to avoid duplicates. 
+      The serial number of a vertex is then used to compute a column
+      subscript in the Jacobian, and a subscript in the state vector.
 
 \item Retain a quadtree that describes the QTM, with serial numbers of
       geolocations within the area of interest at each vertex, and zero as
@@ -349,37 +340,41 @@ To construct and use a QTM for MLS
 \item When a value is needed at a point specified by its longitude and
       latitude, determine its ZOT co\"ordinates, and from those determine
       its QID to the desired level of refinement.  Then use digits of the
-      QID to traverse the QTM tree to find the facet.  The cost of both of
-      these steps is proportional to the level of refinement, not the size
-      of the QTM.  When the facet is found, the vertex of the QTM tree
+      QID to traverse the QTM tree to find the facet.  The cost of these
+      steps is proportional to the level of refinement, not the size of
+      the QTM.  When the facet is found, the vertex of the QTM tree
       includes the serial numbers of its vertices, if it has any vertices
       within the polygon, or at least one missing serial number if it has
-      no vertices within the polygon.
+      any vertices not within the polygon.
 
       If the specified point is within a facet that has serial numbers for
-      its vertices, use interpolation.  Otherwise use extrapolation.
+      all its vertices, interpolate within that facet.  Otherwise use
+      extrapolation.
 
       In one dimension (either along-track or vertically in the orbit
-      plane), our practice is to use constant extrapolation outside the
-      region.  In two dimensions, a point outside the polygon might be
-      close to vertices of the polygon that have different values, i.e.,
-      ``constant extrapolation'' isn't uniquely defined. 
+      plane) for EOS MLS, our practice is to use constant extrapolation
+      outside the region.  In two dimensions, a point outside the polygon
+      might be close to vertices of the polygon that have different
+      values, i.e., ``constant extrapolation'' isn't uniquely defined.
 
-      Attempting to assign values to all vertices of facets outside the
-      polygon, so that it is possible to interpolate to points within
-      them, doesn't work because an edge of a larger facet might include
-      vertices of several smaller facets.
+      If the point is not within a facet that has serial numbers for all
+      its vertices, use the value on the polygon boundary that is nearest
+      to the point of interest.  This is constant extrapolation from the
+      point on the boundary of the polygon that is nearest to the point of
+      interest.  First, find the vertex of the polygon that is nearest to
+      the point of interest.  Then, construct lines that are perpendicular
+      to the two edges incident on that vertex.  If either of those lines
+      intersects an incident edge between its vertices, use the
+      intersection that is closer to the point of interest (there might be
+      two such intersections if the polygon is not convex); otherwise, use
+      the nearest vertex.  By step \ref{step3} of the construction, this
+      point will be within a facet.  Interpolate within that facet to that
+      point.
 
-      To extrapolate outside the polygon, construct lines through the
-      desired point that are perpendicular to each edge of the polygon,
-      until edges are found such that the constructed line intersects an
-      edge between its end points, and the line does not intersect another
-      edge at a point nearer to the specified point.  There might be more
-      than one if the polygon is not convex.  Interpolate to those
-      intersections and use the sum of those values, each one weighted by
-      its distance from the desired point, divided by the sum of their
-      distances.  If there is no such edge, use the value at the polygon
-      vertex nearest to the specified point.
+      Once one has identified a facet and its vertices, interpolation
+      to a point within it is easy:  One computes the normalized
+      barycentric co\"ordinates (Section \ref{Barycentric}) of the point. 
+      The interpolation coefficients are those co\"ordinates.
 
 \end{enumerate}
 
@@ -464,6 +459,10 @@ and
 % $Id$
 
 % $Log$
+% Revision 1.3  2015/12/15 23:21:18  vsnyder
+% Revise explanation of extrapolation.  Explain meridians.  Other
+% clarifications.
+%
 % Revision 1.2  2015/12/02 02:00:07  vsnyder
 % A bunch of clarifications
 %
