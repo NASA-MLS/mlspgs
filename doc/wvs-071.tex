@@ -1,13 +1,14 @@
 \documentclass[landscape]{slides}
 \usepackage[final]{epsfig}
 \usepackage[mathbf]{euler}
-\usepackage{optima}
+%\usepackage{optima}
 \usepackage[nofancy,notoday]{rcsinfo}
-\usepackage{pstcol,pst-plot,pst-char,pst-node}
+%\usepackage{pstcol,pst-plot,pst-char,pst-node}
+\usepackage{pstricks}
 \usepackage{color}
 \usepackage{amsmath}
-\usepackage{moreverb}
-\usepackage{multicol}
+%\usepackage{moreverb}
+%\usepackage{multicol}
 \usepackage[dvips,% pdftoolbar=false, pdfmenubar=false, 
   pdfwindowui=false, pdffitwindow=true, pdfborder={0 0 0}]{hyperref}
 \usepackage[screen]{njlslides}
@@ -72,8 +73,8 @@ n(r) = N_1\, r \exp(-2 \alpha r) +
 \gamma = \frac{\log(2r) - \mu}{\sigma}\,.
 \end{equation}
 %
-$N_1$, $N_2$, $\alpha$, $\mu$ and $\sigma$ depend upon temperature and IWC,
-but not on $\theta$ or $r$.
+$N_1$ and $\alpha$ depend upon IWC, and $N_2$, $\mu$ and $\sigma$ depend upon
+temperature and IWC, but not on $\theta$ or $r$.
 %
 \clearpage
 %
@@ -358,6 +359,9 @@ temperature.
 %%% End: 
 
 % $Log$
+% Revision 1.1  2008/06/11 20:14:55  vsnyder
+% Initial commit
+%
 % Revision 1.1  2008/06/11 20:14:55  vsnyder
 % Initial commit
 %
