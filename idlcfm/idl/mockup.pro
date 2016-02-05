@@ -1,3 +1,6 @@
+; Just a mockup of how one might use the idl-callable forward model
+; ---------------------------------- -------------------------------------------
+pro mockup
 l2aux = '/data/emls/l2aux/v03.30/2009/040/MLS-Aura_L2AUX-DGM_v03-30-c01_2009d040.h5'
 l1boa = '/data/emls/l1b/v03.30/2009/040/MLS-Aura_L1BOA_v03-30-c01_2009d040.h5'
 l1brad = '/data/emls/l1b/v03.30/2009/040/MLS-Aura_L1BRADG_v03-30-c01_2009d040.h5'
@@ -122,7 +125,14 @@ pfa=['/data/emls/l2cal/PFA_R5V_FS-04.h5', $
 hdf5l2pc= $
 ['/data/emls/l2cal/l2pc_30H6/MLS-Aura_L2Cal-L2PC-band9-LATSCALARHIRESO3HR_v3-00-HO-06_m02.h5']
 
-tid = 1 ; replace this with the tid that server prints when it starts
+; ------------------------------ tid -------------------------------------------
+; tid is the task id the server prints when it starts up
+; it also saves it to a text file named tid.txt
+; uncomment and use one of the following lines to set tid for this run
+; tid = 262146 ; 1 ; replace this with the tid that server prints when it starts
+; or else use geetenv, like the following
+; tid = getenv('tid')
+; ---------------------------------- -------------------------------------------
 icfm_setup, tid,info, signalfile, configfile, spectroscopy, $
 antennaPatterns, filterShapes, dacsFilterShapes, pointingGrids, $
 pfa, hdf5l2pc
@@ -130,3 +140,5 @@ forwardmodel, tid, info, mafNo, state, stateExtra, measurement, $
 output
 icfm_cleanup, tid, info
 end
+; ---------------------------------- -------------------------------------------
+; $Log$
