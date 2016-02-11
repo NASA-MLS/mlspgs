@@ -15,7 +15,8 @@ module Call_Stack_m
   private
 
   public :: Stack_T
-  public :: Dump_Stack, Get_Frame, Pop_Stack, Push_Stack, Stack_Depth, Top_Stack
+  public :: Deallocate_Stack, Dump_Stack, Get_Frame
+  public :: Pop_Stack, Push_Stack, Stack_Depth, Top_Stack
   public :: Show_Sys_Memory, sys_memory_ch, sys_memory_convert, sys_memory_max
 
   type :: Stack_t
@@ -444,6 +445,17 @@ contains ! ====     Public Procedures     ==============================
     end if
   end subroutine Top_Stack
 
+! ----------------------------------------------------  Deallocate_Stack  -----
+  subroutine Deallocate_Stack
+    ! internal variables
+    integer :: stat
+    ! Executable
+    if ( .not. allocated(stack) ) return
+    deallocate ( stack, stat=stat )
+    stack_ptr = 0
+    Stack_Doublings = 0
+  end subroutine Deallocate_Stack
+
 ! =====     Private Procedures     =====================================
 
   subroutine Show_When
@@ -470,6 +482,9 @@ contains ! ====     Public Procedures     ==============================
 end module Call_Stack_m
 
 ! $Log$
+! Revision 2.31  2016/02/11 21:16:07  pwagner
+! Added Deallocate_Stack
+!
 ! Revision 2.30  2015/09/17 22:48:50  pwagner
 ! Will now catch error where tree ref outside bounds
 !
