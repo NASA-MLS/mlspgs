@@ -55,7 +55,8 @@ program l2gpcat ! catenates split L2GPData files, e.g. dgg
 ! Then run it
 ! LF95.Linux/test [options] [input files] -o [output file]
   type options_T
-    logical     :: verbose = .false.
+    logical     ::           timing = .false.           ! Show detailed timings
+    logical     ::           verbose = .false.          ! print extra
     character(len=255) ::    outputFile= 'default.he5'  ! output filename       
     logical ::               append   = .false.         ! append swaths with same name
     logical ::               catenate = .false.         ! catenate swaths with same name
@@ -91,6 +92,7 @@ program l2gpcat ! catenates split L2GPData files, e.g. dgg
   integer, parameter :: DELAY = 1*S2US  ! How long to sleep in microseconds
   real        :: t1
   real        :: t2
+  real        :: tLast
   real        :: tFile
   character(len=255) ::    rename = ' '               ! how to rename them
   character(len=L2GPNameLen)          :: swath
@@ -320,16 +322,16 @@ contains
 
         call DestroyL2GPContents( l2gp )
       enddo
-      call sayTime('Reading this swath', tFile)
+      if ( options%timing ) call sayTime('Reading this swath', tFile)
       call WriteL2GPData ( ol2gp, l2FileHandle, swath )
-      call sayTime('Writing this swath', tFile)
+      if ( options%timing ) call sayTime('Writing this swath', tFile)
       call DestroyL2GPContents( ol2gp )
     enddo
     call mls_closeFile( L2GPFile, Status )
     do i=1, n_filenames
       call mls_closeFile( L2GPFiles(i), Status )
     enddo
-    call sayTime('catenating all swaths')
+    if ( options%timing ) call sayTime('catenating all swaths')
   end subroutine catenate_non_Fills
 
 !------------------------- catenate_trimming_overlaps ---------------------
@@ -384,8 +386,16 @@ contains
     endif
     call GetStringElement( swathList, swath, 1, countEmpty )
     do jj=1, NumStringElements( swathList, countEmpty )
+      ! For an unexplained reason, in our tests, 
+      ! everything slows down after 48 swaths
+      ! Here is something we aree trying
+      if ( mod( jj, 10 ) < -1 ) then
+        call mls_h5close( error )
+        call mls_h5open( error )
+      endif
       call GetStringElement( swathList, swath, jj, countEmpty )
       call time_now ( tFile )
+      tLast = tFile
       if ( options%verbose ) print *, 'Catenating swath: ', trim(swath)
       N = 0
       M = 0
@@ -394,6 +404,8 @@ contains
       do i=1, n_filenames
         if ( options%verbose ) print *, 'Reading from: ', trim(filenames(i))
         call ReadL2GPData( trim(filenames(i)), swath, ol2gp, numProfs )
+        if ( options%timing ) call sayTime( 'Reading swath ' // trim(swath), tLast )
+        tlast = t2
         ! Check if nProfiles is in range
         if ( any(options%nProfiles /= 0) ) then
           if ( ol2gp%nTimes < options%nProfiles(1) .or. &
@@ -413,6 +425,8 @@ contains
             print *, 'About to write ', trim(swath)
           endif
           call WriteL2GPData ( ol2gp, l2gpFile, swath )
+          if ( options%timing ) call sayTime( 'Writing swath', tLast )
+          tlast = t2
           N = ol2gp%nTimes
           a(1:N) = ol2gp%GeodAngle
           if ( options%verbose ) call dump( a(1:N), '1st a' )
@@ -446,6 +460,8 @@ contains
           if ( DEEBUG ) print *, 'About to append ', trim(swath)
           call AppendL2GPData ( ol2gp, options%outputFile, &
           & swath, offset=max(0,numTotProfs) )
+          if ( options%timing ) call sayTime( 'Appending swath (k < 2 )', tLast )
+          tlast = t2
           ! Could this be a bug in the HDFEOS library?
           !if ( i > 1 .and. ol2gp%nTimes > numTotProfs ) &
           !  & call AppendL2GPData ( ol2gp, options%outputFile, &
@@ -454,6 +470,8 @@ contains
         else
           ! print *, 'k (before extraction): ', k
           call ExtractL2GPRecord ( ol2gp, l2gp, rTimes=(/ k, M /) )
+          if ( options%timing ) call sayTime( 'Extracting record (k > 1 )', tLast )
+          tlast = t2
           ! print *, 'k (after extraction): ', k
           ! print *, 'should be writing'
           if ( options%verbose ) call dump( l2gp%GeodAngle, 'appended Geod. angle' )
@@ -461,6 +479,8 @@ contains
           ! call usleep ( delay ) ! Should we make this parallel%delay?
           call AppendL2GPData ( l2gp, options%outputFile, &
           & swath, offset=max(0,numTotProfs-kLopOff) )
+          if ( options%timing ) call sayTime( 'Appending swath (k > 1 )', tLast )
+          tlast = t2
           ! Could this be a bug in the HDFEOS library?
           !if ( i > 1 .and. l2gp%nTimes > numTotProfs .and. .false. ) &
           !  & call AppendL2GPData ( l2gp, options%outputFile, &
@@ -480,9 +500,9 @@ contains
           call DestroyL2GPContents( ol2gp )
         endif
       enddo
-      call sayTime('catenating this swath', tFile)
+      if ( options%timing ) call sayTime('catenating this swath', tFile)
     enddo
-    call sayTime('catenating all swaths')
+    if ( options%timing ) call sayTime('catenating all swaths')
   end subroutine catenate_trimming_overlaps
 
 !------------------------- copy_swaths ---------------------
@@ -565,10 +585,10 @@ contains
           & notUnlimited=.true., andGlAttributes=.true.)
         endif
       endif
-      call sayTime('copying this file', tFile)
+      if ( options%timing ) call sayTime('copying this file', tFile)
       createdYet = .true.
     enddo
-    call sayTime('copying all files')
+    if ( options%timing ) call sayTime('copying all files')
   end subroutine copy_swaths
 !------------------------- get_filename ---------------------
     subroutine get_filename(filename, n_filenames, options)
@@ -577,7 +597,6 @@ contains
      integer, intent(in)             :: n_filenames
      type ( options_T ), intent(inout) :: options
      ! character(LEN=*), intent(inout) :: outputFile        ! output filename
-     ! logical, intent(inout)          :: verbose
      ! Local variables
      integer ::                         error = 1
      integer, save ::                   i = 1
@@ -599,6 +618,9 @@ contains
         exit
       elseif ( filename(1:5) == '-524 ' ) then
         options%convert = '524'
+        exit
+      elseif ( filename(1:3) == '-t ' ) then
+        options%timing = .true.
         exit
       elseif ( filename(1:3) == '-v ' ) then
         options%verbose = .true.
@@ -685,6 +707,7 @@ contains
       write (*,*) '   -o ofile      => copy swaths to ofile'
       write (*,*) '   -425          => convert from hdf4 to hdf5'
       write (*,*) '   -524          => convert from hdf5 to hdf4'
+      write (*,*) '   -t            => show detailed timings'
       write (*,*) '   -v            => switch on verbose mode'
       write (*,*) '   -append       => append or overwrite swaths with same name'
       write (*,*) '   -cat          => catenate swaths with same name'
@@ -730,6 +753,9 @@ end program L2GPcat
 !==================
 
 ! $Log$
+! Revision 1.20  2015/08/05 20:37:03  pwagner
+! Option -ign can catenate non-Fills
+!
 ! Revision 1.19  2014/09/12 22:22:14  pwagner
 ! Fixed sense errors in len_trim tests
 !
