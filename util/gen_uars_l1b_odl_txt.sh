@@ -17,15 +17,72 @@
 
 # "$Id$"
 
+#------------------------------- zero_pad ------------
+#
+# Function to pad a number with a zero if its
+# length is less than 2
+# usage: zero_pad n
+
+zero_pad()
+{
+   # Count chars in n (-n  means skip newline)
+   if [ `echo -n "$1" | wc -m` -lt 2 ]
+   then
+     echo "0$1"
+   else
+     echo $1
+   fi
+}
+
+#------------------------------- Main Program ------------
+
+#****************************************************************
+#                                                               *
+#                  * * * Main Program  * * *                    *
+#                                                               *
+#                                                               *
+#	The entry point where control is given to the script         *
+#****************************************************************
+
+# ------------------ ccsds ascii date formats ------------------
+# There aree 2 possible date formats we may impose on the metadata
+# (a) yyyy-mm-dd
+# (b) yyyy-Doy
+#
+# Let the next line assign either 'a' or 'b' as the format you prefer
+dateformat='b'
+# ----------------------------------------------------------------
+
 # Assume the 1st argument is the hdf filename
 filein=$1
 
 # Generate all the known attributes from L1b
 echo "LocalGranuleID=$filein"
 l2auxdump -a PGEVersion  $filein | perl -pe 's/Dump of (.*)\n/$1=/'
-l2auxdump -a StartUTC    $filein | perl -ne 'print if $. == 2' | perl -pe 's/(.*)T(.*)\n/RangeBeginningDate=$1\nRangeBeginningTime=$2.00000\nEquatorCrossingLongitude=0.0\nEquatorCrossingDate=$1\nEquatorCrossingTime=$2\n/' 
-l2auxdump -a EndUTC      $filein | perl -ne 'print if $. == 2' | perl -pe 's/(.*)T(.*)\n/RangeEndingDate=$1\nRangeEndingTime=$2.00000\n/' 
-
+if [ "$dateformat" = "b" ]
+then
+  # The file-level attributes were already formatted like 'b'
+  l2auxdump -a StartUTC    $filein | perl -ne 'print if $. == 2' | perl -pe 's/(.*)T(.*)\n/RangeBeginningDate=$1\nRangeBeginningTime=$2.00000\nEquatorCrossingLongitude=0.0\nEquatorCrossingDate=$1\nEquatorCrossingTime=$2\n/' 
+  l2auxdump -a EndUTC      $filein | perl -ne 'print if $. == 2' | perl -pe 's/(.*)T(.*)\n/RangeEndingDate=$1\nRangeEndingTime=$2.00000\n/' 
+else
+  GranuleYear=`l2auxdump -a GranuleYear $filein | awk '{print $3}'`
+  GranuleMonth=`l2auxdump -a GranuleMonth $filein | awk '{print $3}'`
+  GranuleDay=`l2auxdump -a GranuleDay $filein | awk '{print $3}'`
+  # In case they are single digits, we pad them with zeros
+  GranuleMonth=`zero_pad $GranuleMonth`
+  GranuleDay=`zero_pad $GranuleDay`
+  StartUTC=`l2auxdump -a StartUTC    $filein`
+  EndUTC=`l2auxdump -a EndUTC    $filein`
+  StartTime=`echo $StartUTC | awk '{print $4}' | awk -FT '{print $2}'`
+  EndTime=`echo $EndUTC | awk '{print $4}' | awk -FT '{print $2}'`
+  echo "RangeBeginningDate=$GranuleYear-$GranuleMonth-$GranuleDay"
+  echo "RangeBeginningTime=$StartTime"
+  echo "EquatorCrossingLongitude=0.0"
+  echo "EquatorCrossingDate=0.0"
+  echo "EquatorCrossingTime=$StartTime"
+  echo "RangeEndingDate=$GranuleYear-$GranuleMonth-$GranuleDay"
+  echo "RangeEndingTime=$EndTime"
+fi
 I=gen_uars_l1b_odl_txt
 split_path="`echo $0 | sed 's/'$I'/split_path/'`"
 
@@ -122,6 +179,9 @@ EOF
 
 
 # $Log$
+# Revision 1.4  2015/04/16 22:33:32  pwagner
+# Reduce number of warnings logged (but why are there any?)
+#
 # Revision 1.3  2015/01/06 18:08:53  pwagner
 # Revised default attribute values; added abstract.txt and attributes.txt mechanisms
 #
