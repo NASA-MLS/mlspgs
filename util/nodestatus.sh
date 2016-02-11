@@ -26,6 +26,8 @@
 # (3) the number of processors must be findable from /proc/cpuinfo
 # (4) -v and -S options uneasily coexist--
 #     best to treat them as mutually exclusive
+# (5) if the file $HOME/ncpus.txt exists it will be read to change the
+#      expected number of processors (may be overridden by -n option)
 # 
 # Result:
 # Won't try to spawn jobs to deficient nodes
@@ -141,6 +143,12 @@ HOSTER="pvmhost.sh"
 delete="yes"
 dryrun="no"
 expected="2"
+# Is there a file to read to change the expected number of processors?
+file=$HOME/ncpus.txt
+if [ -f "$file" ]
+then
+  expected=`cat $file | read_file_into_array`
+fi
 file=""
 mail="no"
 silent="no"
@@ -354,3 +362,6 @@ fi
 
 exit 0
 # $Log$
+# Revision 1.1  2005/10/01 00:36:28  pwagner
+# First commit
+#
