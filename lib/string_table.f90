@@ -100,10 +100,10 @@ module STRING_TABLE
 
   ! Tables
   character, allocatable, save :: CHAR_TABLE (:)
-  integer, allocatable, save :: HASH_TABLE (:,:)
-  integer, allocatable, save :: STRINGS (:)  ! STRINGS(i) is the position
+  integer, allocatable, save   :: HASH_TABLE (:,:)
+  integer, allocatable, save   :: STRINGS (:)  ! STRINGS(i) is the position
   ! in CHAR_TABLE of the last character of the i'th string
-  integer, save :: NSTRING = 0   ! How full, not how big
+  integer, save                :: NSTRING = 0   ! How full, not how big (??)
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -328,6 +328,7 @@ contains
         deallocate ( strings )
       end if
     end if
+    nstring = 0
   end subroutine DESTROY_STRING_TABLE
   ! =======================================     DISPLAY_STRING     =====
   subroutine DISPLAY_STRING ( STRING, ADVANCE, STRIP, IERR, BEFORE )
@@ -1196,9 +1197,7 @@ contains
   end subroutine TEST_STRING
 
   logical function isStringInTable ( string )
-  ! Test whether STRING is within bounds.  If not, use ROUTINE to emit
-  ! an error message.
-  ! Unless IERR is present, in which case set IERR and return
+  ! Test whether STRING is within bounds.
     integer, intent(in) :: STRING
     isStringInTable = .not. ( string < 1 .or. string > nstring ) 
   end function isStringInTable
@@ -1277,6 +1276,9 @@ contains
 end module STRING_TABLE
 
 ! $Log$
+! Revision 2.47  2016/02/12 21:08:09  pwagner
+! Reinitialize nstring in DESTROY_STRING_TABLE
+!
 ! Revision 2.46  2016/01/29 01:10:49  vsnyder
 ! Add procedure pointer to get full name of include from PCF
 !
