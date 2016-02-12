@@ -301,6 +301,7 @@ contains ! =====     Public Procedures     =============================
       ! Get the time from the l1b file
       call L1BGeoLocation ( filedatabase, "MAFStartTimeTAI", fullArray )
       call L1BSubsample ( chunk, FullArray, values=TAI )
+      noMAFs = size(TAI)
       minTime = TAI(1) ! l1bField%dpField(1,1,1)
       maxTime = TAI(noMAFs) ! l1bField%dpField(1,1,noMAFs)
 
@@ -1189,7 +1190,10 @@ contains ! =====     Public Procedures     =============================
       call dump(scOrbIncl, "scOrbIncl")
     end if
     ! Use the average of all the first MIFs to get inclination for chunk
-    incline = sum ( scOrbIncl ) / noMAFs
+    incline = sum ( scOrbIncl ) / size(scOrbIncl) ! noMAFs
+    if ( noMAFs /= size(scOrbIncl) ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'num of MAFs /= size(orb inclination qty)' )
     if ( deebughere ) then
       call dump( (/incline/), 'Average inclination')
     end if
@@ -1531,9 +1535,12 @@ contains ! =====     Public Procedures     =============================
     use allocate_deallocate, only: deallocate_test
     call Deallocate_test ( HGridGeolocations%MAFStartTimeTAI, 'MAFStartTimeTAI', ModuleName )
     call Deallocate_test ( HGridGeolocations%GHzGeodAngle   , 'GHzGeodAngle   ', ModuleName )
+    call Deallocate_test ( HGridGeolocations%Orbincl        , 'Orbincl        ', ModuleName )
     call Deallocate_test ( HGridGeolocations%GHzGeodAlt     , 'GHzGeodAlt     ', ModuleName )
     call Deallocate_test ( HGridGeolocations%GHzGeodLat     , 'GHzGeodLat     ', ModuleName )
+    call Deallocate_test ( HGridGeolocations%GHzLon         , 'GHzLon         ', ModuleName )
     call Deallocate_test ( HGridGeolocations%GHzSolarTime   , 'GHzSolarTime   ', ModuleName )
+    call Deallocate_test ( HGridGeolocations%GHzSolarZenith , 'GHzSolarZenith ', ModuleName )
   end subroutine DestroyHGridGeoLocations
 
   ! -------------------------------------  DumpChunkHGridGeometry  -----
@@ -2319,6 +2326,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.128  2016/02/12 20:10:53  pwagner
+! Better error checking, more complete DestroyHGridGeoLocations
+!
 ! Revision 2.127  2015/10/14 23:23:01  pwagner
 ! Warn instead of crashing if no profiles in chunk; housekeeping
 !
