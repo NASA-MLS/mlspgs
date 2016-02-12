@@ -58,16 +58,20 @@ CONTAINS
   SUBROUTINE ExamineEngData
 !=============================================================================
 
-    USE EngUtils, ONLY: NextEngMAF
-    USE EngTbls, ONLY: EngMAF, EngPkt
+    use EngUtils, ONLY: NextEngMAF
+    use EngTbls, ONLY: EngMAF, EngPkt
+    use MLSL1Common, ONLY: MaxdataGaps, MaxErroneousCounterMAFs
+    USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Warning
 
-    LOGICAL :: first = .TRUE.
-    LOGICAL :: more_data = .TRUE.
-    INTEGER :: counterMAF = 0
+    logical :: first = .TRUE.
+    logical :: more_data = .TRUE.
+    integer :: counterMAF = 0
+    integer, save :: dataGaps = 0
+    integer, save :: erroneousCounterMAFs = 0
 
-    PRINT *, 'Examining eng data...'
-    WRITE (unit, *) ''
-    WRITE (unit, *) '################ Engineering data scan ###############'
+    print *, 'Examining eng data...'
+    write (unit, *) ''
+    write (unit, *) '################ Engineering data scan ###############'
     WRITE (unit, *) ''
 
     EngMAFs = 0
@@ -106,6 +110,7 @@ CONTAINS
        IF (MAF_dif > 1) THEN
           EngGaps = EngGaps + 1
           Eng_Warns = Eng_Warns + 1
+          dataGaps  = dataGaps + 1
           WRITE (unit, *) '##### WARNING! Data Gap:'
           WRITE (unit, *) 'MAFs missing: ', (MAF_dif-1)
           WRITE (unit, *) 'MAFno gap: ', BeginEnd%EngMAFno(2), EngMAF%MAFno
@@ -113,6 +118,9 @@ CONTAINS
           PGS_stat = PGS_TD_TAItoUTC (EngMAF%secTAI, asciiUTC(2))
           WRITE (unit, *) 'UTC gap: ', asciiUTC(1)//' to '//asciiUTC(2)
           WRITE (unit, *) ''
+          if ( dataGaps > MaxdataGaps ) &
+            & call MLSMessage ( MLSMSG_Error, ModuleName, &
+                     & 'Too many data gaps--must quit now' )
        ENDIF
        last_TAI = EngMAF%secTAI
 
@@ -120,11 +128,15 @@ CONTAINS
 
        IF (counterMAF /= (EngMAF%TotalMAF - 1)) THEN
           Eng_Warns = Eng_Warns + 1
+          erroneousCounterMAFs  = erroneousCounterMAFs + 1
           WRITE (unit, *) '##### WARNING! Counter MAF incorrect:'
           WRITE (unit, *) 'Counter MAFs: ', counterMAF, EngMAF%TotalMAF
           PGS_stat = PGS_TD_TAItoUTC (EngMAF%secTAI, asciiUTC(1))
           WRITE (unit, *) 'UTC: ', asciiUTC(1)
           WRITE (unit, *) ''
+          if ( erroneousCounterMAFs > MaxerroneousCounterMAFs ) &
+            & call MLSMessage ( MLSMSG_Error, ModuleName, &
+                     & 'Too many bad counterMAFs--must quit now' )
        ENDIF
        counterMAF = EngMAF%TotalMAF
 
@@ -132,6 +144,16 @@ CONTAINS
        BeginEnd%EngMAFno(2) = EngMAF%MAFno
        BeginEnd%EngTAI(2) = EngMAF%secTAI
        BeginEnd%TotalMAFcount(2) = EngMAF%TotalMAF
+       
+       ! Check for utterly bogus times
+       ! signaled by mismatch between Engineering and Science times
+       ! If they are more than 1 week apart, exit with error status
+       if ( abs(BeginEnd%SciTAI(1) - BeginEnd%EngTAI(1)) > 60*60*24*7 ) &
+         & CALL MLSMessage ( MLSMSG_Error, ModuleName, &
+            "mismatched start times between science and engineering data" )
+       if ( abs(BeginEnd%SciTAI(2) - BeginEnd%EngTAI(2)) > 60*60*24*7 ) &
+         & CALL MLSMessage ( MLSMSG_Error, ModuleName, &
+            "mismatched end times between science and engineering data" )
 
        more_data = (EngMAF%secTAI <= BeginEnd%SciTAI(2))
        IF (.NOT. more_data) more_data = (EngMAF%MAFno /= BeginEnd%SciMAFno(2))
@@ -567,6 +589,9 @@ END MODULE L1LogUtils
 !=============================================================================
 
 ! $Log$
+! Revision 2.18  2016/02/12 20:04:48  pwagner
+! Prevent bad level 0 files from causing englog to fill all diskspace
+!
 ! Revision 2.17  2011/01/27 15:35:51  perun
 ! Only check TAI time for good scAngleG or for first empty MAF
 !
