@@ -1,5 +1,0 @@
-! Fill all values in the quantity with the same number
-subroutine SpreadFillVectorQuantity (quantity, value)
-   type(VectorValue_T), intent(inout) :: quantity
-   real(r8), intent(in) :: value
-end subroutine
