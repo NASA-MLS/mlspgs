@@ -264,6 +264,10 @@ MODULE MLSL1Common              ! Common data types for the MLSL1 program
   TYPE (ChanBand_R_T), TARGET :: deflt_chi2
 
   REAL :: tau = 1.0 / 6.0  ! default data rate (secs)
+  
+!!  Any error limits?
+  integer, parameter :: MaxDataGaps             = 3000
+  integer, parameter :: MaxErroneousCounterMAFs = 300
 
 !! Useful constants:
 
@@ -297,6 +301,9 @@ END MODULE MLSL1Common
 !=============================================================================
 
 ! $Log$
+! Revision 2.19  2011/06/07 18:57:36  perun
+! Add another Side B switching mirror table uploaded on 2011 DOY 153 at 19:10.
+!
 ! Revision 2.18  2006/03/24 15:11:50  perun
 ! Add ChanLogical_T, ChanInt_T, MaxAlts, SC_YPR and THz_GeodAlt
 !
