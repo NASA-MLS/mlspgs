@@ -278,58 +278,17 @@ echo "export PGE_ROOT=$PGE_ROOT" >> $JOBENV
 echo "export PVM_HOSTS_INFO=$PVM_HOSTS_INFO" >> $JOBENV
 #echo "export OTHEROPTS=$otheropts" >> $JOBENV
 
-# For each of the level 1 jobs, we'll have Spartacus request a host
+# For the level 1 jobs, we'll have Spartacus request a host
 # from l2q
 # For level 2, we'll imitate the mlsl2p.sh script
 
-# (1) Create 3 level 1 jobs and run them
+# (1) Create a single level 1 job and run it
 JOB1SCRIPT="job1script.sh"
 echo "#!/bin/sh" > $JOB1SCRIPT
-echo "$RONIN `pwd` . $JOBDIR/$JOBENV; env; PGS_PC_Shell.sh $LEVEL1_BINARY_DIR/$MLSPROG_0 $EXTRA_OPTIONS $@" >> $JOB1SCRIPT
+echo "$RONIN `pwd` . $JOBDIR/$JOBENV; env; PGS_PC_Shell.sh $LEVEL1_BINARY_DIR/mlsl1.sh $EXTRA_OPTIONS $@" >> $JOB1SCRIPT
 chmod a+x $JOB1SCRIPT
 echo $SPARTACUS $JOB1SCRIPT
 $SPARTACUS $JOB1SCRIPT
-
-return_status_0=`expr $?`
-
-if [ $return_status_0 != $NORMAL_STATUS ]
-then
-   exit 1
-else
-   return_status_0=0
-fi
-
-JOB2SCRIPT="job2script.sh"
-echo "#!/bin/sh" > $JOB2SCRIPT
-echo "$RONIN `pwd` . $JOBDIR/$JOBENV; PGS_PC_Shell.sh $LEVEL1_BINARY_DIR/$MLSPROG_1 $EXTRA_OPTIONS $@" >> $JOB2SCRIPT
-chmod a+x $JOB2SCRIPT
-echo $SPARTACUS $JOB2SCRIPT
-$SPARTACUS $JOB2SCRIPT
-
-return_status_1=`expr $?`
-
-if [ $return_status_1 != $NORMAL_STATUS ]
-then
-   exit 1
-else
-   return_status_1=0
-fi
-
-JOB3SCRIPT="job3script.sh"
-echo "#!/bin/sh" > $JOB3SCRIPT
-echo "$RONIN `pwd` . $JOBDIR/$JOBENV; PGS_PC_Shell.sh $LEVEL1_BINARY_DIR/$MLSPROG_2 $EXTRA_OPTIONS $@" >> $JOB3SCRIPT
-chmod a+x $JOB3SCRIPT
-echo $SPARTACUS $JOB3SCRIPT
-$SPARTACUS $JOB3SCRIPT
-
-return_status_2=`expr $?`
-
-if [ $return_status_2 != $NORMAL_STATUS ]
-then
-   exit 1
-else
-   return_status_2=0
-fi
 
 # (2) repack level 1 files to speed things up
 if [ -x "$H5REPACK" ]
@@ -407,6 +366,9 @@ then
 fi
 
 # $Log$
+# Revision 1.7  2013/11/23 00:59:48  pwagner
+# Hide product files if number of profiles too many or too few
+#
 # Revision 1.6  2013/09/04 17:44:45  pwagner
 # Replaced '--cat' cmdline option; 'Catenate' now an Output section command
 #
