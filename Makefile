@@ -94,8 +94,8 @@ endif
 #                          (2) Those not appearing in executable's ident id/rcs
 #   mkpath.sh              Creates a directory, and any yet uncreated parents
 #   mlsconfigure           Configures Makefiles for building mlspgs software
-#   mlsprog.sh, mlsnrt.sh, mlsl2pntk.sh, mlsl2p.sh, mlsnrtl2only.sh, mlsl1prog.sh            
-#   slavetmpltntk.sh, slavetmplt.sh
+#   mlsprog.sh, mlsnrt.sh, mlsnrtp.sh, mlsl2pntk.sh, mlsl2p.sh, mlsnrtl2only.sh,           
+#   mlsl1prog.sh,  slavetmpltntk.sh, slavetmplt.sh
 #                          wrapper scripts for binary executables
 #   newAifBdiff.sh         Precompiler to forestall recompilations
 #   reecho.sh              Filter list of args to remove bogus ones
@@ -668,6 +668,10 @@ install: $(LEVELS)
           $(MLSBIN)/mlsl2p.sh $(MLSBIN)/slavetmplt.sh \
           $(MLSBIN)/mlsl2pntk.sh $(MLSBIN)/slavetmpltntk.sh \
           $(INSTALLDIR); \
+         cp -a $(MLSBIN)/jobstat-sips.sh $(MLSBIN)/../scripts/mlsqlog-scan-sips.py \
+          $(MLSBIN)/mlsl2p.sh $(MLSBIN)/slavetmplt.sh \
+          $(MLSBIN)/mlsl2pntk.sh $(MLSBIN)/slavetmpltntk.sh \
+          $(INSTALLDIR); \
          chmod a+x $(INSTALLDIR)/*.sh $(INSTALLDIR)/*.py; \
          echo "(Don't forget to scp them to your cluster)"; \
 		;; \
@@ -705,7 +709,7 @@ install: $(LEVELS)
 		;; \
 	esac ; \
 	done
-	@cp $(MLSBIN)/mlsnrt.sh $(INSTALLDIR)
+	@cp $(MLSBIN)/mlsnrt*.sh $(INSTALLDIR)
 
 # install the mls programs, libraries, etc. from $(LEVELS) into $(INSTALLDIR)
 install-cfm: cfm
@@ -744,7 +748,7 @@ install-l3m: l3m
 	@$(MAKE) -f $(MakeFName) install LEVELS=l3m
 
 install-nrt: install-l1 install-l2
-	@cp $(MLSBIN)/mlsnrt.sh $(INSTALLDIR)
+	@cp $(MLSBIN)/mlsnrt*.sh $(INSTALLDIR)
 
 # For reasons not yet understood, executables built
 # directly by "make install-LEVEL" did not always
@@ -1367,6 +1371,9 @@ tools: chunktimes checkpvmup compare dateconverter extinctionmaker \
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.10  2015/11/18 21:44:09  pwagner
+# Repaired the help functionality; corrected and expanded comments
+#
 # Revision 1.9  2015/11/04 19:25:17  pwagner
 # Can build misalignment; EVERYTHINg includes conv_uars
 #
