@@ -103,7 +103,6 @@ contains
     ! be split between lines.
 
     use Allocate_Deallocate, only: Test_Allocate
-    use Machine, only: IO_Error
     use MoreMessage, only: MLSMessage
     use Toggles, only: GEN, Toggle
     use Trace_m, only: Trace_Begin, Trace_End
@@ -112,6 +111,7 @@ contains
     integer, intent(in), optional :: Where   ! In the L2CF tree, for tracing
 
     integer :: I, L, N
+    character(127) :: IOMSG
     integer :: Me = -1             ! For tracing
     character(1023) :: Line
     integer :: Status
@@ -125,24 +125,24 @@ contains
     l = 0
     do ! Read the "inside" vertex
       l = l + 1
-      read ( lun, '(a)', end=98, err=99, iostat=status ) line
+      read ( lun, '(a)', end=98, err=99, iostat=status, iomsg=iomsg ) line
       i = scan(line,'!#')
       if ( i > 0 ) line(i:) = ''
       if ( line == '' ) cycle
-      read ( line, *, err=99, iostat=status ) polygon_inside
+      read ( line, *, err=99, iostat=status, iomsg=iomsg ) polygon_inside
       exit
     end do
 
     n = 0
     do ! Count the boundary vertices
       l = l + 1
-      read ( lun, '(a)', end=9, err=99, iostat=status ) line
+      read ( lun, '(a)', end=9, err=99, iostat=status, iomsg=iomsg ) line
       if ( status < 0 ) exit
       i = scan(line,'!#')
       if ( i > 0 ) line(i:) = ''
       if ( line == '' ) cycle
       vertices%lat = -99999.0
-      read ( line, *, err=99, iostat=status ) vertices
+      read ( line, *, err=99, iostat=status, iomsg=iomsg ) vertices
       do i = 0, size(vertices)-1
         if ( vertices(i+1)%lat <= -99999.0 ) exit
       end do
@@ -158,24 +158,24 @@ contains
     l = 0
     do ! Read the "inside" vertex
       l = l + 1
-      read ( lun, '(a)', end=98, err=99, iostat=status ) line
+      read ( lun, '(a)', end=98, err=99, iostat=status, iomsg=iomsg ) line
       i = scan(line,'!#')
       if ( i > 0 ) line(i:) = ''
       if ( line == '' ) cycle
-      read ( line, *, err=99, iostat=status ) polygon_inside
+      read ( line, *, err=99, iostat=status, iomsg=iomsg ) polygon_inside
       exit
     end do
 
     n = 0
     do ! Read the boundary vertices
       l = l + 1
-      read ( lun, '(a)', err=99, iostat=status ) line
+      read ( lun, '(a)', err=99, iostat=status, iomsg=iomsg ) line
       if ( status < 0 ) exit
       i = scan(line,'!#')
       if ( i > 0 ) line(i:) = ''
       if ( line == '' ) cycle
       vertices%lat = -99999.0
-      read ( line, *, err=99, iostat=status ) vertices
+      read ( line, *, err=99, iostat=status, iomsg=iomsg ) vertices
       do i = 0, size(vertices)-1
         if ( vertices(i+1)%lat <= -99999.0 ) exit
       end do
@@ -189,7 +189,8 @@ contains
  98 call MLSMessage ( MLSMSG_Error, moduleName, &
       & "Unexpected end-of-file while reading the polygon file" )
  99 call MLSMessage ( MLSMSG_Error, moduleName, &
-      & "Input error while reading line $d of the polygon file", l )
+      & "Input error " // trim(iomsg) // &
+      & " while reading line $d of the polygon file", l )
 
   end subroutine Read_Polygon_File
 
@@ -213,25 +214,16 @@ contains
 
   ! --------------------------------------  Dump_Polygon_Database  -----
   subroutine Dump_Polygon_Database
-    use Output_m, only: NewLine, Output
-    integer :: I, J, N
+    use Dump_Geolocation_m, only: Dump_H_t
+    use Output_m, only: Output
 
     if ( .not. allocated(polygon_vertices) ) return ! silently
 
-    n = size(polygon_vertices)
     call output ( polygon_inside%lon, before='Point inside polygon (lon,lat): (' )
     call output ( polygon_inside%lat, before=',', after=')', advance='yes' )
-    call output ( 'Polygon boundary vertices (lon,lat):', advance='yes' )
-    do i = 1, n, 5
-      call output ( i, 4 )
-      call output ( ':' )
-      do j = i, min(i+4,n)
-        call output ( polygon_vertices(j)%lon, before=' (', format='(f8.3)' )
-        call output ( polygon_vertices(j)%lat, before=',', format='(f7.3)' )
-        call output ( ')' )
-      end do
-      call NewLine
-    end do
+    call dump_h_t ( polygon_vertices, &
+      & 'Polygon boundary vertices (lon,lat):', format='(f8.3)' )
+
   end subroutine Dump_Polygon_Database
 
 !--------------------------- end bloc --------------------------------------
@@ -247,6 +239,9 @@ contains
 end module Polygon_m
 
 ! $Log$
+! Revision 2.2  2016/02/19 23:23:05  vsnyder
+! Remove unreferenced USE name, spiff an error message
+!
 ! Revision 2.1  2016/01/29 00:54:14  vsnyder
 ! Initial commit
 !
