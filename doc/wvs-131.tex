@@ -84,21 +84,22 @@
 To: \>Van\\
 Subject: \>Intersection of a line with an ellipsoid\\
 From: \>Van Snyder\\
-Reference: \> wvs-030 \\
+Reference: \> wvs-030 \hr{wvs-030} \\
 \end{tabbing}
 
 \parindent 0pt \parskip 6pt
 \vspace{-20pt}
 
-Using vector notation, an ellipsoid can be expressed as the set of points
+Using vector notation, an ellipsoid with center at $\mathbf{p}_0$ and axes
+aligned with the co\"ordinate directions can be expressed as the set of points
 $\mathbf{p}$ such that
 %
 \begin{equation}\label{one}
-(\mathbf{p}\, \mathbf{M})^T (\mathbf{p}\, \mathbf{M}) = 1\,,
-(\mathbf{p} - \mathbf{p}_0) \cdot \mathbf{n} = 0\,,
+(( \mathbf{p} - \mathbf{p}_0) \, \mathbf{M})^T
+(( \mathbf{p} - \mathbf{p}_0) \, \mathbf{M}) = 1
 \end{equation}
 %
-where $p$ is a point on the surface of the ellipse,
+where $\mathbf{p}$ is a point on the surface of the ellipsoid,
 %
 \begin{equation}
 \mathbf{M} = \left[
@@ -110,24 +111,45 @@ where $p$ is a point on the surface of the ellipse,
 \right]
 \end{equation}
 %
+and $a$, $b$, and $c$ are the semi-minor axes.
+
 A line can be expressed as the set of points
 %
 \begin{equation}\label{two}
-\mathbf{p} = d \, \mathbf{U} + \mathbf{U}_0 \,,
+\mathbf{p} = \mathbf{C} + t \, \mathbf{U} \,,
 \end{equation}
 %
-where $\mathbf{U}_0$ is a point on the line and $\mathbf{U}$ is a vector
+where $\mathbf{C}$ is a point on the line and $\mathbf{U}$ is a vector
 along the line.  Substituting Equation (\ref{two}) into Equation
 (\ref{one}) gives
 %
-\begin{equation}
+\begin{equation}\label{four}
 (\mathbf{U}\, \mathbf{M})^T (\mathbf{U}\, \mathbf{M})\, t^2 +
-(\mathbf{C} \mathbf{M})^T (\mathbf{U}\, \mathbf{M})\, t +
-(\mathbf{C} \mathbf{M})^T (\mathbf{C} \mathbf{M}) = 1
+(( \mathbf{C} - \mathbf{p}_0) \mathbf{M} )^T (\mathbf{U}\, \mathbf{M})\, t +
+(( \mathbf{C} - \mathbf{p}_0) \mathbf{M} )^T
+(( \mathbf{C} - \mathbf{p}_0) \mathbf{M} ) = 1
+\end{equation}
+
+Let $\mathbf{V} = \mathbf{C} - \mathbf{p}_0$.  Then Equation (\ref{four})
+becomes
+%
+\begin{equation}\label{five}
+(\mathbf{U}\, \mathbf{M})^T (\mathbf{U}\, \mathbf{M})\, t^2 +
+(\mathbf{V} \mathbf{M} )^T (\mathbf{U}\, \mathbf{M})\, t +
+(\mathbf{V} \mathbf{M} )^T
+(\mathbf{V} \mathbf{M} ) = 1
 \end{equation}
 
 A method to determine the points on a line and ellipsoid that are nearest
-to each other is described in wvs-030.
+to each other is described in wvs-030 \hr{wvs-030}.
+
+For the case of a sphere with radius $r$, Equation (\ref{five}) becomes
+%
+\begin{equation}
+\mathbf{U} \cdot \mathbf{U} \, t^2 +
+\mathbf{V} \cdot \mathbf{U} \, t +
+\mathbf{V} \cdot \mathbf{V} = r^2 \,.
+\end{equation}
 
 \label{lastpage}
 \vspace*{-0.1in} % Somehow, this causes lastpage to be defined
@@ -136,5 +158,5 @@ to each other is described in wvs-030.
 % $Id$
 
 % $Log$
-% Revision 1.1  2016/02/05 03:36:20  vsnyder
+% Revision 1.1  2016/02/18 20:57:06  vsnyder
 % Initial commit
