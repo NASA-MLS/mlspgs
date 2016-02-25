@@ -69,9 +69,9 @@ contains
     type(ECR_t) :: UM, VM
     UM = ECR_t( Line(2)%xyz / [ A, A, B ] )
     VM = ECR_t( Line(1)%xyz / [ A, A, B ] )
-    a2 = UM%dot(UM)       ! ifort 15.0.2.164 doesn't like UM .dot. UM
-    a1 = VM%dot(UM)       ! ifort 15.0.2.164 doesn't like VM .dot. UM
-    a0 = VM%dot(VM) - 1.0 ! ifort 15.0.2.164 doesn't like VM .dot. VM
+    a2 = UM .dot. UM
+    a1 = VM .dot. UM
+    a0 = ( VM .dot. VM ) - 1.0
     call solve ( a2, a1, a0, line, intersections )
   end subroutine Line_And_Earth_Geoid
 
@@ -87,9 +87,9 @@ contains
     type(ECR_t) :: UM, VM
     UM = ECR_t( Line(2)%xyz / axes )
     VM = ECR_t( Line(1)%xyz / axes )
-    a2 = UM%dot(UM)       ! ifort 15.0.2.164 doesn't like UM .dot. UM
-    a1 = VM%dot(UM)       ! ifort 15.0.2.164 doesn't like VM .dot. UM
-    a0 = VM%dot(VM) - 1.0 ! ifort 15.0.2.164 doesn't like VM .dot. VM
+    a2 = UM .dot. UM
+    a1 = VM .dot. UM
+    a0 = ( VM .dot. VM ) - 1.0
     call solve ( a2, a1, a0, line, intersections )
   end subroutine Line_And_Ellipsoid_RG
 
@@ -102,9 +102,9 @@ contains
                                        ! vector along the line at V
     type(ECR_t), intent(out), allocatable :: Intersections (:) ! 0..2 elements
     real(rg) :: A2, A1, A0
-    a2 = line(2)%dot(line(2)) ! ifort 15.0.2.164 doesn't like line(2) .dot. line(2)
-    a1 = line(1)%dot(line(2))       ! ifort 15.0.2.164 doesn't like line(1) .dot. line(2)
-    a0 = line(1)%dot(line(1)) - radius**2 ! ifort 15.0.2.164 doesn't like line(1) .dot. line(1)
+    a2 = line(2) .dot. line(2)
+    a1 = line(1) .dot. line(2)
+    a0 = ( line(1) .dot. line(1) ) - radius**2
     call solve ( a2, a1, a0, line, intersections )
   end subroutine Line_And_Sphere_RG
 
@@ -144,6 +144,9 @@ contains
 end module Line_And_Ellipsoid_m
 
 ! $Log$
+! Revision 2.2  2016/02/25 21:02:24  vsnyder
+! Use .DOT. operator bound to ECR_t
+!
 ! Revision 2.1  2016/02/24 01:19:50  vsnyder
 ! Initial commit
 !

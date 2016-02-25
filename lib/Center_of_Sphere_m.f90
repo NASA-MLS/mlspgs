@@ -79,7 +79,7 @@ contains
 
     ! For derivation see wvs-132.
 
-    use Geolocation_0, only: Dot_Product, ECR_t, RG
+    use Geolocation_0, only: ECR_t, RG
 
     type(ECR_t), intent(in) :: P3
     type(ECR_t), intent(in) :: V  ! Vector from P3 to circumcenter of {P1, P2, P3}
@@ -92,17 +92,16 @@ contains
     real(rg) :: T       ! Distance from circumcenter of {P1, P2, P3} to C
     real(rg) :: V2      ! |V|**2
 
-    v2 = dot_product(v,v) ! ifort 15.0.2 doesn't like v .DOT. v
+    v2 = v .dot. v
 
     t = ( r**2 - v2 ) / n2
 
     c = p3 + v   ! Start at the circumcenter, p(0) in wvs-132.
     if ( t > 0 ) then
       t = sqrt(t)
-      ! We don't need A and B any more, so use them for the two solutions
       a = c + t * n
       b = c - t * n
-      if ( dot_product(a,a) < dot_product(b,b) ) then
+      if ( ( a .dot. a ) < ( b .dot. b ) ) then
         c = a
       else
         c = b
@@ -140,30 +139,23 @@ contains
     ! Compute the vector C from P3 to the circumcenter of the plane defined
     ! by {P1, P2, P3}.
 
-    use Geolocation_0, only: Cross, Dot_Product, ECR_t, RG
+    use Geolocation_0, only: ECR_t, RG
 
     type(ECR_t), intent(in) :: P1, P2, P3
     type(ECR_t), intent(out) :: C  ! Vector from P3 to circumcenter
 
     type(ECR_t) :: A, B ! p1-p3, p2-p3
-    real(rg) :: A2, B2  ! |A|**2 and |B|**2
     type(ECR_t) :: D    ! a2 * b - b2 * a
-    type(ECR_t) :: N  ! Normal to the plane defined by {P1, P2, P3}.
-    real(rg) :: N2    ! |N|**2
+    type(ECR_t) :: N    ! Normal to the plane defined by {P1, P2, P3}.
 
     a = p1 - p3
     b = p2 - p3
 
-    a2 = dot_product(a,a) ! ifort 15.0.2 doesn't like a .DOT. a
-    b2 = dot_product(b,b) ! ifort 15.0.2 doesn't like b .DOT. b
+    n = a .cross. b
 
-    n = cross(a,b)        ! ifort 15.0.2 doesn't like a .CROSS. b
+    d = ( a .dot. a ) * b - ( b .dot. b ) * a
 
-    n2 = dot_product(n,n) ! ifort 15.0.2 doesn't like n .DOT. n
-
-    d = a2 * b - b2 * a
-
-    c = cross(d,n) / (2.0 / n2 ) ! ifort 15.0.2 doesn't like d .CROSS. n
+    c = ( d .cross. n ) / (2.0 * ( n .dot. n ) )
 
   end subroutine Circumcenter_3
 
@@ -171,7 +163,7 @@ contains
     ! Compute the vector C from P3 to the circumcenter of the plane defined
     ! by {P1, P2, P3}, a vector N that is a normal to that plane, and |N|**2.
 
-    use Geolocation_0, only: Cross, Dot_Product, ECR_t, RG
+    use Geolocation_0, only: ECR_t, RG
 
     type(ECR_t), intent(in) :: P1, P2, P3
     type(ECR_t), intent(out) :: C  ! Vector from P3 to circumcenter
@@ -179,22 +171,18 @@ contains
     real(rg), intent(out) :: N2    ! |N|**2
 
     type(ECR_t) :: A, B ! p1-p3, p2-p3
-    real(rg) :: A2, B2  ! |A|**2 and |B|**2
-    type(ECR_t) :: D    ! a2 * b - b2 * a
+    type(ECR_t) :: D    ! |A|**2 * B - |B|**2 * A
 
     a = p1 - p3
     b = p2 - p3
 
-    a2 = dot_product(a,a) ! ifort 15.0.2 doesn't like a .DOT. a
-    b2 = dot_product(b,b) ! ifort 15.0.2 doesn't like b .DOT. b
+    n = a .cross. b
 
-    n = cross(a,b)        ! ifort 15.0.2 doesn't like a .CROSS. b
+    n2 = n .dot. n
 
-    n2 = dot_product(n,n) ! ifort 15.0.2 doesn't like n .DOT. n
+    d = ( a .dot. a ) * b - ( b .dot. b ) * a
 
-    d = a2 * b - b2 * a
-
-    c = cross(d,n) / (2.0 / n2 ) ! ifort 15.0.2 doesn't like d .CROSS. n
+    c = ( d .cross. n ) / (2.0 * n2 )
 
   end subroutine Circumcenter_3_N
 
@@ -235,6 +223,9 @@ contains
 end module Center_of_Sphere_m
 
 ! $Log$
+! Revision 2.2  2016/02/25 21:01:30  vsnyder
+! Use .CROSS. and .DOT. operators bound to ECR_t
+!
 ! Revision 2.1  2016/02/24 01:19:50  vsnyder
 ! Initial commit
 !
