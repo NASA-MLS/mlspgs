@@ -174,6 +174,7 @@ primary
 profiles
 ptan
 
+QTM
 quality
 
 rad
@@ -243,6 +244,9 @@ zonalavg
 temperature
 
 # $Log$
+# Revision 2.69  2016/02/25 21:00:18  vsnyder
+# Add QTM
+#
 # Revision 2.68  2015/09/22 01:55:58  vsnyder
 # Add GHzAzim, ScECR
 #
