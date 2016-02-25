@@ -842,6 +842,7 @@ contains
       return
     end if
     ! Look for the file name in the directory list
+    inunit_stack_ptr = inunit_stack_ptr + 1
     if ( .not. allocated(includes) ) allocate ( includes(1:0) ) ! Assume it worked
     ! When the procedure pointer initialization works, we won't need this test
     if ( associated(find_a_file) ) then
@@ -868,7 +869,6 @@ contains
       call loop
       return
     end if
-    inunit_stack_ptr = inunit_stack_ptr + 1
     inunit_stack(inunit_stack_ptr)%file = myFile
     inunit_stack(inunit_stack_ptr)%line = source_line
     inunit_stack(inunit_stack_ptr)%column = source_column
@@ -1276,6 +1276,9 @@ contains
 end module STRING_TABLE
 
 ! $Log$
+! Revision 2.48  2016/02/25 00:54:39  vsnyder
+! Bump inunit_stack_ptr early enough
+!
 ! Revision 2.47  2016/02/12 21:08:09  pwagner
 ! Reinitialize nstring in DESTROY_STRING_TABLE
 !
