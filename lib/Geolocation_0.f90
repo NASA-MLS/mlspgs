@@ -15,13 +15,19 @@ module Geolocation_0
 
   ! Define types used in geolocation modules.
 
+  use Constants, only: Deg2Rad, Rad2Deg
   use MLSKinds, only: RG => R8 ! Kind of REAL geolocation variables
-  use Earth_Constants, only: Earth_Axis_Ratio, EarthRadA, EarthRadB, &
-    & Eccentricity_Sq
+  use Earth_Constants, only: Earth_Axis_Ratio, Earth_Axis_Ratio_Squared, &
+    & EarthRadA, EarthRadB, Eccentricity_Sq, RP
 
   implicit NONE
 
   public
+
+  ! Users should get these from their original definitions, not from here
+  private :: Deg2Rad, Rad2Deg
+  private :: Earth_Axis_Ratio, Earth_Axis_Ratio_Squared, &
+    & EarthRadA, EarthRadB, Eccentricity_Sq, RP
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -34,6 +40,8 @@ module Geolocation_0
     real(rg) :: Lat     ! Degrees
   contains
     procedure :: ECR => H_t_To_ECR_Surf ! at the Earth's surface
+    procedure :: Geoc => H_t_to_H_Geoc  ! Simple type conversion only
+    procedure :: Geod => H_t_to_H_Geod  ! Simple type conversion only
   end type H_t
 
   type, extends(h_t) :: H_Geoc
@@ -53,6 +61,9 @@ module Geolocation_0
 
   type, abstract :: Lat_t ! For latitude; can't instantiate it
     real(rg) :: D       ! Degrees
+  contains
+    procedure :: Geoc => Lat_t_to_GeocLat_t  ! Simple type conversion only
+    procedure :: Geod => Lat_t_to_GeodLat_t  ! Simple type conversion only
   end type Lat_t
 
   type, extends(lat_t) :: GeocLat_t
@@ -102,8 +113,10 @@ module Geolocation_0
     real(rg) :: V       ! geocentric height (meters from the Earth center)
   contains
     procedure :: ECR => Geoc_To_ECR
-  ! procedure :: ECR_Unit => Geod_To_ECR_Unit ! Inherited from H_t via H_Geoc
-    procedure :: GeodV => GeocV_To_GeodV
+    procedure :: GeodV => GeocV_To_GeodV  ! Would be nice to call this Geod,
+                        ! but the result type of the one it would override is
+                        ! H_Geoc and we don't want to make the results
+                        ! polymorphic
   end type H_V_Geoc
 
   type, extends(h_geod) :: H_V_Geod
@@ -112,8 +125,10 @@ module Geolocation_0
     real(rg) :: V       ! geodetic height (meters above sea level)
   contains
     procedure :: ECR => Geod_To_ECR
-  ! procedure :: ECR_Unit => Geod_To_ECR_Unit ! Inherited from H_t via H_Geod
-    procedure :: GeocV => GeodV_To_GeocV
+    procedure :: GeocV => GeodV_To_GeocV  ! Would be nice to call this Geoc,
+                        ! but the result type of the one it would override is
+                        ! H_Geoc and we don't want to make the results
+                        ! polymorphic
   end type H_V_Geod
 
   type, extends(h_geod) :: H_V_Zeta
@@ -127,10 +142,10 @@ module Geolocation_0
   contains
     procedure :: Add => ECR_add
     generic :: operator(+) => Add
-    procedure :: Cross => ECR_Cross
-    generic :: operator(.CROSS.) => Cross
-    procedure :: Dot => ECR_Dot
-    generic :: operator(.DOT.) => Dot
+    procedure :: Cross_Product => ECR_Cross
+    generic :: operator(.CROSS.) => Cross_Product
+    procedure :: Dot_Product => ECR_Dot
+    generic :: operator(.DOT.) => Dot_Product
     procedure :: Div => ECR_Divide
     generic :: operator(/) => Div
     procedure :: Geoc => ECR_to_Geoc
@@ -150,21 +165,23 @@ module Geolocation_0
     module procedure ECR_Dot
   end interface
 
-  interface H_Geoc ! Construct H_Geoc object from an H_t one
-    module procedure H_t_to_H_Geoc
-  end interface
+! Uncomment these when we get past ifort 14 and 15
 
-  interface H_Geod ! Construct H_Geod object from an H_t one
-    module procedure H_t_to_H_Geod
-  end interface
+!   interface H_Geoc ! Construct H_Geoc object from an H_t one
+!     module procedure H_t_to_H_Geoc
+!   end interface
+! 
+!   interface H_Geod ! Construct H_Geod object from an H_t one
+!     module procedure H_t_to_H_Geod
+!   end interface
 
 ! *****     Private Constants     **************************************
 
 ! AQUAD   Square of major half axis for earth ellipsoid
 ! BQUAD   Square of minor half axis for earth ellipsoid
 
-  real(rg), parameter :: AQUAD = EarthRadA**2 ! m**2
-  real(rg), parameter :: BQUAD = EarthRadB**2 ! m**2
+  real(rg), parameter, private :: AQUAD = EarthRadA**2 ! m**2
+  real(rg), parameter, private :: BQUAD = EarthRadB**2 ! m**2
 
 contains
 
@@ -208,7 +225,6 @@ contains
   end function ECR_Subtract
 
   pure elemental type(h_v_geoc) function ECR_To_Geoc ( ECR ) result ( Geoc )
-    use Constants, only: rad2deg
     class(ECR_t), intent(in) :: ECR
     real(rg) :: Rho, Rho2
     rho2 = ECR%xyz(1)**2 + ECR%xyz(2)**2
@@ -219,7 +235,6 @@ contains
   end function ECR_To_Geoc
 
   pure elemental type(h_v_geod) function ECR_To_Geod_Fukushima ( ECR ) result ( Geod )
-    use Constants, only: rad2deg
     class(ECR_t), intent(in) :: ECR
 
     real(rg), parameter :: A = EarthRadA, B = EarthRadB
@@ -285,7 +300,6 @@ contains
 
   pure elemental type(ECR_t) function Geoc_To_ECR ( Geo ) result ( ECR )
     ! Convert geocentric coordinates to ECR coordinates in meters
-    use Constants, only: deg2rad
     class(h_v_geoc), intent(in) :: Geo
     real(rg) ::Lat, Lon, Rho
     lat = geo%lat * deg2rad
@@ -296,38 +310,35 @@ contains
     ECR%xyz(3) = geo%v * sin(lat)
   end function Geoc_To_ECR
 
-  pure elemental function Geoc_To_Geod ( Geoc ) result ( Geod )
-    use Constants, only: deg2rad, rad2deg
-    use Earth_Constants, only: F2 => Earth_Axis_Ratio_Squared ! (b/a)**2
-    class(h_geoc), intent(in) :: Geoc
+  pure elemental function Geoc_To_Geod ( Geo ) result ( Geod )
+    class(h_geoc), intent(in) :: Geo
     type(h_geod) :: Geod
+    real(rp), parameter :: F2 = Earth_Axis_Ratio_Squared ! (b/a)**2
     real(rg) :: Lat
-    geod%lon = geoc%lon
-    lat = geoc%lat * deg2rad
+    geod%lon = geo%lon
+    lat = geo%lat * deg2rad
     geod%lat = atan2 ( sin(lat), f2 * cos(lat) ) * rad2deg
   end function Geoc_To_Geod
 
-  pure elemental function Geoc_To_Geod_Lat ( Geoc ) result ( Geod )
-    use Constants, only: deg2rad, rad2deg
-    use Earth_Constants, only: F2 => Earth_Axis_Ratio_Squared ! (b/a)**2
-    class(geocLat_t), intent(in) :: Geoc
+  pure elemental function Geoc_To_Geod_Lat ( Geo ) result ( Geod )
+    class(geocLat_t), intent(in) :: Geo
     type(geodLat_t) :: Geod
+    real(rp), parameter :: F2 = Earth_Axis_Ratio_Squared ! (b/a)**2
     real(rg) :: Lat
-    lat = geoc%d * deg2rad
+    lat = geo%d * deg2rad
     geod%d = atan2 ( sin(lat), f2 * cos(lat) ) * rad2deg
   end function Geoc_To_Geod_Lat
 
-  pure elemental type(h_v_geod) function GeocV_To_GeodV ( Geoc ) result ( Geod )
-    class(h_v_geoc), intent(in) :: Geoc
+  pure elemental type(h_v_geod) function GeocV_To_GeodV ( Geo ) result ( Geod )
+    class(h_v_geoc), intent(in) :: Geo
     type(ECR_t) :: ECR
   ! geod = geoc%ECR()%geod()   ! Prohibited (why?)
-    ECR = geoc%ECR()
+    ECR = geo%ECR()
     geod = ECR%geod()
   end function GeocV_To_GeodV
 
   pure elemental type(ECR_t) function Geod_To_ECR ( Geo ) result ( ECR )
     ! Convert geodetic coordinates to ECR coordinates in meters
-    use Constants, only: deg2rad
     class(h_v_geod), intent(in) :: Geo
     real(rg) :: MyLon
     real(rg) :: Rho
@@ -339,7 +350,6 @@ contains
 
   pure elemental type(ECR_t) function Geod_To_ECR_Surf ( Geo ) result ( ECR )
     ! Convert geodetic coordinates at the Earth surface to ECR coordinates
-    use Constants, only: deg2rad
     class(h_geod), intent(in) :: Geo
     real(rg) :: CT   ! cos(lat)
     real(rg) :: D    ! sqrt(a^2 ct^2 + b^2 st^2)
@@ -358,49 +368,38 @@ contains
     ecr%xyz(3) = bquad * d * st
   end function Geod_To_ECR_Surf
 
-  pure elemental type(ECR_t) function Geod_To_ECR_Unit ( Geod ) result ( ECR )
-    ! Convert geodetic coordinates to unit ECR coordinates
-    class(h_v_geod), intent(in) :: Geod
-    ECR = geod%ECR()
-    ECR%xyz = ECR%xyz / norm2(ECR%xyz)
-  end function Geod_To_ECR_Unit
-
-  pure elemental type(h_geoc) function Geod_To_Geoc ( Geod ) result ( Geoc )
-    use Constants, only: deg2rad, rad2deg
-    use Earth_Constants, only: F2 => Earth_Axis_Ratio_Squared ! (b/a)**2
-    class(h_geod), intent(in) :: Geod
+  pure elemental type(h_geoc) function Geod_To_Geoc ( Geo ) result ( Geoc )
+    class(h_geod), intent(in) :: Geo
+    real(rp), parameter :: F2 = Earth_Axis_Ratio_Squared ! (b/a)**2
     real(rg) :: Lat
-    geoc%lon = geod%lon
-    lat = geod%lat * deg2rad
+    geoc%lon = geo%lon
+    lat = geo%lat * deg2rad
     geoc%lat = atan2 ( f2 * sin(lat), cos(lat) ) * rad2deg
   end function Geod_To_Geoc
 
-  pure elemental type(GeocLat_t) function Geod_To_Geoc_Lat ( Geod ) result ( Geoc )
-    use Constants, only: deg2rad, rad2deg
-    use Earth_Constants, only: F2 => Earth_Axis_Ratio_Squared ! (b/a)**2
-    class(GeodLat_t), intent(in) :: Geod
+  pure elemental type(GeocLat_t) function Geod_To_Geoc_Lat ( Geo ) result ( Geoc )
+    class(GeodLat_t), intent(in) :: Geo
+    real(rp), parameter :: F2 = Earth_Axis_Ratio_Squared ! (b/a)**2
     real(rg) :: Lat
-    lat = geod%d * deg2rad
+    lat = geo%d * deg2rad
     geoc%d = atan2 ( f2 * sin(lat), cos(lat) ) * rad2deg
   end function Geod_To_Geoc_Lat
 
-  pure elemental type(h_v_geoc) function GeodV_To_GeocV ( Geod ) result ( Geoc )
+  pure elemental type(h_v_geoc) function GeodV_To_GeocV ( Geo ) result ( Geoc )
     ! Convert geodetic coordinates to Geocentric coordinates, including heights
-    use Constants, only: rad2deg
-    class(h_v_geod), intent(in) :: Geod
+    class(h_v_geod), intent(in) :: Geo
     real(rg) :: Rho
     real(rg) :: Z    ! Would be Z coordinate of ECR
-    call geod_to_geoc_support ( geod, z, rho )
-    geoc%lon = geod%lon
+    call geod_to_geoc_support ( geo, z, rho )
+    geoc%lon = geo%lon
     geoc%lat = atan2 ( z, rho ) * rad2deg
     geoc%v = sqrt ( rho**2 + z**2 ) ! geocentric height
   end function GeodV_To_GeocV
 
   pure elemental type(ECR_t) function H_t_To_ECR_Surf ( Geo ) result ( ECR )
     ! Convert geocentric coordinates at the Earth surface to ECR coordinates
-    use Constants, only: deg2rad
-    use Earth_Constants, only: E2 => Eccentricity_Sq
     class(h_t), intent(in) :: Geo
+    real(rp), parameter :: E2 = Eccentricity_Sq
     real(rg) :: Lat, Lon, R, Rho, ST
     lat = geo%lat * deg2rad
     st = sin(lat)
@@ -414,10 +413,31 @@ contains
     ECR%xyz(3) = r * st
   end function H_t_To_ECR_Surf
 
-!  -----     Private Procedures     ------------------------------------
+  ! Construct an H_Geoc object from an H_t one
+  pure elemental type(h_geoc) function H_t_to_H_Geoc ( Geo ) result ( G )
+    class(h_t), intent(in) :: Geo
+    g = h_geoc(geo%lon,geo%lat)
+  end function H_t_to_H_Geoc
+
+  ! Construct an H_Geod object from an H_t one
+  pure elemental type(h_geod) function H_t_to_H_Geod ( Geo ) result ( G )
+    class(h_t), intent(in) :: Geo
+    g = h_geod(geo%lon,geo%lat)
+  end function H_t_to_H_Geod
+
+  pure elemental type (GeocLat_t) function Lat_t_to_GeocLat_t ( Geo ) result ( G )
+    class(lat_t), intent(in) :: Geo
+    g = GeocLat_t(geo%d)
+  end function Lat_t_to_GeocLat_t
+
+  pure elemental type (GeodLat_t) function Lat_t_to_GeodLat_t ( Geo ) result ( G )
+    class(lat_t), intent(in) :: Geo
+    g = GeodLat_t(geo%d)
+  end function Lat_t_to_GeodLat_t
+
+!  =====     Private Procedures     ====================================
 
   pure elemental subroutine Geod_To_Geoc_Support ( Geod, Z, Rho )
-    use Constants, only: deg2rad
     class(h_v_geod), intent(in) :: Geod
     real(rg), intent(out) :: Z    ! Z coordinate of ECR
     real(rg), intent(out) :: Rho  ! sqrt(X^2+Y^2) of ECR
@@ -434,18 +454,6 @@ contains
     rho = ( geod%v + aquad * d ) * ct
   end subroutine Geod_To_Geoc_Support
 
-  ! Construct an H_Geoc object from an H_t one
-  pure elemental type(h_geoc) function H_t_to_H_Geoc ( H ) result ( G )
-    type(h_t), intent(in) :: H
-    g = h_geoc(h%lon,h%lat)
-  end function H_t_to_H_Geoc
-
-  ! Construct an H_Geod object from an H_t one
-  pure elemental type(h_geod) function H_t_to_H_Geod ( H ) result ( G )
-    type(h_t), intent(in) :: H
-    g = h_geod(h%lon,h%lat)
-  end function H_t_to_H_Geod
-
 !=============================================================================
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
@@ -460,6 +468,11 @@ contains
 end module Geolocation_0
 
 ! $Log$
+! Revision 2.6  2016/02/25 21:15:55  vsnyder
+! Comment out generics for H_Geoc and H_Geod because ifort 15 doesn't like
+! them.  Add a bunch of type-conversion bindings.  Move some USE statements.
+! Make stuff used from Constants Earth_Constants private.
+!
 ! Revision 2.5  2016/02/24 01:18:21  vsnyder
 ! Add more coordinate conversions, add arithmetic for ECR.
 !
