@@ -3735,7 +3735,7 @@ contains
 
         else
 
-          call dt_script_dt ( t_path_c, B(:npc), eta_zxp_t_c(1:npc,:), &
+          call dt_script_dt ( t_path_c(:npc), B(:npc), eta_zxp_t_c(1:npc,:), &
                             & nz_zxp_t_c, nnz_zxp_t_c, frq, d_t_scr_dt(1:npc,:) )
 
         end if
@@ -4845,6 +4845,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.362  2016/01/23 02:55:24  vsnyder
+! Add printing for polarized radiance
+!
 ! Revision 2.361  2015/12/08 23:23:42  vsnyder
 ! Put bound (:i_end) on Ref_Corr in call to Get_Tau
 !
