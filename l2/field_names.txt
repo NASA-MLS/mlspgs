@@ -358,6 +358,7 @@ profile
 profileValues
 ptanQuantity
 
+QTMLevel
 quadrature
 quality
 quantities
@@ -537,7 +538,12 @@ xStar
 
 yStar
 
+ZOT # Tells dump of HGrid whether to print QTM coordinates in ZOT or Geo
+
 # $Log$
+# Revision 2.261  2016/02/26 02:06:19  vsnyder
+# Add QTM_Level and ZOT
+#
 # Revision 2.260  2016/01/29 01:08:57  vsnyder
 # Add Polygon
 #
