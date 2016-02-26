@@ -1156,7 +1156,7 @@ contains
       & f_stopwitherror, f_surface, &
       & f_template, f_text, f_tgrid, f_time, f_truncate, &
       & F_TotalMatrixSizes, F_TotalVectorSizes, f_variable, &
-      & f_vector, f_vectormask, f_vgrid, &
+      & f_vector, f_vectormask, f_vgrid, f_ZOT, &
       & s_diff, s_dump, s_quantity, s_vectortemplate, &
       & field_first, field_last
     use io_stuff, only: truncate_textFile
@@ -1278,6 +1278,7 @@ contains
     real(r8), dimension(3) :: VALUEASARRAY ! From expr
     integer :: What
     type(where_t) :: Where_At
+    logical :: ZOT
 
     ! Executable
     call trace_begin ( me, 'DumpCommand', root, cond=toggle(gen) )
@@ -1339,6 +1340,7 @@ contains
     doStretchier = .false.
     lineLength = 40
     text = ' '
+    ZOT = .false.
 
     do j = 2, nsons(root)
       son = subtree(j,root) ! The argument
@@ -1359,7 +1361,7 @@ contains
         & f_DACSfilterShapes, f_filterShapes, f_globalAttributes, f_igrf, f_memory, &
         & f_MieTables, f_pfaFiles, f_pfaStru, f_phaseName, f_pointingGrids, &
         & f_polygon, f_stop, f_stopWithError, f_time, f_totalMatrixSizes, &
-        & f_totalVectorSizes )
+        & f_totalVectorSizes, f_ZOT )
         if ( get_boolean(son) ) then
           select case ( fieldIndex )
           case ( f_allBooleans )
@@ -1566,6 +1568,8 @@ contains
             else
               call announceError ( son, 0, 'Unable to dump Vector DB size here; empty or absent' )
             end if
+          case ( f_ZOT )
+            ZOT = .true.
           end select
         end if
       case ( f_dumpFile )
@@ -1748,8 +1752,8 @@ contains
         if ( haveHGrids ) then
           do i = 2, nsons(son)
             call output ( ' HGrid ' )
-            call dump ( & ! has no details switch
-              & hGrids(decoration(decoration(subtree(i,son)))) )
+            call dump ( &
+              & hGrids(decoration(decoration(subtree(i,son)))), details, ZOT )
           end do
         else
           call announceError ( gson, noHGrid )
@@ -2860,6 +2864,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.126  2016/02/26 02:08:18  vsnyder
+! Add ZOT switch
+!
 ! Revision 2.125  2016/01/29 01:10:07  vsnyder
 ! Add polygon to Dump
 !
