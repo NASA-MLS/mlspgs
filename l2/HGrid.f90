@@ -42,14 +42,15 @@ module HGrid                    ! Horizontal grid information
   real :: T0, T1, T2               ! For timing
 
 ! Error codes for "announce_error"
-  integer, private, parameter :: NoFraction = 1
+  integer, private, parameter :: BadTime = 1
+  integer, private, parameter :: NoFraction = BadTime + 1
   integer, private, parameter :: NoHeight = NoFraction + 1
   integer, private, parameter :: NoL1Bfiles = NoHeight + 1
-  integer, private, parameter :: NoModule = NoL1Bfiles + 1
-  integer, private, parameter :: NoMIF = NoModule + 1
-  integer, private, parameter :: NoSpacingOrigin = NoMIF + 1
-  integer, private, parameter :: BadTime = NoSpacingOrigin + 1
-  
+  integer, private, parameter :: NoMIF = NoL1Bfiles + 1
+  integer, private, parameter :: NoModule = NoMIF + 1
+  integer, private, parameter :: NoPolygon = NoModule + 1
+  integer, private, parameter :: NoSpacingOrigin = NoPolygon + 1
+
 
 contains ! =====     Public Procedures     =============================
 
@@ -68,12 +69,12 @@ contains ! =====     Public Procedures     =============================
       & f_extendible, f_forbidoverspill, f_fraction, f_geodangle, f_geodlat, &
       & f_height, f_inclination, f_insetoverlaps, f_interpolationfactor, &
       & f_lon, f_losangle, f_maxloweroverlap, f_maxupperoverlap, f_mif, &
-      & f_module, f_origin, &
+      & f_module, f_origin, f_QTMlevel, &
       & f_single, f_solartime, f_solarzenith, f_sourcel2gp, f_spacing, &
       & f_time, f_type, &
       & field_first, field_last, &
       & l_explicit, l_fixed, l_fractional, l_height, &
-      & l_l2gp, l_regular
+      & l_l2gp, l_QTM, l_regular
     use L2GPData, only: L2GPData_t
     use MLSCommon, only: MLSfile_t, namelen, tai93_range_t
     use MLSFiles, only: getMLSfilebytype
@@ -84,6 +85,7 @@ contains ! =====     Public Procedures     =============================
     use MLSStringLists, only: switchDetail
     use moretree, only: get_boolean
     use Output_m, only: output
+    use Polygon_m, only: Polygon_Inside, Polygon_Vertices
     use string_table, only: get_string
     use time_m, only: time_now
     use toggles, only: gen, levels, switches, toggle
@@ -136,6 +138,7 @@ contains ! =====     Public Procedures     =============================
     integer :: MAXUPPEROVERLAP          ! For some hGrids
     integer :: MIF                      ! For fixed hGrids
     integer :: NOMAFS                   ! Number of MAFs of L1B data read
+    integer :: QTM_Level                ! From QTMLevel field
     logical :: SINGLE                   ! Just one profile please
     integer :: SON                      ! Son of Root
     integer :: SOLARTIMENODE            ! Tree node
@@ -174,21 +177,22 @@ contains ! =====     Public Procedures     =============================
     
     hGrid%name = name
 
-    got_field = .false.
-    interpolationFactor = 1.0
-    extendible = .false.
-    maxLowerOverlap = -1
-    maxUpperOverlap = -1
-    insetOverlaps = .false.
-    single = .false.
-    solarTimeNode = 0
     date = 0
-    solarZenithNode = 0
-    timeNode = 0
+    extendible = .false.
     geodAngleNode = 0
     geodLatNode = 0
-    LosAngleNode = 0
+    got_field = .false.
+    insetOverlaps = .false.
+    interpolationFactor = 1.0
     lonNode = 0
+    LosAngleNode = 0
+    maxLowerOverlap = -1
+    maxUpperOverlap = -1
+    QTM_level = 6             ! QTM level 6 gives 156 km resolution
+    single = .false.
+    solarTimeNode = 0
+    solarZenithNode = 0
+    timeNode = 0
 
     do keyNo = 2, nsons(root)
       son = subtree(keyNo,root)
@@ -250,6 +254,9 @@ contains ! =====     Public Procedures     =============================
       case ( f_origin )
         call expr ( subtree(2,son), expr_units, expr_value )
         origin = expr_value(1)
+      case ( f_QTMlevel )
+        call expr ( subtree(2,son), expr_units, expr_value )
+        QTM_level = nint(expr_value(1))
       case ( f_single )
         single = get_boolean ( fieldValue )
       case ( f_solarTime )
@@ -297,7 +304,7 @@ contains ! =====     Public Procedures     =============================
 
     case ( l_l2gp) ! --------------------------- L2GP ------------------
       
-        if ( verbose ) call output ( 'Creating L2GP-Based HGrid', advance='yes' )
+      if ( verbose ) call output ( 'Creating L2GP-Based HGrid', advance='yes' )
       ! Get the time from the l1b file
       call L1BGeoLocation ( filedatabase, "MAFStartTimeTAI", fullArray )
       call L1BSubsample ( chunk, FullArray, values=TAI )
@@ -323,6 +330,15 @@ contains ! =====     Public Procedures     =============================
       call Deallocate_test ( fullArray, 'fullArray', ModuleName )
       call Deallocate_test ( TAI, 'TAI', ModuleName )
       ! call deallocateL1BData ( l1bField ) ! Avoid memory leaks
+
+    case ( l_QTM ) ! --------------------------- Regular ---------------
+      if ( verbose ) call output ( 'Creating QTM HGrid', advance='yes' )
+      if ( .not. allocated(polygon_vertices) ) then
+        call announce_error ( root, noPolygon )
+      else
+        call create_QTM_hgrid ( polygon_inside, polygon_vertices, QTM_level, &
+          & hGrid )
+      end if
 
     case ( l_regular ) ! ----------------------- Regular ---------------
       if ( verbose ) call output ( 'Creating Regular HGrid', advance='yes' )
@@ -848,6 +864,49 @@ contains ! =====     Public Procedures     =============================
       & cond=toggle(gen) .and. levels(gen) > 1 .and. .not. computingOffsets )
 
   end subroutine CreateMIFBasedHGrids
+
+  ! -------------------------------------------  Create_QTM_HGrid  -----
+  subroutine Create_QTM_HGrid ( Polygon_Inside, Polygon_Vertices, Level, HGrid )
+
+    ! Create a QTM within the specified polygon with the specified level
+    ! of refinement.
+
+    ! Presumably we don't get here until it's been checked whether the
+    ! polygon exists.
+
+    ! We need to know both the polygon boundary and a point inside the
+    ! polygon because the concept "inside a polygon" is ambiguous on the
+    ! surface of a sphere.
+
+    use allocate_deallocate, only: Test_Allocate
+    use Generate_QTM_m, only: Generate_QTM
+    use Geolocation_0, only: H_t
+
+    type(h_t), intent(in) :: Polygon_Inside ! A point inside the polygon
+    type(h_t), intent(in) :: Polygon_Vertices(:)
+    integer, intent(in) :: Level
+    type(hGrid_t), intent(inout) :: HGrid
+
+    integer :: Stat
+
+    hGrid%QTM_tree%level = level
+    hGrid%QTM_tree%in_geo = polygon_inside
+    ! Explicit allocation won't be necessary when compilers support
+    ! automatic allocation for assignment to allocatable arrays.
+    allocate ( hGrid%QTM_tree%polygon_geo(size(polygon_vertices)), stat=stat )
+    call test_allocate ( stat, moduleName, "hGrid%Polygon_geo", &
+      & [1], [size(polygon_vertices)], storage_size(polygon_vertices) / 8 )
+    hGrid%QTM_tree%polygon_geo = polygon_vertices
+
+    call generate_QTM ( hGrid%QTM_tree, hGrid%QTM_ZOT )
+    ! Explicit allocation won't be necessary when compilers support
+    ! automatic allocation for assignment to allocatable arrays.
+    allocate ( hGrid%QTM_geo(size(hGrid%QTM_ZOT)), stat=stat )
+    call test_allocate ( stat, moduleName, "hGrid%QTM_geo", &
+      & [1], [size(hGrid%QTM_ZOT)], storage_size(hGrid%QTM_geo) / 8 )
+    hGrid%QTM_geo = hGrid%QTM_ZOT%ZOT_to_geo()
+
+  end subroutine Create_QTM_HGrid
 
   ! -----------------------------------------  CreateRegularHGrid  -----
   subroutine CreateRegularHGrid ( filedatabase, processingRange, chunk, &
@@ -2087,6 +2146,8 @@ contains ! =====     Public Procedures     =============================
       call output ( "TYPE = FIXED but no MIF is specified", advance='yes' )
     case ( noModule )
       call output ( "Instrument module must be specified", advance='yes' )
+    case ( noPolygon )
+      call output ( "A polygon has not been defined", advance='yes' )
     case ( noSpacingOrigin )
       call output ( "TYPE = Regular but no spacing and/or origin is specified", &
         & advance='yes' )
@@ -2326,6 +2387,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.129  2016/02/26 02:07:18  vsnyder
+! Add QTM support
+!
 ! Revision 2.128  2016/02/12 20:10:53  pwagner
 ! Better error checking, more complete DestroyHGridGeoLocations
 !
