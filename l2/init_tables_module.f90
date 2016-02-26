@@ -508,7 +508,7 @@ contains ! =====     Public procedures     =============================
              l+l_geos5_7, l+l_gloria, l+l_merra, l+l_ncep, l+l_none, l+l_strat, &
              l+l_surfaceHeight, n+n_dt_def, &
       begin, t+t_hGridType, l+l_explicit, l+l_fixed, l+l_fractional, &
-             l+l_height, l+l_regular, l+l_l2gp, n+n_dt_def /) )
+             l+l_height, l+l_l2gp, l+l_QTM, l+l_regular, n+n_dt_def /) )
     call make_tree ( (/ &
       begin, t+t_i_saturation, l+l_clear, l+l_clear_110rh_below_top, &
              l+l_clear_0rh, l+l_clear_lowest_0_110rh, &
@@ -656,6 +656,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_mif, numeric(phyq_dimensionless), &
              begin, f+f_module, field_spec(s_module), &
              begin, f+f_origin, numeric(phyq_angle), &
+             begin, f+f_QTMlevel, numeric(phyq_dimensionless), &
              begin, f+f_single, boolean(), &
              begin, f+f_solarTime, numeric(phyq_time), &
              begin, f+f_solarZenith, numeric(), &
@@ -1604,6 +1605,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_vector, field_spec(s_vector), &
              begin, f+f_vectorMask, field_spec(s_vector), &
              begin, f+f_vGrid, field_spec(s_vGrid), &
+             begin, f+f_ZOT, boolean(), &
              np+n_spec_def/), continue=.true. )
     call make_tree ( (/ &
       begin, s+s_forwardModelGlobal, &
@@ -2055,6 +2057,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.623  2016/02/26 02:07:44  vsnyder
+! Add QTM support
+!
 ! Revision 2.622  2016/01/29 01:09:24  vsnyder
 ! Add polygon file to ForwardModelGlobal and Polygon switch to Dump
 !
