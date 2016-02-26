@@ -13,6 +13,8 @@ module HGridsDatabase                   ! Horizontal grid information
 
   use Intrinsic, only: L_GeodAngle
   use MLSKinds, only: R8
+  use Generate_QTM_m, only: QTM_Tree_t, ZOT_t
+  use Geolocation_0, only: GeocLat_t, H_t
 
   implicit none
   private
@@ -38,10 +40,10 @@ module HGridsDatabase                   ! Horizontal grid information
   type HGrid_T
     integer :: Name                 = 0    ! String index of name.            
     integer :: masterCoordinate     = l_GeodAngle ! Its lit index;
-    integer :: noProfs                 ! Number of profiles in this grid  
+    integer :: noProfs                  ! Number of profiles in this grid  
     integer :: noProfsLowerOverlap  = 0 ! Number of profiles in the lower overlap
     integer :: noProfsUpperOverlap  = 0 ! Number of profiles in the upper overlap
-    integer :: Type                    ! L_Explicit, L_Fixed ...
+    integer :: Type                     ! L_Explicit, L_Fixed ...
     logical :: forbidOverspill      = .false.   
 
     ! This is the maf number passing nearest to the grid point
@@ -54,6 +56,11 @@ module HGridsDatabase                   ! Horizontal grid information
     real(r8), contiguous, pointer :: solarTime(:,:)   => NULL()
     real(r8), contiguous, pointer :: solarZenith(:,:) => NULL()
     real(r8), contiguous, pointer :: losAngle(:,:)    => NULL()
+    ! For QTM
+    type(QTM_tree_t) :: QTM_Tree             ! for finding things
+    type(ZOT_t), allocatable :: QTM_ZOT(:)   ! Vertices of QTM
+    type(h_t), allocatable :: QTM_Geo(:)     ! Vertices of QTM, computed from QTM_ZOT
+    type(geocLat_t), allocatable :: QTM_Lats(:) ! Unique latitudes in the QTM.
   end type HGrid_T
 
   ! Put here all the 
@@ -390,7 +397,7 @@ contains ! =========== Public procedures ===================================
     noChunkMAFs = chunk%lastMAFIndex - chunk%firstMAFIndex + 1
     if ( present(values) ) then
       if ( .not. present(fullArray) )  &
-        & call MLSMessage ( MLSMSG_Error, trim(ModuleName) // 'L1BSubsample', &
+        & call MLSMessage ( MLSMSG_Error, trim(ModuleName) // '%L1BSubsample', &
         & 'need FullArray' )
       nullify(values)
       call Allocate_test ( values, noChunkMAFs, 'values of array', ModuleName )
@@ -399,7 +406,7 @@ contains ! =========== Public procedures ===================================
     if ( present(values2d) ) then
       noFreqs = size(fullArray2d, 1)
       if ( .not. present(fullArray2d) )  &
-        & call MLSMessage ( MLSMSG_Error, trim(ModuleName) // 'L1BSubsample', &
+        & call MLSMessage ( MLSMSG_Error, trim(ModuleName) // '%L1BSubsample', &
         & 'need FullArray2d' )
       nullify(values2d)
       call Allocate_test ( values2d, noFreqs, noChunkMAFs, '2d values of array', ModuleName )
@@ -523,33 +530,48 @@ contains ! =========== Public procedures ===================================
   end subroutine DestroyHGridDatabase
 
   ! ------------------------------------------------  DUMP_A_HGRID  -----
-  subroutine DUMP_a_HGRID ( aHGRID )
-    use dates_module, only: tai93s2hid 
-    use Intrinsic, only: lit_indices
+  subroutine DUMP_a_HGRID ( aHGRID, Details, ZOT )
+    use dates_module, only: tai93s2hid
+    use Dump_Geolocation_m, only: Dump_H_t, Dump_ZOT
+    use Generate_QTM_m, only: Dump_QTM_Tree
+    use Intrinsic, only: lit_indices, L_QTM
     use output_m, only: blanks, newLine, output
     use string_table, only: display_string
+
     type(hGrid_T), intent(in) :: aHGRID
+    logical, intent(in), optional :: ZOT      ! Dump QTM coordinates in ZOT
+    integer, intent(in), optional :: Details  ! < 1 => Don't dump QTM search tree
+                                              ! > 1 => Dump sons of QTM vertices
+                                              ! Default zero
+
     integer :: IERR
     integer :: J
-      IERR = 0
-      call output ( 'Name = ', advance='no' )
-      if ( aHgrid%name > 0 ) then
-        call display_string ( aHgrid%name, ierr=ierr )
-        if ( ierr /= 0 ) call output ( ' (not found in string table)' )
-      else
-        call output('(unknown)' )
-      end if
-      call newLine
-      call output ( aHgrid%noProfs, before=' noProfs = ', advance='no' )
-      call output ( aHgrid%noProfsLowerOverlap, before=' lowerOverlap = ', advance='no' )
-      call output ( aHgrid%noProfsUpperOverlap, before=' upperOverlap = ', advance='no' )
-      call output ( ' masterCoordinate = ' )
-      if ( aHgrid%masterCoordinate == 0 ) then
-        call output ( '0', advance='yes' )
-      else
-        call display_string ( lit_indices(aHgrid%masterCoordinate), advance='yes' )
-      end if
-      call display_string ( lit_indices(aHgrid%type), before=' type = ', advance='yes' )
+    integer :: MyDetails
+    logical :: MyZOT
+
+    IERR = 0
+    call output ( 'Name = ', advance='no' )
+    if ( aHgrid%name > 0 ) then
+      call display_string ( aHgrid%name, ierr=ierr )
+      if ( ierr /= 0 ) call output ( ' (not found in string table)' )
+    else
+      call output('(unknown)' )
+    end if
+    call newLine
+    call output ( aHgrid%noProfs, before=' noProfs = ', advance='no' )
+    call output ( aHgrid%noProfsLowerOverlap, before=' lowerOverlap = ', advance='no' )
+    call output ( aHgrid%noProfsUpperOverlap, before=' upperOverlap = ', advance='no' )
+    call output ( ' masterCoordinate = ' )
+    if ( aHgrid%masterCoordinate == 0 ) then
+      call output ( '0', advance='yes' )
+    else
+      call display_string ( lit_indices(aHgrid%masterCoordinate), advance='yes' )
+    end if
+    call display_string ( lit_indices(aHgrid%type), before=' type = ' )
+    if ( aHGrid%type == l_QTM ) &
+      & call output ( aHGrid%QTM_tree%level, before=' tree with level = ' )
+    call newLine
+    if ( aHgrid%noProfs > 0 ) then
       call output ( ' prof       phi       geodLat           lon', advance='no' )
       call output ( '      hours in day     solarTime   solarZenith', advance='no' )
       call output ( '      losAngle  nearest maf', advance='yes' )
@@ -567,17 +589,26 @@ contains ! =========== Public procedures ===================================
         call output ( aHgrid%geodLat(1,j), '(1x,1pg13.6)' )
         call output ( aHgrid%lon(1,j), '(1x,1pg13.6)' )
         call output ( tai93s2hid( &                                       
-  &           aHgrid%time(1,j), leapsec=.true. ), '(1x,1pg13.6)' )
+    &         aHgrid%time(1,j), leapsec=.true. ), '(1x,1pg13.6)' )
         call output ( aHgrid%solarTime(1,j), '(1x,1pg13.6)' )
         call output ( aHgrid%solarZenith(1,j), '(1x,1pg13.6)' )
         call output ( aHgrid%losAngle(1,j), '(1x,1pg13.6)', advance='no' )
         call output ( aHgrid%maf(j), places=6, advance='yes' )
       end do
-      if ( aHgrid%masterCoordinate > 0 ) then
-        call output( ' Master coordinate: ', advance='no' )
-        call display_string ( lit_indices(aHgrid%masterCoordinate), ierr=ierr )
-        call newLine
-      endif
+    end if
+    if ( aHGrid%type == l_QTM ) then
+      myZOT = .false.
+      if ( present(ZOT) ) myZOT = ZOT
+      myDetails = 0
+      if ( present(details) ) myDetails = details
+      if ( myDetails > 0 ) call dump_QTM_tree ( aHGrid%QTM_tree, &
+        & latLon=.not. myZOT, sons = myDetails > 1 )
+      if ( myZot ) then
+        call dump_ZOT ( aHGrid%QTM_ZOT, ' QTM vertices in ZOT coordinates:' )
+      else
+        call dump_H_t ( aHGrid%QTM_geo, ' QTM vertices in (lon,lat) coordinates:' )
+      end if
+    end if
   end subroutine DUMP_a_HGRID
 
   ! ------------------------------------------------  DUMP_HGRIDS  -----
@@ -674,6 +705,9 @@ contains ! =========== Public procedures ===================================
 end module HGridsDatabase
 
 ! $Log$
+! Revision 2.24  2016/02/26 02:05:25  vsnyder
+! Add QTM support
+!
 ! Revision 2.23  2016/01/11 23:12:58  pwagner
 ! Skip Attempting to monotonize longitudes containing Fills
 !
