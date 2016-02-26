@@ -31,20 +31,24 @@ module MACHINE
 !---------- Start -gc section
 !           requires -gc among LDOPTS
 !   (the following lines automatically deleted for version (2))
-  use F90_GC, only: GCOLLECT, NCOLLECTIONS, &
-   & DONT_EXPAND, DONT_GC, FULL_FREQUENCY, MAX_RETRIES, SILENT_GC
+  use f90_gc, only: gcollect, ncollections, &
+   & dont_expand, dont_gc, full_frequency, max_retries, silent_gc
 !---------- End -gc section
-  use F90_IOSTAT				! everything; see iostat_msg_NAG
-  use F90_UNIX_ENV, only: IARGC, NAG_GETARG => GETARG
-  ! Exit and return an integer status to the invoking process
-  use F90_UNIX_PROC, only: EXIT_WITH_STATUS => EXIT, SYSTEM
+  use f90_iostat				! everything; see iostat_msg_nag
+  use f90_unix_env, only: iargc, &
+    & nag_getarg => getarg, getenv, geteuid, getegid
+  ! exit and return an integer status to the invoking process
+  use f90_unix_proc, only: exit_with_status => exit, system
   implicit none
+  
+  intrinsic :: execute_command_line
 
   character(LEN=2) :: END_LINE = ' ' // char(10)
   character(LEN=1) :: FILSEP = '/'      ! '/' for Unix, '\' for DOS or NT
   integer, parameter :: HP = 0          ! Offset for first argument for GETARG
 
-  public :: CRASH_BURN, Is_a_Directory
+  public :: crash_burn, create_script, execute, execute_command_line
+  public :: getenv, getids, Is_a_Directory
 
   interface IO_ERROR; module procedure IO_ERROR_; end interface
   private IO_ERROR_
@@ -104,6 +108,75 @@ contains
     end select
     stop
   end subroutine CRASH_BURN
+
+  ! --------------------------------------------------  create_script  -----
+  subroutine create_script( Name, lines, thenRun, status, cmd_output, delay )
+  ! Create the shell script named Name composed of lines
+  ! Optionally run and then return the status and any output
+    character(len=*), intent(in)                 :: Name    ! its path and name
+    character(len=*), dimension(:), intent(in)   :: lines
+    logical, optional, intent(in)                :: thenRun
+    integer, optional, intent(out)               :: status
+    character(len=*), optional, intent(out)      :: cmd_output
+    integer, optional, intent(in)                :: delay
+    ! Internal variables
+    logical                                      :: mustRun
+    ! Executable
+    mustRun = .false.
+    if ( present(thenRun) ) mustRun = thenRun
+    call write_TEXTFILE ( Name, lines )
+    call Execute( 'chmod a+x ' // trim(name), status )
+    if ( mustRun ) call Execute( trim(name), status, cmd_output, delay )
+  end subroutine create_script
+
+  ! --------------------------------------------------  Execute  -----
+  subroutine Execute( Command, status, cmd_output, delay )
+  ! Execute the Command
+  ! Return the status and optionally any output
+    character(len=*), intent(in)            :: Command
+    integer, intent(out)                    :: status
+    character(len=*), optional, intent(out) :: cmd_output
+    integer, optional, intent(in)           :: delay
+    ! Internal variables
+    integer                                 :: pid, gid
+    integer                                 :: myDelay
+    integer                                 :: tempstatus
+    character(len=64)                       :: tempfilename
+    ! Executable
+    myDelay = 2
+    if ( present(delay) ) myDelay = delay
+    if ( .not. present(cmd_output) ) then
+      call execute_command_line( Command, exitstat=status )
+    else
+      ! Approach:
+      ! (1) construct a hopefully unique temporary file name
+      ! (2) delete that file (in case it already exists)
+      ! (3) redirect the stdout from Command to it
+      ! (4) read its contents into cmd_output
+      ! (5) delete it
+      call getids( pid, gid )
+      write( tempfilename, * ) pid
+      tempfilename = '/tmp/Execute_temp.' // adjustl(tempfilename)
+      call execute_command_line( '/bin/rm -f ' // trim(tempfilename), &
+        & exitstat=tempstatus )
+      call execute_command_line( trim(Command) // ' > ' // trim(tempfilename), &
+        & exitstat=status )
+      call usleep( myDelay ) ! To allow time for os to carry out our command
+      call read_textfile ( tempfilename, cmd_output )
+      call execute_command_line( '/bin/rm -f ' // trim(tempfilename), &
+        & exitstat=tempstatus )
+    endif
+  end subroutine Execute
+
+  ! --------------------------------------------------  getids  -----
+  subroutine getids( process_id, group_id )
+  ! return process and group ids
+    integer, intent(out) :: process_id
+    integer, intent(out) :: group_id
+    ! Executable
+    process_id = geteuid()
+    group_id   = getegid()
+  end subroutine getids
 
   ! --------------------------------------------------  IO_ERROR_  -----
   subroutine IO_ERROR_ ( MESSAGE, IOSTAT, FILE )
@@ -607,8 +680,28 @@ contains
     close ( lun )
   end subroutine READ_TEXTFILE
   
- 
-  ! ----------------------------------------------  not_used_here  -----
+  subroutine write_TEXTFILE ( File, lines )
+  ! write lines to a textfile
+    character(len=*), intent(in)               :: File     ! its path and name
+    character(len=*), intent(in), dimension(:) :: lines    ! its contents
+    ! Internal variables
+    integer :: i, lun, status
+    ! Executable
+    open( newunit=lun, form='formatted', &
+      & file=trim(File), status='unknown', access='sequential', &
+      & recl=size(lines)*len(lines(1)) + 1, iostat=status )
+    if ( status /= 0 ) then
+      write(*,*) 'machine%write_TEXTFILE_ARR-E- Unable to open textfile ' // &
+        & trim(File)
+      return
+    endif
+    do i=1, size(lines)
+      write ( lun, '(a)', advance='yes' ) trim(lines(i))
+    enddo
+    close( UNIT=lun, iostat=status )
+  end subroutine write_TEXTFILE
+
+! ----------------------------------------------  not_used_here  -----
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
   character (len=*), parameter :: IdParm = &
@@ -622,6 +715,9 @@ contains
 end module MACHINE
 
 ! $Log$
+! Revision 1.13  2015/08/12 20:18:29  pwagner
+! Added Is_A_Directory; Shell_Command now optionally returns stdout from cmd
+!
 ! Revision 1.12  2009/06/23 19:58:53  pwagner
 ! Prevent Intel from optimizing ident string away
 !

@@ -15,13 +15,17 @@ module MACHINE
 ! languish here still for backward ciompatibility.
 
   use IFPORT
+  ! ----------------- uncomment the following line with v15 -----------
+  ! use ifposix ! only with Intel v15
+  ! -------------------------------------------------------------------
   implicit none
 
   character(LEN=2) :: END_LINE = ' ' // char(10)
   character(LEN=1) :: FILSEP = '/'      ! '/' for Unix, '\' for DOS or NT
   integer, parameter :: HP = 0          ! Offset for first argument for GETARG
 
-  public :: GETARG, CRASH_BURN, IS_A_DIRECTORY
+  public :: crash_burn, create_script, execute, execute_command_line
+  public :: getarg, getenv, getids, is_a_directory
   interface
     subroutine GETARG ( ARGNUM, ARGVAL )
       integer, intent(in) :: ARGNUM  ! 0 = command name, 1 = first arg, etc.
@@ -86,11 +90,87 @@ contains
     stop
   end subroutine CRASH_BURN
 
+  ! --------------------------------------------------  create_script  -----
+  subroutine create_script( Name, lines, thenRun, status, cmd_output, delay )
+  ! Create the shell script named Name composed of lines
+  ! Optionally run and then return the status and any output
+    character(len=*), intent(in)                 :: Name    ! its path and name
+    character(len=*), dimension(:), intent(in)   :: lines
+    logical, optional, intent(in)                :: thenRun
+    integer, optional, intent(out)               :: status
+    character(len=*), optional, intent(out)      :: cmd_output
+    integer, optional, intent(in)                :: delay
+    ! Internal variables
+    logical                                      :: mustRun
+    ! Executable
+    mustRun = .false.
+    if ( present(thenRun) ) mustRun = thenRun
+    call write_TEXTFILE ( Name, lines )
+    call Execute( 'chmod a+x ' // trim(name), status )
+    if ( mustRun ) call Execute( trim(name), status, cmd_output, delay )
+  end subroutine create_script
+
+  ! --------------------------------------------------  Execute  -----
+  subroutine Execute( Command, status, cmd_output, delay )
+  ! Execute the Command
+  ! Return the status and optionally any output
+    character(len=*), intent(in)            :: Command
+    integer, intent(out)                    :: status
+    character(len=*), optional, intent(out) :: cmd_output
+    integer, optional, intent(in)           :: delay
+    ! Internal variables
+    integer                                 :: pid, gid
+    integer                                 :: myDelay
+    integer                                 :: tempstatus
+    character(len=64)                       :: tempfilename
+    ! Executable
+    myDelay = 2
+    if ( present(delay) ) myDelay = delay
+    if ( .not. present(cmd_output) ) then
+      call execute_command_line( Command, exitstat=status )
+    else
+      ! Approach:
+      ! (1) construct a hopefully unique temporary file name
+      ! (2) delete that file (in case it already exists)
+      ! (3) redirect the stdout from Command to it
+      ! (4) read its contents into cmd_output
+      ! (5) delete it
+      call getids( pid, gid )
+      write( tempfilename, * ) pid
+      tempfilename = '/tmp/Execute_temp.' // adjustl(tempfilename)
+      call execute_command_line( '/bin/rm -f ' // trim(tempfilename), &
+        & exitstat=tempstatus )
+      call execute_command_line( trim(Command) // ' > ' // trim(tempfilename), &
+        & exitstat=status )
+      call usleep( myDelay ) ! To allow time for os to carry out our command
+      call read_textfile ( tempfilename, cmd_output )
+      call execute_command_line( '/bin/rm -f ' // trim(tempfilename), &
+        & exitstat=tempstatus )
+    endif
+  end subroutine Execute
+
   subroutine EXIT_WITH_STATUS ( STATUS )
   ! Exit and return STATUS to the invoking process
     integer, intent(in) :: STATUS
     call exit(status)
   end subroutine EXIT_WITH_STATUS
+  
+  ! subroutine getenv( name, value )
+  ! Find value of env variable name
+  !  character(len=*), intent(in)  :: name
+  !  character(len=*), intent(out) :: value
+  !  ! Executable
+  !  call get_environment_variable( name, value )
+  ! end subroutine getenv
+
+  subroutine getids( process_id, group_id )
+  ! return process and group ids
+    integer, intent(out) :: process_id
+    integer, intent(out) :: group_id
+    ! Executable
+    process_id = getpid()
+    group_id   = getgid()
+  end subroutine getids
 
   subroutine IO_ERROR_ ( MESSAGE, IOSTAT, FILE )
   ! Print MESSAGE and FILE, and then do something reasonable with IOSTAT.
@@ -204,7 +284,6 @@ contains
   ! Returns how many garbage collections have been performed
     MLS_HOWMANY_GC = 0 ! NCOLLECTIONS()
   end function MLS_HOWMANY_GC
-!---------- End no -gc section
 
   subroutine READ_TEXTFILE ( File, string )
   ! read a textfile into a single string
@@ -229,7 +308,7 @@ contains
     open( newunit=lun, form='formatted', &
       & file=trim(File), status='old', iostat=status )
     if ( status /= 0 ) then
-      write(*,*) 'IO_STUFF%READ_TEXTFILE_ARR-E- Unable to open textfile ' // &
+      write(*,*) 'machine%READ_TEXTFILE_ARR-E- Unable to open textfile ' // &
         & trim(File)
       return
     endif
@@ -255,8 +334,42 @@ contains
     close ( lun )
   end subroutine READ_TEXTFILE
   
+  subroutine write_TEXTFILE ( File, lines )
+  ! write lines to a textfile
+    character(len=*), intent(in)               :: File     ! its path and name
+    character(len=*), intent(in), dimension(:) :: lines    ! its contents
+    ! Internal variables
+    integer :: i, lun, status
+    ! Executable
+    open( newunit=lun, form='formatted', &
+      & file=trim(File), status='unknown', access='sequential', &
+      & recl=size(lines)*len(lines(1)) + 1, iostat=status )
+    if ( status /= 0 ) then
+      write(*,*) 'machine%write_TEXTFILE_ARR-E- Unable to open textfile ' // &
+        & trim(File)
+      return
+    endif
+    do i=1, size(lines)
+      write ( lun, '(a)', advance='yes' ) trim(lines(i))
+    enddo
+    close( UNIT=lun, iostat=status )
+  end subroutine write_TEXTFILE
+
+  ! ----------------- comment-out the following routine with v15 -----------
+  ! Because v14 and earlier don't support this
+  subroutine execute_command_line( Command, wait, exitstat )
+    ! Dummy args
+    character(len=*), intent(in)   :: Command
+    logical, optional, intent(in)  :: wait
+    integer, optional, intent(out) :: exitstat
+    ! Internal variables
+    integer                        :: status
+    ! Executable
+    status = system( Command )
+    if ( present(exitstat) ) exitstat = status
+  end subroutine execute_command_line
   
-  ! ----------------------------------------------  not_used_here  -----
+! ----------------------------------------------  not_used_here  -----
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
   character (len=*), parameter :: IdParm = &
@@ -270,6 +383,9 @@ contains
 end module MACHINE
 
 ! $Log$
+! Revision 1.11  2015/08/12 20:17:54  pwagner
+! Added Is_A_Directory; Shell_Command now optionally returns stdout from cmd
+!
 ! Revision 1.10  2009/09/15 20:01:12  pwagner
 ! Intel compiler crashes with walkback only for method 'a'
 !
