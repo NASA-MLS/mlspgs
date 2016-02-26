@@ -25,10 +25,11 @@ module Generate_QTM_m
   private
 
   public :: Cross_Meridian, Dump, Dump_QTM, Dump_QTM_Tree, Generate_QTM, &
-          & Polygon_To_ZOT, QTM_node_t, QTM_Tree_t
+          & Get_QTM_Lats, Polygon_To_ZOT, QTM_node_t, QTM_Tree_t, ZOT_t
 
   ! One facet of a QTM:
   type :: QTM_Node_t
+    logical :: Leaf = .false.  ! A leaf node
     integer(qk) :: QID = 0     ! QTM ID
     integer :: Son(0:3) = 0    ! Sub facet subscripts in the tree
     integer :: XN = 0, YN = 0  ! Which son is xNode, yNode?  Central node is 0,
@@ -248,6 +249,8 @@ contains
         call move_alloc ( Q_Temp, QTM_Trees%Q )
       end if
 
+      QTM_Trees%Q(root)%leaf = .true.
+
       call QTM_Decode ( QID, S ) ! Get ZOT coordinates of QID into top of S
 
       QTM_Trees%Q(root)%qid = qid
@@ -318,6 +321,7 @@ contains
           ! of any other entity within the statement."  Recursive reference to
           ! Add_QTM_Vertex_To_Tree will reallocate QTM_Trees%Q if it runs out
           ! of space.
+          QTM_Trees%Q(root)%leaf = .false.
           i = Add_QTM_Vertex_To_Tree ( 4*QID+f )
           QTM_Trees%Q(root)%son(f) = i
         end do
@@ -409,6 +413,35 @@ contains
     end function Is_It_In
 
   end subroutine Generate_QTM
+
+  subroutine Get_QTM_Lats ( QTM_Geo, QTM_Lats )
+    ! Get the unique set of QTM latitudes.
+    use Geolocation_0, only: GeocLat_t, GeodLat_t, H_Geod, H_t, Lat_t
+    class(h_t), intent(in) :: QTM_Geo(:)
+    class(lat_t), intent(out), allocatable :: QTM_Lats(:)
+
+    integer :: I, N
+    class(lat_t), allocatable :: T(:) ! Temp for QTM_Lats
+
+    select type ( QTM_geo )
+    class is ( h_geod )
+      allocate ( geodLat_t :: t(size(QTM_geo)) )
+    class default
+      allocate ( geocLat_t :: t(size(QTM_geo)) )
+    end select
+
+    n = 0
+    do i = 1, size(QTM_geo)
+      if ( .not. any(QTM_geo(i)%lat == t(:n)%d) ) then
+        n = n + 1
+        t(n)%d = QTM_geo(i)%lat
+      end if
+    end do
+
+    allocate ( QTM_lats(n), mold=t )
+    QTM_lats(:n)%d = t(:n)%d
+
+  end subroutine Get_QTM_Lats
 
   integer function Cross_Meridian ( G, Z ) result ( T )
     ! Returns the quadrant, i.e., int(longitude/90), of a meridian in the
@@ -747,6 +780,9 @@ contains
 end module Generate_QTM_m
 
 ! $Log$
+! Revision 2.3  2016/02/26 02:03:37  vsnyder
+! Add Get_QTM_Lats subroutine and Leaf component.
+!
 ! Revision 2.2  2016/01/26 19:55:08  vsnyder
 ! Cannonball polishing
 !

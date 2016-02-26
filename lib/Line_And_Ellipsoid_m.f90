@@ -75,36 +75,42 @@ contains
     call solve ( a2, a1, a0, line, intersections )
   end subroutine Line_And_Earth_Geoid
 
-  subroutine Line_And_Ellipsoid_RG ( Axes, Line, Intersections )
+  subroutine Line_And_Ellipsoid_RG ( Axes, Center, Line, Intersections )
     use Geolocation_0, only: ECR_t, RG
     real(rg), intent(in) :: Axes(3)    ! Semi-minor axes in same units as Center
+    type(ECR_t), intent(in) :: Center  ! Center of the ellipsoid
     type(ECR_t), intent(in) :: Line(2) ! V + t U, two vectors, where V is a
                                        ! vector from the center of the ellipsoid
                                        ! to a point on the line, and U is a
                                        ! vector along the line at V
     type(ECR_t), intent(out), allocatable :: Intersections (:) ! 0..2 elements
     real(rg) :: A2, A1, A0
+    type(ECR_t) :: D ! Line(1) - Center
     type(ECR_t) :: UM, VM
+    d = line(1) - center
     UM = ECR_t( Line(2)%xyz / axes )
-    VM = ECR_t( Line(1)%xyz / axes )
+    VM = ECR_t( d%xyz / axes )
     a2 = UM .dot. UM
     a1 = VM .dot. UM
     a0 = ( VM .dot. VM ) - 1.0
     call solve ( a2, a1, a0, line, intersections )
   end subroutine Line_And_Ellipsoid_RG
 
-  subroutine Line_And_Sphere_RG ( Radius, Line, Intersections )
+  subroutine Line_And_Sphere_RG ( Radius, Center, Line, Intersections )
     use Geolocation_0, only: ECR_t, RG
     real(rg), intent(in) :: Radius     ! In same units as Center
+    type(ECR_t), intent(in) :: Center  ! Center of the sphere
     type(ECR_t), intent(in) :: Line(2) ! V + t U, two vectors, where V is a
                                        ! vector from the center of the ellipsoid
                                        ! to a point on the line, and U is a
                                        ! vector along the line at V
     type(ECR_t), intent(out), allocatable :: Intersections (:) ! 0..2 elements
     real(rg) :: A2, A1, A0
+    type(ECR_t) :: D ! Line(1) - Center
+    d = line(1) - center
     a2 = line(2) .dot. line(2)
-    a1 = line(1) .dot. line(2)
-    a0 = ( line(1) .dot. line(1) ) - radius**2
+    a1 = d .dot. line(2)
+    a0 = ( d .dot. d ) - radius**2
     call solve ( a2, a1, a0, line, intersections )
   end subroutine Line_And_Sphere_RG
 
@@ -144,6 +150,9 @@ contains
 end module Line_And_Ellipsoid_m
 
 ! $Log$
+! Revision 2.3  2016/02/26 01:59:07  vsnyder
+! Add Center argument
+!
 ! Revision 2.2  2016/02/25 21:02:24  vsnyder
 ! Use .DOT. operator bound to ECR_t
 !
