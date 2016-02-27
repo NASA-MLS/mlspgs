@@ -47,7 +47,7 @@ contains ! ============= Public Procedures ==========================
       & L_Extinction, L_ExtinctionV2, L_Full, L_Hybrid, L_Linear, &
       & L_MagneticField, L_MIFExtinction, L_MIFExtinctionExtrapolation, &
       & L_MIFExtinctionForm, L_MIFExtinctionV2, L_MIFRHI, L_PolarLinear, &
-      & L_PTan, L_Scan, L_Scan2d, L_SwitchingMirror
+      & L_PTan, L_RHI, L_Scan, L_Scan2d, L_SwitchingMirror
     use Intrinsic, only: L_LowestRetrievedPressure, L_VMR, Lit_Indices
     use LinearizedForwardModel_m, only: LinearizedForwardModel
     use MatrixModule_1, only: CheckIntegrity, CreateEmptyMatrix, DestroyMatrix, &
@@ -56,7 +56,6 @@ contains ! ============= Public Procedures ==========================
     use MLSL2Timings, only: Add_To_Retrieval_Timing
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
     use MLSStringLists, only: SwitchDetail
-    use Molecules, only: L_Extinction, L_ExtinctionV2, L_RHI
     use MoreMessage, only: MLSMessage
     use PolarLinearModel_m, only: PolarLinearModel
     use ScanModelModule, only: ScanForwardModel, TwoDScanForwardModel
@@ -786,6 +785,10 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelWrappers
 
 ! $Log$
+! Revision 2.79  2016/02/27 01:41:09  vsnyder
+! Don't get literal names from both Init_Tables_Module and Molecules; doing
+! so confuses ifort 16.0.2.
+!
 ! Revision 2.78  2015/03/28 02:44:39  vsnyder
 ! Delete Compute_Model_Plane.  Get the magnetic field from a vector
 ! quantity instead of computing it.  Delete Fill_Magnetic_Field.
