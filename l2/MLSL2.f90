@@ -26,7 +26,7 @@ program MLSL2
     & transmitSlaveArguments
   use leakcheck_m, only: leakcheck
   use lexer_core, only: init_lexer
-  use machine, only: getarg, hp, io_error
+  use machine, only: getarg, hp, io_error, USleep
   use MLSCommon, only: MLSFile_t, MLSNamesAreDebug, MLSnamesAreVerbose
   use MLSFiles, only: filestringtable, &
     & addFileToDatabase, deallocate_filedatabase, dump, &
@@ -178,7 +178,6 @@ program MLSL2
   integer   :: numResolutions
   integer, dimension(2) :: layerList
   integer   :: numLayers
-  external :: USLEEP
   ! Executable
   nullify (filedatabase)
   !---------------- Task (1) ------------------
@@ -846,6 +845,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.216  2016/02/29 19:51:07  pwagner
+! Usleep got from machine module instead of being an external
+!
 ! Revision 2.215  2015/10/06 00:22:09  pwagner
 ! Automatically store l2cf name in runtime Boolean 'l2cf'
 !
