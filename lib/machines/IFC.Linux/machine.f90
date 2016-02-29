@@ -35,6 +35,7 @@ module MACHINE
 
   interface IO_ERROR; module procedure IO_ERROR_; end interface
   private :: IO_ERROR_
+  private :: USleep
 
   logical, public, save :: NEVERCRASH = .true. ! Change to false for testing
 
@@ -369,6 +370,24 @@ contains
     if ( present(exitstat) ) exitstat = status
   end subroutine execute_command_line
   
+  subroutine USleep ( MuSec )
+    ! Args
+    integer, intent(in)            :: MuSec
+    ! Sleep for a specified number of microseconds
+    ! Internal variables
+    character(len=16)              :: MuChars
+    logical                        :: exist
+    write( MuChars, * ) MuSec
+    call execute_command_line ( 'usleep ' // &
+      trim(MuChars) // '; echo Done > /tmp/Wakeup.txt' )
+    do
+      inquire ( file='/tmp/Wakeup.txt', exist=exist )
+      if ( exist ) exit
+    enddo
+    call execute_command_line ( 'rm /tmp/Wakeup.txt' )
+  end subroutine USleep
+  
+  
 ! ----------------------------------------------  not_used_here  -----
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
@@ -383,6 +402,9 @@ contains
 end module MACHINE
 
 ! $Log$
+! Revision 1.12  2016/02/26 19:37:27  pwagner
+! Added create_script, execute, execute_command_line, getenv, getids
+!
 ! Revision 1.11  2015/08/12 20:17:54  pwagner
 ! Added Is_A_Directory; Shell_Command now optionally returns stdout from cmd
 !
