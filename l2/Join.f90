@@ -64,6 +64,7 @@ contains ! =====     Public Procedures     =============================
     use L2AuxData, only: l2AuxData_t
     use L2ParInfo, only: Parallel, WaitForDirectWritePermission
     use Lexer_core, only: Print_Source
+    use machine, only: USleep
     use MatrixModule_1, only: Matrix_Database_t
     use MLSCommon, only: MLSFile_t
     use MLSL2Options, only: CheckPaths, L2CFNode, &
@@ -98,7 +99,6 @@ contains ! =====     Public Procedures     =============================
     ! Local parameters
     ! integer, parameter :: DELAY = 500000  ! For Usleep, no. microsecs
     ! External (C) function
-    external :: Usleep
     ! Local variables
     logical :: AUTODIRECTWRITE
     logical :: CREATEFILE               ! Flag
@@ -2381,6 +2381,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.172  2016/02/29 19:49:49  pwagner
+! Usleep got from machine module instead of being an external
+!
 ! Revision 2.171  2015/10/06 00:26:37  pwagner
 ! magneticField belongs in type=quantity DirectWrite file
 !
