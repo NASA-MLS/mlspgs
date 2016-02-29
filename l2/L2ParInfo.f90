@@ -13,25 +13,26 @@ module L2ParInfo
   ! This module provides definitions needed by L2Parallel and other modules to
   ! manage the parallel aspects of the L2 code.
 
-  use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
-  use DUMP_0, only: DUMP
-  use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
-  use IO_STUFF, only: GET_LUN
-  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, PVMERRORMESSAGE
-  use MLSFINDS, only: FINDFIRST
-  use MLSSTATS1, only: ALLSTATS
-  use MLSSTRINGS, only: LOWERCASE
-  use MLSSTRINGLISTS, only: GETUNIQUEINTS, GETUNIQUESTRINGS, NUMSTRINGELEMENTS, &
-    & REMOVENUMFROMLIST, STRINGELEMENT, SWITCHDETAIL
-  use MOREPVM, only: PVMPACKSTRINGINDEX, PVMUNPACKSTRINGINDEX
-  use OUTPUT_M, only: OUTPUT
-  use PVM, only: INFOTAG, &
-    & PVMFMYTID, PVMFINITSEND, PVMF90PACK, PVMFSEND, &
-    & PVMDATADEFAULT, PVMF90UNPACK, NEXTPVMARG, PVMTASKEXIT, SIG_ABOUTTODIE
-  use PVMIDL, only: PVMIDLPACK
-  use QUANTITYPVM, only: PVMSENDQUANTITY
-  use TOGGLES, only: SWITCHES
-  use VECTORSMODULE, only: VECTORVALUE_T
+  use allocate_deallocate, only: allocate_test, deallocate_test
+  use dump_0, only: dump
+  use highOutput, only: outputNamedValue
+  use io_stuff, only: get_lun
+  use machine, only: usleep
+  use MLSFinds, only: findfirst
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error, PVMErrorMessage
+  use MLSStats1, only: allstats
+  use MLSStrings, only: lowercase
+  use MLSStringLists, only: getuniqueints, getuniquestrings, numstringelements, &
+    & removenumfromlist, stringelement, switchdetail
+  use morePVM, only: PVMpackstringindex, PVMunpackstringindex
+  use output_m, only: output
+  use PVM, only: infotag, &
+    & PVMfmytid, PVMfinitsend, PVMf90pack, PVMfsend, &
+    & PVMdatadefault, PVMf90unpack, nextPVMarg, PVMtaskexit, sig_abouttodie
+  use PVMidl, only: PVMidlpack
+  use quantityPVM, only: PVMsendquantity
+  use toggles, only: switches
+  use vectorsmodule, only: vectorvalue_t
 
   implicit none
   private
@@ -682,8 +683,6 @@ contains ! ==================================================================
     integer :: BUFFERID                 ! From PVM
     integer :: INFO                     ! From PVM
 
-    ! External (C) function
-    external :: Usleep
     ! Executable code
 
     ! Pack and dispatch
@@ -893,6 +892,9 @@ contains ! ==================================================================
 end module L2ParInfo
 
 ! $Log$
+! Revision 2.66  2016/02/29 19:50:26  pwagner
+! Usleep got from machine module instead of being an external
+!
 ! Revision 2.65  2015/03/28 02:48:02  vsnyder
 ! Added stuff to trace allocate/deallocate addresses
 !
