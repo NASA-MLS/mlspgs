@@ -14,14 +14,15 @@ module MACHINE
 ! In a few cases they have in fact been made part of a later standard, but
 ! languish here still for backward ciompatibility.
 
-  use IFPORT
+  use IFPORT, only: getenv, getpid, getgid, system, ierrno
+  use iso_c_binding
   ! ----------------- uncomment the following line with v15 -----------
   ! use ifposix ! only with Intel v15
   ! -------------------------------------------------------------------
   implicit none
 
-  character(LEN=2) :: END_LINE = ' ' // char(10)
-  character(LEN=1) :: FILSEP = '/'      ! '/' for Unix, '\' for DOS or NT
+  character(len=2) :: END_LINE = ' ' // char(10)
+  character(len=1) :: FILSEP = '/'      ! '/' for Unix, '\' for DOS or NT
   integer, parameter :: HP = 0          ! Offset for first argument for GETARG
 
   public :: crash_burn, create_script, execute, execute_command_line
@@ -35,7 +36,22 @@ module MACHINE
 
   interface IO_ERROR; module procedure IO_ERROR_; end interface
   private :: IO_ERROR_
-  private :: USleep
+  ! private :: USleep
+  ! These supply sleep and usleep functions from the c library
+  ! which we call as procedures, thowing away their return values
+  interface
+    subroutine usleep ( i ) bind (c)
+      ! 4.3BSD, POSIX.1-2001.  POSIX.1-2001 declares this function obsolete;
+      ! use nanosleep(2) instead.  POSIX.1-2008 removes the specification of
+      !  usleep().    
+      use, intrinsic          :: iso_c_binding
+      integer, value      :: i
+    end subroutine usleep
+    subroutine sleep ( i ) bind (c)
+    use, intrinsic          :: iso_c_binding
+      integer, value      :: i
+    end subroutine sleep
+  end interface
 
   logical, public, save :: NEVERCRASH = .true. ! Change to false for testing
 
@@ -370,24 +386,6 @@ contains
     if ( present(exitstat) ) exitstat = status
   end subroutine execute_command_line
   
-  subroutine USleep ( MuSec )
-    ! Args
-    integer, intent(in)            :: MuSec
-    ! Sleep for a specified number of microseconds
-    ! Internal variables
-    character(len=16)              :: MuChars
-    logical                        :: exist
-    write( MuChars, * ) MuSec
-    call execute_command_line ( 'usleep ' // &
-      trim(MuChars) // '; echo Done > /tmp/Wakeup.txt' )
-    do
-      inquire ( file='/tmp/Wakeup.txt', exist=exist )
-      if ( exist ) exit
-    enddo
-    call execute_command_line ( 'rm /tmp/Wakeup.txt' )
-  end subroutine USleep
-  
-  
 ! ----------------------------------------------  not_used_here  -----
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
@@ -402,6 +400,9 @@ contains
 end module MACHINE
 
 ! $Log$
+! Revision 1.13  2016/02/28 23:59:46  pwagner
+! Added USleep needed here
+!
 ! Revision 1.12  2016/02/26 19:37:27  pwagner
 ! Added create_script, execute, execute_command_line, getenv, getids
 !

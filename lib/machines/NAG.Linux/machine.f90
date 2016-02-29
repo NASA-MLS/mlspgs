@@ -55,6 +55,23 @@ module MACHINE
   public :: SHELL_COMMAND
   public :: MLS_DISABLE_AUTOGC, MLS_GC_NOW, MLS_HOWMANY_GC, MLS_CONFIG_GC
   
+  ! private :: USleep
+  ! These supply sleep and usleep functions from the c library
+  ! which we call as procedures, thowing away their return values
+  interface
+    subroutine usleep ( i ) bind (c)
+      ! 4.3BSD, POSIX.1-2001.  POSIX.1-2001 declares this function obsolete;
+      ! use nanosleep(2) instead.  POSIX.1-2008 removes the specification of
+      !  usleep().    
+      use, intrinsic          :: iso_c_binding
+      integer, value      :: i
+    end subroutine usleep
+    subroutine sleep ( i ) bind (c)
+    use, intrinsic          :: iso_c_binding
+      integer, value      :: i
+    end subroutine sleep
+  end interface
+
   logical, public, save :: NEVERCRASH = .true. ! Change to false for testing
 
 !---------------------------- RCS Module Info ------------------------------
@@ -701,23 +718,6 @@ contains
     close( UNIT=lun, iostat=status )
   end subroutine write_TEXTFILE
   
-  subroutine USleep ( MuSec )
-    ! Args
-    integer, intent(in)            :: MuSec
-    ! Sleep for a specified number of microseconds
-    ! Internal variables
-    character(len=16)              :: MuChars
-    logical                        :: exist
-    write( MuChars, * ) MuSec
-    call execute_command_line ( 'usleep ' // &
-      trim(MuChars) // '; echo Done > /tmp/Wakeup.txt' )
-    do
-      inquire ( file='/tmp/Wakeup.txt', exist=exist )
-      if ( exist ) exit
-    enddo
-    call execute_command_line ( 'rm /tmp/Wakeup.txt' )
-  end subroutine USleep
-
 ! ----------------------------------------------  not_used_here  -----
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
@@ -732,6 +732,9 @@ contains
 end module MACHINE
 
 ! $Log$
+! Revision 1.15  2016/02/29 00:00:08  pwagner
+! Added USleep needed here
+!
 ! Revision 1.14  2016/02/26 19:38:15  pwagner
 ! Added create_script, execute, execute_command_line, getenv, getids
 !
