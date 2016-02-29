@@ -21,8 +21,6 @@
     ! integer :: i1, i2, i3, i4
     
     ! real(rk) :: T0, T1    ! Time, CPU time, to delay
-    ! External (C) function
-    external :: Usleep
     
     ! Executable
     if ( present(err) ) err=0
@@ -32,6 +30,9 @@
     endif
     
 !$Log$
+!Revision 1.5  2015/07/15 16:19:19  pwagner
+!Removed obsolete component and commented-out lines
+!
 !Revision 1.4  2009/01/12 18:44:55  pwagner
 !Improved cofiguration; wait means sleep
 !
