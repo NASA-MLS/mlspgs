@@ -18,45 +18,45 @@ module L2Parallel
   ! does the chunk divide and then launches slave tasks for each chunk, and
   ! awaits their results in the Join section.
 
-  use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
-  use BITSTUFF, only: BITSTOBOOLEANS, BOOLEANSTOBITS
-  use CHUNKS_M, only: DUMP, MLSCHUNK_T
-  use CHUNKDIVIDE_M, only: CHUNKDIVIDECONFIG
-  use DUMP_0, only: DUMP
-  use HIGHOUTPUT, only: BEVERBOSE, BANNER, OUTPUTNAMEDVALUE, TIMESTAMP
-  use L2PARINFO, only: MACHINE_T, PARALLEL, &
-    & CHUNKTAG, GIVEUPTAG, GRANTEDTAG, NOTIFYTAG, MASTERDUMPTAG, PETITIONTAG, &
-    & SIG_TOJOIN, SIG_FINISHED, SIG_ACKFINISH, SIG_REGISTER, &
-    & SIG_REQUESTDIRECTWRITE, SIG_SWEARALLEGIANCE, SIG_SWITCHALLEGIANCE, &
-    & SIG_DIRECTWRITEGRANTED, SIG_DIRECTWRITEFINISHED, &
-    & SIG_HOSTDIED, SIG_RELEASEHOST, SIG_REQUESTHOST, SIG_THANKSHOST, &
-    & GETNICETIDSTRING, SLAVEARGUMENTS, MACHINENAMELEN, GETMACHINES, &
-    & MACHINEFIXEDTAG, DIRECTWRITEREQUEST_T, &
-    & DW_PENDING, DW_INPROGRESS, DW_COMPLETED, &
-    & INFLATEDIRECTWRITEREQUESTDB, COMPACTDIRECTWRITEREQUESTDB, DUMP, &
-    & ADDMACHINETODATABASE
-  use MACHINE, only: SHELL_COMMAND
-  use MLSKINDS, only: R8
-  use MLSL2Options, only: MLSMessage
-  use MLSMessageModule, only: MLSMSG_ERROR, MLSMSG_WARNING, PVMERRORMESSAGE
-  use MLSFINDS, only: FINDALL, FINDFIRST
-  use MLSSTRINGLISTS, only: CATLISTS, EXPANDSTRINGRANGE, REMOVENUMFROMLIST, &
-    & REPLACESUBSTRING, SWITCHDETAIL
-  use MLSSTRINGS, only: LOWERCASE
-  use MOREPVM, only: PVMUNPACKSTRINGINDEX, PVMPACKSTRINGINDEX
-  use MLSSTRINGS, only: NAPPEARANCES
-  use OUTPUT_M, only: BLANKS, OUTPUT
-  use PVM, only: INFOTAG, &
-    & PVMDATADEFAULT, PVMFINITSEND, PVMF90PACK, PVMFKILL, &
-    & PVMF90UNPACK, PVMTASKHOST, &
-    & MYPVMSPAWN, PVMFCATCHOUT, PVMFSEND, PVMFNOTIFY, PVMTASKEXIT, &
-    & GETMACHINENAMEFROMTID, PVMFFREEBUF, SIG_ABOUTTODIE
-  use PVMIDL, only: PVMIDLUNPACK
-  use STRING_TABLE, only: DISPLAY_STRING
-  use TIME_M, only: TIME_NOW
-  use TOGGLES, only: GEN, SWITCHES, TOGGLE
-  use TRACE_M, only: TRACE_BEGIN, TRACE_END
-  use WRITEMETADATA, only: L2PCF
+  use allocate_deallocate, only: allocate_test, deallocate_test
+  use bitStuff, only: bitsToBooleans, booleansToBits
+  use chunks_m, only: dump, MLSChunk_t
+  use chunkDivide_m, only: chunkDivideConfig
+  use dump_0, only: dump
+  use highOutput, only: beVerbose, banner, outputNamedValue, timeStamp
+  use L2ParInfo, only: machine_t, parallel, &
+    & chunktag, giveuptag, grantedtag, notifytag, masterdumptag, petitiontag, &
+    & sig_tojoin, sig_finished, sig_ackfinish, sig_register, &
+    & sig_requestdirectwrite, sig_swearallegiance, sig_switchallegiance, &
+    & sig_directwritegranted, sig_directwritefinished, &
+    & sig_hostdied, sig_releasehost, sig_requesthost, sig_thankshost, &
+    & getnicetidstring, slavearguments, machinenamelen, getmachines, &
+    & machinefixedtag, directwriterequest_t, &
+    & dw_pending, dw_inprogress, dw_completed, &
+    & inflatedirectwriterequestdb, compactdirectwriterequestdb, dump, &
+    & addmachinetodatabase
+  use machine, only: shell_command, usleep
+  use MLSKinds, only: r8
+  use MLSL2options, only: MLSMessage
+  use MLSMessagemodule, only: MLSMSG_Error, MLSMSG_Warning, PVMErrorMessage
+  use MLSFinds, only: findall, findfirst
+  use MLSStringlists, only: catlists, expandstringrange, removenumfromlist, &
+    & replacesubstring, switchdetail
+  use MLSStrings, only: lowercase
+  use morePVM, only: PVMunpackstringindex, PVMpackstringindex
+  use MLSStrings, only: nAppearances
+  use output_m, only: blanks, output
+  use PVM, only: infotag, &
+    & PVMDatadefault, PVMFinitSend, PVMf90Pack, PVMFKill, &
+    & PVMF90unpack, PVMtaskhost, &
+    & myPVMSpawn, PVMFCatchout, PVMFSend, PVMFNotify, PVMTaskExit, &
+    & getMachineNameFromTID, PVMFFreeBuf, sig_abouttodie
+  use PVMidl, only: PVMidlunpack
+  use string_table, only: display_string
+  use time_m, only: time_now
+  use toggles, only: gen, switches, toggle
+  use trace_m, only: trace_begin, trace_end
+  use writeMetadata, only: l2pcf
 
   implicit none
   private
@@ -197,7 +197,6 @@ contains
     integer, parameter :: DATABASEINFLATION=100
 
     ! External (C) function
-    external :: Usleep
 
     ! Local variables
     logical :: MACHINEREQUESTQUEUED     ! Set if waiting for a free machine
@@ -1800,6 +1799,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.113  2016/02/29 19:50:46  pwagner
+! Usleep got from machine module instead of being an external
+!
 ! Revision 2.112  2015/03/28 02:48:22  vsnyder
 ! Added stuff to trace allocate/deallocate addresses
 !
