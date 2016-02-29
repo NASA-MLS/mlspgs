@@ -27,6 +27,7 @@ module SnoopMLSL2               ! Interface between MLSL2 and IDL snooper via pv
 
   use HIGHOUTPUT, only: BANNER
   use INIT_TABLES_MODULE, only: F_COMMENT, F_PHASENAME
+  use machine, only: USleep
   use MATRIXMODULE_0, only: MATRIXELEMENT_T
   use MATRIXMODULE_1, only: MATRIX_T, RC_INFO
   use MLSL2Options, only: currentPhaseName
@@ -483,8 +484,6 @@ contains ! ========  Public Procedures =========================================
     character(len=*), parameter :: UNPACKERROR = &
       & 'unpacking response from snooper'
 !     integer, parameter :: MAXARRAYARGUMENTS = 12 ! Total number of R1A etc. arguments above
-    ! External (C) function
-    external :: Usleep
 
     ! Local variables, first the more exciting ones.
     integer, save :: MYTID=0            ! Local task ID under PVM
@@ -1022,6 +1021,9 @@ contains ! ========  Public Procedures =========================================
 end module SnoopMLSL2
 
 ! $Log$
+! Revision 2.51  2016/02/29 19:51:38  pwagner
+! Usleep got from machine module instead of being an external
+!
 ! Revision 2.50  2015/03/28 02:51:42  vsnyder
 ! Added stuff to trace allocate/deallocate addresses
 !
