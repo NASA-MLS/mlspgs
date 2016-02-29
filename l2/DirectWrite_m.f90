@@ -28,6 +28,7 @@ module DirectWrite_m  ! alternative to Join/OutputAndClose methods
   use highOutput, only: beVerbose, LetsDebug, outputNamedValue
   use init_tables_module, only: l_geodAltitude, l_pressure, l_zeta, &
     & l_l2gp, l_l2aux, l_l2dgg, l_l2fwm
+  use machine, only: USleep
   use MLSCommon, only: defaultUndefinedValue, Interval_T, MLSFile_T, &
     & inRange
   use MLSKinds, only: rv
@@ -1771,6 +1772,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.80  2016/02/29 19:49:29  pwagner
+! Usleep got from machine module instead of being an external
+!
 ! Revision 2.79  2015/10/14 23:24:46  pwagner
 ! Cope better with l2gp qty with non-pressure vertical coordinate
 !
