@@ -17,6 +17,7 @@ module TIME_M
 ! seconds since midnight.  And some other time-related computations.
 
   use DATES_MODULE, only: YYYYMMDD_TO_DAI
+  use machine, only: USleep
   use PRINTIT_M, only: MLSMSG_WARNING, PRINTITOUT
   implicit none
   private
@@ -380,6 +381,9 @@ contains
 end module TIME_M
 
 !$Log$
+!Revision 2.17  2016/02/29 19:48:12  pwagner
+!Usleep got from machine module instead of being an external
+!
 !Revision 2.16  2015/07/14 23:12:20  pwagner
 !Added family of routines to wait for events
 !
