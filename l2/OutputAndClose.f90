@@ -18,6 +18,7 @@ module OutputAndClose ! outputs all data from the Join module to the
 
   use HDF, only: dfacc_rdonly, dfacc_rdwr
   use HighOutput, only: letsDebug, outputNamedValue
+  use machine, only: USleep
   use MLSFiles, only: hdfversion_5, addInitializeMLSFile, dump, &
     & GetMLSFileByName, getMLSFileByType, getPCFromRef, &
     & MLS_Closefile, mls_exists, mls_inqswath, mls_openfile, &
@@ -2300,6 +2301,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.197  2016/02/29 19:51:22  pwagner
+! Usleep got from machine module instead of being an external
+!
 ! Revision 2.196  2015/11/19 23:57:23  pwagner
 ! Now able to read from L2GP file
 !
