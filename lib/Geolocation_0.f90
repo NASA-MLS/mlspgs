@@ -42,6 +42,10 @@ module Geolocation_0
     procedure :: ECR => H_t_To_ECR_Surf ! at the Earth's surface
     procedure :: Geoc => H_t_to_H_Geoc  ! Simple type conversion only
     procedure :: Geod => H_t_to_H_Geod  ! Simple type conversion only
+    procedure, pass(geo) :: From_ECR => Surf_H_t_From_ECR ! useful because the
+                                        ! desired dynamic result type (H_t) of
+                                        ! ECR_to_Geoc cannot be used for
+                                        ! dispatch
   end type H_t
 
   type, extends(h_t) :: H_Geoc
@@ -57,6 +61,10 @@ module Geolocation_0
   contains
     procedure :: ECR => Geod_To_ECR_Surf
     procedure :: Geoc => Geod_To_Geoc
+    procedure, pass(geo) :: From_ECR => Surf_Geod_From_ECR ! useful because the
+                                        ! desired dynamic result type (H_geod)
+                                        ! of ECR_to_Geod cannot be used for
+                                        ! dispatch
   end type H_Geod
 
   type, abstract :: Lat_t ! For latitude; can't instantiate it
@@ -105,36 +113,49 @@ module Geolocation_0
   ! real(rg) :: Lon     ! Degrees
   ! real(rg) :: Lat     ! Degrees
     real(rg) :: V       ! Meters or zeta
+  contains
+    procedure, pass(geo) :: Surf_From_ECR => Surf_H_v_t_From_ECR ! useful
+                        ! because the desired dynamic result type (H_t) of
+                        ! ECR_to_Geoc cannot be used for dispatch
   end type H_V_t
 
-  type, extends(h_geoc) :: H_V_Geoc
+  type, extends(h_v_t) :: H_V_Geoc
   ! real(rg) :: Lon     ! Degrees
   ! real(rg) :: Lat     ! Degrees
-    real(rg) :: V       ! geocentric height (meters from the Earth center)
+  ! real(rg) :: V       ! geocentric height (meters from the Earth center)
   contains
     procedure :: ECR => Geoc_To_ECR
     procedure :: GeodV => GeocV_To_GeodV  ! Would be nice to call this Geod,
                         ! but the result type of the one it would override is
                         ! H_Geoc and we don't want to make the results
                         ! polymorphic
+    procedure, pass(geo) :: From_ECR => Geoc_From_ECR ! useful because the
+                        ! desired dynamic result type (H_v_geoc) of ECR_to_Geoc
+                        ! cannot be used for dispatch
   end type H_V_Geoc
 
-  type, extends(h_geod) :: H_V_Geod
+  type, extends(h_v_t) :: H_V_Geod
   ! real(rg) :: Lon     ! Degrees
   ! real(rg) :: Lat     ! Degrees
-    real(rg) :: V       ! geodetic height (meters above sea level)
+  ! real(rg) :: V       ! geodetic height (meters above sea level)
   contains
     procedure :: ECR => Geod_To_ECR
     procedure :: GeocV => GeodV_To_GeocV  ! Would be nice to call this Geoc,
                         ! but the result type of the one it would override is
                         ! H_Geoc and we don't want to make the results
                         ! polymorphic
+    procedure, pass(geo) :: From_ECR => Geod_From_ECR ! useful because the
+                        ! desired dynamic result type (H_v_geod) of ECR_to_Geod
+                        ! cannot be used for dispatch
+    procedure, pass(geo) :: Surf_From_ECR => Surf_H_v_Geod_From_ECR ! useful
+                        ! because the desired dynamic result type (H_geod) of
+                        ! ECR_to_Geod cannot be used for dispatch
   end type H_V_Geod
 
-  type, extends(h_geod) :: H_V_Zeta
+  type, extends(h_v_t) :: H_V_Zeta
   ! real(rg) :: Lon     ! Degrees
   ! real(rg) :: Lat     ! Degrees
-    real(rg) :: V       ! Zeta
+  ! real(rg) :: V       ! Zeta
   end type H_V_Zeta
 
   type :: ECR_t
@@ -150,6 +171,7 @@ module Geolocation_0
     generic :: operator(/) => Div
     procedure :: Geoc => ECR_to_Geoc
     procedure :: Geod => ECR_To_Geod_Fukushima
+    procedure :: Norm2 => ECR_Norm2
     procedure, pass(B) :: Scale_L => ECR_Scale_L
     procedure :: Scale_R => ECR_Scale_R
     procedure :: Subtract => ECR_Subtract
@@ -163,6 +185,10 @@ module Geolocation_0
 
   interface Dot_Product
     module procedure ECR_Dot
+  end interface
+
+  interface Norm2
+    module procedure ECR_Norm2
   end interface
 
 ! Uncomment these when we get past ifort 14 and 15
@@ -196,7 +222,7 @@ contains
     ECR_Cross%xyz = cross(a%xyz,b%xyz)
   end function ECR_Cross
 
-  pure type(ECR_t) function ECR_Divide ( A, B )
+  pure elemental type(ECR_t) function ECR_Divide ( A, B )
     class(ECR_t), intent(in) :: A
     real(rg), intent(in) :: B
     ECR_Divide = ECR_t ( a%xyz / b )
@@ -207,13 +233,18 @@ contains
     ECR_Dot = dot_product ( a%xyz, b%xyz )
   end function ECR_Dot
 
-  pure type(ECR_t) function ECR_Scale_L ( A, B )
+  pure elemental real(rg) function ECR_Norm2 ( A )
+    class(ECR_t), intent(in) :: A
+    ECR_Norm2 = norm2(a%xyz)
+  end function ECR_Norm2
+
+  pure elemental type(ECR_t) function ECR_Scale_L ( A, B )
     real(rg), intent(in) :: A
     class(ECR_t), intent(in) :: B
     ECR_Scale_L = ECR_t ( a * b%xyz )
   end function ECR_Scale_L
 
-  pure type(ECR_t) function ECR_Scale_R ( A, B )
+  pure elemental type(ECR_t) function ECR_Scale_R ( A, B )
     class(ECR_t), intent(in) :: A
     real(rg), intent(in) :: B
     ECR_Scale_R = ECR_t ( a%xyz * b )
@@ -298,10 +329,21 @@ contains
 
   end function ECR_To_Geod_Fukushima
 
+  pure elemental subroutine Geoc_From_ECR ( ECR, Geo )
+    class(ECR_t), intent(in) :: ECR
+    class(h_v_geoc), intent(out) :: Geo
+    type(h_v_geoc) :: MyGeo ! Needed because assignment to polymorphic Geo is
+                            ! prohibited
+    myGeo = ECR%geoc()
+    geo%lon = myGeo%lon
+    geo%lat = myGeo%lat
+    geo%v = myGeo%v
+  end subroutine Geoc_From_ECR
+
   pure elemental type(ECR_t) function Geoc_To_ECR ( Geo ) result ( ECR )
     ! Convert geocentric coordinates to ECR coordinates in meters
     class(h_v_geoc), intent(in) :: Geo
-    real(rg) ::Lat, Lon, Rho
+    real(rg) :: Lat, Lon, Rho
     lat = geo%lat * deg2rad
     lon = geo%lon * deg2rad
     rho = geo%v * cos(lat)
@@ -336,6 +378,17 @@ contains
     ECR = geo%ECR()
     geod = ECR%geod()
   end function GeocV_To_GeodV
+
+  pure elemental subroutine Geod_From_ECR ( ECR, Geo )
+    class(ECR_t), intent(in) :: ECR
+    class(h_v_geod), intent(out) :: Geo
+    type(h_v_geod) :: MyGeo ! Needed because assignment to polymorphic Geo is
+                            ! prohibited
+    myGeo = ECR%geod()
+    geo%lon = myGeo%lon
+    geo%lat = myGeo%lat
+    geo%v = myGeo%v
+  end subroutine Geod_From_ECR
 
   pure elemental type(ECR_t) function Geod_To_ECR ( Geo ) result ( ECR )
     ! Convert geodetic coordinates to ECR coordinates in meters
@@ -435,6 +488,39 @@ contains
     g = GeodLat_t(geo%d)
   end function Lat_t_to_GeodLat_t
 
+  pure elemental subroutine Surf_Geod_From_ECR ( ECR, Geo )
+    class(ECR_t), intent(in) :: ECR
+    class(h_geod), intent(out) :: Geo
+    type(h_v_geod) :: MyGeo
+    myGeo = ECR%geod()
+    geo%lon = myGeo%lon
+    geo%lat = myGeo%lat
+  end subroutine Surf_Geod_From_ECR
+
+  pure elemental subroutine Surf_H_t_From_ECR ( ECR, Geo )
+    class(ECR_t), intent(in) :: ECR
+    class(h_t), intent(out) :: Geo
+    geo%lon = rad2deg * atan2(ECR%xyz(2), ECR%xyz(1))
+    geo%lat = rad2deg * asin(ECR%xyz(3)/sqrt(ECR%xyz(1)**2 + ECR%xyz(2)**2))
+  end subroutine Surf_H_t_From_ECR
+
+  pure elemental subroutine Surf_H_v_Geod_From_ECR ( ECR, Geo )
+    class(ECR_t), intent(in) :: ECR
+    class(h_v_geod), intent(out) :: Geo
+    type(h_v_geod) :: MyGeo
+    myGeo = ECR%geod()
+    geo%lon = myGeo%lon
+    geo%lat = myGeo%lat
+    geo%v = 0
+  end subroutine Surf_H_v_Geod_From_ECR
+
+  pure elemental subroutine Surf_H_v_t_From_ECR ( ECR, Geo )
+    class(ECR_t), intent(in) :: ECR
+    class(h_v_t), intent(out) :: Geo
+    call geo%h_t%from_ECR ( ECR )
+    geo%v = 0
+  end subroutine Surf_H_v_t_From_ECR
+
 !  =====     Private Procedures     ====================================
 
   pure elemental subroutine Geod_To_Geoc_Support ( Geod, Z, Rho )
@@ -468,6 +554,12 @@ contains
 end module Geolocation_0
 
 ! $Log$
+! Revision 2.7  2016/03/02 19:23:49  vsnyder
+! Add From_ECR bindings to H_t, H_Geod, and H_V_Geod -- H_Geoc inherits from
+! H_t.  Add Surf_From_ECR bindings to H_V_t and H_V_Geod.  Add NORM2 binding
+! to ECR_t.  Add NORM2 generic interface.  Make ECR_Divide, ECR_Scale_L, and
+! ECR_Scale_R elemental.
+!
 ! Revision 2.6  2016/02/25 21:15:55  vsnyder
 ! Comment out generics for H_Geoc and H_Geod because ifort 15 doesn't like
 ! them.  Add a bunch of type-conversion bindings.  Move some USE statements.
