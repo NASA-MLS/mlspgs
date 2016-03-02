@@ -99,7 +99,7 @@ module Geolocation_0
   end type V_geoc
 
   type, extends(v_t) :: V_geod
-  ! real(rg) :: V       ! geodetic height (meters above sea level)
+  ! real(rg) :: V       ! geodetic height (meters above mean geoid)
   end type V_geod
 
   type, extends(v_t) :: V_zeta
@@ -119,9 +119,17 @@ module Geolocation_0
                         ! ECR_to_Geoc cannot be used for dispatch
   end type H_V_t
 
+  type, extends(h_v_t) :: H_Geoc_V_Geod
+  ! real(rg) :: Lon     ! Degrees
+  ! real(rg) :: Lat     ! Degrees Geocentric
+  ! real(rg) :: V       ! geodetic height (meters above mean geoid)
+  contains
+    procedure :: ECR => Geoc_Geod_To_ECR
+  end type H_Geoc_V_Geod
+
   type, extends(h_v_t) :: H_V_Geoc
   ! real(rg) :: Lon     ! Degrees
-  ! real(rg) :: Lat     ! Degrees
+  ! real(rg) :: Lat     ! Degrees Geocentric
   ! real(rg) :: V       ! geocentric height (meters from the Earth center)
   contains
     procedure :: ECR => Geoc_To_ECR
@@ -136,8 +144,8 @@ module Geolocation_0
 
   type, extends(h_v_t) :: H_V_Geod
   ! real(rg) :: Lon     ! Degrees
-  ! real(rg) :: Lat     ! Degrees
-  ! real(rg) :: V       ! geodetic height (meters above sea level)
+  ! real(rg) :: Lat     ! Degrees Geodetic
+  ! real(rg) :: V       ! geodetic height (meters above mean geoid)
   contains
     procedure :: ECR => Geod_To_ECR
     procedure :: GeocV => GeodV_To_GeocV  ! Would be nice to call this Geoc,
@@ -171,6 +179,10 @@ module Geolocation_0
     generic :: operator(/) => Div
     procedure :: Geoc => ECR_to_Geoc
     procedure :: Geod => ECR_To_Geod_Fukushima
+    generic :: Grad => Grad_Ellipsoid ! Unit gradient at surface
+    generic :: Grad => Grad_Geoid     ! Unit gradient at surface
+    procedure, pass(where) :: Grad_Ellipsoid => Ellipsoid_Gradient_RG
+    procedure :: Grad_Geoid => Earth_Geoid_Gradient
     procedure :: Norm2 => ECR_Norm2
     procedure, pass(B) :: Scale_L => ECR_Scale_L
     procedure :: Scale_R => ECR_Scale_R
@@ -210,6 +222,22 @@ module Geolocation_0
   real(rg), parameter, private :: BQUAD = EarthRadB**2 ! m**2
 
 contains
+
+  pure type(ECR_t) function Earth_Geoid_Gradient ( Where ) result ( Grad )
+    class(ECR_t), intent(in) :: Where ! Where on the Geoid the gradient is desired
+    real(rp), parameter :: A = EarthRadA, B = EarthRadB
+    grad = ECR_t ( where%xyz / [ A, A, B ]**2 )
+    grad = grad / grad%norm2()
+  end function Earth_Geoid_Gradient
+
+  pure type(ECR_t) function Ellipsoid_Gradient_RG ( Axes, Center, Where ) &
+    & result ( Grad )
+    real(rg), intent(in) :: Axes(3)    ! Semi-minor axes in same units as Center
+    type(ECR_t), intent(in) :: Center  ! Center of the ellipsoid
+    class(ECR_t), intent(in) :: Where  ! Where on the Geoid the gradient is desired
+    grad = ECR_t ( ( where%xyz - center%xyz ) / axes**2 )
+    grad = grad / grad%norm2()
+  end function Ellipsoid_Gradient_RG
 
   pure elemental type(ECR_t) function ECR_Add ( A, B )
     class(ECR_t), intent(in) :: A, B
@@ -339,6 +367,16 @@ contains
     geo%lat = myGeo%lat
     geo%v = myGeo%v
   end subroutine Geoc_From_ECR
+
+  pure elemental type(ECR_t) function Geoc_Geod_To_ECR ( Geo ) result ( ECR )
+    ! Convert geocentric coordinates at the Earth surface plus geodetic
+    ! height to ECR
+    class(h_geoc_v_geod), intent(in) :: Geo
+    type(ECR_t) :: Surf
+    surf = geo%h_t%ECR() ! ECR coordinates of geocentric coordinates at the
+                         ! Earth geoid surface
+    ECR = surf + geo%v * surf%grad()
+  end function Geoc_Geod_To_ECR
 
   pure elemental type(ECR_t) function Geoc_To_ECR ( Geo ) result ( ECR )
     ! Convert geocentric coordinates to ECR coordinates in meters
@@ -554,6 +592,9 @@ contains
 end module Geolocation_0
 
 ! $Log$
+! Revision 2.8  2016/03/02 21:48:02  vsnyder
+! Add H_Geoc_V_Geod and ellipsoid gradient functions
+!
 ! Revision 2.7  2016/03/02 19:23:49  vsnyder
 ! Add From_ECR bindings to H_t, H_Geod, and H_V_Geod -- H_Geoc inherits from
 ! H_t.  Add Surf_From_ECR bindings to H_V_t and H_V_Geod.  Add NORM2 binding
