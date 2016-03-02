@@ -37,7 +37,8 @@ OMIT_SRCS := $(OMIT) sbinom.f
 
 #Toolkit-free version requires *Substitute.f90
 ifdef PGSTK
-   OMIT_SRCS := $(OMIT_SRCS) SDPToolkitSubstitute.f90 MLSMessageSubstitute.f90
+   OMIT_SRCS := $(OMIT_SRCS) PseudoToolkit.f90 SDPToolkitSubstitute.f90 \
+   MLSMessageSubstitute.f90
 endif
 
 OMIT_PREFXD := $(shell ${REECHO} -prefix=-d $(OMIT_SRCS))
@@ -180,6 +181,9 @@ $(testsubdirs):
 	echo "Making $@"
 	$(MAKE) -f $(MakeFName) -C $@
 # $Log$
+# Revision 2.1  2015/08/10 23:20:33  pwagner
+# After switching away from MakeFC
+#
 # Revision 2.68  2014/05/20 23:54:17  vsnyder
 # parser.f90 no longer needs a custom build
 #
