@@ -58,13 +58,7 @@ module Line_And_Ellipsoid_m
   implicit NONE
   private
 
-  public :: Ellipsoid_Gradient
   public :: Line_And_Ellipsoid, Line_And_Sphere, Line_Nearest_Ellipsoid
-
-  interface Ellipsoid_Gradient
-    module procedure Earth_Geoid_Gradient
-    module procedure Ellipsoid_Gradient_RG
-  end interface
 
   interface Line_And_Ellipsoid
     module procedure Line_And_Earth_Geoid
@@ -87,23 +81,6 @@ module Line_And_Ellipsoid_m
 !---------------------------------------------------------------------------
 
 contains
-
-  subroutine Earth_Geoid_Gradient ( Where, Grad )
-    use Earth_Constants, only: A => EarthRadA, B => EarthRadB
-    use Geolocation_0, only: ECR_t
-    type(ECR_t), intent(in) :: Where ! Where on the Geoid the gradient is desired
-    type(ECR_t), intent(out) :: Grad ! Vector parallel to the gradient
-    grad = ECR_t ( where%xyz / [ A, A, B ]**2 )
-  end subroutine Earth_Geoid_Gradient
-
-  subroutine Ellipsoid_Gradient_RG ( Axes, Center, Where, Grad )
-    use Geolocation_0, only: ECR_t, RG
-    real(rg), intent(in) :: Axes(3)    ! Semi-minor axes in same units as Center
-    type(ECR_t), intent(in) :: Center  ! Center of the ellipsoid
-    type(ECR_t), intent(in) :: Where ! Where on the Geoid the gradient is desired
-    type(ECR_t), intent(out) :: Grad ! Vector parallel to the gradient
-    grad = ECR_t ( ( where%xyz - center%xyz ) / axes**2 )
-  end subroutine Ellipsoid_Gradient_RG
 
   subroutine Line_And_Earth_Geoid ( Line, Intersections, T )
     use Earth_Constants, only: A => EarthRadA, B => EarthRadB
@@ -240,6 +217,8 @@ contains
     type(ECR_t), intent(out), allocatable, optional :: Intersections (:) ! 0..2 elements
     real(rg), intent(out), allocatable, optional :: T(:)
     real(rg) :: D
+integer :: I ! ifort 14.0.0 doesn't like elemental * operator bound to ECR_t
+             ! ifort 15.0.2 and ifort 16.0.2 accept it
     real(rg) :: MyT(2)
     integer :: N
     d = a1**2 - 4.0 * a2 * a0
@@ -255,7 +234,10 @@ contains
     end if
     if ( present(intersections) ) then
       allocate ( intersections(n) )
-      intersections = line(1) + myT(:n) * line(2)
+!       intersections = line(1) + myT(:n) * line(2)
+do i = 1, n
+intersections(i) = line(1) + myT(i) * line(2)
+end do
     end if
     if ( present(t) ) then
       allocate ( t(n) )
@@ -276,6 +258,9 @@ contains
 end module Line_And_Ellipsoid_m
 
 ! $Log$
+! Revision 2.5  2016/03/02 21:48:20  vsnyder
+! Move ellipsoid gradient code to Geolocation_0
+!
 ! Revision 2.4  2016/03/02 02:25:06  vsnyder
 ! Add Ellipsoid_Gradient and Line_Nearest_Ellipsoid
 !
