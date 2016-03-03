@@ -81,9 +81,11 @@ $(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/$(MLSCFILE)
           -c "$(MLSF95)" -p "$(MLSPLAT)" -cf "$(MLSCFILE)" -nc
 
 depends:
-	temp_name_1=`${UNIQUE_NAME} 1` ;\
+	mv ../lib/PseudoToolkit.f90 ../lib/PseudoToolkit.f90-hide; \
+         temp_name_1=`${UNIQUE_NAME} 1` ;\
 	$(MLSBIN)/makemakedep.sh  -p $$temp_name_1 \
      $(OMIT_PREFXD) $(DRIVERS_PREFXD) $(depends_where) ; \
+     mv ../lib/PseudoToolkit.f90-hide ../lib/PseudoToolkit.f90; \
      mv $$temp_name_1 Makefile.dep
 
 ghostbuster:
@@ -134,6 +136,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude server
 
 # $Log$
+# Revision 1.1  2015/08/10 23:21:50  pwagner
+# After switching away from MakeFC
+#
 # Revision 1.1  2011/05/16 22:46:52  pwagner
 # First commit
 #
