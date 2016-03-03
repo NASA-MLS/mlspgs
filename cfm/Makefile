@@ -108,9 +108,11 @@ $(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/$(MLSCFILE)
           -c "$(MLSF95)" -p "$(MLSPLAT)" -cf "$(MLSCFILE)" -nc
 
 depends:
-	temp_name_1=`${UNIQUE_NAME} 1` ;\
+	mv ../lib/PseudoToolkit.f90 ../lib/PseudoToolkit.f90-hide; \
+         temp_name_1=`${UNIQUE_NAME} 1` ;\
 	$(MLSBIN)/makemakedep.sh  -p $$temp_name_1 \
      $(OMIT_PREFXD) $(depends_where) ; \
+     mv ../lib/PseudoToolkit.f90-hide ../lib/PseudoToolkit.f90; \
      mv $$temp_name_1 Makefile.dep
 
 ghostbuster:
@@ -156,6 +158,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mockup
 
 # $Log$
+# Revision 1.1  2015/08/10 23:21:49  pwagner
+# After switching away from MakeFC
+#
 # Revision 1.8  2012/02/09 21:38:05  pwagner
 # Dont try to build .so by default; BUILDSHAREDLIB must be 'yes'
 #
