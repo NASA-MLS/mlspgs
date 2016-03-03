@@ -24,12 +24,12 @@ module Line_And_Plane_m
 
 contains
 
-  subroutine Line_And_Plane ( Plane, Line, Intersect, Intersection, T )
+  subroutine Line_And_Plane ( Plane, Line, Intersect, Intersection, S )
 
     ! Compute the intersections of Line with a Plane.  The plane is defined
     ! by three vertices in ECR coordinates (in any order).
-    ! The Line is given by a vector to a point on it and a vector along it.
-    ! The Intersection is given in ECR coordinates.
+    ! The Line is given by a vector to a point on it (Line(1)) and a vector
+    ! along it (Line(2)).  The Intersection is given in ECR coordinates.
 
     ! See wvs-130 for a derivation.
 
@@ -38,7 +38,7 @@ contains
 
     type(ECR_t), intent(in) :: Plane(3) ! Three points in the plane
     type(ECR_t), intent(in) :: Line(2) ! The line is of the form
-                                       ! Line(1) + t * Line(2), i.e., Line(1)
+                                       ! Line(1) + s * Line(2), i.e., Line(1)
                                        ! is a vector to a point on the line,
                                        ! and Line(2) is a vector along the
                                        ! line.
@@ -48,11 +48,11 @@ contains
     type(ECR_t), intent(out), optional :: Intersection ! ECR coordinates of
                                        ! intersection if Intersect > 0, else
                                        ! undefined.
-    real(rg), intent(out), optional :: T ! T-value of intersection if
+    real(rg), intent(out), optional :: S ! S-value of intersection if
                                        ! Intersect > 0, else undefined.
 
     real(rg) :: L_dot_N                ! L .dot. N
-    real(rg) :: MyT
+    real(rg) :: MyS
     type(ECR_t) :: N                   ! Normal to the plane
     real(rg) :: Z_dot_N                ! ( P_0 - L_0 ) .dot. N
 
@@ -70,9 +70,9 @@ contains
       end if
     else                       ! Line and plane intersect in one point
       intersect = 1
-      myT = z_dot_n / l_dot_n
-      if ( present(intersection) ) intersection = line(1) + myT * line(2)
-      if ( present(t) ) t = myT
+      myS = z_dot_n / l_dot_n
+      if ( present(intersection) ) intersection = line(1) + myS * line(2)
+      if ( present(s) ) s = myS
     end if
 
   end subroutine Line_And_Plane
@@ -103,6 +103,9 @@ contains
 end module Line_And_Plane_m
 
 ! $Log$
+! Revision 2.3  2016/03/03 21:39:38  vsnyder
+! Change name of T argument to S (because it's arc length)
+!
 ! Revision 2.2  2016/03/03 03:05:38  vsnyder
 ! Add Line_Reflection
 !
