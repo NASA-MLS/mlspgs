@@ -14,7 +14,7 @@ module Line_And_Plane_m
 !=============================================================================
 
   private
-  public :: Line_And_Plane
+  public :: Line_And_Plane, Line_Reflection
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -24,7 +24,7 @@ module Line_And_Plane_m
 
 contains
 
-  subroutine Line_And_Plane ( Plane, Line, Intersection, Intersect )
+  subroutine Line_And_Plane ( Plane, Line, Intersect, Intersection, T )
 
     ! Compute the intersections of Line with a Plane.  The plane is defined
     ! by three vertices in ECR coordinates (in any order).
@@ -33,7 +33,7 @@ contains
 
     ! See wvs-130 for a derivation.
 
-    use Cross_m, only: Cross
+    use Geolocation_0, only: Cross
     use Geolocation_0, only: ECR_t, RG
 
     type(ECR_t), intent(in) :: Plane(3) ! Three points in the plane
@@ -42,19 +42,26 @@ contains
                                        ! is a vector to a point on the line,
                                        ! and Line(2) is a vector along the
                                        ! line.
-    type(ECR_t), intent(out) :: Intersection ! ECR coordinates of intersection
-                                       ! if Intersect > 0, else undefined.
     integer, intent(out) :: Intersect  ! -1 => no intersection,
                                        !  0 => line is in the plane,
                                        ! +1 => one intersection.
+    type(ECR_t), intent(out), optional :: Intersection ! ECR coordinates of
+                                       ! intersection if Intersect > 0, else
+                                       ! undefined.
+    real(rg), intent(out), optional :: T ! T-value of intersection if
+                                       ! Intersect > 0, else undefined.
 
     real(rg) :: L_dot_N                ! L .dot. N
-    real(rg) :: N(3)                   ! Normal to the plane
+    real(rg) :: MyT
+    type(ECR_t) :: N                   ! Normal to the plane
     real(rg) :: Z_dot_N                ! ( P_0 - L_0 ) .dot. N
 
-    n = cross ( plane(2)%xyz - plane(1)%xyz, plane(3)%xyz - plane(1)%xyz )
-    l_dot_n = dot_product ( line(2)%xyz, n )
-    z_dot_n = dot_product ( plane(1)%xyz - line(2)%xyz, n )
+!     ifort 16.0.2.181 doesn't like .CROSS. to have operands that are both
+!     expressions in parentheses.
+!     n = ( plane(2) - plane(1) ) .cross. ( plane(3) - plane(1) )
+    n = cross( plane(2) - plane(1), plane(3) - plane(1) )
+    l_dot_n = line(2) .dot. n
+    z_dot_n = ( plane(1) - line(2) ) .dot. n
     if ( l_dot_n == 0 ) then   ! Line and plane are parallel
       if ( z_dot_n == 0 ) then ! Line is in the plane
         intersect = 0          ! Caller chooses a point
@@ -62,11 +69,26 @@ contains
         intersect = -1
       end if
     else                       ! Line and plane intersect in one point
-      intersection = ECR_t(line(1)%xyz + z_dot_n / l_dot_n * line(2)%xyz )
       intersect = 1
+      myT = z_dot_n / l_dot_n
+      if ( present(intersection) ) intersection = line(1) + myT * line(2)
+      if ( present(t) ) t = myT
     end if
 
   end subroutine Line_And_Plane
+
+  subroutine Line_Reflection ( Line, Normal, Reflection )
+    ! Given a vector parallel to a line, and a vector parallel to an unit
+    ! normal to a plane, compute a vector parallel to the reflection of
+    ! the line from the plane.  For derivation, see wvs-133.
+    use Geolocation_0, only: ECR_t, RG
+    type(ECR_t), intent(in) :: Line    ! A vector parallel to the line
+    type(ECR_t), intent(in) :: Normal  ! An unit normal to the plane
+    type(ECR_t), intent(out) :: Reflection ! A vector parallel to the
+                                       ! reflection, with the same length
+                                       ! as Line
+    Reflection = Line - 2 * ( Line .dot. Normal ) * Normal
+  end subroutine Line_Reflection
 
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
@@ -81,6 +103,9 @@ contains
 end module Line_And_Plane_m
 
 ! $Log$
+! Revision 2.2  2016/03/03 03:05:38  vsnyder
+! Add Line_Reflection
+!
 ! Revision 2.1  2016/02/05 03:38:42  vsnyder
 ! Initial commit
 !
