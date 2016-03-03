@@ -24,7 +24,7 @@ module Line_And_Cone_m
 
 contains
 
-  subroutine Line_And_Cone ( Lat, Line, Intersections )
+  subroutine Line_And_Cone ( Lat, Line, Intersections, S )
 
     ! Compute the intersections of Line with a cone at latitude Lat, its
     ! vertex at the center of the Earth if Lat is geocentric, and its axis
@@ -42,43 +42,44 @@ contains
                                        ! geocentric unless the dynamic type
                                        ! is GeodLat_t.
     type(ECR_t), intent(in) :: Line(2) ! The line is of the form
-                                       ! Line(1) + t * Line(2), i.e., Line(1)
+                                       ! Line(1) + s * Line(2), i.e., Line(1)
                                        ! is a vector to a point on the line,
                                        ! and Line(2) is a vector along the
                                        ! line.
-    type(ECR_t), intent(out), allocatable :: Intersections(:) ! 0 <= size <= 2
+    type(ECR_t), intent(out), allocatable, optional :: Intersections(:) ! 0 <= size <= 2
+    real(rg), intent(out), allocatable, optional :: S(:) ! S-value for intersections
 
     real(rg) :: A0, A1, A2    ! Polynomial coefficients
     real(rg) :: C(3)          ! line(1)%xyz - [ 0, 0, v ]
     real(rg) :: D             ! Discriminant: a1**2 - a0 * a2
+    real(rg) :: MyS(2)        ! Root of a2 * s**2 + 2 * a1 * s + a0
     integer :: N              ! How many intersections?  0 ... 2
-    real(rg) :: S             ! Sin(Lat) or Sin(Lat)**2
-    real(rg) :: T             ! Root of a2 * t**2 + 2 * a1 * t + a0
+    real(rg) :: Sl            ! Sin(Lat) or Sin(Lat)**2
     real(rg) :: V             ! Z-coordinate of vertex, zero for geocentric lat
     real(rg) :: XYZ(3,2)
 
-    s = sin(deg2rad*lat%d)
+    sl = sin(deg2rad*lat%d)
     v = 0
     c = line(1)%xyz
     select type ( lat )
     class is ( geodLat_t )
-      v = ( a * e2 * s ) / sqrt(1 - e2 * s**2 )
+      v = ( a * e2 * sl ) / sqrt(1 - e2 * sl**2 )
       c(3) = c(3) - v
     end select
-    s = s**2
+    sl = sl**2
 
-    a2 = line(2)%xyz(3)**2 - s * dot_product(line(2)%xyz,line(2)%xyz)
+    a2 = line(2)%xyz(3)**2 - sl * dot_product(line(2)%xyz,line(2)%xyz)
     a1 = c(3)*line(2)%xyz(3) - &
-       & s * dot_product(c, line(2)%xyz)
-    a0 = c(3)**2 - s * dot_product(c,c)
+       & sl * dot_product(c, line(2)%xyz)
+    a0 = c(3)**2 - sl * dot_product(c,c)
 
     if ( a2 == 0 ) then ! Zero or one intersections
       if ( a1 == 0 ) then ! No intersections
         n = 0
       else
         n = 1
-        t = -a0 / a1
-        xyz(:,1) = line(1)%xyz + t * line(2)%xyz
+        myS(1) = -a0 / a1
+        xyz(:,1) = line(1)%xyz + myS(1) * line(2)%xyz
         if ( xyz(3,1) * lat%d < 0 ) n = 0 ! Wrong hemisphere
       end if
     else
@@ -87,16 +88,17 @@ contains
         n = 0
       else if ( d == 0 ) then ! One intersection
         n = 1
-        t = -a1 / a2
-        xyz(:,1) = line(1)%xyz + t * line(2)%xyz
+        myS(1) = -a1 / a2
+        xyz(:,1) = line(1)%xyz + myS(1) * line(2)%xyz
         if ( xyz(3,1) * lat%d < 0 ) n = 0 ! Wrong hemisphere
       else
         n = 2
-        t = ( -a1 + d ) / a2
-        xyz(:,2) = line(1)%xyz + t * line(2)%xyz
+        d = sqrt(d)
+        myS(2) = ( -a1 + d ) / a2
+        xyz(:,2) = line(1)%xyz + myS(2) * line(2)%xyz
         if ( xyz(3,1) * lat%d < 0 ) n = 1 ! Wrong hemisphere
-        t = ( -a1 - d ) / a2
-        xyz(:,1) = line(1)%xyz + t * line(2)%xyz
+        myS(1) = ( -a1 - d ) / a2
+        xyz(:,1) = line(1)%xyz + myS(1) * line(2)%xyz
         if ( xyz(3,1) * lat%d < 0 ) then ! Wrong hemisphere
           if ( n == 1 ) then
             n = 0
@@ -107,9 +109,15 @@ contains
         end if
       end if
     end if
-    allocate ( intersections(n) )
-    intersections(1)%xyz = xyz(:,1)
-    if ( n == 2 ) intersections(2)%xyz = xyz(:,2)
+    if ( present(intersections) ) then
+      allocate ( intersections(n) )
+      if ( n > 0 ) intersections(1)%xyz = xyz(:,1)
+      if ( n == 2 ) intersections(2)%xyz = xyz(:,2)
+    end if
+    if ( present(s) ) then
+      allocate ( s(n) )
+      s = myS(:n)
+    end if
 
   end subroutine Line_And_Cone
 
@@ -126,6 +134,9 @@ contains
 end module Line_And_Cone_m
 
 ! $Log$
+! Revision 2.2  2016/03/03 21:39:38  vsnyder
+! Change name of T argument to S (because it's arc length)
+!
 ! Revision 2.1  2016/02/05 03:38:42  vsnyder
 ! Initial commit
 !
