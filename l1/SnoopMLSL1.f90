@@ -18,12 +18,15 @@ MODULE SnoopMLSL1 ! Snoop-ify MLS L1
   ! information (e.g. vectors and matrix databases). The software will look for
   ! an IDL program ready to accept snoop requests and if one is around will do
   ! as instructed.
-
+  !
   ! This will make heavy use of some low level routines in the PVM and PVMIDL
   ! modules to do much of the communication.
-
+  !
   ! Also note that multiple IDL snoopers can talk to one or many f90 procedures,
   ! the little extra book keeping this involves is worth it.
+  !
+  ! To turn on, the environmental variable MLSL1Debug must have the
+  ! string "SnoopMLSL1" in it.
 
   
   USE MLSL1RunConfig, ONLY:  MLSL1Executable ! name of currently running main:
