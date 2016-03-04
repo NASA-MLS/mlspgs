@@ -276,6 +276,10 @@ MODULE MLSL1Common              ! Common data types for the MLSL1 program
   TYPE (ChanBand_R_T), TARGET :: deflt_chi2
 
   REAL :: tau = 1.0 / 6.0  ! default data rate (secs)
+  
+!!  Any error limits?
+  integer, parameter :: MaxDataGaps             = 3000
+  integer, parameter :: MaxErroneousCounterMAFs = 300
 
 !! Useful constants:
 
@@ -309,6 +313,13 @@ END MODULE MLSL1Common
 !=============================================================================
 
 ! $Log$
+!
+! Revision 2.20  2016/02/12 20:04:48  pwagner
+! Prevent bad level 0 files from causing englog to fill all diskspace
+!
+! Revision 2.19.4.1  2015/10/09 10:21:38  whdaffer
+! checkin of continuing work on branch whd-rel-1-0
+!
 ! Revision 2.19  2011/06/07 18:57:36  perun
 ! Add another Side B switching mirror table uploaded on 2011 DOY 153 at 19:10.
 !
