@@ -40,6 +40,9 @@ module MLSNumbers              ! Some number theoretic datatypes, procedures
 ! RationalNum_T            The ratio between two composite numbers
 !
 !         Functions, operations, routines
+!                                                            n
+! BinomialCoef             Compute the binomial coefficient ( )
+!                                                            m
 ! Copy                     Copy one Composite or rational into a second
 ! Create                   Represent an integer as a CompositeNum_T,
 !                            or a ratio between two ints as a rational
@@ -48,20 +51,25 @@ module MLSNumbers              ! Some number theoretic datatypes, procedures
 ! Divide                   Divide two composite nums; c/d = a/b
 !                            (removing common factors so c, d have none)
 ! Dump                     Dump the arrays in a CompositeNum_T or RationalNum_T
-! EstimateCompositeNum     Express a CompositeNum_T as its log (base 10)
+! Estimate                 Express a CompositeNum_T or a RationalNum_T
+!                             as its log (base 10)
 ! EvaluateCompositeNum     Express a CompositeNum_T as an integer
+! Factorial                Compute n!, returned as a composite
 ! GreatestCommonDivisor    Find the gcd of two composite nums
 ! inRange                  Is the int represented by the composite num in range?
 !                           (processor-dependent)
+! IntFactorial             Compute n!, returned as an integer
 ! Invert                   Interchange a rational's numerator and denominator
 ! LeastCommonMultiple      Find the lcm of two composite nums
+! LogBinomialCoef          Compute the logarithm of binomial coefficient
+! LogFactorial             Compute logarithm of n!, returned as a d.p. float
 ! Multiply                 Multiply two composite nums, c = a * b, or
 !                            two rationals, (a/b) * (c/d) = (a*c) / (b*d)
 ! Power                    Set the composite num to the nth power; c^n, or
 !                            r^n = (a/b)^n = a^n / b^n
 ! Reduce                   Reduce numerator and denomincator of a rational number
 !                            by dividing out their gcd
-! isEqual                  ARe the two args equal?
+! isEqual                  Are the two args equal?
 ! isPrime                  Is arg prime?
 ! nextPrime                Next prime > arg
 ! prime                    nth prime
@@ -69,6 +77,7 @@ module MLSNumbers              ! Some number theoretic datatypes, procedures
 ! === (end of toc) ===
 
 ! === (start of api) ===
+! int BinomialCoef ( int n, int m )
 ! Copy ( compNum A, compNum C )
 ! Copy ( rationalNum A, rationalNum C )
 ! Create ( int n, compNum C )
@@ -77,9 +86,12 @@ module MLSNumbers              ! Some number theoretic datatypes, procedures
 ! Destroy ( rationalNum R )
 ! Divide ( compNum A, compNum B, compNum C, compNum D )
 ! Dump ( compNum C )
-! EstimateCompositeNum ( real logn, compNum C )
+! Estimate ( real logn, compNum C )
+! Estimate ( real logn, rationalNum R )
 ! EvaluateCompositeNum ( int n, compNum C )
+! type(compNum) factorial ( int n, [int k] )
 ! GreatestCommonDivisor ( compNum A, compNum B, compNum C )
+! int IntFactorial ( int n, [int k] )
 ! Invert ( rationalNum R )
 ! log inRange( compNum C )
 ! log isEqual( compNum A, compNum B )
@@ -87,6 +99,8 @@ module MLSNumbers              ! Some number theoretic datatypes, procedures
 ! log isEqual( int n, compNum C )
 ! log isPrime( compNum C )
 ! LeastCommonMultiple ( compNum A, compNum B, compNum C )
+! dble logBinomialCoef ( int n, int m )
+! dble logFactorial ( int n, [int k] )
 ! Multiply ( compNum A, compNum B, compNum C )
 ! Multiply ( rationalNum A, rationalNum B, rationalNum C )
 ! Power ( n, compNum C )
@@ -101,10 +115,12 @@ module MLSNumbers              ! Some number theoretic datatypes, procedures
 
   public :: isPrime, isEqual, nextPrime, prime, primeFactors
   public :: CompositeNum_T, RationalNum_T
-  public :: Copy, Create, Destroy, Dump
+  public :: Copy, Create, Destroy, Dump, Estimate
   public :: EstimateCompositeNum, EvaluateCompositeNum, InRange
   public :: GreatestCommonDivisor, LeastCommonMultiple
   public :: Multiply, Divide, Power, Reduce, Invert
+  public :: BinomialCoef, CompBinomialCoef, LogBinomialCoef
+  public :: Factorial, IntFactorial, LogFactorial
 
   interface Copy
     module procedure Copy_composite, Copy_rational
@@ -120,6 +136,19 @@ module MLSNumbers              ! Some number theoretic datatypes, procedures
   
   interface Dump
     module procedure Dump_composite, Dump_rational
+  end interface
+  
+  interface Estimate
+    module procedure EstimateCompositeNum_single, EstimateCompositeNum_double
+    module procedure EstimateRationalNum_single, EstimateRationalNum_double
+  end interface
+  
+  interface EstimateCompositeNum
+    module procedure EstimateCompositeNum_single, EstimateCompositeNum_double
+  end interface
+  
+  interface EstimateRationalNum
+    module procedure EstimateRationalNum_single, EstimateRationalNum_double
   end interface
   
   interface isEqual
@@ -153,6 +182,9 @@ module MLSNumbers              ! Some number theoretic datatypes, procedures
   ! log by a call to inRange; if it is outside the range we
   ! can represent, EvaluateComposteNum returns "-1"
   
+  ! The Estimate procedures provide an alternate way to get at the value,
+  ! returning its logarithm as either a single- or double-precision float
+  
   ! "1" is represnted by c%factors remaining unassoiated
   ! Should we move this datatype and its procedures to a separate module?
   type CompositeNum_T
@@ -171,7 +203,72 @@ module MLSNumbers              ! Some number theoretic datatypes, procedures
   ! How many primes do we track?
   integer, parameter :: MAXNUMPRIMES = 1229
   integer, dimension(MAXNUMPRIMES), save :: primenumbers = -999
+
+  ! How many factorials do we track? How large can we calculate
+  integer, parameter :: MAXNUMFACS = 12
+  integer, parameter :: MAXNINFACTORIAL = 12
+  integer, dimension(MAXNUMFACS), save :: Factorials = (/ &
+    & 1, 2, 6, 24, 120, 720, 5040, 40320, 362880, 3628800, 39916800, 479001600  &
+    & /)
+
 contains
+
+  ! --------------- BinomialCoef --------------------
+  !                               n
+  ! Form the integer bin. coef   ( )
+  !                               m
+  ! We must calculate n! / ( m! (n-m)! )
+  !
+  ! Warning--if the result is too large to fit within an integer, we may get -1
+  ! See also CompBinomialCoef
+  function BinomialCoef( n, m ) result ( c )
+    ! Args
+    integer, intent(in)               :: n
+    integer, intent(in)               :: m
+    integer                           :: c
+    ! Local variables
+    type(CompositeNum_T)              :: A
+    ! Executable
+    c = 1
+    if ( n < 2 .or. m < 1 .or. (n-m) < 1 ) return ! m = 0 and n = m both => 1
+    A = CompBinomialCoef( n, m )
+    call EvaluateCompositeNum( c, A )
+    call Destroy( A )
+  end function BinomialCoef
+
+  ! --------------- CompBinomialCoef --------------------
+  !                               n
+  ! Form the Composite result of ( )
+  !                               m
+  ! We must calculate n! / ( m! (n-m)! )
+  ! See also BinomialCoef
+  function CompBinomialCoef( n, m ) result ( C )
+    ! Args
+    integer, intent(in)               :: n
+    integer, intent(in)               :: m
+    type(CompositeNum_T)              :: C
+    ! Local variables
+    type(CompositeNum_T)              :: A
+    type(CompositeNum_T)              :: B
+    type(CompositeNum_T)              :: D
+    integer                           :: i
+    ! Executable
+    call Create( 1, C ) ! Default value is 1, not 0
+    if ( n < 2 .or. m < 1 .or. (n-m) < 1 ) return ! m = 0 and n = m both => 1
+    call Destroy_composite( C )
+    ! 1st--multiply m! * (n-m)!
+    A = factorial (m)
+    C = factorial (n-m)
+    call Multiply ( A, C, B )
+    call Destroy_composite( A )
+    call Destroy_composite( C )
+    ! 2nd--divide n! by this product
+    A = factorial (n)
+    call Divide ( A, B, C, D )
+    call Destroy_composite( A )
+    call Destroy_composite( B )
+    call Destroy_composite( D ) ! But we are guarenteed that D = 1
+  end function CompBinomialCoef
 
   ! --------------- Copy_composite --------------------
   ! Copy one Composite "a" into a second "c"
@@ -322,8 +419,9 @@ contains
   end subroutine Dump_rational
 
   ! --------------- EstimateCompositeNum --------------------
-  ! Form a Composite from an input integer
-  subroutine EstimateCompositeNum( logN, C )
+  ! Return a single or -double precision estimate
+  ! of a composite number in the value of its logarithm
+  subroutine EstimateCompositeNum_single( logN, C )
     ! Args
     real, intent(out)                 :: logN
     type(CompositeNum_T), intent(in)  :: C
@@ -338,12 +436,66 @@ contains
     ! 1st--Must know if n would be outside range
     logN = 0.
     do i=1, nFactors
-      logN = logN + c%powers(i)*alog10(1.*C%factors(i))
+      logN = logN + c%powers(i)*log10(1.*C%factors(i))
     enddo
-  end subroutine EstimateCompositeNum
+  end subroutine EstimateCompositeNum_single
+
+  subroutine EstimateCompositeNum_double( logN, C )
+    ! Args
+    double precision, intent(out)     :: logN
+    type(CompositeNum_T), intent(in)  :: C
+    ! Local variables
+    integer                           :: i
+    integer                           :: nFactors
+    ! Executable
+    logN = 0 ! Default value is 0
+    if ( isOne ( c ) ) return
+    nFactors = size ( C%factors )
+    if ( nFactors < 1 ) return
+    ! 1st--Must know if n would be outside range
+    logN = 0.d0
+    do i=1, nFactors
+      logN = logN + c%powers(i)*log10(1.d0*C%factors(i))
+    enddo
+  end subroutine EstimateCompositeNum_double
+
+  ! --------------- EstimateRationalNum --------------------
+  ! Return a single or -double precision estimate
+  ! of a rational number in the value of its logarithm
+  ! Note that the log(x/y) = log(x) - log(y)
+  subroutine EstimateRationalNum_single( logN, R )
+    ! Args
+    real, intent(out)                 :: logN
+    type(RationalNum_T), intent(in)   :: R
+    ! Local variables
+    real                              :: logNumerator
+    real                              :: logDenominator
+    ! Executable
+    call EstimateCompositeNum ( logNumerator,   R%numerator )
+    call EstimateCompositeNum ( logDenominator, R%denominator )
+    logN = logNumerator - logDenominator
+  end subroutine EstimateRationalNum_single
+
+  subroutine EstimateRationalNum_double( logN, R )
+    ! Args
+    double precision, intent(out)     :: logN
+    type(RationalNum_T), intent(in)   :: R
+    ! Local variables
+    double precision                  :: logNumerator              
+    double precision                  :: logDenominator            
+    ! Executable
+    call EstimateCompositeNum ( logNumerator,   R%numerator )
+    call EstimateCompositeNum ( logDenominator, R%denominator )
+    logN = logNumerator - logDenominator
+  end subroutine EstimateRationalNum_double
 
   ! --------------- EvaluateCompositeNum --------------------
   ! Form a Composite from an input integer
+  ! Warning-- the result may be outiside the range of integers
+  ! representable on the machine; if it is outside,
+  ! we return 1.
+  
+  ! See also EstimateCompositeNum
   subroutine EvaluateCompositeNum( n, C )
     ! Args
     integer, intent(out)              :: n
@@ -366,6 +518,74 @@ contains
       n = n * C%factors(i)**C%powers(i)
     enddo
   end subroutine EvaluateCompositeNum
+
+  ! --------------- Factorial --------------------
+  ! Form the Composite result of n!.
+  ! Optionally, may find double-factorial, by setting k=2
+  ! E.g., 6!! = 6*4*2. 7!! = 7*5*3
+  
+  ! See also IntFactorial, EstimateCompositeNum
+  function factorial( n, k ) result ( C )
+    ! Args
+    integer, intent(in)               :: n
+    integer, optional, intent(in)     :: k ! In case we need double-factorial
+    type(CompositeNum_T)              :: C
+    ! Local variables
+    type(CompositeNum_T)              :: A
+    type(CompositeNum_T)              :: B
+    integer                           :: i
+    integer                           :: kstep
+    ! Executable
+    kstep = 1
+    if ( present(k) ) kstep = max(k, 1)
+    call Create( 1, C ) ! Default value is 1, not 0
+    if ( n < 2 ) return ! 0! and 1! both = 1
+    i = n
+    do
+      Call Copy( C, B )
+      call Destroy_composite( C )
+      call Create( i, A )
+      call Multiply_composite( A, B, C )
+      i = i - kstep
+      ! Housekeeping
+      call Destroy_composite( A )
+      call Destroy_composite( B )
+      if ( i < 2 ) exit ! No point in multiplying by 1
+    enddo
+  end function factorial
+
+  ! --------------- IntFactorial --------------------
+  ! Find the integer result of n!.
+  ! If n is too large, returns -1
+  ! Optionally, may find double-factorial, by setting k=2
+  ! E.g., 6!! = 6*4*2. 7!! = 7*5*3
+  
+  ! See also Factorial
+  recursive function IntFactorial( n, k ) result ( f )
+    ! Args
+    integer, intent(in)               :: n
+    integer, optional, intent(in)     :: k ! In case we need double-factorial
+    integer                           :: f
+    ! Internal variables
+    integer                           :: kstep
+    ! Executable
+    kstep = 1
+    if ( present(k) ) kstep = max(k, 1)
+    f = 1
+    if ( n < 2 ) return
+    if ( n <= MAXNUMFACS ) then
+      if ( kstep == 1 ) then
+        f = Factorials(n)
+      else
+        f = n * IntFactorial( n-kstep, k )
+      endif
+    elseif ( n <= MAXNINFACTORIAL-kstep ) then
+      f = n * IntFactorial( n-kstep, k )
+    else
+      f = -1
+    endif
+    
+  end function IntFactorial
 
   ! --------------- GreatestCommonDivisor --------------------
   ! Find the gcd of two composite nums
@@ -553,6 +773,47 @@ contains
       enddo
     endif
   end subroutine LeastCommonMultiple
+
+  ! --------------- LogBinomialCoef --------------------
+  !                                   n
+  ! Form the d.p. log of bin. coef   ( )
+  !                                   m
+  ! We must calculate log10( n! / ( m! (n-m)! ) )
+  !
+  ! See also CompBinomialCoef
+  function LogBinomialCoef( n, m ) result ( c )
+    ! Args
+    integer, intent(in)               :: n
+    integer, intent(in)               :: m
+    double precision                  :: c
+    ! Local variables
+    type(CompositeNum_T)              :: A
+    ! Executable
+    c = 0.d0
+    if ( n < 2 .or. m < 1 .or. (n-m) < 1 ) return ! m = 0 and n = m both => log10(1)
+    A = CompBinomialCoef( n, m )
+    call EstimateCompositeNum( c, A )
+    call Destroy( A )
+  end function LogBinomialCoef
+
+  ! --------------- LogFactorial --------------------
+  ! Form the d.p. log of n!
+  !
+  ! See also CompFactorial
+  function LogFactorial( n, k ) result ( c )
+    ! Args
+    integer, intent(in)               :: n
+    integer, optional, intent(in)     :: k
+    double precision                  :: c
+    ! Local variables
+    type(CompositeNum_T)              :: A
+    ! Executable
+    c = 0.d0
+    if ( n < 2  ) return ! 0! and 1! are both 1, so logs are 0
+    A = Factorial( n, k )
+    call EstimateCompositeNum( c, A )
+    call Destroy( A )
+  end function LogFactorial
 
   ! --------------- Multiply_composite --------------------
   ! Multiply two composite nums; c = a * b
@@ -1012,6 +1273,9 @@ end module MLSNumbers
 
 !
 ! $Log$
+! Revision 2.2  2016/03/05 00:17:18  pwagner
+! Added Factorial, BinaryCoef functions
+!
 ! Revision 2.1  2015/06/11 22:59:05  pwagner
 ! First commit
 !

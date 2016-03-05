@@ -45,14 +45,21 @@ module SDPToolkit               ! A minimal substitute SDP Toolkit.
 !  include 'PGS_CBP.f'
 !  include 'PGS_CBP_6.f'
 !  include 'PGS_CSC_4.f'
+  integer, parameter :: PGSCSC_W_HIT_EARTH = 2
 !  include 'PGS_EPH_5.f'
+  integer, parameter :: PGSEPH_W_BAD_EPHEM_VALUE = 1
+  integer, parameter :: PGSEPH_W_CORRUPT_METADATA = 2
+  integer, parameter :: PGSEPH_W_DBLVALUE_METADATA = 3
   
 !  include 'PGS_GCT.f'
   integer, parameter :: PGSD_GCT_INVERSE = 2
 
 !  include 'PGS_IO.f'
+  integer, parameter :: PGSd_SUN = 1
+  integer, parameter :: PGSd_MOON = 2
   integer, parameter :: PGSD_MET_GROUP_NAME_L = 1024
   integer, parameter :: pgs_s_success = 0
+  integer, parameter :: PGS_TRUE = 0
   integer, parameter :: PGSTD_E_NO_LEAP_SECS = 2
   integer, parameter :: PGSD_MET_NUM_OF_GROUPS = 2
   integer, parameter :: PGSD_PC_FILE_PATH_MAX = 1024
@@ -75,6 +82,8 @@ module SDPToolkit               ! A minimal substitute SDP Toolkit.
   integer, parameter :: PGSD_IO_GEN_WSEQUNF = 1033
   integer, parameter :: PGSD_IO_GEN_RSEQFRM = 1035
 
+  integer, parameter :: PGSIO_W_L0_END_OF_VIRTUAL_DS = 1035
+  integer, parameter :: PGSIO_M_L0_HEADER_CHANGED = 1035
   ! include 'PGS_MEM_7.f'
   ! include 'PGS_PC.f'
   ! include 'PGS_PC_9.f'
@@ -105,7 +114,8 @@ module SDPToolkit               ! A minimal substitute SDP Toolkit.
 !  character (len=*), parameter :: earthModel = 'WGS84'
   character (len=*), parameter :: earthModel = 'GRS-80'
 
-  integer, parameter :: max_orbits = 16
+  integer, parameter :: max_orbits = 90
+  integer, parameter :: PGSD_EOS_AURA = 6666
   integer, parameter :: spacecraftId = 6666
 
 !    real, parameter :: Deg2Rad = 1.7453293E-02
@@ -364,6 +374,9 @@ end module SDPToolkit
 
 !
 ! $Log$
+! Revision 2.2  2016/03/05 00:15:11  pwagner
+! Added constants l1 needs to compile; wont run, of course
+!
 ! Revision 2.1  2016/03/02 00:55:30  pwagner
 ! First commit
 !
