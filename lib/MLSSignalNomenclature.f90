@@ -1059,7 +1059,7 @@ contains
 
     type (SDBSpectrometerFamilyInfo_T) :: tempSpectrometerFamilyInfo
     character (len=SDBLineLen), dimension(:), pointer :: &
-         validSignalNames, tempValidSignalNames
+         validSignalNames
 
     ! These strings are a breakdown of the valid signals strings
 
@@ -1079,6 +1079,7 @@ contains
        & "THz"/)
 
     ! Executable code ----------------------------------------------------
+    nullify ( validSignalNames )
 
     ! The first section in the signals file describes the various types
     ! of spectrometer there can be.  First, we read a line and expect it to be
@@ -1484,7 +1485,7 @@ contains
             & storage_size(database%spectrometerFamilyInfo(index)%width) / 8
           addr = 0
           if ( s > 0 ) addr = transfer(c_loc( &
-            & database%spectrometerFamilyInfo(index)%position( &
+            & database%spectrometerFamilyInfo(index)%width( &
              & database%spectrometerFamilyInfo(index)%firstChannel)), addr)
           deallocate ( database%spectrometerFamilyInfo(index)%width, stat=status )
           call test_deallocate ( status, ModuleName, "width", s, address=addr )
@@ -1896,6 +1897,9 @@ end module MLSSignalNomenclature
 
 !
 ! $Log$
+! Revision 2.15  2016/03/08 21:08:18  pwagner
+! Fixed two errors causing some crashes
+!
 ! Revision 2.14  2015/03/28 01:18:07  vsnyder
 ! Some spiffing.  Some reorganization.
 ! Added stuff to trace allocate/deallocate addresses -- some commented out
