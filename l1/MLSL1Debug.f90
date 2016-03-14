@@ -442,7 +442,7 @@ MODULE MLSL1Debug! Module for debugging L1 code
     SUBROUTINE comVecInfo_Init(retType,maxMIFS,maxAlts,max_cal_index)
       !! Writes a header record to the ComVec debug file giving run information,
       !! mostly having to do with sizing info, so that the reader can then use
-      !! that info to dimensioin arrays correctly. WinMAFs, MaxMIFs,
+      !! that info to dimension arrays correctly. WinMAFs, MaxMIFs,
       !! max_cal_index
 
       CHARACTER(len=2),intent(in) :: retType
@@ -481,14 +481,26 @@ MODULE MLSL1Debug! Module for debugging L1 code
       ! CALL FLUSH(ComVecsFileInfo%Lun)
     END SUBROUTINE writeComVecInfo
 
-    ! ==================================================================================================
+    ! =========================================================================================
+    ! Setup writing Radiances
+    ! =========================================================================================
+    
+    SUBROUTINE radiancesInfo_Init(max_cal_index)
+      INTEGER,intent(in):: max_cal_index
+      maxCalSize=max_cal_index
+    END SUBROUTINE  radiancesInfo_Init
+
+
+    ! =========================================================================================
+    ! Write Radiances information to the radiances debug file
+    ! =========================================================================================
     SUBROUTINE writeRadiancesInfo(gnum,nchan,MAFNo, counterMAF,&
-         &sind,eind, target_t, space_t, GHz_T1,GHz_T2)
+         & sind,eind, center, target_t, space_t, GHz_T1,GHz_T2)
 
 
-      USE Calibration, ONLY : limb_cnts, space_interp, target_interp, &
-          &                   target_err, slimb_interp, slimb_err, &
-          &                   slimb_type, space_err, CalWin
+      USE MLSL1Common, ONLY: limb_cnts, space_interp, target_interp, &
+           &                   target_err, slimb_interp, slimb_err, &
+           &                   slimb_type, space_err
 
       USE MLSL1Rad, ONLY : FBrad
 
@@ -496,7 +508,8 @@ MODULE MLSL1Debug! Module for debugging L1 code
 
 
       IMPLICIT NONE
-      INTEGER, INTENT(IN) :: MAFno, counterMAF,gnum, nchan, sind, eind
+
+      INTEGER, INTENT(IN) :: MAFno, counterMAF,gnum, nchan, sind, eind, center
       REAL(4), INTENT(IN) :: target_t, space_t, GHz_T1,GHz_T2
 
 
@@ -506,7 +519,7 @@ MODULE MLSL1Debug! Module for debugging L1 code
       eind2=eind-sind
       IF (DebugControl%Radiances .EQV. .FALSE.) RETURN
       print *,'Writing info to the Radiances file'
-      WRITE(RadiancesFileInfo%Lun) CounterMAF,MAFno, CalWin%central, &
+      WRITE(RadiancesFileInfo%Lun) CounterMAF,MAFno, center, &
            &                       gnum,nchan,sind,eind,target_t, space_t,&
                      &             GHz_T1,GHz_T2,                                               &
                      &             (FBRad(i)%bandno, i=1,gnum),                                 &

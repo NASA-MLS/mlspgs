@@ -172,7 +172,7 @@ contains
 
 
     use Allocate_Deallocate, only: Test_Allocate
-
+    USE machine, only : usleep ! to get the C function
 
     ! Arguments
     character(len=*), intent(in)  :: Location
@@ -195,9 +195,6 @@ contains
     character(len=*), parameter :: UNPACKERROR = &
          & 'unpacking response from snooper'
     
-    ! External (C) function
-    external :: Usleep
-
     ! Local variables, first the more exciting ones.
      integer, save :: MYTID=0            ! Local task ID under PVM
     type (L1SnooperInfo_T), dimension(:), pointer, save :: SNOOPERS => NULL()
