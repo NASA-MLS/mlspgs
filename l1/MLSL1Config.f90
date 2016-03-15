@@ -18,7 +18,7 @@ MODULE MLSL1Config  ! Level 1 Configuration
   USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Info
   USE Init_tables_module, ONLY: First_Parm, Last_Parm
   USE INTRINSIC, ONLY: parm_indices
-  USE Output_m, ONLY: OutputOptions, Output
+  USE Output_m, ONLY: OutputOptions, Output, BOTHPRUNIT
   USE STRING_TABLE, ONLY: Get_string
 
   IMPLICIT NONE
@@ -93,6 +93,8 @@ MODULE MLSL1Config  ! Level 1 Configuration
 !=============================================================================
     SUBROUTINE GetL1Config
 !=============================================================================
+
+      !! Opens and parses the L1CF file.
 
       USE Declaration_Table, ONLY: Allocate_Decl
       USE Init_tables_module, ONLY: Init_tables, z_globalsettings, &
@@ -170,7 +172,7 @@ MODULE MLSL1Config  ! Level 1 Configuration
 
 !! Check tree syntax
 
-      OutputOptions%prunit = -9                  ! to output to MLSMessage (and terminal)
+      OutputOptions%prunit = BOTHPRUNIT  ! to output to MLSMessage (and terminal)
 
       CALL Check_tree (root, error, first_section)
 
@@ -362,6 +364,9 @@ MODULE MLSL1Config  ! Level 1 Configuration
     SUBROUTINE Set_calibration (root)
 !=============================================================================
 
+      !parse the 'Calibration' section of the .cf file.
+
+
       USE EXPR_M, ONLY: Expr
       USE INIT_TABLES_MODULE, ONLY: p_calwindow, s_spaceMIFs, s_targetMIFs, &
            s_limbMIFs, s_discardMIFs, f_mifs, f_use, l_match, l_override, &
@@ -394,10 +399,20 @@ MODULE MLSL1Config  ! Level 1 Configuration
       DOUBLE PRECISION :: expr_value(2), start_TAI, chanbad_TAI
       LOGICAL :: GHz_mod, sec_tgt, Negate
 
+      ! This type is used to store calibration directives from the .cf file. The
+      ! TYPE= 'L', 'S', 'T' 'D', or 't'. 't' means 'secondary target' -- not
+      ! listed in the user type documentatin here, but you see it in the code --
+      ! however, this would only come into play if 1) it's the GHz module and
+      ! 2)the line defining the MIFs that are of a particular type had the
+      ! declaration `secondary' in them. No extant .cf file has this
+      ! characteristic, and Paul Wagner assures me that no .cf file in the past,
+      ! nor any in the future will.
+
+      ! if USE='M'atch, the telemetry must agree with what's in the .cf ifle
       TYPE Scan_T
-         CHARACTER(LEN=1) :: USE    ! M or O
-         CHARACTER(LEN=1) :: TYPE   ! L, S, T, or D
-         INTEGER :: MIF(0:MaxMIFs-1)
+         CHARACTER(LEN=1) :: USE    ! 'M'atch or 'O'verride, 
+         CHARACTER(LEN=1) :: TYPE   ! 'L'imb, 'S'pace, 'T'arget, or 'D'iscard
+         INTEGER :: MIF(0:MaxMIFs-1) ! The MIFs numbers that are of type `TYPE'
       END TYPE Scan_T
 
       TYPE (Scan_T) :: scan
@@ -430,6 +445,8 @@ MODULE MLSL1Config  ! Level 1 Configuration
 
          son = Subtree (i, root)
 
+
+
          SELECT CASE (node_id (son))
 
          CASE (n_equal)
@@ -438,6 +455,8 @@ MODULE MLSL1Config  ! Level 1 Configuration
 
             SELECT CASE (decoration (subtree (1,son)))
 
+               ! remove the 'p_' and look for the remaining string in the .cf
+               ! file
             CASE (p_calwindow)
 
                CALL Expr (subtree (2, son), expr_units, expr_value)
@@ -604,6 +623,8 @@ MODULE MLSL1Config  ! Level 1 Configuration
             END SELECT
 
          CASE (n_spec_args)
+            ! to handle constructs like 
+            !  `limbMIFs, MIFs=[2:122], use=match, module=GHz'
 
             key = son
             spec = decoration (subtree (1, decoration(subtree (1, key))))
@@ -617,7 +638,7 @@ MODULE MLSL1Config  ! Level 1 Configuration
                CASE (s_spaceMIFs)
                   scan%Type = "S"
                CASE (s_targetMIFs)
-                  scan%Type = "T"
+                  scan%Type = "T" ! though, can be changed to 't' if sec_tgt
                   sec_tgt = .FALSE.
                CASE (s_limbMIFs)
                   scan%Type = "L"
@@ -676,8 +697,12 @@ MODULE MLSL1Config  ! Level 1 Configuration
                ENDDO
 
                IF (scan_use == ignore) THEN
+                  ! if scan_use (i.e. L1Config%Calib%{G,T}Hz) == ignore, it
+                  ! means it hasn't been set yet, so we set it to the value
+                  ! we've just read from the .cf file.
                   scan_use = scan%Use
                ELSE IF (scan_use /= scan%Use) THEN
+                  ! how can this possibly happen?!? 
                   CALL MLSMessage (MLSMSG_Error, ModuleName, &
                        'USE fields do not match in L1CF Calib section!')
                ENDIF
@@ -838,6 +863,14 @@ MODULE MLSL1Config  ! Level 1 Configuration
 END MODULE MLSL1Config
 
 ! $Log$
+! Revision 2.34  2016/03/15 22:17:59  whdaffer
+! Merged whd-rel-1-0 back onto main branch. Most changes
+! are to comments, but there's some modification to Calibration.f90
+! and MLSL1Common to support some new modules: MLSL1Debug and SnoopMLSL1.
+!
+! Revision 2.33.4.1  2015/10/09 10:21:38  whdaffer
+! checkin of continuing work on branch whd-rel-1-0
+!
 ! Revision 2.33  2014/05/20 23:57:14  vsnyder
 ! New parser gets its tables from an argument instead of an include
 !
