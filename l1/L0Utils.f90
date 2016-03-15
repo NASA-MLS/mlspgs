@@ -16,7 +16,7 @@ MODULE L0Utils ! Utilities to read L0 data
   USE MLSCommon, ONLY: r8
   USE MLSL1Common, ONLY: L0FileInfo
   USE SDPToolkit, ONLY: PGS_S_SUCCESS, PGSIO_W_L0_END_OF_VIRTUAL_DS, &
-       PGSIO_M_L0_HEADER_CHANGED, PGS_PC_GetReference
+       PGSIO_M_L0_HEADER_CHANGED, PGS_PC_GetReference,PGSd_PC_FILE_PATH_MAX
   USE OpenInit, ONLY: OpenL0File
   USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Info, MLSMSG_Warning
 
@@ -102,6 +102,24 @@ CONTAINS
 
        IF (TAI93(sindx) > L1Config%Expanded_TAI%endTime) THEN
           OK = .FALSE.
+          CALL MLSMessage (MLSMSG_Info, ModuleName, &
+               & 'After time range: TAI time > L1Config%Expanded_TAI%endTime')
+          ! so it gets sent to STDOUT too, otherwise we have to look in two
+          ! files for the complete story
+          print *,'After time range: TAI time > L1Config%Expanded_TAI%endTime'
+          print *,'returning OK=FALSE'
+          RETURN
+       ENDIF
+
+       IF (TAI93(sindx) < L1Config%Expanded_TAI%startTime) THEN
+          OK = .FALSE.
+          CALL MLSMessage (MLSMSG_Info, ModuleName, &
+               & 'Before time range: TAI time < L1Config%Expanded_TAI%startTime')
+          ! so it gets sent to STDOUT too, otherwise we have to look in two
+          ! files for the complete story
+
+          PRINT *,'Before time range: TAI time < L1Config%Expanded_TAI%startTime'
+          print *,'returning OK=FALSE'
           RETURN
        ENDIF
 
@@ -119,6 +137,7 @@ CONTAINS
           IF (returnStatus /= PGS_S_SUCCESS) THEN
              CALL MLSMessage (MLSMSG_Warning, ModuleName, &
                   & 'No next L0 Sci File')
+             print *,'No next L0 Sci File! returning OK=FALSE'
              OK = .FALSE.
              RETURN
           ENDIF
@@ -154,7 +173,7 @@ CONTAINS
 !=============================================================================
 
     USE MLSL1Utils, ONLY: BigEndianStr
-    USE MLSL1Common, ONLY: L1BFileInfo
+    USE MLSL1Common, ONLY: L1BFileInfo,FileNameLen
     USE SDPToolkit, ONLY: PGS_TD_TAItoUTC
 
     CHARACTER(LEN=*), DIMENSION(:) :: engpkt
@@ -167,10 +186,11 @@ CONTAINS
     INTEGER :: IDN(128), ret_len
     LOGICAL :: EOD
     CHARACTER(len=27) :: asciiUTC
-    CHARACTER(len=132) :: filename, msg
+    CHARACTER(len=FileNameLen) :: filename, msg
+
 
 ! For Version 3.0 and above:
-
+    !offsets into packet giving the MAF number for this packet
     INTEGER, PARAMETER :: MAF_offset(6) = (/ 61, 253, 253, 17, 19, 17 /)
 
     INTEGER, EXTERNAL :: PGS_IO_L0_Close
@@ -284,6 +304,14 @@ END MODULE L0Utils
 !=============================================================================
 
 ! $Log$
+! Revision 2.13  2016/03/15 22:17:59  whdaffer
+! Merged whd-rel-1-0 back onto main branch. Most changes
+! are to comments, but there's some modification to Calibration.f90
+! and MLSL1Common to support some new modules: MLSL1Debug and SnoopMLSL1.
+!
+! Revision 2.12.6.1  2015/10/09 10:21:38  whdaffer
+! checkin of continuing work on branch whd-rel-1-0
+!
 ! Revision 2.12  2008/03/18 17:20:14  perun
 ! Align Sci packets based on time, not MIF number.
 !
