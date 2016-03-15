@@ -57,6 +57,11 @@ MODULE BandTbls   ! Tables for all bands
        RadiometerLoss_T ("R3 ", 0.9746, 0.9987, 150.0), &
        RadiometerLoss_T ("R4 ", 0.9802, 0.9916, 150.0)  /)
 
+  ! Defined as POINTERs to get around the restriction (since removed from
+  ! fortran standard) of components of user types not being ALLOCATABLE. I don't
+  ! believe they are every assigned to point to anything, and if they were it
+  ! could be a memory leak. Allocated in Load_Bnd_Tbls
+  !
   TYPE BandAlt_T
      REAL(r4), DIMENSION(:), POINTER :: Meters
      INTEGER, DIMENSION(:), POINTER :: indx
@@ -190,6 +195,11 @@ CONTAINS
        IF (line(1:1) /= ";") EXIT
     ENDDO
 
+    ! <whd> This code reads the BandAlts.tbl file (PCF id=912). It stores only
+    ! the minimum altitudes for each band and an index into the module variable
+    ! `MinAlts'.  Later, in SortQualify::QualifyCurrentMAF this index is used to
+    ! ???</whd>
+    
     DO band = 1, NumBands
        READ (unit, '(A)') line
        READ (unit, *) BandAlt(band)%Meters
@@ -211,6 +221,8 @@ CONTAINS
                 nAlts = 1
                 MinAlt(nAlts) = alt
              ENDIF
+             ! Mark the elements in BandAlt(band)%Meters == i-th altitude,
+             ! sorted from min to max (whd: why?)
              DO i = 1, nAlts
                 IF (alt == MinAlt(i)) THEN
                    BandAlt(band)%indx(n) = i
@@ -261,7 +273,10 @@ CONTAINS
     INTEGER, INTENT (IN) :: bandno, channo
     REAL, INTENT (OUT) :: eta_TSL(3)
 
-    IF (bandno < 32) THEN    ! All channels have same ets values
+    IF (bandno < 32) THEN    ! <vp> All channels have same ets values <whd>
+       !Looking at GHzReflSpillEffs.tbl, the file from where this information is
+       !read, I see that it is false that 'all channels' for bandno < 32 have the
+       !same ets value<whd>
        eta_TSL = SpilloverLoss(bandno)%eta_TSL(:,1)
     ELSE
        eta_TSL = SpilloverLoss(bandno)%eta_TSL(:,channo)
@@ -597,6 +612,14 @@ CONTAINS
 END MODULE BandTbls
 
 ! $Log$
+! Revision 2.12  2016/03/15 22:17:59  whdaffer
+! Merged whd-rel-1-0 back onto main branch. Most changes
+! are to comments, but there's some modification to Calibration.f90
+! and MLSL1Common to support some new modules: MLSL1Debug and SnoopMLSL1.
+!
+! Revision 2.11.6.1  2015/10/09 10:21:37  whdaffer
+! checkin of continuing work on branch whd-rel-1-0
+!
 ! Revision 2.11  2009/06/01 13:59:20  perun
 ! Remove extraneous debug print statement.
 !
