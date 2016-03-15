@@ -89,11 +89,10 @@ MODULE SciUtils ! L0 science utilities
     l0_sci1 = scipkt(1)
     l0_sci2 = scipkt(2)
 
-    IF (.NOT. OK) print *, 'Science packet was not OK'
-    IF (.NOT. OK) RETURN
-
     sci_type = ICHAR(type_sci1)  ! science packet #1 type
 
+    ! attempt to convert the packet, even though it may not be 'OK'. We may be
+    ! able to get more info about the packet
     IF (sci_type == type_I) THEN
 
        READ (UNIT=l0_sci1, FMT=sci1_T1_fmt, iostat=ios) sci1_T1
@@ -128,16 +127,27 @@ MODULE SciUtils ! L0 science utilities
 
     ENDIF
 
-!! Convert raw data:
+    !! Convert raw data:
 
     Sci_pkt%MAFno = BigEndianStr (sci_cptr(tindex)%MAF(1)%ptr)
     Sci_pkt%MIFno = BigEndianStr (sci_cptr(tindex)%MIF(1)%ptr)
     Sci_pkt%Orbit = BigEndianStr (sci_cptr(tindex)%orbit(1)%ptr)
 
+    IF (.NOT. OK) THEN 
+       print *, 'Science packet was not OK'
+       print *, "but check messages, could be we're out of the processing window!"
+       RETURN
+    ENDIF
+
+
+
 ! Get TAI93 time
 
     returnstatus = PGS_TD_EOSPMGIRDtoTAI (scipkt(1)(8:15), Sci_pkt%secTAI)
-    Sci_pkt%secTAI = Sci_pkt%secTAI - 0.25  ! Adjust to actual time taken
+    Sci_pkt%secTAI = Sci_pkt%secTAI - 0.25  ! Adjust to actual time taken (whd:
+    !Why?)  answer: 0.25 seconds is about 1.5 MIFs. Dominick thinks the time
+    !reported is actually this amount of time away from the actual start of the
+    !MIF
 
 !! Check for bad checksums:
 
@@ -161,7 +171,11 @@ MODULE SciUtils ! L0 science utilities
        ENDIF
     ENDDO
 
-!! Convert to angles:
+    !! Convert various positions counts to angles:
+
+
+    !! THz_sw is the THz Single Scanning Mirror position information (THz
+    !! doesn't have a switching mirrog like the GHz module
 
     DN = sci_cptr(tindex)%THz_sw
     IF (DN(1:1) /= sw_good) DN = DN(4:)   ! shift and try
@@ -171,8 +185,9 @@ MODULE SciUtils ! L0 science utilities
     ELSE
        Sci_pkt%TSSM_pos(:) = QNan()
     ENDIF
-!    Sci_pkt%THz_sw_pos = SwMirPos ("T", Sci_pkt%TSSM_pos)
 
+    !    Sci_pkt%THz_sw_pos = SwMirPos ("T", Sci_pkt%TSSM_pos)
+    ! GHz_sw contains the GHz Switching mirror positions
     DN = sci_cptr(tindex)%GHz_sw
     IF (DN(1:1) == sw_good) THEN
        Sci_pkt%GSM_pos(1)  = deg24 * BigEndianStr (DN(3:5))
@@ -180,19 +195,25 @@ MODULE SciUtils ! L0 science utilities
     ELSE
        Sci_pkt%GSM_pos(:) = QNan()
     ENDIF
-!    Sci_pkt%GHz_sw_pos = SwMirPos ("G", Sci_pkt%GSM_pos)
 
-!! Get GHz scanning angles
+    !    Sci_pkt%GHz_sw_pos = SwMirPos ("G", Sci_pkt%GSM_pos)
+
+    !! Get GHz scanning angles
+
+    ! This is the GHz mirror encoder, giving the position of the Limb scanning
+    ! mirror
 
     Sci_pkt%APE_pos(:) = QNan()
     Sci_pkt%ASA_pos(:) = QNan()
     DN = sci_cptr(tindex)%GHz_ant_scan
     if ( DN(1:1) == achar(0) ) then
+       n = PGS_TD_TAItoUTC (Sci_pkt%secTAI, asciiUTC)
       print *, 'About to fail during Get_APE_ASA_pos at MAF ', Sci_pkt%MAFno
+      print *, 'Packet UTC: ',asciiUTC
     endif
     CALL Get_APE_ASA_pos (DN, Sci_pkt%APE_pos, Sci_pkt%ASA_pos)
 
-!! Filter bank switches
+    !! Filter bank switches
 
     Sci_pkt%GSN = ICHAR (sci_cptr(tindex)%GSN%ptr)
     DO i = 1, 4
@@ -215,13 +236,13 @@ MODULE SciUtils ! L0 science utilities
        ENDIF
     ENDDO
 
-!! LLO data
+!! (laser Local oscillator) LLO data (sometimes you see)GLO
 
     Sci_pkt%LLO_DN = sci_cptr(tindex)%LLO_DN
 
     CALL ConvertLLO (Sci_pkt%LLO_DN, Sci_pkt%LLO_EU)
 
-!! PLL data
+!! (Phase Lock Loop Oscillator) PLL data
 
     CALL Get_PLL_DN (scipkt, sci_type, Sci_pkt%PLL_DN)
 
@@ -374,6 +395,8 @@ MODULE SciUtils ! L0 science utilities
        TSSM_pos(MIFno,:) = SciMAF(MIFno)%TSSM_pos
 
 ! Adjust time in MIF 0, if not available
+!
+! whd: That comment doesn't make sense! This code runs only when MIF != 0!
 
        IF (MIFno /= 0) THEN
           SciMAF(0)%secTAI = SciMAF(MIFno)%secTAI - MIFno * &
@@ -419,10 +442,18 @@ MODULE SciUtils ! L0 science utilities
 
     ENDDO
 
+    ! Seems backwards to me, what if SciMAF(m+1) == NaN? 
     DO m = 0, 2    ! Make sure time is available in first 3 MIFs!
        IF (.NOT. Finite (SciMAF(m)%secTAI)) SciMAF(m)%secTAI = &
             SciMAF(m+1)%secTAI - L1Config%Calib%MIF_duration
     ENDDO
+
+    ! Shouldn't it be
+    ! DO m = 2,0,-1    ! Make sure time is available in first 3 MIFs!
+    !    IF (.NOT. Finite (SciMAF(m)%secTAI)) SciMAF(m)%secTAI = &
+    !         SciMAF(m+1)%secTAI - L1Config%Calib%MIF_duration
+    ! ENDDO
+
 
 ! Determine pointing mechanisms angles:
 
@@ -462,6 +493,9 @@ MODULE SciUtils ! L0 science utilities
              APE_theta(m) = pos2 + 0.25 * (dif - 180.0)
           ENDIF
        ENDIF
+       
+       ! THz Single Scanning Mirror (?)
+
        pos1 = TSSM_pos(m,1)
        pos2 = TSSM_pos(m+1,2)
        IF (.NOT. Finite (pos1)) THEN
@@ -472,8 +506,13 @@ MODULE SciUtils ! L0 science utilities
           dif = MOD ((pos1 + TSSM_pos(m+1,1) - 2.0 * pos2 + 900.0), 360.0)
           TSSM_theta(m) = pos2 + 0.25 * (dif - 180.0)
        ENDIF
+
+       ! GHz switching Mirror
        pos1 = GSM_pos(m,1)
        pos2 = GSM_pos(m+1,2)
+
+       !<whd> why GSM_pos(m,1) and GSM_pos(m+1,2)</!whd>
+
        IF (.NOT. Finite (pos1)) THEN
           GSM_theta(m) = pos2
        ELSE IF (.NOT. Finite (pos2)) THEN
@@ -483,7 +522,7 @@ MODULE SciUtils ! L0 science utilities
           GSM_theta(m) = pos2 + 0.25 * (dif - 180.0)
        ENDIF
 
-! Save Pos1 and Pos2 Prime to save in the L1BOA file:
+       ! Save Pos1 and Pos2 Prime to save in the L1BOA file:
 
        TSSM_pos_P(m,1) = TSSM_pos(m,1)
        IF (m == 1 .OR. m > 2) THEN
@@ -535,6 +574,10 @@ MODULE SciUtils ! L0 science utilities
   FUNCTION SwMirPos (sw_module, angle) RESULT (sw_pos)
 !=============================================================================
 
+    ! returns a 1 letter code telling whether this mirror position is to be
+    ! 'D'iscarded or not. If not, the possible returns are 'S' (space target)',
+    ! 'T' (calibration target)', 'L' (limb view)
+
     USE MLSL1Common, ONLY: GHz_SwMir_Range_A, GHz_SwMir_Range_B, r8, &
      GHz_SwMir_Range_B_2, THz_SwMir_Range,  Discard_SwMir_Range, SwMir_Range_T
     USE EngTbls, ONLY: EngMAF
@@ -546,14 +589,31 @@ MODULE SciUtils ! L0 science utilities
     INTEGER :: n
     TYPE (SwMir_Range_T), DIMENSION(:), POINTER :: SwMir_Range
 
-    ! 2011 DOY 153 19:10:00 adjust time
+    ! 2011 DOY 153 19:10:00 adjust time. 
+
+    ! <whd> 
+    ! 
+    ! I think this `TAI' time, is really TAI93. It works out to
+    ! 2011-153T19:07:53. Dom tells me that we went to nominal on the new B side
+    ! table at 2011-153T19:18, so maybe this time is just to set things up to
+    ! make sure we're ready. I'm not going to change it, I'll just use it as is
+    ! here and in my IDL code.
+    !
+    ! </whd>
+
     REAL(r8), PARAMETER :: B_TAI = 5.8112628e+08+69000d00
 
     sw_pos = "D"                 ! Initialize to "Discard"
 
     IF (.NOT. Finite (angle)) RETURN
 
-    IF (sw_module == "G") THEN   ! GigaHertz Module
+    
+    IF (sw_module == "G") THEN   
+
+       ! GigaHertz Module Determine which ranges to use. The ranges have changed
+       ! over the course of the mission. See MLSL1Common (~line 215) for
+       ! definitions
+
        IF (EngMAF%GSM_Side == "A") THEN
           SwMir_Range => GHz_SwMir_Range_A
        ELSE IF (EngMAF%GSM_Side == "B") THEN
@@ -620,6 +680,12 @@ MODULE SciUtils ! L0 science utilities
   SUBROUTINE Get_APE_ASA_pos (DN, APE_pos, ASA_pos)
 !=============================================================================
 
+    ! APE = Antenna Position Electronics 
+    !
+    ! ASA = Antenna Switch A<something>. Might also go by the name ASE (Antenna
+    ! Scan Electronics), see type Eng_MAF_T defined in EngTbls.f90
+
+
     CHARACTER (LEN=24) :: DN
     REAL :: APE_pos(2), ASA_pos(2)
 
@@ -630,13 +696,16 @@ MODULE SciUtils ! L0 science utilities
 
     SELECT CASE (ICHAR(DN(1:1)))
 
-! possible leading commands (z'0e', z'0f', z'18', z'19', z'1a', z'1b', z'22'
+! possible leading commands (z'0e', z'0f', z'18', z'19', z'1a', z'1b', z'22') ==
+! 14, 15, 24, 25, 26, 27, 34 (so what is a 'leading command?')
 
        CASE (14, 15, 24, 25, 26, 27, 34)
           DN = DN(6:)   ! drop the first 5 bytes
 
     END SELECT
 
+    ! The codes that indicate that this is the GHz antenna position counts is 7
+    ! or 9. If either, the data begins at postion 4
     IF (DN(1:1) /= CHAR(7) .AND. DN(1:1) /= CHAR(9)) DN = DN(4:)  ! shift
 
     iape = 0   ! indicate not yet available
@@ -665,7 +734,9 @@ MODULE SciUtils ! L0 science utilities
        ASA_pos(2)  = BigEndianStr (DN(iasa+3:iasa+5)) / aaa_frac
     ENDIF
     
-    if ( iape < 1 .and. iasa < 1 ) print *, 'Get_APE_ASA_pos failed with DN:', DN
+    if ( iape < 1 .and. iasa < 1 ) THEN 
+       print *, 'Get_APE_ASA_pos failed with DN:', DN
+    ENDIF
 
   END SUBROUTINE Get_APE_ASA_pos
 
@@ -774,13 +845,23 @@ MODULE SciUtils ! L0 science utilities
     AttenMaxed = (Val == MaxAttenVal)
     BandMask = .FALSE.  ! Nothing matches yet
 
+
+    !BandAtten loaded by table in L0_sci_tbls:~382. If BandAtten(tblIndx)%Link
+    !!= 0 then there are two banks (channels?, ??) to look at
+
+    !find the indices of records in BandAtten that match the input RIU and
+    !Addr.
     WHERE (BandAtten%RIU == RIU .AND. BandAtten%Addr == Addr)
        BandMask = .TRUE.          ! only for matched case!
     ENDWHERE
-    IF (COUNT (BandMask) /= 1) RETURN
+    IF (COUNT (BandMask) /= 1) RETURN ! nothing to do, if none match
 
+    ! Now find that records
     tblIndx = MAXVAL (BandIndx, BandMask)
+
+    ! extract the Band and Link fields
     MatchBand = (/ BandAtten(tblIndx)%Band, BandAtten(tblIndx)%Link /)
+    ! if %Link != 0 we need to check 2 bands (some are 'linked')
     IF (MatchBand(2) /= 0) THEN
        nMatch = 2
     ELSE
@@ -795,10 +876,11 @@ MODULE SciUtils ! L0 science utilities
 
           CASE (1:21)     ! FBs
 
+             ! If the input Band goes through the GHz switch
              IsSwitchFB = ANY (SwitchBank(2:5) == MatchBand(i)) ! Is a switch FB
              SwitchMask = .FALSE.
              WHERE (BandSwitch == MatchBand(i))
-                SwitchMask = .TRUE.
+                SwitchMask = .TRUE. ! == T where the input Band is going thru GHz switch?
              END WHERE
              swBanks = COUNT (SwitchMask)
              IF (swBanks > 0) THEN
@@ -928,6 +1010,14 @@ MODULE SciUtils ! L0 science utilities
 END MODULE SciUtils
 
 ! $Log$
+! Revision 2.21  2016/03/15 22:17:59  whdaffer
+! Merged whd-rel-1-0 back onto main branch. Most changes
+! are to comments, but there's some modification to Calibration.f90
+! and MLSL1Common to support some new modules: MLSL1Debug and SnoopMLSL1.
+!
+! Revision 2.20.4.1  2015/10/09 10:21:38  whdaffer
+! checkin of continuing work on branch whd-rel-1-0
+!
 ! Revision 2.20  2015/01/27 18:58:51  pwagner
 ! Print warning messages if NaNs will be left in OA products
 !
@@ -983,6 +1073,14 @@ END MODULE SciUtils
 ! moved parameter statement to data statement for LF/NAG compatitibility
 !
 ! $Log$
+! Revision 2.21  2016/03/15 22:17:59  whdaffer
+! Merged whd-rel-1-0 back onto main branch. Most changes
+! are to comments, but there's some modification to Calibration.f90
+! and MLSL1Common to support some new modules: MLSL1Debug and SnoopMLSL1.
+!
+! Revision 2.20.4.1  2015/10/09 10:21:38  whdaffer
+! checkin of continuing work on branch whd-rel-1-0
+!
 ! Revision 2.20  2015/01/27 18:58:51  pwagner
 ! Print warning messages if NaNs will be left in OA products
 !
