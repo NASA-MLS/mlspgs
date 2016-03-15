@@ -20,6 +20,8 @@ MODULE OpenInit ! Opens input L0 files and output L1 files
        MLSMSG_Warning
   USE MLSL1Common, ONLY: OA_counterMAF, OA_counterIndex
 
+  USE MLSL1DEBUG, ONLY: MLSL1DEBUG_INIT
+ 
   IMPLICIT NONE
 
   PRIVATE
@@ -41,6 +43,7 @@ CONTAINS
   SUBROUTINE OpenAndInitialize
 !=============================================================================
 
+    USE MLSL1Debug, ONLY: MLSL1Debug_Init, openMLSL1DebugFiles
     USE MLSL1Config, ONLY: L1Config, GetL1Config
     USE InitPCFs, ONLY: L1PCF, GetPCFParameters
     USE MLSPCF1, ONLY: mlspcf_engtbl_start, mlspcf_nomen_start, &
@@ -54,7 +57,7 @@ CONTAINS
     USE dates_module, ONLY: utc_to_yyyymmdd
     USE L0_sci_tbls, ONLY: InitSciPointers
     USE MLSL1Common, ONLY: L1BFileInfo, deflt_gain, deflt_zero, L1ProgType, &
-         THzType, THz_SwMir_Range, THzTol, BandSwitch
+         THzType, THz_SwMir_Range, THzTol, BandSwitch,FileNameLen
     USE Orbit, ONLY: Orbit_init, altG, altT, ascTAI, dscTAI, numOrb, &
          orbIncline, orbitNumber, scanRate, scanRateT
     USE Calibration, ONLY: InitCalibWindow
@@ -68,7 +71,7 @@ CONTAINS
     USE SpectralBaseline, ONLY: InitBaseline, LoadBaselineAC
     USE BandSwitches, ONLY: GetBandSwitches
 
-    CHARACTER (LEN=132) :: PhysicalFilename
+    CHARACTER (LEN=FileNameLen) :: PhysicalFilename
 
     INTEGER :: ios, lid, noMAFS, returnStatus, version, tbl_unit
 
@@ -80,10 +83,38 @@ CONTAINS
 
     TYPE (TAI93_Range_T) :: procRange
 
+
+    !! <whd:debug> Initialize MLSL1DEBUG module
+    CALL MLSL1Debug_Init() 
+    !! Open any files that might be needed for debugging
+    CALL openMLSL1DebugFiles()
+    !! </whd:debug>
+
+    !! Call
     THz = L1ProgType .EQ. THzType
 
 !! Open log file:
 
+    !! <whd comment> 
+    !!
+    !! A word on variables like `mlspcf_l1b_log_start', because you'll be seeing
+    !! lots of them in this next part fo the code. 
+    !!
+    !! The value of this variable is given by a parameter in MLSPCF1.f90. In the
+    !! case of this variable, its value is 30006. This is the PCF ID, you'll
+    !! find it in the first column of the PCF file, the remainder of that line
+    !! of the PCF file gives the name and directory of the log file. You'll see
+    !! this again and again, as you peruse the code below, so I'm telling you
+    !! how to go about finding which file the code is accessing. It's curious
+    !! that a few lines along it asks for the name of the PCF file, when its
+    !! actually reading the PCF file to get this information. I don' quite know
+    !! how that works, maybe there's an environmental variable being used
+    !! somewhere that I don't know about.  
+    !!
+    !! </whd comment>
+
+
+    !! Open MLS-Aura_L1BLOG (or whatever is at PCF ID 30006 in the PCF)
     WRITE (PhysicalFilename, "(I5.5)") mlspcf_l1b_log_start
     version = 1
     returnStatus = PGS_PC_getReference (mlspcf_l1b_log_start, version, &
@@ -171,6 +202,11 @@ CONTAINS
     returnStatus = PGS_TD_UTCtoTAI (L1PCF%startUTC, procRange%startTime)
     returnStatus = PGS_TD_UTCtoTAI (L1PCF%endUTC, procRange%endTime)
 
+    IF (procRange%startTime .GE. procRange%endTime) THEN 
+       CALL MLSMessage(MLSMSG_Error, ModuleName, &
+            & "Bad processing range time: start >= end! " // &
+            "Check your .PCF!")
+    ENDIF
     procRange%startTime = procRange%startTime - MAF_dur * (0.5 + &
          L1Config%Calib%MAFexpandNum)
     procRange%endTime = procRange%endTime +  MAF_dur * (0.5 + &
@@ -223,7 +259,7 @@ CONTAINS
 
     ENDIF
 
-!! Open and initialize eng table:
+!! Open and initialize eng table: (<whd>: engtlm.tbl, PCF ID 903)
 
     version = 1
     returnStatus = PGS_PC_getReference (mlspcf_engtbl_start, version, &
@@ -359,6 +395,9 @@ CONTAINS
             PhysicalFilename)
     ENDIF
 
+    !<whd>: PCF ID: 922. MAF_data_tmp.dat. This was created by
+    !OpenAndInitializeLog called from MLSL1log </whd>
+
     returnStatus = PGS_IO_Gen_Track_LUN (L1BFileInfo%MAF_data_unit, 0)
 
     OPEN (unit=L1BFileInfo%MAF_data_unit, file=PhysicalFilename, &
@@ -377,15 +416,15 @@ CONTAINS
 
     READ (L1BFileInfo%MAF_data_unit) PhysicalFilename
 
-    IF (PhysicalFilename /= L1PCF%PCF_filename) THEN
+    IF (trim(PhysicalFilename) /= trim(L1PCF%PCF_filename)) THEN
        CALL MLSMessage (MLSMSG_Error, ModuleName, &
-            & "PCF_filenames do not match: " // PhysicalFilename)
+            & "PCF_filenames do not match: " // trim(PhysicalFilename))
     ENDIF
 
     READ (L1BFileInfo%MAF_data_unit) PhysicalFilename
-    IF (PhysicalFilename /= L1PCF%L1CF_filename) THEN
+    IF (trim(PhysicalFilename) /= trim(L1PCF%L1CF_filename)) THEN
        CALL MLSMessage (MLSMSG_Error, ModuleName, &
-            & "L1CF_filenames do not match: " // PhysicalFilename)
+            & "L1CF_filenames do not match: " // trim(PhysicalFilename))
     ENDIF
 
 !! Adjust THz_SwMir "S" range based on the CF file:
@@ -802,7 +841,8 @@ CONTAINS
     USE MLSPCF1, ONLY: mlspcf_l1b_radf_start, mlspcf_l1b_radd_start, &
          mlspcf_l1b_oa_start, mlspcf_l1b_diag_start, mlspcf_l1b_radt_start, &
          mlspcf_l1b_diagT_start
-    USE MLSL1Common, ONLY: L1BFileInfo, HDFversion, SC_YPR, THz_GeodAlt, MaxMIFs
+    USE MLSL1Common, ONLY: L1BFileInfo, HDFversion, SC_YPR, &
+         &THz_GeodAlt, MaxMIFs,FileNameLen
     USE MLSFiles, ONLY: MLS_openFile, MLS_closeFile
     USE MLSHDF5, ONLY: MLS_h5open, GetHDF5Attribute
     USE HDF5, ONLY: H5gOpen_f, H5gClose_f
@@ -814,7 +854,7 @@ CONTAINS
 
     LOGICAL :: THz
 
-    CHARACTER (LEN=132) :: PhysicalFilename
+    CHARACTER (LEN=FileNameLen) :: PhysicalFilename
     INTEGER :: error, returnStatus, grp_id, sd_id, version
     INTEGER :: noMAFs, Flag
     INTEGER :: firstMAF = 0
@@ -1150,6 +1190,14 @@ END MODULE OpenInit
 !=============================================================================
 
 ! $Log$
+! Revision 2.33  2016/03/15 22:17:59  whdaffer
+! Merged whd-rel-1-0 back onto main branch. Most changes
+! are to comments, but there's some modification to Calibration.f90
+! and MLSL1Common to support some new modules: MLSL1Debug and SnoopMLSL1.
+!
+! Revision 2.32.2.1  2015/10/09 10:21:38  whdaffer
+! checkin of continuing work on branch whd-rel-1-0
+!
 ! Revision 2.32  2015/04/23 17:46:27  whdaffer
 ! removed Makefile
 !
