@@ -467,8 +467,21 @@ wvs-128-QTM-3.eps: wvs-128-QTM-3.obj
 wvs-128-QTM-3.pdf: wvs-128-QTM-3.obj
 	tgif -print -pdf -page 1 -color wvs-128-QTM-3.obj
 
+wvs-133.dvi: wvs-133.tex wvs-133-fig.eps
+
+wvs-133.pdf: wvs-133.tex wvs-133-fig.pdf
+
+wvs-133-fig.eps: wvs-133-fig.obj
+	tgif -print -eps -page 1 -color wvs-133-fig.obj
+
+wvs-133-fig.pdf: wvs-133-fig.obj
+	tgif -print -pdf -page 1 -color wvs-133-fig.obj
+
 endif # end shortn_name == doc
 # $Log$
+# Revision 1.19  2015/11/18 17:45:06  pwagner
+# Now builds wvs-128.tex
+#
 # Revision 1.18  2015/09/18 23:38:34  pwagner
 # Added custom builds for wvs-126.tex
 #
