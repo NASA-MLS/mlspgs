@@ -47,8 +47,11 @@ CONTAINS
     USE BrightObjects_m, ONLY: BO_name, BO_Angle_GHz, BO_Angle_THz
     USE DACsUtils, ONLY: TPz
     USE INTRINSIC, ONLY: l_hdf
+    USE MLSL1Common, ONLY: FileNameLen
 
-    CHARACTER(LEN=132) :: filename
+    CHARACTER (LEN=FileNameLen) :: filename
+
+
     INTEGER :: i, returnStatus, error, grp_id
     LOGICAL :: opened
 
@@ -105,7 +108,12 @@ CONTAINS
        CALL MLSMessage (MLSMSG_Info, ModuleName, &
             & 'Closed sciMAF file: '//filename)
 
-    ! Write TPz Annotations and Close L1BRADD file
+    ! Write TPz Annotations and Close L1BRADD file.  
+
+       ! <whd> I can't find where the L1BRADD file is opened when running
+       ! MLSL1log, so I think that, for MLSL1log, L1BFileInfo%RADDid will
+       ! *always* == 0, and I can't find TPz in the output in the L1BRADD files
+       ! that I've run.  </whd>
 
        IF (L1BFileInfo%RADDid /= 0) THEN
           CALL H5gOpen_f (L1BFileInfo%RADDid, '/', grp_id, returnStatus)
@@ -257,6 +265,14 @@ CONTAINS
 END MODULE Close_files
 !=============================================================================
 ! $Log$
+! Revision 2.23  2016/03/15 22:17:59  whdaffer
+! Merged whd-rel-1-0 back onto main branch. Most changes
+! are to comments, but there's some modification to Calibration.f90
+! and MLSL1Common to support some new modules: MLSL1Debug and SnoopMLSL1.
+!
+! Revision 2.22.6.1  2015/10/09 10:21:38  whdaffer
+! checkin of continuing work on branch whd-rel-1-0
+!
 ! Revision 2.22  2008/02/25 20:11:38  perun
 ! Added leapsec and utcpole file contents to L1BOA output file.
 !
