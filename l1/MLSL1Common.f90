@@ -199,7 +199,7 @@ MODULE MLSL1Common              ! Common data types for the MLSL1 program
   REAL, PARAMETER :: DEG24 = 360.0 * 2.0**(-24)
 
 !! Switching mirror position ranges (L, S, T1, T2)
-
+!! 'L'imb, 'S'pace, 'T1' = 'primary' target, 'T2' = 'secondary' target
   TYPE SwMir_Range_T
      CHARACTER(len=1) :: pos
      REAL :: low_angle, high_angle
@@ -235,9 +235,21 @@ MODULE MLSL1Common              ! Common data types for the MLSL1 program
 !! Band switches and associated filter bank numbers
 
   INTEGER :: BandSwitch(5) = (/ 0, 0, 0, 0, 0 /)
+
+  !! <whd> SwitchBank lists the number that output of each switch goes to, as a
+  !! function of switch number ...
+  !!
+  !! SwitchBank(1) => DACS-1
+  !! SwitchBank(2) => FB25-3
+  !! SwitchBank(3) => FB25-8
+  !! SwitchBank(4) => FB25-12
+  !! SwitchBank(5) => FB25-15
+  !! 
+  !! What's on the input side of that switch is another matter
+  !! </whd>
   INTEGER, PARAMETER :: SwitchBank(5) = (/ 1, 3, 8, 12, 15 /)
 
-!! Bandwidths for all channels
+!! Bandwidths for all channels (in Hz?)
 
   REAL, PARAMETER, PRIVATE :: FB_BW(FBchans) = (/ &
        110.0, 110.0, 110.0, 74.0, 74.0, 74.0, 55.0, 37.0, 28.0, 18.4, 14.0, &
@@ -285,6 +297,66 @@ MODULE MLSL1Common              ! Common data types for the MLSL1 program
 
   INTEGER, PARAMETER :: HDFversion = 5   ! from now on!
 
+
+  ! Constants/Parameters needed for Calibration, Radiances and
+  ! MLSL1Debug modules, 
+  !
+  ! This is to avoid circular dependencies between Calibration and
+  ! MLSL1Debug.
+  !
+  ! Before I (whd) introduced the MLSL1Debug module, we handled the
+  ! difference between `normal' L1 processing, where WinMAFs = 10, and
+  ! `moonscan' processing, where WinMAFs = 6, by copying (on the basis
+  ! of whether the user invoked `make install-l1' (normal) or `make
+  ! moonscan') the appropriate Calibration header file
+  ! (Calibration-normal.f9h for normal processing and
+  ! Calibration-moonscan.f9h for moonscans) onto a generic name
+  ! (Calibration.f9h) and Calibration.f90 included that file.
+  !
+  ! In the first cut of MLSL1Debug, on which Calibration depended,
+  ! this arrangement worked fine. However, when I included
+  ! `writeRadiances' to write out the radiances arrays, I needed
+  ! variables from Calibration (e.g. limb_cnts), so there is now a
+  ! circular dependence.
+  !
+  ! The variables in question needed by MLSL1Debug require two
+  ! parameters defined in Calibration: WinMAFs and max_cal_index (a
+  ! function of WinMAFs) so I'm moving them to the header file and
+  ! including it here. The same methodology will be used, if the user
+  ! invokes `make install-l1' then Calibration.f9h will be a copy of
+  ! Calibration-normal.f9h; if `make moonscan' it will be
+  ! Calibration-moonscan.f9h.
+  !
+  ! Also, the type Chan_8_RT and the various variables that depend on
+  ! it will be defined here and Calibration and MLSL1Debug will obtain
+  ! those definitions from this module.
+
+  include "Calibration.f9h"
+
+  ! Moved from Calibration.f90 to here to avoid circular dependencies
+  ! between Calibration and MLSL1Debug.
+  TYPE Cal_R8_T
+     REAL(r8) :: FB(0:max_cal_index,FBchans,FBnum)
+     REAL(r8) :: MB(0:max_cal_index,MBchans,MBnum)
+     REAL(r8) :: WF(0:max_cal_index,WFchans,WFnum)
+     REAL(r8) :: DACS(0:max_cal_index,DACSchans,DACSnum)
+  END TYPE Cal_R8_T
+
+  TYPE (Cal_R8_T) :: space_cnts, target_cnts, limb_cnts, slimb_cnts
+  TYPE (Cal_R8_T) :: space_time, target_time, limb_time, slimb_time
+  TYPE (Cal_R8_T) :: space_weight, target_weight, slimb_weight       
+
+  TYPE (Chan_R8_T) :: space_interp(0:MaxMIFs-1)     ! Space interpolate
+  TYPE (Chan_R8_T) :: space_err(0:MaxMIFs-1)        ! Space error
+  TYPE (Chan_R8_T) :: slimb_interp(0:MaxMIFs-1)     ! Space/Limb interpolate
+  TYPE (Chan_R8_T) :: slimb_err(0:MaxMIFs-1)        ! Space/Limb error
+  TYPE (Chan_R8_T) :: target_interp(0:MaxMIFs-1)    ! Target interpolate
+  TYPE (Chan_R8_T) :: target_err(0:MaxMIFs-1)       ! Target error
+  TYPE (Chan_R8_T) :: temp_interp(0:MaxMIFs-1)      ! Temporary interpolate
+  TYPE (Chan_R8_T) :: temp_err(0:MaxMIFs-1)         ! Temporary error
+  TYPE (ChanLogical_T) :: slimb_type
+
+
   ! --------------------------------------------------------------------------
 
 CONTAINS
@@ -301,6 +373,24 @@ END MODULE MLSL1Common
 !=============================================================================
 
 ! $Log$
+!
+! Revision 2.20  2016/02/12 20:04:48  pwagner
+! Prevent bad level 0 files from causing englog to fill all diskspace
+!
+! Revision 2.19.4.3  2016/03/14 19:51:24  whdaffer
+! Most of the work is to eliminate cicular references between MLSL1Debug
+! and Calibration. To resolve this, I've moved the inclusion of
+! Calibration.f9h and the definition of some 10 variables from
+! Calibration.f90 to MLSL1Common.f90. Radiances, MLSL1Debug and
+! Calibration will get those types, variable from MLSL1Common. Also, use
+! machines.f90 to get the definition of usleep used in SnoopMLSL1
+!
+! Revision 2.19.4.2  2016/03/04 21:43:26  whdaffer
+! Merged PW's Trunk changes into my branch
+!
+! Revision 2.19.4.1  2015/10/09 10:21:38  whdaffer
+! checkin of continuing work on branch whd-rel-1-0
+!
 ! Revision 2.19  2011/06/07 18:57:36  perun
 ! Add another Side B switching mirror table uploaded on 2011 DOY 153 at 19:10.
 !

@@ -62,7 +62,8 @@ $(PROG):  $(PROG_prereqs)
           ls Calibration*.f9h;\
           cp Calibration-normal.f9h Calibration.f9h; \
         fi; \
-	grep WinMAFs Calibration.f9h
+	#grep WinMAFs Calibration.f9h
+	cat Calibration.f9h
 	@cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) \
         UNPREFXDPTHS="$(ADD2PATHS)" ;\
         return_status=`expr $$?` ; \
@@ -170,6 +171,10 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl1
 
 # $Log$
+# Revision 2.10  2015/08/14 20:06:51  whdaffer
+# A comment that I think explains the issue with new files with
+# `program' statements failure
+#
 # Revision 2.9  2015/08/10 23:15:57  pwagner
 # *** empty log message ***
 #

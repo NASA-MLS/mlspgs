@@ -1,0 +1,23 @@
+  ! Local variables to routine which included me
+  INTEGER :: BUFFERID              ! For PVM
+  INTEGER :: INFO                  ! Flag from PVM
+
+
+  ! Executable code
+  CALL PVMFInitSend ( PvmDataDefault, bufferID )
+  print *,"Packing `Array'"
+  CALL PVMIDLPACK ( 'Array', info )
+  IF ( info /= 0 ) CALL PVMErrorMessage ( info, 'packing "Array"' )
+
+  print *,"Packing `name' = ",Trim(name)
+  CALL PVMIDLPack ( TRIM(name), info )
+  IF ( info /= 0 ) CALL PVMErrorMessage ( info, 'packing array name' )
+
+  print *,"Packing values = "
+  CALL PVMIDLPack ( M, info )
+  IF ( info /= 0 ) CALL PVMErrorMessage ( info, 'packing array values' )
+
+  print *,'Sending message to ',snooper%tid, ' using msgTag=',SnoopTag
+  CALL PVMFSend ( snooper%tid, SnoopTag, info )
+  IF ( info /= 0 ) CALL PVMErrorMessage ( info, 'sending array' )
+  

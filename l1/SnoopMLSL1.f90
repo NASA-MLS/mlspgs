@@ -1,0 +1,878 @@
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+MODULE SnoopMLSL1 ! Snoop-ify MLS L1
+
+  ! This module is the fortran end of an interaction between the MLS level 1
+  ! programmer and a user running an interactive IDL program to diagnose the
+  ! progress and behavior of the MLS level 1 program.  The idea is that one can
+  ! place a call to a Snoop routine, passing it any subset of relevant
+  ! information (e.g. vectors and matrix databases). The software will look for
+  ! an IDL program ready to accept snoop requests and if one is around will do
+  ! as instructed.
+  !
+  ! This will make heavy use of some low level routines in the PVM and PVMIDL
+  ! modules to do much of the communication.
+  !
+  ! Also note that multiple IDL snoopers can talk to one or many f90 procedures,
+  ! the little extra book keeping this involves is worth it.
+  !
+  ! To turn on, the environmental variable MLSL1Debug must have the
+  ! string "SnoopMLSL1" in it.
+
+  
+  USE MLSL1RunConfig, ONLY:  MLSL1Executable ! name of currently running main:
+                                             ! lowercase (mlsl0sn, mlsl1log,
+                                             ! mlsl1g or mlsl1t)
+
+  USE MLSKINDS, ONLY: R4
+  use HIGHOUTPUT, only: BANNER
+  use OUTPUT_M, only: OUTPUT
+  use MLSFINDS, only: FINDFIRST
+  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING, &
+    & PVMERRORMESSAGE
+  use MLSSTRINGLISTS, only: SWITCHDETAIL
+  use PVM, only: PVMDATADEFAULT, PVMFINITSEND, PVMFMYTID, &
+    & PVMF90UNPACK, PVMTASKEXIT, PVMFNOTIFY, PVMFSEND
+  use PVMIDL, only:  PVMIDLPACK, PVMIDLSEND, PVMIDLUNPACK
+  use TOGGLES, only: SWITCHES
+  USE MLSL1Common, ONLY: FileNameLen
+
+  ! use STRING_TABLE, only: GET_STRING, DISPLAY_STRING
+  ! use SYMBOL_TABLE, only: ENTER_TERMINAL
+  ! use SYMBOL_TYPES, only: T_IDENTIFIER
+  ! use TREE, only:  NSONS, SUB_ROSA, SUBTREE, Where
+
+
+  IMPLICIT NONE
+  PRIVATE
+
+
+
+  ! =============================================================================
+
+  ! The first main thing is a data type that describes each of the active
+  ! snoopers.
+
+  ! Part of this the following enumerated type, describing the `mode' of the
+  ! snooper.  The mode can be `observing', or `controling'. In observing mode
+  ! the snooper can only request copies of vectors etc.  In controling mode,
+  ! the snooper can write values back for these and to some extent control the
+  ! program (give up on iterations, exit etc.)
+
+
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile$"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+  ! =============================================================================
+
+  ! The first main thing is a data type that describes each of the active
+  ! snoopers.
+
+  ! Part of this the following enumerated type, describing the `mode' of the
+  ! snooper.  The mode can be `observing', or `controling'. In observing mode
+  ! the snooper can only request copies of vectors etc.  In controling mode,
+  ! the snooper can write values back for these and to some extent control the
+  ! program (give up on iterations, exit etc.)
+
+  ! Note that snoopers communicate amongst themselves to arbitrate requests to
+  ! become controling, the succuesful one contacts the l2 code.
+
+
+  INTEGER :: o ! loop counter(s)
+  logical            :: SNOOPINGACTIVE                = .false.
+  character(len=132) :: SNOOPNAME                     = ''
+
+  integer, parameter :: SnooperObserving =  0
+  integer, parameter :: SnooperControling = SnooperObserving + 1
+
+  integer, parameter :: SnoopTag = 300
+  integer, parameter :: SnooperDiedTag = 301
+
+  !character (LEN=*), parameter :: Level1CodeGroupName=MLSL1Executable
+
+
+  INTERFACE SendRealArrayToSnooper
+    MODULE PROCEDURE SendR1ArrayToSnooper, &
+         &           SendR2ArrayToSnooper, & 
+         &           SendR3ArrayToSnooper
+  END INTERFACE
+  INTERFACE SendIntegerArrayToSnooper 
+    MODULE PROCEDURE SendI1ArrayToSnooper, & 
+         &           SendI2ArrayToSnooper, & 
+         &           SendI3ArrayToSnooper    
+  END INTERFACE
+
+  
+
+
+  ! Now the type definitions for snooping. 
+
+  ! Represents one of the data items we might pass through PVM to the IDL
+  ! snooper. The caller fills an array of these types and sends it through in
+  ! the call to `snoop', which then sends it along to the IDL snooper, as in
+  ! "this is what we're offering to you, snooper". The snooper then returns
+  ! requests for each individual `offering' it wants.
+  !
+  ! To use, have a 'use SnoopMLSL1 [,ONLY : L1SnoopOffering_T,...]. Then define
+  ! an array (I call them 'Offerings1' and 'Offerings2') of L1SnoopOffering_T,
+  ! setting name, rank and dimensions accordingly and which has only one of the
+  ! pointers (RValue/IValue) associated and pointing to the data you want to
+  ! pass. When you pass it, the routines in this module will figure out which
+  ! routine to call.
+
+  TYPE L1SnoopOffering_T
+    !SEQUENCE
+    CHARACTER (len=256) name
+    INTEGER rank
+    INTEGER dimensions(3)
+    REAL(r4), DIMENSION(:),     POINTER :: R1Value=>Null()
+    REAL(r4), DIMENSION(:,:),   POINTER :: R2Value=>Null()
+    REAL(r4), DIMENSION(:,:,:), POINTER :: R3Value=>Null()
+    INTEGER,  DIMENSION(:),     POINTER :: I1Value=>Null()
+    INTEGER,  DIMENSION(:,:),   POINTER :: I2Value=>Null()
+    INTEGER,  DIMENSION(:,:,:), POINTER :: I3Value=>Null()
+  END TYPE L1SnoopOffering_T
+
+  ! Copied from SnoopMLSL2 and renamed.
+  type L1SnooperInfo_T
+    integer :: tid                      ! Task ID of snooper
+    integer :: mode                     ! Mode of the snooper
+  end type L1SnooperInfo_T
+
+  TYPE (L1SnoopOffering_T), ALLOCATABLE :: Offerings1(:), Offerings2(:)
+  PUBLIC :: SNOOPINGACTIVE, SNOOP, SNOOPNAME, L1SnoopOffering_T
+
+contains 
+
+
+    
+  ! ------------------------------------------------------  SNOOP  -----
+  ! This is the main routine in the module.  It can be called from anywhere
+  ! within the code, and takes optional arguments which the user can supply
+  ! to pass to and from the IDL end of the snooper.
+
+
+  SUBROUTINE Snoop ( Location, &   ! (i) string 
+       &             Offerings1, &  ! (i) The offerings
+       &             Offerings2, &  ! (i) More offerings
+       &             Comment)      ! (i)
+
+
+    use Allocate_Deallocate, only: Test_Allocate
+    USE machine, only : usleep ! to get the C function
+
+    ! Arguments
+    character(len=*), intent(in)  :: Location
+    TYPE (L1SnoopOffering_T), INTENT(in),OPTIONAL :: Offerings1(:)
+    TYPE (L1SnoopOffering_T), INTENT(in),OPTIONAL :: Offerings2(:)
+    CHARACTER(len=*), intent(in), optional  :: Comment
+
+
+    ! Rather boring arguments 
+    ! real (r8), dimension(:), intent(in), optional :: R1A, R1B, R1C, R1D
+    ! real (r8), dimension(:,:), intent(in), optional :: R2A, R2B, R2C, R2D
+    ! real (r8), dimension(:,:,:), intent(in), optional :: R3A, R3B, R3C, R3D
+    ! character(len=*), intent(in), optional :: &
+    !      & R1ANAME, R1BNAME, R1CNAME, R1DNAME, &
+    !      & R2ANAME, R2BNAME, R2CNAME, R2DNAME, &
+    !      & R3ANAME, R3BNAME, R3CNAME, R3DNAME
+    
+    ! Local parameters
+    integer, parameter :: DELAY=50*1000  ! For Usleep, no. microsecs
+    character(len=*), parameter :: UNPACKERROR = &
+         & 'unpacking response from snooper'
+    
+    ! Local variables, first the more exciting ones.
+     integer, save :: MYTID=0            ! Local task ID under PVM
+    type (L1SnooperInfo_T), dimension(:), pointer, save :: SNOOPERS => NULL()
+    ! For add/del ops.
+
+    ! Now the more mundane items
+    integer :: BYTES
+    integer :: BUFFERID, INFO           ! Flags and ids from PVM
+    !character (len=FileNameLen) :: COMMENT      ! Comment field to snoop command
+    integer :: I                        ! Loop inductor, subtree index
+    integer :: INUM                     ! Index in group
+    character (len=132) :: LINE         ! Line of text received
+    character (len=132) :: NEXTLINE     ! Line of text received
+    integer :: MSGTAG                   ! Incomming Message tag
+    integer :: SNOOPER                  ! Loop counter, indexes list of l1snooper_info_t types
+    integer :: SNOOPERTID               ! Task ID for snooper
+    integer :: SON                      ! of Key
+    integer :: STATUS                   ! Status from allocate/deallocate
+    logical :: KEEPWAITING                ! First time snoop called
+    logical :: GOTSOMETHING             ! Set if we got a message
+
+    character (len=132) :: groupname
+
+    ! When using snoopcatch.pro IDL expects to see the group name, so I'm going
+    ! to use it for now. Eventually I'll change the IDL code.  
+    ! CHARACTER (LEN=*), parameter :: Level1CodexGroupName="MLSL2Executable" 
+    
+    ! When using my l1snoop.pro, it will be the name of the executable, defined
+    ! in MLSL1RunConfig
+
+
+
+    ! If this is the very first call enroll in PVM for the first time, allocate
+    ! 0 snoopers to start with.
+    if ( myTid==0 ) then
+      keepWaiting = .true.
+      call PVMfmytid ( myTid )
+      print *,'from PVMmyTID: myTid=',myTid
+      IF ( myTid<=0 ) CALL PVMErrorMessage ( myTid, "Enroling in PVM" )
+      groupname=Trim(MLSL1Executable)//TRIM(snoopName) ! soon to be replaced with...
+      !groupname=trim(MLSL1Executable)//trim(snoopName)
+      CALL PVMfjoingroup ( TRIM(groupname), inum )
+      if ( inum<0 ) call PVMErrorMessage ( inum, "Joining group " &
+        & // groupname )
+      allocate ( snoopers(0), stat=status )
+      call test_allocate ( status, moduleName, 'snoopers', uBounds = 0, &
+        & elementSize = storage_size(status) / 8 )
+    else
+      keepWaiting = .false.
+    end if
+
+    ! Tell all the snoopers we're ready to talk to them
+    DO snooper = 1, SIZE(snoopers)
+      CALL SendStatusToSnooper ( snoopers(snooper), 'Ready', &
+           &                     location, comment, &
+           & ANY ( snoopers%mode == SnooperControling ) )
+
+      ! The caller has to identify what it will send to the snooper. To do this,
+      ! it must load the variables Offerings[12]. Perhaps there's some way to
+      ! automate this, by having IDL (or some offline processing) poke about in
+      ! the L1 code to figure out which variable names to offer, but I'm not
+      ! going to try to figure that out right now.
+      CALL SendOfferingsListToSnooper(snoopers(snooper), &
+           &  Offerings1, Offerings2)
+    END DO
+
+    snoopEventLoop: DO ! ---------------------------- Snoop event loop -----
+
+      gotSomething = .false.
+      ! Now try to receive a message
+      call PVMFNRecv ( -1, SnoopTag, bufferID )
+      if ( bufferID < 0 ) then
+        call PVMErrorMessage ( info, "checking for snoop message" )
+      else if ( bufferID > 0 ) then
+        ! We have something to look at
+        ! Get first line and find out who sent it.
+        gotSomething = .true.
+        call PVMFBufInfo ( bufferID, bytes, msgTag, snooperTid, info )
+        print *,'eventLoop: From PVMFBufInfo: SnooperTID=',snooperTid
+        if ( info /= 0 ) &
+          & call PVMErrorMessage ( info, "calling PVMFBufInfo" )
+        snooper = FindFirst ( snoopers%tid == snooperTid )
+        call PVMIDLUnpack ( line, info )
+        print *,'eventLoop: PVMIDLUnpack: line= ',line
+        ! L1 executables don't have command line switches
+        ! but I'll leave this in just in case we do get them in the future
+        !
+        ! if ( switchDetail ( switches, 'snoop' ) > -1 ) then
+        !   call output ( 'Got snooper message: ' )
+        !   call output ( trim(line), advance='yes' )
+        ! end if
+
+        select case ( trim(line) )
+
+        case ( 'Array' )
+          ! Here the snooper has asked for some data, so we send it back on the
+          ! basis of the name used by the caller.
+          call PVMIDLUnpack ( nextLine, info )
+          print *,"eventLoop: nextLine= ",nextLine
+
+          if ( info /= 0 ) call PVMErrorMessage ( info, unpackError )
+          DO o=1,SIZE(Offerings1)
+            IF (TRIM(nextLine)==TRIM(Offerings1(o)%name)) THEN 
+              CALL SendRequestedArrayToSnooper(snoopers(snooper),Offerings1(o))
+              EXIT
+            ENDIF
+          END DO
+          DO o=1,SIZE(Offerings2)
+            IF (TRIM(nextLine)==TRIM(Offerings2(o)%name)) THEN 
+              CALL SendRequestedArrayToSnooper(snoopers(snooper),Offerings2(o))
+              EXIT
+            ENDIF
+          END DO
+
+        case ( 'Continue' )
+          !! The snooper has said to continue processing; exit event loop
+          if ( snoopers(snooper)%mode == SnooperControling ) &
+            exit SnoopEventLoop
+
+        case ( 'Control' )
+          !! Change our 'controlling' state (2-state toggle)
+          if ( any ( snoopers%mode == SnooperControling ) ) then
+            call PVMIDLSend ( 'ControlReject', snooperTid, info, msgTag=SnoopTag )
+          else
+            call PVMIDLSend ( 'ControlAccept', snooperTid, info, msgTag=SnoopTag )
+            snoopers(snooper)%mode = SnooperControling
+          end if
+          if ( info /= 0 ) call PVMErrorMessage ( info, &
+            & "sending control response" )
+
+        case ( 'Finishing' )
+          !! This snooper is exiting
+          call ForgetSnooper ( snoopers, snooper )
+
+
+        case ( 'NewSnooper' )
+          !! a new snooper is starting up.
+          keepWaiting = .false.
+          print *,'Calling registerNewSnooper for TID=',snooperTID
+          call RegisterNewSnooper ( snoopers, snooperTid )
+          snooper = FindFirst ( snoopers%tid == snooperTid )
+          ! Tell it where we are
+          print *,'Calling SendStatusToSnooper for TID=',snooperTID
+          call SendStatusToSnooper ( snoopers(snooper), 'Ready', &
+               & location, comment, & 
+               & any(snoopers%mode == SnooperControling ) )
+
+          !! Tell the snooper what the caller is willing to send.
+          print *,'Calling SendOfferings for TID=',snooperTID
+          CALL SendOfferingsListToSnooper(snoopers(snooper), &
+               &  Offerings1, Offerings2)
+
+        case ( 'Relinquish' )
+          !! ?? Don't know what this means
+          snoopers(snooper)%mode = SnooperObserving
+          call PVMIDLSend ( 'Relinquished', snooperTid, info, msgTag=SnoopTag )
+          if ( info /= 0 ) call PVMErrorMessage ( info, &
+            & "sending relinquish response" )
+
+        case default
+          call MLSMessage ( MLSMSG_Warning, ModuleName, &
+            & 'Got unexpected response from snooper:'//trim(line) )
+
+        end select
+      end if
+
+      ! Now check for dead task messages
+      call PVMFNRecv ( -1, SnooperDiedTag, bufferID )
+      if ( bufferID < 0 ) then
+        call PVMErrorMessage ( info, "checking for snooper died message" )
+      else if ( bufferID > 0 ) then     ! Got a message
+        print *,'Got something with SnooperDiedTag, bufferID=',bufferID
+
+        gotSomething = .true.
+        call PVMF90Unpack ( snooperTid, info )
+        if ( info < 0 ) then
+          call PVMErrorMessage ( info, "unpacking dead snooper tid" )
+        end if
+        print *,'Dead Snooper = ',snooperTid
+        snooper = FindFirst ( snoopers%tid == snooperTid )
+        if ( snooper /= 0 ) then
+          call ForgetSnooper ( snoopers, snooper )
+        endif
+      endif ! Got a message
+
+      ! Shall we quit the loop?
+      if ( size(snoopers) == 0 ) then
+        if (.not. keepWaiting) exit SnoopEventLoop
+      else
+        if ( all ( snoopers%mode /= SnooperControling ) ) exit SnoopEventLoop
+      end if
+
+      if (.not. gotSomething) call usleep ( delay )
+    END DO snoopEventLoop ! -------------- End of snoop event loop -----
+
+    ! Tell all the snoopers we're off and running again
+    DO snooper = 1, SIZE(snoopers)
+      CALL SendStatusToSnooper ( snoopers(snooper), &
+           & 'Running', &
+           & location, comment, &
+           & any ( snoopers%mode == SnooperControling ) )
+    END DO
+    
+  end subroutine Snoop
+
+  !=====================================================================
+  ! Administrative routines, used to communicate with the Snooper, but 
+  ! Not to send data back and forth
+  !=====================================================================
+
+
+  ! ---------------------------------------  GetSnooperModeString  -----
+  subroutine GetSnooperModeString ( MODE, STRING )
+    integer, intent(in) :: MODE
+    character (len=*), intent(out) :: STRING
+
+    select case (mode)
+    case (SnooperObserving)
+      string='Observing'
+    case (SnooperControling)
+      string='Controling'
+    case default
+    end select
+  end subroutine GetSnooperModeString
+
+
+  ! ------------------------------------------------ ForgetSnooper -----
+  subroutine ForgetSnooper ( snoopers, snooper )
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
+    type (L1SnooperInfo_T), dimension(:), pointer :: SNOOPERS
+    integer, intent(in) :: SNOOPER
+
+    ! Local variables
+    type (L1SnooperInfo_T), dimension(:), pointer :: NEWSNOOPERS
+    integer(c_intptr_t) :: Addr         ! For tracing
+    integer :: S, STATUS
+
+    ! Executable code
+    if ( switchDetail ( switches, 'snoop' ) > -1 ) &
+      & call output ( 'Forgetting snooper', advance='yes' )
+
+    allocate ( newSnoopers(size(snoopers)-1), stat=status )
+    addr = 0
+    if ( status == 0 .and. size(snoopers)>1 ) addr = transfer(c_loc(newSnoopers(1)), addr)
+    call test_allocate ( status, moduleName, 'newSnoopers', &
+      & uBounds = size(snoopers)-1, elementSize = storage_size(newSnoopers) / 8, &
+      & address=addr )
+
+    if ( size(newSnoopers) > 0 ) then
+      newSnoopers(1:snooper-1) = snoopers(1:snooper-1)
+      newSnoopers(snooper:) = snoopers(snooper+1:)
+    end if
+    s = size(snoopers) * storage_size(snoopers) / 8
+    addr = 0
+    if ( s > 0 ) addr = transfer(c_loc(snoopers(1)), addr)
+    deallocate ( snoopers, stat=status )
+    call test_deallocate ( status, moduleName, 'newSnoopers', s, address=addr )
+
+    snoopers => newSnoopers
+
+  end subroutine ForgetSnooper
+
+  ! ------------------------------------------ SendStatusToSnooper -----
+  subroutine SendStatusToSnooper ( SNOOPER, STATUS, LOCATION, COMMENT, &
+    &  CONTROLED )
+    type (L1SnooperInfo_T), intent(INOUT) :: SNOOPER
+    character (len=*), intent(in) :: STATUS
+    character (len=*), intent(in) :: LOCATION
+    character (len=*), intent(in) :: COMMENT
+    logical, intent(in) :: CONTROLED
+
+    ! Local variables
+    integer :: BUFFERID                 ! ID for PVM
+    integer :: INFO                     ! Flag from PVM
+
+    ! Executable code
+
+    ! Initialize the message
+    call PVMFInitSend ( PvmDataDefault, bufferID )
+    print *,"packing status"
+
+    ! pack up the quantities we're going to send: status, location, a comment,
+    ! the current executable, whether this snooper is controlling or observing.
+
+    call PVMIDLPack ( status, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "packing status" )
+    print *,"packing location"
+    call PVMIDLPack ( location, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "packing location" )
+    print *,"packing comment"
+    call PVMIDLPack ( comment, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "packing comment" )
+
+    ! MLSL1 doesn't have 'phases', but I'm leaving the code in, just in case I
+    ! may need something like this.
+    !
+    ! print *,"packing phase name" call
+    ! PVMIDLPack ( phaseName, info ) if ( info /= 0 ) call PVMErrorMessage (
+    ! info, "packing phaseName" )
+
+    print *,"packing controlled"
+    call PVMIDLPack ( controled, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "packing controled" )
+    print *,"Sending message"
+
+    ! Now send the messages
+    call PVMFSend ( snooper%tid, SnoopTag, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "sending status etc." )
+
+
+  end subroutine SendStatusToSnooper
+
+  
+  ! ---------------------------------------- AddSnooperToDatabase ------
+  integer function AddSnooperToDatabase ( database, item )
+
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
+    type (L1SnooperInfo_T), dimension(:), pointer :: DATABASE
+    type (L1SnooperInfo_T), intent(in) :: ITEM
+    ! Local variables
+    type (L1SnooperInfo_T), dimension(:), pointer :: TEMPDATABASE
+    include "addItemToDatabase.f9h"
+    AddSnooperToDatabase=newSize
+
+  end function AddSnooperToDatabase
+
+  ! ------------------------------------------- RegisterNewSnooper -----
+  subroutine RegisterNewSnooper ( snoopers, snooperTid ) 
+    type (L1SnooperInfo_T), dimension(:), pointer :: snoopers
+    integer, intent(in) :: snooperTid
+
+    ! Local variables
+    integer :: INFO
+    type (L1SnooperInfo_T) :: NEWSNOOPER
+    integer :: NOSNOOPERS
+
+    ! Executable code
+
+    ! Setup the new snooper information
+    if ( switchDetail ( switches, 'snoop' ) > -1 ) &
+      & call output ( 'Registering new snooper', advance='yes' )
+
+    newSnooper%tid = snooperTid
+    newSnooper%mode = SnooperObserving
+    noSnoopers = AddSnooperToDatabase ( snoopers, newSnooper )
+
+    ! Ask to be notified of its death
+    call PVMFNotify ( PVMTaskExit, SnooperDiedTag, 1, &
+      (/ snooperTid /), info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, &
+      & "calling PVMFNotify" )
+
+    ! Now if this is the first, let's have it controling us
+    if ( size(snoopers) == 1 ) then
+      snoopers(1)%mode = SnooperControling
+      call PVMIDLSend ( 'ControlAccept', snooperTid, info, msgTag=SnoopTag )
+      if ( info /= 0 ) call PVMErrorMessage ( info, &
+        & "sending control information" )
+    endif
+    
+  end subroutine RegisterNewSnooper
+
+  ! ==============================================================
+  ! subroutines/functions that deal with sending data to the snooper
+  ! ==============================================================
+  
+
+  ! =========================================================================
+  !
+  ! Send list of things the caller is offering to the IDL client, or whatever
+  ! other PVM client is listening. This doesn't send any data, it just alerts
+  ! the snooper what's available.
+  !
+  ! =========================================================================
+  SUBROUTINE SendOfferingsListToSnooper ( SNOOPER, &
+       &                              Offerings1, &
+       &                              Offerings2)
+
+    ! Arguments
+    TYPE (L1SnooperInfo_T), INTENT(in) :: SNOOPER
+    TYPE (L1SnoopOffering_T), INTENT(in),OPTIONAL :: Offerings1(:)
+    TYPE (L1SnoopOffering_T), INTENT(in),OPTIONAL :: Offerings2(:)
+
+    ! Local variables
+    integer :: BUFFERID              ! For PVM
+    INTEGER :: nArr1, nArr2, nTotArr ! Nummber of arrays supplied
+    integer :: INFO                  ! Flag from PVM
+    CHARACTER(len=FileNameLen) :: name
+
+    ! Executable code
+    nArr1=SIZE(Offerings1) 
+    nArr2=SIZE(Offerings2)
+    nTotArr = nArr1 + nArr2
+
+    IF ( nTotArr > 0 ) THEN
+
+      CALL PVMFInitSend ( PvmDataDefault, bufferID )
+
+      print *,'packing "Arrays"'
+      CALL PVMIDLPack ( "Arrays", info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "packing 'Arrays'" )
+
+      print *,'packing "nTotArray"'
+      CALL PVMIDLPack ( nTotArr, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "packing noArrays" )
+      print *,'packing individual names, won''t give details'
+      DO o = 1,nArr1
+        name=Offerings1(o)%name
+        !print *,'packing "'//trim(name)//'", ', o
+        call PVMIDLPack( TRIM(name), info)
+        IF ( info /= 0 ) CALL PVMErrorMessage ( info, &
+             &                "packing an array name"// TRIM(name))
+      END DO
+
+      DO o = 1,nArr2
+        name=Offerings2(o)%name
+        print *,'packing "'//trim(name)//'", ', o
+        call PVMIDLPack( TRIM(name), info)
+        IF ( info /= 0 ) CALL PVMErrorMessage ( info, &
+             &             "packing an array name"// TRIM(name))
+      END DO
+
+      ! Now send these messages. The snooper has to receive them in the same
+      ! order.
+      print *,'Calling PVMFSend to send messages'
+      call PVMFSend ( snooper%tid, SnoopTag, info )
+      IF (info /= 0) CALL PVMErrorMessage ( info, &
+           &               "sending Offerings1 information" )
+      
+    ELSE
+      ! if ( switchDetail ( switches, 'snoop' ) > -1 ) &
+      !   & call output ( 'Sending "No Arrays"', advance='yes' )
+      print *,'Calling PVMFSend to send "No Arrays"'
+      CALL PVMIDLSend ( "No Arrays", snooper%tid, info, msgTag=SnoopTag )
+      IF ( info /= 0 ) CALL PVMErrorMessage ( info, "sending 'No Arrays'" )
+    END IF
+    
+  END SUBROUTINE SendOfferingsListToSnooper
+ 
+  !-------------------------------------------------------------
+  ! The snooper requested an array. Send it
+  !-------------------------------------------------------------
+  SUBROUTINE SendRequestedArrayToSnooper(SNOOPER, &
+       &                                 Offering)
+
+
+    ! Arguments
+    TYPE (L1SnooperInfo_T), INTENT(in) :: SNOOPER
+    TYPE (L1SnoopOffering_T), INTENT(in) :: Offering
+
+    ! Local variables
+    integer :: BUFFERID              ! For PVM
+    integer :: INFO                  ! Flag from PVM
+    ! Executable code
+
+
+    SELECT CASE (Offering%rank)
+    CASE(1)
+      IF ( ASSOCIATED( Offering%R1Value )) THEN 
+        CALL SendRealArrayToSnooper( SNOOPER, &
+             &                       Offering%R1value,&
+             &                       Offering%name)
+      ELSE IF ( ASSOCIATED( Offering%I1Value )) THEN 
+        CALL SendIntegerArrayToSnooper( SNOOPER, &
+             &                       Offering%I1value,&
+             &                       Offering%name)
+      ELSE
+        CALL MLSMessage ( MLSMSG_Error, ModuleName, &
+             & 'You asked for '//TRIM(Offering%name)//&
+             & " but I can't find associated value! Skipping"  )
+      ENDIF
+    CASE(2)
+      IF ( ASSOCIATED( Offering%R2Value )) THEN 
+        CALL SendRealArrayToSnooper( SNOOPER, &
+             &                       Offering%R2value,&
+             &                       Offering%name)
+      ELSE IF ( ASSOCIATED( Offering%I2Value )) THEN 
+        CALL SendIntegerArrayToSnooper( SNOOPER, &
+             &                       Offering%I2value,&
+             &                       Offering%name)
+      ELSE
+        CALL MLSMessage ( MLSMSG_Error, ModuleName, &
+             & 'You asked for '//TRIM(Offering%name)//&
+             & " but I can't find associated value! Skipping"  )
+      ENDIF
+    CASE(3)
+      IF ( ASSOCIATED( Offering%R3Value )) THEN 
+        CALL SendRealArrayToSnooper( SNOOPER, &
+             &                       Offering%R3value,&
+             &                       Offering%name)
+      ELSE IF ( ASSOCIATED( Offering%I3Value )) THEN 
+        CALL SendIntegerArrayToSnooper( SNOOPER, &
+             &                       Offering%I3value,&
+             &                       Offering%name)
+      ELSE
+        CALL MLSMessage ( MLSMSG_Error, ModuleName, &
+             & 'You asked for '//TRIM(Offering%name)//&
+             & " but I can't find associated value! Skipping"  )
+
+      END IF
+    END SELECT
+    
+  END SUBROUTINE SendRequestedArrayToSnooper
+
+
+
+  ! ------------------------------------- SendR1ArrayToSnooper ------------
+  subroutine SendR1ArrayToSnooper ( SNOOPER, M, NAME )
+    ! This routine sends the array to the given snooper
+
+    ! Dummy arguments
+    type (L1SnooperInfo_T), intent(in) :: SNOOPER ! This snooper
+    REAL(r4), DIMENSION(:), INTENT(in), POINTER :: M
+    character(len=*), intent(in) :: NAME
+
+    ! Local variables
+    ! integer :: BUFFERID                 ! ID for PVM
+    ! integer :: INFO                     ! Flag from PVM
+
+    ! Executable code
+    include "SnoopMLSL1.f9h"
+
+    ! call PVMFInitSend ( PvmDataDefault, bufferID )
+    ! call PVMIDLPACK ( 'Array', info )
+    ! if ( info /= 0 ) call PVMErrorMessage ( info, 'packing "Array"' )
+    ! call PVMIDLPack ( trim(name), info )
+    ! if ( info /= 0 ) call PVMErrorMessage ( info, 'packing array name' )
+    ! call PVMIDLPack ( M, info )
+    ! if ( info /= 0 ) call PVMErrorMessage ( info, 'packing array values' )
+    ! call PVMFSend ( snooper%tid, SnoopTag, info )
+    ! if ( info /= 0 ) call PVMErrorMessage ( info, 'sending array' )
+
+
+  end subroutine SendR1ArrayToSnooper
+
+  ! ------------------------------------- SendR1ArrayToSnooper ------------
+  subroutine SendR2ArrayToSnooper ( SNOOPER, M, NAME )
+    ! This routine sends the array to the given snooper
+
+    ! Dummy arguments
+    type (L1SnooperInfo_T), intent(in) :: SNOOPER ! This snooper
+    REAL(r4), DIMENSION(:,:), INTENT(in), POINTER :: M
+    character(len=*), intent(in) :: NAME
+
+    ! Local variables
+    !integer :: BUFFERID                 ! ID for PVM
+    !integer :: INFO                     ! Flag from PVM
+
+    ! Executable code
+    include "SnoopMLSL1.f9h"
+    ! call PVMFInitSend ( PvmDataDefault, bufferID )
+    ! call PVMIDLPACK ( 'Array', info )
+    ! if ( info /= 0 ) call PVMErrorMessage ( info, 'packing "Array"' )
+    ! call PVMIDLPack ( trim(name), info )
+    ! if ( info /= 0 ) call PVMErrorMessage ( info, 'packing array name' )
+    ! call PVMIDLPack ( M, info )
+    ! if ( info /= 0 ) call PVMErrorMessage ( info, 'packing array values' )
+    ! call PVMFSend ( snooper%tid, SnoopTag, info )
+    ! if ( info /= 0 ) call PVMErrorMessage ( info, 'sending array' )
+  end subroutine SendR2ArrayToSnooper
+
+  ! ------------------------------------- SendR1ArrayToSnooper ------------
+  subroutine SendR3ArrayToSnooper ( SNOOPER, M, NAME )
+    ! This routine sends the array to the given snooper
+
+    ! Dummy arguments
+    type (L1SnooperInfo_T), intent(in) :: SNOOPER ! This snooper
+    REAL(r4), DIMENSION(:,:,:), INTENT(in), POINTER :: M
+    character(len=*), intent(in) :: NAME
+
+    ! Local variables
+    !integer :: BUFFERID                 ! ID for PVM
+    !integer :: INFO                     ! Flag from PVM
+
+    ! Executable code
+    include "SnoopMLSL1.f9h"
+    ! call PVMFInitSend ( PvmDataDefault, bufferID )
+    ! call PVMIDLPACK ( 'Array', info )
+    ! if ( info /= 0 ) call PVMErrorMessage ( info, 'packing "Array"' )
+    ! call PVMIDLPack ( trim(name), info )
+    ! if ( info /= 0 ) call PVMErrorMessage ( info, 'packing array name' )
+    ! call PVMIDLPack ( M, info )
+    ! if ( info /= 0 ) call PVMErrorMessage ( info, 'packing array values' )
+    ! call PVMFSend ( snooper%tid, SnoopTag, info )
+    ! if ( info /= 0 ) call PVMErrorMessage ( info, 'sending array' )
+  end subroutine SendR3ArrayToSnooper
+
+
+  ! ------------------------------------- SendI1ArrayToSnooper ------------
+  subroutine SendI1ArrayToSnooper ( SNOOPER, M, NAME )
+    ! This routine sends the array to the given snooper
+
+    ! Dummy arguments
+    TYPE (L1SnooperInfo_T), INTENT(in) :: SNOOPER ! This snooper
+    INTEGER, DIMENSION(:), INTENT(in), pointer :: M
+    CHARACTER(len=*), INTENT(in) :: NAME
+
+    ! Local variables
+    !INTEGER :: BUFFERID                 ! ID for PVM
+    !INTEGER :: INFO                     ! Flag from PVM
+
+    ! Executable code
+    include "SnoopMLSL1.f9h"
+    ! call PVMFInitSend ( PvmDataDefault, bufferID )
+    ! call PVMIDLPACK ( 'Array', info )
+    ! if ( info /= 0 ) call PVMErrorMessage ( info, 'packing "Array"' )
+    ! call PVMIDLPack ( trim(name), info )
+    ! if ( info /= 0 ) call PVMErrorMessage ( info, 'packing array name' )
+    ! call PVMIDLPack ( M, info )
+    ! if ( info /= 0 ) call PVMErrorMessage ( info, 'packing array values' )
+    ! call PVMFSend ( snooper%tid, SnoopTag, info )
+    ! if ( info /= 0 ) call PVMErrorMessage ( info, 'sending array' )
+  end subroutine SendI1ArrayToSnooper
+
+  ! ------------------------------------- SendI2ArrayToSnooper ------------
+  subroutine SendI2ArrayToSnooper ( SNOOPER, M, NAME )
+    ! This routine sends the array to the given snooper
+
+    ! Dummy arguments
+    TYPE (L1SnooperInfo_T), INTENT(in) :: SNOOPER ! This snooper
+    INTEGER, DIMENSION(:,:), INTENT(in), POINTER :: M
+    CHARACTER(len=*), INTENT(in) :: NAME
+
+    ! Local variables
+    !INTEGER :: BUFFERID                 ! ID for PVM
+    !INTEGER :: INFO                     ! Flag from PVM
+
+    ! Executable code
+    include "SnoopMLSL1.f9h"
+    ! call PVMFInitSend ( PvmDataDefault, bufferID )
+    ! call PVMIDLPACK ( 'Array', info )
+    ! if ( info /= 0 ) call PVMErrorMessage ( info, 'packing "Array"' )
+    ! call PVMIDLPack ( trim(name), info )
+    ! if ( info /= 0 ) call PVMErrorMessage ( info, 'packing array name' )
+    ! call PVMIDLPack ( M, info )
+    ! if ( info /= 0 ) call PVMErrorMessage ( info, 'packing array values' )
+    ! call PVMFSend ( snooper%tid, SnoopTag, info )
+    ! if ( info /= 0 ) call PVMErrorMessage ( info, 'sending array' )
+  end subroutine SendI2ArrayToSnooper
+
+  ! ------------------------------------- SendI3ArrayToSnooper ------------
+  subroutine SendI3ArrayToSnooper ( SNOOPER, M, NAME )
+    ! This routine sends the array to the given snooper
+
+    ! Dummy arguments
+    TYPE (L1SnooperInfo_T), INTENT(in) :: SNOOPER ! This snooper
+    INTEGER, DIMENSION(:,:,:), INTENT(in), POINTER :: M
+    CHARACTER(len=*), INTENT(in) :: NAME
+
+    ! Local variables
+    !INTEGER :: BUFFERID                 ! ID for PVM
+    !INTEGER :: INFO                     ! Flag from PVM
+
+    ! Executable code
+    include "SnoopMLSL1.f9h"
+    ! call PVMFInitSend ( PvmDataDefault, bufferID )
+    ! call PVMIDLPACK ( 'Array', info )
+    ! if ( info /= 0 ) call PVMErrorMessage ( info, 'packing "Array"' )
+    ! call PVMIDLPack ( trim(name), info )
+    ! if ( info /= 0 ) call PVMErrorMessage ( info, 'packing array name' )
+    ! call PVMIDLPack ( M, info )
+    ! if ( info /= 0 ) call PVMErrorMessage ( info, 'packing array values' )
+    ! call PVMFSend ( snooper%tid, SnoopTag, info )
+    ! if ( info /= 0 ) call PVMErrorMessage ( info, 'sending array' )
+  end subroutine SendI3ArrayToSnooper
+
+!--------------------------- end bloc --------------------------------------
+
+
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module SnoopMLSL1
