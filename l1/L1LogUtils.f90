@@ -58,10 +58,16 @@ CONTAINS
   SUBROUTINE ExamineEngData
 !=============================================================================
 
+    ! <whd>Read the L0 PDS science data in the processing range and write out a
+    ! temporary file (PCF id=921, nominally named engMAF.dat, a fortran binary
+    ! file in sequential mode) which will be read later by
+    ! CalibWeightsFlags::ProcessMAFdata.</whd>
+
     use EngUtils, ONLY: NextEngMAF
     use EngTbls, ONLY: EngMAF, EngPkt
     use MLSL1Common, ONLY: MaxdataGaps, MaxErroneousCounterMAFs
     USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Warning
+
 
     logical :: first = .TRUE.
     logical :: more_data = .TRUE.
@@ -86,6 +92,7 @@ CONTAINS
 
 ! Catch up to the Sci MAFno:
 
+          ! loop until we find the MAF no we want
           DO
              IF (EngMAF%MAFno == BeginEnd%SciMAFno(1)) EXIT
              CALL NextEngMAF (more_data)
@@ -101,7 +108,7 @@ CONTAINS
        ENDIF
 
 ! Save data for further processing:
-
+       ! PCF id=921, nominally named engMAF.dat
        WRITE (L1BFileInfo%EngMAF_unit) EngMAF, EngPkt
  
 ! Check for data gaps:
@@ -171,11 +178,17 @@ CONTAINS
   SUBROUTINE ExamineSciData
 !=============================================================================
 
+
+    ! Read the L0 PDS science data in the processing range and write out a
+    ! temporary file (PCF id=920, nominally named sciMAF.dat, a fortran binary
+    ! in sequential mode) which will be read later by
+    ! CalibWeightsFlags::ProcessMAFdata.
+
     USE L0_sci_tbls, ONLY: SciMAF
     USE SciUtils, ONLY: NextSciMAF
     USE MLSL1Common, ONLY: FBnum, MBnum, WFnum, DACSnum, MaxMIFs
 
-    INTEGER :: i, mindx
+    INTEGER :: i, mindx,lastGoodMAF
     LOGICAL :: first = .TRUE.
     LOGICAL :: more_data = .TRUE.
     LOGICAL :: doneAttens = .FALSE.
@@ -194,6 +207,7 @@ CONTAINS
        DO
           CALL NextSciMAF (more_data)
           IF (.NOT. more_data) EXIT
+          ! <whd> what is this first test doing? </whd>
           IF (ALL(SciMAF%scAngleG < 0.0) .OR. (SciMAF(0)%scAngleG > 0.0)) THEN
              IF (SciMAF(0)%secTAI >= TAI_range%startTime) EXIT
           ENDIF
@@ -210,7 +224,6 @@ CONTAINS
        ENDIF
 
 ! Check for data gaps:
-
        MAF_dif = INT ((SciMAF(0)%secTAI - last_TAI) / MAF_dur + 0.1)
        IF (MAF_dif > 1) THEN
           SciGaps = SciGaps + 1
@@ -225,11 +238,15 @@ CONTAINS
        ENDIF
 
        DO i = 0, last_MIF
+         IF (SciMAF(i)%MAFNo /= -1) THEN
+            lastGoodMAF=SciMAF(i)%MAFNo
+         ENDIF
           IF (SciMAF(i)%MIFno < 0) THEN
+             ! It turns out that sciMAF(i)%MAFno will also == -1 here.
              SciGaps = SciGaps + 1
              Sci_Warns = Sci_Warns + 1
              WRITE (unit, *) '##### WARNING! Data Gap:'
-             WRITE (unit, *) 'MIF missing: ', i
+             WRITE (unit, *) 'MAF no:',lastGoodMAF,', MIF missing: ', i
              PGS_stat = PGS_TD_TAItoUTC (SciMAF(0)%secTAI+MIF_dur*i,asciiUTC(2))
              WRITE (unit, *) 'UTC: ', asciiUTC(2)
              WRITE (unit, *) ''
@@ -242,7 +259,7 @@ CONTAINS
        ENDDO
 
 ! Save data for further processing:
-
+       !PCF id=920, nominally named sciMAF.dat
        WRITE (L1BFileInfo%SciMAF_unit) SciMAF
 
        last_TAI = SciMAF(0)%secTAI
@@ -386,10 +403,10 @@ CONTAINS
     USE MLSL1Common, ONLY: FBnum, FBchans, MBnum, MBchans, WFnum, WFchans, &
          deflt_zero
     USE MLSPCF1, ONLY : mlspcf_defltzeros_end
-    USE SDPToolkit, ONLY: PGS_PC_GetReference
+    USE SDPToolkit, ONLY: PGS_PC_GetReference, PGSd_PC_FILE_PATH_MAX
     USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Info
 
-    CHARACTER (LEN=132) :: PhysicalFilename
+    CHARACTER (LEN=PGSd_PC_FILE_PATH_MAX) :: PhysicalFilename
     INTEGER :: bank, chan, i, ios, returnStatus, unit, version
     REAL(R8) :: mid_TAI
     CHARACTER (LEN=*), DIMENSION(10), PARAMETER :: Header = (/ &
@@ -506,6 +523,11 @@ CONTAINS
     CHARACTER(LEN=80) :: message
     INTEGER :: window_MAFs
 
+    ! <whd> L1BFileInfo%LogId points to a file opened in
+    ! OpenInit. that file is defined in the PCF file with PCF ID =
+    ! 30006. Nominally it's named
+    ! MLS-Aura_L1BLOG_<version>_<auraday>.txt </whd>
+
     unit = L1BFileInfo%LogId
 
 ! Determine TAI/MAF range to read:
@@ -589,8 +611,22 @@ END MODULE L1LogUtils
 !=============================================================================
 
 ! $Log$
+! Revision 2.19  2016/03/15 22:17:59  whdaffer
+! Merged whd-rel-1-0 back onto main branch. Most changes
+! are to comments, but there's some modification to Calibration.f90
+! and MLSL1Common to support some new modules: MLSL1Debug and SnoopMLSL1.
+!
 ! Revision 2.18  2016/02/12 20:04:48  pwagner
 ! Prevent bad level 0 files from causing englog to fill all diskspace
+!
+! Revision 2.17.4.3  2016/03/04 21:43:26  whdaffer
+! Merged PW's Trunk changes into my branch
+!
+! Revision 2.17.4.2  2016/03/03 18:53:08  whdaffer
+! Some comments
+!
+! Revision 2.17.4.1  2015/10/09 10:21:38  whdaffer
+! checkin of continuing work on branch whd-rel-1-0
 !
 ! Revision 2.17  2011/01/27 15:35:51  perun
 ! Only check TAI time for good scAngleG or for first empty MAF
