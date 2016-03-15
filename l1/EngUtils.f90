@@ -33,8 +33,11 @@ CONTAINS
 
   FUNCTION Cal_freq (meas_freq, hi_freq, lo_freq, hi_cal, lo_cal) RESULT (freq)
 
-    !! Calibrate the measured frequency against the calibration frequencies
-    !! and their corresponding parameter values
+    !! Calibrate the measured frequency against the calibration frequencies and
+    !! their corresponding parameter values.  
+
+    !! See Eq. 5.3, sec 5 in the _MLS Level Algorithmic Theoretical Basis_
+    !! (ATB) version 2.0)
 
     !--------Arguments--------!
     INTEGER, INTENT(IN) :: meas_freq  ! measured frequency
@@ -57,14 +60,19 @@ CONTAINS
 
   FUNCTION Therm_temp (rin) RESULT (T)
 
+    !! See Eq.s 5.5, 5.6, Sec 5.1.3, page 49 of the MLS Level 1 ATB document
+    !! (rev 2.0)
+    !!
+
     !! Convert thermistor (ohms) to temperature (C) */
-
+    !!
     !! The thermistor is a YSI 44906 in parallel with a 4.99 K ohm resistor.
-
+    !!
     !! input:
     !!         rin: measured thermistor resistance (ohms)
     !! output:
     !!         T:   temperature (C)
+    !!
 
     !--------Arguments--------!
     REAL, INTENT(IN) :: rin
@@ -89,13 +97,17 @@ CONTAINS
     ELSE IF (rin <= 0.0) THEN   ! under the minimum ohms
        T = 500.0                ! maximum possible temperature
     ELSE
-       rth_log = LOG ((rmax * rin) / (rmax - rin))
+       rth_log = LOG ((rmax * rin) / (rmax - rin)) ! log(Eq 5.5, pg 49)
        T = 1.0 / (a + rth_log * (b + rth_log * (c + rth_log * d))) + abs_zero
     ENDIF
 
   END FUNCTION Therm_temp
 
   FUNCTION PRD_temp (rin, r0) RESULT (T)
+
+    !! See Eq. 5.4, Sec 5.1.1, pg 48 of MLS Level 1 ATB (v2.0)
+    !!
+    !!
 
     !! Convert PRD (ohms) to temperature (C)
     !! inputs:
@@ -165,158 +177,276 @@ CONTAINS
 
   SUBROUTINE ConvertEngCounts (GMAB_ON)
 
-    !! Convert the raw counts into engineering units
+    !! Convert the raw counts into engineering units. The input engineering data
+    !! is stored in the module variable EngPkt, which stores one MAF of
+    !! Engineering data and is filled in each call to NextEngMaf, which calls
+    !! this routine.
 
     USE EngTbls, ONLY: Eng_tbl, Riu_tbl, EngPkt, last_tlm_pt, temp_cal, &
      & vin_cal1, vin_cal2, prt1_cal1, prt1_cal2, prt2_cal1, prt2_cal2, &
      & ysi_cal1, ysi_cal2, Cal_const
 
+    USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Info,MLSMSG_Warning
+    USE SDPToolkit, ONLY: PGS_TD_TAItoUTC
     LOGICAL, DIMENSION(:) :: GMAB_ON
 
-    INTEGER :: i, n, dn, pkt_no, riu_no, byte1
+    INTEGER :: i, n, dn, pkt_no, riu_no, byte1,rs
     REAL :: scale
 
     REAL, PARAMETER :: abs_zero = -273.16
+    REAL(r8) TAI93
 
-! Extract the raw counts
 
-    DO i = 1, SIZE(Riu_tbl)
+    LOGICAL :: FoundBadPoints=.FALSE.
 
-       pkt_no = Riu_tbl(i)%pkt_no
-       byte1 = Riu_tbl(i)%start_byte
-       Riu_tbl(i)%id_word = BigEndianStr (EngPkt(pkt_no)(byte1:byte1+1))
+    CHARACTER(len=27) :: asciiUTC
+    CHARACTER(len=256) :: msg
+    INTEGER, EXTERNAL :: PGS_TD_EOSPMGIRDtoTAI
 
-       DO n = Riu_tbl(i)%first_pt, Riu_tbl(i)%last_pt
 
-          byte1 = byte1 + 2    ! next word
-          Eng_tbl(n)%counts = BigEndianStr (EngPkt(pkt_no)(byte1:byte1+1))
-          if ( n == 3 .and. Eng_tbl(n)%counts < 1 ) &
-            & print *, 'Cal counts is 0 for Eng table at n ', n
 
-! Save the calibration counts
+! Extract the raw counts. For each RIU
 
-         IF (Eng_tbl(n)%cal_indx > 0) THEN
-            Riu_tbl(i)%Cal_cnts(Eng_tbl(n)%cal_indx) = Eng_tbl(n)%counts
-            IF (Eng_tbl(n)%cal_indx == prt1_cal1) THEN  ! save also as PRT-2's
-               Riu_tbl(i)%Cal_cnts(prt2_cal1) = Eng_tbl(n)%counts
-            ELSE IF (Eng_tbl(n)%cal_indx == prt1_cal2) THEN
-               Riu_tbl(i)%Cal_cnts(prt2_cal2) = Eng_tbl(n)%counts
-            ENDIF
-         ENDIF
+    DO i = 1, SIZE(Riu_tbl) ! count RIUs
+      
+      ! Here 'i' is the RIU number.
+      
+      pkt_no = Riu_tbl(i)%pkt_no ! pkt for this RIU
+      byte1 = Riu_tbl(i)%start_byte ! starting byte for this RIU
 
-       ENDDO
+      Riu_tbl(i)%id_word = BigEndianStr (EngPkt(pkt_no)(byte1:byte1+1))
+
+      DO n = Riu_tbl(i)%first_pt, Riu_tbl(i)%last_pt
+        ! <whd> 
+        ! {first,last}_pt are actually the first and last line numbers in the
+        ! eng tables file (currently named engtlm.tbl) which mentions RIU(i);
+        ! it is *not* a telemetry value!  Their purpose here is just to count
+        ! the number of bytes that need to be extracted from this packet for
+        ! this RIU
+
+        ! So all that's really important here is the number of lines for this
+        ! RIU, i.e.  nLines = Riu_tbl(i)%last_pt - Riu_tbl(i)%first_pt+1
+
+        byte1 = byte1 + 2    ! next word
+
+        ! so the packet is arranged as: (all quantities are 2-byte long)
+        ! id 
+        ! counts(mnem(1)) 
+        ! counts(mnem(2))
+        ! counts(mnem(3))
+        ! ...
+        ! counts(mnem(last_mnem)
+        !!
+        Eng_tbl(n)%counts = BigEndianStr (EngPkt(pkt_no)(byte1:byte1+1))
+
+
+        ! <whd> why a special test for GM01_PRT1_Cal1 </whd>
+
+        if ( n == 3 .and. Eng_tbl(n)%counts < 1 ) &
+             & print *, 'Cal counts is <= 0 for Eng table at n ', n
+
+        ! Save the calibration counts
+
+        ! <whd> 
+        ! cal_indx is index into the array EngTbls::Cal_Type_str, so
+        ! Riu_tbl%cal_cnts has the same order as that array. Parameters that
+        ! hold these indices are also defined in EngTbls ~line 49
+        ! </whd>
+
+        IF (Eng_tbl(n)%cal_indx > 0) THEN
+          Riu_tbl(i)%Cal_cnts(Eng_tbl(n)%cal_indx) = Eng_tbl(n)%counts
+          ! Don't know why ptr1_cal{1,2} also saves ptr2_cal{1,2}.
+          IF (Eng_tbl(n)%cal_indx == prt1_cal1) THEN  ! save also as PRT-2's
+            Riu_tbl(i)%Cal_cnts(prt2_cal1) = Eng_tbl(n)%counts
+          ELSE IF (Eng_tbl(n)%cal_indx == prt1_cal2) THEN
+            Riu_tbl(i)%Cal_cnts(prt2_cal2) = Eng_tbl(n)%counts
+          ENDIF
+        ENDIF
+
+      ENDDO
 
     ENDDO
 
 ! Convert the counts
 
+    ! <whd>
+    ! `i' here is basically the lines of the engtlm.tbl file (excluding those in
+    ! the `survival table', the file header, and section demarcating lines
+    ! (i.e. those consisting of a line of dashes)
+    ! </whd>
+
     DO i = 1, last_tlm_pt
 
-       riu_no = Eng_tbl(i)%riu_no
-       scale = Eng_tbl(i)%scale
+      riu_no = Eng_tbl(i)%riu_no
+      scale = Eng_tbl(i)%scale
 
-       Eng_tbl(i)%value = QNan()
+      Eng_tbl(i)%value = QNan() ! assume the worst
 
-       ! Skip the always bad THz sensor
+      ! Skip the always bad THz sensor
 
-       IF ((INDEX (Eng_tbl(i)%mnemonic, "THzAmbCalTgt_T2") /= 0) .OR. &
-            (INDEX (Eng_tbl(i)%mnemonic, "THzAmbCalTgtRT2") /= 0)) CYCLE
+      IF ((INDEX (Eng_tbl(i)%mnemonic, "THzAmbCalTgt_T2") /= 0) .OR. &
+           (INDEX (Eng_tbl(i)%mnemonic, "THzAmbCalTgtRT2") /= 0)) CYCLE
 
-       IF (riu_no >= 1 .AND. riu_no <= 4) THEN
-          IF (.NOT. GMAB_ON(riu_no)) CYCLE     ! GMriu_no is NOT ON
-          IF (MOD (riu_no, 2) == 0) THEN
-             IF (GMAB_ON(riu_no-1)) CYCLE      ! Other related GMriu_no is ON
+      IF (riu_no >= 1 .AND. riu_no <= 4) THEN
+        IF (.NOT. GMAB_ON(riu_no)) CYCLE     ! GMriu_no is NOT ON
+        IF (MOD (riu_no, 2) == 0) THEN
+          IF (GMAB_ON(riu_no-1)) CYCLE      ! Other related GMriu_no is ON
+        ELSE
+          IF (GMAB_ON(riu_no+1)) CYCLE      ! Other related GMriu_no is ON
+        ENDIF
+      ENDIF
+
+      ! <whd>
+      ! if id_word == 0, this RIU is off!
+      ! Riu_tbl(riu_no)%id_word is the ID for the Riu_tbl(riu_no). The C&DH
+      ! handbook (e.g. see pages 30-33, similarly for any fields marked
+      ! [GMST]0[1-4]) Eng_tbl(i) the entry on the i-th non-trivial line in the
+      ! engineering telemetry table file, currently called
+      ! engtlm.tbl. Eng_tbl(i)%counts is read from the telemetry, using the pkt
+      ! no and offset stored in Riu_tbl. Riu_tbl is filled in EngTbls.f90
+      ! </whd>
+
+      IF (Riu_tbl(riu_no)%id_word /= 0 .AND. &
+           Eng_tbl(i)%counts > 0) THEN   
+        ! RIU is on and there are non-zero counts: Data available to convert
+
+        SELECT CASE (Eng_tbl(i)%type)
+
+        CASE ("Cal")
+
+          IF (Eng_tbl(i)%cal_indx /= temp_cal) THEN   ! not a temperature
+            Eng_tbl(i)%value = Eng_tbl(i)%counts
           ELSE
-             IF (GMAB_ON(riu_no+1)) CYCLE      ! Other related GMriu_no is ON
+
+            Eng_tbl(i)%value = Cal_freq ( Eng_tbl(i)%counts, & !measurement
+                 & Riu_tbl(riu_no)%Cal_cnts(vin_cal1), & !high cal cnt
+                 & Riu_tbl(riu_no)%Cal_cnts(vin_cal2), & !low cal cnt
+                 & Cal_const(riu_no)%volts, & !high value
+                 & 0.0) &                     !low value
+                 & * 100.0 + abs_zero
           ENDIF
+
+        CASE ("VIN")
+
+          Eng_tbl(i)%value = Cal_freq (Eng_tbl(i)%counts, &
+               & Riu_tbl(riu_no)%Cal_cnts(vin_cal1), &
+               & Riu_tbl(riu_no)%Cal_cnts(vin_cal2), &
+               & Cal_const(riu_no)%volts, 0.0)
+
+          IF (scale /= 0.0) THEN
+            Eng_tbl(i)%value = scale * Eng_tbl(i)%value
+          ELSE
+            Eng_tbl(i)%value = Use_equation (Eng_tbl(i)%mnemonic, &
+                 & Eng_tbl(i)%value)
+          ENDIF
+
+        CASE ("PRT-1")
+
+          dn = Eng_tbl(i)%counts
+          IF (dn > 63000) dn = dn - 65536  ! adjust if DN is too high
+
+          ! calls cal_freq inside PRT_temp. Commented to make that a bit
+          ! clearer. Cases PRT-2, YSI-{1,2} are similar.
+
+          Eng_tbl(i)%value = PRD_temp ( &
+               & Cal_freq(dn, &
+               &          Riu_tbl(riu_no)%Cal_cnts(prt1_cal1), &
+               &          Riu_tbl(riu_no)%Cal_cnts(prt1_cal2), &
+               &          Cal_const(riu_no)%prt1_hi, &
+               &          Cal_const(riu_no)%prt1_low &
+               &          ), &
+               & scale)
+
+        CASE ("PRT-2")
+
+          Eng_tbl(i)%value = PRD_temp ( &
+               Cal_freq( &
+               &                       Eng_tbl(i)%counts, &
+               &                       Riu_tbl(riu_no)%Cal_cnts(prt2_cal1), &
+               &                       Riu_tbl(riu_no)%Cal_cnts(prt2_cal2), &
+               &                       Cal_const(riu_no)%prt2_hi, &
+               &                       Cal_const(riu_no)%prt2_low &
+               &                       ), &
+               &                scale)
+
+        CASE ("YSI")
+
+          Eng_tbl(i)%value = Therm_temp (&
+               &              Cal_freq(&
+               &                 Eng_tbl(i)%counts, &
+               &                 Riu_tbl(riu_no)%Cal_cnts(ysi_cal1), &
+               &                 Riu_tbl(riu_no)%Cal_cnts(ysi_cal2), &
+               &                 Cal_const(riu_no)%therm_hi, Cal_const(riu_no)%therm_low &
+               &                 ) &
+               &               )
+
+        CASE DEFAULT
+
+          PRINT *, "Unknown tlm type!"  !! use standard routine here
+
+        END SELECT
+
+      ELSEIF ( i < 307 .or. i > 321 ) THEN
+        !<whd:comment> 
+!
+        ! Riu_tbl(riu_no)%id_word /= 0 .OR.Eng_tbl(i)%counts <= 0, but i < 307
+        ! or > 321. Lines 307-320 in engtlm.tbl correspond to GM15 and
+        ! SM01. Comment below says those are always NaNs
+!
+        !</whd:comment> 
+        PRINT *, 'Data not available to convert'
+        IF (Eng_tbl(i)%mnemonic .eq. 'Spare') THEN
+          print *,"But it's a `Spare', so we don't really care!"
+        ELSE
+          print *,"Mnemonic = ",Eng_tbl(i)%mnemonic
+        ENDIF
+      ENDIF
+      ! Apparently values 307-320 are all NaNs Who wooda guessed!  
+!
+      ! Line numbers 307-320 in the engtlm.tbl file (not counting lines which
+      ! exclude header, comments and section demarcating lines of all dashes)
+      ! are for the GigaHertz switch network, which is only turned on and then
+      ! immediately turned off, so these are, in a sense, bogus NaNs and are
+      ! not reported. Hence their exclusion from the following code block
+      IF ( isNaN(Eng_tbl(i)%value) .and. &
+           & ( i < 307 .or. i > 321 ) &
+           & ) THEN
+        FoundBadPoints=.TRUE.
+        print *, i, 'th engineering value is a NaN'
+        print *, 'type  ', Eng_tbl(i)%type
+        print *, 'riu number ', riu_no
+        print *, 'mnemonic ', trim(Eng_tbl(i)%mnemonic)
+        if ( riu_no > 0 .and. riu_no < 5 ) print *, 'GMriu on? ', GMAB_ON(riu_no)
+        if ( riu_no > 1 .and. riu_no < 6 .and. MOD (riu_no, 2) == 0 ) &
+             & print *, 'prev GMriu on? ', GMAB_ON(riu_no-1)
+        if ( riu_no > -1 .and. riu_no < 4 .and. MOD (riu_no, 2) /= 0 ) &
+             & print *, 'next GMriu on? ', GMAB_ON(riu_no+1)
+        print *, 'id_word ', Riu_tbl(riu_no)%id_word
+        print *, 'counts ', Eng_tbl(i)%counts
+      ENDIF
+      ! So, it's because GMriu_no is NOT ON for these rius? Tell me, where is
+      ! any of this documented? Does anyone here know anything? 
+!
+      ! (<whd> I'm presuming that vince wrote that last comment. As for me
+      ! I have to say 'no', apparently no one here knows anything!</whd>)
+
+    ENDDO ! loop over engtlm.tbl lines 
+
+    IF (FoundBadPoints) THEN
+       rs = PGS_TD_EOSPMGIRDtoTAI (engpkt(1)(8:15), TAI93)
+       asciiUTC="BadTime"
+       IF (rs /= 0) THEN 
+          print *,"ConvertEngCounts: Can't get engineering packet TAI93 time!"
+          CALL MLSMessage(MLSMSG_Warning,ModuleName, &
+               &   "ConvertEngCounts: Can't get engineering packet TAI93 time!")          
+       ELSE
+          rs = PGS_TD_TAItoUTC (TAI93, asciiUTC)
        ENDIF
+       write(msg,*) 'ConvertEngCounts: bad data! MIF time: '//trim(asciiUTC)
+       print *,trim(msg)
+       CALL MLSMessage(MLSMSG_Info,ModuleName, trim(msg))
 
-       IF (Riu_tbl(riu_no)%id_word /= 0 .AND. &
-            Eng_tbl(i)%counts > 0) THEN   ! Data available to convert
-
-          SELECT CASE (Eng_tbl(i)%type)
-
-          CASE ("Cal")
-
-             IF (Eng_tbl(i)%cal_indx /= temp_cal) THEN   ! not a temperature
-                Eng_tbl(i)%value = Eng_tbl(i)%counts
-             ELSE
-                Eng_tbl(i)%value = Cal_freq (Eng_tbl(i)%counts, &
-                     & Riu_tbl(riu_no)%Cal_cnts(vin_cal1), &
-                     & Riu_tbl(riu_no)%Cal_cnts(vin_cal2), &
-                     & Cal_const(riu_no)%volts, 0.0) * 100.0 + abs_zero
-             ENDIF
-
-          CASE ("VIN")
-
-             Eng_tbl(i)%value = Cal_freq (Eng_tbl(i)%counts, &
-                  & Riu_tbl(riu_no)%Cal_cnts(vin_cal1), &
-                  & Riu_tbl(riu_no)%Cal_cnts(vin_cal2), &
-                  & Cal_const(riu_no)%volts, 0.0)
-
-             IF (scale /= 0.0) THEN
-                Eng_tbl(i)%value = scale * Eng_tbl(i)%value
-             ELSE
-                Eng_tbl(i)%value = Use_equation (Eng_tbl(i)%mnemonic, &
-                     & Eng_tbl(i)%value)
-             ENDIF
-
-          CASE ("PRT-1")
-
-             dn = Eng_tbl(i)%counts
-             IF (dn > 63000) dn = dn - 65536  ! adjust if DN is too high
-             Eng_tbl(i)%value = PRD_temp (Cal_freq(dn, &
-                  & Riu_tbl(riu_no)%Cal_cnts(prt1_cal1), &
-                  & Riu_tbl(riu_no)%Cal_cnts(prt1_cal2), &
-                  & Cal_const(riu_no)%prt1_hi, Cal_const(riu_no)%prt1_low), &
-                  & scale)
-
-          CASE ("PRT-2")
-
-            Eng_tbl(i)%value = PRD_temp (Cal_freq(Eng_tbl(i)%counts, &
-                  & Riu_tbl(riu_no)%Cal_cnts(prt2_cal1), &
-                  & Riu_tbl(riu_no)%Cal_cnts(prt2_cal2), &
-                  & Cal_const(riu_no)%prt2_hi, Cal_const(riu_no)%prt2_low), &
-                  & scale)
-
-          CASE ("YSI")
-
-             Eng_tbl(i)%value = Therm_temp (Cal_freq(Eng_tbl(i)%counts, &
-                  & Riu_tbl(riu_no)%Cal_cnts(ysi_cal1), &
-                  & Riu_tbl(riu_no)%Cal_cnts(ysi_cal2), &
-                  & Cal_const(riu_no)%therm_hi, Cal_const(riu_no)%therm_low))
-
-          CASE DEFAULT
-
-             PRINT *, "Unknown tlm type!"  !! use standard routine here
-
-          END SELECT
-
-       elseif ( i < 307 .or. i > 321 ) then
-         PRINT *, 'Data not available to convert'
-       ENDIF
-       ! Apparently values 307-320 are all NaNs
-       ! Who wooda guessed!
-       if ( isNaN(Eng_tbl(i)%value) .and. &
-         & ( i < 307 .or. i > 321 ) &
-         & ) then
-         print *, i, 'th engineering value is a NaN'
-         print *, 'type  ', Eng_tbl(i)%type
-         print *, 'riu number ', riu_no
-         print *, 'mnemonic ', trim(Eng_tbl(i)%mnemonic)
-         if ( riu_no > 0 .and. riu_no < 5 ) print *, 'GMriu on? ', GMAB_ON(riu_no)
-         if ( riu_no > 1 .and. riu_no < 6 .and. MOD (riu_no, 2) == 0 ) &
-           & print *, 'prev GMriu on? ', GMAB_ON(riu_no-1)
-         if ( riu_no > -1 .and. riu_no < 4 .and. MOD (riu_no, 2) /= 0 ) &
-           & print *, 'next GMriu on? ', GMAB_ON(riu_no+1)
-         print *, 'id_word ', Riu_tbl(riu_no)%id_word
-         print *, 'counts ', Eng_tbl(i)%counts
-       endif
-       ! So, it's because GMriu_no is NOT ON for these rius
-       ! Tell me, where is any of this documented? Does anyone here know anything?
-
-    ENDDO
-
+    ENDIF
   END SUBROUTINE ConvertEngCounts
 
 !=============================================================================
@@ -346,7 +476,15 @@ CONTAINS
        IF (data_OK) EXIT
     ENDDO
 
-    EngMAF%secTAI = EngMAF%secTAI - 0.25   ! actual time to line up with SCI
+    ! <whd:comment> 0.25 ~= 1.5 MIFs (MIF has a nominal dur of 1/6
+    ! secs). Dominick thinks that the time in the engineering packets that goes
+    ! with a particular set of science packets has a time tag about 1.5 MIFs
+    ! later than the science packets they go with. However, in
+    ! CalibWeightsFlags::ProcessMAFdata, the engineering data that's 'paired'
+    ! with science data is selected from the previous Eng MAF.  See ~line 185,
+    ! at the mention of NINT() </whd:comment>
+
+    EngMAF%secTAI = EngMAF%secTAI - 0.25   ! vp's orig comment: actual time to line up with SCI
 
     ! Determine GM01 to GM04 A/B ON/OFF states:
 
@@ -401,6 +539,14 @@ END MODULE EngUtils
 !=============================================================================
 
 ! $Log$
+! Revision 2.15  2016/03/15 22:17:59  whdaffer
+! Merged whd-rel-1-0 back onto main branch. Most changes
+! are to comments, but there's some modification to Calibration.f90
+! and MLSL1Common to support some new modules: MLSL1Debug and SnoopMLSL1.
+!
+! Revision 2.14.4.1  2015/10/09 10:21:38  whdaffer
+! checkin of continuing work on branch whd-rel-1-0
+!
 ! Revision 2.14  2015/01/21 19:30:19  pwagner
 ! Gets isNaN from MLSFillValues
 !
