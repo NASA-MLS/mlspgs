@@ -46,14 +46,16 @@ CONTAINS
          mlspcf_dacsconst_start, mlspcf_defltzeros_start, mlspcf_l1b_radd_start
     USE L0_sci_tbls, ONLY: InitSciPointers
     USE EngTbls, ONLY: Load_Eng_tbls, Eng_tbl, maxtlm
-    USE MLSL1Common, ONLY: L1BFileInfo, deflt_zero, BandSwitch, HDFversion
+    USE MLSL1Common, ONLY: L1BFileInfo, deflt_zero, BandSwitch, HDFversion,FileNameLen
     USE MLSFiles, ONLY: MLS_openFile, MLS_closeFile
     USE MLSHDF5, ONLY: MLS_h5open
     USE THzUtils, ONLY: LLO_Label
     USE DACSUtils, ONLY: InitDACS_FFT
     USE BandSwitches, ONLY: GetBandSwitches
+    USE SDPTOOLKIT, ONLY : PGSd_PC_FILE_PATH_MAX
 
-    CHARACTER (LEN=132) :: PhysicalFilename
+
+    CHARACTER (LEN=FileNameLen) :: PhysicalFilename
     CHARACTER (LEN=28) :: asciiUTC_A
 
     INTEGER :: eng_tbl_unit, error, ios, log_unit, tbl_unit, sd_id
@@ -119,7 +121,7 @@ CONTAINS
     L1Config%Expanded_TAI%startTime = L1Config%Expanded_TAI%startTime - 120.0
     L1Config%Expanded_TAI%endTime = L1Config%Expanded_TAI%endTime + 120.0
 
-!! Open and initialize eng table:
+!! Open and initialize eng table: (<whd>engtlm.tbl, PCF ID: 903.</whd>)
 
     version = 1
     returnStatus = PGS_PC_getReference (mlspcf_engtbl_start, version, &
@@ -151,7 +153,8 @@ CONTAINS
     CALL MLSMessage (MLSMSG_Info, ModuleName, &
          & "Closed engineering table file")
 
-!! Open L1BENG File
+!! Open L1BENG File <whd> As far as I can tell, no other software uses this
+!! file.</whd>
 
     WRITE (PhysicalFilename, "(I5.5)") mlspcf_l1b_eng_start
     version = 1
@@ -306,6 +309,9 @@ CONTAINS
 
 !! Open Eng/Sci MAF files:
 
+    ! <whd> Temporary file nominally named engMAF_tmp.dat, PCF ID: 921. Eng !
+    ! data will be written here, then cobbled together with the matching sci
+    ! data later.</whd>
     WRITE (PhysicalFilename, "(I3.3)") mlspcf_engMAF_start
     version = 1
     returnStatus = PGS_PC_getReference (mlspcf_engMAF_start, version, &
@@ -329,6 +335,9 @@ CONTAINS
     CALL MLSMessage (MLSMSG_Info, ModuleName, &
          & "Opened engMAF file: " // PhysicalFilename)
 
+    ! <whd> Temporary file nominally named sciMAF_tmp.dat, PCF ID: 920. Science
+    ! data will be written here, then cobbled together with the matching eng
+    ! data later.</whd>
     WRITE (PhysicalFilename, "(I3.3)") mlspcf_sciMAF_start
     version = 1
     returnStatus = PGS_PC_getReference (mlspcf_sciMAF_start, version, &
@@ -352,6 +361,7 @@ CONTAINS
     CALL MLSMessage (MLSMSG_Info, ModuleName, &
          & "Opened sciMAF file: " // PhysicalFilename)
 
+    ! 
     WRITE (PhysicalFilename, "(I3.3)") mlspcf_MAF_data_start
     version = 1
     returnStatus = PGS_PC_getReference (mlspcf_MAF_data_start, version, &
@@ -362,6 +372,9 @@ CONTAINS
             PhysicalFilename)
     ENDIF
 
+    !<whd> quasi-Temporary file nominally named MAF_data_tmp.dat which will
+    !contain the colocated eng/sci data as well as the calibration weights
+    !flags. PCF ID: 922 </whd>
     returnStatus = PGS_IO_Gen_Track_LUN (L1BFileInfo%MAF_data_unit, 0)
 
     OPEN (unit=L1BFileInfo%MAF_data_unit, file=PhysicalFilename, &
@@ -470,6 +483,14 @@ END MODULE OpenInitLog
 !=============================================================================
 
 ! $Log$
+! Revision 2.9  2016/03/15 22:17:59  whdaffer
+! Merged whd-rel-1-0 back onto main branch. Most changes
+! are to comments, but there's some modification to Calibration.f90
+! and MLSL1Common to support some new modules: MLSL1Debug and SnoopMLSL1.
+!
+! Revision 2.8.6.1  2015/10/09 10:21:38  whdaffer
+! checkin of continuing work on branch whd-rel-1-0
+!
 ! Revision 2.8  2007/06/21 21:04:05  perun
 ! Only create RADD file if DACS calibration is enabled
 !
