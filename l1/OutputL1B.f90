@@ -405,11 +405,20 @@ CONTAINS
     dataset%data_type = 'integer           '
     dataset%Dimensions(1) = 'MAF'
     IF (sdId%RADGID /= 0) THEN
+
+      !<whd> 
+      ! I assume that RADGID is set ONLY when we're in MLSL1G, so
+      ! this is basically a way of testing on whether the caller is
+      ! MLSL1G 
+      ! </whd>
+
        IF (sdId%RADDID /= 0) CALL Build_MLSAuxData (sdId%RADDID, dataset, &
-            counterMAF, fill_value=INT_FILL, lastIndex=noMAF)
+            counterMAF, fill_value=INT_FILL, lastIndex=noMAF) !<whd> doing DACS processing </whd>
+
        CALL Build_MLSAuxData (sdId%RADGID, dataset, counterMAF, &
             fill_value=INT_FILL, lastIndex=noMAF)
     ELSE
+      !<whd> Or here we're coming from  MLSL1T, the Teraherz module </whd>
        CALL Build_MLSAuxData (sdId%RADTID, dataset, counterMAF, &
             fill_value=INT_FILL, lastIndex=noMAF)
     ENDIF
@@ -482,7 +491,7 @@ CONTAINS
        IF (INDEX(name, 'FB') /= 0 ) THEN
           dim_chan = 'chanFB              '
           IF (sdId%RADGID /= 0) THEN
-             IF (INDEX(name,'R5') /= 0 ) THEN  ! Don't allow R5 in GHz file
+             IF (INDEX(name,'R5') /= 0 ) THEN  ! Don't allow R5 in GHz file: <whd>R5 is the THz radiometer</whd>
                 dim_chan = ''
                 sd_id = -999
              ELSE
@@ -1022,6 +1031,14 @@ END MODULE OutputL1B
 !=============================================================================
 
 ! $Log$
+! Revision 2.30  2016/03/15 22:17:59  whdaffer
+! Merged whd-rel-1-0 back onto main branch. Most changes
+! are to comments, but there's some modification to Calibration.f90
+! and MLSL1Common to support some new modules: MLSL1Debug and SnoopMLSL1.
+!
+! Revision 2.29.6.1  2015/10/09 10:21:38  whdaffer
+! checkin of continuing work on branch whd-rel-1-0
+!
 ! Revision 2.29  2009/07/30 20:40:44  honghanh
 ! Remove a deallocate statement so that dataset sc/VelECR has a Dimensions attribute
 !
