@@ -11,6 +11,10 @@
 
 MODULE TkL1B
 
+  ! This module contains subroutines for producing the L1BOA records on
+  ! a MAF by MAF basis.
+
+
   use Constants, only: Deg2Rad, Pi, Rad2Deg
   USE Geometry, ONLY: Omega => W
   USE MLSCommon, ONLY: R8, DEFAULTUNDEFINEDVALUE
@@ -113,6 +117,9 @@ CONTAINS
        oastat)
     ! This subroutine contains prototype code for creating the desired s/c
     ! record from the EPHEMATTIT output.
+    
+    ! <whd> This subroutine calculates the rotation matrix from SC
+    ! coordinates to ECR coordinates </whd>
 
     ! Arguments
     TYPE (L1BOAsc_T) :: sc
@@ -122,7 +129,7 @@ CONTAINS
     REAL, INTENT(OUT) :: ecrtosc(3,3,numValues)
     INTEGER, INTENT(OUT) :: oastat
 
-    ! Functions
+    ! PDS Toolkit Functions
     INTEGER :: Pgs_csc_eciToECR, Pgs_csc_ecrToGEO, Pgs_eph_ephemAttit
 
     ! Variables
@@ -136,20 +143,35 @@ CONTAINS
     REAL(r8) :: eciV(6,numValues), ecrV(6,numValues)
     REAL(r8) :: sctoeci(6,3*numValues), sctoecr(6,3*numValues) 
     REAL(r8) , POINTER :: w(:), x(:), y(:), z(:)
-    REAL(r8), PARAMETER :: SCtoGHz(3,3) = RESHAPE ((/ &
-         -0.0000086, -0.4260405, 0.9047041, &
-          1.0000000,  0.0000000, 0.0000095, &
-         -0.0000041,  0.9047041, 0.4260405 /), (/ 3, 3 /))
+    
+    ! <whd> This is defined, but never used.
+    !REAL(r8), PARAMETER :: SCtoGHz(3,3) = RESHAPE ((/ &
+    !     -0.0000086, -0.4260405, 0.9047041, &
+    !      1.0000000,  0.0000000, 0.0000095, &
+    !     -0.0000041,  0.9047041, 0.4260405 /), (/ 3, 3 /))
 
     ! Executable code
 
     ! Read oa data
 
     returnStatus = Pgs_eph_ephemAttit (spacecraftId, numValues, asciiUTC,  &
-         offsets, pgs_true, pgs_true, qualityFlags, sc%scECI, sc%scVelECI, &
-         eulerangles, sc%yprRate, attitQuat)
+         & offsets, pgs_true, pgs_true, &
+         & qualityFlags, sc%scECI, sc%scVelECI, & ! the rest are outputs!
+         & eulerangles, sc%yprRate, attitQuat)
 
 ! save YPR:
+
+    ! <whd> 
+    ! 
+    ! Does the following mean that AURAs euler angle order is yaw,
+    ! roll, pitch?, i.e. 3,1,2?  Yes, looking at an Attitude file (in
+    ! /data/Aura/attitude/year/doy/AURAATTH...) the Vdata Attitude
+    ! Header reports the Euler Angle order is 3,1,2
+    ! 
+    ! It doesn't appear that euler angle is used for anything, it's
+    ! just passed along to the output L1BOA file.
+    ! 
+    ! </whd>
 
     sc%ypr(1,:) = eulerangles(1,:)
     sc%ypr(2,:) = eulerangles(3,:)
@@ -192,9 +214,9 @@ CONTAINS
 
     ! Convert quaternion to matrix (optimized for readability)
 
-    sctoeci(1, 1::3) = w**2 + x**2 - y**2 -z**2
-    sctoeci(2, 2::3) = w**2 - x**2 + y**2 -z**2
-    sctoeci(3, 3::3) = w**2 - x**2 - y**2 +z**2
+    sctoeci(1, 1::3) = w**2 + x**2 - y**2 - z**2
+    sctoeci(2, 2::3) = w**2 - x**2 + y**2 - z**2
+    sctoeci(3, 3::3) = w**2 - x**2 - y**2 + z**2
     sctoeci(1, 2::3) = 2*x*y - 2*w*z
     sctoeci(2, 1::3) = 2*x*y + 2*w*z
     sctoeci(1, 3::3) = 2*x*z + 2*w*y
@@ -264,8 +286,9 @@ CONTAINS
     REAL, INTENT(IN) :: scAngle(numValues), encoderAngle(numValues)
     REAL(r8), INTENT(IN) :: asciiTAI
     REAL(r8), INTENT(IN) :: offsets(numValues)
-    REAL(r8), INTENT(IN) :: posECR(3,numValues), posECI(3,numValues), &
-         velECI(3,numValues)
+    REAL(r8), INTENT(IN) :: posECR(3,numValues), &
+         &                  posECI(3,numValues), &
+         &                  velECI(3,numValues)
     REAL, INTENT(IN) :: ecrtosc(3,3,numValues), BO_angle(:)
     REAL, INTENT(IN), OPTIONAL :: MoonToSpaceAngle
 
@@ -305,29 +328,52 @@ CONTAINS
     deltaAlt = 1000.0
     tp%encoderAngle = encoderAngle
 
+
+    !! <whd> Everything labled `fov_sc' is the line-of-sight of the
+    !! instrument.  I think that `_sc' is really in the instrument
+    !! coordinate system, rather than the 'sc' (spacecraft) coordinate
+    !! system. The S/C coordinate system is labeled fov_orb
+    !! below. </whd>
+
     ! Determine ECR to FOV
 
+    !<whd> COB=change-of-basis or coordinate change, or rotation.
     DO i = 1, numValues
 
-       CALL CalcMountsToFOV (scAngle(i), gtindx, MountsToFOV)
+      CALL CalcMountsToFOV (scAngle(i), gtindx, MountsToFOV)
+      GroundMountsToFOV = MATMUL (MountsToFOV, GroundToFlightMounts)
+      ScToFOV = MATMUL (GroundMountsToFOV, ScToGroundMounts)
 
-       GroundMountsToFOV = MATMUL (MountsToFOV, GroundToFlightMounts)
-       ScToFOV = MATMUL (GroundMountsToFOV, ScToGroundMounts)
-       ECRtoFOV = MATMUL (ScToFOV, ecrtosc(:,:,i))
-
-       IF (i <= lenG) tp%tpECRtoFOV(:,i) = RESHAPE (ECRtoFOV, (/ 9 /))
-       
-       fov_sc(1,i) = ScToFOV(3,1)
-       fov_sc(2,i) = ScToFOV(3,2)
-       fov_sc(3,i) = ScToFOV(3,3)
-
-    ! Put sc angle
-
-       tp%scAngle(i) = 90.0 - &
-            ACOS (MAX (MIN(fov_sc(3,i), 1.0d0), -1.0d0)) * Rad2Deg
+      !<whd> ScToFOV = mountsToFOV # GroundToFlightMounts #
+      ! 
+      ECRtoFOV = MATMUL (ScToFOV, ecrtosc(:,:,i))
+      
+      !<whd> What happens when i > lenG? </whd>
+      IF (i <= lenG) tp%tpECRtoFOV(:,i) = RESHAPE (ECRtoFOV, (/ 9 /))
+      
+      ! <whd> Picking up 3rd row of change of coords matrix. Why?
+      ! </whd>
+      fov_sc(1,i) = ScToFOV(3,1)
+      fov_sc(2,i) = ScToFOV(3,2)
+      fov_sc(3,i) = ScToFOV(3,3)
+      
+      ! Put sc angle. 
+      
+      ! <whd> This is the angle in the X/Z plane of the look
+      ! direction, calculated as 90 - 'angle from Z'. </whd>
+      
+      
+      tp%scAngle(i) = 90.0 - &
+           ACOS (MAX (MIN(fov_sc(3,i), 1.0d0), -1.0d0)) * Rad2Deg
     ENDDO
 
     ! Convert s/c vector to Orb vector/angle/degrees
+    
+    ! <whd> do change of coordinates of the line-of-sight vector from
+    ! the instrument (_sc) orbital coordinates. Rick Cofield says that
+    ! the `orb' coordinate system is the local vertical system, Z
+    ! points at S/C nadir, X is parallel to the velocity vector (when
+    ! pitch=0) and Y completes the triad </whd>
 
     returnStatus = Pgs_csc_scToOrb (spacecraftId, numValues, asciiUTC, &
       offsets, fov_sc, fov_orb)
@@ -346,6 +392,11 @@ CONTAINS
 
     Xnum = numValues - lenG   ! extra number of MIFs
 
+    ! <whd> Here we operate on those `excess' MIFs that are in this
+    ! MAF. lenG (nominally == 125) is the normal number of MIFs in a
+    ! MAF that we expect to get actual data out of. Xnum will be the
+    ! excess of that. </whd>
+
     ! Convert s/c vector to ECR
     returnStatus = Pgs_csc_scToECI (spacecraftId, Xnum, asciiUTC, &
       offsets(lenG+1:), fov_sc(:,lenG+1:), fov_eci(:,1:Xnum))
@@ -363,6 +414,12 @@ CONTAINS
       IF (returnStatus /= PGS_S_SUCCESS .AND. &
            returnStatus /= PGSCSC_W_HIT_EARTH) tp%tpGeodAltX(i) = 0.0 ! Special?
     ENDDO
+
+    !<whd> tp%scanAngle is the angle away from X (or Z) axis in the
+    !spacecraft coordinate system of the line-of-sight vector. This is
+    !different from the tp%scAngle, which was the angle of the same
+    !vector in the _sc (really the instrument) coordinate system (I think?)
+    !</whd>
 
     tp%scanAngle = 90.0 - ACOS (MAX (MIN (fov_orb(3,:), 1.0d0), -1.0d0)) * &
          Rad2Deg
@@ -403,15 +460,33 @@ CONTAINS
       ENDIF
 
       ! Create ECR unit vector quantities -- lat=1, lon=2, alt=3
-      flagQ = 2
-      CALL Tp_unit (flagQ, lon(i), latD(i), tp%tpGeodAlt(i), deltaLon, &
-           unitLon(:,i), flag)
       flagQ = 1
       CALL Tp_unit (flagQ, lon(i), latD(i), tp%tpGeodAlt(i), deltaLat, &
            unitLat(:,i), flag)
+      IF (flag==-1) THEN
+         msg="lat:Failure in Tp_unit: UTC="//asciiUTC
+         CALL MLSMessage (MLSMSG_Warning, ModuleName, TRIM(msg))
+         PRINT *,TRIM(msg)
+      ENDIF
+
+      flagQ = 2
+      CALL Tp_unit (flagQ, lon(i), latD(i), tp%tpGeodAlt(i), deltaLon, &
+           unitLon(:,i), flag)
+      IF (flag==-1) THEN
+         msg="lon:Failure in Tp_unit: UTC="//asciiUTC
+         CALL MLSMessage (MLSMSG_Warning, ModuleName, TRIM(msg))
+         PRINT *,TRIM(msg)
+      ENDIF
+
       flagQ = 3
       CALL Tp_unit (flagQ, lon(i), latD(i), tp%tpGeodAlt(i), deltaAlt, &
            unitAlt(:,i), flag)
+      IF (flag==-1) THEN
+         msg="alt:Failure in Tp_unit: UTC="//asciiUTC
+         CALL MLSMessage (MLSMSG_Warning, ModuleName, TRIM(msg))
+         PRINT *,TRIM(msg)
+      ENDIF
+
 
       ! Get local mean solar time from Toolkit
       tai = asciiTAI + (i-1)*offsets(2)
@@ -521,6 +596,7 @@ CONTAINS
 
   END SUBROUTINE TkL1B_tp
 
+
   !------------------------------------------------- Tp_unit ---------
   SUBROUTINE Tp_unit (flagQ, lon, lat, alt, delta, unitQ, flag)
     ! This subroutine creates unit ECR vector quantities used by TkL1B_tp to
@@ -578,8 +654,9 @@ CONTAINS
 
     IF (returnStatus /= PGS_S_SUCCESS) THEN
        CALL Pgs_smf_getMsg (returnStatus, mnemonic, msg)
-       msr = mnemonic // ':  ' // msg
+       msr = mnemonic //':  '//msg
        CALL MLSMessage (MLSMSG_Warning, ModuleName, msr)
+       PRINT *,TRIM(msr)
        flag = -1
     ENDIF
 
@@ -1013,6 +1090,7 @@ CONTAINS
          ecrtosc, GroundToFlightMountsGHz, ScToGroundMountsGHz, &
          BO_Index_GHz(1:BO_NumGHz), BO_Angle_GHz, BO_Negate_GHz, gtindx, &
          L1Config%Calib%MoonToSpaceAngle)
+
     IF (L1Config%Globals%SimOA) THEN   ! correct nominal scan angles for sim
        angle_del = tp%tpGeodAlt(1) / 5200.0 * 0.1
        scAngleG = scAngleG + angle_del
@@ -1657,6 +1735,17 @@ CONTAINS
 END MODULE TkL1B
 
 ! $Log$
+! Revision 2.38  2016/03/15 22:17:59  whdaffer
+! Merged whd-rel-1-0 back onto main branch. Most changes
+! are to comments, but there's some modification to Calibration.f90
+! and MLSL1Common to support some new modules: MLSL1Debug and SnoopMLSL1.
+!
+! Revision 2.37.4.2  2016/03/03 18:54:53  whdaffer
+! Comments, reformated some calls to make the code more readible
+!
+! Revision 2.37.4.1  2015/10/09 10:21:38  whdaffer
+! checkin of continuing work on branch whd-rel-1-0
+!
 ! Revision 2.37  2015/01/23 17:50:17  pwagner
 ! SDPToolkit indispensible for level 1; why not use it instead of Constants?
 !
