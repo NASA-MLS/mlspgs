@@ -13,6 +13,7 @@
 PROGRAM MLSL1G       ! MLS Level 1 software for the GHz module
 !============================================================================
 
+  USE MLSL1RunConfig, ONLY: MLSL1Executable ! name of current executable
   USE OpenInit, ONLY: OpenAndInitialize
   USE SortQualify, ONLY: SortAndQualify
   USE Calibration, ONLY: Calibrate
@@ -23,6 +24,7 @@ PROGRAM MLSL1G       ! MLS Level 1 software for the GHz module
   USE GHzBaseline, ONLY: LatBinRads, OutputBaselinedRads
   USE Close_Files, ONLY: CloseFiles
   USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Info, MLSMessageExit
+  USE MLSL1Debug, ONLY: closeMLSL1DebugFiles
 
   IMPLICIT NONE
 
@@ -36,9 +38,14 @@ PROGRAM MLSL1G       ! MLS Level 1 software for the GHz module
 
   LOGICAL :: more_data, do_calib
   INTEGER, PARAMETER :: NORMAL_EXIT_STATUS = 2
+  CHARACTER (len=255) :: ComVecsFile
 
+
+
+  MLSL1Executable='mlsl1g'
   CALL MLSMessage (MLSMSG_Info, ModuleName, &
-       & "Start EOS MLS Level 1 GHz processing.")
+       & "============= Start EOS MLS Level 1 GHz processing ================ ")
+  PRINT *,"============= Start EOS MLS Level 1 GHz processing ================ "
 
   CALL OpenAndInitialize
 
@@ -70,8 +77,14 @@ PROGRAM MLSL1G       ! MLS Level 1 software for the GHz module
 
   CALL CloseFiles
 
+  CALL closeMLSL1DebugFiles
+
   CALL MLSMessage (MLSMSG_Info, ModuleName, &
        & "EOS MLS Level 1 GHz data processing successfully completed!")
+
+  !<whd:debugging>
+  close(12)
+  !</whd:debugging>
 
   CALL MLSMessageExit (NORMAL_EXIT_STATUS)
 
@@ -80,6 +93,14 @@ END PROGRAM MLSL1G
 !=============================================================================
 
 ! $Log$
+! Revision 2.6  2016/03/15 22:17:59  whdaffer
+! Merged whd-rel-1-0 back onto main branch. Most changes
+! are to comments, but there's some modification to Calibration.f90
+! and MLSL1Common to support some new modules: MLSL1Debug and SnoopMLSL1.
+!
+! Revision 2.5.6.1  2015/10/09 10:21:38  whdaffer
+! checkin of continuing work on branch whd-rel-1-0
+!
 ! Revision 2.5  2005/06/23 18:41:36  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
