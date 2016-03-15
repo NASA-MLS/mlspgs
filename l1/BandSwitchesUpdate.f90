@@ -108,7 +108,10 @@ CONTAINS
 
 !=============================================================================
   SUBROUTINE ExamineSciData
+    
 !=============================================================================
+
+
 
     USE MLSL1Common, ONLY: BandSwitch
     USE L0_sci_tbls, ONLY: SciMAF
@@ -125,7 +128,7 @@ CONTAINS
     BACKSPACE bsw_unit
     READ (bsw_unit, fmt=BandSwFmt) asciiUTC, bandno
     n = PGS_TD_UTCtoTAI (asciiUTC, TAI)
-    PRINT *, asciiUTC, bandno
+    PRINT *, 'BandSwitchesUpdate::ExamineSciData :', asciiUTC, bandno
 
     BandSwitch = bandno     ! Initial band values
     DO
@@ -159,7 +162,7 @@ CONTAINS
                 n = PGS_TD_TAItoUTC (SciMAF(MIF)%secTAI, asciiUTC)
                 bandno = SciMAF(MIF)%BandSwitch
                 WRITE (bsw_unit, fmt=BandSwFmt) asciiUTC, bandno
-                PRINT *, asciiUTC, bandno
+                PRINT *, 'Change in switch network! ,',asciiUTC, bandno
              ENDIF
           ENDIF
        ENDDO
@@ -186,6 +189,14 @@ CONTAINS
 END MODULE BandSwitchesUpdate
 !=============================================================================
 ! $Log$
+! Revision 2.3  2016/03/15 22:17:59  whdaffer
+! Merged whd-rel-1-0 back onto main branch. Most changes
+! are to comments, but there's some modification to Calibration.f90
+! and MLSL1Common to support some new modules: MLSL1Debug and SnoopMLSL1.
+!
+! Revision 2.2.6.1  2015/10/09 10:21:37  whdaffer
+! checkin of continuing work on branch whd-rel-1-0
+!
 ! Revision 2.2  2006/04/05 18:10:24  perun
 ! Remove unused variables
 !
