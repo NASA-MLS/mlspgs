@@ -14,8 +14,8 @@ MODULE InitPCFs ! Init PCF data used by MLSL1 program
 !=============================================================================
 
   USE SDPToolkit, ONLY: PGS_S_SUCCESS
-  USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error
-
+  USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Info
+  USE MLSL1Common, ONLY : FileNameLen
   IMPLICIT NONE
 
   PRIVATE
@@ -36,8 +36,8 @@ MODULE InitPCFs ! Init PCF data used by MLSL1 program
       CHARACTER(LEN=27) :: EndUTC
       CHARACTER(LEN=80) :: OutputVersion
       CHARACTER(LEN=80) :: Cycle
-      CHARACTER(LEN=132) :: PCF_filename
-      CHARACTER(LEN=132) :: L1CF_filename
+      CHARACTER(LEN=FileNameLen) :: PCF_filename
+      CHARACTER(LEN=FileNameLen) :: L1CF_filename
    END TYPE PCFData_T
 
    TYPE (PCFData_T) :: L1PCF
@@ -62,24 +62,33 @@ CONTAINS
 ! Functions
      
      INTEGER, EXTERNAL :: PGS_PC_GetConfigData
-
+     
 ! Variables
 
      CHARACTER (LEN=480) :: msr
      INTEGER :: returnStatus
-     
+     INTEGER :: msgStatus
+
      returnStatus = PGS_PC_GetConfigData (mlspcf_l1_param_startUTC, &
           L1PCF%startUTC)
      IF (returnStatus /= PGS_S_SUCCESS) THEN
+        msgStatus=MLSMSG_Error
         msr = UDRP_ERR // 'startUTC'
-        CALL MLSMessage (MLSMSG_Error, ModuleName, msr)
-     ENDIF
+     ELSE
+        msgStatus=MLSMSG_Info
+        msr = 'Start UTC : '//L1PCF%startUTC
+     ENDIF 
+     CALL MLSMessage (msgStatus, ModuleName, msr)
      
      returnStatus = PGS_PC_GetConfigData (mlspcf_l1_param_endUTC, L1PCF%endUTC)
      IF (returnStatus /= PGS_S_SUCCESS) THEN
         msr = UDRP_ERR // 'endUTC'
-        CALL MLSMessage (MLSMSG_Error, ModuleName, msr)
+        msgStatus=MLSMSG_Error
+     ELSE
+        msgStatus=MLSMSG_Info
+        msr = 'End UTC   : '//L1PCF%endUTC
      ENDIF
+     CALL MLSMessage (msgStatus, ModuleName, msr)
      
      returnStatus = PGS_PC_GetConfigData (mlspcf_l1_param_OutputVersion, &
           L1PCF%OutputVersion)
@@ -107,6 +116,14 @@ CONTAINS
 END MODULE InitPCFs
 
 ! $Log$
+! Revision 2.7  2016/03/15 22:17:59  whdaffer
+! Merged whd-rel-1-0 back onto main branch. Most changes
+! are to comments, but there's some modification to Calibration.f90
+! and MLSL1Common to support some new modules: MLSL1Debug and SnoopMLSL1.
+!
+! Revision 2.6.6.1  2015/10/09 10:21:38  whdaffer
+! checkin of continuing work on branch whd-rel-1-0
+!
 ! Revision 2.6  2006/04/05 18:11:02  perun
 ! Remove unused variables
 !
