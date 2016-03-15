@@ -91,8 +91,8 @@ CONTAINS
 
        ENDDO
 
-PRINT *, "SCI/ENG MAF, time: ", sci_MAFno, EngMAF%MAFno, &
-  & tai93s2hid( EngMAF%sectai, leapsec=.true. )
+       PRINT *, "THz SCI/ENG MAF, time: ", sci_MAFno, EngMAF%MAFno, &
+            & tai93s2hid( EngMAF%sectai, leapsec=.true. )
        CalMAFno = CalMAFno + 1
        CurMAFdata => CalBuf%MAFdata(CalMAFno)
        CurMAFdata%SciMIF = THzSciMAF
@@ -207,6 +207,7 @@ PRINT *, "SCI/ENG MAF, time: ", sci_MAFno, EngMAF%MAFno, &
 
 !! Rule #5: Set Switching Mirror position
 
+
           !! Possibly use sequence from configuration:
 
           IF (THz_seq_use == match) THEN           ! Type Match
@@ -218,6 +219,7 @@ PRINT *, "SCI/ENG MAF, time: ", sci_MAFno, EngMAF%MAFno, &
                 SwMirPos = THz_seq(MIF)
              !ENDIF
           ENDIF
+
 
           WHERE (CurMAFdata%ChanType(MIF)%FB == undefined)
              CurMAFdata%ChanType(MIF)%FB = SwMirPos
@@ -303,6 +305,14 @@ END MODULE SortQualifyTHz
 !=============================================================================
 
 ! $Log$
+! Revision 2.17  2016/03/15 22:17:59  whdaffer
+! Merged whd-rel-1-0 back onto main branch. Most changes
+! are to comments, but there's some modification to Calibration.f90
+! and MLSL1Common to support some new modules: MLSL1Debug and SnoopMLSL1.
+!
+! Revision 2.16.4.1  2015/10/09 10:21:38  whdaffer
+! checkin of continuing work on branch whd-rel-1-0
+!
 ! Revision 2.16  2015/01/13 18:45:19  pwagner
 ! Prints time with MAF nums; warns if Cal Temps are NaNs
 !
