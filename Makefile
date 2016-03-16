@@ -1012,8 +1012,7 @@ moonscan: $(CONFDIR)/$(MLSCFILE) install-l1
 	@echo Making moonscan L1, copying Calibration-moonscan.f9h to Calibration.f9h
 	cd l1; \
 	cp -f Calibration-moonscan.f9h Calibration.f9h; \
-	#grep -nH WinMAFs Calibration.f9h; 
-	cat Calibration.f9h 
+	cat Calibration.f9h; \
 	touch Calibration.f9h
 	mv $(INSTALLDIR)/mlsl1.sh $(INSTALLDIR)/mlsl1.sh-original
 	$(MAKE) -f $(MakeFName) install-l1
@@ -1026,7 +1025,8 @@ moonscan: $(CONFDIR)/$(MLSCFILE) install-l1
 	@echo Done making moonscan L1, copying Calibration-normal.f9h to Calibration.f9h
 	cd l1; \
 	cp -f Calibration-normal.f9h Calibration.f9h; \
-	grep -nH WinMAFs Calibration.f9h;
+	cat Calibration.f9h; \
+	touch Calibration.f9h
 
 
 #lib/$(MLSCONFG)/parser.o: lr
@@ -1372,6 +1372,9 @@ tools: chunktimes checkpvmup compare dateconverter extinctionmaker \
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.12  2016/03/14 19:38:48  whdaffer
+# cat Calibration.f9h file instead of grepping
+#
 # Revision 1.11  2016/02/12 20:59:21  pwagner
 # install-l2 and install-nrt made more complete
 #
