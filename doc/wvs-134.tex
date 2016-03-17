@@ -1,0 +1,279 @@
+\documentclass[11pt]{article}
+\usepackage{alltt}
+\usepackage[fleqn]{amsmath}
+\usepackage{floatflt}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage[strings]{underscore}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9in
+
+\newcommand{\docname}{wvs-134}
+\newcommand{\docdate}{15 March 2016}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+    \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\bf\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\bf\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Van\\
+Subject: \>Intersection of line with surface at constant height above Earth
+reference ellipsoid\\
+From: \>Van Snyder\\
+Reference: \> wvs-030 \hr{wvs-030}, wvs-131 \hr{wvs-131} \\
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-20pt}
+
+\section{Using derivatives in a Newton iteration}
+
+The Cartesian co\"ordinates of points on a surface at height $h$ above the
+Earth reference ellipsoid in the direction normal to it are given in terms
+of geodetic co\"ordinates by the vector $\mathbf{V}_e = [ x, y, z ]^T$
+where
+
+\begin{equation}\begin{split}
+x = \,& p \cos \phi \cos \lambda \,, \\
+y = \,& p \cos \phi \sin \lambda \,, \\
+z = \,& q \sin \phi \,, \\
+\end{split}\end{equation}
+
+$\phi$ is geodetic latitude, $\lambda$ is longitude,
+
+\begin{equation}\begin{split}
+p = \,& a^2 d + h \,, \\
+q = \,& b^2 d + h \,,  \\
+d = \,& \frac1{\sqrt{a^2 \cos^2 \phi + b^2 \sin^2 \phi}} \,, \\
+\end{split}\end{equation}
+
+$h$ is height, and $a$ and $b$ are the equatorial and polar radii of the
+Earth, respectively.
+
+The Cartesian co\"ordinates of points on a line are given by the vector
+$\mathbf{V}_l(s) = \mathbf{V}_0 + s \mathbf{V}_1$, where $\mathbf{V}_0 =
+[x_0, y_0, z_0]^T$ is a vector to a point on the line, $\mathbf{V}_1 =
+[x_1, y_1, z_1]^T$ is a unit vector along the line, and $s$ is the
+distance along the line from $\mathbf{V}_0$ in the direction
+$\mathbf{V}_1$.
+
+The intersection of the line with the surface is given by the solution
+$\mathbf{S} = [ \phi, \lambda, s ]^T$ of the equation
+
+\begin{equation}
+\mathbf{F} = \mathbf{V}_e - \mathbf{V}_l(s) = \left[ \begin{array}{l}
+p \cos \phi \cos \lambda - x_0 - x_1 s \\
+p \cos \phi \sin \lambda - y_0 - y_1 s \\
+q \sin \phi - z_0 - z_1 s \\
+\end{array} \right] = 0 \,.
+\end{equation}
+
+A solution can be obtained by a Newton iteration
+
+\begin{equation}
+\mathbf{J}\, \delta \mathbf{S} = - \mathbf{F} \text{ where}
+\end{equation}
+
+\begin{equation}
+\mathbf{J} = \left[ \begin{array}{ccc}
+p^\prime \cos\phi \cos\lambda
+ - p \sin\phi \cos\lambda & -p \cos\phi \sin\lambda & -x_1 \\
+p^\prime \cos\phi \sin\lambda
+ - p \sin\phi \sin\lambda & p \cos\phi \cos\lambda & -y_1 \\
+q^\prime \sin\phi + q \cos\phi & 0 & -z_1 \\
+\end{array} \right] \,,
+\end{equation}
+
+\begin{equation}\begin{split}
+p^\prime = \,& a^2 d^\prime + h \\
+q^\prime = \,& b^2 d^\prime + h \text{ and}\\
+d^\prime = \,& \frac{\text{d}d}{\text{d}\phi} =
+ \cos\phi \sin\phi\, (a^2-b^2)\, d^3 \,.
+\end{split}\end{equation}
+
+There can be zero, one, or two solutions. To allow for the possibility of
+zero solutions, i.e., that the line does not intersect the surface, a
+least-squares Newton iteration
+
+\begin{equation}
+\mathbf{J}^T \, \mathbf{J} \, \delta \mathbf{S} = - \mathbf{J}^T \,
+\mathbf{F}
+\end{equation}
+
+can be used.  If $|\mathbf{F}|$ is large, there is no intersection.
+
+Starting points can be produced by computing the intersections of the line
+with the ellipsoid
+
+\begin{equation}\label{eight}
+\frac{x^2}{(a+h)^2} + \frac{y^2}{(a+h)^2} + \frac{z^2}{(b+h)^2} = 1 \,,
+\end{equation}
+
+which produces the exact solution at the poles and on the equator.
+As described in wvs-131 \hr{wvs-131}, this involves solving a quadratic
+equation
+
+\begin{equation}\label{nine}
+(\mathbf{M} \mathbf{V}_1)^T (\mathbf{M} \mathbf{V}_1) s^2 +
+(\mathbf{M} \mathbf{V}_0)^T (\mathbf{M} \mathbf{V}_1) s +
+(\mathbf{M} \mathbf{V}_0)^T (\mathbf{M} \mathbf{V}_0) = 0
+\end{equation}
+
+where
+
+\begin{equation}
+\mathbf{M} = \left[ \begin{array}{ccc}
+\frac1{a+h} & 0 & 0 \\
+0 & \frac1{a+h} & 0 \\
+0 & 0 & \frac1{b+h} \\
+\end{array} \right] \,.
+\end{equation}
+
+This solution produces only values of $s$, from which values of $\phi$ and
+$\lambda$ can be determined by Fukushima's algorithm [1] to compute
+geodetic co\"ordinates $[\phi, \lambda, h]^T$ from Cartesian
+co\"ordinates.  If the value of $h$ produced by Fukushima's algorithm is
+sufficiently close to the given value of $h$, the Newton iteration is not
+necessary.
+
+If there is no solution of Equation (\ref{nine}), the closest point to the
+ellipsoid can be determined, as described in wvs-030 \hr{wvs-030}.  If the
+distance at the closest point is greater than $h$, there is no
+intersection between the line and the surface.  Using this desideratum,
+the least-squares Newton iteration would not be necessary.
+
+The reason to solve simultaneously for $\phi$, $\lambda$, and $s$, even
+though $\phi$ and $\lambda$ can be computed from $\mathbf{V}_l(s)$ using
+Fukushima's algorithm, is that we do not have a formula in Cartesian
+co\"ordinates for the surface at the constant ellipsoidal height $h$, and
+we do not have a formula in geodetic co\"ordinates for $\mathbf{V}_l(s)$.
+
+\section{Without using derivatives}
+
+An alternative iteration, that is simpler but might not converge as
+quickly, consists of
+
+\begin{enumerate}
+
+\item\label{step1} Compute $s_0$, the value of $s$ at an intersection, if
+      any, with the ellipsoid defined by Equation (\ref{eight}).
+
+\item\label{step2} If step \ref{step1} does not produce an intersection,
+      compute the value of $s_0$ at which the line defined by
+      $\mathbf{V}_l(s)$ is nearest to the Earth reference ellipsoid using
+      the method described in wvs-030 \hr{wvs-030}.  Use Fukushima's
+      algorithm to compute $h_0$ at $s_0$.  If $h_0 > h$ there is no
+      intersection; otherwise
+
+{\bf for} $i = 0$, \dots
+
+  \begin{enumerate}
+
+  \item\label{step2a} Evaluate $\mathbf{V}_l(s_i)$.
+
+  \item\label{step2b} Using Fukushima's algorithm, compute $\phi_i$,
+        $\lambda_i$, and $h_i$ at $\mathbf{V}_l(s_i)$.
+
+        Step \ref{step2a} and this step can be skipped on the first
+        iteration if no intersection was found in step \ref{step1}; use
+        the values computed in step \ref{step2} instead.
+
+  \item If $|h-h_i| \leq h_{\text{tol}}$ {\bf exit}.
+
+  \item\label{step2d} Compute
+  %
+        \begin{equation*}
+        s_{i+1} = s_i + \frac{\delta h}
+         {\text{sign}(\max(|\cos\alpha_i|, \frac12),\cos\alpha_i)}
+        \end{equation*}
+  %
+        where $\cos\alpha_i = \mathbf{N}_i \cdot \mathbf{V}_1$, and
+        $\mathbf{N}_i =[ \cos\phi_i \cos\lambda_i, \cos\phi_i
+        \sin\lambda_i, \sin\phi_i ]^T$ is the unit normal to the ellipsoid
+        at $\mathbf{V}_l(s_i)$.
+
+  \end{enumerate}
+
+\end{enumerate}
+
+The subroutine DZERO from the Math77 library could be used for steps
+\ref{step2a}--\ref{step2d}.  Instead of computing $s_i$ as in \ref{step2d}
+above, DZERO specifies it.  DZERO needs two values of $s$ and $h$ to get
+started.  To get DZERO started in the correct direction, compute $s_1$ as
+in step \ref{step2d} above.
+
+Fukushima's algorithm uses a Halley iteration.  One iteration suffices to
+produce a value of $\phi_i$ that is accurate to within 30 micro arcseconds
+if $h < 30,000$ km, so step \ref{step2b} is fast.
+
+[1] Toshio Fukushima, \emph{Transformation from Cartesian to geodetic
+coordinates accelerated by Halley's method}, {\bf J. Geod. 79}, 12
+(February 2006) pp 689--693.  DOI 10.1007/s00190-006-0023-2.
+
+\vspace{0.25in}
+\includegraphics{wvs-134-1}
+
+\label{lastpage}
+\vspace*{-0.1in} % Somehow, this causes lastpage to be defined
+\end{document}
+
+% $Id$
+
+% $Log$
