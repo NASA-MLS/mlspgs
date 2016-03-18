@@ -167,6 +167,7 @@ module MLSL2Options              !  Options and Settings for the MLSL2 program
   ! Wouldn't it be better to use get_lun at the moment we open the l2cf?
   integer, parameter :: L2CF_UNIT = 20  ! Unit # if L2CF is opened by Fortran
   integer :: L2CFNODE        = 0        ! Line #, Col # of L2CF being executed
+  integer :: L2CFERRORNODE   = 0        ! Line #, Col # of L2CF at 1st error
   integer :: NUMSWITCHES
   integer :: RECL            = 20000    ! Record length for l2cf (but see --recl opt)
   integer :: MaxChunkSize    = 21     ! Max chunk size for l2gp DirectWrites
@@ -334,10 +335,13 @@ contains
     if ( currentChunkNumber > 0 &
       & .and. severity >= MLSMSG_Severity_to_quit ) then
       call writeIntsToChars( currentChunkNumber, chunkChars )
-      myMessage = ' (chunk' // trim(chunkChars) // ') ' // myMessage
+      myMessage = ' (chunk ' // trim(chunkChars) // ') ' // myMessage
     end if
     ! Do we have an l2cf node we were processing?
-    if ( L2CFNode /= 0 ) then
+    if ( L2CFErrorNode /= 0 ) then
+      call get_where ( where(L2CFErrorNode), myMessage, &
+        & before='***** At ', after=': ' // myMessage )
+    elseif ( L2CFNode /= 0 ) then
       call get_where ( where(L2CFNode), myMessage, &
         & before='***** At ', after=': ' // myMessage )
     else
@@ -684,7 +688,6 @@ cmds: do
           MLSMessageConfig%skipModuleNamesThr = mod(degree, 10) + 2
           MLSMessageConfig%skipSeverityThr = mod(degree, 10) + 2
           MLSMessageConfig%skipMessageThr = degree - 10 + 2
-          ! print *, ' Processing lac option: degree ', degree
           if ( degree > 9 ) then
             removeSwitches = catLists(trim(removeSwitches), 'log' )
             outputOptions%prunit = INVALIDPRUNIT
@@ -1328,6 +1331,9 @@ end module MLSL2Options
 
 !
 ! $Log$
+! Revision 2.106  2016/03/18 17:57:35  pwagner
+! Make certain the L2CF line cited is actal error, not end of section
+!
 ! Revision 2.105  2016/01/12 00:51:35  pwagner
 ! Repair error in treating 'name=false' option
 !
