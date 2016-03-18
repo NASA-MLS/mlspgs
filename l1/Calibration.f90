@@ -300,7 +300,7 @@ CONTAINS
        IF (.NOT. (ALL (CalSwSeqLS(:,n) == ComVecSwSeqLS(:,n)))) THEN
           
           WRITE(msg,&
-               & '("Doing L/S comvecs: UTC: ",a27,", MAF/index=",i4,"/",i3,", altNum: ",i2)'), &
+               & '("Doing L/S comvecs: UTC: ",a27,", MAF/index=",i4,"/",i3,", altNum: ",i2)') &
                &       asciiUTC,dbMAF,dbStartIndex,n
 
           PRINT *,TRIM(msg)
@@ -1236,6 +1236,9 @@ END MODULE Calibration
 !=============================================================================
 
 ! $Log$
+! Revision 2.25  2016/03/18 19:07:22  whdaffer
+! Took out extraneous ',' that NAG complained about
+!
 ! Revision 2.24  2016/03/15 22:17:59  whdaffer
 ! Merged whd-rel-1-0 back onto main branch. Most changes
 ! are to comments, but there's some modification to Calibration.f90
