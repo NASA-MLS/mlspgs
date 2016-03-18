@@ -265,6 +265,7 @@ program MLSL2
   ! Dont log parent module names unless asked by -Sparent
   outputOptions%logparent = ( SwitchDetail(switches, 'parent') > -1 ) 
   ! How to prefix logged messages?
+  ! But don't stomp on effect of laconic
   i = SwitchDetail(switches, 'mess')
   select case (i)
   case (0)
@@ -279,8 +280,11 @@ program MLSL2
     MLSMessageConfig%skipSeverityThr    = MLSMSG_Warning
   case default
     ! Write both module names, severity to log file for routine output
-    MLSMessageConfig%skipModuleNamesThr = MLSMSG_Success
-    MLSMessageConfig%skipSeverityThr    = MLSMSG_Success
+    ! unless countermanded by --laconic commandline option
+    if ( MLSMessageConfig%skipModuleNamesThr < MLSMSG_Warning) then
+      MLSMessageConfig%skipModuleNamesThr = MLSMSG_Success
+      MLSMessageConfig%skipSeverityThr    = MLSMSG_Success
+    endif
   end select
   section_times = sectiontimes
   total_times = totaltimes
@@ -845,6 +849,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.217  2016/03/18 18:00:15  pwagner
+! Dont let -Smess override effect of --loconic option
+!
 ! Revision 2.216  2016/02/29 19:51:07  pwagner
 ! Usleep got from machine module instead of being an external
 !
