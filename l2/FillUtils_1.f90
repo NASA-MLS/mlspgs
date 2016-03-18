@@ -65,19 +65,19 @@ module FillUtils_1                     ! Procedures used by Fill
   use MatrixModule_1, only: dump, findBlock, matrix_spd_t, updateDiagonal
   ! note: if you ever want to include defined assignment for matrices, please
   ! carefully check out the code around the call to snoop.
-  use MLSCommon, only: mlsfile_t, defaultundefinedvalue
+  use MLSCommon, only: MLSFile_t, defaultUndefinedValue
   use MLSFiles, only: hdfversion_5, dump, getMLSFileByType
   use MLSFillvalues, only: isFillValue, isFinite, &
     & Monotonize, removeFillValues
   use MLSKinds, only: r4, r8, rm, rp, rv
-  use MLSL2options, only: aura_l1bfiles, l2cfnode, toolkit
+  use MLSL2options, only: aura_l1bfiles, L2CFErrorNode, L2CFNode, toolkit
   use MLSMessagemodule, only: MLSMessage, MLSMSG_error, MLSMSG_warning
   use MLSNumerics, only: coefficients_r8, interpolateArraySetup, &
     & InterpolateArrayTeardown, interpolateValues, hunt
   use MLSFinds, only: findFirst, findLast
   use MLSSignals_m, only: getFirstChannel, getSignalName, getModuleName, &
     & GetSignal, isModuleSpacecraft, signal_t, signals
-  use MLSStringLists, only: gethashelement, numstringelements, &
+  use MLSStringLists, only: getHashElement, numStringElements, &
     & StringElement, switchDetail
   use MLSStrings, only: indexes, lowerCase, writeIntsToChars
   use Molecules, only: l_H2O
@@ -288,12 +288,12 @@ contains ! =====     Public Procedures     =============================
     end subroutine AddGaussianNoise
 
     ! ---------------------------------------------  ANNOUNCE_ERROR  -----
-    subroutine ANNOUNCE_ERROR ( WHERE, CODE, &
+    subroutine ANNOUNCE_ERROR ( WhereWasIt, CODE, &
       & EXTRAMESSAGE, QTY, EXTRAINFO, QUITNOW )
 
       use MORETREE, only: GET_FIELD_ID, STARTERRORMESSAGE
 
-      integer, intent(in) :: WHERE   ! Tree node where error was noticed
+      integer, intent(in) :: WhereWasIt   ! Tree node WhereWasIt error was noticed
       integer, intent(in) :: CODE    ! Code for error message
       character (len=*), intent(in), optional :: EXTRAMESSAGE
       type (VectorValue_T), optional, intent(in) :: QTY
@@ -310,7 +310,8 @@ contains ! =====     Public Procedures     =============================
         call MLSMessage ( MLSMSG_Warning, ModuleName, &
         & 'Calling ANNOUNCE_ERROR' )
       endif
-      call StartErrorMessage ( where )
+      call StartErrorMessage ( WhereWasIt )
+      L2CFErrorNode = WhereWasIt
       if ( code  > no_Error_Code ) call output ( 'The' );
 
       select case ( code )
@@ -405,7 +406,7 @@ contains ! =====     Public Procedures     =============================
       case ( NotZetaForGrid )
         call output ( " Quantity not on zeta surfaces.", advance='yes' )
       case ( wrongUnits )
-        call display_string ( field_indices(Get_Field_Id(where)), &
+        call display_string ( field_indices(Get_Field_Id(WhereWasIt)), &
           & before=" values of the " )
         call output ( " field have the wrong units", advance="yes" )
         if ( present(extraInfo) ) then
@@ -7697,6 +7698,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.120  2016/03/18 17:58:05  pwagner
+! Make certain the L2CF line cited is actal error, not end of section
+!
 ! Revision 2.119  2016/01/23 02:56:37  vsnyder
 ! Replace To_Cart with GeodToECRm, To_XYZ with GeodToECRu
 !
