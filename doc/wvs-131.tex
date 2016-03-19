@@ -12,8 +12,8 @@
 \topmargin -0.5in
 \textheight 9in
 
-\newcommand{\docname}{wvs-131r2}
-\newcommand{\docdate}{15 March 2016}
+\newcommand{\docname}{wvs-131r3}
+\newcommand{\docdate}{18 March 2016}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
@@ -125,7 +125,7 @@ along the line.  Substituting Equation (\ref{two}) into Equation
 %
 \begin{equation}\label{four}
 (\mathbf{M}\, \mathbf{U})^T (\mathbf{M}\, \mathbf{U})\, s^2 +
-(\mathbf{M} ( \mathbf{C} - \mathbf{p}_0) )^T (\mathbf{M}\, \mathbf{U})\, s +
+2 (\mathbf{M} ( \mathbf{C} - \mathbf{p}_0) )^T (\mathbf{M}\, \mathbf{U})\, s +
 (\mathbf{M} ( \mathbf{C} - \mathbf{p}_0) )^T
 (\mathbf{M} ( \mathbf{C} - \mathbf{p}_0) ) = 1
 \end{equation}
@@ -135,7 +135,7 @@ becomes
 %
 \begin{equation}\label{five}
 (\mathbf{M}\, \mathbf{U})^T (\mathbf{M}\, \mathbf{U})\, s^2 +
-(\mathbf{M} \mathbf{V} )^T (\mathbf{M}\, \mathbf{U})\, s +
+2 (\mathbf{M} \mathbf{V} )^T (\mathbf{M}\, \mathbf{U})\, s +
 (\mathbf{M} \mathbf{V} )^T
 (\mathbf{M} \mathbf{V} ) = 1
 \end{equation}
@@ -147,7 +147,7 @@ For the case of a sphere with radius $r$, Equation (\ref{five}) becomes
 %
 \begin{equation}
 \mathbf{U} \cdot \mathbf{U} \, s^2 +
-\mathbf{V} \cdot \mathbf{U} \, s +
+2 \mathbf{V} \cdot \mathbf{U} \, s +
 \mathbf{V} \cdot \mathbf{V} = r^2 \,.
 \end{equation}
 
@@ -158,6 +158,9 @@ For the case of a sphere with radius $r$, Equation (\ref{five}) becomes
 % $Id$
 
 % $Log$
+% Revision 1.4  2016/03/17 18:58:28  vsnyder
+% Write matrix-vector products correctly, replace t with s
+%
 % Revision 1.3  2016/02/24 01:32:10  vsnyder
 % Forgot to change the date
 %
