@@ -18,7 +18,7 @@
 #i.e., if you call are building this mls
 #by calling make with a different Makefile name,
 #say: make -f $(MakeFName)
-#then rename the Makefiles in /l2 and /lib also MakeFC
+#then rename the Makefiles in /l2 and /lib also $(MakeFName)
 
 # "$Id$"
 
@@ -131,13 +131,9 @@ OMIT_PREFXD := $(shell ${REECHO} -prefix=-d $(OMIT_SRCS))
 
 #----------------------- Build instructions
 
-$(PROG): $(PROG_prereqs)
+$(PROG) $(PLATFORMS)/$(MLSCONFG)/$(PROG): $(PROG_prereqs)
 	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) \
-        UNPREFXDPTHS="$(ADD2PATHS)" \
-
-$(PLATFORMS)/$(MLSCONFG)/$(PROG): $(PROG_prereqs)
-	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) \
-        UNPREFXDPTHS="$(ADD2PATHS)" \
+        UNPREFXDPTHS="$(ADD2PATHS)"
 
 $(libblas_objs)/libmlspack.a: $(blaslib_f) \
    $(libblas_objs)
@@ -171,9 +167,11 @@ $(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/$(MLSCFILE)
           -c "$(MLSF95)" -p "$(MLSPLAT)" -cf "$(MLSCFILE)" -nc
 
 depends:
+	mv $(libmls_sources)/PseudoToolkit.f90 $(libmls_sources)/PseudoToolkit.f90-hide; \
 	temp_name_1=`${UNIQUE_NAME} 1` ;\
 	$(MLSBIN)/makemakedep.sh  -p $$temp_name_1 \
      $(OMIT_PREFXD) $(depends_where) ; \
+	mv $(libmls_sources)/PseudoToolkit.f90-hide $(libmls_sources)/PseudoToolkit.f90; \
      mv $$temp_name_1 Makefile.dep
 
 ghostbuster:
@@ -219,6 +217,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude test
 
 # $Log$
+# Revision 1.1  2015/08/12 17:32:24  pwagner
+# Switched from MakeFC to Makefile
+#
 # Revision 1.15  2010/08/27 20:56:39  pwagner
 # Uses optional HDF*INC Makefile variables
 #
