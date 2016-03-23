@@ -13,7 +13,7 @@
 program l2gpdiff ! show diffs between swaths in two different files
 !=================================
 
-   use Dump_0, only: dumpDumpOptions, dumpTableSide, rmsFormat
+   use Dump_0, only: dumpDumpOptions, dumpTableSide, statsOnOneLine, rmsFormat
    use HighOutput, only: outputNamedValue
    use L2GPData, only: Diff, maxSwathNamesBufSize
    use Machine, only: hp, getarg
@@ -97,6 +97,7 @@ program l2gpdiff ! show diffs between swaths in two different files
   call set_config ( useToolkit = .false., logFileUnit = -1 )
   time_config%use_wall_clock = .true.
   CALL mls_h5open(error)
+  statsOnOneLine = .false.
   n_filenames = 0
   do      ! Loop over filenames, options
      call get_filename(filename, options)
@@ -260,6 +261,9 @@ contains
       elseif ( filename(1:3) == '-v ' ) then
         options%verbose = .true.
         exit
+      elseif ( filename(1:4) == '-one' ) then
+        statsOnOneLine = .true.
+        exit
       else if ( filename(1:6) == '-field' ) then
         call getarg ( i+1+hp, options%fields )
         i = i + 1
@@ -393,6 +397,7 @@ contains
       write (*,*) '   -matchTimes => only matching profile times'
       write (*,*) '   -rms        => just print mean, rms'
       write (*,*) '   -s          => just show number of differences'
+      write (*,*) '   -one        => print name on each line (dont)'
       write (*,*) '   -side "s"   => print stat headers on one of'
       write (*,*) '                   {"top", "left", "right", "bottom"}'
       write (*,*) '   -t[able]    => table of % vs. amount of differences (pdf)'
@@ -432,6 +437,9 @@ end program l2gpdiff
 !==================
 
 ! $Log$
+! Revision 1.23  2015/07/01 18:10:18  pwagner
+! Stray print statement caused headaches for gold brick
+!
 ! Revision 1.22  2015/06/30 18:52:02  pwagner
 ! -d '?' now dumps available dump otions
 !

@@ -14,7 +14,7 @@ program l1bdiff ! diffs two l1b or L2AUX files
 !=================================
 
    use Allocate_deallocate, only: allocate_test, deallocate_test
-   use Dump_0, only: diffRMSMeansrms, RMSFormat, &
+   use Dump_0, only: diffRMSMeansrms, RMSFormat, statsOnOneLine, &
      & Diff, dump, dumpDumpOptions, selfDiff
    use HDF, only: dfacc_create, dfacc_read
    use HDF5, only: h5fis_HDF5_f, &
@@ -104,6 +104,7 @@ program l1bdiff ! diffs two l1b or L2AUX files
   time_config%use_wall_clock = .true.
   DIFFRMSMEANSRMS = .true.
   CALL mls_h5open(error)
+  statsOnOneLine = .false.
   n_filenames = 0
   do      ! Loop over filenames
      call get_options(filename, n_filenames, options)
@@ -222,6 +223,9 @@ contains
         read(number, *) options%hdfVersion
         i = i + 1
         exit
+      elseif ( filename(1:4) == '-one' ) then
+        statsOnOneLine = .true.
+        exit
       elseif ( filename(1:5) == '-opt ' ) then
         call getarg ( i+1+hp, options%dumpOptions )
         if ( index( options%dumpOptions, '?' ) > 0 ) then
@@ -310,6 +314,7 @@ contains
       write (*,*) '                  (2) (otherwise)'
       write (*,*) '                  diff 1/2 of channels (so DACS wont crash)'
       write (*,*) '   -hdf version=> hdf version (default is 5)'
+      write (*,*) '   -one        => print name on each line (dont)'
       write (*,*) '   -opt opts   => pass opts to dump routines'
       write (*,*) '                  e.g., "?" to list available ones'
       write (*,*) '   -silent     => switch on silent mode'
@@ -855,6 +860,9 @@ end program l1bdiff
 !==================
 
 ! $Log$
+! Revision 1.31  2015/06/30 18:50:33  pwagner
+! Corrected error in passing dumpOptions to dump module; -opt '?' now dumps available dump options
+!
 ! Revision 1.30  2014/03/07 21:43:27  pwagner
 ! Name_Len changed to nameLen; got from MLSCommon
 !
