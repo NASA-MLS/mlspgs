@@ -15,7 +15,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
   use BitStuff, only: DumpBitNames
   use Constants, only: Deg2Rad
-  use Dump_0, only: diff, diff_fun, dump
+  use Dump_0, only: statsOnOneLine, nameOnEachLine, diff, diff_fun, dump
   use Geometry, only: EarthRadA
   use HDF, only: dfacc_rdonly, dfacc_read, dfacc_create, dfacc_rdwr, &
     & Dfnt_float32, dfnt_int32, dfnt_float64
@@ -1651,6 +1651,7 @@ contains ! =====     Public Procedures     =============================
     logical :: myVerbose
     logical :: ShapesDontMatch
     ! Executable code
+    nameOnEachLine = ' '
     if ( .not. isL2GPSetUp(l2gp1) ) then
       call MLSMessage ( MLSMSG_Warning, ModuleName, & 
         'l2gp1 not yet allocated in diff')
@@ -1819,6 +1820,7 @@ contains ! =====     Public Procedures     =============================
       return
     endif
 
+    if ( statsOnOneLine ) NameOnEachLine = trim(trim(l2gp1%name)) // '%values'
     if ( any(l2gp1%l2gpValue /= l2gp2Temp%l2gpValue) .and. &
       & SwitchDetail(lowercase(myFields), 'l2gpvalue', '-fc') > -1 ) then
       call diff ( l2gp1%l2gpValue, 'l2gp%l2gpValue', &
@@ -1829,6 +1831,8 @@ contains ! =====     Public Procedures     =============================
       & SwitchDetail(lowercase(myFields), 'l2gpvalue', '-fc') > -1 .and. myVerbose ) then
       call output('(values fields equal)', advance='yes')
     endif
+
+    if ( statsOnOneLine ) NameOnEachLine = trim(trim(l2gp1%name)) // '%Precisions'
     if ( any(l2gp1%l2gpPrecision /= l2gp2Temp%l2gpPrecision) .and. &
       & SwitchDetail(lowercase(myFields), 'l2gpprecision', '-fc') > -1 ) then
       call diff ( l2gp1%l2gpPrecision, 'l2gp%l2gpPrecision', &
@@ -1840,6 +1844,7 @@ contains ! =====     Public Procedures     =============================
       call output('(precision fields equal)', advance='yes')
     endif
 
+    if ( statsOnOneLine ) NameOnEachLine = trim(trim(l2gp1%name)) // '%status'
     if ( any(l2gp1%status /= l2gp2Temp%status) .and. &
       & SwitchDetail(lowercase(myFields), 'status', '-fc') > -1 ) then
       call diff ( l2gp1%status, 'l2gp%status', &
@@ -1850,6 +1855,8 @@ contains ! =====     Public Procedures     =============================
       & SwitchDetail(lowercase(myFields), 'status', '-fc') > -1 .and. myVerbose ) then
       call output('(status fields equal)', advance='yes')
     endif
+
+    if ( statsOnOneLine ) NameOnEachLine = trim(trim(l2gp1%name)) // '%quality'
     if ( any(l2gp1%quality /= l2gp2Temp%quality) .and. &
       & SwitchDetail(lowercase(myFields), 'quality', '-fc') > -1 ) then
       call diff ( l2gp1%quality, 'l2gp%quality', &
@@ -1860,6 +1867,8 @@ contains ! =====     Public Procedures     =============================
       & SwitchDetail(lowercase(myFields), 'quality', '-fc') > -1 .and. myVerbose ) then
       call output('(quality fields equal)', advance='yes')
     endif
+
+    if ( statsOnOneLine ) NameOnEachLine = trim(trim(l2gp1%name)) // '%convergence'
     if ( any(l2gp1%convergence /= l2gp2Temp%convergence) .and. &
       & SwitchDetail(lowercase(myFields), 'convergence', '-fc') > -1 ) then
       call diff ( l2gp1%convergence, 'l2gp%convergence', &
@@ -1970,6 +1979,7 @@ contains ! =====     Public Procedures     =============================
       
       call resumeOutput
       if ( present(numDiffs) ) numDiffs = myNumDiffs
+      nameOnEachLine = ' '
     end subroutine doneHere
     
     function AddOntoOptions( addOn, options) result(newOptions)
@@ -5353,6 +5363,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.220  2015/10/14 23:18:04  pwagner
+! RepairL2GP may optionally repair any geolocations whose chunk number is -999
+!
 ! Revision 2.219  2015/10/13 23:48:28  pwagner
 ! Warn if all chunkNumbers are FillValues; exit with error if asked to create a swath with preexisting name
 !
