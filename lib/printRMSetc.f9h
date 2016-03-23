@@ -36,7 +36,7 @@
           call output ( ': ', advance='no' )
           call output ( mean, format=rmsFormat, advance='no')
         end if
-        call newline
+        call finishLine
       else
         call blanks(3)
       endif
@@ -53,20 +53,23 @@
         call output ( ': ', advance='no' )
         call output ( mean, format=rmsFormat, advance='no')
       end if
-      call newline
+      call finishLine
     else
       if ( present(name) .and. .not. nameHasBeenPrinted ) call output ( trim(name), advance='no' )
       call output ( ' min      max        rms', advance='no' )
       if ( present(mean) ) call output ( '       mean ', advance='no' )
-      call newline
+      call finishLine
       call output(min, format=rmsFormat, advance='no')
       call output(max, format=rmsFormat, advance='no')
       call output(rms, format=rmsFormat, advance='no')
       if ( present(mean) ) call output ( mean, advance='no' )
-      call newline
+      call finishLine
     end if
     nameHasBeenPrinted = .true.
 ! $Log$
+! Revision 2.5  2016/03/23 00:23:10  pwagner
+! Diff now able to print name on each line
+!
 ! Revision 2.4  2012/01/09 22:28:08  pwagner
 ! Override default formats so min, max line up
 !
