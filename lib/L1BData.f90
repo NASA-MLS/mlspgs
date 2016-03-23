@@ -14,7 +14,7 @@ module L1BData
   ! Reading and interacting with Level 1B data (HDF4 or HDF5)
 
   use Allocate_Deallocate, only: Allocate_test, Deallocate_test, Test_Allocate
-  use Dump_0, only: Diff, Diff_fun, Dump
+  use Dump_0, only: nameOnEachLine, statsOnOneLine, Diff, Diff_fun, Dump
   use HDF, only: DFACC_Rdonly, SFGInfo, SFN2Index, SFSelect, &
     & SFRData_f90, &
     & SFRCData, SFENDACC, DFNT_Char8, DFNT_Int32, DFNT_Float64, &
@@ -584,6 +584,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     if ( present(Period) ) myPeriod = Period
     myPeriodic = .false.
     if ( present(options) ) myPeriodic = ( index( options, 'p' ) > 0 )
+    nameOnEachLine = ' '
     if ( DEBUG ) then
       call outputNamedValue( 'options', options )
       call outputNamedValue( 'myDetails', myDetails )
@@ -666,8 +667,8 @@ contains ! ============================ MODULE PROCEDURES ======================
     end if
     if ( associated(l1bData1%counterMAF) .and. &
       & associated(l1bData2%counterMAF) ) then
-      if ( any(l1bData1%counterMAF /= l1bData2%counterMAF)) then
-        call dump ( l1bData1%counterMAF - l1bData2%counterMAF, &
+      if ( any(l1bData1%counterMAF(1:mafEnd2) /= l1bData2%counterMAF(1:mafEnd2))) then
+        call dump ( l1bData1%counterMAF(1:mafEnd2) - l1bData2%counterMAF(1:mafEnd2), &
           & 'l1bData%counterMAF (diff)' )
          myNumDiffs = myNumDiffs + 1
        end if
@@ -681,6 +682,7 @@ contains ! ============================ MODULE PROCEDURES ======================
       call doneHere
       return
     end if
+    if ( statsOnOneLine ) nameOnEachLine = L1BData1%L1BName
     if ( associated(l1bData1%charField) .and. &
       & associated(l1bData2%charField)) then
       if ( any(l1bData1%charField /= l1bData2%charField) ) then
@@ -718,6 +720,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     if ( associated(l1bData1%intField) &
       & .and. associated(l1bData1%intField) ) then
       if ( any(l1bData1%intField /= l1bData2%intField) ) then
+        call output( 'About to call dump with l1bData%intField', advance='yes' )
         call dump ( l1bData1%intField - l1bData2%intField, &
           & 'l1bData%intField (diff)', options=options )
         myNumDiffs = myNumDiffs + count(l1bData1%intField /= l1bData2%intField)
@@ -808,6 +811,7 @@ contains ! ============================ MODULE PROCEDURES ======================
       ! Housekeeping
       ! call resumeOutput
       if ( present(numDiffs) ) numDiffs = myNumDiffs
+      nameOnEachLine = ' '
     end subroutine doneHere
   end subroutine DiffL1BData
 
@@ -2212,7 +2216,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     ! Find data sets for counterMAF & quantity by name
 
     if ( .not. IsHDF5DSPresent(L1FileHandle, '/counterMAF') ) then
-      if ( DEEBUG) print *, 'no counterMAF array in file'
+      if ( DEEBUG ) print *, 'no counterMAF array in file'
       if ( .not. JUSTLIKEL2AUX ) then
         flag = NOCOUNTERMAFINDX
         if ( MyNeverFail ) go to 9
@@ -2800,6 +2804,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.106  2016/03/23 00:19:31  pwagner
+! DiffL1BData now able to print name on each line
+!
 ! Revision 2.105  2015/07/31 20:40:34  pwagner
 ! Fixed error added with last commit
 !
