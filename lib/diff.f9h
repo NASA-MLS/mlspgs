@@ -365,12 +365,14 @@
         call output( exvalues(1), advance='no' )
         call output( '  ( as ratio:  ', advance='no' )
         call output( exratios(1), advance='no' )
-        call output( ' )', advance='yes' )
+        call output( ' )', advance='no' )
+        call finishLine
         call output( 'Maximum ratio: ', advance='no' )
         call output( exratios(2), advance='no' )
         call output( '  ( as difference:  ', advance='no' )
         call output( exvalues(2), advance='no' )
-        call output( ' )', advance='yes' )
+        call output( ' )', advance='no' )
+        call finishLine
         nameHasBeenPrinted = .false.
         call printRMSetc( 'ratio', minratio, maxratio, rmsratio, meanratio )
       endif
@@ -442,12 +444,14 @@
         call output( pctEqual, format = myPCTFormat, advance='no' )
         call output( '  (number of elements ', advance='no' )
         call output( numEqual, advance='no' )
-        call output( ')', advance='yes' )
+        call output( ')', advance='no' )
+        call finishLine
         call output( '% of arrays diff  ', advance='no' )
         call output( pctDiff, format = myPCTFormat, advance='no' )
         call output( '  (number of elements ', advance='no' )
         call output( numTot - numEqual, advance='no' )
-        call output( ')', advance='yes' )
+        call output( ')', advance='no' )
+        call finishLine
       endif
       outputOptions%sdFormatDefault = originalSDFormat
       
@@ -509,6 +513,9 @@
 
 !   end subroutine DIFF_1D_DOUBLE
 ! $Log$
+! Revision 2.32  2016/03/23 00:20:52  pwagner
+! Diff now able to print name on each line
+!
 ! Revision 2.31  2013/01/10 00:17:57  pwagner
 ! Dumps with -N just show where NaNs are
 !
