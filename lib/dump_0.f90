@@ -24,30 +24,30 @@ module DUMP_0
 ! This has become too long--we may split it, putting diffs into a higher-level
 ! and separate dump_1.f90 module
 
-  use BITSTUFF, only: MAXBITNUMBER, WHICHBITSARESET
-  use DATES_MODULE, only: MAXUTCSTRLENGTH, &
-    & REFORMATDATE, REFORMATTIME, SPLITDATETIME, TAI93S2UTC
-  use HIGHOUTPUT, only: ALIGNTOFIT, BLANKSTOTAB, &
-    & NUMNEEDSFORMAT, NUMTOCHARS, &
-    & OUTPUTLIST, OUTPUTNAMEDVALUE, RESETTABS, SETTABS
-  use IEEE_ARITHMETIC, only: IEEE_IS_FINITE
-  use MLSFILLVALUES, only : BANDWIDTH, COLLAPSE, FILTERVALUES, HALFWAVES, &
-    & ISFINITE, ISINFINITE, ISNAN, &
-    & INFFUNCTION, NANFUNCTION, REORDERFILLVALUES, REPLACEFILLVALUES, &
-    & WHEREARETHEINFS, WHEREARETHENANS
-  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING
-  use MLSFINDS, only: FINDUNIQUE
-  use MLSSTATS1, only: STAT_T, &
-    & ALLSTATS, FILLVALUERELATION, HOWFAR, HOWNEAR, &
-    & MLSMAX, MLSMEAN, MLSMIN, MLSSTDDEV, RATIOS, RESET
-  use MLSSTRINGLISTS, only: CATLISTS, GETSTRINGELEMENT, NUMSTRINGELEMENTS, &
-    & OPTIONDETAIL
-  use MLSSTRINGS, only: DELETE, INDEXES, LOWERCASE, &
-    & READINTSFROMCHARS, TRIM_SAFE, &
-    & WRITEINTSTOCHARS
-  use OUTPUT_M, only: OUTPUTOPTIONS, STAMPOPTIONS, &
-    & BLANKS, NEWLINE, OUTPUT
-  use TIME_M, only: TIME_NOW
+  use bitStuff, only: maxBitNumber, whichBitsAreSet
+  use dates_module, only: maxUTCStrLength, &
+    & reformatDate, reformatTime, splitDateTime, tai93s2utc
+  use highOutput, only: alignToFit, blanksToTab, &
+    & numNeedsFormat, numToChars, &
+    & outputList, outputNamedValue, resetTabs, setTabs
+  use ieee_arithmetic, only: ieee_is_finite
+  use mlsfillvalues, only : bandWidth, collapse, filterValues, halfWaves, &
+    & isFinite, isInfinite, isNaN, &
+    & infFunction, NaNFunction, reorderFillValues, replaceFillValues, &
+    & whereAreTheInfs, whereAreTheNaNs
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
+  use MLSFinds, only: findUnique
+  use MLSStats1, only: Stat_t, &
+    & AllStats, fillValueRelation, howFar, howNear, &
+    & MLSMax, MLSMean, MLSMin, MLSStddev, ratios, reset
+  use MLSStringLists, only: catLists, getStringElement, numStringElements, &
+    & OptionDetail
+  use MLSStrings, only: delete, indexes, lowercase, &
+    & readIntsFromChars, trim_safe, &
+    & writeIntsToChars
+  use output_m, only: outputOptions, stampOptions, &
+    & blanks, newline, output
+  use time_m, only: time_now
 
   implicit none
   private
@@ -68,6 +68,7 @@ module DUMP_0
 !                           (not implemented yet)
 ! INTPLACES                How many places to print when dumping integer values
 ! MAXNUMNANS               How many NaNs can we show where they are
+! NAMEONEACHLINE           item name to print on each output line
 ! PCTFORMAT                use this format to print % with '-s' diff option
 ! RMSFORMAT                use this format to print min, max, rms, etc.
 ! SDFORMATDEFAULT          use this format to print s.p., d.p. by default
@@ -339,6 +340,7 @@ module DUMP_0
   logical, public, save ::   PRINTFILLVALUE            = .true.
   logical, public, save ::   PRINTNAMEIFDIFF           = .true.
   logical, public, save ::   STATSONONELINE            = .true.
+  character(len=16), public, save ::   NAMEONEACHLINE  = ' '
 
   ! This determines how a higher-rank array is collapsed to a lower-rank one
   character(len=16), public, save :: COLLAPSEOPTIONS = 'num[+]all[+]'
@@ -354,25 +356,25 @@ module DUMP_0
   ! --------------------------------------------------------------------------
 
   ! These are private variables declared module-wide purely for convenience
-  integer, parameter :: MAXLINELEN = 120
-  integer, parameter :: MAXNUMELEMENTS = 2000
+  integer, parameter :: MAXLINELEN      = 120
+  integer, parameter :: MAXNUMELEMENTS  = 2000
   integer, parameter :: TOOMANYELEMENTS = 125*50*3500 ! Don't try to diff l1b DACS
-  logical, parameter ::   DEEBUG = .false.
-  logical, parameter ::   SHORTCUTDIFFS = .false.
-  ! character(len=MAXLINELEN) :: LINEOFZEROS
+  logical, parameter :: DEEBUG          = .false.
+  logical, parameter :: SHORTCUTDIFFS   = .false.
   logical :: DUMPTHESEZEROS
   logical :: myBandwidth, myClean, myCollapse, myCyclic, myDirect, myGaps, &
     & myLaconic, myNaNs, myRatios, myRMS, myShape, myStats, &
     & myTable, myTranspose, myTrim, myUnique, myWholeArray, onlyWholeArray
   character(len=16) :: myOptions
   character(len=16) :: myPCTFormat
-  logical, save :: nameHasBeenPrinted = .false.
-  integer :: bwidth, myRank, numNonFill, numFill, indx2BSliced, iSlice
-  real :: pctnzero
-  logical, save :: thisIsADiff = .false.
-  integer :: how_many
+  character(len=16) :: nameToPrint
+  logical, save     :: nameHasBeenPrinted = .false.
+  integer           :: bwidth, myRank, numNonFill, numFill, indx2BSliced, iSlice
+  real              :: pctnzero
+  logical, save     :: thisIsADiff = .false.
+  integer           :: how_many
   integer, dimension(1024) :: which
-  complex, parameter :: one_c4 = (1., 0.)
+  complex, parameter       :: one_c4 = (1., 0.)
 
 contains
 
@@ -771,9 +773,11 @@ contains
             call output ( numZeroRows , advance='no' )
             call output ( ' lines of ', advance='no' )
             call output ( myFillValue , advance='no' )
-            call output ( ' not printed', advance='yes' )
+            call output ( ' not printed', advance='no' )
+            call finishLine
           endif
-          call output( ints(1:numBitNames), format='(i3)', advance='yes' )
+          call output( ints(1:numBitNames), format='(i3)', advance='no' )
+          call finishLine
           numZeroRows = 0
         endif
       enddo
@@ -817,7 +821,8 @@ contains
       call empty ( name )
     else if ( size(array) == 1 ) then
       call name_and_size ( name, myClean, 1, TheShape )
-      call output ( array(1)(1:lon), advance='yes' )
+      call output ( array(1)(1:lon), advance='no' )
+      call finishLine
     else
       call name_and_size ( name, myClean, size(array) )
       if ( present(name) .and. .not. mylaconic ) call newLine
@@ -980,6 +985,7 @@ contains
     integer :: MyWidth
     integer :: NumZeroRows
     integer :: nUnique
+    if ( present( FORMAT ) ) call outputNamedValue ( 'format', format )
     myFillValue = 0.
     if ( present(FillValue) ) myFillValue=FillValue
     myFormat = 'places=' // INTPLACES ! To sneak places arg into call to output
@@ -1031,21 +1037,24 @@ contains
       call empty ( name )
     else if ( size(array) == 1 .and. base == 0 ) then
       call name_and_size ( name, myClean, 1 )
-      call output ( array(1), advance='yes' )
+      call output ( array(1), advance='no' )
+      call finishLine
     else if ( all(array .eqv. .true.) ) then
       call name_and_size ( name, myClean, size(array) )
       call output ( '(' )
       if ( present(lbound) ) call output ( lbound )
       call output ( ':) all ', advance='no' )
       call output( trim(arrayShapeToString(shape(array))), advance='no' )
-      call output( ' values are T', advance='yes' )
+      call output( ' values are T', advance='no' )
+      call finishLine
     else if ( all(array .eqv. .false.) ) then
       call name_and_size ( name, myClean, size(array) )
       call output ( '(' )
       if ( present(lbound) ) call output ( lbound )
       call output ( ':) all ', advance='no' )
       call output( trim(arrayShapeToString(shape(array))), advance='no' )
-      call output( ' values are F', advance='yes' )
+      call output( ' values are F', advance='no' )
+      call finishLine
     elseif ( myGaps ) then
       call name_and_size ( name, myClean, size(array) )
       if ( present(name) .and. .not. mylaconic ) call newLine
@@ -1055,14 +1064,16 @@ contains
         N = min(k+100, size(array)) - k
         call output( k+1 , advance='no' )
         call output ( ' through ', advance='no' )
-        call output( k+N, advance='yes' )
+        call output( k+N, advance='no' )
+        call finishLine
         ntrue = count( array(k+1 : min(k+100, size(array))) )
         nfalse = n - ntrue
         if ( ntrue > 0 .and. ( ntrue < nfalse .or. nfalse < 1 ) ) then
-          call output( array(k+1 : k+N), onlyif=.true., advance='yes' )
+          call output( array(k+1 : k+N), onlyif=.true., advance='no' )
         else
-          call output( array(k+1 : k+N), onlyif=.false., advance='yes' )
+          call output( array(k+1 : k+N), onlyif=.false., advance='no' )
         endif
+        call finishLine
         k = k + 100
       enddo
       call showColumnNums( 100 )
@@ -1147,7 +1158,8 @@ contains
       call empty ( name )
     else if ( size(array,1) == 1 ) then
       call name_and_size ( name, myClean, 1, TheShape )
-      call output ( array(1,:), advance='yes' )
+      call output ( array(1,:), advance='no' )
+      call finishLine
     else if ( size(array,2) == 1 ) then
       call dump ( array(:,1), name, fillValue=fillValue, maxlon=maxlon, options=options )
     else
@@ -1387,19 +1399,22 @@ contains
       call empty ( name )
     else if ( size(array) == 1 ) then
       call name_and_size ( name, myClean, 1, TheShape )
-      call output ( array(1,1), advance='yes' )
+      call output ( array(1,1), advance='no' )
+      call finishLine
     else if ( size(array,2) == 1 ) then
       call dump ( array(:,1), name, options=options )
     else if ( all(array .eqv. .true.) ) then
       call name_and_size ( name, myClean, size(array), TheShape )
       call output ( ': all ', advance='no' )
       call output( trim(arrayShapeToString(shape(array))), advance='no' )
-      call output( ' values are T', advance='yes' )
+      call output( ' values are T', advance='no' )
+      call finishLine
     else if ( all(array .eqv. .false.) ) then
       call name_and_size ( name, myClean, size(array), TheShape )
       call output ( ': all ', advance='no' )
       call output( trim(arrayShapeToString(shape(array))), advance='no' )
-      call output( ' values are F', advance='yes' )
+      call output( ' values are F', advance='no' )
+      call finishLine
     else
       call name_and_size ( name, myClean, size(array) )
       if ( present(name) .and. .not. mylaconic ) call newLine
@@ -1481,10 +1496,12 @@ contains
           call output ( afterSub , advance='no' )
         end if
         call output ( array(1,1,j), myFormat , advance='no' )
-        call output ( array(1,2,j), myFormat, advance='yes' )
+        call output ( array(1,2,j), myFormat, advance='no' )
+        call finishLine
         call blanks ( max(3,ilog10(size(array))+1) + len(afterSub) )
         call output ( array(2,1,j), myFormat , advance='no' )
-        call output ( array(2,2,j), myFormat, advance='yes' )
+        call output ( array(2,2,j), myFormat, advance='no' )
+        call finishLine
       end do
     end if
     call theDumpEnds
@@ -1519,10 +1536,12 @@ contains
           call output ( afterSub , advance='no' )
         end if
         call output ( array(1,1,j), myFormat , advance='no' )
-        call output ( array(1,2,j), myFormat, advance='yes' )
+        call output ( array(1,2,j), myFormat, advance='no' )
+        call finishLine
         call blanks ( max(3,ilog10(size(array))+1) + len(afterSub) )
         call output ( array(2,1,j), myFormat , advance='no' )
-        call output ( array(2,2,j), myFormat, advance='yes' )
+        call output ( array(2,2,j), myFormat, advance='no' )
+        call finishLine
       end do
     end if
     call theDumpEnds
@@ -1830,7 +1849,8 @@ contains
         call output ( trim(element), advance='no' )
         call output( ' = ', advance='no' )
         call GetStringElement( values, element, j, countEmpty, separator)
-        call output ( trim(element), advance='yes' )
+        call output ( trim(element), advance='no' )
+        call finishLine
       end do ! j
     end if
     call theDumpEnds
@@ -1865,7 +1885,8 @@ contains
         call GetStringElement( keys, element, j, countEmpty, separator)
         call output ( trim(element), advance='no' )
         call output( ' = ', advance='no' )
-        call output ( values(j), advance='yes' )
+        call output ( values(j), advance='no' )
+        call finishLine
       end do ! j
     end if
     call theDumpEnds
@@ -1910,13 +1931,15 @@ contains
       call empty ( name )
     else if ( NumElements == 1 ) then
       call name_and_size ( name, myClean, 1 )
-      call output ( trim(string), advance='yes' )
+      call output ( trim(string), advance='no' )
+      call finishLine
     else
       call name_and_size ( name, myClean, NumElements )
       if ( present(name) .and. .not. mylaconic ) call newLine
       do j = 1, NumElements
         call GetStringElement(string, myFillValue, j, countEmpty, separator)
-        call output ( trim(myFillValue), advance='yes' )
+        call output ( trim(myFillValue), advance='no' )
+        call finishLine
       end do ! j
     end if
     call theDumpEnds
@@ -2491,6 +2514,17 @@ contains
   end subroutine SELFDIFF_REAL
 
   ! --- Private procedures ---
+  ! --- finishLine ---
+  ! Print a newLine, optionally echoing the item name
+  subroutine finishLine
+    ! Executable
+    if ( len_trim(nameOnEachLine) > 1 ) then
+      call blanks (2)
+      call output ( trim(nameOnEachLine), advance='no' )
+    endif
+    call newLine
+  end subroutine finishLine
+
   ! --- DumpCollapsedArray ---
   ! This family of subroutines dumps a lower-rank representation of
   ! an array
@@ -3019,12 +3053,18 @@ contains
     outputOptions%sdFormatDefault = originalSDFormat
   end subroutine printRMSetc_real
 
-  subroutine printRMSetc_int ( Name, min, max, rms, mean  )
+  subroutine printRMSetc_int ( Name, in_min, in_max, rms, mean  )
     character(len=*), intent(in), optional :: Name
-    integer, intent(in) :: min
-    integer, intent(in) :: max
-    real, intent(in) :: rms
+    integer, intent(in)        :: in_min
+    integer, intent(in)        :: in_max
+    real, intent(in)           :: rms
     real, intent(in), optional :: mean
+    ! Internal variables
+    real                       :: min
+    real                       :: max
+    ! Executable
+    min = in_min
+    max = in_max
     include 'printRMSetc.f9h'
   end subroutine printRMSetc_int
 
@@ -3420,6 +3460,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.135  2016/03/23 00:22:17  pwagner
+! Diff now able to print name on each line; repaired error in printRMSEtc when array is integer
+!
 ! Revision 2.134  2016/01/12 00:46:51  pwagner
 ! May override DEFAULTWIDTH when dumping char array
 !
