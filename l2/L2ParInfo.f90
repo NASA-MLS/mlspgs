@@ -714,8 +714,6 @@ contains ! ==================================================================
     integer :: BUFFERID                 ! From PVM
     integer :: INFO                     ! From PVM
 
-    ! External (C) function
-    external :: Usleep
     ! Executable code
 
     ! Pack and dispatch
@@ -892,6 +890,9 @@ contains ! ==================================================================
 end module L2ParInfo
 
 ! $Log$
+! Revision 2.67  2016/03/23 20:12:42  pwagner
+! Usleep not an external any more
+!
 ! Revision 2.66  2016/02/29 19:50:26  pwagner
 ! Usleep got from machine module instead of being an external
 !
