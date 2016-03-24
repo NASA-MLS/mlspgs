@@ -42,12 +42,19 @@ module Output_0
     module procedure Output_Single
   end interface
 
-  public :: Blanks, NewLine
+  ! Public procedures
+  public :: Blanks, NewLine, NewPage
   public :: Output, Output_Char, Output_Double
   public :: Output_Integer, Output_Logical, Output_Single
   public :: Parse_Advance
 
-  type, public :: Output_0_t
+  ! Public type
+  public :: Output_0_t
+
+  ! Public Variables
+  public :: NewPage_char, Output_0_v
+
+  type :: Output_0_t
     integer :: PrUnit = output_unit           ! Unit to use for output
     character(:), pointer :: Chars => NULL()  ! Characters to output
   contains
@@ -61,10 +68,13 @@ module Output_0
     generic :: Output => Output_Char, Output_Double, Output_Integer, &
       & Output_Logical, Output_Single
   end type Output_0_t
- 
+
   type(Output_0_t), target, save :: Output_0_v
 
   class(Output_0_t), pointer, public :: Output_v => null()
+
+  ! Change this from your main program if necessary.
+  character, save :: NewPage_char = achar(12) ! Ctrl-L
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -95,6 +105,11 @@ contains
   subroutine NewLine
     call output ( '', advance='yes' )
   end subroutine NewLine
+
+  ! ----------------------------------------------------  NewPage  -----
+  subroutine NewPage
+    call output ( NewPage_char )
+  end subroutine NewPage
 
   ! ----------------------------------------------  Output_Char_0  -----
 
@@ -319,6 +334,9 @@ contains
 end module Output_0
 
 ! $Log$
+! Revision 2.2  2016/03/24 23:17:58  vsnyder
+! Add NewPage and NewPage_char; make Output_0_v public
+!
 ! Revision 2.1  2016/03/24 22:46:00  vsnyder
 ! Initial commit
 !
