@@ -16,9 +16,9 @@ module Geolocation_0
   ! Define types used in geolocation modules.
 
   use Constants, only: Deg2Rad, Rad2Deg
-  use MLSKinds, only: RG => R8 ! Kind of REAL geolocation variables
   use Earth_Constants, only: Earth_Axis_Ratio, Earth_Axis_Ratio_Squared, &
     & EarthRadA, EarthRadB, Eccentricity_Sq, RP
+  use MLSKinds, only: RG => R8 ! Kind of REAL geolocation variables
 
   implicit NONE
 
@@ -34,38 +34,6 @@ module Geolocation_0
        "$RCSfile$"
   private :: not_used_here
 !---------------------------------------------------------------------------
-
-  type :: H_t           ! For horizontal (lat/lon) grids, geoc/geod unspecified
-    real(rg) :: Lon     ! Degrees
-    real(rg) :: Lat     ! Degrees
-  contains
-    procedure :: ECR => H_t_To_ECR_Surf ! at the Earth's surface
-    procedure :: Geoc => H_t_to_H_Geoc  ! Simple type conversion only
-    procedure :: Geod => H_t_to_H_Geod  ! Simple type conversion only
-    procedure, pass(geo) :: From_ECR => Surf_H_t_From_ECR ! useful because the
-                                        ! desired dynamic result type (H_t) of
-                                        ! ECR_to_Geoc cannot be used for
-                                        ! dispatch
-  end type H_t
-
-  type, extends(h_t) :: H_Geoc
-  !  real(rg) :: Lon    ! Longitude, degrees
-  !  real(rg) :: Lat    ! Geocentric latitude, degrees
-  contains
-    procedure :: Geod => Geoc_To_Geod
-  end type H_Geoc
-
-  type, extends(h_t) :: H_Geod
-  !  real(rg) :: Lon    ! Longitude, degrees
-  !  real(rg) :: Lat    ! Geodetic latitude, degrees
-  contains
-    procedure :: ECR => Geod_To_ECR_Surf
-    procedure :: Geoc => Geod_To_Geoc
-    procedure, pass(geo) :: From_ECR => Surf_Geod_From_ECR ! useful because the
-                                        ! desired dynamic result type (H_geod)
-                                        ! of ECR_to_Geod cannot be used for
-                                        ! dispatch
-  end type H_Geod
 
   type, abstract :: Lat_t ! For latitude; can't instantiate it
     real(rg) :: D       ! Degrees
@@ -90,6 +58,38 @@ module Geolocation_0
     real(rg) :: D       ! Degrees
   end type Lon_t
 
+  type :: H_t           ! For horizontal (lat/lon) grids, geoc/geod unspecified
+    type(lon_t) :: Lon  ! Degrees
+    real(rg) :: Lat     ! Degrees
+  contains
+    procedure :: ECR => H_t_To_ECR_Surf ! at the Earth's surface
+    procedure :: Geoc => H_t_to_H_Geoc  ! Simple type conversion only
+    procedure :: Geod => H_t_to_H_Geod  ! Simple type conversion only
+    procedure, pass(geo) :: From_ECR => Surf_H_t_From_ECR ! useful because the
+                                        ! desired dynamic result type (H_t) of
+                                        ! ECR_to_Geoc cannot be used for
+                                        ! dispatch
+  end type H_t
+
+  type, extends(h_t) :: H_Geoc
+  !  type(lon_t) :: Lon ! Longitude, degrees
+  !  real(rg) :: Lat    ! Geocentric latitude, degrees
+  contains
+    procedure :: Geod => Geoc_To_Geod
+  end type H_Geoc
+
+  type, extends(h_t) :: H_Geod
+  !  type(lon_t) :: Lon ! Longitude, degrees
+  !  real(rg) :: Lat    ! Geodetic latitude, degrees
+  contains
+    procedure :: ECR => Geod_To_ECR_Surf
+    procedure :: Geoc => Geod_To_Geoc
+    procedure, pass(geo) :: From_ECR => Surf_Geod_From_ECR ! useful because the
+                                        ! desired dynamic result type (H_geod)
+                                        ! of ECR_to_Geod cannot be used for
+                                        ! dispatch
+  end type H_Geod
+
   type :: V_t           ! For vertical grids of unspecified type
     real(rg) :: V       ! Geocentric (meters), geodetic (meters), or zeta
   end type V_t
@@ -110,7 +110,7 @@ module Geolocation_0
   ! For irregular grids, or lines of sight, where H and V are expected to
   ! have the same extents
   type, extends(h_t) :: H_V_t
-  ! real(rg) :: Lon     ! Degrees
+  ! type(lon_t) :: Lon  ! Degrees
   ! real(rg) :: Lat     ! Degrees
     real(rg) :: V       ! Meters or zeta
   contains
@@ -120,7 +120,7 @@ module Geolocation_0
   end type H_V_t
 
   type, extends(h_v_t) :: H_Geoc_V_Geod
-  ! real(rg) :: Lon     ! Degrees
+  ! type(lon_t) :: Lon  ! Degrees
   ! real(rg) :: Lat     ! Degrees Geocentric
   ! real(rg) :: V       ! geodetic height (meters above mean geoid)
   contains
@@ -128,7 +128,7 @@ module Geolocation_0
   end type H_Geoc_V_Geod
 
   type, extends(h_v_t) :: H_V_Geoc
-  ! real(rg) :: Lon     ! Degrees
+  ! type(lon_t) :: Lon  ! Degrees
   ! real(rg) :: Lat     ! Degrees Geocentric
   ! real(rg) :: V       ! geocentric height (meters from the Earth center)
   contains
@@ -143,7 +143,7 @@ module Geolocation_0
   end type H_V_Geoc
 
   type, extends(h_v_t) :: H_V_Geod
-  ! real(rg) :: Lon     ! Degrees
+  ! type(lon_t) :: Lon  ! Degrees
   ! real(rg) :: Lat     ! Degrees Geodetic
   ! real(rg) :: V       ! geodetic height (meters above mean geoid)
   contains
@@ -161,7 +161,7 @@ module Geolocation_0
   end type H_V_Geod
 
   type, extends(h_v_t) :: H_V_Zeta
-  ! real(rg) :: Lon     ! Degrees
+  ! type(lon_t) :: Lon  ! Degrees
   ! real(rg) :: Lat     ! Degrees
   ! real(rg) :: V       ! Zeta
   end type H_V_Zeta
@@ -171,12 +171,15 @@ module Geolocation_0
   contains
     procedure :: Add => ECR_add
     generic :: operator(+) => Add
+    procedure :: Cross_Norm => ECR_Cross_Norm ! Unit length
+    generic :: operator(.CROSSNORM.) => Cross_Norm
     procedure :: Cross_Product => ECR_Cross
     generic :: operator(.CROSS.) => Cross_Product
     procedure :: Dot_Product => ECR_Dot
     generic :: operator(.DOT.) => Dot_Product
-    procedure :: Div => ECR_Divide
-    generic :: operator(/) => Div
+    procedure :: Div => ECR_Divide ! All components by the same value
+    procedure :: Div_Components => ECR_Divide_Components ! Separately
+    generic :: operator(/) => Div, Div_Components
     procedure :: Geoc => ECR_to_Geoc
     procedure :: Geod => ECR_To_Geod_Fukushima
     generic :: Grad => Grad_Ellipsoid ! Unit gradient at surface
@@ -192,7 +195,7 @@ module Geolocation_0
   end type ECR_t
 
   interface Cross
-    module procedure ECR_Cross
+    module procedure ECR_Cross_Norm_Opt
   end interface
 
   interface Dot_Product
@@ -250,11 +253,32 @@ contains
     ECR_Cross%xyz = cross(a%xyz,b%xyz)
   end function ECR_Cross
 
+  pure type(ECR_t) function ECR_Cross_Norm ( A, B ) result ( ECR_Cross )
+    use Cross_m, only: Cross
+    class(ECR_t), intent(in) :: A, B
+    ECR_Cross%xyz = cross(a%xyz,b%xyz,norm=.true.)
+  end function ECR_Cross_Norm
+
+  pure type(ECR_t) function ECR_Cross_Norm_Opt ( A, B, Norm ) result ( ECR_Cross )
+    use Cross_m, only: Cross
+    class(ECR_t), intent(in) :: A, B
+    logical, intent(in), optional :: Norm
+    ECR_Cross%xyz = cross(a%xyz,b%xyz,norm)
+  end function ECR_Cross_Norm_Opt
+
+  ! Divide all the elements of the component by the same value
   pure elemental type(ECR_t) function ECR_Divide ( A, B )
     class(ECR_t), intent(in) :: A
     real(rg), intent(in) :: B
     ECR_Divide = ECR_t ( a%xyz / b )
   end function ECR_Divide
+
+  ! Divide each element of the component by a different value
+  pure type(ECR_t) function ECR_Divide_Components ( A, B )
+    class(ECR_t), intent(in) :: A
+    real(rg), intent(in) :: B(3)
+    ECR_Divide_Components = ECR_t ( a%xyz / b )
+  end function ECR_Divide_Components
 
   pure real(rg) function ECR_Dot ( A, B )
     class(ECR_t), intent(in) :: A, B
@@ -288,7 +312,7 @@ contains
     real(rg) :: Rho, Rho2
     rho2 = ECR%xyz(1)**2 + ECR%xyz(2)**2
     rho = sqrt(rho2)
-    geoc%lon = rad2deg * atan2(ECR%xyz(2), ECR%xyz(1))
+    geoc%lon%d = rad2deg * atan2(ECR%xyz(2), ECR%xyz(1))
     geoc%lat = rad2deg * asin(ECR%xyz(3)/rho)
     geoc%v = sqrt(rho2 + ECR%xyz(3)**2)
   end function ECR_To_Geoc
@@ -316,12 +340,12 @@ contains
     real(rg) :: Z                        ! Ec * |z| / a
 
     ! Computing longitude is easy
-    geod%lon = rad2deg * atan2 ( ECR%xyz(2), ECR%xyz(1) )
+    geod%lon%d = rad2deg * atan2 ( ECR%xyz(2), ECR%xyz(1) )
 
     s = sqrt ( ECR%xyz(1)**2 + ECR%xyz(2)**2 )
     if ( s < sqrt(tiny(1.0_rg)) ) then ! Too near the poles
       geod%lat = sign(90.0_rg,ECR%xyz(3))
-      geod%v = ECR%xyz(3) - b
+      geod%v = abs(ECR%xyz(3)) - b
       return
     end if
 
@@ -368,26 +392,36 @@ contains
     geo%v = myGeo%v
   end subroutine Geoc_From_ECR
 
-  pure elemental type(ECR_t) function Geoc_Geod_To_ECR ( Geo ) result ( ECR )
+  pure elemental type(ECR_t) function Geoc_Geod_To_ECR ( Geo, Norm ) &
+    & result ( ECR )
     ! Convert geocentric coordinates at the Earth surface plus geodetic
     ! height to ECR
     class(h_geoc_v_geod), intent(in) :: Geo
+    logical, intent(in), optional :: Norm ! Compute normalized ECR
     type(ECR_t) :: Surf
     surf = geo%h_t%ECR() ! ECR coordinates of geocentric coordinates at the
                          ! Earth geoid surface
     ECR = surf + geo%v * surf%grad()
+    if ( present(norm) ) then
+      if ( norm ) ECR = ECR/norm2(ECR)
+    end if
   end function Geoc_Geod_To_ECR
 
-  pure elemental type(ECR_t) function Geoc_To_ECR ( Geo ) result ( ECR )
+  pure elemental type(ECR_t) function Geoc_To_ECR ( Geo, Norm ) result ( ECR )
     ! Convert geocentric coordinates to ECR coordinates in meters
     class(h_v_geoc), intent(in) :: Geo
-    real(rg) :: Lat, Lon, Rho
+    logical, intent(in), optional :: Norm ! Compute normalized ECR
+    real(rg) :: CosLat, Lat, Lon
+    logical MyNorm
+    myNorm = .false.
+    if ( present(norm) ) myNorm = norm
     lat = geo%lat * deg2rad
-    lon = geo%lon * deg2rad
-    rho = geo%v * cos(lat)
-    ECR%xyz(1) = rho * cos(lon)
-    ECR%xyz(2) = rho * sin(lon)
-    ECR%xyz(3) = geo%v * sin(lat)
+    lon = geo%lon%d * deg2rad
+    cosLat = cos(lat)
+    ECR%xyz(1) = cosLat * cos(lon)
+    ECR%xyz(2) = cosLat * sin(lon)
+    ECR%xyz(3) = sin(lat)
+    if ( .not. myNorm ) ECR = ECR * geo%v
   end function Geoc_To_ECR
 
   pure elemental function Geoc_To_Geod ( Geo ) result ( Geod )
@@ -428,20 +462,25 @@ contains
     geo%v = myGeo%v
   end subroutine Geod_From_ECR
 
-  pure elemental type(ECR_t) function Geod_To_ECR ( Geo ) result ( ECR )
+  pure elemental type(ECR_t) function Geod_To_ECR ( Geo, Norm ) result ( ECR )
     ! Convert geodetic coordinates to ECR coordinates in meters
     class(h_v_geod), intent(in) :: Geo
+    logical, intent(in), optional :: Norm
     real(rg) :: MyLon
     real(rg) :: Rho
     call geod_to_geoc_support ( geo, ECR%xyz(3), rho )
-    myLon = geo%lon * deg2rad
+    myLon = geo%lon%d * deg2rad
     ECR%xyz(1) = rho * cos(myLon)
     ECR%xyz(2) = rho * sin(myLon)
+    if ( present(norm) ) then
+      if ( norm ) ECR = ECR / norm2(ECR)
+    end if
   end function Geod_To_ECR
 
-  pure elemental type(ECR_t) function Geod_To_ECR_Surf ( Geo ) result ( ECR )
+  pure elemental type(ECR_t) function Geod_To_ECR_Surf ( Geo, Norm ) result ( ECR )
     ! Convert geodetic coordinates at the Earth surface to ECR coordinates
     class(h_geod), intent(in) :: Geo
+    logical, intent(in), optional :: Norm
     real(rg) :: CT   ! cos(lat)
     real(rg) :: D    ! sqrt(a^2 ct^2 + b^2 st^2)
     real(rg) :: Lat  ! geodetic latitude in radians
@@ -453,10 +492,13 @@ contains
     st = sin(lat)
     d = 1.0 / sqrt(aquad*ct*ct + bquad*st*st)
     rho = aquad * d * ct
-    lon = geo%lon * deg2rad
+    lon = geo%lon%d * deg2rad
     ecr%xyz(1) = rho * cos(lon)
     ecr%xyz(2) = rho * sin(lon)
     ecr%xyz(3) = bquad * d * st
+    if ( present(norm) ) then
+      if ( norm ) ECR = ECR / norm2(ECR)
+    end if
   end function Geod_To_ECR_Surf
 
   pure elemental type(h_geoc) function Geod_To_Geoc ( Geo ) result ( Geoc )
@@ -487,9 +529,10 @@ contains
     geoc%v = sqrt ( rho**2 + z**2 ) ! geocentric height
   end function GeodV_To_GeocV
 
-  pure elemental type(ECR_t) function H_t_To_ECR_Surf ( Geo ) result ( ECR )
+  pure elemental type(ECR_t) function H_t_To_ECR_Surf ( Geo, Norm ) result ( ECR )
     ! Convert geocentric coordinates at the Earth surface to ECR coordinates
     class(h_t), intent(in) :: Geo
+    logical, intent(in), optional :: Norm
     real(rp), parameter :: E2 = Eccentricity_Sq
     real(rg) :: Lat, Lon, R, Rho, ST
     lat = geo%lat * deg2rad
@@ -497,11 +540,14 @@ contains
     ! Geocentric radius at geocentric latitude
     ! r = ab / sqrt ( a^2 cos^2(lat) + b^2 sin^2(lat) )
     r = earthRadB / sqrt( 1 - e2 * st * st )
-    lon = geo%lon * deg2rad
+    lon = geo%lon%d * deg2rad
     rho = r * cos(lat)
     ECR%xyz(1) = rho * cos(lon)
     ECR%xyz(2) = rho * sin(lon)
     ECR%xyz(3) = r * st
+    if ( present(norm) ) then
+      if ( norm ) ECR = ECR / norm2(ECR)
+    end if
   end function H_t_To_ECR_Surf
 
   ! Construct an H_Geoc object from an H_t one
@@ -538,7 +584,7 @@ contains
   pure elemental subroutine Surf_H_t_From_ECR ( ECR, Geo )
     class(ECR_t), intent(in) :: ECR
     class(h_t), intent(out) :: Geo
-    geo%lon = rad2deg * atan2(ECR%xyz(2), ECR%xyz(1))
+    geo%lon%d = rad2deg * atan2(ECR%xyz(2), ECR%xyz(1))
     geo%lat = rad2deg * asin(ECR%xyz(3)/sqrt(ECR%xyz(1)**2 + ECR%xyz(2)**2))
   end subroutine Surf_H_t_From_ECR
 
@@ -592,6 +638,14 @@ contains
 end module Geolocation_0
 
 ! $Log$
+! Revision 2.9  2016/03/25 00:24:29  vsnyder
+! Change type of Lon component from real(rg) to type(lon_t).  Add
+! Div_Components binding to ECR_t and add it to Operator(/) generic.
+! Change the Cross generic to ECR_Cross_Norm_Opt because operator
+! generics cannot have optional arguments.  Add Norm option to
+! Geoc_Geod_To_ECR, Geoc_to_ECR, Geod_To_ECR, Geod_To_ECR_Surf, and
+! H_t_To_ECR_Surf.
+!
 ! Revision 2.8  2016/03/02 21:48:02  vsnyder
 ! Add H_Geoc_V_Geod and ellipsoid gradient functions
 !
