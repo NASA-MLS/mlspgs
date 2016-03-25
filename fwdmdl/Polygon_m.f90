@@ -219,7 +219,7 @@ contains
 
     if ( .not. allocated(polygon_vertices) ) return ! silently
 
-    call output ( polygon_inside%lon, before='Point inside polygon (lon,lat): (' )
+    call output ( polygon_inside%lon%d, before='Point inside polygon (lon,lat): (' )
     call output ( polygon_inside%lat, before=',', after=')', advance='yes' )
     call dump_h_t ( polygon_vertices, &
       & 'Polygon boundary vertices (lon,lat):', format='(f8.3)' )
@@ -239,6 +239,9 @@ contains
 end module Polygon_m
 
 ! $Log$
+! Revision 2.3  2016/03/25 18:23:26  vsnyder
+! Lon component now needs to acces its %d component
+!
 ! Revision 2.2  2016/02/19 23:23:05  vsnyder
 ! Remove unreferenced USE name, spiff an error message
 !
