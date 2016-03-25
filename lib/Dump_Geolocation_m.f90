@@ -48,7 +48,7 @@ contains
     do i = 1, n, 5
       call output ( i, 4, after=':' )
       do j = i, min(i+4,n)
-        call output ( g(j)%lon, before=' (', format=myFmt )
+        call output ( g(j)%lon%d, before=' (', format=myFmt )
         call output ( g(j)%lat, before=',', format=myFmt, after=')' )
       end do
       call NewLine
@@ -98,6 +98,9 @@ contains
 end module Dump_Geolocation_m
 
 ! $Log$
+! Revision 2.2  2016/03/25 00:25:06  vsnyder
+! Lon component now needs to acces its %d component
+!
 ! Revision 2.1  2016/02/23 00:46:49  pwagner
 ! First commit
 !
