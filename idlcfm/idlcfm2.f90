@@ -159,7 +159,7 @@ module IDLCFM2_m
         integer, parameter :: P_LAST = P_MASK + 1
         logical :: l29(P_LAST - 1)
         logical :: PROPERTIES(firstProperty : lastProperty) ! Properties for this quantity type
-        character(len=32) :: signalString
+        character(len=640) :: signalString
         integer, dimension(:), pointer :: SignalInds ! From parse signal
         logical, pointer :: channels(:)     ! From Parse_Signal
         integer :: sideband
@@ -950,6 +950,9 @@ module IDLCFM2_m
 end module
 
 ! $Log$
+! Revision 1.11  2016/02/04 22:00:57  pwagner
+! added SIG_DIE; define P_stuff in just one place now
+!
 ! Revision 1.10  2016/01/07 17:56:06  pwagner
 ! Reflects new crossAngles, pointer remapping
 !
