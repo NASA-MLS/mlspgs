@@ -213,7 +213,7 @@ contains
     ! Get fractional colatitude
     dxy = 1.0 - abs(geo%lat) / 90.0
     ! Put longitude in [0, 360).
-    lon = mod(geo%lon,360.0_rg)
+    lon = mod(geo%lon%d,360.0_rg)
     if ( lon < 0.0 ) lon = lon + 360.0
     lonInt = lon
     z%x = mod(lonInt,90) + lon - lonInt
@@ -540,21 +540,21 @@ contains
     if ( oct > 4 ) then ! Southern hemisphere
       geo%lat = -geo%lat
       if ( mod(oct,2) /= 0 ) then
-        geo%lon = 90.0 * dy / dxy
+        geo%lon%d = 90.0 * dy / dxy
       else
-        geo%lon = 90.0 * dx / dxy
+        geo%lon%d = 90.0 * dx / dxy
       end if
     else
       if ( mod(oct,2) /= 0 ) then
-        geo%lon = 90.0 * dx / dxy
+        geo%lon%d = 90.0 * dx / dxy
       else
-        geo%lon = 90.0 * dy / dxy
+        geo%lon%d = 90.0 * dy / dxy
       end if
     end if
     ! Offset longitude based upon octet number
-    geo%lon = geo%lon + mod((mod(oct,4)-1) * 90, 360)
+    geo%lon%d = geo%lon%d + mod((mod(oct,4)-1) * 90, 360)
     ! Negate west longitudes
-    if ( geo%lon > 180.0 ) geo%lon = geo%lon - 360.0
+    if ( geo%lon%d > 180.0 ) geo%lon%d = geo%lon%d - 360.0
   end function ZOT_To_Geo
 
   pure &
@@ -617,6 +617,9 @@ contains
 end module QTM_m
 
 ! $Log$
+! Revision 2.5  2016/03/25 00:47:07  vsnyder
+! Lon component now needs to acces its %d component
+!
 ! Revision 2.4  2015/12/30 23:50:20  vsnyder
 ! Make Get_Octant public (not just type bound).  Add ZOT_V_t.  Change name
 ! of QTM_Encode to QTM_Encode_Tol and add QTM_Encode_Level.  Make procedures

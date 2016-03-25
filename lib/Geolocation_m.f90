@@ -16,9 +16,11 @@ module Geolocation_m
   ! Define geolocation representations.  Enquire a geolocation.
   ! Calculate interpolation coefficients.
 
-  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test, Test_Allocate
-  use Geolocation_0, only: ECR_t, H_t, H_Geoc, H_Geod, Lat_t, GeocLat_t, GeodLat_t, &
-    & Lon_t, H_V_t, H_V_Geoc, H_V_Geod, H_V_Zeta, V_T, V_Geoc, V_Geod, V_Zeta, RG
+  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test, Test_Allocate, &
+    & Test_Deallocate
+  use Geolocation_0, only: ECR_t, GeocLat_t, GeodLat_t, Lat_t, Lon_t, H_t, &
+    & H_Geoc, H_Geod, H_V_t, H_V_Geoc, H_V_Geod, H_V_Zeta, RG, V_T, V_Geoc, &
+    & V_Geod, V_Zeta
   use Generate_QTM_m, only: QTM_Tree_t
   use QTM_m, only: ZOT_t
 
@@ -51,34 +53,34 @@ module Geolocation_m
     ! here -- and we don't have temperature anyway, so we can't.
 
     ! Horizontal coordinates, degrees
-    real(rg), pointer, contiguous :: Lon1(:)=> null()          ! V*H*H
-    real(rg), pointer, contiguous :: Lon2(:,:) => null()       ! => Lon1, V x H*H
-    real(rg), pointer, contiguous :: Lon3(:,:,:) => null()     ! => Lon1, V x H x H
-    real(rg), pointer, contiguous :: GeocLat1(:) => null()     ! V*H*H
-    real(rg), pointer, contiguous :: GeocLat2(:,:) => null()   ! => geodLat1, V x H*H
-    real(rg), pointer, contiguous :: GeocLat3(:,:,:) => null() ! => geodLat1, V x H x H
-    real(rg), pointer, contiguous :: GeodLat1(:) => null()     ! V*H*H
-    real(rg), pointer, contiguous :: GeodLat2(:,:) => null()   ! => geocLat1, V x H*H
-    real(rg), pointer, contiguous :: GeodLat3(:,:,:) => null() ! => geocLat1, V x H x H
+    type(lon_t), pointer, contiguous :: Lon1(:)=> null()       ! V*H*H
+    type(lon_t), pointer, contiguous :: Lon2(:,:) => null()    ! => Lon1, V x H*H
+    type(lon_t), pointer, contiguous :: Lon3(:,:,:) => null()  ! => Lon1, V x H x H
+    type(geocLat_t), pointer, contiguous :: GeocLat1(:) => null()     ! V*H*H
+    type(geocLat_t), pointer, contiguous :: GeocLat2(:,:) => null()   ! => geocLat1, V x H*H
+    type(geocLat_t), pointer, contiguous :: GeocLat3(:,:,:) => null() ! => geocLat1, V x H x H
+    type(geodLat_t), pointer, contiguous :: GeodLat1(:) => null()     ! V*H*H
+    type(geodLat_t), pointer, contiguous :: GeodLat2(:,:) => null()   ! => geodLat1, V x H*H
+    type(geodLat_t), pointer, contiguous :: GeodLat3(:,:,:) => null() ! => geodLat1, V x H x H
     ! Great-circle along-track coordinate, degrees, with origin at the
     ! instrument and increasing in the direction of the tangent.
     real(rg), pointer, contiguous :: Phi1(:) => null()         ! V*H*H
     real(rg), pointer, contiguous :: Phi2(:,:) => null()       ! => Phi1, V x H*H
     real(rg), pointer, contiguous :: Phi3(:,:,:) => null()     ! => Phi1, V x H x H
     ! Vertical coordinates, meters from the Earth center
-    real(rg), pointer, contiguous :: GeocV1(:) => null()       ! V*H*H or V*size(QTM_ZOT)
-    real(rg), pointer, contiguous :: GeocV2(:,:) => null()     ! => GeocV1, V x H*H or
+    type(v_geoc), pointer, contiguous :: GeocV1(:) => null()   ! V*H*H or V*size(QTM_ZOT)
+    type(v_geoc), pointer, contiguous :: GeocV2(:,:) => null() ! => GeocV1, V x H*H or
                                                                ! V x size(QTM_ZOT)
-    real(rg), pointer, contiguous :: GeocV3(:,:,:) => null()   ! => GeocV1, V x H x H
+    type(v_geoc), pointer, contiguous :: GeocV3(:,:,:) => null() ! => GeocV1, V x H x H
     ! Vertical coordinates, meters above sea level
-    real(rg), pointer, contiguous :: GeodV1(:) => null()       ! V*H*H or V*size(QTM_ZOT)
-    real(rg), pointer, contiguous :: GeodV2(:,:) => null()     ! => GeodV1, V x H*H or
+    type(v_geod), pointer, contiguous :: GeodV1(:) => null()   ! V*H*H or V*size(QTM_ZOT)
+    type(v_geod), pointer, contiguous :: GeodV2(:,:) => null() ! => GeodV1, V x H*H or
                                                                ! V x size(QTM_ZOT)
-    real(rg), pointer, contiguous :: GeodV3(:,:,:) => null()   ! => GeodV1, V x H x H
+    type(v_geod), pointer, contiguous :: GeodV3(:,:,:) => null() ! => GeodV1, V x H x H
     ! Vertical coordinates, zeta
-    real(rg), pointer, contiguous :: Zeta1(:) => null()        ! V*H*H
-    real(rg), pointer, contiguous :: Zeta2(:,:) => null()      ! => Zeta1, V x H*H
-    real(rg), pointer, contiguous :: Zeta3(:,:,:) => null()    ! => Zeta1, V x H x H
+    type(v_zeta), pointer, contiguous :: Zeta1(:) => null()    ! V*H*H
+    type(v_zeta), pointer, contiguous :: Zeta2(:,:) => null()  ! => Zeta1, V x H*H
+    type(v_zeta), pointer, contiguous :: Zeta3(:,:,:) => null() ! => Zeta1, V x H x H
     ! ECR coordinates, meters
     type(ecr_t), pointer, contiguous :: P1(:) => null()        ! V*H*H
     type(ecr_t), pointer, contiguous :: P2(:,:) => null()      ! => P1, V x H*H
@@ -280,9 +282,13 @@ contains
   subroutine Geoc_V_1 ( G, HV )
     class(geolocation_t), intent(out) :: G ! Intent(out) causes Destroy_G
     type(h_v_geoc), intent(in) :: HV(:)
-    call allocate_test ( g%lon1, size(hv), 'lon1', moduleName )
-    call allocate_test ( g%geocLat1, size(hv), 'geocLat1', moduleName )
-    call allocate_test ( g%geocV1, size(hv), 'geocV1', moduleName )
+    integer :: Stat
+    allocate ( g%lon1(size(hv)), stat=stat )
+    call test_allocate ( stat, 'lon1', moduleName )
+    allocate ( g%geocLat1(size(hv)), stat=stat )
+    call test_allocate ( stat, 'geocLat1', moduleName )
+    allocate ( g%geocV1(size(hv)), stat=stat )
+    call test_allocate ( stat, 'geocV1', moduleName )
     g%lon2(1:size(hv,1),1:1) => g%lon1
     g%lon3(1:size(hv,1),1:1,1:1) => g%lon1
     g%geocLat2(1:size(hv,1),1:1) => g%geocLat1
@@ -290,8 +296,8 @@ contains
     g%geocV2(1:size(hv,1),1:1) => g%geocV1
     g%geocV3(1:size(hv,1),1:1,1:1) => g%geocV1
     g%lon1 = hv%lon
-    g%geocLat1 = hv%lat
-    g%geocV1 = hv%v
+    g%geocLat1%d = hv%lat
+    g%geocV1%v = hv%v
     g%cartesian = .false.
     g%coherent = .false.
     g%stacked = .false.
@@ -318,18 +324,22 @@ contains
     type(h_geoc), intent(in) :: H(:)         ! Horizontal coordinates (lon, lat)
     type(v_geoc), intent(in) :: V(:)         ! Geocentric height, meters
     logical, intent(in), optional :: Regular ! coherent and stacked, default YES
-    call allocate_test ( g%lon1, size(h), 'lon1', moduleName )
-    call allocate_test ( g%geocLat1, size(h) , 'geocLat1', moduleName )
-    call allocate_test ( g%geocV1, size(v), 'geocV1', moduleName )
+    integer :: Stat
+    allocate ( g%lon1(size(h)), stat=stat )
+    call test_allocate ( stat, 'lon1', moduleName )
+    allocate ( g%geocLat1(size(h)), stat=stat )
+    call test_allocate ( stat, 'geocLat1', moduleName )
+    allocate ( g%geocV1(size(v)), stat=stat )
+    call test_allocate ( stat, 'geocV1', moduleName )
     g%lon2(1:size(h),1:1) => g%lon1
     g%lon3(1:size(h),1:1,1:1) => g%lon1
     g%geocLat2(1:size(h),1:1) => g%geocLat1
     g%geocLat3(1:size(h),1:1,1:1) => g%geocLat1
     g%geocV2(1:size(v),1:1) => g%geocV1
     g%geocV3(1:size(v),1:1,1:1) => g%geocV1
-    g%lon1= h%lon
-    g%geocLat1 = h%lat
-    g%geocV1 = v%v
+    g%lon1 = h%lon
+    g%geocLat1%d = h%lat
+    g%geocV1%v = v%v
     g%cartesian = .false.
     if ( present(regular) ) then
       g%coherent = regular
@@ -349,18 +359,22 @@ contains
     type(geocLat_t), intent(in) :: Lat(:)  ! Geocentric latitude, degrees
     type(lon_t), intent(in) :: Lon(:)      ! Longitude, degrees
     type(v_geoc), intent(in) :: V(:)       ! Geocentric height, meters
-    call allocate_test ( g%lon1, size(lon), 'lon1', moduleName )
-    call allocate_test ( g%geocLat1, size(lat), 'geocLat1', moduleName )
-    call allocate_test ( g%geocV1, size(v), 'geocV1', moduleName )
+    integer :: Stat
+    allocate ( g%lon1(size(lon)), stat=stat )
+    call test_allocate ( stat, 'lon1', moduleName )
+    allocate ( g%geocLat1(size(lat)), stat=stat )
+    call test_allocate ( stat, 'geocLat1', moduleName )
+    allocate ( g%geocV1(size(v)), stat=stat )
+    call test_allocate ( stat, 'geocV1', moduleName )
     g%lon2(1:size(lon),1:1) => g%lon1
     g%lon3(1:size(lon),1:1,1:1) => g%lon1
     g%geocLat2(1:size(lat),1:1) => g%geocLat1
     g%geocLat3(1:size(lat),1:1,1:1) => g%geocLat1
     g%geocV2(1:size(v),1:1) => g%geocV1
     g%geocV3(1:size(v),1:1,1:1) => g%geocV1
-    g%lon1= lon%d
-    g%geocLat1 = lat%d
-    g%geocV1 = v%v
+    g%lon1= lon
+    g%geocLat1 = lat
+    g%geocV1 = v
     g%cartesian = .true.
     g%coherent = .true.
     g%stacked = .true.
@@ -381,9 +395,13 @@ contains
     type(geocLat_t), intent(in) :: Lat(:)  ! Geocentric latitude, degrees
     type(lon_t), intent(in) :: Lon(:)      ! Longitude, degrees
     type(v_geoc), intent(in) :: V(:,:,:)   ! Geocentric height, meters
-    call allocate_test ( g%lon1, size(lon), 'lon1', moduleName )
-    call allocate_test ( g%geocLat1, size(lat), 'geocLat1', moduleName )
-    call allocate_test ( g%geocV1, size(v), 'geocV1', moduleName )
+    integer :: Stat
+    allocate ( g%lon1(size(lon)), stat=stat )
+    call test_allocate ( stat, 'lon1', moduleName )
+    allocate ( g%geocLat1(size(lat)), stat=stat )
+    call test_allocate ( stat, 'geocLat1', moduleName )
+    allocate ( g%geocV1(size(v)), stat=stat )
+    call test_allocate ( stat, 'geocV1', moduleName )
     g%lon2(1:size(lon),1:1) => g%lon1
     g%lon3(1:size(lon),1:1,1:1) => g%lon1
     g%geocLat2(1:size(lat),1:1) => g%geocLat1
@@ -405,9 +423,13 @@ contains
     class(geolocation_t), intent(out) :: G ! Intent(out) causes Destroy_G
     type(h_geoc), intent(in) :: H(:)       ! Horizontal coordinates
     type(v_geoc), intent(in) :: V(:,:)     ! Geocentric heights
-    call allocate_test ( g%lon1, size(h), 'lon1', moduleName )
-    call allocate_test ( g%geocLat1, size(h), 'geocLat1', moduleName )
-    call allocate_test ( g%geocV1, size(v), 'geocV1', moduleName )
+    integer :: Stat
+    allocate ( g%lon1(size(h)), stat=stat )
+    call test_allocate ( stat, 'lon1', moduleName )
+    allocate ( g%geocLat1(size(h)), stat=stat )
+    call test_allocate ( stat, 'geocLat1', moduleName )
+    allocate ( g%geocV1(size(v)), stat=stat )
+    call test_allocate ( stat, 'geocV1', moduleName )
     g%lon2(1:size(h),1:1) => g%lon1
     g%lon3(1:size(h),1:1,1:1) => g%lon1
     g%geocLat2(1:size(h),1:1) => g%geocLat1
@@ -415,8 +437,8 @@ contains
     g%geocV2(1:size(v,1),1:size(v,2)) => g%geocV1
     g%geocV3(1:size(v,1),1:size(v,2),1:1) => g%geocV1
     g%lon1 = h%lon
-    g%geocLat1 = h%lat
-    g%geocV2 = v%v
+    g%geocLat1%d = h%lat
+    g%geocV2 = v
     g%cartesian = .false.
     g%coherent = .false.
     g%stacked = .true.
@@ -429,9 +451,13 @@ contains
   subroutine Geoc_V_2 ( G, HV )
     class(geolocation_t), intent(out) :: G ! Intent(out) causes Destroy_G
     type(h_v_geoc), intent(in) :: HV(:,:)  ! All geocentric coordinates
-    call allocate_test ( g%lon1, size(hv), 'lon1', moduleName )
-    call allocate_test ( g%geocLat1, size(hv), 'geocLat1', moduleName )
-    call allocate_test ( g%geocV1, size(hv), 'geocV1', moduleName )
+    integer :: Stat
+    allocate ( g%lon1(size(hv)), stat=stat )
+    call test_allocate ( stat, 'lon1', moduleName )
+    allocate ( g%geocLat1(size(hv)), stat=stat )
+    call test_allocate ( stat, 'geocLat1', moduleName )
+    allocate ( g%geocV1(size(hv)), stat=stat )
+    call test_allocate ( stat, 'geocV1', moduleName )
     g%lon2(1:size(hv,1),1:size(hv,2)) => g%lon1
     g%lon3(1:size(hv,1),1:size(hv,2),1:1) => g%lon1
     g%geocLat2(1:size(hv,1),1:size(hv,2)) => g%geocLat1
@@ -439,8 +465,8 @@ contains
     g%geocV2(1:size(hv,1),1:size(hv,2)) => g%geocV1
     g%geocV3(1:size(hv,1),1:size(hv,2),1:1) => g%geocV1
     g%lon2 = hv%lon
-    g%geocLat2 = hv%lat
-    g%geocV2 = hv%v
+    g%geocLat2%d = hv%lat
+    g%geocV2%v = hv%v
     g%cartesian = .false.
     g%coherent = .false.
     g%stacked = .false.
@@ -457,9 +483,13 @@ contains
     type(h_geoc), intent(in) :: H(:,:)     ! Horizontal coordinates
     type(v_geoc), intent(in) :: V(:)       ! Geocentric heights
     logical, intent(in), optional :: Stacked ! default YES
-    call allocate_test ( g%lon1, size(h), 'lon1', moduleName )
-    call allocate_test ( g%geocLat1, size(h), 'geocLat1', moduleName )
-    call allocate_test ( g%geocV1, size(v), 'geocV1', moduleName )
+    integer :: Stat
+    allocate ( g%lon1(size(h)), stat=stat )
+    call test_allocate ( stat, 'lon1', moduleName )
+    allocate ( g%geocLat1(size(h)), stat=stat )
+    call test_allocate ( stat, 'geocLat1', moduleName )
+    allocate ( g%geocV1(size(v)), stat=stat )
+    call test_allocate ( stat, 'geocV1', moduleName )
     g%lon2(1:size(h,1),1:size(h,2)) => g%lon1
     g%lon3(1:size(h,1),1:size(h,2),1:1) => g%lon1
     g%geocLat2(1:size(h,1),1:size(h,2)) => g%geocLat1
@@ -467,8 +497,8 @@ contains
     g%geocV2(1:size(v,1),1:1) => g%geocV1
     g%geocV3(1:size(v,1),1:1,1:1) => g%geocV1
     g%lon2 = h%lon
-    g%geocLat2 = h%lat
-    g%geocV1 = v%v
+    g%geocLat2%d = h%lat
+    g%geocV1%v = v%v
     g%cartesian = .false.
     g%coherent = .true.
     if ( present(stacked) ) then
@@ -484,9 +514,13 @@ contains
   subroutine Geoc_V_3 ( G, HV )
     class(geolocation_t), intent(out) :: G  ! Intent(out) causes Destroy_G
     type(h_v_geoc), intent(in) :: HV(:,:,:) ! All geocentric coordinates
-    call allocate_test ( g%lon1, size(hv), 'lon1', moduleName )
-    call allocate_test ( g%geocLat1, size(hv), 'geocLat1', moduleName )
-    call allocate_test ( g%geocV1, size(hv), 'geocV1', moduleName )
+    integer :: Stat
+    allocate ( g%lon1(size(hv)), stat=stat )
+    call test_allocate ( stat, 'lon1', moduleName )
+    allocate ( g%geocLat1(size(hv)), stat=stat )
+    call test_allocate ( stat, 'geocLat1', moduleName )
+    allocate ( g%geocV1(size(hv)), stat=stat )
+    call test_allocate ( stat, 'geocV1', moduleName )
     g%lon2(1:size(hv,1),1:size(hv,2)*size(hv,3)) => g%lon1
     g%lon3(1:size(hv,1),1:size(hv,2),1:size(hv,3)) => g%lon1
     g%geocLat2(1:size(hv,1),1:size(hv,2)*size(hv,3)) => g%geocLat1
@@ -494,8 +528,8 @@ contains
     g%geocV2(1:size(hv,1),1:size(hv,2)*size(hv,3)) => g%geocV1
     g%geocV3(1:size(hv,1),1:size(hv,2),1:size(hv,3)) => g%geocV1
     g%lon3 = hv%lon
-    g%geocLat3 = hv%lat
-    g%geocV3 = hv%v
+    g%geocLat3%d = hv%lat
+    g%geocV3%v = hv%v
     g%cartesian = .false.
     g%coherent = .false.
     g%stacked = .false.
@@ -521,10 +555,14 @@ contains
     real(rg), intent(in) :: Phi(:)           ! Along-track angles (degrees)
     type(v_geoc), intent(in) :: V(:)         ! Geocentric heights (meters)
     logical, intent(in), optional :: Outer   ! Outer product, default YES
+    integer :: Stat
     call allocate_test ( g%phi1, size(phi), 'phi1', moduleName )
-    call allocate_test ( g%lon1, size(phi), 'lon1', moduleName )
-    call allocate_test ( g%geocLat1, size(phi), 'geocLat1', moduleName )
-    call allocate_test ( g%geocV1, size(v), 'geocV1', moduleName )
+    allocate ( g%lon1(size(phi)), stat=stat )
+    call test_allocate ( stat, 'lon1', moduleName )
+    allocate ( g%geocLat1(size(phi)), stat=stat )
+    call test_allocate ( stat, 'geocLat1', moduleName )
+    allocate ( g%geocV1(size(v)), stat=stat )
+    call test_allocate ( stat, 'geocV1', moduleName )
     g%phi2(1:size(phi),1:1) => g%phi1
     g%phi3(1:size(phi),1:1,1:1) => g%phi1
     g%lon2(1:size(phi),1:1) => g%lon1
@@ -534,7 +572,7 @@ contains
     g%geocV2(1:size(v),1:1) => g%geocV1
     g%geocV3(1:size(v),1:1,1:1) => g%geocV1
     g%phi1 = phi
-    g%geocV1 = v%v
+    g%geocV1%v = v%v
     g%cartesian = .false.
     g%coherent = .true.
     g%greatCircle = .true.
@@ -544,8 +582,8 @@ contains
       g%stacked = outer
     end if
     ! Compute Lon and GeocLat for points on the great circle from R1 to R2
-    call great_circle_points ( r1%lon, r1%lat, r2%lon, r2%lat, phi, &
-      & g%lon1, g%geocLat1 )
+    call great_circle_points ( r1%lon%d, r1%lat, r2%lon%d, r2%lat, phi, &
+      & g%lon1%d, g%geocLat1%d )
   end subroutine Geoc_V_G_0_1
 
   ! Identify great circles by two points on each one.  The grid is coherent and
@@ -567,11 +605,14 @@ contains
                                            ! on all circles
     type(v_geoc), intent(in) :: V(:)       ! Geocentric heights (meters) - same
                                            ! on all circles
-    integer :: I
+    integer :: I, Stat
     call allocate_test ( g%phi1, size(phi), 'phi1', moduleName )
-    call allocate_test ( g%lon1, size(phi), 'lon1', moduleName )
-    call allocate_test ( g%geocLat1, size(phi)*size(r1), 'geocLat1', moduleName )
-    call allocate_test ( g%geocV1, size(v), 'geocV1', moduleName )
+    allocate ( g%lon1(size(phi)), stat=stat )
+    call test_allocate ( stat, 'lon1', moduleName )
+    allocate ( g%geocLat1(size(phi)*size(r1)), stat=stat )
+    call test_allocate ( stat, 'geocLat1', moduleName )
+    allocate ( g%geocV1(size(v)), stat=stat )
+    call test_allocate ( stat, 'geocV1', moduleName )
     g%phi2(1:size(phi),1:1) => g%phi1
     g%phi3(1:size(phi),1:1,1:1) => g%phi1
     g%lon2(1:size(phi),1:size(r1)) => g%lon1
@@ -581,15 +622,15 @@ contains
     g%geocV2(1:size(v),1:1) => g%geocV1
     g%geocV3(1:size(v),1:1,1:1) => g%geocV1
     g%phi1 = phi
-    g%geocV1 = v%v
+    g%geocV1%v = v%v
     g%cartesian = .false.
     g%coherent = .true.
     g%greatCircle = .true.
     g%stacked = .true.
     ! Compute Lon and GeocLat for points on the great circles from R1 to R2
     do i = 1, size(r1)
-      call great_circle_points ( r1(i)%lon, r1(i)%lat, r2(i)%lon, r2(i)%lat, &
-        & phi, g%lon2(:,i), g%geocLat2(:,i) )
+      call great_circle_points ( r1(i)%lon%d, r1(i)%lat, r2(i)%lon%d, r2(i)%lat, &
+        & phi, g%lon2(:,i)%d, g%geocLat2(:,i)%d )
     end do
   end subroutine Geoc_V_G_1_1
 
@@ -611,11 +652,14 @@ contains
     type(h_geoc), intent(in) :: R1(:), R2(:) ! Points on the great circles
     real(rg), intent(in) :: Phi(:)         ! Along-track angles (degrees)
     type(v_geoc), intent(in) :: V(:,:)     ! Geocentric heights (meters)
-    integer :: I
+    integer :: I, Stat
     call allocate_test ( g%phi1, size(phi), 'phi1', moduleName )
-    call allocate_test ( g%lon1, size(v), 'lon1', moduleName )
-    call allocate_test ( g%geocLat1, size(v), 'geocLat1', moduleName )
-    call allocate_test ( g%geocV1, size(v), 'geocV1', moduleName )
+    allocate ( g%lon1(size(v)), stat=stat )
+    call test_allocate ( stat, 'lon1', moduleName )
+    allocate ( g%geocLat1(size(v)), stat=stat )
+    call test_allocate ( stat, 'geocLat1', moduleName )
+    allocate ( g%geocV1(size(v)), stat=stat )
+    call test_allocate ( stat, 'geocV1', moduleName )
     g%phi2(1:size(phi),1:1) => g%phi1
     g%phi3(1:size(phi),1:1,1:1) => g%phi1
     g%lon2(1:size(phi),1:size(r1)) => g%lon1
@@ -625,15 +669,15 @@ contains
     g%geocV2(1:size(v,1),1:size(v,2)) => g%geocV1
     g%geocV3(1:size(v,1),1:size(v,2),1:1) => g%geocV1
     g%phi1 = phi
-    g%geocV2 = v%v
+    g%geocV2%v = v%v
     g%cartesian = .false.
     g%coherent = .false.
     g%greatCircle = .true.
     g%stacked = .false.
     ! Compute Lon and GeocLat for points on the great circles from R1 to R2
     do i = 1, size(r1)
-      call great_circle_points ( r1(i)%lon, r1(i)%lat, r2(i)%lon, r2(i)%lat, &
-        & phi, g%lon2(:,i), g%geocLat2(:,i) )
+      call great_circle_points ( r1(i)%lon%d, r1(i)%lat, r2(i)%lon%d, r2(i)%lat, &
+        & phi, g%lon2(:,i)%d, g%geocLat2(:,i)%d )
     end do
   end subroutine Geoc_V_G_1_2
 
@@ -657,11 +701,14 @@ contains
     type(h_geoc), intent(in) :: R1(:,:), R2(:,:) ! Points on the great circles
     real(rg), intent(in) :: Phi(:)         ! Along-track angles (degrees)
     type(v_geoc), intent(in) :: V(:,:,:)   ! Geocentric heights (meters)
-    integer :: I, J
+    integer :: I, J, Stat
     call allocate_test ( g%phi1, size(phi), 'phi1', moduleName )
-    call allocate_test ( g%lon1, size(v), 'lon1', moduleName )
-    call allocate_test ( g%geocLat1, size(v), 'geocLat1', moduleName )
-    call allocate_test ( g%geocV1, size(v), 'geocV1', moduleName )
+    allocate ( g%lon1(size(v)), stat=stat )
+    call test_allocate ( stat, 'lon1', moduleName )
+    allocate ( g%geocLat1(size(v)), stat=stat )
+    call test_allocate ( stat, 'geocLat1', moduleName )
+    allocate ( g%geocV1(size(v)), stat=stat )
+    call test_allocate ( stat, 'geocV1', moduleName )
     g%phi2(1:size(phi),1:1) => g%phi1
     g%phi3(1:size(phi),1:1,1:1) => g%phi1
     g%lon2(1:size(phi),1:size(v,2)*size(v,3)) => g%lon1
@@ -671,7 +718,7 @@ contains
     g%geocV2(1:size(v,1),1:size(v,2)*size(v,3)) => g%geocV1
     g%geocV3(1:size(v,1),1:size(v,2),1:size(v,3)) => g%geocV1
     g%phi1 = phi
-    g%geocV3 = v%v
+    g%geocV3%v = v%v
     g%cartesian = .false.
     g%coherent = .false.
     g%greatCircle = .true.
@@ -679,8 +726,9 @@ contains
     ! Compute Lon and GeocLat for points on the great circles from R1 to R2
     do j = 1, size(r1,2)
       do i = 1, size(r1,1)
-        call great_circle_points ( r1(i,j)%lon, r1(i,j)%lat, &
-          & r2(i,j)%lon, r2(i,j)%lat, phi, g%lon3(:,i,j), g%geocLat3(:,i,j) )
+        call great_circle_points ( r1(i,j)%lon%d, r1(i,j)%lat, &
+          & r2(i,j)%lon%d, r2(i,j)%lat, phi, g%lon3(:,i,j)%d, &
+          & g%geocLat3(:,i,j)%d )
       end do
     end do
   end subroutine Geoc_V_G_2_3
@@ -691,9 +739,13 @@ contains
   subroutine Geod_V_1 ( G, HV )
     class(geolocation_t), intent(out) :: G   ! Intent(out) causes Destroy_G
     type(h_v_geod), intent(in) :: HV(:)      ! All geodetic coordinates
-    call allocate_test ( g%lon1, size(hv), 'lon1', moduleName )
-    call allocate_test ( g%geodLat1, size(hv), 'geodLat1', moduleName )
-    call allocate_test ( g%geodV1, size(hv), 'geodV1', moduleName )
+    integer :: Stat
+    allocate ( g%lon1(size(hv)), stat=stat )
+    call test_allocate ( stat, 'lon1', moduleName )
+    allocate ( g%geodLat1(size(hv)), stat=stat )
+    call test_allocate ( stat, 'geodLat1', moduleName )
+    allocate ( g%geodV1(size(hv)), stat=stat )
+    call test_allocate ( stat, 'geodV1', moduleName )
     g%lon2(1:size(hv,1),1:1) => g%lon1
     g%lon3(1:size(hv,1),1:1,1:1) => g%lon1
     g%geodLat2(1:size(hv,1),1:1) => g%geodLat1
@@ -701,8 +753,8 @@ contains
     g%geodV2(1:size(hv,1),1:1) => g%geodV1
     g%geodV3(1:size(hv,1),1:1,1:1) => g%geodV1
     g%lon1 = hv%lon
-    g%geodLat1 = hv%lat
-    g%geodV1 = hv%v
+    g%geodLat1%d = hv%lat
+    g%geodV1%v = hv%v
     g%cartesian = .false.
     g%coherent = .false.
     g%stacked = .false.
@@ -725,18 +777,22 @@ contains
     type(h_geod), intent(in) :: H(:)         ! Horizontal coordinates
     type(v_geod), intent(in) :: V(:)         ! Geodetic height in meters
     logical, intent(in), optional :: Regular ! coherent and stacked, default YES
-    call allocate_test ( g%lon1, size(h), 'lon1', moduleName )
-    call allocate_test ( g%geodLat1, size(h), 'geodLat1', moduleName )
-    call allocate_test ( g%geodV1, size(v), 'geodV1', moduleName )
+    integer :: Stat
+    allocate ( g%lon1(size(h)), stat=stat )
+    call test_allocate ( stat, 'lon1', moduleName )
+    allocate ( g%geodLat1(size(h)), stat=stat )
+    call test_allocate ( stat, 'geodLat1', moduleName )
+    allocate ( g%geodV1(size(v)), stat=stat )
+    call test_allocate ( stat, 'geodV1', moduleName )
     g%lon2(1:size(h),1:1) => g%lon1
     g%lon3(1:size(h),1:1,1:1) => g%lon1
     g%geodLat2(1:size(h),1:1) => g%geodLat1
     g%geodLat3(1:size(h),1:1,1:1) => g%geodLat1
     g%geodV2(1:size(v),1:1) => g%geodV1
     g%geodV3(1:size(v),1:1,1:1) => g%geodV1
-    g%lon1= h%lon
-    g%geodLat1 = h%lat
-    g%geodV1 = v%v
+    g%lon1 = h%lon
+    g%geodLat1%d = h%lat
+    g%geodV1%v = v%v
     g%cartesian = .false.
     if ( present(regular) ) then
       g%coherent = regular
@@ -756,18 +812,22 @@ contains
     type(geodLat_t), intent(in) :: Lat(:)  ! Geodetic latitude, degrees
     type(lon_t), intent(in) :: Lon(:)      ! Longitude, degrees
     type(v_geoc), intent(in) :: V(:)       ! Geodetic height, meters
-    call allocate_test ( g%lon1, size(lon), 'lon1', moduleName )
-    call allocate_test ( g%geodLat1, size(lat), 'geodLat1', moduleName )
-    call allocate_test ( g%geocV1, size(v), 'geocV1', moduleName )
+    integer :: Stat
+    allocate ( g%lon1(size(lon)), stat=stat )
+    call test_allocate ( stat, 'lon1', moduleName )
+    allocate ( g%geodLat1(size(lat)), stat=stat )
+    call test_allocate ( stat, 'geodLat1', moduleName )
+    allocate ( g%geocV1(size(v)), stat=stat )
+    call test_allocate ( stat, 'geocV1', moduleName )
     g%lon2(1:size(lon),1:1) => g%lon1
     g%lon3(1:size(lon),1:1,1:1) => g%lon1
     g%geodLat2(1:size(lat),1:1) => g%geodLat1
     g%geodLat3(1:size(lat),1:1,1:1) => g%geodLat1
     g%geodV2(1:size(v),1:1) => g%geodV1
     g%geodV3(1:size(v),1:1,1:1) => g%geodV1
-    g%lon1= lon%d
-    g%geocLat1 = lat%d
-    g%geocV1 = v%v
+    g%lon1 = lon
+    g%geocLat1%d = lat%d
+    g%geocV1%v = v%v
     g%cartesian = .true.
     g%coherent = .true.
     g%stacked = .true.
@@ -788,9 +848,13 @@ contains
     type(geodLat_t), intent(in) :: Lat(:)  ! Geodetic latitude, degrees
     type(lon_t), intent(in) :: Lon(:)      ! Longitude, degrees
     type(v_geod), intent(in) :: V(:,:,:)   ! Geodetic height, meters
-    call allocate_test ( g%lon1, size(lon), 'lon1', moduleName )
-    call allocate_test ( g%geodLat1, size(lat), 'geodLat1', moduleName )
-    call allocate_test ( g%geodV1, size(v), 'geodV1', moduleName )
+    integer :: Stat
+    allocate ( g%lon1(size(lon)), stat=stat )
+    call test_allocate ( stat, 'lon1', moduleName )
+    allocate ( g%geodLat1(size(lat)), stat=stat )
+    call test_allocate ( stat, 'geodLat1', moduleName )
+    allocate ( g%geodV1(size(v)), stat=stat )
+    call test_allocate ( stat, 'geodV1', moduleName )
     g%lon2(1:size(lon),1:1) => g%lon1
     g%lon3(1:size(lon),1:1,1:1) => g%lon1
     g%geodLat2(1:size(lat),1:1) => g%geodLat1
@@ -812,9 +876,13 @@ contains
     class(geolocation_t), intent(out) :: G ! Intent(out) causes Destroy_G
     type(h_geod), intent(in) :: H(:)       ! Horizontal coordinates
     type(v_geod), intent(in) :: V(:,:)     ! Geodetic height, meters
-    call allocate_test ( g%lon1, size(h), 'lon1', moduleName )
-    call allocate_test ( g%geodLat1, size(h), 'geodLat1', moduleName )
-    call allocate_test ( g%geodV1, size(v), 'geodV1', moduleName )
+    integer :: Stat
+    allocate ( g%lon1(size(h)), stat=stat )
+    call test_allocate ( stat, 'lon1', moduleName )
+    allocate ( g%geodLat1(size(h)), stat=stat )
+    call test_allocate ( stat, 'geodLat1', moduleName )
+    allocate ( g%geodV1(size(v)), stat=stat )
+    call test_allocate ( stat, 'geodV1', moduleName )
     g%lon2(1:size(h),1:1) => g%lon1
     g%lon3(1:size(h),1:1,1:1) => g%lon1
     g%geodLat2(1:size(h),1:1) => g%geodLat1
@@ -822,8 +890,8 @@ contains
     g%geodV2(1:size(v,1),1:size(v,2)) => g%geodV1
     g%geodV3(1:size(v,1),1:size(v,2),1:1) => g%geodV1
     g%lon1 = h%lon
-    g%geodLat1 = h%lat
-    g%geodV2 = v%v
+    g%geodLat1%d = h%lat
+    g%geodV2%v = v%v
     g%cartesian = .false.
     g%coherent = .false.
     g%stacked = .true.
@@ -836,9 +904,13 @@ contains
   subroutine Geod_V_2 ( G, HV )
     class(geolocation_t), intent(out) :: G ! Intent(out) causes Destroy_G
     type(h_v_geod), intent(in) :: HV(:,:)  ! All coordinates
-    call allocate_test ( g%lon1, size(hv), 'lon1', moduleName )
-    call allocate_test ( g%geodLat1, size(hv), 'geodLat1', moduleName )
-    call allocate_test ( g%geodV1, size(hv), 'geodV1', moduleName )
+    integer :: Stat
+    allocate ( g%lon1(size(hv)), stat=stat )
+    call test_allocate ( stat, 'lon1', moduleName )
+    allocate ( g%geodLat1(size(hv)), stat=stat )
+    call test_allocate ( stat, 'geodLat1', moduleName )
+    allocate ( g%geodV1(size(hv)), stat=stat )
+    call test_allocate ( stat, 'geodV1', moduleName )
     g%lon2(1:size(hv,1),1:size(hv,2)) => g%lon1
     g%lon3(1:size(hv,1),1:size(hv,2),1:1) => g%lon1
     g%geodLat2(1:size(hv,1),1:size(hv,2)) => g%geodLat1
@@ -846,8 +918,8 @@ contains
     g%geodV2(1:size(hv,1),1:size(hv,2)) => g%geodV1
     g%geodV3(1:size(hv,1),1:size(hv,2),1:1) => g%geodV1
     g%lon2 = hv%lon
-    g%geodLat2 = hv%lat
-    g%geodV2 = hv%v
+    g%geodLat2%d = hv%lat
+    g%geodV2%v = hv%v
     g%cartesian = .false.
     g%coherent = .false.
     g%stacked = .false.
@@ -864,9 +936,13 @@ contains
     type(h_geod), intent(in) :: H(:,:)     ! Horizontal coordinates
     type(v_geod), intent(in) :: V(:)       ! Geodetic height, meters
     logical, intent(in), optional :: Stacked ! default YES
-    call allocate_test ( g%lon1, size(h), 'lon1', moduleName )
-    call allocate_test ( g%geodLat1, size(h), 'geodLat1', moduleName )
-    call allocate_test ( g%geodV1, size(v), 'geodV1', moduleName )
+    integer :: Stat
+    allocate ( g%lon1(size(h)), stat=stat )
+    call test_allocate ( stat, 'lon1', moduleName )
+    allocate ( g%geodLat1(size(h)), stat=stat )
+    call test_allocate ( stat, 'geodLat1', moduleName )
+    allocate ( g%geodV1(size(v)), stat=stat )
+    call test_allocate ( stat, 'geodV1', moduleName )
     g%lon2(1:size(h,1),1:size(h,2)) => g%lon1
     g%lon3(1:size(h,1),1:size(h,2),1:1) => g%lon1
     g%geodLat2(1:size(h,1),1:size(h,2)) => g%geodLat1
@@ -874,8 +950,8 @@ contains
     g%geodV2(1:size(v,1),1:1) => g%geodV1
     g%geodV3(1:size(v,1),1:1,1:1) => g%geodV1
     g%lon2 = h%lon
-    g%geodLat2 = h%lat
-    g%geodV1 = v%v
+    g%geodLat2%d = h%lat
+    g%geodV1%v = v%v
     g%cartesian = .false.
     g%coherent = .true.
     if ( present(stacked) ) then
@@ -891,9 +967,13 @@ contains
   subroutine Geod_V_3 ( G, HV )
     class(geolocation_t), intent(out) :: G  ! Intent(out) causes Destroy_G
     type(h_v_geod), intent(in) :: HV(:,:,:) ! All coordinates
-    call allocate_test ( g%lon1, size(hv), 'lon1', moduleName )
-    call allocate_test ( g%geodLat1, size(hv), 'geodLat1', moduleName )
-    call allocate_test ( g%geodV1, size(hv), 'geodV1', moduleName )
+    integer :: Stat
+    allocate ( g%lon1(size(hv)), stat=stat )
+    call test_allocate ( stat, 'lon1', moduleName )
+    allocate ( g%geodLat1(size(hv)), stat=stat )
+    call test_allocate ( stat, 'geodLat1', moduleName )
+    allocate ( g%geodV1(size(hv)), stat=stat )
+    call test_allocate ( stat, 'geodV1', moduleName )
     g%lon2(1:size(hv,1),1:size(hv,2)*size(hv,3)) => g%lon1
     g%lon3(1:size(hv,1),1:size(hv,2),1:size(hv,3)) => g%lon1
     g%geodLat2(1:size(hv,1),1:size(hv,2)*size(hv,3)) => g%geodLat1
@@ -901,8 +981,8 @@ contains
     g%geodV2(1:size(hv,1),1:size(hv,2)*size(hv,3)) => g%geodV1
     g%geodV3(1:size(hv,1),1:size(hv,2),1:size(hv,3)) => g%geodV1
     g%lon3 = hv%lon
-    g%geodLat3 = hv%lat
-    g%geodV3 = hv%v
+    g%geodLat3%d = hv%lat
+    g%geodV3%v = hv%v
     g%cartesian = .false.
     g%coherent = .false.
     g%stacked = .false.
@@ -923,17 +1003,21 @@ contains
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   ! the order of geolocated values is the same as the array-element order of Phi.
   subroutine Geod_V_G_0_1 ( G, R1, R2, Phi, V, Outer )
-    use Geometry, only: GeocToGeodLat, Great_Circle_Points
+    use Geometry, only: Great_Circle_Points
     class(geolocation_t), intent(out) :: G ! Intent(out) causes Destroy_G
     type(h_geod), intent(in) :: R1, R2     ! Points on the great circle
     real(rg), intent(in) :: Phi(:)         ! Along-track angles (degrees)
     type(v_geod), intent(in) :: V(:)       ! Geodetic heights (meters)
     logical, intent(in), optional :: Outer ! Outer product, default YES
-    real(rg) :: Lat(size(phi))             ! Geocentric latitudes
+    type(geocLat_t) :: Lat(size(phi))      ! Geocentric latitudes
+    integer :: Stat
     call allocate_test ( g%phi1, size(phi), 'phi1', moduleName )
-    call allocate_test ( g%lon1, size(phi), 'lon1', moduleName )
-    call allocate_test ( g%geodLat1, size(phi), 'geodLat1', moduleName )
-    call allocate_test ( g%geodV1, size(v), 'geodV1', moduleName )
+    allocate ( g%lon1(size(phi)), stat=stat )
+    call test_allocate ( stat, 'lon1', moduleName )
+    allocate ( g%geodLat1(size(phi)), stat=stat )
+    call test_allocate ( stat, 'geodLat1', moduleName )
+    allocate ( g%geodV1(size(v)), stat=stat )
+    call test_allocate ( stat, 'geodV1', moduleName )
     g%phi2(1:size(phi),1:1) => g%phi1
     g%phi3(1:size(phi),1:1,1:1) => g%phi1
     g%lon2(1:size(phi),1:1) => g%lon1
@@ -943,7 +1027,7 @@ contains
     g%geodV2(1:size(v),1:1) => g%geodV1
     g%geodV3(1:size(v),1:1,1:1) => g%geodV1
     g%phi1 = phi
-    g%geodV1 = v%v
+    g%geodV1%v = v%v
     g%cartesian = .false.
     g%coherent = .true.
     g%greatCircle = .true.
@@ -953,9 +1037,10 @@ contains
       g%stacked = outer
     end if
     ! Compute Lon and geodLat for points on the great circle from R1 to R2
-    call great_circle_points ( r1%lon, r1%lat, r2%lon, r2%lat, phi, &
-      & g%lon1, lat )
-    g%geodLat1 = geocToGeodLat(lat)
+    ! ??? Need work here ??? Convert R[12]%lat to geocentric first ???
+    call great_circle_points ( r1%lon%d, r1%lat, r2%lon%d, r2%lat, phi, &
+      & g%lon1%d, lat%d )
+    g%geodLat1 = lat%geod()
   end subroutine Geod_V_G_0_1
 
   ! Identify great circles by two points on each one.  The grid is coherent and
@@ -970,19 +1055,22 @@ contains
   !!!!                                                   !!!!
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   subroutine Geod_V_G_1_1 ( G, R1, R2, Phi, V )
-    use Geometry, only: GeocToGeodLat, Great_Circle_Points
+    use Geometry, only: Great_Circle_Points
     class(geolocation_t), intent(out) :: G ! Intent(out) causes Destroy_G
     type(h_geod), intent(in) :: R1(:), R2(:) ! Points on the great circles
     real(rg), intent(in) :: Phi(:)         ! Along-track angles (degrees) - same
                                            ! on all circles
     type(v_geod), intent(in) :: V(:)       ! Geodetic heights (meters) - same
                                            ! on all circles
-    integer :: I
-    real(rg) :: Lat(size(phi))             ! Geocentric latitudes
+    integer :: I, Stat
+    type(geocLat_t) :: Lat(size(phi))      ! Geocentric latitudes
     call allocate_test ( g%phi1, size(phi), 'phi1', moduleName )
-    call allocate_test ( g%lon1, size(phi), 'lon1', moduleName )
-    call allocate_test ( g%geodLat1, size(phi)*size(r1), 'geodLat1', moduleName )
-    call allocate_test ( g%geodV1, size(v), 'geodV1', moduleName )
+    allocate ( g%lon1(size(phi)), stat=stat )
+    call test_allocate ( stat, 'lon1', moduleName )
+    allocate ( g%geodLat1(size(phi)*size(r1)), stat=stat )
+    call test_allocate ( stat, 'geodLat1', moduleName )
+    allocate ( g%geodV1(size(v)), stat=stat )
+    call test_allocate ( stat, 'geodV1', moduleName )
     g%phi2(1:size(phi),1:1) => g%phi1
     g%phi3(1:size(phi),1:1,1:1) => g%phi1
     g%lon2(1:size(phi),1:size(r1)) => g%lon1
@@ -992,16 +1080,17 @@ contains
     g%geodV2(1:size(v),1:1) => g%geodV1
     g%geodV3(1:size(v),1:1,1:1) => g%geodV1
     g%phi1 = phi
-    g%geodV1 = v%v
+    g%geodV1%v = v%v
     g%cartesian = .false.
     g%coherent = .true.
     g%greatCircle = .true.
     g%stacked = .true.
     ! Compute Lon and geodLat for points on the great circles from R1 to R2
     do i = 1, size(r1)
-      call great_circle_points ( r1(i)%lon, r1(i)%lat, r2(i)%lon, r2(i)%lat, &
-        & phi, g%lon2(:,i), lat )
-      g%geodLat2(:,i) = geocToGeodLat(lat)
+      ! ??? Need work here ??? Convert R[12]%lat to geocentric first ???
+      call great_circle_points ( r1(i)%lon%d, r1(i)%lat, r2(i)%lon%d, r2(i)%lat, &
+        & phi, g%lon2(:,i)%d, lat%d )
+      g%geodLat2(:,i) = lat%geod()
     end do
   end subroutine Geod_V_G_1_1
 
@@ -1023,12 +1112,15 @@ contains
     type(h_geod), intent(in) :: R1(:), R2(:) ! Points on the great circles
     real(rg), intent(in) :: Phi(:)         ! Along-track angles (degrees)
     type(v_geod), intent(in) :: V(:,:)     ! Geodetic heights (meters)
-    integer :: I
-    real(rg) :: Lat(size(phi))             ! geodentric latitudes
+    integer :: I, Stat
+    type(geodLat_t) :: Lat(size(phi))      ! geodetic latitudes
     call allocate_test ( g%phi1, size(phi), 'phi1', moduleName )
-    call allocate_test ( g%lon1, size(v), 'lon1', moduleName )
-    call allocate_test ( g%geodLat1, size(v)*size(r1), 'geodLat1', moduleName )
-    call allocate_test ( g%geodV1, size(v), 'geodV1', moduleName )
+    allocate ( g%lon1(size(v)), stat=stat )
+    call test_allocate ( stat, 'lon1', moduleName )
+    allocate ( g%geodLat1(size(v)*size(r1)), stat=stat )
+    call test_allocate ( stat, 'geodLat1', moduleName )
+    allocate ( g%geodV1(size(v)), stat=stat )
+    call test_allocate ( stat, 'geodV1', moduleName )
     g%phi2(1:size(phi),1:1) => g%phi1
     g%phi3(1:size(phi),1:1,1:1) => g%phi1
     g%lon2(1:size(phi),1:size(r1)) => g%lon1
@@ -1038,16 +1130,17 @@ contains
     g%geodV2(1:size(v,1),1:size(v,2)) => g%geodV1
     g%geodV3(1:size(v,1),1:size(v,2),1:1) => g%geodV1
     g%phi1 = phi
-    g%geodV2 = v%v
+    g%geodV2%v = v%v
     g%cartesian = .false.
     g%coherent = .false.
     g%greatCircle = .true.
     g%stacked = .false.
     ! Compute Lon and geodLat for points on the great circles from R1 to R2
     do i = 1, size(r1)
-      call great_circle_points ( r1(i)%lon, r1(i)%lat, r2(i)%lon, r2(i)%lat, &
-        & phi, g%lon2(:,i), lat )
-      g%geodLat2(:,i) = lat
+      ! ??? Need work here ??? Convert R[12]%lat to geocentric first ???
+      call great_circle_points ( r1(i)%lon%d, r1(i)%lat, r2(i)%lon%d, r2(i)%lat, &
+        & phi, g%lon2(:,i)%d, lat%d )
+      g%geodLat2(:,i) = lat%geod()
     end do
   end subroutine Geod_V_G_1_2
 
@@ -1071,12 +1164,15 @@ contains
     type(h_geod), intent(in) :: R1(:,:), R2(:,:) ! Points on the great circles
     real(rg), intent(in) :: Phi(:)         ! Along-track angles (degrees)
     type(v_geod), intent(in) :: V(:,:,:)   ! Geodetic height, meters
-    integer :: I, J
-    real(rg) :: Lat(size(phi))             ! Geocentric latitudes
+    integer :: I, J, Stat
+    type(geocLat_t) :: Lat(size(phi))      ! Geocentric latitudes
     call allocate_test ( g%phi1, size(phi), 'phi1', moduleName )
-    call allocate_test ( g%lon1, size(v), 'lon1', moduleName )
-    call allocate_test ( g%geodLat1, size(v), 'geodLat1', moduleName )
-    call allocate_test ( g%geodV1, size(v), 'geodV1', moduleName )
+    allocate ( g%lon1(size(v)), stat=stat )
+    call test_allocate ( stat, 'lon1', moduleName )
+    allocate ( g%geodLat1(size(v)), stat=stat )
+    call test_allocate ( stat, 'geodLat1', moduleName )
+    allocate ( g%geodV1(size(v)), stat=stat )
+    call test_allocate ( stat, 'geodV1', moduleName )
     g%phi2(1:size(phi),1:1) => g%phi1
     g%phi3(1:size(phi),1:1,1:1) => g%phi1
     g%lon2(1:size(phi),1:size(v,2)*size(v,3)) => g%lon1
@@ -1086,7 +1182,7 @@ contains
     g%geodV2(1:size(phi),1:size(v,2)*size(v,3)) => g%geodV1
     g%geodV3(1:size(phi),1:size(v,2),1:size(v,3)) => g%geodV1
     g%phi1 = phi
-    g%geodV3 = v%v
+    g%geodV3%v = v%v
     g%cartesian = .false.
     g%coherent = .false.
     g%greatCircle = .true.
@@ -1094,9 +1190,10 @@ contains
     ! Compute Lon and GeocLat for points on the great circles from R1 to R2
     do j = 1, size(r1,2)
       do i = 1, size(r1,1)
-        call great_circle_points ( r1(i,j)%lon, r1(i,j)%lat, &
-          & r2(i,j)%lon, r2(i,j)%lat, phi, g%lon3(:,i,j), lat )
-        g%geodLat3(:,i,j) = lat
+        ! ??? Need work here ??? Convert R[12]%lat to geocentric first ???
+        call great_circle_points ( r1(i,j)%lon%d, r1(i,j)%lat, &
+          & r2(i,j)%lon%d, r2(i,j)%lat, phi, g%lon3(:,i,j)%d, lat%d )
+        g%geodLat3(:,i,j) = lat%geod()
       end do
     end do
   end subroutine Geod_V_G_2_3
@@ -1107,9 +1204,13 @@ contains
   subroutine Geod_Z_1 ( G, HV )
     class(geolocation_t), intent(out) :: G   ! Intent(out) causes Destroy_G
     type(h_v_zeta), intent(in) :: HV(:)      ! All coordinates
-    call allocate_test ( g%lon1, size(hv), 'lon1', moduleName )
-    call allocate_test ( g%geodLat1, size(hv), 'geodLat1', moduleName )
-    call allocate_test ( g%zeta1, size(hv), 'zeta1', moduleName )
+    integer :: Stat
+    allocate ( g%lon1(size(hv)), stat=stat )
+    call test_allocate ( stat, 'lon1', moduleName )
+    allocate ( g%geodLat1(size(hv)), stat=stat )
+    call test_allocate ( stat, 'geodLat1', moduleName )
+    allocate ( g%zeta1(size(hv)), stat=stat )
+    call test_allocate ( stat, 'zeta1', moduleName )
     g%lon2(1:size(hv,1),1:1) => g%lon1
     g%lon3(1:size(hv,1),1:1,1:1) => g%lon1
     g%geodLat2(1:size(hv,1),1:1) => g%geodLat1
@@ -1117,8 +1218,8 @@ contains
     g%zeta2(1:size(hv,1),1:1) => g%zeta1
     g%zeta3(1:size(hv,1),1:1,1:1) => g%zeta1
     g%lon1 = hv%lon
-    g%geodLat1 = hv%lat
-    g%zeta1 = hv%v
+    g%geodLat1%d = hv%lat
+    g%zeta1%v = hv%v
     g%cartesian = .false.
     g%coherent = .false.
     g%stacked = .false.
@@ -1141,18 +1242,22 @@ contains
     type(h_geod), intent(in) :: H(:)         ! Horizontal coordinates
     type(v_zeta), intent(in) :: V(:)         ! Geodetic height, meters
     logical, intent(in), optional :: Regular ! coherent and stacked, default YES
-    call allocate_test ( g%lon1, size(h), 'lon1', moduleName )
-    call allocate_test ( g%geodLat1, size(h), 'geodLat1', moduleName )
-    call allocate_test ( g%zeta1, size(v), 'zeta1', moduleName )
+    integer :: Stat
+    allocate ( g%lon1(size(h)), stat=stat )
+    call test_allocate( stat, 'lon1', moduleName )
+    allocate ( g%geodLat1(size(h)), stat=stat )
+    call test_allocate( stat, 'geodLat1', moduleName )
+    allocate ( g%zeta1(size(v)), stat=stat )
+    call test_allocate( stat, 'zeta1', moduleName )
     g%lon2(1:size(h),1:1) => g%lon1
     g%lon3(1:size(h),1:1,1:1) => g%lon1
     g%geodLat2(1:size(h),1:1) => g%geodLat1
     g%geodLat3(1:size(h),1:1,1:1) => g%geodLat1
     g%zeta2(1:size(v),1:1) => g%zeta1
     g%zeta3(1:size(v),1:1,1:1) => g%zeta1
-    g%lon1= h%lon
-    g%geodLat1 = h%lat
-    g%zeta1 = v%v
+    g%lon1 = h%lon
+    g%geodLat1%d = h%lat
+    g%zeta1 = v
     g%cartesian = .false.
     if ( present(regular) ) then
       g%coherent = regular
@@ -1171,18 +1276,22 @@ contains
     type(geodLat_t), intent(in) :: Lat(:)  ! Geodetic latitude, degrees
     type(lon_t), intent(in) :: Lon(:)      ! Longitude, degrees
     type(v_zeta), intent(in) :: V(:)       ! Zeta
-    call allocate_test ( g%lon1, size(lon), 'lon1', moduleName )
-    call allocate_test ( g%geodLat1, size(lat), 'geodLat1', moduleName )
-    call allocate_test ( g%zeta1, size(v), 'zeta1', moduleName )
+    integer :: Stat
+    allocate ( g%lon1(size(lon)), stat=stat )
+    call test_allocate ( stat, 'lon1', moduleName )
+    allocate ( g%geodLat1(size(lat)), stat=stat )
+    call test_allocate ( stat, 'geodLat1', moduleName )
+    allocate ( g%zeta1(size(v)), stat=stat )
+    call test_allocate ( stat, 'zeta1', moduleName )
     g%lon2(1:size(lon),1:1) => g%lon1
     g%lon3(1:size(lon),1:1,1:1) => g%lon1
     g%geodLat2(1:size(lat),1:1) => g%geodLat1
     g%geodLat3(1:size(lat),1:1,1:1) => g%geodLat1
     g%zeta2(1:size(v),1:1) => g%zeta1
     g%zeta3(1:size(v),1:1,1:1) => g%zeta1
-    g%lon1= lon%d
-    g%geocLat1 = lat%d
-    g%geocV1 = v%v
+    g%lon1%d = lon%d
+    g%geocLat1%d = lat%d
+    g%geocV1%v = v%v
     g%cartesian = .true.
     g%coherent = .true.
     g%stacked = .true.
@@ -1203,9 +1312,13 @@ contains
     type(geodLat_t), intent(in) :: Lat(:)  ! Geodetic latitude, degrees
     type(lon_t), intent(in) :: Lon(:)      ! Longitude, degrees
     type(v_geod), intent(in) :: V(:,:,:)   ! Geodetic height, meters
-    call allocate_test ( g%lon1, size(lon), 'lon1', moduleName )
-    call allocate_test ( g%geodLat1, size(lat), 'geodLat1', moduleName )
-    call allocate_test ( g%zeta1, size(v), 'zeta1', moduleName )
+    integer :: Stat
+    allocate ( g%lon1(size(lon)), stat=stat )
+    call test_allocate ( stat, 'lon1', moduleName )
+    allocate ( g%geodLat1(size(lat)), stat=stat )
+    call test_allocate ( stat, 'geodLat1', moduleName )
+    allocate ( g%zeta1(size(v)), stat=stat )
+    call test_allocate ( stat, 'zeta1', moduleName )
     g%lon2(1:size(lon),1:1) => g%lon1
     g%lon3(1:size(lon),1:1,1:1) => g%lon1
     g%geodLat2(1:size(lat),1:1) => g%geodLat1
@@ -1226,9 +1339,13 @@ contains
     class(geolocation_t), intent(out) :: G ! Intent(out) causes Destroy_G
     type(h_geod), intent(in) :: H(:)       ! Horizontal coordinates
     type(v_zeta), intent(in) :: V(:,:)     ! Zeta
-    call allocate_test ( g%lon1, size(h), 'lon1', moduleName )
-    call allocate_test ( g%geodLat1, size(h), 'geodLat1', moduleName )
-    call allocate_test ( g%geodV1, size(v), 'geodV1', moduleName )
+    integer :: Stat
+    allocate ( g%lon1(size(h)), stat=stat )
+    call test_allocate ( stat, 'lon1', moduleName )
+    allocate ( g%geodLat1(size(h)), stat=stat )
+    call test_allocate ( stat, 'geodLat1', moduleName )
+    allocate ( g%geodV1(size(v)), stat=stat )
+    call test_allocate ( stat, 'geodV1', moduleName )
     g%lon2(1:size(h),1:1) => g%lon1
     g%lon3(1:size(h),1:1,1:1) => g%lon1
     g%geodLat2(1:size(h),1:1) => g%geodLat1
@@ -1236,8 +1353,8 @@ contains
     g%zeta2(1:size(v,1),1:size(v,2)) => g%zeta1
     g%zeta3(1:size(v,1),1:size(v,2),1:1) => g%zeta1
     g%lon1 = h%lon
-    g%geodLat1 = h%lat
-    g%geodV2 = v%v
+    g%geodLat1%d = h%lat
+    g%geodV2%v = v%v
     g%cartesian = .false.
     g%coherent = .false.
     g%stacked = .true.
@@ -1250,9 +1367,13 @@ contains
   subroutine Geod_Z_2 ( G, HV )
     class(geolocation_t), intent(out) :: G ! Intent(out) causes Destroy_G
     type(h_v_zeta), intent(in) :: HV(:,:)  ! All coordinates
-    call allocate_test ( g%lon1, size(hv), 'lon1', moduleName )
-    call allocate_test ( g%geodLat1, size(hv), 'geodLat1', moduleName )
-    call allocate_test ( g%zeta1, size(hv), 'zeta1', moduleName )
+    integer :: Stat
+    allocate ( g%lon1(size(hv)), stat=stat )
+    call test_allocate ( stat, 'lon1', moduleName )
+    allocate ( g%geodLat1(size(hv)), stat=stat )
+    call test_allocate ( stat, 'geodLat1', moduleName )
+    allocate ( g%zeta1(size(hv)), stat=stat )
+    call test_allocate ( stat, 'zeta1', moduleName )
     g%lon2(1:size(hv,1),1:size(hv,2)) => g%lon1
     g%lon3(1:size(hv,1),1:size(hv,2),1:1) => g%lon1
     g%geodLat2(1:size(hv,1),1:size(hv,2)) => g%geodLat1
@@ -1260,8 +1381,8 @@ contains
     g%zeta2(1:size(hv,1),1:size(hv,2)) => g%zeta1
     g%zeta3(1:size(hv,1),1:size(hv,2),1:1) => g%zeta1
     g%lon2 = hv%lon
-    g%geodLat2 = hv%lat
-    g%zeta2 = hv%v
+    g%geodLat2%d = hv%lat
+    g%zeta2%v = hv%v
     g%cartesian = .false.
     g%coherent = .false.
     g%stacked = .false.
@@ -1278,9 +1399,13 @@ contains
     type(h_geod), intent(in) :: H(:,:)     ! Horizontal coordinates
     type(v_zeta), intent(in) :: V(:)       ! Zeta
     logical, intent(in), optional :: Stacked ! default YES
-    call allocate_test ( g%lon1, size(h), 'lon1', moduleName )
-    call allocate_test ( g%geodLat1, size(h), 'geodLat1', moduleName )
-    call allocate_test ( g%zeta1, size(v), 'zeta1', moduleName )
+    integer :: Stat
+    allocate ( g%lon1(size(h)), stat=stat )
+    call test_allocate ( stat, 'lon1', moduleName )
+    allocate ( g%geodLat1(size(h)), stat=stat )
+    call test_allocate ( stat, 'geodLat1', moduleName )
+    allocate ( g%zeta1(size(v)), stat=stat )
+    call test_allocate ( stat, 'zeta1', moduleName )
     g%lon2(1:size(h,1),1:size(h,2)) => g%lon1
     g%lon3(1:size(h,1),1:size(h,2),1:1) => g%lon1
     g%geodLat2(1:size(h,1),1:size(h,2)) => g%geodLat1
@@ -1288,8 +1413,8 @@ contains
     g%zeta2(1:size(v,1),1:1) => g%zeta1
     g%zeta3(1:size(v,1),1:1,1:1) => g%zeta1
     g%lon2 = h%lon
-    g%geodLat2 = h%lat
-    g%zeta1 = v%v
+    g%geodLat2%d = h%lat
+    g%zeta1 = v
     g%cartesian = .false.
     g%coherent = .true.
     if ( present(stacked) ) then
@@ -1304,9 +1429,13 @@ contains
   subroutine Geod_Z_3 ( G, HV )
     class(geolocation_t), intent(out) :: G  ! Intent(out) causes Destroy_G
     type(h_v_zeta), intent(in) :: HV(:,:,:) ! All coordinates
-    call allocate_test ( g%lon1, size(hv), 'lon1', moduleName )
-    call allocate_test ( g%geodLat1, size(hv), 'geodLat1', moduleName )
-    call allocate_test ( g%zeta1, size(hv), 'zeta1', moduleName )
+    integer :: Stat
+    allocate ( g%lon1(size(hv)), stat=stat )
+    call test_allocate ( stat, 'lon1', moduleName )
+    allocate ( g%geodLat1(size(hv)), stat=stat )
+    call test_allocate ( stat, 'geodLat1', moduleName )
+    allocate ( g%zeta1(size(hv)), stat=stat )
+    call test_allocate ( stat, 'zeta1', moduleName )
     g%lon2(1:size(hv,1),1:size(hv,2)*size(hv,3)) => g%lon1
     g%lon3(1:size(hv,1),1:size(hv,2),1:size(hv,3)) => g%lon1
     g%geodLat2(1:size(hv,1),1:size(hv,2)*size(hv,3)) => g%geodLat1
@@ -1314,8 +1443,8 @@ contains
     g%zeta2(1:size(hv,1),1:size(hv,2)*size(hv,3)) => g%zeta1
     g%zeta3(1:size(hv,1),1:size(hv,2),1:size(hv,3)) => g%zeta1
     g%lon3 = hv%lon
-    g%geodLat3 = hv%lat
-    g%zeta3 = hv%v
+    g%geodLat3%d = hv%lat
+    g%zeta3%v = hv%v
     g%cartesian = .false.
     g%coherent = .false.
     g%stacked = .false.
@@ -1336,17 +1465,21 @@ contains
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   ! the order of geolocated values is the same as the array-element order of Phi.
   subroutine Geod_Z_G_0_1 ( G, R1, R2, Phi, V, Outer )
-    use Geometry, only: GeocToGeodLat, Great_Circle_Points
+    use Geometry, only: Great_Circle_Points
     class(geolocation_t), intent(out) :: G ! Intent(out) causes Destroy_G
     type(h_geod), intent(in) :: R1, R2     ! Points on the great circle
     real(rg), intent(in) :: Phi(:)         ! Along-track angles (degrees)
     type(v_zeta), intent(in) :: V(:)       ! Zeta
     logical, intent(in), optional :: Outer ! Outer product, default YES
-    real(rg) :: Lat(size(phi))             ! Geocentric latitudes
+    type(geocLat_t) :: Lat(size(phi))      ! Geocentric latitudes
+    integer :: Stat
     call allocate_test ( g%phi1, size(phi), 'phi1', moduleName )
-    call allocate_test ( g%lon1, size(phi), 'lon1', moduleName )
-    call allocate_test ( g%geocLat1, size(phi), 'geocLat1', moduleName )
-    call allocate_test ( g%zeta1, size(v), 'zeta1', moduleName )
+    allocate ( g%lon1(size(phi)), stat=stat )
+    call test_allocate ( stat, 'lon1', moduleName )
+    allocate ( g%geocLat1(size(phi)), stat=stat )
+    call test_allocate ( stat, 'geocLat1', moduleName )
+    allocate ( g%zeta1(size(v)), stat=stat )
+    call test_allocate ( stat, 'zeta1', moduleName )
     g%phi2(1:size(phi),1:1) => g%phi1
     g%phi3(1:size(phi),1:1,1:1) => g%phi1
     g%lon2(1:size(phi),1:1) => g%lon1
@@ -1356,7 +1489,7 @@ contains
     g%zeta2(1:size(v),1:1) => g%zeta1
     g%zeta3(1:size(v),1:1,1:1) => g%zeta1
     g%phi1 = phi
-    g%zeta1 = v%v
+    g%zeta1 = v
     g%cartesian = .false.
     g%coherent = .true.
     g%greatCircle = .true.
@@ -1366,9 +1499,10 @@ contains
       g%stacked = outer
     end if
     ! Compute Lon and GeocLat for points on the great circle from R1 to R2
-    call great_circle_points ( r1%lon, r1%lat, r2%lon, r2%lat, phi, &
-      & g%lon1, lat )
-    g%geodLat1 = geocToGeodLat(lat)
+    ! ??? Need work here ??? Convert R[12]%lat to geocentric first ???
+    call great_circle_points ( r1%lon%d, r1%lat, r2%lon%d, r2%lat, phi, &
+      & g%lon1%d, lat%d )
+    g%geodLat1 = lat%geod()
   end subroutine Geod_Z_G_0_1
 
   ! Identify great circles by two points on each one.  The grid is coherent and
@@ -1383,18 +1517,21 @@ contains
   !!!!                                                   !!!!
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   subroutine Geod_Z_G_1_1 ( G, R1, R2, Phi, V )
-    use Geometry, only: GeocToGeodLat, Great_Circle_Points
+    use Geometry, only: Great_Circle_Points
     class(geolocation_t), intent(out) :: G ! Intent(out) causes Destroy_G
     type(h_geod), intent(in) :: R1(:), R2(:) ! Points on the great circles
     real(rg), intent(in) :: Phi(:)         ! Along-track angles (degrees) - same
                                            ! on all circles
     type(v_zeta), intent(in) :: V(:)       ! zeta -- same on all circles
-    integer :: I
-    real(rg) :: Lat(size(phi))             ! Geocentric latitudes
+    integer :: I, Stat
+    type(geocLat_t) :: Lat(size(phi))      ! Geocentric latitudes
     call allocate_test ( g%phi1, size(phi), 'phi1', moduleName )
-    call allocate_test ( g%lon1, size(phi), 'lon1', moduleName )
-    call allocate_test ( g%geodLat1, size(phi)*size(r1), 'geodLat1', moduleName )
-    call allocate_test ( g%zeta1, size(v), 'zeta1', moduleName )
+    allocate ( g%lon1(size(phi)), stat=stat )
+    call test_allocate ( stat, 'lon1', moduleName )
+    allocate ( g%geodLat1(size(phi)*size(r1)), stat=stat )
+    call test_allocate ( stat, 'geodLat1', moduleName )
+    allocate ( g%zeta1(size(v)), stat=stat )
+    call test_allocate ( stat, 'zeta1', moduleName )
     g%phi2(1:size(phi),1:1) => g%phi1
     g%phi3(1:size(phi),1:1,1:1) => g%phi1
     g%lon2(1:size(phi),1:size(r1)) => g%lon1
@@ -1404,16 +1541,17 @@ contains
     g%zeta2(1:size(v),1:1) => g%zeta1
     g%zeta3(1:size(v),1:1,1:1) => g%zeta1
     g%phi1 = phi
-    g%zeta1 = v%v
+    g%zeta1 = v
     g%cartesian = .false.
     g%coherent = .true.
     g%greatCircle = .true.
     g%stacked = .true.
     ! Compute Lon and geodLat for points on the great circles from R1 to R2
     do i = 1, size(r1)
-      call great_circle_points ( r1(i)%lon, r1(i)%lat, r2(i)%lon, r2(i)%lat, &
-        & phi, g%lon2(:,i), lat )
-      g%geodLat2(:,i) = geocToGeodLat(lat)
+      ! ??? Need work here ??? Convert R[12]%lat to geocentric first ???
+      call great_circle_points ( r1(i)%lon%d, r1(i)%lat, r2(i)%lon%d, r2(i)%lat, &
+        & phi, g%lon2(:,i)%d, lat%d )
+      g%geodLat2(:,i) = lat%geod()
     end do
   end subroutine Geod_Z_G_1_1
 
@@ -1435,12 +1573,15 @@ contains
     type(h_geod), intent(in) :: R1(:), R2(:) ! Points on the great circles
     real(rg), intent(in) :: Phi(:)         ! Along-track angles (degrees)
     type(v_zeta), intent(in) :: V(:,:)     ! Zeta
-    integer :: I
-    real(rg) :: Lat(size(phi))             ! geodentric latitudes
+    integer :: I, Stat
+    type(geocLat_t) :: Lat(size(phi))      ! geocentric latitudes
     call allocate_test ( g%phi1, size(phi), 'phi1', moduleName )
-    call allocate_test ( g%lon1, size(v), 'lon1', moduleName )
-    call allocate_test ( g%geodLat1, size(v), 'geodLat1', moduleName )
-    call allocate_test ( g%zeta1, size(v), 'zeta1', moduleName )
+    allocate ( g%lon1(size(v)), stat=stat )
+    call test_allocate ( stat, 'lon1', moduleName )
+    allocate ( g%geodLat1(size(v)), stat=stat )
+    call test_allocate ( stat, 'geodLat1', moduleName )
+    allocate ( g%zeta1(size(v)), stat=stat )
+    call test_allocate ( stat, 'zeta1', moduleName )
     g%phi2(1:size(phi),1:1) => g%phi1
     g%phi3(1:size(phi),1:1,1:1) => g%phi1
     g%lon2(1:size(phi),1:size(v,2)) => g%lon1
@@ -1450,16 +1591,17 @@ contains
     g%zeta2(1:size(v,1),1:size(v,2)) => g%zeta1
     g%zeta3(1:size(v,1),1:size(v,2),1:1) => g%zeta1
     g%phi1 = phi
-    g%zeta2 = v%v
+    g%zeta2 = v
     g%cartesian = .false.
     g%coherent = .false.
     g%greatCircle = .true.
     g%stacked = .false.
     ! Compute Lon and geodLat for points on the great circles from R1 to R2
     do i = 1, size(r1)
-      call great_circle_points ( r1(i)%lon, r1(i)%lat, r2(i)%lon, r2(i)%lat, &
-        & phi, g%lon2(:,i), lat )
-      g%geodLat2(:,i) = lat
+      ! ??? Need work here ??? Convert R[12]%lat to geocentric first ???
+      call great_circle_points ( r1(i)%lon%d, r1(i)%lat, r2(i)%lon%d, r2(i)%lat, &
+        & phi, g%lon2(:,i)%d, lat%d )
+      g%geodLat2(:,i) = lat%geod()
     end do
   end subroutine Geod_Z_G_1_2
 
@@ -1483,12 +1625,15 @@ contains
     type(h_geod), intent(in) :: R1(:,:), R2(:,:) ! Points on the great circles
     real(rg), intent(in) :: Phi(:)         ! Along-track angles (degrees)
     type(v_zeta), intent(in) :: V(:,:,:)   ! Zeta
-    integer :: I, J
-    real(rg) :: Lat(size(phi))             ! Geocentric latitudes
+    integer :: I, J, Stat
+    type(geocLat_t) :: Lat(size(phi))      ! Geocentric latitudes
     call allocate_test ( g%phi1, size(phi), 'phi1', moduleName )
-    call allocate_test ( g%lon1, size(v), 'lon1', moduleName )
-    call allocate_test ( g%geodLat1, size(v), 'geodLat1', moduleName )
-    call allocate_test ( g%zeta1, size(v), 'zeta1', moduleName )
+    allocate ( g%lon1(size(v)), stat=stat )
+    call test_allocate ( stat, 'lon1', moduleName )
+    allocate ( g%geodLat1(size(v)), stat=stat )
+    call test_allocate ( stat, 'geodLat1', moduleName )
+    allocate ( g%zeta1(size(v)), stat=stat )
+    call test_allocate ( stat, 'zeta1', moduleName )
     g%phi2(1:size(phi),1:1) => g%phi1
     g%phi3(1:size(phi),1:1,1:1) => g%phi1
     g%lon2(1:size(phi),1:size(v,2)*size(v,3)) => g%lon1
@@ -1498,7 +1643,7 @@ contains
     g%zeta2(1:size(v,1),1:size(v,2)*size(v,3)) => g%zeta1
     g%zeta3(1:size(v,1),1:size(v,2),1:size(v,3)) => g%zeta1
     g%phi1 = phi
-    g%zeta3 = v%v
+    g%zeta3 = v
     g%cartesian = .false.
     g%coherent = .false.
     g%greatCircle = .true.
@@ -1506,9 +1651,10 @@ contains
     ! Compute Lon and GeocLat for points on the great circles from R1 to R2
     do j = 1, size(r1,2)
       do i = 1, size(r1,1)
-        call great_circle_points ( r1(i,j)%lon, r1(i,j)%lat, &
-          & r2(i,j)%lon, r2(i,j)%lat, phi, g%lon3(:,i,j), lat )
-        g%geodLat3(:,i,j) = lat
+        ! ??? Need work here ??? Convert R[12]%lat to geocentric first ???
+        call great_circle_points ( r1(i,j)%lon%d, r1(i,j)%lat, &
+          & r2(i,j)%lon%d, r2(i,j)%lat, phi, g%lon3(:,i,j)%d, lat%d )
+        g%geodLat3(:,i,j) = lat%geod()
       end do
     end do
   end subroutine Geod_Z_G_2_3
@@ -1561,7 +1707,7 @@ contains
   end subroutine Create_P_3
 
   ! Longitude
-  real(rg) function Lon ( G, I, J, K )
+  type(lon_t) function Lon ( G, I, J, K )
     use Constants, only: Rad2Deg
     class(geolocation_t), intent(in) :: G
     integer, intent(in) :: I            ! Lon index if Cartesian
@@ -1582,20 +1728,20 @@ contains
       end if
     else if ( associated(g%p1) ) then
       xyz = g%ecr(i,j,k)
-      lon = atan2(xyz(2),xyz(1)) * rad2deg
+      lon%d = atan2(xyz(2),xyz(1)) * rad2deg
     else ! nothing associated
-      lon = -huge(0.0_rg)
+      lon%d = -huge(0.0_rg)
     end if
   end function Lon
 
   ! Geocentric latitude
-  real(rg) function GeocLat ( G, I, J, K )
-    use Geometry, only: GeodToGeocLat
+  type(geocLat_t) function GeocLat ( G, I, J, K )
     class(geolocation_t), intent(in) :: G
     integer, intent(in) :: I            ! Lon index if Cartesian, or
                                         ! Lat index if J is not present
     integer, intent(in), optional :: J  ! Lat index if Cartesian
     integer, intent(in), optional :: K  ! Height index if not stacked
+    type(geodLat_t) :: Geod
     real(rg) :: XYZ(3)
     if ( associated(g%geocLat1) ) then
       if ( present(j) ) then
@@ -1610,23 +1756,24 @@ contains
         geocLat = g%geocLat1(i)
       end if
     else if ( associated(g%geodLat1) ) then
-      geocLat = geodToGeocLat(g%geodLat(i,j,k))
+      geod = g%geodLat(i,j,k)
+      geocLat = geod%geoc()
     else if ( associated(g%p1) ) then
       xyz = g%ecr(i,j,k)
-      geocLat = asin(xyz(3)/norm2(xyz(1:2)))
+      geocLat%d = asin(xyz(3)/norm2(xyz(1:2)))
     else ! nothing associated
-      geocLat = -huge(0.0_rg)
+      geocLat%d = -huge(0.0_rg)
     end if
   end function GeocLat
 
   ! Geodetic latitude
-  real(rg) function GeodLat ( G, I, J, K )
-    use Geometry, only: GeocToGeodLat
+  type(geodLat_t) function GeodLat ( G, I, J, K )
     class(geolocation_t), intent(in) :: G
     integer, intent(in) :: I            ! Lon index if Cartesian, or
                                         ! Lat index if J is not present
     integer, intent(in), optional :: J  ! Lat index if Cartesian
     integer, intent(in), optional :: K  ! Height index if not stacked
+    type(geocLat_t) :: Geoc
     if ( associated(g%geodLat1) ) then
       if ( present(j) ) then
         if ( present(k) ) then
@@ -1640,32 +1787,36 @@ contains
         geodLat = g%geodLat1(i)
       end if
     else if ( associated(g%geocLat1) .or. associated(g%p1) ) then
-      geodLat = geocToGeodLat(g%geocLat(i,j,k))
+      geoc = g%geocLat(i,j,k)
+      geodLat = geoc%geod()
     else ! nothing associated
-      geodLat = -huge(0.0_rg)
+      geodLat%d = -huge(0.0_rg)
     end if
   end function GeodLat
 
   ! Geocentric height, meters from the Earth center
-  real(rg) function GeocV ( G, I, J, K )
+  type(v_geoc) function GeocV ( G, I, J, K )
     class(geolocation_t), intent(in) :: G
     integer, intent(in) :: I
     integer, intent(in), optional :: J
     integer, intent(in), optional :: K
     type(h_v_geoc) :: Geoc
     type(h_v_geod) :: Geod
+    type(v_geod) :: GeodV
+    type(geodLat_t) :: LatGeod
+    type(lon_t) :: Lon
     if ( g%coherent ) then
       if ( associated(g%geocV1) ) then
         GeocV = g%geocV1(k)
       else if ( associated(g%geodV1) ) then
         ! Convert [ longitude, geodetic latitude, geodetic height ] to geocentric.
-        geod = h_v_geod ( lon=g%lon1(k), lat=g%geodLat1(k), v=g%geodV1(k) )
+        geod = h_v_geod ( lon=g%lon1(k), lat=g%geodLat1(k)%d, v=g%geodV1(k)%v )
         geoc = geod%geocV()
-        GeocV = geoc%v
+        GeocV%v = geoc%v
       else ! must be Zeta
         ! We would need the hydrostatic model to get geodV from Zeta, after
         ! which we could get GeocV from geodV
-        GeocV = -huge(0.0_rg)
+        GeocV%v = -huge(0.0_rg)
       end if
     else
       if ( associated(g%geocV1) ) then
@@ -1682,21 +1833,24 @@ contains
         end if
       else if ( associated(g%geodV1) ) then
         ! Convert [ longitude, geodetic latitude, geodetic height ] to geocentric.
-        geod = h_v_geod ( lon=g%lon(i,j,k), lat=g%geodLat(i,j,k), v=g%geodV(i,j,k) )
+        latGeod = g%geodLat(i,j,k)
+        geodV = g%geodV(i,j,k)
+        lon = g%lon(i,j,k)
+        geod = h_v_geod ( lon=lon, lat=latGeod%d, v=geodV%v )
         geoc = geod%geocV()
-        GeocV = geoc%v
+        GeocV%v = geoc%v
       else if ( associated(g%p1) ) then ! ECR
-        GeocV = norm2(g%ecr(i,j,k))
+        GeocV%v = norm2(g%ecr(i,j,k))
       else ! must be Zeta
         ! We would need the hydrostatic model to get geodV from Zeta, after
         ! which we could get GeocV from geodV
-        GeocV = -huge(0.0_rg)
+        GeocV%v = -huge(0.0_rg)
       end if
     end if
   end function GeocV
 
   ! Geodetic height, meters above sea level
-  real(rg) function GeodV ( G, I, J, K )
+  type(v_geod) function GeodV ( G, I, J, K )
     use Geometry, only: XYZ_To_Geod
     class(geolocation_t), intent(in) :: G
     integer, intent(in) :: I
@@ -1729,22 +1883,22 @@ contains
     else if ( associated(g%geocV1) ) then
       xyz = g%ecr(i,j,k)
       geod = xyz_to_geod(xyz)
-      geodV = geod(3)
+      geodV%v = geod(3)
     else ! must be Zeta
       ! We would need the hydrostatic model to get geodV from Zeta
-      geodV = -huge(0.0_rg)
+      geodV%v = -huge(0.0_rg)
     end if
   end function GeodV
 
   ! Zeta
-  real(rg) function Zeta ( G, I, J, K )
+  type(v_zeta) function Zeta ( G, I, J, K )
     class(geolocation_t), intent(in) :: G
     integer, intent(in) :: I
     integer, intent(in), optional :: J
     integer, intent(in), optional :: K
     if ( .not. associated(g%zeta1) ) then
       ! We would need the hydrostatic model to get Zeta from geodV
-      zeta = -huge(0.0_rg)
+      zeta%v = -huge(0.0_rg)
       return
     end if
     if ( g%coherent ) then
@@ -1768,27 +1922,39 @@ contains
   type(h_v_geoc) function Loc_Geoc ( G, I, J, K )
     class(geolocation_t), intent(in) :: G
     integer, intent(in) :: I, J, K
+    type(v_geoc) :: GeocV
+    type(geocLat_t) :: LatGeoc
     loc_geoc%lon = g%lon(i,j,k)
-    loc_geoc%lat = g%geocLat(i,j,k)
-    loc_geoc%v = g%geocV(i,j,k)
+    latGeoc = g%geocLat(i,j,k)
+    loc_geoc%lat = latGeoc%d
+    geocV = g%geocV(i,j,k)
+    loc_geoc%v = geocV%v
   end function Loc_Geoc
 
   ! Geodetic location (lon degrees, geod lat degrees, geod height meters)
   type(h_v_geod) function Loc_Geod ( G, I, J, K )
     class(geolocation_t), intent(in) :: G
     integer, intent(in) :: I, J, K
+    type(v_geod) :: GeodV
+    type(geodLat_t) :: LatGeod
     loc_geod%lon = g%lon(i,j,k)
-    loc_geod%lat = g%geodLat(i,j,k)
-    loc_geod%v = g%geodV(i,j,k)
+    latGeod = g%geodLat(i,j,k)
+    loc_geod%lat = latGeod%d
+    geodV = g%geodV(i,j,k)
+    loc_geod%v = geodV%v
   end function Loc_Geod
 
   ! Geodetic/Zeta location (lon degrees, geod lat degrees, zeta)
   type(h_v_zeta) function Loc_Zeta ( G, I, J, K )
     class(geolocation_t), intent(in) :: G
     integer, intent(in) :: I, J, K
+    type(geodLat_t) :: LatGeod
+    type(v_zeta) :: Zeta
     loc_zeta%lon = g%lon(i,j,k)
-    loc_zeta%lat = g%geodLat(i,j,k)
-    loc_zeta%v = g%zeta(i,j,k)
+    latGeod = g%geodLat(i,j,k)
+    loc_zeta%lat = latGeod%d
+    zeta = g%zeta(i,j,k)
+    loc_zeta%v = zeta%v
   end function Loc_Zeta
 
   ! ECR coordinates, meters
@@ -1800,6 +1966,11 @@ contains
     integer, intent(in), optional :: J  ! Lat index if Cartesian
     integer, intent(in), optional :: K  ! Height index
     real(rg) :: ECR(3)
+    type(v_geoc) :: GeocV
+    type(v_geod) :: GeodV
+    type(geocLat_t) :: LatGeoc
+    type(geodLat_t) :: LatGeod
+    type(lon_t) :: Lon
     if ( associated(g%p1) ) then
       if ( present(j) ) then
         if ( present(k) ) then
@@ -1814,10 +1985,16 @@ contains
       end if
     else if ( associated(g%geodV1) ) then
       ! Convert [ longitude, geodetic latitude, geodetic height] to ECR (meters)
-      ecr = geodToECRm ( [ g%lon(i,j,k), g%geodLat(i,j,k), g%geodV(i,j,k) ] )
+      geodV = g%geodV(i,j,k)
+      latGeod = g%geodLat(i,j,k)
+      lon = g%lon(i,j,k)
+      ecr = geodToECRm ( [ lon%d, latGeod%d, geodV%v ] )
     else if ( associated(g%geocV1) ) then
       ! Convert [ longitude, geocentric latitude, geocentric height] to ECR
-      ecr = GeocToECRu ( g%geocLat(i,j,k),g%lon(i,j,k) ) * g%geocV(i,j,k)
+      geocV = g%geocV(i,j,k)
+      latGeoc = g%geocLat(i,j,k)
+      lon = g%lon(i,j,k)
+      ecr = GeocToECRu ( latGeoc%d, lon%d ) * geocV%v
     else
       ecr = [-huge(0.0_rg),-huge(0.0_rg),-huge(0.0_rg)]
     end if
@@ -1826,15 +2003,19 @@ contains
   ! Fill geocentric latitude and height components.
   subroutine Fill_Geoc ( G )
     class(geolocation_t), intent(inout) :: G
-    integer :: I, J, K
+    integer :: I, J, K, Stat
     if ( associated(g%geocLat1) ) return ! Already have it
     if ( associated(g%geodLat1) ) then
       if ( .not. associated(g%geodV1) ) return ! must be zeta, can't convert
-      call allocate_test ( g%geocLat1, size(g%geodLat1), 'geocLat1', moduleName )
-      call allocate_test ( g%geocV1, size(g%geodV1), 'geocV1', moduleName )
+      allocate ( g%geocLat1(size(g%geodLat1)), stat=stat )
+      call test_allocate ( stat, 'geocLat1', moduleName )
+      allocate ( g%geocV1(size(g%geodV1)), stat=stat )
+      call test_allocate ( stat, 'geocV1', moduleName )
     else if ( associated(g%P1) ) then
-      call allocate_test ( g%geocLat1, size(g%p1), 'geocLat1', moduleName )
-      call allocate_test ( g%geocV1, size(g%p1), 'geocV1', moduleName )
+      allocate ( g%geocLat1(size(g%p1)), stat=stat )
+      call test_allocate ( stat, 'geocLat1', moduleName )
+      allocate ( g%geocV1(size(g%p1)), stat=stat )
+      call test_allocate ( stat, 'geocV1', moduleName )
     else
       return ! can't do it
     end if
@@ -1868,22 +2049,26 @@ contains
   ! Fill geodetic latitude and height components.
   subroutine Fill_Geod ( G )
     class(geolocation_t), intent(inout) :: G
-    integer :: I, J, K
+    integer :: I, J, K, Stat
     if ( associated(g%geodLat1) ) return ! Already have it
     if ( associated(g%geocLat1) ) then
       if ( .not. associated(g%geocV1) ) return ! must be zeta, can't convert
-      call allocate_test ( g%geodLat1, size(g%geocLat1), 'geodLat1', moduleName )
-      call allocate_test ( g%geodV1, size(g%geocV1), 'geodV1', moduleName )
+      allocate ( g%geodLat1(size(g%geocLat1)), stat=stat )
+      call test_allocate ( stat, 'geodLat1', moduleName )
+      allocate ( g%geodV1(size(g%geocV1)), stat=stat )
+      call test_allocate ( stat, 'geodV1', moduleName )
     else if ( associated(g%P1) ) then
-      call allocate_test ( g%geodLat1, size(g%P1), 'geodLat1', moduleName )
-      call allocate_test ( g%geodV1, size(g%P1), 'geodV1', moduleName )
+      allocate ( g%geodLat1(size(g%P1)), stat=stat )
+      call test_allocate ( stat, 'geodLat1', moduleName )
+      allocate ( g%geodV1(size(g%P1)), stat=stat )
+      call test_allocate ( stat, 'geodV1', moduleName )
     else
       return ! can't do it
     end if
-    g%geodLat2(1:size(g%geocLat2,1),1:size(g%geocLat2,2)) => g%geocLat1
-    g%geodLat3(1:size(g%geocLat3,1),1:size(g%geocLat3,2),1:size(g%geocLat3,3)) => g%geocLat1
-    g%geodV2(1:size(g%geocV2,1),1:size(g%geocV2,2)) => g%geocV1
-    g%geodV3(1:size(g%geocV3,1),1:size(g%geocV3,2),1:size(g%geocV3,3)) => g%geocV1
+    g%geodLat2(1:size(g%geocLat2,1),1:size(g%geocLat2,2)) => g%geodLat1
+    g%geodLat3(1:size(g%geocLat3,1),1:size(g%geocLat3,2),1:size(g%geocLat3,3)) => g%geodLat1
+    g%geodV2(1:size(g%geocV2,1),1:size(g%geocV2,2)) => g%geodV1
+    g%geodV3(1:size(g%geocV3,1),1:size(g%geocV3,2),1:size(g%geocV3,3)) => g%geodV1
     if ( g%coherent ) then
       do k = 1, size(g%geodV1,1)
         do j = 1, size(g%lon3,2)
@@ -1941,10 +2126,12 @@ contains
   subroutine Insert_Geoc_1 ( G, V )
     class(geolocation_t), intent(inout) :: G
     type(v_geoc), intent(in) :: V(:)
-    call allocate_test ( g%geocV1, size(v), 'G%GeocV1', moduleName )
+    integer :: Stat
+    allocate ( g%geocV1(size(v)), stat=stat )
+    call test_allocate ( stat, 'G%GeocV1', moduleName )
     g%geocV2(1:size(v),1:1) => g%geocV1
     g%geocV3(1:size(v),1:1,1:1) => g%geocV1
-    g%geocV1 = v%v
+    g%geocV1%v = v%v
   end subroutine Insert_Geoc_1
 
   ! Insert geocentric height, meters from the Earth center
@@ -1955,10 +2142,12 @@ contains
   subroutine Insert_Geoc_2 ( G, V )
     class(geolocation_t), intent(inout) :: G
     type(v_geoc), intent(in) :: V(:,:)
-    call allocate_test ( g%geocV1, size(v), 'G%GeocV1', moduleName )
+    integer :: Stat
+    allocate ( g%geocV1(size(v)), stat=stat )
+    call test_allocate ( stat, 'G%GeocV1', moduleName )
     g%geocV2(1:size(v,1),1:size(v,2)) => g%geocV1
     g%geocV3(1:size(v,1),1:size(v,2),1:1) => g%geocV1
-    g%geocV2 = v%v
+    g%geocV2%v = v%v
   end subroutine Insert_Geoc_2
 
   ! Insert geocentric height, meters from the Earth center
@@ -1969,10 +2158,12 @@ contains
   subroutine Insert_Geoc_3 ( G, V )
     class(geolocation_t), intent(inout) :: G
     type(v_geoc), intent(in) :: V(:,:,:)
-    call allocate_test ( g%geocV1, size(v), 'G%GeocV1', moduleName )
+    integer :: Stat
+    allocate ( g%geocV1(size(v)), stat=stat )
+    call test_allocate ( stat, 'G%GeocV1', moduleName )
     g%geocV2(1:size(v,1),1:size(v,2)) => g%geocV1
     g%geocV3(1:size(v,1),1:size(v,2),1:size(v,3)) => g%geocV1
-    g%geocV3 = v%v
+    g%geocV3%v = v%v
   end subroutine Insert_Geoc_3
 
   ! Insert geodetic height, meters above sea level
@@ -1982,10 +2173,12 @@ contains
   subroutine Insert_Geod_1 ( G, V )
     class(geolocation_t), intent(inout) :: G
     type(v_geod), intent(in) :: V(:)
-    call allocate_test ( g%geodV1, size(v), 'G%geodV1', moduleName )
+    integer :: Stat
+    allocate ( g%geodV1(size(v)), stat=stat )
+    call test_allocate ( stat, 'G%geodV1', moduleName )
     g%geodV2(1:size(v,1),1:1) => g%geodV1
     g%geodV3(1:size(v,1),1:1,1:1) => g%geodV1
-    g%geodV1 = v%v
+    g%geodV1%v = v%v
   end subroutine Insert_Geod_1
 
   ! Insert geodetic height, meters above sea level
@@ -1995,10 +2188,12 @@ contains
   subroutine Insert_Geod_2 ( G, V )
     class(geolocation_t), intent(inout) :: G
     type(v_geod), intent(in) :: V(:,:)
-    call allocate_test ( g%geodV1, size(v), 'G%geodV1', moduleName )
+    integer :: Stat
+    allocate ( g%geodV1(size(v)), stat=stat )
+    call test_allocate ( stat, 'G%geodV1', moduleName )
     g%geodV2(1:size(v,1),1:size(v,2)) => g%geodV1
     g%geodV3(1:size(v,1),1:size(v,2),1:1) => g%geodV1
-    g%geodV2 = v%v
+    g%geodV2%v = v%v
   end subroutine Insert_Geod_2
 
   ! Insert geodetic height, meters above sea level
@@ -2008,10 +2203,12 @@ contains
   subroutine Insert_Geod_3 ( G, V )
     class(geolocation_t), intent(inout) :: G
     type(v_geod), intent(in) :: V(:,:,:)
-    call allocate_test ( g%geodV1, size(v), 'G%geodV1', moduleName )
+    integer :: Stat
+    allocate ( g%geodV1(size(v)), stat=stat )
+    call test_allocate ( stat, 'G%geodV1', moduleName )
     g%geodV2(1:size(v,1),1:size(v,2)) => g%geodV1
     g%geodV3(1:size(v,1),1:size(v,2),1:size(v,3)) => g%geodV1
-    g%geodV3 = v%v
+    g%geodV3%v = v%v
   end subroutine Insert_Geod_3
 
   ! Insert Zeta
@@ -2021,10 +2218,12 @@ contains
   subroutine Insert_Zeta_1 ( G, V )
     class(geolocation_t), intent(inout) :: G
     type(v_zeta), intent(in) :: V(:)
-    call allocate_test ( g%zeta1, size(v), 'G%zeta1', moduleName )
+    integer :: Stat
+    allocate ( g%zeta1(size(v)), stat=stat )
+    call test_allocate ( stat, 'G%zeta1', moduleName )
     g%zeta2(1:size(v,1),1:1) => g%zeta1
     g%zeta3(1:size(v,1),1:1,1:1) => g%zeta1
-    g%zeta1 = v%v
+    g%zeta1 = v
   end subroutine Insert_Zeta_1
 
   ! Insert Zeta
@@ -2034,10 +2233,12 @@ contains
   subroutine Insert_Zeta_2 ( G, V )
     class(geolocation_t), intent(inout) :: G
     type(v_zeta), intent(in) :: V(:,:)
-    call allocate_test ( g%zeta1, size(v), 'G%zeta1', moduleName )
+    integer :: Stat
+    allocate ( g%zeta1(size(v)), stat=stat )
+    call test_allocate ( stat, 'G%zeta1', moduleName )
     g%zeta2(1:size(v,1),1:size(v,2)) => g%zeta1
     g%zeta3(1:size(v,1),1:size(v,2),1:1) => g%zeta1
-    g%zeta2 = v%v
+    g%zeta2 = v
   end subroutine Insert_Zeta_2
 
   ! Insert Zeta
@@ -2047,10 +2248,12 @@ contains
   subroutine Insert_Zeta_3 ( G, V )
     class(geolocation_t), intent(inout) :: G
     type(v_zeta), intent(in) :: V(:,:,:)
-    call allocate_test ( g%zeta1, size(v), 'G%zeta1', moduleName )
+    integer :: Stat
+    allocate ( g%zeta1(size(v)), stat=stat )
+    call test_allocate ( stat, 'G%zeta1', moduleName )
     g%zeta2(1:size(v,1),1:size(v,2)) => g%zeta1
     g%zeta3(1:size(v,1),1:size(v,2),1:size(v,3)) => g%zeta1
-    g%zeta3 = v%v
+    g%zeta3 = v
   end subroutine Insert_Zeta_3
 
   ! Delete geocentric latitudes and geocentric vertical coordinates
@@ -2092,15 +2295,23 @@ contains
 ! impure elemental &
   subroutine Destroy_G ( G )
     type(geolocation_t), intent(inout) :: G
-    call deallocate_test ( g%lon1, 'lon1', moduleName )
-    call deallocate_test ( g%geodLat1, 'geodLat1', moduleName )
-    call deallocate_test ( g%geodLat1, 'geodLat1', moduleName )
-    call deallocate_test ( g%geocV1, 'geocV1', moduleName )
-    call deallocate_test ( g%geodV1, 'geodV1', moduleName )
-    call deallocate_test ( g%zeta1, 'zeta1', moduleName )
+    integer :: Stat
+    deallocate ( g%lon1, stat=stat )
+    call test_deallocate ( stat, 'lon1', moduleName )
+    deallocate ( g%geocLat1, stat=stat )
+    call test_deallocate ( stat, 'geocLat1', moduleName )
+    call deallocate_test ( g%phi1, 'geocLat1', moduleName )
+    deallocate ( g%geodLat1, stat=stat )
+    call test_deallocate ( stat, 'geodLat1', moduleName )
+    deallocate ( g%geocV1, stat=stat )
+    call test_deallocate ( stat, 'geocV1', moduleName )
+    deallocate ( g%geodV1, stat=stat )
+    call test_deallocate ( stat, 'geodV1', moduleName )
+    deallocate ( g%zeta1, stat=stat )
+    call test_deallocate ( stat, 'zeta1', moduleName )
     call g%destroy_g_p1
     nullify ( g%lon2, g%lon3, g%geocLat2, g%geocLat3, g%geodLat2, g%geodLat3 )
-    nullify ( g%geocV2, g%geocV3, g%geodV2, g%geodV3 )
+    nullify ( g%phi2, g%phi3, g%geocV2, g%geocV3, g%geodV2, g%geodV3 )
     nullify ( g%zeta2, g%zeta3, g%p2, g%p3 )
   end subroutine Destroy_G
 
@@ -2115,7 +2326,7 @@ contains
   end subroutine Destroy_G_P1
 
 ! impure elemental &
-  subroutine Explicit_Destroy_G (Not_Used )
+  subroutine Explicit_Destroy_G ( Not_Used )
     class(geolocation_t), intent(out) :: Not_Used ! Intent(out) causes Destroy_G
   end subroutine Explicit_Destroy_G
 
@@ -2133,6 +2344,15 @@ contains
 end module Geolocation_m
 
 ! $Log$
+! Revision 2.5  2016/03/25 00:45:25  vsnyder
+! Change type of Lon components from real(rg) to type(lon_t).  Change type
+! of GeodLat components from real(rg) to type(geodLat_t).  Change type of
+! GeocV components from real(rg) to type(v_geoc).  Change type of GeodV
+! components from real(rg) to type(v_geod).  Change type of Zeta
+! components from real(rg) to type(v_zeta).  Need to allocate these guys
+! using an allocate statement, and then use test_allocate, and similarly
+! for deallocating them.
+!
 ! Revision 2.4  2016/02/26 02:02:00  vsnyder
 ! Make Coeff_t and QTM_tree_t public.  Add QTM_Geoc, QTM_Geod and QTM_Lats
 ! components.  Spiff some comments.
