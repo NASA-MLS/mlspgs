@@ -345,6 +345,7 @@ contains ! ====     Public Procedures     ==============================
   subroutine Push_Stack_I ( Name, Root, Index, String, Before, Where, Advance )
     ! Push the stack.  If Before or Where are present, dump the new top frame.
     use Allocate_Deallocate, only: Test_Allocate, NoBytesAllocated
+    use highoutput, only: outputnamedvalue
     use Memory_m, only: Memory_Used
     use Output_m, only: Output
     use String_Table, only: Display_String
@@ -372,6 +373,8 @@ contains ! ====     Public Procedures     ==============================
         call output ( 'Unable to allocate temp_stack', advance='yes' )
         StaySilent = .true.
         return
+      elseif ( verbose ) then
+        call outputnamedValue ( 'allocated stack with size', startingStackSize )
       end if
       call test_allocate ( stat, moduleName, 'Stack', &
         & ubounds=(/startingStackSize/), elementSize=storage_size(stack) / 8 )
@@ -482,6 +485,9 @@ contains ! ====     Public Procedures     ==============================
 end module Call_Stack_m
 
 ! $Log$
+! Revision 2.32  2016/03/25 00:36:34  pwagner
+! More diagnostics if verbose
+!
 ! Revision 2.31  2016/02/11 21:16:07  pwagner
 ! Added Deallocate_Stack
 !
