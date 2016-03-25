@@ -81,7 +81,7 @@ contains
     ! Given a vector parallel to a line, and a vector parallel to an unit
     ! normal to a plane, compute a vector parallel to the reflection of
     ! the line from the plane.  For derivation, see wvs-133.
-    use Geolocation_0, only: ECR_t, RG
+    use Geolocation_0, only: ECR_t
     type(ECR_t), intent(in) :: Line    ! A vector parallel to the line
     type(ECR_t), intent(in) :: Normal  ! An unit normal to the plane
     type(ECR_t), intent(out) :: Reflection ! A vector parallel to the
@@ -103,6 +103,9 @@ contains
 end module Line_And_Plane_m
 
 ! $Log$
+! Revision 2.4  2016/03/25 00:07:47  vsnyder
+! Remove unused USE name
+!
 ! Revision 2.3  2016/03/03 21:39:38  vsnyder
 ! Change name of T argument to S (because it's arc length)
 !
