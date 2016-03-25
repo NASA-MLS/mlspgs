@@ -19,7 +19,8 @@ module Generate_QTM_m
   ! definition of "inside" a polygon is ambiguous, so an additional point that
   ! is defined to be inside the polygon is required.
 
-  use QTM_m, only: H_t, QK, RG, ZOT_t
+  use Geolocation_0, only: Lon_t, H_t, RG
+  use QTM_m, only: QK, ZOT_t
 
   implicit NONE
   private
@@ -45,8 +46,8 @@ module Generate_QTM_m
     type(ZOT_t) :: In = ZOT_t(-999,-999) ! A point defined to be inside the
                                ! polygon. This is needed because the concept of
                                ! "inside a polygon" is ambiguous on a sphere.
-    type(h_t) :: In_Geo = h_t(-999,-999) ! QTM_Tree_t%In as longitude and
-                               ! latitude
+    type(h_t) :: In_Geo = h_t(lon_t(-999),-999) ! QTM_Tree_t%In as longitude
+                               ! and latitude
     logical :: In_or_Out       ! True iff PnPoly reports QTM_Tree_t%In is
                                ! inside the polygon, from the point of view of
                                ! the ZOT projection.  A point is considered to
@@ -91,7 +92,7 @@ contains
     ! the negative of the subscript of the last vertex visited.
     use QTM_m, only: Geo_to_ZOT, Stack_t, ZOT_t
     class(QTM_Tree_t), intent(in) :: QTM_Trees
-    type(h_t), intent(in) :: Geo
+    class(h_t), intent(in) :: Geo
     type(stack_t), intent(inout), optional :: Stack ! to make subsequent search faster
     type(stack_t) :: My_Stack ! in case Stack is not present
     type(ZOT_t) :: Zot
@@ -186,7 +187,7 @@ contains
     end if
 
     if ( QTM_Trees%in%x < -10 .or. QTM_Trees%in%y < -10 ) then
-      if ( QTM_Trees%in_geo%lon < -500 .or. QTM_Trees%in_geo%lat < -500 ) return
+      if ( QTM_Trees%in_geo%lon%d < -500 .or. QTM_Trees%in_geo%lat < -500 ) return
       QTM_Trees%in = geo_to_ZOT(QTM_Trees%in_geo)
     end if
     l = min(QTM_Trees%level,QTM_Depth)
@@ -272,9 +273,7 @@ contains
       ! Is any vertex of the polygon within the facet?
       do i = 1, size(QTM_Trees%polygon_ZOT)
         if ( in ) exit
-        call triangle_interpolate ( &
-          & [ QTM_Trees%Q(root)%z(1)%x, QTM_Trees%Q(root)%z(2)%x, QTM_Trees%Q(root)%z(3)%x ], &
-          & [ QTM_Trees%Q(root)%z(1)%y, QTM_Trees%Q(root)%z(2)%y, QTM_Trees%Q(root)%z(3)%y ], &
+        call triangle_interpolate ( QTM_Trees%Q(root)%z%x, QTM_Trees%Q(root)%z%y, &
           & QTM_Trees%polygon_ZOT(i)%x, QTM_Trees%polygon_ZOT(i)%y, w )
         in = all(w >= 0)
       end do
@@ -476,23 +475,23 @@ contains
     t = -1
     if ( g(1)%lat >= 0 .and. g(2)%lat >= 0 ) return ! both ends in the northern
                                                     ! hemisphere
-    lon = g%lon
+    lon = g%lon%d
     ! Put longitude in [0, 360).
-    lon = mod(g%lon,360.0_rg)
+    lon = mod(g%lon%d,360.0_rg)
     where ( lon < 0.0 ) lon = lon + 360.0
     q = int(lon/90.0_rg) ! Each Q in [0,3]
     t = -abs(q(1)-q(2)) - 1
     ! Does the edge have ends in the same quadrant, or two quadrants apart?
     if ( mod(t,2) /= 0 ) return ! t = -1 or -3 => No crossing or two crossings
-    v1 = to_xyz ( g(1)%lat, g(1)%lon )
-    v2 = to_xyz ( g(2)%lat, g(2)%lon )
+    v1 = to_xyz ( g(1)%lat, g(1)%lon%d )
+    v2 = to_xyz ( g(2)%lat, g(2)%lon%d )
     n = cross ( v1, v2 ) ! Normal to circle containing G(1) and G(2)
     if ( t == -4 ) then  ! Three crossings only if Q = (3,0) or (0,3),
       m = 0              ! therefore crossing meridian 0.
-      if ( g(2)%lon > g(1)%lon ) n = -n
+      if ( g(2)%lon%d > g(1)%lon%d ) n = -n
     else                 ! One crossing, meridian # is max of quadrant #'s
       m = max(q(1),q(2))
-      if ( g(1)%lon > g(2)%lon ) n = -n
+      if ( g(1)%lon%d > g(2)%lon%d ) n = -n
     end if
     t = -1               ! No crossings for now.
     ! [ x(m), y(m), 0 ] is normal to the crossed meridian
@@ -503,7 +502,7 @@ contains
     d = dot_product(v1,v2)
     if ( dot_product(v1,vx) < d .or. dot_product(v2,vx) < d ) lat = -lat
     if ( lat < 0 ) then ! Crosses southern hemisphere meridian M
-      z = geo_to_ZOT(h_t(90.0_rg*m, lat * rad2deg))
+      z = geo_to_ZOT(h_t(lon_t(90.0_rg*m), lat * rad2deg))
       t = m
     end if
   end function Cross_Meridian
@@ -580,7 +579,7 @@ contains
       type(h_t) :: Geo
       if ( latLon ) then
         geo = z%zot_to_geo()
-        x = geo%lon
+        x = geo%lon%d
         y = geo%lat
       else
         x = z%x
@@ -606,7 +605,7 @@ contains
     if ( present(format) ) fmt = format
 
     ! Dump the "inside" point
-    call output ( QTM_Trees%in_geo%lon, before='Inside Geo (Lon,Lat) (' )
+    call output ( QTM_Trees%in_geo%lon%d, before='Inside Geo (Lon,Lat) (' )
     call output ( QTM_Trees%in_geo%lat, before=',' )
     call output ( QTM_Trees%in%x, before=') Inside ZOT (X,Y) (', format=fmt(2) )
     call output ( QTM_Trees%in%y, before=',', format=fmt(2) )
@@ -615,7 +614,7 @@ contains
     call output ( 'Polygon_Geo:', advance='yes' )
     do i = 1, size(QTM_Trees%polygon_geo)
       if ( mod(i,5) == 1 ) call output ( i, format='(i4,"#")' )
-      call output ( QTM_Trees%polygon_geo(i)%lon, before=' (', format=fmt(1) )
+      call output ( QTM_Trees%polygon_geo(i)%lon%d, before=' (', format=fmt(1) )
       call output ( QTM_Trees%polygon_geo(i)%lat, before=',', format=fmt(1) )
       call output ( ')' )
       if ( mod(i,5) == 0 .or. i == size(QTM_Trees%polygon_geo) ) call newLine
@@ -780,6 +779,10 @@ contains
 end module Generate_QTM_m
 
 ! $Log$
+! Revision 2.4  2016/03/25 00:27:35  vsnyder
+! Lon component now needs to access its %d component.  Make Geo argument
+! of Find_Facet_Geo polymorphic.  Simplify call to Triangle_Interpolate.
+!
 ! Revision 2.3  2016/02/26 02:03:37  vsnyder
 ! Add Get_QTM_Lats subroutine and Leaf component.
 !
