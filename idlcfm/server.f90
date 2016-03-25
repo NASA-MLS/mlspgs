@@ -3,16 +3,18 @@ program server
     use CFM, only: QUANTITYTEMPLATE_T
     use DECLARATION_TABLE, only: ALLOCATE_DECL, DEALLOCATE_DECL
     use EmpiricalGeometry, only: CFM_InitEmpiricalGeometry
+    use ForwardModelSupport, ONLY: OnlyWarnIfTangentNotSubset
     use H5LIB, ONLY: h5open_f, h5close_f
     use IDLCFM2_m, only: QTYMSGTAG, &
       & SIG_CLEANUP, SIG_DIE, SIG_FWDMDL, SIG_SETUP, SIG_VECTOR, &
       & ICFMReceiveVector, ICFMReceiveQuantity, ICFMSendVector
     use io_stuff, only: write_textfile
+    use machine, only: crash_burn, nevercrash
     use MatrixTools, only: PVMSendMatrix
     use MLSKinds, only: r8
     use MLSL2Options, only: TOOLKIT
-    use MLSMessageModule, only: MLSMessageConfig, PVMERRORMESSAGE, &
-                                MLSMSG_Severity_to_quit
+    use MLSMessageModule, only: MLSMessageConfig, PVMErrorMessage, &
+      & MLSMSG_Severity_to_quit, MLSMessageCalls
     use MLSStrings, only: WriteIntsToChars
     use PVM, only: PVMFRECV, PVMFBUFINFO
     use PVMIDL, only: PVMIDLUNPACK
@@ -49,6 +51,7 @@ program server
     integer :: reqcode
     character(len=16) :: tidChars
     type (ForwardModelConfig_T), pointer :: ForwardModelConfigDatabase(:)
+    logical :: initializedTables = .false.
     logical :: locked = .false.
     logical :: initStages(P_LAST - 1) = .false.
     ! These aren't really needed, but the program doesn't know that
@@ -56,12 +59,16 @@ program server
     character(len=27) :: endTime = "2009-040T00:00:00.9999"
     character(len=*), parameter :: tidFileName = "tid.txt"
     ! executable
+    ! Sone of the default level 2 settings won't work
+    ! when we run as a server
     MLSMessageConfig%logFileUnit = -1
     MLSMessageConfig%useToolkit = .false.
     TOOLKIT = .false.
+    OnlyWarnIfTangentNotSubset = .true.
     ! set this so the program will never quit unless receiving SIGINT
     ! from the operating system
     MLSMSG_Severity_to_quit = MLSMSG_Crash
+    nevercrash = .false.
 
     call PVMFMyTid(tid)
 
@@ -141,7 +148,7 @@ program server
 
         if (locked) then
             call MLSMessage (MLSMSG_Warning, moduleName, "a session is already started")
-            return
+            call crash_burn
         endif
         locked = .true.
 
@@ -153,7 +160,7 @@ program server
         if (info /= 0) then
             call PVMErrorMessage ( info, "unpacking signalfile." )
             call ICFM_Cleanup
-            return
+            call crash_burn
         endif
         print *, "signalfile ", signalfile
 
@@ -161,7 +168,7 @@ program server
         if (info /= 0) then
             call PVMErrorMessage ( info, "unpacking configfilename." )
             call ICFM_Cleanup
-            return
+            call crash_burn
         endif
         print *, "configfile ", configfile
 
@@ -172,7 +179,7 @@ program server
             call MLSMessage (MLSMSG_Error, moduleName, &
             'Error opening ' // trim(signalfile))
             call ICFM_Cleanup
-            return
+            call crash_burn
         endif
 
         call get_lun(configIn)
@@ -181,13 +188,17 @@ program server
             call MLSMessage (MLSMSG_Error, moduleName, &
             'Error opening ' // trim(configFile))
             call ICFM_Cleanup
-            return
+            call crash_burn
         endif
 
         call init_lexer ( n_chars=80000, n_symbols=4000, hash_table_size=611957 )
         call allocate_decl ( ndecls=8000 )
         call allocate_tree ( n_tree=2000000 )
-        call init_tables
+        if ( .not. initializedTables ) then
+          print *, 'Initialize the tables'
+          call init_tables
+          ! initializedTables = .true.
+        endif
 
         initstages(P_INITTREE) = .true.
 
@@ -195,6 +206,7 @@ program server
         call AddInUnit(configIn)
 
         ! Parse the L2CF, producing an abstract syntax tree
+        print *, 'Parse the L2CF, producing an abstract syntax tree'
         call init_parser_table ( parser_table )
         call configuration ( root, parser_table )
         call destroy_parser_table ( parser_table )
@@ -203,14 +215,14 @@ program server
             call MLSMessage (MLSMSG_Error, moduleName, &
             'A syntax error occurred -- there is no abstract syntax tree')
             call ICFM_Cleanup
-            return
+            call crash_burn
         end if
 
         call check_tree ( root, error, first_section )
         if (error /= 0) then
             call MLSMessage (MLSMSG_Error, moduleName, "Error in tree")
             call ICFM_Cleanup
-            return
+            call crash_burn
         endif
 
         nullify(ForwardModelConfigDatabase)
@@ -230,7 +242,7 @@ program server
         if (error /= 0) then
             call MLSMessage (MLSMSG_Error, moduleName, "Error in initialize hdf5 library")
             call ICFM_Cleanup
-            return
+            call crash_burn
         endif
         initstages(P_INITHDF5) = .true.
 
@@ -331,12 +343,14 @@ program server
     end subroutine
 
     subroutine ICFM_Cleanup
-        use STRING_TABLE, only: DESTROY_CHAR_TABLE, DESTROY_HASH_TABLE, DESTROY_STRING_TABLE
+        use Call_Stack_m, only: Deallocate_Stack
+        use string_table, only: destroy_char_table, &
+          & destroy_hash_table, destroy_string_table
         use ForwardModelConfig, only: DestroyFWMConfigDatabase
         use MLSSignals_m, only: modules, bands, radiometers, spectrometerTypes, &
-                              signals, DestroyBandDatabase, DestroySignalDatabase, &
-                              DestroySpectrometerTypeDatabase, DestroyModuleDatabase, &
-                              DestroyRadiometerDatabase
+          & signals, DestroyBandDatabase, DestroySignalDatabase, &
+          & DestroySpectrometerTypeDatabase, DestroyModuleDatabase, &
+          & DestroyRadiometerDatabase
         use EmpiricalGeometry, only: CFM_ResetEmpiricalGeometry
         use ConstructQuantityTemplates, only: propertyTable, unitsTable
 
@@ -345,7 +359,8 @@ program server
         print *, "call ICFM_Cleanup"
 
         if (.not. locked) then
-            call MLSMessage (MLSMSG_Warning, moduleName, "there is no session to clean up")
+            call MLSMessage (MLSMSG_Warning, moduleName, &
+              & "there is no session to clean up")
             return
         endif
 
@@ -379,6 +394,8 @@ program server
             call destroy_symbol_table
             call deallocate_decl
             call deallocate_tree
+            call deallocate_stack
+            call MLSMessageCalls ( 'clear' )
         endif
 
         ! De-init quantity templates
@@ -437,6 +454,7 @@ program server
         endif
 
         if (info == 0) then
+            print *, "Calling forward model"
             if (doDerivative) then
                 jacobian = CreatePlainMatrix(measurement, state)
                 call ForwardModel2 (mafNo, ForwardModelConfigDatabase, state, stateExtra, &
@@ -446,25 +464,30 @@ program server
                                     measurement)
             endif
 
+            print *, "Sending measurement vector"
             call ICFMSendVector(measurement, tid, info)
             if (info /= 0) then
                 call PVMErrorMessage ( info, "send measurement" )
             endif
             
             if (doDerivative) then
+                print *, "preparing to send matrix"
                 call prepare_matrix_for_pvmsend(jacobian)
+                print *, "sending matrix"
                 call PVMSendMatrix(jacobian, tid)
                 !call dump(jacobian, details=3)
+                print *, "Destroying matrix"
                 call DestroyMatrix(jacobian)
             endif
         end if
 
-        ! call DestroyVectorTemplateInfo(stateExtra%template)
         call DestroyVectorInfo(stateExtra)
-        call DestroyVectorTemplateInfo(state%template)
         call DestroyVectorInfo(state)
-        call DestroyVectorTemplateInfo(measurement%template)
         call DestroyVectorInfo(measurement)
+        call DestroyVectorTemplateInfo(state%template)
+        print *, "Fearful of destroying stateExtraTemplate"
+        ! call DestroyVectorTemplateInfo(stateExtra%template)
+        call DestroyVectorTemplateInfo(measurement%template)
         call DestroyQuantityTemplateDatabase (qtydb)
 
     end subroutine
@@ -617,6 +640,9 @@ program server
 end program
 
 ! $Log$
+! Revision 1.10  2016/02/04 21:55:09  pwagner
+! Obeys SIG_DIE to escape forever loop
+!
 ! Revision 1.9  2016/01/07 18:26:27  pwagner
 ! Will not need toolkit panoply, so do not try to
 !
