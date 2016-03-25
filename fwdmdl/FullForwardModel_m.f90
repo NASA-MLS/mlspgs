@@ -3053,6 +3053,7 @@ contains
       ! trip through the CALL statement -- hopefully thereby helping optimizers.
       use CS_EXPMAT_m, only: CS_EXPMAT
       use DO_T_SCRIPT_m, only: TWO_D_T_SCRIPT, TWO_D_T_SCRIPT_CLOUD
+      use Dump_0, only: Dump_2x2xn
       use D_T_SCRIPT_DTNP_m, only: DT_SCRIPT_DT
       use Dump_Path_m, only: Dump_Path, SPS_List
       use Get_Beta_Path_m, only: GET_Beta_Path, GET_Beta_Path_CLOUD, &
@@ -3411,7 +3412,11 @@ contains
           incoptdepth_pol(2,1,j) = - incoptdepth_pol(2,1,j) * del_s(j)
           incoptdepth_pol(1,2,j) = - incoptdepth_pol(1,2,j) * del_s(j)
           incoptdepth_pol(2,2,j) = - incoptdepth_pol(2,2,j) * del_s(j)
+        end do
 
+        if ( print_incopt ) call dump_2x2xn ( incoptdepth_pol, 'IncoptDepth_Pol' )
+
+        do j = 2, npc-1
           ! deltau_pol = exp(incoptdepth_pol)
           call cs_expmat ( incoptdepth_pol(:,:,j), deltau_pol(:,:,j) )
         end do
@@ -4845,6 +4850,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.363  2016/02/25 00:57:58  vsnyder
+! Include bounds of t_path_c in call to dt_script_dt
+!
 ! Revision 2.362  2016/01/23 02:55:24  vsnyder
 ! Add printing for polarized radiance
 !
