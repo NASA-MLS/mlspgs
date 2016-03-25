@@ -33,7 +33,7 @@ module TRACE_M
 contains ! ====     Public Procedures     ==============================
 
 ! ------------------------------------------------  TRACE_BEGIN_B  -----
-  subroutine TRACE_BEGIN_B ( NAME_I, NAME_C, ROOT, INDEX, String, Cond, Advance )
+  subroutine TRACE_BEGIN_B ( NAME_INPUT, NAME_C, ROOT, INDEX, String, Cond, Advance )
   ! If Name_I <= 0, use Create_String ( Name_C ) to give it a value.
   ! We assume the actual argument is a SAVE variable.  Thereby, if
   ! Name_I is positive, we assume it's the result of entering Name_C,
@@ -42,19 +42,25 @@ contains ! ====     Public Procedures     ==============================
   ! Print "ENTER NAME with ROOT = <node_id(root)>" with DEPTH dots in
   ! front.  Increment DEPTH.
 
+    use highoutput, only: outputnamedValue
     use OUTPUT_M, only: OUTPUT
     use STRING_TABLE, only: CREATE_STRING, STRING_TABLE_SIZE
 
-    integer, intent(inout) :: NAME_I
-    character(len=*), intent(in) :: NAME_C
+    integer, intent(in          ) :: NAME_INPUT
+    character(len=*), intent(in)  :: NAME_C
     integer, intent(in), optional :: ROOT
     integer, intent(in), optional :: INDEX
     integer, intent(in), optional :: String ! To display after Name_I
     logical, intent(in), optional :: Cond   ! Print if true, default true
     character(len=*), intent(in), optional :: Advance
-    if ( Verbose ) &
-      & call output( string_table_size(), &
+    integer                       :: name_i
+    name_i = name_input
+    if ( Verbose ) then
+      call output( string_table_size(), &
         & before='Trace_Begin_B ' // trim(Name_c) // ' ', advance='yes' )
+      call outputnamedValue( 'name_i', name_i )
+      call outputnamedValue( 'name_c', name_c )
+    endif
     if ( string_table_size() < 1 ) return
     if ( name_i <= 0 ) name_i = create_string ( trim(name_c) )
     call trace_begin ( name_i, root, index, string, cond, advance )
@@ -93,6 +99,7 @@ contains ! ====     Public Procedures     ==============================
   ! Print "ENTER NAME with ROOT = <node_id(root)>" with DEPTH dots in
   ! front.  Increment DEPTH.
 
+    use highoutput, only: outputanynamedvalue
     use CALL_STACK_M, only: STACK_T, PUSH_STACK, TOP_STACK
     use MLSCommon, only: MLSDebug, MLSVerbose, &
       & MLSDebugSticky, MLSVerboseSticky, MLSNamesAreVerbose, MLSNamesAreDebug
@@ -126,6 +133,12 @@ contains ! ====     Public Procedures     ==============================
       call push_stack ( name, root, index, string, before='Enter ', &
         & where=.true., advance=advance )
     else
+      if ( verbose ) then
+        call outputanynamedvalue ( 'name', ivalue=name )
+        call outputanynamedvalue ( 'root', ivalue=root )
+        call outputanynamedvalue ( 'index', ivalue=index )
+        call outputanynamedvalue ( 'string', ivalue=string )
+      end if
       call push_stack ( name, root, index, string )
     end if
 
@@ -268,6 +281,9 @@ contains ! ====     Public Procedures     ==============================
 end module TRACE_M
 
 ! $Log$
+! Revision 2.43  2016/03/25 00:38:43  pwagner
+! Must not change name input to TRACE_BEGIN_B
+!
 ! Revision 2.42  2014/09/05 00:30:59  vsnyder
 ! Some cannonball polishing
 !
