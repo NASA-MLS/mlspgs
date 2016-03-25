@@ -143,7 +143,7 @@ module HIGHOUTPUT
     & dump, dumpSize, dumpTabs, getStamp, headLine, &
     & letsDebug, nextColumn, nextTab, numNeedsFormat, numToChars, &
     & output_date_and_time, outputCalendar, outputList, outputTable, &
-    & outputNamedValue, &
+    & outputAnyNamedValue, outputNamedValue, &
     & resetTabs, restoreSettings, &
     & setStamp, setTabs, startTable, tab, timeStamp
 
@@ -203,6 +203,10 @@ module HIGHOUTPUT
     module procedure output_nvp_int_array, output_nvp_integer
     module procedure output_nvp_log_array, output_nvp_logical
     module procedure output_nvp_sngl_array, output_nvp_single
+  end interface
+
+  interface OUTPUTANYNAMEDVALUE
+    module procedure output_nvp_whatever
   end interface
 
   interface TAB
@@ -1442,6 +1446,42 @@ contains
   ! dont_stamp: override setting to stamp end of each line
   ! By means of optional args you can create a line like
   ! *   name                   value   *
+  subroutine output_nvp_whatever ( name, &
+   & chvalue, ivalue, cmvalue, dbvalue, snvalue, &
+   & ADVANCE, colon, fillChar, Before, After, TABN, TABC, TABA, DONT_STAMP )
+    character(len=*), intent(in)          :: name
+    character(len=*), intent(in), optional:: chvalue
+    complex, intent(in), optional         :: cmvalue
+    double precision, intent(in), optional:: dbvalue
+    integer, intent(in), optional         :: ivalue
+    real, intent(in), optional            :: snvalue
+    character(len=*), intent(in), optional :: ADVANCE
+    character(len=1), intent(in), optional :: COLON
+    character(len=1), intent(in), optional :: fillChar
+    integer, intent(in), optional :: TABN
+    integer, intent(in), optional :: TABC
+    integer, intent(in), optional :: TABA
+    logical, intent(in), optional :: DONT_STAMP
+    character(len=*), intent(in), optional :: Before, After ! text to print
+    ! Local variables
+    if ( present(chvalue) ) then
+      call output_nvp_character ( name, chvalue, &
+        & ADVANCE, colon, fillChar, Before, After, TABN, TABC, TABA, DONT_STAMP )
+    elseif ( present(cmvalue) ) then
+      call output_nvp_complex ( name, cmvalue, &
+        & ADVANCE, colon, fillChar, Before, After, TABN, TABC, TABA, DONT_STAMP )
+    elseif ( present(dbvalue) ) then
+      call output_nvp_double ( name, dbvalue, &
+        & ADVANCE, colon, fillChar, Before, After, TABN, TABC, TABA, DONT_STAMP )
+    elseif ( present(ivalue) ) then
+      call output_nvp_integer ( name, ivalue, &
+        & ADVANCE, colon, fillChar, Before, After, TABN, TABC, TABA, DONT_STAMP )
+    elseif ( present(snvalue) ) then
+      call output_nvp_single ( name, snvalue, &
+        & ADVANCE, colon, fillChar, Before, After, TABN, TABC, TABA, DONT_STAMP )
+    endif
+  end subroutine output_nvp_whatever
+
   subroutine output_nvp_character ( name, value, &
    & ADVANCE, colon, fillChar, Before, After, TABN, TABC, TABA, DONT_STAMP )
     character(len=*), intent(in)          :: name
@@ -2162,6 +2202,9 @@ contains
 end module HIGHOUTPUT
 
 ! $Log$
+! Revision 2.11  2016/03/25 00:37:06  pwagner
+! Added OUTPUTANYNAMEDVALUE
+!
 ! Revision 2.10  2015/09/24 18:50:41  pwagner
 ! May choose different pattern for stripes in banner
 !
