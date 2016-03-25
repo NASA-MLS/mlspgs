@@ -55,13 +55,27 @@ module Line_And_Ellipsoid_m
   !  the center of the ellipsoid.
   !  See wvs-030 for details of the derivation.
 
+  ! The procedures with "Earth Geoid" in their name actually refer to the
+  ! Earth Reference Ellipsoid, with axes specified in the Earth_Constants
+  ! module.
+
   implicit NONE
   private
 
+  ! Generic identifiers
   public :: Line_And_Ellipsoid, Line_And_Sphere, Line_Nearest_Ellipsoid
+
+  ! Specific procedures
+  public :: Line_And_Earth_Geoid
+  public :: Line_And_Earth_Geoid_at_H
+  public :: Line_And_Ellipsoid_RG
+  public :: Line_And_Sphere_RG
+  public :: Line_Nearest_Earth_Geoid
+  public :: Line_Nearest_Ellipsoid_RG
 
   interface Line_And_Ellipsoid
     module procedure Line_And_Earth_Geoid
+    module procedure Line_And_Earth_Geoid_at_H
     module procedure Line_And_Ellipsoid_RG
   end interface
 
@@ -74,6 +88,8 @@ module Line_And_Ellipsoid_m
     module procedure Line_Nearest_Ellipsoid_RG
   end interface
 
+  logical, private, parameter :: Debug = .true.
+
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
@@ -83,6 +99,8 @@ module Line_And_Ellipsoid_m
 contains
 
   subroutine Line_And_Earth_Geoid ( Line, Intersections, S )
+    ! Find intersections of Line with the Earth reference ellipsoid.
+    ! See wvs-131.
     use Earth_Constants, only: A => EarthRadA, B => EarthRadB
     use Geolocation_0, only: ECR_t, RG
     type(ECR_t), intent(in) :: Line(2) ! C + s U, two vectors
@@ -90,59 +108,166 @@ contains
     real(rg), intent(out), allocatable, optional :: S(:) ! S-values of intersections
     real(rg) :: A2, A1, A0
     type(ECR_t) :: UM, VM
-    UM = ECR_t( Line(2)%xyz / [ A, A, B ] )
-    VM = ECR_t( Line(1)%xyz / [ A, A, B ] )
+    UM = ECR_t( Line(2)%xyz / real([ A, A, B ],rg) )
+    VM = ECR_t( Line(1)%xyz / real([ A, A, B ],rg) )
     a2 = UM .dot. UM
     a1 = VM .dot. UM
     a0 = ( VM .dot. VM ) - 1.0
     call solve ( a2, a1, a0, line, intersections, s )
   end subroutine Line_And_Earth_Geoid
 
-  subroutine Line_And_Ellipsoid_RG ( Axes, Center, Line, Intersections, S )
+  subroutine Line_And_Earth_Geoid_at_H ( Line, H, Tol, Intersections, S )
+    ! Find intersections of Line with a surface at height H above the
+    ! Earth reference ellipsoid.  See wvs-134.
+    use Earth_Constants, only: A => EarthRadA, B => EarthRadB
+    use Geolocation_0, only: ECR_t, H_V_Geod, RG
+    use Zero_m, only: Zero
+    type(ECR_t), intent(in) :: Line(2) ! C + s U, two vectors
+    real(rg), intent(in) :: H          ! Height above Earth reference ellipsoid
+    real(rg), intent(in) :: Tol        ! Tolerance criterion for height
+    type(ECR_t), intent(out), allocatable, optional :: Intersections (:) ! 0..2 elements
+    real(rg), intent(out), allocatable, optional :: S(:) ! S-values of intersections
+    real(rg) :: Alpha                  ! Cosine of angle between Line(2) and Grad
+    real(rg) :: F1, F2                 ! For Zero, q.v.
+    type(h_v_geod) :: Geod             ! Geodetic coordinates of candidate solution
+    type(ECR_t) :: Grad                ! Gradient to ellipsoid
+    real(rg) :: Hgt                    ! at point nearest, if no intersection
+    integer :: I
+    integer :: Mode(2)                 ! For Zero, q.v.
+    type(ECR_t), allocatable :: MyInts(:)
+    real(rg), allocatable :: MyS(:)
+    integer :: N, M                    ! Number of intersections
+    logical :: NeedGrad
+    type(ECR_t) :: Point               ! Line(1) + s * Line(2)
+    real(rg) :: R                      ! Output from Line_Nearest_Ellipsoid
+    real(rg) :: X1, X2                 ! For Zero, q.v.
+    ! Is there an intersection with an ellipse with semi-minor axes
+    ! [a+h,a+h,b+h]?
+    call line_and_ellipsoid ( real([a+h,a+h,b+h],rg), line, myInts, myS )
+    n = size(myS)
+    if ( n == 0 ) then
+      if ( debug ) print '(a)', 'No intersection with [a+h,a+h,b+h]'
+      ! No intersection.  How close is the closest approach?
+      deallocate ( myInts, myS )
+      allocate ( myInts(1), myS(1) )
+      call Line_Nearest_Ellipsoid ( Line, myS(1), r, grad, myInts(1), hgt )
+      if ( hgt > h ) then
+        ! Closest approach is too high, therefore no intersection.
+        if ( debug ) print '(a,f8.0,a)', 'Closest approach at H =', hgt, ' is too high'
+        if ( present(intersections) ) allocate ( intersections(0) )
+        if ( present(s) ) allocate ( intersections(0) )
+        return
+      end if
+      if ( debug ) print '(a,f8.0)', 'Closest approach at H =', hgt
+      n = 1
+      needGrad = .false.
+    else
+      needGrad = .true.
+    end if
+    if ( debug ) then
+      print '(i0,a,1p,2g15.8)', n, ' intersections with [a+h,a+h,b+h] at S =', myS
+      print '(a,2(" [",3g15.8,"]":))', 'Geodetic coordinates', myInts%geod()
+      print '(a,2(" [",3g15.8,"]":))', 'ECR coordinates     ', myInts
+    end if
+    do i = 1, n
+      x2 = myS(i)
+      point = line(1) + x2 * line(2)
+      geod = point%geod()
+      f2 = h - geod%v
+      if ( abs(f2) < abs(tol) ) then
+        if ( debug ) print '(4(a,g17.10))', 'X2 = ', x2, ' F2 =', f2, &
+          & ' H2 =', geod%v
+        cycle
+      end if
+      if ( needGrad ) then
+      ! grad = point / ( real([ A**2, A**2, B**2 ], rg) ) ! ifort 16.0.2 can't do this
+        grad = ECR_t ( point%xyz / ( real([ A**2, A**2, B**2 ], rg) ) )
+      end if
+      needGrad = .true. ! needed next time, if there is a next time
+      grad = grad / grad%norm2()
+      ! Cosine of angle between line and gradient
+      alpha = ( line(2) / line(2)%norm2() ) .DOT. grad
+      if ( debug ) print '(4(a,g17.10))', 'X2 = ', x2, ' F2 =', f2, &
+        & ' H2 =', geod%v, ' Alpha =', alpha
+      x1 = x2 + ( h - geod%v ) / sign(max(abs(alpha),0.5_rg),alpha)
+      mode(i) = 0
+      do while ( mode(i) < 2 )
+        point = line(1) + x1 * line(2)
+        geod = point%geod()
+        f1 = h - geod%v
+        if ( debug ) print '(3(a,g17.10))', 'X1 = ', x1, ' F1 =', f1, ' H1 =', geod%v
+        call zero ( x1, f1, x2, f2, mode(i), -abs(tol) ) ! Tolerance is on F not X
+      end do
+      myS(i) = x1
+    end do
+    m = count(mode<4) ! How many normal terminations of Zero
+    if ( present(intersections) ) allocate ( intersections(m) )
+    if ( present(s) ) allocate ( s(m) )
+    m = 0
+    do i = 1, n
+      if ( mode(i) < 4 ) then
+        m = m + 1
+        if ( present(intersections) ) intersections(m) = line(1) + myS(i) * line(2)
+        if ( present(s) ) s(m) = myS(i)
+      end if
+    end do
+  end subroutine Line_And_Earth_Geoid_at_H
+
+  subroutine Line_And_Ellipsoid_RG ( Axes, Line, Intersections, S, Center )
+    ! See wvs-131.
     use Geolocation_0, only: ECR_t, RG
     real(rg), intent(in) :: Axes(3)    ! Semi-minor axes in same units as Center
-    type(ECR_t), intent(in) :: Center  ! Center of the ellipsoid
     type(ECR_t), intent(in) :: Line(2) ! V + s U, two vectors, where V is a
                                        ! vector from the center of the ellipsoid
                                        ! to a point on the line, and U is a
                                        ! vector along the line at V
     type(ECR_t), intent(out), allocatable, optional :: Intersections (:) ! 0..2 elements
     real(rg), intent(out), allocatable, optional :: S(:) ! S-values of intersections
+    type(ECR_t), intent(in), optional :: Center  ! Center of the ellipsoid
     real(rg) :: A2, A1, A0
     type(ECR_t) :: D ! Line(1) - Center
     type(ECR_t) :: UM, VM
-    d = line(1) - center
+    if ( present(center) ) then
+      d = line(1) - center
+      VM = ECR_t( d%xyz / axes )
+    else
+      VM = ECR_t( line(1)%xyz / axes )
+    end if
     UM = ECR_t( Line(2)%xyz / axes )
-    VM = ECR_t( d%xyz / axes )
     a2 = UM .dot. UM
     a1 = VM .dot. UM
     a0 = ( VM .dot. VM ) - 1.0
     call solve ( a2, a1, a0, line, intersections, s )
   end subroutine Line_And_Ellipsoid_RG
 
-  subroutine Line_And_Sphere_RG ( Radius, Center, Line, Intersections, S )
+  subroutine Line_And_Sphere_RG ( Radius, Line, Intersections, S, Center )
+    ! See wvs-131.
     use Geolocation_0, only: ECR_t, RG
     real(rg), intent(in) :: Radius     ! In same units as Center
-    type(ECR_t), intent(in) :: Center  ! Center of the sphere
     type(ECR_t), intent(in) :: Line(2) ! V + s U, two vectors, where V is a
                                        ! vector from the center of the ellipsoid
                                        ! to a point on the line, and U is a
                                        ! vector along the line at V
     type(ECR_t), intent(out), allocatable, optional :: Intersections (:) ! 0..2 elements
     real(rg), intent(out), allocatable, optional :: S(:) ! S-values of intersections
+    type(ECR_t), intent(in), optional :: Center  ! Center of the sphere
     real(rg) :: A2, A1, A0
     type(ECR_t) :: D ! Line(1) - Center
-    d = line(1) - center
+    if ( present(center) ) then
+      d = line(1) - center
+    else
+      d = line(1)
+    end if
     a2 = line(2) .dot. line(2)
     a1 = d .dot. line(2)
     a0 = ( d .dot. d ) - radius**2
     call solve ( a2, a1, a0, line, intersections, s )
   end subroutine Line_And_Sphere_RG
 
-  subroutine Line_Nearest_Earth_Geoid ( Line, S, R, Grad, Intersect )
+  subroutine Line_Nearest_Earth_Geoid ( Line, S, R, Grad, Intersect, H )
     ! See wvs-030 for derivation.
     use Earth_Constants, only: A => EarthRadA, B => EarthRadB
-    use Geolocation_0, only: ECR_t, RG
+    use Geolocation_0, only: ECR_t, Norm2, RG
     type(ECR_t), intent(in) :: Line(2) ! C + s U, two vectors
     real(rg), intent(out) :: S ! S-value of nearest point
     real(rg), intent(out) :: R ! R < 1 => C + s U is an intersection
@@ -152,30 +277,37 @@ contains
     type(ECR_t), intent(out), optional :: Intersect ! If R >= 1, where G
                                ! intersects the Geoid, i.e., the point on
                                ! the Geoid nearest to Line, else undefined
+    real(rg), intent(out), optional :: H ! Distance at nearest point, zero if
+                               ! there is an intersection ( R < 1 ).
+    type(ECR_t) :: Int         ! Intersection of gradient with ellipsoid
     type(ECR_t) :: N(2)        ! Normal to the ellipsoid
     type(ECR_t) :: PM, UM, VM
     real(rg), allocatable :: S_int(:) ! Intersection of N with the Geoid
-    UM = ECR_t( line(2)%xyz / [ A, A, B ] )
-    VM = ECR_t( line(1)%xyz / [ A, A, B ] )
+    UM = ECR_t( line(2)%xyz / real([ A, A, B ],rg) )
+    VM = ECR_t( line(1)%xyz / real([ A, A, B ],rg) )
     s = - ( UM .dot. VM ) / ( UM .dot. UM )
-    PM = ECR_t( ( line(1)%xyz + s * line(2)%xyz ) / [ A, A, B ] )
+    PM = ECR_t( ( line(1)%xyz + s * line(2)%xyz ) / real([ A, A, B ],rg) )
     r = sqrt(PM .dot. PM)
-    if ( r >= 1 .and. ( present(intersect) .or. present(grad) ) ) then
-      n(2) = ECR_t ( PM%xyz / [ A, A, B ] ) ! Gradient to Geoid
+    if ( r >= 1 .and. &
+       & ( present(intersect) .or. present(grad) .or. present(h) ) ) then
+      n(2) = ECR_t ( PM%xyz / real([ A, A, B ],rg) ) ! Gradient to Geoid
       if ( present(grad) ) grad = n(2)
-      if ( present(intersect) ) then
+      if ( present(intersect) .or. present(h) ) then
         n(1) = line(1) + s * line(2)
         call line_and_ellipsoid ( n, s=s_int )
-        intersect = n(1) + s_int(minloc(abs(s_int),1)) * n(2)
+        int = n(1) + s_int(minloc(abs(s_int),1)) * n(2)
+        if ( present(intersect) ) intersect = int
+        if ( present(h) ) h = norm2 ( ( line(1) + s * line(2) ) - int )
       end if
+    else if ( present(h) ) then
+      h = 0
     end if
   end subroutine Line_Nearest_Earth_Geoid
 
-  subroutine Line_Nearest_Ellipsoid_RG ( Axes, Center, Line, S, R, Grad, Intersect )
+  subroutine Line_Nearest_Ellipsoid_RG ( Axes, Line, S, R, Grad, Intersect, Center )
     ! See wvs-030 for derivation.
     use Geolocation_0, only: ECR_t, RG
     real(rg), intent(in) :: Axes(3)    ! Semi-minor axes in same units as Center
-    type(ECR_t), intent(in) :: Center  ! Center of the ellipsoid
     type(ECR_t), intent(in) :: Line(2) ! C + s U, two vectors
     real(rg), intent(out) :: S ! S-value of nearest point
     real(rg), intent(out) :: R ! R < 1 => C + s U is an intersection
@@ -185,11 +317,16 @@ contains
     type(ECR_t), intent(out), optional :: Intersect ! If R >= 1, where G
                                ! intersects the Geoid, i.e., the point on
                                ! the Geoid nearest to Line, else undefined
+    type(ECR_t), intent(in), optional :: Center  ! Center of the ellipsoid
     type(ECR_t) :: D ! Line(1) - Center
     type(ECR_t) :: N(2)        ! Normal to the ellipsoid
     type(ECR_t) :: PM, UM, VM
     real(rg), allocatable :: S_int(:) ! Intersection of N with the Geoid
-    d = line(1) - center
+    if ( present(center) ) then
+      d = line(1) - center
+    else
+      d = line(1)
+    end if
     UM = ECR_t( line(2)%xyz / axes )
     VM = ECR_t( d%xyz / axes )
     s = - ( UM .dot. VM ) / ( UM .dot. UM )
@@ -201,7 +338,7 @@ contains
       if ( present(grad) ) grad = n(2)
       if ( present(intersect) ) then
         n(1) = line(1) + s * line(2)
-        call line_and_ellipsoid ( axes, center, n, s=s_int )
+        call line_and_ellipsoid ( axes, n, s=s_int, center=center )
         intersect = n(1) + s_int(minloc(abs(s_int),1)) * n(2)
       end if
     end if
@@ -209,8 +346,9 @@ contains
 
   ! =====     Private Procedure     ====================================
 
-  ! Hopefully inlined above
-  subroutine Solve ( A2, A1, A0, Line, Intersections, S )
+  ! Solve a2 s^2 + 2 a1 s + a0 = 0.  Then compute Line(1) + S * Line(2)
+  ! Hopefully inlined above.
+  pure subroutine Solve ( A2, A1, A0, Line, Intersections, S )
     use Geolocation_0, only: ECR_t, RG
     real(rg), intent(in) :: A2, A1, A0
     type(ECR_t), intent(in) :: Line(2)
@@ -221,20 +359,20 @@ integer :: I ! ifort 14.0.0 doesn't like elemental * operator bound to ECR_t
              ! ifort 15.0.2 and ifort 16.0.2 accept it
     real(rg) :: MyS(2)
     integer :: N
-    d = a1**2 - 4.0 * a2 * a0
+    d = a1**2 - a2 * a0
     if ( d < 0.0 ) then
       n = 0
     else if ( d == 0.0 ) then
       n = 1
-      myS(1) = -0.5 * a1 / a2
+      myS(1) = -a1 / a2
     else
       n = 2
       d = sqrt(d)
-      myS = [ 0.5 *(- a1 + d) / a2, 0.5 *(- a1 - d) / a2 ]
+      myS = [ (- a1 + d) / a2, (- a1 - d) / a2 ]
     end if
     if ( present(intersections) ) then
       allocate ( intersections(n) )
-!       intersections = line(1) + myS(:n) * line(2)
+!       intersections(:n) = line(1) + myS(:n) * line(2)
 do i = 1, n
 intersections(i) = line(1) + myS(i) * line(2)
 end do
@@ -258,6 +396,16 @@ end do
 end module Line_And_Ellipsoid_m
 
 ! $Log$
+! Revision 2.7  2016/03/25 00:45:42  vsnyder
+! ke specific procedures public.  Add a Debug parameter and some
+! debugging output.  Add Line_And_Earth_Geoid_at_H to compute intersection
+! of a line with a surface at a specified height above the Earth Reference
+! Ellipsoid.  Convert the kind of the semi-axes to RG so that type-bound
+! divide for ECR_t will work.  Make Center argument optional and improve
+! its handling in several places.  Add H argument to
+! Line_Nearest_Earth_Geoid to report height at nearest point.  Correct
+! Solve subroutine.
+!
 ! Revision 2.6  2016/03/03 21:39:38  vsnyder
 ! Change name of T argument to S (because it's arc length)
 !
