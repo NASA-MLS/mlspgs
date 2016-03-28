@@ -12,8 +12,8 @@
 \topmargin -0.5in
 \textheight 9in
 
-\newcommand{\docname}{wvs-134}
-\newcommand{\docdate}{15 March 2016}
+\newcommand{\docname}{wvs-134r1}
+\newcommand{\docdate}{25 March 2016}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
@@ -83,7 +83,8 @@ Reference: \> wvs-030 \hr{wvs-030}, wvs-131 \hr{wvs-131} \\
 \parindent 0pt \parskip 6pt
 \vspace{-20pt}
 
-\section{Using derivatives in a Newton iteration}
+\section{Using derivatives in a Newton iteration for Geodetic
+co\"ordinates}
 
 The Cartesian co\"ordinates of points on a surface at height $h$ above the
 Earth reference ellipsoid in the direction normal to it are given in terms
@@ -163,27 +164,27 @@ Starting points can be produced by computing the intersections of the line
 with the ellipsoid
 
 \begin{equation}\label{eight}
+( \mathbf{M} \mathbf{V} )^T ( \mathbf{M} \mathbf{V} ) =
 \frac{x^2}{(a+h)^2} + \frac{y^2}{(a+h)^2} + \frac{z^2}{(b+h)^2} = 1 \,,
 \end{equation}
 
-which produces the exact solution at the poles and on the equator.
-As described in wvs-131 \hr{wvs-131}, this involves solving a quadratic
-equation
-
-\begin{equation}\label{nine}
-(\mathbf{M} \mathbf{V}_1)^T (\mathbf{M} \mathbf{V}_1) s^2 +
-(\mathbf{M} \mathbf{V}_0)^T (\mathbf{M} \mathbf{V}_1) s +
-(\mathbf{M} \mathbf{V}_0)^T (\mathbf{M} \mathbf{V}_0) = 0
-\end{equation}
-
-where
+where $\mathbf{V} = [ x, y, z ]^T$ and
 
 \begin{equation}
 \mathbf{M} = \left[ \begin{array}{ccc}
 \frac1{a+h} & 0 & 0 \\
 0 & \frac1{a+h} & 0 \\
 0 & 0 & \frac1{b+h} \\
-\end{array} \right] \,.
+\end{array} \right]
+\end{equation}
+
+produces the exact solution at the poles and on the equator. As described
+in wvs-131 \hr{wvs-131}, this involves solving a quadratic equation
+
+\begin{equation}\label{nine}
+(\mathbf{M} \mathbf{V}_1)^T (\mathbf{M} \mathbf{V}_1) s^2 +
+(\mathbf{M} \mathbf{V}_0)^T (\mathbf{M} \mathbf{V}_1) s +
+(\mathbf{M} \mathbf{V}_0)^T (\mathbf{M} \mathbf{V}_0) = 0 \,.
 \end{equation}
 
 This solution produces only values of $s$, from which values of $\phi$ and
@@ -207,8 +208,9 @@ we do not have a formula in geodetic co\"ordinates for $\mathbf{V}_l(s)$.
 
 \section{Without using derivatives}
 
-An alternative iteration, that is simpler but might not converge as
-quickly, consists of
+An alternative iteration, that is simpler and converges remarkably quickly
+for the Earth reference ellipsoid, probably because the eccentricity is so
+small, consists of
 
 \begin{enumerate}
 
@@ -263,12 +265,199 @@ Fukushima's algorithm uses a Halley iteration.  One iteration suffices to
 produce a value of $\phi_i$ that is accurate to within 30 micro arcseconds
 if $h < 30,000$ km, so step \ref{step2b} is fast.
 
+\vspace{0.25in}
+\includegraphics{wvs-134-1}
+
+\section{A method provided by Fred Krogh}
+
+Define an ellipsoid by
+%
+\begin{equation}\label{one}
+\mathbf{x}^T \mathbf{D} \mathbf{x} = 1
+\end{equation}
+
+where $\mathbf{D} = \text{Diag}(1/a_i^2)$ and $a_i$ is a semi-axis length.
+
+Define a line by
+%
+\begin{equation}\label{twelve}
+\mathbf{y}(s) = \mathbf{u} + s \mathbf{v}
+\end{equation}
+
+The vector from the ellipsoid to the point $\mathbf{y}(s)$ that is a
+distance $h$ from the ellipsoid in the normal direction is a multiple $w$
+of the gradient at $\mathbf{x}$, \emph{viz.} $w \mathbf{D} \mathbf{x}$. 
+The quantities $\mathbf{D}$, $\mathbf{u}$, $\mathbf{v}$, and $h$ are
+given.  We wish to know the point where the lines $\mathbf{y}(s)$ and
+$\mathbf{x} + w\mathbf{D}\mathbf{x}$ intersect, for which it is sufficient
+to know either $s$, or $\mathbf{x}$ and $w$. Using the intersection
+condition, the vector $\mathbf{x}$ can be expressed in terms of
+$\mathbf{D}$, $s$ and $w$ by observing that $\mathbf{x} + w \mathbf{D}
+\mathbf{x} = ( \mathbf{I} + w \mathbf{D} ) \mathbf{x} = \mathbf{y}(s) =
+\mathbf{u} + s \mathbf{v}$, from which
+%
+\begin{equation}\label{x}
+\mathbf{x} = (\mathbf{I} + w \mathbf{D})^{-1} \mathbf{y}(s) =
+ \mathbf{E}(w) \mathbf{y}(s) =
+ (\mathbf{I} + w \mathbf{D})^{-1} ( \mathbf{u} + s \mathbf{v}) =
+ \mathbf{E}(w) ( \mathbf{u} + s \mathbf{v}) \,,
+\end{equation}
+
+where $\mathbf{E}(w) = (\mathbf{I} + w \mathbf{D})^{-1}$.  From the
+definition of $\mathbf{D}$, $\mathbf{E}(w) = \text{Diag} (a_i^2 / (
+a_i^2+w ) )$. Substituting Equation (\ref{x}) into Equation (\ref{one}) we
+have
+%
+\begin{equation}\label{three}
+\mathbf{y}(s)^T \mathbf{E}(w)^T \mathbf{D} \mathbf{E}(w) \mathbf{y}(s) =
+(\mathbf{u} + s \mathbf{v})^T (\mathbf{I} + w \mathbf{D})^{-T} \mathbf{D}
+ (\mathbf{I} + w \mathbf{D})^{-1} (\mathbf{u} + s \mathbf{v}) = 1 \,.
+\end{equation}
+
+Let $\mathbf{G}(w) = \mathbf{E}(w)^T \mathbf{D} \mathbf{E}(w) =
+\text{Diag} (a_i^2 / ( a_i^2+w )^2 )$.
+
+Then Equation (\ref{three}) becomes
+%
+\begin{equation}\label{four}
+\mathbf{y}(s)^T \mathbf{G}(w) \mathbf{y}(s) =
+(\mathbf{u} + s \mathbf{v})^T \mathbf{G}(w) (\mathbf{u} + s \mathbf{v})
+ = 1 \,.
+\end{equation}
+
+We also want the condition
+%
+\begin{equation}\label{five}
+w | \mathbf{D} \mathbf{x} | = h \text{, or }
+ w^2 | \mathbf{D} \mathbf{x} |^2 =
+   w^2 \mathbf{x}^T \mathbf{D}^T \mathbf{D} \mathbf{x} =
+     w^2 (\mathbf{u} + s \mathbf{v})^T \mathbf{E}(w)^T \mathbf{D}^T \mathbf{D}
+      \mathbf{E}(w) (\mathbf{u} + s \mathbf{v}) = h^2 \,.
+\end{equation}
+
+Let $\mathbf{H}(w) = \mathbf{E}(w)^T \mathbf{D}^T \mathbf{D} \mathbf{E}(w)
+= \mathbf{D} \mathbf{G}(w) = \text{Diag} ( 1 / ( a_i^2 + w )^2$.  Then
+Equation (\ref{five}) becomes
+%
+\begin{equation}\label{six}
+w^2 \mathbf{y}(s)^T \mathbf{H}(w) \mathbf{y}(s) =
+w^2 (\mathbf{u} + s \mathbf{v})^T \mathbf{H}(w) (\mathbf{u} + s \mathbf{v})
+ = h^2 \,.
+\end{equation}
+
+Collecting Equations (\ref{four}) and (\ref{six}) into a single vector
+equation, we have
+%
+\begin{equation}
+\mathbf{F}(w,s) = \left[ \begin{array}{c}
+ \mathbf{F}_1(w,s) \\
+ \mathbf{F}_2(w,s) \\ \end{array} \right]
+= \left[ \begin{array}{c}
+ \mathbf{y}(s)^T \mathbf{G}(w) \mathbf{y}(s) - 1 \\
+ w^2\, \mathbf{y}(s)^T \mathbf{H}(w) \mathbf{y}(s) - h^2 \\
+ \end{array} \right] = \mathbf{0} \\
+\end{equation}
+
+with Jacobian matrix $\mathbf{J}(w,s)$
+%
+\begin{equation}
+\left[ \begin{array}{cc}
+\frac{\partial \mathbf{F}_1}{\partial s} &
+ \frac{\partial \mathbf{F}_1}{\partial w} \\
+  &\\
+\frac{\partial \mathbf{F}_2}{\partial s} &
+ \frac{\partial \mathbf{F}_2}{\partial w}
+\end{array} \right]
+= \left[ \begin{array}{cc}
+2\, \mathbf{y}(s)_s^T \mathbf{G}(w) \mathbf{y}(s) &
+ \mathbf{y}(s)^T \mathbf{G}(w)_w \mathbf{y}(s) \\
+& \\
+2 w^2 \, \mathbf{y}(s)_s^T \mathbf{H}(w) \mathbf{y}(s) &
+ \frac{2\mathbf{F}_2}w +
+  w^2 \, \mathbf{y}(s) \mathbf{H}(w)_w \mathbf{y}(s) \\
+\end{array} \right] \\
+\end{equation}
+
+where
+%
+\begin{equation}\begin{split}
+\mathbf{y}(s)_s = \,& \frac{\partial \mathbf{y}(s)}{\partial s} =
+ \mathbf{v} \\
+& \\
+\mathbf{G}(w)_w = \,& \frac{\partial \mathbf{G}(w)}{\partial w} =
+ \text{Diag}\left(\frac{-2 a_i^2}{(a_i^2+w)^3} \right) \\
+& \\
+\mathbf{H}(w)_w = \,& \frac{\partial \mathbf{H}(w)}{\partial w} =
+ \mathbf{D} \mathbf{G}(w)_w =
+  \text{Diag}\left(\frac{-2}{(a_i^2+w)^3} \right) \,. \\
+\end{split}\end{equation}
+
+Given initial estimates for $s$ and $w$, a Newton iteration using
+$\mathbf{F}(w,s)$ and $\mathbf{J}(w,s)$ can be used to refine the values
+of $s$ and $w$.
+
+An initial estimate for $s$ can be gotten by solving for the intersection
+of $\mathbf{y}(s)$ with an ellipse having $\mathbf{D} =
+\text{Diag}(1/(a_i+h)^2)$, i.e., its semi-axes are $h$ longer than the
+given ones, as in Equation (\ref{eight}), and as described in wvs-131
+\hr{wvs-131}.  This gives the exact answer on the axes, and on the equator
+of the Earth.
+
+One initial estimate for $w^2$ can be gotten by solving $\mathbf{F}_1(w,s)
+= 0$ (in $n$ dimensions,  $\mathbf{F}_1(w,s)$ is a polynomial in $w$ of
+degree $2n$).
+
+To derive the initial estimate $w^2 \approx
+\frac{nh^2}{\text{Tr}(\mathbf{D})}$, consider Equation (\ref{five})
+modified for a sphere, i.e., $\mathbf{D} = a \mathbf{I}$, with $a = 1/r^2$
+so that Equation (\ref{five}) becomes
+%
+\begin{equation}\label{grad-1}
+w^2 \mathbf{x}^T \mathbf{D}^T \mathbf{D} \mathbf{x} =
+w^2 a^2 \mathbf{x}^T \mathbf{I}^T \mathbf{I} \mathbf{x} =
+w^2 a^2 \mathbf{x}^T \mathbf{x} = h^2 \,.
+\end{equation}
+
+If we substitute $\mathbf{D} = a \mathbf{I}$ into Equation (\ref{one}),
+the equation for an ellipsoid, we get
+%
+\begin{equation}\label{ellipsoid-1}
+\mathbf{x}^T \mathbf{D} \mathbf{x} =
+a \mathbf{x}^T \mathbf{I} \mathbf{x} =
+a \mathbf{x}^T  \mathbf{x} = 1 \text{ or }
+\mathbf{x}^T  \mathbf{x} = \frac1a \,.
+\end{equation}
+
+Substituting the conclusion of Equation(\ref{ellipsoid-1}) into Equation
+(\ref{grad-1}) we have
+%
+\begin{equation}
+w^2 a = h^2 \text{ or } w^2 = \frac{h^2}a = r^2 h^2 \,.
+\end{equation}
+
+One definition of the mean radius of a sphere not too different from the
+ellipsoid is the average of the ellipsoid's semi-axes.  This is the
+definition used by the International Union of Geodesy and Geophysics for
+the mean Earth radius.  Making a further approximation that the inverse of
+the square of the sphere's radius is the average of the inverses of the
+squares of the ellipsoid's semi-axes, we have $a = \frac1{r^2} \approx
+\frac{\text{Tr}(\mathbf{D})}n$, or
+%
+\begin{equation}
+w^2 = \frac{nh^2}{\text{Tr}(\mathbf{D})} \,.
+\end{equation}
+
+If $\mathbf{D}$ is given, this is somewhat easier to compute than $\frac1a
+= r^2 \approx \frac{\text{Tr}(\mathbf{D}^{-1})}n$, i.e., the square of the
+sphere's radius is the average of the squares of the ellipsoid's
+semi-axes.  However, if the semi-axes $a_i$, i.e., the square roots of the
+inverses of the diagonal elements of $\mathbf{D}$, are given, $\frac1a =
+r^2 \approx \left[ \frac{\text{Tr}(\mathbf{D}^{-\frac12})}n\right]^2 =
+\left[\frac1n \sum a_i\right]^2$ might be easiest to compute.
+
 [1] Toshio Fukushima, \emph{Transformation from Cartesian to geodetic
 coordinates accelerated by Halley's method}, {\bf J. Geod. 79}, 12
 (February 2006) pp 689--693.  DOI 10.1007/s00190-006-0023-2.
-
-\vspace{0.25in}
-\includegraphics{wvs-134-1}
 
 \label{lastpage}
 \vspace*{-0.1in} % Somehow, this causes lastpage to be defined
@@ -277,3 +466,6 @@ coordinates accelerated by Halley's method}, {\bf J. Geod. 79}, 12
 % $Id$
 
 % $Log$
+% Revision 1.1  2016/03/17 19:04:25  vsnyder
+% Initial commit
+%
