@@ -246,7 +246,7 @@ program F90TEX
       read ( *, '(a)', iostat=iostat ) line
     end if
     if ( iostat /= 0 ) exit
-    i = verify(line,' ') ! first nonblank
+    i = max(verify(line,' '),1) ! first nonblank, or first character if all blank
     select case ( state )
     case ( 0 ) ! begin
       if ( line(i:i+1) /= '!{' ) then
@@ -363,6 +363,9 @@ contains
 end program F90TEX
 
 ! $Log$
+! Revision 1.22  2013/08/09 00:40:39  vsnyder
+! Some cannonball polishing
+!
 ! Revision 1.21  2013/08/08 20:48:50  vsnyder
 ! Don't emit linenumbers commands if -l selected
 !
