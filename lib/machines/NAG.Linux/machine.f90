@@ -44,6 +44,7 @@ module MACHINE
   intrinsic :: execute_command_line
 
   character(LEN=2) :: END_LINE = ' ' // char(10)
+  integer, parameter  :: FILENOTFOUND = 1
   character(LEN=1) :: FILSEP = '/'      ! '/' for Unix, '\' for DOS or NT
   integer, parameter :: HP = 0          ! Offset for first argument for GETARG
 
@@ -219,9 +220,43 @@ contains
   ! --------------------------------------------------  is_a_directory  -----
   ! Return TRUE if path is a directory
   ! Unfortunately, also returns TRUE if path is an ordinary file
-  logical  function is_a_directory ( path )
+  function is_a_directory_old ( path ) result( exist )
     character(len=*), intent(in) :: path
-    inquire( file=trim(path), exist=is_a_directory )
+    logical                      :: exist
+    inquire( file=trim(path), exist=exist )
+  end function is_a_directory_old
+
+  function is_a_directory ( path ) result( exist )
+    ! Here's what we'll do:
+    ! (1) We create a temporary file
+    ! (2) Create a script that
+    !     If path is a directory, leaves it alone, otherwise we rms it
+    ! (3) We then check whether the tempotaty file exists
+    ! (4) Housekeeping
+    character(len=*), intent(in)         :: path
+    logical                              :: exist
+    ! Internal variables
+    integer                              :: status
+    character(len=8)                     :: cmd_output
+    integer                              :: pid, gid
+    character(len=8)                     :: shell
+    character(len=64), dimension(6)      :: lines
+    character(len=128)                   :: tempfilename
+    ! Executable
+    call getids( pid, gid )
+    write( tempfilename, * ) pid
+    tempfilename = '/tmp/Execute_temp.' // adjustl(tempfilename)
+    lines(1) = '#!/bin/sh'
+    lines(2) = 'echo "yes" > ' // trim(tempfilename)
+    lines(3) = 'if [ ! -d ' // trim(path) // ' ]'
+    lines(4) = 'then'
+    lines(5) = '/bin/rm ' // trim(tempfilename)
+    lines(6) = 'fi'
+    call create_script( trim(tempfilename) // '.sh', lines, thenRun=.true., &
+      &  status=status,  delay=1 )
+    exist = ( mls_exists( tempfilename ) == 0 )
+    ! (4) Housekeeping
+    call Execute( '/bin/rm ' // trim(tempfilename) // '*', status, delay=1 )
   end function is_a_directory
 
   ! -----------------------------------------------------  GETARG  -----
@@ -648,6 +683,21 @@ contains
   end function MLS_HOWMANY_GC
 !---------- End no -gc section
 
+!----------------------- mls_exists
+  integer function mls_exists( filename )
+  ! returns 0 if file exists, FILENOTFOUND if not
+  ! Argument
+  character (len=*) :: filename
+  ! Internal variables
+  logical :: exist
+  inquire(file=filename, exist=exist)
+  if (exist) then
+    mls_exists = 0
+  else
+    mls_exists = FILENOTFOUND
+  endif
+  end function mls_exists
+
   subroutine READ_TEXTFILE ( File, string )
   ! read a textfile into a single string
   ! Stolen mustly from io_stuff in lib
@@ -732,6 +782,9 @@ contains
 end module MACHINE
 
 ! $Log$
+! Revision 1.16  2016/02/29 19:46:08  pwagner
+! Exploit c bindings for usleep, sleep
+!
 ! Revision 1.15  2016/02/29 00:00:08  pwagner
 ! Added USleep needed here
 !
