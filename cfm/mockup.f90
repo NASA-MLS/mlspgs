@@ -17,7 +17,7 @@ program MLS_CFM_Main
 
        use CFM
        use input
-       use machine, only: getarg
+       use machine, only: getarg, execute, is_a_directory
 
 
        ! To convert MAF to Profile, Pranjit Saha 
@@ -103,7 +103,8 @@ program MLS_CFM_Main
        call getarg(1, inputH5fileName)
 
         ! now construct log file name from stateVector file name and open them
-        ! if stateVector file (inputH5fileName) is like '/[path]/TES_0000010310_0767_004_MLS_1679_2009d041_Version_1_StateVector.hdf'
+        ! if stateVector file (inputH5fileName) is like 
+        ! '/[path]/TES_0000010310_0767_004_MLS_1679_2009d041_Version_1_StateVector.hdf'
         ! then log file should be:
         ! TES_0000010310_0767_004_MLS_1679_2009d041_[VersionId]_run.log
         ! TES_0000010310_0767_004_MLS_1679_2009d041_[VersionId]_error.log
@@ -121,22 +122,25 @@ program MLS_CFM_Main
        CALL GET_ENVIRONMENT_VARIABLE('MLS_INPUT_FILE_PATH', MLS_INPUT_FILE_PATH )
 
        ! Testing if directory MLS_CFM_OSP_PATH exists -- please note this is IFORT implementation only
-       inquire( DIRECTORY=trim(MLS_CFM_OSP_PATH), exist=exists )
+       !inquire( DIRECTORY=trim(MLS_CFM_OSP_PATH), exist=exists )
+       exists = is_a_directory( MLS_CFM_OSP_PATH )
        if (.NOT. exists) then
             call errlog ( moduleName, &
          &(/'Environment variable TES_MLS_OSP_PATH was not properly set?',&
-            '$TES_MLS_OSP_PATH/MLS_CFM not found!'/)) 
+            '$TES_MLS_OSP_PATH/MLS_CFM not found!                       '/)) 
        endif
        
        
-       inquire( DIRECTORY=trim(MLS_CFM_OUTPUT_PATH), exist=exists )
+       ! inquire( DIRECTORY=trim(MLS_CFM_OUTPUT_PATH), exist=exists )
+       exists = is_a_directory( MLS_CFM_OUTPUT_PATH )
        if (.NOT. exists) then
             call errlog ( moduleName, &
            & (/'Environment variable MLS_CFM_OUTPUT_PATH was not properly set.'/) ) 
        endif
 
        
-       inquire( DIRECTORY=trim(MLS_INPUT_FILE_PATH ), exist=exists )
+       !inquire( DIRECTORY=trim(MLS_INPUT_FILE_PATH ), exist=exists )
+       exists = is_a_directory( MLS_INPUT_FILE_PATH )
        if (.NOT. exists) then
             call errlog ( moduleName, &
            & (/'Environment variable MLS_INPUT_FILE_PATH  was not properly set.'/) ) 
@@ -253,11 +257,11 @@ program MLS_CFM_Main
        if (index(trim(inputH5fileName), trim(chbuff)) .le. 0 ) then
 
            call errlog ( ModuleName, &
-               & (/ 'StateVector file', &
-               trim(inputH5fileName), &
-               'does NOT have the pattern', &
-               trim(chbuff) , &
-               'which was derived from TES run-seq-scan and MLS profile#, year and day', & 
+               & (/ 'StateVector file' // &
+               trim(inputH5fileName) // &
+               'does NOT have the pattern' // &
+               trim(chbuff) // &
+               'which was derived from TES run-seq-scan and MLS profile#, year and day'// & 
                'read from the stateVector file itself!' /))
        endif
        
@@ -523,7 +527,7 @@ program MLS_CFM_Main
        call runlog(VersionId, 'Calling the forward model')
        call ForwardModel2 (0, forwardModelConfigDatabase, state, &
                            stateExtra, radiance, jacobian)
-						
+
        ! Write 'state', 'radiance', 'jacobian', 'ptanGHz' in separate files, Pranjit Saha
        call runlog(VersionId, 'Writing state, radiance, ptanGHz etc. to file and concatenate Jacobians.')
        if (outputTxtFile) call Write_To_File1 (state, radiance, jacobian, newer_ptanGHz)
@@ -777,11 +781,14 @@ program MLS_CFM_Main
        cbuff = '/bin/rm `/usr/bin/find '//trim(logError)// &
         ' -size 0` > /dev/null 2>&1'
 
-       call system(trim(cbuff))
+       call execute( trim(cbuff), error )
        
 end program
 
         ! $Log$
+        ! Revision 1.59  2015/08/05 20:21:29  pwagner
+        ! Modified to compile properly with v4
+        !
         ! Revision 1.57  2011/12/24 18:39:13  honghanh
         ! Clean up unused imports and variables
         !
