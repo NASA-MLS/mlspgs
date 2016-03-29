@@ -9,6 +9,7 @@
 ! export authority as may be required before exporting such information to
 ! foreign countries or providing access to foreign persons.
 module CFM_IO_M
+   use machine, only: is_a_directory
    implicit none
 
    public :: Read_Spectroscopy, ReadDACSFilterShapes, ReadAntennaPatterns
@@ -36,7 +37,6 @@ module CFM_IO_M
        function cstring2fortranchar(strin) result (strout)
        ! This is to convert a C string (ends with null) to Fortran character variable for file name
        ! It replaces all trailing characters since the first occurence of 'null' with blank space
-            implicit none
             character(len=*), intent(in) :: strin
             character(len=len(strin)) :: strout
             integer j
@@ -54,7 +54,6 @@ module CFM_IO_M
        ! Before calling MLSMessageSetup, the error message doesn't goto specified log file
        ! So we use this subroutine to handle errors before MLSMessageSetup is called.
            use MLSMessageModule, only: MLSMessageExit
-           implicit none
            character(len=*), intent(in) :: mode_name
            character(len=*), intent(in), dimension(:) :: msgs
            integer j
@@ -71,7 +70,6 @@ module CFM_IO_M
        
        subroutine runlog(mode_name, msg, msg_only)
            
-           implicit none
            character(len=*), intent(in) :: mode_name, msg
            logical, intent(in), optional :: msg_only
            ! 
@@ -101,7 +99,6 @@ module CFM_IO_M
         
        subroutine  openLogFiles(inputH5fileName, VID, strlen, logProcess, logError)
            use MLSMessageModule, only: MLSMessageExit
-           implicit none
            character(len=*) , intent(in) :: inputH5fileName, VID
            integer, intent(in) :: strlen
            character(len=strlen),  intent(out) :: logProcess, logError
@@ -140,33 +137,13 @@ module CFM_IO_M
         
        end subroutine openLogFiles
 
-       !--------------------
-       ! As coded, this works only with the Intel compiler
-       ! NAG generates a compile-time error, complaining about
-       ! the field named "DIRECTORY".
-       ! To repair it properly, we must relocate the function to
-       ! lib/machines.machine.f90
-       ! where the version for Intel, as written above, and a
-       ! separate version for NAG can be located. The NAG
-       ! version would be       
-       !   subroutine validate_path(path, modulename, varname)
-       !       implicit none
-       !       character(len=*), intent(in) :: path, modulename, varname
-       !       logical :: existsd, existsf
-       !        
-       !       inquire( DIRECTORY=trim(path), exist=existsd )
-       !       if (.NOT. (existsd .OR. existsf)) then
-       !            call errlog ( moduleName, &
-       !         &(/'Path '//trim(varname)//'='//trim(path)//' is not a valid path!'/)) 
-       !       endif
-       !   end subroutine validate_path
        subroutine validate_path(path, modulename, varname)
-           implicit none
            character(len=*), intent(in) :: path, modulename, varname
            logical :: existsd, existsf
             
-           inquire( DIRECTORY=trim(path), exist=existsd )
+           ! inquire( DIRECTORY=trim(path), exist=existsd )
            inquire( FILE=trim(path), exist=existsf )
+           existsd = is_a_directory( path )
            if (.NOT. (existsd .OR. existsf)) then
                 call errlog ( moduleName, &
              &(/'Path '//trim(varname)//'='//trim(path)//' is not a valid path!'/)) 
@@ -175,7 +152,6 @@ module CFM_IO_M
        
        !-------------------
        function path_join(path1, path2, novalidation)
-           implicit none
            character(len=*), intent(in) :: path1, path2
            logical, optional, intent(in) :: novalidation
            character(len=len_trim(path1)+len_trim(path2)+1) :: path_join
@@ -207,7 +183,6 @@ module CFM_IO_M
        ! it returns an index array with for elements that are true in logarr.
        ! Returning value is a 1-D integer pointer
             use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-            implicit none
             integer, dimension(:), pointer :: IDL_where
             logical, dimension(:), intent(in) :: logarr
             integer j, n, nn, nTrue, ierr, i
@@ -245,7 +220,6 @@ module CFM_IO_M
           use MLSStrings, only: Capitalize
           use MLSMessageModule, only: MLSMessage, MLSMSG_Error
 
-          implicit none
           ! The name of the file
           character(len=*), intent(in) :: filename
           ! Only 'HDF5' is supported currently
@@ -287,7 +261,6 @@ module CFM_IO_M
        
        use MLSCommon, only: r8, i4
        use MLSMessageModule, only: MLSMessage
-       implicit none
        
        character(len=*), intent(in) ::  TES_MLS_OSP_PATH, fileName, &
         inputH5fileName, MLS_CFM_OUTPUT_PATH, MLS_INPUT_FILE_PATH 
@@ -533,7 +506,6 @@ module CFM_IO_M
        
        use MLSCommon, only: r8
 
-       implicit none
        
 
        character(len=*), intent(in) ::  MLS_CFM_OSP_PATH, fileName
@@ -634,7 +606,6 @@ module CFM_IO_M
         use MLSMessageModule, only: MLSMessage, MLSMSG_Error
         use Allocate_Deallocate, only: Allocate_Test, DeAllocate_Test
         use MLSCommon, only: r8, r4, i4
-        implicit none
         real(r4), dimension(:), pointer :: ptr_from ! ptr_from will be nullified upon return
         real(r8), dimension(:), pointer :: ptr_to
         character(len=*), intent(in) :: varname
@@ -711,7 +682,6 @@ module CFM_IO_M
       use HDF5, only:  H5FOpen_F, H5FClose_F, HSize_T, &
             H5F_ACC_RDONLY_F, h5open_f
       
-      implicit none
       
       character(len=*), intent(in) :: fileName, MLS_INPUT_FILE_PATH 
       real(r8), dimension(55), intent(in) :: H2O_sample_vals 
@@ -894,7 +864,6 @@ module CFM_IO_M
       use Allocate_Deallocate, only: Allocate_Test, DeAllocate_Test
       use Parse_Signal_m, only: Parse_Signal
       use HDF5, only: H5F_ACC_RDONLY_F, H5FOpen_F, H5FClose_F, HSize_T
-      implicit none
 
       character(len=*), intent(in) :: filename
       character(len=*), intent(in) ::filetype
@@ -931,7 +900,6 @@ module CFM_IO_M
       use VectorsModule, only: VECTOR_T, VectorValue_T
       use QuantityTemplates, only: QUANTITYTEMPLATE_T
       use MLSMessageModule, only:  MLSMessage, MLSMSG_Error
-      implicit none
 
       type(VectorValue_T), intent(in) :: band9
       type(VectorValue_T), intent(in) :: precision9
@@ -1006,7 +974,6 @@ module CFM_IO_M
       use VectorsModule, only: VECTOR_T, VectorValue_T
       use MATRIXMODULE_1 , only: MATRIX_T
       use QuantityTemplates, only: QUANTITYTEMPLATE_T
-      implicit none
 
       ! Function argument type
       type(Vector_T),           intent(in) :: state
@@ -1155,8 +1122,6 @@ module CFM_IO_M
       use MLSMessageModule, only: MLSMessage, MLSMSG_Error
       use Allocate_Deallocate, only: Allocate_Test, DeAllocate_Test
 
-      implicit none
-      
       ! Function argument type
       type(Vector_T),           intent(in) :: radiance
       type(Matrix_T),           intent(in) :: jacobian
@@ -1282,7 +1247,6 @@ module CFM_IO_M
         
         use MLSHDF5, only: saveAsHDF5DS
       !-------------------------------------------
-      implicit none
       
       type(VectorValue_T), intent(in) :: band9
       type(VectorValue_T), intent(in) :: precision9
@@ -1600,8 +1564,6 @@ module CFM_IO_M
       use Allocate_Deallocate, only: Allocate_Test, DeAllocate_Test
       use HDF5, only:  H5FOpen_F, H5FClose_F, HSize_T, &
             H5F_ACC_TRUNC_F, H5FCreate_F, h5open_f, h5gClose_F, h5gCreate_f
-      implicit none
-
 
       ! Function argument type
       type(Vector_T),           intent(in) :: state
@@ -1791,7 +1753,6 @@ module CFM_IO_M
         use Allocate_Deallocate, only: Allocate_Test, DeAllocate_Test
         use HDF5, only:  H5FCreate_F, H5FClose_F, HSize_T, &
               H5F_ACC_TRUNC_F, h5open_f, h5gClose_F, h5gCreate_f      
-        implicit none
         
       real(rv), dimension(:), pointer :: &
             Radiance_Calculated_out, &
@@ -1837,7 +1798,6 @@ module CFM_IO_M
 
    subroutine Read_HDF5_Spectroscopy (filename)
        use SpectroscopyCatalog_m, only: read_spectroscopy
-       implicit none
 
        character(len=*), intent(in) :: filename
 
@@ -1863,8 +1823,6 @@ module CFM_IO_M
       use MLSMessageModule, only: MLSMessage, MLSMSG_Error
 
       use MLSCommon, only: r8
-      implicit none
-  
 
       ! input variables
       
@@ -2067,7 +2025,6 @@ module CFM_IO_M
                                 read_DACS_filter_shapes_file, &
                                 close_filter_shapes_file
 
-      implicit none
       character(len=*), intent(in) :: fileName
       integer :: lun, fileIndex
 
@@ -2084,7 +2041,6 @@ module CFM_IO_M
                                    read_antenna_patterns_file, &
                                    close_antenna_patterns_file
 
-      implicit none
       character(len=*), intent(in) :: filename
       integer :: lun
 
@@ -2100,7 +2056,6 @@ module CFM_IO_M
                                 read_filter_shapes_file, &
                                 close_filter_shapes_file
 
-      implicit none
       character(len=*), intent(in) :: filename
       integer :: lun, fileIndex
 
@@ -2116,7 +2071,6 @@ module CFM_IO_M
                                 read_pointing_grid_file, &
                                 close_pointing_grid_file
 
-      implicit none
       character(len=*), intent(in) :: filename
       integer :: lun
 
@@ -2131,7 +2085,6 @@ module CFM_IO_M
       use PFADataBase_m, only: process_PFA_File
       use MLSMessageModule, only: MLSMessage, MLSMSG_Error
 
-      implicit none
       character(len=*), intent(in) :: filename
       integer :: num
 
@@ -2149,7 +2102,6 @@ module CFM_IO_M
       use MLSFiles, only: InitializeMLSFile, mls_openFile, mls_closeFile
       use Intrinsic, only: l_hdf
       use Hdf, only: DFACC_RDONLY
-      implicit none
 
       character(len=*), intent(in) :: filename
       type(MLSFile_T), target :: file
@@ -2178,7 +2130,6 @@ module CFM_IO_M
 
    !--------------------------- end bloc --------------------------------------
    logical function not_used_here()
-   implicit none
    character (len=*), parameter :: IdParm = &
        "$Id$"
    character (len=len(idParm)) :: Id = idParm
@@ -2191,6 +2142,9 @@ end module
 
 
 ! $Log$
+! Revision 1.9  2015/08/05 20:21:29  pwagner
+! Modified to compile properly with v4
+!
 ! Revision 1.7  2011/12/15 18:27:44  honghanh
 ! Documentation and code clean up, including removing unused and broken
 ! subroutines.
