@@ -132,9 +132,9 @@ contains
 
     ! Construct interpolation weights and positions for a point in a 3D grid
     ! for which the horizontal grid is QTM.  The 3D grid is assumed to be
-    ! stacked and coherent.  The positions are array element order positions,
-    ! which can be converted to 2D subscripts (QTM serial number, height)
-    ! by the Subscripts function in the Array_Stuff module.
+    ! stacked but not necessarily coherent.  The positions are array element
+    ! order positions, which can be converted to 2D subscripts (QTM serial
+    ! number, height) by the Subscripts function in the Array_Stuff module.
 
     use Array_Stuff, only: Element_Position
     use Generate_QTM_m, only: QTM_Tree_t
@@ -159,6 +159,12 @@ contains
     integer :: P         ! Index of a corner of a facet
     integer :: S         ! Serial number of a point in the QTM
     real(rg) :: W        ! Weight in the vertical direction for the lower level
+
+    if ( size(heights,2) == 1 ) then ! Coherent heights
+      call QTM_Interpolation_Weights ( QTM_Tree, Heights(:,1), &
+                                & Point, Weights, N_Weights, Stack, Used )
+      return
+    end if
 
     n_QTM = QTM_Tree%n_in
 
@@ -222,9 +228,9 @@ contains
 
     ! Construct interpolation weights and positions for a point in a 3D grid
     ! for which the horizontal grid is QTM.  The 3D grid is assumed to be
-    ! stacked and coherent.  The positions are array element order positions,
-    ! which can be converted to 2D subscripts (QTM serial number, height)
-    ! by the Subscripts function in the Array_Stuff module.
+    ! stacked but not necessarily coherent.  The positions are array element
+    ! order positions, which can be converted to 2D subscripts (QTM serial
+    ! number, height) by the Subscripts function in the Array_Stuff module.
 
     use Array_Stuff, only: Element_Position
     use Generate_QTM_m, only: QTM_Tree_t
@@ -246,6 +252,12 @@ contains
     integer :: P         ! Index of a corner of a facet
     integer :: S         ! Serial number of a point in the QTM
     real(rg) :: W        ! Weight in the vertical direction for the lower level
+
+    if ( size(heights,2) == 1 ) then ! Coherent heights
+      call QTM_Interpolation_Weights ( QTM_Tree, Heights(:,1), &
+                                & Points, Weights, N_Weights )
+      return
+    end if
 
     n_QTM = QTM_Tree%n_in
 
@@ -407,6 +419,9 @@ contains
 end module QTM_Interpolation_Weights_3D_m
 
 ! $Log$
+! Revision 2.3  2016/03/30 01:42:02  vsnyder
+! Detect and exploit coherent heights in incoherent routine
+!
 ! Revision 2.2  2016/01/26 02:30:32  vsnyder
 ! Add QTM_Interpolation_Weights_Geo_3D_Incoherent_List to generic
 ! QTM_Interpolation_Weights.
