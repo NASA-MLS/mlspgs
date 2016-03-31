@@ -85,6 +85,7 @@ module DUMP_0
 ! DUMPSUMS                 dump after summing successive array values
 !                            ("inverse" of selfDiff)
 ! DUMPTABLE                dump a 2-d table of values with headers
+! DUMPTEXTFILE             dump contents of a text file
 ! RESTOREDUMPCONFIG        restore default values to dump configuration
 ! SELFDIFF                 dump increments between successive array values
 ! === (end of toc) ===
@@ -126,6 +127,7 @@ module DUMP_0
 !       headers is an array the same size as the 2nd index of values
 !       format optionally overrides the default format for the numeric type
 !       formats allows you to specify a format separately column-by-column
+! dumpTextfile ( char* fileName, [char* options] )
 ! restoreDumpConfig
 ! selfdiff ( array, char* name,
 !      [fillvalue], [int width], [char* format],
@@ -202,7 +204,7 @@ module DUMP_0
 
   public :: DIFF, DIFF_FUN, &
     & DUMP, DUMP_2x2xN, DUMPDATES, DUMPDUMPOPTIONS, DUMPLISTS, DUMPNAMEDVALUES, &
-    & DUMPSUMS, DUMPTABLE, RESTOREDUMPCONFIG, SELFDIFF
+    & DUMPSUMS, DUMPTABLE, DUMPTEXTFILE, RESTOREDUMPCONFIG, SELFDIFF
 
   interface DIFF        ! dump diffs between pair of n-d arrays of numeric type
     module procedure DIFF_1D_DOUBLE, DIFF_1D_INTEGER, DIFF_1D_REAL
@@ -356,11 +358,13 @@ module DUMP_0
   ! --------------------------------------------------------------------------
 
   ! These are private variables declared module-wide purely for convenience
-  integer, parameter :: MAXLINELEN      = 120
-  integer, parameter :: MAXNUMELEMENTS  = 2000
-  integer, parameter :: TOOMANYELEMENTS = 125*50*3500 ! Don't try to diff l1b DACS
-  logical, parameter :: DEEBUG          = .false.
-  logical, parameter :: SHORTCUTDIFFS   = .false.
+  integer, parameter :: MAXLINELEN              = 120
+  integer, parameter :: MAXTEXTFILELINELEN      = 255
+  integer, parameter :: MAXTEXTFILELINES        = 600
+  integer, parameter :: MAXNUMELEMENTS          = 2000
+  integer, parameter :: TOOMANYELEMENTS         = 125*50*3500 ! Don't try to diff l1b DACS
+  logical, parameter :: DEEBUG                  = .false.
+  logical, parameter :: SHORTCUTDIFFS           = .false.
   logical :: DUMPTHESEZEROS
   logical :: myBandwidth, myClean, myCollapse, myCyclic, myDirect, myGaps, &
     & myLaconic, myNaNs, myRatios, myRMS, myShape, myStats, &
@@ -2416,6 +2420,29 @@ contains
     include 'dumpTable.f9h'
   end subroutine dumpTable_REAL
 
+  ! -----------------------------------  dumpTextfile  -----
+  ! This family of routines dumps a table of values and headers
+  ! The headside determines on which of the 4 sides 
+  ! ('top', 'left', 'right', 'bottom') we place the headers
+  subroutine dumpTextfile ( FileName, Options )
+    use io_stuff, only: read_textfile
+    character(len=*), intent(in)           :: FileName
+    character(len=*), intent(in), optional :: options
+    ! Internal variables
+    character(len=MAXTEXTFILELINELEN), dimension(MAXTEXTFILELINES) :: lines
+    integer :: k, nLines
+    ! Executable
+    lines = ' '
+    call read_textfile( FileName, lines, nLines=nLines )
+    call outputNamedValue ( 'text file name', trim(FileName) )
+    call outputNamedValue ( 'number of lines', nLines )
+    call blanks( 80, fillChar='-', advance='yes' )
+    do k=1, nLines
+      call output ( trim(lines(k)), advance='yes' )
+    enddo
+    call blanks( 80, fillChar='-', advance='yes' )
+  end subroutine dumpTextfile
+
  ! ---------------------------------------------  SELFDIFF_DOUBLE  -----
   subroutine SELFDIFF_DOUBLE ( ARRAY, NAME, &
     & FILLVALUE, WIDTH, FORMAT, waves, LBOUND, OPTIONS )
@@ -3460,6 +3487,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.136  2016/03/31 22:59:03  pwagner
+! Added dumpTextfile
+!
 ! Revision 2.135  2016/03/23 00:22:17  pwagner
 ! Diff now able to print name on each line; repaired error in printRMSEtc when array is integer
 !
