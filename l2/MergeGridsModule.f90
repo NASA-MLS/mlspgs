@@ -42,18 +42,19 @@ contains ! ===================================  Public procedures  =====
     & GRIDDEDDATABASE, FILEDATABASE )
 
     use DumpCommand_m, only: booleanFromEmptyGrid, booleanFromFormula, &
-      & dumpcommand, MLSCase, MLSEndSelect, MLSSelect, MLSSelecting, skip
+      & dumpCommand, ExecuteCommand, &
+      & MLSCase, MLSEndSelect, MLSSelect, MLSSelecting, skip
     use GriddedData, only: griddedData_T, &
       & addGriddedDataToDatabase, destroyGriddedData
     use Init_tables_module, only: f_grid, &
       & s_boolean, s_case, s_concatenate, s_concatenateGrids, s_convertEtaToP, &
-      & s_delete, s_diff, s_dump, s_endSelect, s_gridded, s_isGridEmpty, &
-      & s_merge, s_mergeGrids, s_reevaluate, s_select, s_skip, &
+      & s_delete, s_diff, s_dump, s_endSelect, s_execute, s_gridded, &
+      & s_isGridEmpty, s_merge, s_mergeGrids, s_reevaluate, s_select, s_skip, &
       & s_wmotrop, s_wmotropfromgrids
     use L2AUXData, only: l2auxdata_t
     use L2GPData, only: l2gpdata_t
     use MLSCommon, only: mlsfile_t
-    use MLSStringlists, only: switchdetail
+    use MLSStringlists, only: switchDetail
     use MoreTree, only: get_label_and_spec, get_spec_id
     use Next_Tree_Node_m, only: next_tree_node, next_tree_node_state
     use ReadAPriori, only: processOneAprioriFile
@@ -120,6 +121,8 @@ contains ! ===================================  Public procedures  =====
         call DeleteGriddedData ( key, griddedDatabase )
       case ( s_diff, s_dump )
         call dumpCommand ( key, griddedDataBase=griddedDataBase )
+      case ( s_execute ) ! ======================== ExecuteCommand ==========
+        call ExecuteCommand ( key )
       case ( s_Gridded )
         call processOneAprioriFile ( key, L2GPDatabase, L2auxDatabase, &
           & GriddedDatabase, fileDataBase, &
@@ -193,12 +196,12 @@ contains ! ===================================  Public procedures  =====
   ! ----------------------------------------------  ConvertEtaToP  -----
   type (griddedData_T) function ConvertEtaToP ( root, griddedDataBase ) &
     & result ( newGrid )
-    use GriddedData, only: GRIDDEDDATA_T, DUMP, NULLIFYGRIDDEDDATA, &
-      & CONVERTFROMETALEVELGRIDS
+    use GriddedData, only: griddedData_t, dump, nullifyGriddedData, &
+      & convertFromEtaLevelGrids
     use Init_tables_module, only: F_A, F_B, F_GRID
-    use Toggles, only: GEN, TOGGLE
-    use Trace_M, only: TRACE_BEGIN, TRACE_END
-    use Tree, only: NSONS, SUBTREE, DECORATION
+    use Toggles, only: gen, toggle
+    use Trace_M, only: trace_begin, trace_end
+    use Tree, only: nsons, subtree, decoration
     ! use VGridsDatabase, only: VGrid_T, VGrids, ConvertVGrid
     
     integer, intent(in) :: ROOT         ! Tree node
@@ -467,9 +470,9 @@ contains ! ===================================  Public procedures  =====
 
   ! ------------------------------------------  DeleteGriddedData  -----
   subroutine DeleteGriddedData ( root, griddedDataBase )
-    use Tree, only: NSONS, SUBTREE, DECORATION
-    use GriddedData, only: DESTROYGRIDDEDDATA, GRIDDEDDATA_T
-    use Init_Tables_Module, only: F_GRID
+    use Tree, only: nsons, subtree, decoration
+    use GriddedData, only: destroygriddeddata, griddedData_t
+    use Init_Tables_Module, only: F_Grid
     ! This routine deletes the grid indicated by the l2cf
     integer, intent(in) :: ROOT         ! Tree node
     type (griddedData_T), dimension(:), pointer :: GRIDDEDDATABASE ! Database
@@ -504,13 +507,13 @@ contains ! ===================================  Public procedures  =====
     & result ( newGrid )
     use Dump_0, only: dump
     use Expr_m, only: expr
-    use GriddedData, only: griddeddata_t, rgr, v_is_pressure, &
-      & copygrid, dump, nullifygriddeddata, &
-      & setupnewgriddeddata, slicegriddeddata, wrapgriddeddata
+    use GriddedData, only: griddedData_t, rgr, v_is_pressure, &
+      & copyGrid, dump, nullifyGriddedData, &
+      & setupNewGriddedData, sliceGriddedData, wrapGriddedData
     use Init_tables_module, only: f_climatology, f_height, &
       & f_operational, f_scale
     use MLSKinds, only: r8
-    use MLSFillValues, only: essentiallyequal
+    use MLSFillValues, only: essentiallyEqual
     use Toggles, only: gen, toggle
     use Trace_M, only: trace_begin, trace_end
     use Tree, only: nsons, subtree, decoration
@@ -836,20 +839,20 @@ contains ! ===================================  Public procedures  =====
   ! --------------------------------------------  wmoTropFromGrid  -----
   type (griddedData_T) function wmoTropFromGrid ( root, griddedDataBase ) &
     & result ( newGrid )
-    use DUMP_0, only: DUMP
-    use GRIDDEDDATA, only: GRIDDEDDATA_T, DUMP, V_IS_PRESSURE, V_IS_ETA, &
-      & NULLIFYGRIDDEDDATA, &
-      & DOGRIDDEDDATAMATCH, &
-      & SETUPNEWGRIDDEDDATA
-    use INIT_TABLES_MODULE, only: F_A, F_B, F_GRID
-    use MLSCOMMON, only: DEFAULTUNDEFINEDVALUE
-    use MLSFILLVALUES, only: ISFILLVALUE, REMOVEFILLVALUES
-    use MLSSTATS1, only: MLSMIN, MLSMAX, MLSMEAN
-    use MLSSTRINGS, only: LOWERCASE
-    use TOGGLES, only: GEN, TOGGLE
-    use TRACE_M, only: TRACE_BEGIN, TRACE_END
-    use TREE, only: NSONS, SUBTREE, DECORATION
-    use WMOTROPOPAuse, only: EXTRATROPICS, TWMO
+    use dump_0, only: dump
+    use griddeddata, only: griddedData_t, dump, v_is_pressure, v_is_eta, &
+      & nullifyGriddedData, &
+      & doGriddedDataMatch, &
+      & setupnewGriddedData
+    use init_tables_module, only: f_a, f_b, f_grid
+    use MLSCommon, only: defaultundefinedvalue
+    use MLSFillvalues, only: isfillvalue, removefillvalues
+    use MLSStats1, only: MLSMin, MLSMax, MLSMean
+    use MLSStrings, only: lowercase
+    use toggles, only: gen, toggle
+    use trace_m, only: trace_begin, trace_end
+    use tree, only: nsons, subtree, decoration
+    use WMOTropopause, only: extraTropics, twmo
     ! Implements the algorithm published in GRL
 
     integer, intent(in) :: ROOT         ! Tree node
@@ -1185,6 +1188,9 @@ contains ! ===================================  Public procedures  =====
 end module MergeGridsModule
 
 ! $Log$
+! Revision 2.61  2016/04/01 00:27:15  pwagner
+! May now Execute a single command or a script of lines from l2cf
+!
 ! Revision 2.60  2015/03/28 02:49:58  vsnyder
 ! Added stuff to trace allocate/deallocate addresses
 !
