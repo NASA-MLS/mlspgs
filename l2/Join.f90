@@ -52,14 +52,15 @@ contains ! =====     Public Procedures     =============================
     use Allocate_Deallocate, only: Test_Allocate
     use Chunks_m, only: MLSChunk_t
     use DirectWrite_m, only: DirectData_t
-    use Dumpcommand_m, only: dumpcommand, &
+    use Dumpcommand_m, only: DumpCommand, ExecuteCommand, &
       & MLSCase, MLSEndSelect, MLSSelect, MLSSelecting, Skip
     use ForwardModelConfig, only: ForwardModelConfig_t
     use HessianModule_1, only: Hessian_t
     use HGridsDatabase, only: HGrid_t
     use highOutput, only: beVerbose, letsDebug, outputNamedValue
     use Init_Tables_Module, only: s_l2gp, s_l2aux, s_time, s_directwrite, &
-      & s_endselect, s_case, s_diff, s_dump, s_label, s_select, s_skip
+      & s_endselect, s_case, s_diff, s_dump, s_execute, s_label, s_select, &
+      & s_skip
     use L2GPData, only: L2GPData_t
     use L2AuxData, only: l2AuxData_t
     use L2ParInfo, only: Parallel, WaitForDirectWritePermission
@@ -205,6 +206,8 @@ contains ! =====     Public Procedures     =============================
           call dumpCommand ( key, vectors=vectors, HGrids=HGrids, &
             & ForwardModelConfigs=FWModelConfig, FileDataBase=FileDataBase, &
             & MatrixDatabase=matrices, HessianDatabase=Hessians )
+        case ( s_execute ) ! ======================== ExecuteCommand ==========
+          call ExecuteCommand ( key )
         case ( s_skip ) ! ============================== Skip ==========
           ! We'll skip the rest of the section if the Boolean cond'n is TRUE
           if ( Skip(key) ) exit
@@ -2381,6 +2384,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.173  2016/04/01 00:27:15  pwagner
+! May now Execute a single command or a script of lines from l2cf
+!
 ! Revision 2.172  2016/02/29 19:49:49  pwagner
 ! Usleep got from machine module instead of being an external
 !
