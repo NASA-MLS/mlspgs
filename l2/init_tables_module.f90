@@ -162,7 +162,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_DUMPBLOCKS         = s_dump + 1
   integer, parameter :: S_EMPIRICALGEOMETRY  = s_dumpblocks + 1
   integer, parameter :: S_ENDSELECT          = s_empiricalGeometry + 1
-  integer, parameter :: S_FGRID              = s_endSelect + 1
+  integer, parameter :: S_EXECUTE            = s_endSelect + 1
+  integer, parameter :: S_FGRID              = s_execute + 1
   integer, parameter :: S_FILL               = s_fGrid + 1
   integer, parameter :: S_FILLCOVARIANCE     = s_fill + 1
   integer, parameter :: S_FILLDIAGONAL       = s_fillcovariance + 1
@@ -379,6 +380,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_dump) =                   add_ident ( 'dump' )
     spec_indices(s_dumpblocks) =             add_ident ( 'dumpblocks' )
     spec_indices(s_endSelect) =              add_ident ( 'endSelect' )
+    spec_indices(s_execute) =                add_ident ( 'execute' )
     spec_indices(s_fGrid) =                  add_ident ( 'fGrid' )
     spec_indices(s_fill) =                   add_ident ( 'fill' )
     spec_indices(s_fillCovariance) =         add_ident ( 'fillCovariance' )
@@ -1607,6 +1609,19 @@ contains ! =====     Public procedures     =============================
              begin, f+f_vGrid, field_spec(s_vGrid), &
              begin, f+f_ZOT, boolean(), &
              np+n_spec_def/), continue=.true. )
+    call make_tree ( (/ & ! Must be AFTER s_vector,s_vectorTemplate, etc.
+      begin, s+s_execute, &
+             begin, f+f_Clean, boolean(), &
+             begin, f+f_command, string(), &
+             begin, f+f_crashBurn, boolean(), &
+             begin, f+f_delay, numeric(phyq_dimensionless), &
+             begin, f+f_fileName, string(), &
+             begin, f+f_lines, string(), &
+             begin, f+f_options, string(), &
+             begin, f+f_stop, boolean(), &
+             begin, f+f_stopWithError, boolean(), &
+             begin, f+f_wait, boolean(), &
+             np+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_forwardModelGlobal, &
              begin, f+f_antennaPatterns, string(), &
@@ -1803,13 +1818,13 @@ contains ! =====     Public procedures     =============================
              s+s_l2parsf, s+s_makePFA, s+s_pfaData, s+s_readPFA, &
              s+s_tGrid, s+s_time, s+s_vGrid, s+s_writePFA, n+n_section, &
       begin, z+z_readapriori, s+s_time, s+s_diff, s+s_dump, s+s_gridded, &
-             s+s_l2aux, s+s_l2gp, s+s_readGriddedData, s+s_snoop, &
-             s+s_Boolean, s+s_case, s+s_endSelect, s+s_select, n+n_section, &
-      begin, z+z_mergegrids, s+s_Boolean, s+s_case, s+s_concatenate, s+s_concatenateGrids, &
-             s+s_ConvertEtaToP, s+s_delete, s+s_diff, s+s_dump, s+s_isGridEmpty, &
-             s+s_endSelect, s+s_Gridded, s+s_merge, s+s_mergeGrids, &
-             s+s_reevaluate, s+s_select, s+s_skip, s+s_time, &
-             s+s_vgrid, s+s_wmoTrop, s+s_wmoTropFromGrids, &
+             s+s_l2aux, s+s_l2gp, s+s_readGriddedData, s+s_snoop, s+s_case, &
+             s+s_Boolean, s+s_endSelect, s+s_execute, s+s_select, n+n_section, &
+      begin, z+z_mergegrids, s+s_Boolean, s+s_case, s+s_concatenate, &
+             s+s_concatenateGrids, s+s_ConvertEtaToP, s+s_delete, s+s_diff, &
+             s+s_dump, s+s_endSelect, s+s_execute, s+s_Gridded, s+s_merge, &
+             s+s_reevaluate, s+s_select, s+s_skip, s+s_time, s+s_isGridEmpty, &
+             s+s_mergeGrids, s+s_vgrid, s+s_wmoTrop, s+s_wmoTropFromGrids, &
              n+n_section /) )
     call make_tree ( (/ &
       begin, z+z_chunkdivide, &
@@ -1824,7 +1839,7 @@ contains ! =====     Public procedures     =============================
              s+s_anyGoodRadiances, s+s_anyGoodValues, &
              s+s_case, s+s_catchWarning, s+s_compare, s+s_computeTotalPower, &
              s+s_destroy, s+s_diff, s+s_directRead, s+s_dump, s+s_endSelect, &
-             s+s_fill, s+s_fillCovariance, &
+             s+s_execute, s+s_fill, s+s_fillCovariance, &
              s+s_fillDiagonal, s+s_flagcloud, s+s_flushL2PCBins, s+s_flushPFA, &
              s+s_hessian, s+s_load, s+s_matrix, s+s_negativePrecision, &
              s+s_phase, s+s_populateL2PCBin, s+s_reevaluate, &
@@ -1840,13 +1855,13 @@ contains ! =====     Public procedures     =============================
              n+n_section, &
       begin, z+z_join, s+s_time, s+s_label, s+s_l2gp, s+s_l2aux, &
              s+s_case, s+s_directWrite, s+s_diff, s+s_dump, s+s_endSelect, &
-             s+s_select, s+s_skip, n+n_section, &
+             s+s_execute, s+s_select, s+s_skip, n+n_section, &
       begin, z+z_algebra, s+s_columnScale, s+s_combineChannels, s+s_cyclicJacobi, &
              s+s_disjointEquations, s+s_normalEquations, s+s_reflect, &
              s+s_regularization, s+s_rowScale, nc+n_section, &
       begin, z+z_output, s+s_Boolean, s+s_case, s+s_catenate, s+s_copy, &
              s+s_destroy, s+s_diff, s+s_dump, s+s_dumpblocks, s+s_endSelect, &
-             s+s_hgrid, s+s_isSwathEmpty, s+s_output, s+s_Reevaluate, &
+             s+s_execute, s+s_hgrid, s+s_isSwathEmpty, s+s_output, s+s_Reevaluate, &
              s+s_select, s+s_Skip, s+s_Sleep, s+s_time, s+s_writeFileAttribute, &
              n+n_section /) )
 
@@ -2057,6 +2072,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.624  2016/04/01 00:26:23  pwagner
+! May now Execute a single command or a script of lines from l2cf
+!
 ! Revision 2.623  2016/02/26 02:07:44  vsnyder
 ! Add QTM support
 !
