@@ -27,8 +27,9 @@ module DumpCommand_M
   public :: booleanFromComparingQtys
   public :: booleanFromEmptygrid, booleanFromEmptySwath
   public :: booleanFromFormula
+  public :: dumpCommand, ExecuteCommand
   public :: initializeRepeat, nextRepeat
-  public :: MLSCase, dumpCommand, MLSEndSelect, MLSSelect, skip
+  public :: MLSCase, MLSEndSelect, MLSSelect, skip
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -72,6 +73,7 @@ module DumpCommand_M
 !
 ! The following subroutines depart from the sbove pattern
 ! DumpCommand    Process the Dump command, dumping any of the allowed datatypes
+! Execute        Execute the dhell command specified in text
 ! InitializeRepeat
 !                Set the Repeat counter "count" to 0
 ! NextRepeat     Add 1 to Repeat counter "count",
@@ -97,6 +99,7 @@ module DumpCommand_M
 !    type (HGrid_T) HGrids(:), &
 !    type (GriddedData_T) GriddedDataBase(:), type (MLSFile_T) FileDataBase(:), &
 !    type (Matrix_Database_T) MatrixDataBase(:), type (Hessian_T) HessianDataBase(:) )
+! Execute ( int root )
 ! InitializeRepeat
 ! NextRepeat
 ! MLSCase ( int root )
@@ -1160,14 +1163,15 @@ contains
       & s_diff, s_dump, s_quantity, s_vectortemplate, &
       & field_first, field_last
     use io_stuff, only: truncate_textFile
-    use l2parinfo, only: parallel, closeparallel
-    use l2pc_m, only: l2pcdatabase, dumpl2pc => dump
+    use L2Parinfo, only: parallel, closeparallel
+    use L2PC_M, only: l2pcdatabase, dumpl2pc => dump
     use lexer_core, only: get_where, where_t
     use machine, only: nevercrash
-    use matrixmodule_1, only: matrix_t, matrix_database_t, &
-      & diff, dump, getfrommatrixdatabase, MatricesMemoryInUse
-    use mlscommon, only: mlsfile_t
+    use matrixModule_1, only: matrix_t, matrix_database_t, &
+      & diff, dump, getFromMatrixDatabase, MatricesMemoryInUse
+    use MLSCommon, only: mlsfile_t
     use MLSFiles, only: dumpMLSFile => dump, getMLSFilebyname
+    use MLSFinds, only: findfirst
     use MLSKinds, only: r8, rv
     use MLSL2Options, only: command_line, currentChunkNumber, currentPhaseName, &
       & l2cfnode, normal_exit_status, runtimeValues, &
@@ -1175,7 +1179,6 @@ contains
     use MLSL2Timings, only: dump_section_timings
     use MLSMessagemodule, only: MLSMSG_Crash, MLSMSG_Error, MLSmessageCalls, &
       & MLSMessageExit
-    use MLSFinds, only: findfirst
     use MLSSignals_m, only: radiometers, signals, &
       & dump, dump_all, getradiometerindex
     use MLSStrings, only: indexes, lowerCase, &
@@ -2116,6 +2119,241 @@ contains
 
   end subroutine DumpCommand
 
+  ! ------------------------------------------------  ExecuteCCommand  -----
+  subroutine ExecuteCommand ( root )
+    use Dump_0, only: dumpTextfile
+    use expr_m, only: expr
+    use init_tables_module, only:  f_crashburn, &
+      & f_delay, f_details, f_filename, f_lines, f_options, &
+      & f_stop, f_stopwitherror, f_command, f_time, &
+      & f_wait, &
+      & field_first, field_last
+    use io_stuff, only: write_textfile
+    use l2parinfo, only: parallel, closeparallel
+    use lexer_core, only: get_where, where_t
+    use machine, only: create_script, Execute, nevercrash, Usleep
+    use MLSL2Options, only: l2cfnode, normal_exit_status, &
+      & MLSMessage
+    use MLSL2Timings, only: dump_section_timings
+    use MLSMessageModule, only: MLSMSG_Crash, MLSMSG_Warning, &
+      & MLSMessageExit
+    use MLSStringLists, only: switchDetail
+    use moretree, only: get_boolean, get_field_id
+    use string_table, only: get_string
+    use time_m, only: finish
+    use toggles, only: gen, switches, toggle
+    use trace_m, only: trace_begin, trace_end
+    use tree, only: nsons, sub_rosa, subtree, where
+
+  ! Process an Execute command
+    integer, intent(in) :: Root ! Root of the parse tree for the Execute command
+    ! Local variables
+    character(len=256)         :: command
+    integer                    :: fieldIndex
+    logical, dimension(field_first:field_last) :: GOT
+    integer                    :: Delay
+    integer                    :: DetailReduction
+    integer                    :: Details
+    character(len=255)         :: Farewell
+    character(len=80)          :: filename  ! E.g., '/tmp/Execute_me.sh'
+    integer                    :: gson
+    integer                    :: j
+    integer                    :: k
+    character(len=128), dimension(64) :: lines
+    integer                    :: Me = -1  ! String index for trace cacheing
+    integer                    :: nLines
+    character(len=80)          :: OPTIONSSTRING  ! E.g., '-rbs' (see dump_0.f90)
+    logical :: reset
+    integer                    :: son
+    integer                    :: status
+    logical                    :: verbose
+    integer                    :: Units(2) ! of the Details expr -- known to be phyq_dimensionless
+    double precision           :: Values(2) ! of the Details expr
+    logical                    :: wait
+    type(where_t)              :: Where_At
+    ! Executable
+    call trace_begin ( me, 'ExecuteCommand', root, cond=toggle(gen) )
+    verbose = BeVerbose ( 'bool', -1 )
+    DetailReduction = switchDetail(switches, 'red')
+    if ( DetailReduction < 0 ) then ! The 'red' switch is absent
+      DetailReduction = 0
+    else if ( DetailReduction == 0 ) then ! By default, reduce details level by 2
+      DetailReduction = 2
+    end if
+    delay = 0
+    details = 0 - DetailReduction
+    lines = ' '
+    command = ' '
+    nLines = 0
+    OPTIONSSTRING = '-'
+    reset = .false.
+    got= .false.
+
+    do j = 2, nsons(root)
+      son = subtree(j,root) ! The argument
+      fieldIndex = get_field_id(son)
+      gson = son
+      L2CFNODE = son
+      if (nsons(son) > 1) gson = subtree(2,son) ! Now value of said argument
+      where_at = where(gson) ! column + 256*line in l2cf & file name
+      got(fieldIndex) = .true.
+      select case ( fieldIndex )
+        case ( f_wait )
+          wait = get_boolean(son)
+        case ( f_crashBurn )
+        case ( f_delay )
+          call expr ( gson, units, values )
+          delay = nint(values(1))
+        case ( f_details )
+          call expr ( gson, units, values )
+          details = nint(values(1)) - DetailReduction
+        case ( f_stop )
+        case ( f_stopWithError )
+        case ( f_time )
+          call SayTime
+          if ( reset ) T1 = T2
+        case ( f_options )
+          call get_string ( sub_rosa(gson), optionsString, strip=.true. )
+        case ( f_FileName )
+          call get_string ( sub_rosa(gson), fileName, strip=.true. )
+        case ( f_command )
+          do k = 2, nsons(son)
+            call get_string ( sub_rosa(subtree(k,son)), command, strip=.true. )
+          enddo
+        case ( f_lines )
+          do k = 2, nsons(son)
+            nLines = nLines + 1
+            call get_string ( sub_rosa(subtree(k,son)), lines(nLines), strip=.true. )
+          enddo
+        end select
+      end do
+      if ( .not. (got(f_command) .or. got(f_fileName)) ) then
+        call MLSMessage( MLSMSG_Warning, moduleName, &
+          & "Execute must have either command or fileName present.")
+        return
+      endif
+      ! Do we have a single-line command or an entire script? Must we wait for it?
+      if ( wait ) then
+        if ( got(f_lines) ) then
+          call Execute_then_wait( inscriptName=fileName, inLines=lines(:nLines) )
+        elseif ( got(f_command) ) then
+          call Execute_then_wait( command=command )
+        endif
+      elseif ( got(f_lines) ) then
+        call create_script( fileName, lines(:nLines), thenRun=.true., &
+          & status=status, delay=delay )
+        if ( verbose ) then
+          call outputNamedValue( 'script name', trim(fileName) )
+          call dumpTextfile( FileName, OptionsString )
+        endif
+        call execute( 'rm -f ' // trim(fileName), status, delay=delay )
+      elseif ( got(f_command) ) then
+        call outputNamedValue( 'Command to Execute', trim(command) )
+        call execute( command, status, delay=delay )
+      else
+        call MLSMessage( MLSMSG_Warning, moduleName, &
+          & "Execute command must have either command or lines field.")
+      endif
+      ! Have we been commanded to stop? wait? crash?
+      if ( got(f_stop) ) then
+        call finish ( 'ending mlsl2' )
+        call MLSMessage( MLSMSG_Crash, moduleName, &
+          & "Program stopped by /stop field on DUMP statement.")
+          if ( switchDetail(switches, 'time') >= 0 ) then
+            call output('(Now for the timings summary)', advance='yes')
+            call dump_section_timings
+          end if
+        if ( NORMAL_EXIT_STATUS /= 0 .and. .not. parallel%slave ) then
+          call get_where ( where_at, farewell, &
+            & before="Program stopped with normal status by /stop field on DUMP statement at ", &
+            & after="." )
+          call MLSMessageExit( NORMAL_EXIT_STATUS, farewell=farewell )
+        else if( parallel%slave ) then
+          call closeParallel(0)
+          call get_where ( where_at, farewell, &
+            & before="Slave stopped by /stop field on DUMP statement at ", &
+            & after="." )
+          call MLSMessageExit( farewell=farewell )
+        else
+          call get_where ( where_at, farewell, &
+            & before="Program stopped by /stop field on DUMP statement at ", &
+            & after="." )
+          call MLSMessageExit( farewell=farewell )
+        end if
+      elseif ( got(f_stopWithError) ) then
+        if ( switchDetail(switches, 'time') >= 0 ) then
+          call output('(Now for the timings summary)', advance='yes')
+          call dump_section_timings
+        end if
+        call get_where ( where_at, farewell, &
+          & before="Program stopped by /stopWithError field on DUMP statement at ", &
+            & after="." )
+        call MLSMessageExit( 1, farewell=farewell )
+      elseif ( got(f_crashBurn) ) then
+        call finish ( 'ending mlsl2' )
+        NEVERCRASH = .false.
+        call MLSMessage( MLSMSG_Crash, moduleName, &
+          & "Program stopped by /crashBurn field on DUMP statement.")
+      endif
+    call trace_end ( 'ExecuteCommand', cond=toggle(gen) )
+  contains
+    subroutine Execute_then_wait ( command, inscriptName, inlines )
+      ! Execute a command or a script
+      ! Then wait for it to complete
+      ! Method: we create a script, based either on command or on input lines
+      ! At the end of the script we rm a sentinel file we cleverly created 
+      ! on entering this subroutine
+      ! We loop over checking for the sentinel file
+      ! When it's gone, so are we
+      ! Args
+      character(len=*), optional, intent(in)                  :: command
+      character(len=*), optional, intent(in)                  :: inscriptName
+      character(len=*), dimension(:), optional, intent(in)    :: inlines
+      ! Internal variables
+      logical                                                 :: exist
+      character(len=80), dimension(60)                        :: lines
+      character(len=80)                                       :: scriptName
+      character(len=80)                                       :: sentinelName
+      integer                                                 :: myDelay
+      integer                                                 :: nLines
+      ! Executable
+      scriptName = '/tmp/mlsl2scriptname.sh'
+      if ( present(inscriptName) ) scriptName = inscriptName
+      sentinelName = trim(scriptName) // '.txt'
+      call write_textfile( sentinelName, 'waiting' )
+      if ( present(command) ) then
+        lines(1) = '#!/bin/sh'
+        lines(2) = command
+        lines(3) = 'rm -f ' // sentinelName
+        nLines = 3
+      elseif ( present(inLines) ) then
+        nLines = size(inLines) + 1
+        lines(1:nLines-1) = inLines
+        lines(nLines) = 'rm -f ' // sentinelName
+      else
+        call MLSMessage( MLSMSG_Warning, moduleName, &
+          & "Execute_then_wait must have either command or inlines present.")
+        return
+      endif
+      call create_script( scriptName, lines(:nLines), thenRun=.true., &
+        & status=status, delay=delay )
+      if ( verbose ) then
+        call outputNamedValue( 'script name', trim(scriptName) )
+        call dumpTextfile( scriptName, OptionsString )
+      endif
+      ! Now we loop over waiting for the sentinel file to disappear
+      myDelay = max( delay, 50 )
+      do
+        call Usleep( myDelay )
+        ! Still there?
+        inquire( file=sentinelName, exist=exist )
+        if ( .not. exist ) exit
+      enddo
+      call execute( 'rm -f ' // trim(scriptName), status, delay=delay )
+    end subroutine Execute_then_wait
+  end subroutine ExecuteCommand
+
+  ! ------------------------------------------------  INITIALIZEREPEAT  -----
   subroutine  INITIALIZEREPEAT
     use MLSL2Options, only: runtimeValues
     use MLSStringlists, only: putHashElement
@@ -2864,6 +3102,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.127  2016/04/01 00:27:41  pwagner
+! May now Execute a single command or a script of lines from l2cf
+!
 ! Revision 2.126  2016/02/26 02:08:18  vsnyder
 ! Add ZOT switch
 !
