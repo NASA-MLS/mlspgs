@@ -99,6 +99,7 @@ colSurfaces
 columnAbundance
 columns
 columnScale
+command
 commandLine
 comment
 compareOverlaps
@@ -125,6 +126,7 @@ date
 debug
 default_spectroscopy
 deferReading
+delay
 deleteGrids
 destination
 destroy
@@ -527,6 +529,7 @@ vRegQuants
 vRegWeights
 vRegWeightVec
 
+wait
 weightsVector
 where
 whereFill
@@ -541,6 +544,9 @@ yStar
 ZOT # Tells dump of HGrid whether to print QTM coordinates in ZOT or Geo
 
 # $Log$
+# Revision 2.262  2016/04/01 00:25:13  pwagner
+# Added fields for Execute command
+#
 # Revision 2.261  2016/02/26 02:06:19  vsnyder
 # Add QTM_Level and ZOT
 #
