@@ -73,17 +73,18 @@ contains ! =====     Public Procedures     =============================
 
     use allocate_deallocate, only: deallocate_test, allocate_test
     use chunks_m, only: MLSchunk_t, dump
-    use chunkdivide_m, only: chunkdivideconfig, obstructions
-    use destroycommand_m, only: destroycommand
-    use directwrite_m, only: directdata_t, dump
-    use dumpcommand_m, only: booleanfromemptyswath, booleanfromformula, &
-      & dumpcommand, MLScase, MLSendselect, MLSselect, MLSselecting, skip
+    use chunkDivide_m, only: chunkDivideConfig, obstructions
+    use destroyCommand_m, only: destroyCommand
+    use directWrite_m, only: directData_t, dump
+    use dumpCommand_m, only: booleanFromEmptySwath, booleanFromFormula, &
+      & dumpCommand, ExecuteCommand, MLScase, MLSendselect, MLSselect, MLSselecting, &
+      & skip
     use expr_m, only: expr
-    use griddeddata, only: griddeddata_t
-    use hessianmodule_1, only: hessian_t
-    use hgrid, only: createhgridfromMLScfinfo, dealwithobstructions
-    use hgridsdatabase, only: hgrid_t, &
-      & addhgridtodatabase, dump
+    use griddedData, only: griddedData_t
+    use hessianModule_1, only: hessian_t
+    use HGrid, only: createHGridfromMLScfinfo, dealWithObstructions
+    use HGridsdatabase, only: HGrid_t, &
+      & addHGridtodatabase, dump
     use init_tables_module, only: f_additional, f_attrName, f_attrValue, &
       & f_destroy, f_dontpack, f_file, f_hdfversion, &
       & f_metadataonly, f_metaname, f_moleculesecondderivatives, f_overlaps, &
@@ -92,7 +93,7 @@ contains ! =====     Public Procedures     =============================
       & l_l2aux, l_l2cf, l_l2dgg, l_l2gp, l_l2pc, &
       & s_boolean, s_case, s_catenate, s_copy, &
       & s_destroy, s_diff, s_dump, s_dumpblocks, &
-      & s_endselect, s_hgrid, s_isswathempty, s_l2gp, s_output, &
+      & s_endselect, s_execute, s_hgrid, s_isswathempty, s_l2gp, s_output, &
       & s_reevaluate, s_select, s_skip, s_sleep, s_time, s_writeFileAttribute
     use intrinsic, only: lit_indices
     use L2AuxData, only: L2AUXData_t
@@ -115,8 +116,8 @@ contains ! =====     Public Procedures     =============================
     use toggles, only: gen, toggle, switches
     use trace_m, only: trace_begin, trace_end
     use tree, only: decorate, decoration, nsons, subtree, sub_rosa
-    use vectorsmodule, only: vector_t
-    use writemetadata, only: l2pcf, writemetalog
+    use vectorsModule, only: vector_t
+    use writeMetadata, only: L2PCF, writeMetalog
 
     ! Arguments
     integer, intent(in) :: ROOT   ! Of the output section's AST
@@ -280,6 +281,8 @@ contains ! =====     Public Procedures     =============================
         call destroyCommand ( key, matrices, vectors, griddedDataBase )
       case ( s_Dumpblocks )
         call dumpBlocks ( key, matrices, hessians )
+      case ( s_execute ) ! ======================== ExecuteCommand ==========
+        call ExecuteCommand ( key )
       case ( s_HGrid )
         if ( specialDumpFile /= ' ' ) &
           & call switchOutput( specialDumpFile, keepOldUnitOpen=.true. )
@@ -535,32 +538,17 @@ contains ! =====     Public Procedures     =============================
   ! ---------------------------------------------  CreateAndReadL2GP  -----
   function CreateAndReadL2GP ( name, key, filedatabase ) result(l2gp)
     ! Read and store l2gp data type from a file
-    use Init_tables_module, only: f_auraInstrument, &
-      & f_date, f_dimlist, f_downsample, &
-      & f_field, f_file, f_grid, f_HDFVersion, f_missingvalue, f_noPCFid, &
-      & f_origin, f_quantitytype, f_sdname, f_deferReading, f_sum, f_swath, &
-      & field_first, field_last, &
-      & l_climatology, l_dao, l_geos5, l_geos5_7, l_gloria, &
-      & l_merra, l_ncep, l_none, l_strat, l_surfaceheight, &
-      & s_diff, s_dump, s_gridded, s_l2aux, s_l2gp, s_readGriddedData
-    use L2GPdata, only: l2GPdata_t, &
-      & Addl2GPtodatabase, readl2GPdata, dump
+    use Init_tables_module, only: f_file, f_sdname, f_noPCFid, f_swath, &
+      & field_first, field_last
+    use L2GPdata, only: L2GPData_t
     use MLSCommon, only: filenamelen, MLSfile_t
-    use MLSFiles, only: filenotfound, &
-      & HDFVersion_4, HDFVersion_5, wildCardHDFVersion, &
-      & AddFileToDatabase, MLS_CloseFile, dump, getPCFromRef, initializeMLSFile, &
-      & MLS_HDF_Version, MLS_inqswath, MLS_openfile, split_path_name
+    use MLSFiles, only: AddFileToDatabase
     use MLSPCF2, only: &
-      & MLSPCF_l2apriori_start, MLSPCF_l2apriori_end, &
-      & MLSPCF_l2clim_start, MLSPCF_l2clim_end, &
-      & MLSPCF_l2dao_start, MLSPCF_l2dao_end, &
-      & MLSPCF_l2geos5_start, MLSPCF_l2geos5_end, &
-      & MLSPCF_l2ncep_start, MLSPCF_l2ncep_end, &
-      & MLSPCF_surfaceheight_start, MLSPCF_surfaceheight_end
+      & MLSPCF_l2apriori_start, MLSPCF_l2apriori_end
     use MoreTree, only: get_boolean
     use readapriori, only: processOneL2GPFile
-    use Tree, only: decorate, decoration, nsons, &
-      &             sub_rosa, subtree, dump_tree_node, where
+    use Tree, only: decoration, nsons, &
+      &             sub_rosa, subtree
     ! Args
     integer, intent(in)             :: name
     integer, intent(in)             :: key
@@ -577,9 +565,7 @@ contains ! =====     Public Procedures     =============================
     type (MLSFile_T)                :: L2GPFile
     integer                         :: LastAprioriPCF      ! l2gp or l2aux  apriori
     logical                         :: noPCFid
-    integer                         :: ReturnStatus
     integer                         :: SdName  ! sub-rosa index of name in sdName='name'
-    character(len=FileNameLen)      :: SDNAMESTRING ! actual literal sdName
     character(len=FileNameLen)      :: ShortFileName
     integer                         :: son
     integer                         :: SwathName        ! sub-rosa index of name in swath='name'
@@ -2301,6 +2287,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.198  2016/04/01 00:27:15  pwagner
+! May now Execute a single command or a script of lines from l2cf
+!
 ! Revision 2.197  2016/02/29 19:51:22  pwagner
 ! Usleep got from machine module instead of being an external
 !
