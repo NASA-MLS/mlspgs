@@ -47,9 +47,9 @@ contains ! =====     Public Procedures     =============================
 
   !---------------------------------------------------  MLSL2Fill  -----
 
-  subroutine MLSL2FILL ( ROOT, FILEDATABASE, GRIDDEDDATABASE, VECTORTEMPLATES, &
-    & VECTORS, QTYTEMPLATES, MATRICES, HESSIANS, L2GPDATABASE, L2AUXDATABASE, &
-    & FWMODELCONFIG, CHUNKS, CHUNKNO, HGRIDS )
+  subroutine MLSL2Fill ( root, fileDatabase, griddedDatabase, vectorTemplates, &
+    & Vectors, QtyTemplates, Matrices, Hessians, L2GPDatabase, L2AUXDatabase, &
+    & FwmodelConfig, chunks, chunkNo, HGrids )
 
     ! This is the main routine for the module.  It parses the relevant lines
     ! of the l2cf and works out what to do.
@@ -60,16 +60,16 @@ contains ! =====     Public Procedures     =============================
     use dumpCommand_m, only: booleanFromAnyGoodRadiances, &
       & booleanFromAnygoodvalues, &
       & booleanFromCatchwarning, booleanFromComparingQtys, booleanFromFormula, &
-      & dumpcommand, initializerepeat, nextrepeat, &
-      & mlscase, mlsendselect, mlsselect, mlsselecting, &
+      & dumpcommand, ExecuteCommand, initializerepeat, nextrepeat, &
+      & MLSCase, MLSEndSelect, MLSSelect, MLSSelecting, &
       & repeat=>skip, skip
     use expr_m, only: expr
-    use fillUtils_1, only: addgaussiannoise, applybaseline, autofillvector, &
-      & computetotalpower, derivativeofsource, fillcovariance, &
-      & extractsinglechannel, fillerror, fromanother, fromgrid, &
-      & froml2gp, fromprofile, gather, geoiddata, losvelocity, &
+    use FillUtils_1, only: addgaussiannoise, applybaseline, autoFillVector, &
+      & computetotalpower, derivativeofsource, Fillcovariance, &
+      & extractsinglechannel, Fillerror, fromanother, fromgrid, &
+      & fromL2GP, fromprofile, gather, geoiddata, losvelocity, &
       & chisqchan, chisqmmaf, chisqmmif, chisqratio, &
-      & colabundance, foldedradiance, phitanwithrefraction, &
+      & colabundance, foldedRadiance, phitanwithrefraction, &
       & iwcfromextinction, rhifromortoh2o, noradspermif, &
       & rhiprecisionfromortoh2o, withestnoise, &
       & hydrostatically_gph, hydrostatically_ptan, fromsplitsideband, &
@@ -77,22 +77,22 @@ contains ! =====     Public Procedures     =============================
       & explicit, froml1b, &
       & froml2aux, usingmagneticmodel, &
       & frominterpolatedqty, fromlosgrid, NearestProfiles, &
-      & bymanipulation, manipulatevectors, withreflectortemperature, &
+      & bymanipulation, manipulateVectors, withreflectortemperature, &
       & withascordesc, withreichlerwmotp, &
       & withwmotropopause, withbinresults, withboxcarfunction, &
-      & statusquantity, qualityfromchisq, convergencefromchisq, &
-      & usingleastsquares, offsetradiancequantity, resetunusedradiances, &
-      & scaleoverlaps, scatter, spreadchannelfill, transfervectors, &
-      & transfervectorsbymethod, uncompressradiance, &
-      & qtyfromfile, vectorfromfile, announce_error, &
+      & statusQuantity, qualityfromchisq, convergencefromchisq, &
+      & usingleastsquares, offsetRadianceQuantity, resetunusedRadiances, &
+      & scaleoverlaps, scatter, spreadchannelFill, transferVectors, &
+      & transferVectorsbymethod, uncompressRadiance, &
+      & qtyfromfile, Vectorfromfile, announce_error, &
       ! codes for announce_error:
-      & badestnoisefill, badgeocaltitudequantity, badisotopefill, &
-      & badlosgridfill, badlosvelfill, badrefgphquantity, badgphquantity, &
-      & badrefractfill, badscvelecrquantity, badtemperaturequantity, &
+      & badestnoiseFill, badgeocaltitudeQuantity, badisotopeFill, &
+      & badlosgridFill, badlosvelFill, badrefgphQuantity, badgphQuantity, &
+      & badrefractFill, badscvelecrQuantity, badtemperatureQuantity, &
       & bothfractionandlength, missingfield, &
       & needgeocaltitude, needh2o, needorbitinclination, needtemprefgph, &
       & negativePhiWindow, nocodefor, no_error_code, noexplicitvaluesgiven, &
-      & nosourcegridgiven, nosourcel2auxgiven, nosourcel2gpgiven, &
+      & nosourcegridgiven, nosourcel2auxgiven, nosourceL2GPgiven, &
       & notimplemented, notplain, notspd, &
       & wrongunits
     use forwardModelConfig, only: forwardmodelconfig_t
@@ -176,8 +176,9 @@ contains ! =====     Public Procedures     =============================
     ! now the specifications:
     use init_tables_module, only: s_anygoodvalues, s_anygoodradiances, &
       & s_case, s_catchwarning, s_compare, s_computetotalpower, s_destroy, &
-      & s_diff, s_directread, s_dump, s_endselect, s_fill, s_fillcovariance, &
-      & s_filldiagonal, s_flagcloud, s_flushl2pcbins, s_flushpfa, s_hessian, &
+      & s_diff, s_directread, s_dump, s_endselect, s_execute, &
+      & s_fill, s_fillcovariance, s_filldiagonal, &
+      & s_flagcloud, s_flushl2pcbins, s_flushpfa, s_hessian, &
       & s_load, s_matrix,  s_negativeprecision, s_phase, s_populatel2pcbin, &
       & s_reevaluate, s_repeat, s_restrictrange, &
       & s_select, s_changeSettings, s_skip, s_snoop, s_streamlinehessian, s_subset, &
@@ -188,8 +189,8 @@ contains ! =====     Public Procedures     =============================
       & phyq_profiles
     use, intrinsic :: iso_c_binding, only: c_intptr_t, c_loc
     use L1BData, only: deallocateL1BData, L1BData_t, readL1BData
-    use L2GPData, only: l2gpdata_t, col_species_hash, col_species_keys
-    use L2AUXdata, only: l2auxdata_t
+    use L2GPData, only: L2GPData_t, col_species_hash, col_species_keys
+    use L2AUXdata, only: L2AUXData_t
     use L2PC_m, only: populatel2pcbinbyname, loadhessian, loadmatrix, loadvector
     use L2PCBins_m, only: flushlockedbins
     use manipulateVectorQuantities, only: doHGridsMatch, &
@@ -219,11 +220,11 @@ contains ! =====     Public Procedures     =============================
       & get_spec_id
     use next_tree_node_m, only: next_tree_node, next_tree_node_state
     use output_m, only: blanks, output, revertoutput, switchoutput
-    use pfadata_m, only: flush_pfadata
-    use quantitytemplates, only: quantitytemplate_t, &
-      & modifyquantitytemplate
-    use readapriori, only: apriorifiles
-    use snoopmlsl2, only: snoop
+    use PFAData_m, only: flush_PFAData
+    use quantityTemplates, only: quantityTemplate_t, &
+      & modifyQuantityTemplate
+    use readAPriori, only: APrioriFiles
+    use snoopMLSL2, only: snoop
     use string_table, only: get_string
     use subsetmodule, only: applymasktoquantity, restrictrange, &
       & setupflagcloud, setupsubset, updatemask
@@ -231,13 +232,13 @@ contains ! =====     Public Procedures     =============================
     use toggles, only: gen, levels, toggle
     use trace_m, only: trace_begin, trace_end
     use tree, only: decorate, decoration, nsons, sub_rosa, subtree, where
-    use vectorsmodule, only: addvectortodatabase, &
-      & clearmask, clonevectorquantity, createvector, &
-      & dumpquantitymask, &
-      & getvectorqtybytemplateindex, &
-      & validatevectorquantity, vector_t, &
-      & vectortemplate_t, vectorvalue_t, m_fill
-    use vgridsdatabase, only: vgrids
+    use VectorsModule, only: addVectortodatabase, &
+      & clearmask, cloneVectorQuantity, createVector, &
+      & dumpQuantitymask, &
+      & getVectorQtybytemplateindex, &
+      & validateVectorQuantity, Vector_t, &
+      & Vectortemplate_t, Vectorvalue_t, m_fill
+    use VGridsDatabase, only: VGrids
 
     ! Dummy arguments
     integer, intent(in)                               :: ROOT ! Of the FILL section in the AST
@@ -586,7 +587,7 @@ contains ! =====     Public Procedures     =============================
       call trace_begin ( me_spec, "Fill.spec", son, &
         & cond=toggle(gen) .and. levels(gen) > 0 )
       call get_label_and_spec ( son, vectorName, key )
-      L2CFNODE = key
+      L2CFNode = key
       if ( MLSSelecting .and. &
         & .not. any( get_spec_id(key) == (/ s_endselect, s_select, s_case /) ) ) cycle
       additional = .false.
@@ -737,6 +738,8 @@ contains ! =====     Public Procedures     =============================
           & GriddedDataBase=GriddedDataBase, hGrids=hGrids, &
           & FileDataBase=FileDataBase, &
           & MatrixDatabase=Matrices, HessianDatabase=Hessians )
+      case ( s_execute ) ! ======================== ExecuteCommand ==========
+        call ExecuteCommand ( key )
       case ( s_hessian ) ! ===============================  Hessian  =====
         got = .false.
         do j = 2, nsons(key)
@@ -3262,6 +3265,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.459  2016/04/01 00:27:15  pwagner
+! May now Execute a single command or a script of lines from l2cf
+!
 ! Revision 2.458  2015/12/01 21:19:57  pwagner
 ! May Fill with nearest profile number
 !
