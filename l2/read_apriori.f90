@@ -22,7 +22,7 @@ module ReadAPriori
     & field_first, field_last, &
     & l_climatology, l_dao, l_geos5, l_geos5_7, l_gloria, &
     & l_merra, l_ncep, l_none, l_strat, l_surfaceheight, &
-    & s_diff, s_dump, s_gridded, s_l2aux, s_l2gp, s_readGriddedData
+    & s_diff, s_dump, s_execute, s_gridded, s_l2aux, s_l2gp, s_readGriddedData
   use Intrinsic, only: l_ascii, l_binary, l_hdfeos, l_hdf, l_swath, &
     & phyq_dimensionless
   use L2GPData, only: maxSwathNamesBufSize
@@ -146,8 +146,8 @@ contains ! =====     Public Procedures     =============================
 
   subroutine Read_apriori ( Root, L2GPDatabase, L2auxDatabase, GriddedDatabase, &
     & fileDataBase )
-    use dumpCommand_m, only: booleanFromFormula, MLSCase, MLSEndSelect, &
-      & MLSSelect, MLSSelecting, skip
+    use dumpCommand_m, only: booleanFromFormula, ExecuteCommand, &
+      & MLSCase, MLSEndSelect, MLSSelect, MLSSelecting, skip
     use griddedData, only: griddedData_t, dump
     use init_tables_module, only: s_boolean, s_case, s_endselect, &
       & s_select, s_skip
@@ -228,6 +228,8 @@ contains ! =====     Public Procedures     =============================
       case ( s_endSelect ) ! ============ End of select .. case ==========
         ! We'done with seeking a match
         call MLSEndSelect (key)
+      case ( s_execute ) ! ======================== ExecuteCommand ==========
+        call ExecuteCommand ( key )
       case ( s_skip ) ! ============================== Skip ==========
         ! We'll skip the rest of the section if the Boolean cond'n is TRUE
         if ( Skip(key) ) exit
@@ -1460,6 +1462,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.114  2016/04/01 00:27:15  pwagner
+! May now Execute a single command or a script of lines from l2cf
+!
 ! Revision 2.113  2015/11/17 21:28:07  pwagner
 ! Made public processOneL2AUXFile and processOneL2GPFile
 !
