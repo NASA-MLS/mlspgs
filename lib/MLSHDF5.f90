@@ -24,14 +24,14 @@ module MLSHDF5
   ! software. We will resume alphabetizing the used module names.
 
   use Allocate_deallocate, only: allocate_test, deallocate_test
-  use Dump_0, only: dopt_laconic, dopt_rms, dopt_stats, &
-    & Dump, dumpnamedvalues
-  use Hdf, only: dfacc_rdonly
+  use Dump_0, only: dopt_laconic, dopt_rms, dopt_stats, dopt_verbose, &
+    & Dump, dumpNamedValues, nameOnEachLine
+  use Hdf, only: DFACC_RDOnly
   use HighOutput, only: outputNamedValue
   use Intrinsic, only: l_hdf
-  use MLSCommon, only: mlsfile_t
-  use MLSDataInfo, only: mlsdatainfo_t, query_mlsdata
-  use MLSFiles, only: hdfversion_5, initializemlsfile, mls_openfile
+  use MLSCommon, only: MLSFile_t
+  use MLSDataInfo, only: MLSDataInfo_t, query_mlsdata
+  use MLSFiles, only: HDFVersion_5, initializeMLSFile, MLS_Openfile
   use MLSKinds, only: r8
   use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning, MLSMessage
   use MLSFinds, only: findFirst
@@ -564,6 +564,7 @@ contains ! ======================= Public Procedures =========================
     character(len=*), intent(in), optional  :: options
 
     ! Local variables
+    logical :: addnameOnEachLine
     integer :: ch
     character(len=MAXCHFIELDLENGTH), dimension(1) :: chValue
     character(len=MAXCHFIELDLENGTH), dimension(:), pointer :: ch1dArray => null()
@@ -622,6 +623,8 @@ contains ! ======================= Public Procedures =========================
     ! print *, 'Intersection:   ', trim(myNames)
     dontPrintName = .false.
     if ( present(options) ) dontPrintName = index(options, dopt_laconic) > 0
+    addnameOnEachLine = .false.
+    if ( present(options) ) addnameOnEachLine = index(options, dopt_verbose ) > 0
     numDS = NumStringElements ( myNames, countEmpty )
     call h5gOpen_f ( locid, trim(groupName), groupID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -634,6 +637,7 @@ contains ! ======================= Public Procedures =========================
       if ( any( theIndexes > 0 ) ) cycle
       namePrinted = name
       if ( dontPrintName ) namePrinted = ' '
+      if ( addnameOnEachLine ) nameOnEachLine = namePrinted
       call h5dopen_f ( groupID, trim(name), ItemID, status )
       if ( status /= 0 ) then
         call output ( trim(name), advance='no' )
@@ -5712,6 +5716,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.134  2016/04/05 23:53:51  pwagner
+! If -v option present, DumpHDF5DS will print DSName on each line
+!
 ! Revision 2.133  2016/01/20 00:23:09  pwagner
 ! Added wildcard matches to DumpHDF5DS
 !
