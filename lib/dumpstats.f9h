@@ -21,6 +21,7 @@
       call output ( trim(name) //'   ' , advance='no' )
       nameHasBeenPrinted = .true.
     endif
+    if ( myVerbose .and. present(name) ) nameOnEachLine = name
     if ( myShape ) then
       call outputNamedValue( 'rank', myRank, advance='no' )
       call output( '   shape  ', advance='no' )
@@ -164,6 +165,9 @@
     end if
     ! call output('Leaving dumpstats', advance='no')
 ! $Log$
+! Revision 2.35  2016/04/05 23:55:17  pwagner
+! -v verbose option added; usu. will print name on each line
+!
 ! Revision 2.34  2015/08/25 18:38:27  vsnyder
 ! Include LBOUND in 'all values are the same' dumps
 !
