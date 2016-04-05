@@ -180,6 +180,7 @@ module DUMP_0
 !       p              transpose 
 !       t              trim      
 !       u              unique    
+!       v              verbose
 !       w              wholearray
 !       W[i]           wholearray, looping over ith index (for rank 3 and 4 arrays only)
 !       1 or 2 or ..   ignored; calling routine is free to interpret
@@ -321,6 +322,7 @@ module DUMP_0
   character, public, parameter :: dopt_NaNs        = 'N'
   character, public, parameter :: dopt_ratios      = 'r'
   character, public, parameter :: dopt_rms         = 'R'
+  character, public, parameter :: dopt_verbose     = 'v'
   character, public, parameter :: dopt_shape       = 'H'
   character, public, parameter :: dopt_stats       = 's'
   character, public, parameter :: dopt_table       = 'b'
@@ -368,7 +370,8 @@ module DUMP_0
   logical :: DUMPTHESEZEROS
   logical :: myBandwidth, myClean, myCollapse, myCyclic, myDirect, myGaps, &
     & myLaconic, myNaNs, myRatios, myRMS, myShape, myStats, &
-    & myTable, myTranspose, myTrim, myUnique, myWholeArray, onlyWholeArray
+    & myTable, myTranspose, myTrim, myUnique, myVerbose, myWholeArray, &
+    & onlyWholeArray
   character(len=16) :: myOptions
   character(len=16) :: myPCTFormat
   character(len=16) :: nameToPrint
@@ -3045,7 +3048,8 @@ contains
     call output ( 100*equal/(equal+unequal+0.), format = myPCTFormat, advance='no' )
     call output ( ': ', advance='no' )
     call output ( 100*unequal/(equal+unequal+0.), format = myPCTFormat, advance='no' )
-    call output ( ' )', advance='yes' )
+    call output ( ' )', advance='no' )
+    call finishLine
   end subroutine printPercentages
 
   ! ----------------------------------------------  printRMSetc  -----
@@ -3239,6 +3243,7 @@ contains
       myTranspose   =   index( options, dopt_transpose  ) > 0
       myTrim        =   index( options, dopt_trim       ) > 0
       myUnique      =   index( options, dopt_unique     ) > 0
+      myVerbose     =   index( options, dopt_verbose    ) > 0
       myWholeArray  = ( index( options, dopt_wholearray ) > 0 )
     endif
     myWholeArray = myWholeArray .or. &
@@ -3294,6 +3299,8 @@ contains
       isit = index( defaultstring, dopt_trim       ) > 0
     case ('unique')
       isit = index( defaultstring, dopt_unique     ) > 0
+    case ('verbose')
+      isit = index( defaultstring, dopt_verbose    ) > 0
     case ('wholearray')
       isit = index( defaultstring, dopt_wholearray ) > 0
 
@@ -3487,6 +3494,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.137  2016/04/05 23:54:57  pwagner
+! -v verbose option added; usu. will print name on each line
+!
 ! Revision 2.136  2016/03/31 22:59:03  pwagner
 ! Added dumpTextfile
 !
