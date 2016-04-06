@@ -204,6 +204,14 @@ fi
 echo $LEVEL1_BINARY_DIR/$MLSPROG_1 $EXTRA_OPTIONS "$@"
 $LEVEL1_BINARY_DIR/$MLSPROG_1 $EXTRA_OPTIONS "$@"
 return_status_1=`expr $?`
+
+if [ $return_status_1 != $NORMAL_STATUS ]
+then
+   exit 1
+else
+   return_status_1=0
+fi
+
 H5REPACK=$LEVEL1_BINARY_DIR/h5repack
 NETCDFAUGMENT=$LEVEL1_BINARY_DIR/aug_hdfeos5
 L2GPDUMP=$LEVEL1_BINARY_DIR/l2gpdump
@@ -218,13 +226,6 @@ fi
 if [ ! -x "$L2GPDUMP" ]
 then
   L2GPDUMP=$MLSTOOLS/l2gpdump
-fi
-
-if [ $return_status_1 != $NORMAL_STATUS ]
-then
-   exit 1
-else
-   return_status_1=0
 fi
 
 echo $LEVEL1_BINARY_DIR/$MLSPROG_2 $EXTRA_OPTIONS "$@"
@@ -368,6 +369,9 @@ else
 fi
 
 # $Log$
+# Revision 1.8  2013/11/23 00:59:41  pwagner
+# Hide product files if number of profiles too many or too few
+#
 # Revision 1.7  2013/09/06 16:39:15  pwagner
 # Replaced '--cat' cmdline option; 'Catenate' now an Output section command
 #
