@@ -32,9 +32,10 @@ PROGRAM L2GPDump ! dumps L2GPData files
    use MLSHdfeos, only: MLS_isglatt, he5_ehrdglatt
    use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning, &
      & MLSMessage
-   use MLSStringLists, only: catlists, expandstringrange, &
-     & getstringelement, Intersection, numstringelements, readintsfromlist, &
-     & stringelement, stringelementnum
+   use MLSStats1, only: StatsOnOneLine
+   use MLSStringLists, only: catLists, expandStringRange, &
+     & getStringElement, Intersection, numStringElements, readIntsFromList, &
+     & stringElement, stringElementNum
    use MLSStrings, only: lowercase, readnumsfromchars
    use output_m, only: blanks, newline, output, &
      & resumeoutput, suspendoutput
@@ -67,6 +68,7 @@ PROGRAM L2GPDump ! dumps L2GPData files
      real, dimension(2)  :: hoursRange = 0.
      logical ::             debug = .true.
      logical ::             verbose = .false.
+     logical ::             oneLine = .false.         ! Print on one line
      logical ::             senseInquiry = .true.
      logical ::             anyNaNs = .false. ! Just say if any NaNs
      integer ::             details = 1
@@ -183,6 +185,10 @@ contains
         options%attributesToo = .true.
       elseif ( filename(1:3) == '-c ' ) then
         options%columnsOnly = .true.
+      elseif ( filename(1:4) == '-one' ) then
+        options%oneLine = .true.
+        statsOnOneLine = .true.
+        options%dumpOptions = trim(options%dumpOptions) // 'v'
       else if ( filename(1:6) == '-chunk' ) then
         call getarg ( i+1+hp, options%chunks )
         i = i + 1
@@ -215,7 +221,8 @@ contains
         call getarg ( i+1+hp, options%format )
         i = i + 1
       else if ( filename(1:3) == '-d ' ) then
-        call getarg ( i+1+hp, options%dumpOptions )
+        call getarg ( i+1+hp, filename )
+        options%dumpOptions = trim(options%dumpOptions) // filename
         if ( index( options%dumpOptions, '?' ) > 0 ) then
           call DumpDumpOptions( "?" )
           stop
@@ -317,6 +324,7 @@ contains
       write (*,*) ' -d opts     => pass opts to dump routines'
       write (*,*) '                 e.g., "-rs" to dump only rms, stats'
       write (*,*) '                 e.g., "?" to list available opts'
+      write (*,*) ' -one        => print statistics on one line (dont)'
       write (*,*) ' -format form=> format output using form'
       write (*,*) ' -[n]inqattr attr'
       write (*,*) '             => print only if attribute attr [not] present'
@@ -656,6 +664,7 @@ contains
      integer                         :: nChunks
      ! Dump the actual swath
      if ( options%verbose ) print *, 'swath: ', trim(swath)
+     if ( options%verbose ) print *, 'dumpOptions: ', trim(options%dumpOptions)
      if ( options%nGeoBoxDims > 0 ) then
        call dumpRange( l2gp, &
          & options%geoBoxNames, options%geoBoxLowBound, options%geoBoxHiBound, &
@@ -763,6 +772,9 @@ end program L2GPDump
 !==================
 
 ! $Log$
+! Revision 1.20  2016/01/22 00:38:40  pwagner
+! May use wildcard as part of swath names
+!
 ! Revision 1.19  2015/01/30 21:05:34  pwagner
 ! Added commandline option to detect NaNs in l2gp files
 !

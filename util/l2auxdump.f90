@@ -20,7 +20,7 @@ program l2auxdump ! dumps datasets, attributes from L2AUX files
    use HDF, only: dfacc_read
    use HDF5, only: h5fis_hdf5_f, h5gclose_f, h5gopen_f
    use highoutput, only: dump
-   use l1bdata, only: l1bdata_t, namelen, precisionsuffix, &
+   use L1BData, only: L1BData_t, nameLen, precisionSuffix, &
      & deallocatel1bdata, readl1bdata
    use machine, only: hp, getarg
    use MLSCommon, only: r8
@@ -28,14 +28,15 @@ program l2auxdump ! dumps datasets, attributes from L2AUX files
      & MLS_exists, mls_sfstart, mls_sfend, &
      & HDFVersion_5, mls_hdf_version, wildcardhdfversion
    use MLSFillvalues, only: isNaN
-   use MLSHdf5, only: maxndsnames, dumphdf5attributes, dumphdf5ds, &
-     & getallhdf5attrnames, getallhdf5dsnames, &
-     & MLS_h5open, mls_h5close
+   use MLSHDF5, only: maxNDSNames, dumpHDF5Attributes, dumpHDF5DS, &
+     & getAllHDF5AttrNames, getAllHDF5DSNames, &
+     & MLS_H5Open, MLS_H5Close
    use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning, &
      & MLSMessage
-   use MLSStats1, only: fillvaluerelation, stat_t, dump, statistics
-   use MLSStringLists, only: catlists, getstringelement, Intersection, &
-     & numStringelements, stringelementnum
+   use MLSStats1, only: fillValueRelation, Stat_t, statsOnOneLine, &
+     & dump, statistics
+   use MLSStringLists, only: catlists, getStringElement, Intersection, &
+     & numStringElements, stringElementNum
    use MLSStrings, only: indexes, lowercase, streq, trim_safe
    use output_m, only: output, switchOutput
    use printit_m, only: set_config
@@ -296,6 +297,10 @@ contains
         defaultWidth = options%width
         i = i + 1
         exit
+      elseif ( filename(1:4) == '-one' ) then
+        statsOnOneLine = .true.
+        options%dumpOptions = trim(options%dumpOptions) // 'v'
+        exit
       else if ( filename(1:4) == '-fv ' ) then
         call getarg ( i+1+hp, number )
         read(number, *) options%fillValue
@@ -378,6 +383,7 @@ contains
       write (*,*) '  -o opts         => pass opts to dump routines'
       write (*,*) '                  e.g., "-rs" to dump only rms, stats'
       write (*,*) '                  e.g., "?" to list available ones'
+      write (*,*) '  -one        => print statistics on one line (dont)'
       write (*,*) '  -r root         => limit to group based at root'
       write (*,*) '                     (default is "/")'
       write (*,*) '  -rd DSName      => limit attributes to root/DSName'
@@ -625,6 +631,9 @@ end program l2auxdump
 !==================
 
 ! $Log$
+! Revision 1.21  2016/01/22 00:38:04  pwagner
+! May use wildcard as part of dataset names
+!
 ! Revision 1.20  2016/01/12 00:52:12  pwagner
 ! May override DEFAULTWIDTH when dumping char array
 !
