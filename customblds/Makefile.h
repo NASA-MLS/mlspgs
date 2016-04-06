@@ -477,8 +477,22 @@ wvs-133-fig.eps: wvs-133-fig.obj
 wvs-133-fig.pdf: wvs-133-fig.obj
 	tgif -print -pdf -page 1 -color wvs-133-fig.obj
 
+
+wvs-134.dvi: wvs-134.tex wvs-134-1.eps
+
+wvs-134.pdf: wvs-134.tex wvs-134-1.pdf
+
+wvs-134-1.eps: wvs-134-1.obj
+	tgif -print -eps -page 1 -color wvs-134-1.obj
+
+wvs-134-1.pdf: wvs-134-1.obj
+	tgif -print -pdf -page 1 -color wvs-134-1.obj
+
 endif # end shortn_name == doc
 # $Log$
+# Revision 1.20  2016/03/15 18:38:22  pwagner
+# Added wvs-133
+#
 # Revision 1.19  2015/11/18 17:45:06  pwagner
 # Now builds wvs-128.tex
 #
