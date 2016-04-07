@@ -156,7 +156,7 @@ contains
     & result( hashsize )
     use allocate_deallocate, only: deallocate_test
     use constructQuantityTemplates, only: anyGoodSignalData
-    use chunks_m, only: mlschunk_t
+    use chunks_m, only: MLSChunk_t
     use init_tables_module, only: f_signal, f_boolean
     use MLSCommon, only: mlsfile_t
     use MLSL2Options, only: runtimeValues
@@ -439,8 +439,8 @@ contains
     use MLSL2Options, only: runtimeValues
     use MLSMessagemodule, only: MLSMessage, MLSMSG_Error
     use MLSStats1, only: mlsmax, mlsmin, mlsmean, mlsmedian
-    use MLSStringLists, only: getStringElement, numStringElements, puthashelement, &
-      & replacesubstring
+    use MLSStringLists, only: getStringElement, numStringElements, &
+      & putHashElement, replaceSubstring
     use MLSStrings, only: lowercase
     use string_table, only: get_string
     use trace_m, only: trace_begin, trace_end
@@ -747,15 +747,15 @@ contains
     use dump_0, only: dump
     use init_tables_module, only: f_boolean, f_file, f_swath, f_type, &
       & l_l2dgg, l_l2gp
-    use l2gpdata, only: l2gpdata_t, rgp, l2gpnamelen, &
-      & readl2gpdata, destroyl2gpcontents
+    use L2GPData, only: L2GPData_t, rgp, L2GPNameLen, &
+      & readL2GPData, destroyL2GPContents
     use MLSCommon, only: filenamelen
     use MLSFiles, only: hdfversion_5
     use MLSHdfeos, only: mls_swath_in_file
     use MLSMessageModule, only: MLSMessage, MLSMSG_Warning
     use MLSL2Options, only: runtimeValues
-    use MLSPcf2, only: mlspcf_l2gp_end, &
-      & MLSPcf_l2gp_start, mlspcf_l2dgg_start, mlspcf_l2dgg_end
+    use MLSPCF2, only: MLSPCF_L2GP_End, MLSPCF_L2GP_Start, &
+      & MLSPCF_L2DGG_Start, MLSPCF_L2DGG_End
     use MLSStringLists, only: numStringElements, putHashElement
     use MLSStrings, only: lowercase
     use string_table, only: get_string
@@ -810,10 +810,10 @@ contains
     select case (fileType)
     case ( l_l2dgg )
       call returnFullFileName( file_base, Filename, &
-        & mlspcf_l2dgg_start, mlspcf_l2dgg_end )
+        & MLSPCF_l2dgg_start, MLSPCF_l2dgg_end )
     case ( l_l2gp )
       call returnFullFileName( file_base, Filename, &
-        & mlspcf_l2gp_start, mlspcf_l2gp_end )
+        & MLSPCF_l2gp_start, MLSPCF_l2gp_end )
     case default
       call MLSMessage( MLSMSG_Warning, ModuleName, &
       & "type should have been either l2gp or dgg; assume you meant dgg" )
@@ -2257,7 +2257,7 @@ contains
       ! Have we been commanded to stop? wait? crash?
       if ( got(f_stop) ) then
         call finish ( 'ending mlsl2' )
-        call MLSMessage( MLSMSG_Crash, moduleName, &
+        call MLSMessage( MLSMSG_Warning, moduleName, &
           & "Program stopped by /stop field on DUMP statement.")
           if ( switchDetail(switches, 'time') >= 0 ) then
             call output('(Now for the timings summary)', advance='yes')
@@ -3102,6 +3102,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.128  2016/04/07 23:40:28  pwagner
+! Should exit, not crash, if stopped by /stop flag to Execute
+!
 ! Revision 2.127  2016/04/01 00:27:41  pwagner
 ! May now Execute a single command or a script of lines from l2cf
 !
