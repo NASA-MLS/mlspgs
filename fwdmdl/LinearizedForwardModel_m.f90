@@ -135,7 +135,7 @@ contains ! =====     Public Procedures     =============================
     use TOGGLES, only: EMIT, LEVELS, SWITCHES, TOGGLE
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use VECTORSMODULE, only: ASSIGNMENT(=), OPERATOR(-), OPERATOR(+), &
-      & AREEQUAL, CLONEVECTOR,  DESTROYVECTORINFO, DUMP, &
+      & OPERATOR(/=), CLONEVECTOR,  DESTROYVECTORINFO, DUMP, &
       & GETVECTORQUANTITYINDEXBYNAME, GETVECTORQUANTITYBYTYPE, M_LINALG, &
       & VECTOR_T, VECTORVALUE_T
     use SORT_M, only: SORTP
@@ -535,12 +535,12 @@ contains ! =====     Public Procedures     =============================
       end do quantityLoop               ! End loop over quantities
 
       ! Now compute yP
-      if ( .not. areEqual(deltaX, c=0._rv) .and. EXPECTDELTAXALLZERO ) then
+      if ( (deltaX /= 0.0_rv) .and. EXPECTDELTAXALLZERO ) then
         call dump ( fmConf )
         call dump ( deltaX, name='deltaX' )
         call MLSMessage( MLSMSG_Error, ModuleName, &
           & "deltaX not all zero" )
-      endif
+      end if
 
       if ( toggle(emit) .and. levels(emit) > 8 ) then
         call dump ( deltaX, name='deltaX' )
@@ -805,6 +805,12 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.91  2015/08/25 17:24:32  vsnyder
+! PhiWindow is a tuple, with the first element specifying the angles or
+! number of profiles/MAFs before the tangent point, and the second
+! specifying the angles or number after.  Pay attention to the units of
+! PhiWindow instead of assuming it's the number of profiles.
+!
 ! Revision 2.90  2013/08/30 03:56:23  vsnyder
 ! Revise use of trace_begin and trace_end
 !
