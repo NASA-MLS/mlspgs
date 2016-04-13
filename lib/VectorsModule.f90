@@ -32,6 +32,8 @@ module VectorsModule            ! Vectors in the MLS PGS suite
 ! AddVectorToDatabase          Adds a vector to a database of such vectors
 ! AreEqual                     Check that two vectors are equal valuewise
 !                               (assumes the same template, ignores masks)
+! AreUnEqual                   Check that two vectors are unequal valuewise
+!                               (assumes the same template, ignores masks)
 ! AssignVector                 Destroy 1st arg, then assign 2nd arg to it
 ! AxPy                         Result z = A x + y
 ! CheckIntegrity_Vector
@@ -137,14 +139,16 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   implicit none
   private
   ! Generics
-  public :: Assignment (=), Multiply, operator (+), operator (-)
-  public :: operator (*), operator ( .DOT. ), operator ( .MDOT. )
+  public :: Assignment (=), AreEqual, AreUnEqual, Multiply
+  public :: operator (+), operator (-), operator (*)
+  public :: operator (==), operator (/=), operator ( .DOT. )
+  public :: operator ( .MDOT. )
   public :: DIFF, DUMP
   ! Specifics
   public :: ADDTOVECTOR, ADDVECTORS, ADDVECTORTEMPLATETODATABASE
-  public :: ADDVECTORTODATABASE, AREEQUAL, ASSIGNVECTOR, AXPY, CHECKINTEGRITY
-  public :: CHECKNAN, CHECKVECTORFORNAN, CHECKVECTORQUANTITYFORNAN
-  public :: CLEARMASK, CLEARUNDERMASK, CLEARVECTOR
+  public :: ADDVECTORTODATABASE, ASSIGNVECTOR, AXPY
+  public :: CHECKINTEGRITY, CHECKNAN, CHECKVECTORFORNAN
+  public :: CHECKVECTORQUANTITYFORNAN, CLEARMASK, CLEARUNDERMASK, CLEARVECTOR
   public :: CLONEVECTOR, CLONEVECTORQUANTITY, CONSTANTXVECTOR
   public :: CONSTRUCTVECTORTEMPLATE, COPYVECTOR, COPYVECTORMASK
   public :: CREATEMASK, CREATEVECTOR, CREATEVECTORVALUE, DESTROYVECTORDATABASE
@@ -183,6 +187,14 @@ module VectorsModule            ! Vectors in the MLS PGS suite
 
   interface Assignment (=)
     module procedure AssignVector, AssignVectorValue
+  end interface
+
+  interface AreEqual
+    module procedure AreEqual_Scalar, AreEqual_Vector
+  end interface
+
+  interface AreUnEqual
+    module procedure AreUnEqual_Scalar, AreUnEqual_Vector
   end interface
 
   interface CheckIntegrity
@@ -234,6 +246,14 @@ module VectorsModule            ! Vectors in the MLS PGS suite
 
   interface operator (*)
     module procedure ConstantXVector ! by a scalar on the left
+  end interface
+
+  interface operator (==)
+    module procedure AreEqual_Scalar, AreEqual_Vector
+  end interface
+
+  interface operator (/=)
+    module procedure AreUnEqual_Scalar, AreUnEqual_Vector
   end interface
 
   interface operator ( .DOT. )
@@ -457,42 +477,74 @@ contains ! =====     Public Procedures     =============================
     AddVectorToDatabase = newSize
   end function AddVectorToDatabase
 
-  ! ----------------------------------------  Areequal  -----
-  logical function Areequal ( A, B, C )
+  ! --------------------------------------------  AreEqual_Scalar  -----
+  logical function AreEqual_Scalar ( A, C ) result ( Equal )
 
-  ! This routine checks that all values in a vector are equal to either:
-  ! (1) values in a 2nd vector with matching quantities; or
-  ! (2) equal to a supplied scalar
+  ! This routine checks that all associated values in vector A are equal to
+  ! scalar C.
 
     ! Dummy arguments
     type (Vector_T), intent(in)           ::  A
-    type (Vector_T), intent(in), optional ::  B
     real(rv), intent(in)                  ::  C
+
+    ! Local variables
+    type (VectorValue_T), pointer :: AQ ! a quantity
+    integer :: qIndex
+    ! Executable
+    equal = .true. ! In case there are no quantities
+    do qIndex = 1, size ( a%quantities ) 
+      aq => a%quantities(qIndex)
+      if ( .not. associated(aq) ) cycle
+      equal = all(aq%values == c)
+      if ( .not. equal ) exit
+    end do
+
+  end function AreEqual_Scalar
+
+  ! --------------------------------------------  AreEqual_Vector  -----
+  logical function AreEqual_Vector ( A, B ) result ( Equal )
+
+  ! This routine checks that all associated values in vector A are equal
+  ! to corresponding values in vector B.
+
+    ! Dummy arguments
+    type (Vector_T), intent(in)           ::  A
+    type (Vector_T), intent(in)           ::  B
 
     ! Local variables
     type (VectorValue_T), pointer :: AQ ! a quantity
     type (VectorValue_T), pointer :: BQ ! a quantity
     integer :: qIndex
     ! Executable
-    Areequal = .true.
+    equal = .true. ! In case there are no quantities
 
-    if ( present(b) ) then
-      do qIndex = 1, size ( a%quantities ) 
-        aq => a%quantities(qIndex)
-        bq => b%quantities(qIndex)
-        if ( .not. associated(aq) .or. .not. associated(bq) ) cycle
-        Areequal = Areequal .and. all(aq%values == bq%values)
-        if ( .not. Areequal ) exit
-      end do
-    else
-      do qIndex = 1, size ( a%quantities ) 
-        aq => a%quantities(qIndex)
-        if ( .not. associated(aq) ) cycle
-        Areequal = Areequal .and. all(aq%values == c)
-        if ( .not. Areequal ) exit
-      end do
-    end if
-  end function Areequal
+    do qIndex = 1, size ( a%quantities ) 
+      aq => a%quantities(qIndex)
+      bq => b%quantities(qIndex)
+      equal = associated(aq) .eqv. associated(bq)
+      if ( .not. equal ) exit
+      if ( .not. associated(aq) .or. .not. associated(bq) ) cycle
+      equal = all(aq%values == bq%values)
+      if ( .not. equal ) exit
+    end do
+
+  end function AreEqual_Vector
+
+  ! ------------------------------------------  AreUnEqual_Scalar  -----
+  logical function AreUnEqual_Scalar ( A, C ) result ( UnEqual )
+    ! Dummy arguments
+    type (Vector_T), intent(in)           ::  A
+    real(rv), intent(in)                  ::  C
+    unEqual = .not. ( A == C )
+  end function AreUnEqual_Scalar
+
+  ! ------------------------------------------  AreUnEqual_Vector  -----
+  logical function AreUnEqual_Vector ( A, B ) result ( UnEqual )
+    ! Dummy arguments
+    type (Vector_T), intent(in)           ::  A
+    type (Vector_T), intent(in)           ::  B
+    unEqual = .not. ( A == B )
+  end function AreUnEqual_Vector
 
   ! -----------------------------------------------  AssignVector  -----
   subroutine AssignVector ( Z, X )
@@ -3443,6 +3495,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.203  2015/09/24 18:46:09  pwagner
+! Prevent an obscure cause of crashing when index too big in GetVectorQtyByTemplateIndex
+!
 ! Revision 2.202  2015/09/17 22:55:23  pwagner
 ! Will now complain, quit in GetVectorQtyByTemplateIndex if index too big
 !
