@@ -13,8 +13,8 @@
 \topmargin -0.5in
 \textheight 9in
 
-\newcommand{\docname}{wvs-128r3}
-\newcommand{\docdate}{17 December 2015}
+\newcommand{\docname}{wvs-128r4}
+\newcommand{\docdate}{12 April 2016}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
@@ -129,15 +129,16 @@ digits are in the representation, and thereby the resolution of the
 facet.  Using a four-bit octant number and a two-bit facet number allows
 the identifiers for facets of a mesh refined up to thirteen levels to be
 represented within a 31-bit integer.  At a refinement level of thirteen,
-the length of an edge of a facet is bounded by about 1.2 kilometers.  This
-ought to be adequate for MLS.  If not, 63-bit integers could be used,
-allowing a refinement level of 29, at which the resolution is about 4
-centimeters.
+the height of a facet (see Section \ref{four}) is bounded by about 1.2
+kilometers.  This ought to be adequate for MLS.  If not, 63-bit integers
+could be used, allowing a refinement level of 29, at which the resolution
+is about 4 centimeters.
 
 \section{ZOT projection and facet numbering}
 
 Dutton developed a simple way, called the \emph{Zenithial OrthoTriangular}
-projection, or ZOT projection, to compute positions within a QTM.
+projection, or ZOT projection, to identify facets within a QTM, and to
+compute the facets within which a position is contained.
 
 \begin{figure}[h]\label{Two}
 \hfil\includegraphics[scale=0.675]{wvs-128-QTM-2}\hfill
@@ -176,7 +177,7 @@ smaller facet.
 In the ZOT projection, every triangle in the mesh is an isosceles right
 triangle.  The right angle is called the \emph{polar angle} because it is
 always nearest one of the poles of the sphere.  One edge incident on the
-pole node is horizontal, and the other is vertical.
+pole node is horizontal in the ZOT projection, and the other is vertical.
 
 ZOT co\"ordinates are in the range $-1\cdots1$, with the north pole at
 $(0,0)$, and the south pole at $(\pm1,\pm1)$.  The mapping from longitude
@@ -281,29 +282,35 @@ $l$ used ought to be the maximum QTM refinement level, regardless of the
 level to which the mesh is actually refined.  This identification method
 works even if the mesh is not refined to the same level everywhere.
 
-\section{Using QTM in MLS}
+\section{Using QTM in MLS}\label{four}
 
-Since the linear extent of a facet is roughly 20,000/$2^l$ km, a
-refinement level of 7 (156 km or 1.4$^\circ$) would be appropriate to SMLS
-if it has roughtly the same orbit and same scan rates as Aura MLS.  A
-finer refinement might be appropriate to A-SMLS.
+Assuming the distance along a meridian between the poles is 20,000 km, the
+height of a facet at level $l$ refinement, i.e., the distance from its
+polar vertex to the opposite edge, is 20,000/$2^l$ km.  This is always
+along a meridian because the edge opposite the polar vertex is a parallel
+of latitude, as can be seen in Figure \ref{Two}.  It is the same distance
+for every facet at the same level of refinement because parallels of
+latitude at a particular level of refinement are equally spaced. 
+Therefore, a refinement level of 7 (156.25 km or $\approx1.4^\circ$) would
+be appropriate to SMLS if it has roughtly the same orbit and same scan
+rates as Aura MLS.  A finer refinement might be appropriate to A-SMLS.
 
 The {\tt mlsl2} program will not be used to retrieve atmospheric state
-over the entire Earth: At a refinement level of 7 (159 km) there would be
+over the entire Earth: At a refinement level of 7 (156 km) there would be
 16,386 profiles.  Solving for 20 quantities on 72 levels, there would be
 23,595,840 columns in the Jacobian.  Therefore, a smaller mesh will be
 constructed.  For A-SMLS, a grid could be constructed consisting of a
 swath having the instrument path along its center, and a width such that
 the longest line of sight extends to a specified altitude, say 100 km.  An
 ``interesting'' region would be defined by a polygon.  On a sphere, the
-concepts of ``inside'' and ``outside'' of a polygon are ambiguous, so an
+concepts of ``inside'' and ``outside'' a polygon are ambiguous, so an
 additional point defined to be inside the polygon is necessary.  Having
 the polygon and a point defined to be within it, determining whether
 another point is within the polygon, or constructing a set of points
 within the polygon, is not terribly difficult.  As vertices are
-identified, a hash table could be used to eliminate duplicates.  QTM
-vertices within the interesting region of the mesh could thereby be
-given serial numbers.
+identified, a hash table is used to eliminate duplicates.  QTM vertices
+within the interesting region of the mesh are thereby given serial
+numbers.
 
 To construct and use a QTM for MLS
 
@@ -317,25 +324,29 @@ To construct and use a QTM for MLS
       in the ZOT projection along the crossed meridian to join the aliased
       points.
 
-\item Construct the QTM top down, starting with level 1.  If the facet has
-      a point in the polygon, or the polygon has a point in the facet, or
-      an edge of the polygon intersects an edge of the facet, and the
-      level of refinement is not sufficient, refine that facet.
+\item Construct the QTM top down, starting with level 1.  If a facet has a
+      point in the polygon, or the polygon has a point in that facet, or
+      an edge of the polygon intersects an edge of that facet, and the
+      level of refinement of that facet is not sufficient, refine that
+      facet.
 
 \item \label{step3} When a facet is constructed, add its vertices that are
       within the polygon to the set of vertices that are geolocations for
       the state vector.  If the facet is at the specified refinement
       level, and it has any points in the polygon, add all its points to
-      the set.  Points of the QTM that surround the polygon are in the set
-      so that it is possible to interpolate to any point within the
-      polygon or on its boundary.  Use a hash table to avoid duplicates. 
-      The serial number of a vertex is then used to compute a column
-      subscript in the Jacobian, and a subscript in the state vector.
+      the set.  Points of facets of the QTM at the finest level of
+      refinement that immediately surround the polygon are in the set so
+      that it is possible to interpolate within a facet to any point
+      within the polygon or on its boundary.  A hash table is used to
+      avoid duplicate vertices.  The serial number of a vertex is then
+      used to compute a column subscript in the Jacobian, and a subscript
+      in the state vector.
 
 \item Retain a quadtree that describes the QTM, with serial numbers of
       geolocations within the area of interest at each vertex, and zero as
       the serial number for vertices that are outside the area of
-      interest.
+      interest.  Vertices having zero for a serial number are vertices of
+      facets that are not at the finest level of refinement.
 
 \item When a value is needed at a point specified by its longitude and
       latitude, determine its ZOT co\"ordinates, and from those determine
@@ -344,8 +355,9 @@ To construct and use a QTM for MLS
       steps is proportional to the level of refinement, not the size of
       the QTM.  When the facet is found, the vertex of the QTM tree
       includes the serial numbers of its vertices, if it has any vertices
-      within the polygon, or at least one missing serial number if it has
-      any vertices not within the polygon.
+      within or immediately adjacent to the polygon, or at least one
+      missing serial number if it has any vertices not within or
+      immediately adjacent to the polygon.
 
       If the specified point is within a facet that has serial numbers for
       all its vertices, interpolate within that facet.  Otherwise use
@@ -355,7 +367,7 @@ To construct and use a QTM for MLS
       plane) for EOS MLS, our practice is to use constant extrapolation
       outside the region.  In two dimensions, a point outside the polygon
       might be close to vertices of the polygon that have different
-      values, i.e., ``constant extrapolation'' isn't uniquely defined.
+      values, i.e., ``constant extrapolation'' is not uniquely defined.
 
       If the point is not within a facet that has serial numbers for all
       its vertices, use the value on the polygon boundary that is nearest
@@ -369,7 +381,8 @@ To construct and use a QTM for MLS
       two such intersections if the polygon is not convex); otherwise, use
       the nearest vertex.  By step \ref{step3} of the construction, this
       point will be within a facet.  Interpolate within that facet to that
-      point.
+      point.  Alternatively, use the value where the line of sight
+      intersects the region of interest.
 
       Once one has identified a facet and its vertices, interpolation
       to a point within it is easy:  One computes the normalized
@@ -394,7 +407,7 @@ polygons, a slightly larger polygon that encloses the interesting points
 
 \section{Barycentric co\"ordinates and interpolation}\label{Barycentric}
 
-The unnormalized barycentric co\"ordinates $\hat\lambda_{s_i}$ of a point
+The unnormalized barycentric co\"ordinates $\hat\lambda_{s_k}$ of a point
 $(x, y)$ within a triangle having vertices $(x_{s_i}, y_{s_i})$, where $i
 \in \{1,2,3\}$ and $s_i$ is the serial number of vertex $i$ of the QTM
 facet, are
@@ -406,7 +419,7 @@ facet, are
 
 where $i$, $j$, $k$ are distinct and in $\{1,2,3\}$.  The signs depend
 upon whether the vertices are numbered in clockwise or anticlockwise
-order.  Normalized co\"ordinates $\lambda_{s_i}$ are obtained by dividing
+order.  Normalized co\"ordinates $\lambda_{s_k}$ are obtained by dividing
 the unnormalized co\"ordinates by their sum.  Therefore, it doesn't matter
 in which order the vertices are numbered.  If any normalized barycentric
 co\"ordinate is negative, the point $(x,y)$ is outside the triangle.
@@ -415,14 +428,14 @@ Assuming $(x,y)$ is within the facet, the interpolated value at $f(x,y)$
 from $\{f(x_{s_i},y_{s_i})\}$ is
 
 \begin{equation*}
-f(x,y) = \sum_{i=1}^3 \lambda_{s_i} f(x_{s_i},y_{s_i})\,.
+f(x,y) = \sum_{k=1}^3 \lambda_{s_k} f(x_{s_k},y_{s_k})\,.
 \end{equation*}
 
 The system was introduced in 1827 by August Ferdinand M{\"o}bius.
 
 Barycentric co\"ordinates can be computed using either longitude and
 latitude, or ZOT co\"ordinates, which would result in slightly different
-values for $\lambda_{s_i}$ and $f(x,y)$.
+values for $\lambda_{s_k}$ and $f(x,y)$.
 
 In MLS, for three-dimensional problems, the state vector is represented
 using a stacked and coherent grid.  That is, the same QTM is used at every
@@ -430,27 +443,35 @@ level, and the set of vertical mesh points is the same on every vertical
 line that passes through corresponding QTM vertices.  To interpolate to a
 point within the state vector, given its longitude, latitude, and
 altitude, its barycentric co\"ordinates are computed.  Let $z$ be the
-altitude of a point with $z_k \leq z \leq z_{k+1}$ and $k, k+1$ are serial
+altitude of a point with $z_h \leq z \leq z_{h+1}$ and $h, h+1$ are serial
 numbers of levels in the vertical mesh.  Using linear interpolation in the
-vertical direction, there are two weights $\mu_k =
-(z_{k+1}-z)/(z_{k+1}-z_k)$ and $\mu_{k+1} = 1 - \mu_k$.  This results in
-six interpolation weights $\eta_{s_{i}j} = \lambda_{s_i}\mu_j$ where $i
-\in \{1,2,3\}$ and $j \in \{k, k+1\}$.  In three dimensions, interpolation
+vertical direction, there are two weights $\mu_h =
+(z_{h+1}-z)/(z_{h+1}-z_h)$ and $\mu_{h+1} = 1 - \mu_h$.  This results in
+six interpolation weights $\eta_{s_{k}j} = \lambda_{s_k}\mu_j$ where $k
+\in \{1,2,3\}$ and $j \in \{h, h+1\}$.  In three dimensions, interpolation
 would therefore be
 
 \begin{equation*}
-f(x,y,z) = \sum_{i=1}^3 \sum_{j=k}^{k+1} \lambda_{s_i}\mu_j
-                                         f(x_{s_i},y_{s_i},z_j)
-         = \sum_{i=1}^3 \sum_{j=k}^{k+1} \eta_{s_{i}j}
-                                         f(x_{s_i},y_{s_i},z_j)\,,
+f(x,y,z) = \sum_{k=1}^3 \sum_{j=h}^{h+1} \lambda_{s_k}\mu_j
+                                         f(x_{s_k},y_{s_k},z_j)
+         = \sum_{k=1}^3 \sum_{j=h}^{h+1} \eta_{s_{k}j}
+                                         f(x_{s_k},y_{s_k},z_j)\,,
 \end{equation*}
 
 and
 
 \begin{equation*}
-\frac{\partial f(x,y,z)}{\partial f(x_{s_i},y_{s_i},z_j)} = \eta_{s_{i}j}
+\frac{\partial f(x,y,z)}{\partial f(x_{s_k},y_{s_k},z_j)} = \eta_{s_{k}j}
 \,.
 \end{equation*}
+
+More generally, in $n$ dimensions, if we have $n$ $n-$vectors
+$\{\mathbf{V}_i | i = 1 \cdots n \}$ and a point represented by an
+$n-$vector $\mathbf{P}$, if a set of numbers $\{\alpha_i | i = 1
+\cdots n \}$ is computed such that $\mathbf{P} = \sum_{i=1}^n \alpha_i
+\mathbf{V}_i$ and $\sum_{i=1}^n \alpha_i = 1$, then $\{\alpha_i\}$ are the
+normalized barycentric co\"ordinates of $\mathbf{P}$ with respect to
+$\{\mathbf{V}_i\}$.
 
 \label{lastpage}
 \vspace*{-0.1in} % Somehow, this causes lastpage to be defined
@@ -459,6 +480,9 @@ and
 % $Id$
 
 % $Log$
+% Revision 1.4  2016/02/05 00:26:38  vsnyder
+% Revise description of vertex numbering and construction of a polygon.
+%
 % Revision 1.3  2015/12/15 23:21:18  vsnyder
 % Revise explanation of extrapolation.  Explain meridians.  Other
 % clarifications.
