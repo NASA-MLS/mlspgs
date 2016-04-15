@@ -191,7 +191,7 @@ contains ! =========== Public procedures ===================================
 
     use allocate_deallocate, only: allocate_test
     use dump_0, only: dump
-    use HighOutput, only: outputNamedValue
+    use highOutput, only: outputNamedValue
     use L1BData, only: deallocateL1BData, L1BData_t, readL1BData, &
       & assembleL1BQtyName
     use MLSCommon, only: MLSfile_t
@@ -287,17 +287,23 @@ contains ! =========== Public procedures ===================================
       readItemName = AssembleL1BQtyName ( Name, hdfVersion, .false. )
     endif
     if ( DeeBug ) call outputnamedValue( '2nd readItemName', readItemName )
-    call ReadL1BData ( L1BFile, readItemName, l1bField, noMAFs, status )
+    ! We must not pad because that inserts unwanted Fill values 
+    ! into the l1b data fields!
+    ! Before we began using L1BGeoLocation, we used to read each
+    ! chunk's worth of l1b data by setting FirstMAF and lastMAF
+    ! which auttomatically set dontPad=.true.
+    call ReadL1BData ( L1BFile, readItemName, l1bField, noMAFs, status, &
+      & dontpad=.true. )
     if ( any(isFillValue(l1bField%dpField) ) .and. &
       & trim(readItemname) /= '/GHz/Lon') then
       call output( 'Fill values among ' // trim(readItemName), advance='yes' )
       call MLSMessage ( MLSMSG_Warning, trim(ModuleName) // 'L1BGeoLocation', &
         & 'Required monotonization' )
-      verbose = ( trim(readItemname) == '/GHz/Lon' ) 
+      verbose = ( trim(readItemname) == '/GHz/Lon' ) &
+        & .or. ( trim(readItemname) == '/GHz/GeodAngle' )
       if ( verbose ) call dump( l1bField%dpField, 'lons before monotony' )
       call Monotonize( l1bField%dpField )
       if ( verbose ) call dump( l1bField%dpField, 'lons after monotony' )
-      ! call dump( l1bField%dpField, 'l1bField%dpField' )
     endif
     noFreqs = size(l1bField%dpField,2)
     if ( present(values) ) then
@@ -381,6 +387,7 @@ contains ! =========== Public procedures ===================================
   ! Pull out just the array elements corresponding to startMAF and LastMAF
   subroutine L1BSubsample ( chunk, fullArray, fullArray2d, values, values2d )
     use allocate_deallocate, only: allocate_test
+    use highOutput, only: beVerbose, letsDebug, outputNamedValue
     use MLSCommon, only: MLSChunk_t
     use MLSKinds, only: rk => r8
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
@@ -390,11 +397,18 @@ contains ! =========== Public procedures ===================================
     real(rk), dimension(:,:), optional           :: fullArray2d
     real(rk), dimension(:), pointer, optional    :: values
     real(rk), dimension(:,:), pointer, optional  :: values2d
+    logical                                      :: verbose
     ! Local variables
     integer :: noFreqs
     integer :: noChunkMAFs
     ! Executable
+    verbose = BeVerbose( 'hgrid', -1 ) ! .or. .true.
     noChunkMAFs = chunk%lastMAFIndex - chunk%firstMAFIndex + 1
+    if ( verbose ) then
+      call outputnamedValue( 'noChunkMAFs', noChunkMAFs )
+      call outputnamedValue( '/chunk%firstMAFIndex+1, chunk%lastMAFIndex+1/', &
+        &                    (/chunk%firstMAFIndex+1, chunk%lastMAFIndex+1/) )
+    endif
     if ( present(values) ) then
       if ( .not. present(fullArray) )  &
         & call MLSMessage ( MLSMSG_Error, trim(ModuleName) // '%L1BSubsample', &
@@ -705,6 +719,9 @@ contains ! =========== Public procedures ===================================
 end module HGridsDatabase
 
 ! $Log$
+! Revision 2.25  2016/04/15 22:24:43  pwagner
+! Tried to fix latest cause of Fill Values among l1b fields
+!
 ! Revision 2.24  2016/02/26 02:05:25  vsnyder
 ! Add QTM support
 !
