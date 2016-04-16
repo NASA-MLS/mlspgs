@@ -186,13 +186,22 @@ module Geolocation_0
     generic :: Grad => Grad_Geoid     ! Unit gradient at surface
     procedure, pass(where) :: Grad_Ellipsoid => Ellipsoid_Gradient_RG
     procedure :: Grad_Geoid => Earth_Geoid_Gradient
+    procedure :: Negate => ECR_Negate
     procedure :: Norm2 => ECR_Norm2
     procedure, pass(B) :: Scale_L => ECR_Scale_L
     procedure :: Scale_R => ECR_Scale_R
     procedure :: Subtract => ECR_Subtract
-    generic :: operator(-) => Subtract
+    generic :: operator(-) => Negate, Subtract
     generic :: operator(*) => Scale_L, Scale_R
   end type ECR_t
+
+  type :: S_t        ! Descriptors of points along a line
+    real(rg) :: S    ! Distance along Line(1) in the direction of Line(2)
+  contains
+    generic :: operator (*) => Scaled_Line_L, Scaled_Line_R
+    procedure :: Scaled_Line_L            ! S_t%s * ECR_t => ECR_t
+    procedure, pass(S) :: Scaled_Line_R   ! ECR_t * S_t%s => ECR_t
+  end type S_t
 
   interface Cross
     module procedure ECR_Cross_Norm_Opt
@@ -252,6 +261,11 @@ contains
     class(ECR_t), intent(in) :: A, B
     ECR_Cross%xyz = cross(a%xyz,b%xyz)
   end function ECR_Cross
+
+  pure type(ECR_t) function ECR_Negate ( A )
+    class(ECR_t), intent(in) :: A
+    ECR_Negate%xyz = -A%xyz
+  end function ECR_Negate
 
   pure type(ECR_t) function ECR_Cross_Norm ( A, B ) result ( ECR_Cross )
     use Cross_m, only: Cross
@@ -572,6 +586,20 @@ contains
     g = GeodLat_t(geo%d)
   end function Lat_t_to_GeodLat_t
 
+  pure elemental function Scaled_Line_L ( S, Line ) result ( R )
+    class(S_t), intent(in) :: S
+    type(ECR_t), intent(in) :: Line
+    type(ECR_t) :: R ! ifort 16.0.2 rejects type decl in the function header
+    r = s%s * line
+  end function Scaled_Line_L
+
+  pure elemental function Scaled_Line_R ( Line, S ) result ( R )
+    type(ECR_t), intent(in) :: Line
+    class(S_t), intent(in) :: S
+    type(ECR_t) :: R ! ifort 16.0.2 rejects type decl in the function header
+    r = line * s%s
+  end function Scaled_Line_R
+
   pure elemental subroutine Surf_Geod_From_ECR ( ECR, Geo )
     class(ECR_t), intent(in) :: ECR
     class(h_geod), intent(out) :: Geo
@@ -638,6 +666,9 @@ contains
 end module Geolocation_0
 
 ! $Log$
+! Revision 2.10  2016/04/16 02:02:48  vsnyder
+! Add Negate, type to represent position on a line
+!
 ! Revision 2.9  2016/03/25 00:24:29  vsnyder
 ! Change type of Lon component from real(rg) to type(lon_t).  Add
 ! Div_Components binding to ECR_t and add it to Operator(/) generic.
