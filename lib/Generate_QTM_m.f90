@@ -453,8 +453,7 @@ contains
     ! is in quadrant 3 and the other in quadrant zero, we assume it goes the
     ! short way around and crosses only one.
     use Constants, only: Rad2Deg
-    use Cross_m, only: Cross
-    use Geometry, only: To_XYZ
+    use Geolocation_0, only: Cross, Dot_Product, ECR_t
     use QTM_m, only: Geo_To_ZOT, RG, ZOT_t
     type(h_t), intent(in) :: G(2)
     type(ZOT_t), intent(out) :: Z
@@ -463,11 +462,11 @@ contains
     real(rg) :: Lat
     real(rg) :: Lon(2)       ! Longitudes of end points of edge
     integer :: M             ! Longitude of crossed meridian / 90
-    real(rg) :: N(3)         ! Normal to great circle containing an edge
+    type(ECR_t) :: N         ! Normal to great circle containing an edge
     integer :: Q(2)          ! Quadrant number
-    real(rg) :: V1(3), V2(3) ! Cartesian coordinates of ends of polygon
+    type(ECR_t) :: V1, V2    ! Cartesian coordinates of ends of polygon
                              ! edge, then test vectors
-    real(rg) :: VX(3)        ! Cartesian coordinates of edge's intersection
+    type(ECR_t) :: VX        ! Cartesian coordinates of edge's intersection
                              ! with a meridian having mod(longitude,90) = 0.
     ! X(m) and Y(m) coordinates of normal to meridian M
     real, parameter :: X(0:3) = [  0, -1,  0,  1 ]
@@ -483,8 +482,8 @@ contains
     t = -abs(q(1)-q(2)) - 1
     ! Does the edge have ends in the same quadrant, or two quadrants apart?
     if ( mod(t,2) /= 0 ) return ! t = -1 or -3 => No crossing or two crossings
-    v1 = to_xyz ( g(1)%lat, g(1)%lon%d )
-    v2 = to_xyz ( g(2)%lat, g(2)%lon%d )
+    v1 = g(1)%ECR()
+    v2 = g(2)%ECR()
     n = cross ( v1, v2 ) ! Normal to circle containing G(1) and G(2)
     if ( t == -4 ) then  ! Three crossings only if Q = (3,0) or (0,3),
       m = 0              ! therefore crossing meridian 0.
@@ -495,8 +494,8 @@ contains
     end if
     t = -1               ! No crossings for now.
     ! [ x(m), y(m), 0 ] is normal to the crossed meridian
-    vx = [ -n(3)*y(m), n(3)*x(m), n(1)*y(m)- n(2)*x(m) ] ! N X E
-    lat = atan2( vx(3), abs(vx(1+mod(m,2))) )
+    vx = ECR_t([ -n%xyz(3)*y(m), n%xyz(3)*x(m), n%xyz(1)*y(m)- n%xyz(2)*x(m) ]) ! N X E
+    lat = atan2( vx%xyz(3), abs(vx%xyz(1+mod(m,2))) )
     ! If VX isn't between V1 and V2, i.e., if V1.VX < V1.V2 or V2.VX < V1.V2,
     ! assume the other crossing.
     d = dot_product(v1,v2)
@@ -589,7 +588,6 @@ contains
   end subroutine Dump_QTM
 
   subroutine Dump_QTM_Tree ( QTM_Trees, Format, LatLon, Sons )
-    use Dump_0, only: Dump
     use Output_m, only: NewLine, Output
 
     type(QTM_tree_t), intent(in) :: QTM_Trees
@@ -599,7 +597,7 @@ contains
     logical, intent(in), optional :: Sons   ! Dump sons' indices
 
     character(31) :: Fmt(2)
-    integer :: I
+    integer :: I, J
 
     fmt = [ '(f8.3)', '(f8.4)' ]
     if ( present(format) ) fmt = format
@@ -627,8 +625,19 @@ contains
       call output ( ')' )
       if ( mod(i,5) == 0 .or. i == size(QTM_Trees%polygon_ZOT) ) call newLine
     end do
-    call dump ( QTM_Trees%ignore_edge, &
-      & name='Edges on 90*n degree meridians that have antiparallel partners:' )
+    if ( allocated(QTM_Trees%ignore_edge) ) then
+      if ( size(QTM_Trees%ignore_edge) > 0 ) then
+        call output ( 'Edges on 90*n degree meridians that have antiparallel partners:', &
+          & advance='yes' )
+        do i = 1, size(QTM_Trees%ignore_edge), 20
+          call output ( i, 4, after=": " )
+          do j = i, min(i+20,size(QTM_Trees%ignore_edge))
+            call output ( QTM_Trees%ignore_edge(j), before=" " )
+          end do
+          call newLine
+        end do
+      end if
+    end if
 
     call output ( QTM_Trees%n, before='QTM tree has ' )
     call output ( ' vertices:', advance='yes' )
@@ -779,6 +788,9 @@ contains
 end module Generate_QTM_m
 
 ! $Log$
+! Revision 2.5  2016/04/16 02:01:21  vsnyder
+! Use ECR_t instead of arrays, remove dependence upon Dump_0
+!
 ! Revision 2.4  2016/03/25 00:27:35  vsnyder
 ! Lon component now needs to access its %d component.  Make Geo argument
 ! of Find_Facet_Geo polymorphic.  Simplify call to Triangle_Interpolate.
