@@ -13,6 +13,7 @@
 module QTM_Interpolation_Weights_3D_m
 !=============================================================================
 
+  use Geolocation_0, only: RG, S_t
   use QTM_Interpolation_Weights_m, only: QTM_Interpolation_Weights, Weight_t
 
   implicit NONE
@@ -22,13 +23,55 @@ module QTM_Interpolation_Weights_3D_m
   ! interpolation to get weights in 3D.  It is assumed that the 3D
   ! grid is stacked and coherent.
 
+  type, extends(S_t), public :: S_QTM_t ! Descriptors of points along a line
+                     ! through a stacked but not necessarily coherent 3D grid
+                     ! built atop a QTM surface grid.  The grid consists of
+                     ! triangular prisms resting upon the QTM.  The horizontal
+                     ! boundaries of the prisms are spherical caps.  One
+                     ! vertical face is a latitude cone; the other two are
+                     ! planes.
+  ! real(rg) :: S    ! Distance along Line(1) in the direction of Line(2);
+                     ! Inherited from parent type.
+    real(rg) :: Coeff(3) = 0.0_rg ! Horizontal interpolation coefficients.
+    integer :: Facet = 0 ! Index in Grid%QTM_Tree of QTM facet intersected at
+                     ! the point.
+    real(rg) :: H    ! Height at which the point intersects a face.  This is
+                     ! the height where the extrapolated line intersects a face
+                     ! of the QTM for points outside the QTM.
+    integer :: Face  ! Cone_Face => latitude cone face, bounded horizontally
+                     !      by two non-polar vertices of facet QID.
+                     ! X_face => vertical face bounded horizontally by the
+                     !      polar vertex and the X-node vertex of facet QID.
+                     ! Y_face => vertical face bounded horizontally by the
+                     !      polar vertex and the Y-node vertex of facet QID.
+                     ! Top_Face => horizontal face of facet QID at height
+                     !      indexed by H.
+                     ! Inside_Prism => The intersection is not with a face of a
+                     !      prism resting on the surface QTM; it is inside a
+                     !      prism resting on the surface QTM.
+                     ! If the point is outside the QTM, this will not be
+                     ! Inside_Prism; it will be whatever face the extrapolated
+                     ! line intersects.
+    integer :: N_Coeff = 0  ! How many elements of Coeff and ZOT_N are used.
+    integer :: ZOT_N(3) = 0 ! Serial numbers of ZOT coordinates, see QTM_Node_t
+                     ! in the Generate_QTM_m module.
+  end type S_QTM_t
+
+  integer, parameter, public :: Cone_Face = 0
+  integer, parameter, public :: X_face = cone_face + 1
+  integer, parameter, public :: Y_face = x_face + 1
+  integer, parameter, public :: Top_Face = y_face + 1
+  integer, parameter, public :: Inside_Prism = top_face + 1
+
   public :: QTM_Interpolation_Weights, Weight_t
 
   interface QTM_Interpolation_Weights
     module procedure &
       & QTM_Interpolation_Weights_Geo_3D, &
       & QTM_Interpolation_Weights_Geo_3D_Incoherent, &
+      & QTM_Interpolation_Weights_Geo_3D_Incoherent_Line, &
       & QTM_Interpolation_Weights_Geo_3D_Incoherent_List, &
+      & QTM_Interpolation_Weights_Geo_3D_Line, &
       & QTM_Interpolation_Weights_Geo_3D_List
   end interface QTM_Interpolation_Weights
 
@@ -51,7 +94,7 @@ contains
 
     use Array_Stuff, only: Element_Position
     use Generate_QTM_m, only: QTM_Tree_t
-    use Geolocation_0, only: H_t, H_V_t, RG
+    use Geolocation_0, only: H_t, H_V_t
     use Hunt_m, only: Hunt
     use QTM_m, only: QK, Stack_t
 
@@ -138,7 +181,7 @@ contains
 
     use Array_Stuff, only: Element_Position
     use Generate_QTM_m, only: QTM_Tree_t
-    use Geolocation_0, only: H_t, H_V_t, RG
+    use Geolocation_0, only: H_t, H_V_t
     use Hunt_m, only: Hunt
     use QTM_m, only: QK, Stack_t
 
@@ -223,6 +266,95 @@ contains
 
   end subroutine QTM_Interpolation_Weights_Geo_3D_Incoherent
 
+  subroutine QTM_Interpolation_Weights_Geo_3D_Incoherent_Line ( QTM_Tree, &
+                         & Heights, Line, Points, Weights, N_Weights )
+
+    ! Construct interpolation weights and positions for a point in a 3D grid
+    ! for which the horizontal grid is QTM.  The 3D grid is assumed to be
+    ! stacked but not necessarily coherent.  The positions are array element
+    ! order positions, which can be converted to 2D subscripts (QTM serial
+    ! number, height) by the Subscripts function in the Array_Stuff module.
+    ! The points are described by Line, which consists of a vector in ECR to
+    ! a point on a line and an unit vector along the line, and Points, which
+    ! describe distances along that line and how the line intersects a prism
+    ! of a QTM-based grid (or not).
+
+    use Array_Stuff, only: Element_Position
+    use Generate_QTM_m, only: QTM_Tree_t
+    use Geolocation_0, only: ECR_t, H_V_Geod
+
+    type(QTM_tree_t), intent(in) :: QTM_Tree
+    real(rg), intent(in) :: Heights(:,:) ! Extents are (heights, QTM_Tree%N_In)
+                                         ! Assume Heights and QTM_Tree came from
+                                         ! the same Geolocation_t structure
+                                         ! (see Geolocation_m).
+    type(ECR_t), intent(in) :: Line(2)   ! Vector to a point on the line,
+                                         ! vector along the line.
+    type(S_QTM_t), intent(in) :: Points(:) ! Points along Line
+    type(weight_t), intent(out) :: Weights(6,size(points))
+    integer, intent(out) :: N_Weights(size(points)) ! Number of nonzero weights
+
+    type(H_V_Geod) :: G                  ! Geodetic coordinate of Points(i)
+    integer :: I, J
+    integer :: Jlo, Jhi                  ! Indices of H[pxy] in Heights
+    integer :: Nh                        ! Number of heights
+    integer :: NQ                        ! Number of QTM vertices
+    type(ECR_t) :: P                     ! ECR coordinate of Points(i)
+    real(rg) :: W(2,2)                   ! Interpolation weights
+
+    if ( size(heights,2) == 1 ) then ! Coherent heights
+      call QTM_Interpolation_Weights ( QTM_Tree, Heights(:,1), &
+                                     & Line, Points, Weights, N_Weights )
+      return
+    end if
+
+    nh = size(heights,1)
+    nq = size(QTM_Tree%q)
+
+    do i = 1, size(points)
+      p = line(1) + points(i)*line(2)
+      g = p%geod()
+      select case ( points(i)%face )
+      case ( cone_face, X_face, Y_face )
+        ! Interpolate in height at the X and Y, X and P, or Y and P nodes
+        ! of the QTM.
+        jlo = 1; jhi = nh
+        call weight_1d ( heights(:,points(i)%ZOT_n(1)), g%v, jlo, jhi, w(:,1) )
+        call weight_1d ( heights(:,points(i)%ZOT_n(2)), g%v, jlo, jhi, w(:,2) )
+        ! Assume that it's extremely rare to hit a vertex, so compute four
+        ! weights.
+        n_weights(i) = 4
+        weights(1:4,i)%weight = [ w(:,1)*points(i)%coeff(1), &
+                                & w(:,2)*points(i)%coeff(2) ]
+        weights(5:6,i)%weight = 0
+        weights(1:4,i)%which = &
+          & [ element_position([jlo,points(i)%ZOT_n(1)], [nh,nq]), &
+            & element_position([jhi,points(i)%ZOT_n(1)], [nh,nq]), &
+            & element_position([jlo,points(i)%ZOT_n(2)], [nh,nq]), &
+            & element_position([jhi,points(i)%ZOT_n(2)], [nh,nq]) ]
+        weights(5:6,i)%which = 0
+      case ( inside_prism ) ! Use the general method
+        call QTM_interpolation_weights ( QTM_tree, heights, g, weights(:,i), &
+                                       & n_weights(i) )
+      case ( top_face )
+        ! Don't need height interpolation, but we do need to find the index
+        ! in the heights array, because the heights array here might be a
+        ! subset of the heights array given to Metrics_3D.
+        n_weights(i) = 3
+        weights(1:3,i)%weight = points(i)%coeff(1:3)
+        weights(4:6,i)%weight = 0
+        do j = 1, 3
+          call purehunt ( points(i)%h, heights(:,points(i)%ZOT_n(j)), &
+                        & nh, jlo, jhi )
+          weights(j,i)%which = &
+            & element_position([jlo,points(i)%ZOT_n(j)], [nh,nq])
+        end do
+        weights(4:6,i)%which = 0
+      end select
+    end do
+
+  end subroutine QTM_Interpolation_Weights_Geo_3D_Incoherent_Line
+
   subroutine QTM_Interpolation_Weights_Geo_3D_Incoherent_List ( QTM_Tree, &
                          & Heights, Points, Weights, N_Weights )
 
@@ -234,7 +366,7 @@ contains
 
     use Array_Stuff, only: Element_Position
     use Generate_QTM_m, only: QTM_Tree_t
-    use Geolocation_0, only: H_V_t, RG
+    use Geolocation_0, only: H_V_t
     use Hunt_m, only: Hunt
     use QTM_m, only: QK
 
@@ -243,7 +375,7 @@ contains
                                          ! Assume Heights (meters, zeta) are
     class(h_v_t), intent(in) :: Points(:) !   the same units as for Points%V
     type(weight_t), intent(out) :: Weights(6,size(points))
-    integer :: N_Weights                 ! Number of nonzero weights
+    integer :: N_Weights(size(points))   ! Number of nonzero weights
 
     real(rg) :: dH       ! Difference in Heights coordinates
     integer :: I, Index
@@ -310,13 +442,94 @@ contains
 
       end do ! p
 
-      n_weights = count ( weights(:,i)%weight /= 0 ) 
+      n_weights(i) = count ( weights(:,i)%weight /= 0 ) 
       where ( weights(:,i)%weight == 0 ) weights(:,i)%which = 0
       weights(:,i) = pack ( weights(:,i),weights(:,i)%which /= 0 )
-      weights(n_weights+1:6,i) = weight_t(0,0)
+      weights(n_weights(i)+1:6,i) = weight_t(0,0)
     end do ! i
 
   end subroutine QTM_Interpolation_Weights_Geo_3D_Incoherent_List
+
+  subroutine QTM_Interpolation_Weights_Geo_3D_Line ( QTM_Tree, &
+                         & Heights, Line, Points, Weights, N_Weights )
+
+    ! Construct interpolation weights and positions for a point in a 3D grid
+    ! for which the horizontal grid is QTM.  The 3D grid is assumed to be
+    ! stacked and coherent.  The positions are array element order positions,
+    ! which can be converted to 2D subscripts (QTM serial number, height) by
+    ! the Subscripts function in the Array_Stuff module. The points are
+    ! described by Line, which consists of a vector in ECR to a point on a
+    ! line and an unit vector along the line, and Points, which describe
+    ! distances along that line and how the line intersects a prism of a
+    ! QTM-based grid (or not).
+
+    use Array_Stuff, only: Element_Position
+    use Generate_QTM_m, only: QTM_Tree_t
+    use Geolocation_0, only: ECR_t, H_V_Geod
+    use Hunt_m, only: PureHunt
+
+    type(QTM_tree_t), intent(in) :: QTM_Tree
+    real(rg), intent(in) :: Heights(:)   ! Assume Heights and QTM_Tree came from
+                                         ! the same Geolocation_t structure
+                                         ! (see Geolocation_m).
+    type(ECR_t), intent(in) :: Line(2)   ! Vector to a point on the line,
+                                         ! vector along the line.
+    type(S_QTM_t), intent(in) :: Points(:) ! Points along Line
+    type(weight_t), intent(out) :: Weights(6,size(points))
+    integer, intent(out) :: N_Weights(size(points)) ! Number of nonzero weights
+
+    type(h_v_geod) :: G                  ! Geodetic coordinate of Points(i)
+    integer :: I, J
+    integer :: Jlo, Jhi                  ! Indices of H[pxy] in Heights
+    integer :: Nh                        ! Number of heights
+    integer :: NQ                        ! Number of QTM vertices
+    type(ECR_t) :: P                     ! ECR coordinate of Points(i)
+    real(rg) :: W(2)                     ! Interpolation weights
+
+    nh = size(heights,1)
+    nq = size(QTM_Tree%q)
+
+    do i = 1, size(points)
+      p = line(1) + points(i)*line(2)
+      g = p%geod()
+      select case ( points(i)%face )
+      case ( cone_face, X_face, Y_face )
+        ! Interpolate in height at the X and Y, X and P, or Y and P nodes
+        ! of the QTM.
+        jlo = 1; jhi = nh
+        call weight_1d ( heights, g%v, jlo, jhi, w )
+        ! Assume that it's extremely rare to hit a vertex, so compute four
+        ! weights.
+        n_weights(i) = 4
+        weights(1:4,i)%weight = [ w*points(i)%coeff(1), &
+                                & w*points(i)%coeff(2) ]
+        weights(5:6,i)%weight = 0
+        weights(1:4,i)%which = &
+          & [ element_position([jlo,points(i)%ZOT_n(1)], [nh,nq]), &
+            & element_position([jhi,points(i)%ZOT_n(1)], [nh,nq]), &
+            & element_position([jlo,points(i)%ZOT_n(2)], [nh,nq]), &
+            & element_position([jhi,points(i)%ZOT_n(2)], [nh,nq]) ]
+        weights(5:6,i)%which = 0
+      case ( inside_prism ) ! Use the general method
+        call QTM_interpolation_weights ( QTM_tree, heights, g, weights(:,i), &
+                                       & n_weights(i) )
+      case ( top_face )
+        ! Don't need height interpolation, but we do need to find the index
+        ! in the heights array, because the heights array here might be a
+        ! subset of the heights array given to Metrics_3D.
+        n_weights(i) = 3
+        weights(1:3,i)%weight = points(i)%coeff(1:3)
+        weights(4:6,i)%weight = 0
+        do j = 1, 3
+          call purehunt ( points(i)%h, heights, nh, jlo, jhi )
+          weights(j,i)%which = &
+            & element_position([jlo,points(i)%ZOT_n(j)], [nh,nq])
+        end do
+        weights(4:6,i)%which = 0
+      end select
+    end do
+
+  end subroutine QTM_Interpolation_Weights_Geo_3D_Line
 
   subroutine QTM_Interpolation_Weights_Geo_3D_List ( QTM_Tree, Heights, Points, &
                                                    & Weights, N_Weights )
@@ -329,7 +542,7 @@ contains
 
     use Array_Stuff, only: Element_Position
     use Generate_QTM_m, only: QTM_Tree_t
-    use Geolocation_0, only: H_V_t, RG
+    use Geolocation_0, only: H_V_t
     use Hunt_m, only: Hunt
     use QTM_m, only: QK
 
@@ -337,7 +550,7 @@ contains
     real(rg), intent(in) :: Heights(:)    ! Assume Heights (meters, zeta) are
     class(h_v_t), intent(in) :: Points(:) !   the same units as for Points%V
     type(weight_t), intent(out) :: Weights(6,size(points))
-    integer :: N_Weights                  ! Number of nonzero weights
+    integer :: N_Weights(size(points))    ! Number of nonzero weights
 
     real(rg) :: dH       ! Difference in Heights coordinates
     integer :: I, Index, Indices(size(points)), J
@@ -397,13 +610,28 @@ contains
           end if
         end if
       end if
-      n_weights = count ( weights(:,i)%weight /= 0 ) 
+      n_weights(i) = count ( weights(:,i)%weight /= 0 ) 
       where ( weights(:,i)%weight == 0 ) weights(:,i)%which = 0
       weights(:,i) = pack ( weights(:,i),weights(:,i)%which /= 0 )
-      weights(n_weights+1:6,i) = weight_t(0,0)
+      weights(n_weights(i)+1:6,i) = weight_t(0,0)
     end do ! i
 
   end subroutine QTM_Interpolation_Weights_Geo_3D_List
+
+!  =====     Private Procedures     ====================================
+
+  subroutine Weight_1D ( Heights, Height, Jlo, Jhi, Weights )
+    ! Interpolate Height in Heights to calculate Weight
+    use Hunt_m, only: PureHunt
+    real(rg), intent(in) :: Heights(:)  ! Array in which to interpolate
+    real(rg), intent(in) :: Height      ! Value to which to interpolate
+    integer, intent(inout) :: Jlo, Jhi  ! Which array elements used
+    real(rg), intent(out) :: Weights(2) ! Interpolation coefficients
+    call purehunt ( height, heights, size(heights), jlo, jhi )
+    weights(1) = ( heights(jhi) - height ) / &
+               & ( heights(jhi) - heights(jlo) )
+    weights(2) = 1 - weights(1)
+  end subroutine Weight_1D
 
 !=============================================================================
 !--------------------------- end bloc --------------------------------------
@@ -419,6 +647,9 @@ contains
 end module QTM_Interpolation_Weights_3D_m
 
 ! $Log$
+! Revision 2.4  2016/04/16 02:04:06  vsnyder
+! Add S_QTM_t, routines for using positions on a line
+!
 ! Revision 2.3  2016/03/30 01:42:02  vsnyder
 ! Detect and exploit coherent heights in incoherent routine
 !
