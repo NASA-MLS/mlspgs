@@ -24,14 +24,15 @@ module L1BData
   use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
   use intrinsic, only: l_HDF
   use lexer_core, only: print_source
-  use MLSCommon, only: MLSfile_t, &
+  use MLSCommon, only: MLSFile_t, &
     & unDefinedValue, fileNameLen, nameLen
   use MLSFiles, only: filenotfound, HDFversion_4, HDFversion_5, &
     & addFileToDatabase, initializeMLSfile, &
     & MLS_openFile, MLS_closeFile
+  use MLSHDF5, only: SaveAsHDF5DS
   use MLSKinds, only: r4, r8
-  use MLSMessagemodule, only: MLSmsg_error, &
-    & MLSMsg_l1bread, MLSmsg_warning, MLSmessage
+  use MLSMessageModule, only: MLSMSG_Error, &
+    & MLSMSG_L1BRead, MLSMSG_Warning, MLSMessage
   use MLSStrings, only: indexes, streq
   use MLSStringLists, only: numStringElements, switchDetail
   use moretree, only: get_field_id
@@ -40,7 +41,7 @@ module L1BData
   use trace_m, only: trace_begin, trace_end
   use tree, only: nsons, sub_rosa, subtree, dump_tree_node, where
 
-  implicit NONE
+  implicit none
 
 ! === (start of toc) ===
 !     c o n t e n t s
@@ -66,7 +67,9 @@ module L1BData
 
 !     (subroutines and functions)
 ! AssembleL1BQtyName              Returns Quantity Name depending on hdfVersion
+! cpL1BData                       Duplicate an l1bData
 ! DeallocateL1BData               Called when an l1bData is finished with
+! dupL1BData                      Duplicate an l1bData
 ! Diff                            Diff two l1b quantities
 ! Dump                            Print facts about l1brad quantity
 ! findl1bdata                     Which file handle contains a given sd name
@@ -90,6 +93,9 @@ module L1BData
 !     (subroutines and functions)
 ! char*32 AssembleL1BQtyName (char name, int hdfVersion, log isTngtQty,
 !                         [char InstrumentName] )
+! CpL1BData ( MLSFile_t L1BFile1, MLSFile_t L1BFile2, char QuantityName, &
+!    [char NewName], [log l2aux] )
+! dupL1BData ( l1bData_T l1bData1, l1bData_T l1bData2, int offsetMAF )
 ! DeallocateL1BData (l1bData_T l1bData)
 ! Diff (l1bData_T l1bData1, l1bData_T l1bData2, int details, &
 !   [char options], [int numDiffs], [int mafStart], [int mafEnd])
@@ -107,10 +113,10 @@ module L1BData
 
   private
 
-  public :: L1BData_T, namelen, PRECISIONSUFFIX, &
-    & allocateL1BData, AssembleL1BQtyName, ContractL1BData, cpL1bData, &
-    & DeallocateL1BData, DIFF, DUMP, GetL1BFile, &
-    & FINDL1BDATA, FindMaxMAF, &
+  public :: L1BData_T, nameLen, precisionSuffix, &
+    & allocateL1BData, AssembleL1BQtyName, ContractL1BData, CpL1BData, &
+    & DeallocateL1BData, diff, dump, dupL1BData, &
+    & findL1BData, FindMaxMAF, GetL1BFile, &
     & L1BRadSetup, L1BOASetup, PadL1BData, &
     & ReadL1BAttribute, ReadL1BData
 
@@ -300,7 +306,7 @@ contains ! ============================ MODULE PROCEDURES ======================
   function AssembleL1BQtyName ( name, hdfVersion, isTngtQty, &
     & InstrumentName, dont_compress_name) &
     & result(QtyName)
-    use MLSStrings, only: COMPRESSSTRING
+    use MLSStrings, only: compressString
     ! Returns a QtyName to be found in the L1b file
     ! If given InstrumentName, name should be a fragment:
     ! e.g., name='VelECI' and InstrumentName='sc'
@@ -479,8 +485,55 @@ contains ! ============================ MODULE PROCEDURES ======================
     l1bDataOut%lastMAFCtr = maxval(l1bDataOut%counterMAF)
   end subroutine ContractL1BData
 
-  ! --------------------------------------------------  cpL1BData  -----
-  subroutine cpL1BData ( l1bData1, l1bData2, offsetMAF )
+  ! ----------------------------------------  CpL1BData  -----
+  subroutine CpL1BData ( L1BFile1, L1BFile2, QuantityName, NewName, l2aux )
+
+    use toggles, only: gen, levels, toggle
+    use trace_m, only: trace_begin, trace_end
+    ! Dummy arguments
+    type(MLSFile_T), pointer                :: L1BFile1
+    type(MLSFile_T), pointer                :: L1BFile2
+    character(len=*), intent(in)            :: quantityName ! Name of SD to cp
+    character(len=*), optional, intent(in)  :: newName
+    logical, optional, intent(in)           :: l2aux
+
+    ! Local variables
+    type(l1bdata_t)                :: L1BDATA ! Result
+    integer                        :: Me = -1 ! String index for trace
+    integer                        :: flag
+    integer                        :: noMAFs
+    character(len=256)             :: rename
+    integer                        :: status
+    ! Executable code
+    call trace_begin ( me, "CpL1BData", &
+      & cond=toggle(gen) .and. levels(gen) > 1 )
+    rename = QuantityName
+    if ( present(NewName) ) rename = NewName
+    if ( .not. associated(L1BFile1) ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'null pointer passed to readl1bdata--probably cant find ' // &
+        & trim(QuantityName) )
+    call mls_openFile ( L1BFile2, status )
+    call ReadL1BData_MLSFile ( L1BFile1, QuantityName, L1BData, noMAFs, flag, &
+      & l2aux=l2aux  )
+    if ( associated(L1BData%CharField) ) then
+      call SaveAsHDF5DS( L1BFile2%FileID%f_id, rename, &
+        & L1BData%CharField(:,:,1) )
+    endif
+    if ( associated(L1BData%DpField) ) then
+      call SaveAsHDF5DS( L1BFile2%FileID%f_id, rename, L1BData%DpField )
+    endif
+    if ( associated(L1BData%IntField) ) then
+      call SaveAsHDF5DS( L1BFile2%FileID%f_id, rename, L1BData%IntField )
+    endif
+    call deallocateL1BData ( L1BData )
+    call mls_CloseFile( L1BFile2 )
+    call trace_end ( "CpL1BData", &
+      & cond=toggle(gen) .and. levels(gen) > 1 )
+  end subroutine CpL1BData
+
+  ! --------------------------------------------------  dupL1BData  -----
+  subroutine dupL1BData ( l1bData1, l1bData2, offsetMAF )
     ! cp all components from l1bdata1 to l1bdata2
     ! increment counterMAF by offsetMAF (if present)
     type( L1BData_T ), intent(in)  :: L1bData1
@@ -501,7 +554,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     if ( associated(l1bdata1%charField) ) l1bdata2%charField=l1bdata1%charField
     if ( associated(l1bdata1%intField) ) l1bdata2%intField=l1bdata1%intField
     if ( associated(l1bdata1%dpField) ) l1bdata2%dpField=l1bdata1%dpField
-  end subroutine cpL1BData
+  end subroutine dupL1BData
 
   ! ------------------------------------------  DeallocateL1BData  -----
   subroutine DeallocateL1BData ( l1bData )
@@ -519,8 +572,8 @@ contains ! ============================ MODULE PROCEDURES ======================
   subroutine DiffL1BData ( l1bData1, l1bData2, &
     & details, options, numDiffs, mafStart, mafEnd, l1bValues1, l1bValues2, &
     & Period )
-  use MLSFillValues, only: ESSENTIALLYEQUAL
-  use MLSStrings, only: ASCIIFY, ISALLASCII
+  use MLSFillValues, only: essentiallyEqual
+  use MLSStrings, only: asciify, isAllAscii
     ! Diff two l1brad quantities
     type( L1BData_T ), intent(inout) :: L1bData1
     type( L1BData_T ), intent(inout) :: L1bData2
@@ -902,9 +955,9 @@ contains ! ============================ MODULE PROCEDURES ======================
   ! This means, e.g. if the attribute is attached to a ds, opening
   ! that ds.
   ! Afterwards we atempt to cleanup, closing the ds.
-    use MLSHDF5, only: ISHDF5ITEMPRESENT
-    use MLSFILES, only: DUMP
-    use HDF5, only: H5DOPEN_F, H5GCLOSE_F, H5GOPEN_F
+    use MLSHDF5, only: isHDF5ItemPresent
+    use MLSFiles, only: dump
+    use HDF5, only: H5DOpen_F, H5GClose_F, H5GOpen_F
 
     type (MLSFile_T), dimension(:), pointer :: FILEDATABASE
     character (len=*), intent(in)           :: fieldName ! Name of field
@@ -1039,7 +1092,7 @@ contains ! ============================ MODULE PROCEDURES ======================
   ! ------------------------------------------------  FindL1BData  -----
   integer function FindL1BData ( filedatabase, fieldName, hdfVersion )
 
-  use MLSHDF5, only: ISHDF5DSPRESENT
+  use MLSHDF5, only: isHDF5DSPresent
 
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
     ! integer, dimension(:), intent(in) :: files ! File handles
@@ -1091,7 +1144,7 @@ contains ! ============================ MODULE PROCEDURES ======================
   integer function FindMaxMAF ( files, minMAF )
   ! Find maximum MAF among files (using counterMAF arrays)
 
-  use MLSHDF5, only: ISHDF5DSPRESENT
+  use MLSHDF5, only: isHDF5DSPresent
 
     type(MLSFile_T), dimension(:), intent(in), target :: files ! File handles
     integer, optional, intent(out) :: minMAF
@@ -1161,7 +1214,7 @@ contains ! ============================ MODULE PROCEDURES ======================
   ! -------------------------------------------------  IsL1BGappy  -----
   logical function IsL1BGappy ( l1bData, ignoreGlobalAttrs )
     ! Look for gaps in l1bData, returning true if any found
-  use PCFHdr, only: GLOBALATTRIBUTES
+  use PCFHdr, only: globalAttributes
 
     ! Dummy arguments
     type (L1BData_T), intent(in) :: l1bData
@@ -1196,7 +1249,7 @@ contains ! ============================ MODULE PROCEDURES ======================
   ! -------------------------------------------------  showL1BGaps  -----
   subroutine showL1BGaps ( l1bData, ignoreGlobalAttrs )
     ! Look for gaps in l1bData, returning true if any found
-  use PCFHdr, only: GLOBALATTRIBUTES
+  use PCFHdr, only: globalAttributes
 
     ! Dummy arguments
     type (L1BData_T), intent(in) :: l1bData
@@ -1322,8 +1375,8 @@ contains ! ============================ MODULE PROCEDURES ======================
   ! ----------------------------------  ReadL1BAttribute_intarr1l  -----
   subroutine ReadL1BAttribute_intarr1 ( L1BFile, value, AttrName, Flag )
 
-    use MLSHDF5, only: ISHDF5ATTRIBUTEPRESENT, GETHDF5ATTRIBUTE
-    use HDF5, only: H5GCLOSE_F, H5GOPEN_F
+    use MLSHDF5, only: isHDF5AttributePresent, getHDF5Attribute
+    use HDF5, only: H5GClosE_F, H5GOpen_F
 
     ! Dummy arguments
     type(MLSFile_T), intent(in)            :: L1BFile
@@ -1378,8 +1431,8 @@ contains ! ============================ MODULE PROCEDURES ======================
   ! -----------------------------------  ReadL1BAttribute_dblarr1  -----
   subroutine ReadL1BAttribute_dblarr1 ( L1BFile, value, AttrName, Flag )
 
-    use MLSHDF5, only: ISHDF5ATTRIBUTEPRESENT, GETHDF5ATTRIBUTE
-    use HDF5, only: H5GCLOSE_F, H5GOPEN_F
+    use MLSHDF5, only: isHDF5AttributePresent, getHDF5Attribute
+    use HDF5, only: H5GClose_F, H5GOpen_F
 
     ! Dummy arguments
     type(MLSFile_T), intent(in)            :: L1BFile
@@ -1610,8 +1663,8 @@ contains ! ============================ MODULE PROCEDURES ======================
   ! In time we will do away with most file-handle based interfaces
   subroutine ReadL1BData_fileHandle ( L1FileHandle, QuantityName, L1bData, NoMAFs, Flag, &
     & FirstMAF, LastMAF, NEVERFAIL, hdfVersion, dontPad, L2AUX )
-    use TOGGLES, only: GEN, LEVELS, TOGGLE
-    use TRACE_M, only: TRACE_BEGIN, TRACE_END
+    use toggles, only: gen, levels, toggle
+    use trace_m, only: trace_begin, trace_end
     ! Dummy arguments
     character(len=*), intent(in)   :: QUANTITYNAME ! Name of SD to read
     integer, intent(in)            :: L1FILEHANDLE ! From HDF
@@ -1661,24 +1714,24 @@ contains ! ============================ MODULE PROCEDURES ======================
     & FirstMAF, LastMAF, NEVERFAIL, dontPad, L2AUX )
 
     use MLSFillValues, only: isFillValue
-    use PCFHdr, only: GLOBALATTRIBUTES
-    use TOGGLES, only: GEN, LEVELS, SWITCHES, TOGGLE
-    use TRACE_M, only: TRACE_BEGIN, TRACE_END
+    use PCFHdr, only: globalAttributes
+    use toggles, only: gen, levels, switches, toggle
+    use trace_m, only: trace_begin, trace_end
     ! Dummy arguments
     character(len=*), intent(in)   :: QUANTITYNAME ! Name of SD to read
     type(MLSFile_T), pointer       :: L1BFile
+    integer, intent(out)           :: FLAG        ! Error flag
+    integer, intent(out)           :: NOMAFS      ! Number actually read
     integer, intent(in), optional  :: FIRSTMAF ! First to read (default 0)
     integer, intent(in), optional  :: LASTMAF ! Last to read (default last/file)
     logical, intent(in), optional  :: NEVERFAIL ! Don't quit if TRUE
     logical, intent(in), optional  :: L2AUX     ! Don't even warn if TRUE
     type(l1bdata_t), intent(inout) :: L1BDATA ! Result
-    integer, intent(out) :: FLAG        ! Error flag
-    integer, intent(out) :: NOMAFS      ! Number actually read
     logical, intent(in), optional  :: DONTPAD ! Don't try to pad even if gappy
 
     ! Local variables
     logical :: alreadyOpen
-    logical, parameter :: DEEBug = .false.
+    logical :: DEEBug
     logical :: isScalar
     type(l1bdata_t) :: L1BDATATMP
     integer :: Me = -1                  ! String index for trace
@@ -1686,6 +1739,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     logical :: myDontPad
     integer :: returnStatus
     ! Executable code
+    DEEBug = .false. ! ( index(QuantityName, '/GHz/GeodAngle') > 0 )
     call trace_begin ( me, "ReadL1BData_MLSFile", &
       & cond=toggle(gen) .and. levels(gen) > 1 )
     if ( .not. associated(L1BFile) ) &
@@ -1747,7 +1801,7 @@ contains ! ============================ MODULE PROCEDURES ======================
       ! print *, 'max(l1bdata) ', maxval(l1bdata%dpField(1,1,:))
       ! print *, 'min(l1bdata) ', minval(l1bdata%dpField(1,1,:))
     end if
-    call cpL1bData(l1bdata, l1bdataTmp)
+    call dupL1BData(l1bdata, l1bdataTmp)
     if ( associated(l1bdatatmp%dpField) .and. DEEBug ) then
       ! print *, 'max(l1bdatatmp) ', maxval(l1bdatatmp%dpField(1,1,:))
       ! print *, 'min(l1bdatatmp) ', minval(l1bdatatmp%dpField(1,1,:))
@@ -1774,7 +1828,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     call deallocatel1bData(l1bdataTmp)
     if ( .not. present(firstMAF) .and. .not. present(lastMAF) ) go to 9
     ! Need to contract padded l1bdata to just those MAFs requested
-    call cpL1bData(l1bdata, l1bdataTmp)
+    call dupL1BData(l1bdata, l1bdataTmp)
     call deallocatel1bData(l1bdata)
     if ( DEEBug ) print *, 'preparing to contract'
     call ContractL1BData(l1bdataTmp, l1bData, noMAFs, firstMAF, lastMAF)
@@ -1788,8 +1842,8 @@ contains ! ============================ MODULE PROCEDURES ======================
   ! ----------------------------------------  ReadL1BData_MF_hdf4  -----
   subroutine ReadL1BData_MF_hdf4 ( L1BFile, QuantityName, L1bData, &
     & NoMAFs, Flag, FirstMAF, LastMAF, NEVERFAIL, L2AUX )
-    use TOGGLES, only: GEN, LEVELS, TOGGLE
-    use TRACE_M, only: TRACE_BEGIN, TRACE_END
+    use toggles, only: gen, levels, toggle
+    use trace_m, only: trace_begin, trace_end
 
     ! Dummy arguments
     character(len=*), intent(in)   :: QUANTITYNAME ! Name of SD to read
@@ -2077,7 +2131,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     & Flag, FirstMAF, LastMAF, NEVERFAIL, L2AUX )
     use Allocate_Deallocate, only: Test_Allocate
     use MLSFillValues, only: isFillValue
-    use HDF5, only: hsize_t
+    use HDF5, only: HSize_t
     use MLSHDF5, only: isHDF5DSPresent, loadFromHDF5DS, &
       & getHDF5DSRank, getHDF5DSDims, getHDF5DSQType
     use toggles, only: gen, levels, toggle
@@ -2804,6 +2858,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.107  2016/04/20 00:05:15  pwagner
+! cpL1BData now copies l1b datasets between files
+!
 ! Revision 2.106  2016/03/23 00:19:31  pwagner
 ! DiffL1BData now able to print name on each line
 !
