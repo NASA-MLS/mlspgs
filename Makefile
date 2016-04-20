@@ -235,6 +235,7 @@ SHELL = /bin/sh
 # hl             
 # init_gen       
 # killmaster     
+# l1bcat     
 # l1bdiff        
 # l1bdump
 # l1h5subset     
@@ -261,7 +262,7 @@ SHELL = /bin/sh
 # wrapLines
 # WrapList
 #
-# As a shortcut, to build them all, just eneter "make tools"
+# As a shortcut, to build them all, just enter "make tools"
 #
 #    The following are useful if you stored multiple configurations
 #     besides current one
@@ -348,9 +349,6 @@ endif
 #-----------------------
 
 # These are all the configurations that will be removed by distclean
-# EVERY_MLSCONFG = LF95.Linux  NAG.Linux  NAG.SGI  NAG.Sun  Unknown.None  Sun.Sun
-# Instead of hard-coding, as customized name are now possible for MLSCONFG
-# we will let reecho.sh find the ones we'll use
 REECHO=$(MLSBIN)/reecho.sh
 UNIQUE_NAME=$(MLSBIN)/unique_name.sh
 EVERY_MLSCONFG = $(shell ${REECHO} -d -dirn lib/machines -excl CVS -excl NAG.nogc)
@@ -747,7 +745,7 @@ install-l3d: l3 l3m
 install-l3m: l3m
 	@$(MAKE) -f $(MakeFName) install LEVELS=l3m
 
-install-nrt: install-l1 install-l2
+install-nrt: install-l1 install-l2 l2q
 	@cp $(MLSBIN)/mlsnrt*.sh $(INSTALLDIR)
 
 # For reasons not yet understood, executables built
@@ -898,6 +896,11 @@ killmaster: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/killmaster.c
       -c $(MLSCONFG) -p $@ -M $(MAKE) \
 	   -C $(MLSCFILE) $(MLSBIN)/$@.c \
       $(UTIL_OPTS) -main killmaster.c
+
+l1bcat: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/l1bcat.f90 l1--itm
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) -m lib \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
 
 l1bdiff: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/l1bdiff.f90 l1--itm
 	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
@@ -1343,7 +1346,7 @@ update:
 tools: chunktimes checkpvmup compare dateconverter extinctionmaker \
   heconvert h5subset h5cat hl Goldbrick_More \
   killmaster \
-  l1bdiff l1bdump l1h5subset \
+  l1bcat l1bdiff l1bdump l1h5subset \
   l2auxcat l2auxchi l2auxdump l2gpcat l2gpdiff l2gpdump \
   l2pcdiff l2pcdump l2q lr \
   machineok misalignment Spartacus tellMasterToQuit WordSplit wrapLines
@@ -1363,7 +1366,7 @@ tools: chunktimes checkpvmup compare dateconverter extinctionmaker \
   substar substarz substarg substars tar targ tarz update\
   checkpvmup chunktimes CondenseLeakLog end_stmts f90tex Goldbrick_More \
   heconvert h5subset h5cat hl init_gen killmaster \
-  l1bdiff l1bdump l1h5subset \
+  l1bcat l1bdiff l1bdump l1h5subset \
   l2auxcat l2auxchi l2auxdump l2gpcat l2gpdiff l2gpdump l2pcdump lr \
   machineok Mie_Tables Mie_Tables_nohdf misalignment MLS_h5ls moonscan \
   tellMasterToQuit UnwrapList utctotai \
@@ -1372,6 +1375,9 @@ tools: chunktimes checkpvmup compare dateconverter extinctionmaker \
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.13  2016/03/16 17:20:24  whdaffer
+# Added cat/touch Calibration.f9h to before/after moonscan build.
+#
 # Revision 1.12  2016/03/14 19:38:48  whdaffer
 # cat Calibration.f9h file instead of grepping
 #
