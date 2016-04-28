@@ -33,11 +33,6 @@ module QTM_Interpolation_Weights_3D_m
   ! real(rg) :: S    ! Distance along Line(1) in the direction of Line(2);
                      ! Inherited from parent type.
     real(rg) :: Coeff(3) = 0.0_rg ! Horizontal interpolation coefficients.
-    integer :: Facet = 0 ! Index in Grid%QTM_Tree of QTM facet intersected at
-                     ! the point.
-    real(rg) :: H    ! Height at which the point intersects a face.  This is
-                     ! the height where the extrapolated line intersects a face
-                     ! of the QTM for points outside the QTM.
     integer :: Face  ! Cone_Face => latitude cone face, bounded horizontally
                      !      by two non-polar vertices of facet QID.
                      ! X_face => vertical face bounded horizontally by the
@@ -49,15 +44,25 @@ module QTM_Interpolation_Weights_3D_m
                      ! Inside_Prism => The intersection is not with a face of a
                      !      prism resting on the surface QTM; it is inside a
                      !      prism resting on the surface QTM.
-                     ! If the point is outside the QTM, this will not be
+                     ! If the point is outside the QTM, this will be the
+                     ! negative of one of the above values, other than
                      ! Inside_Prism; it will be whatever face the extrapolated
-                     ! line intersects.
+                     ! line intersects.  The coordinates indexed by ZOT_N are
+                     ! those where the line intersects the QTM, not where it
+                     ! intersects a surface of a height equal to one of the
+                     ! heights in the intersection of all heights in the state
+                     ! vector.  The H component probably isn't useful.
+    integer :: Facet = 0 ! Index in Grid%QTM_Tree of QTM facet intersected at
+                     ! the point.
+    real(rg) :: H    ! Height at which the point intersects a face.  This is
+                     ! the height where the extrapolated line intersects a face
+                     ! of the QTM for points outside the QTM.
     integer :: N_Coeff = 0  ! How many elements of Coeff and ZOT_N are used.
     integer :: ZOT_N(3) = 0 ! Serial numbers of ZOT coordinates, see QTM_Node_t
                      ! in the Generate_QTM_m module.
   end type S_QTM_t
 
-  integer, parameter, public :: Cone_Face = 0
+  integer, parameter, public :: Cone_Face = 1
   integer, parameter, public :: X_face = cone_face + 1
   integer, parameter, public :: Y_face = x_face + 1
   integer, parameter, public :: Top_Face = y_face + 1
@@ -314,7 +319,7 @@ contains
     do i = 1, size(points)
       p = line(1) + points(i)*line(2)
       g = p%geod()
-      select case ( points(i)%face )
+      select case ( abs(points(i)%face) )
       case ( cone_face, X_face, Y_face )
         ! Interpolate in height at the X and Y, X and P, or Y and P nodes
         ! of the QTM.
@@ -492,7 +497,7 @@ contains
     do i = 1, size(points)
       p = line(1) + points(i)*line(2)
       g = p%geod()
-      select case ( points(i)%face )
+      select case ( abs(points(i)%face) )
       case ( cone_face, X_face, Y_face )
         ! Interpolate in height at the X and Y, X and P, or Y and P nodes
         ! of the QTM.
@@ -647,6 +652,10 @@ contains
 end module QTM_Interpolation_Weights_3D_m
 
 ! $Log$
+! Revision 2.5  2016/04/28 23:09:50  vsnyder
+! Interpret negative face number as the index of the face intersected by a
+! line segment outside the QTM.  Alphabetize components of S_QTM_t.
+!
 ! Revision 2.4  2016/04/16 02:04:06  vsnyder
 ! Add S_QTM_t, routines for using positions on a line
 !
