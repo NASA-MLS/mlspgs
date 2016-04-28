@@ -46,12 +46,13 @@ module Hydrostatic_m
 ! Inputs
 
     real(rp), intent(in) :: lat         ! geocentric latitude in radians
-    real(rp), intent(in) :: t_basis(:)  ! vertical temperature basis
+    real(rp), intent(in) :: t_basis(:)  ! vertical temperature basis, zeta
     real(rp), intent(in) :: t_coeffs(:) ! temperature values
-    real(rp), intent(in) :: z_grid(:)   ! -log10(P) pressures for which heights
-!                                         are needed
-    real(rp), intent(in) :: z_ref       ! reference pressure in -log10(P)
+    real(rp), intent(in) :: z_grid(:)   ! zeta = -log10(P) pressures for which
+!                                         heights are needed
+    real(rp), intent(in) :: z_ref       ! reference pressure in zeta = -log10(P)
     real(rp), intent(in) :: h_ref       ! reference geopotential height in km
+
 ! Outputs
 
     real(rp), intent(out) :: t_grid(:)  ! temperatures on z_grid
@@ -93,10 +94,10 @@ module Hydrostatic_m
     where ( z_grid > 2.5_rp )
 !     mass_corr = 1.0_rp / (0.875_rp + 0.1_rp*z_grid - 0.02_rp*z_grid**2)
 
-!{A series expansion about z\_grid = 5/2 of
-! $\frac1{\frac78 + \frac1{10}z - \frac1{50}z^2}$ is
-! $\sum_{k=0}^{\infty} \left( \frac{(z-\frac52)^2}{50}\right)^k$.  Use the
-! first two terms.
+!{ A series expansion about z\_grid = 5/2 of
+!  $\frac1{\frac78 + \frac1{10}z - \frac1{50}z^2}$ is
+!  $\sum_{k=0}^{\infty} \left( \frac{(z-\frac52)^2}{50}\right)^k$.  Use the
+!  first two terms.
       mass_corr = 1.0_rp + 0.02_rp*(z_grid - 2.5_rp)**2
     elsewhere
       mass_corr = 1.0_rp
@@ -106,7 +107,10 @@ module Hydrostatic_m
     call get_eta_sparse ( t_basis, z_grid, eta )
     t_grid = matmul(eta,t_coeffs)
 
-! compute surface acceleration and effective earth radius
+!{ Compute surface acceleration and effective earth radius.  First,
+!  evaluate the Legendre polynomials $P_2(\sin\lambda) = \frac32 \sin^2\lambda
+!  - \frac12$ and $P_4(\sin\lambda) = \frac{35}8 \sin^4\lambda
+!  - \frac{15}4 \sin^2\lambda + \frac38$.
 
     slsq = sin(lat) ** 2
     clsq = 1.0_rp - slsq
@@ -116,7 +120,7 @@ module Hydrostatic_m
 !   dp4 = 2.5_rp * sl * cl * ( 7.0_rp * slsq - 3.0_rp )
 
 !{ Compute radius at geoid having potential = $W_0$ (see Geometry module):
-!  $r_e^2 = \frac{a^2 b^2}{a^2 \sin^2 \beta + b^2 \cos^2 \beta}$ in meters.
+!  $r_e^2 = \frac{a^2 b^2}{a^2 \sin^2 \lambda + b^2 \cos^2 \lambda}$ in meters.
 !  First compute $r_e^{-2}$ in $m^{-2}$.  The parenthesization used here
 !  avoids potential overflow; $a^2 b^2 \approx 1.64 \times 10^{27}$, but
 !  the inner factor is $\approx 1$ and $a^2 \approx 4 \times 10^{13}$.
@@ -125,12 +129,12 @@ module Hydrostatic_m
 
     r_e = sqrt(1.0_rp / r_eisq) ! in meters
 
-!{ Radial surface acceleration at latitude $\beta$, k$m/s^2$:
+!{ Radial surface acceleration at latitude $\lambda$, k$m/s^2$:
 !  \begin{equation*}
 !   g_{\text{ref}} = 0.001 \left ( G m
-!                     \frac{1 - 3 J_2 P_2(\sin \beta)
-!                       (a/r_e)^2 - 5 J_4 P_4(\sin \beta) (a/r_e)^4 }{r_e^2}
-!                       - \omega^2 \cos^2 \beta \, r_e \right )
+!                     \frac{1 - 3 J_2 P_2(\sin \lambda)
+!                       (a/r_e)^2 - 5 J_4 P_4(\sin \lambda) (a/r_e)^4 }{r_e^2}
+!                       - \omega^2 \cos^2 \lambda \, r_e \right )
 !  \end{equation*}
 
     g_ref = 0.001_rp * (gm * (1.0_rp - 3.0_rp*j2*p2*eRadAsq*r_eisq &
@@ -141,9 +145,9 @@ module Hydrostatic_m
 !  \begin{equation*}
 !   r_{\text{eff}} =
 !    \frac{2\, g_{\text{ref}}}
-!         { 2\, G m \frac{1 - 6 J_2 P_2 (\sin \beta) (a/r_e)^2
-!                         - 15 J_4 P_4 (\sin \beta) (a/r_e)^4}{r_e^3}
-!                          + \omega^2 \cos^2 \beta }
+!         { 2\, G m \frac{1 - 6 J_2 P_2 (\sin \lambda) (a/r_e)^2
+!                         - 15 J_4 P_4 (\sin \lambda) (a/r_e)^4}{r_e^3}
+!                          + \omega^2 \cos^2 \lambda }
 !  \end{equation*}
 !  $d g_{\text{ref}} / d r$ has units $s^{-2}$, because we compute
 !  $d g_{\text{ref}}(\text{meters}) / d r$(meters), thereby canceling
@@ -181,8 +185,8 @@ module Hydrostatic_m
 
     if (present(z_surface)) z_surface = z_surf
 
-! compute the piq integrals with mass reduction compensation relative to the
-! surface
+!{ Compute the {\tt piq} integrals with mass reduction compensation relative to the
+!  surface.  Here, {\tt piq} = $P_l(\zeta) = P(\zeta_l,\phi_m)$.
 
     call piq_int ( z_grid,t_basis,z_surf,piq,Z_MASS=2.5_rp,C_MASS=0.02_rp )
 
@@ -193,22 +197,22 @@ module Hydrostatic_m
 !{ Equation (5.27) in the 19 August 2004 ATBD is
 !  \begin{equation*}
 !   h(\zeta,\phi) =
-!    \frac{g_0 \stackrel{\star}{R_0}^2}
+!    \frac{g_0 \stackrel{\star}{R_0^2}}
 !         {g_0 \stackrel{\star}{R_0} - k\, \ln 10
-!          \sum_l^{\text{NH}^T} \sum_m^{\text{NP}^T}
-!           ( f^T_{lm} \eta^T_m(\phi) P_l)}
+!          \sum_{l=1}^{\text{NH}^T} \sum_{m=1}^{\text{NP}^T}
+!           ( f^T_{lm} \eta^T_m(\phi) P_l(\zeta))}
 !    -\stackrel{\star}{R_0} + R_0 - R^\oplus
 !  \end{equation*}
 !  The last two terms, i.e., $R_0-R^\oplus$, are handled in {\tt metrics}.
-!  Putting the remainder over a common denominator, we have
+!  Putting what remains over a common denominator, we have
 !  \begin{equation*}
 !   h(\zeta,\phi) =
 !    \frac{\stackrel{\star}{R_0} k \, \ln10
-!          \sum_l^{\text{NH}^T} \sum_m^{\text{NP}^T}
-!          ( f^T_{lm} \eta^T_m(\phi) P_l)}
+!          \sum_{l=1}^{\text{NH}^T} \sum_{m=1}^{\text{NP}^T}
+!          ( f^T_{lm} \eta^T_m(\phi) P_l(\zeta))}
 !         {g_0 \stackrel{\star}{R_0} - k \, \ln10
-!          \sum_l^{\text{NH}^T} \sum_m^{\text{NP}^T}
-!          ( f^T_{lm} \eta^T_m(\phi) P_l)}
+!          \sum_{l=1}^{\text{NH}^T} \sum_{m=1}^{\text{NP}^T}
+!          ( f^T_{lm} \eta^T_m(\phi) P_l(\zeta))}
 !  \end{equation*}
 !  Notice that $g_0$ here is not the average or equatorial surface
 !  acceleration.  Rather, it is $g_\text{ref}$, which is corrected for
@@ -216,9 +220,53 @@ module Hydrostatic_m
 !  centripetal acceleration.
     h_grid = boltz * matmul(piq,t_coeffs)
     h_grid = r_eff * h_grid / (r_eff * g_ref - h_grid)
+
+!{ \begin{equation*}
+!  \frac1{h(\zeta,\phi)^2} \frac{\text{d}h(\zeta,\phi)}{\text{d}\zeta} =
+!  \frac{k \ln 10}{g_0 \stackrel{\star}{R_0^2}}
+!   \sum_{l=1}^{\text{NH}^T} \sum_{m=1}^{\text{NP}^T} f^T_{lm} \eta^T_m(\phi)
+!    \frac{\partial P_l(\zeta)}{\partial \zeta}\,.
+!  \end{equation*}
+!
+!  Because
+!  \begin{equation*}
+!  P_l(\zeta) = \int_{\zeta_0}^\zeta \frac{\eta^T_l(z)}{\mathcal{M}(z)}
+!                 \text{d}z\,\text{, then }
+!  \frac{\partial P_l(\zeta)}{\partial \zeta} =
+!  \frac{\eta^T_l(\zeta)}{\mathcal{M}(\zeta)}\, \text{. Therefore,}
+!  \end{equation*}
+!  \begin{equation*}
+!  \frac1{h(\zeta,\phi)^2} \frac{\partial h(\zeta,\phi)}{\partial \zeta} =
+!  \frac{k \ln 10}{g_0 \stackrel{\star}{R_0^2}}
+!  \frac1{\mathcal{M}(\zeta)} \left(
+!   \sum_{l=1}^{\text{NH}^T} \sum_{m=1}^{\text{NP}^T} f^T_{lm} \eta^T_m(\phi)
+!    \eta^T_l(\zeta) \right)\,.
+!  \end{equation*}
+!  The factor in parentheses is simply $T(\zeta,\phi)$.  Therefore,
+!  \begin{equation*}
+!  \frac1{h(\zeta,\phi)^2} \frac{\partial h(\zeta,\phi)}{\partial \zeta} =
+!  \frac{k \ln 10}{g_0 \stackrel{\star}{R_0^2}}
+!  \frac{T(\zeta,\phi)}{\mathcal{M}(\zeta)}\,.
+!  \end{equation*}
+!  The variable {\tt Boltz} is $k \ln 10$.  Therefore
+!  \begin{equation*}
+!  \frac{\partial h(\zeta,\phi)}{\partial \zeta} = \left(
+!  h(\zeta,\phi)^2\, \frac{\text{\tt Boltz}}{g_0 \stackrel{\star}{R_0^2}}
+!  \right) \,\frac{T(\zeta,\phi)}{\mathcal{M}(\zeta)}\,.
+!  \end{equation*}
+!  At first, {\tt dhidzi} is only the factor in parentheses, which is
+!  used to compute {\tt dhidtq}.
+
     dhidzi = (h_grid+r_eff)**2 * boltz / (g_ref * r_eff**2)
 
     if ( present(dhidtq) ) then
+
+!{ \begin{equation*}
+!  \frac{\partial h(\zeta,\phi)}{\partial f^T_{lm}} =
+!  h(\zeta,\phi)^2\, \frac{\text{\tt Boltz}}{g_0 \stackrel{\star}{R_0^2}}
+!  \sum_{l=1}^{\text{NH}^T} \sum_{m=1}^{\text{NP}^T} P_l(\zeta) \eta^T_m(\phi)
+!  \end{equation*}
+
       dhidtq = spread(dhidzi,2,n_coeffs) * piq
 ! this derivative is useful for antenna derivatives
       if ( present(ddhdhdtq) ) &
@@ -226,7 +274,27 @@ module Hydrostatic_m
                  & + eta / spread(t_grid,2,n_coeffs)
     end if
 
+!{ \begin{equation*}
+!  \frac{\partial h_{lm}}{\partial \zeta_{\,l}} =
+!  h(\zeta_{\,l},\phi_m)^2\, \frac{\text{\tt Boltz}}{g_0 \stackrel{\star}{R_0^2}}
+!  \frac{f^T_{lm}}{\mathcal{M}(\zeta_{\,l})}\,.
+!  \end{equation*}
+
     dhidzi = dhidzi * t_grid * mass_corr
+
+!{ If we ever need it:
+!  \begin{equation*}\begin{split}
+!  \frac{\partial^2 h_{lm}}{\partial \zeta_l \partial f^T_{lm}} = \,&
+!  2 h(\zeta_{\,l},\phi_m) \frac{\partial h_{lm}}{\partial \zeta_{\,l}}
+!  \text{\tt Boltz} \frac{T_{lm}}{\mathcal{M}(\zeta_{\,l})} +
+!  h(\zeta_{\,l},\phi_m)^2\, \frac{\partial T(\zeta,\phi)}{\partial f^T_{lm}}
+!  \text{\tt boltz}\,\frac1{\mathcal{M}(\zeta_{\,l})} \\
+!  = \,&
+!  2 h(\zeta_{\,l},\phi_m) \frac{\partial h_{lm}}{\partial \zeta_{\,l}}
+!  \text{\tt Boltz} \frac{T_{lm}}{\mathcal{M}(\zeta_{\,l})} +
+!  h(\zeta_{\,l},\phi_m)^2\, \text{\tt boltz}\,
+!   \frac{\eta^T_{lm}}{\mathcal{M}(\zeta_{\,l})} \\
+!  \end{split}\end{equation*}
 
     call trace_end ( 'Hydrostatic_All', &
       & cond=toggle(emit) .and. levels(emit) > 2 )
@@ -248,12 +316,13 @@ module Hydrostatic_m
 ! Inputs
 
     real(rp), intent(in) :: lat         ! geocentric latitude in radians
-    real(rp), intent(in) :: t_basis(:)  ! vertical temperature basis
+    real(rp), intent(in) :: t_basis(:)  ! vertical temperature basis, zeta
     real(rp), intent(in) :: t_coeffs(:) ! temperature values
-    real(rp), intent(in) :: z_grid(:)   ! -log10(P) pressures for which heights
-!                                         are needed
-    real(rp), intent(in) :: z_ref       ! reference pressure in -log10(P)
+    real(rp), intent(in) :: z_grid(:)   ! zeta = -log10(P) pressures for which
+!                                         heights are needed
+    real(rp), intent(in) :: z_ref       ! reference pressure in zeta = -log10(P)
     real(rp), intent(in) :: h_ref       ! reference geopotential height in km
+
 ! Outputs
 
     real(rp), intent(out) :: h_grid(:)  ! heights on z_grid (km)
@@ -281,16 +350,20 @@ module Hydrostatic_m
 !     where ( z_grid > 2.5_rp )
 ! !     mass_corr = 1.0_rp / (0.875_rp + 0.1_rp*z_grid - 0.02_rp*z_grid**2)
 
-! !{A series expansion about z\_grid = 5/2 of
-! ! $\frac1{\frac78 + \frac1{10}z - \frac1{50}z^2}$ is
-! ! $\sum_{k=0}^{\infty} \left( \frac{(z-\frac52)^2}{50}\right)^k$.  Use the
-! ! first two terms.
+!{ A series expansion about z\_grid = 5/2 of
+!  $\frac1{\frac78 + \frac1{10}z - \frac1{50}z^2}$ is
+!  $\sum_{k=0}^{\infty} \left( \frac{(z-\frac52)^2}{50}\right)^k$.  Use the
+!  first two terms.
+
 !       mass_corr = 1.0_rp + 0.02_rp*(z_grid - 2.5_rp)**2
 !     elsewhere
 !       mass_corr = 1.0_rp
 !     end where
 
-! compute surface acceleration and effective earth radius
+!{ Compute surface acceleration and effective earth radius.  First,
+!  evaluate the Legendre polynomials $P_2(\sin\lambda) = \frac32 \sin^2\lambda
+!  - \frac12$ and $P_4(\sin\lambda) = \frac{35}8 \sin^4\lambda
+!  - \frac{15}4 \sin^2\lambda + \frac38$.
 
     slsq = sin(lat) ** 2
     clsq = 1.0_rp - slsq
@@ -300,7 +373,7 @@ module Hydrostatic_m
 !   dp4 = 2.5_rp * sl * cl * ( 7.0_rp * slsq - 3.0_rp )
 
 !{ Compute radius at geoid having potential = $W_0$ (see Geometry module):
-!  $r_e^2 = \frac{a^2 b^2}{a^2 \sin^2 \beta + b^2 \cos^2 \beta}$ in meters.
+!  $r_e^2 = \frac{a^2 b^2}{a^2 \sin^2 \lambda + b^2 \cos^2 \lambda}$ in meters.
 !  First compute $r_e^{-2}$ in $m^{-2}$.  The parenthesization used here
 !  avoids potential overflow; $a^2 b^2 \approx 1.64 \times 10^{27}$, but
 !  the inner factor is $\approx 1$ and $a^2 \approx 4 \times 10^{13}$.
@@ -309,12 +382,12 @@ module Hydrostatic_m
 
     r_e = sqrt(1.0_rp / r_eisq) ! in meters
 
-!{ Radial surface acceleration at latitude $\beta$, k$m/s^2$:
+!{ Radial surface acceleration at latitude $\lambda$, k$m/s^2$:
 !  \begin{equation*}
 !   g_{\text{ref}} = 0.001 \left ( G m
-!                     \frac{1 - 3 J_2 P_2(\sin \beta)
-!                       (a/r_e)^2 - 5 J_4 P_4(\sin \beta) (a/r_e)^4 }{r_e^2}
-!                       - \omega^2 \cos^2 \beta \, r_e \right )
+!                     \frac{1 - 3 J_2 P_2(\sin \lambda)
+!                       (a/r_e)^2 - 5 J_4 P_4(\sin \lambda) (a/r_e)^4 }{r_e^2}
+!                       - \omega^2 \cos^2 \lambda \, r_e \right )
 !  \end{equation*}
 
     g_ref = 0.001_rp * (gm * (1.0_rp - 3.0_rp*j2*p2*eRadAsq*r_eisq &
@@ -325,9 +398,9 @@ module Hydrostatic_m
 !  \begin{equation*}
 !   r_{\text{eff}} =
 !    \frac{2\, g_{\text{ref}}}
-!         { 2\, G m \frac{1 - 6 J_2 P_2 (\sin \beta) (a/r_e)^2
-!                         - 15 J_4 P_4 (\sin \beta) (a/r_e)^4}{r_e^3}
-!                          + \omega^2 \cos^2 \beta }
+!         { 2\, G m \frac{1 - 6 J_2 P_2 (\sin \lambda) (a/r_e)^2
+!                         - 15 J_4 P_4 (\sin \lambda) (a/r_e)^4}{r_e^3}
+!                          + \omega^2 \cos^2 \lambda }
 !  \end{equation*}
 !  $d g_{\text{ref}} / d r$ has units $s^{-2}$, because we compute
 !  $d g_{\text{ref}}(\text{meters}) / d r$(meters), thereby canceling
@@ -363,8 +436,8 @@ module Hydrostatic_m
 
     end do
 
-! compute the piq integrals with mass reduction compensation relative to the
-! surface
+!{ Compute the {\tt piq} integrals with mass reduction compensation relative to the
+!  surface.  Here, {\tt piq} = $P_l(\zeta) = P(\zeta_l,\phi_m)$.
 
     call piq_int ( z_grid,t_basis,z_surf,piq,Z_MASS=2.5_rp,C_MASS=0.02_rp )
 
@@ -376,22 +449,22 @@ module Hydrostatic_m
 !{ Equation (5.27) in the 19 August 2004 ATBD is
 !  \begin{equation*}
 !   h(\zeta,\phi) =
-!    \frac{g_0 \stackrel{\star}{R_0}^2}
+!    \frac{g_0 \stackrel{\star}{R_0^2}}
 !         {g_0 \stackrel{\star}{R_0} - k\, \ln 10
-!          \sum_l^{\text{NH}^T} \sum_m^{\text{NP}^T}
-!           ( f^T_{lm} \eta^T_m(\phi) P_l)}
+!          \sum_{l=1}^{\text{NH}^T} \sum_{m=1}^{\text{NP}^T}
+!           ( f^T_{lm} \eta^T_m(\phi) P_l(\zeta))}
 !    -\stackrel{\star}{R_0} + R_0 - R^\oplus
 !  \end{equation*}
 !  The last two terms, i.e., $R_0-R^\oplus$, are handled in {\tt metrics}.
-!  Putting the remainder over a common denominator, we have
+!  Putting what remains over a common denominator, we have
 !  \begin{equation*}
 !   h(\zeta,\phi) =
 !    \frac{\stackrel{\star}{R_0} k \, \ln10
-!          \sum_l^{\text{NH}^T} \sum_m^{\text{NP}^T}
-!          ( f^T_{lm} \eta^T_m(\phi) P_l)}
+!          \sum_{l=1}^{\text{NH}^T} \sum_{m=1}^{\text{NP}^T}
+!          ( f^T_{lm} \eta^T_m(\phi) P_l(\zeta))}
 !         {g_0 \stackrel{\star}{R_0} - k \, \ln10
-!          \sum_l^{\text{NH}^T} \sum_m^{\text{NP}^T}
-!          ( f^T_{lm} \eta^T_m(\phi) P_l)}
+!          \sum_{l=1}^{\text{NH}^T} \sum_{m=1}^{\text{NP}^T}
+!          ( f^T_{lm} \eta^T_m(\phi) P_l(\zeta))}
 !  \end{equation*}
 !  Notice that $g_0$ here is not the average or equatorial surface
 !  acceleration.  Rather, it is $g_\text{ref}$, which is corrected for
@@ -415,6 +488,9 @@ module Hydrostatic_m
 end module Hydrostatic_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.25  2015/04/11 00:45:03  vsnyder
+! Add units (km) in h_grid comment
+!
 ! Revision 2.24  2014/09/05 21:12:31  vsnyder
 ! Get kinds from MLSKinds instead of MLSCommon.  Add more tracing.
 !
