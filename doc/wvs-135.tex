@@ -12,8 +12,8 @@
 \topmargin -0.5in
 \textheight 9in
 
-\newcommand{\docname}{wvs-135}
-\newcommand{\docdate}{8 April 2016}
+\newcommand{\docname}{wvs-135r1}
+\newcommand{\docdate}{28 April 2016}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
@@ -73,14 +73,22 @@
 \vspace{-10pt}
 \begin{tabbing}
 \phantom{References: }\= \\
-To: \>Nathaniel\\
-Subject: \>Outline of 3-dimensional forward model\\
+To: \>Nathaniel, Bill\\
+Subject: \>Outline of 3-dimensional Retrieval\\
 From: \>Van Snyder\\
 %Reference: \> \\
 \end{tabbing}
 
 \parindent 0pt \parskip 6pt
 \vspace{-20pt}
+
+\section{Retriever}
+
+The retriever is almost completely unaware of the representation of the
+solution or the methods by which the radiative transfer equation and its
+variation are integrated.  A different method to calculate the positions
+in the least-squares problem matrix of Tikhonov regularization
+coefficients is necessary.
 
 \section{Forward model}
 
@@ -116,13 +124,15 @@ the method to interpolate from the grid to the path.
 Let us assume that the process that creates the grid produces a serial
 number for each point in the grid, which can be used to compute a column
 subscript for the Jacobian.  Let us further assume that this same serial
-number is used to index the set of interpolation coefficients.  With these
-parts in hand, the remainder of the forward model should be insensitive to
-the grid.
+number is used to index the set of interpolation coefficients, and any
+other quantities related to the grid, such as the horizontal subscript for
+heights -- assuming the primary vertical coordinate is $\zeta$, and is
+stacked and coherent.  With these parts in hand, the remainder of the
+forward model should be insensitive to the grid.
 
 The present full forward model is intimately aware of the grids used to
 represent the atmospheric state.  The principles and details are not
-hidden inside abstractions.  Further, the present forward model represents
+hidden inside abstractions.  The present forward model represents
 the atmospheric state differently from the state-vector representation
 used throughout the remainder of the {\tt mlsl2} program, and represents
 the Jacobian differently from the matrix representation used by the
@@ -133,6 +143,12 @@ grids to the path as abstractions.  It should further use the state-vector
 representation directly instead of copying it to an internal
 representation, and it should produce the Jacobian in the form of the
 matrix representation  used by the retriever.
+
+The forward model uses a quantity called {\tt PhiTan}, which is the orbit
+angle of the tangent point.  This needs to be replaced by longitude and
+geodetic latitude.  This is used to find the instance window when filling
+the internal representations of state-vector quantities, and in
+preparation for antenna convolution.
 
 The sequence of operations of the revised forward model can be the same as
 for the present forward model:
@@ -146,7 +162,9 @@ for the present forward model:
 
 \item Compute the relationship between temperature, pressure, and height,
       using the hydrostatic equilibrium assumption, and compute
-      derivatives with respect to temperature if necessary.
+      derivatives with respect to temperature if necessary.  A QTM-based
+      hydrostatic module is necessary, but it can use the one-dimensional
+      module at each vertex of the QTM.
 
 \item Compute the paths upon which to integrate the radiative-transfer
       equation.
@@ -309,3 +327,6 @@ most part, with little interaction with other modules.
 % $Id$
 
 % $Log$
+% Revision 1.1  2016/04/08 23:56:59  vsnyder
+% Initial commit
+%
