@@ -231,6 +231,7 @@ module ForwardModelConfig
     integer, dimension(:), pointer :: USEDDACSSIGNALS => NULL() ! Indices in
       ! FwdModelConf_T%Signals of signals for our dacs
     type(channels_T), pointer, dimension(:) :: Channels => NULL()
+    type(qtyStuff_T) :: Temp ! Temperature stuff
   end type ForwardModelConfig_T
 
   !------------- RCS Ident Info (more below in not_used_here) ----------------
@@ -1547,6 +1548,11 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.135  2015/08/25 17:21:47  vsnyder
+! PhiWindow is a tuple, with the first element specifying the angles or
+! number of profiles/MAFs before the tangent point, and the second
+! specifying the angles or number after.
+!
 ! Revision 2.134  2015/03/28 01:59:22  vsnyder
 ! Added stuff to trace allocate/deallocate addresses
 !
