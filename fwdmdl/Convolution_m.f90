@@ -395,10 +395,10 @@ contains
   end subroutine Convolution
 
   ! ----------------------------------------  Convolution_Setup  -----
-  subroutine Convolution_Setup ( DH_DZ_OUT, DX_DH_OUT, DX_DT, DXDT_Surface, &
-                               & DXDT_TAN, D2X_DXDT, EarthRadC_sq, Est_ScGeocAlt, &
-                               & FwdModelConf, &
-                               & FwdModelExtra, FwdModelIn, Grids_f, Grids_tmp, &
+  subroutine Convolution_Setup ( DH_DZ_OUT, DX_DH_OUT, DXDT_Surface, &
+                               & DXDT_TAN, EarthRadC_sq, Est_ScGeocAlt, &
+                               & FwdModelConf, FwdModelExtra, FwdModelIn, &
+                               & Grids_f, Grids_tmp, &
                                & L1BMIF_TAI, MAF, MIFDeadTime, &
                                & OrbIncline, PhiTan, PTan, RefGPH, SCGeocAlt, &
                                & Surf_Angle, Tan_Chi_Out, Tan_Phi, TAN_Press, &
@@ -420,10 +420,8 @@ contains
 
     real(rp), intent(out), contiguous :: DH_DZ_OUT(:) ! (ptan%template%nosurfs)
     real(rp), intent(out), contiguous :: DX_DH_OUT(:) ! (ptan%template%nosurfs)
-    real(rp), intent(in), contiguous :: DX_DT(:,:) ! (no_tan_hts,s_t*sv_t_len)     ! (No_tan_hts, nz*np)
     real(rp), intent(out), contiguous :: DXDT_Surface(:,:) ! (1,s_t*sv_t_len)
     real(rp), intent(out), contiguous :: DXDT_TAN(:,:) ! (ptan%template%nosurfs,s_t*sv_t_len)
-    real(rp), intent(in), contiguous :: D2X_DXDT(:,:) ! (no_tan_hts,s_t*sv_t_len)    ! (No_tan_hts, nz*np)
     real(rp), intent(in) :: EarthRadC_sq ! (minor axis of orbit plane projected Earth ellipse)**2
     real(rp), intent(in), contiguous :: Est_ScGeocAlt(:) ! (no_tan_hts) ! Est S/C geocentric altitude /m
     type(forwardModelConfig_T), intent(in) :: FwdModelConf
@@ -527,6 +525,9 @@ contains
 end module Convolution_m
 
 ! $Log$
+! Revision 2.2  2016/05/02 23:32:15  vsnyder
+! Remove unused dummy arguments from Convolution_Setup
+!
 ! Revision 2.1  2016/04/21 01:59:12  vsnyder
 ! Initial commit
 !
