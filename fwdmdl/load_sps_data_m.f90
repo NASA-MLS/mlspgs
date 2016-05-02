@@ -11,6 +11,7 @@
 
 module Load_SPS_Data_M
 
+  use ForwardModelConfig, only: QtyStuff_T
   use MLSCommon, only: R8, RP
 
   implicit NONE
@@ -22,19 +23,28 @@ module Load_SPS_Data_M
   public :: FindInGrid
   public :: EmptyGrids_t, Destroygrids_t, Dump, Dump_Grids
 
+  integer, public, parameter :: L_Phi_Based = 1 ! Two-dimensional grid with
+                                                ! orbit angle being the
+                                                ! horizontal coordinate
+  integer, public, parameter :: L_QTM_Based = 2 ! Three-dimensional grid with
+                                                ! the horizontal grid being QTM
+
   type, public :: Grids_T                 ! Fit all Gridding categories
+    integer,  pointer :: Grid_Type(:) => null() ! l_Phi_Based or l_QTM_Based
+    type(qtyStuff_t), pointer :: QtyStuff(:) => null()
     integer,  pointer :: names(:) => null() ! for each sps, from Qty template
     integer,  pointer :: l_f(:) => null() ! Last entry in frq_basis per sps
     integer,  pointer :: l_z(:) => null() ! Last entry in zet_basis per sps
-    integer,  pointer :: l_p(:) => null() ! Last entry in phi_basis per sps
+    integer,  pointer :: l_p(:) => null() ! Last entry in phi_basis or QTM_Geo
+                                          ! per sps
     integer,  pointer :: l_x(:) => null() ! Last entry in cross angles per sps
     integer,  pointer :: l_v(:) => null() ! Last entry in values per sps
     integer :: P_Len = 0 ! \sum_{i=1}^n (l_z(i)-l_z(i-1))*(l_p(i)-l_p(i-1))*
                          !              (l_x(i)-l_x(i-1))
     integer,  pointer :: windowstart(:) => null()! horizontal starting index
-!                                                  from l2gp
+                                                 ! from l2gp
     integer,  pointer :: windowfinish(:) => null()! horizontal ending index
-!                                                  from l2gp
+                                                  !from l2gp
     integer,  pointer :: mol(:) => null() ! Qty molecule, l_...
     integer,  pointer :: Z_coord(:) => null()  ! l_geo[cd]Altitude, l_zeta
     logical,  pointer :: Coherent(:) => null() ! From each Qty template
@@ -47,22 +57,25 @@ module Load_SPS_Data_M
     integer,  pointer :: qty(:) => null() ! Qty type, l_...
     integer,  pointer :: s_ind(:) => null()     ! Indexed by mol, gives index
     ! in l_f etc if qty=l_vmr.
-    logical,  pointer :: lin_log(:) => null()   ! true for log representation basis
+    logical,  pointer :: lin_log(:) => null()   ! true for log representation
+                                                ! basis
     real(r8), pointer :: min_val(:) => null()   ! Minimum value
     real(r8), pointer :: frq_basis(:) => null() ! frq  grid entries for all
-!                                                 molecules
+                                                ! molecules
     real(rp), pointer :: zet_basis(:) => null() ! zeta grid entries for all
-!                                                 molecules
+                                                ! molecules
+    integer, pointer :: QTM_Geo(:) => null()    ! QTM vertex geolocation
     real(rp), pointer :: phi_basis(:) => null() ! phi  grid entries for all
-!                                                 molecules, radians
+                                                ! molecules, radians
     real(rp), pointer :: cross_angles(:) => null() ! cross-angles  grid entries
-!                                                 for all molecules, degrees
+                                                ! for all molecules, degrees
     real(rp), pointer :: values(:) => null()    ! species values (eg vmr).
-!     This is really a four-dimensional quantity dimensioned frequency
-!     (or 1) X zeta (or 1) X phi (or 1) X Cross, taken in Fortran's column-
-!     major array-element order.
+    ! This is really a four-dimensional quantity dimensioned frequency
+    ! (or 1) X zeta (or 1) X phi (or 1) X Cross, taken in Fortran's column-
+    ! major array-element order.
     logical,  pointer :: deriv_flags(:) => null() ! flags to do derivatives,
-!     corresponding to the values component.
+                                                ! corresponding to the values
+                                                ! component.
 
   end type Grids_T
 
@@ -81,7 +94,7 @@ contains
   ! ----------------------------------------------  Load_SPS_Data  -----
 
   subroutine Load_Sps_Data ( FwdModelConf, Phitan, MAF, &
-    & Grids_x, QtyStuffIn )
+                           & Grids_x, QtyStuffIn )
 
     use ForwardModelConfig, only: ForwardModelConfig_t, QtyStuff_T
     use Toggles, only: Emit, Levels, Toggle
@@ -89,7 +102,7 @@ contains
     use VectorsModule, only: VectorValue_T
 
     type (forwardModelConfig_T), intent(in) :: fwdModelConf
-    type (VectorValue_T), intent(in) ::  PHITAN  ! Tangent geodAngle component of
+    type (vectorValue_T), intent(in) ::  PHITAN  ! Tangent geodAngle component of
     integer, intent(in) :: MAF
 
     type (Grids_T), intent(out) :: Grids_x   ! All the coordinates
@@ -123,11 +136,10 @@ contains
         grids_x%l_v(mol) = grids_x%l_v(mol-1)
         grids_x%l_z(mol) = grids_x%l_z(mol-1)
         grids_x%s_ind(mol) = 0
-        cycle
+      else
+        call fill_grids_1 ( grids_x, mol, qtyStuff(mol)%qty, maf, phitan, &
+          &                 fwdModelConf )
       end if
-
-      call fill_grids_1 ( grids_x, mol, qtyStuff(mol)%qty, maf, phitan, &
-        &                 fwdModelConf )
 
     end do
 
@@ -157,7 +169,7 @@ contains
     & FwdModelConf, SetDerivFlags )
 
     use ForwardModelConfig, only: ForwardModelConfig_t
-    use VectorsModule, only: Vector_T, VectorValue_T
+    use VectorsModule, only: Vector_T, VectorValue_t
 
     type(grids_t), intent(out) :: Grids_X
     type(vector_t), intent(in) :: Vector
@@ -271,23 +283,23 @@ contains
 
   ! ---------------------------------  Modify_Values_For_Supersat  -----
 
-  subroutine Modify_Values_For_Supersat ( fwdModelConf, &
-    & grids_f, h2o_ind, grids_tmp, boundaryPressure )
+  subroutine Modify_Values_For_Supersat ( FwdModelConf, &
+    & Grids_f, H2O_Ind, Grids_Tmp, BoundaryPressure )
 
-    use Intrinsic, only: l_clear_110RH_below_top, l_clear_0RH
+    use Constants, only: Deg2Rad
+    use ForwardModelConfig, only: ForwardModelConfig_t
+    use Intrinsic, only: L_Clear_110RH_Below_Top, L_Clear_0RH
+    use MLSFillValues, only: EssentiallyEqual
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use MLSNumerics, only: Hunt
     use RHIFromH2O, only: RHIFromH2O_Factor
-    use ForwardModelConfig, only: ForwardModelConfig_t
     use VectorsModule, only: VectorValue_T
-    use MLSFillValues, only: EssentiallyEqual
-    use Constants, only: Deg2Rad
 
-    type (ForwardModelConfig_T) ,intent(in) :: FWDMODELCONF
-    type (Grids_T), intent(inout) :: GRIDS_F   ! All the vmrs
-    integer, intent(in) :: H2O_IND             ! Where is H2O in Grids_f?
-    type (Grids_T), intent(in) :: GRIDS_TMP    ! All the temperatures
-    type (VectorValue_T), intent(in) :: BOUNDARYPRESSURE
+    type (forwardModelConfig_T) ,intent(in) :: FwdModelConf
+    type (grids_T), intent(inout) :: Grids_F   ! All the vmrs
+    integer, intent(in) :: H2O_Ind             ! Where is H2O in Grids_f?
+    type (grids_T), intent(in) :: Grids_Tmp    ! All the temperatures
+    type (vectorValue_T), intent(in) :: BoundaryPressure
 
     integer :: KF, KZ, KP
     real(r8) :: RHI
@@ -296,7 +308,7 @@ contains
     integer :: V0               ! One before starting point in Values array
     integer :: Z_index
     integer :: Z0, P, P0
-    logical :: FAILED
+    logical :: Failed
 
     kf = Grids_f%l_f(h2o_ind) - Grids_f%l_f(h2o_ind-1)
     kz = Grids_f%l_z(h2o_ind) - Grids_f%l_z(h2o_ind-1)
@@ -343,12 +355,12 @@ contains
     ! zetas (-log pressure) are given by grids_tmp%zet_basis
 
     select case (FwdModelConf%i_saturation)
-       case (l_clear_110RH_below_top)
-          RHi = 110._r8              ! 110% supersaturation
-       case (l_clear_0RH)
-          RHi = 1.e-9_r8             ! 0% dry saturation
-       case default
-          call MLSMessage(MLSMSG_Error, ModuleName,'invalid i_saturation')
+      case (l_clear_110RH_below_top)
+        RHi = 110._r8              ! 110% supersaturation
+      case (l_clear_0RH)
+        RHi = 1.e-9_r8             ! 0% dry saturation
+      case default
+        call MLSMessage(MLSMSG_Error, ModuleName,'invalid i_saturation')
     end select
 
     ! H2O may have log basis functions
@@ -384,20 +396,25 @@ contains
   ! Create the part of the Grids_T structure that doesn't depend on the
   ! number of values or lengths of bases
 
-    use Allocate_Deallocate, only: Allocate_test
+    use Allocate_Deallocate, only: Allocate_test, Test_Allocate
     use Molecules, only: First_Molecule, Last_Molecule
 
     type (Grids_T), intent(inout) :: Grids_X
     integer, intent(in) :: N
 
-    call allocate_test ( Grids_x%names, n, 'Grids_x%names', ModuleName )
-    call allocate_test ( Grids_x%l_z, n, 'Grids_x%l_z', ModuleName, lowBound=0 )
-    call allocate_test ( Grids_x%l_p, n, 'Grids_x%l_p', ModuleName, lowBound=0 )
-    call allocate_test ( Grids_x%l_f, n, 'Grids_x%l_f', ModuleName, lowBound=0 )
-    call allocate_test ( Grids_x%l_x, n, 'Grids_x%l_f', ModuleName, lowBound=0 )
-    call allocate_test ( Grids_x%l_v, n, 'Grids_x%l_v', ModuleName, lowBound=0 )
-    call allocate_test ( Grids_x%mol, n, 'Grids_x%mol', ModuleName )
-    call allocate_test ( Grids_x%qty, n, 'Grids_x%qty', ModuleName )
+    integer :: Stat
+
+    call allocate_test ( Grids_x%grid_Type, n, 'Grids_x%grid_Type', ModuleName )
+    allocate ( Grids_x%qtyStuff(n), stat=stat )
+    call test_allocate ( stat, moduleName, 'Grids_x%QtyStuff' )
+    call allocate_test ( Grids_x%names, n, 'Grids_x%names', moduleName )
+    call allocate_test ( Grids_x%l_z, n, 'Grids_x%l_z', moduleName, lowBound=0 )
+    call allocate_test ( Grids_x%l_p, n, 'Grids_x%l_p', moduleName, lowBound=0 )
+    call allocate_test ( Grids_x%l_f, n, 'Grids_x%l_f', moduleName, lowBound=0 )
+    call allocate_test ( Grids_x%l_x, n, 'Grids_x%l_f', moduleName, lowBound=0 )
+    call allocate_test ( Grids_x%l_v, n, 'Grids_x%l_v', moduleName, lowBound=0 )
+    call allocate_test ( Grids_x%mol, n, 'Grids_x%mol', moduleName )
+    call allocate_test ( Grids_x%qty, n, 'Grids_x%qty', moduleName )
     call allocate_test ( Grids_x%where_dBeta_df, n, 'Grids_x%where_dBeta_df', ModuleName )
     call allocate_test ( Grids_x%s_ind, last_molecule, &
       & 'Grids_x%S_ind', moduleName, lowBound=first_molecule, fill=0 )
@@ -534,7 +551,7 @@ contains
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use Molecules, only: L_CloudIce, L_H2O
     use MoreMessage, only: MLSMessage
-    use VectorsModule, only: VectorValue_T, M_FullDerivatives
+    use VectorsModule, only: M_FullDerivatives, VectorValue_T
 
     ! For which molecules do we compute dBeta_df?
     !integer, parameter :: Which_dBeta_df(2) = (/ L_CloudIce, L_H2O /)
@@ -735,11 +752,16 @@ contains
   ! -----------------------------------------------  EmptyGrids_t  -----
   subroutine EmptyGrids_t ( grids_x )
     ! Create a grids structure with all empty grids
-    use Allocate_Deallocate, only: Allocate_test
+    use Allocate_Deallocate, only: Allocate_test, Test_Allocate
 
     type (Grids_T), intent(inout) :: Grids_x
 
+    integer :: Stat
+
     grids_x%p_len = 0
+    allocate ( Grids_x%qtyStuff(0), stat=stat )
+    call test_allocate ( stat, moduleName, 'Grids_x%QtyStuff' )
+    call allocate_test(Grids_x%grid_Type,0,'grids_x%qtyStuff',modulename)
     call allocate_test(Grids_x%names,0,'grids_x%names',modulename)
     call allocate_test(grids_x%l_f,0,'grids_x%l_f',modulename)
     call allocate_test(grids_x%l_z,0,'grids_x%l_z',modulename)
@@ -768,11 +790,16 @@ contains
 
   ! ---------------------------------------------  DestroyGrids_t  -----
   subroutine DestroyGrids_t ( grids_x )
-    use Allocate_Deallocate, only: Deallocate_test
+    use Allocate_Deallocate, only: Deallocate_Test, Test_Deallocate
 
     type (Grids_T), intent(inout) :: Grids_x
 
+    integer :: Stat
+
     grids_x%p_len = 0
+    call deallocate_test(Grids_x%grid_Type,'Grids_x%Grid_Type',modulename)
+    deallocate ( Grids_x%qtyStuff, stat=stat )
+    call test_deallocate ( stat, moduleName, 'Grids_x%QtyStuff' )
     call deallocate_test(Grids_x%names,'Grids_x%names',modulename)
     call deallocate_test(grids_x%l_f,'Grids_x%l_f',modulename)
     call deallocate_test(grids_x%l_z,'Grids_x%l_z',modulename)
@@ -939,6 +966,9 @@ contains
 end module LOAD_SPS_DATA_M
 
 ! $Log$
+! Revision 2.105  2015/10/28 00:32:12  vsnyder
+! Check that windowStart is not after windowFinish
+!
 ! Revision 2.104  2015/09/22 23:18:23  vsnyder
 ! Add a cross-track horizontal coordinate; spiff the dump
 !
