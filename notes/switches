@@ -140,7 +140,6 @@ Switches (set by -S option in mlsl2's command line):
              and each file l2gp, l1brad, ncep, dao input; dump filedatabase
  psct[n] => Print TScat table generation
  ptb     => Show perturbed quantities if used in Sids for Jacobean, Hessian
- ptg     => Dump full forward model pointing angles
  qtmp    => Quantity templates being constructed, destroyed
  rad     => Radiances in ForwardModelInterface
  rcfx[n] => Print RefCor fixup details, stop if n > 0
@@ -226,6 +225,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.99  2016/01/23 03:00:23  vsnyder
+ Add polr
+
  Revision 1.98  2015/10/28 19:22:25  vsnyder
  Add plane
 
