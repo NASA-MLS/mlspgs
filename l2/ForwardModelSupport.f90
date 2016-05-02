@@ -395,7 +395,7 @@ contains ! =====     Public Procedures     =============================
     use FORWARDMODELCONFIG, only: DUMP, FORWARDMODELCONFIG_T, &
       & LINECENTER, LINEWIDTH, LINEWIDTH_TDEP, &
       & NULLIFYFORWARDMODELCONFIG, SPECTROPARAM_T
-    use highoutput, only: outputnamedvalue
+  ! use highoutput, only: outputnamedvalue
     use INIT_TABLES_MODULE, only: FIELD_FIRST, FIELD_LAST
     use INIT_TABLES_MODULE, only: L_FULL, L_SCAN, L_LINEAR, L_CLOUDFULL, L_HYBRID, &
       & L_POLARLINEAR
@@ -1141,7 +1141,7 @@ op:     do j = 2, nsons(theTree)
             & info%integrationGrid%surfs(:,1) ) > 1.0e-4 ) ) then
             call AnnounceError ( TangentNotSubset, root, warn=OnlyWarnIfTangentNotSubset )
             ! call outputnamedValue ( 'tangent index', tangent )
-          endif
+          end if
         end do
       end if
 
@@ -1566,6 +1566,9 @@ op:     do j = 2, nsons(theTree)
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.184  2016/05/02 23:30:46  vsnyder
+! Comment out unused USE
+!
 ! Revision 2.183  2016/03/25 00:39:58  pwagner
 ! May downgrade severity if TangentNotSubset
 !
