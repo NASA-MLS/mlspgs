@@ -52,7 +52,7 @@ contains
     use Get_Species_Data_M, only:  Get_Species_Data
     use HessianModule_1, only: Hessian_T
     use Intrinsic, only: Lit_Indices, L_GeodAltitude, L_MagneticField, &
-      & L_PhiTan, L_PTan, L_Temperature, L_TScat, L_VMR, L_Zeta
+      & L_PhiTan, L_PTan, L_TScat, L_VMR, L_Zeta
     use Load_SPS_Data_M, only: DestroyGrids_T, Dump, EmptyGrids_T, Grids_T, &
       & Load_One_Item_Grid, Load_SPS_Data
     use MatrixModule_1, only: Matrix_T
@@ -131,7 +131,6 @@ contains
     ! Flags for various derivatives
     logical :: Atmos_Der, Atmos_Second_Der, PTan_Der, Spect_Der
     logical :: Spect_Der_Center, Spect_Der_Width, Spect_Der_Width_TDep
-    logical :: Temp_Der, Temp_In_First
     ! What severity is not having derivative in "first" state vector?
     integer, parameter :: DerivativeMissingFromState = MLSMSG_Error
 
@@ -141,8 +140,10 @@ contains
     nullify ( tan_press )
 
     ! Create the data structures for the species.  Get the
-    ! spectroscopy parameters from the state vector.
-    ! This has to be done AFTER deriveFromForwardModelConfig.
+    ! spectroscopy parameters from the state vector.  Get the temperature
+    ! quantity from the state vector.
+    ! This has to be done AFTER deriveFromForwardModelConfig, which is
+    ! invoked from ForwardModelWrappers.
 
     call get_species_data ( fwdModelConf, fwdModelIn, fwdModelExtra )
 
@@ -157,9 +158,7 @@ contains
     ptan => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
       & quantityType=l_ptan, foundInFirst=ptan_der, config=fwdModelConf, &
       & instrumentModule=fwdModelConf%signals(1)%instrumentModule )
-    temp => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
-      & quantityType=l_temperature, foundInFirst=temp_in_first, &
-      & config=fwdModelConf )
+    temp => fwdModelConf%temp%qty
     call load_one_item_grid ( grids_tmp, temp, fmStat%maf, phitan, fwdModelConf, .true. )
     no_sv_p_t = grids_tmp%l_p(1) ! phi == windowFinish - windowStart + 1
     n_t_zeta = grids_tmp%l_z(1)  ! zeta
@@ -170,8 +169,8 @@ contains
       
     call load_sps_data ( FwdModelConf, phitan, fmStat%maf, grids_f )
 
-    temp_der = present ( jacobian ) .and. FwdModelConf%temp_der
-    if ( temp_der .and. .not. temp_in_first ) &
+    fwdModelConf%temp%derivOK = present ( jacobian ) .and. FwdModelConf%temp_der
+    if ( fwdModelConf%temp%derivOK .and. .not. fwdModelConf%temp%foundInFirst ) &
       & call MLSMessage ( DerivativeMissingFromStateFun(), moduleName, &
         & 'With config(%S): Temperature derivative requested but temperature is not in "first" state vector', &
         & datum=fwdModelConf%name )
@@ -287,14 +286,14 @@ contains
   ! tangent grid and species).  Tan_Press is thrown in for free.
     if ( fwdModelConf%generateTScat ) then
       ! Make sure the TScat zeta is in the preselected grid.
-      call compute_Z_PSIG ( fwdModelConf, temp, z_psig,             &
+      call compute_Z_PSIG ( fwdModelConf, z_psig,                   &
                           & GetQuantityForForwardModel (            &
                           &  fwdModelOut, quantityType=l_TScat,     &
                           &  signal=fwdModelConf%signals(1)%index,  &
                           &  config=fwdModelConf ) )
 
     else
-      call compute_Z_PSIG ( fwdModelConf, temp, z_psig )
+      call compute_Z_PSIG ( fwdModelConf, z_psig )
     end if
     nlvl = size(z_psig)
     call tangent_pressures ( fwdModelConf, z_psig, no_tan_hts,   &
@@ -328,7 +327,7 @@ contains
     s_lw = merge(1,0,spect_der_width)
     s_pfa = merge(1,0,FwdModelConf%anyPFA(1) .or. FwdModelConf%anyPFA(2))
     s_p = merge(1,0,FwdModelConf%polarized)
-    s_t = merge(1,0,temp_der)
+    s_t = merge(1,0,fwdModelConf%temp%derivOK)
     s_td = merge(1,0,spect_der_width_TDep)
     s_tg = merge(1,0,FwdModelConf%GenerateTScat)
     s_ts = merge(1,0,FwdModelConf%useTScat)
@@ -408,8 +407,7 @@ contains
     use FilterShapes_M, only: DACSFilterShapes, FilterShapes
     use ForwardModelConfig, only: Beta_Group_T, Channels_T, &
       & ForwardModelConfig_T, LineCenter, LineWidth, LineWidth_TDep
-    use ForwardModelIntermediate, only: ForwardModelStatus_T, &
-                                    &   B_Ptg_Angles, B_Refraction
+    use ForwardModelIntermediate, only: ForwardModelStatus_T, B_Refraction
     use ForwardModelVectorTools, only: GetQuantityForForwardModel
     use Geometry, only: Get_R_EQ
     use Get_ETA_Matrix_M, only: ETA_D_T ! TYPE FOR ETA STRUCT
@@ -565,7 +563,6 @@ contains
     integer :: Print_Pol_Rad      ! For debugging, from -Spolr[n]
                                   ! n>0 => print pointing number
                                   ! n>1 => print frequency
-    logical :: Print_Ptg          ! For debugging, from -Sptg
     integer :: Print_Rad          ! For debugging, from -Srad
     logical :: Print_Seez         ! For debugging, from -Sseez
     logical :: Print_TauL         ! For debugging, from -Staul
@@ -990,7 +987,6 @@ contains
     print_IncRad = switchDetail(switches, 'incr' ) > -1
     print_Mag = switchDetail(switches, 'mag')
     print_Pol_Rad = switchDetail(switches, 'polr')
-    print_Ptg = switchDetail(switches, 'ptg') > -1
     print_path = switchDetail(switches, 'path')
     print_Rad = switchDetail(switches, 'rad')
     print_Seez = switchDetail(switches, 'seez') > -1
@@ -1073,8 +1069,8 @@ contains
       &                      IWC, scatteringAngles )
     else
       if ( FwdModelConf%incl_cld ) call cloud_setup
-      call convolution_setup ( DH_DZ_OUT, DX_DH_OUT, DX_DT, DXDT_Surface, &
-                             & DXDT_TAN, D2X_DXDT, EarthRadC_sq, Est_ScGeocAlt, &
+      call convolution_setup ( DH_DZ_OUT, DX_DH_OUT, DXDT_Surface, &
+                             & DXDT_TAN, EarthRadC_sq, Est_ScGeocAlt, &
                              & FwdModelConf, &
                              & FwdModelExtra, FwdModelIn, Grids_f, Grids_tmp, &
                              & L1BMIF_TAI, MAF, MIFDeadTime, &
@@ -1323,7 +1319,7 @@ contains
 
       fmStat%flags = 0 ! Assume no errors
 
-      temp_der = present ( jacobian ) .and. FwdModelConf%temp_der
+      temp_der = fwdModelConf%temp%derivOK
       atmos_der = present ( jacobian ) .and. FwdModelConf%atmos_der
       atmos_second_der = present ( hessian ) .and. FwdModelConf%atmos_second_der
 
@@ -4531,6 +4527,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.365  2016/04/21 02:00:12  vsnyder
+! Move Convolution and Convolution_Setup to Convolution_m
+!
 ! Revision 2.364  2016/03/25 02:02:37  vsnyder
 ! Add a dump for polarized incremental optical depth just before its
 ! exponential is attempted to be computed.
