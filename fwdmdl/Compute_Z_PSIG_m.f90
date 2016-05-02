@@ -23,7 +23,7 @@ module Compute_Z_PSIG_m
 contains
 !------------------------------------------------  Compute_Z_PSIG  -----
 
-  subroutine Compute_Z_PSIG ( FwdModelConf, Temp, Z_PSIG, Observer )
+  subroutine Compute_Z_PSIG ( FwdModelConf, Z_PSIG, Observer )
 
   ! Compute the preselected integration zeta grid.
 
@@ -37,7 +37,6 @@ contains
 
   ! Inputs:
     type (forwardModelConfig_T), intent(in) :: fwdModelConf
-    type (vectorValue_T), intent(in) :: TEMP      ! Temperature component of state vector
 
   ! Outputs:
     real(rp), allocatable, intent(out) :: Z_psig(:) ! recommended PSIG for
@@ -65,7 +64,7 @@ contains
 
 ! Calculate size of z_all and allocate it
 
-    z_all_size = temp%template%nosurfs + 2
+    z_all_size = fwdModelConf%temp%qty%template%nosurfs + 2
     if ( associated(FwdModelConf%integrationGrid) ) &
       & z_all_size = z_all_size + FwdModelConf%integrationGrid%nosurfs
     if ( associated(FwdModelConf%tangentGrid) .and. .not. &
@@ -80,9 +79,9 @@ contains
 ! Fill in z_all
 ! the -3.000 is a designated "surface" value
 
-    z_all_prev = temp%template%nosurfs + 2
+    z_all_prev = fwdModelConf%temp%qty%template%nosurfs + 2
     z_all(1) = -3.000_rp
-    z_all(2:z_all_prev-1) = temp%template%surfs(:,1)
+    z_all(2:z_all_prev-1) = fwdModelConf%temp%qty%template%surfs(:,1)
     z_all(z_all_prev) = 4.000_rp
 
     if ( associated(FwdModelConf%integrationGrid) ) then
@@ -136,6 +135,9 @@ contains
 end module Compute_Z_PSIG_m
 
 ! $Log$
+! Revision 2.13  2016/05/02 23:32:31  vsnyder
+! Get temperature quantity from FwdModelConf
+!
 ! Revision 2.12  2014/08/06 23:24:51  vsnyder
 ! Remove USE for Switches, which is not referenced
 !
