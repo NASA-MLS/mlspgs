@@ -12,7 +12,8 @@
 module Get_Species_Data_m
 
   ! Get species data for the molecules in the beta groups.
-  ! Get the spectal parameters from the state vector.
+  ! Get the spectral parameters from the state vector.
+  ! Get the temperature quantity.
 
   implicit NONE
   private
@@ -35,7 +36,7 @@ contains
     use FORWARDMODELVECTORTOOLS, only: GETQUANTITYFORFORWARDMODEL, &
       GetQtyStuffForForwardModel
     use INTRINSIC, only: L_ISOTOPERATIO, L_LINECENTER, L_LINEWIDTH, &
-      & L_LINEWIDTH_TDEP, L_VMR
+      & L_LINEWIDTH_TDEP, L_Temperature, L_VMR
     use MLSSTRINGLISTS, only: SWITCHDETAIL
     use SPECTROSCOPYCATALOG_M, only: Catalog, DUMP
     use TOGGLES, only: EMIT, LEVELS, SWITCHES, TOGGLE
@@ -98,6 +99,12 @@ contains
 !       fwdModelConf%beta_group(b)%pfa_ratio(1)     = 1.0
       end if
     end do ! b
+
+    ! Get temperature vector quantity
+    fwdModelConf%temp = GetQtyStuffForForwardModel ( &
+        &  fwdModelIn, fwdModelExtra, quantityType=l_temperature, &
+        &  config=fwdModelConf, radiometer=fwdModelConf%signals(1)%radiometer, &
+        &  noError=.false. )
 
     ! Get state vector quantities for species
     do b = 1, size(fwdModelConf%beta_group)
@@ -174,6 +181,9 @@ contains
 end module Get_Species_Data_m
 
 ! $Log$
+! Revision 2.38  2014/04/22 00:37:18  vsnyder
+! Add tracing
+!
 ! Revision 2.37  2013/08/02 01:23:33  vsnyder
 ! Use GetQtyStuffForForwardModel
 !
