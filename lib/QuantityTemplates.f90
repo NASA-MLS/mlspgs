@@ -23,7 +23,7 @@ module QuantityTemplates         ! Quantities within vectors
   use highOutput, only: outputNamedValue
   use intrinsic, only: l_dl, l_geodetic, l_geodAltitude, l_none, l_phitan, &
     & l_vmr, lit_indices, phyq_angle, phyq_dimensionless, phyq_frequency, &
-    & phyq_indices, phyq_time
+    & phyq_indices, phyq_time, phyq_vmr
   use MLSFillValues, only: rerank
   use MLSKinds, only: rt => r8 ! rt is "kind of real components of template"
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
@@ -102,12 +102,12 @@ module QuantityTemplates         ! Quantities within vectors
     integer :: noInstancesUpperOverlap
 
     ! Misc. information
-    real(rt) :: badValue      ! Value used to flag bad/missing data
-    integer :: unit = l_dl    ! Unit quantity is in when scaled as below,
-                              ! an l_lit of the type t_units.  Units are
-                              ! defined in units.f90, but their names are
-                              ! declared in intrinsic.f90, and their membership
-                              ! in the type t_units is defined in init_tables_module.
+    real(rt) :: badValue       ! Value used to flag bad/missing data
+    integer :: unit = PHYQ_VMR ! Unit quantity is in when scaled as below,
+                               ! an l_lit of the type t_units.  Units are
+                               ! defined in units.f90, but their names are
+                               ! declared in intrinsic.f90, and their membership
+                               ! in the type t_units is defined in init_tables_module.
 
     ! For regular quantities the number of elements of each instance
     ! is simply noSurfs*noChans.  For irregular ones it is less, but it is
@@ -2172,6 +2172,12 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.107  2015/09/25 02:12:25  vsnyder
+! Add an optional verticalCoordinate argument to SetupNewQuantityTemplate.
+! It has the VALUE attribute so qty%verticalCoordinate can be the actual
+! argument without violating the standard, and without getting clobbered
+! before it's needed.
+!
 ! Revision 2.106  2015/09/23 22:39:09  vsnyder
 ! Add type-bound procedures to access and store latitude as either
 ! geocentric or geodetic latitude, except for the rank-2 GeodLat
