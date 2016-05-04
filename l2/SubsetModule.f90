@@ -49,28 +49,28 @@ contains ! ========= Public Procedures ============================
     & IGNORE, REVERSE, ADDITIONAL, RESET, &
     & MASKBIT, HEIGHTNODE, SURFNODE, INSTANCESNODE, CHANNELSNODE )
 
-    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
-    use DUMP_0, only: DUMP
-    use EXPR_M, only: EXPR, GETINDEXFLAGSFROMLIST
-    use FILLUTILS_1, only: BYMANIPULATION
-    use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
-    use INIT_TABLES_MODULE, only: F_HEIGHT, F_PTANQUANTITY, F_QUANTITY, F_SURFACE
-    use INIT_TABLES_MODULE, only: L_NONE, L_PRESSURE, &
-      & L_ZETA
-    use INTRINSIC, only: PHYQ_DIMENSIONLESS, PHYQ_LENGTH, &
-      & PHYQ_MIFS, PHYQ_PRESSURE
-    use MLSKINDS, only: R8, RV
-    use MLSSTRINGLISTS, only: SWITCHDETAIL
-    use MLSFINDS, only: FINDFIRST, FINDLAST
-    use MLSSTRINGS, only: TRUELIST
-    use OUTPUT_M, only: OUTPUT
-    use TOGGLES, only: SWITCHES
-    use TREE, only: NSONS, SUBTREE, NODE_ID
-    use TREE_TYPES, only: N_COLON_LESS, N_LESS_COLON, &
-      & N_LESS_COLON_LESS
-    use VECTORSMODULE, only: VECTORVALUE_T, &
-      & CLEARMASK, CLONEVECTORQUANTITY, CREATEMASK, DUMP, &
-      & REVERSEMASK, SETMASK
+    use allocate_deallocate, only: allocate_test, deallocate_test
+    use dump_0, only: dump
+    use expr_m, only: expr, getindexflagsfromlist
+    use fillUtils_1, only: byManipulation
+    use highoutput, only: outputNamedValue
+    use init_tables_module, only: f_height, f_ptanquantity, f_quantity, f_surface
+    use init_tables_module, only: l_none, l_pressure, &
+      & l_zeta
+    use intrinsic, only: phyq_dimensionless, phyq_length, &
+      & phyq_mifs, phyq_pressure
+    use MLSKinds, only: r8, rv
+    use MLSStringLists, only: switchDetail
+    use MLSFinds, only: findFirst, findLast
+    use MLSStrings, only: trueList
+    use output_m, only: output
+    use toggles, only: switches
+    use tree, only: nsons, subtree, node_id
+    use tree_types, only: n_colon_less, n_less_colon, &
+      & n_less_colon_less
+    use vectorsModule, only: vectorValue_t, &
+      & clearMask, cloneVectorQuantity, createMask, dump, &
+      & reverseMask, setMask
     ! Args
     type (VectorValue_T), pointer :: QTY
     type (VectorValue_T), pointer :: RAD
@@ -440,6 +440,13 @@ contains ! ========= Public Procedures ============================
                 s1 = minloc ( abs ( theseHeights - value(1) ) )
                 s2 = minloc ( abs ( theseHeights - value(2) ) )
               end if
+              ! Did we try heightRange mechanism?
+              select case ( heightRange )
+              case ( 'above' )
+                if ( theseHeights(s1(1)) < value(1) ) s1 = s1 + 1
+              case ( 'below' )
+                if ( theseHeights(s2(1)) > value(2) ) s2 = s2 - 1
+              end select
             end if
           else
             ! Subset by surface (i.e. MIF) instead, much easier
@@ -597,21 +604,21 @@ contains ! ========= Public Procedures ============================
   ! So be warned--
   ! d o c u m e n t   y o u r   c o d e
   subroutine RestrictRange ( key, vectors )
-    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
-    use MLSKINDS, only: R8
-    use EXPR_M, only: EXPR
-    use VECTORSMODULE, only: M_LINALG, VECTOR_T, VECTORVALUE_T, &
-      & CREATEMASK, GETVECTORQTYBYTEMPLATEINDEX, GETVECTORQUANTITYBYTYPE, &
-      & SETMASK
-    use INIT_TABLES_MODULE, only: F_QUANTITY, F_PTANQUANTITY, F_BASISFRACTION, &
-      & F_MINCHANNELS, F_SIGNALS, F_MEASUREMENTS, F_MASK
-    use INIT_TABLES_MODULE, only: L_ZETA, L_RADIANCE
-    use TREE, only: NSONS, SUBTREE, DECORATION
-    use MORETREE, only: GET_FIELD_ID
-    use MLSSIGNALS_M, only: SIGNAL_T
-    use PARSE_SIGNAL_M, only: EXPAND_SIGNAL_LIST
-    use MANIPULATEVECTORQUANTITIES, only: FINDONECLOSESTINSTANCE
-    use MLSNUMERICS, only: HUNT
+    use allocate_deallocate, only: allocate_test, deallocate_test
+    use expr_m, only: expr
+    use vectorsModule, only: m_linalg, vector_t, vectorvalue_t, &
+      & createMask, getVectorQtyByTemplateIndex, getVectorQuantityByType, &
+      & setMask
+    use init_tables_module, only: f_quantity, f_ptanquantity, f_basisfraction, &
+      & f_minchannels, f_signals, f_measurements, f_mask
+    use init_tables_module, only: l_zeta, l_radiance
+    use ManipulateVectorQuantities, only: FindOneClosestInstance
+    use MLSKinds, only: r8
+    use MLSNumerics, only: hunt
+    use MLSSignals_m, only: signal_t
+    use moreTree, only: get_field_id
+    use parse_signal_m, only: expand_signal_list
+    use tree, only: nsons, subtree, decoration
 
     ! Dummy arguments
     integer, intent(in) :: KEY          ! Tree node
@@ -819,26 +826,26 @@ contains ! ========= Public Procedures ============================
   ! Mask setting business moved from here to workhorse subroutine.
   subroutine SetupSubset ( key, vectors )
 
-    use EXPR_M, only: EXPR
-    use INIT_TABLES_MODULE, only: FIELD_FIRST, FIELD_LAST
-    use INIT_TABLES_MODULE, only: F_A, F_ADDITIONAL, F_CHANNELS, &
-      & F_HEIGHT, F_HEIGHTRANGE, &
-      & F_IGNORE, F_INSTANCES, F_MASK, F_MAXVALUE, F_MINVALUE, F_OPTICALDEPTH, &
-      & F_OPTICALDEPTHCUTOFF, F_PTANQUANTITY, F_QUANTITY, F_RADIANCEQUANTITY, &
-      & F_RESET, F_REVERSE, F_SOURCEQUANTITY, F_SURFACE, F_WHERE
-    use INIT_TABLES_MODULE, only: L_OPTICALDEPTH, &
-      & L_RADIANCE
-    use INTRINSIC, only: PHYQ_DIMENSIONLESS, PHYQ_INVALID
-    use MLSKINDS, only: R8
-    use MLSSTRINGLISTS, only: SWITCHDETAIL
-    use MORETREE, only: GET_FIELD_ID, GET_BOOLEAN
-    use OUTPUT_M, only: OUTPUT
-    use STRING_TABLE, only: DISPLAY_STRING, GET_STRING
-    use TOGGLES, only: SWITCHES
-    use TREE, only: NSONS, SUB_ROSA, SUBTREE, DECORATION
-    use VECTORSMODULE, only: M_LINALG, VECTOR_T, VECTORVALUE_T, &
-      & CREATEMASK, DESTROYVECTORQUANTITYMASK, DUMPMASK, &
-      & GETVECTORQTYBYTEMPLATEINDEX
+    use expr_m, only: expr
+    use init_tables_module, only: field_first, field_last
+    use init_tables_module, only: f_a, f_additional, f_channels, &
+      & f_height, f_heightRange, &
+      & f_ignore, f_instances, f_mask, f_maxValue, f_minValue, f_opticalDepth, &
+      & f_opticalDepthCutoff, f_PTanQuantity, f_quantity, f_radianceQuantity, &
+      & f_reset, f_reverse, f_sourceQuantity, f_surface, f_where
+    use init_tables_module, only: l_opticalDepth, &
+      & l_radiance
+    use intrinsic, only: phyq_dimensionless, phyq_invalid
+    use MLSKinds, only: r8
+    use MLSStringlists, only: switchDetail
+    use moreTree, only: get_field_id, get_boolean
+    use output_m, only: output
+    use string_table, only: display_string, get_string
+    use toggles, only: switches
+    use tree, only: nsons, sub_rosa, subtree, decoration
+    use vectorsModule, only: m_linalg, vector_t, vectorValue_t, &
+      & createMask, destroyVectorQuantityMask, dumpMask, &
+      & getVectorQtyByTemplateIndex
     integer, intent(in) :: KEY        ! Tree node
     type (Vector_T), dimension(:) :: VECTORS
 
@@ -1069,20 +1076,20 @@ contains ! ========= Public Procedures ============================
 
   subroutine SetupFlagCloud ( key, vectors )
     
-    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
-    use EXPR_M, only: EXPR, GETINDEXFLAGSFROMLIST
-    use MLSKINDS, only: R8
-    use INIT_TABLES_MODULE, only: FIELD_FIRST, FIELD_LAST
-    use INIT_TABLES_MODULE, only: F_QUANTITY, F_PTANQUANTITY, &
-      & F_HEIGHT, F_CLOUDHEIGHT, F_CHANNELS, F_CLOUDCHANNELS, F_CLOUDRADIANCE, &
-      & F_CLOUDRADIANCECUTOFF, F_MASK
-    use INIT_TABLES_MODULE, only: L_RADIANCE, L_CLOUDINDUCEDRADIANCE
-    use INTRINSIC, only: PHYQ_DIMENSIONLESS, PHYQ_PRESSURE
-    use MORETREE, only: GET_FIELD_ID
-    use VECTORSMODULE, only: CREATEMASK, &
-      & GETVECTORQTYBYTEMPLATEINDEX, SETMASK, VECTORVALUE_T, VECTOR_T, &
-      & M_CLOUD
-    use TREE, only: NSONS, SUBTREE, DECORATION
+    use allocate_deallocate, only: allocate_test, deallocate_test
+    use expr_m, only: expr, getindexflagsfromlist
+    use init_tables_module, only: field_first, field_last
+    use init_tables_module, only: f_quantity, f_ptanquantity, &
+      & f_height, f_cloudheight, f_channels, f_cloudchannels, f_cloudradiance, &
+      & f_cloudradiancecutoff, f_mask
+    use init_tables_module, only: l_radiance, l_cloudinducedradiance
+    use intrinsic, only: phyq_dimensionless, phyq_pressure
+    use MLSKinds, only: r8
+    use moretree, only: get_field_id
+    use vectorsModule, only: createMask, &
+      & getVectorQtyByTemplateIndex, setMask, vectorValue_t, vector_t, &
+      & m_cloud
+    use tree, only: nsons, subtree, decoration
 
     integer, intent(in) :: KEY        ! Tree node
     type (Vector_T), dimension(:) :: VECTORS
@@ -1316,14 +1323,14 @@ contains ! ========= Public Procedures ============================
   ! d o c u m e n t   y o u r   c o d e
   subroutine UpdateMask ( key, vectors )
 
-    use INIT_TABLES_MODULE, only: FIELD_FIRST, FIELD_LAST
-    use INIT_TABLES_MODULE, only: F_QUANTITY, F_SOURCEQUANTITY, &
-      & F_OPERATION, F_SOURCEMASK, F_MASK
-    use INIT_TABLES_MODULE, only: L_INVERT, L_COPY, L_ANDMASKS, L_ORMASKS
-    use VECTORSMODULE, only: GETVECTORQTYBYTEMPLATEINDEX, VECTORVALUE_T, &
-      & VECTOR_T, CREATEMASK
-    use TREE, only: NSONS, SUBTREE, DECORATION
-    use MORETREE, only: GET_FIELD_ID
+    use init_tables_module, only: field_first, field_last
+    use init_tables_module, only: f_quantity, f_sourceQuantity, &
+      & f_operation, f_sourceMask, f_mask
+    use init_tables_module, only: l_invert, l_copy, l_andMasks, l_orMasks
+    use moretree, only: get_field_id
+    use tree, only: nsons, subtree, decoration
+    use vectorsModule, only: getVectorQtyByTemplateIndex, vectorValue_t, &
+      & vector_t, createMask
 
     integer, intent(in) :: KEY          ! Tree node
     type (Vector_T), dimension(:) :: VECTORS
@@ -1441,11 +1448,11 @@ contains ! ========= Public Procedures ============================
 
   subroutine AnnounceError ( NODE, STRING, FIELDINDEX, ANOTHERFIELDINDEX )
     
-    use INTRINSIC, only: FIELD_INDICES
-    use LEXER_CORE, only: PRINT_SOURCE
-    use TREE, only: Where
-    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
-    use OUTPUT_M, only: OUTPUT
+    use intrinsic, only: field_indices
+    use lexer_core, only: print_source
+    use tree, only: where
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use output_m, only: output
     use String_Table, only: Display_String
     
     integer, intent(in) :: NODE
@@ -1472,11 +1479,11 @@ contains ! ========= Public Procedures ============================
   ! -------------------------------------- GetMaskBit -------------
 
   function GetMaskBit ( node, single ) result ( maskBit )
-    use Tree, only: NSONS, DECORATION, SUBTREE
-    use Init_Tables_Module, only: L_CLOUD, L_FILL, L_FULL_DERIVATIVES, &
-      & L_IGNORE, L_LINALG, L_SPARE, L_TIKHONOV
-    use VectorsModule, only: M_CLOUD, M_FILL, M_FULLDERIVATIVES, M_LINALG, &
-      & M_IGNORE, M_SPARE, M_TIKHONOV
+    use Tree, only: nsons, decoration, subtree
+    use Init_Tables_Module, only: l_cloud, l_fill, l_full_derivatives, &
+      & l_ignore, l_linalg, l_spare, l_tikhonov
+    use VectorsModule, only: m_cloud, m_fill, m_fullderivatives, m_linalg, &
+      & m_ignore, m_spare, m_tikhonov
 
     ! This routine parses the mask field in an l2cf command
     ! Dummy arguments
@@ -1524,6 +1531,9 @@ contains ! ========= Public Procedures ============================
 end module SubsetModule
  
 ! $Log$
+! Revision 2.35  2016/05/04 17:52:00  pwagner
+! Tried harder to make the hightRange mechanism work as advertised
+!
 ! Revision 2.34  2014/09/05 01:23:40  vsnyder
 ! Remove declaration of unused parameter and USE name
 !
