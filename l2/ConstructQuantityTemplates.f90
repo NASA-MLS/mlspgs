@@ -13,7 +13,7 @@ module ConstructQuantityTemplates
 
   ! This module is responsible for constructing templates for quantities.
   ! This version is a rewrite, aimed at tidying up a lot of the codebase
-  use INIT_TABLES_MODULE, only: FIRST_LIT, LAST_LIT
+  use init_tables_module, only: first_lit, last_lit
 
   implicit none
 
@@ -71,35 +71,35 @@ contains ! ============= Public procedures ===================================
   type (QuantityTemplate_T) function CreateQtyTemplateFromMLSCFInfo ( &
     & Name, Root, FGrids, HGrids, filedatabase, Chunk, MifGeolocation ) &
     & result ( QTY )
-    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
-    use CHUNKS_M, only: MLSCHUNK_T
-!   use CHUNKDIVIDE_M, only: CHUNKDIVIDECONFIG
-    use EXPR_M, only: EXPR
-    use FGRID, only: FGRID_T
-    use HGRIDSDATABASE, only: HGRID_T
-    use highOutput, only: outputNamedValue
-    use init_tables_module, only:  f_badValue, f_coordinate, f_fGrid, f_hGrid, &
-      & f_irregular, f_keepChannels, f_logBasis, f_minValue, f_module, &
+    use allocate_deallocate, only: allocate_test, deallocate_test
+    use chunks_m, only: mlschunk_t
+!   use chunkdivide_m, only: chunkdivideconfig
+    use expr_m, only: expr
+    use fgrid, only: fgrid_t
+    use hgridsdatabase, only: hgrid_t
+    use highoutput, only: outputnamedvalue
+    use init_tables_module, only:  f_badvalue, f_coordinate, f_fgrid, f_hgrid, &
+      & f_irregular, f_keepchannels, f_logbasis, f_minvalue, f_module, &
       & f_molecule, f_radiometer, f_reflector, f_sgrid, f_signal, f_stacked, &
       & f_type, f_vgrid, f_xgrid, field_first, field_last, l_channel, &
-      & l_explicit, l_geocAltitude, l_lostransfunc, l_matrix3x3, l_none, &
+      & l_explicit, l_geocaltitude, l_lostransfunc, l_matrix3x3, l_none, &
       & l_phitan, l_true, l_xyz, l_zeta
     use intrinsic, only: phyq_indices
-    use MLSCOMMON, only: MLSFILE_T
-    use MLSKINDS, only: RK => R8
-    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING
-    use MLSSIGNALS_M, only:GETMODULEFROMRADIOMETER, GETMODULEFROMSIGNAL, &
-      & GETRADIOMETERFROMSIGNAL, GETSIGNAL, SIGNAL_T, ISMODULESPACECRAFT
-    use MoreTree, only: Get_Boolean
-    use PARSE_SIGNAL_M, only: PARSE_SIGNAL
-    use QUANTITYTEMPLATES, only: NULLIFYQUANTITYTEMPLATE, PointQuantityToHGrid, &
-      & QUANTITYTEMPLATE_T, SETUPNEWQUANTITYTEMPLATE
-    use STRING_TABLE, only: GET_STRING
-    use TOGGLES, only: GEN, LEVELS, TOGGLE
-    use TRACE_M, only: TRACE_BEGIN, TRACE_END
-    use TREE, only: DECORATION, NODE_ID, NSONS, SUB_ROSA, SUBTREE
-    use TREE_TYPES, only: N_SET_ONE
-    use VGRIDSDATABASE, only: VGRIDS
+    use MLSCommon, only: MLSFile_t
+    use MLSKinds, only: rk => r8
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
+    use MLSSignals_m, only:getModuleFromRadiometer, getModuleFromSignal, &
+      & getRadiometerFromSignal, getSignal, signal_t, isModuleSpacecraft
+    use moreTree, only: get_boolean
+    use parse_signal_m, only: parse_signal
+    use quantityTemplates, only: nullifyQuantityTemplate, pointQuantityToHGrid, &
+      & quantityTemplate_t, setupNewQuantityTemplate
+    use string_table, only: get_string
+    use toggles, only: gen, levels, toggle
+    use trace_m, only: trace_begin, trace_end
+    use tree, only: decoration, node_id, nsons, sub_rosa, subtree
+    use tree_types, only: n_set_one
+    use VGridsDatabase, only: VGrids
 
     ! Dummy arguments
     integer, intent(in) :: NAME              ! Sub-rosa index of name
@@ -525,29 +525,29 @@ contains ! ============= Public procedures ===================================
   ! --------------------------------  ConstructMinorFrameQuantity  -----
   ! I think we should make filedatabase and chunk optional as well
   ! because we don't need it when mifGeolocation is present -haley
-  subroutine ConstructMinorFrameQuantity (instrumentModule, &
+  subroutine ConstructMinorFrameQuantity ( instrumentModule, &
     & qty, noChans, regular, instanceLen, NoCrossTrack, &
     & filedatabase, chunk, mifGeolocation )
 
-    use CHUNKS_M, only: MLSCHUNK_T
+    use chunks_m, only: MLSChunk_t
     use Dump_0, only: Dump
     use highOutput, only: BeVerbose, LetsDebug, outputNamedValue
-    use INIT_TABLES_MODULE, only: L_GeocAltitude, L_GeodAltitude, L_None
-    use L1BDATA, only: L1BDATA_T, READL1BDATA, DEALLOCATEL1BDATA, &
-      & ASSEMBLEL1BQTYNAME
-    use MLSCOMMON, only: MLSFILE_T, NAMELEN
-    use MLSKINDS, only: RK => R8
-    use MLSL2OPTIONS, only: AURA_L1BFILES
-    use MLSFILES, only: GETMLSFILEBYTYPE
-    use MLSMESSAGEMODULE, only: MLSMESSAGE, &
-      & MLSMSG_ERROR, MLSMSG_L1BREAD, MLSMSG_WARNING
-    use MLSSIGNALS_M, only:  ISMODULESPACECRAFT, GETMODULENAME
-    use MLSSTRINGLISTS, only: SWITCHDETAIL
-    use OUTPUT_M, only: OUTPUT
-    use QUANTITYTEMPLATES, only: QUANTITYTEMPLATE_T, &
-      & Dump, SETUPNEWQUANTITYTEMPLATE
-    use TOGGLES, only: Gen, Levels, SWITCHES, Toggle
-    use TRACE_M, only: TRACE_BEGIN, TRACE_END
+    use init_tables_module, only: l_geocaltitude, l_geodaltitude, l_none
+    use L1BData, only: L1BData_t, readL1BData, deallocateL1BData, &
+      & assemblel1bqtyname
+    use MLSCommon, only: MLSFile_t, nameLen
+    use MLSKinds, only: rk => r8
+    use MLSL2options, only: aura_L1BFiles
+    use MLSFiles, only: getMLSFileByType
+    use MLSMessageModule, only: MLSMessage, &
+      & MLSMSG_Error, MLSMSG_L1BRead, MLSMSG_Warning
+    use MLSSignals_m, only:  isModuleSpacecraft, getModuleName
+    use MLSStringLists, only: switchDetail
+    use output_m, only: output
+    use quantityTemplates, only: quantityTemplate_t, &
+      & dump, setupNewQuantityTemplate
+    use toggles, only: gen, levels, switches, toggle
+    use trace_m, only: trace_begin, trace_end
 
     ! This routine constructs a minor frame based quantity.
 
@@ -781,7 +781,7 @@ contains ! ============= Public procedures ===================================
           call MLSMessage ( MLSMSG_Error, ModuleName, &
           & "No code to read L1B item " // trim(L1bItemsToRead(l1bItem)%name) )
         end select
-        if ( verbose ) call dump( l1bField%dpField(1,:,:) )
+        if ( verboser ) call dump( l1bField%dpField(1,:,:) )
 
         call DeallocateL1BData ( l1bField )
       end do                          ! Loop over l1b quantities
@@ -809,19 +809,19 @@ contains ! ============= Public procedures ===================================
     ! and we want to invent a set of minor frame quantities with no
     ! reference to the l1 files
 
-    use EXPR_M, only: EXPR
-    use INIT_TABLES_MODULE, only: F_GEODALT, F_GEODANGLE, F_MODULE, F_NOMIFS, &
-      & F_SOLARTIME, F_SOLARZENITH, F_Truncate
-    use INIT_TABLES_MODULE, only: L_GEODALTITUDE, PHYQ_ANGLE, PHYQ_DIMENSIONLESS, &
-      & PHYQ_TIME
-    use MLSKINDS, only: RK => R8
-    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
+    use expr_m, only: expr
+    use init_tables_module, only: f_geodalt, f_geodangle, f_module, f_nomifs, &
+      & f_solartime, f_solarzenith, f_truncate
+    use init_tables_module, only: l_geodaltitude, phyq_angle, phyq_dimensionless, &
+      & phyq_time
+    use MLSKinds, only: rk => r8
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use MoreTree, only: Get_Boolean
-    use QUANTITYTEMPLATES, only: CopyQuantityTemplate, &
+    use QuantityTemplates, only: CopyQuantityTemplate, &
       & DestroyQuantityTemplateContents, QuantityTemplate_T, &
       & SetupNewQuantityTemplate
-    use TREE, only: DECORATION, NSONS, SUBTREE
-    use VGRIDSDATABASE, only: VGRID_T, VGRIDS
+    use tree, only: decoration, nsons, subtree
+    use vgridsdatabase, only: vgrid_t, vgrids
 
     ! Dummy arguments
     integer, intent(in) :: ROOT         ! Tree vertex
@@ -1005,12 +1005,12 @@ contains ! ============= Public procedures ===================================
   ! -----------------------------------------------  Announce_Error  -----
   subroutine Announce_Error ( where, message, extra, severity )
 
-    use LEXER_CORE, only: PRINT_SOURCE
-    use OUTPUT_M, only: BLANKS, OUTPUT
-    use TREE, only: WHERE_AT=>WHERE
-    use Intrinsic, only: LIT_INDICES
-    use STRING_TABLE, only: DISPLAY_STRING
-    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
+    use lexer_core, only: print_source
+    use output_m, only: blanks, output
+    use tree, only: where_at=>where
+    use Intrinsic, only: lit_indices
+    use string_table, only: display_string
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
 
     integer, intent(in) :: WHERE   ! Tree node where error was noticed
     character (LEN=*), intent(in) :: MESSAGE
@@ -1052,14 +1052,14 @@ contains ! ============= Public procedures ===================================
   ! otherwise return true
   ! Arguments
 
-    use CHUNKS_M, only: MLSCHUNK_T
-    use ALLOCATE_DEALLOCATE, only: DEALLOCATE_TEST
-    use L1BDATA, only: L1BDATA_T, READL1BDATA, GETL1BFILE, &
-      & ASSEMBLEL1BQTYNAME, PRECISIONSUFFIX
-    use MLSCOMMON, only: MLSFILE_T
-    use MLSKINDS, only: RK => R8
-    use MLSFILES, only: GETMLSFILEBYTYPE
-    use MLSSIGNALS_M, only: GETSIGNALNAME
+    use chunks_m, only: MLSChunk_t
+    use allocate_deallocate, only: deallocate_test
+    use L1BData, only: L1BData_t, readL1BData, getl1bfile, &
+      & assemblel1bqtyname, precisionsuffix
+    use MLSCommon, only: MLSFile_t
+    use MLSKinds, only: rk => r8
+    use MLSFiles, only: geTMLSFileByType
+    use MLSSignals_m, only: getSignalName
 
     integer, intent(in)                         :: signal
     integer, intent(in)                         :: sideband
@@ -1113,11 +1113,11 @@ contains ! ============= Public procedures ===================================
   subroutine ConstructMajorFrameQuantity( chunk, instrumentModule, qty, noChans, &
     & mifGeolocation, NoCrossTrack )
     ! Dummy arguments
-    use CHUNKS_M, only: MLSCHUNK_T
-    use QUANTITYTEMPLATES, only: CreateGeolocationFields, QUANTITYTEMPLATE_T, &
-      & SETUPNEWQUANTITYTEMPLATE
-    use TOGGLES, only: GEN, LEVELS, TOGGLE
-    use TRACE_M, only: TRACE_BEGIN, TRACE_END
+    use chunks_m, only: MLSChunk_t
+    use quantityTemplates, only: CreateGeolocationFields, quantityTemplate_t, &
+      & setUpNewQuantityTemplate
+    use toggles, only: gen, levels, toggle
+    use trace_m, only: trace_begin, trace_end
 
     type (MLSChunk_T), intent(in) :: CHUNK
     integer, intent(in) :: INSTRUMENTMODULE
@@ -1167,9 +1167,9 @@ contains ! ============= Public procedures ===================================
 
   ! ----------------------------------------------  GetQtyTypeIndex  -----
   subroutine GetQtyTypeIndex(string_text, QtyType)
-    use Intrinsic, only: LIT_INDICES
-    use MLSStrings, only: LOWERCASE
-    use STRING_TABLE, only: GET_STRING
+    use Intrinsic, only: lit_indices
+    use MLSStrings, only: lowercase
+    use string_table, only: get_string
     ! Returns the lit index,  given QtyType name in mixed case
     ! Returns 0 if QtyType name not found
     ! (inverse function: GetQtyTypeName)
@@ -1191,48 +1191,49 @@ contains ! ============= Public procedures ===================================
   subroutine InitQuantityTemplates
     ! This routine initializes the quantity template properties
     ! This is the routine one needs to update when one introduces a new quantity type.
-    use Init_Tables_Module, only:  L_ADOPTED, L_ADOPTED, L_BASELINE, &
-      L_BOUNDARYPRESSURE, L_CALSIDEBANDFRACTION, &
-      L_CHISQBINNED, L_CHISQCHAN, L_CHISQMMAF, L_CHISQMMIF, L_CLOUDICE, &
-      L_CLOUDINDUCEDRADIANCE, L_CLOUDEXTINCTION, L_CLOUDMINMAX, L_CLOUDRADSENSITIVITY, &
-      L_CLOUDTEMPERATURE, L_CLOUDWATER, L_COLUMNABUNDANCE, &
-      L_DNWT_ABANDONED, L_DNWT_AJN, L_DNWT_AXMAX, L_DNWT_CAIT, &
-      L_DNWT_CHISQMINNORM, L_DNWT_CHISQNORM, L_DNWT_CHISQRATIO, &
-      L_DNWT_COUNT, L_DNWT_DIAG, L_DNWT_DXDX, L_DNWT_DXDXL, &
-      L_DNWT_DXN, L_DNWT_DXNL, L_DNWT_FLAG, L_DNWT_FNMIN, &
-      L_DNWT_FNORM, L_DNWT_GDX, L_DNWT_GFAC, &
-      L_DNWT_GRADN, L_DNWT_SQ, L_DNWT_SQT,&
-      L_EARTHRADIUS, L_EARTHREFL, L_ECRTOFOV, L_EFFECTIVEOPTICALDEPTH, &
-      L_ELEVOFFSET, L_EXTINCTION, L_EXTINCTIONV2, &
-      L_FIELDAZIMUTH, L_FIELDELEVATION, L_FIELDSTRENGTH, &
-      L_GEOLOCATION, L_GPH, L_GHzAzim, L_HEIGHTOFFSET, L_ISOTOPERATIO, L_IWC, &
-      L_JACOBIAN_COLS, L_JACOBIAN_ROWS, &
-      L_L1BMAFBASELINE, L_L1BMIF_TAI, L_LIMBSIDEBANDFRACTION, &
-      L_LINECENTER, L_LINEWIDTH, L_LINEWIDTH_TDEP, &
-      L_LOSTRANSFUNC, L_LOSVEL, L_LOWESTRETRIEVEDPRESSURE, &
-      L_MASSMEANDIAMETERICE, L_MASSMEANDIAMETERWATER, L_MAGNETICFIELD, &
-      L_MIFDEADTIME, L_MIFEXTINCTION, L_MIFEXTINCTIONEXTRAPOLATION, &
-      L_MIFEXTINCTIONFORM, L_MIFEXTINCTIONV2, L_MIFRHI, &
-      L_NOISEBANDWIDTH, L_NORADSPERMIF, L_NORADSBINNED, &
-      L_NUMGRAD, L_NUMJ, L_NUMNEWT, &
-      L_OPTICALDEPTH, L_ORBITINCLINATION, L_AscDescMode, &
-      L_PHASETIMING, L_PHITAN, L_PTAN, L_QUALITY, L_RADIANCE, &
-      L_REFGPH, L_REFLTEMP, L_REFLTRANS, L_REFLREFL, L_REFLSPILL, &
-      L_RHI, L_SINGLECHANNELRADIANCE, L_SIZEDISTRIBUTION, &
-      L_SCANRESIDUAL, L_SCATTERINGANGLE, L_SCECI, L_SCECR, L_SCVELECI, &
-      L_SCVELECR, L_SCGEOCALT, L_SPACERADIANCE, L_STATUS, &
-      L_STRAYRADIANCE, L_SURFACEHEIGHT, L_SURFACETYPE, L_SYSTEMTEMPERATURE, &
-      L_TEMPERATURE, L_TNGTECI, L_TNGTGEODALT, L_TNGTGEOCALT, &
-      L_TOTALPOWERWEIGHT, L_TSCAT, L_VMR
-    use Init_Tables_Module, only: PHYQ_ANGLE, PHYQ_COLMABUNDANCE, &
-      & PHYQ_DIMENSIONLESS, PHYQ_EXTINCTION, PHYQ_FREQUENCY,&
-      & PHYQ_GAUSS, PHYQ_IceDensity, PHYQ_LENGTH, &
-      & PHYQ_PRESSURE, PHYQ_TEMPERATURE, PHYQ_TIME, PHYQ_VELOCITY, &
-      & PHYQ_VMR, PHYQ_ZETA
-    use MLSMessageModule, only: MLSMSG_ERROR, MLSMESSAGE
+    use Init_Tables_Module, only:  l_adopted, l_adopted, l_baseline, &
+      l_boundarypressure, l_calsidebandfraction, &
+      l_chisqbinned, l_chisqchan, l_chisqmmaf, l_chisqmmif, l_cloudice, &
+      l_cloudinducedradiance, l_cloudextinction, l_cloudminmax, l_cloudradsensitivity, &
+      l_cloudtemperature, l_cloudwater, l_columnabundance, &
+      l_dnwt_abandoned, l_dnwt_ajn, l_dnwt_axmax, l_dnwt_cait, &
+      l_dnwt_chisqminnorm, l_dnwt_chisqnorm, l_dnwt_chisqratio, &
+      l_dnwt_count, l_dnwt_diag, l_dnwt_dxdx, l_dnwt_dxdxl, &
+      l_dnwt_dxn, l_dnwt_dxnl, l_dnwt_flag, l_dnwt_fnmin, &
+      l_dnwt_fnorm, l_dnwt_gdx, l_dnwt_gfac, &
+      l_dnwt_gradn, l_dnwt_sq, l_dnwt_sqt,&
+      l_earthradius, l_earthrefl, l_ecrtofov, l_effectiveopticaldepth, &
+      l_elevoffset, l_extinction, l_extinctionv2, &
+      l_fieldazimuth, l_fieldelevation, l_fieldstrength, &
+      l_geolocation, l_gph, l_ghzazim, l_heightoffset, l_isotoperatio, l_iwc, &
+      l_jacobian_cols, l_jacobian_rows, &
+      l_l1bmafbaseline, l_l1bmif_tai, l_limbsidebandfraction, &
+      l_linecenter, l_linewidth, l_linewidth_tdep, &
+      l_lostransfunc, l_losvel, l_lowestretrievedpressure, &
+      l_massmeandiameterice, l_massmeandiameterwater, l_magneticfield, &
+      l_mifdeadtime, l_mifextinction, l_mifextinctionextrapolation, &
+      l_mifextinctionform, l_mifextinctionv2, l_mifrhi, &
+      l_noisebandwidth, l_noradspermif, l_noradsbinned, &
+      l_numgrad, l_numj, l_numnewt, &
+      l_opticaldepth, l_orbitinclination, l_ascdescmode, &
+      l_phasetiming, l_phitan, l_ptan, l_quality, l_radiance, &
+      l_refgph, l_refltemp, l_refltrans, l_reflrefl, l_reflspill, &
+      l_rhi, l_singlechannelradiance, l_sizedistribution, &
+      l_scanresidual, l_scatteringangle, l_sceci, l_scecr, l_scveleci, &
+      l_scvelecr, l_scgeocalt, l_spaceradiance, l_status, &
+      l_strayradiance, l_surfaceheight, l_surfacetype, l_systemtemperature, &
+      l_temperature, l_tngteci, l_tngtgeodalt, l_tngtgeocalt, &
+      l_totalpowerweight, l_tscat, l_vmr
+    use Init_Tables_Module, only:  phyq_angle, phyq_colmabundance, &
+     & phyq_dimensionless, phyq_extinction, phyq_frequency,&
+     & phyq_gauss, phyq_icedensity, phyq_length, &
+     & phyq_pressure, phyq_temperature, phyq_time, phyq_velocity, &
+     & phyq_vmr, phyq_zeta
+
+    use MLSMessageModule, only: MLSMSG_Error, MLSMessage
     use Intrinsic, only: LIT_INDICES
-    use Output_M, only: OUTPUT
-    use String_Table, only: DISPLAY_STRING
+    use Output_M, only: output
+    use String_Table, only: display_string
 
     ! Local variables
     integer :: I                        ! Loop counter
@@ -1459,8 +1460,8 @@ contains ! ============= Public procedures ===================================
 
   ! ---------------------------------- SetupEmptyHGridForQuantity
   subroutine SetupEmptyHGridForQuantity ( qty ) 
-    use Allocate_Deallocate, only: ALLOCATE_TEST
-    use Pointer_Rank_Remapping, only: REMAP
+    use Allocate_Deallocate, only: allocate_test
+    use Pointer_Rank_Remapping, only: remap
     use QuantityTemplates, only: QuantityTemplate_T
     ! Dummy arguments
     type ( QuantityTemplate_T ), intent(inout) :: QTY
@@ -1516,6 +1517,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.187  2016/05/04 18:31:39  pwagner
+! Requires -Sqtmp1 to dump l1b arrays when constructing minor fram qty
+!
 ! Revision 2.186  2015/09/25 02:16:20  vsnyder
 ! Preserve the quantity template vertical coordinate.  Read the appropriate
 ! kind of altitude quantity from the L1BOA file, depending on the quantity
