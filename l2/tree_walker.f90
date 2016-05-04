@@ -34,25 +34,25 @@ contains ! ====     Public Procedures     ==============================
 
     use Algebra_m, only: algebra
     use Allocate_deallocate, only: allocate_test, deallocate_test
-    use Antennapatterns_m, only: destroy_ant_patterns_database
-    use Chunkdivide_m, only: chunkdivide, destroychunkdatabase
-    use Chunks_m, only: dump, MLSchunk_t
-    use Construct, only: MLSl2construct, MLSl2deconstruct, &
-      & Constructmifgeolocation
+    use AntennaPatterns_m, only: destroy_ant_patterns_database
+    use ChunkDivide_m, only: chunkDivide, destroyChunkDatabase
+    use Chunks_m, only: dump, MLSChunk_t
+    use Construct, only: MLSL2Construct, MLSL2Deconstruct, &
+      & ConstructMIFGeolocation, DestroyMIFGeolocation
     use DirectWrite_m, only: directdata_t, destroydirectdatabase
     use Dump_0, only: dump
-    use Empiricalgeometry, only: forgetoptimumlon0
-    use Fgrid, only: fgrid_t, destroyfgriddatabase, dump
-    use Fill, only: MLSl2fill
-    use Forwardmodelconfig, only: forwardmodelconfig_t, &
+    use Empiricalgeometry, only: forgetOptimumLon0
+    use FGrid, only: fgrid_t, destroyFGridDatabase, dump
+    use Fill, only: MLSL2Fill
+    use ForwardModelConfig, only: forwardModelConfig_t, &
       & DestroyFwmConfigDatabase, &
       & StripForwardModelConfigDatabase
-    use Forwardmodelsupport, only: printForwardModelTiming
+    use ForwardModelSupport, only: printForwardModelTiming
     use Global_settings, only: set_global_settings
-    use Griddeddata, only: griddeddata_t, destroygriddeddatadatabase, dump
-    use Hessianmodule_1, only: destroyhessiandatabase, hessian_t
-    use Hgridsdatabase, only: hgrid_t
-    use Hgrid, only: computeAllHGridOffsets, DestroyHGridGeoLocations
+    use GriddedData, only: griddedData_t, destroyGriddedDataDatabase, dump
+    use HessianModule_1, only: destroyHessianDatabase, hessian_t
+    use HGridsDatabase, only: HGrid_t
+    use HGrid, only: computeAllHGridOffsets, DestroyHGridGeoLocations
     use HighOutput, only: beVerbose, getStamp, headLine, outputNamedValue, &
       & setStamp
     use Init_tables_module, only: l_chisqchan, l_chisqmmaf, l_chisqmmif,  &
@@ -62,41 +62,42 @@ contains ! ====     Public Procedures     ==============================
       & Z_retrieve, z_spectroscopy
     use Intrinsic, only: section_indices
     use Join, only: MLSl2join
-    use L2AUXData, only: destroyl2auxdatabase, l2auxdata_t, dump
+    use L2AUXData, only: destroyL2AUXDatabase, L2AUXData_t, dump
     use L2FWMParallel, only: L2FWMSlaveTask, launchFWMSlaves
     use L2GPData, only: destroyL2GPDatabase, L2GPData_t, dump
     use L2Parallel, only: getChunkInfoFromMaster, L2MasterTask
     use L2Parinfo, only: parallel, closeparallel
     use L2PC_m, only: destroyL2PCDatabase, destroyBinSelectorDatabase
     use L2PCBins_m, only: flushlockedbins
-    use MatrixModule_1, only: destroymatrixdatabase, matrix_database_t
-    use Mergegridsmodule, only: mergegrids
-    use MLSCommon, only: tai93_range_t, MLSfile_t
-    use MLSL2Options, only: aura_l1bfiles, checkpaths, currentchunknumber, &
-      & L2cfnode, need_l1bfiles, &
-      & Skipdirectwrites, skipdirectwritesoriginal, &
-      & Skipretrieval, slavescleanupselves, specialdumpfile, stopaftersection, &
+    use MatrixModule_1, only: destroyMatrixDatabase, matrix_database_t
+    use MergeGridsModule, only: mergeGrids
+    use MLSCommon, only: tai93_range_t, MLSFile_t
+    use MLSL2Options, only: aura_L1BFiles, checkPaths, currentChunkNumber, &
+      & L2CFNode, need_L1BFiles, &
+      & SkipDirectWrites, skipDirectWritesOriginal, &
+      & SkipRetrieval, slavesCleanUpSelves, specialDumpFile, stopAfterSection, &
       & MLSMessage, toolkit
     use MLSMessageModule, only: MLSMSG_Allocate, MLSMSG_Info, &
-      & MLSMsg_error, summarizewarnings
-    use MLSPCF2, only: MLSpcf_spectroscopy_end
-    use MLSFinds, only: findfirst
-    use MLSSignals_m, only: bands, destroybanddatabase, destroymoduledatabase, &
-      & Destroyradiometerdatabase, destroysignaldatabase, &
-      & Destroyspectrometertypedatabase, isspacecraftaura, &
+      & MLSMSG_Error, summarizeWarnings
+    use MLSPCF2, only: MLSPCF_Spectroscopy_end
+    use MLSFinds, only: findFirst
+    use MLSSignals_m, only: bands, destroyBandDatabase, destroyModuleDatabase, &
+      & DestroyRadiometerDatabase, destroySignalDatabase, &
+      & DestroySpectrometerTypeDatabase, isSpacecraftAura, &
       & MLSSignals, modules, radiometers, &
-      & Signals, spectrometertypes
-    use MLSStringlists, only: expandstringrange, isinlist, switchdetail
+      & Signals, spectrometerTypes
+    use MLSStringLists, only: expandStringRange, isInList, switchDetail
     use MLSStrings, only: lowercase
     use MLSL2Timings, only: add_to_section_timing, total_times
     use Next_tree_node_m, only: dump, &
       & Next_tree_node, next_tree_node_state
-    use Open_init, only: openandinitialize
-    use Outputandclose, only: output_close
+    use Open_init, only: openAndInitialize
+    use OutputAndClose, only: output_close
     use Output_m, only: blanks, output, &
-      & Resumeoutput, revertoutput, switchoutput
+      & ResumeOutput, revertOutput, switchOutput
     use PointingGrid_m, only: destroy_pointing_grid_database
-    use QuantityTemplates, only: quantitytemplate_t
+    use QuantityTemplates, only: quantityTemplate_t, &
+      & destroyQuantityTemplateDatabase
     use ReadApriori, only: read_apriori
     use RetrievalModule, only: retrieve
     use SpectroscopyCatalog_m, only: destroy_line_database, &
@@ -105,15 +106,15 @@ contains ! ====     Public Procedures     ==============================
     use Time_m, only: time_now
     use Toggles, only: gen, switches, toggle
     use Trace_m, only: trace_begin, trace_end
-    use Tree, only: decoration, nsons, subtree
+    use Tree, only: decoration, subtree
     use VectorsModule, only: destroyVectorDatabase, dump_vectors, &
       & Vector_t, vectorTemplate_t
-    use VgridsDatabase, only: destroyVGridDatabase, vgrids
+    use VGridsDatabase, only: destroyVGridDatabase, VGrids
 
     integer, intent(in) ::     ROOT        ! Root of the abstract syntax tree
     integer, intent(out) ::    ERROR_FLAG  ! Nonzero means failure
     integer, intent(in) ::     FIRST_SECTION! Index of son of root of first n_cf
-    logical, intent(in) ::     COUNTCHUNKS ! Just count the chunks, print them out and quit
+    logical, intent(in) ::     COUNTCHUNKS ! Just count, print, and quit
 
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
     character(len=*), intent(in) :: SECTIONSTOSKIP
@@ -487,8 +488,7 @@ subtrees:   do
             ! Otherwise, we'll save them as we may need to output them as l2pc files.
             if ( .not. canWriteL2PC ) then
               if ( warnOnDestroy ) call output('About to MLSL2Deconstruct', advance='yes' )
-              call MLSL2DeConstruct ( qtyTemplates, vectorTemplates, &
-                & mifGeolocation, hGrids )
+              call MLSL2DeConstruct ( vectorTemplates, hGrids )
               if ( warnOnDestroy ) call output('About to destroy hessian db', advance='yes' )
               call DestroyHessianDatabase ( hessians )
               if ( warnOnDestroy ) call output('About to destroy matrix db', advance='yes' )
@@ -516,6 +516,7 @@ subtrees:   do
               call finishUp(.true.)
               return
             end if
+            call DestroyMIFGeolocation( mifGeolocation ) 
           end do ! ---------------------------------- End of chunk loop
           doneWithChunks = .true.
           state = save2
@@ -589,14 +590,15 @@ subtrees:   do
       ! This is to guard against destroying stuff needed by l2pc writing
       if ( canWriteL2PC ) then
         if ( warnOnDestroy ) call output('About to MLSL2Deconstruct', advance='yes' )
-        call MLSL2DeConstruct ( qtyTemplates, vectorTemplates, &
-          & mifGeolocation, hGrids )
+        call MLSL2DeConstruct ( vectorTemplates, hGrids )
         if ( warnOnDestroy ) call output('About to destroy hessian db', advance='yes' )
         call DestroyHessianDatabase ( hessians )
         if ( warnOnDestroy ) call output('About to destroy matrix db', advance='yes' )
         call DestroyMatrixDatabase ( matrices )
         if ( warnOnDestroy ) call output('About to destroy vector db', advance='yes' )
         call DestroyVectorDatabase ( vectors )
+        if ( warnOnDestroy ) call output('About to destroy qty template db', advance='yes' )
+        call destroyQuantityTemplateDatabase ( QtyTemplates )
       end if
 
       if ( specialDumpFile /= ' ' ) &
@@ -726,6 +728,9 @@ subtrees:   do
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.200  2015/10/13 23:51:53  pwagner
+! Will skip a chunk w/o profiles instead of crashing
+!
 ! Revision 2.199  2015/09/03 20:29:47  pwagner
 ! We were calling L2MasterTask more than once; fixed
 !
