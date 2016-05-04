@@ -10,7 +10,7 @@
 ! foreign countries or providing access to foreign persons.
 
 !=============================================================================
-MODULE Construct                ! The construct module for the MLS L2 sw.
+module Construct                ! The construct module for the MLS L2 sw.
 !=============================================================================
 
   ! This module performs the `construct' task for the level 2 software.  This
@@ -21,7 +21,8 @@ MODULE Construct                ! The construct module for the MLS L2 sw.
 
   private
 
-  public :: MLSL2Construct, MLSL2DeConstruct, ConstructMIFGeolocation
+  public :: MLSL2Construct, MLSL2DeConstruct, &
+    & ConstructMIFGeolocation, DestroyMIFGeolocation
   
   !------------------------------- RCS Ident Info ------------------------------
   character (len=*), parameter :: ModuleName="$RCSfile$"
@@ -29,6 +30,27 @@ MODULE Construct                ! The construct module for the MLS L2 sw.
   !-----------------------------------------------------------------------------
 
 contains ! =====     Public Procedures     =============================
+
+  ! --------------------------------------------- DestroyMIFGeolocation --
+  subroutine DestroyMIFGeolocation ( mifGeolocation )
+    ! Deallocate mifGeolocations
+    use highOutput, only: BeVerbose
+    use quantityTemplates, only: DestroyQuantityTemplateDatabase, quantityTemplate_t
+    use toggles, only: gen, toggle
+    use trace_m, only: trace_begin, trace_end
+    type (QuantityTemplate_T), dimension(:), pointer :: mifGeolocation
+    
+    ! Local variables
+    integer :: Me = -1          ! String index for trace
+    logical :: verbose
+
+    call trace_begin ( me, "DestroyMIFGeolocation", 0, cond=toggle(gen) )
+    verbose = BeVerbose( 'qtmp', 0 )
+    if ( associated ( mifGeolocation ) ) then
+      call DestroyQuantityTemplateDatabase( mifGeolocation )
+    end if
+    call trace_end ( "DestroyMIFGeolocation", cond=toggle(gen) )
+  end subroutine DestroyMIFGeolocation
 
   ! --------------------------------------------- ConstructMIFGeolocation --
   subroutine ConstructMIFGeolocation ( mifGeolocation, filedatabase, chunk )
@@ -38,12 +60,14 @@ contains ! =====     Public Procedures     =============================
     ! quantities saving file IO and memory.
     use chunks_m, only: MLSChunk_t
     use constructQuantityTemplates, only: constructMinorFrameQuantity
-    use highOutput, only: BeVerbose, outputNamedValue
+    use highOutput, only: BeVerbose
     use quantityTemplates, only: Dump, quantityTemplate_t
     use MLSCommon, only: MLSFile_t
     use MLSL2Options, only: MLSMessage
     use MLSSignals_m, only: modules
     use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Allocate
+    use toggles, only: gen, toggle
+    use trace_m, only: trace_begin, trace_end
 
     type (QuantityTemplate_T), dimension(:), pointer :: mifGeolocation
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
@@ -51,9 +75,11 @@ contains ! =====     Public Procedures     =============================
     
     ! Local variables
     integer :: INSTRUMENTMODULEINDEX    ! Loop counter
+    integer :: Me = -1          ! String index for trace
     integer :: STATUS                   ! Flag
     logical :: verbose
 
+    call trace_begin ( me, "ConstructMIFGeolocation", 0, cond=toggle(gen) )
     verbose = BeVerbose( 'qtmp', 0 )
     if ( .not. associated ( mifGeolocation ) ) then
       ! Don't overwrite it if we already have it, e.g. from previous construct
@@ -67,14 +93,16 @@ contains ! =====     Public Procedures     =============================
         do instrumentModuleIndex = 1, size(modules)
           call ConstructMinorFrameQuantity ( instrumentModuleIndex, &
           mifGeolocation(instrumentModuleIndex), &
-          filedatabase=filedatabase, chunk=chunk)
-          if ( verbose ) call Dump( mifGeolocation(instrumentModuleIndex) )
+          filedatabase=filedatabase, chunk=chunk )
+          if ( verbose ) &
+            & call Dump( mifGeolocation(instrumentModuleIndex), details=0 )
         end do
       else
         mifGeolocation%noSurfs = 0
         mifGeolocation%noInstances = 0
       end if
     end if
+    call trace_end ( "ConstructMIFGeolocation", cond=toggle(gen) )
   end subroutine ConstructMIFGeolocation
 
   ! ---------------------------------------------  MLSL2Construct  -----
@@ -248,22 +276,21 @@ contains ! =====     Public Procedures     =============================
   end subroutine MLSL2Construct
 
   ! -------------------------------------------  MLSL2DeConstruct  -----
-  subroutine MLSL2DeConstruct ( quantityTemplatesBase, vectorTemplates, &
-    &                           mifGeolocation, hGrids )
+  subroutine MLSL2DeConstruct ( vectorTemplates, hGrids )
 
-  ! DeConstruct the Quantity and Vector template databases.
+  ! DeConstruct the Vector template databases.
 
     use HGridsDatabase, only: destroyHGridDatabase, HGrid_t
     use MLSStringLists, only: switchdetail
     use output_m, only: output
-    use quantityTemplates, only: destroyQuantityTemplateDatabase, &
-      & quantityTemplate_t
+    ! use quantityTemplates, only: destroyQuantityTemplateDatabase, &
+    !   & quantityTemplate_t
     use toggles, only: switches
     use vectorsModule, only: destroyVectorTemplateDatabase, vectorTemplate_t
 
-    type (QuantityTemplate_T), dimension(:), pointer :: quantityTemplatesBase
+    ! type (QuantityTemplate_T), dimension(:), pointer :: quantityTemplatesBase
     type (VectorTemplate_T), dimension(:), pointer :: vectorTemplates
-    type (QuantityTemplate_T), dimension(:), pointer :: mifGeolocation
+    ! type (QuantityTemplate_T), dimension(:), pointer :: mifGeolocation
     type (HGrid_T), dimension(:), pointer :: hGrids
     logical :: verbose
 
@@ -291,11 +318,14 @@ contains ! =====     Public Procedures     =============================
   end function not_used_here
 !---------------------------------------------------------------------------
 
-END MODULE Construct
+end module Construct
 !=============================================================================
 
 !
 ! $Log$
+! Revision 2.77  2016/05/04 17:53:32  pwagner
+! Added DestroyMIFGeolocation; removed unused args from MLSL2DeConstruct
+!
 ! Revision 2.76  2015/09/17 23:15:19  pwagner
 ! Added changeSettings command
 !
