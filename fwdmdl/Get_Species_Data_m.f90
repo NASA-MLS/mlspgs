@@ -103,8 +103,7 @@ contains
     ! Get temperature vector quantity
     fwdModelConf%temp = GetQtyStuffForForwardModel ( &
         &  fwdModelIn, fwdModelExtra, quantityType=l_temperature, &
-        &  config=fwdModelConf, radiometer=fwdModelConf%signals(1)%radiometer, &
-        &  noError=.false. )
+        &  config=fwdModelConf )
 
     ! Get state vector quantities for species
     do b = 1, size(fwdModelConf%beta_group)
@@ -181,6 +180,9 @@ contains
 end module Get_Species_Data_m
 
 ! $Log$
+! Revision 2.39  2016/05/02 23:33:53  vsnyder
+! Get the temperature QtyStuff into FwdModelConf
+!
 ! Revision 2.38  2014/04/22 00:37:18  vsnyder
 ! Add tracing
 !
