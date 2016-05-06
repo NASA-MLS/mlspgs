@@ -597,8 +597,8 @@ subtrees:   do
         call DestroyMatrixDatabase ( matrices )
         if ( warnOnDestroy ) call output('About to destroy vector db', advance='yes' )
         call DestroyVectorDatabase ( vectors )
-        if ( warnOnDestroy ) call output('About to destroy qty template db', advance='yes' )
-        call destroyQuantityTemplateDatabase ( QtyTemplates )
+        if ( warnOnDestroy ) call output('Unable to destroy qty template db', advance='yes' )
+        ! call destroyQuantityTemplateDatabase ( QtyTemplates )
       end if
 
       if ( specialDumpFile /= ' ' ) &
@@ -728,6 +728,9 @@ subtrees:   do
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.201  2016/05/04 18:22:59  pwagner
+! Restored ability of serial runs to process multiple chunks; updated api for MLSL2DeConstruct; deallocated qty templates before end
+!
 ! Revision 2.200  2015/10/13 23:51:53  pwagner
 ! Will skip a chunk w/o profiles instead of crashing
 !
