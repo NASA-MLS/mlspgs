@@ -23,16 +23,8 @@ module Load_SPS_Data_M
   public :: FindInGrid
   public :: EmptyGrids_t, Destroygrids_t, Dump, Dump_Grids
 
-  integer, public, parameter :: L_Phi_Based = 1 ! Two-dimensional grid with
-                                                ! orbit angle being the
-                                                ! horizontal coordinate
-  integer, public, parameter :: L_QTM_Based = 2 ! Three-dimensional grid with
-                                                ! the horizontal grid being QTM
-
   type, public :: Grids_T                 ! Fit all Gridding categories
-    integer,  pointer :: Grid_Type(:) => null() ! l_Phi_Based or l_QTM_Based
     type(qtyStuff_t), pointer :: QtyStuff(:) => null()
-    integer,  pointer :: names(:) => null() ! for each sps, from Qty template
     integer,  pointer :: l_f(:) => null() ! Last entry in frq_basis per sps
     integer,  pointer :: l_z(:) => null() ! Last entry in zet_basis per sps
     integer,  pointer :: l_p(:) => null() ! Last entry in phi_basis or QTM_Geo
@@ -130,6 +122,8 @@ contains
 
     do mol = 1, no_mol
 
+      grids_x%qtyStuff(mol) = qtyStuff(mol)
+
       if ( .not. associated(qtyStuff(mol)%qty) ) then
         grids_x%l_f(mol) = grids_x%l_f(mol-1)
         grids_x%l_p(mol) = grids_x%l_p(mol-1)
@@ -137,8 +131,7 @@ contains
         grids_x%l_z(mol) = grids_x%l_z(mol-1)
         grids_x%s_ind(mol) = 0
       else
-        call fill_grids_1 ( grids_x, mol, qtyStuff(mol)%qty, maf, phitan, &
-          &                 fwdModelConf )
+        call fill_grids_1 ( grids_x, mol, maf, phitan, fwdModelConf )
       end if
 
     end do
@@ -178,25 +171,27 @@ contains
     type(forwardModelConfig_t), intent(in), optional :: FwdModelConf
     logical, intent(in), optional :: SetDerivFlags(:) ! size(vector%quantities)
 
-    integer :: Qty
+    integer :: I_Qty
 
     call create_grids_1 ( Grids_x, size(vector%quantities) )
-    do qty = 1, size(vector%quantities)
+    do i_qty = 1, size(vector%quantities)
+
+     grids_x%qtyStuff(i_qty)%qty => vector%quantities(i_qty)
+
       if ( present(phitan) ) then
-        call fill_grids_1 ( grids_x, qty, vector%quantities(qty), maf, phitan, &
-          &                 fwdModelConf )
+        call fill_grids_1 ( grids_x, i_qty, maf, phitan, fwdModelConf )
       else
         ! Use the whole phi space for the window
-        call fill_grids_1 ( grids_x, qty, vector%quantities(qty), maf )
+        call fill_grids_1 ( grids_x, i_qty, maf )
       end if
     end do
 
     ! Allocate space for the zeta, phi, freq. basis and value components.
     call create_grids_2 ( Grids_x )
 
-    do qty = 1, size(vector%quantities)
+    do i_qty = 1, size(vector%quantities)
       ! Fill the zeta, phi, freq. basis and value components.
-      call fill_grids_2 ( grids_x, qty, vector%quantities(qty), setDerivFlags(qty) )
+      call fill_grids_2 ( grids_x, i_qty, vector%quantities(i_qty), setDerivFlags(i_qty) )
     end do
 
   end subroutine Load_Grid_From_Vector
@@ -212,7 +207,8 @@ contains
     use VectorsModule, only: VectorValue_T
 
     type(grids_t), intent(out) :: Grids_X
-    type(vectorValue_t), intent(in) :: Qty
+    type(vectorValue_t), intent(in), target :: Qty ! Assumes actual argument
+                                                   ! is a pointer or target
     integer, intent(in) :: Maf
     type(vectorValue_t), intent(in), optional :: Phitan
     type(forwardModelConfig_t), intent(in), optional :: FwdModelConf
@@ -241,8 +237,10 @@ contains
 
        call create_grids_1 ( grids_x, no_ang )
 
+
        do ii = 1, no_ang
-         call fill_grids_1 ( grids_x, ii, qtyStuff, maf, phitan, fwdModelConf )
+         grids_x%qtyStuff(ii)%qty => qty
+         call fill_grids_1 ( grids_x, ii, maf, phitan, fwdModelConf )
        end do
 
        call create_grids_2 ( grids_x )
@@ -264,18 +262,19 @@ contains
        call create_grids_1 ( grids_x, 1 )
 
        if ( present(phitan) ) then
-         call fill_grids_1 ( grids_x, 1, qty, maf, phitan, fwdModelConf )
+         grids_x%qtyStuff(1)%qty => qty
+         call fill_grids_1 ( grids_x, 1, maf, phitan, fwdModelConf )
        else if ( myAcross ) then
          call MLSMessage ( MLSMSG_Error, moduleName, &
          & 'Cross-track viewing needs PhiTan quantity' )
        else
          ! Use the whole phi space for the window
-         call fill_grids_1 ( grids_x, 1, qty, maf )
+         call fill_grids_1 ( grids_x, 1, maf )
        end if
 
        call create_grids_2 ( grids_x )
 
-       call fill_grids_2 ( grids_x, 1, qty, setDerivFlags, phitan=phitan )
+       call fill_grids_2 ( grids_x, 1, qty, setDerivFlags )
 
     end if
 
@@ -404,10 +403,8 @@ contains
 
     integer :: Stat
 
-    call allocate_test ( Grids_x%grid_Type, n, 'Grids_x%grid_Type', ModuleName )
     allocate ( Grids_x%qtyStuff(n), stat=stat )
     call test_allocate ( stat, moduleName, 'Grids_x%QtyStuff' )
-    call allocate_test ( Grids_x%names, n, 'Grids_x%names', moduleName )
     call allocate_test ( Grids_x%l_z, n, 'Grids_x%l_z', moduleName, lowBound=0 )
     call allocate_test ( Grids_x%l_p, n, 'Grids_x%l_p', moduleName, lowBound=0 )
     call allocate_test ( Grids_x%l_f, n, 'Grids_x%l_f', moduleName, lowBound=0 )
@@ -469,78 +466,80 @@ contains
   end subroutine Create_Grids_2
 
   ! -----------------------------------------------  Fill_Grids_1  -----
-  subroutine Fill_Grids_1 ( Grids_x, II, Qty, Maf, Phitan, FwdModelConf )
+  subroutine Fill_Grids_1 ( Grids_x, II, Maf, Phitan, FwdModelConf )
   ! Fill in the size information for the II'th element of Grids_x
 
     use ForwardModelConfig, only: ForwardModelConfig_t
-    use Intrinsic, only: L_Vmr
+    use Intrinsic, only: L_QTM, L_Vmr
     use ManipulateVectorQuantities, only: FindInstanceWindow
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use VectorsModule, only: VectorValue_T
 
     type(grids_T), intent(inout) :: Grids_x
     integer, intent(in) :: II
-    type (vectorValue_T), intent(in) :: QTY     ! An arbitrary vector quantity
     integer, intent(in) :: MAF
     type (vectorValue_T), intent(in), optional :: PHITAN  ! Tangent geodAngle
     type(forwardModelConfig_T), intent(in), optional :: FwdModelConf
 
     integer :: KF, KP, KX, KZ
 
-    if ( .not. qty%template%stacked .or. .not. qty%template%coherent ) &
-      & call MLSMessage ( MLSMSG_Error, moduleName, &
-         & 'Cannot load a quantity that is unstacked or incoherent' )
+    associate ( qty => grids_x%qtyStuff(ii)%qty )
+ 
+      if ( .not. qty%template%stacked .or. .not. qty%template%coherent ) &
+        & call MLSMessage ( MLSMSG_Error, moduleName, &
+           & 'Cannot load a quantity that is unstacked or incoherent' )
 
-    grids_x%names(ii) = qty%template%name
+      if ( qty%template%the_HGrid%type == l_QTM ) then
+        grids_x%windowStart(ii) = 1
+        grids_x%windowFinish(ii) = size(qty%template%the_HGrid%QTM_geo)
+      else if ( present(phitan) ) then
+        call FindInstanceWindow ( qty, phitan, maf, fwdModelConf%phiWindow, &
+          & fwdModelConf%windowUnits, grids_x%windowStart(ii), grids_x%windowFinish(ii) )
+      else ! Use the whole phi space for the window
+        grids_x%windowStart(ii) = 1
+        grids_x%windowFinish(ii) = size(qty%template%phi,2)
+      end if
+      if ( grids_x%windowStart(ii) > grids_x%windowFinish(ii) ) &
+        & call MLSMessage ( MLSMSG_Error, moduleName, &
+          & 'Why is windowStart greater than windowFinish?' )
 
-    if ( present(phitan) ) then
-      call FindInstanceWindow ( qty, phitan, maf, fwdModelConf%phiWindow, &
-        & fwdModelConf%windowUnits, grids_x%windowStart(ii), grids_x%windowFinish(ii) )
-    else ! Use the whole phi space for the window
-      grids_x%windowStart(ii) = 1
-      grids_x%windowFinish(ii) = size(qty%template%phi,2)
-    end if
-    if ( grids_x%windowStart(ii) > grids_x%windowStart(ii) ) &
-      & call MLSMessage ( MLSMSG_Error, moduleName, &
-        & 'Why is windowStart greater than windowFinish?' )
+      kz = qty%template%noSurfs
 
-    kz = qty%template%noSurfs
+      kp = grids_x%windowFinish(ii) - grids_x%windowStart(ii) + 1
 
-    kp = grids_x%windowFinish(ii) - grids_x%windowStart(ii) + 1
+      kx = qty%template%noCrossTrack
 
-    kx = qty%template%noCrossTrack
+      if ( associated(qty%template%frequencies) ) then
+        kf = size(qty%template%frequencies)
+      else
+        kf = qty%template%noChans ! == 1 if qty%template%frequencyCoordinate == l_none
+      end if
 
-    if ( associated(qty%template%frequencies) ) then
-      kf = size(qty%template%frequencies)
-    else
-      kf = qty%template%noChans ! == 1 if qty%template%frequencyCoordinate == l_none
-    end if
+      grids_x%l_f(ii) = grids_x%l_f(ii-1) + kf
+      grids_x%l_p(ii) = grids_x%l_p(ii-1) + &
+                      &   kp * merge(1,kz,qty%template%stacked) * kx
+      grids_x%l_x(ii) = grids_x%l_x(ii-1) + kx
+      grids_x%l_v(ii) = grids_x%l_v(ii-1) + kf * kz * kp * kx
+      grids_x%z_coord(ii) = qty%template%verticalCoordinate
+      grids_x%l_z(ii) = grids_x%l_z(ii-1) + kz * merge(1,kx,qty%template%stacked)
+      grids_x%p_len = grids_x%p_len + kz * kp * kx
+      grids_x%mol(ii) = qty%template%molecule
+      grids_x%qty(ii) = qty%template%quantityType
+      grids_x%coherent(ii) = qty%template%coherent
+      grids_x%stacked(ii) = qty%template%stacked
 
-    grids_x%l_f(ii) = grids_x%l_f(ii-1) + kf
-    grids_x%l_p(ii) = grids_x%l_p(ii-1) + &
-                    &   kp * merge(1,kz,qty%template%stacked) * kx
-    grids_x%l_x(ii) = grids_x%l_x(ii-1) + kx
-    grids_x%l_v(ii) = grids_x%l_v(ii-1) + kf * kz * kp * kx
-    grids_x%z_coord(ii) = qty%template%verticalCoordinate
-    grids_x%l_z(ii) = grids_x%l_z(ii-1) + kz * merge(1,kx,qty%template%stacked)
-    grids_x%p_len = grids_x%p_len + kz * kp * kx
-    grids_x%mol(ii) = qty%template%molecule
-    grids_x%qty(ii) = qty%template%quantityType
-    grids_x%coherent(ii) = qty%template%coherent
-    grids_x%stacked(ii) = qty%template%stacked
-
-    ! Remember positions of molecules in grids_x
-    if ( qty%template%quantityType == l_vmr ) &
-      & grids_x%s_ind(qty%template%molecule) = ii
-      ! Note the ambiguity here as to whether it's extinction or extinctionv2:
-      ! the last one wins.
-      ! Also note, however, that s_ind(l_*extinction*) are never actually used.
+      ! Remember positions of molecules in grids_x
+      if ( qty%template%quantityType == l_vmr ) &
+        & grids_x%s_ind(qty%template%molecule) = ii
+        ! Note the ambiguity here as to whether it's extinction or extinctionv2:
+        ! the last one wins.
+        ! Also note, however, that s_ind(l_*extinction*) are never actually used.
+    end associate
 
   end subroutine Fill_Grids_1
 
   ! -----------------------------------------------  Fill_Grids_2  -----
-  subroutine Fill_Grids_2 ( Grids_x, II, Qty, SetDerivFlags, Phi_Offset, &
-    & PhiTan )
+  subroutine Fill_Grids_2 ( Grids_x, II, Qty, SetDerivFlags, Phi_Offset )
   ! Fill the zeta, phi, freq. basis and value components for the II'th
   ! "molecule" in Grids_x.
 
@@ -563,7 +562,6 @@ contains
     type(vectorValue_T), intent(in) :: QTY     ! An arbitrary vector quantity
     logical, intent(in), optional :: SetDerivFlags
     real(rp), intent(in), optional :: Phi_Offset ! Radians
-    type (vectorValue_T), intent(in), optional :: PHITAN  ! Tangent geodAngle
 
     integer :: I, J, K, KF, KP, KX, KZ, L, N, PF, PP, PV, PX, PZ
     integer :: QF, QP, QV, QX, QZ, WF, WS
@@ -761,8 +759,6 @@ contains
     grids_x%p_len = 0
     allocate ( Grids_x%qtyStuff(0), stat=stat )
     call test_allocate ( stat, moduleName, 'Grids_x%QtyStuff' )
-    call allocate_test(Grids_x%grid_Type,0,'grids_x%qtyStuff',modulename)
-    call allocate_test(Grids_x%names,0,'grids_x%names',modulename)
     call allocate_test(grids_x%l_f,0,'grids_x%l_f',modulename)
     call allocate_test(grids_x%l_z,0,'grids_x%l_z',modulename)
     call allocate_test(grids_x%l_p,0,'grids_x%l_p',modulename)
@@ -794,15 +790,14 @@ contains
 
     type (Grids_T), intent(inout) :: Grids_x
 
+    character(127) :: ERMSG
     integer :: Stat
 
     grids_x%p_len = 0
-    call deallocate_test(Grids_x%grid_Type,'Grids_x%Grid_Type',modulename)
     if ( associated(Grids_x%qtyStuff) ) then
       deallocate ( Grids_x%qtyStuff, stat=stat, errmsg=ermsg )
       call test_deallocate ( stat, moduleName, 'Grids_x%QtyStuff', ermsg=ermsg )
     end if
-    call deallocate_test(Grids_x%names,'Grids_x%names',modulename)
     call deallocate_test(grids_x%l_f,'Grids_x%l_f',modulename)
     call deallocate_test(grids_x%l_z,'Grids_x%l_z',modulename)
     call deallocate_test(grids_x%l_p,'Grids_x%l_p',modulename)
@@ -855,10 +850,10 @@ contains
     end if
     call output ( the_grid%p_len, before = ', P_Len = ', advance='yes' )
     call output ( 'Molecules:', advance='yes' )
-    do i = 1, size(the_grid%names)
+    do i = 1, size(the_grid%qtyStuff)
       call output ( i )
-      if ( the_grid%names(i) > 0 ) then
-        call display_string ( the_grid%names(i), before=': ' )
+      if ( the_grid%qtyStuff(i)%qty%template%name > 0 ) then
+        call display_string ( the_grid%qtyStuff(i)%qty%template%name, before=': ' )
       else
         call output ( ': ?' )
       end if
@@ -890,7 +885,7 @@ contains
       call dump ( the_grid%frq_basis, 'The_grid%Frq_Basis' )
       call dump ( the_grid%coherent, 'The_grid%Coherent' )
       call dump ( the_grid%stacked, 'The_grid%Stacked' )
-      do i = 1, size(the_grid%names)
+      do i = 1, size(the_grid%qtyStuff)
         kx = the_grid%l_x(i) - the_grid%l_x(i-1)
         ! NZ for geolocation fields:
         nzg = merge(1,(the_grid%l_z(i)-the_grid%l_z(i-1))/kx,the_grid%stacked(i))
@@ -943,8 +938,9 @@ contains
 
   contains
     subroutine Dump_What
-      if ( the_grid%names(i) > 0 ) then
-        call display_string ( the_grid%names(i), before='=' )
+      if ( the_grid%qtyStuff(i)%qty%template%name > 0 ) then
+        call display_string ( the_grid%qtyStuff(i)%qty%template%name, &
+          & before='=' )
       else if ( the_grid%mol(i) > 0 ) then
         call display_string ( lit_indices(the_grid%mol(i)), before='=' )
       else if ( the_grid%qty(i) > 0 ) then
@@ -968,6 +964,9 @@ contains
 end module LOAD_SPS_DATA_M
 
 ! $Log$
+! Revision 2.107  2016/05/10 00:00:32  vsnyder
+! Test Grids_x%qtyStuff before deallocating it
+!
 ! Revision 2.106  2016/05/02 23:31:32  vsnyder
 ! Add QtyStuff, horizontal grid type (phi or QTM), some cannonball polishing
 !
