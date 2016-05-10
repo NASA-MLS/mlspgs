@@ -348,7 +348,8 @@ contains
     end do ! qty
     if ( dumpDX ) call dump ( dX, name='DX' )
 
-    ! Get the TScat quantity for radInL2PC
+    ! Get the TScat quantity for radInL2PC.  We assume TQ is the same quantity
+    ! put into Grids_TScat by Get_TScat_Setup.
     tq => TScat%quantities(radInL2PC)
     tq%values = l2pc%j%row%vec%quantities(radInL2PC)%values
 
@@ -366,7 +367,8 @@ contains
       &                + tq%template%phi(1,grids_TScat%windowFinish(1)) )
 
     ! Put values and coordinates into Grids_TScat, which was created by
-    ! Get_TScat_Setup.
+    ! Get_TScat_Setup.  We assume TQ is the same quantity put into
+    ! Grids_TScat by Get_TScat_Setup.
     call Fill_Grids_2 ( grids_TScat, 1, tq, setDerivFlags = .true., &
       & phi_offset=phi_offset )
 
@@ -746,6 +748,9 @@ contains
 end module TScat_Support_m
 
 ! $Log$
+! Revision 2.11  2016/05/10 00:03:09  vsnyder
+! Cannonball polishing
+!
 ! Revision 2.10  2015/03/28 02:07:09  vsnyder
 ! Added stuff to trace allocate/deallocate addresses
 !
