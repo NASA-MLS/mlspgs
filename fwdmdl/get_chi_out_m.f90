@@ -56,9 +56,9 @@ contains
 ! Outputs
 
     real(rp), intent(out) :: tan_chi_out(:) ! computed tangent pointing angles
-!                                 corrected for refraction in radians
-    real(rp), intent(out) :: dx_dh_out(:)   ! d(chi)/dh on the output grid
+!                                 in radians, corrected for refraction
     real(rp), intent(out) :: dhdz_out(:)    ! dh/dz on the output grid
+    real(rp), intent(out) :: dx_dh_out(:)   ! d(chi)/dh on the output grid
 
 ! Outputs not computed if size(dxdt_tan) is zero
     real(rp), intent(out), optional :: dxdt_tan(:,:)      ! computed dchi dt.
@@ -192,6 +192,9 @@ contains
 end module Get_Chi_Out_m
 
 ! $Log$
+! Revision 2.23  2016/05/10 00:03:55  vsnyder
+! Cannonball polishing
+!
 ! Revision 2.22  2016/01/23 02:53:49  vsnyder
 ! Get MaxRefraction from refraction_m instead of geometry
 !
