@@ -48,6 +48,9 @@ MODULE MLSL1Config  ! Level 1 Configuration
      INTEGER :: CalWindow
      INTEGER :: MIFsPerMAF
      INTEGER :: MAFexpandNum             ! number of MAFs to expand at both ends
+     INTEGER :: MaxDataGaps              ! maximum allowed data gaps
+     INTEGER :: MaxErroneousCounterMAFs  ! maximum error logs count
+     INTEGER :: DiffBeginEndEng          ! Beging and End for Engineering times difference
      INTEGER :: MinSpaceLimbs            ! minimum "Space" views per MAF
      INTEGER :: DACSwindow
      REAL :: GHzSpaceTemp, GHzTargetTemp
@@ -375,7 +378,7 @@ MODULE MLSL1Config  ! Level 1 Configuration
            p_mif_dead_time, p_mifspermaf, p_calibDACS, p_THzMaxBias, &
            p_thzspaceangle, f_bandno, f_chan, s_markchanbad, p_thzcoldcal, &
            p_MoonToSpaceAngle, p_DACSwindow, p_UseAntOffsets, p_MinSpaceLimbs, &
-           p_MAFexpandNum, p_TPdigital, p_Do_Slimb, f_yrdoy
+           p_MAFexpandNum, p_MaxDataGaps, p_MaxErroneousCounterMAFs, p_DiffBeginEndEng, p_TPdigital, p_Do_Slimb, f_yrdoy
       USE BrightObjects_m, ONLY: s_BrightObject, f_angle, f_name, f_negate, &
            l_mercury, BO_Angle_GHz, BO_Angle_THz, BO_NumGHz, BO_NumTHz, &
            BO_Index_GHz, BO_Index_THz, BO_Negate_GHz, BO_Negate_THz
@@ -476,6 +479,21 @@ MODULE MLSL1Config  ! Level 1 Configuration
                   CALL MLSMessage (MLSMSG_Error, ModuleName, &
                        TRIM (identifier)//' is not input as MAFs')
                ENDIF
+	       
+            CASE (p_MaxDataGaps)
+
+               CALL Expr (subtree (2, son), expr_units, expr_value)
+               L1Config%Calib%MaxDataGaps = expr_value(1)
+          
+	    CASE (p_MaxErroneousCounterMAFs)
+
+               CALL Expr (subtree (2, son), expr_units, expr_value)
+               L1Config%Calib%MaxErroneousCounterMAFs = expr_value(1)
+	       
+	    CASE (p_DiffBeginEndEng)
+
+               CALL Expr (subtree (2, son), expr_units, expr_value)
+               L1Config%Calib%DiffBeginEndEng = expr_value(1)           
 
             CASE (p_MinSpaceLimbs)
 
@@ -863,6 +881,9 @@ MODULE MLSL1Config  ! Level 1 Configuration
 END MODULE MLSL1Config
 
 ! $Log$
+! Revision 2.35  2016/05/10 20:30:57  mmadatya
+! To get the error-checking parameters from the l1 configuration file instead of them being hard-coded into the source code
+!
 ! Revision 2.34  2016/03/15 22:17:59  whdaffer
 ! Merged whd-rel-1-0 back onto main branch. Most changes
 ! are to comments, but there's some modification to Calibration.f90
