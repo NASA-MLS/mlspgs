@@ -798,8 +798,10 @@ contains
 
     grids_x%p_len = 0
     call deallocate_test(Grids_x%grid_Type,'Grids_x%Grid_Type',modulename)
-    deallocate ( Grids_x%qtyStuff, stat=stat )
-    call test_deallocate ( stat, moduleName, 'Grids_x%QtyStuff' )
+    if ( associated(Grids_x%qtyStuff) ) then
+      deallocate ( Grids_x%qtyStuff, stat=stat, errmsg=ermsg )
+      call test_deallocate ( stat, moduleName, 'Grids_x%QtyStuff', ermsg=ermsg )
+    end if
     call deallocate_test(Grids_x%names,'Grids_x%names',modulename)
     call deallocate_test(grids_x%l_f,'Grids_x%l_f',modulename)
     call deallocate_test(grids_x%l_z,'Grids_x%l_z',modulename)
@@ -966,6 +968,9 @@ contains
 end module LOAD_SPS_DATA_M
 
 ! $Log$
+! Revision 2.106  2016/05/02 23:31:32  vsnyder
+! Add QtyStuff, horizontal grid type (phi or QTM), some cannonball polishing
+!
 ! Revision 2.105  2015/10/28 00:32:12  vsnyder
 ! Check that windowStart is not after windowFinish
 !
