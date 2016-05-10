@@ -15,7 +15,8 @@ MODULE L1LogUtils
 
   USE MLSCommon, ONLY: TAI93_Range_T
   USE MLSL1Common, ONLY: L1BFileInfo, R8, Chan_R_T
-  USE MLSL1Config, ONLY: L1Config
+  !USE MLSL1Config, ONLY: L1Config
+  USE MLSL1Config, ONLY: L1Config, GetL1Config
   USE SDPToolkit, ONLY: PGS_TD_TAItoUTC
 
   IMPLICIT NONE
@@ -65,16 +66,21 @@ CONTAINS
 
     use EngUtils, ONLY: NextEngMAF
     use EngTbls, ONLY: EngMAF, EngPkt
-    use MLSL1Common, ONLY: MaxdataGaps, MaxErroneousCounterMAFs
+    !use MLSL1Common, ONLY: MaxdataGaps, MaxErroneousCounterMAFs
     USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Warning
 
-
+    
     logical :: first = .TRUE.
     logical :: more_data = .TRUE.
     integer :: counterMAF = 0
     integer, save :: dataGaps = 0
     integer, save :: erroneousCounterMAFs = 0
 
+    WRITE (unit, *) 'MaxDataGaps = ', L1Config%Calib%MaxDataGaps
+    WRITE (unit, *) 'MaxErroneousCounterMAFs = ', L1Config%Calib%MaxErroneousCounterMAFs
+    WRITE (unit, *) 'DiffBeginEndEng = ', L1Config%Calib%DiffBeginEndEng
+    
+    
     print *, 'Examining eng data...'
     write (unit, *) ''
     write (unit, *) '################ Engineering data scan ###############'
@@ -125,7 +131,8 @@ CONTAINS
           PGS_stat = PGS_TD_TAItoUTC (EngMAF%secTAI, asciiUTC(2))
           WRITE (unit, *) 'UTC gap: ', asciiUTC(1)//' to '//asciiUTC(2)
           WRITE (unit, *) ''
-          if ( dataGaps > MaxdataGaps ) &
+          !if ( dataGaps > MaxdataGaps ) &
+	  if ( dataGaps > L1Config%Calib%MaxDataGaps ) &
             & call MLSMessage ( MLSMSG_Error, ModuleName, &
                      & 'Too many data gaps--must quit now' )
        ENDIF
@@ -141,7 +148,7 @@ CONTAINS
           PGS_stat = PGS_TD_TAItoUTC (EngMAF%secTAI, asciiUTC(1))
           WRITE (unit, *) 'UTC: ', asciiUTC(1)
           WRITE (unit, *) ''
-          if ( erroneousCounterMAFs > MaxerroneousCounterMAFs ) &
+          if ( erroneousCounterMAFs > L1Config%Calib%MaxErroneousCounterMAFs ) &
             & call MLSMessage ( MLSMSG_Error, ModuleName, &
                      & 'Too many bad counterMAFs--must quit now' )
        ENDIF
@@ -155,10 +162,10 @@ CONTAINS
        ! Check for utterly bogus times
        ! signaled by mismatch between Engineering and Science times
        ! If they are more than 1 week apart, exit with error status
-       if ( abs(BeginEnd%SciTAI(1) - BeginEnd%EngTAI(1)) > 60*60*24*7 ) &
+       if ( abs(BeginEnd%SciTAI(1) - BeginEnd%EngTAI(1)) > L1Config%Calib%DiffBeginEndEng ) &
          & CALL MLSMessage ( MLSMSG_Error, ModuleName, &
             "mismatched start times between science and engineering data" )
-       if ( abs(BeginEnd%SciTAI(2) - BeginEnd%EngTAI(2)) > 60*60*24*7 ) &
+       if ( abs(BeginEnd%SciTAI(2) - BeginEnd%EngTAI(2)) > L1Config%Calib%DiffBeginEndEng ) &
          & CALL MLSMessage ( MLSMSG_Error, ModuleName, &
             "mismatched end times between science and engineering data" )
 
@@ -611,6 +618,9 @@ END MODULE L1LogUtils
 !=============================================================================
 
 ! $Log$
+! Revision 2.20  2016/05/10 20:41:23  mmadatya
+! To get the error-checking parameters from the l1 configuration file instead of them being hard-coded into the source code
+!
 ! Revision 2.19  2016/03/15 22:17:59  whdaffer
 ! Merged whd-rel-1-0 back onto main branch. Most changes
 ! are to comments, but there's some modification to Calibration.f90
