@@ -359,10 +359,10 @@ end if
       type(ECR_t), allocatable :: Test_Int(:) ! Intersections of Line with
                                ! a surface at constant height above the Earrh
                                ! reference ellipsoid.  Size is in 0..2.
-      integer :: V1, V2        ! Vertices of facet to use for height
-                               ! interpolation
       real(rg) :: Want_H       ! The desired height at the extrapolation
       type(ZOT_t) :: Z         ! ZOT coordinates of Geod
+      integer :: ZOT_n(3)      ! Vertices of facet to use for height
+                               ! interpolation
 
       ! Sort the intersections according to their positions along Line
       call sortp ( inside%s, 1, k, p )
@@ -382,28 +382,28 @@ end if
       if ( inside(i_edge)%face /= top_face ) then
         select case ( inside(i_edge)%face )
         case ( cone_face )
-          v1 = QTM_tree%q(f)%xn
-          v2 = QTM_tree%q(f)%yn
+          ZOT_n(1) = QTM_tree%q(f)%xn
+          ZOT_n(2) = QTM_tree%q(f)%yn
         case ( x_face )
-          v1 = QTM_tree%q(f)%xn
-          v2 = i
+          ZOT_n(1) = QTM_tree%q(f)%xn
+          ZOT_n(2) = i
         case ( y_face )
-          v1 = i
-          v2 = QTM_tree%q(f)%yn
+          ZOT_n(1) = i
+          ZOT_n(2) = QTM_tree%q(f)%yn
         end select
         n_h = 2 ! Number of QTM vertices to use for height interpolation
-        v1 = QTM_tree%q(f)%ZOT_n(v1)
-        v2 = QTM_tree%q(f)%ZOT_n(v2)
+        ZOT_n(1:2) = QTM_tree%q(f)%ZOT_n(ZOT_n(1:2))
         geod_s = h_geod ( geod%lon, geod%lat ) ! Surface geodetic coordinates
         surf = geod_s%ECR()
-        eta(1) = norm2(QTM_geo(v2)%ecr() - surf) / &
-               & norm2(QTM_geo(v2)%ecr() - QTM_geo(v1)%ecr())
+        eta(1) = norm2(QTM_geo(ZOT_n(2))%ecr() - surf) / &
+               & norm2(QTM_geo(ZOT_n(2))%ecr() - QTM_geo(ZOT_n(1))%ecr())
         eta(2) = 1 - eta(1)
-        i_h(1) = min(v1,size(h,2))
-        i_h(2) = min(v2,size(h,2))
+        i_h(1) = min(ZOT_n(1),size(h,2))
+        i_h(2) = min(ZOT_n(2),size(h,2))
       else ! This interpolates in a plane; maybe it should be the same
            ! as in Intersect_Line_And_Horizontal_Boundary
         n_h = 3 ! Number of QTM vertices to use for height interpolation
+        ZOT_n = QTM_tree%q(f)%ZOT_n
         i_h = min(QTM_tree%q(f)%ZOT_n,size(h,2))
         ! Compute the interpolation coefficients in ZOT coordinates.
         z = geo_to_ZOT ( geod )
@@ -419,8 +419,9 @@ end if
         do j = 1, size(test_int)
           if ( s(j) >= sMin .and. s(j) <= sMax ) then
             n_out = n_out + 1
-            outside(n_out) = S_QTM_t( s=s(j), facet=0, h=want_h, &
-                                    & face=inside(i_edge)%face )
+            outside(n_out) = S_QTM_t( s=s(j), face=-inside(i_edge)%face, &
+                                    & facet=f, h=want_h, n_coeff=n_h, &
+                                    & zot_n=zot_n)
           end if
         end do
       end do
@@ -699,6 +700,9 @@ geod_f(m,n+1)%v = h(j+1,l)
 end module Metrics_3D_m
 
 ! $Log$
+! Revision 2.2  2016/05/10 00:13:59  vsnyder
+! Remember all three QTM vertex indices used for height interpolation.
+!
 ! Revision 2.1  2016/04/16 02:06:23  vsnyder
 ! Initial commit
 !
