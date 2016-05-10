@@ -445,7 +445,7 @@ contains
 
     real(rp) :: D2XDXDT_SURFACE(1,size(dxdt_surface,2))
     real(rp) :: D2XDXDT_TAN(size(dxdt_tan,1),size(dxdt_tan,2))
-    integer :: H2O_Ind, J, No_SV_p_T
+    integer :: H2O_Ind, J
     real(rp) :: One_dhdz(1), One_dxdh(1)
     real(rp) :: REQ_OUT(phitan%template%nosurfs)
 
@@ -456,7 +456,6 @@ contains
       & cond=toggle(emit)  .and. levels(emit) > 0 )
 
     h2o_ind = grids_f%s_ind(l_h2o)
-    no_sv_p_t = grids_tmp%l_p(1) ! phi == windowFinish - windowStart + 1
 
     ! Compute equivalent earth radius
 
@@ -475,7 +474,7 @@ contains
     ! This is only used for convolution, which is done for both sidebands.
     call get_chi_out ( ptan%values(:,maf), phitan%values(:,maf)*deg2rad, &
        & 0.001_rp*scGeocAlt%values(:,maf), Grids_tmp,                    &
-       & (/ (refGPH%template%surfs(1,1), j=1,no_sv_p_t) /),              &
+       & (/ (refGPH%template%surfs(1,1), j=windowStart,windowFinish) /), &
        & 0.001_rp*refGPH%values(1,windowStart:windowFinish),             &
        & orbIncline%values(1,maf)*Deg2Rad, 0.0_rp,                       &
        & req_out, grids_f, h2o_ind, tan_chi_out, dh_dz_out, dx_dh_out,   &
@@ -525,6 +524,9 @@ contains
 end module Convolution_m
 
 ! $Log$
+! Revision 2.3  2016/05/10 00:02:35  vsnyder
+! Remove unused variable
+!
 ! Revision 2.2  2016/05/02 23:32:15  vsnyder
 ! Remove unused dummy arguments from Convolution_Setup
 !
