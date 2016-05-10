@@ -278,8 +278,7 @@ MODULE MLSL1Common              ! Common data types for the MLSL1 program
   REAL :: tau = 1.0 / 6.0  ! default data rate (secs)
   
 !!  Any error limits?
-  integer, parameter :: MaxDataGaps             = 3000
-  integer, parameter :: MaxErroneousCounterMAFs = 300
+  
 
 !! Useful constants:
 
@@ -373,6 +372,11 @@ END MODULE MLSL1Common
 !=============================================================================
 
 ! $Log$
+! Revision 2.21  2016/03/15 22:17:59  whdaffer
+! Merged whd-rel-1-0 back onto main branch. Most changes
+! are to comments, but there's some modification to Calibration.f90
+! and MLSL1Common to support some new modules: MLSL1Debug and SnoopMLSL1.
+!
 !
 ! Revision 2.20  2016/02/12 20:04:48  pwagner
 ! Prevent bad level 0 files from causing englog to fill all diskspace
