@@ -93,7 +93,10 @@ MODULE INIT_TABLES_MODULE
 
   INTEGER, PARAMETER :: P_CALWINDOW = p_simoa + 1
   INTEGER, PARAMETER :: P_MAFexpandNum = p_calwindow + 1
-  INTEGER, PARAMETER :: P_USEDEFAULTGAINS = p_MAFexpandNum + 1
+  INTEGER, PARAMETER :: p_MaxDataGaps = p_MAFexpandNum + 1
+  INTEGER, PARAMETER :: p_MaxErroneousCounterMAFs = p_MaxDataGaps + 1
+  INTEGER, PARAMETER :: p_DiffBeginEndEng = p_MaxErroneousCounterMAFs + 1   
+  INTEGER, PARAMETER :: P_USEDEFAULTGAINS = p_DiffBeginEndEng  + 1
   INTEGER, PARAMETER :: P_CALIBDACS = p_usedefaultgains + 1
   INTEGER, PARAMETER :: P_GHZSPACETEMP = p_calibdacs + 1
   INTEGER, PARAMETER :: P_GHZTARGETTEMP = p_GHzSpaceTemp + 1
@@ -171,8 +174,11 @@ CONTAINS ! =====     Public procedures     =============================
  
     ! Put parameter names into the symbol table
 
-    parm_indices(p_calwindow)=              add_ident ( 'CalWindow' )
-    parm_indices(p_MAFexpandNum)=           add_ident ( 'MAFexpandNum' )
+    parm_indices(p_calwindow)=               add_ident ( 'CalWindow' )
+    parm_indices(p_MAFexpandNum)=            add_ident ( 'MAFexpandNum' )
+    parm_indices(p_MaxDataGaps)=             add_ident ( 'MaxDataGaps' )
+    parm_indices(p_MaxErroneousCounterMAFs)= add_ident ( 'MaxErroneousCounterMAFs' )
+    parm_indices(p_DiffBeginEndEng)=        add_ident ( 'DiffBeginEndEng' )   
     parm_indices(p_MinSpaceLimbs)=          add_ident ( 'MinSpaceLimbs' )
     parm_indices(p_usedefaultgains)=        add_ident ( 'UseDefaultGains' )
     parm_indices(p_calibDACS)=              add_ident ( 'CalibDACS' )
@@ -339,6 +345,9 @@ CONTAINS ! =====     Public procedures     =============================
       begin, z+z_calibration, &
              begin, p+p_calwindow, t+t_numeric, n+n_name_def, &
              begin, p+p_MAFexpandNum, t+t_numeric, n+n_name_def, &
+             begin, p+p_MaxDataGaps, t+t_numeric, n+n_name_def, &
+	     begin, p+p_MaxErroneousCounterMAFs, t+t_numeric, n+n_name_def, &
+	     begin, p+p_DiffBeginEndEng, t+t_numeric, n+n_name_def, &
              begin, p+p_MinSpaceLimbs, t+t_numeric, n+n_name_def, &
              begin, p+p_GHzSpaceTemp, t+t_numeric, n+n_name_def, &
              begin, p+p_GHzTargetTemp, t+t_numeric, n+n_name_def, &
@@ -381,6 +390,9 @@ CONTAINS ! =====     Public procedures     =============================
 END MODULE INIT_TABLES_MODULE
   
 ! $Log$
+! Revision 2.33  2016/05/10 20:42:30  mmadatya
+! To get the error-checking parameters from the l1 configuration file instead of them being hard-coded into the source code
+!
 ! Revision 2.32  2008/03/04 19:59:55  perun
 ! Add optional YRDOY field to MarkChanBad entry.
 !
