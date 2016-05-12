@@ -19,7 +19,7 @@ module QuantityTemplates         ! Quantities within vectors
   use allocate_deallocate, only: allocate_test, deallocate_test
   use dump_0, only: dump
   use expr_m, only: expr_check
-  use hGridsDatabase, only: hgrid_t
+  use hGridsDatabase, only: HGrid_t, Dump
   use highOutput, only: outputNamedValue
   use intrinsic, only: l_dl, l_geodetic, l_geodAltitude, l_none, l_phitan, &
     & l_vmr, lit_indices, phyq_angle, phyq_dimensionless, phyq_frequency, &
@@ -42,7 +42,8 @@ module QuantityTemplates         ! Quantities within vectors
   public :: CheckIntegrity, CopyQuantityTemplate, CreateGeolocationFields, &
     & CreateLatitudeFields, CreateLongitudeFields, &
     & DestroyGeolocationFields, DestroyQuantityTemplateContents, &
-    & DestroyQuantityTemplateDatabase, Dump, ModifyQuantityTemplate, &
+    & DestroyQuantityTemplateDatabase, Dump, GetHGridFromQuantity, &
+    & ModifyQuantityTemplate, &
     & NullifyQuantityTemplate, PointQuantityToHGrid, QuantitiesAreCompatible, &
     & SetupNewQuantityTemplate, WriteAttributes
 
@@ -701,6 +702,12 @@ contains
       end if
       call newLine
     end if
+    
+    if ( .not. associated (qty%the_HGrid) ) then
+      call output ( 'qty%the_HGrid not associated', advance='yes' )
+    else
+      call Dump( qty%the_HGrid, myDetails )
+    endif
     if ( myDetails > 0 ) then
       if ( qty%signal /= 0 ) then
         call output ( '      Signal ' )
@@ -1108,6 +1115,45 @@ contains
 
   end subroutine NullifyQuantityTemplate
 
+  ! ---------------------------------------  GetHGridFromQuantity  -----
+  subroutine GetHGridFromQuantity ( Qty )
+
+  ! This routine associates HGrid information from an already defined quantity,
+  ! except that if Qty%NoCrossTrack > 1, it creates a copy.
+
+    use HGridsDatabase, only: HGrid_T, CreateEmptyHGrid
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
+    use MoreMessage, only: MLSMessage
+    use Toggles, only: Gen, Levels, Toggle
+    use Trace_m, only: Trace_Begin, Trace_End
+
+    ! Dummy argument
+    type (QuantityTemplate_T), intent(inout) :: Qty
+
+    ! Local variables
+    integer :: I, J, K
+    integer :: Me = -1                  ! String index for trace
+    type (hGrid_T), pointer :: HGrid
+
+    ! Executable code
+
+    call trace_begin ( me, "GetHGridFromQuantity", &
+      & cond=toggle(gen) .and. levels(gen) > 2 )
+    nullify ( HGrid )
+    qty%the_hGrid             => HGrid              
+    HGrid%noProfs             = qty%noInstances     
+    HGrid%noProfsLowerOverlap = qty%noInstancesLowerOverlap
+    HGrid%noProfsUpperOverlap = qty%noInstancesUpperOverlap
+    call CreateEmptyHGrid ( hGrid )
+    HGrid%time                => qty%time              
+    HGrid%solarTime           => qty%solarTime         
+    HGrid%solarZenith         => qty%solarZenith       
+    HGrid%losAngle            => qty%losAngle          
+    call trace_end ( "GetHGridFromQuantity", &
+      & cond=toggle(gen) .and. levels(gen) > 2 )
+  end subroutine GetHGridFromQuantity
+
+
   ! ---------------------------------------  PointQuantityToHGrid  -----
   subroutine PointQuantityToHGrid ( Qty )
 
@@ -1173,10 +1219,10 @@ contains
           & "; assume Lat, Lon, Phi computed somehow.")
       end if
     end if
-    qty%time => hGrid%time
-    qty%solarTime => hGrid%solarTime
-    qty%solarZenith => hGrid%solarZenith
-    qty%losAngle => hGrid%losAngle
+    qty%time                    => hGrid%time
+    qty%solarTime               => hGrid%solarTime
+    qty%solarZenith             => hGrid%solarZenith
+    qty%losAngle                => hGrid%losAngle
     qty%noInstancesLowerOverlap = hGrid%noProfsLowerOverlap
     qty%noInstancesUpperOverlap = hGrid%noProfsUpperOverlap
 
@@ -2172,6 +2218,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.108  2016/05/04 18:34:16  pwagner
+! Changed default unit to a valid phyq; some misunderstandings still remain however
+!
 ! Revision 2.107  2015/09/25 02:12:25  vsnyder
 ! Add an optional verticalCoordinate argument to SetupNewQuantityTemplate.
 ! It has the VALUE attribute so qty%verticalCoordinate can be the actual
