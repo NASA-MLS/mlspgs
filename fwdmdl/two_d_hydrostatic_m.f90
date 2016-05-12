@@ -82,7 +82,8 @@ contains
     p_coeffs = Grids_tmp%l_p(1) ! - Grids_tmp%l_p(0), which is always zero
     z_coeffs = Grids_tmp%l_z(1) ! - Grids_tmp%l_z(0), which is always zero
 
-    QTM = grids_tmp%qtyStuff(1)%qty%template%the_Hgrid%type == L_QTM
+    QTM = associated(grids_tmp%qtyStuff(1)%qty%template%the_Hgrid)
+    if ( QTM ) QTM = grids_tmp%qtyStuff(1)%qty%template%the_Hgrid%type == L_QTM
     if ( .not. QTM ) then
       ! Phitan-based two-dimensional grid
 
@@ -154,6 +155,9 @@ contains
 end module Two_D_Hydrostatic_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.23  2016/05/10 00:09:02  vsnyder
+! Compute hydrostatic equilibrium on profiles at QTM vertices
+!
 ! Revision 2.22  2015/04/11 00:45:03  vsnyder
 ! Add units (km) in h_grid comment
 !

@@ -482,17 +482,20 @@ contains
     type(forwardModelConfig_T), intent(in), optional :: FwdModelConf
 
     integer :: KF, KP, KX, KZ
+    logical :: UsingQTM
 
     associate ( qty => grids_x%qtyStuff(ii)%qty )
  
+    UsingQTM = associated(qty%template%the_HGrid)
+    if ( UsingQTM ) UsingQTM = ( qty%template%the_HGrid%type == l_QTM )
       if ( .not. qty%template%stacked .or. .not. qty%template%coherent ) &
         & call MLSMessage ( MLSMSG_Error, moduleName, &
            & 'Cannot load a quantity that is unstacked or incoherent' )
 
-      if ( qty%template%the_HGrid%type == l_QTM ) then
+      if ( UsingQTM ) then
         grids_x%windowStart(ii) = 1
         grids_x%windowFinish(ii) = size(qty%template%the_HGrid%QTM_geo)
-      else if ( present(phitan) ) then
+      elseif ( present(phitan) ) then
         call FindInstanceWindow ( qty, phitan, maf, fwdModelConf%phiWindow, &
           & fwdModelConf%windowUnits, grids_x%windowStart(ii), grids_x%windowFinish(ii) )
       else ! Use the whole phi space for the window
@@ -964,6 +967,9 @@ contains
 end module LOAD_SPS_DATA_M
 
 ! $Log$
+! Revision 2.108  2016/05/10 00:11:33  vsnyder
+! Copy qtyStuff into Grids_x, simplify Create_Grids_1
+!
 ! Revision 2.107  2016/05/10 00:00:32  vsnyder
 ! Test Grids_x%qtyStuff before deallocating it
 !
