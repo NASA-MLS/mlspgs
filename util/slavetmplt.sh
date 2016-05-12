@@ -454,11 +454,26 @@ fi
 ulimit -s unlimited
 #ulimit -a >> "$ENVSETTINGS"
 
+if [ "$CAPTURE_MT" = "yes" -a "$STDERRFILE" = "" ]
+then
+  STDERRFILE="$LOGFILE.stderr"
+fi
+
 echo $PGE_BINARY --tk -m --slave $masterTid $otheropts 2>&1 >> "$LOGFILE"
 if [ "$runinbackground" != "yes" ]
 then
   # Run pge in foreground
-  $PGE_BINARY --tk -m --slave $masterTid $otheropts 2>&1 >> "$LOGFILE"
+  if [ "$CAPTURE_MT" = "yes" ]
+  then
+    /usr/bin/time -f 'M: %M t: %e' \
+      $PGE_BINARY --tk -m --slave $masterTid $otheropts \
+       1>> "$LOGFILE" 2> "$STDERRFILE"
+  elif [ "$STDERRFILE" != "" ]
+  then
+    $PGE_BINARY --tk -m --slave $masterTid $otheropts 1>> "$LOGFILE" 2> "$STDERRFILE"
+  else
+    $PGE_BINARY --tk -m --slave $masterTid $otheropts 2>&1 >> "$LOGFILE"
+  fi
   echo "Returned from $PGE_BINARY with status $?" 2>&1 >> "$LOGFILE"
   exit 0
 fi
@@ -468,28 +483,43 @@ echo "Must run $PGE_BINARY in background" >> "$LOGFILE"
 NOTEFILE=`echo "$LOGFILE" | sed 's/.log$/.note/'`
 notdone="true"
 
-$PGE_BINARY --tk -m --slave $masterTid --pidf "$NOTEFILE" $otheropts 2>&1 \
-  >> "$LOGFILE" &
-pgepid=$!
-echo "pge pid: $pgepid" 2>&1 >> "$LOGFILE"
-sleep 20
-# Find the pge's pid; call it pgepid
-ps aux | grep "uid $pid " | grep -v grep 2>&1 >> "$LOGFILE"
-pgepid2=`ps aux | grep "uid $pid " | grep -v grep | awk '{print $2}'`
-if [ "$pgepid" != "$pgepid2" ]
+if [ "$CAPTURE_MT" = "yes" ]
 then
-  echo "Warning-- $pgepid and $pgepid2 differ" 2>&1 >> "$LOGFILE"
-  ps -l -p "$pgepid" 2>&1 >> "$LOGFILE"
-  ps -l -p "$pgepid2" 2>&1 >> "$LOGFILE"
+  echo   /usr/bin/time -f 'M: %M t: %e' \
+    $PGE_BINARY --tk -m --slave $masterTid --pidf "$NOTEFILE" $otheropts  \
+    "$LOGFILE" "$STDERRFILE" >> "$LOGFILE"
+  /usr/bin/time -f 'M: %M t: %e' \
+    $PGE_BINARY --tk -m --slave $masterTid --pidf "$NOTEFILE" $otheropts  \
+    1>> "$LOGFILE" 2> "$STDERRFILE" &
+elif [ "$STDERRFILE" != "" ]
+then
+  $PGE_BINARY --tk -m --slave $masterTid --pidf "$NOTEFILE" $otheropts \
+    1>> "$LOGFILE" 2> "$STDERRFILE" &
+else
+  $PGE_BINARY --tk -m --slave $masterTid --pidf "$NOTEFILE" $otheropts  \
+    >> "$LOGFILE" &
+fi
+pgepid=$!
+echo "pge pid: $pgepid"  >> "$LOGFILE"
+sleep 20
+echo "Find the pge's pid; call it pgepid2" >> "$LOGFILE"
+ps aux | grep "uid"  >> "$LOGFILE"
+ps aux | grep "uid $pid " | egrep -v '(grep|time)' >> "$LOGFILE"
+pgepid2=`ps aux | grep "uid $pid " | egrep -v '(grep|/time)' | awk '{print $2}'`
+if [ "$pgepid" != "$pgepid2" -a "$CAPTURE_MT" != "yes" ]
+then
+  echo "Warning-- $pgepid and $pgepid2 differ" >> "$LOGFILE"
+  ps -l -p "$pgepid" >> "$LOGFILE"
+  ps -l -p "$pgepid2" >> "$LOGFILE"
   kill -9 $pgepid
   kill -9 $pgepid2
   exit 1
 fi
-
+pgepid=pgepid2
 # Did the launch fail immediately?
 if [ "$pgepid" = "" ]
 then
-  echo "Failed to launch $PGE_BINARY in background" 2>&1 >> "$LOGFILE"
+  echo "Failed to launch $PGE_BINARY in background" >> "$LOGFILE"
   exit 1
 fi
 
@@ -513,11 +543,11 @@ do
     notdone=disappeared
   fi
 done
-echo "$notdone; Returned from $PGE_BINARY with status $?" 2>&1 >> "$LOGFILE"
-echo "cat $NOTEFILE" 2>&1 >> "$LOGFILE"
-cat $NOTEFILE 2>&1 >> "$LOGFILE"
+echo "$notdone; Returned from $PGE_BINARY with status $?" >> "$LOGFILE"
+echo "cat $NOTEFILE" >> "$LOGFILE"
+cat $NOTEFILE >> "$LOGFILE"
 # For good measure, we alo kill the pge's own pid (n case it was left hanging)
-echo "killing $pgepid" 2>&1 >> "$LOGFILE"
+echo "killing $pgepid" >> "$LOGFILE"
 kill -9 "$pgepid"
 
 }
@@ -539,6 +569,9 @@ do_the_call $all_my_opts
 exit 0
 
 # $Log$
+# Revision 1.35  2015/09/25 00:12:52  pwagner
+# Added --maxChunkSize option
+#
 # Revision 1.34  2014/11/06 01:52:18  pwagner
 # Now add_option with auxiliary args pairwise
 #

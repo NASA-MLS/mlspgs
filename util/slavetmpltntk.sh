@@ -447,11 +447,25 @@ fi
 ulimit -s unlimited
 #ulimit -a >> "$ENVSETTINGS"
 
+if [ "$CAPTURE_MT" = "yes" -a "$STDERRFILE" = "" ]
+then
+  STDERRFILE="$LOGFILE.stderr"
+fi
+
 echo $PGE_BINARY --ntk -m --slave $masterTid $otheropts $l2cf 2>&1 >> "$LOGFILE"
 if [ "$runinbackground" != "yes" ]
 then
   # Run pge in foreground
-  $PGE_BINARY --ntk -m --slave $masterTid $otheropts $l2cf 2>&1 >> "$LOGFILE"
+  if [ "$CAPTURE_MT" = "yes" ]
+  then
+    /echo usr/bin/time -f 'M: %M t: %e' $PGE_BINARY --ntk -m --slave $masterTid $otheropts $l2cf  "$LOGFILE"  "$STDERRFILE" >> "$LOGFILE"
+    /usr/bin/time -f 'M: %M t: %e' $PGE_BINARY --ntk -m --slave $masterTid $otheropts $l2cf  1>> "$LOGFILE" 2> "$STDERRFILE"
+  elif [ "$STDERRFILE" != "" ]
+  then
+    $PGE_BINARY --ntk -m --slave $masterTid $otheropts $l2cf 1>> "$LOGFILE" 2> "$STDERRFILE"
+  else
+    $PGE_BINARY --ntk -m --slave $masterTid $otheropts $l2cf 2>&1 >> "$LOGFILE"
+  fi
   exit 0
 fi
 
@@ -460,7 +474,18 @@ echo "Must run $PGE_BINARY in background" >> "$LOGFILE"
 NOTEFILE=`echo "$LOGFILE" | sed 's/.log$/.note/'`
 notdone="true"
 
-$PGE_BINARY --ntk -m --slave $masterTid --pidf "$NOTEFILE" $otheropts $l2cf 2>&1 >> "$LOGFILE" &
+if [ "$CAPTURE_MT" = "yes" ]
+then
+  /usr/bin/time -f 'M: %M t: %e' $PGE_BINARY --ntk -m --slave $masterTid --pidf "$NOTEFILE" $otheropts $l2cf  \
+    1>> "$LOGFILE" 2> "$STDERRFILE" &
+elif [ "$STDERRFILE" != "" ]
+then
+  $PGE_BINARY --ntk -m --slave $masterTid --pidf "$NOTEFILE" $otheropts $l2cf  \
+    1>> "$LOGFILE" 2> "$STDERRFILE" &
+else
+  $PGE_BINARY --ntk -m --slave $masterTid --pidf "$NOTEFILE" $otheropts $l2cf  \
+    >> "$LOGFILE" &
+fi
 pgepid=$!
 echo "pge pid: $pgepid" 2>&1 >> "$LOGFILE"
 sleep 20
@@ -517,6 +542,9 @@ do_the_call $all_my_opts
 exit 0
 
 # $Log$
+# Revision 1.14  2015/09/25 00:12:52  pwagner
+# Added --maxChunkSize option
+#
 # Revision 1.13  2014/11/06 01:52:18  pwagner
 # Now add_option with auxiliary args pairwise
 #

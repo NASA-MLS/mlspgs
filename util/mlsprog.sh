@@ -70,7 +70,15 @@ run_prog()
   then
     cat $BIN_DIR/license.txt
   fi
-  if [ "$STDERRFILE" != "" ]
+  echo $PGE_BINARY $EXTRA_OPTIONS "$@"
+  if [ "$CAPTURE_MT" = "yes" -a "$STDERRFILE" = "" ]
+  then
+    STDERRFILE=$MLSPROG.stderr
+  fi
+  if [ "$CAPTURE_MT" = "yes" ]
+  then
+    /usr/bin/time -f 'M: %M t: %e' $PGE_BINARY $EXTRA_OPTIONS "$@" 2> "$STDERRFILE"
+  elif [ "$STDERRFILE" != "" ]
   then
     $PGE_BINARY $EXTRA_OPTIONS "$@" 2> "$STDERRFILE"
   else
@@ -214,6 +222,9 @@ else
 fi
 
 # $Log$
+# Revision 1.12  2015/11/02 23:20:47  pwagner
+# Now checks for mialigned geolocations
+#
 # Revision 1.11  2015/10/07 22:58:42  pwagner
 # Automtically stores stderr to STDERRFILE; housekeeping
 #
