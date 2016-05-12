@@ -15,7 +15,8 @@ module CFM_QuantityTemplate_m
    use VGridsDatabase, only: VGrids, VGrid_T
    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning, MLSMSG_L1BRead
    use QuantityTemplates, only: QuantityTemplate_T, NullifyQuantityTemplate, &
-                                DestroyQuantityTemplateDatabase
+                                DestroyQuantityTemplateDatabase, &
+                                PointQuantityToHGrid
    use Init_Tables_Module, only: FIRST_LIT, LAST_LIT, L_ADOPTED, &
       L_BASELINE, L_BOUNDARYPRESSURE, L_CALSIDEBANDFRACTION, &
       L_CHISQBINNED, L_CHISQCHAN, L_CHISQMMAF, L_CHISQMMIF, L_CLOUDICE, &
@@ -166,7 +167,7 @@ module CFM_QuantityTemplate_m
       type(VGrid_T), intent(in), optional :: avgrid
       ! the (x,y) coordinate samples of the spacecraft's path
       ! Information in this grid will be copied over.
-      type(HGrid_T), intent(in), optional :: ahgrid
+      type(HGrid_T), intent(in), target, optional :: ahgrid
       ! the frequency in which the data is gathered
       ! Information in this grid will be copied over.
       type(FGrid_T), intent(in), optional :: afgrid
@@ -378,7 +379,8 @@ module CFM_QuantityTemplate_m
          ! Setup the quantity template
          if (present(ahgrid)) then
             qty%noInstances = ahgrid%noprofs
-            call PointQuantityToHGrid (ahgrid, qty)
+            qty%the_hGrid => aHGrid
+            call PointQuantityToHGrid ( qty )
          else
             call SetupEmptyHGridForQuantity(qty)
          end if
@@ -419,8 +421,8 @@ module CFM_QuantityTemplate_m
 
    end function
 
-  ! ----------------------------------  PointQuantityToHGrid  -----
-  subroutine PointQuantityToHGrid ( hGrid, qty )
+  ! ----------------------------------  myPointQuantityToHGrid  -----
+  subroutine myPointQuantityToHGrid ( hGrid, qty )
 
   ! This routine copies HGrid information into an already defined quantity
 
@@ -462,7 +464,7 @@ module CFM_QuantityTemplate_m
     qty%noInstancesUpperOverlap = hGrid%noProfsUpperOverlap
     qty%noCrossTrack = 1
 
-  end subroutine PointQuantityToHGrid
+  end subroutine myPointQuantityToHGrid
 
   ! ---------------------------------- SetupEmptyHGridForQuantity
   subroutine SetupEmptyHGridForQuantity ( qty )
@@ -688,6 +690,9 @@ module CFM_QuantityTemplate_m
 end module
 
 ! $Log$
+! Revision 1.26  2016/01/07 17:54:02  pwagner
+! Allocates crossAngles
+!
 ! Revision 1.25  2015/08/05 20:21:29  pwagner
 ! Modified to compile properly with v4
 !
