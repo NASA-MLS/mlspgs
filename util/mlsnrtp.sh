@@ -260,23 +260,27 @@ MLSPROG_3=mlsl1t
 
 # We'll start by creating an environment script
 # so that each job can inherit our settings
-
+# But don't clobber if it exists already
 JOBENV=job.env
-echo "#!/bin/sh" > $JOBENV
-# echo "export PGS_PC_INFO_FILE=$PCF" >> $JOBENV
+if [ ! -f "$JOBENV" ]
+then
+  echo "Must build $JOBENV"
+  echo "#!/bin/sh" > $JOBENV
+  echo "export JOBDIR=$JOBDIR" >> $JOBENV
+  echo "export MLSTOOLS=$MLSTOOLS" >> $JOBENV
+  echo "export PGE_BINARY_DIR=$PGE_BINARY_DIR" >> $JOBENV
+  echo "export PGE_ROOT=$PGE_ROOT" >> $JOBENV
+  echo "export PVM_HOSTS_INFO=$PVM_HOSTS_INFO" >> $JOBENV
+else
+  echo "Will reuse $JOBENV"
+fi
 if [ -f "$MLSTOOLS/tkreset.sh" ]
 then
   echo ". $MLSTOOLS/tkreset.sh" >> $JOBENV
 fi
 echo ". $PGE_ROOT/pgs-env.ksh" >> $JOBENV
-echo "export JOBDIR=$JOBDIR" >> $JOBENV
-echo "export MLSTOOLS=$MLSTOOLS" >> $JOBENV
 echo "export PGSMEM_USESHM=$PGSMEM_USESHM" >> $JOBENV
 echo "export FLIB_DVT_BUFFER=$FLIB_DVT_BUFFER" >> $JOBENV
-echo "export PGE_BINARY_DIR=$PGE_BINARY_DIR" >> $JOBENV
-echo "export PGE_ROOT=$PGE_ROOT" >> $JOBENV
-echo "export PVM_HOSTS_INFO=$PVM_HOSTS_INFO" >> $JOBENV
-#echo "export OTHEROPTS=$otheropts" >> $JOBENV
 
 # For the level 1 jobs, we'll have Spartacus request a host
 # from l2q
@@ -366,6 +370,9 @@ then
 fi
 
 # $Log$
+# Revision 1.8  2016/02/12 20:14:38  pwagner
+# Use mlsl1.sh wrapper script to stop with error status when appropriate
+#
 # Revision 1.7  2013/11/23 00:59:48  pwagner
 # Hide product files if number of profiles too many or too few
 #
