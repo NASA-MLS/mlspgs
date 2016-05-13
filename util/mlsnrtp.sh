@@ -287,9 +287,16 @@ echo "export FLIB_DVT_BUFFER=$FLIB_DVT_BUFFER" >> $JOBENV
 # For level 2, we'll imitate the mlsl2p.sh script
 
 # (1) Create a single level 1 job and run it
+. $JOBDIR/$JOBENV
 JOB1SCRIPT="job1script.sh"
+JOB1STDERR="job1script.stderr"
 echo "#!/bin/sh" > $JOB1SCRIPT
-echo "$RONIN `pwd` . $JOBDIR/$JOBENV; env; PGS_PC_Shell.sh $LEVEL1_BINARY_DIR/mlsl1.sh $EXTRA_OPTIONS $@" >> $JOB1SCRIPT
+if [ "$CAPTURE_MT" = "yes" ]
+then
+  echo "$RONIN `pwd` . $JOBDIR/$JOBENV; env; /usr/bin/time -f 'M: %M t: %e' PGS_PC_Shell.sh $LEVEL1_BINARY_DIR/mlsl1.sh $EXTRA_OPTIONS $@ 2> $JOB1STDERR" >> $JOB1SCRIPT
+else
+  echo "$RONIN `pwd` . $JOBDIR/$JOBENV; env; PGS_PC_Shell.sh $LEVEL1_BINARY_DIR/mlsl1.sh $EXTRA_OPTIONS $@" >> $JOB1SCRIPT
+fi
 chmod a+x $JOB1SCRIPT
 echo $SPARTACUS $JOB1SCRIPT
 $SPARTACUS $JOB1SCRIPT
@@ -370,6 +377,9 @@ then
 fi
 
 # $Log$
+# Revision 1.9  2016/05/13 00:36:53  pwagner
+# Dont clobber an existing JOBENV
+#
 # Revision 1.8  2016/02/12 20:14:38  pwagner
 # Use mlsl1.sh wrapper script to stop with error status when appropriate
 #
