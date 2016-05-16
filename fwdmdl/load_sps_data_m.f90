@@ -486,16 +486,16 @@ contains
 
     associate ( qty => grids_x%qtyStuff(ii)%qty )
  
-    UsingQTM = associated(qty%template%the_HGrid)
-    if ( UsingQTM ) UsingQTM = ( qty%template%the_HGrid%type == l_QTM )
       if ( .not. qty%template%stacked .or. .not. qty%template%coherent ) &
         & call MLSMessage ( MLSMSG_Error, moduleName, &
            & 'Cannot load a quantity that is unstacked or incoherent' )
 
-      if ( UsingQTM ) then
+      usingQTM = associated(qty%template%the_HGrid)
+      if ( usingQTM ) usingQTM = qty%template%the_HGrid%type == l_QTM 
+      if ( usingQTM ) then
         grids_x%windowStart(ii) = 1
         grids_x%windowFinish(ii) = size(qty%template%the_HGrid%QTM_geo)
-      elseif ( present(phitan) ) then
+      else if ( present(phitan) ) then
         call FindInstanceWindow ( qty, phitan, maf, fwdModelConf%phiWindow, &
           & fwdModelConf%windowUnits, grids_x%windowStart(ii), grids_x%windowFinish(ii) )
       else ! Use the whole phi space for the window
