@@ -548,9 +548,10 @@ contains ! =========== Public procedures ===================================
     use dates_module, only: tai93s2hid
     use Dump_Geolocation_m, only: Dump_H_t, Dump_ZOT
     use Generate_QTM_m, only: Dump_QTM_Tree
+    use highOutput, only: outputNamedValue
     use Intrinsic, only: lit_indices, L_QTM
     use output_m, only: blanks, newLine, output
-    use string_table, only: display_string
+    use string_table, only: display_string, isStringInTable
 
     type(hGrid_T), intent(in) :: aHGRID
     logical, intent(in), optional :: ZOT      ! Dump QTM coordinates in ZOT
@@ -562,10 +563,13 @@ contains ! =========== Public procedures ===================================
     integer :: J
     integer :: MyDetails
     logical :: MyZOT
+    ! Executable
+    myDetails = 0
+    if ( present(details) ) myDetails = details
 
     IERR = 0
     call output ( 'Name = ', advance='no' )
-    if ( aHgrid%name > 0 ) then
+    if ( isStringInTable(aHgrid%name) ) then
       call display_string ( aHgrid%name, ierr=ierr )
       if ( ierr /= 0 ) call output ( ' (not found in string table)' )
     else
@@ -576,16 +580,20 @@ contains ! =========== Public procedures ===================================
     call output ( aHgrid%noProfsLowerOverlap, before=' lowerOverlap = ', advance='no' )
     call output ( aHgrid%noProfsUpperOverlap, before=' upperOverlap = ', advance='no' )
     call output ( ' masterCoordinate = ' )
-    if ( aHgrid%masterCoordinate == 0 ) then
+    if ( .not. isStringInTable(aHgrid%masterCoordinate, lit_indices) ) then
       call output ( '0', advance='yes' )
     else
       call display_string ( lit_indices(aHgrid%masterCoordinate), advance='yes' )
     end if
-    call display_string ( lit_indices(aHgrid%type), before=' type = ' )
+    if ( .not. isStringInTable( aHgrid%type, lit_indices ) ) then
+      call outputNamedValue ( 'type', 0 )
+    else
+      call display_string ( lit_indices(aHgrid%type), before=' type = ' )
+    endif
     if ( aHGrid%type == l_QTM ) &
       & call output ( aHGrid%QTM_tree%level, before=' tree with level = ' )
     call newLine
-    if ( aHgrid%noProfs > 0 ) then
+    if ( aHgrid%noProfs > 0 .and. myDetails > 0 ) then
       call output ( ' prof       phi       geodLat           lon', advance='no' )
       call output ( '      hours in day     solarTime   solarZenith', advance='no' )
       call output ( '      losAngle  nearest maf', advance='yes' )
@@ -613,8 +621,6 @@ contains ! =========== Public procedures ===================================
     if ( aHGrid%type == l_QTM ) then
       myZOT = .false.
       if ( present(ZOT) ) myZOT = ZOT
-      myDetails = 0
-      if ( present(details) ) myDetails = details
       if ( myDetails > 0 ) call dump_QTM_tree ( aHGrid%QTM_tree, &
         & latLon=.not. myZOT, sons = myDetails > 1 )
       if ( myZot ) then
@@ -719,6 +725,9 @@ contains ! =========== Public procedures ===================================
 end module HGridsDatabase
 
 ! $Log$
+! Revision 2.26  2016/05/17 00:14:40  pwagner
+! Tries harder not to bomb in display_string
+!
 ! Revision 2.25  2016/04/15 22:24:43  pwagner
 ! Tried to fix latest cause of Fill Values among l1b fields
 !
