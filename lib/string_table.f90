@@ -1196,10 +1196,19 @@ contains
     return
   end subroutine TEST_STRING
 
-  logical function isStringInTable ( string )
+  logical function isStringInTable ( string, indices )
   ! Test whether STRING is within bounds.
     integer, intent(in) :: STRING
-    isStringInTable = .not. ( string < 1 .or. string > nstring ) 
+    integer, dimension(:), optional, intent(in) :: indices
+    ! Executable
+    if ( .not. present(indices) ) then
+      isStringInTable = .not. ( string < 1 .or. string > nstring ) 
+    else
+      isStringInTable = .not. ( string < 1 .or. string > size(indices) )
+      if ( isStringInTable ) &
+        & isStringInTable = .not. &
+        & ( indices(string) < 1 .or. indices(string) > nstring ) 
+    endif
   end function isStringInTable
 
   ! Add another unit to read from
@@ -1276,6 +1285,9 @@ contains
 end module STRING_TABLE
 
 ! $Log$
+! Revision 2.49  2016/05/17 00:05:53  pwagner
+! Added optional arg indices to isStringInTable
+!
 ! Revision 2.48  2016/02/25 00:54:39  vsnyder
 ! Bump inunit_stack_ptr early enough
 !
