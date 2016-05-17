@@ -219,6 +219,17 @@ then
   cat $PGE_BINARY_DIR/license.txt >> "$MLSL2PLOG"
 fi
 
+if [ -r "$JOBDIR/job.env"  ]
+then
+  . $JOBDIR/job.env
+elif [ -r "$PGE_ROOT/science_env.sh"  ]
+then
+  . ${PGE_ROOT}/science_env.sh
+elif [ -r "$PGSBIN/pgs-env.ksh" ]
+then
+  . $PGSBIN/pgs-env.ksh
+fi
+
 # The logs will be written as separate files into ${JOBDIR}/pvmlog
 # before being catenated at end of run
 # Make certain this directory exists and that it is empty
@@ -295,10 +306,24 @@ then
   exit 1
 fi
 
-# Now we launch the master task itself to set everything in motion
-$PGE_BINARY --pge $slave_script --tk --master $PVM_HOSTS_INFO \
-  --idents "$IDENTFILE" --loc "$HOSTNAME" $otheropts
+  if [ "$CAPTURE_MT" = "yes" -a "$STDERRFILE" = "" ]
+  then
+    STDERRFILE=mlsl2p.stderr
+  fi
 
+# Now we launch the master task itself to set everything in motion
+if [ "$CAPTURE_MT" = "yes" ]
+then
+  /usr/bin/time -f 'M: %M t: %e' $PGE_BINARY --pge $slave_script --tk --master $PVM_HOSTS_INFO \
+    --idents "$IDENTFILE" --loc "$HOSTNAME" $otheropts 2> "$STDERRFILE"
+elif [ "$STDERRFILE" != "" ]
+then
+  $PGE_BINARY --pge $slave_script --tk --master $PVM_HOSTS_INFO \
+    --idents "$IDENTFILE" --loc "$HOSTNAME" $otheropts 2> "$STDERRFILE"
+else
+  $PGE_BINARY --pge $slave_script --tk --master $PVM_HOSTS_INFO \
+    --idents "$IDENTFILE" --loc "$HOSTNAME" $otheropts
+fi
 # Save return status
 return_status=`expr $?`
 
@@ -431,6 +456,9 @@ else
 fi
 
 # $Log$
+# Revision 1.32  2015/12/09 01:30:59  pwagner
+# Fixed some typos
+#
 # Revision 1.31  2015/11/02 23:21:18  pwagner
 # Now checks for mialigned geolocations
 #
