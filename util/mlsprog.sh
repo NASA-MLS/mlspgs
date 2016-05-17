@@ -109,6 +109,15 @@ then
   shift
   . $1
   shift
+elif [ -r "$JOBDIR/job.env"  ]
+then
+  . $JOBDIR/job.env
+elif [ -r "$PGE_ROOT/science_env.sh"  ]
+then
+  . ${PGE_ROOT}/science_env.sh
+elif [ -r "$PGSBIN/pgs-env.ksh" ]
+then
+  . $PGSBIN/pgs-env.ksh
 fi
 # Use the following line to add extra options to MLSPROG
 EXTRA_OPTIONS="$OTHEROPTS mlseexxttrraa"
@@ -222,6 +231,9 @@ else
 fi
 
 # $Log$
+# Revision 1.13  2016/05/12 17:00:14  pwagner
+# Obey CAPTURE_MT by capturing time, mmory footpint to stderr
+#
 # Revision 1.12  2015/11/02 23:20:47  pwagner
 # Now checks for mialigned geolocations
 #
