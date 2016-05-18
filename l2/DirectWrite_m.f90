@@ -390,19 +390,17 @@ contains ! ======================= Public Procedures =========================
   ! ------------------------------------------ DirectWriteVector_L2GP_MF --------
   subroutine DirectWriteVector_L2GP_MF ( L2gpFile, &
     & vector, &
-    & chunkNo, HGrids, createSwath, lowerOverlap, upperOverlap, maxChunkSize )
+    & chunkNo, createSwath, lowerOverlap, upperOverlap, maxChunkSize )
 
     ! Purpose:
     ! Write out all the quantities in a vector as swaths to an hdfeos file
     ! Notes and limitations:
     ! Why don't you also supply an entire vector's worth of
     ! precision, quality, etc.?
-    use HGridsDatabase, only: HGrid_t
     ! Args:
     type(MLSFile_T)               :: L2GPFile
     type (Vector_T), intent(in)   :: VECTOR
     integer, intent(in)              :: chunkNo
-    type (HGrid_T), dimension(:), pointer ::     HGrids
     logical, intent(in), optional :: createSwath
     logical, intent(in), optional :: lowerOverlap
     logical, intent(in), optional :: upperOverlap
@@ -423,7 +421,7 @@ contains ! ======================= Public Procedures =========================
       call get_string( quantity%template%name, sdname )
       call DirectWrite_L2GP_MF ( L2gpFile, &
         & quantity, precision, quality, status, Convergence, AscDescMode, &
-        & sdName, chunkNo, HGrids, createSwath, lowerOverlap, upperOverlap, &
+        & sdName, chunkNo, createSwath, lowerOverlap, upperOverlap, &
         & maxChunkSize )
     enddo
   end subroutine DirectWriteVector_L2GP_MF
@@ -431,7 +429,7 @@ contains ! ======================= Public Procedures =========================
   ! ------------------------------------------ DirectWrite_L2GP_MF --------
   subroutine DirectWrite_L2GP_MF ( L2gpFile, &
     & quantity, precision, quality, status, Convergence, AscDescMode, &
-    & sdName, chunkNo, HGrids, createSwath, lowerOverlap, upperOverlap, &
+    & sdName, chunkNo, createSwath, lowerOverlap, upperOverlap, &
     & maxChunkSize )
 
     ! Purpose:
@@ -444,7 +442,6 @@ contains ! ======================= Public Procedures =========================
     ! Convergence       Convergence
     ! AscDescMode       AscDescMode
     use HDF, only: dfacc_create, dfacc_rdonly, dfacc_rdwr
-    use HGridsDatabase, only: hgrid_t
     use L2GPData, only: L2GPData_t, &
       & appendL2GPData, destroyL2GPContents, dump
     use readApriori, only: writeAPrioriAttributes
@@ -458,7 +455,6 @@ contains ! ======================= Public Procedures =========================
     type (VectorValue_T), pointer :: AscDescMode
     character(len=*), intent(in) :: SDNAME       ! Name of sd in output file
     integer, intent(in)              :: chunkNo
-    type (HGrid_T), dimension(:), pointer ::     HGrids
     logical, intent(in), optional :: createSwath
     logical, intent(in), optional :: lowerOverlap
     logical, intent(in), optional :: upperOverlap
@@ -547,7 +543,7 @@ contains ! ======================= Public Procedures =========================
     call vectorValue_to_l2gp( quantity, &
       & precision, quality, status, convergence, AscDescMode, &
       & l2gp, &
-      & sdname, chunkNo, HGrids, offset=0, &
+      & sdname, chunkNo, offset=0, &
       & firstInstance=firstInstance, lastInstance=lastInstance)
     ! Output the l2gp into the file
     ! if ( l2gp%name == 'Temperature-InitPtan' .and. deebug ) then
@@ -1516,9 +1512,8 @@ contains ! ======================= Public Procedures =========================
   ! ---------------------------------------------  vectorValue_to_l2gp  -----
   subroutine vectorValue_to_l2gp ( quantity, &
     & precision, quality, status, convergence, AscDescMode, &
-    & l2gp, name, chunkNo, HGrids, offset, firstInstance, lastInstance )
+    & l2gp, name, chunkNo, offset, firstInstance, lastInstance )
     use Dump_0, only: Dump
-    use HGridsDatabase, only: HGrid_T
     use intrinsic, only: l_none, lit_indices
     use L2GPData, only: descendingRange, L2GPData_T, RGP, &
       & setupNewL2GPRecord
@@ -1533,7 +1528,6 @@ contains ! ======================= Public Procedures =========================
     type (L2GPData_T)                :: l2gp
     character(len=*), intent(in)     :: name
     integer, intent(in)              :: chunkNo
-    type (HGrid_T), dimension(:), pointer ::     HGrids
     type (Interval_T)                :: myRange
     integer, intent(in), optional    :: offset
     integer, intent(in), optional    :: firstInstance
@@ -1772,6 +1766,10 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.81  2016/05/18 19:05:44  vsnyder
+! Change HGrids database from an array of HGrid_T to an array of pointers
+! to HGrid_T using the new type HGrids_T.
+!
 ! Revision 2.80  2016/02/29 19:49:29  pwagner
 ! Usleep got from machine module instead of being an external
 !
