@@ -51,7 +51,7 @@ contains ! ====     Public Procedures     ==============================
     use Global_settings, only: set_global_settings
     use GriddedData, only: griddedData_t, destroyGriddedDataDatabase, dump
     use HessianModule_1, only: destroyHessianDatabase, hessian_t
-    use HGridsDatabase, only: HGrid_t
+    use HGridsDatabase, only: HGrids_t
     use HGrid, only: computeAllHGridOffsets, DestroyHGridGeoLocations
     use HighOutput, only: beVerbose, getStamp, headLine, outputNamedValue, &
       & setStamp
@@ -134,7 +134,7 @@ contains ! ====     Public Procedures     ==============================
     type (GriddedData_T), dimension(:), &
       & pointer ::                               GriddedDataBase
     type (Hessian_T), dimension(:), pointer ::   Hessians
-    type (HGrid_T), dimension(:), pointer ::     HGrids
+    type (HGrids_T), dimension(:), pointer ::    HGrids
     integer ::                                   I       ! Loop inductors
     integer, dimension(1) :: ICHUNKS
     integer ::                                   LASTCHUNK ! For chunk loop
@@ -439,7 +439,7 @@ subtrees:   do
                   & griddedDataBase, mifGeolocation )
                 call add_to_section_timing ( 'construct', t1, now_stop )
                 if ( associated(hGrids) ) then
-                  if ( HGrids(1)%noProfs < 1 ) then
+                  if ( HGrids(1)%the_hGrid%noProfs < 1 ) then
                     call headLine ( 'No profiles, so skipping this chunk' )
                     exit subtrees
                   endif
@@ -728,6 +728,9 @@ subtrees:   do
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.202  2016/05/06 17:50:17  pwagner
+! Still unable to reliably destroyQuantityTemplateDatabase
+!
 ! Revision 2.201  2016/05/04 18:22:59  pwagner
 ! Restored ability of serial runs to process multiple chunks; updated api for MLSL2DeConstruct; deallocated qty templates before end
 !
