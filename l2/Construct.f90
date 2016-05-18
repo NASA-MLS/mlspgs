@@ -126,7 +126,7 @@ contains ! =====     Public Procedures     =============================
       & forwardModelConfig_t
     use forwardModelSupport, only: constructForwardModelConfig
     use griddedData, only: griddedData_t
-    use HGridsDatabase, only: addHGridToDatabase, HGrid_t
+    use HGridsDatabase, only: addHGridToDatabase, HGrids_t
     use HGrid, only: createHGridFromMLSCFInfo
     use init_tables_module, only: s_anygoodvalues, s_anygoodradiances, &
       & s_boolean, s_catchwarning, s_compare, s_dump, &
@@ -159,7 +159,7 @@ contains ! =====     Public Procedures     =============================
     type (VectorTemplate_T), dimension(:), pointer :: vectorTemplates
     type (vector_T), dimension(:), pointer :: Vectors
     type (FGrid_T), dimension(:), pointer :: fGrids
-    type (HGrid_T), dimension(:), pointer :: HGrids
+    type (HGrids_T), dimension(:), pointer :: HGrids
     type (L2GPData_T), dimension(:), pointer :: L2GPDatabase
     type (ForwardModelConfig_T), dimension(:), pointer :: ForwardModelConfigDatabase
     type (GriddedData_T), dimension(:), pointer        :: griddedDataBase
@@ -280,7 +280,7 @@ contains ! =====     Public Procedures     =============================
 
   ! DeConstruct the Vector template databases.
 
-    use HGridsDatabase, only: destroyHGridDatabase, HGrid_t
+    use HGridsDatabase, only: destroyHGridDatabase, HGrids_t
     use MLSStringLists, only: switchdetail
     use output_m, only: output
     ! use quantityTemplates, only: destroyQuantityTemplateDatabase, &
@@ -291,7 +291,7 @@ contains ! =====     Public Procedures     =============================
     ! type (QuantityTemplate_T), dimension(:), pointer :: quantityTemplatesBase
     type (VectorTemplate_T), dimension(:), pointer :: vectorTemplates
     ! type (QuantityTemplate_T), dimension(:), pointer :: mifGeolocation
-    type (HGrid_T), dimension(:), pointer :: hGrids
+    type (HGrids_T), dimension(:), pointer :: hGrids
     logical :: verbose
 
     ! Executable code
@@ -323,6 +323,10 @@ end module Construct
 
 !
 ! $Log$
+! Revision 2.78  2016/05/18 01:37:30  vsnyder
+! Change HGrids database from an array of HGrid_T to an array of pointers
+! to HGrid_T using the new type HGrids_T.
+!
 ! Revision 2.77  2016/05/04 17:53:32  pwagner
 ! Added DestroyMIFGeolocation; removed unused args from MLSL2DeConstruct
 !
