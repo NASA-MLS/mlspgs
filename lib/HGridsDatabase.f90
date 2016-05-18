@@ -19,7 +19,7 @@ module HGridsDatabase                   ! Horizontal grid information
   implicit none
   private
 
-  public :: HGrid_T, HGridGeolocations_T, HGridGeolocations
+  public :: HGrid_T, HGrids_T, HGridGeolocations_T, HGridGeolocations
   public :: addHGridtodatabase, copyHGrid, createEmptyHGrid, destroyHGridContents, &
     & destroyHGridDatabase, Dump, findClosestMatch, &
     & L1BGeoLocation, L1BSubsample, nullifyHGrid, &
@@ -63,6 +63,15 @@ module HGridsDatabase                   ! Horizontal grid information
     type(geocLat_t), allocatable :: QTM_Lats(:) ! Unique latitudes in the QTM.
   end type HGrid_T
 
+  ! To construct an array of pointers to HGrid_T.  The reason for this
+  ! is that the quantity template has a pointer to an HGrid_T.  When we
+  ! add an item to the HGrid_T database, using an array of HGrid_T, all
+  ! those pointers become invalid.  So now we allocate each HGrid_T
+  ! individually, and grow an array of HGrids_T.
+  type HGrids_T
+    type(hGrid_t), pointer :: The_HGrid => NULL()
+  end type HGrids_T
+
   ! Put here all the 
   ! l1boa quantities that we don't wish to read again and again and again ..
   type HGridGeolocations_T
@@ -79,35 +88,46 @@ module HGridsDatabase                   ! Horizontal grid information
   
   type(HGridGeolocations_T), save :: HGridGeolocations
 
-  interface DUMP
-    module procedure DUMP_a_HGRID
-    module procedure DUMP_HGRIDS
+  interface Dump
+    module procedure Dump_a_HGrid
+    module procedure Dump_HGrids
   end interface
 
 contains ! =========== Public procedures ===================================
 
  ! -----------------------------------------  AddHGridToDatabase  -----
-  integer function AddHGridToDatabase ( database, item )
+  integer function AddHGridToDatabase ( Database, The_HGrid )
+
+    ! This adds an item to the array of pointers to HGrid_T's.  Then it
+    ! allocates an HGrid_T as the last element of the new array.  Then it
+    ! does a shallow copy of the_hGrid to the allocated hGrid -- so DO NOT
+    ! destroy the original one, just nullify all its pointers.
 
     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
     use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
 
     ! Dummy arguments
-    type (HGrid_T), dimension(:), pointer :: database
-    type (HGrid_T), intent(in) :: item
+    type (HGrids_T), dimension(:), pointer :: Database
+    type (HGrid_T), intent(in) :: The_HGrid
 
     ! Local variables
-    type (HGrid_T), dimension(:), pointer :: tempDatabase
+    type (HGrids_T) :: Item
+    type (HGrids_T), dimension(:), pointer :: TempDatabase
 
+    ! Add another pointer to HGrid_T to the HGrids_T database
     include "addItemToDatabase.f9h"
+
+    allocate ( database(newSize)%the_hGrid, stat=status )
+    call test_allocate ( status, moduleName, "database(newSize)%the_hGrid" )
+    database(newSize)%the_hGrid = the_hGrid
 
     AddHGridToDatabase = newSize
   end function AddHGridToDatabase
 
   ! -------------------------------------------  copyHGrid  -----
-  ! Copy all fields from aGrid to hGrid
-  ! Allocates all the pointer components, so a full copy results
-  ! allowing you to destroy agrid afterwards
+  ! Deep copy all fields from aGrid to hGrid.
+  ! Allocates all the pointer components, so a full deep copy results
+  ! allowing you to destroy agrid afterwards.
   subroutine copyHGrid ( aGrid, hGrid )
     ! Just does allocates etc.
 
@@ -524,7 +544,7 @@ contains ! =========== Public procedures ===================================
   ! This subroutine destroys a quantity template database
 
     ! Dummy argument
-    type (HGrid_T), dimension(:), pointer :: database
+    type (HGrids_T), dimension(:), pointer :: database
 
     ! Local variables
     integer(c_intptr_t) :: Addr         ! For tracing
@@ -532,7 +552,13 @@ contains ! =========== Public procedures ===================================
 
     if ( associated(database) ) then
       do hGridIndex=1,SIZE(database)
-        call DestroyHGridContents ( database(hGridIndex) )
+        call DestroyHGridContents ( database(hGridIndex)%the_hGrid )
+        s = storage_size(database(hGridIndex)%the_hGrid) / 8
+        addr = 0
+        if ( s > 0 ) addr = transfer(c_loc(database(1)), addr)
+        deallocate ( database(hGridIndex)%the_hGrid, stat=status )
+        call test_deallocate ( status, ModuleName, &
+          & "database(hGridIndex)%the_hGrid", s, address=addr )
       end do
       s = size(database) * storage_size(database) / 8
       addr = 0
@@ -543,8 +569,8 @@ contains ! =========== Public procedures ===================================
 
   end subroutine DestroyHGridDatabase
 
-  ! ------------------------------------------------  DUMP_A_HGRID  -----
-  subroutine DUMP_a_HGRID ( aHGRID, Details, ZOT )
+  ! ------------------------------------------------  Dump_a_HGrid  -----
+  subroutine Dump_a_HGrid ( aHGRID, Details, ZOT )
     use dates_module, only: tai93s2hid
     use Dump_Geolocation_m, only: Dump_H_t, Dump_ZOT
     use Generate_QTM_m, only: Dump_QTM_Tree
@@ -629,19 +655,21 @@ contains ! =========== Public procedures ===================================
         call dump_H_t ( aHGrid%QTM_geo, ' QTM vertices in (lon,lat) coordinates:' )
       end if
     end if
-  end subroutine DUMP_a_HGRID
+  end subroutine Dump_a_HGrid
 
-  ! ------------------------------------------------  DUMP_HGRIDS  -----
-  subroutine DUMP_HGRIDS ( HGRIDS )
-    use OUTPUT_M, only: OUTPUT
-    type(hGrid_T), intent(in) :: HGRIDS(:)
+  ! ------------------------------------------------  Dump_HGrids  -----
+  subroutine Dump_HGrids ( HGrids, Details, ZOT )
+    use Output_M, only: Output
+    type(hGrids_T), intent(in) :: HGrids(:)
+    integer, intent(in), optional :: Details
+    logical, intent(in), optional :: ZOT
     integer :: I
     call output ( size(hgrids), before='HGRIDS: SIZE = ', advance='yes' )
     do i = 1, size(hgrids)
       call output ( i, 4, after=': ' )
-      call dump ( hgrids(i) )
+      call dump ( hGrids(i)%the_hGrid, details, ZOT )
     end do
-  end subroutine DUMP_HGRIDS
+  end subroutine Dump_HGrids
 
   ! ---------------------------------------- FindClosestMatch ---
   integer function FindClosestMatch ( reference, sought, instance )
@@ -725,6 +753,9 @@ contains ! =========== Public procedures ===================================
 end module HGridsDatabase
 
 ! $Log$
+! Revision 2.27  2016/05/18 01:34:37  vsnyder
+! HGridsDatabase.f90
+!
 ! Revision 2.26  2016/05/17 00:14:40  pwagner
 ! Tries harder not to bomb in display_string
 !
