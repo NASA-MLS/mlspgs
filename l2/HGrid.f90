@@ -2075,11 +2075,12 @@ contains ! =====     Public Procedures     =============================
   subroutine ComputeNextChunksHGridOffsets ( chunks, chunkNo, hGrids )
     use Allocate_Deallocate, only: Allocate_Test
     use Chunks_m, only: MLSChunk_T
-    use HGridsDatabase, only: HGRID_T
+    use HGridsDatabase, only: HGrids_T
     ! Dummy arguments
     type(MLSChunk_T), dimension(:), intent(inout) :: CHUNKS
     integer, intent(in) :: CHUNKNO
-    type(HGrid_T), dimension(:), intent(in) :: HGRIDS
+    type(HGrids_T), dimension(:), intent(in) :: HGrids
+    integer :: I
     ! Executable code
     ! Do nothing if this is the last chunk
     if ( chunkNo == size(chunks) ) return
@@ -2087,9 +2088,11 @@ contains ! =====     Public Procedures     =============================
     call Allocate_Test ( chunks(chunkNo+1)%hGridOffsets, size(hGrids), &
       & 'chunks(?)%hGridOffsets', ModuleName )
     ! Compute our number of output instances
-    chunks(chunkNo+1)%hGridOffsets = hGrids%noProfs - &
-      & hGrids%noProfsLowerOverlap - &
-      & hGrids%noProfsUpperOverlap
+    do i = 1, size(hGrids)
+      chunks(chunkNo+1)%hGridOffsets = hGrids(i)%the_hGrid%noProfs - &
+        & hGrids(i)%the_hGrid%noProfsLowerOverlap - &
+        & hGrids(i)%the_hGrid%noProfsUpperOverlap
+    end do
     ! For later chunks, add on the accumulated previous stuff
     if ( chunkNo > 1 ) &
       & chunks(chunkNo+1)%hGridOffsets = chunks(chunkNo+1)%hGridOffsets + &
@@ -2099,10 +2102,10 @@ contains ! =====     Public Procedures     =============================
   ! ------------------------------------- PlaceHGridContents --
   subroutine PlaceHGridContents ( HGrid1, HGrid2, offset )
     ! Place the contents of one Hgrid1 inside HGrid2, possibly offset
-    use hgridsdatabase, only: hgrid_t
+    use HGridsDatabase, only: HGrid_t
     ! Args
-    type(HGRID_T), intent(in)     :: HGrid1
-    type(HGRID_T), intent(inout)  :: HGrid2
+    type(HGrid_T), intent(in)     :: HGrid1
+    type(HGrid_T), intent(inout)  :: HGrid2
     integer, optional, intent(in) :: offset ! where in HGrid2 to place HGrid1
     ! Internal variables
     integer :: myOffset
@@ -2387,6 +2390,10 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.130  2016/05/18 01:37:30  vsnyder
+! Change HGrids database from an array of HGrid_T to an array of pointers
+! to HGrid_T using the new type HGrids_T.
+!
 ! Revision 2.129  2016/02/26 02:07:18  vsnyder
 ! Add QTM support
 !
