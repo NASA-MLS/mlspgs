@@ -4974,7 +4974,7 @@ contains ! =====     Public Procedures     =============================
     ! method:
     ! We read the s/c velocity and look at the sign of its z component
     subroutine WithAscOrDesc ( key, quantity, chunk, fileDatabase, HGrids, PtanQuantity )
-    use HGridsDatabase, only: HGrid_T
+    use HGridsDatabase, only: HGrids_T
     use MLSNumerics, only: ClosestElement
 
       ! Dummy arguments
@@ -4982,7 +4982,7 @@ contains ! =====     Public Procedures     =============================
       type (VectorValue_T), intent(inout)        :: QUANTITY ! Quantity to fill
       type (MLSChunk_T), INTENT(IN)              :: CHUNK
       type (MLSFile_T), dimension(:), pointer    :: FILEDATABASE
-      type (HGrid_T), dimension(:), pointer      :: HGrids
+      type (HGrids_T), dimension(:), pointer     :: HGrids
       type (VectorValue_T), pointer              :: PtanQuantity
       ! Local variables
       integer                                    :: heightMAF
@@ -5025,7 +5025,7 @@ contains ! =====     Public Procedures     =============================
         Heights = Quantity%template%surfs
       endif
       do i=1, quantity%template%noInstances
-        maf = Hgrids(quantity%template%hGridIndex)%maf(i)
+        maf = Hgrids(quantity%template%hGridIndex)%the_hGrid%maf(i)
         if ( maf < 1 ) maf = i
         heightMAF = maf
         if ( size(heights, 2) < heightMAF ) heightMAF = 1
@@ -7698,6 +7698,10 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.121  2016/05/18 01:37:30  vsnyder
+! Change HGrids database from an array of HGrid_T to an array of pointers
+! to HGrid_T using the new type HGrids_T.
+!
 ! Revision 2.120  2016/03/18 17:58:05  pwagner
 ! Make certain the L2CF line cited is actal error, not end of section
 !
