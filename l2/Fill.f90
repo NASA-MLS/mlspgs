@@ -101,7 +101,7 @@ contains ! =====     Public Procedures     =============================
     use griddeddata, only: griddeddata_t
     use hessianmodule_1, only: addhessiantodatabase, createemptyhessian, &
       & streamlinehessian, hessian_t
-    use hgridsdatabase, only: hgrid_t
+    use HGridsDatabase, only: HGrids_t
     use highoutput, only: outputnamedvalue
     ! we need many things from init_tables_module.  first the fields:
     use init_tables_module, only: f_a, f_additional, f_allowmissing, &
@@ -254,7 +254,7 @@ contains ! =====     Public Procedures     =============================
     type(ForwardModelConfig_T), dimension(:), pointer :: FWMODELCONFIG
     type (mlSChunk_T), dimension(:), pointer          :: CHUNKS
     integer, intent(in)                               :: CHUNKNO
-    type (HGrid_T), dimension(:), pointer ::     HGrids
+    type (HGrids_T), dimension(:), pointer            :: HGrids
 
     ! -----     Declarations for Fill and internal subroutines     -------
 
@@ -2278,7 +2278,7 @@ contains ! =====     Public Procedures     =============================
           if ( .not. got(f_hgrid) )  &
             & call Announce_error ( key, no_Error_Code,'hGrid not supplied' )
           call NearestProfiles ( &
-            & quantity, HGrids(hgridIndex), &
+            & quantity, HGrids(hgridIndex)%the_hGrid, &
             & Chunks(ChunkNo)%HGridOffsets(hgridIndex) &
             & )
         case default
@@ -2297,7 +2297,7 @@ contains ! =====     Public Procedures     =============================
             & noSurfs /= size(l1bField%dpField, 2) ) then
             noSurfs = min(noSurfs, size(l1bField%dpField, 2))
             do i=1, quantity%template%noInstances
-              maf = Hgrids(quantity%template%hGridIndex)%maf(i)
+              maf = Hgrids(quantity%template%hGridIndex)%the_hGrid%maf(i)
               quantity%value3(:,1:noSurfs,i) = l1bField%dpField(:,1:noSurfs,maf)
             enddo
           else
@@ -3265,6 +3265,10 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.460  2016/05/18 01:37:30  vsnyder
+! Change HGrids database from an array of HGrid_T to an array of pointers
+! to HGrid_T using the new type HGrids_T.
+!
 ! Revision 2.459  2016/04/01 00:27:15  pwagner
 ! May now Execute a single command or a script of lines from l2cf
 !
