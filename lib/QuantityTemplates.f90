@@ -132,7 +132,7 @@ module QuantityTemplates         ! Quantities within vectors
     ! is copied into the vector value, not targeted therein.  If the VGrid
     ! is shared, deallocating a pointer would result in a dangling pointer.
     ! If noCrossTrack > 1, use the Surfs3 function to access it.
-    real(rt), allocatable :: Surfs(:,:)
+    real(rt), allocatable :: Surfs(:,:) ! zeta or meters, depending on verticalCoordinate
 
     ! Horizontal coordinates in the orbit plane.
     integer :: horizontalCoordinate = l_phiTan ! The horizontal coordinate used.
@@ -2218,6 +2218,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.109  2016/05/12 15:22:46  pwagner
+! Added GetHGridFromQuantity
+!
 ! Revision 2.108  2016/05/04 18:34:16  pwagner
 ! Changed default unit to a valid phyq; some misunderstandings still remain however
 !
