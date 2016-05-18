@@ -56,7 +56,7 @@ contains ! =====     Public Procedures     =============================
       & MLSCase, MLSEndSelect, MLSSelect, MLSSelecting, Skip
     use ForwardModelConfig, only: ForwardModelConfig_t
     use HessianModule_1, only: Hessian_t
-    use HGridsDatabase, only: HGrid_t
+    use HGridsDatabase, only: HGrids_t
     use highOutput, only: beVerbose, letsDebug, outputNamedValue
     use Init_Tables_Module, only: s_l2gp, s_l2aux, s_time, s_directwrite, &
       & s_endselect, s_case, s_diff, s_dump, s_execute, s_label, s_select, &
@@ -93,7 +93,7 @@ contains ! =====     Public Procedures     =============================
     type (MLSChunk_T), dimension(:), intent(in) :: chunks
     type(ForwardModelConfig_T), dimension(:), pointer :: FWModelConfig
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
-    type (HGrid_T), dimension(:), pointer ::     HGrids
+    type (HGrids_T), dimension(:), pointer  ::     HGrids
     type (matrix_database_T), dimension(:), pointer :: Matrices
     type (Hessian_T), dimension(:), pointer :: Hessians
 
@@ -173,7 +173,7 @@ contains ! =====     Public Procedures     =============================
         timeSpentWaiting = dwt22-dwt2
         if ( timeSpentWaiting > timeReasonable ) then
           call output('Unreasonable time waiting for permission', advance='yes')
-        endif
+        end if
         if ( parallel%verbosity > 0 ) then
           call output ( "Got permission for ticket " )
           call output ( ticket )
@@ -181,7 +181,7 @@ contains ! =====     Public Procedures     =============================
           call output ( directWriteNodeGranted, advance='no' )
           call output ( " file " )
           call output ( trim(theFile), advance='yes' )
-        endif
+        end if
         call add_to_directwrite_timing ( 'waiting', dwt2)
         didthewrite = .false.
       end if
@@ -305,13 +305,13 @@ contains ! =====     Public Procedures     =============================
                 call output(ChunkNo, advance='yes')
                 call output('File: ', advance='no')
                 call output(trim(theFile), advance='yes')
-              endif
+              end if
               if ( verbose ) then
                 call sayJustThisTime ( 'Completing this DW, ' // &
                   & trim(outputTyp), dwt2 )
                 call outputNamedValue( 'Waiting time', TimeSpentWaiting )
                 call outputNamedValue( 'File name', trim(theFile) )
-              endif
+              end if
               call add_to_directwrite_timing ( 'writing', dwt2 )
               noDirectWritesCompleted = noDirectWritesCompleted + 1
               ! If that was the last one then bail out
@@ -421,7 +421,7 @@ contains ! =====     Public Procedures     =============================
     use expr_m, only: expr
     use forwardModelConfig, only: forwardModelConfig_t
     use hdf, only: dfacc_create, dfacc_rdwr
-    use HGridsDatabase, only: HGrid_t
+    use HGridsDatabase, only: HGrids_t
     use highOutput, only: outputNamedValue
     use init_tables_module, only: f_ascDescMode, f_convergence, f_file, &
       & f_hdfVersion, f_inputFile, &
@@ -469,7 +469,7 @@ contains ! =====     Public Procedures     =============================
     type (DirectData_T), dimension(:), pointer :: DirectDatabase
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
     type(ForwardModelConfig_T), dimension(:), pointer :: FWModelConfig
-    type (HGrid_T), dimension(:), pointer ::     HGrids
+    type (HGrids_T), dimension(:), pointer ::     HGrids
     integer, intent(in) :: CHUNKNO
     type (MLSChunk_T), dimension(:), intent(in) :: CHUNKS
     character(len=*), intent(out) :: OUTPUTTYPESTR   ! 'l2gp', 'l2aux', etc.
@@ -786,7 +786,7 @@ contains ! =====     Public Procedures     =============================
         qty => GetVectorQtyByTemplateIndex ( vectors(sourceVectors(i)), sourceQuantities(i) )
         qty%label = labels(i)
       enddo
-    endif
+    end if
 
     ! if ( .not. (SKIPDIRECTWRITES .or. checkpaths) ) then
     if ( .not. checkpaths ) then
@@ -877,7 +877,7 @@ contains ! =====     Public Procedures     =============================
       call trace_end ( "DirectWriteCommand", &
         & cond=toggle(gen) .and. switchDetail(switches, 'dwreq') > -1 )
       return
-    endif
+    end if
 
     ! Distribute sources among available DirectWrite files if filename undefined
     if ( distributingSources ) then
@@ -905,7 +905,7 @@ contains ! =====     Public Procedures     =============================
       call trace_end ( "DirectWriteCommand", &
         & cond=toggle(gen) .and. switchDetail(switches, 'dwreq') > -1 )
       return
-    endif
+    end if
 
     ! If this is the first pass through, then we just log our request
     ! with the master
@@ -1069,7 +1069,7 @@ contains ! =====     Public Procedures     =============================
         call trace_end ( "DirectWriteCommand", &
           & cond=toggle(gen) .and. switchDetail(switches, 'dwreq') > -1 )
         return
-      endif
+      end if
       
       if ( createFileFlag .and. .not. patch ) then
         fileaccess = DFACC_CREATE
@@ -1127,7 +1127,7 @@ contains ! =====     Public Procedures     =============================
           & name=Filename, shortName=file_base, &
           & type=fileType, access=DFACC_CREATE, HDFVersion=HDFVERSION_5, &
           & PCBottom=PCBottom, PCTop=PCTop)
-      endif
+      end if
       directFile%access = FileAccess
       if ( OPENHERE ) call mls_openFile(directFile, ErrorType)
       if(DEEBUG) call dump(directFile)
@@ -1153,7 +1153,7 @@ contains ! =====     Public Procedures     =============================
             else
               qty => GetVectorQtyByTemplateIndex ( &
                 & vectors(sourceVectors(source)), 1 )
-            endif
+            end if
             hdfNameIndex = qty%label
             if(DEEBUG) &
               & call display_string ( hdfNameIndex, strip=.true., advance='yes' )
@@ -1168,7 +1168,7 @@ contains ! =====     Public Procedures     =============================
           if ( returnStatus /= 0 ) then
             call MLSMessage(MLSMSG_Warning, ModuleName, &
               & 'Unable to check on swath in ' // trim(filename) )
-          endif
+          end if
           if(DEEBUG)call dump( createThisSource, 'createThisSource' )
           source = findFirst( createThisSource )
           if(DEEBUG)call outputNamedValue ( 'source number of T', source )
@@ -1218,7 +1218,7 @@ contains ! =====     Public Procedures     =============================
           select case ( outputType )
           case ( l_l2gp, l_l2dgg )
             call DirectWrite ( directFile, vector, &
-            & chunkNo, HGrids, &
+            & chunkNo, &
             & createSwath=createthisswath, &
             & lowerOverlap=lowerOverlap, upperOverlap=upperOverlap, &
             & maxChunkSize=maxChunkSize )
@@ -1234,7 +1234,7 @@ contains ! =====     Public Procedures     =============================
           case default
           end select
           cycle
-        endif
+        end if
         qty => GetVectorQtyByTemplateIndex ( vectors(sourceVectors(source)), &
           & sourceQuantities(source) )
         hdfNameIndex = qty%label
@@ -1303,7 +1303,7 @@ contains ! =====     Public Procedures     =============================
           & switchDetail(switches,'dwreq') > -1 ) then
           call output('Unreasonable set up time for ' // trim(hdfname), &
             & advance='yes')
-        endif
+        end if
 
         ! Do the actual DirectWrite
         ! (Why do we need to redefine fileType? Is add_metadata so stupid?)
@@ -1319,7 +1319,7 @@ contains ! =====     Public Procedures     =============================
             call output('createSwath: ', advance='no')
             call output(.not. createThisSource(source), advance='yes')
             call outputNamedValue ( 'source number of DW', source )
-          endif
+          end if
           createthisswath = (.not. createThisSource(source))
           ! We had a bug somewhere in hdfeos
           ! When we created the first swath in an hdfeos file
@@ -1329,7 +1329,7 @@ contains ! =====     Public Procedures     =============================
           ! by the DFACC_CREATE
           call DirectWrite ( directFile, &
             & qty, precQty, qualityQty, statusQty, convergQty, AscDescModeQty, &
-            & hdfName, chunkNo, HGrids, &
+            & hdfName, chunkNo, &
             & createSwath=createthisswath, &
             & lowerOverlap=lowerOverlap, upperOverlap=upperOverlap, &
             & maxChunkSize=maxChunkSize )
@@ -1337,16 +1337,16 @@ contains ! =====     Public Procedures     =============================
             if ( directFile%stillOpen ) &
               & call mls_closeFile(directFile, errorType)
             directFile%access = DFACC_RDWR
-          endif
+          end if
           if ( fileaccess == DFACC_CREATE ) then
             ! OK, because the bug is still there (!), we'll repeat
             call DirectWrite ( directFile, &
               & qty, precQty, qualityQty, statusQty, convergQty, AscDescModeQty, &
-              & hdfName, chunkNo, HGrids, &
+              & hdfName, chunkNo, &
               & createSwath=createthisswath, &
               & lowerOverlap=lowerOverlap, upperOverlap=upperOverlap, &
               & maxChunkSize=maxChunkSize )
-          endif
+          end if
           NumOutput= NumOutput + 1
           if ( outputType == l_l2dgg ) then
             filetype=l_l2dgg
@@ -1370,7 +1370,7 @@ contains ! =====     Public Procedures     =============================
               & chunkNo, chunks, FWModelConfig, &
               & lowerOverlap=lowerOverlap, upperOverlap=upperOverlap, &
               & single=single, options=options )
-          endif
+          end if
           NumOutput = NumOutput + 1
           filetype=l_hdf
         case ( l_quantity )
@@ -1383,7 +1383,7 @@ contains ! =====     Public Procedures     =============================
             ! call outputnamedValue( 'Calling DirectWrite with rank', rank )
             call DirectWrite ( directFile, qty, hdfName, &
               & chunkNo, options=options, rank=rank )
-          endif
+          end if
           NumOutput = NumOutput + 1
           filetype=l_quantity
         case default
@@ -1397,7 +1397,7 @@ contains ! =====     Public Procedures     =============================
       if ( timeWriting-timeSetup > timeReasonable .and. &
         & switchDetail(switches,'dwreq') > -1 ) then
         call output('Unreasonable writing time for ' //trim(hdfname), advance='yes')
-      endif
+      end if
       
       if ( DEEBUG ) then
         print *, 'Num permitted to ', trim(FileName), ' ', NumPermitted
@@ -1446,7 +1446,7 @@ contains ! =====     Public Procedures     =============================
           & switchDetail(switches,'dwreq') > -1 ) then
           call output('Unreasonable closing time for ' // trim(hdfname), &
             & advance='yes')
-        endif
+        end if
         if ( errortype /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
           & 'DirectWriteCommand unable to close (1)' // trim(filename), &
           & MLSFile=directFile )
@@ -1494,7 +1494,7 @@ contains ! =====     Public Procedures     =============================
         & switchDetail(switches,'dwreq') > -1 ) then
         call output('Unreasonable closing time for ' // trim(hdfname), &
           & advance='yes')
-      endif
+      end if
       if ( errortype /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'DirectWriteCommand unable to close (2)' // trim(filename), &
         & MLSFile=directFile )
@@ -1514,7 +1514,7 @@ contains ! =====     Public Procedures     =============================
       if ( timeOut-timeToClose > timeReasonable .and. &
         & switchDetail(switches,'dwreq') > -1 ) then
         call output('Unreasonable time out ' //trim(hdfname), advance='yes')
-      endif
+      end if
     end if
 
     call trace_end ( "DirectWriteCommand", &
@@ -1687,10 +1687,10 @@ contains ! =====     Public Procedures     =============================
         labelStr = ' '
         if ( qty%template%name /= 0 ) then
           call get_string( qty%template%name, labelStr, strip=.true. )
-        endif
+        end if
         if ( len_trim(labelStr) == 0 ) then
           write( labelStr, '(a9,i3.3,a1)' ) 'quantity[', quantityIndex, ']'
-        endif
+        end if
         ! call outputNamedValue( 'label string start', labelStr, advance='yes' )
         call Get_String( label, labelStr(len_trim(labelStr)+1:), strip=.true. )
         ! Attach the label
@@ -2384,6 +2384,10 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.174  2016/05/18 01:37:30  vsnyder
+! Change HGrids database from an array of HGrid_T to an array of pointers
+! to HGrid_T using the new type HGrids_T.
+!
 ! Revision 2.173  2016/04/01 00:27:15  pwagner
 ! May now Execute a single command or a script of lines from l2cf
 !
