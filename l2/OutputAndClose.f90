@@ -83,7 +83,7 @@ contains ! =====     Public Procedures     =============================
     use griddedData, only: griddedData_t
     use hessianModule_1, only: hessian_t
     use HGrid, only: createHGridfromMLScfinfo, dealWithObstructions
-    use HGridsdatabase, only: HGrid_t, &
+    use HGridsdatabase, only: HGrid_T, HGrids_t, &
       & addHGridtodatabase, dump
     use init_tables_module, only: f_additional, f_attrName, f_attrValue, &
       & f_destroy, f_dontpack, f_file, f_hdfversion, &
@@ -149,7 +149,7 @@ contains ! =====     Public Procedures     =============================
     character (len=FileNameLen) :: FILE_BASE    ! From the FILE= field
     logical, dimension(field_first:field_last) :: GOT ! Fields
     integer :: GSON                     ! Son of Son -- an assign node
-    type (HGrid_T), dimension(:), pointer :: HGrids => null()
+    type (HGrids_T), dimension(:), pointer :: HGrids => null()
     integer :: HDFVERSION
     integer :: KEY                      ! Index of spec_args node
     integer :: Me = -1                  ! String index for trace
@@ -289,7 +289,7 @@ contains ! =====     Public Procedures     =============================
         call decorate ( key, AddHGridToDatabase ( hGrids, CreateHGridFromMLSCFInfo ( name, key, filedatabase, l2gpDatabase, &
           & processingRange, allChunks ) ) )
         if ( DEBUG ) print *, 'Before dealing with obstructions'
-        newHGridp => hGrids(1) 
+        newHGridp => hGrids(1)%the_hGrid
         if ( DEBUG ) call dump(newHGridp)
         if ( associated(obstructions) ) &
           & call DealWithObstructions( newHGridp, obstructions, DestroyOld = .false. )
@@ -346,7 +346,7 @@ contains ! =====     Public Procedures     =============================
           return
 
         case ( l_l2gp ) ! --------------------- Writing l2gp files -----
-        if ( noGapsHGIndex > 0 ) newHGridp => HGrids(noGapsHGIndex)
+        if ( noGapsHGIndex > 0 ) newHGridp => HGrids(noGapsHGIndex)%the_hGrid
           call OutputL2GP ( key, file_base, DEBUG, &
             & output_type, mlspcf_l2gp_start, mlspcf_l2gp_end, &
             & filedatabase, l2gpDatabase, newHGridp )
@@ -397,7 +397,7 @@ contains ! =====     Public Procedures     =============================
           call Deallocate_test ( dontPack, 'dontPack', ModuleName )
 
         case ( l_l2dgg ) ! --------------------- Writing l2dgg files -----
-        if ( noGapsHGIndex > 0 ) newHGridp => HGrids(noGapsHGIndex)
+        if ( noGapsHGIndex > 0 ) newHGridp => HGrids(noGapsHGIndex)%the_hGrid
           call OutputL2GP ( key, file_base, DEBUG, &
             & output_type, mlspcf_l2dgg_start, mlspcf_l2dgg_end, &
             & filedatabase, l2gpDatabase, newHGridp )
@@ -891,7 +891,7 @@ contains ! =====     Public Procedures     =============================
   subroutine CopyQuantity ( key, fileDatabase )
     ! Do the work of copying named quantity data to a named file
     use expr_m, only: expr
-    use HGridsdatabase, only: HGrid_t, dump
+    use HGridsdatabase, only: HGrids_t, dump
     use init_tables_module, only: f_create, &
       & f_exclude, f_file, f_hdfversion, f_hgrid, &
       & f_ifanycrashedchunks, f_inputfile, f_inputtype, &
@@ -933,7 +933,7 @@ contains ! =====     Public Procedures     =============================
     character (len=FileNameLen) :: FILE_BASE    ! From the FILE= field
     integer :: FORMATTYPE               ! l_hdf or l_swath
     logical, dimension(field_first:field_last) :: GOT ! Fields
-    type (HGrid_T), dimension(:), pointer :: HGrids => null()
+    type (HGrids_T), dimension(:), pointer :: HGrids => null()
     integer :: GSON                     ! Son of Son -- an assign node
     integer :: hdfVersion               ! 4 or 5 (corresp. to hdf4 or hdf5)
     integer :: HGridIndex
@@ -1208,14 +1208,14 @@ contains ! =====     Public Procedures     =============================
           & outputfile, create2=create, &
           & swathList=trim(sdList), rename=rename, &
           & notUnlimited=avoidUnlimitedDims, andGlAttributes=COPYGLOBALATTRIBUTES, &
-          & HGrid=HGrids(HGridIndex), options=optionsString )
+          & HGrid=HGrids(HGridIndex)%the_hGrid, options=optionsString )
       elseif ( got(f_exclude) .and. repairGeoLocations ) then
         call cpL2GPData( l2metaData, inputfile, &
           & outputfile, create2=create, &
           & swathList=trim(sdList), rename=rename, &
           & exclude=trim(exclude), &
           & notUnlimited=avoidUnlimitedDims, andGlAttributes=COPYGLOBALATTRIBUTES, &
-          & HGrid=HGrids(HGridIndex), options=optionsString )
+          & HGrid=HGrids(HGridIndex)%the_hGrid, options=optionsString )
       else
         if ( DEBUG ) then
           call output( 'input file', advance='yes' )
@@ -1246,7 +1246,7 @@ contains ! =====     Public Procedures     =============================
       endif
       if ( noGapsHGIndex > 0 ) &
         & call writeHGridComponents( trim(PhysicalFilename), &
-        & HGrids(noGapsHGIndex) )
+        & HGrids(noGapsHGIndex)%the_hGrid )
     case default
     end select
 
@@ -1692,15 +1692,15 @@ contains ! =====     Public Procedures     =============================
     & output_type, pcf_start, pcf_end, &
     & filedatabase, l2gpDatabase, HGrid )
     ! Do the work of outputting specified l2gp data to a named file
-    use hgridsdatabase, only: hgrid_t
-    use init_tables_module, only: f_overlaps, f_quantities
+    use HGridsDatabase, only: HGrid_t
+    use Init_tables_module, only: f_overlaps, f_quantities
     use intrinsic, only: l_swath, lit_indices
-    use l2gpdata, only: l2gpdata_t, l2gpnamelen, writel2gpdata
+    use L2gpdata, only: l2gpdata_t, l2gpnamelen, writel2gpdata
     use MLSCommon, only: mlsfile_t, filenamelen, l2metadata_t
     use MLSStringlists, only: switchdetail
     use SDPToolkit, only: pgs_s_success
-    use toggles, only: switches
-    use tree, only: decoration, nsons, subtree
+    use Toggles, only: switches
+    use Tree, only: decoration, nsons, subtree
     ! Args
     integer, intent(in)                     :: key ! tree node
     character(len=*), intent(inout)         :: fileName ! according to l2cf
@@ -1710,7 +1710,7 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in)                     :: pcf_end
     type(MLSFile_T), dimension(:), pointer  :: filedatabase
     type(L2GPData_T), dimension(:), pointer :: l2gpDatabase
-    type(HGRID_T)                           :: HGrid
+    type(HGrid_T)                           :: HGrid
     ! Local variables
     integer :: DB_index
     integer :: FIELD_NO                 ! Index of assign vertex sons of Key
@@ -1890,7 +1890,7 @@ contains ! =====     Public Procedures     =============================
     use chunkdivide_m, only: obstructions
     use directwrite_m, only: directdata_t, dump
     use hdf5, only: h5gclose_f, h5gopen_f
-    use HGridsdatabase, only: HGrid_t, dump
+    use HGridsdatabase, only: HGrids_t, dump
     use init_tables_module, only: l_l2aux, l_l2dgg
     use init_tables_module, only: f_file, f_hgrid, &
       & field_first, field_last, &
@@ -1921,7 +1921,7 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in)                        :: key
     type (DirectData_T), dimension(:), pointer :: DirectDatabase
     type (MLSFile_T), dimension(:), pointer    :: FILEDATABASE
-    type (HGrid_T), dimension(:), pointer      :: HGrids
+    type (HGrids_T), dimension(:), pointer     :: HGrids
     logical, intent(in)                        :: debug
     logical, intent(in)                        :: USINGSUBMIT ! Set if using the submit mechanism
     ! Local variables
@@ -2054,7 +2054,7 @@ contains ! =====     Public Procedures     =============================
             & outputFile, exclude=outsdList, create2=create2, &
             & notUnlimited=avoidUnlimitedDims, &
             & andGlAttributes=COPYGLOBALATTRIBUTES, &
-            & HGrid=HGrids(HGridIndex), options=trim(options) // 'cr' )
+            & HGrid=HGrids(HGridIndex)%the_hGrid, options=trim(options) // 'cr' )
         else
           call cpL2GPData( l2metaData, inputFile, &
             & outputFile, exclude=outsdList, create2=create2, &
@@ -2287,6 +2287,10 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.199  2016/05/18 01:37:30  vsnyder
+! Change HGrids database from an array of HGrid_T to an array of pointers
+! to HGrid_T using the new type HGrids_T.
+!
 ! Revision 2.198  2016/04/01 00:27:15  pwagner
 ! May now Execute a single command or a script of lines from l2cf
 !
