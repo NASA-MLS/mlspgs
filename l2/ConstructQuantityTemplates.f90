@@ -76,7 +76,7 @@ contains ! ============= Public procedures ===================================
 !   use chunkdivide_m, only: chunkdivideconfig
     use expr_m, only: expr
     use fgrid, only: fgrid_t
-    use hgridsdatabase, only: hgrid_t
+    use HGridsDatabase, only: HGrids_t
     use highoutput, only: outputnamedvalue
     use init_tables_module, only:  f_badvalue, f_coordinate, f_fgrid, f_hgrid, &
       & f_irregular, f_keepchannels, f_logbasis, f_minvalue, f_module, &
@@ -105,7 +105,7 @@ contains ! ============= Public procedures ===================================
     integer, intent(in) :: NAME              ! Sub-rosa index of name
     integer, intent(in) :: ROOT              ! Root of QuantityTemplate subtree
     type (FGrid_T), dimension(:), pointer :: FGrids
-    type (HGrid_T), dimension(:), pointer :: HGrids
+    type (HGrids_T), dimension(:), pointer :: HGrids
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
     type (MLSChunk_T), intent(in) :: Chunk
     type (QuantityTemplate_T), dimension(:), intent(in), optional, target :: &
@@ -276,9 +276,9 @@ contains ! ============= Public procedures ===================================
         vGridIndex = decoration(value) ! node_id(value) == n_spec_args
       case ( f_xgrid ) ! an hGrid
         xGridIndex = decoration(value) ! node_id(value) == n_spec_args
-        if ( hGrids(xGridIndex)%type /= l_explicit ) &
+        if ( hGrids(xGridIndex)%the_hGrid%type /= l_explicit ) &
           & call Announce_error ( root, 'XGrid is not explicit', quantityType )
-        noCrossTrack = size(hgrids(xGridIndex)%phi)
+        noCrossTrack = size(hgrids(xGridIndex)%the_hGrid%phi)
       end select
     end do
 
@@ -392,7 +392,7 @@ contains ! ============= Public procedures ===================================
     ! horizontalCoordinate?
     if ( got(f_hGrid) ) then
       if (  hGridIndex > 0 ) &
-        & horizontalCoordinate = HGrids(hGridIndex)%masterCoordinate
+        & horizontalCoordinate = HGrids(hGridIndex)%the_hGrid%masterCoordinate
     else if ( got(f_xGrid) ) then
       call Announce_error ( root, 'XGrid specified without HGrid', quantityType )
     end if
@@ -413,7 +413,7 @@ contains ! ============= Public procedures ===================================
     else
       ! Setup a non major/minor frame quantity
       noInstances = 1
-      if ( got ( f_hGrid ) ) noInstances = hGrids(hGridIndex)%noProfs
+      if ( got ( f_hGrid ) ) noInstances = hGrids(hGridIndex)%the_hGrid%noProfs
       noSurfs = 1
       if ( got ( f_vGrid ) ) noSurfs = vGrids(vGridIndex)%noSurfs
 
@@ -425,7 +425,7 @@ contains ! ============= Public procedures ===================================
 
       ! Setup the horizontal coordinates
       if ( got(f_hGrid) ) then
-        qty%the_hGrid => hGrids(hGridIndex)
+        qty%the_hGrid => hGrids(hGridIndex)%the_hGrid
         qty%hGridIndex = hGridIndex
         qty%xGridIndex = xGridIndex
         call PointQuantityToHGrid ( qty )
@@ -440,10 +440,10 @@ contains ! ============= Public procedures ===================================
           ! Subtract any instances outside processing range
           !   if ( ChunkDivideConfig%allowPriorOverlaps ) &
           !     & qty%grandTotalInstances = qty%grandTotalInstances - &
-          !     & hGrids(hGridIndex)%noProfsLowerOverlap
+          !     & hGrids(hGridIndex)%the_hGrid%noProfsLowerOverlap
           !   if ( ChunkDivideConfig%allowPostOverlaps ) &
           !     & qty%grandTotalInstances = qty%grandTotalInstances - &
-          !     & hGrids(hGridIndex)%noProfsUpperOverlap
+          !     & hGrids(hGridIndex)%the_hGrid%noProfsUpperOverlap
         else
           ! Must have a single instance per chunk
           qty%instanceOffset = chunk%chunkNumber - 1
@@ -465,9 +465,9 @@ contains ! ============= Public procedures ===================================
     ! Setup the cross-track coordinates
     nullify ( qty%crossAngles )
     if ( xGridIndex /= 0 ) then
-      call allocate_test ( qty%crossAngles, size(hGrids(xGridIndex)%phi,2), &
-        & 'qty%crossAngles', moduleName )
-      qty%crossAngles = hGrids(xGridIndex)%phi(1,:)
+      call allocate_test ( qty%crossAngles, &
+        & size(hGrids(xGridIndex)%the_hGrid%phi,2), 'qty%crossAngles', moduleName )
+      qty%crossAngles = hGrids(xGridIndex)%the_hGrid%phi(1,:)
     else
       call allocate_test ( qty%crossAngles, 1, 'qty%crossAngles', moduleName )
       qty%crossAngles = 0.0
@@ -1517,6 +1517,10 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.188  2016/05/18 01:37:30  vsnyder
+! Change HGrids database from an array of HGrid_T to an array of pointers
+! to HGrid_T using the new type HGrids_T.
+!
 ! Revision 2.187  2016/05/04 18:31:39  pwagner
 ! Requires -Sqtmp1 to dump l1b arrays when constructing minor fram qty
 !
