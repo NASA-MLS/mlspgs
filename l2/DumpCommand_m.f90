@@ -96,7 +96,7 @@ module DumpCommand_M
 ! DumpCommand ( int root, type (quantityTemplate_t) quantityTemplatesDB(:), &
 !    type (vectorTemplate_T) vectorTemplates(:), &
 !    type (vector_t) vectors(:), type (forwardModelConfig_t) forwardModelConfigs(:), &
-!    type (HGrid_T) HGrids(:), &
+!    type (HGrids_T) HGrids(:), &
 !    type (GriddedData_T) GriddedDataBase(:), type (MLSFile_T) FileDataBase(:), &
 !    type (Matrix_Database_T) MatrixDataBase(:), type (Hessian_T) HessianDataBase(:) )
 ! Execute ( int root )
@@ -1122,26 +1122,26 @@ contains
 
   ! ------------------------------------------------  DumpCommand  -----
   subroutine DumpCommand ( root, quantityTemplatesDB, &
-    & vectorTemplates, vectors, forwardModelConfigs, hgrids, griddedDatabase, &
+    & vectorTemplates, vectors, forwardModelConfigs, hGrids, griddedDatabase, &
     & fileDatabase, matrixDatabase, hessianDatabase )
 
   ! Process a "dump" command
 
-    use antennaPatterns_m, only: dump_antenna_patterns_database
-    use calendar, only: duration_formatted, time_t, tk
-    use call_stack_m, only: dump_stack
-    use chunkDivideConfig_m, only: chunkDivideConfig, dump
-    use declaration_table, only: dump_a_decl, decls, get_decl, variable
-    use dump_0, only: diff, dump, rmsformat
-    use expr_m, only: expr
-    use filterShapes_m, only: dump_filter_shapes_database, &
-      & dump_dacs_filter_database
-    use forwardmodelconfig, only: dump, forwardmodelconfig_t
-    use griddeddata, only: diff, dump, griddeddata_t
-    use hessianModule_1, only: hessian_t, diff, dump
-    use hGridsDatabase, only: dump, hgrid_t
-    use igrf_int, only: dump_gh
-    use init_tables_module, only: f_allbooleans, f_allfiles, &
+    use AntennaPatterns_m, only: dump_antenna_patterns_database
+    use Calendar, only: duration_formatted, time_t, tk
+    use Call_stack_m, only: dump_stack
+    use ChunkDivideConfig_m, only: chunkDivideConfig, dump
+    use Declaration_table, only: dump_a_decl, decls, get_decl, variable
+    use Dump_0, only: diff, dump, rmsformat
+    use Expr_m, only: expr
+    use FilterShapes_m, only: dump_filter_shapes_database, &
+      & Dump_dacs_filter_database
+    use Forwardmodelconfig, only: dump, forwardmodelconfig_t
+    use Griddeddata, only: diff, dump, griddeddata_t
+    use HessianModule_1, only: hessian_t, diff, dump
+    use HGridsDatabase, only: dump, HGrids_t
+    use Igrf_int, only: dump_gh
+    use Init_tables_module, only: f_allbooleans, f_allfiles, &
       & f_allforwardmodels, f_allgriddeddata, f_allhessians, f_allhgrids, &
       & f_alll2pcs, f_alllines, f_allmatrices, f_allpfa, &
       & f_allquantitytemplates, f_allradiometers, f_allsignals, f_allspectra, &
@@ -1211,7 +1211,7 @@ contains
     type (forwardModelConfig_t), dimension(:), pointer, optional :: ForwardModelConfigs
     type (vectorTemplate_T), dimension(:), pointer, optional     :: VectorTemplates
     type (vector_T), dimension(:), target, optional              :: Vectors
-    type (HGrid_T), dimension(:), pointer, optional              :: HGrids
+    type (HGrids_T), dimension(:), pointer, optional             :: HGrids
     type (griddedData_T), dimension(:), pointer, optional        :: griddedDataBase
     type (MLSFile_T), dimension(:), pointer, optional            :: FileDataBase
     type (matrix_Database_T), dimension(:), pointer, optional    :: MatrixDataBase
@@ -1398,7 +1398,7 @@ contains
             end if
           case ( f_allHGrids )
             if ( haveHGrids ) then
-              call dump ( hGrids )
+              call dump ( hGrids, details, ZOT )
             else
               call announceError ( son, noHGrid )
             end if
@@ -1756,7 +1756,8 @@ contains
           do i = 2, nsons(son)
             call output ( ' HGrid ' )
             call dump ( &
-              & hGrids(decoration(decoration(subtree(i,son)))), details, ZOT )
+              & hGrids(decoration(decoration(subtree(i,son))))%the_hGrid, &
+              & details, ZOT )
           end do
         else
           call announceError ( gson, noHGrid )
@@ -3102,6 +3103,10 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.129  2016/05/18 01:37:30  vsnyder
+! Change HGrids database from an array of HGrid_T to an array of pointers
+! to HGrid_T using the new type HGrids_T.
+!
 ! Revision 2.128  2016/04/07 23:40:28  pwagner
 ! Should exit, not crash, if stopped by /stop flag to Execute
 !
