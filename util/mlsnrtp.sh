@@ -281,6 +281,7 @@ fi
 echo ". $PGE_ROOT/pgs-env.ksh" >> $JOBENV
 echo "export PGSMEM_USESHM=$PGSMEM_USESHM" >> $JOBENV
 echo "export FLIB_DVT_BUFFER=$FLIB_DVT_BUFFER" >> $JOBENV
+echo "export PGS_PC_INFO_FILE=$PGS_PC_INFO_FILE" >> $JOBENV
 
 # For the level 1 jobs, we'll have Spartacus request a host
 # from l2q
@@ -377,6 +378,9 @@ then
 fi
 
 # $Log$
+# Revision 1.10  2016/05/13 21:58:42  pwagner
+# Obey CAPTURE_MT by capturing time, mmory footpint to stderr
+#
 # Revision 1.9  2016/05/13 00:36:53  pwagner
 # Dont clobber an existing JOBENV
 #
