@@ -86,6 +86,8 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
 !     (subroutines and functions)
 ! SetupNewL2AUXRecord ( int dimensionFamilies(L2AUXRANK), 
 !    int dimSizes(L2AUXRANK), int dimStarts(L2AUXRANK), L2AUXData_T l2aux )
+! CpL2AUXData ( MLSFile_t L2AUXFile1,  MLSFile_t L2AUXFile1, &
+!    [log create], [char* sdList], [char* rename], [char* options] )
 ! DestroyL2AUXContents ( L2AUXData_T l2aux )
 ! ResizeL2AUXData ( L2AUXData_T l2aux, int newSize )
 ! int AddL2AUXToDatabase ( *L2AUXData_T DATABASE(:), L2AUXData_T ITEM )
@@ -1975,6 +1977,9 @@ end module L2AUXData
 
 
 ! $Log$
+! Revision 2.98  2016/05/19 23:19:02  pwagner
+! Added api for cpL2AUXData
+!
 ! Revision 2.97  2015/08/03 21:43:03  pwagner
 ! Made quantityType optional in call to ReadL2AUXData
 !
