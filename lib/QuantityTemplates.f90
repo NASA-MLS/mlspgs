@@ -31,6 +31,7 @@ module QuantityTemplates         ! Quantities within vectors
   use MLSStringLists, only: switchDetail
   use MLSStrings, only: lowercase, writeIntsToChars
   use output_m, only: output
+  use string_table, only: isStringInTable
   use toggles, only: switches
   use tree, only: nsons, subtree
 
@@ -310,18 +311,26 @@ contains
   end function AddQuantityTemplateToDatabase
 
   ! ----------------------------  CopyQuantityTemplate  -----
-  subroutine CopyQuantityTemplate ( Z, A )
+  subroutine CopyQuantityTemplate ( Z, A, dontDestroy )
     ! This routine does a 'deep' copy of a quantity template.
     ! We don't need to do if often as typically only a shallow copy
     ! is required.  Note that this also follows any 'links' to h/v/xGrids
     ! and expands them too.
     use DeepCopy_m, only: DeepCopy
     type (QuantityTemplate_T), intent(inout) :: Z
-    type (QuantityTemplate_T), intent(in) :: A
-
+    type (QuantityTemplate_T), intent(in)    :: A
+    logical, optional, intent(in)            :: dontDestroy
+    ! Internal variables
+    logical                                  :: mustDestroy
     ! Executable code
+    mustDestroy = .true.
+    if ( present(dontDestroy) ) mustDestroy = .not. dontDestroy
     ! Destroy result
-    call DestroyQuantityTemplateContents ( z )
+    if ( mustDestroy ) then
+      call DestroyQuantityTemplateContents ( z )
+    else
+      nullify( z%the_HGrid )
+    endif
     ! Setup result
     z%name = a%name
     call SetupNewQuantityTemplate ( z, noInstances=a%noInstances, &
@@ -367,6 +376,8 @@ contains
     z%radiometer                   = a%radiometer      
     z%reflector                    = a%reflector       
     z%molecule                     = a%molecule        
+    if ( associated(a%the_HGrid) ) &
+  & z%the_HGrid                    => a%the_HGrid        
 
     ! Next, arrays
     if ( allocated(z%surfs)        .and. allocated(a%surfs) )        z%surfs =       a%surfs
@@ -489,7 +500,7 @@ contains
     ! Executable code
     verbose = ( switchDetail(switches, 'qtmp' ) > -1 .or. switchDetail(switches, 'destroy' ) > -1 )
     ! May not destroy GeoLocations (until we discover why not)
-    if ( qty%quantityType < 1 ) return
+    if ( qty%quantityType < 1 .or. qty%quantityType > size(lit_indices) ) return
     call get_string( lit_indices(qty%quantityType), typeStr )
     if ( lowercase( typeStr ) == 'geolocation' ) then
       call output( 'Unable to destroy this geoLocation quantity', advance='yes' )
@@ -626,10 +637,12 @@ contains
     myNoL2CF = switchDetail(switches, 'nl2cf') > -1 ! .false.
     if ( present(NoL2CF) ) myNoL2CF = NoL2CF
     call output ( ' Name = ' )
-    call myDisplayString ( qty%name )
+    if ( isStringInTable( qty%name ) ) &
+          & call myDisplayString ( qty%name )
     if ( .not. myNoL2CF .and. qty%quantityType > 0 ) then
       call output ( ' quantityType = ' )
-      call myDisplayString ( lit_indices(qty%quantityType) )
+      if ( isStringInTable(qty%quantityType, lit_indices) ) &
+        &  call myDisplayString ( lit_indices(qty%quantityType) )
     else
       call output ( ' unknown quantityType' )
     end if
@@ -654,16 +667,18 @@ contains
     call output ( qty%noInstancesLowerOverlap )
     call output ( ' NoInstancesUpperOverlap = ' )
     call output ( qty%noInstancesUpperOverlap, advance='yes' )
-    if ( .not. myNoL2CF .and. qty%unit > 0 ) then
+    if ( .not. myNoL2CF .and. isStringInTable( qty%unit, phyq_indices) ) then
       call myDisplayString ( phyq_indices(qty%unit), before='      Unit = ' )
     end if
     call output ( qty%badValue, before=' BadValue = ' )
     call output ( ' InstanceLen = ' )
     call output ( qty%InstanceLen, advance='yes' )
-    if ( .not. myNoL2CF .and. qty%horizontalCoordinate > 0 ) &
+    if ( .not. myNoL2CF .and. &
+      & isStringInTable( qty%horizontalCoordinate, lit_indices) ) &
       & call myDisplayString ( lit_indices(qty%horizontalCoordinate), &
       & before=   '      horizontal coordinate = ' )
-    call myDisplayString ( lit_indices(qty%latitudeCoordinate), &
+    if ( isStringInTable( qty%horizontalCoordinate, lit_indices ) ) &
+      & call myDisplayString ( lit_indices(qty%horizontalCoordinate), &
       & before=' latitude coordinate = ', advance='yes' )
     call output ( qty%hGridIndex, before='      hGridIndex = ' )
     call output ( qty%xGridIndex, before=' xGridIndex = ' )
@@ -673,7 +688,8 @@ contains
       call output ( ' vGridIndex = ' )
       call output ( qty%vGridIndex )
     end if
-    if ( .not. myNoL2CF .and. qty%verticalCoordinate > 0 ) &
+    if ( .not. myNoL2CF .and. &
+      & isStringInTable( qty%verticalCoordinate, lit_indices ) ) &
       & call myDisplayString ( lit_indices(qty%verticalCoordinate), &
       & before=' vertical coordinate = ' )
     call newLine
@@ -682,7 +698,8 @@ contains
       call output ( ' fGridIndex = ' )
       call output ( qty%fGridIndex )
     end if
-    call myDisplayString ( lit_indices(qty%frequencyCoordinate), &
+    if ( isStringInTable( qty%frequencyCoordinate, lit_indices ) ) &
+      & call myDisplayString ( lit_indices(qty%frequencyCoordinate), &
       & before=   ' frequency coordinate = ', advance='yes' )
     if ( qty%radiometer /= 0 .and. .not. myNoL2CF ) then
       call output ( '      Radiometer = ' )
@@ -693,7 +710,8 @@ contains
       call output ( '     ' )
       if ( qty%quantityType == l_vmr ) then
         call output ( ' Molecule = ' )
-        call myDisplayString ( lit_indices(qty%molecule) )
+        if ( isStringInTable( qty%molecule, lit_indices ) ) &
+          & call myDisplayString ( lit_indices(qty%molecule) )
       end if
       if ( qty%instrumentModule /= 0 ) then
         call output ( ' Instrument Module = ' )
@@ -706,7 +724,7 @@ contains
     if ( .not. associated (qty%the_HGrid) ) then
       call output ( 'qty%the_HGrid not associated', advance='yes' )
     else
-      call Dump( qty%the_HGrid, myDetails )
+      call Dump( qty%the_HGrid )
     endif
     if ( myDetails > 0 ) then
       if ( qty%signal /= 0 ) then
@@ -763,14 +781,16 @@ contains
         call maybe_dump_1_rt ( qty%crossAngles, 'CrossAngles' )
       end if
       if ( associated(qty%frequencies)  .and. .not. myNoL2CF ) then
-        call myDisplayString ( lit_indices(qty%frequencyCoordinate), &
+        if ( isStringInTable( qty%frequencyCoordinate, lit_indices ) ) &
+          & call myDisplayString ( lit_indices(qty%frequencyCoordinate), &
           & before='      FrequencyCoordinate = ', advance='yes' )
         call dump ( qty%frequencies, ' Frequencies = ' )
       end if
     else
-      if ( associated(qty%frequencies)  .and. .not. myNoL2CF ) &
+      if ( associated(qty%frequencies)  .and. .not. myNoL2CF .and. &
+        & isStringInTable( qty%frequencyCoordinate, lit_indices ) ) &
         & call myDisplayString ( lit_indices(qty%frequencyCoordinate), &
-          & before='      FrequencyCoordinate = ', advance='yes' )
+        & before='      FrequencyCoordinate = ', advance='yes' )
     end if
   
   contains
@@ -2218,6 +2238,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.110  2016/05/18 01:34:37  vsnyder
+! HGridsDatabase.f90
+!
 ! Revision 2.109  2016/05/12 15:22:46  pwagner
 ! Added GetHGridFromQuantity
 !
