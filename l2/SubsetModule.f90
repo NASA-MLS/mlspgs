@@ -512,7 +512,7 @@ contains ! ========= Public Procedures ============================
                     ind = ind - qty%template%noChans
                   end do
                 else ! else scanning down
-                  ind = qty%template%noChans + channel
+                  ind = channel ! qty%template%noChans + channel
                   do odCutoffHeight = 1, qty%template%noSurfs
                     if ( opticalDepth%values ( ind, instance ) > &
                       & opticalDepthCutoff ) exit
@@ -522,7 +522,7 @@ contains ! ========= Public Procedures ============================
               end if
 
               if ( qty%template%coherent .or. surfNode > 0 ) then
-                ! For coherent quantities and/or spefified surfaces simply do a loop over a range.
+                ! For coherent quantities and/or specified surfaces simply do a loop over a range.
                 do height = s1(1), s2(1)
                   !??? Make sure mask bit numbers begin at 1, even when
                   !??? channel numbers don't.
@@ -1531,6 +1531,9 @@ contains ! ========= Public Procedures ============================
 end module SubsetModule
  
 ! $Log$
+! Revision 2.36  2016/05/19 23:17:56  pwagner
+! Corrected what looked like an error in indexing
+!
 ! Revision 2.35  2016/05/04 17:52:00  pwagner
 ! Tried harder to make the hightRange mechanism work as advertised
 !
