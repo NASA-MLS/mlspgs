@@ -158,13 +158,7 @@ if [ ! -x "$H5REPACK" ]
 then
   H5REPACK=$HDFTOOLS/h5repack
 fi
-if [ "$PGS_PC_INFO_FILE" = "" ]
-then
-  echo 'PGS_PC_INFO_FILE undefined'
-  echo 'usage:'
-  echo 'PGS_PC_Shell.sh (pge) 0111 (PCF_file) 25 -v'
-  exit 1
-elif [ "$JOBDIR" = "" ]
+if [ "$JOBDIR" = "" ]
 then
   echo 'JOBDIR undefined'
   echo 'It should be the path where the job is run'
@@ -281,7 +275,7 @@ fi
 echo ". $PGE_ROOT/pgs-env.ksh" >> $JOBENV
 echo "export PGSMEM_USESHM=$PGSMEM_USESHM" >> $JOBENV
 echo "export FLIB_DVT_BUFFER=$FLIB_DVT_BUFFER" >> $JOBENV
-echo "export PGS_PC_INFO_FILE=$PGS_PC_INFO_FILE" >> $JOBENV
+echo "export PGS_PC_INFO_FILE=$2" >> $JOBENV
 
 # For the level 1 jobs, we'll have Spartacus request a host
 # from l2q
@@ -378,6 +372,9 @@ then
 fi
 
 # $Log$
+# Revision 1.11  2016/05/19 17:32:49  pwagner
+# Restore PCF file name for master level 2
+#
 # Revision 1.10  2016/05/13 21:58:42  pwagner
 # Obey CAPTURE_MT by capturing time, mmory footpint to stderr
 #
