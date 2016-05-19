@@ -23,20 +23,20 @@ MODULE MLSL2Timings              !  Timings for the MLSL2 program sections
     & field_first, field_last
   use intrinsic, only: l_hours, l_minutes, l_seconds
   use L2Parinfo, only: parallel
-  use MLSCommon, only: MLSdebug, MLSverbose, &
-    & MLSDebugsticky, MLSverbosesticky
-  use MLSL2Options, only: command_line, currentphasename, &
-    & dumpmacros, originalcmds, &
-    & processoptions, restartwarnings, restoredefaults, runtimevalues, &
-    & sectiontimingunits, skipdirectwrites, skipdirectwritesoriginal, &
-    & skipretrieval, skipretrievaloriginal, &
-    & stopaftersection
-  use MLSMessagemodule, only: MLSmessageconfig, MLSmessage, MLSmessagereset, &
-    & MLSMsg_error
+  use MLSCommon, only: MLSDebug, MLSVerbose, &
+    & MLSDebugSticky, MLSVerboseSticky
+  use MLSL2Options, only: command_line, currentPhaseName, &
+    & dumpMacros, originalCmds, &
+    & processOptions, restartWarnings, restoreDefaults, runtimeValues, &
+    & sectionTimingUnits, skipDirectwrites, skipDirectwritesOriginal, &
+    & skipRetrieval, skipRetrievalOriginal, &
+    & stopAfterSection
+  use MLSMessageModule, only: MLSMessageConfig, MLSMessage, MLSMessageReset, &
+    & MLSMSG_Error
   use MLSStrings, only: lowercase 
-  use MLSStringlists, only: booleanvalue, catlists, getstringelement, &
-    & numstringelements, stringelementnum, switchdetail
-  use moretree, only: get_boolean
+  use MLSStringLists, only: booleanValue, catlists, getStringElement, &
+    & numStringElements, stringElementNum, switchDetail
+  use moreTree, only: get_boolean
   use output_m, only: blanks, newLine, output, &
     & resumeOutput, suspendOutput
   use string_table, only: get_string
@@ -152,7 +152,7 @@ contains ! =====     Public Procedures     =============================
   ! Add current elapsed directwrite section time to total so far for section_name
 
   ! Formal arguments
-    character(LEN=*), intent(in):: section_name   ! One of the dw. sect_names
+    character(len=*), intent(in):: section_name   ! One of the dw. sect_names
     real, optional, intent(inout)  :: t1          ! Prior time_now, then current
 
   ! Private
@@ -195,7 +195,7 @@ contains ! =====     Public Procedures     =============================
   ! (2) Compute elapsed time (using either arg t1 or stored lastTime)
   ! (3) Add elapsed time to amount for last phase name (unless 1st phase ever)
   ! Formal arguments
-    character(LEN=*), intent(in):: phase_name   ! One of the phases, e.g. 'core'
+    character(len=*), intent(in):: phase_name   ! One of the phases, e.g. 'core'
     real, optional, intent(inout)  :: t1        ! Prior time_now, then current
 
   ! Private
@@ -245,7 +245,7 @@ contains ! =====     Public Procedures     =============================
   ! Add current elapsed retrieval section time to total so far for section_name
 
   ! Formal arguments
-    character(LEN=*), intent(in):: section_name   ! One of the retr. sect_names
+    character(len=*), intent(in):: section_name   ! One of the retr. sect_names
     real, optional, intent(inout)  :: t1          ! Prior time_now, then current
 
   ! Private
@@ -282,7 +282,7 @@ contains ! =====     Public Procedures     =============================
   ! (or possibly, one of the retrieval sections)
 
   ! Formal arguments
-    character(LEN=*), intent(in):: section_name   ! One of the section_names
+    character(len=*), intent(in):: section_name   ! One of the section_names
     real, optional, intent(inout)  :: t1          ! Prior time_now, then current
     logical, intent(out), optional :: now_stop
 
@@ -326,13 +326,13 @@ contains ! =====     Public Procedures     =============================
   ! Process the phase specification statement of the l2cf
   ! In particular, set up an entry in the phase names database
   ! to hold timing info
-  ! set options controllable by runtime flags, like whther
+  ! set options controllable by runtime flags, like whether
   ! to skip retrievals, skip directwrites, verboseness, etc.
   
   ! This may be called in response to either
   ! name: phase, ..
   ! or
-  ! setPhase, ..
+  ! changeSettings, ..
   subroutine addPhaseToPhaseNames ( name, root )
     ! Dummy arguments
     integer, intent(in) :: NAME               ! String index of name
@@ -501,9 +501,9 @@ contains ! =====     Public Procedures     =============================
   ! (2) breakdown timings by subsection in retrieve, directwrite
   ! (3) breakdown timings by phase
   ! Private
-    character(LEN=*), parameter     :: TIMEFORMSMALL = '(F10.2)'
-    character(LEN=*), parameter     :: TIMEFORMBIG = '(1PE10.2)'
-    character(LEN=*), parameter     :: PCTFORM='(F10.0)'
+    character(len=*), parameter     :: TIMEFORMSMALL = '(F10.2)'
+    character(len=*), parameter     :: TIMEFORMBIG = '(1PE10.2)'
+    character(len=*), parameter     :: PCTFORM='(F10.0)'
     logical, parameter              :: PRINTCHUNKNUMWITHPHASES=.true.
     integer                         :: elem
     integer                         :: retrElem
@@ -1024,6 +1024,9 @@ END MODULE MLSL2Timings
 
 !
 ! $Log$
+! Revision 2.65  2016/05/19 23:22:58  pwagner
+! Corrected some mistakes and misspellings in comments
+!
 ! Revision 2.64  2015/10/13 23:50:05  pwagner
 ! Delete unneeded debug printing
 !
