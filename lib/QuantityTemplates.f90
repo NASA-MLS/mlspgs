@@ -1253,15 +1253,31 @@ contains
 
   ! ------------------------------------  QuantitiesAreCompatible  -----
   logical function QuantitiesAreCompatible ( Qty_1, Qty_2, DifferentTypeOK )
+    use Intrinsic, only: L_QTM
     type(quantityTemplate_t), intent(in) :: Qty_1, Qty_2
-    logical, intent(in), optional :: DifferentTypeOK
-    logical :: TypeCheck
-    typeCheck = qty_1%quantityType == qty_2%quantityType
+    logical, intent(in), optional :: DifferentTypeOK ! present implies true
+
+    QuantitiesAreCompatible = qty_1%quantityType == qty_2%quantityType
     if ( present(differentTypeOK) ) then
-      if ( differentTypeOK ) typeCheck = .true.
+      if ( differentTypeOK ) QuantitiesAreCompatible = .true.
     end if
+    if ( .not. QuantitiesAreCompatible ) return
+    QuantitiesAreCompatible = associated(qty_1%the_hGrid) .eqv. &
+                            & associated(qty_2%the_hGrid)
+    if ( .not. QuantitiesAreCompatible ) return
+    if ( associated(qty_1%the_hGrid) ) then
+      QuantitiesAreCompatible = qty_1%the_hGrid%type == qty_1%the_hGrid%type
+      if ( qty_1%the_hGrid%type .eq. l_QTM ) then
+        QuantitiesAreCompatible = allocated(qty_1%the_hGrid%QTM_ZOT) .and. &
+                                & allocated(qty_2%the_hGrid%QTM_ZOT)
+        if ( QuantitiesAreCompatible ) &
+          & QuantitiesAreCompatible = size(qty_1%the_hGrid%QTM_ZOT) == &
+                                    & size(qty_2%the_hGrid%QTM_ZOT)
+      end if
+    end if
+    if ( .not. QuantitiesAreCompatible ) return
+
     QuantitiesAreCompatible = &
-      & typeCheck .and. &
       & qty_1%noInstances == qty_2%noInstances .and. &
       & qty_1%noSurfs == qty_2%noSurfs .and. &
       & qty_1%noChans == qty_2%noChans .and. &
@@ -1276,6 +1292,7 @@ contains
       & qty_1%verticalCoordinate == qty_2%verticalCoordinate .and. &
       & qty_1%grandTotalInstances == qty_2%grandTotalInstances .and. &
       & qty_1%frequencyCoordinate == qty_2%frequencyCoordinate
+
   end function QuantitiesAreCompatible
 
   ! ----------------------------  ReadAttributes_QuantityTemplate  -----
@@ -2238,6 +2255,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.111  2016/05/19 23:28:07  pwagner
+! Try harder not to crash on invalid strings; CopyQuantityTemplate takes optional arg dontDestroy
+!
 ! Revision 2.110  2016/05/18 01:34:37  vsnyder
 ! HGridsDatabase.f90
 !
