@@ -13,9 +13,9 @@ module Line_And_Ellipsoid_m
 
   !{ Compute the intersections of a line with an ellipsoid, or sphere. For an
   !  ellipsoid with center $\mathbf{p}_0$ and semi-minor axes $a$, $b$, and
-  !  $c$, and a line given by $\mathbf{C} + t\, \mathbf{U}$, where
+  !  $c$, and a line given by $\mathbf{C} + s\, \mathbf{U}$, where
   !  $\mathbf{C}$ is a point on the line and $\mathbf{U}$ is a vector along
-  !  the line, the intersections occur on the line at values of $t$ such that
+  !  the line, the intersections occur on the line at values of $s$ such that
   !%
   !  \begin{equation}
   !    (\mathbf{U}\, \mathbf{M})^T (\mathbf{U}\, \mathbf{M})\, s^2 +
@@ -39,21 +39,49 @@ module Line_And_Ellipsoid_m
   !  See wvs-131 for details of the derivation.
   !
   !  Compute the point on a line that is nearest to an ellipsoid.
+  !  This is an approximation developed by replacing the usual equation
+  !  for an ellipsoid by $(\mathbf{M} \mathbf{X})^T \mathbf{M} \mathbf{X} = r$
+  !  and then solving for a value of $r$ such that the line intersects the
+  !  ellipsoid in just one place.  For $|r-1|$ very small, this shouldn't be
+  !  very far from the true tangent point.
   !  This occurs at
   !%
   !  \begin{equation}
   !   s =
-  ! -\frac{\left(\mathbf{M}\mathbf{D}\right)^T
+  ! -\frac{\left(\mathbf{M}\mathbf{V}\right)^T
   !        \left(\mathbf{M}\mathbf{U}\right)}
   !       {\left(\mathbf{M}\mathbf{U}\right)^T
   !        \left(\mathbf{M}\mathbf{U}\right)} =
   ! -\frac{\frac{x_1 x_2}{a^2} + \frac{y_1 y_2}{b^2} + \frac{z_1 z_2}{c^2}}
   !       {\frac{x_2^2}{a^2} + \frac{y_2^2}{b^2} + \frac{z_2^2}{c^2}} \,.
-  ! \end{equation}
+  !  \end{equation}
   !
-  !  where $\mathbf{D} = \mathbf{C} - \mathbf{p}(0)$ and $\mathbf{p}(0)$ is
-  !  the center of the ellipsoid.
-  !  See wvs-030 for details of the derivation.
+  !  The position on the ellipsoid that is nearest to the line is
+  !%
+  !  \begin{equation}
+  !  \mathbf{P} = \frac{\mathbf{M}^{-T} \mathbf{M}^{-1} \mathbf{R}}{\ell} =
+  !  \frac{(a^2 \mathbf{R}_x, b^2 \mathbf{R}_y, c^2 \mathbf{R}_z)^T}
+  !       {\ell}
+  !  \end{equation}
+  !%
+  !  where $\ell = \sqrt{\mathbf{R} \mathbf{M}^{-T} \mathbf{M}^{-1}
+  !                            \mathbf{R}} =
+  !        \sqrt{a^2 \mathbf{R}_x^2 + b^2 \mathbf{R}_y^2 + 
+  !              c^2 \mathbf{R}_z^2}$, and
+  !  $\mathbf{R} = \mathbf{C} - ( \mathbf{C} \cdot \mathbf{U} )
+  !  \mathbf{U}$ is the vector from the origin to the point on the line
+  !  that is nearest to the origin.  The tangent height $h = |\mathbf{R}| -
+  !  \ell/|\mathbf{R}|$.  Let $F(\mathbf{X}) =
+  !  (\mathbf{M} \mathbf{X})^T \mathbf{M} \mathbf{X} = 1$ define the
+  !  ellipsoid.  Then $\nabla \mathbf{F}(\mathbf{P}) =
+  !  \nabla F(\mathbf{X})|_{\mathbf{X}=\mathbf{P}} =
+  !  2 \, \mathbf{M}^T \mathbf{M} \mathbf{P}$ is normal to the ellipsoid at
+  !  $\mathbf{P}$, $\mathbf{T} = \mathbf{P} + h \nabla F(\mathbf{P})$ is
+  !  the vector from $\mathbf{P}$ to the tangent point, and the position of
+  !  the tangent point is determined by
+  !  $s = ( \mathbf{T} - \mathbf{C} ) \cdot \mathbf{U}$.
+  !
+  !  See wvs-030 for details of the derivations.
 
   ! The procedures with "Earth Geoid" in their name actually refer to the
   ! Earth Reference Ellipsoid, with axes specified in the Earth_Constants
@@ -63,15 +91,24 @@ module Line_And_Ellipsoid_m
   private
 
   ! Generic identifiers
-  public :: Line_And_Ellipsoid, Line_And_Sphere, Line_Nearest_Ellipsoid
+  public :: Exact_Line_Nearest_Ellipsoid, Line_And_Ellipsoid
+  public :: Line_And_Sphere, Line_Nearest_Ellipsoid
 
-  ! Specific procedures
+  ! Specific procedures.  The suffix RG refers to the kind type parameter
+  ! RG from the module Geolocation_0, meaning "Real kind for geolocations."
+  public :: Exact_Line_Nearest_Earth_Geoid
+  public :: Exact_Line_Nearest_Ellipsoid_RG
   public :: Line_And_Earth_Geoid
   public :: Line_And_Earth_Geoid_at_H
   public :: Line_And_Ellipsoid_RG
   public :: Line_And_Sphere_RG
   public :: Line_Nearest_Earth_Geoid
   public :: Line_Nearest_Ellipsoid_RG
+
+  interface Exact_Line_Nearest_Ellipsoid
+    module procedure Exact_Line_Nearest_Earth_Geoid
+    module procedure Exact_Line_Nearest_Ellipsoid_RG
+  end interface
 
   interface Line_And_Ellipsoid
     module procedure Line_And_Earth_Geoid
@@ -214,7 +251,8 @@ contains
   end subroutine Line_And_Earth_Geoid_at_H
 
   subroutine Line_And_Ellipsoid_RG ( Axes, Line, Intersections, S, Center )
-    ! See wvs-131.
+    ! Intersection of a line with arbitrary ellipsoid, not necessarily
+    ! the Earth Reference Ellipsoid.  See wvs-131.
     use Geolocation_0, only: ECR_t, RG
     real(rg), intent(in) :: Axes(3)    ! Semi-minor axes in same units as Center
     type(ECR_t), intent(in) :: Line(2) ! V + s U, two vectors, where V is a
@@ -241,6 +279,7 @@ contains
   end subroutine Line_And_Ellipsoid_RG
 
   subroutine Line_And_Sphere_RG ( Radius, Line, Intersections, S, Center )
+    ! Intersection of a line with a sphere.
     ! See wvs-131.
     use Geolocation_0, only: ECR_t, RG
     real(rg), intent(in) :: Radius     ! In same units as Center
@@ -264,8 +303,72 @@ contains
     call solve ( a2, a1, a0, line, intersections, s )
   end subroutine Line_And_Sphere_RG
 
+  subroutine Exact_Line_Nearest_Earth_Geoid ( Line, S, P, H )
+    ! Find the point  on a line that is nearest to the Earth
+    ! geoid.  See wvs-030 for derivation.
+    use Earth_Constants, only: A => EarthRadA, B => EarthRadB
+    use Geolocation_0, only: ECR_t, RG
+    type(ECR_t), intent(in) :: Line(2)   ! C + s U, two vectors
+    real(rg), intent(out), optional :: S ! S-value of nearest point
+    type(ECR_t), intent(out), optional :: P ! Point on Earth Geoid nearest
+                                         ! to C + s U
+    real(rg), intent(out), optional :: H ! Tangent height
+
+    real(rg), parameter :: Axes(3) = [ A, A, B ]
+    real(rg) :: D      ! L / |R|
+    real(rg) :: L      ! sqrt( [ A**2, A**2, B**2 ] .dot. R**2 )
+    real(rg) :: MyH
+    type(ECR_t) :: MyP
+    type(ECR_t) :: R   ! Point on Line nearest the origin
+    real(rg) :: Rnorm  ! |R|
+
+    ! C - ( C . U ) U
+    r = line(1) - ( line(1) .dot. line(2) ) * line(2)
+    rnorm = r%norm2()
+    l = sqrt ( dot_product(axes**2, r%xyz**2 ) )
+    d = l / rnorm
+    myH = rnorm - l / d
+    myP = ecr_t ( axes**2 * r%xyz ) / l
+    ! ( P + h * \nabla F(P) - C ) . U
+    if ( present(s) ) s = ( myP + myH * myP%grad_geoid() - line(1) ) .dot. line(2)
+    if ( present(h) ) h = myH
+    if ( present(p) ) p = myP
+  end subroutine Exact_Line_Nearest_Earth_Geoid
+
+  subroutine Exact_Line_Nearest_Ellipsoid_RG ( Axes, Line, S, P, H )
+    ! Find the point  on a line that is nearest to an arbitrary ellipsoid
+    ! with its center at the origin.  See wvs-030 for derivation.
+    use Geolocation_0, only: ECR_t, RG
+    real(rg), intent(in) :: Axes(3)      ! Semi-minor axes in same units as Center
+    type(ECR_t), intent(in) :: Line(2)   ! C + s U, two vectors
+    real(rg), intent(out), optional :: S ! S-value of nearest point
+    type(ECR_t), intent(out), optional :: P ! Point on Earth Geoid nearest
+                                         ! to C + s U
+    real(rg), intent(out), optional :: H ! Tangent height
+
+    real(rg) :: D      ! L / |R|
+    real(rg) :: L      ! sqrt( [ A**2, A**2, B**2 ] .dot. R**2 )
+    real(rg) :: MyH
+    type(ECR_t) :: MyP
+    type(ECR_t) :: R   ! Point on Line nearest the origin
+    real(rg) :: Rnorm  ! |R|
+
+    ! C - ( C . U ) U
+    r = line(1) - ( line(1) .dot. line(2) ) * line(2)
+    rnorm = r%norm2()
+    l = sqrt ( dot_product(axes**2, r%xyz**2 ) )
+    d = l / rnorm
+    myH = rnorm - l / d
+    myP = ecr_t ( axes**2 * r%xyz ) / l
+    ! ( P + h * \nabla F(P) - C ) . U
+    if ( present(s) ) s = ( myP + myH * myP%grad_geoid() - line(1) ) .dot. line(2)
+    if ( present(h) ) h = myH
+    if ( present(p) ) p = myP
+  end subroutine Exact_Line_Nearest_Ellipsoid_RG
+
   subroutine Line_Nearest_Earth_Geoid ( Line, S, R, Grad, Intersect, H )
-    ! See wvs-030 for derivation.
+    ! Find a point (approximately) on a line that is nearest to the Earth
+    ! geoid.  See wvs-030 for derivation.
     use Earth_Constants, only: A => EarthRadA, B => EarthRadB
     use Geolocation_0, only: ECR_t, Norm2, RG
     type(ECR_t), intent(in) :: Line(2) ! C + s U, two vectors
@@ -305,7 +408,8 @@ contains
   end subroutine Line_Nearest_Earth_Geoid
 
   subroutine Line_Nearest_Ellipsoid_RG ( Axes, Line, S, R, Grad, Intersect, Center )
-    ! See wvs-030 for derivation.
+    ! Find a point (approximately) on a line that is nearest to an
+    ! arbitrary ellipsoid.  See wvs-030 for derivation.
     use Geolocation_0, only: ECR_t, RG
     real(rg), intent(in) :: Axes(3)    ! Semi-minor axes in same units as Center
     type(ECR_t), intent(in) :: Line(2) ! C + s U, two vectors
@@ -346,8 +450,8 @@ contains
 
   ! =====     Private Procedure     ====================================
 
-  ! Solve a2 s^2 + 2 a1 s + a0 = 0.  Then compute Line(1) + S * Line(2)
-  ! Hopefully inlined above.
+  ! Solve a2 s^2 + 2 a1 s + a0 = 0.  Then compute Line(1) + S * Line(2).
+  ! This is hopefully inlined above.
   pure subroutine Solve ( A2, A1, A0, Line, Intersections, S )
     use Geolocation_0, only: ECR_t, RG
     real(rg), intent(in) :: A2, A1, A0
@@ -396,8 +500,12 @@ end do
 end module Line_And_Ellipsoid_m
 
 ! $Log$
+! Revision 2.8  2016/05/24 01:18:55  vsnyder
+! Change "t" to "s" because it's path length.  Add exact non-iterative
+! computation of tangent point.  Add TeXnicalities.
+!
 ! Revision 2.7  2016/03/25 00:45:42  vsnyder
-! ke specific procedures public.  Add a Debug parameter and some
+! Make specific procedures public.  Add a Debug parameter and some
 ! debugging output.  Add Line_And_Earth_Geoid_at_H to compute intersection
 ! of a line with a surface at a specified height above the Earth Reference
 ! Ellipsoid.  Convert the kind of the semi-axes to RG so that type-bound
