@@ -147,6 +147,9 @@ mifExtinction    # Extinction as a minor-frame quantity
 mifExtinctionExtrapolation # exponent in MIF extinction extrapolation
 mifExtinctionForm # exponent in MIF extinction derivative extrapolation
 mifExtinctionV2  # Extinction as a minor-frame quantity
+mifIncline       # Inclination of a plane defined by mifLOS
+mifLOS           # Line-of-sight C and U vectors for 3D model
+mifRadC          # Semi-minor axis of ellipse at inclination mifIncline
 mifRHI           # RHI as a minor-frame quantity
 mifs
 minutes
@@ -244,6 +247,9 @@ zonalavg
 temperature
 
 # $Log$
+# Revision 2.70  2016/05/24 01:20:17  vsnyder
+# Add mifIncline, mifLOS, and mifRadC
+#
 # Revision 2.69  2016/02/25 21:00:18  vsnyder
 # Add QTM
 #
