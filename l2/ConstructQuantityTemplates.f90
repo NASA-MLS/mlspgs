@@ -1212,7 +1212,8 @@ contains ! ============= Public procedures ===================================
       l_lostransfunc, l_losvel, l_lowestretrievedpressure, &
       l_massmeandiameterice, l_massmeandiameterwater, l_magneticfield, &
       l_mifdeadtime, l_mifextinction, l_mifextinctionextrapolation, &
-      l_mifextinctionform, l_mifextinctionv2, l_mifrhi, &
+      l_mifExtinctionform, l_mifExtinctionv2, l_mifIncline, l_mifLOS, &
+      l_mifRadC, l_mifRHI, &
       l_noisebandwidth, l_noradspermif, l_noradsbinned, &
       l_numgrad, l_numj, l_numnewt, &
       l_opticaldepth, l_orbitinclination, l_ascdescmode, &
@@ -1343,6 +1344,9 @@ contains ! ============= Public procedures ===================================
       l_mifExtinctionForm, phyq_dimensionless, none, next, &
       l_mifExtinctionV2, phyq_extinction, p_flexibleVHGrid, &
         & p_minorFrame, p_radiometer, p_mustBeZeta, next, &
+      l_mifIncline, phyq_length, p_minorFrame, p_module, next, &
+      l_mifLOS, phyq_length, p_minorFrame, p_module, next, &
+      l_mifRadC, phyq_length, p_minorFrame, p_module, next, &
       l_mifRHI, phyq_dimensionless, p_flexibleVHGrid, &
         & p_minorFrame, p_radiometer, p_mustBeZeta, next, &
       l_noiseBandwidth, phyq_frequency, p_signal, next, &
@@ -1517,6 +1521,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.189  2016/05/24 01:26:01  vsnyder
+! Add mifIncline, mifLOS, mifRadC
+!
 ! Revision 2.188  2016/05/18 01:37:30  vsnyder
 ! Change HGrids database from an array of HGrid_T to an array of pointers
 ! to HGrid_T using the new type HGrids_T.
