@@ -80,7 +80,7 @@ contains ! ====     Procedures     =====================================
       return
     endif
     call banner ( 'Dump of next tree node datatype (' // trim(myName) // ')' )
-    do i=1, size(state%ancestors)
+    do i = 1, size(state%ancestors)
       call Dump_ancestor( state%ancestors(i) )
     enddo
   end subroutine Dump_Next_Tree_Node
@@ -88,7 +88,6 @@ contains ! ====     Procedures     =====================================
   logical function isStateNull ( State )
     type(next_Tree_Node_State), intent(in) :: State ! What to Dump
     ! Internal variables
-    integer :: i
     ! Executable
     isStateNull = .not. allocated(state%ancestors)
   end function isStateNull
@@ -99,7 +98,7 @@ contains ! ====     Procedures     =====================================
 
   integer function Next_Tree_Node ( Root, State, Start, NoVariable, TraceLevel )
 
-  ! Get the next tree node, taking IF, SELECT CASE, DO, and WHOLE constructs
+  ! Get the next tree node, taking IF, SELECT CASE, DO, and WHILE constructs
   ! into account, i.e., process them here and select which tree node to return.
   ! To use this:
   !   call Init_Next_Tree_Node ( State )
@@ -574,6 +573,9 @@ contains ! ====     Procedures     =====================================
 end module Next_Tree_Node_m
 
 ! $Log$
+! Revision 2.8  2016/05/25 00:19:30  vsnyder
+! Decruftication
+!
 ! Revision 2.7  2015/07/31 20:41:29  pwagner
 ! Added Dump, isStateNull
 !
