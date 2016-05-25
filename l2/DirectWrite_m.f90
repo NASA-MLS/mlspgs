@@ -353,7 +353,7 @@ contains ! ======================= Public Procedures =========================
     type (Vector_T), intent(in)   :: VECTOR
     type(MLSFile_T)               :: File
     integer, intent(in)           :: CHUNKNO      ! Index into chunks
-    character(len=*), intent(in), optional :: options
+    character(len=*), intent(in)  :: options
     integer, intent(in), optional :: rank
     ! Local parameters
     integer                       :: j
@@ -363,9 +363,7 @@ contains ! ======================= Public Procedures =========================
     logical :: verbose
     ! Executable
     verbose = BeVerbose ( 'direct', -1 )
-    nameQtyByTemplate = .true.
-    if ( present(options) ) nameQtyByTemplate = &
-      & .not. ( index(options, 'num') > 0 )
+    nameQtyByTemplate = .not. ( index(options, 'num') > 0 )
     if ( verbose ) then
       if ( vector%name > 0 ) then
         call get_string( vector%name, sdName )
@@ -1766,6 +1764,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.82  2016/05/25 00:07:18  pwagner
+! To appease NAG which disliked ambiguity in generic DirectWrites
+!
 ! Revision 2.81  2016/05/18 19:05:44  vsnyder
 ! Change HGrids database from an array of HGrid_T to an array of pointers
 ! to HGrid_T using the new type HGrids_T.
