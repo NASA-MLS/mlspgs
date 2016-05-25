@@ -1252,10 +1252,12 @@ contains
   end subroutine PointQuantityToHGrid
 
   ! ------------------------------------  QuantitiesAreCompatible  -----
-  logical function QuantitiesAreCompatible ( Qty_1, Qty_2, DifferentTypeOK )
+  logical function QuantitiesAreCompatible ( Qty_1, Qty_2, DifferentTypeOK, &
+                                           & DifferentChansOK )
     use Intrinsic, only: L_QTM
     type(quantityTemplate_t), intent(in) :: Qty_1, Qty_2
-    logical, intent(in), optional :: DifferentTypeOK ! present implies true
+    logical, intent(in), optional :: DifferentTypeOK ! Quantity, not hGrid, type
+    logical, intent(in), optional :: DifferentChansOK
 
     QuantitiesAreCompatible = qty_1%quantityType == qty_2%quantityType
     if ( present(differentTypeOK) ) then
@@ -1266,21 +1268,29 @@ contains
                             & associated(qty_2%the_hGrid)
     if ( .not. QuantitiesAreCompatible ) return
     if ( associated(qty_1%the_hGrid) ) then
-      QuantitiesAreCompatible = qty_1%the_hGrid%type == qty_1%the_hGrid%type
+      QuantitiesAreCompatible = qty_1%the_hGrid%type == qty_2%the_hGrid%type
+      if ( .not. QuantitiesAreCompatible ) return
       if ( qty_1%the_hGrid%type .eq. l_QTM ) then
         QuantitiesAreCompatible = allocated(qty_1%the_hGrid%QTM_ZOT) .and. &
                                 & allocated(qty_2%the_hGrid%QTM_ZOT)
         if ( QuantitiesAreCompatible ) &
           & QuantitiesAreCompatible = size(qty_1%the_hGrid%QTM_ZOT) == &
                                     & size(qty_2%the_hGrid%QTM_ZOT)
+      else
+        QuantitiesAreCompatible = .not. allocated(qty_1%the_hGrid%QTM_ZOT) .and. &
+                                & .not. allocated(qty_2%the_hGrid%QTM_ZOT)
       end if
+    end if
+    if ( .not. QuantitiesAreCompatible ) return
+    QuantitiesAreCompatible = qty_1%noChans == qty_2%noChans
+    if ( present(differentChansOK) ) then
+      if ( differentChansOK ) QuantitiesAreCompatible = .true.
     end if
     if ( .not. QuantitiesAreCompatible ) return
 
     QuantitiesAreCompatible = &
       & qty_1%noInstances == qty_2%noInstances .and. &
       & qty_1%noSurfs == qty_2%noSurfs .and. &
-      & qty_1%noChans == qty_2%noChans .and. &
       & qty_1%noCrossTrack == qty_2%noCrossTrack .and. &
       & qty_1%coherent .eqv. qty_2%coherent .and. &
       & qty_1%stacked .eqv. qty_2%stacked .and. &
@@ -2255,6 +2265,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.112  2016/05/24 01:24:53  vsnyder
+! Add checking for hGrid associated and of same type to QuantitiesAreCompatibie
+!
 ! Revision 2.111  2016/05/19 23:28:07  pwagner
 ! Try harder not to crash on invalid strings; CopyQuantityTemplate takes optional arg dontDestroy
 !
