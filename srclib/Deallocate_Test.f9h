@@ -24,7 +24,7 @@
 !      addr = transfer ( c_loc(to_deallocate), addr )
       if ( mod(trackallocates,2) > 0 ) &
         & call trackDeAllocate ( to_deAllocate, itsName, moduleName )
-      s = byte_size(to_deallocate)
+      s = ( storage_size(to_deallocate) * size(to_deallocate) ) / 8
       deallocate ( To_Deallocate, stat=status, errmsg=ermsg )
       call test_deallocate ( status, moduleName, itsName, s, ermsg=ermsg &
 !        & , address=addr &
@@ -33,6 +33,10 @@
     end if
 
 ! $Log$
+! Revision 1.7  2015/03/28 00:53:02  vsnyder
+! Stuff to trace allocate/deallocate addresses -- mostly commented out
+! because NAG build 1017 doesn't yet allow arrays as arguments to C_LOC.
+!
 ! Revision 1.6  2014/09/04 23:51:27  vsnyder
 ! Change size tracking from Memory_Units to bytes
 !
