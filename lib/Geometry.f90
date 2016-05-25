@@ -33,6 +33,7 @@ module Geometry
   public :: GeodToGeocLat, Get_R_Eq, Great_Circle_Points
   public :: Orbit_Plane_Minor_Axis_sq, To_Cart, To_XYZ, XYZ_to_Geod
   public :: XYZ_to_Geod_Bowring, XYZ_to_Geod_Fukushima
+  public :: XZ_to_Geod_Fukushima
 
   interface GeocToECRu ! Convert longitude and geocentric latitude
                        ! (both in degrees ) to an unit vector in ECR.
@@ -82,6 +83,20 @@ module Geometry
 
   interface XYZ_to_Geod
     module procedure XYZ_to_Geod_Fukushima_D, XYZ_to_Geod_Fukushima_S
+  end interface
+
+  interface XZ_to_Geod_Fukushima ! ( X_in, Z_in, A, B, GeodLat, GeodHt )
+    ! This can be used to convert ECR to geodetic latitude and geodetic height
+    ! with respect to the orbit-plane projected ellipse by using that ellipse's
+    ! minor axis for B and sqrt(ECR%xyz(1)**2 + ECR%xyz(2)**2) for Z_in.
+    module procedure XZ_to_Geod_Fukushima_D, XZ_to_Geod_Fukushima_S
+  end interface
+
+  interface XZ_to_Geod ! ( X_in, Z_in, A, B, GeodLat, GeodHt )
+    ! This can be used to convert ECR to geodetic latitude and geodetic height
+    ! with respect to the orbit-plane projected ellipse by using that ellipse's
+    ! minor axis for B and sqrt(ECR%xyz(1)**2 + ECR%xyz(2)**2) for Z_in.
+    module procedure XZ_to_Geod_Fukushima_D, XZ_to_Geod_Fukushima_S
   end interface
 
 ! *****     Private Constants     **************************************
@@ -607,6 +622,40 @@ contains
     include 'XYZ_to_Geod_Fukushima.f9h'
   end function XYZ_to_Geod_Fukushima_S
 
+  elemental subroutine XZ_to_Geod_Fukushima_D ( X_in, Z_in, A, B, GeodLat, GeodHt )
+  ! Convert Cartesian coordinates of a point on an ellipse to geodetic latitude
+  ! in radians and geodetic height in the same units as X_in, Z_in, A, and B.
+  ! This can be used to convert ECR to geodetic latitude and geodetic height
+  ! with respect to the orbit-plane projected ellipse by using that ellipse's
+  ! minor axis for B and sqrt(ECR%xyz(1)**2 + ECR%xyz(2)**2) for Z_in.
+    integer, parameter :: RK = kind(1.0d0)
+    real(rk), intent(in) :: X_in ! X-coordinate of a point on the ellipse
+    real(rk), intent(in) :: Z_in ! Z-coordinate of a point on the ellipse
+    real(rk), intent(in) :: A    ! Ellipse semi-major axis
+    real(rk), intent(in) :: B    ! Ellipse semi-minor axis
+    real(rk), intent(out) :: GeodLat ! Geodetic latitude of (X_in, Z_in), radians
+    real(rk), intent(out) :: GeodHt  ! Geodetic height of (X_in, Z_in), in same
+                                     ! units as X_in, Z_in, A, B
+    include 'XZ_to_Geod_Fukushima.f9h'
+  end subroutine XZ_to_Geod_Fukushima_D
+
+  elemental subroutine XZ_to_Geod_Fukushima_S ( X_in, Z_in, A, B, GeodLat, GeodHt )
+  ! Convert Cartesian coordinates of a point on an ellipse to geodetic latitude
+  ! in radians and geodetic height in the same units as X_in, Z_in, A, and B
+  ! This can be used to convert ECR to geodetic latitude and geodetic height
+  ! with respect to the orbit-plane projected ellipse by using that ellipse's
+  ! minor axis for B and sqrt(ECR%xyz(1)**2 + ECR%xyz(2)**2) for Z_in.
+    integer, parameter :: RK = kind(1.0e0)
+    real(rk), intent(in) :: X_in ! X-coordinate of a point on the ellipse
+    real(rk), intent(in) :: Z_in ! Z-coordinate of a point on the ellipse
+    real(rk), intent(in) :: A    ! Ellipse semi-major axis
+    real(rk), intent(in) :: B    ! Ellipse semi-minor axis
+    real(rk), intent(out) :: GeodLat ! Geodetic latitude of (X_in, Z_in), radians
+    real(rk), intent(out) :: GeodHt  ! Geodetic height of (X_in, Z_in), in same
+                                     ! units as X_in, Z_in, A, B
+    include 'XZ_to_Geod_Fukushima.f9h'
+  end subroutine XZ_to_Geod_Fukushima_S
+
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
   character (len=*), parameter :: IdParm = &
@@ -620,6 +669,9 @@ contains
 end module Geometry
 
 ! $Log$
+! Revision 2.29  2016/05/25 01:52:00  vsnyder
+! Add XZ_to_Geod and XZ_to_Geod_Fukushima
+!
 ! Revision 2.28  2016/01/23 02:45:27  vsnyder
 ! Add GeodToECRm (meters); get constants from Earth_Constants
 !
