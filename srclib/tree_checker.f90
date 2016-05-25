@@ -126,7 +126,6 @@ contains ! ====     Public Procedures     ==============================
                                                     ! first CF, IF or SELECT?
     integer, intent(out), optional :: HOW_MANY_SECTIONS ! Number of begin ... ends
 
-    integer :: Gson1, Gson2   ! Sons of N_Named vertex
     integer :: I              ! Loop inductor
     integer :: Me = -1        ! String index for trace
     integer :: MyFirst
@@ -872,7 +871,6 @@ contains ! ====     Public Procedures     ==============================
     integer, intent(in) :: Root      ! Of the CYCLE or EXIT statement
     integer, intent(in) :: In_Or_Out ! +1 => Outside a section, -1 => Inside
 
-    type(decls) :: Decl              ! Declaration of a label
     integer :: Do_Tree               ! The referenced DO construct
     integer :: I                     ! For hunting in the DO construct stack
     integer :: Me = -1               ! String index for trace cacheing
@@ -1769,7 +1767,6 @@ contains ! ====     Public Procedures     ==============================
     integer, intent(in) :: SON1    ! First son of CF
     type(decls), intent(in) :: DECL ! Declaration of "name" on "begin name"
 
-    type(decls) :: DECL2           ! Declaration of a label
     integer :: GSON1, GSON2        ! Grandsons of ROOT being analyzed
     integer :: Me = -1             ! String index for trace
     integer :: STRING1             ! Sub_Rosa
@@ -2205,7 +2202,6 @@ contains ! ====     Public Procedures     ==============================
     integer :: Me = -1             ! String index for trace
     integer :: Stat, Type, Units
     double precision :: Value      ! not used
-    type(decls) :: Var_Decl ! Declaration of expr as variable
 
     call trace_begin ( me, 'WHILE_Construct', root, cond=toggle(con) )
 
@@ -2261,6 +2257,9 @@ contains ! ====     Public Procedures     ==============================
 end module TREE_CHECKER
 
 ! $Log$
+! Revision 1.51  2015/02/05 21:51:26  vsnyder
+! Work related to variable definitions
+!
 ! Revision 1.50  2014/04/09 00:41:26  vsnyder
 ! Repair problem finding variables
 !
