@@ -327,7 +327,7 @@ contains
     rnorm = r%norm2()
     l = sqrt ( dot_product(axes**2, r%xyz**2 ) )
     d = l / rnorm
-    myH = rnorm - l / d
+    myH = rnorm - d
     myP = ecr_t ( axes**2 * r%xyz ) / l
     ! ( P + h * \nabla F(P) - C ) . U
     if ( present(s) ) s = ( myP + myH * myP%grad_geoid() - line(1) ) .dot. line(2)
@@ -358,7 +358,7 @@ contains
     rnorm = r%norm2()
     l = sqrt ( dot_product(axes**2, r%xyz**2 ) )
     d = l / rnorm
-    myH = rnorm - l / d
+    myH = rnorm - d
     myP = ecr_t ( axes**2 * r%xyz ) / l
     ! ( P + h * \nabla F(P) - C ) . U
     if ( present(s) ) s = ( myP + myH * myP%grad_geoid() - line(1) ) .dot. line(2)
@@ -500,6 +500,9 @@ end do
 end module Line_And_Ellipsoid_m
 
 ! $Log$
+! Revision 2.9  2016/05/26 19:24:28  vsnyder
+! Correct height calculation in Exact_Line_Nearest_Ellipsoid
+!
 ! Revision 2.8  2016/05/24 01:18:55  vsnyder
 ! Change "t" to "s" because it's path length.  Add exact non-iterative
 ! computation of tangent point.  Add TeXnicalities.
