@@ -181,7 +181,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   public :: VECTORTEMPLATE_T, VECTORVALUE_T, VECTOR_T
   ! Parameters
   public :: M_IGNORE, M_CLOUD, M_FILL, M_FULLDERIVATIVES, M_LINALG, &
-    & M_SPARE, M_TIKHONOV
+    & M_SPARE, M_TIKHONOV, RV
 
 ! =====     Defined Operators and Generic Identifiers     ==============
 
@@ -3495,6 +3495,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.204  2016/04/13 00:47:18  vsnyder
+! Make AreEqual generic.  Add AreUnEqual, operator(==), and operator(/=)
+!
 ! Revision 2.203  2015/09/24 18:46:09  pwagner
 ! Prevent an obscure cause of crashing when index too big in GetVectorQtyByTemplateIndex
 !
