@@ -395,7 +395,7 @@ contains
   ! (1) the command line directly, by calls to getNextArg; or
   ! (2) parsing cmdline, if supplied as an arg
   ! The return value will be the filename (if any)
-  function ProcessOptions ( cmdLine ) result ( fileName )
+  function ProcessOptions ( cmdLine, separator ) result ( fileName )
     use allocate_deallocate, only: AllocateLogUnit, trackAllocates, &
       & clearOnAllocate, allocate_test, deallocate_test
     use Evaluate_Variable_m, only: Define_Variable_As_String
@@ -421,6 +421,7 @@ contains
     use toggles, only: switches
     ! Args
     character(len=*), intent(in), optional :: cmdLine
+    character(len=1), intent(in), optional :: separator
     character(len=FileNameLen)             :: fileName
     ! Internal variables
     character(len=1) :: arg_rhs      ! 'n' part of 'arg=n'
@@ -536,10 +537,18 @@ cmds: do
       logical, parameter :: countEmpty = .false.
       ! Executable
       if ( present( cmdline ) ) then
-        line = StringElement ( cmdline, i, countEmpty, inseparator=' ' )
+        line = StringElement ( cmdline, i, countEmpty, inseparator=separator )
+        ! print *, 'Using cmdline:', trim(cmdline)
+        ! print *, trim(line)
       else
         call getArg ( i, line )
+        ! print *, 'arg #:', i
+        ! print *, trim(line)
       end if
+      ! Check for embedded spaces
+      if ( index(trim(line), ' ') > 0 ) then
+        line = "'" // trim(line) // "'"
+      endif
       command_line = trim(command_line) // ' ' // trim(line)
       call AccumulateSlaveArguments(line) ! pass them to slave processes
     end subroutine getNextArg
@@ -1200,9 +1209,13 @@ jloop:do while ( j < len_trim(line) )
       ! Executable
       if ( .not. entireLine ) then
         call getNextArg ( i, line )
+        ! print *, 'not entireLine'
+        ! print *, trim(line)
       else
         line = stringElement( adjustl( inLine ), 2, &
           & countEmpty=.false., inseparator=' ' )
+        ! print *, 'entireLine'
+        ! print *, trim(line)
       endif
       ! print *, 'my next arg: ', trim(line)
     end subroutine myNextArgument
@@ -1331,6 +1344,9 @@ end module MLSL2Options
 
 !
 ! $Log$
+! Revision 2.107  2016/05/27 00:05:43  pwagner
+! Should now correctly process options containing an embedded space
+!
 ! Revision 2.106  2016/03/18 17:57:35  pwagner
 ! Make certain the L2CF line cited is actal error, not end of section
 !
