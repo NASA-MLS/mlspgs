@@ -67,10 +67,10 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
   public :: MultiplyMatrixVector, MultiplyMatrixVector_1
   public :: MultiplyMatrixVectorNoT, MultiplyMatrixVectorNoT_1
   public :: MultiplyMatrixVectorSPD_1
-  public :: Negate, Negate_1
-  public :: NewMultiplyMatrixVector, NormalEquations, NullifyRCInfo, NullifyMatrix, NullifyMatrix_1
-  public :: Operator(+), ReflectMatrix, RC_Info, RowScale, RowScale_1, ScaleMatrix
-  public :: SolveCholesky, SolveCholesky_1, Spill, Spill_1
+  public :: Negate, Negate_1, NewMultiplyMatrixVector
+  public :: NormalEquations, NullifyRCInfo, NullifyMatrix, NullifyMatrix_1
+  public :: Operator(+), ReflectMatrix, RC_Info, RM, RowScale, RowScale_1
+  public :: ScaleMatrix, SolveCholesky, SolveCholesky_1, Spill, Spill_1
   public :: Sparsify_1, Sparsify, TransposeMatrix
   public :: UpdateDiagonal, UpdateDiagonal_1, UpdateDiagonalSPD_1, UpdateDiagonalVec_1
 
@@ -3187,6 +3187,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.143  2016/05/27 00:14:55  vsnyder
+! Publish RM because this seems like a logical place to get it
+!
 ! Revision 2.142  2015/06/02 23:53:36  vsnyder
 ! Remove unreferenced variable
 !
