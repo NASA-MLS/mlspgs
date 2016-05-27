@@ -23,7 +23,7 @@ program MLSL2
   use intrinsic, only: get_type, l_ascii, l_tkgen, lit_indices
   use L2GPData, only: avoidUnlimitedDims
   use L2ParInfo, only: parallel, initParallel, accumulateSlaveArguments, &
-    & transmitSlaveArguments
+    & SlaveArguments, transmitSlaveArguments
   use leakcheck_m, only: leakcheck
   use lexer_core, only: init_lexer
   use machine, only: getarg, hp, io_error, USleep
@@ -157,6 +157,7 @@ program MLSL2
   integer :: J                     ! index within option
   ! integer :: LastCHUNK = 0         ! Just run range [SINGLECHUNK-LastCHUNK]
   character(len=2048) :: LINE      ! Into which is read the command args
+  character(len=1) :: null
   integer :: NUMFILES
   type(Parser_Table_t) :: Parser_Table
   ! integer :: RECL = 20000          ! Record length for l2cf (but see --recl opt)
@@ -180,6 +181,7 @@ program MLSL2
   integer   :: numLayers
   ! Executable
   nullify (filedatabase)
+  null = achar(0)
   !---------------- Task (1) ------------------
 
   call time_now ( t0 )
@@ -224,9 +226,9 @@ program MLSL2
     ! print *, trim(line)
     if ( len_trim(line) < 1 ) exit
     i = i + 1
-    ORIGINALCMDS = trim(ORIGINALCMDS) // ' ' // trim(line)
+    ORIGINALCMDS = trim(ORIGINALCMDS) // null // trim(line)
   enddo
-  line = processOptions( trim(ORIGINALCMDS ) )
+  line = processOptions( trim(ORIGINALCMDS), null )
   ! stop
   if ( line == 'help' ) then
     call option_usage
@@ -234,7 +236,7 @@ program MLSL2
     & switchDetail(switches, 'help') > -1 ) then
     call switch_usage
   end if
-
+  ! print *, 'slaveArguments: ', trim(slaveArguments)
   ! The following no longer does anything
   call Set_garbage_collection(garbage_collection_by_dt)
 
@@ -849,6 +851,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.218  2016/05/27 00:05:22  pwagner
+! Should now correctly process options containing an embedded space
+!
 ! Revision 2.217  2016/03/18 18:00:15  pwagner
 ! Dont let -Smess override effect of --loconic option
 !
