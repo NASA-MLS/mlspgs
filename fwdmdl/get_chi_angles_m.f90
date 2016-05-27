@@ -43,7 +43,7 @@ contains
 
     real(rp), intent(in) :: SC_geoc_alt ! geocentric spacecraft(observer)
                                         ! altitude in km
-    real(rp), intent(in) :: Tan_index_refr ! tangent index of refraction
+    real(rp), intent(in) :: Tan_index_refr ! tangent index of refraction - 1
     real(rp), intent(in) :: Tan_ht      ! tangent height relative to Req
     real(rp), intent(in) :: Phi_tan     ! tangent orbit plane projected
                                         ! geodetic angle in radians
@@ -83,7 +83,7 @@ contains
     ht = Req + tan_ht
     Np1 = 1.0_rp + tan_index_refr
 
-    !{ Empirical formula: $H_s = R_s + 38.9014\, \sin 2(\phi_t-51^{\circ}.6814 )$
+    !{ Empirical formula (8.5): $H_s = R_s + 38.9014\, \sin 2(\phi_t-51^{\circ}.6814 )$
 
     hs = sc_geoc_alt + ampl * sin(2.0*(phi_tan-phas))
     x = min ( Np1 * ht / hs, 1.0_rp )
@@ -92,17 +92,22 @@ contains
     !    \frac{\mathcal{N}_t}{\mathcal{N}_s} \frac{H_t}{H_s}
     !    \frac{ \text{min} ( H_t, H^{\oplus} ) }{H^{\oplus}}$,
     !  where $\mathcal{N}_s$ is the index of refraction at the spacecraft,
-    !  which is 1.0, and therefore need not be written explicitly.
+    !  which is 1.0, and therefore need not be written explicitly.  This is
+    !  a bit different from Equation (8.3) in the 19 Aug 2004 ATBD because
+    !  that equation does not consider the case of $H_t < H^{\oplus}$.
 
     ! ptg_angle = asin(x * min(ht,Req)/Req) - elev_offset
 
     if ( tan_ht >= 0.0_rp ) then      ! min(ht,Req)/Req = 1
 
-      !{ $H_t \geq H^{\oplus}: ~~
-      !  \sin \chi^{\text{refr}}_{\text{eq}} = N_t \frac{ H_t }{ H_s }; ~~
+      !{ $H_t \geq H^{\oplus}: ~
+      !  \sin \chi^{\text{refr}}_{\text{eq}} = N_t \frac{ H_t }{ H_s }; ~
       !  \frac{ \text{d} \chi^{\text{refr}}_{\text{eq}} }{ \text{d} H_t}
-      !    \cos \chi^{\text{refr}}_{\text{eq}} =\frac{1}{H_s} \left ( N_t +
-      !    \frac{ \text{d} N_t }{ \text{d} \zeta_t }
+      !    \cos \chi^{\text{refr}}_{\text{eq}} =
+      !    \frac{1}{H_s} \left ( N_t +
+      !     \frac{\text{d} N_t}{\text{d} H_t } H_t \right) =
+      !    \frac{1}{H_s} \left ( N_t +
+      !     \frac{ \text{d} N_t }{ \text{d} \zeta_t }
       !      \frac{ \text{d} \zeta_t }{ \text{d} H_t } H_t \right )$ \\ ~\\
       !  $N_t = 1 + a\, e^{-\zeta_t \ln 10} ~\Rightarrow~ 
       !    \frac{ \text{d} N_t }{ \text{d} \zeta_t } = - \ln 10 ( N_t - 1 )$
@@ -337,6 +342,9 @@ contains
 
 end module Get_Chi_Angles_m
 ! $Log$
+! Revision 2.21  2013/06/12 02:25:43  vsnyder
+! Cruft removal
+!
 ! Revision 2.20  2009/06/23 18:26:11  pwagner
 ! Prevent Intel from optimizing ident string away
 !
