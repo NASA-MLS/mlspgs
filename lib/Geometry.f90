@@ -33,7 +33,7 @@ module Geometry
   public :: GeodToGeocLat, Get_R_Eq, Great_Circle_Points
   public :: Orbit_Plane_Minor_Axis_sq, To_Cart, To_XYZ, XYZ_to_Geod
   public :: XYZ_to_Geod_Bowring, XYZ_to_Geod_Fukushima
-  public :: XZ_to_Geod_Fukushima
+  public :: XZ_to_Geod, XZ_to_Geod_Fukushima
 
   interface GeocToECRu ! Convert longitude and geocentric latitude
                        ! (both in degrees ) to an unit vector in ECR.
@@ -669,6 +669,9 @@ contains
 end module Geometry
 
 ! $Log$
+! Revision 2.30  2016/05/27 01:10:52  vsnyder
+! Publish XZ_to_Geod
+!
 ! Revision 2.29  2016/05/25 01:52:00  vsnyder
 ! Add XZ_to_Geod and XZ_to_Geod_Fukushima
 !
