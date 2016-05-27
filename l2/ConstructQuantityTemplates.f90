@@ -1213,7 +1213,7 @@ contains ! ============= Public procedures ===================================
       l_massmeandiameterice, l_massmeandiameterwater, l_magneticfield, &
       l_mifdeadtime, l_mifextinction, l_mifextinctionextrapolation, &
       l_mifExtinctionform, l_mifExtinctionv2, l_mifIncline, l_mifLOS, &
-      l_mifRadC, l_mifRHI, &
+      l_mifRadC, l_mifRHI, l_mifTanHt, &
       l_noisebandwidth, l_noradspermif, l_noradsbinned, &
       l_numgrad, l_numj, l_numnewt, &
       l_opticaldepth, l_orbitinclination, l_ascdescmode, &
@@ -1349,6 +1349,7 @@ contains ! ============= Public procedures ===================================
       l_mifRadC, phyq_length, p_minorFrame, p_module, next, &
       l_mifRHI, phyq_dimensionless, p_flexibleVHGrid, &
         & p_minorFrame, p_radiometer, p_mustBeZeta, next, &
+      l_mifTanHt, phyq_length, p_minorFrame, p_module, next, &
       l_noiseBandwidth, phyq_frequency, p_signal, next, &
       l_noRadsBinned, phyq_dimensionless, p_vGrid, p_hGrid, &
         & p_signal, p_suppressChannels, p_mustBeZeta, next, &
@@ -1521,6 +1522,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.190  2016/05/27 01:24:07  vsnyder
+! Add L_mifTanHt
+!
 ! Revision 2.189  2016/05/24 01:26:01  vsnyder
 ! Add mifIncline, mifLOS, mifRadC
 !
