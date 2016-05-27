@@ -148,9 +148,10 @@ mifExtinctionExtrapolation # exponent in MIF extinction extrapolation
 mifExtinctionForm # exponent in MIF extinction derivative extrapolation
 mifExtinctionV2  # Extinction as a minor-frame quantity
 mifIncline       # Inclination of a plane defined by mifLOS
-mifLOS           # Line-of-sight C and U vectors for 3D model
+mifLOS           # Line-of-sight C and U vectors
 mifRadC          # Semi-minor axis of ellipse at inclination mifIncline
 mifRHI           # RHI as a minor-frame quantity
+mifTanHt         # Geodetic tangent height, meters
 mifs
 minutes
 molcm2 # mol/cm^2
@@ -247,6 +248,9 @@ zonalavg
 temperature
 
 # $Log$
+# Revision 2.71  2016/05/27 01:10:27  vsnyder
+# Add L_mifTanHt
+#
 # Revision 2.70  2016/05/24 01:20:17  vsnyder
 # Add mifIncline, mifLOS, and mifRadC
 #
