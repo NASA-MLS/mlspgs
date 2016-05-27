@@ -51,7 +51,7 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
   public :: MultiplyMatrixVector
   public :: MultiplyMatrixVectorNoT
   public :: NullifyMatrix, NullifyMatrix_0
-  public :: operator(+), ReflectMatrix, RemapValue3, RowScale
+  public :: operator(+), ReflectMatrix, RemapValue3, RM, RowScale
   public :: ScaleBlock, SolveCholesky, SolveCholeskyM_0
   public :: Sparsify, Spill, Spill_0, SubBlockLength
   public :: TransposeMatrix, UpdateDiagonal
@@ -230,7 +230,7 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
 
   type MatrixElement_T
     integer :: KIND = M_Absent               ! Kind of block -- one of the
-      !                                        M_... parameters above
+                                             ! M_... parameters above
     integer :: nRows = 0, nCols = 0          ! Numbers of rows and columns
     integer :: nChan = 0, nVert = 0          ! nRows = nChan * nVert
     integer, pointer, dimension(:) :: R1 => NULL()     ! Indexed by the column
@@ -3737,6 +3737,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.22  2016/05/27 00:14:55  vsnyder
+! Publish RM because this seems like a logical place to get it
+!
 ! Revision 2.21  2015/04/29 00:03:09  pwagner
 ! Diffs made more manageable
 !
