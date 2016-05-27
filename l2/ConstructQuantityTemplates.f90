@@ -1212,8 +1212,8 @@ contains ! ============= Public procedures ===================================
       l_lostransfunc, l_losvel, l_lowestretrievedpressure, &
       l_massmeandiameterice, l_massmeandiameterwater, l_magneticfield, &
       l_mifdeadtime, l_mifextinction, l_mifextinctionextrapolation, &
-      l_mifExtinctionform, l_mifExtinctionv2, l_mifIncline, l_mifLOS, &
-      l_mifRadC, l_mifRHI, l_mifTanHt, &
+      l_mifExtinctionform, l_mifExtinctionv2, l_mifLOS, &
+      l_mifRadC, l_mifRHI, &
       l_noisebandwidth, l_noradspermif, l_noradsbinned, &
       l_numgrad, l_numj, l_numnewt, &
       l_opticaldepth, l_orbitinclination, l_ascdescmode, &
@@ -1232,15 +1232,15 @@ contains ! ============= Public procedures ===================================
      & phyq_vmr, phyq_zeta
 
     use MLSMessageModule, only: MLSMSG_Error, MLSMessage
-    use Intrinsic, only: LIT_INDICES
-    use Output_M, only: output
-    use String_Table, only: display_string
+    use Intrinsic, only: Lit_Indices
+    use Output_M, only: Output
+    use String_Table, only: Display_String
 
     ! Local variables
     integer :: I                        ! Loop counter
-    integer, dimension(1:0), parameter :: NONE = (/ ( 0, i=1,0 ) /)
-    logical :: VALID                    ! Flag
-    character(len=132) :: MESSAGE       ! An error message
+    integer, dimension(1:0), parameter :: None = (/ ( 0, i=1,0 ) /)
+    logical :: Valid                    ! Flag
+    character(len=132) :: Message       ! An error message
 
     ! Executable code
     ! Basically here, we're going to go through and populate the various tables
@@ -1344,12 +1344,10 @@ contains ! ============= Public procedures ===================================
       l_mifExtinctionForm, phyq_dimensionless, none, next, &
       l_mifExtinctionV2, phyq_extinction, p_flexibleVHGrid, &
         & p_minorFrame, p_radiometer, p_mustBeZeta, next, &
-      l_mifIncline, phyq_length, p_minorFrame, p_module, next, &
       l_mifLOS, phyq_length, p_minorFrame, p_module, next, &
       l_mifRadC, phyq_length, p_minorFrame, p_module, next, &
       l_mifRHI, phyq_dimensionless, p_flexibleVHGrid, &
         & p_minorFrame, p_radiometer, p_mustBeZeta, next, &
-      l_mifTanHt, phyq_length, p_minorFrame, p_module, next, &
       l_noiseBandwidth, phyq_frequency, p_signal, next, &
       l_noRadsBinned, phyq_dimensionless, p_vGrid, p_hGrid, &
         & p_signal, p_suppressChannels, p_mustBeZeta, next, &
@@ -1522,6 +1520,10 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.191  2016/05/27 20:59:04  vsnyder
+! Remove l_mifIncline and l_mifTanHt because they are redundant to
+! l_OrbitInclination and l_tngtGeodAlt
+!
 ! Revision 2.190  2016/05/27 01:24:07  vsnyder
 ! Add L_mifTanHt
 !
