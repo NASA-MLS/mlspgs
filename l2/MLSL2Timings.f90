@@ -348,6 +348,7 @@ contains ! =====     Public Procedures     =============================
     integer :: interval
     integer :: keyNo
     logical, save :: LASTPHASEOVERWROTEOPTS = .false.
+    character(len=1) :: null
     character(len=128) :: OPTIONS
     character(len=80) :: PHASESTRING    ! E.g., 'Core'
     character(len=80) :: BOOLEANSTRING  ! E.g., 'BAND13_OK'
@@ -359,6 +360,7 @@ contains ! =====     Public Procedures     =============================
     ! Executable
     additional = .false.
     detail = switchDetail( switches, 'phase' )
+    null = achar(0)
     silent = .false.
     stamp = detail > 1 ! E.g., -Sphase2; was .false.
     skipDirectwrites = skipDirectWritesoriginal
@@ -429,7 +431,7 @@ contains ! =====     Public Procedures     =============================
     ! Restore settings if last one overwrote them (unless additional)
     if ( LASTPHASEOVERWROTEOPTS .and. .not. additional ) then
       call restoredefaults
-      booleanstring = processOptions( trim( ORIGINALCMDS ) )
+      booleanstring = processOptions( trim( ORIGINALCMDS ), null )
       MLSDebugSticky = .false.
       MLSVerboseSticky = .false.
       call output( 'Restoring default command-line args', advance='yes' )
@@ -1024,6 +1026,9 @@ END MODULE MLSL2Timings
 
 !
 ! $Log$
+! Revision 2.66  2016/05/27 00:06:14  pwagner
+! Should now correctly process options containing an embedded space
+!
 ! Revision 2.65  2016/05/19 23:22:58  pwagner
 ! Corrected some mistakes and misspellings in comments
 !
