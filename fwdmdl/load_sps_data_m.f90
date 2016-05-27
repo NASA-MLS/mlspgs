@@ -34,13 +34,14 @@ module Load_SPS_Data_M
     integer :: P_Len = 0 ! \sum_{i=1}^n (l_z(i)-l_z(i-1))*(l_p(i)-l_p(i-1))*
                          !              (l_x(i)-l_x(i-1))
     integer,  pointer :: windowstart(:) => null()! horizontal starting index
-                                                 ! from l2gp
+                                          ! from l2gp for 2D, or 1 for QTM
     integer,  pointer :: windowfinish(:) => null()! horizontal ending index
-                                                  !from l2gp
-    integer,  pointer :: mol(:) => null() ! Qty molecule, l_...
-    integer,  pointer :: Z_coord(:) => null()  ! l_geo[cd]Altitude, l_zeta
-    logical,  pointer :: Coherent(:) => null() ! From each Qty template
-    logical,  pointer :: Stacked(:) => null()  ! From each Qty template
+                                          ! from l2gp for 2D, or size(QTM_geo)
+                                          ! per sps
+    integer,  pointer :: mol(:) => null()       ! Qty molecule, l_...
+    integer,  pointer :: Z_coord(:) => null()   ! l_geo[cd]Altitude, l_zeta
+    logical,  pointer :: Coherent(:) => null()  ! From each Qty template
+    logical,  pointer :: Stacked(:) => null()   ! From each Qty template
     ! Which column of dBeta_path_df to use for each molecule.
     ! Molecule beta is not dependent upon mixing ratio if zero.
     ! Only nonzero where derivatives for molecules with mixing-ratio-dependent
@@ -62,9 +63,11 @@ module Load_SPS_Data_M
     real(rp), pointer :: cross_angles(:) => null() ! cross-angles  grid entries
                                                 ! for all molecules, degrees
     real(rp), pointer :: values(:) => null()    ! species values (eg vmr).
-    ! This is really a four-dimensional quantity dimensioned frequency
+    ! For 2D, this is really a four-dimensional quantity dimensioned frequency
     ! (or 1) X zeta (or 1) X phi (or 1) X Cross, taken in Fortran's column-
-    ! major array-element order.
+    ! major array-element order.  For 3D, this is a three-dimensional quantity
+    ! dimensioned frequency (or 1) X zeta (or 1) X QTM index, taken in
+    ! Fortran's column- major array-element order.
     logical,  pointer :: deriv_flags(:) => null() ! flags to do derivatives,
                                                 ! corresponding to the values
                                                 ! component.
@@ -481,7 +484,10 @@ contains
     type (vectorValue_T), intent(in), optional :: PHITAN  ! Tangent geodAngle
     type(forwardModelConfig_T), intent(in), optional :: FwdModelConf
 
-    integer :: KF, KP, KX, KZ
+    integer :: KF ! Number of frequencies
+    integer :: KP ! Number of horizontal coordinates
+    integer :: KX ! Number of cross-track coordinates
+    integer :: KZ ! Number of vertical coordinates
     logical :: UsingQTM
 
     associate ( qty => grids_x%qtyStuff(ii)%qty )
@@ -967,6 +973,9 @@ contains
 end module LOAD_SPS_DATA_M
 
 ! $Log$
+! Revision 2.110  2016/05/16 23:22:30  vsnyder
+! Check for stacked and coherent always, not just for QTM
+!
 ! Revision 2.108  2016/05/10 00:11:33  vsnyder
 ! Copy qtyStuff into Grids_x, simplify Create_Grids_1
 !
