@@ -16,6 +16,10 @@
 # foreign countries or providing access to foreign persons.
 
 # "$Id$"
+
+# Oh, man do we really need this? Only if lit_names.txt has changed
+EVERY_MLSCONFG = $(shell ${REECHO} -d -dirn $(CONFDIR)/lib/machines -excl CVS -excl NAG.nogc)
+
 # Two useful utilities
 $(INSTALLDIR)/init_gen: $(UTILDIR)/init_gen.f90
 	$(UTILDIR)/build_f90_in_misc.sh -p init_gen \
@@ -120,6 +124,8 @@ $(S)/lit_parm.f9h $(S)/lit_add.f9h: $(S)/lit_names.txt $(INSTALLDIR)/init_gen
           -j lit_names.txt \
           $(S)/lit_parm.f9h $(S)/lit_add.f9h lit_indices
 
+init_tables_module.mod init_tables_module.o: $(CONFDIR)/lib/lit_add.f9h \
+        $(CONFDIR)/lib/lit_parm.f9h
 endif # short_name == l2
 
 #	l3
@@ -166,11 +172,21 @@ L3MMData.o: l3mmdata.mod
 ifeq ($(short_name),lib)
 # This uses the utility program init_gen to create two
 # up-to-date prereqs for intrinsic
+# Due to a strange error in level 2, we also create a sentinel file, 
+# new_lit_names.txt
+# whose existence will be detected later in l2 to trigger linking mlsl2 twice
+# We must copy that sentienel file to each MLSCONFG
+# because oherwise the .f9h will be already up-to-date and so no sentinel
+# file will becreated if you change one MLSCONFG for another
 $(S)/lit_parm.f9h $(S)/lit_add.f9h: $(S)/lit_names.txt $(INSTALLDIR)/init_gen
 	sort -f -u $(S)/lit_names.txt | $(INSTALLDIR)/init_gen \
           -l last_intrinsic_lit -pl_ \
           -j lit_names.txt \
           $(S)/lit_parm.f9h $(S)/lit_add.f9h lit_indices
+	echo "new lit_names" > new_lit_names.txt
+	@for dir in $(EVERY_MLSCONFG); do \
+          cp new_lit_names.txt ../$$dir 2>/dev/null; \
+        done
 
 $(S)/mol_parm.f9h $(S)/mol_add.f9h: $(TABLES_DIR)/sps_cross_ref_table.txt $(INSTALLDIR)/init_gen
 	sed -n '/---\*/,$$ p' $(TABLES_DIR)/sps_cross_ref_table.txt | sed '1 d' | \
@@ -280,6 +296,8 @@ $(S)/lit_parm.f9h $(S)/lit_add.f9h: $(S)/lit_names.txt $(INSTALLDIR)/init_gen
           -j lit_names.txt \
           $(S)/lit_parm.f9h $(S)/lit_add.f9h lit_indices
 
+init_tables_module.o: $(CONFDIR)/lib/lit_add.f9h \
+        $(CONFDIR)/lib/lit_parm.f9h
 endif # end short_name==l2
 #	l3
 
@@ -320,6 +338,10 @@ $(S)/lit_parm.f9h $(S)/lit_add.f9h: $(S)/lit_names.txt $(INSTALLDIR)/init_gen
           -l last_intrinsic_lit -pl_ \
           -j lit_names.txt \
           $(S)/lit_parm.f9h $(S)/lit_add.f9h lit_indices
+	echo "new lit_names" > new_lit_names.txt
+	@for dir in $(EVERY_MLSCONFG); do \
+          cp new_lit_names.txt ../$$dir 2>/dev/null; \
+        done
 
 $(S)/mol_parm.f9h $(S)/mol_add.f9h: $(TABLES_DIR)/sps_cross_ref_table.txt $(INSTALLDIR)/init_gen
 	sed -n '/---\*/,$$ p' $(TABLES_DIR)/sps_cross_ref_table.txt | sed '1 d' | \
@@ -366,16 +388,29 @@ endif  # END not doc
 # Some custom builds for the doc subdirectory
 ifeq ($(short_name),doc)
 # graphic for wvs-010
+# Note this pattern for turning a .obj into LaTeX-useable files
+# (the same pattern will be reused often)
+# (1) an eps-type file
 sparse.eps: sparse.obj
 	tgif -print -eps -page 1 -color sparse.obj
 
-# graphic for wvs-010
+# (2) a pdf-type file
 sparse.pdf: sparse.obj
 	tgif -print -pdf -page 1 -color sparse.obj
 
 wvs-010.dvi: wvs-010.tex sparse.eps
 
 wvs-010.pdf: wvs-010.tex sparse.pdf
+
+wvs-030-nearest.eps: wvs-030-nearest.obj
+	tgif -print -eps -page 1 -color wvs-030-nearest.obj
+
+wvs-030-nearest.pdf: wvs-030-nearest.obj
+	tgif -print -pdf -page 1 -color wvs-030-nearest.obj
+
+wvs-030.dvi: wvs-030.tex wvs-030-nearest.eps
+
+wvs-030.pdf: wvs-030.tex wvs-030-nearest.pdf
 
 wvs-048-grid2.eps: wvs-048-grid2.obj
 	tgif -print -eps -page 1 -color wvs-048-grid2.obj
@@ -490,6 +525,9 @@ wvs-134-1.pdf: wvs-134-1.obj
 
 endif # end shortn_name == doc
 # $Log$
+# Revision 1.21  2016/04/06 22:15:21  pwagner
+# Now builds  doc/wvs-134 properly
+#
 # Revision 1.20  2016/03/15 18:38:22  pwagner
 # Added wvs-133
 #
