@@ -12,8 +12,8 @@
 \topmargin -0.5in
 \textheight 9in
 
-\newcommand{\docname}{wvs-135r1}
-\newcommand{\docdate}{28 April 2016}
+\newcommand{\docname}{wvs-135r2}
+\newcommand{\docdate}{31 May 2016}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
@@ -76,7 +76,7 @@
 To: \>Nathaniel, Bill\\
 Subject: \>Outline of 3-dimensional Retrieval\\
 From: \>Van Snyder\\
-%Reference: \> \\
+Reference: \> \h{wvs-030}, \h{wvs-131} \\
 \end{tabbing}
 
 \parindent 0pt \parskip 6pt
@@ -91,6 +91,8 @@ in the least-squares problem matrix of Tikhonov regularization
 coefficients is necessary.
 
 \section{Forward model}
+
+\subsection{First thoughts -- as of 28 Apr 2016}
 
 Regardless of whether the forward model is solving for the atmospheric
 state on a one-, two-, or three-dimensional grid, the mathematical problem
@@ -260,6 +262,63 @@ the NAG (version 6) and Intel (version 16.0.2) compilers support all the
 necessary features.  Intel version 14.0.0 does not, but methods to work
 around its deficiencies have so far been found.
 
+\subsection{A possible simplification}
+
+The full forward model uses some quantities that are presently inherently
+coupled to a two-dimensional model: orbit geodetic angle $\phi$, orbit
+inclination angle $\beta$, and the minor axis $c$ of the orbit-plane
+projected ellipse.  These are presently scalars, at least for each MAF,
+but if they were arrays, with a separate value for each MIF (and then
+interpolated to each pointing), the remainder of the full forward model
+would be largely oblivious to the change.  These quantities can be
+computed from the pointing information provided by Level 1.  For each MIF,
+Level 1 will provide two vectors in ECR, one to a point on the line of
+sight, and another along the line of sight.  The line of sight is then
+represented by $\mathbf{C} + s\, \mathbf{U}$, where $\mathbf{C}$ is the
+first vector, $\mathbf{U}$ is the second one, and $s$ is path length
+measured from $\mathbf{C}$.
+
+Whether the line of sight intersects the Earth can be calculated using a
+method described in \h{wvs-131}.  If it does not intersect, the tangent
+position can be calculated using a method described in \h{wvs-030}. 
+Denote the position in ECR of the tangent or intersection by the vector
+$\mathbf{T}$.  The normal vector in ECR to the plane that is defined by
+the line of sight and the center of the earth, which is the orbit plane
+and considered to be a constant for each MAF in EOS-MLS, is $\mathbf{N} =
+\mathbf{C} \times \mathbf{U}$ and the unit normal is $\mathbf{\hat{N}} =
+\mathbf{N} / |\mathbf{N}|$.  Let $r = |(\mathbf{\hat{N}}_x,
+\mathbf{\hat{N}}_y,0)|$ be the projection of $\mathbf{\hat{N}}$ into the
+equatorial plane.  The inclination of the ``orbit'' plane, currently
+called the orbit inclination, is $\beta = 90^\circ -
+\sin^{-1}(\mathbf{\hat{N}}_z) = 90^\circ -
+\tan^{-1}(\mathbf{\hat{N}}_z/r)$.  A vector in ECR toward where the
+projected plane intersects the equator is given by $\mathbf{E} = (0,0,1)
+\times \mathbf{\hat{N}} = (-\mathbf{\hat{N}}_y, \mathbf{\hat{N}}_x,0)$,
+and $\mathbf{\hat{E}} = (-\mathbf{\hat{N}}_y, \mathbf{\hat{N}}_x,0)/r$ is
+an unit vector in that direction.  This would be the ascending node of an
+orbit.  The value the full forward model calls the orbit geodetic angle
+$\phi$ is the angle that a vector normal to the Earth's surface toward
+$\mathbf{T}$ makes with the equator, or the complement of the angle it
+makes with the nearest pole.  The geodetic latitude $\lambda$ of
+$\mathbf{T}$ can be computed efficiently from $\mathbf{T}$ using
+Fukushima's algorithm\footnote{Fukushima's algorithm converges in one
+iteration to within a few micro arc seconds at geodetic altitudes below
+30,000 km.}.  Then $\phi=\lambda$ if $\lambda \mathbf{U}_z \geq 0$, or
+$\phi = \text{signum}(\lambda) ( 180^\circ - |\lambda|)$ otherwise.  From
+this we have $-180^\circ \leq \phi \leq 180^\circ$.  The full forward
+model prefers to use $\phi \leftarrow 360^\circ + \phi$ if $\phi < 0$. 
+The semi-minor axis $c$ of the plane-projected ellipse can be calculated
+from $\beta$ and either $\phi$ or $\lambda$.
+
+After computing $\mathbf{T}$, $\phi$, $\beta$, and $c$ for every MIF,
+these values can be interpolated to the tangent for each pointing for each
+$\zeta$, as is currently done only for $\phi$, spacecraft position, and
+line-of-sight velocity.  Throughout the full forward model, these
+quantities become vectors instead of scalars.  They are already taken from
+elements of vector quantitites, so the change will be in how the subscript
+is calculated, i.e., use the $\zeta$-index for each pointing instead of 1
+if the first dimension is not 1 (the second subscript is the MAF number).
+
 \section{Modules needing attention}
 
 The intent is that a newer forward model, whether for two or three
@@ -327,6 +386,9 @@ most part, with little interaction with other modules.
 % $Id$
 
 % $Log$
+% Revision 1.2  2016/04/28 23:05:58  vsnyder
+% Add remark about Tikhonov, PhiTan
+%
 % Revision 1.1  2016/04/08 23:56:59  vsnyder
 % Initial commit
 %
