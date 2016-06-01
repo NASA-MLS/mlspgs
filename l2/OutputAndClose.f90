@@ -19,17 +19,18 @@ module OutputAndClose ! outputs all data from the Join module to the
   use HDF, only: dfacc_rdonly, dfacc_rdwr
   use HighOutput, only: letsDebug, outputNamedValue
   use machine, only: USleep
-  use MLSFiles, only: hdfversion_5, addInitializeMLSFile, dump, &
+  use MLSFiles, only: HDFVersion_5, addInitializeMLSFile, dump, &
     & GetMLSFileByName, getMLSFileByType, getPCFromRef, &
-    & MLS_Closefile, mls_exists, mls_inqswath, mls_openfile, &
-    & MLS_SFStart, mls_sfend, &
+    & MLS_Closefile, MLS_Exists, MLS_Inqswath, MLS_Openfile, &
+    & MLS_SFStart, MLS_SFEnd, &
     & Split_path_name, unSplitName
   use MLSHDF5, only: GetHDF5Attribute, MakeHDF5Attribute
   use MLSL2Options, only: checkpaths, &
     & Default_HDFVersion_write, l2cfnode, &
     & SpecialDumpFile, skipDirectwrites, toolkit, MLSMessage, writeFileAttributes
-  use MLSMessagemodule, only: MLSMSG_Error, MLSMSG_Info, MLSMSG_Warning
+  use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Info, MLSMSG_Warning
   use String_table, only: display_string, get_string
+  use Toggles, only: gen, toggle, switches
 
   implicit none
   private
@@ -55,7 +56,7 @@ module OutputAndClose ! outputs all data from the Join module to the
 contains ! =====     Public Procedures     =============================
 
   ! -----------------------------------------------  Output_Close  -----
-  subroutine Output_Close ( root, l2gpDatabase, l2auxDatabase, DirectDatabase, &
+  subroutine Output_Close ( root, L2GPDatabase, L2AUXDatabase, DirectDatabase, &
     & matrices, hessians, vectors, fileDataBase, GriddedDataBase, &
     & chunks, processingRange, canWriteL2PC )
 
@@ -63,9 +64,9 @@ contains ! =====     Public Procedures     =============================
 
     ! ----------------------- metadata ------------------------
 
-    !   for the l2aux the mcf is mlspcf_mcf_l2dgm_start
-    !   for the log file the mcf is mlspcf_mcf_l2log_start
-    !   for the dgg file the mcf is mlspcf_mcf_l2dgg_start
+    !   for the l2aux the mcf is MLSPCF_MCF_L2DGM_Start
+    !   for the log file the mcf is MLSPCF_MCF_L2LOG_Start
+    !   for the dgg file the mcf is MLSPCF_MCF_L2DGG_Start
 
     ! The correspondence between MCF and l2gp files is determined by
     ! the value of        MCFFORL2GPOPTION
@@ -96,7 +97,7 @@ contains ! =====     Public Procedures     =============================
       & s_endselect, s_execute, s_hgrid, s_isswathempty, s_l2gp, s_output, &
       & s_reevaluate, s_select, s_skip, s_sleep, s_time, s_writeFileAttribute
     use intrinsic, only: lit_indices
-    use L2AuxData, only: L2AUXData_t
+    use L2AUXData, only: L2AUXData_t
     use L2GPData, only: L2GPData_t, &
       & AddL2GPToDatabase, writemastersfileattributes
     use L2PC_m, only: outputHDF5L2PC
@@ -105,15 +106,14 @@ contains ! =====     Public Procedures     =============================
     use matrixTools, only: dumpblocks
     use MLSCommon, only: MLSfile_t, tai93_range_t, filenamelen
     use MLSL2timings, only: section_times, total_times
-    use MLSPcf2, only: MLSpcf_l2gp_end, &
-      & MLSPcf_l2gp_start, MLSpcf_l2dgg_start, MLSpcf_l2dgg_end
+    use MLSPCF2, only: MLSPCF_L2GP_End, &
+      & MLSPCF_L2GP_Start, MLSPCF_L2DGG_Start, MLSPCF_L2DGG_End
     use MLSStringlists, only: switchdetail
     use MLSStrings, only: trim_safe
     use moretree, only: get_label_and_spec, get_spec_id, get_boolean
     use next_tree_node_m, only: next_tree_node, next_tree_node_state
     use output_m, only: blanks, output, revertoutput, switchoutput
     use time_m, only: time_now
-    use toggles, only: gen, toggle, switches
     use trace_m, only: trace_begin, trace_end
     use tree, only: decorate, decoration, nsons, subtree, sub_rosa
     use vectorsModule, only: vector_t
@@ -121,8 +121,8 @@ contains ! =====     Public Procedures     =============================
 
     ! Arguments
     integer, intent(in) :: ROOT   ! Of the output section's AST
-    type (L2GPData_T), dimension(:), pointer :: L2GPDATABASE ! L2GP products
-    type (L2AUXData_T), dimension(:), pointer :: L2AUXDATABASE ! L2AUX products
+    type (L2GPData_T), dimension(:), pointer :: L2GPDataBASE ! L2GP products
+    type (L2AUXData_T), dimension(:), pointer :: L2AUXDataBASE ! L2AUX products
     type (Matrix_Database_T), dimension(:), pointer :: MATRICES ! Matrix database (for l2pcs)
     type (Hessian_T), dimension(:), pointer :: HESSIANS ! Hessian database (for l2pcs)
     type (Vector_T), dimension(:), pointer :: Vectors ! Vectors database
@@ -187,7 +187,7 @@ contains ! =====     Public Procedures     =============================
     debug = LetsDebug ( 'output', 0 )
     error = 0
 
-    if (switchDetail( switches, 'pro') > -1 ) then
+    if ( switchDetail( switches, 'pro') > -1 ) then
       call output ( '============ Level 2 Products ============', advance='yes' )
       call output ( ' ', advance='yes' )
     end if
@@ -286,7 +286,7 @@ contains ! =====     Public Procedures     =============================
       case ( s_HGrid )
         if ( specialDumpFile /= ' ' ) &
           & call switchOutput( specialDumpFile, keepOldUnitOpen=.true. )
-        call decorate ( key, AddHGridToDatabase ( hGrids, CreateHGridFromMLSCFInfo ( name, key, filedatabase, l2gpDatabase, &
+        call decorate ( key, AddHGridToDatabase ( hGrids, CreateHGridFromMLSCFInfo ( name, key, filedatabase, L2GPDatabase, &
           & processingRange, allChunks ) ) )
         if ( DEBUG ) print *, 'Before dealing with obstructions'
         newHGridp => hGrids(1)%the_hGrid
@@ -348,13 +348,13 @@ contains ! =====     Public Procedures     =============================
         case ( l_l2gp ) ! --------------------- Writing l2gp files -----
         if ( noGapsHGIndex > 0 ) newHGridp => HGrids(noGapsHGIndex)%the_hGrid
           call OutputL2GP ( key, file_base, DEBUG, &
-            & output_type, mlspcf_l2gp_start, mlspcf_l2gp_end, &
-            & filedatabase, l2gpDatabase, newHGridp )
+            & output_type, MLSPCF_L2GP_Start, MLSPCF_L2GP_End, &
+            & filedatabase, L2GPDatabase, newHGridp )
           if ( .not. TOOLKIT ) return
 
         case ( l_l2aux ) ! ------------------------------ Writing l2aux files ---
           call OutputL2AUX ( key, file_base, DEBUG, writeCounterMAF, &
-            & filedatabase, l2auxDatabase )
+            & filedatabase, L2AUXDatabase )
           if ( .not. TOOLKIT ) return
 
         case ( l_l2pc ) ! ------------------------------ Writing l2pc files --
@@ -399,8 +399,8 @@ contains ! =====     Public Procedures     =============================
         case ( l_l2dgg ) ! --------------------- Writing l2dgg files -----
         if ( noGapsHGIndex > 0 ) newHGridp => HGrids(noGapsHGIndex)%the_hGrid
           call OutputL2GP ( key, file_base, DEBUG, &
-            & output_type, mlspcf_l2dgg_start, mlspcf_l2dgg_end, &
-            & filedatabase, l2gpDatabase, newHGridp )
+            & output_type, MLSPCF_L2DGG_Start, MLSPCF_L2DGG_End, &
+            & filedatabase, L2GPDatabase, newHGridp )
           if ( .not. TOOLKIT ) return
 
         case default
@@ -467,11 +467,11 @@ contains ! =====     Public Procedures     =============================
             & filedatabase, additional )       
         case ( l_l2gp ) ! --------------------- Writing it to l2gp files -----
           call writeAttributeToL2GP ( file_base, meta_name, strValue, &
-            & output_type, mlspcf_l2gp_start, mlspcf_l2gp_end, &
+            & output_type, MLSPCF_L2GP_Start, MLSPCF_L2GP_End, &
             & filedatabase, additional )       
         case ( l_l2dgg ) ! --------------------- Writing it to l2dgg files -----
           call writeAttributeToL2GP ( file_base, meta_name, strValue, &
-            & output_type, mlspcf_l2dgg_start, mlspcf_l2dgg_end, &
+            & output_type, MLSPCF_L2DGG_Start, MLSPCF_L2DGG_End, &
             & filedatabase, additional )       
         case default
           call MLSMessage( MLSMSG_Warning, ModuleName, &
@@ -540,11 +540,11 @@ contains ! =====     Public Procedures     =============================
     ! Read and store l2gp data type from a file
     use Init_tables_module, only: f_file, f_sdname, f_noPCFid, f_swath, &
       & field_first, field_last
-    use L2GPdata, only: L2GPData_t
-    use MLSCommon, only: filenamelen, MLSfile_t
+    use L2GPData, only: L2GPData_t
+    use MLSCommon, only: fileNameLen, MLSFile_t
     use MLSFiles, only: AddFileToDatabase
     use MLSPCF2, only: &
-      & MLSPCF_l2apriori_start, MLSPCF_l2apriori_end
+      & MLSPCF_L2APriori_start, MLSPCF_L2APriori_end
     use MoreTree, only: get_boolean
     use readapriori, only: processOneL2GPFile
     use Tree, only: decoration, nsons, &
@@ -571,7 +571,7 @@ contains ! =====     Public Procedures     =============================
     integer                         :: SwathName        ! sub-rosa index of name in swath='name'
     character(len=FileNameLen)      :: SWATHNAMESTRING ! actual literal swath name
     ! Executable
-    LastAprioriPCF = mlspcf_l2apriori_start - 1
+    LastAprioriPCF = MLSPCF_L2APriori_start - 1
     got = .false.
     noPCFid = .false.
     do j = 2, nsons(key)
@@ -603,7 +603,7 @@ contains ! =====     Public Procedures     =============================
     if ( got(f_swath) ) &
       & call get_string ( swathName, swathNameString, strip=.true. )
     call processOneL2GPFile ( FileNameString, swathNameString, &
-      & noPCFid, mlspcf_l2apriori_start, mlspcf_l2apriori_end, &
+      & noPCFid, MLSPCF_L2APriori_start, MLSPCF_L2APriori_end, &
       & LastAprioriPCF, ' ', .false., &
       & L2GP, L2GPFile )
     FileIndex = AddFileToDataBase( filedatabase, L2GPFile )
@@ -620,10 +620,10 @@ contains ! =====     Public Procedures     =============================
     use MLSCommon, only: l2metadata_t
     use L2GPData, only: L2GPNamelen, maxswathnamesbufsize
     use MLSHDF5, only: getallhdf5dsnames
-    use MLSPCF2, only: MLSPCF_l2dgm_end, MLSPCF_l2dgm_start, MLSPCF_l2gp_end, &
-      & MLSPCF_l2gp_start, MLSPCF_l2dgg_start, MLSPCF_l2dgg_end, &
-      & MLSPCF_mcf_l2dgm_start, MLSPCF_mcf_l2dgg_start, &
-      & MLSPCF_mcf_l2gp_start
+    use MLSPCF2, only: MLSPCF_L2DGM_End, MLSPCF_L2DGM_Start, MLSPCF_L2GP_End, &
+      & MLSPCF_L2GP_Start, MLSPCF_L2DGG_Start, MLSPCF_L2DGG_End, &
+      & MLSPCF_MCF_L2DGM_Start, MLSPCF_MCF_L2DGG_Start, &
+      & MLSPCF_MCF_L2GP_Start
     use MLSStringLists, only: getHashElement, list2array, numStringElements
     use output_m, only: output
     use writeMetadata, only: L2PCF, populate_metadata_std, &
@@ -662,9 +662,9 @@ contains ! =====     Public Procedures     =============================
   ! Executable
   debug = LetsDebug ( 'output', 0 )
   nullify(quantityNames)
-  l2aux_mcf = mlspcf_mcf_l2dgm_start
-  l2dgg_mcf = mlspcf_mcf_l2dgg_start
-  l2gp_mcf  = mlspcf_mcf_l2gp_start - 1
+  l2aux_mcf = MLSPCF_MCF_L2DGM_Start
+  l2dgg_mcf = MLSPCF_MCF_L2DGG_Start
+  l2gp_mcf  = MLSPCF_MCF_L2GP_Start - 1
   metadata_error = 0
   Version = 1
   select case (filetype)
@@ -675,8 +675,8 @@ contains ! =====     Public Procedures     =============================
        file_base=file_base(baseIndex+len(L2GPHEAD):)
      end if
      if ( filetype == l_l2dgg ) then
-       FileHandle = GetPCFromRef(file_base, mlspcf_l2dgg_start, &
-         & mlspcf_l2dgg_end, &
+       FileHandle = GetPCFromRef(file_base, MLSPCF_L2DGG_Start, &
+         & MLSPCF_L2DGG_End, &
          & .true., returnStatus, Version, DEBUG, &
          & exactName=PhysicalFilename)
        l2gp_mcf = l2dgg_mcf
@@ -685,8 +685,8 @@ contains ! =====     Public Procedures     =============================
        if ( len_trim(l2metaData%doiIdentifier) < 1 ) &
          & l2metaData%doiIdentifier = '10.5067/AURA/MLS/DATA2006'
      else
-       FileHandle = GetPCFromRef(file_base, mlspcf_l2gp_start, &
-         & mlspcf_l2gp_end, &
+       FileHandle = GetPCFromRef(file_base, MLSPCF_L2GP_Start, &
+         & MLSPCF_L2GP_End, &
          & .true., returnStatus, Version, DEBUG, &
          & exactName=PhysicalFilename)
        call get_l2gp_mcf ( file_base, meta_name, l2gp_mcf, &
@@ -754,8 +754,8 @@ contains ! =====     Public Procedures     =============================
      ! Get the l2aux file name from the PCF
 
      call split_path_name(fileName, path, file_base)
-     FileHandle = GetPCFromRef(file_base, mlspcf_l2dgm_start, &
-       & mlspcf_l2dgm_end, &
+     FileHandle = GetPCFromRef(file_base, MLSPCF_L2DGM_Start, &
+       & MLSPCF_L2DGM_End, &
        & .true., returnStatus, Version, DEBUG, &
        & exactName=PhysicalFilename)
      if (returnStatus /= 0) then
@@ -902,14 +902,14 @@ contains ! =====     Public Procedures     =============================
       & l_l2aux, l_l2cf, l_l2dgg, l_l2gp
     use highOutput, only: outputnamedValue
     use intrinsic, only: l_ascii, l_swath, l_hdf, lit_indices
-    use l2auxdata, only: cpl2auxdata
-    use l2gpdata, only: avoidunlimiteddims, &
-      & maxswathnamesbufsize, cpl2gpdata, cpl2gpdatatoattribute
+    use L2AUXData, only: cpL2AUXData
+    use L2GPData, only: avoidunlimiteddims, &
+      & maxswathnamesbufsize, cpL2GPData, cpL2GPDatatoattribute
     use l2parinfo, only: parallel
     use MLSCommon, only: mlsfile_t, filenamelen, l2metadata_t
-    use MLSPCF2, only: MLSPCF_l2dgm_end, MLSPCF_l2dgm_start, MLSPCF_l2gp_end, &
-      & MLSPCF_l2gp_start, MLSPCF_l2dgg_start, MLSPCF_l2dgg_end, &
-      & MLSPCF_l2clim_start, MLSPCF_l2clim_end
+    use MLSPCF2, only: MLSPCF_L2DGM_End, MLSPCF_L2DGM_Start, MLSPCF_L2GP_End, &
+      & MLSPCF_L2GP_Start, MLSPCF_L2DGG_Start, MLSPCF_L2DGG_End, &
+      & MLSPCF_L2CLIM_Start, MLSPCF_L2CLIM_End
     use MLSStringlists, only: intersection, switchdetail
     use MLSStrings, only: lowercase
     use moretree, only: get_boolean
@@ -917,7 +917,6 @@ contains ! =====     Public Procedures     =============================
     use PCFHdr, only: globalattributes, &
       & h5_writeglobalattr, he5_writeMLSFileattr, he5_writeGlobalAttr
     use readAPriori, only: readAPrioriattributes, writeAPrioriAttributes
-    use toggles, only: switches
     use tree, only: decoration, nsons, subtree, sub_rosa
     ! Args
     integer, intent(in)                       :: KEY
@@ -1055,7 +1054,7 @@ contains ! =====     Public Procedures     =============================
     select case ( output_type )
     case ( l_l2aux ) ! --------------------- Copying l2aux files -----
       call returnFullFileName(file_base, PhysicalFilename, &
-        & mlspcf_l2dgm_start, mlspcf_l2dgm_end)
+        & MLSPCF_L2DGM_Start, MLSPCF_L2DGM_End)
       outputFile => GetMLSFileByName(filedatabase, PhysicalFilename)
       if ( .not. associated(outputFile) ) then
         newFile = .true.
@@ -1063,11 +1062,11 @@ contains ! =====     Public Procedures     =============================
           & content=outputTypeStr, &
           & name=PhysicalFilename, shortName=file_base, &
           & type=l_hdf, access=DFACC_RDWR, HDFVersion=hdfVersion, &
-          & PCBottom=mlspcf_l2dgm_start, PCTop=mlspcf_l2dgm_end)
+          & PCBottom=MLSPCF_L2DGM_Start, PCTop=MLSPCF_L2DGM_End)
       endif
     case ( l_l2gp ) ! --------------------- Copying l2gp files -----
       call returnFullFileName(file_base, PhysicalFilename, &
-        & mlspcf_l2gp_start, mlspcf_l2gp_end)
+        & MLSPCF_L2GP_Start, MLSPCF_L2GP_End)
       outputFile => GetMLSFileByName(filedatabase, PhysicalFilename)
       if ( .not. associated(outputFile) ) then
         newFile = .true.
@@ -1075,11 +1074,11 @@ contains ! =====     Public Procedures     =============================
           & content=outputTypeStr, &
           & name=PhysicalFilename, shortName=file_base, &
           & type=l_swath, access=DFACC_RDWR, HDFVersion=hdfVersion, &
-          & PCBottom=mlspcf_l2gp_start, PCTop=mlspcf_l2gp_end)
+          & PCBottom=MLSPCF_L2GP_Start, PCTop=MLSPCF_L2GP_End)
       endif
     case ( l_l2dgg ) ! --------------------- Copying l2dgg files -----
       call returnFullFileName(file_base, PhysicalFilename, &
-        & mlspcf_l2dgg_start, mlspcf_l2dgg_end)
+        & MLSPCF_L2DGG_Start, MLSPCF_L2DGG_End)
       outputFile => GetMLSFileByName(filedatabase, PhysicalFilename)
       if ( .not. associated(outputFile) ) then
         newFile = .true.
@@ -1087,7 +1086,7 @@ contains ! =====     Public Procedures     =============================
           & content=outputTypeStr, &
           & name=PhysicalFilename, shortName=file_base, &
           & type=l_swath, access=DFACC_RDWR, HDFVersion=hdfVersion, &
-          & PCBottom=mlspcf_l2dgg_start, PCTop=mlspcf_l2dgg_end)
+          & PCBottom=MLSPCF_L2DGG_Start, PCTop=MLSPCF_L2DGG_End)
       endif
     case default
     end select
@@ -1101,7 +1100,7 @@ contains ! =====     Public Procedures     =============================
     select case ( input_type )
     case ( l_l2aux ) ! --------------------- Copying l2aux files -----
       call returnFullFileName(inputfile_base, inputPhysicalFilename, &
-        & mlspcf_l2dgm_start, mlspcf_l2dgm_end)
+        & MLSPCF_L2DGM_Start, MLSPCF_L2DGM_End)
       inputFile => GetMLSFileByName(filedatabase, inputPhysicalFilename)
       if ( .not. associated(inputFile) ) then
         call MLSMessage(MLSMSG_Error, ModuleName, &
@@ -1109,7 +1108,7 @@ contains ! =====     Public Procedures     =============================
       endif
     case ( l_l2gp ) ! --------------------- Copying l2gp files -----
       call returnFullFileName(inputfile_base, inputPhysicalFilename, &
-        & mlspcf_l2gp_start, mlspcf_l2gp_end)
+        & MLSPCF_L2GP_Start, MLSPCF_L2GP_End)
       inputFile => GetMLSFileByName(filedatabase, inputPhysicalFilename)
       if ( .not. associated(inputFile) ) then
         call MLSMessage(MLSMSG_Error, ModuleName, &
@@ -1117,7 +1116,7 @@ contains ! =====     Public Procedures     =============================
       endif
     case ( l_l2dgg ) ! --------------------- Copying l2dgg files -----
       call returnFullFileName(inputfile_base, inputPhysicalFilename, &
-        & mlspcf_l2dgg_start, mlspcf_l2dgg_end)
+        & MLSPCF_L2DGG_Start, MLSPCF_L2DGG_End)
       inputFile => GetMLSFileByName(filedatabase, inputPhysicalFilename)
       if ( .not. associated(inputFile) ) then
         call output( ' output base ', advance='no' )
@@ -1134,12 +1133,12 @@ contains ! =====     Public Procedures     =============================
       endif
     case ( l_ascii, l_l2cf ) ! --------------------- Copying ascii files -----
       call returnFullFileName(inputfile_base, inputPhysicalFilename, &
-        & mlspcf_l2clim_start, mlspcf_l2clim_end)
+        & MLSPCF_L2Clim_start, MLSPCF_L2Clim_end)
       inputFile => AddInitializeMLSFile( filedatabase, &
           & content=trim(inputfile_base), &
           & name=inputPhysicalFilename, shortName=inputfile_base, &
           & type=l_ascii, access=DFACC_RDWR, &
-          & PCBottom=mlspcf_l2clim_start, PCTop=mlspcf_l2clim_end )
+          & PCBottom=MLSPCF_L2Clim_start, PCTop=MLSPCF_L2Clim_end )
       if ( .not. associated(inputFile) ) then
         call MLSMessage(MLSMSG_Warning, ModuleName, &
           & 'No entry in filedatabase for ' // trim(inputPhysicalFilename) )
@@ -1284,8 +1283,9 @@ contains ! =====     Public Procedures     =============================
     ! Do the work of outputting specified attribute to a named l2aux file
     use HDF5, only: H5GClose_f, H5GOpen_f
     use intrinsic, only: l_hdf
-    use MLSCommon, only: mlsfile_t, filenamelen
-    use MLSPcf2, only: mlspcf_l2dgm_start, mlspcf_l2dgm_end
+    use MLSCommon, only: MLSFile_t, fileNameLen
+    use MLSPCF2, only: MLSPCF_L2DGM_Start, MLSPCF_L2DGM_End
+    use MLSStringLists, only: switchDetail
     use output_m, only: output
     ! Args
     character(len=*), intent(inout)         :: fileName ! according to l2cf
@@ -1316,8 +1316,8 @@ contains ! =====     Public Procedures     =============================
     if ( TOOLKIT ) then
       call split_path_name(fileName, path, fileName)
 
-      FileHandle = GetPCFromRef(fileName, mlspcf_l2dgm_start, &
-        & mlspcf_l2dgm_end, &
+      FileHandle = GetPCFromRef(fileName, MLSPCF_L2DGM_Start, &
+        & MLSPCF_L2DGM_End, &
         & TOOLKIT, returnStatus, Version, DEBUG, &
         & exactName=FullFilename)
     else
@@ -1325,17 +1325,24 @@ contains ! =====     Public Procedures     =============================
       returnStatus = 0
     end if
 
-    if ( returnStatus == 0 .and. .not. checkPaths ) then
+    if ( mls_exists(trim(FullFilename)) /= 0 ) then
+      if( DEBUG .or.  switchDetail(switches, 'pro') > -1 ) &
+        & call MLSMessage(MLSMSG_Warning, ModuleName, &
+        & 'Its non-existence prevented writing attribute to ' &
+        & // trim(FullFilename) )
+      return
+    elseif ( returnStatus == 0 .and. .not. checkPaths ) then
       ! Open the HDF file and write l2aux data
       outputFile => GetMLSFileByName(filedatabase, FullFilename)
       if ( .not. associated(outputFile) ) then
-        if(DEBUG) call MLSMessage(MLSMSG_Warning, ModuleName, &
+      if( DEBUG .or.  switchDetail(switches, 'pro') > -1 ) &
+          & call MLSMessage(MLSMSG_Warning, ModuleName, &
           & 'No entry in filedatabase for ' // trim(FullFilename) )
         outputFile => AddInitializeMLSFile( filedatabase, &
           & content=outputTypeStr, &
           & name=FullFilename, shortName=fileName, &
           & type=l_hdf, access=DFACC_RDWR, HDFVersion=hdfVersion, &
-          & PCBottom=mlspcf_l2dgm_start, PCTop=mlspcf_l2dgm_end )
+          & PCBottom=MLSPCF_L2DGM_Start, PCTop=MLSPCF_L2DGM_End )
       endif
     endif
     if ( .not. outputFile%stillOpen ) &
@@ -1367,6 +1374,7 @@ contains ! =====     Public Procedures     =============================
     use MLSCommon, only: MLSFile_t, fileNameLen
     use MLSHDF5, only: MakeHDF5Attribute
     use MLSHDFEOS, only: HE5_EHRDGlAtt, MLS_EHWRGlatt
+    use MLSStringLists, only: switchDetail
     use output_m, only: output
     ! Args
     character(len=*), intent(inout)         :: fileName ! according to l2cf
@@ -1412,11 +1420,18 @@ contains ! =====     Public Procedures     =============================
       returnStatus = 0
     end if
 
-    if ( returnStatus == 0 .and. .not. checkPaths ) then
-      ! Open the HDF-EOS file and write swath data
+    if ( mls_exists(trim(FullFilename)) /= 0 ) then
+      if( DEBUG .or.  switchDetail(switches, 'pro') > -1 ) &
+        & call MLSMessage(MLSMSG_Warning, ModuleName, &
+          & 'Its non-existence prevented writing attribute to ' &
+          & // trim(FullFilename) )
+      return
+    elseif ( returnStatus == 0 .and. .not. checkPaths ) then
+      ! Open the HDF-EOS file and write the attribute
       outputFile => GetMLSFileByName(filedatabase, FullFilename)
       if ( .not. associated(outputFile) ) then
-        if(DEBUG) call MLSMessage(MLSMSG_Warning, ModuleName, &
+      if( DEBUG .or.  switchDetail(switches, 'pro') > -1 ) &
+        & call MLSMessage(MLSMSG_Warning, ModuleName, &
           & 'No entry in filedatabase for ' // trim(FullFilename) )
         outputFile => AddInitializeMLSFile(filedatabase, &
           & content=outputTypeStr, &
@@ -1481,17 +1496,16 @@ contains ! =====     Public Procedures     =============================
 
   ! ---------------------------------------------  OutputL2AUX  -----
   subroutine OutputL2AUX ( key, fileName, DEBUG, writeCounterMAF, &
-    & filedatabase, l2auxDatabase )
+    & filedatabase, L2AUXDatabase )
     ! Do the work of outputting specified l2aux data to a named file
     use init_tables_module, only: f_overlaps, f_quantities
     use intrinsic, only: l_hdf
     use L2AUXData, only: L2AUXData_t, writeL2AUXData
-    use L2GPdata, only: L2GPNamelen
+    use L2GPData, only: L2GPNamelen
     use MLSCommon, only: MLSFile_t, fileNamelen, l2metadata_t
-    use MLSPcf2, only: mlspcf_l2dgm_start, mlspcf_l2dgm_end
+    use MLSPCF2, only: MLSPCF_L2DGM_Start, MLSPCF_L2DGM_End
     use MLSStringLists, only: switchDetail
     use SDPToolkit, only: pgs_s_success
-    use toggles, only: switches
     use tree, only: decoration, nsons, subtree
     ! Args
     integer, intent(in)                     :: key ! tree node
@@ -1499,7 +1513,7 @@ contains ! =====     Public Procedures     =============================
     logical, intent(in)                     :: DEBUG ! Print lots?
     logical, intent(in)                     :: writeCounterMAF
     type(MLSFile_T), dimension(:), pointer  :: filedatabase
-    type(L2AUXData_T), dimension(:), pointer :: l2auxDatabase
+    type(L2AUXData_T), dimension(:), pointer :: L2AUXDatabase
     ! Local variables
     integer :: DB_index
     integer :: FIELD_NO                 ! Index of assign vertex sons of Key
@@ -1528,8 +1542,8 @@ contains ! =====     Public Procedures     =============================
     if ( TOOLKIT ) then
       call split_path_name(fileName, path, fileName)
 
-      FileHandle = GetPCFromRef(fileName, mlspcf_l2dgm_start, &
-        & mlspcf_l2dgm_end, &
+      FileHandle = GetPCFromRef(fileName, MLSPCF_L2DGM_Start, &
+        & MLSPCF_L2DGM_End, &
         & TOOLKIT, returnStatus, Version, DEBUG, &
         & exactName=FullFilename)
     else
@@ -1547,7 +1561,7 @@ contains ! =====     Public Procedures     =============================
           & content=outputTypeStr, &
           & name=FullFilename, shortName=fileName, &
           & type=l_hdf, access=DFACC_RDWR, HDFVersion=hdfVersion, &
-          & PCBottom=mlspcf_l2dgm_start, PCTop=mlspcf_l2dgm_end)
+          & PCBottom=MLSPCF_L2DGM_Start, PCTop=MLSPCF_L2DGM_End)
       endif
       ! Loop over the segments of the l2cf line
 
@@ -1559,7 +1573,7 @@ contains ! =====     Public Procedures     =============================
           do in_field_no = 2, nsons(gson)
             db_index = -decoration(decoration(subtree(in_field_no, gson)))
             if ( db_index >= 1 ) then
-              call WriteL2AUXData ( l2auxDatabase(db_index), outputFile, &
+              call WriteL2AUXData ( L2AUXDatabase(db_index), outputFile, &
                 & returnStatus, &
                 & WriteCounterMAF = &
                 &   (writeCounterMAF .and. numquantitiesperfile == 0) )
@@ -1572,7 +1586,7 @@ contains ! =====     Public Procedures     =============================
                 numquantitiesperfile = MAXQUANTITIESPERFILE
               end if
               call get_string &
-                & ( l2auxDatabase(db_index)%name, &
+                & ( L2AUXDatabase(db_index)%name, &
                 &     QuantityNames(numquantitiesperfile) )
             else
               call MLSMessage ( MLSMSG_Warning, ModuleName, &
@@ -1609,7 +1623,8 @@ contains ! =====     Public Procedures     =============================
     use intrinsic, only: l_hdf
     use MLSCommon, only: MLSFile_t, fileNameLen
     use MLSHDF5, only: saveashdf5ds
-    use MLSPCF2, only: mlspcf_l2dgm_start, mlspcf_l2dgm_end
+    use MLSPCF2, only: MLSPCF_L2DGM_Start, MLSPCF_L2DGM_End
+    use MLSStringLists, only: switchDetail
     use output_m, only: output
     ! Args
     character(len=*), intent(inout)         :: fileName ! according to l2cf
@@ -1652,8 +1667,8 @@ contains ! =====     Public Procedures     =============================
     if ( TOOLKIT ) then
       call split_path_name(fileName, path, fileName)
 
-      FileHandle = GetPCFromRef(fileName, mlspcf_l2dgm_start, &
-        & mlspcf_l2dgm_end, &
+      FileHandle = GetPCFromRef(fileName, MLSPCF_L2DGM_Start, &
+        & MLSPCF_L2DGM_End, &
         & TOOLKIT, returnStatus, Version, DEBUG, &
         & exactName=FullFilename)
     else
@@ -1661,17 +1676,24 @@ contains ! =====     Public Procedures     =============================
       returnStatus = 0
     end if
 
-    if ( returnStatus == 0 .and. .not. checkPaths ) then
+    if ( mls_exists(trim(FullFilename)) /= 0 ) then
+      if( DEBUG .or.  switchDetail(switches, 'pro') > -1 ) &
+        & call MLSMessage(MLSMSG_Warning, ModuleName, &
+        & 'Its non-existence prevented any copying to ' &
+        & // trim(FullFilename) )
+      return
+    elseif ( returnStatus == 0 .and. .not. checkPaths ) then
       ! Open the HDF file and write text file
       outputFile => GetMLSFileByName(filedatabase, FullFilename)
       if ( .not. associated(outputFile) ) then
-        if(DEBUG) call MLSMessage(MLSMSG_Warning, ModuleName, &
+        if( DEBUG .or.  switchDetail(switches, 'pro') > -1 ) &
+          & call MLSMessage(MLSMSG_Warning, ModuleName, &
           & 'No entry in filedatabase for ' // trim(FullFilename) )
         outputFile => AddInitializeMLSFile(filedatabase, &
           & content=outputTypeStr, &
           & name=FullFilename, shortName=fileName, &
           & type=l_hdf, access=DFACC_RDWR, HDFVersion=hdfVersion, &
-          & PCBottom=mlspcf_l2dgm_start, PCTop=mlspcf_l2dgm_end)
+          & PCBottom=MLSPCF_L2DGM_Start, PCTop=MLSPCF_L2DGM_End)
       endif
       if ( DEBUG ) then
         call output ( 'About to copy text file to hdf', advance='yes' )
@@ -1690,16 +1712,15 @@ contains ! =====     Public Procedures     =============================
   ! ---------------------------------------------  OutputL2GP  -----
   subroutine OutputL2GP ( key, fileName, DEBUG, &
     & output_type, pcf_start, pcf_end, &
-    & filedatabase, l2gpDatabase, HGrid )
+    & filedatabase, L2GPDatabase, HGrid )
     ! Do the work of outputting specified l2gp data to a named file
     use HGridsDatabase, only: HGrid_t
     use Init_tables_module, only: f_overlaps, f_quantities
     use intrinsic, only: l_swath, lit_indices
-    use L2gpdata, only: l2gpdata_t, l2gpnamelen, writel2gpdata
+    use L2GPData, only: L2GPData_t, l2gpnamelen, writeL2GPData
     use MLSCommon, only: mlsfile_t, filenamelen, l2metadata_t
     use MLSStringlists, only: switchdetail
     use SDPToolkit, only: pgs_s_success
-    use Toggles, only: switches
     use Tree, only: decoration, nsons, subtree
     ! Args
     integer, intent(in)                     :: key ! tree node
@@ -1709,7 +1730,7 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in)                     :: pcf_start
     integer, intent(in)                     :: pcf_end
     type(MLSFile_T), dimension(:), pointer  :: filedatabase
-    type(L2GPData_T), dimension(:), pointer :: l2gpDatabase
+    type(L2GPData_T), dimension(:), pointer :: L2GPDatabase
     type(HGrid_T)                           :: HGrid
     ! Local variables
     integer :: DB_index
@@ -1770,7 +1791,7 @@ contains ! =====     Public Procedures     =============================
           do in_field_no = 2, nsons(gson)
             db_index = -decoration(decoration(subtree(in_field_no ,gson)))
             if ( db_index >= 1 ) then
-              call writeL2GPData ( l2gpDatabase(db_index), outputFile )
+              call writeL2GPData ( L2GPDatabase(db_index), outputFile )
               numquantitiesperfile = numquantitiesperfile+1
               if ( numquantitiesperfile > MAXQUANTITIESPERFILE ) then
                 call announce_error ( son, &
@@ -1779,7 +1800,7 @@ contains ! =====     Public Procedures     =============================
                   & numquantitiesperfile )
                 numquantitiesperfile = MAXQUANTITIESPERFILE
               end if
-              quantityNames(numquantitiesperfile) = l2gpDatabase(db_index)%name
+              quantityNames(numquantitiesperfile) = L2GPDatabase(db_index)%name
             else
               call MLSMessage ( MLSMSG_Warning, ModuleName, &
                 & 'Unable to write quantity to ' // trim(outputTypeStr) // &
@@ -1887,35 +1908,34 @@ contains ! =====     Public Procedures     =============================
     ! Also write various types of metadata
     ! We assume hdfVersion is 5
     use allocate_deallocate, only: deallocate_test, allocate_test
-    use chunkdivide_m, only: obstructions
-    use directwrite_m, only: directdata_t, dump
+    use chunkDivide_m, only: obstructions
+    use directWrite_m, only: directData_t, dump
     use hdf5, only: h5gclose_f, h5gopen_f
-    use HGridsdatabase, only: HGrids_t, dump
+    use HGridsDatabase, only: HGrids_t, dump
     use init_tables_module, only: l_l2aux, l_l2dgg
     use init_tables_module, only: f_file, f_hgrid, &
       & field_first, field_last, &
       & f_type, f_repairGeolocations
     use intrinsic, only: l_swath, l_hdf, lit_indices
-    use l2auxdata, only: cpl2auxdata, phasenameattributes
-    use l2gpdata, only: avoidunlimiteddims, &
-      & maxswathnamesbufsize, cpl2gpdata
-    use l2parinfo, only: parallel
+    use L2AUXData, only: cpL2AUXData, phasenameattributes
+    use L2GPData, only: avoidUnlimitedDims, &
+      & maxSwathNamesBufSize, cpL2GPData
+    use L2ParInfo, only: parallel
     use MLSCommon, only: mlsfile_t, filenamelen, l2metadata_t
-    use MLSHdf5, only: cphdf5glattribute, makehdf5attribute, saveashdf5ds
-    use MLSPcf2, only: mlspcf_l2dgm_end, mlspcf_l2dgm_start, &
-      & MLSPcf_l2dgg_start, mlspcf_l2dgg_end
-    use MLSFinds, only: findfirst, findnext
-    use MLSStringlists, only: array2list, switchdetail
+    use MLSHdf5, only: cpHDF5Glattribute, makeHDF5Attribute, saveAsHDF5DS
+    use MLSPCF2, only: MLSPCF_L2DGM_Start, MLSPCF_L2DGM_End, &
+      & MLSPCF_L2DGG_Start, MLSPCF_L2DGG_End
+    use MLSFinds, only: findFirst, findNext
+    use MLSStringLists, only: array2List, switchDetail
     use MLSStrings, only: trim_safe
-    use moretree, only: get_boolean
+    use moreTree, only: get_boolean
     use output_m, only: blanks, output
-    use pcfhdr, only: globalattributes, &
+    use PCFHdr, only: globalattributes, &
       & h5_writemlsfileattr, h5_writeglobalattr, &
       & he5_writeglobalattr, he5_writemlsfileattr, &
       & writeleapsechdfeosattr, writeleapsechdf5ds, &
       & writeutcpolehdfeosattr, writeutcpolehdf5ds
     use readapriori, only: readaprioriattributes, writeaprioriattributes
-    use toggles, only: switches
     use tree, only: decoration, nsons, subtree, sub_rosa
     ! Arguments
     integer, intent(in)                        :: key
@@ -1993,8 +2013,8 @@ contains ! =====     Public Procedures     =============================
     if ( findNext(DirectDatabase%autoType, l_l2dgg, DB_index) > 0 ) then
       if ( TOOLKIT ) then
         l2gp_Version = 1
-        l2gpFileHandle = GetPCFromRef('DGG', mlspcf_l2dgg_start, &
-          & mlspcf_l2dgg_end, &
+        l2gpFileHandle = GetPCFromRef('DGG', MLSPCF_L2DGG_Start, &
+          & MLSPCF_L2DGG_End, &
           & TOOLKIT, returnStatus, l2gp_Version, DEBUG, &
           & exactName=l2gpPhysicalFilename)
       else
@@ -2013,7 +2033,7 @@ contains ! =====     Public Procedures     =============================
           & content='l2dgg', &
           & name=l2gpPhysicalFilename, shortName='DGG', &
           & type=l_swath, access=DFACC_RDWR, HDFVersion=HDFVERSION_5, &
-          & PCBottom=mlspcf_l2dgg_start, PCTop=mlspcf_l2dgg_end)
+          & PCBottom=MLSPCF_L2DGG_Start, PCTop=MLSPCF_L2DGG_End)
       endif
       madeFile = .false.
       create2 = .true.
@@ -2129,8 +2149,8 @@ contains ! =====     Public Procedures     =============================
     if ( findNext(DirectDatabase%autoType, l_l2aux, DB_index) > 0 ) then
       if ( TOOLKIT ) then
         l2gp_Version = 1
-        l2gpFileHandle = GetPCFromRef('DGM', mlspcf_l2dgm_start, &
-          & mlspcf_l2dgm_end, &
+        l2gpFileHandle = GetPCFromRef('DGM', MLSPCF_L2DGM_Start, &
+          & MLSPCF_L2DGM_End, &
           & TOOLKIT, returnStatus, l2gp_Version, DEBUG, &
           & exactName=l2auxPhysicalFilename)
       else
@@ -2148,7 +2168,7 @@ contains ! =====     Public Procedures     =============================
           & content='l2aux', &
           & name=l2auxPhysicalFilename, shortName='L2AUX-DGM', &
           & type=l_hdf, access=DFACC_RDWR, HDFVersion=HDFVERSION_5, &
-          & PCBottom=mlspcf_l2dgm_start, PCTop=mlspcf_l2dgm_end)
+          & PCBottom=MLSPCF_L2DGM_Start, PCTop=MLSPCF_L2DGM_End)
       endif
       madeFile = .false.
       create2 = .true.
@@ -2287,6 +2307,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.200  2016/06/01 23:26:48  pwagner
+! Be forgiving of Copy commands directed to non-existent files
+!
 ! Revision 2.199  2016/05/18 01:37:30  vsnyder
 ! Change HGrids database from an array of HGrid_T to an array of pointers
 ! to HGrid_T using the new type HGrids_T.
