@@ -37,6 +37,7 @@
 # -m4 cmd             use cmd instead of m4
 # -o file             store expanded l2cf in file instead of stdout
 # -v                  verbose; prints handy summary at end of l2cf
+# -d                  debug; even more verbose
 # -w                  wrap lines in l2cf
 # -example            print brief example of how to use; exit
 # -example--dotfile   print brief example of how to use dotfile; exit
@@ -299,7 +300,8 @@ envfile=""
 expandmacros="yes"
 I=expandl2cf
 ident="no"
-IDENTMAKER=identl2cf.sh
+#IDENTMAKER=identl2cf.sh
+IDENTMAKER=""
 ignore="no"
 l2cf="STDOUT"
 M4=m4
@@ -416,24 +418,6 @@ while [ "$more_opts" = "yes" ] ; do
     esac
 done
 
-if [ "$debug" = "yes" ]
-then
-  echo "dotfile: $dotfile"
-  echo "envfile: $envfile"
-  echo "macros: $macros"
-  echo "macrofile: $macrofile"
-  echo "dryrun: $dryrun"
-  echo "expandmacros: $expandmacros"
-  echo "mypath: $mypath"
-  echo "M4: $M4"
-  which m4
-  echo "wrap: $wrap"
-  echo "template: $1"
-  echo "l2cf: $l2cf"
-  echo "templ2cf: $templ2cf"
-  echo "PATH $PATH"
-fi
-
 if [ -f "$dotfile" ]
 then
   . "$dotfile"
@@ -482,6 +466,30 @@ else
     echo ";;; Warning--no macrofile"
 fi
 
+if [ "$IDENTMAKER" = "" ]
+then
+  IDENTMAKER=$HOME/mlspgs/util/identl2cf.sh
+fi
+
+if [ "$debug" = "yes" ]
+then
+  echo "dotfile: $dotfile"
+  echo "dryrun: $dryrun"
+  echo "envfile: $envfile"
+  echo "macros: $macros"
+  echo "macrofile: $macrofile"
+  echo "dryrun: $dryrun"
+  echo "expandmacros: $expandmacros"
+  echo "mypath: $mypath"
+  echo "M4: $M4"
+  which m4
+  echo "wrap: $wrap"
+  echo "template: $1"
+  echo "l2cf: $l2cf"
+  echo "templ2cf: $templ2cf"
+  echo "PATH $PATH"
+fi
+
 if [ "$1" = "" -a "$TEMPLATE" = "" ]
 then
   echo "Sorry--no template found among args"
@@ -513,6 +521,10 @@ if [ "$dryrun" = "yes" ]
 then
   echo "$M4 $ALLOPTS $TEMPLATE > $templ2cf"
   exit 0
+elif [ "$debug" = "yes" ]
+then
+  echo "$M4 $ALLOPTS $TEMPLATE  $templ2cf"
+  eval $M4 $ALLOPTS $TEMPLATE > $templ2cf
 else
   eval $M4 $ALLOPTS $TEMPLATE > $templ2cf
 fi
@@ -586,6 +598,9 @@ fi
 
 exit 0
 # $Log$
+# Revision 1.10  2013/12/04 21:36:58  pwagner
+# env variable WIDTH can set width if wrapping lines
+#
 # Revision 1.9  2013/05/30 20:38:52  pwagner
 # Fixed error where set_read_env.sh not local
 #
