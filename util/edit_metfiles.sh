@@ -17,7 +17,7 @@
 #Use(1) (the default)
 #edit .met files so that their INPUTPOINTER values
 #match what we have decided level 1 hdf5 files should have
-#The fix involves changing lines to each file to the following:
+#The fix involves changing lines in each file to the following:
 #  >  OBJECT                 = INPUTPOINTER
 #  >    NUM_VAL              = 1
 #  >    VALUE                = "Found at /PCF"
@@ -27,7 +27,7 @@
 #Use(2)
 #As in use (1) except to
 #match what we have decided level 2 hdfeos5 files should have
-#The fix involves changing lines to each file to the following:
+#The fix involves changing lines in each file to the following:
 #  >  OBJECT                 = INPUTPOINTER
 #  >    NUM_VAL              = 1
 #  >    VALUE                = "Found at /HDFEOS/ADDITIONAL/FILE_ATTRIBUTES/PCF"
@@ -35,6 +35,7 @@
 #(where the changed lines have been marked with the ">")
 #
 #Use(3)
+#Primarily for use with .mcf files
 #More general than (1) and (2); given myOBJECT and myVALUE
 #The fix involves changing one line in each file as the following illustrates:
 #   OBJECT                 = myOBJECT
@@ -44,6 +45,7 @@
 #(where only the changed line has been marked with the ">")
 #
 #Use(4)
+#Primarily for use with .mcf files
 #Bloc replacement; given myOBJECT and myFILE
 #The fix involves replacing the bloc of lines in each file 
 #with the contents of myFILE as the following illustrates:
@@ -63,16 +65,21 @@
 # -4            use(4)
 # -obj myOBJECT instead of INPUTPOINTER, change value of myOBJECT
 # -val myVALUE  instead of use(1) or (2), change value of OBJECT to myVALUE
+#               if myVALUE has the special "stuttered" value ffiilleennaammee
+#               its value will be the filename
 # -f myFILE     for use (4)
 # -print        instead of creating new file(s), print results of sed to stdout
 # -test         instead of creating new file(s), confirm that files already 
 #                  match output of running script; i.e., diff would be null
 # -h[elp]       print brief help message; exit
 #Notes:
-#(1) Options -1, -2, -val are mutually exclusive
-#(2) If -obj is supplied, then -val should be, too
-#(3) The default use is Use(1)
-#(4) usage (4) requires that replacetext.sh exist, be executable, and in your PATH
+#(1) The default use is Use(1)
+#(2) Options -1, -2, -val are mutually exclusive
+#(3) Note special case when myVALUE = ffiilleennaammee, 
+#    actual value will be the filename
+#    If -obj is supplied, then -val should be, too
+#(4) usage (4) requires that replacetext.sh exist, be executable, 
+#    and in your PATH
 # --------------- End edit_metfiles.sh help
 #Another example of my regrettable tendency to bundle a number of
 #different functionalities within a single multi-use file
@@ -230,7 +237,8 @@ then
   echo '/OBJECT * = *'$myOBJECT'/,/END_OBJECT * = *'$myOBJECT'/ c \' > temp.sed
   print_the_lines "$myOBJECT" "$example_file" "yes" >> temp.sed
   rm -f temp1.sed
-  sed '/VALUE/ s^".*"^"'"$myVALUE"'"^' temp.sed > temp1.sed
+  # sed '/VALUE/ s^".*"^"'"$myVALUE"'"^' temp.sed > temp1.sed
+  sed '/[Vv][Aa][Ll][Uu][Ee]/ s^".*"^"'"vvaalluuee"'"^' temp.sed > temp1.sed
   mv temp1.sed temp.sed
   diff_list=""
   nodiff_list=""
@@ -249,8 +257,18 @@ fi
 #else
 #  $resed -f temp.sed $@
 #fi
+mv temp.sed tteemmpp.sed
 for the_file
 do
+  # Is myVALUE ffiilleennaammee?
+  if [ "$myVALUE" = "ffiilleennaammee" ]
+  then
+    vvaalluuee="$the_file"
+  else
+    vvaalluuee="$myVALUE"
+  fi
+  # tansform vvaalluuee -> $vvaalluuee
+  sed "s/vvaalluuee/$vvaalluuee/g" tteemmpp.sed > temp.sed
   if [ "$usage" = "4" ]
   then
     replacetext.sh "OBJECT = $myOBJECT" "END_OBJECT = $myOBJECT" "$the_file" "$myFILE" > temp1.rep.txt
@@ -280,7 +298,7 @@ do
     mv temp1.sed "$the_file"
   fi
 done
-/bin/rm -f temp.sed
+/bin/rm -f temp.sed tteemmpp.sed
 if [ "$usage" = "4" ]
 then
   exit 0
@@ -302,6 +320,9 @@ then
 fi
 exit 0
 # $Log$
+# Revision 1.6  2014/04/25 18:01:59  pwagner
+# Added Usage (4): replace bloc of lines with contents of myFILE
+#
 # Revision 1.5  2005/06/23 22:20:45  pwagner
 # Reworded Copyright statement
 #
