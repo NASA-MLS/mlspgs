@@ -373,7 +373,7 @@ contains
   !         the eccentricity, given by $1 - \frac{b^2}{a^2}$.
   !  This is Equation (5.3) in the 19 August 2004 ATBD JPL D-18130.
 
-  pure function Orbit_Plane_Minor_Axis_sq_D ( Beta ) result ( Csq )
+  pure elemental function Orbit_Plane_Minor_Axis_sq_D ( Beta ) result ( Csq )
     integer, parameter :: RK = kind(0.0d0)
     real(rk), intent(in) :: Beta  ! Orbit inclination, radians
     real(rk) :: Csq               ! Square of the minor axis of the
@@ -383,7 +383,7 @@ contains
 
 ! ----------------------------------  Orbit_Plane_Minor_Axis_sq_S  -----
 
-  pure function Orbit_Plane_Minor_Axis_sq_S ( Beta ) result ( Csq )
+  pure elemental function Orbit_Plane_Minor_Axis_sq_S ( Beta ) result ( Csq )
     integer, parameter :: RK = kind(0.0e0)
     real(rk), intent(in) :: Beta  ! Orbit inclination, radians
     real(rk) :: Csq               ! Square of the minor axis of the
@@ -669,6 +669,9 @@ contains
 end module Geometry
 
 ! $Log$
+! Revision 2.31  2016/06/02 02:11:32  vsnyder
+! Make Orbit_Plane_Minor_Axis_sq elemental
+!
 ! Revision 2.30  2016/05/27 01:10:52  vsnyder
 ! Publish XZ_to_Geod
 !
