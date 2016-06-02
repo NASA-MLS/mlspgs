@@ -50,6 +50,7 @@ module MLSNumerics              ! Some low level numerical stuff
 !                            y(x[i]) where x[i+1] - x[i] = constant
 
 !         Functions, operations, routines
+! Average                  Compute the average of a rank-one real array
 ! Battleship               By ever-widening evaluations find integer root
 !                             or floating root to within a given tolerance
 ! ClosestElement           Find index(es) in array closest to test value
@@ -152,7 +153,7 @@ module MLSNumerics              ! Some low level numerical stuff
 ! multidimensional arrays up to rank 3. In a scalar context A and B may be scalars
 ! === (end of api) ===
 
-  public :: Battleship, BivariateLinearInterpolation
+  public :: Average, Battleship, BivariateLinearInterpolation
   public :: ClosestElement
   public :: Destroy, dFdXApproximate, d2FdX2Approximate, Dump
   public :: FApproximate, FillLookupTable, FindInRange, FinvApproximate
@@ -291,7 +292,7 @@ module MLSNumerics              ! Some low level numerical stuff
   ! evaluated over uniformly-spaced x-values x[i] ( = x1 + (i-1) dx )
   ! called sometimes a look up table
   ! (although that name unfairly limits its suggested use)
-  
+
   ! By default when we use one of these datatypes to approximate the
   ! actual function at some x we 
   ! choose the corresponding y at the xi closest to x
@@ -302,7 +303,7 @@ module MLSNumerics              ! Some low level numerical stuff
   ! 'i'   interpolate between two xis closest to x
   ! 'q'   quadratic interpolation (Simpson's rule)
   ! 's'   (cubic) splines (not efficiently implemented)
-  
+
   ! Note that points outside the range of xi (i.e. less than the smallest
   ! or greater than the largest) are treated according to "BC" which may be
   ! 'clamped'   use y at the nearest xi                (default)                        
@@ -316,7 +317,7 @@ module MLSNumerics              ! Some low level numerical stuff
 
   ! Another family of datatypes may someday be implemented,
   ! which would utilize non-uniformly spaced x values
-  
+
   type, public :: UnifDiscreteFn_r4
     integer :: N = 0                               ! The number of values xi
     character(len=8) :: BC = 'clamped'             ! boundary conditions
@@ -328,7 +329,7 @@ module MLSNumerics              ! Some low level numerical stuff
     real(r4), dimension(:), pointer :: y => null() ! y(xi)
     ! type(Coefficients_R4) :: Coeffs                ! in case we'll use splines
   end type UnifDiscreteFn_r4
-  
+
   type, public :: UnifDiscreteFn_r8
     integer :: N = 0                               ! The number of values xi
     character(len=8) :: BC = 'clamped'             ! boundary conditions
@@ -340,10 +341,14 @@ module MLSNumerics              ! Some low level numerical stuff
     real(r8), dimension(:), pointer :: y => null() ! y(xi)
     ! type(Coefficients_R8) :: Coeffs                ! in case we'll use splines
   end type UnifDiscreteFn_r8
-  
+
   ! No use for a class member of this datatype yet
   ! type(UnifDiscreteFn_r8), save :: MLSUDF
-  
+
+  interface Average
+    module procedure Average_D, Average_S
+  end interface
+
   interface Battleship
     module procedure Battleship_int, Battleship_log, Battleship_r4, Battleship_r8
   end interface
@@ -480,6 +485,16 @@ module MLSNumerics              ! Some low level numerical stuff
 
 contains
 
+  double precision function Average_D ( A ) result ( R )
+    double precision, intent(in) :: A(:)
+    r = sum(a) / size(a)
+  end function Average_D
+
+  real function Average_S ( A ) result ( R )
+    real, intent(in) :: A(:)
+    r = sum(a) / size(a)
+  end function Average_S
+
 ! -------------------------------------------------  Battleship  -----
 
   ! This family of routines finds a root of a function
@@ -501,17 +516,17 @@ contains
   ! as its sole argument and that returns the iostat as its value
   ! Battleship will then calculate the exact number characters in the file
   ! (which NAG cares about; Lahey doesn't care)
-  
+
   ! If you wish to do the usual root-finder where the returned values change
   ! sign, set the options appropriately to "-x"
-  
+
   ! Method:
   ! We take shots during 2 phases:
   ! (1) outbound: ever-widening circles of radius 1 2 4 8 .. (n) (2n) ..
   !     or else prescribed shots in array ns[:]
   ! (2) inbound: once root is crossed, ever narowing circles around it
   !     (until "You sank my battleship!")
-  
+
   ! The options string (if supplied) modifies how this search operates
   !  options            search goal
   !  -------            -----------
@@ -871,7 +886,7 @@ contains
   ! The array of indices locate that nearest element
   ! The following options really make sense only for 1-d searches
   ! and so are ignored for arrays of rank 2 or higher
-  
+
   ! options  none, one, or more of the following:
   ! (default)   choose pt in array closest to x
   !   l         always choose lower of two closest x's in array
@@ -986,11 +1001,11 @@ contains
 
   ! This family of routines use a uniDiscFunction to approximate a 
   ! function's 2nd derivative
-  
+
   ! Args: (* means optional)
   ! x        pt at which to evaluate
   ! UDF      the uniformly discretized function type
-  
+
   function d2Fdx2Approximate_r4 ( x, UDF ) result(value)
     integer, parameter :: RK = kind(0.0e0)
     ! Args
@@ -1057,11 +1072,11 @@ contains
 
   ! This family of routines use a uniDiscFunction to approximate a 
   ! function's derivative
-  
+
   ! Args: (* means optional)
   ! x        pt at which to evaluate
   ! UDF      the uniformly discretized function type
-  
+
   function dFdxApproximate_r4 ( x, UDF ) result(value)
     integer, parameter :: RK = kind(0.0e0)
     ! Args
@@ -1209,11 +1224,11 @@ contains
 
   ! This family of routines use a uniDiscFunction to approximate a 
   ! (costly-to-evaluate) function based on its values at a set of points
-  
+
   ! Args: (* means optional)
   ! x        pt at which to evaluate
   ! UDF      the uniformly discretized function type
-  
+
   function FApproximate_r4 ( x, UDF ) result(value)
     integer, parameter :: RK = kind(0.0e0)
     ! Args
@@ -1294,14 +1309,14 @@ contains
 
   ! This family of routines use a uniDiscFunction to approximately invert 
   ! a function possibly restricting the search to a range [xS, xE]
-  
+
   ! Args: (* means optional)
   ! y        y value to invert
   ! UDF      the uniformly discretized function type
   ! [xS,xE]  range in which to search (otherwise [UDF%x1, UDF%x2])
-  
+
   ! Will return x such that y[x] is approximately y
-  
+
   function FInvApproximate_r4 ( y, UDF, xS, xE ) result(x)
     integer, parameter :: RK = kind(0.0e0)
     ! Args
@@ -1340,7 +1355,7 @@ contains
   ! at regularly-spaced points
   ! Subsequently, instead of evaluating the function you can address the
   ! array at the index of its closest element
-  
+
   ! This only makes sense if you're going to evaluate the function many more
   ! times than takes to fill the table and you're willing 
   ! to accept whatever error may result from using the ClosestValue
@@ -1400,11 +1415,11 @@ contains
 
   ! This family of routines use a uniDiscFunction to approximate a 
   ! function's integral
-  
+
   ! Args: (* means optional)
   ! UDF      the uniformly discretized function type
   ! [xS,xE]  range over which to integrate (otherwise [UDF%x1, UDF%x2])
-  
+
   function IFApproximate_r4 ( UDF, xS, xE ) result(value)
     integer, parameter :: RK = kind(0.0e0)
     ! Args
@@ -1986,11 +2001,11 @@ contains
 
   ! This family of functions return a value interpolated across
   ! multiple dimensions
-  
+
   ! Args: (* means optional)
   ! values   the 2^n values at the hypercube's vertices
   ! coords   2*n vertices coordinates
-  
+
   function LinearInterpolate_1d_r4 ( values, coords, vertices ) result(value)
     integer, parameter :: RK = kind(0.0e0)
     include "LinearInterpolate_1d.f9h"
@@ -2151,7 +2166,7 @@ contains
   ! function based on its values at a set of points
   ! They are workhorse functions used by the more specialized functions
   ! that approximate derivatives, integrals, etc.
-  
+
   ! Args:       (* means optional)
   ! x              pt at which to evaluate
   ! table          table of function values
@@ -2160,7 +2175,7 @@ contains
   ! xS,xE          * range of x-values in which to search
   ! yBottom, yTop  * range of y-values in which to search
   !                 (ignored if xtable is sorted)
-  
+
   ! options  * none, one, or more of the following:
   ! (default)   choose pt in xtable closest to x
   !    p        xtable is sorted (necessary for the other options)
@@ -2172,7 +2187,7 @@ contains
   !    2        return 2nd derivative (at nearest pt)
   !    S        return definite integral from x1 to x
   !    C        return definite integral from x to x2
-  
+
   ! notes:
   ! (1) You should supply either xtable or the range (x1,x2)
   !      (but not both)
@@ -2499,6 +2514,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.89  2016/06/02 02:11:51  vsnyder
+! Add Average function
+!
 ! Revision 2.88  2015/07/29 00:24:05  vsnyder
 ! Add InterpolateExtrapolate_[sd]_1
 !
