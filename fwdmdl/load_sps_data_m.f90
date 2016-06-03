@@ -26,18 +26,16 @@ module Load_SPS_Data_M
   type, public :: Grids_T                 ! Fit all Gridding categories
     type(qtyStuff_t), pointer :: QtyStuff(:) => null()
     integer,  pointer :: l_f(:) => null() ! Last entry in frq_basis per sps
-    integer,  pointer :: l_z(:) => null() ! Last entry in zet_basis per sps
-    integer,  pointer :: l_p(:) => null() ! Last entry in phi_basis or QTM_Geo
-                                          ! per sps
-    integer,  pointer :: l_x(:) => null() ! Last entry in cross angles per sps
+    integer,  pointer :: l_p(:) => null() ! Last entry in phi_basis per sps
     integer,  pointer :: l_v(:) => null() ! Last entry in values per sps
+    integer,  pointer :: l_x(:) => null() ! Last entry in cross angles per sps
+    integer,  pointer :: l_z(:) => null() ! Last entry in zet_basis per sps
     integer :: P_Len = 0 ! \sum_{i=1}^n (l_z(i)-l_z(i-1))*(l_p(i)-l_p(i-1))*
                          !              (l_x(i)-l_x(i-1))
     integer,  pointer :: windowstart(:) => null()! horizontal starting index
                                           ! from l2gp for 2D, or 1 for QTM
     integer,  pointer :: windowfinish(:) => null()! horizontal ending index
-                                          ! from l2gp for 2D, or size(QTM_geo)
-                                          ! per sps
+                                          ! from l2gp for 2D per sps
     integer,  pointer :: mol(:) => null()       ! Qty molecule, l_...
     integer,  pointer :: Z_coord(:) => null()   ! l_geo[cd]Altitude, l_zeta
     logical,  pointer :: Coherent(:) => null()  ! From each Qty template
@@ -57,7 +55,6 @@ module Load_SPS_Data_M
                                                 ! molecules
     real(rp), pointer :: zet_basis(:) => null() ! zeta grid entries for all
                                                 ! molecules
-    integer, pointer :: QTM_Geo(:) => null()    ! QTM vertex geolocation
     real(rp), pointer :: phi_basis(:) => null() ! phi  grid entries for all
                                                 ! molecules, radians
     real(rp), pointer :: cross_angles(:) => null() ! cross-angles  grid entries
@@ -264,8 +261,8 @@ contains
 
        call create_grids_1 ( grids_x, 1 )
 
+       grids_x%qtyStuff(1)%qty => qty
        if ( present(phitan) ) then
-         grids_x%qtyStuff(1)%qty => qty
          call fill_grids_1 ( grids_x, 1, maf, phitan, fwdModelConf )
        else if ( myAcross ) then
          call MLSMessage ( MLSMSG_Error, moduleName, &
@@ -408,11 +405,11 @@ contains
 
     allocate ( Grids_x%qtyStuff(n), stat=stat )
     call test_allocate ( stat, moduleName, 'Grids_x%QtyStuff' )
-    call allocate_test ( Grids_x%l_z, n, 'Grids_x%l_z', moduleName, lowBound=0 )
-    call allocate_test ( Grids_x%l_p, n, 'Grids_x%l_p', moduleName, lowBound=0 )
     call allocate_test ( Grids_x%l_f, n, 'Grids_x%l_f', moduleName, lowBound=0 )
-    call allocate_test ( Grids_x%l_x, n, 'Grids_x%l_f', moduleName, lowBound=0 )
+    call allocate_test ( Grids_x%l_p, n, 'Grids_x%l_p', moduleName, lowBound=0 )
     call allocate_test ( Grids_x%l_v, n, 'Grids_x%l_v', moduleName, lowBound=0 )
+    call allocate_test ( Grids_x%l_x, n, 'Grids_x%l_x', moduleName, lowBound=0 )
+    call allocate_test ( Grids_x%l_z, n, 'Grids_x%l_z', moduleName, lowBound=0 )
     call allocate_test ( Grids_x%mol, n, 'Grids_x%mol', moduleName )
     call allocate_test ( Grids_x%qty, n, 'Grids_x%qty', moduleName )
     call allocate_test ( Grids_x%where_dBeta_df, n, 'Grids_x%where_dBeta_df', ModuleName )
@@ -451,6 +448,7 @@ contains
     type (Grids_T), intent(inout) :: Grids_X
 
     integer :: N
+
     n = ubound(grids_x%l_z,1)
 
     call allocate_test ( Grids_x%zet_basis, Grids_x%l_z(n), 'Grids_x%zet_basis', &
@@ -496,11 +494,11 @@ contains
         & call MLSMessage ( MLSMSG_Error, moduleName, &
            & 'Cannot load a quantity that is unstacked or incoherent' )
 
-      usingQTM = associated(qty%template%the_HGrid)
-      if ( usingQTM ) usingQTM = qty%template%the_HGrid%type == l_QTM 
+      usingQTM = associated(qty%template%the_hGrid)
+      if ( usingQTM ) usingQTM = qty%template%the_hGrid%type == l_QTM 
       if ( usingQTM ) then
         grids_x%windowStart(ii) = 1
-        grids_x%windowFinish(ii) = size(qty%template%the_HGrid%QTM_geo)
+        grids_x%windowFinish(ii) = size(qty%template%the_hGrid%QTM_geo)
       else if ( present(phitan) ) then
         call FindInstanceWindow ( qty, phitan, maf, fwdModelConf%phiWindow, &
           & fwdModelConf%windowUnits, grids_x%windowStart(ii), grids_x%windowFinish(ii) )
@@ -516,7 +514,7 @@ contains
 
       kp = grids_x%windowFinish(ii) - grids_x%windowStart(ii) + 1
 
-      kx = qty%template%noCrossTrack
+      kx = qty%template%noCrossTrack ! kx >= 1 even if there is no cross track
 
       if ( associated(qty%template%frequencies) ) then
         kf = size(qty%template%frequencies)
@@ -634,7 +632,8 @@ contains
 
     p3(1:size(qty%template%phi,1),1:kp,1:kx) => Grids_x%phi_basis(pp+1:qp)
 
-    do i = 1, kx
+    do i = 1, kx ! kx >= 1 even if there are no crossAngles, and
+                 ! qty%template%crossAngles == 0 if there are none.
       p3(:,:,i) = (qty%template%phi(:,ws:wf) + qty%template%crossAngles(i)) * Deg2Rad
     end do
 
@@ -810,7 +809,7 @@ contains
     call deallocate_test(grids_x%l_f,'Grids_x%l_f',modulename)
     call deallocate_test(grids_x%l_z,'Grids_x%l_z',modulename)
     call deallocate_test(grids_x%l_p,'Grids_x%l_p',modulename)
-    call deallocate_test(grids_x%l_x,'Grids_x%l_p',modulename)
+    call deallocate_test(grids_x%l_x,'Grids_x%l_x',modulename)
     call deallocate_test(grids_x%l_v,'Grids_x%l_v',modulename)
     call deallocate_test(grids_x%windowstart,'Grids_x%windowstart',modulename)
     call deallocate_test(grids_x%windowfinish,'Grids_x%windowfinish',modulename)
@@ -833,7 +832,7 @@ contains
   end subroutine DestroyGrids_t
 
   ! -------------------------------------------------  Dump_Grids  -----
-  subroutine Dump_Grids ( The_Grid, Name, Details )
+  subroutine Dump_Grids ( The_Grid, Name, Details, OneGrid )
   ! Dump The_Grid
 
     use Constants, only: rad2deg
@@ -846,8 +845,9 @@ contains
     character(len=*), intent(in), optional :: Name
     integer, intent(in), optional :: Details ! <= 0 => don't dump bases (default)
                                              ! <= 1 => don't dump values
+    integer, intent(in), optional :: OneGrid ! Only dump this grid
 
-    integer :: I, KX, MyDetails, NZG, NZV, W
+    integer :: I, I1, IN, KX, MyDetails, NZG, NZV, W
 
     myDetails = 0
     if ( present(details) ) myDetails = details
@@ -859,7 +859,13 @@ contains
     end if
     call output ( the_grid%p_len, before = ', P_Len = ', advance='yes' )
     call output ( 'Molecules:', advance='yes' )
-    do i = 1, size(the_grid%qtyStuff)
+    i1 = 1
+    in = size(the_grid%qtyStuff)
+    if ( present(oneGrid) ) then
+      i1 = oneGrid
+      in = oneGrid
+    end if
+    do i = i1, in
       call output ( i )
       if ( the_grid%qtyStuff(i)%qty%template%name > 0 ) then
         call display_string ( the_grid%qtyStuff(i)%qty%template%name, before=': ' )
@@ -881,11 +887,11 @@ contains
       end if
       call newLine
     end do
-    call dump ( the_grid%l_f(1:), 'The_grid%l_f' )
-    call dump ( the_grid%l_z(1:), 'The_grid%l_z' )
-    call dump ( the_grid%l_p(1:), 'The_grid%l_p' )
-    call dump ( the_grid%l_x(1:), 'The_grid%l_x' )
-    call dump ( the_grid%l_v(1:), 'The_grid%l_v' )
+    call dump ( the_grid%l_f(i1:in), 'The_grid%l_f' )
+    call dump ( the_grid%l_z(i1:in), 'The_grid%l_z' )
+    call dump ( the_grid%l_p(i1:in), 'The_grid%l_p' )
+    call dump ( the_grid%l_x(i1:in), 'The_grid%l_x' )
+    call dump ( the_grid%l_v(i1:in), 'The_grid%l_v' )
     call dump ( the_grid%windowStart, 'The_grid%WindowStart' )
     call dump ( the_grid%windowFinish, 'The_grid%WindowFinish' )
     call dump ( the_grid%lin_log, 'The_grid%Lin_Log' )
@@ -894,7 +900,7 @@ contains
       call dump ( the_grid%frq_basis, 'The_grid%Frq_Basis' )
       call dump ( the_grid%coherent, 'The_grid%Coherent' )
       call dump ( the_grid%stacked, 'The_grid%Stacked' )
-      do i = 1, size(the_grid%qtyStuff)
+      do i = i1, in
         kx = the_grid%l_x(i) - the_grid%l_x(i-1)
         ! NZ for geolocation fields:
         nzg = merge(1,(the_grid%l_z(i)-the_grid%l_z(i-1))/kx,the_grid%stacked(i))
@@ -973,6 +979,9 @@ contains
 end module LOAD_SPS_DATA_M
 
 ! $Log$
+! Revision 2.111  2016/05/27 01:26:01  vsnyder
+! Cannonball polishing
+!
 ! Revision 2.110  2016/05/16 23:22:30  vsnyder
 ! Check for stacked and coherent always, not just for QTM
 !
