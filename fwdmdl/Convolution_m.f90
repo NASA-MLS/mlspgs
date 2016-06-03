@@ -61,8 +61,8 @@ contains
     use MatrixModule_1, only: Matrix_T
     use MLSKinds, only: RP, RV, R4, R8
     use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_WARNING
-    use MLSNUMERICS, only: COEFFICIENTS => COEFFICIENTS_R8, &
-      & INTERPOLATEARRAYSETUP, INTERPOLATEARRAYTEARDOWN
+    use MLSNUMERICS, only: Average, Coefficients => Coefficients_R8, &
+      & InterpolateArraySetup, InterpolateArrayTeardown
     use MLSSignals_M, only: AreSignalsSuperset, Signal_T
     use MLSStringLists, only: SwitchDetail
     use Toggles, only: Emit, Levels, Switches, Toggle
@@ -75,7 +75,7 @@ contains
     real(rp), intent(in), contiguous :: DXDT_Surface(:,:) ! (1,s_t*sv_t_len)
     real(rp), intent(in), contiguous :: DXDT_TAN(:,:) ! (ptan%template%nosurfs,s_t*sv_t_len)
     real(rp), intent(in), contiguous :: D2X_DXDT(:,:) ! (no_tan_hts,s_t*sv_t_len)    ! (No_tan_hts, nz*np)
-    real(rp), intent(in) :: EarthRadC_sq ! (minor axis of orbit plane projected Earth ellipse)**2
+    type(vectorValue_t), intent(in) :: EarthRadC_sq  ! (minor axis of orbit plane projected Earth ellipse)**2
     real(rp), intent(in), contiguous :: Est_ScGeocAlt(:) ! Est S/C geocentric altitude /m
     type (Signal_T), intent(in)  :: FirstSignal ! The first signal we're dealing with
     type(forwardModelStatus_t), intent(inout) :: FmStat ! Reverse comm. stuff
@@ -119,6 +119,7 @@ contains
     real(rp) :: DELTAPTG         ! Used for patching the pointings
     integer :: MAF
     integer :: Me = -1           ! String index for trace
+    integer :: MIFs              ! Number of MIFs in the MAF
     integer :: MINSUPERSET       ! Min. value of superset > 0
     integer :: No_Tan_Hts        ! Number of tangent heights
     integer :: NoUsedChannels    ! Number of channels used
@@ -251,8 +252,9 @@ contains
 
         call fov_convolve_setup ( antennaPatterns(whichPattern), ptg_angles, &
           & tan_chi_out-thisElev, convolve_support, &
-          & get_r_eq(sum(tan_phi)/no_tan_hts,earthradc_sq), & ! Average r_eq
-          & sum(0.001_rp*est_scgeocalt)/no_tan_hts,         & ! Average alt
+          & get_r_eq(average(tan_phi), &
+          &          average(earthradc_sq%values(:,MAF))), &  ! Average r_eq
+          & average(0.001_rp*est_scgeocalt), &                ! Average alt
           & do_dRad_dx=ptan_der, do_Scan_Avg=fwdModelConf%scanAverage )
 
         if ( temp_der ) then
@@ -422,7 +424,7 @@ contains
     real(rp), intent(out), contiguous :: DX_DH_OUT(:) ! (ptan%template%nosurfs)
     real(rp), intent(out), contiguous :: DXDT_Surface(:,:) ! (1,s_t*sv_t_len)
     real(rp), intent(out), contiguous :: DXDT_TAN(:,:) ! (ptan%template%nosurfs,s_t*sv_t_len)
-    real(rp), intent(in) :: EarthRadC_sq ! (minor axis of orbit plane projected Earth ellipse)**2
+    type(VectorValue_T), intent(in) :: EarthRadC_sq ! (minor axis of orbit plane projected Earth ellipse)**2
     real(rp), intent(in), contiguous :: Est_ScGeocAlt(:) ! (no_tan_hts) ! Est S/C geocentric altitude /m
     type(forwardModelConfig_T), intent(in) :: FwdModelConf
     type(vector_T), intent(in) :: FwdModelExtra, FwdModelIn
@@ -465,7 +467,7 @@ contains
     ! these values in metrics, or where its output r_eq value is
     ! used.
 
-    req_out = get_R_eq ( phitan%values(:,maf)*Deg2Rad, earthradc_sq )
+    req_out = get_R_eq ( phitan%values(:,maf)*Deg2Rad, earthradc_sq%values(:,maf) )
 
     ! Temperature's windowStart:windowFinish are correct here.
     ! RefGPH and Temperature have the same horizontal basis.
@@ -524,6 +526,10 @@ contains
 end module Convolution_m
 
 ! $Log$
+! Revision 2.4  2016/06/03 23:49:50  vsnyder
+! Change EarthRadC_sq from a real scalar to a vector quantity.  Use average
+! of tangent phi / average EarthRacC_sq to do FOV_Convolve_Setup.
+!
 ! Revision 2.3  2016/05/10 00:02:35  vsnyder
 ! Remove unused variable
 !
