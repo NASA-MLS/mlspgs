@@ -359,6 +359,11 @@ contains
     ! Executable code
     DoHGridsMatch = .false.
 
+    if ( associated(a%template%the_hGrid) .and. &
+       & associated(b%template%the_hGrid) ) then ! How could this fail?
+      if ( a%template%the_hGrid%type /= b%template%the_hGrid%type ) return
+    end if
+
     mySpacingOnly = .false.
     if ( present ( spacingOnly ) ) mySpacingOnly = spacingOnly
 
@@ -658,6 +663,10 @@ contains
 end module ManipulateVectorQuantities
   
 ! $Log$
+! Revision 2.53  2016/06/03 02:33:06  vsnyder
+! If both templates have pointers to their hGrids, verify that the hGrids
+! have the same type.
+!
 ! Revision 2.52  2015/10/28 00:36:39  vsnyder
 ! Confine WindowStart:WindowFinish with 1:noInstances
 !
