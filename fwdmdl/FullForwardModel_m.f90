@@ -68,7 +68,7 @@ contains
     use VectorsModule, only: Vector_T, VectorValue_T
 
     type(forwardModelConfig_T), intent(inout) :: FwdModelConf
-    type(vector_T), intent(in) ::  FwdModelIn, FwdModelExtra
+    type(vector_T), intent(in) :: FwdModelIn, FwdModelExtra
     type(vector_T), intent(inout) :: FwdModelOut  ! Radiances, etc.
     type(forwardModelStatus_t), intent(inout) :: FmStat ! Reverse comm. stuff
     type(matrix_T), intent(inout), optional :: Jacobian
@@ -80,9 +80,9 @@ contains
                                       ! position and velocity vectors, and the
                                       ! plane defined by the spacecraft
                                       ! position and PTan vectors.
-    real(rp), allocatable :: Z_PSIG(:)   ! Surfs from Temperature, tangent grid
-                                         ! and species grids, sans duplicates.
-    real(rp), pointer :: TAN_PRESS(:)    ! Pressures corresponding to Z_PSIG
+    real(rp), allocatable :: Z_PSIG(:)    ! Surfs from Temperature, tangent grid
+                                          ! and species grids, sans duplicates.
+    real(rp), allocatable :: Tan_Press(:) ! Pressures corresponding to Z_PSIG
     type (Grids_T) :: Grids_tmp ! All the coordinates for TEMP
     type (Grids_T) :: Grids_f   ! All the coordinates for VMR
     type (Grids_T) :: Grids_IWC ! All the coordinates for IWC
@@ -92,8 +92,10 @@ contains
     type (Grids_T) :: Grids_w   ! All the spectroscopy(W) coordinates
     type (VectorValue_T), pointer :: CloudIce ! Ice water content
     type (VectorValue_T), pointer :: MagField ! Magnetic field
-    type (VectorValue_T), pointer :: PhiTan ! Tangent geodAngle component of state vector
-    type (VectorValue_T), pointer :: PTan   ! Tangent pressure component of state vector
+    type (VectorValue_T), pointer :: PhiTan ! Tangent geodAngle component of
+                                ! state vector (minor frame quantity)
+    type (VectorValue_T), pointer :: PTan   ! Tangent pressure component of
+                                ! state vector (minor frame quantity)
     type (VectorValue_T), pointer :: Temp   ! Temperature component of state vector
     integer :: Dump_Conf        ! for debugging, from -Sfmconf
     integer :: K                ! Loop inductor and subscript
@@ -137,11 +139,9 @@ contains
     call trace_begin ( me, 'FullForwardModel, MAF=', index=fmstat%maf, &
       & cond=toggle(emit) ) ! set by -f command-line switch
 
-    nullify ( tan_press )
-
     ! Create the data structures for the species.  Get the
-    ! spectroscopy parameters from the state vector.  Get the temperature
-    ! quantity from the state vector.
+    ! spectroscopy parameters from the state vector.  Get a pointer to the
+    ! temperature quantity from the state vector into the configuration.
     ! This has to be done AFTER deriveFromForwardModelConfig, which is
     ! invoked from ForwardModelWrappers.
 
@@ -150,15 +150,16 @@ contains
     no_mol = size(fwdModelConf%beta_group)
     noUsedChannels = size(fwdModelConf%channels)
 
-    ! Find quantities in the state vector.  For now, these are just
-    ! used to set the sizes of other arrays.
+    ! Find temperature and phiTan quantities in the state vector.  Here, the
+    ! temperature quantity is just used to set the sizes of some arrays, but
+    ! it's passed along to FullForwardModelAuto.  The phiTan quantity is only
+    ! used to compute the instance window for the temperature quantity.  If the
+    ! temperature grid is QTM, phiTan isn't actually used because the entire
+    ! QTM is used, instead of having an instance window.
+    temp => fwdModelConf%temp%qty
     phitan => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
       & quantityType=l_phitan, config=fwdModelConf, &
       & instrumentModule=fwdModelConf%signals(1)%instrumentModule )
-    ptan => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
-      & quantityType=l_ptan, foundInFirst=ptan_der, config=fwdModelConf, &
-      & instrumentModule=fwdModelConf%signals(1)%instrumentModule )
-    temp => fwdModelConf%temp%qty
     call load_one_item_grid ( grids_tmp, temp, fmStat%maf, phitan, fwdModelConf, .true. )
     no_sv_p_t = grids_tmp%l_p(1) ! phi == windowFinish - windowStart + 1
     n_t_zeta = grids_tmp%l_z(1)  ! zeta
@@ -166,7 +167,7 @@ contains
 
     fwdModelConf%beta_group%qty%derivOK = fwdModelConf%moleculeDerivatives .and. &
       & ( fwdModelConf%beta_group%qty%foundInFirst .or. present(extraJacobian) )
-      
+
     call load_sps_data ( FwdModelConf, phitan, fmStat%maf, grids_f )
 
     fwdModelConf%temp%derivOK = present ( jacobian ) .and. FwdModelConf%temp_der
@@ -175,6 +176,9 @@ contains
         & 'With config(%S): Temperature derivative requested but temperature is not in "first" state vector', &
         & datum=fwdModelConf%name )
 
+    ptan => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
+      & quantityType=l_ptan, foundInFirst=ptan_der, config=fwdModelConf, &
+      & instrumentModule=fwdModelConf%signals(1)%instrumentModule )
     ptan_der = ptan_der .and. present ( jacobian )
 
     spect_der = present ( jacobian ) .and. FwdModelConf%spect_der
@@ -286,7 +290,7 @@ contains
   ! tangent grid and species).  Tan_Press is thrown in for free.
     if ( fwdModelConf%generateTScat ) then
       ! Make sure the TScat zeta is in the preselected grid.
-      call compute_Z_PSIG ( fwdModelConf, z_psig,                   &
+      call compute_Z_PSIG ( fwdModelConf, z_psig,                  &
                           & GetQuantityForForwardModel (            &
                           &  fwdModelOut, quantityType=l_TScat,     &
                           &  signal=fwdModelConf%signals(1)%index,  &
@@ -401,7 +405,7 @@ contains
     ! & Comp_SPS_Path_Frq_NZ, &
       & Comp_SPS_Path_No_Frq, Comp_1_SPS_Path_No_Frq
     use Compute_GL_Grid_M, only: Compute_GL_Grid
-    use CONSTANTS, only: Deg2Rad, Rad2Deg
+    use Constants, only: Deg2Rad, Rad2Deg
     use Convolution_m, only: Convolution, Convolution_Setup
     use Dump_0, only: Dump
     use FilterShapes_M, only: DACSFilterShapes, FilterShapes
@@ -409,11 +413,12 @@ contains
       & ForwardModelConfig_T, LineCenter, LineWidth, LineWidth_TDep
     use ForwardModelIntermediate, only: ForwardModelStatus_T, B_Refraction
     use ForwardModelVectorTools, only: GetQuantityForForwardModel
+    use Geolocation_0, only: ECR_T
     use Geometry, only: Get_R_EQ
     use Get_ETA_Matrix_M, only: ETA_D_T ! TYPE FOR ETA STRUCT
     use Get_IEEE_NaN_m, only: Fill_IEEE_NaN
     use HessianModule_1, only: Hessian_T
-    use Intrinsic, only: L_A, L_GeocAltitude, L_GeodAltitude, &
+    use Intrinsic, only: L_A, L_GeocAltitude, L_GeodAltitude, L_QTM, &
       & L_Radiance, L_TScat, L_VMR, L_Zeta
     use Load_SPS_Data_M, only: DestroyGrids_T, Dump, Grids_T
     use MatrixModule_1, only: Matrix_T
@@ -424,6 +429,7 @@ contains
       & Radiometers, Signal_T
     use MLSStringLists, only: SwitchDetail
     use Molecules, only: L_H2O, L_N2O, L_O3
+    use MoreMessage, only: MLSMessage
     use Output_M, only: NewLine, Output
     use Path_Contrib_M, only: Get_GL_Inds
     use Physics, only: SpeedOfLight
@@ -434,11 +440,11 @@ contains
     use Trace_M, only: Trace_Begin, Trace_End
     use TScat_Support_M, ONLY: TScat_Gen_Setup
     use Two_D_Hydrostatic_M, only: Two_D_Hydrostatic
-    use VectorsModule, only: DestroyVectorQuantityValue, &
+    use VectorsModule, only: CloneVectorQuantity, DestroyVectorQuantityValue, &
       & GetVectorQuantityByType, Vector_T, VectorValue_T
 
     type(forwardModelConfig_T), intent(inout) :: FwdModelConf
-    type(vector_T), intent(in) ::  FwdModelIn, FwdModelExtra
+    type(vector_T), intent(in) :: FwdModelIn, FwdModelExtra
     type(vector_T), intent(inout) :: FwdModelOut  ! Radiances, etc.
     type(forwardModelStatus_t), intent(inout) :: FmStat ! Reverse comm. stuff
     real(rp), intent(in) :: Z_PSIG(:)       ! Surfs from Temperature, tangent
@@ -456,8 +462,10 @@ contains
     type (Grids_T), intent(in) :: Grids_n   ! All the spectroscopy(N) coordinates
     type (Grids_T), intent(in) :: Grids_v   ! All the spectroscopy(V) coordinates
     type (Grids_T), intent(in) :: Grids_w   ! All the spectroscopy(W) coordinates
-    type (VectorValue_T), intent(in) :: PTan ! Tangent pressure component of state vector
-    type (VectorValue_T), intent(in) :: PhiTan ! Tangent geodAngle component of state vector
+    type (VectorValue_T), pointer :: PhiTan ! Tangent geodAngle component of
+                                            ! state vector (minor frame quantity)
+    type (VectorValue_T), intent(in) :: PTan ! Tangent pressure component of
+                                            ! state vector (minor frame quantity)
     type (VectorValue_T), intent(in) :: Temp ! Temperature component of state vector
     integer, intent(in) :: No_Mol           ! Number of molecules
     integer, intent(in) :: NoUsedChannels   ! Number of channels used
@@ -570,6 +578,8 @@ contains
     logical :: Print_TScat        ! For debugging, from -STScat
     integer :: Print_TScat_Deriv  ! For debugging, Temp deriv, from -Sdtsct
     integer :: Print_TScat_Detail ! For debugging, from -Spsct
+    logical :: UsingQTM           ! Temperature and all species have the same
+                                  ! QTM hGrid
 
     character(len=*), parameter :: TScat_Detail_Heading = &
       & "Scat_Phi   Scat_Ht   Scat_Zeta     Xi       D2     Tan_Phi    Tan_Ht  Begin Phi   End Phi Which Rev Fwd"
@@ -863,7 +873,9 @@ contains
     real(rp) :: Surf_Angle(1)
     real(rp) :: TAN_CHI_OUT(ptan%template%nosurfs)
 
-    real(rp) :: EarthRadC_sq ! (minor axis of orbit plane projected Earth ellipse)**2
+!  The 'all_radiometers grid file' approach variables declaration:
+
+    real(rp) :: Max_ch_freq_grid, Min_ch_freq_grid
 
 ! *** Beta & Molecules grouping variables:
     type (Beta_Group_T), pointer :: Beta_Group(:) ! from FwdModelConf%Beta_Group
@@ -893,7 +905,7 @@ contains
     type (VectorValue_T), pointer :: F             ! An arbitrary species
     type (VectorValue_T), pointer :: GPH           ! Geopotential height
     type (VectorValue_T), pointer :: IWC           ! IWC at scattering points, for TScat gen.
-    type (VectorValue_T), pointer :: LOSVel        ! Line of sight velocity
+    type (VectorValue_T), pointer :: LOSVel        ! Line of sight velocity m/s
     type (VectorValue_T), pointer :: OrbIncline    ! Orbital inclination
     type (VectorValue_T), pointer :: RefGPH        ! Reference geopotential height
     type (VectorValue_T), pointer :: ScatteringAngles ! for TScat computation
@@ -902,9 +914,25 @@ contains
     type (VectorValue_T), pointer :: SurfaceHeight ! km above mean sea level
     type (VectorValue_T), pointer :: ThisRadiance  ! A radiance vector quantity
 
-!  The 'all_radiometers grid file' approach variables declaration:
+    ! Intermediate minor-frame tangent quantities calculated from LOS, for QTM
+    type (VectorValue_T) :: Q_EarthRadC_sq
+    type (VectorValue_T) :: Q_Incline
+    type (VectorValue_T) :: Q_LOS
+    type (VectorValue_T), target :: Q_PhiTan
+    type (VectorValue_T) :: Q_TanHt
 
-    real(rp) :: max_ch_freq_grid, min_ch_freq_grid
+    ! Coarse-zeta grid tangent quantities interpreted from intermediate
+    ! minor-frame tangent quantities calculated from LOS, for QTM
+    type (ECR_T) :: LOS(2,2,no_tan_hts)  ! Lines-of-sight, (1:2,1,:) are before
+                                         ! intersection or tangent, (1:2,2,:) are
+                                         ! after.  (1,:,:) are intersection or
+                                         ! tangent, (2,:,:) are unit vector along
+                                         ! lines-of-sight.
+    real(rp) :: Incline(no_tan_hts)      ! Inclination of plane containing LOS
+                                         ! and Earth center, degrees
+    real(rp) :: EarthRadC_sq(no_tan_hts) ! Square of minor axis of plane-projected
+                                         ! ellipse, meters^2
+    real(rp) :: TanHt(no_tan_hts)        ! Tangent heights, meters
 
 ! Scattering source function for each temperature surface
     type (VectorValue_T) :: scat_src
@@ -922,19 +950,19 @@ contains
     if ( NaN_Fill ) then
       ! Scalar RP:
       call fill_IEEE_NaN ( e_rflty, h_surf, min_zeta, min_phi, vel_rel, &
-        & earthradc_sq, max_ch_freq_grid, min_ch_freq_grid )
+        & max_ch_freq_grid, min_ch_freq_grid )
       ! Rank 1 RP:
       call fill_IEEE_NaN ( Alpha_path_c, Alpha_path_f, b, &
         & beta_path_cloud_c, beta_c_e_path_c, beta_c_s_path_c, &
         & dAlpha_dT_path_f, del_s, del_zeta, dBeta_c_a_dIWC_path_C, &
         & dBeta_c_s_dIWC_path_C, dBeta_c_a_dT_path_C, dBeta_c_s_dT_path_C, &
         & dhdz_path, dhdz_gw_path, dsdh_path, dsdz_c, dsdz_gw_path, dTanh_dT_c, &
-        & dTanh_dT_f, h_path, h_path_c, n_path_f, phi_path, ptg_angles, &
-        & ref_corr )
+        & dTanh_dT_f, h_path, h_path_c, n_path_f, phi_path, &
+        & ptg_angles, ref_corr )
       call fill_IEEE_NaN ( tan_dh_dT, tanh1_c, tanh1_f, t_path, t_path_c, &
         & t_path_f, tt_path_c, w0_path_c, z_coarse, z_glgrid, z_path )
-      call fill_IEEE_NaN ( est_scgeocalt, est_los_vel, tan_d2h_dhdT, &
-        & tan_phi )
+      call fill_IEEE_NaN ( earthradc_sq, est_scgeocalt, est_los_vel, &
+        & tan_d2h_dhdT, tan_phi )
       call fill_IEEE_NaN ( dh_dz_out, dx_dh_out )
       call fill_IEEE_NaN ( dB_df, surf_angle, tan_chi_out )
       ! Rank 1 R4:
@@ -1070,7 +1098,7 @@ contains
     else
       if ( FwdModelConf%incl_cld ) call cloud_setup
       call convolution_setup ( DH_DZ_OUT, DX_DH_OUT, DXDT_Surface, &
-                             & DXDT_TAN, EarthRadC_sq, Est_ScGeocAlt, &
+                             & DXDT_TAN, Q_EarthRadC_sq, Est_ScGeocAlt, &
                              & FwdModelConf, &
                              & FwdModelExtra, FwdModelIn, Grids_f, Grids_tmp, &
                              & L1BMIF_TAI, MAF, MIFDeadTime, &
@@ -1176,7 +1204,7 @@ contains
       if ( .not. fwdModelConf%generateTScat ) call convolution & ! or interpolate to ptan
         ( DH_DZ_OUT, DX_DH_OUT, DX_DT, DXDT_Surface, &
         & DXDT_TAN, D2X_DXDT, &
-        & EarthRadC_sq, Est_ScGeocAlt, FirstSignal, FmStat, &
+        & Q_EarthRadC_sq, Est_ScGeocAlt, FirstSignal, FmStat, &
         & FwdModelConf, FwdModelExtra, FwdModelIn, FwdModelOut, &
         & Grids_f, Grids_n, Grids_tmp, Grids_v, Grids_w, &
         & H_Atmos, K_Atmos, K_Spect_DN, K_Spect_DV, K_Spect_DW, &
@@ -1285,6 +1313,15 @@ contains
       call DestroyVectorQuantityValue ( cld_ext, forWhom='cld_ext' )
     end if
 
+    ! If hGrids were QTM, destroy intermediate minor-frame quantities
+    if ( usingQTM ) then
+      call DestroyVectorQuantityValue ( Q_EarthRadC_sq, forWhom='Q_EarthRadC_sq' )
+      call DestroyVectorQuantityValue ( Q_Incline, forWhom='Q_Incline' )
+      call DestroyVectorQuantityValue ( Q_LOS, forWhom='Q_LOS' )
+      call DestroyVectorQuantityValue ( Q_PhiTan, forWhom='Q_PhiTan' )
+      call DestroyVectorQuantityValue ( Q_TanHt, forWhom='Q_TanHt' )
+    end if
+
     call trace_end ( 'FullForwardModelAuto, MAF=', fmStat%maf, &
       & cond=toggle(emit) )
 
@@ -1307,17 +1344,56 @@ contains
     ! for convolution and stuff for clouds.
 
       use Geometry, only: Orbit_Plane_Minor_Axis_sq
-      use Intrinsic, only: L_EARTHREFL, L_ECRtoFOV, L_GPH, L_LOSVEL,  &
-        & L_SurfaceHeight, L_ORBITINCLINATION, L_REFGPH, L_SCGEOCALT, &
-        & L_SPACERADIANCE
+      use Intrinsic, only: L_EarthRefl, L_ECRtoFOV, L_GPH, L_LOSVel,  &
+        & L_SurfaceHeight, L_OrbitInclination, L_REFGPH, L_ScGeocAlt, &
+        & L_SpaceRadiance
       use ManipulateVectorQuantities, only: DoHGridsMatch
+      use Tangent_Quantities_m, only: Tangent_Quantities
 
-      integer :: Me = -1    ! String index for trace
+      integer :: Me = -1  ! String index for trace
+      logical :: QTM_fail
+      logical :: SpsQTM   ! Species being examined in Grids_F has QTM hGrid
 
       call trace_begin ( me, 'ForwardModel.Both_Sidebands_Setup', &
         & cond=toggle(emit)  .and. levels(emit) > 0  )
 
-      fmStat%flags = 0 ! Assume no errors
+      fmStat%flags = 0   ! Assume no errors
+      QTM_fail = .false. ! Assume no errors
+
+      ! If temperature is QTM, verify that all the species hGrids are the
+      ! same QTM, and if not, verify that no species hGrid is QTM.
+      usingQTM = associated(temp%template%the_hGrid)
+      if ( usingQTM ) usingQTM = temp%template%the_hGrid%type == l_QTM
+      do k = 1, size(grids_f%qtyStuff)
+        spsQTM = associated(grids_f%qtyStuff(k)%qty%template%the_hGrid)
+        if ( spsQTM ) &
+          & spsQTM = grids_f%qtyStuff(k)%qty%template%the_hGrid%type == l_QTM
+        if ( spsQTM ) then
+          if ( .not. usingQTM ) then
+            call MLSMessage ( MLSMSG_Warning, moduleName, &
+              & 'Species %s has QTM hGrid, but temperature does not.', &
+              & grids_f%qtyStuff(k)%qty%template%the_hGrid%name )
+            QTM_fail = .true.
+          end if
+          spsQTM = grids_f%qtyStuff(k)%qty%template%the_hGrid%name == &
+                   temp%template%the_hGrid%name
+        end if
+        if ( usingQTM .and. .not. spsQTM ) then
+          call MLSMessage ( MLSMSG_Warning, moduleName, &
+            & 'Quantity %s does not have same QTM hGrid as temperature.', &
+            & grids_f%qtyStuff(k)%qty%template%the_hGrid%name )
+          QTM_fail = .true.
+        end if
+      end do
+      if ( usingQTM ) then
+        if ( QTM_fail ) call MLSMessage ( MLSMSG_Error, moduleName, &
+          & 'Quantities do not have identical QTM hGrids.' )
+        ! Compute tangent quantities from LOS provided by level 1
+        call tangent_quantities ( MAF, fwdModelConf, fwdModelIn, fwdModelExtra, &
+                                & Q_EarthRadC_sq, Q_Incline, Q_LOS, Q_PhiTan, &
+                                & Q_TanHt )
+        phiTan => Q_PhiTan ! Use the calculated one, not the one in FwdModelIn
+      end if
 
       temp_der = fwdModelConf%temp%derivOK
       atmos_der = present ( jacobian ) .and. FwdModelConf%atmos_der
@@ -1349,20 +1425,22 @@ contains
       ! Start sorting out stuff from state vector ------------------------------
 
       ! Identify the appropriate state vector components
-      ! VMRS are in Beta_group%qty, gotten by get_species_data
-      gph => GetQuantityForForwardModel (fwdModelIn, fwdModelExtra, &
-        & quantityType=l_gph, config=fwdModelConf )
-      earthRefl => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
-        & quantityType=l_earthRefl, config=fwdModelConf )
+      ! VMRS are in Beta_group%qty, gotten by get_species_data.
+      ! First the minor frame quantities:
       losVel => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
         & quantityType=l_losVel, instrumentModule=firstSignal%instrumentModule, &
         & config=fwdModelConf )
       orbIncline => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
         & quantityType=l_orbitInclination, config=fwdModelConf )
-      refGPH => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
-        & quantityType=l_refGPH, config=fwdModelConf )
       scGeocAlt => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
         & quantityType=l_scGeocAlt, config=fwdModelConf )
+      ! Now the others:
+      gph => GetQuantityForForwardModel (fwdModelIn, fwdModelExtra, &
+        & quantityType=l_gph, config=fwdModelConf )
+      earthRefl => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
+        & quantityType=l_earthRefl, config=fwdModelConf )
+      refGPH => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
+        & quantityType=l_refGPH, config=fwdModelConf )
       spaceRadiance => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
         & quantityType=l_spaceRadiance, config=fwdModelConf )
       surfaceHeight => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
@@ -1399,9 +1477,33 @@ contains
 
       ! interpolate tan_phi, scgeocalt and losvel from MIFs to pointings
       if ( .not. FwdModelConf%generateTScat ) then
-         call estimate_tan_phi ( nlvl, maf, phitan, ptan, &
+        if ( .not. usingQTM ) then
+          call estimate_tan_phi ( nlvl, maf, phitan, ptan, &
                                 & scgeocalt, losvel, tan_press, &
                                 & tan_phi, est_scgeocalt, est_los_vel )
+          call cloneVectorQuantity ( Q_Incline, phitan )
+          call cloneVectorQuantity ( Q_earthRadC_sq, phitan )
+          ! Create minor-frame values, all the same
+          Q_Incline%values = orbIncline%values(1,MAF)
+          Q_EarthRadC_sq%values = &
+            & orbit_plane_minor_axis_sq ( Q_Incline%values * deg2rad )
+          ! Create coarse-grid tangent-point values, all the same
+          earthradc_sq = &
+            & orbit_plane_minor_axis_sq ( orbIncline%values(1,maf) * deg2rad )
+        else
+          call estimate_tan_phi ( nlvl, maf, phitan, ptan, &
+                                & scgeocalt, losvel, tan_press, &
+                                & tan_phi, est_scgeocalt, est_los_vel, &
+                                & Q_EarthRadC_sq, Q_Incline, Q_LOS, Q_TanHt, &
+                                & earthRadC_sq,   incline,   LOS,   tanHt  )
+          ! Q_EarthRadC_sq, Q_Incline, Q_LOS, Q_TanHt are interpolated to
+          ! earthRadC_sq,   incline,   LOS,   tanHt by Estimate_Tan_Phi
+        end if
+      else
+        ! Compute the square of the minor axis of the orbit plane projected
+        ! Earth ellipse.
+
+        earthradc_sq = orbit_plane_minor_axis_sq ( orbIncline%values(1,maf) * deg2rad )
       end if
 
       ! Now, allocate other variables we're going to need later --------
@@ -1413,10 +1515,6 @@ contains
           & moduleName )
       end if
 
-      ! Compute the square of the minor axis of the orbit plane projected Earth
-      ! ellipse.
-
-      earthradc_sq = orbit_plane_minor_axis_sq ( orbIncline%values(1,maf) * deg2rad )
 
       call trace_end ( 'ForwardModel.Both_Sidebands_Setup', &
         & cond=toggle(emit) .and. levels(emit) > 0  )
@@ -2213,7 +2311,7 @@ contains
       vel_rel = LOSVel%values(FwdModelConf%TScatMIF,MAF) / speedOfLight
 
       phi_ref = mod(phitan%values(FwdModelConf%TScatMIF,MAF),360.0_r8) * deg2rad
-      r_eq = get_R_eq ( phi_ref, earthradc_sq )
+      r_eq = get_R_eq ( phi_ref, earthradc_sq(1) )
 
       if ( print_TScat_detail > 0 .and. .not. print_TScat_deriv > -1 .and. .not. &
         & print_incopt .and. .not. print_incrad .and. print_path <= 0 ) then
@@ -3675,7 +3773,8 @@ contains
       if ( present(use_r_eq) ) then
         r_eq = use_r_eq
       else
-        r_eq = get_r_eq ( tan_phi, earthradc_sq ) ! Geometric earth radius
+        !!!!!  QTM needs earthradc_sq(:)  !!!!!
+        r_eq = get_r_eq ( tan_phi, earthradc_sq(1) ) ! Geometric earth radius
       end if
 
       ! Get H_Path and Phi_Path on the fine grid.
@@ -4423,36 +4522,64 @@ contains
 ! =====     Private procedures     =====================================
 
   ! -------------------------------------------  Estimate_Tan_Phi  -----
-  subroutine Estimate_Tan_Phi ( nlvl, maf, phitan, ptan, &
-                              & scgeocalt, losvel, tan_press, &
-                              & tan_phi, est_scgeocalt, est_los_vel )
+  subroutine Estimate_Tan_Phi ( Nlvl, MAF, PhiTan, PTan, &
+                              & ScGeocAlt, LOSVel, Tan_Press, &
+                              & Tan_Phi, Est_ScGeocAlt, Est_LOS_Vel, &
+                              & Q_EarthRadC_sq, Q_Incline, Q_LOS, Q_TanHt, &
+                              & EarthRadC, Incline, LOS, TanHt  )
 
-  ! Estimate Tan_Phi, SC_geoc_alt and LOS Velocity.
+  ! Interpolate minor frame quantities PhiTan, ScGeocAlt, and LOSVel at
+  ! pressure levels given by PTan to Tan_Phi, SC_Geoc_Alt and LOS Velocity at
+  ! pressure levels given by Tan_Press.
 
-    use MLSKINDS, only: RK => RP
-    use MLSNUMERICS, only: INTERPOLATEVALUES
-    use CONSTANTS, only: DEG2RAD
-    use VECTORSMODULE, only: VECTORVALUE_T
+    use Geolocation_0, only: ECR_T
+    use MLSKinds, only: RK => RP
+    use MLSNumerics, only: InterpolateValues
+    use Constants, only: Deg2Rad
+    use VectorsModule, only: VectorValue_T
 
     implicit NONE
 
   ! Inputs
-    integer, intent(in) :: NLVL                    ! Size of integration grid
-    integer, intent(in) :: MAF                     ! MAF under consideration
-    type (VectorValue_T), intent(in) :: PHITAN     ! Tangent geodAngle component of state vector
-    type (VectorValue_T), intent(in) :: PTAN       ! Tangent pressure component of state vector
-    type (VectorValue_T), intent(in) :: SCGEOCALT  ! S/C geocentric altitude /m
-    type (VectorValue_T), intent(in) :: losvel     ! line of sight velocity by mif and maf
-    real(rk), dimension(:), intent(in) :: Tan_press
+    integer, intent(in) :: NLvl                   ! Size of integration grid
+    integer, intent(in) :: MAF                    ! MAF under consideration
+    type(vectorValue_T), intent(in) :: PhiTan     ! Tangent geodAngle (minor
+                                                  ! frame), degrees
+    type(vectorValue_T), intent(in) :: PTan       ! Tangent pressure (minor
+                                                  ! frame), zeta
+    type(vectorValue_T), intent(in) :: ScGeocAlt  ! S/C geocentric altitude
+                                                  ! (minor frame), meters
+    type(vectorValue_T), intent(in) :: LOSVel     ! Line of sight velocity by mif
+                                                  ! and maf (minor frame), m/s
+    real(rk), dimension(:), intent(in) :: Tan_press ! Tangent pressure levels
+                                                  ! where the other quantities
+                                                  ! are desired, zeta.
 
   ! Outputs
-    real(rk), dimension(:), intent(out) :: Tan_phi
-    real(rk), dimension(:), intent(out) :: Est_scgeocalt ! Est S/C geocentric altitude /m
-    real(rk), dimension(:), intent(out) :: est_los_vel
+    real(rk), intent(out) :: Tan_Phi(:)
+    real(rk), intent(out) :: Est_ScGeocAlt(:) ! Est S/C geocentric altitude /m
+    real(rk), intent(out) :: Est_LOS_Vel(:)
+
+  ! Optional inputs, for QTM-based model
+    type(vectorValue_T), intent(in), optional :: Q_EarthRadC_sq ! square of orbit-
+                                                  ! plane projected ellipse, m^2
+    type(vectorValue_t), intent(in), optional :: Q_Incline ! Degrees, geocentric
+    type(vectorValue_t), intent(in), optional :: Q_LOS     ! LOS as C + s U
+    type(vectorValue_t), intent(in), optional :: Q_TanHt   ! Geodetic height, above
+                                                  ! plane-projected ellipse, meters
+  ! Optional outputs, interpolated to Tan_Press, for QTM-based model
+    type(ECR_t), intent(out), optional :: LOS(:,:,:) ! (1,1:2,:) are points on LOS,
+                                                  ! (2,1:2,:) are unit directions
+    real(rk), intent(out), optional :: Incline(:) ! Inclination of the plane
+                                                  ! defined by LOS and the
+                                                  ! Earth center, degrees.
+    real(rk), intent(out), optional :: EarthRadC(:) ! Plane-projected
+                                                  ! minor axis**2, m**2
+    real(rk), intent(out), optional :: TanHt(:)   ! Tangent height, m
 
   ! Local variables
     integer :: I, JF, K, SUB
-    real(rk) :: RP, RT, RV, RZ       ! real variables for various uses
+    real(rk) :: RP, RT, RV, RZ ! real variables for various uses
     real(rk), dimension(ptan%template%noSurfs) :: &
       & P_MIF, &               ! Pressures for MIFs
       & T_MIF, &               ! Temperatures for MIFs
@@ -4527,6 +4654,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.366  2016/05/02 23:32:52  vsnyder
+! Get temperature quantity from FwdModelConf, remove some unused stuff
+!
 ! Revision 2.365  2016/04/21 02:00:12  vsnyder
 ! Move Convolution and Convolution_Setup to Convolution_m
 !
