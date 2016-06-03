@@ -42,12 +42,10 @@ contains ! =====     Public Procedures     =============================
   ! Outputs:
     integer, intent(out) :: No_Tan_Hts          ! Number of tangent heights
     integer, intent(out) :: SurfaceTangentIndex ! First or surface tangent index
-    real(rp), pointer :: Tan_Press(:)  ! Pressures at tangent points in z_psig
+    real(rp), allocatable :: Tan_Press(:)  ! Pressures at tangent points in z_psig
 
     ! Allocate tan_press and compute it from fwdModelConf%tangentGrid%surfs
     ! and z_grid
-
-    nullify ( tan_press )
 
     if ( associated(FwdModelConf%tangentGrid) ) then
       surfaceTangentIndex = COUNT( fwdModelConf%tangentGrid%surfs < &
@@ -81,6 +79,9 @@ contains ! =====     Public Procedures     =============================
 end module Tangent_Pressures_m
 
 ! $Log$
+! Revision 2.2  2016/06/03 23:44:44  vsnyder
+! Make Tan_Press allocatable instead of a pointer
+!
 ! Revision 2.1  2013/07/11 00:00:01  vsnyder
 ! Initial commit
 !
