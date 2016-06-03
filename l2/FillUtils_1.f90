@@ -7698,8 +7698,12 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.123  2016/06/03 20:54:38  vsnyder
+! Correct the log for the previous commit
+!
 ! Revision 2.122  2016/06/03 20:52:04  vsnyder
-! FillUtils_1.f90
+! Allow scVelQuantity and geocAltitudeQuantity to have different numbers
+! of "channels" in the magnetic fill.
 !
 ! Revision 2.121  2016/05/18 01:37:30  vsnyder
 ! Change HGrids database from an array of HGrid_T to an array of pointers
