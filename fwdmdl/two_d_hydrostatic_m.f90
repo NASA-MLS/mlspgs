@@ -115,7 +115,10 @@ contains
           & / sqrt(earthrada**4*(1.0_rp-sinPhiSQ) + csq**2*sinPhiSQ))
       else ! QTM-based grid
         associate ( template => Grids_tmp%qtyStuff(i)%qty%template )
-          lat = deg2rad * template%the_HGrid%QTM_geo(Grids_tmp%QTM_geo(i))%lat
+          ! If QTM, all of the QTM grid is used, so we don't need to get
+          ! a subset of the indices that depend upon the phi window from
+          ! grids_tmp.
+          lat = deg2rad * template%the_HGrid%QTM_geo(i)%lat
           if ( template%latitudeCoordinate == l_geodetic ) then
             ! Similar to GeocToGeodLat from Geometry, but result is radians
             lat = atan2 ( f2 * sin(lat), cos(lat) ) ! Convert geodetic to geocentric
@@ -155,6 +158,9 @@ contains
 end module Two_D_Hydrostatic_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.24  2016/05/12 15:21:13  pwagner
+! Avoid referring to unassociated the_HGrid
+!
 ! Revision 2.23  2016/05/10 00:09:02  vsnyder
 ! Compute hydrostatic equilibrium on profiles at QTM vertices
 !
