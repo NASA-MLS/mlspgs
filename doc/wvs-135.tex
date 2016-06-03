@@ -12,8 +12,8 @@
 \topmargin -0.5in
 \textheight 9in
 
-\newcommand{\docname}{wvs-135r2}
-\newcommand{\docdate}{31 May 2016}
+\newcommand{\docname}{wvs-135r3}
+\newcommand{\docdate}{2 June 2016}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
@@ -128,7 +128,7 @@ number for each point in the grid, which can be used to compute a column
 subscript for the Jacobian.  Let us further assume that this same serial
 number is used to index the set of interpolation coefficients, and any
 other quantities related to the grid, such as the horizontal subscript for
-heights -- assuming the primary vertical coordinate is $\zeta$, and is
+heights -- assuming the primary vertical co\"ordinate is $\zeta$, and is
 stacked and coherent.  With these parts in hand, the remainder of the
 forward model should be insensitive to the grid.
 
@@ -298,17 +298,24 @@ and $\mathbf{\hat{E}} = (-\mathbf{\hat{N}}_y, \mathbf{\hat{N}}_x,0)/r$ is
 an unit vector in that direction.  This would be the ascending node of an
 orbit.  The value the full forward model calls the orbit geodetic angle
 $\phi$ is the angle that a vector normal to the Earth's surface toward
-$\mathbf{T}$ makes with the equator, or the complement of the angle it
-makes with the nearest pole.  The geodetic latitude $\lambda$ of
-$\mathbf{T}$ can be computed efficiently from $\mathbf{T}$ using
-Fukushima's algorithm\footnote{Fukushima's algorithm converges in one
-iteration to within a few micro arc seconds at geodetic altitudes below
-30,000 km.}.  Then $\phi=\lambda$ if $\lambda \mathbf{U}_z \geq 0$, or
-$\phi = \text{signum}(\lambda) ( 180^\circ - |\lambda|)$ otherwise.  From
-this we have $-180^\circ \leq \phi \leq 180^\circ$.  The full forward
-model prefers to use $\phi \leftarrow 360^\circ + \phi$ if $\phi < 0$. 
-The semi-minor axis $c$ of the plane-projected ellipse can be calculated
-from $\beta$ and either $\phi$ or $\lambda$.
+$\mathbf{T}$ makes with the major axis of the plane-projected ellipse, or
+the complement of the angle it makes with the minor axis.  Let $\mathbf{P}
+= \mathbf{N} \times \mathbf{E}$ be the vector along the minor axis of the
+plane-projected ellipse and $\mathbf{\hat{P}} = \mathbf{P}/|\mathbf{P}|$
+be the corresponding unit vector.  Then $\mathbf{T}_x = \mathbf{\hat{E}}
+\cdot \mathbf{T}$ and $\mathbf{T}_z = \mathbf{E} \cdot \mathbf{\hat{P}}$
+are $x$ and $z$ co\"ordinates of $\mathbf{T}$ with respect to the
+plane-projected ellipse.  The angle $\lambda$, which would be the geodetic
+latitude if the Earth's minor axis length were $c$, can be computed
+efficiently from $\mathbf{T}_x$ and $\mathbf{T}_z$ using Fukushima's
+algorithm\footnote{Fukushima's algorithm converges in one iteration to
+within a few micro arc seconds at geodetic altitudes below 30,000 km.}. 
+Then $\phi=\lambda$ if $\lambda \mathbf{U}_z \geq 0$, or $\phi =
+\text{signum}(\lambda) ( 180^\circ - |\lambda|)$ otherwise.  From this we
+have $-180^\circ \leq \phi \leq 180^\circ$.  The full forward model
+prefers to use $\phi \leftarrow 360^\circ + \phi$ if $\phi < 0$.  The
+semi-minor axis $c$ of the plane-projected ellipse can be calculated from
+$\beta$ and either $\phi$ or $\lambda$.
 
 After computing $\mathbf{T}$, $\phi$, $\beta$, and $c$ for every MIF,
 these values can be interpolated to the tangent for each pointing for each
@@ -386,6 +393,12 @@ most part, with little interaction with other modules.
 % $Id$
 
 % $Log$
+% Revision 1.3  2016/06/01 00:56:45  vsnyder
+% Describe how to compute orbit geodetic angle phi, orbit inclination beta,
+% semi-minor axis of orbit-plane projected ellipse, and tangent or
+% intersection, for each MIF and then each pointing, from Level 1 pointing
+% data alone.
+%
 % Revision 1.2  2016/04/28 23:05:58  vsnyder
 % Add remark about Tikhonov, PhiTan
 %
