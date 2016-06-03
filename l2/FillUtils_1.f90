@@ -4663,7 +4663,7 @@ contains ! =====     Public Procedures     =============================
       end if
       if ( present(scVelQuantity) .and. present(geocAltitudeQuantity) ) then
         if ( .not. quantitiesAreCompatible ( scVelQuantity%template, geocAltitudeQuantity%template, &
-                                           & differentTypeOK=.true. ) ) then
+                   & differentTypeOK=.true., differentChansOK=.true. ) ) then
           call MLSMessage ( MLSMSG_Error, moduleName, &
             & "Spacecraft velocity and tangent altitude quantities are not " // &
             & "compatible" )
@@ -7698,6 +7698,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.122  2016/06/03 20:52:04  vsnyder
+! FillUtils_1.f90
+!
 ! Revision 2.121  2016/05/18 01:37:30  vsnyder
 ! Change HGrids database from an array of HGrid_T to an array of pointers
 ! to HGrid_T using the new type HGrids_T.
