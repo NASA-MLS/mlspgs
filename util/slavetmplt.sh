@@ -187,7 +187,7 @@ SLVPROG=ssllaavveessccrriipptt
 OTHEROPTS=ootthheerrooppttss
 PGE_BINARY=ppggeebbiinnaarryy
 
-export PGS_PC_INFO_FILE PGSMEM_USESHM
+export PGS_PC_INFO_FILE PGSMEM_USESHM PGSHOME
 export FLIB_DVT_BUFFER=0
 
 # Puts each slave's output into its own unique file
@@ -569,6 +569,9 @@ do_the_call $all_my_opts
 exit 0
 
 # $Log$
+# Revision 1.36  2016/05/12 17:01:28  pwagner
+# Obey CAPTURE_MT by capturing time, mmory footpint to stderr
+#
 # Revision 1.35  2015/09/25 00:12:52  pwagner
 # Added --maxChunkSize option
 #
