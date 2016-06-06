@@ -10,32 +10,31 @@
 ! foreign countries or providing access to foreign persons.
 
 program Spartacus
-  use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
-  use HIGHOUTPUT, only: OUTPUT_DATE_AND_TIME, TIMESTAMP
-  use L2PARINFO, only: PARALLEL, INITPARALLEL
-  use L2PARINFO, only: MACHINE_T, PARALLEL, &
-    & PETITIONTAG, GIVEUPTAG, GRANTEDTAG, NOTIFYTAG, &
-    & SIG_FINISHED, SIG_REGISTER, &
-    & SIG_HOSTDIED, SIG_RELEASEHOST, SIG_REQUESTHOST, SIG_THANKSHOST, &
-    & MACHINENAMELEN, GETMACHINES, GETNICETIDSTRING, &
-    & DUMP, ADDMACHINETODATABASE
-  use machine, only: usleep
-  use MLSCOMMON, only: FILENAMELEN
-  use MLSL2OPTIONS, only: CURRENT_VERSION_ID
-  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMESSAGECONFIG, &
-    & MLSMSG_ERROR, &
-    & MLSMSG_WARNING, PVMERRORMESSAGE
-  use MLSFINDS, only: FINDFIRST
-  use MLSSTRINGS, only: LOWERCASE, UNWRAPLINES
-  use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT, OUTPUTOPTIONS
+  use allocate_deallocate, only: allocate_test, deallocate_test
+  use highOutput, only: output_date_and_time, timestamp
+  use L2Parinfo, only: parallel, initparallel
+  use L2Parinfo, only: machine_t, parallel, &
+    & petitiontag, giveuptag, grantedtag, notifytag, &
+    & sig_finished, sig_register, &
+    & sig_hostdied, sig_releasehost, sig_requesthost, sig_thankshost, &
+    & machineNameLen, getMachines, getNiceTIDString, &
+    & dump, addMachineToDatabase
+  use Machine, only: io_error, USleep
+  use MLSCommon, only: fileNameLen
+  use MLSL2Options, only: current_version_id
+  use MLSMessageModule, only: MLSMessage, MLSMessageConfig, &
+    & MLSMsg_error, &
+    & MLSMsg_warning, PVMErrormessage
+  use MLSFinds, only: findFirst
+  use MLSStrings, only: lowercase, unwraplines
+  use output_m, only: blanks, newline, output, outputoptions
   use PrintIt_m, only: Set_Config
-  use PVM, only: CLEARPVMARGS, MYPVMSPAWN, NEXTPVMARG, &
-    & PVMDATADEFAULT, PVMFINITSEND, PVMF90PACK, PVMFKILL, PVMFMYTID, &
-    & PVMF90UNPACK, &
-    & PVMFSEND, PVMFNOTIFY, PVMTASKEXIT, PVMTASKHOST
-  use TIME_M, only: TIME_NOW, TIME_CONFIG
-  use TOGGLES, only: GEN, LEVELS, &
-    & TOGGLE
+  use PVM, only: clearPVMArgs, myPVMSpawn, nextPVMArg, &
+    & PVMdatadefault, PVMFinitsend, PVMF90pack, PVMFkill, PVMFmytid, &
+    & PVMF90Unpack, &
+    & PVMFsend, PVMFnotify, PVMTaskExit, PVMTaskHost
+  use time_m, only: time_now, time_config
+  use toggles, only: gen, levels, toggle
 
   ! === (start of toc) ===
   !     c o n t e n t s
@@ -618,7 +617,7 @@ contains
 
   ! ---------------------------------------------  get_options  -----
   subroutine get_options
-  use MACHINE ! At least HP for command lines, and maybe GETARG, too
+  use machine ! At least HP for command lines, and maybe GETARG, too
     ! Internal variables
     integer :: i
     integer :: j
@@ -1105,7 +1104,7 @@ contains
   function spawnRebellion( act, PvmTaskHost, machineName, ntask, tids ) &
     & result(info)
     ! Prepare for myPVMSpawn by separating command from args
-    use MLSSTRINGLISTS, only: NUMSTRINGELEMENTS, STRINGELEMENT
+    use MLSStringLists, only: numStringElements, stringElement
     ! Args
     character(len=*), intent(in)               :: act
     integer, intent(in)                        :: PvmTaskHost
@@ -1219,6 +1218,9 @@ contains
 end module BOGUS_MODULE
 
 ! $Log$
+! Revision 1.12  2016/06/06 21:15:56  pwagner
+! Gets USleep from machine module; renamed machine counter to machNum
+!
 ! Revision 1.11  2014/03/04 18:50:28  pwagner
 ! Must allow more commands and lines; should there even be a limit?
 !
