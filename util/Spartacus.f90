@@ -19,6 +19,7 @@ program Spartacus
     & SIG_HOSTDIED, SIG_RELEASEHOST, SIG_REQUESTHOST, SIG_THANKSHOST, &
     & MACHINENAMELEN, GETMACHINES, GETNICETIDSTRING, &
     & DUMP, ADDMACHINETODATABASE
+  use machine, only: usleep
   use MLSCOMMON, only: FILENAMELEN
   use MLSL2OPTIONS, only: CURRENT_VERSION_ID
   use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMESSAGECONFIG, &
@@ -154,7 +155,7 @@ program Spartacus
   logical, dimension(:), pointer :: CmdSABANDONED ! Cmds kept failing
   integer :: L2QTid
   character(len=MAXLINELEN), dimension(MAXNUMLINES) :: lines
-  integer :: machine
+  integer :: machNum
   logical :: machineRequestQueued
   type (Machine_T),dimension(:), pointer :: Machines
   integer :: nextCmd
@@ -316,31 +317,31 @@ program Spartacus
     ! In the first part, we look to see if there are any Cmds still to be
     ! started done, and any vacant machines to do them.
     ! --------------------------------------------------------- Start new jobs? --
-    do while ( CmdAndMachineReady() ) ! (nextCmd, machine) )
+    do while ( CmdAndMachineReady() ) ! (nextCmd, machNum) )
       if ( nextCmd < 1 ) then
         ! Should have returned false
         call MLSMessage ( MLSMSG_Error, ModuleName, &
           & 'Illegal Cmd number' )
       endif
       info = SpawnRebellion ( trim(cmds(nextCmd)), PvmTaskHost, &
-        & trim(machines(machine)%Name), 1, tidarr )
+        & trim(machines(machNum)%Name), 1, tidarr )
       if ( options%verbose ) then
         call output ( 'Tried to spawn ' )
         call TimeStamp ( trim(cmds(nextCmd)), advance='yes' )
         call output ( 'PvmTaskHost ' )
         call output ( PvmTaskHost, advance='yes' )
         call output ( 'on machine ' )
-        call output ( trim(machines(machine)%Name), advance='yes' )
+        call output ( trim(machines(machNum)%Name), advance='yes' )
         call output ( 'result was ' )
         call output ( info, advance='yes' )
       end if
 
       ! Did this launch work
       if ( info == 1 ) then
-        machines(machine)%free = .false.
-        machines(machine)%tid = tidArr(1)
-        machines(machine)%Chunk = nextCmd
-        CmdMachines(nextCmd) = machine
+        machines(machNum)%free = .false.
+        machines(machNum)%tid = tidArr(1)
+        machines(machNum)%Chunk = nextCmd
+        CmdMachines(nextCmd) = machNum
         CmdTids(nextCmd) = tidArr(1)
         CmdNiceTids(nextCmd) = GetNiceTidString(CmdTids(nextCmd))
         CmdsStarted(nextCmd) = .true.
@@ -351,18 +352,18 @@ program Spartacus
           endif
           call output ( 'Launched Cmd ' )
           call output ( nextCmd )
-          call TimeStamp ( ' on slave ' // trim(machines(machine)%name) // &
+          call TimeStamp ( ' on slave ' // trim(machines(machNum)%name) // &
             & ' ' // trim(CmdNiceTids(nextCmd)), &
             & advance='yes' )
         end if
         call WelcomeSlave ( nextCmd, CmdTids(nextCmd) )
-        call ThankL2Q(machines(machine), L2Qtid)
+        call ThankL2Q(machines(machNum), L2Qtid)
         skipDeathWatch = .true.
       else
         ! Couldn't start this job, mark this machine as unreliable
         if ( options%verbose ) then
           call output ( 'Unable to start slave task on ' // &
-            & trim(machines(machine)%Name) // ' info=' )
+            & trim(machines(machNum)%Name) // ' info=' )
           if ( info == -6 ) then
             call TimeStamp ( '(pvm demon dispirited)', advance='yes' )
           elseif ( info == -7 ) then
@@ -375,12 +376,12 @@ program Spartacus
           call TimeStamp ( 'Marking this machine as not usable', advance='yes')
         end if
         ! Mark all instances of this machine as not to be used.
-        where ( machines%Name == machines(machine)%Name )
+        where ( machines%Name == machines(machNum)%Name )
           machines%OK = .false.
         end where
-        call ThankL2Q( machines(machine), L2Qtid )
+        call ThankL2Q( machines(machNum), L2Qtid )
         ! Send bad news back to l2 queue manager
-        call TellL2QMachineDied( machines(machine), L2Qtid )
+        call TellL2QMachineDied( machines(machNum), L2Qtid )
       end if
     end do
 
@@ -411,7 +412,7 @@ program Spartacus
       skipDelay = .true.
       Tid = 0
       CmdID = 0
-      Machine = 0
+      machNum = 0
       ! Get the TID for the dead task
       call PVMF90Unpack ( Tid, info )
       if ( info /= 0 ) call PVMErrorMessage ( info, 'unpacking deadTid' )
@@ -420,18 +421,18 @@ program Spartacus
       ! (1) we won't know about this tid any more
       ! (2) the machine status was reset to free after a finished signal
       ! Otherwise we need to tidy up.
-      Machine = FindFirst ( machines%tid, Tid )
-      if ( Machine > 0 ) then
+      machNum = FindFirst ( machines%tid, Tid )
+      if ( machNum > 0 ) then
         ! On the other hand
-        if ( machines(Machine)%free ) &
-          & Machine = 0
+        if ( machines(machNum)%free ) &
+          & machNum = 0
       endif
-      if ( Machine > 0 ) then
+      if ( machNum > 0 ) then
         ! Now, to get round a memory management bug, we'll ignore this
         ! if, as far as we're concerned, the task was finished anyway.
-        ! Cmd = machines(Machine)%Chunk
-        CmdID = machines(Machine)%Chunk
-        machines(Machine)%free = .true.
+        ! Cmd = machines(machNum)%Chunk
+        CmdID = machines(machNum)%Chunk
+        machines(machNum)%free = .true.
         if ( options%verbose ) then
           if ( options%debug ) then
             call output ( TID )
@@ -440,14 +441,14 @@ program Spartacus
           call output ( 'The run of Cmd number ' )
           call output ( CmdID )
           call output ( ' ' )
-          call output ( 'on ' // trim(machines(Machine)%Name) // ' ' )
+          call output ( 'on ' // trim(machines(machNum)%Name) // ' ' )
           call TimeStamp ( trim(GetNiceTidString(Tid)) // &
             & ' finished.', advance='yes' )
         end if
 
         if ( options%verbose ) then
           call output ( 'Got a finished message from ' )
-          call output ( trim(machines(machine)%Name) // ' ' )
+          call output ( trim(machines(machNum)%Name) // ' ' )
           call output ( trim(GetNiceTidString(Tid)) // &
             & ' processing Cmd ' )
           call TimeStamp ( CmdID, advance='yes')
@@ -458,7 +459,7 @@ program Spartacus
           inquire( file=trim(Rslts(CmdID)), exist=success )
           if ( .not. success ) then
             ! Uh-oh, we crashed .. must tell l2q and try to relaunch task
-            call TellL2QMachineDied( machines(Machine), L2Qtid )
+            call TellL2QMachineDied( machines(machNum), L2Qtid )
             if ( options%verbose ) then
               call output ( 'Bad news about command ' )
               call TimeStamp ( CmdID, advance='yes' )
@@ -467,9 +468,9 @@ program Spartacus
             CmdsCompleted(CmdID) = .false.
             CmdsStarted(CmdID) = .false.
             CmdTids(CmdID) = 0
-            machines(machine)%free = .false.
-            machines(machine)%tid = 0
-            machines(machine)%Chunk = 0
+            machines(machNum)%free = .false.
+            machines(machNum)%tid = 0
+            machines(machNum)%Chunk = 0
             if ( options%verbose ) then
               call printMasterStatus
             end if
@@ -478,14 +479,14 @@ program Spartacus
         endif
         ! Send news back to l2 queue manager
         call TellL2QMachineFinished( &
-          & trim(machines(machine)%name), machines(machine)%tid, L2Qtid, &
+          & trim(machines(machNum)%name), machines(machNum)%tid, L2Qtid, &
           & FIXDELAYFORSLAVETOFINISH )
         ! Now update our information
         CmdsCompleted(CmdID) = .true.
         CmdTids(CmdID) = 0
-        machines(machine)%free = .true.
-        machines(machine)%tid = 0
-        machines(machine)%Chunk = 0
+        machines(machNum)%free = .true.
+        machines(machNum)%tid = 0
+        machines(machNum)%Chunk = 0
         parallel%numCompletedChunks = parallel%numCompletedChunks + 1
         if ( options%verbose ) then
           call printMasterStatus
@@ -515,14 +516,14 @@ program Spartacus
   do CmdID = 1, noCmds
     if ( CmdTids(CmdID) /= 0 ) then
       call usleep ( 100*parallel%delay )
-      machine = CmdMachines(CmdID)
+      machNum = CmdMachines(CmdID)
       call TellL2QMachineFinished( &
-        & trim(machines(machine)%name), machines(machine)%tid, L2Qtid, 0 )
+        & trim(machines(machNum)%name), machines(machNum)%tid, L2Qtid, 0 )
       if ( options%verbose ) then
         call output( 'tid: ', advance='no' )
-        call output( machines(machine)%tid, advance='no' )
+        call output( machines(machNum)%tid, advance='no' )
         call output( 'machine name: ', advance='no' )
-        call output( trim(machines(machine)%name), advance='no' )
+        call output( trim(machines(machNum)%name), advance='no' )
         call TimeStamp ( '   released', &
         & advance='yes' )
       endif
@@ -796,7 +797,7 @@ contains
     character(len=MACHINENAMELEN) :: machineName
     type (Machine_T)                       :: thisMachine
     nextCmd = 0
-    machine = 0
+    machNum = 0
     machineName = ' '
     ! 1st check if any Cmds remain
     CmdAndMachineReady = .not. all(CmdsStarted .or. CmdsAbandoned)
@@ -830,11 +831,11 @@ contains
       machineRequestQueued = .false.
       ! What if the machine has been added after this master began?
       ! Or, troubles other prevented machine from being added
-      machine = FindFirst( (trim(machineName) == machines%Name) &
+      machNum = FindFirst( (trim(machineName) == machines%Name) &
         & .and. machines%free )
-      if ( machine < 1 ) then
+      if ( machNum < 1 ) then
         thisMachine%name = machineName
-        machine = AddMachineToDataBase(machines, thisMachine)
+        machNum = AddMachineToDataBase(machines, thisMachine)
         if ( options%verbose ) &
           & call output('Added machine to db', advance='yes')
         ! machine = AddMachineNameToDataBase(machines%Name, machineName)
@@ -1218,6 +1219,9 @@ contains
 end module BOGUS_MODULE
 
 ! $Log$
+! Revision 1.11  2014/03/04 18:50:28  pwagner
+! Must allow more commands and lines; should there even be a limit?
+!
 ! Revision 1.10  2014/01/09 00:31:26  pwagner
 ! Some procedures formerly in output_m now got from highOutput
 !
