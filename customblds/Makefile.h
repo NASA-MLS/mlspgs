@@ -185,7 +185,9 @@ $(S)/lit_parm.f9h $(S)/lit_add.f9h: $(S)/lit_names.txt $(INSTALLDIR)/init_gen
           $(S)/lit_parm.f9h $(S)/lit_add.f9h lit_indices
 	echo "new lit_names" > new_lit_names.txt
 	@for dir in $(EVERY_MLSCONFG); do \
-          cp new_lit_names.txt ../$$dir 2>/dev/null; \
+          if [ -d ../$$dir ]; then \
+            cp new_lit_names.txt ../$$dir 2>/dev/null; \
+          fi; \
         done
 
 $(S)/mol_parm.f9h $(S)/mol_add.f9h: $(TABLES_DIR)/sps_cross_ref_table.txt $(INSTALLDIR)/init_gen
@@ -340,7 +342,9 @@ $(S)/lit_parm.f9h $(S)/lit_add.f9h: $(S)/lit_names.txt $(INSTALLDIR)/init_gen
           $(S)/lit_parm.f9h $(S)/lit_add.f9h lit_indices
 	echo "new lit_names" > new_lit_names.txt
 	@for dir in $(EVERY_MLSCONFG); do \
-          cp new_lit_names.txt ../$$dir 2>/dev/null; \
+          if [ -d ../$$dir ]; then \
+            cp new_lit_names.txt ../$$dir 2>/dev/null; \
+          fi; \
         done
 
 $(S)/mol_parm.f9h $(S)/mol_add.f9h: $(TABLES_DIR)/sps_cross_ref_table.txt $(INSTALLDIR)/init_gen
@@ -525,6 +529,9 @@ wvs-134-1.pdf: wvs-134-1.obj
 
 endif # end shortn_name == doc
 # $Log$
+# Revision 1.22  2016/05/31 23:41:16  pwagner
+# Tried again to fix need to build mlsl2 twice; added graphic to wvs-030
+#
 # Revision 1.21  2016/04/06 22:15:21  pwagner
 # Now builds  doc/wvs-134 properly
 #
