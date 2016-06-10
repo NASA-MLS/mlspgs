@@ -14,18 +14,16 @@ program l1bcat ! catenates l1b files, e.g. l1boa
 !=================================
 
    use Dump_0, only: DUMP
-   use Hdf, only: DFACC_Create, DFACC_RDWR, DFACC_Read, DFACC_RDOnly
-   use HDF5, only: h5fis_hdf5_f, h5gcreate_f, h5gclose_f
-   use HDFEOS5, only: HE5T_NATIVE_CHAR
+   use Hdf, only: DFACC_Create, DFACC_RDWR, DFACC_Read
+   use HDF5, only: H5FIs_HDF5_F, H5GCreate_F, H5GClose_F
    use Intrinsic, only: l_hdf
    use io_stuff, only: get_lun
    use L1BData, only: L1BData_t, cpL1BData
    use machine, only: hp, getarg
    use MLSFiles, only: HDFVERSION_5, Dump, InitializeMLSFile, &
      & MLS_OpenFile, MLS_CloseFile
-   use MLSFinds, only: FindFirst, FindLast
-   use MLSCommon, only: MLSFile_T, defaultUndefinedValue
-   use MLSHDF5, only: GetAllHDF5DSNames, mls_h5open, mls_h5close
+   use MLSCommon, only: MLSFile_T
+   use MLSHDF5, only: GetAllHDF5DSNames, MLS_H5Open, MLS_H5Close
    use MLSKinds, only: r8
    use MLSMessageModule, only: MLSMessageConfig
    use MLSStringLists, only: catLists, GetStringElement, &
@@ -163,7 +161,7 @@ contains
           endif
         endif
         call cpAllL1BData( trim(options%filenames(i)), &
-        & trim(options%outputFile), create2=.not. createdYet, &
+        & trim(options%outputFile), &
         & hdfVersion=HDFVERSION_5, sdList=mysdList, rename=rename )
         tempSdList = sdListAll
         sdListAll = catlists(tempSdList, mysdList)
@@ -172,7 +170,7 @@ contains
         call GetAllHDF5DSNames ( trim(options%filenames(i)), '/', mysdList )
         rename = mysdList
         call cpAllL1BData( trim(options%filenames(i)), &
-        & trim(options%outputFile), create2=.not. createdYet, &
+        & trim(options%outputFile), &
         & hdfVersion=HDFVERSION_5, sdList=mysdList, rename=rename )
       endif
       call sayTime('copying this file', tFile)
@@ -182,12 +180,11 @@ contains
 
 !------------------------- cpAllL1BData ---------------------
     ! copy all the l1bdata sets from filename1 to filename2
-    subroutine cpAllL1BData( filename1, filename2, create2, &
+    subroutine cpAllL1BData( filename1, filename2, &
         & hdfVersion, sdList, rename )
       ! Args
       character(len=*), intent(in)            :: filename1
       character(len=*), intent(in)            :: filename2
-      logical, intent(in)                     :: create2
       integer, intent(in)                     :: hdfversion
       character(len=*), intent(in)            :: sdList
       character(len=*), intent(in)            :: rename
@@ -371,12 +368,13 @@ contains
       write (*,*) ' Options:'
       write (*,*) ' -f filename            => add filename to list of filenames'
       write (*,*) '                        (can do the same w/o the -f)'
+      write (*,*) ' -o ofile               => copy data sets to ofile'
       write (*,*) ' -create gname          => create group named gname'
       write (*,*) '                        (may be repeated)'
-      write (*,*) ' -o ofile               => copy data sets to ofile'
+      write (*,*) '                        (must appear after -o ofile)'
       write (*,*) ' -v                     => switch on verbose mode'
       write (*,*) ' -l                     => just list lib names in files'
-      write (*,*) ' -l2aux                 => may be missing counterMAF'
+      write (*,*) ' -l2aux                 => input files may be missing counterMAF'
       write (*,*) ' -nodup                 => if dup dataset names, cp 1st only'
       write (*,*) ' -h                     => print brief help'
       write (*,*) ' -s name1,name2,..      => copy only datasets so named; otherwise all'
@@ -405,3 +403,6 @@ end program l1bcat
 !==================
 
 ! $Log$
+! Revision 1.1  2016/04/20 00:21:13  pwagner
+! First commit
+!
