@@ -17,6 +17,7 @@ program l2gpcat ! catenates split L2GPData files, e.g. dgg
    use Hdf, only: DFACC_CREATE, DFACC_RDONLY
    use HDF5, only: h5fis_hdf5_f   
    use Intrinsic, only: l_swath
+   use io_stuff, only: read_textfile
    use L2GPData, only: L2GPData_T, L2GPNameLen, MAXSWATHNAMESBUFSIZE, RGP, &
      & AppendL2GPData, cpL2GPData, DestroyL2GPContents, ExtractL2GPRecord, &
      & ReadL2GPData, WriteL2GPData
@@ -29,6 +30,7 @@ program l2gpcat ! catenates split L2GPData files, e.g. dgg
    use MLSStringLists, only: catLists, GetStringElement, &
      & Intersection, NumStringElements, RemoveElemFromList, &
      & StringElement, StringElementNum
+   use MLSStrings, only: asciify
    use output_m, only: output
    use PrintIt_m, only: Set_Config
    use Time_M, only: Time_Now, time_config
@@ -57,6 +59,7 @@ program l2gpcat ! catenates split L2GPData files, e.g. dgg
   type options_T
     logical     ::           timing = .false.           ! Show detailed timings
     logical     ::           verbose = .false.          ! print extra
+    character(len=255) ::    inputFile= ''              ! file with list of inputs       
     character(len=255) ::    outputFile= 'default.he5'  ! output filename       
     logical ::               append   = .false.         ! append swaths with same name
     logical ::               catenate = .false.         ! catenate swaths with same name
@@ -75,7 +78,7 @@ program l2gpcat ! catenates split L2GPData files, e.g. dgg
   
   type ( options_T ) :: options
 
-  integer, parameter ::          MAXFILES = 100
+  integer, parameter ::          MAXFILES = 750
   logical, parameter ::          countEmpty = .true.
   logical     :: createdYet
   logical, parameter ::          DEEBUG = .false.
@@ -121,52 +124,62 @@ program l2gpcat ! catenates split L2GPData files, e.g. dgg
      filenames(n_filenames) = filename
   enddo
   createdYet = .false.
+  if ( len_trim(options%inputFile) > 0 ) then
+    call read_textfile ( options%inputFile, filenames, nLines=n_filenames )
+    ! Must replace all nulls with spaces
+    do i=1, n_filenames
+      filenames(i) = asciify( filenames(i), how='snip' )
+    enddo
+    if ( options%verbose ) then
+      call dump( filenames(1:n_filenames), width=1, options='-t' )
+    endif
+  endif
   if ( n_filenames == 0 ) then
     if ( options%verbose ) print *, 'Sorry no input files to copy'
-  else
-    ! Check that the hdfversions of the input files accord with convert mode
-    status = 0
-    do i=1, n_filenames
-     call h5fis_hdf5_f(filenames(i), is_hdf5, error)
-     select case (options%convert)
-     case ('425')
-       if ( is_hdf5 ) then
-         print *, 'Sorry--not recognized as hdf4 file: ', trim(filenames(i))
-         status = 1
-         cycle
-       else
-         hdfVersion1 = HDFVERSION_4
-         hdfVersion2 = HDFVERSION_5
-       endif
-     case ('524')
-       if ( .not. is_hdf5 ) then
-         print *, 'Sorry--not recognized as hdf5 file: ', trim(filenames(i))
-         status = 1
-         cycle
-       else
-         hdfVersion1 = HDFVERSION_5
-         hdfVersion2 = HDFVERSION_4
-       endif
-     case default
-       if ( .not. is_hdf5 ) then
-         hdfVersion1 = HDFVERSION_4
-       else
-         hdfVersion1 = HDFVERSION_5
-       endif
-       hdfVersion2 = hdfVersion1
-     end select
-    enddo
-    call time_now ( t1 )
+    stop
+  endif
+  ! Check that the hdfversions of the input files accord with convert mode
+  status = 0
+  do i=1, n_filenames
+   call h5fis_hdf5_f(filenames(i), is_hdf5, error)
+   select case (options%convert)
+   case ('425')
+     if ( is_hdf5 ) then
+       print *, 'Sorry--not recognized as hdf4 file: ', trim(filenames(i))
+       status = 1
+       cycle
+     else
+       hdfVersion1 = HDFVERSION_4
+       hdfVersion2 = HDFVERSION_5
+     endif
+   case ('524')
+     if ( .not. is_hdf5 ) then
+       print *, 'Sorry--not recognized as hdf5 file: ', trim(filenames(i))
+       status = 1
+       cycle
+     else
+       hdfVersion1 = HDFVERSION_5
+       hdfVersion2 = HDFVERSION_4
+     endif
+   case default
+     if ( .not. is_hdf5 ) then
+       hdfVersion1 = HDFVERSION_4
+     else
+       hdfVersion1 = HDFVERSION_5
+     endif
+     hdfVersion2 = hdfVersion1
+   end select
+  enddo
+  call time_now ( t1 )
 
-    swathListAll = ''
-    numswathssofar = 0
-    if ( options%catenate ) then
-      call catenate_swaths
-    elseif ( options%append ) then
-      call append_swaths
-    else
-      call copy_swaths
-    endif
+  swathListAll = ''
+  numswathssofar = 0
+  if ( options%catenate ) then
+    call catenate_swaths
+  elseif ( options%append ) then
+    call append_swaths
+  else
+    call copy_swaths
   endif
   call mls_h5close(error)
 contains
@@ -637,6 +650,9 @@ contains
       elseif ( filename(1:3) == '-no' ) then
         options%noDupSwaths = .true.
         exit
+      else if ( filename(1:3) == '-F ' ) then
+        call getarg ( i+1+hp, options%inputFile )
+        i = i + 1
       else if ( filename(1:3) == '-f ' ) then
         call getarg ( i+1+hp, filename )
         i = i + 1
@@ -686,13 +702,6 @@ contains
       call print_help
     endif
     i = i + 1
-    if (trim(filename) == ' ' .and. n_filenames == 0) then
-
-    ! Last chance to enter filename
-      print *,  "Enter the name of the HDFEOS4 or 5 L2GP file. " // &
-       &  "The default output file name will be used."
-      read(*,'(a)') filename
-    endif
     
   end subroutine get_filename
 !------------------------- print_help ---------------------
@@ -703,26 +712,28 @@ contains
       write (*,*) &
       & ' If no filenames supplied, you will be prompted to supply one'
       write (*,*) ' Options: -f filename   => add filename to list of filenames'
-      write (*,*) '                    (can do the same w/o the -f)'
-      write (*,*) '   -o ofile      => copy swaths to ofile'
-      write (*,*) '   -425          => convert from hdf4 to hdf5'
-      write (*,*) '   -524          => convert from hdf5 to hdf4'
-      write (*,*) '   -t            => show detailed timings'
-      write (*,*) '   -v            => switch on verbose mode'
-      write (*,*) '   -append       => append or overwrite swaths with same name'
-      write (*,*) '   -cat          => catenate swaths with same name'
-      write (*,*) '   -ignoreFills  => ignore profiles with Fill Values'
-      write (*,*) '   -nodup        => if dup swath names, cp 1st only'
-      write (*,*) '   -freqs m n    => keep only freqs in range m n'
-      write (*,*) '   -levels m n   => keep only levels in range m n'
-      write (*,*) '   -profiles m n => keep only profiles in range m n'
-      write (*,*) '   -nprofiles m n => keep only if nProfs is in range m n'
-      write (*,*) '   -s name1,name2,..'
-      write (*,*) '      => copy only swaths so named; otherwise all'
-      write (*,*) '   -r rename1,rename2,..'
-      write (*,*) '      => if and how to rename the copied swaths'
-      write (*,*) '   -overlap n    => max num profiles in overlap'
-      write (*,*) '   -h            => print brief help'
+      write (*,*) '                  (can do the same w/o the -f)'
+      write (*,*) ' -F infile     => read list of filenames from infile'
+      write (*,*) ' -o ofile      => copy swaths to ofile'
+      write (*,*) ' -425          => convert from hdf4 to hdf5'
+      write (*,*) ' -524          => convert from hdf5 to hdf4'
+      write (*,*) ' -t            => show detailed timings'
+      write (*,*) ' -v            => switch on verbose mode'
+      write (*,*) ' -append       => append or overwrite swaths with same name'
+      write (*,*) ' -cat          => catenate swaths with same name'
+      write (*,*) ' -ignoreFills  => ignore profiles with Fill Values'
+      write (*,*) '                  useful for combining independently-run chunks'
+      write (*,*) ' -nodup        => if dup swath names, cp 1st only'
+      write (*,*) ' -freqs m n    => keep only freqs in range m n'
+      write (*,*) ' -levels m n   => keep only levels in range m n'
+      write (*,*) ' -profiles m n => keep only profiles in range m n'
+      write (*,*) ' -nprofiles m n => keep only if nProfs is in range m n'
+      write (*,*) ' -s name1,name2,..'
+      write (*,*) '    => copy only swaths so named; otherwise all'
+      write (*,*) ' -r rename1,rename2,..'
+      write (*,*) '    => if and how to rename the copied swaths'
+      write (*,*) ' -overlap n    => max num profiles in overlap'
+      write (*,*) ' -h            => print brief help'
       stop
   end subroutine print_help
 !------------------------- SayTime ---------------------
@@ -753,6 +764,9 @@ end program L2GPcat
 !==================
 
 ! $Log$
+! Revision 1.21  2016/02/11 19:53:20  pwagner
+! options to turn timing, verbose mode on
+!
 ! Revision 1.20  2015/08/05 20:37:03  pwagner
 ! Option -ign can catenate non-Fills
 !
