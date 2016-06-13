@@ -123,6 +123,8 @@ contains
         ! there won't be an overflow while computing norm2.
         tangent = line(1) - ( 10 * A ) * line(2)
         ! Choose the intersection nearest the instrument.
+!       ifort 14 didn't like this:
+!       tangent = intersections(minloc(norm2 ( tangent - intersections ), 1 ))
         call Choose_Nearest( Tangent, Intersections )
       case default ! zero => No intersection, compute the tangent point.
         ! Hopefully, if we asked to get the tangent height here, it would be
@@ -147,9 +149,8 @@ contains
       ! Unit vector along the intersection of the plane-projected ellipse and
       ! the Equator = North_Pole .cross. Normal = (0,0,1) .cross. Normal.
       equator = ECR_t ( [ -normal%xyz(2), normal%xyz(1), 0.0_rg ] ) / r
-
-      ! -------------------------  Here is where trouble really begins
       ! X coordinate of tangent point w.r.t. plane-projected ellipse is the
+      ! projection of C' onto its equator.
       x = tangent .dot. equator
       ! Compute the unit "pole" of the plane-projected ellipse, which would be
       ! the north pole (0,0,1) if the inclination were 90 degrees.
@@ -161,8 +162,6 @@ contains
       ! Compute geodetic tangent coordinates w.r.t. the plane-projected ellipse,
       ! radians and meters above the ellipse.
       call xz_to_geod ( x, z, a, sqrt(earthRadC_sq%values(i,MAF)), p, h )
-      ! ------------------------- Here is where it ends
-      
       if ( size(intersections) > 0 ) h = 0 ! Don't use negative height
       tanHt%values(i,MAF) = h
       p = rad2deg * p ! XZ_to_Geod produced angle in radians
@@ -269,6 +268,9 @@ contains
 end module Tangent_Quantities_m
 
 ! $Log$
+! Revision 2.2  2016/06/13 21:03:01  vsnyder
+! Polish up some comments
+!
 ! Revision 2.1  2016/06/07 18:45:57  pwagner
 ! First commit
 !
