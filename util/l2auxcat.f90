@@ -14,25 +14,25 @@ program L2AUXcat ! catenates split L2AUX files, e.g. dgm
 !=================================
 
    use Dump_0, only: DUMP
-   use Hdf, only: DFACC_Create, DFACC_RDWR, DFACC_Read, DFACC_RDOnly
-   use HDF5, only: h5fis_hdf5_f
-   use HDFEOS5, only: HE5T_NATIVE_CHAR
+   use Hdf, only: DFACC_Create, DFACC_RDWR, DFACC_RDOnly
+   use HDF5, only: H5FIs_HDF5_f, H5GCreate_f, H5GClose_f
    use Intrinsic, only: l_hdf
+   use io_stuff, only: get_lun, read_textfile
    use L2AUXData, only: L2AUXData_t, maxSDNamesBufSize, &
      & cpL2AUXData, destroyL2AUXContents, readL2AUXData, WriteL2AUXData
    use machine, only: hp, getarg
-   use MLSFiles, only: HDFVERSION_5, Dump, InitializeMLSFile, &
+   use MLSFiles, only: HDFVersion_5, Dump, InitializeMLSFile, &
      & MLS_OpenFile, MLS_CloseFile
    use MLSFinds, only: FindFirst, FindLast
    use MLSCommon, only: MLSFile_T, defaultUndefinedValue
    use MLSHDF5, only: GetAllHDF5DSNames, mls_h5open, mls_h5close
    use MLSKinds, only: r8
-   use MLSMessageModule, only: MLSMessageConfig
+   use MLSStrings, only: asciify
    use MLSStringLists, only: catLists, GetStringElement, &
      & Intersection, NumStringElements, &
      & RemoveElemFromList, StringElement, StringElementNum
    use output_m, only: output
-   use PCFHdr, only: GlobalAttributes
+   use PCFHdr, only: h5_ReadGlobalAttr, h5_WriteGlobalAttr
    use PrintIt_m, only: Set_Config
    use Time_M, only: Time_Now, time_config
 
@@ -58,20 +58,24 @@ program L2AUXcat ! catenates split L2AUX files, e.g. dgm
 ! Then run it
 ! LF95.Linux/test [options] [input files] -o [output file]
 
-  integer, parameter ::          MAXFILES = 100
+  integer, parameter ::   MAXFILES = 750
+  integer, parameter ::   MAXFILENAMEESIZE = 255*MAXFILES
   type options_T
-    logical     :: verbose = .false.
-    character(len=255) :: outputFile= 'default.h5'        ! output filename
-    logical ::          noDupDSNames = .false.            ! cp 1st, ignore rest
-    logical ::          ignoreFills  = .false.
-    logical     :: list = .false.
-    character(len=255) ::    DSNames = ' '              ! which datasets to copy
-    character(len=255) ::    rename = ' '               ! how to rename them
+    logical            :: verbose = .false.
+    character(len=255) :: glAttrFile= ''                ! file with global attrs
+    character(len=255) :: outputFile= 'default.h5'      ! output filename
+    character(len=255) :: inputFile= ''                 ! file with list of inputs       
+    logical ::            noDupDSNames = .false.        ! cp 1st, ignore rest
+    logical ::            ignoreFills  = .false.
+    logical            :: list = .false.
+    character(len=255) :: DSNames = ' '                 ! which datasets to copy
+    character(len=255) :: rename = ' '                  ! how to rename them
     character(len=255), dimension(MAXFILES) :: filenames
   end type options_T
 
   type ( options_T ) :: options
 
+  ! character (len=MAXFILENAMEESIZE) :: allInputFiles
   logical, parameter :: COUNTEMPTY = .false.
   logical     :: createdYet
   logical, parameter :: DEEBUG = .true.
@@ -80,6 +84,8 @@ program L2AUXcat ! catenates split L2AUX files, e.g. dgm
   integer     ::  i, j, status, error ! Counting indices & Error flags
   integer     :: elem
   logical     :: is_hdf5
+  type(MLSFile_t)                   :: L2AUXFile1
+  type(MLSFile_t)                   :: L2AUXFile2
   character (len=MAXSDNAMESBUFSIZE) :: mySdList
   integer :: numdsets
   integer :: numdsetssofar
@@ -95,11 +101,12 @@ program L2AUXcat ! catenates split L2AUX files, e.g. dgm
   time_config%use_wall_clock = .true.
   CALL mls_h5open(error)
   n_filenames = 0
+  createdYet = .false.
   do      ! Loop over filenames
-     call get_filename(filename, n_filenames, options)
+     call get_filename( filename, n_filenames, options )
      if ( filename(1:1) == '-' ) cycle
      if ( filename == ' ' ) exit
-     call h5fis_hdf5_f(trim(filename), is_hdf5, error)
+     call h5fis_hdf5_f( trim(filename), is_hdf5, error )
      if ( .not. is_hdf5 ) then
        print *, 'Sorry--not recognized as hdf5 file: ', trim(filename)
        cycle
@@ -107,7 +114,25 @@ program L2AUXcat ! catenates split L2AUX files, e.g. dgm
      n_filenames = n_filenames + 1
      options%filenames(n_filenames) = filename
   enddo
+  ! Did we use the -F commandline option to supply the input file lisi?
+  if ( len_trim(options%inputFile) > 0 ) then
+    print *, 'inputFile :', trim(options%inputFile)
+    ! call read_file ( options%inputFile, allInputFiles )
+    ! print *, 'File list :', trim(allInputFiles)
+    ! n_filenames = NumStringElements ( allInputFiles, countEmpty )
+    call read_textfile ( options%inputFile, options%filenames, nLines=n_filenames )
+    ! Must replace all nulls with spaces
+    do i=1, n_filenames
+      options%filenames(i) = asciify( options%filenames(i), how='snip' )
+    enddo
+    print *, 'n :', n_filenames
+    ! call List2Array( allInputFiles, options%filenames, countEmpty )
+    if ( options%verbose ) then
+      call dump( options%filenames(1:n_filenames), width=1, options='-t' )
+    endif
+  endif
   call time_now ( t1 )
+  ! stop
   if ( n_filenames == 0 ) then
     if ( options%verbose ) print *, 'Sorry no input files supplied'
   elseif ( options%list ) then
@@ -120,6 +145,15 @@ program L2AUXcat ! catenates split L2AUX files, e.g. dgm
     call catenate_non_Fills
   else
     call catenate_all
+  endif
+  ! Do we copy global attributes from a particular file
+  if ( len_trim(options%glAttrFile) > 0 ) then
+    status = InitializeMLSFile( l2auxFile1, type=l_hdf, access=DFACC_RDONLY, &
+      & content='l2aux', name=options%glAttrFile, hdfVersion=HDFVERSION_5 )
+    status = InitializeMLSFile( l2auxFile2, type=l_hdf, access=DFACC_RDWR, &
+      & content='l2aux', name=options%outputFile, hdfVersion=HDFVERSION_5 )
+    call h5_ReadGlobalAttr ( l2auxFile1 )
+    call h5_WriteGlobalAttr ( l2auxFile2 )
   endif
   if ( .not. options%list ) call sayTime('copying all files')
   call mls_h5close(error)
@@ -137,23 +171,16 @@ contains
 
   subroutine catenate_non_Fills
     ! Internal variables
-    integer :: j
     integer :: jj
-    integer :: k
-    integer :: kLopOff
     type(l2auxData_T) :: l2aux
     type( MLSFile_T ) :: l2auxFile
     type(MLSFile_T), dimension(MAXFILES)    :: L2AUXFiles
-    integer, parameter :: MAXNUMPROFS = 3500
-    integer :: numProfs
-    integer :: numTotProfs
     type(l2auxData_T) :: ol2aux
     integer :: l2FileHandle
     integer :: N ! last profile number of a
     integer :: M ! size of b
     real(r8) :: MissingValue
     integer :: status
-    logical :: wroteAlready
     integer, parameter :: FORBDIMS = 10
     character(len=42), dimension(FORBDIMS), parameter :: forbiddens = (/ &
       & 'HDFEOS INFORMATION/coremetadata.0        ', &
@@ -226,8 +253,6 @@ contains
       if ( options%verbose ) print *, 'Catenating dataset: ', trim(sdName)
       N = 0
       M = 0
-      wroteAlready = .false.
-      numTotProfs = 0
       do i=1, n_filenames
         if ( options%verbose ) print *, 'Reading from: ', trim(options%filenames(i))
         if ( i == 1 ) then
@@ -262,7 +287,6 @@ contains
   ! Copy l2aux data from one of the filenames to the outputFile
   ! Copy all the MAFs
   subroutine catenate_all
-    createdYet = .false.
     if ( options%verbose ) print *, 'Copy l2aux data to: ', trim(options%outputFile)
     numdsetssofar = 0
     sdListAll = ''
@@ -319,8 +343,13 @@ contains
      integer, intent(in)               :: n_filenames
      type ( options_T ), intent(inout) :: options
      ! Local variables
-     integer ::                         error = 1
-     integer, save ::                   i = 1
+     type(MLSFile_t)                   :: L2AUXFile
+     integer                           :: error = 1
+     integer                           :: fileaccess
+     integer, save                     :: i = 1
+     character(LEN=255)                :: groupname
+     integer                           :: grp_id
+     integer                           :: status
   ! Get inputfile name, process command-line args
   ! (which always start with -)
     do
@@ -354,8 +383,35 @@ contains
         call getarg ( i+1+hp, options%rename )
         i = i + 1
         exit
+      else if ( filename(1:3) == '-F ' ) then
+        call getarg ( i+1+hp, options%inputFile )
+        i = i + 1
       else if ( filename(1:3) == '-f ' ) then
         call getarg ( i+1+hp, filename )
+        i = i + 1
+        exit
+      else if ( filename(1:3) == '-Sf' ) then
+        call getarg ( i+1+hp, filename )
+        call read_file ( filename, options%DSNames )
+        i = i + 1
+        exit
+      else if ( filename(1:3) == '-Rf' ) then
+        call getarg ( i+1+hp, filename )
+        call read_file ( filename, options%rename )
+        i = i + 1
+        exit
+      else if ( filename(1:7) == '-create' ) then
+        call getarg ( i+1+hp, groupname )
+        fileaccess = DFACC_Create
+        if ( createdYet ) fileaccess = DFACC_RDWR
+        status = InitializeMLSFile ( L2AUXFile, type=l_hdf, &
+          & access=fileaccess, content='l2aux', name=options%outputFile, &
+          & HDFVersion=HDFVERSION_5 )
+        call mls_openFile ( L2AUXFile, status )
+        call h5GCreate_f ( L2AUXFile%fileID%f_id, groupname, grp_id, status )
+        call h5GClose_f ( grp_id, status )
+        call mls_CloseFile( L2AUXFile )
+        createdYet = .true.
         i = i + 1
         exit
       else
@@ -367,15 +423,46 @@ contains
       call print_help
     endif
     i = i + 1
-    if (trim(filename) == ' ' .and. n_filenames == 0) then
-
-    ! Last chance to enter filename
-      print *,  "Enter the name of the HDFEOS5 L2AUX file. " // &
-       &  "The default output file name will be used."
-      read(*,'(a)') filename
-    endif
 
   end subroutine get_filename
+
+!------------------------- read_file ---------------------
+  subroutine read_file ( filename, string )
+    ! Read contents of file into comma-separated string
+    ! Args
+    character(len=*), intent(in)        :: filename
+    character(len=*), intent(out)       :: string
+    ! Internal varaibles
+    character(len=80)                   :: line
+    integer                             :: lun
+    integer                             :: status
+    ! Executable
+    string = ' '
+    call get_lun( lun )
+    open(UNIT=lun, form='formatted', &
+      & file=trim(FileName), status='old', iostat=status )
+    if ( status /= 0 ) then
+      write(*,*) 'read_file error Unable to open textfile ' // &
+        & trim(FileName)
+      return
+    endif
+    do
+      read( lun, *, end=500, err=50 ) line
+      line = adjustl(line)
+      if (len_trim(line) < 1 .or. line(1:1) == '#' ) cycle
+      string = trim(string) // ',' // line
+500   status = -1
+50    if ( status /= 0 ) exit
+    enddo
+    ! Snip off leading ','
+    if ( string(1:1) == ',' ) then
+      string(1:1) = ' '
+      string = adjustl(string)
+    endif
+    close(unit=lun)
+    
+  end subroutine read_file
+
 !------------------------- print_help ---------------------
   subroutine print_help
   ! Print brief but helpful message
@@ -384,17 +471,23 @@ contains
       write (*,*) &
       & ' If no filenames supplied, you will be prompted to supply one'
       write (*,*) ' Options: -f filename => add filename to list of filenames'
-      write (*,*) '                         (can do the same w/o the -f)'
-      write (*,*) '          -o ofile    => copy data sets to ofile'
-      write (*,*) '          -v          => switch on verbose mode'
-      write (*,*) '          -l          => just list l2aux names in files'
-      write (*,*) '          -ign        => ignore MAFs with Fill Values'
-      write (*,*) '          -nodup      => if dup dataset names, cp 1st only'
-      write (*,*) '          -h          => print brief help'
-      write (*,*) '          -s name1,name2,..'
-      write (*,*) '             => copy only datasets so named; otherwise all'
-      write (*,*) '          -r rename1,rename2,..'
-      write (*,*) '             => if and how to rename the copied datasets'
+      write (*,*) '                (can do the same w/o the -f)'
+      write (*,*) ' -F infile     => read list of filenames from infile'
+      write (*,*) ' -g glattrfile => read global attrs from glattrfile'
+      write (*,*) ' -create gname => create group named gname'
+      write (*,*) '               (may be repeated)'
+      write (*,*) ' -o ofile      => copy data sets to ofile'
+      write (*,*) ' -v            => switch on verbose mode'
+      write (*,*) ' -l            => just list l2aux names in files'
+      write (*,*) ' -ign          => ignore MAFs with Fill Values'
+      write (*,*) ' -nodup        => if dup dataset names, cp 1st only'
+      write (*,*) ' -h            => print brief help'
+      write (*,*) ' -s name1,name2,..'
+      write (*,*) '               => copy only datasets so named; otherwise all'
+      write (*,*) ' -r rename1,rename2,..'
+      write (*,*) '               => if and how to rename the copied datasets'
+      write (*,*) ' -Sf file      => copy data only sets named in file'
+      write (*,*) ' -Rf file      => rename them according to names in file'
       stop
   end subroutine print_help
 !------------------------- SayTime ---------------------
@@ -417,6 +510,9 @@ end program L2AUXcat
 !==================
 
 ! $Log$
+! Revision 1.6  2015/08/05 20:36:28  pwagner
+! Option -ign can catenate non-Fills
+!
 ! Revision 1.5  2013/08/23 02:51:47  vsnyder
 ! Move PrintItOut to PrintIt_m
 !
