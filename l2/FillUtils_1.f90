@@ -4563,7 +4563,8 @@ contains ! =====     Public Procedures     =============================
                & referenceMIF - maxv > 2.0 * ( maxv - minv ) ) &
               call MLSMessage ( MLSMSG_Warning, moduleName, &
                 & 'ReferenceMIF = %R is far outside the range %R ... %R of the ' // &
-                & 'vertical coordinate of the tangent point geocentric height ', &
+                & 'vertical coordinate of the tangent point geocentric height; ' // &
+                & 'did you mean it to be an unitless MIF number?', &
                 & datum = [ referenceMIF, minv, maxv ] )
             deallocate ( seq )
             call deallocate_test ( surfs, 'Surfs', moduleName )
@@ -7698,6 +7699,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.124  2016/06/13 21:03:20  vsnyder
+! Improve a warning message
+!
 ! Revision 2.123  2016/06/03 20:54:38  vsnyder
 ! Correct the log for the previous commit
 !
