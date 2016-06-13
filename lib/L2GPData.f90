@@ -48,15 +48,15 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   implicit none
 
   private
-  public :: l2gpdata_t
-  public :: l2gpnamelen
-  public :: addl2gptodatabase, appendl2gpdata, &
-    & contractl2gprecord, convertl2gptoquantity, &
-    & cpl2gpdata, cpl2gpdatatoattribute, &
-    & destroyl2gpcontents, destroyl2gpdatabase, &
-    & diff, diffrange, dump, dumprange, &
-    & expandl2gpdatainplace, extractl2gprecord, isl2gpsetup, &
-    & readl2gpdata, repairl2gp, setupnewl2gprecord, writel2gpdata
+  public :: L2GPdata_t
+  public :: L2GPnamelen
+  public :: addL2GPToDatabase, appendL2GPData, &
+    & contractL2GPRecord, convertL2GPToQuantity, &
+    & cpHE5GlobalAttrs, cpL2GPdata, cpL2GPDataToAttribute, &
+    & destroyL2GPContents, destroyL2GPDatabase, &
+    & diff, diffRange, dump, dumpRange, &
+    & expandL2GPDataInPlace, extractL2GPRecord, isL2GPSetup, &
+    & readL2GPData, repairL2GP, setupNewL2GPRecord, writeL2GPData
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -135,6 +135,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
 ! AppendL2GPData          Appends L2GP onto end of existing swath file
 ! ContractL2GPRecord      Gather a reduced L2GP from an existing L2GP
 ! ConvertL2GPToQuantity   Convert an L2GP data type into a Vector Quantity
+! cpHE5GlobalAttrs        Copies global attributes from one l2gp file to another
 ! cpL2GPData              Copies swaths from one l2gp file to another
 ! cpL2GPDataToAttribute   Copies swathvalues from one l2gp file to another's
 !                           file-level attributes
@@ -888,6 +889,56 @@ contains ! =====     Public Procedures     =============================
     if ( associated(l2gp%l2gpValue) ) Quantity%values = l2gp%l2gpValue(1,:,:)
   end subroutine ConvertL2GPToQuantity
 
+  ! ---------------------- cpHE5GlobalAttrs  ---------------------------
+
+  subroutine cpHE5GlobalAttrs( File1Handle, File2Handle, status )
+  ! Copy global attributes from file 1 to file 2
+    use PCfhdr, only: globalAttributes_t, globalAttributes, &
+      & dumpGlobalAttributes, HE5_Readglobalattr, HE5_Writeglobalattr
+    ! Args
+    integer, intent(in)                          :: File1Handle
+    integer, intent(in)                          :: File2Handle
+    integer, intent(out)                         :: status
+    ! Internal variables
+    type(GlobalAttributes_T)                     :: gAttributes        
+    type(GlobalAttributes_T)                     :: gAttributesOriginal
+    character(len=40)                            :: ProcessLevel       
+    double precision                             :: TAI93At0zOfGranule 
+    integer                                      :: DayofYear          
+    ! Executable
+    if ( DEEBUG ) then
+      call output( 'Before reading global attributes', advance='yes' )
+      call outputNamedValue( 'StartUTC', trim(GlobalAttributes%StartUTC) )
+    endif
+    call he5_readglobalattr ( File1Handle, gAttributes, &
+      & ProcessLevel, DayofYear, TAI93At0zOfGranule, status )
+    if ( status == 0 ) then
+      if ( DEEBUG ) then
+        call output ( '(Global Attributes read) ', advance='yes')
+        call dumpGlobalAttributes
+      endif
+      if ( DEEBUG ) then
+        call output( 'After reading global attributes', advance='yes' )
+        call outputNamedValue( 'StartUTC', trim(GlobalAttributes%StartUTC) )
+      endif
+      ! Unfortunately, he5_writeglobalattr writes class-level data
+      ! so must save original version so can copy new data into it 
+      gAttributes%HostName = GlobalAttributes%HostName
+      gAttributes%ProductionLoc = GlobalAttributes%ProductionLoc
+      gAttributesOriginal = GlobalAttributes
+      GlobalAttributes = gAttributes
+      ! Why must we do this? Why do things not simply work out properly?
+      GlobalAttributes%TAI93At0zOfGranule = TAI93At0zOfGranule
+      if ( DEEBUG ) then
+        call outputNamedValue('Misc Notes (written) ', trim(GlobalAttributes%MiscNotes) )
+        call dumpGlobalAttributes
+      endif
+      call he5_writeglobalattr (File2Handle)
+      ! Before leaving must restore original data back
+      GlobalAttributes = gAttributesOriginal
+    endif
+  end subroutine cpHE5GlobalAttrs
+
   ! ---------------------- cpL2GPData_fileID  ---------------------------
 
   subroutine cpL2GPData_fileID( l2metaData, file1, file2, swathList, &
@@ -1053,8 +1104,6 @@ contains ! =====     Public Procedures     =============================
     ! Optionally repairs l2gpdata
 
     use HGridsDatabase, only: hgrid_t
-    use PCfhdr, only: globalAttributes_t, globalAttributes, &
-      & dumpGlobalAttributes, HE5_Readglobalattr, HE5_Writeglobalattr
     ! Arguments
 
     type (L2Metadata_T) :: l2metaData
@@ -1078,23 +1127,18 @@ contains ! =====     Public Procedures     =============================
     ! Local
     logical :: allSwaths
     logical, parameter            :: countEmpty = .true.
-    integer :: DayofYear
     ! logical, parameter :: DEEBUG = .TRUE.
     integer :: File1Handle
     integer :: File2Handle
     logical :: file_exists
     integer :: file_access
-    type(GlobalAttributes_T) :: gAttributes
-    type(GlobalAttributes_T) :: gAttributesOriginal
     integer :: listsize
     type(MLSFile_T)                :: MLSFile1, MLSFile2
     logical :: myandGlAttributes
     character (len=MAXSWATHNAMESBUFSIZE) :: mySwathList
     character (len=MAXSWATHNAMESBUFSIZE) :: myrename
     integer :: noSwaths
-    character(len=40)        :: ProcessLevel
     integer :: status
-    double precision         :: TAI93At0zOfGranule
     integer :: the_hdfVersion1
     integer :: the_hdfVersion2
     
@@ -1174,39 +1218,9 @@ contains ! =====     Public Procedures     =============================
     endif
     ! Maybe copy global attributes, too
     if ( myandGlAttributes ) then
-      if ( DEEBUG ) then
-        call output( 'Before reading global attributes', advance='yes' )
-        call outputNamedValue( 'StartUTC', trim(GlobalAttributes%StartUTC) )
-      endif
-      call he5_readglobalattr ( File1Handle, gAttributes, &
-        & ProcessLevel, DayofYear, TAI93At0zOfGranule, status )
-      if ( status == 0 ) then
-        if ( DEEBUG ) then
-          call output ( '(Global Attributes read) ', advance='yes')
-          call dumpGlobalAttributes
-        endif
-        if ( DEEBUG ) then
-          call output( 'After reading global attributes', advance='yes' )
-          call outputNamedValue( 'StartUTC', trim(GlobalAttributes%StartUTC) )
-        endif
-        ! Unfortunately, he5_writeglobalattr writes class-level data
-        ! so must save original version so can copy new data into it 
-        gAttributes%HostName = GlobalAttributes%HostName
-        gAttributes%ProductionLoc = GlobalAttributes%ProductionLoc
-        gAttributesOriginal = GlobalAttributes
-        GlobalAttributes = gAttributes
-        ! Why must we do this? Why do things not simply work out properly?
-        GlobalAttributes%TAI93At0zOfGranule = TAI93At0zOfGranule
-        if ( DEEBUG ) then
-          call outputNamedValue('Misc Notes (written) ', trim(GlobalAttributes%MiscNotes) )
-          call dumpGlobalAttributes
-        endif
-        call he5_writeglobalattr (File2Handle)
-        ! Before leaving must restore original data back
-        GlobalAttributes = gAttributesOriginal
-      else
-        call output ( '(Global Attributes missing) ' // trim(file1), advance='yes')
-      endif
+      call cpHE5GlobalAttrs ( File1Handle, File2Handle, status )
+      if ( status /= 0 ) &
+        & call output ( '(Global Attributes missing) ' // trim(file1), advance='yes')
     endif
 
     if ( present(exclude) ) then
@@ -1240,6 +1254,7 @@ contains ! =====     Public Procedures     =============================
   end subroutine cpL2GPData_fileName
 
   ! ---------------------- cpL2GPData_MLSFile  ---------------------------
+
 
   subroutine cpL2GPData_MLSFile(l2metaData, L2GPfile1, L2GPfile2, &
     & create2, swathList, rename, exclude, &
@@ -2704,8 +2719,6 @@ contains ! =====     Public Procedures     =============================
     
   !----------------------------------------  DumpL2GP_attributes_hdf5  -----
   subroutine DumpL2GP_attributes_hdf5( l2FileHandle, l2gp, swathName )
-
-  use HDFEOS5, only: HE5T_Native_real, HE5T_Native_double
   use HE5_SWAPI, only: HE5_SWRdattr, HE5_SWRdlattr
   use MLSHDFEOS, only: MLS_SWAttach, MLS_SWDetach, HE5_EHRdglatt
   use PCFHdr, only:  globalAttributes_t, HE5_ReadGlobalAttr
@@ -5363,6 +5376,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.221  2016/03/23 00:20:09  pwagner
+! DiffL2GPData now able to print name on each line
+!
 ! Revision 2.220  2015/10/14 23:18:04  pwagner
 ! RepairL2GP may optionally repair any geolocations whose chunk number is -999
 !
