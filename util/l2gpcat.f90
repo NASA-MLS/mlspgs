@@ -14,18 +14,18 @@ program l2gpcat ! catenates split L2GPData files, e.g. dgg
 !=================================
 
    use dump_0, only: Dump
-   use Hdf, only: DFACC_CREATE, DFACC_RDONLY
-   use HDF5, only: h5fis_hdf5_f   
+   use HDF, only: DFACC_Create, DFACC_RDonly, DFACC_RdWr
+   use HDF5, only: H5FIs_HDF5_f   
    use Intrinsic, only: l_swath
    use io_stuff, only: read_textfile
    use L2GPData, only: L2GPData_T, L2GPNameLen, MAXSWATHNAMESBUFSIZE, RGP, &
-     & AppendL2GPData, cpL2GPData, DestroyL2GPContents, ExtractL2GPRecord, &
-     & ReadL2GPData, WriteL2GPData
+     & AppendL2GPData, cpHE5GlobalAttrs, cpL2GPData, DestroyL2GPContents, &
+     & ExtractL2GPRecord, ReadL2GPData, WriteL2GPData
    use Machine, only: hp, getarg
    use MLSCommon, only: MLSFile_t, L2Metadata_T
-   use MLSFiles, only: mls_exists, mls_closeFile, mls_openFile, &
+   use MLSFiles, only: MLS_Exists, MLS_CloseFile, MLS_OpenFile, &
      & HDFVersion_4, HDFVersion_5, MLS_InqSwath, InitializeMLSFile
-   use MLSHDF5, only: mls_h5open, mls_h5close
+   use MLSHDF5, only: MLS_H5Open, MLS_H5Close
    use MLSFinds, only: FindFirst, FindLast
    use MLSStringLists, only: catLists, GetStringElement, &
      & Intersection, NumStringElements, RemoveElemFromList, &
@@ -59,6 +59,7 @@ program l2gpcat ! catenates split L2GPData files, e.g. dgg
   type options_T
     logical     ::           timing = .false.           ! Show detailed timings
     logical     ::           verbose = .false.          ! print extra
+    character(len=255) ::    glAttrFile= ''             ! file with global attrs
     character(len=255) ::    inputFile= ''              ! file with list of inputs       
     character(len=255) ::    outputFile= 'default.he5'  ! output filename       
     logical ::               append   = .false.         ! append swaths with same name
@@ -82,8 +83,12 @@ program l2gpcat ! catenates split L2GPData files, e.g. dgg
   logical, parameter ::          countEmpty = .true.
   logical     :: createdYet
   logical, parameter ::          DEEBUG = .false.
+  integer                                 :: file1Handle
+  integer                                 :: file2Handle
   character(len=255) :: filename          ! input filename
-  character(len=255), dimension(MAXFILES) :: filenames
+  character(len=255), dimension(MAXFILES) :: fileNames
+  type(MLSFile_T)                         :: L2GPFile1
+  type(MLSFile_T)                         :: L2GPFile2
   type(MLSFile_T), dimension(MAXFILES)    :: L2GPFiles
   integer            :: n_filenames
   integer     ::  i, j, status, error ! Counting indices & Error flags
@@ -181,19 +186,32 @@ program l2gpcat ! catenates split L2GPData files, e.g. dgg
   else
     call copy_swaths
   endif
+  ! Do we copy global attributes from a particular file
+  if ( len_trim(options%glAttrFile) > 0 ) then
+    status = InitializeMLSFile( l2gpFile1, type=l_swath, access=DFACC_RDONLY, &
+      & content='l2gp', name=options%glAttrFile, hdfVersion=HDFVERSION_5 )
+    status = InitializeMLSFile( l2gpFile2, type=l_swath, access=DFACC_RDWR, &
+      & content='l2gp', name=options%outputFile, hdfVersion=HDFVERSION_5 )
+    call MLS_OpenFile( l2gpFile1 )
+    call MLS_OpenFile( l2gpFile2 )
+    File1Handle = l2gpFile1%FileID%f_id
+    File2Handle = l2gpFile2%FileID%f_id
+    call cpHE5GlobalAttrs ( File1Handle, File2Handle, status )
+    if ( status /= 0 ) &
+      & call output ( '(Global Attributes missing) ' // &
+      & trim(options%glAttrFile), advance='yes')
+    call MLS_CloseFile( l2gpFile1 )
+    call MLS_CloseFile( l2gpFile2 )
+  endif
   call mls_h5close(error)
 contains
 !------------------------- append_swaths ---------------------
 !  Add to or overwrite existing swaths
   subroutine append_swaths
     ! Internal variables
-    integer :: j
     integer :: jj
-    integer :: k
     type( MLSFile_T ) :: l2gpFile
-    integer, parameter :: MAXNUMPROFS = 3500
     type(L2GPData_T) :: ol2gp
-    real(rgp), parameter :: eps = 0.01_rgp
     ! Executable
     status = InitializeMLSFile( l2gpFile, type=l_swath, access=DFACC_CREATE, &
       & content='l2gp', name='unknown', hdfVersion=HDFVERSION_5 )
@@ -249,27 +267,18 @@ contains
 
   subroutine catenate_non_Fills
     ! Internal variables
-    integer :: j
     integer :: jj
-    integer :: k
-    integer :: kLopOff
     type(L2GPData_T) :: l2gp
     type( MLSFile_T ) :: l2gpFile
-    integer, parameter :: MAXNUMPROFS = 3500
     integer :: numProfs
     integer :: numTotProfs
     type(L2GPData_T) :: ol2gp
-    real(rgp), dimension(MAXNUMPROFS) :: a
-    real(rgp), dimension(MAXNUMPROFS) :: b
     integer :: l2FileHandle
     integer :: N ! last profile number of a
     integer :: M ! size of b
     integer :: status
     logical :: wroteAlready
-    real(rgp), parameter :: eps = 0.01_rgp
     ! Executable
-    a = 0.
-    b = 0.
     if ( options%verbose ) print *, 'Catenate l2gp data to: ', &
       & trim(options%outputFile)
     numswathssofar = mls_InqSwath ( filenames(1), SwathList, listSize, &
@@ -604,7 +613,7 @@ contains
     if ( options%timing ) call sayTime('copying all files')
   end subroutine copy_swaths
 !------------------------- get_filename ---------------------
-    subroutine get_filename(filename, n_filenames, options)
+    subroutine get_filename( filename, n_filenames, options )
     ! Added for command-line processing
      character(LEN=255), intent(out) :: filename          ! filename
      integer, intent(in)             :: n_filenames
@@ -657,6 +666,9 @@ contains
         call getarg ( i+1+hp, filename )
         i = i + 1
         exit
+      else if ( filename(1:3) == '-g ' ) then
+        call getarg ( i+1+hp, options%glAttrFile )
+        i = i + 1
       else if ( filename(1:3) == '-s ' ) then
         call getarg ( i+1+hp, options%swathNames )
         i = i + 1
@@ -714,6 +726,7 @@ contains
       write (*,*) ' Options: -f filename   => add filename to list of filenames'
       write (*,*) '                  (can do the same w/o the -f)'
       write (*,*) ' -F infile     => read list of filenames from infile'
+      write (*,*) ' -g glattrfile => read global attrs from glattrfile'
       write (*,*) ' -o ofile      => copy swaths to ofile'
       write (*,*) ' -425          => convert from hdf4 to hdf5'
       write (*,*) ' -524          => convert from hdf5 to hdf4'
@@ -764,6 +777,9 @@ end program L2GPcat
 !==================
 
 ! $Log$
+! Revision 1.22  2016/06/10 16:13:18  pwagner
+! Added commandline option -F; upped max num of input files tto 750
+!
 ! Revision 1.21  2016/02/11 19:53:20  pwagner
 ! options to turn timing, verbose mode on
 !
