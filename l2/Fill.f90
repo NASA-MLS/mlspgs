@@ -2697,8 +2697,10 @@ contains ! =====     Public Procedures     =============================
                                     & referenceMIFunits=referenceMIFunits )
           end if
         else if ( associated(scVelQuantity) .and. associated(geocAltitudeQuantity) ) then
-          if ( .not. got(f_referenceMIF) ) &
-            & referenceMIF = scVelQuantity%template%noSurfs / 2
+          if ( .not. got(f_referenceMIF) ) then
+            referenceMIF = scVelQuantity%template%noSurfs / 2
+            referenceMIFunits = PHYQ_Dimensionless
+          end if
           call UsingMagneticModel ( quantity, key, scVelQuantity, &
                                   & geocAltitudeQuantity, &
                                   & regular=regular, referenceMIF=referenceMIF, &
@@ -3265,6 +3267,11 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.461  2016/06/14 22:52:46  vsnyder
+! The default for ReferenceMIFUnits is PHYQ_Dimensionless, but just to make
+! sure, set it to PHYQ_Dimensionless every place that ReferenceMIF is an
+! index instead of an altitude.
+!
 ! Revision 2.460  2016/05/18 01:37:30  vsnyder
 ! Change HGrids database from an array of HGrid_T to an array of pointers
 ! to HGrid_T using the new type HGrids_T.
