@@ -4514,11 +4514,14 @@ contains ! =====     Public Procedures     =============================
               do i = 1, geocAltitudeQuantity%template%noSurfs
                 ! Convert [lat, lon, ht] to ECR in meters
                 if ( geocAltitudeQuantity%template%latitudeCoordinate == l_geodetic ) then
+                  ! geodetic altitude, geodetic latitude.
+                  ! GeodToECRm makes an ECR vector in meters here.
                   xyz = geodToECRm ( [ geocAltitudeQuantity%template%geodLat(i,1), &
                                      & geocAltitudeQuantity%template%lon(i,1), &
                                      & geocAltitudeQuantity%template%surfs(i,1) ] )
-                else ! geocentric latitude
-                  ! GeocToECRu gets an ECR unit vector
+                else ! geodetic altitude, geocentric latitude (weird)
+                  ! Convert [lat, lon] to unit ECR, then ECR * ht to meters.
+                  ! GeocToECRu makes an ECR unit vector.
                   xyz = geocToECRu ( geocAltitudeQuantity%template%geodLat(i,1), &
                                    & geocAltitudeQuantity%template%lon(i,1) ) * &
                                    & geocAltitudeQuantity%template%surfs(i,1)
@@ -4529,9 +4532,9 @@ contains ! =====     Public Procedures     =============================
               end do
             else
               call MLSMessage ( MLSMSG_Info, moduleName, &
-                & 'ReferenceMIF = %R is greater than half than Earth radius ' // &
-                & 'and is therefore assumed to be geocentric height.', &
-                & datum = referenceMIF )
+                & 'ReferenceMIF = %R is greater than half the Earth radius ' // &
+                & '= %R and is therefore assumed to be geocentric height.', &
+                & datum = [ referenceMIF, 0.5 * EarthRadA ] )
               surfs(:) = geocAltitudeQuantity%template%surfs(:,1)
             end if
             ! Use only the monotone part of the tangent-point altitudes
@@ -7699,6 +7702,10 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.125  2016/06/14 22:54:39  vsnyder
+! In UsingMagneticModel, improve a message.  Add some comments about unexpected
+! combinations, such as geodetic height and geocentric latitude.
+!
 ! Revision 2.124  2016/06/13 21:03:20  vsnyder
 ! Improve a warning message
 !
