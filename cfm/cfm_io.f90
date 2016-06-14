@@ -855,7 +855,8 @@ module CFM_IO_M
    end subroutine  read_H5inputdata
 
    ! Read ptan values from L2AUX-DGM file, Pranjit Saha
-   subroutine Read_ptan (filename, fileType, MAFnumber, ptanValuesRead)
+   subroutine Read_ptan ( filename, fileType, MAFnumber, ptanValuesRead, &
+     & DSName )
       use MLSHDF5, only: LoadFromHDF5DS, LoadPtrFromHDF5DS, GetHDF5DSDims, &
                          IsHDF5DSPresent
       use MLSCommon, only: r8
@@ -865,25 +866,29 @@ module CFM_IO_M
       use Parse_Signal_m, only: Parse_Signal
       use HDF5, only: H5F_ACC_RDONLY_F, H5FOpen_F, H5FClose_F, HSize_T
 
-      character(len=*), intent(in) :: filename
-      character(len=*), intent(in) ::filetype
-      integer, intent(in) :: MAFnumber
-      real(r8), dimension(125) :: ptanValuesRead
+      character(len=*), intent(in)           :: filename
+      character(len=*), intent(in)           :: filetype
+      integer, intent(in)                    :: MAFnumber
+      real(r8), dimension(125)               :: ptanValuesRead
+      character(len=*), optional, intent(in) :: DSName
 
       ! Local variables
       integer :: iostat, fileID, Line1, nLines, lineN, j, i
       integer(hsize_t) :: Shp(1), Shp2(2) ! To get the shapes of datasets HD
       real(r8), pointer :: ptanValues(:,:,:)
+      character(len=128) :: PTanName
 
       ! Open HDF file
+      PTanName = 'GHz.ptan-FinalPtan'
+      if ( present(DSName) ) PTanName = DSName
       call h5fopen_f ( trim(fileName), H5F_ACC_RDONLY_F, fileID, iostat )
-      if (iostat /= 0) call MLSMessage (MLSMSG_Error, ModuleName, &
+      if (iostat /= 0) call MLSMessage ( MLSMSG_Error, ModuleName, &
          & 'Unable to open HDF5 L2AUX-DGM file ' // trim(fileName) // '.' )
 
       ! Check if field (GHz.ptan-FinalPtan) is present in the file
-      if ( IsHDF5DSPresent ( fileID, 'GHz.ptan-FinalPtan' ) ) then
+      if ( IsHDF5DSPresent ( fileID, trim(PTanName) ) ) then
         ! Read data from HDF file
-        call  loadPtrFromHDF5DS ( fileID, 'GHz.ptan-FinalPtan', ptanValues )
+        call  loadPtrFromHDF5DS ( fileID, trim(PTanName), ptanValues )
         do j = 1, 125
            ptanValuesRead(j) = ptanValues(1, j, MAFnumber)
         end do
@@ -892,7 +897,7 @@ module CFM_IO_M
       ! clode file and deallocate memory
       call H5FClose_F ( fileID, iostat )
 
-   end subroutine      ! end of subroutine Read_ptan (....)
+   end subroutine Read_ptan
 
    ! Write 'band9', 'precision9' in separate text files, Pranjit Saha
    subroutine Write_To_File2 ( band9, precision9 )
@@ -973,7 +978,6 @@ module CFM_IO_M
       ! Reference to user defined types
       use VectorsModule, only: VECTOR_T, VectorValue_T
       use MATRIXMODULE_1 , only: MATRIX_T
-      use QuantityTemplates, only: QUANTITYTEMPLATE_T
 
       ! Function argument type
       type(Vector_T),           intent(in) :: state
@@ -1120,7 +1124,6 @@ module CFM_IO_M
       use MATRIXMODULE_1 , only: MATRIX_T
       use MLSKINDS, only: RV
       use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-      use Allocate_Deallocate, only: Allocate_Test, DeAllocate_Test
 
       ! Function argument type
       type(Vector_T),           intent(in) :: radiance
@@ -1556,14 +1559,12 @@ module CFM_IO_M
       ! Reference to user defined types
       use VectorsModule, only: VECTOR_T, VectorValue_T
       use MATRIXMODULE_1 , only: MATRIX_T
-      use QuantityTemplates, only: QUANTITYTEMPLATE_T
       ! for HDF5 files
-      use MLSKINDS, only: R8, RV, RM
+      use MLSKINDS, only: RV
       use MLSHDF5, only: saveAsHDF5DS
       use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-      use Allocate_Deallocate, only: Allocate_Test, DeAllocate_Test
-      use HDF5, only:  H5FOpen_F, H5FClose_F, HSize_T, &
-            H5F_ACC_TRUNC_F, H5FCreate_F, h5open_f, h5gClose_F, h5gCreate_f
+      use HDF5, only:  H5FClose_F, &
+            H5F_ACC_TRUNC_F, H5FCreate_F
 
       ! Function argument type
       type(Vector_T),           intent(in) :: state
@@ -1585,7 +1586,6 @@ module CFM_IO_M
       ! Local variables
       integer :: columns, ncolumns
       integer :: rows, nrows
-      integer :: indx, i
       character(len=128) :: CERRMSG
       
       ! initialize 
@@ -1747,12 +1747,11 @@ module CFM_IO_M
             Radiance_Observed_out)
         
         ! for HDF5 files
-        use MLSKINDS, only: R8, RV, RM
+        use MLSKINDS, only: RV
         use MLSHDF5, only: saveAsHDF5DS
         use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-        use Allocate_Deallocate, only: Allocate_Test, DeAllocate_Test
-        use HDF5, only:  H5FCreate_F, H5FClose_F, HSize_T, &
-              H5F_ACC_TRUNC_F, h5open_f, h5gClose_F, h5gCreate_f      
+        use HDF5, only:  H5FCreate_F, H5FClose_F, &
+              H5F_ACC_TRUNC_F  
         
       real(rv), dimension(:), pointer :: &
             Radiance_Calculated_out, &
@@ -1768,8 +1767,6 @@ module CFM_IO_M
         character(len=128) :: moduleName="CFM_IO:Write2HDF5"
         integer :: iostat, fileID, error, ierr
 
-        character(len=128) :: CERRMSG
-        
         call H5FCreate_F (trim(outputH5fileName), H5F_ACC_TRUNC_F, fileID, iostat )
         if ( iostat /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
         & 'Unable to open hdf5 file ' // trim(outputH5fileName) // ' for output.' )
@@ -1816,9 +1813,6 @@ module CFM_IO_M
         RADIANCE, O3_JACOBIAN, ExtinctionV2_JACOBIAN , &
         BAND9, PRECISION9, MASK9)
       ! Reference to user defined types
-      use VectorsModule, only: VECTOR_T, VectorValue_T
-      use MATRIXMODULE_1 , only: MATRIX_T
-      use QuantityTemplates, only: QUANTITYTEMPLATE_T
       
       use MLSMessageModule, only: MLSMessage, MLSMSG_Error
 
@@ -1837,7 +1831,7 @@ module CFM_IO_M
       ! Local variables
       integer :: columns
       integer :: rows
-      integer :: indx, i, j
+      integer :: i, j
       CHARACTER(LEN=20), PARAMETER :: FMT1 = "(F16.5)"
       CHARACTER(LEN=20), PARAMETER :: FMT2 = "(E18.8)"
       character(len=*), parameter :: ModuleName = 'CFM_IO:Write_To_File1Txt'
@@ -2142,6 +2136,9 @@ end module
 
 
 ! $Log$
+! Revision 1.10  2016/03/29 20:29:52  pwagner
+! Restored functionality to validate_path; removed redundant ' implicit none' staements
+!
 ! Revision 1.9  2015/08/05 20:21:29  pwagner
 ! Modified to compile properly with v4
 !
