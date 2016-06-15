@@ -90,6 +90,13 @@ Copy, $
 !ifdef(flagCopyAPiori,{
 !forall(copyApriori,!NonColumnStdProds)
 })
+
+!ifdef(flagNRT,{
+;; OK, seem to have flagNRT
+!forall(copyStandardProductWithoutColumn,!ColumnStdProds)
+!forall(copyApriori,!ColumnStdProds)
+},{
+
 !define(copyStandardProductWithColumn, {Copy, $
   type=l2gp, hdfVersion=5, $
     inputFile='!DGGFileName', swath='$1-StdProd column,$1-StdProd', inputtype=l2dgg, $
@@ -105,21 +112,15 @@ Copy, $
     /create
 })
 
-!ifdef(flagNRT,{
-!forall(copyStandardProductWithoutColumn,!ColumnStdProds)
-},{
 !ifdef(flagUseGEOS5PTrop,{!dnl
 !forall(copyStandardProductWith2Columns,!ColumnStdProds)
 },{!dnl
 !forall(copyStandardProductWithColumn,!ColumnStdProds)
 })
-})
 !ifdef(flagCopyAPiori,{
 !forall(copyApriori,!ColumnStdProds)
 })
 
-!ifdef(flagNRT,{},
-{
 ;; --------------------------------- Other files ---
 ;; The IWC, RHI files require special treatment
 ;; In each case we copy two related swaths into the same l2gp file
@@ -177,9 +178,9 @@ Copy, type=l2gp, hdfVersion=!hdfVersion, $
     file='!l2gpFileName(Temperature)', rename='WMOTPPressure'
 
 })
-})
 !ifdef(flagAscendDescend,{
 !forall(copyAscDescToAttributei,!NonColumnStdProds,!ColumnStdProds,IWC)
+})
 })
 end Output
 
@@ -211,6 +212,9 @@ begin Output
 end Output
 !divert(-1)
 ; $Log$
+; Revision 1.7  2014/12/10 23:07:20  pwagner
+; Asc/Desc quantity alculations needs ptanQuantity
+;
 ; Revision 1.6  2014/11/19 21:33:51  pwagner
 ; Automatically write ExtraNotes attribute if no good OH profiles
 ;
