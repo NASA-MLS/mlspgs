@@ -63,7 +63,7 @@ begin Fill
       [ 100mb : 10.0, 68mb:0.0001]
 
   Fill, quantity=apriori.rhivmr,sourcequantity=apriori.rhi,method = vector, $
-        /interpolate,/force
+        /interpolate,/ignoreTemplate
 
 ; These radiometers use nu^2 extinctions instead of flat extinctions
 !define(v2ExtinctionRadiometers,{R3})!dnl
@@ -246,7 +246,7 @@ Fill, quantity=apriori.refGPH,$
 
   Fill, quantity=aprioriPrecision.rhivmrsngl, $
         sourcequantity=aprioriPrecision.rhi,method = vector,/interpolate, $
-        /force
+        /ignoreTemplate
   Fill, quantity=aprioriPrecision.rhivmrsngl, method=profile, $
         profileValues= [ 100mb:100, 68mb:0.0001 ]
 
@@ -609,6 +609,9 @@ end Join
   })
 !divert(-1)
 ;$Log$
+;Revision 1.3  2012/05/02 16:48:18  pwagner
+;Use flags to Ignore instead of Use CClimatology, Meteorology
+;
 ;Revision 1.2  2012/04/13 21:20:44  wgread
 ;increased high bound for extinction-wgr
 ;
