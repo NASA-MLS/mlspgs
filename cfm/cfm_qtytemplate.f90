@@ -12,6 +12,7 @@ module CFM_QuantityTemplate_m
    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test, Test_Allocate
    use FGrid, only: fGrid_T
    use HGridsDatabase, only: hGrid_T
+   use highOutput, only: outputNamedValue
    use VGridsDatabase, only: VGrids, VGrid_T
    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning, MLSMSG_L1BRead
    use QuantityTemplates, only: QuantityTemplate_T, NullifyQuantityTemplate, &
@@ -149,10 +150,11 @@ module CFM_QuantityTemplate_m
       qty = CreateQtyTemplate_chunk (quantityType, filedatabase, chunk, &
       avgrid, ahgrid, afgrid, qInstModule, qMolecule, qLogBasis, qMinValue, qSignal, &
       qRadiometer, qBadValue, qName)
-   end function
+   end function CreateQtyTemplate_maf
 
    ! Creating a quantity based on the optional inputs this subroutine is provided with.
-   type(QuantityTemplate_T) function CreateQtyTemplate_chunk (quantityType, filedatabase, chunk, &
+   type(QuantityTemplate_T) function CreateQtyTemplate_chunk &
+     & (quantityType, filedatabase, chunk, &
         avgrid, ahgrid, afgrid, qInstModule, qMolecule, qLogBasis, qMinValue, qSignal, &
         qRadiometer, qBadValue, qName) result(qty)
       ! an integer representing a quantity type, see CFM documentation appendix
@@ -201,7 +203,14 @@ module CFM_QuantityTemplate_m
       logical :: isMinorFrame
       character(len=256) :: haha = ' '
 
-      ! Executables
+    character(63) :: What
+
+    ! Executable code
+    if ( qty%name > 0 ) then
+      call mygetString ( qty%name, what )
+    else
+      what = "qty"
+    end if
       call NullifyQuantityTemplate(qty)
       instrumentModule = 0
       qty%fGridIndex = 0 ! we're not getting fgrid from fgridDatabase
@@ -232,6 +241,7 @@ module CFM_QuantityTemplate_m
       qty%sharedFGrid = .false.
       qty%badValue = huge(0.0_r8)   !Default bad value
       ! These field are not used in cfm
+      qty%verticalCoordinate = l_zeta
       qty%noInstancesLowerOverlap = 0
       qty%noInstancesUpperOverlap = 0
 
@@ -376,14 +386,18 @@ module CFM_QuantityTemplate_m
          call ConstructMajorFrameQuantity (instrumentModule, qty, &
               noChans, filedatabase, chunk)
       else
-         ! Setup the quantity template
+         ! Setup the quantity template for an HGrid
          if (present(ahgrid)) then
+            ! call output( 'We have an HGrid', advance='yes' )
             qty%noInstances = ahgrid%noprofs
             qty%the_hGrid => aHGrid
             call PointQuantityToHGrid ( qty )
          else
+            ! call output( 'We do not have an HGrid', advance='yes' )
             call SetupEmptyHGridForQuantity(qty)
          end if
+         ! call outputNamedValue ( 'is crossAngles associated?', &
+         !   & associated(qty%crossAngles) )
 
          if (present(avGrid)) then
             qty%verticalCoordinate = avGrid%verticalCoordinate
@@ -419,7 +433,20 @@ module CFM_QuantityTemplate_m
      qty%instrumentModule = instrumentModule
      qty%minorFrame = isMinorFrame
 
-   end function
+     ! Now think about instanceLen
+     if ( .not. qty%regular ) then
+       qty%instanceLen = 0
+     else
+       qty%instanceLen = qty%noSurfs * qty%noChans * qty%noCrossTrack
+     end if
+
+     ! Now the horizontal coordinates
+
+     call allocate_test ( qty%crossAngles, qty%noCrossTrack, &
+       & trim(what) // "%crossAngles", ModuleName )
+     qty%crossAngles = 0.0 ! In case there actually is no xGrid
+
+   end function CreateQtyTemplate_chunk
 
   ! ----------------------------------  myPointQuantityToHGrid  -----
   subroutine myPointQuantityToHGrid ( hGrid, qty )
@@ -638,7 +665,28 @@ module CFM_QuantityTemplate_m
         call DeallocateL1BData ( l1bField )
 
      end if
-  end subroutine
+  end subroutine ConstructMajorFrameQuantity
+
+  ! ------------------------------------------------  myGetString  -----
+  subroutine myGetString ( index, what, strip )
+    ! Given a string index, Get the string or an error message
+    use MLSStrings, only: writeIntsToChars
+    use string_table, only: get_string, how_many_strings
+    integer, intent(in)           :: index
+    character(len=*), intent(out) :: what
+    logical, intent(in), optional :: strip
+
+    ! Executable code
+    if ( index < 1 ) then
+      what = '(string index < 1)'
+    else if ( index > how_many_strings() ) then
+      call writeIntsToChars( how_many_strings(), what )
+      what = '(string index >' // trim(what) // ')'
+    else
+      call get_string ( index, what, strip )
+    end if
+  end subroutine myGetString
+
 
    ! -----------------------------------------------  Announce_Error  -----
    subroutine Announce_Error ( message, extra, severity )
@@ -690,6 +738,9 @@ module CFM_QuantityTemplate_m
 end module
 
 ! $Log$
+! Revision 1.27  2016/05/12 18:17:22  pwagner
+! Use PointQuantityToHGrid from QuantityTemplates
+!
 ! Revision 1.26  2016/01/07 17:54:02  pwagner
 ! Allocates crossAngles
 !
