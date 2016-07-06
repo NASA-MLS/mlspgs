@@ -164,6 +164,7 @@ module CFM_Vector_m
     type(VectorValue_T) function CreateValue4AgileVector (template, value, spreadvalue, &
     mask) result(vectorvalue)
         use MLSStrings, only: writeIntsToChars
+        use VectorsModule, only: remapVectorValue, remapVectorMask
 
         type(QuantityTemplate_T), intent(in) :: template
         real(r8), dimension(:), intent(in), optional :: value
@@ -172,15 +173,21 @@ module CFM_Vector_m
 
         integer :: row, col
         character(len=10) :: int1 = "          ", int2 = "          "
+        integer :: valueSize
 
         row = template%nochans * template%nosurfs
         col = template%noinstances
 
         vectorvalue%template = template
 
+        valueSize = max( 1, vectorvalue%template%noChans * &
+           & vectorvalue%template%noSurfs * &
+           & vectorvalue%template%noInstances * &
+           & vectorvalue%template%noCrossTrack )
         if (.not. present(value) .and. .not. present(spreadvalue)) then
-            call allocate_test(vectorvalue%values, row, col, "vectorvalue%values", modulename)
-            vectorvalue%values = 0.0_r8
+            call allocate_test(vectorvalue%value1, valueSize, "vectorvalue%values", modulename)
+            vectorvalue%value1 = 0.0_r8
+            call remapVectorValue ( vectorvalue )
             return
         end if
 
@@ -198,20 +205,35 @@ module CFM_Vector_m
             end if
         end if
 
-        call allocate_test(vectorvalue%values, row, col, "vectorvalue%values", modulename)
-        if (present(spreadvalue)) then
-            vectorvalue%values = spreadvalue
+        ! This simply doesn't work any longer after we moved to remapping
+        if ( .false. ) then
+          call allocate_test(vectorvalue%values, row, col, "vectorvalue%values", modulename)
+          if (present(spreadvalue)) then
+              vectorvalue%values = spreadvalue
+          else
+              vectorvalue%values = reshape(value, shape(vectorvalue%values))
+          end if
         else
-            vectorvalue%values = reshape(value, shape(vectorvalue%values))
-        end if
+          call allocate_test ( vectorvalue%value1, &
+            & valueSize, &
+            & trim(vectorvalue%AllocationName), moduleName )
+          if (present(spreadvalue)) then
+              vectorvalue%value1 = spreadvalue
+          else
+              vectorvalue%value1 = value
+          end if
+
+          call remapVectorValue ( vectorvalue )
+        endif
 
         if (present(mask)) then
             if (size(vectorvalue%values) /= size(mask)) &
             call MLSMessage (MLSMSG_Error, modulename, "Size of mask differs from shape of value.")
-            call allocate_test(vectorvalue%mask, row, col, "vectorvalue%mask", modulename)
-            vectorvalue%mask = reshape(mask, shape(vectorvalue%mask))
+            call allocate_test(vectorvalue%mask1, valueSize, "vectorvalue%mask", modulename)
+            vectorvalue%mask1 = mask
+          call remapVectorMask ( vectorvalue )
         end if
-    end function
+    end function CreateValue4AgileVector
 
     ! =====     Private Procedures     =====================================
     subroutine CreateValues ( Vector)
@@ -243,6 +265,10 @@ module CFM_Vector_m
 end module
 
 ! $Log$
+! Revision 1.14  2011/12/25 03:39:06  honghanh
+! Fix cloning and memory cleanup method
+! in forwardmodel2 subroutines.
+!
 ! Revision 1.13  2011/12/15 18:27:45  honghanh
 ! Documentation and code clean up, including removing unused and broken
 ! subroutines.
