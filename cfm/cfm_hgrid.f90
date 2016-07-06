@@ -145,6 +145,7 @@ module CFM_HGrid_m
          if (last < maxAngle) last = last + spacing
       end if
 
+      if ( chunk%firstMafIndex >= chunk%lastMafIndex ) last = first
       hgrid%noProfs = nint ( (last - first) / spacing ) + 1
       call CreateEmptyHGrid(hgrid)
       do i = 1, hgrid%noProfs
@@ -231,6 +232,9 @@ module CFM_HGrid_m
 end module
 
 ! $Log$
+! Revision 1.11  2011/12/15 23:47:49  honghanh
+! Add documentation for CreateStandardHGrid
+!
 ! Revision 1.10  2011/10/19 16:06:13  honghanh
 ! Add function to create hgrid with start maf and end maf.
 !
