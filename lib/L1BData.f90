@@ -306,7 +306,7 @@ contains ! ============================ MODULE PROCEDURES ======================
   function AssembleL1BQtyName ( name, hdfVersion, isTngtQty, &
     & InstrumentName, dont_compress_name) &
     & result(QtyName)
-    use MLSStrings, only: compressString
+    use MLSStrings, only: compressString, streq
     ! Returns a QtyName to be found in the L1b file
     ! If given InstrumentName, name should be a fragment:
     ! e.g., name='VelECI' and InstrumentName='sc'
@@ -318,21 +318,21 @@ contains ! ============================ MODULE PROCEDURES ======================
     logical, intent(in)          :: isTngtQty   ! T or F
     character(len=*), intent(in), optional :: InstrumentName ! e.g. THz
     logical, intent(in), optional :: dont_compress_name
-    character(len=namelen)      :: QtyName
-    logical, parameter           :: DEEBUG = .FALSE.
+    character(len=namelen)       :: QtyName
 
     ! Private
     character(len=1), dimension(HDFVersion_4:HDFVersion_5), parameter :: &
       heads =       (/ ' ', '/' /), &
       instr_tails = (/ '.', '/' /), &
       tp_tails =    (/ ' ', '/' /)
-    character(len=1) :: head
-    character(len=1) :: instr_tail
-    character(len=1) :: tp_tail
-    character(len=4) :: my_instrument
+    logical, parameter     :: DEEBUG = .false.
+    character(len=1)       :: head
+    character(len=1)       :: instr_tail
+    character(len=1)       :: tp_tail
+    character(len=16)      :: my_instrument
     character(len=namelen) :: the_rest
-    logical          :: is_a_signal
-    logical          :: compress
+    logical                :: is_a_signal
+    logical                :: compress
     ! Executable code
     compress = .true.
     if ( present(dont_compress_name) ) compress = .not. dont_compress_name
@@ -353,6 +353,9 @@ contains ! ============================ MODULE PROCEDURES ======================
     instr_tail = instr_tails(hdfVersion)
     tp_tail = tp_tails(hdfVersion)
     if ( hdfVersion == HDFVERSION_4 .and. my_instrument == 'sc' ) instr_tail= ''
+    if ( DEEBUG ) then
+      print *, 'my_instrument: ', trim(my_instrument)
+    endif
     if ( present(InstrumentName) ) then
       QtyName = head // trim(my_instrument) // instr_tail
     else if ( is_a_signal .or. hdfVersion /= HDFVERSION_5 ) then
@@ -371,6 +374,20 @@ contains ! ============================ MODULE PROCEDURES ======================
       else if ( name(1:4) == 'THz.' ) then
         my_instrument = 'THz'
         the_rest = name(5:)
+      ! ASMLS? 
+      ! Shouldn't we cook up something more flexible? Less of a crude hack?
+      elseif ( streq(name, 'ASMLS*', options='-wc' ) ) then
+        my_instrument = 'ASMLS'
+        the_rest = name(6:)
+      elseif ( streq(name, 'ER2*', options='-wc' ) ) then
+        my_instrument = 'ER2'
+        the_rest = name(4:)
+      else if ( streq(name, 'Spectrometer1*', options='-wc' ) ) then
+        my_instrument = 'Spectrometer1'
+        the_rest = name(15:)
+      else if ( streq(name, 'Spectrometer2*', options='-wc' ) ) then
+        my_instrument = 'Spectrometer2'
+        the_rest = name(15:)
       else
         my_instrument = ' '
         the_rest = name
@@ -1740,12 +1757,13 @@ contains ! ============================ MODULE PROCEDURES ======================
     integer :: returnStatus
     ! Executable code
     DEEBug = .false. ! ( index(QuantityName, '/GHz/GeodAngle') > 0 )
-    call trace_begin ( me, "ReadL1BData_MLSFile", &
-      & cond=toggle(gen) .and. levels(gen) > 1 )
     if ( .not. associated(L1BFile) ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'null pointer passed to readl1bdata--probably cant find ' // &
         & trim(QuantityName) )
+        return
+    call trace_begin ( me, "ReadL1BData_MLSFile", &
+      & cond=toggle(gen) .and. levels(gen) > 1 )
     alreadyOpen = L1BFile%StillOpen
     if ( .not. alreadyOpen ) then
       ! print *, 'Oops--need to open l1b file before reading'
@@ -1917,6 +1935,7 @@ contains ! ============================ MODULE PROCEDURES ======================
         if ( MyNeverFail ) go to 9
         call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Failed to find identifier of counterMAF data set.', MLSFile=L1BFile)
+        return
       end if
     end if
 
@@ -1927,6 +1946,7 @@ contains ! ============================ MODULE PROCEDURES ======================
       dummy = 'Failed to find index of quantity "' // trim(quantityName) // &
         & '" data set.'
       call MLSMessage ( MLSMSG_Error, ModuleName, dummy, MLSFile=L1BFile )
+      return
     end if
 
     sds2_id = sfselect(L1FileHandle, sds_index)
@@ -1935,6 +1955,7 @@ contains ! ============================ MODULE PROCEDURES ======================
       if ( MyNeverFail ) go to 9
       call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Failed to find identifier of data set matching the index.', MLSFile=L1BFile)
+      return
     end if
 
     ! Find rank (# of dimensions), dimension sizes of quantity data set
@@ -1946,6 +1967,7 @@ contains ! ============================ MODULE PROCEDURES ======================
       if ( MyNeverFail ) go to 9
       call MLSMessage ( MLSMSG_Error, ModuleName,&
       & 'Failed to find rank of data set.', MLSFile=L1BFile)
+      return
     end if
 
     ! allocate, based on above SD, dim info; don't track allocatable sizes
@@ -2013,6 +2035,7 @@ contains ! ============================ MODULE PROCEDURES ======================
         if ( MyNeverFail ) go to 9
         call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_L1BRead // 'counterMAF.', MLSFile=L1BFile )
+        return
       end if
     else
       ! Since we aren't reading these, just make them internally consistent
@@ -2090,11 +2113,13 @@ contains ! ============================ MODULE PROCEDURES ======================
       if ( MyNeverFail ) go to 9
       call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_L1BRead // quantityName, MLSFile=L1BFile )
+      return
     else if ( status == -2 ) then
       flag = UNKNOWNDATATYPE
       if ( MyNeverFail ) go to 9
       call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unknown data type in readl1bData', MLSFile=L1BFile   )
+      return
     end if
 
     ! Terminate access to the data sets
@@ -2200,6 +2225,7 @@ contains ! ============================ MODULE PROCEDURES ======================
       dummy = 'Failed to find index of quantity "' // trim(quantityName) // &
         & '" data set.'
       call MLSMessage ( MLSMSG_Error, ModuleName, dummy, MLSFile=L1BFile )
+      return
     end if
 
     ! Find Qtype, rank and dimensions of QuantityName
@@ -2858,6 +2884,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.108  2016/07/21 20:27:06  pwagner
+! Can now handle ASMLS data better
+!
 ! Revision 2.107  2016/04/20 00:05:15  pwagner
 ! cpL1BData now copies l1b datasets between files
 !
