@@ -78,6 +78,7 @@ contains ! =====     Public Procedures     =============================
     use L2GPData, only: L2GPData_t
     use MLSCommon, only: MLSfile_t, namelen, tai93_range_t
     use MLSFiles, only: getMLSfilebytype
+    use MLSHDF5, only: IsHDF5DSInFile
     use MLSKinds, only: rk => r8
     use MLSL2options, only: need_L1Bfiles
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
@@ -358,6 +359,14 @@ contains ! =====     Public Procedures     =============================
     end select
     
     ! Find nearest maf based on time
+    if ( .not. IsHDF5DSInFile ( L1BFile%name, "MAFStartTimeTAI" ) ) then
+      call MLSMessage ( MLSMSG_Error, ModuleName // '/' &
+        & // 'CreateHGridFromMLSCFInfo', &
+        & "MAFStartTimeTAI not found in l1b file" )
+      call trace_end ( "CreateHGridFromMLSCFInfo", &
+        & cond=toggle(gen) .and. ( levels(gen) > 1 .or. .not. computingOffsets ) )
+      return
+    endif
     call L1BGeoLocation ( filedatabase, "MAFStartTimeTAI", fullArray )
     call L1BSubsample ( chunk, fullArray, values=TAI )
     call Hunt ( TAI, hgrid%time(1,:), hgrid%maf, &
@@ -582,6 +591,7 @@ contains ! =====     Public Procedures     =============================
       & assembleL1BQtyName
     use MLSCommon, only: MLSFile_t, NameLen
     use MLSFiles, only: getMLSFileByType
+    use MLSHDF5, only: IsHDF5DSInFile
     use MLSKinds, only: rk => r8
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_L1BRead
     use MLSNumerics, only: hunt, interpolateValues
@@ -591,6 +601,7 @@ contains ! =====     Public Procedures     =============================
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
     integer, intent(in)               :: HGRIDTYPE
     type (MLSChunk_T), intent(in)     :: CHUNK
+    integer                           :: error
     logical, dimension(:), intent(in) :: GOT_FIELD
     integer, intent(in)               :: ROOT
     real(rk), intent(in)              :: INTERPOLATIONFACTOR
@@ -626,6 +637,7 @@ contains ! =====     Public Procedures     =============================
     integer :: Me = -1                  ! String index for trace
     real(rk) :: MinAngle, MaxAngle
     logical :: MissingOK
+    logical :: MissingThisOK
     integer :: NOMAFS                   ! Dimension
     real(rk), dimension(:,:,:), pointer :: TpGeodAlt, TpGeodAngle
 
@@ -749,20 +761,34 @@ contains ! =====     Public Procedures     =============================
 
     ! Now we go through all the important geolocation quantities, read them
     ! in, interpolate them if required and store the result in the hGrid
-    
+    error = 0
     do l1bItem = 1, NoL1BItemsToRead
       ! Get the name of the item to read
       l1bItemName = l1bItemNames(l1bItem)
+      MissingThisOK = MissingOK .and. l1bItem /= l1b_mafstarttimetai
       if ( l1bItem >= firstModularItem ) l1bItemName = &
         & trim(instrumentModuleName)//"."//l1bItemName
       
       ! Read it from the l1boa file
       l1bItemName = AssembleL1BQtyName ( l1bItemName, hdfVersion, .false. )
+      if ( deebug ) then
+        call outputNamedValue( 'item', trim(l1bItemName) )
+        call outputNamedValue( 'MissingOK', MissingOK )
+      endif
       call ReadL1BData ( L1BFile, l1bItemName, l1bField, noMAFs, &
         & l1bFlag, firstMAF=chunk%firstMafIndex, lastMAF=chunk%lastMafIndex, &
         & neverfail=(MissingOK .or. l1bItem == l1b_tplosangle), dontPad=.true. )
-      if ( l1bFlag==-1 .and. .not. MissingOK) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & MLSMSG_L1BRead//l1bItemName )
+      if ( deebug ) call outputNamedValue( 'l1bFlag', l1bFlag )
+      if ( l1bFlag==-1 .and. .not. MissingthisOK) then
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & MLSMSG_L1BRead//l1bItemName )
+        error = 1
+        stop
+        cycle
+      elseif ( .not. IsHDF5DSInFile ( L1BFile%name, trim(l1bItemName) ) ) then
+        call outputNamedValue ( 'item missing from l1b file', trim(l1bItemName) )
+        cycle
+      endif
       if ( deebug .and. index(l1bItemName, 'MAFStartTimeTAI') > 0 ) then
         call dump(l1bField%DpField(1,1,:), 'MAFStartTimeTAI (before interpolating)')
       end if
@@ -854,10 +880,10 @@ contains ! =====     Public Procedures     =============================
 
     ! Now deal with the user requests
     if ( maxLowerOverlap >= 0 .and. &
-      & ( hGrid%noProfsLowerOverlap > maxLowerOverlap ) ) &
+      & ( hGrid%noProfsLowerOverlap > maxLowerOverlap ) .and. error == 0 ) &
       call TrimHGrid ( hGrid, -1, hGrid%noProfsLowerOverlap - maxLowerOverlap )
     if ( maxUpperOverlap >= 0 .and. &
-      & ( hGrid%noProfsUpperOverlap > maxUpperOverlap ) ) &
+      & ( hGrid%noProfsUpperOverlap > maxUpperOverlap ) .and. error == 0 ) &
       call TrimHGrid ( hGrid, -1, hGrid%noProfsUpperOverlap - maxUpperOverlap )
 
     call trace_end ( "CreateMIFBasedHGrids", &
@@ -1521,12 +1547,12 @@ contains ! =====     Public Procedures     =============================
 
     ! Executable code
     deebug = LetsDebug ( 'hgrid', 1 )
-    call trace_begin ( me, "DealWithObstructions", &
-      & cond=toggle(gen) .and. levels(gen) > 1 .and. .not. computingOffsets )
     ! 1st--some short-circuits
     if ( hGrid%noProfs < 1 ) return
     if ( .not. associated(obstructions) ) return
     if ( .not. associated(hGrid%phi) ) return
+    call trace_begin ( me, "DealWithObstructions", &
+      & cond=toggle(gen) .and. levels(gen) > 1 .and. .not. computingOffsets )
     mayDestroyOld = .false.
     if ( present(DestroyOld) ) mayDestroyOld = DestroyOld
     
@@ -2390,6 +2416,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.131  2016/07/21 20:55:09  pwagner
+! Deal smootly when items missing from l1b file
+!
 ! Revision 2.130  2016/05/18 01:37:30  vsnyder
 ! Change HGrids database from an array of HGrid_T to an array of pointers
 ! to HGrid_T using the new type HGrids_T.
