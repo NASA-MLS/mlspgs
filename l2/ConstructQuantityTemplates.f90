@@ -701,7 +701,11 @@ contains ! ============= Public procedures ===================================
       end if
       
       ! In case we didn't find the proper item in the l1boa files
-      if ( l1bFlag /= 0 ) return
+      if ( l1bFlag /= 0 ) then
+        call trace_end ( "ConstructMinorFrameQuantity", &
+          & cond=toggle(gen) .and. levels(gen) > 1 )
+        return
+      endif
 
       ! Work out which items to read
       if ( IsModuleSpacecraft(instrumentModule) ) then
@@ -1520,6 +1524,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.192  2016/07/21 20:28:54  pwagner
+! Now remembers to call trace_end before returning from a failed l1b read
+!
 ! Revision 2.191  2016/05/27 20:59:04  vsnyder
 ! Remove l_mifIncline and l_mifTanHt because they are redundant to
 ! l_OrbitInclination and l_tngtGeodAlt
