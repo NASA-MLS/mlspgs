@@ -325,7 +325,7 @@ contains ! ============================ MODULE PROCEDURES ======================
       heads =       (/ ' ', '/' /), &
       instr_tails = (/ '.', '/' /), &
       tp_tails =    (/ ' ', '/' /)
-    logical, parameter     :: DEEBUG = .true.
+    logical, parameter     :: DEEBUG = .false.
     character(len=1)       :: head
     character(len=1)       :: instr_tail
     character(len=1)       :: tp_tail
@@ -1743,11 +1743,12 @@ contains ! ============================ MODULE PROCEDURES ======================
     integer :: returnStatus
     ! Executable code
     DEEBug = .false. ! ( index(QuantityName, '/GHz/GeodAngle') > 0 )
-    if ( .not. associated(L1BFile) ) &
-      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+    if ( .not. associated(L1BFile) ) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'null pointer passed to readl1bdata--probably cant find ' // &
         & trim(QuantityName) )
         return
+    endif
     call trace_begin ( me, "ReadL1BData_MLSFile", &
       & cond=toggle(gen) .and. levels(gen) > 1 )
     alreadyOpen = L1BFile%StillOpen
@@ -2870,6 +2871,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.110  2016/07/22 20:03:52  pwagner
+! Fixed errors in AssembleL1BQtyName, ReadL1BData_MLSFile
+!
 ! Revision 2.109  2016/07/22 00:22:58  pwagner
 ! Improved pattern recognition
 !
