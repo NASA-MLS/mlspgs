@@ -325,11 +325,12 @@ contains ! ============================ MODULE PROCEDURES ======================
       heads =       (/ ' ', '/' /), &
       instr_tails = (/ '.', '/' /), &
       tp_tails =    (/ ' ', '/' /)
-    logical, parameter     :: DEEBUG = .false.
+    logical, parameter     :: DEEBUG = .true.
     character(len=1)       :: head
     character(len=1)       :: instr_tail
     character(len=1)       :: tp_tail
     character(len=16)      :: my_instrument
+    integer                :: p
     character(len=namelen) :: the_rest
     logical                :: is_a_signal
     logical                :: compress
@@ -368,26 +369,11 @@ contains ! ============================ MODULE PROCEDURES ======================
       if ( name(1:2) == 'sc' ) then
         my_instrument = 'sc'
         the_rest = name(3:)
-      else if ( name(1:4) == 'GHz.' ) then
-        my_instrument = 'GHz'
-        the_rest = name(5:)
-      else if ( name(1:4) == 'THz.' ) then
-        my_instrument = 'THz'
-        the_rest = name(5:)
-      ! ASMLS? 
-      ! Shouldn't we cook up something more flexible? Less of a crude hack?
-      elseif ( streq(name, 'ASMLS*', options='-wc' ) ) then
-        my_instrument = 'ASMLS'
-        the_rest = name(6:)
-      elseif ( streq(name, 'ER2*', options='-wc' ) ) then
-        my_instrument = 'ER2'
-        the_rest = name(4:)
-      else if ( streq(name, 'Spectrometer1*', options='-wc' ) ) then
-        my_instrument = 'Spectrometer1'
-        the_rest = name(15:)
-      else if ( streq(name, 'Spectrometer2*', options='-wc' ) ) then
-        my_instrument = 'Spectrometer2'
-        the_rest = name(15:)
+      ! Do we match the pattern 'Instrument.tpItem'
+      elseif ( streq(name, '*.tp*', options='-wc' ) ) then
+        p = index( name, '.tp' )
+        my_instrument = name(:p-1)
+        the_rest = name(p+3:)
       else
         my_instrument = ' '
         the_rest = name
@@ -2884,6 +2870,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.109  2016/07/22 00:22:58  pwagner
+! Improved pattern recognition
+!
 ! Revision 2.108  2016/07/21 20:27:06  pwagner
 ! Can now handle ASMLS data better
 !
