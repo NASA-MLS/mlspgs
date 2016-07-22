@@ -77,7 +77,7 @@ contains ! =====     Public Procedures     =============================
       & l_l2gp, l_QTM, l_regular
     use L2GPData, only: L2GPData_t
     use MLSCommon, only: MLSfile_t, namelen, tai93_range_t
-    use MLSFiles, only: getMLSfilebytype
+    use MLSFiles, only: HDFVERSION_5, getMLSFileByType
     use MLSHDF5, only: IsHDF5DSInFile
     use MLSKinds, only: rk => r8
     use MLSL2options, only: need_L1Bfiles
@@ -359,7 +359,8 @@ contains ! =====     Public Procedures     =============================
     end select
     
     ! Find nearest maf based on time
-    if ( .not. IsHDF5DSInFile ( L1BFile%name, "MAFStartTimeTAI" ) ) then
+    if ( L1BFile%hdfVersion /= HDFVERSION_5 ) then
+    elseif ( .not. IsHDF5DSInFile ( L1BFile%name, "MAFStartTimeTAI" ) ) then
       call MLSMessage ( MLSMSG_Error, ModuleName // '/' &
         & // 'CreateHGridFromMLSCFInfo', &
         & "MAFStartTimeTAI not found in l1b file" )
@@ -1638,7 +1639,7 @@ contains ! =====     Public Procedures     =============================
     use L1BData, only: deallocateL1BData, L1BData_t, readL1BData, &
       & assemblel1bqtyname
     use MLSCommon, only: mlsfile_t, namelen
-    use MLSFiles, only: getmlsfilebytype
+    use MLSFiles, only: getMLSFileByType
     use MLSKinds, only: r8
     use output_m, only: output
     use string_table, only: display_string
@@ -2416,6 +2417,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.132  2016/07/22 20:04:46  pwagner
+! Permit using hdf4 l1b files
+!
 ! Revision 2.131  2016/07/21 20:55:09  pwagner
 ! Deal smootly when items missing from l1b file
 !
