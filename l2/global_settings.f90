@@ -815,7 +815,7 @@ contains
     ! add maf offsets to start, end times
     ! (unless you didn't input start, end times)
     subroutine timesFromMafOffsets
-      call output( 'Using mafOffsts to convert times', advance='yes' )
+      if ( DEEBUG ) call output( 'Using mafOffsts to convert times', advance='yes' )
       ! 1st--check that have L1BOA
       if ( L1BFile%FileID%f_id < 1 ) then
         call announce_error(son, &
@@ -824,12 +824,13 @@ contains
 
       quantity = 'MAFStartTimeTAI'
       l1bItemName = AssembleL1BQtyName ( quantity, the_hdf_version, .false. )
-      if ( DEEBUG ) call output( 'About to read L1B file', advance='yes' )
+      if ( DEEBUG ) call output( 'About to read L1B file: ' // trim(l1bItemName), &
+        & advance='yes' )
       call ReadL1BData ( L1BFile, l1bItemName, l1bField, noMAFs, &
         & l1bFlag, dontPad=.true.)
       if ( l1bFlag==-1 ) then
         call announce_error(son, &
-          & 'unrecognized MAFStarttimeTAI in L1BOA file')
+          & 'unrecognized MAFStartTimeTAI in L1BOA file')
         minTime = 0.
         maxTime = 0.
       else
@@ -1354,6 +1355,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.161  2015/09/02 23:17:43  pwagner
+! Bomb promptly if no DEM files instead of waiting until run ends
+!
 ! Revision 2.160  2014/03/31 23:50:47  pwagner
 ! Let tai93 times become negative
 !
