@@ -14,18 +14,18 @@ module MLSSignals_M
   ! Process the MLSSignals section of the L2 configuration file and deal with
   ! parsing signal request strings.
 
-  use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
-  use DUMP_0, only: DUMP
-  use EXPR_M, only: EXPR
-  use HIGHOUTPUT, only: HEADLINE
-  use INIT_MLSSIGNALS_M ! EVERYTHING
-  use INTRINSIC, only: FIELD_FIRST, FIELD_INDICES, LIT_INDICES, &
-    & PHYQ_DIMENSIONLESS, PHYQ_FREQUENCY, PHYQ_INDICES, S_TIME, L_A, L_EMLS
-  use MLSKinds, only: R8
-  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, PVMERRORMESSAGE
-  use MLSSTRINGS, only: LOWERCASE, CAPITALIZE
-  use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT
-  use STRING_TABLE, only: DISPLAY_STRING, GET_STRING
+  use allocate_deallocate, only: allocate_test, deallocate_test
+  use dump_0, only: dump
+  use expr_m, only: expr
+  use highOutput, only: headLine
+  use init_MLSSignals_m ! everything
+  use intrinsic, only: field_first, field_indices, lit_indices, &
+    & phyq_dimensionless, phyq_frequency, phyq_indices, s_time, l_a, l_emls
+  use MLSKinds, only: r8
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error, PVMErrorMessage
+  use MLSStrings, only: lowercase, capitalize
+  use output_m, only: blanks, newline, output
+  use string_table, only: display_string, get_string
 
   implicit none
 
@@ -72,6 +72,7 @@ module MLSSignals_M
 ! GetSignalIndex                  Returns the index in the signals database, given signal name in mixed case
 ! GetSignalName                   Given an index in the signals database, constructs full signal name.
 ! GetSpectrometerTypeName         Place spectrometer name and number in string
+! IsAnyModuleSpacecraft           Returns true if any module is really the spacecraft
 ! IsModuleSpacecraft              Returns true if the module is really the spacecraft
 ! IsSpacecraftAura                Returns true if the s/c is really Aura
 ! MatchSignal                     Given an array Signals, find the matching one
@@ -98,8 +99,8 @@ module MLSSignals_M
   public :: GETMODULEINDEX, GETSIDEBANDLOOP, GETSIDEBANDSTARTSTOP, GETSIGNALINDEX
   public :: GETMODULEFROMSIGNAL, GETMODULENAME, GETNAMEOFSIGNAL
   public :: GETRADIOMETERFROMSIGNAL, GETRADIOMETERNAME, GETRADIOMETERINDEX
-  public :: GETSIGNAL, GETSIGNALNAME
-  public :: GETSPECTROMETERTYPENAME, ISSPACECRAFTAURA, ISMODULESPACECRAFT
+  public :: GETSIGNAL, GETSIGNALNAME, GETSPECTROMETERTYPENAME
+  public :: ISSPACECRAFTAURA, ISANYMODULESPACECRAFT, ISMODULESPACECRAFT
   public :: MATCHSIGNAL, MATCHSIGNALPAIR, MLSSIGNALS
   public :: PVMPACKSIGNAL, PVMUNPACKSIGNAL
 
@@ -217,13 +218,13 @@ contains
   subroutine MLSSignals ( ROOT )
     ! Process the MLSSignals section of the L2 configuration file.
 
-    use MLSSTRINGLISTS, only: SWITCHDETAIL
-    use MORETREE, only: GET_BOOLEAN, Get_Label_And_Spec, STARTERRORMESSAGE
-    use Next_Tree_Node_m, only: Next_Tree_Node, Next_Tree_Node_State
-    use TIME_M, only: TIME_NOW
-    use TOGGLES, only: GEN, LEVELS, SWITCHES, TOGGLE
-    use TRACE_M, only: TRACE_BEGIN, TRACE_END
-    use TREE, only: DECORATE, DECORATION, NSONS, SUB_ROSA, SUBTREE
+    use MLSStringLists, only: switchdetail
+    use moreTree, only: get_boolean, get_label_and_spec, starterrormessage
+    use next_tree_node_m, only: next_tree_node, next_tree_node_state
+    use time_m, only: time_now
+    use toggles, only: gen, levels, switches, toggle
+    use trace_m, only: trace_begin, trace_end
+    use tree, only: decorate, decoration, nsons, sub_rosa, subtree
 
     integer, intent(in) :: ROOT         ! The "cf" vertex for the section
 
@@ -1695,6 +1696,17 @@ oc:       do
     string_text = Capitalize(string_text)
   end subroutine GetSpectrometerTypeName
 
+  ! -----------------------------------------  IsAnyModuleSpacecraft  -----
+  logical function IsAnyModuleSpacecraft()
+    ! Returns true if any module is really the spacecraft
+    integer :: i
+    IsAnyModuleSpacecraft = modules(1)%spacecraft
+    do i = 2, size(modules)
+      IsAnyModuleSpacecraft = IsAnyModuleSpacecraft &
+        & .or. modules(i)%spacecraft
+    enddo
+  end function IsAnyModuleSpacecraft
+
   ! -----------------------------------------  IsModuleSpacecraft  -----
   logical function IsModuleSpacecraft(thisModule)
     ! Returns true if the module is really the spacecraft
@@ -2023,6 +2035,9 @@ oc:       do
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.109  2016/07/25 23:15:41  pwagner
+! Added IsAnyModuleSpacecraft function
+!
 ! Revision 2.108  2015/03/28 01:18:43  vsnyder
 ! Added stuff to trace allocate/deallocate addresses
 !
