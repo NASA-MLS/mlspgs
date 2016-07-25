@@ -75,9 +75,9 @@ contains ! ============= Public procedures ===================================
     use chunks_m, only: mlschunk_t
 !   use chunkdivide_m, only: chunkdivideconfig
     use expr_m, only: expr
-    use fgrid, only: fgrid_t
+    use FGrid, only: FGrid_t
     use HGridsDatabase, only: HGrids_t
-    use highoutput, only: outputnamedvalue
+    use highOutput, only: outputNamedValue
     use init_tables_module, only:  f_badvalue, f_coordinate, f_fgrid, f_hgrid, &
       & f_irregular, f_keepchannels, f_logbasis, f_minvalue, f_module, &
       & f_molecule, f_radiometer, f_reflector, f_sgrid, f_signal, f_stacked, &
@@ -89,7 +89,8 @@ contains ! ============= Public procedures ===================================
     use MLSKinds, only: rk => r8
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
     use MLSSignals_m, only:getModuleFromRadiometer, getModuleFromSignal, &
-      & getRadiometerFromSignal, getSignal, signal_t, isModuleSpacecraft
+      & getRadiometerFromSignal, getSignal, signal_t, &
+      & isAnyModuleSpacecraft, isModuleSpacecraft
     use moreTree, only: get_boolean
     use parse_signal_m, only: parse_signal
     use quantityTemplates, only: nullifyQuantityTemplate, pointQuantityToHGrid, &
@@ -541,7 +542,8 @@ contains ! ============= Public procedures ===================================
     use MLSFiles, only: getMLSFileByType
     use MLSMessageModule, only: MLSMessage, &
       & MLSMSG_Error, MLSMSG_L1BRead, MLSMSG_Warning
-    use MLSSignals_m, only:  isModuleSpacecraft, getModuleName
+    use MLSSignals_m, only:  getModuleName, &
+      & isAnyModuleSpacecraft, isModuleSpacecraft
     use MLSStringLists, only: switchDetail
     use output_m, only: output
     use quantityTemplates, only: quantityTemplate_t, &
@@ -654,6 +656,10 @@ contains ! ============= Public procedures ===================================
       L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
       hdfversion = L1BFile%HDFVersion
       if ( IsModuleSpacecraft(instrumentModule) ) then
+        if ( .not. isAnyModuleSpacecraft() ) then
+          call output( 'You should never have come here like this', advance='yes' )
+          stop
+        endif
         l1bItemName = merge("scGeodAlt","scGeocAlt", &
                            &qty%verticalCoordinate==l_geodAltitude)
       else
@@ -663,6 +669,8 @@ contains ! ============= Public procedures ===================================
       end if
       l1bItemName = AssembleL1BQtyName ( l1bItemName, hdfVersion, .false. )
       if ( verbose ) then
+        call outputnamedValue ( 'l1bItemName#1', trim(l1bItemName) )
+        call outputnamedValue ( 'isAnyModuleSpacecraft', isAnyModuleSpacecraft() )
         call outputnamedValue ( 'firstMAFIndex', chunk%firstMAFIndex )
         call outputnamedValue ( 'lastMAFIndex', chunk%lastMAFIndex )
       endif
@@ -734,13 +742,15 @@ contains ! ============= Public procedures ===================================
         if ( L1bItemsToRead(l1bItem)%modular ) then
           call GetModuleName ( instrumentModule, l1bItemName )
           l1bItemName = trim(l1bItemName)//'.'//L1bItemsToRead(l1bItem)%name
+        elseif ( .not. isAnyModuleSpacecraft() ) then
+          cycle
         else
           l1bItemName = L1bItemsToRead(l1bItem)%name
         end if
 
         ! Read it from the l1boa file
         l1bItemName = AssembleL1BQtyName ( l1bItemName, hdfVersion, .false. )
-        if ( verbose ) call outputnamedValue ( 'l1bItemName', trim(l1bItemName) )
+        if ( verbose ) call outputnamedValue ( 'l1bItemName#2', trim(l1bItemName) )
         call ReadL1BData ( L1BFile, l1bItemName, l1bField, noMAFs, &
           & l1bFlag, firstMAF=chunk%firstMafIndex, &
           & lastMAF=chunk%lastMafIndex, neverfail=MissingOK )
@@ -1524,6 +1534,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.193  2016/07/25 23:41:53  pwagner
+! Avoid reading l1b s/c fields if no module is s/c
+!
 ! Revision 2.192  2016/07/21 20:28:54  pwagner
 ! Now remembers to call trace_end before returning from a failed l1b read
 !
