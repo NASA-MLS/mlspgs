@@ -45,11 +45,11 @@ contains
     ! at tree node 'node' into a fully described array of signals
     ! populated with channel flags and everything
 
-    use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
-    use MLSSignals_m, only: SIGNALS, SIGNAL_T, DESTROYSIGNALDATABASE
-    use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_ERROR
-    use Tree, only: SUBTREE, SUB_ROSA, NSONS
-    use String_table, only: GET_STRING
+    use Allocate_Deallocate, only: allocate_test, deallocate_test
+    use MLSSignals_m, only: signals, signal_t, destroySignalDatabase
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error
+    use Tree, only: subtree, sub_rosa, nsons
+    use String_table, only: get_string
 
     integer, intent(in) :: NODE         ! Tree node
     type ( Signal_T ), pointer, dimension(:) :: THESESIGNALS ! Result
@@ -323,6 +323,8 @@ contains
     integer, parameter :: NotNumber = notLabel + 1   ! Expected a number
     integer, parameter :: Unexpected = notNumber + 1 ! Unexpected token
     integer, parameter :: WrongSuffix = unexpected + 1
+    
+    logical, parameter :: verbose = .false.
 
     ! Initialize
     band_i = -1
@@ -338,7 +340,9 @@ contains
     spectrometer_n = -1
     switch = -1
     where = 0
-
+    if ( verbose ) call output( signal_string, advance='yes' )
+    if ( verbose ) call output( 'len(signal_string)', advance='no' )
+    if ( verbose ) call output( len_trim(signal_string), advance='yes' )
     ! Get the tokens; verify they are the correct kinds of thing-o's.
 o:  do
       call lex_signal ( signal_string, where, the_token )
@@ -348,13 +352,26 @@ o:  do
         & call announce_error ( unexpected, signal_string, tree_index, &
           & expected = (/ t_identifier /) )
       call get_string ( the_token%string_index, tokenText, strip=.true. )
+      if ( verbose ) then
+        call output( 'token text ' // trim(tokenText), advance='yes' )
+        call output( 'token text(2:) ' // tokenText(2:), advance='yes' )
+        call output( '1st char ' // tokenText(1:1), advance='yes' )
+        i = len_trim(tokenText)
+        call output( 'its length ' , advance='no' )
+        call output( i, advance='yes' )
+        call output( verify(tokenText(1:1), 'CcSs'), advance='yes' )
+      endif
       if ( verify(tokenText(1:1), 'CcSs') == 0 ) then
+        if ( verbose ) call output( 'About to read ' //  tokenText(2:), advance='yes' )
         read ( tokenText(2:), *, iostat=status ) i
+        if ( verbose ) call output( 'switch or channel: ', advance='no' )
+        if ( verbose ) call output( i, advance='yes' )
         if ( status /= 0 ) &
           & call announce_error ( malformed, signal_string, tree_index )
         if ( verify(tokenText(1:1), 'Ss') == 0 ) then
           next = sawSwitch
           switch = i
+          if ( verbose ) call output( 'was a switch', advance='yes' )
         else if ( verify(tokenText(1:1), 'Cc') == 0 ) then
           next = sawChannel
           numChannelNums = 1
@@ -363,7 +380,7 @@ o:  do
           do
             call lex_signal ( signal_string, where, the_token )
             if ( the_token%class == t_end_of_input ) &
-    exit o
+              & exit o
             if ( the_token%class == t_colon ) then
               next = sawChannelColon
             else if ( the_token%class == t_plus ) then
@@ -381,6 +398,7 @@ o:  do
           exit
             end if
             call get_string ( the_token%string_index, tokenText, strip=.true. )
+            if ( verbose ) call output( 'more token text ' // trim(tokenText), advance='yes' )
             read ( tokenText, *, iostat=status ) i
             if ( status /= 0 ) &
               & call announce_error ( malformed, signal_string, tree_index )
@@ -462,6 +480,7 @@ o:  do
     exit
         end if
         call get_string ( the_token%string_index, tokenText, .true., .true. )
+        if ( verbose ) call output( 'even more token text ' // trim(tokenText), advance='yes' )
         select case ( next )
         case ( sawBand )           ! Band:Suffix
           call get_string ( bands(band_i)%suffix, testText, .true., .true. )
@@ -670,6 +689,9 @@ o:  do
 end module Parse_Signal_M
 
 ! $Log$
+! Revision 2.27  2016/07/25 23:39:49  pwagner
+! Begin allowing extra output in response to verbose setting
+!
 ! Revision 2.26  2013/09/24 23:27:14  vsnyder
 ! Use Get_Where or Print_Source to start error messages
 !
