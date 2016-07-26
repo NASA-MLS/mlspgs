@@ -624,8 +624,9 @@ contains
    SUBROUTINE h5_writeMLSFileAttr ( MLSFile, skip_if_already_there )
 !------------------------------------------------------------
 
-      use HDF5, only:  H5GCLOSE_F, H5GOPEN_F
-      use MLSHDF5, only: ISHDF5ATTRIBUTEPRESENT, MAKEHDF5ATTRIBUTE
+      use HDF5, only:  H5GClose_f, H5GOpen_f
+      use MLSHDF5, only: ISHDF5AttributePresent, makeHDF5Attribute
+      use highOutput, only: BeVerbose
       ! Brief description of subroutine
       ! This subroutine writes the components of an MLSFile_t 
       ! as attributes for an hdf5-formatted file
@@ -640,18 +641,20 @@ contains
       logical, intent(in), optional :: skip_if_already_there
       ! Local variables
       integer :: fileID
-      logical, parameter :: DeeBug = .false.
+      ! logical, parameter :: DeeBug = .false.
+      logical :: DeeBug
       integer :: grp_id
       integer :: status
       logical :: my_skip
       logical, parameter :: WRITE_ORBIT = .false.
 
       ! Executable code
+      Deebug = BeVerbose ( 'file', 0 )
       if ( .not. MLSFile%stillOpen ) then
         call MLS_OpenFile( MLSFile )
       endif
       if ( deebug ) then
-        call output( 'Writing global attributes', advance='yes' )
+        call output( 'Writing file attributes as global attributes', advance='yes' )
         call dumpGlobalAttributes
       endif
       my_skip = .false.
@@ -729,9 +732,9 @@ contains
    SUBROUTINE he5_writeglobalattr_FileID ( fileID, dayNum, DOI, skip_if_already_there )
 !------------------------------------------------------------
 
-    use HDFEOS5, only: HE5T_NATIVE_INT, &
-      & HE5T_NATIVE_DOUBLE, MLS_CHARTYPE
-    use MLSHDFEOS, only: HE5_EHWRGLATT, HSIZE, MLS_EHWRGLATT, MLS_Isglatt
+    use HDFEOS5, only: HE5T_Native_int, &
+      & HE5T_Native_Double, MLS_Chartype
+    use MLSHDFEOS, only: HE5_EHWRGlAtt, HSize, MLS_EhwrGlAtt, MLS_IsGlAtt
 ! Brief description of subroutine
 ! This subroutine writes the global attributes for an hdfeos5 file
 
@@ -765,7 +768,7 @@ contains
        & 'ProductionLocation', MLS_CHARTYPE, 1, &
        &  GlobalAttributes%productionLoc)
       if ( my_skip ) then
-        if ( mls_isglatt ( fileID, 'OrbitNumber' ) ) &
+        if ( MLS_IsGlAtt ( fileID, 'OrbitNumber' ) ) &
           & return
       endif
       if (present(dayNum)) then
@@ -1755,6 +1758,9 @@ end module PCFHdr
 !================
 
 !# $Log$
+!# Revision 2.68  2016/07/26 17:44:31  pwagner
+!# Deebug may be turned on by switch; print clearer message
+!#
 !# Revision 2.67  2015/08/12 20:36:38  pwagner
 !# Added some missing global attrs; added h5_readGlobalAttr
 !#
