@@ -784,7 +784,11 @@ contains ! ============= Public procedures ===================================
         case ( tpLon, scLon )
           qty%lon = l1bField%dpField(1,:,:)
         case ( tpGeodAngle )
-          qty%phi = l1bField%dpField(1,:,:)
+          if ( associated(l1bField%intField) ) then
+            qty%phi = l1bField%intField(1,:,:)
+          else
+            qty%phi = l1bField%dpField(1,:,:)
+          endif
         case ( tpSolarZenith )
           qty%solarZenith = l1bField%dpField(1,:,:)
         case ( tpSolarTime )
@@ -1534,6 +1538,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.194  2016/07/27 23:03:44  pwagner
+! Works better with Aircraft-borne instrument data
+!
 ! Revision 2.193  2016/07/25 23:41:53  pwagner
 ! Avoid reading l1b s/c fields if no module is s/c
 !
