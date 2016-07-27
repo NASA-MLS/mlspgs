@@ -17,7 +17,7 @@ module MLSSignals_M
   use allocate_deallocate, only: allocate_test, deallocate_test
   use dump_0, only: dump
   use expr_m, only: expr
-  use highOutput, only: headLine
+  use highOutput, only: headLine, outputNamedValue
   use init_MLSSignals_m ! everything
   use intrinsic, only: field_first, field_indices, lit_indices, &
     & phyq_dimensionless, phyq_frequency, phyq_indices, s_time, l_a, l_emls
@@ -128,6 +128,7 @@ module MLSSignals_M
     integer :: Node                     ! Node of tree where module declared
     logical :: spaceCraft               ! Set if module is in fact s/c
     logical :: Aura  = .true.           ! Set if s/c is in fact Aura
+    character(len=32) :: NameString = ' '  ! If not get_string (e.g., camelCase)
   end type Module_T
 
   ! This type defines a radiometer.
@@ -1046,7 +1047,11 @@ oc:       do
     do i=1, size(modules)
       call output( i , advance='no' )
       call blanks( 3 )
-      call display_string ( modules(i)%name, advance='no' ) 
+      if ( len_trim(modules(i)%nameString) < 1 ) then
+        call display_string ( modules(i)%name, advance='no' ) 
+      else
+        call output( trim(modules(i)%nameString) )
+      endif
       call blanks( 3 )
       call output( 's/c? ', advance='no' )
       call output( modules(i)%spaceCraft, advance='no' ) 
@@ -1326,6 +1331,10 @@ oc:       do
         call Get_String ( modules(instrumentModule)%name, string_test )
         if ( LowerCase(trim(string_text)) == LowerCase(trim(string_test))) &
           & return
+      elseif ( len_trim(modules(instrumentModule)%nameString) > 0 ) then
+        string_test = modules(instrumentModule)%nameString
+        if ( LowerCase(trim(string_text)) == LowerCase(trim(string_test))) &
+          & return
       end if
     end do
     instrumentModule = 0
@@ -1337,7 +1346,13 @@ oc:       do
     ! (inverse function: GetModuleIndex)
     integer, intent(in) :: instrumentModule
     character (len=*), intent(out) :: string_text
-    call Get_String ( modules(instrumentModule)%name, string_text )
+    if ( modules(instrumentModule)%name < 1 .or. &
+      & len_trim(modules(instrumentModule)%nameString) > 0 ) then
+      string_text =  modules(instrumentModule)%nameString
+    else
+      call Get_String ( modules(instrumentModule)%name, string_text )
+    endif
+    ! call outputNamedValue ( 'got module name', trim(string_text) )
   end subroutine GetModuleName
 
   ! ----------------------------------------------  GetSignalIndex  -----
@@ -2035,6 +2050,9 @@ oc:       do
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.110  2016/07/27 22:14:59  pwagner
+! Added NameString component to module type
+!
 ! Revision 2.109  2016/07/25 23:15:41  pwagner
 ! Added IsAnyModuleSpacecraft function
 !
