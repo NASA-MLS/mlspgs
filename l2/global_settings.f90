@@ -61,8 +61,9 @@ module GLOBAL_SETTINGS
   private :: not_used_here 
 !---------------------------------------------------------------------------
 
-  integer, private :: ERROR, WARNING
-  logical, parameter :: DEEBUG = .false.
+  integer, private              :: ERROR, WARNING
+  logical, parameter            :: countEmpty = .true.
+  logical, parameter            :: DEEBUG = .false.
 
 contains
 
@@ -88,7 +89,6 @@ contains
     type (MLSFile_T), pointer :: FILEDATABASE(:)
     integer :: profile
     ! Internal variables
-    logical, parameter            :: countEmpty = .true.
     integer, dimension(1) :: indices
     integer :: L1BFLAG
     character(len=namelen) :: l1bItemName
@@ -153,7 +153,6 @@ contains
     type (MLSFile_T), pointer :: FILEDATABASE(:)
     integer :: MAF
     ! Internal variables
-    logical, parameter            :: countEmpty = .true.
     integer, dimension(1) :: indices
     integer :: L1BFLAG
     character(len=namelen) :: l1bItemName
@@ -243,11 +242,12 @@ contains
     use MLSFiles, only: filenotfound, hdfversion_5, &
       & addfiletodatabase, getpcfromref, getmlsfilebyname, getmlsfilebytype, &
       & initializemlsfile, mls_closefile, mls_openfile, split_path_name
+    use MLSHDF5, only: GetAllHDF5GroupNames
     use MLSKinds, only: r8
     use MLSL2Options, only: checkPaths, L2CFNode, level1_HDFVersion, &
       & need_L1BFiles, specialDumpFile, stopAfterSection, toolkit, &
       & MLSMessage
-    use MLSL2timings, only: section_times, total_times
+    use MLSL2Timings, only: section_times, total_times
     use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning
     use MLSPCF2, only: MLSPCF_l2gp_start, MLSPCF_l2gp_end, &
       & MLSPCF_l2dgm_start, MLSPCF_l2dgm_end, MLSPCF_l2fwm_full_start, &
@@ -255,8 +255,8 @@ contains
       & MLSPCF_l2dgg_start, MLSPCF_l2dgg_end
     use MLSStrings, only: hhmmss_value, lowerCase, trim_safe
     use MLSStringLists, only: array2List, catLists, switchDetail, &
-      & numStringElements, stringElement
-    use MLSSignals_m, only: instrument
+      & numStringElements, stringElement, stringElementNum
+    use MLSSignals_m, only: instrument, modules, Dump_Modules, GetModuleName
     use moreTree, only: get_field_id, get_label_and_spec, get_spec_id, &
       & startErrorMessage
     use next_tree_node_m, only: next_tree_node, next_tree_node_state
@@ -265,7 +265,7 @@ contains
     use PFAData_m, only: get_PFAData_from_l2cf, flush_PFAData, make_PFAData, &
       & read_PFAData, write_PFAData
     use PFADatabase_m, only: process_pfa_file
-    use pcfhdr, only: globalattributes, filltai93attribute
+    use PCFHDR, only: globalAttributes, fillTAI93Attribute
     use readAPriori, only: APrioriFiles
     use sdptoolkit, only: max_orbits, mls_utctotai, &
       & pgsd_dem_30arc, pgsd_dem_90arc, &
@@ -280,7 +280,7 @@ contains
     use tree_types, only: n_equal
     use VGrid, only: createVGridFromMLSCFInfo
     use VGridsDatabase, only: addVGridToDatabase, VGrids
-    use writeMetadata, only: l2pcf
+    use writeMetadata, only: L2PCF
 
     ! placed non-alphabetically due to Lahey internal compiler error
     ! (How much longer must we endure these onerous work-arounds?)
@@ -308,12 +308,14 @@ contains
     logical :: GOT(FIRST_PARM:LAST_PARM)
     integer :: I, J                ! Index of son, grandson of root
     logical ::  ItExists
+    character(len=namelen) :: itsname
     type (L1BData_T) :: L1bField   ! L1B data
     type(MLSFile_T), pointer :: L1BFile
     character(len=namelen) :: L1bItemName
     integer :: L1BFLAG
     integer :: Me = -1             ! String index for trace
     real(r8) :: MINTIME, MAXTIME   ! Time Span in L1B file data
+    character(len=namelen) :: modulenames
     integer :: NAME                ! Sub-rosa index of name of vGrid or hGrid
     character(len=NameLen) :: Name_string
     integer :: NOMAFS              ! Number of MAFs of L1B data read
@@ -650,7 +652,29 @@ contains
     if ( .not. associated(L1BFile) ) then
       call MLSMessage ( MLSMSG_Warning, ModuleName, &                      
       & 'l1boa File not found--hope you dont need one' )
+      call FinishUp
       return
+    else
+      ! Check on module names--do they agree with group names in L1BOA file?
+      ! If not, overwrite them
+      call mls_openFile ( L1BFile )
+      call GetAllHDF5GroupNames ( L1BFile%FileID%f_id, moduleNames )
+      call mls_closeFile ( L1BFile )
+      do i=1, size(modules)
+        call GetModuleName ( i, itsName )
+        call outputNamedValue ( 'module name', trim(itsname) )
+        j = StringElementNum( lowercase(moduleNames), lowercase(itsName), countEmpty )
+        if ( j > 0 ) then
+          if ( itsName /= &
+            & StringElement( moduleNames, j, countEmpty ) ) &
+            & modules(i)%nameString = &
+            & StringElement( moduleNames, j, countEmpty )
+        else
+            modules(i)%nameString = StringElement( moduleNames, i, countEmpty )
+        endif
+      enddo
+      call Dump( modulenames, 'module names' )
+      call Dump_Modules
     endif
 
     the_hdf_version = &
@@ -1055,7 +1079,6 @@ contains
       integer, intent(in) :: details
 
       ! Local
-      logical, parameter :: countEmpty = .true.
       type (L1BData_T) :: l1bData   ! L1B dataset
       integer ::                              i, NoMAFs, IERR
       character (len=*), parameter ::         TIME_FORMAT = '(1pD18.12)'
@@ -1355,6 +1378,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.162  2016/07/22 20:07:16  pwagner
+! Fix typos in output
+!
 ! Revision 2.161  2015/09/02 23:17:43  pwagner
 ! Bomb promptly if no DEM files instead of waiting until run ends
 !
