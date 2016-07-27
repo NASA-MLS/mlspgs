@@ -42,7 +42,7 @@ module MLSHDF5
   use Trace_m, only: trace_begin, trace_end
   ! leTs break down our use, parameters first
   use Hdf5, only: h5f_acc_rdonly_f, h5f_acc_rdwr_f, &
-    & H5p_dataset_create_f, &
+    & H5G_Group_F, H5p_dataset_create_f, &
     & H5sis_simple_f, & ! h5soffset_simple_f, &
     & H5s_scalar_f, h5s_select_set_f, h5s_unlimited_f, &
     & H5t_ieee_f32le, h5t_ieee_f64le, h5t_ieee_f64le, &
@@ -59,6 +59,7 @@ module MLSHDF5
     & H5eset_auto_f, &
     & H5fopen_f, h5fclose_f, &
     & H5gopen_f, h5gclose_f, &
+    & h5gn_members_f, h5gget_obj_info_idx_f, &
     & H5pcreate_f, h5pset_chunk_f, h5pset_fill_value_f, &
     & H5pget_chunk_f, h5pget_fill_value_f, &
     & H5sclose_f, &
@@ -72,7 +73,7 @@ module MLSHDF5
 
   public :: CpHDF5Attribute, CpHDF5GlAttribute, &
     & DumpHDF5Attributes, DumpHDF5DS, &
-    & GetAllHDF5AttrNames, GetAllHDF5DSNames, &
+    & GetAllHDF5AttrNames, GetAllHDF5DSNames, GetAllHDF5GroupNames, &
     & GetHDF5Attribute, GetHDF5AttributePtr, GetHDF5AttrDims, &
     & GetHDF5DSRank, GetHDF5DSDims, GetHDF5DSQType, &
     & IsHDF5AttributeInFile, IsHDF5AttributePresent, IsHDF5DSInFile, &
@@ -99,6 +100,7 @@ module MLSHDF5
 ! DumpHDF5DS           Dumps datasets
 ! GetAllHDF5AttrNames  Retrieves names of all attributes under itemID
 ! GetAllHDF5DSNames    Retrieves names of all DS in file (under group name)
+! GetAllHDF5GroupNames Retrieves names of all groups in file (under group name)
 ! GetHDF5Attribute     Retrieves an attribute
 ! GetHDF5AttributePtr  Allocates an array for an attribute and retrieves it
 ! GetHDF5DSRank        How many dimensions in dataset
@@ -2570,6 +2572,49 @@ contains ! ======================= Public Procedures =========================
     call trace_end ( cond=.false. )
   end subroutine GetHDF5AttributePtr_dblarr1
 
+  ! -----------------------------------  GetAllHDF5GroupNames  -----
+  subroutine GetAllHDF5GroupNames ( FileID, GroupNames )
+    integer, intent(in) :: FILEID          ! fileID
+    character (len=*), intent(out) :: GroupNames ! Names of Group in file (,-separated)
+
+    ! Local variables
+    integer :: h5error
+    integer :: i                        ! loop counter
+    character(len=32) :: objName
+    integer :: objType
+    integer :: Me = -1                  ! String index for trace cacheing
+    logical :: omitSlash
+    integer :: STATUS                   ! Flag
+    integer :: nsubmembers
+    logical, parameter :: DeeBug = .false.
+    ! Executable code
+    call trace_begin ( me, 'GetAllHDF5GroupNames', cond=.false. )
+    GroupNames = ' '
+    call h5eSet_auto_f ( 0, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to turn error messages off before looking for all grp names' )
+    call h5gn_members_f( FileID, '/', nsubmembers, h5error )
+    if ( DeeBug ) call outputNamedValue ( 'nsubmembers', nsubmembers )
+    ! This number is actually greater than it should be--
+    ! another nasty hdf5 gotcha
+    do i = 1, nsubmembers
+      call h5gget_obj_info_idx_f( FileID, '/', i, &
+        & objName, objType, h5error )
+      if ( h5error /= 0 ) exit
+      if ( objType /= H5G_Group_F ) cycle
+      if ( DeeBug ) call outputNamedValue ( 'objName', trim(objName) )
+      if ( len_trim( GroupNames ) < 1 ) then
+        GroupNames = objName
+      else
+        GroupNames = trim(GroupNames) // ',' // objName
+      endif
+    enddo
+    call h5eSet_auto_f ( 1, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to turn error messages back on after looking for all grp names' )
+    call trace_end ( cond=.false. )
+  end subroutine GetAllHDF5GroupNames
+
   ! ---------------------------------  MatchHDF5Attributes  -----
   subroutine MatchHDF5Attributes ( MLSFile, attrNames, attrValues, name )
     type (MLSFile_T)   :: MLSFile
@@ -3316,7 +3361,7 @@ contains ! ======================= Public Procedures =========================
 
   ! -----------------------------------------  IsHDF5GroupPresent  -----
   logical function IsHDF5GroupPresent ( locID, name )
-    ! This routine returns true if the given HDF5 DS is present
+    ! This routine returns true if the given HDF5 Group is present
     integer, intent(in) :: LOCID        ! Where to look
     character (len=*), intent(in) :: NAME ! Name for the dataset
 
@@ -5716,6 +5761,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.135  2016/07/27 22:14:06  pwagner
+! Added GetAllHDF5GroupNames
+!
 ! Revision 2.134  2016/04/05 23:53:51  pwagner
 ! If -v option present, DumpHDF5DS will print DSName on each line
 !
