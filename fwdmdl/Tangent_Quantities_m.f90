@@ -57,7 +57,6 @@ contains
                        & l_tngtGeodAlt
     use Line_And_Ellipsoid_m, only: Exact_Line_Nearest_Ellipsoid, &
                                   & Line_And_Ellipsoid
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use VectorsModule, only: CloneVectorQuantity, RV, Vector_T, VectorValue_T
 
     integer, intent(in) :: MAF
@@ -268,6 +267,9 @@ contains
 end module Tangent_Quantities_m
 
 ! $Log$
+! Revision 2.3  2016/07/27 23:47:36  vsnyder
+! Remove unreferenced USE
+!
 ! Revision 2.2  2016/06/13 21:03:01  vsnyder
 ! Polish up some comments
 !
