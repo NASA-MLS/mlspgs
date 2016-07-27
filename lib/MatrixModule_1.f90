@@ -2930,8 +2930,8 @@ contains ! =====     Public Procedures     =============================
   end subroutine Dump_Matrix_Layout
 
   ! ------------------------------------------------  Dump_Matrix  -----
-  subroutine Dump_Matrix ( Matrix, Name, Details, Clean, Row, Column )
-    use Lexer_core, only: PRINT_SOURCE
+  subroutine Dump_Matrix ( Matrix, Name, Details, Clean, Row, Column, QuantityType )
+    use Lexer_core, only: Print_Source
     type(Matrix_T), intent(in) :: Matrix
     character(len=*), intent(in), optional :: Name
     integer, intent(in), optional :: Details   ! Print details, default 1
@@ -2941,12 +2941,13 @@ contains ! =====     Public Procedures     =============================
     !  == 0  => Layout of blocks but not their values
     !  == One => Add details of matrix but not its blocks,
     !  >One => Details of the blocks, too.
-    integer, intent(in), optional :: Row, Column ! Only do these
-    logical, intent(in), optional :: Clean     ! Print zeroes, count
+    integer, intent(in), optional :: Row, Column  ! Only do these
+    logical, intent(in), optional :: Clean        ! Print zeroes, count
+    integer, intent(in), optional :: QuantityType ! Only do this column
 
     integer :: Col1, ColN
     integer :: I, J                ! Subscripts, loop inductors
-    integer :: MY_DETAILS          ! True if DETAILS is absent, else DETAILS
+    integer :: My_Details          ! True if Details is absent, else Details
     integer :: Row1, RowN
     integer :: TotalSize           ! of all blocks
 
@@ -2986,6 +2987,10 @@ contains ! =====     Public Procedures     =============================
       col1 = 1; colN = matrix%col%nb
     end if
     do j = col1, colN
+      if ( present(quantityType) ) then
+        if ( matrix%col%vec%quantities(matrix%col%quant(j))%template%quantityType /= &
+          quantityType ) cycle
+      end if
       do i = row1, rowN
         if ( associated(matrix%block(i,j)%values) ) &
           totalSize = totalSize + size(matrix%block(i,j)%values)
@@ -3187,6 +3192,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.144  2016/07/27 23:02:42  vsnyder
+! Add QuantityType argument to Dump_Matrix
+!
 ! Revision 2.143  2016/05/27 00:14:55  vsnyder
 ! Publish RM because this seems like a logical place to get it
 !
