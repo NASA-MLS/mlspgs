@@ -83,6 +83,7 @@ contains ! =====     Public Procedures     =============================
     use MLSL2options, only: need_L1Bfiles
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use MLSNumerics, only: hunt
+    use MLSSignals_m, only: GetModuleName
     use MLSStringLists, only: switchDetail
     use moretree, only: get_boolean
     use Output_m, only: output
@@ -250,8 +251,10 @@ contains ! =====     Public Procedures     =============================
         call expr ( subtree(2,son), expr_units, expr_value )
         mif = nint(expr_value(1))
       case ( f_module )
-        instrumentModule = sub_rosa(subtree(2,son))
-        call get_string ( instrumentModule , instrumentModuleName )
+        ! instrumentModule = sub_rosa(subtree(2,son))
+        ! call get_string ( instrumentModule , instrumentModuleName )
+        instrumentModule = decoration(decoration(subtree(2,son)))
+        call GetModuleName ( instrumentModule , instrumentModuleName )
       case ( f_origin )
         call expr ( subtree(2,son), expr_units, expr_value )
         origin = expr_value(1)
@@ -594,7 +597,8 @@ contains ! =====     Public Procedures     =============================
     use MLSFiles, only: getMLSFileByType
     use MLSHDF5, only: IsHDF5DSInFile
     use MLSKinds, only: rk => r8
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_L1BRead
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_L1BRead, &
+      & MLSMSG_Warning
     use MLSNumerics, only: hunt, interpolateValues
     use toggles, only: gen, levels, toggle
     use trace_m, only: trace_begin, trace_end
@@ -772,15 +776,21 @@ contains ! =====     Public Procedures     =============================
       
       ! Read it from the l1boa file
       l1bItemName = AssembleL1BQtyName ( l1bItemName, hdfVersion, .false. )
-      if ( deebug ) then
+      if ( deebug  ) then
         call outputNamedValue( 'item', trim(l1bItemName) )
         call outputNamedValue( 'MissingOK', MissingOK )
+      endif
+      if ( .not. IsHDF5DSInFile( L1BFile%name, l1bItemName ) &
+        & .and. MissingthisOK ) then
+        call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          & MLSMSG_L1BRead//l1bItemName )
+        cycle
       endif
       call ReadL1BData ( L1BFile, l1bItemName, l1bField, noMAFs, &
         & l1bFlag, firstMAF=chunk%firstMafIndex, lastMAF=chunk%lastMafIndex, &
         & neverfail=(MissingOK .or. l1bItem == l1b_tplosangle), dontPad=.true. )
       if ( deebug ) call outputNamedValue( 'l1bFlag', l1bFlag )
-      if ( l1bFlag==-1 .and. .not. MissingthisOK) then
+      if ( l1bFlag==-1 .and. .not. MissingthisOK ) then
         call MLSMessage ( MLSMSG_Error, ModuleName, &
           & MLSMSG_L1BRead//l1bItemName )
         error = 1
@@ -794,15 +804,21 @@ contains ! =====     Public Procedures     =============================
         call dump(l1bField%DpField(1,1,:), 'MAFStartTimeTAI (before interpolating)')
       end if
       
-      if ( l1bItem==1 ) then       ! do something special for time
+      if ( l1bItem == 1 ) then       ! do something special for time
         do maf = 1, noMAFs
           defaultField(maf) = l1bField%dpField(1,1,maf) + &
             & (defaultMIFs(maf)-1)*sixth
         end do
-      else                         ! Otherwise this is fairly easy.
-        do maf = 1, noMAFs
-          defaultField(maf) = l1bField%dpField(1,defaultMIFs(maf),maf)
-        end do
+      else                         ! Otherwise this is fairly "easy". ???
+        if ( associated(l1bField%intField) ) then
+          do maf = 1, noMAFs
+            defaultField(maf) = l1bField%intField(1,defaultMIFs(maf),maf)
+          end do
+        else
+          do maf = 1, noMAFs
+            defaultField(maf) = l1bField%dpField(1,defaultMIFs(maf),maf)
+          end do
+        endif
       end if
 
       if ( deebug .and. index(l1bItemName, 'MAFStartTimeTAI') > 0 ) then
@@ -2417,6 +2433,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.133  2016/07/27 23:02:20  pwagner
+! Works better with Aircraft-borne instrument data
+!
 ! Revision 2.132  2016/07/22 20:04:46  pwagner
 ! Permit using hdf4 l1b files
 !
