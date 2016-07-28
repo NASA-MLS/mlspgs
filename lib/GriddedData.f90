@@ -14,23 +14,24 @@ module GriddedData ! Contains the derived TYPE GriddedData_T
   use Allocate_Deallocate, only: Allocate_Test, Byte_Size, Bytes, &
     & Deallocate_Test, NoBytesAllocated, &
     & Test_Allocate, Test_Deallocate
-  use DATES_MODULE, only: TAI2CCSDS
-  use DUMP_0, only: DUMP, DUMPDATES
-  use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
-  use INTRINSIC, only: L_GEODALTITUDE, L_GPH, L_ETA, L_PRESSURE, &
-    & L_THETA
+  use Dates_Module, only: TAI2CCSDS
+  use Dump_0, only: Dump
+  use Dump_1, only: DumpDates
+  use HighOutput, only: OutputNamedValue
+  use Intrinsic, only: L_GeodAltitude, L_GPH, L_Eta, L_Pressure, &
+    & L_Theta
   use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
-  use MLSCOMMON, only: LINELEN, NAMELEN, UNDEFINEDVALUE
+  use MLSCommon, only: LineLen, NameLen, UndefinedValue
   ! R4 CORRESPONDS TO SING. PREC. :: SAME AS STORED IN FILES
   ! (EXCEPT FOR DAO DIMENSIONS)
-  use MLSKINDS, only: RGR=>R4, R8
-  use MLSMESSAGEMODULE, only: MLSMSG_ERROR, &
-    & MLSMSG_WARNING, MLSMESSAGECONFIG, MLSMESSAGE
-  use MLSSTRINGLISTS, only: SNIPLIST, SWITCHDETAIL
-  use MLSSTRINGS, only: LOWERCASE, READINTSFROMCHARS
-  use OUTPUT_M, only: OUTPUTOPTIONS, BLANKS, OUTPUT, NEWLINE
-  use TOGGLES, only: SWITCHES
-  use TRACE_M, only: TRACE_BEGIN, TRACE_END
+  use MLSKinds, only: RGR=>R4, R8
+  use MLSMessageModule, only: MLSMSG_Error, &
+    & MLSMSG_Warning, MLSMessageConfig, MLSMessage
+  use MLSStringLists, only: SnipList, SwitchDetail
+  use MLSStrings, only: LowerCase, ReadIntsFromChars
+  use Output_m, only: OutputOptions, Blanks, Output, NewLine
+  use Toggles, only: Switches
+  use Trace_m, only: Trace_Begin, Trace_End
 
   implicit none
   private
@@ -561,7 +562,7 @@ contains
 
   ! --------------------------------------------  DiffGriddedData  -----
   subroutine DiffGriddedData ( GriddedData1, GriddedData2, options )
-    use Dump_0, only: DIFF
+    use Diff_1, only: DIFF
 
     ! Imitating what dump_pointing_grid_database does, but for gridded data
     ! which may come from climatology, ncep, dao
@@ -1812,6 +1813,9 @@ end module GriddedData
 
 !
 ! $Log$
+! Revision 2.80  2016/07/28 01:42:27  vsnyder
+! Refactoring dump and diff
+!
 ! Revision 2.79  2015/03/28 01:01:03  vsnyder
 ! Stuff to trace allocate/deallocate addresses -- mostly commented out
 ! because NAG build 1017 doesn't yet allow arrays as arguments to C_LOC.
