@@ -13,7 +13,8 @@
 module Hunt_m
 !=============================================================================
 
-  use Dump_0, only: Dump, SelfDiff
+  use Diff_1, only: SelfDiff
+  use Dump_0, only: Dump
   use MLSCommon, only : UndefinedValue
   use MLSFillValues, only: IsFillValue, ReplaceFillValues
   use MLSFinds, only: FindFirst, FindLast
@@ -228,6 +229,9 @@ end module Hunt_m
 !=============================================================================
 
 ! $Log$
+! Revision 2.2  2016/07/28 01:42:27  vsnyder
+! Refactoring dump and diff
+!
 ! Revision 2.1  2015/05/27 22:36:35  vsnyder
 ! Initial commit -- moved stuff here from MLSNumerics to avoid circularity
 !
