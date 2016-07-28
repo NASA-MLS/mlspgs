@@ -841,6 +841,7 @@ contains
     endif
   end function daysInMonth
 
+  ! -----------------------------------------------  DumpDateTime  -----
   subroutine dumpDateTime( dateTime, name )
     ! Dump an MLSDate_Time_T
     ! Args
@@ -2949,6 +2950,9 @@ contains
 
 end module dates_module
 ! $Log$
+! Revision 2.39  2015/06/25 23:17:16  pwagner
+! One more go at fixing this (is uars so important?)
+!
 ! Revision 2.38  2015/06/24 18:00:22  pwagner
 ! A workaround, fixing gold brick, until better solution found
 !
