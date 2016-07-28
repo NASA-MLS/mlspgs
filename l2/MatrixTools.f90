@@ -805,7 +805,6 @@ contains ! =====  Public procedures  ===================================
 
   ! -----------------------------------------------  PVMSendBlock  -----
   subroutine PVMPackBlock ( BLOCK )
-    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
     ! Dummy arguments
     type (MatrixElement_T), intent(in) :: BLOCK ! The block of the matrix
 
@@ -935,6 +934,9 @@ contains ! =====  Public procedures  ===================================
 end module MatrixTools
 
 ! $Log$
+! Revision 1.45  2015/03/28 02:49:25  vsnyder
+! Added stuff to trace allocate/deallocate addresses
+!
 ! Revision 1.44  2014/09/05 01:13:10  vsnyder
 ! More complete and accurate allocate/deallocate size tracking.  Convert
 ! some local pointer temps to allocatable.  Get kinds from MLSKinds instead
