@@ -406,8 +406,8 @@ contains ! =========== Public procedures ===================================
   ! ---------------------------------------------  L1BSubsample  -----
   ! Pull out just the array elements corresponding to startMAF and LastMAF
   subroutine L1BSubsample ( chunk, fullArray, fullArray2d, values, values2d )
-    use allocate_deallocate, only: allocate_test
-    use highOutput, only: beVerbose, letsDebug, outputNamedValue
+    use Allocate_Deallocate, only: Allocate_Test
+    use HighOutput, only: BeVerbose, OutputNamedValue
     use MLSCommon, only: MLSChunk_t
     use MLSKinds, only: rk => r8
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
@@ -753,6 +753,9 @@ contains ! =========== Public procedures ===================================
 end module HGridsDatabase
 
 ! $Log$
+! Revision 2.28  2016/07/28 01:34:55  vsnyder
+! Remove unreferenced USE
+!
 ! Revision 2.27  2016/05/18 01:34:37  vsnyder
 ! HGridsDatabase.f90
 !
