@@ -88,7 +88,7 @@ contains ! =====     Public Procedures     =============================
     use moretree, only: get_boolean
     use Output_m, only: output
     use Polygon_m, only: Polygon_Inside, Polygon_Vertices
-    use string_table, only: get_string
+!     use string_table, only: get_string
     use time_m, only: time_now
     use toggles, only: gen, levels, switches, toggle
     use trace_m, only: trace_begin, trace_end
@@ -2434,6 +2434,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.135  2016/07/28 02:02:26  vsnyder
+! Removed unreferenceed USE
+!
 ! Revision 2.134  2016/07/28 01:45:07  vsnyder
 ! Refactor dump and diff
 !
