@@ -119,7 +119,6 @@ contains
     real(rp) :: DELTAPTG         ! Used for patching the pointings
     integer :: MAF
     integer :: Me = -1           ! String index for trace
-    integer :: MIFs              ! Number of MIFs in the MAF
     integer :: MINSUPERSET       ! Min. value of superset > 0
     integer :: No_Tan_Hts        ! Number of tangent heights
     integer :: NoUsedChannels    ! Number of channels used
@@ -526,6 +525,9 @@ contains
 end module Convolution_m
 
 ! $Log$
+! Revision 2.5  2016/07/28 00:44:55  vsnyder
+! Remove unused variable declaration
+!
 ! Revision 2.4  2016/06/03 23:49:50  vsnyder
 ! Change EarthRadC_sq from a real scalar to a vector quantity.  Use average
 ! of tangent phi / average EarthRacC_sq to do FOV_Convolve_Setup.
