@@ -2598,12 +2598,13 @@ contains ! ======================= Public Procedures =========================
     if ( DeeBug ) call outputNamedValue ( 'nsubmembers', nsubmembers )
     ! This number is actually greater than it should be--
     ! another nasty hdf5 gotcha
-    do i = 1, nsubmembers
+    do i = 0, nsubmembers-1
       call h5gget_obj_info_idx_f( FileID, '/', i, &
         & objName, objType, h5error )
+      if ( DeeBug ) call outputNamedValue ( 'objName', trim(objName) )
+      if ( DeeBug ) call outputNamedValue ( 'objType', objType )
       if ( h5error /= 0 ) exit
       if ( objType /= H5G_Group_F ) cycle
-      if ( DeeBug ) call outputNamedValue ( 'objName', trim(objName) )
       if ( len_trim( GroupNames ) < 1 ) then
         GroupNames = objName
       else
@@ -5762,6 +5763,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.137  2016/07/28 19:24:37  pwagner
+! Fixed error in GetAllHDF5GroupNames
+!
 ! Revision 2.136  2016/07/28 01:42:27  vsnyder
 ! Refactoring dump and diff
 !
