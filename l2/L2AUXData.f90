@@ -191,6 +191,7 @@ contains ! =====     Public Procedures     =============================
 
   subroutine cpL2AUXData_MLSFile(L2AUXFile1, L2AUXFile2, &
     & create2, sdList, rename, options)
+    use Dump_1, only: Dump
     use MLSFiles, only: areTheSameFile
     use MLSHdf5, only: getAllHDF5DSNames
     !-------------------------------------------------------------------
@@ -289,6 +290,7 @@ contains ! =====     Public Procedures     =============================
 
   subroutine cpL2AUXData_Name(file1, file2, create2, hdfVersion, sdList, rename, &
     & options)
+    use Dump_1, only: Dump
     use HDF, only: dfacc_read, dfacc_rdwr
     use HDF5, only: h5gclose_f, h5gopen_f, h5dopen_f, h5dclose_f
     use MLSFiles, only: fileNotFound, wildCardHDFVersion, &
@@ -1977,6 +1979,9 @@ end module L2AUXData
 
 
 ! $Log$
+! Revision 2.99  2016/07/28 01:45:07  vsnyder
+! Refactor dump and diff
+!
 ! Revision 2.98  2016/05/19 23:19:02  pwagner
 ! Added api for cpL2AUXData
 !
