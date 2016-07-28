@@ -29,7 +29,7 @@
 !   double precision, dimension(MAXNUMELEMENTS) :: elements
     ! Executable
     call theDumpBegins ( options )
-    if ( myTranspose ) then
+    if ( dopts(myTranspose)%v ) then
       call dump ( transpose(array), name, &
         & fillvalue, width, format, lbound, &
         & options=snipoption(options, dopt_transpose) )
@@ -40,7 +40,7 @@
     if ( present(FillValue) ) myFillValue = FillValue
     MyWidth = 5
     if ( present(width) ) MyWidth = width
-    if ( myUnique ) then
+    if ( dopts(unique)%v ) then
       call FindUnique( reshape( array, (/ product(shape(array)) /) ), &
         & elements, nUnique, counts )
       if ( nUnique < 2 ) then
@@ -66,6 +66,9 @@
 !    include 'dump2db.f9h'
 !   end subroutine DUMP_2D_INTEGER
 ! $Log$
+! Revision 2.11  2016/07/28 01:42:27  vsnyder
+! Refactoring dump and diff
+!
 ! Revision 2.10  2012/06/22 20:25:18  pwagner
 ! Specify advance arg because we may now set default to 'yes'
 !
