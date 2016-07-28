@@ -15,9 +15,9 @@ MODULE MLSL2Timings              !  Timings for the MLSL2 program sections
 
   use allocate_deallocate, only: allocate_test, deallocate_test
   use Call_Stack_m, only: sys_memory_ch, sys_memory_convert, sys_memory_max
-  use Dump_0, only: dump
-  use highOutput, only: banner, outputNamedValue, setStamp
-  use init_tables_module, only: f_additional, f_debug, f_options, f_silent, &
+!  use Dump_0, only: Dump
+  use HighOutput, only: banner, outputNamedValue
+  use Init_tables_module, only: f_additional, f_debug, f_options, f_silent, &
     & f_skipdirectwrites, f_skipdirectwritesif, &
     & f_skipretrieval, f_skipretrievalif, f_stamp, f_verbose, &
     & field_first, field_last
@@ -1026,6 +1026,9 @@ END MODULE MLSL2Timings
 
 !
 ! $Log$
+! Revision 2.67  2016/07/28 01:44:41  vsnyder
+! Remove unused USE
+!
 ! Revision 2.66  2016/05/27 00:06:14  pwagner
 ! Should now correctly process options containing an embedded space
 !
