@@ -15,7 +15,10 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
   use BitStuff, only: DumpBitNames
   use Constants, only: Deg2Rad
-  use Dump_0, only: statsOnOneLine, nameOnEachLine, diff, diff_fun, dump
+  use Diff_1, only: diff, diff_fun
+  use Dump_Options, only: StatsOnOneLine, NameOnEachLine
+  use Dump_0, only: Dump
+  use Dump_1, only: Dump
   use Geometry, only: EarthRadA
   use HDF, only: dfacc_rdonly, dfacc_read, dfacc_create, dfacc_rdwr, &
     & Dfnt_float32, dfnt_int32, dfnt_float64
@@ -54,7 +57,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
     & contractL2GPRecord, convertL2GPToQuantity, &
     & cpHE5GlobalAttrs, cpL2GPdata, cpL2GPDataToAttribute, &
     & destroyL2GPContents, destroyL2GPDatabase, &
-    & diff, diffRange, dump, dumpRange, &
+    & Diff, DiffRange, Dump, DumpRange, &
     & expandL2GPDataInPlace, extractL2GPRecord, isL2GPSetup, &
     & readL2GPData, repairL2GP, setupNewL2GPRecord, writeL2GPData
 
@@ -84,15 +87,15 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
     module procedure DiffStatsInt
   end interface
 
-  interface DUMP
-    module procedure DUMP_L2GP
-    module procedure DUMP_L2GP_CHUNKS
-    module procedure DUMP_L2GP_DataBase
+  interface Dump
+    module procedure Dump_L2GP
+    module procedure Dump_L2GP_Chunks
+    module procedure Dump_L2GP_DataBase
     module procedure DumpL2GP_attributes_hdf5
   end interface
 
-  interface DUMPRANGE
-    module procedure DUMPL2GPData_RANGES
+  interface DumpRange
+    module procedure DumpL2GPData_Ranges
   end interface
 
   interface ReadL2GPData
@@ -243,7 +246,6 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
    ! character (len=*), parameter :: DEFAULTMAXDIM = UNLIM
    ! integer, parameter :: DEFAULT_CHUNKRANK = 1
    ! integer, dimension(7), parameter :: DEFAULT_CHUNKDIMS = (/ 1,1,1,1,1,1,1 /)
-   integer, parameter :: HDFE_AUTOMERGE = 1     ! MERGE FIELDS WITH SHARE DIM
    integer, parameter :: HDFE_NOMERGE = 0       ! don't merge
   
   ! So far, the nameIndex component of the main data type is never set
@@ -971,7 +973,7 @@ contains ! =====     Public Procedures     =============================
     character (len=*), optional, intent(in) :: options ! E.g., '-v'
 
     ! Local variables
-    integer :: chunk
+!     integer :: chunk
     logical, parameter            :: countEmpty = .true.
     logical :: filter
     integer :: i
@@ -4392,7 +4394,7 @@ contains ! =====     Public Procedures     =============================
     ! Variables
 
     character (len=132) :: name ! Either swathName or l2gp%name
-    integer :: chunk
+!     integer :: chunk
     integer :: status, swid,myOffset
     integer :: start(2), stride(2), edge(2)
     integer :: hdfVersion
@@ -5376,6 +5378,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.222  2016/06/13 17:59:16  pwagner
+! Added cpHE5GlobalAttrs
+!
 ! Revision 2.221  2016/03/23 00:20:09  pwagner
 ! DiffL2GPData now able to print name on each line
 !

@@ -117,7 +117,8 @@ module VectorsModule            ! Vectors in the MLS PGS suite
     & test_deallocate
   use, intrinsic :: iso_c_binding, only: c_intptr_t, c_loc
   use bitStuff, only: dumpBitNames, isBitSet
-  use dump_0, only: diff, dump
+  use Diff_1, only: Diff
+  use dump_0, only: dump
   use highOutput, only: outputNamedValue
   use intrinsic, only: lit_indices, phyq_invalid, l_vmr
   use lexer_core, only: where_t
@@ -3495,6 +3496,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.205  2016/05/27 00:14:05  vsnyder
+! Publish RV because this seems like a logical place to get it
+!
 ! Revision 2.204  2016/04/13 00:47:18  vsnyder
 ! Make AreEqual generic.  Add AreUnEqual, operator(==), and operator(/=)
 !
