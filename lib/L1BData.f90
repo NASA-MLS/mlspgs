@@ -14,7 +14,9 @@ module L1BData
   ! Reading and interacting with Level 1B data (HDF4 or HDF5)
 
   use Allocate_Deallocate, only: Allocate_test, Deallocate_test, Test_Allocate
-  use Dump_0, only: nameOnEachLine, statsOnOneLine, Diff, Diff_fun, Dump
+  use Diff_1, only: diff, diff_fun
+  use Dump_Options, only: NameOnEachLine, StatsOnOneLine
+  use Dump_0, only: Dump
   use HDF, only: DFACC_Rdonly, SFGInfo, SFN2Index, SFSelect, &
     & SFRData_f90, &
     & SFRCData, SFENDACC, DFNT_Char8, DFNT_Int32, DFNT_Float64, &
@@ -2871,6 +2873,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.111  2016/07/28 01:42:27  vsnyder
+! Refactoring dump and diff
+!
 ! Revision 2.110  2016/07/22 20:03:52  pwagner
 ! Fixed errors in AssembleL1BQtyName, ReadL1BData_MLSFile
 !
