@@ -15,11 +15,11 @@ module MLSNumbers              ! Some number theoretic datatypes, procedures
 
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
   use Dump_0, only: Dump
-  use HighOutput, only: headLine
-  use MLSFinds, only: findFirst, findLast
+  use HighOutput, only: HeadLine
+  use MLSFinds, only: FindFirst, FindLast
   use MLSSets, only: Intersection, Union
-  use MLSStringLists, only: readIntsFromList
-  use Output_m, only: output
+  use MLSStringLists, only: ReadIntsFromList
+  use Output_m, only: Output
 
   implicit none
 
@@ -27,7 +27,7 @@ module MLSNumbers              ! Some number theoretic datatypes, procedures
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
-  private :: not_used_here 
+  private :: not_used_here
 !---------------------------------------------------------------------------
 
 ! === (start of toc) ===
@@ -125,66 +125,66 @@ module MLSNumbers              ! Some number theoretic datatypes, procedures
   interface Copy
     module procedure Copy_composite, Copy_rational
   end interface
-  
+
   interface Create
     module procedure Create_composite, Create_rational
   end interface
-  
+
   interface Destroy
     module procedure Destroy_composite, Destroy_rational
   end interface
-  
+
   interface Dump
     module procedure Dump_composite, Dump_rational
   end interface
-  
+
   interface Estimate
     module procedure EstimateCompositeNum_single, EstimateCompositeNum_double
     module procedure EstimateRationalNum_single, EstimateRationalNum_double
   end interface
-  
+
   interface EstimateCompositeNum
     module procedure EstimateCompositeNum_single, EstimateCompositeNum_double
   end interface
-  
+
   interface EstimateRationalNum
     module procedure EstimateRationalNum_single, EstimateRationalNum_double
   end interface
-  
+
   interface isEqual
     module procedure isEqual_int, isEqual_composite, isEqual_rational
   end interface
-  
+
   interface isPrime
     module procedure isPrime_int, isPrime_composite
   end interface
-  
+
   interface Multiply
     module procedure Multiply_composite, Multiply_rational
   end interface
-  
+
   interface Power
     module procedure Power_composite, Power_rational
   end interface
-  
+
   interface Reduce
     module procedure Reduce_composite, Reduce_rational
   end interface
-  
+
   ! This datatype represents an integer as a composite of its prime factors
   ! I.e., n = Product ( factors[k] ^ powers[k] )
   ! where each factors[k] is a prime number, and powers[k] > 0
   ! Why might this be useful?
   ! (1) Represents very large non-prime integers without loss of precision
   ! (2) Some operations become very easy, e.g. lcm, gcd, isPrime, power
-  
+
   ! Beware of calling EvaluateComposteNum without first checking the size of its
   ! log by a call to inRange; if it is outside the range we
   ! can represent, EvaluateComposteNum returns "-1"
-  
+
   ! The Estimate procedures provide an alternate way to get at the value,
   ! returning its logarithm as either a single- or double-precision float
-  
+
   ! "1" is represnted by c%factors remaining unassoiated
   ! Should we move this datatype and its procedures to a separate module?
   type CompositeNum_T
@@ -198,8 +198,8 @@ module MLSNumbers              ! Some number theoretic datatypes, procedures
   end type
 
   ! How many factors can CompositeNum_T hold?
-  integer, parameter :: MAXNUMFACTORS = 128 
-  
+  integer, parameter :: MAXNUMFACTORS = 128
+
   ! How many primes do we track?
   integer, parameter :: MAXNUMPRIMES = 1229
   integer, dimension(MAXNUMPRIMES), save :: primenumbers = -999
@@ -251,7 +251,6 @@ contains
     type(CompositeNum_T)              :: A
     type(CompositeNum_T)              :: B
     type(CompositeNum_T)              :: D
-    integer                           :: i
     ! Executable
     call Create( 1, C ) ! Default value is 1, not 0
     if ( n < 2 .or. m < 1 .or. (n-m) < 1 ) return ! m = 0 and n = m both => 1
@@ -287,7 +286,7 @@ contains
     call allocate_test( C%powers, nFactors, 'powers', &
       & ModuleName // 'Copy_composite' )
     C%factors = a%factors
-    C%powers  = a%powers 
+    C%powers  = a%powers
   end subroutine Copy_composite
 
   ! --------------- Copy_rational --------------------
@@ -300,7 +299,7 @@ contains
     type(CompositeNum_T)                :: numerator
     type(CompositeNum_T)                :: denominator
     ! Executable
-    
+
     call Copy( A%numerator, numerator )
     call Copy( A%denominator, denominator )
     C = RationalNum_T( numerator, denominator )
@@ -382,13 +381,13 @@ contains
     ! Executable
     if ( isOne ( A ) ) then
       call Copy_composite ( b, d ) ! a is 1, so c is 1
-    elseif ( isOne ( B ) ) then
+    else if ( isOne ( B ) ) then
       call Copy_composite ( a, c ) ! b is 1 so d is 1
     else
       call GreatestCommonDivisor( A, B, G )
       call Reduce( A, G, C )
       call Reduce( B, G, D )
-    endif
+    end if
   end subroutine Divide
 
   ! --------------- Dump_composite --------------------
@@ -403,7 +402,7 @@ contains
     else
       call Dump( C%factors, 'prime factors' )
       call Dump( C%powers, 'their powers' )
-    endif
+    end if
   end subroutine Dump_composite
 
   ! --------------- Dump_rational --------------------
@@ -437,7 +436,7 @@ contains
     logN = 0.
     do i=1, nFactors
       logN = logN + c%powers(i)*log10(1.*C%factors(i))
-    enddo
+    end do
   end subroutine EstimateCompositeNum_single
 
   subroutine EstimateCompositeNum_double( logN, C )
@@ -456,7 +455,7 @@ contains
     logN = 0.d0
     do i=1, nFactors
       logN = logN + c%powers(i)*log10(1.d0*C%factors(i))
-    enddo
+    end do
   end subroutine EstimateCompositeNum_double
 
   ! --------------- EstimateRationalNum --------------------
@@ -481,8 +480,8 @@ contains
     double precision, intent(out)     :: logN
     type(RationalNum_T), intent(in)   :: R
     ! Local variables
-    double precision                  :: logNumerator              
-    double precision                  :: logDenominator            
+    double precision                  :: logNumerator
+    double precision                  :: logDenominator
     ! Executable
     call EstimateCompositeNum ( logNumerator,   R%numerator )
     call EstimateCompositeNum ( logDenominator, R%denominator )
@@ -494,7 +493,7 @@ contains
   ! Warning-- the result may be outiside the range of integers
   ! representable on the machine; if it is outside,
   ! we return 1.
-  
+
   ! See also EstimateCompositeNum
   subroutine EvaluateCompositeNum( n, C )
     ! Args
@@ -513,19 +512,19 @@ contains
       ! print *, 'logN > range(n) ', logN, range(n)
       n = -1 ! The value returned if n would be > Huge
       return
-    endif
+    end if
     do i=1, nFactors
       n = n * C%factors(i)**C%powers(i)
-    enddo
+    end do
   end subroutine EvaluateCompositeNum
 
   ! --------------- Factorial --------------------
   ! Form the Composite result of n!.
   ! Optionally, may find double-factorial, by setting k=2
   ! E.g., 6!! = 6*4*2. 7!! = 7*5*3
-  
+
   ! See also IntFactorial, EstimateCompositeNum
-  function factorial( n, k ) result ( C )
+  function Factorial( n, k ) result ( C )
     ! Args
     integer, intent(in)               :: n
     integer, optional, intent(in)     :: k ! In case we need double-factorial
@@ -551,15 +550,15 @@ contains
       call Destroy_composite( A )
       call Destroy_composite( B )
       if ( i < 2 ) exit ! No point in multiplying by 1
-    enddo
-  end function factorial
+    end do
+  end function Factorial
 
   ! --------------- IntFactorial --------------------
   ! Find the integer result of n!.
   ! If n is too large, returns -1
   ! Optionally, may find double-factorial, by setting k=2
   ! E.g., 6!! = 6*4*2. 7!! = 7*5*3
-  
+
   ! See also Factorial
   recursive function IntFactorial( n, k ) result ( f )
     ! Args
@@ -578,19 +577,19 @@ contains
         f = Factorials(n)
       else
         f = n * IntFactorial( n-kstep, k )
-      endif
-    elseif ( n <= MAXNINFACTORIAL-kstep ) then
+      end if
+    else if ( n <= MAXNINFACTORIAL-kstep ) then
       f = n * IntFactorial( n-kstep, k )
     else
       f = -1
-    endif
-    
+    end if
+
   end function IntFactorial
 
   ! --------------- GreatestCommonDivisor --------------------
   ! Find the gcd of two composite nums
   ! Method:
-  ! (1) Find the factors in the set 
+  ! (1) Find the factors in the set
   !       {c%factors[i]} = {a%factors[i]} /\ {b%factors[i]}
   ! (2) For each c%factors(i), choose the smaller of the corresponding a or b
   !      power
@@ -620,12 +619,12 @@ contains
         j = FindFirst( b%factors, c%factors(i) )
         nb = b%powers(j)
         c%powers(i) = min(na, nb)
-      enddo
-    endif
+      end do
+    end if
   end subroutine GreatestCommonDivisor
 
   ! --------------- InRange --------------------
-  ! Is the integer represented by the composite argument in range? 
+  ! Is the integer represented by the composite argument in range?
   ! i.e., not too big
   logical function InRange( C )
     ! Args
@@ -637,7 +636,7 @@ contains
     InRange = .true.
     if ( isOne ( c ) ) return ! "1" is not too big
     call EstimateCompositeNum ( logN, C )
-    inRange = .not. ( logN > real(range(n)) ) 
+    inRange = .not. ( logN > real(range(n)) )
   end function InRange
 
   ! --------------- Invert --------------------
@@ -659,7 +658,7 @@ contains
   ! Are the two numbers equal?
   ! (1) size(c*factors) == 1
   ! (2) c%powers(1) == 1
-  logical function isEqual_composite( A, B )
+  logical function IsEqual_composite( A, B )
     ! Args
     type(CompositeNum_T), intent(in) :: A, B
     isEqual_composite = .true.
@@ -671,7 +670,7 @@ contains
     if ( size(a%factors) /= size(b%factors) ) return
     isEqual_composite = all(a%factors == b%factors) .and. &
       & all(a%powers == b%powers)
-  end function isEqual_composite
+  end function IsEqual_composite
 
   ! --------------- IsEqual_int --------------------
   ! Are the two numbers equal?
@@ -687,10 +686,10 @@ contains
     if ( n < 1 ) then
       isEqual_int = .false.
       return
-    elseif ( .not. associated(a%factors) ) then
+    else if ( .not. associated(a%factors) ) then
       isEqual_int = ( n == 1 )
       return
-    endif
+    end if
     call EvaluateCompositeNum( nA, A )
     isEqual_int = ( n == nA )
   end function isEqual_int
@@ -698,7 +697,7 @@ contains
   ! --------------- IsEqual_rational --------------------
   ! Are the two numbers equal?
   ! Having been reduced, are numerators and denominators equal?
-  logical function isEqual_rational( A, B )
+  logical function IsEqual_rational( A, B )
     ! Args
     type(RationalNum_T), intent(in) :: A, B
     ! Internal variables
@@ -712,31 +711,31 @@ contains
       & isequal( C%denominator, D%denominator )
     call Destroy( C )
     call Destroy( D )
-  end function isEqual_rational
+  end function IsEqual_rational
 
-  logical function isOne( A )
+  logical function IsOne( A )
     type(CompositeNum_T), intent(in) :: A
     isOne = ( .not. associated(A%factors) )
-  end function isOne
+  end function IsOne
 
   ! --------------- IsPrime_composite --------------------
   ! A version of the function for composite arguments
   ! Returns FALSE unless both
   ! (1) size(c*factors) == 1
   ! (2) c%powers(1) == 1
-  logical function isPrime_composite( C )
+  logical function IsPrime_composite( C )
     ! Args
     type(CompositeNum_T), intent(in) :: C
     isPrime_composite = .false.
     if ( isOne ( c ) ) return ! "1" is not prime
     if ( size(c%factors) /= 1 ) return
     if ( c%powers(1) == 1 ) isPrime_composite = .true.
-  end function isPrime_composite
+  end function IsPrime_composite
 
   ! --------------- LeastCommonMultiple --------------------
   ! Find the lcm of two composite nums
   ! Method:
-  ! (1) Find the factors in the set 
+  ! (1) Find the factors in the set
   !       {c%factors[i]} = {a%factors[i]} U {b%factors[i]}
   ! (2) For each c%factors(i), choose the larger of the corresponding a or b
   !      power
@@ -753,7 +752,7 @@ contains
     ! Executable
     if ( isOne ( a ) ) then
       call Copy_composite ( b, c )
-    elseif ( isOne ( b ) ) then
+    else if ( isOne ( b ) ) then
       call Copy_composite ( a, c )
     else
       ! c%factors = Union( a%factors, b%factors )
@@ -770,8 +769,8 @@ contains
         j = FindFirst( b%factors, c%factors(i) )
         if ( j > 0 ) nb = b%powers(j)
         c%powers(i) = max(na, nb)
-      enddo
-    endif
+      end do
+    end if
   end subroutine LeastCommonMultiple
 
   ! --------------- LogBinomialCoef --------------------
@@ -830,7 +829,7 @@ contains
     ! Executable
     if ( isOne ( a ) ) then
       call Copy_composite ( b, c )
-    elseif ( isOne ( b ) ) then
+    else if ( isOne ( b ) ) then
       call Copy_composite ( a, c )
     else
       c = CompositeNum_T( &
@@ -845,8 +844,8 @@ contains
         j = FindFirst( b%factors, c%factors(i) )
         if ( j > 0 ) nb = b%powers(j)
         c%powers(i) = na + nb
-      enddo
-    endif
+      end do
+    end if
   end subroutine Multiply_composite
 
   ! --------------- Multiply_rational --------------------
@@ -866,12 +865,12 @@ contains
     call Reduce ( C )
   end subroutine Multiply_rational
 
-  ! --------------- Power_composite --------------------
+  ! --------------- Power_Composite --------------------
   ! Set the Composite number "c" to the "n"th power
   ! If n < 1, returns "1"
   ! if n == 1, returns C
   ! otherwise just multiply each power by n
-  subroutine Power_composite( n, C )
+  subroutine Power_Composite( n, C )
     ! Args
     integer, intent(in)                  :: n
     type(CompositeNum_T), intent(inout)  :: C
@@ -880,15 +879,15 @@ contains
     if ( n < 1 ) then
       ! Return 1
       call Destroy_composite( C )
-    elseif ( n > 1 ) then
+    else if ( n > 1 ) then
       c%powers = n*c%powers
-    endif
-  end subroutine Power_composite
+    end if
+  end subroutine Power_Composite
 
-  ! --------------- Power_rational --------------------
+  ! --------------- Power_Rational --------------------
   ! Set the Rational number "R" to the "n"th power
   ! where n can be any integer, even < 1
-  subroutine Power_rational( n, R )
+  subroutine Power_Rational( n, R )
     ! Args
     integer, intent(in)                  :: n
     type(RationalNum_T), intent(inout)   :: R
@@ -898,18 +897,18 @@ contains
       call Invert ( R )
       call Power( n, R%numerator )
       call Power( n, R%denominator )
-    elseif ( n == 0 ) then
+    else if ( n == 0 ) then
       call Destroy( R ) ! anything to the "0" is "1"
-    elseif ( n > 1 ) then
+    else if ( n > 1 ) then
       call Power( n, R%numerator )
       call Power( n, R%denominator )
-    endif
-  end subroutine Power_rational
+    end if
+  end subroutine Power_Rational
 
-  ! --------------- Reduce_composite --------------------
+  ! --------------- Reduce_Composite --------------------
   ! Divide two composite nums; c = a / b
   ! knowing each factor in b is also in a
-  subroutine Reduce_composite( A, B, C )
+  subroutine Reduce_Composite( A, B, C )
     ! Args
     type(CompositeNum_T), intent(in)  :: A
     type(CompositeNum_T), intent(in)  :: B
@@ -934,7 +933,7 @@ contains
         k = k + 1
         c%factors(k) = a%factors(i)
         c%powers(k)  = a%powers(i)
-      elseif ( a%powers(i) > b%powers(j) ) then
+      else if ( a%powers(i) > b%powers(j) ) then
         ! A factor in common, so a suffers a reduction
         k = k + 1
         c%factors(k) = a%factors(i)
@@ -942,8 +941,8 @@ contains
       else ! if ( a%powers(i) == b%powers(j) )
         ! Both factor and power in common, so it is eliminated totally
         ! no operation
-      endif
-    enddo
+      end if
+    end do
     nFactors = FindLast( c%factors /= 0 )
     nullify ( factors, powers )
     call allocate_test( factors, nFactors, 'factors', &
@@ -958,12 +957,12 @@ contains
     !  & ModuleName // 'ReduceCompositeNum' )
     ! call deallocate_test( powers, 'powers', &
     !  & ModuleName // 'ReduceCompositeNum' )
-  end subroutine Reduce_composite
+  end subroutine Reduce_Composite
 
-  ! --------------- Reduce_rational --------------------
+  ! --------------- Reduce_Rational --------------------
   ! Reduce a rational number by dividing numerator and denominator
   ! by their gcd
-  subroutine Reduce_rational( R )
+  subroutine Reduce_Rational( R )
     ! Args
     type(RationalNum_T), intent(inout) :: R
     ! Local variables
@@ -978,13 +977,13 @@ contains
     call Destroy( gcd )
     call Destroy( R )
     R = RationalNum_T( C, D )
-  end subroutine Reduce_rational
+  end subroutine Reduce_Rational
 
-  ! --------- isPrime ------------------
-  logical function isPrime_int(n)
+  ! --------- IsPrime ------------------
+  logical function IsPrime_int(n)
     ! Return TRUE if arg is prime, FALSE if not
     ! Method:
-    ! if n is < M (largest of stored array) primenumbers, 
+    ! if n is < M (largest of stored array) primenumbers,
     ! just check if n is an element of the array
     ! Otherwise, check if arg is divisible by any of them
     ! Obvious bug:
@@ -1005,13 +1004,13 @@ contains
     if ( n < maxval(primenumbers)+1 ) then
       isPrime_int = any(n == primenumbers)
       return
-    endif
+    end if
     sqrtn = sqrt(n * 1.0)
     kM = FindFirst( primenumbers > sqrtn )
     if ( kM < 1 ) kM = MAXNUMPRIMES
     ! print *, 'kM: ', kM
     isPrime_int = all( mod(n, primenumbers) > 0 )
-  end function isPrime_int
+  end function IsPrime_int
 
   function NextPrime(n) result(next)
     ! Returns the next prime number greater than the arg n
@@ -1029,10 +1028,10 @@ contains
     do
       if ( isPrime(next) ) return
       next = next + 2
-    enddo
+    end do
   end function NextPrime
 
-  integer function prime(n)
+  integer function Prime(n)
     ! Returns the nth prime number
     ! Args
     integer, intent(in) :: n ! E.g., if n=1 returns 2 which is first prime
@@ -1041,7 +1040,7 @@ contains
     if ( primenumbers(1) > 0 ) then
       prime = primenumbers(n)
       return
-    endif
+    end if
     ! Initializing
     ! We need to build array of primenumbers
     call appendValues(primenumbers, '    2     3     5     7    11    13    17    19    23    29')
@@ -1169,11 +1168,11 @@ contains
     call appendValues(primenumbers, ' 9901  9907  9923  9929  9931  9941  9949  9967  9973')
 
     prime = primenumbers(n)
-  end function prime
+  end function Prime
 
-  function primeFactors( n, factors, powers ) result(nFactors)
+  function PrimeFactors( n, factors, powers ) result(nFactors)
     ! Break n into its prime factors and, optionally, their powers
-    ! E.g., called with 200, returns 2 (the number of prime factors) 
+    ! E.g., called with 200, returns 2 (the number of prime factors)
     ! along with:
     ! factors = (/ 2, 5 /)
     ! powers  = (/ 3, 2 /)
@@ -1198,19 +1197,19 @@ contains
       if ( present(powers) ) powers(1) = 1
       nFactors = 1
       return
-    endif
+    end if
     m = n
     k = 1
     do i = 1, n
       if ( m < 2 .or. k > size(factors) ) then
         return
-      endif
+      end if
       ! Now check to see if prime(i) divides m
       if ( prime(i) < 0 ) then
         primo = nextPrime(primo+1)
       else
         primo = prime(i)
-      endif
+      end if
       ! print *, 'm, primo', m, primo
       if ( primo < 0 ) return
       addOneTok = .false.
@@ -1221,10 +1220,10 @@ contains
         if ( present(powers) ) powers(k) = powers(k) + 1
         nFactors = k
         m = m / primo
-      enddo
+      end do
       if ( addOneTok ) k = k + 1
-    enddo
-  end function primeFactors
+    end do
+  end function PrimeFactors
 
   function PrimeIndex(n) result(i)
     ! Returns the index i of prime number prime(i) greater than the arg n
@@ -1238,7 +1237,8 @@ contains
     if ( primenumbers(1) < 0 ) i = prime(n)
     i = findFirst( primenumbers > n )
   end function PrimeIndex
-  subroutine appendValues( array, chars )
+
+  subroutine AppendValues( array, chars )
     ! Append new values to end of array where new values
     ! are encoded by chars
     ! Args
@@ -1255,8 +1255,8 @@ contains
     if ( nRead < 1 ) return
     nEnd = min( size(array), nBegin+nRead-1 )
     array(nBegin:nEnd) = ints(:nEnd-nBegin+1)
-  end subroutine appendValues
-  
+  end subroutine AppendValues
+
 !=============================================================================
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
@@ -1273,6 +1273,9 @@ end module MLSNumbers
 
 !
 ! $Log$
+! Revision 2.3  2016/07/28 01:35:51  vsnyder
+! Remove unused variable declaration
+!
 ! Revision 2.2  2016/03/05 00:17:18  pwagner
 ! Added Factorial, BinaryCoef functions
 !
