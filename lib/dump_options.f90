@@ -14,6 +14,66 @@ module Dump_Options
   ! Options for Dump_0, Dump_1, Diff_1, and maybe others.
   ! Variables shared between those modules and derived from the options.
 
+
+! Most of the optional parameters have default values
+! logically set to FALSE or 0, ' ',  or '*' where appropriate
+
+!  optional args
+!  (dumps and diffs if the same)
+!      arg            meaning                                     default
+!      ---            -------                                     -------
+!    fillvalue        skip dumping lines containg only fillValues    0
+!    width            how many values printed per line            depends
+!    format           fortran format used to print                depends
+!    lbound           lower bound of 1st index                       1
+!    options          (see below)                                    ''
+
+!  (diffs)
+!      arg            meaning                                     default
+!      ---            -------                                     -------
+!    fillvalue        don't diff where array elements are this    -999.99
+
+! The format optional arg defaults to SDFORMATDEFAULT for floating pt. arrys
+! For integer arrays it defaults to i6 or i_INTPLACES_
+! For complex arrays it defaults to SDFORMATDEFAULTCMPLX
+! If set to '(*)', for floating point and complex arrays it
+! will be the least number of spaces wide enough to contain the
+! largest array element printed according to the default format
+! If set to '(*.m)', for floating point and complex arrays it
+! will be the least number of spaces wide enough to contain the
+! largest array element with m spaces after the decimal point
+
+! The meaning of options has replaced the older logical arguments
+! if the options is present and contains the following characters:
+! (for dump or diff)
+!   character         meaning
+!      ---            -------
+!       B              show Bandwidth, % of array that is non-zero
+!       H              show rank, TheShape of array
+!       L              laconic; skip printing name, size of array
+!       N              Show where NaNs and Infs are located
+!       R              rms       -- min, max, etc.
+!       b              table of % vs. amount of differences (pdf)
+!       c              clean
+!       g              gaps      
+!       l              collapse (last index)
+!       r              ratios    -- min, max, etc. of differences' ratios
+!       s              stats     -- number of differences
+!       p              transpose 
+!       t              trim      
+!       u              unique    
+!       v              verbose
+!       w              wholearray
+!       W[i]           wholearray, looping over ith index (for rank 3 and 4 arrays only)
+!       1 or 2 or ..   ignored; calling routine is free to interpret
+
+! An exception is the behavior of wholearray:
+! if all {HRblrs} are FALSE, i.e. unset, the whole array is dumped (or diffed)
+! if any is TRUE the whole array will be dumped only if
+! w or wholearray is set to TRUE
+
+! in the above, a string list is a string of elements (usu. comma-separated)
+
   implicit NONE
   public
 
@@ -70,6 +130,24 @@ module Dump_Options
 
   logical :: NameHasBeenPrinted = .false.
 
+!     (parameters)
+! CollapseOptions          options determining what and how to dump collapsed
+!                           representations of multidimensional arrays
+! DefaultDiffOptions       switches to set default DIFF values for CLEAN, TRIM, etc.
+! DefaultDumpOptions       same as above, but for DUMP
+! DiffRMSMeansRMS          print abs min, max, etc. when DIFF has RMS set TRUE
+! DontDumpIfAllEqual       don't dump every element of a constant array
+! DumpTableSide            what side to place headers when dumping tables
+! FilterFillsFromRMS       exclude fill values when calculating rms, etc.
+!                           (not implemented yet)
+! IntPlaces                How many places to print when dumping integer values
+! MaxNumNANS               How many NaNs can we show where they are
+! NameOnEachLine           item name to print on each output line
+! PCTFormat                use this format to print % with '-s' diff option
+! RMSFormat                use this format to print min, max, rms, etc.
+! SDFormatDefault          use this format to print s.p., d.p. by default
+! StatsOnOneLine           stats, rms each printed on a single line
+
   ! The following character strings can include one or more options listed above
   ! E.g., '-crt' turns on Clean, RMS, and TrimIt
   character(len=8)  :: DefaultDiffOptions = ' '
@@ -109,7 +187,7 @@ module Dump_Options
 
   data dopts(bandwidth)  / option_t('bandwidth',  dopt_bandwidth,  .false. ) /
   data dopts(clean)      / option_t('clean',      dopt_clean,      .false. ) /
-  data dopts(collapseIt) / option_t('collapse',   dopt_clean,      .false. ) /
+  data dopts(collapseIt) / option_t('collapse',   dopt_collapse,   .false. ) /
   data dopts(cyclic)     / option_t('cyclic',     dopt_cyclic,     .false. ) /
   data dopts(direct)     / option_t('direct',     dopt_direct,     .false. ) /
   data dopts(gaps)       / option_t('gaps',       dopt_gaps,       .false. ) /
@@ -305,6 +383,10 @@ contains
 end module Dump_Options
 
 ! $Log$
+! Revision 2.2  2016/07/28 03:29:28  vsnyder
+! Moved a bunch of comments here from Dump_0.  Repaired typo that confused
+! "Clean" option with "Collape" option.
+!
 ! Revision 2.1  2016/07/28 01:41:48  vsnyder
 ! Initial Commit
 !
