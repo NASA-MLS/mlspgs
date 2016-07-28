@@ -65,7 +65,6 @@ contains ! =====     Public Procedures     =============================
     use L2AuxData, only: l2AuxData_t
     use L2ParInfo, only: Parallel, WaitForDirectWritePermission
     use Lexer_core, only: Print_Source
-    use machine, only: USleep
     use MatrixModule_1, only: Matrix_Database_t
     use MLSCommon, only: MLSFile_t
     use MLSL2Options, only: CheckPaths, L2CFNode, &
@@ -98,7 +97,6 @@ contains ! =====     Public Procedures     =============================
     type (Hessian_T), dimension(:), pointer :: Hessians
 
     ! Local parameters
-    ! integer, parameter :: DELAY = 500000  ! For Usleep, no. microsecs
     ! External (C) function
     ! Local variables
     logical :: AUTODIRECTWRITE
@@ -1603,9 +1601,9 @@ contains ! =====     Public Procedures     =============================
     end function doOutputTypesMatch
   end subroutine DirectWriteCommand
 
-  ! ------------------------------------------------ LabelVectorQuantity -----
+  ! ------------------------------------------ LabelVectorQuantity -----
   subroutine LabelVectorQuantity ( node, vectors )
-    use highOutput, only: outputNamedValue
+!     use highOutput, only: outputNamedValue
     use init_tables_module, only: f_label, f_prefixsignal, &
       & f_quantity, f_vector
     use MLSSignals_m, only: getSignalName
@@ -2384,6 +2382,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.175  2016/07/28 01:43:51  vsnyder
+! Remove unreferenced USE
+!
 ! Revision 2.174  2016/05/18 01:37:30  vsnyder
 ! Change HGrids database from an array of HGrid_T to an array of pointers
 ! to HGrid_T using the new type HGrids_T.
