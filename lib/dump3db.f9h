@@ -42,14 +42,14 @@
       call empty ( name )
     else if ( size(array) == 1 ) then
       if ( present(theShape) ) then
-        call name_and_size ( name, myClean, 1, theShape )
+        call name_and_size ( name, dopts(clean)%v, 1, theShape )
       else
-        call name_and_size ( name, myClean, 1, '(1,1,1)' )
+        call name_and_size ( name, dopts(clean)%v, 1, '(1,1,1)' )
       end if
       call output ( base-1, before='(', after=') ' , advance='no' )
       call output ( array(1,1,1), format=myFormat, advance='yes' )
     else if ( size(array,1) == 1 ) then
-      if ( myWholeArray ) then
+      if ( dopts(wholeArray)%v ) then
         if ( present(theShape) ) then
           call dump ( array(1,:,:), name, &
             & fillValue=fillValue, format=format, options=options, theShape=theShape )
@@ -62,7 +62,7 @@
           & fillValue=fillValue, format=format, options=options )
       endif
     else if ( size(array,2) == 1 ) then
-      if ( myWholeArray ) then
+      if ( dopts(wholeArray)%v ) then
         if ( present(theShape) ) then
           call dump ( array(:,1,:), name, &
             & fillValue=fillValue, format=format, options=options, theShape=theShape )
@@ -75,7 +75,7 @@
           & fillValue=fillValue, format=format, options=options )
       endif
     else if ( size(array,3) == 1 ) then
-      if ( myWholeArray ) then
+      if ( dopts(wholeArray)%v ) then
         if ( present(theShape) ) then
           call dump ( array(:,:,1), name, &
             & fillValue=fillValue, format=format, options=options, theShape=theShape )
@@ -112,19 +112,19 @@
           & fillValue=fillValue, format=format, options=options )
       enddo
     else
-      call name_and_size ( name, myClean, size(array), theShape )
-      if ( present(name) .and. .not. mylaconic ) call newLine
+      call name_and_size ( name, dopts(clean)%v, size(array), theShape )
+      if ( present(name) .and. .not. dopts(laconic)%v ) call newLine
       do i = 1, size(array,1)
         do j = 1, size(array,2)
           do k = 1, size(array,3), myWidth
-            DumpTheseZeros = myClean .or. &
+            DumpTheseZeros = dopts(clean)%v .or. &
               & any(array(i,j,k:min(k+2*MyWidth-1, size(array,3))) /= myFillValue) &
               & .or. &
               & ( k+MyWidth >= size(array,3) .and. &
               & any(array(i,min(j+1, size(array,2)),1:min(1+MyWidth-1, size(array,3))) &
               & /= myFillValue) &
               & )
-            if (.not. myClean) then
+            if (.not. dopts(clean)%v) then
               if ( DumpTheseZeros ) then
                 call say_fill ( (/ i, size(array,1), j-1, size(array,2), &
                   & k, size(array,3) /), numZeroRows, &
@@ -149,6 +149,9 @@
    call theDumpEnds
 ! end subroutine DUMP_3D_DOUBLE
 ! $Log$
+! Revision 2.8  2016/07/28 01:42:27  vsnyder
+! Refactoring dump and diff
+!
 ! Revision 2.7  2013/06/19 23:13:44  pwagner
 ! Remove more unused stuff
 !
