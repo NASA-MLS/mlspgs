@@ -265,12 +265,12 @@ contains
   !
   ! In certain other cases we must repeat printing the message via the
   ! output module's commands
-  subroutine MLSMessage ( SEVERITY, MODULENAMEIN, MESSAGE, &
-    & ADVANCE, MLSFILE, STATUS, ITEM )
-    use lexer_core, only: get_where
-    use MLSStringlists, only: switchDetail
-    use toggles, only: switches
-    use tree, only: where
+  subroutine MLSMessage ( Severity, ModuleNameIn, Message, &
+    & Advance, MLSFile, Status, Item )
+    use Lexer_Core, only: Get_Where
+    use MLSStringlists, only: SwitchDetail
+    use Toggles, only: Switches
+    use Tree, only: Where
     integer, intent(in) :: Severity ! e.g. MLSMSG_Error
     character (len=*), intent(in) :: ModuleNameIn ! Name of module (see below)
     character (len=*), intent(in) :: Message ! Line of text
@@ -1257,13 +1257,14 @@ jloop:do while ( j < len_trim(line) )
   ! Dump the runtime macros
   ! Either simply, or in a table
   subroutine DumpMacros ( details )
-    use highOutput, only: outputTable
-    use MLSStringLists, only: List2Array, numStringElements, switchDetail
-    use toggles, only: switches
-    integer, optional, intent(in)         :: details
-    character(len=64), dimension(1024, 2) :: keysValues
-    integer                               :: myDetails
-    integer                               :: nValues
+    use Dump_1, only: Dump
+    use HighOutput, only: OutputTable
+    use MLSStringLists, only: List2Array, NumStringElements, SwitchDetail
+    use Toggles, only: Switches
+    integer, optional, intent(in)         :: Details
+    character(len=64), dimension(1024, 2) :: KeysValues
+    integer                               :: MyDetails
+    integer                               :: NValues
     ! Executable
     myDetails = SwitchDetail( switches, 'bool' )
     if ( present(details) ) myDetails = details
@@ -1288,7 +1289,7 @@ jloop:do while ( j < len_trim(line) )
     endif
   end subroutine DumpMacros
 
-  ! ---------------------------------------  SubstituteRuntimeBoolean  -----
+  ! -----------------------------------  SubstituteRuntimeBoolean  -----
   ! Substitute values for named runtime macros in the original
   subroutine SubstituteRuntimeBoolean ( original, substitute )
     ! Args:
@@ -1344,6 +1345,9 @@ end module MLSL2Options
 
 !
 ! $Log$
+! Revision 2.108  2016/07/28 01:45:07  vsnyder
+! Refactor dump and diff
+!
 ! Revision 2.107  2016/05/27 00:05:43  pwagner
 ! Should now correctly process options containing an embedded space
 !
