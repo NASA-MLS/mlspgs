@@ -11,41 +11,41 @@
 
 module ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
 
-  use allocate_deallocate, only: allocate_test, deallocate_test, bytes, &
-    & test_allocate
+  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test, Bytes, &
+    & Test_Allocate
   use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
-  use dump_0, only : dump
-  use griddeddata, only: griddeddata_t, rgr, v_is_altitude, v_is_gph, &
-    & v_is_pressure, v_is_theta, &
-    & addgriddeddatatodatabase, dump, setupnewgriddeddata, nullifygriddeddata
-  use HDFeos, only: HDFe_nentdim, &
-    & gdopen, gdattach, gddetach, gdclose, gdfldinfo, &
-    & gdinqgrid, gdnentries, gdinqdims, gdinqflds
+  use Dump_0, only : Dump
+  use GriddedData, only: GriddedData_t, RGR, V_is_Altitude, V_is_GPH, &
+    & V_is_Pressure, V_is_Theta, &
+    & AddGriddedDataToDatabase, Dump, SetupNewGriddedData, NullifyGriddedData
+  use HDFeos, only: HDFe_NentDim, &
+    & GDOpen, GDAttach, GDDetach, GDClose, GDFldinfo, &
+    & GDInqGrid, GDNentries, GDInqDims, GDInqFlds
   use HDF, only: dfacc_create, dfacc_rdonly, dfacc_rdwr, &
     & dfnt_float32, dfnt_float64
-  use highoutput, only: outputnamedvalue
-  use intrinsic, only: l_hdfeos
-  use l3ascii, only: l3ascii_read_field
-  use lexer_core, only: print_source
-  use MLScommon, only: linelen, namelen, filenamelen, &
-    & undefinedvalue, MLSfile_t
-  use MLSFiles, only: fileNotFound, HDFversion_5, dump, InitializeMLSFile, &
-    & getpcfromref, MLS_HDF_version, MLS_openfile, MLS_closefile, &
-    & split_path_name, MLS_openfile, MLS_closefile
-  use MLSkinds, only: r4, r8
+  use HighOutput, only: OutputNamedValue
+  use intrinsic, only: L_HDFeos
+  use L3ASCII, only: L3ASCII_Read_Field
+  use Lexer_Core, only: Print_Source
+  use MLScommon, only: LineLen, NameLen, FileNameLen, &
+    & UndefinedValue, MLSfile_t
+  use MLSFiles, only: FileNotFound, HDFversion_5, Dump, InitializeMLSFile, &
+    & GetPCFromRef, MLS_HDF_version, MLS_openfile, MLS_closefile, &
+    & Split_Path_Name, MLS_openfile, MLS_closefile
+  use MLSkinds, only: R4, R8
   use MLSMessagemodule, only: MLSMsg_error, MLSMsg_info, MLSMsg_warning, &
     & MLSMessage
-  use MLSstrings, only: capitalize, hhmmss_value, lowercase
-  use MLSstringlists, only: getstringelement, numstringelements, &
-    & list2array, replacesubstring, stringelementnum
+  use MLSstrings, only: Capitalize, HHMMSS_Value, Lowercase
+  use MLSstringlists, only: GetStringElement, NumStringElements, &
+    & List2array, ReplaceSubstring, StringElementNum
   use output_m, only: output
   use SDPtoolkit, only: PGS_s_success, &
     & PGS_io_gen_closef, PGS_io_gen_openf, PGSd_io_gen_rseqfrm, &
     & PGSd_gct_inverse, &
-    & useSDPtoolkit
-  use tree, only: dump_tree_node, where
+    & UseSDPtoolkit
+  use Tree, only: Dump_Tree_Node, Where
 
-  implicit none
+  implicit NONE
   private
 
 !---------------------------- RCS Module Info ------------------------------
@@ -389,18 +389,19 @@ contains
 
   end subroutine ReadGriddedData_Name
 
-  ! ----------------------------------------------- Read_geos5_7
-  subroutine Read_geos5_7( GEOS5File, lcf_where, v_type, &
+  ! ----------------------------------------------- Read_GEOS5_7
+  subroutine Read_GEOS5_7( GEOS5File, lcf_where, v_type, &
     & the_g_data, GeoDimList, fieldName, date, sumDelp )
 
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
-    use dates_module, only: utc2tai93s
-    use hdf5, only: hsize_t
-    use mlshdf5, only: getallhdf5dsnames, &
-      & gethdf5dsrank, gethdf5dsdims, loadfromhdf5ds, &
-      & readhdf5attribute
-    use mlsstringlists, only: switchdetail
-    use toggles, only: switches
+    use Dates_module, only: UTC2TAI93s
+    use Dump_1, only: Dump
+    use HDF5, only: Hsize_t
+    use MLSHDF5, only: GetAllHDF5DSNames, &
+      & GetHDF5DSRank, gethDF5DSDims, LoadFromHDF5DS, &
+      & ReadHDF5Attribute
+    use MLSStringLists, only: SwitchDetail
+    use Toggles, only: Switches
 
     ! This routine reads a gmao geos5_7 file, named something like
     ! DAS.ops.asm.avg3_3d_Nv.GEOS571.20110930_0300.V01.nc4 (pressure with
@@ -449,7 +450,7 @@ contains
     DEEBUG = ( index(lowercase(actual_field_name), 'inq') > 0 )
     verbose = ( switchDetail(switches, 'geos5') > -1 ) .or. DEEBUG
     call GetAllHDF5DSNames ( GEOS5File%Name, '/', mysdList )
-    if ( verbose ) call dump(mysdList, 'DS names')
+    if ( verbose ) call dump( mysdList, 'DS names' )
 
     ! Fill in value
     the_g_data%quantityName = actual_field_name
@@ -647,10 +648,10 @@ contains
     call mls_closefile(geos5File, error)
     if (error .gt. 0) call announce_error(lcf_where, "Could not close "// GEOS5File%Name)
     if ( verbose ) call dump( the_g_data, details = 1 )
-  end subroutine Read_geos5_7
+  end subroutine Read_GEOS5_7
 
-  ! ----------------------------------------------- Read_geos5_or_merra
-  subroutine Read_geos5_or_merra( GEOS5File, lcf_where, v_type, &
+  ! ----------------------------------------------- Read_GEOS5_or_Merra
+  subroutine Read_GEOS5_or_Merra( GEOS5File, lcf_where, v_type, &
     & the_g_data, GeoDimList, fieldName, date, sumDelp )
 
     ! This routine reads a gmao GEOS5 or MERRA file, named something like
@@ -750,7 +751,7 @@ contains
         & trim(GEOS5File%Name))
     else if ( strbufsize > MAXLISTLENGTH ) then
        CALL MLSMessage ( MLSMSG_Error, moduleName,  &
-          & 'list size too big in Read_geos5_or_merra ' // trim(GEOS5File%Name), MLSFile=GEOS5File )
+          & 'list size too big in Read_GEOS5_or_Merra ' // trim(GEOS5File%Name), MLSFile=GEOS5File )
     else if ( strbufsize < MAXLISTLENGTH .and. strbufsize > 0 ) then
       gridlist = gridlist(1:strbufsize) // ' '
     end if
@@ -913,7 +914,7 @@ contains
     if(DEEBUG) print *, 'v_type ', v_type
     if(DEEBUG) print *, 'About to allocate ', dims(1:4)
     call allocate_test( all_the_fields, dims(1), dims(2), dims(3), dims(4), &
-        & 'all_the_fields', ModuleName // 'Read_geos5_or_merra' )
+        & 'all_the_fields', ModuleName // 'Read_GEOS5_or_Merra' )
     all_the_fields = the_g_data%missingValue
     start = 0                                                             
     stride = 1                                                               
@@ -932,7 +933,7 @@ contains
       ! Sum up all the delps, starting from the top of the atmosphere
       nullify(pb)
       call allocate_test( pb, nlev+1, 'pb', &
-        & ModuleName // 'Read_geos5_or_merra' )
+        & ModuleName // 'Read_GEOS5_or_Merra' )
       do itime=1, ntime
         do ilat=1, nlat
           do ilon=1, nlon
@@ -952,7 +953,7 @@ contains
         end do
       end do
       call deallocate_test( pb, 'pb', &
-        & ModuleName // 'Read_geos5_or_merra' )
+        & ModuleName // 'Read_GEOS5_or_Merra' )
     end if
     ! The actual dimlist is this                    XDim,YDim,Height,TIME
     ! Need to reshape it so that the order becomes: Height,YDim,XDim,TIME
@@ -974,7 +975,7 @@ contains
       call output( trim(actual_field_name) // ' had the wrong size (field, 4) ' // &
         & trim(GEOS5File%Name), advance='yes' )
       call deallocate_test( all_the_fields, 'all_the_fields', &
-        & ModuleName // 'Read_geos5_or_merra' )
+        & ModuleName // 'Read_GEOS5_or_Merra' )
       deallocate(the_g_data%field, STAT=status)
       if ( status /= 0 ) &
         & call announce_error( lcf_where, "failed to deallocate field" )
@@ -993,7 +994,7 @@ contains
       call dump(the_g_data%field(1,1,1,:,1,1), 't-slice')
     end if
     call deallocate_test( all_the_fields, 'all_the_fields', &
-        & ModuleName // 'Read_geos5_or_merra' )
+        & ModuleName // 'Read_GEOS5_or_Merra' )
     ! Now read the dims
     nullify(dim_field)
     ! call read_the_dim(gd_id, 'XDim', dims(1), dim_field)
@@ -1060,10 +1061,10 @@ contains
         & call announce_error(lcf_where, "failed to read dim field " &
         & // trim(field_name))
     end subroutine read_the_dim
-  end subroutine Read_geos5_or_merra
+  end subroutine Read_GEOS5_or_Merra
 
-  ! ----------------------------------------------- Read_dao
-  subroutine Read_dao(DAOFile, lcf_where, v_type, &
+  ! ---------------------------------------------------  Read_DAO  -----
+  subroutine Read_DAO(DAOFile, lcf_where, v_type, &
     & the_g_data, GeoDimList, fieldName)
 
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
@@ -1138,7 +1139,7 @@ contains
         & trim(DAOFile%Name))
     else if ( strbufsize > MAXLISTLENGTH ) then
        CALL MLSMessage ( MLSMSG_Error, moduleName,  &
-          & 'list size too big in Read_dao ' // trim(DAOFile%Name), MLSFile=DAOFile )
+          & 'list size too big in Read_DAO ' // trim(DAOFile%Name), MLSFile=DAOFile )
     else if ( strbufsize < MAXLISTLENGTH .and. strbufsize > 0 ) then
       gridlist = gridlist(1:strbufsize) // ' '
     end if
@@ -1346,10 +1347,10 @@ contains
          & call announce_error(lcf_where, "failed to read dim field " &
          & // trim(field_name))
      end subroutine read_the_dim
-  end subroutine Read_dao
+  end subroutine Read_DAO
 
-  ! ----------------------------------------------- Read_ncep_gdas
-  subroutine Read_ncep_gdas ( NCEPFile, lcf_where, v_type, &
+  ! ---------------------------------------------  Read_NCEP_GDAs  -----
+  subroutine Read_NCEP_GDAs ( NCEPFile, lcf_where, v_type, &
     & the_g_data, GeoDimList, gridName, missingValue )
 
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
@@ -1619,7 +1620,7 @@ contains
     ! Insert code to transform upLeft and LowRight
     ! info into lats and lons
     if ( USEPROJECTFORDIMS ) then
-      call announce_error(lcf_where, "Read_ncep_gdas unable to use projection")
+      call announce_error(lcf_where, "Read_NCEP_GDAs unable to use projection")
     else
     ! Now read the dims
     !  But .. they aren't there!
@@ -1667,10 +1668,10 @@ contains
          & call announce_error(lcf_where, "failed to read dim field " &
          & // trim(field_name))
      end subroutine read_the_dim
-  end subroutine Read_ncep_gdas
+  end subroutine Read_NCEP_GDAs
 
-  ! ----------------------------------------------- Read_ncep_strat
-  subroutine Read_ncep_strat(NCEPFile, lcf_where, v_type, &
+  ! --------------------------------------------  Read_NCEP_Strat  -----
+  subroutine Read_NCEP_Strat(NCEPFile, lcf_where, v_type, &
     & the_g_data, GeoDimList, fieldName)
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
     use hdfeos5, only: he5_hdfe_nentdim, he5f_acc_rdonly, &
@@ -2012,9 +2013,9 @@ contains
          & call announce_error(lcf_where, "failed to read dim field " &
          & // trim(field_name))
      end subroutine read_the_dim
-  end subroutine Read_ncep_strat
+  end subroutine Read_NCEP_Strat
 
-  ! --------------------------------------------- ReadGloriaFile -------
+  ! ---------------------------------------------  ReadGloriaFile  -----
   type ( GriddedData_T) function ReadGloriaFile ( gloriaFile ) result ( grid )
     type(MLSFile_T)                :: GloriaFile
     ! This function reads data in Gloria's gridded data format into memory
@@ -2152,7 +2153,7 @@ contains
 
   end function ReadGloriaFile
 
-  ! --------------------------------------------------  Read_Climatology
+  ! -------------------------------------------  Read_Climatology  -----
   subroutine Read_Climatology ( climFile, root, aprioriData, returnStatus, &
     & mlspcf_l2clim_start, mlspcf_l2clim_end, missingValue, echo_data, &
     & dump_data )
@@ -2321,7 +2322,7 @@ contains
 
   end subroutine Read_Climatology
 
-  ! ----------------------------------------------- WriteGriddedData
+  ! -------------------------------------------  WriteGriddedData  -----
   subroutine WriteGriddedData( GriddedFile, lcf_where, description, v_type, &
     & the_g_data, returnStatus, &
     & GeoDimList, fieldNames, missingValue, date, sumDelp )
@@ -2401,8 +2402,8 @@ contains
     end do
   end subroutine WriteGriddedData
 
-  ! ----------------------------------------------- Write_merra
-  subroutine Write_merra( createGrid, GEOS5File, lcf_where, &
+  ! ------------------------------------------------  Write_Merra  -----
+  subroutine Write_Merra( createGrid, GEOS5File, lcf_where, &
     & the_g_data, GeoDimList, fieldName )
 
     ! This routine Writes a gmao MERRA file, named something like
@@ -2501,7 +2502,7 @@ contains
     status = gddetach( gd_Id )
     status = gdclose( file_id )
 
-  end subroutine Write_merra
+  end subroutine Write_Merra
 
   ! ----- utility procedures ----
   function GEOS5orMERRA( File ) result( fType )
@@ -2689,6 +2690,9 @@ contains
 end module ncep_dao
 
 ! $Log$
+! Revision 2.82  2016/07/28 01:42:27  vsnyder
+! Refactoring dump and diff
+!
 ! Revision 2.81  2015/03/28 00:56:14  vsnyder
 ! Stuff to trace allocate/deallocate addresses -- mostly commented out
 ! because NAG build 1017 doesn't yet allow arrays as arguments to C_LOC.
