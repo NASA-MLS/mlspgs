@@ -16,29 +16,29 @@ module QuantityTemplates         ! Quantities within vectors
   ! This module defines the `quantities' that make up vectors and their
   ! template information.
 
-  use allocate_deallocate, only: allocate_test, deallocate_test
-  use dump_0, only: dump
-  use expr_m, only: expr_check
-  use hGridsDatabase, only: HGrid_t, Dump
-  use highOutput, only: outputNamedValue
-  use intrinsic, only: l_dl, l_geodetic, l_geodAltitude, l_none, l_phitan, &
-    & l_vmr, lit_indices, phyq_angle, phyq_dimensionless, phyq_frequency, &
-    & phyq_indices, phyq_time, phyq_vmr
+  use Allocate_deallocate, only: allocate_test, deallocate_test
+  use Dump_0, only: Dump
+  use Expr_m, only: Expr_check
+  use HGridsDatabase, only: HGrid_t, Dump
+  use HighOutput, only: outputNamedValue
+  use Intrinsic, only: L_geodetic, L_geodAltitude, L_none, L_phitan, &
+    & L_vmr, lit_indices, Phyq_angle, Phyq_dimensionless, Phyq_frequency, &
+    & Phyq_indices, Phyq_time, Phyq_vmr
   use MLSFillValues, only: rerank
   use MLSKinds, only: rt => r8 ! rt is "kind of real components of template"
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
   use MLSFinds, only: findfirst
   use MLSStringLists, only: switchDetail
   use MLSStrings, only: lowercase, writeIntsToChars
-  use output_m, only: output
-  use string_table, only: isStringInTable
-  use toggles, only: switches
-  use tree, only: nsons, subtree
+  use Output_m, only: output
+  use String_table, only: isStringInTable
+  use Toggles, only: switches
+  use Tree, only: nsons, subtree
 
-  implicit none
+  implicit NONE
   private
 
-  public :: EPOCH, QuantityTemplate_T, RT
+  public :: Epoch, QuantityTemplate_T, RT
   public :: AddQuantityTemplateToDatabase, InflateQuantityTemplateDatabase
   public :: CheckIntegrity, CopyQuantityTemplate, CreateGeolocationFields, &
     & CreateLatitudeFields, CreateLongitudeFields, &
@@ -56,13 +56,13 @@ module QuantityTemplates         ! Quantities within vectors
 
   ! Define some global parameters and data types.
 
-  real(rt), parameter :: EPOCH = 1993.0 ! Starting point for time references
+  real(rt), parameter :: Epoch = 1993.0 ! Starting point for time references
 
   type QuantityTemplate_T
 
     ! Some administrative stuff
 
-    integer :: name = 0        ! Sub-rosa index of quantity name
+    integer :: Name = 0        ! Sub-rosa index of quantity name
 
     ! This integer is of an enumerated type describing what kind of
     ! quantity this is -- one of the l_lits of type t_quantityType
@@ -81,31 +81,31 @@ module QuantityTemplates         ! Quantities within vectors
 
     ! Flags describing the quantity
 
-    logical :: coherent        ! Do instances have same vertical coordinates?
-    logical :: stacked         ! Are instances true vertical profiles?
-    logical :: regular         ! Are all channels/heights represented
+    logical :: Coherent        ! Do instances have same vertical coordinates?
+    logical :: Stacked         ! Are instances true vertical profiles?
+    logical :: Regular         ! Are all channels/heights represented
 
     ! This next one allows software using the vector quantities to be somewhat
     ! lazy and, for example, avoid interpolation.  Minor frame quantities are
     ! incoherent and unstacked, but may be regular or irregular.  However, not
     ! all incoherent unstacked quantities are minor frame quantities.
 
-    logical :: minorFrame      ! Is this a minor frame quantity.
-    logical :: majorFrame      ! Is this a major frame quantity.
+    logical :: MinorFrame      ! Is this a minor frame quantity.
+    logical :: MajorFrame      ! Is this a major frame quantity.
 
     ! This one indicates whether log or linear interpolation should be used
-    logical :: logBasis                 ! If set use log
-    real(rt) :: minValue                ! Minimum value to consider if using log
+    logical :: LogBasis                 ! If set use log
+    real(rt) :: MinValue                ! Minimum value to consider if using log
 
     ! This information describes how much of the data is in the overlap
     ! regions if any.
 
-    integer :: noInstancesLowerOverlap
-    integer :: noInstancesUpperOverlap
+    integer :: NoInstancesLowerOverlap
+    integer :: NoInstancesUpperOverlap
 
     ! Misc. information
-    real(rt) :: badValue       ! Value used to flag bad/missing data
-    integer :: unit = PHYQ_VMR ! Unit quantity is in when scaled as below,
+    real(rt) :: BadValue       ! Value used to flag bad/missing data
+    integer :: Unit = PHYQ_VMR ! Unit quantity is in when scaled as below,
                                ! an l_lit of the type t_units.  Units are
                                ! defined in units.f90, but their names are
                                ! declared in intrinsic.f90, and their membership
@@ -114,14 +114,14 @@ module QuantityTemplates         ! Quantities within vectors
     ! For regular quantities the number of elements of each instance
     ! is simply noSurfs*noChans.  For irregular ones it is less, but it is
     ! constant from instance to instance; this is that number.
-    integer :: instanceLen
+    integer :: InstanceLen
 
     ! Vertical coordinate
-    integer :: verticalCoordinate=l_geodAltitude ! The vertical coordinate
+    integer :: VerticalCoordinate=l_geodAltitude ! The vertical coordinate
                                   ! used.  These are l_lits of the type
                                   ! t_VGridCoord defined in Init_Tables_Module.
-    logical :: sharedVGrid        ! Set if surfs is a pointer not a copy
-    integer :: vGridIndex         ! Index of any vGrid used
+    logical :: SharedVGrid        ! Set if surfs is a pointer not a copy
+    integer :: VGridIndex         ! Index of any vGrid used
 
     ! Surfs is dimensioned (noSurfs,noCrossTrack) for coherent quantities and
     ! (noSurfs, noInstances*noCrossTrack) for incoherent ones.  Pretending the
@@ -136,14 +136,14 @@ module QuantityTemplates         ! Quantities within vectors
     real(rt), allocatable :: Surfs(:,:) ! zeta or meters, depending on verticalCoordinate
 
     ! Horizontal coordinates in the orbit plane.
-    integer :: horizontalCoordinate = l_phiTan ! The horizontal coordinate used.
+    integer :: HorizontalCoordinate = l_phiTan ! The horizontal coordinate used.
                                         ! Either l_phiTan or l_time
-    integer :: grandTotalInstances      ! Total number of instances in destination output file
+    integer :: GrandTotalInstances      ! Total number of instances in destination output file
     ! for example MAF index, or profile index.
     integer :: hGridIndex               ! Index of any hGrid used
     type(hGrid_t), pointer :: The_HGrid => NULL()
-    integer :: instanceOffset           ! Ind of 1st non overlapped instance in output
-    integer :: xGridIndex = 0           ! Index of any xGrid used
+    integer :: InstanceOffset           ! Ind of 1st non overlapped instance in output
+    integer :: XGridIndex = 0           ! Index of any xGrid used
 
     ! First subscript values for GeoLocation component
     integer :: OrbitCoordinateIndex = 1 ! For spacecraft position
@@ -202,20 +202,20 @@ module QuantityTemplates         ! Quantities within vectors
     integer :: fGridIndex               ! Index of any fGrid Index used
     real(rt), dimension(:), pointer :: frequencies => NULL() ! List of frequencies
                                         ! for Channels(ChanInds)
-    integer :: frequencyCoordinate      ! An enumerated type, e.g. FG_USBFreq
-    real(rt) :: lo                      ! Local oscillator frequency, MHz
-    logical :: sharedFGrid              ! Set of frequencies are a pointer not a copy
-    integer :: sideband                 ! Associated sideband -1, 0, +1
-    integer :: signal                   ! Index into signals database
+    integer :: FrequencyCoordinate      ! An enumerated type, e.g. FG_USBFreq
+    real(rt) :: Lo                      ! Local oscillator frequency, MHz
+    logical :: SharedFGrid              ! Set of frequencies are a pointer not a copy
+    integer :: Sideband                 ! Associated sideband -1, 0, +1
+    integer :: Signal                   ! Index into signals database
 
     ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     ! Some families of quantities require special additional information.
     ! This is given here if needed.
 
-    integer :: instrumentModule ! Index in the Modules database in MLSSignals_m
-    integer :: radiometer       ! For ptan etc., index into radiometers database
-    integer :: reflector        ! For reflector efficiency etc. terms
-    integer :: molecule ! What molecule does this refer to? (One of the l_...
+    integer :: InstrumentModule ! Index in the Modules database in MLSSignals_m
+    integer :: Radiometer       ! For ptan etc., index into radiometers database
+    integer :: Reflector        ! For reflector efficiency etc. terms
+    integer :: Molecule ! What molecule does this refer to? (One of the l_...
                         ! lits of type t_molecule in Molecules.)
 
     ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -223,8 +223,8 @@ module QuantityTemplates         ! Quantities within vectors
     ! For irregular quantities, we have these arrays to
     ! help us navigate around the quantity.
 
-    integer, dimension(:,:), pointer :: surfIndex => NULL()
-    integer, dimension(:,:), pointer :: chanIndex => NULL()
+    integer, dimension(:,:), pointer :: SurfIndex => NULL()
+    integer, dimension(:,:), pointer :: ChanIndex => NULL()
     ! These are actually dimensioned (instanceLen, noInstances)
   contains
     procedure :: GeocLat => GetGeocLat
@@ -242,11 +242,11 @@ module QuantityTemplates         ! Quantities within vectors
     procedure :: Surfs3 => GetSurfs3
   end type QuantityTemplate_T
 
-  interface DUMP
+  interface Dump
     module procedure Dump_Quantity_Template, Dump_Quantity_Templates
   end interface
 
-  interface MODIFYQUANTITYTEMPLATE
+  interface ModifyQuantityTemplate
     module procedure ModifyQuantityTemplate_allocate
     module procedure ModifyQuantityTemplate_array, ModifyQuantityTemplate_sca
   end interface
@@ -1142,8 +1142,6 @@ contains
   ! except that if Qty%NoCrossTrack > 1, it creates a copy.
 
     use HGridsDatabase, only: HGrid_T, CreateEmptyHGrid
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
-    use MoreMessage, only: MLSMessage
     use Toggles, only: Gen, Levels, Toggle
     use Trace_m, only: Trace_Begin, Trace_End
 
@@ -1151,7 +1149,6 @@ contains
     type (QuantityTemplate_T), intent(inout) :: Qty
 
     ! Local variables
-    integer :: I, J, K
     integer :: Me = -1                  ! String index for trace
     type (hGrid_T), pointer :: HGrid
 
@@ -1171,8 +1168,8 @@ contains
     HGrid%losAngle            => qty%losAngle          
     call trace_end ( "GetHGridFromQuantity", &
       & cond=toggle(gen) .and. levels(gen) > 2 )
-  end subroutine GetHGridFromQuantity
 
+  end subroutine GetHGridFromQuantity
 
   ! ---------------------------------------  PointQuantityToHGrid  -----
   subroutine PointQuantityToHGrid ( Qty )
@@ -2265,6 +2262,10 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.113  2016/05/25 00:21:01  vsnyder
+! Optionally allow different numbers of channels in QuantitiesAreCompatible.
+! Check that HGrids are the same type in QuantitiesAreCompatible.
+!
 ! Revision 2.112  2016/05/24 01:24:53  vsnyder
 ! Add checking for hGrid associated and of same type to QuantitiesAreCompatibie
 !
