@@ -61,6 +61,11 @@ module Dump_1
 !       formats allows you to specify a format separately column-by-column
 ! DumpTextfile ( char* fileName, [char* options] )
 
+! Dump_Strlist ( strlist string, char* name, [char* fillvalue],
+!      [char* options], [char* InSeparator] )
+! Dump ( log countEmpty, strlist keys, strlist values, char* name, 
+!       [char* separator], [char* options] )
+
   interface Dump
     module procedure Dump_Hash_Log, Dump_Hash_Str, Dump_StrList
   end interface
@@ -174,14 +179,14 @@ contains
   end subroutine Dump_Hash_Str
 
   ! -----------------------------------------------  Dump_StrList  -----
-  subroutine Dump_StrList ( STRING, Name, FillValue, Options, INSeparator )
+  subroutine Dump_StrList ( String, Name, FillValue, Options, InSeparator )
     ! Dumps a ','-separated string list, one item per line
     ! (Unless it consists of multiple lines)
-    character(len=*), intent(in) :: STRING
+    character(len=*), intent(in) :: String
     character(len=*), intent(in), optional :: Name
     character(len=*), intent(in), optional :: FillValue
     character(len=*), intent(in), optional :: Options
-    character(len=*), optional, intent(in) :: INSeparator
+    character(len=*), optional, intent(in) :: InSeparator
 
     integer :: J
     integer :: NumElements
@@ -654,6 +659,9 @@ contains
 end module Dump_1
 
 ! $Log$
+! Revision 2.2  2016/07/28 03:19:52  vsnyder
+! Move comments here from dump_0
+!
 ! Revision 2.1  2016/07/28 01:41:48  vsnyder
 ! Initial Commit
 !
