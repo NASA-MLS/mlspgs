@@ -14,7 +14,6 @@ module Chunks_m
 !=============================================================================
 
   use MLSCommon, only: MLSChunk_T
-  use MLSKINDS, only: RP
   implicit none
   private
   public :: Dump, Initialize, MLSChunk_T
@@ -31,12 +30,12 @@ module Chunks_m
 
 contains ! =====     Private Procedures     ============================
 
-  ! ------------------------------------------------  DUMP_CHUNKS  -----
-  subroutine DUMP_CHUNKS ( CHUNKS )
+  ! ------------------------------------------------  Dump_Chunks  -----
+  subroutine Dump_Chunks ( Chunks )
 
-    use OUTPUT_M, only: OUTPUT
+    use Output_m, only: Output
 
-    type(MLSChunk_t), intent(in) :: CHUNKS(:)
+    type(MLSChunk_t), intent(in) :: Chunks(:)
     integer :: I
     call output ( 'CHUNKS: SIZE = ' )
     call output ( size(chunks), advance='yes' )
@@ -44,15 +43,15 @@ contains ! =====     Private Procedures     ============================
       call output ( i, before=' Chunk ', advance='yes' )
       call dump(chunks(i))
     end do
-  end subroutine DUMP_CHUNKS
+  end subroutine Dump_Chunks
 
-  ! ------------------------------------------------  DUMP_ONE_CHUNK  -----
-  subroutine DUMP_ONE_CHUNK ( CHUNK )
+  ! ---------------------------------------------  Dump_One_Chunk  -----
+  subroutine Dump_One_Chunk ( Chunk )
 
-    use DUMP_0, only: DUMP
-    use OUTPUT_M, only: OUTPUT
+    use Dump_0, only: Dump
+    use Output_m, only: Output
 
-    type(MLSChunk_t), intent(in) :: CHUNK
+    type(MLSChunk_t), intent(in) :: Chunk
     if ( chunk%chunkNumber > -1 ) call output ( chunk%chunkNumber, before='  chunkNumber: ' )
     call output ( chunk%firstMAFIndex, before='  firstMAFIndex: ' )
     call output ( chunk%lastMAFIndex, before='  lastMAFIndex: ', advance='yes' )
@@ -75,13 +74,13 @@ contains ! =====     Private Procedures     ============================
       & call dump( chunk%HGridOffsets, 'HGrid offsets' )
     if ( associated(chunk%HGridTotals) ) &
       & call dump( chunk%HGridTotals, 'HGrid Totals' )
-  end subroutine DUMP_ONE_CHUNK
+  end subroutine Dump_One_Chunk
 
-  ! ------------------------------------------------  INITIALIZE  -----
+  ! ------------------------------------------------  Initialize  -----
   ! Override each chunk component's default values if given a precursor
-  subroutine INITIALIZE ( CHUNK, PRECURSOR )
-    type(MLSChunk_T)                       :: CHUNK
-    type(MLSChunk_T), optional, intent(in) :: PRECURSOR
+  subroutine Initialize ( Chunk, Precursor )
+    type(MLSChunk_T)                       :: Chunk
+    type(MLSChunk_T), optional, intent(in) :: Precursor
     if ( .not. present(precursor) ) return
     chunk%abandoned            = precursor%abandoned
     chunk%firstMAFIndex        = precursor%lastMAFIndex + 1
@@ -91,7 +90,7 @@ contains ! =====     Private Procedures     ============================
     chunk%chunkNumber          = precursor%chunkNumber       
     chunk%phiStart             = precursor%phiEnd      
     chunk%phiEnd               = 2*precursor%phiEnd - precursor%phiStart
-  end subroutine INITIALIZE
+  end subroutine Initialize
 
 !=======================================================================
 !--------------------------- end bloc --------------------------------------
@@ -107,6 +106,9 @@ contains ! =====     Private Procedures     ============================
 end module Chunks_m
 
 ! $Log$
+! Revision 2.10  2016/07/28 00:41:41  vsnyder
+! Remove unreferenced USE
+!
 ! Revision 2.9  2015/06/19 00:36:39  pwagner
 ! Moved MLSChunk_T to MLSCommon in lib
 !
