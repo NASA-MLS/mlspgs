@@ -655,16 +655,23 @@ contains
       & 'l1boa File not found--hope you dont need one' )
       call FinishUp
       return
+    elseif ( L1BFile%hdfVersion /= hdfversion_5 ) then
+      call MLSMessage ( MLSMSG_Warning, ModuleName, &                      
+      & 'l1boa File is the older hdf4' )
+      call FinishUp
+      return
     else
       ! Check on module names--do they agree with group names in L1BOA file?
       ! If not, overwrite them
       call mls_openFile ( L1BFile )
       call GetAllHDF5GroupNames ( L1BFile%FileID%f_id, moduleNames )
+      call outputNamedValue ( 'group names', trim(moduleNames) )
       call mls_closeFile ( L1BFile )
       do i=1, size(modules)
         call GetModuleName ( i, itsName )
         call outputNamedValue ( 'module name', trim(itsname) )
         j = StringElementNum( lowercase(moduleNames), lowercase(itsName), countEmpty )
+        call outputNamedValue ( 'element num', j )
         if ( j > 0 ) then
           if ( itsName /= &
             & StringElement( moduleNames, j, countEmpty ) ) &
@@ -1379,6 +1386,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.164  2016/07/28 01:45:07  vsnyder
+! Refactor dump and diff
+!
 ! Revision 2.163  2016/07/27 23:02:59  pwagner
 ! Works better with Aircraft-borne instrument data
 !
