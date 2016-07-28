@@ -14,12 +14,11 @@ module MLSNumerics              ! Some low level numerical stuff
 !=============================================================================
 
   use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
-  use DUMP_0, only : DUMP, SELFDIFF
+  use DUMP_0, only : DUMP
   use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
   use Hunt_M, only: Hunt, HuntBox, HuntRange, PureHunt
   use MATRIXMODULE_0, only: CREATEBLOCK, M_ABSENT, MATRIXELEMENT_T, SPARSIFY
-  use MLSCOMMON, only : UNDEFINEDVALUE
-  use MLSFILLVALUES, only: ISFILLVALUE, REPLACEFILLVALUES, RERANK
+  use MLSFILLVALUES, only: ISFILLVALUE, RERANK
   use MLSKINDS, only: I4, R4, R8, RM
   use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_WARNING, &
     & MLSMESSAGE
@@ -2514,6 +2513,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.90  2016/07/28 01:40:24  vsnyder
+! Remove unused USE
+!
 ! Revision 2.89  2016/06/02 02:11:51  vsnyder
 ! Add Average function
 !
