@@ -125,7 +125,7 @@ contains ! =====     Public Procedures     =============================
   subroutine dumpAPrioriAttributes
     ! dump info about what apriori files were used
     ! Storing them as hdfeos5 attributes
-    use dump_0, only: dump
+    use Dump_1, only: Dump
     ! Executable
     call output( 'Actual apriori files and file types used', advance='yes' )
     if ( len_trim(APrioriFiles%l2gp) > 0 )&
@@ -283,9 +283,9 @@ contains ! =====     Public Procedures     =============================
       & DestroyGriddedData, downSampleGriddedData, dump, &
       & Setupnewgriddeddata
     use L2AUXData, only: L2AUXdata_t, addL2AUXtodatabase, &
-      &                  readL2AUXdata, dump
+      &                  dump
     use L2GPdata, only: l2GPdata_t, &
-      & Addl2GPtodatabase, readl2GPdata, dump
+      & Addl2GPtodatabase, dump
     use Moretree, only: get_label_and_spec, get_spec_id
     use Ncep_dao, only: read_climatology, readgriddeddata, readgloriafile
     use Surfaceheight_m, only: open_surface_height_file, &
@@ -956,7 +956,7 @@ contains ! =====     Public Procedures     =============================
     & LastAprioriPCF, Debug, &
     & L2AUX, L2AUXFile, fileDatabase )
    use L2AUXData, only: L2AUXdata_t, addL2AUXtodatabase, &
-    &                  readL2AUXdata, dump
+    &                  readL2AUXdata
    ! Process an a priori l2gp
     ! Args:
     character(len=FileNameLen)              :: FileNameString   ! actual literal file name
@@ -1462,6 +1462,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.115  2016/07/28 01:45:07  vsnyder
+! Refactor dump and diff
+!
 ! Revision 2.114  2016/04/01 00:27:15  pwagner
 ! May now Execute a single command or a script of lines from l2cf
 !
