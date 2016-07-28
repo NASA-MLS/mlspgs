@@ -13,7 +13,7 @@
 module HGrid                    ! Horizontal grid information
 !=============================================================================
 
-  use HGridsdatabase, only: HGrid_T, HGridGeolocations_T, HGridGeolocations, &
+  use HGridsdatabase, only: HGrid_T, HGridGeolocations, &
     & L1BGeolocation, L1BSubsample
   
   implicit none
@@ -965,12 +965,13 @@ contains ! =====     Public Procedures     =============================
     
     ! With older l1b files (pre v2.0), some coordinates
     ! (solar time, solar zenith angle) are mean rather than apparent local
-    use allocate_deallocate, only: allocate_test, deallocate_test
-    use chunkdivide_m, only: chunkdivideconfig
-    use chunks_m, only: MLSChunk_t, dump
-    use constants, only: deg2rad, rad2deg
-    use dump_0, only: dump, selfdiff
-    use empiricalgeometry, only: empiricallongitude, chooseoptimumlon0
+    use Allocate_deallocate, only: allocate_test, deallocate_test
+    use Chunkdivide_m, only: chunkdivideconfig
+    use Chunks_m, only: MLSChunk_t, dump
+    use Constants, only: deg2rad, rad2deg
+    use Dump_0, only: Dump
+    use Diff_1, only: Selfdiff
+    use Empiricalgeometry, only: empiricallongitude, chooseoptimumlon0
     use hgridsDatabase, only: createemptyhgrid, hgrid_t, trimhgrid, findclosestmatch
     use highOutput, only: letsDebug, outputNamedValue
     use MLSCommon, only: mlsfile_t, tai93_range_t
@@ -2433,6 +2434,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.134  2016/07/28 01:45:07  vsnyder
+! Refactor dump and diff
+!
 ! Revision 2.133  2016/07/27 23:02:20  pwagner
 ! Works better with Aircraft-borne instrument data
 !
