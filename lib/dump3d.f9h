@@ -30,7 +30,7 @@
     ! Executable
     call theDumpBegins ( options )
     myRank = 3
-    if ( myUnique ) then
+    if ( dopts(unique)%v ) then
       call FindUnique( reshape( array, (/ product(shape(array)) /) ), &
         & elements, nUnique, counts )
       if ( nUnique < 2 ) then
@@ -57,6 +57,9 @@
 !    include 'dump3db.f9h'
 ! end subroutine DUMP_3D_DOUBLE
 ! $Log$
+! Revision 2.10  2016/07/28 01:42:27  vsnyder
+! Refactoring dump and diff
+!
 ! Revision 2.9  2013/06/19 23:13:44  pwagner
 ! Remove more unused stuff
 !
