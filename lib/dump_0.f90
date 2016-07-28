@@ -52,27 +52,8 @@ module Dump_0
 !     c o n t e n t s
 !     - - - - - - - -
 
-!     (parameters)
-! AFTERSUB                 character printed between row, col id and data
-! CollapseOptions          options determining what and how to dump collapsed
-!                           representations of multidimensional arrays
-! DEFAULTDIFFOPTIONS       switches to set default DIFF values for CLEAN, TRIM, etc.
-! DEFAULTDUMPOPTIONS       same as above, but for DUMP
-! DIFFRMSMEANSRMS          print abs min, max, etc. when DIFF has RMS set TRUE
-! DONTDUMPIFALLEQUAL       don't dump every element of a constant array
-! DUMPTABLESIDE            what side to place headers when dumping tables
-! FILTERFILLSFROMRMS       exclude fill values when calculating rms, etc.
-!                           (not implemented yet)
-! INTPLACES                How many places to print when dumping integer values
-! MAXNUMNANS               How many NaNs can we show where they are
-! NAMEONEACHLINE           item name to print on each output line
-! PCTFORMAT                use this format to print % with '-s' diff option
-! RMSFORMAT                use this format to print min, max, rms, etc.
-! SDFORMATDEFAULT          use this format to print s.p., d.p. by default
-! STATSONONELINE           stats, rms each printed on a single line
-
 !     (subroutines and functions)
-! DUMP                     dump an array to output
+! Dump                     dump an array to output
 ! === (end of toc) ===
 
 ! === (start of api) ===
@@ -82,74 +63,12 @@ module Dump_0
 !       where array can be a 1, 2, or 3d array of
 !       chars, ints, reals, or doubles,
 !       and fillValue is a scalar of the same type, if present
-! dump ( strlist string, char* name, [char* fillvalue], [char* options] )
-! dump ( log countEmpty, strlist keys, strlist values, char* name, 
-!       [char* separator], [char* options] )
-! restoreDumpConfig
-
-! Note that most of the optional parameters have default values
-! logically set to FALSE or 0, ' ',  or '*' where appropriate
-
-!  optional args
-!  (dumps and diffs if the same)
-!      arg            meaning                                     default
-!      ---            -------                                     -------
-!    fillvalue        skip dumping lines containg only fillValues    0
-!    width            how many values printed per line            depends
-!    format           fortran format used to print                depends
-!    lbound           lower bound of 1st index                       1
-!    options          (see below)                                    ''
-
-!  (diffs)
-!      arg            meaning                                     default
-!      ---            -------                                     -------
-!    fillvalue        don't diff where array elements are this    -999.99
-
-! The format optional arg defaults to SDFORMATDEFAULT for floating pt. arrys
-! For integer arrays it defaults to i6 or i_INTPLACES_
-! For complex arrays it defaults to SDFORMATDEFAULTCMPLX
-! If set to '(*)', for floating point and complex arrays it
-! will be the least number of spaces wide enough to contain the
-! largest array element printed according to the default format
-! If set to '(*.m)', for floating point and complex arrays it
-! will be the least number of spaces wide enough to contain the
-! largest array element with m spaces after the decimal point
-
-! The meaning of options has replaced the older logical arguments
-! if the options is present and contains the following characters:
-! (for dump or diff)
-!   character         meaning
-!      ---            -------
-!       B              show Bandwidth, % of array that is non-zero
-!       H              show rank, TheShape of array
-!       L              laconic; skip printing name, size of array
-!       N              Show where NaNs and Infs are located
-!       R              rms       -- min, max, etc.
-!       b              table of % vs. amount of differences (pdf)
-!       c              clean
-!       g              gaps      
-!       l              collapse (last index)
-!       r              ratios    -- min, max, etc. of differences' ratios
-!       s              stats     -- number of differences
-!       p              transpose 
-!       t              trim      
-!       u              unique    
-!       v              verbose
-!       w              wholearray
-!       W[i]           wholearray, looping over ith index (for rank 3 and 4 arrays only)
-!       1 or 2 or ..   ignored; calling routine is free to interpret
-
-! An exception is the behavior of wholearray:
-! if all {HRblrs} are FALSE, i.e. unset, the whole array is dumped (or diffed)
-! if any is TRUE the whole array will be dumped only if
-! w or wholearray is set to TRUE
-
-! in the above, a string list is a string of elements (usu. comma-separated)
+!
+! Options are described in Dump_Options
 ! === (end of api) ===
 
   public :: &
-    & Dump, Dump_2x2xN, Empty, FinishLine, &
-    & ILog10, Name_And_Size, &
+    & Dump, Dump_2x2xN, Empty, FinishLine, ILog10, Name_And_Size, &
     & TheDumpEnds
 
   ! =====     Public Generics     ======================================
@@ -221,10 +140,10 @@ module Dump_0
 contains
 
   ! -----------------------------------------------  Dump_1D_Bit  -----
-  subroutine Dump_1D_Bit ( ARRay, Name, BITNAMES, FillValue, OptIONS )
+  subroutine Dump_1D_Bit ( Array, Name, BITNameS, FillValue, Options )
     integer, intent(in) :: Array(:)
-    character(len=*), intent(in) :: NAME
-    character(len=*), intent(in) :: BITNAMES
+    character(len=*), intent(in) :: Name
+    character(len=*), intent(in) :: BITNameS
     integer, intent(in), optional :: FillValue
     character(len=*), optional, intent(in) :: options
 
@@ -276,26 +195,26 @@ contains
   end subroutine Dump_1D_Bit
 
   ! -----------------------------------------------  Dump_1D_Char  -----
-  subroutine Dump_1D_Char ( ARRay, Name, FillValue, WIDTH, OPTIONS, MAXLON, &
+  subroutine Dump_1D_Char ( Array, Name, FillValue, Width, Options, Maxlon, &
     & TheShape )
     character(len=*), intent(in) :: Array(:)
-    character(len=*), intent(in), optional :: NAME
+    character(len=*), intent(in), optional :: Name
     character(len=*), intent(in), optional :: FillValue
-    integer, intent(in), optional :: WIDTH
-    character(len=*), optional, intent(in) :: OPTIONS
-    integer, intent(in), optional :: MAXLON
+    integer, intent(in), optional :: Width
+    character(len=*), optional, intent(in) :: Options
+    integer, intent(in), optional :: Maxlon
     character(len=*), intent(in), optional :: TheShape
 
     integer :: J, K
     integer :: LON
     integer :: NumZeroRows
-    character(len=len(array)) :: myFillValue
+    character(len=len(array)) :: MyFillValue
     integer :: MyWidth
 
     call theDumpBegins ( options )
     myFillValue = ' '
     if ( present(FillValue) ) myFillValue = FillValue
-    MyWidth = DEFAULTWIDTH ! 10
+    MyWidth = DEFAULTWidth ! 10
     if ( present(width) ) MyWidth = width
 
     lon = len(array(1))
@@ -303,7 +222,7 @@ contains
     if ( present(maxlon) ) then
       lon = min(lon, maxlon)
     else if ( .not. dopts(trimIt)%v ) then
-      lon = min(lon, DEFAULTMAXLON)
+      lon = min(lon, DEFAULTMaxlon)
     end if
 
     numZeroRows = 0
@@ -342,22 +261,22 @@ contains
   end subroutine Dump_1D_Char
 
   ! --------------------------------------------  Dump_1D_Complex  -----
-  subroutine Dump_1D_Complex ( ARRay, Name, WIDTH, FORMAT, &
-    & FillValue, LBOUND, OPTIONS, TheShape )
+  subroutine Dump_1D_Complex ( Array, Name, Width, Format, &
+    & FillValue, Lbound, Options, TheShape )
     integer, parameter :: RK = kind(0.0e0)
     complex(rk), intent(in) :: Array(:)
-    character(len=*), intent(in), optional :: NAME
-    integer, intent(in), optional :: WIDTH
-    character(len=*), intent(in), optional :: FORMAT
+    character(len=*), intent(in), optional :: Name
+    integer, intent(in), optional :: Width
+    character(len=*), intent(in), optional :: Format
     real(rk), intent(in), optional :: FillValue
-    integer, intent(in), optional :: LBOUND ! Low bound for Array             
-    character(len=*), optional, intent(in) :: OPTIONS
+    integer, intent(in), optional :: Lbound ! Low bound for Array             
+    character(len=*), optional, intent(in) :: Options
     character(len=*), intent(in), optional :: TheShape
 
     integer :: J, K, MyWidth
     character(len=64) :: MyFormat
     complex(rk) :: myFillValue
-    integer :: BASE
+    integer :: Base
     integer :: NumZeroRows
     ! Executable
     myFormat = sdFormatDefaultCmplx
@@ -375,22 +294,22 @@ contains
   end subroutine Dump_1D_Complex
 
   ! --------------------------------------------  Dump_1D_DComplex  -----
-  subroutine Dump_1D_DComplex ( ARRay, Name, WIDTH, FORMAT, &
-    & FillValue, LBOUND, OPTIONS, TheShape )
+  subroutine Dump_1D_DComplex ( Array, Name, Width, Format, &
+    & FillValue, Lbound, Options, TheShape )
     integer, parameter :: RK = kind(0.0d0)
     complex(rk), intent(in) :: Array(:)
-    character(len=*), intent(in), optional :: NAME
-    integer, intent(in), optional :: WIDTH
-    character(len=*), intent(in), optional :: FORMAT
+    character(len=*), intent(in), optional :: Name
+    integer, intent(in), optional :: Width
+    character(len=*), intent(in), optional :: Format
     real(rk), intent(in), optional :: FillValue
-    integer, intent(in), optional :: LBOUND ! Low bound for Array             
-    character(len=*), optional, intent(in) :: OPTIONS
+    integer, intent(in), optional :: Lbound ! Low bound for Array             
+    character(len=*), optional, intent(in) :: Options
     character(len=*), intent(in), optional :: TheShape
 
     integer :: J, K, MyWidth
     character(len=64) :: MyFormat
     complex(rk) :: myFillValue
-    integer :: BASE
+    integer :: Base
     integer :: NumZeroRows
     ! Executable
     myFormat = sdFormatDefaultCmplx
@@ -408,20 +327,20 @@ contains
   end subroutine Dump_1D_DComplex
 
  ! ---------------------------------------------  Dump_1D_Double  -----
-  subroutine Dump_1D_Double ( ARRay, Name, &
-    & FillValue, WIDTH, FORMAT, LBOUND, OPTIONS, TheShape )
+  subroutine Dump_1D_Double ( Array, Name, &
+    & FillValue, Width, Format, Lbound, Options, TheShape )
     double precision, intent(in) :: Array(:)
-    character(len=*), intent(in), optional :: NAME
+    character(len=*), intent(in), optional :: Name
     double precision, intent(in), optional :: FillValue
-    integer, intent(in), optional :: WIDTH
-    character(len=*), intent(in), optional :: FORMAT
-    integer, intent(in), optional :: LBOUND ! Low bound for Array
-    character(len=*), optional, intent(in) :: OPTIONS
+    integer, intent(in), optional :: Width
+    character(len=*), intent(in), optional :: Format
+    integer, intent(in), optional :: Lbound ! Low bound for Array
+    character(len=*), optional, intent(in) :: Options
     character(len=*), intent(in), optional :: TheShape
 
-    integer, dimension(MAXNUMELEMENTS) :: counts
-    double precision, dimension(MAXNUMELEMENTS) :: elements
-    double precision :: myFillValue
+    integer, dimension(MaxNumElements) :: Counts
+    double precision, dimension(MaxNumElements) :: Elements
+    double precision :: MyFillValue
     integer :: Base, J, K
     character(len=64) :: MyFormat
     integer :: MyWidth
@@ -435,26 +354,26 @@ contains
   end subroutine Dump_1D_Double
 
   ! --------------------------------------------  Dump_1D_Integer  -----
-  subroutine Dump_1D_Integer ( ARRay, Name, &
-    & FillValue, FORMAT, WIDTH, LBOUND, OPTIONS, TheShape )
+  subroutine Dump_1D_Integer ( Array, Name, &
+    & FillValue, Format, Width, Lbound, Options, TheShape )
     integer, intent(in) :: Array(:)
-    character(len=*), intent(in), optional :: NAME
+    character(len=*), intent(in), optional :: Name
     integer, intent(in), optional :: FillValue
-    character(len=*), intent(in), optional :: FORMAT
-    integer, intent(in), optional :: WIDTH ! How many numbers per line (10)?
-    integer, intent(in), optional :: LBOUND ! Low bound for Array
-    character(len=*), optional, intent(in) :: OPTIONS
+    character(len=*), intent(in), optional :: Format
+    integer, intent(in), optional :: Width ! How many numbers per line (10)?
+    integer, intent(in), optional :: Lbound ! Low bound for Array
+    character(len=*), optional, intent(in) :: Options
     character(len=*), intent(in), optional :: TheShape
 
-    integer, dimension(MAXNUMELEMENTS) :: counts
-    integer, dimension(MAXNUMELEMENTS) :: elements
-    integer :: myFillValue
+    integer, dimension(MaxNumElements) :: counts
+    integer, dimension(MaxNumElements) :: elements
+    integer :: MyFillValue
     integer :: Base, J, K
     character(len=64) :: MyFormat
     integer :: MyWidth
     integer :: NumZeroRows
     integer :: nUnique
-    if ( present( FORMAT ) ) call outputNamedValue ( 'format', format )
+    if ( present( Format ) ) call outputNamedValue ( 'format', format )
     myFillValue = 0.
     if ( present(FillValue) ) myFillValue=FillValue
     myFormat = 'places=' // INTPLACES ! To sneak places arg into call to output
@@ -463,31 +382,31 @@ contains
   end subroutine Dump_1D_Integer
 
   ! --------------------------------------------  Dump_1D_Integer_2B  -----
-  subroutine Dump_1D_Integer_2B ( ARRay, Name, &
-    & FillValue, FORMAT, WIDTH, LBOUND, OPTIONS, TheShape )
+  subroutine Dump_1D_Integer_2B ( Array, Name, &
+    & FillValue, Format, Width, Lbound, Options, TheShape )
     use ISO_C_BINDING, only: C_int16_t
     integer(C_int16_t), intent(in) :: Array(:)
-    character(len=*), intent(in), optional :: NAME
+    character(len=*), intent(in), optional :: Name
     integer, intent(in), optional :: FillValue
-    character(len=*), intent(in), optional :: FORMAT
-    integer, intent(in), optional :: WIDTH ! How many numbers per line (10)?
-    integer, intent(in), optional :: LBOUND ! Low bound for Array
-    character(len=*), optional, intent(in) :: OPTIONS
+    character(len=*), intent(in), optional :: Format
+    integer, intent(in), optional :: Width ! How many numbers per line (10)?
+    integer, intent(in), optional :: Lbound ! Low bound for Array
+    character(len=*), optional, intent(in) :: Options
     character(len=*), intent(in), optional :: TheShape
 
-    call dump( int(array), NAME, &
-    & FillValue, FORMAT, WIDTH, LBOUND, OPTIONS, TheShape )
+    call dump( int(array), Name, &
+    & FillValue, Format, Width, Lbound, Options, TheShape )
   end subroutine Dump_1D_Integer_2B
 
   ! ----------------------------------------------  Dump_1D_Logical ----
-  subroutine Dump_1D_Logical ( ARRay, Name, LBOUND, OPTIONS, TheShape )
+  subroutine Dump_1D_Logical ( Array, Name, Lbound, Options, TheShape )
     logical, intent(in) :: Array(:)
-    character(len=*), intent(in), optional :: NAME
-    integer, intent(in), optional :: LBOUND ! Low bound of Array
-    character(len=*), optional, intent(in) :: OPTIONS
+    character(len=*), intent(in), optional :: Name
+    integer, intent(in), optional :: Lbound ! Low bound of Array
+    character(len=*), optional, intent(in) :: Options
     character(len=*), intent(in), optional :: TheShape
 
-    integer :: Base, J, K, N, NTRUE, NFALSE
+    integer :: Base, J, K, N, Ntrue, Nfalse
 
     ! Executable
     call theDumpBegins ( options )
@@ -556,20 +475,20 @@ contains
   end subroutine Dump_1D_Logical
 
   ! -----------------------------------------------  Dump_1D_Real  -----
-  subroutine Dump_1D_Real ( ARRay, Name, &
-    & FillValue, WIDTH, FORMAT, LBOUND, OPTIONS, TheShape )
+  subroutine Dump_1D_Real ( Array, Name, &
+    & FillValue, Width, Format, Lbound, Options, TheShape )
     real, intent(in) :: Array(:)
-    character(len=*), intent(in), optional :: NAME
+    character(len=*), intent(in), optional :: Name
     real, intent(in), optional :: FillValue
-    integer, intent(in), optional :: WIDTH
-    character(len=*), intent(in), optional :: FORMAT
-    integer, intent(in), optional :: LBOUND ! Low bound for Array
-    character(len=*), optional, intent(in) :: OPTIONS
+    integer, intent(in), optional :: Width
+    character(len=*), intent(in), optional :: Format
+    integer, intent(in), optional :: Lbound ! Low bound for Array
+    character(len=*), optional, intent(in) :: Options
     character(len=*), intent(in), optional :: TheShape
 
-    integer, dimension(MAXNUMELEMENTS) :: counts
-    real, dimension(MAXNUMELEMENTS) :: elements
-    real :: myFillValue
+    integer, dimension(MaxNumElements) :: Counts
+    real, dimension(MaxNumElements) :: Elements
+    real :: MyFillValue
     integer :: Base, J, K
     character(len=64) :: MyFormat
     integer :: MyWidth
@@ -583,20 +502,20 @@ contains
   end subroutine Dump_1D_Real
 
   ! -----------------------------------------------  Dump_2D_Char  -----
-  recursive subroutine Dump_2D_Char ( ARRay, Name, FillValue, WIDTH, MAXLON, &
-    & OPTIONS, TheShape )
+  recursive subroutine Dump_2D_Char ( Array, Name, FillValue, Width, Maxlon, &
+    & Options, TheShape )
     character(len=*), intent(in) :: Array(:,:)
-    character(len=*), intent(in), optional :: NAME
+    character(len=*), intent(in), optional :: Name
     character(len=*), intent(in), optional :: FillValue
-    integer, intent(in), optional :: MAXLON
+    integer, intent(in), optional :: Maxlon
     character(len=*), optional, intent(in) :: options
-    integer, intent(in), optional :: WIDTH
+    integer, intent(in), optional :: Width
     character(len=*), intent(in), optional :: TheShape
 
     integer :: I, J, K
-    integer :: LON
+    integer :: Lon
     integer :: NumZeroRows
-    character(len=len(array)) :: myFillValue
+    character(len=len(array)) :: MyFillValue
     integer :: MyWidth
 
     call theDumpBegins ( options )
@@ -659,22 +578,22 @@ contains
   end subroutine Dump_2D_Char
 
   ! --------------------------------------------  Dump_2D_Complex  -----
-  recursive subroutine Dump_2D_Complex ( ARRay, Name, WIDTH, FORMAT, &
-    & FillValue, OptIONS, LBOUND, TheShape )
+  recursive subroutine Dump_2D_Complex ( Array, Name, Width, Format, &
+    & FillValue, Options, Lbound, TheShape )
     integer, parameter :: RK = kind(0.0e0)
     complex(rk), intent(in) :: Array(:,:)
-    character(len=*), intent(in), optional :: NAME
-    integer, intent(in), optional :: WIDTH ! How many per line?
-    character(len=*), optional :: FORMAT
+    character(len=*), intent(in), optional :: Name
+    integer, intent(in), optional :: Width ! How many per line?
+    character(len=*), optional :: Format
     real, intent(in), optional :: FillValue
     character(len=*), intent(in), optional :: options
     integer, intent(in), optional :: LBound ! to print for first dimension
     character(len=*), intent(in), optional :: TheShape
 
     integer :: Base, I, J, K
-    integer :: myWidth
+    integer :: MyWidth
     integer :: NumZeroRows
-    complex(rk) :: myFillValue
+    complex(rk) :: MyFillValue
     character(len=64) :: MyFormat
     ! Executable
 
@@ -704,13 +623,13 @@ contains
   end subroutine Dump_2D_Complex
 
   ! --------------------------------------------  Dump_2D_DComplex  -----
-  recursive subroutine Dump_2D_DComplex ( ARRay, Name, WIDTH, FORMAT, &
-    & FillValue, OptIONS, LBOUND, TheShape )
+  recursive subroutine Dump_2D_DComplex ( Array, Name, Width, Format, &
+    & FillValue, Options, Lbound, TheShape )
     integer, parameter :: RK = kind(0.0d0)
     complex(rk), intent(in) :: Array(:,:)
-    character(len=*), intent(in), optional :: NAME
-    integer, intent(in), optional :: WIDTH ! How many per line?
-    character(len=*), optional :: FORMAT
+    character(len=*), intent(in), optional :: Name
+    integer, intent(in), optional :: Width ! How many per line?
+    character(len=*), optional :: Format
     real(rk), intent(in), optional :: FillValue
     character(len=*), intent(in), optional :: options
     integer, intent(in), optional :: LBound ! to print for first dimension
@@ -750,25 +669,25 @@ contains
   end subroutine Dump_2D_DComplex
 
   ! ---------------------------------------------  Dump_2D_Double  -----
- recursive subroutine Dump_2D_Double ( ARRay, Name, &
-    & FillValue, WIDTH, FORMAT, LBOUND, OPTIONS, TheShape )
+ recursive subroutine Dump_2D_Double ( Array, Name, &
+    & FillValue, Width, Format, Lbound, Options, TheShape )
     double precision, intent(in) :: Array(:,:)
-    character(len=*), intent(in), optional :: NAME
+    character(len=*), intent(in), optional :: Name
     double precision, intent(in), optional :: FillValue
-    integer, intent(in), optional :: WIDTH
-    character(len=*), intent(in), optional :: FORMAT
-    integer, intent(in), optional :: LBOUND ! to print for first dimension
-    character(len=*), intent(in), optional :: options
+    integer, intent(in), optional :: Width
+    character(len=*), intent(in), optional :: Format
+    integer, intent(in), optional :: Lbound ! to print for first dimension
+    character(len=*), intent(in), optional :: Options
     character(len=*), intent(in), optional :: TheShape
 
     integer :: Base, I, J, K
     integer :: NumZeroRows
-    double precision :: myFillValue
+    double precision :: MyFillValue
     character(len=64) :: MyFormat
     integer :: nUnique
     integer :: MyWidth
-    integer, dimension(MAXNUMELEMENTS) :: counts
-    double precision, dimension(MAXNUMELEMENTS) :: elements
+    integer, dimension(MaxNumElements) :: Counts
+    double precision, dimension(MaxNumElements) :: Elements
 
     myFormat = sdFormatDefault
     myFillValue = 0.
@@ -776,21 +695,20 @@ contains
 
     base = 1
     if ( present(lbound) ) base = lbound
-
     include 'dump2d.f9h'
     include 'dump2db.f9h'
   end subroutine Dump_2D_Double
 
   ! --------------------------------------------  Dump_2D_Integer  -----
-  recursive subroutine Dump_2D_Integer ( ARRay, Name, &
-    & FillValue, WIDTH, FORMAT, LBOUND, OPTIONS, TheShape )
+  recursive subroutine Dump_2D_Integer ( Array, Name, &
+    & FillValue, Width, Format, Lbound, Options, TheShape )
     integer, intent(in) :: Array(:,:)
-    character(len=*), intent(in), optional :: NAME
+    character(len=*), intent(in), optional :: Name
     integer, intent(in), optional :: FillValue
-    character(len=*), intent(in), optional :: FORMAT
-    integer, intent(in), optional :: WIDTH ! How many numbers per line (10)?
-    integer, intent(in), optional :: LBOUND ! to print for first dimension
-    character(len=*), intent(in), optional :: options
+    character(len=*), intent(in), optional :: Format
+    integer, intent(in), optional :: Width ! How many numbers per line (10)?
+    integer, intent(in), optional :: Lbound ! to print for first dimension
+    character(len=*), intent(in), optional :: Options
     character(len=*), intent(in), optional :: TheShape
 
     integer :: Base, I, J, K
@@ -799,8 +717,8 @@ contains
     integer :: myFillValue
     character(len=64) :: MyFormat
     integer :: nUnique
-    integer, dimension(MAXNUMELEMENTS) :: counts
-    integer, dimension(MAXNUMELEMENTS) :: elements
+    integer, dimension(MaxNumElements) :: Counts
+    integer, dimension(MaxNumElements) :: Elements
 
     myFormat = 'places=' // INTPLACES ! To sneak places arg into call to output
     myFillValue = 0.
@@ -814,27 +732,27 @@ contains
   end subroutine Dump_2D_Integer
 
   ! --------------------------------------------  Dump_2D_Integer_2B  -----
-  recursive subroutine Dump_2D_Integer_2B ( ARRay, Name, &
-    & FillValue, WIDTH, FORMAT, LBOUND, OPTIONS, TheShape )
+  recursive subroutine Dump_2D_Integer_2B ( Array, Name, &
+    & FillValue, Width, Format, Lbound, Options, TheShape )
     use ISO_C_BINDING, only: C_int16_t
     integer(C_int16_t), intent(in) :: Array(:,:)
-    character(len=*), intent(in), optional :: NAME
+    character(len=*), intent(in), optional :: Name
     integer, intent(in), optional :: FillValue
-    character(len=*), intent(in), optional :: FORMAT
-    integer, intent(in), optional :: WIDTH ! How many numbers per line (10)?
-    integer, intent(in), optional :: LBOUND ! to print for first dimension
-    character(len=*), intent(in), optional :: options
+    character(len=*), intent(in), optional :: Format
+    integer, intent(in), optional :: Width ! How many numbers per line (10)?
+    integer, intent(in), optional :: Lbound ! to print for first dimension
+    character(len=*), intent(in), optional :: Options
     character(len=*), intent(in), optional :: TheShape
 
-    call dump( int(array), NAME, &
-    & FillValue, WIDTH, FORMAT, LBOUND, OPTIONS, TheShape )
+    call dump( int(array), Name, &
+    & FillValue, Width, Format, Lbound, Options, TheShape )
   end subroutine Dump_2D_Integer_2B
 
   ! --------------------------------------------  Dump_2D_Logical  -----
-  recursive subroutine Dump_2D_Logical ( ARRay, Name, OPTIONS, THESHAPE )
+  recursive subroutine Dump_2D_Logical ( Array, Name, Options, TheShape )
     logical, intent(in) :: Array(:,:)
-    character(len=*), intent(in), optional :: NAME
-    character(len=*), intent(in), optional :: options
+    character(len=*), intent(in), optional :: Name
+    character(len=*), intent(in), optional :: Options
     character(len=*), intent(in), optional :: TheShape
 
     integer :: I, J, K
@@ -888,25 +806,25 @@ contains
   end subroutine Dump_2D_Logical
 
   ! -----------------------------------------------  Dump_2D_Real  -----
-  recursive subroutine Dump_2D_Real ( ARRay, Name, &
-    & FillValue, WIDTH, FORMAT, LBOUND, OPTIONS, THESHAPE )
+  recursive subroutine Dump_2D_Real ( Array, Name, &
+    & FillValue, Width, Format, Lbound, Options, TheShape )
     real, intent(in) :: Array(:,:)
-    character(len=*), intent(in), optional :: NAME
+    character(len=*), intent(in), optional :: Name
     real, intent(in), optional :: FillValue
-    integer, intent(in), optional :: WIDTH
-    character(len=*), intent(in), optional :: FORMAT
-    integer, intent(in), optional :: LBOUND
-    character(len=*), intent(in), optional :: options
+    integer, intent(in), optional :: Width
+    character(len=*), intent(in), optional :: Format
+    integer, intent(in), optional :: Lbound
+    character(len=*), intent(in), optional :: Options
     character(len=*), intent(in), optional :: TheShape
 
     integer :: Base, I, J, K
     integer :: NumZeroRows
-    real :: myFillValue
+    real :: MyFillValue
     character(len=64) :: MyFormat
     integer :: nUnique
     integer :: MyWidth
-    integer, dimension(MAXNUMELEMENTS) :: counts
-    real, dimension(MAXNUMELEMENTS) :: elements
+    integer, dimension(MaxNumElements) :: Counts
+    real, dimension(MaxNumElements) :: Elements
 
     myFormat = sdFormatDefault
     myFillValue = 0.
@@ -920,13 +838,13 @@ contains
   end subroutine Dump_2D_Real
 
   ! -----------------------------------------  Dump_2x2xN_Complex  -----
-  subroutine Dump_2x2xN_Complex ( ARRay, Name, FORMAT, OPTIONS )
+  subroutine Dump_2x2xN_Complex ( Array, Name, Format, Options )
   ! This is for dumping polarized incremental optical depth
     integer, parameter :: RK = kind(0.0e0)
     complex(rk), intent(in) :: Array(:,:,:) ! Better be 2x2xn
-    character(len=*), intent(in), optional :: NAME
-    character(len=*), intent(in), optional :: FORMAT
-    character(len=*), intent(in), optional :: options
+    character(len=*), intent(in), optional :: Name
+    character(len=*), intent(in), optional :: Format
+    character(len=*), intent(in), optional :: Options
 
     integer :: J
     character(len=64) :: MyFormat
@@ -960,13 +878,13 @@ contains
   end subroutine Dump_2x2xN_Complex
 
   ! ----------------------------------------  Dump_2x2xN_DComplex  -----
-  subroutine Dump_2x2xN_DComplex ( ARRay, Name, FORMAT, OPTIONS )
+  subroutine Dump_2x2xN_DComplex ( Array, Name, Format, Options )
   ! This is for dumping polarized incremental optical depth
     integer, parameter :: RK = kind(0.0d0)
     complex(rk), intent(in) :: Array(:,:,:) ! Better be 2x2xn
-    character(len=*), intent(in), optional :: NAME
-    character(len=*), intent(in), optional :: FORMAT
-    character(len=*), intent(in), optional :: options
+    character(len=*), intent(in), optional :: Name
+    character(len=*), intent(in), optional :: Format
+    character(len=*), intent(in), optional :: Options
 
     integer :: J
     character(len=64) :: MyFormat
@@ -1000,20 +918,20 @@ contains
   end subroutine Dump_2x2xN_DComplex
 
   ! -----------------------------------------------  Dump_3D_Char  -----
-  subroutine Dump_3D_Char ( ARRay, Name, FillValue, WIDTH, &
-    & MAXLON, OPTIONS, THESHAPE )
+  subroutine Dump_3D_Char ( Array, Name, FillValue, Width, &
+    & Maxlon, Options, TheShape )
     character(len=*), intent(in) :: Array(:,:,:)
-    character(len=*), intent(in), optional :: NAME
+    character(len=*), intent(in), optional :: Name
     character(len=*), intent(in), optional :: FillValue
-    integer, intent(in), optional :: WIDTH
-    integer, intent(in), optional :: MAXLON
-    character(len=*), intent(in), optional :: options
+    integer, intent(in), optional :: Width
+    integer, intent(in), optional :: Maxlon
+    character(len=*), intent(in), optional :: Options
     character(len=*), intent(in), optional :: TheShape
 
     integer :: LON
     integer :: I, J, K, L
     integer :: NumZeroRows
-    character(len=len(array)) :: myFillValue
+    character(len=len(array)) :: MyFillValue
     integer :: MyWidth
 
     call theDumpBegins ( options )
@@ -1076,17 +994,17 @@ contains
   end subroutine Dump_3D_Char
 
   ! --------------------------------------------  Dump_3D_Complex  -----
-  subroutine Dump_3D_Complex ( ARRay, Name, &
-    & FillValue, WIDTH, FORMAT, LBOUND, OPTIONS, THESHAPE )
+  subroutine Dump_3D_Complex ( Array, Name, &
+    & FillValue, Width, Format, Lbound, Options, TheShape )
     integer, parameter :: RK = kind(0.0e0)
     complex(rk), intent(in) :: Array(:,:,:)
-    character(len=*), intent(in), optional :: NAME
+    character(len=*), intent(in), optional :: Name
     real, intent(in), optional :: FillValue
-    integer, intent(in), optional :: WIDTH
-    character(len=*), intent(in), optional :: FORMAT
-    integer, intent(in), optional :: LBOUND
+    integer, intent(in), optional :: Width
+    character(len=*), intent(in), optional :: Format
+    integer, intent(in), optional :: Lbound
     character(len=*), intent(in), optional :: options
-    character(len=*), intent(in), optional :: THESHAPE
+    character(len=*), intent(in), optional :: TheShape
 
     integer :: Base, I, J, K, L
     integer :: NumZeroRows
@@ -1111,15 +1029,15 @@ contains
   end subroutine Dump_3D_Complex
 
   ! -------------------------------------------  Dump_3D_DComplex  -----
-  subroutine Dump_3D_DComplex ( ARRay, Name, &
-    & FillValue, WIDTH, FORMAT, LBOUND, OPTIONS, THESHAPE )
+  subroutine Dump_3D_DComplex ( Array, Name, &
+    & FillValue, Width, Format, Lbound, Options, TheShape )
     integer, parameter :: RK = kind(0.0d0)
     complex(rk), intent(in) :: Array(:,:,:)
-    character(len=*), intent(in), optional :: NAME
+    character(len=*), intent(in), optional :: Name
     real(rk), intent(in), optional :: FillValue
-    integer, intent(in), optional :: WIDTH
-    character(len=*), intent(in), optional :: FORMAT
-    integer, intent(in), optional :: LBOUND
+    integer, intent(in), optional :: Width
+    character(len=*), intent(in), optional :: Format
+    integer, intent(in), optional :: Lbound
     character(len=*), intent(in), optional :: options
     character(len=*), intent(in), optional :: TheShape
 
@@ -1146,14 +1064,14 @@ contains
   end subroutine Dump_3D_DComplex
 
   ! ---------------------------------------------  Dump_3D_Double  -----
-  subroutine Dump_3D_Double ( ARRay, Name, &
-    & FillValue, WIDTH, FORMAT, LBOUND, OPTIONS, THESHAPE )
+  subroutine Dump_3D_Double ( Array, Name, &
+    & FillValue, Width, Format, Lbound, Options, TheShape )
     double precision, intent(in) :: Array(:,:,:)
-    character(len=*), intent(in), optional :: NAME
+    character(len=*), intent(in), optional :: Name
     double precision, intent(in), optional :: FillValue
-    integer, intent(in), optional :: WIDTH
-    character(len=*), intent(in), optional :: FORMAT
-    integer, intent(in), optional :: LBOUND
+    integer, intent(in), optional :: Width
+    character(len=*), intent(in), optional :: Format
+    integer, intent(in), optional :: Lbound
     character(len=*), intent(in), optional :: options
     character(len=*), intent(in), optional :: TheShape
 
@@ -1163,8 +1081,8 @@ contains
     character(len=64) :: myFormat
     integer :: nUnique
     integer :: MyWidth
-    integer, dimension(MAXNUMELEMENTS) :: counts
-    double precision, dimension(MAXNUMELEMENTS) :: elements
+    integer, dimension(MaxNumElements) :: counts
+    double precision, dimension(MaxNumElements) :: elements
     myFormat = sdFormatDefault
     myFillValue = 0.
     if ( present(FillValue) ) myFillValue=FillValue
@@ -1173,14 +1091,14 @@ contains
   end subroutine Dump_3D_Double
 
   ! --------------------------------------------  Dump_3D_Integer  -----
-  subroutine Dump_3D_Integer ( ARRay, Name, &
-    & FillValue, FORMAT, WIDTH, LBOUND, OPTIONS, THESHAPE )
+  subroutine Dump_3D_Integer ( Array, Name, &
+    & FillValue, Format, Width, Lbound, Options, TheShape )
     integer, intent(in) :: Array(:,:,:)
-    character(len=*), intent(in), optional :: NAME
+    character(len=*), intent(in), optional :: Name
     integer, intent(in), optional :: FillValue
-    character(len=*), intent(in), optional :: FORMAT
-    integer, intent(in), optional :: WIDTH ! How many numbers per line (10)?
-    integer, intent(in), optional :: LBOUND ! Low bound for Array
+    character(len=*), intent(in), optional :: Format
+    integer, intent(in), optional :: Width ! How many numbers per line (10)?
+    integer, intent(in), optional :: Lbound ! Low bound for Array
     character(len=*), intent(in), optional :: options
     character(len=*), intent(in), optional :: TheShape
 
@@ -1193,8 +1111,8 @@ contains
     integer :: myFillValue
     integer :: nUnique
     integer :: MyWidth
-    integer, dimension(MAXNUMELEMENTS) :: counts
-    integer, dimension(MAXNUMELEMENTS) :: elements
+    integer, dimension(MaxNumElements) :: counts
+    integer, dimension(MaxNumElements) :: elements
     myFormat = 'places=' // INTPLACES ! To sneak places arg into call to output
     myFillValue = 0.
     if ( present(FillValue) ) myFillValue=FillValue
@@ -1203,14 +1121,14 @@ contains
   end subroutine Dump_3D_Integer
 
   ! ---------------------------------------------  Dump_3D_Real  -----
-  subroutine Dump_3D_Real ( ARRay, Name, &
-    & FillValue, WIDTH, FORMAT, LBOUND, OPTIONS, THESHAPE )
+  subroutine Dump_3D_Real ( Array, Name, &
+    & FillValue, Width, Format, Lbound, Options, TheShape )
     real, intent(in) :: Array(:,:,:)
-    character(len=*), intent(in), optional :: NAME
+    character(len=*), intent(in), optional :: Name
     real, intent(in), optional :: FillValue
-    integer, intent(in), optional :: WIDTH
-    character(len=*), intent(in), optional :: FORMAT
-    integer, intent(in), optional :: LBOUND
+    integer, intent(in), optional :: Width
+    character(len=*), intent(in), optional :: Format
+    integer, intent(in), optional :: Lbound
     character(len=*), intent(in), optional :: options
     character(len=*), intent(in), optional :: TheShape
 
@@ -1220,8 +1138,8 @@ contains
     character(len=64) :: MyFormat
     integer :: myWidth
     integer :: nUnique
-    integer, dimension(MAXNUMELEMENTS) :: counts
-    real, dimension(MAXNUMELEMENTS) :: elements
+    integer, dimension(MaxNumElements) :: counts
+    real, dimension(MaxNumElements) :: elements
     myFormat = sdFormatDefault
     myFillValue = 0.
     if ( present(FillValue) ) myFillValue=FillValue
@@ -1230,42 +1148,42 @@ contains
   end subroutine Dump_3D_Real
 
   ! ---------------------------------------------  Dump_4D_Double  -----
-  subroutine Dump_4D_Double ( ARRay, Name, &
-    & FillValue, WIDTH, FORMAT, LBOUND, OPTIONS )
+  subroutine Dump_4D_Double ( Array, Name, &
+    & FillValue, Width, Format, Lbound, Options )
     double precision, intent(in) :: Array(:,:,:,:)
-    character(len=*), intent(in), optional :: NAME
+    character(len=*), intent(in), optional :: Name
     double precision, intent(in), optional :: FillValue
-    integer, intent(in), optional :: WIDTH
-    character(len=*), intent(in), optional :: FORMAT
-    integer, intent(in), optional :: LBOUND
-    character(len=*), intent(in), optional :: options
+    integer, intent(in), optional :: Width
+    character(len=*), intent(in), optional :: Format
+    integer, intent(in), optional :: Lbound
+    character(len=*), intent(in), optional :: Options
 
     integer :: J
-    character(len=64) :: myFormat
+    character(len=64) :: MyFormat
     integer :: nUnique
-    integer, dimension(MAXNUMELEMENTS) :: counts
-    double precision, dimension(MAXNUMELEMENTS) :: elements
+    integer, dimension(MaxNumElements) :: Counts
+    double precision, dimension(MaxNumElements) :: Elements
     myFormat = sdFormatDefault
     include 'dump4d.f9h'
     include 'dump4db.f9h'
   end subroutine Dump_4D_Double
 
   ! ---------------------------------------------  Dump_4D_Real  -----
-  subroutine Dump_4D_Real ( ARRay, Name, &
-    & FillValue, WIDTH, FORMAT, LBOUND, OPTIONS )
+  subroutine Dump_4D_Real ( Array, Name, &
+    & FillValue, Width, Format, Lbound, Options )
     real, intent(in) :: Array(:,:,:,:)
-    character(len=*), intent(in), optional :: NAME
+    character(len=*), intent(in), optional :: Name
     real, intent(in), optional :: FillValue
-    integer, intent(in), optional :: WIDTH
-    character(len=*), intent(in), optional :: FORMAT
-    integer, intent(in), optional :: LBOUND
-    character(len=*), intent(in), optional :: options
+    integer, intent(in), optional :: Width
+    character(len=*), intent(in), optional :: Format
+    integer, intent(in), optional :: Lbound
+    character(len=*), intent(in), optional :: Options
 
     integer :: J
-    character(len=64) :: myFormat
+    character(len=64) :: MyFormat
     integer :: nUnique
-    integer, dimension(MAXNUMELEMENTS) :: counts
-    real, dimension(MAXNUMELEMENTS) :: elements
+    integer, dimension(MaxNumElements) :: Counts
+    real, dimension(MaxNumElements) :: Elements
     myFormat = sdFormatDefault
     include 'dump4d.f9h'
     include 'dump4db.f9h'
@@ -1302,7 +1220,7 @@ contains
   end function ILOG10
 
   ! ----------------------------------------------  Name_And_Size  -----
-  subroutine Name_And_Size ( NAME, CLEAN, SIZE, THESHAPE )
+  subroutine Name_And_Size ( Name, Clean, Size, TheShape )
     character(len=*), intent(in), optional :: Name
     logical, intent(in) :: Clean
     integer, intent(in) :: Size
@@ -1338,14 +1256,14 @@ contains
   ! won't follow .f9h files to look for more uses and includes.
   ! When will we repair the perl script?
   !
-  subroutine Dump_Bogus ( ARRay, Name, &
-    & FillValue, FORMAT, WIDTH, LBOUND, OPTIONS )
+  subroutine Dump_Bogus ( Array, Name, &
+    & FillValue, Format, Width, Lbound, Options )
     integer, intent(in) :: Array(:)
-    character(len=*), intent(in), optional :: NAME
+    character(len=*), intent(in), optional :: Name
     integer, intent(in), optional :: FillValue
-    character(len=*), intent(in), optional :: FORMAT
-    integer, intent(in), optional :: WIDTH ! How many numbers per line (10)?
-    integer, intent(in), optional :: LBOUND ! Low bound for Array
+    character(len=*), intent(in), optional :: Format
+    integer, intent(in), optional :: Width ! How many numbers per line (10)?
+    integer, intent(in), optional :: Lbound ! Low bound for Array
     character(len=*), optional, intent(in) :: options
     integer :: myFillValue
     myFillValue = 0
@@ -1358,7 +1276,7 @@ contains
   ! an array
   subroutine DumpCollapsedArray_1D_Integer ( Array, Name, FillValue, Options )
     INTEGER, intent(in) :: Array(:)
-    character(len=*), intent(in) :: NAME
+    character(len=*), intent(in) :: Name
     INTEGER, intent(in), optional :: FillValue
     character(len=*), intent(in), optional :: options
     call output( 'Did not expect to dump collapsed 1d array', advance='yes' )
@@ -1366,7 +1284,7 @@ contains
 
   subroutine DumpCollapsedArray_1D_Double ( Array, Name, FillValue, Options )
     double precision, intent(in) :: Array(:)
-    character(len=*), intent(in) :: NAME
+    character(len=*), intent(in) :: Name
     double precision, intent(in), optional :: FillValue
     character(len=*), intent(in), optional :: options
     call output( 'Did not expect to dump collapsed 1d array', advance='yes' )
@@ -1374,7 +1292,7 @@ contains
 
   subroutine DumpCollapsedArray_1D_Real ( Array, Name, FillValue, Options )
     real, intent(in) :: Array(:)
-    character(len=*), intent(in) :: NAME
+    character(len=*), intent(in) :: Name
     real, intent(in), optional :: FillValue
     character(len=*), intent(in), optional :: options
     call output( 'Did not expect to dump collapsed 1d array', advance='yes' )
@@ -1382,7 +1300,7 @@ contains
 
   subroutine DumpCollapsedArray_2D_Double ( Array, Name, FillValue, Options )
     double precision, intent(in) :: Array(:,:)
-    character(len=*), intent(in) :: NAME
+    character(len=*), intent(in) :: Name
     double precision, intent(in), optional :: FillValue
     character(len=*), intent(in), optional :: options
     ! For dumping lower-rank collapsed representations
@@ -1403,7 +1321,7 @@ contains
 
   subroutine DumpCollapsedArray_2D_Real ( Array, Name, FillValue, Options )
     real, intent(in) :: Array(:,:)
-    character(len=*), intent(in) :: NAME
+    character(len=*), intent(in) :: Name
     real, intent(in), optional :: FillValue
     character(len=*), intent(in), optional :: options
     ! For dumping lower-rank collapsed representations
@@ -1424,7 +1342,7 @@ contains
 
   subroutine DumpCollapsedArray_2D_Integer ( Array, Name, FillValue, Options )
     INTEGER, intent(in) :: Array(:,:)
-    character(len=*), intent(in) :: NAME
+    character(len=*), intent(in) :: Name
     INTEGER, intent(in), optional :: FillValue
     character(len=*), intent(in), optional :: options
     ! For dumping lower-rank collapsed representations
@@ -1445,7 +1363,7 @@ contains
 
   subroutine DumpCollapsedArray_3D_Double ( Array, Name, FillValue, Options )
     double precision, intent(in) :: Array(:,:,:)
-    character(len=*), intent(in) :: NAME
+    character(len=*), intent(in) :: Name
     double precision, intent(in), optional :: FillValue
     character(len=*), intent(in), optional :: options
     ! For dumping lower-rank collapsed representations
@@ -1466,7 +1384,7 @@ contains
 
   subroutine DumpCollapsedArray_3D_Real ( Array, Name, FillValue, Options )
     real, intent(in) :: Array(:,:,:)
-    character(len=*), intent(in) :: NAME
+    character(len=*), intent(in) :: Name
     real, intent(in), optional :: FillValue
     character(len=*), intent(in), optional :: options
     ! For dumping lower-rank collapsed representations
@@ -1487,7 +1405,7 @@ contains
 
   subroutine DumpCollapsedArray_3D_Integer ( Array, Name, FillValue, Options )
     INTEGER, intent(in) :: Array(:,:,:)
-    character(len=*), intent(in) :: NAME
+    character(len=*), intent(in) :: Name
     INTEGER, intent(in), optional :: FillValue
     character(len=*), intent(in), optional :: options
     ! For dumping lower-rank collapsed representations
@@ -1529,39 +1447,39 @@ contains
   ! trimming if the latter
   subroutine PrintIt_Char ( it, format )
     character(len=*) :: it
-    character(len=*), intent(in), optional :: FORMAT
+    character(len=*), intent(in), optional :: Format
     call output ( trim(it), advance='no' )
   end subroutine PrintIt_Char
 
   subroutine PrintIt_int ( it, format )
     integer :: it
-    character(len=*), intent(in), optional :: FORMAT
+    character(len=*), intent(in), optional :: Format
     call output ( it, format=format, advance='no' )
   end subroutine PrintIt_int
 
   subroutine PrintIt_Real ( it, format )
     real :: it
-    character(len=*), intent(in), optional :: FORMAT
+    character(len=*), intent(in), optional :: Format
     call output ( it, format=format, advance='no' )
   end subroutine PrintIt_Real
 
   subroutine PrintIt_Double ( it, format )
     double precision :: it
-    character(len=*), intent(in), optional :: FORMAT
+    character(len=*), intent(in), optional :: Format
     call output ( it, format=format, advance='no' )
   end subroutine PrintIt_Double
 
   subroutine PrintIt_Complex ( it, format )
     integer, parameter :: RK = kind(0.0e0)
     complex(rk) :: it
-    character(len=*), intent(in), optional :: FORMAT
+    character(len=*), intent(in), optional :: Format
     call output ( it, format=format, advance='no' )
   end subroutine PrintIt_Complex
 
   subroutine PrintIt_DComplex ( it, format )
     integer, parameter :: RK = kind(0.0d0)
     complex(rk) :: it
-    character(len=*), intent(in), optional :: FORMAT
+    character(len=*), intent(in), optional :: Format
     call output ( it, format=format, advance='no' )
   end subroutine PrintIt_DComplex
 
@@ -1776,6 +1694,9 @@ contains
 end module Dump_0
 
 ! $Log$
+! Revision 2.139  2016/07/28 03:28:17  vsnyder
+! Moved comments to Dump_1 and Dump_Options
+!
 ! Revision 2.138  2016/07/28 01:42:27  vsnyder
 ! Refactoring dump and diff
 !
@@ -1789,10 +1710,10 @@ end module Dump_0
 ! Diff now able to print name on each line; repaired error in printRMSEtc when array is integer
 !
 ! Revision 2.134  2016/01/12 00:46:51  pwagner
-! May override DEFAULTWIDTH when dumping char array
+! May override DEFAULTWidth when dumping char array
 !
 ! Revision 2.133  2015/08/25 18:38:27  vsnyder
-! Include LBOUND in 'all values are the same' dumps
+! Include Lbound in 'all values are the same' dumps
 !
 ! Revision 2.132  2015/01/29 01:23:29  vsnyder
 ! Make sure MyFillValue has a value before references
@@ -1882,7 +1803,7 @@ end module Dump_0
 ! New '-l' option dumps collapsed representation of higher ranked array
 !
 ! Revision 2.103  2011/01/04 00:48:26  pwagner
-! DEFAULTMAXLON can now set max width of 1d char array dumps
+! DEFAULTMaxlon can now set max width of 1d char array dumps
 !
 ! Revision 2.102  2010/10/14 18:44:01  pwagner
 ! Can now dump lists
@@ -1988,7 +1909,7 @@ end module Dump_0
 ! Allow separate rmsFormat to be set at class level
 !
 ! Revision 2.68  2007/04/14 00:32:47  vsnyder
-! Remove OPTIONAL attribute from NAME1 and NAME args of DIFF_...
+! Remove OPTIONAL attribute from Name1 and Name args of DIFF_...
 !
 ! Revision 2.67  2007/04/03 02:49:23  vsnyder
 ! Don't look at non-present dummy argument
@@ -2072,10 +1993,10 @@ end module Dump_0
 ! Much moved from MLSStrings to MLSStringLists
 !
 ! Revision 2.40  2004/07/23 19:47:20  vsnyder
-! Add LBOUND to Dump_1d_[double,integer,real]
+! Add Lbound to Dump_1d_[double,integer,real]
 !
 ! Revision 2.39  2004/07/23 18:34:59  vsnyder
-! Add LBOUND argument to Dump_1d_Logical
+! Add Lbound argument to Dump_1d_Logical
 !
 ! Revision 2.38  2004/07/21 19:57:21  pwagner
 ! New rms, wholeArray options to some dumps
@@ -2115,7 +2036,7 @@ end module Dump_0
 ! Revision 2.27  2003/08/08 20:45:42  vsnyder
 ! Made say_fill_* generic, made them test for numZeroRows, and made them
 ! optionally do say_subs_only.  This simplified several dump routines.
-! Added optional FORMAT arguments in several more routines.
+! Added optional Format arguments in several more routines.
 !
 ! Revision 2.26  2003/07/04 02:41:33  vsnyder
 ! Substantial simplification by putting little things into subroutines
@@ -2133,7 +2054,7 @@ end module Dump_0
 ! Merged in feb03 newfwm branch
 !
 ! Revision 2.20.2.3  2003/04/18 20:26:05  vsnyder
-! Add WIDTH and FORMAT arguments to 1D_Real and 1D_Double
+! Add Width and Format arguments to 1D_Real and 1D_Double
 !
 ! Revision 2.20.2.2  2003/03/27 23:18:33  vsnyder
 ! Put new-lines in better places
