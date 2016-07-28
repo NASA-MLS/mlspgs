@@ -15,21 +15,22 @@ module DumpCommand_M
 ! Or functions to set a run-time "Boolean" flag.
 ! (Should these latter functions be moved into a special run-time module?)
 
-  use highOutput, only: banner, beVerbose, headLine, &
-    & numToChars, outputNamedValue
-  use output_m, only: Beep, blanks, newLine, output, revertOutput, switchOutput
+  use HighOutput, only: Banner, BeVerbose, HeadLine, &
+    & NumToChars, OutputNamedValue
+  use Output_m, only: Beep, Blanks, NewLine, Output, RevertOutput, SwitchOutput
+
   implicit none
   private
 
-  public :: booleanFromAnyGoodRadiances
-  public :: booleanFromAnyGoodValues
-  public :: booleanFromCatchWarning
-  public :: booleanFromComparingQtys
-  public :: booleanFromEmptygrid, booleanFromEmptySwath
-  public :: booleanFromFormula
-  public :: dumpCommand, ExecuteCommand
-  public :: initializeRepeat, nextRepeat
-  public :: MLSCase, MLSEndSelect, MLSSelect, skip
+  public :: BooleanFromAnyGoodRadiances
+  public :: BooleanFromAnyGoodValues
+  public :: BooleanFromCatchWarning
+  public :: BooleanFromComparingQtys
+  public :: BooleanFromEmptygrid, booleanFromEmptySwath
+  public :: BooleanFromFormula
+  public :: DumpCommand, ExecuteCommand
+  public :: InitializeRepeat, NextRepeat
+  public :: MLSCase, MLSEndSelect, MLSSelect, Skip
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -1132,8 +1133,10 @@ contains
     use Call_stack_m, only: dump_stack
     use ChunkDivideConfig_m, only: chunkDivideConfig, dump
     use Declaration_table, only: dump_a_decl, decls, get_decl, variable
-    use Dump_0, only: diff, dump, rmsformat
-    use Expr_m, only: expr
+    use Diff_1, only: Diff
+    use Dump_Options, only: RMSFormat
+    use Dump_0, only: Dump
+    use Expr_m, only: Expr
     use FilterShapes_m, only: dump_filter_shapes_database, &
       & Dump_dacs_filter_database
     use Forwardmodelconfig, only: dump, forwardmodelconfig_t
@@ -2120,31 +2123,31 @@ contains
 
   end subroutine DumpCommand
 
-  ! ------------------------------------------------  ExecuteCCommand  -----
+  ! ---------------------------------------------  ExecuteCommand  -----
   subroutine ExecuteCommand ( root )
-    use Dump_0, only: dumpTextfile
-    use expr_m, only: expr
-    use init_tables_module, only:  f_crashburn, &
+    use Dump_1, only: DumpTextfile
+    use Expr_m, only: Expr
+    use Init_Tables_Module, only:  f_crashburn, &
       & f_delay, f_details, f_filename, f_lines, f_options, &
       & f_stop, f_stopwitherror, f_command, f_time, &
       & f_wait, &
       & field_first, field_last
-    use io_stuff, only: write_textfile
-    use l2parinfo, only: parallel, closeparallel
-    use lexer_core, only: get_where, where_t
-    use machine, only: create_script, Execute, nevercrash, Usleep
-    use MLSL2Options, only: l2cfnode, normal_exit_status, &
+    use IO_Stuff, only: Write_Textfile
+    use L2parinfo, only: Parallel, CloseParallel
+    use Lexer_Core, only: get_where, where_t
+    use Machine, only: Create_Script, Execute, NeverCrash, Usleep
+    use MLSL2Options, only: L2CFNode, Normal_Exit_Status, &
       & MLSMessage
-    use MLSL2Timings, only: dump_section_timings
+    use MLSL2Timings, only: Dump_Section_Timings
     use MLSMessageModule, only: MLSMSG_Crash, MLSMSG_Warning, &
       & MLSMessageExit
-    use MLSStringLists, only: switchDetail
-    use moretree, only: get_boolean, get_field_id
-    use string_table, only: get_string
-    use time_m, only: finish
-    use toggles, only: gen, switches, toggle
-    use trace_m, only: trace_begin, trace_end
-    use tree, only: nsons, sub_rosa, subtree, where
+    use MLSStringLists, only: SwitchDetail
+    use MoreTree, only: Get_Boolean, Get_Field_ID
+    use String_Table, only: Get_String
+    use Time_m, only: Finish
+    use Toggles, only: Gen, Switches, Toggle
+    use Trace_m, only: Trace_Begin, Trace_End
+    use Tree, only: NSons, Sub_Rosa, SubTree, Where
 
   ! Process an Execute command
     integer, intent(in) :: Root ! Root of the parse tree for the Execute command
@@ -3103,6 +3106,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.130  2016/07/28 01:45:07  vsnyder
+! Refactor dump and diff
+!
 ! Revision 2.129  2016/05/18 01:37:30  vsnyder
 ! Change HGrids database from an array of HGrid_T to an array of pointers
 ! to HGrid_T using the new type HGrids_T.
