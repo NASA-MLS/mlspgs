@@ -539,7 +539,7 @@ contains ! ============= Public procedures ===================================
     use MLSFiles, only: getMLSFileByType
     use MLSMessageModule, only: MLSMessage, &
       & MLSMSG_Error, MLSMSG_L1BRead, MLSMSG_Warning
-    use MLSSignals_m, only:  getModuleName, &
+    use MLSSignals_m, only:  Dump_Modules, getModuleName, &
       & isAnyModuleSpacecraft, isModuleSpacecraft
     use output_m, only: output
     use quantityTemplates, only: quantityTemplate_t, &
@@ -618,6 +618,11 @@ contains ! ============= Public procedures ===================================
     verbose = BeVerbose( 'qtmp', -1 )
     verboser = LetsDebug( 'qtmp', 0 )
 
+    if ( verbose ) then
+      call outputnamedValue( 'instrumentModule index', instrumentModule )
+      call GetModuleName ( instrumentModule, l1bItemName )
+      call outputnamedValue( 'instrumentModule name', trim(l1bItemName) )
+    endif
     useMIFGeolocation = present(mifGeolocation)
     if ( useMIFGeolocation ) &
       & useMIFGeolocation = mifGeolocation(instrumentModule)%verticalCoordinate == &
@@ -666,9 +671,11 @@ contains ! ============= Public procedures ===================================
       l1bItemName = AssembleL1BQtyName ( l1bItemName, hdfVersion, .false. )
       if ( verbose ) then
         call outputnamedValue ( 'l1bItemName#1', trim(l1bItemName) )
+        call outputnamedValue ( 'isModuleSpacecraft', isModuleSpacecraft(instrumentModule) )
         call outputnamedValue ( 'isAnyModuleSpacecraft', isAnyModuleSpacecraft() )
         call outputnamedValue ( 'firstMAFIndex', chunk%firstMAFIndex )
         call outputnamedValue ( 'lastMAFIndex', chunk%lastMAFIndex )
+        call Dump_Modules
       endif
 
       call ReadL1BData ( L1BFile, l1bItemName, l1bField, noMAFs, &
@@ -733,10 +740,15 @@ contains ! ============= Public procedures ===================================
       call DeallocateL1BData ( l1bField )
 
       do l1bItem = start, stop
+        if ( verbose ) call outputNamedValue ( 'l1bItem num', l1bItem )
         ! Get the name of the item to read
         l1bItemName = L1bItemsToRead(l1bItem)%name
+        if ( verbose ) call outputNamedValue ( 'its name', trim(l1bItemName) )
         if ( L1bItemsToRead(l1bItem)%modular ) then
+          if ( verbose ) call output ( 'it is modular', advance='yes' )
           call GetModuleName ( instrumentModule, l1bItemName )
+          if ( IsModuleSpacecraft(instrumentModule) ) &
+            & call GetModuleName ( instrumentModule+1, l1bItemName )
           l1bItemName = trim(l1bItemName)//'.'//L1bItemsToRead(l1bItem)%name
         elseif ( .not. isAnyModuleSpacecraft() ) then
           cycle
@@ -745,6 +757,7 @@ contains ! ============= Public procedures ===================================
         end if
 
         ! Read it from the l1boa file
+        if ( verbose ) call outputnamedValue ( 'before assembly', trim(l1bItemName) )
         l1bItemName = AssembleL1BQtyName ( l1bItemName, hdfVersion, .false. )
         if ( verbose ) call outputnamedValue ( 'l1bItemName#2', trim(l1bItemName) )
         call ReadL1BData ( L1BFile, l1bItemName, l1bField, noMAFs, &
@@ -1533,6 +1546,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.196  2016/07/28 19:56:00  pwagner
+! Extra care in CConstructMinorFrameQs
+!
 ! Revision 2.195  2016/07/28 00:42:46  vsnyder
 ! Remove unused USE
 !
