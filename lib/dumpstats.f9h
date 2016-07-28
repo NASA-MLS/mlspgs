@@ -17,12 +17,12 @@
 
     ! call output('Entering dumpstats', advance='no')
     if ( present(name) .and. .not. nameHasBeenPrinted .and. &
-      & .not. onlyWholeArray ) then
+      & .not. dopts(onlyWholeArray)%v ) then
       call output ( trim(name) //'   ' , advance='no' )
       nameHasBeenPrinted = .true.
     endif
-    if ( myVerbose .and. present(name) ) nameOnEachLine = name
-    if ( myShape ) then
+    if ( dopts(verbose)%v .and. present(name) ) nameOnEachLine = name
+    if ( dopts(itsShape)%v ) then
       call outputNamedValue( 'rank', myRank, advance='no' )
       call output( '   shape  ', advance='no' )
       call output( shape(array), advance='no' )
@@ -30,20 +30,20 @@
       if ( any(isNaN(array)) ) call output( '(NaNs found)', advance='no' )
       call newLine
     endif
-    if ( myBandwidth ) then
+    if ( dopts(myBandwidth)%v ) then
       call BandWidth( array, bwidth, pctnzero )
       call outputNamedValue( 'Band width', bwidth, advance='no' )
       call output( '   % /= 0  ', advance='no' )
       call output( pctnzero, advance='yes' )
     endif
     if ( any(shape(array) == 0) ) return
-    if ( myRMS .or. myRatios .or. myNaNs ) then
+    if ( dopts(RMS)%v .or. dopts(ratios)%v .or. dopts(NaNs)%v ) then
       if ( .not. any(isfinite(array)) ) then
         call output ('(no finite values found in array) ', advance='yes')
       elseif ( .not. all(isfinite(array)) ) then
         if ( present(name) .and. .not. nameHasBeenPrinted ) &
           & call output ( trim(name) //'   ' , advance='no' )
-        if ( myNaNs ) then
+        if ( dopts(NaNs)%v ) then
           call WhereAreTheInfs ( array, which, how_many )
           if ( how_many > 0 ) then
             call outputNamedValue( 'num(Infs)', how_many )
@@ -59,7 +59,7 @@
         else
           call output ('(non-finite values found in array--skipped) ', advance='yes')
         endif
-      elseif ( myNaNs ) then
+      elseif ( dopts(NaNs)%v ) then
         ! Don't want to do anything else, because
         how_many = 0 ! No NaNs or Infs
       else if ( present(fillValue) ) then
@@ -77,7 +77,7 @@
         ! call output( 'done with PrintRMSetc.', advance='yes')
       end if
     end if
-    if ( myStats .and. .not. thisIsADiff ) then
+    if ( dopts(stats)%v .and. .not. thisIsADiff ) then
       ! Count how many meet our desired relationship w.r.t. FillValue
       select case ( fillvaluerelation )
       case ( '=' )
@@ -98,21 +98,21 @@
       end if
       call printPercentages ( equal=numFill, unEqual=numNonFill )
     end if
-    if ( myCollapse .and. myRank > 1 ) then
+    if ( dopts(collapseIt)%v .and. myRank > 1 ) then
       call dumpCollapsedArray( array, name, &
         & fillValue, trim(snipOption(options, dopt_Collapse)) // 'L' )
       ! call output('Leaving dumpstats', advance='no')
       return
     endif
-    if ( .not. myWholeArray ) then
+    if ( .not. dopts(wholeArray)%v ) then
       ! call output('Leaving dumpstats', advance='no')
       return
     endif
 
     ! Avoid dumping the entire array if all its elements are equal
-    if ( .not. myClean .and. DONTDUMPIFALLEQUAL .and. size(array) > 5 ) then
+    if ( .not. dopts(clean)%v .and. dontDumpIfAllEqual .and. size(array) > 5 ) then
       if ( all(isInfinite(array)) ) then
-        if ( myLaconic .or. nameHasBeenPrinted ) then
+        if ( dopts(laconic)%v .or. nameHasBeenPrinted ) then
           call blanks(3)
         elseif ( present(name) ) then
           call output( trim(name), advance='no' )
@@ -128,7 +128,7 @@
         ! call output('Leaving dumpstats', advance='no')
         return
       elseif ( all(isNaN(array)) ) then
-        if ( myLaconic .or. nameHasBeenPrinted ) then
+        if ( dopts(laconic)%v .or. nameHasBeenPrinted ) then
           call blanks(3)
         elseif ( present(name) ) then
           call output( trim(name), advance='no' )
@@ -146,7 +146,7 @@
       elseif ( .not. all(isFinite(array)) ) then
         ! we'll need to dump to see where the NaNs and Infs are
       elseif ( minval(array) == maxval(array) ) then
-        if ( myLaconic .or. nameHasBeenPrinted ) then
+        if ( dopts(laconic)%v .or. nameHasBeenPrinted ) then
           call blanks(3)
         elseif ( present(name) ) then
           call output( trim(name), advance='no' )
@@ -165,6 +165,9 @@
     end if
     ! call output('Leaving dumpstats', advance='no')
 ! $Log$
+! Revision 2.36  2016/07/28 01:42:27  vsnyder
+! Refactoring dump and diff
+!
 ! Revision 2.35  2016/04/05 23:55:17  pwagner
 ! -v verbose option added; usu. will print name on each line
 !
