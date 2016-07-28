@@ -20,7 +20,8 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
 
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
   use Dot_m, only: Dot
-  use Dump_0, only: Diff, Dump
+  use Dump_0, only: Dump
+  use Diff_1, only: Diff
   use gemm_m, only: gemm
   use gemv_m, only: gemv
   use MLSKinds, only: RM, R4, R8
@@ -3737,6 +3738,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.23  2016/07/28 01:42:27  vsnyder
+! Refactoring dump and diff
+!
 ! Revision 2.22  2016/05/27 00:14:55  vsnyder
 ! Publish RM because this seems like a logical place to get it
 !
