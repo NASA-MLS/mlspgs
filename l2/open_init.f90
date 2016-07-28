@@ -19,7 +19,6 @@ module Open_Init
   ! Reads user params as PCF-supplied config data  |
   ! -----------------------------------------------
 
-  use DUMP_0, only: DUMP
   use HIGHOUTPUT, only: BEVERBOSE
   use MLSCOMMON, only: FILENAMELEN, MLSFILE_T, NAMELEN, TAI93_RANGE_T
   use MLSL2OPTIONS, only: SPECIALDUMPFILE, TOOLKIT
@@ -68,9 +67,9 @@ contains ! =====     Public Procedures     =============================
     ! the necessary inputs via the l2cf and
     ! processing user inputs during global settings section
 
-    use DATES_MODULE, only: UTC_TO_YYYYMMDD
+    use Dates_Module, only: UTC_To_YYYYMMDD
+    use Dump_1, only: Dump
     use HDF, only: DFACC_RDONLY
-!   use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
     use INTRINSIC, only: L_HDF
     use L1BDATA, only: FINDMAXMAF, READL1BATTRIBUTE
     use L2GPDATA, only: COL_SPECIES_KEYS, COL_SPECIES_HASH
@@ -702,6 +701,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.109  2016/07/28 01:45:07  vsnyder
+! Refactor dump and diff
+!
 ! Revision 2.108  2014/09/05 01:26:25  vsnyder
 ! Remove unused parameter; comment out unused USE name
 !
