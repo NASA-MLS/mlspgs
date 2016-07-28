@@ -19,7 +19,8 @@ module HessianModule_0          ! Low-level Hessians in the MLS PGS suite
   use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST, &
     & TEST_ALLOCATE, TEST_DEALLOCATE
   use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
-  use DUMP_0, only: DIFF, DUMP
+  use Diff_1, only: Diff
+  use DUMP_0, only: DUMP
   use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
   use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
   use MLSKINDS, only: RH=>RM ! Renamed here to make it easier to change later
@@ -1452,6 +1453,9 @@ o:    do while ( i < n )
 end module HessianModule_0
 
 ! $Log$
+! Revision 2.31  2016/07/28 01:42:27  vsnyder
+! Refactoring dump and diff
+!
 ! Revision 2.30  2015/03/28 01:04:29  vsnyder
 ! Added stuff to trace allocate/deallocate addresses
 !
