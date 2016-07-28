@@ -9,7 +9,7 @@
 ! export authority as may be required before exporting such information to
 ! foreign countries or providing access to foreign persons.
 
-module DUMP_0
+module Dump_0
 
 ! Low-level dump routines -- for some arrays of intrinsic type.
 ! Should handle most combinations of rank and type
@@ -22,42 +22,39 @@ module DUMP_0
 ! showing min, max, percentages of non-zero values, etc.
 
 ! This has become too long--we may split it, putting diffs into a higher-level
-! and separate dump_1.f90 module
+! and separate Dump_1.f90 module
 
-  use bitStuff, only: maxBitNumber, whichBitsAreSet
-  use dates_module, only: maxUTCStrLength, &
-    & reformatDate, reformatTime, splitDateTime, tai93s2utc
-  use highOutput, only: alignToFit, blanksToTab, &
-    & numNeedsFormat, numToChars, &
-    & outputList, outputNamedValue, resetTabs, setTabs
-  use ieee_arithmetic, only: ieee_is_finite
-  use mlsfillvalues, only : bandWidth, collapse, filterValues, halfWaves, &
-    & isFinite, isInfinite, isNaN, &
-    & infFunction, NaNFunction, reorderFillValues, replaceFillValues, &
-    & whereAreTheInfs, whereAreTheNaNs
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
-  use MLSFinds, only: findUnique
-  use MLSStats1, only: Stat_t, &
-    & AllStats, fillValueRelation, howFar, howNear, &
-    & MLSMax, MLSMean, MLSMin, MLSStddev, ratios, reset
-  use MLSStringLists, only: catLists, getStringElement, numStringElements, &
-    & OptionDetail
-  use MLSStrings, only: delete, indexes, lowercase, &
-    & readIntsFromChars, trim_safe, &
-    & writeIntsToChars
-  use output_m, only: outputOptions, stampOptions, &
-    & blanks, newline, output
-  use time_m, only: time_now
+  use BitStuff, only: MaxBitNumber, WhichBitsAreSet
+  use Dump_Options, only: AfterSub, MyBandwidth=>Bandwidth, Clean, CollapseIt, &
+    & CollapseOptions,  DefaultDumpOptions, DefaultMaxLon, DefaultPCTFormat, &
+    & DefaultWidth, Dopt_Collapse, Dopt_Transpose, DiffRMSMeansRMS, &
+    & DontDumpIfAllEqual, Dopts, Gaps, IntPlaces, Laconic, MaxNumNANs, &
+    & NameHasBeenPrinted, NameOnEachLine, NaNs, OnlyWholeArray, PCTFormat, &
+    & PrintFillValue, PrintNameIfDiff, Ratios, RMS, RMSFormat, SDFormatDefault, &
+    & SDFormatDefaultCmplx, Stats, StatsOnOneLine, &
+    & TheDumpBegins, ItsShape, MyTranspose=>Transpose, TrimIt, Unique, Verbose, WholeArray
+  use HighOutput, only: NumNeedsFormat, OutputNamedValue
+  use MLSFillValues, only: Bandwidth, Collapse, &
+    & InfFunction, IsFinite, IsInfinite, IsNaN, NaNFunction, &
+    & WhereAreTheInfs, WhereAreTheNaNs
+  use MLSFinds, only: FindUnique
+  use MLSStats1, only: FillValueRelation, &
+    & MLSMax, MLSMean, MLSMin, MLSStdDev
+  use MLSStringLists, only: CatLists, NumStringElements, OptionDetail
+  use MLSStrings, only: delete, Indexes, ReadIntsFromChars
+  use Output_m, only: OutputOptions, StampOptions, &
+    & Blanks, Newline, Output
 
-  implicit none
+  implicit NONE
   private
+
 ! === (start of toc) ===
 !     c o n t e n t s
 !     - - - - - - - -
 
 !     (parameters)
 ! AFTERSUB                 character printed between row, col id and data
-! COLLAPSEOPTIONS          options determining what and how to dump collapsed
+! CollapseOptions          options determining what and how to dump collapsed
 !                           representations of multidimensional arrays
 ! DEFAULTDIFFOPTIONS       switches to set default DIFF values for CLEAN, TRIM, etc.
 ! DEFAULTDUMPOPTIONS       same as above, but for DUMP
@@ -75,30 +72,11 @@ module DUMP_0
 ! STATSONONELINE           stats, rms each printed on a single line
 
 !     (subroutines and functions)
-! DIFF_FUN                 returns differences between scalars, arrays, etc.
-! DIFF                     dump diffs between pair of arrays of numeric type
 ! DUMP                     dump an array to output
-! DUMPDATES                dump 1-d array of tai93 (s. after 1 jan 1993)
-! DUMPDUMPOPTIONS          dump module settings for dump, diff, etc.
-! DUMPLISTS                dump 2-d array as a set of lists
-! DUMPNAMEDVALUES          dump an array of paired names and values
-! DUMPSUMS                 dump after summing successive array values
-!                            ("inverse" of selfDiff)
-! DUMPTABLE                dump a 2-d table of values with headers
-! DUMPTEXTFILE             dump contents of a text file
-! RESTOREDUMPCONFIG        restore default values to dump configuration
-! SELFDIFF                 dump increments between successive array values
 ! === (end of toc) ===
 
 ! === (start of api) ===
-! num diff_fun ( num value1, num value2, num auxvalue, char* options )
-! diff ( array1, char* name1, array2, char* name2,
-!      [fillvalue], [int width], [char* format],
-!      [int lbound], [char* options] ) 
-!       where array1, array2 can be 1, 2, or 3d arrays of 
-!       ints, reals, or doubles, compatible in size and type
-!       and fillValue is a scalar of the same type, if present
-! dump ( array, char* name,
+! dump ( Array, char* name,
 !      [fillvalue], [int width], [char* format],
 !      [int lbound], [char* options] ) 
 !       where array can be a 1, 2, or 3d array of
@@ -107,31 +85,7 @@ module DUMP_0
 ! dump ( strlist string, char* name, [char* fillvalue], [char* options] )
 ! dump ( log countEmpty, strlist keys, strlist values, char* name, 
 !       [char* separator], [char* options] )
-! dumpDates ( dble dates(:), [int width], [char* dateFormat], [char* timeFormat] )
-! dumpDumpOptions ( [char* options] )
-! dumpLists ( array, char* name,
-!      [int width], [char* sep],
-!      [char* delims] ) 
-!       where array can be a 2d array of
-!       chars or ints
-! dumpNamedValues ( values, strlist names,
-!      [char* format, [int width], [char* options] ) 
-!       where values can be a 1d array of ints or reals, and
-!       names is a string list of corresponding names
-! dumpSums ( array, char* name,
-!      [fillvalue], [int width], [char* format],
-!      [int lbound], [char* options] )
-! dumpTable ( values, headers, char* headside
-!      [char* format, [char* formats(:)] ) 
-!       where values can be a 2d array of ints or reals, and
-!       headers is an array the same size as the 2nd index of values
-!       format optionally overrides the default format for the numeric type
-!       formats allows you to specify a format separately column-by-column
-! dumpTextfile ( char* fileName, [char* options] )
 ! restoreDumpConfig
-! selfdiff ( array, char* name,
-!      [fillvalue], [int width], [char* format],
-!      [log waves], [int lbound], [char* options] )
 
 ! Note that most of the optional parameters have default values
 ! logically set to FALSE or 0, ' ',  or '*' where appropriate
@@ -190,117 +144,55 @@ module DUMP_0
 ! if any is TRUE the whole array will be dumped only if
 ! w or wholearray is set to TRUE
 
-! (for diff_fun)
-!   character      meaning
-!    ---           -------
-!     a            diff the absolute values
-!     r            divide the difference by the max abs of the 2 values
-!     f            treat auxvalue as a fillvalue: return fillvalue if either
-!                    value is fillvalue
-!     p            treat auxvalue as a period: return 
-!                       min(value1 - value2 + n*period)
-
 ! in the above, a string list is a string of elements (usu. comma-separated)
 ! === (end of api) ===
 
-  public :: DIFF, DIFF_FUN, &
-    & DUMP, DUMP_2x2xN, DUMPDATES, DUMPDUMPOPTIONS, DUMPLISTS, DUMPNAMEDVALUES, &
-    & DUMPSUMS, DUMPTABLE, DUMPTEXTFILE, RESTOREDUMPCONFIG, SELFDIFF
+  public :: &
+    & Dump, Dump_2x2xN, Empty, FinishLine, &
+    & ILog10, Name_And_Size, &
+    & TheDumpEnds
 
-  interface DIFF        ! dump diffs between pair of n-d arrays of numeric type
-    module procedure DIFF_1D_DOUBLE, DIFF_1D_INTEGER, DIFF_1D_REAL
-    module procedure DIFF_2D_DOUBLE, DIFF_2D_INTEGER, DIFF_2D_REAL
-    module procedure DIFF_3D_DOUBLE, DIFF_3D_REAL
-    module procedure DIFF_4D_DOUBLE, DIFF_4D_REAL
+  ! =====     Public Generics     ======================================
+
+  interface Dump        ! Dump n-d arrays of homogeneous type
+    module procedure Dump_1D_BIT, Dump_1D_Char, Dump_1D_Complex, Dump_1D_DComplex
+    module procedure Dump_1D_Double, Dump_1D_Integer, Dump_1D_Integer_2B
+    module procedure Dump_1D_Logical, Dump_1D_Real
+    module procedure Dump_2D_Char, Dump_2D_Complex, Dump_2D_DComplex
+    module procedure Dump_2D_Double, Dump_2D_Integer, Dump_2D_Integer_2B
+    module procedure Dump_2D_Logical, Dump_2D_Real
+    module procedure Dump_3D_Char, Dump_3D_Double, Dump_3D_Integer
+    module procedure Dump_3D_Real, Dump_3D_Complex, Dump_3D_DComplex
+    module procedure Dump_4D_Double, Dump_4D_Real
   end interface
 
-  interface DIFF_FUN    ! return diffs between args or arrays of numeric type
-    module procedure DIFF_SCALAR_DOUBLE, DIFF_SCALAR_REAL
+  interface Dump_2x2xN ! For polarized incremental optical depth
+    module procedure Dump_2x2xN_Complex, Dump_2x2xN_DComplex
   end interface
 
-  interface FILTEREDDIFF        ! dump FILTEREDDIFFs between pair of n-d arrays of numeric type
-    module procedure FILTEREDDIFF_1D_DOUBLE, FILTEREDDIFF_1D_INTEGER, FILTEREDDIFF_1D_REAL
-    module procedure FILTEREDDIFF_2D_DOUBLE, FILTEREDDIFF_2D_INTEGER, FILTEREDDIFF_2D_REAL
-    module procedure FILTEREDDIFF_3D_DOUBLE, FILTEREDDIFF_3D_REAL
-    module procedure FILTEREDDIFF_4D_DOUBLE, FILTEREDDIFF_4D_REAL
+  ! =====     Private Generics     =====================================
+  interface DumpCollapsedArray
+    module procedure DumpCollapsedArray_1D_Double, DumpCollapsedArray_1D_Real
+    module procedure DumpCollapsedArray_2D_Double, DumpCollapsedArray_2D_Real
+    module procedure DumpCollapsedArray_3D_Double, DumpCollapsedArray_3D_Real
+    module procedure DumpCollapsedArray_1D_Integer
+    module procedure DumpCollapsedArray_2D_Integer
+    module procedure DumpCollapsedArray_3D_Integer
   end interface
 
-  interface DUMP        ! dump n-d arrays of homogeneous type
-    module procedure DUMP_1D_BIT, DUMP_1D_CHAR, DUMP_1D_COMPLEX, DUMP_1D_DCOMPLEX
-    module procedure DUMP_1D_DOUBLE, DUMP_1D_INTEGER, DUMP_1D_INTEGER_2B
-    module procedure DUMP_1D_LOGICAL, DUMP_1D_REAL
-    module procedure DUMP_2D_CHAR, DUMP_2D_COMPLEX, DUMP_2D_DCOMPLEX
-    module procedure DUMP_2D_DOUBLE, DUMP_2D_INTEGER, DUMP_2D_INTEGER_2B
-    module procedure DUMP_2D_LOGICAL, DUMP_2D_REAL
-    module procedure DUMP_3D_CHAR, DUMP_3D_DOUBLE, DUMP_3D_INTEGER
-    module procedure DUMP_3D_REAL, DUMP_3D_COMPLEX, DUMP_3D_DCOMPLEX
-    module procedure DUMP_HASH_LOG, DUMP_HASH_STR, DUMP_STRLIST
-    module procedure DUMP_4D_DOUBLE, DUMP_4D_REAL
-  end interface
+  Interface PrintIt
+    module procedure PrintIt_Char, PrintIt_Double, PrintIt_Int, PrintIt_Real
+    module procedure PrintIt_Complex, PrintIt_DComplex
+  end Interface
 
-  interface DUMP_2x2xN ! For polarized incremental optical depth
-    module procedure DUMP_2x2xN_COMPLEX, DUMP_2x2xN_DCOMPLEX
-  end interface
+  Interface PrintRMSEtc
+    module procedure PrintRMSEtc_Double, PrintRMSEtc_int, PrintRMSEtc_Real
+  end Interface
 
-  interface DUMPCOLLAPSEDARRAY
-    module procedure DUMPCOLLAPSEDARRAY_1D_DOUBLE, DUMPCOLLAPSEDARRAY_1D_REAL
-    module procedure DUMPCOLLAPSEDARRAY_2D_DOUBLE, DUMPCOLLAPSEDARRAY_2D_REAL
-    module procedure DUMPCOLLAPSEDARRAY_3D_DOUBLE, DUMPCOLLAPSEDARRAY_3D_REAL
-    module procedure DUMPCOLLAPSEDARRAY_1D_INTEGER
-    module procedure DUMPCOLLAPSEDARRAY_2D_INTEGER
-    module procedure DUMPCOLLAPSEDARRAY_3D_INTEGER
-  end interface
-
-  interface dumpDates
-    module procedure dump_tai
-  end interface
-
-  interface DUMPLISTS
-    module procedure DUMPLISTS_CHARS, DUMPLISTS_INTS
-  end interface
-
-  interface DUMPNAMEDVALUES   ! dump name-value pairs, names in string list
-    module procedure DUMPNAMEDVALUES_DOUBLE, DUMPNAMEDVALUES_INTEGER
-    module procedure DUMPNAMEDVALUES_REAL
-  end interface
-
-  interface DUMPTABLE   ! dump table of values, headers
-    module procedure DUMPTABLE_DOUBLE, DUMPTABLE_INTEGER
-    module procedure DUMPTABLE_REAL
-  end interface
-
-  interface SELFDIFF       ! dump increments between successive array values
-    module procedure SELFDIFF_INTEGER
-    module procedure SELFDIFF_REAL
-    module procedure SELFDIFF_DOUBLE
-  end interface
-
-  interface DUMPSUMS       ! dump after summing successive array values
-    module procedure DUMPSUMS_INTEGER
-    module procedure DUMPSUMS_REAL
-    module procedure DUMPSUMS_DOUBLE
-  end interface
-
-  interface PRINTIT
-    module procedure PRINTIT_CHAR, PRINTIT_DOUBLE, PRINTIT_INT, PRINTIT_REAL
-    module procedure PRINTIT_COMPLEX, PRINTIT_DCOMPLEX
-  end interface
-
-  interface PRINTRMSETC
-    module procedure PRINTRMSETC_DOUBLE, PRINTRMSETC_INT, PRINTRMSETC_REAL
-  end interface
-
-  interface SAY_FILL
-    module procedure SAY_FILL_CHAR, SAY_FILL_DOUBLE, SAY_FILL_INT
-    module procedure SAY_FILL_REAL, SAY_FILL_COMPLEX, SAY_FILL_DCOMPLEX
-  end interface
-
-  interface UNFILTEREDDIFF        ! dump UNFILTEREDDIFFs between pair of n-d arrays of numeric type
-    module procedure UNFILTEREDDIFF_1D_DOUBLE, UNFILTEREDDIFF_1D_INTEGER, UNFILTEREDDIFF_1D_REAL
-    module procedure UNFILTEREDDIFF_2D_DOUBLE, UNFILTEREDDIFF_2D_INTEGER, UNFILTEREDDIFF_2D_REAL
-    module procedure UNFILTEREDDIFF_3D_DOUBLE, UNFILTEREDDIFF_3D_REAL
-    module procedure UNFILTEREDDIFF_4D_DOUBLE, UNFILTEREDDIFF_4D_REAL
-  end interface
+  Interface Say_Fill
+    module procedure Say_Fill_Char, Say_Fill_Double, Say_Fill_Int
+    module procedure Say_Fill_Real, Say_Fill_Complex, Say_Fill_DComplex
+  end Interface
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -310,439 +202,30 @@ module DUMP_0
 
   ! These public parameters can't be reconfigured outside the module
   ! --------------------------------------------------------------------------
-  character, public, parameter :: AFTERSUB = '#'
-  character(len=*), parameter :: DEFAULTPCTFORMAT = '(0pf6.1)'
-  ! These are the possible options to dumps, diffs
-  character, public, parameter :: dopt_bandwidth   = 'B'
-  character, public, parameter :: dopt_clean       = 'c'
-  character, public, parameter :: dopt_collapse    = 'l'
-  character, public, parameter :: dopt_cyclic      = 'y'
-  character, public, parameter :: dopt_gaps        = 'g'
-  character, public, parameter :: dopt_laconic     = 'L'
-  character, public, parameter :: dopt_NaNs        = 'N'
-  character, public, parameter :: dopt_ratios      = 'r'
-  character, public, parameter :: dopt_rms         = 'R'
-  character, public, parameter :: dopt_verbose     = 'v'
-  character, public, parameter :: dopt_shape       = 'H'
-  character, public, parameter :: dopt_stats       = 's'
-  character, public, parameter :: dopt_table       = 'b'
-  character, public, parameter :: dopt_transpose   = 'p'
-  character, public, parameter :: dopt_trim        = 't'
-  character, public, parameter :: dopt_unique      = 'u'
-  character, public, parameter :: dopt_wholearray  = 'w'
-  ! The following character strings can include one or more options listed above
-  !
-  ! E.g., '-crt' turns on CLEAN, RMS, and TRIM
-  character(len=8), public, save :: DEFAULTDIFFOPTIONS = ' '
-  character(len=8), public, save :: DEFAULTDUMPOPTIONS = ' '
-  integer, public, save          :: DEFAULTMAXLON      = 128
-  integer, public, save          :: DEFAULTWIDTH       = 10
-  character(len=8), public, save :: DUMPTABLESIDE      = 'top'
-  logical, public, save ::   DIFFRMSMEANSRMS           = .false.
-  logical, public, save ::   DONTDUMPIFALLEQUAL        = .true.
-  logical, public, save ::   FILTERFILLSFROMRMS        = .false.
-  logical, public, save ::   PRINTFILLVALUE            = .true.
-  logical, public, save ::   PRINTNAMEIFDIFF           = .true.
-  logical, public, save ::   STATSONONELINE            = .true.
-  character(len=16), public, save ::   NAMEONEACHLINE  = ' '
 
-  ! This determines how a higher-rank array is collapsed to a lower-rank one
-  character(len=16), public, save :: COLLAPSEOPTIONS = 'num[+]all[+]'
-
-  ! These determine how dumped numerical data (s.p. or d.p.) will be formatted
-  character(len=2), public, save  :: INTPLACES = '6' ! how many places
-  integer,          public, save  :: MAXNUMNANS= 60  ! how many NaNs to show
-  character(len=16), public, save :: PCTFORMAT = '*' ! * means default format
-  character(len=16), public, save :: RMSFORMAT = '*' ! * means default format
-  character(len=16), public, save :: SDFORMATDEFAULT = '(1pg14.6)'
-  character(*), parameter :: sdFormatDefaultCmplx = &
-    & '(1x,"(",1pg13.6,",",1pg13.6,")")'
   ! --------------------------------------------------------------------------
 
   ! These are private variables declared module-wide purely for convenience
-  integer, parameter :: MAXLINELEN              = 120
-  integer, parameter :: MAXTEXTFILELINELEN      = 255
-  integer, parameter :: MAXTEXTFILELINES        = 600
-  integer, parameter :: MAXNUMELEMENTS          = 2000
-  integer, parameter :: TOOMANYELEMENTS         = 125*50*3500 ! Don't try to diff l1b DACS
+  integer, parameter :: MaxNumElements          = 2000
   logical, parameter :: DEEBUG                  = .false.
-  logical, parameter :: SHORTCUTDIFFS           = .false.
-  logical :: DUMPTHESEZEROS
-  logical :: myBandwidth, myClean, myCollapse, myCyclic, myDirect, myGaps, &
-    & myLaconic, myNaNs, myRatios, myRMS, myShape, myStats, &
-    & myTable, myTranspose, myTrim, myUnique, myVerbose, myWholeArray, &
-    & onlyWholeArray
-  character(len=16) :: myOptions
-  character(len=16) :: myPCTFormat
-  character(len=16) :: nameToPrint
-  logical, save     :: nameHasBeenPrinted = .false.
-  integer           :: bwidth, myRank, numNonFill, numFill, indx2BSliced, iSlice
-  real              :: pctnzero
-  logical, save     :: thisIsADiff = .false.
-  integer           :: how_many
+  logical           :: DumpTheseZeros
+  character(len=16) :: MyOptions
+  character(len=16) :: MyPCTFormat
+  integer           :: Bwidth, myRank, numNonFill, numFill, indx2BSliced, iSlice
+  real              :: Pctnzero
+  logical, save     :: ThisIsADiff = .false.
+  integer           :: How_many
   integer, dimension(1024) :: which
   complex, parameter       :: one_c4 = (1., 0.)
 
 contains
 
- ! ---------------------------------------------  DIFF  -----
- ! This family of routines dumps the differences between two arrays
- ! with the same shape and numeric type
- ! Its behavior is modified by the following optional parameters
- ! FillValue   Ignore these values when computing min, max
- ! Width       Row size when dumping wholearrays
- ! Format      Output format when printing wholearray
- ! LBound      Lower bound when printing wholearray indices
- !
- ! The following optional params are now set by options
- ! Wholearray  Whether to print whole array of differences
- ! Stats       Dump number of differences found, %
- ! RMS         Dump min, max, rms
- ! Clean       Clean up after any prior dumps
-  subroutine DIFF_1D_DOUBLE ( ARRAY1, NAME1, ARRAY2, NAME2, &
-    & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS )
-    double precision, intent(in) :: ARRAY1(:)
-    character(len=*), intent(in) :: NAME1
-    double precision, intent(in) :: ARRAY2(:)
-    character(len=*), intent(in) :: NAME2
-    double precision, intent(in), optional :: FILLVALUE
-    integer, intent(in), optional :: WIDTH
-    character(len=*), intent(in), optional :: FORMAT
-    integer, intent(in), optional :: LBOUND ! Low bound for Array
-    character(len=*), intent(in), optional :: options
-
-    if ( .not. present(FillValue) ) then
-      call UnfilteredDiff( ARRAY1, NAME1, ARRAY2, NAME2, &
-        & WIDTH, FORMAT, LBOUND, OPTIONS )
-    elseif ( product(shape(array1)) > TOOMANYELEMENTS ) then
-      call MLSMessage ( MLSMSG_Warning, ModuleName, &
-        & 'array size of ' // trim(name1) // ' too large to filter Fill values' )
-      call UnfilteredDiff( ARRAY1, NAME1, ARRAY2, NAME2, &
-        & WIDTH, FORMAT, LBOUND, OPTIONS )
-    else
-      call FilteredDiff( ARRAY1, NAME1, ARRAY2, NAME2, &
-        & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS )
-    endif
-  end subroutine DIFF_1D_DOUBLE
-
-  subroutine DIFF_1D_INTEGER ( ARRAY1, NAME1, ARRAY2, NAME2, &
-    & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS )
-    integer, intent(in) :: ARRAY1(:)
-    character(len=*), intent(in) :: NAME1
-    integer, intent(in) :: ARRAY2(:)
-    character(len=*), intent(in) :: NAME2
-    integer, intent(in), optional :: FILLVALUE
-    integer, intent(in), optional :: WIDTH
-    character(len=*), intent(in), optional :: FORMAT
-    integer, intent(in), optional :: LBOUND ! Low bound for Array
-    character(len=*), intent(in), optional :: options
-
-    if ( .not. present(FillValue) ) then
-      call UnfilteredDiff( ARRAY1, NAME1, ARRAY2, NAME2, &
-        & WIDTH, FORMAT, LBOUND, OPTIONS )
-    elseif ( product(shape(array1)) > TOOMANYELEMENTS ) then
-      call MLSMessage ( MLSMSG_Warning, ModuleName, &
-        & 'array size of ' // trim(name1) // ' too large to filter Fill values' )
-      call UnfilteredDiff( ARRAY1, NAME1, ARRAY2, NAME2, &
-        & WIDTH, FORMAT, LBOUND, OPTIONS )
-    else
-      call FilteredDiff( ARRAY1, NAME1, ARRAY2, NAME2, &
-        & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS )
-    endif
-  end subroutine DIFF_1D_INTEGER
-
-  subroutine DIFF_1D_REAL ( ARRAY1, NAME1, ARRAY2, NAME2, &
-    & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS )
-    real, intent(in) :: ARRAY1(:)
-    character(len=*), intent(in) :: NAME1
-    real, intent(in) :: ARRAY2(:)
-    character(len=*), intent(in) :: NAME2
-    real, intent(in), optional :: FILLVALUE
-    integer, intent(in), optional :: WIDTH
-    character(len=*), intent(in), optional :: FORMAT
-    integer, intent(in), optional :: LBOUND ! Low bound for Array
-    character(len=*), intent(in), optional :: options
-
-    if ( .not. present(FillValue) ) then
-      call UnfilteredDiff( ARRAY1, NAME1, ARRAY2, NAME2, &
-        & WIDTH, FORMAT, LBOUND, OPTIONS )
-    elseif ( product(shape(array1)) > TOOMANYELEMENTS ) then
-      call MLSMessage ( MLSMSG_Warning, ModuleName, &
-        & 'array size of ' // trim(name1) // ' too large to filter Fill values' )
-      call UnfilteredDiff( ARRAY1, NAME1, ARRAY2, NAME2, &
-        & WIDTH, FORMAT, LBOUND, OPTIONS )
-    else
-      call FilteredDiff( ARRAY1, NAME1, ARRAY2, NAME2, &
-        & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS )
-    endif
-  end subroutine DIFF_1D_REAL
-
-  subroutine DIFF_2D_INTEGER ( ARRAY1, NAME1, ARRAY2, NAME2, &
-    & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS )
-    integer, intent(in) :: ARRAY1(:,:)
-    character(len=*), intent(in) :: NAME1
-    integer, intent(in) :: ARRAY2(:,:)
-    character(len=*), intent(in) :: NAME2
-    integer, intent(in), optional :: FILLVALUE
-    integer, intent(in), optional :: WIDTH
-    character(len=*), intent(in), optional :: FORMAT
-    integer, intent(in), optional :: LBOUND ! Low bound for Array
-    character(len=*), intent(in), optional :: options
-
-    if ( .not. present(FillValue) ) then
-      call UnfilteredDiff( ARRAY1, NAME1, ARRAY2, NAME2, &
-        & WIDTH, FORMAT, LBOUND, OPTIONS )
-    elseif ( product(shape(array1)) > TOOMANYELEMENTS ) then
-      call MLSMessage ( MLSMSG_Warning, ModuleName, &
-        & 'array size of ' // trim(name1) // ' too large to filter Fill values' )
-      call UnfilteredDiff( ARRAY1, NAME1, ARRAY2, NAME2, &
-        & WIDTH, FORMAT, LBOUND, OPTIONS )
-    else
-      call FilteredDiff( ARRAY1, NAME1, ARRAY2, NAME2, &
-        & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS )
-    endif
-  end subroutine DIFF_2D_INTEGER
-
-  subroutine DIFF_2D_DOUBLE ( ARRAY1, NAME1, ARRAY2, NAME2, &
-    & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS )
-    double precision, intent(in) :: ARRAY1(:,:)
-    character(len=*), intent(in) :: NAME1
-    double precision, intent(in) :: ARRAY2(:,:)
-    character(len=*), intent(in) :: NAME2
-    double precision, intent(in), optional :: FILLVALUE
-    integer, intent(in), optional :: WIDTH
-    character(len=*), intent(in), optional :: FORMAT
-    integer, intent(in), optional :: LBOUND ! Low bound for Array
-    character(len=*), intent(in), optional :: options
-
-    if ( .not. present(FillValue) ) then
-      call UnfilteredDiff( ARRAY1, NAME1, ARRAY2, NAME2, &
-        & WIDTH, FORMAT, LBOUND, OPTIONS )
-    elseif ( product(shape(array1)) > TOOMANYELEMENTS ) then
-      call MLSMessage ( MLSMSG_Warning, ModuleName, &
-        & 'array size of ' // trim(name1) // ' too large to filter Fill values' )
-      call UnfilteredDiff( ARRAY1, NAME1, ARRAY2, NAME2, &
-        & WIDTH, FORMAT, LBOUND, OPTIONS )
-    else
-      call FilteredDiff( ARRAY1, NAME1, ARRAY2, NAME2, &
-        & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS )
-    endif
-  end subroutine DIFF_2D_DOUBLE
-
-  subroutine DIFF_2D_REAL ( ARRAY1, NAME1, ARRAY2, NAME2, &
-    & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS )
-    real, intent(in) :: ARRAY1(:,:)
-    character(len=*), intent(in) :: NAME1
-    real, intent(in) :: ARRAY2(:,:)
-    character(len=*), intent(in) :: NAME2
-    real, intent(in), optional :: FILLVALUE
-    integer, intent(in), optional :: WIDTH
-    character(len=*), intent(in), optional :: FORMAT
-    integer, intent(in), optional :: LBOUND ! Low bound for Array
-    character(len=*), intent(in), optional :: options
-
-    if ( .not. present(FillValue) ) then
-      call UnfilteredDiff( ARRAY1, NAME1, ARRAY2, NAME2, &
-        & WIDTH, FORMAT, LBOUND, OPTIONS )
-    elseif ( product(shape(array1)) > TOOMANYELEMENTS ) then
-      call MLSMessage ( MLSMSG_Warning, ModuleName, &
-        & 'array size of ' // trim(name1) // ' too large to filter Fill values' )
-      call UnfilteredDiff( ARRAY1, NAME1, ARRAY2, NAME2, &
-        & WIDTH, FORMAT, LBOUND, OPTIONS )
-    else
-      call FilteredDiff( ARRAY1, NAME1, ARRAY2, NAME2, &
-        & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS )
-    endif
-  end subroutine DIFF_2D_REAL
-
-  subroutine DIFF_3D_DOUBLE ( ARRAY1, NAME1, ARRAY2, NAME2, &
-    & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS )
-    double precision, intent(in) :: ARRAY1(:,:,:)
-    character(len=*), intent(in) :: NAME1
-    double precision, intent(in) :: ARRAY2(:,:,:)
-    character(len=*), intent(in) :: NAME2
-    double precision, intent(in), optional :: FILLVALUE
-    integer, intent(in), optional :: WIDTH
-    character(len=*), intent(in), optional :: FORMAT
-    integer, intent(in), optional :: LBOUND ! Low bound for Array
-    character(len=*), intent(in), optional :: options
-
-    if ( .not. present(FillValue) ) then
-      call UnfilteredDiff( ARRAY1, NAME1, ARRAY2, NAME2, &
-        & WIDTH, FORMAT, LBOUND, OPTIONS )
-    elseif ( product(shape(array1)) > TOOMANYELEMENTS ) then
-      call MLSMessage ( MLSMSG_Warning, ModuleName, &
-        & 'array size of ' // trim(name1) // ' too large to filter Fill values' )
-      call UnfilteredDiff( ARRAY1, NAME1, ARRAY2, NAME2, &
-        & WIDTH, FORMAT, LBOUND, OPTIONS )
-    else
-      call FilteredDiff( ARRAY1, NAME1, ARRAY2, NAME2, &
-        & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS )
-    endif
-  end subroutine DIFF_3D_DOUBLE
-
-  subroutine DIFF_3D_REAL ( ARRAY1, NAME1, ARRAY2, NAME2, &
-    & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS )
-    real, intent(in) :: ARRAY1(:,:,:)
-    character(len=*), intent(in) :: NAME1
-    real, intent(in) :: ARRAY2(:,:,:)
-    character(len=*), intent(in) :: NAME2
-    real, intent(in), optional :: FILLVALUE
-    integer, intent(in), optional :: WIDTH
-    character(len=*), intent(in), optional :: FORMAT
-    integer, intent(in), optional :: LBOUND ! Low bound for Array
-    character(len=*), intent(in), optional :: options
-
-    if ( .not. present(FillValue) ) then
-      call UnfilteredDiff( ARRAY1, NAME1, ARRAY2, NAME2, &
-        & WIDTH, FORMAT, LBOUND, OPTIONS )
-    elseif ( product(shape(array1)) > TOOMANYELEMENTS ) then
-      call MLSMessage ( MLSMSG_Warning, ModuleName, &
-        & 'array size of ' // trim(name1) // ' too large to filter Fill values' )
-      call UnfilteredDiff( ARRAY1, NAME1, ARRAY2, NAME2, &
-        & WIDTH, FORMAT, LBOUND, OPTIONS )
-    else
-      call FilteredDiff( ARRAY1, NAME1, ARRAY2, NAME2, &
-        & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS )
-    endif
-  end subroutine DIFF_3D_REAL
-
-  subroutine DIFF_4D_DOUBLE ( ARRAY1, NAME1, ARRAY2, NAME2, &
-    & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS )
-    double precision, intent(in) :: ARRAY1(:,:,:,:)
-    character(len=*), intent(in) :: NAME1
-    double precision, intent(in) :: ARRAY2(:,:,:,:)
-    character(len=*), intent(in) :: NAME2
-    double precision, intent(in), optional :: FILLVALUE
-    integer, intent(in), optional :: WIDTH
-    character(len=*), intent(in), optional :: FORMAT
-    integer, intent(in), optional :: LBOUND ! Low bound for Array
-    character(len=*), intent(in), optional :: options
-
-    call theDumpBegins ( options )
-    if ( any(shape(array1) == 0) ) then
-      call output( 'array sizes are 0', advance='yes' )
-    else if ( size(array1,1) == 1 ) then
-      if ( myWholeArray ) call output( '1st size is 1: reducing rank to 3', advance='yes' )
-      call diff ( array1(1,:,:,:), name1, array2(1,:,:,:), name2, &
-        & fillvalue, width, format, lbound, options )
-    else if ( size(array1,2) == 1 ) then
-      if ( myWholeArray ) call output( '2nd size is 1: reducing rank to 3', advance='yes' )
-      call diff ( array1(:,1,:,:), name1, array2(:,1,:,:), name2, &
-        & fillvalue, width, format, lbound, options )
-    else if ( size(array1,3) == 1 ) then
-      if ( myWholeArray ) call output( '3rd size is 1: reducing rank to 3', advance='yes' )
-      call diff ( array1(:,:,1,:), name1, array2(:,:,1,:), name2, &
-        & fillvalue, width, format, lbound, options )
-    else if ( size(array1,4) == 1 ) then
-      if ( myWholeArray ) call output( '4th size is 1: reducing rank to 3', advance='yes' )
-      call diff ( array1(:,:,:,1), name1, array2(:,:,:,1), name2, &
-        & fillvalue, width, format, lbound, options )
-    elseif ( .not. present(FillValue) ) then
-      if ( myWholeArray ) call UnfilteredDiff( ARRAY1, NAME1, ARRAY2, NAME2, &
-        & WIDTH, FORMAT, LBOUND, OPTIONS )
-    elseif ( product(shape(array1)) > TOOMANYELEMENTS ) then
-      call MLSMessage ( MLSMSG_Warning, ModuleName, &
-        & 'array size of ' // trim(name1) // ' too large to filter Fill values' )
-      call UnfilteredDiff( ARRAY1, NAME1, ARRAY2, NAME2, &
-        & WIDTH, FORMAT, LBOUND, OPTIONS )
-    else
-      call FilteredDiff( ARRAY1, NAME1, ARRAY2, NAME2, &
-        & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS )
-    endif
-  end subroutine DIFF_4D_DOUBLE
-
-  subroutine DIFF_4D_REAL ( ARRAY1, NAME1, ARRAY2, NAME2, &
-    & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS )
-    real, intent(in) :: ARRAY1(:,:,:,:)
-    character(len=*), intent(in) :: NAME1
-    real, intent(in) :: ARRAY2(:,:,:,:)
-    character(len=*), intent(in) :: NAME2
-    real, intent(in), optional :: FILLVALUE
-    integer, intent(in), optional :: WIDTH
-    character(len=*), intent(in), optional :: FORMAT
-    integer, intent(in), optional :: LBOUND ! Low bound for Array
-    character(len=*), intent(in), optional :: options
-
-    call theDumpBegins ( options )
-    if ( any(shape(array1) == 0) ) then
-      call output( 'array sizes are 0', advance='yes' )
-    else if ( size(array1,1) == 1 ) then
-      if ( myWholeArray ) call output( '1st size is 1: reducing rank to 3', advance='yes' )
-      call diff ( array1(1,:,:,:), name1, array2(1,:,:,:), name2, &
-        & fillvalue, width, format, lbound, options )
-    else if ( size(array1,2) == 1 ) then
-      if ( myWholeArray ) call output( '2nd size is 1: reducing rank to 3', advance='yes' )
-      call diff ( array1(:,1,:,:), name1, array2(:,1,:,:), name2, &
-        & fillvalue, width, format, lbound, options )
-    else if ( size(array1,3) == 1 ) then
-      if ( myWholeArray ) call output( '3rd size is 1: reducing rank to 3', advance='yes' )
-      call diff ( array1(:,:,1,:), name1, array2(:,:,1,:), name2, &
-        & fillvalue, width, format, lbound, options )
-    else if ( size(array1,4) == 1 ) then
-      if ( myWholeArray ) call output( '4th size is 1: reducing rank to 3', advance='yes' )
-      call diff ( array1(:,:,:,1), name1, array2(:,:,:,1), name2, &
-        & fillvalue, width, format, lbound, options )
-    elseif ( .not. present(FillValue) ) then
-      call UnfilteredDiff( ARRAY1, NAME1, ARRAY2, NAME2, &
-        & WIDTH, FORMAT, LBOUND, OPTIONS )
-    elseif ( product(shape(array1)) > TOOMANYELEMENTS ) then
-      call MLSMessage ( MLSMSG_Warning, ModuleName, &
-        & 'array size of ' // trim(name1) // ' too large to filter Fill values' )
-      call UnfilteredDiff( ARRAY1, NAME1, ARRAY2, NAME2, &
-        & WIDTH, FORMAT, LBOUND, OPTIONS )
-    else
-      call FilteredDiff( ARRAY1, NAME1, ARRAY2, NAME2, &
-        & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS )
-    endif
-  end subroutine DIFF_4D_REAL
-
-  ! -----------------------------------------------  DIFF_SCALAR  -----
-  ! This family of functions differences two values and returns
-  ! according to options:
-  ! if options contains
-  ! character        meaning
-  ! ---------        -------
-  !     a            diff the absolute values
-  !     r            divide the difference by the max abs of the 2 values
-  !     f            treat auxvalue as a fillvalue: return fillvalue if either
-  !                    value is fillvalue
-  !     p            treat auxvalue as a period: return 
-  !                    min(value1 - value2 + n*period)
-  elemental function DIFF_SCALAR_DOUBLE ( VALUE1, VALUE2, AUXVALUE, OPTIONS ) &
-    & result(d)
-    ! Args
-    double precision, intent(in)           :: value1
-    double precision, intent(in)           :: value2
-    double precision, optional, intent(in) :: auxvalue
-    character(len=*), optional, intent(in) :: options
-    double precision                       :: d
-    ! Internal variables
-    integer, parameter :: RK = kind(0.0d0)
-    ! Executable
-    include 'diff_scalar.f9h'
-  end function DIFF_SCALAR_DOUBLE
-
-  elemental function DIFF_SCALAR_REAL ( VALUE1, VALUE2, AUXVALUE, OPTIONS ) &
-    & result(d)
-    ! Args
-    real, intent(in)                       :: value1
-    real, intent(in)                       :: value2
-    real, optional, intent(in)             :: auxvalue
-    character(len=*), optional, intent(in) :: options
-    real                                   :: d
-    ! Internal variables
-    integer, parameter :: RK = kind(0.0e0)
-    ! Executable
-    include 'diff_scalar.f9h'
-  end function DIFF_SCALAR_REAL
-
-  ! -----------------------------------------------  DUMP_1D_BIT  -----
-  subroutine DUMP_1D_BIT ( ARRAY, NAME, BITNAMES, FILLVALUE, OPTIONS )
-    integer, intent(in) :: ARRAY(:)
+  ! -----------------------------------------------  Dump_1D_Bit  -----
+  subroutine Dump_1D_Bit ( ARRay, Name, BITNAMES, FillValue, OptIONS )
+    integer, intent(in) :: Array(:)
     character(len=*), intent(in) :: NAME
     character(len=*), intent(in) :: BITNAMES
-    integer, intent(in), optional :: FILLVALUE
+    integer, intent(in), optional :: FillValue
     character(len=*), optional, intent(in) :: options
 
     integer :: howMany, J, K
@@ -763,7 +246,7 @@ contains
     if ( any(shape(array) == 0) ) then
       call empty ( name )
     else
-      call name_and_size ( name, myClean, size(array) )
+      call name_and_size ( name, dopts(clean)%v, size(array) )
       call newline
       call output( trim(BitNames), advance='yes' )
       do j=1, size(array)
@@ -774,7 +257,7 @@ contains
           ints = 0
           do k=1, howMany
             ints( 1 + set(k) ) = 1
-          enddo
+          end do
           if ( numZeroRows > 0 ) then
             call output ( ' ' , advance='no' )
             call output ( numZeroRows , advance='no' )
@@ -782,22 +265,22 @@ contains
             call output ( myFillValue , advance='no' )
             call output ( ' not printed', advance='no' )
             call finishLine
-          endif
+          end if
           call output( ints(1:numBitNames), format='(i3)', advance='no' )
           call finishLine
           numZeroRows = 0
-        endif
-      enddo
-    endif
+        end if
+      end do
+    end if
     call theDumpEnds
-  end subroutine DUMP_1D_BIT
+  end subroutine Dump_1D_Bit
 
-  ! -----------------------------------------------  DUMP_1D_CHAR  -----
-  subroutine DUMP_1D_CHAR ( ARRAY, NAME, FILLVALUE, WIDTH, OPTIONS, MAXLON, &
-    & TheSHAPE )
-    character(len=*), intent(in) :: ARRAY(:)
+  ! -----------------------------------------------  Dump_1D_Char  -----
+  subroutine Dump_1D_Char ( ARRay, Name, FillValue, WIDTH, OPTIONS, MAXLON, &
+    & TheShape )
+    character(len=*), intent(in) :: Array(:)
     character(len=*), intent(in), optional :: NAME
-    character(len=*), intent(in), optional :: FILLVALUE
+    character(len=*), intent(in), optional :: FillValue
     integer, intent(in), optional :: WIDTH
     character(len=*), optional, intent(in) :: OPTIONS
     integer, intent(in), optional :: MAXLON
@@ -816,10 +299,10 @@ contains
     if ( present(width) ) MyWidth = width
 
     lon = len(array(1))
-    if ( myTrim ) lon = maxval(len_trim(array))
+    if ( dopts(trimIt)%v ) lon = maxval(len_trim(array))
     if ( present(maxlon) ) then
       lon = min(lon, maxlon)
-    else if ( .not. myTrim ) then
+    else if ( .not. dopts(trimIt)%v ) then
       lon = min(lon, DEFAULTMAXLON)
     end if
 
@@ -827,16 +310,16 @@ contains
     if ( any(shape(array) == 0) ) then
       call empty ( name )
     else if ( size(array) == 1 ) then
-      call name_and_size ( name, myClean, 1, TheShape )
+      call name_and_size ( name, dopts(clean)%v, 1, TheShape )
       call output ( array(1)(1:lon), advance='no' )
       call finishLine
     else
-      call name_and_size ( name, myClean, size(array) )
-      if ( present(name) .and. .not. mylaconic ) call newLine
+      call name_and_size ( name, dopts(clean)%v, size(array) )
+      if ( present(name) .and. .not. dopts(laconic)%v ) call newLine
       do j = 1, size(array), MyWidth
-        DumpTheseZeros = myClean .or. &
+        DumpTheseZeros = dopts(clean)%v .or. &
           & any(array(j:min(j+2*myWidth-1, size(array))) /= myFillValue)
-        if (.not. myClean) then
+        if (.not. dopts(clean)%v) then
           if ( DumpTheseZeros ) then
             call say_fill ( (/ j-1, size(array) /), numZeroRows, &
               & myFillValue, inc=1 )
@@ -856,13 +339,13 @@ contains
         & myFillValue )
     end if
     call theDumpEnds
-  end subroutine DUMP_1D_CHAR
+  end subroutine Dump_1D_Char
 
-  ! --------------------------------------------  DUMP_1D_COMPLEX  -----
-  subroutine DUMP_1D_COMPLEX ( ARRAY, NAME, WIDTH, FORMAT, &
-    & FILLVALUE, LBOUND, OPTIONS, TheShape )
+  ! --------------------------------------------  Dump_1D_Complex  -----
+  subroutine Dump_1D_Complex ( ARRay, Name, WIDTH, FORMAT, &
+    & FillValue, LBOUND, OPTIONS, TheShape )
     integer, parameter :: RK = kind(0.0e0)
-    complex(rk), intent(in) :: ARRAY(:)
+    complex(rk), intent(in) :: Array(:)
     character(len=*), intent(in), optional :: NAME
     integer, intent(in), optional :: WIDTH
     character(len=*), intent(in), optional :: FORMAT
@@ -889,13 +372,13 @@ contains
     if ( present(lbound) ) base = lbound - 1
 
     include 'dump1db.f9h'
-  end subroutine DUMP_1D_COMPLEX
+  end subroutine Dump_1D_Complex
 
-  ! --------------------------------------------  DUMP_1D_DCOMPLEX  -----
-  subroutine DUMP_1D_DCOMPLEX ( ARRAY, NAME, WIDTH, FORMAT, &
-    & FILLVALUE, LBOUND, OPTIONS, TheShape )
+  ! --------------------------------------------  Dump_1D_DComplex  -----
+  subroutine Dump_1D_DComplex ( ARRay, Name, WIDTH, FORMAT, &
+    & FillValue, LBOUND, OPTIONS, TheShape )
     integer, parameter :: RK = kind(0.0d0)
-    complex(rk), intent(in) :: ARRAY(:)
+    complex(rk), intent(in) :: Array(:)
     character(len=*), intent(in), optional :: NAME
     integer, intent(in), optional :: WIDTH
     character(len=*), intent(in), optional :: FORMAT
@@ -922,14 +405,14 @@ contains
     if ( present(lbound) ) base = lbound - 1
 
     include 'dump1db.f9h'
-  end subroutine DUMP_1D_DCOMPLEX
+  end subroutine Dump_1D_DComplex
 
- ! ---------------------------------------------  DUMP_1D_DOUBLE  -----
-  subroutine DUMP_1D_DOUBLE ( ARRAY, NAME, &
-    & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS, TheShape )
-    double precision, intent(in) :: ARRAY(:)
+ ! ---------------------------------------------  Dump_1D_Double  -----
+  subroutine Dump_1D_Double ( ARRay, Name, &
+    & FillValue, WIDTH, FORMAT, LBOUND, OPTIONS, TheShape )
+    double precision, intent(in) :: Array(:)
     character(len=*), intent(in), optional :: NAME
-    double precision, intent(in), optional :: FILLVALUE
+    double precision, intent(in), optional :: FillValue
     integer, intent(in), optional :: WIDTH
     character(len=*), intent(in), optional :: FORMAT
     integer, intent(in), optional :: LBOUND ! Low bound for Array
@@ -949,35 +432,14 @@ contains
     myFormat = sdFormatDefault
     include 'dump1d.f9h'
     include 'dump1db.f9h'
-  end subroutine DUMP_1D_DOUBLE
+  end subroutine Dump_1D_Double
 
-  ! --------------------------------------------  DUMP_BOGUS  -----
-  ! Never used--just here to tell Makefiles that dumpstats.f9h is
-  ! a prerequisite for dump_0 because perl script f90makedep.pl
-  ! won't follow .f9h files to look for more uses and includes.
-  ! When will we repair the perl script?
-  !
-  subroutine DUMP_BOGUS ( ARRAY, NAME, &
-    & FILLVALUE, FORMAT, WIDTH, LBOUND, OPTIONS )
-    integer, intent(in) :: ARRAY(:)
+  ! --------------------------------------------  Dump_1D_Integer  -----
+  subroutine Dump_1D_Integer ( ARRay, Name, &
+    & FillValue, FORMAT, WIDTH, LBOUND, OPTIONS, TheShape )
+    integer, intent(in) :: Array(:)
     character(len=*), intent(in), optional :: NAME
-    integer, intent(in), optional :: FILLVALUE
-    character(len=*), intent(in), optional :: FORMAT
-    integer, intent(in), optional :: WIDTH ! How many numbers per line (10)?
-    integer, intent(in), optional :: LBOUND ! Low bound for Array
-    character(len=*), optional, intent(in) :: options
-    integer :: myFillValue
-    myFillValue = 0
-    myRank = 0
-    include 'dumpstats.f9h'
-  end subroutine DUMP_BOGUS
-
-  ! --------------------------------------------  DUMP_1D_INTEGER  -----
-  subroutine DUMP_1D_INTEGER ( ARRAY, NAME, &
-    & FILLVALUE, FORMAT, WIDTH, LBOUND, OPTIONS, TheShape )
-    integer, intent(in) :: ARRAY(:)
-    character(len=*), intent(in), optional :: NAME
-    integer, intent(in), optional :: FILLVALUE
+    integer, intent(in), optional :: FillValue
     character(len=*), intent(in), optional :: FORMAT
     integer, intent(in), optional :: WIDTH ! How many numbers per line (10)?
     integer, intent(in), optional :: LBOUND ! Low bound for Array
@@ -998,44 +460,36 @@ contains
     myFormat = 'places=' // INTPLACES ! To sneak places arg into call to output
     include 'dump1d.f9h'
     include 'dump1db.f9h'
-  end subroutine DUMP_1D_INTEGER
+  end subroutine Dump_1D_Integer
 
-  ! --------------------------------------------  DUMP_1D_INTEGER_2B  -----
-  subroutine DUMP_1D_INTEGER_2B ( ARRAY, NAME, &
-    & FILLVALUE, FORMAT, WIDTH, LBOUND, OPTIONS, TheShape )
+  ! --------------------------------------------  Dump_1D_Integer_2B  -----
+  subroutine Dump_1D_Integer_2B ( ARRay, Name, &
+    & FillValue, FORMAT, WIDTH, LBOUND, OPTIONS, TheShape )
     use ISO_C_BINDING, only: C_int16_t
-    integer(C_int16_t), intent(in) :: ARRAY(:)
+    integer(C_int16_t), intent(in) :: Array(:)
     character(len=*), intent(in), optional :: NAME
-    integer, intent(in), optional :: FILLVALUE
+    integer, intent(in), optional :: FillValue
     character(len=*), intent(in), optional :: FORMAT
     integer, intent(in), optional :: WIDTH ! How many numbers per line (10)?
     integer, intent(in), optional :: LBOUND ! Low bound for Array
     character(len=*), optional, intent(in) :: OPTIONS
     character(len=*), intent(in), optional :: TheShape
 
-    integer, dimension(MAXNUMELEMENTS) :: counts
-    integer, dimension(MAXNUMELEMENTS) :: elements
-    integer :: myFillValue
-    integer :: Base, J, K
-    character(len=64) :: MyFormat
-    integer :: MyWidth
-    integer :: NumZeroRows
-    integer :: nUnique
     call dump( int(array), NAME, &
-    & FILLVALUE, FORMAT, WIDTH, LBOUND, OPTIONS, TheShape )
-  end subroutine DUMP_1D_INTEGER_2B
+    & FillValue, FORMAT, WIDTH, LBOUND, OPTIONS, TheShape )
+  end subroutine Dump_1D_Integer_2B
 
-  ! ----------------------------------------------  DUMP_1D_LOGICAL ----
-  subroutine DUMP_1D_LOGICAL ( ARRAY, NAME, LBOUND, OPTIONS, TheShape )
-    logical, intent(in) :: ARRAY(:)
+  ! ----------------------------------------------  Dump_1D_Logical ----
+  subroutine Dump_1D_Logical ( ARRay, Name, LBOUND, OPTIONS, TheShape )
+    logical, intent(in) :: Array(:)
     character(len=*), intent(in), optional :: NAME
     integer, intent(in), optional :: LBOUND ! Low bound of Array
     character(len=*), optional, intent(in) :: OPTIONS
     character(len=*), intent(in), optional :: TheShape
 
     integer :: Base, J, K, N, NTRUE, NFALSE
-    ! Executable
 
+    ! Executable
     call theDumpBegins ( options )
     base = 0
     if ( present(lbound) ) base = lbound - 1
@@ -1043,11 +497,11 @@ contains
     if ( any(shape(array) == 0) ) then
       call empty ( name )
     else if ( size(array) == 1 .and. base == 0 ) then
-      call name_and_size ( name, myClean, 1 )
+      call name_and_size ( name, dopts(clean)%v, 1 )
       call output ( array(1), advance='no' )
       call finishLine
     else if ( all(array .eqv. .true.) ) then
-      call name_and_size ( name, myClean, size(array) )
+      call name_and_size ( name, dopts(clean)%v, size(array) )
       call output ( '(' )
       if ( present(lbound) ) call output ( lbound )
       call output ( ':) all ', advance='no' )
@@ -1055,16 +509,16 @@ contains
       call output( ' values are T', advance='no' )
       call finishLine
     else if ( all(array .eqv. .false.) ) then
-      call name_and_size ( name, myClean, size(array) )
+      call name_and_size ( name, dopts(clean)%v, size(array) )
       call output ( '(' )
       if ( present(lbound) ) call output ( lbound )
       call output ( ':) all ', advance='no' )
       call output( trim(arrayShapeToString(shape(array))), advance='no' )
       call output( ' values are F', advance='no' )
       call finishLine
-    elseif ( myGaps ) then
-      call name_and_size ( name, myClean, size(array) )
-      if ( present(name) .and. .not. mylaconic ) call newLine
+    else if ( dopts(gaps)%v ) then
+      call name_and_size ( name, dopts(clean)%v, size(array) )
+      if ( present(name) .and. .not. dopts(laconic)%v ) call newLine
       k = 0
       if ( size(array)/100 > 100 )  call showColumnNums( 100 )
       do j=1, size(array), 100
@@ -1079,16 +533,16 @@ contains
           call output( array(k+1 : k+N), onlyif=.true., advance='no' )
         else
           call output( array(k+1 : k+N), onlyif=.false., advance='no' )
-        endif
+        end if
         call finishLine
         k = k + 100
-      enddo
+      end do
       call showColumnNums( 100 )
     else
-      call name_and_size ( name, myClean, size(array) )
-      if ( present(name) .and. .not. mylaconic ) call newLine
+      call name_and_size ( name, dopts(clean)%v, size(array) )
+      if ( present(name) .and. .not. dopts(laconic)%v ) call newLine
       do j = 1, size(array), 34
-        if (.not. myClean) then
+        if (.not. dopts(clean)%v) then
           call output ( j+base, max(4,ilog10(size(array))+1) , advance='no' )
           call output ( afterSub , advance='no' )
         end if
@@ -1099,14 +553,14 @@ contains
       end do
     end if
     call theDumpEnds
-  end subroutine DUMP_1D_LOGICAL
+  end subroutine Dump_1D_Logical
 
-  ! -----------------------------------------------  DUMP_1D_REAL  -----
-  subroutine DUMP_1D_REAL ( ARRAY, NAME, &
-    & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS, TheShape )
-    real, intent(in) :: ARRAY(:)
+  ! -----------------------------------------------  Dump_1D_Real  -----
+  subroutine Dump_1D_Real ( ARRay, Name, &
+    & FillValue, WIDTH, FORMAT, LBOUND, OPTIONS, TheShape )
+    real, intent(in) :: Array(:)
     character(len=*), intent(in), optional :: NAME
-    real, intent(in), optional :: FILLVALUE
+    real, intent(in), optional :: FillValue
     integer, intent(in), optional :: WIDTH
     character(len=*), intent(in), optional :: FORMAT
     integer, intent(in), optional :: LBOUND ! Low bound for Array
@@ -1126,14 +580,14 @@ contains
     myFormat = sdFormatDefault
     include 'dump1d.f9h'
     include 'dump1db.f9h'
-  end subroutine DUMP_1D_REAL
+  end subroutine Dump_1D_Real
 
-  ! -----------------------------------------------  DUMP_2D_CHAR  -----
-  recursive subroutine DUMP_2D_CHAR ( ARRAY, NAME, FILLVALUE, WIDTH, MAXLON, &
+  ! -----------------------------------------------  Dump_2D_Char  -----
+  recursive subroutine Dump_2D_Char ( ARRay, Name, FillValue, WIDTH, MAXLON, &
     & OPTIONS, TheShape )
-    character(len=*), intent(in) :: ARRAY(:,:)
+    character(len=*), intent(in) :: Array(:,:)
     character(len=*), intent(in), optional :: NAME
-    character(len=*), intent(in), optional :: FILLVALUE
+    character(len=*), intent(in), optional :: FillValue
     integer, intent(in), optional :: MAXLON
     character(len=*), optional, intent(in) :: options
     integer, intent(in), optional :: WIDTH
@@ -1146,51 +600,51 @@ contains
     integer :: MyWidth
 
     call theDumpBegins ( options )
-    if ( myTranspose ) then
+    if ( dopts(myTranspose)%v ) then
       call dump ( transpose(array), name, &
         & fillvalue, width, &
         & options=snipoption(options, dopt_transpose) )
       return
-    endif
+    end if
     myFillValue = ' '
     if ( present(FillValue) ) myFillValue = FillValue
     MyWidth = 10
     if ( present(width) ) MyWidth = width
     lon = len(array(1,1))
-    if ( myTrim ) lon = maxval(len_trim(array))
+    if ( dopts(trimIt)%v ) lon = maxval(len_trim(array))
     if ( present(maxlon) ) lon = min(lon, maxlon)
 
     numZeroRows = 0
     if ( any(shape(array) == 0) ) then
       call empty ( name )
-    else if ( size(array,1) == 1 ) then
-      call name_and_size ( name, myClean, 1, TheShape )
+    else if ( size( Array,1) == 1 ) then
+      call name_and_size ( name, dopts(clean)%v, 1, TheShape )
       call output ( array(1,:), advance='no' )
       call finishLine
-    else if ( size(array,2) == 1 ) then
+    else if ( size( Array,2) == 1 ) then
       call dump ( array(:,1), name, fillValue=fillValue, maxlon=maxlon, options=options )
     else
-      call name_and_size ( name, myClean, size(array) )
-      if ( present(name) .and. .not. mylaconic ) call newLine
-      do i = 1, size(array,1)
-        do j = 1, size(array,2), MyWidth
-          DumpTheseZeros = myClean .or. &
-            & any(array(i,j:min(j+2*MyWidth-1, size(array,2))) /= myFillValue) &
+      call name_and_size ( name, dopts(clean)%v, size(array) )
+      if ( present(name) .and. .not. dopts(laconic)%v ) call newLine
+      do i = 1, size( Array,1)
+        do j = 1, size( Array,2), MyWidth
+          DumpTheseZeros = dopts(clean)%v .or. &
+            & any(array(i,j:min(j+2*MyWidth-1, size( Array,2))) /= myFillValue) &
             & .or. &
-            & ( j+MyWidth >= size(array,2) .and. &
-            & any(array(min(i+1, size(array,1)),1:min(1+MyWidth-1, size(array,2))) &
+            & ( j+MyWidth >= size( Array,2) .and. &
+            & any(array(min(i+1, size( Array,1)),1:min(1+MyWidth-1, size( Array,2))) &
             & /= myFillValue) &
             & )
-          if (.not. myClean) then
+          if (.not. dopts(clean)%v) then
             if ( DumpTheseZeros ) then
-              call say_fill ( (/ i, size(array,1), j-1, size(array,2) /), &
+              call say_fill ( (/ i, size( Array,1), j-1, size( Array,2) /), &
                 & numZeroRows, myFillValue, inc=3 )
             else
               numZeroRows = numZeroRows + 1
             end if
           end if
           if ( DumpTheseZeros ) then
-            do k = j, min(j+myWidth-1, size(array,2))
+            do k = j, min(j+myWidth-1, size( Array,2))
                 call output ( array(i,k)(1:lon) // ' ' , advance='no' )
             end do
             call newLine
@@ -1198,17 +652,17 @@ contains
           end if
         end do ! j
       end do ! i
-      call say_fill ( (/ i-1, size(array,1), j-MyWidth, size(array,2) /), &
+      call say_fill ( (/ i-1, size( Array,1), j-MyWidth, size( Array,2) /), &
         & numZeroRows, myFillValue )
     end if
     call theDumpEnds
-  end subroutine DUMP_2D_CHAR
+  end subroutine Dump_2D_Char
 
-  ! --------------------------------------------  DUMP_2D_COMPLEX  -----
-  recursive subroutine DUMP_2D_COMPLEX ( ARRAY, NAME, WIDTH, FORMAT, &
-    & FILLVALUE, OPTIONS, LBOUND, TheShape )
+  ! --------------------------------------------  Dump_2D_Complex  -----
+  recursive subroutine Dump_2D_Complex ( ARRay, Name, WIDTH, FORMAT, &
+    & FillValue, OptIONS, LBOUND, TheShape )
     integer, parameter :: RK = kind(0.0e0)
-    complex(rk), intent(in) :: ARRAY(:,:)
+    complex(rk), intent(in) :: Array(:,:)
     character(len=*), intent(in), optional :: NAME
     integer, intent(in), optional :: WIDTH ! How many per line?
     character(len=*), optional :: FORMAT
@@ -1226,12 +680,12 @@ contains
 
     myFormat = sdFormatDefaultCmplx
     call theDumpBegins ( options )
-    if ( myTranspose ) then
+    if ( dopts(myTranspose)%v ) then
       call dump ( transpose(array), name, &
         & width, format, fillvalue, &
         & options=snipoption(options, dopt_transpose) )
       return
-    endif
+    end if
 
     myWidth = 3
     if ( present(width) ) myWidth = width
@@ -1247,13 +701,13 @@ contains
     if ( present(lbound) ) base = lbound
 
     include 'dump2db.f9h'
-  end subroutine DUMP_2D_COMPLEX
+  end subroutine Dump_2D_Complex
 
-  ! --------------------------------------------  DUMP_2D_DCOMPLEX  -----
-  recursive subroutine DUMP_2D_DCOMPLEX ( ARRAY, NAME, WIDTH, FORMAT, &
-    & FILLVALUE, OPTIONS, LBOUND, TheShape )
+  ! --------------------------------------------  Dump_2D_DComplex  -----
+  recursive subroutine Dump_2D_DComplex ( ARRay, Name, WIDTH, FORMAT, &
+    & FillValue, OptIONS, LBOUND, TheShape )
     integer, parameter :: RK = kind(0.0d0)
-    complex(rk), intent(in) :: ARRAY(:,:)
+    complex(rk), intent(in) :: Array(:,:)
     character(len=*), intent(in), optional :: NAME
     integer, intent(in), optional :: WIDTH ! How many per line?
     character(len=*), optional :: FORMAT
@@ -1272,12 +726,12 @@ contains
 
     myFormat = sdFormatDefaultCmplx
     call theDumpBegins ( options )
-    if ( myTranspose ) then
+    if ( dopts(myTranspose)%v ) then
       call dump ( transpose(array), name, &
         & width, format, fillvalue, &
         & options=snipoption(options, dopt_transpose) )
       return
-    endif
+    end if
 
     myWidth = 3
     if ( present(width) ) myWidth = width
@@ -1293,14 +747,14 @@ contains
     if ( present(lbound) ) base = lbound
 
     include 'dump2db.f9h'
-  end subroutine DUMP_2D_DCOMPLEX
+  end subroutine Dump_2D_DComplex
 
-  ! ---------------------------------------------  DUMP_2D_DOUBLE  -----
- recursive subroutine DUMP_2D_DOUBLE ( ARRAY, NAME, &
-    & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS, TheShape )
-    double precision, intent(in) :: ARRAY(:,:)
+  ! ---------------------------------------------  Dump_2D_Double  -----
+ recursive subroutine Dump_2D_Double ( ARRay, Name, &
+    & FillValue, WIDTH, FORMAT, LBOUND, OPTIONS, TheShape )
+    double precision, intent(in) :: Array(:,:)
     character(len=*), intent(in), optional :: NAME
-    double precision, intent(in), optional :: FILLVALUE
+    double precision, intent(in), optional :: FillValue
     integer, intent(in), optional :: WIDTH
     character(len=*), intent(in), optional :: FORMAT
     integer, intent(in), optional :: LBOUND ! to print for first dimension
@@ -1325,14 +779,14 @@ contains
 
     include 'dump2d.f9h'
     include 'dump2db.f9h'
-  end subroutine DUMP_2D_DOUBLE
+  end subroutine Dump_2D_Double
 
-  ! --------------------------------------------  DUMP_2D_INTEGER  -----
-  recursive subroutine DUMP_2D_INTEGER ( ARRAY, NAME, &
-    & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS, TheShape )
-    integer, intent(in) :: ARRAY(:,:)
+  ! --------------------------------------------  Dump_2D_Integer  -----
+  recursive subroutine Dump_2D_Integer ( ARRay, Name, &
+    & FillValue, WIDTH, FORMAT, LBOUND, OPTIONS, TheShape )
+    integer, intent(in) :: Array(:,:)
     character(len=*), intent(in), optional :: NAME
-    integer, intent(in), optional :: FILLVALUE
+    integer, intent(in), optional :: FillValue
     character(len=*), intent(in), optional :: FORMAT
     integer, intent(in), optional :: WIDTH ! How many numbers per line (10)?
     integer, intent(in), optional :: LBOUND ! to print for first dimension
@@ -1357,37 +811,28 @@ contains
 
     include 'dump2d.f9h'
     include 'dump2db.f9h'
-  end subroutine DUMP_2D_INTEGER
+  end subroutine Dump_2D_Integer
 
-  ! --------------------------------------------  DUMP_2D_INTEGER_2B  -----
-  recursive subroutine DUMP_2D_INTEGER_2B ( ARRAY, NAME, &
-    & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS, TheShape )
+  ! --------------------------------------------  Dump_2D_Integer_2B  -----
+  recursive subroutine Dump_2D_Integer_2B ( ARRay, Name, &
+    & FillValue, WIDTH, FORMAT, LBOUND, OPTIONS, TheShape )
     use ISO_C_BINDING, only: C_int16_t
-    integer(C_int16_t), intent(in) :: ARRAY(:,:)
+    integer(C_int16_t), intent(in) :: Array(:,:)
     character(len=*), intent(in), optional :: NAME
-    integer, intent(in), optional :: FILLVALUE
+    integer, intent(in), optional :: FillValue
     character(len=*), intent(in), optional :: FORMAT
     integer, intent(in), optional :: WIDTH ! How many numbers per line (10)?
     integer, intent(in), optional :: LBOUND ! to print for first dimension
     character(len=*), intent(in), optional :: options
     character(len=*), intent(in), optional :: TheShape
 
-    integer :: Base, I, J, K
-    integer :: MyWidth
-    integer :: NumZeroRows
-    integer :: myFillValue
-    character(len=64) :: MyFormat
-    integer :: nUnique
-    integer, dimension(MAXNUMELEMENTS) :: counts
-    integer, dimension(MAXNUMELEMENTS) :: elements
-
     call dump( int(array), NAME, &
-    & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS, TheShape )
-  end subroutine DUMP_2D_INTEGER_2B
+    & FillValue, WIDTH, FORMAT, LBOUND, OPTIONS, TheShape )
+  end subroutine Dump_2D_Integer_2B
 
-  ! --------------------------------------------  DUMP_2D_LOGICAL  -----
-  recursive subroutine DUMP_2D_LOGICAL ( ARRAY, NAME, OPTIONS, THESHAPE )
-    logical, intent(in) :: ARRAY(:,:)
+  ! --------------------------------------------  Dump_2D_Logical  -----
+  recursive subroutine Dump_2D_Logical ( ARRay, Name, OPTIONS, THESHAPE )
+    logical, intent(in) :: Array(:,:)
     character(len=*), intent(in), optional :: NAME
     character(len=*), intent(in), optional :: options
     character(len=*), intent(in), optional :: TheShape
@@ -1396,43 +841,43 @@ contains
     integer, parameter :: MyWidth = 34
 
     call theDumpBegins ( options )
-    if ( myTranspose ) then
+    if ( dopts(myTranspose)%v ) then
       call dump ( transpose(array), name, &
         & options=snipoption(options, dopt_transpose) )
       return
-    endif
+    end if
 
     if ( any(shape(array) == 0) ) then
       call empty ( name )
     else if ( size(array) == 1 ) then
-      call name_and_size ( name, myClean, 1, TheShape )
+      call name_and_size ( name, dopts(clean)%v, 1, TheShape )
       call output ( array(1,1), advance='no' )
       call finishLine
-    else if ( size(array,2) == 1 ) then
+    else if ( size( Array,2) == 1 ) then
       call dump ( array(:,1), name, options=options )
     else if ( all(array .eqv. .true.) ) then
-      call name_and_size ( name, myClean, size(array), TheShape )
+      call name_and_size ( name, dopts(clean)%v, size(array), TheShape )
       call output ( ': all ', advance='no' )
       call output( trim(arrayShapeToString(shape(array))), advance='no' )
       call output( ' values are T', advance='no' )
       call finishLine
     else if ( all(array .eqv. .false.) ) then
-      call name_and_size ( name, myClean, size(array), TheShape )
+      call name_and_size ( name, dopts(clean)%v, size(array), TheShape )
       call output ( ': all ', advance='no' )
       call output( trim(arrayShapeToString(shape(array))), advance='no' )
       call output( ' values are F', advance='no' )
       call finishLine
     else
-      call name_and_size ( name, myClean, size(array) )
-      if ( present(name) .and. .not. mylaconic ) call newLine
-      do i = 1, size(array,1)
-        do j = 1, size(array,2), myWidth
-          if (.not. myClean) then
-            call output ( i, places=max(4,ilog10(size(array,1))+1) , advance='no' )
-            call output ( j, places=max(4,ilog10(size(array,2))+1) , advance='no' )
+      call name_and_size ( name, dopts(clean)%v, size(array) )
+      if ( present(name) .and. .not. dopts(laconic)%v ) call newLine
+      do i = 1, size( Array,1)
+        do j = 1, size( Array,2), myWidth
+          if (.not. dopts(clean)%v) then
+            call output ( i, places=max(4,ilog10(size( Array,1))+1) , advance='no' )
+            call output ( j, places=max(4,ilog10(size( Array,2))+1) , advance='no' )
             call output ( afterSub , advance='no' )
           end if
-          do k = j, min(j+myWidth-1, size(array,2))
+          do k = j, min(j+myWidth-1, size( Array,2))
             call output ( array(i,k) , advance='no' )
           end do
           call newLine
@@ -1440,14 +885,14 @@ contains
       end do ! i
     end if
     call theDumpEnds
-  end subroutine DUMP_2D_LOGICAL
+  end subroutine Dump_2D_Logical
 
-  ! -----------------------------------------------  DUMP_2D_REAL  -----
-  recursive subroutine DUMP_2D_REAL ( ARRAY, NAME, &
-    & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS, THESHAPE )
-    real, intent(in) :: ARRAY(:,:)
+  ! -----------------------------------------------  Dump_2D_Real  -----
+  recursive subroutine Dump_2D_Real ( ARRay, Name, &
+    & FillValue, WIDTH, FORMAT, LBOUND, OPTIONS, THESHAPE )
+    real, intent(in) :: Array(:,:)
     character(len=*), intent(in), optional :: NAME
-    real, intent(in), optional :: FILLVALUE
+    real, intent(in), optional :: FillValue
     integer, intent(in), optional :: WIDTH
     character(len=*), intent(in), optional :: FORMAT
     integer, intent(in), optional :: LBOUND
@@ -1472,13 +917,13 @@ contains
 
     include 'dump2d.f9h'
     include 'dump2db.f9h'
-  end subroutine DUMP_2D_REAL
+  end subroutine Dump_2D_Real
 
-  ! -----------------------------------------  DUMP_2x2xN_COMPLEX  -----
-  subroutine DUMP_2x2xN_COMPLEX ( ARRAY, NAME, FORMAT, OPTIONS )
+  ! -----------------------------------------  Dump_2x2xN_Complex  -----
+  subroutine Dump_2x2xN_Complex ( ARRay, Name, FORMAT, OPTIONS )
   ! This is for dumping polarized incremental optical depth
     integer, parameter :: RK = kind(0.0e0)
-    complex(rk), intent(in) :: ARRAY(:,:,:) ! Better be 2x2xn
+    complex(rk), intent(in) :: Array(:,:,:) ! Better be 2x2xn
     character(len=*), intent(in), optional :: NAME
     character(len=*), intent(in), optional :: FORMAT
     character(len=*), intent(in), optional :: options
@@ -1495,10 +940,10 @@ contains
     if ( any(shape(array) == 0) ) then
       call empty ( name )
     else
-      call name_and_size ( name, myClean, size(array) )
-      if ( present(name) .and. .not. mylaconic ) call newLine
-      do j = 1, size(array,3)
-        if (.not. myClean) then
+      call name_and_size ( name, dopts(clean)%v, size(array) )
+      if ( present(name) .and. .not. dopts(laconic)%v ) call newLine
+      do j = 1, size( Array,3)
+        if (.not. dopts(clean)%v) then
           call output ( j, max(3,ilog10(size(array))+1) , advance='no' )
           call output ( afterSub , advance='no' )
         end if
@@ -1512,13 +957,13 @@ contains
       end do
     end if
     call theDumpEnds
-  end subroutine DUMP_2x2xN_COMPLEX
+  end subroutine Dump_2x2xN_Complex
 
-  ! ----------------------------------------  DUMP_2x2xN_DCOMPLEX  -----
-  subroutine DUMP_2x2xN_DCOMPLEX ( ARRAY, NAME, FORMAT, OPTIONS )
+  ! ----------------------------------------  Dump_2x2xN_DComplex  -----
+  subroutine Dump_2x2xN_DComplex ( ARRay, Name, FORMAT, OPTIONS )
   ! This is for dumping polarized incremental optical depth
     integer, parameter :: RK = kind(0.0d0)
-    complex(rk), intent(in) :: ARRAY(:,:,:) ! Better be 2x2xn
+    complex(rk), intent(in) :: Array(:,:,:) ! Better be 2x2xn
     character(len=*), intent(in), optional :: NAME
     character(len=*), intent(in), optional :: FORMAT
     character(len=*), intent(in), optional :: options
@@ -1535,10 +980,10 @@ contains
     if ( any(shape(array) == 0) ) then
       call empty ( name )
     else
-      call name_and_size ( name, myClean, size(array) )
-      if ( present(name) .and. .not. mylaconic ) call newLine
-      do j = 1, size(array,3)
-        if (.not. myClean) then
+      call name_and_size ( name, dopts(clean)%v, size(array) )
+      if ( present(name) .and. .not. dopts(laconic)%v ) call newLine
+      do j = 1, size( Array,3)
+        if (.not. dopts(clean)%v) then
           call output ( j, max(3,ilog10(size(array))+1) , advance='no' )
           call output ( afterSub , advance='no' )
         end if
@@ -1552,14 +997,14 @@ contains
       end do
     end if
     call theDumpEnds
-  end subroutine DUMP_2x2xN_DCOMPLEX
+  end subroutine Dump_2x2xN_DComplex
 
-  ! -----------------------------------------------  DUMP_3D_CHAR  -----
-  subroutine DUMP_3D_CHAR ( ARRAY, NAME, FILLVALUE, WIDTH, &
+  ! -----------------------------------------------  Dump_3D_Char  -----
+  subroutine Dump_3D_Char ( ARRay, Name, FillValue, WIDTH, &
     & MAXLON, OPTIONS, THESHAPE )
-    character(len=*), intent(in) :: ARRAY(:,:,:)
+    character(len=*), intent(in) :: Array(:,:,:)
     character(len=*), intent(in), optional :: NAME
-    character(len=*), intent(in), optional :: FILLVALUE
+    character(len=*), intent(in), optional :: FillValue
     integer, intent(in), optional :: WIDTH
     integer, intent(in), optional :: MAXLON
     character(len=*), intent(in), optional :: options
@@ -1576,7 +1021,7 @@ contains
     if ( present(FillValue) ) myFillValue = FillValue
 
     lon = len(array(1,1,1))
-    if ( myTrim ) lon = maxval(len_trim(array))
+    if ( dopts(trimIt)%v ) lon = maxval(len_trim(array))
     if ( present(maxlon) ) lon = min(lon, maxlon)
     MyWidth = 10
     if ( present(width) ) MyWidth = width
@@ -1584,38 +1029,38 @@ contains
     numZeroRows = 0
     if ( any(shape(array) == 0) ) then
       call empty ( name )
-    else if ( size(array,1) == 1 ) then
+    else if ( size( Array,1) == 1 ) then
       call dump ( array(1,:,:), name, fillValue=fillValue, &
         & maxlon=maxlon, options=options, width=width )
-    else if ( size(array,2) == 1 ) then
+    else if ( size( Array,2) == 1 ) then
       call dump ( array(:,1,:), name, fillValue=fillValue, &
         & maxlon=maxlon, options=options, width=width )
-    else if ( size(array,3) == 1 ) then
+    else if ( size( Array,3) == 1 ) then
       call dump ( array(:,:,1), name, fillValue=fillValue, &
         & maxlon=maxlon, options=options, width=width )
     else
-      call name_and_size ( name, myClean, size(array) )
-      if ( present(name) .and. .not. mylaconic ) call newLine
-      do i = 1, size(array,1)
-        do j = 1, size(array,2)
-          do k = 1, size(array,3), MyWidth
-            DumpTheseZeros = myClean .or. &
-              & any(array(i,j,k:min(k+2*MyWidth-1, size(array,3))) /= myFillValue) &
+      call name_and_size ( name, dopts(clean)%v, size(array) )
+      if ( present(name) .and. .not. dopts(laconic)%v ) call newLine
+      do i = 1, size( Array,1)
+        do j = 1, size( Array,2)
+          do k = 1, size( Array,3), MyWidth
+            DumpTheseZeros = dopts(clean)%v .or. &
+              & any(array(i,j,k:min(k+2*MyWidth-1, size( Array,3))) /= myFillValue) &
               & .or. &
-              & ( k+MyWidth >= size(array,3) .and. &
-              & any(array(i,min(j+1, size(array,2)),1:min(1+MyWidth-1, size(array,3))) &
+              & ( k+MyWidth >= size( Array,3) .and. &
+              & any(array(i,min(j+1, size( Array,2)),1:min(1+MyWidth-1, size( Array,3))) &
               & /= myFillValue) &
               & )
-            if (.not. myClean) then
+            if (.not. dopts(clean)%v) then
               if ( DumpTheseZeros ) then
-                call say_fill ( (/ i, size(array,1), j-1, size(array,2), &
-                  & k, size(array,3) /), numZeroRows, myFillValue, inc=3 )
+                call say_fill ( (/ i, size( Array,1), j-1, size( Array,2), &
+                  & k, size( Array,3) /), numZeroRows, myFillValue, inc=3 )
               else
                 numZeroRows = numZeroRows + 1
               end if
             end if
           if ( DumpTheseZeros ) then
-              do l = k, min(k+MyWidth-1, size(array,3))
+              do l = k, min(k+MyWidth-1, size( Array,3))
                   call output ( array(i,j,l)(1:lon) // ' ' , advance='no' )
               end do
               call newLine
@@ -1624,19 +1069,19 @@ contains
           end do
         end do
       end do
-      call say_fill ( (/ i-1, size(array,1), j-1, size(array,2), &
-        & k-MyWidth, size(array,3) /), numZeroRows, myFillValue )
+      call say_fill ( (/ i-1, size( Array,1), j-1, size( Array,2), &
+        & k-MyWidth, size( Array,3) /), numZeroRows, myFillValue )
     end if
     call theDumpEnds
-  end subroutine DUMP_3D_CHAR
+  end subroutine Dump_3D_Char
 
-  ! --------------------------------------------  DUMP_3D_COMPLEX  -----
-  subroutine DUMP_3D_COMPLEX ( ARRAY, NAME, &
-    & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS, THESHAPE )
+  ! --------------------------------------------  Dump_3D_Complex  -----
+  subroutine Dump_3D_Complex ( ARRay, Name, &
+    & FillValue, WIDTH, FORMAT, LBOUND, OPTIONS, THESHAPE )
     integer, parameter :: RK = kind(0.0e0)
-    complex(rk), intent(in) :: ARRAY(:,:,:)
+    complex(rk), intent(in) :: Array(:,:,:)
     character(len=*), intent(in), optional :: NAME
-    real, intent(in), optional :: FILLVALUE
+    real, intent(in), optional :: FillValue
     integer, intent(in), optional :: WIDTH
     character(len=*), intent(in), optional :: FORMAT
     integer, intent(in), optional :: LBOUND
@@ -1663,15 +1108,15 @@ contains
     if ( present(width) ) MyWidth = width
 
     include 'dump3db.f9h'
-  end subroutine DUMP_3D_COMPLEX
+  end subroutine Dump_3D_Complex
 
-  ! -------------------------------------------  DUMP_3D_DCOMPLEX  -----
-  subroutine DUMP_3D_DCOMPLEX ( ARRAY, NAME, &
-    & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS, THESHAPE )
+  ! -------------------------------------------  Dump_3D_DComplex  -----
+  subroutine Dump_3D_DComplex ( ARRay, Name, &
+    & FillValue, WIDTH, FORMAT, LBOUND, OPTIONS, THESHAPE )
     integer, parameter :: RK = kind(0.0d0)
-    complex(rk), intent(in) :: ARRAY(:,:,:)
+    complex(rk), intent(in) :: Array(:,:,:)
     character(len=*), intent(in), optional :: NAME
-    real(rk), intent(in), optional :: FILLVALUE
+    real(rk), intent(in), optional :: FillValue
     integer, intent(in), optional :: WIDTH
     character(len=*), intent(in), optional :: FORMAT
     integer, intent(in), optional :: LBOUND
@@ -1698,14 +1143,14 @@ contains
     if ( present(width) ) MyWidth = width
 
     include 'dump3db.f9h'
-  end subroutine DUMP_3D_DCOMPLEX
+  end subroutine Dump_3D_DComplex
 
-  ! ---------------------------------------------  DUMP_3D_DOUBLE  -----
-  subroutine DUMP_3D_DOUBLE ( ARRAY, NAME, &
-    & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS, THESHAPE )
-    double precision, intent(in) :: ARRAY(:,:,:)
+  ! ---------------------------------------------  Dump_3D_Double  -----
+  subroutine Dump_3D_Double ( ARRay, Name, &
+    & FillValue, WIDTH, FORMAT, LBOUND, OPTIONS, THESHAPE )
+    double precision, intent(in) :: Array(:,:,:)
     character(len=*), intent(in), optional :: NAME
-    double precision, intent(in), optional :: FILLVALUE
+    double precision, intent(in), optional :: FillValue
     integer, intent(in), optional :: WIDTH
     character(len=*), intent(in), optional :: FORMAT
     integer, intent(in), optional :: LBOUND
@@ -1725,14 +1170,14 @@ contains
     if ( present(FillValue) ) myFillValue=FillValue
     include 'dump3d.f9h'
     include 'dump3db.f9h'
-  end subroutine DUMP_3D_DOUBLE
+  end subroutine Dump_3D_Double
 
-  ! --------------------------------------------  DUMP_3D_INTEGER  -----
-  subroutine DUMP_3D_INTEGER ( ARRAY, NAME, &
-    & FILLVALUE, FORMAT, WIDTH, LBOUND, OPTIONS, THESHAPE )
-    integer, intent(in) :: ARRAY(:,:,:)
+  ! --------------------------------------------  Dump_3D_Integer  -----
+  subroutine Dump_3D_Integer ( ARRay, Name, &
+    & FillValue, FORMAT, WIDTH, LBOUND, OPTIONS, THESHAPE )
+    integer, intent(in) :: Array(:,:,:)
     character(len=*), intent(in), optional :: NAME
-    integer, intent(in), optional :: FILLVALUE
+    integer, intent(in), optional :: FillValue
     character(len=*), intent(in), optional :: FORMAT
     integer, intent(in), optional :: WIDTH ! How many numbers per line (10)?
     integer, intent(in), optional :: LBOUND ! Low bound for Array
@@ -1755,14 +1200,14 @@ contains
     if ( present(FillValue) ) myFillValue=FillValue
     include 'dump3d.f9h'
     include 'dump3db.f9h'
-  end subroutine DUMP_3D_INTEGER
+  end subroutine Dump_3D_Integer
 
-  ! ---------------------------------------------  DUMP_3D_REAL  -----
-  subroutine DUMP_3D_REAL ( ARRAY, NAME, &
-    & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS, THESHAPE )
-    real, intent(in) :: ARRAY(:,:,:)
+  ! ---------------------------------------------  Dump_3D_Real  -----
+  subroutine Dump_3D_Real ( ARRay, Name, &
+    & FillValue, WIDTH, FORMAT, LBOUND, OPTIONS, THESHAPE )
+    real, intent(in) :: Array(:,:,:)
     character(len=*), intent(in), optional :: NAME
-    real, intent(in), optional :: FILLVALUE
+    real, intent(in), optional :: FillValue
     integer, intent(in), optional :: WIDTH
     character(len=*), intent(in), optional :: FORMAT
     integer, intent(in), optional :: LBOUND
@@ -1782,14 +1227,14 @@ contains
     if ( present(FillValue) ) myFillValue=FillValue
     include 'dump3d.f9h'
     include 'dump3db.f9h'
-  end subroutine DUMP_3D_REAL
+  end subroutine Dump_3D_Real
 
-  ! ---------------------------------------------  DUMP_4D_DOUBLE  -----
-  subroutine DUMP_4D_DOUBLE ( ARRAY, NAME, &
-    & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS )
-    double precision, intent(in) :: ARRAY(:,:,:,:)
+  ! ---------------------------------------------  Dump_4D_Double  -----
+  subroutine Dump_4D_Double ( ARRay, Name, &
+    & FillValue, WIDTH, FORMAT, LBOUND, OPTIONS )
+    double precision, intent(in) :: Array(:,:,:,:)
     character(len=*), intent(in), optional :: NAME
-    double precision, intent(in), optional :: FILLVALUE
+    double precision, intent(in), optional :: FillValue
     integer, intent(in), optional :: WIDTH
     character(len=*), intent(in), optional :: FORMAT
     integer, intent(in), optional :: LBOUND
@@ -1803,14 +1248,14 @@ contains
     myFormat = sdFormatDefault
     include 'dump4d.f9h'
     include 'dump4db.f9h'
-  end subroutine DUMP_4D_DOUBLE
+  end subroutine Dump_4D_Double
 
-  ! ---------------------------------------------  DUMP_4D_REAL  -----
-  subroutine DUMP_4D_REAL ( ARRAY, NAME, &
-    & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS )
-    real, intent(in) :: ARRAY(:,:,:,:)
+  ! ---------------------------------------------  Dump_4D_Real  -----
+  subroutine Dump_4D_Real ( ARRay, Name, &
+    & FillValue, WIDTH, FORMAT, LBOUND, OPTIONS )
+    real, intent(in) :: Array(:,:,:,:)
     character(len=*), intent(in), optional :: NAME
-    real, intent(in), optional :: FILLVALUE
+    real, intent(in), optional :: FillValue
     integer, intent(in), optional :: WIDTH
     character(len=*), intent(in), optional :: FORMAT
     integer, intent(in), optional :: LBOUND
@@ -1824,1118 +1269,8 @@ contains
     myFormat = sdFormatDefault
     include 'dump4d.f9h'
     include 'dump4db.f9h'
-  end subroutine DUMP_4D_real
+  end subroutine Dump_4D_Real
 
-  ! -----------------------------------------------  DUMP_HASH_STR  -----
-  subroutine DUMP_HASH_STR ( COUNTEMPTY, KEYS, VALUES, NAME, SEPARATOR, OPTIONS )
-    ! Dumps a hash composed of two string lists: keys and values
-    logical, intent(in)          :: COUNTEMPTY
-    character(len=*), intent(in) :: KEYS
-    character(len=*), intent(in) :: VALUES
-    character(len=*), intent(in), optional :: NAME
-    character(len=*), intent(in), optional :: SEPARATOR
-    character(len=*), intent(in), optional :: options
-
-    character( len=max(len(values), len(keys)) ) :: element
-    integer :: J
-    integer :: NumElements
-    character(len=*), parameter :: COMMA = ','
-
-    call theDumpBegins ( options )
-
-    NumElements = NumStringElements(keys, countEmpty, &
-     & separator)
-    if ( NumElements == 0 ) then
-      call empty ( name )
-    else
-      call name_and_size ( name, .false., NumElements )
-      if ( present(name) .and. .not. mylaconic ) call newLine
-      call output ( '(key)    =   (value)', advance='yes' )
-      do j = 1, NumElements
-        call GetStringElement( keys, element, j, countEmpty, separator)
-        call output ( trim(element), advance='no' )
-        call output( ' = ', advance='no' )
-        call GetStringElement( values, element, j, countEmpty, separator)
-        call output ( trim(element), advance='no' )
-        call finishLine
-      end do ! j
-    end if
-    call theDumpEnds
-  end subroutine DUMP_HASH_STR
-
-  ! -----------------------------------------------  DUMP_HASH_LOG  -----
-  subroutine DUMP_HASH_LOG ( COUNTEMPTY, KEYS, VALUES, NAME, SEPARATOR, OPTIONS )
-    ! Dumps a hash composed of two string lists: keys and values
-    logical, intent(in)          :: COUNTEMPTY
-    character(len=*), intent(in) :: KEYS
-    logical, dimension(:), intent(in) :: VALUES
-    character(len=*), intent(in), optional :: NAME
-    character(len=*), intent(in), optional :: SEPARATOR
-    character(len=*), intent(in), optional :: OPTIONS
-
-    character( len=len(keys)) :: element
-    integer :: J
-    integer :: NumElements
-    character(len=*), parameter :: COMMA = ','
-
-    call theDumpBegins ( options )
-
-    NumElements = NumStringElements(keys, countEmpty, &
-     & separator)
-    if ( NumElements == 0 ) then
-      call empty ( name )
-    else
-      call name_and_size ( name, .false., NumElements )
-      if ( present(name) .and. .not. mylaconic ) call newLine
-      call output ( '(key)    =   (value)', advance='yes' )
-      do j = 1, NumElements
-        call GetStringElement( keys, element, j, countEmpty, separator)
-        call output ( trim(element), advance='no' )
-        call output( ' = ', advance='no' )
-        call output ( values(j), advance='no' )
-        call finishLine
-      end do ! j
-    end if
-    call theDumpEnds
-  end subroutine DUMP_HASH_LOG
-
-  ! -----------------------------------------------  DUMP_STRLIST  -----
-  subroutine DUMP_STRLIST ( STRING, NAME, FILLVALUE, OPTIONS, INSEPARATOR )
-    ! Dumps a ','-separated string list, one item per lines
-    ! (Unless it consists of multiple lines)
-    character(len=*), intent(in) :: STRING
-    character(len=*), intent(in), optional :: NAME
-    character(len=*), intent(in), optional :: FILLVALUE
-    character(len=*), intent(in), optional :: OPTIONS
-    character(len=*), optional, intent(in) :: INSEPARATOR
-
-    integer :: J
-    integer :: NumElements
-    character(len=len(string)) :: myFillValue
-    character(len=1), parameter :: CR = ACHAR(13) ! Carriage return
-    character(len=1), parameter :: LF = ACHAR(10) ! Line feed
-    character(len=1) :: SEPARATOR
-    logical, parameter :: COUNTEMPTY = .true.
-    ! Executable
-    if( index(string, CR) > 0 ) then
-      call dump( (/ trim(string) /), name, fillvalue, options=options )
-      return
-    elseif( index(string, LF) > 0 ) then
-      call dump( (/ trim(string) /), name, fillvalue, options=options )
-      return
-    endif
-
-    call theDumpBegins ( options )
-    myFillValue = ' '
-    if ( present(FillValue) ) myFillValue = FillValue
-
-    SEPARATOR = ','
-    if ( present(INSEPARATOR) ) SEPARATOR = INSEPARATOR
-    
-    NumElements = NumStringElements(string, countEmpty, &
-     & separator)
-    if ( NumElements == 0 ) then
-      call empty ( name )
-    else if ( NumElements == 1 ) then
-      call name_and_size ( name, myClean, 1 )
-      call output ( trim(string), advance='no' )
-      call finishLine
-    else
-      call name_and_size ( name, myClean, NumElements )
-      if ( present(name) .and. .not. mylaconic ) call newLine
-      do j = 1, NumElements
-        call GetStringElement(string, myFillValue, j, countEmpty, separator)
-        call output ( trim(myFillValue), advance='no' )
-        call finishLine
-      end do ! j
-    end if
-    call theDumpEnds
-  end subroutine DUMP_STRLIST
-
-  ! ---------------------------------------------- DumpDates -----
-  ! This family dumps dates (re)formatted according to dates_module
-  subroutine dump_tai( taiDates, name, width, dateFormat, timeFormat )
-    ! Dump an array of tai dates in whatever formats the user specifies
-    ! Warning: does not bother with leap seconds
-    ! By default we dump both date and time fields
-    ! If dateFormat is present and blank or 'none', don't print date
-    ! If timeFormat is present and blank or 'none', don't print time
-    ! Args
-    double precision, dimension(:)       :: taiDates ! tai93 (s)
-    character(len=*), optional           :: name
-    integer, intent(in), optional        :: WIDTH
-    character(len=*), optional           :: dateFormat
-    character(len=*), optional           :: timeFormat
-    ! Internal variables
-    character(len=16)                            :: date, time
-    character(len=MAXUTCSTRLENGTH), dimension(size(taiDates)) &
-      &                                          :: dates
-    integer                                      :: error
-    integer                                      :: i
-    ! Executable
-    if ( size(taidates) < 1 ) then
-      call dump ( taiDates, name )
-      return
-    endif
-    do i = 1, size(taiDates)
-      dates(i) = tai93s2utc( taiDates(i) )
-    enddo
-    if ( present(dateFormat) .or. present(timeFormat) ) then
-      do i = 1, size(taiDates)
-        call splitDateTime( dates(i), error, date, time )
-        if ( present(dateFormat) ) then
-          if ( len_trim(dateFormat) < 1 .or. lowercase(dateFormat) == 'none' ) then
-            date = ' '
-          else
-            date = ReformatDate( date, toForm=dateFormat )
-          endif
-        endif
-        if ( present(timeFormat) ) then
-          if ( len_trim(timeFormat) < 1 .or. lowercase(timeFormat) == 'none' ) then
-            time = ' '
-          else
-            time = ReformatTime( time, Form=timeFormat )
-          endif
-        endif
-        dates(i) = trim(date) // time
-      enddo
-    endif
-    call dump( dates, name, width=width )
-  end subroutine dump_tai
-  
-  ! ---------------------------------------------- DumpDumpOptions -----
-  subroutine DumpDumpOptions( options )
-    ! Show 
-    ! (if current options supplied) actual dump, diff options
-    ! (if arg is "?") available options and their meanings
-    ! (if no arg) default options
-    character(len=*), optional, intent(in) :: options
-    character(len=1), parameter :: fillChar = '1' ! fill blanks with '. .'
-     if ( .not. present(options) ) then
-       call blanks(90, fillChar='-', advance='yes')
-       call output(' ------------------------ Summary of automatic Dump, Diff options'      , advance='no')
-       call output(' ------------------------ ', advance='yes')
-       call outputNamedValue ( 'character printed between row, col id and data', aftersub, advance='yes', &
-         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=90 )
-       call outputNamedValue ( 'default DIFF switches for CLEAN, TRIM, etc.', trim_safe(DEFAULTDIFFOPTIONS), advance='yes', &
-         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=90 )
-       call outputNamedValue ( 'default DUMP switches for CLEAN, TRIM, etc.', trim_safe(DEFAULTDUMPOPTIONS), advance='yes', &
-         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=90 )
-       call outputNamedValue ( 'print abs min, max, etc. when DIFF has RMS set TRUE?', DIFFRMSMEANSRMS, advance='yes', &
-         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=90 )
-       call outputNamedValue ( 'skip dumping every element of a constant array?', DIFFRMSMEANSRMS, advance='yes', &
-         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=90 )
-       call outputNamedValue ( 'what side to place headers when dumping tables', trim(DUMPTABLESIDE), advance='yes', &
-         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=90 )
-       call outputNamedValue ( 'print stats all on one line?', STATSONONELINE, advance='yes', &
-         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=90 )
-       call outputNamedValue ( 'pct output format', trim_safe(PCTFORMAT), advance='yes', &
-         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=90 )
-       call outputNamedValue ( 'rms output format', trim_safe(RMSFORMAT), advance='yes', &
-         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=90 )
-       call outputNamedValue ( 'numeric output format', trim_safe(SDFORMATDEFAULT), advance='yes', &
-         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=90 )
-       call outputNamedValue ( 'complex output format', trim_safe(sdFormatDefaultCmplx), advance='yes', &
-         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=90 )
-       call blanks(90, fillChar='-', advance='yes')
-     elseif ( index( options, "?" ) > 0 ) then
-       call output( 'The meaning of options is determined by the presence or absence', advance='yes' )
-       call output( 'of specific characters in the options string', advance='yes' )
-       call output( 'If options is present and contains the following characters:', advance='yes' )
-       call output( '(for dump or diff)', advance='yes' )
-       call output( '  character         meaning', advance='yes' )
-       call output( '     ---            -------', advance='yes' )
-       call output( '      B              show Bandwidth, % of array that is non-zero', advance='yes' )
-       call output( '      H              show rank, TheShape of array', advance='yes' )
-       call output( '      L              laconic; skip printing name, size of array', advance='yes' )
-       call output( '      N              show where NaNs and Infs are located', advance='yes' )
-       call output( '      R              rms       -- min, max, etc.', advance='yes' )
-       call output( '      b              table of % vs. amount of differences (pdf)', advance='yes' )
-       call output( '      c              clean', advance='yes' )
-       call output( '      g              gaps      ', advance='yes' )
-       call output( '      l              collapse (last index)', advance='yes' )
-       call output( '      r              ratios    -- min, max, etc. of difference ratios', advance='yes' )
-       call output( '      s              stats     -- number of differences', advance='yes' )
-       call output( '      p              transpose (for rank 2 arrays only)', advance='yes' )
-       call output( '      t              trim      ', advance='yes' )
-       call output( '      u              unique    ', advance='yes' )
-       call output( '      w              wholearray', advance='yes' )
-       call output( '      W[i]           wholearray, looping over ith index', advance='yes' )
-       call output( '                     (for rank 3 and 4 arrays only)', advance='yes' )
-       call output( '      1 or 2 or ..   ignored; calling routine is free to interpret', advance='yes' )
-       call output( ' ', advance='yes' )
-       call output( 'An exception is the behavior of w (wholearray):', advance='yes' )
-       call output( 'if all {HNRblrs} are FALSE, i.e. unset, the whole array is dumped (or diffed)', advance='yes' )
-       call output( 'if any are TRUE the whole array will be dumped only if', advance='yes' )
-       call output( 'w is present or wholearray is set to TRUE', advance='yes' )
-     else
-       call outputNamedValue ( 'options', trim_safe(options), advance='yes', &
-         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=90 )
-       call outputNamedValue ( 'thisIsADiff?', thisIsADiff, advance='yes', &
-         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=90 )
-       call outputNamedValue ( 'myClean?', myClean, advance='yes', &
-         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=90 )
-       call outputNamedValue ( 'myCollapse?', myCollapse, advance='yes', &
-         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=90 )
-       call outputNamedValue ( 'myCyclic?', myCyclic, advance='yes', &
-         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=90 )
-       call outputNamedValue ( 'myRMS?', myRMS, advance='yes', &
-         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=90 )
-       call outputNamedValue ( 'myRatios?', myRatios, advance='yes', &
-         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=90 )
-       call outputNamedValue ( 'myWholeArray?', myWholeArray, advance='yes', &
-         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=90 )
-     endif
-  end subroutine DumpDumpOptions
-
-  ! -----------------------------------  dumpLists  -----
-  ! Dump a 2d array as a set of lists
-  ! Show names and related (numerical) values
-  subroutine dumpLists_chars ( ARRAY, NAME, WIDTH, SEP, DELIMS )
-    ! Args
-    character(len=*), dimension(:,:), intent(in)   :: array
-    character(len=*), intent(in), optional         :: NAME
-    integer, optional, intent(in)                  :: width
-    character(len=*), optional, intent(in)         :: sep
-    character(len=*), optional, intent(in)         :: delims
-    ! Internal variables
-    character(len=8) :: intChars
-    integer :: leftMargin
-    integer :: line
-    integer :: m
-    integer :: myWidth ! how wide to make each list
-    integer :: n
-    integer :: n1
-    integer :: n2
-    integer :: nElemsPerLine
-    integer :: nlines
-    character(len=32) :: tabRange
-    ! Executable
-    call theDumpBegins ( options=' ' )
-    if ( size(array, 2) < 1 ) then
-      call empty(name)
-    endif
-    call name_and_size( name, clean=.false., size=size(array, 2) )
-    m = size(array,1) ! num of elements in each list
-    myWidth = (len(array(1,1))+2) * m + 3
-    if ( present(width) ) myWidth = width
-    leftMargin = max(4,ilog10(size(array,2)+1)) + 2
-    nElemsPerLine = max( 1, (MAXLINELEN-leftMargin-1)/myWidth )
-    nLines = 1 + (size(array,2)-1)/nElemsPerLine
-    call writeIntsToChars( leftMargin, intChars )
-    tabRange = intChars
-    call writeIntsToChars( MAXLINELEN, intChars )
-    tabRange = trim(tabRange) // '-' // intChars
-    call writeIntsToChars( myWidth, intChars )
-    tabRange = trim(tabRange) // '+' // intChars
-    call setTabs( range=tabRange )
-    n2 = 0
-    do line=1, nLines
-      n1 = n2 + 1
-      n2 = min( n2 + nElemsPerLine, size(array,2) )
-      call newLine
-      call output ( n1, places=max(4,ilog10(size(array,2)+1)) , advance='no' )
-      call output ( afterSub , advance='no' )
-      do n=n1, n2
-        call blanksToTab
-        call outputList( array(:,n), sep, delims)
-      enddo
-    enddo
-  end subroutine dumpLists_chars
-
-  subroutine dumpLists_ints ( ARRAY, NAME, WIDTH, SEP, DELIMS )
-    ! Args
-    integer, dimension(:,:), intent(in)            :: array
-    character(len=*), intent(in), optional         :: NAME
-    character(len=*), optional, intent(in)         :: sep
-    integer, optional, intent(in)                  :: width
-    character(len=*), optional, intent(in)         :: delims
-    ! Internal variables
-    integer :: arrayMax
-    character(len=8) :: intChars
-    integer :: leftMargin
-    integer :: line
-    integer :: m
-    integer :: myWidth ! how wide to make each list
-    integer :: n
-    integer :: n1
-    integer :: n2
-    integer :: nElemsPerLine
-    integer :: nlines
-    character(len=32) :: tabRange
-    ! Executable
-    call theDumpBegins ( options=' ' )
-    if ( size(array, 2) < 1 ) then
-      call empty(name)
-    endif
-    call name_and_size( name, clean=.false., size=size(array, 2) )
-    m = size(array,1) ! num of elements in each list
-    arrayMax = maxval(abs(array)) + 1
-    myWidth = ( ilog10(arrayMax) + 1 ) * m + 3
-    if ( present(width) ) myWidth = width
-    leftMargin = max(4,ilog10(size(array,2)+1)) + 2
-    nElemsPerLine = max( 1, (MAXLINELEN-leftMargin-1)/myWidth )
-    nLines = 1 + (size(array,2)-1)/nElemsPerLine
-    call writeIntsToChars( max(4,ilog10(size(array,2)+1)) + 4, intChars )
-    tabRange = intChars
-    call writeIntsToChars( MAXLINELEN, intChars )
-    tabRange = trim(tabRange) // '-' // intChars
-    call writeIntsToChars( myWidth, intChars )
-    tabRange = trim(tabRange) // '+' // intChars
-    call setTabs( range=tabRange )
-    n2 = 0
-    do line=1, nLines
-      n1 = n2 + 1
-      n2 = min( n2 + nElemsPerLine, size(array,2) )
-      call newLine
-      call output ( n1, places=max(4,ilog10(size(array,2)+1)) , advance='no' )
-      call output ( afterSub , advance='no' )
-      do n=n1, n2
-        call blanksToTab
-        call outputList( array(:,n), sep, delims)
-      enddo
-    enddo
-    ! Reset tabs
-    call newLine
-    call resetTabs
-  end subroutine dumpLists_ints
-
-  ! -----------------------------------  dumpNamedValues  -----
-  ! Another hash-like dump:
-  ! Show names and related (numerical) values
-  ! -----------------------------------  dumpNamedValues_DOUBLE  -----
-  subroutine dumpNamedValues_DOUBLE ( VALUES, NAMES, FORMAT, WIDTH, OPTIONS )
-    double precision, intent(in)                         :: values(:)
-    character(len=*), intent(in), optional :: NAMES
-    character(len=*), intent(in), optional :: FORMAT
-    integer, intent(in), optional :: WIDTH ! How many pairs per line (1)?
-    character(len=*), intent(in), optional :: options
-    
-    integer :: J, K, L
-    integer :: MyWidth
-    character(len=24) :: myName
-    call theDumpBegins ( options )
-    MyWidth = 1
-    if ( present(width) ) myWidth = max(width, 1)
-    if ( size(values) < 1 ) return
-    if ( myClean ) call output(' ', advance='yes')
-    l = 0
-    do j=1, size(values), MyWidth
-      do k=1, MyWidth
-        call blanks(3, advance='no')
-        l = l + 1
-        if ( l <= size(values) ) then
-          if ( present (names) ) then
-            call GetStringElement(names, myName, l, .true.)
-          else
-            write(myName, *) 'double # ', l, ': '
-          end if
-          call output(myName,  advance='no')
-          call blanks(3, advance='no')
-          call output(values(l), format, advance='no')
-        end if
-      end do
-      call output(' ', advance='yes')
-    end do
-    call theDumpEnds
-
-  end subroutine dumpNamedValues_DOUBLE
-
-  ! ----------------------------------  dumpNamedValues_INTEGER  -----
-  subroutine dumpNamedValues_INTEGER ( VALUES, NAMES, FORMAT, WIDTH, OPTIONS )
-    integer, intent(in)                         :: values(:)
-    character(len=*), intent(in), optional :: NAMES
-    character(len=*), intent(in), optional :: FORMAT
-    integer, intent(in), optional :: WIDTH ! How many pairs per line (1)?
-    character(len=*), intent(in), optional :: options
-    
-    integer :: J, K, L
-    integer :: MyWidth
-    character(len=24) :: myName
-    call theDumpBegins ( options )
-    MyWidth = 1
-    if ( present(width) ) myWidth = max(width, 1)
-    if ( size(values) < 1 ) return
-    if ( myClean ) call output(' ', advance='yes')
-    l = 0
-    do j=1, size(values), MyWidth
-      do k=1, MyWidth
-        call blanks(3, advance='no')
-        l = l + 1
-        if ( l <= size(values) ) then
-          if ( present (names) ) then
-            call GetStringElement(names, myName, l, .true.)
-          else
-            write(myName, *) 'integer # ', l, ': '
-          end if
-          call output(myName,  advance='no')
-          call blanks(3, advance='no')
-          call output(values(l), format=format, advance='no')
-        end if
-      end do
-      call output(' ', advance='yes')
-    end do
-    call theDumpEnds
-
-  end subroutine dumpNamedValues_INTEGER
-
-  ! -------------------------------------  dumpNamedValues_REAL  -----
-  subroutine dumpNamedValues_REAL ( VALUES, NAMES, FORMAT, WIDTH, OPTIONS )
-    real, intent(in)                         :: values(:)
-    character(len=*), intent(in), optional :: NAMES
-    character(len=*), intent(in), optional :: FORMAT
-    integer, intent(in), optional :: WIDTH ! How many pairs per line (1)?
-    character(len=*), intent(in), optional :: options
-    
-    integer :: J, K, L
-    integer :: MyWidth
-    character(len=24) :: myName
-    call theDumpBegins ( options )
-    MyWidth = 1
-    if ( present(width) ) myWidth = max(width, 1)
-    if ( size(values) < 1 ) return
-    if ( myClean ) call output(' ', advance='yes')
-    l = 0
-    do j=1, size(values), MyWidth
-      do k=1, MyWidth
-        call blanks(3, advance='no')
-        l = l + 1
-        if ( l <= size(values) ) then
-          if ( present (names) ) then
-            call GetStringElement(names, myName, l, .true.)
-          else
-            write(myName, *) 'single # ', l, ': '
-          end if
-          call output(myName,  advance='no')
-          call blanks(3, advance='no')
-          call output(values(l), format, advance='no')
-        end if
-      end do
-      call output(' ', advance='yes')
-    end do
-    call theDumpEnds
-
-  end subroutine dumpNamedValues_REAL
-
- ! ---------------------------------------------  DUMPSUMS  -----
- ! This family of routines dumps the running sum:
- ! summed(i) == ( array(i) + summed(i-1) )
-  subroutine DUMPSUMS_DOUBLE ( ARRAY, NAME, &
-    & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS )
-    double precision, intent(in) :: ARRAY(:)
-    character(len=*), intent(in), optional :: NAME
-    double precision, intent(in), optional :: FILLVALUE
-    integer, intent(in), optional :: WIDTH
-    character(len=*), intent(in), optional :: FORMAT
-    integer, intent(in), optional :: LBOUND ! Low bound for Array
-    character(len=*), intent(in), optional :: options
-    ! Local variables
-    integer                                  :: i
-    double precision, dimension(size(array)) :: summed
-    ! Executable
-    if ( size(array) < 1 ) return
-    summed(1) = array(1)
-    if ( size(array) > 1 ) then
-      do i=2, size(array)
-        summed(i) = array(i) + summed(i-1)
-      enddo
-    endif
-    call dump ( summed, NAME, &
-      & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS )
-  end subroutine DUMPSUMS_DOUBLE
-
-  subroutine DUMPSUMS_INTEGER ( ARRAY, NAME, &
-    & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS )
-    integer, intent(in) :: ARRAY(:)
-    character(len=*), intent(in), optional :: NAME
-    integer, intent(in), optional :: FILLVALUE
-    integer, intent(in), optional :: WIDTH
-    character(len=*), intent(in), optional :: FORMAT
-    integer, intent(in), optional :: LBOUND ! Low bound for Array
-    character(len=*), intent(in), optional :: options
-    ! Local variables
-    integer                                  :: i
-    integer, dimension(size(array)) :: summed
-    ! Executable
-    if ( size(array) < 1 ) return
-    summed(1) = array(1)
-    if ( size(array) > 1 ) then
-      do i=2, size(array)
-        summed(i) = array(i) + summed(i-1)
-      enddo
-    endif
-    call dump ( summed, NAME, &
-      & FILLVALUE, FORMAT, WIDTH, LBOUND, OPTIONS )
-  end subroutine DUMPSUMS_INTEGER
-
-  subroutine DUMPSUMS_REAL ( ARRAY, NAME, &
-    & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS )
-    real, intent(in) :: ARRAY(:)
-    character(len=*), intent(in), optional :: NAME
-    real, intent(in), optional :: FILLVALUE
-    integer, intent(in), optional :: WIDTH
-    character(len=*), intent(in), optional :: FORMAT
-    integer, intent(in), optional :: LBOUND ! Low bound for Array
-    character(len=*), intent(in), optional :: options
-    ! Local variables
-    integer                                  :: i
-    real, dimension(size(array)) :: summed
-    ! Executable
-    if ( size(array) < 1 ) return
-    summed(1) = array(1)
-    if ( size(array) > 1 ) then
-      do i=2, size(array)
-        summed(i) = array(i) + summed(i-1)
-      enddo
-    endif
-    call dump ( summed, NAME, &
-      & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS )
-  end subroutine DUMPSUMS_REAL
-
-  ! -----------------------------------  dumpTable  -----
-  ! This family of routines dumps a table of values and headers
-  ! The headside determines on which of the 4 sides 
-  ! ('top', 'left', 'right', 'bottom') we place the headers
-  subroutine dumpTable_DOUBLE ( VALUES, HEADERS, HEADSIDE, FORMAT, FORMATS )
-    double precision, dimension(:,:), intent(in) :: values
-    character(len=*), dimension(:), intent(in)   :: HEADERS
-    character(len=*), intent(in)                 :: HEADSIDE
-    character(len=*), intent(in), optional       :: FORMAT
-    character(len=*), dimension(:), intent(in), optional :: FORMATS
-    include 'dumpTable.f9h'
-  end subroutine dumpTable_DOUBLE
-
-  subroutine dumpTable_INTEGER ( VALUES, HEADERS, HEADSIDE, FORMAT, FORMATS )
-    integer, dimension(:,:), intent(in)          :: values
-    character(len=*), dimension(:), intent(in)   :: HEADERS
-    character(len=*), intent(in)                 :: HEADSIDE
-    character(len=*), intent(in), optional       :: FORMAT
-    character(len=*), dimension(:), intent(in), optional :: FORMATS
-    include 'dumpTable.f9h'
-  end subroutine dumpTable_INTEGER
-
-  subroutine dumpTable_REAL ( VALUES, HEADERS, HEADSIDE, FORMAT, FORMATS )
-    real, dimension(:,:), intent(in)             :: values
-    character(len=*), dimension(:), intent(in)   :: HEADERS
-    character(len=*), intent(in)                 :: HEADSIDE
-    character(len=*), intent(in), optional       :: FORMAT
-    character(len=*), dimension(:), intent(in), optional :: FORMATS
-    include 'dumpTable.f9h'
-  end subroutine dumpTable_REAL
-
-  ! -----------------------------------  dumpTextfile  -----
-  ! This family of routines dumps a table of values and headers
-  ! The headside determines on which of the 4 sides 
-  ! ('top', 'left', 'right', 'bottom') we place the headers
-  subroutine dumpTextfile ( FileName, Options )
-    use io_stuff, only: read_textfile
-    character(len=*), intent(in)           :: FileName
-    character(len=*), intent(in), optional :: options
-    ! Internal variables
-    character(len=MAXTEXTFILELINELEN), dimension(MAXTEXTFILELINES) :: lines
-    integer :: k, nLines
-    ! Executable
-    lines = ' '
-    call read_textfile( FileName, lines, nLines=nLines )
-    call outputNamedValue ( 'text file name', trim(FileName) )
-    call outputNamedValue ( 'number of lines', nLines )
-    call blanks( 80, fillChar='-', advance='yes' )
-    do k=1, nLines
-      call output ( trim(lines(k)), advance='yes' )
-    enddo
-    call blanks( 80, fillChar='-', advance='yes' )
-  end subroutine dumpTextfile
-
- ! ---------------------------------------------  SELFDIFF_DOUBLE  -----
-  subroutine SELFDIFF_DOUBLE ( ARRAY, NAME, &
-    & FILLVALUE, WIDTH, FORMAT, waves, LBOUND, OPTIONS )
-    ! dump the running increment == ( array(i) - array(i-1) )
-    double precision, intent(in) :: ARRAY(:)
-    character(len=*), intent(in), optional :: NAME
-    double precision, intent(in), optional :: FILLVALUE
-    integer, intent(in), optional :: WIDTH
-    character(len=*), intent(in), optional :: FORMAT
-    logical, intent(in), optional :: WAVES
-    integer, intent(in), optional :: LBOUND ! Low bound for Array
-    character(len=*), intent(in), optional :: options
-    ! Local variables
-    integer                                  :: i
-    double precision, dimension(size(array)-1) :: increment
-    integer, dimension(100) :: lengths
-    logical :: myWaves
-    integer :: nWaves
-    ! Executable
-    myWaves = .false.
-    if ( present(waves) ) myWaves = waves
-    if ( size(array) < 2 ) return
-    do i=2, size(array)
-      increment(i-1) = array(i) - array(i-1)
-    enddo
-    if ( myWaves ) then
-      call halfWaves( increment, lengths, nWaves )
-      if ( nWaves > 0 ) then
-        call dump( lengths(1:nWaves), 'half-waves of ' // NAME )
-      endif
-      return
-    endif
-    call dump ( increment, NAME, &
-      & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS )
-  end subroutine SELFDIFF_DOUBLE
-
- ! ---------------------------------------------  SELFDIFF_INTEGER  -----
-  subroutine SELFDIFF_INTEGER ( ARRAY, NAME, &
-    & FILLVALUE, FORMAT, WIDTH, waves, LBOUND, OPTIONS )
-    ! dump the running increment == ( array(i) - array(i-1) )
-    integer, intent(in) :: ARRAY(:)
-    character(len=*), intent(in), optional :: NAME
-    integer, intent(in), optional :: FILLVALUE
-    integer, intent(in), optional :: WIDTH
-    character(len=*), intent(in), optional :: FORMAT
-    logical, intent(in), optional :: WAVES
-    integer, intent(in), optional :: LBOUND ! Low bound for Array
-    character(len=*), intent(in), optional :: options
-    ! Local variables
-    integer                                  :: i
-    integer, dimension(size(array)-1) :: increment
-    ! Executable
-    if ( size(array) < 2 ) return
-    do i=2, size(array)
-      increment(i-1) = array(i) - array(i-1)
-    enddo
-    call dump ( increment, NAME, &
-      & FILLVALUE, FORMAT, WIDTH, LBOUND, OPTIONS )
-  end subroutine SELFDIFF_INTEGER
-
- ! ---------------------------------------------  SELFDIFF_REAL  -----
-  subroutine SELFDIFF_REAL ( ARRAY, NAME, &
-    & FILLVALUE, FORMAT, WIDTH, waves, LBOUND, OPTIONS )
-    ! dump the running increment == ( array(i) - array(i-1) )
-    real, intent(in) :: ARRAY(:)
-    character(len=*), intent(in), optional :: NAME
-    real, intent(in), optional :: FILLVALUE
-    integer, intent(in), optional :: WIDTH
-    character(len=*), intent(in), optional :: FORMAT
-    logical, intent(in), optional :: WAVES
-    integer, intent(in), optional :: LBOUND ! Low bound for Array
-    character(len=*), intent(in), optional :: options
-    ! Local variables
-    integer                                  :: i
-    real, dimension(size(array)-1) :: increment
-    ! logical, parameter :: unique = .false. 
-    integer, dimension(100) :: lengths
-    logical :: myWaves
-    integer :: nWaves
-    ! Executable
-    myWaves = .false.
-    if ( present(waves) ) myWaves = waves
-    if ( size(array) < 2 ) return
-    do i=2, size(array)
-      increment(i-1) = array(i) - array(i-1)
-    enddo
-    if ( myWaves ) then
-      call halfWaves( increment, lengths, nWaves )
-      if ( nWaves > 0 ) then
-        call dump( lengths(1:nWaves), 'half-waves of ' // NAME )
-      endif
-      return
-    endif
-    call dump ( increment, NAME, &
-      & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS )
-  end subroutine SELFDIFF_REAL
-
-  ! --- Private procedures ---
-  ! --- finishLine ---
-  ! Print a newLine, optionally echoing the item name
-  subroutine finishLine
-    ! Executable
-    if ( len_trim(nameOnEachLine) > 1 ) then
-      call blanks (2)
-      call output ( trim(nameOnEachLine), advance='no' )
-    endif
-    call newLine
-  end subroutine finishLine
-
-  ! --- DumpCollapsedArray ---
-  ! This family of subroutines dumps a lower-rank representation of
-  ! an array
-  subroutine DUMPCOLLAPSEDARRAY_1D_INTEGER (  array, name, fillValue, options )
-    INTEGER, intent(in) :: ARRAY(:)
-    character(len=*), intent(in) :: NAME
-    INTEGER, intent(in), optional :: FILLVALUE
-    character(len=*), intent(in), optional :: options
-    call output( 'Did not expect to dump collapsed 1d array', advance='yes' )
-  end subroutine DUMPCOLLAPSEDARRAY_1D_INTEGER
-
-  subroutine DUMPCOLLAPSEDARRAY_1D_DOUBLE (  array, name, fillValue, options )
-    double precision, intent(in) :: ARRAY(:)
-    character(len=*), intent(in) :: NAME
-    double precision, intent(in), optional :: FILLVALUE
-    character(len=*), intent(in), optional :: options
-    call output( 'Did not expect to dump collapsed 1d array', advance='yes' )
-  end subroutine DUMPCOLLAPSEDARRAY_1D_DOUBLE
-
-  subroutine DUMPCOLLAPSEDARRAY_1D_REAL (  array, name, fillValue, options )
-    real, intent(in) :: ARRAY(:)
-    character(len=*), intent(in) :: NAME
-    real, intent(in), optional :: FILLVALUE
-    character(len=*), intent(in), optional :: options
-    call output( 'Did not expect to dump collapsed 1d array', advance='yes' )
-  end subroutine DUMPCOLLAPSEDARRAY_1D_REAL
-
-  subroutine DUMPCOLLAPSEDARRAY_2D_DOUBLE (  array, name, fillValue, options )
-    double precision, intent(in) :: ARRAY(:,:)
-    character(len=*), intent(in) :: NAME
-    double precision, intent(in), optional :: FILLVALUE
-    character(len=*), intent(in), optional :: options
-    ! For dumping lower-rank collapsed representations
-    double precision, dimension(size(array, 1)) :: nums
-    logical, dimension(size(array, 1))          :: logs
-
-    ! dump numerical representation
-    if ( index(COLLAPSEOPTIONS, 'num') > 0 ) then
-      call collapse( array, nums, options=COLLAPSEOPTIONS )
-      call dump( nums, name, fillvalue, options=options )
-    endif
-    if ( index(COLLAPSEOPTIONS, 'any') > 0 .or. &
-      &  index(COLLAPSEOPTIONS, 'all') > 0 ) then
-      call collapse( array, logs=logs, options=COLLAPSEOPTIONS )
-      call dump( logs, name, options=options )
-    endif
-  end subroutine DUMPCOLLAPSEDARRAY_2D_DOUBLE
-
-  subroutine DUMPCOLLAPSEDARRAY_2D_REAL (  array, name, fillValue, options )
-    real, intent(in) :: ARRAY(:,:)
-    character(len=*), intent(in) :: NAME
-    real, intent(in), optional :: FILLVALUE
-    character(len=*), intent(in), optional :: options
-    ! For dumping lower-rank collapsed representations
-    real, dimension(size(array, 1)) :: nums
-    logical, dimension(size(array, 1))          :: logs
-
-    ! dump numerical representation
-    if ( index(COLLAPSEOPTIONS, 'num') > 0 ) then
-      call collapse( array, nums, options=COLLAPSEOPTIONS )
-      call dump( nums, name, fillvalue, options=options )
-    endif
-    if ( index(COLLAPSEOPTIONS, 'any') > 0 .or. &
-      &  index(COLLAPSEOPTIONS, 'all') > 0 ) then
-      call collapse( array, logs=logs, options=COLLAPSEOPTIONS )
-      call dump( logs, name, options=options )
-    endif
-  end subroutine DUMPCOLLAPSEDARRAY_2D_REAL
-
-  subroutine DUMPCOLLAPSEDARRAY_2D_INTEGER (  array, name, fillValue, options )
-    INTEGER, intent(in) :: ARRAY(:,:)
-    character(len=*), intent(in) :: NAME
-    INTEGER, intent(in), optional :: FILLVALUE
-    character(len=*), intent(in), optional :: options
-    ! For dumping lower-rank collapsed representations
-    INTEGER, dimension(size(array, 1)) :: nums
-    logical, dimension(size(array, 1))          :: logs
-
-    ! dump numerical representation
-    if ( index(COLLAPSEOPTIONS, 'num') > 0 ) then
-      call collapse( array, nums, options=COLLAPSEOPTIONS )
-      call dump( nums, name, fillvalue, options=options )
-    endif
-    if ( index(COLLAPSEOPTIONS, 'any') > 0 .or. &
-      &  index(COLLAPSEOPTIONS, 'all') > 0 ) then
-      call collapse( array, logs=logs, options=COLLAPSEOPTIONS )
-      call dump( logs, name, options=options )
-    endif
-  end subroutine DUMPCOLLAPSEDARRAY_2D_INTEGER
-
-  subroutine DUMPCOLLAPSEDARRAY_3D_DOUBLE (  array, name, fillValue, options )
-    double precision, intent(in) :: ARRAY(:,:,:)
-    character(len=*), intent(in) :: NAME
-    double precision, intent(in), optional :: FILLVALUE
-    character(len=*), intent(in), optional :: options
-    ! For dumping lower-rank collapsed representations
-    double precision, dimension(size(array, 1),size(array, 2)) :: nums
-    logical, dimension(size(array, 1),size(array, 2))          :: logs
-
-    ! dump numerical representation
-    if ( index(COLLAPSEOPTIONS, 'num') > 0 ) then
-      call collapse( array, nums, options=COLLAPSEOPTIONS )
-      call dump( nums, name, fillvalue, options=options )
-    endif
-    if ( index(COLLAPSEOPTIONS, 'any') > 0 .or. &
-      &  index(COLLAPSEOPTIONS, 'all') > 0 ) then
-      call collapse( array, logs=logs, options=COLLAPSEOPTIONS )
-      call dump( logs, name, options=options )
-    endif
-  end subroutine DUMPCOLLAPSEDARRAY_3D_DOUBLE
-
-  subroutine DUMPCOLLAPSEDARRAY_3D_REAL (  array, name, fillValue, options )
-    real, intent(in) :: ARRAY(:,:,:)
-    character(len=*), intent(in) :: NAME
-    real, intent(in), optional :: FILLVALUE
-    character(len=*), intent(in), optional :: options
-    ! For dumping lower-rank collapsed representations
-    real, dimension(size(array, 1),size(array, 2)) :: nums
-    logical, dimension(size(array, 1),size(array, 2))          :: logs
-
-    ! dump numerical representation
-    if ( index(COLLAPSEOPTIONS, 'num') > 0 ) then
-      call collapse( array, nums, options=COLLAPSEOPTIONS )
-      call dump( nums, name, fillvalue, options=options )
-    endif
-    if ( index(COLLAPSEOPTIONS, 'any') > 0 .or. &
-      &  index(COLLAPSEOPTIONS, 'all') > 0 ) then
-      call collapse( array, logs=logs, options=COLLAPSEOPTIONS )
-      call dump( logs, name, options=options )
-    endif
-  end subroutine DUMPCOLLAPSEDARRAY_3D_REAL
-
-  subroutine DUMPCOLLAPSEDARRAY_3D_INTEGER (  array, name, fillValue, options )
-    INTEGER, intent(in) :: ARRAY(:,:,:)
-    character(len=*), intent(in) :: NAME
-    INTEGER, intent(in), optional :: FILLVALUE
-    character(len=*), intent(in), optional :: options
-    ! For dumping lower-rank collapsed representations
-    INTEGER, dimension(size(array, 1),size(array, 2)) :: nums
-    logical, dimension(size(array, 1),size(array, 2))          :: logs
-
-    ! dump numerical representation
-    if ( index(COLLAPSEOPTIONS, 'num') > 0 ) then
-      call collapse( array, nums, options=COLLAPSEOPTIONS )
-      call dump( nums, name, fillvalue, options=options )
-    endif
-    if ( index(COLLAPSEOPTIONS, 'any') > 0 .or. &
-      &  index(COLLAPSEOPTIONS, 'all') > 0 ) then
-      call collapse( array, logs=logs, options=COLLAPSEOPTIONS )
-      call dump( logs, name, options=options )
-    endif
-  end subroutine DUMPCOLLAPSEDARRAY_3D_INTEGER
-
-  !
-  subroutine FILTEREDDIFF_1D_DOUBLE ( ARRAY1, NAME1, ARRAY2, NAME2, &
-    & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS )
-    double precision, intent(in) :: ARRAY1(:)
-    character(len=*), intent(in) :: NAME1
-    double precision, intent(in) :: ARRAY2(:)
-    character(len=*), intent(in) :: NAME2
-    double precision, intent(in):: FILLVALUE
-    integer, intent(in), optional :: WIDTH
-    character(len=*), intent(in), optional :: FORMAT
-    integer, intent(in), optional :: LBOUND ! Low bound for Array
-    character(len=*), intent(in), optional :: options
-
-    double precision, dimension(size(array1)) :: filtered1
-    double precision, dimension(size(array2)) :: filtered2
-    double precision :: refmin, refmax, refrms
-    include "diff.f9h"
-  end subroutine FILTEREDDIFF_1D_DOUBLE
-
-  subroutine FILTEREDDIFF_1D_INTEGER ( IARRAY1, NAME1, IARRAY2, NAME2, &
-    & IFILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS )
-    integer, intent(in) :: IARRAY1(:)
-    character(len=*), intent(in) :: NAME1
-    integer, intent(in) :: IARRAY2(:)
-    character(len=*), intent(in) :: NAME2
-    integer, intent(in), optional :: IFILLVALUE
-    integer, intent(in), optional :: WIDTH
-    character(len=*), intent(in), optional :: FORMAT
-    integer, intent(in), optional :: LBOUND ! Low bound for Array
-    character(len=*), intent(in), optional :: options
-
-    real, dimension(size(iarray1)) :: array1
-    real, dimension(size(iarray2)) :: array2
-    real :: fillValue
-    ! So we don't have to write an integer-version of allstats
-    array1 = iarray1
-    array2 = iarray2
-    fillValue = iFillValue
-    call DIFF ( ARRAY1, NAME1, ARRAY2, NAME2, &
-    & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS )
-  end subroutine FILTEREDDIFF_1D_INTEGER
-
-  subroutine FILTEREDDIFF_1D_REAL ( ARRAY1, NAME1, ARRAY2, NAME2, &
-    & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS )
-    real, intent(in) :: ARRAY1(:)
-    character(len=*), intent(in) :: NAME1
-    real, intent(in) :: ARRAY2(:)
-    character(len=*), intent(in) :: NAME2
-    real, intent(in):: FILLVALUE
-    integer, intent(in), optional :: WIDTH
-    character(len=*), intent(in), optional :: FORMAT
-    integer, intent(in), optional :: LBOUND ! Low bound for Array
-    character(len=*), intent(in), optional :: options
-
-    real, dimension(size(array1)) :: filtered1
-    real, dimension(size(array2)) :: filtered2
-    real :: refmin, refmax, refrms
-    include "diff.f9h"
-  end subroutine FILTEREDDIFF_1D_REAL
-
-  subroutine FILTEREDDIFF_2D_DOUBLE ( ARRAY1, NAME1, ARRAY2, NAME2, &
-    & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS )
-    double precision, intent(in) :: ARRAY1(:,:)
-    character(len=*), intent(in) :: NAME1
-    double precision, intent(in) :: ARRAY2(:,:)
-    character(len=*), intent(in) :: NAME2
-    double precision, intent(in):: FILLVALUE
-    integer, intent(in), optional :: WIDTH
-    character(len=*), intent(in), optional :: FORMAT
-    integer, intent(in), optional :: LBOUND
-    character(len=*), intent(in), optional :: options
-    !
-    double precision, dimension(product(shape(array1))) :: filtered1
-    double precision, dimension(product(shape(array2))) :: filtered2
-    double precision :: refmin, refmax, refrms
-    include "diff.f9h"
-  end subroutine FILTEREDDIFF_2D_DOUBLE
-
-  subroutine FILTEREDDIFF_2D_INTEGER ( IARRAY1, NAME1, IARRAY2, NAME2, &
-    & IFILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS )
-    integer, intent(in) :: IARRAY1(:,:)
-    character(len=*), intent(in) :: NAME1
-    integer, intent(in) :: IARRAY2(:,:)
-    character(len=*), intent(in) :: NAME2
-    integer, intent(in), optional :: IFILLVALUE
-    integer, intent(in), optional :: WIDTH
-    character(len=*), intent(in), optional :: FORMAT
-    integer, intent(in), optional :: LBOUND ! Low bound for Array
-    character(len=*), intent(in), optional :: options
-
-    real, dimension(size(iarray1,1), size(iarray1,2)) :: array1
-    real, dimension(size(iarray1,1), size(iarray1,2)) :: array2
-    real :: fillValue
-    ! So we don't have to write an integer-version of allstats
-    array1 = iarray1
-    array2 = iarray2
-    fillValue = iFillValue
-    call DIFF ( ARRAY1, NAME1, ARRAY2, NAME2, &
-    & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS )
-  end subroutine FILTEREDDIFF_2D_INTEGER
-
-  subroutine FILTEREDDIFF_2D_REAL ( ARRAY1, NAME1, ARRAY2, NAME2, &
-    & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS )
-    real, intent(in) :: ARRAY1(:,:)
-    character(len=*), intent(in) :: NAME1
-    real, intent(in) :: ARRAY2(:,:)
-    character(len=*), intent(in) :: NAME2
-    real, intent(in):: FILLVALUE
-    integer, intent(in), optional :: WIDTH
-    character(len=*), intent(in), optional :: FORMAT
-    integer, intent(in), optional :: LBOUND
-    character(len=*), intent(in), optional :: options
-    !
-    real, dimension(product(shape(array1))) :: filtered1
-    real, dimension(product(shape(array2))) :: filtered2
-    real :: refmin, refmax, refrms
-    include "diff.f9h"
-  end subroutine FILTEREDDIFF_2D_REAL
-
-  subroutine FILTEREDDIFF_3D_DOUBLE ( ARRAY1, NAME1, ARRAY2, NAME2, &
-    & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS )
-    double precision, intent(in) :: ARRAY1(:,:,:)
-    character(len=*), intent(in) :: NAME1
-    double precision, intent(in) :: ARRAY2(:,:,:)
-    character(len=*), intent(in) :: NAME2
-    double precision, intent(in):: FILLVALUE
-    integer, intent(in), optional :: WIDTH
-    character(len=*), intent(in), optional :: FORMAT
-    integer, intent(in), optional :: LBOUND
-    character(len=*), intent(in), optional :: options
-
-    double precision, dimension(product(shape(array1))) :: filtered1
-    double precision, dimension(product(shape(array2))) :: filtered2
-    double precision :: refmin, refmax, refrms
-    include "diff.f9h"
-  end subroutine FILTEREDDIFF_3D_DOUBLE
-
-  subroutine FILTEREDDIFF_3D_REAL ( ARRAY1, NAME1, ARRAY2, NAME2, &
-    & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS )
-    real, intent(in) :: ARRAY1(:,:,:)
-    character(len=*), intent(in) :: NAME1
-    real, intent(in) :: ARRAY2(:,:,:)
-    character(len=*), intent(in) :: NAME2
-    real, intent(in):: FILLVALUE
-    integer, intent(in), optional :: WIDTH
-    character(len=*), intent(in), optional :: FORMAT
-    integer, intent(in), optional :: LBOUND
-    character(len=*), intent(in), optional :: options
-
-    real, dimension(product(shape(array1))) :: filtered1
-    real, dimension(product(shape(array2))) :: filtered2
-    real :: refmin, refmax, refrms
-    include "diff.f9h"
-  end subroutine FILTEREDDIFF_3D_REAL
-
-  subroutine FILTEREDDIFF_4D_DOUBLE ( ARRAY1, NAME1, ARRAY2, NAME2, &
-    & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS )
-    double precision, intent(in) :: ARRAY1(:,:,:,:)
-    character(len=*), intent(in) :: NAME1
-    double precision, intent(in) :: ARRAY2(:,:,:,:)
-    character(len=*), intent(in) :: NAME2
-    double precision, intent(in):: FILLVALUE
-    integer, intent(in), optional :: WIDTH
-    character(len=*), intent(in), optional :: FORMAT
-    integer, intent(in), optional :: LBOUND
-    character(len=*), intent(in), optional :: options
-
-    double precision, dimension(product(shape(array1))) :: filtered1
-    double precision, dimension(product(shape(array2))) :: filtered2
-    double precision :: refmin, refmax, refrms
-    include "diff.f9h"
-  end subroutine FILTEREDDIFF_4D_DOUBLE
-
-  subroutine FILTEREDDIFF_4D_REAL ( ARRAY1, NAME1, ARRAY2, NAME2, &
-    & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS )
-    real, intent(in) :: ARRAY1(:,:,:,:)
-    character(len=*), intent(in) :: NAME1
-    real, intent(in) :: ARRAY2(:,:,:,:)
-    character(len=*), intent(in) :: NAME2
-    real, intent(in):: FILLVALUE
-    integer, intent(in), optional :: WIDTH
-    character(len=*), intent(in), optional :: FORMAT
-    integer, intent(in), optional :: LBOUND
-    character(len=*), intent(in), optional :: options
-
-    real, dimension(product(shape(array1))) :: filtered1
-    real, dimension(product(shape(array2))) :: filtered2
-    real :: refmin, refmax, refrms
-    include "diff.f9h"
-  end subroutine FILTEREDDIFF_4D_REAL
-
-  ! ---------------------------------------------  restoreDumpConfig  -----
-  ! Restore default values for dump settings
-  subroutine RESTOREDUMPCONFIG
-    DEFAULTDIFFOPTIONS        = ' '
-    DEFAULTDUMPOPTIONS        = ' '
-    DEFAULTMAXLON             = 128
-    DEFAULTWIDTH              = 10
-    DUMPTABLESIDE             = 'top'
-    DIFFRMSMEANSRMS           = .false.
-    DONTDUMPIFALLEQUAL        = .true.
-    FILTERFILLSFROMRMS        = .false.
-    PRINTFILLVALUE            = .true.
-    PRINTNAMEIFDIFF           = .true.
-    STATSONONELINE            = .true.
-    COLLAPSEOPTIONS           = 'num[+]all[+]'
-    INTPLACES                 = '6' ! how many places
-    PCTFORMAT                 = '*' ! * means default format
-    RMSFORMAT                 = '*' ! * means default format
-    SDFORMATDEFAULT           = '(1pg14.6)'
-  end subroutine RESTOREDUMPCONFIG
-
-  ! ---------------------------------------------  arrayShapeToString  -----
-  function arrayShapeToString ( arrayShape ) result ( string )
-    ! Given an array of integers return the shape as a string
-    ! E.g., given (/4,2,6/) return '4*2*6'
-    integer, dimension(:), intent(in) :: arrayShape
-    character(len=16) :: string
-    ! Internal variables
-    integer :: i
-    ! Executable
-    string = ' '
-    if ( size(arrayShape) < 1 ) return
-    do i=1, size( arrayshape )
-      string = catLists( string, arrayShape(i), inseparator='*' )
-    enddo
-    
-  end function arrayShapeToString
   ! ------------------------------------------------------  Empty  -----
   subroutine Empty ( Name )
     character(len=*), intent(in), optional :: Name
@@ -2948,6 +1283,17 @@ contains
     call output ( 'empty', advance='yes' )
 
   end subroutine Empty
+
+  ! -------------------------------------------------  FinishLine  -----
+  ! Print a newLine, optionally echoing the item name
+  subroutine FinishLine
+    ! Executable
+    if ( len_trim(nameOnEachLine) > 1 ) then
+      call blanks (2)
+      call output ( trim(nameOnEachLine), advance='no' )
+    end if
+    call newLine
+  end subroutine FinishLine
 
   ! -----------------------------------------------------  ILOG10  -----
   integer function ILOG10(int)
@@ -2962,7 +1308,7 @@ contains
     integer, intent(in) :: Size
     character(len=*), intent(in), optional :: TheShape
 
-    if ( present(name) .and. .not. myLaconic ) then
+    if ( present(name) .and. .not. dopts(laconic)%v ) then
       if ( len_trim(name) < 1 ) return
       if ( .not. nameHasBeenPrinted ) then
         call output ( name , advance='no' )
@@ -2978,16 +1324,214 @@ contains
     end if
 
   end subroutine Name_And_Size
+
+  ! -------------------------------------------------  TheDumpEnds -----
+  subroutine TheDumpEnds
+    stampOptions%neverStamp = .false.
+  end subroutine TheDumpEnds
+
+  ! =====     Private Procedures     ===================================
+
+  ! -------------------------------------------------  Dump_Bogus  -----
+  ! Never used--just here to tell Makefiles that dumpstats.f9h is
+  ! a prerequisite for Dump_0 because perl script f90makedep.pl
+  ! won't follow .f9h files to look for more uses and includes.
+  ! When will we repair the perl script?
+  !
+  subroutine Dump_Bogus ( ARRay, Name, &
+    & FillValue, FORMAT, WIDTH, LBOUND, OPTIONS )
+    integer, intent(in) :: Array(:)
+    character(len=*), intent(in), optional :: NAME
+    integer, intent(in), optional :: FillValue
+    character(len=*), intent(in), optional :: FORMAT
+    integer, intent(in), optional :: WIDTH ! How many numbers per line (10)?
+    integer, intent(in), optional :: LBOUND ! Low bound for Array
+    character(len=*), optional, intent(in) :: options
+    integer :: myFillValue
+    myFillValue = 0
+    myRank = 0
+    include 'dumpstats.f9h'
+  end subroutine Dump_Bogus
+
+  ! -----------------------------------------  DumpCollapsedArray  -----
+  ! This family of subroutines dumps a lower-rank representation of
+  ! an array
+  subroutine DumpCollapsedArray_1D_Integer ( Array, Name, FillValue, Options )
+    INTEGER, intent(in) :: Array(:)
+    character(len=*), intent(in) :: NAME
+    INTEGER, intent(in), optional :: FillValue
+    character(len=*), intent(in), optional :: options
+    call output( 'Did not expect to dump collapsed 1d array', advance='yes' )
+  end subroutine DumpCollapsedArray_1D_Integer
+
+  subroutine DumpCollapsedArray_1D_Double ( Array, Name, FillValue, Options )
+    double precision, intent(in) :: Array(:)
+    character(len=*), intent(in) :: NAME
+    double precision, intent(in), optional :: FillValue
+    character(len=*), intent(in), optional :: options
+    call output( 'Did not expect to dump collapsed 1d array', advance='yes' )
+  end subroutine DumpCollapsedArray_1D_Double
+
+  subroutine DumpCollapsedArray_1D_Real ( Array, Name, FillValue, Options )
+    real, intent(in) :: Array(:)
+    character(len=*), intent(in) :: NAME
+    real, intent(in), optional :: FillValue
+    character(len=*), intent(in), optional :: options
+    call output( 'Did not expect to dump collapsed 1d array', advance='yes' )
+  end subroutine DumpCollapsedArray_1D_Real
+
+  subroutine DumpCollapsedArray_2D_Double ( Array, Name, FillValue, Options )
+    double precision, intent(in) :: Array(:,:)
+    character(len=*), intent(in) :: NAME
+    double precision, intent(in), optional :: FillValue
+    character(len=*), intent(in), optional :: options
+    ! For dumping lower-rank collapsed representations
+    double precision, dimension(size( Array, 1)) :: nums
+    logical, dimension(size( Array, 1))          :: logs
+
+    ! dump numerical representation
+    if ( index(collapseOptions, 'num') > 0 ) then
+      call collapse( Array, nums, options=collapseOptions )
+      call dump( nums, name, fillvalue, Options=options )
+    end if
+    if ( index(collapseOptions, 'any') > 0 .or. &
+      &  index(collapseOptions, 'all') > 0 ) then
+      call collapse( Array, logs=logs, options=collapseOptions )
+      call dump( logs, name, options=options )
+    end if
+  end subroutine DumpCollapsedArray_2D_Double
+
+  subroutine DumpCollapsedArray_2D_Real ( Array, Name, FillValue, Options )
+    real, intent(in) :: Array(:,:)
+    character(len=*), intent(in) :: NAME
+    real, intent(in), optional :: FillValue
+    character(len=*), intent(in), optional :: options
+    ! For dumping lower-rank collapsed representations
+    real, dimension(size( Array, 1)) :: nums
+    logical, dimension(size( Array, 1))          :: logs
+
+    ! dump numerical representation
+    if ( index(collapseOptions, 'num') > 0 ) then
+      call collapse( Array, nums, options=collapseOptions )
+      call dump( nums, name, fillvalue, Options=options )
+    end if
+    if ( index(collapseOptions, 'any') > 0 .or. &
+      &  index(collapseOptions, 'all') > 0 ) then
+      call collapse( Array, logs=logs, options=collapseOptions )
+      call dump( logs, name, options=options )
+    end if
+  end subroutine DumpCollapsedArray_2D_Real
+
+  subroutine DumpCollapsedArray_2D_Integer ( Array, Name, FillValue, Options )
+    INTEGER, intent(in) :: Array(:,:)
+    character(len=*), intent(in) :: NAME
+    INTEGER, intent(in), optional :: FillValue
+    character(len=*), intent(in), optional :: options
+    ! For dumping lower-rank collapsed representations
+    INTEGER, dimension(size( Array, 1)) :: nums
+    logical, dimension(size( Array, 1))          :: logs
+
+    ! dump numerical representation
+    if ( index(collapseOptions, 'num') > 0 ) then
+      call collapse( Array, nums, options=collapseOptions )
+      call dump( nums, name, fillvalue, Options=options )
+    end if
+    if ( index(collapseOptions, 'any') > 0 .or. &
+      &  index(collapseOptions, 'all') > 0 ) then
+      call collapse( Array, logs=logs, options=collapseOptions )
+      call dump( logs, name, options=options )
+    end if
+  end subroutine DumpCollapsedArray_2D_Integer
+
+  subroutine DumpCollapsedArray_3D_Double ( Array, Name, FillValue, Options )
+    double precision, intent(in) :: Array(:,:,:)
+    character(len=*), intent(in) :: NAME
+    double precision, intent(in), optional :: FillValue
+    character(len=*), intent(in), optional :: options
+    ! For dumping lower-rank collapsed representations
+    double precision, dimension(size( Array, 1),size( Array, 2)) :: nums
+    logical, dimension(size( Array, 1),size( Array, 2))          :: logs
+
+    ! dump numerical representation
+    if ( index(collapseOptions, 'num') > 0 ) then
+      call collapse( Array, nums, options=collapseOptions )
+      call dump( nums, name, fillvalue, Options=options )
+    end if
+    if ( index(collapseOptions, 'any') > 0 .or. &
+      &  index(collapseOptions, 'all') > 0 ) then
+      call collapse( Array, logs=logs, options=collapseOptions )
+      call dump( logs, name, options=options )
+    end if
+  end subroutine DumpCollapsedArray_3D_Double
+
+  subroutine DumpCollapsedArray_3D_Real ( Array, Name, FillValue, Options )
+    real, intent(in) :: Array(:,:,:)
+    character(len=*), intent(in) :: NAME
+    real, intent(in), optional :: FillValue
+    character(len=*), intent(in), optional :: options
+    ! For dumping lower-rank collapsed representations
+    real, dimension(size( Array, 1),size( Array, 2)) :: nums
+    logical, dimension(size( Array, 1),size( Array, 2))          :: logs
+
+    ! dump numerical representation
+    if ( index(collapseOptions, 'num') > 0 ) then
+      call collapse( Array, nums, options=collapseOptions )
+      call dump( nums, name, fillvalue, Options=options )
+    end if
+    if ( index(collapseOptions, 'any') > 0 .or. &
+      &  index(collapseOptions, 'all') > 0 ) then
+      call collapse( Array, logs=logs, options=collapseOptions )
+      call dump( logs, name, options=options )
+    end if
+  end subroutine DumpCollapsedArray_3D_Real
+
+  subroutine DumpCollapsedArray_3D_Integer ( Array, Name, FillValue, Options )
+    INTEGER, intent(in) :: Array(:,:,:)
+    character(len=*), intent(in) :: NAME
+    INTEGER, intent(in), optional :: FillValue
+    character(len=*), intent(in), optional :: options
+    ! For dumping lower-rank collapsed representations
+    INTEGER, dimension(size( Array, 1),size( Array, 2)) :: nums
+    logical, dimension(size( Array, 1),size( Array, 2))          :: logs
+
+    ! dump numerical representation
+    if ( index(collapseOptions, 'num') > 0 ) then
+      call collapse( Array, nums, options=collapseOptions )
+      call dump( nums, name, fillvalue, Options=options )
+    end if
+    if ( index(collapseOptions, 'any') > 0 .or. &
+      &  index(collapseOptions, 'all') > 0 ) then
+      call collapse( Array, logs=logs, options=collapseOptions )
+      call dump( logs, name, options=options )
+    end if
+  end subroutine DumpCollapsedArray_3D_Integer
+
+  ! -----------------------------------------  ArrayShapeToString  -----
+  function ArrayShapeToString ( ArrayShape ) result ( String )
+    ! Given an array of integers return the shape as a string
+    ! E.g., given (/4,2,6/) return '4*2*6'
+    integer, dimension(:), intent(in) :: ArrayShape
+    character(len=16) :: String
+    ! Internal variables
+    integer :: i
+    ! Executable
+    string = ' '
+    if ( size(arrayShape) < 1 ) return
+    do i=1, size( arrayshape )
+      string = catLists( string, arrayShape(i), inseparator='*' )
+    end do
+    
+  end function ArrayShapeToString
   
-  ! -------------------- PrintIt ---------------------
+  ! ----------------------------------------------------  PrintIt  -----
   ! This family of subroutines exists only so that we can generically call
   ! output with either a numeric arg or a character string, 
   ! trimming if the latter
-  subroutine PrintIt_char ( it, format )
+  subroutine PrintIt_Char ( it, format )
     character(len=*) :: it
     character(len=*), intent(in), optional :: FORMAT
     call output ( trim(it), advance='no' )
-  end subroutine PrintIt_char
+  end subroutine PrintIt_Char
 
   subroutine PrintIt_int ( it, format )
     integer :: it
@@ -2995,42 +1539,42 @@ contains
     call output ( it, format=format, advance='no' )
   end subroutine PrintIt_int
 
-  subroutine PrintIt_real ( it, format )
+  subroutine PrintIt_Real ( it, format )
     real :: it
     character(len=*), intent(in), optional :: FORMAT
     call output ( it, format=format, advance='no' )
-  end subroutine PrintIt_real
+  end subroutine PrintIt_Real
 
-  subroutine PrintIt_double ( it, format )
+  subroutine PrintIt_Double ( it, format )
     double precision :: it
     character(len=*), intent(in), optional :: FORMAT
     call output ( it, format=format, advance='no' )
-  end subroutine PrintIt_double
+  end subroutine PrintIt_Double
 
-  subroutine PrintIt_complex ( it, format )
+  subroutine PrintIt_Complex ( it, format )
     integer, parameter :: RK = kind(0.0e0)
     complex(rk) :: it
     character(len=*), intent(in), optional :: FORMAT
     call output ( it, format=format, advance='no' )
-  end subroutine PrintIt_complex
+  end subroutine PrintIt_Complex
 
-  subroutine PrintIt_dcomplex ( it, format )
+  subroutine PrintIt_DComplex ( it, format )
     integer, parameter :: RK = kind(0.0d0)
     complex(rk) :: it
     character(len=*), intent(in), optional :: FORMAT
     call output ( it, format=format, advance='no' )
-  end subroutine PrintIt_dcomplex
+  end subroutine PrintIt_DComplex
 
-  ! ----------------------------------------------  printPercentages  -----
+  ! -------------------------------------------  PrintPercentages  -----
   ! Prints a nicely-formatted summary of equal, unequal, etc.
   ! using output
-  subroutine printPercentages ( name, equal, unequal )
+  subroutine PrintPercentages ( name, equal, unequal )
     character(len=*), intent(in), optional :: Name
     integer, intent(in) :: equal
     integer, intent(in) :: unequal
     if ( equal+unequal < 1 ) return
-    myPCTFormat  = DEFAULTPCTFORMAT
-    if ( PCTFORMAT /= '*' ) myPCTFormat = PCTFORMAT
+    myPCTFormat  = DefaultPCTFormat
+    if ( PCTFormat /= '*' ) myPCTFormat = PCTFormat
     if ( present(name) ) call output ( trim(name), advance='no' )
     call blanks( 1, advance='no' )
     call output( fillvaluerelation, advance='no' )
@@ -3040,22 +1584,22 @@ contains
     call output ( equal, advance='no' )
     call output ( ': ', advance='no' )
     call output ( unequal, advance='no' )
-    if ( .not. STATSONONELINE ) then
+    if ( .not. statsOnOneLine ) then
       call newline
       call blanks(10)
-    endif
+    end if
     call output ( '( ', advance='no' )
     call output ( 100*equal/(equal+unequal+0.), format = myPCTFormat, advance='no' )
     call output ( ': ', advance='no' )
     call output ( 100*unequal/(equal+unequal+0.), format = myPCTFormat, advance='no' )
     call output ( ' )', advance='no' )
     call finishLine
-  end subroutine printPercentages
+  end subroutine PrintPercentages
 
-  ! ----------------------------------------------  printRMSetc  -----
+  ! ------------------------------------------------  PrintRMSetc  -----
   ! This family of routines prints a nicely-formatted list of min, max, etc.
   ! using output
-  subroutine printRMSetc_double ( Name, min, max, rms, mean  )
+  subroutine PrintRMSetc_Double ( Name, min, max, rms, mean  )
     character(len=*), intent(in), optional :: Name
     double precision, intent(in) :: min
     double precision, intent(in) :: max
@@ -3068,9 +1612,9 @@ contains
     outputOptions%sdFormatDefault = rmsFormat
     include 'printRMSetc.f9h'
     outputOptions%sdFormatDefault = originalSDFormat
-  end subroutine printRMSetc_double
+  end subroutine PrintRMSetc_Double
 
-  subroutine printRMSetc_real ( Name, min, max, rms, mean  )
+  subroutine PrintRMSetc_Real ( Name, min, max, rms, mean  )
     character(len=*), intent(in), optional :: Name
     real, intent(in) :: min
     real, intent(in) :: max
@@ -3082,9 +1626,9 @@ contains
     outputOptions%sdFormatDefault = rmsFormat
     include 'printRMSetc.f9h'
     outputOptions%sdFormatDefault = originalSDFormat
-  end subroutine printRMSetc_real
+  end subroutine PrintRMSetc_Real
 
-  subroutine printRMSetc_int ( Name, in_min, in_max, rms, mean  )
+  subroutine PrintRMSetc_int ( Name, in_min, in_max, rms, mean  )
     character(len=*), intent(in), optional :: Name
     integer, intent(in)        :: in_min
     integer, intent(in)        :: in_max
@@ -3097,7 +1641,7 @@ contains
     min = in_min
     max = in_max
     include 'printRMSetc.f9h'
-  end subroutine printRMSetc_int
+  end subroutine PrintRMSetc_int
 
   ! This family of subroutines print subscripts to the left
   ! of each dumped row, sometimes noting that repeated lines
@@ -3108,19 +1652,19 @@ contains
     include 'Say_Fill.f9h'
   end subroutine Say_Fill_Char
 
-  ! --------------------------------------------  Say_Fill_Complex  -----
+  ! -------------------------------------------  Say_Fill_Complex  -----
   subroutine Say_Fill_Complex ( Subs, NumZeroRows, Fill, Inc, Format )
     integer, parameter :: RK = kind(0.0e0)
     complex(rk), intent(in) :: Fill
     include 'Say_Fill.f9h'
   end subroutine Say_Fill_Complex
 
-  ! --------------------------------------------  Say_Fill_Dcomplex  -----
-  subroutine Say_Fill_Dcomplex ( Subs, NumZeroRows, Fill, Inc, Format )
+  ! ------------------------------------------  Say_Fill_DComplex  -----
+  subroutine Say_Fill_DComplex ( Subs, NumZeroRows, Fill, Inc, Format )
     integer, parameter :: RK = kind(0.0d0)
     complex(rk), intent(in) :: Fill
     include 'Say_Fill.f9h'
-  end subroutine Say_Fill_Dcomplex
+  end subroutine Say_Fill_DComplex
 
   ! --------------------------------------------  Say_Fill_Double  -----
   subroutine Say_Fill_Double ( Subs, NumZeroRows, Fill, Inc, Format )
@@ -3160,7 +1704,8 @@ contains
     call output ( afterSub , advance='no' )
   end subroutine Say_Subs_Only
   
-  subroutine showColumnNums( lineLength, skip )
+  ! ----------------------------------------------  ShowColumnNums -----
+  subroutine ShowColumnNums( lineLength, skip )
     ! show column numbers
     ! usu. printed below other data to help guide the eye as to where
     ! stuff actually is
@@ -3189,12 +1734,13 @@ contains
       do bloc = 1, numBlocs
         write(line(2), '(i10)' ) bloc
         call output( line(multiple), advance='no' )
-      enddo
+      end do
       call newline
-    enddo
-  end subroutine showColumnNums
-  
-  function snipOption( options, particular ) result ( snipped )
+    end do
+  end subroutine ShowColumnNums
+
+  ! --------------------------------------------------  SnipOption -----
+  function SnipOption ( options, particular ) result ( snipped )
     ! Snip from options a particular option commanding dump or diff
     ! Args:
     character(len=*), optional, intent(in) :: options
@@ -3204,274 +1750,10 @@ contains
     snipped = ' '
     if ( .not. present(options) .or. .not. present(particular) ) return
     snipped = delete( options, particular )
-  end function snipOption
-  
-  subroutine theDumpBegins(options)
-    character(len=*), intent(in), optional :: options
-    nameHasBeenPrinted = .false.
-    stampOptions%neverStamp = .true. ! So we don't interrupt tables of numbers
-    myBandwidth  = theDefault('bandwidth') ! .false.
-    myClean      = theDefault('clean') ! .false.
-    myCollapse   = theDefault('collapse') ! .false.
-    myCyclic     = theDefault('cyclic') ! .false.
-    myDirect     = theDefault('direct') ! .false.
-    myGaps       = theDefault('gaps')
-    myLaconic    = theDefault('laconic')
-    myNaNs       = theDefault('nans')
-    myRMS        = theDefault('rms')   ! .false.
-    MyRatios     = theDefault('ratios')   ! .false.
-    myShape      = theDefault('shape')  ! .false.
-    myStats      = theDefault('stat')  ! .false.
-    myTable      = theDefault('table')  ! .false.
-    myTranspose  = theDefault('transpose')  ! .false.
-    myTrim       = theDefault('trim')  ! .false.
-    myUnique     = theDefault('unique')
-    myWholeArray = theDefault('wholearray')
-    if ( present(options) ) then
-      myBandwidth   =   index( options, dopt_bandwidth  ) > 0
-      myClean       =   index( options, dopt_clean      ) > 0
-      myCollapse    =   index( options, dopt_collapse   ) > 0
-      myCyclic      =   index( options, dopt_cyclic     ) > 0
-      myGaps        =   index( options, dopt_gaps       ) > 0
-      myLaconic     =   index( options, dopt_laconic    ) > 0
-      myNaNs        =   index( options, dopt_NaNs       ) > 0
-      myRatios      =   index( options, dopt_ratios     ) > 0
-      myRMS         =   index( options, dopt_rms        ) > 0
-      myShape       =   index( options, dopt_shape      ) > 0
-      myStats       =   index( options, dopt_stats      ) > 0
-      myTable       =   index( options, dopt_table      ) > 0
-      myTranspose   =   index( options, dopt_transpose  ) > 0
-      myTrim        =   index( options, dopt_trim       ) > 0
-      myUnique      =   index( options, dopt_unique     ) > 0
-      myVerbose     =   index( options, dopt_verbose    ) > 0
-      myWholeArray  = ( index( options, dopt_wholearray ) > 0 )
-    endif
-    myWholeArray = myWholeArray .or. &
-      & .not. (myBandwidth.or. myCollapse .or. myRatios .or. myRMS .or. myShape .or. myStats &
-      & .or. myTable .or. myNaNs)
-    onlyWholeArray = myWholeArray .and. &
-      & .not. (myBandwidth.or. myCollapse .or. myRatios .or. myRMS .or. myShape .or. myStats &
-      & .or. myTable .or. myNaNs)
-    nameHasBeenPrinted = nameHasBeenPrinted .or. myLaconic
-  end subroutine theDumpBegins
+  end function SnipOption
 
-  subroutine theDumpEnds
-    stampOptions%neverStamp = .false.
-  end subroutine theDumpEnds
-
-  function theDefault( code ) result ( isit )
-    ! Return the default value for a given code, e.g. 'clean'
-    ! Args
-    character(len=*), intent(in)    :: code
-    logical                         :: isit
-    !
-    character(len=8) :: defaultString
-    ! Executable
-    if ( thisIsADiff ) then
-      defaultString = DEFAULTDIFFOPTIONS
-    else
-      defaultString = DEFAULTDUMPOPTIONS
-    endif
-    select case ( code )
-    case ('clean')
-      isit = index( defaultstring, dopt_clean      ) > 0
-    case ('cyclic')
-      isit = index( defaultstring, dopt_cyclic     ) > 0
-    case ('direct')
-      isit = index( defaultstring, dopt_collapse   ) > 0
-    case ('gaps')
-      isit = index( defaultstring, dopt_gaps       ) > 0
-    case ('laconic')
-      isit = index( defaultstring, dopt_laconic    ) > 0
-    case ('nans')
-      isit = index( defaultstring, dopt_NaNs       ) > 0
-    case ('rms')
-      isit = index( defaultstring, dopt_rms        ) > 0
-    case ('shape')
-      isit = index( defaultstring, dopt_shape      ) > 0
-    case ('stat')
-      isit = index( defaultstring, dopt_stats      ) > 0
-    case ('table')
-      isit = index( defaultstring, dopt_table      ) > 0
-    case ('transpose')
-      isit = index( defaultstring, dopt_transpose  ) > 0
-    case ('trim')
-      isit = index( defaultstring, dopt_trim       ) > 0
-    case ('unique')
-      isit = index( defaultstring, dopt_unique     ) > 0
-    case ('verbose')
-      isit = index( defaultstring, dopt_verbose    ) > 0
-    case ('wholearray')
-      isit = index( defaultstring, dopt_wholearray ) > 0
-
-    case default
-      isit = .false.
-    end select
-  end function theDefault
-  
-  subroutine UNFILTEREDDIFF_1D_DOUBLE ( ARRAY1, NAME1, ARRAY2, NAME2, &
-    & WIDTH, FORMAT, LBOUND, OPTIONS )
-    integer, parameter :: RK = kind(1.0d0)
-    real(rk), intent(in) :: ARRAY1(:)
-    character(len=*), intent(in) :: NAME1
-    real(rk), intent(in) :: ARRAY2(:)
-    character(len=*), intent(in) :: NAME2
-    integer, intent(in), optional :: WIDTH
-    character(len=*), intent(in), optional :: FORMAT
-    integer, intent(in), optional :: LBOUND ! Low bound for Array
-    character(len=*), intent(in), optional :: options
-
-    include "unfiltereddiff.f9h"
-  end subroutine UNFILTEREDDIFF_1D_DOUBLE
-
-  subroutine UNFILTEREDDIFF_1D_INTEGER ( IARRAY1, NAME1, IARRAY2, NAME2, &
-    & WIDTH, FORMAT, LBOUND, OPTIONS )
-    integer, intent(in) :: IARRAY1(:)
-    character(len=*), intent(in) :: NAME1
-    integer, intent(in) :: IARRAY2(:)
-    character(len=*), intent(in) :: NAME2
-    integer, intent(in), optional :: WIDTH
-    character(len=*), intent(in), optional :: FORMAT
-    integer, intent(in), optional :: LBOUND ! Low bound for Array
-    character(len=*), intent(in), optional :: options
-
-    real, dimension(size(iarray1)) :: array1
-    real, dimension(size(iarray2)) :: array2
-    ! So we don't have to write an integer-version of allstats
-    array1 = iarray1
-    array2 = iarray2
-    call DIFF ( ARRAY1, NAME1, ARRAY2, NAME2, &
-      & WIDTH=WIDTH, FORMAT=FORMAT, &
-      & LBOUND=LBOUND, OPTIONS=OPTIONS )
-  end subroutine UNFILTEREDDIFF_1D_INTEGER
-
-  subroutine UNFILTEREDDIFF_1D_REAL ( ARRAY1, NAME1, ARRAY2, NAME2, &
-    & WIDTH, FORMAT, LBOUND, OPTIONS )
-    integer, parameter :: RK = kind(1.0e0)
-    real(rk), intent(in) :: ARRAY1(:)
-    character(len=*), intent(in) :: NAME1
-    real(rk), intent(in) :: ARRAY2(:)
-    character(len=*), intent(in) :: NAME2
-    integer, intent(in), optional :: WIDTH
-    character(len=*), intent(in), optional :: FORMAT
-    integer, intent(in), optional :: LBOUND ! Low bound for Array
-    character(len=*), intent(in), optional :: options
-
-    include "unfiltereddiff.f9h"
-  end subroutine UNFILTEREDDIFF_1D_REAL
-
-  subroutine UNFILTEREDDIFF_2D_DOUBLE ( ARRAY1, NAME1, ARRAY2, NAME2, &
-    & WIDTH, FORMAT, LBOUND, OPTIONS )
-    integer, parameter :: RK = kind(1.0d0)
-    real(rk), intent(in) :: ARRAY1(:,:)
-    character(len=*), intent(in) :: NAME1
-    real(rk), intent(in) :: ARRAY2(:,:)
-    character(len=*), intent(in) :: NAME2
-    integer, intent(in), optional :: WIDTH
-    character(len=*), intent(in), optional :: FORMAT
-    integer, intent(in), optional :: LBOUND
-    character(len=*), intent(in), optional :: options
-
-    include "unfiltereddiff.f9h"
-  end subroutine UNFILTEREDDIFF_2D_DOUBLE
-
-  subroutine UNFILTEREDDIFF_2D_INTEGER ( IARRAY1, NAME1, IARRAY2, NAME2, &
-    & WIDTH, FORMAT, LBOUND, OPTIONS )
-    integer, intent(in) :: IARRAY1(:,:)
-    character(len=*), intent(in) :: NAME1
-    integer, intent(in) :: IARRAY2(:,:)
-    character(len=*), intent(in) :: NAME2
-    integer, intent(in), optional :: WIDTH
-    character(len=*), intent(in), optional :: FORMAT
-    integer, intent(in), optional :: LBOUND ! Low bound for Array
-    character(len=*), intent(in), optional :: options
-
-    real, dimension(size(iarray1,1), size(iarray1,2)) :: array1
-    real, dimension(size(iarray1,1), size(iarray1,2)) :: array2
-    ! So we don't have to write an integer-version of allstats
-    array1 = iarray1
-    array2 = iarray2
-    call DIFF ( ARRAY1, NAME1, ARRAY2, NAME2, &
-      & WIDTH=WIDTH, FORMAT=FORMAT, &
-      & LBOUND=LBOUND, OPTIONS=OPTIONS )
-  end subroutine UNFILTEREDDIFF_2D_INTEGER
-
-  subroutine UNFILTEREDDIFF_2D_REAL ( ARRAY1, NAME1, ARRAY2, NAME2, &
-    & WIDTH, FORMAT, LBOUND, OPTIONS )
-    integer, parameter :: RK = kind(1.0e0)
-    real(rk), intent(in) :: ARRAY1(:,:)
-    character(len=*), intent(in) :: NAME1
-    real(rk), intent(in) :: ARRAY2(:,:)
-    character(len=*), intent(in) :: NAME2
-    integer, intent(in), optional :: WIDTH
-    character(len=*), intent(in), optional :: FORMAT
-    integer, intent(in), optional :: LBOUND
-    character(len=*), intent(in), optional :: options
-
-    include "unfiltereddiff.f9h"
-  end subroutine UNFILTEREDDIFF_2D_REAL
-
-  subroutine UNFILTEREDDIFF_3D_DOUBLE ( ARRAY1, NAME1, ARRAY2, NAME2, &
-    & WIDTH, FORMAT, LBOUND, OPTIONS )
-    integer, parameter :: RK = kind(1.0d0)
-    real(rk), intent(in) :: ARRAY1(:,:,:)
-    character(len=*), intent(in) :: NAME1
-    real(rk), intent(in) :: ARRAY2(:,:,:)
-    character(len=*), intent(in) :: NAME2
-    integer, intent(in), optional :: WIDTH
-    character(len=*), intent(in), optional :: FORMAT
-    integer, intent(in), optional :: LBOUND
-    character(len=*), intent(in), optional :: options
-
-    include "unfiltereddiff.f9h"
-  end subroutine UNFILTEREDDIFF_3D_DOUBLE
-
-  subroutine UNFILTEREDDIFF_3D_REAL ( ARRAY1, NAME1, ARRAY2, NAME2, &
-    & WIDTH, FORMAT, LBOUND, OPTIONS )
-    integer, parameter :: RK = kind(1.0e0)
-    real(rk), intent(in) :: ARRAY1(:,:,:)
-    character(len=*), intent(in) :: NAME1
-    real(rk), intent(in) :: ARRAY2(:,:,:)
-    character(len=*), intent(in) :: NAME2
-    integer, intent(in), optional :: WIDTH
-    character(len=*), intent(in), optional :: FORMAT
-    integer, intent(in), optional :: LBOUND
-    character(len=*), intent(in), optional :: options
-
-    include "unfiltereddiff.f9h"
-  end subroutine UNFILTEREDDIFF_3D_REAL
-
-  subroutine UNFILTEREDDIFF_4D_DOUBLE ( ARRAY1, NAME1, ARRAY2, NAME2, &
-    & WIDTH, FORMAT, LBOUND, OPTIONS )
-    integer, parameter :: RK = kind(1.0d0)
-    real(rk), intent(in) :: ARRAY1(:,:,:,:)
-    character(len=*), intent(in) :: NAME1
-    real(rk), intent(in) :: ARRAY2(:,:,:,:)
-    character(len=*), intent(in) :: NAME2
-    integer, intent(in), optional :: WIDTH
-    character(len=*), intent(in), optional :: FORMAT
-    integer, intent(in), optional :: LBOUND
-    character(len=*), intent(in), optional :: options
-
-    include "unfiltereddiff.f9h"
-  end subroutine UNFILTEREDDIFF_4D_DOUBLE
-
-  subroutine UNFILTEREDDIFF_4D_REAL ( ARRAY1, NAME1, ARRAY2, NAME2, &
-    & WIDTH, FORMAT, LBOUND, OPTIONS )
-    integer, parameter :: RK = kind(1.0e0)
-    real(rk), intent(in) :: ARRAY1(:,:,:,:)
-    character(len=*), intent(in) :: NAME1
-    real(rk), intent(in) :: ARRAY2(:,:,:,:)
-    character(len=*), intent(in) :: NAME2
-    integer, intent(in), optional :: WIDTH
-    character(len=*), intent(in), optional :: FORMAT
-    integer, intent(in), optional :: LBOUND
-    character(len=*), intent(in), optional :: options
-
-    include "unfiltereddiff.f9h"
-  end subroutine UNFILTEREDDIFF_4D_REAL
-
-  logical function uniqueonly ( options )
+  ! --------------------------------------------------  UniqueOnly -----
+  logical function UniqueOnly ( options )
     character(len=*), intent(in), optional :: options
     ! Executable
     uniqueonly = .true.
@@ -3479,7 +1761,7 @@ contains
     uniqueonly = uniqueonly .and. &
       & .not. any( indexes(options, (/'w','s','r'/)) > 0 )
 
-  end function uniqueonly
+  end function UniqueOnly
 
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
@@ -3491,9 +1773,12 @@ contains
   end function not_used_here
 !---------------------------------------------------------------------------
 
-end module DUMP_0
+end module Dump_0
 
 ! $Log$
+! Revision 2.138  2016/07/28 01:42:27  vsnyder
+! Refactoring dump and diff
+!
 ! Revision 2.137  2016/04/05 23:54:57  pwagner
 ! -v verbose option added; usu. will print name on each line
 !
@@ -3718,10 +2003,10 @@ end module DUMP_0
 ! Added interface for dumping bit arrays
 !
 ! Revision 2.63  2006/08/23 20:06:25  pwagner
-! Restored more backward-compatible arglist to DUMP_STRLIST
+! Restored more backward-compatible arglist to Dump_STRLIST
 !
 ! Revision 2.62  2006/08/22 20:40:04  pwagner
-! Added required arg=separator to DUMP_STRLIST
+! Added required arg=separator to Dump_STRLIST
 !
 ! Revision 2.61  2006/07/11 00:24:04  pwagner
 ! use fillValue properly when computing rms etc.
@@ -3787,10 +2072,10 @@ end module DUMP_0
 ! Much moved from MLSStrings to MLSStringLists
 !
 ! Revision 2.40  2004/07/23 19:47:20  vsnyder
-! Add LBOUND to dump_1d_[double,integer,real]
+! Add LBOUND to Dump_1d_[double,integer,real]
 !
 ! Revision 2.39  2004/07/23 18:34:59  vsnyder
-! Add LBOUND argument to Dump_1d_logical
+! Add LBOUND argument to Dump_1d_Logical
 !
 ! Revision 2.38  2004/07/21 19:57:21  pwagner
 ! New rms, wholeArray options to some dumps
@@ -3848,7 +2133,7 @@ end module DUMP_0
 ! Merged in feb03 newfwm branch
 !
 ! Revision 2.20.2.3  2003/04/18 20:26:05  vsnyder
-! Add WIDTH and FORMAT arguments to 1D_REAL and 1D_DOUBLE
+! Add WIDTH and FORMAT arguments to 1D_Real and 1D_Double
 !
 ! Revision 2.20.2.2  2003/03/27 23:18:33  vsnyder
 ! Put new-lines in better places
@@ -3869,17 +2154,17 @@ end module DUMP_0
 ! Work on dumping masks
 !
 ! Revision 2.16  2001/12/08 00:47:51  pwagner
-! Added dump_1d_real for s.p. arrays
+! Added Dump_1d_Real for s.p. arrays
 !
 ! Revision 2.15  2001/11/29 23:50:53  pwagner
-! Added optional blase arg to dump_nd_char; fixed bug where optional
-! format not passed from dump_3d_int
+! Added optional blase arg to Dump_nd_Char; fixed bug where optional
+! format not passed from Dump_3d_int
 !
 ! Revision 2.14  2001/11/28 23:32:01  livesey
-! Fixed bug where dump_2d_integer didn't pass format to 1d dump.
+! Fixed bug where Dump_2d_Integer didn't pass format to 1d dump.
 !
 ! Revision 2.13  2001/10/25 23:30:39  pwagner
-! Improved dump_nd_double to skip rows (e.g., of zeros)
+! Improved Dump_nd_Double to skip rows (e.g., of zeros)
 !
 ! Revision 2.12  2001/10/24 18:11:14  pwagner
 ! which_ints_are_it now works properly
