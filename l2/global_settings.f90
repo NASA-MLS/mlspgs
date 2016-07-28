@@ -658,8 +658,6 @@ contains
     elseif ( L1BFile%hdfVersion /= hdfversion_5 ) then
       call MLSMessage ( MLSMSG_Warning, ModuleName, &                      
       & 'l1boa File is the older hdf4' )
-      call FinishUp
-      return
     else
       ! Check on module names--do they agree with group names in L1BOA file?
       ! If not, overwrite them
@@ -711,7 +709,8 @@ contains
     elseif ( got(p_starttime) .and. got(p_endtime) ) then
       call datesModuleTimeConversion
     end if
-
+    ! call outputNamedValue( 'processingRange%startTime', processingRange%startTime )
+    ! call outputNamedValue( 'processingRange%EndTime', processingRange%EndTime )
 
     if ( .not. TOOLKIT ) then
       ! Store appropriate user input as global attributes
@@ -1386,6 +1385,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.165  2016/07/28 19:54:30  pwagner
+! Guard against older hdf4 l1boa
+!
 ! Revision 2.164  2016/07/28 01:45:07  vsnyder
 ! Refactor dump and diff
 !
