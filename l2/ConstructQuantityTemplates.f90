@@ -77,20 +77,18 @@ contains ! ============= Public procedures ===================================
     use expr_m, only: expr
     use FGrid, only: FGrid_t
     use HGridsDatabase, only: HGrids_t
-    use highOutput, only: outputNamedValue
     use init_tables_module, only:  f_badvalue, f_coordinate, f_fgrid, f_hgrid, &
       & f_irregular, f_keepchannels, f_logbasis, f_minvalue, f_module, &
       & f_molecule, f_radiometer, f_reflector, f_sgrid, f_signal, f_stacked, &
       & f_type, f_vgrid, f_xgrid, field_first, field_last, l_channel, &
       & l_explicit, l_geocaltitude, l_lostransfunc, l_matrix3x3, l_none, &
       & l_phitan, l_true, l_xyz, l_zeta
-    use intrinsic, only: phyq_indices
     use MLSCommon, only: MLSFile_t
     use MLSKinds, only: rk => r8
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
     use MLSSignals_m, only:getModuleFromRadiometer, getModuleFromSignal, &
       & getRadiometerFromSignal, getSignal, signal_t, &
-      & isAnyModuleSpacecraft, isModuleSpacecraft
+      & isModuleSpacecraft
     use moreTree, only: get_boolean
     use parse_signal_m, only: parse_signal
     use quantityTemplates, only: nullifyQuantityTemplate, pointQuantityToHGrid, &
@@ -533,22 +531,20 @@ contains ! ============= Public procedures ===================================
     use chunks_m, only: MLSChunk_t
     use Dump_0, only: Dump
     use highOutput, only: BeVerbose, LetsDebug, outputNamedValue
-    use init_tables_module, only: l_geocaltitude, l_geodaltitude, l_none
+    use init_tables_module, only: l_geodaltitude, l_none
     use L1BData, only: L1BData_t, readL1BData, deallocateL1BData, &
       & assemblel1bqtyname
     use MLSCommon, only: MLSFile_t, nameLen
     use MLSKinds, only: rk => r8
-    use MLSL2options, only: aura_L1BFiles
     use MLSFiles, only: getMLSFileByType
     use MLSMessageModule, only: MLSMessage, &
       & MLSMSG_Error, MLSMSG_L1BRead, MLSMSG_Warning
     use MLSSignals_m, only:  getModuleName, &
       & isAnyModuleSpacecraft, isModuleSpacecraft
-    use MLSStringLists, only: switchDetail
     use output_m, only: output
     use quantityTemplates, only: quantityTemplate_t, &
       & dump, setupNewQuantityTemplate
-    use toggles, only: gen, levels, switches, toggle
+    use toggles, only: gen, levels, toggle
     use trace_m, only: trace_begin, trace_end
 
     ! This routine constructs a minor frame based quantity.
@@ -1482,7 +1478,6 @@ contains ! ============= Public procedures ===================================
   ! ---------------------------------- SetupEmptyHGridForQuantity
   subroutine SetupEmptyHGridForQuantity ( qty ) 
     use Allocate_Deallocate, only: allocate_test
-    use Pointer_Rank_Remapping, only: remap
     use QuantityTemplates, only: QuantityTemplate_T
     ! Dummy arguments
     type ( QuantityTemplate_T ), intent(inout) :: QTY
@@ -1538,6 +1533,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.195  2016/07/28 00:42:46  vsnyder
+! Remove unused USE
+!
 ! Revision 2.194  2016/07/27 23:03:44  pwagner
 ! Works better with Aircraft-borne instrument data
 !
