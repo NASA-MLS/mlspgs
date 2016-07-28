@@ -206,21 +206,22 @@ contains
   subroutine SET_GLOBAL_SETTINGS ( ROOT, FORWARDMODELCONFIGDATABASE, &
     & FILEDATABASE, FGRIDS, L2GPDATABASE, DIRECTDATABASE, PROCESSINGRANGE )
 
-    use bitStuff, only: isBitSet
-    use dates_module, only: precedesUTC, resetStartingDate, secondsBetween2UTCs, &
-      & utc2tai93s, utc_to_yyyymmdd
-    use declaration_table, only: named_value, redeclare, str_value
-    use directWrite_m, only: directData_t, &
-      & addDirectToDatabase, dump, setupNewDirect
-    use dumpCommand_m, only: dumpCommand
-    use empiricalGeometry, only: initEmpiricalGeometry
+    use BitStuff, only: isBitSet
+    use Dates_module, only: precedesUTC, resetStartingDate, secondsBetween2UTCs, &
+      & Utc2tai93s, utc_to_yyyymmdd
+    use Declaration_table, only: named_value, redeclare, str_value
+    use DirectWrite_m, only: directData_t, &
+      & AddDirectToDatabase, dump, setupNewDirect
+    use DumpCommand_m, only: dumpCommand
+    use Dump_1, only: Dump
+    use EmpiricalGeometry, only: initEmpiricalGeometry
     use FGrid, only: addFGridToDatabase, createFGridFromMLSCFInfo, dump, fgrid_t
-    use forwardModelConfig, only: addForwardModelConfigToDatabase, dump, &
-      & forwardModelConfig_t
-    use forwardModelSupport, only: constructForwardModelConfig, &
-      & forwardModelGlobalsetup, createBinSelectorFromMLSCFInfo
-    use hdf, only: dfacc_create
-    use igrf_int, only: read_gh
+    use ForwardModelConfig, only: addForwardModelConfigToDatabase, dump, &
+      & ForwardModelConfig_t
+    use ForwardModelSupport, only: constructForwardModelConfig, &
+      & ForwardModelGlobalsetup, createBinSelectorFromMLSCFInfo
+    use HDF, only: dfacc_create
+    use IGRF_Int, only: read_gh
     use init_tables_module, only: f_file, f_type, &
       & l_l2gp, l_l2dgg, l_l2fwm, &
       & parm_indices, &
@@ -231,7 +232,7 @@ contains
       & s_fgrid, s_flushpfa, s_forwardmodel, s_forwardmodelglobal, &
       & s_l1boa, s_l1brad, s_l2parsf, s_makepfa, s_pfadata, s_readpfa, &
       & s_tgrid, s_time, s_vgrid, s_writepfa
-    use intrinsic, only: l_hdf, l_swath, spec_indices
+    use Intrinsic, only: l_hdf, l_swath, spec_indices
     use L1BData, only: L1BData_t, namelen, precisionSuffix, &
       & assemblel1bqtyname, deallocateL1BData, dump, findmaxmaf, &
       & L1BRadsetup, L1BOASetup, readL1BAttribute, readL1BData 
@@ -257,30 +258,30 @@ contains
     use MLSStringLists, only: array2List, catLists, switchDetail, &
       & numStringElements, stringElement, stringElementNum
     use MLSSignals_m, only: instrument, modules, Dump_Modules, GetModuleName
-    use moreTree, only: get_field_id, get_label_and_spec, get_spec_id, &
-      & startErrorMessage
-    use next_tree_node_m, only: next_tree_node, next_tree_node_state
-    use output_m, only: blanks, output, &
-      & revertOutput, switchOutput
+    use MoreTree, only: get_field_id, get_label_and_spec, get_spec_id, &
+      & StartErrorMessage
+    use Next_tree_node_m, only: next_tree_node, next_tree_node_state
+    use Output_m, only: blanks, output, &
+      & RevertOutput, switchOutput
     use PFAData_m, only: get_PFAData_from_l2cf, flush_PFAData, make_PFAData, &
-      & read_PFAData, write_PFAData
+      & Read_PFAData, write_PFAData
     use PFADatabase_m, only: process_pfa_file
     use PCFHDR, only: globalAttributes, fillTAI93Attribute
-    use readAPriori, only: APrioriFiles
-    use sdptoolkit, only: max_orbits, mls_utctotai, &
-      & pgsd_dem_30arc, pgsd_dem_90arc, &
-      & pgsd_dem_elev, pgsd_dem_water_land, &
-      & pgs_dem_open, pgs_s_success
-    use string_table, only: display_string, get_string
-    use time_m, only: time_now
-    use toggles, only: gen, switches, toggle
-    use trace_m, only: trace_begin, trace_end
-    use tree, only: decorate, decoration, node_id, nsons, sub_rosa, subtree, &
-      & dump_tree_node
-    use tree_types, only: n_equal
+    use ReadAPriori, only: APrioriFiles
+    use SDPToolkit, only: Max_orbits, MLS_UTCToTAI, &
+      & Pgsd_dem_30arc, pgsd_dem_90arc, &
+      & Pgsd_dem_elev, pgsd_dem_water_land, &
+      & Pgs_dem_open, pgs_s_success
+    use String_table, only: display_string, get_string
+    use Time_m, only: time_now
+    use Toggles, only: gen, switches, toggle
+    use Trace_m, only: trace_begin, trace_end
+    use Tree, only: decorate, decoration, node_id, nsons, sub_rosa, subtree, &
+      & Dump_tree_node
+    use Tree_types, only: n_equal
     use VGrid, only: createVGridFromMLSCFInfo
     use VGridsDatabase, only: addVGridToDatabase, VGrids
-    use writeMetadata, only: L2PCF
+    use WriteMetadata, only: L2PCF
 
     ! placed non-alphabetically due to Lahey internal compiler error
     ! (How much longer must we endure these onerous work-arounds?)
@@ -1378,6 +1379,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.163  2016/07/27 23:02:59  pwagner
+! Works better with Aircraft-borne instrument data
+!
 ! Revision 2.162  2016/07/22 20:07:16  pwagner
 ! Fix typos in output
 !
