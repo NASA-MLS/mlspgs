@@ -23,9 +23,11 @@ module MLSHDF5
   ! This note, like the Lahey compiler, is deprecated in our current
   ! software. We will resume alphabetizing the used module names.
 
-  use Allocate_deallocate, only: allocate_test, deallocate_test
-  use Dump_0, only: dopt_laconic, dopt_rms, dopt_stats, dopt_verbose, &
-    & Dump, dumpNamedValues, nameOnEachLine
+  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+  use Dump_Options, only: Dopt_Laconic, Dopt_RMS, Dopt_Stats, Dopt_Verbose, &
+    & NameOnEachLine
+  use Dump_0, only: Dump
+  use Dump_1, only: DumpNamedValues
   use Hdf, only: DFACC_RDOnly
   use HighOutput, only: outputNamedValue
   use Intrinsic, only: l_hdf
@@ -37,20 +39,20 @@ module MLSHDF5
   use MLSFinds, only: findFirst
   use MLSStringLists, only: catLists, isInList, &
     & Getstringelement, Intersection, numStringElements, stringElement
-  use Mlsstrings, only: indexes, lowercase, replace, trim_safe
+  use MLSStrings, only: indexes, lowercase, replace, trim_safe
   use Output_m, only: newline, output
   use Trace_m, only: trace_begin, trace_end
-  ! leTs break down our use, parameters first
-  use Hdf5, only: h5f_acc_rdonly_f, h5f_acc_rdwr_f, &
-    & H5G_Group_F, H5p_dataset_create_f, &
+  ! Let's break down our use, parameters first
+  use HDF5, only: h5f_acc_rdonly_f, h5f_acc_rdwr_f, &
+    & H5G_Group_f, H5p_dataset_create_f, &
     & H5sis_simple_f, & ! h5soffset_simple_f, &
     & H5s_scalar_f, h5s_select_set_f, h5s_unlimited_f, &
     & H5t_ieee_f32le, h5t_ieee_f64le, h5t_ieee_f64le, &
     & H5t_native_double, h5t_native_real, h5t_std_i32le, &
     & H5t_native_character, h5t_native_integer, h5t_string, h5t_string_f, &
     & Hid_t, hsize_t, size_t
-  ! noW routines
-  use Hdf5, only: h5aclose_f, h5acreate_f, &
+  ! Now routines
+  use HDF5, only: h5aclose_f, h5acreate_f, &
     & H5aget_name_f, h5aget_num_attrs_f, &
     & H5aget_space_f, h5aget_type_f, h5aopen_idx_f, h5aopen_name_f, &
     & H5aread_f, h5awrite_f, h5adelete_f, &
@@ -68,7 +70,7 @@ module MLSHDF5
     & H5tclose_f, h5tcopy_f, h5tequal_f, h5tget_class_f, h5tget_size_f, &
     & H5tset_size_f
 
-  implicit none
+  implicit NONE
   private
 
   public :: CpHDF5Attribute, CpHDF5GlAttribute, &
@@ -554,7 +556,7 @@ contains ! ======================= Public Procedures =========================
     call trace_end ( 'DumpHDF5Attributes', cond=.false. )
   end subroutine DumpHDF5Attributes
   
-  ! -------------------------------  DumpHDF5DS  -----
+  ! -------------------------------------------------  DumpHDF5DS  -----
   subroutine DumpHDF5DS ( locID, groupName, &
     & names, fillValue, options )
     ! Dump datasets in groupID
@@ -588,7 +590,6 @@ contains ! ======================= Public Procedures =========================
     integer :: k
     integer :: m
     integer :: Me = -1                  ! String index for trace cacheing
-    character(len=MAXNDSNAMES*MAXNAMELEN) :: matches
     character(len=MAXNDSNAMES*MAXNAMELEN) :: myNames
     character(len=128) :: name
     character(len=128) :: namePrinted
@@ -5761,6 +5762,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.136  2016/07/28 01:42:27  vsnyder
+! Refactoring dump and diff
+!
 ! Revision 2.135  2016/07/27 22:14:06  pwagner
 ! Added GetAllHDF5GroupNames
 !
