@@ -32,19 +32,19 @@
       call empty ( name )
     else if ( size(array) == 1 ) then
       if ( present(theShape) ) then
-        call name_and_size ( name, myClean, 1, theShape )
+        call name_and_size ( name, dopts(clean)%v, 1, theShape )
       else
-        call name_and_size ( name, myClean, 1, '(1)' )
+        call name_and_size ( name, dopts(clean)%v, 1, '(1)' )
       end if
       call output ( base+1, before='(', after=') ' , advance='no' )
       call output ( array(1), format=myFormat, advance='yes' )
     else
-      call name_and_size ( name, myClean, size(array), theShape )
-      if ( present(name) .and. .not. mylaconic ) call newLine
+      call name_and_size ( name, dopts(clean)%v, size(array), theShape )
+      if ( present(name) .and. .not. dopts(laconic)%v ) call newLine
       do j = 1, size(array), myWidth
-        DumpTheseZeros = myClean .or. &
+        DumpTheseZeros = dopts(clean)%v .or. &
           & any(array(j:min(j+2*myWidth-1, size(array))) /= myFillValue)
-        if (.not. myClean) then
+        if (.not. dopts(clean)%v) then
           if ( DumpTheseZeros ) then
             call say_fill ( (/ j-1+base, size(array) /), numZeroRows, &
               & myFillValue, inc=1, format=myFormat )
@@ -66,6 +66,9 @@
     call theDumpEnds
 !   end subroutine DUMP_1D_COMPLEX
 ! $Log$
+! Revision 2.5  2016/07/28 01:42:27  vsnyder
+! Refactoring dump and diff
+!
 ! Revision 2.4  2012/06/22 20:25:18  pwagner
 ! Specify advance arg because we may now set default to 'yes'
 !
