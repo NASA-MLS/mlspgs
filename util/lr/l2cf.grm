@@ -44,7 +44,10 @@ dot        = t_dot
 ','        = t_comma
 '^'        = t_hat
 begin      = t_begin
+cycle      = t_cycle
+do         = t_do
 end        = t_end
+exit       = t_exit
 and        = t_and
 or         = t_or
 not        = t_not
@@ -54,7 +57,8 @@ else       = t_else
 if         = t_if
 select     = t_select
 then       = t_then
-EOG        = t_end_of_input ; EOG is generated; the parser assumes it is defined
+while      = t_while
+EOG        = t_end_of_input ; LR generates EOG; the parser assumes it is defined
 EOS        = t_end_of_stmt
 name       = t_identifier
 number     = t_number
@@ -63,16 +67,20 @@ string     = t_string
 
 ; Now the productions.  The syntax for one production is
 ; LHS ( -> RHS ( => ACT '?' ? ) ? EOS )+
-; where LHS is a nonterminal symbol,
+; where LHS is a nonterminal symbol.
 ;       RHS is a sequence of terminal and nonterminal symbols,
 ;       ACT is the name of a tree node from the Tree_Types module of a
-;           number,
+;           number.  If a number, the low-order digit specifies the action:
+;             1 => build a tree node given by the high-order digits,
+;             2 => build a tree node given by the high-order digits iff
+;                  the RHS generated more than one tree node,
+;             9 => open an include file,
+;             else do nothing.
 ;       EOS means "end of statement", which is end of line or the
 ;           beginning of a comment, unless the production is continued by
-;           a "$"
-;       '?' means "do the action only if the RHS generated more than one
-;           tree node,
-;       ? means "can appear zero or one times, and
+;           a "$".
+;       '?' means "do the action iff the RHS generated more than one tree node.
+;       ? means "can appear zero or one times.
 ;       + means "can appear more than one time.
 
 ; A comment beginning with semicolon continues to the end of the line.
@@ -80,30 +88,64 @@ string     = t_string
 
 cf -> cfs
 
-cfs -> one_cf
-    -> include
-    -> cfs one_cf
+cfs -> one_cf EOS
+    -> cfs include
+    -> cfs one_cf EOS
 
-one_cf -> EOS
-       -> select case '(' expr ')' 'EOS+' cases_outer end select EOS => n_select
-       -> if_stmt_outer more_if_outer end if EOS => n_if
-       -> name ':=' value EOS => n_variable
-       -> begin name EOS specs end name EOS => n_cf
+one_cf -> ; blank lines are OK
+       -> construct_label select case '(' expr ')' 'EOS+' cases_outer end select => n_select
+       -> construct_label do do_header EOS cfs end do => n_do
+       -> construct_label do while '(' expr ')' EOS cfs end do => n_while
+       -> if_block_outer more_if_outer end if => n_if
+       -> if_label if_block_outer more_if_outer end if => n_if
+       -> if_stmt_outer => n_if
+       -> if_consequent_outer
+       -> begin name EOS specs end name => n_cf
+
+; cases_outer is right recursive to require case default at the end
+; if you make it left recursive it won't be LR
 
 cases_outer -> case_test_outer
-            -> case_test_outer cases_outer
             -> case default EOS cfs => n_default
+            -> case_test_outer cases_outer
 
 case_test_outer -> case '(' expr ')' EOS cfs => n_test
 
-if_stmt_outer -> if '(' expr ')' then EOS cfs => n_test
-
-more_if_outer ->
-     -> else if_stmt_outer more_if_outer
-     -> else EOS cfs => n_else
-
 'EOS+' -> EOS
        -> 'EOS+' EOS
+
+construct_label ->
+                -> if_label
+
+if_label -> name ':' => n_named
+
+do_header -> name ':=' expr_array => n_do_head
+          -> name ':=' expr ',' expr => n_do_head
+          -> name ':=' expr ',' expr ',' expr => n_do_head
+
+expr_array -> expr => n_array
+           -> '[' exprs ']' => n_array
+
+if_block_outer -> if '(' expr ')' then EOS cfs => n_test
+
+more_if_outer ->
+              -> else if_block_outer more_if_outer
+              -> else EOS cfs => n_else
+
+if_stmt_outer -> if '(' expr ')' if_consequent_outer => n_test
+
+if_consequent_outer -> cycle_stmt
+                    -> exit_stmt
+                    -> variable_def
+
+cycle_stmt -> cycle => n_cycle
+           -> cycle name => n_cycle
+
+exit_stmt -> exit => n_exit
+          -> exit name => n_exit
+
+variable_def -> name ':=' value => n_variable
+             -> name ':='  => n_variable
 
 specs ->
       -> specs spec
@@ -111,34 +153,45 @@ specs ->
 spec -> one_spec EOS
      -> include
 
-; "value" is either a scalar or an array enclosed in brackets
-
-one_spec ->
-         -> select case '(' expr ')' 'EOS+' cases end select EOS => n_select
-         -> if_stmt more_if end if => n_if
-         -> name ':=' value => n_variable
-         -> name ':' spec_rest => n_named
-         -> spec_rest
-         -> name '=' value => n_equal
+one_spec -> ; Blank lines are OK
+         -> construct_label select case '(' expr ')' 'EOS+' cases end select => n_select
+         -> construct_label do while '(' expr ')' EOS specs end do => n_while
+         -> construct_label do do_header EOS specs end do => n_do
+         -> if_label if_block more_if end if => n_if
+         -> if_block more_if end if => n_if
+         -> if_stmt => n_if
+         -> if_consequent
 
 ; We need to consume the EOS here so it won't be the first
 ; token we see after closing the include file.
 
 include -> '#include' string EOS => 9                         ; include file
 
+; cases is right recursive to require case default at the end
+; if you make it left recursive it won't be LR
+
 cases -> case_test
-      -> case_test cases
       -> case default EOS specs => n_default
+      -> case_test cases
 
 ; "expr" is a scalar
 
 case_test -> case '(' expr ')' EOS specs => n_test
 
-if_stmt -> if '(' expr ')' then EOS specs => n_test
+if_block -> if '(' expr ')' then EOS specs => n_test
 
 more_if ->
-        -> else if_stmt more_if
+        -> else if_block more_if
         -> else EOS specs => n_else
+
+if_stmt -> if '(' expr ')' if_consequent => n_test
+
+if_consequent -> cycle_stmt
+              -> exit_stmt
+              -> variable_def
+              -> name ':' spec_rest => n_named
+              -> spec_rest
+              -> name '=' value => n_equal
 
 spec_rest -> name fields => n_spec_args
 
@@ -148,7 +201,7 @@ fields ->
 field -> name '=' value => n_asg
       -> '/' name => n_set_one
 
-; "value" can be an array enclosed in brackets, or an array of
+; "value" can be a scalar, an array enclosed in brackets, or an array of
 ; arrays, but not any deeper nesting of arrays.
 
 value -> expr
@@ -219,6 +272,9 @@ dots ->
      -> dot name dots
 
 ; $Log$
+; Revision 1.5  2014/01/14 00:52:30  vsnyder
+; Replace n_dots with n_dot
+;
 ; Revision 1.4  2014/01/14 00:11:42  vsnyder
 ; Revised LR completely
 ;

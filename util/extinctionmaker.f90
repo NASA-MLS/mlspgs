@@ -18,7 +18,8 @@ program extinctionmaker
 
 ! Optionally, creates "ExtinctionR3-OzoneOnly"
 ! which would be used by a joint TES-MLS ozone retrieval
-   use Dump_0, only: DUMP, selfDiff
+   use Dump_0, only: DUMP
+   use Dump_1, only: selfDiff
    use Hdf, only: DFACC_RDWR, DFACC_RDOnly
    use HDF5, only: h5fis_hdf5_f
    use Intrinsic, only: l_hdf, l_swath
@@ -356,3 +357,6 @@ end program extinctionmaker
 !==================
 
 ! $Log$
+! Revision 1.1  2016/06/02 22:50:49  pwagner
+! First commit
+!

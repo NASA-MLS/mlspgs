@@ -14,8 +14,10 @@ program l1bdiff ! diffs two l1b or L2AUX files
 !=================================
 
    use Allocate_deallocate, only: allocate_test, deallocate_test
+   use Diff_1, only: Diff
    use Dump_0, only: diffRMSMeansrms, RMSFormat, statsOnOneLine, &
-     & Diff, dump, dumpDumpOptions, selfDiff
+     & Dump, dumpDumpOptions
+   use Dump_1, only: selfDiff
    use HDF, only: dfacc_create, dfacc_read
    use HDF5, only: h5fis_HDF5_f, &
      & H5gclose_f, h5gopen_f, h5gcreate_f
@@ -860,6 +862,9 @@ end program l1bdiff
 !==================
 
 ! $Log$
+! Revision 1.32  2016/03/23 16:38:28  pwagner
+! Added -one commandline option
+!
 ! Revision 1.31  2015/06/30 18:50:33  pwagner
 ! Corrected error in passing dumpOptions to dump module; -opt '?' now dumps available dump options
 !
