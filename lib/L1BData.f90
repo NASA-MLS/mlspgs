@@ -367,15 +367,15 @@ contains ! ============================ MODULE PROCEDURES ======================
       ! Need only to convert complete hdf4-name to hdf5-name
       ! This means we must parse hdf4-name fully, however
       QtyName = head
-      ! 1st--is there an instrument prefixed to name?
-      if ( name(1:2) == 'sc' ) then
-        my_instrument = 'sc'
-        the_rest = name(3:)
       ! Do we match the pattern 'Instrument.tpItem'
-      elseif ( streq(name, '*.tp*', options='-wc' ) ) then
+      if ( streq(name, '*.tp*', options='-wc' ) ) then
         p = index( name, '.tp' )
         my_instrument = name(:p-1)
         the_rest = name(p+3:)
+      ! Is there an instrument prefixed to name?
+      elseif ( name(1:2) == 'sc' ) then
+        my_instrument = 'sc'
+        the_rest = name(3:)
       else
         my_instrument = ' '
         the_rest = name
@@ -2873,6 +2873,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.112  2016/07/28 19:23:10  pwagner
+! Fixed error in GetAllHDF5GroupNames
+!
 ! Revision 2.111  2016/07/28 01:42:27  vsnyder
 ! Refactoring dump and diff
 !
