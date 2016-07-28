@@ -50,66 +50,66 @@ contains ! =====  Public procedures  ===================================
     ! not dump absent blocks.
 
     use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
-    use DUMP_0, only: DUMP
+    use Dump_0, only: Dump
     use Expr_m, only: Expr
     use HessianModule_0, only: H_Absent, HessianElement_T
     use HessianModule_1, only: Dump, Hessian_T
     use Init_Tables_Module, only: F_AllHessians, F_AllMatrices, &
-      & F_COLCHANNELS, F_COLINSTANCES, F_COLQUANTITY, F_COLSURFACES, &
-      & F_Details, F_Diagonal, F_Hessian, F_MATRIX, F_NOABSENT, &
-      & F_ROWCHANNELS, F_ROWINSTANCES, F_ROWQUANTITY, F_ROWSURFACES, &
+      & F_ColChannels, F_ColInstances, F_ColQuantity, F_ColSurfaces, &
+      & F_Details, F_Diagonal, F_Hessian, F_Matrix, F_NoAbsent, &
+      & F_RowChannels, F_RowInstances, F_RowQuantity, F_RowSurfaces, &
       & F_Structure
     use Lexer_Core, only: Print_Source
-    use MatrixModule_1, only: Dump, Dump_Struct, GETFROMMATRIXDATABASE, &
-      & MATRIX_DATABASE_T
-    use MLSStringLists, only: SWITCHDETAIL
-    use MoreTree, only: GET_BOOLEAN, GET_FIELD_ID
-    use Output_M, only: NewLine, OUTPUT
-    use String_Table, only: DISPLAY_STRING
+    use MatrixModule_1, only: Dump, Dump_Struct, GetFromMatrixDatabase, &
+      & Matrix_Database_t
+    use MLSStringLists, only: SwitchDetail
+    use MoreTree, only: Get_Boolean, Get_Field_Id
+    use Output_M, only: NewLine, Output
+    use String_Table, only: Display_String
     use Toggles, only: Switches
-    use Tree, only: DECORATION, NSONS, SUBTREE, Where
+    use Tree, only: Decoration, NSons, Subtree, Where
     use VectorsModule, only: GetVectorQtyByTemplateIndex, &
-      & VECTORVALUE_T
+      & VectorValue_T
 
     ! Dummy arguments
-    integer, intent(in) :: KEY          ! L2CF node
-    type (Matrix_Database_T), dimension(:), pointer :: MATRICES ! Matrix database
+    integer, intent(in) :: Key          ! L2CF node
+    type (Matrix_Database_T), dimension(:), pointer :: Matrices ! Matrix database
     type (Hessian_T), dimension(:), pointer :: Hessians
 
     ! Local variables
-    integer :: COL                      ! Matrix or Hessian block column
-    integer :: COL2                     ! Hessian block second column
-    integer :: COLCHANNELSNODE          ! Tree node
-    integer :: COLINSTANCE              ! Loop counter
-    integer :: COLINSTANCE2             ! Loop counter
-    integer :: COLINSTANCESNODE         ! Tree node
-    integer :: COLQI, Colqi2            ! Index of column quantity within vector
-    integer :: COLQuantityIx            ! Index in ColQIs array
-    integer :: COLQuantityIx2           ! Index in ColQIs array for dumping Hessians
-    integer :: COLQuantityNode          ! Tree node
-    integer :: COLSURFACESNODE          ! Tree node
+    integer :: Col                      ! Matrix or Hessian block column
+    integer :: Col2                     ! Hessian block second column
+    integer :: ColChannelsNode          ! Tree node
+    integer :: ColInstance              ! Loop counter
+    integer :: ColInstance2             ! Loop counter
+    integer :: ColInstancesNode         ! Tree node
+    integer :: ColQI, Colqi2            ! Index of column quantity within vector
+    integer :: ColQuantityIx            ! Index in ColQIs array
+    integer :: ColQuantityIx2           ! Index in ColQIs array for dumping Hessians
+    integer :: ColQuantityNode          ! Tree node
+    integer :: ColSurfacesNode          ! Tree node
     integer :: DetailReduction
     integer :: Details                  ! 0 => just shapes, >0 => values, default 1
     logical :: Diagonal                 ! Dump only the diagonal
     logical :: DoAny                    ! Any non-absent blocks?
-    integer :: FIELDINDEX               ! Type for tree node
+    integer :: FieldIndex               ! Type for tree node
     integer :: HessianIndex             ! Hessian database index
     integer :: Hessian1, HessianEnd     ! Range for HessianIndex
-    integer :: MATRIXINDEX              ! Matrix database index
+    integer :: MatrixIndex              ! Matrix database index
     integer :: Matrix1, MatrixEnd       ! Range for MatrixIndex
     integer :: NColQ                    ! How many column quantities?
     logical :: NoAbsent                 ! Don't dump absent blocks
     integer :: NODE                     ! Loop counter
     integer :: NRowQ                    ! How many row quantities?
     integer :: ROW                      ! Matrix block row
-    integer :: ROWCHANNELSNODE          ! Tree node
-    integer :: ROWINSTANCE              ! Loop counter
-    integer :: ROWINSTANCESNODE         ! Tree node
-    integer :: ROWQI                    ! Index of row quantity within vector
-    integer :: ROWQuantityIx            ! Index in RowQIs array
-    integer :: ROWQuantityNode          ! Tree node
-    integer :: ROWSURFACESNODE          ! Tree node
-    integer :: SON                      ! Tree node
+    integer :: RowChannelsNode          ! Tree node
+    integer :: RowInstance              ! Loop counter
+    integer :: RowInstancesNode         ! Tree node
+    integer :: RowQI                    ! Index of row quantity within vector
+    integer :: RowQuantityIx            ! Index in RowQIs array
+    integer :: RowQuantityNode          ! Tree node
+    integer :: RowSurfacesNode          ! Tree node
+    integer :: Son                      ! Tree node
     integer :: Units(2) ! of the Details expr -- known to be phyq_dimensionless
     double precision :: Values(2) ! of the Details expr
 
@@ -124,9 +124,9 @@ contains ! =====  Public procedures  ===================================
     logical :: Fail          ! No matrix to get from database
     logical :: Stru          ! Dump sparsity structure instead of values
 
-    type (VectorValue_T), pointer :: COLQ   ! Col quantity
-    type (VectorValue_T), pointer :: ROWQ   ! Row quantity
-    type (Matrix_T), pointer :: MATRIX      ! The matrix to dump
+    type (VectorValue_T), pointer :: ColQ   ! Col quantity
+    type (VectorValue_T), pointer :: RowQ   ! Row quantity
+    type (Matrix_T), pointer :: Matrix      ! The matrix to dump
     type (MatrixElement_T), pointer :: MB   ! A block from the matrix
     type (HessianElement_T), pointer :: HB  ! A block from the Hessian
 
@@ -149,9 +149,9 @@ contains ! =====  Public procedures  ===================================
     DetailReduction = switchDetail(switches, 'red')
     if ( DetailReduction < 0 ) then ! The 'red' switch is absent
       DetailReduction = 0
-    elseif ( DetailReduction == 0 ) then ! By default, reduce details level by 2
+    else if ( DetailReduction == 0 ) then ! By default, reduce details level by 2
       DetailReduction = 2
-    endif
+    end if
 
 
     ! Set defaults
@@ -462,26 +462,26 @@ contains ! =====  Public procedures  ===================================
     ! .......................................  DumpOneMatrixBlock  .....
     subroutine DumpOneMatrixBlock
 
-      use MatrixModule_0, only: DENSIFY, GetDiagonal
+      use MatrixModule_0, only: Densify, GetDiagonal
 
       ! Local variables
       integer :: CC                       ! Loop counter
       integer :: CS                       ! Loop counter
-      integer :: NOCOLCHANNELS            ! Number selected
-      integer :: NOCOLSURFACES            ! Number selected
-      integer :: NOROWCHANNELS            ! Number selected
-      integer :: NOROWSURFACES            ! Number selected
+      integer :: NoColChannels            ! Number selected
+      integer :: NoColSurfaces            ! Number selected
+      integer :: NoRowChannels            ! Number selected
+      integer :: NoRowSurfaces            ! Number selected
       integer :: RC                       ! Loop counter
       integer :: RS                       ! Loop counter
 
-      integer, dimension(:), pointer :: ROWCHANINDS ! Indices
-      integer, dimension(:), pointer :: COLCHANINDS ! Indices
-      integer, dimension(:), pointer :: ROWSURFINDS ! Indices
-      integer, dimension(:), pointer :: COLSURFINDS ! Indices
+      integer, dimension(:), pointer :: RowChanInds ! Indices
+      integer, dimension(:), pointer :: ColChanInds ! Indices
+      integer, dimension(:), pointer :: RowSurfInds ! Indices
+      integer, dimension(:), pointer :: ColSurfInds ! Indices
 
-      real(rm), dimension(:,:), pointer :: VAL    ! The values from the block
-      real(rm), dimension(:), pointer :: VAL_1D   ! The diagonal
-      real(r8), dimension(:,:), pointer :: TODUMP ! The 2D matrix to dump
+      real(rm), dimension(:,:), pointer :: Val    ! The values from the block
+      real(rm), dimension(:), pointer :: Val_1D   ! The diagonal
+      real(r8), dimension(:,:), pointer :: ToDump ! The 2D matrix to dump
 
       nullify ( rowChanInds, colChanInds )
       nullify ( rowSurfInds, colSurfInds )
@@ -886,7 +886,7 @@ contains ! =====  Public procedures  ===================================
 
     if (.not. myJustPack) then
         call PVMFInitSend ( PvmDataDefault, bufferID )
-    endif
+    end if
     call PVMPackRC ( matrix%col )
     call PVMPackRC ( matrix%row )
 
@@ -903,23 +903,24 @@ contains ! =====  Public procedures  ===================================
 
   end subroutine PVMSendMatrix
 
-  function what_options( clean, transpose, trim ) result( options )
+  function What_Options( Clean, Transpose, Trim ) result( Options )
+    use Dump_Options, only: Dopt_Clean, Dopt_Transpose, Dopt_Trim
     use MLSStrings, only: trim_safe
-    logical, optional, intent(in) :: clean
-    logical, optional, intent(in) :: transpose
-    logical, optional, intent(in) :: trim
+    logical, optional, intent(in) :: Clean
+    logical, optional, intent(in) :: Transpose
+    logical, optional, intent(in) :: Trim
     character(len=8) :: options
     options = ' '
     if ( present(clean) ) then
-      if ( clean ) options = trim_safe(options) // 'c'
-    endif
+      if ( clean ) options = trim_safe(options) // Dopt_Clean
+    end if
     if ( present(transpose) ) then
-      if ( transpose ) options = trim_safe(options) // 'p'
-    endif
+      if ( transpose ) options = trim_safe(options) // Dopt_Transpose
+    end if
     if ( present(trim) ) then
-      if ( trim ) options = trim_safe(options) // 't'
-    endif
-  end function what_options
+      if ( trim ) options = trim_safe(options) // Dopt_Trim
+    end if
+  end function What_Options
 
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
@@ -934,6 +935,9 @@ contains ! =====  Public procedures  ===================================
 end module MatrixTools
 
 ! $Log$
+! Revision 1.46  2016/07/28 00:40:34  vsnyder
+! Remove unreferenced USE
+!
 ! Revision 1.45  2015/03/28 02:49:25  vsnyder
 ! Added stuff to trace allocate/deallocate addresses
 !
