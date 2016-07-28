@@ -13,8 +13,8 @@
 \topmargin -0.5in
 \textheight 9in
 
-\newcommand{\docname}{wvs-128r4}
-\newcommand{\docdate}{12 April 2016}
+\newcommand{\docname}{wvs-128r5}
+\newcommand{\docdate}{13 July 2016}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
@@ -141,7 +141,7 @@ projection, or ZOT projection, to identify facets within a QTM, and to
 compute the facets within which a position is contained.
 
 \begin{figure}[h]\label{Two}
-\hfil\includegraphics[scale=0.675]{wvs-128-QTM-2}\hfill
+\hfil\includegraphics[scale=0.675,angle=270]{wvs-128-QTM-2}\hfill
 \caption{ZOT projections of refinements to levels 2 and 3, from Dutton's
 book}\label{Fig-2}
 \end{figure}
@@ -182,12 +182,28 @@ pole node is horizontal in the ZOT projection, and the other is vertical.
 ZOT co\"ordinates are in the range $-1\cdots1$, with the north pole at
 $(0,0)$, and the south pole at $(\pm1,\pm1)$.  The mapping from longitude
 and latitude to ZOT co\"ordinates is done in the $\ell_1$ metric
-(sometimes called the ``Manhattan'' or ``taxicab'' metric), and is best
-described by reference to the function {\tt Geo_to_ZOT} in the module {\tt
-QTM_m}.  To compute the QID containing a point, one computes the ZOT
+(sometimes called the ``Manhattan'' or ``taxicab'' metric), by the
+function {\tt Geo_to_ZOT} in the module {\tt QTM_m}.
+
+Given longitude $\lambda$ and latitude $\theta$, ZOT coordinates $x$ and
+$y$ are initially computed in the $\ell_1$ metric using
+
+\begin{equation*}\begin{split}
+\delta x =\,& 1 - \frac{| \theta |}{ 90 }\\
+x = \,& \delta x
+    \frac{ \lfloor \phi \rfloor \!\!\!\!\mod 90 + \phi - \lfloor \phi \rfloor }
+    {90} \\
+y = \,& \delta x - x \\
+\end{split}\end{equation*}
+
+In the southern hemisphere, replace $x = 1 - y$ and $y = 1 - x$.  Then in
+even-numbered octants, exchange $x$ and $y$.  Then in the top half of ZOT
+space, negate $y$, and in the left half of ZOT space, negate $x$.
+
+To compute the QID containing a point, one computes the $x$ and $y$ ZOT
 co\"ordinates of the point, and uses its octant number as the initial
 QID.  If the level of facet identified does not have sufficient
-resolution, the identity of a sub-facet is determined by computing the
+resolution, the QID of a sub-facet is determined by computing the
 distances $dx$ and $dy$ of the $x$ and $y$ ZOT co\"ordinates from the pole
 node.  Let the length of a horizontal or vertical edge of a facet be $s$.
 If $|dx| + |dy| < s/2$, append the basis number of the pole node to the
@@ -196,8 +212,8 @@ append the basis number of the $x$ or $y$ node respectively.  Otherwise,
 append zero.  If $|dx| > s/2$ and $|dy| > s/2$, you made a mistake along
 the way and you're working in the wrong facet.  No square roots or
 trigonometric functions are needed.  The process is repeated if the size
-of the facet is not sufficiently small.  The number of repetitions is
-equal to the degree of refinement of the mesh.
+of the facet is not sufficiently small.  The maximum number of repetitions
+is equal to the degree of refinement of the mesh.
 
 \begin{figure}[h]
 \hfil\includegraphics{wvs-128-QTM-3}\hfill
@@ -269,7 +285,7 @@ identifiers.  The reason is that the outer edges of the ZOT projection are
 edges of the lower half of the octahedron; the negative half of each outer
 edge represents the same points as the positive half.  Therefore, ZOT
 co\"ordinates need to be disambiguated by using $|y|$ if $|x| = 1$ and
-$|x|$ if $|y| = 1$.  This reduces the number of identifiers to $2^{2n}+2$,
+$|x|$ if $|y| = 1$.  This reduces the number of identifiers to $2^{2l}+2$,
 and reduces the range to $2^{l-1} \cdots 2^{2l}+2^{l+1}$.  Since $l$ is
 restricted so that a QID fits in an integer, and a QID identifies a facet,
 and there are $2^{2l+1}$ facets, this identifer also fits in an integer. 
@@ -480,6 +496,11 @@ $\{\mathbf{V}_i\}$.
 % $Id$
 
 % $Log$
+% Revision 1.5  2016/04/14 01:00:16  vsnyder
+% More details about facet size as a function of refinement level.
+% Regularize notation in description of barycentric coordinates.  Add short
+% description of barycentric coordinates in more than two dimensions.
+%
 % Revision 1.4  2016/02/05 00:26:38  vsnyder
 % Revise description of vertex numbering and construction of a polygon.
 %
