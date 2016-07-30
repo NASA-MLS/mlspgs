@@ -41,7 +41,7 @@ module Generate_QTM_m
   end type QTM_Node_t
 
   type :: QTM_Tree_t
-    integer :: Level = 6       ! Level of QTM refinement
+    integer :: Level = 7       ! Level of QTM refinement, 20000 / 2^level km
     integer(qk) :: N           ! Number of used elements in Q
     type(ZOT_t) :: In = ZOT_t(-999,-999) ! A point defined to be inside the
                                ! polygon. This is needed because the concept of
@@ -788,6 +788,9 @@ contains
 end module Generate_QTM_m
 
 ! $Log$
+! Revision 2.6  2016/07/30 00:51:35  vsnyder
+! Change default QTM level to 7 (156 km)
+!
 ! Revision 2.5  2016/04/16 02:01:21  vsnyder
 ! Use ECR_t instead of arrays, remove dependence upon Dump_0
 !
