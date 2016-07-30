@@ -27,6 +27,7 @@ module Diff_1
   use MLSStats1, only: AllStats, HowFar, HowNear, MLSStdDev, Ratios, Reset, &
     & Stat_t
   use Output_m, only: OutputOptions, Blanks, Output
+  use Time_M, only: Time_Now
 
   implicit none
   private
@@ -975,6 +976,9 @@ contains
 end module Diff_1
 
 ! $Log$
+! Revision 2.2  2016/07/30 00:09:31  pwagner
+! NAG complained at link about not having a Time_Now
+!
 ! Revision 2.1  2016/07/28 01:41:48  vsnyder
 ! Initial Commit
 !
