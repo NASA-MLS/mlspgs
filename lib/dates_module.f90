@@ -330,7 +330,7 @@ module dates_module
 
   integer, private, parameter :: SECONDSINADAY = 24*60*60
   
-  character(len=*), dimension(40), parameter :: leapSecDates = (/ &
+  character(len=*), dimension(41), parameter :: leapSecDates = (/ &
     '1961 JAN 1', & 
     '1961 AUG 1', & 
     '1962 JAN 1', & 
@@ -370,13 +370,14 @@ module dates_module
     '2006 JAN 1', & 
     '2009 JAN 1', & 
     '2012 JUL 1', & 
-    '2015 JUL 1'  & 
+    '2015 JUL 1', & 
+    '2017 JAN 1'  & 
     /) 
 
   ! These somewhat similar parameters are used in the separately-coded
   ! but redundant functions and procedures moved here from their
   ! original slots in MLSStrings
-  integer, parameter :: YEARMAX = 4999  ! Conversion invalid after 4999 AD
+  integer, parameter :: YEARMAX = 4999  ! Conversions valid until 4999 AD
 
   ! The following arrays contains the maximum permissible day for each month
   ! where month=-1 means the whole year, month=1..12 means Jan, .., Dec
@@ -2950,6 +2951,9 @@ contains
 
 end module dates_module
 ! $Log$
+! Revision 2.40  2016/07/28 01:37:04  vsnyder
+! Cannonball polishing
+!
 ! Revision 2.39  2015/06/25 23:17:16  pwagner
 ! One more go at fixing this (is uars so important?)
 !
