@@ -19,12 +19,12 @@ module Open_Init
   ! Reads user params as PCF-supplied config data  |
   ! -----------------------------------------------
 
-  use HIGHOUTPUT, only: BEVERBOSE
-  use MLSCOMMON, only: FILENAMELEN, MLSFILE_T, NAMELEN, TAI93_RANGE_T
-  use MLSL2OPTIONS, only: SPECIALDUMPFILE, TOOLKIT
-  use MLSSTRINGLISTS, only: ARRAY2LIST, CATLISTS, GETSTRINGELEMENT, &
-    & NUMSTRINGELEMENTS, SWITCHDETAIL
-  use OUTPUT_M, only: BLANKS, OUTPUT
+  use highOutput, only: beVerbose, outputNamedValue
+  use MLSCommon, only: fileNameLen, MLSFile_t, nameLen, TAI93_Range_t
+  use MLSL2Options, only: specialDumpFile, Toolkit
+  use MLSStringLists, only: array2List, catLists, getStringElement, &
+    & numStringElements, switchDetail
+  use Output_m, only: Blanks, Output
 
   implicit none
 
@@ -69,37 +69,37 @@ contains ! =====     Public Procedures     =============================
 
     use Dates_Module, only: UTC_To_YYYYMMDD
     use Dump_1, only: Dump
-    use HDF, only: DFACC_RDONLY
-    use INTRINSIC, only: L_HDF
-    use L1BDATA, only: FINDMAXMAF, READL1BATTRIBUTE
-    use L2GPDATA, only: COL_SPECIES_KEYS, COL_SPECIES_HASH
-    use MLSFILES, only: WILDCARDHDFVERSION, &
-      & ADDFILETODATABASE, INITIALIZEMLSFILE, MLS_OPENFILE
-    use MLSKINDS, only: R8
-    use MLSL2TIMINGS, only: SECTION_TIMES, TOTAL_TIMES
-    use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_WARNING, MLSMESSAGE
-    use MLSPCF2, only: MLSPCF_L1B_OA_START, MLSPCF_L1B_RAD_END, &
-      &                MLSPCF_L1B_RAD_START, &
-      &                MLSPCF_L2_PARAM_PGEVERSION, &
-      &                MLSPCF_L2_PARAM_CYCLE, &
-      &                MLSPCF_L2_PARAM_CCSDSSTARTID, &
-      &                MLSPCF_L2_PARAM_CCSDSENDID, &
-      &                MLSPCF_L2_PARAM_COL_SPEC_KEYS, &
-      &                MLSPCF_L2_PARAM_COL_SPEC_MCFNAMES      , &
-      &                MLSPCF_L2_PARAM_COL_SPEC_DOINAMES      , &
-      &                MLSPCF_L2_PARAM_SPEC_KEYS, &
-      &                MLSPCF_L2_PARAM_SPEC_MCFNAMES      , &
-      &                MLSPCF_L2_PARAM_SWITCHES, &
-      &                MLSPCF_PCF_START
-    use MLSSTRINGS, only: LOWERCASE
-    use PCFHDR, only: GLOBALATTRIBUTES, CREATEPCFANNOTATION, FILLTAI93ATTRIBUTE
-    use SDPTOOLKIT, only: MAX_ORBITS, PGS_PC_GETFILESIZE, PGS_TD_UTCTOTAI,&
-      &    PGS_PC_GETCONFIGDATA, PGS_PC_GETREFERENCE, PGS_S_SUCCESS, &
-      &    PGSTD_E_NO_LEAP_SECS
-    use TIME_M, only: TIME_NOW
-    use TOGGLES, only: GEN, LEVELS, SWITCHES, TOGGLE
-    use TRACE_M, only: TRACE_BEGIN, TRACE_END
-    use WRITEMETADATA, only: L2PCF, MCFCASESENSITIVE
+    use HDF, only: dfacc_rdonly
+    use intrinsic, only: l_hdf
+    use L1BData, only: findMaxMaf, readL1BAttribute
+    use L2GPData, only: col_species_keys, col_species_hash
+    use MLSFiles, only: wildCardHDFVersion, &
+      & addFileToDatabase, initializeMLSFile, MLS_Openfile
+    use MLSKinds, only: r8
+    use MLSL2Timings, only: section_times, total_times
+    use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning, MLSMessage
+    use MLSPCF2, only: MLSPCF_L1b_oa_start, mlspcf_l1b_rad_end, &
+      &                MLSPCF_L1b_rad_start, &
+      &                MLSPCF_L2_param_pgeversion, &
+      &                MLSPCF_L2_param_cycle, &
+      &                MLSPCF_L2_param_ccsdsstartid, &
+      &                MLSPCF_L2_param_ccsdsendid, &
+      &                MLSPCF_L2_param_col_spec_keys, &
+      &                MLSPCF_L2_param_col_spec_mcfnames      , &
+      &                MLSPCF_L2_param_col_spec_doinames      , &
+      &                MLSPCF_L2_param_spec_keys, &
+      &                MLSPCF_L2_param_spec_mcfnames      , &
+      &                MLSPCF_L2_param_switches, &
+      &                MLSPCF_Pcf_start
+    use MLSStrings, only: lowercase
+    use PCFHdr, only: globalattributes, createpcfannotation, filltai93attribute
+    use SDPToolkit, only: max_orbits, pgs_pc_getfilesize, pgs_td_utctotai,&
+      &    pgs_pc_getconfigdata, pgs_pc_getreference, pgs_s_success, &
+      &    pgstd_e_no_leap_secs
+    use Time_m, only: time_now
+    use Toggles, only: gen, levels, switches, toggle
+    use Trace_m, only: trace_begin, trace_end
+    use WriteMetadata, only: L2PCF, MCFCaseSensitive
 
     ! Arguments
 
@@ -122,7 +122,8 @@ contains ! =====     Public Procedures     =============================
     integer                      :: Ifl1
     integer                      :: Indx, Version                            
     integer                      :: l1bFlag
-    type (MLSFile_T)             :: L1BFile
+    type (MLSFile_T), target     :: L1BFile
+    type (MLSFile_T), pointer    :: L1BPtr
     integer                      :: L1FileHandle
     integer :: Me = -1           ! String index for trace
     character (len=fileNameLen)  :: name
@@ -245,6 +246,7 @@ contains ! =====     Public Procedures     =============================
       & type=l_hdf, access=DFACC_RDONLY)
     L1BFile%PCFIDRange%Top = mlspcf_l1b_oa_start
     L1BFile%PCFIDRange%Bottom = mlspcf_l1b_oa_start
+    L1BPtr => L1BFile
     call mls_openFile(L1BFile, returnStatus)
     if ( returnStatus == PGS_S_SUCCESS ) then
 
@@ -280,8 +282,10 @@ contains ! =====     Public Procedures     =============================
     ! if gaps occur
     ! For now, just look for them in l1boa
     ! Later you may look also in l1brad files
-    GlobalAttributes%LastMAFCtr = FindMaxMAF ( (/l1BFile/), &
+    GlobalAttributes%LastMAFCtr = FindMaxMAF ( L1BPtr, &
       & GlobalAttributes%FirstMAFCtr )
+    call outputNamedValue ( 'Last MAF', GlobalAttributes%LastMAFCtr )
+    call outputNamedValue ( 'First MAF', GlobalAttributes%FirstMAFCtr )
     ! Get the Start and End Times from PCF
 
     returnStatus = pgs_pc_getConfigData(mlspcf_l2_param_CCSDSStartId, &
@@ -486,14 +490,14 @@ contains ! =====     Public Procedures     =============================
     ! cycle number
     ! logfile name
   
-    use L1BDATA, only: L1BDATA_T, &
-      & ASSEMBLEL1BQTYNAME, DEALLOCATEL1BDATA, DUMP, READL1BDATA
-    use L2AUXDATA, only: MAXSDNAMESBUFSIZE
-    use L2GPDATA, only: COL_SPECIES_KEYS, COL_SPECIES_HASH
-    use MLSFILES, only: HDFVERSION_4       
-    use MLSHDF5, only: GETALLHDF5DSNAMES
-    use OUTPUT_M, only: REVERTOUTPUT, SWITCHOUTPUT
-    use WRITEMETADATA, only: L2PCF
+    use L1BData, only: L1BData_t, &
+      & Assemblel1bqtyname, deallocatel1bdata, dump, readl1bdata
+    use L2AUxdata, only: maxsdnamesbufsize
+    use L2GPData, only: col_species_keys, col_species_hash
+    use MLSFiles, only: HDFVersion_4       
+    use MLSHdf5, only: getAllHDF5DSNames
+    use Output_m, only: revertoutput, switchoutput
+    use WriteMetadata, only: L2PCF
 
     ! Arguments
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
@@ -510,7 +514,6 @@ contains ! =====     Public Procedures     =============================
     type (L1BData_T) :: l1bDataSet   ! L1B dataset
 
     integer ::  hdfVersion
-    integer :: ifl1
     integer :: item
     character(len=namelen) :: l1bItemName
     character(len=MAXSDNAMESBUFSIZE) :: l1bitemlist
@@ -527,7 +530,6 @@ contains ! =====     Public Procedures     =============================
    if(associated(filedatabase)) then
      if ( specialDumpFile /= ' ' .and. Details > -2 ) &
        & call switchOutput( specialDumpFile, keepOldUnitOpen=.true. )
-    ifl1 = 0
     do i = 1, size(filedatabase)
       L1BFile => filedatabase(i)
       if ( L1BFile%content == 'l1brad' ) then
@@ -701,6 +703,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.110  2016/08/09 21:21:13  pwagner
+! Survives encounter with non-satellite data
+!
 ! Revision 2.109  2016/07/28 01:45:07  vsnyder
 ! Refactor dump and diff
 !
