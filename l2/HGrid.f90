@@ -13,8 +13,11 @@
 module HGrid                    ! Horizontal grid information
 !=============================================================================
 
-  use HGridsdatabase, only: HGrid_T, HGridGeolocations, &
+  use HGridsDatabase, only: HGrid_T, HGridGeolocations, &
     & L1BGeolocation, L1BSubsample
+  use MLSCommon, only: MLSFile_t, nameLen, TAI93_Range_t
+  use MLSFiles, only: HDFVersion_5, GetMLSFileByType
+  use MLSSignals_m, only: GetModuleName
   
   implicit none
   private
@@ -31,8 +34,6 @@ module HGrid                    ! Horizontal grid information
 
   logical, save, private :: computingOffsets = .false.
   integer, private       :: error                     
-  logical, parameter     :: deeBug = .false.          
-  logical, parameter     :: dontPad = .false.         
 
   interface PlaceArray
     module procedure PlaceArray_r4
@@ -57,7 +58,7 @@ contains ! =====     Public Procedures     =============================
   ! -----------------------------------  CreateHGridFromMLSCFInfo  -----
   type(hGrid_T) function CreateHGridFromMLSCFInfo &
     & ( name, root, filedatabase, l2gpDatabase, &
-    & processingRange, chunk, onlyComputingOffsets ) result ( hGrid )
+    & processingRange, chunk, onlyComputingOffsets, check ) result ( hGrid )
 
     use allocate_deallocate, only: Deallocate_test
     use chunks_m, only: MLSChunk_t
@@ -75,15 +76,13 @@ contains ! =====     Public Procedures     =============================
       & field_first, field_last, &
       & l_explicit, l_fixed, l_fractional, l_height, &
       & l_l2gp, l_QTM, l_regular
+    use L1BData, only: CheckForCorruptFileDatabase
     use L2GPData, only: L2GPData_t
-    use MLSCommon, only: MLSfile_t, namelen, tai93_range_t
-    use MLSFiles, only: HDFVERSION_5, getMLSFileByType
     use MLSHDF5, only: IsHDF5DSInFile
     use MLSKinds, only: rk => r8
     use MLSL2options, only: need_L1Bfiles
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use MLSNumerics, only: hunt
-    use MLSSignals_m, only: GetModuleName
     use MLSStringLists, only: switchDetail
     use moretree, only: get_boolean
     use Output_m, only: output
@@ -104,6 +103,7 @@ contains ! =====     Public Procedures     =============================
     type (TAI93_Range_T), intent(in) :: PROCESSINGRANGE
     ! logical, intent(in), optional :: SUPPRESSGEOMETRYDUMP
     logical, intent(in), optional :: onlyComputingOffsets
+    logical, intent(in), optional :: check
     type (MLSChunk_T), intent(in) :: CHUNK ! The chunk
 
     ! Local variables
@@ -139,6 +139,7 @@ contains ! =====     Public Procedures     =============================
     integer :: MAXLOWEROVERLAP          ! For some hGrids
     integer :: MAXUPPEROVERLAP          ! For some hGrids
     integer :: MIF                      ! For fixed hGrids
+    logical :: myCheck
     integer :: NOMAFS                   ! Number of MAFs of L1B data read
     integer :: QTM_Level                ! From QTMLevel field
     logical :: SINGLE                   ! Just one profile please
@@ -157,7 +158,7 @@ contains ! =====     Public Procedures     =============================
     call trace_begin ( me, "CreateHGridFromMLSCFInfo", root, &
       & cond=toggle(gen) .and. ( levels(gen) > 1 .or. .not. computingOffsets ) )
 
-    deebug = LetsDebug ( 'hgrid', 1 )
+    deebug = LetsDebug ( 'hgrid', 2 )
     verbose = beVerbose ( 'hgrid', 1 )
     computingOffsets       = .false.               
     mySuppressGeometryDump = .false.               
@@ -168,6 +169,8 @@ contains ! =====     Public Procedures     =============================
     if ( verbose ) then
       call time_now ( t1 )
     endif
+    myCheck = .false.
+    if ( present(check) ) myCheck = check
 
     L1BFile => GetMLSFileByType( filedatabase, content='l1boa' )
     if ( .not. associated(L1BFile) .and. NEED_L1BFILES ) &
@@ -176,6 +179,10 @@ contains ! =====     Public Procedures     =============================
       & "Didn't I warn you about not having an L1BOA file?" )
 
     call nullifyHGrid ( hgrid ) ! for Sun's rubbish compiler
+    if ( mycheck ) then
+      call outputNamedValue( 'Before creating HGrid', chunk%chunkNumber )
+      call CheckForCorruptFileDatabase( filedatabase )
+    endif
     
     hGrid%name = name
 
@@ -255,6 +262,7 @@ contains ! =====     Public Procedures     =============================
         ! call get_string ( instrumentModule , instrumentModuleName )
         instrumentModule = decoration(decoration(subtree(2,son)))
         call GetModuleName ( instrumentModule , instrumentModuleName )
+        hGrid%module = instrumentModule
       case ( f_origin )
         call expr ( subtree(2,son), expr_units, expr_value )
         origin = expr_value(1)
@@ -295,9 +303,18 @@ contains ! =====     Public Procedures     =============================
             & solarTimeNode, solarZenithNode, lonNode, losAngleNode, &
             & processingRange%startTime, timeNode, hGrid )
         end if
+        ! call Dump ( filedatabase, details=2 )
+        if ( mycheck ) then
+          call outputNamedValue( 'Before creating mif-based MGrid', chunk%chunkNumber )
+          call CheckForCorruptFileDatabase( filedatabase )
+        endif
         call CreateMIFBasedHGrids ( filedatabase, hGridType, chunk, &
           & got_field, root, height, fraction, interpolationFactor, &
           & instrumentModuleName, mif, maxLowerOverlap, maxUpperOverlap, hGrid )
+        if ( mycheck ) then
+          call outputNamedValue( 'After creating mif-based MGrid', chunk%chunkNumber )
+          call CheckForCorruptFileDatabase( filedatabase )
+        endif
       end if
 
     case ( l_explicit ) ! ---------------------- Explicit --------------
@@ -310,7 +327,8 @@ contains ! =====     Public Procedures     =============================
       
       if ( verbose ) call output ( 'Creating L2GP-Based HGrid', advance='yes' )
       ! Get the time from the l1b file
-      call L1BGeoLocation ( filedatabase, "MAFStartTimeTAI", fullArray )
+      call L1BGeoLocation ( filedatabase, "MAFStartTimeTAI", &
+        & instrumentModuleName, fullArray )
       call L1BSubsample ( chunk, FullArray, values=TAI )
       noMAFs = size(TAI)
       minTime = TAI(1) ! l1bField%dpField(1,1,1)
@@ -361,6 +379,10 @@ contains ! =====     Public Procedures     =============================
 
     end select
     
+    if ( mycheck ) then
+      call outputNamedValue( 'Before finding nearest maf', chunk%chunkNumber )
+      call CheckForCorruptFileDatabase( filedatabase )
+    endif
     ! Find nearest maf based on time
     if ( L1BFile%hdfVersion /= HDFVERSION_5 ) then
     elseif ( .not. IsHDF5DSInFile ( L1BFile%name, "MAFStartTimeTAI" ) ) then
@@ -371,7 +393,8 @@ contains ! =====     Public Procedures     =============================
         & cond=toggle(gen) .and. ( levels(gen) > 1 .or. .not. computingOffsets ) )
       return
     endif
-    call L1BGeoLocation ( filedatabase, "MAFStartTimeTAI", fullArray )
+    call L1BGeoLocation ( filedatabase, "MAFStartTimeTAI", &
+        & instrumentModuleName, fullArray )
     call L1BSubsample ( chunk, fullArray, values=TAI )
     call Hunt ( TAI, hgrid%time(1,:), hgrid%maf, &
       & allowTopValue=.true. )
@@ -584,17 +607,15 @@ contains ! =====     Public Procedures     =============================
     ! This is part of ConstructHGridFromMLSCFInfo
 
     use allocate_deallocate, only: allocate_test, deallocate_test
-    use chunks_m, only: mlschunk_t
+    use chunks_m, only: MLSCHunk_t
     use dump_0, only: dump
-    use hgridsdatabase, only: createemptyhgrid, dump, hgrid_t, trimhgrid
+    use HGridsdatabase, only: createEmptyHGrid, Dump, HGrid_t, trimHGrid
     use highOutput, only: letsDebug, outputNamedValue
     use init_tables_module, only: f_fraction, f_geodangle, f_geodlat, f_height, &
       & f_lon, f_losangle, f_mif, f_time, &
       & f_solartime, f_solarzenith, l_fixed, l_fractional, l_height, l_mif
     use L1BData, only: deallocateL1BData, L1BData_t, readL1BData, &
-      & assembleL1BQtyName
-    use MLSCommon, only: MLSFile_t, NameLen
-    use MLSFiles, only: getMLSFileByType
+      & assembleL1BQtyName, CheckForCorruptFileDatabase
     use MLSHDF5, only: IsHDF5DSInFile
     use MLSKinds, only: rk => r8
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_L1BRead, &
@@ -643,6 +664,7 @@ contains ! =====     Public Procedures     =============================
     real(rk) :: MinAngle, MaxAngle
     logical :: MissingOK
     logical :: MissingThisOK
+    logical :: myCheck
     integer :: NOMAFS                   ! Dimension
     real(rk), dimension(:,:,:), pointer :: TpGeodAlt, TpGeodAngle
 
@@ -654,6 +676,7 @@ contains ! =====     Public Procedures     =============================
     real(rk), dimension(:), pointer :: defaultIndex
     real(rk), dimension(:), pointer :: interpolatedIndex
     integer ::  hdfVersion
+    integer ::  status
     character (len=NameLen) :: L1BItemName
     type (MLSFile_T), pointer             :: L1BFile
 
@@ -662,8 +685,19 @@ contains ! =====     Public Procedures     =============================
     call trace_begin ( me, "CreateMIFBasedHGrids", root, &
       & cond=toggle(gen) .and. levels(gen) > 1 .and. .not. computingOffsets )
 
-      L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
-      hdfversion = L1BFile%HDFVersion
+    L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
+    hdfversion = L1BFile%HDFVersion
+    myCheck = .false. ! (chunk%chunkNumber == 1)
+    if ( mycheck ) then
+      call outputNamedValue( 'On entering mif-based MGrid', chunk%chunkNumber )
+      call CheckForCorruptFileDatabase( filedatabase )
+    endif
+    ! call MLS_closeFile ( L1BFile, status )
+    ! call outputNamedValue ( 'Status on close', status )
+    ! call Dump ( L1BFile, details=2 )
+    ! call MLS_openFile ( L1BFile, status )
+    ! call outputNamedValue ( 'Status on open', status )
+    ! call Dump ( L1BFile, details=2 )
     nullify ( tpGeodAlt, tpGeodAngle, defaultField, interpolatedField, &
       & defaultMIFs, defaultIndex, interpolatedIndex )
 
@@ -737,6 +771,10 @@ contains ! =====     Public Procedures     =============================
       defaultMIFs = mif
     end select
     
+    if ( mycheck ) then
+      call outputNamedValue( 'After reading 1st l1bdata', chunk%chunkNumber )
+      call CheckForCorruptFileDatabase( filedatabase )
+    endif
     ! Done with this piece of l1b data for the moment
     call DeallocateL1BData ( l1bField )
     
@@ -776,7 +814,7 @@ contains ! =====     Public Procedures     =============================
       
       ! Read it from the l1boa file
       l1bItemName = AssembleL1BQtyName ( l1bItemName, hdfVersion, .false. )
-      if ( deebug  ) then
+      if ( deebug ) then
         call outputNamedValue( 'item', trim(l1bItemName) )
         call outputNamedValue( 'MissingOK', MissingOK )
       endif
@@ -786,9 +824,17 @@ contains ! =====     Public Procedures     =============================
           & MLSMSG_L1BRead//l1bItemName )
         cycle
       endif
+      if ( mycheck ) then
+        call outputNamedValue( 'Before next reading l1bdata', trim(l1bItemName) )
+        call CheckForCorruptFileDatabase( filedatabase )
+      endif
       call ReadL1BData ( L1BFile, l1bItemName, l1bField, noMAFs, &
         & l1bFlag, firstMAF=chunk%firstMafIndex, lastMAF=chunk%lastMafIndex, &
         & neverfail=(MissingOK .or. l1bItem == l1b_tplosangle), dontPad=.true. )
+      if ( mycheck ) then
+        call outputNamedValue( 'After next reading l1bdata', trim(l1bItemName) )
+        call CheckForCorruptFileDatabase( filedatabase )
+      endif
       if ( deebug ) call outputNamedValue( 'l1bFlag', l1bFlag )
       if ( l1bFlag==-1 .and. .not. MissingthisOK ) then
         call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -821,6 +867,10 @@ contains ! =====     Public Procedures     =============================
         endif
       end if
 
+      if ( mycheck ) then
+        call outputNamedValue( 'After setting default field', trim(l1bItemName) )
+        call CheckForCorruptFileDatabase( filedatabase )
+      endif
       if ( deebug .and. index(l1bItemName, 'MAFStartTimeTAI') > 0 ) then
         call dump(defaultField, 'MAFStartTimeTAI, corrected to defaultMIFs')
       end if
@@ -859,6 +909,10 @@ contains ! =====     Public Procedures     =============================
 
       end if
       
+      if ( mycheck ) then
+        call outputNamedValue( 'After interpolating', trim(l1bItemName) )
+        call CheckForCorruptFileDatabase( filedatabase )
+      endif
       if ( deebug .and. index(l1bItemName, 'MAFStartTimeTAI') > 0 ) then
         call dump(InterpolatedField, 'MAFStartTimeTAI (after interpolating)')
       end if
@@ -878,6 +932,10 @@ contains ! =====     Public Procedures     =============================
       case ( l1b_tpLosAngle )
         hGrid%losAngle(1,:) = interpolatedField
       end select
+      if ( mycheck ) then
+        call outputNamedValue( 'After filling HGrid with this l1bdata', chunk%chunkNumber )
+        call CheckForCorruptFileDatabase( filedatabase )
+      endif
     end do
     
     call Deallocate_test ( defaultMIFs, 'defaultMIFs', ModuleName )
@@ -903,6 +961,10 @@ contains ! =====     Public Procedures     =============================
       & ( hGrid%noProfsUpperOverlap > maxUpperOverlap ) .and. error == 0 ) &
       call TrimHGrid ( hGrid, -1, hGrid%noProfsUpperOverlap - maxUpperOverlap )
 
+    if ( mycheck ) then
+      call outputNamedValue( 'After trimming hgrid', chunk%chunkNumber )
+      call CheckForCorruptFileDatabase( filedatabase )
+    endif
     call trace_end ( "CreateMIFBasedHGrids", &
       & cond=toggle(gen) .and. levels(gen) > 1 .and. .not. computingOffsets )
 
@@ -966,21 +1028,19 @@ contains ! =====     Public Procedures     =============================
     ! With older l1b files (pre v2.0), some coordinates
     ! (solar time, solar zenith angle) are mean rather than apparent local
     use Allocate_deallocate, only: allocate_test, deallocate_test
-    use Chunkdivide_m, only: chunkdivideconfig
+    use ChunkDivide_m, only: chunkDivideConfig
     use Chunks_m, only: MLSChunk_t, dump
     use Constants, only: deg2rad, rad2deg
     use Dump_0, only: Dump
     use Diff_1, only: Selfdiff
-    use Empiricalgeometry, only: empiricallongitude, chooseoptimumlon0
-    use hgridsDatabase, only: createemptyhgrid, hgrid_t, trimhgrid, findclosestmatch
+    use Empiricalgeometry, only: empiricalLongitude, chooseOptimumLon0
+    use HGridsDatabase, only: createEmptyHGrid, HGrid_t, trimHGrid, findClosestMatch
     use highOutput, only: letsDebug, outputNamedValue
-    use MLSCommon, only: mlsfile_t, tai93_range_t
-    use MLSFiles, only: Dump, getMLSFileByType
     use MLSFillvalues, only: isFillValue, Monotonize
     use MLSKinds, only: rk => r8
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
-    use MLSNumerics, only: hunt, interpolatevalues, solvequadratic
-    use MLSStringlists, only: switchdetail
+    use MLSNumerics, only: hunt, interpolateValues, solveQuadratic
+    use MLSStringLists, only: switchDetail
     use Monotone, only: IsMonotonic
     use output_m, only: output
     use string_table, only: display_string
@@ -1084,12 +1144,13 @@ contains ! =====     Public Procedures     =============================
 
     ! Setup the empircal geometry estimate of lon0
     ! (it makes sure it's not done twice
-    call ChooseOptimumLon0 ( filedatabase, chunk )
+    call ChooseOptimumLon0 ( filedatabase, chunk, instrumentModuleName )
 
     ! First we're going to work out the geodetic angle range
     ! Read an extra MAF if possible, as we may use it later
     ! when computing the overlaps.
-    call L1BGeoLocation ( filedatabase, "tpGeodAngle", fullArray, FullArray2d )
+    call L1BGeoLocation ( filedatabase, "tpGeodAngle", instrumentModuleName, &
+      & fullArray, FullArray2d )
     call L1BSubsample ( chunk, fullArray, fullArray2d, GeodAngle, GeodAngle2d )
     if ( any(isFillValue(FullArray2d) ) ) then
       call output( 'Fill values among full array', advance='yes' )
@@ -1287,7 +1348,8 @@ contains ! =====     Public Procedures     =============================
     ! l1bItemName = AssembleL1BQtyName ( "scOrbIncl", hdfVersion, .false. )
     if ( .not. associated(L1BFile) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'l1boa file not in database' )
-    call L1BGeoLocation ( filedatabase, "scOrbIncl", fullArray )
+    call L1BGeoLocation ( filedatabase, "scOrbIncl", &
+      & instrumentModuleName, fullArray )
     call L1BSubsample ( chunk, FullArray, values=scOrbIncl )
     if ( deebughere ) then
       call dump(scOrbIncl, "scOrbIncl")
@@ -1309,7 +1371,8 @@ contains ! =====     Public Procedures     =============================
     ! Now longitude
     call EmpiricalLongitude ( hGrid%phi(1,:), hGrid%lon(1,:) )
 
-    call L1BGeoLocation ( filedatabase, "MAFStartTimeTAI", fullArray )
+    call L1BGeoLocation ( filedatabase, "MAFStartTimeTAI", &
+      & instrumentModuleName, fullArray )
     call L1BSubsample ( chunk, FullArray, values=TAI )
     if ( deebughere ) then
       call dump( TAI, "MAFStartTimeTAI" // ' (before interpolating)')
@@ -1347,7 +1410,8 @@ contains ! =====     Public Procedures     =============================
     if ( deebughere ) call output ( 'Content with l1boa solartime', advance='yes' )
 
     ! Solar zenith
-    call L1BGeoLocation ( filedatabase, "tpSolarZenith", fullArray, fullArray2d )
+    call L1BGeoLocation ( filedatabase, "tpSolarZenith", &
+      & instrumentModuleName,  fullArray, fullArray2d )
     call L1BSubsample ( chunk, FullArray, fullArray2d, SolarZenith, SolarZenith2d )
     if ( deebughere ) then
       call dump( SolarZenith, "SolarZenith" // &
@@ -1367,7 +1431,8 @@ contains ! =====     Public Procedures     =============================
     call Deallocate_test ( SolarZenith2d, 'SolarZenith2d', ModuleName )
 
     ! Line of sight angle
-    call L1BGeoLocation ( filedatabase, "tpLosAngle", fullArray )
+    call L1BGeoLocation ( filedatabase, "tpLosAngle", &
+      & instrumentModuleName, fullArray )
     call L1BSubsample ( chunk, FullArray, values=LosAngle )
     if ( deebughere ) then
       call dump( LosAngle, 'LosAngle' // ' (before interpolating)')
@@ -1655,8 +1720,6 @@ contains ! =====     Public Procedures     =============================
     use hgridsdatabase, only: hgrid_t
     use L1BData, only: deallocateL1BData, L1BData_t, readL1BData, &
       & assemblel1bqtyname
-    use MLSCommon, only: mlsfile_t, namelen
-    use MLSFiles, only: getMLSFileByType
     use MLSKinds, only: r8
     use output_m, only: output
     use string_table, only: display_string
@@ -1821,8 +1884,8 @@ contains ! =====     Public Procedures     =============================
     use HGridsDatabase, only: HGrid_t, copyHGrid, destroyHGridContents, Dump
     use HighOutput, only: beVerbose, letsDebug, outputNamedValue
     use Init_tables_module, only: z_construct, s_hgrid, z_output
-    use L2GPdata, only: l2gpdata_t
-    use MLSCommon, only: mlsfile_t, tai93_range_t
+    use L1BData, only: CheckForCorruptFileDatabase
+    use L2GPData, only: L2GPData_t
     use MLSKinds, only: rk => r8
     use MLSL2Options, only: specialDumpFile
     use Moretree, only: get_spec_id
@@ -1866,6 +1929,8 @@ contains ! =====     Public Procedures     =============================
     logical :: verbose
     real(rk), dimension(:), pointer :: MAFStartTimeTAI, OrbIncl, &
       & GeodAngle, GeodAlt, GeodLat, Lon, LosAngle, SolarTime, SolarZenith
+    integer :: InstrumentModule
+    character (len=NameLen) :: InstrumentModuleName
     ! Executable code
     computingOffsets = .true.
     deebug = LetsDebug ( 'hgrid', 1 )
@@ -1880,7 +1945,11 @@ contains ! =====     Public Procedures     =============================
     ! Finally we accumulate these to get offsets.
     noHGrids = 0
     nkeys = 0
-    ! call outputNamedValue ( 'size(chunks)', size(chunks) )
+    if ( deebug ) then
+      call outputNamedValue ( 'size(chunks)', size(chunks) )
+      call output( 'Before loop of chunks', advance='yes' )
+      call CheckForCorruptFileDatabase( filedatabase )
+    endif
     do chunk = 0, size(chunks)
       if ( chunk > 0 ) chunks(chunk)%hGridOffsets = 0 ! Initialize
       call time_now ( t0 )
@@ -1888,7 +1957,7 @@ contains ! =====     Public Procedures     =============================
       hGrid = 1
       ! if ( chunk > 20) stop
       ! Loop over all the setions in the l2cf, look for construct sections
-      if ( verbose ) &
+      if ( verbose .or. .true. ) &
         & call outputNamedValue ( 'Computing offsets for chunk number', chunk, &
         & Before='*   ', After = '  *' )
       call init_next_tree_node ( state1 )
@@ -1925,8 +1994,19 @@ contains ! =====     Public Procedures     =============================
                   & (/ nsections, keyindex /) )
                 call time_now( t1 )
               endif
+              ! call Dump ( filedatabase, details=2 )
+              if ( chunk == 1 .and. deebug ) then
+                call outputNamedValue( 'Before making dummyHGrid', chunk )
+                call CheckForCorruptFileDatabase( filedatabase )
+              endif
               dummyHGrid = CreateHGridFromMLSCFInfo ( 0, key, filedatabase, l2gpDatabase, &
-                & processingRange, chunks(chunk), onlyComputingOffsets=.true. )
+                & processingRange, chunks(chunk), onlyComputingOffsets=.true., &
+                & check=(chunk == 1) .and. deebug )
+                ! & check=(chunk == 1) )
+              if ( chunk == 1 .and. deebug ) then
+                call outputNamedValue( 'During chunk#', chunk )
+                call CheckForCorruptFileDatabase( filedatabase )
+              endif
               if ( keyindex == 1 ) then
                 if ( verbose ) call output ( 'Creating firstHGrid', advance='yes' )
                   ! firstHGrid(chunk) = CreateHGridFromMLSCFInfo ( 0, key, filedatabase, &
@@ -1938,6 +2018,7 @@ contains ! =====     Public Procedures     =============================
                   call Dump ( firstHGrid(chunk) )
                   call sayTime( 'Copying HGrid' )
                 endif
+                InstrumentModule = dummyHGrid%module
                 call time_now( t1 )
               endif
               if ( chunk == 1 ) then
@@ -1949,6 +2030,10 @@ contains ! =====     Public Procedures     =============================
                   chunks(chunk)%hGridOffsets(hGrid) = dummyHGrid%noProfs - &
                   & dummyHGrid%noProfsLowerOverlap - dummyHGrid%noProfsUpperOverlap
                 end if
+                if ( deebug ) then
+                  call outputNamedValue( 'During chunk#', chunk )
+                  call CheckForCorruptFileDatabase( filedatabase )
+                endif
               else if ( chunk == size(chunks) ) then
                 if ( ChunkDivideConfig%allowPostOverlaps ) then
                   chunks(chunk)%hGridOffsets(hGrid) = dummyHGrid%noProfs - &
@@ -1994,12 +2079,21 @@ contains ! =====     Public Procedures     =============================
           call Allocate_Test ( LowerOverlaps, noHGrids, &
             & 'LowerOverlaps', ModuleName )
         end do
+        if ( deebug ) then
+          call output( 'After 0th chunk', advance='yes' )
+          call CheckForCorruptFileDatabase( filedatabase )
+        endif
       elseif ( nkeys /= noHGrids ) then
         call outputnamedValue ( 'nkeys, noHGrids', (/ nkeys, noHGrids /) )
         call MLSMessage ( MLSMSG_Error, ModuleName, &
           & 'Got a different number of hGrids than expected!' )
+      elseif ( chunk < 10 .and. deebug ) then
+        call outputNamedValue( 'After chunk#', chunk )
+        call CheckForCorruptFileDatabase( filedatabase )
       end if
     end do                              ! Chunk loop
+    ! call output( 'After loop of chunks', advance='yes' )
+    ! call CheckForCorruptFileDatabase( filedatabase )
     ! call output( 'Done with chunk Loop', advance='yes' )
     
     if ( DEEBUG ) then
@@ -2068,19 +2162,20 @@ contains ! =====     Public Procedures     =============================
       end do
     end if
 
+    call GetModuleName ( instrumentModule, instrumentModuleName )
     if ( verbose ) then
       ! Read the l1boa items we will need
       nullify( MAFStartTimeTAI, GeodAngle, GeodAlt, GeodLat, &
         & LosAngle, OrbIncl, SolarTime, SolarZenith )
-      call L1BGeoLocation ( filedatabase, 'MAFStartTimeTAI  ', MAFStartTimeTAI )
-      call L1BGeoLocation ( filedatabase, 'GHz/GeodAngle    ', GeodAngle )
-      call L1BGeoLocation ( filedatabase, 'GHz/GeodAlt      ', GeodAlt )
-      call L1BGeoLocation ( filedatabase, 'GHz/GeodLat      ', GeodLat )
-      call L1BGeoLocation ( filedatabase, 'GHz/Lon          ', Lon )
-      call L1BGeoLocation ( filedatabase, 'GHz/LosAngle     ', LosAngle )
-      call L1BGeoLocation ( filedatabase, 'sc/OrbIncl       ', OrbIncl )
-      call L1BGeoLocation ( filedatabase, 'GHz/SolarTime    ', SolarTime )
-      call L1BGeoLocation ( filedatabase, 'GHz/SolarZenith  ', SolarZenith )
+      call L1BGeoLocation ( filedatabase, 'MAFStartTimeTAI  ', instrumentModuleName,  MAFStartTimeTAI )
+      call L1BGeoLocation ( filedatabase, 'GHz/GeodAngle    ', instrumentModuleName,  GeodAngle )
+      call L1BGeoLocation ( filedatabase, 'GHz/GeodAlt      ', instrumentModuleName,  GeodAlt )
+      call L1BGeoLocation ( filedatabase, 'GHz/GeodLat      ', instrumentModuleName,  GeodLat )
+      call L1BGeoLocation ( filedatabase, 'GHz/Lon          ', instrumentModuleName,  Lon )
+      call L1BGeoLocation ( filedatabase, 'GHz/LosAngle     ', instrumentModuleName,  LosAngle )
+      call L1BGeoLocation ( filedatabase, 'sc/OrbIncl       ', instrumentModuleName,  OrbIncl )
+      call L1BGeoLocation ( filedatabase, 'GHz/SolarTime    ', instrumentModuleName,  SolarTime )
+      call L1BGeoLocation ( filedatabase, 'GHz/SolarZenith  ', instrumentModuleName,  SolarZenith )
       call output ( "Comparing start, end geolocations all chunks: " , &
         & advance='yes')
       do chunk = 1, size ( chunks )
@@ -2434,6 +2529,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.136  2016/08/09 21:12:50  pwagner
+! Survives encounter with non-satellite data
+!
 ! Revision 2.135  2016/07/28 02:02:26  vsnyder
 ! Removed unreferenceed USE
 !
