@@ -233,16 +233,16 @@ contains
       & s_l1boa, s_l1brad, s_l2parsf, s_makepfa, s_pfadata, s_readpfa, &
       & s_tgrid, s_time, s_vgrid, s_writepfa
     use Intrinsic, only: l_hdf, l_swath, spec_indices
-    use L1BData, only: L1BData_t, namelen, precisionSuffix, &
-      & assemblel1bqtyname, deallocateL1BData, dump, findmaxmaf, &
+    use L1BData, only: L1BData_t, nameLen, precisionSuffix, &
+      & assembleL1BQtyName, deallocateL1BData, Dump, findMaxMaf, &
       & L1BRadsetup, L1BOASetup, readL1BAttribute, readL1BData 
     use L2GPData, only: L2GPData_t
     use L2PC_m, only: addbinselectortodatabase, binselectors
     use MLSCommon, only: mlsfile_t, nameLen, &
       & tai93_range_t
-    use MLSFiles, only: filenotfound, hdfversion_5, &
-      & addfiletodatabase, getpcfromref, getmlsfilebyname, getmlsfilebytype, &
-      & initializemlsfile, mls_closefile, mls_openfile, split_path_name
+    use MLSFiles, only: filenotfound, HDFVersion_5, &
+      & addfiletodatabase, getpcfromref, getMLSFileByName, getMLSFileByType, &
+      & initializemlsfile, MLS_CloseFile, MLS_OpenFile, split_path_name
     use MLSHDF5, only: GetAllHDF5GroupNames
     use MLSKinds, only: r8
     use MLSL2Options, only: checkPaths, L2CFNode, level1_HDFVersion, &
@@ -661,15 +661,15 @@ contains
     else
       ! Check on module names--do they agree with group names in L1BOA file?
       ! If not, overwrite them
-      call mls_openFile ( L1BFile )
+      call MLS_OpenFile ( L1BFile )
       call GetAllHDF5GroupNames ( L1BFile%FileID%f_id, moduleNames )
-      call outputNamedValue ( 'group names', trim(moduleNames) )
+      if ( verbose ) call outputNamedValue ( 'group names', trim(moduleNames) )
       call mls_closeFile ( L1BFile )
       do i=1, size(modules)
         call GetModuleName ( i, itsName )
-        call outputNamedValue ( 'module name', trim(itsname) )
+        if ( verbose ) call outputNamedValue ( 'module name', trim(itsname) )
         j = StringElementNum( lowercase(moduleNames), lowercase(itsName), countEmpty )
-        call outputNamedValue ( 'element num', j )
+        if ( verbose ) call outputNamedValue ( 'element num', j )
         if ( j > 0 ) then
           if ( itsName /= &
             & StringElement( moduleNames, j, countEmpty ) ) &
@@ -679,8 +679,10 @@ contains
             modules(i)%nameString = StringElement( moduleNames, i, countEmpty )
         endif
       enddo
-      call Dump( modulenames, 'module names' )
-      call Dump_Modules
+      if ( verbose ) then
+        call Dump( modulenames, 'module names' )
+        call Dump_Modules
+      endif
     endif
 
     the_hdf_version = &
@@ -726,8 +728,10 @@ contains
       ! if gaps occur
       ! For now, just look for them in l1boa
       ! Later you may look also in l1brad files
-      GlobalAttributes%LastMAFCtr = FindMaxMAF ( (/L1BFile/), &
+      GlobalAttributes%LastMAFCtr = FindMaxMAF ( L1BFile, &
         & GlobalAttributes%FirstMAFCtr )
+      call outputNamedValue ( 'Last MAF', GlobalAttributes%LastMAFCtr )
+      call outputNamedValue ( 'First MAF', GlobalAttributes%FirstMAFCtr )
     end if
 
     ! Have we overridden the Bright Object names? Can we find them in l1boa?
@@ -1385,6 +1389,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.166  2016/07/28 23:39:32  pwagner
+! Fixed error introduced with last commit
+!
 ! Revision 2.165  2016/07/28 19:54:30  pwagner
 ! Guard against older hdf4 l1boa
 !
