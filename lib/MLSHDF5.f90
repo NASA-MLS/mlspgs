@@ -33,12 +33,13 @@ module MLSHDF5
   use Intrinsic, only: l_hdf
   use MLSCommon, only: MLSFile_t
   use MLSDataInfo, only: MLSDataInfo_t, query_mlsdata
-  use MLSFiles, only: HDFVersion_5, initializeMLSFile, MLS_Openfile
+  use MLSFiles, only: HDFVersion_5, Dump, initializeMLSFile, MLS_Openfile
   use MLSKinds, only: r8
-  use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning, MLSMessage
+  use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Info, MLSMSG_Warning, &
+    & MLSMessage
   use MLSFinds, only: findFirst
   use MLSStringLists, only: catLists, isInList, &
-    & Getstringelement, Intersection, numStringElements, stringElement
+    & GetStringElement, Intersection, numStringElements, stringElement
   use MLSStrings, only: indexes, lowercase, replace, trim_safe
   use Output_m, only: newline, output
   use Trace_m, only: trace_begin, trace_end
@@ -248,6 +249,10 @@ module MLSHDF5
 
   interface GetHDF5DSDims
     module procedure GetHDF5DSDims_ID, GetHDF5DSDims_MLSFile
+  end interface
+
+  interface IsHDF5DSPresent
+    module procedure IsHDF5DSPresent_in_fID, IsHDF5DSPresent_in_MLSFile
   end interface
 
   interface IsHDF5AttributePresent
@@ -1021,9 +1026,10 @@ contains ! ======================= Public Procedures =========================
     ! Executable code
     call trace_begin ( me, 'GetAllHDF5DSNames_MLSFile', cond=.false. )
     ! Do we have any FileID fields?
-    If ( .not. MLSFile%stillOpen .or. all( &
-      & (/ MLSFile%FileId%f_id, MLSFile%FileId%grp_id, MLSFile%FileId%sd_id /) &
-      & == 0 ) ) then
+    ! If ( .not. MLSFile%stillOpen .or. all( &
+    !  & (/ MLSFile%FileId%f_id, MLSFile%FileId%grp_id, MLSFile%FileId%sd_id /) &
+    !   & == 0 ) ) then
+    if ( .not. MLSFile%stillOpen ) then
       call GetAllHDF5DSNames( MLSFile%Name, gname, DSNames, andSlash )
     elseif( MLSFile%FileId%grp_id > 0 ) then
       call GetAllHDF5DSNames( MLSFile%FileId%grp_id, gname, DSNames, andSlash )
@@ -2584,7 +2590,6 @@ contains ! ======================= Public Procedures =========================
     character(len=32) :: objName
     integer :: objType
     integer :: Me = -1                  ! String index for trace cacheing
-    logical :: omitSlash
     integer :: STATUS                   ! Flag
     integer :: nsubmembers
     logical, parameter :: DeeBug = .false.
@@ -3321,8 +3326,48 @@ contains ! ======================= Public Procedures =========================
     call trace_end ( cond=.false. )
   end function IsHDF5AttributePresent_in_MLSFile
 
-  ! --------------------------------------------  IsHDF5DSPresent  -----
-  logical function IsHDF5DSPresent ( locID, name, options )
+  ! --------------------------------------------  IsHDF5DSPresent_in_MLSFile  -----
+  logical function IsHDF5DSPresent_in_MLSFile ( MLSFile, name, options )
+    ! This routine returns true if the given HDF5 DS is present
+    ! options such as "-cw" are explained in notes above
+    type (MLSFile_T)   :: MLSFile
+    character (len=*), intent(in) :: NAME ! Name for the dataset
+    character (len=*), optional, intent(in) :: options ! E.g., -c
+
+    ! Local variables
+    integer :: Me = -1                  ! String index for trace cacheing
+    integer :: STATUS                   ! Flag
+    ! logical, parameter :: DEEBUG = .true.
+
+    ! Executable code
+    IsHDF5DSPresent_in_MLSFile = .false.
+    call trace_begin ( me, 'IsHDF5DSPresent_in_MLSFile', cond=.false. )
+    ! if ( .not. MLSFile%stillOpen .or. all( &
+    !   & (/ MLSFile%FileId%f_id, MLSFile%FileId%grp_id, MLSFile%FileId%sd_id /) &
+    !   & == 0 ) ) then
+    if ( .not. MLSFile%stillOpen ) then
+      call MLS_Openfile ( MLSFile, status )
+      if ( status /= 0 ) then
+        if ( DEEBUG ) &
+          & call outputNamedValue( 'error in IsHDF5DSPresent_in_MLSFile', status )
+      return
+      endif
+    endif
+    if ( MLSFile%fileID%grp_ID > 0 ) then
+      IsHDF5DSPresent_in_MLSFile = &
+        & IsHDF5DSPresent_in_fID ( MLSFile%fileID%grp_ID, name, options )
+    elseif ( MLSFile%FileID%f_id > 0 ) then
+      IsHDF5DSPresent_in_MLSFile = &
+        & IsHDF5DSPresent_in_fID ( MLSFile%FileID%f_id, name, options )
+    else
+      status = -1
+    endif
+    if ( DEEBUG .and.  .not. IsHDF5DSPresent_in_MLSFile ) &
+      & call Dump( MLSFile, details=2 )
+    call trace_end ( cond=.false. )
+  end function IsHDF5DSPresent_in_MLSFile
+
+  logical function IsHDF5DSPresent_in_fID ( locID, name, options )
     ! This routine returns true if the given HDF5 DS is present
     ! options such as "-cw" are explained in notes above
     integer, intent(in) :: LOCID        ! Where to look
@@ -3336,9 +3381,11 @@ contains ! ======================= Public Procedures =========================
     integer :: Me = -1                  ! String index for trace cacheing
     integer :: SETID                    ! ID for DS if present
     integer :: STATUS                   ! Flag
+    logical, parameter :: DEEBUG = .false.
 
     ! Executable code
-    call trace_begin ( me, 'IsHDF5DSPresent', cond=.false. )
+    IsHDF5DSPresent_in_fID = .false.
+    call trace_begin ( me, 'IsHDF5DSPresent_in_fID', cond=.false. )
     myOptions = ' ' ! By default, match name exactly
     if (present(options)) myOptions = options
     call h5eSet_auto_f ( 0, status )
@@ -3346,20 +3393,25 @@ contains ! ======================= Public Procedures =========================
       & 'Unable to turn error messages off before looking for DS ' // trim(name) )
     if ( myOptions == ' ' ) then
       call h5dOpen_f ( locID, name, setID, status )
-      IsHDF5DSPresent = ( status == 0 )
-      if ( IsHDF5DSPresent ) call h5dClose_f ( setID, status )
+      IsHDF5DSPresent_in_fID = ( status == 0 )
+      if ( IsHDF5DSPresent_in_fID ) then
+        call h5dClose_f ( setID, status )
+      elseif ( DEEBUG ) then
+        call MLSMessage ( MLSMSG_Info, ModuleName, &
+          & 'Unable to open DS ' // trim(name) )
+      endif
     elseif ( index(myOptions, 'a') < 1 ) then
       call GetAllHDF5DSNames_fileID ( locID, '/', DSNames )
-      IsHDF5DSPresent = IsInList( DSNames, name, options )
+      IsHDF5DSPresent_in_fID = IsInList( DSNames, name, options )
     else
       call GetAllHDF5AttrNames( locID, DSNames )
-      IsHDF5DSPresent = IsInList( DSNames, name, options )
+      IsHDF5DSPresent_in_fID = IsInList( DSNames, name, options )
     endif
     call h5eSet_auto_f ( 1, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages back on after looking for DS ' // trim(name) )
     call trace_end ( cond=.false. )
-  end function IsHDF5DSPresent
+  end function IsHDF5DSPresent_in_fID
 
   ! -----------------------------------------  IsHDF5GroupPresent  -----
   logical function IsHDF5GroupPresent ( locID, name )
@@ -5763,6 +5815,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.138  2016/08/09 18:12:16  pwagner
+! Made IsHDF5DSPresent generic
+!
 ! Revision 2.137  2016/07/28 19:24:37  pwagner
 ! Fixed error in GetAllHDF5GroupNames
 !
