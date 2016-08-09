@@ -1,0 +1,166 @@
+; This bit of an l2cf fills all the boring stuff in the `lesser' state vector
+
+begin Fill
+
+!ifdef(flagElevOffsetFromFile, {
+  elevOffset: vector, template=ElevOffsetTemplate
+  DirectRead, Vector=elevOffset, hdfVersion=5, type=hdf, $
+    file='!ElevOffsetHDF'
+  Transfer, source=elevOffset, destination=apriori
+},{
+  ;; -------------------------------------------------- Elev offsets
+ 
+  ;; This macro below fills <x>Elev for radiometer <x> with the value
+  ;; given in the macro !elev<x>
+  !define(fillElevOffset,{Fill, quantity=apriori.elev$1, method=explicit, $
+    explicitValues=!NegElevation$1!nl})
+
+  ;; Call that macro for all radiometers
+  !ifdef(flagPreV14Configuration,{},{!forall(fillElevOffset,!allBandLSBs,!allBandUSBs)})
+})
+
+!ifdef(flagIsotopeRatioFromFile, {
+  isotopeRatio: vector, template=IsotopeRatioTemplate
+  DirectRead, Vector=isotopeRatio, hdfVersion=5, type=hdf, $
+    file='!IsotopeRatioHDF'
+  Transfer, source=isotopeRatio, destination=apriori
+},{
+  ;; --------------------------------------------------- Isotope ratios
+
+  ;; This macro below fills the isotope ratio quanity for molecule <x>
+  ;; (apriori.<x>_ratio) with the value in the macro !isotoperatiox
+  !define(fillIsotopeRatio,{Fill, quantity=apriori.isotoperatio$1, method=explicit, $
+    explicitValues=!indir(isotoperatio$1)!nl})
+  ;; Note the use of indir as the molecule can contain underscores
+  ;; which are not part of valid macro names generally in the l2cf
+
+  ;; Call this macro for all molecules
+  !forall(fillIsotopeRatio,!isotopicMolecules)
+
+})
+
+!ifdef(flagMiscFromFile, {
+  Misc: vector, template=MiscTemplate
+  DirectRead, Vector=Misc, hdfVersion=5, type=hdf, $
+    file='!MiscHDF'
+  Transfer, source=Misc, destination=apriori
+},{
+  ;; --------------------------------------------------- Minor terms
+
+  Fill, quantity=apriori.earthReflectivity, $
+    method=explicit, explicitValues=!earthReflectivity
+
+  Fill, quantity=apriori.spaceRadiance, $
+    method=explicit, explicitValues=!spaceRadiance
+
+  Fill, quantity=apriori.earthradius, $
+    method=explicit, explicitValues=6370.0km, /spread
+
+;   !ifdef(flagPrecisionEstimates,{
+;   ;  O2 and N2 are in the climatology for PEs (vmr not constant in the
+;   ;  meso/thermosphere)
+;   },{
+  Fill, quantity=apriori.n2, method=explicit,  $
+    explicitValues=!n2vmr, /spread
+
+  ;; --------------------------------------------- O2 
+
+  ;; Put in O2 vmr profile that drops off in the mesosphere/thermosphere
+  ;; this is what Bill used in uars
+  Fill, quantity=apriori.o2, method=profile, profileValues = $
+    [ 1.0000e+03 mb : 0.2095 vmr, $  
+      8.0131e-03 mb : 0.2095 vmr, $
+      5.8925e-03 mb : 0.2092 vmr, $
+      4.3241e-03 mb : 0.2089 vmr, $
+      3.1594e-03 mb : 0.2086 vmr, $
+      2.2961e-03 mb : 0.2083 vmr, $
+      1.6581e-03 mb : 0.2080 vmr, $
+      1.1874e-03 mb : 0.2070 vmr, $
+      8.4392e-04 mb : 0.2061 vmr, $
+      5.9869e-04 mb : 0.2051 vmr, $
+      4.2472e-04 mb : 0.2042 vmr, $
+      3.0332e-04 mb : 0.2032 vmr, $
+      2.1863e-04 mb : 0.1915 vmr, $
+      1.5948e-04 mb : 0.1798 vmr, $
+      1.1809e-04 mb : 0.1681 vmr, $
+      8.8552e-05 mb : 0.1564 vmr, $
+      6.6696e-05 mb : 0.1447 vmr ]
+;   })
+
+})
+
+  ;; --------------------------------------------------- Stuff from L1BOA
+
+  ;; In some cases (e.g. when computing l2pc files) the l1boa file is
+  ;; not the desired source of information
+
+  !ifdef(flagAvoidL1BOA,{
+  ;; ----------------- Avoiding l1boa
+
+  Fill, quantity=apriori.orbitInclination, $
+    method=explicit, explicitValues=98.145 degrees, /spread
+
+  ;; Get an approximate line of sight velocity
+  Fill, quantity = apriori.losVelGHz, method = explicit, $
+    explicitValues = -6.865e3, /spread
+
+  ;; Get an approximate spacecraft geocentric altitude
+  Fill, quantity = apriori.scGeocAlt, method = explicit, $
+    explicitValues = 7070 km, /spread
+
+  ;; Fake an identity matrix as the ECRtoFOV
+  Subset, quantity = apriori.ecrtofov, mask=fill, channels=[2:4,6:8], /ignore
+  Fill, quantity=apriori.ecrtofov, method=explicit, explicitValues=1.0, /spread
+  Subset, quantity = apriori.ecrtofov, mask=fill, /reset
+
+  ;; Note, we're doing NOTHING here about tangent point altitudes.
+  ;; The presumption is that we don't need them for an l2pc calculation.
+  !ifdef(flagMagneticFieldOnHeightGrid,!dnl
+  {
+  ;; Which is utterly wrong .. again
+  ;; Really must stop making assumptions that come back
+  ;; later to harm us
+  Fill, quantity = apriori.scECI, method = explicit, $
+    explicitValues = 7070 km, /spread
+  Fill, quantity = apriori.scVelECI, method = explicit, $
+    explicitValues = 7070 , /spread
+  Fill, quantity = apriori.scVelECR, method = explicit, $
+    explicitValues = 7070 , /spread
+  })
+  },{
+  ;; ----------------- Using l1boa
+  Fill, quantity=apriori.orbitInclination, method=l1b
+
+  ;; Geocentric altitudes
+  Fill, quantity=apriori.scGeocAlt, method=l1b
+  Fill, quantity=apriori.tngtGeocAltGHz, method=l1b
+
+  ;; Here we're after LOS velocities.  Newer L1BOA files have this
+  ;; information in them. For older files we have to extract it ourselves
+  !ifdef(flagOldStyleL1BOA, {
+  ;; We're after the line of sight velocities here, have to get them
+  ;; in a slightly awkward manner.  First get the position of the
+  ;; spacecraft and tangent points in ECI coordinates.
+  Fill, quantity=apriori.scECI, method=l1b
+  Fill, quantity=apriori.tngtECIGHz, method=l1b
+
+  ;; Now get the spacecraft velocity in both sets of coordinates
+  Fill, quantity=apriori.scVelECI, method=l1b
+  Fill, quantity=apriori.scVelECR,, method=l1b
+
+  ;; Now do a special vector computation to get the LOS velocities.
+  ;; Note that this DOES take into account the earth's rotation, even
+  ;; though it's been given ECI coordinates.
+  Fill, quantity=apriori.losVelGHz, tngtECI=apriori.tngtECIGHz, $
+    scECI=apriori.scECI, scVelECI=apriori.scVelECI, method=special
+  },{
+  ;; Get it from the L1BOA file
+  Fill, quantity=apriori.losVelGHz, method=l1b
+  })
+
+  ;; For newer L1BOA files, read the ECRtoFOV rotation matrix,
+  ;; older files don't have this, so I guess we leave it blank.
+  !ifdef(flagOldStyleL1BOA,{},{Fill, quantity=apriori.ECRtoFOV, method=l1b})
+  })
+
+end Fill
