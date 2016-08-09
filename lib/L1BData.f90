@@ -14,9 +14,10 @@ module L1BData
   ! Reading and interacting with Level 1B data (HDF4 or HDF5)
 
   use Allocate_Deallocate, only: Allocate_test, Deallocate_test, Test_Allocate
-  use Diff_1, only: diff, diff_fun
+  use Diff_1, only: Diff, Diff_fun
   use Dump_Options, only: NameOnEachLine, StatsOnOneLine
   use Dump_0, only: Dump
+  use Dump_1, only: Dump
   use HDF, only: DFACC_Rdonly, SFGInfo, SFN2Index, SFSelect, &
     & SFRData_f90, &
     & SFRCData, SFENDACC, DFNT_Char8, DFNT_Int32, DFNT_Float64, &
@@ -24,24 +25,25 @@ module L1BData
   use HighOutput, only: OutputNamedValue
   use IEEE_Arithmetic, only: IEEE_Is_Finite
   use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
-  use intrinsic, only: l_HDF
-  use lexer_core, only: print_source
+  use Intrinsic, only: l_HDF
+  use Lexer_core, only: print_source
+  use machine, only: crash_burn
   use MLSCommon, only: MLSFile_t, &
-    & unDefinedValue, fileNameLen, nameLen
-  use MLSFiles, only: filenotfound, HDFversion_4, HDFversion_5, &
-    & addFileToDatabase, initializeMLSfile, &
-    & MLS_openFile, MLS_closeFile
-  use MLSHDF5, only: SaveAsHDF5DS
+    & UnDefinedValue, fileNameLen, nameLen
+  use MLSFiles, only: fileNotFound, HDFVersion_4, HDFVersion_5, &
+    & AddFileToDatabase, getMLSFileByType, initializeMLSfile, &
+    & MLS_OpenFile, MLS_CloseFile
+  use MLSHDF5, only: GetAllHDF5DSNames, SaveAsHDF5DS
   use MLSKinds, only: r4, r8
   use MLSMessageModule, only: MLSMSG_Error, &
     & MLSMSG_L1BRead, MLSMSG_Warning, MLSMessage
   use MLSStrings, only: indexes, streq
   use MLSStringLists, only: numStringElements, switchDetail
-  use moretree, only: get_field_id
-  use output_m, only: output
-  use string_table, only: get_string
-  use trace_m, only: trace_begin, trace_end
-  use tree, only: nsons, sub_rosa, subtree, dump_tree_node, where
+  use Moretree, only: get_field_id
+  use Output_m, only: newLine, output
+  use String_table, only: get_string
+  use Trace_m, only: trace_begin, trace_end
+  use Tree, only: nsons, sub_rosa, subtree, dump_tree_node, where
 
   implicit none
 
@@ -75,6 +77,7 @@ module L1BData
 ! Diff                            Diff two l1b quantities
 ! Dump                            Print facts about l1brad quantity
 ! findl1bdata                     Which file handle contains a given sd name
+! findMaxMAF                      What is the maximum MAF number in the file?
 ! Getl1BFile                      Which MLSFile contains a given sd name
 !                                  (or attribute)
 ! L1BOASetup                      From l2cf, open, and save l1boa file info
@@ -103,6 +106,7 @@ module L1BData
 !   [char options], [int numDiffs], [int mafStart], [int mafEnd])
 ! Dump (l1bData_T l1bData, int details)
 ! int FindL1BData (int files(:), char fieldName, [int hdfVersion])
+! int FindMaxMAF (MLSFile_t file, [int minMAF])
 ! MLSFile_T GetL1BFile (MLSFile_t filedatabase(:), char fieldName, [char options])
 ! L1boaSetup (int root, MLSFile_t filedatabase(:), int f_file, [int hdfVersion])
 ! L1bradSetup (int root, MLSFile_t filedatabase(:), int f_file, [int hdfVersion])
@@ -116,7 +120,8 @@ module L1BData
   private
 
   public :: L1BData_T, nameLen, precisionSuffix, &
-    & allocateL1BData, AssembleL1BQtyName, ContractL1BData, CpL1BData, &
+    & allocateL1BData, AssembleL1BQtyName, &
+    & CheckForCorruptFileDatabase, ContractL1BData, CpL1BData, &
     & DeallocateL1BData, diff, dump, dupL1BData, &
     & findL1BData, FindMaxMAF, GetL1BFile, &
     & L1BRadSetup, L1BOASetup, PadL1BData, &
@@ -134,6 +139,10 @@ module L1BData
 
   interface DUMP
     module procedure DumpL1BData
+  end interface
+
+  interface FindMaxMAF
+    module procedure FindMaxMAF_arr, FindMaxMAF_sca
   end interface
 
   interface ReadL1BAttribute
@@ -413,6 +422,26 @@ contains ! ============================ MODULE PROCEDURES ======================
       print *, 'more converted name: ', trim(QtyName)
     end if
   end function AssembleL1BQtyName
+
+  ! --------------------------------------------  CheckForCorruptFileDatabase  -----
+  subroutine CheckForCorruptFileDatabase ( FileDatabase )
+    ! Check whether filedatabase has become corrupted
+    type (MLSFile_T), dimension(:), pointer, optional ::     FILEDATABASE
+    ! Internal variables
+    character(len=1024) :: DSNames
+    type (MLSFile_T), pointer :: L1BFile
+
+    ! Executable code
+    call output( 'Checking for corrupt file database', advance='yes' )
+    L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
+    call GetAllHDF5DSNames ( L1BFile, DSNames )
+    call Dump ( DSNames, 'DSNames from MLSFile type' )
+    call newLine
+    call GetAllHDF5DSNames ( L1BFile%name, '/', DSNames )
+    call Dump ( DSNames, 'DSNames from MLSFile name' )
+    call newLine
+    call crash_burn
+  end subroutine CheckForCorruptFileDatabase
 
   ! --------------------------------------------  ContractL1BData  -----
   subroutine ContractL1BData ( L1BDataIn, L1BDataOut, noMAFs, &
@@ -1145,76 +1174,113 @@ contains ! ============================ MODULE PROCEDURES ======================
 
   end function FindL1BData
 
-  ! -------------------------------------------------  FindMaxMAF  -----
-  integer function FindMaxMAF ( files, minMAF )
+  ! -------------------------------------------------  FindMaxMAF_arr  -----
+  integer function FindMaxMAF_arr ( files, minMAF )
   ! Find maximum MAF among files (using counterMAF arrays)
+
+    type(MLSFile_T), dimension(:), intent(in), target    :: files ! File handles
+    integer, optional, intent(out)                       :: minMAF
+
+    ! Local variables
+    integer :: i
+    type(MLSFile_T), pointer :: L1BFile
+    integer :: myMinMAF
+    integer :: theMinMAF
+    logical :: haveCtrMAF
+    logical, parameter :: DEEBug = .false.
+    ! Executable code
+
+    FindMaxMAF_arr = 0
+    myMinMAF = BIGGESTMAFCTR
+    haveCtrMAF = .false.
+    do i = 1, size(files)
+      L1BFile => files(i)
+      if ( streq( L1BFile%content, 'l1b*', '-w') ) then
+        ! This is an l1b file
+        FindMaxMAF_arr = max( FindMaxMAF_sca( L1BFile, theMinMAF ), FindMaxMAF_arr )
+        myMinMAF = min( myMinMAF, theMinMAF )
+      end if
+    end do
+    if ( DEEBug ) print *, 'FindMaxMAF_arr ', FindMaxMAF_arr
+    if ( DEEBug ) print *, 'myMinMAF ', myMinMAF
+    if ( present(minMAF) ) minMAF = myMinMAF
+  end function FindMaxMAF_arr
+
+  ! -------------------------------------------------  FindMaxMAF_sca  -----
+  integer function FindMaxMAF_sca ( L1BFile, minMAF )
+  ! Find maximum MAF among files (using counterMAF arrays)
+  ! If there is no counterMAF, just return the isze of the MAFStartTimeTAI
 
   use MLSHDF5, only: isHDF5DSPresent
 
-    type(MLSFile_T), dimension(:), intent(in), target :: files ! File handles
-    integer, optional, intent(out) :: minMAF
+    type(MLSFile_T), pointer               :: L1BFile ! File handles
+    integer, optional, intent(out)         :: minMAF
 
     ! Externals
     integer, external :: SFN2INDEX
 
     ! Local variables
     logical :: alreadyOpen
-    integer :: i
-    integer :: myhdfVersion
     character(len=*), parameter :: fieldname = 'counterMAF'
     type(L1BData_T) :: l1bData
-    type(MLSFile_T), pointer :: L1BFile
-    integer :: noMAFs
+    integer :: myhdfVersion
     integer :: myMinMAF
+    integer :: noMAFs
     integer :: status
     logical :: haveCtrMAF
+    logical :: haveMAFStartTimeTAI
     logical, parameter :: DEEBug = .false.
+    character(len=1024) :: DSNames
     ! Executable code
-
-    FindMaxMAF=0
-    myMinMAF = BIGGESTMAFCTR
-    haveCtrMAF = .false.
-    do i = 1, size(files)
-      L1BFile => files(i)
-      if ( streq(files(i)%content, 'l1b*', '-w') ) then
-        ! This is an l1b file
-        alreadyOpen = files(i)%StillOpen
-        if ( .not. alreadyOpen ) &
-          & call mls_openFile(files(i), status)
-        myHDFVersion = files(i)%HDFVersion
-        if ( myhdfVersion == HDFVERSION_4 ) then
-          haveCtrMAF = sfn2index(files(i)%FileID%f_id,trim(fieldName)) /= -1
-          if ( haveCtrMAF ) then
-            call ReadL1BData ( L1BFile, fieldName, L1bData, noMAFs, status, &
-              & dontPad=.true.)
-          end if
-        else
-          haveCtrMAF = IsHDF5DSPresent(files(i)%FileID%f_id, trim(fieldName))
-          if ( haveCtrMAF ) then
-            call ReadL1BData ( L1BFile, fieldName, L1bData, noMAFs, status, &
-              & dontPad=.true.)
-          end if
-        end if
-        if ( haveCtrMAF ) then
-          FindMaxMAF = max(FindMaxMAF, maxval(l1bData%counterMAF))
-          myMinMAF = min(myMinMAF, myminval(l1bData%counterMAF))
-          if ( DEEBug ) print *, 'counterMAF ', l1bData%counterMAF
-          ! call output('Shape L1b counterMAF ')
-          ! call output(shape(l1bData%intField), advance='yes')
-          call deallocatel1bdata(L1bData)
-        else
-          call MLSMessage ( MLSMSG_Warning, ModuleName, &
-          & 'Failed to find '//trim(fieldName)// &
-          & ' in l1b files while FindMaxMAF', MLSFile=files(i))
-        end if
-        if ( .not. alreadyOpen ) &
-          & call mls_closeFile(files(i), status)
+    alreadyOpen = L1BFile%StillOpen
+    myMinMAF = 0
+    if ( .not. alreadyOpen ) &
+      & call mls_openFile( L1BFile, status )
+    myHDFVersion = L1BFile%HDFVersion
+    if ( myhdfVersion == HDFVERSION_4 ) then
+      haveCtrMAF = sfn2index(L1BFile%FileID%f_id,trim(fieldName)) /= -1
+      if ( haveCtrMAF ) then
+        call ReadL1BData ( L1BFile, fieldName, L1bData, noMAFs, status, &
+          & dontPad=.true. )
       end if
-    end do
-    if ( DEEBug ) print *, 'FindMaxMAF ', FindMaxMAF
-    if ( DEEBug ) print *, 'myMinMAF ', myMinMAF
+    else
+      haveCtrMAF = IsHDF5DSPresent( L1BFile, trim(fieldName) )
+      haveMAFStartTimeTAI = IsHDF5DSPresent( L1BFile, 'MAFStartTimeTAI' )
+      call outputNamedValue( 'haveCtrMAF', haveCtrMAF )
+      call outputNamedValue( 'haveMAFStartTimeTAI', haveMAFStartTimeTAI )
+      if ( haveCtrMAF ) then
+        call ReadL1BData ( L1BFile, fieldName, L1bData, noMAFs, status, &
+          & dontPad=.true.)
+      elseif ( haveMAFStartTimeTAI ) then
+        call ReadL1BData ( L1BFile, 'MAFStartTimeTAI', L1bData, noMAFs, status, &
+          & dontPad=.true.)
+      end if
+    end if
+    if ( haveCtrMAF ) then
+      FindMaxMAF_sca =  maxval(l1bData%counterMAF)
+      myMinMAF =  myminval(l1bData%counterMAF)
+      if ( DEEBug ) print *, 'counterMAF ', l1bData%counterMAF
+      ! call output('Shape L1b counterMAF ')
+      ! call output(shape(l1bData%intField), advance='yes')
+      call deallocatel1bdata(L1bData)
+    elseif ( haveMAFStartTimeTAI ) then
+      FindMaxMAF_sca =  size(l1bData%dpField)
+      myMinMAF = 1
+      if ( DEEBug ) print *, 'MAFStartTimeTAI ', l1bData%dpField
+      ! call output('Shape L1b counterMAF ')
+      ! call output(shape(l1bData%intField), advance='yes')
+      call deallocatel1bdata(L1bData)
+    else
+      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+      & 'Failed to find '//trim(fieldName)// &
+      & ' in l1b files while FindMaxMAF_sca', MLSFile=L1BFile )
+      call GetAllHDF5DSNames( L1BFile, DSNames )
+      call Dump ( DSNames, 'DSNames' )
+    end if
+    if ( .not. alreadyOpen ) &
+      & call mls_closeFile( L1BFile, status )
     if ( present(minMAF) ) minMAF = myMinMAF
-  end function FindMaxMAF
+  end function FindMaxMAF_sca
 
   ! -------------------------------------------------  IsL1BGappy  -----
   logical function IsL1BGappy ( l1bData, ignoreGlobalAttrs )
@@ -1717,7 +1783,7 @@ contains ! ============================ MODULE PROCEDURES ======================
   ! ----------------------------------------  ReadL1BData_MLSFile  -----
   subroutine ReadL1BData_MLSFile ( L1BFile, QuantityName, L1bData, NoMAFs, Flag, &
     & FirstMAF, LastMAF, NEVERFAIL, dontPad, L2AUX )
-
+    use MLSFiles, only: Dump
     use MLSFillValues, only: isFillValue
     use PCFHdr, only: globalAttributes
     use toggles, only: gen, levels, switches, toggle
@@ -1737,6 +1803,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     ! Local variables
     logical :: alreadyOpen
     logical :: DEEBug
+    character(len=1024) :: DSNames
     logical :: isScalar
     type(l1bdata_t) :: L1BDATATMP
     integer :: Me = -1                  ! String index for trace
@@ -1749,14 +1816,19 @@ contains ! ============================ MODULE PROCEDURES ======================
       call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'null pointer passed to readl1bdata--probably cant find ' // &
         & trim(QuantityName) )
-        return
+      return
     endif
     call trace_begin ( me, "ReadL1BData_MLSFile", &
       & cond=toggle(gen) .and. levels(gen) > 1 )
     alreadyOpen = L1BFile%StillOpen
-    if ( .not. alreadyOpen ) then
-      ! print *, 'Oops--need to open l1b file before reading'
-      call mls_openFile(L1BFile, returnStatus)
+    if ( .not. alreadyOpen .and. DEEBug ) then
+      print *, 'Oops--need to open l1b file before reading'
+      call Dump( L1BFile, details=2 )
+      call GetAllHDF5DSNames( L1BFile, DSNames )
+      call Dump ( DSNames, 'DSNames' )
+      call mls_openFile( L1BFile, returnStatus )
+      call Dump( L1BFile, details=2 )
+      call GetAllHDF5DSNames( L1BFile, DSNames )
       if ( returnStatus /= 0 ) &
         call MLSMessage(MLSMSG_Error, ModuleName, &
         & 'Unable to open l1b file', MLSFile=L1BFile)
@@ -1787,8 +1859,13 @@ contains ! ============================ MODULE PROCEDURES ======================
         call Reshape_for_hdf4(L1bData)
       else
         call MLSMessage ( MLSMSG_Warning, ModuleName // '/ReadL1BData_MLSFile', &
-        & 'Failed to find '//trim(QuantityName)//' in l1b files')
-        if ( .not. alreadyOpen )  call mls_closeFile(L1BFile, returnStatus)
+          & 'Failed to find '//trim(QuantityName)//' in l1b files')
+        call Dump ( L1BFile, details=2 )
+        call GetAllHDF5DSNames( L1BFile, DSNames )
+        call Dump ( DSNames, 'DSNames' )
+        call GetAllHDF5DSNames( L1BFile%name, '/', DSNames )
+        call Dump ( DSNames, 'DSNames' )
+        call crash_burn
         NOMAFS = -1
         go to 9
       end if
@@ -2166,12 +2243,10 @@ contains ! ============================ MODULE PROCEDURES ======================
     character (len=*), parameter :: INPUT_ERR = 'Error in input argument '
 
     ! Local Variables
-
-    integer(c_intptr_t) :: Addr         ! For tracing
     character (len=128) :: DUMMY        ! Dummy quantity name
-
     character(len=1) :: Char_rank
     real(r8), dimension(:,:,:,:), pointer :: DP4Buf => null()
+    character(len=1024) :: DSNames
     integer :: I
     integer :: L1FileHandle
     integer :: MAFoffset
@@ -2196,6 +2271,13 @@ contains ! ============================ MODULE PROCEDURES ======================
     call trace_begin ( me, "ReadL1BData_MF_hdf5", &
       & cond=toggle(gen) .and. levels(gen) > 1 )
     L1FileHandle = L1BFile%FileID%f_id
+    if ( L1FileHandle < 1 .or. .not. L1BFile%stillOpen ) then
+      call MLS_OpenFile ( L1BFile, status )
+      if ( status /= 0 ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to open L1B File', MLSFile=L1BFile )
+      L1FileHandle = L1BFile%FileID%f_id
+    endif
     if ( present(FirstMAF) ) then
       MAFoffset = max(0, FirstMAF)   ! Never let this be < 0
     end if
@@ -2209,7 +2291,7 @@ contains ! ============================ MODULE PROCEDURES ======================
 
     if ( .not. IsHDF5DSPresent(L1FileHandle, QuantityName) ) then
       flag = NOQUANTITYINDEX
-      ! print *, 'Oops--' // trim(QuantityName) // ' not here'
+      print *, 'Oops--' // trim(QuantityName) // ' not here'
       if ( MyNeverFail ) go to 9
       dummy = 'Failed to find index of quantity "' // trim(quantityName) // &
         & '" data set.'
@@ -2298,6 +2380,11 @@ contains ! ============================ MODULE PROCEDURES ======================
         do i = 1, l1bData%noMAFs
           l1bData%counterMAF(i) = l1bData%firstMAF + i - 1
         end do
+        ! Have we damaged L1BFile?
+        if ( trim(Quantityname) == '/MAFStartTimeTAI' .and. .false. ) then
+          call GetAllHDF5DSNames( L1BFile, DSNames )
+          call Dump ( DSNames, 'DSNames' )
+        endif
       end if
     else
       if ( DEEBUG) print *, 'Getting counterMAF rank'
@@ -2873,6 +2960,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.113  2016/08/09 18:15:29  pwagner
+! Made FindMaxMAF generic; survives encounter with non-satellite data files
+!
 ! Revision 2.112  2016/07/28 19:23:10  pwagner
 ! Fixed error in GetAllHDF5GroupNames
 !
