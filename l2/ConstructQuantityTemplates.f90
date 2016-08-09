@@ -530,13 +530,15 @@ contains ! ============= Public procedures ===================================
 
     use chunks_m, only: MLSChunk_t
     use Dump_0, only: Dump
+    use Dump_1, only: Dump
     use highOutput, only: BeVerbose, LetsDebug, outputNamedValue
     use init_tables_module, only: l_geodaltitude, l_none
     use L1BData, only: L1BData_t, readL1BData, deallocateL1BData, &
       & assemblel1bqtyname
     use MLSCommon, only: MLSFile_t, nameLen
     use MLSKinds, only: rk => r8
-    use MLSFiles, only: getMLSFileByType
+    use MLSFiles, only: Dump, getMLSFileByType
+    use MLSHDF5, only: GetAllHDF5DSNames, IsHDF5DSPresent
     use MLSMessageModule, only: MLSMessage, &
       & MLSMSG_Error, MLSMSG_L1BRead, MLSMSG_Warning
     use MLSSignals_m, only:  Dump_Modules, getModuleName, &
@@ -593,7 +595,8 @@ contains ! ============= Public procedures ===================================
     ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     ! Local variables
-
+    character(len=1024) :: DSNames
+    character (len=NameLen) :: instrumentModuleName
     type (L1BData_T) :: l1bField
     type (MLSFile_T), pointer :: L1BFile
     character (len=NameLen) :: l1bItemName
@@ -618,10 +621,10 @@ contains ! ============= Public procedures ===================================
     verbose = BeVerbose( 'qtmp', -1 )
     verboser = LetsDebug( 'qtmp', 0 )
 
+    call GetModuleName( instrumentModule, instrumentModuleName )
     if ( verbose ) then
       call outputnamedValue( 'instrumentModule index', instrumentModule )
-      call GetModuleName ( instrumentModule, l1bItemName )
-      call outputnamedValue( 'instrumentModule name', trim(l1bItemName) )
+      call outputnamedValue( 'instrumentModule name', trim(instrumentModuleName) )
     endif
     useMIFGeolocation = present(mifGeolocation)
     if ( useMIFGeolocation ) &
@@ -653,7 +656,7 @@ contains ! ============= Public procedures ===================================
       ! We have no geolocation information, or we don't want to use it.
       ! We have to read it ourselves from the L1BOA file.
 
-      ! First we read xxGeodalt to get the number of MAFs, and the surfs
+      ! First we read xxGeodAlt to get the number of MAFs, and the surfs
       L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
       hdfversion = L1BFile%HDFVersion
       if ( IsModuleSpacecraft(instrumentModule) ) then
@@ -678,6 +681,33 @@ contains ! ============= Public procedures ===================================
         call Dump_Modules
       endif
 
+      ! OK, so what if GeodAlt isn't here?
+      ! 2nd bet: 
+      if ( .not. IsHDF5DSPresent( L1BFile, trim(l1bItemName) ) ) &
+        & l1bItemName = AssembleL1BQtyName ( 'tpGeodAlt', HDFVersion, &
+        & .true., instrumentModuleName )
+      if ( .not. IsHDF5DSPresent( L1BFile, trim(l1bItemName) ) ) then
+
+        call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          & "Will not know number of mafs; unable to find " &
+          & // trim(l1bItemName) )
+        call Dump ( L1BFile, details=2 )
+        ! call Dump ( filedatabase, details=2 )
+        call GetAllHDF5DSNames ( L1BFile, DSNames )
+        call Dump ( DSNames, 'DSNames' )
+        call GetAllHDF5DSNames ( L1BFile%name, '/', DSNames )
+        call Dump ( DSNames, 'DSNames' )
+        qty%name = 0
+        call SetupNewQuantityTemplate ( qty, &
+          & noInstances=chunk%lastMAFIndex-chunk%firstMAFIndex +1, &
+          & noSurfs=l1bField%maxMIFs, noChans=noChans, &
+          & noCrossTrack=noCrossTrack, coherent=.false., &
+          & stacked=.false., regular=regular, instanceLen=instanceLen, &
+          & minorFrame=.true., verticalCoordinate=qty%verticalCoordinate )
+        call trace_end ( "ConstructMinorFrameQuantity", &
+          & cond=toggle(gen) .and. levels(gen) > 2 )
+        return
+      endif
       call ReadL1BData ( L1BFile, l1bItemName, l1bField, noMAFs, &
         & l1bFlag, firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
           & neverfail=MissingOK )
@@ -808,8 +838,13 @@ contains ! ============= Public procedures ===================================
           call MLSMessage ( MLSMSG_Error, ModuleName, &
           & "No code to read L1B item " // trim(L1bItemsToRead(l1bItem)%name) )
         end select
-        if ( verboser ) call dump( l1bField%dpField(1,:,:) )
-
+        if ( verboser ) then
+          if ( associated(l1bField%intField) ) then
+            call dump( l1bField%intField(1,:,:) )
+          else
+            call dump( l1bField%dpField(1,:,:) )
+          endif
+        endif
         call DeallocateL1BData ( l1bField )
       end do                          ! Loop over l1b quantities
     else
@@ -1546,6 +1581,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.197  2016/08/09 21:51:57  pwagner
+! Survives encounter with non-satellite data
+!
 ! Revision 2.196  2016/07/28 19:56:00  pwagner
 ! Extra care in CConstructMinorFrameQs
 !
