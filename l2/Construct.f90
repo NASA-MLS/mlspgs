@@ -34,18 +34,15 @@ contains ! =====     Public Procedures     =============================
   ! --------------------------------------------- DestroyMIFGeolocation --
   subroutine DestroyMIFGeolocation ( mifGeolocation )
     ! Deallocate mifGeolocations
-    use highOutput, only: BeVerbose
-    use quantityTemplates, only: DestroyQuantityTemplateDatabase, quantityTemplate_t
-    use toggles, only: gen, toggle
-    use trace_m, only: trace_begin, trace_end
+    use QuantityTemplates, only: DestroyQuantityTemplateDatabase, quantityTemplate_t
+    use Toggles, only: gen, toggle
+    use Trace_m, only: trace_begin, trace_end
     type (QuantityTemplate_T), dimension(:), pointer :: mifGeolocation
     
     ! Local variables
     integer :: Me = -1          ! String index for trace
-    logical :: verbose
 
     call trace_begin ( me, "DestroyMIFGeolocation", 0, cond=toggle(gen) )
-    verbose = BeVerbose( 'qtmp', 0 )
     if ( associated ( mifGeolocation ) ) then
       call DestroyQuantityTemplateDatabase( mifGeolocation )
     end if
@@ -58,16 +55,16 @@ contains ! =====     Public Procedures     =============================
     ! information for the GHz and THz modules.  The software can then
     ! point to these for geolocation information for all minor frame
     ! quantities saving file IO and memory.
-    use chunks_m, only: MLSChunk_t
-    use constructQuantityTemplates, only: constructMinorFrameQuantity
-    use highOutput, only: BeVerbose
-    use quantityTemplates, only: Dump, quantityTemplate_t
+    use Chunks_m, only: MLSChunk_t
+    use ConstructQuantityTemplates, only: constructMinorFrameQuantity
+    use HighOutput, only: BeVerbose, outputNamedValue
+    use QuantityTemplates, only: Dump, quantityTemplate_t
     use MLSCommon, only: MLSFile_t
     use MLSL2Options, only: MLSMessage
     use MLSSignals_m, only: modules
     use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Allocate
-    use toggles, only: gen, toggle
-    use trace_m, only: trace_begin, trace_end
+    use Toggles, only: gen, toggle
+    use Trace_m, only: trace_begin, trace_end
 
     type (QuantityTemplate_T), dimension(:), pointer :: mifGeolocation
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
@@ -90,6 +87,9 @@ contains ! =====     Public Procedures     =============================
     
       ! Now try to fill it if we have any L1BFiles
       if (associated(filedatabase) ) then
+        if ( verbose ) &
+          & call outputNamedValue ( &
+          & 'Constructing how many mif geolocations?', size(modules) )
         do instrumentModuleIndex = 1, size(modules)
           call ConstructMinorFrameQuantity ( instrumentModuleIndex, &
           mifGeolocation(instrumentModuleIndex), &
@@ -113,7 +113,7 @@ contains ! =====     Public Procedures     =============================
 
   ! This is the `main' subroutine for this module
 
-    use chunks_m, only: mlschunk_t
+    use chunks_m, only: MLSChunk_t
     use constructQuantityTemplates, only: &
       & createQtyTemplateFromMLSCFInfo, forgeMinorFrames
     use constructVectorTemplates, only: createVecTemplateFromMLSCFInfo
@@ -323,6 +323,9 @@ end module Construct
 
 !
 ! $Log$
+! Revision 2.79  2016/08/09 18:55:26  pwagner
+! Print how many mif geolocations if verbose
+!
 ! Revision 2.78  2016/05/18 01:37:30  vsnyder
 ! Change HGrids database from an array of HGrid_T to an array of pointers
 ! to HGrid_T using the new type HGrids_T.
