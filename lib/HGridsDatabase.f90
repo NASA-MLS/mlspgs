@@ -44,6 +44,7 @@ module HGridsDatabase                   ! Horizontal grid information
     integer :: noProfsLowerOverlap  = 0 ! Number of profiles in the lower overlap
     integer :: noProfsUpperOverlap  = 0 ! Number of profiles in the upper overlap
     integer :: Type                     ! L_Explicit, L_Fixed ...
+    integer :: module                   ! index into modules database
     logical :: forbidOverspill      = .false.   
 
     ! This is the maf number passing nearest to the grid point
@@ -207,23 +208,21 @@ contains ! =========== Public procedures ===================================
   ! In all subsequent times, simply copy the stored values.
   
   ! We check for stored values by whether the component is associated
-  subroutine L1BGeoLocation ( filedatabase, name, values, values2d )
+  subroutine L1BGeoLocation ( filedatabase, name, moduleStr, values, values2d )
 
-    use allocate_deallocate, only: allocate_test
-    use dump_0, only: dump
-    use highOutput, only: outputNamedValue
+    use Allocate_deallocate, only: allocate_test
+    use HighOutput, only: outputNamedValue
     use L1BData, only: deallocateL1BData, L1BData_t, readL1BData, &
-      & assembleL1BQtyName
-    use MLSCommon, only: MLSfile_t
-    use MLSFiles, only: getMLSfilebytype
-    use MLSFillValues, only: isFillValue, Monotonize
+      & AssembleL1BQtyName
+    use MLSCommon, only: MLSFile_t
+    use MLSFiles, only: getMLSFileByType
     use MLSKinds, only: rk => r8
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Warning
     use MLSStrings, only: lowercase
-    use output_m, only: output
+    use Output_m, only: output
     ! Args
     type (MLSFile_T), dimension(:), pointer     :: fileDatabase
     character(len=*), intent(in)                :: name
+    character(len=*), intent(in)                :: moduleStr
     real(rk), dimension(:), pointer, optional   :: values
     real(rk), dimension(:,:), pointer, optional :: values2d
     ! Local variables
@@ -236,57 +235,56 @@ contains ! =========== Public procedures ===================================
     character(len=64)                     :: readItemName
     integer                               :: status
     logical, parameter                    :: DeeBug = .false.
-    logical                               :: verbose
     ! Executable
     l1bItemName = adjustl(lowercase(name))
     ! Sometimes we're called as GHz/Name; othertimes as tpName
-    if ( l1bItemName(1:2) == 'tp' ) l1bItemName = 'ghz/' // l1bItemName(3:)
+    if ( l1bItemName(1:2) == 'tp' ) l1bItemName = trim(moduleStr) // l1bItemName(3:)
     if ( l1bItemName(1:2) == 'sc' ) l1bItemName = 'sc/' // l1bItemName(3:)
     ! `1st--check if we have already read this from the l1boa file
     if ( DeeBug ) call outputnamedValue( 'name', name )
     if ( DeeBug ) call outputnamedValue( 'l1bItemName (before select case)', l1bItemName )
-    select case (l1bItemName)
+    select case ( snipModuleStr(l1bItemName) )
     case ('mafstarttimetai')
       if ( associated ( HGridGeolocations%MAFStartTimeTAI ) ) then
         call recallValues( HGridGeolocations%MAFStartTimeTAI, values, values2d )
         return
       endif
-    case ('sc/orbincl')
+    case ('orbincl')
       if ( associated ( HGridGeolocations%OrbIncl ) ) then
         call recallValues( HGridGeolocations%OrbIncl, values, values2d )
         return
       endif
-    case ('ghz/geodangle   ')
+    case ('geodangle   ')
       if ( associated ( HGridGeolocations%GHzGeodAngle ) ) then
         call recallValues( HGridGeolocations%GHzGeodAngle, values, values2d )
         return
       endif
-    case ('ghz/geodalt     ')
+    case ('geodalt     ')
       if ( associated ( HGridGeolocations%GHzGeodAlt ) ) then
         call recallValues( HGridGeolocations%GHzGeodAlt, values, values2d )
         return
       endif
-    case ('ghz/geodlat     ')
+    case ('geodlat     ')
       if ( associated ( HGridGeolocations%GHzGeodLat ) ) then
         call recallValues( HGridGeolocations%GHzGeodLat, values, values2d )
         return
       endif
-    case ('ghz/solartime   ')
+    case ('solartime   ')
       if ( associated ( HGridGeolocations%GHzSolarTime ) ) then
         call recallValues( HGridGeolocations%GHzSolarTime, values, values2d )
         return
       endif
-    case ('ghz/solarzenith   ')
+    case ('solarzenith   ')
       if ( associated ( HGridGeolocations%GHzSolarZenith ) ) then
         call recallValues( HGridGeolocations%GHzSolarZenith, values, values2d )
         return
       endif
-    case ('ghz/losangle   ')
+    case ('losangle   ')
       if ( associated ( HGridGeolocations%GHzlosAngle ) ) then
         call recallValues( HGridGeolocations%GHzlosAngle, values, values2d )
         return
       endif
-    case ('ghz/lon   ')
+    case ('lon   ')
       if ( associated ( HGridGeolocations%GHzlon ) ) then
         call recallValues( HGridGeolocations%GHzlon, values, values2d )
         return
@@ -299,10 +297,12 @@ contains ! =========== Public procedures ===================================
     if ( DeeBug ) call outputnamedValue( 'name', name )
     if ( DeeBug ) call outputnamedValue( '1st l1bitemname', l1bitemname )
     if ( index( lowercase(name), 'ghz') > 0 ) then
-      readItemName = "/" // adjustl(Name)
+      ! readItemName = "/" // adjustl(Name)
+      call output( 'We should have stopped specifying GHz by now', advance='yes' )
+      stop
     elseif ( index( name, 'tp') > 0 ) then
       ! l1bItemName = AssembleL1BQtyName ( 'GHz.' // Name, hdfVersion, .false. )
-      readItemName = AssembleL1BQtyName ( 'GHz.' // Name, hdfVersion, .false. )
+      readItemName = AssembleL1BQtyName ( trim(moduleStr) // Name, hdfVersion, .false. )
     else
       readItemName = AssembleL1BQtyName ( Name, hdfVersion, .false. )
     endif
@@ -314,17 +314,6 @@ contains ! =========== Public procedures ===================================
     ! which auttomatically set dontPad=.true.
     call ReadL1BData ( L1BFile, readItemName, l1bField, noMAFs, status, &
       & dontpad=.true. )
-    if ( any(isFillValue(l1bField%dpField) ) .and. &
-      & trim(readItemname) /= '/GHz/Lon') then
-      call output( 'Fill values among ' // trim(readItemName), advance='yes' )
-      call MLSMessage ( MLSMSG_Warning, trim(ModuleName) // 'L1BGeoLocation', &
-        & 'Required monotonization' )
-      verbose = ( trim(readItemname) == '/GHz/Lon' ) &
-        & .or. ( trim(readItemname) == '/GHz/GeodAngle' )
-      if ( verbose ) call dump( l1bField%dpField, 'lons before monotony' )
-      call Monotonize( l1bField%dpField )
-      if ( verbose ) call dump( l1bField%dpField, 'lons after monotony' )
-    endif
     noFreqs = size(l1bField%dpField,2)
     if ( present(values) ) then
       nullify(values)
@@ -378,6 +367,19 @@ contains ! =========== Public procedures ===================================
     end select
     call deallocateL1BData ( l1bField ) ! Avoid memory leaks
   contains
+    function snipModuleStr ( itemName ) result ( bareName )
+      character(len=*), intent(in) :: itemname
+      character(len=32)            :: bareName
+      ! Internal variables
+      integer                      :: i
+      ! Executable
+      i = index( itemname, trim(moduleStr) )
+      if ( i < 1 ) then
+        bareName = itemName
+      else
+        bareName = itemName( i+len_trim(moduleStr)+1 : ) ! To account for "/"
+      endif
+    end function snipModuleStr
     subroutine recallValues( array, values, values2d )
       ! Args
       double precision, dimension(:,:)            :: array
@@ -753,6 +755,9 @@ contains ! =========== Public procedures ===================================
 end module HGridsDatabase
 
 ! $Log$
+! Revision 2.29  2016/08/09 18:16:30  pwagner
+! Survives encounter with non-satellite data
+!
 ! Revision 2.28  2016/07/28 01:34:55  vsnyder
 ! Remove unreferenced USE
 !
