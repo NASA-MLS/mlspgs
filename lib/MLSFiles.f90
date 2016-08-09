@@ -23,13 +23,13 @@ module MLSFiles               ! Utility file routines
     & l_swath, l_tkgen, l_zonalavg, lit_indices
   use io_stuff, only: get_lun
   use machine, only: io_error
-  use MLScommon, only: barefnlen, filenamelen,  MLSfile_t, range_t, &
-    & inrange
-  use MLSmessagemodule, only: MLSmessage, MLSmsg_crash, MLSmsg_error, &
-    & MLSmsg_warning
-  use MLSfinds, only: findfirst
-  use MLSstrings, only: capitalize, lowercase
-  use MLSstringlists, only: extractsubstring, &
+  use MLSCommon, only: bareFNLen, fileNameLen, FileIds_T, MLSFile_t, range_t, &
+    & inRange
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Crash, MLSMSG_Error, &
+    & MLSMSG_Warning
+  use MLSFinds, only: findfirst
+  use MLSStrings, only: capitalize, lowercase
+  use MLSStringLists, only: extractsubstring, &
     & replacesubstring, sortarray
   use output_m, only: blanks, output
   use SDPtoolkit, only: &
@@ -232,7 +232,7 @@ module MLSFiles               ! Utility file routines
   
   ! Whether to use PGS_MET commands in mls_sf(start)(end)
   ! (The alternative is to use hdf5 calls directly)
-  logical, parameter :: PGS_MET4MLS_SF = .true.
+  ! logical, parameter :: PGS_MET4MLS_SF = .true.
   ! Whether to pass hdf5_acc types to PGS_MET 
   ! (The alternative is to pass h5f_acc directly)
   ! Contradicting what the documents say,
@@ -276,12 +276,14 @@ module MLSFiles               ! Utility file routines
     module procedure mls_openFileType
   end interface
 
-  character (len=*), parameter :: accesses = 'rdonly,write,rdwrite,create,nonhdf'
-  integer, dimension(5), parameter :: accessTypes = &
-    & (/ DFACC_RDONLY, DFACC_RDWR, DFACC_RDWR, DFACC_CREATE, PGSd_IO_Gen_RSeqFrm/)
-  character (len=*), parameter :: hdfmodes = 'hg,sw,gd,za'
-  character (len=*), parameter :: modes = 'op,hg,sw,gd,za,bin,pg'
-  character (len=*), parameter :: types = 'ascii,hdf,swath,grid,zonalavg,binary,tkgen'
+  ! The following parameters may some day be used
+  ! but, not so far
+  ! character (len=*), parameter :: accesses = 'rdonly,write,rdwrite,create,nonhdf'
+  ! integer, dimension(5), parameter :: accessTypes = &
+  !   & (/ DFACC_RDONLY, DFACC_RDWR, DFACC_RDWR, DFACC_CREATE, PGSd_IO_Gen_RSeqFrm/)
+  ! character (len=*), parameter :: hdfmodes = 'hg,sw,gd,za'
+  ! character (len=*), parameter :: modes = 'op,hg,sw,gd,za,bin,pg'
+  ! character (len=*), parameter :: types = 'ascii,hdf,swath,grid,zonalavg,binary,tkgen'
 
   type(MLSFile_T), save :: MLSFile_save
   logical, parameter :: DeeBug = .false.
@@ -992,6 +994,8 @@ contains
   ! These functions can be called to operate on MLSFile_save
   function readnchars ( n )  result( status )
     ! Tries to read n chars
+    ! Our success orr failure determines the resulting status
+    ! We don't actually care what the chars are
     ! Args
     integer, intent(in) :: n
     integer :: status
@@ -1155,15 +1159,14 @@ contains
     logical, optional, intent(in) :: addingmetadata
     ! Local variables
     integer                       :: mls_sfstart
-    integer                       :: returnStatus
-    integer                       :: access_prp_default
     integer                       :: myhdfVersion
     integer                       :: myAccess
     logical                       :: myaddingmetadata
-    
-    integer, parameter :: h5p_default_f = 0
-    integer, external :: PGS_MET_SFstart
+    integer                       :: returnStatus
+    ! parameters    
     logical, parameter :: DEBUG = .false.
+    ! external
+    integer, external :: PGS_MET_SFstart
 
     ! begin
    returnStatus = 0
@@ -1215,7 +1218,6 @@ contains
      endif
      returnStatus = PGS_MET_SFstart(trim(FileName), myAccess, mls_sfstart)
    else
-     access_prp_default = h5p_default_f    ! Can't figure out what this means
      select case (FileAccess)
      case (DFACC_CREATE)
        call h5fcreate_f(trim(filename), H5F_ACC_TRUNC_F, mls_sfstart, &
@@ -1486,13 +1488,11 @@ contains
     integer :: PCTop
     integer :: record_length
     ! character(len=8) :: toolbox_mode
-    integer :: version
     !
     if ( present(error) ) error = FILEALREADYOPEN
     if ( MLSFile%StillOpen ) return
     ! print *, 'Opening ' // trim(MLSFile%name)
     ! print *, 'type ', MLSFile%type
-    version = 1
     PCBottom = MLSFile%PCFidRange%Bottom
     PCTop = MLSFile%PCFidRange%Top
     record_length = MLSFile%recordLength
@@ -1639,20 +1639,13 @@ contains
 
   end subroutine mls_closeFileID
 
-  subroutine mls_CloseFileType(MLSFile, error)
+  subroutine MLS_CloseFileType( MLSFile, error )
   ! Closes any kind of file
     type(MLSFIle_T) :: MLSFile
     integer, optional, intent(out) :: error
     !
-    logical, parameter :: CASESENSITIVE = .true.
     integer :: ioerror
-    integer :: PCBottom
-    integer :: PCTop
-    integer :: version
     !
-    version = 1
-    PCBottom = MLSFile%PCFidRange%Bottom
-    PCTop = MLSFile%PCFidRange%Top
     if ( MLSFile%hdfVersion < 1 ) then
       ! ioerror = mls_io_gen_closeF(toolbox_mode, MLSFile%FileID%f_id)
       ioerror = mls_io_gen_closeF(MLSFile%type, MLSFile%FileID%f_id)
@@ -1667,6 +1660,7 @@ contains
     MLSFile%StillOpen=.false.
     MLSFile%errorCode = ioerror
     MLSFile%lastOperation = 'close'
+    MLSFile%FileID = FileIds_T( 0, 0, 0 )
     if ( present(error) ) error = ioerror
   end subroutine mls_CloseFileType
 
@@ -2046,7 +2040,6 @@ contains
 
     logical, parameter :: DEFAULT_PRINT_EVERY_OPEN=.false.
     integer, parameter :: FH_ON_ERROR=-99
-    integer, parameter :: DEFAULTRECLEN=0
     integer, parameter :: KEYWORDLEN=12 ! Max length of keywords in OPEN(...)
     character (LEN=MAXFILENAMELENGTH) :: myName
     integer :: myPC
@@ -2071,7 +2064,6 @@ contains
    myPC = 0
     ! In case of premature return
     theFileHandle = FH_ON_ERROR
-    ! record_length = DEFAULTRECLEN
 
     if(present(versionNum)) then
       version = versionNum
@@ -2484,6 +2476,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.104  2016/08/09 18:13:34  pwagner
+! MLS_CloseFile now sets FileIDs to 0
+!
 ! Revision 2.103  2015/03/28 01:13:24  vsnyder
 ! Added stuff to trace allocate/deallocate addresses
 !
