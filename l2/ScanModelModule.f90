@@ -84,8 +84,6 @@ module ScanModelModule          ! Scan model and associated calculations
 !---------------------------------------------------------------------------
 
   ! Define various constants etc.
-  logical, parameter :: deeBug = .false.
-  
   ! Some terms to do with refraction
   
   real (r8), parameter :: MaxPressure = 1400.0 ! /mb Don't allow very large pressures
@@ -618,6 +616,18 @@ contains ! =============== Subroutines and functions ==========================
         & 'Why is PTan weird?  Module turned off?  PTan guess set to -3.0' )
       ptan%values = -3.0
     end if
+    if ( .not. associated(orbIncl%values) ) then
+      call MLSMessage ( MLSMSG_Warning, moduleName, &
+        & 'orbIncl not associated; non-satellite data?' )
+      call trace_end ( 'Get2DHydrostaticTangentPressure', cond=toggle(emit) )
+      return
+    elseif ( size(orbIncl%values) < 1 ) then
+      call MLSMessage ( MLSMSG_Warning, moduleName, &
+        & 'orbIncl array size 0; non-satellite data?' )
+      call trace_end ( 'Get2DHydrostaticTangentPressure', cond=toggle(emit) )
+      return
+    endif
+    
     if ( switchDetail ( switches, 'pguess' ) > -1 ) then
       call dump ( ptan%values, 'Initial ptan guess' )
       if ( switchDetail ( switches, 'pguess' ) > 1 ) then
@@ -1743,7 +1753,13 @@ contains ! =============== Subroutines and functions ==========================
     CALL ALLOCATE_TEST(sinphi2,ptan%template%nosurfs,'sinphi2',modulename)
     CALL ALLOCATE_TEST(red_phi_t,ptan%template%nosurfs,'red_phi_t',modulename)
     CALL ALLOCATE_TEST(earthradc,ptan%template%nosurfs,'earthradc',modulename)
-    sinbeta = sin(deg2rad*orbincline%values(1:ptan%template%noSurfs,fmStat%maf))
+    ! Sometimes, orbincline may not have the same number of surfaces as
+    ! ptan, e.g. for non-satellite data
+    if ( size(orbincline%values, 1) /= ptan%template%noSurfs ) then
+      sinbeta = sin(deg2rad*orbincline%values(1,fmStat%maf))
+    else
+      sinbeta = sin(deg2rad*orbincline%values(1:ptan%template%noSurfs,fmStat%maf))
+    endif
     earthradc = (earthrada*earthradb)**2 / &
       & ( (earthRada**2 - earthRadb**2) * sinbeta**2 + earthRadb**2) ! in meters
   ! rephase the phi
@@ -2201,6 +2217,9 @@ contains ! =============== Subroutines and functions ==========================
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.87  2016/08/09 18:46:16  pwagner
+! Survives encounter with non-satellite data
+!
 ! Revision 2.86  2016/01/23 02:59:18  vsnyder
 ! Get MexRefraction from refraction_m, not geometry.  Get refractive index
 ! derivatives from refraction_m instead of computing them here.  Add LaTeX.
