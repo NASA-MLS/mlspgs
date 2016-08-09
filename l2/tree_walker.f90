@@ -20,6 +20,7 @@ module TREE_WALKER
   public :: WALK_TREE_TO_DO_MLS_L2
   
   logical, parameter :: COMPLAINIFSKIPPEDEVERYCHUNK = .true.
+  logical, parameter :: MustCheckForCorruptFileDatabase = .false.
 
 !---------------------------- RCS Ident Info -------------------------------
   character(len=*), private, parameter :: ModuleName= &
@@ -62,6 +63,7 @@ contains ! ====     Public Procedures     ==============================
       & Z_retrieve, z_spectroscopy
     use Intrinsic, only: section_indices
     use Join, only: MLSl2join
+    use L1BData, only: CheckForCorruptFileDatabase
     use L2AUXData, only: destroyL2AUXDatabase, L2AUXData_t, dump
     use L2FWMParallel, only: L2FWMSlaveTask, launchFWMSlaves
     use L2GPData, only: destroyL2GPDatabase, L2GPData_t, dump
@@ -234,6 +236,10 @@ contains ! ====     Public Procedures     ==============================
           call finishUp(.true.)
           return
         end if
+        if ( verbose .and. MustCheckForCorruptFileDatabase ) then
+          call output( 'Done with global settings', advance='yes' )
+          call CheckForCorruptFileDatabase( filedatabase )
+        endif
       case ( z_mlsSignals )
         if ( verbose ) call Dump ( state, 'at mlsSignals' )
         call MLSSignals ( son )
@@ -296,10 +302,22 @@ contains ! ====     Public Procedures     ==============================
         else
           if ( (.not. checkPaths .or. parallel%chunkRange /= '') .and. &
             & NEED_L1BFILES ) then
+            if ( verbose .and. MustCheckForCorruptFileDatabase ) then
+              call output( 'before chunk divide', advance='yes' )
+              call CheckForCorruptFileDatabase( filedatabase )
+            endif
             call ChunkDivide ( son, processingRange, filedatabase, chunks )
+            if ( verbose .and. MustCheckForCorruptFileDatabase ) then
+              call output( 'after chunk divide', advance='yes' )
+              call CheckForCorruptFileDatabase( filedatabase )
+            endif
             call ComputeAllHGridOffsets ( root, first_section, chunks, &
               & filedatabase, &
-            & l2gpDatabase, processingRange )
+              & l2gpDatabase, processingRange )
+            if ( verbose .and. MustCheckForCorruptFileDatabase ) then
+              call output( 'after computing hgrid offsets', advance='yes' )
+              call CheckForCorruptFileDatabase( filedatabase )
+            endif
           else
             allocate ( chunks(1), stat=error_flag )
             if ( error_flag /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -323,6 +341,8 @@ contains ! ====     Public Procedures     ==============================
           call finishUp(.true.)
           return
         end if
+        if ( verbose ) &
+          & call outputNamedValue ( 'First, last chunks', (/ firstChunk, lastChunk /) )
       case ( z_algebra )
         call algebra ( son, vectors, matrices, chunks(1), &
           & forwardModelConfigDatabase )
@@ -414,6 +434,10 @@ contains ! ====     Public Procedures     ==============================
               call LaunchFWMSlaves ( chunks ( chunkNo ) )
             elseif( .not. parallel%slave ) then
               currentChunkNumber = chunkNo  ! Stored for dumping
+            endif
+            if ( verbose .and. MustCheckForCorruptFileDatabase ) then
+              call output( 'Now in loop of chunks', advance='yes' )
+              call CheckForCorruptFileDatabase( filedatabase )
             endif
 subtrees:   do
               ! Start inner loop for one chunk at the current position
@@ -728,6 +752,10 @@ subtrees:   do
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.203  2016/05/18 01:37:30  vsnyder
+! Change HGrids database from an array of HGrid_T to an array of pointers
+! to HGrid_T using the new type HGrids_T.
+!
 ! Revision 2.202  2016/05/06 17:50:17  pwagner
 ! Still unable to reliably destroyQuantityTemplateDatabase
 !
