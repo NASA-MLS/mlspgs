@@ -24,26 +24,26 @@ module DirectWrite_m  ! alternative to Join/OutputAndClose methods
     ! or simply take too much time doing i/o
     ! so instead write them out chunk-by-chunk
 
-  use allocate_deallocate, only: allocate_test
-  use highOutput, only: beVerbose, LetsDebug, outputNamedValue
-  use init_tables_module, only: l_geodAltitude, l_pressure, l_zeta, &
-    & l_l2gp, l_l2aux, l_l2dgg, l_l2fwm
-  use machine, only: USleep
+  use Allocate_deallocate, only: allocate_test
+  use HighOutput, only: beVerbose, LetsDebug, outputNamedValue
+  use Init_tables_module, only: l_geodAltitude, l_pressure, l_zeta, &
+    & L_l2gp, l_l2aux, l_l2dgg, l_l2fwm
+  use Machine, only: USleep
   use MLSCommon, only: defaultUndefinedValue, Interval_T, MLSFile_T, &
-    & inRange
+    & InRange
   use MLSKinds, only: rv
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
   use MLSFiles, only: hdfversion_4, hdfversion_5, dump, MLS_Exists, &
-    & MLS_closefile, MLS_openfile
-  use MLSFinds, only: findfirst
-  use MLSHDFEOS, only: MLS_swath_in_file
+    & MLS_CloseFile, MLS_OpenFile
+  use MLSFinds, only: findFirst
+  use MLSHDFEOS, only: MLS_Swath_in_file
   use MLSL2Options, only: writeFileAttributes
   use MLSStringLists, only: switchDetail
-  use output_m, only: blanks, output
+  use Output_m, only: blanks, output
   use PCFHdr, only: GlobalAttributes
-  use string_table, only: get_string
-  use toggles, only: switches
-  use vectorsModule, only: vector_t, vectorValue_t, dump
+  use String_table, only: get_string
+  use Toggles, only: switches
+  use VectorsModule, only: vector_t, vectorValue_t, dump
 
   implicit none
   private
@@ -306,7 +306,7 @@ contains ! ======================= Public Procedures =========================
       ! Args
       type (VectorValue_T), intent(inout) :: QUANTITY
       ! Local variables
-      character(len=80) :: str
+      ! character(len=80) :: str
       ! Executable
       ! call get_string( lit_indices(quantity%template%quantityType ), str, strip=.true. )
       ! call GetHDF5Attribute ( File, 'type', str )
@@ -930,7 +930,6 @@ contains ! ======================= Public Procedures =========================
     integer :: returnStatus
     integer :: SIZES(3)                 ! HDF array sizes
     integer :: START(3)                 ! HDF array starting position
-    integer :: STRIDE(3)                ! HDF array stride
     integer :: total_DS_size
     logical, parameter :: MAYCOLLAPSEDIMS = .false.
     ! logical, parameter :: DEEBUG = .true.
@@ -977,7 +976,6 @@ contains ! ======================= Public Procedures =========================
     end if
 
     ! What exactly will be our contribution
-    stride = 1
     start = 0
     sizes = 1
     sizes(noDims-1) = quantity%template%noSurfs
@@ -1764,6 +1762,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.83  2016/08/09 21:39:40  pwagner
+! Removed unused variables
+!
 ! Revision 2.82  2016/05/25 00:07:18  pwagner
 ! To appease NAG which disliked ambiguity in generic DirectWrites
 !
