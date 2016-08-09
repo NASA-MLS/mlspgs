@@ -13,11 +13,12 @@
 program l2gpdiff ! show diffs between swaths in two different files
 !=================================
 
-   use Dump_0, only: dumpDumpOptions, dumpTableSide, statsOnOneLine, rmsFormat
+   use Dump_Options, only: dumpDumpOptions, dumpTableSide, &
+     & statsOnOneLine, rmsFormat
    use HighOutput, only: outputNamedValue
    use L2GPData, only: Diff, maxSwathNamesBufSize
    use Machine, only: hp, getarg
-   use MLSFiles, only: mls_exists, HDFVERSION_5, MLS_INQSWATH
+   use MLSFiles, only: mls_exists, HDFVersion_5, MLS_InqSwath
    use MLSHDF5, only: MLS_H5Open, MLS_H5Close
    use MLSStringLists, only: catLists, ExpandStringRange
    use MLSStrings, only: WriteIntsToChars
@@ -437,6 +438,9 @@ end program l2gpdiff
 !==================
 
 ! $Log$
+! Revision 1.24  2016/03/23 16:38:51  pwagner
+! Added -one commandline option
+!
 ! Revision 1.23  2015/07/01 18:10:18  pwagner
 ! Stray print statement caused headaches for gold brick
 !

@@ -13,17 +13,18 @@
 PROGRAM L2GPDump ! dumps L2GPData files
 !=================================
 
-   use allocate_deallocate, only: allocate_test, deallocate_test
-   use bitstuff, only: isbitset
-   use dump_0, only: dump, dumpdumpoptions, sdformatdefault
+   use Allocate_deallocate, only: allocate_test, deallocate_test
+   use Bitstuff, only: isbitset
+   use Dump_1, only: Dump
+   use Dump_Options, only: SDFormatDefault, DumpDumpOptions
    use HDF, only: dfacc_read
    use HDF5, only: h5fclose_f, h5gopen_f, h5gclose_f, h5fis_hdf5_f   
-   use highoutput, only: outputnamedvalue
-   use intrinsic, only: l_swath
+   use Highoutput, only: outputnamedvalue
+   use Intrinsic, only: l_swath
    use L2GPdata, only: L2GPdata_t, L2GPnamelen, maxswathnamesbufsize, rgp, &
-     & contractL2GPrecord, dump, dumprange, readL2GPdata, destroyL2GPcontents, &
-     & setupnewL2GPrecord
-   use machine, only: hp, getarg
+     & ContractL2GPrecord, dump, dumprange, readL2GPdata, destroyL2GPcontents, &
+     & SetupnewL2GPrecord
+   use Machine, only: hp, getarg
    use MLSCommon, only: MLSfile_t
    use MLSFiles, only: hdfversion_5, initializeMLSfile, MLS_inqswath, &
      & MLS_closefile, MLS_openfile, split_path_name
@@ -34,12 +35,12 @@ PROGRAM L2GPDump ! dumps L2GPData files
      & MLSMessage
    use MLSStats1, only: StatsOnOneLine
    use MLSStringLists, only: catLists, expandStringRange, &
-     & getStringElement, Intersection, numStringElements, readIntsFromList, &
-     & stringElement, stringElementNum
+     & GetStringElement, Intersection, numStringElements, readIntsFromList, &
+     & StringElement, stringElementNum
    use MLSStrings, only: lowercase, readnumsfromchars
-   use output_m, only: blanks, newline, output, &
-     & resumeoutput, suspendoutput
-   use printit_m, only: set_config
+   use Output_m, only: blanks, newline, output, &
+     & Resumeoutput, suspendoutput
+   use Printit_m, only: set_config
    
    implicit none
 
@@ -772,6 +773,9 @@ end program L2GPDump
 !==================
 
 ! $Log$
+! Revision 1.21  2016/04/06 00:00:17  pwagner
+! -one cmdline option added; prints name on each line
+!
 ! Revision 1.20  2016/01/22 00:38:40  pwagner
 ! May use wildcard as part of swath names
 !

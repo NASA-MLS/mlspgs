@@ -13,34 +13,35 @@
 program l2auxdump ! dumps datasets, attributes from L2AUX files
 !=================================
 
-   use allocate_deallocate, only: allocate_test, deallocate_test
-   use dates_module, only: tai93s2hid
-   use dump_0, only: defaultmaxlon, defaultwidth, dump, dumpdumpoptions, &
-     & intplaces
+   use Allocate_deallocate, only: allocate_test, deallocate_test
+   use Dates_module, only: tai93s2hid
+   use Dump_1, only: dump
+   use Dump_Options, only: defaultMaxLon, defaultWidth, dumpDumpOptions, &
+     & IntPlaces
    use HDF, only: dfacc_read
    use HDF5, only: h5fis_hdf5_f, h5gclose_f, h5gopen_f
-   use highoutput, only: dump
+   use Highoutput, only: dump
    use L1BData, only: L1BData_t, nameLen, precisionSuffix, &
-     & deallocatel1bdata, readl1bdata
-   use machine, only: hp, getarg
+     & DeallocateL1Bdata, readL1Bdata
+   use Machine, only: hp, getarg
    use MLSCommon, only: r8
-   use MLSFiles, only: filenotfound, &
-     & MLS_exists, mls_sfstart, mls_sfend, &
-     & HDFVersion_5, mls_hdf_version, wildcardhdfversion
-   use MLSFillvalues, only: isNaN
+   use MLSFiles, only: FileNotFound, &
+     & MLS_Exists, MLS_SFStart, MLS_SFEnd, &
+     & HDFVersion_5, MLS_HDF_Version, WildCardHDFVersion
+   use MLSFillValues, only: isNaN
    use MLSHDF5, only: maxNDSNames, dumpHDF5Attributes, dumpHDF5DS, &
-     & getAllHDF5AttrNames, getAllHDF5DSNames, &
+     & GetAllHDF5AttrNames, getAllHDF5DSNames, &
      & MLS_H5Open, MLS_H5Close
    use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning, &
      & MLSMessage
    use MLSStats1, only: fillValueRelation, Stat_t, statsOnOneLine, &
-     & dump, statistics
+     & Dump, statistics
    use MLSStringLists, only: catlists, getStringElement, Intersection, &
-     & numStringElements, stringElementNum
+     & NumStringElements, stringElementNum
    use MLSStrings, only: indexes, lowercase, streq, trim_safe
-   use output_m, only: output, switchOutput
-   use printit_m, only: set_config
-   use time_m, only: time_now, time_config
+   use Output_m, only: output, switchOutput
+   use Printit_m, only: set_config
+   use Time_m, only: time_now, time_config
    
    implicit none
 
@@ -631,6 +632,9 @@ end program l2auxdump
 !==================
 
 ! $Log$
+! Revision 1.22  2016/04/05 23:57:38  pwagner
+! -one cmdline option added; prints name on each line
+!
 ! Revision 1.21  2016/01/22 00:38:04  pwagner
 ! May use wildcard as part of dataset names
 !
