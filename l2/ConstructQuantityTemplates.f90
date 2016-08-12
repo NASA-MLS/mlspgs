@@ -537,7 +537,7 @@ contains ! ============= Public procedures ===================================
       & assemblel1bqtyname
     use MLSCommon, only: MLSFile_t, nameLen
     use MLSKinds, only: rk => r8
-    use MLSFiles, only: Dump, getMLSFileByType
+    use MLSFiles, only: HDFVersion_5, Dump, getMLSFileByType
     use MLSHDF5, only: GetAllHDF5DSNames, IsHDF5DSPresent
     use MLSMessageModule, only: MLSMessage, &
       & MLSMSG_Error, MLSMSG_L1BRead, MLSMSG_Warning
@@ -680,33 +680,34 @@ contains ! ============= Public procedures ===================================
         call outputnamedValue ( 'lastMAFIndex', chunk%lastMAFIndex )
         call Dump_Modules
       endif
+      if ( L1BFile%HDFVersion == HDFVersion_5 ) then
+        ! OK, so what if GeodAlt isn't here?
+        ! 2nd bet: 
+        if ( .not. IsHDF5DSPresent( L1BFile, trim(l1bItemName) ) ) &
+          & l1bItemName = AssembleL1BQtyName ( 'tpGeodAlt', HDFVersion, &
+          & .true., instrumentModuleName )
+        if ( .not. IsHDF5DSPresent( L1BFile, trim(l1bItemName) ) ) then
 
-      ! OK, so what if GeodAlt isn't here?
-      ! 2nd bet: 
-      if ( .not. IsHDF5DSPresent( L1BFile, trim(l1bItemName) ) ) &
-        & l1bItemName = AssembleL1BQtyName ( 'tpGeodAlt', HDFVersion, &
-        & .true., instrumentModuleName )
-      if ( .not. IsHDF5DSPresent( L1BFile, trim(l1bItemName) ) ) then
-
-        call MLSMessage ( MLSMSG_Warning, ModuleName, &
-          & "Will not know number of mafs; unable to find " &
-          & // trim(l1bItemName) )
-        call Dump ( L1BFile, details=2 )
-        ! call Dump ( filedatabase, details=2 )
-        call GetAllHDF5DSNames ( L1BFile, DSNames )
-        call Dump ( DSNames, 'DSNames' )
-        call GetAllHDF5DSNames ( L1BFile%name, '/', DSNames )
-        call Dump ( DSNames, 'DSNames' )
-        qty%name = 0
-        call SetupNewQuantityTemplate ( qty, &
-          & noInstances=chunk%lastMAFIndex-chunk%firstMAFIndex +1, &
-          & noSurfs=l1bField%maxMIFs, noChans=noChans, &
-          & noCrossTrack=noCrossTrack, coherent=.false., &
-          & stacked=.false., regular=regular, instanceLen=instanceLen, &
-          & minorFrame=.true., verticalCoordinate=qty%verticalCoordinate )
-        call trace_end ( "ConstructMinorFrameQuantity", &
-          & cond=toggle(gen) .and. levels(gen) > 2 )
-        return
+          call MLSMessage ( MLSMSG_Warning, ModuleName, &
+            & "Will not know number of mafs; unable to find " &
+            & // trim(l1bItemName) )
+          call Dump ( L1BFile, details=2 )
+          ! call Dump ( filedatabase, details=2 )
+          call GetAllHDF5DSNames ( L1BFile, DSNames )
+          call Dump ( DSNames, 'DSNames' )
+          call GetAllHDF5DSNames ( L1BFile%name, '/', DSNames )
+          call Dump ( DSNames, 'DSNames' )
+          qty%name = 0
+          call SetupNewQuantityTemplate ( qty, &
+            & noInstances=chunk%lastMAFIndex-chunk%firstMAFIndex +1, &
+            & noSurfs=l1bField%maxMIFs, noChans=noChans, &
+            & noCrossTrack=noCrossTrack, coherent=.false., &
+            & stacked=.false., regular=regular, instanceLen=instanceLen, &
+            & minorFrame=.true., verticalCoordinate=qty%verticalCoordinate )
+          call trace_end ( "ConstructMinorFrameQuantity", &
+            & cond=toggle(gen) .and. levels(gen) > 2 )
+          return
+        endif
       endif
       call ReadL1BData ( L1BFile, l1bItemName, l1bField, noMAFs, &
         & l1bFlag, firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
@@ -1581,6 +1582,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.198  2016/08/12 00:33:05  pwagner
+! Seems to restore tthe gold brick
+!
 ! Revision 2.197  2016/08/09 21:51:57  pwagner
 ! Survives encounter with non-satellite data
 !
