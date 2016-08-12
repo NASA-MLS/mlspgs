@@ -1755,7 +1755,7 @@ contains ! =============== Subroutines and functions ==========================
     CALL ALLOCATE_TEST(earthradc,ptan%template%nosurfs,'earthradc',modulename)
     ! Sometimes, orbincline may not have the same number of surfaces as
     ! ptan, e.g. for non-satellite data
-    if ( size(orbincline%values, 1) /= ptan%template%noSurfs ) then
+    if ( size(orbincline%values, 1) < ptan%template%noSurfs ) then
       sinbeta = sin(deg2rad*orbincline%values(1,fmStat%maf))
     else
       sinbeta = sin(deg2rad*orbincline%values(1:ptan%template%noSurfs,fmStat%maf))
@@ -2217,6 +2217,9 @@ contains ! =============== Subroutines and functions ==========================
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.88  2016/08/12 00:31:25  pwagner
+! Seems to restore tthe gold brick
+!
 ! Revision 2.87  2016/08/09 18:46:16  pwagner
 ! Survives encounter with non-satellite data
 !
