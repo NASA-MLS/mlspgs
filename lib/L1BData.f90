@@ -38,7 +38,7 @@ module L1BData
   use MLSMessageModule, only: MLSMSG_Error, &
     & MLSMSG_L1BRead, MLSMSG_Warning, MLSMessage
   use MLSStrings, only: indexes, streq
-  use MLSStringLists, only: numStringElements, switchDetail
+  use MLSStringLists, only: numStringElements, ReplaceSubstring, switchDetail
   use Moretree, only: get_field_id
   use Output_m, only: newLine, output
   use String_table, only: get_string
@@ -407,6 +407,7 @@ contains ! ============================ MODULE PROCEDURES ======================
       if ( DEEBUG ) then
         print *, 'converted name: ', trim(QtyName)
       end if
+      call restoreHDF4Dot ( QtyName )
       return
     end if
     if ( isTngtQty ) then
@@ -418,9 +419,39 @@ contains ! ============================ MODULE PROCEDURES ======================
     end if
     QtyName = trim(QtyName) // trim(name)
     if ( compress ) QtyName = CompressString(QtyName)
+    call restoreHDF4Dot ( QtyName )
     if ( DEEBUG ) then
       print *, 'more converted name: ', trim(QtyName)
     end if
+  contains
+    subroutine restoreHDF4Dot ( name )
+      ! If hdf4, make certain the "." is part of the dataset name, e.g. 
+      !               GHz.tpGeodAngle
+      ! If hdf5, make certain "/" is not followed by "tp", e.g. 
+      !               not /GHz/tpGeodAngle but /GHz/GeodAngle
+      ! Dummy arg
+      character(len=*), intent(inout)     :: name
+      ! Internal variable
+      integer                             :: i
+      character(len=len(name))            :: temp
+      ! Executable
+      if ( hdfVersion == HDFVERSION_5 ) then
+        i = index(name, '/tp')
+        if ( i > 0 ) name = name(:i) // name(i+3:)
+      else
+        if ( index(name, 'tptp' ) > 0 ) then
+          temp = name
+          call ReplaceSubString ( temp, name, 'tptp', 'tp' )
+        endif
+        if ( index(name, '.tp') > 0 ) return
+        if ( index(name, 'tp') < 1 ) return
+        ! OK, we apparently have an undotted tp in name
+        ! so we'll simply insert a "." before it
+        ! call output( 'Restored the dot in ' // trim(name), advance='yes' )
+        i = index( name, 'tp' )
+        name = name(:i-1) // '.' // name(i:)
+      endif
+    end subroutine restoreHDF4Dot
   end function AssembleL1BQtyName
 
   ! --------------------------------------------  CheckForCorruptFileDatabase  -----
@@ -1810,6 +1841,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     integer :: myhdfVersion
     logical :: myDontPad
     integer :: returnStatus
+    logical, parameter :: ShowName = .false.
     ! Executable code
     DEEBug = .false. ! ( index(QuantityName, '/GHz/GeodAngle') > 0 )
     if ( .not. associated(L1BFile) ) then
@@ -1818,6 +1850,7 @@ contains ! ============================ MODULE PROCEDURES ======================
         & trim(QuantityName) )
       return
     endif
+    if ( showName ) call output ( '&&&&&&&&&&&&&&&&& ' // trim(Quantityname), advance='yes' )
     call trace_begin ( me, "ReadL1BData_MLSFile", &
       & cond=toggle(gen) .and. levels(gen) > 1 )
     alreadyOpen = L1BFile%StillOpen
@@ -2960,6 +2993,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.114  2016/08/12 00:35:18  pwagner
+! Seems to restore tthe gold brick
+!
 ! Revision 2.113  2016/08/09 18:15:29  pwagner
 ! Made FindMaxMAF generic; survives encounter with non-satellite data files
 !
