@@ -104,7 +104,7 @@ module CFM_HGrid_m
       real(r8), dimension(:), pointer :: TMPANGLE ! A temporary array for the single case
 
       L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
-      call ChooseOptimumLon0(filedatabase, chunk)
+      call ChooseOptimumLon0( filedatabase, chunk, 'GHz' )
       l1bItemName = AssembleL1BQtyName (instrumentModuleName // ".tpGeodAngle", &
                                         l1bfile%hdfVersion, .false.)
       call ReadL1BData (L1BFile, trim(l1bItemName), l1bField, noMafs, flag, &
@@ -232,6 +232,9 @@ module CFM_HGrid_m
 end module
 
 ! $Log$
+! Revision 1.12  2016/07/06 22:11:16  pwagner
+! We seem to ned this change sometimes
+!
 ! Revision 1.11  2011/12/15 23:47:49  honghanh
 ! Add documentation for CreateStandardHGrid
 !
