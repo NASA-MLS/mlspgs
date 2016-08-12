@@ -13,9 +13,10 @@ program L2Q
   use Allocate_Deallocate, only: allocate_test, deallocate_test, &
     & NoBytesAllocated, test_allocate, test_deallocate
   use dates_module, only: dateform, reformatdate
+  use Dump_1, only: Dump
   use highOutput, only: output_date_and_time, outputNamedValue, timeStamp
-  use l2parinfo, only: parallel, initParallel
-  use l2parinfo, only: machine_t, parallel, &
+  use L2ParInfo, only: parallel, initParallel
+  use L2ParInfo, only: machine_t, parallel, &
     & petitiontag, giveuptag, grantedtag, masterdumptag, notifytag, &
     & sig_finished, sig_register, sig_swearallegiance, sig_switchallegiance, &
     & sig_hostdied, sig_releasehost, sig_requesthost, sig_thankshost, &
@@ -26,11 +27,11 @@ program L2Q
   use MLSL2Options, only: current_version_id
   use MLSMessageModule, only: MLSMessage, MLSMessageConfig, MLSMessageExit, &
     & MLSMSG_Allocate, MLSMSG_DeAllocate, MLSMSG_Debug, MLSMSG_Error, &
-    & MLSMSG_Info, MLSMSG_Success, MLSMSG_Warning, PVMERRORMESSAGE
+    & MLSMSG_Info, MLSMSG_Success, MLSMSG_Warning, PVMErrorMessage
   use MLSFinds, only: Findfirst
-  use MLSStringlists, only: catlists, getstringelement, numstringelements, &
+  use MLSStringLists, only: catLists, getStringElement, numStringElements, &
     & stringelementnum
-  use MLSStrings, only: lowercase, readintsfromchars, streq
+  use MLSStrings, only: lowercase, readIntsFromChars, streq
   use output_m, only: blanks, newline, &
     & output, OutputOptions
   use PrintIt_m, only: Set_Config
@@ -2411,6 +2412,9 @@ contains
 end program L2Q
 
 ! $Log$
+! Revision 1.38  2015/04/29 16:18:17  pwagner
+! Fixed bug due to changes in rmItemFromDatabase.f9h
+!
 ! Revision 1.37  2014/09/22 18:02:10  pwagner
 ! Corrected to conform with new add/rmItemFromDatabase
 !
