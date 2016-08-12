@@ -211,12 +211,15 @@ contains ! =========== Public procedures ===================================
   subroutine L1BGeoLocation ( filedatabase, name, moduleStr, values, values2d )
 
     use Allocate_deallocate, only: allocate_test
+    use dump_0, only: dump
     use HighOutput, only: outputNamedValue
     use L1BData, only: deallocateL1BData, L1BData_t, readL1BData, &
       & AssembleL1BQtyName
     use MLSCommon, only: MLSFile_t
     use MLSFiles, only: getMLSFileByType
+    use MLSFillValues, only: isFillValue, Monotonize	 
     use MLSKinds, only: rk => r8
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Warning	 
     use MLSStrings, only: lowercase
     use Output_m, only: output
     ! Args
@@ -233,8 +236,11 @@ contains ! =========== Public procedures ===================================
     integer                               :: noFreqs
     integer                               :: noMAFs
     character(len=64)                     :: readItemName
+    character(len=64)                     :: snippedName
     integer                               :: status
     logical, parameter                    :: DeeBug = .false.
+    logical                               :: verbose	 
+    logical, parameter :: ShowName = .true.
     ! Executable
     l1bItemName = adjustl(lowercase(name))
     ! Sometimes we're called as GHz/Name; othertimes as tpName
@@ -242,8 +248,11 @@ contains ! =========== Public procedures ===================================
     if ( l1bItemName(1:2) == 'sc' ) l1bItemName = 'sc/' // l1bItemName(3:)
     ! `1st--check if we have already read this from the l1boa file
     if ( DeeBug ) call outputnamedValue( 'name', name )
+    if ( DeeBug ) call outputnamedValue( 'module name', moduleStr )
     if ( DeeBug ) call outputnamedValue( 'l1bItemName (before select case)', l1bItemName )
-    select case ( snipModuleStr(l1bItemName) )
+    snippedName = snipModuleStr(l1bItemName)
+    if ( showName ) call output ( '############### ' // trim(snippedName), advance='yes' )
+    select case ( snippedName )
     case ('mafstarttimetai')
       if ( associated ( HGridGeolocations%MAFStartTimeTAI ) ) then
         call recallValues( HGridGeolocations%MAFStartTimeTAI, values, values2d )
@@ -302,7 +311,7 @@ contains ! =========== Public procedures ===================================
       stop
     elseif ( index( name, 'tp') > 0 ) then
       ! l1bItemName = AssembleL1BQtyName ( 'GHz.' // Name, hdfVersion, .false. )
-      readItemName = AssembleL1BQtyName ( trim(moduleStr) // Name, hdfVersion, .false. )
+      readItemName = AssembleL1BQtyName ( Name, hdfVersion, .true., moduleStr )
     else
       readItemName = AssembleL1BQtyName ( Name, hdfVersion, .false. )
     endif
@@ -314,6 +323,18 @@ contains ! =========== Public procedures ===================================
     ! which auttomatically set dontPad=.true.
     call ReadL1BData ( L1BFile, readItemName, l1bField, noMAFs, status, &
       & dontpad=.true. )
+    if ( any(isFillValue(l1bField%dpField) ) .and. &	 
+      & trim(readItemname) /= '/GHz/Lon') then	 
+      call output( 'Fill values among ' // trim(readItemName), advance='yes' )	 
+      call MLSMessage ( MLSMSG_Warning, trim(ModuleName) // 'L1BGeoLocation', &	 
+        & 'Required monotonization' )	 
+      verbose = ( trim(readItemname) == '/GHz/Lon' ) &	 
+        & .or. ( trim(readItemname) == '/GHz/GeodAngle' )	 
+      if ( verbose ) call dump( l1bField%dpField, 'lons before monotony' )	 
+      call Monotonize( l1bField%dpField )	 
+      if ( verbose ) call dump( l1bField%dpField, 'lons after monotony' )	 
+    endif	 
+
     noFreqs = size(l1bField%dpField,2)
     if ( present(values) ) then
       nullify(values)
@@ -327,40 +348,40 @@ contains ! =========== Public procedures ===================================
     endif
     ! Now before leaving, save these values for the future,
     ! eliminating the need to read the same dataset each time through
-    select case (lowercase(l1bItemName))
+    select case ( snippedName )
     case ('mafstarttimetai')
       call Allocate_test ( HGridGeolocations%MAFStartTimeTAI, noFreqs, noMAFs, &
         & '2d values of ' // trim(name), ModuleName )
       HGridGeolocations%MAFStartTimeTAI = l1bField%dpField(1,:,:)
-    case ('ghz/geodangle   ')
+    case ('geodangle   ')
       call Allocate_test ( HGridGeolocations%GHzGeodAngle, noFreqs, noMAFs, &
         & '2d values of ' // trim(name), ModuleName )
       HGridGeolocations%GHzGeodAngle = l1bField%dpField(1,:,:)
-    case ('ghz/geodalt     ')
+    case ('geodalt     ')
       call Allocate_test ( HGridGeolocations%GHzGeodAlt, noFreqs, noMAFs, &
         & '2d values of ' // trim(name), ModuleName )
       HGridGeolocations%GHzGeodAlt = l1bField%dpField(1,:,:)
-    case ('ghz/geodlat     ')
+    case ('geodlat     ')
       call Allocate_test ( HGridGeolocations%GHzGeodLat, noFreqs, noMAFs, &
         & '2d values of ' // trim(name), ModuleName )
       HGridGeolocations%GHzGeodLat = l1bField%dpField(1,:,:)
-    case ('ghz/losangle   ')
+    case ('losangle   ')
       call Allocate_test ( HGridGeolocations%GHzlosangle, noFreqs, noMAFs, &
         & '2d values of ' // trim(name), ModuleName )
       HGridGeolocations%GHzlosangle = l1bField%dpField(1,:,:)
-    case ('ghz/lon   ')
+    case ('lon   ')
       call Allocate_test ( HGridGeolocations%GHzlon, noFreqs, noMAFs, &
         & '2d values of ' // trim(name), ModuleName )
       HGridGeolocations%GHzlon = l1bField%dpField(1,:,:)
-    case ('sc/orbincl   ')
+    case ('orbincl')
       call Allocate_test ( HGridGeolocations%orbincl, noFreqs, noMAFs, &
         & '2d values of ' // trim(name), ModuleName )
       HGridGeolocations%orbincl = l1bField%dpField(1,:,:)
-    case ('ghz/solartime   ')
+    case ('solartime   ')
       call Allocate_test ( HGridGeolocations%GHzSolarTime, noFreqs, noMAFs, &
         & '2d values of ' // trim(name), ModuleName )
       HGridGeolocations%GHzSolarTime = l1bField%dpField(1,:,:)
-    case ('ghz/solarzenith   ')
+    case ('solarzenith   ')
       call Allocate_test ( HGridGeolocations%GHzsolarzenith, noFreqs, noMAFs, &
         & '2d values of ' // trim(name), ModuleName )
       HGridGeolocations%GHzsolarzenith = l1bField%dpField(1,:,:)
@@ -373,12 +394,20 @@ contains ! =========== Public procedures ===================================
       ! Internal variables
       integer                      :: i
       ! Executable
-      i = index( itemname, trim(moduleStr) )
+      i = index( itemname, trim(moduleStr) // '/')
       if ( i < 1 ) then
         bareName = itemName
       else
         bareName = itemName( i+len_trim(moduleStr)+1 : ) ! To account for "/"
       endif
+      i = index( barename, trim(moduleStr) )
+      if ( i < 1 ) then
+        bareName = bareName
+      else
+        bareName = bareName( i+len_trim(moduleStr) : )
+      endif
+      if ( bareName(1:3) == 'sc/' ) barename = bareName(4:)
+      if ( bareName(1:3) == 'sc' ) barename = bareName(3:)
     end function snipModuleStr
     subroutine recallValues( array, values, values2d )
       ! Args
@@ -755,6 +784,9 @@ contains ! =========== Public procedures ===================================
 end module HGridsDatabase
 
 ! $Log$
+! Revision 2.30  2016/08/12 00:35:47  pwagner
+! Seems to restore tthe gold brick
+!
 ! Revision 2.29  2016/08/09 18:16:30  pwagner
 ! Survives encounter with non-satellite data
 !
