@@ -18,7 +18,7 @@ module STRING_TABLE
                   hash_bad_loc => bad_loc, hash_empty => empty
   use io_stuff, only: get_lun
   use machine, only: crash_burn, io_error
-  use output_m, only: blanks, output
+  use output_m, only: blanks, NewLine, output
   use printIt_m, only: MLSMSG_Deallocate, MLSMSG_Allocate, MLSMSG_Error, &
                        printItOut
   implicit NONE
@@ -331,34 +331,52 @@ contains
     nstring = 0
   end subroutine DESTROY_STRING_TABLE
   ! =======================================     DISPLAY_STRING     =====
-  subroutine DISPLAY_STRING ( STRING, ADVANCE, STRIP, IERR, BEFORE )
+  subroutine DISPLAY_STRING ( String, Advance, Strip, Ierr, Before, Pos, Width )
   ! Write BEFORE (if present), followed by the string indexed by STRING.
-  ! If IERR is present return 0 if all went well, 1 otherwise
-    integer, intent(in) :: STRING
-    character(len=*), intent(in), optional :: ADVANCE
-    logical, intent(in), optional :: STRIP
-    integer, intent(out), optional :: IERR
-    character(len=*), intent(in), optional :: BEFORE
+  ! If IERR is present return 0 if all went well, 1 otherwise.
+  ! If Pos is present, add len(Before) + string_length(String) to it, using zero
+  ! for len(Before) if Before is absent.  If Pos and Width are present, and Pos
+  ! was > 0, and Pos > Width, advance regardless of the value of Advance.
+    integer, intent(in) :: String
+    character(len=*), intent(in), optional :: Advance
+    logical, intent(in), optional :: Strip
+    integer, intent(out), optional :: Ierr
+    character(len=*), intent(in), optional :: Before
+    integer, intent(inout), optional :: Pos ! Current position in line
+    integer, intent(in), optional :: Width  ! Maximum line width
 
-    integer :: offset
-    logical :: myStrip
+    logical :: Fail     ! String is not in the string table
     character (len=1) :: firstChar, lastChar
+    character(len=*), parameter :: Msg = '(not found in string table)'
+    logical :: myStrip
+    integer :: offset
+    integer :: W        ! width of string or msg
 
-    if ( present(before) ) call output ( before )
-
+    fail = .false.
     call test_string ( string, 'Display_String', ierr )
-    if ( present(ierr) ) then
-      if ( ierr /= 0 ) then
-        call output ( '(not found in string table)', &
-                        advance=advance )
-        return
+    if ( present(ierr) ) fail = ierr /= 0
+
+    if ( present(pos) ) then
+      w = len(msg)
+      if ( .not. fail ) w = string_length(string)
+      offset = pos ! Temp to avoid new line if the line is empty
+      if ( present(before) ) pos = pos + len(before)
+      pos = pos + w
+      if ( present(width) .and. offset > 0 ) then
+        if ( pos > width ) call newLine
       end if
     end if
-    myStrip=.false.
-    if (present(strip)) myStrip=strip
+    if ( present(before) ) call output ( before )
+    if ( fail ) then
+      call output ( msg, advance=advance )
+      return
+    end if
 
     offset=0
-    if (myStrip) then
+
+    myStrip=.false.
+    if (present(strip)) myStrip=strip
+    if ( myStrip ) then
       firstChar=char_table(strings(string-1)+1)
       lastChar=char_table(strings(string))
       if ( (firstChar=='"' .and. lastChar=='"') .or. &
@@ -1285,6 +1303,9 @@ contains
 end module STRING_TABLE
 
 ! $Log$
+! Revision 2.50  2016/08/16 23:15:13  vsnyder
+! Add Pos and Width arguments to Display_String
+!
 ! Revision 2.49  2016/05/17 00:05:53  pwagner
 ! Added optional arg indices to isStringInTable
 !
