@@ -658,7 +658,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_mif, numeric(phyq_dimensionless), &
              begin, f+f_module, field_spec(s_module), &
              begin, f+f_origin, numeric(phyq_angle), &
-             begin, f+f_QTMlevel, numeric(phyq_dimensionless), &
+             begin, f+f_QTMlevel, numeric(), &
              begin, f+f_single, boolean(), &
              begin, f+f_solarTime, numeric(phyq_time), &
              begin, f+f_solarZenith, numeric(), &
@@ -2072,6 +2072,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.625  2016/08/16 23:23:07  vsnyder
+! Remove phyq_dimensionless requirement from QTM_Level of HGrid
+!
 ! Revision 2.624  2016/04/01 00:26:23  pwagner
 ! May now Execute a single command or a script of lines from l2cf
 !
