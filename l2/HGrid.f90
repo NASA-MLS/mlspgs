@@ -60,13 +60,14 @@ contains ! =====     Public Procedures     =============================
     & ( name, root, filedatabase, l2gpDatabase, &
     & processingRange, chunk, onlyComputingOffsets, check ) result ( hGrid )
 
-    use allocate_deallocate, only: Deallocate_test
-    use chunks_m, only: MLSChunk_t
-    use dates_module, only: tai93s2hid
-    use expr_m, only: expr
+    use Allocate_deallocate, only: Deallocate_test
+    use Chunks_m, only: MLSChunk_t
+    use Constants, only: Ln2
+    use Dates_module, only: tai93s2hid
+    use Expr_m, only: expr
     use HGridsDatabase, only: HGrid_t, createEmptyHGrid, nullifyHGrid
-    use highOutput, only: beVerbose, letsDebug, outputNamedValue
-    use init_tables_module, only: f_coordinate, f_date, &
+    use HighOutput, only: beVerbose, letsDebug, outputNamedValue
+    use Init_tables_module, only: f_coordinate, f_date, &
       & f_extendible, f_forbidoverspill, f_fraction, f_geodangle, f_geodlat, &
       & f_height, f_inclination, f_insetoverlaps, f_interpolationfactor, &
       & f_lon, f_losangle, f_maxloweroverlap, f_maxupperoverlap, f_mif, &
@@ -76,6 +77,7 @@ contains ! =====     Public Procedures     =============================
       & field_first, field_last, &
       & l_explicit, l_fixed, l_fractional, l_height, &
       & l_l2gp, l_QTM, l_regular
+    use Intrinsic, only: PHYQ_Angle, PHYQ_Dimensionless, PHYQ_Length
     use L1BData, only: CheckForCorruptFileDatabase
     use L2GPData, only: L2GPData_t
     use MLSHDF5, only: IsHDF5DSInFile
@@ -84,14 +86,16 @@ contains ! =====     Public Procedures     =============================
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use MLSNumerics, only: hunt
     use MLSStringLists, only: switchDetail
-    use moretree, only: get_boolean
-    use Output_m, only: output
+    use MoreMessage, only: MLSMessage
+    use MoreTree, only: Get_Boolean
+    use Output_m, only: Output
     use Polygon_m, only: Polygon_Inside, Polygon_Vertices
+    use QTM_m, only: QTM_Depth ! Maximum depth that will fit in one integer
 !     use string_table, only: get_string
-    use time_m, only: time_now
-    use toggles, only: gen, levels, switches, toggle
-    use trace_m, only: trace_begin, trace_end
-    use tree, only: decoration, nsons, sub_rosa, subtree
+    use Time_m, only: time_now
+    use Toggles, only: gen, levels, switches, toggle
+    use Trace_m, only: trace_begin, trace_end
+    use Tree, only: Decoration, NSons, Sub_rosa, Subtree, Where
 
   ! This routine creates an hGrid based on the user requests.
 
@@ -268,7 +272,28 @@ contains ! =====     Public Procedures     =============================
         origin = expr_value(1)
       case ( f_QTMlevel )
         call expr ( subtree(2,son), expr_units, expr_value )
-        QTM_level = nint(expr_value(1))
+          QTM_level = nint(expr_value(1))
+        select case ( expr_units(1) )
+        case ( phyq_angle ) ! expr_value is in degrees
+          QTM_level = ceiling ( log ( 180.0d0 / expr_value(1) ) / ln2 )
+        case ( phyq_dimensionless )
+          QTM_level = nint(expr_value(1))
+        case ( phyq_length ) ! expr_value is in meters
+          QTM_level = ceiling ( log (20.0d6 / expr_value(1)) / ln2 )
+        case default
+          call MLSMessage ( MLSMSG_Error, ModuleName // '/' &
+            & // 'CreateHGridFromMLSCFInfo', &
+            & "Units of QTMLevel not dimensionless, length, or angle." )
+        end select
+        if ( QTM_level > QTM_Depth ) then
+          call MLSMessage ( MLSMSG_Error, ModuleName // '/' &
+            & // 'CreateHGridFromMLSCFInfo', &
+            & "QTM resolution is too fine; maximum depth is %D.", QTM_depth, &
+            & where=where(son), advance='no' )
+          call MLSMessage ( MLSMSG_Error, ModuleName // '/' &
+            & // 'CreateHGridFromMLSCFInfo', &
+            & " QTM resolution is 20000/2**level km or 180/2**level degrees." )
+        end if
       case ( f_single )
         single = get_boolean ( fieldValue )
       case ( f_solarTime )
@@ -2162,8 +2187,8 @@ contains ! =====     Public Procedures     =============================
       end do
     end if
 
-    call GetModuleName ( instrumentModule, instrumentModuleName )
     if ( verbose ) then
+      call GetModuleName ( instrumentModule, instrumentModuleName )
       ! Read the l1boa items we will need
       nullify( MAFStartTimeTAI, GeodAngle, GeodAlt, GeodLat, &
         & LosAngle, OrbIncl, SolarTime, SolarZenith )
@@ -2529,6 +2554,11 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.137  2016/08/17 00:47:52  vsnyder
+! Allow QTM resolution to be defined by level, length along meridian, or
+! degrees along meridian.  Don't get the instrument module name in
+! ComputeAllHGridOffsets unless verbose is set.
+!
 ! Revision 2.136  2016/08/09 21:12:50  pwagner
 ! Survives encounter with non-satellite data
 !
