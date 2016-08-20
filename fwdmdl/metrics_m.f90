@@ -71,9 +71,9 @@ contains
     ! inputs:
 
     real(rp), intent(in) :: Phi_t      ! orbit projected tangent geodetic angle,
-                                       ! degrees
+                                       ! radians
     real(rp), intent(in) :: P_basis(:) ! horizontal temperature representation
-                                       ! basis, degrees
+                                       ! basis, radians
     real(rp), intent(in) :: H_ref(:,:) ! heights by fine zeta and p_basis,
                                        ! referenced to equivalent circular earth
                                        ! center, km
@@ -1132,6 +1132,9 @@ path: do i = i1, i2
 end module Metrics_m
 
 ! $Log$
+! Revision 2.75  2015/09/22 01:59:32  vsnyder
+! Correct some comments, dump Z
+!
 ! Revision 2.74  2015/05/28 23:14:42  vsnyder
 ! Add units in comments about variables
 !
