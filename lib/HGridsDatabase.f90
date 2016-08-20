@@ -132,7 +132,7 @@ contains ! =========== Public procedures ===================================
   subroutine copyHGrid ( aGrid, hGrid )
     ! Just does allocates etc.
 
-    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST
+    use Allocate_Deallocate, only: Allocate_Test
 
     type (HGrid_T), intent(in)  :: AGRID
     type (HGrid_T), intent(out) :: HGRID
@@ -177,7 +177,7 @@ contains ! =========== Public procedures ===================================
   subroutine CreateEmptyHGrid ( hGrid )
     ! Just does allocates etc.
 
-    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST
+    use Allocate_Deallocate, only: Allocate_Test
 
     type (HGrid_T), intent(inout) :: HGRID
 
@@ -210,16 +210,16 @@ contains ! =========== Public procedures ===================================
   ! We check for stored values by whether the component is associated
   subroutine L1BGeoLocation ( filedatabase, name, moduleStr, values, values2d )
 
-    use Allocate_deallocate, only: allocate_test
-    use dump_0, only: dump
+    use Allocate_Deallocate, only: Allocate_Test
+    use Dump_0, only: Dump
     use HighOutput, only: outputNamedValue
     use L1BData, only: deallocateL1BData, L1BData_t, readL1BData, &
       & AssembleL1BQtyName
     use MLSCommon, only: MLSFile_t
     use MLSFiles, only: getMLSFileByType
-    use MLSFillValues, only: isFillValue, Monotonize	 
+    use MLSFillValues, only: isFillValue, Monotonize
     use MLSKinds, only: rk => r8
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Warning	 
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Warning 
     use MLSStrings, only: lowercase
     use Output_m, only: output
     ! Args
@@ -239,7 +239,7 @@ contains ! =========== Public procedures ===================================
     character(len=64)                     :: snippedName
     integer                               :: status
     logical, parameter                    :: DeeBug = .false.
-    logical                               :: verbose	 
+    logical                               :: verbose 
     logical, parameter :: ShowName = .true.
     ! Executable
     l1bItemName = adjustl(lowercase(name))
@@ -323,17 +323,17 @@ contains ! =========== Public procedures ===================================
     ! which auttomatically set dontPad=.true.
     call ReadL1BData ( L1BFile, readItemName, l1bField, noMAFs, status, &
       & dontpad=.true. )
-    if ( any(isFillValue(l1bField%dpField) ) .and. &	 
-      & trim(readItemname) /= '/GHz/Lon') then	 
-      call output( 'Fill values among ' // trim(readItemName), advance='yes' )	 
-      call MLSMessage ( MLSMSG_Warning, trim(ModuleName) // 'L1BGeoLocation', &	 
-        & 'Required monotonization' )	 
-      verbose = ( trim(readItemname) == '/GHz/Lon' ) &	 
-        & .or. ( trim(readItemname) == '/GHz/GeodAngle' )	 
-      if ( verbose ) call dump( l1bField%dpField, 'lons before monotony' )	 
-      call Monotonize( l1bField%dpField )	 
-      if ( verbose ) call dump( l1bField%dpField, 'lons after monotony' )	 
-    endif	 
+    if ( any(isFillValue(l1bField%dpField) ) .and. & 
+      & trim(readItemname) /= '/GHz/Lon') then 
+      call output( 'Fill values among ' // trim(readItemName), advance='yes' ) 
+      call MLSMessage ( MLSMSG_Warning, trim(ModuleName) // 'L1BGeoLocation', & 
+        & 'Required monotonization' ) 
+      verbose = ( trim(readItemname) == '/GHz/Lon' ) & 
+        & .or. ( trim(readItemname) == '/GHz/GeodAngle' ) 
+      if ( verbose ) call dump( l1bField%dpField, 'lons before monotony' ) 
+      call Monotonize( l1bField%dpField ) 
+      if ( verbose ) call dump( l1bField%dpField, 'lons after monotony' ) 
+    endif 
 
     noFreqs = size(l1bField%dpField,2)
     if ( present(values) ) then
@@ -482,8 +482,8 @@ contains ! =========== Public procedures ===================================
   ! -------------------------------------------------  TrimHGrid  ------
   subroutine TrimHGrid ( hGrid, side, NOTODELETE )
 
-    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST
-    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
+    use Allocate_Deallocate, only: Allocate_Test
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
 
     type (HGrid_T), intent(inout) :: HGrid
     integer, intent(in) :: SIDE         ! -1 = lower, 1 = upper
@@ -546,7 +546,7 @@ contains ! =========== Public procedures ===================================
   ! ---------------------------------------  DestroyHGridContents  -----
   subroutine DestroyHGridContents ( hGrid )
 
-    use ALLOCATE_DEALLOCATE, only: DEALLOCATE_TEST
+    use Allocate_Deallocate, only: Deallocate_Test
 
   ! This routine destroys the information associated with an hGrid
 
@@ -784,6 +784,9 @@ contains ! =========== Public procedures ===================================
 end module HGridsDatabase
 
 ! $Log$
+! Revision 2.31  2016/08/20 01:11:39  vsnyder
+! Cannonball polishing
+!
 ! Revision 2.30  2016/08/12 00:35:47  pwagner
 ! Seems to restore tthe gold brick
 !
