@@ -131,7 +131,7 @@ contains
         call exact_line_nearest_ellipsoid ( line, p=tangent )
       end select
       ! Produce output LOS as tangent point or surface intersection C',
-      ! and an vector U' along the line of sight
+      ! and an unit vector U' along the line of sight
       LOS%value3(1:3,i,MAF) = tangent%xyz    ! C'
       LOS%value3(4:6,i,MAF) = line(2)%xyz    ! U'
       ! Normal to plane containing LOS and Earth center is C .cross. U.
@@ -267,6 +267,9 @@ contains
 end module Tangent_Quantities_m
 
 ! $Log$
+! Revision 2.4  2016/08/20 00:54:17  vsnyder
+! Correct a typo in a comment
+!
 ! Revision 2.3  2016/07/27 23:47:36  vsnyder
 ! Remove unreferenced USE
 !
