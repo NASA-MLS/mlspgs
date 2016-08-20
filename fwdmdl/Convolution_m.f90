@@ -439,7 +439,7 @@ contains
     type (VectorValue_T), intent(in) :: SCGeocAlt     ! S/C geocentric altitude /m
     real(rp), intent(out) :: Surf_Angle(1)
     real(rp), intent(out), contiguous :: Tan_Chi_Out(:)
-    real(rp), intent(in), contiguous :: Tan_Phi(:)
+    real(rp), intent(in), contiguous :: Tan_Phi(:) ! Radians
     real(rp), intent(in) :: TAN_Press(:)       ! Pressures corresponding to Z_PSIG
     integer, intent(in) :: WindowFinish        ! End of temperature `window'
     integer, intent(in) :: WindowStart         ! Start of temperature `window'
@@ -525,6 +525,9 @@ contains
 end module Convolution_m
 
 ! $Log$
+! Revision 2.6  2016/08/20 00:53:48  vsnyder
+! Correct a comment about units for Ten_Phi
+!
 ! Revision 2.5  2016/07/28 00:44:55  vsnyder
 ! Remove unused variable declaration
 !
