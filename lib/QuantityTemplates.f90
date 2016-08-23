@@ -1268,14 +1268,14 @@ contains
       QuantitiesAreCompatible = qty_1%the_hGrid%type == qty_2%the_hGrid%type
       if ( .not. QuantitiesAreCompatible ) return
       if ( qty_1%the_hGrid%type .eq. l_QTM ) then
-        QuantitiesAreCompatible = allocated(qty_1%the_hGrid%QTM_ZOT) .and. &
-                                & allocated(qty_2%the_hGrid%QTM_ZOT)
+        QuantitiesAreCompatible = allocated(qty_1%the_hGrid%QTM_tree%ZOT_in) .and. &
+                                & allocated(qty_2%the_hGrid%QTM_tree%ZOT_in)
         if ( QuantitiesAreCompatible ) &
-          & QuantitiesAreCompatible = size(qty_1%the_hGrid%QTM_ZOT) == &
-                                    & size(qty_2%the_hGrid%QTM_ZOT)
+          & QuantitiesAreCompatible = size(qty_1%the_hGrid%QTM_tree%ZOT_in) == &
+                                    & size(qty_2%the_hGrid%QTM_tree%ZOT_in)
       else
-        QuantitiesAreCompatible = .not. allocated(qty_1%the_hGrid%QTM_ZOT) .and. &
-                                & .not. allocated(qty_2%the_hGrid%QTM_ZOT)
+        QuantitiesAreCompatible = .not. allocated(qty_1%the_hGrid%QTM_tree%ZOT_in) .and. &
+                                & .not. allocated(qty_2%the_hGrid%QTM_tree%ZOT_in)
       end if
     end if
     if ( .not. QuantitiesAreCompatible ) return
@@ -2262,6 +2262,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.114  2016/07/28 01:36:34  vsnyder
+! Remove unreferenced USE and local variables
+!
 ! Revision 2.113  2016/05/25 00:21:01  vsnyder
 ! Optionally allow different numbers of channels in QuantitiesAreCompatible.
 ! Check that HGrids are the same type in QuantitiesAreCompatible.

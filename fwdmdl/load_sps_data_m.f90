@@ -498,7 +498,7 @@ contains
       if ( usingQTM ) usingQTM = qty%template%the_hGrid%type == l_QTM 
       if ( usingQTM ) then
         grids_x%windowStart(ii) = 1
-        grids_x%windowFinish(ii) = size(qty%template%the_hGrid%QTM_geo)
+        grids_x%windowFinish(ii) = size(qty%template%the_hGrid%QTM_tree%geo_in)
       else if ( present(phitan) ) then
         call FindInstanceWindow ( qty, phitan, maf, fwdModelConf%phiWindow, &
           & fwdModelConf%windowUnits, grids_x%windowStart(ii), grids_x%windowFinish(ii) )
@@ -979,6 +979,11 @@ contains
 end module LOAD_SPS_DATA_M
 
 ! $Log$
+! Revision 2.112  2016/06/03 23:44:05  vsnyder
+! Eliminate QTM_Geo component.  Make sure grids_x%qtyStuff(:)%qty is
+! associated with the quantity.  Correct some labels in DestroyGrids_t.
+! Allow to dump only grid.
+!
 ! Revision 2.111  2016/05/27 01:26:01  vsnyder
 ! Cannonball polishing
 !

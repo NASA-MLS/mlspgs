@@ -118,7 +118,7 @@ contains
           ! If QTM, all of the QTM grid is used, so we don't need to get
           ! a subset of the indices that depend upon the phi window from
           ! grids_tmp.
-          lat = deg2rad * template%the_HGrid%QTM_geo(i)%lat
+          lat = deg2rad * template%the_HGrid%QTM_tree%geo_in(i)%lat
           if ( template%latitudeCoordinate == l_geodetic ) then
             ! Similar to GeocToGeodLat from Geometry, but result is radians
             lat = atan2 ( f2 * sin(lat), cos(lat) ) ! Convert geodetic to geocentric
@@ -158,6 +158,9 @@ contains
 end module Two_D_Hydrostatic_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.25  2016/06/03 23:40:55  vsnyder
+! Convert geodetic to geocentric latitude if needed
+!
 ! Revision 2.24  2016/05/12 15:21:13  pwagner
 ! Avoid referring to unassociated the_HGrid
 !
