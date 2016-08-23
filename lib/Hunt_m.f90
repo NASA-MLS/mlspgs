@@ -19,7 +19,8 @@ module Hunt_m
   use MLSFillValues, only: IsFillValue, ReplaceFillValues
   use MLSFinds, only: FindFirst, FindLast
   use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning, &
-    & MLSMessage
+    & Crash_burn, MLSMessage
+  use HighOutput, only: OutputNamedValue
 
   implicit none
 
@@ -59,6 +60,14 @@ contains
   ! does the hunt/bisect implemention a la Numerical Recipes.  List must
   ! be monotonically increasing or decreasing. There is no such
   ! requirement for values.
+  
+  ! Things can go wrong for a multitude of reasons. We print a message that
+  ! may be helpful. If you supply the optional parameter "fail", 
+  ! then instead of simply bombing
+  ! we return with fail set to TRUE if something goes wrong. This allows you
+  ! the opprtunity to either supply further information about the circumstances,
+  ! or else try to recover from the situation.
+  ! 
 
   subroutine HuntArray_r4 ( list, values, indices, start, allowTopValue, &
     & allowBelowValue, nearest, logSpace, fail )
@@ -109,7 +118,7 @@ contains
   ! This routine is a scalar wrapper for the above one
 
   subroutine HuntScalar_r4 (list, value, index, start, allowTopValue, &
-    & allowBelowValue, nearest, logSpace )
+    & allowBelowValue, nearest, logSpace, fail )
     integer, parameter :: RK = kind(0.0e0)
 
     ! Dummy arguments
@@ -121,20 +130,21 @@ contains
     logical, optional, intent(in) :: allowBelowValue ! Can return 0
     logical, optional, intent(in) :: nearest ! Choose nearest value instead
     logical, optional, intent(in) :: logSpace ! Choose nearest based on log space
+    logical, optional, intent(out) :: Fail    ! True for failure
 
     ! Local variables
 
     integer, dimension(1) :: indices ! To pass to HuntArray
 
     call Hunt ( list, (/ value /), indices, start, &
-      & allowTopValue, allowBelowValue, nearest, logSpace )
+      & allowTopValue, allowBelowValue, nearest, logSpace, fail )
     index = indices(1)
   end subroutine HuntScalar_r4
 
 ! ------------------------------------------------  HuntScalar_r8  -----
 
   subroutine HuntScalar_r8 (list, value, index, start, allowTopValue, &
-    & allowBelowValue, nearest, logSpace )
+    & allowBelowValue, nearest, logSpace, fail )
     integer, parameter :: RK = kind(0.0d0)
 
     ! Dummy arguments
@@ -146,13 +156,14 @@ contains
     logical, optional, intent(in) :: allowBelowValue ! Can return 0
     logical, optional, intent(in) :: nearest ! Choose nearest value instead
     logical, optional, intent(in) :: logSpace ! Choose nearest based on log space
+    logical, optional, intent(out) :: Fail    ! True for failure
 
     ! Local variables
 
     integer, dimension(1) :: indices ! To pass to HuntArray
 
     call Hunt ( list, (/ value /), indices, start, &
-      & allowTopValue, allowBelowValue, nearest, logSpace )
+      & allowTopValue, allowBelowValue, nearest, logSpace, fail )
     index = indices(1)
   end subroutine HuntScalar_r8
 
@@ -229,6 +240,9 @@ end module Hunt_m
 !=============================================================================
 
 ! $Log$
+! Revision 2.3  2016/08/23 20:25:51  pwagner
+! Hunt mail return after failure if optional arg fail present
+!
 ! Revision 2.2  2016/07/28 01:42:27  vsnyder
 ! Refactoring dump and diff
 !
