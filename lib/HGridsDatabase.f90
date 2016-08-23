@@ -58,9 +58,9 @@ module HGridsDatabase                   ! Horizontal grid information
     real(r8), contiguous, pointer :: solarZenith(:,:) => NULL()
     real(r8), contiguous, pointer :: losAngle(:,:)    => NULL()
     ! For QTM
-    type(QTM_tree_t) :: QTM_Tree             ! for finding things
-    type(ZOT_t), allocatable :: QTM_ZOT(:)   ! Vertices of QTM
-    type(h_t), allocatable :: QTM_Geo(:)     ! Vertices of QTM, computed from QTM_ZOT
+    type(QTM_tree_t) :: QTM_Tree ! for finding things and representing the
+                                 ! geolocations of vertices of a QTM that are
+                                 ! within or adjacent to a specified polygon
     type(geocLat_t), allocatable :: QTM_Lats(:) ! Unique latitudes in the QTM.
   end type HGrid_T
 
@@ -679,12 +679,7 @@ contains ! =========== Public procedures ===================================
       myZOT = .false.
       if ( present(ZOT) ) myZOT = ZOT
       if ( myDetails > 0 ) call dump_QTM_tree ( aHGrid%QTM_tree, &
-        & latLon=.not. myZOT, sons = myDetails > 1 )
-      if ( myZot ) then
-        call dump_ZOT ( aHGrid%QTM_ZOT, ' QTM vertices in ZOT coordinates:' )
-      else
-        call dump_H_t ( aHGrid%QTM_geo, ' QTM vertices in (lon,lat) coordinates:' )
-      end if
+        & latLon=.not. myZOT, details=details )
     end if
   end subroutine Dump_a_HGrid
 
@@ -784,6 +779,10 @@ contains ! =========== Public procedures ===================================
 end module HGridsDatabase
 
 ! $Log$
+! Revision 2.32  2016/08/23 00:41:55  vsnyder
+! Components within or adjacent to the polygon are now within the QTM_Tree_t
+! structure instead of the HGrid_t structure.
+!
 ! Revision 2.31  2016/08/20 01:11:39  vsnyder
 ! Cannonball polishing
 !
