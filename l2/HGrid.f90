@@ -1028,13 +1028,9 @@ contains ! =====     Public Procedures     =============================
       & [1], [size(polygon_vertices)], storage_size(polygon_vertices) / 8 )
     hGrid%QTM_tree%polygon_geo = polygon_vertices
 
-    call generate_QTM ( hGrid%QTM_tree, hGrid%QTM_ZOT )
+    call generate_QTM ( hGrid%QTM_tree )
     ! Explicit allocation won't be necessary when compilers support
     ! automatic allocation for assignment to allocatable arrays.
-    allocate ( hGrid%QTM_geo(size(hGrid%QTM_ZOT)), stat=stat )
-    call test_allocate ( stat, moduleName, "hGrid%QTM_geo", &
-      & [1], [size(hGrid%QTM_ZOT)], storage_size(hGrid%QTM_geo) / 8 )
-    hGrid%QTM_geo = hGrid%QTM_ZOT%ZOT_to_geo()
 
   end subroutine Create_QTM_HGrid
 
@@ -2554,6 +2550,10 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.138  2016/08/23 00:43:34  vsnyder
+! Components within or adjacent to the polygon are now within the QTM_Tree_t
+! structure instead of the HGrid_t structure.
+!
 ! Revision 2.137  2016/08/17 00:47:52  vsnyder
 ! Allow QTM resolution to be defined by level, length along meridian, or
 ! degrees along meridian.  Don't get the instrument module name in
