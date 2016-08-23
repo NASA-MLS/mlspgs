@@ -10,7 +10,7 @@
 ! foreign countries or providing access to foreign persons.
 
 ! subroutine InterpolateArraySetup_r* ( OldX, NewX, Method, Coeffs, &
-!   & Extrapolate, Width, DyByDx, dNewByDOld, intYdX )
+!   & Extrapolate, Width, DyByDx, dNewByDOld, intYdX, fail )
 
     ! Method = S for spline, else linear
     ! ExtrapolateMethod = C for constant, B for bad, P for periodic
@@ -72,7 +72,10 @@
       where ( NewX_P < 0 ) NewX_P = NewX_P + Period
       NewX_P = NewX_P + OldX(1)
     end if
-    call Hunt ( oldX, newX_P, coeffs%lowerInds )
+    call Hunt ( oldX, newX_P, coeffs%lowerInds, fail=fail )
+    if ( present(fail) ) then
+      if ( fail ) return
+    endif
     coeffs%gap = oldX(coeffs%lowerInds+1) - oldX(coeffs%lowerInds)
     coeffs%A = (oldX(coeffs%lowerInds+1)-newX_P)/coeffs%gap
 
@@ -172,6 +175,9 @@
 ! end subroutine InterpolateArraySetup_r*
 
 ! $Log$
+! Revision 1.8  2010/02/02 01:32:11  vsnyder
+! Deallocate TempDNewByDOld to plug a memory leak
+!
 ! Revision 1.7  2009/12/10 02:56:14  vsnyder
 ! Put NewX into the period of OldX correctly
 !
