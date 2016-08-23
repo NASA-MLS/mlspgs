@@ -240,7 +240,7 @@ contains ! =========== Public procedures ===================================
     integer                               :: status
     logical, parameter                    :: DeeBug = .false.
     logical                               :: verbose 
-    logical, parameter :: ShowName = .true.
+    logical, parameter                    :: ShowName = .false.
     ! Executable
     l1bItemName = adjustl(lowercase(name))
     ! Sometimes we're called as GHz/Name; othertimes as tpName
@@ -779,6 +779,9 @@ contains ! =========== Public procedures ===================================
 end module HGridsDatabase
 
 ! $Log$
+! Revision 2.33  2016/08/23 18:34:44  pwagner
+! ShowName not needed any longer
+!
 ! Revision 2.32  2016/08/23 00:41:55  vsnyder
 ! Components within or adjacent to the polygon are now within the QTM_Tree_t
 ! structure instead of the HGrid_t structure.
