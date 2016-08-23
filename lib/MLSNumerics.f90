@@ -1571,7 +1571,7 @@ contains
 ! -------------------------------------  InterpolateArraySetup_r4  -----
 
   subroutine InterpolateArraySetup_r4 ( OldX, NewX, Method, Coeffs, &
-    & Extrapolate, Width, DyByDx, dNewByDOld, IntYdX )
+    & Extrapolate, Width, DyByDx, dNewByDOld, IntYdX, fail )
 
     integer, parameter :: RK = kind(0.0e0)
 
@@ -1588,6 +1588,7 @@ contains
                                            ! after an old one
     logical, optional, intent(in) :: IntYdX ! just a signal to
                                            ! compute more coeffs for splines
+    logical, optional, intent(out) :: Fail    ! True for failure
 
     include "InterpolateArraySetup.f9h"
 
@@ -1596,7 +1597,7 @@ contains
 ! -------------------------------------  InterpolateArraySetup_r8  -----
 
   subroutine InterpolateArraySetup_r8 ( OldX, NewX, Method, Coeffs, &
-    & Extrapolate, Width, DyByDx, dNewByDOld, IntYdX )
+    & Extrapolate, Width, DyByDx, dNewByDOld, IntYdX, fail )
 
     integer, parameter :: RK = kind(0.0d0)
 
@@ -1613,6 +1614,7 @@ contains
                                            ! after an old one
     logical, optional, intent(in) :: IntYdX ! just a signal to
                                            ! compute more coeffs for splines
+    logical, optional, intent(out) :: Fail    ! True for failure
 
     include "InterpolateArraySetup.f9h"
 
@@ -2513,6 +2515,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.91  2016/08/23 20:27:40  pwagner
+! InterpolateArraySetup may return after failure if optional arg fail present
+!
 ! Revision 2.90  2016/07/28 01:40:24  vsnyder
 ! Remove unused USE
 !
