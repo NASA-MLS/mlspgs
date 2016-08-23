@@ -36,7 +36,8 @@ module Generate_QTM_m
     integer :: XN = 0, YN = 0  ! Which son is xNode, yNode?  Central node is 0,
                                ! pole node is 6 - ( xn + yn )
     type(ZOT_t) :: Z(3)        ! ZOT coordinates of vertices
-    integer :: ZOT_N(3) = 0    ! Serial numbers of ZOT coordinates of vertices;
+    integer :: ZOT_N(3) = 0    ! Serial numbers of ZOT coordinates of vertices
+                               ! in QTM_Tree_t%ZOT_In and QTM_Tree_t%Geo_In;
                                ! zero if the vertex is not in a polygon.
   end type QTM_Node_t
 
@@ -61,6 +62,11 @@ module Generate_QTM_m
                                ! is an edge antiparallel to it and colinear
                                ! with it.
     type(QTM_node_t), allocatable :: Q(:)
+    type(ZOT_t), allocatable :: ZOT_In(:)  ! ZOT coordinates of vertices of QTM
+                               ! that are inside or adjacent to the polygon.
+                               ! Indexed by Q(.)%ZOT_n(.).
+    type(h_t), allocatable :: Geo_In(:)    ! H_T coordinates corresponding to
+                               ! ZOT_In.
   contains
     procedure :: Find_Facet_Geo
     procedure :: Find_Facet_QID
@@ -145,7 +151,8 @@ contains
     end if
   end function Find_Facet_ZOT
 
-  subroutine Generate_QTM ( QTM_Trees, ZOT )
+  subroutine Generate_QTM ( QTM_Trees )
+
     ! Generate a QTM refined to QTM_Trees%Level (in 1..QTM_Depth) within a
     ! Polygon defined by QTM_Trees%Polygon_Geo or QTM_Trees%Polygon_ZOT.  A
     ! point inside the polygon, specified by QTM_Trees%In_Geo or QTM_Trees%In,
@@ -158,14 +165,14 @@ contains
     ! projection might be outwith (within) the polygon on the surface of the
     ! Earth if it's near an edge.
 
-    ! The ZOT coordinates of the vertices are in ZOT.
+    ! The ZOT coordinates of the vertices that are within or adjacent to the
+    ! polygon are in QTM_Trees%ZOT_In.  The (lon,lat) coordinates are in
+    ! QTM_Trees%Geo_In.
 
     use PnPoly_m, only: PnPoly
     use QTM_m, only: Geo_to_ZOT, QTM_Decode, QTM_Depth, Stack_t, ZOT_t
 
     type(QTM_Tree_t), intent(inout) :: QTM_Trees
-    type(ZOT_t), intent(out), allocatable :: ZOT(:) ! ZOT coordinates of QTM
-                                   ! vertices that are within a polygon
 
     integer :: H(2,hash_size()) ! Assume QK = kind(0) for now
     integer :: Hemisphere ! 2 = north, 3 = south
@@ -200,7 +207,7 @@ contains
                                  & QTM_Trees%polygon_ZOT%y ) >= 0
 
     if ( .not. allocated(QTM_Trees%Q) ) allocate ( QTM_Trees%Q(default_initial_size) )
-    allocate ( zot(default_initial_size) )
+    allocate ( QTM_Trees%ZOT_In(default_initial_size) )
     ! Create the top eight octants in the tree
     QTM_Trees%n = 3
     QTM_Trees%Q(1)%son = [ 0, 0, 2, 3 ]
@@ -218,11 +225,15 @@ contains
     Q_temp(:) = QTM_Trees%Q(1:QTM_Trees%n)
     call move_alloc ( Q_temp, QTM_Trees%Q )
 
-    if ( QTM_Trees%n_in /= size(ZOT) ) then ! Reallocate ZOT to the correct size
+    if ( QTM_Trees%n_in /= size(QTM_Trees%ZOT_In) ) then
+      ! Reallocate ZOT to the correct size
       allocate ( z_temp(QTM_Trees%n_in) )
-      z_temp = ZOT(1:QTM_Trees%n_in)
-      call move_alloc ( z_temp, ZOT )
+      z_temp = QTM_Trees%ZOT_In(1:QTM_Trees%n_in)
+      call move_alloc ( z_temp, QTM_Trees%ZOT_In )
     end if
+
+    ! Compute (lon,lat) coordinates corresponding to ZOT coordinates
+    QTM_Trees%geo_in = QTM_Trees%ZOT_In%zot_to_geo()
 
   contains
 
@@ -378,10 +389,10 @@ contains
       do
         call lookup_and_insert ( cz, h, .true., loc, stat )
         if ( stat == inserted ) then
-          if ( QTM_Trees%n_in >= size(zot) ) then
-            allocate ( z_temp ( 2*size(zot) ) )
-            z_temp(1:QTM_Trees%n_in) = zot(1:QTM_Trees%n_in)
-            call move_alloc ( z_temp, zot )
+          if ( QTM_Trees%n_in >= size(QTM_Trees%ZOT_in) ) then
+            allocate ( z_temp ( 2*size(QTM_Trees%ZOT_in) ) )
+            z_temp(1:QTM_Trees%n_in) = QTM_Trees%ZOT_in(1:QTM_Trees%n_in)
+            call move_alloc ( z_temp, QTM_Trees%ZOT_in )
           end if
           QTM_Trees%n_in = QTM_Trees%n_in + 1
           ! Disambiguate ZOT coordinates, because the outer edges of the ZOT
@@ -389,13 +400,13 @@ contains
           ! original octahedron twice.
           x = merge(qtm%z(node)%x,abs(qtm%z(node)%x),abs(qtm%z(node)%y)/=1.0_rg)
           y = merge(qtm%z(node)%y,abs(qtm%z(node)%y),abs(qtm%z(node)%x)/=1.0_rg)
-          zot(QTM_Trees%n_in) = zot_t(x,y)
+          QTM_Trees%ZOT_in(QTM_Trees%n_in) = zot_t(x,y)
           h(2,loc) = QTM_Trees%n_in ! Remember coordinates' serial number
           QTM%zot_n(node) = h(2,loc) ! Coordinates' serial number
           return
         end if
         ! Hash got a match; make sure it's the same, else go around again.
-        if ( zot(h(2,loc))%condense_ZOT() == cz ) exit
+        if ( QTM_Trees%ZOT_in(h(2,loc))%condense_ZOT() == cz ) exit
       end do
       if ( stat == found ) QTM%zot_n(node) = h(2,loc) ! Coordinates' serial number
 
@@ -587,17 +598,23 @@ contains
     end subroutine Get_XY
   end subroutine Dump_QTM
 
-  subroutine Dump_QTM_Tree ( QTM_Trees, Format, LatLon, Sons )
+  subroutine Dump_QTM_Tree ( QTM_Trees, Format, LatLon, Details )
+    use Dump_Geolocation_m, only: Dump
     use Output_m, only: NewLine, Output
 
     type(QTM_tree_t), intent(in) :: QTM_Trees
     character(*), intent(in), optional :: Format(2) ! to override default,
-                                            ! Format(1) is Geo, Format(2) is ZOT
-    logical, intent(in), optional :: LatLon ! instead of ZOT, default .false.
-    logical, intent(in), optional :: Sons   ! Dump sons' indices
+                                             ! Format(1) is Geo, Format(2) is ZOT
+    logical, intent(in), optional :: LatLon  ! instead of ZOT, default .false.
+    integer, intent(in), optional :: Details ! >1 Dump QTM vertices in the
+                                             !    polygon
+                                             ! >2 Dump sons' indices
+                                             ! default 1
 
     character(31) :: Fmt(2)
     integer :: I, J
+    integer :: MyDetails
+    logical :: MyLatLon
 
     fmt = [ '(f8.3)', '(f8.4)' ]
     if ( present(format) ) fmt = format
@@ -641,11 +658,22 @@ contains
 
     call output ( QTM_Trees%n, before='QTM tree has ' )
     call output ( ' vertices:', advance='yes' )
+    myDetails = 1
+    if ( present(details) ) myDetails = details
     if ( QTM_Trees%n > 0 ) &
-      & call dump ( QTM_Trees%q, 1, 0, latLon=latLon, sons=sons )
+      & call dump ( QTM_Trees%q, 1, 0, latLon=latLon, sons=myDetails>2 )
     call output ( QTM_Trees%level, before='Mesh refined to level ' )
     call output ( QTM_Trees%n_in, before=' has ' )
     call output ( ' vertices within or adjacent to the polygon', advance='yes' )
+    if ( myDetails > 1 ) then
+      myLatLon = .false.
+      if ( present(latLon) ) myLatLon = latLon
+      if ( latLon ) then
+        call dump ( QTM_Trees%geo_in, ' QTM vertices in (lon,lat) coordinates:' )
+      else
+        call dump ( QTM_Trees%ZOT_in, ' QTM vertices in ZOT coordinates:' )
+      end if
+    end if
 
   end subroutine Dump_QTM_Tree
 
@@ -788,6 +816,10 @@ contains
 end module Generate_QTM_m
 
 ! $Log$
+! Revision 2.7  2016/08/23 00:40:48  vsnyder
+! Put coordinates of vertices within or adjacent to the polygon in components
+! within the QTM_Tree_t structure.
+!
 ! Revision 2.6  2016/07/30 00:51:35  vsnyder
 ! Change default QTM level to 7 (156 km)
 !
