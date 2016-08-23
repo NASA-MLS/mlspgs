@@ -19,7 +19,7 @@ program extinctionmaker
 ! Optionally, creates "ExtinctionR3-OzoneOnly"
 ! which would be used by a joint TES-MLS ozone retrieval
    use Dump_0, only: DUMP
-   use Dump_1, only: selfDiff
+   use Diff_1, only: SelfDiff
    use Hdf, only: DFACC_RDWR, DFACC_RDOnly
    use HDF5, only: h5fis_hdf5_f
    use Intrinsic, only: l_hdf, l_swath
@@ -240,7 +240,7 @@ contains
         &                         Geodlat%values(1, 1, MAF)
       maxLatOffset = max( &
         & maxLatOffset, abs( &
-        & l2gp%latitude(instance) - Geodlat%values(1, 1, MAF) &
+        & l2gp%latitude(instance) - real(Geodlat%values(1, 1, MAF), rgp) &
         & ) &
         & )                  
     end do
@@ -357,6 +357,9 @@ end program extinctionmaker
 !==================
 
 ! $Log$
+! Revision 1.2  2016/07/28 01:46:37  vsnyder
+! Refactor diff and dump
+!
 ! Revision 1.1  2016/06/02 22:50:49  pwagner
 ! First commit
 !
