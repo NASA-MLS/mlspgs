@@ -233,6 +233,7 @@ contains
     end if
 
     ! Compute (lon,lat) coordinates corresponding to ZOT coordinates
+    allocate ( QTM_Trees%geo_in(QTM_Trees%n_in) )
     QTM_Trees%geo_in = QTM_Trees%ZOT_In%zot_to_geo()
 
   contains
@@ -816,6 +817,10 @@ contains
 end module Generate_QTM_m
 
 ! $Log$
+! Revision 2.8  2016/08/23 01:25:58  vsnyder
+! Allocate QTM_Trees%geo_in explicitly because ifort doesn't do it
+! automagigically without a command-line option.
+!
 ! Revision 2.7  2016/08/23 00:40:48  vsnyder
 ! Put coordinates of vertices within or adjacent to the polygon in components
 ! within the QTM_Tree_t structure.
