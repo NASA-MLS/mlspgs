@@ -37,9 +37,8 @@ module QTM_Interpolation_Weights_m
 
   type :: Weight_t
     integer :: Which      ! Position in array element order to which weight is
-                          ! germane; zero if not to be used because no facet
-                          ! was found (which shouldn't happen) or because the
-                          ! Weight is zero.
+                          ! germane; if no facet was found (which shouldn't
+                          ! happen), Which is one and Weight is zero.
     real(rg) :: Weight    ! Weight -- interpolation coefficient
   end type Weight_t
 
@@ -99,7 +98,7 @@ contains
         call triangle_interpolate ( QTM_tree%Q(f)%z%x, QTM_tree%Q(f)%z%y, &
                                   & z%x, z%y, weights%weight )
       else ! Shouldn't get here
-        weights = weight_t(0,0)
+        weights = weight_t(1,0)
       end if
       if ( present(used) ) then
         used%lon = p%lon
@@ -180,7 +179,7 @@ contains
         call triangle_interpolate ( QTM_tree%Q(f)%z%x, QTM_tree%Q(f)%z%y, &
                                   & point%x, point%y, weights%weight )
       else ! Shouldn't get here
-        weights = weight_t(0,0)
+        weights = weight_t(1,0)
       end if
       if ( present(used) ) used = p
     end if
@@ -230,6 +229,11 @@ contains
 end module QTM_Interpolation_Weights_m
 
 ! $Log$
+! Revision 2.3  2016/08/24 22:56:34  vsnyder
+! Make Weights%Which == 1 with Weights%Weight == 0 if a facet is not found,
+! so Weights can still be used without checking whether a facet was found.
+! The result of interpolating with it will be zero.
+!
 ! Revision 2.2  2015/12/31 00:57:32  vsnyder
 ! Move 3D routines to QTM_Interpolation_Weights_3D_m
 !
