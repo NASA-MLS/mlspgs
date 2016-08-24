@@ -35,6 +35,7 @@ module Generate_QTM_m
     integer :: Son(0:3) = 0    ! Sub facet subscripts in the tree
     integer :: XN = 0, YN = 0  ! Which son is xNode, yNode?  Central node is 0,
                                ! pole node is 6 - ( xn + yn )
+    type(h_t) :: Geo(3)        ! (lon,lat) coordinates of vertices
     type(ZOT_t) :: Z(3)        ! ZOT coordinates of vertices
     integer :: ZOT_N(3) = 0    ! Serial numbers of ZOT coordinates of vertices
                                ! in QTM_Tree_t%ZOT_In and QTM_Tree_t%Geo_In;
@@ -270,6 +271,7 @@ contains
       QTM_Trees%Q(root)%xn = s%xNode(s%top(octant),octant)  ! xNode number
       QTM_Trees%Q(root)%yn = s%yNode(s%top(octant),octant)  ! yNode number
       QTM_Trees%Q(root)%z = s%z(:,s%top(octant),octant)     ! All the vertices
+      QTM_Trees%Q(root)%geo = QTM_Trees%Q(root)%z%ZOT_to_geo()
 
       ! Determine which vertices, if any, are within the polygon
       in = .false.
@@ -817,6 +819,9 @@ contains
 end module Generate_QTM_m
 
 ! $Log$
+! Revision 2.9  2016/08/24 01:35:51  vsnyder
+! Add (lon,lat) coordinates of facet vertices in QTM_Node_t
+!
 ! Revision 2.8  2016/08/23 01:25:58  vsnyder
 ! Allocate QTM_Trees%geo_in explicitly because ifort doesn't do it
 ! automagigically without a command-line option.
