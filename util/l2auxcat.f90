@@ -13,13 +13,15 @@
 program L2AUXcat ! catenates split L2AUX files, e.g. dgm
 !=================================
 
-   use Dump_0, only: DUMP
+   use Dump_0, only: Dump
+   use Dump_1, only: Dump
    use Hdf, only: DFACC_Create, DFACC_RDWR, DFACC_RDOnly
    use HDF5, only: H5FIs_HDF5_f, H5GCreate_f, H5GClose_f
    use Intrinsic, only: l_hdf
    use io_stuff, only: get_lun, read_textfile
-   use L2AUXData, only: L2AUXData_t, maxSDNamesBufSize, &
-     & cpL2AUXData, destroyL2AUXContents, readL2AUXData, WriteL2AUXData
+   use L2AUXData, only: L2AUXData_t, L2AUXRANK, maxSDNamesBufSize, &
+     & cpL2AUXData, destroyL2AUXContents, readL2AUXData, SetupNewL2AUXRecord, &
+     & ResizeL2AUXData, WriteL2AUXData
    use machine, only: hp, getarg
    use MLSFiles, only: HDFVersion_5, Dump, InitializeMLSFile, &
      & MLS_OpenFile, MLS_CloseFile
@@ -171,6 +173,9 @@ contains
 
   subroutine catenate_non_Fills
     ! Internal variables
+    integer :: i1
+    integer :: i2
+    integer :: iBloc
     integer :: jj
     type(l2auxData_T) :: l2aux
     type( MLSFile_T ) :: l2auxFile
@@ -180,6 +185,8 @@ contains
     integer :: N ! last profile number of a
     integer :: M ! size of b
     real(r8) :: MissingValue
+    integer :: nBlocs
+    integer, parameter :: numFilesPerBloc = 40
     integer :: status
     integer, parameter :: FORBDIMS = 10
     character(len=42), dimension(FORBDIMS), parameter :: forbiddens = (/ &
@@ -224,21 +231,10 @@ contains
       stop
     endif
     l2FileHandle = l2auxFile%FileID%f_id
+    
+    nBlocs = (n_filenames - 1)/numFilesPerBloc + 1
 
-    do i=1, n_filenames
-      status = InitializeMLSFile( l2auxFiles(i), type=l_hdf, access=DFACC_RDONLY, &
-        & content='l2aux', name=options%filenames(i), hdfVersion=HDFVERSION_5 )
-      l2auxFiles(i)%name = options%filenames(i)
-      l2auxFiles(i)%stillOpen = .false.
-      call mls_openFile( l2auxFiles(i), Status )
-      if ( status /= 0 ) then
-        print *, 'Unable to open trim(options%filenames(i)'
-        stop
-      endif
-      call Dump( l2auxFiles(i), details=1 )
-    enddo
-
-    do jj=1, NumStringElements( mysdList, countEmpty )
+    do jj=1, NumStringElements( mysdList, countEmpty ) ! Loop of datasets
       call GetStringElement( mysdList, sdName, jj, countEmpty )
       sdName = adjustl(sdName)
       call time_now ( tFile )
@@ -253,34 +249,55 @@ contains
       if ( options%verbose ) print *, 'Catenating dataset: ', trim(sdName)
       N = 0
       M = 0
-      do i=1, n_filenames
-        if ( options%verbose ) print *, 'Reading from: ', trim(options%filenames(i))
-        if ( i == 1 ) then
-          call Readl2auxData( l2auxFiles(i)%FileID%f_id, trim(sdName), ol2aux, &
-            & hdfVersion=HDFVERSION_5 )
-          print *, 'shape l2auxvalues (after reading): ', shape(ol2aux%values)
-          cycle
-        endif
-        call Readl2auxData( l2auxFiles(i)%FileID%f_id, trim(sdName), l2aux, &
-          & hdfVersion=HDFVERSION_5)
-        ! We will use ChunkNumbers to determine N and M
-        N = FindFirst( l2aux%values(1,1,:) /= MissingValue ) - 1
-        M = FindLast( l2aux%values(1,1,:) /= MissingValue )
-        ol2aux%values      (:,:,N+1:M) = l2aux%values        (:,:,N+1:M)    
+      i2 = 0
+      do iBloc = 1, nBlocs ! Loop of blocs
+        i1 = i2 + 1
+        i2 = min( i2 + numFilesPerBloc, n_filenames )
+        ! 1st open the files
+        do i=i1, i2
+          status = InitializeMLSFile( l2auxFiles(i), type=l_hdf, access=DFACC_RDONLY, &
+            & content='l2aux', name=options%filenames(i), hdfVersion=HDFVERSION_5 )
+          l2auxFiles(i)%name = options%filenames(i)
+          l2auxFiles(i)%stillOpen = .false.
+          call mls_openFile( l2auxFiles(i), Status )
+          if ( status /= 0 ) then
+            print *, 'Unable to open trim(options%filenames(i)'
+            stop
+          endif
+          if ( options%verbose .and. jj == 1 ) call Dump( l2auxFiles(i), details=1 )
+        enddo
+        ! Read each file, putting its values into ol2aux
+        do i=i1, i2
+          if ( options%verbose ) print *, 'Reading from: ', trim(options%filenames(i))
+          if ( i == 1 ) then
+            call Readl2auxData( l2auxFiles(i)%FileID%f_id, trim(sdName), ol2aux, &
+              & hdfVersion=HDFVERSION_5 )
+            print *, 'shape l2auxvalues (after reading first): ', shape(ol2aux%values)
+            cycle
+          endif
+          call Readl2auxData( l2auxFiles(i)%FileID%f_id, trim(sdName), l2aux, &
+            & hdfVersion=HDFVERSION_5)
+          ! We will use ChunkNumbers to determine N and M
+          N = FindFirst( l2aux%values(1,1,:) /= MissingValue ) - 1
+          M = FindLast( l2aux%values(1,1,:) /= MissingValue )
+          call ResizeL2AUXData ( ol2aux, M )
+          ol2aux%values      (:,:,N+1:M) = l2aux%values        (:,:,N+1:M)    
 
-        call Destroyl2auxContents( l2aux )
-      enddo
+          call Destroyl2auxContents( l2aux )
+        enddo
+        ! Last, close each file
+        do i=i1, i2
+          call mls_closeFile( l2auxFiles(i), Status )
+        enddo
+      enddo ! End Loop of blocs
       call sayTime('Reading this dataset', tFile)
       ! print *, 'shape l2auxvalues (before writing): ', shape(ol2aux%values)
       call Writel2auxData ( ol2aux, l2FileHandle, status, sdName, &
         & hdfVersion=HDFVERSION_5 )
       call sayTime('Writing this dataset', tFile)
       call Destroyl2auxContents( ol2aux )
-    enddo
+    enddo ! End Loop of datasets
     call mls_closeFile( l2auxFile, Status )
-    do i=1, n_filenames
-      call mls_closeFile( l2auxFiles(i), Status )
-    enddo
     call sayTime( 'catenating all datasets' )
   end subroutine catenate_non_Fills
 
@@ -510,6 +527,9 @@ end program L2AUXcat
 !==================
 
 ! $Log$
+! Revision 1.7  2016/06/13 23:26:41  pwagner
+! Added commandline option -F; upped max num of input files tto 750
+!
 ! Revision 1.6  2015/08/05 20:36:28  pwagner
 ! Option -ign can catenate non-Fills
 !
