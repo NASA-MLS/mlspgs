@@ -267,9 +267,14 @@ contains
 
   subroutine catenate_non_Fills
     ! Internal variables
+    integer :: i1
+    integer :: i2
+    integer :: iBloc
     integer :: jj
     type(L2GPData_T) :: l2gp
     type( MLSFile_T ) :: l2gpFile
+    integer :: nBlocs
+    integer, parameter :: numFilesPerBloc = 40
     integer :: numProfs
     integer :: numTotProfs
     type(L2GPData_T) :: ol2gp
@@ -297,17 +302,10 @@ contains
     l2gpFile%stillOpen = .false.
     call mls_openFile( L2GPFile, Status )
     l2FileHandle = l2gpFile%FileID%f_id
-
-    do i=1, n_filenames
-      status = InitializeMLSFile( L2GPFiles(i), type=l_swath, access=DFACC_RDONLY, &
-        & content='l2gp', name=filenames(i), hdfVersion=HDFVERSION_5 )
-      L2GPFiles(i)%name = filenames(i)
-      L2GPFiles(i)%stillOpen = .false.
-      call mls_openFile( L2GPFiles(i), Status )
-    enddo
+    nBlocs = (n_filenames - 1)/numFilesPerBloc + 1
 
     call GetStringElement( swathList, swath, 1, countEmpty )
-    do jj=1, NumStringElements( swathList, countEmpty )
+    do jj=1, NumStringElements( swathList, countEmpty ) ! Loop of swaths
       call GetStringElement( swathList, swath, jj, countEmpty )
       call time_now ( tFile )
       if ( options%verbose ) print *, 'Catenating swath: ', trim(swath)
@@ -315,44 +313,59 @@ contains
       M = 0
       wroteAlready = .false.
       numTotProfs = 0
-      do i=1, n_filenames
-        if ( options%verbose ) print *, 'Reading from: ', trim(filenames(i))
-        if ( i == 1 ) then
-          call ReadL2GPData( L2GPFiles(i)%FileID%f_id, swath, ol2gp, numProfs )
-          cycle
-        endif
-        call ReadL2GPData( L2GPFiles(i)%FileID%f_id, swath, l2gp, numProfs )
-        ! We will use ChunkNumbers to determine N and M
-        N = FindFirst( l2gp%chunkNumber > 0 ) - 1
-        M = FindLast( l2gp%chunkNumber > 0 )
-        ol2gp%latitude       (N+1:M)     = l2gp%latitude       (N+1:M)
-        ol2gp%longitude      (N+1:M)     = l2gp%longitude      (N+1:M)
-        ol2gp%solarTime      (N+1:M)     = l2gp%solarTime      (N+1:M)
-        ol2gp%solarZenith    (N+1:M)     = l2gp%solarZenith    (N+1:M)
-        ol2gp%losAngle       (N+1:M)     = l2gp%losAngle       (N+1:M)
-        ol2gp%geodAngle      (N+1:M)     = l2gp%geodAngle      (N+1:M)
-        ol2gp%time           (N+1:M)     = l2gp%time           (N+1:M)
+      i2 = 0
+      do iBloc = 1, nBlocs ! Loop of blocs
+        i1 = i2 + 1
+        i2 = min( i2 + numFilesPerBloc, n_filenames )
+        ! 1st open the files
+        do i=i1, i2
+          status = InitializeMLSFile( L2GPFiles(i), type=l_swath, access=DFACC_RDONLY, &
+            & content='l2gp', name=filenames(i), hdfVersion=HDFVERSION_5 )
+          L2GPFiles(i)%name = filenames(i)
+          L2GPFiles(i)%stillOpen = .false.
+          call mls_openFile( L2GPFiles(i), Status )
+        enddo
+        ! Read each file, putting its values into ol2gp
+        do i=i1, i2
+          if ( options%verbose ) print *, 'Reading from: ', trim(filenames(i))
+          if ( i == 1 ) then
+            call ReadL2GPData( L2GPFiles(i)%FileID%f_id, swath, ol2gp, numProfs )
+            cycle
+          endif
+          call ReadL2GPData( L2GPFiles(i)%FileID%f_id, swath, l2gp, numProfs )
+          ! We will use ChunkNumbers to determine N and M
+          N = FindFirst( l2gp%chunkNumber > 0 ) - 1
+          M = FindLast( l2gp%chunkNumber > 0 )
+          ol2gp%latitude       (N+1:M)     = l2gp%latitude       (N+1:M)
+          ol2gp%longitude      (N+1:M)     = l2gp%longitude      (N+1:M)
+          ol2gp%solarTime      (N+1:M)     = l2gp%solarTime      (N+1:M)
+          ol2gp%solarZenith    (N+1:M)     = l2gp%solarZenith    (N+1:M)
+          ol2gp%losAngle       (N+1:M)     = l2gp%losAngle       (N+1:M)
+          ol2gp%geodAngle      (N+1:M)     = l2gp%geodAngle      (N+1:M)
+          ol2gp%time           (N+1:M)     = l2gp%time           (N+1:M)
 
-        ol2gp%chunkNumber    (N+1:M)     = l2gp%chunkNumber      (N+1:M)
-        ol2gp%status         (N+1:M)     = l2gp%status           (N+1:M)
-        ol2gp%quality        (N+1:M)     = l2gp%quality          (N+1:M)
-        ol2gp%convergence    (N+1:M)     = l2gp%convergence      (N+1:M)  
-        ol2gp%AscDescMode    (N+1:M)     = l2gp%AscDescMode      (N+1:M)  
+          ol2gp%chunkNumber    (N+1:M)     = l2gp%chunkNumber      (N+1:M)
+          ol2gp%status         (N+1:M)     = l2gp%status           (N+1:M)
+          ol2gp%quality        (N+1:M)     = l2gp%quality          (N+1:M)
+          ol2gp%convergence    (N+1:M)     = l2gp%convergence      (N+1:M)  
+          ol2gp%AscDescMode    (N+1:M)     = l2gp%AscDescMode      (N+1:M)  
 
-        ol2gp%l2gpValue      (:,:,N+1:M) = l2gp%l2gpValue        (:,:,N+1:M)    
-        ol2gp%l2gpPrecision  (:,:,N+1:M) = l2gp%l2gpPrecision    (:,:,N+1:M)    
+          ol2gp%l2gpValue      (:,:,N+1:M) = l2gp%l2gpValue        (:,:,N+1:M)    
+          ol2gp%l2gpPrecision  (:,:,N+1:M) = l2gp%l2gpPrecision    (:,:,N+1:M)    
 
-        call DestroyL2GPContents( l2gp )
-      enddo
+          call DestroyL2GPContents( l2gp )
+        enddo
+        ! Last, close each file
+        do i=i1, i2
+          call mls_closeFile( L2GPFiles(i), Status )
+        enddo
+      enddo  ! End Loop of blocs
       if ( options%timing ) call sayTime('Reading this swath', tFile)
       call WriteL2GPData ( ol2gp, l2FileHandle, swath )
       if ( options%timing ) call sayTime('Writing this swath', tFile)
       call DestroyL2GPContents( ol2gp )
-    enddo
+    enddo ! End Loop of swaths
     call mls_closeFile( L2GPFile, Status )
-    do i=1, n_filenames
-      call mls_closeFile( L2GPFiles(i), Status )
-    enddo
     if ( options%timing ) call sayTime('catenating all swaths')
   end subroutine catenate_non_Fills
 
@@ -777,6 +790,9 @@ end program L2GPcat
 !==================
 
 ! $Log$
+! Revision 1.23  2016/06/13 23:27:46  pwagner
+! Added -g commandline option
+!
 ! Revision 1.22  2016/06/10 16:13:18  pwagner
 ! Added commandline option -F; upped max num of input files tto 750
 !
