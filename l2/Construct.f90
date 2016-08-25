@@ -62,8 +62,9 @@ contains ! =====     Public Procedures     =============================
     use MLSCommon, only: MLSFile_t
     use MLSL2Options, only: MLSMessage
     use MLSSignals_m, only: modules
+    use MLSStringLists, only: switchDetail
     use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Allocate
-    use Toggles, only: gen, toggle
+    use Toggles, only: gen, switches, toggle
     use Trace_m, only: trace_begin, trace_end
 
     type (QuantityTemplate_T), dimension(:), pointer :: mifGeolocation
@@ -71,6 +72,7 @@ contains ! =====     Public Procedures     =============================
     type (MLSChunk_T), intent(in) :: chunk
     
     ! Local variables
+    integer :: details
     integer :: INSTRUMENTMODULEINDEX    ! Loop counter
     integer :: Me = -1          ! String index for trace
     integer :: STATUS                   ! Flag
@@ -78,6 +80,7 @@ contains ! =====     Public Procedures     =============================
 
     call trace_begin ( me, "ConstructMIFGeolocation", 0, cond=toggle(gen) )
     verbose = BeVerbose( 'qtmp', 0 )
+    details = SwitchDetail( switches, 'qtmp' )
     if ( .not. associated ( mifGeolocation ) ) then
       ! Don't overwrite it if we already have it, e.g. from previous construct
       ! or forge.
@@ -95,7 +98,7 @@ contains ! =====     Public Procedures     =============================
           mifGeolocation(instrumentModuleIndex), &
           filedatabase=filedatabase, chunk=chunk )
           if ( verbose ) &
-            & call Dump( mifGeolocation(instrumentModuleIndex), details=0 )
+            & call Dump( mifGeolocation(instrumentModuleIndex), details=details )
         end do
       else
         mifGeolocation%noSurfs = 0
@@ -281,7 +284,7 @@ contains ! =====     Public Procedures     =============================
   ! DeConstruct the Vector template databases.
 
     use HGridsDatabase, only: destroyHGridDatabase, HGrids_t
-    use MLSStringLists, only: switchdetail
+    use MLSStringLists, only: switchDetail
     use output_m, only: output
     ! use quantityTemplates, only: destroyQuantityTemplateDatabase, &
     !   & quantityTemplate_t
@@ -323,6 +326,9 @@ end module Construct
 
 !
 ! $Log$
+! Revision 2.80  2016/08/25 22:58:43  pwagner
+! Apply -Sqtmp switch level when dumping mifGeolocation
+!
 ! Revision 2.79  2016/08/09 18:55:26  pwagner
 ! Print how many mif geolocations if verbose
 !
