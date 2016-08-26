@@ -11,45 +11,45 @@
 
 module L2AUXData                 ! Data types for storing L2AUX data internally
 
-  use allocate_deallocate, only: allocate_test, deallocate_test
-  use dump_0, only: dump
-  use hdf, only: dfacc_create, dfacc_rdonly, dfacc_rdwr, dfnt_float32, &
-    & dfnt_int32, sfcreate, sfdimid, sfendacc, sfgdinfo, sfginfo, &
-    & sfn2index, sfrdata_f90, sfsdmname, sfsdscale, sfselect, sfwdata_f90
-  use init_tables_module, only: l_baseline, l_channel, l_chisqchan, &
-    & l_chisqmmaf, l_chisqmmif, l_chunk, l_cloudextinction, &
-    & l_cloudinducedradiance, l_cloudradsensitivity, l_cloudwater, &
-    & l_dnwt_ajn, l_dnwt_axmax, l_dnwt_cait, l_dnwt_chisqminnorm, &
-    & l_dnwt_chisqnorm, l_dnwt_diag, l_dnwt_dxdx, l_dnwt_dxdxl, &
-    & l_dnwt_dxn, l_dnwt_dxnl, l_dnwt_flag, l_dnwt_fnmin, l_dnwt_fnorm, &
-    & l_dnwt_gdx, l_dnwt_gfac, l_dnwt_gradn, l_dnwt_sq, l_dnwt_sqt, &
-    & l_effectiveopticaldepth, l_elevoffset, l_frequency, l_geodangle, &
-    & l_height, l_heightoffset, l_intermediatefrequency, l_iteration, &
-    & l_jacobian_cols, l_jacobian_rows, l_limbsidebandfraction, &
-    & l_lostransfunc, l_losvel, l_lsbfrequency, l_maf, &
-    & l_massmeandiameterice, l_massmeandiameterwater, l_mif, &
-    & l_mifextinction, l_mifextinctionv2, l_noisebandwidth, l_none, &
-    & l_noradspermif, l_numj, l_opticaldepth, l_orbitinclination, l_ascdescmode, &
-    & l_phasetiming, l_phitan, l_pressure, l_ptan, l_radiance, &
-    & l_reflspill, l_refltemp, l_scanresidual, l_sceci, l_scgeocalt, &
-    & l_scveleci, l_scvelecr, l_singlechannelradiance, l_sizedistribution, &
-    & l_spaceradiance, l_strayradiance, l_surfacetype, &
-    & l_systemtemperature, l_tngteci, l_tngtgeocalt, l_tngtgeodalt, &
-    & l_totalextinction, l_usbfrequency, l_vmr, l_xyz
-  use intrinsic, only: l_hdf, lit_indices
-  use lexer_core, only: print_source
+  use Allocate_deallocate, only: Allocate_test, Deallocate_test
+  use Dump_0, only: Dump
+  use HDF, only: dfacc_create, dfacc_rdonly, dfacc_rdwr, dfnt_float32, &
+    & Dfnt_int32, sfcreate, sfdimid, sfendacc, sfgdinfo, sfginfo, &
+    & Sfn2index, sfrdata_f90, sfsdmname, sfsdscale, sfselect, sfwdata_f90
+  use Init_tables_module, only: l_baseline, l_channel, l_chisqchan, &
+    & L_chisqmmaf, l_chisqmmif, l_chunk, l_cloudextinction, &
+    & L_cloudinducedradiance, l_cloudradsensitivity, l_cloudwater, &
+    & L_dnwt_ajn, l_dnwt_axmax, l_dnwt_cait, l_dnwt_chisqminnorm, &
+    & L_dnwt_chisqnorm, l_dnwt_diag, l_dnwt_dxdx, l_dnwt_dxdxl, &
+    & L_dnwt_dxn, l_dnwt_dxnl, l_dnwt_flag, l_dnwt_fnmin, l_dnwt_fnorm, &
+    & L_dnwt_gdx, l_dnwt_gfac, l_dnwt_gradn, l_dnwt_sq, l_dnwt_sqt, &
+    & L_effectiveopticaldepth, l_elevoffset, l_frequency, l_geodangle, &
+    & L_height, l_heightoffset, l_intermediatefrequency, l_iteration, &
+    & L_jacobian_cols, l_jacobian_rows, l_limbsidebandfraction, &
+    & L_lostransfunc, l_losvel, l_lsbfrequency, l_maf, &
+    & L_massmeandiameterice, l_massmeandiameterwater, l_mif, &
+    & L_mifextinction, l_mifextinctionv2, l_noisebandwidth, l_none, &
+    & L_noradspermif, l_numj, l_opticaldepth, l_orbitinclination, l_ascdescmode, &
+    & L_phasetiming, l_phitan, l_pressure, l_ptan, l_radiance, &
+    & L_reflspill, l_refltemp, l_scanresidual, l_sceci, l_scgeocalt, &
+    & L_scveleci, l_scvelecr, l_singlechannelradiance, l_sizedistribution, &
+    & L_spaceradiance, l_strayradiance, l_surfacetype, &
+    & L_systemtemperature, l_tngteci, l_tngtgeocalt, l_tngtgeodalt, &
+    & L_totalextinction, l_usbfrequency, l_vmr, l_xyz
+  use Intrinsic, only: l_HDF, lit_indices
+  use Lexer_core, only: print_source
   use MLSCommon, only: defaultUndefinedValue, MLSFile_t
   use MLSKinds, only: r8, r4
-  use MLSL2options, only: default_hdfversion_read, default_hdfversion_write
-  use MLSMessagemodule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Deallocate, &
+  use MLSL2Options, only: default_HDFversion_read, default_HDFversion_write
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Deallocate, &
     & MLSMSG_Error, MLSMSG_Warning
   use MLSSignals_m, only: getModuleName, modules
   use MLSStrings, only: lowercase
   use MLSStringLists, only: array2List, getStringElement, list2Array, &
-    & numStringElements, stringElement
-  use output_m, only: output
-  use quantityTemplates, only: quantityTemplate_t
-  use string_table, only: get_string, display_string
+    & NumStringElements, stringElement
+  use Output_m, only: output
+  use QuantityTemplates, only: quantityTemplate_t
+  use String_table, only: get_string, display_string
 
   implicit none
 
@@ -294,8 +294,8 @@ contains ! =====     Public Procedures     =============================
     use HDF, only: dfacc_read, dfacc_rdwr
     use HDF5, only: h5gclose_f, h5gopen_f, h5dopen_f, h5dclose_f
     use MLSFiles, only: fileNotFound, wildCardHDFVersion, &
-      & MLS_exists, mls_hdf_version, mls_sfstart, mls_sfend
-    use MLSHdf5, only: getAllHDF5DSNames, getHDF5Attribute, &
+      & MLS_exists, MLS_hdf_version, MLS_sfstart, MLS_sfend
+    use MLSHDF5, only: getAllHDF5DSNames, getHDF5Attribute, &
       & isHDF5AttributePresent
     !-------------------------------------------------------------------
 
@@ -851,7 +851,7 @@ contains ! =====     Public Procedures     =============================
     & firstProf, lastProf, checkDimNames)
 
     use MLSFiles, only: HDFVersion_4, HDFVersion_5, &
-      & mls_closefile, mls_openfile
+      & MLS_closefile, MLS_openfile
     use trace_m, only: trace_begin, trace_end
 
     ! This routine reads an l2aux file, returning a filled data structure
@@ -1124,7 +1124,7 @@ contains ! =====     Public Procedures     =============================
   subroutine WriteL2AUXData_FileHandle(l2aux, sd_id, returnStatus, sdName, &
     & NoMAFS, WriteCounterMAF, DimNames, Reuse_dimNames, hdfVersion)
 
-  use MLSFiles, only: initializemlsfile
+  use MLSFiles, only: initializeMLSFile
 
   ! Write l2aux to the file with l2FileHandle
   ! Optionally, write a bogus CounterMAF sd so the
@@ -1201,8 +1201,8 @@ contains ! =====     Public Procedures     =============================
       call WriteL2AUXData_MF_hdf4(l2aux, L2AUXFile, returnStatus, sdName, &
     & NoMAFS, WriteCounterMAF, DimNames, Reuse_dimNames)
     case (HDFVERSION_5)
-      call WriteL2AUXData_MF_hdf5(l2aux, L2AUXFile, returnStatus, sdName, &
-    & NoMAFS, WriteCounterMAF, DimNames, Reuse_dimNames)
+      call WriteL2AUXData_MF_hdf5( l2aux, L2AUXFile, returnStatus, sdName, &
+    & NoMAFS, WriteCounterMAF )
     case default
       call MLSMessage(MLSMSG_Error, ModuleName, &
         & 'Unrecognized hdfVersion for l2aux file', MLSFile=L2AUXFile)
@@ -1214,16 +1214,15 @@ contains ! =====     Public Procedures     =============================
   end subroutine WriteL2AUXData_MLSFile
 
   ! ----------------------------------------  WriteL2AUXData_MF_hdf5  -----
-
   subroutine WriteL2AUXData_MF_hdf5(l2aux, L2AUXFile, returnStatus, sdName, &
-    & NoMAFS, WriteCounterMAF, DimNames, Reuse_dimNames)
+    & NoMAFS, WriteCounterMAF )
   ! Write l2aux to the L2AUXFile
   ! Optionally, write a bogus CounterMAF sd so the
   ! resulting file can masquerade as an l1BRad
   ! (Note that this bogus sd should only be written once for each file;
   !  also note the attempt to convert l2aux%values to KIND of l1b radiances)
     use HDF5, only: h5gclose_f, h5gopen_f
-    use MLS_Dataproducts, only: dataproducts_t
+    use MLS_DataProducts, only: dataProducts_t
     use MLSAUXdata, only: build_MLSAUXData
     use MLSHDF5, only: ishdf5attributepresent, makeHDF5Attribute, saveAsHDF5DS
     use MLSL2Timings, only: showTimingNames
@@ -1232,12 +1231,8 @@ contains ! =====     Public Procedures     =============================
     type (L2AUXData_T), intent(inout) :: L2AUX
     type(MLSFile_T)                :: L2AUXFile
     character (len=*), optional, intent(in) :: SDNAME ! Defaults to l2aux%name
-    character (len=*), optional, intent(in) :: DimNames ! Comma-separated list
-                                                        ! Otherwise automatic
-                                                        ! (Requiring l2cf)
     integer, intent(in), optional :: NoMAFS
     logical, intent(in), optional :: WriteCounterMAF  ! Write bogus CounterMAF
-    logical, intent(in), optional :: Reuse_dimNames   ! We already wrote them
     integer, intent(out) :: returnStatus           ! 0 unless error
 
     ! Local variables
@@ -1331,7 +1326,6 @@ contains ! =====     Public Procedures     =============================
   end subroutine WriteL2AUXData_MF_hdf5
 
   ! ----------------------------------------  WriteL2AUXData_MF_hdf4  -----
-
   subroutine WriteL2AUXData_MF_hdf4(l2aux, L2AUXFile, returnStatus, sdName, &
     & NoMAFS, WriteCounterMAF, DimNames, Reuse_dimNames)
   ! Write l2aux to the file with l2FileHandle
@@ -1979,6 +1973,9 @@ end module L2AUXData
 
 
 ! $Log$
+! Revision 2.100  2016/08/26 00:17:52  pwagner
+! Removed two unused dummy args
+!
 ! Revision 2.99  2016/07/28 01:45:07  vsnyder
 ! Refactor dump and diff
 !
