@@ -62,6 +62,7 @@ dl
 dobsonunits  # 1 DU = 2.687e20 molecules/m^2
 DU  # 1 DU = 2.687e20 molecules/m^2
 
+ECR
 ECRtoFOV
 earthradius
 earthRefl
@@ -219,9 +220,11 @@ theta
 THz
 time
 tkgen
-tngteci
-tngtgeocalt
-tngtgeodalt
+tngtECI
+tngtECR
+tngtGeocAlt
+tngtGeodAlt
+tngtGeodLat
 totalExtinction
 totalPowerWeight
 true
@@ -246,6 +249,9 @@ zonalavg
 temperature
 
 # $Log$
+# Revision 2.73  2016/08/30 23:43:45  vsnyder
+# Add ECR and TngtGeodLat
+#
 # Revision 2.72  2016/05/27 20:59:22  vsnyder
 # Remove l_mifIncline and l_mifTanHt because they are redundant to
 # l_OrbitInclination and l_tngtGeodAlt
