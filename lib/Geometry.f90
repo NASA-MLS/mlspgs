@@ -31,6 +31,7 @@ module Geometry
   ! Procedures
   public :: GeocToECRu, GeocToGeodLat, GeodToECRm, GeodToGeocAlt
   public :: GeodToGeocLat, Get_R_Eq, Great_Circle_Points
+  public :: Phi_To_Lat_Deg, Phi_To_Lat_Rad
   public :: Orbit_Plane_Minor_Axis_sq, To_Cart, To_XYZ, XYZ_to_Geod
   public :: XYZ_to_Geod_Bowring, XYZ_to_Geod_Fukushima
   public :: XZ_to_Geod, XZ_to_Geod_Fukushima
@@ -59,6 +60,14 @@ module Geometry
 
   interface Great_Circle_Points
     module procedure Great_Circle_Points_D, Great_Circle_Points_S
+  end interface
+
+  interface Phi_To_Lat_Deg
+    module procedure Phi_To_Lat_Deg_D, Phi_To_Lat_Deg_S
+  end interface
+
+  interface Phi_To_Lat_Rad
+    module procedure Phi_To_Lat_Rad_D, Phi_To_Lat_Rad_S
   end interface
 
   interface Orbit_Plane_Minor_Axis_sq
@@ -121,7 +130,7 @@ module Geometry
 
 contains
 
-  ! --------------------------------------------  GeocToGeodLat_D  -----
+  ! ----------------------------------------------  GeocToGeodLat  -----
   double precision elemental function GeocToGeodLat_D ( geocLat ) result ( GeodLat )
 
   !{ Convert a geocentric latitude $\lambda$ to a geodetic one $\mu$, both
@@ -139,7 +148,6 @@ contains
 
   end function GeocToGeodLat_D
 
-  ! --------------------------------------------  GeocToGeodLat_S  -----
   real elemental function GeocToGeodLat_S ( geocLat ) result ( GeodLat )
 
   !{ Convert a geocentric latitude $\lambda$ to a geodetic one $\mu$, both
@@ -232,7 +240,7 @@ contains
     ECR(2) = rho * sin(myLon)
   end function GeodToECRm_S
 
-  ! --------------------------------------------  GeodToGeocAlt_D  -----
+  ! ----------------------------------------------  GeodToGeocAlt  -----
   double precision function GeodToGeocAlt_D ( Where ) result ( GeocAlt )
 
   ! Convert geodetic altitude in meters above sea level to geocentric height in meters
@@ -246,7 +254,6 @@ contains
 
   end function GeodToGeocAlt_D
 
-  ! --------------------------------------------  GeodToGeocAlt_S  -----
   double precision function GeodToGeocAlt_S ( Where ) result ( GeocAlt )
 
   ! Convert geodetic altitude in meters above sea level to geocentric height in meters
@@ -260,8 +267,7 @@ contains
 
   end function GeodToGeocAlt_S
 
-
-  ! --------------------------------------------  GeodToGeocLat_D  -----
+  ! ----------------------------------------------  GeodToGeocLat  -----
   double precision elemental function GeodToGeocLat_D ( GeodLat ) result ( GeocLat )
 
   !{ Convert a geodetic latitude $\mu$ (IN DEGREES!) into a geocentric one
@@ -280,7 +286,6 @@ contains
 
   end function GeodToGeocLat_D
 
-  ! --------------------------------------------  GeodToGeocLat_S  -----
   real elemental function GeodToGeocLat_S ( GeodLat ) result ( GeocLat )
 
   !{ Convert a geodetic latitude $\mu$ (IN DEGREES!) into a geocentric one
@@ -331,7 +336,7 @@ contains
 
   end function Get_R_Eq
 
-! ----------------------------------------  Great_Circle_Points_D  -----
+! ------------------------------------------  Great_Circle_Points  -----
 
   subroutine Great_Circle_Points_D ( Lon1, GeocLat1, Lon2, GeocLat2, Phi, Lon, GeocLat )
   ! Compute longitude and geocentric latitude of points on the great circle
@@ -347,8 +352,6 @@ contains
     include "Great_Circle_Points.f9h"
   end subroutine Great_Circle_Points_D
 
-! ----------------------------------------  Great_Circle_Points_S  -----
-
   subroutine Great_Circle_Points_S ( Lon1, GeocLat1, Lon2, GeocLat2, Phi, Lon, GeocLat )
   ! Compute longitude and geocentric latitude of points on the great circle
   ! defined by R1 and R2, with Phi(1) at R1, and subsequent points along the
@@ -363,13 +366,13 @@ contains
     include "Great_Circle_Points.f9h"
   end subroutine Great_Circle_Points_S
 
-! ----------------------------------  Orbit_Plane_Minor_Axis_sq_D  -----
+! ------------------------------------  Orbit_Plane_Minor_Axis_sq  -----
 
-  !{ Compute the square of the minor axis of orbit plane projected Earth
-  !  ellipse $c$, where
+  !{ Compute the square of the ratio of the minor axis to the major axis
+  !  lengths of the orbit plane projected Earth ellipse $c$, where
   !  $c^2 = \frac{a^2\,b^2}{a^2 \sin^2 \beta + b^2 \cos^2 \beta} =
   !         \frac{a^2}{\left(\frac{a^2}{b^2}-1\right) \sin^2 \beta + 1} =
-  !         \frac{b^2}{1 - e^2 \cos^2 \beta}$ where $e^2$ is the square of
+  !         \frac{b^2}{1 - e^2 \cos^2 \beta}$ and $e^2$ is the square of
   !         the eccentricity, given by $1 - \frac{b^2}{a^2}$.
   !  This is Equation (5.3) in the 19 August 2004 ATBD JPL D-18130.
 
@@ -381,8 +384,6 @@ contains
     csq = EarthRadB**2 / ( 1.0_rk - Eccentricity_sq * cos(beta)**2 )
   end function Orbit_Plane_Minor_Axis_sq_D
 
-! ----------------------------------  Orbit_Plane_Minor_Axis_sq_S  -----
-
   pure elemental function Orbit_Plane_Minor_Axis_sq_S ( Beta ) result ( Csq )
     integer, parameter :: RK = kind(0.0e0)
     real(rk), intent(in) :: Beta  ! Orbit inclination, radians
@@ -391,7 +392,86 @@ contains
     csq = EarthRadB**2 / ( 1.0_rk - Eccentricity_sq * cos(beta)**2 )
   end function Orbit_Plane_Minor_Axis_sq_S
 
-  ! --------------------------------------------------  To_Cart_D  -----
+! ---------------------------------------------------  Phi_To_Lat  -----
+
+  !{ Given the orbit angle $\phi$ and inclination $\beta$, compute the
+  !  latitude $\lambda$ corresponding to the orbit angle.  If the orbit
+  !  angle is geodetic (geocentric), the latitude is geodetic
+  !  (geocentric).
+  !  \begin{equation}
+  !    \lambda = \sin^{-1} \left(
+  !      \frac{c^2 \sin \phi \sin \beta}
+  !           {\sqrt{a^4 ( 1 - \sin^2 \phi ) + c^4 \sin^2 \phi}} \right)
+  !  \end{equation}
+  !  where $a$ is the Earth's semi-major (equatorial) axis length, and $c$
+  !  is the ratio of the minor axis to the major axis lengths of the
+  !  Earth-projected orbit-plane ellipse.
+
+  pure elemental function Phi_To_Lat_Deg_D ( Phi, Beta ) result ( Lat )
+    integer, parameter :: RK = kind(0.0d0)
+    real(rk) :: Lat              ! Latitude, degrees (geocentric or geodetic)
+    real(rk), intent(in) :: Phi  ! Orbit angle, degrees (geocentric or geodetic)
+    real(rk), intent(in) :: Beta ! Orbit inclination, degrees
+    real(rk) :: Csq ! Square of ratio of minor to major axis lengths of Earth-
+                    ! projected orbit-plane ellipse
+    real(rk) :: SinBeta, SinPhi, SinPhiSQ
+    csq =  orbit_plane_minor_axis_sq ( deg2rad * beta )
+    sinBeta = sin(deg2rad * beta)
+    sinPhi = sin(deg2rad * phi)
+    sinPhiSQ = sinPhi**2
+    lat = rad2deg * asin(csq * sinPhi * sinBeta &
+      & / sqrt(earthrada**4*(1.0_rp-sinPhiSQ) + csq**2*sinPhiSQ))
+  end function Phi_To_Lat_Deg_D
+
+  pure elemental function Phi_To_Lat_Deg_S ( Phi, Beta ) result ( Lat )
+    integer, parameter :: RK = kind(0.0e0)
+    real(rk) :: Lat              ! Latitude, degrees (geocentric or geodetic)
+    real(rk), intent(in) :: Phi  ! Orbit angle, degrees (geocentric or geodetic)
+    real(rk), intent(in) :: Beta ! Orbit inclination, degrees
+    real(rk) :: Csq ! Square of ratio of minor to major axis lengths of Earth-
+                    ! projected orbit-plane ellipse
+    real(rk) :: SinBeta, SinPhi, SinPhiSQ
+    csq =  orbit_plane_minor_axis_sq ( deg2rad * beta )
+    sinBeta = sin(deg2rad * beta)
+    sinPhi = sin(deg2rad * phi)
+    sinPhiSQ = sinPhi**2
+    lat = rad2deg * asin(csq * sinPhi * sinBeta &
+      & / sqrt(earthrada**4*(1.0_rp-sinPhiSQ) + csq**2*sinPhiSQ))
+  end function Phi_To_Lat_Deg_S
+
+  pure elemental function Phi_To_Lat_Rad_D ( Phi, Beta ) result ( Lat )
+    integer, parameter :: RK = kind(0.0d0)
+    real(rk) :: Lat              ! Latitude, radians (geocentric or geodetic)
+    real(rk), intent(in) :: Phi  ! Orbit angle, radians (geocentric or geodetic)
+    real(rk), intent(in) :: Beta ! Orbit inclination, radians
+    real(rk) :: Csq ! Square of ratio of minor to major axis lengths of Earth-
+                    ! projected orbit-plane ellipse
+    real(rk) :: SinBeta, SinPhi, SinPhiSQ
+    csq =  orbit_plane_minor_axis_sq ( beta )
+    sinBeta = sin(beta)
+    sinPhi = sin(phi)
+    sinPhiSQ = sinPhi**2
+    lat = asin(csq * sinPhi * sinBeta &
+      & / sqrt(earthrada**4*(1.0_rp-sinPhiSQ) + csq**2*sinPhiSQ))
+  end function Phi_To_Lat_Rad_D
+
+  pure elemental function Phi_To_Lat_Rad_S ( Phi, Beta ) result ( Lat )
+    integer, parameter :: RK = kind(0.0e0)
+    real(rk) :: Lat              ! Latitude, radians (geocentric or geodetic)
+    real(rk), intent(in) :: Phi  ! Orbit angle, radians (geocentric or geodetic)
+    real(rk), intent(in) :: Beta ! Orbit inclination, radians
+    real(rk) :: Csq ! Square of ratio of minor to major axis lengths of Earth-
+                    ! projected orbit-plane ellipse
+    real(rk) :: SinBeta, SinPhi, SinPhiSQ
+    csq =  orbit_plane_minor_axis_sq ( beta )
+    sinBeta = sin(beta)
+    sinPhi = sin(phi)
+    sinPhiSQ = sinPhi**2
+    lat = asin(csq * sinPhi * sinBeta &
+      & / sqrt(earthrada**4*(1.0_rp-sinPhiSQ) + csq**2*sinPhiSQ))
+  end function Phi_To_Lat_Rad_S
+
+  ! ----------------------------------------------------  To_Cart  -----
 
   !{ Convert geodetic Latitude (DEGREES!), Longitude (DEGREES!), and Height
   !  (km) above the mean Earth ellipsoid (mean sea level), to Cartesian
@@ -439,7 +519,6 @@ contains
 
   end subroutine To_Cart_D
 
-  ! --------------------------------------------------  To_Cart_S  -----
   subroutine To_Cart_S ( WHERE, CART, CT, ST, CP, SP, KM )
   ! Convert Geodetic latitude and longitude (degrees), and altitude (km
   ! above sea level), to Cartesian coordinates.  The units are ERAD (see
@@ -460,7 +539,7 @@ contains
 
   end subroutine To_Cart_S
 
-  ! ---------------------------------------------------  To_XYZ_D  -----
+  ! -----------------------------------------------------  To_XYZ  -----
   pure function To_XYZ_D ( Lat, Lon, Radians ) result ( XYZ )
     ! Convert north geocentric Lat (default degrees) and east Lon
     ! (default degrees) to a unit vector in ECR.
@@ -484,7 +563,6 @@ contains
     xyz(3) = sin(myLat)
   end function To_XYZ_D
 
-  ! ---------------------------------------------------  To_XYZ_S  -----
   pure function To_XYZ_S ( Lat, Lon, Radians ) result ( XYZ )
     ! Convert north geocentric Lat (default degrees) and east Lon
     ! (default degrees) to a unit vector in ECR.
@@ -669,6 +747,9 @@ contains
 end module Geometry
 
 ! $Log$
+! Revision 2.32  2016/08/30 20:27:51  vsnyder
+! Add Phi_To_Lat functions
+!
 ! Revision 2.31  2016/06/02 02:11:32  vsnyder
 ! Make Orbit_Plane_Minor_Axis_sq elemental
 !
