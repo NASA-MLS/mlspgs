@@ -64,11 +64,12 @@ module Load_SPS_Data_M
     ! (or 1) X zeta (or 1) X phi (or 1) X Cross, taken in Fortran's column-
     ! major array-element order.  For 3D, this is a three-dimensional quantity
     ! dimensioned frequency (or 1) X zeta (or 1) X QTM index, taken in
-    ! Fortran's column- major array-element order.
+    ! Fortran's column-major array-element order.
     logical,  pointer :: deriv_flags(:) => null() ! flags to do derivatives,
                                                 ! corresponding to the values
                                                 ! component.
-
+  contains
+    procedure :: IsQTM
   end type Grids_T
 
   interface Dump
@@ -755,6 +756,13 @@ contains
     end if
   end function FindInGrid
 
+! --------------------------------------------------------  IsQTM  -----
+  pure logical function IsQTM ( Grid, I )
+    class(grids_t), intent(in) :: Grid
+    integer, intent(in) :: I
+    IsQTM = grid%qtyStuff(i)%qty%template%isQTM()
+  end function IsQTM
+
   ! -----------------------------------------------  EmptyGrids_t  -----
   subroutine EmptyGrids_t ( grids_x )
     ! Create a grids structure with all empty grids
@@ -979,6 +987,10 @@ contains
 end module LOAD_SPS_DATA_M
 
 ! $Log$
+! Revision 2.113  2016/08/23 00:43:11  vsnyder
+! Components within or adjacent to the polygon are now within the QTM_Tree_t
+! structure instead of the HGrid_t structure.
+!
 ! Revision 2.112  2016/06/03 23:44:05  vsnyder
 ! Eliminate QTM_Geo component.  Make sure grids_x%qtyStuff(:)%qty is
 ! associated with the quantity.  Correct some labels in DestroyGrids_t.

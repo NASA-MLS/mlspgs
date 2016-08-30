@@ -22,8 +22,8 @@ module QuantityTemplates         ! Quantities within vectors
   use HGridsDatabase, only: HGrid_t, Dump
   use HighOutput, only: outputNamedValue
   use Intrinsic, only: L_geodetic, L_geodAltitude, L_none, L_phitan, &
-    & L_vmr, lit_indices, Phyq_angle, Phyq_dimensionless, Phyq_frequency, &
-    & Phyq_indices, Phyq_time, Phyq_vmr
+    & L_VMR, L_QTM, lit_indices, Phyq_angle, Phyq_dimensionless, &
+    & Phyq_frequency, Phyq_indices, Phyq_time, Phyq_vmr
   use MLSFillValues, only: rerank
   use MLSKinds, only: rt => r8 ! rt is "kind of real components of template"
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
@@ -156,6 +156,11 @@ module QuantityTemplates         ! Quantities within vectors
     ! geolocation(*,i,j) for an unstacked one.  The "*" is taken from either
     ! the OrbitCoordinateIndex or LOSCoordinateIndex component.
 
+    real(rt), allocatable :: ECR(:,:,:) ! Meters
+
+    ! ECR is dimensioned (3,1,noInstances*noCrossTrack) for stacked quantities
+    ! and (3, noSurfs, noInstances*noCrossTrack) for unstacked ones.
+
     real(rt), allocatable :: Phi(:,:)   ! Degrees
 
     ! Phi is dimensioned (1, noInstances*noCrossTrack) for stacked quantities
@@ -230,6 +235,7 @@ module QuantityTemplates         ! Quantities within vectors
     procedure :: GeocLat => GetGeocLat
     procedure :: GeocLat3 => GetGeocLat3
     procedure :: GeodLat3 => GetLat3
+    procedure :: IsQTM
     procedure :: Lon3 => GetLon3
     procedure :: Phi3 => GetPhi3
     procedure :: PutGeocLat
@@ -611,20 +617,20 @@ contains
     end if
   end subroutine DestroyQuantityTemplateDatabase
 
-  ! -------------------------------------  DUMP_QUANTITY_TEMPLATE  -----
-  subroutine DUMP_QUANTITY_TEMPLATE ( Qty, DETAILS, NOL2CF, What )
+  ! -------------------------------------  Dump_Quantity_Template  -----
+  subroutine Dump_Quantity_Template ( Qty, Details, NoL2CF, What )
 
     use MLSSignals_m, only: signals, dump, getRadiometerName, getModuleName
     use Output_m, only: blanks, newLine
     use vGridsDatabase, only: dump
 
     type(QuantityTemplate_T), intent(in) :: Qty
-    integer, intent(in), optional :: DETAILS ! <= 0 => Don't dump arrays
+    integer, intent(in), optional :: Details ! <= 0 => Don't dump arrays
                                              ! >0   => Do signal, phi, surfs
                                              !         and frequency
                                              ! >1   => Dump all arrays
                                              ! Default 1
-    logical, intent(in), optional :: NOL2CF  ! if TRUE => Don't dump L2-specific
+    logical, intent(in), optional :: NoL2CF  ! if TRUE => Don't dump L2-specific
                                              !  stuff
     character(*), intent(in), optional :: What ! In case you want to label it
     ! Local variables
@@ -825,29 +831,29 @@ contains
       end if
     end subroutine Maybe_Dump_2_RT
 
-  end subroutine DUMP_QUANTITY_TEMPLATE
+  end subroutine Dump_Quantity_Template
 
-  ! ------------------------------------  DUMP_QUANTITY_TEMPLATES  -----
-  subroutine DUMP_QUANTITY_TEMPLATES ( QUANTITY_TEMPLATES, DETAILS, NOL2CF, What )
+  ! ------------------------------------  Dump_Quantity_Templates  -----
+  subroutine Dump_Quantity_Templates ( Quantity_Templates, Details, NoL2CF, What )
 
-    type(QuantityTemplate_T), intent(in) :: QUANTITY_TEMPLATES(:)
-    integer, intent(in), optional :: DETAILS ! <= 0 => Don't dump arrays
+    type(QuantityTemplate_T), intent(in) :: Quantity_Templates(:)
+    integer, intent(in), optional :: Details ! <= 0 => Don't dump arrays
     !                                        ! >0   => Do dump arrays
     !                                        ! Default 1
-    logical, intent(in), optional :: NOL2CF  ! if TRUE => Don't dump l2-specific
+    logical, intent(in), optional :: NoL2CF  ! if TRUE => Don't dump l2-specific
     character(*), intent(in), optional :: What ! In case you want to label it
 
     integer :: I
 
-    call output ( 'QUANTITY_TEMPLATES: SIZE = ' )
-    call output ( size(quantity_templates), advance='yes' )
+    call output ( size(quantity_templates), &
+                & before='Quantity_Templates: SIZE = ', advance='yes' )
     do i = 1, size(quantity_templates)
       call output ( i, 4 )
       call output ( ':' )
       call dump_quantity_template ( quantity_templates(i), details, nol2cf, What )
     end do
 
-  end subroutine DUMP_QUANTITY_TEMPLATES
+  end subroutine Dump_Quantity_Templates
 
   ! ------------------------------ InflateQuantityTemplateDatabase -----
   integer function InflateQuantityTemplateDatabase ( database, extra )
@@ -867,6 +873,13 @@ contains
     include "inflateDatabase.f9h"
     InflateQuantityTemplateDatabase = firstNewItem
   end function InflateQuantityTemplateDatabase
+
+! --------------------------------------------------------  IsQTM  -----
+  pure logical function IsQTM ( Qty )
+    class(QuantityTemplate_T), intent(in) :: Qty
+    IsQTM = associated(qty%the_Hgrid)
+    if ( IsQTM ) IsQTM = qty%the_Hgrid%type == L_QTM
+  end function IsQTM
 
   ! ------------------------------------  ModifyQuantityTemplate   -----
   ! This family modifies a quantity template's fields according to
@@ -2262,6 +2275,10 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.115  2016/08/23 00:42:43  vsnyder
+! Components within or adjacent to the polygon are now within the QTM_Tree_t
+! structure instead of the HGrid_t structure.
+!
 ! Revision 2.114  2016/07/28 01:36:34  vsnyder
 ! Remove unreferenced USE and local variables
 !
