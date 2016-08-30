@@ -505,7 +505,8 @@ contains ! =====     Public procedures     =============================
       begin, t+t_fwmType, l+l_baseline, l+l_linear, l+l_full, &
              l+l_cloudFull, l+l_hybrid, l+l_scan, l+l_scan2d, l+l_switchingMirror, &
              l+l_polarLinear, n+n_dt_def, &
-      begin, t+t_geolocation, l+l_geocentric, l+l_geodetic, l+l_none, n+n_dt_def, &
+      begin, t+t_geolocation, l+l_ECR, l+l_geocentric, l+l_geodetic, l+l_none, &
+             n+n_dt_def, &
       begin, t+t_griddedOrigin, l+l_climatology, l+l_dao, l+l_geos5, &
              l+l_geos5_7, l+l_gloria, l+l_merra, l+l_ncep, l+l_none, l+l_strat, &
              l+l_surfaceHeight, n+n_dt_def, &
@@ -564,9 +565,9 @@ contains ! =====     Public procedures     =============================
              l+l_singleChannelRadiance, l+l_sizedistribution, &
              l+l_spaceRadiance, l+l_status, l+l_strayRadiance, &
              l+l_surfaceHeight, l+l_surfacetype, l+l_systemTemperature, &
-             l+l_temperature, l+l_tngtECI, l+l_tngtGeocAlt, &
-             l+l_tngtGeodAlt, l+l_totalExtinction, l+l_totalPowerWeight, &
-             l+l_TScat, l+l_vmr, &
+             l+l_temperature, l+l_tngtECI, l+l_tngtECR, l+l_tngtGeocAlt, &
+             l+l_tngtGeodAlt, l+l_tngtGeodLat, l+l_totalExtinction, &
+             l+l_totalPowerWeight, l+l_TScat, l+l_vmr, &
              n+n_dt_def , &
       begin, t+t_reflector, l+l_primary, l+l_secondary, l+l_tertiary, &
              l+l_complete, n+n_dt_def, &
@@ -2072,6 +2073,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.626  2016/08/30 23:54:22  vsnyder
+! Add ECR as a geolocation type, and TngtECR and TngtGeodLat as quantity types
+!
 ! Revision 2.625  2016/08/16 23:23:07  vsnyder
 ! Remove phyq_dimensionless requirement from QTM_Level of HGrid
 !
