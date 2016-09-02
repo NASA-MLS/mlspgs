@@ -659,13 +659,23 @@ contains ! =====     Public procedures     =============================
              begin, f+f_mif, numeric(phyq_dimensionless), &
              begin, f+f_module, field_spec(s_module), &
              begin, f+f_origin, numeric(phyq_angle), &
-             begin, f+f_QTMlevel, numeric(), &
+             begin, f+f_QTMlevel, &
+                    begin, numeric(phyq_dimensionless), &
+                    begin, numeric(phyq_angle), &
+                    begin, numeric(phyq_length), &
+                    n+n_or, &
              begin, f+f_single, boolean(), &
              begin, f+f_solarTime, numeric(phyq_time), &
-             begin, f+f_solarZenith, numeric(), &
+             begin, f+f_solarZenith, &
+                    begin, numeric(phyq_dimensionless), &
+                    begin, numeric(phyq_angle), &
+                    n+n_or, &
              begin, f+f_spacing, numeric(phyq_angle), &
              begin, f+f_sourceL2GP, field_spec(s_l2gp), &
-             begin, f+f_Time, numeric(), &
+             begin, f+f_Time, &
+                    begin, numeric(phyq_dimensionless), &
+                    begin, numeric(phyq_time), &
+                    n+n_or, &
              begin, f+f_type, field_type(t_hgridtype,req=req), &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
@@ -2073,6 +2083,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.627  2016/09/02 00:24:54  vsnyder
+! Specify units for QTM_Level, SolarZenith, and Time fields in HGrid
+!
 ! Revision 2.626  2016/08/30 23:54:22  vsnyder
 ! Add ECR as a geolocation type, and TngtECR and TngtGeodLat as quantity types
 !
