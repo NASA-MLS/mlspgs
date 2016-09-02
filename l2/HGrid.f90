@@ -17,6 +17,7 @@ module HGrid                    ! Horizontal grid information
     & L1BGeolocation, L1BSubsample
   use MLSCommon, only: MLSFile_t, nameLen, TAI93_Range_t
   use MLSFiles, only: HDFVersion_5, GetMLSFileByType
+  use MLSKinds, only: rk => r8
   use MLSSignals_m, only: GetModuleName
   
   implicit none
@@ -81,7 +82,6 @@ contains ! =====     Public Procedures     =============================
     use L1BData, only: CheckForCorruptFileDatabase
     use L2GPData, only: L2GPData_t
     use MLSHDF5, only: IsHDF5DSInFile
-    use MLSKinds, only: rk => r8
     use MLSL2options, only: need_L1Bfiles
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use MLSNumerics, only: hunt
@@ -137,6 +137,7 @@ contains ! =====     Public Procedures     =============================
     integer :: GEODANGLENODE            ! Tree node
     integer :: GEODLATNODE            ! Tree node
     logical :: GOT_FIELD(field_first:field_last)
+    real(rk) :: Incline                 ! Orbit inclination, degrees
     logical :: INSETOVERLAPS            ! Flag
     integer :: LONNODE                  ! Tree node
     integer :: LOSANGLENODE             ! Tree node
@@ -195,6 +196,7 @@ contains ! =====     Public Procedures     =============================
     geodAngleNode = 0
     geodLatNode = 0
     got_field = .false.
+    incline = 90 ! Latitude same as phi, not projected onto orbit plane
     insetOverlaps = .false.
     interpolationFactor = 1.0
     lonNode = 0
@@ -247,7 +249,7 @@ contains ! =====     Public Procedures     =============================
         geodLatNode = son
       case ( f_inclination )
         call expr (subtree ( 2, son), expr_units, expr_value )
-        ! incline = expr_value(1) !??? Never used
+        incline = expr_value(1)
       case ( f_lon )
         lonNode = son
       case ( f_losAngle )
@@ -280,7 +282,7 @@ contains ! =====     Public Procedures     =============================
           QTM_level = nint(expr_value(1))
         case ( phyq_length ) ! expr_value is in meters
           QTM_level = ceiling ( log (20.0d6 / expr_value(1)) / ln2 )
-        case default
+        case default ! Don't really need this because units are checked already
           call MLSMessage ( MLSMSG_Error, ModuleName // '/' &
             & // 'CreateHGridFromMLSCFInfo', &
             & "Units of QTMLevel not dimensionless, length, or angle." )
@@ -325,7 +327,7 @@ contains ! =====     Public Procedures     =============================
         if ( any ( got_field ( (/ f_geodAngle, f_geodLat, f_losAngle, f_lon, &
           & f_solarTime, f_solarZenith, f_time /) ) ) ) then
           call CreateExplicitHGrid ( son, date, geodAngleNode, geodLatNode, &
-            & solarTimeNode, solarZenithNode, lonNode, losAngleNode, &
+            & solarTimeNode, solarZenithNode, lonNode, losAngleNode, incline, &
             & processingRange%startTime, timeNode, hGrid )
         end if
         ! call Dump ( filedatabase, details=2 )
@@ -345,7 +347,7 @@ contains ! =====     Public Procedures     =============================
     case ( l_explicit ) ! ---------------------- Explicit --------------
       if ( verbose ) call output ( 'Creating Explicit HGrid', advance='yes' )
       call CreateExplicitHGrid ( son, date, geodAngleNode, geodLatNode, &
-        & solarTimeNode, solarZenithNode, lonNode, losAngleNode, &
+        & solarTimeNode, solarZenithNode, lonNode, losAngleNode, incline, &
         & processingRange%startTime, timeNode, hGrid )
 
     case ( l_l2gp) ! --------------------------- L2GP ------------------
@@ -461,30 +463,33 @@ contains ! =====     Public Procedures     =============================
 
   ! ----------------------------------------  CreateExplicitHGrid  -----
   subroutine CreateExplicitHGrid ( key, date, geodAngleNode, geodLatNode, &
-        & solarTimeNode, solarZenithNode, lonNode, losAngleNode, &
+        & solarTimeNode, solarZenithNode, lonNode, losAngleNode, incline, &
         & Time, timeNode, hGrid )
 
-    use dates_module, only: utc2tai93s
-    use expr_m, only: expr
-    use highOutput, only: beverbose, outputnamedvalue
-    use global_settings, only: leapsecfilename
-    use hgridsDatabase, only: createEmptyHGrid, HGrid_t
-    use init_tables_module, only: phyq_angle, phyq_dimensionless, phyq_time
+    use Dates_module, only: UTC2TAI93s
+    use Error_Handler, only: Simple, Error_Intro
+    use Expr_m, only: expr
+    use HighOutput, only: BeVerbose, OutputNamedValue
+    use Geometry, only: Phi_To_Lat_Deg
+    use Global_settings, only: LeapSecFilename
+    use HgridsDatabase, only: CreateEmptyHGrid, HGrid_t
+    use Init_tables_module, only: phyq_angle, phyq_dimensionless, phyq_time
     use MLSKinds, only: rk => r8
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-    use SDPToolkit, only: mls_utctotai
-    use string_table, only: get_string
-    use toggles, only: gen, levels, toggle
-    use trace_m, only: trace_begin, trace_end
-    use tree, only: nsons, subtree
+    use SDPToolkit, only: MLS_UTCtoTAI
+    use String_table, only: Get_String
+    use Toggles, only: gen, levels, toggle
+    use Trace_m, only: Trace_Begin, Trace_End
+    use Tree, only: NSons, Source_Ref, Subtree
 
     ! dummy arguments
-    integer, intent(in) :: KEY          ! Tree node
+    integer, intent(in) :: KEY           ! Tree node
     integer, intent(in) :: DATE          ! Date if any
     integer, intent(in) :: GEODANGLENODE ! Geod angle if any
     integer, intent(in) :: GEODLATNODE   ! Geod latitude if any
     integer, intent(in) :: LONNODE       ! longitude if any
     integer, intent(in) :: LOSANGLENODE  ! los angle if any
+    real(rk), intent(in) :: Incline      ! Orbit inclination, degrees
     integer, intent(in) :: SOLARTIMENODE ! Solar time if any
     integer, intent(in) :: SOLARZENITHNODE ! Solar zenith angle if any
     integer, intent(in) :: TIMENODE ! Explicit d.p. numeric time field if any
@@ -510,7 +515,6 @@ contains ! =====     Public Procedures     =============================
     ! args for each field
     ! However, we inherited this piece-o-work and just
     ! expanded it include three more fields
-    integer, parameter :: NUMPARAMS = 7
     integer, parameter :: PHIPARAM = 1
     integer, parameter :: SOLARTIMEPARAM = PHIPARAM + 1
     integer, parameter :: SOLARZENITHPARAM = SOLARTIMEPARAM + 1
@@ -518,27 +522,40 @@ contains ! =====     Public Procedures     =============================
     integer, parameter :: LONPARAM = TIMEPARAM + 1
     integer, parameter :: LOSANGLEPARAM = LONPARAM + 1
     integer, parameter :: GEODLATPARAM = LOSANGLEPARAM + 1
+    integer, parameter :: NUMPARAMS = GEODLATPARAM
+
+    integer :: ParamNode(numParams)
 
     ! Executable code
 
     call trace_begin ( me, "CreateExplicitHGrid", key, &
       & cond=toggle(gen) .and. levels(gen) > 1 .and. .not. computingOffsets )
     verbose = BeVerbose( 'hgrid', -1 ) .or. .true.
+
+    paramNode = [ &
+      & geodAngleNode             , & ! PHIPARAM
+      & solarTimeNode             , & ! SOLARTIMEPARAM
+      & solarZenithNode           , & ! SOLARZENITHPARAM
+      & TimeNode                  , & ! TIMEPARAM
+      & lonNode                   , & ! LONPARAM
+      & losAngleNode              , & ! LOSANGLEPARAM
+      & geodLatNode               ]   ! GEODLATPARAM
+
     ! 1st--try to get the number of instances by rude count
     noProfs = 0
-    if ( geodAngleNode /= 0 ) then
-      noProfs = nsons ( geodAngleNode ) - 1
-    else if ( geodLatNode /= 0 ) then
-      noProfs = nsons ( geodLatNode ) - 1
-    else if ( solarTimeNode /= 0 ) then
-      noProfs = nsons ( solarTimeNode ) - 1
-    else if ( solarZenithNode /= 0 ) then
-      noProfs = nsons ( solarZenithNode ) - 1
-    else if ( lonNode /= 0 ) then
-      noProfs = nsons ( lonNode ) - 1
-    else if ( losAngleNode /= 0 ) then
-      noProfs = nsons ( losAngleNode ) - 1
-    end if
+    do param = 1, NUMPARAMS
+      node = paramNode(param)
+      if ( node /= 0 ) then
+        if ( noProfs /= 0 ) then
+          if ( nSons(node) - 1 /= noProfs ) then
+            call error_intro ( simple, source_ref(node) )
+            call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & 'Explicit HGrid fields have different sizes' )
+          end if
+        end if
+        noProfs = nSons ( node ) - 1
+      end if
+    end do
 
     ! Create an hGrid with this many profiles and no overlaps
     hGrid%noProfs = noProfs
@@ -576,49 +593,36 @@ contains ! =====     Public Procedures     =============================
     ! Loop over the parameters we might have
     ! which may override any set above
     do param = 1, NUMPARAMS
-      select case ( param )
-      case ( PHIPARAM )
-        values => hGrid%phi
-        node = geodAngleNode
-        units = phyq_angle
-      case ( SOLARTIMEPARAM )
-        values => hGrid%solarTime
-        node = solarTimeNode
-        units = phyq_time
-      case ( SOLARZENITHPARAM )
-        values => hGrid%solarZenith
-        node = solarZenithNode
-        units = phyq_angle
-      case ( TIMEPARAM )
-        values => hGrid%Time
-        node = TimeNode
-        units = phyq_time
-      case ( LONPARAM )
-        values => hGrid%lon
-        node = lonNode
-        units = phyq_angle
-      case ( LOSANGLEPARAM )
-        values => hGrid%losAngle
-        node = losAngleNode
-        units = phyq_angle
-      case ( GEODLATPARAM )
-        values => hGrid%GeodLat
-        node = geodLatNode
-        units = phyq_angle
-      end select
+      node = paramNode(param)
       if ( node /= 0 ) then
+        select case ( param )
+        case ( PHIPARAM )
+          values => hGrid%phi
+        case ( SOLARTIMEPARAM )
+          values => hGrid%solarTime
+        case ( SOLARZENITHPARAM )
+          values => hGrid%solarZenith
+        case ( TIMEPARAM )
+          values => hGrid%Time
+        case ( LONPARAM )
+          values => hGrid%lon
+        case ( LOSANGLEPARAM )
+          values => hGrid%losAngle
+        case ( GEODLATPARAM )
+          values => hGrid%GeodLat
+        end select
         do prof = 1, hGrid%noProfs
           call expr ( subtree ( prof+1, node), expr_units, expr_value )
-          if ( all ( expr_units(1) /= (/ phyq_dimensionless, units /) ) ) &
-            & call MLSMessage ( MLSMSG_Error, ModuleName, &
-            & 'Invalid units for explicit hGrid' )
+          ! Units are checked in the type checker.
           values(1,prof) = expr_value(1)
         end do
       end if
     end do
-    ! Make the latitude the same as the geod angle
-    ! This is a bit of a hack, but it should be OK in all cases.
-    hGrid%geodLat = hGrid%phi
+
+    ! If the geodetic latitude isn't explicitly specified, compute it from
+    ! orbit geodetic angle and orbit inclination.
+    if ( geodLatNode == 0 ) &
+      & hGrid%geodLat = Phi_To_Lat_Deg ( hGrid%phi, incline )
 
     call trace_end ( "CreateExplicitHGrid", &
       & cond=toggle(gen) .and. levels(gen) > 1 .and. .not. computingOffsets )
@@ -1055,6 +1059,7 @@ contains ! =====     Public Procedures     =============================
     use Dump_0, only: Dump
     use Diff_1, only: Selfdiff
     use Empiricalgeometry, only: empiricalLongitude, chooseOptimumLon0
+    use Geometry, only: Phi_To_Lat_Deg
     use HGridsDatabase, only: createEmptyHGrid, HGrid_t, trimHGrid, findClosestMatch
     use highOutput, only: letsDebug, outputNamedValue
     use MLSFillvalues, only: isFillValue, Monotonize
@@ -1386,8 +1391,7 @@ contains ! =====     Public Procedures     =============================
     ! call DeallocateL1BData ( l1bField )
     call Deallocate_test ( fullArray, 'fullArray', ModuleName )
     call Deallocate_test ( scOrbIncl, 'scOrbIncl', ModuleName )
-    hGrid%geodLat = rad2deg * asin ( sin( deg2Rad*hGrid%phi ) * &
-      & sin ( deg2Rad*incline ) )
+    hGrid%geodLat = phi_to_lat_deg ( hGrid%phi, incline )
 
     ! Now longitude
     call EmpiricalLongitude ( hGrid%phi(1,:), hGrid%lon(1,:) )
@@ -2550,6 +2554,11 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.139  2016/09/02 00:48:08  vsnyder
+! Use Inclination field of explicit HGrid to compute latitude from phi.
+! Simplify method of filling fields of explicit HGrid.  Verify that fields
+! of explicit HGrid have the same sizes.  Use Phi_To_Lat_Deg from Geometry.
+!
 ! Revision 2.138  2016/08/23 00:43:34  vsnyder
 ! Components within or adjacent to the polygon are now within the QTM_Tree_t
 ! structure instead of the HGrid_t structure.
