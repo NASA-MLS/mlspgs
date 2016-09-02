@@ -30,7 +30,7 @@ module Geometry
 
   ! Procedures
   public :: GeocToECRu, GeocToGeodLat, GeodToECRm, GeodToGeocAlt
-  public :: GeodToGeocLat, Get_R_Eq, Great_Circle_Points
+  public :: GeodToGeocLat, GeodToGeocLatRad, Get_R_Eq, Great_Circle_Points
   public :: Phi_To_Lat_Deg, Phi_To_Lat_Rad
   public :: Orbit_Plane_Minor_Axis_sq, To_Cart, To_XYZ, XYZ_to_Geod
   public :: XYZ_to_Geod_Bowring, XYZ_to_Geod_Fukushima
@@ -54,8 +54,12 @@ module Geometry
     module procedure GeodToGeocAlt_D, GeodToGeocAlt_S
   end interface
 
-  interface GeodToGeocLat
+  interface GeodToGeocLat ! Degrees -> Radians
     module procedure GeodToGeocLat_D, GeodToGeocLat_S
+  end interface
+
+  interface GeodToGeocLatRad ! Radians -> Radians
+    module procedure GeodToGeocLatRad_D, GeodToGeocLatRad_S
   end interface
 
   interface Great_Circle_Points
@@ -304,6 +308,38 @@ contains
 
   end function GeodToGeocLat_S
 
+  double precision elemental function GeodToGeocLatRad_D ( Lat ) result ( GeocLat )
+
+  !{ Convert a geodetic latitude $\mu$ in radians into a geocentric one
+  !  $\lambda$ in radians
+  !  Use the relation $\lambda = \tan^{-1} \frac{\sin\mu}{f^2 \cos\mu}$,
+  !  where $f$ is the ratio of the equatorial to polar Earth radii.
+
+    ! Arguments
+    double precision, intent(in) :: Lat ! Geodetic latitude in radians
+
+    double precision, parameter :: F2 = Earth_Axis_Ratio_Squared ! b^2/a^2
+
+    geocLat = atan2 ( f2 * sin(lat), cos(lat) )
+
+  end function GeodToGeocLatRad_D
+
+  real elemental function GeodToGeocLatRad_S ( Lat ) result ( GeocLat )
+
+  !{ Convert a geodetic latitude $\mu$ in radians into a geocentric one
+  !  $\lambda$ in radians
+  !  Use the relation $\lambda = \tan^{-1} \frac{\sin\mu}{f^2 \cos\mu}$,
+  !  where $f$ is the ratio of the equatorial to polar Earth radii.
+
+    ! Arguments
+    real, intent(in) :: Lat ! Geodetic latitude in radians
+
+    real, parameter :: F2 = Earth_Axis_Ratio_Squared ! b^2/a^2
+
+    geocLat = atan2 ( f2 * sin(lat), cos(lat) )
+
+  end function GeodToGeocLatRad_S
+
   ! ----------------------------------------------------  Get_R_eq -----
   real(rp) elemental function Get_R_Eq ( Phi, Csq ) result ( R_eq )
 
@@ -399,9 +435,7 @@ contains
   !  angle is geodetic (geocentric), the latitude is geodetic
   !  (geocentric).
   !  \begin{equation}
-  !    \lambda = \sin^{-1} \left(
-  !      \frac{c^2 \sin \phi \sin \beta}
-  !           {\sqrt{a^4 ( 1 - \sin^2 \phi ) + c^4 \sin^2 \phi}} \right)
+  !    \lambda = \sin^{-1} \left( \sin \phi \sin \beta \right)
   !  \end{equation}
   !  where $a$ is the Earth's semi-major (equatorial) axis length, and $c$
   !  is the ratio of the minor axis to the major axis lengths of the
@@ -412,15 +446,7 @@ contains
     real(rk) :: Lat              ! Latitude, degrees (geocentric or geodetic)
     real(rk), intent(in) :: Phi  ! Orbit angle, degrees (geocentric or geodetic)
     real(rk), intent(in) :: Beta ! Orbit inclination, degrees
-    real(rk) :: Csq ! Square of ratio of minor to major axis lengths of Earth-
-                    ! projected orbit-plane ellipse
-    real(rk) :: SinBeta, SinPhi, SinPhiSQ
-    csq =  orbit_plane_minor_axis_sq ( deg2rad * beta )
-    sinBeta = sin(deg2rad * beta)
-    sinPhi = sin(deg2rad * phi)
-    sinPhiSQ = sinPhi**2
-    lat = rad2deg * asin(csq * sinPhi * sinBeta &
-      & / sqrt(earthrada**4*(1.0_rp-sinPhiSQ) + csq**2*sinPhiSQ))
+    lat = rad2deg * asin( sin(deg2rad * phi) * sin(deg2rad * beta) )
   end function Phi_To_Lat_Deg_D
 
   pure elemental function Phi_To_Lat_Deg_S ( Phi, Beta ) result ( Lat )
@@ -428,15 +454,7 @@ contains
     real(rk) :: Lat              ! Latitude, degrees (geocentric or geodetic)
     real(rk), intent(in) :: Phi  ! Orbit angle, degrees (geocentric or geodetic)
     real(rk), intent(in) :: Beta ! Orbit inclination, degrees
-    real(rk) :: Csq ! Square of ratio of minor to major axis lengths of Earth-
-                    ! projected orbit-plane ellipse
-    real(rk) :: SinBeta, SinPhi, SinPhiSQ
-    csq =  orbit_plane_minor_axis_sq ( deg2rad * beta )
-    sinBeta = sin(deg2rad * beta)
-    sinPhi = sin(deg2rad * phi)
-    sinPhiSQ = sinPhi**2
-    lat = rad2deg * asin(csq * sinPhi * sinBeta &
-      & / sqrt(earthrada**4*(1.0_rp-sinPhiSQ) + csq**2*sinPhiSQ))
+    lat = rad2deg * asin( sin(deg2rad * phi) * sin(deg2rad * beta) )
   end function Phi_To_Lat_Deg_S
 
   pure elemental function Phi_To_Lat_Rad_D ( Phi, Beta ) result ( Lat )
@@ -444,15 +462,7 @@ contains
     real(rk) :: Lat              ! Latitude, radians (geocentric or geodetic)
     real(rk), intent(in) :: Phi  ! Orbit angle, radians (geocentric or geodetic)
     real(rk), intent(in) :: Beta ! Orbit inclination, radians
-    real(rk) :: Csq ! Square of ratio of minor to major axis lengths of Earth-
-                    ! projected orbit-plane ellipse
-    real(rk) :: SinBeta, SinPhi, SinPhiSQ
-    csq =  orbit_plane_minor_axis_sq ( beta )
-    sinBeta = sin(beta)
-    sinPhi = sin(phi)
-    sinPhiSQ = sinPhi**2
-    lat = asin(csq * sinPhi * sinBeta &
-      & / sqrt(earthrada**4*(1.0_rp-sinPhiSQ) + csq**2*sinPhiSQ))
+    lat = asin( sin(phi) * sin(beta) )
   end function Phi_To_Lat_Rad_D
 
   pure elemental function Phi_To_Lat_Rad_S ( Phi, Beta ) result ( Lat )
@@ -462,13 +472,7 @@ contains
     real(rk), intent(in) :: Beta ! Orbit inclination, radians
     real(rk) :: Csq ! Square of ratio of minor to major axis lengths of Earth-
                     ! projected orbit-plane ellipse
-    real(rk) :: SinBeta, SinPhi, SinPhiSQ
-    csq =  orbit_plane_minor_axis_sq ( beta )
-    sinBeta = sin(beta)
-    sinPhi = sin(phi)
-    sinPhiSQ = sinPhi**2
-    lat = asin(csq * sinPhi * sinBeta &
-      & / sqrt(earthrada**4*(1.0_rp-sinPhiSQ) + csq**2*sinPhiSQ))
+    lat = asin( sin(phi) * sin(beta) )
   end function Phi_To_Lat_Rad_S
 
   ! ----------------------------------------------------  To_Cart  -----
@@ -747,6 +751,9 @@ contains
 end module Geometry
 
 ! $Log$
+! Revision 2.33  2016/09/02 00:23:25  vsnyder
+! Add GeodToGeocLatRad, correct Phi_To_Lat
+!
 ! Revision 2.32  2016/08/30 20:27:51  vsnyder
 ! Add Phi_To_Lat functions
 !
