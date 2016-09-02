@@ -32,7 +32,7 @@ contains
                                    ! Optional inputs
     &                              Z_Ref, Tan_press, Surf_temp, Surf_height )
 
-  ! Compute the surface height and the tangent height at Phi_T.
+  ! Compute the surface height and the tangent height at Tan_Pt.
 
     use Geolocation_0, only: H_t
     use Generate_QTM_m, only: QTM_Tree_t
@@ -40,7 +40,7 @@ contains
     use QTM_Interpolation_Weights_m, only: Weight_t, QTM_Interpolation_Weights
 
     ! Inputs:
-    type(h_t), intent(in) :: Tan_Pt    ! Tangent point horizontal coordinates
+    class(h_t), intent(in) :: Tan_Pt   ! Tangent point horizontal coordinates
     type(QTM_Tree_t), intent(in) :: QTM   ! Horizontal grid
     real(rp), intent(in) :: H_Ref(:,:) ! Heights by fine zeta and QTM grid
                                        ! serial number, km
@@ -50,11 +50,12 @@ contains
 
     ! Outputs:
     real(rp), intent(out) :: H_Surf    ! Height of the pressure reference
-                                       ! surface at Phi_t -- interpolated in
-                                       ! Surf_Height if present(Surf_Height)
+                                       ! surface at Tan_Pt, km -- interpolated
+                                       ! in Surf_Height if present(Surf_Height)
                                        ! else interpolated in row 1 of H_REF, km
     real(rp), intent(out) :: H_Tan     ! Tangent height above H_Surf (negative
-    !                                  ! for Earth-intersecting rays), km
+                                       ! for Earth-intersecting rays).
+                                       ! Interpolated in Tan_Ind_F row of H_Ref.
 
     ! optional inputs
     ! We have Z_Ref, Tan_Press and Surf_Temp if the pointing is below the
@@ -69,15 +70,32 @@ contains
 
     type(Weight_t) :: Eta(3)           ! Interpolation coefficients
 
+    ! Get interpolation coefficients and QTM serial numbers from QTM to Tan_Pt
     call QTM_Interpolation_Weights ( QTM, Tan_Pt, Eta )
 
-    ! ====================================================================
-    ! !!!!! For now, don't fiddle with the optional stuff.  Look in  !!!!!
-    ! !!!!! metrics_m to see how it's done in the 2-D case.          !!!!!
-    ! ====================================================================
+    if ( present(surf_height) ) then
+      ! We set the surface reference at the actual surface height if we
+      ! have it, and adjust r_eq and h_tan relative to this, and adjust
+      ! h_ref accordingly.
+      h_surf = dot_product ( surf_height(eta%which), eta%weight )
+    else
+      ! If we don't have the actual surface height, we set the surface
+      ! reference at the input z_ref and adjust r_eq and h_tan relative
+      ! to this, and adjust h_ref accordingly.
+      h_surf = dot_product ( h_ref(1,eta%which), eta%weight )
+    end if
 
-    h_surf = dot_product ( h_ref(1,eta%which), eta%weight )
-    h_tan = dot_product ( h_ref(tan_ind_f,eta%which), eta%weight ) - h_surf
+    if ( present(tan_press) .and. present(surf_temp) .and. &
+      &  .not. present(surf_height) ) then
+      ! Earth intersecting ray. Compute GP height (km) of tangent pressure
+      ! below surface. This will be negative because tan_press < z_ref.
+      ! present(tan_press) requires present(surf_temp).  We don't need to
+      ! subtract h_surf here because this gives km from the z_ref surface.
+      h_tan = dot_product ( surf_temp(eta%which),eta%weight ) * &
+            & (tan_press-z_ref)/14.8
+    else
+      h_tan = dot_product ( h_ref(tan_ind_f,eta%which), eta%weight ) - h_surf
+    end if
     
   end subroutine QTM_Tangent_Metrics
 
@@ -94,6 +112,9 @@ contains
 end module QTM_Tangent_Metrics_m
 
 ! $Log$
+! Revision 2.2  2016/09/02 00:22:19  vsnyder
+! Calculate H_Surf and H_Tan if they're requested
+!
 ! Revision 2.1  2016/08/24 22:59:43  vsnyder
 ! Initial commit
 !
