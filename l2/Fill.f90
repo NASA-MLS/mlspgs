@@ -1407,7 +1407,7 @@ contains ! =====     Public Procedures     =============================
     ! Now we're on actual Fill instructions.
       use Declaration_Table, only: Base_Unit, Range
 !     use DUMP_0, only: DUMP
-      use Init_tables_module, only: L_None
+      use Init_tables_module, only: L_Geodetic, L_None
       use Intrinsic, only: lit_indices, t_boolean, t_numeric
       use String_table, only: display_string
       use Vector_qty_expr_m, only: dot, vector_qty_expr
@@ -1438,7 +1438,7 @@ contains ! =====     Public Procedures     =============================
       BOMask = 0
       AvoidObjects = ' '
       dimList = 'c' ! defaults to shift or slip by channel, or surface if noFreqs < 2
-      geolocation = l_none
+      geolocation = l_geodetic
       got = .false.
       hGridIndex = 0
       multiplier = 1.
@@ -3267,6 +3267,10 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.462  2016/09/02 00:49:40  vsnyder
+! Change default geolocation from L_None to L_Geodetic.  The result is that
+! the geodLat and Lon fields of HGrids are always filled.
+!
 ! Revision 2.461  2016/06/14 22:52:46  vsnyder
 ! The default for ReferenceMIFUnits is PHYQ_Dimensionless, but just to make
 ! sure, set it to PHYQ_Dimensionless every place that ReferenceMIF is an
