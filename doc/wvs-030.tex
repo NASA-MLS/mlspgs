@@ -10,8 +10,8 @@
 \topmargin -0.5in
 \textheight 9.00in
 
-\newcommand{\docname}{\bf wvs-030r2}
-\newcommand{\docdate}{13 May 2016}
+\newcommand{\docname}{\bf wvs-030r3}
+\newcommand{\docdate}{2 September 2016}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
@@ -171,27 +171,28 @@ References: \>wvs-131 \hr{wvs-131}
 
 \item
 
-    $\mathcal{L}$ is parallel to the plane, so the distance from the plane
-    to $\mathcal{L}$, the tangent height, is $h = |\vec{r}\,| - d$. The
-    point on $\mathcal{L}$ nearest to $P$ can be found by solving for the
-    intersection of $\mathcal{L}(t)$ with $\vec{P} + h \nabla F(\vec{P})$,
-    i.e., by solving $\vec{C} + t \vec{U} = \vec{P} + h \nabla F(\vec{P})$
-    for $t$.  This gives three equations for $t$, e.g. $t = \left( x ( 1 +
-    2h/a^2 ) - x_c \right) / x_u$, where $x_c$ and $x_u$ are components of
-    $\vec{C}$ and $\vec{U}$, respectively.  All of these for which the
-    component of $\vec{U}$ is nonzero should give the same result.  By
-    construction, $\mathcal{L}$ and $\nabla F(\vec{P})$ are orthogonal
-    (and therefore not parallel).  The other two possibilities for
-    nonparallel lines in 3D are that they intersect (which they ought to
-    do by construction since $P + h\nabla F(\vec{P})$ is in the plane
-    defined by $\mathcal{L}$ and the origin), or they don't.  If the lines
-    don't intersect, the results will not be consistent.  Alternatively,
-    $t = | \vec{P} + h \nabla F(\vec{P}) - \vec{C}\, | / |\vec{U}\,| = |
-    \vec{P} + h \nabla F(\vec{P}) - \vec{C}\, | = ( \vec{P} + h \nabla
-    F(\vec{P}) - \vec{C} ) \cdot \vec{U}$.  The last expression arises
-    because $\vec{P} + h \nabla F(\vec{P})$ and $\vec{C}$ are on
-    $\mathcal{L}$, and the distance between them, $t$, is the difference
-    of their projections onto $\mathcal{L}$.
+    $\mathcal{L}$ is parallel to the tangent plane, so the distance from
+    the plane to $\mathcal{L}$, the tangent height, is $h = |\vec{r}\,| -
+    d$. The point on $\mathcal{L}$ nearest to $P$ can be found by solving
+    for the intersection of $\mathcal{L}(t)$ with $\vec{P} + h \nabla
+    F(\vec{P})$, i.e., by solving $\vec{C} + t \vec{U} = \vec{P} + h
+    \nabla F(\vec{P})$ for $t$.  This gives three equations for $t$, e.g.
+    $t = \left( x ( 1 + 2h/a^2 ) - x_c \right) / x_u$, where $x_c$ and
+    $x_u$ are components of $\vec{C}$ and $\vec{U}$, respectively.  All of
+    these for which the component of $\vec{U}$ is nonzero should give the
+    same result.  By construction, $\mathcal{L}$ and $\nabla F(\vec{P})$
+    are orthogonal (and therefore not parallel).  The other two
+    possibilities for nonparallel lines in 3D are that they intersect
+    (which they ought to do by construction since $P + h\nabla F(\vec{P})$
+    is in the plane defined by $\mathcal{L}$ and the origin), or they
+    don't.  If the lines don't intersect, the results will not be
+    consistent.  Alternatively, $t = | \vec{P} + h \nabla F(\vec{P}) -
+    \vec{C}\, | / |\vec{U}\,| = | \vec{P} + h \nabla F(\vec{P}) -
+    \vec{C}\, | = ( \vec{P} + h \nabla F(\vec{P}) - \vec{C} ) \cdot
+    \vec{U}$.  The last expression arises because $\vec{P} + h \nabla
+    F(\vec{P})$ and $\vec{C}$ are on $\mathcal{L}$, and the distance
+    between them, $t$, is the difference of their projections onto
+    $\mathcal{L}$.
 
 \end{enumerate}
 
@@ -202,7 +203,7 @@ References: \>wvs-131 \hr{wvs-131}
     Given a line $\mathcal{L}(t) = \mathbf{C} + t\, \mathbf{U}$ where
     $\mathbf{C}$ is a vector to a point on the line, and $\mathbf{U}$ is
     an unit vector along the line.  Given an ellipsoid defined by
-    $F(\mathbf{P}) = \mathbf{P}^T \mathbf{M} \mathbf{P} = 0$, where
+    $F(\mathbf{P}) = \mathbf{P}^T \mathbf{M} \mathbf{P} = 1$, where
     $\mathbf{M} =
     \text{Diag}\left(\frac1{a^2},\frac1{b^2},\frac1{c^2}\right)$. A line
     $\mathcal{L}_P(t) = \mathbf{P} + t\, \mathbf{U}$, where $\mathbf{P}$
@@ -223,13 +224,13 @@ References: \>wvs-131 \hr{wvs-131}
     from which $d(\mathcal{L}_P(t))^2 = \mathbf{R} \cdot \mathbf{R}$.
 \item
     The maximum of $ d(\mathcal{L}_P(t))^2 $ subject to the constraint
-    $F(\mathbf{P}) = 0$ can be found using the method of Lagrange
+    $F(\mathbf{P}) = 1$ can be found using the method of Lagrange
     multipliers: 
 
     Construct two equations:
 %
     $$ \nabla d(\mathcal{L}_P(t))^2 = \lambda \nabla F(\mathbf{P}) $$
-    $$ F(\mathbf{P}) = 0 \,.$$
+    $$ F(\mathbf{P}) = 1 \,.$$
 
     The gradients $\nabla(d(\mathcal{L}_P(t))^2 = 2 \mathbf{P} + 2
     \mathbf{U} ( \mathbf{P} \cdot \mathbf{U} ) ( \mathbf{U} \cdot
@@ -544,6 +545,9 @@ described in wvs-131 \hr{wvs-131}.
 % $Id$
 
 % $Log$
+% Revision 1.3  2016/05/19 01:15:09  vsnyder
+% Include three exact methods in addition to the approximation
+%
 % Revision 1.2  2016/03/02 02:26:00  vsnyder
 % Add vector derivation
 %
