@@ -46,8 +46,8 @@ module FillUtils_1                     ! Procedures used by Fill
     & l_sceci, l_scecr, l_scgeocalt, l_scveleci, l_scvelecr, &
     & l_singlechannelradiance, &
     & l_status, l_surfacetype, l_systemtemperature, &
-    & l_temperature, l_time, l_tngteci, l_tngtgeodalt, &
-    & l_tngtgeocalt, l_totalpowerweight, l_vmr, &
+    & l_temperature, l_time, l_tngtECI, l_tngtECR, l_tngtGeocAlt, &
+    & l_tngtGeodAlt, l_tngtGeodLat, l_totalPowerWeight, l_vmr, &
     & l_xyz, l_zeta
   use Intrinsic, only: field_indices, lit_indices, &
     & phyq_angle, phyq_dimensionless, phyq_indices, phyq_invalid, &
@@ -104,7 +104,7 @@ module FillUtils_1                     ! Procedures used by Fill
 
   implicit none
   private
-  
+
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
@@ -179,7 +179,7 @@ module FillUtils_1                     ! Procedures used by Fill
   logical :: UNITSERROR               ! From expr
 
   public :: addGaussianNoise, applyBaseline, autoFillVector, &
-      & computeTotalpower, deallocatestuff, &
+      & computeTotalpower, &
       & extractsinglechannel, fillcovariance, fromanother, fromgrid, &
       & froml2gp, fromprofile, gather, geoiddata, losvelocity, &
       & chisqchan, chisqmmaf, chisqmmif, chisqratio, &
@@ -522,8 +522,8 @@ contains ! =====     Public Procedures     =============================
       ! Local variables
       type (VectorValue_T), pointer :: SQ ! vector quantity
       integer :: Me = -1                  ! String index for trace
-      integer :: MOL                      ! Molecule index 
-      integer :: SQI                      ! Quantity index 
+      integer :: MOL                      ! Molecule index
+      integer :: SQI                      ! Quantity index
       character(len=32) :: str
       ! DEEBUG = .true.
       ! Executable code
@@ -550,26 +550,6 @@ contains ! =====     Public Procedures     =============================
       call trace_end ( cond=toggle(gen) .and. levels(gen) > 2 )
     end subroutine AutoFillVector
 
-    ! -------------------------------------------- deallocateStuff -----
-    subroutine DeallocateStuff(Zetab, Zetac, Zetai, Pb, Pc, Pi)
-      real (r8), pointer, dimension(:) :: Zetab
-      real (r8), pointer, dimension(:) :: Zetac
-      real (r8), pointer, dimension(:) :: Zetai
-      real (r8), pointer, dimension(:) :: Pb         ! p[i] in hPa
-      real (r8), pointer, dimension(:) :: Pc         ! p[i] in hPa
-      real (r8), pointer, dimension(:) :: Pi         ! p[i] in hPa
-      ! call Deallocate_test ( pa, 'pa', ModuleName )
-      call Deallocate_test ( pb, 'pb', ModuleName )
-      call Deallocate_test ( pc, 'pc', ModuleName )
-      ! call Deallocate_test ( pd, 'pd', ModuleName )
-      call Deallocate_test ( pi, 'pi', ModuleName )
-      ! call Deallocate_test ( Zetaa, 'Zetaa', ModuleName )
-      call Deallocate_test ( Zetab, 'Zetab', ModuleName )
-      call Deallocate_test ( Zetac, 'Zetac', ModuleName )
-      ! call Deallocate_test ( Zetad, 'Zetad', ModuleName )
-      call Deallocate_test ( Zetai, 'Zetai', ModuleName )
-    end subroutine DeallocateStuff
-
     !--------------------------------------------------  NearestProfiles  -----
     subroutine NearestProfiles ( quantity, HGrid, ProfileOffset )
     use HGridsDatabase, only: HGrid_T
@@ -592,7 +572,7 @@ contains ! =====     Public Procedures     =============================
         profile = FindFirst ( HGrid%maf, i )
         if ( profile > 0 ) quantity%values(:, i) = profile + ProfileOffset
       end do
-      
+
     end subroutine NearestProfiles
 
     !--------------------------------------------------  Explicit  -----
@@ -602,7 +582,7 @@ contains ! =====     Public Procedures     =============================
       ! This routine is called from MLSL2Fill to fill values from an explicit
       ! fill command line or as part of a compound Fill,
       ! Fill with height (range) specified
-      
+
       ! Use (1): extraQuantity not present
       ! values node must be same shape as quantity or else /spread flag
       ! spreads scalar values over all (unMasked) quantity%values
@@ -679,7 +659,7 @@ contains ! =====     Public Procedures     =============================
         whichToReplace = '/='
       end if
       verbose = ( index(myOptions, 'v') > 0 )
-      
+
       if ( .not. present(extraQuantity) ) then
         ! Check the dimensions work out OK
         if ( myAzEl .and. mod(noValues,3) /= 0 ) &
@@ -824,7 +804,7 @@ contains ! =====     Public Procedures     =============================
 
       integer :: Me = -1                ! String index for trace
       real(rv) :: TOTALWEIGHT
-      
+
       ! Executable code
       call trace_begin ( me, 'FillUtils_1.ComputeTotalPower', key, &
         & cond=toggle(gen) .and. levels(gen) > 1 )
@@ -1344,17 +1324,17 @@ contains ! =====     Public Procedures     =============================
       ! ----------------     [iter_n, *]
       ! chi squared Min Norm
       ! where iter_n is the final iteration number
-      
+
       ! Note the following tricks:
       ! The number of surfaces is the maximum allowed number of iterations
       ! The actual number of iterations will be less than this
-      
+
       ! Depending on UNIFORMCHISQRATIO
       ! TRUE    all values will equal the ratio of the last iteration
       ! FALSE   nth value will be ratio for nth iteration, up to last one
       !           and all zero thereafter
       ! After the last iteration, all "surfaces" above this are zero-filled
-      
+
       ! The number of instances will be the number of chunks
       ! (yes, an unfortunate fact)
       integer, intent(in) :: KEY
@@ -1476,7 +1456,7 @@ contains ! =====     Public Procedures     =============================
     subroutine ColAbundance ( key, qty, bndPressQty, vmrQty, &
       & colmAbUnits, ignoreTemplate, &
       & firstInstance, lastInstance )
-      ! A special fill according to W.R.Read's idl code
+      ! A special fill according to W.G.Read's idl code
       ! Similar to his hand-written notes, but with a small correction
 
       ! Assumptions:
@@ -1516,15 +1496,15 @@ contains ! =====     Public Procedures     =============================
       real (r8) :: DELTAZETA       ! Zetai[s+1] - Zetai[s]
       real (r8) :: INVERMG
       real (r8)                        :: Zetaa
-      real (r8), pointer, dimension(:) :: Zetab
-      real (r8), pointer, dimension(:) :: Zetac
-      real (r8)                        :: Zetad
-      real (r8), pointer, dimension(:) :: Zetai
-      real (r8)                        :: Pa         ! p[i] in hPa
-      real (r8), pointer, dimension(:) :: Pb         ! p[i] in hPa
-      real (r8), pointer, dimension(:) :: Pc         ! p[i] in hPa
-      real (r8)                        :: Pd         ! p[i] in hPa
-      real (r8), pointer, dimension(:) :: Pi         ! p[i] in hPa
+      real (r8), dimension(vmrQty%template%noSurfs) :: Zetab
+      real (r8), dimension(vmrQty%template%noSurfs) :: Zetac
+      real (r8)                                     :: Zetad
+      real (r8), dimension(vmrQty%template%noSurfs) :: Zetai
+      real (r8)               :: Pa         ! p[i] in hPa
+      real (r8), dimension(vmrQty%template%noSurfs) :: Pb         ! p[i] in hPa
+      real (r8), dimension(vmrQty%template%noSurfs) :: Pc         ! p[i] in hPa
+      real (r8)               :: Pd         ! p[i] in hPa
+      real (r8), dimension(vmrQty%template%noSurfs) :: Pi         ! p[i] in hPa
 
       ! Executable code
       call trace_begin ( me, 'FillUtils_1.ColAbundance', key, &
@@ -1578,13 +1558,6 @@ contains ! =====     Public Procedures     =============================
       ! If we've not been asked to output anything then don't carry on
       if ( noOutputInstances < 1 ) go to 9
 
-      nullify ( Zetab, Zetac, Zetai, pb, pc, pi )
-      call allocate_test ( Zetab, vmrQty%template%noSurfs, 'Zetab', ModuleName )
-      call allocate_test ( Zetac, vmrQty%template%noSurfs, 'Zetac', ModuleName )
-      call allocate_test ( Zetai, vmrQty%template%noSurfs, 'Zetai', ModuleName )
-      call allocate_test ( pb, vmrQty%template%noSurfs, 'pb', ModuleName )
-      call allocate_test ( pc, vmrQty%template%noSurfs, 'pc', ModuleName )
-      call allocate_test ( pi, vmrQty%template%noSurfs, 'pi', ModuleName )
       Zetai = vmrQty%template%surfs(:,1)
       pi = 10.0 ** ( -Zetai  )
       N = vmrQty%template%noSurfs
@@ -1600,7 +1573,6 @@ contains ! =====     Public Procedures     =============================
         if ( instance > size(bndPressQty%values, 2) ) then
           call MLSMessage ( MLSMSG_Warning, ModuleName, &
           & 'Cant fill column--instance outside b.pres. range' )
-          call deallocateStuff(Zetab, Zetac, Zetai, Pb, Pc, Pi)
           go to 9
         end if
         thisBndPress = bndPressQty%values(1,instance)
@@ -1662,7 +1634,6 @@ contains ! =====     Public Procedures     =============================
         else if ( firstSurfaceAbove > N ) then
           call MLSMessage ( MLSMSG_Warning, ModuleName, &
           & 'Cant column, tropopause above top surface' )
-          call deallocateStuff(Zetab, Zetac, Zetai, Pb, Pc, Pi)
           go to 9
         else  ! Nothing special
           firstSurfaceBelow = firstSurfaceAbove - 1
@@ -1721,7 +1692,6 @@ contains ! =====     Public Procedures     =============================
         if ( printMe ) print *, 'trapezoid: ', -trapezoidSum
         qty%values ( 1, instance ) = InverMg * columnSum
       end do
-      call deallocateStuff(Zetab, Zetac, Zetai, Pb, Pc, Pi)
     9 call trace_end ( 'FillUtils_1.ColAbundance', &
         & cond=toggle(gen) .and. levels(gen) > 1 )
     end subroutine ColAbundance
@@ -2063,7 +2033,7 @@ contains ! =====     Public Procedures     =============================
 
     ! --------------------------------------------- FromAnother ---
     ! The most basic of Fill methods:
-    ! At some point we must try to modify most of the other Fill methods so 
+    ! At some point we must try to modify most of the other Fill methods so
     ! that they do their unique stuff and then call this method
     ! That makes maximum reuse, a best practice, and confines future changes to
     ! just this subroutine
@@ -2071,7 +2041,7 @@ contains ! =====     Public Procedures     =============================
     ! It is assumed that the original one (e.g. inherited from transfer)
     ! is still relevant.
     ! See Subset command
-    
+
     ! Next:
     ! Check that vGrids match
     ! If they don't, and /interpolate not set, then raise an exception
@@ -2360,7 +2330,7 @@ contains ! =====     Public Procedures     =============================
     ! them into the quanity's values
     ! according to the start, stride, block, and count arrays
     ! No checking is done
-    
+
     ! (See also Scatter)
     ! See the hdf5 introduction to HDF5 description of the hyperslab
     ! for a discussion of what we mean
@@ -2373,7 +2343,7 @@ contains ! =====     Public Procedures     =============================
     ! o x x o x x o x x o x x  |
     ! o x x o x x o x x o x x  v
     ! o x x o x x o x x o x x
-    ! o o o o o o o o o o o o 
+    ! o o o o o o o o o o o o
     ! The above is an array from sourceQuantity sized 8x12 (as n1 x n2)
     ! We plan to gather the elements marked by x into the
     ! contiguous array in quantity sized 6x8
@@ -2428,7 +2398,7 @@ contains ! =====     Public Procedures     =============================
       end if
     end subroutine Gather
 
-    ! ----------------------------------------  GeoidData  -----
+    ! ------------------------------------------------  GeoidData  -----
     ! Load the geoid data from the DEM toolkit files
     ! at the default resolution unless another is specified
     ! If source quantity is present use geoid data to make it
@@ -2750,7 +2720,7 @@ contains ! =====     Public Procedures     =============================
       ! Count number of valid (i.e., not Masked) radiances
       ! optionally compute it as a percentage of largest number possible
       ! The largest number possible takes into account
-      ! np = the number with negative precisions 
+      ! np = the number with negative precisions
       !      Masked with bits m_linalg + m_ignore
       ! ns = the number subsetted "do not use"
       !      Masked only with bit m_linalg
@@ -2762,7 +2732,7 @@ contains ! =====     Public Procedures     =============================
       integer, intent(in) :: KEY
       type(VectorValue_T), intent(inout) :: QUANTITY
       type(VectorValue_T), intent(in) :: MEASQTY
-      logical, intent(in), optional   :: asPercentage ! as % of 
+      logical, intent(in), optional   :: asPercentage ! as % of
       ! Local variables
       integer  :: I0, I1                 ! Indices
       integer  :: MAF, MIF               ! Loop counters
@@ -3991,7 +3961,7 @@ contains ! =====     Public Procedures     =============================
     ! standard algebraic formulas plus
     ! selected functions, statistical operations, geolocations,
     ! and other miscellaneous but useful functions
-    
+
     ! Most of the hard work has been moved to the manipulationUtils module
     subroutine ByManipulation ( quantity, a, b, &
       & manipulation, key, ignoreTemplate, &
@@ -4029,7 +3999,7 @@ contains ! =====     Public Procedures     =============================
       ! check that what the user has asked for, we can supply.
       call get_string ( manipulation, mstr, strip=.true. )
       mstr = lowercase(mstr)
-      
+
       StatisticalFunction = any( &
         & indexes( &
         &   mstr, &
@@ -4037,8 +4007,8 @@ contains ! =====     Public Procedures     =============================
         &   ) &
         &  > 1 )
       MapFunction = ( index(mstr, 'map') > 0 )
-      
-      numWays = 2 
+
+      numWays = 2
       okSoFar = .true.
       do i = 1, numWays ! 2
         if ( i == 1 ) then
@@ -4122,43 +4092,76 @@ contains ! =====     Public Procedures     =============================
     ! Optionally supply PrecisionQuantity when reading a radiance
     ! so that we Mask radiances where the corresponding precisions
     ! are negative or Masked themselves
-    
+
     ! Naming conventions:
     ! l1boa datasets are named differently depending on hdfversion
     ! if 4, they are some way I have forgotten
     ! If 5, they are divided among 3 groups: GHz, THz, and spacecraft
-    
+
     ! radiances are named the same independent of hdf version
-    subroutine FromL1B ( ROOT, QUANTITY, CHUNK, FILEDATABASE, &
-      & ISPRECISION, SUFFIX, GEOLOCATION, PRECISIONQUANTITY, BOMask )
+    subroutine FromL1B ( Root, Quantity, Chunk, FileDatabase, &
+      & IsPrecision, Suffix, Geolocation, PrecisionQuantity, BOMask )
       use BitStuff, only: negativeIfBitPatternSet
-      use Init_Tables_Module, only: l_geocentric, l_geodetic, l_none
-      integer, intent(in)                        :: ROOT
-      type (VectorValue_T), INTENT(INOUT)        :: QUANTITY
-      type (MLSChunk_T), INTENT(IN)              :: CHUNK
-      type (MLSFile_T), dimension(:), pointer    :: FILEDATABASE
-      logical, intent(in)                        :: ISPRECISION
-      integer, intent(in)                        :: SUFFIX
-      integer, intent(in)                        :: GEOLOCATION
-      type (VectorValue_T), INTENT(IN), optional :: PRECISIONQUANTITY
+      use Init_Tables_Module, only: l_ECR, l_geocentric, l_geodetic, l_none
+      integer, intent(in)                        :: Root
+      type (VectorValue_T), intent(inout)        :: Quantity
+      type (MLSChunk_T), intent(in)              :: Chunk
+      type (MLSFile_T), dimension(:), pointer    :: FileDatabase
+      logical, intent(in)                        :: IsPrecision
+      integer, intent(in)                        :: Suffix
+      integer, intent(in)                        :: Geolocation
+      type (VectorValue_T), intent(in), optional :: PrecisionQuantity
       integer, intent(in), optional              :: BOMask ! A pattern of bits--
                                               ! set prec. neg. if matched
       ! Local variables
       integer                   :: BO_error
       type (L1BData_T)          :: BO_stat
-      integer                   :: channel
-      character (len=132)       :: MODULENAMESTRING
-      character (len=132)       :: NAMESTRING
-      integer                   :: FLAG, NOMAFS, maxMIFs
-      type (L1BData_T)          :: L1BDATA
+      integer                   :: Channel
+      integer                   :: Found
+      logical                   :: Goofy ! MIF_TAI is goofy in HDF4
+      character (len=132)       :: ModuleNameString
+      character (len=132)       :: NameString
+      integer                   :: Flag, NoMAFS, MaxMIFs
+      type (L1BData_T)          :: L1BData
       type (MLSFile_T), pointer :: L1BFile
       type (MLSFile_T), pointer :: L1BOAFile
-      integer                   :: COLUMN
+      integer                   :: Column
+      integer                   :: I
       integer                   :: Me = -1 ! String index for trace
-      integer                   :: myBOMask
+      integer                   :: MyBOMask
       integer                   :: NG ! geolocations = noSurfs * noCrossTrack =
                                       ! instanceLen / noChans
-      integer                   :: ROW
+      integer                   :: Row
+
+      type :: Finder_t ! to find the quantity name and module name
+        integer :: QtyType     ! L_...
+        character(15) :: Name  ! Special case (signal) if *SIGNAL*
+        character(2) :: Module ! Use GetModuleName if blank; 4 if HDF4 is goofy
+        logical :: Tngt        ! IsTngtQty argument for AssembleL1BQtyName
+      end type Finder_t
+
+      type(finder_t), parameter :: Finder(18) = [ &
+                   ! QtyType              Name       Module  Tngt
+        & finder_t ( l_ECRtoFOV,         'ECRtoFOV',  '  ', .true.  ), &
+        & finder_t ( l_GHzAzim,          'azimAngle', '  ', .true.  ), &
+        & finder_t ( l_L1BMAFBaseline,   '*SIGNAL*',  '  ', .false. ), &
+        & finder_t ( l_l1bMIF_TAI,       'MIF_TAI',   '4 ', .false. ), &
+        & finder_t ( l_LosVel,           'LosVel',    '  ', .true.  ), &
+        & finder_t ( l_orbitInclination, 'OrbIncl',   '  ', .false. ), &
+        & finder_t ( l_ptan,             'ptan',      '  ', .false. ), &
+        & finder_t ( l_radiance,         '*SIGNAL*',  '  ', .false. ), &
+        & finder_t ( l_scECI,            'ECI',       'sc', .false. ), &
+        & finder_t ( l_scECR,            'ECR',       'sc', .false. ), &
+        & finder_t ( l_scGeocAlt,        'GeocAlt',   'sc', .false. ), &
+        & finder_t ( l_scVelECI,         'VelECI',    'sc', .false. ), &
+        & finder_t ( l_scVelECR,         'VelECR',    'sc', .false. ), &
+        & finder_t ( l_tngtECI,          'ECI',       '  ', .true.  ), &
+        & finder_t ( l_tngtECR,          'ECR',       '  ', .true.  ), &
+        & finder_t ( l_tngtGeocAlt,      'GeocAlt',   '  ', .true.  ), &
+        & finder_t ( l_tngtGeodAlt,      'GeodAlt',   '  ', .true.  ), &
+        & finder_t ( l_tngtGeodLat,      'GeodLat',   '  ', .true.  )  &
+        & ]
+
       ! Executable code
       call trace_begin ( me, 'FillUtils_1.FromL1B', root, &
         & cond=toggle(gen) .and. levels(gen) > 1 )
@@ -4169,70 +4172,33 @@ contains ! =====     Public Procedures     =============================
       L1BOAFile => GetMLSFileByType(filedatabase, content='l1boa')
       ! fileID = L1BFile%FileID%f_id
 
-      select case ( quantity%template%quantityType )
-      case ( l_ECRtoFOV )
-        call GetModuleName( quantity%template%instrumentModule, nameString )
-        nameString = AssembleL1BQtyName('ECRtoFOV', L1BOAFile%HDFVersion, .TRUE., &
-          & trim(nameString))
-      case ( l_GHzAzim )
-        call GetModuleName ( quantity%template%instrumentModule, nameString )
-        nameString = AssembleL1BQtyName ('azimAngle', L1BOAFile%HDFVersion, .TRUE., &
-          & trim(nameString) )
-      case ( l_L1BMAFBaseline )
-        call GetSignalName ( quantity%template%signal, nameString, &
-          & sideband=quantity%template%sideband, noChannels=.TRUE. )
-        nameString = AssembleL1BQtyName(nameString, L1BOAFile%HDFVersion, .FALSE.)
-      case ( l_l1bMIF_TAI )
-        if ( L1BOAFile%HDFVersion == HDFVERSION_5 ) then
-          call GetModuleName ( quantity%template%instrumentModule, nameString )
-          nameString = AssembleL1BQtyName ('MIF_TAI', L1BOAFile%HDFVersion, .FALSE., &
-            & trim(nameString) )
-        else ! ??? MIF_TAI is goofy in HDF4 files -- no sc, no tp, no GHz....
-          nameString = 'MIF_TAI'
+      goofy = .false.
+      do found = 1, size(finder)
+        if ( quantity%template%quantityType == finder(found)%qtyType ) then
+          moduleNameString = ''
+          nameString = finder(found)%name
+          if ( finder(found)%name == '*SIGNAL*' ) then
+            call GetSignalName ( quantity%template%signal, nameString, &
+              & sideband=quantity%template%sideband, noChannels=.TRUE. )
+          else if ( finder(found)%module == '4 ' ) then
+            goofy = L1BOAFile%HDFVersion /= HDFVERSION_5
+            if ( .not. goofy ) &
+              & call GetModuleName ( quantity%template%instrumentModule, &
+                & moduleNameString )
+            ! else Goofy in HDF4 files -- no sc, no tp, no GHz....
+          else if ( finder(found)%module /= '  ' ) then
+            moduleNameString = finder(found)%module
+          else
+            call GetModuleName ( quantity%template%instrumentModule, &
+                               & moduleNameString )
+          end if
+          nameString = AssembleL1BQtyName ( trim(nameString), &
+                     & L1BOAFile%HDFVersion, &
+                     & finder(found)%tngt, trim(moduleNameString) )
+          exit
         end if
-      case ( l_LosVel )
-        call GetModuleName ( quantity%template%instrumentModule, nameString )
-        nameString = AssembleL1BQtyName ('LosVel', L1BOAFile%HDFVersion, .TRUE., &
-          & trim(nameString) )
-      case ( l_orbitInclination )
-        nameString = AssembleL1BQtyName('OrbIncl', L1BOAFile%HDFVersion, .FALSE., &
-          & 'sc')
-      case ( l_ptan )
-        call GetModuleName( quantity%template%instrumentModule,nameString )
-        nameString = AssembleL1BQtyName('ptan', L1BOAFile%HDFVersion, .FALSE., &
-          & trim(nameString))
-      case ( l_radiance )
-        call GetSignalName ( quantity%template%signal, nameString, &
-          & sideband=quantity%template%sideband, noChannels=.TRUE. )
-        nameString = AssembleL1BQtyName(nameString, L1BOAFile%HDFVersion, .FALSE.)
-      case ( l_scECI )
-        nameString = AssembleL1BQtyName('ECI', L1BOAFile%HDFVersion, .FALSE., 'sc')
-      case ( l_scECR )
-        nameString = AssembleL1BQtyName('ECR', L1BOAFile%HDFVersion, .FALSE., 'sc')
-      case ( l_scGeocAlt )
-        nameString = AssembleL1BQtyName('GeocAlt', L1BOAFile%HDFVersion, .FALSE., &
-          & 'sc')
-      case ( l_scVelECI )
-        nameString = AssembleL1BQtyName('VelECI', L1BOAFile%HDFVersion, .FALSE., &
-          & 'sc')
-      case ( l_scVelECR )
-        nameString = AssembleL1BQtyName('VelECR', L1BOAFile%HDFVersion, .FALSE., &
-          & 'sc')
-      case ( l_tngtECI )
-        call GetModuleName( quantity%template%instrumentModule,nameString )
-        nameString = AssembleL1BQtyName('ECI', L1BOAFile%HDFVersion, .TRUE., &
-          & trim(nameString))
-      case ( l_tngtGeocAlt )
-        call GetModuleName( quantity%template%instrumentModule,nameString )
-        nameString = AssembleL1BQtyName('GeocAlt', L1BOAFile%HDFVersion, .TRUE., &
-          & trim(nameString))
-      case ( l_tngtGeodAlt )
-        call GetModuleName( quantity%template%instrumentModule,nameString )
-        nameString = AssembleL1BQtyName('GeodAlt', L1BOAFile%HDFVersion, .TRUE., &
-          & trim(nameString))
-      case default
-        call Announce_Error ( root, cantFromL1B )
-      end select
+      end do
+      if ( found > size(finder) ) call Announce_Error ( root, cantFromL1B )
 
       ! Perhaps will need to read bright object status from l1bOA file
       if ( isPrecision .and. myBOMask /= 0 ) then
@@ -4247,7 +4213,7 @@ contains ! =====     Public Procedures     =============================
 
       ! Possibly modify namestring based on whether a suffix field was supplied
       ! or a /isPrecision switch was set
-      
+
       if ( suffix /= 0 ) then
         call Get_String ( suffix, &
           & nameString(len_trim(nameString)+1:), strip=.true. )
@@ -4372,13 +4338,27 @@ contains ! =====     Public Procedures     =============================
         end do
       end if
 
-      if ( geolocation /= l_none ) then
+      if ( geolocation == l_ECR ) then
+        ng = quantity%template%noSurfs * quantity%template%noCrossTrack
+        if ( .not. goofy ) & ! not MIF_TAI in HDF4
+          & call GetModuleName( quantity%template%instrumentModule,nameString )
+        nameString = AssembleL1BQtyName('ECR', L1BOAFile%HDFVersion, &
+          & finder(found)%tngt, trim(nameString))
+        call ReadL1BData ( L1BOAFile, nameString, L1BData, noMAFs, flag, &
+          & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
+          & NeverFail=.false., dontPad=DONTPAD )
+        ! Assume we don't usually have ECR, so create it
+        call allocate_test ( quantity%template%ECR, 3, 1, ng, 'ECR', moduleName )
+        quantity%template%ECR = RESHAPE(L1BData%dpField, &
+        & (/ 3, ng, quantity%template%noInstances /) )
+      else if ( geolocation /= l_none ) then
         ng = quantity%template%noSurfs * quantity%template%noCrossTrack
         select case ( geolocation )
         case ( l_geocentric )
-          call GetModuleName( quantity%template%instrumentModule,nameString )
-          nameString = AssembleL1BQtyName('GeocLat', L1BOAFile%HDFVersion, .false., &
-            & trim(nameString))
+          if ( .not. goofy ) & ! not MIF_TAI in HDF4
+            & call GetModuleName( quantity%template%instrumentModule,nameString )
+          nameString = AssembleL1BQtyName('GeocLat', L1BOAFile%HDFVersion, &
+            & finder(found)%tngt, trim(nameString))
           call ReadL1BData ( L1BOAFile, nameString, L1BData, noMAFs, flag, &
             & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
             & NeverFail=.false., dontPad=DONTPAD )
@@ -4386,9 +4366,10 @@ contains ! =====     Public Procedures     =============================
             & (/ ng, quantity%template%noInstances /) )
           quantity%template%latitudeCoordinate = l_geocentric
         case ( l_geodetic )
-          call GetModuleName( quantity%template%instrumentModule,nameString )
-          nameString = AssembleL1BQtyName('GeodLat', L1BOAFile%HDFVersion, .false., &
-            & trim(nameString))
+          if ( .not. goofy ) & ! not MIF_TAI in HDF4
+            & call GetModuleName( quantity%template%instrumentModule,nameString )
+          nameString = AssembleL1BQtyName('GeodLat', L1BOAFile%HDFVersion, &
+            & finder(found)%tngt, trim(nameString))
           call ReadL1BData ( L1BOAFile, nameString, L1BData, noMAFs, flag, &
             & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
             & NeverFail=.false., dontPad=DONTPAD )
@@ -4396,9 +4377,10 @@ contains ! =====     Public Procedures     =============================
             & (/ ng, quantity%template%noInstances /) )
           quantity%template%latitudeCoordinate = l_geodetic
         end select
-        call GetModuleName( quantity%template%instrumentModule,nameString )
-        nameString = AssembleL1BQtyName('Lon', L1BOAFile%HDFVersion, .false., &
-          & trim(nameString))
+        if ( .not. goofy ) & ! not MIF_TAI in HDF4
+          & call GetModuleName( quantity%template%instrumentModule,nameString )
+        nameString = AssembleL1BQtyName('Lon', L1BOAFile%HDFVersion, &
+            & finder(found)%tngt, trim(nameString))
         call ReadL1BData ( L1BOAFile, nameString, L1BData, noMAFs, flag, &
           & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
           & NeverFail=.false., dontPad=DONTPAD )
@@ -4478,7 +4460,7 @@ contains ! =====     Public Procedures     =============================
       logical, intent(in), optional :: Regular ! coherent and stacked
       real(r8), intent(in), optional :: ReferenceMIF
       integer, intent(in), optional :: ReferenceMIFunits ! Dimless or height
- 
+
       integer, allocatable :: Dec(:)  ! Decreasing sequence indices
       logical :: Error
       real(rt) :: Geod(3)             ! [lat radians, lon radians, ht meters]
@@ -4569,7 +4551,7 @@ contains ! =====     Public Procedures     =============================
             call deallocate_test ( surfs, 'Surfs', moduleName )
           else
             call Announce_Error ( key, no_error_code, &
-              & 'Reference MIF for magnetic field is height but geocentric ' // & 
+              & 'Reference MIF for magnetic field is height but geocentric ' // &
               & 'altitude quantity is not provided' )
             error = .true.
           end if
@@ -4734,7 +4716,7 @@ contains ! =====     Public Procedures     =============================
 
       call trace_end ( 'FillUtils_1.Hydrostatically_GPH', &
         & cond=toggle(gen) .and. levels(gen) > 1 )
-      
+
     end subroutine Hydrostatically_GPH
 
     ! -------------------------------------  Hydrostatically_PTan  -----
@@ -4778,7 +4760,7 @@ contains ! =====     Public Procedures     =============================
           call Announce_Error ( key, nonConformingHydrostatic, &
             & "case l_ptan failed first test" )
           go to 9
-        end if  
+        end if
         if ( (.not. ValidateVectorQuantity(quantity, minorFrame=.true.) ) .or. &
           &  (.not. ValidateVectorQuantity(geocAltitudeQuantity, minorFrame=.true.) ) .or. &
           &  (quantity%template%instrumentModule /= &
@@ -4900,7 +4882,7 @@ contains ! =====     Public Procedures     =============================
     ! them into the quanity's values
     ! according to the start, stride, block, and count arrays
     ! No checking is done
-    
+
     ! (See also Gather)
     ! See the hdf5 introduction to HDF5 description of the hyperslab
     ! for a discussion of what we mean
@@ -4913,7 +4895,7 @@ contains ! =====     Public Procedures     =============================
     ! o x x o x x o x x o x x  |
     ! o x x o x x o x x o x x  v
     ! o x x o x x o x x o x x
-    ! o o o o o o o o o o o o 
+    ! o o o o o o o o o o o o
     ! The above is an array from quantity sized 8x12 (as n1 x n2)
     ! We plan to Scatter into the elements marked by x from the
     ! contiguous array in sourcequantity sized 6x8
@@ -5168,13 +5150,13 @@ contains ! =====     Public Procedures     =============================
 
     ! ----------------------------------------  WithReichlerWMOTP  -----
     subroutine WithReichlerWMOTP ( tpPres, temperature )
-      
+
       use wmoTropopause, only: extraTropics, TWMO
       ! Implements the algorithm published in GRL
       ! Loosely called the "Reichler" algorithm
       ! Ideas the same as in WithWMOTropopause
       ! But implemented differently
-      ! 
+      !
       type (VectorValue_T), intent(inout) :: TPPRES ! Result
       type (VectorValue_T), intent(in) :: TEMPERATURE
 
@@ -5222,7 +5204,7 @@ contains ! =====     Public Procedures     =============================
       else
         invert=0
         ! p=refGPH%values(:,instance)*100.         ! hPa > Pa
-        p = 10.0**(-temperature%template%surfs(:,1)) 
+        p = 10.0**(-temperature%template%surfs(:,1))
         p = p * 100.  ! hPa > Pa
       end if
       instanceLoop: do instance = 1, temperature%template%noInstances
@@ -5365,10 +5347,11 @@ contains ! =====     Public Procedures     =============================
         call InterpolateValues ( &
           & temperature%template%surfs(:,1), temperature%values(:,i), &
           & grid%surfs(:,1), tFine, method='Spline' )
-        ! Now get the height for this.
+        ! Now get the height for this.  Temperature and RefGPH are on same
+        ! hGrids. RefGPH is in meters, but Hydrostatic wants it in km.
         call Hydrostatic ( GeodToGeocLat ( temperature%template%geodLat(1,i) ), &
           & grid%surfs(:,1), tFine, grid%surfs(:,1), &
-          & refGPH%template%surfs(1,1), refGPH%values(1,i), hFine )
+          & refGPH%template%surfs(1,1), 0.001*refGPH%values(1,i), hFine )
         ! Note while much of the software thinks in meters, the hydrostatic
         ! routine works in km.
         ! Now do another spline 'interpolation' to get dTdH
@@ -5833,7 +5816,7 @@ contains ! =====     Public Procedures     =============================
           quantity%values(surf,instance) = newValue
         end do                            ! End surface loop
       end do                              ! End instance loop
-      
+
       if ( check ) then
           call l3ascii_interp_field(grid, newValue, &
             & pressure=100.0_rv, &
@@ -6116,9 +6099,9 @@ contains ! =====     Public Procedures     =============================
         ! Hunt fails with non-monotonic outHeights
         if ( .not. isMonotonic(outHeights) ) then
           call monotonize( outHeights )
-          if ( WARNWHENPTANNONMONOTONIC ) then                               
+          if ( WARNWHENPTANNONMONOTONIC ) then
             call MLSMessage ( MLSMSG_Warning, ModuleName // '/FromProfile', &
-              & 'Ptan non-monotonic' )                                       
+              & 'Ptan non-monotonic' )
             call dump( outHeights, 'outHeights' )
           end if
         end if
@@ -7004,7 +6987,7 @@ contains ! =====     Public Procedures     =============================
     ! This may fill multiple quantities in destination using the same
     ! source quantities if more than one match according to
     ! method-dependent criteria (should we check? warn?)
-    
+
     ! Which methods to permit is a question probably to be revisited
     ! as needed
     subroutine TransferVectorsByMethod ( key, dest, &
@@ -7091,7 +7074,7 @@ contains ! =====     Public Procedures     =============================
           sq => source%quantities(sqi)
         end if
         nummatches = 0
-        do dqi = 1, size ( dest%quantities ) 
+        do dqi = 1, size ( dest%quantities )
           dq => dest%quantities(dqi)
           if ( .not. associated(dq) ) cycle
           call get_string ( dq%template%name, qName, &
@@ -7181,7 +7164,7 @@ contains ! =====     Public Procedures     =============================
 
       ! Local variables
       integer :: I
-      integer :: J 
+      integer :: J
       integer :: K
       integer :: Me = -1                      ! String index for trace
       integer :: Nchannels
@@ -7217,7 +7200,7 @@ contains ! =====     Public Procedures     =============================
       if ( nsons ( termsNode ) /= noTerms + 1 ) &
         & call Announce_Error ( key, no_error_code, &
         & 'Wrong number of terms for uncompressRadiance fill' )
-      
+
       do i = 1, noTerms
         call expr_check ( subtree(i+1,termsNode), unitAsArray, valueAsArray, &
           & (/PHYQ_Dimensionless/), unitsError )
@@ -7231,20 +7214,20 @@ contains ! =====     Public Procedures     =============================
       ! System temperature is in systemTemperatureQuantity%values(chans,1)
       ! The terms supplied are in myTerms(:)
 
-      ! YOUR CODE HERE  
+      ! YOUR CODE HERE
       !
       !terms needed:
-      !   myTerms(1) == b == gain compression at the cal target, e.g. 0.01 
-      !   myTerms(2) == Tcal == cal target Planckified radiance, e.g. 250 
+      !   myTerms(1) == b == gain compression at the cal target, e.g. 0.01
+      !   myTerms(2) == Tcal == cal target Planckified radiance, e.g. 250
       !   myTerms(3) == Tspace == space Planckified radiance,    e.g. 3
       !
       ! TA ~= TAhat + b * TAhat *(TAhatbar - Tcal - Tspace - Tsys) +  b * Tcal * Tspace  +  b * Tsys * TAhatbar
       !
       Nchannels = size(quantity%values, 1)/ size(totalPowerQuantity%values, 1)
-      !Nchannels = quantity% 
+      !Nchannels = quantity%
       Npointings = size(totalPowerQuantity%values, 1)
       do i = 1, size(quantity%values, 2)  !MAFS
-        
+
         do j = 1, Npointings !Pointings
           if ( totalPowerQuantity%values(j,i) == 0 ) then
              call Announce_Error ( key, noTotalPower )
@@ -7252,12 +7235,12 @@ contains ! =====     Public Procedures     =============================
             do k = 1, Nchannels  !channels
               b=myTerms(1)/(myTerms(2) +  systemTemperatureQuantity%values(k,1))
               sumCal = myTerms(2) + myTerms(3) + systemTemperatureQuantity%values(k,1)
-              bprodCal = b * myTerms(2) * myTerms(3) 
+              bprodCal = b * myTerms(2) * myTerms(3)
               bTsys= b * systemTemperatureQuantity%values(k,1)
 
               quantity%values(k + (j - 1)*Nchannels, i) = quantity%values(k + (j - 1)*Nchannels, i) &
                        &  + b *  quantity%values(k + (j - 1)*Nchannels, i) * (totalPowerQuantity%values(j,i)-sumcal) &
-                       &  + bprodCal  + bTsys * totalPowerQuantity%values(j,i)  
+                       &  + bprodCal  + bTsys * totalPowerQuantity%values(j,i)
             end do
           end if
         end do
@@ -7318,7 +7301,7 @@ contains ! =====     Public Procedures     =============================
       call trace_end ( 'FillUtils_1.QtyFromFile', &
         & cond=toggle(gen) .and. levels(gen) > 1 )
     end subroutine QtyFromFile
-    
+
     ! -------------------------------------------  VectorFromFile  -----
     subroutine VectorFromFile ( key, Vector, MLSFile, &
       & filetype, options, spread, interpolate )
@@ -7338,7 +7321,7 @@ contains ! =====     Public Procedures     =============================
       logical :: homogeneous
       integer :: Me = -1                  ! String index for trace
       character(len=64) :: name
-      type (VectorValue_T), pointer :: quantity 
+      type (VectorValue_T), pointer :: quantity
       integer, parameter                      :: MAXLISTLENGTH=256
       character (LEN=10*MAXLISTLENGTH)        :: attrnames
       character (LEN=10*MAXLISTLENGTH)        :: attrvalues
@@ -7657,7 +7640,7 @@ contains ! =====     Public Procedures     =============================
         end if
       end subroutine FillMyInstances
     end subroutine NamedQtyFromFile
-    
+
   ! --------- WhichSurfaceIsHeight ------
   function WhichSurfaceIsHeight ( node, Heights ) result ( surface )
     ! Args
@@ -7699,6 +7682,13 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.127  2016/09/02 00:56:05  vsnyder
+! Add TngtECR and TngtGeodLat fills from L1B.  Make some arrays in
+! ColAbundance automatic, resulting in DeallocateStuff being unused, and
+! therefore deleted.  Simplify FromL1B fills.  Correct geolocation fills
+! in FromL1B.  Correct reference to Hydrostatic in WithWMOTropopause,
+! which was giving RefGPH in meters instead of kilometers.
+!
 ! Revision 2.126  2016/07/28 01:45:07  vsnyder
 ! Refactor dump and diff
 !
