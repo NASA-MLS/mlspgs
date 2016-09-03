@@ -1982,7 +1982,7 @@ contains ! =====     Public Procedures     =============================
       hGrid = 1
       ! if ( chunk > 20) stop
       ! Loop over all the setions in the l2cf, look for construct sections
-      if ( verbose .or. .true. ) &
+      if ( verbose ) &
         & call outputNamedValue ( 'Computing offsets for chunk number', chunk, &
         & Before='*   ', After = '  *' )
       call init_next_tree_node ( state1 )
@@ -2554,6 +2554,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.140  2016/09/03 00:06:01  vsnyder
+! Turn off some debug printing
+!
 ! Revision 2.139  2016/09/02 00:48:08  vsnyder
 ! Use Inclination field of explicit HGrid to compute latitude from phi.
 ! Simplify method of filling fields of explicit HGrid.  Verify that fields
