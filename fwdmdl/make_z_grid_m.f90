@@ -21,97 +21,103 @@ module Make_Z_Grid_m
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
-  private :: not_used_here 
+  private :: not_used_here
 !---------------------------------------------------------------------------
 
 contains
 !---------------------------------------------------------------------------
   subroutine Make_Z_Grid ( zetas, z_grid, logp_eq_th, mult )
 
-! This routine automatically makes an appropriate z_grid for the
-! users specified input
+    ! This routine automatically makes an appropriate z_grid for the
+    ! users specified input
 
-    use Allocate_deallocate, only: Bytes, Test_Allocate
+    use Allocate_deallocate, only: Allocate_Test
     use MLSCommon, only: rp, ip
     use Sort_m, only: Sort
 
-! inputs:
+    ! inputs:
 
     real(rp), intent(in) :: zetas(:) ! this contains output pointing,
-!                          vertical bases for all considered species,
-!                          and a surface zeta (if desired) all concatenated
-!                          into one vector.
-!                          Elements in zetas do not need to be ordered.
+                        !  vertical bases for all considered species,
+                        !  and a surface zeta (if desired) all concatenated
+                        !  into one vector.
+                        !  Elements in zetas do not need to be ordered.
 
-! outputs:
+    ! outputs:
 
-    real(rp), allocatable :: z_grid(:) ! a suitable preselected integration
-!                          grid
+    real(rp), allocatable, intent(out) :: z_grid(:) ! a suitable preselected
+                        !  integration grid, with duplicates or near-duplicates
+                        !  from zetas eliminated, and intermediate zetas
+                        !  inserted if Mult is present and > 1.
 
-! Keywords (Optional variables):
+    ! Keywords (Optional variables):
 
     real(rp), optional, intent(in) :: logp_eq_th ! threshold value for
-!                          eliminating duplicates
+                        !  eliminating duplicates
     integer(ip), optional, intent(in) :: mult ! A multiplicative factor for
-!                          increasing the z_grid density. N means have N
-!                          additional grid points between the minimal
-!                          necessary z_grid
+                        !  increasing the z_grid density. N means have N
+                        !  additional grid points between the minimal
+                        !  necessary z_grid
 
-! Local variables:
+    ! Local variables:
 
-    logical :: mask(size(zetas))
+    integer(ip) :: I           ! generic counter
+    integer(ip) :: Keep(size(zetas)) ! indices of non-duplicates
+    integer(ip) :: N           ! number of elements in minimal z_grid
+    integer(ip) :: N_Ele       ! number of elements in zetas
+    integer(ip) :: N_Grid      ! number of elements in z_grid
+    integer(ip) :: M           ! grid resolution factor
 
-    integer(ip) :: i      ! generic counter                      
-    integer(ip) :: n      ! number of elements in minimal z_grid 
-    integer(ip) :: n_ele  ! number of elements in zetas
-    integer(ip) :: n_grid ! number of elements in z_grid
-    integer(ip) :: m      ! grid resolution factor
+    real(rp), allocatable :: Frac(:) ! fractions [1,2,...m-1]/m, for subgridding
+    real(rp) :: Thresh         ! threshold for eliminating duplicates
+    real(rp) :: Z(size(zetas))
 
-    real(rp) :: thresh    ! threshold for eliminating duplicates
-    real(rp) :: z(size(zetas))
-
-! BEGIN CODE
-
-! Sort the input
+    ! Sort the input
 
     n_ele = size(zetas)
     z = zetas
     call sort ( z, 1, n_ele )
-    if ( present(logp_eq_th) ) then
-      thresh = logp_eq_th
-    else
-      thresh = Default_Thresh
-    end if
 
-    mask = (cshift(z,1) - z) > thresh
-    mask(n_ele) = .true.
-    n = count(mask)
+    thresh = Default_Thresh
+    if ( present(logp_eq_th) ) thresh = logp_eq_th
 
-! compute total grid points including multiplicative factors
+    ! Find non-duplicates.  This eliminates consecutive elements of Z that
+    ! are closer together than the threshold.  If your input grid spacing
+    ! is less than the threshold, it eliminates the entire grid.  A more
+    ! complicated method is required to get a minimum spacing of the threshold
+    ! even if consecutive elements are all closer together.
 
-    if ( present(mult) ) then
-      m = mult
-    else
-      m = 1
-    end if
+    n = 1
+    keep(1) = 1
+    do i = 2, n_ele
+      if ( z(i) - z(i-1) > thresh ) then
+        n = n + 1
+        keep(n) = i
+      end if
+    end do
+
+    ! Compute total grid points including subgrid points
+
+    m = 1
+    if ( present(mult) ) m = max(1,mult)
     n_grid = m * (n - 1) + 1
-    allocate ( z_grid(n_grid), stat=i )
-    call test_allocate ( i, moduleName, 'Z_Grid', [1], [n_grid], &
-      & bytes(z_grid) )
+    call allocate_test ( z_grid, n_grid, 'Z_Grid', moduleName )
 
-! Fill the grid
+    ! Fill the grid
 
-    z_grid(1:n) = pack(z,mask)
-    if ( m == 1 ) return ! not subgridding
+    z_grid(1:n_grid:m) = z(keep(1:n))
 
-! Create z_grid with subgridding: z_grid = z_grid + del_z * frac
+    if ( m > 1 ) then
 
-    z_grid(n_grid) = z_grid(n)
-    z_grid(1:n_grid-1) = &
-      & reshape(spread(z_grid(1:n-1),1,m) + &
-      &         spread(z_grid(2:n) - z_grid(1:n-1),1,m) * &
-      &         spread((/(real(i,kind=rp) / m, i = 0,m-1)/),2,n-1), &
-      &         (/n_grid - 1/))
+      ! Insert subgridding.
+
+      allocate ( frac(m-1) )
+      frac = [ ( real(i,kind=rp), i = 1, m-1 ) ] / m
+      do i = 1, n_grid-m, m
+        z_grid(i+1:i+m-1) = z_grid(i) + ( z_grid(i+m) - z_grid(i) ) * frac
+      end do
+
+    end if
 
   end subroutine Make_Z_Grid
 
@@ -128,6 +134,9 @@ contains
 end module Make_Z_Grid_m
 
 ! $Log$
+! Revision 2.13  2016/09/03 00:29:14  vsnyder
+! Eliminate several array temps
+!
 ! Revision 2.12  2014/01/11 01:28:53  vsnyder
 ! Decruftification
 !
