@@ -1980,7 +1980,7 @@ contains ! =====     Public Procedures     =============================
       if ( quantity%template%verticalCoordinate == l_Zeta ) &
         & newL2GP%pressures = 10.0**(-quantity%template%surfs(:,1))
       ! It inherits its quantity type from the quantity template
-      newL2GP%quantityType=quantity%template%quantityType
+      ! newL2GP%quantityType=quantity%template%quantityType
       ! Do something about frequency
       if ( associated ( quantity%template%frequencies ) ) then
         newL2GP%frequency = quantity%template%frequencies
@@ -2382,6 +2382,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.176  2016/09/07 22:47:12  pwagner
+! Removed unused QuantityType component from L2GPData type
+!
 ! Revision 2.175  2016/07/28 01:43:51  vsnyder
 ! Remove unreferenced USE
 !
