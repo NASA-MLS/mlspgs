@@ -293,7 +293,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
 
      character (LEN=L2GPNameLen) :: name ! Typically the swath name.
      integer :: nameIndex       ! Used by the parser to keep track of the data
-     integer :: QUANTITYTYPE = 0   ! E.g., l_temperature; (Where is this used?)
+     ! integer :: QUANTITYTYPE = 0   ! E.g., l_temperature; (Where is this used?)
 
      ! Now the dimensions of the data
 
@@ -815,7 +815,7 @@ contains ! =====     Public Procedures     =============================
 
     l2gp%name               = ol2gp%name    
     l2gp%nameIndex          = ol2gp%nameIndex    
-    l2gp%quantitytype       = ol2gp%quantitytype 
+    ! l2gp%quantitytype       = ol2gp%quantitytype 
     l2gp%MissingValue       = ol2gp%MissingValue 
     l2gp%MissingStatus      = ol2gp%MissingStatus
     l2gp%verticalCoordinate = ol2gp%verticalCoordinate    
@@ -1650,7 +1650,8 @@ contains ! =====     Public Procedures     =============================
     character(len=*), intent(in), optional :: fields  ! diff only these fields
     integer, intent(out), optional :: numDiffs  ! how many diffs
     ! Local variables
-    logical :: badChunks
+    logical :: badChunks              ! Are any chunks bad?
+    logical :: badChunksDifferent     ! Are any chunks bad in one l2gp not bad in the other?
     integer :: badInstances
     character(len=*), parameter :: DEFAULTFIELDS = &
       & 'pressures, latitude, longitude, solarTime, solarZenith,' // &
@@ -1658,7 +1659,8 @@ contains ! =====     Public Procedures     =============================
       & 'l2gpvalue, l2gpPrecision, status, quality, convergence, AscDescMode '
     ! logical, parameter :: DEEBUG = .true.
     logical :: diffGeosMeanBadChunks
-    logical :: skipGeos
+    logical :: fillsInL2GP1
+    logical :: fillsInL2GP2
     integer :: instance
     type (l2gpData_T) ::          L2GP2Temp
     integer :: MYDETAILS
@@ -1667,6 +1669,7 @@ contains ! =====     Public Procedures     =============================
     logical :: mySilent
     logical :: myVerbose
     logical :: ShapesDontMatch
+    logical :: skipGeos
     ! Executable code
     nameOnEachLine = ' '
     if ( .not. isL2GPSetUp(l2gp1) ) then
@@ -1797,18 +1800,25 @@ contains ! =====     Public Procedures     =============================
           & l2gp2Temp%status(instance) = -1
       enddo
     endif
+    badChunksDifferent = .false.
     if ( badChunks ) then
       do instance=1, L2gp1%nTimes
+        fillsInL2GP1 = any( IsFillValue ( l2gp1%l2gpValue(:,:,instance), l2gp1%MissingValue ) )
+        fillsInL2GP2 = any( IsFillValue ( l2gp2%l2gpValue(:,:,instance), l2gp2%MissingValue ) )
         if  ( l2gp2Temp%status(instance) < 0 &
           & .or. &
           & mod(l2gp1%status(instance), 2) == 1 &
           & .or. &
           & mod(l2gp2%status(instance), 2) == 1 &
           & .or. &
-          & any( IsFillValue ( l2gp1%l2gpValue(:,:,instance), l2gp1%MissingValue ) ) &
+          & fillsInL2GP1 &
           & .or. &
-          & any( IsFillValue ( l2gp2%l2gpValue(:,:,instance), l2gp2%MissingValue ) ) &
+          & fillsInL2GP2 &
           & ) then
+          badChunksDifferent = badChunksDifferent .or. &
+            mod(l2gp1%status(instance), 2) /= mod(l2gp2%status(instance), 2) &
+            & .or. &
+            & fillsInL2GP1 .neqv. fillsInL2GP2
           l2gp2Temp%l2gpValue(:,:,instance) = l2gp1%l2gpValue(:,:,instance)
           l2gp2Temp%l2gpPrecision(:,:,instance) = l2gp1%l2gpPrecision(:,:,instance)
           l2gp2Temp%status(instance) = l2gp1%status(instance)
@@ -1827,8 +1837,10 @@ contains ! =====     Public Procedures     =============================
           badInstances = badInstances + 1
         endif
       enddo
-      call output('Number of bad instances of l2gp2 reset to l2gp1 ', advance='no')
-      call output(badInstances, advance='yes')
+      if ( badChunksDifferent ) then
+        call output('Number of bad instances of l2gp2 reset to l2gp1 ', advance='no')
+        call output(badInstances, advance='yes')
+      endif
     endif
 
     if ( .not. skipGeos ) call diffGeoLocations( l2gp1, l2gp2Temp )
@@ -2560,15 +2572,15 @@ contains ! =====     Public Procedures     =============================
         call output ( ' ', advance='yes')
       endif
     endif
-    if ( showMe(.true., myFields, 'quantitytype') ) then
-      call output ( 'Quantity type: ')
-      if ( l2gp%QuantityType > 0 ) then
-        call display_string ( lit_indices(l2gp%QuantityType), &
-          &             strip=.true., advance='yes' )
-      else
-        call output ( '(the QType Index was 0) ', advance='yes')
-      endif
-    endif
+!     if ( showMe(.true., myFields, 'quantitytype') ) then
+!       call output ( 'Quantity type: ')
+!       if ( l2gp%QuantityType > 0 ) then
+!         call display_string ( lit_indices(l2gp%QuantityType), &
+!           &             strip=.true., advance='yes' )
+!       else
+!         call output ( '(the QType Index was 0) ', advance='yes')
+!       endif
+!     endif
 
     if ( showMe(myDetails > -2, myFields, 'ntimes') ) then
       call output ( 'nTimes: ')
@@ -3045,7 +3057,7 @@ contains ! =====     Public Procedures     =============================
 
     l2gp%name               = ol2gp%name    
     l2gp%nameIndex          = ol2gp%nameIndex    
-    l2gp%quantitytype       = ol2gp%quantitytype 
+    ! l2gp%quantitytype       = ol2gp%quantitytype 
     l2gp%MissingValue       = ol2gp%MissingValue 
     l2gp%MissingStatus      = ol2gp%MissingStatus
     l2gp%verticalCoordinate = ol2gp%verticalCoordinate    
@@ -3251,7 +3263,7 @@ contains ! =====     Public Procedures     =============================
       nn                = proto%nTimes
       l2gp%name         = proto%name
       l2gp%nameIndex    = proto%nameIndex
-      l2gp%QUANTITYTYPE = proto%QUANTITYTYPE
+      ! l2gp%QUANTITYTYPE = proto%QUANTITYTYPE
       l2gp%MissingStatus= proto%MissingStatus
       l2gp%MissingValue = proto%MissingValue
       l2gp%pressures    = proto%pressures    
@@ -5378,6 +5390,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.223  2016/07/28 01:42:27  vsnyder
+! Refactoring dump and diff
+!
 ! Revision 2.222  2016/06/13 17:59:16  pwagner
 ! Added cpHE5GlobalAttrs
 !
