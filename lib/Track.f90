@@ -43,6 +43,10 @@ module Track_m
     module procedure TrackAllocate_L2
     module procedure TrackAllocate_L3
   ! For allocatable argument instead of pointer
+    module procedure TrackAllocateA_I1
+    module procedure TrackAllocateA_I2
+    module procedure TrackAllocateA_I3
+    module procedure TrackAllocateA_I4
     module procedure TrackAllocateA_R1
     module procedure TrackAllocateA_R2
     module procedure TrackAllocateA_R3
@@ -79,6 +83,10 @@ module Track_m
     module procedure TrackDeallocate_L2
     module procedure TrackDeallocate_L3
   ! For allocatable argument instead of pointer
+    module procedure TrackDeallocateA_I1
+    module procedure TrackDeallocateA_I2
+    module procedure TrackDeallocateA_I3
+    module procedure TrackDeallocateA_I4
     module procedure TrackDeallocateA_R1
     module procedure TrackDeallocateA_R2
     module procedure TrackDeallocateA_R3
@@ -611,6 +619,91 @@ contains
     track_r4(i)%where = trim(where) // "@" // trimModule(module)
     num_r4 = max(num_r4,i)
   end subroutine TrackAllocate_R4
+
+  subroutine TrackAllocateA_I1 ( What, Where, Module )
+    integer, allocatable :: What(:)
+    character(len=*), intent(in) :: Where, Module
+    integer :: I
+    type(track_i1_t), pointer :: temp(:)
+    if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
+    do i = 1, num_r1
+      if ( .not. associated(track_i1(i)%p) ) go to 9 ! Found empty one
+    end do
+    if ( .not. associated(track_i1) ) then
+      allocate(track_i1(initSize))
+    else if ( i > size(track_i1) ) then
+      temp => track_i1
+      allocate ( track_i1(2*size(temp)) )
+      track_i1(:size(temp)) = temp
+      deallocate ( temp )
+    end if
+9   nullify ( track_i1(i)%p )
+    track_i1(i)%where = trim(where) // "@" // trimModule(module)
+    num_r1 = max(num_r1,i)
+  end subroutine TrackAllocateA_I1
+  subroutine TrackAllocateA_I2 ( What, Where, Module )
+    integer, allocatable :: What(:,:)
+    character(len=*), intent(in) :: Where, Module
+    integer :: I
+    type(track_i2_t), pointer :: temp(:)
+    if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
+    do i = 1, num_r2
+      if ( .not. associated(track_i2(i)%p) ) go to 9 ! Found empty one
+    end do
+    if ( .not. associated(track_i2) ) then
+      allocate(track_i2(initSize))
+    else if ( i > size(track_i2) ) then
+      temp => track_i2
+      allocate ( track_i2(2*size(temp)) )
+      track_i2(:size(temp)) = temp
+      deallocate ( temp )
+    end if
+9   nullify ( track_i2(i)%p )
+    track_i2(i)%where = trim(where) // "@" // trimModule(module)
+    num_r2 = max(num_r2,i)
+  end subroutine TrackAllocateA_I2
+  subroutine TrackAllocateA_I3 ( What, Where, Module )
+    integer, allocatable :: What(:,:,:)
+    character(len=*), intent(in) :: Where, Module
+    integer :: I
+    type(track_i3_t), pointer :: temp(:)
+    if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
+    do i = 1, num_r3
+      if ( .not. associated(track_i3(i)%p) ) go to 9 ! Found empty one
+    end do
+    if ( .not. associated(track_i3) ) then
+      allocate(track_i3(initSize))
+    else if ( i > size(track_i3) ) then
+      temp => track_i3
+      allocate ( track_i3(2*size(temp)) )
+      track_i3(:size(temp)) = temp
+      deallocate ( temp )
+    end if
+9   nullify ( track_i3(i)%p )
+    track_i3(i)%where = trim(where) // "@" // trimModule(module)
+    num_r3 = max(num_r3,i)
+  end subroutine TrackAllocateA_I3
+  subroutine TrackAllocateA_I4 ( What, Where, Module )
+    integer, allocatable :: What(:,:,:,:)
+    character(len=*), intent(in) :: Where, Module
+    integer :: I
+    type(track_i4_t), pointer :: temp(:)
+    if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
+    do i = 1, num_r4
+      if ( .not. associated(track_i4(i)%p) ) go to 9 ! Found empty one
+    end do
+    if ( .not. associated(track_i4) ) then
+      allocate(track_i4(initSize))
+    else if ( i > size(track_i4) ) then
+      temp => track_i4
+      allocate ( track_i4(2*size(temp)) )
+      track_i4(:size(temp)) = temp
+      deallocate ( temp )
+    end if
+9   nullify ( track_i4(i)%p )
+    track_i4(i)%where = trim(where) // "@" // trimModule(module)
+    num_r4 = max(num_r4,i)
+  end subroutine TrackAllocateA_I4
 
   subroutine TrackAllocateA_R1 ( What, Where, Module )
     real, allocatable :: What(:)
@@ -1208,6 +1301,71 @@ contains
     write ( *, '("No allocation found for ", a, " in ", a)' ) trim(where), trim(trimModule(module))
   end subroutine TrackDeallocate_R4
 
+  subroutine TrackDeallocateA_I1 ( What, Where, Module )
+    integer, allocatable, target :: What(:)
+    character(len=*), intent(in) :: Where, Module
+    integer :: I
+    if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
+    do i = 1, num_r1
+      if ( associated(track_I1(i)%p, what) ) then
+        nullify ( track_I1(i)%p )  ! Mark it free
+        do num_r1 = num_r1, 1, -1  ! Reduce count to speed searches
+          if ( associated(track_I1(num_r1)%p) ) return
+        end do
+        return
+      end if
+    end do
+    write ( *, '("No allocation found for ", a, " in ", a)' ) trim(where), trim(trimModule(module))
+  end subroutine TrackDeallocateA_I1
+  subroutine TrackDeallocateA_I2 ( What, Where, Module )
+    integer, allocatable, target :: What(:,:)
+    character(len=*), intent(in) :: Where, Module
+    integer :: I
+    if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
+    do i = 1, num_r2
+      if ( associated(track_I2(i)%p, what) ) then
+        nullify ( track_I2(i)%p )  ! Mark it free
+        do num_r2 = num_r2, 1, -1  ! Reduce count to speed searches
+          if ( associated(track_I2(num_r2)%p) ) return
+        end do
+        return
+      end if
+    end do
+    write ( *, '("No allocation found for ", a, " in ", a)' ) trim(where), trim(trimModule(module))
+  end subroutine TrackDeallocateA_I2
+  subroutine TrackDeallocateA_I3 ( What, Where, Module )
+    integer, allocatable, target :: What(:,:,:)
+    character(len=*), intent(in) :: Where, Module
+    integer :: I
+    if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
+    do i = 1, num_r3
+      if ( associated(track_I3(i)%p, what) ) then
+        nullify ( track_I3(i)%p )  ! Mark it free
+        do num_r3 = num_r3, 1, -1  ! Reduce count to speed searches
+          if ( associated(track_I3(num_r3)%p) ) return
+        end do
+        return
+      end if
+    end do
+    write ( *, '("No allocation found for ", a, " in ", a)' ) trim(where), trim(trimModule(module))
+  end subroutine TrackDeallocateA_I3
+  subroutine TrackDeallocateA_I4 ( What, Where, Module )
+    integer, allocatable, target :: What(:,:,:,:)
+    character(len=*), intent(in) :: Where, Module
+    integer :: I
+    if ( size(what) == 0 ) return ! Never associated with another, so we can't track them
+    do i = 1, num_r4
+      if ( associated(track_I4(i)%p, what) ) then
+        nullify ( track_I4(i)%p )  ! Mark it free
+        do num_r4 = num_r4, 1, -1  ! Reduce count to speed searches
+          if ( associated(track_I4(num_r4)%p) ) return
+        end do
+        return
+      end if
+    end do
+    write ( *, '("No allocation found for ", a, " in ", a)' ) trim(where), trim(trimModule(module))
+  end subroutine TrackDeallocateA_I4
+
   subroutine TrackDeallocateA_R1 ( What, Where, Module )
     real, allocatable, target :: What(:)
     character(len=*), intent(in) :: Where, Module
@@ -1784,6 +1942,9 @@ contains
 end module Track_m
 
 ! $Log$
+! Revision 2.9  2016/09/07 23:54:37  vsnyder
+! Add support for allocatable integer arrays
+!
 ! Revision 2.8  2015/06/02 23:59:42  vsnyder
 ! Track allocation and deallocation of allocatable arrays
 !
