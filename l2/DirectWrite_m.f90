@@ -1601,7 +1601,7 @@ contains ! ======================= Public Procedures =========================
       if ( deebug  ) call dump( quantity%template )
     end select
     ! It inherits its quantity type from the quantity template
-    l2gp%quantityType=quantity%template%quantityType
+    ! l2gp%quantityType=quantity%template%quantityType
     ! Do something about frequency
     if ( associated ( quantity%template%frequencies ) ) then
       l2gp%frequency = quantity%template%frequencies
@@ -1762,6 +1762,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.84  2016/09/07 22:46:49  pwagner
+! Removed unused QuantityType component from L2GPData type
+!
 ! Revision 2.83  2016/08/09 21:39:40  pwagner
 ! Removed unused variables
 !
