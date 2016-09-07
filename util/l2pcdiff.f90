@@ -13,28 +13,28 @@
 program l2pcdiff ! show diffs between swaths in two different files
 !=================================
 
-   use DECLARATION_TABLE, only: ALLOCATE_DECL, DEALLOCATE_DECL, DUMP_DECL
-   use dump_0, only: dumpTableSide, rmsFormat
-   use Hdf, only: DFACC_RDONLY
-   use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
-   use INIT_TABLES_MODULE, only: INIT_TABLES
-   use intrinsic, only: l_hdf
+   use Declaration_table, only: allocate_decl, deallocate_decl, dump_decl
+   use Dump_Options, only: dumpTableSide, rmsFormat
+   use Hdf, only: dfacc_rdonly
+   use HighOutput, only: OutputNamedValue
+   use Init_tables_module, only: init_tables
+   use Intrinsic, only: l_hdf
    use L2PC_m, only: Diff
-   use LEXER_CORE, only: INIT_LEXER
-   use MACHINE, only: HP, GETARG
+   use Lexer_core, only: init_lexer
+   use Machine, only: hp, getarg
    use MLSCommon, only: MLSFile_T
-   use MLSFiles, only: HDFVERSION_5, &
-     & InitializeMLSFile, mls_exists, MLS_INQSWATH
-   use MLSHDF5, only: mls_h5open, mls_h5close
+   use MLSFiles, only: HDFVersion_5, &
+     & InitializeMLSFile, MLS_Exists, MLS_Inqswath
+   use MLSHDF5, only: MLS_H5Open, MLS_H5Close
    use MLSMessageModule, only: MLSMessageConfig
    use MLSStringLists, only: catLists, ExpandStringRange
    use MLSStrings, only: WriteIntsToChars
-   use output_m, only: resumeOutput, suspendOutput, output
+   use Output_m, only: resumeOutput, suspendOutput, output
    use PrintIt_m, only: Set_Config
    use SDPToolkit, only: UseSDPToolkit
    use Time_M, only: Time_Now, time_config
-   use TOGGLES, only: SWITCHES
-   use TREE, only: ALLOCATE_TREE, DEALLOCATE_TREE, PRINT_SUBTREE
+   use Toggles, only: switches
+   use Tree, only: allocate_tree, deallocate_tree, print_subtree
    
    implicit none
 
@@ -138,12 +138,12 @@ contains
 !------------------------- get_filenames ---------------------
     subroutine get_filename(filename, options)
     ! Added for command-line processing
-     character(LEN=255), intent(out) :: filename          ! filename
+     character(len=255), intent(out) :: filename          ! filename
      type ( options_T ), intent(inout) :: options
      ! Local variables
      integer ::                         error = 1
      integer, save ::                   i = 1
-     character(LEN=160)              :: Chars
+     character(len=160)              :: Chars
   ! Get inputfile name, process command-line args
   ! (which always start with -)
     do
@@ -263,6 +263,9 @@ end program l2pcdiff
 !==================
 
 ! $Log$
+! Revision 1.4  2015/04/29 00:04:50  pwagner
+! Improved -help page
+!
 ! Revision 1.3  2014/01/09 00:31:26  pwagner
 ! Some procedures formerly in output_m now got from highOutput
 !
