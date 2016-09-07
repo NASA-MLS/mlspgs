@@ -61,31 +61,27 @@ MLSBIN=mlsbbiinn
 # If relative, it must be relative to the following absolute path
 MLSHOME=mlshhoommee
 
+if [ "$PGE_BINARY_DIR" = "" ]
+then
+  is_absolute=`echo "$MLSBIN" | grep '^\/'`
+  if [ "$is_absolute" = "" ]
+  then
+    PGE_BINARY_DIR=$MLSBIN
+  else
+    PGE_BINARY_DIR=$MLSHOME/$MLSBIN
+  fi
+fi
+
 ulimit -s unlimited
 ulimit -a
 
-# Does MLSBIN start with "/" or not?
-# (in other words is it absolute or relative?)
-
-is_absolute=`echo "$MLSBIN" | grep '^\/'`
-
 # We print the file license.txt to stdout
-if [ "$is_absolute" = "" ]
+echo $PGE_BINARY_DIR/$MLSPROG_0 $EXTRA_OPTIONS "$@"
+if [ -f $PGE_BINARY_DIR/license.txt ]
 then
-   echo $MLSHOME/$MLSBIN/$MLSPROG_0 $EXTRA_OPTIONS "$@"
-   if [ -f $MLSHOME/$MLSBIN/license.txt ]
-   then
-     cat $MLSHOME/$MLSBIN/license.txt
-   fi
-   $MLSHOME/$MLSBIN/$MLSPROG_0 $EXTRA_OPTIONS "$@"
-else
-   echo $MLSBIN/$MLSPROG_0 $EXTRA_OPTIONS "$@"
-   if [ -f $MLSBIN/license.txt ]
-   then
-     cat $MLSBIN/license.txt
-   fi
-   $MLSBIN/$MLSPROG_0 $EXTRA_OPTIONS "$@"
+  cat $PGE_BINARY_DIR/license.txt
 fi
+$PGE_BINARY_DIR/$MLSPROG_0 $EXTRA_OPTIONS "$@"
 
 return_status_0=`expr $?`
 
@@ -96,18 +92,10 @@ else
    return_status_0=0
 fi
 
-if [ "$is_absolute" = "" ]
-then
-   echo $MLSHOME/$MLSBIN/$MLSPROG_1 $EXTRA_OPTIONS "$@"
-   $MLSHOME/$MLSBIN/$MLSPROG_1 $EXTRA_OPTIONS "$@"
-   return_status_1=`expr $?`
-   H5REPACK=$MLSHOME/$MLSBIN/h5repack
-else
-   echo $MLSBIN/$MLSPROG_1 $EXTRA_OPTIONS "$@"
-   $MLSBIN/$MLSPROG_1 $EXTRA_OPTIONS "$@"
-   return_status_1=`expr $?`
-   H5REPACK=$MLSBIN/h5repack
-fi
+echo $PGE_BINARY_DIR/$MLSPROG_1 $EXTRA_OPTIONS "$@"
+$PGE_BINARY_DIR/$MLSPROG_1 $EXTRA_OPTIONS "$@"
+return_status_1=`expr $?`
+H5REPACK=$PGE_BINARY_DIR/h5repack
 
 if [ $return_status_1 != $NORMAL_STATUS ]
 then
@@ -116,14 +104,8 @@ else
    return_status_1=0
 fi
 
-if [ "$is_absolute" = "" ]
-then
-   echo $MLSHOME/$MLSBIN/$MLSPROG_2 $EXTRA_OPTIONS "$@"
-   $MLSHOME/$MLSBIN/$MLSPROG_2 $EXTRA_OPTIONS "$@"
-else
-   echo $MLSBIN/$MLSPROG_2 $EXTRA_OPTIONS "$@"
-   $MLSBIN/$MLSPROG_2 $EXTRA_OPTIONS "$@"
-fi
+echo $PGE_BINARY_DIR/$MLSPROG_2 $EXTRA_OPTIONS "$@"
+$PGE_BINARY_DIR/$MLSPROG_2 $EXTRA_OPTIONS "$@"
 
 return_status_2=`expr $?`
 
@@ -134,14 +116,8 @@ else
    return_status_2=0
 fi
 
-if [ "$is_absolute" = "" ]
-then
-   echo $MLSHOME/$MLSBIN/$MLSPROG_3 $EXTRA_OPTIONS "$@"
-   $MLSHOME/$MLSBIN/$MLSPROG_3 $EXTRA_OPTIONS "$@"
-else
-   echo $MLSBIN/$MLSPROG_3 $EXTRA_OPTIONS "$@"
-   $MLSBIN/$MLSPROG_3 $EXTRA_OPTIONS "$@"
-fi
+echo $PGE_BINARY_DIR/$MLSPROG_3 $EXTRA_OPTIONS "$@"
+$PGE_BINARY_DIR/$MLSPROG_3 $EXTRA_OPTIONS "$@"
 
 return_status_3=`expr $?`
 
@@ -202,6 +178,9 @@ else
 fi
 
 # $Log$
+# Revision 1.12  2015/01/16 17:16:17  pwagner
+# stack size limit lifted
+#
 # Revision 1.11  2012/02/15 18:12:06  pwagner
 # Offer last chance to find h5repack in HDFTOOLS directory
 #
