@@ -29,15 +29,15 @@ module PointingGrid_m
 
   type, public :: OneGrid_T
     real(r8) :: Height                            ! Zeta, actually
-    real(r8), pointer, dimension(:) :: Frequencies => NULL()
+    real(r8), allocatable, dimension(:) :: Frequencies
   end type OneGrid_T
 
   type, public :: PointingGrid_T
-    type(signal_T), pointer, dimension(:) :: Signals => NULL()
+    type(signal_T), allocatable, dimension(:) :: Signals
     real(r8) :: CenterFrequency         ! Should be gotten from Bands database
     !??? Maybe not.  The one in the pointing grid file appears to have been
     !??? Doppler shifted.
-    type(oneGrid_t), pointer, dimension(:) :: OneGrid => NULL()
+    type(oneGrid_t), allocatable, dimension(:) :: OneGrid
   end type PointingGrid_T
 
   type(pointingGrid_t), public, pointer, dimension(:) :: &
@@ -93,8 +93,8 @@ contains
     !                                          Should ultimately come from the
     !                                          signals database.
     real(r8) :: Height                       ! Zeta, actually, from the file
-    integer, pointer, dimension(:) :: HowManyGrids  ! per radiometer batch
-    integer, pointer, dimension(:) :: HowManySignals ! per radiometer batch
+    integer, allocatable, dimension(:) :: HowManyGrids  ! per radiometer batch
+    integer, allocatable, dimension(:) :: HowManySignals ! per radiometer batch
     integer :: HowManyRadiometers            ! gotten by counting the file
     integer :: I, N                          ! Loop inductor, subscript, temp
     character(127) :: IOMSG
@@ -106,6 +106,7 @@ contains
     integer :: SignalCount                   ! From Parse_Signal
     integer :: Status                        ! From read or allocate
     integer, pointer, dimension(:) :: Signal_Indices   ! From Parse_Signal, q.v.
+    integer, allocatable :: Temp(:)          ! For increasing sizes
     character(3) :: Which                    ! Which I/O statement caused error
 
     call trace_begin ( me, "Read_Pointing_Grid_File", where, &
@@ -113,7 +114,6 @@ contains
 
     if ( associated(pointingGrids) ) call destroy_pointing_grid_database
 
-    nullify ( howManyGrids, howManySignals )
     call allocate_test ( howManyGrids, size(signals), 'HowManyGrids', &
       & moduleName )
     call allocate_test ( howManySignals, size(signals), 'HowManySignals', &
@@ -127,18 +127,14 @@ contains
 outer1: do
       howManyRadiometers = howManyRadiometers + 1
       if ( howManyRadiometers > size(howManyGrids) ) then ! Double table sizes
-        signal_indices => howManyGrids
-        nullify ( howManyGrids )
-        call allocate_test ( howManyGrids, 2*size(signal_indices), &
+        call allocate_test ( temp, 2*size(howManyGrids), &
           & 'HowManyGrids', moduleName )
-        howManyGrids(:size(signal_indices)) = signal_indices
-        call deallocate_test ( signal_indices, 'Old HowManyGrids', moduleName )
-        signal_indices => howManySignals
-        nullify ( howManySignals )
-        call allocate_test ( howManySignals, 2*size(signal_indices), &
-          & 'HowManySignals', moduleName )
-        howManySignals(:size(signal_indices)) = signal_indices
-        call deallocate_test ( signal_indices, 'Old HowManySignals', moduleName )
+        temp(:size(howManyGrids)) = howManyGrids
+        call move_alloc ( temp, howManyGrids )
+        call allocate_test ( temp, 2*size(howmanySignals), &
+          & 'HowmanySignals', moduleName )
+        temp(:size(howmanySignals)) = howmanySignals
+        call move_alloc ( temp, howmanySignals )
       end if
       howManySignals(howManyRadiometers) = 0
       nullify(signal_indices)
@@ -200,8 +196,7 @@ outer2: do
         & elementSize = storage_size(pointingGrids(howManyRadiometers)%signals) / 8, &
         & address=addr )
       n = 0 ! Counter in pointingGrids(howManyRadiometers)%signals
-      nullify ( signal_indices )
-      nullify ( channels )
+      nullify ( signal_indices, channels )
       line = adjustl(line)
       do
         call parse_signal ( line, signal_indices, &
@@ -370,6 +365,9 @@ outer2: do
 end module PointingGrid_m
 
 ! $Log$
+! Revision 2.16  2015/03/28 02:00:28  vsnyder
+! Added stuff to trace allocate/deallocate addresses
+!
 ! Revision 2.15  2014/11/06 00:00:09  vsnyder
 ! Robustify: left adjust LINE before checking for numbers
 !
