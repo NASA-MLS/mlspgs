@@ -48,6 +48,7 @@ module Dump_Options
 ! (for dump or diff)
 !   character         meaning
 !      ---            -------
+!       @              show differences in the goldbrick-style
 !       B              show Bandwidth, % of array that is non-zero
 !       H              show rank, TheShape of array
 !       L              laconic; skip printing name, size of array
@@ -73,8 +74,14 @@ module Dump_Options
 ! w or wholearray is set to TRUE
 
 ! in the above, a string list is a string of elements (usu. comma-separated)
+!
+! For an example of the goldbrick style of showing differences,
+!  ** Reference values (min : max, rms): -343.791 : 4.67836, 3.52708
+!  ** Max. absolute: 0.000439644 ( = 4.39644e+16 fractional )
+!  ** Max. fractional: 4.39644e+16 ( = 0.000439644 absolute )
 
-  implicit NONE
+
+  implicit none
   public
 
   save
@@ -83,6 +90,7 @@ module Dump_Options
   character(len=*), parameter :: DefaultPCTFormat = '(0pf6.1)'
 
   ! These are the possible option characters to dumps, diffs
+  character, parameter :: Dopt_AuBrick     = '@'
   character, parameter :: Dopt_Bandwidth   = 'B'
   character, parameter :: Dopt_Clean       = 'c'
   character, parameter :: Dopt_Collapse    = 'l'
@@ -105,7 +113,8 @@ module Dump_Options
 
   ! These are the indices of those options in the Dopts array
   enum, bind(c)
-    enumerator :: Bandwidth = 1
+    enumerator :: AuBrick = 1
+    enumerator :: Bandwidth
     enumerator :: Clean
     enumerator :: CollapseIt
     enumerator :: Cyclic
@@ -185,6 +194,7 @@ module Dump_Options
   ! Options for Dumps and Diffs
   type(option_t) :: Dopts(numOpt)
 
+  data dopts(aubrick)    / option_t('aubrick',    dopt_aubrick,    .false. ) /
   data dopts(bandwidth)  / option_t('bandwidth',  dopt_bandwidth,  .false. ) /
   data dopts(clean)      / option_t('clean',      dopt_clean,      .false. ) /
   data dopts(collapseIt) / option_t('collapse',   dopt_collapse,   .false. ) /
@@ -198,6 +208,7 @@ module Dump_Options
   data dopts(ratios)     / option_t('ratios',     dopt_ratios,     .false. ) /
   data dopts(RMS)        / option_t('RMS',        dopt_rms,        .false. ) /
   data dopts(stats)      / option_t('stats',      dopt_stats,      .false. ) /
+  data dopts(table)      / option_t('table',      dopt_transpose,  .false. ) /
   data dopts(transpose)  / option_t('transpose',  dopt_transpose,  .false. ) /
   data dopts(trimIt)     / option_t('trim',       dopt_trim,       .false. ) /
   data dopts(unique)     / option_t('unique',     dopt_unique,     .false. ) /
@@ -255,6 +266,10 @@ contains
       call outputNamedValue ( 'complex output format', trim_safe(sdFormatDefaultCmplx), advance='yes', &
         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=90 )
       call blanks(90, fillChar='-', advance='yes')
+      do i = 1, size(dopts)
+        call outputNamedValue ( dopts(i)%name//'?', dopts(i)%v, advance='yes', &
+        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=90 )
+      end do
     else if ( index( optionString, "?" ) > 0 ) then
       call output( 'The meaning of options is determined by the presence or absence', advance='yes' )
       call output( 'of specific characters in the options string', advance='yes' )
@@ -263,6 +278,7 @@ contains
       call output( '  character         meaning', advance='yes' )
       call output( '     ---            -------', advance='yes' )
       ! The following are in order according to their option letters
+      call output( '     ' // dopt_aubrick     // '              show aubrick, diffs in goldbrick style', advance='yes' )
       call output( '     ' // dopt_bandwidth   // '              show Bandwidth, % of array that is non-zero', advance='yes' )
       call output( '     ' // dopt_shape       // '              show rank, TheShape of array', advance='yes' )
       call output( '     ' // dopt_laconic     // '              laconic; skip printing name, size of array', advance='yes' )
@@ -286,7 +302,7 @@ contains
       call output( '      1 or 2 or ..   ignored; calling routine is free to interpret', advance='yes' )
       call output( ' ', advance='yes' )
       call output( 'An exception is the behavior of w (wholearray):', advance='yes' )
-      call output( 'if all {HNRblrs} are FALSE, i.e. unset, the whole array is dumped (or diffed)', advance='yes' )
+      call output( 'if all {@HNRblrs} are FALSE, i.e. unset, the whole array is dumped (or diffed)', advance='yes' )
       call output( 'if any are TRUE the whole array will be dumped only if', advance='yes' )
       call output( 'w is present or wholearray is set to TRUE', advance='yes' )
     else
@@ -360,11 +376,11 @@ contains
     call set_options ( options, &
       & merge(defaultDiffOptions,defaultDumpOptions,myDiff) )
     dopts(wholeArray)%v = dopts(wholeArray)%v .or. &
-      & .not. ( dopts(bandwidth)%v .or. dopts(collapseIt)%v .or. &
+      & .not. ( dopts(AuBrick)%v .or. dopts(bandwidth)%v .or. dopts(collapseIt)%v .or. &
       &         dopts(ratios)%v .or. dopts(RMS)%v .or. dopts(itsShape)%v .or. &
       &         dopts(stats)%v .or. dopts(table)%v .or. dopts(NaNs)%v )
     dopts(onlyWholeArray)%v = dopts(wholeArray)%v .and. &
-      & .not. ( dopts(bandwidth)%v .or. dopts(collapseIt)%v .or. &
+      & .not. ( dopts(AuBrick)%v .or. dopts(bandwidth)%v .or. dopts(collapseIt)%v .or. &
       &         dopts(ratios)%v .or. dopts(RMS)%v .or. dopts(itsShape)%v .or. &
       &         dopts(stats)%v .or. dopts(table)%v .or. dopts(NaNs)%v)
     nameHasBeenPrinted = nameHasBeenPrinted .or. dopts(laconic)%v
@@ -383,6 +399,9 @@ contains
 end module Dump_Options
 
 ! $Log$
+! Revision 2.3  2016/09/09 20:09:51  pwagner
+! Added Au (Gold) brick option removing some hay from the stack of statistics
+!
 ! Revision 2.2  2016/07/28 03:29:28  vsnyder
 ! Moved a bunch of comments here from Dump_0.  Repaired typo that confused
 ! "Clean" option with "Collape" option.
