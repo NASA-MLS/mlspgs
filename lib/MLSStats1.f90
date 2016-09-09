@@ -12,15 +12,15 @@
 !=============================================================================
 module MLSStats1                 ! Calculate statistics of rank n arrays
 !=============================================================================
-  use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
-  use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
-  use MLSKINDS, only: R4, R8
-  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
-  use MLSFINDS, only: FINDALL, FINDFIRST, FINDLAST
-  use MLSSTRINGLISTS, only: CATLISTS
-  use MLSSTRINGS, only: LOWERCASE
-  use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT
-  use SORT_M, only: SORT, SORTP
+  use Allocate_Deallocate, only: allocate_test, deallocate_test
+  use HighOutput, only: OutputNamedValue
+  use MLSKinds, only: r4, r8
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+  use MLSFinds, only: FindAll, FindFirst, FindLast
+  use MLSStringLists, only: catlists
+  use MLSStrings, only: lowercase
+  use Output_m, only: blanks, newline, output
+  use Sort_m, only: sort, sortp
 
   implicit none
 ! === (start of toc) ===
@@ -45,7 +45,7 @@ module MLSStats1                 ! Calculate statistics of rank n arrays
 !                                   or with x1, x2 its integral over [x1, x2]
 ! RATIOS                          Statistics of ratio between 2 arrays;
 !                                    can be used to track changes to a reference
-!                                    array "gold" standard (Why is this here?)
+!                                    goldbrick standard
 ! RESET                           Resets a STAT_T
 ! STATFUNCTION                    Given a set of values it returns a STAT_T
 ! STATISTICS                      Similar to STATFUNCTION, but may accumulate
@@ -202,6 +202,11 @@ module MLSStats1                 ! Calculate statistics of rank n arrays
     module procedure dump_if_selected_r8_scalar
   end interface
   
+  interface filterValues
+    module procedure filterValues_r4
+    module procedure filterValues_r8
+  end interface
+  
   interface howfar
     module procedure howfar_d1int, howfar_d2int, howfar_d3int
     module procedure howfar_d1r4, howfar_d2r4, howfar_d3r4, howfar_d4r4
@@ -212,17 +217,6 @@ module MLSStats1                 ! Calculate statistics of rank n arrays
     module procedure hownear_d1int, hownear_d2int, hownear_d3int
     module procedure hownear_d1r4, hownear_d2r4, hownear_d3r4, hownear_d4r4
     module procedure hownear_d1r8, hownear_d2r8, hownear_d3r8, hownear_d4r8
-  end interface
-  
-  interface ratios
-    module procedure ratios_d1int, ratios_d2int, ratios_d3int
-    module procedure ratios_d1r4, ratios_d2r4, ratios_d3r4, ratios_d4r4
-    module procedure ratios_d1r8, ratios_d2r8, ratios_d3r8, ratios_d4r8
-  end interface
-  
-  interface filterValues
-    module procedure filterValues_r4
-    module procedure filterValues_r8
   end interface
   
   interface mlsmin
@@ -269,6 +263,12 @@ module MLSStats1                 ! Calculate statistics of rank n arrays
   
   interface pdf
     module procedure pdf_1, pdf_2
+  end interface
+  
+  interface ratios
+    module procedure ratios_d1int, ratios_d2int, ratios_d3int
+    module procedure ratios_d1r4, ratios_d2r4, ratios_d3r4, ratios_d4r4
+    module procedure ratios_d1r8, ratios_d2r8, ratios_d3r8, ratios_d4r8
   end interface
   
   interface shrinkarray
@@ -1680,6 +1680,12 @@ contains
       ! ------------------- RATIOS -----------------------
       ! This family of routines finds both the absolute and relative RATIOS
       ! of one array w.r.t. another 'weighting' array (ignoring signs in both)
+      
+      ! The result, thinking in classic goldbrick style, would be
+
+      ! **max absolute is exvalues(1) (corresponding ratio is exratios(1))**
+      ! **max ratio is exratios(2) (corresponding absolute is exvalues(2))**
+
       ! E.g. let
       ! array1 = (/ 1,  -0.5, 2, +100 /)
       ! array2 = (/ 10, 0.5, 10, 1000 /)
@@ -1692,7 +1698,7 @@ contains
       
       ! This may be useful in checking for non-negligible differences
       ! between two arrays representing results from two different analyses
-      ! or noting the magnitude of changes to a "gold" standard
+      ! or noting the magnitude of changes to the goldbrick
       !
       ! If array2 is all 0, ratios, which would be undefined, are
       ! all set to -1.0
@@ -1703,6 +1709,10 @@ contains
       ! '-'      array1 - array2             max( abs(array1), abs(array2) )
       ! '+'      array1 + array2             max( abs(array1), abs(array2) )
       ! '*' min( abs(array1), abs(array2) )  max( abs(array1), abs(array2) )
+      
+      ! '-' is precisely what we would want for the goldbrick if 
+      ! array1 is the reference standard
+      ! array2 is the new result
       !
       ! Couldn't we have thought of a better name than "RATIOS"?
       subroutine ratios_d1int( array1, array2, exvalues, exratios, &
@@ -2420,6 +2430,9 @@ end module MLSStats1
 
 !
 ! $Log$
+! Revision 2.26  2016/09/09 20:37:32  pwagner
+! Improved explanation of ratios, including args and usage
+!
 ! Revision 2.25  2014/01/09 00:24:29  pwagner
 ! Some procedures formerly in output_m now got from highOutput
 !
