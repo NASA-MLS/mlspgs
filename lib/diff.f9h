@@ -78,6 +78,7 @@
     if ( PCTFormat /= '*' ) myPCTFormat = PCTFormat
     call theDumpBegins ( options, thisIsADiff )
 
+    if ( debug ) call DumpDumpOptions
     if ( len_trim(name1) < 1 ) then
       DiffName = ' '
     else if ( len_trim(name2) < 1 ) then
@@ -202,7 +203,7 @@
         return
       end if
     end if
-    if ( dopts(RMS)%v .or. dopts(myRatios)%v ) then
+    if ( dopts(RMS)%v .or. dopts(myRatios)%v .or. dopts(AuBrick)%v ) then
       ! We want to make sure we remove values from both arrays where either is fill
       if ( DEBUG ) call outputNamedValue( 'filtering FillValue', FillValue )
       filtered1 = reshape( array1, (/ product(shape(array1)) /) )
@@ -314,6 +315,36 @@
           & rms=rmsvalue, median=medianvalue, fillValue=FillValue )
         ! call outputNamedValue( 'min(filterddiff)', minval(array2-array1) )
         ! call outputNamedValue( 'max(filterddiff)', maxval(array2-array1) )
+      end if
+      if ( dopts(AuBrick)%v ) then
+        if ( .not. nameHasBeenPrinted ) then
+          if ( len_trim(DiffName) > 0 ) call output( trim(DiffName), advance='yes' )
+          nameHasBeenPrinted = .true.
+        end if
+        nameHasBeenPrinted = .false.
+        
+        call output( ' ** Reference values (min : max, rms): ', advance='no' )
+        call output( refmin, advance='no' )
+        call output( ' : ', advance='no' )
+        call output( refmax, advance='no' )
+        call output( ' , ', advance='no' )
+        call output( refrms, advance='no' )
+        call output( ' **', advance='no' )
+        call newLine
+        
+        call output( ' ** Max. absolute: ', advance='no' )
+        call output( exvalues(1), advance='no' )
+        call output( ' ( =  ', advance='no' )
+        call output( exratios(1), advance='no' )
+        call output( ' fractional ) ** ', advance='no' )
+        call newLine
+        
+        call output( ' ** Max. fractional: ', advance='no' )
+        call output( exratios(2), advance='no' )
+        call output( ' ( =  ', advance='no' )
+        call output( exvalues(2), advance='no' )
+        call output( ' absolute ) ** ', advance='no' )
+        call newLine
       end if
       if ( dopts(myRatios)%v ) then
         if ( .not. nameHasBeenPrinted ) then
@@ -473,6 +504,9 @@
 
 !   end subroutine DIFF_1D_DOUBLE
 ! $Log$
+! Revision 2.34  2016/09/09 20:35:17  pwagner
+! Added Au (Gold) brick option removing some hay from the stack of statistics
+!
 ! Revision 2.33  2016/07/28 01:42:27  vsnyder
 ! Refactoring dump and diff
 !
