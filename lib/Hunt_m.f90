@@ -15,24 +15,19 @@ module Hunt_m
 
   use Diff_1, only: SelfDiff
   use Dump_0, only: Dump
+  use HighOutput, only: OutputNamedValue
   use MLSCommon, only : UndefinedValue
   use MLSFillValues, only: IsFillValue, ReplaceFillValues
   use MLSFinds, only: FindFirst, FindLast
   use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning, &
     & Crash_burn, MLSMessage
-  use HighOutput, only: OutputNamedValue
+  use Pure_Hunt_m, only: PureHunt ! because others get it from here
 
   implicit none
 
   private
 
   public :: Hunt, HuntBox, HuntRange, PureHunt
-
-!---------------------------- RCS Module Info ------------------------------
-  character (len=*), private, parameter :: ModuleName= &
-       "$RCSfile$"
-  private :: not_used_here 
-!---------------------------------------------------------------------------
 
 
   interface Hunt
@@ -48,9 +43,11 @@ module Hunt_m
     module procedure HuntRange_int, HuntRange_r4, HuntRange_r8
   end interface
 
-  interface purehunt
-    module procedure purehunt_r4, purehunt_r8
-  end interface
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile$"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
 
 contains
 
@@ -213,19 +210,6 @@ contains
     include 'HuntRange.f9h'
   end subroutine HuntRange_r8
 
-  ! ---------------------------------------------------  PureHunt  -----
-  ! A binary search routine with a hunt procedure, to start from last known
-  ! location (if 0 < JLO < N) or from the begining otherwise.
-  pure subroutine purehunt_r4 ( ELEMENT, ARRAY, N, JLO, JHI )
-    integer, parameter :: RK = kind(0.0e0)
-    include 'hunt.f9h'
-  end subroutine purehunt_r4
-
-  pure subroutine purehunt_r8 ( ELEMENT, ARRAY, N, JLO, JHI )
-    integer, parameter :: RK = kind(0.0d0)
-    include 'hunt.f9h'
-  end subroutine purehunt_r8
-
   logical function not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
@@ -240,6 +224,9 @@ end module Hunt_m
 !=============================================================================
 
 ! $Log$
+! Revision 2.4  2016/09/09 00:12:26  vsnyder
+! Moved PureHunt into a module of its own
+!
 ! Revision 2.3  2016/08/23 20:25:51  pwagner
 ! Hunt mail return after failure if optional arg fail present
 !
