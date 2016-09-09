@@ -14,14 +14,14 @@ program l2gpdiff ! show diffs between swaths in two different files
 !=================================
 
    use Dump_Options, only: dumpDumpOptions, dumpTableSide, &
-     & statsOnOneLine, rmsFormat
+     & StatsOnOneLine, rmsFormat
    use HighOutput, only: outputNamedValue
    use L2GPData, only: Diff, maxSwathNamesBufSize
    use Machine, only: hp, getarg
-   use MLSFiles, only: mls_exists, HDFVersion_5, MLS_InqSwath
+   use MLSFiles, only: MLS_Exists, HDFVersion_5, MLS_InqSwath
    use MLSHDF5, only: MLS_H5Open, MLS_H5Close
    use MLSStringLists, only: catLists, ExpandStringRange
-   use MLSStrings, only: WriteIntsToChars
+   use MLSStrings, only: LowerCase, WriteIntsToChars
    use Output_m, only: resumeOutput, suspendOutput, output
    use PrintIt_m, only: Set_Config
    use Time_M, only: Time_Now, time_config
@@ -58,6 +58,7 @@ program l2gpdiff ! show diffs between swaths in two different files
     real, dimension(4) ::  geoBoxHiBound
     integer     ::         Details         = 1
     logical     ::         force           = .false.
+    logical     ::         AuBrick         = .false.
     logical     ::         rms             = .false.
     logical     ::         stats           = .false.
     logical     ::         table           = .false.
@@ -142,6 +143,7 @@ program l2gpdiff ! show diffs between swaths in two different files
   if ( options%rms ) options%dumpOptions = trim(options%dumpOptions) // 'r'
   if ( options%stats ) options%dumpOptions = trim(options%dumpOptions) // 's'
   if ( options%table ) options%dumpOptions = trim(options%dumpOptions) // 'b'
+  if ( options%AuBrick ) options%dumpOptions = trim(options%dumpOptions) // '@'
   if ( options%verbose ) options%dumpOptions = trim(options%dumpOptions) // 'v'
   call time_now ( t1 )
   ! print *, 'dumpOptions: ', trim(options%dumpOptions)
@@ -295,6 +297,9 @@ contains
       else if ( filename(1:4) == '-mat' ) then
         options%matchTimes = .true.
         exit
+      else if ( lowercase(filename(1:3)) == '-au' ) then
+        options%AuBrick = .true.
+        exit
       else if ( filename(1:5) == '-rms ' ) then
         options%rms = .true.
         exit
@@ -343,6 +348,7 @@ contains
     call outputNamedValue( 'nGeoBoxDims    ', options%nGeoBoxDims     )
     call outputNamedValue( 'geoBoxLowBound ', options%geoBoxLowBound  )
     call outputNamedValue( 'geoBoxHiBound  ', options%geoBoxHiBound   )
+    call outputNamedValue( 'AuBrick        ', options%AuBrick         )
     call outputNamedValue( 'Details        ', options%Details         )
     call outputNamedValue( 'dumpOptions    ', options%dumpOptions     )
     call outputNamedValue( 'force          ', options%force           )
@@ -396,6 +402,7 @@ contains
       write (*,*) '   -debug      => dump options, etc.'
       write (*,*) '   -ignore     => ignore bad chunks'
       write (*,*) '   -matchTimes => only matching profile times'
+      write (*,*) '   -au         => format like goldbrick'
       write (*,*) '   -rms        => just print mean, rms'
       write (*,*) '   -s          => just show number of differences'
       write (*,*) '   -one        => print name on each line (dont)'
@@ -438,6 +445,9 @@ end program l2gpdiff
 !==================
 
 ! $Log$
+! Revision 1.25  2016/08/09 22:45:26  pwagner
+! Consistent with splitting of Dunp_0
+!
 ! Revision 1.24  2016/03/23 16:38:51  pwagner
 ! Added -one commandline option
 !
