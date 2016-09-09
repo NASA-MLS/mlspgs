@@ -13,10 +13,11 @@ module Diff_1
 
   ! Dump differences of arrays
 
-  use Dump_Options, only: DefaultPCTFormat, DiffRMSMeansRMS, Direct, Dopts, &
-    & DumpTableSide, NameHasBeenPrinted, NaNs, PCTFormat, PrintNameIfDiff, &
+  use Dump_Options, only: AuBrick, &
+    & DefaultPCTFormat, DiffRMSMeansRMS, Direct, Dopts, DumpTableSide, &
+    & NameHasBeenPrinted, NaNs, PCTFormat, PrintNameIfDiff, &
     & MyRatios=>Ratios, RMS, RMSFormat, Stats, StatsOnOneLine, Table, &
-    & TheDumpBegins, WholeArray
+    & TheDumpBegins, WholeArray, DumpDumpOptions
   use Dump_0, only: Dump, FinishLine
   use Dump_1, only: DumpTable
   use HighOutput, only: OutputNamedValue
@@ -26,7 +27,7 @@ module Diff_1
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
   use MLSStats1, only: AllStats, HowFar, HowNear, MLSStdDev, Ratios, Reset, &
     & Stat_t
-  use Output_m, only: OutputOptions, Blanks, Output
+  use Output_m, only: OutputOptions, Blanks, NewLine, Output
   use Time_M, only: Time_Now
 
   implicit none
@@ -976,6 +977,9 @@ contains
 end module Diff_1
 
 ! $Log$
+! Revision 2.3  2016/09/09 20:34:53  pwagner
+! Added Au (Gold) brick option removing some hay from the stack of statistics
+!
 ! Revision 2.2  2016/07/30 00:09:31  pwagner
 ! NAG complained at link about not having a Time_Now
 !
