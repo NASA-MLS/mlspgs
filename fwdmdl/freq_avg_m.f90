@@ -26,7 +26,7 @@ contains
   ! ---------------------------------------------------  Freq_Avg  -----
   subroutine Freq_Avg ( F_grid, F_grid_fltr, Fltr_func, Rad, Avg )
 
-    use MLSKINDS, only: R8, RP
+    use MLSKinds, only: R8, RP
 
     real(r8), intent(in) :: F_grid(:), F_grid_fltr(:), Fltr_func(:)
     real(rp), intent(in) :: Rad(:)
@@ -46,8 +46,8 @@ contains
                           & Avg )
 
     ! use D_CSPLINE_M, only: CSPLINE
-    use MLSNUMERICS, only: INTERPOLATEVALUES, SIMPS => SIMPSONSSUB
-    use MLSKINDS, only: R8, RP
+    use MLSNumerics, only: InterpolateValues, Simps => SimpsonsSub
+    use MLSKinds, only: R8, RP
 
     real(r8), intent(in) :: F_grid(:), F_grid_fltr(:), Fltr_func(:)
     real(rp), intent(in) :: Rad(:)
@@ -85,11 +85,12 @@ contains
 
     ! use D_CSPLINE_M, only: CSPLINE
     use DFFT_M, only: DTCST
-    use FilterShapes_m, only: DACSFILTERSHAPE_T
-    use MLSKINDS, only: I4, R8, RP
-    use MLSNumerics, only: INTERPOLATEVALUES, PUREHUNT
-    use SineTables_m, only: CREATESINETABLE, N_SINE => LOGSIZE_SINETABLE_R8, &
-      & SINES => SINETABLE_R8
+    use FilterShapes_m, only: DACSFilterShape_T
+    use MLSKinds, only: I4, R8, RP
+    use MLSNumerics, only: InterpolateValues
+    use Pure_Hunt_m, only: PureHunt
+    use SineTables_m, only: CreateSineTable, N_Sine => Logsize_SineTable_R8, &
+      & Sines => SineTable_R8
 
     real(r8), intent(in) :: F_grid(:) ! Frequency grid
     type(DACSFilterShape_T), intent(in) :: DACSFilter
@@ -161,8 +162,8 @@ contains
 
     ! Determine which frequencies from F_Grid to use to span F_Grid_Fltr
 
-    use MLSNumerics, only: PUREHUNT
-    use MLSKINDS, only: R8
+    use Pure_Hunt_m, only: PureHunt
+    use MLSKinds, only: R8
 
     real(r8), intent(in) :: F_grid(:), F_grid_fltr(:)
 
@@ -204,6 +205,9 @@ contains
 end module Freq_Avg_m
 
 ! $Log$
+! Revision 2.20  2013/06/12 02:24:58  vsnyder
+! Cruft removal
+!
 ! Revision 2.19  2013/05/22 00:09:12  vsnyder
 ! Remove unreferenced use names
 !
