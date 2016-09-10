@@ -671,7 +671,7 @@ contains
     if ( myDetails > 1 ) then
       myLatLon = .false.
       if ( present(latLon) ) myLatLon = latLon
-      if ( latLon ) then
+      if ( myLatLon ) then
         call dump ( QTM_Trees%geo_in, ' QTM vertices in (lon,lat) coordinates:' )
       else
         call dump ( QTM_Trees%ZOT_in, ' QTM vertices in ZOT coordinates:' )
@@ -819,6 +819,9 @@ contains
 end module Generate_QTM_m
 
 ! $Log$
+! Revision 2.11  2016/09/10 01:50:41  vsnyder
+! Use MyLatLon instead of optional LatLon in Dump_QTM_Tree
+!
 ! Revision 2.10  2016/09/10 01:48:07  vsnyder
 ! Indent dump headers so they line up with other dumps
 !
