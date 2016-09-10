@@ -637,7 +637,7 @@ contains
       call output ( ')' )
       if ( mod(i,5) == 0 .or. i == size(QTM_Trees%polygon_geo) ) call newLine
     end do
-    call output ( 'Polygon_ZOT:', advance='yes' )
+    call output ( ' Polygon_ZOT:', advance='yes' )
     do i = 1, size(QTM_Trees%polygon_ZOT)
       if ( mod(i,5) == 1 ) call output ( i, format='(i4,"#")' )
       call output ( QTM_Trees%polygon_ZOT(i)%x, before=' (', format=fmt(2) )
@@ -660,7 +660,14 @@ contains
     end if
 
     call output ( QTM_Trees%n, before=' QTM tree has ' )
-    call output ( ' vertices:', advance='yes' )
+    call output ( ' vertices ' )
+    myLatLon = .false.
+    if ( present(latLon) ) myLatLon = latLon
+    if ( myLatLon ) then
+      call output ( '(lon,lat):', advance='yes' )
+    else
+      call output ( '(ZOT x,y):', advance='yes' )
+    end if
     myDetails = 1
     if ( present(details) ) myDetails = details
     if ( QTM_Trees%n > 0 ) &
@@ -819,6 +826,9 @@ contains
 end module Generate_QTM_m
 
 ! $Log$
+! Revision 2.12  2016/09/10 01:57:46  vsnyder
+! Use LatLon argument to print 'Polygon has n vertices' header
+!
 ! Revision 2.11  2016/09/10 01:50:41  vsnyder
 ! Use MyLatLon instead of optional LatLon in Dump_QTM_Tree
 !
