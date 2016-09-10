@@ -623,13 +623,13 @@ contains
     if ( present(format) ) fmt = format
 
     ! Dump the "inside" point
-    call output ( QTM_Trees%in_geo%lon%d, before='Inside Geo (Lon,Lat) (' )
+    call output ( QTM_Trees%in_geo%lon%d, before=' Inside Geo (Lon,Lat) (' )
     call output ( QTM_Trees%in_geo%lat, before=',' )
     call output ( QTM_Trees%in%x, before=') Inside ZOT (X,Y) (', format=fmt(2) )
     call output ( QTM_Trees%in%y, before=',', format=fmt(2) )
     call output ( ')', advance='yes' )
     ! Dump the polygons
-    call output ( 'Polygon_Geo:', advance='yes' )
+    call output ( ' Polygon_Geo:', advance='yes' )
     do i = 1, size(QTM_Trees%polygon_geo)
       if ( mod(i,5) == 1 ) call output ( i, format='(i4,"#")' )
       call output ( QTM_Trees%polygon_geo(i)%lon%d, before=' (', format=fmt(1) )
@@ -647,7 +647,7 @@ contains
     end do
     if ( allocated(QTM_Trees%ignore_edge) ) then
       if ( size(QTM_Trees%ignore_edge) > 0 ) then
-        call output ( 'Edges on 90*n degree meridians that have antiparallel partners:', &
+        call output ( ' Edges on 90*n degree meridians that have antiparallel partners:', &
           & advance='yes' )
         do i = 1, size(QTM_Trees%ignore_edge), 20
           call output ( i, 4, after=": " )
@@ -659,13 +659,13 @@ contains
       end if
     end if
 
-    call output ( QTM_Trees%n, before='QTM tree has ' )
+    call output ( QTM_Trees%n, before=' QTM tree has ' )
     call output ( ' vertices:', advance='yes' )
     myDetails = 1
     if ( present(details) ) myDetails = details
     if ( QTM_Trees%n > 0 ) &
       & call dump ( QTM_Trees%q, 1, 0, latLon=latLon, sons=myDetails>2 )
-    call output ( QTM_Trees%level, before='Mesh refined to level ' )
+    call output ( QTM_Trees%level, before=' Mesh refined to level ' )
     call output ( QTM_Trees%n_in, before=' has ' )
     call output ( ' vertices within or adjacent to the polygon', advance='yes' )
     if ( myDetails > 1 ) then
@@ -819,6 +819,9 @@ contains
 end module Generate_QTM_m
 
 ! $Log$
+! Revision 2.10  2016/09/10 01:48:07  vsnyder
+! Indent dump headers so they line up with other dumps
+!
 ! Revision 2.9  2016/08/24 01:35:51  vsnyder
 ! Add (lon,lat) coordinates of facet vertices in QTM_Node_t
 !
