@@ -42,7 +42,6 @@ contains
     use String_Table, only: Display_String
     use Toggles, only: Emit, Levels, Toggle
     use Trace_M, only: Trace_Begin, Trace_End
-    use VectorsModule, only: VectorValue_T
 
     type (Grids_T), intent(in) :: Grids_Tmp  ! All the coordinates for Temperature
     type (Grids_T), intent(in) :: Grids_f    ! All the coordinates for VMR
@@ -114,6 +113,9 @@ contains
 end module Check_QTM_m
 
 ! $Log$
+! Revision 2.2  2016/09/12 23:51:40  vsnyder
+! Delete unused VectorValue_T
+!
 ! Revision 2.1  2016/09/12 23:49:51  vsnyder
 ! Initial commit
 !
