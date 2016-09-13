@@ -25,12 +25,15 @@ module Generate_QTM_m
   implicit NONE
   private
 
-  public :: Cross_Meridian, Dump, Dump_QTM, Dump_QTM_Tree, Generate_QTM, &
-          & Get_QTM_Lats, Polygon_To_ZOT, QTM_node_t, QTM_Tree_t, ZOT_t
+  public :: Cross_Meridian, Generate_QTM, Get_QTM_Lats, Polygon_To_ZOT, &
+          & QTM_node_t, QTM_Tree_t, ZOT_t
 
-  ! One facet of a QTM:
+  ! One facet of a QTM, not at the finest refinement unless
+  ! %depth == QTM_Tree_t%Level.  All(%son==0) means a facet is not refined,
+  ! but it might not be at the finest refinement because it's entirely
+  ! outwith the polygon.
   type :: QTM_Node_t
-    logical :: Leaf = .false.  ! A leaf node
+    integer :: Depth = 1       ! A leaf node if Depth == N
     integer(qk) :: QID = 0     ! QTM ID
     integer :: Son(0:3) = 0    ! Sub facet subscripts in the tree
     integer :: XN = 0, YN = 0  ! Which son is xNode, yNode?  Central node is 0,
@@ -54,6 +57,7 @@ module Generate_QTM_m
                                ! inside the polygon, from the point of view of
                                ! the ZOT projection.  A point is considered to
                                ! be inside if PnPoly returns the same value.
+    integer(qk) :: N_Facets = 0 ! Number of finest-refinement facets of the QTM
     integer(qk) :: N_In = 0    ! Number of vertices inside the polygon
     type(h_t), allocatable :: Polygon_Geo(:)
     type(ZOT_t), allocatable :: Polygon_ZOT(:)
@@ -76,10 +80,6 @@ module Generate_QTM_m
     generic :: Find_Facet => Find_Facet_QID
     generic :: Find_Facet => Find_Facet_ZOT
   end type QTM_Tree_t
-
-  interface Dump
-    module procedure Dump_QTM, Dump_QTM_Tree
-  end interface Dump
 
   ! Initial size to allocate for QTM_Tree_t%Q if it's not allocated
   integer, public :: Default_Initial_Size = 100
@@ -185,6 +185,7 @@ contains
                           ! instance of Add_QTM_Vertex_To_Tree.  Speeds up
                           ! QTM_Decode in Add_QTM_Vertex_To_Tree if it's
                           ! not new for every instance.
+    integer :: Son        ! A temp
     real(rg) :: X, Y      ! Disambiguated ZOT coordinates
     type(ZOT_t), allocatable :: Z_Temp(:) ! For reallocating ZOT
 
@@ -209,7 +210,7 @@ contains
 
     if ( .not. allocated(QTM_Trees%Q) ) allocate ( QTM_Trees%Q(default_initial_size) )
     allocate ( QTM_Trees%ZOT_In(default_initial_size) )
-    ! Create the top eight octants in the tree
+    ! Create the top eight octants in the tree.  Depth defaults to 1 here.
     QTM_Trees%n = 3
     QTM_Trees%Q(1)%son = [ 0, 0, 2, 3 ]
     QTM_Trees%Q(2)%son = [ 4, 5,  6,  7 ]
@@ -217,7 +218,14 @@ contains
     do hemisphere = 2, 3
       do quadrant = 0, 3 ! Octant number = 4*hemisphere + octant
         octant = 4*hemisphere + quadrant
-        QTM_Trees%Q(hemisphere)%son(quadrant) = Add_QTM_Vertex_To_Tree ( octant )
+        ! The assignment needs to be done in two stages because of a
+        ! restriction in the standard: "The evaluation of a function
+        ! reference shall neither affect nor be affected by the evaluation
+        ! of any other entity within the statement."  Recursive reference to
+        ! Add_QTM_Vertex_To_Tree will reallocate QTM_Trees%Q if it runs out
+        ! of space.
+        son = Add_QTM_Vertex_To_Tree ( octant, 1 )
+        QTM_Trees%Q(hemisphere)%son(quadrant) = son
       end do
     end do
 
@@ -239,12 +247,13 @@ contains
 
   contains
 
-    integer recursive function Add_QTM_Vertex_To_Tree ( QID ) result( Root )
+    integer recursive function Add_QTM_Vertex_To_Tree ( QID, Depth ) result( Root )
 
       use Line_and_Polygon, only: Line_Intersects_Any_Edge
       use Triangle_Interpolate_m, only: Triangle_Interpolate
 
       integer(qk), intent(in) :: QID
+      integer, intent(in) :: Depth
 
       integer :: F      ! Which facet is being created
       integer :: I
@@ -262,8 +271,6 @@ contains
         q_temp(1:size(QTM_Trees%Q)) = QTM_Trees%Q
         call move_alloc ( Q_Temp, QTM_Trees%Q )
       end if
-
-      QTM_Trees%Q(root)%leaf = .true.
 
       call QTM_Decode ( QID, S ) ! Get ZOT coordinates of QID into top of S
 
@@ -334,8 +341,8 @@ contains
           ! of any other entity within the statement."  Recursive reference to
           ! Add_QTM_Vertex_To_Tree will reallocate QTM_Trees%Q if it runs out
           ! of space.
-          QTM_Trees%Q(root)%leaf = .false.
-          i = Add_QTM_Vertex_To_Tree ( 4*QID+f )
+          QTM_Trees%Q(root)%depth = depth + 1
+          i = Add_QTM_Vertex_To_Tree ( 4*QID+f, depth + 1 )
           QTM_Trees%Q(root)%son(f) = i
         end do
       end if
@@ -345,6 +352,8 @@ contains
          & all(QTM_Trees%Q(root)%zot_n == 0) ) then
         root = 0
         QTM_Trees%n = QTM_Trees%n - 1
+      else if ( QTM_Trees%Q(root)%depth == QTM_Trees%level ) then
+        QTM_Trees%n_facets = QTM_Trees%n_facets + 1
       end if
 
     end function Add_QTM_Vertex_To_Tree
@@ -520,173 +529,6 @@ contains
     end if
   end function Cross_Meridian
 
-  recursive subroutine Dump_QTM ( QTM, Which, Depth, LatLon, Only, Before, &
-                                & Sons, Format )
-    ! Dump the frame of the QTM tree specified by Which, preceded by Depth
-    ! dots. Then dump its sons with Depth + 1.  You should start this with
-    ! Depth == 0.
-    use Output_m, only: Output
-    use QTM_m, only: Dump_QID, RG
-
-    type(QTM_node_t), intent(in) :: QTM(:)
-    integer, intent(in) :: Which
-    integer, intent(in) :: Depth
-    logical, intent(in), optional :: LatLon ! instead of ZOT, default .false.
-    logical, intent(in), optional :: Only   ! Only dump Which frame
-    character(*), intent(in), optional :: Before
-    logical, intent(in), optional :: Sons   ! Dump sons' indices
-    character(*), intent(in), optional :: Format ! For coordinates
-
-    character(6) :: DefaultFmt(2) = [ '(f8.3)', '(f8.4)' ]
-    logical :: DoLatLon
-    integer :: I
-    character(31) :: Fmt
-    integer :: NX, NY
-    real(rg) :: X, Y
-
-    doLatLon = .false.
-    if ( present(latLon) ) doLatLon = latLon
-    if ( present(before) ) call output ( before )
-    if ( present(format) ) then
-      fmt = format
-    else if ( doLatLon ) then
-      fmt = defaultFmt(1)
-    else
-      fmt = defaultFmt(2)
-    end if
-    call output ( which, format='(i5)', after=':' )
-    call output ( repeat('.',depth) )
-    call dump_qid ( QTM(which)%QID, before=' QID ' )
-    nx = QTM(which)%xn; ny = QTM(which)%yn
-    call output ( nx, before=' XN ' )
-    call output ( ny, before=' YN ' )
-    do i = 1, 3
-      call get_xy ( QTM(which)%z(i), x, y, doLatLon )
-      call output ( x, before=' (', format=fmt )
-      call output ( y, before=',', after=')', format=fmt )
-    end do
-    call output ( QTM(which)%ZOT_n(1), before=' Serial # ' )
-    call output ( QTM(which)%ZOT_n(2), before=' ' )
-    call output ( QTM(which)%ZOT_n(3), before=' ' )
-    if ( present(sons) ) then
-      if ( sons ) then
-        call output ( ' SONS' )
-        do i = 0, 3
-          call output ( QTM(which)%son(i), before=' ' )
-        end do
-      end if
-    end if
-    call output ( "", advance='yes' )
-    if ( present(only) ) then
-      if ( only ) return
-    end if
-    do i = 0, 3
-      if ( QTM(which)%son(i) /= 0 ) &
-        & call dump_QTM ( QTM, QTM(which)%son(i), depth+1, latLon, sons=sons )
-    end do
-  contains
-    subroutine Get_XY ( Z, X, Y, LatLon )
-      type(zot_t), intent(in) :: Z
-      real(rg), intent(out) :: X, Y
-      logical, intent(in) :: LatLon
-      type(h_t) :: Geo
-      if ( latLon ) then
-        geo = z%zot_to_geo()
-        x = geo%lon%d
-        y = geo%lat
-      else
-        x = z%x
-        y = z%y
-      end if
-    end subroutine Get_XY
-  end subroutine Dump_QTM
-
-  subroutine Dump_QTM_Tree ( QTM_Trees, Format, LatLon, Details )
-    use Dump_Geolocation_m, only: Dump
-    use Output_m, only: NewLine, Output
-
-    type(QTM_tree_t), intent(in) :: QTM_Trees
-    character(*), intent(in), optional :: Format(2) ! to override default,
-                                             ! Format(1) is Geo, Format(2) is ZOT
-    logical, intent(in), optional :: LatLon  ! instead of ZOT, default .false.
-    integer, intent(in), optional :: Details ! >1 Dump QTM vertices in the
-                                             !    polygon
-                                             ! >2 Dump sons' indices
-                                             ! default 1
-
-    character(31) :: Fmt(2)
-    integer :: I, J
-    integer :: MyDetails
-    logical :: MyLatLon
-
-    fmt = [ '(f8.3)', '(f8.4)' ]
-    if ( present(format) ) fmt = format
-
-    ! Dump the "inside" point
-    call output ( QTM_Trees%in_geo%lon%d, before=' Inside Geo (Lon,Lat) (' )
-    call output ( QTM_Trees%in_geo%lat, before=',' )
-    call output ( QTM_Trees%in%x, before=') Inside ZOT (X,Y) (', format=fmt(2) )
-    call output ( QTM_Trees%in%y, before=',', format=fmt(2) )
-    call output ( ')', advance='yes' )
-    ! Dump the polygons
-    call output ( ' Polygon_Geo:', advance='yes' )
-    do i = 1, size(QTM_Trees%polygon_geo)
-      if ( mod(i,5) == 1 ) call output ( i, format='(i4,"#")' )
-      call output ( QTM_Trees%polygon_geo(i)%lon%d, before=' (', format=fmt(1) )
-      call output ( QTM_Trees%polygon_geo(i)%lat, before=',', format=fmt(1) )
-      call output ( ')' )
-      if ( mod(i,5) == 0 .or. i == size(QTM_Trees%polygon_geo) ) call newLine
-    end do
-    call output ( ' Polygon_ZOT:', advance='yes' )
-    do i = 1, size(QTM_Trees%polygon_ZOT)
-      if ( mod(i,5) == 1 ) call output ( i, format='(i4,"#")' )
-      call output ( QTM_Trees%polygon_ZOT(i)%x, before=' (', format=fmt(2) )
-      call output ( QTM_Trees%polygon_ZOT(i)%y, before=',', format=fmt(2) )
-      call output ( ')' )
-      if ( mod(i,5) == 0 .or. i == size(QTM_Trees%polygon_ZOT) ) call newLine
-    end do
-    if ( allocated(QTM_Trees%ignore_edge) ) then
-      if ( size(QTM_Trees%ignore_edge) > 0 ) then
-        call output ( ' Edges on 90*n degree meridians that have antiparallel partners:', &
-          & advance='yes' )
-        do i = 1, size(QTM_Trees%ignore_edge), 20
-          call output ( i, 4, after=": " )
-          do j = i, min(i+20,size(QTM_Trees%ignore_edge))
-            call output ( QTM_Trees%ignore_edge(j), before=" " )
-          end do
-          call newLine
-        end do
-      end if
-    end if
-
-    call output ( QTM_Trees%n, before=' QTM tree has ' )
-    call output ( ' vertices ' )
-    myLatLon = .false.
-    if ( present(latLon) ) myLatLon = latLon
-    if ( myLatLon ) then
-      call output ( '(lon,lat):', advance='yes' )
-    else
-      call output ( '(ZOT x,y):', advance='yes' )
-    end if
-    myDetails = 1
-    if ( present(details) ) myDetails = details
-    if ( QTM_Trees%n > 0 ) &
-      & call dump ( QTM_Trees%q, 1, 0, latLon=latLon, sons=myDetails>2 )
-    call output ( QTM_Trees%level, before=' Mesh refined to level ' )
-    call output ( QTM_Trees%n_in, before=' has ' )
-    call output ( ' vertices within or adjacent to the polygon', advance='yes' )
-    if ( myDetails > 1 ) then
-      myLatLon = .false.
-      if ( present(latLon) ) myLatLon = latLon
-      if ( myLatLon ) then
-        call dump ( QTM_Trees%geo_in, ' QTM vertices in (lon,lat) coordinates:' )
-      else
-        call dump ( QTM_Trees%ZOT_in, ' QTM vertices in ZOT coordinates:' )
-      end if
-    end if
-
-  end subroutine Dump_QTM_Tree
-
   subroutine Polygon_To_ZOT ( QTM_Trees )
     ! Convert the coordinates that define a polygon on the surface of the
     ! Earth using geographic coordinates (longitude, latitude) to ones in
@@ -826,6 +668,9 @@ contains
 end module Generate_QTM_m
 
 ! $Log$
+! Revision 2.13  2016/09/13 20:08:12  vsnyder
+! Replace Leaf component with Depth
+!
 ! Revision 2.12  2016/09/10 01:57:46  vsnyder
 ! Use LatLon argument to print 'Polygon has n vertices' header
 !
