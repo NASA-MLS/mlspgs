@@ -604,7 +604,7 @@ contains ! =========== Public procedures ===================================
   subroutine Dump_a_HGrid ( aHGRID, Details, ZOT )
     use dates_module, only: tai93s2hid
     use Dump_Geolocation_m, only: Dump_H_t, Dump_ZOT
-    use Generate_QTM_m, only: Dump_QTM_Tree
+    use QTM_Output, only: Dump_QTM_Tree
     use highOutput, only: outputNamedValue
     use Intrinsic, only: lit_indices, L_QTM
     use output_m, only: blanks, newLine, output
@@ -779,6 +779,9 @@ contains ! =========== Public procedures ===================================
 end module HGridsDatabase
 
 ! $Log$
+! Revision 2.34  2016/09/13 20:09:13  vsnyder
+! Get Dump_QTM from its new home in QTM_Output
+!
 ! Revision 2.33  2016/08/23 18:34:44  pwagner
 ! ShowName not needed any longer
 !
