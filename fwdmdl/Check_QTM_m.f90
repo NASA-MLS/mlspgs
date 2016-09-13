@@ -38,7 +38,7 @@ contains
     use Intrinsic, only: Lit_Indices, L_Temperature
     use Load_SPS_Data_M, only: Grids_T
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-    use Output_m, only: Output
+    use Output_m, only: NewLine, Output
     use String_Table, only: Display_String
     use Toggles, only: Emit, Levels, Toggle
     use Trace_M, only: Trace_Begin, Trace_End
@@ -113,6 +113,9 @@ contains
 end module Check_QTM_m
 
 ! $Log$
+! Revision 2.3  2016/09/13 00:30:44  vsnyder
+! Missed out one use name
+!
 ! Revision 2.2  2016/09/12 23:51:40  vsnyder
 ! Delete unused VectorValue_T
 !
