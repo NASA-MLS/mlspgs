@@ -19,7 +19,7 @@ module QTM_Output
   private
 
   public :: Dump, Dump_QTM, Dump_QTM_Tree, Write_QTM_Unformatted
-! public :: QTM_HDF ! Maybe someday
+! public :: Write_QTM_HDF ! Maybe someday
 
   interface Dump
     module procedure Dump_QTM, Dump_QTM_Tree
@@ -67,7 +67,7 @@ contains
       fmt = defaultFmt(2)
     end if
     call output ( which, format='(i5)', after=':' )
-    call output ( repeat('.',QTM(which)%depth - 1) )
+    call output ( repeat('.',QTM(which)%depth) )
     call dump_qid ( QTM(which)%QID, before=' QID ' )
     nx = QTM(which)%xn; ny = QTM(which)%yn
     call output ( nx, before=' XN ' )
@@ -191,6 +191,8 @@ contains
     call output ( QTM_Trees%n_in, before=' has ' )
     call output ( ' vertices within or adjacent to the polygon and ' )
     call output ( QTM_Trees%n_facets, after=' facets', advance='yes' )
+    call output ( 180.0 / 2**QTM_Trees%level, before=' Latitude resolution is ', &
+      & after=' degrees', advance='yes' )
     if ( myDetails > 1 ) then
       myLatLon = .false.
       if ( present(latLon) ) myLatLon = latLon
@@ -230,6 +232,9 @@ contains
 end module QTM_Output
 
 ! $Log$
+! Revision 2.2  2016/09/14 20:08:50  vsnyder
+! Cannonball polishing
+!
 ! Revision 2.1  2016/09/13 20:07:44  vsnyder
 ! Initial commit
 !
