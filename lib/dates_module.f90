@@ -82,6 +82,7 @@ module dates_module
 ! gethid             like tai93s2hid but neither pure nor a function (what?)
 ! hoursbetween2utcs  How many hours between 2 date-times
 ! hoursinday         How many hours since the start of the day
+! isUTCInRange       Is the utc a date within allowable range of dates?
 ! lastday            How many days in leap month
 ! nextMoon           utc date, time of next (new) moon 
 !                     (or next after input date); less accurate than toolkit AA
@@ -139,6 +140,7 @@ module dates_module
 ! gethid( dble tai, [log leapsec] )
 ! int hoursbetween2utcs (char* utc1, char* utc2)
 ! dble hoursinday (char* utc1)
+! log IsUTCInRange ( char* utc,  [char* utc1], [char* utc2] )
 ! char* nextMoon ([char* date], [phase])
 ! log precedesutc ( char* date1,  char* date2 )
 ! char* ReformatDate (char* date, [char* fromForm], [char* toForm])
@@ -276,7 +278,7 @@ module dates_module
     & dai_to_yyyymmdd, dateform, datesbetween2utcs, dayofweek, &
     & daysbetween2utcs, daysinmonth, daysince2eudtf, days_in_year, &
     & eudtf2cal, eudtf2daysince, FromUARSDate, gethid, &
-    & hoursbetween2utcs, hoursinday, &
+    & hoursbetween2utcs, hoursinday, isUTCInRange, &
     & lastday, nextmoon, precedesutc, reformatdate, reformattime, &
     & resetstartingdate, restorestartingdate, &
     & secondsbetween2utcs, secondsinday, splitdatetime, &
@@ -539,6 +541,27 @@ contains
     write(unit=ccsds(6:8),fmt="(i3.3)")day
     ccsds(5:5) = '-'
   end function eudtf2ccsds
+
+  logical function isUTCInRange ( UTC, lower, upper ) result( itIs )
+    ! Is the UTC within an allowable range?
+    ! Args
+    character(len=*), intent(in)             :: UTC
+    character(len=*), intent(in), optional   :: lower
+    character(len=*), intent(in), optional   :: upper
+    ! Internal variables
+    type(MLSDate_time_T)                     :: dateTime
+    type(MLSDate_time_T)                     :: lowerDT
+    type(MLSDate_time_T)                     :: upperDT
+    ! Executable
+    datetime = utc2datetime( utc )
+    if ( present(lower) .and. present(upper) ) then
+      lowerDT = utc2datetime( lower )
+      upperDT = utc2datetime( upper )
+      itIs = isDateTimeInRange( dateTime, lowerDT, upperDT )
+    else
+      itIs = isDateTimeInRange( dateTime )
+    endif
+  end function isUTCInRange
 
   ! Converts TAI date to CCSDS Date. This is DAYS since the TAI93=0
   ! time _not_ genuine TAI93 which is in seconds. 
@@ -2520,8 +2543,30 @@ contains
    enddo
    if ( daiNegative ) dai = -dai
   end subroutine yyyymmdd_to_dai_str
-
+!! ------------------------------------------------------------------- !!
   ! Private procedures
+  logical function isDateTimeInRange ( dateTime, lower, upper ) result( itIs )
+    ! Is the date part of dateTime within an allowable range?
+    ! Args
+    type(MLSDate_time_T), intent(in)             :: datetime
+    type(MLSDate_time_T), intent(in), optional   :: lower
+    type(MLSDate_time_T), intent(in), optional   :: upper
+    ! Executable
+    if ( present(lower) .and. present(upper) ) then
+      itIs = ( dateTime%dai >= lower%dai .and. dateTime%dai <= upper%dai )
+      itis = itIs .and. dateTime%seconds >= lower%seconds .and. &
+        & dateTime%seconds <= upper%seconds
+    else
+      ! How far back in years do we think we should be allowed to retreat?
+      ! And how far in the future do we think we will ever need to advance?
+      ! Quite arbitrarily, let's say no more than 500 years each way.
+      ! which, by the way, is more than 1.5 *10^10 seconds; log_2 of
+      ! that is more than 33, meaning we will have blown past short
+      ! 32-bit intger reprresentation before that point is reached
+      itIs = abs( dateTime%dai ) < 125*1461  ! 1461 is 4*365.25
+    endif
+  end function isDateTimeInRange
+
   elemental subroutine yyyyMondd_yyyymmdd_str( yyyyMondd, yyyymmdd )
     ! Routine that returns the string yyyymmdd
     ! from a string of the form yyyyMondd
@@ -2951,6 +2996,9 @@ contains
 
 end module dates_module
 ! $Log$
+! Revision 2.41  2016/08/08 22:56:11  pwagner
+! Added leap second to 2016
+!
 ! Revision 2.40  2016/07/28 01:37:04  vsnyder
 ! Cannonball polishing
 !
