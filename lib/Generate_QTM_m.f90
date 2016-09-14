@@ -33,7 +33,7 @@ module Generate_QTM_m
   ! but it might not be at the finest refinement because it's entirely
   ! outwith the polygon.
   type :: QTM_Node_t
-    integer :: Depth = 1       ! A leaf node if Depth == N
+    integer :: Depth = 0       ! A leaf node if Depth == N
     integer(qk) :: QID = 0     ! QTM ID
     integer :: Son(0:3) = 0    ! Sub facet subscripts in the tree
     integer :: XN = 0, YN = 0  ! Which son is xNode, yNode?  Central node is 0,
@@ -46,7 +46,8 @@ module Generate_QTM_m
   end type QTM_Node_t
 
   type :: QTM_Tree_t
-    integer :: Level = 7       ! Level of QTM refinement, 20000 / 2^level km
+    integer :: Level = 7       ! Level of QTM refinement, 20000 / 2^level km,
+                               ! Not greater than QTM_Depth from QTM_m
     integer(qk) :: N           ! Number of used elements in Q
     type(ZOT_t) :: In = ZOT_t(-999,-999) ! A point defined to be inside the
                                ! polygon. This is needed because the concept of
@@ -200,6 +201,7 @@ contains
       QTM_Trees%in = geo_to_ZOT(QTM_Trees%in_geo)
     end if
     l = min(QTM_Trees%level,QTM_Depth)
+    QTM_Trees%level = l
     h = 0
 
     x = merge(QTM_Trees%in%x,abs(QTM_Trees%in%x),abs(QTM_Trees%in%y)/=1.0_rg)
@@ -210,11 +212,11 @@ contains
 
     if ( .not. allocated(QTM_Trees%Q) ) allocate ( QTM_Trees%Q(default_initial_size) )
     allocate ( QTM_Trees%ZOT_In(default_initial_size) )
-    ! Create the top eight octants in the tree.  Depth defaults to 1 here.
+    ! Create the top two hemispheres and eight octants in the tree.
     QTM_Trees%n = 3
-    QTM_Trees%Q(1)%son = [ 0, 0, 2, 3 ]
-    QTM_Trees%Q(2)%son = [ 4, 5,  6,  7 ]
-    QTM_Trees%Q(3)%son = [ 8, 9, 10, 11 ]
+    QTM_Trees%Q(1)%son = [ 0, 0,  2,  3 ]; QTM_Trees%Q(1)%depth=0 ! Root
+    QTM_Trees%Q(2)%depth=0 ! Northern hemisphere
+    QTM_Trees%Q(3)%depth=0 ! Southern hemisphere
     do hemisphere = 2, 3
       do quadrant = 0, 3 ! Octant number = 4*hemisphere + octant
         octant = 4*hemisphere + quadrant
@@ -224,7 +226,7 @@ contains
         ! of any other entity within the statement."  Recursive reference to
         ! Add_QTM_Vertex_To_Tree will reallocate QTM_Trees%Q if it runs out
         ! of space.
-        son = Add_QTM_Vertex_To_Tree ( octant, 1 )
+        son = Add_QTM_Vertex_To_Tree ( octant, 0 )
         QTM_Trees%Q(hemisphere)%son(quadrant) = son
       end do
     end do
@@ -258,7 +260,8 @@ contains
       integer :: F      ! Which facet is being created
       integer :: I
       logical :: In     ! Facet vertex is in a polygon, or polygon vertex is
-                        ! in the facet
+                        ! in the facet, or an edge of the polygon crosses an
+                        ! edge of the facet.
       real(rg) :: W(3)  ! Barycentric coordinates of polygon vertex in facet,
                         ! to determine whether any of its vertices are within it.
 
@@ -274,6 +277,7 @@ contains
 
       call QTM_Decode ( QID, S ) ! Get ZOT coordinates of QID into top of S
 
+      QTM_Trees%Q(root)%depth = depth + 1
       QTM_Trees%Q(root)%qid = qid
       QTM_Trees%Q(root)%xn = s%xNode(s%top(octant),octant)  ! xNode number
       QTM_Trees%Q(root)%yn = s%yNode(s%top(octant),octant)  ! yNode number
@@ -310,7 +314,7 @@ contains
       end do
 
       ! Is the mesh fine enough in this facet?
-      if ( s%top(octant) == l ) then
+      if ( QTM_Trees%Q(root)%depth >= l ) then
         if ( in ) then
           ! Make sure all vertices of final facets have serial numbers. 
           ! Thereby, a vertex outside the polygon that is a vertex of a final
@@ -324,23 +328,23 @@ contains
         in = .false. ! So we don't refine further
       end if
 
-      ! If any vertices are within a polygon, or any polygon vertex is
-      ! within the facet, refine the facet.
-      ! What we really want here is to know whether there's any overlap
-      ! between the facet and a polygon.  This can happen even if there are
-      ! no vertices of the facet within the polygon, and no vertices of
-      ! any polygon within the facet.
+      ! If any vertices are within the polygon, or any polygon vertex is
+      ! within the facet, or any edge of the polygon crosses an edge of
+      ! the facet (i.e., there's any overlap between the polygon and
+      ! the facet), and the facet is not of sufficiently fine resolution,
+      ! refine the facet.
 
-      if ( in .and. s%top(octant) <= l) then ! s%top(octant) <= l should
-                                             ! always be true
-        ! Is the mesh fine enough in this facet?
+      if ( in  ) then
+        ! The mesh is not fine enough in this facet.
         do f = 0, 3
           ! The assignment needs to be done in two stages because of a
           ! restriction in the standard: "The evaluation of a function
           ! reference shall neither affect nor be affected by the evaluation
           ! of any other entity within the statement."  Recursive reference to
           ! Add_QTM_Vertex_To_Tree will reallocate QTM_Trees%Q if it runs out
-          ! of space.
+          ! of space.  A processor might decide where to store the result before
+          ! it invokes the function, which would be the wrong place if the
+          ! tree gets reallocated.
           QTM_Trees%Q(root)%depth = depth + 1
           i = Add_QTM_Vertex_To_Tree ( 4*QID+f, depth + 1 )
           QTM_Trees%Q(root)%son(f) = i
@@ -668,6 +672,9 @@ contains
 end module Generate_QTM_m
 
 ! $Log$
+! Revision 2.14  2016/09/14 20:08:32  vsnyder
+! Correct depth component calculation
+!
 ! Revision 2.13  2016/09/13 20:08:12  vsnyder
 ! Replace Leaf component with Depth
 !
