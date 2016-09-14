@@ -11,7 +11,7 @@
 
 module GLOBAL_SETTINGS
 
-  use MLSCommon, only: fileNameLen
+  use MLSCommon, only: fileNameLen, MLSFile_t, nameLen, tai93_range_t
   use highOutput, only: beVerbose, outputCalendar, outputNamedValue
 
   implicit none
@@ -76,7 +76,6 @@ contains
       & readL1BData 
     use L2GPData, only: L2GPData_t, L2GPNameLen, maxSwathNamesBufSize, &
       & readL2GPData, destroyL2GPContents
-    use MLSCommon, only: MLSFile_t, namelen
     use MLSFiles, only: hdfversion_5, &
       & MLS_inqswath, getmlsfilebytype
     use MLSKinds, only: r8
@@ -140,7 +139,6 @@ contains
       & readl1bdata 
     use L2GPData, only: L2GPData_t, L2GPNameLen, maxSwathNamesBufSize, &
       & readL2GPData, destroyL2GPContents
-    use MLSCommon, only: mlsfile_t
     use MLSFiles, only: hdfversion_5, &
       & MLS_inqswath, getmlsfilebytype
     use MLSKinds, only: r8
@@ -203,12 +201,12 @@ contains
     call destroyl2gpcontents( l2gp )
   end function L2ProfileToL1MAF
 
-  subroutine SET_GLOBAL_SETTINGS ( ROOT, FORWARDMODELCONFIGDATABASE, &
-    & FILEDATABASE, FGRIDS, L2GPDATABASE, DIRECTDATABASE, PROCESSINGRANGE )
+  subroutine SET_GLOBAL_SETTINGS ( root, forwardModelConfigDatabase, &
+    & fileDatabase, FGrids, L2GPDatabase, directDatabase, processingRange )
 
     use BitStuff, only: isBitSet
-    use Dates_module, only: precedesUTC, resetStartingDate, secondsBetween2UTCs, &
-      & Utc2tai93s, utc_to_yyyymmdd
+    use Dates_module, only: isUTCInRange, precedesUTC, resetStartingDate, &
+      & secondsBetween2UTCs, Utc2tai93s, utc_to_yyyymmdd
     use Declaration_table, only: named_value, redeclare, str_value
     use DirectWrite_m, only: directData_t, &
       & AddDirectToDatabase, dump, setupNewDirect
@@ -238,8 +236,6 @@ contains
       & L1BRadsetup, L1BOASetup, readL1BAttribute, readL1BData 
     use L2GPData, only: L2GPData_t
     use L2PC_m, only: addbinselectortodatabase, binselectors
-    use MLSCommon, only: mlsfile_t, nameLen, &
-      & tai93_range_t
     use MLSFiles, only: filenotfound, HDFVersion_5, &
       & addfiletodatabase, getpcfromref, getMLSFileByName, getMLSFileByType, &
       & initializemlsfile, MLS_CloseFile, MLS_OpenFile, split_path_name
@@ -285,8 +281,8 @@ contains
 
     ! placed non-alphabetically due to Lahey internal compiler error
     ! (How much longer must we endure these onerous work-arounds?)
-    use MLSHDF5, only: GETHDF5ATTRIBUTE, ISHDF5ATTRIBUTEINFILE
-    use HDF5, only: H5GCLOSE_F, H5GOPEN_F
+    use MLSHDF5, only: GetHDF5Attribute, IsHDF5AttributeInFile
+    use HDF5, only: H5GClose_f, H5GOpen_f
 
     integer, intent(in)                    :: ROOT    ! Index of N_CF node in abstract syntax tree
     type(ForwardModelConfig_T), pointer    :: FORWARDMODELCONFIGDATABASE(:)
@@ -638,8 +634,14 @@ contains
       return
     elseif( .not. NEED_L1BFILES ) then
       ! w/o an l1boa file we'll trust the user to have supplied start, end times
-      ! (Shouldn't we check that she did?)
-      if ( LeapSecFileName /= '' ) then
+      ! (So we check that she did)
+      if ( .not. ( &
+        & got(p_starttime) .and. got(p_endtime) ) &
+        & ) then
+        error = 1
+        call MLSMessage( MLSMSG_Warning, ModuleName, &
+          & 'start, end times must be supplied if there is no l1boa file' )
+      elseif ( LeapSecFileName /= '' ) then
         call ToolkitTimeConversion
       elseif ( LEAPSINDATESMODULE ) then
         ! Without a leapsec file, let's use date_module's built-in feature
@@ -841,9 +843,18 @@ contains
     ! ---------------------------------------  datesModuleTimeConversion  -----
     ! Convert utc time strings to tai93 using dates module
     subroutine datesModuleTimeConversion
-      call output( 'Using datesModule to convert times', advance='yes' )
-      processingrange%starttime = utc2tai93s ( start_time_string, leapsec=.true. )
-      processingrange%endtime = utc2tai93s ( end_time_string, leapsec=.true. )
+      if ( isUTCInRange(start_time_string) .and. &
+        & isUTCInRange(end_time_string) ) then
+        call output( 'Using datesModule to convert times', advance='yes' )
+        processingrange%starttime = utc2tai93s ( start_time_string, leapsec=.true. )
+        processingrange%endtime = utc2tai93s ( end_time_string, leapsec=.true. )
+      else
+        error = 1
+        call outputNamedValue ( 'start time', trim(start_time_string) )
+        call outputNamedValue ( 'end time', trim(end_time_string) )
+        call MLSMessage( MLSMSG_Warning, ModuleName, &
+          & 'start, end times not in range' )
+      endif
     end subroutine datesModuleTimeConversion
 
     ! ---------------------------------------  timesFromMafOffsets  -----
@@ -1389,6 +1400,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.167  2016/08/09 21:47:42  pwagner
+! Fix error in FindMaxMAF; print module names only if verbose
+!
 ! Revision 2.166  2016/07/28 23:39:32  pwagner
 ! Fixed error introduced with last commit
 !
