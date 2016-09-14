@@ -16,7 +16,7 @@ module MLSNumerics              ! Some low level numerical stuff
   use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
   use DUMP_0, only : DUMP
   use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
-  use Hunt_M, only: Hunt, HuntBox, HuntRange, PureHunt
+  use Hunt_M, only: Hunt, HuntBox, HuntRange
   use MATRIXMODULE_0, only: CREATEBLOCK, M_ABSENT, MATRIXELEMENT_T, SPARSIFY
   use MLSFILLVALUES, only: ISFILLVALUE, RERANK
   use MLSKINDS, only: I4, R4, R8, RM
@@ -25,6 +25,7 @@ module MLSNumerics              ! Some low level numerical stuff
   use MLSFINDS, only: FINDFIRST, FINDLAST
   use MLSSTRINGS, only: CAPITALIZE, TRIM_SAFE
   use OUTPUT_M, only: BLANKS, OUTPUT
+  use Pure_Hunt_m, only: PureHunt
   use SYMM_TRI, only: FACTOR_SYMM_TRI, SOLVE_FACTORED_SYMM_TRI
 
   implicit none
@@ -2515,6 +2516,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.92  2016/09/14 20:13:19  vsnyder
+! Get PureHunt from Pure_Hunt_m
+!
 ! Revision 2.91  2016/08/23 20:27:40  pwagner
 ! InterpolateArraySetup may return after failure if optional arg fail present
 !
