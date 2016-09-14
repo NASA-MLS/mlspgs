@@ -15,6 +15,7 @@ module QTM_Interpolation_Weights_3D_m
 
   use Geolocation_0, only: RG, S_t
   use QTM_Interpolation_Weights_m, only: QTM_Interpolation_Weights, Weight_t
+  use Weight_1D_m, only: Weight_1D
 
   implicit NONE
   private
@@ -57,6 +58,9 @@ module QTM_Interpolation_Weights_3D_m
     real(rg) :: H    ! Height at which the point intersects a face.  This is
                      ! the height where the extrapolated line intersects a face
                      ! of the QTM for points outside the QTM.
+    integer :: H_ind = 0 ! Index in height grid.  If the intersection is not
+                     ! with a horizontal boundary within the QTM, H_Ind is the
+                     ! index of the next lower height surface.
     integer :: N_Coeff = 0  ! How many elements of Coeff and ZOT_N are used.
     integer :: ZOT_N(3) = 0 ! Serial numbers of ZOT coordinates, see QTM_Node_t
                      ! in the Generate_QTM_m module.
@@ -287,6 +291,7 @@ contains
     use Array_Stuff, only: Element_Position
     use Generate_QTM_m, only: QTM_Tree_t
     use Geolocation_0, only: ECR_t, H_V_Geod
+    use Pure_Hunt_m, only: PureHunt
 
     type(QTM_tree_t), intent(in) :: QTM_Tree
     real(rg), intent(in) :: Heights(:,:) ! Extents are (heights, QTM_Tree%N_In)
@@ -623,21 +628,6 @@ contains
 
   end subroutine QTM_Interpolation_Weights_Geo_3D_List
 
-!  =====     Private Procedures     ====================================
-
-  subroutine Weight_1D ( Heights, Height, Jlo, Jhi, Weights )
-    ! Interpolate Height in Heights to calculate Weight
-    use Hunt_m, only: PureHunt
-    real(rg), intent(in) :: Heights(:)  ! Array in which to interpolate
-    real(rg), intent(in) :: Height      ! Value to which to interpolate
-    integer, intent(inout) :: Jlo, Jhi  ! Which array elements used
-    real(rg), intent(out) :: Weights(2) ! Interpolation coefficients
-    call purehunt ( height, heights, size(heights), jlo, jhi )
-    weights(1) = ( heights(jhi) - height ) / &
-               & ( heights(jhi) - heights(jlo) )
-    weights(2) = 1 - weights(1)
-  end subroutine Weight_1D
-
 !=============================================================================
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
@@ -652,6 +642,9 @@ contains
 end module QTM_Interpolation_Weights_3D_m
 
 ! $Log$
+! Revision 2.6  2016/09/14 20:46:21  vsnyder
+! Add H_Ind component, move Weight_1D to Weight_1D_m
+!
 ! Revision 2.5  2016/04/28 23:09:50  vsnyder
 ! Interpret negative face number as the index of the face intersected by a
 ! line segment outside the QTM.  Alphabetize components of S_QTM_t.
