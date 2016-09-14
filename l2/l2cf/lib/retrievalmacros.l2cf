@@ -211,14 +211,19 @@ begin Fill
     flags=diag$1.dnwt_flag
 end Fill
 
-!ifdef(flagSuppressRegularOutput,{},{
-!ifdef(flagPrecisionEstimates,{},{
-  begin Join !dnl
-    !nl!ifdef(flagAvoidDirectWrite,
+!ifdef(flagSuppressRegularOutput,{
+  !define(flagSkipWritingDiagnostics,{yes})
+})
+!ifdef(flagAvoidDirectWrite,{
+  !define(flagSkipWritingDiagnostics,{yes})
+})
+
+!ifdef(flagSkipWritingDiagnostics,{},{
+  begin Join 
     {!forall(joinOneDiagnostic,!outputRetrievalDiagnostics)},
-    {!forall(directWriteOneDiagnostic,!outputRetrievalDiagnostics)})
+    {!forall(directWriteOneDiagnostic,!outputRetrievalDiagnostics)}
   end Join
-})})
+})
 })
 
 ; ------------------------------------------------------------- High resolution
@@ -475,11 +480,15 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
      !forall(fillMinorFrameDiagnostics,$*)
      !forall(fillMappedDiagnostics,$*)
    end Fill
+   !ifdef(flagSkipWritingDiagnostics, {}, 
+   {
    begin Join !dnl
      !nl!ifdef(flagAvoidDirectWrite,
        {!forall(joinRadianceDiagnostics,$*)},
        {!forall(directWriteRadianceDiagnostics,$*)})
-   end Join!nl})
+   end Join
+   })
+   !nl})
 
 
 ; --------------------------------------------------------------- Offseting radiances
@@ -1212,6 +1221,9 @@ Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, $
 })})
 
 ; $Log$
+; Revision 1.155  2014/12/10 23:05:47  pwagner
+; Correct erroneous calculation of AscDescMode; now based on geodAngle
+;
 ; Revision 1.154  2014/04/07 18:14:54  pwagner
 ; Added stuff for writing Ascending/Descending Mode flags
 ;

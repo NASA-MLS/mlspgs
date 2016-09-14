@@ -19,6 +19,7 @@ begin Fill
   !forall(extractRadDT,!allRadiometers)
 end Fill
 
+!ifdef(flagSkipWritingDiagnostics,{},{
 begin Join
 
   !define(outputCloudRad,{!directWriteCloud(cloudOutput.dt$1,'.C!cloudChannelFor$1 DT', /prefixSignal)!nl})
@@ -51,4 +52,5 @@ begin Join
 
   !flushDGGDGMFiles
 end Join
+})
 
