@@ -66,7 +66,8 @@ contains
                                    ! Lines(2,1) + s * Lines(2,2) defines the
                                    ! line after the tangent point.
     type(geolocation_t), intent(inout), target :: Grid
-    class(S_t), intent(out), allocatable :: S(:) ! S-values.
+    class(S_t), intent(out), allocatable :: S(:) ! S-values, and interpolation
+                                   ! coefficients if the dynamic type is S_QTM_t.
     integer :: Tangent_Index       ! Index in S of tangent or intersection
                                    ! S(Tangent_Index) == S(Tangent_Index+1)
 
@@ -225,6 +226,7 @@ end if
     use Line_And_Cone_m, only: Line_And_Cone
     use Line_And_Ellipsoid_m, only: Line_And_Sphere
     use Line_And_Plane_m, only: Line_And_Plane
+    use Pure_Hunt_m, only: PureHunt
     use QTM_m, only: Stack_t
     use QTM_Interpolation_Weights_3D_m, only: S_QTM_t, Cone_Face, &
       & Top_Face, X_Face, Y_Face
@@ -419,9 +421,10 @@ end if
         do j = 1, size(test_int)
           if ( s(j) >= sMin .and. s(j) <= sMax ) then
             n_out = n_out + 1
-            outside(n_out) = S_QTM_t( s=s(j), face=-inside(i_edge)%face, &
-                                    & facet=f, h=want_h, n_coeff=n_h, &
-                                    & zot_n=zot_n)
+            outside(n_out) = S_QTM_t( s=s(j), face=-inside(i_edge)%face,  &
+                                    & facet=f, h=want_h, h_ind=j, n_coeff=n_h )
+            outside(n_out)%coeff(:n_h) = eta(:n_h)
+            outside(n_out)%zot_n(:n_h) = zot_n(:n_h)
           end if
         end do
       end do
@@ -461,8 +464,8 @@ end if
 
       n_top = 0
       do i = 1, size(qtm_tree%q)
-        if ( qtm_tree%q(i)%leaf ) then ! Tree node represents a facet of the
-                                       ! finest refinement.
+        if ( qtm_tree%q(i)%depth == qtm_tree%level ) then 
+         ! Tree node represents a facet of the finest refinement.
           do j = 1, n_height
 
             do k = 1, 3
@@ -511,8 +514,8 @@ geod_f(k)%v = h(j,l)
               if ( keep ) then
                 n_top = n_top + 1
                 top_int(n_top) = S_QTM_t(s=s_int(k), facet=i, h=geod%v, &
-                               & face=top_face, n_coeff=3, &
-                               & ZOT_n=qtm_tree%q(i)%ZOT_n, coeff=0.0_rg )
+                               & face=top_face, n_coeff=3, h_ind=j,     &
+                               & ZOT_n=qtm_tree%q(i)%ZOT_n )
                 do l = 1, 3 ! Compute horizontal interpolation coefficients.
                             ! Use normalized geocentric angular distances.
                             ! C and CC are temporary variables here
@@ -521,7 +524,8 @@ geod_f(k)%v = h(j,l)
                   c = QTM_geo(qtm_tree%q(i)%ZOT_n(l))%ecr(norm=.true.)
                   top_int(n_top)%coeff(i) = acos( cc .dot. c )
                 end do
-                top_int(n_top)%coeff = top_int(n_top)%coeff / sum(top_int(n_top)%coeff)
+                top_int(n_top)%coeff(1:3) = top_int(n_top)%coeff(1:3) / &
+                                          & sum(top_int(n_top)%coeff(1:3))
               end if
             end do
           end do
@@ -531,15 +535,15 @@ geod_f(k)%v = h(j,l)
 
     subroutine Intersect_Line_And_Latitude_Cone
       ! Get all intersections of Line with latitude cones of the QTM.
-      real(rg) :: Eta                      ! Interpolating coefficient
+      real(rg) :: Eta_h(2)    ! Interpolation coefficient for longitude
       class(h_v_t), allocatable :: Geo     ! H_V_Geoc or H_V_Geod, depending
-                                           ! upon QTM_Geo
-      integer :: H1, H2                    ! Subscripts for second dimension
-                                           ! of H at non-polar vertices of F
+                              ! upon QTM_Geo
+      integer :: H1, H2       ! Subscripts for second dimension
+                              ! of H at non-polar vertices of F
       real(rg), allocatable :: S_Int(:)    ! Intersections of Line with
-                                           ! one latitude cone of the QTM.
-      integer :: S1, S2                    ! Serial numbers of X or Y
-                                           ! vertices of QTM facet
+                              ! one latitude cone of the QTM.
+      integer :: S1, S2       ! Serial numbers of X or Y
+                              ! vertices of QTM facet
 
       allocate ( cone_int(2*size(QTM_lats)) )
       n_cone = 0
@@ -561,19 +565,20 @@ geod_f(k)%v = h(j,l)
           f = QTM_tree%find_facet ( geo, stack )
           ! Intersection with cone is on a QTM leaf facet that is within
           ! or intersects the polygon, and is within [SMin,SMax]
-          keep = qtm_tree%q(f)%leaf .and. &
+          keep = qtm_tree%q(f)%depth == qtm_tree%level .and. &
                & s_int(j) >= SMin .and. s_int(j) <= SMax
           if ( keep ) then
             s1 = qtm_tree%q(f)%zot_n(qtm_tree%q(f)%xn)
             h1 = min(s1,ubound(h,2))
             s2 = qtm_tree%q(f)%zot_n(qtm_tree%q(f)%yn)
-            h2 = min(s1,ubound(h,2))
-            eta = ( geo%lon%d - QTM_geo(s1)%lon%d ) / &
-                & ( QTM_geo(s2)%lon%d - QTM_geo(s1)%lon%d )
+            h2 = min(s2,ubound(h,2))
+            eta_h(1) = ( QTM_geo(s2)%lon%d - geo%lon%d ) / &
+                     & ( QTM_geo(s2)%lon%d - QTM_geo(s1)%lon%d )
+            eta_h(2) = 1 - eta_h(2)
             ! Keep the intersection if it's not too high or too low
             keep = &
-              & geo%v >= ( h(1,h1) * ( 1 - eta ) + h(1,h2) * eta ) .and. &
-              & geo%v <= ( h(n_height,h1) * ( 1 - eta ) + h(n_height,h2) * eta )
+              & geo%v >= ( h(1,h1) * eta_h(1) + h(1,h2) * eta_h(2) ) .and. &
+              & geo%v <= ( h(n_height,h1) * eta_h(1) + h(n_height,h2) * eta_h(2) )
           end if
           if ( keep ) then
             n_cone = n_cone + 1
@@ -583,7 +588,7 @@ geod_f(k)%v = h(j,l)
             cone_int(n_cone)%face = cone_face
             cone_int(n_cone)%n_coeff = 2
             cone_int(n_cone)%zot_n(:2) = qtm_tree%q(f)%zot_n([s1,s2])
-            cone_int(n_cone)%coeff(:2) = [ 1.0_rg - eta, eta ]
+            cone_int(n_cone)%coeff(:2) = eta_h
            end if
         end do
       end do
@@ -593,7 +598,7 @@ geod_f(k)%v = h(j,l)
       ! Get all intersections of Line with vertical faces of prisms of the QTM
       ! that are not on latitude cones.  These are faces for which one vertex
       ! of the QTM is a polar vertex and the other one is not.
-      real(rg) :: Eta         ! Interpolation coefficient for latitude
+      real(rg) :: Eta_h(2)    ! Interpolation coefficient for latitude
       integer :: F(2,2)       ! Indices of QTM vertices of edges not on a
                               ! latitude cone
       integer, parameter :: Faces(2) = [ X_face, Y_face ]
@@ -609,14 +614,15 @@ geod_f(k)%v = h(j,l)
                               ! +1 => one intersection.
       integer :: M, N
       type(ECR_t) :: Plane(4) ! Vertices that define a vertical face
+      integer :: SN(0:1)      ! Serial numbers of QTM vertices of vertical face
       real(rg) :: S_Int       ! S-value of the intersection, if there is one
 
       allocate ( v_int(2*size(QTM_lats)) )
       n_vert = 0
       hit = .false.
    facet: do i = 1, size(qtm_tree%q) ! Examine all the facets
-        if ( qtm_tree%q(i)%leaf ) then ! Tree node represents a facet of the
-                                       ! finest refinement.
+        if ( qtm_tree%q(i)%depth == qtm_tree%level ) then
+          ! Tree node represents a facet of the finest refinement.
           ! Get indices of vertices of edges not on a latitude cone.
           ! One of the vertices of such an edge will be the pole node.
           f(1,:) = 6 - qtm_tree%q(i)%xn - qtm_tree%q(i)%yn ! pole node
@@ -629,15 +635,15 @@ geod_f(k)%v = h(j,l)
                 ! Get geodetic and then ECR coordinates of vertices of vertical
                 ! plane K at heights H(j:j+1,.) above the Earth's surface.
                 do n = 0, 1
-                  l = min(qtm_tree%q(i)%ZOT_n(f(m,k)),size(h,2))
+                  sn(n) = min(qtm_tree%q(i)%ZOT_n(f(m,k)),size(h,2))
 ! Assigning to individual components of geod_f(m,n+1) because Intel ifort 14.0.0
 ! cannot construct h_v_geod correctly
 geod_f(m,n+1)%lon = QTM_geo(qtm_tree%q(i)%ZOT_n(f(m,k)))%lon
 geod_f(m,n+1)%lat = QTM_geo(qtm_tree%q(i)%ZOT_n(f(m,k)))%lat
-geod_f(m,n+1)%v = h(j+1,l)
+geod_f(m,n+1)%v = h(j+1,sn(n))
 !                   geod_f(m,n+1) = h_v_geod ( QTM_geo(qtm_tree%q(i)%ZOT_n(f(m,k)))%lon, &
 !                                            & QTM_geo(qtm_tree%q(i)%ZOT_n(f(m,k)))%lat, &
-!                                            & h(j+n,l) )
+!                                            & h(j+n,sn(n)) )
                   plane(2*n+m) = geod_f(m,n+1)%ECR()
                 end do ! n
                 ! Geod_f(1,:) are on vertical edge at polar vertex
@@ -662,19 +668,19 @@ geod_f(m,n+1)%v = h(j+1,l)
                    & geod_int%lat <= minval(geod_f(:,1)%lat) ) then
                   ! Intersection is within horizontal range.  Interpolate
                   ! heights along top and bottom edges to geod_int%lat.
-                  eta = (geod_int%lat     - geod_f(1,1)%lat) / &
-                      & ( geod_f(2,1)%lat - geod_f(1,1)%lat )
-                  h1 = eta * geod_f(2,1)%v + ( 1 - eta ) * geod_f(1,1)%v
-                  h2 = eta * geod_f(2,2)%v + ( 1 - eta ) * geod_f(1,2)%v
+                  eta_h(1) = ( geod_f(2,1)%lat - geod_int%lat ) / &
+                           & ( geod_f(2,1)%lat - geod_f(1,1)%lat )
+                  eta_h(2) = 1 - eta_h(2)
+                  h1 = eta_h(1) * geod_f(2,1)%v + eta_h(2) * geod_f(1,1)%v
+                  h2 = eta_h(1) * geod_f(2,2)%v + eta_h(2) * geod_f(1,2)%v
                   if ( geod_int%v >= h1 .and. geod_int%v <= h2 ) then
                     ! Intersection is within vertical range too
                     n_vert = n_vert + 1
                     v_int(n_vert) = S_QTM_t( s=s_int, facet=i, h=geod_int%v, &
                                            & face=faces(m), n_coeff=2 )
                     v_int(n_vert)%ZOT_n(:2) = qtm_tree%q(i)%ZOT_n(f(:,1))
-                    ! Interpolation coefficient is in latitude only.  Could
-                    ! instead be geocentric angle.
-                    v_int(n_vert)%coeff(:2) = [ 1.0_rg - eta, eta ]
+                    ! Interpolation coefficients are in latitude only.
+                    v_int(n_vert)%coeff(:2) = eta_h
                     hit(j,f(2,k)) = .true.
                   end if
                 end if
@@ -700,6 +706,9 @@ geod_f(m,n+1)%v = h(j+1,l)
 end module Metrics_3D_m
 
 ! $Log$
+! Revision 2.3  2016/09/14 18:18:05  vsnyder
+! Replace QTM_Node_t%Leaf with Depth
+!
 ! Revision 2.2  2016/05/10 00:13:59  vsnyder
 ! Remember all three QTM vertex indices used for height interpolation.
 !
