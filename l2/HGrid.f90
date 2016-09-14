@@ -163,6 +163,8 @@ contains ! =====     Public Procedures     =============================
     call trace_begin ( me, "CreateHGridFromMLSCFInfo", root, &
       & cond=toggle(gen) .and. ( levels(gen) > 1 .or. .not. computingOffsets ) )
 
+    nullify ( fullArray, TAI )
+
     deebug = LetsDebug ( 'hgrid', 2 )
     verbose = beVerbose ( 'hgrid', 1 )
     computingOffsets       = .false.               
@@ -409,22 +411,24 @@ contains ! =====     Public Procedures     =============================
     if ( mycheck ) then
       call outputNamedValue( 'Before finding nearest maf', chunk%chunkNumber )
       call CheckForCorruptFileDatabase( filedatabase )
-    endif
-    ! Find nearest maf based on time
-    if ( L1BFile%hdfVersion /= HDFVERSION_5 ) then
-    elseif ( .not. IsHDF5DSInFile ( L1BFile%name, "MAFStartTimeTAI" ) ) then
-      call MLSMessage ( MLSMSG_Error, ModuleName // '/' &
-        & // 'CreateHGridFromMLSCFInfo', &
-        & "MAFStartTimeTAI not found in l1b file" )
-      call trace_end ( "CreateHGridFromMLSCFInfo", &
-        & cond=toggle(gen) .and. ( levels(gen) > 1 .or. .not. computingOffsets ) )
-      return
-    endif
-    call L1BGeoLocation ( filedatabase, "MAFStartTimeTAI", &
-        & instrumentModuleName, fullArray )
-    call L1BSubsample ( chunk, fullArray, values=TAI )
-    call Hunt ( TAI, hgrid%time(1,:), hgrid%maf, &
-      & allowTopValue=.true. )
+    end if
+    if ( hGridType /= l_QTM ) then
+      ! Find nearest maf based on time
+      if ( L1BFile%hdfVersion /= HDFVERSION_5 ) then
+      elseif ( .not. IsHDF5DSInFile ( L1BFile%name, "MAFStartTimeTAI" ) ) then
+        call MLSMessage ( MLSMSG_Error, ModuleName // '/' &
+          & // 'CreateHGridFromMLSCFInfo', &
+          & "MAFStartTimeTAI not found in l1b file" )
+        call trace_end ( "CreateHGridFromMLSCFInfo", &
+          & cond=toggle(gen) .and. ( levels(gen) > 1 .or. .not. computingOffsets ) )
+        return
+      endif
+      call L1BGeoLocation ( filedatabase, "MAFStartTimeTAI", &
+          & instrumentModuleName, fullArray )
+      call L1BSubsample ( chunk, fullArray, values=TAI )
+      call Hunt ( TAI, hgrid%time(1,:), hgrid%maf, &
+        & allowTopValue=.true. )
+    end if
 
     if ( DeeBug ) then
       call outputNamedValue ( 'firstMAF', chunk%firstMAFIndex )
@@ -438,19 +442,21 @@ contains ! =====     Public Procedures     =============================
       call outputNamedValue ( 'nearest maf', hgrid%maf + chunk%firstMAFIndex )
       call outputNamedValue ( 'nearest maf time', &
         & tai93s2hid(TAI(hgrid%maf), leapsec=.true.) )
-    endif
+    end if
     ! No--we already use hgrid%maf as a relativee maf numbr elsewhere in l2
     ! hgrid%maf = hgrid%maf + chunk%firstMAFIndex - 1
     ! call deallocateL1BData ( l1bField )
-    call Deallocate_test ( fullArray, 'fullArray', ModuleName )
-    call Deallocate_test ( TAI, 'TAI', ModuleName )
-    if ( switchDetail(switches, 'geom') >= 0 .and. .not. mySuppressGeometryDump ) &
-      & call DumpChunkHGridGeometry ( hGrid, chunk, &
-      & trim(instrumentModuleName), filedatabase )
+    if ( hGridType /= l_QTM ) then
+      call Deallocate_test ( fullArray, 'fullArray', ModuleName )
+      call Deallocate_test ( TAI, 'TAI', ModuleName )
+      if ( switchDetail(switches, 'geom') >= 0 .and. .not. mySuppressGeometryDump ) &
+        & call DumpChunkHGridGeometry ( hGrid, chunk, &
+        & trim(instrumentModuleName), filedatabase )
+    end if
     if ( verbose ) then
       call sayTime ( 'Constructing this HGrid' )
       call time_now( t1 )
-    endif
+    end if
 
     if ( error /= 0 ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName // '/' &
@@ -473,7 +479,6 @@ contains ! =====     Public Procedures     =============================
     use Geometry, only: Phi_To_Lat_Deg
     use Global_settings, only: LeapSecFilename
     use HgridsDatabase, only: CreateEmptyHGrid, HGrid_t
-    use Init_tables_module, only: phyq_angle, phyq_dimensionless, phyq_time
     use MLSKinds, only: rk => r8
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use SDPToolkit, only: MLS_UTCtoTAI
@@ -505,7 +510,6 @@ contains ! =====     Public Procedures     =============================
     integer :: PARAM                    ! Loop counter
     integer :: PROF                     ! Loop counter
     integer :: RETURNSTATUS             ! Flag
-    integer :: UNITS                    ! Units
     real(rk), dimension(:,:), pointer :: VALUES
     logical :: verbose
     ! The following mysterious integers allow us
@@ -1012,17 +1016,23 @@ contains ! =====     Public Procedures     =============================
     ! polygon because the concept "inside a polygon" is ambiguous on the
     ! surface of a sphere.
 
-    use allocate_deallocate, only: Test_Allocate
+    use Allocate_Deallocate, only: Test_Allocate
     use Generate_QTM_m, only: Generate_QTM
     use Geolocation_0, only: H_t
+    use HGridsdatabase, only: CreateEmptyHGrid
+    use MLSStringLists, only: SwitchDetail
+    use QTM_Output, only: Write_QTM_Unformatted
+    use Toggles, only: Switches
 
     type(h_t), intent(in) :: Polygon_Inside ! A point inside the polygon
     type(h_t), intent(in) :: Polygon_Vertices(:)
     integer, intent(in) :: Level
     type(hGrid_t), intent(inout) :: HGrid
 
-    integer :: Stat
+    integer :: I, QTMFile, Stat
 
+    hGrid%noProfs = hGrid%QTM_tree%n_in !!!!!????? or maybe zero ?????
+    call CreateEmptyHGrid(hGrid)
     hGrid%QTM_tree%level = level
     hGrid%QTM_tree%in_geo = polygon_inside
     ! Explicit allocation won't be necessary when compilers support
@@ -1033,8 +1043,13 @@ contains ! =====     Public Procedures     =============================
     hGrid%QTM_tree%polygon_geo = polygon_vertices
 
     call generate_QTM ( hGrid%QTM_tree )
-    ! Explicit allocation won't be necessary when compilers support
-    ! automatic allocation for assignment to allocatable arrays.
+
+    QTMFile = switchDetail ( switches, 'QTMFile' )
+    if ( QTMFile > 0 ) then
+      ! Write a Fortran unformatted file to make it easier to look at a QTM
+      ! using other tools, e.g., IDL
+      call write_QTM_unformatted ( hGrid%QTM_tree, QTMFile )
+    end if
 
   end subroutine Create_QTM_HGrid
 
@@ -1055,70 +1070,69 @@ contains ! =====     Public Procedures     =============================
     use Allocate_deallocate, only: allocate_test, deallocate_test
     use ChunkDivide_m, only: chunkDivideConfig
     use Chunks_m, only: MLSChunk_t, dump
-    use Constants, only: deg2rad, rad2deg
     use Dump_0, only: Dump
     use Diff_1, only: Selfdiff
-    use Empiricalgeometry, only: empiricalLongitude, chooseOptimumLon0
+    use EmpiricalGeometry, only: EmpiricalLongitude, ChooseOptimumLon0
     use Geometry, only: Phi_To_Lat_Deg
-    use HGridsDatabase, only: createEmptyHGrid, HGrid_t, trimHGrid, findClosestMatch
-    use highOutput, only: letsDebug, outputNamedValue
-    use MLSFillvalues, only: isFillValue, Monotonize
+    use HGridsDatabase, only: CreateEmptyHGrid, HGrid_t, trimHGrid, FindClosestMatch
+    use HighOutput, only: LetsDebug, OutputNamedValue
+    use MLSFillvalues, only: IsFillValue, Monotonize
     use MLSKinds, only: rk => r8
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
     use MLSNumerics, only: hunt, interpolateValues, solveQuadratic
     use MLSStringLists, only: switchDetail
     use Monotone, only: IsMonotonic
-    use output_m, only: output
-    use string_table, only: display_string
-    use toggles, only: gen, levels, switches, toggle
-    use trace_m, only: trace_begin, trace_end
+    use Output_m, only: Output
+    use String_Table, only: Display_String
+    use Toggles, only: Gen, Levels, Switches, Toggle
+    use Trace_m, only: Trace_Begin, Trace_End
 
-    type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
-    type (TAI93_Range_T), intent(in) :: PROCESSINGRANGE
-    type (MLSChunk_T), intent(in) :: CHUNK
-    real(rk), intent(in) :: SPACING
-    real(rk), intent(in) :: ORIGIN
-    character (len=*), intent(in) :: INSTRUMENTMODULENAME
-    logical, intent(in) :: EXTENDIBLE
-    integer, intent(in) :: MAXLOWEROVERLAP
-    integer, intent(in) :: MAXUPPEROVERLAP
-    logical, intent(in) :: INSETOVERLAPS
-    logical, intent(in) :: SINGLE
-    type (HGrid_T), intent(inout) :: HGRID ! Needs inout as name set by caller
+    type (MLSFile_T), dimension(:), pointer ::     FileDatabase
+    type (TAI93_Range_T), intent(in) :: ProcessingRange
+    type (MLSChunk_T), intent(in) :: Chunk
+    real(rk), intent(in) :: Spacing
+    real(rk), intent(in) :: Origin
+    character (len=*), intent(in) :: InstrumentModuleName
+    logical, intent(in) :: Extendible
+    integer, intent(in) :: MaxLowerOverlap
+    integer, intent(in) :: MaxUpperOverlap
+    logical, intent(in) :: InsetOverlaps
+    logical, intent(in) :: Single
+    type (HGrid_T), intent(inout) :: HGrid ! Needs inout as name set by caller
     logical, intent(in), optional :: onlyComputingOffsets
 
     ! Local variables/parameters
-    real(rk), dimension(:,:), pointer :: ALLGEODANGLE ! For every mif
+    real(rk), dimension(:,:), pointer :: AllGeodAngle ! For every MIF
     logical :: deeBug
-    real(rk), parameter :: SECONDSINDAY = 24*60*60
+    real(rk), parameter :: SecondsInDay = 24*60*60
     ! Note this next one is ONLY NEEDED for the case where we have only
     ! one MAF in the chunk
-    real(rk), parameter :: ORBITALPERIOD = 98.8418*60.0
+    real(rk), parameter :: OrbitalPeriod = 98.8418*60.0
 
-    logical :: DEEBUGHERE
-    real(rk) :: DELTA                   ! A change in angle
-    integer :: EXTRA                    ! How many profiles over 1 are we
-    real(rk) :: FIRST                   ! First point in of hGrid
-    integer :: FIRSTPROFINRUN           ! Index of first profile in processing time
+    logical :: DeebugHere
+    real(rk) :: Delta                   ! A change in angle
+    integer :: Extra                    ! How many profiles over 1 are we
+    real(rk) :: First                   ! First point in of hGrid
+    integer :: FirstProfInRun           ! Index of first profile in processing time
     double precision, dimension(:), pointer :: FullArray
     double precision, dimension(:,:), pointer :: FullArray2d
     integer :: I                        ! Loop counter
-    real(rk) :: INCLINE                 ! Mean orbital inclination
+    real(rk) :: Incline                 ! Mean orbital inclination
     type (MLSFile_T), pointer             :: L1BFile
-    integer :: LASTPROFINRUN            ! Index of last profile in processing time
-    real(rk) :: LAST                    ! Last point in hGrid
-    integer :: LEFT                     ! How many profiles to delete from the LHS in single
-    real(rk) :: MAXANGLE                ! Largest angle in chunk
-    real(rk) :: MAXANGLEFIRSTMAF        ! Gives 'range' of first maf
+    integer :: LastProfInRun            ! Index of last profile in processing time
+    real(rk) :: Last                    ! Last point in hGrid
+    integer :: Left                     ! How many profiles to delete from the LHS in single
+    real(rk) :: MaxAngle                ! Largest angle in chunk
+    real(rk) :: MaxAngleFirstMAF        ! Gives 'range' of first maf
     integer :: Me = -1                  ! String index for tracing
     real(rk), dimension(:), pointer :: MIF1GEODANGLE ! For first mif
-    real(rk) :: MINANGLE                ! Smallest angle in chunk
-    real(rk) :: MINANGLELASTMAF         ! Gives 'range' of last maf
+    real(rk) :: MinAngle                ! Smallest angle in chunk
+    real(rk) :: MinAngleLastMAF         ! Gives 'range' of last maf
     integer :: N                        ! Guess at number of profiles
-    integer :: NOMAFS                   ! How many in chunk
-    integer :: NOMIFS
-    real(rk) :: NEXTANGLE               ! First non ovl. MAF for next chunk
-    integer :: RIGHT                     ! How many profiles to delete from the RHS in single
+    integer :: NoMAFs                   ! How many in chunk
+    integer :: NoMIFs
+    real(rk) :: NextAngle               ! First non ovl. MAF for next chunk
+    integer :: Right                     ! How many profiles to delete from the RHS in single
     double precision, dimension(:), pointer :: GeodAngle
     double precision, dimension(:,:), pointer :: GeodAngle2d
     double precision, dimension(:), pointer :: LosAngle
@@ -1126,16 +1140,16 @@ contains ! =====     Public Procedures     =============================
     double precision, dimension(:), pointer :: SolarZenith
     double precision, dimension(:,:), pointer :: SolarZenith2d
     double precision, dimension(:), pointer :: TAI
-    real(rk), dimension(:), pointer :: TMPANGLE ! A temporary array for the single case
-    logical :: verbose
-    logical :: warnIfNoProfs
+    real(rk), dimension(:), pointer :: TmpAngle ! A temporary array for the single case
+    logical :: Verbose
+    logical :: WarnIfNoProfs
 
-    real(rk) :: a
-    real(rk) :: b
-    real(rk) :: c
+    real(rk) :: A
+    real(rk) :: B
+    real(rk) :: C
     real(rk) :: ImPart
-    real(rk) :: r1
-    real(rk) :: r2
+    real(rk) :: R1
+    real(rk) :: R2
 
     ! Executable code
     deebug = LetsDebug ( 'hgrid', 1 )
@@ -2554,6 +2568,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.141  2016/09/14 20:11:42  vsnyder
+! Move writing QTM to QTM_Output module
+!
 ! Revision 2.140  2016/09/03 00:06:01  vsnyder
 ! Turn off some debug printing
 !
