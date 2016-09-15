@@ -28,39 +28,42 @@ module Generate_QTM_m
   public :: Cross_Meridian, Generate_QTM, Get_QTM_Lats, Polygon_To_ZOT, &
           & QTM_node_t, QTM_Tree_t, ZOT_t
 
-  ! One facet of a QTM, not at the finest refinement unless
-  ! %depth == QTM_Tree_t%Level.  All(%son==0) means a facet is not refined,
-  ! but it might not be at the finest refinement because it's entirely
-  ! outwith the polygon.
+  ! One facet of a QTM, at the finest refinement if %depth == QTM_Tree_t%Level.
+  ! All(%son==0) means a facet is not refined, but it might not be at the
+  ! finest refinement because it's entirely outwith the polygon.
   type :: QTM_Node_t
-    integer :: Depth = 0       ! A leaf node if Depth == N
+    integer :: Depth = 0       ! A leaf node if Depth == QTM_Tree_t%Level
     integer(qk) :: QID = 0     ! QTM ID
     integer :: Son(0:3) = 0    ! Sub facet subscripts in the tree
     integer :: XN = 0, YN = 0  ! Which son is xNode, yNode?  Central node is 0,
                                ! pole node is 6 - ( xn + yn )
-    type(h_t) :: Geo(3)        ! (lon,lat) coordinates of vertices
+    type(h_t) :: Geo(3)        ! (lon,lat) coordinates of vertices, degrees
     type(ZOT_t) :: Z(3)        ! ZOT coordinates of vertices
-    integer :: ZOT_N(3) = 0    ! Serial numbers of ZOT coordinates of vertices
-                               ! in QTM_Tree_t%ZOT_In and QTM_Tree_t%Geo_In;
-                               ! zero if the vertex is not in a polygon.
+    integer :: ZOT_N(3) = 0    ! Serial numbers of coordinates of vertices in 
+                               ! QTM_Tree_t%ZOT_In and QTM_Tree_t%Geo_In if
+                               ! nonzero, else the vertex is not either in or
+                               ! adjacent to the polygon.  A leaf node always
+                               ! has three nonzero vertex serial numbers, and
+                               ! four zero son indices.
   end type QTM_Node_t
 
   type :: QTM_Tree_t
-    integer :: Level = 7       ! Level of QTM refinement, 20000 / 2^level km,
+    integer :: Level = 7       ! Level of QTM refinement, 20000 / 2^level km
+                               ! or 180 / 2^level degrees latitude spacing. 
                                ! Not greater than QTM_Depth from QTM_m
     integer(qk) :: N           ! Number of used elements in Q
     type(ZOT_t) :: In = ZOT_t(-999,-999) ! A point defined to be inside the
                                ! polygon. This is needed because the concept of
                                ! "inside a polygon" is ambiguous on a sphere.
     type(h_t) :: In_Geo = h_t(lon_t(-999),-999) ! QTM_Tree_t%In as longitude
-                               ! and latitude
+                               ! and latitude, degrees
     logical :: In_or_Out       ! True iff PnPoly reports QTM_Tree_t%In is
                                ! inside the polygon, from the point of view of
                                ! the ZOT projection.  A point is considered to
                                ! be inside if PnPoly returns the same value.
     integer(qk) :: N_Facets = 0 ! Number of finest-refinement facets of the QTM
     integer(qk) :: N_In = 0    ! Number of vertices inside the polygon
-    type(h_t), allocatable :: Polygon_Geo(:)
+    type(h_t), allocatable :: Polygon_Geo(:)   ! (lon,lat) degrees
     type(ZOT_t), allocatable :: Polygon_ZOT(:)
     logical, allocatable :: Ignore_Edge(:) ! Ignore edge (i,1+mod(i,n)) because
                                ! it joins two aliased points on a southern-
@@ -72,7 +75,7 @@ module Generate_QTM_m
                                ! that are inside or adjacent to the polygon.
                                ! Indexed by Q(.)%ZOT_n(.).
     type(h_t), allocatable :: Geo_In(:)    ! H_T coordinates corresponding to
-                               ! ZOT_In.
+                               ! ZOT_In, (lon,lat) degrees.
   contains
     procedure :: Find_Facet_Geo
     procedure :: Find_Facet_QID
@@ -122,14 +125,20 @@ contains
     integer :: H, Next  ! High bit index, next tree node to visit
     integer :: QD       ! One two-bit digit of QID
 
+    ! Start at the root (f == 1).  The highest-order two nonzero bits of the
+    ! QID are either 2 (indexing the Northern hemisphere frame) or 3 (indexing
+    ! the Southern hemisphere frame).  Thereafter, they are subdivision
+    ! indices, according to how basis numbers are reassigned as the QTM is
+    ! refined.  QTM_Trees%Q(1)%son(2) == 2 and QTM_Trees%Q(1)%son(3) == 3.
+
     f = 1
     if ( qid < 8 ) return ! Bogus QID
     h = high_bit_index(QID)
     ! The number of iterations is bounded by the refinement level.
     do while ( h > 0 )
       h = h - 2
-      qd = iand(int(shiftr(qid,h)),3)
-      next = QTM_Trees%Q(f)%son(qd)
+      qd = iand(int(shiftr(qid,h)),3) ! Peel off the next two bits of the QID
+      next = QTM_Trees%Q(f)%son(qd)   ! Use those bits to select the next frame
       if ( next == 0 ) exit
       f = next
     end do
@@ -163,25 +172,33 @@ contains
 
     ! Whether a QTM vertex is within a polygon is determined within the ZOT
     ! projection.  Depending upon how edges of facets are defined on the
-    ! Earth, a point determined to be within (outwith) a polygon in the ZOT
-    ! projection might be outwith (within) the polygon on the surface of the
-    ! Earth if it's near an edge.
+    ! Earth, and the resolution of the polygon, a point determined to be
+    ! within (outwith) a polygon in the ZOT projection might be outwith
+    ! (within) the polygon on the surface of the Earth if it's near an edge.
 
     ! The ZOT coordinates of the vertices that are within or adjacent to the
     ! polygon are in QTM_Trees%ZOT_In.  The (lon,lat) coordinates are in
-    ! QTM_Trees%Geo_In.
+    ! QTM_Trees%Geo_In.  For each facet, they are also in QTM_Trees%Q(F)%Z
+    ! and QTM_Trees%Q(F)%Geo, which could be gotten from
+    ! QTM_Trees%ZOT_In(QTM_Trees%Q(F)%ZOT_n) and
+    ! QTM_Trees%Geo_In(QTM_Trees%Q(F)%ZOT_n), provided
+    ! QTM_Trees%Q(F)%ZOT_n /= 0, which is true for facets at the finest
+    ! refinement but not necessarily at coarser refinement.  If a vertex V of
+    ! a coarse-refinement facet C is not also a vertex of a finest-refinement
+    ! facet, QTM_Trees%Q(C)%ZOT_n(v) == 0.
 
     use PnPoly_m, only: PnPoly
     use QTM_m, only: Geo_to_ZOT, QTM_Decode, QTM_Depth, Stack_t, ZOT_t
 
     type(QTM_Tree_t), intent(inout) :: QTM_Trees
 
-    integer :: H(2,hash_size()) ! Assume QK = kind(0) for now
+    integer :: H(2,hash_size()) ! Assume QK = kind(0) for now, until we have
+                          ! a generic Hash module
     integer :: Hemisphere ! 2 = north, 3 = south
     integer :: L          ! min(QTM_Trees%Level,QTM_Depth)
     integer :: Octant     ! Octant being refined.
     integer :: Quadrant   ! Quadrant in a hemisphere, 0..3.
-    type(QTM_node_t), allocatable :: Q_Temp(:)
+    type(QTM_node_t), allocatable :: Q_Temp(:) ! For reallocating Q
     type(stack_t) :: S    ! Put here so we don't need a new one in every
                           ! instance of Add_QTM_Vertex_To_Tree.  Speeds up
                           ! QTM_Decode in Add_QTM_Vertex_To_Tree if it's
@@ -212,7 +229,7 @@ contains
 
     if ( .not. allocated(QTM_Trees%Q) ) allocate ( QTM_Trees%Q(default_initial_size) )
     allocate ( QTM_Trees%ZOT_In(default_initial_size) )
-    ! Create the top two hemispheres and eight octants in the tree.
+    ! Create the root and top two hemispheres in the tree.
     QTM_Trees%n = 3
     QTM_Trees%Q(1)%son = [ 0, 0,  2,  3 ]; QTM_Trees%Q(1)%depth=0 ! Root
     QTM_Trees%Q(2)%depth=0 ! Northern hemisphere
@@ -231,10 +248,12 @@ contains
       end do
     end do
 
-    ! Re-size QTM_Trees%Q to the number actually used
-    allocate ( Q_Temp(QTM_Trees%n) )
-    Q_temp(:) = QTM_Trees%Q(1:QTM_Trees%n)
-    call move_alloc ( Q_temp, QTM_Trees%Q )
+    if ( QTM_Trees%n /= size(QTM_Trees%Q) ) then
+      ! Re-size QTM_Trees%Q to the number actually used
+      allocate ( Q_Temp(QTM_Trees%n) )
+      Q_temp(:) = QTM_Trees%Q(1:QTM_Trees%n)
+      call move_alloc ( Q_temp, QTM_Trees%Q )
+    end if
 
     if ( QTM_Trees%n_in /= size(QTM_Trees%ZOT_In) ) then
       ! Reallocate ZOT to the correct size
@@ -281,12 +300,12 @@ contains
       QTM_Trees%Q(root)%qid = qid
       QTM_Trees%Q(root)%xn = s%xNode(s%top(octant),octant)  ! xNode number
       QTM_Trees%Q(root)%yn = s%yNode(s%top(octant),octant)  ! yNode number
-      QTM_Trees%Q(root)%z = s%z(:,s%top(octant),octant)     ! All the vertices
-      QTM_Trees%Q(root)%geo = QTM_Trees%Q(root)%z%ZOT_to_geo()
+      QTM_Trees%Q(root)%z = s%z(:,s%top(octant),octant) ! All the vertices ZOT
+      QTM_Trees%Q(root)%geo = QTM_Trees%Q(root)%z%ZOT_to_geo() ! Vertices Geo
 
-      ! Determine which vertices, if any, are within the polygon
       in = .false.
 
+      ! Determine which vertices, if any, are within the polygon
       do i = 1, 3
         if ( is_it_in ( s%z(i,s%top(octant),octant) ) ) then
           ! In the polygon; give it a serial number
@@ -313,8 +332,9 @@ contains
           & QTM_Trees%ignore_edge ) > 0
       end do
 
-      ! Is the mesh fine enough in this facet?
+      ! Is this facet of the mesh too coarse?
       if ( QTM_Trees%Q(root)%depth >= l ) then
+        ! Should we refine this facet?
         if ( in ) then
           ! Make sure all vertices of final facets have serial numbers. 
           ! Thereby, a vertex outside the polygon that is a vertex of a final
@@ -334,8 +354,8 @@ contains
       ! the facet), and the facet is not of sufficiently fine resolution,
       ! refine the facet.
 
-      if ( in  ) then
-        ! The mesh is not fine enough in this facet.
+      if ( in ) then
+        ! The mesh is not fine enough in this facet and it needs to be refined.
         do f = 0, 3
           ! The assignment needs to be done in two stages because of a
           ! restriction in the standard: "The evaluation of a function
@@ -343,15 +363,16 @@ contains
           ! of any other entity within the statement."  Recursive reference to
           ! Add_QTM_Vertex_To_Tree will reallocate QTM_Trees%Q if it runs out
           ! of space.  A processor might decide where to store the result before
-          ! it invokes the function, which would be the wrong place if the
-          ! tree gets reallocated.
+          ! it invokes the function, which would be the wrong place if
+          ! QTM_Trees%Q gets reallocated.
           QTM_Trees%Q(root)%depth = depth + 1
           i = Add_QTM_Vertex_To_Tree ( 4*QID+f, depth + 1 )
           QTM_Trees%Q(root)%son(f) = i
         end do
       end if
 
-      ! Don't keep the tree node if it's not interesting
+      ! Don't keep the tree node if it's not interesting, that is, the facet
+      ! is too coarse and not refined.
       if ( all(QTM_Trees%Q(root)%son == 0) .and. &
          & all(QTM_Trees%Q(root)%zot_n == 0) ) then
         root = 0
@@ -672,6 +693,10 @@ contains
 end module Generate_QTM_m
 
 ! $Log$
+! Revision 2.15  2016/09/15 22:49:42  vsnyder
+! Resize QTM_Trees%Q only if it's the wrong size, add and revise a ton of
+! comments.
+!
 ! Revision 2.14  2016/09/14 20:08:32  vsnyder
 ! Correct depth component calculation
 !
