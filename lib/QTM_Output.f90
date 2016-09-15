@@ -212,10 +212,14 @@ contains
     type(QTM_tree_t), intent(in) :: Tree
     integer, intent(in) :: Unit
     integer :: I
-    write ( unit ) size(tree%polygon_geo), tree%in_geo, &
+    write ( unit ) size(tree%polygon_geo), &
+      & tree%in_geo, tree%in, & ! Point defined to be in,  Geo, Zot
       & tree%level, tree%n, tree%n_facets, tree%n_in
-    write ( unit ) tree%polygon_geo, tree%geo_in, tree%q%depth, &
-      & ( tree%q(i)%geo, i = 1, tree%n )
+    write ( unit ) tree%polygon_geo, tree%polygon_zot, & ! Geo, Zot
+      & tree%geo_in, tree%zot_in, & ! Vertices in polygon  Geo, Zot
+      & tree%q%depth, &
+      & ( tree%q(i)%geo, i = 1, tree%n ), & ! facet vertices Geo
+      & ( tree%q(i)%z,   i = 1, tree%n )    ! facet vertices ZOT
   end subroutine Write_QTM_Unformatted
 
 !=============================================================================
@@ -232,6 +236,9 @@ contains
 end module QTM_Output
 
 ! $Log$
+! Revision 2.3  2016/09/15 00:25:45  vsnyder
+! Output both Geo and ZOT
+!
 ! Revision 2.2  2016/09/14 20:08:50  vsnyder
 ! Cannonball polishing
 !
