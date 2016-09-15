@@ -212,7 +212,7 @@ contains
     type(QTM_tree_t), intent(in) :: Tree
     integer, intent(in) :: Unit
     integer :: I
-    write ( unit ) size(tree%polygon_geo), &
+    write ( unit ) size(tree%polygon_geo), size(tree%polygon_zot), &
       & tree%in_geo, tree%in, & ! Point defined to be in,  Geo, Zot
       & tree%level, tree%n, tree%n_facets, tree%n_in
     write ( unit ) tree%polygon_geo, tree%polygon_zot, & ! Geo, Zot
@@ -236,6 +236,9 @@ contains
 end module QTM_Output
 
 ! $Log$
+! Revision 2.4  2016/09/15 19:20:43  vsnyder
+! Output both Geo and ZOT sizes for the polygon (might be different)
+!
 ! Revision 2.3  2016/09/15 00:25:45  vsnyder
 ! Output both Geo and ZOT
 !
