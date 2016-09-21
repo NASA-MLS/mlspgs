@@ -487,7 +487,6 @@ contains
     integer :: KP ! Number of horizontal coordinates
     integer :: KX ! Number of cross-track coordinates
     integer :: KZ ! Number of vertical coordinates
-    logical :: UsingQTM
 
     associate ( qty => grids_x%qtyStuff(ii)%qty )
  
@@ -495,9 +494,7 @@ contains
         & call MLSMessage ( MLSMSG_Error, moduleName, &
            & 'Cannot load a quantity that is unstacked or incoherent' )
 
-      usingQTM = associated(qty%template%the_hGrid)
-      if ( usingQTM ) usingQTM = qty%template%the_hGrid%type == l_QTM 
-      if ( usingQTM ) then
+      if ( qty%template%isQTM() ) then
         grids_x%windowStart(ii) = 1
         grids_x%windowFinish(ii) = size(qty%template%the_hGrid%QTM_tree%geo_in)
       else if ( present(phitan) ) then
@@ -987,6 +984,9 @@ contains
 end module LOAD_SPS_DATA_M
 
 ! $Log$
+! Revision 2.114  2016/08/30 20:29:36  vsnyder
+! Add IsQTM type-bound function
+!
 ! Revision 2.113  2016/08/23 00:43:11  vsnyder
 ! Components within or adjacent to the polygon are now within the QTM_Tree_t
 ! structure instead of the HGrid_t structure.
