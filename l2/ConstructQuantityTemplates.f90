@@ -672,7 +672,7 @@ contains ! ============= Public procedures ===================================
           & merge("tpGeodAlt","tpGeocAlt",qty%verticalCoordinate==l_geodAltitude)
       end if
       l1bItemName = AssembleL1BQtyName ( l1bItemName, hdfVersion, .false. )
-      if ( verbose ) then
+      if ( verboser ) then
         call outputnamedValue ( 'l1bItemName#1', trim(l1bItemName) )
         call outputnamedValue ( 'isModuleSpacecraft', isModuleSpacecraft(instrumentModule) )
         call outputnamedValue ( 'isAnyModuleSpacecraft', isAnyModuleSpacecraft() )
@@ -720,7 +720,7 @@ contains ! ============= Public procedures ===================================
           & MLSMSG_L1BRead//l1bItemName )
         ! return
       end if
-      if ( verbose ) then
+      if ( verboser ) then
         call outputnamedValue ( 'noMAFs', noMAFs )
         call outputnamedValue ( 'l1bFlag', l1bFlag )
       endif
@@ -788,9 +788,9 @@ contains ! ============= Public procedures ===================================
         end if
 
         ! Read it from the l1boa file
-        if ( verbose ) call outputnamedValue ( 'before assembly', trim(l1bItemName) )
+        if ( verboser ) call outputnamedValue ( 'before assembly', trim(l1bItemName) )
         l1bItemName = AssembleL1BQtyName ( l1bItemName, hdfVersion, .false. )
-        if ( verbose ) call outputnamedValue ( 'l1bItemName#2', trim(l1bItemName) )
+        if ( verboser ) call outputnamedValue ( 'l1bItemName#2', trim(l1bItemName) )
         call ReadL1BData ( L1BFile, l1bItemName, l1bField, noMAFs, &
           & l1bFlag, firstMAF=chunk%firstMafIndex, &
           & lastMAF=chunk%lastMafIndex, neverfail=MissingOK )
@@ -1582,6 +1582,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.199  2016/09/21 00:41:32  pwagner
+! Default to printing less
+!
 ! Revision 2.198  2016/08/12 00:33:05  pwagner
 ! Seems to restore tthe gold brick
 !
