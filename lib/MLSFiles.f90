@@ -13,25 +13,25 @@
 module MLSFiles               ! Utility file routines
   !=============================================================================
   use HDF, only: dfacc_create, dfacc_rdonly, dfacc_read, dfacc_rdwr, &
-    & sfstart, sfend
+    & Sfstart, sfend
   use HDFeos, only: gdclose, gdopen, swclose, swopen, swinqswath
   use HDFeos5, only: HE5_swclose, HE5_swopen, HE5_swinqswath, &
     & HE5_gdopen, HE5_gdclose, &
     & HE5f_acc_trunc, HE5f_acc_rdonly, HE5f_acc_rdwr
-  use highoutput, only: outputnamedvalue
-  use intrinsic, only: l_ascii, l_hdfeos, l_hdf, l_open, &
-    & l_swath, l_tkgen, l_zonalavg, lit_indices
-  use io_stuff, only: get_lun
-  use machine, only: io_error
-  use MLSCommon, only: bareFNLen, fileNameLen, FileIds_T, MLSFile_t, range_t, &
-    & inRange
+  use HighOutput, only: OutputNamedValue, OutputTable
+  use Intrinsic, only: l_ascii, l_hdfeos, l_hdf, l_open, &
+    & L_swath, l_tkgen, l_zonalavg, lit_indices
+  use Io_stuff, only: get_lun
+  use Machine, only: io_error
+  use MLSCommon, only: bareFNLen, fileNameLen, FileIds_T, MLSFile_t, Range_t, &
+    & InRange
   use MLSMessageModule, only: MLSMessage, MLSMSG_Crash, MLSMSG_Error, &
     & MLSMSG_Warning
   use MLSFinds, only: findfirst
   use MLSStrings, only: capitalize, lowercase
-  use MLSStringLists, only: extractsubstring, &
-    & replacesubstring, sortarray
-  use output_m, only: blanks, output
+  use MLSStringLists, only: extractSubstring, &
+    & ReplaceSubstring, SortArray
+  use Output_m, only: Blanks, Output
   use SDPtoolkit, only: &
     & PGS_pc_getreference, PGS_s_success, &
     & PGSd_io_gen_rseqfrm, PGSd_io_gen_rsequnf, & 
@@ -42,11 +42,11 @@ module MLSFiles               ! Utility file routines
     & PGSd_io_gen_udirfrm, PGSd_io_gen_udirunf, & 
     & PGSd_io_gen_aseqfrm, PGSd_io_gen_asequnf, &
     & PGS_io_gen_closef, PGS_io_gen_openf, PGSd_pc_file_path_max, &
-    & useSDPtoolkit
+    & UseSDPtoolkit
 !   In the long run, we'll try putting interfaces to these in SDPToolkit.f90
 !   Until then, just declare them as external
 !    & PGS_MET_SFstart, PGS_MET_SFend, &
-  use string_table, only: display_string, get_string
+  use String_table, only: display_string, get_string
   use HDF5, only: size_t
 
   implicit none
@@ -167,7 +167,7 @@ module MLSFiles               ! Utility file routines
 !   [Range PCFIdRange], [int PCFBottom], [int PCFTop])
 ! log AreTheSameFile (MLSFile File1, MLSFile File2 )
 ! Deallocate_filedatabase(MLSFile *dataBase(:))
-! Dump ( MLSFile *dataBase(:), [char* Name], [int details] )
+! Dump ( MLSFile *dataBase(:), [char* Name], [int details], [log table] )
 ! Dump ( MLSFile MLSFile, [int details] )
 ! MLSFile *GetMLSFileByName (MLSFile *dataBase(:), char* name, [log ignore_paths])
 ! MLSFile *GetMLSFileByType (MLSFile *dataBase(:), [int type], [char* content],
@@ -779,19 +779,26 @@ contains
 
   ! ------------------------------------------  Dump_FileDataBase  -----
 
-  subroutine Dump_FileDataBase ( database, Name, details )
+  subroutine Dump_FileDataBase ( database, Name, details, table )
 
     ! Dummy arguments
     type (MLSFile_T), intent(in) ::           database(:)
     character(len=*), intent(in), optional :: Name
-    integer, intent(in), optional          :: details
+    integer, intent(in), optional          :: details ! How verbose
+    logical, intent(in), optional          :: table   ! As a table
 
     ! Local variables
+    character(len=256), dimension(:,:), pointer :: array
     integer :: i
     integer :: myDetails
+    logical :: myTable
+    integer :: n
     ! Executable
     myDetails = 0
     if ( present(details) ) myDetails = details
+    myTable = .false.
+    if ( present(Table) ) myTable = Table
+    n = size(database)
     
     call output ( '============ MLS File Data Base ============', advance='yes' )
     call output ( ' ', advance='yes' )
@@ -799,14 +806,24 @@ contains
       call output ( 'MLS File Database name: ', advance='no' )
       call output ( name, advance='yes' )
     endif
-    if ( size(database) < 1 ) then
+    if ( n < 1 ) then
       call output ( '**** MLS File Database empty ****', advance='yes' )
       return
+    elseif ( myTable ) then
+      nullify( array )
+      allocate( array(n+1, 2 ) )
+      array(1,1) = 'name'
+      array(1,2) = 'path'
+      do i = 1, size(database)
+        call split_path_name( database(i)%name, array(i+1, 2), array(i+1, 1) )
+      end do
+      call outputTable( array, border='-', headliner='-' )
+      deallocate( array )
     else
       call output ( 'size: ')
       call output ( size(database), advance='yes')                                
     endif
-    if ( myDetails < -1 ) return
+    if ( myDetails < -1 .or. (myTable .and. myDetails < 1) ) return
     do i = 1, size(database)
       call dump(database(i), details)
     end do
@@ -2476,6 +2493,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.105  2016/09/21 00:38:41  pwagner
+! May Dump filedatabase as a table
+!
 ! Revision 2.104  2016/08/09 18:13:34  pwagner
 ! MLS_CloseFile now sets FileIDs to 0
 !
