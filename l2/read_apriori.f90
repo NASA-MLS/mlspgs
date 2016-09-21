@@ -180,6 +180,7 @@ contains ! =====     Public Procedures     =============================
     integer :: SON                 ! Of root, an n_spec_args or a n_named
     type(next_tree_node_state) :: State ! of tree traverser
     logical :: verbose
+    logical :: verboser
 
     call trace_begin ( me, "read_apriori", root, cond=toggle(gen) )
 
@@ -188,6 +189,7 @@ contains ! =====     Public Procedures     =============================
     ! Will we be dumping info? To what level of detail?
     Details = switchDetail(switches, 'apr') - 2
     verbose = ( Details > -3 )
+    verbose = ( Details > -2 )
     if ( verbose ) &     
     & call output ( '============ Read APriori ============', advance='yes' )  
     ! Are we picking up again where we left off in the last
@@ -197,7 +199,7 @@ contains ! =====     Public Procedures     =============================
       & inseparator=runTimeValues%sep )
     carryover = ( index(lowercase(cvalue), 't') > 0 )
     if ( verbose ) call dumpMacros
-    if ( verbose ) call outputNamedValue( 'carryover', carryover )
+    if ( verboser ) call outputNamedValue( 'carryover', carryover )
     if ( .not. carryover ) then
       LastAprioriPCF = mlspcf_l2apriori_start - 1
       lastClimPCF = mlspcf_l2clim_start - 1
@@ -206,8 +208,8 @@ contains ! =====     Public Procedures     =============================
       lastGEOS5PCF = mlspcf_l2geos5_start - 1
       LastHeightPCF = mlspcf_surfaceHeight_start - 1
     end if
-    if ( verbose ) call outputNamedValue ( 'mlspcf_l2geos5_start', mlspcf_l2geos5_start )
-    if ( verbose ) call outputNamedValue ( 'lastGEOS5PCF', lastGEOS5PCF )
+    if ( verboser ) call outputNamedValue ( 'mlspcf_l2geos5_start', mlspcf_l2geos5_start )
+    if ( verboser ) call outputNamedValue ( 'lastGEOS5PCF', lastGEOS5PCF )
 
     do 
       son = next_tree_node ( root, state )
@@ -245,7 +247,7 @@ contains ! =====     Public Procedures     =============================
             )
       end select
     end do                              ! Lines in l2cf loop
-    if( Details > -2 ) then
+    if( verboser ) then
       call output( '------------------- apriori datatypes --------------', advance='yes' )
       call output ( 'l2gp', advance='yes' )
       call dump( trim(APrioriFiles%l2gp), 'l2gp files' )
@@ -1462,6 +1464,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.116  2016/09/21 00:41:04  pwagner
+! Default to printing less
+!
 ! Revision 2.115  2016/07/28 01:45:07  vsnyder
 ! Refactor dump and diff
 !
