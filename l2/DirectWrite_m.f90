@@ -25,7 +25,7 @@ module DirectWrite_m  ! alternative to Join/OutputAndClose methods
     ! so instead write them out chunk-by-chunk
 
   use Allocate_deallocate, only: allocate_test
-  use HighOutput, only: beVerbose, LetsDebug, outputNamedValue
+  use HighOutput, only: beVerbose, LetsDebug, outputNamedValue, outputTable
   use Init_tables_module, only: l_geodAltitude, l_pressure, l_zeta, &
     & L_l2gp, l_l2aux, l_l2dgg, l_l2fwm
   use Machine, only: USleep
@@ -34,7 +34,7 @@ module DirectWrite_m  ! alternative to Join/OutputAndClose methods
   use MLSKinds, only: rv
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
   use MLSFiles, only: hdfversion_4, hdfversion_5, dump, MLS_Exists, &
-    & MLS_CloseFile, MLS_OpenFile
+    & MLS_CloseFile, MLS_OpenFile, split_path_name
   use MLSFinds, only: findFirst
   use MLSHDFEOS, only: MLS_Swath_in_file
   use MLSL2Options, only: writeFileAttributes
@@ -1302,7 +1302,13 @@ contains ! ======================= Public Procedures =========================
     integer, intent(in), optional :: DETAILS
 
     ! Local variables
+    character(len=256), dimension(:,:), pointer :: array
     integer :: i
+    integer :: myDetails
+    integer :: n
+    ! Executable
+    myDetails = 1
+    if ( present(details) ) myDetails = details
     call output ( '========== DirectWrite Data Base ==========', advance='yes' )
     call output ( ' ', advance='yes' )
     if ( .not. associated(directDB) ) then
@@ -1312,9 +1318,22 @@ contains ! ======================= Public Procedures =========================
       call output ( '**** directWrite Database empty ****', advance='yes' )
       return
     endif
-    do i = 1, size(directDB)
-      call DumpDirectWrite(directDB(i), Details)
-    end do
+    if ( myDetails < -1 ) then
+      nullify( array )
+      n = size(directDB)
+      allocate( array(n+1, 2 ) )
+      array(1,1) = 'name'
+      array(1,2) = 'path'
+      do i = 1, size(directDB)
+        call split_path_name( directDB(i)%filename, array(i+1, 2), array(i+1, 1) )
+      end do
+      call outputTable( array, border='-', headliner='-' )
+      deallocate( array )
+    else
+      do i = 1, size(directDB)
+        call DumpDirectWrite(directDB(i), Details)
+      end do
+    endif
   end subroutine DumpDirectDB
 
   !------------------------------------------  DumpDirectWrite  -----
@@ -1329,7 +1348,7 @@ contains ! ======================= Public Procedures =========================
     ! Local variables
     integer :: i
     integer :: myDetails
-    ! Executable code
+    ! Executable
     myDetails = 1
     if ( present(details) ) myDetails = details
 
@@ -1762,6 +1781,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.85  2016/09/21 00:39:46  pwagner
+! Usually dump DirectDB as a table
+!
 ! Revision 2.84  2016/09/07 22:46:49  pwagner
 ! Removed unused QuantityType component from L2GPData type
 !
