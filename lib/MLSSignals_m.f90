@@ -14,18 +14,19 @@ module MLSSignals_M
   ! Process the MLSSignals section of the L2 configuration file and deal with
   ! parsing signal request strings.
 
-  use allocate_deallocate, only: allocate_test, deallocate_test
-  use dump_0, only: dump
-  use expr_m, only: expr
-  use highOutput, only: headLine, outputNamedValue
-  use init_MLSSignals_m ! everything
-  use intrinsic, only: field_first, field_indices, lit_indices, &
-    & phyq_dimensionless, phyq_frequency, phyq_indices, s_time, l_a, l_emls
+  use Allocate_deallocate, only: allocate_test, deallocate_test
+  use Dump_0, only: dump
+  use Dump_1, only: dumpLists
+  use Expr_m, only: expr
+  use HighOutput, only: headLine, outputNamedValue, OutputTable
+  use Init_MLSSignals_m ! everything
+  use Intrinsic, only: field_first, field_indices, lit_indices, &
+    & Phyq_dimensionless, phyq_frequency, phyq_indices, s_time, l_a, l_emls
   use MLSKinds, only: r8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, PVMErrorMessage
   use MLSStrings, only: lowercase, capitalize
-  use output_m, only: blanks, newline, output
-  use string_table, only: display_string, get_string
+  use Output_m, only: blanks, newline, output
+  use String_table, only: display_string, get_string
 
   implicit none
 
@@ -1029,7 +1030,7 @@ oc:       do
     call display_string ( lit_indices(instrument) )
     call newLine
     call dump_modules
-    call dump_radiometers (radiometers )
+    call dump_radiometers ( radiometers )
     call dump_bands( bands )
     call dump_spectrometerTypes( spectrometerTypes )
     call dump_signals( signals )
@@ -1038,27 +1039,30 @@ oc:       do
   ! -------------------------------------------  Dump_Modules  -----
   subroutine Dump_Modules
     !
+    character(len=16), dimension(:,:), pointer :: array
     integer :: i
+    integer :: n
+    ! Executable
     if ( .not. associated(modules) ) then
       call output( '(modules not associated)', advance='yes' )
       return
     endif
     call headline( 'modules' )
-    do i=1, size(modules)
-      call output( i , advance='no' )
-      call blanks( 3 )
-      if ( len_trim(modules(i)%nameString) < 1 ) then
-        call display_string ( modules(i)%name, advance='no' ) 
-      else
-        call output( trim(modules(i)%nameString) )
-      endif
-      call blanks( 3 )
-      call output( 's/c? ', advance='no' )
-      call output( modules(i)%spaceCraft, advance='no' ) 
-      call blanks( 3 )
-      call output( 'Aura? ', advance='no' )
-      call output( modules(i)%Aura, advance='yes' ) 
+    nullify( array )
+    n = size(modules)
+    allocate( array(n+1, 3 ) )
+    array(1,1) = 'name'
+    array(1,2) = 's/c'
+    array(1,3) = 'Aura'
+    array(2:n+1,1) = modules(:)%nameString
+    do i=1, n
+      if ( len_trim(modules(i)%nameString) < 1 ) &
+        & call get_string( modules(i)%name, array(i+1,1) )
     enddo
+    array(2:n+1,2) = merge( 'T', 'F', modules(:)%spaceCraft )
+    array(2:n+1,3) = merge( 'T', 'F', modules(:)%Aura )
+    call outputTable( array, border='-', headliner='-' )
+    deallocate( array )
   end subroutine Dump_Modules
 
   ! -------------------------------------------  Dump_OneRadiometer  -----
@@ -2050,6 +2054,9 @@ oc:       do
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.111  2016/09/21 00:38:09  pwagner
+! Change appearance of Dump_Modules
+!
 ! Revision 2.110  2016/07/27 22:14:59  pwagner
 ! Added NameString component to module type
 !
