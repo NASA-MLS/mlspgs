@@ -42,7 +42,7 @@ contains ! ====     Public Procedures     ==============================
       & ConstructMIFGeolocation, DestroyMIFGeolocation
     use DirectWrite_m, only: directdata_t, destroydirectdatabase
     use Dump_0, only: dump
-    use Empiricalgeometry, only: forgetOptimumLon0
+    use EmpiricalGeometry, only: forgetOptimumLon0
     use FGrid, only: fgrid_t, destroyFGridDatabase, dump
     use Fill, only: MLSL2Fill
     use ForwardModelConfig, only: forwardModelConfig_t, &
@@ -598,8 +598,8 @@ subtrees:   do
       ! Deallocate and utterly destroy all the arrays we allocated
       ! Some are known to us, ebing arrays of user-defined datatypes
       ! These we try to deallocate first
-      use filtershapes_m, only: destroy_filter_shapes_database, &
-        & destroy_dacs_filter_database
+      use FilterShapes_m, only: Destroy_filter_shapes_database, &
+        & Destroy_dacs_filter_database
       logical, intent(in), optional :: Early ! If so, can't deallocate everything
       ! Local variables
       logical :: myEarly
@@ -658,7 +658,7 @@ subtrees:   do
       details = SwitchDetail(switches, 'pro') - 2 ! 'pro' prints only size(DB)
       if ( details > -3 &
         & .and. associated(fileDataBase) ) then
-        call Dump( fileDataBase, details=details )
+        call Dump( fileDataBase, details=details, table=.true. )
       end if
       if ( specialDumpFile /= ' ' ) &
         & call revertOutput
@@ -752,6 +752,9 @@ subtrees:   do
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.204  2016/08/09 22:08:33  pwagner
+! May check for corrupt file database
+!
 ! Revision 2.203  2016/05/18 01:37:30  vsnyder
 ! Change HGrids database from an array of HGrid_T to an array of pointers
 ! to HGrid_T using the new type HGrids_T.
