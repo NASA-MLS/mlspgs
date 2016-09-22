@@ -11,12 +11,13 @@
 
 ! $Id$
 
-!  subroutine addRow_character ( name, value )
+!  subroutine addRow_character ( name, value, format )
 !    Method:
 !    capture output to the outputLines via formatted calls to output
 !    then set name side of added row to name, and value side to outputLines
 !    character(len=*), intent(in)              :: name
 !    character(len=*), intent(in)              :: value
+    character(len=*), intent(in), optional    :: format
     ! Local variables
     character(len=MAXCELLSIZE), dimension(2)   :: item
     integer                                    :: newSize
@@ -27,7 +28,7 @@
     oldUnit = outputOptions%prunit
     oldLines = ' ' ! outputLines
     outputOptions%prunit = OUTPUTLINESPRUNIT
-    call output( value, advance='no' )
+    call output( value, format=format, advance='no' )
     outputOptions%prunit = oldUnit
     item(1) = name
     item(2) = adjustl( outputLines )
@@ -39,6 +40,9 @@
     outputLines = ' '
     ! print *, 'newSize: ', newSize
 ! $Log$
+! Revision 2.2  2016/09/22 22:20:50  pwagner
+! May specify format in call to addRow
+!
 ! Revision 2.1  2015/05/18 17:43:24  pwagner
 ! First commit
 !
