@@ -19,12 +19,13 @@ module Open_Init
   ! Reads user params as PCF-supplied config data  |
   ! -----------------------------------------------
 
-  use highOutput, only: beVerbose, outputNamedValue
+  use HighOutput, only: addRow, beVerbose, &
+    & OutputNamedValue, outputTable, startTable
   use MLSCommon, only: fileNameLen, MLSFile_t, nameLen, TAI93_Range_t
   use MLSL2Options, only: specialDumpFile, Toolkit
-  use MLSStringLists, only: array2List, catLists, getStringElement, &
-    & numStringElements, switchDetail
-  use Output_m, only: Blanks, Output
+  use MLSStringLists, only: array2List, catLists, &
+    & switchDetail
+  use Output_m, only: Blanks, newLine, Output, switchOutput, revertOutput
 
   implicit none
 
@@ -37,7 +38,7 @@ module Open_Init
 ! === (end of toc) ===
 
   private
-  public :: OpenAndInitialize
+  public :: DumpL1BDatabase, OpenAndInitialize
 
   ! -----     Private declarations     ---------------------------------
 
@@ -490,154 +491,134 @@ contains ! =====     Public Procedures     =============================
     ! cycle number
     ! logfile name
   
-    use L1BData, only: L1BData_t, &
-      & Assemblel1bqtyname, deallocatel1bdata, dump, readl1bdata
-    use L2AUxdata, only: maxsdnamesbufsize
+    use Dump_1, only: Dump
     use L2GPData, only: col_species_keys, col_species_hash
-    use MLSFiles, only: HDFVersion_4       
-    use MLSHdf5, only: getAllHDF5DSNames
-    use Output_m, only: revertoutput, switchoutput
     use WriteMetadata, only: L2PCF
 
     ! Arguments
-    type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
-    character(len=CCSDSlen) CCSDSEndTime
-    character(len=CCSDSlen) CCSDSStartTime
-    type (TAI93_Range_T) :: processingRange ! Data processing range
-    integer, intent(in) :: Details
+    type (MLSFile_T), dimension(:), pointer :: FILEDATABASE
+    character(len=CCSDSlen)                 :: CCSDSEndTime
+    character(len=CCSDSlen)                 :: CCSDSStartTime
+    type (TAI93_Range_T)                    :: processingRange ! Data processing range
+    integer, intent(in)                     :: Details
 
     ! Local
-
-    integer :: i, NoMAFs, IERR
-    character (len=*), parameter :: time_format='(1pD18.12)'
-    character (len=*), parameter :: l1b_quant_name='R1A:118.B1F:PT.S0.FB25-1'
-    type (L1BData_T) :: l1bDataSet   ! L1B dataset
-
-    integer ::  hdfVersion
-    integer :: item
-    character(len=namelen) :: l1bItemName
-    character(len=MAXSDNAMESBUFSIZE) :: l1bitemlist
-    integer :: nL1bItems
-    logical, parameter :: countEmpty = .true.
-    type (MLSFile_T), pointer ::     L1BFile
+    character (len=*), parameter            :: time_format='(1pD18.12)'
 
     ! Begin                                                                       
     call output ( '============ Open Initialize ============', advance='yes' )
     call output ( '        (Data entered via pcf)', advance='yes' )
     call output ( ' ', advance='yes' )
     call output ( 'L1B database:', advance='yes' )
-  
-   if(associated(filedatabase)) then
-     if ( specialDumpFile /= ' ' .and. Details > -2 ) &
-       & call switchOutput( specialDumpFile, keepOldUnitOpen=.true. )
-    do i = 1, size(filedatabase)
-      L1BFile => filedatabase(i)
-      if ( L1BFile%content == 'l1brad' ) then
-         call output ( 'PCF id:   ' )                                       
-         call output ( L1BFile%PCFID, advance='yes' )
-         call output ( 'fileid:   ' )
-         call output ( L1BFile%FileID%f_id, advance='yes' )
-         call output ( 'name:   ' )                                       
-         call output ( TRIM(L1BFile%name), advance='yes' )
-         call output ( 'hdf version:   ' )                                       
-         call output ( L1BFile%hdfVersion, advance='yes' )
-         if ( Details > -2 .and. hdfVersion == HDFVERSION_4 ) then
-           l1bItemName = AssembleL1BQtyName ( l1b_quant_name, hdfVersion, .false. )
-           call ReadL1BData ( L1BFile, l1bItemname, L1bDataSet, &
-            & NoMAFs, IERR, NeverFail=.true. )
-           if ( IERR == 0 ) then
-             call Dump ( l1bDataSet, Details )
-             call DeallocateL1BData ( l1bDataSet )
-           else
-             call output ( 'Error number  ' )
-             call output ( IERR )
-             call output ( ' while reading quantity named  ' )
-             call output ( trim(l1b_quant_name) )
-           end if
-         elseif( Details > -2 ) then
-           call GetAllHDF5DSNames (L1BFile%FileID%f_id, '/', l1bitemlist)
-           nL1bItems = NumStringElements(trim(l1bitemlist), countEmpty)
-           do item=1, nL1bItems
-             call GetStringElement (trim(l1bitemlist), l1bItemName, item, &
-               & countEmpty )
-             if ( index('/PCF,/LCF', trim(l1bItemName)) > 0 ) cycle
-             call ReadL1BData ( L1BFile, l1bItemName, L1bDataSet, &
-              & NoMAFs, IERR, NeverFail=.true. )
-             if ( IERR == 0 ) then
-               call Dump ( l1bDataSet, Details )
-               call DeallocateL1BData ( l1bDataSet )
-             else
-               call output ( 'Error number  ' )
-               call output ( IERR )
-               call output ( ' while reading quantity named  ' )
-               call output ( trim(l1bItemName) )
-             end if
-             ! if ( item > 2 ) stop
-           enddo
-        end if
-      elseif ( L1BFile%content == 'l1boa' ) then
-        call output ( 'L1OA file:', advance='yes' )
-  
-        call output ( 'PCFid:   ' )
-        call output ( L1BFile%PCFId, advance='yes' )
-        call output ( 'fileid:   ' )
-        call output ( L1BFile%FileID%f_id, advance='yes' )
-        call output ( 'name:   ' )
-        call output ( TRIM(L1BFile%Name), advance='yes' )
-      end if
-    enddo
+    call DumpL1BDatabase ( filedatabase, Details )
 
-     if ( specialDumpFile /= ' ' .and. Details > -2 ) &
-       & call revertOutput
+    call startTable
+    call addRow ( 'Start Time', CCSDSStartTime )
+    call addRow ( 'End Time', CCSDSEndTime )
 
-   else
-    call output ( '(null database)', advance='yes' )
+    call addRow ( 'Start Time (tai)', processingrange%starttime, format=time_format )
+    call addRow ( 'End Time (tai)', processingrange%endtime, format=time_format )
+    call addRow ( 'Processing Range', processingrange%endtime-processingrange%starttime )
+    call addRow ( 'PGE version', l2pcf%PGEVersion )
+    call addRow ( 'cycle', l2pcf%cycle )
+    call addRow ( 'RunID', l2pcf%RunID )
+    call addRow ( 'Log file name', l2pcf%logGranID )
+    call outputTable ( sep=' ', border='-' )
 
-   end if
+    ! Dump special hashes
+    call NewLine
+    call Dump ( countEmpty=.true., &
+      & keys=col_species_keys, values=col_species_hash, &
+      & name='l2gp column species, units', separator=',' )
 
-    call output ( 'Start Time:   ' )
-    call output ( CCSDSStartTime, advance='yes' )
-
-    call output ( 'End Time:     ' )
-    call output ( CCSDSEndTime, advance='yes' )
-
-    call output ( 'Start Time (tai):   ' )
-    call output ( processingrange%starttime, format=time_format, advance='yes' )
-
-    call output ( 'End Time (tai):     ' )
-    call output ( processingrange%endtime, format=time_format, advance='yes' )
-
-    call output ( 'Processing Range:     ' )
-    call output ( processingrange%endtime-processingrange%starttime, advance='yes' )
-
-    call output ( 'PGE version:   ' )
-    call output ( l2pcf%PGEVersion, advance='yes' )
-
-    call output ( 'cycle:   ' )
-    call output ( l2pcf%cycle, advance='yes' )
-
-    call output ( 'RunID:   ' )
-    call output ( l2pcf%RunID, advance='yes' )
-
-    call output ( 'Log file name:   ' )
-    call output ( TRIM(l2pcf%logGranID), advance='yes' )
-
-    call output ( 'l2gp column species name keys:   ' )
-    call output ( TRIM(col_species_keys), advance='yes' )
-
-    call output ( 'corresponding units hash:   ' )
-    call output ( TRIM(col_species_hash), advance='yes' )
-
-    call output ( 'l2gp species name keys:   ' )
-    call output ( TRIM(l2pcf%spec_keys), advance='yes' )
-
-    call output ( 'corresponding mcf names:   ' )
-    call output ( TRIM(l2pcf%spec_mcfnames      ), advance='yes' )
-
-    call output ( 'corresponding doi names:   ' )
-    call output ( TRIM(l2pcf%spec_doinames      ), advance='yes' )
+    call NewLine
+    call Dump ( countEmpty=.true., &
+      & keys=l2pcf%spec_keys, values=l2pcf%spec_mcfnames, &
+      & name='l2gp species, mcf : doi', separator=',', &
+      & ExtraValues= l2pcf%spec_doinames)
+    call blanks ( 80, FillChar='-', advance='yes' )
 
   end subroutine Dump_open_init
+
+  ! ---------------------------------------------  DumpL1BDatabase  -----
+  subroutine DumpL1BDatabase ( filedatabase, Details )
+    use L1BData, only: L1BData_t, nameLen, precisionSuffix, &
+      & assembleL1BQtyName, deallocateL1BData, Dump, &
+      & readL1BData 
+    ! Arguments
+    type (MLSFile_T), dimension(:), pointer :: FILEDATABASE
+    integer, intent(in)                     :: Details
+    ! Local variables
+    integer                                 :: hdfVersion
+    integer                                 :: i
+    integer                                 :: ierr
+    character(len=namelen)                  :: L1bItemName
+    integer                                 :: noMAFs
+    type(MLSFile_T), pointer                :: L1BFile
+    type (L1BData_T)                        :: l1bDataSet   ! L1B dataset
+    ! This next is in case we're to dump at greatest possible detail
+    character (len=namelen), parameter ::  BASE_QUANT_NAME = &
+                                    &       'R2:190.B3F:N2O.S2.FB25-3'
+!                                    &       'R1A:118.B1F:PT.S0.FB25-1'
+    character (len=LEN(BASE_QUANT_NAME)) :: l1b_quant_name
+    logical, parameter ::                   DUMPPRECISIONTOO = .true.
+    ! Executable
+    if(associated(filedatabase)) then
+      call startTable
+      if ( specialDumpFile /= ' ' .and. Details > -2 ) &
+        & call switchOutput( specialDumpFile, keepOldUnitOpen=.true. )
+    else
+      call output ( '(null database)', advance='yes' )
+      return
+    end if
+    do i = 1, size(filedatabase)
+      L1BFile => filedatabase(i)
+      hdfVersion = L1BFile%HDFVersion
+      if ( L1BFile%content == 'l1brad' ) then
+        call addRow ( 'L1B type ', 'radiance' )
+      elseif ( L1BFile%content == 'l1boa' ) then
+        call addRow ( 'L1B type ', 'orbit/attitude' )
+      else
+        cycle
+      endif
+      call addRow ( 'PCF id', L1BFile%PCFID )
+      call addRow ( 'fileid', L1BFile%FileID%f_id )
+      call addRow ( 'name', L1BFile%name )
+      if ( details > -2 .and. L1BFile%content == 'l1brad' ) then
+        l1b_quant_name = BASE_QUANT_NAME
+        l1bItemName = AssembleL1BQtyName ( l1b_quant_name, hdfVersion, .false. )
+        call ReadL1BData ( L1BFile, l1bItemName, l1bDataSet, &
+         & NoMAFs, IERR, NeverFail=.true. )
+        if ( IERR == 0 ) then
+          call Dump( l1bDataSet, details )
+          call DeallocateL1BData ( l1bDataSet )
+        else
+          call output ( 'Error number  ' )
+          call output ( IERR )
+          call output ( ' while reading quantity named  ' )
+          call output ( trim(l1b_quant_name), advance='yes' )
+        end if
+        if ( .not. DUMPPRECISIONTOO ) cycle
+        l1b_quant_name = trim(BASE_QUANT_NAME) // PRECISIONSUFFIX
+        l1bItemName = AssembleL1BQtyName ( l1b_quant_name, hdfVersion, .false. )
+        call ReadL1BData ( L1BFile, l1bItemName, l1bDataSet, &
+         & NoMAFs, IERR, NeverFail=.true. )
+        if ( IERR == 0 ) then
+          call Dump( l1bDataSet, details )
+          call DeallocateL1BData ( l1bDataSet )
+        else
+          call output ( 'Error number  ' )
+          call output ( IERR )
+          call output ( ' while reading quantity named  ' )
+          call output ( trim(l1b_quant_name), advance='yes' )
+        end if
+      endif
+    enddo
+    call outputTable ( sep=' ', border='-' )
+
+    if ( specialDumpFile /= ' ' .and. Details > -2 ) &
+      & call revertOutput
+  end subroutine DumpL1BDatabase
 
   ! ---------------------------------------------  Announce_Error  -----
   subroutine Announce_Error ( Full_message, Use_toolkit, &
@@ -703,6 +684,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.111  2016/09/22 22:57:25  pwagner
+! Added DumpL1BDatabase; improved appearance of Dump_open_init
+!
 ! Revision 2.110  2016/08/09 21:21:13  pwagner
 ! Survives encounter with non-satellite data
 !
