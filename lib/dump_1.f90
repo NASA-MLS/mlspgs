@@ -143,7 +143,8 @@ contains
   end subroutine Dump_Hash_Log
 
   ! -----------------------------------------------  Dump_Hash_Str  -----
-  subroutine Dump_Hash_Str ( CountEmpty, Keys, Values, Name, Separator, Options )
+  subroutine Dump_Hash_Str ( CountEmpty, Keys, Values, &
+    & Name, Separator, Options, ExtraValues )
     ! Dumps a hash composed of two string lists: keys and values
     logical, intent(in)          :: CountEmpty
     character(len=*), intent(in) :: Keys
@@ -151,6 +152,7 @@ contains
     character(len=*), intent(in), optional :: Name
     character(len=*), intent(in), optional :: Separator
     character(len=*), intent(in), optional :: Options
+    character(len=*), intent(in), optional :: ExtraValues
 
     character( len=max(len(values), len(keys)) ) :: element
     integer :: J
@@ -172,6 +174,11 @@ contains
         call output( ' = ', advance='no' )
         call GetStringElement( values, element, j, countEmpty, separator)
         call output ( trim(element), advance='no' )
+        if ( present(ExtraValues) ) then
+          call output ( ' : ', advance='no' )
+          call GetStringElement( ExtraValues, element, j, countEmpty, separator)
+          call output ( trim(element), advance='no' )
+        endif
         call finishLine
       end do ! j
     end if
@@ -233,7 +240,7 @@ contains
 
   ! --------------------------------------------------  DumpLists  -----
   ! Dump a 2d array as a set of lists
-  ! Show names and related (numerical) values
+  ! Show name (if any)
   subroutine DumpLists_Chars ( Array, Name, Width, Sep, Delims )
     ! Args
     character(len=*), dimension(:,:), intent(in)   :: Array
@@ -659,6 +666,9 @@ contains
 end module Dump_1
 
 ! $Log$
+! Revision 2.3  2016/09/22 22:52:42  pwagner
+! Dump_Hash_Str can now take optional ExtraValues arg
+!
 ! Revision 2.2  2016/07/28 03:19:52  vsnyder
 ! Move comments here from dump_0
 !
