@@ -63,12 +63,13 @@ module Geolocation_0
     real(rg) :: Lat     ! Degrees
   contains
     procedure :: ECR => H_t_To_ECR_Surf ! at the Earth's surface
-    procedure :: Geoc => H_t_to_H_Geoc  ! Simple type conversion only
-    procedure :: Geod => H_t_to_H_Geod  ! Simple type conversion only
     procedure, pass(geo) :: From_ECR => Surf_H_t_From_ECR ! useful because the
                                         ! desired dynamic result type (H_t) of
                                         ! ECR_to_Geoc cannot be used for
                                         ! dispatch
+    procedure :: Geoc => H_t_to_H_Geoc  ! Simple type conversion only
+    procedure :: Geod => H_t_to_H_Geod  ! Simple type conversion only
+    procedure :: H_t_fields             ! A "self" component
   end type H_t
 
   type, extends(h_t) :: H_Geoc
@@ -543,6 +544,11 @@ contains
     geoc%v = sqrt ( rho**2 + z**2 ) ! geocentric height
   end function GeodV_To_GeocV
 
+  pure elemental type(h_t) function H_t_fields ( Geo )
+    class(h_t), intent(in) :: Geo
+    h_t_fields = h_t(lon=geo%lon, lat=geo%lat)
+  end function H_t_fields
+
   pure elemental type(ECR_t) function H_t_To_ECR_Surf ( Geo, Norm ) result ( ECR )
     ! Convert geocentric coordinates at the Earth surface to ECR coordinates
     class(h_t), intent(in) :: Geo
@@ -666,6 +672,11 @@ contains
 end module Geolocation_0
 
 ! $Log$
+! Revision 2.11  2016/09/22 20:32:11  vsnyder
+! Add H_t_fields to type H_t.  This is a subterfuge to access essentially
+! the entire object from a polymorphic version of it, so we don't need to
+! write defined I/O subroutines.  Ugh.
+!
 ! Revision 2.10  2016/04/16 02:02:48  vsnyder
 ! Add Negate, type to represent position on a line
 !
