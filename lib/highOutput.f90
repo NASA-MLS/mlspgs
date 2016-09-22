@@ -260,61 +260,61 @@ contains
   ! later to be printed as a neatly-formatted table to stdout
   ! By means of optional args you can create a line like
   ! *   name                   value   *
-  subroutine addRow_character ( name, value )
+  subroutine addRow_character ( name, value, format )
     character(len=*), intent(in)          :: name
     character(len=*), intent(in)          :: value
     include 'addRow.f9h'
   end subroutine addRow_character
 
-  subroutine addRow_complex ( name, value )
+  subroutine addRow_complex ( name, value, format )
     character(len=*), intent(in)          :: name
     complex, intent(in)                   :: value
     include 'addRow.f9h'
   end subroutine addRow_complex
 
-  subroutine addRow_double ( name, value )
+  subroutine addRow_double ( name, value, format )
     character(len=*), intent(in)          :: name
     double precision, intent(in)                   :: value
     include 'addRow.f9h'
   end subroutine addRow_double
 
-  subroutine addRow_dbl_array ( name, value )
+  subroutine addRow_dbl_array ( name, value, format )
     character(len=*), intent(in)          :: name
     double precision, dimension(:), intent(in)     :: value
     include 'addRow.f9h'
   end subroutine addRow_dbl_array
 
-  subroutine addRow_int_array ( name, value )
+  subroutine addRow_int_array ( name, value, format )
     character(len=*), intent(in)          :: name
     integer, dimension(:), intent(in)     :: value
     include 'addRow.f9h'
   end subroutine addRow_int_array
 
-  subroutine addRow_integer ( name, value )
+  subroutine addRow_integer ( name, value, format )
     character(len=*), intent(in)          :: name
     integer, intent(in)                   :: value
     include 'addRow.f9h'
   end subroutine addRow_integer
 
-  subroutine addRow_log_array ( name, value )
+  subroutine addRow_log_array ( name, value, format )
     character(len=*), intent(in)          :: name
     logical, dimension(:), intent(in)     :: value
     include 'addRow.f9h'
   end subroutine addRow_log_array
 
-  subroutine addRow_logical ( name, value )
+  subroutine addRow_logical ( name, value, format )
     character(len=*), intent(in)          :: name
     logical, intent(in)                   :: value
     include 'addRow.f9h'
   end subroutine addRow_logical
 
-  subroutine addRow_single ( name, value )
+  subroutine addRow_single ( name, value, format )
     character(len=*), intent(in)          :: name
     real, intent(in)                      :: value
     include 'addRow.f9h'
   end subroutine addRow_single
 
-  subroutine addRow_sngl_array ( name, value )
+  subroutine addRow_sngl_array ( name, value, format )
     character(len=*), intent(in)          :: name
     real, dimension(:), intent(in)     :: value
     include 'addRow.f9h'
@@ -1672,6 +1672,8 @@ contains
   subroutine startTable 
     ! Internal variables
     integer :: status
+    ! Executable
+    status = 0
     if ( associated( cellDatabase ) ) &
       & deallocate( cellDatabase, stat=status )
     if ( status /= 0 ) call myMessage ( MLSMSG_Warning, 'startTable', &
@@ -2202,6 +2204,9 @@ contains
 end module HIGHOUTPUT
 
 ! $Log$
+! Revision 2.12  2016/09/22 22:21:16  pwagner
+! May specify format in call to addRow
+!
 ! Revision 2.11  2016/03/25 00:37:06  pwagner
 ! Added OUTPUTANYNAMEDVALUE
 !
