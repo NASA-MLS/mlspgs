@@ -65,7 +65,7 @@ module ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
 ! ReadGloriaFile       read binary-formatted file designed by G. Manney
 !
 ! The supported descriptions are
-! geos5_7         Geos5.7.2  gmao files in netcdf4/hdf5 format
+! geos5_7         Geos5.7 +  gmao files in netcdf4/hdf5 format
 ! geos5           Geos5x.x   gmao files in hdfeos2/hdf4 format
 ! dao or gmao     Geos4x.x   gmao files in hdfeos2/hdf4 format
 ! merra           Geos5x.x   gmao reanalysis files in hdfeos2/hdf4 format
@@ -207,7 +207,7 @@ contains
     call getStringElement(fieldNames, fieldName, 1, COUNTEMPTY)
     ! According to the kinds of gridded data files we can read
     select case ( trim(LIT_DESCRIPTION) )
-    case ('geos5_7')
+    case ('geos5_7') ! Actually 5.7 or later; netCDF4 format
       ! Check that hdf version is OK
       if ( mls_hdf_version( GriddedFile%Name ) /= HDFVERSION_5 ) then
         the_g_data%empty = .true.
@@ -224,7 +224,7 @@ contains
       else if ( the_g_data%empty .or. .not. associated(the_g_data%field) ) then
           call output( 'File appears not to be ' // trim(LIT_DESCRIPTION), advance='yes' )
       else
-        call output( '(Returned from read_geos5_7)', advance='yes' )
+        call output( '(Returned from read_geos5_7 or later)', advance='yes' )
         call output( 'Quantity Name   ' // trim(the_g_data%QuantityName), advance='yes' )
         call output( 'Description     ' // trim(the_g_data%description), advance='yes' )
         call output( 'Units           ' // trim(the_g_data%units), advance='yes' )
@@ -2690,6 +2690,9 @@ contains
 end module ncep_dao
 
 ! $Log$
+! Revision 2.83  2016/09/22 22:22:47  pwagner
+! Change message to acknowledge version may be later than geos5_7
+!
 ! Revision 2.82  2016/07/28 01:42:27  vsnyder
 ! Refactoring dump and diff
 !
