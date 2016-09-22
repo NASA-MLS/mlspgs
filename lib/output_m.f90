@@ -473,7 +473,7 @@ contains
   ! Output CHARS to PRUNIT.
   subroutine OUTPUT_CHAR ( CHARS, &
     & ADVANCE, FROM_WHERE, DONT_LOG, LOG_CHARS, INSTEADOFBLANK, DONT_STAMP, &
-    & NEWLINEVAL, DONT_ASCIIFY )
+    & NEWLINEVAL, DONT_ASCIIFY, format )
     ! We will 1st check to see whether any internal characters are
     ! codes for newlines
     ! If any are, we will call newLine in place of printing
@@ -489,6 +489,7 @@ contains
     logical, intent(in), optional          :: DONT_STAMP ! Prevent double-stamping
     integer, intent(in), optional :: NEWLINEVAL ! What char val to treat as <cr>
     logical, intent(in), optional          :: DONT_ASCIIFY ! output binary
+    character(len=*), intent(in), optional :: format ! consistent with generic
     ! Internal variables
     integer :: I ! loop inductor
     integer :: myNewLineVal
@@ -796,13 +797,14 @@ contains
 
   ! ------------------------------------------  OUTPUT_CHAR_ARRAY  -----
   subroutine OUTPUT_CHAR_ARRAY ( CHARS, ADVANCE_AFTER_EACH, ADVANCE, &
-    & INSTEADOFBLANK, NEWLINEVAL )
+    & INSTEADOFBLANK, NEWLINEVAL, format )
   ! Output CHARS to PRUNIT.
     character(len=*), intent(in) :: CHARS(:)
     character(len=*), intent(in), optional :: ADVANCE_AFTER_EACH
     character(len=*), intent(in), optional :: ADVANCE
     character(len=*), intent(in), optional :: INSTEADOFBLANK ! What to output
     integer, intent(in), optional :: NEWLINEVAL ! What char val to treat as <cr>
+    character(len=*), intent(in), optional :: format ! consistent with generic
     ! Internal variables
     integer :: I ! loop inductor
     ! Executable
@@ -997,12 +999,13 @@ contains
   end subroutine OUTPUT_INTEGER_ARRAY
 
   ! ---------------------------------------------  OUTPUT_LOGICAL  -----
-  subroutine OUTPUT_LOGICAL ( LOG, ADVANCE, BEFORE, DONT_STAMP )
+  subroutine OUTPUT_LOGICAL ( LOG, ADVANCE, BEFORE, DONT_STAMP, format )
   ! Output LOG to PRUNIT using at most PLACES (default zero) places
     logical, intent(in) :: LOG
     character(len=*), intent(in), optional :: ADVANCE
     character(len=*), intent(in), optional :: BEFORE
     logical, optional, intent(in) :: DONT_STAMP
+    character(len=*), intent(in), optional :: format ! consistent with generic
     character(len=2) :: LINE
     if ( log ) then
       line=' T'
@@ -1014,13 +1017,14 @@ contains
   end subroutine OUTPUT_LOGICAL
 
   ! ---------------------------------------------  OUTPUT_LOGICAL  -----
-  subroutine OUTPUT_LOGICAL_ARRAY ( logs, ADVANCE, BEFORE, DONT_STAMP, ONLYIF )
+  subroutine OUTPUT_LOGICAL_ARRAY ( logs, ADVANCE, BEFORE, DONT_STAMP, ONLYIF, format )
   ! Output LOG to PRUNIT using at most PLACES (default zero) places
     logical, dimension(:), intent(in) :: logs
     character(len=*), intent(in), optional :: ADVANCE
     character(len=*), intent(in), optional :: BEFORE
     logical, optional, intent(in) :: DONT_STAMP
     logical, optional, intent(in) :: ONLYIF ! Print only if true (false)
+    character(len=*), intent(in), optional :: format ! consistent with generic
     ! Internal variables
     character(len=1), dimension(size(logs)) :: clogs
     character(len=size(logs)) :: logChars
@@ -1101,7 +1105,7 @@ contains
   end subroutine OUTPUT_SINGLE_ARRAY
 
   ! ----------------------------------------------  OUTPUT_STRING  -----
-  subroutine OUTPUT_STRING ( STRING, LENSTRING, ADVANCE, FROM_WHERE, DONT_LOG, LOG_CHARS )
+  subroutine OUTPUT_STRING ( STRING, LENSTRING, ADVANCE, FROM_WHERE, DONT_LOG, LOG_CHARS, format )
   ! Output STRING to PRUNIT.
     character(len=*), intent(in) :: STRING
     integer, intent(in) :: LENSTRING
@@ -1109,6 +1113,7 @@ contains
     character(len=*), intent(in), optional :: FROM_WHERE
     logical, intent(in), optional          :: DONT_LOG ! Prevent double-logging
     character(len=*), intent(in), optional :: LOG_CHARS
+    character(len=*), intent(in), optional :: format ! consistent with generic
     integer :: n_chars
     !
     n_chars = min(len(string), lenstring)
@@ -1523,6 +1528,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.126  2016/09/22 22:51:48  pwagner
+! optional format arg now in generic output api
+!
 ! Revision 2.125  2015/09/24 18:52:28  pwagner
 ! Expanded special Fill patterns; allow user to set own special pattern '0'
 !
