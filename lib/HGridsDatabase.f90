@@ -13,8 +13,7 @@ module HGridsDatabase                   ! Horizontal grid information
 
   use Intrinsic, only: L_GeodAngle
   use MLSKinds, only: R8
-  use Generate_QTM_m, only: QTM_Tree_t, ZOT_t
-  use Geolocation_0, only: GeocLat_t, H_t
+  use Generate_QTM_m, only: QTM_Tree_t
 
   implicit none
   private
@@ -61,7 +60,6 @@ module HGridsDatabase                   ! Horizontal grid information
     type(QTM_tree_t) :: QTM_Tree ! for finding things and representing the
                                  ! geolocations of vertices of a QTM that are
                                  ! within or adjacent to a specified polygon
-    type(geocLat_t), allocatable :: QTM_Lats(:) ! Unique latitudes in the QTM.
   end type HGrid_T
 
   ! To construct an array of pointers to HGrid_T.  The reason for this
@@ -73,8 +71,8 @@ module HGridsDatabase                   ! Horizontal grid information
     type(hGrid_t), pointer :: The_HGrid => NULL()
   end type HGrids_T
 
-  ! Put here all the 
-  ! l1boa quantities that we don't wish to read again and again and again ..
+  ! Put here all the  l1boa quantities that we don't
+  ! wish to read again and again and again ..
   type HGridGeolocations_T
     double precision, dimension(:,:), pointer :: MAFStartTimeTAI => null()
     double precision, dimension(:,:), pointer :: Orbincl         => null()
@@ -779,6 +777,9 @@ contains ! =========== Public procedures ===================================
 end module HGridsDatabase
 
 ! $Log$
+! Revision 2.35  2016/09/23 01:34:56  vsnyder
+! Remove QTM_Lats; moved to QTM_Tree_t in Generate_QTM_m
+!
 ! Revision 2.34  2016/09/13 20:09:13  vsnyder
 ! Get Dump_QTM from its new home in QTM_Output
 !
