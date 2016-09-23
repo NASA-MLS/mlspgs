@@ -218,7 +218,7 @@ fi
 masterIdent="none"
 runinbackground="no"
 otheropts="-g --uid $pid"
-switches="--stdout out -S'slv,opt1,log,pro,time,glob1'"
+switches="--stdout out -S'slv,opt,log,pro,time,glob'"
 OPTSFILE="${JOBDIR}/slave.opts"
 # otheropts="-g -S'slv,opt1,log,pro,time,glob1'"
 # otheropts="$OTHEROPTS"
@@ -569,6 +569,9 @@ do_the_call $all_my_opts
 exit 0
 
 # $Log$
+# Revision 1.37  2016/06/04 00:25:12  pwagner
+# Tried to prevent another cause of slave deaths
+#
 # Revision 1.36  2016/05/12 17:01:28  pwagner
 # Obey CAPTURE_MT by capturing time, mmory footpint to stderr
 #

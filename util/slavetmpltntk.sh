@@ -213,7 +213,7 @@ fi
 masterIdent="none"
 runinbackground="no"
 otheropts="-g"
-switches="-S'slv,opt1,log,pro,time,glob1'"
+switches="-S'slv,opt,log,pro,time,glob'"
 OPTSFILE="${JOBDIR}/slave.opts"
 # otheropts="-g -S'slv,opt1,log,pro,time,glob1'"
 # otheropts="$OTHEROPTS"
@@ -542,6 +542,9 @@ do_the_call $all_my_opts
 exit 0
 
 # $Log$
+# Revision 1.15  2016/05/12 17:02:05  pwagner
+# Obey CAPTURE_MT by capturing time, mmory footpint to stderr
+#
 # Revision 1.14  2015/09/25 00:12:52  pwagner
 # Added --maxChunkSize option
 #
