@@ -600,13 +600,12 @@ contains ! =========== Public procedures ===================================
 
   ! ------------------------------------------------  Dump_a_HGrid  -----
   subroutine Dump_a_HGrid ( aHGRID, Details, ZOT )
-    use dates_module, only: tai93s2hid
-    use Dump_Geolocation_m, only: Dump_H_t, Dump_ZOT
+    use Dates_Module, only: tai93s2hid
     use QTM_Output, only: Dump_QTM_Tree
-    use highOutput, only: outputNamedValue
-    use Intrinsic, only: lit_indices, L_QTM
-    use output_m, only: blanks, newLine, output
-    use string_table, only: display_string, isStringInTable
+    use HighOutput, only: OutputNamedValue
+    use Intrinsic, only: Lit_indices, L_QTM
+    use Output_m, only: Blanks, NewLine, Output
+    use String_Table, only: Display_String, IsStringInTable
 
     type(hGrid_T), intent(in) :: aHGRID
     logical, intent(in), optional :: ZOT      ! Dump QTM coordinates in ZOT
@@ -777,6 +776,9 @@ contains ! =========== Public procedures ===================================
 end module HGridsDatabase
 
 ! $Log$
+! Revision 2.36  2016/09/23 02:41:47  vsnyder
+! Remove USE for unused use names
+!
 ! Revision 2.35  2016/09/23 01:34:56  vsnyder
 ! Remove QTM_Lats; moved to QTM_Tree_t in Generate_QTM_m
 !
