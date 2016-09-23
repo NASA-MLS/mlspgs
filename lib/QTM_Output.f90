@@ -39,7 +39,8 @@ contains
     ! QTM(which)%Depth-1 dots. Then dump its sons.
     use Generate_QTM_m, only: QTM_node_t
     use Output_m, only: Output
-    use QTM_m, only: Dump_QID, RG
+    use QTM_dumps, only: Dump_QID
+    use QTM_m, only: RG
 
     type(QTM_node_t), intent(in) :: QTM(:)
     integer, intent(in) :: Which
@@ -215,8 +216,8 @@ contains
     write ( unit ) size(tree%polygon_geo), size(tree%polygon_zot), &
       & tree%in_geo, tree%in, & ! Point defined to be in,  Geo, Zot
       & tree%level, tree%n, tree%n_facets, tree%n_in
-    write ( unit ) tree%polygon_geo, tree%polygon_zot, & ! Geo, Zot
-      & tree%geo_in, tree%zot_in, & ! Vertices in polygon  Geo, Zot
+    write ( unit ) tree%polygon_geo%h_t_fields(), tree%polygon_zot, & ! Geo, Zot
+      & tree%geo_in%h_t_fields(), tree%zot_in, & ! Vertices in polygon Geo, Zot
       & tree%q%depth, &
       & ( tree%q(i)%geo, i = 1, tree%n ), & ! facet vertices Geo
       & ( tree%q(i)%z,   i = 1, tree%n )    ! facet vertices ZOT
@@ -236,6 +237,9 @@ contains
 end module QTM_Output
 
 ! $Log$
+! Revision 2.5  2016/09/23 01:52:59  vsnyder
+! Get nonpolymorphic geolocations
+!
 ! Revision 2.4  2016/09/15 19:20:43  vsnyder
 ! Output both Geo and ZOT sizes for the polygon (might be different)
 !
