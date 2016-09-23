@@ -600,26 +600,24 @@ contains ! =========== Public procedures ===================================
 
   ! ------------------------------------------------  Dump_a_HGrid  -----
   subroutine Dump_a_HGrid ( aHGRID, Details, ZOT )
-    use Dates_Module, only: tai93s2hid
-    use QTM_Output, only: Dump_QTM_Tree
+    use Dates_Module, only: TAI93s2hid
     use HighOutput, only: OutputNamedValue
-    use Intrinsic, only: Lit_indices, L_QTM
+    use Intrinsic, only: Lit_Indices, L_QTM
+    use Optional_m, only: Default
     use Output_m, only: Blanks, NewLine, Output
+    use QTM_Output, only: Dump_QTM_Tree
     use String_Table, only: Display_String, IsStringInTable
 
     type(hGrid_T), intent(in) :: aHGRID
     logical, intent(in), optional :: ZOT      ! Dump QTM coordinates in ZOT
+                                              ! Default false
     integer, intent(in), optional :: Details  ! < 1 => Don't dump QTM search tree
                                               ! > 1 => Dump sons of QTM vertices
                                               ! Default zero
 
     integer :: IERR
     integer :: J
-    integer :: MyDetails
-    logical :: MyZOT
     ! Executable
-    myDetails = 0
-    if ( present(details) ) myDetails = details
 
     IERR = 0
     call output ( 'Name = ', advance='no' )
@@ -643,11 +641,11 @@ contains ! =========== Public procedures ===================================
       call outputNamedValue ( 'type', 0 )
     else
       call display_string ( lit_indices(aHgrid%type), before=' type = ' )
-    endif
+    end if
     if ( aHGrid%type == l_QTM ) &
       & call output ( aHGrid%QTM_tree%level, before=' tree with level = ' )
     call newLine
-    if ( aHgrid%noProfs > 0 .and. myDetails > 0 ) then
+    if ( aHgrid%noProfs > 0 .and. default(details,0) > 0 ) then
       call output ( ' prof       phi       geodLat           lon', advance='no' )
       call output ( '      hours in day     solarTime   solarZenith', advance='no' )
       call output ( '      losAngle  nearest maf', advance='yes' )
@@ -672,11 +670,9 @@ contains ! =========== Public procedures ===================================
         call output ( aHgrid%maf(j), places=6, advance='yes' )
       end do
     end if
-    if ( aHGrid%type == l_QTM ) then
-      myZOT = .false.
-      if ( present(ZOT) ) myZOT = ZOT
-      if ( myDetails > 0 ) call dump_QTM_tree ( aHGrid%QTM_tree, &
-        & latLon=.not. myZOT, details=details )
+    if ( aHGrid%type == l_QTM .and. default(details,0) > 0 ) then
+      call dump_QTM_tree ( aHGrid%QTM_tree, latLon=.not. default(zot,.false.), &
+        & details=details )
     end if
   end subroutine Dump_a_HGrid
 
@@ -776,6 +772,9 @@ contains ! =========== Public procedures ===================================
 end module HGridsDatabase
 
 ! $Log$
+! Revision 2.37  2016/09/23 03:08:37  vsnyder
+! Get optional argument values using Optional_m
+!
 ! Revision 2.36  2016/09/23 02:41:47  vsnyder
 ! Remove USE for unused use names
 !
