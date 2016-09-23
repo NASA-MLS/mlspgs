@@ -13,6 +13,8 @@ module GLOBAL_SETTINGS
 
   use MLSCommon, only: fileNameLen, MLSFile_t, nameLen, tai93_range_t
   use highOutput, only: beVerbose, outputCalendar, outputNamedValue
+  use Output_m, only: blanks, newLine, output, &
+    & RevertOutput, switchOutput
 
   implicit none
 
@@ -231,7 +233,7 @@ contains
       & s_l1boa, s_l1brad, s_l2parsf, s_makepfa, s_pfadata, s_readpfa, &
       & s_tgrid, s_time, s_vgrid, s_writepfa
     use Intrinsic, only: l_hdf, l_swath, spec_indices
-    use L1BData, only: L1BData_t, nameLen, precisionSuffix, &
+    use L1BData, only: L1BData_t, nameLen, &
       & assembleL1BQtyName, deallocateL1BData, Dump, findMaxMaf, &
       & L1BRadsetup, L1BOASetup, readL1BAttribute, readL1BData 
     use L2GPData, only: L2GPData_t
@@ -257,8 +259,6 @@ contains
     use MoreTree, only: get_field_id, get_label_and_spec, get_spec_id, &
       & StartErrorMessage
     use Next_tree_node_m, only: next_tree_node, next_tree_node_state
-    use Output_m, only: blanks, output, &
-      & RevertOutput, switchOutput
     use PFAData_m, only: get_PFAData_from_l2cf, flush_PFAData, make_PFAData, &
       & Read_PFAData, write_PFAData
     use PFADatabase_m, only: process_pfa_file
@@ -337,6 +337,7 @@ contains
     real :: T1, T2                 ! For S_Time
     real(r8) :: Start_time_from_1stMAF, End_time_from_1stMAF
     logical :: verbose
+    logical :: verboser
     logical :: wasAlreadyOpen
 
     integer, parameter :: Param_restricted = 1 ! Parameter not allowed
@@ -374,6 +375,7 @@ contains
       DetailReduction = 2
     end if
     verbose = BeVerbose( 'glo', -1 )
+    verboser = BeVerbose( 'glo', 0 )
     
     ! Start Digital Elevation Model
     if ( Toolkit ) then
@@ -407,7 +409,7 @@ contains
           & any( param_id == &
           & (/ p_output_version_string, p_cycle, p_starttime, p_endtime, &
           & p_leapsecfile /) ) ) then
-          if ( verbose ) call announce_error(0, &
+          if ( verboser ) call announce_error(0, &
             & '*** l2cf parameter global setting ignored ***', &
             & just_a_warning = .true.)
           cycle
@@ -484,7 +486,7 @@ contains
         if ( TOOLKIT .and. &
           & any( spec_id == &
           & (/ s_l1boa, s_l1brad, s_l2parsf /) ) ) then
-          if ( verbose ) call announce_error(0, &
+          if ( verboser ) call announce_error(0, &
             & '*** l2cf spec global setting ignored ***', &
             & just_a_warning = .true.)
           cycle
@@ -665,13 +667,13 @@ contains
       ! If not, overwrite them
       call MLS_OpenFile ( L1BFile )
       call GetAllHDF5GroupNames ( L1BFile%FileID%f_id, moduleNames )
-      if ( verbose ) call outputNamedValue ( 'group names', trim(moduleNames) )
+      if ( verboser ) call outputNamedValue ( 'group names', trim(moduleNames) )
       call mls_closeFile ( L1BFile )
       do i=1, size(modules)
         call GetModuleName ( i, itsName )
-        if ( verbose ) call outputNamedValue ( 'module name', trim(itsname) )
+        if ( verboser ) call outputNamedValue ( 'module name', trim(itsname) )
         j = StringElementNum( lowercase(moduleNames), lowercase(itsName), countEmpty )
-        if ( verbose ) call outputNamedValue ( 'element num', j )
+        if ( verboser ) call outputNamedValue ( 'element num', j )
         if ( j > 0 ) then
           if ( itsName /= &
             & StringElement( moduleNames, j, countEmpty ) ) &
@@ -1077,7 +1079,9 @@ contains
     subroutine dump_global_settings ( processingRange, &
       & filedatabase, DirectDatabase, ForwardModelConfigDatabase, &
       & LeapSecFileName, details )
-
+    use Dump_1, only: Dump
+    use HighOutput, only: addRow, outputTable, startTable
+    use Open_init, only: DumpL1BDatabase
       ! Dump info obtained during OpenAndInitialize and global_settings:
       ! L1B databse
       ! L1OA file
@@ -1101,18 +1105,10 @@ contains
       integer, intent(in) :: details
 
       ! Local
-      type (L1BData_T) :: l1bData   ! L1B dataset
-      integer ::                              i, NoMAFs, IERR
+      integer ::                              i
       character (len=*), parameter ::         TIME_FORMAT = '(1pD18.12)'
-      ! This next is in case we're to dump at greatest possible detail
-      character (len=namelen), parameter ::  BASE_QUANT_NAME = &
-                                      &       'R2:190.B3F:N2O.S2.FB25-3'
-  !                                    &       'R1A:118.B1F:PT.S0.FB25-1'
-      character (len=LEN(BASE_QUANT_NAME)) :: l1b_quant_name
-      logical, parameter ::                   DUMPPRECISIONTOO = .true.
-      integer ::  hdfVersion
-      character(len=namelen) :: l1bItemName
-      type(MLSFile_T), pointer :: L1BFile
+      integer                              ::  hdfVersion
+      type(MLSFile_T), pointer             :: L1BFile
 
       ! Begin
       L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
@@ -1126,96 +1122,32 @@ contains
       call output ( ' ', advance='yes' )
 
       call output ( 'L1B database:', advance='yes' )
-
-        do i = 1, size(filedatabase)
-         L1BFile => filedatabase(i)
-         if ( L1BFile%content == 'l1brad' ) then
-           call output ( 'fileid:   ' )
-           call output ( L1BFile%FileID%f_id, advance='yes' )
-           call output ( 'name:   ' )
-           call output ( TRIM(L1BFile%name), advance='yes' )
-           if ( details > -2 ) then
-             l1b_quant_name = BASE_QUANT_NAME
-             l1bItemName = AssembleL1BQtyName ( l1b_quant_name, hdfVersion, .false. )
-             call ReadL1BData ( L1BFile, l1bItemName, L1bData, &
-              & NoMAFs, IERR, NeverFail=.true. )
-             if ( IERR == 0 ) then
-               call Dump(l1bData, details )
-               call DeallocateL1BData ( l1bData )
-             else
-               call output ( 'Error number  ' )
-               call output ( IERR )
-               call output ( ' while reading quantity named  ' )
-               call output ( trim(l1b_quant_name), advance='yes' )
-             end if
-           end if
-           if ( details > -2 .and. DUMPPRECISIONTOO ) then
-             l1b_quant_name = trim(BASE_QUANT_NAME) // PRECISIONSUFFIX
-             l1bItemName = AssembleL1BQtyName ( l1b_quant_name, hdfVersion, .false. )
-             call ReadL1BData ( L1BFile, l1bItemName, L1bData, &
-              & NoMAFs, IERR, NeverFail=.true. )
-             if ( IERR == 0 ) then
-               call Dump(l1bData, details )
-               call DeallocateL1BData ( l1bData )
-             else
-               call output ( 'Error number  ' )
-               call output ( IERR )
-               call output ( ' while reading quantity named  ' )
-               call output ( trim(l1b_quant_name), advance='yes' )
-             end if
-           end if
-         elseif ( L1BFile%content == 'l1boa' ) then
-           call output ( ' ', advance='yes' )
-           call output ( 'L1OA file:', advance='yes' )
-
-           call output ( 'fileid:   ' )
-           call output ( L1BFile%FileID%f_id, advance='yes' )
-           call output ( 'name:   ' )
-           call output ( TRIM(L1BFile%Name), advance='yes' )
-         end if
-        end do
-
-
-
+      call DumpL1BDatabase ( filedatabase, Details )
       call dump(DirectDatabase, Details)
-      call output ( ' ', advance='yes' )
-      call output ( 'Start Time:   ' )
-      call output ( l2pcf%startutc, advance='yes' )
 
-      call output ( 'End Time:     ' )
-      call output ( l2pcf%endutc, advance='yes' )
+      call startTable
+      call addRow ( 'Start Time', l2pcf%startutc )
+      call addRow ( 'End Time', l2pcf%endutc )
 
-      call output ( 'Start Time (tai):   ' )
-      call output ( processingrange%starttime, format=TIME_FORMAT, advance='yes' )
-
-      call output ( 'End Time (tai):     ' )
-      call output ( processingrange%endtime, format=TIME_FORMAT, advance='yes' )
-
-      call output ( 'Processing Range:     ' )
-      call output ( processingrange%endtime-processingrange%starttime, advance='yes' )
-
+      call addRow ( 'Start Time (tai)', processingrange%starttime, format=time_format )
+      call addRow ( 'End Time (tai)', processingrange%endtime, format=time_format )
+      call addRow ( 'Processing Range', processingrange%endtime-processingrange%starttime )
       if ( LeapSecFileName /= '' ) then
-        call output ( 'Leap Seconds File:   ' )
-        call output ( trim(LeapSecFileName), advance='yes' )
-      end if
+        call addRow ( 'Leap Seconds File', LeapSecFileName )
+      endif
+      call addRow ( 'PGE version', l2pcf%PGEVersion )
+      call addRow ( 'cycle', l2pcf%cycle )
+      call addRow ( 'RunID', l2pcf%RunID )
+      call addRow ( 'Log file name', l2pcf%logGranID )
+      call outputTable ( sep=' ', border='-' )
 
-      call output ( 'PGE version:   ' )
-      call output ( l2pcf%PGEVersion, advance='yes' )
-
-      ! call output ( 'input version:   ' )
-      ! call output ( l2pcf%InputVersion, advance='yes' )
-
-      call output ( 'cycle:   ' )
-      call output ( l2pcf%cycle, advance='yes' )
-
-      call output ( 'Log file name:   ' )
-      call output ( TRIM(l2pcf%logGranID), advance='yes' )
-
-      call output ( 'l2gp species name keys:   ' )
-      call output ( TRIM(l2pcf%spec_keys), advance='yes' )
-
-      call output ( 'corresponding mcf names:   ' )
-      call output ( TRIM(l2pcf%spec_mcfnames), advance='yes' )
+      ! Dump special hashes
+      call NewLine
+      call Dump ( countEmpty=.true., &
+        & keys=l2pcf%spec_keys, values=l2pcf%spec_mcfnames, &
+        & name='l2gp species, mcf : doi', separator=',', &
+        & ExtraValues= l2pcf%spec_doinames)
+      call blanks ( 80, FillChar='-', advance='yes' )
 
       call output ( 'Bright Objects:   ', advance='yes' )
       call output ( 'bit #             Cause   ', advance='yes' )
@@ -1400,6 +1332,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.168  2016/09/14 20:08:45  pwagner
+! heck if we set start, end times if no l1boa; also that they are reasonable
+!
 ! Revision 2.167  2016/08/09 21:47:42  pwagner
 ! Fix error in FindMaxMAF; print module names only if verbose
 !
