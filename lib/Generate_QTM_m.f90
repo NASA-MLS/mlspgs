@@ -19,7 +19,7 @@ module Generate_QTM_m
   ! definition of "inside" a polygon is ambiguous, so an additional point that
   ! is defined to be inside the polygon is required.
 
-  use Geolocation_0, only: Lon_t, H_t, RG
+  use Geolocation_0, only: Lat_t, Lon_t, H_t, RG
   use QTM_m, only: QK, ZOT_t
 
   implicit NONE
@@ -52,18 +52,21 @@ module Generate_QTM_m
                                ! or 180 / 2^level degrees latitude spacing. 
                                ! Not greater than QTM_Depth from QTM_m
     integer(qk) :: N           ! Number of used elements in Q
+    logical :: Geodetic = .true. ! "Latitudes are geodetic" or not
     type(ZOT_t) :: In = ZOT_t(-999,-999) ! A point defined to be inside the
                                ! polygon. This is needed because the concept of
                                ! "inside a polygon" is ambiguous on a sphere.
     type(h_t) :: In_Geo = h_t(lon_t(-999),-999) ! QTM_Tree_t%In as longitude
-                               ! and latitude, degrees
+                               ! and latitude, degrees, either geodetic or
+                               ! geocentric.
     logical :: In_or_Out       ! True iff PnPoly reports QTM_Tree_t%In is
                                ! inside the polygon, from the point of view of
                                ! the ZOT projection.  A point is considered to
                                ! be inside if PnPoly returns the same value.
     integer(qk) :: N_Facets = 0 ! Number of finest-refinement facets of the QTM
     integer(qk) :: N_In = 0    ! Number of vertices inside the polygon
-    type(h_t), allocatable :: Polygon_Geo(:)   ! (lon,lat) degrees
+    type(h_t), allocatable :: Polygon_Geo(:)   ! (lon,lat) degrees, either
+                               ! geodetic or geocentric.
     type(ZOT_t), allocatable :: Polygon_ZOT(:)
     logical, allocatable :: Ignore_Edge(:) ! Ignore edge (i,1+mod(i,n)) because
                                ! it joins two aliased points on a southern-
@@ -74,8 +77,12 @@ module Generate_QTM_m
     type(ZOT_t), allocatable :: ZOT_In(:)  ! ZOT coordinates of vertices of QTM
                                ! that are inside or adjacent to the polygon.
                                ! Indexed by Q(.)%ZOT_n(.).
-    type(h_t), allocatable :: Geo_In(:)    ! H_T coordinates corresponding to
-                               ! ZOT_In, (lon,lat) degrees.
+    class(h_t), allocatable :: Geo_In(:)   ! H_T coordinates corresponding to
+                               ! ZOT_In, (lon,lat) degrees, either geodetic or
+                               ! geocentric.
+    class(lat_t), allocatable :: QTM_Lats(:)   ! Unique latitudes within QTM.
+                               ! They're geocentric or geodetic, depending on
+                               ! the dynamic type of Geo_In.
   contains
     procedure :: Find_Facet_Geo
     procedure :: Find_Facet_QID
@@ -187,13 +194,16 @@ contains
     ! a coarse-refinement facet C is not also a vertex of a finest-refinement
     ! facet, QTM_Trees%Q(C)%ZOT_n(v) == 0.
 
+    use Geolocation_0, only: H_Geoc, H_Geod
     use PnPoly_m, only: PnPoly
     use QTM_m, only: Geo_to_ZOT, QTM_Decode, QTM_Depth, Stack_t, ZOT_t
 
-    type(QTM_Tree_t), intent(inout) :: QTM_Trees
+    type(QTM_Tree_t), intent(inout), target :: QTM_Trees
 
     integer :: H(2,hash_size()) ! Assume QK = kind(0) for now, until we have
                           ! a generic Hash module
+    type(h_t), pointer :: Geo(:) ! Nonpolymorphic handle for QTM_Trees%geo_in
+    integer :: I
     integer :: Hemisphere ! 2 = north, 3 = south
     integer :: L          ! min(QTM_Trees%Level,QTM_Depth)
     integer :: Octant     ! Octant being refined.
@@ -249,7 +259,7 @@ contains
     end do
 
     if ( QTM_Trees%n /= size(QTM_Trees%Q) ) then
-      ! Re-size QTM_Trees%Q to the number actually used
+      ! Reallocate QTM_Trees%Q to the number actually used
       allocate ( Q_Temp(QTM_Trees%n) )
       Q_temp(:) = QTM_Trees%Q(1:QTM_Trees%n)
       call move_alloc ( Q_temp, QTM_Trees%Q )
@@ -263,8 +273,17 @@ contains
     end if
 
     ! Compute (lon,lat) coordinates corresponding to ZOT coordinates
-    allocate ( QTM_Trees%geo_in(QTM_Trees%n_in) )
-    QTM_Trees%geo_in = QTM_Trees%ZOT_In%zot_to_geo()
+    if ( QTM_Trees%Geodetic ) then
+      allocate ( h_geod :: QTM_Trees%geo_in(1:QTM_Trees%n_in) )
+    else
+      allocate ( h_geoc :: QTM_Trees%geo_in(1:QTM_Trees%n_in) )
+    end if
+
+    geo => QTM_Trees%geo_in ! Get a nonpolymorphic handle
+    geo = QTM_Trees%ZOT_In%zot_to_geo()
+
+    ! Get the unique latitudes
+    call Get_QTM_Lats ( QTM_Trees%geo_in, QTM_Trees%QTM_Lats )
 
   contains
 
@@ -693,6 +712,10 @@ contains
 end module Generate_QTM_m
 
 ! $Log$
+! Revision 2.16  2016/09/23 01:56:16  vsnyder
+! Add Geodetic and QTM_Lats components.  Fill QTM_Lats.  Make geolocation
+! components polymorphic so they encode whether they're geodetic or not.
+!
 ! Revision 2.15  2016/09/15 22:49:42  vsnyder
 ! Resize QTM_Trees%Q only if it's the wrong size, add and revise a ton of
 ! comments.
