@@ -58,7 +58,7 @@ module Geolocation_0
     real(rg) :: D       ! Degrees
   end type Lon_t
 
-  type :: H_t           ! For horizontal (lat/lon) grids, geoc/geod unspecified
+  type :: H_t           ! For horizontal (lon/lat) grids, geoc/geod unspecified
     type(lon_t) :: Lon  ! Degrees
     real(rg) :: Lat     ! Degrees
   contains
@@ -69,7 +69,8 @@ module Geolocation_0
                                         ! dispatch
     procedure :: Geoc => H_t_to_H_Geoc  ! Simple type conversion only
     procedure :: Geod => H_t_to_H_Geod  ! Simple type conversion only
-    procedure :: H_t_fields             ! A "self" component
+    procedure :: H_t_fields             ! A nonpolymorphic "self" component
+                                        ! to avoid a defined output subroutine
   end type H_t
 
   type, extends(h_t) :: H_Geoc
@@ -115,6 +116,8 @@ module Geolocation_0
   ! real(rg) :: Lat     ! Degrees
     real(rg) :: V       ! Meters or zeta
   contains
+    procedure :: H_v_t_fields           ! A nonpolymorphic "self" component
+                                        ! to avoid a defined output subroutine
     procedure, pass(geo) :: Surf_From_ECR => Surf_H_v_t_From_ECR ! useful
                         ! because the desired dynamic result type (H_t) of
                         ! ECR_to_Geoc cannot be used for dispatch
@@ -544,10 +547,11 @@ contains
     geoc%v = sqrt ( rho**2 + z**2 ) ! geocentric height
   end function GeodV_To_GeocV
 
-  pure elemental type(h_t) function H_t_fields ( Geo )
+  ! Nonpolymorphic result; useful to avoid writing a defined output routine
+  pure elemental type(h_t) function H_t_Fields ( Geo )
     class(h_t), intent(in) :: Geo
     h_t_fields = h_t(lon=geo%lon, lat=geo%lat)
-  end function H_t_fields
+  end function H_t_Fields
 
   pure elemental type(ECR_t) function H_t_To_ECR_Surf ( Geo, Norm ) result ( ECR )
     ! Convert geocentric coordinates at the Earth surface to ECR coordinates
@@ -581,6 +585,12 @@ contains
     class(h_t), intent(in) :: Geo
     g = h_geod(geo%lon,geo%lat)
   end function H_t_to_H_Geod
+
+  ! Nonpolymorphic result; useful to avoid writing a defined output routine
+  pure elemental type(h_v_t) function H_v_t_Fields ( Geo )
+    class(h_v_t), intent(in) :: Geo
+    h_v_t_fields = h_v_t(lon=geo%lon, lat=geo%lat, v=geo%v)
+  end function H_v_t_Fields
 
   pure elemental type (GeocLat_t) function Lat_t_to_GeocLat_t ( Geo ) result ( G )
     class(lat_t), intent(in) :: Geo
@@ -672,6 +682,9 @@ contains
 end module Geolocation_0
 
 ! $Log$
+! Revision 2.12  2016/09/23 01:34:03  vsnyder
+! Add H_v_t_fields to H_v_t, for the same reason as adding H_t_fields
+!
 ! Revision 2.11  2016/09/22 20:32:11  vsnyder
 ! Add H_t_fields to type H_t.  This is a subterfuge to access essentially
 ! the entire object from a polymorphic version of it, so we don't need to
