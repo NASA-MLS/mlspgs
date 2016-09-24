@@ -71,6 +71,7 @@ module Geolocation_0
     procedure :: Geod => H_t_to_H_Geod  ! Simple type conversion only
     procedure :: H_t_fields             ! A nonpolymorphic "self" component
                                         ! to avoid a defined output subroutine
+    procedure :: Surf_ECR => H_t_To_ECR_Surf ! at the Earth's surface
   end type H_t
 
   type, extends(h_t) :: H_Geoc
@@ -84,12 +85,13 @@ module Geolocation_0
   !  type(lon_t) :: Lon ! Longitude, degrees
   !  real(rg) :: Lat    ! Geodetic latitude, degrees
   contains
-    procedure :: ECR => Geod_To_ECR_Surf
+    procedure :: ECR => H_Geod_To_ECR_Surf
     procedure :: Geoc => Geod_To_Geoc
     procedure, pass(geo) :: From_ECR => Surf_Geod_From_ECR ! useful because the
                                         ! desired dynamic result type (H_geod)
                                         ! of ECR_to_Geod cannot be used for
                                         ! dispatch
+    procedure, pass(geo) :: Surf_ECR => H_Geod_To_ECR_Surf
   end type H_Geod
 
   type :: V_t           ! For vertical grids of unspecified type
@@ -121,6 +123,7 @@ module Geolocation_0
     procedure, pass(geo) :: Surf_From_ECR => Surf_H_v_t_From_ECR ! useful
                         ! because the desired dynamic result type (H_t) of
                         ! ECR_to_Geoc cannot be used for dispatch
+    procedure, pass(geo) :: Surf_ECR => H_V_t_To_ECR_Surf ! At the Earth's surface
   end type H_V_t
 
   type, extends(h_v_t) :: H_Geoc_V_Geod
@@ -159,6 +162,7 @@ module Geolocation_0
     procedure, pass(geo) :: From_ECR => Geod_From_ECR ! useful because the
                         ! desired dynamic result type (H_v_geod) of ECR_to_Geod
                         ! cannot be used for dispatch
+    procedure, pass(geo) :: Surf_ECR => H_V_Geod_To_ECR_Surf ! ECR at the surface
     procedure, pass(geo) :: Surf_From_ECR => Surf_H_v_Geod_From_ECR ! useful
                         ! because the desired dynamic result type (H_geod) of
                         ! ECR_to_Geod cannot be used for dispatch
@@ -486,7 +490,7 @@ contains
     logical, intent(in), optional :: Norm
     real(rg) :: MyLon
     real(rg) :: Rho
-    call geod_to_geoc_support ( geo, ECR%xyz(3), rho )
+    call h_v_geod_to_geoc_support ( geo, ECR%xyz(3), rho )
     myLon = geo%lon%d * deg2rad
     ECR%xyz(1) = rho * cos(myLon)
     ECR%xyz(2) = rho * sin(myLon)
@@ -494,30 +498,6 @@ contains
       if ( norm ) ECR = ECR / norm2(ECR)
     end if
   end function Geod_To_ECR
-
-  pure elemental type(ECR_t) function Geod_To_ECR_Surf ( Geo, Norm ) result ( ECR )
-    ! Convert geodetic coordinates at the Earth surface to ECR coordinates
-    class(h_geod), intent(in) :: Geo
-    logical, intent(in), optional :: Norm
-    real(rg) :: CT   ! cos(lat)
-    real(rg) :: D    ! sqrt(a^2 ct^2 + b^2 st^2)
-    real(rg) :: Lat  ! geodetic latitude in radians
-    real(rg) :: Lon  ! longitude in radians
-    real(rg) :: Rho  ! a^2/d cos(lat)
-    real(rg) :: ST   ! sin(lat)
-    lat = geo%lat * deg2rad
-    ct = cos(lat)
-    st = sin(lat)
-    d = 1.0 / sqrt(aquad*ct*ct + bquad*st*st)
-    rho = aquad * d * ct
-    lon = geo%lon%d * deg2rad
-    ecr%xyz(1) = rho * cos(lon)
-    ecr%xyz(2) = rho * sin(lon)
-    ecr%xyz(3) = bquad * d * st
-    if ( present(norm) ) then
-      if ( norm ) ECR = ECR / norm2(ECR)
-    end if
-  end function Geod_To_ECR_Surf
 
   pure elemental type(h_geoc) function Geod_To_Geoc ( Geo ) result ( Geoc )
     class(h_geod), intent(in) :: Geo
@@ -541,11 +521,18 @@ contains
     class(h_v_geod), intent(in) :: Geo
     real(rg) :: Rho
     real(rg) :: Z    ! Would be Z coordinate of ECR
-    call geod_to_geoc_support ( geo, z, rho )
+    call h_v_geod_to_geoc_support ( geo, z, rho )
     geoc%lon = geo%lon
     geoc%lat = atan2 ( z, rho ) * rad2deg
     geoc%v = sqrt ( rho**2 + z**2 ) ! geocentric height
   end function GeodV_To_GeocV
+
+  pure elemental type(ECR_t) function H_Geod_To_ECR_Surf ( Geo, Norm ) result ( ECR )
+    ! Convert geodetic coordinates at the Earth surface to ECR coordinates
+    class(h_geod), intent(in) :: Geo
+    logical, intent(in), optional :: Norm
+    ECR = geod_to_ECR_surf ( geo%lon%d, geo%lat, norm )
+  end function H_Geod_To_ECR_Surf
 
   ! Nonpolymorphic result; useful to avoid writing a defined output routine
   pure elemental type(h_t) function H_t_Fields ( Geo )
@@ -557,21 +544,7 @@ contains
     ! Convert geocentric coordinates at the Earth surface to ECR coordinates
     class(h_t), intent(in) :: Geo
     logical, intent(in), optional :: Norm
-    real(rp), parameter :: E2 = Eccentricity_Sq
-    real(rg) :: Lat, Lon, R, Rho, ST
-    lat = geo%lat * deg2rad
-    st = sin(lat)
-    ! Geocentric radius at geocentric latitude
-    ! r = ab / sqrt ( a^2 cos^2(lat) + b^2 sin^2(lat) )
-    r = earthRadB / sqrt( 1 - e2 * st * st )
-    lon = geo%lon%d * deg2rad
-    rho = r * cos(lat)
-    ECR%xyz(1) = rho * cos(lon)
-    ECR%xyz(2) = rho * sin(lon)
-    ECR%xyz(3) = r * st
-    if ( present(norm) ) then
-      if ( norm ) ECR = ECR / norm2(ECR)
-    end if
+    ECR = geoc_to_ECR_surf ( geo%lon%d, geo%lat, norm )
   end function H_t_To_ECR_Surf
 
   ! Construct an H_Geoc object from an H_t one
@@ -586,11 +559,25 @@ contains
     g = h_geod(geo%lon,geo%lat)
   end function H_t_to_H_Geod
 
+  pure elemental type(ECR_t) function H_V_Geod_To_ECR_Surf ( Geo, Norm ) result ( ECR )
+    ! Convert geodetic coordinates at the Earth surface to ECR coordinates
+    class(h_v_geod), intent(in) :: Geo
+    logical, intent(in), optional :: Norm
+    ECR = geod_to_ECR_surf ( geo%lon%d, geo%lat, norm )
+  end function H_V_Geod_To_ECR_Surf
+
   ! Nonpolymorphic result; useful to avoid writing a defined output routine
   pure elemental type(h_v_t) function H_v_t_Fields ( Geo )
     class(h_v_t), intent(in) :: Geo
     h_v_t_fields = h_v_t(lon=geo%lon, lat=geo%lat, v=geo%v)
   end function H_v_t_Fields
+
+  pure elemental type(ECR_t) function H_V_t_To_ECR_Surf ( Geo, Norm ) result ( ECR )
+    ! Convert geodetic coordinates at the Earth surface to ECR coordinates
+    class(h_v_t), intent(in) :: Geo
+    logical, intent(in), optional :: Norm
+    ECR = geoc_to_ECR_surf ( geo%lon%d, geo%lat, norm )
+  end function H_V_t_To_ECR_Surf
 
   pure elemental type (GeocLat_t) function Lat_t_to_GeocLat_t ( Geo ) result ( G )
     class(lat_t), intent(in) :: Geo
@@ -651,7 +638,59 @@ contains
 
 !  =====     Private Procedures     ====================================
 
-  pure elemental subroutine Geod_To_Geoc_Support ( Geod, Z, Rho )
+  pure elemental type(ECR_t) function Geoc_To_ECR_Surf ( Lon, Lat, Norm ) result ( ECR )
+    ! Convert geocentric coordinates at the Earth surface to ECR coordinates
+    real(rg), intent(in) :: Lon, Lat ! Degrees
+    logical, intent(in), optional :: Norm
+    real(rp), parameter :: E2 = Eccentricity_Sq
+    real(rg) :: R, Rho, ST
+    st = sin(lat)
+    ! Geocentric radius at geocentric latitude
+    ! r = ab / sqrt ( a^2 cos^2(lat) + b^2 sin^2(lat) )
+    r = earthRadB / sqrt( 1 - e2 * st * st )
+    rho = r * cos(lat)
+    ECR%xyz(1) = rho * cos(lon)
+    ECR%xyz(2) = rho * sin(lon)
+    ECR%xyz(3) = r * st
+    if ( present(norm) ) then
+      if ( norm ) ECR = ECR / norm2(ECR)
+    end if
+  end function Geoc_To_ECR_Surf
+
+  pure elemental type(ECR_t) function Geod_To_ECR_Surf ( Lon, Lat, Norm ) result ( ECR )
+    ! Convert geodetic coordinates at the Earth surface to ECR coordinates
+    real(rg), intent(in) :: Lon, Lat ! Degrees
+    logical, intent(in), optional :: Norm
+    real(rg) :: D      ! sqrt(a^2 ct^2 + b^2 st^2)
+    real(rg) :: MyLon  ! longitude in radians
+    real(rg) :: Rho    ! a^2/d cos(lat)
+    real(rg) :: ST     ! sin(lat)
+    call geod_to_geoc_support ( lat, d, rho, st )
+    myLon = lon * deg2rad
+    ecr%xyz(1) = rho * cos(myLon)
+    ecr%xyz(2) = rho * sin(myLon)
+    ecr%xyz(3) = bquad * d * st
+    if ( present(norm) ) then
+      if ( norm ) ECR = ECR / norm2(ECR)
+    end if
+  end function Geod_To_ECR_Surf
+
+  pure elemental subroutine Geod_To_Geoc_Support ( Lat, D, Rho, St )
+    real(rg), intent(in) :: Lat   ! Geodetic latitude, degrees
+    real(rg), intent(out) :: D
+    real(rg), intent(out) :: Rho  ! sqrt(X^2+Y^2) of ECR
+    real(rg), intent(out) :: St   ! Sin(myLat)
+    real(rg) :: Ct    ! cos(myLat)
+    real(rg) :: MyLat ! Geodetic latitude, radians
+    myLat = lat * deg2rad
+    st = sin(myLat)
+    ct = cos(myLat)
+    d = 1.0_rg / sqrt(aquad*ct*ct + bquad*st*st)
+!   d = 1.0_rg / sqrt(aquad-(aquad-bquad)*st*st)
+    rho = aquad * d * ct
+  end subroutine Geod_To_Geoc_Support
+
+  pure elemental subroutine H_V_Geod_To_Geoc_Support ( Geod, Z, Rho )
     class(h_v_geod), intent(in) :: Geod
     real(rg), intent(out) :: Z    ! Z coordinate of ECR
     real(rg), intent(out) :: Rho  ! sqrt(X^2+Y^2) of ECR
@@ -666,7 +705,7 @@ contains
 !   d = 1.0_rg / sqrt(aquad-(aquad-bquad)*st*st)
     z = ( geod%v + bquad * d ) * st
     rho = ( geod%v + aquad * d ) * ct
-  end subroutine Geod_To_Geoc_Support
+  end subroutine H_V_Geod_To_Geoc_Support
 
 !=============================================================================
 !--------------------------- end bloc --------------------------------------
@@ -682,6 +721,9 @@ contains
 end module Geolocation_0
 
 ! $Log$
+! Revision 2.13  2016/09/24 02:08:11  vsnyder
+! Add Surf_ECR to H_t, H_V_t, and extensions other than H_V_Zeta
+!
 ! Revision 2.12  2016/09/23 01:34:03  vsnyder
 ! Add H_v_t_fields to H_v_t, for the same reason as adding H_t_fields
 !
