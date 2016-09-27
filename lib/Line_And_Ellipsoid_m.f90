@@ -330,7 +330,10 @@ contains
     myH = rnorm - d
     myP = ecr_t ( axes**2 * r%xyz ) / l
     ! ( P + h * \nabla F(P) - C ) . U
-    if ( present(s) ) s = ( myP + myH * myP%grad_geoid() - line(1) ) .dot. line(2)
+    if ( present(s) ) then
+      s = ( ( myP + myH * myP%grad_geoid() - line(1) ) .dot. line(2) ) / &
+        & line(2)%norm2() ! ifort 15.0.2.164 doesn't like (a) .dot. (b)
+    end if
     if ( present(h) ) h = myH
     if ( present(p) ) p = myP
   end subroutine Exact_Line_Nearest_Earth_Geoid
@@ -361,7 +364,10 @@ contains
     myH = rnorm - d
     myP = ecr_t ( axes**2 * r%xyz ) / l
     ! ( P + h * \nabla F(P) - C ) . U
-    if ( present(s) ) s = ( myP + myH * myP%grad_geoid() - line(1) ) .dot. line(2)
+    if ( present(s) ) then
+      s = ( ( myP + myH * myP%grad_geoid() - line(1) ) .dot. line(2) ) / &
+        & line(2)%norm2() ! ifort 15.0.2.164 doesn't like (a) .dot. (b)
+    end if
     if ( present(h) ) h = myH
     if ( present(p) ) p = myP
   end subroutine Exact_Line_Nearest_Ellipsoid_RG
@@ -500,6 +506,9 @@ end do
 end module Line_And_Ellipsoid_m
 
 ! $Log$
+! Revision 2.10  2016/09/27 00:55:17  vsnyder
+! Repair computation of S in Exact_Line_Nearest...
+!
 ! Revision 2.9  2016/05/26 19:24:28  vsnyder
 ! Correct height calculation in Exact_Line_Nearest_Ellipsoid
 !
