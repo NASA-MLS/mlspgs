@@ -16,9 +16,17 @@ module TScat_Support_m
 
   implicit NONE
   private
+  public :: Find_Scattering_Point
   public :: Get_dB_df, Get_dB_dT, Get_TScat, Get_TScat_Setup
   public :: Get_TScat_Teardown, Interpolate_P_to_theta_e, Mie_Freq_Index
-  public :: TScat_Gen_Setup
+  public :: TScat_Detail_Heading, TScat_Gen_Setup
+
+
+  integer, public :: Print_TScat_Deriv  ! For debugging, Temp deriv, from -Sdtsct
+  integer, public :: Print_TScat_Detail ! For debugging, from -Spsct
+
+  character(len=*), parameter :: TScat_Detail_Heading = &
+    & "Scat_Phi   Scat_Ht   Scat_Zeta     Xi       D2     Tan_Phi    Tan_Ht  Begin Phi   End Phi Which Rev Fwd"
 
 !------------------------------ RCS Ident Info -------------------------------
   character (len=*), parameter, private :: ModuleName= &
@@ -26,6 +34,153 @@ module TScat_Support_m
 !------------------------------------------------------------------------------
 
 contains
+
+  ! --------------------------------------  Find_Scattering_Point  -----
+  subroutine Find_Scattering_Point ( Scat_Zeta, Scat_Phi, Scat_Ht, Xi, &
+                                   & Scat_Index, Tan_Phi, Npc, Npf, &
+                                   & Print_Incopt, Print_IncRad, &
+                                   & Print_Path, Req_S, PhiTan, Tan_Ht, &
+                                   & FwdModelConf, MAF, Z_Coarse, Vert_Inds, &
+                                   & H_Path, Phi_Path, Tan_Pt_C, Tan_Pt_F, &
+                                   & Forward, Rev, Which )
+
+    use Constants, only: PI, Rad2Deg
+    use Dump_0, only: Dump
+    use ForwardModelConfig, only: ForwardModelConfig_T
+    use GLNP, only: NG, NGP1
+    use MLSKinds, only: RP, R8
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
+    use MLSStringLists, only: SwitchDetail
+    use Output_m, only: Output
+    use Toggles, only: Switches
+    use VectorsModule, only: VectorValue_T
+
+    real(rp), intent(in) :: Scat_Zeta
+    real(rp), intent(in) :: Scat_Phi         ! of scattering point
+    real(rp), intent(in) :: Scat_Ht          ! To check we hit the
+                                             ! scattering point
+    real(rp), intent(in) :: Xi               ! Scattering angle
+    integer, intent(out) :: Scat_Index       ! in coarse grid
+    real(rp), intent(in) :: Tan_Phi          ! orbit angle at tangent, radians
+    integer, intent(in) :: Npc, Npf          ! Numbers of points on coarse,
+                                             ! fine paths
+
+    ! Stuff only for debugging, printing, and error messages
+    logical, intent(in) :: Print_Incopt      ! For debugging, from -Sincp
+    logical, intent(in) :: Print_IncRad      ! For debugging, from -Sincr
+    integer, intent(in) :: Print_Path        ! Nicer format than Print_Incopt,
+                                             ! for few molecules
+    real(rp), intent(in) :: Req_S            ! Equivalent Earth Radius at
+                                             ! height reference surface
+    type(vectorValue_t), intent(in) :: PhiTan
+    real(rp), intent(in) :: Tan_Ht           ! Geometric tangent height,
+                                             ! km from equivalent Earth center
+    type(forwardModelConfig_T), intent(in) :: FwdModelConf
+    integer, intent(in) :: MAF               ! MAF under consideration
+
+    ! Recomputed path stuff
+    real(rp), intent(inout) :: Z_Coarse(:)   ! Zetas on coarse path
+    integer, intent(inout) :: Vert_Inds(:)   ! Height indices of fine path in
+                                             ! H_Glgrid etc.
+    real(rp), intent(inout) :: H_Path(:)     ! Heights on fine path (km)
+    real(rp), intent(inout), target :: Phi_Path(:) ! Phi's on fine path, Radians
+    integer, intent(inout) :: Tan_Pt_c, Tan_Pt_f ! Index of tangent point in
+                                             ! coarse, fine path
+
+    ! Optional stuff
+    logical, intent(in), optional :: Forward ! For subsurface rays
+                                             ! and Generate_TScat
+    logical, intent(in), optional :: Rev     ! Reverse the path
+    integer, intent(in), optional :: Which   ! Which TScat call got us here?
+                                             ! Negative if we're trying to
+                                             ! trace an Earth-intersecting ray.
+
+    character(max(128,len(TScat_Detail_Heading)+10)) :: Line    ! Of output
+    logical :: MyRev               ! "Reverse the integration path"
+    real(rp), pointer :: Phi_Path_c(:)  ! Phi on the coarse path
+    real(rp) :: Scat_D1, Scat_D2   ! To compute scat_index
+    integer :: Scat_Temp           ! To compute scat_index
+    real(rp), parameter :: Scat_Tol = 1.0 ! max miss of scattering pt, (km/h)**2
+
+    scat_index = 0
+    scat_d2 = huge(1.0_rp)
+    do scat_temp = 1, npc
+      scat_d1 = sin(phi_path_c(scat_temp)-scat_phi)**2 + &
+              &  (h_path(scat_temp*ngp1-ng)/scat_ht-1.0_rp)**2
+      if ( scat_d1 < scat_d2 ) then
+        scat_index = scat_temp
+        scat_d2 = scat_d1
+      end if
+    end do
+
+    if ( present(rev) ) then
+      myRev = rev
+    else
+      myRev = (xi > -pi .and. xi < 0.0) .neqv. (scat_index < tan_pt_c)
+    end if
+    if ( myRev ) then
+      ! Ray from below the scattering point won't see the tangent point, or
+      ! Ray from above the scattering point will see the tangent point, so
+      ! reverse the path
+      z_coarse(:npc) = z_coarse(npc:1:-1)
+      vert_inds(:npf) = vert_inds(npf:1:-1)
+      h_path(:npf) = h_path(npf:1:-1)
+      phi_path(:npf) = phi_path(npf:1:-1)
+      scat_index = npc - scat_index + 1
+      tan_pt_c = npc - tan_pt_c ! The first one, not the same one
+      tan_pt_f = ngp1 * tan_pt_c - ng
+    end if
+    if ( scat_index == tan_pt_c + 1 ) scat_index = tan_pt_c
+
+    ! Check that we hit it well enough.
+    if ( abs(z_coarse(scat_index)-scat_zeta) > 0.05 .or. &
+      &  scat_d2 > scat_tol .or. &
+      ! or print details if requested
+      &  print_TScat_detail > -1 ) then
+      phi_path_c => phi_path(1:npf:ngp1)
+      if ( print_TScat_detail /= 0 .or. print_TScat_Deriv > -1 .or. &
+        & print_incopt .or. print_incrad .or. print_path > -1 ) &
+        & call output ( TScat_Detail_Heading, advance="yes" )
+      write ( line, "(f7.2,f12.4,f9.3,f11.2,f10.6,f9.2,f11.4,f8.2,i4,f8.2,i4,4x,L1)" ) &
+        & rad2deg*scat_phi, scat_ht, scat_zeta, rad2deg*xi, sqrt(scat_d2), & ! km/ht, not (km/ht)**2
+        & rad2deg*tan_phi, tan_ht, rad2deg*phi_path(1), scat_index*ngp1-ng, &
+        & rad2deg*phi_path_c(scat_index), which, myRev
+      if ( present(forward) ) then; line = trim(line) // merge("   T", "   F", forward)
+      else ; line = trim(line) // "   T"
+      end if
+      if ( abs(z_coarse(scat_index)-scat_zeta) > 0.05 .or. &
+        &  scat_d2 > scat_tol ) then
+        ! Are we trying to trace an Earth-intersecting ray, for TScat
+        ! generation, but the detailed Metrics calculation discovered
+        ! it's not one?
+        line(len(TScat_detail_heading)+1:) = "> abandoned"
+        call output ( trim(line), advance="yes" ) ! Too far away from scattering point
+        if ( scat_ht <= tan_ht .or. which > 0 .or. print_TScat_detail > -1 ) then
+          call output ( req_s, before="Req_s = " )
+          call output ( mod(phitan%values(FwdModelConf%TScatMIF,MAF),360.0_r8), &
+            & before=", Phi_ref = ", advance="yes" )
+          call dump ( z_coarse(:npc), name="Z_Coarse" )
+          call dump ( rad2deg*phi_path_c, name="Phi_Path", format="(f14.8)" )
+          call dump ( h_path(1:npf:ngp1), name="H_Path", format="(f14.6)" )
+        end if
+        if ( scat_ht <= tan_ht .or. which > 0 ) &
+          call MLSMessage ( merge(MLSMSG_Warning,MLSMSG_Error,switchDetail(switches,'igsc')>0), &
+            & moduleName, 'Scattering point appears not to be in path' )
+        scat_index = -1
+      else
+        call output ( trim(line) // " <", advance="yes" ) ! Close enough
+        if ( print_TScat_detail > 0 ) then
+          call output ( tan_pt_c, before='Tan_Pt_C = ' )
+          call dump ( rad2deg*phi_path_c(:scat_index), name=', Phi_Path_C' )
+!c              call dump ( h_path(:scat_index*ngp1-ng:ngp1), name='H_Path_C' )
+          associate ( h_path_x => h_path(1:npf:ngp1) )
+            call dump ( h_path_x(:scat_index), name='H_Path_C' )
+          end associate
+          call dump ( z_coarse(:scat_index), name='Z_Coarse' )
+        end if
+      end if
+    end if
+  end subroutine Find_Scattering_Point
 
   ! --------------------------------------------------  Get_dB_df  -----
   subroutine Get_dB_df ( Alpha, Beta_c_e, dBeta_c_a_dIWC, &
@@ -748,6 +903,9 @@ contains
 end module TScat_Support_m
 
 ! $Log$
+! Revision 2.12  2016/09/30 01:26:30  vsnyder
+! Create Find_Scattering_Point andd move stuff to it from FullForwardModel
+!
 ! Revision 2.11  2016/05/10 00:03:09  vsnyder
 ! Cannonball polishing
 !
