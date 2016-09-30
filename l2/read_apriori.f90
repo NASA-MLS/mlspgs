@@ -189,7 +189,7 @@ contains ! =====     Public Procedures     =============================
     ! Will we be dumping info? To what level of detail?
     Details = switchDetail(switches, 'apr') - 2
     verbose = ( Details > -3 )
-    verbose = ( Details > -2 )
+    verboser = ( Details > -2 )
     if ( verbose ) &     
     & call output ( '============ Read APriori ============', advance='yes' )  
     ! Are we picking up again where we left off in the last
@@ -1464,6 +1464,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.117  2016/09/30 20:33:46  pwagner
+! verboser was used w/o being defined; fixed
+!
 ! Revision 2.116  2016/09/21 00:41:04  pwagner
 ! Default to printing less
 !
