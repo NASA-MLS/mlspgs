@@ -49,7 +49,7 @@ contains
 
     ! The tangent point is Lines(2,1).
 
-    use Geolocation_0, only: ECR_t, Norm2, RG
+    use Geolocation_0, only: ECR_t, Norm2
     use Line_And_Ellipsoid_m, only: Line_And_Ellipsoid, Line_Nearest_Ellipsoid
     use Line_And_Plane_m, only: Line_Reflection
 
@@ -142,7 +142,7 @@ end if
     ! order such that the first one is the tangent point (again) and the
     ! last one is farthest from Lines(1,1).
 
-    use Geolocation_0, only: ECR_t, RG, S_t
+    use Geolocation_0, only: ECR_t, S_t
     use Geolocation_m, only: Geolocation_t
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use QTM_Interpolation_Weights_3D_m, only: S_QTM_t
@@ -224,7 +224,7 @@ end if
     ! order such that the first one is the tangent point (again) and the
     ! last one is farthest from Lines(1,1).
 
-    use Geolocation_0, only: ECR_t, RG, S_t
+    use Geolocation_0, only: ECR_t, S_t
     use Geolocation_m, only: QTM_Tree_t, RG
     use QTM_Interpolation_Weights_3D_m, only: S_QTM_t
 
@@ -300,7 +300,6 @@ end if
     use Line_And_Cone_m, only: Line_And_Cone
     use Line_And_Ellipsoid_m, only: Line_And_Sphere
     use Line_And_Plane_m, only: Line_And_Plane
-    use Pure_Hunt_m, only: PureHunt
     use QTM_m, only: Stack_t
     use QTM_Interpolation_Weights_3D_m, only: S_QTM_t, Cone_Face, &
       & Top_Face, X_Face, Y_Face
@@ -776,6 +775,9 @@ geod_f(m,n+1)%v = h(j+1,sn(n))
 end module Metrics_3D_m
 
 ! $Log$
+! Revision 2.5  2016/09/30 21:47:47  pwagner
+! Intel v16 unhappy w/o these changes
+!
 ! Revision 2.4  2016/09/23 18:42:53  vsnyder
 ! Inching along
 !
