@@ -68,7 +68,7 @@ contains
     do k = 1, size(grids_f%qtyStuff)
       spsQTM = grids_f%isQTM(k)
       QTM_fail = QTM_fail .or. ( spsQTM .neqv. usingQTM )
-      if ( .not. QTM_fail ) then
+      if ( .not. QTM_fail .and. usingQTM .and. spsQTM ) then
         if ( QTM_hGrid%QTM_tree%level < &
            & grids_f%qtyStuff(k)%qty%template%the_hGrid%QTM_tree%level ) &
            & QTM_hGrid => grids_f%qtyStuff(k)%qty%template%the_hGrid
@@ -113,6 +113,9 @@ contains
 end module Check_QTM_m
 
 ! $Log$
+! Revision 2.4  2016/10/01 01:37:47  vsnyder
+! Make QTM_Tree component of HGrid_t allocatable
+!
 ! Revision 2.3  2016/09/13 00:30:44  vsnyder
 ! Missed out one use name
 !
