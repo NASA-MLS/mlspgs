@@ -1048,6 +1048,19 @@ contains ! =====     Public Procedures     =============================
     hGrid%noProfs = hGrid%QTM_tree%n_in
     call CreateEmptyHGrid(hGrid)
 
+    ! Put imaginative values in HGrid fields so they're not undefined.
+    ! They might actually be useful.  Some might get more meaningful
+    ! values elsewhere.
+
+    hGrid%maf = [ ( i, i = 1, hGrid%noProfs ) ]
+    hGrid%phi(1,:) = 0 ! Phi is kind of meaningless for QTM
+    hGrid%geodLat(1,:) = hGrid%QTM_tree%geo_in%lat
+    hGrid%lon(1,:) = hGrid%QTM_tree%geo_in%lon%d
+    hGrid%time(1,:) = 0
+    hGrid%solarTime(1,:) = 0
+    hGrid%solarZenith(1,:) = 0
+    hGrid%losAngle(1,:) = 0
+
     QTMFile = switchDetail ( switches, 'QTMFile' )
     if ( QTMFile > 0 ) then
       ! Write a Fortran unformatted file to make it easier to look at a QTM
@@ -2572,6 +2585,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.143  2016/10/01 01:53:28  vsnyder
+! Fill hGrid fields after creating QTM
+!
 ! Revision 2.142  2016/10/01 01:37:36  vsnyder
 ! Make QTM_Tree component of HGrid_t allocatable
 !
