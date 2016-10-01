@@ -193,7 +193,8 @@ contains
     call output ( ' vertices within or adjacent to the polygon and ' )
     call output ( QTM_Trees%n_facets, after=' facets', advance='yes' )
     call output ( 180.0 / 2**QTM_Trees%level, before=' Latitude resolution is ', &
-      & after=' degrees', advance='yes' )
+      & after=' degrees = ' )
+    call output ( 20000.0 / 2**QTM_Trees%level, after=' km', advance='yes' )
     if ( myDetails > 1 ) then
       myLatLon = .false.
       if ( present(latLon) ) myLatLon = latLon
@@ -237,6 +238,9 @@ contains
 end module QTM_Output
 
 ! $Log$
+! Revision 2.6  2016/10/01 01:54:18  vsnyder
+! Spiff the dump
+!
 ! Revision 2.5  2016/09/23 01:52:59  vsnyder
 ! Get nonpolymorphic geolocations
 !
