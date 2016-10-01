@@ -19,10 +19,10 @@ module HGridsDatabase                   ! Horizontal grid information
   private
 
   public :: HGrid_T, HGrids_T, HGridGeolocations_T, HGridGeolocations
-  public :: addHGridtodatabase, copyHGrid, createEmptyHGrid, destroyHGridContents, &
-    & destroyHGridDatabase, Dump, findClosestMatch, &
-    & L1BGeoLocation, L1BSubsample, nullifyHGrid, &
-    & trimHGrid
+  public :: AddHGridtodatabase, CopyHGrid, CreateEmptyHGrid, DestroyHGridContents, &
+    & DestroyHGridDatabase, Dump, FindClosestMatch, &
+    & L1BGeoLocation, L1BSubsample, NullifyHGrid, &
+    & TrimHGrid
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -30,36 +30,37 @@ module HGridsDatabase                   ! Horizontal grid information
   private :: not_used_here 
 !---------------------------------------------------------------------------
 
-  ! This module contains datatypes and routines for handling HGrid information
+  ! This module contains datatypes and routines for handling HGrid information.
   ! HGrids are the horizontal gridding information that get into vector
   ! quantities.
 
   ! This is the main datatype, an HGrid.
 
   type HGrid_T
-    integer :: Name                 = 0    ! String index of name.            
-    integer :: masterCoordinate     = l_GeodAngle ! Its lit index;
-    integer :: noProfs                  ! Number of profiles in this grid  
-    integer :: noProfsLowerOverlap  = 0 ! Number of profiles in the lower overlap
-    integer :: noProfsUpperOverlap  = 0 ! Number of profiles in the upper overlap
+    integer :: Name                 = 0 ! String index of name.            
+    integer :: MasterCoordinate     = l_GeodAngle ! Its lit index;
+    integer :: NoProfs                  ! Number of profiles in this grid  
+    integer :: NoProfsLowerOverlap  = 0 ! Number of profiles in the lower overlap
+    integer :: NoProfsUpperOverlap  = 0 ! Number of profiles in the upper overlap
     integer :: Type                     ! L_Explicit, L_Fixed ...
-    integer :: module                   ! index into modules database
-    logical :: forbidOverspill      = .false.   
+    integer :: Module                   ! index into modules database
+    logical :: ForbidOverspill      = .false.   
 
     ! This is the maf number passing nearest to the grid point
-    integer, dimension(:), pointer    :: maf         => NULL()
+    integer, dimension(:), pointer    :: MAF          => NULL()
     ! Now the various coordinates in the HGrid, all dimensioned (1,noProfs)
-    real(r8), contiguous, pointer :: phi(:,:)         => NULL()
-    real(r8), contiguous, pointer :: geodLat(:,:)     => NULL()
-    real(r8), contiguous, pointer :: lon (:,:)        => NULL()
-    real(r8), contiguous, pointer :: time(:,:)        => NULL()
-    real(r8), contiguous, pointer :: solarTime(:,:)   => NULL()
-    real(r8), contiguous, pointer :: solarZenith(:,:) => NULL()
-    real(r8), contiguous, pointer :: losAngle(:,:)    => NULL()
+    real(r8), contiguous, pointer :: Phi(:,:)         => NULL()
+    real(r8), contiguous, pointer :: GeodLat(:,:)     => NULL()
+    real(r8), contiguous, pointer :: Lon (:,:)        => NULL()
+    real(r8), contiguous, pointer :: Time(:,:)        => NULL()
+    real(r8), contiguous, pointer :: SolarTime(:,:)   => NULL()
+    real(r8), contiguous, pointer :: SolarZenith(:,:) => NULL()
+    real(r8), contiguous, pointer :: LOSAngle(:,:)    => NULL()
     ! For QTM
-    type(QTM_tree_t) :: QTM_Tree ! for finding things and representing the
-                                 ! geolocations of vertices of a QTM that are
-                                 ! within or adjacent to a specified polygon
+    type(QTM_tree_t), allocatable :: QTM_Tree ! for finding things and
+                                 ! representing the geolocations of vertices
+                                 ! of a QTM that are within or adjacent to a
+                                 ! specified polygon
   end type HGrid_T
 
   ! To construct an array of pointers to HGrid_T.  The reason for this
@@ -71,8 +72,8 @@ module HGridsDatabase                   ! Horizontal grid information
     type(hGrid_t), pointer :: The_HGrid => NULL()
   end type HGrids_T
 
-  ! Put here all the  l1boa quantities that we don't
-  ! wish to read again and again and again ..
+  ! Put here all the l1boa quantities that we don't
+  ! wish to read again and again and again ....
   type HGridGeolocations_T
     double precision, dimension(:,:), pointer :: MAFStartTimeTAI => null()
     double precision, dimension(:,:), pointer :: Orbincl         => null()
@@ -772,6 +773,9 @@ contains ! =========== Public procedures ===================================
 end module HGridsDatabase
 
 ! $Log$
+! Revision 2.38  2016/10/01 01:37:28  vsnyder
+! Make QTM_Tree component of HGrid_t allocatable
+!
 ! Revision 2.37  2016/09/23 03:08:37  vsnyder
 ! Get optional argument values using Optional_m
 !
