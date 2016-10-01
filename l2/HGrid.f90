@@ -1031,8 +1031,9 @@ contains ! =====     Public Procedures     =============================
 
     integer :: I, QTMFile, Stat
 
-    hGrid%noProfs = hGrid%QTM_tree%n_in !!!!!????? or maybe zero ?????
-    call CreateEmptyHGrid(hGrid)
+    allocate ( hGrid%QTM_tree, stat=stat )
+    call test_allocate ( stat, moduleName, "hGrid%QTM_tree", &
+      & [1], [1], storage_size(hGrid%QTM_tree) / 8 )
     hGrid%QTM_tree%level = level
     hGrid%QTM_tree%in_geo = polygon_inside
     ! Explicit allocation won't be necessary when compilers support
@@ -1043,6 +1044,9 @@ contains ! =====     Public Procedures     =============================
     hGrid%QTM_tree%polygon_geo = polygon_vertices
 
     call generate_QTM ( hGrid%QTM_tree )
+
+    hGrid%noProfs = hGrid%QTM_tree%n_in
+    call CreateEmptyHGrid(hGrid)
 
     QTMFile = switchDetail ( switches, 'QTMFile' )
     if ( QTMFile > 0 ) then
@@ -2568,6 +2572,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.142  2016/10/01 01:37:36  vsnyder
+! Make QTM_Tree component of HGrid_t allocatable
+!
 ! Revision 2.141  2016/09/14 20:11:42  vsnyder
 ! Move writing QTM to QTM_Output module
 !
