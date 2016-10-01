@@ -879,6 +879,7 @@ contains
     class(QuantityTemplate_T), intent(in) :: Qty
     IsQTM = associated(qty%the_Hgrid)
     if ( IsQTM ) IsQTM = qty%the_Hgrid%type == L_QTM
+    if ( isQTM ) IsQTM = allocated ( qty%the_Hgrid%QTM_Tree )
   end function IsQTM
 
   ! ------------------------------------  ModifyQuantityTemplate   -----
@@ -2275,6 +2276,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.116  2016/08/30 20:27:24  vsnyder
+! Add IsQTM type-bound function
+!
 ! Revision 2.115  2016/08/23 00:42:43  vsnyder
 ! Components within or adjacent to the polygon are now within the QTM_Tree_t
 ! structure instead of the HGrid_t structure.
