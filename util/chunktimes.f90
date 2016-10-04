@@ -13,29 +13,29 @@
 program chunktimes ! Reads chunk times from l2aux file(s)
 !=================================
 
-   use DUMP_0, only: DUMP
-   use HDF, only: DFACC_RDONLY
-   use HDF5, only: HSIZE_T, H5FIS_HDF5_F, H5GCLOSE_F, H5GOPEN_F
-    use HIGHOUTPUT, only: OUTPUT_DATE_AND_TIME
-   use L1BDATA, only: namelen
-   use MACHINE, only: HP, GETARG
-   use MLSKINDS, only: R4, R8
-   use MLSFILES, only: MLS_EXISTS, MLS_SFSTART, MLS_SFEND, &
-     & HDFVERSION_4, HDFVERSION_5
+   use Dump_0, only: Dump
+   use Dump_1, only: Dump
+   use HDF, only: dfacc_rdonly
+   use HDF5, only: hsize_t, H5FIs_HDF5_f, H5GClose_f, H5GOpen_f
+   use HighOutput, only: output_date_and_time
+   use L1BData, only: namelen
+   use Machine, only: hp, getarg
+   use MLSKinds, only: r4, r8
+   use MLSFiles, only: MLS_Exists, MLS_SFStart, MLS_SFEnd, &
+     & HDFVersion_4, HDFVersion_5
    use MLSHDF5, only: &
-     & GETALLHDF5DSNAMES, GETHDF5ATTRIBUTE, GETHDF5DSDIMS, &
-     & ISHDF5ATTRIBUTEPRESENT, LOADFROMHDF5DS, MLS_H5OPEN, MLS_H5CLOSE
-   use MLSMESSAGEMODULE, only: MLSMESSAGECONFIG
-   use MLSFINDS, only: FINDALL, FINDFIRST, FINDLAST, FINDNEXT
-   use MLSSTATS1, only: STAT_T, STATSONONELINE, &
-     & DUMPSTAT=>DUMP, STATISTICS
-   use MLSSTRINGLISTS, only: CATLISTS, GETSTRINGELEMENT, GETUNIQUELIST, &
-     & NUMSTRINGELEMENTS, STRINGELEMENT, STRINGELEMENTNUM
-   use MLSSTRINGS, only: LOWERCASE
-   use OUTPUT_M, only: OUTPUTOPTIONS, &
-     & BLANKS, NEWLINE, OUTPUT
-   use PrintIt_m, only: Set_Config
-   use TIME_M, only: TIME_NOW, TIME_CONFIG
+     & GetAllHDF5DSNames, getHDF5Attribute, getHDF5DSDims, &
+     & ISHDf5AttributePresent, loadFromHDF5DS, MLS_H5Open, MLS_H5Close
+   use MLSFinds, only: findall, findfirst, findlast, findnext
+   use MLSStats1, only: stat_t, statsononeline, &
+     & DumpStat=>dump, statistics
+   use MLSStringLists, only: catLists, getStringElement, getUniqueList, &
+     & NUMStringelements, stringElement, stringElementNum
+   use MLSStrings, only: lowercase
+   use Output_m, only: outputOptions, &
+     & Blanks, newline, output
+   use Printit_m, only: set_config
+   use Time_m, only: time_now, time_config
    
    implicit none
 
@@ -817,6 +817,9 @@ end program chunktimes
 !==================
 
 ! $Log$
+! Revision 1.29  2014/03/07 21:42:59  pwagner
+! Name_Len changed to nameLen; got from MLSCommon
+!
 ! Revision 1.28  2014/01/09 00:31:26  pwagner
 ! Some procedures formerly in output_m now got from highOutput
 !
