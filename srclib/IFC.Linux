@@ -13,7 +13,7 @@ DUSTY = $(FOPTS)
 PATH_OPTS=-d -prefix=-I
 
 # Some macros needed to link successfully
-hdf5_linker_line=-L${HDF5} -lhdf5_fortran -lhdf5 -lhdf5_hl
+hdf5_linker_line=-L${HDF5} -lhdf5_fortran -lhdf5_hl -lhdf5
 l_specials := $(l_specials) -lz
 hdfeos5_linker_line=-L${HDFEOS5} -lhe5_hdfeos
 ifeq ($(MLSF95),IFCold)
@@ -30,6 +30,9 @@ endif
 endif
 
 # $Log$
+# Revision 1.4  2010/09/21 22:17:54  pwagner
+# Now builds with tk5.2.17
+#
 # Revision 1.3  2010/02/03 01:07:38  pwagner
 # Moved link macros here from targets.h to simplify latter
 #
