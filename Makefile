@@ -436,13 +436,13 @@ endif
 ifdef HDFEOSINC
    IHDFEOSINC := -I $(HDFEOSINC)
 else
-   IHDFEOSINC := -I $(HDFEOS)/../include
+   IHDFEOSINC := -I $(HDFEOS)/../../include
 endif
 
 ifdef HDFEOS5INC
    IHDFEOS5INC := -I $(HDFEOS5INC)
 else
-   IHDFEOS5INC := -I $(HDFEOS5)/../include
+   IHDFEOS5INC := -I $(HDFEOS5)/../../include
 endif
 
 #----------------------- Build instructions
@@ -854,10 +854,11 @@ Goldbrick_More: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/Goldbrick_More.f90
    -c $(MLSCONFG) -p $@ -M $(MAKE) \
 	-C $(MLSCFILE) $(MLSBIN)/$@.f90
 
-heconvert: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/convert.c $(MLSBIN)/HE5_HdfEosDef.h
+heconvert: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/convert.c \
+           $(MLSBIN)/HE5_HdfEosDef.h
 	   $(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
       -c $(MLSCONFG) -p $@ -M $(MAKE) \
-	   -C $(MLSCFILE) $(MLSBIN)/convert.c \
+      -C $(MLSCFILE) $(MLSBIN)/convert.c \
       -I $(MLSBIN) \
       $(IHDFEOS5INC) \
       $(IHDFEOSINC) \
@@ -1375,6 +1376,9 @@ tools: chunktimes checkpvmup compare dateconverter extinctionmaker \
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.14  2016/04/20 23:01:51  pwagner
+# Added l1bcat as a target; install-nrt also builds l2q
+#
 # Revision 1.13  2016/03/16 17:20:24  whdaffer
 # Added cat/touch Calibration.f9h to before/after moonscan build.
 #
