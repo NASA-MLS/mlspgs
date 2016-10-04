@@ -13,24 +13,25 @@
 program l1bdump ! dumps an l1b or L2AUX file
 !=================================
 
-   use Dump_0, only: RMSFORMAT, DUMP
+   use Dump_0, only: Dump
+   use Dump_Options, only: rmsFormat
    use Hdf, only: DFACC_READ
    use HDF5, only: H5FIS_HDF5_F, &
      & H5GCLOSE_F, H5GOPEN_F
    use L1BData, only: L1BData_T, namelen, &
-     & DEALLOCATEL1BDATA, dump, READL1BDATA
+     & DeallocateL1BData, dump, readL1BData
    use MACHINE, only: HP, GETARG
-   use MLSFiles, only: FILENOTFOUND, WILDCARDHDFVERSION, &
+   use MLSFiles, only: FILENOTFOUND, WildcardHDFVersion, &
      & MLS_EXISTS, MLS_HDF_VERSION, MLS_SFSTART, MLS_SFEND, &
      & HDFVERSION_5
-   use MLSHDF5, only: GETALLHDF5DSNAMES, MLS_H5OPEN, MLS_H5CLOSE
-   use MLSMessageModule, only: MLSMSG_ERROR, MLSMSG_WARNING, &
-     & MLSMESSAGE
-   use MLSStringLists, only: GETSTRINGELEMENT, NUMSTRINGELEMENTS
-   use MLSStrings, only: REPLACE, STREQ
-   use output_m, only: RESUMEOUTPUT, SUSPENDOUTPUT, OUTPUT
+   use MLSHDF5, only: GetAllHDF5DSNames, MLS_H5Open, MLS_H5CLOSE
+   use MLSMessageModule, only: MLSMSG_ERROR, MLSMSG_Warning, &
+     & MLSMessage
+   use MLSStringLists, only: Getstringelement, numSTRINGELEMENTS
+   use MLSStrings, only: Replace, streq
+   use output_m, only: Resumeoutput, suspendoutput, output
    use PrintIt_m, only: Set_Config
-   use Time_M, only: TIME_NOW, TIME_CONFIG
+   use Time_M, only: Time_now, time_config
    
    implicit none
 
@@ -472,6 +473,9 @@ end program l1bdump
 !==================
 
 ! $Log$
+! Revision 1.3  2014/03/07 21:43:51  pwagner
+! Name_Len changed to nameLen; got from MLSCommon
+!
 ! Revision 1.2  2013/08/23 02:51:47  vsnyder
 ! Move PrintItOut to PrintIt_m
 !

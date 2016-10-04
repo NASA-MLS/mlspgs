@@ -13,24 +13,21 @@
 program l1bcat ! catenates l1b files, e.g. l1boa
 !=================================
 
-   use Dump_0, only: DUMP
+   use Dump_1, only: Dump
    use Hdf, only: DFACC_Create, DFACC_RDWR, DFACC_Read
    use HDF5, only: H5FIs_HDF5_F, H5GCreate_F, H5GClose_F
    use Intrinsic, only: l_hdf
    use io_stuff, only: get_lun
-   use L1BData, only: L1BData_t, cpL1BData
+   use L1BData, only: cpL1BData
    use machine, only: hp, getarg
-   use MLSFiles, only: HDFVERSION_5, Dump, InitializeMLSFile, &
+   use MLSFiles, only: HDFVersion_5, Dump, InitializeMLSFile, &
      & MLS_OpenFile, MLS_CloseFile
    use MLSCommon, only: MLSFile_T
    use MLSHDF5, only: GetAllHDF5DSNames, MLS_H5Open, MLS_H5Close
-   use MLSKinds, only: r8
-   use MLSMessageModule, only: MLSMessageConfig
    use MLSStringLists, only: catLists, GetStringElement, &
      & Intersection, NumStringElements, &
      & RemoveElemFromList, StringElement, StringElementNum
    use output_m, only: output
-   use PCFHdr, only: GlobalAttributes
    use PrintIt_m, only: Set_Config
    use Time_M, only: Time_Now, time_config
 
@@ -76,7 +73,7 @@ program l1bcat ! catenates l1b files, e.g. l1boa
   logical, parameter :: DEEBUG = .true.
   character(len=255) :: filename          ! input filename
   integer            :: n_filenames
-  integer     ::  i, j, status, error ! Counting indices & Error flags
+  integer     ::  i, j, error ! Counting indices & Error flags
   integer     :: elem
   logical     :: is_hdf5
   character (len=MAXSDNAMESBUFSIZE) :: mySdList
@@ -403,6 +400,9 @@ end program l1bcat
 !==================
 
 ! $Log$
+! Revision 1.2  2016/06/10 16:15:31  pwagner
+! Corrected call to cpAllL1BData; clarified meaning of -l2aux option
+!
 ! Revision 1.1  2016/04/20 00:21:13  pwagner
 ! First commit
 !

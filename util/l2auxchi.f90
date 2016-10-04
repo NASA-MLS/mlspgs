@@ -13,28 +13,28 @@
 program l2auxchi ! dumps chi^sq read from L2AUX files
 !=================================
 
-   use Dump_0, only: DUMP
-   use Hdf, only: DFACC_READ
-   use HDF5, only: H5FIS_HDF5_F, &
-     & H5GCLOSE_F, H5GOPEN_F
-   use L1BData, only: L1BDATA_T, &
-     & DEALLOCATEL1BDATA, READL1BDATA
-   use MACHINE, only: HP, GETARG
-   use MLSCommon, only: NAMELEN
-   use MLSKINDS, only: R8
-   use MLSFiles, only: FILENOTFOUND, WILDCARDHDFVERSION, &
-     & MLS_EXISTS, MLS_HDF_VERSION, MLS_SFSTART, MLS_SFEND, &
-     & HDFVERSION_5
-   use MLSHDF5, only: GETALLHDF5DSNAMES, &
-     & MLS_H5OPEN, MLS_H5CLOSE
-   use MLSMessageModule, only: MLSMSG_ERROR, MLSMSG_WARNING, &
-     & MLSMESSAGE
-   use MLSStats1, only: FILLVALUERELATION, STAT_T, STATISTICS
-   use MLSStringLists, only: CATLISTS, GETSTRINGELEMENT, NUMSTRINGELEMENTS
-   use MLSStrings, only: LOWERCASE, WRITEINTSTOCHARS
-   use output_m, only: BLANKS, NEWLINE, OUTPUT, RESUMEOUTPUT, SUSPENDOUTPUT
-   use PrintIt_m, only: SET_CONFIG
-   use Time_M, only: TIME_NOW, TIME_CONFIG
+   use Dump_1, only: dump
+   use Hdf, only: dfacc_read
+   use Hdf5, only: h5fis_hdf5_f, &
+     & H5gclose_f, h5gopen_f
+   use L1bdata, only: l1bdata_t, &
+     & Deallocatel1bdata, readl1bdata
+   use Machine, only: hp, getarg
+   use MLSCommon, only: namelen
+   use MLSKinds, only: r8
+   use MLSFiles, only: filenotfound, wildcardhdfversion, &
+     & MLS_exists, mls_hdf_version, mls_sfstart, mls_sfend, &
+     & HDFVersion_5
+   use MLSHdf5, only: getallhdf5dsnames, &
+     & MLS_h5open, MLS_H5Close
+   use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning, &
+     & MLSMessage
+   use MLSStats1, only: fillValueRelation, stat_t, statistics
+   use MLSStringLists, only: catlists, getstringelement, numstringelements
+   use MLSStrings, only: lowercase, writeintstochars
+   use Output_m, only: blanks, newline, output, resumeoutput, suspendoutput
+   use Printit_m, only: set_config
+   use Time_m, only: time_now, time_config
    
    implicit none
 
@@ -417,6 +417,9 @@ end program l2auxchi
 !==================
 
 ! $Log$
+! Revision 1.7  2014/03/07 21:44:11  pwagner
+! Name_Len changed to nameLen; got from MLSCommon
+!
 ! Revision 1.6  2013/08/23 02:51:47  vsnyder
 ! Move PrintItOut to PrintIt_m
 !
