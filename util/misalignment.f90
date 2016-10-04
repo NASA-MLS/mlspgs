@@ -13,13 +13,13 @@
 program misalignment
 !=================================
 
-   use Dump_0, only: rmsFormat
+   use Dump_Options, only: rmsFormat
    use HighOutput, only: outputNamedValue
-   use L2GPData, only: L2GPdata_t, MAXSWATHNAMESBUFSIZE, &
+   use L2GPData, only: L2GPdata_t, maxSwathNamesBufsize, &
      & destroyL2GPContents, readL2GPData
    use Machine, only: hp, getarg
    use MLSCommon, only: defaultUndefinedValue
-   use MLSFiles, only: mls_exists, HDFVERSION_5, MLS_INQSWATH
+   use MLSFiles, only: MLS_Exists, HDFVersion_5, MLS_Inqswath
    use MLSFinds, only: FindFirst
    use MLSHDF5, only: MLS_H5Open, MLS_H5Close
    use MLSHDFEOS, only: MLS_swath_in_file
@@ -338,6 +338,9 @@ end program misalignment
 !==================
 
 ! $Log$
+! Revision 1.2  2015/11/17 19:53:30  pwagner
+! Fill values put in bad profiles to reduce number of false positives
+!
 ! Revision 1.1  2015/11/03 17:31:00  pwagner
 ! First commit
 !
