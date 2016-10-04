@@ -29,7 +29,9 @@ module STRING_TABLE
   public :: allocate_hash_table, allocate_string_table, clear_string
   public :: compare_strings, create_string, destroy_char_table
   public :: destroy_hash_table, destroy_string_table, display_string
-  public :: display_string_list, dump_inunit_stack, enter_string, find_file
+  public :: display_string_list, dump_inunit_stack, enter_string
+!   ifort v17 gets a seg fault if find_file is public.
+!   public :: find_file
   public :: float_value, get_char, get_string, how_many_strings, include_stack_top
   public :: index, init_string_table, index_in_string, isStringInTable, len, lookup
   public :: lookup_and_insert, new_line, numerical_value, open_include, open_input
@@ -1257,7 +1259,7 @@ contains
     temp_inunits(size(temp_inunits)) = inunit
     inunit_list => temp_inunits
     inunit_counter = 1
-  end subroutine
+  end subroutine AddInUnit
 
   subroutine SetNextInUnit
     integer :: status
@@ -1275,9 +1277,9 @@ contains
       inunit_counter = inunit_counter + 1
     end if
 
-  end subroutine
+  end subroutine SetNextInUnit
 
-  subroutine init_string_table
+  subroutine Init_String_Table
     source_line = 0
     ! no need to initialize source_column
     at_eof = .false.
@@ -1288,7 +1290,7 @@ contains
     ! has been used before this call
     if (associated(inunit_list)) deallocate(inunit_list)
     inunit_list => NULL()
-  end subroutine
+  end subroutine Init_String_Table
 
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
@@ -1303,6 +1305,9 @@ contains
 end module STRING_TABLE
 
 ! $Log$
+! Revision 2.51  2016/10/04 20:55:25  vsnyder
+! Make Find_File private because ifort 17 crashes with it public
+!
 ! Revision 2.50  2016/08/16 23:15:13  vsnyder
 ! Add Pos and Width arguments to Display_String
 !
