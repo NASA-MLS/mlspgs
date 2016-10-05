@@ -23,57 +23,57 @@
 !     integer, intent(in), optional :: LBOUND ! Low bound for Array
 !     character(len=*), iptional, intent(in) :: OPTIONS
 ! 
-    integer, parameter :: MAXPCTS = 10
-    logical :: NaNsIn1, NaNsIn2
-    character(len=64) :: DiffName
-    real(rk), dimension(3, MAXPCTS):: array1AtNAbs
-    real(rk), dimension(3, MAXPCTS):: array2AtNAbs
-    real(rk), dimension(3, MAXPCTS):: array1AtNRel
-    real(rk), dimension(3, MAXPCTS):: array2AtNRel
-    real(rk), dimension(2)         :: exvalues
-    real(rk), dimension(2)         :: exratios
-    real(rk), dimension(MAXPCTS)   :: gaps
+    integer, parameter                       :: MAXPCTS = 10
+    logical                                  :: NaNsIn1, NaNsIn2
+    character(len=64)                        :: DiffName
+    real(rk), dimension(3, MAXPCTS)          :: array1AtNAbs
+    real(rk), dimension(3, MAXPCTS)          :: array2AtNAbs
+    real(rk), dimension(3, MAXPCTS)          :: array1AtNRel
+    real(rk), dimension(3, MAXPCTS)          :: array2AtNRel
+    real(rk), dimension(2)                   :: exvalues
+    real(rk), dimension(2)                   :: exratios
+    real(rk), dimension(MAXPCTS)             :: gaps
     type(Stat_T), dimension(MAXPCTS)         :: gapStat
-    real(rk), dimension(MAXPCTS)   :: gapratios
+    real(rk), dimension(MAXPCTS)             :: gapratios
     type(Stat_T), dimension(MAXPCTS)         :: gapRatioStat
-    real(rk)                       :: minratio
-    real(rk)                       :: maxratio
-    real(rk)                       :: medianratio
-    real(rk)                       :: meanratio
-    real(rk)                       :: minvalue
-    real(rk)                       :: maxvalue
-    real(rk)                       :: medianvalue
-    real(rk)                       :: meanvalue
-    real(rk)                       :: rmsvalue
-    integer                        :: numTot
-    integer                        :: numEqual
-    real(rk)                       :: pctDiff
-    real(rk)                       :: pctEqual
-    real(rk), dimension(MAXPCTS)   :: pcts
-    real(rk), dimension(MAXPCTS)   :: pctratios
-    real(rk), dimension(MAXPCTS)   :: pctMaxGaps
-    real(rk), dimension(MAXPCTS)   :: pctMaxGapAsRatios
-    real(rk), dimension(MAXPCTS)   :: pctMeanGaps
-    real(rk), dimension(MAXPCTS)   :: pctMaxRatios
-    real(rk), dimension(MAXPCTS)   :: pctMaxRatioAsGaps
-    real(rk), dimension(MAXPCTS)   :: pctMeanRatios
-    real(rk)                       :: rmsratio
-    real(rk)                       :: stddev
-    real(rk)                       :: stddevratio
-    real(rk) :: refmin, refmax, refrms
-    real                           :: sTime
-    real                           :: t1
-    real                           :: t2
-    real(rk), dimension(MAXPCTS,7) :: TheTable
+    real(rk)                                 :: minratio
+    real(rk)                                 :: maxratio
+    real(rk)                                 :: medianratio
+    real(rk)                                 :: meanratio
+    real(rk)                                 :: minvalue
+    real(rk)                                 :: maxvalue
+    real(rk)                                 :: medianvalue
+    real(rk)                                 :: meanvalue
+    real(rk)                                 :: rmsvalue
+    integer                                  :: numTot
+    integer                                  :: numEqual
+    real(rk)                                 :: pctDiff
+    real(rk)                                 :: pctEqual
+    real(rk), dimension(MAXPCTS)             :: pcts
+    real(rk), dimension(MAXPCTS)             :: pctratios
+    real(rk), dimension(MAXPCTS)             :: pctMaxGaps
+    real(rk), dimension(MAXPCTS)             :: pctMaxGapAsRatios
+    real(rk), dimension(MAXPCTS)             :: pctMeanGaps
+    real(rk), dimension(MAXPCTS)             :: pctMaxRatios
+    real(rk), dimension(MAXPCTS)             :: pctMaxRatioAsGaps
+    real(rk), dimension(MAXPCTS)             :: pctMeanRatios
+    real(rk)                                 :: refmin, refmax, refrms
+    real(rk)                                 :: rmsratio
+    real(rk)                                 :: stddev
+    real(rk)                                 :: stddevratio
+    real                                     :: sTime
+    real                                     :: t1
+    real                                     :: t2
+    real(rk), dimension(MAXPCTS,7)           :: TheTable
     logical, parameter                       :: PrintReferenceValues = .false.
     logical, parameter                       :: PrintMinMaxWithRMS = .true.
     logical, parameter                       :: PrintExtraDump = .false.
-    logical, parameter               :: DEBUG = .false.
-    real(rk), dimension(MAXPCTS), parameter :: PCTAges = &
+    logical, parameter                       :: DEBUG = .false.
+    real(rk), dimension(MAXPCTS), parameter  :: PCTAges = &
       & (/ 99.9, 99.8, 99.7, 99.5, 99., 98., 97., 95., 90., 80. /)
-    real, dimension(MAXPCTS), parameter :: PCTFactors = &
+    real, dimension(MAXPCTS), parameter      :: PCTFactors = &
       & (/ .01, .02, .05, .1, .2, .5, 1., 2., 5., 10. /)
-    logical, parameter :: unique = .true. 
+    logical, parameter                       :: unique = .true. 
     ! Executable
     t1 = 0.
     t2 = 0.
@@ -97,6 +97,7 @@
       call outputNamedValue( 'Ratios', dopts(myRatios)%v )
       call outputNamedValue( 'RMS', dopts(RMS)%v )
       call outputNamedValue( 'Table', dopts(table)%v )
+      call outputNamedValue( 'goldbrick', dopts(AuBrick)%v )
       call outputNamedValue( 'WholeArray', dopts(wholeArray)%v )
     end if
     if ( dopts(wholeArray)%v ) then
@@ -250,6 +251,36 @@
           & rms=rmsvalue, median=medianvalue )
         ! call outputNamedValue( 'min(diff)', minval(array2-array1) )
         ! call outputNamedValue( 'max(diff)', maxval(array2-array1) )
+      end if
+      if ( dopts(AuBrick)%v ) then
+        if ( .not. nameHasBeenPrinted ) then
+          if ( len_trim(DiffName) > 0 ) call output( trim(DiffName), advance='yes' )
+          nameHasBeenPrinted = .true.
+        end if
+        nameHasBeenPrinted = .false.
+        
+        call output( ' ** Reference values (min : max, rms): ', advance='no' )
+        call output( refmin, advance='no' )
+        call output( ' : ', advance='no' )
+        call output( refmax, advance='no' )
+        call output( ' , ', advance='no' )
+        call output( refrms, advance='no' )
+        call output( ' **', advance='no' )
+        call newLine
+        
+        call output( ' ** Max. absolute: ', advance='no' )
+        call output( exvalues(1), advance='no' )
+        call output( ' ( =  ', advance='no' )
+        call output( exratios(1), advance='no' )
+        call output( ' fractional ) ** ', advance='no' )
+        call newLine
+        
+        call output( ' ** Max. fractional: ', advance='no' )
+        call output( exratios(2), advance='no' )
+        call output( ' ( =  ', advance='no' )
+        call output( exvalues(2), advance='no' )
+        call output( ' absolute ) ** ', advance='no' )
+        call newLine
       end if
       if ( dopts(myRatios)%v ) then
         if ( .not. nameHasBeenPrinted ) then
@@ -418,6 +449,9 @@
 
 !   end subroutine DIFF_1D_DOUBLE
 ! $Log$
+! Revision 2.19  2016/10/05 20:13:39  pwagner
+! Implemented Au (Gold) option
+!
 ! Revision 2.18  2016/07/28 01:42:27  vsnyder
 ! Refactoring dump and diff
 !
