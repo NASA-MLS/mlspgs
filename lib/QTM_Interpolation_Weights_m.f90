@@ -76,10 +76,10 @@ contains
 
     f = QTM_tree%find_facet ( point, stack )
     inside = f > 0
-    if ( inside ) inside = all(QTM_tree%Q(f)%ZOT_n > 0)
+    if ( inside ) inside = all(QTM_tree%Q(f)%ser > 0)
     if ( inside ) then
       z = geo_to_ZOT ( point )
-      weights%which = QTM_tree%Q(f)%ZOT_n
+      weights%which = QTM_tree%Q(f)%ser
       call triangle_interpolate ( QTM_tree%Q(f)%z%x, QTM_tree%Q(f)%z%y, &
                                 & z%x, z%y, weights%weight )
       if ( present(used) ) then
@@ -92,9 +92,9 @@ contains
       f = QTM_tree%find_facet ( z, stack )
       ! P should be inside!
       inside = f > 0
-      if ( inside ) inside = all(QTM_tree%Q(f)%ZOT_n > 0)
+      if ( inside ) inside = all(QTM_tree%Q(f)%ser > 0)
       if ( inside ) then
-        weights%which = QTM_tree%Q(f)%ZOT_n
+        weights%which = QTM_tree%Q(f)%ser
         call triangle_interpolate ( QTM_tree%Q(f)%z%x, QTM_tree%Q(f)%z%y, &
                                   & z%x, z%y, weights%weight )
       else ! Shouldn't get here
@@ -162,9 +162,9 @@ contains
 
     f = QTM_tree%find_facet ( point, stack )
     inside = f > 0
-    if ( inside ) inside = all(QTM_tree%Q(f)%ZOT_n > 0)
+    if ( inside ) inside = all(QTM_tree%Q(f)%ser > 0)
     if ( inside ) then
-      weights%which = QTM_tree%Q(f)%ZOT_n
+      weights%which = QTM_tree%Q(f)%ser
       call triangle_interpolate ( QTM_tree%Q(f)%z%x, QTM_tree%Q(f)%z%y, &
                                 & point%x, point%y, weights%weight )
       if ( present(used) ) used = point
@@ -173,9 +173,9 @@ contains
       f = QTM_tree%find_facet ( p, stack )
       ! It should be inside!
       inside = f > 0
-      if ( inside ) inside = all(QTM_tree%Q(f)%ZOT_n > 0)
+      if ( inside ) inside = all(QTM_tree%Q(f)%ser > 0)
       if ( inside ) then
-        weights%which = QTM_tree%Q(f)%ZOT_n
+        weights%which = QTM_tree%Q(f)%ser
         call triangle_interpolate ( QTM_tree%Q(f)%z%x, QTM_tree%Q(f)%z%y, &
                                   & point%x, point%y, weights%weight )
       else ! Shouldn't get here
@@ -229,6 +229,10 @@ contains
 end module QTM_Interpolation_Weights_m
 
 ! $Log$
+! Revision 2.4  2016/10/05 23:28:22  vsnyder
+! Replace ZOT_n component name with Ser because it's a serial number for
+! more than just the ZOT coordinates.
+!
 ! Revision 2.3  2016/08/24 22:56:34  vsnyder
 ! Make Weights%Which == 1 with Weights%Weight == 0 if a facet is not found,
 ! so Weights can still be used without checking whether a facet was found.
