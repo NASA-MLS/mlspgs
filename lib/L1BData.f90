@@ -676,7 +676,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     if ( present(details) ) myDetails = details
     hideAssocStatus = .false.
     if ( present(options) ) then
-      hideAssocStatus = any(indexes(options, (/'s','r'/)) > 0 )
+      hideAssocStatus = any(indexes(options, (/'s','r','@'/)) > 0 )
     end if
     prntAssocStatus = .not. hideAssocStatus
     if ( present(mafStart) ) then
@@ -2993,6 +2993,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.115  2016/10/05 20:13:58  pwagner
+! Implemented Au (Gold) option
+!
 ! Revision 2.114  2016/08/12 00:35:18  pwagner
 ! Seems to restore tthe gold brick
 !
