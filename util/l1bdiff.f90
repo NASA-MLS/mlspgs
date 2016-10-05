@@ -33,7 +33,7 @@ program l1bdiff ! diffs two l1b or L2AUX files
    use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning, &
      & MLSMessage
    use MLSStringLists, only: getStringElement, numStringElements
-   use MLSStrings, only: replace, streq, writeIntsToChars
+   use MLSStrings, only: lowercase, replace, streq, writeIntsToChars
    use Output_m, only: resumeOutput, suspendOutput, output
    use Printit_m, only: set_config
    use Time_m, only: time_now, time_config
@@ -67,6 +67,7 @@ program l1bdiff ! diffs two l1b or L2AUX files
     logical     :: verbose = .false.
     logical     :: list = .false.
     logical     :: stats = .false.
+    logical     :: AuBrick         = .false.
     logical     :: rms = .false.
     logical     :: table = .false.
     logical     :: direct = .true.
@@ -141,6 +142,7 @@ program l1bdiff ! diffs two l1b or L2AUX files
   if ( options%silent ) options%dumpOptions = trim(options%dumpOptions) // 'h'
   if ( options%direct ) options%dumpOptions = trim(options%dumpOptions) // 'd'
   if ( options%table ) options%dumpOptions = trim(options%dumpOptions) // 'b'
+  if ( options%AuBrick ) options%dumpOptions = trim(options%dumpOptions) // '@'
   call time_now ( t1 )
   if ( options%verbose .and. .not. options%list ) &
     & print *, 'Compare l1b data to: ', trim(options%referenceFileName)
@@ -257,6 +259,9 @@ contains
       elseif ( filename(1:3) == '-l ' ) then
         options%list = .true.
         exit
+      else if ( lowercase(filename(1:3)) == '-au' ) then
+        options%AuBrick = .true.
+        exit
       else if ( filename(1:5) == '-rms ' ) then
         options%rms = .true.
         exit
@@ -325,6 +330,7 @@ contains
       write (*,*) '   -l          => just list sd names in files'
       write (*,*) '   -maf m1,m2  => just diff in the range [m1,m2]'
       write (*,*) '   -moff offset=> 2nd data set starts after 1st'
+      write (*,*) '   -au         => format like goldbrick'
       write (*,*) '   -rms        => just print mean, rms'
       write (*,*) '   -s          => just show number of differences'
       write (*,*) '   -skip list  => skip diffing the SDs in list'
@@ -485,13 +491,9 @@ contains
     else
       sdfid1 = sfstart( trim(File1), DFACC_READ )
       status = sffinfo( sdfid1, noSds, nsize )
-      ! print *, 'status ', status
-      ! print *, 'noSds ', noSds
       mysdList = '*'
       sdfid2 = sfstart( trim(File2), DFACC_READ )
       status = sffinfo( sdfid1, noSds, nsize )
-      ! print *, 'status ', status
-      ! print *, 'noSds ', noSds
     endif
     if ( options%halfwaves ) then
       nHalves = 2
@@ -510,26 +512,17 @@ contains
         status = sfginfo( sds_id, sdName, rank, dimsizes, data_type, num_attrs )
         ! print *, 'sdName: ', sdName
       endif
-!      if ( sdName == 'PCF' .or. &
-!        &  sdName == 'HDFEOS INFORMATION/coremetadata.0' .or. &
-!        &  sdName == 'l2cf' .or. &
       if ( any( &
         & streq( &
         & (/ 'PCF ', 'meta', 'l2cf', 'utcp', 'leap', 'LCF ' /), &
         & sdname, options='-Pw' ) ) .or. &
         &  index(options%skipList, trim(sdName)) > 0 ) cycle
-   !    print *, trim(sdName)
-   !    print *, streq( '*PCF*', sdname, '-w' )
-   !    print *, streq( '*meta*', sdname, '-w' )
-   !    print *, streq( '*l2cf*', sdname, '-w' )
       do ihalf=1, nHalves
         ! Allocate and fill l2aux
         if ( options%debug ) print *, 'About to read ', trim(sdName)
         if ( options%halfwaves ) then
           call ReadL1BData ( sdfid1, trim(sdName), L1bDataT, NoMAFs, status, &
             & hdfVersion=the_hdfVersion, NEVERFAIL=.true., l2aux=options%l2aux )
-          ! call outputNamedValue( 'NoMAFs', noMAFs )
-          ! call outputNamedValue( 'status', status )
           if ( noMAFs < 1 ) cycle
           if ( status /= 0 .and. .not. options%silent ) then
 	         call MLSMessage ( MLSMSG_Warning, ModuleName, &
@@ -560,9 +553,6 @@ contains
         endif
         if ( options%timing ) call SayTime( 'Reading l1bdata 1', stime )
         stime = t2
-        ! if (associated(L1BData%dpField) ) &
-        !   & call outputnamedValue('shape(l1bdata)', shape(L1BData%dpField) )
-        ! if ( options%verbose ) print *, 'About to read ', trim(sdName), ' (2nd)'
         if ( options%halfwaves ) then
           call ReadL1BData ( sdfid1, trim(sdName), L1bDataT, NoMAFs, status, &
             & hdfVersion=the_hdfVersion, NEVERFAIL=.true., l2aux=options%l2aux )
@@ -582,8 +572,6 @@ contains
         endif
         if ( options%timing ) call SayTime( 'Reading l1bdata 2', stime )
         stime = t2
-        ! if (associated(L1BData2%dpField) ) &
-        !   & call outputnamedValue('shape(l1bdata2)', shape(L1BData2%dpField) )
         if ( associated(L1bData%charField) .and. .not. options%ascii .and. &
           & .not. options%silent ) then
 	       call MLSMessage ( MLSMSG_Warning, ModuleName, &
@@ -607,8 +595,6 @@ contains
         endif
         myOptions = options%dumpOptions
         if ( mustDiff ) myOptions = Replace ( myOptions, 'h', ' ' )
-        ! print *, mustDiff
-        ! print *, trim(myOptions)
         if ( associated(L1bData%dpField) .and. mustDiff .and. options%debug ) &
           & call outputNamedValue( 'num diffs', &
           & count(L1bData%dpField /= L1bData2%dpField), &
@@ -619,9 +605,8 @@ contains
         elseif ( options%oneD .and. associated(L1bData%dpField) ) then
           ! We will store L1BData%dpField in a values array
           nsize = product(shape(L1bData%dpField))
-          ! if ( options%verbose ) print *, 'About to do it 1-d ' // options%dumpOptions, nsize
-          ! print *, 'Calling dump', maxval(L1bData%dpField-L1bData2%dpField)
-          call dump( L1bData%dpField-L1bData2%dpField, 'L1bData%dpField diff', &
+
+          call dump( L1bData%dpField-L1bData2%dpField, &
             & options=myOptions )
           ! stop
           call allocate_test(l1bValues1, nsize, 'l1bValues1', ModuleName )
@@ -632,24 +617,17 @@ contains
           call deallocate_test( L1bData2%dpField, 'l1bData%Values2', ModuleName )
           if ( options%timing ) call SayTime( 'Copying values to 1-d arrays', stime )
           stime = t2
-          ! if ( options%verbose ) print *, 'About to do it 1-d ' // options%dumpOptions, nsize
-          ! print *, 'Calling diff', maxval(l1bValues2-l1bValues1)
+
           call diff(L1bData, L1bData2, numDiffs=numDiffs, options=myOptions, &
             & l1bValues1=l1bValues1, l1bValues2=l1bValues2 )
           call deallocate_test( L1bValues1, 'l1bValues1', ModuleName )
           call deallocate_test( L1bValues2, 'l1bValues2', ModuleName )
         elseif ( options%direct .or. .not. associated(L1bData%dpField) ) then
           if ( options%verbose ) print *, 'About to do it direct ' // myOptions
-          ! print *, 'Calling direct diff'
           call diff(L1bData, L1bData2, numDiffs=numDiffs, options=myOptions )
         else
-          ! print *, 'details=0'
-          ! print *, 'Calling 3rd diff'
           call diff(L1bData, L1bData2, details=0, &
             & numDiffs=numDiffs, options=myOptions )
-          ! print *, 'done diffing'
-
-          ! numDiffs = numDiffs + count( L1bData%dpField /= L1bData2%dpField )
           if ( .true. .and. associated(L1bData%dpField) .and. &
             & associated(L1bData2%dpField)) then
             if ( options%silent .and. numDiffs < 1 ) then
@@ -657,8 +635,6 @@ contains
               & L1bData2%dpField(:,:,maf1+options%moff:maf2+options%moff)) ) then
               print *, '(The two fields are exactly equal)'
             elseif( options%moff /= 0 .or. options%maf1 > 0 ) then
-              ! print *, 'About to diff dpFields'
-              ! print *, 'Calling 4th diff'
               call diff( L1bData%dpField(:,:,maf1:maf2), &
                 & '(1)', &
                 & L1bData2%dpField(:,:,maf1+options%moff:maf2+options%moff), &
@@ -678,13 +654,9 @@ contains
             elseif ( .false. .and. all(L1bData%dpField == 0.d0) ) then
               print *, '(The two fields are exactly equal)'
             elseif ( options%maf1 /= 0 .and. options%maf2 /= 0 ) then
-              ! print *, shape( L1bData%dpField(:,:,options%maf1:options%maf2) )
-              ! print *, 'Calling 2nd dump'
               call dump( L1bData%dpField(:,:,options%maf1:options%maf2), &
                 & 'l1bData%dpField', options=myOptions )
             else
-              ! print *, shape( L1bData%dpField )
-              ! print *, 'Calling 3rd dump'
               call dump( L1bData%dpField, &
                 & 'l1bData%dpField', options=myOptions )
             endif
@@ -862,6 +834,9 @@ end program l1bdiff
 !==================
 
 ! $Log$
+! Revision 1.34  2016/08/09 22:41:40  pwagner
+! Consistent with splitting of Dunp_0
+!
 ! Revision 1.33  2016/07/28 01:46:38  vsnyder
 ! Refactor diff and dump
 !
