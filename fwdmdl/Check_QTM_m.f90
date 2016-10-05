@@ -32,7 +32,8 @@ contains
   subroutine Check_QTM ( Grids_Tmp, Grids_f, QTM_HGrid, UsingQTM )
     ! Check whether temperature and all species either all have QTM HGrid,
     ! or none do.  If they all do, set UsingQTM and find the QTM HGrid with
-    ! the finest resolution and associate it with QTM_HGrid.
+    ! the finest resolution and associate it with QTM_HGrid.  At least for now,
+    ! require all the QTM grids to have the same resolution.
 
     use HGridsDatabase, only: HGrid_T
     use Intrinsic, only: Lit_Indices, L_Temperature
@@ -69,6 +70,8 @@ contains
       spsQTM = grids_f%isQTM(k)
       QTM_fail = QTM_fail .or. ( spsQTM .neqv. usingQTM )
       if ( .not. QTM_fail .and. usingQTM .and. spsQTM ) then
+        QTM_fail = QTM_fail .or. QTM_hGrid%QTM_tree%level /= &
+                 & grids_f%qtyStuff(k)%qty%template%the_hGrid%QTM_tree%level
         if ( QTM_hGrid%QTM_tree%level < &
            & grids_f%qtyStuff(k)%qty%template%the_hGrid%QTM_tree%level ) &
            & QTM_hGrid => grids_f%qtyStuff(k)%qty%template%the_hGrid
@@ -90,7 +93,8 @@ contains
         call newLine
       end do
       call MLSMessage ( MLSMSG_Error, moduleName, &
-        & 'Some quantities have QTM hGrids but some do not.' )
+        & 'Some quantities have QTM hGrids but some do not, ' // &
+        & 'or QTM resolutions are different.' )
     end if
 
     if ( .not. usingQTM ) nullify ( QTM_HGrid )
@@ -113,6 +117,9 @@ contains
 end module Check_QTM_m
 
 ! $Log$
+! Revision 2.5  2016/10/05 20:44:58  vsnyder
+! Require all QTM grids to have the same resolution
+!
 ! Revision 2.4  2016/10/01 01:37:47  vsnyder
 ! Make QTM_Tree component of HGrid_t allocatable
 !
