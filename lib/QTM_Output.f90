@@ -78,9 +78,9 @@ contains
       call output ( x, before=' (', format=fmt )
       call output ( y, before=',', after=')', format=fmt )
     end do
-    call output ( QTM(which)%ZOT_n(1), before=' Serial # ' )
-    call output ( QTM(which)%ZOT_n(2), before=' ' )
-    call output ( QTM(which)%ZOT_n(3), before=' ' )
+    call output ( QTM(which)%ser(1), before=' Serial # ' )
+    call output ( QTM(which)%ser(2), before=' ' )
+    call output ( QTM(which)%ser(3), before=' ' )
     if ( present(sons) ) then
       if ( sons ) then
         call output ( ' SONS' )
@@ -238,6 +238,10 @@ contains
 end module QTM_Output
 
 ! $Log$
+! Revision 2.7  2016/10/05 23:28:22  vsnyder
+! Replace ZOT_n component name with Ser because it's a serial number for
+! more than just the ZOT coordinates.
+!
 ! Revision 2.6  2016/10/01 01:54:18  vsnyder
 ! Spiff the dump
 !

@@ -48,7 +48,7 @@ module QTM_Interpolation_Weights_3D_m
                      ! If the point is outside the QTM, this will be the
                      ! negative of one of the above values, other than
                      ! Inside_Prism; it will be whatever face the extrapolated
-                     ! line intersects.  The coordinates indexed by ZOT_N are
+                     ! line intersects.  The coordinates indexed by Ser are
                      ! those where the line intersects the QTM, not where it
                      ! intersects a surface of a height equal to one of the
                      ! heights in the intersection of all heights in the state
@@ -61,8 +61,8 @@ module QTM_Interpolation_Weights_3D_m
     integer :: H_ind = 0 ! Index in height grid.  If the intersection is not
                      ! with a horizontal boundary within the QTM, H_Ind is the
                      ! index of the next lower height surface.
-    integer :: N_Coeff = 0  ! How many elements of Coeff and ZOT_N are used.
-    integer :: ZOT_N(3) = 0 ! Serial numbers of ZOT coordinates, see QTM_Node_t
+    integer :: N_Coeff = 0  ! How many elements of Coeff and Ser are used.
+    integer :: Ser(3) = 0   ! Serial numbers of coordinates, see QTM_Node_t
                      ! in the Generate_QTM_m module.
   end type S_QTM_t
 
@@ -329,8 +329,8 @@ contains
         ! Interpolate in height at the X and Y, X and P, or Y and P nodes
         ! of the QTM.
         jlo = 1; jhi = nh
-        call weight_1d ( heights(:,points(i)%ZOT_n(1)), g%v, jlo, jhi, w(:,1) )
-        call weight_1d ( heights(:,points(i)%ZOT_n(2)), g%v, jlo, jhi, w(:,2) )
+        call weight_1d ( heights(:,points(i)%ser(1)), g%v, jlo, jhi, w(:,1) )
+        call weight_1d ( heights(:,points(i)%ser(2)), g%v, jlo, jhi, w(:,2) )
         ! Assume that it's extremely rare to hit a vertex, so compute four
         ! weights.
         n_weights(i) = 4
@@ -338,10 +338,10 @@ contains
                                 & w(:,2)*points(i)%coeff(2) ]
         weights(5:6,i)%weight = 0
         weights(1:4,i)%which = &
-          & [ element_position([jlo,points(i)%ZOT_n(1)], [nh,nq]), &
-            & element_position([jhi,points(i)%ZOT_n(1)], [nh,nq]), &
-            & element_position([jlo,points(i)%ZOT_n(2)], [nh,nq]), &
-            & element_position([jhi,points(i)%ZOT_n(2)], [nh,nq]) ]
+          & [ element_position([jlo,points(i)%ser(1)], [nh,nq]), &
+            & element_position([jhi,points(i)%ser(1)], [nh,nq]), &
+            & element_position([jlo,points(i)%ser(2)], [nh,nq]), &
+            & element_position([jhi,points(i)%ser(2)], [nh,nq]) ]
         weights(5:6,i)%which = 0
       case ( inside_prism ) ! Use the general method
         call QTM_interpolation_weights ( QTM_tree, heights, g, weights(:,i), &
@@ -354,10 +354,10 @@ contains
         weights(1:3,i)%weight = points(i)%coeff(1:3)
         weights(4:6,i)%weight = 0
         do j = 1, 3
-          call purehunt ( points(i)%h, heights(:,points(i)%ZOT_n(j)), &
+          call purehunt ( points(i)%h, heights(:,points(i)%ser(j)), &
                         & nh, jlo, jhi )
           weights(j,i)%which = &
-            & element_position([jlo,points(i)%ZOT_n(j)], [nh,nq])
+            & element_position([jlo,points(i)%ser(j)], [nh,nq])
         end do
         weights(4:6,i)%which = 0
       end select
@@ -515,10 +515,10 @@ contains
                                 & w*points(i)%coeff(2) ]
         weights(5:6,i)%weight = 0
         weights(1:4,i)%which = &
-          & [ element_position([jlo,points(i)%ZOT_n(1)], [nh,nq]), &
-            & element_position([jhi,points(i)%ZOT_n(1)], [nh,nq]), &
-            & element_position([jlo,points(i)%ZOT_n(2)], [nh,nq]), &
-            & element_position([jhi,points(i)%ZOT_n(2)], [nh,nq]) ]
+          & [ element_position([jlo,points(i)%ser(1)], [nh,nq]), &
+            & element_position([jhi,points(i)%ser(1)], [nh,nq]), &
+            & element_position([jlo,points(i)%ser(2)], [nh,nq]), &
+            & element_position([jhi,points(i)%ser(2)], [nh,nq]) ]
         weights(5:6,i)%which = 0
       case ( inside_prism ) ! Use the general method
         call QTM_interpolation_weights ( QTM_tree, heights, g, weights(:,i), &
@@ -533,7 +533,7 @@ contains
         do j = 1, 3
           call purehunt ( points(i)%h, heights, nh, jlo, jhi )
           weights(j,i)%which = &
-            & element_position([jlo,points(i)%ZOT_n(j)], [nh,nq])
+            & element_position([jlo,points(i)%ser(j)], [nh,nq])
         end do
         weights(4:6,i)%which = 0
       end select
@@ -642,6 +642,10 @@ contains
 end module QTM_Interpolation_Weights_3D_m
 
 ! $Log$
+! Revision 2.7  2016/10/05 23:28:22  vsnyder
+! Replace ZOT_n component name with Ser because it's a serial number for
+! more than just the ZOT coordinates.
+!
 ! Revision 2.6  2016/09/14 20:46:21  vsnyder
 ! Add H_Ind component, move Weight_1D to Weight_1D_m
 !
