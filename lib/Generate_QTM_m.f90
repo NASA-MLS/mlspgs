@@ -39,7 +39,7 @@ module Generate_QTM_m
                                ! pole node is 6 - ( xn + yn )
     type(h_t) :: Geo(3)        ! (lon,lat) coordinates of vertices, degrees
     type(ZOT_t) :: Z(3)        ! ZOT coordinates of vertices
-    integer :: ZOT_N(3) = 0    ! Serial numbers of coordinates of vertices in 
+    integer :: Ser(3) = 0      ! Serial numbers of coordinates of vertices in 
                                ! QTM_Tree_t%ZOT_In and QTM_Tree_t%Geo_In if
                                ! nonzero, else the vertex is not either in or
                                ! adjacent to the polygon.  A leaf node always
@@ -76,7 +76,7 @@ module Generate_QTM_m
     type(QTM_node_t), allocatable :: Q(:)
     type(ZOT_t), allocatable :: ZOT_In(:)  ! ZOT coordinates of vertices of QTM
                                ! that are inside or adjacent to the polygon.
-                               ! Indexed by Q(.)%ZOT_n(.).
+                               ! Indexed by Q(.)%Ser(.).
     class(h_t), allocatable :: Geo_In(:)   ! H_T coordinates corresponding to
                                ! ZOT_In, (lon,lat) degrees, either geodetic or
                                ! geocentric.
@@ -187,12 +187,12 @@ contains
     ! polygon are in QTM_Trees%ZOT_In.  The (lon,lat) coordinates are in
     ! QTM_Trees%Geo_In.  For each facet, they are also in QTM_Trees%Q(F)%Z
     ! and QTM_Trees%Q(F)%Geo, which could be gotten from
-    ! QTM_Trees%ZOT_In(QTM_Trees%Q(F)%ZOT_n) and
-    ! QTM_Trees%Geo_In(QTM_Trees%Q(F)%ZOT_n), provided
-    ! QTM_Trees%Q(F)%ZOT_n /= 0, which is true for facets at the finest
+    ! QTM_Trees%ZOT_In(QTM_Trees%Q(F)%Ser) and
+    ! QTM_Trees%Geo_In(QTM_Trees%Q(F)%Ser), provided
+    ! QTM_Trees%Q(F)%Ser /= 0, which is true for facets at the finest
     ! refinement but not necessarily at coarser refinement.  If a vertex V of
     ! a coarse-refinement facet C is not also a vertex of a finest-refinement
-    ! facet, QTM_Trees%Q(C)%ZOT_n(v) == 0.
+    ! facet, QTM_Trees%Q(C)%Ser(v) == 0.
 
     use Geolocation_0, only: H_Geoc, H_Geod
     use PnPoly_m, only: PnPoly
@@ -393,7 +393,7 @@ contains
       ! Don't keep the tree node if it's not interesting, that is, the facet
       ! is too coarse and not refined.
       if ( all(QTM_Trees%Q(root)%son == 0) .and. &
-         & all(QTM_Trees%Q(root)%zot_n == 0) ) then
+         & all(QTM_Trees%Q(root)%ser == 0) ) then
         root = 0
         QTM_Trees%n = QTM_Trees%n - 1
       else if ( QTM_Trees%Q(root)%depth == QTM_Trees%level ) then
@@ -439,7 +439,7 @@ contains
       integer :: Stat   ! "Inserted" if Z%condense_ZOT() inserted in H
       real(rg) :: X, Y
 
-      if ( QTM%zot_n(node) /= 0 ) return ! Already has a serial number
+      if ( QTM%ser(node) /= 0 ) return ! Already has a serial number
       cz = qtm%z(node)%condense_ZOT()
       loc = 0 ! Start lookup at z%condense_ZOT()
       do
@@ -458,13 +458,13 @@ contains
           y = merge(qtm%z(node)%y,abs(qtm%z(node)%y),abs(qtm%z(node)%x)/=1.0_rg)
           QTM_Trees%ZOT_in(QTM_Trees%n_in) = zot_t(x,y)
           h(2,loc) = QTM_Trees%n_in ! Remember coordinates' serial number
-          QTM%zot_n(node) = h(2,loc) ! Coordinates' serial number
+          QTM%ser(node) = h(2,loc) ! Coordinates' serial number
           return
         end if
         ! Hash got a match; make sure it's the same, else go around again.
         if ( QTM_Trees%ZOT_in(h(2,loc))%condense_ZOT() == cz ) exit
       end do
-      if ( stat == found ) QTM%zot_n(node) = h(2,loc) ! Coordinates' serial number
+      if ( stat == found ) QTM%ser(node) = h(2,loc) ! Coordinates' serial number
 
     end subroutine Add_One
 
@@ -712,6 +712,10 @@ contains
 end module Generate_QTM_m
 
 ! $Log$
+! Revision 2.17  2016/10/05 23:28:22  vsnyder
+! Replace ZOT_n component name with Ser because it's a serial number for
+! more than just the ZOT coordinates.
+!
 ! Revision 2.16  2016/09/23 01:56:16  vsnyder
 ! Add Geodetic and QTM_Lats components.  Fill QTM_Lats.  Make geolocation
 ! components polymorphic so they encode whether they're geodetic or not.
