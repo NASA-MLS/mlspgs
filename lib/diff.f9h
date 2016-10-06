@@ -11,11 +11,11 @@
 
 ! $Id$
 
-!   subroutine DIFF_1D_DOUBLE ( ARRAY1, NAME1, ARRAY2, NAME2, &
+!   subroutine DIFF_1D_DOUBLE ( inArray1, NAME1, inArray2, NAME2, &
 !     & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS )
-!     double precision, intent(in) :: ARRAY1(:)
+!     double precision, intent(in) :: inArray1(:)
 !     character(len=*), intent(in), optional :: NAME1
-!     double precision, intent(in) :: ARRAY2(:)
+!     double precision, intent(in) :: inArray2(:)
 !     character(len=*), intent(in), optional :: NAME2
 !     double precision, intent(in)           :: FILLVALUE
 !     integer, intent(in), optional :: WIDTH
@@ -23,53 +23,59 @@
 !     integer, intent(in), optional :: LBOUND ! Low bound for Array
 !     character(len=*), intent(in), optional :: options
 ! 
-!     double precision, dimension(size(array1)) :: filtered1
-!     double precision, dimension(size(array2)) :: filtered2
-    integer, parameter :: MAXPCTS = 10
-    logical :: warn, NaNsIn1, NaNsIn2, alreadySbtrcted
-    character(len=64) :: DiffName
-    integer :: i
-    double precision :: tmax
-    real(kind(array1)), dimension(2)       :: exvalues
-    real(kind(array1)), dimension(2)       :: exratios
-    real(kind(array1)), dimension(MAXPCTS) :: gaps
+!     double precision, dimension(size(inArray1)) :: Array1
+!     double precision, dimension(size(inArray2)) :: Array2
+    integer, parameter                     :: MAXPCTS = 10
+    logical                                :: warn, NaNsIn1, NaNsIn2, alreadySbtrcted
+    real(kind(inArray1)), dimension(3, MAXPCTS) :: array1AtNAbs
+    real(kind(inArray1)), dimension(3, MAXPCTS) :: array2AtNAbs
+    real(kind(inArray1)), dimension(3, MAXPCTS) :: array1AtNRel
+    real(kind(inArray1)), dimension(3, MAXPCTS) :: array2AtNRel
+    character(len=64)                      :: DiffName
+    integer                                :: i
+    double precision                       :: tmax
+    real(kind(inArray1)), dimension(2)       :: exvalues
+    real(kind(inArray1)), dimension(2)       :: exratios
+    real(kind(inArray1)), dimension(MAXPCTS) :: gaps
     type(Stat_T), dimension(MAXPCTS)       :: gapStat
-    real(kind(array1)), dimension(MAXPCTS) :: gapratios
+    real(kind(inArray1)), dimension(MAXPCTS) :: gapratios
     type(Stat_T), dimension(MAXPCTS)       :: gapRatioStat
-    real(kind(array1))                     :: minratio
-    real(kind(array1))                     :: maxratio
-    real(kind(array1))                     :: medianratio
-    real(kind(array1))                     :: meanratio
-    real(kind(array1))                     :: minvalue
-    real(kind(array1))                     :: maxvalue
-    real(kind(array1))                     :: medianvalue
-    real(kind(array1))                     :: meanvalue
-    real(kind(array1))                     :: rmsvalue
-    integer                                :: numTot
-    integer                                :: numEqual
-    real(kind(array1))                     :: pctDiff
-    real(kind(array1))                     :: pctEqual
-    real(kind(array1)), dimension(MAXPCTS) :: pcts
-    real(kind(array1)), dimension(MAXPCTS) :: pctratios
-    real(kind(array1)), dimension(MAXPCTS) :: pctMaxGaps
-    real(kind(array1)), dimension(MAXPCTS) :: pctMaxGapAsRatios
-    real(kind(array1)), dimension(MAXPCTS) :: pctMeanGaps
-    real(kind(array1)), dimension(MAXPCTS) :: pctMaxRatios
-    real(kind(array1)), dimension(MAXPCTS) :: pctMaxRatioAsGaps
-    real(kind(array1)), dimension(MAXPCTS) :: pctMeanRatios
-    logical, parameter                     :: PRINTREFERENCEVALUES = .false.
-    logical, parameter                     :: PRINTMINMAXWITHRMS = .true.
-    logical, parameter                     :: PRINTEXTRADUMP = .true.
-    real(kind(array1))                     :: rmsratio
-    real(kind(array1))                     :: stddev
-    real(kind(array1))                     :: stddevratio
-    logical, parameter               :: DEBUG = .false.
-    logical, parameter               :: REPLACEFILLVALUESWITH0 = .false.
-    real(kind(array1)), dimension(MAXPCTS), parameter :: PCTAGES = &
+    real(kind(inArray1))                     :: minratio
+    real(kind(inArray1))                     :: maxratio
+    real(kind(inArray1))                     :: medianratio
+    real(kind(inArray1))                     :: meanratio
+    real(kind(inArray1))                     :: minvalue
+    real(kind(inArray1))                     :: maxvalue
+    real(kind(inArray1))                     :: medianvalue
+    real(kind(inArray1))                     :: meanvalue
+    real(kind(inArray1))                     :: rmsvalue
+    integer                                  :: numTot
+    integer                                  :: numEqual
+    real(kind(inArray1))                     :: pctDiff
+    real(kind(inArray1))                     :: pctEqual
+    real(kind(inArray1)), dimension(MAXPCTS) :: pcts
+    real(kind(inArray1)), dimension(MAXPCTS) :: pctratios
+    real(kind(inArray1)), dimension(MAXPCTS) :: pctMaxGaps
+    real(kind(inArray1)), dimension(MAXPCTS) :: pctMaxGapAsRatios
+    real(kind(inArray1)), dimension(MAXPCTS) :: pctMeanGaps
+    real(kind(inArray1)), dimension(MAXPCTS) :: pctMaxRatios
+    real(kind(inArray1)), dimension(MAXPCTS) :: pctMaxRatioAsGaps
+    real(kind(inArray1)), dimension(MAXPCTS) :: pctMeanRatios
+    logical, parameter                       :: PRINTREFERENCEVALUES = .false.
+    logical, parameter                       :: PRINTMINMAXWITHRMS = .true.
+    logical, parameter                       :: PRINTEXTRADUMP = .true.
+    real(kind(inArray1))                     :: rmsratio
+    real(kind(inArray1))                     :: stddev
+    real(kind(inArray1))                     :: stddevratio
+    real                                     :: t1
+    real                                     :: t2
+    logical, parameter                       :: DEBUG = .false.
+    logical, parameter                       :: REPLACEFILLVALUESWITH0 = .false.
+    real(kind(inArray1)), dimension(MAXPCTS), parameter :: PCTAGES = &
       & (/ 99.9, 99.8, 99.7, 99.5, 99., 98., 97., 95., 90., 80. /)
     real, dimension(MAXPCTS), parameter :: PCTFACTORS = &
       & (/ .01, .02, .05, .1, .2, .5, 1., 2., 5., 10. /)
-    real(kind(array1)), dimension(MAXPCTS,7) :: TheTable
+    real(kind(inArray1)), dimension(MAXPCTS,7) :: TheTable
     logical, parameter :: unique = .false. 
     ! Executable
     thisIsADiff = .true.  ! For special dumps
@@ -93,18 +99,19 @@
       call outputNamedValue( 'Ratios', dopts(myRatios)%v )
       call outputNamedValue( 'RMS', dopts(RMS)%v )
       call outputNamedValue( 'Table', dopts(table)%v )
+      call outputNamedValue( 'goldbrick', dopts(AuBrick)%v )
       call outputNamedValue( 'WholeArray', dopts(wholeArray)%v )
     end if
     if ( dopts(wholeArray)%v ) then
-      call dump(array1-array2, trim(DiffName), &
-      & real(0.,kind(array1)), WIDTH, FORMAT, &
+      call dump(inArray1-inArray2, trim(DiffName), &
+      & real(0.,kind(inArray1)), WIDTH, FORMAT, &
       & LBOUND, options )
       return
     end if
     
-    NaNsIn1 = any(.not. ieee_is_finite(array1))
+    NaNsIn1 = any(.not. ieee_is_finite(inArray1))
     if ( NaNsIn1 ) then
-      if ( .not. any(ieee_is_finite(array1)) ) then
+      if ( .not. any(ieee_is_finite(inArray1)) ) then
         call output( '*** skipping: no finite values found', advance='no' )
         if ( len_trim(name1) > 0 ) then
           call output( ' in ' // trim(name1), advance='yes')
@@ -120,12 +127,12 @@
         call output( ' in first array', advance='yes')
       end if
       if ( dopts(NaNs)%v ) then
-        call WhereAreTheInfs ( array1, which, how_many )
+        call WhereAreTheInfs ( inArray1, which, how_many )
         if ( how_many > 0 ) then
           call outputNamedValue( 'num(Infs)', how_many )
           if ( how_many < 50 ) call outputNamedValue( 'which', which(1:how_many) )
         end if
-        call WhereAreTheNaNs ( array1, which, how_many )
+        call WhereAreTheNaNs ( inArray1, which, how_many )
         if ( how_many > 0 ) then
           call outputNamedValue( 'num(NaNs)', how_many )
           if ( how_many < 50 ) call outputNamedValue( 'which', which(1:how_many) )
@@ -133,9 +140,9 @@
       end if
     end if
 
-    NaNsIn2 = any(.not. ieee_is_finite(array2))
+    NaNsIn2 = any(.not. ieee_is_finite(inArray2))
     if ( NaNsIn2 ) then
-      if ( .not. any(ieee_is_finite(array2)) ) then
+      if ( .not. any(ieee_is_finite(inArray2)) ) then
         call output( '*** skipping: no finite values found', advance='no' )
         if ( len_trim(name2) > 0 ) then
           call output( ' in ' // trim(name2), advance='yes')
@@ -151,12 +158,12 @@
         call output( ' in second array', advance='yes')
       end if
       if ( dopts(NaNs)%v ) then
-        call WhereAreTheInfs ( array2, which, how_many )
+        call WhereAreTheInfs ( inArray2, which, how_many )
         if ( how_many > 0 ) then
           call outputNamedValue( 'num(Infs)', how_many )
           if ( how_many < 50 ) call outputNamedValue( 'which', which(1:how_many) )
         end if
-        call WhereAreTheNaNs ( array2, which, how_many )
+        call WhereAreTheNaNs ( inArray2, which, how_many )
         if ( how_many > 0 ) then
           call outputNamedValue( 'num(NaNs)', how_many )
           if ( how_many < 50 ) call outputNamedValue( 'which', which(1:how_many) )
@@ -165,40 +172,40 @@
     end if
 
     if ( NaNsIn1 .or. NaNsIn2 ) then
-      call filterValues(reshape( array1, (/ product(shape(array1)) /) ), &
-        & filtered1, &
-        & reshape( array2, (/ product(shape(array2)) /) ), &
-        & filtered2, &
+      call filterValues(reshape( inArray1, (/ product(shape(inArray1)) /) ), &
+        & Array1, &
+        & reshape( inArray2, (/ product(shape(inArray2)) /) ), &
+        & Array2, &
         & warn, FillValue)
       if ( warn ) call output( &
         & '*** non-matched NaNs diffing ' // trim(DiffName), &
         & advance='yes')
     else
-      ! All of array11 and array2 are finite, so we need only reshape to 1d
-      filtered1 = reshape( array1, (/ product(shape(array1)) /) )
-      filtered2 = reshape( array2, (/ product(shape(array2)) /) )
+      ! All of inArray11 and inArray2 are finite, so we need only reshape to 1d
+      Array1 = reshape( inArray1, (/ product(shape(inArray1)) /) )
+      Array2 = reshape( inArray2, (/ product(shape(inArray2)) /) )
     end if
 
     ! call output( 'About to count array elements', advance='yes' )
-    if ( all(filtered1 == filtered2) ) then
+    if ( all(Array1 == Array2) ) then
       call output( '(The two arrays are exactly equal)', advance='yes' )
       return
-    else if ( all(filtered1 == FillValue) ) then
+    else if ( all(Array1 == FillValue) ) then
       call outputNamedValue( trim(name1) // ' filled entirely with Fill values', &
         & FillValue )
       return
-    else if ( all(filtered2 == FillValue) ) then
+    else if ( all(Array2 == FillValue) ) then
       call outputNamedValue( '2nd array filled entirely with Fill values', &
         & FillValue )
       return
     end if
-    numTot = count( (/filtered1 /= FillValue/) )
-    numEqual = count( (/filtered1 /= FillValue .and. filtered1 == filtered2/) )
+    numTot = count( (/Array1 /= FillValue/) )
+    numEqual = count( (/Array1 /= FillValue .and. Array1 == Array2/) )
     ! I can't think of a good reason to replace FillValues with 0 here
     if ( REPLACEFILLVALUESWITH0 ) then
-      call ReplaceFillValues( filtered1, FillValue, newFill=real(0., kind(FillValue)) )
-      call ReplaceFillValues( filtered2, FillValue, newFill=real(0., kind(FillValue)) )
-      if ( all(filtered1 == filtered2) ) then
+      call ReplaceFillValues( Array1, FillValue, newFill=real(0., kind(FillValue)) )
+      call ReplaceFillValues( Array2, FillValue, newFill=real(0., kind(FillValue)) )
+      if ( all(Array1 == Array2) ) then
         call output( '(The two arrays are exactly equal)', advance='yes' )
         return
       end if
@@ -206,34 +213,32 @@
     if ( dopts(RMS)%v .or. dopts(myRatios)%v .or. dopts(AuBrick)%v ) then
       ! We want to make sure we remove values from both arrays where either is fill
       if ( DEBUG ) call outputNamedValue( 'filtering FillValue', FillValue )
-      filtered1 = reshape( array1, (/ product(shape(array1)) /) )
-      filtered2 = reshape( array2, (/ product(shape(array2)) /) )
-      where (filtered1 == FillValue)
-        filtered2 = FillValue
+      Array1 = reshape( inArray1, (/ product(shape(inArray1)) /) )
+      Array2 = reshape( inArray2, (/ product(shape(inArray2)) /) )
+      where (Array1 == FillValue)
+        Array2 = FillValue
       end where
-      where (filtered2 == FillValue)
-        filtered1 = FillValue
+      where (Array2 == FillValue)
+        Array1 = FillValue
       end where
-      numNonFill = count(filtered1 /= FillValue)
-      call ReorderFillValues ( filtered1, FillValue )
-      call ReorderFillValues ( filtered2, FillValue )
-      call allstats(filtered1(1:numNonFill), &
+      numNonFill = count(Array1 /= FillValue)
+      call ReorderFillValues ( Array1, FillValue )
+      call ReorderFillValues ( Array2, FillValue )
+      call allstats(Array1(1:numNonFill), &
         & addedData=.false., min=refmin, max=refmax, rms=refrms)
-      call allstats(filtered2(1:numNonFill), &
+      call allstats(Array2(1:numNonFill), &
         & addedData=.true., min=refmin, max=refmax, rms=refrms)
       if ( PRINTREFERENCEVALUES ) &
         & call printRMSetc ( 'Reference values', refmin, refmax, refrms )
-      ! call dump ( filtered1, 'filtered1', fillvalue=fillvalue )
-      ! call dump ( filtered2, 'filtered2', fillvalue=fillvalue )
-      if ( product(shape(array1)) > TOOMANYELEMENTS ) then
-        call outputNamedValue( 'Array size excessive for pcts', product(shape(array1)) )
+      if ( product(shape(inArray1)) > TOOMANYELEMENTS ) then
+        call outputNamedValue( 'Array size excessive for pcts', product(shape(inArray1)) )
         if ( dopts(wholeArray)%v ) then
-          call dump( filtered1-filtered2, trim(DiffName), &
-            & real(0.,kind(array1)), WIDTH, FORMAT, &
+          call dump( Array1-Array2, trim(DiffName), &
+            & real(0.,kind(inArray1)), WIDTH, FORMAT, &
             & LBOUND, options )
         else
-          call dump( filtered1(1:numNonFill)-filtered2(1:numNonFill), trim(DiffName), &
-            & real(0.,kind(array1)), WIDTH, FORMAT, &
+          call dump( Array1(1:numNonFill)-Array2(1:numNonFill), trim(DiffName), &
+            & real(0.,kind(inArray1)), WIDTH, FORMAT, &
             & LBOUND, options )
         end if
         return
@@ -243,21 +248,19 @@
       call usePcts
       ! Prepare to find abs, relative differences
       ! Avoid another automatic array
-      do i=1, size(filtered1)
-        tmax = max( abs(filtered1(i)), abs(filtered2(i)) )
-        filtered1(i) = filtered1(i) - filtered2(i)
-        filtered2(i) = tmax
+      do i=1, size(Array1)
+        tmax = max( abs(Array1(i)), abs(Array2(i)) )
+        Array1(i) = Array1(i) - Array2(i)
+        Array2(i) = tmax
       end do
-      ! call dump ( filtered1, 'filtered1-filtered2', fillvalue=real(0.,kind(array1)) )
-      ! call outputNamedValue( 'num /= fill value', numNonFill )
       alreadySbtrcted = .true.
       if ( dopts(wholeArray)%v ) then
-        call dump( filtered1, trim(DiffName), &
-          & real(0.,kind(array1)), WIDTH, FORMAT, &
+        call dump( Array1, trim(DiffName), &
+          & real(0.,kind(inArray1)), WIDTH, FORMAT, &
           & LBOUND, options )
       else if ( .not. PRINTEXTRADUMP ) then
-        call dump( filtered1(1:numNonFill), trim(DiffName), &
-          & real(0.,kind(array1)), WIDTH, FORMAT, &
+        call dump( Array1(1:numNonFill), trim(DiffName), &
+          & real(0.,kind(inArray1)), WIDTH, FORMAT, &
           & LBOUND, options )
       end if
       if ( DEBUG ) call output( 'DoneWithDiff', advance='yes' )
@@ -271,239 +274,25 @@
       call usePcts
       ! Prepare to find abs, relative differences
       ! Avoid another automatic array
-      do i=1, size(filtered1)
-        tmax = max( abs(filtered1(i)), abs(filtered2(i)) )
-        filtered1(i) = filtered1(i) - filtered2(i)
-        filtered2(i) = tmax
+      do i=1, size(Array1)
+        tmax = max( abs(Array1(i)), abs(Array2(i)) )
+        Array1(i) = Array1(i) - Array2(i)
+        Array2(i) = tmax
       end do
     end if
-    if ( PRINTEXTRADUMP ) call dump(filtered1, trim(DiffName), &
-      & real(0.,kind(array1)), WIDTH, FORMAT, &
+    if ( PRINTEXTRADUMP ) call dump(Array1, trim(DiffName), &
+      & real(0.,kind(inArray1)), WIDTH, FORMAT, &
       & LBOUND, options )
     call doneWithDiff
     if ( DEBUG ) call output( 'DoneWithDiff', advance='yes' )
   contains
-    subroutine doneWithDiff
-      ! Internal variables
-      character(len=12), dimension(7) :: formats
-      character(len=16) :: originalSDFormat
-      !
-      originalSDFormat = outputOptions%sdFormatDefault
-      outputOptions%sdFormatDefault = rmsFormat
-      thisIsADiff = .false.   ! Reset
-      if ( .not. PRINTMINMAXWITHRMS ) return
-      originalSDFormat = outputOptions%sdFormatDefault
-      outputOptions%sdFormatDefault = rmsFormat
-      if ( DEBUG ) call outputNamedValue( 'maxval(1-2)', maxval(filtered1-filtered2))
-      if ( SHORTCUTDIFFS .and. &
-        & (numEqual == numTot .or. stddev == real(0., kind(stddev))) ) then
-        exvalues = real(0., kind(stddev))
-        exratios = real(0., kind(stddev))
-        minratio = real(0., kind(stddev))
-        maxratio = real(0., kind(stddev))
-        meanratio = real(0., kind(stddev))
-        rmsratio = real(0., kind(stddev))
-        medianratio = real(0., kind(stddev))
-      else
-        call ratios( filtered1, filtered2, exvalues, exratios, &
-          & minratio, maxratio, meanratio, stddevratio, rmsratio, medianratio )
-        ! Note that because alreadySbtrcted we don't need to subtract again
-        if ( .not. alreadySbtrcted ) &
-          & call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & 'We should have subtracted already by this point' )
-        call allstats( filtered1, min=minvalue, max=maxvalue, mean=meanvalue, &
-          & rms=rmsvalue, median=medianvalue, fillValue=FillValue )
-        ! call outputNamedValue( 'min(filterddiff)', minval(array2-array1) )
-        ! call outputNamedValue( 'max(filterddiff)', maxval(array2-array1) )
-      end if
-      if ( dopts(AuBrick)%v ) then
-        if ( .not. nameHasBeenPrinted ) then
-          if ( len_trim(DiffName) > 0 ) call output( trim(DiffName), advance='yes' )
-          nameHasBeenPrinted = .true.
-        end if
-        nameHasBeenPrinted = .false.
-        
-        call output( ' ** Reference values (min : max, rms): ', advance='no' )
-        call output( refmin, advance='no' )
-        call output( ' : ', advance='no' )
-        call output( refmax, advance='no' )
-        call output( ' , ', advance='no' )
-        call output( refrms, advance='no' )
-        call output( ' **', advance='no' )
-        call newLine
-        
-        call output( ' ** Max. absolute: ', advance='no' )
-        call output( exvalues(1), advance='no' )
-        call output( ' ( =  ', advance='no' )
-        call output( exratios(1), advance='no' )
-        call output( ' fractional ) ** ', advance='no' )
-        call newLine
-        
-        call output( ' ** Max. fractional: ', advance='no' )
-        call output( exratios(2), advance='no' )
-        call output( ' ( =  ', advance='no' )
-        call output( exvalues(2), advance='no' )
-        call output( ' absolute ) ** ', advance='no' )
-        call newLine
-      end if
-      if ( dopts(myRatios)%v ) then
-        if ( .not. nameHasBeenPrinted ) then
-          if ( len_trim(DiffName) > 0 ) call output( trim(DiffName), advance='yes' )
-          nameHasBeenPrinted = .true.
-        end if
-        
-        call output( 'Maximum difference: ', advance='no' )
-        call output( exvalues(1), advance='no' )
-        call output( '  ( as ratio:  ', advance='no' )
-        call output( exratios(1), advance='no' )
-        call output( ' )', advance='no' )
-        call finishLine
-        call output( 'Maximum ratio: ', advance='no' )
-        call output( exratios(2), advance='no' )
-        call output( '  ( as difference:  ', advance='no' )
-        call output( exvalues(2), advance='no' )
-        call output( ' )', advance='no' )
-        call finishLine
-        nameHasBeenPrinted = .false.
-        call printRMSetc( 'ratio', minratio, maxratio, rmsratio, meanratio )
-      end if
-      if ( dopts(RMS)%v ) then
-        if ( .not. nameHasBeenPrinted ) then
-          if ( len_trim(DiffName) > 0 ) call output( trim(DiffName), advance='yes' )
-          nameHasBeenPrinted = .true.
-        end if
-        nameHasBeenPrinted = .false.
-        call printRMSetc( 'value', minvalue, maxvalue, rmsvalue, meanvalue )
-      end if
-      if ( dopts(table)%v ) then
-        if ( .not. nameHasBeenPrinted ) then
-          if ( len_trim(DiffName) > 0 ) call output( trim(DiffName), advance='yes' )
-          nameHasBeenPrinted = .true.
-        end if
-        call output( '% of arrays nearer than', advance='yes' )
-        theTable(:,1) = gaps
-        theTable(:,2) = pcts
-        theTable(:,3) = gapratios
-        theTable(:,4) = pctratios
-        formats(1:3:2) = rmsFormat
-        formats(2:4:2) = myPCTFormat ! '(0pf6.1)'
-        call dumpTable ( theTable(:,1:4), &
-          & (/ 'abs diff', &
-          &    '%       ', &
-          &    'as ratio', &
-          &    '%       ' /), &
-          & headside=dumpTableSide, formats=formats(1:4) )
-        call output( 'By keeping the closest % of arrays', advance='yes' )
-        theTable(:,1) = pctAges
-      if ( SHORTCUTDIFFS .and. &
-        & (numEqual == numTot .or. stddev == real(0., kind(stddev))) ) then
-          theTable(:,2:7) = real(0., kind(stddev))
-        else
-          theTable(:,2) = pctMaxGaps
-          theTable(:,3) = pctMaxGapAsRatios
-          theTable(:,4) = pctMeanGaps
-          theTable(:,5) = pctMaxRatios
-          theTable(:,6) = pctMaxRatioAsGaps
-          theTable(:,7) = pctMeanRatios
-          formats(2:7) = rmsFormat
-          formats(1) = myPCTFormat ! '(0pf6.1)'
-        end if
-        if ( .not. nameHasBeenPrinted ) then
-          if ( len_trim(DiffName) > 0 ) call output( trim(DiffName), advance='yes' )
-          nameHasBeenPrinted = .true.
-        end if
-        call dumpTable ( theTable, &
-          & (/ '%          ', &
-          &    'max diffs  ', &
-          &    '(as ratio) ', &
-          &    'mean diffs ', &
-          &    'max ratios ', &
-          &    '(as abs)   ', &
-          &    'mean ratios' /), &
-          & headside=dumpTableSide, formats=formats )
-      end if
-      if ( dopts(stats)%v ) then
-        if ( .not. nameHasBeenPrinted ) then
-          if ( len_trim(DiffName) > 0 ) call output( trim(DiffName), advance='yes' )
-          nameHasBeenPrinted = .true.
-        end if
-        ! Now to show how near the two arrays are
-        if ( numNonFill < size(array1) ) &
-          & call outputNamedValue( 'count(NonFill), count(Fill)', &
-          & (/ numNonFill, size(array1) - numNonFill/) )
-        call output( '% of arrays equal ', advance='no' )
-        call output( pctEqual, format = myPCTFormat, advance='no' )
-        call output( '  (number of elements ', advance='no' )
-        call output( numEqual, advance='no' )
-        call output( ')', advance='no' )
-        call finishLine
-        call output( '% of arrays diff  ', advance='no' )
-        call output( pctDiff, format = myPCTFormat, advance='no' )
-        call output( '  (number of elements ', advance='no' )
-        call output( numTot - numEqual, advance='no' )
-        call output( ')', advance='no' )
-        call finishLine
-      end if
-      outputOptions%sdFormatDefault = originalSDFormat
-      
-    end subroutine doneWithDiff
-
-    subroutine fillPcts
-      ! Executable
-      ! numTot = max( 1, product(shape(filtered1)) )
-      ! numEqual = count( filtered1 == filtered2 )
-      pctEqual = (100.*numEqual)/max(numTot, 1)
-      pctDiff = 100. - pctEqual
-      stddev = mlsstddev( filtered1-filtered2 )
-      gaps = PCTFACTORS*stddev
-      call hownear( filtered1, filtered2, pcts, gaps=gaps )
-      if ( DEBUG ) call outputNamedValue( 'maxval(1-2)', maxval(filtered1-filtered2))
-      call ratios( filtered1, filtered2, exvalues, exratios, &
-        & stddevratio=stddevratio, op='-' )
-      gapratios = pctFactors*stddevratio
-      call hownear( filtered1, filtered2, pctratios, gapratios=gapratios )
-    end subroutine fillPcts
-
-    subroutine usePcts
-      ! Internal variables
-      integer :: i, n
-      real(kind(array1)) :: absdiff
-      ! Executable
-      do i=1, MAXPCTS
-        call reset(gapstat(i))
-        call reset(gapratiostat(i))
-      end do
-      call howfar( filtered1, filtered2, pctages, &
-        & gaps=gapstat, mode='abs' )
-      call howfar( filtered1, filtered2, pctages, &
-        & gaps=gapRatiostat, mode='rel' )
-      pctMaxGaps = gapStat%max
-      pctMeanGaps = gapStat%mean
-      pctMaxRatios = gapRatioStat%max
-      pctMeanRatios = gapRatioStat%mean
-      do i=1, MAXPCTS
-        n = gapStat(i)%indexing(1)
-        if ( n < 1 ) then
-          call MLSMessage ( MLSMSG_Warning, ModuleName, &
-            & 'unable to locate max of abs in filterediff' )
-          cycle
-        end if
-        pctMaxGapAsRatios(i) = 0.
-        absdiff = abs( filtered1(n) - filtered2(n) )
-        if ( absdiff > real(0.,kind(array1)) ) pctMaxGapAsRatios(i) = &
-          &  absdiff / max( abs(filtered1(n)), abs(filtered2(n)) )
-        n = gapRatioStat(i)%indexing(1)
-        if ( n < 1 ) then
-          call MLSMessage ( MLSMSG_Warning, ModuleName, &
-            & 'unable to locate max of ratio in filterediff' )
-          cycle
-        end if
-        pctMaxRatioAsGaps(i) = abs( filtered1(n) - filtered2(n) )
-      end do
-    end subroutine usePcts
+    include "donewithdiff.f9h"
 
 !   end subroutine DIFF_1D_DOUBLE
 ! $Log$
+! Revision 2.35  2016/10/06 20:21:28  pwagner
+! parts commom to unfiltered and filtered diffs moved to donewithdiff.f9h
+!
 ! Revision 2.34  2016/09/09 20:35:17  pwagner
 ! Added Au (Gold) brick option removing some hay from the stack of statistics
 !
