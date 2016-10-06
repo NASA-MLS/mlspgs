@@ -1,7 +1,13 @@
 !divert(-1)
 ;; $Id$
 
-;; This l2cf fragment is for setting up a priori gridded quantities
+;; This l2cf fragment is for setting up meteorology as gridded quantities
+;; In general we could have any of 4 types:
+;;    geos 5 Classic (prior to 5.7)
+;;    Merra
+;;    geos 5.7 or 5.9
+;;    none (when we'll make do with climatology alone)
+;; This l2cf fragment works with 5.9 and later, but not 5.7
 
 !ifdef(flagUsingPCF,
   {!define(geos5TFile1,{})!define(geos5TFile2,{})!define(geos5TFile3,{})!define(geos5TFile4,{})
@@ -112,10 +118,6 @@ begin ReadApriori
   geos5EtaWMOPTrop: gridded, origin=none
 end ReadApriori
 
-begin MergeGrids
-  meteorologyType: Boolean, label="none"     ;; The kind of meteorology used
-end MergeGrids
-
 begin ReadApriori
   gmaoTemperatureInput1: gridded, origin=none
   gmaoTemperatureInput2: gridded, origin=none
@@ -137,6 +139,15 @@ begin ReadApriori
   gmaoPressureInputNext: gridded, origin=none
 end ReadApriori
 
+; Initialize the run-time Booleans and flags
+begin MergeGrids
+  meteorologyType: Boolean, label="none"     ;; The kind of meteorology used
+  merraMeteorology: Boolean, formula="false"
+  geos59Meteorology: Boolean, formula="false"
+  geos5Meteorology: Boolean, formula="false"
+end MergeGrids
+
+!ifdef(flagSkipReadingGeos5Classic,{},{
 ; (1) Try to read them as geos5 classic; will return "empty" if unsuccessful
 begin ReadApriori
   readGriddedData, grid=gmaoPressureInput1, origin=geos5, field='PL', $
@@ -145,14 +156,14 @@ end ReadApriori
 
 ; test
 begin MergeGrids
-  geos5Meteorology: Boolean, formula="false"
   isGridEmpty, grid=gmaoPressureInput1, Boolean=geos5Meteorology
   Reevaluate, Boolean=geos5Meteorology, formula="not geos5Meteorology"
   Skip, formula="not geos5Meteorology"
   Reevaluate, Boolean=meteorologyType, label="geos5-classic"
   Delete, grid=gmaoPressureInput1
 end MergeGrids
-
+})
+!ifdef(flagSkipReadingMerra,{},{
 ; (2) Try to read them as merra reanalysis; will return "empty" if unsuccessful
 begin ReadApriori
   readGriddedData, grid=gmaoPressureInput1, origin=merra, field='DELP', $
@@ -161,14 +172,14 @@ end ReadApriori
 
 ; test
 begin MergeGrids
-  merraMeteorology: Boolean, formula="false"
   isGridEmpty, grid=gmaoPressureInput1, Boolean=merraMeteorology
   Reevaluate, Boolean=merraMeteorology, formula="not merraMeteorology"
   Skip, formula="not merraMeteorology"
   Reevaluate, Boolean=meteorologyType, label="merra"
   Delete, grid=gmaoPressureInput1
 end MergeGrids
-
+})
+!ifdef(flagSkipReadingGeos5,{},{
 ; (3) Try to read them as geos5_9 netcdf4/hdf5; will return "empty" if unsuccessful
 begin ReadApriori
   readGriddedData, grid=gmaoPressureInput1, origin=geos5_7, field='PL', $
@@ -177,18 +188,18 @@ end ReadApriori
 
 ; test
 begin MergeGrids
-  geos59Meteorology: Boolean, formula="false"
   isGridEmpty, grid=gmaoPressureInput1, Boolean=geos59Meteorology
   Reevaluate, Boolean=geos59Meteorology, formula="not geos59Meteorology"
   Skip, formula="not geos59Meteorology"
   Reevaluate, Boolean=meteorologyType, label="geos5_9-nc4"
   Delete, grid=gmaoPressureInput1
 end MergeGrids
-
+})
 begin ReadApriori
   Select, Boolean=meteorologyType ;;; ------------ start of Select ----------
 end ReadApriori
 
+!ifdef(flagSkipReadingGeos5Classic,{},{
 begin ReadApriori
   Case, label="geos5-classic" ;;; ------------- "geos5-classic" -----------
   readGriddedData, grid=gmaoTemperatureInput1, origin=geos5, field='T', $
@@ -255,7 +266,8 @@ begin MergeGrids
     climatology=gridTemperature, height=1mb, scale=5km
   delete, grid=geos5Concatenate
 end MergeGrids
-
+})
+!ifdef(flagSkipReadingMerra,{},{
 begin ReadApriori
   Case, label="merra" ;;; ------------------- "merra" -----------------
   readGriddedData, grid=gmaoTemperatureInput1, origin=merra, field='T', $
@@ -322,19 +334,14 @@ begin MergeGrids
     climatology=gridTemperature, height=1mb, scale=5km
   delete, grid=merraConcatenate
 end MergeGrids
-
+})
 !define(setgeos59dates,{!dnl
 !ProcessParVal(g59date,$@)!dnl
 })
 !setgeos59dates(1='00:00:00',2='03:00:00',3='06:00:00',4='09:00:00')
 !setgeos59dates(5='12:00:00',6='15:00:00',7='18:00:00',8='21:00:00',Next='00:00:00')
 
-
-;!setgeos59dateStrings(1='_0000.V01',2='_0300.V01',3='_0600.V01',4='_0900.V01')
-;!setgeos59dateStrings(5='_1200.V01',6='_1500.V01',7='_1800.V01',8='_2100.V01',Next='_0000.V01')
-
 !define(g59dateNext,{'00:00:00'})
-;!define(g59dateStringNext,{'_0000.V01'})
 !define(geos5TFileNext,{!geos5TFileN})
 !define(geos5PFileNext,{!geos5PFileN})
 !define(getgeos59dates,{!g59date$1})
@@ -364,6 +371,7 @@ begin MergeGrids
   Delete, grid=geos59Converted$1
 end MergeGrids
 })
+!ifdef(flagSkipReadingGeos5,{},{
 begin ReadApriori
   Case, label="geos5_9-nc4" ;;; --------------- "geos5_9-nc4" -----------------
   carryover: Boolean, formula="true"
@@ -395,7 +403,7 @@ begin MergeGrids
   Delete, grid=geos59Merged8
   Delete, grid=geos59MergedNext
 end MergeGrids
-
+})
 ; Don't ignore possibility that meteorology files are missing
 begin MergeGrids
   Case, label="none" ;;; ------------------- "none" -----------------
@@ -420,6 +428,9 @@ begin MergeGrids
 end MergeGrids
 
 ;$Log$
+;Revision 1.4  2015/05/27 22:59:58  pwagner
+;Needed to fix to work with MERRA again
+;
 ;Revision 1.3  2015/05/27 00:10:24  pwagner
 ;Tried to correct how we use when no PCF to supply filenames
 ;
