@@ -22,8 +22,9 @@ module Diff_1
   use Dump_1, only: DumpTable
   use HighOutput, only: OutputNamedValue
   use IEEE_Arithmetic, only: IEEE_Is_Finite
-  use MLSFillValues, only: FilterValues, HalfWaves, ReorderFillValues, &
-    & ReplaceFillValues, WhereAreTheInfs, WhereAreTheNaNs
+  use MLSFillValues, only: FilterValues, HalfWaves, NaNFunction, &
+    & ReorderFillValues, ReplaceFillValues, &
+    & WhereAreTheInfs, WhereAreTheNaNs
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
   use MLSStats1, only: AllStats, HowFar, HowNear, MLSStdDev, Ratios, Reset, &
     & Stat_t
@@ -467,11 +468,11 @@ contains
   end function Diff_Scalar_Real
 
   ! -----------------------------------------------  FilteredDiff  -----
-  subroutine FilteredDiff_1D_Double ( Array1, Name1, Array2, Name2, &
+  subroutine FilteredDiff_1D_Double ( inArray1, Name1, inArray2, Name2, &
     & FillValue, Width, Format, LBound, Options )
-    double precision, intent(in) :: Array1(:)
+    double precision, intent(in) :: inArray1(:)
     character(len=*), intent(in) :: Name1
-    double precision, intent(in) :: Array2(:)
+    double precision, intent(in) :: inArray2(:)
     character(len=*), intent(in) :: Name2
     double precision, intent(in):: FillValue
     integer, intent(in), optional :: Width
@@ -479,8 +480,8 @@ contains
     integer, intent(in), optional :: LBound ! Low bound for Array
     character(len=*), intent(in), optional :: options
 
-    double precision, dimension(size(array1)) :: filtered1
-    double precision, dimension(size(array2)) :: filtered2
+    double precision, dimension(size(inArray1)) :: array1
+    double precision, dimension(size(inArray2)) :: array2
     double precision :: refmin, refmax, refrms
     include "diff.f9h"
   end subroutine FilteredDiff_1D_Double
@@ -508,11 +509,11 @@ contains
     & FillValue, Width, Format, LBound, Options )
   end subroutine FilteredDiff_1D_Integer
 
-  subroutine FilteredDiff_1D_Real ( Array1, Name1, Array2, Name2, &
+  subroutine FilteredDiff_1D_Real ( inArray1, Name1, inArray2, Name2, &
     & FillValue, Width, Format, LBound, Options )
-    real, intent(in) :: Array1(:)
+    real, intent(in) :: inArray1(:)
     character(len=*), intent(in) :: Name1
-    real, intent(in) :: Array2(:)
+    real, intent(in) :: inArray2(:)
     character(len=*), intent(in) :: Name2
     real, intent(in):: FillValue
     integer, intent(in), optional :: Width
@@ -520,17 +521,17 @@ contains
     integer, intent(in), optional :: LBound ! Low bound for Array
     character(len=*), intent(in), optional :: options
 
-    real, dimension(size(array1)) :: filtered1
-    real, dimension(size(array2)) :: filtered2
+    real, dimension(size(inArray1)) :: array1
+    real, dimension(size(inArray2)) :: array2
     real :: refmin, refmax, refrms
     include "diff.f9h"
   end subroutine FilteredDiff_1D_Real
 
-  subroutine FilteredDiff_2D_Double ( Array1, Name1, Array2, Name2, &
+  subroutine FilteredDiff_2D_Double ( inArray1, Name1, inArray2, Name2, &
     & FillValue, Width, Format, LBound, Options )
-    double precision, intent(in) :: Array1(:,:)
+    double precision, intent(in) :: inArray1(:,:)
     character(len=*), intent(in) :: Name1
-    double precision, intent(in) :: Array2(:,:)
+    double precision, intent(in) :: inArray2(:,:)
     character(len=*), intent(in) :: Name2
     double precision, intent(in):: FillValue
     integer, intent(in), optional :: Width
@@ -538,8 +539,8 @@ contains
     integer, intent(in), optional :: LBound
     character(len=*), intent(in), optional :: options
     !
-    double precision, dimension(product(shape(array1))) :: filtered1
-    double precision, dimension(product(shape(array2))) :: filtered2
+    double precision, dimension(product(shape(inArray1))) :: array1
+    double precision, dimension(product(shape(inArray2))) :: array2
     double precision :: refmin, refmax, refrms
     include "diff.f9h"
   end subroutine FilteredDiff_2D_Double
@@ -567,11 +568,11 @@ contains
     & FillValue, Width, Format, LBound, Options )
   end subroutine FilteredDiff_2D_Integer
 
-  subroutine FilteredDiff_2D_Real ( Array1, Name1, Array2, Name2, &
+  subroutine FilteredDiff_2D_Real ( inArray1, Name1, inArray2, Name2, &
     & FillValue, Width, Format, LBound, Options )
-    real, intent(in) :: Array1(:,:)
+    real, intent(in) :: inArray1(:,:)
     character(len=*), intent(in) :: Name1
-    real, intent(in) :: Array2(:,:)
+    real, intent(in) :: inArray2(:,:)
     character(len=*), intent(in) :: Name2
     real, intent(in):: FillValue
     integer, intent(in), optional :: Width
@@ -579,17 +580,17 @@ contains
     integer, intent(in), optional :: LBound
     character(len=*), intent(in), optional :: options
     !
-    real, dimension(product(shape(array1))) :: filtered1
-    real, dimension(product(shape(array2))) :: filtered2
+    real, dimension(product(shape(inArray1))) :: array1
+    real, dimension(product(shape(inArray2))) :: array2
     real :: refmin, refmax, refrms
     include "diff.f9h"
   end subroutine FilteredDiff_2D_Real
 
-  subroutine FilteredDiff_3D_Double ( Array1, Name1, Array2, Name2, &
+  subroutine FilteredDiff_3D_Double ( inArray1, Name1, inArray2, Name2, &
     & FillValue, Width, Format, LBound, Options )
-    double precision, intent(in) :: Array1(:,:,:)
+    double precision, intent(in) :: inArray1(:,:,:)
     character(len=*), intent(in) :: Name1
-    double precision, intent(in) :: Array2(:,:,:)
+    double precision, intent(in) :: inArray2(:,:,:)
     character(len=*), intent(in) :: Name2
     double precision, intent(in):: FillValue
     integer, intent(in), optional :: Width
@@ -597,17 +598,17 @@ contains
     integer, intent(in), optional :: LBound
     character(len=*), intent(in), optional :: options
 
-    double precision, dimension(product(shape(array1))) :: filtered1
-    double precision, dimension(product(shape(array2))) :: filtered2
+    double precision, dimension(product(shape(inArray1))) :: array1
+    double precision, dimension(product(shape(inArray2))) :: array2
     double precision :: refmin, refmax, refrms
     include "diff.f9h"
   end subroutine FilteredDiff_3D_Double
 
-  subroutine FilteredDiff_3D_Real ( Array1, Name1, Array2, Name2, &
+  subroutine FilteredDiff_3D_Real ( inArray1, Name1, inArray2, Name2, &
     & FillValue, Width, Format, LBound, Options )
-    real, intent(in) :: Array1(:,:,:)
+    real, intent(in) :: inArray1(:,:,:)
     character(len=*), intent(in) :: Name1
-    real, intent(in) :: Array2(:,:,:)
+    real, intent(in) :: inArray2(:,:,:)
     character(len=*), intent(in) :: Name2
     real, intent(in):: FillValue
     integer, intent(in), optional :: Width
@@ -615,17 +616,17 @@ contains
     integer, intent(in), optional :: LBound
     character(len=*), intent(in), optional :: options
 
-    real, dimension(product(shape(array1))) :: filtered1
-    real, dimension(product(shape(array2))) :: filtered2
+    real, dimension(product(shape(inArray1))) :: array1
+    real, dimension(product(shape(inArray2))) :: array2
     real :: refmin, refmax, refrms
     include "diff.f9h"
   end subroutine FilteredDiff_3D_Real
 
-  subroutine FilteredDiff_4D_Double ( Array1, Name1, Array2, Name2, &
+  subroutine FilteredDiff_4D_Double ( inArray1, Name1, inArray2, Name2, &
     & FillValue, Width, Format, LBound, Options )
-    double precision, intent(in) :: Array1(:,:,:,:)
+    double precision, intent(in) :: inArray1(:,:,:,:)
     character(len=*), intent(in) :: Name1
-    double precision, intent(in) :: Array2(:,:,:,:)
+    double precision, intent(in) :: inArray2(:,:,:,:)
     character(len=*), intent(in) :: Name2
     double precision, intent(in):: FillValue
     integer, intent(in), optional :: Width
@@ -633,17 +634,17 @@ contains
     integer, intent(in), optional :: LBound
     character(len=*), intent(in), optional :: options
 
-    double precision, dimension(product(shape(array1))) :: filtered1
-    double precision, dimension(product(shape(array2))) :: filtered2
+    double precision, dimension(product(shape(inArray1))) :: array1
+    double precision, dimension(product(shape(inArray2))) :: array2
     double precision :: refmin, refmax, refrms
     include "diff.f9h"
   end subroutine FilteredDiff_4D_Double
 
-  subroutine FilteredDiff_4D_Real ( Array1, Name1, Array2, Name2, &
+  subroutine FilteredDiff_4D_Real ( inArray1, Name1, inArray2, Name2, &
     & FillValue, Width, Format, LBound, Options )
-    real, intent(in) :: Array1(:,:,:,:)
+    real, intent(in) :: inArray1(:,:,:,:)
     character(len=*), intent(in) :: Name1
-    real, intent(in) :: Array2(:,:,:,:)
+    real, intent(in) :: inArray2(:,:,:,:)
     character(len=*), intent(in) :: Name2
     real, intent(in):: FillValue
     integer, intent(in), optional :: Width
@@ -651,8 +652,8 @@ contains
     integer, intent(in), optional :: LBound
     character(len=*), intent(in), optional :: options
 
-    real, dimension(product(shape(array1))) :: filtered1
-    real, dimension(product(shape(array2))) :: filtered2
+    real, dimension(product(shape(inArray1))) :: array1
+    real, dimension(product(shape(inArray2))) :: array2
     real :: refmin, refmax, refrms
     include "diff.f9h"
   end subroutine FilteredDiff_4D_Real
@@ -964,6 +965,66 @@ contains
     include "unfiltereddiff.f9h"
   end subroutine UnfilteredDiff_4D_Real
 
+  subroutine Zdonewithdiff ( Array1, Array2 )
+    ! Not an actual subroutine--here only so make knows we
+    ! have a dependency on donewithdiff.f9h
+    integer, parameter :: RK = kind(1.0e0)
+    real(rk), intent(in) :: Array1(:,:,:,:)
+    real(rk), intent(in) :: Array2(:,:,:,:)
+
+    integer, parameter                       :: MAXPCTS = 10
+    character(len=64)                        :: DiffName
+    logical                                  :: alreadySbtrcted = .false.
+    real(rk), dimension(3, MAXPCTS)          :: array1AtNAbs
+    real(rk), dimension(3, MAXPCTS)          :: array2AtNAbs
+    real(rk), dimension(3, MAXPCTS)          :: array1AtNRel
+    real(rk), dimension(3, MAXPCTS)          :: array2AtNRel
+    real(rk), dimension(2)                   :: exvalues
+    real(rk), dimension(2)                   :: exratios
+    real(rk)                                 :: fillvalue
+    real(rk), dimension(MAXPCTS)             :: gaps
+    type(Stat_T), dimension(MAXPCTS)         :: gapStat
+    real(rk), dimension(MAXPCTS)             :: gapratios
+    type(Stat_T), dimension(MAXPCTS)         :: gapRatioStat
+    real(rk)                                 :: minratio
+    real(rk)                                 :: maxratio
+    real(rk)                                 :: medianratio
+    real(rk)                                 :: meanratio
+    real(rk)                                 :: minvalue
+    real(rk)                                 :: maxvalue
+    real(rk)                                 :: medianvalue
+    real(rk)                                 :: meanvalue
+    real(rk)                                 :: rmsvalue
+    integer                                  :: numTot
+    integer                                  :: numEqual
+    real(rk)                                 :: pctDiff
+    real(rk)                                 :: pctEqual
+    real(rk), dimension(MAXPCTS)             :: pcts
+    real(rk), dimension(MAXPCTS)             :: pctratios
+    real(rk), dimension(MAXPCTS)             :: pctMaxGaps
+    real(rk), dimension(MAXPCTS)             :: pctMaxGapAsRatios
+    real(rk), dimension(MAXPCTS)             :: pctMeanGaps
+    real(rk), dimension(MAXPCTS)             :: pctMaxRatios
+    real(rk), dimension(MAXPCTS)             :: pctMaxRatioAsGaps
+    real(rk), dimension(MAXPCTS)             :: pctMeanRatios
+    real(rk)                                 :: refmin, refmax, refrms
+    real(rk)                                 :: rmsratio
+    real(rk)                                 :: stddev
+    real(rk)                                 :: stddevratio
+    real                                     :: t1
+    real                                     :: t2
+    real(rk), dimension(MAXPCTS,7)           :: TheTable
+    logical, parameter                       :: PrintMinMaxWithRMS = .true.
+    logical, parameter                       :: DEBUG = .false.
+    real(rk), dimension(MAXPCTS), parameter  :: PCTAges = &
+      & (/ 99.9, 99.8, 99.7, 99.5, 99., 98., 97., 95., 90., 80. /)
+    real, dimension(MAXPCTS), parameter      :: PCTFactors = &
+      & (/ .01, .02, .05, .1, .2, .5, 1., 2., 5., 10. /)
+    ! Executable
+  contains
+    include "donewithdiff.f9h"
+  end subroutine Zdonewithdiff
+
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
   character (len=*), parameter :: IdParm = &
@@ -977,6 +1038,9 @@ contains
 end module Diff_1
 
 ! $Log$
+! Revision 2.4  2016/10/06 20:22:14  pwagner
+! parts commom to unfiltered and filtered diffs moved to donewithdiff.f9h
+!
 ! Revision 2.3  2016/09/09 20:34:53  pwagner
 ! Added Au (Gold) brick option removing some hay from the stack of statistics
 !
