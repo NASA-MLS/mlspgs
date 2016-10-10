@@ -13,7 +13,7 @@
 module MLSMessageModule         ! Basic messaging for the MLSPGS suite
 !==============================================================================
 
-  use Call_stack_m, only: dump_stack
+  ! use Call_stack_m, only: dump_stack
   use Highoutput, only: banner
   use Machine, only: crash_burn_rude=>crash_burn, exit_with_status, nevercrash
   use MLSCommon, only: MLSFile_t, MLSDebug, MLSVerbose, &
@@ -105,6 +105,16 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
     end select
   end function accessDFACCToStr
 
+  ! -------------------- Dump_Stack -------------------
+  ! In the full module this is called when:
+  ! We're a slave and we're about to expire
+  ! Before we do, however, try to tell the master why
+  subroutine Dump_Stack ( Where, CPU )
+    logical, intent(in) :: Where
+    logical, intent(in) :: CPU
+    call MLSMessageCalls ( 'dump' )
+  end subroutine Dump_Stack
+
   ! -------------------- LastGasp -------------------
   ! In the full module this is called when:
   ! We're a slave and we're about to expire
@@ -142,6 +152,9 @@ end module MLSMessageModule
 
 !
 ! $Log$
+! Revision 2.18  2016/10/10 22:42:06  pwagner
+! Avoid the Call_Stack module if no toolkit
+!
 ! Revision 2.17  2015/06/30 18:41:29  pwagner
 ! Added a conditional crash_burn
 !
