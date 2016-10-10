@@ -1053,7 +1053,7 @@ contains
     ! in it, replace that with newline.
 
     use PRINTIT_M, only: GET_CONFIG
-    use CALL_STACK_M, only: DUMP_STACK
+    ! use CALL_STACK_M, only: DUMP_STACK
     ! Dummy arguments
     integer, intent(in) :: Severity ! e.g. MLSMSG_Error
     character (len=*), intent(in) :: ModuleNameIn ! Name of module (see below)
@@ -1132,6 +1132,9 @@ contains
 
 !
 ! $Log$
+! Revision 2.41  2016/10/10 22:41:37  pwagner
+! Avoid the Call_Stack module if no toolkit
+!
 ! Revision 2.40  2015/09/02 23:15:52  pwagner
 ! Fixed bug that prevented dumping last MLSFile
 !
