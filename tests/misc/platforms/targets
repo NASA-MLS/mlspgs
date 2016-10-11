@@ -122,6 +122,19 @@ ifndef LDMISC
 LDMISC=$(FC)
 endif
 
+ifndef DONT_LINK_TOOLKIT
+TOOLKIT_LIBS=$(tk_linker_line) \
+        -L${HDFEOS} -lhdfeos \
+        $(hdfeos5_linker_line) \
+        $(hdf5_linker_line) \
+		-L${HDF} -lmfhdf \
+        -ldf \
+        -lz \
+        -ljpeg -lsz \
+		-L${GCTP} -lGctp \
+        $(pvm_linker_line)
+endif
+
 PROG_NAME=test
 
 STATIC_LINK := $(shell echo $(LDOPTS) | grep -e "-static")
@@ -135,16 +148,7 @@ $(PROG_NAME): $(ALLOBJS) $(CONFDIR)/$(MLSCFILE)
 		@echo "$(lapack_message)"
 		@echo "$(hdf5_message)"
 		$(LDMISC) $(LDOPTS) -o $(PROG_NAME) $(ALLOBJS)  \
-		$(tk_linker_line) \
-        -L${HDFEOS} -lhdfeos \
-        $(hdfeos5_linker_line) \
-        $(hdf5_linker_line) \
-		-L${HDF} -lmfhdf \
-        -ldf \
-        -lz \
-        -ljpeg -lsz \
-		-L${GCTP} -lGctp \
-        $(pvm_linker_line) \
+		$(TOOLKIT_LIBS) \
         $(blas_linker_line) \
         $(lapack_linker_line) \
         $(l_specials) $(LAFTER) \
@@ -174,6 +178,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.21  2009/07/17 20:27:32  pwagner
+# Added COPTS as cc options
+#
 # Revision 1.20  2007/05/29 17:42:19  pwagner
 # compiler-specific settings now in srclib, not platforms
 #
