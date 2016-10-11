@@ -214,6 +214,7 @@ contains ! =========== Public procedures ===================================
     use HighOutput, only: outputNamedValue
     use L1BData, only: deallocateL1BData, L1BData_t, readL1BData, &
       & AssembleL1BQtyName
+    use machine, only: crash_burn
     use MLSCommon, only: MLSFile_t
     use MLSFiles, only: getMLSFileByType
     use MLSFillValues, only: isFillValue, Monotonize
@@ -307,7 +308,9 @@ contains ! =========== Public procedures ===================================
     if ( index( lowercase(name), 'ghz') > 0 ) then
       ! readItemName = "/" // adjustl(Name)
       call output( 'We should have stopped specifying GHz by now', advance='yes' )
-      stop
+      call outputNamedValue( 'name', trim(Name) )
+      ! call crash_burn
+      readItemName = Name
     elseif ( index( name, 'tp') > 0 ) then
       ! l1bItemName = AssembleL1BQtyName ( 'GHz.' // Name, hdfVersion, .false. )
       readItemName = AssembleL1BQtyName ( Name, hdfVersion, .true., moduleStr )
@@ -773,6 +776,9 @@ contains ! =========== Public procedures ===================================
 end module HGridsDatabase
 
 ! $Log$
+! Revision 2.39  2016/10/11 23:28:37  pwagner
+! Removed stop statement; downgraded to just a warning
+!
 ! Revision 2.38  2016/10/01 01:37:28  vsnyder
 ! Make QTM_Tree component of HGrid_t allocatable
 !
