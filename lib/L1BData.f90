@@ -471,7 +471,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     call GetAllHDF5DSNames ( L1BFile%name, '/', DSNames )
     call Dump ( DSNames, 'DSNames from MLSFile name' )
     call newLine
-    call crash_burn
+    ! call crash_burn
   end subroutine CheckForCorruptFileDatabase
 
   ! --------------------------------------------  ContractL1BData  -----
@@ -2993,6 +2993,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.116  2016/10/11 23:27:18  pwagner
+! Commented-out the crash_burn
+!
 ! Revision 2.115  2016/10/05 20:13:58  pwagner
 ! Implemented Au (Gold) option
 !
