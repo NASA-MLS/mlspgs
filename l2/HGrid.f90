@@ -2072,6 +2072,7 @@ contains ! =====     Public Procedures     =============================
                 call copyHGrid( dummyHGrid, firstHGrid(chunk) )
                 if ( verbose ) then
                   call Dump ( firstHGrid(chunk) )
+                  call outputNamedValue( 'num Profs copied', dummyHGrid%noProfs )
                   call sayTime( 'Copying HGrid' )
                 endif
                 InstrumentModule = dummyHGrid%module
@@ -2102,6 +2103,9 @@ contains ! =====     Public Procedures     =============================
                 chunks(chunk)%hGridOffsets(hGrid) = dummyHGrid%noProfs - &
                 & dummyHGrid%noProfsLowerOverlap - dummyHGrid%noProfsUpperOverlap
               end if
+              ! Sometimes we have been computing negative offsets which is .. offsetting
+              if ( chunk > 0 ) &
+                & chunks(chunk)%hGridOffsets(hGrid) = max( 0, chunks(chunk)%hGridOffsets(hGrid) )
               call time_now ( t1 )
               if ( DEEBUG ) &
                 & call dump(dummyHGrid)
@@ -2360,10 +2364,11 @@ contains ! =====     Public Procedures     =============================
   subroutine CompareWithChunk ( chunk, nextChunk, hgrid, &
     & MAFStartTimeTAI, GeodAngle, GeodAlt, GeodLat, SolarTime )
 
-    use chunks_m, only: mlschunk_t
+    use chunks_m, only: MLSChunk_t, Dump
     use dates_module, only: gethid
     use HGridsDatabase, only: HGrid_T
     use highOutput, only: blanksToColumn, outputNamedValue
+    use machine, only: crash_burn
     use MLSKinds, only: rk => r8
     use output_m, only: blanks, newLine, output
     ! Args
@@ -2395,7 +2400,7 @@ contains ! =====     Public Procedures     =============================
     call blanks ( 3 )
     call output ( lastVal, format='(f9.4)', advance='no' )
     call newLine
-    
+    ! call crash_burn
     firstMAF = chunk%firstMAFIndex + chunk%noMAFsLowerOverlap
     lastMAF = chunk%lastMAFIndex - chunk%noMAFsUpperOverlap
     firstProfile = 1 + chunk%HGridOffsets(1)
@@ -2413,6 +2418,9 @@ contains ! =====     Public Procedures     =============================
     call output ( (/firstProfile, lastProfile/), advance='yes' )
     if ( lastProfile > chunk%hGridTotals(1) ) then
       call output ( 'Uh-oh, last profile beyond chunk grand total', advance='yes' )
+    elseif ( lastProfile < firstProfile ) then
+      call output ( '(No profiles in this chunk)', advance='yes' )
+      return
     endif
     ! Must reset profile first, last prfile numbers
     ! before using them as indexes into HGrid
@@ -2585,6 +2593,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.144  2016/10/14 00:04:28  pwagner
+! Avoid negative hGridOffsets
+!
 ! Revision 2.143  2016/10/01 01:53:28  vsnyder
 ! Fill hGrid fields after creating QTM
 !
