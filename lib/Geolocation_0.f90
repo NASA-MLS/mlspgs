@@ -405,7 +405,7 @@ contains
 
   pure elemental subroutine Geoc_From_ECR ( ECR, Geo )
     class(ECR_t), intent(in) :: ECR
-    class(h_v_geoc), intent(out) :: Geo
+    class(h_v_geoc), intent(inout) :: Geo ! intent(out) is prohibited
     type(h_v_geoc) :: MyGeo ! Needed because assignment to polymorphic Geo is
                             ! prohibited
     myGeo = ECR%geoc()
@@ -475,7 +475,7 @@ contains
 
   pure elemental subroutine Geod_From_ECR ( ECR, Geo )
     class(ECR_t), intent(in) :: ECR
-    class(h_v_geod), intent(out) :: Geo
+    class(h_v_geod), intent(inout) :: Geo ! intent(out) is prohibited
     type(h_v_geod) :: MyGeo ! Needed because assignment to polymorphic Geo is
                             ! prohibited
     myGeo = ECR%geod()
@@ -605,7 +605,7 @@ contains
 
   pure elemental subroutine Surf_Geod_From_ECR ( ECR, Geo )
     class(ECR_t), intent(in) :: ECR
-    class(h_geod), intent(out) :: Geo
+    class(h_geod), intent(inout) :: Geo ! intent(out) is prohibited
     type(h_v_geod) :: MyGeo
     myGeo = ECR%geod()
     geo%lon = myGeo%lon
@@ -614,14 +614,14 @@ contains
 
   pure elemental subroutine Surf_H_t_From_ECR ( ECR, Geo )
     class(ECR_t), intent(in) :: ECR
-    class(h_t), intent(out) :: Geo
+    class(h_t), intent(inout) :: Geo ! intent(out) is prohibited
     geo%lon%d = rad2deg * atan2(ECR%xyz(2), ECR%xyz(1))
     geo%lat = rad2deg * asin(ECR%xyz(3)/sqrt(ECR%xyz(1)**2 + ECR%xyz(2)**2))
   end subroutine Surf_H_t_From_ECR
 
   pure elemental subroutine Surf_H_v_Geod_From_ECR ( ECR, Geo )
     class(ECR_t), intent(in) :: ECR
-    class(h_v_geod), intent(out) :: Geo
+    class(h_v_geod), intent(inout) :: Geo ! intent(out) is prohibited
     type(h_v_geod) :: MyGeo
     myGeo = ECR%geod()
     geo%lon = myGeo%lon
@@ -631,7 +631,7 @@ contains
 
   pure elemental subroutine Surf_H_v_t_From_ECR ( ECR, Geo )
     class(ECR_t), intent(in) :: ECR
-    class(h_v_t), intent(out) :: Geo
+    class(h_v_t), intent(inout) :: Geo ! intent(out) is prohibited
     call geo%h_t%from_ECR ( ECR )
     geo%v = 0
   end subroutine Surf_H_v_t_From_ECR
@@ -721,6 +721,9 @@ contains
 end module Geolocation_0
 
 ! $Log$
+! Revision 2.14  2016/10/17 23:06:56  vsnyder
+! Intent(OUT) polymorphic dummy argument of pure subroutine is prohibited
+!
 ! Revision 2.13  2016/09/24 02:08:11  vsnyder
 ! Add Surf_ECR to H_t, H_V_t, and extensions other than H_V_Zeta
 !
