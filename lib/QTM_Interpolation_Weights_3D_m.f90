@@ -42,9 +42,9 @@ module QTM_Interpolation_Weights_3D_m
                      !      polar vertex and the Y-node vertex of facet QID.
                      ! Top_Face => horizontal face of facet QID at height
                      !      indexed by H.
-                     ! Inside_Prism => The intersection is not with a face of a
-                     !      prism resting on the surface QTM; it is inside a
-                     !      prism resting on the surface QTM.
+                     ! Inside_Prism => The intersection is inside a prism
+                     !      resting on the surface QTM instead of with one
+                     !      of its faces.
                      ! If the point is outside the QTM, this will be the
                      ! negative of one of the above values, other than
                      ! Inside_Prism; it will be whatever face the extrapolated
@@ -58,11 +58,15 @@ module QTM_Interpolation_Weights_3D_m
     real(rg) :: H    ! Height at which the point intersects a face.  This is
                      ! the height where the extrapolated line intersects a face
                      ! of the QTM for points outside the QTM.
-    integer :: H_ind = 0 ! Index in height grid.  If the intersection is not
-                     ! with a horizontal boundary within the QTM, H_Ind is the
-                     ! index of the next lower height surface.
-    integer :: N_Coeff = 0  ! How many elements of Coeff and Ser are used.
-    integer :: Ser(3) = 0   ! Serial numbers of coordinates, see QTM_Node_t
+    integer :: H_ind = 0 ! Index in height grid.  If |Face| /= Top_Face, H_Ind
+                     ! is the index of the next lower height surface.  If
+                     ! |Face| == Top_Face but the point is below the first
+                     ! element of the height grid, H_ind is zero.  This could
+                     ! happen if the ray is an Earth-reflecting ray and the
+                     ! minimum height in the height-reference array is above
+                     ! the Earth surface.
+    integer :: N_Coeff = 0 ! How many elements of Coeff and Ser are used.
+    integer :: Ser(3) = 0  ! Serial numbers of facet coordinates, see QTM_Node_t
                      ! in the Generate_QTM_m module.
   end type S_QTM_t
 
@@ -642,6 +646,9 @@ contains
 end module QTM_Interpolation_Weights_3D_m
 
 ! $Log$
+! Revision 2.8  2016/10/18 00:44:28  vsnyder
+! Correct some comments
+!
 ! Revision 2.7  2016/10/05 23:28:22  vsnyder
 ! Replace ZOT_n component name with Ser because it's a serial number for
 ! more than just the ZOT coordinates.
