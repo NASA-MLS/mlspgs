@@ -203,7 +203,6 @@ contains
     integer :: H(2,hash_size()) ! Assume QK = kind(0) for now, until we have
                           ! a generic Hash module
     type(h_t), pointer :: Geo(:) ! Nonpolymorphic handle for QTM_Trees%geo_in
-    integer :: I
     integer :: Hemisphere ! 2 = north, 3 = south
     integer :: L          ! min(QTM_Trees%Level,QTM_Depth)
     integer :: Octant     ! Octant being refined.
@@ -712,6 +711,9 @@ contains
 end module Generate_QTM_m
 
 ! $Log$
+! Revision 2.18  2016/10/18 00:43:15  vsnyder
+! Remove declaration for unused variable
+!
 ! Revision 2.17  2016/10/05 23:28:22  vsnyder
 ! Replace ZOT_n component name with Ser because it's a serial number for
 ! more than just the ZOT coordinates.
