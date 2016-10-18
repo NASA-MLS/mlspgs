@@ -24,7 +24,7 @@ module Get_Eta_Matrix_m
   public :: Get_Eta_Sparse_2d, Get_Eta_Sparse_2d_fl, Get_Eta_Sparse_2d_fl_nz
   public :: Get_Eta_Sparse_2d_nz
   public :: Get_Eta_Stru, Get_Eta_Stru_D_D, Get_Eta_Stru_D_S, Get_Eta_Stru_S_S
-  public :: Get_Eta_1d_Hunt
+  public :: Get_Eta_1d_Hunt, Get_Eta_ZP
   public :: Interpolate_Stru
   public :: Interpolate_Stru_1D_D, Interpolate_Stru_1D_S
   public :: Interpolate_Stru_2D_D, Interpolate_Stru_2D_S
@@ -1273,6 +1273,83 @@ contains
     include "Get_Eta_Stru.f9h"
   end subroutine Get_Eta_Stru_S_S
 
+! ---------------------------------------------------  Get_Eta_ZP  -----
+  subroutine Get_Eta_ZP ( Z_Basis, Z_Path, Eta_Z, NZ_Z, NNZ_Z, Tan_Ind, &
+                        & P_Basis, P_Path, Eta_P, NZ_P, NNZ_P, &
+                        & Eta_ZP, NZ_ZP, NNZ_ZP, NonZero_ZP, Update )
+
+    use GLNP, only: NG, NGP1
+    real(rp), intent(in) :: Z_Basis(:)     ! Zeta basis break points
+    real(rp), intent(in) :: Z_Path(:)      ! Zeta on the path
+    real(rp), intent(inout) :: Eta_Z(:,:)  ! Interpolating coefficients from
+                                           ! Z_Basis to Z_Path
+    integer, intent(inout) :: NZ_Z(:,:)    ! Nonzeros in Eta_Z
+    integer, intent(inout) :: NNZ_Z(:)     ! Numbers of nonzeros in columns of
+                                           ! Eta_Z
+    integer, intent(in) :: Tan_Ind         ! Index of tangent in Z_Path etc.
+    real(rp), intent(in) :: P_Basis(:)     ! Phi basis break points
+    real(rp), intent(in) :: P_Path(:)      ! Phi on the path
+    real(rp), intent(inout) :: Eta_P(:,:)  ! Interpolating coefficients from
+                                           ! P_Basis to P_Path
+    integer, intent(inout) :: NZ_P(:,:)    ! Nonzeros in Eta_P
+    integer, intent(inout) :: NNZ_P(:)     ! Numbers of nonzeros in columns of
+                                           ! Eta_P
+    real(rp), intent(inout) :: Eta_ZP(:,:) ! Eta_Z * Eta_P on the path for
+                                           ! each state vector Z X P element
+    integer, intent(inout) :: NZ_ZP(:,:)   ! Nonzeros in Eta_ZP
+    integer, intent(inout) :: NNZ_ZP(:)    ! Numbers of nonzeros in columns of
+                                           ! Eta_ZP
+    logical, intent(out), optional :: NonZero_ZP(:,:) ! Where Eta_ZP is nonzero
+    logical, intent(in), optional :: Update ! Clear nonzeros using NZ_, NNZ_
+                                           ! for each Eta first, otherwise
+                                           ! clear everything
+
+    integer :: I
+    logical :: MyUpdate
+
+    myUpdate = .false.
+    if ( present(update) ) myUpdate = update
+
+    if ( myUpdate ) then
+      ! Replace previously calculated nonzeros with zeros.
+      do i = 1, size(nnz_p)
+        eta_p(nz_p(:nnz_p(i),i),i) = 0
+      end do
+      do i = 1, size(nnz_z)
+        eta_z(nz_z(:nnz_z(i),i),i) = 0
+      end do
+      do i = 1, size(nnz_zp)
+        eta_zp(nz_zp(:nnz_zp(i),i),i) = 0
+      end do
+    else
+      eta_p = 0
+      eta_z = 0
+      eta_zp = 0
+    end if
+    nnz_p = 0
+    nnz_z = 0
+    nnz_zp = 0
+
+    call get_eta_sparse ( z_basis, z_path, eta_z, &
+    &      tan_ind, 1, nz_z, nnz_z, .false. )
+    ! Fine grid points between tangent points, if any, aren't used.
+    eta_z(tan_ind+1:tan_ind+ng,:) = 0.0_rp
+    call get_eta_sparse ( z_basis, z_path, eta_z, &
+      &    tan_ind+ngp1, size(z_path), nz_z, nnz_z, .true. )
+    call get_eta_sparse ( p_basis, p_path, eta_p, &
+      &    1, size(p_path), nz_p, nnz_p, .false. )
+
+    if ( present(nonZero_ZP) ) then
+      call multiply_eta_column_sparse ( &
+        & eta_z, nz_z, nnz_z, eta_p, nz_p, nnz_p, eta_zp, nz_zp, nnz_zp, &
+        & nonZero_ZP )
+    else
+      call multiply_eta_column_sparse ( &
+        & eta_z, nz_z, nnz_z, eta_p, nz_p, nnz_p, eta_zp, nz_zp, nnz_zp )
+    end if
+
+  end subroutine Get_Eta_ZP
+
 ! ----------------------------------------  Interpolate_Stru_1D_D  -----
   subroutine Interpolate_Stru_1D_D ( From, Eta, To )
     ! Interpolate from From to To using interpolating coefficients Eta
@@ -1435,6 +1512,9 @@ contains
 end module Get_Eta_Matrix_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.26  2013/05/13 23:40:52  vsnyder
+! Check for zero size grid
+!
 ! Revision 2.25  2013/02/28 21:06:42  vsnyder
 ! Try not to access array out of bounds
 !
