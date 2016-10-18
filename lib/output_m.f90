@@ -22,8 +22,8 @@ module OUTPUT_M
     & is_what_ieee
   use MLSStringLists, only: nCharsInFormat
   use MLSStrings, only: replaceNonAscii, lowercase, &
-    & readintsfromchars, trim_safe
-  use printit_m, only: assemblefullline, get_config, &
+    & readintsfromchars, stretch, trim_safe
+  use PrintIt_m, only: assemblefullline, get_config, &
     & MLSMSG_Crash, MLSMSG_Debug, MLSMSG_info, MLSMSG_Error, &
     & MLSMSG_Severity_to_quit, printItOut, &
     & MLSMessageConfig
@@ -100,20 +100,23 @@ module OUTPUT_M
 ! switchOutput ( char* filename, [int unit] )
 ! === (end of api) ===
 !
-! Note:
-! By calling appropriate functions and procedures you can adjust aspects of
+! Notes:
+! (1) By calling appropriate functions and procedures you can adjust aspects of
 ! how and where we output, and others can be changed by setting various
 ! public global parameters directly
 ! (in OO-speak they are class-level rather than instance-level)
-! Sometimes there is more than one way to accomplish the same thing
+! (2) Sometimes there is more than one way to accomplish the same thing
 ! E.g., calling timeStamp or using setStamp before calling output
 ! (Should we remove one of these?)
-!
+! (3) Another example is the advance argument which may be composed of multiple
+! sub-arguments, each to set an advanced feature
+! (see advancedOptions below)
+! (4)
 ! To understand the codes for dateformat and timeFormat, see the dates_module
 ! 
   ! Where to output?
   ! These apply if we don't output to a fortran unit number (which is > 0)
-  ! See also Beep command, and advance='stderr'
+  ! See also Beep command, and advance='stderr' or advance='arg1 ..'
   integer, parameter, public :: INVALIDPRUNIT      = 0
   integer, parameter, public :: STDOUTPRUNIT       = INVALIDPRUNIT - 1
   integer, parameter, public :: MSGLOGPRUNIT       = STDOUTPRUNIT - 1
@@ -140,6 +143,7 @@ module OUTPUT_M
   public :: stampOptions_t
   public :: timestampOptions_t
 
+  ! We can use the advance=.. mechanism to convey extra formatting info
   interface getOption
     module procedure getOption_char, getOption_log
   end interface
@@ -154,7 +158,7 @@ module OUTPUT_M
     module procedure output_string
   end interface
 
-  ! Don't filter for <cr>
+  ! This won't filter for <cr>
   interface OUTPUT_
     module procedure OUTPUT_CHAR_NOCR
   end interface
@@ -203,7 +207,16 @@ module OUTPUT_M
     character(len=27) :: parentName = "$RCSfile$"
   end type
 
-  type(outputOptions_T), public, save :: OUTPUTOPTIONS
+  ! This is the type for advanced formatting options from the advance=..
+  type advancedOptions_T
+    logical :: stretch             = .false. ! p r i n t  l i k e  t h i s   ?
+    logical :: bannered            = .false. ! print as a banner
+    logical :: headered            = .false. ! print as a header
+    type(outputOptions_T) :: originalOptions
+  end type
+
+  type(advancedOptions_T), public, save :: advancedOptions
+  type(outputOptions_T), public, save   :: outputOptions
 
   ! This is the type for configuring whether and how to automatically stamp
   ! lines sent to stdout
@@ -287,49 +300,92 @@ contains
 
   ! .......................................  Advance_is_yes_or_no  .....
   function Advance_is_yes_or_no ( str ) result ( outstr )
+    ! Process the advance argument in
+    !   call output( something, [advance='arg1 [arg2] .. [argn]' )
     ! takes '[Yy]...' or '[Nn..] and returns 'yes' or 'no' respectively
     ! also does the same with '[Tt]..' and '[Ff]..'
-    ! leaves all other patterns unchanged, but truncated to 4
-    ! characters.  Returns 'no' if the argument is absent.
-    
-    ! 'stderr' or just 'err' is special case--we return it as 'beep'
-
-    ! (The following comments are either untrue or unwise, possibly both)
+    ! Returns outputoptions%advanceDefault if the argument is absent.
+    !        A d v a n c e d   u s a g e
+    ! All other patterns require a longer explanation:
+    ! (1)
+    ! 'beep', 'stderr' or just 'err' is special case--we return 'beep'
+    ! trusting that the caller will print to stderr instead of stdout
+    ! (2)
+    ! if the initial character isn't one of [YyNn], or (1), we return 
+    ! outputoptions%advanceDefault (just as if it were missing)
+    ! (3)
     ! We are allowing the argument str to do multiple duties by being
-    ! composed of multiple space-separated arguments, e.g. 
-    ! 'arg1 [arg2] .. [argn]'
-    ! (1) the first arg1 is treated as before, basically 'yes' or 'no' or 'beep'
-    ! (2) arg2 and beyond will introduce extra options to the
-    ! output command, eventually simplifying it to just
-    !   call output( something, [advance='arg1 [arg2] .. [argn]' )
+    ! composed of multiple space-separated sub-arguments, e.g. 
+    !   'arg1 [arg2] .. [argn]'
+    ! the first arg1 is treated as before, basically 'yes' or 'no' or 'beep'.
+    ! arg2 and beyond set advancedOptions to the
+    ! output command:
+    !   sub-arg                   meaning
+    !   -------                   -------
+    !     save         save original outputOptions to be restored later
+    !    restore       restore original outputOptions
+    !    unit n        set print unit to n
+    !    level k       set severity level to k if calling MLSMessage
+    !   newline m      use achar(m) as character for newLine
+    !    stretch       s t r e t c h  charcaters before printing
+    !                  * -------------------------------------- *
+    !    banner        *   surround characters with a banner    *
+    !                  * -------------------------------------- *
+    !    header        *-- surround characters with a header ---*
     !--------Argument--------!
     character (len=*), intent(in), optional :: Str
-    character (len=4) :: Outstr
+    character (len=4) :: Outstr ! 'yes', 'no', or 'beep'
 
     !----------Local vars----------!
     character (len=*), parameter :: yeses = 'YyTt'
     character (len=*), parameter :: nose = 'NnFf'
-    integer :: kSpace
-
+    integer                      :: kSpace
+    character (len=32)           :: val
+    logical                      :: logval
+    ! Executable
     if ( .not. present(str)  ) then
       outstr = outputoptions%advanceDefault ! 'no'
       return
     end if
-
     outstr = adjustl(str)
-    kSpace = index( outstr, ' ' )
+    kSpace = index( outstr, ',' ) ! Did we separate args with a ',' ?
+    if ( kspace < 1 ) kSpace = index( outstr, ' ' )
     if ( kSpace > 1 ) outstr = outstr(:kSpace) ! To snip off arg2 ..
     if ( index( yeses, outstr(:1)) > 0  ) then
       outstr = 'yes'
     else if ( index( nose, outstr(:1)) > 0  ) then
       outstr = 'no'
+    else if ( index( lowercase(outstr), 'beep' ) > 0  ) then
+      outstr = 'beep'
     else if ( index( lowercase(outstr), 'err' ) > 0  ) then
       outstr = 'beep'
     else if ( index( lowercase(outstr), 'stde' ) > 0  ) then
       outstr = 'beep'
     else
-      outstr = str
+      outstr = outputoptions%advanceDefault ! str
     end if
+    if ( len_trim(str) < 4 ) return
+    ! write(*,*) 'str       = ', str
+    
+    ! advancedOptions%originalOptions = outputOptions
+    ! Now check for changing the advanced options
+    call getOption ( str, 'save', logval )
+    if ( logval ) then
+      advancedOptions%originalOptions = outputOptions
+    endif
+    call getOption ( str, 'restore', logval )
+    if ( logval ) then
+      outputOptions = advancedOptions%originalOptions
+    endif
+    call getOption ( str, 'unit', val )
+    if ( len_trim(val) > 0 ) read ( val, * ) outputOptions%prUnit
+    call getOption ( str, 'level', val )
+    if ( len_trim(val) > 0 ) read ( val, * ) outputOptions%MLSMSG_Level
+    call getOption ( str, 'newline', val )
+    if ( len_trim(val) > 0 ) read ( val, * ) outputOptions%newLineVal
+    call getOption ( str, 'stretch', advancedOptions%stretch )
+    call getOption ( str, 'banner', advancedOptions%bannered )
+    call getOption ( str, 'header', advancedOptions%headered )
   end function Advance_is_yes_or_no
 
   ! -----------------------------------------------------  Beep  -----
@@ -347,7 +403,9 @@ contains
   ! -----------------------------------------------------  BLANKS  -----
   subroutine BLANKS ( N_BLANKS, FILLCHAR, ADVANCE, DONT_STAMP )
   ! Output N_BLANKS blanks to PRUNIT.
-  ! (or optionally that many copies of fillChar)
+  ! or optionally that many copies of fillChar.
+  ! If FillChar is one of the SpecialFillChars maintained in outputOptions
+  ! we print the corresponding pattern instead of blanks.
     integer, intent(in) :: N_BLANKS
     character(len=*), intent(in), optional :: ADVANCE
     character(len=*), intent(in), optional :: FILLCHAR  ! default is ' '
@@ -428,7 +486,7 @@ contains
     if ( kNull >= 2 .and. kNull <= len(OutputLines) ) &
       & call output( OutputLines(1:kNull-1) )
     OutputLines = ' '
-    flush ( merge ( output_Unit, outputOptions%prUnit, outputOptions%prUnit < 0 ) )
+    ! flush ( merge ( output_Unit, outputOptions%prUnit, outputOptions%prUnit < 0 ) )
     outputOptions%prUnit = oldPrUnit
   end subroutine flushOutputLines
 
@@ -492,20 +550,56 @@ contains
     character(len=*), intent(in), optional :: format ! consistent with generic
     ! Internal variables
     integer :: I ! loop inductor
+    integer :: BannerLen
+    integer :: indent ! Should have chosen different name
+    integer :: LineLen ! How many chars tto print
+    character(len=4) :: MY_ADV ! 'yes' if advance
     integer :: myNewLineVal
-    logical :: myAsciify
+    logical :: myAsciify ! Convert non-printing chars to ascii?
+    character(len=max(90, 2*(len(chars)+15))) :: newChars ! What to print
     ! Executable
+    my_adv = Advance_is_yes_or_no(advance)
+    ! call Dump_AdvancedOptions
     myNewLineVal = outputOptions%newlineVal
     if ( present(newLineVal) ) myNewLineVal = newLineVal
     myAsciify = .true.
     if ( present(dont_asciify) ) myAsciify = .not. dont_asciify
+    ! If bannered, how large
+    BannerLen = max( 80, 4 + len_trim(chars) )
+    LineLen = len(chars)
+    indent = ( BannerLen - LineLen ) / 2 ! spaces beetween '*' and start of chars
+    newChars = chars
     i = index( chars, achar(myNewLineVal) )
+    if ( advancedOptions%bannered ) then
+      call OUTPUT_CHAR_NOCR ( '*', advance='no' )
+      call OUTPUT_CHAR_NOCR ( Repeat('-', BannerLen-2 ), advance='no' )
+      call OUTPUT_CHAR_NOCR ( '*', advance='yes' )
+    endif
+    if ( advancedOptions%headered ) then
+      newChars = '* ---- ' // newChars(:LineLen) // ' ---- *'
+      LineLen = LineLen + 2*7
+    endif
+    if ( advancedOptions%stretch ) then
+      newChars = stretch( newChars, options='-a' )
+      LineLen = 2*LineLen - 1
+      BannerLen = max( 80, 4 + LineLen )
+      indent = ( BannerLen - LineLen ) / 2
+    endif
+    ! write (*,*) 'bannered            =  ', advancedOptions%bannered 
+    if ( advancedOptions%bannered ) then
+      newChars = '*' // Repeat( ' ', indent-1 ) // newChars
+      LineLen = Linelen + indent
+      newChars(BannerLen:BannerLen) = '*'
+      LineLen = Bannerlen
+      ! print *, 'newChars ', newChars
+    endif
     if ( i < 1 ) then
-      if ( myAsciify) then
-        call OUTPUT_CHAR_NOCR ( ReplaceNonAscii(CHARS, '@', exceptions=achar(9)), &
+      if ( myAsciify ) newChars = ReplaceNonAscii( newChars, '@', exceptions=achar(9))
+      if ( myAsciify ) then
+        call OUTPUT_CHAR_NOCR ( newChars(:LineLen), &
           & ADVANCE, FROM_WHERE, DONT_LOG, LOG_CHARS, INSTEADOFBLANK, DONT_STAMP )
       else
-        call OUTPUT_CHAR_NOCR ( CHARS, &
+        call OUTPUT_CHAR_NOCR ( newChars(:LineLen), &
           & ADVANCE, FROM_WHERE, DONT_LOG, LOG_CHARS, INSTEADOFBLANK, DONT_STAMP )
       endif
     else
@@ -526,7 +620,13 @@ contains
           call newLine
         endif
       enddo
-      if ( Advance_is_yes_or_no(advance) == 'yes' ) call newLine
+      if ( my_adv == 'yes' ) call newLine
+    endif
+    ! write (*,*) 'bannered            =  ', advancedOptions%bannered 
+    if ( advancedOptions%bannered ) then
+      call OUTPUT_CHAR_NOCR ( '*', advance='no' )
+      call OUTPUT_CHAR_NOCR ( Repeat('-', BannerLen-2 ), advance='no' )
+      call OUTPUT_CHAR_NOCR ( '*', advance='yes' )
     endif
   end subroutine OUTPUT_CHAR
 
@@ -598,7 +698,7 @@ contains
     ! Executable
     n_chars = len(chars)
     alreadyLogged = .false.
-    my_adv = Advance_is_yes_or_no(advance)
+    my_adv = Advance_is_yes_or_no( advance )
     ! Print to stderr instead?
     if ( my_adv == 'beep' ) then
       call Beep( chars )
@@ -1291,6 +1391,14 @@ contains
   end subroutine switchOutput
 
   ! ------------------ Private procedures -------------------------
+  ! ----------------- Dump_AdvancedOptions
+  subroutine Dump_AdvancedOptions
+    write (*,*) 'stretch             =  ', advancedOptions%stretch  
+    write (*,*) 'bannered            =  ', advancedOptions%bannered 
+    write (*,*) 'headered            =  ', advancedOptions%headered 
+    ! write (*,*) '                       ', advancedOptions
+  end subroutine Dump_AdvancedOptions
+  
   ! .............................................  getOption  .....
   ! This family of subroutines parses a multipart advance arg into
   ! its components, returning an appropriate value
@@ -1298,6 +1406,9 @@ contains
   ! value type     component   returned value
   !  logical          -S         true
   ! character       -Sxyz        xyz
+  !
+  ! You may optionally insert a space between S and its value, e.g.
+  !                 "-S xyz" also returns "xyz"
   subroutine getOption_char ( arg, flag, val )
     ! Args
     character(len=*), intent(in)  :: arg
@@ -1528,6 +1639,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.127  2016/10/18 17:46:28  pwagner
+! Added advancedOptions; may insert extra args in advance='..'
+!
 ! Revision 2.126  2016/09/22 22:51:48  pwagner
 ! optional format arg now in generic output api
 !
