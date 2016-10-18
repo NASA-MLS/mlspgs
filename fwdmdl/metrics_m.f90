@@ -797,14 +797,14 @@ path: do i = i1, i2
   ! -----------------------------------------------  More_Metrics  -----
   subroutine More_Metrics ( &
           ! Inputs:
-          & tan_ind, n_tan, p_basis, vert_inds, t_ref, dhidzij, p_grid, &
+          & Tan_Ind, N_Tan, P_Basis, Vert_Inds, T_Ref, dHidZij, P_Grid, &
           ! Outputs:
-          & t_grid, dhitdzi,                                            &
+          & T_Grid, dHitdZi,                                            &
           ! Optional inputs:
-          & ddhidhidtl0, dhidtlm, t_deriv_flag, z_basis, z_ref,         &
+          & ddHidHidTl0, dHidTlm, T_Deriv_Flag, Z_Basis, Z_Ref,         &
           ! Optional outputs:
-          & ddhtdhtdtl0, dhitdtlm, dhtdtl0, dhtdzt,                     &
-          & do_calc_hyd, do_calc_t, eta_zxp, nz_zxp, nnz_zxp, tan_phi_t )
+          & ddHtdHtdTl0, dHitdTlm, dHtdTl0, dHtdZt,                     &
+          & Do_Calc_Hyd, Do_Calc_T, Eta_zxp, NZ_Zxp, NNZ_Zxp, Tan_Phi_t )
 
     ! This subroutine computes metrics-related things after H_Grid and
     ! P_Grid are computed by Height_Metrics, and then perhaps augmented
@@ -818,61 +818,66 @@ path: do i = i1, i2
     use TOGGLES, only: SWITCHES
     ! inputs:
 
-    integer, intent(in) :: tan_ind     ! tangent height index, 1 = center of
+    integer, intent(in) :: Tan_Ind      ! Tangent height index, 1 = center of
     !                                     longest path
-    integer, intent(in) :: n_tan       ! tangent index in path, usually n_path/2
-    real(rp), intent(in) :: p_basis(:) ! horizontal temperature representation
+    integer, intent(in) :: N_Tan        ! Tangent index in path, usually n_path/2
+    real(rp), intent(in) :: P_Basis(:)  ! Horizontal temperature representation
     !                                     basis
-    integer, intent(in) :: vert_inds(:) ! What to use in [zt]_ref
-    real(rp), intent(in) :: t_ref(:,:) ! temperatures at z_ref X p_basis
-    real(rp), intent(in) :: dhidzij(:,:)! vertical derivative at z_ref X p_basis
-    real(rp), intent(in) :: p_grid(:)  ! phi's on the path
+    integer, intent(in) :: Vert_Inds(:) ! First (vertical) subscripts for
+    !                                    [zt]_ref  at points on the path
+    real(rp), intent(in) :: T_Ref(:,:)  ! Temperatures at Z_Ref X P_Basis
+    real(rp), intent(in) :: dHidZij(:,:)! Vertical derivative at Z_Ref X P_Basis
+    real(rp), intent(in) :: P_Grid(:)   ! Phi's on the path
 
     ! outputs:
 
-    real(rp), intent(out) :: t_grid(:) ! computed temperatures
-    real(rp), intent(out) :: dhitdzi(:)! derivative of height wrt zeta
+    real(rp), intent(out) :: T_Grid(:) ! computed temperatures
+    real(rp), intent(out) :: dHitdZi(:)! derivative of height wrt zeta
     !                                    --may be useful in future computations
 
     ! optional inputs
 
-    real(rp), optional, intent(in) :: ddhidhidtl0(:,:,:) ! second order reference
-    !   temperature derivatives. This is (height, phi_basis, zeta_basis).
-    !   Needed only if present(dhidtlm).
-    real(rp), optional, intent(inout) :: dhidtlm(:,:,:) ! reference temperature
-    !   derivatives. This gets adjusted so that at ref_h(1,@tan phi)) is 0.0 for
-    !   all temperature coefficients. This is height X zeta_basis X phi_basis
-    logical, optional, intent(in) :: t_deriv_flag(:)  ! User's deriv. flags for
-    !   Temperature. needed only if present(dhidtlm).
-    real(rp), optional, intent(in) :: z_basis(:) ! vertical temperature basis
-    !   Needed only if present(dhidtlm).
-    real(rp), optional, intent(in) :: z_ref(:)   ! -log pressures (zetas) for
-    !   which derivatives are needed.  Only the parts from the tangent outward
-    !   are used.  Needed only if present(dhidtlm).
+    real(rp), optional, intent(in) :: ddHidHidTl0(:,:,:) ! second order
+    !          reference temperature derivatives. This is (height, phi_basis,
+    !          zeta_basis). Needed only if present(dHidTlm).
+    real(rp), optional, intent(inout) :: dHidTlm(:,:,:) ! reference temperature
+    !          derivatives. This gets adjusted so that at ref_h(1,@tan phi)) is
+    !          0.0 for all temperature coefficients.
+    !          This is height X zeta_basis X phi_basis
+    logical, optional, intent(in) :: T_Deriv_Flag(:)  ! User's deriv. flags for
+    !          Temperature.  Needed only if present(dHidTlm).
+    real(rp), optional, intent(in) :: Z_Basis(:) ! Vertical temperature basis.
+    !          Needed only if present(dHidTlm).
+    real(rp), optional, intent(in) :: Z_Ref(:)   ! -log pressures (zetas) for
+    !          which derivatives are needed.  Only the parts from the tangent
+    !          outward are used.  Needed only if present(dHidTlm).
 
-    ! optional outputs.
+    ! Optional outputs.
 
-    real(rp), optional, intent(out) :: ddhtdhtdtl0(:) ! Second order 
-    !          derivative at the tangent only---used for antenna affects.
-    !          Computed if present(dhidtlm)
-    real(rp), optional, intent(out) :: dhitdtlm(:,:)
-    !                             derivative of path position wrt temperature
-    !                             statevector (z_basis X phi_basis)
-    real(rp), optional, intent(out) :: dhtdtl0(:)  ! First order derivative at
-    !           the tangent.  Computed if present(dhidtlm)
-    real(rp), optional, intent(out) :: dhtdzt      ! height derivative wrt
-    !                                                pressure at the tangent
-    logical, optional, intent(out) :: do_calc_hyd(:,:) ! nonzero locator for
-    !           hydrostatic calculations.  Computed if present(dhidtlm)
-    logical, optional, intent(inout) :: do_calc_t(:,:) ! nonzero locater for
-    !           temperature bases computations.  Computed if present(dhidtlm).
-    !           intent(inout) instead of intent(out) so as not to make parts we
-    !           don't touch undefined.
-    real(rp), optional, intent(inout) :: eta_zxp(:,:) ! eta matrix for temperature
-    !           Computed if present(dhidtlm)
-    integer, optional, intent(inout) :: NZ_ZXP(:,:)   ! Nonzeros in Eta_zxp
-    integer, optional, intent(inout) :: NNZ_ZXP(:)    ! Numbers of rows in NZ_ZXP
-    real(rp), optional, intent(out) :: tan_phi_t ! temperature at the tangent
+    real(rp), optional, intent(out) :: ddHtdHtdTl0(:)  ! Second order
+    !          derivatives of height w.r.t T_Ref at the tangent only -- used
+    !          for antenna affects. Computed if present(dHidTlm).
+    real(rp), optional, intent(out) :: dHitdTlm(:,:)   ! Derivative of path
+    !          position wrt temperature state vector (z_basis X phi_basis)
+    real(rp), optional, intent(out) :: dHtdTl0(:)      ! First order derivatives
+    !          of height w.r.t T_Ref at the tangent only.  Computed if
+    !          present(dHidTlm).
+    real(rp), optional, intent(out) :: dHtdZt          ! Height derivative wrt
+    !          pressure at the tangent.  Computed if present(dHidTlm).
+    logical, optional, intent(out) :: Do_Calc_Hyd(:,:) ! Nonzero locator for
+    !          hydrostatic calculations.  Computed if present(dHidTlm).
+    !          This is Path X StateVector = Path X ( Zeta * Phi )
+    logical, optional, intent(inout) :: Do_Calc_T(:,:) ! Nonzero locater for
+    !          temperature bases computations.  Computed if present(dHidTlm).
+    !          intent(inout) instead of intent(out) so as not to make parts we
+    !          don't touch undefined.  Updated if present(dHidTlm).
+    !          This is Path X StateVector = Path X ( Zeta * Phi )
+    real(rp), optional, intent(inout) :: Eta_zxp(:,:)  ! Eta matrix for
+    !          temperature.  Computed if present(dHidTlm).
+    !          This is Path X StateVector = Path X ( Zeta * Phi )
+    integer, optional, intent(inout) :: NZ_Zxp(:,:)    ! Nonzeros in Eta_zxp
+    integer, optional, intent(inout) :: NNZ_Zxp(:)     ! Numbers of rows in NZ_ZXP
+    real(rp), optional, intent(out) :: Tan_Phi_t ! temperature at the tangent
 
     ! Local variables.
 
@@ -897,7 +902,7 @@ path: do i = i1, i2
     n_path = size(vert_inds)
 
     ! Interpolate Temperature (T_Ref) and the vertical height derivative
-    ! (dhidzij) to the path (T_Grid and dhitdzi).
+    ! (dHidZij) to the path (T_Grid and dHitdZi).
 
     nnz_p = 0
     eta_p = 0.0
@@ -908,27 +913,28 @@ path: do i = i1, i2
       t_grid(i) = dot_product(t_ref(vert_inds(i),col1(i):col2(i)), &
         & eta_p(i,col1(i):col2(i)))
       ! compute the vertical derivative grid
-      dhitdzi(i) = dot_product(dhidzij(vert_inds(i),col1(i):col2(i)), &
+      dHitdZi(i) = dot_product(dHidZij(vert_inds(i),col1(i):col2(i)), &
         & eta_p(i,col1(i):col2(i)))
     end do
 
-    ! now for the optional tangent quantities.
+    ! Now for the optional tangent quantities.  
     if ( n_tan <= n_path ) then
+      ! Why aren't these two just t_ref(n_tan) and dHitdZi(n_tan)?
       if ( present(tan_phi_t) ) &
         & tan_phi_t = dot_product(t_ref(tan_ind,col1(n_tan):col2(n_tan)), &
           & eta_p(n_tan,col1(n_tan):col2(n_tan)))
       if ( present(dhtdzt) ) &
-        & dhtdzt = dot_product(dhidzij(tan_ind,col1(n_tan):col2(n_tan)), &
+        & dhtdzt = dot_product(dHidZij(tan_ind,col1(n_tan):col2(n_tan)), &
           & eta_p(n_tan,col1(n_tan):col2(n_tan)))
 
-      ! compute tangent temperature derivatives
-      if ( present(dhidtlm) ) call Tangent_Temperature_Derivatives ( size(z_basis) )
+      ! compute temperature derivatives
+      if ( present(dHidTlm) ) call Temperature_Derivatives ( size(z_basis) )
     end if
 
     if ( do_dumps >= 0 ) then
       call dump ( t_ref, name='t_ref', format='(1pg14.6)', options=options )
       call dump ( t_grid(:n_path), name='t_grid', format='(1pg14.6)', options=options )
-      call dump ( dhitdzi(:n_path), name='dhitdzi', format='(1pg14.6)', options=options )
+      call dump ( dHitdZi(:n_path), name='dHitdZi', format='(1pg14.6)', options=options )
       call dump ( eta_p, name='eta_p', format='(1pg14.6)', options=options )
       call dump ( col1, name='col1', options=options )
       call dump ( col2, name='col2', options=options )
@@ -938,63 +944,69 @@ path: do i = i1, i2
 
   contains
 
-    subroutine Tangent_Temperature_Derivatives ( N )
-      ! This is a subroutine instead of inline so that the references
-      ! to Z_Basis in the dimensions of automatic variables are only
-      ! attempted if Z_Basis is present.
+    subroutine Temperature_Derivatives ( Z_Coeffs )
+      ! This is a subroutine instead of inline so that the references to the
+      ! size of Z_Basis in the dimensions of automatic variables are only
+      ! attempted if Z_Basis is present.  But we could have used size(T_Ref,1).
       use GLNP, only: NGP1
-      integer, intent(in) :: N
-      real(rp) :: ETA_T2(n_path,n)    ! n = size(z_basis)
-      integer :: NZ_T2(n_path,n)      ! Nonzeros in Eta_T2
-      integer :: NNZ_T2(n)            ! Numbers of rows in NZ_T2
-      integer :: I, J, SV_P, SV_T, SV_Z ! Loop inductors and subscripts
-      integer :: P_COEFFS    ! size(p_basis)
-      integer :: Z_COEFFS    ! size(z_basis)
+      integer, intent(in) :: Z_Coeffs     ! size(z_basis)
+      real(rp) :: ETA_T2(n_path,z_coeffs) ! Path X Zeta
+      integer :: NZ_T2(n_path,z_coeffs)   ! Nonzeros in Eta_T2
+      integer :: NNZ_T2(z_coeffs)         ! Numbers of rows in NZ_T2
+      integer :: I, J, SV_P, SV_T, SV_Z   ! Loop inductors and subscripts
+      integer :: P_Coeffs                 ! size(p_basis)
 
-      ! Adjust the 2d hydrostatic relative to the surface. Even though
-      ! this is updated on every invocation, that is, with a new phi_t, it
-      ! works as if the original value were updated with the current
-      ! phi_t, because the interpolation represented by eta_p is linear.
-      ! Thus, the effect of cumulative updates for each new phi_t are the
-      ! same as starting from the original dhidtlm and updating with the
+      ! Adjust the 2d hydrostatic temperature derivative relative to the
+      ! surface. Even though this is updated on every invocation, that is,
+      ! with a new phi_t, it works as if the original value were updated with
+      ! the current phi_t, because the interpolation represented by eta_p is
+      ! linear. Thus, the effect of cumulative updates for each new phi_t are
+      ! the same as starting from the original dHidTlm and updating with the
       ! latest phi_t.  The algebra is horrible, but Maple has verified this.
-      p_coeffs = size(p_basis)
-      z_coeffs = size(z_basis)
+
       do i = 1, z_coeffs
-        dhidtlm(:,i,:) = dhidtlm(:,i,:) - &
-          & dot_product(dhidtlm(1,i,col1(n_tan):col2(n_tan)), &
-            & eta_p(n_tan,col1(n_tan):col2(n_tan)))
+        dHidTlm(:,i,:) = dHidTlm(:,i,:) - &
+          & dot_product ( dHidTlm(1,i,col1(n_tan):col2(n_tan)), &
+                        & eta_p(n_tan,col1(n_tan):col2(n_tan)) )
       end do
 
+      p_coeffs = size(p_basis)
       j = z_coeffs * p_coeffs
-      dhtdtl0 = RESHAPE(dhidtlm(tan_ind,:,:) * SPREAD(eta_p(n_tan,:),1,z_coeffs),&
+      dHtdTl0 = RESHAPE(dHidTlm(tan_ind,:,:) * SPREAD(eta_p(n_tan,:),1,z_coeffs),&
                      & (/j/))
 
-      ddhtdhtdtl0 = RESHAPE( &
-                   ddhidhidtl0(tan_ind,:,:) * SPREAD(eta_p(n_tan,:),1,z_coeffs), &
+      ddHtdHtdTl0 = RESHAPE( &
+                   ddHidHidTl0(tan_ind,:,:) * SPREAD(eta_p(n_tan,:),1,z_coeffs), &
                      & (/j/))
 
-      ! compute the path temperature, noting where the zeros are
+      ! Compute Zeta interpolation coefficients, noting where the zeros are
       nnz_t2 = 0
       eta_t2 = 0.0
+      ! Get_Eta_Sparse is called twice because Z_Ref is sorted on N_Tan:1:-1
+      ! and on N_Tan+ngp1:
       call get_eta_sparse ( z_basis, z_ref(vert_inds), eta_t2, &
-        & n_tan, 1, nz_t2, nnz_t2, .false. )
+        & n_tan, 1, nz_t2, nnz_t2, .true. )
       call get_eta_sparse ( z_basis, z_ref(vert_inds), eta_t2, &
         & n_tan+ngp1, size(vert_inds), nz_t2, nnz_t2, .true. )
 
+      ! Compute Zeta X Phi interpolation coefficients, noting where the zeros
+      ! are.  This is ultimately the same as Comp_Eta_Docalc_No_Frq, but that
+      ! doesn't return the Eta_P it computes, which we use above for a one-D
+      ! interpolation.
       call multiply_eta_column_sparse ( eta_t2, nz_t2, nnz_t2, eta_p, nz_p, nnz_p, &
         & eta_zxp, nz_zxp, nnz_zxp, do_calc_t )
 
+      ! Compute the path temperature derivative, noting where the zeros are
       sv_t = 0
       do sv_p = 1 , p_coeffs
         do sv_z = 1 , z_coeffs
           sv_t = sv_t + 1
           if ( t_deriv_flag(sv_t) ) then
-            dhitdtlm(:,sv_t) = max(dhidtlm(vert_inds,sv_z,sv_p),0.0_rp) * eta_p(:,sv_p)
-            do_calc_hyd(:,sv_t) = dhitdtlm(:,sv_t) /= 0.0_rp
+            dHitdTlm(:,sv_t) = max(dHidTlm(vert_inds,sv_z,sv_p),0.0_rp) * eta_p(:,sv_p)
+            do_calc_hyd(:,sv_t) = dHitdTlm(:,sv_t) /= 0.0_rp
           else
             do_calc_hyd(:,sv_t) = .false.
-            dhitdtlm(:,sv_t) = 0.0
+            dHitdTlm(:,sv_t) = 0.0
             eta_zxp(nz_zxp(:nnz_zxp(sv_t),sv_t),sv_t) = 0.0
             do_calc_t(nz_zxp(:nnz_zxp(sv_t),sv_t),sv_t) = .false.
             nnz_zxp(sv_t) = 0
@@ -1002,7 +1014,7 @@ path: do i = i1, i2
         end do
       end do
 
-    end subroutine Tangent_Temperature_Derivatives
+    end subroutine Temperature_Derivatives
 
   end subroutine More_Metrics
 
@@ -1132,6 +1144,9 @@ path: do i = i1, i2
 end module Metrics_m
 
 ! $Log$
+! Revision 2.76  2016/08/20 00:55:08  vsnyder
+! Correct comments about units for Phi_t and P_Basis in Tangent_Metrics
+!
 ! Revision 2.75  2015/09/22 01:59:32  vsnyder
 ! Correct some comments, dump Z
 !
