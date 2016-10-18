@@ -264,6 +264,18 @@ SHELL = /bin/sh
 #
 # As a shortcut, to build them all, just enter "make tools"
 #
+# You can write and build your own tools, too. In most cases it is easy enough
+# to cd tests/misc or lib or l2 or wherever, hide
+# whatever sources you find already there, copy in your own source file or files,
+# then
+#   make update
+#   make
+#
+# The script util/build_f90_in_misc.sh was written to automate this process
+# Two additional targets
+# withouttoolkit
+# withoutmlsmessage
+#
 #    The following are useful if you stored multiple configurations
 #     besides current one
 # clean_config   -- deletes configurations named using MLSCONFG on command-line
@@ -282,6 +294,9 @@ SHELL = /bin/sh
 #                  (see EVERYTHING variable)
 # substar        -- creates separate archives of subdirs; then tar them
 #                   (also util, notes and srclib are tarred up in this case)
+# nomlsmessagetar-- creates an archive of only a portion of mlspgs to allow
+#                   building or debugging something apart from the enchilada
+# notoolkittar   -- like nomlsmessagetar, but a little bigger
 
 # --------------- SETTING definitions
 # FOPTS              Override default compiler option; note that you must
@@ -382,6 +397,36 @@ EVERYTHING = $(SUBDIRS)  srclib \
 # something like
 #    make tar TAR=/usr/local/gnu/bin/tar
 TAR=tar
+
+# These definitions allow us to tar up smaller portions of our software
+# for code reuse of debugging
+# They allow us to forego the toolkit and associated hdf libraries
+NO_MLSMESS_LIB := $(shell ${REECHO} -dir lib -path lib \
+dates_module.f90  MLSFinds.f90        numToChars.f9h  PseudoToolkit.f90\
+findunique.f9h    MLSKinds.f90        output_m.f90    ReadANumFromChars.f9h\
+isafillvalue.f9h  MLSStringLists.f90  \
+MLSCommon.f90     MLSStrings.f90      PrintIt_m.f90\
+)
+NO_MLSMESS_SRCLIB := $(shell ${REECHO} -dir srclib -path srclib \
+  ReadNumFromBaseN.f9h\
+)
+
+NO_MLSMESS := $(NO_MLSMESS_LIB) $(NO_MLSMESS_SRCLIB)
+
+NO_TOOLKIT_LIB := $(shell ${REECHO} -dir lib -path lib \
+addRow.f9h        MLSKinds.f90              output_m.f90\
+dates_module.f90  MLSMessage.f9h            output_name_value_pair.f9h\
+findunique.f9h    MLSMessageSubstitute.f90  PrintIt_m.f90\
+highOutput.f90    mlsmessagetest.f90        PseudoToolkit.f90\
+isafillvalue.f9h  MLSStringLists.f90        ReadANumFromChars.f9h\
+MLSCommon.f90     MLSStrings.f90            \
+MLSFinds.f90      numToChars.f9h            toggles_core.f90\
+)
+NO_TOOLKIT_SRCLIB := $(shell ${REECHO} -dir srclib -path srclib \
+  ReadNumFromBaseN.f9h\
+)
+
+NO_TOOLKIT := $(NO_TOOLKIT_LIB) $(NO_TOOLKIT_SRCLIB)
 
 # The next 2 may be commented out if you're absolutely sure you won't need them
 tests_sub_dirs := $(shell ${REECHO} -d -excl tests/CVS tests/*)
@@ -783,6 +828,23 @@ $(utctotai_sources): $(MLSBIN)/utctotai.shar
 	cd $(UTCDIR); \
 	/bin/sh utctotai.shar
 
+# to build and install your own executable without toolkit panoply
+# type
+#    make MY_PROG=/path/to/it/myprog.f90 withouttoolkit
+# to omit even MLSMessage
+#    make MY_PROG=/path/to/it/myprog.f90 withoutmlsmessage
+withouttoolkit: $(CONFDIR)/$(MLSCFILE) $(MY_PROG)
+	   $(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+      -c $(MLSCONFG) -p $@ -M $(MAKE) \
+	   -C $(MLSCFILE) -O DONT_LINK_TOOLKIT=yes \
+            $(MY_PROG) $(NO_TOOLKIT)
+
+withoutmlsmessage: $(CONFDIR)/$(MLSCFILE) $(MY_PROG)
+	   $(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+      -c $(MLSCONFG) -p $@ -M $(MAKE) \
+	   -C $(MLSCFILE) -O DONT_LINK_TOOLKIT=yes \
+            $(MY_PROG) $(NO_MLSMESS)
+
 # build and install some of the executables out of util
 checkpvmup: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/checkpvmup.c
 	   $(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
@@ -1168,6 +1230,22 @@ disttarg:
 	$(TAR) hcvzf machines.tgz lib/machines customblds/ --exclude CVS; \
 	$(TAR) hAvzf ../mlspgs.tgz machines.tgz
 
+# These are just the modules and files need for building with the output_m
+# module but without MLSMessage-ing
+nomlsmessagetar:
+	@echo "tar-ing without MLSMessge"; \
+        echo "$(NO_MLSMESS)" ; \
+        rm -f ../mlspgs_nomess.tar; \
+	$(TAR) hcvf ../mlspgs_nomess.tar $(NO_MLSMESS) 
+
+# These are just the modules and files need for building with the MLSMessage
+# module but without the dread toolkit panoply
+notoolkittar:
+	@echo "tar-ing without Toolkit"; \
+        echo "$(NO_TOOLKIT)" ; \
+        rm -f ../mlspgs_notoolkit.tar; \
+	$(TAR) hcvf ../mlspgs_notoolkit.tar $(NO_TOOLKIT) 
+
 tar:
 	@echo "tar-ing mlspgs for sips"; \
         echo "EXCL_MLSCONFG: $(EXCL_MLSCONFG)" ; \
@@ -1365,6 +1443,7 @@ tools: chunktimes checkpvmup compare dateconverter extinctionmaker \
   internaladd_copy show_copy internalupdate levels l2q \
   mostlyclean partialclean Spartacus $(SUBDIRS) subdirs\
   substar substarz substarg substars tar targ tarz update\
+  nomlsmessagetar notoolkittar \
   checkpvmup chunktimes CondenseLeakLog end_stmts f90tex Goldbrick_More \
   heconvert h5subset h5cat hl init_gen killmaster \
   l1bcat l1bdiff l1bdump l1h5subset \
@@ -1376,6 +1455,9 @@ tools: chunktimes checkpvmup compare dateconverter extinctionmaker \
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.15  2016/10/04 00:31:11  pwagner
+# IHDFEOS5INC and IHDFEOSINC fixed
+#
 # Revision 1.14  2016/04/20 23:01:51  pwagner
 # Added l1bcat as a target; install-nrt also builds l2q
 #
