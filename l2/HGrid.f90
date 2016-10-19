@@ -423,9 +423,12 @@ contains ! =====     Public Procedures     =============================
           & cond=toggle(gen) .and. ( levels(gen) > 1 .or. .not. computingOffsets ) )
         return
       endif
+      if ( verbose ) call output ( 'Reading MAFStartTimeTAI', advance='yes' )
       call L1BGeoLocation ( filedatabase, "MAFStartTimeTAI", &
           & instrumentModuleName, fullArray )
+      if ( verbose ) call output ( 'Subsampling MAFStartTimeTAI', advance='yes' )
       call L1BSubsample ( chunk, fullArray, values=TAI )
+      if ( verbose ) call output ( 'Hunting MAFStartTimeTAI', advance='yes' )
       call Hunt ( TAI, hgrid%time(1,:), hgrid%maf, &
         & allowTopValue=.true. )
     end if
@@ -464,7 +467,6 @@ contains ! =====     Public Procedures     =============================
       & "See ***** above for error message" )
     call trace_end ( "CreateHGridFromMLSCFInfo", &
       & cond=toggle(gen) .and. ( levels(gen) > 1 .or. .not. computingOffsets ) )
-
   end function CreateHGridFromMLSCFInfo
 
   ! ----------------------------------------  CreateExplicitHGrid  -----
@@ -2223,7 +2225,9 @@ contains ! =====     Public Procedures     =============================
     end if
 
     if ( verbose ) then
-      call GetModuleName ( instrumentModule, instrumentModuleName )
+      instrumentModuleName = 'none'
+      if ( instrumentModule > 0 ) &
+        & call GetModuleName ( instrumentModule, instrumentModuleName )
       ! Read the l1boa items we will need
       nullify( MAFStartTimeTAI, GeodAngle, GeodAlt, GeodLat, &
         & LosAngle, OrbIncl, SolarTime, SolarZenith )
@@ -2233,7 +2237,7 @@ contains ! =====     Public Procedures     =============================
       call L1BGeoLocation ( filedatabase, 'GHz/GeodLat      ', instrumentModuleName,  GeodLat )
       call L1BGeoLocation ( filedatabase, 'GHz/Lon          ', instrumentModuleName,  Lon )
       call L1BGeoLocation ( filedatabase, 'GHz/LosAngle     ', instrumentModuleName,  LosAngle )
-      call L1BGeoLocation ( filedatabase, 'sc/OrbIncl       ', instrumentModuleName,  OrbIncl )
+      ! call L1BGeoLocation ( filedatabase, 'sc/OrbIncl       ', instrumentModuleName,  OrbIncl )
       call L1BGeoLocation ( filedatabase, 'GHz/SolarTime    ', instrumentModuleName,  SolarTime )
       call L1BGeoLocation ( filedatabase, 'GHz/SolarZenith  ', instrumentModuleName,  SolarZenith )
       call output ( "Comparing start, end geolocations all chunks: " , &
@@ -2249,7 +2253,7 @@ contains ! =====     Public Procedures     =============================
         endif
       end do
       call deAllocate_Test ( MAFStartTimeTAI, 'MAFStartTimeTAI', ModuleName )
-      call deAllocate_Test ( OrbIncl        , 'OrbIncl        ', ModuleName )
+      ! call deAllocate_Test ( OrbIncl        , 'OrbIncl        ', ModuleName )
       call deAllocate_Test ( GeodAngle      , 'GHz/GeodAngle  ', ModuleName )
       call deAllocate_Test ( GeodAlt        , 'GHz/GeodAlt    ', ModuleName )
       call deAllocate_Test ( GeodLat        , 'GHz/GeodLat    ', ModuleName )
@@ -2437,6 +2441,7 @@ contains ! =====     Public Procedures     =============================
     endif
     lowMAF = hgrid%maf(1) + chunk%firstMAFIndex - 1
     highMAF = hgrid%maf(hGrid%noProfs) + chunk%firstMAFIndex - 1
+    highMAF = min(highMAF, size(MAFStartTimeTAI) - 1 )
     call output( 'First, last MAFs matching grid (then times)', advance='no' )
     call blanks( 6 )
     call output ( (/lowMAF, highMAF/), advance='no' )
@@ -2593,6 +2598,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.145  2016/10/19 00:31:18  pwagner
+! Trying to avoid certain crashes; may be signs of deeper problems
+!
 ! Revision 2.144  2016/10/14 00:04:28  pwagner
 ! Avoid negative hGridOffsets
 !
