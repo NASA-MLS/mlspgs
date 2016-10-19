@@ -71,6 +71,8 @@ module L1BData
 
 !     (subroutines and functions)
 ! AssembleL1BQtyName              Returns Quantity Name depending on hdfVersion
+! contractL1BData                 Contract an l1bData to just a range of mafs
+! convertL1BData                  Convert an l1bData from integer-valued to d.p.
 ! cpL1BData                       Duplicate an l1bData
 ! DeallocateL1BData               Called when an l1bData is finished with
 ! dupL1BData                      Duplicate an l1bData
@@ -98,6 +100,10 @@ module L1BData
 !     (subroutines and functions)
 ! char*32 AssembleL1BQtyName (char name, int hdfVersion, log isTngtQty,
 !                         [char InstrumentName] )
+! ConvertL1BData ( l1bData_T l1bDatain , l1bData_T l1bDataOut, int noMAFs,
+!   int firstMAF, int lastMAF, int firstChannel, int lastChannel,
+!   int firstMIF, int lastMIF )
+! ConvertL1BData ( l1bData_T l1bData )
 ! CpL1BData ( MLSFile_t L1BFile1, MLSFile_t L1BFile2, char QuantityName, &
 !    [char NewName], [log l2aux] )
 ! dupL1BData ( l1bData_T l1bData1, l1bData_T l1bData2, int offsetMAF )
@@ -121,7 +127,7 @@ module L1BData
 
   public :: L1BData_T, nameLen, precisionSuffix, &
     & allocateL1BData, AssembleL1BQtyName, &
-    & CheckForCorruptFileDatabase, ContractL1BData, CpL1BData, &
+    & CheckForCorruptFileDatabase, ContractL1BData, ConvertL1BData, CpL1BData, &
     & DeallocateL1BData, diff, dump, dupL1BData, &
     & findL1BData, FindMaxMAF, GetL1BFile, &
     & L1BRadSetup, L1BOASetup, PadL1BData, &
@@ -468,9 +474,9 @@ contains ! ============================ MODULE PROCEDURES ======================
     call GetAllHDF5DSNames ( L1BFile, DSNames )
     call Dump ( DSNames, 'DSNames from MLSFile type' )
     call newLine
-    call GetAllHDF5DSNames ( L1BFile%name, '/', DSNames )
-    call Dump ( DSNames, 'DSNames from MLSFile name' )
-    call newLine
+    !call GetAllHDF5DSNames ( L1BFile%name, '/', DSNames )
+    !call Dump ( DSNames, 'DSNames from MLSFile name' )
+    !call newLine
     ! call crash_burn
   end subroutine CheckForCorruptFileDatabase
 
@@ -549,6 +555,22 @@ contains ! ============================ MODULE PROCEDURES ======================
     l1bDataOut%firstMAFCtr = myminval(l1bDataOut%counterMAF)
     l1bDataOut%lastMAFCtr = maxval(l1bDataOut%counterMAF)
   end subroutine ContractL1BData
+
+  ! --------------------------------------------  ConvertL1BData  -----
+  subroutine ConvertL1BData ( L1BData )
+    ! Convert an l1bdatafrom integer type to d.p.
+    type(L1BData_T), intent(inout)  :: L1BData
+    ! Internal variables
+    integer, dimension(3) :: dims
+    integer :: rank
+    logical, parameter :: DEEBug = .false.
+    ! Executable
+    dims = shape(l1bData%intField)
+    call allocate_test ( l1bData%dpField, dims(1), dims(2), dims(3), &
+      & 'l1bData%dpField', ModuleName )
+    l1bData%dpField = l1bData%intField
+    call deallocate_test ( l1bData%intField, 'l1bData%intField', ModuleName )
+  end subroutine ConvertL1BData
 
   ! ----------------------------------------  CpL1BData  -----
   subroutine CpL1BData ( L1BFile1, L1BFile2, QuantityName, NewName, l2aux )
@@ -2993,6 +3015,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.117  2016/10/19 00:09:15  pwagner
+! Added ConvertL1BData
+!
 ! Revision 2.116  2016/10/11 23:27:18  pwagner
 ! Commented-out the crash_burn
 !
