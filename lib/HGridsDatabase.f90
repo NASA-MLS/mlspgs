@@ -135,6 +135,7 @@ contains ! =========== Public procedures ===================================
 
     type (HGrid_T), intent(in)  :: AGRID
     type (HGrid_T), intent(out) :: HGRID
+    integer                     :: stat
 
     ! Executable code
     hGrid%Name                 = aGrid%Name               
@@ -170,6 +171,10 @@ contains ! =========== Public procedures ===================================
     hGrid%solarTime    = aGrid%solarTime  
     hGrid%solarZenith  = aGrid%solarZenith
     hGrid%losAngle     = aGrid%losAngle   
+    if ( allocated(aGrid%QTM_tree) ) then
+      allocate ( hGrid%QTM_tree, stat=stat )
+      hGrid%losAngle     = aGrid%losAngle   
+    endif
   end subroutine copyHGrid
 
   ! -------------------------------------------  CreateEmptyHGrid  -----
@@ -212,8 +217,8 @@ contains ! =========== Public procedures ===================================
     use Allocate_Deallocate, only: Allocate_Test
     use Dump_0, only: Dump
     use HighOutput, only: outputNamedValue
-    use L1BData, only: deallocateL1BData, L1BData_t, readL1BData, &
-      & AssembleL1BQtyName
+    use L1BData, only: L1BData_t, &
+      & AssembleL1BQtyName, ConvertL1BData, deallocateL1BData, readL1BData
     use machine, only: crash_burn
     use MLSCommon, only: MLSFile_t
     use MLSFiles, only: getMLSFileByType
@@ -309,8 +314,15 @@ contains ! =========== Public procedures ===================================
       ! readItemName = "/" // adjustl(Name)
       call output( 'We should have stopped specifying GHz by now', advance='yes' )
       call outputNamedValue( 'name', trim(Name) )
+      call outputNamedValue( 'moduleStr', trim(moduleStr) )
       ! call crash_burn
-      readItemName = Name
+      if ( moduleStr /= 'none' .and. moduleStr /= 'GHz' .and. &
+        & len_trim(moduleStr) > 1 ) then
+        readItemName = trim(moduleStr) // '/' // snipModuleStr(Name, 'GHz')
+      else
+        readItemName = Name
+      endif
+      call outputNamedValue( 'readItemName to read', trim(readItemName) )
     elseif ( index( name, 'tp') > 0 ) then
       ! l1bItemName = AssembleL1BQtyName ( 'GHz.' // Name, hdfVersion, .false. )
       readItemName = AssembleL1BQtyName ( Name, hdfVersion, .true., moduleStr )
@@ -325,6 +337,7 @@ contains ! =========== Public procedures ===================================
     ! which auttomatically set dontPad=.true.
     call ReadL1BData ( L1BFile, readItemName, l1bField, noMAFs, status, &
       & dontpad=.true. )
+    if ( .not. associated(l1bField%dpField) ) call ConvertL1BData( l1bField )
     if ( any(isFillValue(l1bField%dpField) ) .and. & 
       & trim(readItemname) /= '/GHz/Lon') then 
       call output( 'Fill values among ' // trim(readItemName), advance='yes' ) 
@@ -390,23 +403,27 @@ contains ! =========== Public procedures ===================================
     end select
     call deallocateL1BData ( l1bField ) ! Avoid memory leaks
   contains
-    function snipModuleStr ( itemName ) result ( bareName )
-      character(len=*), intent(in) :: itemname
-      character(len=32)            :: bareName
+    function snipModuleStr ( itemName, moduleGHz ) result ( bareName )
+      character(len=*), intent(in)                    :: itemname
+      character(len=32)                               :: bareName
+      character(len=*), intent(in), optional          :: moduleGHz
       ! Internal variables
-      integer                      :: i
+      character(len=32)                               :: modName
+      integer                                         :: i
       ! Executable
-      i = index( itemname, trim(moduleStr) // '/')
+      modName = moduleStr
+      if ( present(moduleGHz) ) modName = moduleGHz
+      i = index( itemname, trim(modName) // '/')
       if ( i < 1 ) then
         bareName = itemName
       else
-        bareName = itemName( i+len_trim(moduleStr)+1 : ) ! To account for "/"
+        bareName = itemName( i+len_trim(modName)+1 : ) ! To account for "/"
       endif
-      i = index( barename, trim(moduleStr) )
+      i = index( barename, trim(modName) )
       if ( i < 1 ) then
         bareName = bareName
       else
-        bareName = bareName( i+len_trim(moduleStr) : )
+        bareName = bareName( i+len_trim(modName) : )
       endif
       if ( bareName(1:3) == 'sc/' ) barename = bareName(4:)
       if ( bareName(1:3) == 'sc' ) barename = bareName(3:)
@@ -776,6 +793,9 @@ contains ! =========== Public procedures ===================================
 end module HGridsDatabase
 
 ! $Log$
+! Revision 2.40  2016/10/19 00:11:51  pwagner
+! Try to avoid certain crashes QTM HGrids and ASMLS data
+!
 ! Revision 2.39  2016/10/11 23:28:37  pwagner
 ! Removed stop statement; downgraded to just a warning
 !
