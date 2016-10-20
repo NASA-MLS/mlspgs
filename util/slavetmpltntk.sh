@@ -477,11 +477,11 @@ notdone="true"
 if [ "$CAPTURE_MT" = "yes" ]
 then
   /usr/bin/time -f 'M: %M t: %e' $PGE_BINARY --ntk -m --slave $masterTid --pidf "$NOTEFILE" $otheropts $l2cf  \
-    1>> "$LOGFILE" 2> "$STDERRFILE" &
+    1>> "$LOGFILE" 2> "$STDERRFILE" 2>> "$LOGFILE" &
 elif [ "$STDERRFILE" != "" ]
 then
   $PGE_BINARY --ntk -m --slave $masterTid --pidf "$NOTEFILE" $otheropts $l2cf  \
-    1>> "$LOGFILE" 2> "$STDERRFILE" &
+    1>> "$LOGFILE" 2> "$STDERRFILE" 2>> "$LOGFILE" &
 else
   $PGE_BINARY --ntk -m --slave $masterTid --pidf "$NOTEFILE" $otheropts $l2cf  \
     >> "$LOGFILE" &
@@ -542,6 +542,9 @@ do_the_call $all_my_opts
 exit 0
 
 # $Log$
+# Revision 1.16  2016/09/23 00:13:07  pwagner
+# Reduce default switches for opt and glob
+#
 # Revision 1.15  2016/05/12 17:02:05  pwagner
 # Obey CAPTURE_MT by capturing time, mmory footpint to stderr
 #

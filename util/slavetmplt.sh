@@ -490,11 +490,11 @@ then
     "$LOGFILE" "$STDERRFILE" >> "$LOGFILE"
   /usr/bin/time -f 'M: %M t: %e' \
     $PGE_BINARY --tk -m --slave $masterTid --pidf "$NOTEFILE" $otheropts  \
-    1>> "$LOGFILE" 2> "$STDERRFILE" &
+    1>> "$LOGFILE" 2> "$STDERRFILE" 2>> "$LOGFILE" &
 elif [ "$STDERRFILE" != "" ]
 then
   $PGE_BINARY --tk -m --slave $masterTid --pidf "$NOTEFILE" $otheropts \
-    1>> "$LOGFILE" 2> "$STDERRFILE" &
+    1>> "$LOGFILE" 2> "$STDERRFILE" 2>> "$LOGFILE" &
 else
   $PGE_BINARY --tk -m --slave $masterTid --pidf "$NOTEFILE" $otheropts  \
     >> "$LOGFILE" &
@@ -549,7 +549,6 @@ cat $NOTEFILE >> "$LOGFILE"
 # For good measure, we alo kill the pge's own pid (n case it was left hanging)
 echo "killing $pgepid" >> "$LOGFILE"
 kill -9 "$pgepid"
-
 }
       
 #------------------------------- Main Program ------------
@@ -569,6 +568,9 @@ do_the_call $all_my_opts
 exit 0
 
 # $Log$
+# Revision 1.38  2016/09/23 00:13:07  pwagner
+# Reduce default switches for opt and glob
+#
 # Revision 1.37  2016/06/04 00:25:12  pwagner
 # Tried to prevent another cause of slave deaths
 #
