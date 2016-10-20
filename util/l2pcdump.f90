@@ -15,11 +15,12 @@ program l2pcdump ! dumps datasets, attributes from l2pc files
 
    use Allocate_Deallocate, only: allocate_test, deallocate_test
    use DECLARATION_TABLE, only: ALLOCATE_DECL, DEALLOCATE_DECL
-   use Dump_0, only: DUMP, INTPLACES
+   use Dump_0, only: Dump
+   use dump_options, only: Intplaces
    use Hdf, only: DFACC_READ
    use HDF5, only: h5fis_hdf5_f, h5gclose_f, h5gopen_f
    use HIGHOUTPUT, only: DUMP
-   use INIT_TABLES_MODULE, only: INIT_TABLES
+   use INIT_TABLES_MODULE, only: Init_tables
    use Intrinsic, only: l_hdf
    use L2PC_m, only: DestroyL2PC, Dump, L2PCDatabase, &
      & ReadCompleteHDF5L2PCFile, PopulateL2PCBin
@@ -312,6 +313,9 @@ end program l2pcdump
 !==================
 
 ! $Log$
+! Revision 1.5  2014/01/09 00:31:26  pwagner
+! Some procedures formerly in output_m now got from highOutput
+!
 ! Revision 1.4  2013/08/23 02:51:48  vsnyder
 ! Move PrintItOut to PrintIt_m
 !
