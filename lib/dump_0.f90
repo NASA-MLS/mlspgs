@@ -1617,7 +1617,7 @@ contains
     integer, intent(in) :: Subs(:)
     integer :: I
     do i = 1, size(subs), 2
-      call output ( subs(i), places=max(4,ilog10(subs(i+1))+1) , advance='no' )
+      call output ( subs(i), places=max(4,ilog10(subs(i+1))+2) , advance='no' )
     end do
     call output ( afterSub , advance='no' )
   end subroutine Say_Subs_Only
@@ -1694,6 +1694,9 @@ contains
 end module Dump_0
 
 ! $Log$
+! Revision 2.140  2016/10/20 23:05:41  pwagner
+! Separated row, column indexes in 2d arrays
+!
 ! Revision 2.139  2016/07/28 03:28:17  vsnyder
 ! Moved comments to Dump_1 and Dump_Options
 !
