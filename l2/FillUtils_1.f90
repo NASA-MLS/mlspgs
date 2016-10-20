@@ -2629,43 +2629,35 @@ contains ! =====     Public Procedures     =============================
       use Geometry, only: OMEGA => W
       integer, intent(in) :: KEY
       type (VectorValue_T), intent(inout) :: QTY
-      type (VectorValue_T), intent(in) :: TNGTECI
+      type (VectorValue_T), intent(in) :: TngtECI
       type (VectorValue_T), intent(in) :: SCECI
       type (VectorValue_T), intent(in) :: SCVEL
-
 
       ! Local variables
       integer :: MAF, MIF                 ! Loop counters
       integer :: Me = -1                  ! String index for trace
       integer :: noMAFs                   ! Number of major frames
       integer :: noMIFs                   ! Number of minor frames for this module
-      integer :: x,y,z                    ! Indicies into the vectors
 
-      real (r8), dimension(3) :: tngtVel   ! Due to rotation of earth
-      real (r8), dimension(3) :: los       ! Normalised line of sight vector
+      real (r8), dimension(3) :: tngtVel  ! Due to rotation of earth
+      real (r8), dimension(3) :: los      ! Normalised line of sight vector
 
       ! Executable code
       call trace_begin ( me, 'FillUtils_1.LOSVelocity', key, &
         & cond=toggle(gen) .and. levels(gen) > 1 )
       ! First check that things are OK.
-      if ( .not. ValidateVectorQuantity ( qty, &
-        & quantityType=(/l_losVel/), &
-        & minorFrame=.true., &
-        & frequencyCoordinate=(/l_none/) ) ) &
+      if ( .not. ValidateVectorQuantity ( qty, quantityType=(/l_losVel/), &
+        & minorFrame=.true., frequencyCoordinate=(/l_none/) ) ) &
         call Announce_Error ( key, No_Error_Code, &
-        & 'Quantity to fill is not a valid LOS Velocity', qty )
-      if ( .not. ValidateVectorQuantity ( tngtECI, &
-        & quantityType=(/l_tngtECI/), &
-        & minorFrame=.true., &
-        & frequencyCoordinate=(/l_xyz/) ) ) &
+          & 'Quantity to fill is not a valid LOS Velocity', qty )
+      if ( .not. ValidateVectorQuantity ( tngtECI, quantityType=(/l_tngtECI/), &
+        & minorFrame=.true., frequencyCoordinate=(/l_xyz/) ) ) &
         call Announce_Error ( key, No_Error_Code, &
-        & 'Tangent ECI quantity is not of an appropriate form', tngtECI )
-      if ( .not. ValidateVectorQuantity ( scECI, &
-        & quantityType=(/l_scECI/), &
-        & minorFrame=.true., &
-        & frequencyCoordinate=(/l_xyz/) ) ) &
+          & 'Tangent ECI quantity is not of an appropriate form', tngtECI )
+      if ( .not. ValidateVectorQuantity ( scECI, quantityType=(/l_scECI/), &
+        & minorFrame=.true., frequencyCoordinate=(/l_xyz/) ) ) &
         call Announce_Error ( key, No_Error_Code, &
-        & 'Spacecraft ECI quantity is not of an approriate form', scECI )
+          & 'Spacecraft ECI quantity is not of an approriate form', scECI )
       if ( qty%template%instrumentModule /= tngtECI%template%instrumentModule ) &
         & call Announce_Error ( key, No_Error_Code, &
         & 'LOS Velocity and Tangent ECI quantities are not for the same module' )
@@ -2683,30 +2675,25 @@ contains ! =====     Public Procedures     =============================
 
             ! First compute the tangent point velocity in ECI coordinates due
             ! to the rotation of the earth.  This no doubt makes approximations
-            ! due to the slight non alignment between the earth's rotation axis and
-            ! the ECI z axis, but I'm going to ignore this.
+            ! due to the slight non alignment between the earth's rotation axis
+            ! and the ECI z axis, but I'm going to ignore this.
 
-            ! Work out the indices in 3*mif,maf space
-            x = 1 + 3*(mif-1)
-            y = x+1
-            z = x+2
+            tngtVel= omega* (/ -tngtECI%value3(2,mif,maf), &
+              &                 tngtECI%value3(1,mif,maf), 0.0_r8 /)
 
-            tngtVel= omega* (/ -tngtECI%values(y,maf), &
-              &                 tngtECI%values(x,maf), 0.0_r8 /)
-
-            ! Now compute the line of sight direction normal
-            los = tngtECI%values(x:z,maf) - scECI%values(x:z,maf)
+            ! Now compute the line of sight direction unit normal
+            los = tngtECI%value3(1:3,mif,maf) - scECI%value3(1:3,mif,maf)
             los = los / norm2(los)
 
-            ! Now compute the net velocity in this direction.  For the moment I'll
-            ! assume +ve means the sc and tp are moving apart, and -ve that they're
-            ! getting closer.
+            ! Now compute the net velocity in this direction.  For the moment,
+            ! assume +ve means the sc and tp are moving apart, and -ve that
+            ! they're getting closer.
 
             qty%values(mif,maf) = dot_product(tngtVel, los) - &
-              &                   dot_product(scVel%values(x:z,maf), los)
+                                & dot_product(scVel%value3(1:3,mif,maf), los)
 
-            ! Note that even though x,y,z have been used up to now for a GHz/THz
-            ! minor frame quantity, they're OK with this sc one too.
+            ! Even though x,y,z have been used up to now for a GHz/THz minor
+            ! frame quantity, they're OK with this sc one too.
           end do
         end do
       end if
@@ -4126,7 +4113,6 @@ contains ! =====     Public Procedures     =============================
       type (MLSFile_T), pointer :: L1BFile
       type (MLSFile_T), pointer :: L1BOAFile
       integer                   :: Column
-      integer                   :: I
       integer                   :: Me = -1 ! String index for trace
       integer                   :: MyBOMask
       integer                   :: NG ! geolocations = noSurfs * noCrossTrack =
@@ -7682,6 +7668,11 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.128  2016/10/20 19:18:30  vsnyder
+! Use tngtECE%value3 and scVel%value3, which eliminates the need to calculate
+! 2D subscripts for XYZ, MIF, MAF, and eliminates a seg fault with NAG build
+! 1052.
+!
 ! Revision 2.127  2016/09/02 00:56:05  vsnyder
 ! Add TngtECR and TngtGeodLat fills from L1B.  Make some arrays in
 ! ColAbundance automatic, resulting in DeallocateStuff being unused, and
