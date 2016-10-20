@@ -279,8 +279,10 @@ then
   return_status=`expr $?`
   if [ $return_status != $NORMAL_STATUS ]
   then
+     cat $JOBDIR/master.l2cfname
      echo "Preflight checkPaths run ended badly"
      echo "Possibly an error in pathnames; please check your PCF"
+     cat $JOBDIR/master.l2cfname >> "$MLSL2PLOG"
      echo "Preflight checkPaths run ended badly" >> "$MLSL2PLOG"
      echo "Possibly an error in pathnames; please check your PCF" >> "$MLSL2PLOG"
      exit 1
@@ -456,6 +458,9 @@ else
 fi
 
 # $Log$
+# Revision 1.33  2016/05/17 17:07:52  pwagner
+# 'dot' job.env if found; Obey CAPTURE_MT
+#
 # Revision 1.32  2015/12/09 01:30:59  pwagner
 # Fixed some typos
 #
