@@ -704,11 +704,13 @@ contains ! ============= Public procedures ===================================
           call Dump ( DSNames, 'DSNames' )
           qty%name = 0
           call SetupNewQuantityTemplate ( qty, &
-            & noInstances=chunk%lastMAFIndex-chunk%firstMAFIndex +1, &
+            & noInstances=chunk%lastMAFIndex-chunk%firstMAFIndex + 1, &
             & noSurfs=l1bField%maxMIFs, noChans=noChans, &
             & noCrossTrack=noCrossTrack, coherent=.false., &
             & stacked=.false., regular=regular, instanceLen=instanceLen, &
             & minorFrame=.true., verticalCoordinate=qty%verticalCoordinate )
+          call outputNamedValue ( 'Set num of MAFs to', &
+            & chunk%lastMAFIndex-chunk%firstMAFIndex + 1 )
           call trace_end ( "ConstructMinorFrameQuantity", &
             & cond=toggle(gen) .and. levels(gen) > 2 )
           return
@@ -1587,6 +1589,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.201  2016/10/20 23:13:39  pwagner
+! When warning of missing GeodAlt, say how big we set numMAFs
+!
 ! Revision 2.200  2016/10/14 00:05:46  pwagner
 ! Show qty name, too, when verbosely Constructing its template
 !
