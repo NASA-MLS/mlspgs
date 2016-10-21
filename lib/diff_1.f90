@@ -25,7 +25,7 @@ module Diff_1
   use MLSFillValues, only: FilterValues, HalfWaves, NaNFunction, &
     & ReorderFillValues, ReplaceFillValues, &
     & WhereAreTheInfs, WhereAreTheNaNs
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Warning
   use MLSStats1, only: AllStats, HowFar, HowNear, MLSStdDev, Ratios, Reset, &
     & Stat_t
   use Output_m, only: OutputOptions, Blanks, NewLine, Output
@@ -966,7 +966,7 @@ contains
   end subroutine UnfilteredDiff_4D_Real
 
   subroutine Zdonewithdiff ( Array1, Array2 )
-    ! Not an actual subroutine--here only so make knows we
+    ! Not an actual subroutine--here only so "make depends" knows we
     ! have a dependency on donewithdiff.f9h
     integer, parameter :: RK = kind(1.0e0)
     real(rk), intent(in) :: Array1(:,:,:,:)
@@ -1011,8 +1011,8 @@ contains
     real(rk)                                 :: rmsratio
     real(rk)                                 :: stddev
     real(rk)                                 :: stddevratio
-    real                                     :: t1
-    real                                     :: t2
+    real                                     :: t1 = 0
+    real                                     :: t2 = 0
     real(rk), dimension(MAXPCTS,7)           :: TheTable
     logical, parameter                       :: PrintMinMaxWithRMS = .true.
     logical, parameter                       :: DEBUG = .false.
@@ -1038,6 +1038,9 @@ contains
 end module Diff_1
 
 ! $Log$
+! Revision 2.5  2016/10/21 23:12:50  vsnyder
+! Remove unused USE name
+!
 ! Revision 2.4  2016/10/06 20:22:14  pwagner
 ! parts commom to unfiltered and filtered diffs moved to donewithdiff.f9h
 !
