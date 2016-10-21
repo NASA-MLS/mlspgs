@@ -44,7 +44,7 @@ module INIT_TABLES_MODULE
   use Units, only: init_units
   ! We're adding the following use statements to clue the makefiles'
   ! dependency calculator for srclib's tree_checker
-  use Tree, only: build_tree, push_pseudo_terminal
+  use Tree, only: ! build_tree, push_pseudo_terminal
   
   implicit none
 
@@ -2083,6 +2083,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.628  2016/10/21 23:27:09  vsnyder
+! Remove unused USE name
+!
 ! Revision 2.627  2016/09/02 00:24:54  vsnyder
 ! Specify units for QTM_Level, SolarZenith, and Time fields in HGrid
 !
