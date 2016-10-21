@@ -14,7 +14,7 @@
 
 ! $Id$
 
-  subroutine MAKE_TREE ( IDS, CONTINUE, Trace )
+  subroutine Make_Tree ( IDs, Continue, Trace )
   ! Build a tree specified by the "ids" array.  "begin" marks the
   ! beginning of a tree.  A tree-node marks the end of the corresponding
   ! tree.  Pseudo-terminals are decorated with their indices.
@@ -26,16 +26,16 @@
   ! continuing work on a previously-started subtree.  This is accomplished
   ! by not making the internal stack initially empty.
 
-    ! You may need to copy this USE statement to the routine or module
+    ! You might need to copy these USE statements to the routines or modules
     ! that incorporates this one by "include", because "make depends" can't
-    ! see through includes:
+    ! see through includes.  "use XYZ, only:" ought to be good enough.
     use Symbol_Table, only: Symbol, Set_Symbol
-    use Symbol_Types, only: T_Identifier, T_Null
-    use TREE, only: BUILD_TREE, PUSH_PSEUDO_TERMINAL
+    use Symbol_Types, only: T_Identifier
+    use Tree, only: Build_Tree, Push_Pseudo_Terminal
     implicit NONE
 
     integer, intent(in) :: IDS(:)
-    logical, intent(in), optional :: CONTINUE
+    logical, intent(in), optional :: Continue
     integer, intent(in), optional :: Trace ! passed through to Build_Tree
 
     integer, save :: CALLNO = 0    ! Which call to Make_Tree -- for error msg.
@@ -125,9 +125,12 @@
         stack(m) = stack(m) + 1
       end if
     end do
-  end subroutine MAKE_TREE
+  end subroutine Make_Tree
 
 ! $Log$
+! Revision 1.12  2013/12/04 02:31:44  vsnyder
+! Don't clobber reserved word definition
+!
 ! Revision 1.11  2013/09/19 23:33:46  vsnyder
 ! Provide for tracing
 !
