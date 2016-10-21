@@ -157,7 +157,7 @@ contains ! =====     Public procedures     =============================
     ! (because of the "include"):
 
     use Allocate_Deallocate, only: Allocate_Test
-    use TREE, only: BUILD_TREE, PUSH_PSEUDO_TERMINAL
+    use TREE, only: ! BUILD_TREE, PUSH_PSEUDO_TERMINAL
     use TREE_TYPES, only: N_DT_DEF
 
     integer, intent(in) :: N_DATA_TYPE_INDICES
@@ -329,6 +329,9 @@ contains ! =====     Public procedures     =============================
 end module INTRINSIC
 
 ! $Log$
+! Revision 2.74  2016/10/21 23:28:20  vsnyder
+! Remove unused USE name
+!
 ! Revision 2.73  2014/05/20 22:16:24  vsnyder
 ! Don't go out of bounds in Get_Type
 !
