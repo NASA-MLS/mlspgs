@@ -78,6 +78,7 @@
     real(kind(inArray1)), dimension(MAXPCTS,7) :: TheTable
     logical, parameter :: unique = .false. 
     ! Executable
+    t1 = 0.
     thisIsADiff = .true.  ! For special dumps
     alreadySbtrcted = .false.
     myPCTFormat  = DefaultPCTFormat
@@ -290,6 +291,9 @@
 
 !   end subroutine DIFF_1D_DOUBLE
 ! $Log$
+! Revision 2.36  2016/10/21 23:12:05  vsnyder
+! Make sure T1 is defined
+!
 ! Revision 2.35  2016/10/06 20:21:28  pwagner
 ! parts commom to unfiltered and filtered diffs moved to donewithdiff.f9h
 !
