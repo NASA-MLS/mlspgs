@@ -150,7 +150,7 @@ contains
     use Allocate_Deallocate, only: Test_Allocate
     use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
 
-    type (slabs_struct), dimension(:,:), pointer :: Slabs
+    type (slabs_struct), dimension(:,:), allocatable :: Slabs
     integer, intent(in) :: No_Ele
     type (catalog_t), dimension(:), target, intent(in) :: Catalog
     character(len=*), intent(in) :: Caller
@@ -162,11 +162,11 @@ contains
 
     allocate ( slabs(no_ele, size(catalog)), stat=i )
     addr = 0
-    if ( i == 0 ) then
-      if ( size(slabs) > 0 ) addr = transfer(c_loc(slabs(1,1)), addr)
-    end if
+!     if ( i == 0 ) then
+!       if ( size(slabs) > 0 ) addr = transfer(c_loc(slabs(1,1)), addr)
+!     end if
     call test_allocate ( i, caller, 'Slabs', (/1,1/), (/no_ele,size(catalog)/), &
-      & storage_size(slabs) / 8, address=addr )
+      & storage_size(slabs) / 8 )
 
     do i = 1, size(catalog)
       do j = 1, no_ele
@@ -225,7 +225,7 @@ contains
     ! Destroys all the components of a slabs
     use Allocate_Deallocate, only: Test_Deallocate
     use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
-    type (slabs_struct), dimension(:,:), pointer :: Slabs
+    type (slabs_struct), dimension(:,:), allocatable :: Slabs
 
     integer(c_intptr_t) :: Addr         ! For tracing
     integer :: I, S
@@ -233,7 +233,7 @@ contains
     call deallocateAllSlabs ( slabs, moduleName )
     s = size(slabs) * storage_size(slabs) / 8
     addr = 0
-    if ( s > 0 ) addr = transfer(c_loc(slabs(1,1)), addr)
+!     if ( s > 0 ) addr = transfer(c_loc(slabs(1,1)), addr)
     deallocate ( slabs, stat=i )
     call test_deallocate ( i, moduleName, 'slabs', s, address=addr )
   end subroutine DestroyCompleteSlabs
@@ -2781,6 +2781,9 @@ contains
 end module SLABS_SW_M
 
 ! $Log$
+! Revision 2.65  2015/03/28 02:11:31  vsnyder
+! Added stuff to trace allocate/deallocate addresses
+!
 ! Revision 2.64  2014/09/05 21:27:29  vsnyder
 ! More complete and accurate allocate/deallocate size tracking
 !
