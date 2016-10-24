@@ -401,7 +401,7 @@ contains
                                & FwdModelConf, FwdModelExtra, FwdModelIn, &
                                & Grids_f, Grids_tmp, &
                                & L1BMIF_TAI, MAF, MIFDeadTime, &
-                               & OrbIncline, PhiTan, PTan, RefGPH, SCGeocAlt, &
+                               & PhiTan, PTan, RefGPH, SCGeocAlt, &
                                & Surf_Angle, Tan_Chi_Out, Tan_Phi, TAN_Press, &
                                & WindowFinish, WindowStart )
   ! set up output pointing angles ------------------------------------
@@ -432,7 +432,6 @@ contains
     real(rv), intent(out), pointer :: L1BMIF_TAI(:,:)   ! MIF Times
     integer, intent(in) :: MAF
     real(rv), intent(out), pointer :: MIFDeadTime(:,:)  ! Not collecting data
-    type (VectorValue_T), intent(in) :: OrbIncline      ! Orbital inclination
     type (VectorValue_T), intent(in) :: PhiTan ! Tangent geodAngle component of state vector
     type (VectorValue_T), intent(in) :: PTan   ! Tangent pressure component of state vector
     type (VectorValue_T), intent(in) :: RefGPH ! Reference geopotential height
@@ -476,8 +475,7 @@ contains
     call get_chi_out ( ptan%values(:,maf), phitan%values(:,maf)*deg2rad, &
        & 0.001_rp*scGeocAlt%values(:,maf), Grids_tmp,                    &
        & (/ (refGPH%template%surfs(1,1), j=windowStart,windowFinish) /), &
-       & 0.001_rp*refGPH%values(1,windowStart:windowFinish),             &
-       & orbIncline%values(1,maf)*Deg2Rad, 0.0_rp,                       &
+       & 0.001_rp*refGPH%values(1,windowStart:windowFinish), 0.0_rp,     &
        & req_out, grids_f, h2o_ind, tan_chi_out, dh_dz_out, dx_dh_out,   &
        & dxdt_tan=dxdt_tan, d2xdxdt_tan=d2xdxdt_tan )
 
@@ -490,8 +488,7 @@ contains
     call get_chi_out ( tan_press(1:1), tan_phi(1:1),                     &
        & 0.001_rp*est_scgeocalt(1:1), Grids_tmp,                         &
        & (/ (refGPH%template%surfs(1,1), j=windowStart,windowFinish) /), &
-       & 0.001_rp*refGPH%values(1,windowStart:windowFinish),             &
-       & orbIncline%values(1,maf)*Deg2Rad, 0.0_rp,                       &
+       & 0.001_rp*refGPH%values(1,windowStart:windowFinish), 0.0_rp,     &
        & req_out(1:1), grids_f, h2o_ind, surf_angle, one_dhdz, one_dxdh, &
        & dxdt_tan=dxdt_surface, d2xdxdt_tan=d2xdxdt_surface )
 
@@ -525,6 +522,9 @@ contains
 end module Convolution_m
 
 ! $Log$
+! Revision 2.7  2016/10/24 22:13:42  vsnyder
+! Eliminate orbit inclination because get_chi_out no longer needs it
+!
 ! Revision 2.6  2016/08/20 00:53:48  vsnyder
 ! Correct a comment about units for Ten_Phi
 !
