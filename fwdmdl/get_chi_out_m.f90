@@ -24,7 +24,7 @@ module Get_Chi_Out_m
 contains
 
   subroutine Get_Chi_Out ( zetatan, phitan, scgeocalt, Grids_tmp, ref_zeta, &
-           & ref_gph, orb_inc, elev_offset, req, grids_f, h2o_ind, &
+           & ref_gph, elev_offset, req, grids_f, h2o_ind, &
            & tan_chi_out, dhdz_out, dx_dh_out, dxdt_tan, d2xdxdt_tan )
 
 ! Compute the output angles to interpolate to
@@ -47,7 +47,6 @@ contains
     real(rp), intent(in) :: ref_zeta(:)  ! zetas for inputted gph's
     real(rp), intent(in) :: ref_gph(:)   ! reference geopotential heights along the
 !                            temperature horizontal basis in km
-    real(rp), intent(in) :: orb_inc      ! orbital incline angle in radians
     real(rp), intent(in) :: elev_offset  ! elevation offset in radians
     real(rp), intent(in) :: req(:)       ! Earth radius in equivalent circle
     type(grids_t), intent(in) :: Grids_f ! Grids other than temperature
@@ -98,7 +97,7 @@ contains
     n_t_phi = grids_tmp%l_p(1)  ! Size of temperature phi basis
     n_t_zeta = grids_tmp%l_z(1) ! Size of temperature zeta basis
 
-    call two_d_hydrostatic ( grids_tmp, ref_zeta, ref_gph, zetatan, orb_inc, &
+    call two_d_hydrostatic ( grids_tmp, ref_zeta, ref_gph, zetatan, &
              & temp_tan, height_tan, dhdz_tan, dhdt_tan, d2hdhdt_tan )
 
 ! tangent heights for input pressures along phi
@@ -192,6 +191,9 @@ contains
 end module Get_Chi_Out_m
 
 ! $Log$
+! Revision 2.24  2016/10/24 22:14:24  vsnyder
+! Eliminate orbit inclination because two_d_hydrostatic no longer needs it
+!
 ! Revision 2.23  2016/05/10 00:03:55  vsnyder
 ! Cannonball polishing
 !
