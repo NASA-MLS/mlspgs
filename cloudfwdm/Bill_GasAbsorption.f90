@@ -52,7 +52,7 @@ contains
     REAL(rp), INTENT(IN) :: LosVel          !     OR RELATIVE HUMIDITY
     
     Type(Catalog_T), INTENT(IN) :: Catalog(:)
-    Type (slabs_struct), DIMENSION(:,:), POINTER :: gl_slabs
+    Type (slabs_struct), DIMENSION(:,:), allocatable :: gl_slabs
 
     !------------------
     ! OUTPUTS
@@ -168,6 +168,9 @@ contains
 end module Bill_GasAbsorption
 
 ! $Log$
+! Revision 1.32  2009/06/23 18:26:19  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 1.31  2008/10/03 21:04:26  livesey
 ! Added fixes to support EXTINCTIONV2 stuff
 !
