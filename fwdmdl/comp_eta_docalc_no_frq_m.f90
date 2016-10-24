@@ -27,22 +27,23 @@ contains
 
 ! ---------------------------------------  Comp_Eta_Docalc_No_Frq  -----
 
-  subroutine Comp_Eta_Docalc_No_Frq ( Grids_x, path_zeta, path_phi, &
-                                  &   eta_zp, do_calc_zp, sps, tan_pt, &
-                                  &   nz_zp, nnz_zp )
+  subroutine Comp_Eta_Docalc_No_Frq ( Grids_x, Path_Zeta, Path_Phi, &
+                                    & Eta_zp, Do_Calc_zp, Sps, Tan_Pt, &
+                                    & Your_NZ_Zp, Your_NNZ_Zp )
 
     use GLNP, only: NG, NGP1
     use MLSCommon, only: RP
-    use Get_Eta_Matrix_m, only: Get_Eta_Sparse, Multiply_Eta_Column_Sparse
+    use Get_Eta_Matrix_m, only: Get_Eta_Sparse, Multiply_Eta_Column_Sparse, &
+                              & Get_Eta_ZP
     use Load_Sps_Data_m, only: Grids_T
 
 ! Input:
 
     type (grids_t), intent(in) :: Grids_x  ! All the needed coordinates
 
-    real(rp), intent(in) :: path_zeta(:) ! zeta values along path for which
+    real(rp), intent(in) :: Path_Zeta(:) ! zeta values along path for which
 !                           species vmr is needed.
-    real(rp), intent(in) :: path_phi(:) ! phi values along path for which
+    real(rp), intent(in) :: Path_Phi(:) ! phi values along path for which
 !                           species vmr is needed.
     integer, intent(in), optional :: SPS ! Only do this species if present
     integer, intent(in), optional :: Tan_Pt ! Tangent point; path_zeta is sorted
@@ -50,17 +51,17 @@ contains
 
 ! Inout:
 
-    logical, intent(inout), optional :: do_calc_zp(:,:) ! Indicates whether there
+    logical, intent(inout), optional :: Do_Calc_zp(:,:) ! Indicates whether there
 !                           is a contribution for this state vector element.
 !                           This is the same length as values.
-    integer, intent(inout), optional :: NZ_ZP(:,:) ! Nonzeros in eta_zp
-    integer, intent(inout), optional :: NNZ_ZP(:)  ! Number of nonzeros in eta_zp
+    integer, intent(inout), optional, target :: Your_NZ_ZP(:,:) ! Nonzeros in eta_zp
+    integer, intent(inout), optional, target :: Your_NNZ_ZP(:)  ! Number of nonzeros in eta_zp
 
 ! Output:
 
     ! Marked inout so that we can clear only the nonzeros without making
     ! the rest of it undefined.
-    real(rp), intent(inout) :: eta_zp(:,:) ! Eta_z * Eta_phi for each state
+    real(rp), intent(inout) :: Eta_zp(:,:) ! Eta_z * Eta_phi for each state
 !                           vector element. This is the same length as values.
 ! Notes:
 ! units of z_basis must be same as zeta_path (usually -log(P)) and units of
@@ -80,23 +81,28 @@ contains
     integer :: NZ_Z(1:size(Eta_z,1),1:size(Eta_z,2))
     integer :: NNZ_P(1:size(Eta_p,2))
     integer :: NNZ_Z(1:size(Eta_z,2))
-    integer :: MY_NZ_ZP(size(eta_zp,1),size(eta_p,2)*size(eta_z,2))
-    integer :: MY_NNZ_ZP(size(eta_p,2)*size(eta_z,2))
+    integer, target :: MY_NZ_ZP(size(eta_zp,1),size(eta_p,2)*size(eta_z,2))
+    integer, target :: MY_NNZ_ZP(size(eta_p,2)*size(eta_z,2))
+    integer, pointer :: NZ_ZP(:,:) ! Nonzeros in eta_zp
+    integer, pointer :: NNZ_ZP(:)  ! Number of nonzeros in eta_zp
 
 ! Begin executable code:
 
-    if ( .not. present(nz_zp) ) then
+    if ( .not. present(your_nz_zp) ) then
       eta_zp = 0.0
       if ( present(do_calc_zp) ) do_calc_zp = .false.
-      my_nnz_zp = 0
+      nz_zp => my_nz_zp
+      nnz_zp => my_nnz_zp
     else ! Replace previously calculated nonzeros with zeros.
+      nz_zp => your_nz_zp
+      nnz_zp => your_nnz_zp
       do n_p = 1, size(nnz_zp)
         eta_zp(nz_zp(:nnz_zp(n_p),n_p),n_p) = 0.0
-        nnz_zp(n_p) = 0
       end do
     end if
     nnz_z = 0
     nnz_p = 0
+    nnz_zp = 0
 
     my_tan = ( size(path_zeta) - ng ) / 2
     if ( present(tan_pt) ) my_tan = tan_pt
@@ -129,41 +135,20 @@ contains
 
       v_indb = v_inda + n_v
 
-      call get_eta_sparse ( Grids_x%zet_basis(z_inda+1:z_indb), path_zeta, &
-      &    eta_z, my_tan, 1, nz_z, nnz_z, .false. )
-      ! Fine grid points between tangent points, if any, aren't used.
-      eta_z(my_tan+1:my_tan+ng,:) = 0.0_rp
-      call get_eta_sparse ( Grids_x%zet_basis(z_inda+1:z_indb), path_zeta, &
-        &    eta_z, my_tan+ngp1, size(path_zeta), nz_z, nnz_z, .true. )
-      call get_eta_sparse ( Grids_x%phi_basis(p_inda+1:p_indb), path_phi,  &
-      &    eta_p, 1, size(path_phi), nz_p, nnz_p, .false. )
-      if ( present(nz_zp) ) then
-        if ( present(do_calc_zp) ) then
-          call multiply_eta_column_sparse ( &
-            & eta_z(:,:n_z), nz_z(:,:n_z), nnz_z(:n_z), &
-            & eta_p(:,:n_p), nz_p(:,:n_p), nnz_p(:n_p), &
-            & eta_zp(:,v_inda+1:v_indb), nz_zp(:,v_inda+1:v_indb), &
-            & nnz_zp(v_inda+1:v_indb), do_calc_zp(:,v_inda+1:v_indb) )
-        else
-          call multiply_eta_column_sparse ( &
-            & eta_z(:,:n_z), nz_z(:,:n_z), nnz_z(:n_z), &
-            & eta_p(:,:n_p), nz_p(:,:n_p), nnz_p(:n_p), &
-            & eta_zp(:,v_inda+1:v_indb), nz_zp(:,v_inda+1:v_indb), &
-            & nnz_zp(v_inda+1:v_indb) )
-        end if
+      if ( present(do_calc_zp) ) then
+        call get_eta_zp ( Grids_x%zet_basis(z_inda+1:z_indb), path_zeta,       &
+                        & eta_z(:,:n_z), nz_z(:,:n_z), nnz_z(:n_z), my_tan,    &
+                        & Grids_x%phi_basis(p_inda+1:p_indb), path_phi,        &
+                        & eta_p(:,:n_p), nz_p(:,:n_p), nnz_p(:n_p),            &
+                        & eta_zp(:,v_inda+1:v_indb), nz_zp(:,v_inda+1:v_indb), &
+                        & nnz_zp(v_inda+1:v_indb), do_calc_zp(:,v_inda+1:v_indb) )
       else
-        if ( present(do_calc_zp) ) then
-          call multiply_eta_column_sparse ( &
-            & eta_z(:,:n_z), nz_z(:,:n_z), nnz_z(:n_z), &
-            & eta_p(:,:n_p), nz_p(:,:n_p), nnz_p(:n_p), &
-            & eta_zp(:,v_inda+1:v_indb), my_nz_zp(:,:n_v), my_nnz_zp(:n_v), &
-            & do_calc_zp(:,v_inda+1:v_indb) )
-        else
-          call multiply_eta_column_sparse ( &
-            & eta_z(:,:n_z), nz_z(:,:n_z), nnz_z(:n_z), &
-            & eta_p(:,:n_p), nz_p(:,:n_p), nnz_p(:n_p), &
-            & eta_zp(:,v_inda+1:v_indb), my_nz_zp(:,:n_v), my_nnz_zp(:n_v) )
-        end if
+        call get_eta_zp ( Grids_x%zet_basis(z_inda+1:z_indb), path_zeta,       &
+                        & eta_z(:,:n_z), nz_z(:,:n_z), nnz_z(:n_z), my_tan,    &
+                        & Grids_x%phi_basis(p_inda+1:p_indb), path_phi,        &
+                        & eta_p(:,:n_p), nz_p(:,:n_p), nnz_p(:n_p),            &
+                        & eta_zp(:,v_inda+1:v_indb), nz_zp(:,v_inda+1:v_indb), &
+                        & nnz_zp(v_inda+1:v_indb) )
       end if
 
     end do
@@ -250,6 +235,9 @@ contains
 end module Comp_Eta_Docalc_No_Frq_m
 
 ! $Log$
+! Revision 2.20  2016/10/24 22:17:47  vsnyder
+! Use Get_Eta_ZP
+!
 ! Revision 2.19  2015/09/22 23:19:55  vsnyder
 ! Consequences of cross-track stuff in load_sps_data
 !
