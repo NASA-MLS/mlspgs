@@ -436,7 +436,7 @@ contains
     use Path_Contrib_M, only: Get_GL_Inds
     use Physics, only: SpeedOfLight
     use PointingGrid_M, only: PointingGrids, PointingGrid_T
-    use QTM_Interpolation_Weights_3D_m, only: S_QTM_t
+    use QTM_Interpolation_Weights_3D_m, only: S_QTM_t, Weight_ZQ_t
     use Slabs_sw_m, only: AllocateSLABS, DestroyCompleteSLABS, SLABS_Struct
     use TAU_M, only: Destroy_TAU, Dump, TAU_T
     use Toggles, only: Emit, Levels, Switches, Toggle
@@ -904,6 +904,9 @@ contains
     type (S_QTM_t), allocatable :: S(:)
 
     type (Tau_T) :: Tau_LBL, Tau_PFA
+
+    type (weight_ZQ_t) :: Eta_zQT(s_qtm*max_f) ! Interpolation coefficients
+                                  ! from 3D QTM to path for temperature
 
     type (VectorValue_T), pointer :: BoundaryPressure
     type (VectorValue_T), pointer :: EarthRefl     ! Earth reflectivity
@@ -3926,16 +3929,14 @@ contains
         end if
       else
         if ( temp_der ) then
-          call more_metrics_3d ( S, tan_pt_f, t_glgrid, dhdz_glgrid, &
-            & t_path(1:npf), dhdz_path(1:npf),                       &
-                        !  Stuff for temperature derivatives:
-            &  ddHidHidTl0 = ddhidhidtl0, dHidTlm = dh_dt_glgrid,          &
-            &  T_Deriv_Flag = Grids_tmp%deriv_flags,                       &
-            &  Z_Basis = Grids_tmp%zet_basis, Z_Ref=z_glgrid,              &
-            &  ddHtdHtdTl0 = tan_d2h_dhdt, dHitdTlm = dh_dt_path(1:npf,:), &
-            &  dHtdTl0 = tan_dh_dt, Do_Calc_Hyd = do_calc_hyd(1:npf,:),    &
-            &  Do_Calc_T = do_calc_t, Eta_zxp = eta_zxp_t,                 &
-            &  NZ_zxp = nz_zxp_t, NNZ_zxp = nnz_zxp_t )
+          call more_metrics_3d ( S, tan_pt_f, t_glgrid, dhdz_glgrid,         &
+            & t_path(1:npf), dhdz_path(1:npf),                               &
+            !  Stuff for temperature derivatives:
+            &  QTM_hGrid%QTM_tree, ddHidHidTl0 = ddhidhidtl0,                &
+            &  dHidTlm = dh_dt_glgrid, T_Deriv_Flag = Grids_tmp%deriv_flags, &
+            &  Z_Basis = Grids_tmp%zet_basis, Z_Ref=z_glgrid,                &
+            &  ddHtdHtdTl0 = tan_d2h_dhdt, dHitdTlm = dh_dt_path(1:npf,:),   &
+            &  dHtdTl0 = tan_dh_dt, Eta_zQT = eta_zQT )
         else
           call more_metrics_3d ( S, tan_pt_f, t_glgrid, dhdz_glgrid, &
             & t_path(1:npf), dhdz_path(1:npf) )
@@ -4643,6 +4644,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.368  2016/10/24 22:20:32  vsnyder
+! A bunch of stuff for QTM etc.
+!
 ! Revision 2.367  2016/06/03 23:47:23  vsnyder
 ! Make Tan_Press allocatable instead of a pointer.  Provide minor-frame
 ! quantities for "orbit" inclination, minor axis length, phiTan, and tangent
