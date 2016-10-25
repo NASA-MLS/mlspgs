@@ -19,7 +19,7 @@ module QTM_Interpolation_Weights_m
   private
 
   ! Determine which vertices of QTM to use for interpolation to a specified
-  ! point, and calculate their interpolation weights.
+  ! point, and calculate their horizontal interpolation weights.
 
   public :: QTM_Interpolation_Weights
   public :: QTM_Interpolation_Weights_Geo, QTM_Interpolation_Weights_Geo_list
@@ -53,9 +53,9 @@ contains
   subroutine QTM_Interpolation_Weights_Geo ( QTM_Tree, Point, Weights, Stack, &
                                            & Used )
 
-    ! Get the interpolation weights for Point in the QTM.  This is the
-    ! routine that actually does the work for Point being in some kind of Geo
-    ! coordinates.  This is a 2D-only routine.
+    ! Get the horizontal interpolation weights for Point in the QTM.  This is
+    ! the routine that actually does the work for Point being in some kind of
+    ! Geo coordinates.  This is a 2D-only routine.
 
     use Generate_QTM_m, only: QTM_Tree_t
     use Geolocation_0, only: H_t
@@ -110,9 +110,9 @@ contains
 
   subroutine QTM_Interpolation_Weights_Geo_list ( QTM_Tree, Point, Weights, Stack )
 
-    ! Get the interpolation weights for Point in the QTM.  This is the
-    ! routine that actually does the work for Point being in some kind of Geo
-    ! coordinates.  This is a 2D-only routine.
+    ! Get the horizontal interpolation weights for Point in the QTM.  This is
+    ! the routine that actually does the work for Point being in some kind of
+    ! Geo coordinates.  This is a 2D-only routine.
 
     use Generate_QTM_m, only: QTM_Tree_t
     use Geolocation_0, only: H_t
@@ -142,7 +142,7 @@ contains
   subroutine QTM_Interpolation_Weights_ZOT ( QTM_Tree, Point, Weights, Stack, &
                                            & Used )
 
-    ! Get the interpolation weights for Point in the QTM.
+    ! Get the horizontal interpolation weights for Point in the QTM.
     ! This is a 2D-only routine.
 
     use QTM_m, only: Stack_T, ZOT_t
@@ -188,7 +188,7 @@ contains
 
   subroutine QTM_Interpolation_Weights_ZOT_list ( QTM_Tree, Point, Weights, Stack  )
 
-    ! Get the interpolation weights for Point in the QTM.
+    ! Get the horizontal interpolation weights for Point in the QTM.
     ! This is a 2D-only routine.
 
     use QTM_m, only: Stack_T, ZOT_t
@@ -229,6 +229,9 @@ contains
 end module QTM_Interpolation_Weights_m
 
 ! $Log$
+! Revision 2.5  2016/10/25 18:23:48  vsnyder
+! Inching toward 3D-QTM forward model support
+!
 ! Revision 2.4  2016/10/05 23:28:22  vsnyder
 ! Replace ZOT_n component name with Ser because it's a serial number for
 ! more than just the ZOT coordinates.
