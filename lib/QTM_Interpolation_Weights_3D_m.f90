@@ -70,13 +70,24 @@ module QTM_Interpolation_Weights_3D_m
                      ! in the Generate_QTM_m module.
   end type S_QTM_t
 
+  integer, parameter, public :: MaxCoeff = 6 ! First dimension of Weights arguments
+
+  ! Interpolation coefficients within a 3D grid that has a QTM horizontal grid
+  type, public :: Weight_ZQ_t
+    integer :: N                  ! count(w%weight/=0), <= MaxCoeff
+    type(weight_t) :: W(maxCoeff) ! Weights, and array element positions in
+                                  ! 1-D view of the state vector, a conflation
+                                  ! of (height, QTM) indices using
+                                  ! Element_Position from Array_Stuff
+  end type Weight_ZQ_t
+
   integer, parameter, public :: Cone_Face = 1
   integer, parameter, public :: X_face = cone_face + 1
   integer, parameter, public :: Y_face = x_face + 1
   integer, parameter, public :: Top_Face = y_face + 1
   integer, parameter, public :: Inside_Prism = top_face + 1
 
-  public :: QTM_Interpolation_Weights, Weight_t
+  public :: QTM_Interpolation_Weights
 
   interface QTM_Interpolation_Weights
     module procedure &
@@ -97,13 +108,13 @@ module QTM_Interpolation_Weights_3D_m
 contains
 
   subroutine QTM_Interpolation_Weights_Geo_3D ( QTM_Tree, Heights, Point, &
-                                              & Weights, N_Weights, Stack, Used )
+                                              & Weights, Stack, Used )
 
     ! Construct interpolation weights and positions for a point in a 3D grid
     ! for which the horizontal grid is QTM.  The 3D grid is assumed to be
-    ! stacked and coherent.  The positions are array element order positions,
-    ! which can be converted to 2D subscripts (QTM serial number, height)
-    ! by the Subscripts function in the Array_Stuff module.
+    ! stacked and coherent.  Weights%Which are array element order positions,
+    ! which can be converted to 2D subscripts (height, QTM serial number) by
+    ! the Subscripts function in the Array_Stuff module.
 
     use Array_Stuff, only: Element_Position
     use Generate_QTM_m, only: QTM_Tree_t
@@ -114,8 +125,7 @@ contains
     type(QTM_tree_t), intent(in) :: QTM_Tree
     real(rg), intent(in) :: Heights(:)   ! Assume Heights (meters, zeta) are
     class(h_v_t), intent(in) :: Point    !   the same units as for Point%V
-    type(weight_t), intent(out) :: Weights(6)
-    integer :: N_Weights                 ! Number of nonzero weights
+    type(weight_ZQ_t), intent(out) :: Weights
     type(stack_t), intent(inout), optional :: Stack
     class(h_t), intent(out), optional :: Used ! Horizontal coordinates of the
                                          !   point used for interpolation
@@ -129,7 +139,7 @@ contains
     n_QTM = QTM_Tree%n_in
 
     ! Get horizontal interpolation coefficients and serial numbers
-    call QTM_Interpolation_Weights ( QTM_Tree, Point, Weights(1:3), Stack, Used )
+    call QTM_Interpolation_Weights ( QTM_Tree, Point, Weights%w(1:3), Stack, Used )
 
     ! Get vertical interpolation coefficients
     call hunt ( heights, point%v, index, &
@@ -137,58 +147,58 @@ contains
 
     ! Combine horizontal and vertical interpolation coefficients
     if ( index == 0 ) then
-      weights(4:6)%which = 0 ! Constant vertical extrapolation outside
-                             !   range of Heights(:)
+      weights%w(4:6)%which = 0 ! Constant vertical extrapolation outside
+                               !   range of Heights(:)
     else if ( index >= size(heights) ) then
       do j = 1, 3
-        weights(j)%which = element_position ( [ weights(j)%which, size(heights) ], &
-                                            & [ n_QTM, size(heights) ] )
+        weights%w(j)%which = element_position ( [ weights%w(j)%which, size(heights) ], &
+                                              & [ n_QTM, size(heights) ] )
       end do
-      weights(4:6)%which = 0 ! Constant vertical extrapolation outside
-                             !   range of Heights(:)
+      weights%w(4:6)%which = 0 ! Constant vertical extrapolation outside
+                               !   range of Heights(:)
     else
       dH = heights(index+1) - heights(index)
       if ( dH == 0 ) then ! shouldn't happen if Heights(:) are distinct
-        weights(4:6)%which = 0 ! Don't use points other than at Height Index
+        weights%w(4:6)%which = 0 ! Don't use points other than at Height Index
       else
         w = ( heights(index+1) - point%v ) / dh
         if ( w == 1.0_rg ) then
           do j = 1, 3
-            weights(j)%which = element_position ( [ weights(j)%which, index ], &
-                                                & [ n_QTM, size(heights) ] )
+            weights%w(j)%which = element_position ( [ weights%w(j)%which, index ], &
+                                                  & [ n_QTM, size(heights) ] )
           end do
-          weights(4:6)%which = 0 ! Don't use points other than at Height Index
+          weights%w(4:6)%which = 0 ! Don't use points other than at Height Index
         else if ( w == 0.0_rg ) then
           do j = 1, 3
-            weights(j)%which = element_position ( [ weights(j)%which, index+1 ], &
-                                                & [ n_QTM, size(heights) ] )
-          end do
-          weights(4:6)%which = 0 ! Don't use points other than at Height Index + 1
-        else
-          weights(4:6)%weight = weights(1:3)%weight * ( 1.0_rg - w )
-          weights(1:3)%weight = weights(1:3)%weight * w
-          do j = 1, 3
-            weights(j+3)%which = element_position ( [ weights(j)%which, index+1 ], &
+            weights%w(j)%which = element_position ( [ weights%w(j)%which, index+1 ], &
                                                   & [ n_QTM, size(heights) ] )
-            weights(j)%which = element_position ( [ weights(j)%which, index ], &
-                                                & [ n_QTM, size(heights) ] )
+          end do
+          weights%w(4:6)%which = 0 ! Don't use points other than at Height Index + 1
+        else
+          weights%w(4:6)%weight = weights%w(1:3)%weight * ( 1.0_rg - w )
+          weights%w(1:3)%weight = weights%w(1:3)%weight * w
+          do j = 1, 3
+            weights%w(j+3)%which = element_position ( [ weights%w(j)%which, index+1 ], &
+                                                    & [ n_QTM, size(heights) ] )
+            weights%w(j)%which = element_position ( [ weights%w(j)%which, index ], &
+                                                  & [ n_QTM, size(heights) ] )
           end do
         end if
       end if
     end if
-    n_weights = count ( weights%weight /= 0 ) 
-    where ( weights%weight == 0 ) weights%which = 0
-    weights = pack ( weights,weights%which /= 0 )
-    weights(n_weights+1:6) = weight_t(0,0)
+    weights%n = count ( weights%w%weight /= 0 ) 
+    where ( weights%w%weight == 0 ) weights%w%which = 0
+    weights%w = pack ( weights%w,weights%w%which /= 0 )
+    weights%w(weights%n+1:) = weight_t(0,0)
 
   end subroutine QTM_Interpolation_Weights_Geo_3D
 
   subroutine QTM_Interpolation_Weights_Geo_3D_Incoherent ( QTM_Tree, Heights, &
-                                     & Point, Weights, N_Weights, Stack, Used )
+                                     & Point, Weights, Stack, Used )
 
     ! Construct interpolation weights and positions for a point in a 3D grid
     ! for which the horizontal grid is QTM.  The 3D grid is assumed to be
-    ! stacked but not necessarily coherent.  The positions are array element
+    ! stacked but not necessarily coherent.  Weights%Which are array element
     ! order positions, which can be converted to 2D subscripts (QTM serial
     ! number, height) by the Subscripts function in the Array_Stuff module.
 
@@ -202,8 +212,7 @@ contains
     real(rg), intent(in) :: Heights(:,:) ! Extents are (heights, QTM_Tree%N_In)
                                          ! Assume Heights (meters, zeta) are
     class(h_v_t), intent(in) :: Point    !   the same units as for Point%V
-    type(weight_t), intent(out) :: Weights(6)
-    integer :: N_Weights                 ! Number of nonzero weights
+    type(weight_ZQ_t), intent(out) :: Weights
     type(stack_t), intent(inout), optional :: Stack
     class(h_t), intent(out), optional :: Used ! Horizontal coordinates of the
                                          !   point used for interpolation
@@ -218,19 +227,21 @@ contains
 
     if ( size(heights,2) == 1 ) then ! Coherent heights
       call QTM_Interpolation_Weights ( QTM_Tree, Heights(:,1), &
-                                & Point, Weights, N_Weights, Stack, Used )
+                                     & Point, Weights, Stack, Used )
       return
     end if
 
     n_QTM = QTM_Tree%n_in
 
     ! Get horizontal interpolation coefficients and serial numbers
-    call QTM_Interpolation_Weights ( QTM_Tree, Point, Weights(1:3), Stack, Used )
+    call QTM_Interpolation_Weights ( QTM_Tree, Point, Weights%w(1:3), Stack, Used )
 
+    ! Default is constant vertical extrapolation outside range of Heights(:)
+    weights%w(4:6)%which = 0
     ! Get vertical interpolation coefficients
     do p = 1, 3
       index = 0
-      s = weights(p)%which
+      s = weights%w(p)%which
       if ( s /= 0 ) then
         call hunt ( heights(:,s), point%v, index, &
                   & allowTopValue=.true., allowBelowValue = .true. )
@@ -238,53 +249,47 @@ contains
 
       ! Combine horizontal and vertical interpolation coefficients
       if ( index == 0 ) then
-        weights(4:6)%which = 0 ! Constant vertical extrapolation outside
-                               !   range of Heights(:)
       else if ( index >= size(heights) ) then
-        weights(p)%which = element_position ( [ weights(p)%which, size(heights,1) ], &
-          & [ n_QTM, size(heights,1) ] )
-        weights(4:6)%which = 0 ! Constant vertical extrapolation outside
-                               !   range of Heights(:)
+        weights%w(p)%which = element_position ( [ weights%w(p)%which, size(heights,1) ], &
+                                              & [ n_QTM, size(heights,1) ] )
       else
         dH = heights(index+1,s) - heights(index,s)
         if ( dH == 0 ) then ! shouldn't happen if Heights(:) are distinct
-          weights(4:6)%which = 0 ! Don't use points other than at Height Index
+          weights%w(4:6)%which = 0 ! Don't use points other than at Height Index
         else
           w = ( heights(index+1,p) - point%v ) / dh
           if ( w == 1.0_rg ) then
-            weights(p)%which = element_position ( [ weights(p)%which, index ], &
-                                                & [ n_QTM, size(heights,1) ] )
-            weights(4:6)%which = 0 ! Don't use points other than at Height Index
-          else if ( w == 0.0_rg ) then
-            weights(p)%which = element_position ( [ weights(p)%which, index+1 ], &
-                                                & [ n_QTM, size(heights,1) ] )
-            weights(4:6)%which = 0 ! Don't use points other than at Height Index + 1
-          else
-            weights(4:6)%weight = weights(1:3)%weight * ( 1.0_rg - w )
-            weights(1:3)%weight = weights(1:3)%weight * w
-            weights(p+3)%which = element_position ( [ weights(p)%which, index+1 ], &
+            weights%w(p)%which = element_position ( [ weights%w(p)%which, index ], &
                                                   & [ n_QTM, size(heights,1) ] )
-            weights(p)%which = element_position ( [ weights(p)%which, index ], &
-                                                & [ n_QTM, size(heights,1) ] )
+          else if ( w == 0.0_rg ) then
+            weights%w(p)%which = element_position ( [ weights%w(p)%which, index+1 ], &
+                                                  & [ n_QTM, size(heights,1) ] )
+          else
+            weights%w(p+3)%weight = weights%w(p)%weight * ( 1.0_rg - w )
+            weights%w(p)%weight = weights%w(p)%weight * w
+            weights%w(p+3)%which = element_position ( [ weights%w(p)%which, index+1 ], &
+                                                    & [ n_QTM, size(heights,1) ] )
+            weights%w(p)%which = element_position ( [ weights%w(p)%which, index ], &
+                                                  & [ n_QTM, size(heights,1) ] )
           end if
         end if
       end if
 
     end do ! p
 
-    n_weights = count ( weights%weight /= 0 ) 
-    where ( weights%weight == 0 ) weights%which = 0
-    weights = pack ( weights,weights%which /= 0 )
-    weights(n_weights+1:6) = weight_t(0,0)
+    weights%n = count ( weights%w%weight /= 0 ) 
+    where ( weights%w%weight == 0 ) weights%w%which = 0
+    weights%w = pack ( weights%w,weights%w%which /= 0 )
+    weights%w(weights%n+1:maxCoeff) = weight_t(0,0)
 
   end subroutine QTM_Interpolation_Weights_Geo_3D_Incoherent
 
   subroutine QTM_Interpolation_Weights_Geo_3D_Incoherent_Line ( QTM_Tree, &
-                         & Heights, Line, Points, Weights, N_Weights )
+                         & Heights, Line, Points, Weights )
 
     ! Construct interpolation weights and positions for a point in a 3D grid
     ! for which the horizontal grid is QTM.  The 3D grid is assumed to be
-    ! stacked but not necessarily coherent.  The positions are array element
+    ! stacked but not necessarily coherent.  Weights%Which are array element
     ! order positions, which can be converted to 2D subscripts (QTM serial
     ! number, height) by the Subscripts function in the Array_Stuff module.
     ! The points are described by Line, which consists of a vector in ECR to
@@ -295,18 +300,14 @@ contains
     use Array_Stuff, only: Element_Position
     use Generate_QTM_m, only: QTM_Tree_t
     use Geolocation_0, only: ECR_t, H_V_Geod
-    use Pure_Hunt_m, only: PureHunt
 
     type(QTM_tree_t), intent(in) :: QTM_Tree
-    real(rg), intent(in) :: Heights(:,:) ! Extents are (heights, QTM_Tree%N_In)
-                                         ! Assume Heights and QTM_Tree came from
-                                         ! the same Geolocation_t structure
-                                         ! (see Geolocation_m).
+    real(rg), intent(in) :: Heights(:,:) ! to which to interpolate.  Extents are
+                                         ! (heights, QTM_Tree%N_In).
     type(ECR_t), intent(in) :: Line(2)   ! Vector to a point on the line,
                                          ! vector along the line.
     type(S_QTM_t), intent(in) :: Points(:) ! Points along Line
-    type(weight_t), intent(out) :: Weights(6,size(points))
-    integer, intent(out) :: N_Weights(size(points)) ! Number of nonzero weights
+    type(weight_ZQ_t), intent(out) :: Weights(size(points))
 
     type(H_V_Geod) :: G                  ! Geodetic coordinate of Points(i)
     integer :: I, J
@@ -318,7 +319,7 @@ contains
 
     if ( size(heights,2) == 1 ) then ! Coherent heights
       call QTM_Interpolation_Weights ( QTM_Tree, Heights(:,1), &
-                                     & Line, Points, Weights, N_Weights )
+                                     & Line, Points, Weights )
       return
     end if
 
@@ -337,59 +338,56 @@ contains
         call weight_1d ( heights(:,points(i)%ser(2)), g%v, jlo, jhi, w(:,2) )
         ! Assume that it's extremely rare to hit a vertex, so compute four
         ! weights.
-        n_weights(i) = 4
-        weights(1:4,i)%weight = [ w(:,1)*points(i)%coeff(1), &
-                                & w(:,2)*points(i)%coeff(2) ]
-        weights(5:6,i)%weight = 0
-        weights(1:4,i)%which = &
+        weights(i)%n = 4
+        weights(i)%w(1:maxCoeff)%weight = [ w(:,1)*points(i)%coeff(1), &
+                                          & w(:,2)*points(i)%coeff(2), &
+                                          & 0.0_rg, 0.0_rg ]
+        weights(i)%w(1:maxCoeff)%which = &
           & [ element_position([jlo,points(i)%ser(1)], [nh,nq]), &
             & element_position([jhi,points(i)%ser(1)], [nh,nq]), &
             & element_position([jlo,points(i)%ser(2)], [nh,nq]), &
-            & element_position([jhi,points(i)%ser(2)], [nh,nq]) ]
-        weights(5:6,i)%which = 0
+            & element_position([jhi,points(i)%ser(2)], [nh,nq]), 0, 0 ]
       case ( inside_prism ) ! Use the general method
-        call QTM_interpolation_weights ( QTM_tree, heights, g, weights(:,i), &
-                                       & n_weights(i) )
+        call QTM_interpolation_weights ( QTM_tree, heights, g, weights(i) )
       case ( top_face )
-        ! Don't need height interpolation, but we do need to find the index
-        ! in the heights array, because the heights array here might be a
-        ! subset of the heights array given to Metrics_3D.
-        n_weights(i) = 3
-        weights(1:3,i)%weight = points(i)%coeff(1:3)
-        weights(4:6,i)%weight = 0
+        ! Get the two vertical interpolation weights
         do j = 1, 3
-          call purehunt ( points(i)%h, heights(:,points(i)%ser(j)), &
-                        & nh, jlo, jhi )
-          weights(j,i)%which = &
-            & element_position([jlo,points(i)%ser(j)], [nh,nq])
+        jlo = 1; jhi = nh
+          call weight_1d ( heights(:,points(i)%ser(j)), points(i)%h, jlo, jhi, &
+                         & w(:,1) )
+          weights(i)%n = 6
+          ! Compute the outer product of the vertical and horizontal
+          ! interpolation coefficients
+          weights(i)%w(2*j-1:2*j)%weight = w(:,1)*points(i)%coeff(j)
+          weights(i)%w(2*j-1:2*j)%which = &
+            & [ element_position([jlo,points(i)%ser(j)], [nh,nq]), &
+              & element_position([jhi,points(i)%ser(j)], [nh,nq]) ]
         end do
-        weights(4:6,i)%which = 0
       end select
     end do
 
   end subroutine QTM_Interpolation_Weights_Geo_3D_Incoherent_Line
 
   subroutine QTM_Interpolation_Weights_Geo_3D_Incoherent_List ( QTM_Tree, &
-                         & Heights, Points, Weights, N_Weights )
+                         & Heights, Points, Weights )
 
     ! Construct interpolation weights and positions for a point in a 3D grid
     ! for which the horizontal grid is QTM.  The 3D grid is assumed to be
-    ! stacked but not necessarily coherent.  The positions are array element
-    ! order positions, which can be converted to 2D subscripts (QTM serial
-    ! number, height) by the Subscripts function in the Array_Stuff module.
+    ! stacked but not necessarily coherent.  Weights%Which are array element
+    ! order positions, which can be converted to 2D subscripts (height, QTM
+    ! serial number) by the Subscripts function in the Array_Stuff module.
 
     use Array_Stuff, only: Element_Position
     use Generate_QTM_m, only: QTM_Tree_t
     use Geolocation_0, only: H_V_t
     use Hunt_m, only: Hunt
-    use QTM_m, only: QK
+    use QTM_m, only: QK, Stack_t
 
     type(QTM_tree_t), intent(in) :: QTM_Tree
-    real(rg), intent(in) :: Heights(:,:) ! Extents are (heights, QTM_Tree%N_In)
-                                         ! Assume Heights (meters, zeta) are
-    class(h_v_t), intent(in) :: Points(:) !   the same units as for Points%V
-    type(weight_t), intent(out) :: Weights(6,size(points))
-    integer :: N_Weights(size(points))   ! Number of nonzero weights
+    real(rg), intent(in) :: Heights(:,:)  ! to which to interpolate.  Extents
+                                          ! are (heights, QTM_Tree%N_In).
+    class(h_v_t), intent(in) :: Points(:) ! same units as for Heights
+    type(weight_ZQ_t), intent(out) :: Weights(size(points))
 
     real(rg) :: dH       ! Difference in Heights coordinates
     integer :: I, Index
@@ -397,80 +395,79 @@ contains
                          ! the polygon
     integer :: P         ! Index of a corner of a facet
     integer :: S         ! Serial number of a point in the QTM
+    type(stack_t) :: Stack
     real(rg) :: W        ! Weight in the vertical direction for the lower level
 
     if ( size(heights,2) == 1 ) then ! Coherent heights
       call QTM_Interpolation_Weights ( QTM_Tree, Heights(:,1), &
-                                & Points, Weights, N_Weights )
+                                     & Points, Weights )
       return
     end if
 
     n_QTM = QTM_Tree%n_in
 
-    ! Get horizontal interpolation coefficients and serial numbers
-    call QTM_Interpolation_Weights ( QTM_Tree, Points, Weights(1:3,:) )
-
-    ! Get vertical interpolation coefficients
     do i = 1, size(points)
+      ! Get horizontal interpolation coefficients and serial numbers
+      call QTM_Interpolation_Weights ( QTM_Tree, Points(i), Weights(i)%w(1:3), &
+                                     & stack )
+      ! Default is constant vertical extrapolation outside range of Heights(:)
+      weights(i)%w(4:6)%which = 0
+      ! Get vertical interpolation coefficients
       do p = 1, 3
         index = 0
-        s = weights(p,i)%which
+        s = weights(i)%w(p)%which
         if ( s /= 0 ) then
-          call hunt ( heights(:,s), points(i)%v, index, &
+          call hunt ( heights(:,s), points(i)%v, index, &             
                     & allowTopValue=.true., allowBelowValue = .true. )
         end if
-
         ! Combine horizontal and vertical interpolation coefficients
-        if ( index == 0 ) then
-          weights(4:6,i)%which = 0 ! Constant vertical extrapolation outside
-                                   !   range of Heights(:)
-        else if ( index >= size(heights) ) then
-          weights(p,i)%which = element_position ( [ weights(p,i)%which, size(heights,1) ], &
-                                                & [ n_QTM, size(heights,1) ] )
-          weights(4:6,i)%which = 0 ! Constant vertical extrapolation outside
-                                   !   range of Heights(:)
+        if ( index >= size(heights) ) then
+          weights(i)%w(p)%which = element_position ( [ weights(i)%w(i)%which, size(heights,1) ], &
+                                                   & [ n_QTM, size(heights,1) ] )
         else
           dH = heights(index+1,s) - heights(index,s)
           if ( dH == 0 ) then ! shouldn't happen if Heights(:) are distinct
-            weights(4:6,i)%which = 0 ! Don't use points other than at Height Index
+            weights(i)%w(p)%which = 0 ! Don't use points other than at Height Index
           else
             w = ( heights(index+1,p) - points(i)%v ) / dh
             if ( w == 1.0_rg ) then
-              weights(p,i)%which = element_position ( [ weights(p,i)%which, index ], &
-                                                    & [ n_QTM, size(heights,1) ] )
-              weights(4:6,i)%which = 0 ! Don't use points other than at Height Index
+              weights(i)%w(p)%which = element_position ( [ weights(i)%w(p)%which, &
+                                                       &   index ], &
+                                                       & [ n_QTM, size(heights,1) ] )
             else if ( w == 0.0_rg ) then
-              weights(p,i)%which = element_position ( [ weights(p,i)%which, index+1 ], &
-                                                    & [ n_QTM, size(heights,1) ] )
-              weights(4:6,i)%which = 0 ! Don't use points other than at Height Index + 1
+              weights(i)%w(p)%which = element_position ( [ weights(i)%w(p)%which, &
+                                                       &   index+1 ], &
+                                                       & [ n_QTM, size(heights,1) ] )
             else
-              weights(4:6,i)%weight = weights(1:3,i)%weight * ( 1.0_rg - w )
-              weights(1:3,i)%weight = weights(1:3,i)%weight * w
-              weights(p+3,i)%which = element_position ( [ weights(p,i)%which, index+1 ], &
-                                                      & [ n_QTM, size(heights,1) ] )
-              weights(p,i)%which = element_position ( [ weights(p,i)%which, index ], &
-                                                    & [ n_QTM, size(heights,1) ] )
+              weights(i)%w(3)%weight = weights(i)%w(p)%weight * ( 1.0_rg - w )
+              weights(i)%w(p+3)%weight = weights(i)%w(p)%weight * w
+              weights(i)%w(p)%which = element_position ( [ weights(i)%w(p)%which, &
+                                                       &   index ], &
+                                                       & [ n_QTM, size(heights,1) ] )
+              weights(i)%w(p+3)%which = element_position ( [ weights(i)%w(p)%which, &
+                                                         &   index+1 ], &
+                                                         & [ n_QTM, size(heights,1) ] )
             end if
           end if
         end if
 
       end do ! p
 
-      n_weights(i) = count ( weights(:,i)%weight /= 0 ) 
-      where ( weights(:,i)%weight == 0 ) weights(:,i)%which = 0
-      weights(:,i) = pack ( weights(:,i),weights(:,i)%which /= 0 )
-      weights(n_weights(i)+1:6,i) = weight_t(0,0)
+      weights(i)%n = count ( weights(i)%w%weight /= 0 ) 
+      where ( weights(i)%w%weight == 0 ) weights(i)%w%which = 0
+      weights(i)%w = pack ( weights(i)%w,weights(i)%w%which /= 0 )
+      weights(i)%w(weights(i)%n+1:6) = weight_t(0,0)
     end do ! i
 
   end subroutine QTM_Interpolation_Weights_Geo_3D_Incoherent_List
 
   subroutine QTM_Interpolation_Weights_Geo_3D_Line ( QTM_Tree, &
-                         & Heights, Line, Points, Weights, N_Weights )
+                         & Heights, Line, Points, Weights )
 
     ! Construct interpolation weights and positions for a point in a 3D grid
     ! for which the horizontal grid is QTM.  The 3D grid is assumed to be
-    ! stacked and coherent.  The positions are array element order positions,
-    ! which can be converted to 2D subscripts (QTM serial number, height) by
+    ! stacked and coherent.  Weights%Which are array element order positions,
+    ! which can be converted to 2D subscripts (height, QTM serial number) by
     ! the Subscripts function in the Array_Stuff module. The points are
     ! described by Line, which consists of a vector in ECR to a point on a
     ! line and an unit vector along the line, and Points, which describe
@@ -480,20 +477,17 @@ contains
     use Array_Stuff, only: Element_Position
     use Generate_QTM_m, only: QTM_Tree_t
     use Geolocation_0, only: ECR_t, H_V_Geod
-    use Hunt_m, only: PureHunt
 
     type(QTM_tree_t), intent(in) :: QTM_Tree
-    real(rg), intent(in) :: Heights(:)   ! Assume Heights and QTM_Tree came from
-                                         ! the same Geolocation_t structure
-                                         ! (see Geolocation_m).
+    real(rg), intent(in) :: Heights(:)   ! to which to interpolate.  Extents
+                                         ! are (heights, QTM_Tree%N_In).
     type(ECR_t), intent(in) :: Line(2)   ! Vector to a point on the line,
                                          ! vector along the line.
     type(S_QTM_t), intent(in) :: Points(:) ! Points along Line
-    type(weight_t), intent(out) :: Weights(6,size(points))
-    integer, intent(out) :: N_Weights(size(points)) ! Number of nonzero weights
+    type(weight_ZQ_t), intent(out) :: Weights(size(points))
 
     type(h_v_geod) :: G                  ! Geodetic coordinate of Points(i)
-    integer :: I, J
+    integer :: I
     integer :: Jlo, Jhi                  ! Indices of H[pxy] in Heights
     integer :: Nh                        ! Number of heights
     integer :: NQ                        ! Number of QTM vertices
@@ -510,124 +504,133 @@ contains
       case ( cone_face, X_face, Y_face )
         ! Interpolate in height at the X and Y, X and P, or Y and P nodes
         ! of the QTM.
+        ! Get the two vertical interpolation weights
         jlo = 1; jhi = nh
         call weight_1d ( heights, g%v, jlo, jhi, w )
         ! Assume that it's extremely rare to hit a vertex, so compute four
         ! weights.
-        n_weights(i) = 4
-        weights(1:4,i)%weight = [ w*points(i)%coeff(1), &
-                                & w*points(i)%coeff(2) ]
-        weights(5:6,i)%weight = 0
-        weights(1:4,i)%which = &
+        weights(i)%n = 4
+        ! Compute the outer product of the vertical and horizontal
+        ! interpolation coefficients
+        weights(i)%w(1:6)%weight = [ w*points(i)%coeff(1), &
+                                   & w*points(i)%coeff(2), 0.0_rg, 0.0_rg ]
+        weights(i)%w(1:6)%which = &
           & [ element_position([jlo,points(i)%ser(1)], [nh,nq]), &
             & element_position([jhi,points(i)%ser(1)], [nh,nq]), &
             & element_position([jlo,points(i)%ser(2)], [nh,nq]), &
-            & element_position([jhi,points(i)%ser(2)], [nh,nq]) ]
-        weights(5:6,i)%which = 0
+            & element_position([jhi,points(i)%ser(2)], [nh,nq]), 0, 0 ]
       case ( inside_prism ) ! Use the general method
-        call QTM_interpolation_weights ( QTM_tree, heights, g, weights(:,i), &
-                                       & n_weights(i) )
+        call QTM_interpolation_weights ( QTM_tree, heights, g, weights(i) )
       case ( top_face )
-        ! Don't need height interpolation, but we do need to find the index
-        ! in the heights array, because the heights array here might be a
-        ! subset of the heights array given to Metrics_3D.
-        n_weights(i) = 3
-        weights(1:3,i)%weight = points(i)%coeff(1:3)
-        weights(4:6,i)%weight = 0
-        do j = 1, 3
-          call purehunt ( points(i)%h, heights, nh, jlo, jhi )
-          weights(j,i)%which = &
-            & element_position([jlo,points(i)%ser(j)], [nh,nq])
-        end do
-        weights(4:6,i)%which = 0
+        ! Get the two vertical interpolation weights
+        jlo = 1; jhi = nh
+        call weight_1d ( heights, g%v, jlo, jhi, w )
+        weights(i)%n = 6
+        ! Compute the outer product of the vertical and horizontal
+        ! interpolation coefficients
+        weights(i)%w(1:6)%weight = [ w*points(i)%coeff(1), &
+                                   & w*points(i)%coeff(2), &
+                                   & w*points(i)%coeff(3) ]
+        weights(i)%w(1:6)%which = &
+          & [ element_position([jlo,points(i)%ser(1)], [nh,nq]), &
+            & element_position([jhi,points(i)%ser(1)], [nh,nq]), &
+            & element_position([jlo,points(i)%ser(2)], [nh,nq]), &
+            & element_position([jhi,points(i)%ser(2)], [nh,nq]), &
+            & element_position([jlo,points(i)%ser(3)], [nh,nq]), &
+            & element_position([jhi,points(i)%ser(3)], [nh,nq]) ]
       end select
     end do
 
   end subroutine QTM_Interpolation_Weights_Geo_3D_Line
 
   subroutine QTM_Interpolation_Weights_Geo_3D_List ( QTM_Tree, Heights, Points, &
-                                                   & Weights, N_Weights )
+                                                   & Weights )
 
     ! Construct interpolation weights and positions for a point in a 3D grid
     ! for which the horizontal grid is QTM.  The 3D grid is assumed to be
-    ! stacked and coherent.  The positions are array element order positions,
-    ! which can be converted to 2D subscripts (QTM serial number, height)
+    ! stacked and coherent.  Weights%Which are array element order positions,
+    ! which can be converted to 2D subscripts (height, QTM serial number)
     ! by the Subscripts function in the Array_Stuff module.
 
     use Array_Stuff, only: Element_Position
     use Generate_QTM_m, only: QTM_Tree_t
     use Geolocation_0, only: H_V_t
     use Hunt_m, only: Hunt
-    use QTM_m, only: QK
+    use QTM_m, only: QK, Stack_t
 
     type(QTM_tree_t), intent(in) :: QTM_Tree
-    real(rg), intent(in) :: Heights(:)    ! Assume Heights (meters, zeta) are
-    class(h_v_t), intent(in) :: Points(:) !   the same units as for Points%V
-    type(weight_t), intent(out) :: Weights(6,size(points))
-    integer :: N_Weights(size(points))    ! Number of nonzero weights
+    real(rg), intent(in) :: Heights(:)    ! from which to interpolate.  Extents
+                                          ! are (heights, QTM_Tree%N_In).
+    class(h_v_t), intent(in) :: Points(:) ! Points%V are same units as Heights
+    type(weight_ZQ_t), intent(out) :: Weights(size(points))
 
     real(rg) :: dH       ! Difference in Heights coordinates
     integer :: I, Index, Indices(size(points)), J
     integer(qk) :: N_QTM ! Number of vertices of QTM within or adjacent to
                          ! the polygon
+    type(stack_t) :: Stack
     real(rg) :: W        ! Weight in the vertical direction for the lower level
 
     n_QTM = QTM_Tree%n_in
 
-    ! Get horizontal interpolation coefficients and serial numbers
-    call QTM_Interpolation_Weights ( QTM_Tree, Points, Weights(1:3,:) )
-
-    ! Get vertical interpolation coefficients
+    ! Get vertical interpolation indices
     call hunt ( heights, points%v, indices, &
               & allowTopValue=.true., allowBelowValue = .true. )
 
     ! Combine horizontal and vertical interpolation coefficients
     do i = 1, size(points)
+      ! Get horizontal interpolation coefficients and serial numbers
+      call QTM_Interpolation_Weights ( QTM_Tree, Points(i), Weights(i)%w(1:3), stack )
       index = indices(i)
       if ( index == 0 ) then
-        weights(4:6,i)%which = 0 ! Constant vertical extrapolation outside
-                               !   range of Heights(:)
+        weights(i)%w(4:maxCoeff)%which = 0 ! Constant vertical extrapolation
+                                    !   outside range of Heights(:)
       else if ( index >= size(heights) ) then
         do j = 1, 3
-          weights(j,i)%which = element_position ( [ weights(j,i)%which, size(heights) ], &
-            & [ n_QTM, size(heights) ] )
+          weights(i)%w(j)%which = element_position ( [ weights(i)%w(j)%which, &
+                                                   &   size(heights) ], &
+                                                   & [ n_QTM, size(heights) ] )
         end do
-        weights(4:6,i)%which = 0 ! Constant vertical extrapolation outside
-                               !   range of Heights(:)
+        weights(i)%w(4:maxCoeff)%which = 0 ! Constant vertical extrapolation
+                               !   outside range of Heights(:)
       else
         dH = heights(index+1) - heights(index)
         if ( dH == 0 ) then ! shouldn't happen if Heights(:) are distinct
-          weights(4:6,i)%which = 0 ! Don't use points other than at Height Index
+          weights(i)%w(4:6)%which = 0 ! Don't use points other than at Height Index
         else
           w = ( heights(index+1) - points(i)%v ) / dh
           if ( w == 1.0_rg ) then
             do j = 1, 3
-              weights(j,i)%which = element_position ( [ weights(j,i)%which, index ], &
-                                                    & [ n_QTM, size(heights) ] )
+              weights(i)%w(j)%which = element_position ( [ weights(i)%w(j)%which, &
+                                                       &   index ], &
+                                                       & [ n_QTM, size(heights) ] )
             end do
-            weights(4:6,i)%which = 0 ! Don't use points other than at Height Index
+            weights(i)%w(4:maxCoeff)%which = 0 ! Don't use points other than at Height Index
           else if ( w == 0.0_rg ) then
             do j = 1, 3
-              weights(j,i)%which = element_position ( [ weights(j,i)%which, index+1 ], &
-                                                    & [ n_QTM, size(heights) ] )
+              weights(i)%w(j)%which = element_position ( [ weights(i)%w(j)%which, &
+                                                       &   index+1 ], &
+                                                       & [ n_QTM, size(heights) ] )
             end do
-            weights(4:6,i)%which = 0 ! Don't use points other than at Height Index + 1
+            weights(i)%w(4:maxCoeff)%which = 0 ! Don't use points other than at Height Index
           else
-            weights(4:6,i)%weight = weights(1:3,i)%weight * ( 1.0_rg - w )
-            weights(1:3,i)%weight = weights(1:3,i)%weight * w
+            weights(i)%w(4:6)%weight = weights(i)%w(1:3)%weight * ( 1.0_rg - w )
+            weights(i)%w(1:3)%weight = weights(i)%w(1:3)%weight * w
             do j = 1, 3
-              weights(j,i+3)%which = element_position ( [ weights(j,i)%which, index+1 ], &
-                                                      & [ n_QTM, size(heights) ] )
-              weights(j,i)%which = element_position ( [ weights(j,i)%which, index ], &
-                                                    & [ n_QTM, size(heights) ] )
+              weights(i)%w(j)%which = element_position ( [ weights(i)%w(j)%which, &
+                                                       &   index ], &
+                                                       & [ n_QTM, size(heights) ] )
+              weights(i)%w(j+3)%which = element_position ( [ weights(i)%w(j)%which, &
+                                                         &   index+1 ], &
+                                                         & [ n_QTM, size(heights) ] )
             end do
           end if
         end if
       end if
-      n_weights(i) = count ( weights(:,i)%weight /= 0 ) 
-      where ( weights(:,i)%weight == 0 ) weights(:,i)%which = 0
-      weights(:,i) = pack ( weights(:,i),weights(:,i)%which /= 0 )
-      weights(n_weights(i)+1:6,i) = weight_t(0,0)
+      weights(i)%n = count ( weights(i)%w%weight /= 0 ) 
+      where ( weights(i)%w%weight == 0 ) weights(i)%w%which = 0
+      weights(i)%w = pack ( weights(i)%w,weights(i)%w%which /= 0 )
+      weights(i)%w(weights(i)%n+1:maxCoeff) = weight_t(0,0)
     end do ! i
 
   end subroutine QTM_Interpolation_Weights_Geo_3D_List
@@ -646,6 +649,9 @@ contains
 end module QTM_Interpolation_Weights_3D_m
 
 ! $Log$
+! Revision 2.9  2016/10/25 18:23:48  vsnyder
+! Inching toward 3D-QTM forward model support
+!
 ! Revision 2.8  2016/10/18 00:44:28  vsnyder
 ! Correct some comments
 !
