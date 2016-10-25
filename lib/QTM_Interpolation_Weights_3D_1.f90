@@ -37,18 +37,17 @@ module QTM_Interpolation_Weights_3D_1
 
 contains
 
-  subroutine Fill_Matrix_From_Weights ( Weights, N_Weights, Matrix )
+  subroutine Fill_Matrix_From_Weights ( Weights, Matrix )
     ! Create a column-sparse matrix block from Weights and N_Weights
 
     use MatrixModule_0, only: CreateBlock, M_Column_Sparse, MatrixElement_t
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-    use QTM_Interpolation_Weights_3D_m, only: Weight_t
+    use QTM_Interpolation_Weights_3D_m, only: Weight_ZQ_t
 
-    type(weight_t), intent(in) :: Weights (:,:)
-    integer, intent(in) :: N_Weights(:)
+    type(weight_ZQ_t), intent(in) :: Weights(:)
     type(matrixElement_t), intent(inout) :: Matrix
 
-    integer :: I
+    integer :: I, J
     integer :: NCols                     ! from Matrix
     logical :: New                       ! Re-create the matrix block
     integer :: NNZ                       ! Number of nonzeroes in Weights
@@ -57,10 +56,10 @@ contains
 
     nCols = matrix%nCols
     nRows = matrix%nRows
-    if ( size(n_weights) > nCols ) call MLSMessage ( MLSMSG_Error, moduleName, &
+    if ( size(weights) > nCols ) call MLSMessage ( MLSMSG_Error, moduleName, &
       & "Matrix has fewer columns than line has points" )
 
-    nnz = sum(n_weights)
+    nnz = sum(weights%n)
     ! Re-create the matrix block as column sparse with the appropriate number
     ! of nonzeroes.
     new = matrix%kind /= m_column_sparse
@@ -76,9 +75,11 @@ contains
 
     ! Fill the nonzeroes locators (matrix%r2 and matrix%r1) and the values
     do i = 1, nCols
-      matrix%r2(nVal+1:nVal+n_weights(i)) = weights(1:n_weights(i),i)%which
-      matrix%value1(nVal+1:nVal+n_weights(i)) = weights(1:n_weights(i),i)%weight
-      nVal = nVal + n_weights(i)
+      do j = 1, weights(i)%n
+        matrix%r2(nVal+1:nVal+j) = weights(i)%w(j)%which
+        matrix%value1(nVal+1:nVal+j) = weights(i)%w(j)%weight
+      end do
+      nVal = nVal + weights(i)%n
       matrix%r1(i) = nVal
     end do
 
@@ -97,7 +98,7 @@ contains
     use Geolocation_0, only: ECR_t, RG
     use MatrixModule_0, only: MatrixElement_T
     use QTM_Interpolation_Weights_3D_m, only: QTM_Interpolation_Weights, S_QTM_T, &
-      & Weight_t
+      & Weight_ZQ_t
 
     type(QTM_tree_t), intent(in) :: QTM_Tree
     real(rg), intent(in) :: Heights(:,:) ! Extents are (heights, QTM_Tree%N_In)
@@ -111,8 +112,7 @@ contains
     type(S_QTM_t), intent(in) :: Points(:) ! Points along Line
     type(matrixElement_t), intent(inout), optional :: Matrix ! Weights
 
-    integer :: N_Weights(size(points))
-    type(weight_t) :: Weights(6,size(points))
+    type(weight_ZQ_t) :: Weights(size(points))
 
     if ( size(heights,2) == 1 ) then ! Coherent heights
       call QTM_Interpolation_Weights ( QTM_Tree, Heights(:,1), &
@@ -121,9 +121,9 @@ contains
     end if
 
     call QTM_interpolation_weights ( QTM_Tree, &
-                         & heights, line, points, weights, n_weights )
+                         & heights, line, points, weights )
 
-    call fill_matrix_from_weights ( weights, n_weights, matrix )
+    call fill_matrix_from_weights ( weights, matrix )
 
   end subroutine QTM_Interpolation_Weights_Geo_3D_Incoherent_Line_Matrix
 
@@ -140,7 +140,7 @@ contains
     use Geolocation_0, only: ECR_t, RG
     use MatrixModule_0, only: MatrixElement_T
     use QTM_Interpolation_Weights_3D_m, only: QTM_Interpolation_Weights, S_QTM_T, &
-      & Weight_t
+      & Weight_ZQ_t
   
     type(QTM_tree_t), intent(in) :: QTM_Tree
     real(rg), intent(in) :: Heights(:)   ! Extents are (heights, QTM_Tree%N_In)
@@ -154,13 +154,12 @@ contains
     type(S_QTM_t), intent(in) :: Points(:) ! Points along Line
     type(matrixElement_t), intent(inout), optional :: Matrix ! Weights
 
-    integer :: N_Weights(size(points))
-    type(weight_t) :: Weights(6,size(points))
+    type(weight_ZQ_t) :: Weights(size(points))
 
     call QTM_interpolation_weights ( QTM_Tree, &
-                         & heights, line, points, weights, n_weights )
+                         & heights, line, points, weights )
 
-    call fill_matrix_from_weights ( weights, n_weights, matrix )
+    call fill_matrix_from_weights ( weights, matrix )
 
   end subroutine QTM_Interpolation_Weights_Geo_3D_Line_Matrix
 
@@ -178,6 +177,9 @@ contains
 end module QTM_Interpolation_Weights_3D_1
 
 ! $Log$
+! Revision 2.2  2016/10/25 18:23:48  vsnyder
+! Inching toward 3D-QTM forward model support
+!
 ! Revision 2.1  2016/04/16 02:04:59  vsnyder
 ! Initial commit
 !
