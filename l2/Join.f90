@@ -1116,7 +1116,13 @@ contains ! =====     Public Procedures     =============================
 
       ! Call the l2gp open/create routine.  Filename is 'filename'
       ! file id should go into 'handle'
-      directFile => GetMLSFileByName(filedatabase, filename, ignore_paths=.true.)
+      if ( .not. TOOLKIT .or. noPCFid ) then
+        directFile => GetMLSFileByName( filedatabase, filename, &
+          & ignore_paths=.false. )
+      else
+        directFile => GetMLSFileByName( filedatabase, filename, &
+          & ignore_paths=.true. )
+      endif
       if ( .not. associated(directFile) ) then
         if(DEEBUG) call MLSMessage(MLSMSG_Warning, ModuleName, &
           & 'No entry in filedatabase for ' // trim(filename) )
@@ -2382,6 +2388,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.177  2016/11/01 17:44:40  pwagner
+! Fixed error in getting directFile to ignore_paths or not
+!
 ! Revision 2.176  2016/09/07 22:47:12  pwagner
 ! Removed unused QuantityType component from L2GPData type
 !
