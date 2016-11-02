@@ -76,8 +76,8 @@ contains
     ! Fill the nonzeroes locators (matrix%r2 and matrix%r1) and the values
     do i = 1, nCols
       do j = 1, weights(i)%n
-        matrix%r2(nVal+1:nVal+j) = weights(i)%w(j)%which
-        matrix%value1(nVal+1:nVal+j) = weights(i)%w(j)%weight
+        matrix%r2(nVal+1:nVal+j) = weights(i)%w(j)%n
+        matrix%value1(nVal+1:nVal+j) = weights(i)%w(j)%v
       end do
       nVal = nVal + weights(i)%n
       matrix%r1(i) = nVal
@@ -177,6 +177,9 @@ contains
 end module QTM_Interpolation_Weights_3D_1
 
 ! $Log$
+! Revision 2.3  2016/11/02 22:57:30  vsnyder
+! New name for weight component of Weights_ZQ_t
+!
 ! Revision 2.2  2016/10/25 18:23:48  vsnyder
 ! Inching toward 3D-QTM forward model support
 !
