@@ -472,7 +472,7 @@ contains
   ! Fill in the size information for the II'th element of Grids_x
 
     use ForwardModelConfig, only: ForwardModelConfig_t
-    use Intrinsic, only: L_QTM, L_Vmr
+    use Intrinsic, only: L_Vmr
     use ManipulateVectorQuantities, only: FindInstanceWindow
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use VectorsModule, only: VectorValue_T
@@ -984,6 +984,9 @@ contains
 end module LOAD_SPS_DATA_M
 
 ! $Log$
+! Revision 2.115  2016/09/21 00:14:20  vsnyder
+! Use IsQTM function
+!
 ! Revision 2.114  2016/08/30 20:29:36  vsnyder
 ! Add IsQTM type-bound function
 !
