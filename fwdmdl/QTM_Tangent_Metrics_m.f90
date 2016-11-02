@@ -34,27 +34,31 @@ contains
 
   ! Compute the surface height and the tangent height at Tan_Pt.
 
-    use Geolocation_0, only: H_t
+    use Geolocation_0, only: H_v_geod
     use Generate_QTM_m, only: QTM_Tree_t
     use MLSKinds, only: RP
-    use QTM_Interpolation_Weights_m, only: Weight_t, QTM_Interpolation_Weights
+    use QTM_Interpolation_Weights_m, only: QTM_Interpolation_Weights
+    use Path_Representation_m, only: Value_t
 
     ! Inputs:
-    class(h_t), intent(in) :: Tan_Pt   ! Tangent point horizontal coordinates
+    class(h_v_geod), intent(in) :: Tan_Pt ! Tangent point coordinates
+                                       ! (lon,lat, ht) degrees, m
     type(QTM_Tree_t), intent(in) :: QTM   ! Horizontal grid
-    real(rp), intent(in) :: H_Ref(:,:) ! Heights by fine zeta and QTM grid
+    real(rp), intent(in) :: H_Ref(:,:) ! Geodetic heights (above Earth Reference
+                                       ! Ellipsoid) by fine zeta and QTM grid
                                        ! serial number, km
     integer, intent(in) :: Tan_Ind_f   ! First (vertical) index of tangent
                                        ! point in H_Ref, which is on the fine
                                        ! zeta grid.
 
     ! Outputs:
-    real(rp), intent(out) :: H_Surf    ! Height of the pressure reference
-                                       ! surface at Tan_Pt, km -- interpolated
-                                       ! in Surf_Height if present(Surf_Height)
-                                       ! else interpolated in row 1 of H_REF, km
+    real(rp), intent(out) :: H_Surf    ! Geodetic height of the pressure
+                                       ! reference surface at Tan_Pt, km --
+                                       ! interpolated in Surf_Height if
+                                       ! present(Surf_Height) else interpolated
+                                       ! in row 1 of H_REF, km
     real(rp), intent(out) :: H_Tan     ! Tangent height above H_Surf (negative
-                                       ! for Earth-intersecting rays).
+                                       ! for Earth-intersecting rays), km.
                                        ! Interpolated in Tan_Ind_F row of H_Ref.
 
     ! optional inputs
@@ -68,7 +72,7 @@ contains
                                        ! above mean sea level (whatever that
                                        ! means) on QTM grid.
 
-    type(Weight_t) :: Eta(3)           ! Interpolation coefficients
+    type(value_t) :: Eta(3)            ! Interpolation coefficients
 
     ! Get interpolation coefficients and QTM serial numbers from QTM to Tan_Pt
     call QTM_Interpolation_Weights ( QTM, Tan_Pt, Eta )
@@ -77,12 +81,12 @@ contains
       ! We set the surface reference at the actual surface height if we
       ! have it, and adjust r_eq and h_tan relative to this, and adjust
       ! h_ref accordingly.
-      h_surf = dot_product ( surf_height(eta%which), eta%weight )
+      h_surf = dot_product ( surf_height(eta%n), eta%v )
     else
       ! If we don't have the actual surface height, we set the surface
       ! reference at the input z_ref and adjust r_eq and h_tan relative
       ! to this, and adjust h_ref accordingly.
-      h_surf = dot_product ( h_ref(1,eta%which), eta%weight )
+      h_surf = dot_product ( h_ref(1,eta%n), eta%v )
     end if
 
     if ( present(tan_press) .and. present(surf_temp) .and. &
@@ -91,10 +95,10 @@ contains
       ! below surface. This will be negative because tan_press < z_ref.
       ! present(tan_press) requires present(surf_temp).  We don't need to
       ! subtract h_surf here because this gives km from the z_ref surface.
-      h_tan = dot_product ( surf_temp(eta%which),eta%weight ) * &
+      h_tan = dot_product ( surf_temp(eta%n),eta%v ) * &
             & (tan_press-z_ref)/14.8
     else
-      h_tan = dot_product ( h_ref(tan_ind_f,eta%which), eta%weight ) - h_surf
+      h_tan = dot_product ( h_ref(tan_ind_f,eta%n), eta%v ) - h_surf
     end if
     
   end subroutine QTM_Tangent_Metrics
@@ -112,6 +116,10 @@ contains
 end module QTM_Tangent_Metrics_m
 
 ! $Log$
+! Revision 2.3  2016/11/02 22:50:36  vsnyder
+! Use Value_t from Path_Representation instead of Weight_t from
+! QTM_Interpolation_Weights_m
+!
 ! Revision 2.2  2016/09/02 00:22:19  vsnyder
 ! Calculate H_Surf and H_Tan if they're requested
 !
