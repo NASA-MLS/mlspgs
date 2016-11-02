@@ -64,24 +64,33 @@ module Generate_QTM_m
                                ! the ZOT projection.  A point is considered to
                                ! be inside if PnPoly returns the same value.
     integer(qk) :: N_Facets = 0 ! Number of finest-refinement facets of the QTM
-    integer(qk) :: N_In = 0    ! Number of vertices inside the polygon
-    type(h_t), allocatable :: Polygon_Geo(:)   ! (lon,lat) degrees, either
+    integer(qk) :: N_In = 0    ! Number of vertices inside the polygon or
+                               ! immediately adjacent to it.
+    type(h_t), allocatable :: Polygon_Geo(:) ! (lon,lat) degrees, either
+                               ! geodetic or geocentric.
+    type(h_t) :: Polygon_Geo_Centroid        ! (lon,lat) degrees, either
                                ! geodetic or geocentric.
     type(ZOT_t), allocatable :: Polygon_ZOT(:)
-    logical, allocatable :: Ignore_Edge(:) ! Ignore edge (i,1+mod(i,n)) because
-                               ! it joins two aliased points on a southern-
-                               ! hemisphere meridian at mod(lon,90)=0 and there
-                               ! is an edge antiparallel to it and colinear
-                               ! with it.
-    type(QTM_node_t), allocatable :: Q(:)
-    type(ZOT_t), allocatable :: ZOT_In(:)  ! ZOT coordinates of vertices of QTM
-                               ! that are inside or adjacent to the polygon.
-                               ! Indexed by Q(.)%Ser(.).
-    class(h_t), allocatable :: Geo_In(:)   ! H_T coordinates corresponding to
+    type(ZOT_t):: Polygon_ZOT_Centroid
+    logical, allocatable :: Ignore_Edge(:)   ! Ignore edge (i,1+mod(i,n))
+                               ! because it joins two aliased points on a
+                               ! southern-hemisphere meridian at mod(lon,90)=0
+                               ! and there is an edge antiparallel to it and
+                               ! colinear with it.
+    type(QTM_node_t), allocatable :: Q(:)    ! The nodes of the search tree
+    integer, allocatable :: Adjacent_in(:,:) ! Search tree node indices of
+                               ! facets adjacent to each vertex of Geo_In or
+                               ! ZOT_In.  First dimension is 6.
+    integer, allocatable :: N_Adjacent_in(:) ! Effective first extents of
+                               ! Adjacent_in.
+    class(h_t), allocatable :: Geo_In(:)     ! H_T coordinates corresponding to
                                ! ZOT_In, (lon,lat) degrees, either geodetic or
                                ! geocentric.
-    class(lat_t), allocatable :: QTM_Lats(:)   ! Unique latitudes within QTM.
-                               ! They're geocentric or geodetic, depending on
+    type(ZOT_t), allocatable :: ZOT_In(:)    ! ZOT coordinates of vertices of
+                               ! QTM that are inside or adjacent to the
+                               ! polygon. Indexed by Q(.)%Ser(.).
+    class(lat_t), allocatable :: QTM_Lats(:) ! Unique latitudes within QTM.
+                               ! They're geocentric or geodetic, depending upon
                                ! the dynamic type of Geo_In.
   contains
     procedure :: Find_Facet_Geo
@@ -192,7 +201,9 @@ contains
     ! QTM_Trees%Q(F)%Ser /= 0, which is true for facets at the finest
     ! refinement but not necessarily at coarser refinement.  If a vertex V of
     ! a coarse-refinement facet C is not also a vertex of a finest-refinement
-    ! facet, QTM_Trees%Q(C)%Ser(v) == 0.
+    ! facet, QTM_Trees%Q(C)%Ser(v) == 0.  The search tree indices of facets
+    ! adjacent to QTM_Trees%Geo_In(V) or QTM_Trees%ZOT_In(V) are in
+    ! QTM_Trees%Adjacent_in(:QTM_Trees%N_Adjacent_in(V),V).
 
     use Geolocation_0, only: H_Geoc, H_Geod
     use PnPoly_m, only: PnPoly
@@ -204,6 +215,8 @@ contains
                           ! a generic Hash module
     type(h_t), pointer :: Geo(:) ! Nonpolymorphic handle for QTM_Trees%geo_in
     integer :: Hemisphere ! 2 = north, 3 = south
+    integer, allocatable :: I1_Temp(:)   ! 1-dimensional integer temp
+    integer, allocatable :: I2_Temp(:,:) ! 2-dimensional integer temp
     integer :: L          ! min(QTM_Trees%Level,QTM_Depth)
     integer :: Octant     ! Octant being refined.
     integer :: Quadrant   ! Quadrant in a hemisphere, 0..3.
@@ -222,6 +235,16 @@ contains
       call polygon_to_ZOT ( QTM_Trees )
     end if
 
+    ! The polygon centroid is later useful for finding a point on a line of
+    ! sight that is nearest to it, and from that finding the facet below that
+    ! point, and from that finding all facets crossed by that line.
+    QTM_Trees%polygon_geo_centroid = &
+      & h_t(lon_t(sum(QTM_Trees%polygon_geo%lon%d)/size(QTM_Trees%polygon_geo)), &
+         &  sum(QTM_Trees%polygon_geo%lat)/size(QTM_Trees%polygon_geo) )
+    QTM_Trees%polygon_ZOT_centroid = &
+      & ZOT_t(sum(QTM_Trees%polygon_ZOT%x)/size(QTM_Trees%polygon_ZOT), &
+           &  sum(QTM_Trees%polygon_ZOT%y)/size(QTM_Trees%polygon_ZOT) )
+
     if ( QTM_Trees%in%x < -10 .or. QTM_Trees%in%y < -10 ) then
       if ( QTM_Trees%in_geo%lon%d < -500 .or. QTM_Trees%in_geo%lat < -500 ) return
       QTM_Trees%in = geo_to_ZOT(QTM_Trees%in_geo)
@@ -238,6 +261,8 @@ contains
 
     if ( .not. allocated(QTM_Trees%Q) ) allocate ( QTM_Trees%Q(default_initial_size) )
     allocate ( QTM_Trees%ZOT_In(default_initial_size) )
+    allocate ( QTM_Trees%adjacent_in(6,default_initial_size) )
+    allocate ( QTM_Trees%n_adjacent_in(default_initial_size), source=0 )
     ! Create the root and top two hemispheres in the tree.
     QTM_Trees%n = 3
     QTM_Trees%Q(1)%son = [ 0, 0,  2,  3 ]; QTM_Trees%Q(1)%depth=0 ! Root
@@ -265,10 +290,16 @@ contains
     end if
 
     if ( QTM_Trees%n_in /= size(QTM_Trees%ZOT_In) ) then
-      ! Reallocate ZOT to the correct size
+      ! Reallocate ZOT etc. to the correct size
       allocate ( z_temp(QTM_Trees%n_in) )
       z_temp = QTM_Trees%ZOT_In(1:QTM_Trees%n_in)
       call move_alloc ( z_temp, QTM_Trees%ZOT_In )
+      allocate ( i1_temp(QTM_Trees%n_in) )
+      i1_temp = QTM_Trees%n_adjacent_in(1:QTM_Trees%n_in)
+      call move_alloc ( i1_temp, QTM_Trees%n_adjacent_in )
+      allocate ( i2_temp(6,QTM_Trees%n_in) )
+      i2_temp = QTM_Trees%adjacent_in(1:6,1:QTM_Trees%n_in)
+      call move_alloc ( i2_temp, QTM_Trees%adjacent_in )
     end if
 
     ! Compute (lon,lat) coordinates corresponding to ZOT coordinates
@@ -294,13 +325,14 @@ contains
       integer(qk), intent(in) :: QID
       integer, intent(in) :: Depth
 
+      real(rg) :: B(3)  ! Barycentric coordinates of polygon vertex in facet,
+                        ! to determine whether any of its vertices are within it.
       integer :: F      ! Which facet is being created
       integer :: I
       logical :: In     ! Facet vertex is in a polygon, or polygon vertex is
                         ! in the facet, or an edge of the polygon crosses an
                         ! edge of the facet.
-      real(rg) :: W(3)  ! Barycentric coordinates of polygon vertex in facet,
-                        ! to determine whether any of its vertices are within it.
+      integer :: V      ! Serial number of a vertex.
 
       QTM_trees%n = QTM_trees%n + 1
       root = QTM_trees%n
@@ -336,8 +368,8 @@ contains
       do i = 1, size(QTM_Trees%polygon_ZOT)
         if ( in ) exit
         call triangle_interpolate ( QTM_Trees%Q(root)%z%x, QTM_Trees%Q(root)%z%y, &
-          & QTM_Trees%polygon_ZOT(i)%x, QTM_Trees%polygon_ZOT(i)%y, w )
-        in = all(w >= 0)
+          & QTM_Trees%polygon_ZOT(i)%x, QTM_Trees%polygon_ZOT(i)%y, b )
+        in = all(b >= 0)
       end do
 
       ! Does an edge of the facet intersect an edge of the polygon?
@@ -397,6 +429,15 @@ contains
         QTM_Trees%n = QTM_Trees%n - 1
       else if ( QTM_Trees%Q(root)%depth == QTM_Trees%level ) then
         QTM_Trees%n_facets = QTM_Trees%n_facets + 1
+        ! Add facet to list of facets adjacent to its vertices
+        do i = 1, 3
+          v = QTM_Trees%Q(root)%ser(i)
+          f = QTM_Trees%n_adjacent_in(v)
+          if ( any(QTM_Trees%adjacent_in(:f,v) == root) ) cycle
+          f = f + 1
+          QTM_Trees%n_adjacent_in(v) = f
+          QTM_Trees%adjacent_in(f,v) = root
+        end do
       end if
 
     end function Add_QTM_Vertex_To_Tree
@@ -410,7 +451,7 @@ contains
       ! used for interpolation.  The original coordinates, not the
       ! disambiguated ones, should be used for plotting in the ZOT projection.
 
-      use Hash, only: Found, Inserted, Lookup_And_Insert
+      use Hash, only: Inserted, Lookup_And_Insert
 
       type(QTM_node_t), intent(inout) :: QTM ! Vertex of QTM tree
       integer, intent(in) :: Node  ! Which node 1..3
@@ -445,9 +486,16 @@ contains
         call lookup_and_insert ( cz, h, .true., loc, stat )
         if ( stat == inserted ) then
           if ( QTM_Trees%n_in >= size(QTM_Trees%ZOT_in) ) then
+            ! Make ZOT_in etc twice as big as before
             allocate ( z_temp ( 2*size(QTM_Trees%ZOT_in) ) )
             z_temp(1:QTM_Trees%n_in) = QTM_Trees%ZOT_in(1:QTM_Trees%n_in)
             call move_alloc ( z_temp, QTM_Trees%ZOT_in )
+            allocate ( i1_temp ( 2*size(QTM_Trees%ZOT_in) ) )
+            i1_temp = QTM_Trees%n_adjacent_in(1:QTM_Trees%n_in)
+            call move_alloc ( i1_temp, QTM_Trees%n_adjacent_in )
+            allocate ( i2_temp(6,2*size(QTM_Trees%ZOT_in)) )
+            i2_temp = QTM_Trees%adjacent_in(1:6,1:QTM_Trees%n_in)
+            call move_alloc ( i2_temp, QTM_Trees%adjacent_in )
           end if
           QTM_Trees%n_in = QTM_Trees%n_in + 1
           ! Disambiguate ZOT coordinates, because the outer edges of the ZOT
@@ -457,13 +505,12 @@ contains
           y = merge(qtm%z(node)%y,abs(qtm%z(node)%y),abs(qtm%z(node)%x)/=1.0_rg)
           QTM_Trees%ZOT_in(QTM_Trees%n_in) = zot_t(x,y)
           h(2,loc) = QTM_Trees%n_in ! Remember coordinates' serial number
-          QTM%ser(node) = h(2,loc) ! Coordinates' serial number
-          return
+          exit
         end if
         ! Hash got a match; make sure it's the same, else go around again.
         if ( QTM_Trees%ZOT_in(h(2,loc))%condense_ZOT() == cz ) exit
       end do
-      if ( stat == found ) QTM%ser(node) = h(2,loc) ! Coordinates' serial number
+      QTM%ser(node) = h(2,loc) ! Coordinates' serial number
 
     end subroutine Add_One
 
@@ -711,6 +758,10 @@ contains
 end module Generate_QTM_m
 
 ! $Log$
+! Revision 2.19  2016/11/02 22:58:58  vsnyder
+! Compute Polygon centroid in Geo and ZOT coordinates.  Compute facets
+! adjacent to each vertex.
+!
 ! Revision 2.18  2016/10/18 00:43:15  vsnyder
 ! Remove declaration for unused variable
 !
