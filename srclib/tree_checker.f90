@@ -24,10 +24,10 @@ module TREE_CHECKER
   use DECLARATION_TABLE, only: DECLARATION, DECLARE, DECLARED, DECLS, &
     &                          DO_LABEL, DUMP_1_DECL, EMPTY, ENUM_VALUE, &
     &                          FIELD, FUNCTION, GET_DECL, LABEL, LOG_VALUE, &
-    &                          NAMED_VALUE, NULL_DECL, NUM_VALUE, PRIOR_DECL, &
-    &                          RANGE, REDECLARE, SECTION, SPEC, STR_Range, &
-    &                          STR_VALUE, TYPE_NAME, UNITS_NAME, VALUE_T, &
-    &                          VARIABLE
+    &                          NAMED_VALUE, NULL_DECL, NUM_VALUE, &
+    &                          PRIOR_DECL, RANGE, REDECLARE, SECTION, SPEC, &
+    &                          STR_Range, STR_VALUE, TYPE_NAME, UNITS_NAME, &
+    &                          VALUE_T, VARIABLE
   use INIT_TABLES_MODULE, only: DATA_TYPE_INDICES, FIELD_FIRST, FIELD_INDICES, &
     &                           FIELD_LAST, LIT_INDICES, PHYQ_DIMENSIONLESS, &
     &                           SECTION_FIRST, SECTION_INDICES, SECTION_LAST, &
@@ -579,9 +579,7 @@ contains ! ====     Public Procedures     ==============================
             type_decl = decoration(subtree(j,field))
             decl = get_decl(sub_rosa(root),[look_for,variable])
             do while ( decl%tree /= null_tree )
-              if ( node_id(type_decl) == n_spec_def ) then
-                test_type = decoration(subtree(1,decl%tree))
-              else if ( decl%type==variable ) then
+              if ( decl%type==variable ) then
                 ! Type of variable is not the tree that represents the type,
                 ! so check for the type, not the tree that represents it.
                 if ( node_id(type_decl) == n_dt_def ) &
@@ -594,6 +592,12 @@ contains ! ====     Public Procedures     ==============================
                 end if
               else
                 test_type = decl%tree
+                select case ( decl%type )
+                case ( do_label, enum_value, function, label, named_value, &
+                     & type_name ) ! decl%tree is a tree node index
+                  if ( node_id(type_decl) == n_spec_def ) &
+                     & test_type = decoration(subtree(1,decl%tree))
+                end select
               end if
               if ( test_type == type_decl ) then  ! right type
                 if ( look_for == enum_value ) then
@@ -875,7 +879,6 @@ contains ! ====     Public Procedures     ==============================
     integer :: I                     ! For hunting in the DO construct stack
     integer :: Me = -1               ! String index for trace cacheing
     integer :: Son                   ! of a DO construct root
-    integer :: String1               ! Text of Gson1, which is a label
 
     call trace_begin ( me, 'Cycle_Exit', root, cond=toggle(con) )
 
@@ -2144,13 +2147,14 @@ contains ! ====     Public Procedures     ==============================
       double precision, intent(out) :: Value
 
       type(decls) :: Decl ! of Sonn
-      integer :: I, J
+      integer :: I
       integer :: Me = -1  ! String index for tracing
       logical :: Numeric
       integer :: Sonn     ! of Root
       integer :: Tree     ! Decl%Tree if sonn is identifier
       integer :: Type2    ! of Sonn
       integer :: Units2   ! of Sonn
+      integer :: Unused
       integer :: What2    ! of Sonn
 
       call trace_begin ( me, 'Check_Type', root, cond=toggle(con) )
@@ -2159,7 +2163,7 @@ contains ! ====     Public Procedures     ==============================
         if ( node_id(sonn) == n_array ) then
           call check_type ( sonn, 1, what, units, type, value )
         else
-          j = expr ( sonn, type2, units2, value, tree=tree )
+          unused = expr ( sonn, type2, units2, value, tree=tree )
           numeric = type2 == num_value
           what2 = type2
           if ( type < 0 ) then
@@ -2257,6 +2261,9 @@ contains ! ====     Public Procedures     ==============================
 end module TREE_CHECKER
 
 ! $Log$
+! Revision 1.52  2016/05/25 00:17:29  vsnyder
+! Decruftication
+!
 ! Revision 1.51  2015/02/05 21:51:26  vsnyder
 ! Work related to variable definitions
 !
