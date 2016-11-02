@@ -117,7 +117,6 @@ contains
   end subroutine Dump_QTM
 
   subroutine Dump_QTM_Tree ( QTM_Trees, Format, LatLon, Details )
-    use Dump_Geolocation_m, only: Dump
     use Generate_QTM_m, only: QTM_tree_t
     use Output_m, only: NewLine, Output
 
@@ -198,10 +197,31 @@ contains
     if ( myDetails > 1 ) then
       myLatLon = .false.
       if ( present(latLon) ) myLatLon = latLon
+      call output ( ' Vertices within or adjacent to the polygon' )
       if ( myLatLon ) then
-        call dump ( QTM_Trees%geo_in, ' QTM vertices in (lon,lat) coordinates:' )
+        call output ( ' in Lon/Lat coordinates', advance='yes' )
+        do i = 1, QTM_Trees%n_in
+          call output ( i, format='(i4)' )
+          call output ( QTM_Trees%geo_in(i)%lon%d, before=': (', format='(f9.4)' )
+          call output ( QTM_Trees%geo_in(i)%lat, before=',', format='(f9.4)' )
+          call output ( ') Adjacent facets' )
+          do j = 1, QTM_Trees%n_adjacent_in(i)
+            call output ( QTM_Trees%adjacent_in(j,i), before=' ' )
+          end do
+          call newLine
+        end do
       else
-        call dump ( QTM_Trees%ZOT_in, ' QTM vertices in ZOT coordinates:' )
+        call output ( ' in ZOT coordinates', advance='yes' )
+        do i = 1, QTM_Trees%n_in
+          call output ( i, format='(i4)' )
+          call output ( QTM_Trees%ZOT_in(i)%x, before=': (', format='(f9.6)' )
+          call output ( QTM_Trees%ZOT_in(i)%y, before=',', format='(f9.6)' )
+          call output ( ') Adjacent facets' )
+          do j = 1, QTM_Trees%n_adjacent_in(i)
+            call output ( QTM_Trees%adjacent_in(j,i), before=' ' )
+          end do
+          call newLine
+        end do
       end if
     end if
 
@@ -220,8 +240,9 @@ contains
     write ( unit ) tree%polygon_geo%h_t_fields(), tree%polygon_zot, & ! Geo, Zot
       & tree%geo_in%h_t_fields(), tree%zot_in, & ! Vertices in polygon Geo, Zot
       & tree%q%depth, &
-      & ( tree%q(i)%geo, i = 1, tree%n ), & ! facet vertices Geo
-      & ( tree%q(i)%z,   i = 1, tree%n )    ! facet vertices ZOT
+      & ( tree%q(i)%geo, i = 1, tree%n ), &  ! facet vertices Geo
+      & ( tree%q(i)%z,   i = 1, tree%n ), &  ! facet vertices ZOT
+      & tree%adjacent_in, tree%n_adjacent_in ! facets adjacent to vertices
   end subroutine Write_QTM_Unformatted
 
 !=============================================================================
@@ -238,6 +259,9 @@ contains
 end module QTM_Output
 
 ! $Log$
+! Revision 2.8  2016/11/02 22:59:16  vsnyder
+! Output facets adjacent to each vertex
+!
 ! Revision 2.7  2016/10/05 23:28:22  vsnyder
 ! Replace ZOT_n component name with Ser because it's a serial number for
 ! more than just the ZOT coordinates.
