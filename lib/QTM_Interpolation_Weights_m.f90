@@ -13,8 +13,6 @@
 module QTM_Interpolation_Weights_m
 !=============================================================================
 
-  use Geolocation_0, only: RG
-
   implicit NONE
   private
 
@@ -32,15 +30,6 @@ module QTM_Interpolation_Weights_m
       & QTM_Interpolation_Weights_Geo_list, &
       & QTM_Interpolation_Weights_ZOT_list
   end interface QTM_Interpolation_Weights
-
-  public :: Weight_t
-
-  type :: Weight_t
-    integer :: Which      ! Position in array element order to which weight is
-                          ! germane; if no facet was found (which shouldn't
-                          ! happen), Which is one and Weight is zero.
-    real(rg) :: Weight    ! Weight -- interpolation coefficient
-  end type Weight_t
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -60,12 +49,13 @@ contains
     use Generate_QTM_m, only: QTM_Tree_t
     use Geolocation_0, only: H_t
     use Nearest_Polygon_Point_m, only: Nearest_Polygon_Point
+    use Path_Representation_m, only: Value_t
     use QTM_m, only: Geo_to_ZOT, Stack_t, ZOT_t
     use Triangle_Interpolate_m, only: Triangle_Interpolate
 
     type(QTM_tree_t), intent(in) :: QTM_Tree
     class(h_t), intent(in) :: Point
-    type(weight_t), intent(out) :: Weights(3)
+    type(value_t), intent(out) :: Weights(3)
     type(stack_t), intent(inout), optional :: Stack
     class(h_t), intent(out), optional :: Used ! The point used for interpolation
 
@@ -79,9 +69,9 @@ contains
     if ( inside ) inside = all(QTM_tree%Q(f)%ser > 0)
     if ( inside ) then
       z = geo_to_ZOT ( point )
-      weights%which = QTM_tree%Q(f)%ser
+      weights%n = QTM_tree%Q(f)%ser
       call triangle_interpolate ( QTM_tree%Q(f)%z%x, QTM_tree%Q(f)%z%y, &
-                                & z%x, z%y, weights%weight )
+                                & z%x, z%y, weights%v )
       if ( present(used) ) then
         used%lon = point%lon
         used%lat = point%lat
@@ -94,11 +84,11 @@ contains
       inside = f > 0
       if ( inside ) inside = all(QTM_tree%Q(f)%ser > 0)
       if ( inside ) then
-        weights%which = QTM_tree%Q(f)%ser
+        weights%n = QTM_tree%Q(f)%ser
         call triangle_interpolate ( QTM_tree%Q(f)%z%x, QTM_tree%Q(f)%z%y, &
-                                  & z%x, z%y, weights%weight )
+                                  & z%x, z%y, weights%v )
       else ! Shouldn't get here
-        weights = weight_t(1,0)
+        weights = value_t(1,0)
       end if
       if ( present(used) ) then
         used%lon = p%lon
@@ -116,11 +106,12 @@ contains
 
     use Generate_QTM_m, only: QTM_Tree_t
     use Geolocation_0, only: H_t
+    use Path_Representation_m, only: Value_t
     use QTM_m, only: Stack_t
 
     type(QTM_tree_t), intent(in) :: QTM_Tree
     class(h_t), intent(in) :: Point(:)          ! Assume size(point) == 
-    type(weight_t), intent(out) :: Weights(:,:) ! size(weights,2) and
+    type(value_t), intent(out) :: Weights(:,:)  ! size(weights,2) and
                                                 ! size(weights,1) == 3
     type(stack_t), intent(inout), optional :: Stack
 
@@ -148,11 +139,12 @@ contains
     use QTM_m, only: Stack_T, ZOT_t
     use Generate_QTM_m, only: QTM_Tree_t
     use Nearest_Polygon_Point_m, only: Nearest_Polygon_Point
+    use Path_Representation_m, only: Value_t
     use Triangle_Interpolate_m, only: Triangle_Interpolate
 
     type(QTM_tree_t), intent(in) :: QTM_Tree
     type(ZOT_t), intent(in) :: Point
-    type(weight_t), intent(out) :: Weights(3)
+    type(value_t), intent(out) :: Weights(3)
     type(stack_t), intent(inout), optional :: Stack
     type(ZOT_t), intent(out), optional :: Used ! The point used for interpolation
 
@@ -164,9 +156,9 @@ contains
     inside = f > 0
     if ( inside ) inside = all(QTM_tree%Q(f)%ser > 0)
     if ( inside ) then
-      weights%which = QTM_tree%Q(f)%ser
+      weights%n = QTM_tree%Q(f)%ser
       call triangle_interpolate ( QTM_tree%Q(f)%z%x, QTM_tree%Q(f)%z%y, &
-                                & point%x, point%y, weights%weight )
+                                & point%x, point%y, weights%v )
       if ( present(used) ) used = point
     else
       call nearest_polygon_point ( point, QTM_tree%polygon_zot, p )
@@ -175,11 +167,11 @@ contains
       inside = f > 0
       if ( inside ) inside = all(QTM_tree%Q(f)%ser > 0)
       if ( inside ) then
-        weights%which = QTM_tree%Q(f)%ser
+        weights%n = QTM_tree%Q(f)%ser
         call triangle_interpolate ( QTM_tree%Q(f)%z%x, QTM_tree%Q(f)%z%y, &
-                                  & point%x, point%y, weights%weight )
+                                  & point%x, point%y, weights%v )
       else ! Shouldn't get here
-        weights = weight_t(1,0)
+        weights = value_t(1,0)
       end if
       if ( present(used) ) used = p
     end if
@@ -193,10 +185,11 @@ contains
 
     use QTM_m, only: Stack_T, ZOT_t
     use Generate_QTM_m, only: QTM_Tree_t
+    use Path_Representation_m, only: Value_t
 
     type(QTM_tree_t), intent(in) :: QTM_Tree
     type(ZOT_t), intent(in) :: Point(:)         ! Assume size(point) ==
-    type(weight_t), intent(out) :: Weights(:,:) ! size(weights,2) and
+    type(value_t), intent(out) :: Weights(:,:)  ! size(weights,2) and
                                                 ! size(weights,1) == 3
     type(stack_t), intent(inout), optional :: Stack
 
@@ -229,6 +222,9 @@ contains
 end module QTM_Interpolation_Weights_m
 
 ! $Log$
+! Revision 2.6  2016/11/02 22:55:15  vsnyder
+! Remove Weight_t in favor of Value_t in Path_Representation_m
+!
 ! Revision 2.5  2016/10/25 18:23:48  vsnyder
 ! Inching toward 3D-QTM forward model support
 !
