@@ -13,7 +13,7 @@
 module Metrics_3D_m
 !=============================================================================
 
-  use Geolocation_0, only: RG
+  use Geolocation_0, only: ECR_t, RG
 
   implicit NONE
 
@@ -28,113 +28,34 @@ module Metrics_3D_m
     module procedure Metrics_3D_Grid, Metrics_3D_QTM, Metrics_3D_QTM_1
   end interface Metrics_3D
 
+  ! Which surface penetrations to put into the path:
+  enum, bind(C)
+    enumerator :: All        ! Both horizontal and vertical surfaces
+    enumerator :: Horizontal ! Horizontal (zeta or height) surfaces
+    enumerator :: Vertical   ! Vertical surfaces (planes and latitude cones)
+  end enum
+
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
-  private :: not_used_here 
+  private :: not_used_here
 !---------------------------------------------------------------------------
 
 contains
 
-  subroutine Get_Lines_Ready ( Lines, SMin, SMax )
-    ! Given a line defined by a point in ECR, and a vector in ECR parallel
-    ! to that line, compute the position of the tangent on that line, and
-    ! the extents of the interesting parts of the line.
-
-    ! The given line is Lines(1,1) + s * Lines(2,1).  Lines(2,1) is made an
-    ! unit vector here.  A line defined by Lines(1,2) + s * Lines(2,2) is
-    ! produced, which is the continuation of Lines(:,1) after the tangent
-    ! point if Lines(:,1) does not intersect the Earth reference ellipsoid,
-    ! or the reflection of Lines(:,1) if it does intersect the Earth
-    ! reference ellipsoid.  Lines(2,2) is an unit vector.
-
-    ! The tangent point is Lines(1,2).
-
-    use Geolocation_0, only: ECR_t, Norm2
-    use Line_And_Ellipsoid_m, only: Line_And_Ellipsoid, Line_Nearest_Ellipsoid
-    use Line_And_Plane_m, only: Line_Reflection
-
-    type(ECR_t), intent(inout) :: Lines(2,2)  ! Lines(1,1) + s * Lines(2,1)
-                                   ! defines the initial line, i.e., before
-                                   ! the tangent point.
-                                   ! Lines(2,1) + s * Lines(2,2) defines the
-                                   ! line after the tangent point.
-    real(rg), intent(out) :: SMax(2), SMin(2) ! Interesting intervals of S
-                                   ! along Lines
-
-    type(ECR_t) :: Grad   ! Gradient to Earth reference ellipsoid at tangent point
-    integer :: I
-    type(ECR_t), allocatable :: Ints(:) ! Intersections with Earth reference ellipsoid
-    real(rg) :: R         ! R = 1 => intersection, >= 1 => tangent
-    real(rg) :: Tangent   ! S-value of tangent point
-    real(rg) :: Tan_Dir   ! +/- 1; Tan_Dir * Lines(2,i) is directed from
-                          ! Lines(1,i) toward the tangent point.
-    real(rg), allocatable :: W(:) ! Where line and ellipsoid intersect
-
-    ! Make Lines(2,1) an unit vector, to simplify later calculations.
-    Lines(2,1) = Lines(2,1) / norm2(Lines(2,1))
-
-    ! Get the tangent or intersection point of Lines(:,1) with the Earth
-    ! reference ellipsoid.
-    ! Lines(1,1) + s * Lines(2,1) describes the line before the tangent point.
-    ! Lines(1,2) + s * Lines(2,2) describes the line after the tangent point.
-    ! We could, in principle, divide the line into an arbitrary number of
-    ! segments, to account (approximately) for refraction.
-    call line_nearest_ellipsoid ( lines(:,1), tangent, r )
-    if ( r >= 1 ) then ! No intersection, Lines(:,2) is colinear with Lines(:,1)
-      lines(1,2) = lines(1,1) + tangent * lines(2,1)
-      lines(2,2) = lines(2,1) ! Continuation is parallel to incident line
-    else               ! Compute reflection direction
-      ! Assume lines(1,1) is not inside the ellipsoid
-      call line_and_ellipsoid ( lines(:,1), ints, w ) ! S_int(1) is temp
-! Intel ifort 14.0.0 gets an internal error trying to compile the next line.
-! It doesn't like that the norm2 generic in Geolocation_0 is elemental.
-!       i = minloc(norm2(ints - lines(1,1)),1)
-i = 1
-if ( size(ints) > 1 ) then
-if ( norm2(ints(1) - lines(1,1)) > norm2(ints(2) - lines(1,1)) ) i = 2
-end if
-      lines(1,2) = ints(i)
-      tangent = w(i)
-      grad = lines(1,2)%grad() ! Gradient to Earth reference ellipsoid at the
-      ! intersection Compute Lines(2,2) such that Lines(2,2) is at the same
-      ! angle from Grad as Lines(2,1), but on the opposite side of the tangent
-      ! from Lines(2,1).
-      call line_reflection ( lines(2,1), grad, lines(2,2) )
-      deallocate ( w )
-    end if
-    tan_dir = sign(1.0_rg,tangent)
-    if ( tan_dir >= 0 ) then
-      ! Direction of Lines(2,1) is from Lines(1,1) toward tangent, therefore
-      ! direction of Lines(2,2) is from tangent toward +infinity
-      sMin(1) = -sqrt(huge(0.0_rg)) ! Allow intersections before Lines(1,1)
-      sMax(1) = tangent             ! Disallow intersections after tangent
-      sMin(2) = 0                   ! Disallow intersections before tangent
-      sMax(2) = sqrt(huge(0.0_rg))  ! Allow intersections arbitrarily far away
-    else ! sMax(1) < 0
-      ! Direction of Lines(2,1) is from Lines(1,1) away from tangent, therefore
-      ! direction of Lines(2,2) is from -infinity toward tangent
-      sMin(1) = tangent             ! Disallow intersections before tangent
-      sMax(1) = sqrt(huge(0.0_rg))  ! Allow intersections arbitrarily far away
-      sMin(2) = -sqrt(huge(0.0_rg)) ! Allow intersections arbitrarily far away
-      sMax(2) = 0                   ! Disallow intersections after tangent
-    end if
-
-  end subroutine Get_Lines_Ready
-
-  subroutine Metrics_3D_Grid ( Lines, Grid, S, Tangent_Index, Zeta_Only )
+  subroutine Metrics_3D_Grid ( Path, Grid, S, Tangent_Index, Which )
     ! Given a line defined by a point in ECR, and a vector in ECR parallel
     ! to that line, compute all intersections of that line with a face of
     ! the grid.
-    
+
     ! Lines(2,1) and Lines(2,2) are made unit vectors here.
-    
+
     ! The given line is Lines(1,1) + s * Lines(2,1).  A line defined by
     ! Lines(1,2) + s * Lines(2,2) is produced, which is the continuation of
     ! Lines(:,1) after the tangent point if Lines(:,1) does not intersect the
     ! Earth reference ellipsoid, or the reflection of Lines(:,1) if it does
     ! intersect the Earth reference ellipsoid.  Lines(2,2) is an unit vector.
-    
+
     ! The tangent point is Lines(1,2).
 
     ! Values of S(1:Tangent_Index) are in order such that the first one is
@@ -143,24 +64,24 @@ end if
     ! order such that the first one is the tangent point (again) and the
     ! last one is farthest from Lines(1,1).
 
-    use Geolocation_0, only: ECR_t
     use Geolocation_m, only: Geolocation_t
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use Path_Representation_m, only: Path_t
     use QTM_Interpolation_Weights_3D_m, only: S_QTM_t
 
-    type(ECR_t), intent(inout) :: Lines(2,2) ! Lines(1,1) + s * Lines(2,1)
+    type(path_t), intent(inout) :: Path ! Path%Lines(1,1) + s * Path%Lines(2,1)
                                    ! defines the initial line, i.e., before
                                    ! the tangent point.
-                                   ! Lines(2,1) + s * Lines(2,2) defines the
-                                   ! line after the tangent point.
+                                   ! Path%Lines(2,1) + s * Path%Lines(2,2)
+                                   ! defines the line after the tangent point.
     type(geolocation_t), intent(inout), target :: Grid
     class(S_QTM_t), intent(out), allocatable :: S(:) ! S-values, and interpolation
                                    ! coefficients
     integer, intent(out) :: Tangent_Index ! Index in S of tangent or
                                    ! intersection.
                                    ! S(Tangent_Index) == S(Tangent_Index+1)
-    logical, intent(in), optional :: Zeta_Only ! Compute only intersections
-                                   ! with constant-zeta surfaces.
+    integer, intent(in), optional :: Which ! Which intersections to detect,
+                                   ! default all
 
     ! Type(S_QTM_t) records the S-values of interesting places along lines.
     ! We don't want to use a two-dimensional array because the numbers of
@@ -173,9 +94,8 @@ end if
     real(rg), pointer :: H(:,:)
     integer :: I
     type(Temp) :: S_Int(2) ! Intersections from Metrics_3D_QTM_1
-    real(rg) :: SMax(2), SMin(2) ! Interesting intervals of S along Lines
 
-    call get_lines_ready ( lines, sMin, sMax )
+    call path%get_path_ready
 
     ! Get the surface coordinates of the surface grid, and the height profiles
     ! at each surface position.
@@ -192,8 +112,8 @@ end if
       ! Do the real work, one half at a time -- before and after the
       ! tangent or intersection.
       do i = 1, size(s_int,1)
-        call Metrics_3D_QTM_1 ( Lines(:,i), sMin(i), sMax(i), grid%QTM_tree, &
-          & h, s_int(i)%s, zeta_only )
+        call Metrics_3D_QTM_1 ( Path%Lines(:,i), path%sMin(i), path%sMax(i), &
+          & grid%QTM_tree, h, s_int(i)%s, which )
       end do
       ! Concatenate the two halves of the path
       allocate ( s, source=[ ( s_int(i)%s, i = 1, size(s_int,1) ) ] )
@@ -204,38 +124,39 @@ end if
 
   end subroutine Metrics_3D_Grid
 
-  subroutine Metrics_3D_QTM ( Lines, QTM_Tree, H, S, Tangent_Index, Pad, &
-                            & Zeta_Only )
+  subroutine Metrics_3D_QTM ( Path, QTM_Tree, H, S, Tangent_Index, Pad, &
+                            & Which )
     ! Given a line defined by a point in ECR, and a vector in ECR parallel
     ! to that line, compute all intersections of that line with a face of
     ! the grid whose horizontal grid is QTM_Tree.  It is assumed the vertical
     ! grid given by H is stacked, but it needn't be coherent.
-    
-    ! Lines(2,1) and Lines(2,2) are made unit vectors here.
-    
-    ! The given line is Lines(1,1) + s * Lines(2,1).  A line defined by
-    ! Lines(1,2) + s * Lines(2,2) is produced, which is the continuation of
-    ! Lines(:,1) after the tangent point if Lines(:,1) does not intersect the
-    ! Earth reference ellipsoid, or the reflection of Lines(:,1) if it does
-    ! intersect the Earth reference ellipsoid.  Lines(2,2) is an unit vector.
-    
-    ! The tangent point is Lines(2,1).
+
+    ! Path%Lines(2,1) and Path%Lines(2,2) are made unit vectors here.
+
+    ! The given line is Path%Lines(1,1) + s * Path%Lines(2,1).  A line defined
+    ! by Path%Lines(1,2) + s * Path%Lines(2,2) is produced, which is the
+    ! continuation of Path%Lines(:,1) after the tangent point if
+    ! Path%Lines(:,1) does not intersect the Earth reference ellipsoid, or the
+    ! reflection of Path%Lines(:,1) if it does intersect the Earth reference
+    ! ellipsoid.  Path%Lines(2,2) is an unit vector.
+
+    ! The tangent point is Path%Lines(2,1).
 
     ! Values of S(1:Tangent_Index) are in order such that the first one is
-    ! farthest from the tangent point in the direction toward Lines(1,1) and
-    ! the last one is the tangent point.  Values of S(Tangent_Index:) are in
-    ! order such that the first one is the tangent point (again) and the
-    ! last one is farthest from Lines(1,1).
+    ! farthest from the tangent point in the direction toward Path%Lines(1,1)
+    ! and the last one is the tangent point.  Values of S(Tangent_Index:) are
+    ! in order such that the first one is the tangent point (again) and the
+    ! last one is farthest from Path%Lines(1,1).
 
     use Generate_QTM_m, only: QTM_Tree_t
-    use Geolocation_0, only: ECR_t
+    use Path_Representation_m, only: Path_t
     use QTM_Interpolation_Weights_3D_m, only: S_QTM_t
 
-    type(ECR_t), intent(inout) :: Lines(2,2) ! Lines(1,1) + s * Lines(2,1)
+    type(path_t), intent(inout) :: Path ! Path%Lines(1,1) + s * Path%Lines(2,1)
                                    ! defines the initial line, i.e., before
                                    ! the tangent point.
-                                   ! Lines(2,1) + s * Lines(2,2) defines the
-                                   ! line after the tangent point.
+                                   ! Path%Lines(2,1) + s * Path%Lines(2,2)
+                                   ! defines the line after the tangent point.
     type(QTM_Tree_t), intent(inout), target :: QTM_Tree
     real(rg), intent(in), contiguous :: H(:,:) ! Heights X size(QTM_Tree%Geo_in)
                                    ! The second subscript is the QTM vertex
@@ -248,8 +169,8 @@ end if
                                    ! S(Tangent_Index) == S(Tangent_Index+1)
     integer, intent(in) :: Pad     ! Amount of padding to introduce in S between
                                    ! before-the-tangent and after-the-tangent.
-    logical, intent(in), optional :: Zeta_Only ! Compute only intersections
-                                   ! with constant-zeta surfaces.
+    integer, intent(in), optional :: Which ! Which intersections to detect,
+                                   ! default all
 
     type :: Temp
       type(S_QTM_t), allocatable :: S(:)
@@ -257,15 +178,14 @@ end if
 
     integer :: I
     type(Temp) :: S_Int(2)         ! Intersections from Metrics_3D_QTM_1
-    real(rg) :: SMax(2), SMin(2)   ! Interesting intervals of S along Lines
 
-    call get_lines_ready ( lines, sMin, sMax )
+    call path%get_path_ready
 
     ! Do the real work, one half at a time -- before and after the
     ! tangent or Earth-surface intersection.
     do i = 1, 2
-      call Metrics_3D_QTM_1 ( Lines(:,i), sMin(i), sMax(i), QTM_tree, &
-        & h, s_int(i)%s, Zeta_Only )
+      call Metrics_3D_QTM_1 ( path%Lines(:,i), path%sMin(i), path%sMax(i), &
+        & QTM_tree, h, s_int(i)%s, which )
     end do
     ! Concatenate the two halves of the path, with Pad copies of the tangent
     ! between.  s(tangent_index:tangent_index+pad+1) should all be the same.
@@ -278,7 +198,7 @@ end if
   end subroutine Metrics_3D_QTM
 
   subroutine Metrics_3D_QTM_1 ( Line, SMin, SMax, QTM_Tree, H, Intersections, &
-    & Zeta_Only )
+                              & Which )
 
     ! Given a line defined by a point in ECR, and a vector in ECR parallel
     ! to that line, compute all intersections of that line with a face of
@@ -314,7 +234,7 @@ end if
 
     use Center_of_Sphere_m, only: Center_of_Sphere, Circumcenter
     use Generate_QTM_m, only: QTM_Tree_t
-    use Geolocation_0, only: ECR_t, H_Geod, H_V_Geoc, H_V_Geod, H_V_t
+    use Geolocation_0, only: H_Geod, H_V_Geoc, H_V_Geod, H_V_t
     use Line_And_Cone_m, only: Line_And_Cone
     use Line_And_Ellipsoid_m, only: Line_And_Sphere
     use Line_And_Plane_m, only: Line_And_Plane
@@ -334,17 +254,16 @@ end if
                                            ! surface of any prism of the
                                            ! QTM-based 3D grid, provided they
                                            ! are within [SMin, SMax]
-    logical, intent(in), optional :: Zeta_Only ! Compute only intersections
-                                           ! with constant-zeta surfaces.
+    integer, intent(in), optional :: Which ! Which intersections to detect,
+                                           ! default all
 
     type(S_QTM_t), allocatable :: Cone_Int(:) ! All intersections of Line with
                                            ! a latitude cone of the QTM
-    logical :: Do_All                      ! .true. if .not. present(zeta_only),
-                                           ! else .not. zeta_only
     integer :: F                           ! Index of a facet in the QTM
     integer :: I, J, K, L
     logical :: Keep                        ! "Keep the intersection"
     type(S_QTM_t), allocatable :: Inside(:) ! [ Cone_Int, V_Int, Top_Int ]
+    integer :: MyWhich                     ! Which intersections to detect
     integer :: N_Cone                      ! Number of intersections of Line
                                            ! with a latitude cone of the QTM
     integer :: N_Height                    ! Ubound(H,1)
@@ -354,6 +273,7 @@ end if
                                            ! with a vertical face of a prism of
                                            ! the QTM that is not on a latitude
                                            ! cone
+    integer, allocatable :: P(:) ! Permutation vector for sorting
     type(stack_t) :: Stack                 ! To make QTM searches faster
     type(S_QTM_t) :: Tangent ! SMin or SMax, whichever has the smaller magnitude
     type(S_QTM_t) :: Top_Int(2*ubound(h,1)) ! All intersections of Line with the
@@ -371,8 +291,8 @@ end if
                                            ! QTM that is not on a latitude
                                            ! cone
 
-    do_all = .true.
-    if ( present(zeta_only) ) do_all = .not. zeta_only
+    myWhich = all
+    if ( present(which) ) myWhich = which
 
     n_height = ubound(h,1)
 
@@ -382,9 +302,10 @@ end if
     ! QTM facet, and pass through the three points at the height level
     ! above the facet.
 
-    call Intersect_Line_And_Horizontal_Boundary
+    n_top = 0
+    if ( myWhich /= vertical ) call Intersect_Line_And_Horizontal_Boundary
 
-    if ( do_all ) then
+    if ( myWhich /= horizontal ) then
 
       ! Get all intersections of Line with latitude cones of the QTM.
       call Intersect_Line_And_Latitude_Cone
@@ -392,7 +313,7 @@ end if
       ! A vertical face of a prism can be intersected by the line only if its
       ! cone face is or one of its horizontal boundaries is.  The intersected
       ! faces might be in the same prism, the one above it, the one below it, or
-      ! the ones below and above it on the opposite facet of its latitude cone. 
+      ! the ones below and above it on the opposite facet of its latitude cone.
       ! For now, it's simpler just to check all the vertical faces than to check
       ! the eight possible faces while avoiding duplicates.
       call Intersect_Line_And_Vertical_Boundary
@@ -420,7 +341,14 @@ end if
                                   & v_int(1:n_vert), tangent ] )
     end if
 
-    k = size(inside,1) ! nagfor build 1052 doesn't like this as a dimension
+    ! Sort the intersections found so far according to their positions along
+    ! Line
+    k = size(inside,1)
+    allocate ( p(k+n_height) )
+    call sortp ( inside%s, 1, k, p )
+    inside = inside(p(:k))
+    ! Maybe at this point we want to eliminate points that are too
+    ! close together to bother keeping both of them
 
     ! Extrapolate along Line to surfaces of constant height that are above
     ! the intersection of Line with the outermost face of a prism of the QTM.
@@ -430,7 +358,11 @@ end if
     ! Then concatenate the outside intersections with the inside ones,
     ! and sort everything on S.
 
-    call Intersect_Line_And_Extrapolated_Height
+    if ( myWhich /= vertical ) then
+      call Intersect_Line_And_Extrapolated_Height
+    else
+      call move_alloc ( inside, intersections )
+    end if
 
   contains
 
@@ -450,7 +382,6 @@ end if
       integer :: N_Out         ! How much of Outside is used
       type(S_QTM_t) :: Outside(size(h,1)) ! Intersections with surfaces of
                                ! constant height outside the QTM
-      integer :: P(k+n_height) ! Permutation vector for sorting
       real(rg), allocatable :: S(:) ! Intersections of Line with
                                ! a surface at constant height above the Earrh
                                ! reference ellipsoid.  Size is in 0..2.
@@ -462,12 +393,6 @@ end if
       type(ZOT_t) :: Z         ! ZOT coordinates of Geod
       integer :: Ser(3)        ! Vertices of facet to use for height
                                ! interpolation
-
-      ! Sort the intersections according to their positions along Line
-      call sortp ( inside%s, 1, k, p )
-      inside = inside(p(:k))
-      ! Maybe at this point we want to eliminate points that are too
-      ! close together to bother keeping both of them
 
       if ( tangent%s < 0.0 ) then
         i_edge = maxloc(inside%s,1)
@@ -544,6 +469,8 @@ end if
       type(ECR_t) :: CC                    ! Circumcenter of facet V (see
                                            ! below) = V(3) + C, or its centroid
       type(ECR_t) :: Center                ! Center of sphere containing facet V
+      real(rg) :: G(3)                     ! Normalized geocentric angular
+                                           ! distance coordinates
       type(h_v_geod) :: Geod               ! Geodetic coordinates of CC
       type(h_v_geod) :: Geod_f(3)          ! Geodetic coordinates of corners
                                            ! of facet
@@ -560,9 +487,8 @@ end if
       type(ECR_t) :: V(3)                  ! Vertices of a horizontal boundary
                                            ! surface above a QTM facet
 
-      n_top = 0
       do i = 1, size(qtm_tree%q)
-        if ( qtm_tree%q(i)%depth == qtm_tree%level ) then 
+        if ( qtm_tree%q(i)%depth == qtm_tree%level ) then
          ! Tree node represents a facet of the finest refinement.
           do j = 1, n_height
 
@@ -570,14 +496,9 @@ end if
             ! Get geodetic coordinates of vertices of QTM facet V at height
             ! H(j,.) above the Earth's surface.
               l = min(qtm_tree%q(i)%ser(k),size(h,2)) ! Coherent?
-! Assigning to individual components of geod_f(k) because Intel ifort 14.0.0
-! cannot construct h_v_geod correctly
-geod_f(k)%lon = QTM_tree%geo_in(qtm_tree%q(i)%ser(k))%lon
-geod_f(k)%lat = QTM_tree%geo_in(qtm_tree%q(i)%ser(k))%lat
-geod_f(k)%v = h(j,l)
-!               geod_f(k) = h_v_geod ( QTM_tree%geo_in(qtm_tree%q(i)%ser(k))%lon, &
-!                                    & QTM_tree%geo_in(qtm_tree%q(i)%ser(k))%lat, &
-!                                    & h(j,l) )
+              geod_f(k) = h_v_geod ( QTM_tree%geo_in(qtm_tree%q(i)%ser(k))%lon, &
+                                   & QTM_tree%geo_in(qtm_tree%q(i)%ser(k))%lat, &
+                                   & h(j,l) )
               ! Get the ECR coordinates of geod_f
               v(k) = geod_f(k)%ecr()
             end do
@@ -620,10 +541,11 @@ geod_f(k)%v = h(j,l)
                   cc = line(1) + s_int(k) * line(2)
                   cc = cc / cc%norm2()
                   c = QTM_tree%geo_in(qtm_tree%q(i)%ser(l))%ecr(norm=.true.)
-                  top_int(n_top)%coeff(i) = acos( cc .dot. c )
+                  g(i) = acos( cc .dot. c )
                 end do
-                top_int(n_top)%coeff(1:3) = top_int(n_top)%coeff(1:3) / &
-                                          & sum(top_int(n_top)%coeff(1:3))
+                top_int(n_top)%coeff(1) = 0.5 * ( 1.0 - g(2) - g(3) )
+                top_int(n_top)%coeff(2) = 0.5 * ( 1.0 - g(1) - g(3) )
+                top_int(n_top)%coeff(3) = 0.5 * ( 1.0 - g(1) - g(2) )
               end if
             end do
           end do
@@ -734,14 +656,9 @@ geod_f(k)%v = h(j,l)
                 ! plane K at heights H(j:j+1,.) above the Earth's surface.
                 do n = 0, 1
                   sn(n) = min(qtm_tree%q(i)%ser(f(m,k)),size(h,2))
-! Assigning to individual components of geod_f(m,n+1) because Intel ifort 14.0.0
-! cannot construct h_v_geod correctly
-geod_f(m,n+1)%lon = QTM_tree%geo_in(qtm_tree%q(i)%ser(f(m,k)))%lon
-geod_f(m,n+1)%lat = QTM_tree%geo_in(qtm_tree%q(i)%ser(f(m,k)))%lat
-geod_f(m,n+1)%v = h(j+1,sn(n))
-!                   geod_f(m,n+1) = h_v_geod ( QTM_tree%geo_in(qtm_tree%q(i)%ser(f(m,k)))%lon, &
-!                                            & QTM_tree%geo_in(qtm_tree%q(i)%ser(f(m,k)))%lat, &
-!                                            & h(j+n,sn(n)) )
+                  geod_f(m,n+1) = h_v_geod ( QTM_tree%geo_in(qtm_tree%q(i)%ser(f(m,k)))%lon, &
+                                           & QTM_tree%geo_in(qtm_tree%q(i)%ser(f(m,k)))%lat, &
+                                           & h(j+n,sn(n)) )
                   plane(2*n+m) = geod_f(m,n+1)%ECR()
                 end do ! n
                 ! Geod_f(1,:) are on vertical edge at polar vertex
@@ -804,6 +721,9 @@ geod_f(m,n+1)%v = h(j+1,sn(n))
 end module Metrics_3D_m
 
 ! $Log$
+! Revision 2.7  2016/11/03 19:11:47  vsnyder
+! Inching toward 3D forward model
+!
 ! Revision 2.6  2016/10/05 23:29:04  vsnyder
 ! Replace ZOT_n component name with Ser because it's a serial number for
 ! more than just the ZOT coordinates.
