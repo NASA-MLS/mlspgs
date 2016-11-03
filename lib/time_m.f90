@@ -18,6 +18,7 @@ module TIME_M
 
   use DATES_MODULE, only: YYYYMMDD_TO_DAI
   use machine, only: USleep
+  use Optional_m, only: Default
   use PRINTIT_M, only: MLSMSG_WARNING, PRINTITOUT
   implicit none
   private
@@ -47,7 +48,9 @@ module TIME_M
 !     if ( shall_i /= RETRY_SUCCESS ) 
 !        call exception_handler ( shall_i )
 !     endif
-! set_starttime            Explicitly set start time in time_config_t
+! sayTime                  print a stepwise and cumulative timing line
+! configureSayTime         set a start time, units, etc. to be used to say timings times
+! set_time_config          Explicitly set start time in time_config_t
 !                            formatted as array of integer values returned 
 !                            by intrinsic date_and_time
 !                         (/ year,month,day,t-t_utc,hour,minutes,s,ms /)
@@ -67,7 +70,9 @@ module TIME_M
 ! init_retry ( [int successful_result], [int failed_result] )
 ! int retry ( int trial_value, [real delay], [int max_retries], &
 !   [real max_retrying_time] )
-! set_starttime ( real values(8) )
+! sayTime ( [char* Operation], [real t1], [real t2] )
+! configureSayTime ( [real t1], [char timingUnits] )
+! set_time_config ( real values(8) )
 ! time_now ( float t, [int invalues(8)] )
 ! wait ( float t, [int err] )
 ! wait_for_event ( integer function event, int id, [int err] )
@@ -78,7 +83,8 @@ module TIME_M
 ! float means either real or double precision types
 ! === (end of api) ===
   public :: BEGIN, FINISH, &
-   & INIT_RETRY, MS_to_HMS, RETRY, RETRY_SUCCESS, SET_STARTTIME, &
+   & INIT_RETRY, MS_to_HMS, RETRY, RETRY_SUCCESS, &
+   & sayTime, configureSayTime, set_time_config, &
    & TIME_NOW, TIME_NOW_D, TIME_NOW_S, &
    & TOO_MANY_RETRIES, TRY_AGAIN, &
    & WAIT, WAIT_FOR_EVENT
@@ -120,6 +126,15 @@ module TIME_M
     real    :: init_t0
   end type retry_config_t
 
+  ! This is the sayTime configuration type
+  public :: sayTime_config_t
+  type sayTime_config_t
+    real                 :: startT1 = 0.
+    logical              :: sayUnits = .false.
+    character(len=1)     :: TimingUnits = 's'
+    character(len=16)    :: Preamble = ''
+  end type sayTime_config_t
+
   integer, parameter :: MICROSPERS = 1000000 ! How many micros in a s
   integer, parameter :: SUCCESSFUL_DEFAULT = 0
   integer, parameter :: FAILED_DEFAULT = 999
@@ -131,6 +146,7 @@ module TIME_M
 
   type(retry_config_t), public, save :: retry_config
   type(time_config_t), public, save :: time_config
+  type(sayTime_config_t), public, save :: sayTime_config
 
   double precision, private :: Start_CPU_time
 
@@ -263,7 +279,91 @@ contains
     retry = TRY_AGAIN
   end function RETRY
 
-  subroutine SET_STARTTIME ( VALUES )
+  ! ----------------------------------------------  sayTime  -----
+  subroutine sayTime ( Operation, t1, t2, cumulative )
+  use output_m, only: blanks, newLine, output
+  ! Print stepwise and cumulative time usage
+    character(len=*), optional, intent(in) :: Operation
+    real, optional, intent(in)             :: t1       ! Time at last op
+    real, optional, intent(out)            :: t2       ! Time at current op
+    logical, optional, intent(in)          :: cumulative ! defaults to TRUE
+    ! Internal variables
+    double precision                       :: dt1 
+    double precision                       :: dt2 
+    logical                                :: myCumulative 
+    integer                                :: timeDivisor
+    character(len=*), parameter            :: TIMEFORMSMALL = '(F10.2)'
+    character(len=*), parameter            :: TIMEFORMBIG = '(1PE10.2)'
+    character(len=len(timeformbig))        :: timeForm
+    ! Executable
+    myCumulative = Default( cumulative, .true. )
+    select case ( sayTime_config%TimingUnits )
+    case ( 's' )
+      timeDivisor = 1
+    case ( 'm' )
+      timeDivisor = 60
+    case ( 'h' )
+      timeDivisor = 3600
+    end select
+    dt1 = Default( t1, sayTime_config%startT1 )
+    call time_now ( dt2 )
+    if ( present(t2) ) t2 = dt2
+    ! call output( (/ StartT1*1.d0, dt1, dt2 /), advance='yes' )
+    if ( dt2/timeDivisor < 0.5d0 .or. dt2/timeDivisor > 99999.99d0 ) then
+      TIMEFORM = TIMEFORMBIG
+    else
+      TIMEFORM = TIMEFORMSMALL
+    endif
+    if ( len_trim(sayTime_config%Preamble) < 1 ) then
+      call output ( "Timing ", advance='no' )
+    else
+      call output ( trim(sayTime_config%Preamble) // " ", advance='no' )
+    endif
+    if ( present(operation) ) then
+      call output ( "for " // trim(Operation), advance='no'  )
+    endif
+    call output ( (dt2-dt1)/timeDivisor, FORMAT=TIMEFORM, advance='no' )
+    if ( sayTime_config%sayUnits ) &
+      & call output( trim(sayTime_config%timingUnits), advance='no' )
+    if ( .not. present(t1) ) then
+      call newLine
+      sayTime_config%startT1 = dt2
+      return
+    endif
+    ! Cumulative
+    if ( myCumulative ) then
+      call blanks ( 3 )
+      call output ( "Total ", advance='no' )
+      call output ( (dt2-sayTime_config%startT1)/timeDivisor, FORMAT=TIMEFORM, advance='no' )
+      if ( sayTime_config%sayUnits ) &
+        & call output( trim(sayTime_config%timingUnits), advance='no' )
+    endif
+    call newLine
+  end subroutine sayTime
+
+  ! ----------------------------------------------  configureSayTime  -----
+  subroutine configureSayTime ( t1, units, reset, showTimingUnits, Preamble )
+  ! set start time or timing units to be used by sayTime
+    real, optional, intent(in)             :: t1
+    character(len=*), optional, intent(in) :: units
+    logical, optional, intent(in)          :: reset
+    logical, optional, intent(in)          :: showTimingUnits
+    character(len=*), optional, intent(in) :: Preamble
+    ! Local variables
+    logical                                :: myReset
+    ! Executable
+    myReset = Default( reset, .false. )
+    if ( present(t1) ) then
+      sayTime_config%startT1 = t1
+    elseif ( myReset ) then
+      call time_now ( sayTime_config%startT1 )
+    endif
+    if ( present(units) ) sayTime_config%timingUnits = units
+    if ( present(showTimingUnits) ) sayTime_config%sayUnits = showTimingUnits
+    if ( present(Preamble) ) sayTime_config%Preamble = units
+  end subroutine configureSayTime
+
+  subroutine set_time_config ( VALUES )
     integer, dimension(8), intent(in) :: VALUES
     character (len=8) :: date   ! in yyyymmdd format
     character (len=4) :: yyyy
@@ -280,7 +380,7 @@ contains
     ! print *, 'dd: ', dd
     ! print *, 'date: ', date
     ! print *, 'startdaysoff: ', startdaysoff
-  end subroutine SET_STARTTIME
+  end subroutine set_time_config
 
   subroutine TIME_NOW_D ( T, INVALUES )
     integer, parameter :: RK = kind(0.0d0)
@@ -381,6 +481,9 @@ contains
 end module TIME_M
 
 !$Log$
+!Revision 2.18  2016/11/03 20:54:51  pwagner
+!Added sayTime and configureSayTime
+!
 !Revision 2.17  2016/02/29 19:48:12  pwagner
 !Usleep got from machine module instead of being an external
 !
