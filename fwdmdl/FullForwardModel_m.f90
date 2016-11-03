@@ -1125,18 +1125,26 @@ contains
     ! geodetic locations of the temperature phi basis -- not necessarily
     ! the tangent phi's, which may be somewhat different.
 
-    ! Temperature's windowStart:windowFinish are correct here.
+    ! For 2D, temperature's windowStart:windowFinish are correct here.
     ! RefGPH and temperature have the same horizontal basis.
     ! RefGPH is in meters, but Two_D_Hydrostatic wants it in km.
     ! RefGPH is assumed to be coherent, and to have one surface, so Surfs
     ! is spread out to the same extent as the window.
 
+    ! For QTM, WindowStart:WindowFinish is the entire grid.  We could do the
+    ! calculations only for serial numbers in the path description.  This would
+    ! entail splitting the Metrics-3D calculation into two parts: First,
+    ! identify the facets that the path crosses and gather the vertex
+    ! serial numbers.  Then do the hydrostatic calculation for those vertices.
+    ! Then finish the vertical part of the Metrics-3D calculation.
+    ! For now, do them all, until a profiler says this expense is significant.
+
     if ( temp_der ) then
       call two_d_hydrostatic ( Grids_tmp, &
         &  (/ (refGPH%template%surfs(1,1), j=windowStart,windowFinish) /), &
         &  0.001*refGPH%values(1,windowStart:windowFinish), z_glgrid, &
-        &  t_glgrid, h_glgrid, &
-        &  dhdz_glgrid, dh_dt_glgrid, DDHDHDTL0=ddhidhidtl0 )
+        &  t_glgrid, h_glgrid, dhdz_glgrid, &
+        &  dh_dt_glgrid, DDHDHDTL0=ddhidhidtl0 )
     else
       call two_d_hydrostatic ( Grids_tmp, &
         &  (/ (refGPH%template%surfs(1,1), j=windowStart,windowFinish) /), &
@@ -3643,9 +3651,10 @@ contains
       use Get_Eta_Matrix_M, only: Get_Eta_Stru
       use GLNP, only: GW, NG
       use Metrics_M, only: Height_Metrics, More_Metrics, Tangent_Metrics
-      use Metrics_3D_m, only: Metrics_3D_QTM
+      use Metrics_3D_m, only: Metrics_3D_QTM, Horizontal
       use Min_Zeta_m, only: Lower_Path_Crossings
       use More_Metrics_3D_m, only: More_Metrics_3D
+      use Path_Representation_m, only: Path_t
       use Phi_Refractive_Correction_M, only: Phi_Refractive_Correction
       use QTM_Tangent_Metrics_m, only: QTM_Tangent_Metrics
       use Read_Mie_M, only: IWC_S, T_S
@@ -3667,7 +3676,8 @@ contains
         ! instrument.  LOS(2) is a vector in the direction from the instrument
         ! to the tangent.  Present if UsingQTM.
       type(s_QTM_t), allocatable, intent(out), optional :: S(:) ! Positions on
-        ! the line of sight are MyLOS(:,1) + s%s*MyLOS(:,2).  Present if UsingQTM.
+        ! the line of sight are MyLOS%Lines(:,1) + s%s*MyLOS%Lines(:,2).
+        ! Present if UsingQTM.
 
       ! The following are all present iff fwdModelConf%generateTScat
       real(rp), intent(in), optional :: Scat_Zeta   ! of scattering point
@@ -3690,16 +3700,16 @@ contains
       integer :: I_start, I_end ! Boundaries of coarse path to use
       integer :: Me = -1        ! String index for trace
       integer :: Me_Etc = -1    ! String index for trace
-      type(ECR_t) :: MyLOS(2,2) ! LOS from instrument to tangent, then LOS from
-                                ! tangent.  MyLOS(1,1) is (probably) the
-                                ! instrument.  MyLOS(2,1) is a vector in the
-                                ! direction from the instrument to the tangent. 
-                                ! MyLOS(1,2) is the tangent point.  MyLOS(2,2)
-                                ! is a vector in the direction of the ray after
-                                ! the tangent, which is either the same as
-                                ! MyLOS(2,1), or the direction of the reflected
-                                ! ray.
-      real(rp) :: R_EQ          ! Equivalent Earth Radius at true surface
+      type(path_t) :: MyLOS     ! LOS from instrument to tangent, then LOS from
+                                ! tangent.  MyLOS%Lines(1,1) is (probably) the
+                                ! instrument.  MyLOS%Lines(2,1) is a vector in
+                                ! the direction from the instrument to the
+                                ! tangent.  MyLOS%Lines(1,2) is the tangent
+                                ! point.  MyLOS%Lines(2,2) is a vector in the
+                                ! direction of the ray after the tangent, which
+                                ! is either the same as MyLOS%Lines(2,1), or the
+                                ! direction of the reflected ray. Equivalent
+      real(rp) :: R_EQ          ! Earth Radius at true surface
       real(rp) :: REQ_S  ! Equivalent Earth Radius at height reference surface
       real(rp) :: Tan_Ht ! Geometric tangent height, km, from equivalent Earth center
       real(rp) :: Tan_Ht_S ! Tangent height above 1 bar reference surface, km
@@ -3790,18 +3800,19 @@ contains
         !!!!!                                                         !!!!!
         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-        myLOS(:,1) = LOS ! Line of from instrument to tangent point
+        call myLos%new_path
+        myLOS%Lines(:,1) = LOS ! Line of from instrument to tangent point
         call metrics_3d_QTM ( myLOS, QTM_hGrid%QTM_tree, h=h_glgrid, s=s, &
-          & tangent_index=tan_ind_f, pad=NG, zeta_only=zeta_only )
+          & tangent_index=tan_ind_f, pad=NG, which=horizontal )
         ! ECR coordinates of points on the line-of-sight are
-        ! myLos(1,1) + S%s(:tan_ind_f) * myLos(2,1) from the instrument to
-        ! the tangent, and
-        ! myLos(1,2) + S%s(tan_ind_f+ngp1:) * myLos(2,2) from the tangent
-        ! onward. All values of |S%face| should be Top_Face, with S%Face < 0
-        ! if the intersection is outside the QTM.  S(.)%H_ind is the subscript
-        ! of z_psig, and the first subscript of H_GLGrid, i.e., the index of the
-        ! zeta surface in the fine zeta grid.  If it's zero, S(.) is an Earth-
-        ! reflecting point below H_GLGrid.
+        ! MyLOS%Lines(1,1) + S%s(:tan_ind_f) * MyLOS%Lines(2,1) from the
+        ! instrument to the tangent, and
+        ! MyLOS%Lines(1,2) + S%s(tan_ind_f+ngp1:) * MyLOS%Lines(2,2) from the
+        ! tangent onward. All values of |S%face| should be Top_Face, with
+        ! S%Face < 0 if the intersection is outside the QTM.  S(.)%H_ind is
+        ! the subscript of z_psig, and the first subscript of H_GLGrid, i.e.,
+        ! the index of the zeta surface in the fine zeta grid.  If it's zero,
+        ! S(.) is an Earth-reflecting point below H_GLGrid.
       end if
 
       ! Handle Earth-intersecting ray.  It is assumed to reflect from the
@@ -4644,6 +4655,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.369  2016/10/25 22:27:39  vsnyder
+! Inching toward 3D QTM
+!
 ! Revision 2.368  2016/10/24 22:20:32  vsnyder
 ! A bunch of stuff for QTM etc.
 !
