@@ -902,11 +902,19 @@ contains
   ! where it makes sense
   ! i.e., we wouldn't mess with masterTID or logFileUnit
 
-  subroutine RestoreConfig
+  subroutine RestoreConfig ( complete )
     use PrintIt_m, only: SET_CONFIG
     ! The next won't work because of Intel v12 internal compiler error
     ! MLSMessageConfig = MLSMessageConfig_T()
     ! So instead,
+    ! Args
+    logical, intent(in), optional            :: complete ! Restore even quit, crash!
+    ! Internal variables
+    logical                                  :: myComplete
+    ! Executable
+    myComplete                               = present(complete)
+    if ( myComplete )   myComplete           = complete
+    print *, 'Entered RestoreConfig; myComplete ', myComplete
     MLSMessageConfig%limitWarnings           = 1000 
     MLSMessageConfig%prefix                  = ' '  
     MLSMessageConfig%skipModuleNamesThr      = MLSMSG_Success ! Always show module   
@@ -920,10 +928,10 @@ contains
     MLSMessageConfig%SendErrMsgToMaster      = .false. ! send last gasp to master?                                               
     MLSMessageConfig%ShowCumulativeSeverity  = .false. ! print severity_so_far?                
     MLSMessageConfig%StackTrace              = .false. ! Trace via MLSMessageCalls?            
-
+    call set_config ( asciify=.true., prefix='' )
+    if ( .not. myComplete ) return
     MLSMSG_Severity_to_quit                  = MLSMSG_Error
     MLSMSG_Severity_to_walkback              = MLSMSG_Error
-    call set_config ( asciify=.true., prefix='' )
   end subroutine RestoreConfig
 
   ! --------------------------------------------------  SetConfig  -----
@@ -1132,6 +1140,9 @@ contains
 
 !
 ! $Log$
+! Revision 2.42  2016/11/03 20:53:19  pwagner
+! RestoreConfig defaults to being less complete
+!
 ! Revision 2.41  2016/10/10 22:41:37  pwagner
 ! Avoid the Call_Stack module if no toolkit
 !
