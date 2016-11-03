@@ -45,7 +45,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
     & StringElementNum, switchDetail
   use Output_m, only: blanks, output, resumeOutput, suspendOutput
   use String_table, only: display_string
-  use Time_M, only: Time_Now
+  use Time_M, only: SayTime, configureSayTime, Time_Now
   use Trace_m, only: trace_begin, trace_end
 
   implicit none
@@ -479,6 +479,7 @@ contains ! =====     Public Procedures     =============================
     call trace_begin ( me, 'AppendL2GPData_MLSFile', cond=.false. )
     ! call Dump ( l2gp%chunkNumber, 'Appending l2gp%chunkNumber' )
     call time_now ( tFile )
+    call configureSayTime ( tFile )
     status = 0
     timing = DEEBUG .or. BeVerbose( 'l2gp', 2 )
 
@@ -497,8 +498,10 @@ contains ! =====     Public Procedures     =============================
         call MLSMessage(MLSMSG_Error, ModuleName, &
         & 'Unable to open l2gp file', MLSFile=L2GPFile)
     endif
-    if ( timing ) call sayTime( 'Opening file ' // trim(L2GPFile%name), tFile )
-    tFile = t2
+    if ( timing ) then
+      call sayTime( 'Opening file ' // trim(L2GPFile%name), tFile, t2 )
+      tFile = t2
+    endif
     if ( L2GPFile%access == DFACC_RDONLY )  &
       & call MLSMessage(MLSMSG_Error, ModuleName, &
       & 'l2gp file is rdonly', MLSFile=L2GPFile)
@@ -508,8 +511,11 @@ contains ! =====     Public Procedures     =============================
     swath_exists = mls_swath_in_file( L2GPFile%name, myswathName, &
       & L2GPFile%HdfVersion )
 
-    if ( timing ) call sayTime( 'Checking that swath exists', tFile )
-    tFile = t2
+    ! if ( timing ) call outputNamedValue( 'tFile', tFile )
+    if ( timing ) then
+      call sayTime( 'Checking that swath exists', tFile, t2 )
+      tFile = t2
+    endif
     if ( swath_exists .and. &
       & ( MUSTGUARDAGIANSTHDFEOSBUG .or. .not. present(maxChunkSize) ) &
       & ) then
@@ -531,8 +537,10 @@ contains ! =====     Public Procedures     =============================
          print *, 'Swath already has enough profiles'
       endif
       call DestroyL2GPContents ( totall2gp )
-      if ( timing ) call sayTime( 'Guarding against HDFEOS error', tFile )
-      tFile = t2
+      if ( timing ) then
+        call sayTime( 'Guarding against HDFEOS error', tFile, t2 )
+        tFile = t2
+      endif
     elseif ( swath_exists ) then
       if(DEEBUG) print *, 'OK, swath already exists, but HDFEOS bug no longer scares us'
     else
@@ -596,20 +604,26 @@ contains ! =====     Public Procedures     =============================
         & call output( 'all chunk numbers are -999', advance='yes' )
       call OutputL2GP_writeGeo_MF (l2gp, l2GPFile, &
         & myswathName, offset)
-      if ( timing ) call sayTime( 'Writing geolocations', tFile )
-      tFile = t2
+      if ( timing ) then
+        call sayTime( 'Writing geolocations', tFile, t2 )
+        tFile = t2
+      endif
       call OutputL2GP_writeData_MF (l2gp, l2GPFile, &
         & myswathName, offset)
-      if ( timing ) call sayTime( 'Writing data', tFile )
-      tFile = t2
+      if ( timing ) then
+        call sayTime( 'Writing data', tFile, t2 )
+        tFile = t2
+      endif
       select case ( L2GPFile%HDFVersion )
       case ( HDFVERSION_4 )
       case ( HDFVERSION_5 )
         if ( .not. swath_exists .and. APPENDSWRITEATTRIBUTES) then
           call OutputL2GP_attributes_MF (l2gp, l2GPFile, swathName)
           call SetL2GP_aliases_MF (l2gp, l2GPFile, swathName)
-          if ( timing ) call sayTime( 'Writing attributes', tFile )
-          tFile = t2
+          if ( timing ) then
+            call sayTime( 'Writing attributes', tFile, t2 )
+            tFile = t2
+          endif
         end if
       case default
         call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -4548,8 +4562,10 @@ contains ! =====     Public Procedures     =============================
       call outputNamedValue( 'shape(Geod. Angle', shape(l2gp%geodAngle) )
     endif
     swid = mls_SWattach (L2GPFile, name)
-    if ( DEEBUG ) call sayTime( 'Attaching swath ' // trim(name), tFile )
-    tFile = t2
+    if ( DEEBUG ) then
+      call sayTime( 'Attaching swath ' // trim(name), tFile, t2 )
+      tFile = t2
+    endif
     if ( l2gp%nFreqs > 0 ) then
        ! Value and Precision are 3-D fields
        if (DEEBUG) print *, 'start, stride, edge ', start, stride, edge
@@ -4562,32 +4578,42 @@ contains ! =====     Public Procedures     =============================
             & reshape(l2gp%l2gpPrecision, edge), &
             & hdfVersion=hdfVersion )
 
-       if ( DEEBUG ) call sayTime( 'Witing 3d values and precision', tFile )
-       tFile = t2
+       if ( DEEBUG ) then
+         call sayTime( 'Witing 3d values and precision', tFile, t2 )
+         tFile = t2
+       endif
     else if ( l2gp%nLevels > 0 ) then
        ! Value and Precision are 2-D fields
       
        if (DEEBUG) print *, 'start, stride, edge: ', start(2:3), stride(2:3), edge(2:3)
        status = mls_SWwrfld( swid, 'L2gpValue', start(2:3), stride(2:3), &
             edge(2:3), l2gp%l2gpValue(1,:,:), hdfVersion=hdfVersion)
-       if ( DEEBUG ) call sayTime( 'Witing 2d values', tFile )
-       tFile = t2
+       if ( DEEBUG ) then
+         call sayTime( 'Witing 2d values', tFile, t2 )
+         tFile = t2
+       endif
        status = mls_SWwrfld( swid, 'L2gpPrecision', start(2:3), stride(2:3), &
             edge(2:3), l2gp%l2gpPrecision(1,:,:), hdfVersion=hdfVersion)
-       if ( DEEBUG ) call sayTime( 'Witing 2d precision', tFile )
-       tFile = t2
+       if ( DEEBUG ) then
+         call sayTime( 'Witing 2d precision', tFile, t2 )
+         tFile = t2
+       endif
     else
 
        ! Value and Precision are 1-D fields
        if (DEEBUG) print *, 'start, stride, edge: ', start(3), stride(3), edge(3)
        status = mls_SWwrfld( swid, 'L2gpValue', start(3:3), stride(3:3), edge(3:3), &
             real(l2gp%l2gpValue(1,1,:) ), hdfVersion=hdfVersion)
-       if ( DEEBUG ) call sayTime( 'Witing 1d values', tFile )
-       tFile = t2
+       if ( DEEBUG ) then
+         call sayTime( 'Witing 1d values', tFile, t2 )
+         tFile = t2
+       endif
        status = mls_SWwrfld( swid, 'L2gpPrecision', start(3:3), stride(3:3), edge(3:3), &
             real(l2gp%l2gpPrecision(1,1,:) ), hdfVersion=hdfVersion)
-       if ( DEEBUG ) call sayTime( 'Witing 1d precision', tFile )
-       tFile = t2
+       if ( DEEBUG ) then
+         call sayTime( 'Witing 1d precision', tFile, t2 )
+         tFile = t2
+       endif
     end if
 
     ! 1-D status & quality fields
@@ -4604,8 +4630,10 @@ contains ! =====     Public Procedures     =============================
     status = mls_SWwrfld(swid, 'AscDescMode ', start(3:3), stride(3:3), edge(3:3), &
          l2gp%AscDescMode, hdfVersion=hdfVersion)
 
-    if ( DEEBUG ) call sayTime( 'Witing 1d status, Quality, Asc/Desc', tFile )
-    tFile = t2
+    if ( DEEBUG ) then
+      call sayTime( 'Witing 1d status, Quality, Asc/Desc', tFile, t2 )
+      tFile = t2
+    endif
     !     Detach from the swath interface.
     status = mls_SWdetach(swid, hdfVersion=hdfVersion)
     if(DEEBUG) print *, 'Detached from swid ', swid
@@ -5364,14 +5392,14 @@ contains ! =====     Public Procedures     =============================
     endif
   end function TimeToHoursInDay
 
-!------------------------- SayTime ---------------------
-  subroutine SayTime ( What, startTime )
+!------------------------- SayTimeHere ---------------------
+  subroutine SayTimeHere ( What, startTime )
     character(len=*), intent(in) :: What
     real, intent(in)             :: startTime
     call time_now ( t2 )
     call output ( "Timing for " // what // " = " )
     call output ( dble(t2 - startTime), advance = 'yes' )
-  end subroutine SayTime
+  end subroutine SayTimeHere
 
 !=============================================================================
 !--------------------------- end bloc --------------------------------------
@@ -5390,6 +5418,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.224  2016/09/07 22:46:21  pwagner
+! Removed unused QuantityType component from L2GPData type
+!
 ! Revision 2.223  2016/07/28 01:42:27  vsnyder
 ! Refactoring dump and diff
 !
