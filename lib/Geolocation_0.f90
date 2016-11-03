@@ -190,6 +190,7 @@ module Geolocation_0
     generic :: operator(/) => Div, Div_Components
     procedure :: Geoc => ECR_to_Geoc
     procedure :: Geod => ECR_To_Geod_Fukushima
+    procedure :: Geod_Surf => ECR_To_Geod_Surface
     generic :: Grad => Grad_Ellipsoid ! Unit gradient at surface
     generic :: Grad => Grad_Geoid     ! Unit gradient at surface
     procedure, pass(where) :: Grad_Ellipsoid => Ellipsoid_Gradient_RG
@@ -402,6 +403,14 @@ contains
     geod%v = ( s * Cc + abs(ECR%xyz(3)) * Sn - b * An ) / sqrt ( Cc**2 + Sn**2 )
 
   end function ECR_To_Geod_Fukushima
+
+  pure elemental function ECR_To_Geod_Surface ( ECR ) result ( Geo )
+    class(ECR_t), intent(in) :: ECR
+    type(h_geod) :: Geo
+    type(h_v_geoc) :: Geoc
+    geoc = ecr%geoc()
+    geo = geoc%geod()
+  end function ECR_To_Geod_Surface
 
   pure elemental subroutine Geoc_From_ECR ( ECR, Geo )
     class(ECR_t), intent(in) :: ECR
@@ -721,6 +730,9 @@ contains
 end module Geolocation_0
 
 ! $Log$
+! Revision 2.15  2016/11/03 20:40:28  vsnyder
+! Add ECR_To_Geod_Surface
+!
 ! Revision 2.14  2016/10/17 23:06:56  vsnyder
 ! Intent(OUT) polymorphic dummy argument of pure subroutine is prohibited
 !
