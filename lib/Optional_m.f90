@@ -11,16 +11,31 @@
 
 module Optional_m
 
+! === (start of toc) ===                                                 
+!     c o n t e n t s
+!     - - - - - - - -
+!         Functions, operations, routines
+! Default            Returns either the value of an optional arg
+!                       if it is present, otherwise a default value
+! HowWeHandle        Returns one of two values depending on whether an 
+!                       optional arg is present; if present sets it to TRUE
+! === (end of toc) ===
+
   implicit none
   private
 
   public :: Default, Default_Char, Default_Double, Default_Integer
   public :: Default_Logical, Default_Single
+  public :: HowWeHandle_int, HowWeHandle_log
 
   interface Default
     module procedure Default_Char, Default_Double, Default_Integer
     module procedure Default_Logical, Default_Single
   end interface
+
+  ! interface HowWeHandle
+  !  module procedure HowWeHandle_log, HowWeHandle_int
+  ! end interface
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -66,6 +81,45 @@ contains
     if ( present(opt) ) r = opt
   end function Default_Single
 
+  ! --------------------------------------------------------------------
+  ! Function used to determine how to handle exceptions (crash or just set flag)
+  ! depending on whether an optional flag named 'opt' is present
+  ! If opt is not present                     => AbsentValue
+  ! If opt is present                         => PresentValue
+  !                                               and set opt => 1 or TRUE or ..
+  ! E.g., whether to quit with just a warning message or with an error
+  ! Assume the optional arg 'fail' is meant to allow for a soft failure:
+  ! if an exception occurs, fail is seet to a non-zero value,
+  ! a message is printed, and the procedure returns
+  ! If instead fail is not present, we quit with a message
+  !   severity = HowWeHandle( fail, MLSMSG_Error, MLSMSG_Warning )
+  integer function HowWeHandle_int ( Opt, AbsentValue, PresentValue, OptValue ) &
+    & result ( R )
+    integer, intent(out), optional :: Opt
+    integer, intent(in)            :: AbsentValue
+    integer, intent(in)            :: PresentValue
+    integer, intent(in), optional  :: OptValue    ! If present, set opt to me
+    if ( present(opt) ) then
+      r = PresentValue
+      opt = 1
+      if ( present(OptValue) ) opt = OptValue
+    else
+      r = AbsentValue
+    endif
+  end function HowWeHandle_int
+
+  integer function HowWeHandle_log ( Opt, AbsentValue, PresentValue ) result ( R )
+    logical, intent(out), optional :: Opt
+    integer, intent(in)            :: AbsentValue
+    integer, intent(in)            :: PresentValue
+    if ( present(opt) )then
+      r = PresentValue
+      opt = .true.
+    else
+      r = AbsentValue
+    endif
+  end function HowWeHandle_log
+
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
   character (len=*), parameter :: IdParm = &
@@ -79,6 +133,9 @@ contains
 end module Optional_m
 
 ! $Log$
+! Revision 2.2  2016/11/03 21:00:16  pwagner
+! Added HowWeHandle to determine how to handle an exception
+!
 ! Revision 2.1  2016/09/23 02:55:58  vsnyder
 ! Initial commit
 !
