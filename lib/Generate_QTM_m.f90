@@ -19,7 +19,7 @@ module Generate_QTM_m
   ! definition of "inside" a polygon is ambiguous, so an additional point that
   ! is defined to be inside the polygon is required.
 
-  use Geolocation_0, only: Lat_t, Lon_t, H_t, RG
+  use Geolocation_0, only: ECR_t, Lat_t, Lon_t, H_Geod, H_t, H_V_Geoc, RG
   use QTM_m, only: QK, ZOT_t
 
   implicit NONE
@@ -93,9 +93,11 @@ module Generate_QTM_m
                                ! They're geocentric or geodetic, depending upon
                                ! the dynamic type of Geo_In.
   contains
+    procedure :: Find_Facet_ECR
     procedure :: Find_Facet_Geo
     procedure :: Find_Facet_QID
     procedure :: Find_Facet_ZOT
+    generic :: Find_Facet => Find_Facet_ECR
     generic :: Find_Facet => Find_Facet_Geo
     generic :: Find_Facet => Find_Facet_QID
     generic :: Find_Facet => Find_Facet_ZOT
@@ -111,6 +113,24 @@ module Generate_QTM_m
 !---------------------------------------------------------------------------
 
 contains
+
+  integer function Find_Facet_ECR ( QTM_Trees, ECR, Stack ) result ( F )
+    ! Return the subscript in QTM_Trees of the facet containing the position
+    ! where the line from the Earth's center to ECR pierces the surface.
+    use QTM_m, only: Stack_t
+    class(QTM_Tree_t), intent(in) :: QTM_Trees
+    type(ECR_t), intent(in) :: ECR
+    type(stack_t), intent(inout), optional :: Stack ! to make subsequent search faster
+    type(h_v_geoc) :: Geoc
+    type(h_geod) :: Geod
+    if ( QTM_Trees%geodetic ) then
+      geod = ecr%geod_surf()
+      f = qtm_trees%find_facet ( geod, stack )
+    else
+      geoc = ecr%geoc()
+      f = qtm_trees%find_facet ( geoc, stack )
+    end if
+  end function Find_Facet_ECR
 
   integer function Find_Facet_Geo ( QTM_Trees, Geo, Stack ) result ( F )
     ! Return the subscript in QTM_Trees of the facet containing the longitude
@@ -758,6 +778,9 @@ contains
 end module Generate_QTM_m
 
 ! $Log$
+! Revision 2.20  2016/11/03 20:40:39  vsnyder
+! Add Find_Facet_ECR
+!
 ! Revision 2.19  2016/11/02 22:58:58  vsnyder
 ! Compute Polygon centroid in Geo and ZOT coordinates.  Compute facets
 ! adjacent to each vertex.
