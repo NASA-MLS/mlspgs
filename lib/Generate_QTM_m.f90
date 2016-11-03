@@ -167,7 +167,7 @@ contains
     ! indices, according to how basis numbers are reassigned as the QTM is
     ! refined.  QTM_Trees%Q(1)%son(2) == 2 and QTM_Trees%Q(1)%son(3) == 3.
 
-    f = 1
+    f = -1
     if ( qid < 8 ) return ! Bogus QID
     h = high_bit_index(QID)
     ! The number of iterations is bounded by the refinement level.
@@ -778,6 +778,9 @@ contains
 end module Generate_QTM_m
 
 ! $Log$
+! Revision 2.21  2016/11/03 20:52:51  vsnyder
+! Return negative facet number for point outside QTM
+!
 ! Revision 2.20  2016/11/03 20:40:39  vsnyder
 ! Add Find_Facet_ECR
 !
