@@ -37,10 +37,10 @@ contains
           & ddHtdHtdTl0, dHitdTlm, dHtdTl0, dHtdZt, Eta_zQT, Tan_T )
 
     use Generate_QTM_m, only: QTM_Tree_t
-    use Geolocation_0, only: H_V_t, RG
+    use Geolocation_0, only: RG
     use MLSKinds, only: RP
-    use QTM_Interpolation_Weights_3D_m, only: MaxCoeff, &
-      & QTM_Interpolation_Weights, S_QTM_t, Weight_ZQ_t
+    use QTM_Interpolation_Weights_3D_m, only: QTM_Interpolation_Weights, &
+      & S_QTM_t, Weight_ZQ_t
 
     ! Inputs
 
@@ -96,9 +96,10 @@ contains
 
     n_path = size(s)
 
-    ! Path quantities.  These involve only horizontal interpolation.
-    ! The interpolation coefficients were computed and put into S by
-    ! Metrics_3D.
+    ! Path quantities.  These involve only horizontal interpolation because
+    ! temperature and dHidZij were interpolated onto the GL grid by
+    ! Two_D_Hydrostatic. The interpolation coefficients were computed and
+    ! put into S by Metrics_3D.
     do i = 1, n_path
       nc = s(i)%n_coeff
       iz = s(i)%h_ind
@@ -117,11 +118,11 @@ contains
 
   contains
 
-    subroutine Temperature_Derivatives ( S, Z_Coeffs )
+    subroutine Temperature_Derivatives ( TP, Z_Coeffs )
       ! This is a subroutine instead of inline so that the references to the
       ! size of Z_Basis in the dimensions of automatic variables are only
       ! attempted if Z_Basis is present.
-      type(S_QTM_t), intent(in) :: S   ! Tangent point
+      type(S_QTM_t), intent(in) :: TP  ! Tangent point
       integer, intent(in) :: Z_Coeffs  ! size(z_basis) = size(T_ref,1)
 
       real(rp), pointer :: ddH2(:,:) ! Two-d (V x H) pointer for ddHtdHtdTl0
@@ -129,7 +130,6 @@ contains
       integer :: I
       integer :: IZ     ! First (vertical) subscript at tangent
       integer :: NC     ! Number of interpolating coefficients at the tangent
-      type(h_v_t) :: points(z_coeffs)
 
       ! Adjust the 2d hydrostatic temperature derivative relative to the
       ! surface. Even though this is updated on every invocation, that is,
@@ -139,24 +139,24 @@ contains
       ! the same as starting from the original dHidTlm and updating with the
       ! latest S.  The algebra is horrible, but Maple has verified this.
 
-      nc = s%n_coeff
+      nc = tp%n_coeff
       do i = 1, z_coeffs
         dHidTlm(:,i,:) = dHidTlm(:,i,:) - &
-          & dot_product ( dHidTlm(1,i,s%ser(:nc)), s%coeff(:nc) )
+          & dot_product ( dHidTlm(1,i,tp%ser(:nc)), tp%coeff(:nc) )
       end do
 
-      ! Get coefficients to interpolate to temperature (zeta,QTM) basis
-      call QTM_Interpolation_Weights ( QTM_Tree, z_basis, points, eta_zQT )
-
-      iz = s%h_ind
+      iz = tp%h_ind
       dHtdTl0 = 0
       ddHtdHtdTl0 = 0
       dH2(1:z_coeffs,1:size(t_ref,2)) => dHtdTl0
       ddH2(1:z_coeffs,1:size(t_ref,2)) => ddHtdHtdTl0
       do i = 1, z_coeffs
-        dH2(i,s%ser(:nc)) = dHidTlm(iz,i,s%ser(:nc)) * s%coeff(:nc)
-        ddH2(i,s%ser(:nc)) = ddHidHidTl0(iz,i,s%ser(:nc)) * s%coeff(:nc)
+        dH2(i,tp%ser(:nc)) = dHidTlm(iz,i,tp%ser(:nc)) * tp%coeff(:nc)
+        ddH2(i,tp%ser(:nc)) = ddHidHidTl0(iz,i,tp%ser(:nc)) * tp%coeff(:nc)
       end do
+
+      ! Get coefficients to interpolate to temperature (zeta,QTM) basis
+      call QTM_Interpolation_Weights ( QTM_Tree, z_basis, s, z_ref, eta_zQT )
 
     end subroutine Temperature_Derivatives
 
@@ -175,6 +175,9 @@ contains
 end module More_Metrics_3D_m
 
 ! $Log$
+! Revision 2.2  2016/11/03 19:11:47  vsnyder
+! Inching toward 3D forward model
+!
 ! Revision 2.1  2016/10/25 18:24:29  vsnyder
 ! Initial commit -- still a lot to do
 !
