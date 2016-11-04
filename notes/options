@@ -102,6 +102,8 @@ Note: use "-T2" and not "--T2" because -T2 has one 'letter'
     when giving slaves their tasks (useful when using toolkit)
   --pidf <filename>: slave reads its own processID from filename;          
       writes "Finished" to the same file when done
+  --[n]quit:  [Don't] allow job to quit after a serious error
+      (--nquit will force it to keep running "no matter what")
   --recl[ ]<number>: set the max record length size for l2cf to <number>
      (In case the default value, 20000, is too small for some l2cfs).
      This has effect only if the l2cf is not coming from standard input.
@@ -169,6 +171,9 @@ by the equal-signs -- stuff outside that space, like these
 comments, will be ignored when responding to mlsl2 -?)
 
  $Log$
+ Revision 1.71  2015/09/24 22:11:39  pwagner
+ Added --maxChunkSize option
+
  Revision 1.70  2015/03/10 00:23:47  pwagner
  Note that HostName defaults to ProductionLocation
 
