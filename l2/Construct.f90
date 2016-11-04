@@ -146,7 +146,7 @@ contains ! =====     Public Procedures     =============================
       & revertOutput, switchOutput
     use quantityTemplates, only: addQuantityTemplateToDatabase, &
       & quantityTemplate_t
-    use time_m, only: time_now
+    use time_m, only: SayTime, time_now
     use toggles, only: gen, levels, toggle
     use trace_m, only: trace_begin, trace_end
     use tree, only: decorate
@@ -262,10 +262,10 @@ contains ! =====     Public Procedures     =============================
     if ( specialDumpFile /= ' ' ) call revertOutput
     call trace_end ( "MLSL2Construct", cond=toggle(gen) )
 
-    if ( timing ) call sayTIme
+    if ( timing ) call sayTIme( "Timing for MLSL2Construct" )
 
   contains
-    subroutine SayTime
+    subroutine SayTimeHere
       call time_now ( t2 )
       if ( total_times ) then
         call output ( "Total time = " )
@@ -275,7 +275,7 @@ contains ! =====     Public Procedures     =============================
       call output ( "Timing for MLSL2Construct = " )
       call output ( DBLE(t2 - t1), advance = 'yes' )
       timing = .false.
-    end subroutine SayTime
+    end subroutine SayTimeHere
   end subroutine MLSL2Construct
 
   ! -------------------------------------------  MLSL2DeConstruct  -----
@@ -326,6 +326,9 @@ end module Construct
 
 !
 ! $Log$
+! Revision 2.81  2016/11/04 19:35:06  pwagner
+! begin transition to sayTime from time_m
+!
 ! Revision 2.80  2016/08/25 22:58:43  pwagner
 ! Apply -Sqtmp switch level when dumping mifGeolocation
 !
