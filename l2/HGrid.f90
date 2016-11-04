@@ -92,7 +92,7 @@ contains ! =====     Public Procedures     =============================
     use Polygon_m, only: Polygon_Inside, Polygon_Vertices
     use QTM_m, only: QTM_Depth ! Maximum depth that will fit in one integer
 !     use string_table, only: get_string
-    use Time_m, only: time_now
+    use Time_m, only: SayTime, time_now
     use Toggles, only: gen, levels, switches, toggle
     use Trace_m, only: trace_begin, trace_end
     use Tree, only: Decoration, NSons, Sub_rosa, Subtree, Where
@@ -1951,7 +1951,7 @@ contains ! =====     Public Procedures     =============================
     use Next_Tree_Node_m, only: Init_Next_Tree_Node, Next_Tree_Node, &
       & Next_Tree_Node_State
     use Output_m, only: blanks, output, revertOutput, switchOutput
-    use time_m, only: time_now
+    use time_m, only: SayTime, time_now
     use Toggles, only: gen, toggle
     use Trace_m, only: trace_begin, trace_end
     use Tree, only: subtree, node_id, decoration
@@ -2568,7 +2568,7 @@ contains ! =====     Public Procedures     =============================
     array2(:, 1+offset:N+offset) = array1
   end subroutine PlaceArray_r8
 
-  subroutine SayTime ( What )
+  subroutine SayTimeHere ( What )
     use Output_m, only: blanks, output
     use time_m, only: time_now
     character(len=*), intent(in) :: What
@@ -2580,7 +2580,7 @@ contains ! =====     Public Procedures     =============================
       call output ( "Total = " )
       call output ( dble(t2-t0), advance = 'yes' )
     end if
-  end subroutine SayTime
+  end subroutine SayTimeHere
 
 !=============================================================================
 !--------------------------- end bloc --------------------------------------
@@ -2598,6 +2598,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.146  2016/11/04 19:36:24  pwagner
+! begin transition to sayTime from time_m
+!
 ! Revision 2.145  2016/10/19 00:31:18  pwagner
 ! Trying to avoid certain crashes; may be signs of deeper problems
 !
