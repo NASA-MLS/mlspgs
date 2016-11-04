@@ -236,6 +236,7 @@ program MLSL2
     & switchDetail(switches, 'help') > -1 ) then
     call switch_usage
   end if
+  MLSMSG_Severity_to_quit = MAX(QUIT_ERROR_THRESHOLD, MLSMSG_Debug+1)
   ! print *, 'slaveArguments: ', trim(slaveArguments)
   ! The following no longer does anything
   call Set_garbage_collection(garbage_collection_by_dt)
@@ -851,6 +852,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.219  2016/11/04 19:32:11  pwagner
+! Locate calculation of MLSMSG_Severity_to_quit appropriately
+!
 ! Revision 2.218  2016/05/27 00:05:22  pwagner
 ! Should now correctly process options containing an embedded space
 !
