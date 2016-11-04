@@ -12,8 +12,8 @@
 \topmargin -0.5in
 \textheight 9in
 
-\newcommand{\docname}{wvs-136}
-\newcommand{\docdate}{2 November 2016}
+\newcommand{\docname}{wvs-136r1}
+\newcommand{\docdate}{4 November 2016}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
@@ -90,10 +90,13 @@ From: \>Van Snyder\\
 \parindent 0pt \parskip 6pt
 \vspace{-20pt}
 
+Let $\mathbf{C}$ be a point on a line, and $\mathbf{U}$ be an unit vector
+along the line.
+
 Consider two lines $\mathcal{L}_1(s_1) = \mathbf{C}_1 + s_1 \mathbf{U}_1$
-and $\mathcal{L}_2(s_2) = \mathbf{C}_2 + s_2 \mathbf{U}_2$, where
-$|\mathbf{U}_1| = |\mathbf{U}_2| = 1$.  We want to find $s_1$ and $s_2$
-such that $|\mathcal{L}_1(s_1) - \mathcal{L}_2(s_2)|$ is minimal.
+and $\mathcal{L}_2(s_2) = \mathbf{C}_2 + s_2 \mathbf{U}_2$.  We want to
+find $s_1$ and $s_2$ such that $|\mathcal{L}_1(s_1) - \mathcal{L}_2(s_2)|$
+is minimal.
 
 Let the vector $\mathbf{W} = \mathbf{C}_W + s_1 \mathbf{U}_1 - s_2
 \mathbf{U}_2 = \mathbf{P}_1 - \mathbf{P}_2$, where $\mathbf{C}_W =
@@ -138,12 +141,12 @@ s_1 =\,& \frac{b e - d}{1-b^2} \\
 s_2 =\,& \frac{e - b d}{1-b^2} \\
 \end{split}\end{equation*}
 
-provided $b^2 \neq 1$.  If $b^2 = 1$ the lines are parallel.  The distance
-between the lines is $|\mathbf{P}_1-\mathbf{P}_2|$.
+provided $b^2 \neq 1$.  The distance between the lines is
+$|\mathbf{P}_1-\mathbf{P}_2|$.
 
-If $b^2 = 1$, we can solve for the distance between the lines by setting
-the value of $s_1$ to an arbitrary value, say zero, and solving for $s_2$,
-giving $s_2 = e$.
+If $b^2 = 1$, the lines are parallel, and we can solve for the distance
+between the lines by setting the value of $s_1$ to an arbitrary value,
+say zero, and solving for $s_2$, giving $s_2 = e$.
 
 \label{lastpage}
 \vspace*{-0.1in} % Somehow, this causes lastpage to be defined
