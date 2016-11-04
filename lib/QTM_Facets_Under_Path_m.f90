@@ -233,7 +233,11 @@ b:  if ( facet <= 0 ) then ! The "hunt for a centroid" method didn't work.
       if ( path_intersects_facet_edge ) return ! path and edge are in same plane
 
       d = v1 .dot. v2 ! Cosine of angle between facet vertices
-      path_intersects_facet_edge = (n3 .dot. v1) >= d .and. (n3 .dot. v2) > d
+      ! Use ABS in the check here because N3 might point to the other side
+      ! of the Earth from the facet, depending on the ordering of vertices,
+      ! which oughtn't make a difference.
+      path_intersects_facet_edge = abs(n3 .dot. v1) >= d .and. &
+                                 & abs(n3 .dot. v2) >= d
 
     end function Path_Intersects_Facet_Edge
 
@@ -253,6 +257,9 @@ b:  if ( facet <= 0 ) then ! The "hunt for a centroid" method didn't work.
 end module QTM_Facets_Under_Path_m
 
 ! $Log$
+! Revision 2.2  2016/11/04 01:25:33  vsnyder
+! Detect intersection at V2.  Don't care about vertex order
+!
 ! Revision 2.1  2016/11/04 01:19:28  vsnyder
 ! Initial commit
 !

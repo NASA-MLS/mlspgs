@@ -113,9 +113,11 @@ contains
       path%lines(2,2) = path%lines(2,1) ! Parallel to incident line
     else               ! Compute reflection direction
       ! Assume lines(1,1) is not inside the ellipsoid
-      call line_and_ellipsoid ( path%lines(:,1), ints, w ) ! S_int(1) is temp
+      call line_and_ellipsoid ( path%lines(:,1), ints, w )
+      ! If path%lines(:,1) is not tangent to the Earth's surface, there are
+      ! two intersections.  Choose the one closest to path%lines(1,1).
       i = minloc(norm2(ints - path%lines(1,1)),1)
-      path%lines(1,2) = ints(i)
+      path%lines(1,2) = ints(i) ! The continuation starts at that intersection
       tangent = w(i)
       grad = path%lines(1,2)%grad() ! Gradient to Earth reference ellipsoid at
       ! the intersection Compute Lines(2,2) such that Lines(2,2) is at the
@@ -163,6 +165,9 @@ contains
 end module Path_Representation_m
 
 ! $Log$
+! Revision 2.2  2016/11/04 01:26:32  vsnyder
+! Spiff some comments
+!
 ! Revision 2.1  2016/10/26 01:20:19  vsnyder
 ! Initial commit
 !
