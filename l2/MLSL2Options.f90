@@ -13,7 +13,8 @@
 module MLSL2Options              !  Options and Settings for the MLSL2 program
 !=============================================================================
 
-  use dump_0, only: dump
+  use Dump_0, only: Dump
+  use Dump_1, only: Dump
   use HDF, only: dfacc_rdwr
   use HighOutput, only: Banner, OutputNamedValue
   use intrinsic, only: l_ascii, l_hours, l_minutes, l_seconds
@@ -82,7 +83,7 @@ module MLSL2Options              !  Options and Settings for the MLSL2 program
   ! Set the following to MLSMSG_Error before delivering to sips;
   ! when set higher, it allows program keep going despite errors
   ! when set lower, the program would quit even on warnings
-  integer, parameter :: QUIT_ERROR_THRESHOLD          = MLSMSG_Error
+  integer            :: QUIT_ERROR_THRESHOLD          = MLSMSG_Error
 
   ! Set the following to 2 before delivering to sips;
   ! If 0, you won't be able to distinguish normal termination
@@ -512,14 +513,14 @@ cmds: do
     call GetUniqueList( tempSwitches, Switches, numSwitches, &
           & ignoreLeadingSpaces=.true., options='-eSL' )
     ! Remove any switches embedded in the removeSwitches option 'R'
-    ! call outputNamedValue( 'starting List', trim(switches) )
-    ! call outputNamedValue( 'to remove', trim(removeSwitches) )
+    if ( DEEBUG ) print *, 'starting List ', trim(switches) 
+    if ( DEEBUG ) print *, 'to remove ', trim(removeSwitches) 
     do i=1, NumStringElements(removeSwitches, countEmpty=.true.)
       call GetStringElement(trim(removeSwitches), aSwitch, i, countEmpty=.true.)
       call RemoveSwitchFromList(switches, tempSwitches, trim(aSwitch))
       switches = tempSwitches
     end do
-    ! call outputNamedValue( 'result List', trim(switches) )
+    if ( DEEBUG ) print *, 'result List ', trim(switches) 
 
     ! If we like, we could move these next few statements to a standalone
     ! subroutine named something like processSwitches
@@ -826,6 +827,8 @@ cmds: do
         else if ( line(3+n:6) == 'pidf' ) then
           i = i + 1
           call myNextArgument( i, inLine, entireLine, noteFile )
+        else if ( line(3+n:6+n) == 'quit' ) then
+          if ( .not. switch ) QUIT_ERROR_THRESHOLD = MLSMSG_Error + 10 ! Try not to quit
         else if ( line(3+n:6+n) == 'recl' ) then
           if ( line(7+n:) /= ' ' ) then
             line(:6+n) = ' '
@@ -860,6 +863,7 @@ cmds: do
           optLines = ' '
           call read_textFile( optsFile, optLines )
           print *, 'options read from ' // trim(optsFile)
+          print *, 'nLines', nLines 
           do k=1, nLines
             print *,  trim(optLines(k))
           enddo
@@ -867,9 +871,11 @@ cmds: do
           iActual = i
           do k=1, nLines
             ! Ignore comments and blank lines
+            if ( DEEBUG ) print *, 'len(line)', len_trim(optLines(k)) 
+            if ( DEEBUG ) print *, 'is Comment', isComment( optLines(k), '#' ) 
             if ( len_trim(optLines(k)) < 1 .or. &
               & isComment( optLines(k), '#' ) ) cycle
-            ! call outputnamedValue( 'optLines(k)', trim(optLines(k)) )
+            if ( DEEBUG ) print *, 'optLines(k)', trim(optLines(k)) 
             call parseNameValue( optLines(k) )
           enddo
           call deallocate_test ( optLines, 'optLines', &
@@ -1072,6 +1078,7 @@ jloop:do while ( j < len_trim(line) )
           case ( 'm' ); outputOptions%prunit = STDOUTPRUNIT ! -1
           case ( 'R' ) ! This does the opposite of what S does
             removeSwitches = catLists(trim(removeSwitches), line(j+1:))
+            call Dump ( removeSwitches, 'switches to be removed' )
             exit ! Took the rest of the string, so there can't be more options
           case ( 'S' )
             switches = catLists(trim(switches), line(j+1:))
@@ -1163,6 +1170,7 @@ jloop:do while ( j < len_trim(line) )
       elseif ( lowercase(name) == 'remove' ) then
         valu = '-R' // valu
         call ProcessLine( trim(valu), filename, exitLoop, entireLine=.true. )
+        if ( DEEBUG ) print *, 'encountered a remove name/value pair ' // trim(valu)
         return
       elseif ( lowercase(name) == 'debugging' ) then
         valu = '-D' // valu
@@ -1226,31 +1234,40 @@ jloop:do while ( j < len_trim(line) )
   ! Restore the options to their default values
   ! Now some things it makes no sense to overwrite, so it makes
   ! no sense to restore them either; e.g., CHECKPATHS, parallel, etc.
-  subroutine restoreDefaults
+  subroutine restoreDefaults ( complete )
   use MLSMessageModule, only: restoreConfig
   use toggles, only: init_toggle
+    logical, intent(in), optional            :: complete ! Restore even quit, crash!
+    ! Internal variables
+    logical                                  :: myComplete
+    ! Executable
+    myComplete                               = present(complete)
+    if ( myComplete )   myComplete           = complete
+    print *, 'Entered restoreDefaults; myComplete ', myComplete
     OUTPUT_PRINT_UNIT             = -2
     DEFAULT_HDFVERSION_WRITE      = HDFVERSION_5
     DEFAULT_HDFVERSION_READ       = WILDCARDHDFVERSION
     LEVEL1_HDFVERSION             = WILDCARDHDFVERSION
-    NEED_L1BFILES                 = .true.
-    AURA_L1BFILES                 = .true.
-    PATCH                         = .false. 
     RESTARTWARNINGS               = .true.
     SECTIONTIMINGUNITS            = L_SECONDS
     SKIPDIRECTWRITES              = .false.    
     SKIPDIRECTWRITESORIGINAL      = .false.    
     SKIPRETRIEVAL                 = .false.        
     SKIPRETRIEVALORIGINAL         = .false. 
-    slavesCleanUpSelves            = .false.
+    slavesCleanUpSelves           = .false.
     SPECIALDUMPFILE               = ' '
     STATEFILLEDBYSKIPPEDRETRIEVALS = 0.
     STOPAFTERSECTION              = ' ' ! Blank means 
     STOPWITHERROR                 = .false.         
+    call init_toggle
+
+    if ( .not. myComplete ) return
+    NEED_L1BFILES                 = .true.
+    AURA_L1BFILES                 = .true.
+    PATCH                         = .false. 
     CHECKPATHS                    = .false.         
     TOOLKIT                       =  .true. ! SIPS_VERSION
-    call init_toggle
-    call restoreConfig
+    call restoreConfig ( complete )
   end subroutine restoreDefaults
 
   ! -------------------------------------------------  DumpMacros  -----
@@ -1345,6 +1362,9 @@ end module MLSL2Options
 
 !
 ! $Log$
+! Revision 2.109  2016/11/04 19:30:54  pwagner
+! restoreDefaults less complete by default
+!
 ! Revision 2.108  2016/07/28 01:45:07  vsnyder
 ! Refactor dump and diff
 !
