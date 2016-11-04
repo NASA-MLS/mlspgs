@@ -527,8 +527,21 @@ wvs-134-1.eps: wvs-134-1.obj
 wvs-134-1.pdf: wvs-134-1.obj
 	tgif -print -pdf -page 1 -color wvs-134-1.obj
 
+wvs-136.dvi: wvs-136.tex wvs-136-lines.eps
+
+wvs-136.pdf: wvs-136.tex wvs-136-lines.pdf
+
+wvs-136-lines.eps: wvs-136-lines.obj
+	tgif -print -eps -page 1 -color wvs-136-lines.obj
+
+wvs-136-lines.pdf: wvs-136-lines.obj
+	tgif -print -pdf -page 1 -color wvs-136-lines.obj
+
 endif # end shortn_name == doc
 # $Log$
+# Revision 1.23  2016/06/08 00:00:41  pwagner
+# Prevent creating unwanted text files in lib, etc. with names of machine directories
+#
 # Revision 1.22  2016/05/31 23:41:16  pwagner
 # Tried again to fix need to build mlsl2 twice; added graphic to wvs-030
 #
