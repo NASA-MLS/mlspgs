@@ -77,6 +77,7 @@ contains ! ============= Public procedures ===================================
     use expr_m, only: expr
     use FGrid, only: FGrid_t
     use HGridsDatabase, only: HGrids_t
+    use HighOutput, only: BeVerbose, outputNamedValue
     use init_tables_module, only:  f_badvalue, f_coordinate, f_fgrid, f_hgrid, &
       & f_irregular, f_keepchannels, f_logbasis, f_minvalue, f_module, &
       & f_molecule, f_radiometer, f_reflector, f_sgrid, f_signal, f_stacked, &
@@ -151,6 +152,7 @@ contains ! ============= Public procedures ===================================
     integer :: VGRIDINDEX               ! Index in database
     integer :: VALUE                    ! Node index of value of field of spec
     integer :: S_INDEX                  ! Loop counter
+    logical :: verbose
     integer :: xGridIndex               ! Index in hGrid database
 
     integer, dimension(2) :: EXPR_UNITS
@@ -166,6 +168,7 @@ contains ! ============= Public procedures ===================================
       call InitQuantityTemplates
       firstCall = .false.
     end if
+    verbose = BeVerbose( 'qtmp', 0 )
 
     call trace_begin ( me, "CreateQtyTemplate", root, &
       & cond=toggle(gen) .and. levels(gen) > 1 )
@@ -436,6 +439,8 @@ contains ! ============= Public procedures ===================================
         if ( got ( f_hGrid )  ) then
           qty%instanceOffset = chunk%hGridOffsets(hGridIndex)
           qty%grandTotalInstances = chunk%hGridTotals(hGridIndex)
+          if ( verbose ) call outputnamedvalue ( 'grandTotalInstances from hgrid)', &
+            & qty%grandTotalInstances )
           ! Subtract any instances outside processing range
           !   if ( ChunkDivideConfig%allowPriorOverlaps ) &
           !     & qty%grandTotalInstances = qty%grandTotalInstances - &
@@ -635,7 +640,7 @@ contains ! ============= Public procedures ===================================
     if ( useMIFGeolocation ) &
       & useMIFGeolocation = mifGeolocation(instrumentModule)%verticalCoordinate == &
                             qty%verticalCoordinate
-
+    if ( verbose ) call outputnamedValue( 'useMIFGeolocation', useMIFGeolocation )
     if ( useMIFGeolocation ) then
       ! --  Got mifGeolocation and vertical coordinates match --
       if ( .not. (present(noChans)) ) &
@@ -657,6 +662,7 @@ contains ! ============= Public procedures ===================================
       end if
 
     else if (present(chunk) .and. present(filedatabase)) then
+      if ( verbose ) call output( 'We have no geolocation information', advance='yes' )
       ! --  Not Got mifGeolocation or vertical coordinates do not match  --
       ! We have no geolocation information, or we don't want to use it.
       ! We have to read it ourselves from the L1BOA file.
@@ -685,6 +691,7 @@ contains ! ============= Public procedures ===================================
         call outputnamedValue ( 'lastMAFIndex', chunk%lastMAFIndex )
         call Dump_Modules
       endif
+      if ( verbose ) call outputnamedValue( 'hdfversion', L1BFile%HDFVersion )
       if ( L1BFile%HDFVersion == HDFVersion_5 ) then
         ! OK, so what if GeodAlt isn't here?
         ! 2nd bet: 
@@ -700,17 +707,18 @@ contains ! ============= Public procedures ===================================
           ! call Dump ( filedatabase, details=2 )
           call GetAllHDF5DSNames ( L1BFile, DSNames )
           call Dump ( DSNames, 'DSNames' )
-          call GetAllHDF5DSNames ( L1BFile%name, '/', DSNames )
-          call Dump ( DSNames, 'DSNames' )
           qty%name = 0
+          qty%instanceOffset = chunk%firstMAFIndex + chunk%noMAFsLowerOverlap
+          qty%grandTotalInstances = 0
           call SetupNewQuantityTemplate ( qty, &
             & noInstances=chunk%lastMAFIndex-chunk%firstMAFIndex + 1, &
-            & noSurfs=l1bField%maxMIFs, noChans=noChans, &
+            & noSurfs=0, noChans=0, &
             & noCrossTrack=noCrossTrack, coherent=.false., &
-            & stacked=.false., regular=regular, instanceLen=instanceLen, &
+            & stacked=.false., regular=regular, instanceLen=0, &
             & minorFrame=.true., verticalCoordinate=qty%verticalCoordinate )
           call outputNamedValue ( 'Set num of MAFs to', &
             & chunk%lastMAFIndex-chunk%firstMAFIndex + 1 )
+          call Dump( qty, details=2 )
           call trace_end ( "ConstructMinorFrameQuantity", &
             & cond=toggle(gen) .and. levels(gen) > 2 )
           return
@@ -856,7 +864,7 @@ contains ! ============= Public procedures ===================================
         call DeallocateL1BData ( l1bField )
       end do                          ! Loop over l1b quantities
     else
-       call MLSMessage ( MLSMSG_Error, ModuleName, &
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
                         "Must supply either mifGeolocation " &
                         // "or both filedatabase and chunk")
     end if
@@ -1589,6 +1597,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.202  2016/11/04 23:05:48  pwagner
+! Define some potentially undefined qty components
+!
 ! Revision 2.201  2016/10/20 23:13:39  pwagner
 ! When warning of missing GeodAlt, say how big we set numMAFs
 !
