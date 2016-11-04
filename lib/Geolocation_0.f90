@@ -242,9 +242,11 @@ module Geolocation_0
   real(rg), parameter, private :: AQUAD = EarthRadA**2 ! m**2
   real(rg), parameter, private :: BQUAD = EarthRadB**2 ! m**2
 
+! *****     Procedures     *********************************************
+
 contains
 
-  pure type(ECR_t) function Earth_Geoid_Gradient ( Where ) result ( Grad )
+  pure elemental type(ECR_t) function Earth_Geoid_Gradient ( Where ) result ( Grad )
     class(ECR_t), intent(in) :: Where ! Where on the Geoid the gradient is desired
     real(rp), parameter :: A = EarthRadA, B = EarthRadB
     grad = ECR_t ( where%xyz / [ A, A, B ]**2 )
@@ -265,24 +267,24 @@ contains
     ECR_Add = ECR_t ( a%xyz + b%xyz )
   end function ECR_Add
 
-  pure type(ECR_t) function ECR_Cross ( A, B )
+  pure elemental type(ECR_t) function ECR_Cross ( A, B )
     use Cross_m, only: Cross
     class(ECR_t), intent(in) :: A, B
     ECR_Cross%xyz = cross(a%xyz,b%xyz)
   end function ECR_Cross
 
-  pure type(ECR_t) function ECR_Negate ( A )
+  pure elemental type(ECR_t) function ECR_Negate ( A )
     class(ECR_t), intent(in) :: A
     ECR_Negate%xyz = -A%xyz
   end function ECR_Negate
 
-  pure type(ECR_t) function ECR_Cross_Norm ( A, B ) result ( ECR_Cross )
+  pure elemental type(ECR_t) function ECR_Cross_Norm ( A, B ) result ( ECR_Cross )
     use Cross_m, only: Cross
     class(ECR_t), intent(in) :: A, B
     ECR_Cross%xyz = cross(a%xyz,b%xyz,norm=.true.)
   end function ECR_Cross_Norm
 
-  pure type(ECR_t) function ECR_Cross_Norm_Opt ( A, B, Norm ) result ( ECR_Cross )
+  pure elemental type(ECR_t) function ECR_Cross_Norm_Opt ( A, B, Norm ) result ( ECR_Cross )
     use Cross_m, only: Cross
     class(ECR_t), intent(in) :: A, B
     logical, intent(in), optional :: Norm
@@ -303,7 +305,7 @@ contains
     ECR_Divide_Components = ECR_t ( a%xyz / b )
   end function ECR_Divide_Components
 
-  pure real(rg) function ECR_Dot ( A, B )
+  pure elemental real(rg) function ECR_Dot ( A, B )
     class(ECR_t), intent(in) :: A, B
     ECR_Dot = dot_product ( a%xyz, b%xyz )
   end function ECR_Dot
@@ -730,6 +732,9 @@ contains
 end module Geolocation_0
 
 ! $Log$
+! Revision 2.16  2016/11/04 22:50:53  vsnyder
+! Make as many type-bound procedures as possible elemental
+!
 ! Revision 2.15  2016/11/03 20:40:28  vsnyder
 ! Add ECR_To_Geod_Surface
 !
