@@ -85,7 +85,6 @@ contains
 
     class(path_t), intent(inout) :: Path
 
-    integer :: I
     real(rg) :: Tangent   ! S-value of tangent point
     real(rg) :: Tan_Dir   ! +/- 1; Tan_Dir * Lines(2,i) is directed from
                           ! Lines(1,i) toward the tangent point.
@@ -188,6 +187,9 @@ contains
 end module Path_Representation_m
 
 ! $Log$
+! Revision 2.4  2016/11/07 23:50:55  vsnyder
+! Remove unused variable declaration
+!
 ! Revision 2.3  2016/11/07 23:48:52  vsnyder
 ! Make Path_Continuation public
 !
