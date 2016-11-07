@@ -57,6 +57,8 @@ module Path_Representation_m
     logical :: F   ! Flag at a point on or near the path
   end type Flag_t
 
+  public :: Path_Continuation
+
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
@@ -81,55 +83,29 @@ contains
 
     ! The tangent or surface-intersection point is Path%Lines(1,2).
 
-    use Geolocation_0, only: Norm2
-    use Line_And_Ellipsoid_m, only: Line_And_Ellipsoid, Line_Nearest_Ellipsoid
-    use Line_And_Plane_m, only: Line_Reflection
-
     class(path_t), intent(inout) :: Path
 
-    type(ECR_t) :: Grad   ! Gradient to Earth reference ellipsoid at tangent point
     integer :: I
-    type(ECR_t), allocatable :: Ints(:) ! Intersections with Earth reference ellipsoid
-    real(rg) :: R         ! R = 1 => intersection, >= 1 => tangent
     real(rg) :: Tangent   ! S-value of tangent point
     real(rg) :: Tan_Dir   ! +/- 1; Tan_Dir * Lines(2,i) is directed from
                           ! Lines(1,i) toward the tangent point.
-    real(rg), allocatable :: W(:) ! Where line and ellipsoid intersect
 
     if ( path%ready ) return
 
-    ! Make Lines(2,1) an unit vector, to simplify later calculations.
-    path%lines(2,1) = path%lines(2,1) / norm2(path%lines(2,1))
-
-    ! Get the tangent or intersection point of Lines(:,1) with the Earth
+    ! Make Path%Lines(1:2) an unit vector to simplify later calculations.
+    ! Get the tangent or intersection point of Path%Lines(:,1) with the Earth
     ! reference ellipsoid.
-    ! Lines(1,1) + s * Lines(2,1) describes the line before the tangent point.
-    ! Lines(1,2) + s * Lines(2,2) describes the line after the tangent point.
+    ! Path%Lines(1,1) + s * Path%Lines(2,1) describes the line before the
+    ! tangent point.
+    ! Path%Lines(1,2) + s * Path%Lines(2,2) describes the line after the
+    ! tangent point.
     ! We could, in principle, divide the line into an arbitrary number of
     ! segments, to account (approximately) for refraction.
-    call line_nearest_ellipsoid ( path%lines(:,1), tangent, r )
-    if ( r >= 1 ) then ! No intersection, Lines(:,2) is colinear with Lines(:,1)
-      path%lines(1,2) = path%lines(1,1) + tangent * path%lines(2,1)
-      path%lines(2,2) = path%lines(2,1) ! Parallel to incident line
-    else               ! Compute reflection direction
-      ! Assume lines(1,1) is not inside the ellipsoid
-      call line_and_ellipsoid ( path%lines(:,1), ints, w )
-      ! If path%lines(:,1) is not tangent to the Earth's surface, there are
-      ! two intersections.  Choose the one closest to path%lines(1,1).
-      i = minloc(norm2(ints - path%lines(1,1)),1)
-      path%lines(1,2) = ints(i) ! The continuation starts at that intersection
-      tangent = w(i)
-      grad = path%lines(1,2)%grad() ! Gradient to Earth reference ellipsoid at
-      ! the intersection Compute Lines(2,2) such that Lines(2,2) is at the
-      ! same angle from Grad as Lines(2,1), but on the opposite side of the
-      ! tangent from Lines(2,1).
-      call line_reflection ( path%lines(2,1), grad, path%lines(2,2) )
-      deallocate ( w )
-    end if
+    call path_continuation ( path%lines, tangent )
     tan_dir = sign(1.0_rg,tangent)
     if ( tan_dir >= 0 ) then
-      ! Direction of Lines(2,1) is from Lines(1,1) toward tangent, therefore
-      ! direction of Lines(2,2) is from tangent toward +infinity
+      ! Direction of Path%Lines(2,1) is from Path%Lines(1,1) toward tangent,
+      ! therefore direction of Path%Lines(2,2) is from tangent toward +infinity
       path%sMin(1) = -sqrt(huge(0.0_rg)) ! Allow intersections before Lines(1,1)
       path%sMax(1) = tangent             ! Disallow intersections after tangent
       path%sMin(2) = 0                   ! Disallow intersections before tangent
@@ -151,6 +127,53 @@ contains
 
   end subroutine New_Path
 
+  subroutine Path_Continuation ( Lines, Tangent )
+
+    ! Calculate the path continuation after the tangent point or intersection.
+    ! Lines(1,1) + s * Lines(2,1) describes the line before the tangent point.
+    ! Lines(1,2) + s * Lines(2,2) describes the line after the tangent point.
+    ! We could, in principle, divide the line into an arbitrary number of
+    ! segments, to account (approximately) for refraction.
+
+    use Geolocation_0, only: Norm2
+    use Line_And_Ellipsoid_m, only: Line_And_Ellipsoid, Line_Nearest_Ellipsoid
+    use Line_And_Plane_m, only: Line_Reflection
+    type(ECR_t), intent(inout) :: Lines(2,2)
+    real(rg), intent(out) :: Tangent   ! S-value of tangent point
+
+    type(ECR_t) :: Grad           ! Gradient to Earth reference ellipsoid
+                                  ! at tangent point
+    integer :: I
+    type(ECR_t), allocatable :: Ints(:) ! Intersections with Earth reference ellipsoid
+    real(rg) :: R                 ! R = 1 => intersection, >= 1 => tangent
+    real(rg), allocatable :: W(:) ! Where line and ellipsoid intersect
+
+    ! Make Lines(2,1) an unit vector, to simplify later calculations.
+    lines(2,1) = lines(2,1) / lines(2,1)%norm2()
+
+    ! Get the tangent or intersection point of Lines(:,1) with the Earth
+    ! reference ellipsoid.
+    call line_nearest_ellipsoid ( lines(:,1), tangent, r )
+    if ( r >= 1 ) then ! No intersection, Lines(:,2) is colinear with Lines(:,1)
+      lines(1,2) = lines(1,1) + tangent * lines(2,1)
+      lines(2,2) = lines(2,1) ! Parallel to incident line
+    else               ! Compute reflection direction
+      ! Assume lines(1,1) is not inside the ellipsoid
+      call line_and_ellipsoid ( lines(:,1), ints, w )
+      ! If lines(:,1) is not tangent to the Earth's surface, there are
+      ! two intersections.  Choose the one closest to lines(1,1).
+      i = minloc(norm2(ints - lines(1,1)),1)
+      lines(1,2) = ints(i) ! The continuation starts at that intersection
+      tangent = w(i)
+      grad = lines(1,2)%grad() ! Gradient to Earth reference ellipsoid at
+      ! the intersection Compute Lines(2,2) such that Lines(2,2) is at the
+      ! same angle from Grad as Lines(2,1), but on the opposite side of the
+      ! tangent from Lines(2,1).
+      call line_reflection ( lines(2,1), grad, lines(2,2) )
+      deallocate ( w )
+    end if
+  end subroutine Path_Continuation
+
 !=============================================================================
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
@@ -165,6 +188,9 @@ contains
 end module Path_Representation_m
 
 ! $Log$
+! Revision 2.3  2016/11/07 23:48:52  vsnyder
+! Make Path_Continuation public
+!
 ! Revision 2.2  2016/11/04 01:26:32  vsnyder
 ! Spiff some comments
 !
