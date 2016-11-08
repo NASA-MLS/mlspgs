@@ -627,7 +627,9 @@ contains ! =====     Public procedures     =============================
     ! form appears.
 
     call make_tree ( (/ &
-      begin, s+s_time, np+n_spec_def, &
+      begin, s+s_time, &
+             begin, f+f_reset, boolean(), &
+             np+n_spec_def, &
       begin, s+s_gridded, &
              begin, f+f_date, string(), &
              begin, f+f_dimList, string(), &
@@ -2083,6 +2085,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.629  2016/11/08 17:29:54  pwagner
+! Add /reset field to time command
+!
 ! Revision 2.628  2016/10/21 23:27:09  vsnyder
 ! Remove unused USE name
 !
