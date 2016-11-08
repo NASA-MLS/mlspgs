@@ -97,7 +97,7 @@ contains ! =====     Public Procedures     =============================
     use SDPToolkit, only: max_orbits, pgs_pc_getfilesize, pgs_td_utctotai,&
       &    pgs_pc_getconfigdata, pgs_pc_getreference, pgs_s_success, &
       &    pgstd_e_no_leap_secs
-    use Time_m, only: time_now
+    use Time_m, only: sayTime, time_now
     use Toggles, only: gen, levels, switches, toggle
     use Trace_m, only: trace_begin, trace_end
     use WriteMetadata, only: L2PCF, MCFCaseSensitive
@@ -216,7 +216,7 @@ contains ! =====     Public Procedures     =============================
          & advance='yes')
      end if
      call trace_end ( "OpenAndInitialize", cond=toggle(gen) )
-     if ( timing ) call sayTime
+     if ( timing ) call sayTime ( 'open_init', cumulative=.false. )
      return
    end if
 
@@ -439,21 +439,9 @@ contains ! =====     Public Procedures     =============================
    if ( levels(gen) > 0 .or. details > -3 .or. BeVerbose('pcf', -1) ) &
       & call Dump_open_init ( filedatabase, &
           & CCSDSEndTime, CCSDSStartTime, processingrange, details )
-   if ( timing ) call sayTime         
+   if ( timing ) call sayTime ( 'open_init', cumulative=.false. )
    call trace_end ( "OpenAndInitialize", cond=toggle(gen) )
 
-  contains
-    subroutine SayTime
-      call time_now ( t2 )
-      if ( total_times ) then
-        call output ( "Total time = " )
-        call output ( dble(t2), advance = 'no' )
-        call blanks ( 4, advance = 'no' )
-      end if
-      call output ( "Timing for open_init = " )
-      call output ( dble(t2 - t1), advance = 'yes' )
-      timing = .false.
-    end subroutine SayTime
   end subroutine OpenAndInitialize
 
 ! =====     Private Procedures     =====================================
@@ -684,6 +672,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.112  2016/11/08 17:31:47  pwagner
+! Use SayTime subroutine from time_m module
+!
 ! Revision 2.111  2016/09/22 22:57:25  pwagner
 ! Added DumpL1BDatabase; improved appearance of Dump_open_init
 !
