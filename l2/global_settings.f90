@@ -222,7 +222,7 @@ contains
       & ForwardModelGlobalsetup, createBinSelectorFromMLSCFInfo
     use HDF, only: dfacc_create
     use IGRF_Int, only: read_gh
-    use init_tables_module, only: f_file, f_type, &
+    use init_tables_module, only: f_file, f_reset, f_type, &
       & l_l2gp, l_l2dgg, l_l2fwm, &
       & parm_indices, &
       & first_parm, last_parm, p_brightobjects, &
@@ -256,8 +256,8 @@ contains
     use MLSStringLists, only: array2List, catLists, switchDetail, &
       & numStringElements, stringElement, stringElementNum
     use MLSSignals_m, only: instrument, modules, Dump_Modules, GetModuleName
-    use MoreTree, only: get_field_id, get_label_and_spec, get_spec_id, &
-      & StartErrorMessage
+    use MoreTree, only: get_boolean, get_field_id, get_label_and_spec, &
+      & get_spec_id, StartErrorMessage
     use Next_tree_node_m, only: next_tree_node, next_tree_node_state
     use PFAData_m, only: get_PFAData_from_l2cf, flush_PFAData, make_PFAData, &
       & Read_PFAData, write_PFAData
@@ -269,7 +269,7 @@ contains
       & Pgsd_dem_elev, pgsd_dem_water_land, &
       & Pgs_dem_open, pgs_s_success
     use String_table, only: display_string, get_string
-    use Time_m, only: time_now
+    use Time_m, only: SayTime, time_now
     use Toggles, only: gen, switches, toggle
     use Trace_m, only: trace_begin, trace_end
     use Tree, only: decorate, decoration, node_id, nsons, sub_rosa, subtree, &
@@ -303,9 +303,12 @@ contains
     character(len=NameLen) :: End_time_string, Start_time_string
     character(len=FileNameLen) :: FilenameString
     logical :: GOT(FIRST_PARM:LAST_PARM)
+    integer :: Gson
+    integer :: Field
     integer :: I, J                ! Index of son, grandson of root
     logical ::  ItExists
     character(len=namelen) :: itsname
+    integer :: Key
     type (L1BData_T) :: L1bField   ! L1B data
     type(MLSFile_T), pointer :: L1BFile
     character(len=namelen) :: L1bItemName
@@ -323,6 +326,7 @@ contains
     integer :: Param               ! Tree index of param i.e., name before =
     integer :: Param_id            ! e.g., p_brightObjects
     character (len=namelen) :: QUANTITY
+    logical :: Reset
     logical :: Restricted          ! Some commands not available
     integer :: ReturnStatus        ! non-zero means trouble
     integer :: SON                 ! Son of root
@@ -397,8 +401,22 @@ contains
 
     do
       son = next_tree_node ( root, state )
+      call get_label_and_spec ( son, name, key )
       if ( son == 0 ) exit
       L2CFNODE = son
+      reset = .false.
+
+      do j = 2, nsons(key) ! fields of the "time" specification
+        gson = subtree(j, key)
+        field = get_field_id(gson)   ! tree_checker prevents duplicates
+        if (nsons(gson) > 1 ) gson = subtree(2,gson) ! Gson is value
+        select case ( field )
+        case ( f_reset )
+          reset = Get_Boolean ( gson )
+        case default
+          ! Shouldn't get here if the type checker worked
+        end select
+      end do ! j = 2, nsons(key)
       if ( node_id(son) == n_equal ) then
         sub_rosa_index = sub_rosa(subtree(2,son))
         param = subtree(1,son)
@@ -611,8 +629,8 @@ contains
           call write_PFAdata ( son, returnStatus )
           error = max(error, returnStatus)
         case ( s_time )
-          if ( timing ) then
-            call sayTime
+          if ( timing .and. .not. reset ) then
+            call sayTime ( 'global_settings', t1=t1, cumulative=.false. )
           else
             call time_now ( t1 )
             timing = .true.
@@ -838,7 +856,7 @@ contains
       if ( specialDumpFile /= ' ' ) &
         & call revertOutput
       call trace_end ( 'SET_GLOBAL_SETTINGS', cond=toggle(gen) )
-      if ( timing ) call sayTime
+      if ( timing ) call sayTime ( 'global_settings', cumulative=.false. )
 
     end subroutine FinishUp
 
@@ -1209,24 +1227,6 @@ contains
       call output ( trim(Name), advance='yes')
     end subroutine proclaim
 
-    ! --------------------------------------------------  SayTime  -----
-    subroutine SayTime ( msg )
-      character(len=*), optional, intent(in) :: msg
-      call time_now ( t2 )
-      if ( total_times ) then
-        call output ( "Total time = " )
-        call output ( dble(t2), advance = 'no' )
-        call blanks ( 4, advance = 'no' )
-      end if
-      if ( present(msg) ) then
-        call output ( trim_safe(msg) )
-      else
-        call output ( "Timing for GlobalSettings = " )
-      endif
-      call output ( dble(t2 - t1), advance = 'yes' )
-      timing = .false.
-    end subroutine SayTime
-
     ! --------------------------  CreateDirectTypeFromMLSCFInfo  -----
     function CreateDirectTypeFromMLSCFInfo ( root, DirectFile ) result (Direct)
     integer, intent(in) :: ROOT         ! Tree node
@@ -1332,6 +1332,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.169  2016/09/23 00:11:52  pwagner
+! Improve appearance of Dumps
+!
 ! Revision 2.168  2016/09/14 20:08:45  pwagner
 ! heck if we set start, end times if no l1boa; also that they are reasonable
 !
