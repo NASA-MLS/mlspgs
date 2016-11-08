@@ -135,16 +135,18 @@ contains
     ! segments, to account (approximately) for refraction.
 
     use Geolocation_0, only: Norm2
-    use Line_And_Ellipsoid_m, only: Line_And_Ellipsoid, Line_Nearest_Ellipsoid
+    use Line_And_Ellipsoid_m, only: Line_And_Ellipsoid, &
+      & Exact_Line_Nearest_Ellipsoid
     use Line_And_Plane_m, only: Line_Reflection
     type(ECR_t), intent(inout) :: Lines(2,2)
     real(rg), intent(out) :: Tangent   ! S-value of tangent point
 
     type(ECR_t) :: Grad           ! Gradient to Earth reference ellipsoid
                                   ! at tangent point
+    real(rg) :: H                 ! Tangent height above Earth surface,
+                                  ! Lines is an intersection if H < 0.
     integer :: I
     type(ECR_t), allocatable :: Ints(:) ! Intersections with Earth reference ellipsoid
-    real(rg) :: R                 ! R = 1 => intersection, >= 1 => tangent
     real(rg), allocatable :: W(:) ! Where line and ellipsoid intersect
 
     ! Make Lines(2,1) an unit vector, to simplify later calculations.
@@ -152,8 +154,8 @@ contains
 
     ! Get the tangent or intersection point of Lines(:,1) with the Earth
     ! reference ellipsoid.
-    call line_nearest_ellipsoid ( lines(:,1), tangent, r )
-    if ( r >= 1 ) then ! No intersection, Lines(:,2) is colinear with Lines(:,1)
+    call exact_line_nearest_ellipsoid ( lines(:,1), tangent, h=h )
+    if ( h >= 0 ) then ! No intersection, Lines(:,2) is colinear with Lines(:,1)
       lines(1,2) = lines(1,1) + tangent * lines(2,1)
       lines(2,2) = lines(2,1) ! Parallel to incident line
     else               ! Compute reflection direction
@@ -169,7 +171,7 @@ contains
       ! same angle from Grad as Lines(2,1), but on the opposite side of the
       ! tangent from Lines(2,1).
       call line_reflection ( lines(2,1), grad, lines(2,2) )
-      deallocate ( w )
+      deallocate ( ints, w )
     end if
   end subroutine Path_Continuation
 
@@ -187,6 +189,9 @@ contains
 end module Path_Representation_m
 
 ! $Log$
+! Revision 2.5  2016/11/08 02:04:56  vsnyder
+! Use Exact_Line_Nearest_Ellipsoid
+!
 ! Revision 2.4  2016/11/07 23:50:55  vsnyder
 ! Remove unused variable declaration
 !
