@@ -67,7 +67,7 @@ program MLSL2
   use string_table, only: destroy_char_table, destroy_hash_table, &
     & destroy_string_table, get_string, addinunit
   use symbol_table, only: destroy_symbol_table
-  use time_m, only: begin, finish, time_now, time_config
+  use time_m, only: begin, finish, SayTime, time_now, time_config
   use toggles, only: levels, syn, switches, toggle
   use track_m, only: reportleaks
   use tree, only: allocate_tree, deallocate_tree, nsons, subtree
@@ -432,7 +432,7 @@ program MLSL2
   else
     root = -1
   end if
-  if ( timing ) call sayTime ( 'Parsing the L2CF' )
+  if ( timing ) call SayTime ( 'Parsing the L2CF', cumulative=.false. )
 
   !---------------- Task (6) ------------------
   if ( TOOLKIT .and. error==0) then
@@ -463,7 +463,7 @@ program MLSL2
     ! types for fields of commands, correct command order, etc.
     call time_now ( t1 )
     call check_tree ( root, error, first_section )
-    if ( timing ) call sayTime ( 'Type checking the L2CF' )
+    if ( timing ) call SayTime ( 'Type checking the L2CF', cumulative=.false. )
     if ( do_dump > 0 ) call dump_decl ( do_dump )
     if ( toggle(syn) ) then
       call output ( 'Begin type-checked abstract syntax tree:', advance='yes' )
@@ -501,7 +501,7 @@ program MLSL2
         & filedatabase, sectionsToSkip )
       if ( timing ) then
         call output ( "-------- Processing Ended ------ ", advance='yes' )
-        call sayTime ( 'Processing' )
+        call SayTime ( 'Processing mlsl2', t1=0., cumulative=.false. )
       end if
     end if
   end if
@@ -571,7 +571,7 @@ program MLSL2
     call outputNamedValue( 'PGS_DEM_Close status', status )
   end if
   if ( AllocateLogUnit > 0 ) close( Unit=AllocateLogUnit )
-  if ( timing ) call sayTime ( 'Closing and deallocating' )
+  if ( timing ) call SayTime ( 'Closing and deallocating', cumulative=.false. )
   call add_to_section_timing( 'main', t0 )
   if ( trackAllocates > 0 ) call ReportLeaks ( "At end of program execution..." )
   call finish ( 'ending mlsl2' )
@@ -619,18 +619,6 @@ contains
       end do
     end if
   end subroutine Print_Interesting_Subtrees
-
-  subroutine SayTime ( What )
-    character(len=*), intent(in) :: What
-    call time_now ( t2 )
-    if ( total_times ) then
-      call output ( "Total time = " )
-      call output ( dble(t2), advance = 'no' )
-      call blanks ( 4, advance = 'no' )
-    end if
-    call output ( "Timing for " // what // " = " )
-    call output ( dble(t2 - t1), advance = 'yes' )
-  end subroutine SayTime
 
   ! The following offer some information on the options
   ! available either on the command-line or via the PCF
@@ -706,16 +694,6 @@ contains
         & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       call outputNamedValue ( 'Show system memory usage?', &
         & Show_Sys_Memory, advance='yes', &
-        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-      call outputNamedValue ( 'Avoiding unlimited dimensions in directwrites?', &
-        & avoidUnlimitedDims, advance='yes', &
-        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-      call outputNamedValue ( 'Allow overlaps outside proc. range?', &
-        & (/ChunkDivideConfig%allowPriorOverlaps, ChunkDivideConfig%allowPostOverlaps/), advance='yes', &
-        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-      call outputNamedValue ( 'Is this run in forward model parallel?', parallel%fwmParallel, advance='yes', &
-        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-      call outputNamedValue ( 'Avoid creating file on first directWrite?', patch, advance='yes', &
         & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       call outputNamedValue ( 'Is this the master task in pvm?', parallel%master, advance='yes', &
         & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
@@ -807,6 +785,18 @@ contains
         call outputNamedValue ( 'Log Allocates to', trim(AllocFile%Name), advance='yes', &
         & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       endif
+      call outputNamedValue ( 'Avoiding unlimited dimensions in directwrites?', &
+        & avoidUnlimitedDims, advance='yes', &
+        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
+      call outputNamedValue ( 'Allow overlaps outside proc. range?', &
+        & (/ChunkDivideConfig%allowPriorOverlaps, ChunkDivideConfig%allowPostOverlaps/), advance='yes', &
+        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
+      call outputNamedValue ( 'Time some processes?', timing, advance='yes', &
+        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
+      call outputNamedValue ( 'Is this run in forward model parallel?', parallel%fwmParallel, advance='yes', &
+        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
+      call outputNamedValue ( 'Avoid creating file on first directWrite?', patch, advance='yes', &
+        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       call blanks(80, fillChar='-', advance='yes')
       call dump(outputOptions)
       call dump(stampOptions)
@@ -852,6 +842,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.220  2016/11/08 17:30:57  pwagner
+! Use SayTime subroutine from time_m module
+!
 ! Revision 2.219  2016/11/04 19:32:11  pwagner
 ! Locate calculation of MLSMSG_Severity_to_quit appropriately
 !
