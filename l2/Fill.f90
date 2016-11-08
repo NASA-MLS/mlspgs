@@ -130,9 +130,9 @@ contains ! =====     Public Procedures     =============================
       & f_phiwindow, f_phizero, f_precision, f_precisionfactor, &
       & f_profile, f_profilevalues, f_ptanquantity, &
       & f_quadrature, f_quantity, f_quantitynames, &
-      & f_radiancequantity, f_ratioquantity, &
-      & f_refract, f_refgphquantity, f_refgphprecisionquantity, f_referenceMIF, &
-      & f_regular, f_resetseed, f_rhiprecisionquantity, f_rhiquantity, f_rank, &
+      & f_radiancequantity, f_ratioquantity, f_refract, &
+      & f_refgphquantity, f_refgphprecisionquantity, f_referenceMIF, f_regular, &
+      & f_reset, f_resetseed, f_rhiprecisionquantity, f_rhiquantity, f_rank, &
       & f_rows, f_scale, f_scaleinsts, f_scaleratio, f_scalesurfs, f_sceci, &
       & f_scvel, f_scveleci, f_scvelecr, f_sdname, f_seed, f_skipmask, &
       & f_source, f_sourcegrid, f_sourcel2aux, f_sourcel2gp, &
@@ -228,7 +228,7 @@ contains ! =====     Public Procedures     =============================
     use string_table, only: get_string
     use subsetmodule, only: applymasktoquantity, restrictrange, &
       & setupflagcloud, setupsubset, updatemask
-    use time_m, only: time_now
+    use time_m, only: SayTime, time_now
     use toggles, only: gen, levels, toggle
     use trace_m, only: trace_begin, trace_end
     use tree, only: decorate, decoration, nsons, sub_rosa, subtree, where
@@ -371,6 +371,7 @@ contains ! =====     Public Procedures     =============================
     integer :: Expr_Type                ! From expr
     logical :: Extinction               ! Flag for cloud extinction calculation
     integer :: FIELDINDEX               ! Entry in tree
+    integer :: Field
     integer :: FieldValue               ! Value of a field in the L2CF
     integer :: FIELDECRQUANTITYINDEX    ! Magnetic field
     integer :: FIELDECRVECTORINDEX      ! Magnetic field
@@ -500,6 +501,7 @@ contains ! =====     Public Procedures     =============================
     integer :: REFGPHPRECISIONQUANTITYINDEX      ! in the quantities database
     integer :: REFGPHPRECISIONVECTORINDEX        ! In the vector database
     logical :: REPEATLOOP               ! Do we repeat this section?
+    logical :: RESET
     logical :: RESETSEED                ! Let mls_random_seed choose new seed
     integer :: RHIPRECISIONQUANTITYINDEX         ! in the quantities database
     integer :: RHIPRECISIONVECTORINDEX           ! In the vector database
@@ -629,6 +631,7 @@ contains ! =====     Public Procedures     =============================
       noPCFid = .false.
       noZeros = .false.
       options = ' '
+      reset = .false.
       resetSeed = .false.
       refract = .false.
       scale = 0.0
@@ -655,6 +658,17 @@ contains ! =====     Public Procedures     =============================
       whereNotFill = .false.
       nullify ( nullQuantity, ptanQuantity, radQuantity, odQuantity )
 
+      do j = 2, nsons(key) ! fields of the "time" specification
+        gson = subtree(j, key)
+        field = get_field_id(gson)   ! tree_checker prevents duplicates
+        if (nsons(gson) > 1 ) gson = subtree(2,gson) ! Gson is value
+        select case ( field )
+        case ( f_reset )
+          reset = Get_Boolean ( gson )
+        case default
+          ! Shouldn't get here if the type checker worked
+        end select
+      end do ! j = 2, nsons(key)
       ! Node_id(key) is now n_spec_args.
 
       if ( get_spec_id(key) /= s_catchWarning ) &
@@ -1146,8 +1160,8 @@ contains ! =====     Public Procedures     =============================
         call trace_end ( "Fill.Transfer", cond=toggle(gen) .and. levels(gen) > 1 )
 
       case ( s_time ) ! ===================================  Time  =====
-        if ( timing ) then
-          call sayTime
+        if ( timing .and. .not. reset ) then
+          call sayTime ( 'Fill', t1=t1, cumulative=.false. )
         else
           call time_now ( t1 )
           timing = .true.
@@ -1218,7 +1232,7 @@ contains ! =====     Public Procedures     =============================
     if ( specialDumpFile /= ' ' ) call revertOutput
     call trace_end ( "MLSL2Fill", cond=toggle(gen) )
     math77_ran_pack = old_math77_ran_pack
-    if ( timing ) call sayTime
+    if ( timing ) call sayTime ( 'Fill', cumulative=.false. )
 
   ! =====     Internal Procedures     ==================================
 
@@ -3238,19 +3252,6 @@ contains ! =====     Public Procedures     =============================
       MLSFile%PCFId = lun
     end subroutine Get_File_Name
 
-    ! --------------------------------------------------  SayTime  -----
-    subroutine SayTime
-      call time_now ( t2 )
-      if ( total_times ) then
-        call output ( "Total time = " )
-        call output ( dble(t2), advance = 'no' )
-        call blanks ( 4, advance = 'no' )
-      end if
-      call output ( "Timing for MLSL2Fill = " )
-      call output ( dble(t2 - t1), advance = 'yes' )
-      timing = .false.
-    end subroutine SayTime
-
   end subroutine MLSL2Fill
 
 !--------------------------- end bloc --------------------------------------
@@ -3267,6 +3268,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.463  2016/11/08 17:32:57  pwagner
+! Use SayTime subroutine from time_m module; process /reset field
+!
 ! Revision 2.462  2016/09/02 00:49:40  vsnyder
 ! Change default geolocation from L_None to L_Geodetic.  The result is that
 ! the geodLat and Lon fields of HGrids are always filled.
