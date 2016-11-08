@@ -131,7 +131,8 @@ contains ! =====     Public Procedures     =============================
     use griddedData, only: griddedData_t
     use HGridsDatabase, only: addHGridToDatabase, HGrids_t
     use HGrid, only: createHGridFromMLSCFInfo
-    use init_tables_module, only: s_anygoodvalues, s_anygoodradiances, &
+    use init_tables_module, only: f_reset, &
+      & s_anygoodvalues, s_anygoodradiances, &
       & s_boolean, s_catchwarning, s_compare, s_dump, &
       & s_forge, s_forwardmodel, s_hgrid, &
       & s_phase, s_quantity, s_reevaluate, s_changesettings, s_time, s_vectortemplate
@@ -140,7 +141,7 @@ contains ! =====     Public Procedures     =============================
     use MLSL2Options, only: l2cfnode, need_l1bfiles, specialDumpFile
     use MLSL2Timings, only: section_times, total_times, addphaseToPhaseNames
     use MLSMessageModule, only: MLSMessageReset
-    use moretree, only: get_label_and_spec, get_spec_id
+    use moretree, only: get_field_id, get_boolean, get_label_and_spec, get_spec_id
     use Next_Tree_Node_m, only: Next_Tree_Node, Next_Tree_Node_State
     use output_m, only: blanks, output, &
       & revertOutput, switchOutput
@@ -149,7 +150,7 @@ contains ! =====     Public Procedures     =============================
     use time_m, only: SayTime, time_now
     use toggles, only: gen, levels, toggle
     use trace_m, only: trace_begin, trace_end
-    use tree, only: decorate
+    use tree, only: decorate, nsons, subtree
     use vectorsModule, only: addVectorTemplateToDatabase, &
       & vector_t, vectorTemplate_t
 
@@ -170,10 +171,14 @@ contains ! =====     Public Procedures     =============================
 
     ! Local variables
 
+    integer :: field
+    integer :: gson
+    integer :: j
     integer :: KEY              ! S_... from Init_Tables_Module.
     integer :: Me = -1          ! String index for trace
     integer :: Me_Spec = -1     ! String index for trace
     integer :: NAME             ! Sub-rosa index of name
+    logical :: reset
     integer :: SON              ! Son or grandson of Root
     type(next_tree_node_state) :: State ! of tree traverser
     real :: T1, T2              ! for timing
@@ -201,7 +206,19 @@ contains ! =====     Public Procedures     =============================
         & cond=toggle(gen) .and. levels(gen) > 0 )
       call get_label_and_spec ( son, name, key )
       L2CFNODE = key
+      reset = .false.
 
+      do j = 2, nsons(key) ! fields of the "time" specification
+        gson = subtree(j, key)
+        field = get_field_id(gson)   ! tree_checker prevents duplicates
+        if (nsons(gson) > 1 ) gson = subtree(2,gson) ! Gson is value
+        select case ( field )
+        case ( f_reset )
+          reset = Get_Boolean ( gson )
+        case default
+          ! Shouldn't get here if the type checker worked
+        end select
+      end do ! j = 2, nsons(key)
       ! Node_id(key) is now n_spec_args.
 
       if ( get_spec_id(key) /= s_catchWarning ) &
@@ -248,7 +265,7 @@ contains ! =====     Public Procedures     =============================
         call decorate ( key, AddVectorTemplateToDatabase ( vectorTemplates, &
           & CreateVecTemplateFromMLSCfInfo ( name, key, quantityTemplatesBase ) ) )
       case ( s_time )
-        if ( timing ) then
+        if ( timing .and. .not. reset ) then
           call sayTime
         else
           call time_now ( t1 )
@@ -326,6 +343,9 @@ end module Construct
 
 !
 ! $Log$
+! Revision 2.82  2016/11/08 17:33:51  pwagner
+! process /reset field
+!
 ! Revision 2.81  2016/11/04 19:35:06  pwagner
 ! begin transition to sayTime from time_m
 !
