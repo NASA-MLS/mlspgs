@@ -105,7 +105,7 @@ contains ! ====     Public Procedures     ==============================
     use SpectroscopyCatalog_m, only: destroy_line_database, &
       & Destroy_spectcat_database, spectroscopy
     use String_table, only: get_string
-    use Time_m, only: time_now
+    use Time_m, only: SayTime, time_now
     use Toggles, only: gen, switches, toggle
     use Trace_m, only: trace_begin, trace_end
     use Tree, only: decoration, subtree
@@ -534,7 +534,7 @@ subtrees:   do
             if ( warnOnDestroy ) call output('About to strip fwmconfig db', advance='yes' )
             call StripForwardModelConfigDatabase ( forwardModelConfigDatabase )
             if ( switchDetail(switches,'chu') > -1 ) then
-              call sayTime('processing this chunk', tChunk)
+              call sayTime( 'processing this chunk', t1=tChunk )
             end if
             if ( now_stop ) then
               call finishUp(.true.)
@@ -718,25 +718,6 @@ subtrees:   do
       call trace_end ( 'WALK_TREE_TO_DO_MLS_L2', cond=toggle(gen) )
     end subroutine FinishUp
 
-    subroutine SayTime ( What, startTime )
-      character(len=*), intent(in) :: What
-      real, intent(in), optional :: startTime
-      real :: myt1
-      if ( present(startTime) ) then
-        myt1 = startTime
-      else
-        myt1 = t1
-      end if
-      call time_now ( t2 )
-      if ( total_times ) then
-        call output ( "Total time = " )
-        call output ( dble(t2), advance = 'no' )
-        call blanks ( 4, advance = 'no' )
-      end if
-      call output ( "Timing for " // what // " = " )
-      call output ( dble(t2 - myt1), advance = 'yes' )
-    end subroutine SayTime
-
   end subroutine WALK_TREE_TO_DO_MLS_L2
 
 !--------------------------- end bloc --------------------------------------
@@ -752,6 +733,9 @@ subtrees:   do
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.205  2016/09/21 00:40:17  pwagner
+! Usually dump FileDB as a table
+!
 ! Revision 2.204  2016/08/09 22:08:33  pwagner
 ! May check for corrupt file database
 !
