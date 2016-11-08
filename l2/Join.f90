@@ -58,7 +58,8 @@ contains ! =====     Public Procedures     =============================
     use HessianModule_1, only: Hessian_t
     use HGridsDatabase, only: HGrids_t
     use highOutput, only: beVerbose, letsDebug, outputNamedValue
-    use Init_Tables_Module, only: s_l2gp, s_l2aux, s_time, s_directwrite, &
+    use Init_Tables_Module, only: f_reset, &
+      & s_l2gp, s_l2aux, s_time, s_directwrite, &
       & s_endselect, s_case, s_diff, s_dump, s_execute, s_label, s_select, &
       & s_skip
     use L2GPData, only: L2GPData_t
@@ -72,13 +73,14 @@ contains ! =====     Public Procedures     =============================
     use MLSL2Timings, only: Section_Times, Total_Times, &
       & Add_to_DirectWrite_Timing, Add_to_Section_Timing
     use MLSMessageModule, only: MLSMSG_Error
-    use MoreTree, only: Get_Label_and_Spec, Get_Spec_Id
+    use MoreTree, only: get_boolean, get_field_id, Get_Label_and_Spec, &
+      & Get_Spec_Id
     use Next_Tree_Node_m, only: Init_Next_Tree_Node, Next_Tree_Node, &
       & Next_Tree_Node_State
     use Output_m, only: Blanks, Output, RevertOutput, SwitchOutput
     use Toggles, only: Gen, Toggle, Switches
-    use Tree, only: Where_at => Where
-    use Time_m, only: Time_Now
+    use Tree, only: Where_at => Where, nsons, subtree
+    use Time_m, only: SayTime, Time_Now
     use Trace_m, only: Trace_Begin, Trace_End
     use VectorsModule, only: Vector_t
 
@@ -107,6 +109,9 @@ contains ! =====     Public Procedures     =============================
     real :: DWT1                        ! Time we started
     real :: DWT2                        ! Time we finished
     real :: DWT22                       ! Time we finished, too
+    integer :: field
+    integer :: gson
+    integer :: j
     integer :: KEY                      ! Tree node
     integer :: Label                    ! Not actually used
     integer :: Me = -1                  ! String index for trace
@@ -115,6 +120,7 @@ contains ! =====     Public Procedures     =============================
     integer :: NOEXTRAWRITES            ! Correction to NODIRECTWRITES
     character(len=16) :: outputTyp
     integer :: PASS                     ! Loop counter
+    logical :: reset
     integer :: SON                      ! Tree node
     integer :: SPECID                   ! Type of l2cf line this is
     type(next_tree_node_state) :: State ! of tree traverser
@@ -191,6 +197,19 @@ contains ! =====     Public Procedures     =============================
         if ( son == 0 ) exit
         call get_label_and_spec ( son, label, key )
         L2CFNODE = key
+        reset = .false.
+
+        do j = 2, nsons(key) ! fields of the "time" specification
+          gson = subtree(j, key)
+          field = get_field_id(gson)   ! tree_checker prevents duplicates
+          if (nsons(gson) > 1 ) gson = subtree(2,gson) ! Gson is value
+          select case ( field )
+          case ( f_reset )
+            reset = Get_Boolean ( gson )
+          case default
+            ! Shouldn't get here if the type checker worked
+          end select
+        end do ! j = 2, nsons(key)
         if ( MLSSelecting .and. &
           & .not. any( get_spec_id(key) == (/ s_endselect, s_select, s_case /) ) ) cycle
         specId = get_spec_id ( key )
@@ -221,8 +240,8 @@ contains ! =====     Public Procedures     =============================
         case ( s_time )
           ! Only say the time the first time round
           if ( pass == 1 ) then
-            if ( timing ) then
-              call sayTime
+            if ( timing .and. .not. reset ) then
+              call sayTime ( 'Join', t1=t1, cumulative=.false. )
             else
               call time_now ( t1 )
               timing = .true.
@@ -305,8 +324,8 @@ contains ! =====     Public Procedures     =============================
                 call output(trim(theFile), advance='yes')
               end if
               if ( verbose ) then
-                call sayJustThisTime ( 'Completing this DW, ' // &
-                  & trim(outputTyp), dwt2 )
+                call sayTime ( 'Completing this DW, ' // &
+                  & trim(outputTyp), t1=dwt2, cumulative=.false. )
                 call outputNamedValue( 'Waiting time', TimeSpentWaiting )
                 call outputNamedValue( 'File name', trim(theFile) )
               end if
@@ -350,34 +369,7 @@ contains ! =====     Public Procedures     =============================
       & call MLSMessage ( MLSMSG_Error, ModuleName, 'Error in Join section' )
 
     call trace_end ( "MLSL2Join", cond=toggle(gen) )
-    if ( timing ) call sayTime
-
-  contains
-    ! Private procedures
-    subroutine SayJustThisTime ( ForWhat, t1 )
-      ! Args
-      character(len=*), intent(in) :: ForWhat
-      real, intent(in) :: t1
-      ! Internal variables
-      real             :: t2
-      ! Executable
-      call time_now ( t2 )
-      call output ( "Timing for ", advance='no' )
-      call output ( trim(ForWhat), advance='no' )
-      call blanks ( 1 )
-      call output ( dble(t2 - t1), advance = 'yes' )
-    end subroutine SayJustThisTime
-
-    subroutine SayTime
-      call time_now ( t2 )
-      if ( total_times ) then
-        call output ( "Total time = " )
-        call output ( dble(t2), after='    ', advance = 'no' )
-      end if
-      call output ( "Timing for MLSL2Join =" )
-      call output ( dble(t2 - t1), advance = 'yes' )
-      timing = .false.
-    end subroutine SayTime
+    if ( timing ) call sayTime ( 'Join', t1=t1, cumulative=.false. )
 
   end subroutine MLSL2Join
 
@@ -2388,6 +2380,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.178  2016/11/08 17:34:15  pwagner
+! Use SayTime subroutine from time_m module; process /reset field
+!
 ! Revision 2.177  2016/11/01 17:44:40  pwagner
 ! Fixed error in getting directFile to ignore_paths or not
 !
