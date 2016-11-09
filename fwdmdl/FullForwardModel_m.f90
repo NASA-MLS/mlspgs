@@ -156,15 +156,14 @@ contains
     ! only used to compute the instance window for the temperature quantity.
     ! If the temperature grid is QTM, phiTan isn't actually used because the
     ! entire QTM is used, instead of having an instance window.
-    temp => fwdModelConf%temp%qty
-    
-    ! Find the phiTan quantity in the state vector.  The phiTan quantity is
-    ! only used to compute the instance window for the temperature quantity.
-    ! If the temperature grid is QTM, phiTan isn't actually used because the
-    ! entire QTM is used, instead of having an instance window.
     phitan => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
       & quantityType=l_phitan, config=fwdModelConf, &
       & instrumentModule=fwdModelConf%signals(1)%instrumentModule )
+
+    ! Copy the temperature quantity from the state vector via the
+    ! configuration into Grids_f.
+
+    temp => fwdModelConf%temp%qty
     call load_one_item_grid ( grids_tmp, temp, fmStat%maf, phitan, fwdModelConf, .true. )
 
     ! Compute some derivative flags.  %derivOK needs to be computed BEFORE
@@ -177,17 +176,19 @@ contains
         & 'With config(%S): Temperature derivative requested but temperature is not in "first" state vector', &
         & datum=fwdModelConf%name )
 
-    ! Copy the mixing ratios from the state vector into Grids_f
+    ! Copy the mixing ratios from the state vector into Grids_f.
 
     call load_sps_data ( FwdModelConf, phitan, fmStat%maf, grids_f )
 
     ! Check whether temperature and all the mixing ratios either all have QTM
-    ! HGrid, or none do.  If so, find the QTM HGrid with the finest resolution
+    ! HGrid, or none do.  If so, find the QTM HGrid with the finest resolution.
 
     call check_QTM ( grids_tmp, grids_f, QTM_HGrid, usingQTM )
 
     ! Compute some sizes
-    no_sv_p_t = grids_tmp%l_p(1) ! phi == windowFinish - windowStart + 1
+    no_sv_p_t = grids_tmp%l_p(1) ! size of temperature's horizontal grid ==
+                                 ! windowFinish - windowStart + 1 if not QTM,
+                                 ! else the number of vertices in the QTM
     n_t_zeta = grids_tmp%l_z(1)  ! zeta
     sv_t_len = grids_tmp%p_len   ! zeta X phi == n_t_zeta * no_sv_p_t
 
@@ -434,8 +435,10 @@ contains
     use MoreMessage, only: MLSMessage
     use Output_M, only: NewLine, Output
     use Path_Contrib_M, only: Get_GL_Inds
+    use Path_Representation_m, only: Path_t
     use Physics, only: SpeedOfLight
     use PointingGrid_M, only: PointingGrids, PointingGrid_T
+    use QTM_Facets_Under_Path_m, only: QTM_Facets_Under_Path
     use QTM_Interpolation_Weights_3D_m, only: S_QTM_t, Weight_ZQ_t
     use Slabs_sw_m, only: AllocateSLABS, DestroyCompleteSLABS, SLABS_Struct
     use TAU_M, only: Destroy_TAU, Dump, TAU_T
@@ -519,6 +522,7 @@ contains
     integer :: Frq_Avg_Sel        ! Summarizes combinations of PFA, LBL,
                                   ! Frequency averaging and derivatives.
                                   ! See Frequency_Average below.
+    integer, allocatable :: Facets(:)  ! Facets of QTM under path
     integer :: Frq_I              ! Frequency loop index
     integer :: H2O_Ind            ! Grids_f%S_Ind(L_H2O) = index of H2O in Grids_f
     integer :: IER                ! Status flag from allocates
@@ -597,6 +601,7 @@ contains
                                         ! d_delta_df
     integer :: nnz_d_delta_df(size(grids_f%values)) ! Column lengths in
                                         ! nz_d_delta_df
+    integer, allocatable :: Vertices(:) ! Vertices of QTM adjacent to path
     integer :: Vert_Inds(max_f)         ! Height indices of fine path in
                                         ! H_Glgrid etc.
 
@@ -895,6 +900,8 @@ contains
     type (Grids_T) :: Grids_Salb  ! All the coordinates for single scattering albedo
     type (Grids_T) :: Grids_Cext  ! All the coordinates for cloud extinction
 
+    type (Path_t) :: Path         ! of one LOS, to calculate facets under it
+
     type (PointingGrid_T), pointer :: WhichPointingGrid ! Pointing grids for one signal
 
     type (Signal_T), pointer :: FirstSignal        ! The first signal we're dealing with
@@ -1192,6 +1199,19 @@ contains
         if ( toggle(emit) .and. levels(emit) > 2 ) &
           & call output( '(Skipping loop of pointings)', advance='yes' )
       else if ( .not. FwdModelConf%generateTScat ) then
+
+        if ( usingQTM ) then ! Find facets under the path and vertices
+                             ! adjacent to it, assuming all pointings are
+                             ! in a vertical plane.  If pointings are not
+                             ! in a vertical plane, QTM_Facets_Under_Path
+                             ! should be used for each line of sight.
+          call path%new_path
+          path%lines(:,1) = LOS(:,1)
+          call path%get_path_ready
+          call QTM_Facets_Under_Path ( path, QTM_hGrid%QTM_tree, facets, &
+                                     & vertices )
+        end if
+
         do ptg_i = 1, no_tan_hts
 
           Vel_Rel = est_los_vel(ptg_i) / speedOfLight
@@ -1216,11 +1236,14 @@ contains
               &                 tan_press=tan_press(ptg_i), &
               &                 est_scGeocAlt=est_scGeocAlt(ptg_i) )
           else
+            call path%new_path
+            path%lines(:,1) = LOS(:,ptg_i)
             call one_pointing ( ptg_i, vel_rel, r_eq,               &
               &                 tan_loc=tan_pt_geod(ptg_i),         &
               &                 tan_press=tan_press(ptg_i),         &
               &                 est_scGeocAlt=est_scGeocAlt(ptg_i), &
-              &                 los=LOS(:,ptg_i), s=s )
+              &                 path=path, s=s, facets=facets,      &
+              &                 vertices=vertices )
           end if
         end do ! ptg_i
 
@@ -1363,6 +1386,7 @@ contains
     ! for convolution and stuff for clouds.
 
       use Geometry, only: Orbit_Plane_Minor_Axis_sq
+      use interpolate_MIF_to_tan_press_m, only: interpolate_MIF_to_tan_press
       use Intrinsic, only: L_EarthRefl, L_ECRtoFOV, L_GPH,  &
         & L_LOSVel, L_SurfaceHeight, L_OrbitInclination, L_REFGPH, &
         & L_ScGeocAlt, L_SpaceRadiance
@@ -3642,11 +3666,10 @@ contains
 
   ! ...............................................  One_Pointing  .....
     subroutine One_Pointing ( Ptg_i, Vel_Rel, R_Eq, Tan_Phi, Tan_Loc, QTM,  &
-      & Tan_Press, Est_SCGeocAlt, LOS, S, Scat_Zeta, Scat_Phi, Scat_Ht, Xi, &
-      & Scat_Index, Scat_Tan_Ht, Forward, Rev, Which )
+      & Tan_Press, Est_SCGeocAlt, Path, S, Facets, Vertices, Scat_Zeta,     &
+      & Scat_Phi, Scat_Ht, Xi, Scat_Index, Scat_Tan_Ht, Forward, Rev, Which )
 
       use Generate_QTM_m, only: QTM_Tree_t
-      use Geolocation_0, only: ECR_t
       use Get_Chi_Angles_M, only: Get_Chi_Angles
       use Get_Eta_Matrix_M, only: Get_Eta_Stru
       use GLNP, only: GW, NG
@@ -3671,13 +3694,20 @@ contains
       real(rp), intent(in), optional :: Tan_Press     ! hPa, not zeta
       real(rp), intent(in), optional :: Est_SCGeocAlt ! Est S/C geocentric
         ! altitude /m, used only to compute chi angles for convolution
-      type(ECR_t), intent(in), optional :: LOS(2)     ! Line-of-sight
-        ! from instrument to tangent, meters.  LOS(1) is (probably) the
-        ! instrument.  LOS(2) is a vector in the direction from the instrument
-        ! to the tangent.  Present if UsingQTM.
+      type(Path_t), intent(inout), optional :: Path    ! Path from
+        ! instrument to tangent.  Path%Lines(1,1) is (probably) the instrument
+        ! location.  Path%Lines(1,2) is a vector in the direction from the
+        ! instrument to the tangent. Path%Lines(1,2) is the tangent or
+        ! reflection point.  Path%Lines(2,2) is a vector in the direction of the
+        ! ray after the tangent, which is either the same as Path%Lines(2,1), or
+        ! the direction of the reflected ray.  Present iff UsingQTM.
       type(s_QTM_t), allocatable, intent(out), optional :: S(:) ! Positions on
-        ! the line of sight are MyLOS%Lines(:,1) + s%s*MyLOS%Lines(:,2).
+        ! the line of sight are Path%Lines(:,1) + s%s*Path%Lines(:,2).
         ! Present if UsingQTM.
+      integer, intent(in), optional :: Facets(:) ! Indices in QTM tree of
+                                       ! facets under Path.  Present only for QTM.
+      integer, intent(in), optional :: Vertices(:) ! Indices in QTM of vertices
+                                       ! adjacent to Path.  Present only for QTM.
 
       ! The following are all present iff fwdModelConf%generateTScat
       real(rp), intent(in), optional :: Scat_Zeta   ! of scattering point
@@ -3700,16 +3730,7 @@ contains
       integer :: I_start, I_end ! Boundaries of coarse path to use
       integer :: Me = -1        ! String index for trace
       integer :: Me_Etc = -1    ! String index for trace
-      type(path_t) :: MyLOS     ! LOS from instrument to tangent, then LOS from
-                                ! tangent.  MyLOS%Lines(1,1) is (probably) the
-                                ! instrument.  MyLOS%Lines(2,1) is a vector in
-                                ! the direction from the instrument to the
-                                ! tangent.  MyLOS%Lines(1,2) is the tangent
-                                ! point.  MyLOS%Lines(2,2) is a vector in the
-                                ! direction of the ray after the tangent, which
-                                ! is either the same as MyLOS%Lines(2,1), or the
-                                ! direction of the reflected ray. Equivalent
-      real(rp) :: R_EQ          ! Earth Radius at true surface
+      real(rp) :: R_EQ          ! Equivalent Earth Radius at true surface
       real(rp) :: REQ_S  ! Equivalent Earth Radius at height reference surface
       real(rp) :: Tan_Ht ! Geometric tangent height, km, from equivalent Earth center
       real(rp) :: Tan_Ht_S ! Tangent height above 1 bar reference surface, km
@@ -3782,16 +3803,16 @@ contains
 
         if ( associated(surfaceHeight) ) then
           call QTM_tangent_metrics ( tan_loc, QTM, h_glgrid, tan_ind_f, & ! in
-            &                    h_surf, tan_ht_s, &                  ! output
-            &                    surf_height=surfaceHeight%values(1,:) ) ! optional
+            &                 h_surf, tan_ht_s, &                     ! output
+            &                 surf_height=surfaceHeight%values(1,:) ) ! optional
         else if ( ptg_i < surfaceTangentIndex ) then
           call QTM_tangent_metrics ( tan_loc, QTM, h_glgrid, tan_ind_f, & ! in
-            &                    h_surf, tan_ht_s, &                  ! output
-            &                    Tan_Press=tan_press,               & ! optional
-            &                    Surf_Temp=temp%values(1,windowstart:windowfinish) )
+            &                 h_surf, tan_ht_s, &                     ! output
+            &                 Tan_Press=tan_press,               &    ! optional
+            &                 Surf_Temp=temp%values(1,windowstart:windowfinish) )
         else
           call QTM_tangent_metrics ( tan_loc, QTM, h_glgrid, tan_ind_f, & ! in
-            &                    h_surf, tan_ht_s )                   ! output
+            &                 h_surf, tan_ht_s )                      ! output
         end if
         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         !!!!!                                                         !!!!!
@@ -3800,19 +3821,19 @@ contains
         !!!!!                                                         !!!!!
         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-        call myLos%new_path
-        myLOS%Lines(:,1) = LOS ! Line of from instrument to tangent point
-        call metrics_3d_QTM ( myLOS, QTM_hGrid%QTM_tree, h=h_glgrid, s=s, &
-          & tangent_index=tan_ind_f, pad=NG, which=horizontal )
+        call path%get_path_ready ! Calculate tangent or reflection, and
+                                 ! continuation of the path thereafter.
+        call metrics_3d_QTM ( path, QTM_hGrid%QTM_tree, h=h_glgrid, s=s, &
+          & tangent_index=tan_ind_f, pad=NG, facets=facets, which=horizontal )
         ! ECR coordinates of points on the line-of-sight are
-        ! MyLOS%Lines(1,1) + S%s(:tan_ind_f) * MyLOS%Lines(2,1) from the
+        ! Path%Lines(1,1) + S%s(:tan_ind_f) * Path%Lines(2,1) from the
         ! instrument to the tangent, and
-        ! MyLOS%Lines(1,2) + S%s(tan_ind_f+ngp1:) * MyLOS%Lines(2,2) from the
+        ! Path%Lines(1,2) + S%s(tan_ind_f+ngp1:) * Path%Lines(2,2) from the
         ! tangent onward. All values of |S%face| should be Top_Face, with
-        ! S%Face < 0 if the intersection is outside the QTM.  S(.)%H_ind is
-        ! the subscript of z_psig, and the first subscript of H_GLGrid, i.e.,
-        ! the index of the zeta surface in the fine zeta grid.  If it's zero,
-        ! S(.) is an Earth-reflecting point below H_GLGrid.
+        ! S%Face < 0 if the intersection is outside the QTM.  S(.)%H_ind is the
+        ! subscript of z_psig, and the first subscript of H_GLGrid, i.e., the
+        ! index of the zeta surface in the fine zeta grid.  If it's zero, S(.)
+        ! is an Earth-reflecting point below H_GLGrid.
       end if
 
       ! Handle Earth-intersecting ray.  It is assumed to reflect from the
@@ -4062,7 +4083,7 @@ contains
         ! Get the rotation matrix for the magnetic field.  Use the
         ! matrix for the MIF having ptan nearest to tan_press.
         mif = minloc(abs(tan_press - &
-        &                  ptan%values(:ptan%template%nosurfs,maf)),1)
+            &            ptan%values(:ptan%template%nosurfs,maf)),1)
 
         ! Dimensions of ECRtoFOV%value3 are ( chans, surfs, instances*cross angles ).
         ! Chans is actually 3x3, so we need to reform it.
@@ -4404,7 +4425,7 @@ contains
       real(rp), intent(inout) :: Xis(:)     ! Store Xi in Xis(I_R) if OK
       real(rp), intent(inout) :: Rads(:,:)  ! Store radiance in Rads(:,I_R)
       real(r4), intent(inout) :: K_Atmos_TScat(:,:,:) ! Store partials in K_Atmos_TScat(:,I_R,:)
-      real(r4), intent(inout) :: K_Temp_TScat(:,:,:) ! Store partials in K_Atmos_TScat(:,I_R,:)
+      real(r4), intent(inout) :: K_Temp_TScat(:,:,:) ! Store partials in K_Temp_TScat(:,I_R,:)
       integer, intent(inout) :: I_R         ! Index in Xis, Update if OK
       real(rp), intent(in), optional :: Scat_Tan_Ht ! Tangent height above
                                             ! earth geometric surface, km, for
@@ -4416,11 +4437,11 @@ contains
       integer :: My_Scat_Index
 
       ! Do the ray tracing for all the signals
-        call one_pointing ( ptg_i, vel_rel, use_r_eq, scat_tan_phi,            &
-          &                 scat_zeta=scat_zeta, scat_phi=scat_phi,            &
-          &                 scat_ht=scat_ht, xi=xi, scat_index=my_scat_index,  &
-          &                 scat_tan_ht=scat_tan_ht, forward=forward, rev=rev, &
-          &                 which=which )
+      call one_pointing ( ptg_i, vel_rel, use_r_eq, scat_tan_phi,            &
+        &                 scat_zeta=scat_zeta, scat_phi=scat_phi,            &
+        &                 scat_ht=scat_ht, xi=xi, scat_index=my_scat_index,  &
+        &                 scat_tan_ht=scat_tan_ht, forward=forward, rev=rev, &
+        &                 which=which )
 
       if ( my_scat_index <= 0 ) return ! No ray to trace
 
@@ -4443,204 +4464,6 @@ contains
 
   end subroutine FullForwardModelAuto
 
-! =====     Private procedures     =====================================
-
-    ! -------------------------------  Interpolate_MIF_to_Tan_Press  -----
-  subroutine Interpolate_MIF_to_Tan_Press ( Nlvl, MAF, PTan, &
-                              & PhiTan,  ScGeocAlt,     LOSVel, &
-                              & Tan_Press, &
-                              & Tan_Phi, Est_ScGeocAlt, Est_LOS_Vel, &
-                              & Q_EarthRadC_sq, Q_Incline, Q_LOS, Q_TanHt, &
-                              & EarthRadC,      Incline,   LOS,   TanHt, &
-                              & Tan_Pt_Geod )
-
-  ! Interpolate minor frame quantities PhiTan, ScGeocAlt, and LOSVel, at
-  ! pressure levels given by PTan, to Tan_Phi, SC_Geoc_Alt and LOS Velocity, at
-  ! pressure levels given by Tan_Press.  If Q_... are present, interpolate
-  ! them too.
-
-    use Geolocation_0, only: ECR_T, H_V_Geod, Lon_T
-    use MLSKinds, only: RK => RP
-    use MLSNumerics, only: InterpolateValues
-    use Constants, only: Deg2Rad
-    use VectorsModule, only: VectorValue_T
-
-    implicit NONE
-
-  ! Inputs
-    integer, intent(in) :: NLvl                   ! Size of integration grid
-    integer, intent(in) :: MAF                    ! MAF under consideration
-    type(vectorValue_T), intent(in) :: PTan       ! Tangent pressure (minor
-                                                  ! frame), zeta
-    type(vectorValue_T), intent(in) :: PhiTan     ! Tangent geodAngle (minor
-                                                  ! frame), degrees
-    type(vectorValue_T), intent(in) :: ScGeocAlt  ! S/C geocentric altitude
-                                                  ! (minor frame), meters
-    type(vectorValue_T), intent(in) :: LOSVel     ! Line of sight velocity
-                                                  ! (minor frame), m/s
-    real(rk), intent(in) :: Tan_Press(:)          ! Tangent pressure levels
-                                                  ! where the output quantities
-                                                  ! are desired, zeta.
-
-  ! Outputs, on pressure levels given by Tan_Press
-    real(rk), intent(out) :: Tan_Phi(:)       ! Radians
-    real(rk), intent(out) :: Est_ScGeocAlt(:) ! Est S/C geocentric altitude /m
-    real(rk), intent(out) :: Est_LOS_Vel(:)
-
-  ! Optional minor frame inputs, for QTM-based model
-    type(vectorValue_T), intent(in), optional :: Q_EarthRadC_sq ! square of orbit-
-                                                  ! plane projected ellipse, m^2
-    type(vectorValue_t), intent(in), optional :: Q_Incline ! Degrees, geocentric
-    type(vectorValue_t), intent(in), optional :: Q_LOS     ! LOS as C + s U
-    type(vectorValue_t), intent(in), optional :: Q_TanHt   ! Geodetic height, above
-                                                  ! plane-projected ellipse, meters
-  ! Optional outputs, interpolated to Tan_Press, for QTM-based model
-    real(rk), intent(out), optional :: EarthRadC(:) ! Plane-projected
-                                                  ! minor axis**2, m**2
-    real(rk), intent(out), optional :: Incline(:) ! Inclination of the plane
-                                                  ! defined by LOS and the
-                                                  ! Earth center, degrees.
-    type(ECR_t), intent(out), optional :: LOS(:,:)! (1,:) are points on LOS,
-                                                  ! (2,:) are unit directions.
-    real(rk), intent(out), optional :: TanHt(:)   ! Tangent height, m
-    type(H_V_Geod), intent(out), optional :: Tan_Pt_Geod(:) ! Tangent point
-                                                  ! coordinates at Tan_Press
-                                                  ! (lon,lat,geod ht) degrees,m
-
-  ! Local variables
-    integer :: I, IP, J, K, SUB
-!   real(rk), dimension(merge(size(tan_press),0,present(tan_pt_Geod))) :: Lat, Lon
-    real(rk), dimension(size(tan_press)) :: Lat, Lon
-    real(rk) :: RZ ! for sorting Z_MIF
-    integer :: P(ptan%template%noSurfs) ! Permutation result of sorting Z_MIF
-    real(rk) :: Z_MIF(0:ptan%template%noSurfs)    ! Zetas for sorting MIFs
-                                                  ! 0'th is a sentinel
-
-    sub = size(tan_press) - nlvl ! # subsurface levels = SurfaceTangentIndex-1
-
-    ! Use first MIF value for subsurface values
-    tan_phi(1:sub) = phitan%values(1,maf)
-    est_scgeocalt(1:sub) = scGeocalt%values(1,maf)
-    est_los_vel(1:sub) = losvel%values(1,maf)
-
-    ! Since the interpolateValues routine needs the OldX array to be sorted
-    ! we have to sort ptan%values and re-arrange phitan%values, scgeocalt%values
-    ! and losvel%values accordingly
-
-    k = ptan%template%noSurfs
-
-    z_mif(0) = -0.5 * huge(1.0_rk)    ! Sentinel to simplify sort. Use 0.5*Huge
-                                      ! instead of Huge in case some compiler
-                                      ! uses subtraction to compare.
-    z_mif(1:k) = ptan%values(1:k,maf) ! Zeta
-    p = [ ( i, i = 1, k ) ]           ! Initial permutation of Z_MIF
-
-    ! Sort Z_MIF.
-    ! Use insertion sort since things might be nearly in order already.
-    ! Compute the permutation of Z_MIF that puts it in order, to permute
-    ! other minor-frame quantities from which we interpolate.
-    do i = 2, k ! Invariant: z_mif(0:i-1) are sorted.
-      rz = z_mif(i)
-      ip = p(i)
-      if ( rz < z_mif(i-1) ) then
-        j = i
-        do ! Find where to insert RZ.  Make room as we go.
-          z_mif(j) = z_mif(j-1)
-          p(j) = p(j-1)
-          j = j - 1
-          if ( rz >= z_mif(j-1) ) exit ! z_mif(0) is -huge(1.0_rk)
-        end do
-        z_mif(j) = rz
-        p(j) = ip
-      end if
-    end do
-
-    ! Interpolate from minor frame zetas to pointing grid zetas.
-    ! Tangent phi.  This actually isn't interesting for QTM.
-    call interpolateValues ( z_mif(1:k),        phitan%values(p,maf), &
-                           & tan_press(sub+1:), tan_phi(sub+1:), &
-                           & METHOD = 'L', EXTRAPOLATE='C' )
-    tan_phi = tan_phi * deg2rad
-    ! Geocentric altitude
-    call interpolateValues ( z_mif(1:k),        scgeocalt%values(p,maf), &
-                           & tan_press(sub+1:), est_scgeocalt(sub+1:), &
-                           & METHOD='L', EXTRAPOLATE='C' )
-    ! LOS velocity
-    call interpolateValues ( z_mif(1:k),        losvel%values(p,maf), &
-                           & tan_press(sub+1:), est_los_vel(sub+1:), &
-                           & METHOD='L', EXTRAPOLATE='C' )
-
-    if ( present(Q_EarthRadC_sq) ) then
-      earthRadC(:sub) = Q_EarthRadC_sq%values(1,maf)
-      call interpolateValues ( z_mif(1:k),        Q_EarthRadC_sq%values(p,maf), &
-                             & tan_press(sub+1:), earthRadC(sub+1:), &
-                             & METHOD = 'L', EXTRAPOLATE='C' )
-    end if
-
-    if ( present(Q_Incline) ) then
-      incline(:sub) = Q_Incline%values(1,maf)
-      call interpolateValues ( z_mif(1:k),        Q_Incline%values(p,maf), &
-                             & tan_press(sub+1:), incline(sub+1:), &
-                             & METHOD = 'L', EXTRAPOLATE='C' )
-    end if
-
-    ! ==========================================================================
-    ! !!!!! This doesn't create LOS for Earth-intersecting rays correctly. !!!!!
-    ! !!!!! I'm not sure what to do here because we don't know which MIF   !!!!!
-    ! !!!!! zetas are for intersecting rays.  Even if we did, we don't     !!!!!
-    ! !!!!! have zetas for subsurface tangent points to which to           !!!!!
-    ! !!!!! interpolate them.                                              !!!!!
-    ! ==========================================================================
-    if ( present(Q_LOS) ) then
-      do i = 1, 2 ! 1 = C, 2 = U
-        ! Use the first MAF value for subsurface values, if any.
-        ! ==================================================================
-        ! !!!!! This is wrong.  LOS(1,:) ought to be the vector from   !!!!!
-        ! !!!!! the instrument to the intersection point, and LOS(2,:) !!!!!
-        ! !!!!! ought to be the vector that's a reflection of the      !!!!!
-        ! !!!!! direction to the intersection, but we don't know what  !!!!!
-        ! !!!!! direction that is.  Tangent_Quantities does compute    !!!!!
-        ! !!!!! MIF LOS correctly, but how do we interpolate that to   !!!!!
-        ! !!!!! pointing-grid LOS without subsurface MIF zetas?        !!!!!
-        ! !!!!! Eventually, we could do the radiative transfer on MIF  !!!!!
-        ! !!!!! rays instead of aiming at an hypothetical subsurface   !!!!!
-        ! !!!!! tangent pressure.  This would affect many places,      !!!!!
-        ! !!!!! setting up convolution.                                !!!!!
-        ! ==================================================================
-        LOS(i,:sub) = ECR_t(Q_LOS%value3(3*i-2:3*i,1,maf))
-        ! Now interpolate rays that don't intersect the surface from MIF zetas
-        ! to pointing-grid zetas.
-        do j = 1, 3 ! XYZ
-          call interpolateValues ( z_mif(1:k),        Q_LOS%value3(3*i-3+j,p,maf), &
-                                 & tan_press(sub+1:), LOS(i,sub+1:)%xyz(j), &
-                                 & METHOD = 'L', EXTRAPOLATE='C' )
-        end do
-      end do
-    end if
-
-    if ( present(Q_TanHt) ) then
-      tanHt(:sub) = Q_TanHt%values(1,maf)
-      call interpolateValues ( z_mif(1:k),        Q_TanHt%values(p,maf), &
-                             & tan_press(sub+1:), tanHt(sub+1:), &
-                             & METHOD = 'L', EXTRAPOLATE='C' )
-      if ( present(tan_pt_Geod) ) then
-        call interpolateValues ( z_mif(1:k),        phitan%template%geodLat(p,maf), &
-                               & tan_press(sub+1:), lat(sub+1:), &
-                               & METHOD = 'L', EXTRAPOLATE='C' )
-        call interpolateValues ( z_mif(1:k),        phitan%template%lon(p,maf), &
-                               & tan_press(sub+1:), lon(sub+1:), &
-                               & METHOD = 'L', EXTRAPOLATE='C' )
-        ! Subsurface values all the same.  These might also be changed to MIF
-        ! some day.
-        tan_pt_geod(:sub) = h_v_geod ( lon_t(lon(1)), lat(1), tanHt(1) )
-        do i = 1, nlvl
-          tan_pt_geod(sub+i) = h_v_geod ( lon_t(lon(sub+i)), lat(sub+i), tanHt(sub+i) )
-        end do
-      end if
-    end if
-
-  end subroutine Interpolate_MIF_to_Tan_Press
-
 ! ------------------------------------------------  not_used_here  -----
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
@@ -4655,6 +4478,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.370  2016/11/03 19:11:47  vsnyder
+! Inching toward 3D forward model
+!
 ! Revision 2.369  2016/10/25 22:27:39  vsnyder
 ! Inching toward 3D QTM
 !
