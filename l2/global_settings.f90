@@ -405,9 +405,10 @@ contains
       if ( son == 0 ) exit
       L2CFNODE = son
       reset = .false.
-
       do j = 2, nsons(key) ! fields of the "time" specification
         gson = subtree(j, key)
+        if ( gson == 0 ) exit
+        if ( node_id(son) == n_equal ) cycle ! Why can't we loop over params ?
         field = get_field_id(gson)   ! tree_checker prevents duplicates
         if (nsons(gson) > 1 ) gson = subtree(2,gson) ! Gson is value
         select case ( field )
@@ -417,6 +418,7 @@ contains
           ! Shouldn't get here if the type checker worked
         end select
       end do ! j = 2, nsons(key)
+
       if ( node_id(son) == n_equal ) then
         sub_rosa_index = sub_rosa(subtree(2,son))
         param = subtree(1,son)
@@ -635,6 +637,7 @@ contains
             call time_now ( t1 )
             timing = .true.
           end if
+          call output ( ' Finished time command in global settings', advance='yes' )
         case ( s_tGrid, s_vGrid )
           call decorate ( son, AddVGridToDatabase ( vGrids, &
             & CreateVGridFromMLSCFInfo ( name, son, l2gpDatabase, returnStatus ) ) )
@@ -1332,6 +1335,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.170  2016/11/08 17:32:35  pwagner
+! Use SayTime subroutine from time_m module; process /reset field
+!
 ! Revision 2.169  2016/09/23 00:11:52  pwagner
 ! Improve appearance of Dumps
 !
