@@ -130,13 +130,9 @@ contains
         ! the same value as the one we get from XZ_to_Geod below.
         call exact_line_nearest_ellipsoid ( line, p=tangent )
       end select
-      ! Produce output LOS as tangent point or surface intersection C',
-      ! and an unit vector U' along the line of sight
-      LOS%value3(1:3,i,MAF) = tangent%xyz    ! C'
-      LOS%value3(4:6,i,MAF) = line(2)%xyz    ! U'
-      ! Normal to plane containing LOS and Earth center is C .cross. U.
-      normal = line(1) .cross. line(2)
-      normal = normal / normal%norm2()       ! Make normal an unit vector.
+
+      ! Unit normal to plane containing LOS and Earth center is C .crossnorm. U.
+      normal = line(1) .crossnorm. line(2)
       r = norm2 ( normal%xyz(1:2) ) ! Radius of unit normal in plane parallel
                                     ! to the Equator.
       ! Inclination of plane containing LOS and Earth center = 90 - atan(Z / R).
@@ -153,8 +149,7 @@ contains
       x = tangent .dot. equator
       ! Compute the unit "pole" of the plane-projected ellipse, which would be
       ! the north pole (0,0,1) if the inclination were 90 degrees.
-      pole = normal .cross. equator
-      pole = pole / pole%norm2() ! Make it an unit vector.
+      pole = normal .crossnorm. equator
       ! Z coordinate of tangent point w.r.t. the plane-projected ellipse is
       ! the projection of C' onto its pole.
       z = pole .dot. tangent
@@ -178,10 +173,10 @@ contains
 
     subroutine Choose_Nearest ( Tangent, Intersections )
       ! Choose the intersection nearest the instrument.
-      type(ecr_t)              :: tangent
-      type(ECR_t)              :: Intersections(:)
+      type(ECR_t), intent(out) :: Tangent
+      type(ECR_t), intent(in)  :: Intersections(:)
       ! Internal variables
-      type(ecr_t), dimension(size(intersections)) :: diff
+      type(ECR_t), dimension(size(intersections)) :: diff
       real, dimension(size(intersections))        :: n2
       integer, dimension(1)                       :: k
       ! Executable
@@ -243,7 +238,7 @@ contains
       integer, intent(in) :: Shape
       if ( v%template%name == 0 ) then
         call MLSMessage ( MLSMSG_Error, moduleName, &
-          & "Quantity " // name // " does not have %s ECR components.", shape )
+          & "Quantity " // name // " does not have %d ECR components.", shape )
       else
         call MLSMessage ( MLSMSG_Error, moduleName, &
           & "Quantity %s does not have %d ECR components.", &
@@ -267,6 +262,11 @@ contains
 end module Tangent_Quantities_m
 
 ! $Log$
+! Revision 2.5  2016/11/09 00:34:13  vsnyder
+! Don't put first line reference at the tangent point.  Use .crossnorm. for
+! cross products that should return unit vectors.  Specify intents for
+! arguments of Choose_Nearets.  Correct an error message.
+!
 ! Revision 2.4  2016/08/20 00:54:17  vsnyder
 ! Correct a typo in a comment
 !
