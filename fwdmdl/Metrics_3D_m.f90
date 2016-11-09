@@ -25,7 +25,9 @@ module Metrics_3D_m
                      ! interest?
 
   interface Metrics_3D
-    module procedure Metrics_3D_Grid, Metrics_3D_QTM, Metrics_3D_QTM_1
+    module procedure Metrics_3D_QTM   ! The entire path
+    module procedure Metrics_3D_QTM_1 ! Half of the path, before or after
+                                      ! tangent or reflection
   end interface Metrics_3D
 
   ! Which surface penetrations to put into the path:
@@ -43,88 +45,7 @@ module Metrics_3D_m
 
 contains
 
-  subroutine Metrics_3D_Grid ( Path, Grid, S, Tangent_Index, Which )
-    ! Given a line defined by a point in ECR, and a vector in ECR parallel
-    ! to that line, compute all intersections of that line with a face of
-    ! the grid.
-
-    ! Lines(2,1) and Lines(2,2) are made unit vectors here.
-
-    ! The given line is Lines(1,1) + s * Lines(2,1).  A line defined by
-    ! Lines(1,2) + s * Lines(2,2) is produced, which is the continuation of
-    ! Lines(:,1) after the tangent point if Lines(:,1) does not intersect the
-    ! Earth reference ellipsoid, or the reflection of Lines(:,1) if it does
-    ! intersect the Earth reference ellipsoid.  Lines(2,2) is an unit vector.
-
-    ! The tangent point is Lines(1,2).
-
-    ! Values of S(1:Tangent_Index) are in order such that the first one is
-    ! farthest from the tangent point in the direction toward Lines(1,1) and
-    ! the last one is the tangent point.  Values of S(Tangent_Index:) are in
-    ! order such that the first one is the tangent point (again) and the
-    ! last one is farthest from Lines(1,1).
-
-    use Geolocation_m, only: Geolocation_t
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-    use Path_Representation_m, only: Path_t
-    use QTM_Interpolation_Weights_3D_m, only: S_QTM_t
-
-    type(path_t), intent(inout) :: Path ! Path%Lines(1,1) + s * Path%Lines(2,1)
-                                   ! defines the initial line, i.e., before
-                                   ! the tangent point.
-                                   ! Path%Lines(2,1) + s * Path%Lines(2,2)
-                                   ! defines the line after the tangent point.
-    type(geolocation_t), intent(inout), target :: Grid
-    class(S_QTM_t), intent(out), allocatable :: S(:) ! S-values, and interpolation
-                                   ! coefficients
-    integer, intent(out) :: Tangent_Index ! Index in S of tangent or
-                                   ! intersection.
-                                   ! S(Tangent_Index) == S(Tangent_Index+1)
-    integer, intent(in), optional :: Which ! Which intersections to detect,
-                                   ! default all
-
-    ! Type(S_QTM_t) records the S-values of interesting places along lines.
-    ! We don't want to use a two-dimensional array because the numbers of
-    ! interesting places might not be the same on different lines.
-
-    type :: Temp
-      type(S_QTM_t), allocatable :: S(:)
-    end type Temp
-
-    real(rg), pointer :: H(:,:)
-    integer :: I
-    type(Temp) :: S_Int(2) ! Intersections from Metrics_3D_QTM_1
-
-    call path%get_path_ready
-
-    ! Get the surface coordinates of the surface grid, and the height profiles
-    ! at each surface position.
-    if ( allocated(grid%QTM_tree%ZOT_in) ) then
-      if ( grid%QTM_tree%geodetic ) then
-        h => grid%GeodV2%v
-      else
-        h => grid%GeocV2%v
-      end if
-      if ( .not. associated(h) ) then
-        call MLSMessage ( MLSMSG_Error, moduleName, "Need heights for QTM grids" )
-      end if
-
-      ! Do the real work, one half at a time -- before and after the
-      ! tangent or intersection.
-      do i = 1, size(s_int,1)
-        call Metrics_3D_QTM_1 ( Path%Lines(:,i), path%sMin(i), path%sMax(i), &
-          & grid%QTM_tree, h, s_int(i)%s, which )
-      end do
-      ! Concatenate the two halves of the path
-      allocate ( s, source=[ ( s_int(i)%s, i = 1, size(s_int,1) ) ] )
-      tangent_index = size(s_int(1)%s,1)
-    else
-      call MLSMessage ( MLSMSG_Error, moduleName, "Can only handle QTM grids" )
-    end if
-
-  end subroutine Metrics_3D_Grid
-
-  subroutine Metrics_3D_QTM ( Path, QTM_Tree, H, S, Tangent_Index, Pad, &
+  subroutine Metrics_3D_QTM ( Path, QTM_Tree, H, S, Tangent_Index, Pad, Facets, &
                             & Which )
     ! Given a line defined by a point in ECR, and a vector in ECR parallel
     ! to that line, compute all intersections of that line with a face of
@@ -167,6 +88,7 @@ contains
     integer, intent(out) :: Tangent_Index ! Index in S of tangent or
                                    ! intersection.
                                    ! S(Tangent_Index) == S(Tangent_Index+1)
+    integer, intent(in) :: Facets(:) ! Facets under Path
     integer, intent(in) :: Pad     ! Amount of padding to introduce in S between
                                    ! before-the-tangent and after-the-tangent.
     integer, intent(in), optional :: Which ! Which intersections to detect,
@@ -185,7 +107,7 @@ contains
     ! tangent or Earth-surface intersection.
     do i = 1, 2
       call Metrics_3D_QTM_1 ( path%Lines(:,i), path%sMin(i), path%sMax(i), &
-        & QTM_tree, h, s_int(i)%s, which )
+        & QTM_tree, h, s_int(i)%s, facets, which )
     end do
     ! Concatenate the two halves of the path, with Pad copies of the tangent
     ! between.  s(tangent_index:tangent_index+pad+1) should all be the same.
@@ -198,7 +120,7 @@ contains
   end subroutine Metrics_3D_QTM
 
   subroutine Metrics_3D_QTM_1 ( Line, SMin, SMax, QTM_Tree, H, Intersections, &
-                              & Which )
+                              & Facets, Which )
 
     ! Given a line defined by a point in ECR, and a vector in ECR parallel
     ! to that line, compute all intersections of that line with a face of
@@ -254,14 +176,13 @@ contains
                                            ! surface of any prism of the
                                            ! QTM-based 3D grid, provided they
                                            ! are within [SMin, SMax]
+    integer, intent(in) :: Facets(:)       ! Facets under Line
     integer, intent(in), optional :: Which ! Which intersections to detect,
                                            ! default all
 
     type(S_QTM_t), allocatable :: Cone_Int(:) ! All intersections of Line with
                                            ! a latitude cone of the QTM
-    integer :: F                           ! Index of a facet in the QTM
-    integer :: I, J, K, L
-    logical :: Keep                        ! "Keep the intersection"
+    integer :: I, J, K
     type(S_QTM_t), allocatable :: Inside(:) ! [ Cone_Int, V_Int, Top_Int ]
     integer :: MyWhich                     ! Which intersections to detect
     integer :: N_Cone                      ! Number of intersections of Line
@@ -464,102 +385,107 @@ contains
       ! of curvature as the Earth's surface at the circumcenter of the
       ! QTM facet, and pass through the three points at the height level
       ! above the facet.
-      type(ECR_t) :: C                     ! Vector from V(3) to circumcenter
-                                           ! of facet V (see below)
-      type(ECR_t) :: CC                    ! Circumcenter of facet V (see
-                                           ! below) = V(3) + C, or its centroid
-      type(ECR_t) :: Center                ! Center of sphere containing facet V
-      real(rg) :: G(3)                     ! Normalized geocentric angular
-                                           ! distance coordinates
-      type(h_v_geod) :: Geod               ! Geodetic coordinates of CC
-      type(h_v_geod) :: Geod_f(3)          ! Geodetic coordinates of corners
-                                           ! of facet
-      integer :: M
-      type(ECR_t) :: N                     ! Normal vector to V (see below)
-      real(rg) :: N2                       ! |N|**2
-      real(rg) :: R                        ! Mean radius of curvature at the
-                                           ! geodetic latitude of the
-                                           ! circumcenter of a horizontal
-                                           ! boundary surface of a facet
-      real(rg), allocatable :: S_Int(:)    ! Intersections of Line with the
-                                           ! horizontal boundary of one facet
-                                           ! of the QTM
-      type(ECR_t) :: V(3)                  ! Vertices of a horizontal boundary
-                                           ! surface above a QTM facet
+      type(ECR_t) :: C                  ! Vector from V(3) to circumcenter
+                                        ! of facet V (see below)
+      type(ECR_t) :: CC                 ! Circumcenter of facet V (see
+                                        ! below) = V(3) + C, or its centroid
+      type(ECR_t) :: Center             ! Center of sphere containing facet V
+      integer :: F                      ! Index of a facet, from Facets(:)
+      real(rg) :: G(3)                  ! Normalized geocentric angular
+                                        ! distance coordinates
+      type(h_v_geod) :: Geod            ! Geodetic coordinates of CC
+      type(h_v_geod) :: Geod_f(3)       ! Geodetic coordinates of corners
+                                        ! of facet                                        
+      integer :: I, J, K, L, M
+      logical :: Keep                   ! "Keep the intersection"
+      type(ECR_t) :: N                  ! Normal vector to V (see below)
+      real(rg) :: N2                    ! |N|**2
+      real(rg) :: R                     ! Mean radius of curvature at the
+                                        ! geodetic latitude of the
+                                        ! circumcenter of a horizontal
+                                        ! boundary surface of a facet
+      real(rg), allocatable :: S_Int(:) ! Intersections of Line with the
+                                        ! horizontal boundary of one facet
+                                        ! of the QTM
+      type(ECR_t) :: V(3)               ! Vertices of a horizontal boundary
+                                        ! surface above a QTM facet
 
-      do i = 1, size(qtm_tree%q)
-        if ( qtm_tree%q(i)%depth == qtm_tree%level ) then
-         ! Tree node represents a facet of the finest refinement.
-          do j = 1, n_height
+      do i = 1, size(facets)
+        f = facets(i)
+        ! We know qtm_tree%q(f)%depth == qtm_tree%level, f.e., it's a facet
+        ! at the finest level of refinement.
+        do j = 1, n_height
 
-            do k = 1, 3
-            ! Get geodetic coordinates of vertices of QTM facet V at height
-            ! H(j,.) above the Earth's surface.
-              l = min(qtm_tree%q(i)%ser(k),size(h,2)) ! Coherent?
-              geod_f(k) = h_v_geod ( QTM_tree%geo_in(qtm_tree%q(i)%ser(k))%lon, &
-                                   & QTM_tree%geo_in(qtm_tree%q(i)%ser(k))%lat, &
-                                   & h(j,l) )
-              ! Get the ECR coordinates of geod_f
-              v(k) = geod_f(k)%ecr()
-            end do
-            ! Get the vector C from V(3) to the circumcenter of facet V, a
-            ! normal N to the plane containing V, and N2 = |N|^2
-            call circumcenter ( v, c, n, n2 )
-            ! Get the circumcenter of facet V
-            cc = c + v(3)
-            ! Get the geodetic coordinates of the circumcenter of facet V
-            geod = cc%geod()
-            ! Get the radius of curvature at CC.  We assume that the geodetic
-            ! height of the boundary surface is so small that the radius of
-            ! curvature is essentially the same as at the Earth's surface.
-            r = radius_of_curvature_mean ( geod%lat )
-            ! Get the center of the sphere having mean radius of curvature R
-            ! and including V, and center nearest the Earth's center
-            call center_of_sphere ( v(3), cc, n, n2, r, center )
-            ! Compute intersections of Line with the sphere at Center
-            ! and radius R
-            call line_and_sphere ( r, line, s=s_int, center=center )
-            ! Eliminate intersections not in [SMin,SMax]
-            m = size(s_int)
-            do k = 1, m
-              keep = s_int(k) >= sMin .and. s_int(k) <= sMax
-              if ( keep ) then
-                ! Get the geodetic coordinates of the centroid of facet V
-                cc = ( v(1) + v(2) + v(3) ) / 3.0_rg
-                geod = cc%geod()
-                ! Keep the intersection if it's with the current facet.
-                keep = i == QTM_tree%find_facet ( geod, stack )
-              end if
-              if ( keep ) then
-                n_top = n_top + 1
-                top_int(n_top) = S_QTM_t(s=s_int(k), facet=i, h=geod%v, &
-                               & face=top_face, n_coeff=3, h_ind=j,     &
-                               & ser=qtm_tree%q(i)%ser )
-                do l = 1, 3 ! Compute horizontal interpolation coefficients.
-                            ! Use normalized geocentric angular distances.
-                            ! C and CC are temporary variables here
-                  cc = line(1) + s_int(k) * line(2)
-                  cc = cc / cc%norm2()
-                  c = QTM_tree%geo_in(qtm_tree%q(i)%ser(l))%ecr(norm=.true.)
-                  g(i) = acos( cc .dot. c )
-                end do
-                top_int(n_top)%coeff(1) = 0.5 * ( 1.0 - g(2) - g(3) )
-                top_int(n_top)%coeff(2) = 0.5 * ( 1.0 - g(1) - g(3) )
-                top_int(n_top)%coeff(3) = 0.5 * ( 1.0 - g(1) - g(2) )
-              end if
-            end do
+          do k = 1, 3
+          ! Get geodetic coordinates of vertices of QTM facet V at height
+          ! H(j,.) above the Earth's surface.
+            l = min(qtm_tree%q(f)%ser(k),size(h,2)) ! Coherent?
+            geod_f(k) = h_v_geod ( QTM_tree%geo_in(qtm_tree%q(f)%ser(k))%lon, &
+                                 & QTM_tree%geo_in(qtm_tree%q(f)%ser(k))%lat, &
+                                 & h(j,l) )
+            ! Get the ECR coordinates of geod_f
+            v(k) = geod_f(k)%ecr()
           end do
-        end if
+          ! Get the vector C from V(3) to the circumcenter of facet V, a
+          ! normal N to the plane containing V, and N2 = |N|^2
+          call circumcenter ( v, c, n, n2 )
+          ! Get the circumcenter of facet V
+          cc = c + v(3)
+          ! Get the geodetic coordinates of the circumcenter of facet V
+          geod = cc%geod()
+          ! Get the radius of curvature at CC.  We assume that the geodetic
+          ! height of the boundary surface is so small that the radius of
+          ! curvature is essentially the same as at the Earth's surface.
+          r = radius_of_curvature_mean ( geod%lat )
+          ! Get the center of the sphere having mean radius of curvature R
+          ! and including V, and center nearest the Earth's center
+          call center_of_sphere ( v(3), cc, n, n2, r, center )
+          ! Compute intersections of Line with the sphere at Center
+          ! and radius R
+          call line_and_sphere ( r, line, s=s_int, center=center )
+          ! Eliminate intersections not in [SMin,SMax]
+          m = size(s_int)
+          do k = 1, m
+            keep = s_int(k) >= sMin .and. s_int(k) <= sMax
+            if ( keep ) then
+              ! Get the geodetic coordinates of the centroid of facet V
+              cc = ( v(1) + v(2) + v(3) ) / 3.0_rg
+              geod = cc%geod()
+              ! Keep the intersection if it's with the current facet.
+              keep = f == QTM_tree%find_facet ( geod, stack )
+            end if
+            if ( keep ) then
+              n_top = n_top + 1
+              top_int(n_top) = S_QTM_t(s=s_int(k), facet=f, h=geod%v, &
+                             & face=top_face, n_coeff=3, h_ind=j,     &
+                             & ser=qtm_tree%q(f)%ser )
+              do l = 1, 3 ! Compute horizontal interpolation coefficients.
+                          ! Use normalized geocentric angular distances.
+                          ! C and CC are temporary variables here
+                cc = line(1) + s_int(k) * line(2)
+                cc = cc / cc%norm2()
+                c = QTM_tree%geo_in(qtm_tree%q(f)%ser(l))%ecr(norm=.true.)
+                g(f) = acos( cc .dot. c )
+              end do
+              top_int(n_top)%coeff(1) = 0.5 * ( 1.0 - g(2) - g(3) )
+              top_int(n_top)%coeff(2) = 0.5 * ( 1.0 - g(1) - g(3) )
+              top_int(n_top)%coeff(3) = 0.5 * ( 1.0 - g(1) - g(2) )
+            end if
+          end do
+        end do
       end do
     end subroutine Intersect_Line_And_Horizontal_Boundary
 
     subroutine Intersect_Line_And_Latitude_Cone
       ! Get all intersections of Line with latitude cones of the QTM.
       real(rg) :: Eta_h(2)    ! Interpolation coefficient for longitude
+      integer :: F            ! Index of a facet, from Facets(:)
       class(h_v_t), allocatable :: Geo     ! H_V_Geoc or H_V_Geod, depending
                               ! upon QTM_tree%geo_in
       integer :: H1, H2       ! Subscripts for second dimension
                               ! of H at non-polar vertices of F
+      integer :: I, J
+      logical :: Keep         ! "Keep the intersection"
       real(rg), allocatable :: S_Int(:)    ! Intersections of Line with
                               ! one latitude cone of the QTM.
       integer :: S1, S2       ! Serial numbers of X or Y
@@ -619,8 +545,7 @@ contains
       ! that are not on latitude cones.  These are faces for which one vertex
       ! of the QTM is a polar vertex and the other one is not.
       real(rg) :: Eta_h(2)    ! Interpolation coefficient for latitude
-      integer :: F(2,2)       ! Indices of QTM vertices of edges not on a
-                              ! latitude cone
+      integer :: F            ! Index of a facet, from Facets(:)
       integer, parameter :: Faces(2) = [ X_face, Y_face ]
       type(h_v_geod) :: Geod_f(2,2) ! Geodetic coordinates of a point on a plane
       type(h_v_geod) :: Geod_int    ! Geodetic coordinates of intersection
@@ -628,81 +553,83 @@ contains
                               ! one polar vertex, so its serial number, along
                               ! with the height, can be used to identify a face
       real(rg) :: H1, H2      ! Heights at Eta on top and bottom boundaries
+      integer :: I
       type(ECR_t) :: Int      ! Intersection, if there is one
       integer :: Intersect    ! -1 => no intersection,
                               !  0 => line is in the plane,
                               ! +1 => one intersection.
-      integer :: M, N
+      integer :: J, K, L, M, N
       type(ECR_t) :: Plane(4) ! Vertices that define a vertical face
       integer :: SN(0:1)      ! Serial numbers of QTM vertices of vertical face
       real(rg) :: S_Int       ! S-value of the intersection, if there is one
+      integer :: V(2,2)       ! Indices of QTM vertices of edges not on a
+                              ! latitude cone
 
       allocate ( v_int(2*size(QTM_Tree%QTM_lats)) )
       n_vert = 0
       hit = .false.
-   facet: do i = 1, size(qtm_tree%q) ! Examine all the facets
-        if ( qtm_tree%q(i)%depth == qtm_tree%level ) then
-          ! Tree node represents a facet of the finest refinement.
-          ! Get indices of vertices of edges not on a latitude cone.
-          ! One of the vertices of such an edge will be the pole node.
-          f(1,:) = 6 - qtm_tree%q(i)%xn - qtm_tree%q(i)%yn ! pole node
-          f(2,1) = qtm_tree%q(i)%xn
-          f(2,2) = qtm_tree%q(i)%yn
-          do j = 1, size(h,1)-1
-            do k = 1, 2     ! Which vertical plane
-              if ( hit(j,f(2,k)) ) cycle facet ! Already checked this face
-              do m = 1, 2   ! 1 => polar, 2 => non-polar vertex of the QTM
-                ! Get geodetic and then ECR coordinates of vertices of vertical
-                ! plane K at heights H(j:j+1,.) above the Earth's surface.
-                do n = 0, 1
-                  sn(n) = min(qtm_tree%q(i)%ser(f(m,k)),size(h,2))
-                  geod_f(m,n+1) = h_v_geod ( QTM_tree%geo_in(qtm_tree%q(i)%ser(f(m,k)))%lon, &
-                                           & QTM_tree%geo_in(qtm_tree%q(i)%ser(f(m,k)))%lat, &
-                                           & h(j+n,sn(n)) )
-                  plane(2*n+m) = geod_f(m,n+1)%ECR()
-                end do ! n
-                ! Geod_f(1,:) are on vertical edge at polar vertex
-                ! Geod_f(2,:) are on vertical edge at non-polar
-                ! Geod_f(:,1) are on bottom surface
-                ! Geod_f(:,2) are on top surface
-              end do ! m
-              call line_and_plane ( plane(1:3), line, intersect, int, s_int )
-              if ( s_int < sMin.or. s_int > sMax ) cycle ! Outside range
-              if ( intersect >= 0 ) then
-                if ( intersect == 0 ) then ! Place intersection at the centroid
-                  int = 0.25_rg * ( plane(1) + plane(2) + plane(3) + plane(4) )
-                  l = maxloc(abs(line(2)%xyz),1) ! don't divide by zero; assume
-                                                 ! line(2) is not the zero vector
-                  s_int = ( int%xyz(l) - line(1)%xyz(l) ) / line(2)%xyz(l)
-                end if
-                call geod_int%from_ECR(int) ! Get geodetic coordinates of Int
-                ! We're looking at a face that's not on a parallel of latitude.
-                ! Therefore, if the line intersects the face, the latitude of
-                ! the intersection will be between the minimum and maximum
-                if ( geod_int%lat >= minval(geod_f(:,1)%lat) .and. &
-                   & geod_int%lat <= minval(geod_f(:,1)%lat) ) then
-                  ! Intersection is within horizontal range.  Interpolate
-                  ! heights along top and bottom edges to geod_int%lat.
-                  eta_h(1) = ( geod_f(2,1)%lat - geod_int%lat ) / &
-                           & ( geod_f(2,1)%lat - geod_f(1,1)%lat )
-                  eta_h(2) = 1 - eta_h(2)
-                  h1 = eta_h(1) * geod_f(2,1)%v + eta_h(2) * geod_f(1,1)%v
-                  h2 = eta_h(1) * geod_f(2,2)%v + eta_h(2) * geod_f(1,2)%v
-                  if ( geod_int%v >= h1 .and. geod_int%v <= h2 ) then
-                    ! Intersection is within vertical range too
-                    n_vert = n_vert + 1
-                    v_int(n_vert) = S_QTM_t( s=s_int, facet=i, h=geod_int%v, &
-                                           & face=faces(m), n_coeff=2 )
-                    v_int(n_vert)%ser(:2) = qtm_tree%q(i)%ser(f(:,1))
-                    ! Interpolation coefficients are in latitude only.
-                    v_int(n_vert)%coeff(:2) = eta_h
-                    hit(j,f(2,k)) = .true.
-                  end if
+   facet: do i = 1, size(facets) ! Examine all the facets under the path
+        f = facets(i)
+        ! F is the index of a facet of the finest refinement.
+        ! Get indices of vertices of edges not on a latitude cone.
+        ! One of the vertices of such an edge will be the pole node.
+        v(1,:) = 6 - qtm_tree%q(f)%xn - qtm_tree%q(f)%yn ! pole node
+        v(2,1) = qtm_tree%q(f)%xn
+        v(2,2) = qtm_tree%q(f)%yn
+        do j = 1, size(h,1)-1
+          do k = 1, 2     ! Which vertical plane
+            if ( hit(j,v(2,k)) ) cycle facet ! Already checked this face
+            do m = 1, 2   ! 1 => polar, 2 => non-polar vertex of the QTM
+              ! Get geodetic and then ECR coordinates of vertices of vertical
+              ! plane K at heights H(j:j+1,.) above the Earth's surface.
+              do n = 0, 1
+                sn(n) = min(qtm_tree%q(f)%ser(v(m,k)),size(h,2))
+                geod_f(m,n+1) = h_v_geod ( QTM_tree%geo_in(qtm_tree%q(f)%ser(v(m,k)))%lon, &
+                                         & QTM_tree%geo_in(qtm_tree%q(f)%ser(v(m,k)))%lat, &
+                                         & h(j+n,sn(n)) )
+                plane(2*n+m) = geod_f(m,n+1)%ECR()
+              end do ! n
+              ! Geod_f(1,:) are on vertical edge at polar vertex
+              ! Geod_f(2,:) are on vertical edge at non-polar
+              ! Geod_f(:,1) are on bottom surface
+              ! Geod_f(:,2) are on top surface
+            end do ! m
+            call line_and_plane ( plane(1:3), line, intersect, int, s_int )
+            if ( s_int < sMin.or. s_int > sMax ) cycle ! Outside range
+            if ( intersect >= 0 ) then
+              if ( intersect == 0 ) then ! Place intersection at the centroid
+                int = 0.25_rg * ( plane(1) + plane(2) + plane(3) + plane(4) )
+                l = maxloc(abs(line(2)%xyz),1) ! don't divide by zero; assume
+                                               ! line(2) is not the zero vector
+                s_int = ( int%xyz(l) - line(1)%xyz(l) ) / line(2)%xyz(l)
+              end if
+              call geod_int%from_ECR(int) ! Get geodetic coordinates of Int
+              ! We're looking at a face that's not on a parallel of latitude.
+              ! Therefore, if the line intersects the face, the latitude of
+              ! the intersection will be between the minimum and maximum
+              if ( geod_int%lat >= minval(geod_f(:,1)%lat) .and. &
+                 & geod_int%lat <= minval(geod_f(:,1)%lat) ) then
+                ! Intersection is within horizontal range.  Interpolate
+                ! heights along top and bottom edges to geod_int%lat.
+                eta_h(1) = ( geod_f(2,1)%lat - geod_int%lat ) / &
+                         & ( geod_f(2,1)%lat - geod_f(1,1)%lat )
+                eta_h(2) = 1 - eta_h(2)
+                h1 = eta_h(1) * geod_f(2,1)%v + eta_h(2) * geod_f(1,1)%v
+                h2 = eta_h(1) * geod_f(2,2)%v + eta_h(2) * geod_f(1,2)%v
+                if ( geod_int%v >= h1 .and. geod_int%v <= h2 ) then
+                  ! Intersection is within vertical range too
+                  n_vert = n_vert + 1
+                  v_int(n_vert) = S_QTM_t( s=s_int, facet=f, h=geod_int%v, &
+                                         & face=faces(m), n_coeff=2 )
+                  v_int(n_vert)%ser(:2) = qtm_tree%q(f)%ser(v(:,1))
+                  ! Interpolation coefficients are in latitude only.
+                  v_int(n_vert)%coeff(:2) = eta_h
+                  hit(j,v(2,k)) = .true.
                 end if
               end if
-            end do ! which plane
-          end do ! heights
-        end if ! a leaf vertex
+            end if
+          end do ! which plane
+        end do ! heights
       end do facet
     end subroutine Intersect_Line_And_Vertical_Boundary
 
@@ -721,6 +648,9 @@ contains
 end module Metrics_3D_m
 
 ! $Log$
+! Revision 2.8  2016/11/09 00:36:13  vsnyder
+! Remove Metrics_3D_Grid, pass in list of facets to use
+!
 ! Revision 2.7  2016/11/03 19:11:47  vsnyder
 ! Inching toward 3D forward model
 !
