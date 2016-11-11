@@ -662,7 +662,7 @@ contains
       real(rp) :: f1, f2, x1, x2
       logical :: Head ! Need debug stuff heading
 
-      real(rp), parameter :: H_tol = 0.001 ! km
+      real(rp), parameter :: H_tol = 0.001_rp ! km
 
       integer,  parameter :: Max_Iter = 20
       character(LEN=*), parameter :: Msg1 = &
@@ -797,6 +797,9 @@ contains
 end module REFRACTION_M
 
 ! $Log$
+! Revision 2.46  2016/01/23 02:52:55  vsnyder
+! Add LaTeX, procedures to compute derivatives
+!
 ! Revision 2.45  2013/07/26 22:19:05  vsnyder
 ! Fiddle with dump switches
 !
