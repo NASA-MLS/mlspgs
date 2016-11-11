@@ -34,19 +34,18 @@ module QTM_Facets_Under_Path_m
 
 contains
 
-  subroutine QTM_Facets_Under_Path ( Path, QTM, Facets, Vertices )
+  subroutine QTM_Facets_Under_Path ( Path, QTM, F_and_V )
     ! Find the facets of QTM that are under Path, and list their vertices.
     use Generate_QTM_m, only: QTM_Tree_t
     use Geolocation_0, only: ECR_t, H_t, H_Geoc, H_Geod, Lon_t, RG
     use Nearest_Lines_m, only: Nearest_Lines
-    use Path_Representation_m, only: Path_t
+    use Path_Representation_m, only: Facets_and_Vertices_t, Path_t
     use QTM_m, only: Stack_t
     use Where_m, only: Where
 
     type(path_t), intent(inout) :: Path
     type(QTM_tree_t), intent(in) :: QTM
-    integer, allocatable, intent(out) :: Facets(:)   ! Indices of QTM%Q(:)
-    integer, allocatable, intent(out) :: Vertices(:) ! Indices of QTM%Geo_In(:)
+    type(facets_and_vertices_t), intent(out) :: F_and_V
 
     logical :: Adjacent(QTM%n_in) ! "Vertex I is adjacent to the path"
     type(h_t) :: Centroid    ! of a facet
@@ -131,7 +130,7 @@ o:    do j = 1, 2 ! Both parts of the path
     end do
 
     if ( facet <= 0 ) then ! Path apparently does not cross the polygon
-      allocate ( facets(0), vertices(0) )
+      allocate ( f_and_v%facets(0), f_and_v%vertices(0) )
       return
     end if
 
@@ -169,9 +168,9 @@ o:    do j = 1, 2 ! Both parts of the path
     end do
 
     ! Fill Facets and Vertices arrays
-    allocate ( facets(count(kept)), vertices(count(adjacent)) )
-    call where ( kept, facets )
-    call where ( adjacent, vertices )
+    allocate ( f_and_v%facets(count(kept)), f_and_v%vertices(count(adjacent)) )
+    call where ( kept, f_and_v%facets )
+    call where ( adjacent, f_and_v%vertices )
 
   contains
 
@@ -262,6 +261,9 @@ o:    do j = 1, 2 ! Both parts of the path
 end module QTM_Facets_Under_Path_m
 
 ! $Log$
+! Revision 2.4  2016/11/11 01:47:24  vsnyder
+! Use Facets_and_Vertices_t instead of schlepping them indivicually
+!
 ! Revision 2.3  2016/11/07 21:21:46  vsnyder
 ! Numerous simplifications and corrections
 !
