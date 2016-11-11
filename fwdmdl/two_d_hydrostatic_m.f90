@@ -26,29 +26,29 @@ contains
 
   ! ------------------------------------------  Two_D_Hydrostatic  -----
   subroutine Two_D_Hydrostatic ( Grids_tmp, z_refs, h_refs, z_grid, &
-                               & t_grid, h_grid, dhidzij, dhidtlm, ddhdhdtl0 )
+                               & t_grid, h_grid, dhidzij, dhidtlm, ddhdhdtl0, &
+                               & Vertices )
 
-  ! Compute the 2 dimensional hydrostatic stuff if the horizontal grid is
-  ! PhiTan based, or the 3 dimensional hydrostatic stuff if the horizontal
-  ! grid is QTM based.
+    ! Compute the 2 dimensional hydrostatic stuff.
 
+    use Constants, only: Deg2Rad
     use Geometry, only: GeodToGeocLat
     use Hydrostatic_m, only: Hydrostatic
     use Intrinsic, only: L_Geodetic
     use Load_sps_data_m, only: Grids_T
     use MLSKinds, only: RP, IP
 
-  ! Inputs:
+    ! Inputs:
 
     type (Grids_T), intent(in) :: Grids_tmp   ! All Temperature's coordinates
                                        ! and values.
     real(rp), intent(in) :: Z_Refs(:)  ! Reference pressures for all profiles.
-    real(rp), intent(in) :: H_Refs(:)  ! Reference geopotential heights (km) at
+    real(rp), intent(in) :: H_Refs(:)  ! Reference geopotential heights (m) at
                                        ! z_refs for all profiles.
     real(rp), intent(in) :: Z_Grid(:)  ! pressures for which heights and
                                        ! temperatures are needed.
 
-  ! Outputs:
+    ! Outputs:
 
     real(rp), intent(out):: T_Grid(:,:)    ! Computed temperatures, interpolated
                                            ! from Grids_Tmp to Z_Grid.
@@ -59,57 +59,69 @@ contains
     real(rp), optional, intent(out):: ddHdHdTl0(:,:,:) ! second order derivative
                                            ! at the tangent only---used for
                                            ! antenna effects.
-  ! Internal stuff
 
-    integer(ip) :: I, J1, J2
+    ! Optional input
+
+    integer, optional, intent(in) :: Vertices(:) ! to select a subset of
+                                           ! the horizontal basis for Grids_Tmp,
+                                           ! usually for QTM.
+
+    ! Internal stuff
+
+    integer(ip) :: I, J, N
     integer(ip) :: P_Coeffs ! Size of interesting part of Grids_tmp%phi_basis
-                   ! if .not. Grids_tmp%IsQTM(1), else the size of
-                   ! Grids_tmp%qtyStuff%qty(1)%the_HGrid%QTM_Tree%Geo_In (all
-                   ! of which is interesting).
     logical :: QTM          ! ...%the_Hgrid%type == l_QTM
     integer(ip) :: Z_Coeffs ! Size of interesting part of Grids_tmp%zet_basis
+    real(rp), pointer :: T(:,:) ! Rank-2 view of Grids_tmp%values
 
     real(rp) :: Lat         ! Geocentric latitude in Radians
 
-  ! Begin execution
+    ! Begin execution
 
     p_coeffs = Grids_tmp%l_p(1) ! - Grids_tmp%l_p(0), which is always zero
     z_coeffs = Grids_tmp%l_z(1) ! - Grids_tmp%l_z(0), which is always zero
-
     QTM = grids_tmp%isQTM(1)
 
-    ! compute the 2 d hydrostatic
+    ! Compute the 2 d hydrostatic by computing the 1 d hydrostatic at
+    ! each profile.
 
-    j2 = 0
+    t(1:z_coeffs,1:p_coeffs) => Grids_tmp%values ! Get rank-2 view
+
+    n = p_coeffs
+    if ( present(vertices) ) n = size(vertices)
+
     associate ( template => Grids_tmp%qtyStuff(1)%qty%template )
-     do i = 1, p_coeffs
+      do i = 1, n
+
+        j = i
+        if ( present(vertices) ) j = vertices(i)
 
         ! Compute the geocentric latitude in radians.
 
         if ( .not. QTM ) then
-          lat = template%geodLat(1,i)
+          lat = template%geodLat(1,j)
         else
-          lat = template%the_HGrid%QTM_tree%geo_in(i)%lat
+          lat = template%the_HGrid%QTM_tree%geo_in(j)%lat
         end if
 
         if ( template%latitudeCoordinate == l_geodetic ) then
           ! Result is in Radians even though argument is in Degrees
           lat = GeodToGeocLat ( lat )
+        else ! Latitude is geocentric, but in degrees, and we want radians
+          lat = lat * deg2rad
         end if
 
-        j1 = j2
-        j2 = j1 + z_coeffs
         if ( present(ddhdhdtl0) ) then ! needs dhidtlm
-          call hydrostatic ( lat, Grids_tmp%zet_basis, Grids_tmp%values(j1+1:j2), &
-             & z_grid, z_refs(i), h_refs(i), t_grid(:,i), h_grid(:,i), &
+          call hydrostatic ( lat, Grids_tmp%zet_basis, t(:,j), &
+             & z_grid, z_refs(i), 0.001_rp*h_refs(j), t_grid(:,i), h_grid(:,i), &
              & dhidzij(:,i), dhidtlm(:,:,i), ddhdhdtl0(:,:,i) )
         else if ( present(dhidtlm) ) then
-          call hydrostatic ( lat, Grids_tmp%zet_basis, Grids_tmp%values(j1+1:j2), &
-             & z_grid, z_refs(i), h_refs(i), t_grid(:,i), h_grid(:,i), &
+          call hydrostatic ( lat, Grids_tmp%zet_basis, t(:,j), &
+             & z_grid, z_refs(i), 0.001_rp*h_refs(j), t_grid(:,i), h_grid(:,i), &
              & dhidzij(:,i), dhidtlm(:,:,i) )
         else
-          call hydrostatic ( lat, Grids_tmp%zet_basis, Grids_tmp%values(j1+1:j2), &
-             & z_grid, z_refs(i), h_refs(i), t_grid(:,i), h_grid(:,i), &
+          call hydrostatic ( lat, Grids_tmp%zet_basis, t(:,j), &
+             & z_grid, z_refs(i), 0.001_rp*h_refs(j), t_grid(:,i), h_grid(:,i), &
              & dhidzij(:,i) )
         end if
       end do
@@ -130,6 +142,9 @@ contains
 end module Two_D_Hydrostatic_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.27  2016/10/24 22:15:11  vsnyder
+! Use geodLat component instead of computing it from phi & orbIncline
+!
 ! Revision 2.26  2016/08/23 00:43:11  vsnyder
 ! Components within or adjacent to the polygon are now within the QTM_Tree_t
 ! structure instead of the HGrid_t structure.
