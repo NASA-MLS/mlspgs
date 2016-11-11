@@ -16,7 +16,7 @@ module Interpolate_MIF_to_Tan_Press_m
 
   implicit NONE
   private
-  public :: Interpolate_MIF_to_Tan_Press
+  public :: Get_Lines_of_Sight, Interpolate_MIF_to_Tan_Press
 
 !------------------------------ RCS Ident Info -------------------------------
   character (len=*), parameter, private :: ModuleName= &
@@ -25,27 +25,87 @@ module Interpolate_MIF_to_Tan_Press_m
 
 contains
 
+  subroutine Get_Lines_of_Sight ( MAF, PTan, Tan_Press, Q_LOS, Path )
+
+    ! Interpolate lines of sight from the PTan pressures for minor frame Q_LOS
+    ! to Tan_Press pressures for Path.  Probably only used for QTM.
+    ! This only computes Path%Lines(:,1), not Path%Lines(:,2), i.e., only from
+    ! the reference to the tangent or Earth-surface intersection.
+
+    use Insertion_Sort_m, only: Insertion_Sort
+    use Path_Representation_m, only: Path_t
+    use MLSKinds, only: RK => RP
+    use MLSNumerics, only: InterpolateValues
+    use VectorsModule, only: VectorValue_T
+
+    ! Inputs
+    integer, intent(in) :: MAF                    ! MAF under consideration
+    type(vectorValue_T), intent(in) :: PTan       ! Tangent pressure (minor
+                                                  ! frame), zeta
+    real(rk), intent(in) :: Tan_Press(:)          ! Tangent pressure levels
+                                                  ! where the output quantities
+                                                  ! are desired, zeta.
+    type(vectorValue_t), intent(in):: Q_LOS       ! Minor frame LOS as C + s U
+
+    ! Output
+    type(path_t), intent(out) :: Path(:)          ! Interpolated to Tan_Press
+
+    ! Local variables
+    integer :: I, J
+    integer :: P(ptan%template%noSurfs) ! Permutation result of sorting Z_MIF
+    real(rk) :: Q_LOS_P(6,ptan%template%noSurfs)  ! Permuted from Q_LOS%Value3
+    real(rk) :: Z_MIF(0:ptan%template%noSurfs)    ! Zetas for sorting MIFs
+                                                  ! 0'th is a sentinel
+
+    ! Since the interpolateValues routine needs the OldX array to be sorted
+    ! we have to sort ptan%values and re-arrange phitan%values, scgeocalt%values
+    ! and losvel%values accordingly
+
+    z_mif(0) = -0.5 * huge(1.0_rk)    ! Sentinel to simplify sort. Use 0.5*Huge
+                                      ! instead of Huge in case some compiler
+                                      ! uses subtraction to compare.
+    z_mif(1:) = ptan%values(1:,maf)   ! Zeta
+
+    ! Sort Z_MIF.
+    ! Use insertion sort since it might be nearly in order already.
+    ! Compute the permutation P of Z_MIF that put it into order, to permute
+    ! Q_LOS%value3, from which we interpolate.
+    call insertion_sort ( z_mif, p )
+
+    ! Permute Q_LOS to correspond to Z_MIF, to avoid a vector subscript in
+    ! the second actual argument to InterpolateValues
+    Q_LOS_P = Q_LOS%value3(1:6,p,maf)
+
+    do i = 1, 2 ! 1 = C, 2 = U
+      ! Extrapolate for subsurface values, if necessary.
+      do j = 1, 3 ! XYZ
+        call interpolateValues ( z_mif(1:), Q_LOS_P(3*i-3+j,1:), &
+                               & tan_press, path%lines(i,1)%xyz(j), &
+                               & METHOD = 'L', EXTRAPOLATE='A' )
+      end do
+    end do
+
+  end subroutine Get_Lines_of_Sight
+
   subroutine Interpolate_MIF_to_Tan_Press ( Nlvl, MAF, PTan, &
                               & PhiTan,  ScGeocAlt,     LOSVel, &
                               & Tan_Press, &
                               & Tan_Phi, Est_ScGeocAlt, Est_LOS_Vel, &
-                              & Q_EarthRadC_sq, Q_Incline, Q_LOS, Q_TanHt, &
-                              & EarthRadC,      Incline,   LOS,   TanHt, &
+                              & Q_EarthRadC_sq, Q_TanHt, &
+                              & EarthRadC,      TanHt, &
                               & Tan_Pt_Geod )
 
-  ! Interpolate minor frame quantities PhiTan, ScGeocAlt, and LOSVel, at
-  ! pressure levels given by PTan, to Tan_Phi, SC_Geoc_Alt and LOS Velocity, at
-  ! pressure levels given by Tan_Press.  If Q_... are present, interpolate
-  ! them too.
+    ! Interpolate minor frame quantities PhiTan, ScGeocAlt, and LOSVel, at
+    ! pressure levels given by PTan, to Tan_Phi, SC_Geoc_Alt and LOS Velocity,
+    ! at pressure levels given by Tan_Press.  If Q_... are present, interpolate
+    ! them too.  If Tan_Pt_Geod is present, interpolate it too.
 
-    use Geolocation_0, only: ECR_T, H_V_Geod, Lon_T
+    use Geolocation_0, only: H_V_Geod, Lon_T
     use Insertion_Sort_m, only: Insertion_Sort
     use MLSKinds, only: RK => RP
     use MLSNumerics, only: InterpolateValues
     use Constants, only: Deg2Rad
     use VectorsModule, only: VectorValue_T
-
-    implicit NONE
 
   ! Inputs
     integer, intent(in) :: NLvl                   ! Size of integration grid
@@ -70,19 +130,12 @@ contains
   ! Optional minor frame inputs, for QTM-based model
     type(vectorValue_T), intent(in), optional :: Q_EarthRadC_sq ! square of orbit-
                                                   ! plane projected ellipse, m^2
-    type(vectorValue_t), intent(in), optional :: Q_Incline ! Degrees, geocentric
-    type(vectorValue_t), intent(in), optional :: Q_LOS     ! LOS as C + s U
     type(vectorValue_t), intent(in), optional :: Q_TanHt   ! Geodetic height,
                                                   ! above plane-projected
                                                   ! ellipse, meters
   ! Optional outputs, interpolated to Tan_Press, for QTM-based model
     real(rk), intent(out), optional :: EarthRadC(:) ! Plane-projected
                                                   ! minor axis**2, m**2
-    real(rk), intent(out), optional :: Incline(:) ! Inclination of the plane
-                                                  ! defined by LOS and the
-                                                  ! Earth center, degrees.
-    type(ECR_t), intent(out), optional :: LOS(:,:)! (1,:) are points on LOS,
-                                                  ! (2,:) are unit directions.
     real(rk), intent(out), optional :: TanHt(:)   ! Tangent height, meters
     type(H_V_Geod), intent(out), optional :: Tan_Pt_Geod(:) ! Tangent point
                                                   ! coordinates at Tan_Press
@@ -90,7 +143,7 @@ contains
                                                   ! degrees, meters
 
   ! Local variables
-    integer :: I, J, K, SUB
+    integer :: I, Sub
 !   real(rk), dimension(merge(size(tan_press),0,present(tan_pt_Geod))) :: Lat, Lon
     real(rk), dimension(size(tan_press)) :: Lat, Lon
     integer :: P(ptan%template%noSurfs) ! Permutation result of sorting Z_MIF
@@ -108,12 +161,10 @@ contains
     ! we have to sort ptan%values and re-arrange phitan%values, scgeocalt%values
     ! and losvel%values accordingly
 
-    k = ptan%template%noSurfs
-
     z_mif(0) = -0.5 * huge(1.0_rk)    ! Sentinel to simplify sort. Use 0.5*Huge
                                       ! instead of Huge in case some compiler
                                       ! uses subtraction to compare.
-    z_mif(1:k) = ptan%values(1:k,maf) ! Zeta
+    z_mif(1:) = ptan%values(1:,maf)   ! Zeta
 
     ! Sort Z_MIF.
     ! Use insertion sort since it might be nearly in order already.
@@ -123,84 +174,42 @@ contains
 
     ! Interpolate from minor frame zetas to pointing grid zetas.
     ! Tangent phi.  This actually isn't interesting for QTM.
-    call interpolateValues ( z_mif(1:k),        phitan%values(p,maf), &
+    call interpolateValues ( z_mif(1:),         phitan%values(p,maf), &
                            & tan_press(sub+1:), tan_phi(sub+1:), &
                            & METHOD = 'L', EXTRAPOLATE='C' )
     tan_phi = tan_phi * deg2rad
     ! Geocentric altitude
-    call interpolateValues ( z_mif(1:k),        scgeocalt%values(p,maf), &
+    call interpolateValues ( z_mif(1:),         scgeocalt%values(p,maf), &
                            & tan_press(sub+1:), est_scgeocalt(sub+1:), &
                            & METHOD='L', EXTRAPOLATE='C' )
     ! LOS velocity
-    call interpolateValues ( z_mif(1:k),        losvel%values(p,maf), &
+    call interpolateValues ( z_mif(1:),         losvel%values(p,maf), &
                            & tan_press(sub+1:), est_los_vel(sub+1:), &
                            & METHOD='L', EXTRAPOLATE='C' )
 
     if ( present(Q_EarthRadC_sq) ) then
       earthRadC(:sub) = Q_EarthRadC_sq%values(1,maf)
-      call interpolateValues ( z_mif(1:k),        Q_EarthRadC_sq%values(p,maf), &
+      call interpolateValues ( z_mif(1:),         Q_EarthRadC_sq%values(p,maf), &
                              & tan_press(sub+1:), earthRadC(sub+1:), &
                              & METHOD = 'L', EXTRAPOLATE='C' )
     end if
 
-    if ( present(Q_Incline) ) then
-      incline(:sub) = Q_Incline%values(1,maf)
-      call interpolateValues ( z_mif(1:k),        Q_Incline%values(p,maf), &
-                             & tan_press(sub+1:), incline(sub+1:), &
-                             & METHOD = 'L', EXTRAPOLATE='C' )
-    end if
-
-    ! ==========================================================================
-    ! !!!!! This doesn't create LOS for Earth-intersecting rays correctly. !!!!!
-    ! !!!!! I'm not sure what to do here because we don't know which MIF   !!!!!
-    ! !!!!! zetas are for intersecting rays.  Even if we did, we don't     !!!!!
-    ! !!!!! have zetas for subsurface tangent points to which to           !!!!!
-    ! !!!!! interpolate them.                                              !!!!!
-    ! ==========================================================================
-    if ( present(Q_LOS) ) then
-      do i = 1, 2 ! 1 = C, 2 = U
-        ! Use the first MAF value for subsurface values, if any.
-        ! ==================================================================
-        ! !!!!! This is wrong.  LOS(1,:) ought to be the vector from   !!!!!
-        ! !!!!! the instrument to the intersection point, and LOS(2,:) !!!!!
-        ! !!!!! ought to be the vector that's a reflection of the      !!!!!
-        ! !!!!! direction to the intersection, but we don't know what  !!!!!
-        ! !!!!! direction that is.  Tangent_Quantities does compute    !!!!!
-        ! !!!!! MIF LOS correctly, but how do we interpolate that to   !!!!!
-        ! !!!!! pointing-grid LOS without subsurface MIF zetas?        !!!!!
-        ! !!!!! Eventually, we could do the radiative transfer on MIF  !!!!!
-        ! !!!!! rays instead of aiming at an hypothetical subsurface   !!!!!
-        ! !!!!! tangent pressure.  This would affect many places,      !!!!!
-        ! !!!!! setting up convolution.                                !!!!!
-        ! ==================================================================
-        LOS(i,:sub) = ECR_t(Q_LOS%value3(3*i-2:3*i,1,maf))
-        ! Now interpolate rays that don't intersect the surface from MIF zetas
-        ! to pointing-grid zetas.
-        do j = 1, 3 ! XYZ
-          call interpolateValues ( z_mif(1:k),        Q_LOS%value3(3*i-3+j,p,maf), &
-                                 & tan_press(sub+1:), LOS(i,sub+1:)%xyz(j), &
-                                 & METHOD = 'L', EXTRAPOLATE='C' )
-        end do
-      end do
-    end if
-
     if ( present(Q_TanHt) ) then
-      tanHt(:sub) = Q_TanHt%values(1,maf)
-      call interpolateValues ( z_mif(1:k),        Q_TanHt%values(p,maf), &
-                             & tan_press(sub+1:), tanHt(sub+1:), &
-                             & METHOD = 'L', EXTRAPOLATE='C' )
+      ! Extrapolate subsurface values if necessary
+      call interpolateValues ( z_mif(1:), Q_TanHt%values(p,maf), &
+                             & tan_press, tanHt, &
+                             & METHOD = 'L', EXTRAPOLATE='A' )
       if ( present(tan_pt_Geod) ) then
-        call interpolateValues ( z_mif(1:k),        phitan%template%geodLat(p,maf), &
-                               & tan_press(sub+1:), lat(sub+1:), &
-                               & METHOD = 'L', EXTRAPOLATE='C' )
-        call interpolateValues ( z_mif(1:k),        phitan%template%lon(p,maf), &
-                               & tan_press(sub+1:), lon(sub+1:), &
-                               & METHOD = 'L', EXTRAPOLATE='C' )
+        call interpolateValues ( z_mif(1:), phitan%template%geodLat(p,maf), &
+                               & tan_press, lat, &
+                               & METHOD = 'L', EXTRAPOLATE='A' )
+        call interpolateValues ( z_mif(1:), phitan%template%lon(p,maf), &
+                               & tan_press ,lon, &
+                               & METHOD = 'L', EXTRAPOLATE='A' )
         ! Subsurface values all the same.  These might also be changed to MIF
         ! some day.
-        tan_pt_geod(:sub) = h_v_geod ( lon_t(lon(1)), lat(1), tanHt(1) )
-        do i = 1, nlvl
-          tan_pt_geod(sub+i) = h_v_geod ( lon_t(lon(sub+i)), lat(sub+i), tanHt(sub+i) )
+        do i = 1, size(tan_pt_geod)
+          tan_pt_geod(i) = h_v_geod ( lon_t(lon(i)), lat(i), tanHt(i) )
         end do
       end if
     end if
@@ -221,6 +230,12 @@ contains
 end module Interpolate_MIF_to_Tan_Press_m
 
 ! $Log$
+! Revision 2.2  2016/11/11 02:01:48  vsnyder
+! Add Get_Lines_of_Sight to compute LOS to Tan_Press levels from MIF LOS.
+! Eliminate LOS from computations done by Interpolate_MIF_to_Tan_Press.
+! Interpolate or extrapolate subsurface rays to subsurface pressures, instead
+! of using the first MIF direction.
+!
 ! Revision 2.1  2016/11/09 00:24:27  vsnyder
 ! Moved from FullForwardModel
 !
