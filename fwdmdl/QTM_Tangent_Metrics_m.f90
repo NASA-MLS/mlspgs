@@ -89,7 +89,7 @@ contains
       h_surf = dot_product ( h_ref(1,eta%n), eta%v )
     end if
 
-    if ( present(tan_press) .and. present(surf_temp) .and. &
+    if ( present(tan_press) .and. present(surf_temp) .and. present(z_ref) .and. &
       &  .not. present(surf_height) ) then
       ! Earth intersecting ray. Compute GP height (km) of tangent pressure
       ! below surface. This will be negative because tan_press < z_ref.
@@ -116,6 +116,9 @@ contains
 end module QTM_Tangent_Metrics_m
 
 ! $Log$
+! Revision 2.4  2016/11/11 01:58:36  vsnyder
+! Make computation involving Z_Ref contingent upon Z_Ref being present.
+!
 ! Revision 2.3  2016/11/02 22:50:36  vsnyder
 ! Use Value_t from Path_Representation instead of Weight_t from
 ! QTM_Interpolation_Weights_m
