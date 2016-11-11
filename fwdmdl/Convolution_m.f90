@@ -445,7 +445,7 @@ contains
 
     real(rp) :: D2XDXDT_SURFACE(1,size(dxdt_surface,2))
     real(rp) :: D2XDXDT_TAN(size(dxdt_tan,1),size(dxdt_tan,2))
-    integer :: H2O_Ind, J
+    integer :: H2O_Ind
     real(rp) :: One_dhdz(1), One_dxdh(1)
     real(rp) :: REQ_OUT(phitan%template%nosurfs)
 
@@ -472,11 +472,11 @@ contains
     ! Grids_F is only needed for H2O, for calculating refractive index.
     ! SCgeocAlt and RefGPH are in meters, but Get_Chi_Out wants them in km.
     ! This is only used for convolution, which is done for both sidebands.
-    call get_chi_out ( ptan%values(:,maf), phitan%values(:,maf)*deg2rad, &
-       & 0.001_rp*scGeocAlt%values(:,maf), Grids_tmp,                    &
-       & (/ (refGPH%template%surfs(1,1), j=windowStart,windowFinish) /), &
-       & 0.001_rp*refGPH%values(1,windowStart:windowFinish), 0.0_rp,     &
-       & req_out, grids_f, h2o_ind, tan_chi_out, dh_dz_out, dx_dh_out,   &
+    call get_chi_out ( ptan%values(:,maf), phitan%values(:,maf)*deg2rad,  &
+       & scGeocAlt%values(:,maf), Grids_tmp,                              &
+       & spread(refGPH%template%surfs(1,1),1,windowFinish-windowStart+1), &
+       & refGPH%values(1,windowStart:windowFinish), 0.0_rp,               &
+       & req_out, grids_f, h2o_ind, tan_chi_out, dh_dz_out, dx_dh_out,    &
        & dxdt_tan=dxdt_tan, d2xdxdt_tan=d2xdxdt_tan )
 
     ! This is a lazy way to get the surface angle
@@ -485,11 +485,11 @@ contains
     ! Grids_tmp is only needed for H2O, for calculating refractive index.
     ! Est_scgeocalt and RefGPH are in meters, but Get_Chi_Out wants them in km.
     ! This is only used for convolution, which is done for both sidebands.
-    call get_chi_out ( tan_press(1:1), tan_phi(1:1),                     &
-       & 0.001_rp*est_scgeocalt(1:1), Grids_tmp,                         &
-       & (/ (refGPH%template%surfs(1,1), j=windowStart,windowFinish) /), &
-       & 0.001_rp*refGPH%values(1,windowStart:windowFinish), 0.0_rp,     &
-       & req_out(1:1), grids_f, h2o_ind, surf_angle, one_dhdz, one_dxdh, &
+    call get_chi_out ( tan_press(1:1), tan_phi(1:1),                      &
+       & est_scgeocalt(1:1), Grids_tmp,                                   &
+       & spread(refGPH%template%surfs(1,1),1,windowFinish-windowStart+1), &
+       & refGPH%values(1,windowStart:windowFinish), 0.0_rp,               &
+       & req_out(1:1), grids_f, h2o_ind, surf_angle, one_dhdz, one_dxdh,  &
        & dxdt_tan=dxdt_surface, d2xdxdt_tan=d2xdxdt_surface )
 
     ! This is only used for convolution, which is done for both sidebands.
@@ -522,6 +522,12 @@ contains
 end module Convolution_m
 
 ! $Log$
+! Revision 2.8  2016/11/11 01:54:36  vsnyder
+! Call Get_Chi_Out with ScGeocAlt and RefGPH in m instead of km, because
+! Get_Chi_Out does the conversion now (to avoid an array temp).  Use
+! SPREAD intrinsic function instead of an array constructor to create an
+! array of all-the-same reference surface values.
+!
 ! Revision 2.7  2016/10/24 22:13:42  vsnyder
 ! Eliminate orbit inclination because get_chi_out no longer needs it
 !
