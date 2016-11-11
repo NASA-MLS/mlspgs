@@ -102,6 +102,7 @@ contains
     integer :: Scat_Temp           ! To compute scat_index
     real(rp), parameter :: Scat_Tol = 1.0 ! max miss of scattering pt, (km/h)**2
 
+    phi_path_c => phi_path(1:npf:ngp1)
     scat_index = 0
     scat_d2 = huge(1.0_rp)
     do scat_temp = 1, npc
@@ -903,6 +904,9 @@ contains
 end module TScat_Support_m
 
 ! $Log$
+! Revision 2.13  2016/11/11 02:38:41  vsnyder
+! Associate the Phi_Path_C pointer before using it
+!
 ! Revision 2.12  2016/09/30 01:26:30  vsnyder
 ! Create Find_Scattering_Point andd move stuff to it from FullForwardModel
 !
