@@ -41,12 +41,13 @@ contains
     real(rp), intent(in) :: zetatan(:)   ! tangent zeta profle for input mmaf
     real(rp), intent(in) :: phitan(:)    ! tangent phi profle for input mmaf
 !                                          (in radians)
-    real(rp), intent(in) :: scgeocalt(:) ! spacecraft geocentric altitude profile in km
+    real(rp), intent(in) :: scgeocalt(:) ! spacecraft geocentric altitude
+                                         ! profile in METERS
     type (grids_t), intent(in) :: Grids_tmp  ! All Temperature's coordinates
 
     real(rp), intent(in) :: ref_zeta(:)  ! zetas for inputted gph's
     real(rp), intent(in) :: ref_gph(:)   ! reference geopotential heights along the
-!                            temperature horizontal basis in km
+!                            temperature horizontal basis in METERS
     real(rp), intent(in) :: elev_offset  ! elevation offset in radians
     real(rp), intent(in) :: req(:)       ! Earth radius in equivalent circle
     type(grids_t), intent(in) :: Grids_f ! Grids other than temperature
@@ -63,7 +64,6 @@ contains
     real(rp), intent(out), optional :: dxdt_tan(:,:)      ! computed dchi dt.
     real(rp), intent(out), optional :: d2xdxdt_tan(:,:)   ! computed d2chi dxdt.
 !                                  ! at each phi value representation (km)
-
 
 ! the matrix hierarchy is n_out,phi,zeta
 
@@ -158,7 +158,7 @@ contains
       dhdt_tan = dhdt_tan * spread(eta_t,2,n_t_zeta)
       d2hdhdt_tan = d2hdhdt_tan * spread(eta_t,2,n_t_zeta)
       do ht_i = 1, n_out
-        call get_chi_angles ( scgeocalt(ht_i), n_tan_out(ht_i), &
+        call get_chi_angles ( 0.001_rp*scgeocalt(ht_i), n_tan_out(ht_i), &
            & h_tan_out(ht_i), phitan(ht_i), req(ht_i), elev_offset, &
            & tan_chi_out(ht_i), dx_dh_out(ht_i), dhdz_out(ht_i), &
            & reshape(dhdt_tan(ht_i,:,:),(/n_t_zeta*n_t_phi/)), &
@@ -169,7 +169,7 @@ contains
     else
 
        do ht_i = 1, n_out
-         call get_chi_angles(scgeocalt(ht_i), n_tan_out(ht_i), &
+         call get_chi_angles( 0.001_rp*scgeocalt(ht_i), n_tan_out(ht_i), &
            & h_tan_out(ht_i), phitan(ht_i), req(ht_i), elev_offset, &
            & tan_chi_out(ht_i), dx_dh_out(ht_i), dhdz_out(ht_i) )
        end do
@@ -191,6 +191,11 @@ contains
 end module Get_Chi_Out_m
 
 ! $Log$
+! Revision 2.25  2016/11/11 01:52:23  vsnyder
+! Change units for ScGeocAlt and Ref_GPH from km to m, and do the conversion
+! from m to km here instead of in callers, to avoid the need for an array
+! temp.
+!
 ! Revision 2.24  2016/10/24 22:14:24  vsnyder
 ! Eliminate orbit inclination because two_d_hydrostatic no longer needs it
 !
