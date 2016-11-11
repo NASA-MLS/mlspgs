@@ -49,7 +49,7 @@ contains
   ! This gets a little bit of data and then computes the sizes for quantities
   ! in the full forward model proper, FullForwardModelAuto.
 
-    use Allocate_Deallocate, only: Deallocate_Test
+    use Allocate_Deallocate, only: Deallocate_Test, Test_Allocate, Test_Deallocate
     use Check_QTM_m, only: Check_QTM
     use Compute_Z_PSIG_M, only: Compute_Z_PSIG
     use ForwardModelConfig, only: Dump, ForwardModelConfig_T
@@ -59,7 +59,8 @@ contains
     use Get_Species_Data_M, only:  Get_Species_Data
     use HessianModule_1, only: Hessian_T
     use HGridsDatabase, only: HGrid_T
-    use Intrinsic, only: Lit_Indices, L_PhiTan, L_PTan, L_TScat, L_VMR
+    use Interpolate_MIF_to_Tan_Press_m, only: Get_Lines_of_Sight
+    use Intrinsic, only: Lit_Indices, L_MIFLOS, L_PhiTan, L_PTan, L_TScat, L_VMR
     use Load_SPS_Data_M, only: DestroyGrids_T, Dump, EmptyGrids_T, Grids_T, &
       & Load_One_Item_Grid, Load_SPS_Data
     use MatrixModule_1, only: Matrix_T
@@ -68,6 +69,8 @@ contains
     use MLSStringLists, only: SwitchDetail
     use Molecules, only: L_CloudIce
     use MoreMessage, only: MLSMessage
+    use Path_Representation_m, only: Facets_and_Vertices_t, Path_t
+    use QTM_Facets_Under_Path_m, only: QTM_Facets_Under_Path
     use Tangent_Pressures_m, only: Tangent_Pressures
     use Toggles, only: Emit, Switches, Toggle
     use Trace_M, only: Trace_Begin, Trace_End
@@ -84,6 +87,10 @@ contains
     real(rp), allocatable :: Z_PSIG(:)    ! Surfs from Temperature, tangent grid
                                           ! and species grids, sans duplicates.
     real(rp), allocatable :: Tan_Press(:) ! Pressures corresponding to Z_PSIG
+
+    type (Facets_and_Vertices_t), allocatable :: F_and_V(:) ! Facets and
+                                          ! vertices under each path through
+                                          ! the QTM.
     type (Grids_T) :: Grids_tmp ! All the coordinates for TEMP
     type (Grids_T) :: Grids_f   ! All the coordinates for VMR
     type (Grids_T) :: Grids_IWC ! All the coordinates for IWC
@@ -92,12 +99,19 @@ contains
     type (Grids_T) :: Grids_v   ! All the spectroscopy(V) coordinates
     type (Grids_T) :: Grids_w   ! All the spectroscopy(W) coordinates
     type (HGrid_T), pointer :: QTM_HGrid  ! HGrid that has finest QTM resolution.
+    type (Path_t), allocatable :: QTM_Paths(:)! LOS through QTM
     type (VectorValue_T), pointer :: CloudIce ! Ice water content
-    type (VectorValue_T), pointer :: PhiTan ! Tangent geodAngle component of
+    type (VectorValue_T), pointer :: PhiTan   ! Tangent geodAngle component of
                                 ! state vector (minor frame quantity)
-    type (VectorValue_T), pointer :: PTan   ! Tangent pressure component of
+    type (VectorValue_T), pointer :: PTan     ! Tangent pressure component of
                                 ! state vector (minor frame quantity)
-    type (VectorValue_T), pointer :: Temp   ! Temperature component of state vector
+    type (VectorValue_T), pointer :: Q_LOS    ! Line-of-sight, for QTM,
+                                ! minor frame quantity
+    type (VectorValue_T), pointer :: Temp     ! Temperature component of
+                                ! state vector
+
+    character(127) :: ERMSG     ! From allocate
+
     integer :: Dump_Conf        ! for debugging, from -Sfmconf
     integer :: K                ! Loop inductor and subscript
     integer :: Max_C            ! Length of longest possible coarse path,
@@ -115,6 +129,7 @@ contains
     integer :: No_Tan_Hts       ! Number of tangent heights
     integer :: NoUsedChannels   ! Number of channels used
     integer :: N_T_zeta         ! Number of zetas for temperature
+    integer :: Stat             ! From allocate
     integer :: SurfaceTangentIndex  ! Index in tangent grid of earth's
                                     ! surface
     integer :: Sv_T_len         ! Number of t_phi*t_zeta in the window
@@ -144,13 +159,30 @@ contains
     ! Create the data structures for the species.  Get the
     ! spectroscopy parameters from the state vector.  Get a pointer to the
     ! temperature quantity from the state vector into the configuration.
-    ! This has to be done AFTER deriveFromForwardModelConfig, which is
+    ! This has to be done AFTER DeriveFromForwardModelConfig, which is
     ! invoked from ForwardModelWrappers.
 
     call get_species_data ( fwdModelConf, fwdModelIn, fwdModelExtra )
 
     no_mol = size(fwdModelConf%beta_group)
     noUsedChannels = size(fwdModelConf%channels)
+
+    ! Compute the preselected integration grid (all surfs from temperature,
+    ! tangent grid and species).  Tan_Press is thrown in for free.
+    if ( fwdModelConf%generateTScat ) then
+      ! Make sure the TScat zeta is in the preselected grid.
+      call compute_Z_PSIG ( fwdModelConf, z_psig,                  &
+                          & GetQuantityForForwardModel (            &
+                          &  fwdModelOut, quantityType=l_TScat,     &
+                          &  signal=fwdModelConf%signals(1)%index,  &
+                          &  config=fwdModelConf ) )
+
+    else
+      call compute_Z_PSIG ( fwdModelConf, z_psig )
+    end if
+    nlvl = size(z_psig)
+    call tangent_pressures ( fwdModelConf, z_psig, no_tan_hts,   &
+                           & surfaceTangentIndex, tan_press )
 
     ! Find the phiTan quantity in the state vector.  The phiTan quantity is
     ! only used to compute the instance window for the temperature quantity.
@@ -180,22 +212,71 @@ contains
 
     call load_sps_data ( FwdModelConf, phitan, fmStat%maf, grids_f )
 
+    pTan => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
+      & quantityType=l_ptan, foundInFirst=pTan_der, config=fwdModelConf, &
+      & instrumentModule=fwdModelConf%signals(1)%instrumentModule )
+    pTan_der = pTan_der .and. present ( jacobian )
+
+    ! Compute some sizes
+    n_t_zeta = grids_tmp%l_z(1)  ! Number of zeta levels for temperature
+
     ! Check whether temperature and all the mixing ratios either all have QTM
     ! HGrid, or none do.  If so, find the QTM HGrid with the finest resolution.
 
     call check_QTM ( grids_tmp, grids_f, QTM_HGrid, usingQTM )
 
-    ! Compute some sizes
-    no_sv_p_t = grids_tmp%l_p(1) ! size of temperature's horizontal grid ==
-                                 ! windowFinish - windowStart + 1 if not QTM,
-                                 ! else the number of vertices in the QTM
-    n_t_zeta = grids_tmp%l_z(1)  ! zeta
-    sv_t_len = grids_tmp%p_len   ! zeta X phi == n_t_zeta * no_sv_p_t
+    if ( usingQTM ) then
+      ! Find the facets and vertices under all the paths through the QTM.
+      ! The largest number of vertices in any of them is the horizontal
+      ! extent of grids related to temperature.
+      allocate ( QTM_Paths(no_tan_hts), stat=stat, errmsg=ermsg )
+      call test_allocate ( stat, moduleName, "QTM_paths", 1, no_tan_hts, &
+        & ermsg=ermsg )
+      allocate ( F_and_V(no_tan_hts), stat=stat, errmsg=ermsg )
+      call test_allocate ( stat, moduleName, "F_and_V", 1, no_tan_hts, &
+        & ermsg=ermsg )
+      Q_LOS => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
+        & quantityType=l_MIFLOS, config=fwdModelConf, &
+        & instrumentModule=fwdModelConf%signals(1)%instrumentModule )
 
-    ptan => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
-      & quantityType=l_ptan, foundInFirst=ptan_der, config=fwdModelConf, &
-      & instrumentModule=fwdModelConf%signals(1)%instrumentModule )
-    ptan_der = ptan_der .and. present ( jacobian )
+      ! Check that Q_LOS has at least 6 channels (two ECR quantities).
+      if ( Q_LOS%template%noChans < 6 ) then
+        if ( Q_LOS%template%name == 0 ) then
+          call MLSMessage ( MLSMSG_Error, moduleName, &
+            & "Quantity MIF LOS does not have %d ECR components.", 6 )
+        else
+          call MLSMessage ( MLSMSG_Error, moduleName, &
+            & "Quantity %s does not have %d ECR components.", &
+            & [ Q_LOS%template%name, 6 ] )
+        end if
+      end if
+
+      call get_lines_of_sight ( fmStat%maf, pTan, tan_press, Q_LOS, QTM_paths )
+
+      ! Compute the maximum horizontal extent of arrays related to temperature.
+      ! Temperature is extracted from the state vector and put onto a grid that
+      ! has a horizontal extent equal to the maximum number of vertices adjacent
+      ! to any path through the QTM.  All the other temperature-related
+      ! quantities have the same horizontal grid.
+
+      no_sv_p_t = 0
+      do k = 1, no_tan_hts ! size(QTM_paths), size(F_and_V)
+        call QTM_Facets_Under_Path ( QTM_paths(k), QTM_HGrid%QTM_tree, F_and_V(k) )
+        no_sv_p_t = max(no_sv_p_t,size(f_and_v(k)%vertices))
+      end do
+      sv_t_len = no_sv_p_t * n_t_zeta
+    else
+      nullify ( Q_LOS )
+      allocate ( QTM_Paths(0), stat=stat, errmsg=ermsg )
+      call test_allocate ( stat, moduleName, "QTM_paths", 1, no_tan_hts, &
+        & ermsg=ermsg )
+      allocate ( F_and_V(0), stat=stat, errmsg=ermsg )
+      call test_allocate ( stat, moduleName, "F_and_V", 1, no_tan_hts, &
+        & ermsg=ermsg )
+      no_sv_p_t = grids_tmp%l_p(1) ! size of temperature's horizontal grid ==
+                                   ! windowFinish - windowStart + 1.
+      sv_t_len = grids_tmp%p_len   ! zeta X phi == n_t_zeta * no_sv_p_t
+    end if
 
     spect_der = present ( jacobian ) .and. FwdModelConf%spect_der
     spect_der_center = spect_der .and. size(fwdModelConf%lineCenter) > 0
@@ -278,23 +359,6 @@ contains
       call emptyGrids_t ( grids_IWC ) ! Allocate components with zero size
     end if
 
-  ! Compute the preselected integration grid (all surfs from temperature,
-  ! tangent grid and species).  Tan_Press is thrown in for free.
-    if ( fwdModelConf%generateTScat ) then
-      ! Make sure the TScat zeta is in the preselected grid.
-      call compute_Z_PSIG ( fwdModelConf, z_psig,                  &
-                          & GetQuantityForForwardModel (            &
-                          &  fwdModelOut, quantityType=l_TScat,     &
-                          &  signal=fwdModelConf%signals(1)%index,  &
-                          &  config=fwdModelConf ) )
-
-    else
-      call compute_Z_PSIG ( fwdModelConf, z_psig )
-    end if
-    nlvl = size(z_psig)
-    call tangent_pressures ( fwdModelConf, z_psig, no_tan_hts,   &
-                           & surfaceTangentIndex, tan_press )
-
     ! Compute some sizes
     maxVert = (nlvl-1) * ngp1 + 1
     if ( usingQTM .and. .not. zeta_only ) then
@@ -344,11 +408,11 @@ contains
                               & FwdModelOut, FmStat, z_psig, tan_press,        &
                               & grids_tmp, grids_f, grids_mag, grids_iwc,      &
                               & grids_n, grids_v, grids_w,                     &
-                              & ptan, phitan, temp, QTM_HGrid, UsingQTM,       &
-                              & no_mol, noUsedChannels, no_sv_p_t, n_t_zeta,   &
-                              & sv_t_len, nlvl, no_tan_hts,                    &
-                              & surfaceTangentIndex,                           &
-                              & max_c, maxVert, max_f, ptan_der,               &
+                              & ptan, phitan, temp, QTM_HGrid, Q_LOS,          &
+                              & QTM_Paths, f_and_v, no_mol, noUsedChannels,    &
+                              & no_sv_p_t, n_t_zeta, sv_t_len, nlvl,           &
+                              & no_tan_hts, surfaceTangentIndex,  max_c,       &
+                              & maxVert, max_f, ptan_der,                      &
                               & s_t, s_a, s_h, s_lc, s_lw, s_td, s_p, s_pfa,   &
                               & s_i, s_tg, s_ts, s_QTM,                        &
                               ! Optional:
@@ -364,6 +428,11 @@ contains
 
     ! Allocated in tangent_pressures:
     call deallocate_test ( tan_press,    'tan_press',    moduleName )
+
+    deallocate ( QTM_Paths, stat=stat, errmsg=ermsg )
+    call test_deallocate ( stat, moduleName, "QTM_Paths", ermsg=ermsg )
+    deallocate ( F_and_V, stat=stat, errmsg=ermsg )
+    call test_deallocate ( stat, moduleName, "F_and_V", ermsg=ermsg )
 
     call trace_end ( 'FullForwardModel, MAF=', fmStat%maf, cond=toggle(emit) )
 
@@ -386,9 +455,9 @@ contains
                              & FwdModelOut, FmStat, z_psig, tan_press,         &
                              & grids_tmp,  grids_f, grids_mag, grids_iwc,      &
                              & grids_n, grids_v, grids_w, ptan,                &
-                             & phitan, temp, QTM_HGrid, UsingQTM, no_mol,      &
-                             & noUsedChannels, no_sv_p_t, n_t_zeta,            &
-                             & sv_t_len, nlvl, no_tan_hts,                     &
+                             & phitan, temp, QTM_HGrid, Q_LOS, QTM_Paths,      &
+                             & f_and_v, no_mol, noUsedChannels, no_sv_p_t,     &
+                             & n_t_zeta, sv_t_len, nlvl, no_tan_hts,           &
                              & surfaceTangentIndex,                            &
                              & max_c, maxVert, max_f, ptan_der,                &
                              & s_t, s_a, s_h, s_lc, s_lw, s_td, s_p, s_pfa,    &
@@ -415,7 +484,7 @@ contains
       & ForwardModelConfig_T, LineCenter, LineWidth, LineWidth_TDep
     use ForwardModelIntermediate, only: ForwardModelStatus_T, B_Refraction
     use ForwardModelVectorTools, only: GetQuantityForForwardModel
-    use Geolocation_0, only: ECR_t, H_V_Geod
+    use Geolocation_0, only: H_V_Geod
     use Geometry, only: Get_R_EQ
     use Get_ETA_Matrix_M, only: ETA_D_T ! TYPE FOR ETA STRUCT
     use Get_IEEE_NaN_m, only: Fill_IEEE_NaN
@@ -435,10 +504,9 @@ contains
     use MoreMessage, only: MLSMessage
     use Output_M, only: NewLine, Output
     use Path_Contrib_M, only: Get_GL_Inds
-    use Path_Representation_m, only: Path_t
+    use Path_Representation_m, only: Facets_and_Vertices_t, Path_t
     use Physics, only: SpeedOfLight
     use PointingGrid_M, only: PointingGrids, PointingGrid_T
-    use QTM_Facets_Under_Path_m, only: QTM_Facets_Under_Path
     use QTM_Interpolation_Weights_3D_m, only: S_QTM_t, Weight_ZQ_t
     use Slabs_sw_m, only: AllocateSLABS, DestroyCompleteSLABS, SLABS_Struct
     use TAU_M, only: Destroy_TAU, Dump, TAU_T
@@ -475,7 +543,9 @@ contains
                                             ! state vector (minor frame quantity)
     type (VectorValue_T), intent(in) :: Temp ! Temperature component of state vector
     type (HGrid_T), pointer, intent(in) :: QTM_HGrid ! HGrid that has finest QTM resolution.
-    logical, intent(in) :: UsingQTM         ! Temperature and all species have QTM hGrids
+    type (VectorValue_T), pointer :: Q_LOS  ! Minor-frame lines of sight for QTM
+    type (Path_t), intent(inout) :: QTM_Paths(:) ! LOS through QTM
+    type (Facets_and_Vertices_t), intent(in) :: F_and_V(:) ! of QTM under path
     integer, intent(in) :: No_Mol           ! Number of molecules
     integer, intent(in) :: NoUsedChannels   ! Number of channels used
     integer, intent(in) :: No_sv_p_T        ! number of phi basis for temperature
@@ -522,7 +592,6 @@ contains
     integer :: Frq_Avg_Sel        ! Summarizes combinations of PFA, LBL,
                                   ! Frequency averaging and derivatives.
                                   ! See Frequency_Average below.
-    integer, allocatable :: Facets(:)  ! Facets of QTM under path
     integer :: Frq_I              ! Frequency loop index
     integer :: H2O_Ind            ! Grids_f%S_Ind(L_H2O) = index of H2O in Grids_f
     integer :: IER                ! Status flag from allocates
@@ -585,6 +654,8 @@ contains
     logical :: Print_TauP         ! For debugging, from -Staup
     logical :: Print_TScat        ! For debugging, from -STScat
 
+    logical :: UsingQTM
+
     logical :: temp_der, atmos_der, spect_der ! Flags for various derivatives
     logical :: atmos_second_der   ! Flag for atmos second derivatives
     logical :: Spect_Der_Center, Spect_Der_Width, Spect_Der_Width_TDep
@@ -601,7 +672,6 @@ contains
                                         ! d_delta_df
     integer :: nnz_d_delta_df(size(grids_f%values)) ! Column lengths in
                                         ! nz_d_delta_df
-    integer, allocatable :: Vertices(:) ! Vertices of QTM adjacent to path
     integer :: Vert_Inds(max_f)         ! Height indices of fine path in
                                         ! H_Glgrid etc.
 
@@ -900,8 +970,6 @@ contains
     type (Grids_T) :: Grids_Salb  ! All the coordinates for single scattering albedo
     type (Grids_T) :: Grids_Cext  ! All the coordinates for cloud extinction
 
-    type (Path_t) :: Path         ! of one LOS, to calculate facets under it
-
     type (PointingGrid_T), pointer :: WhichPointingGrid ! Pointing grids for one signal
 
     type (Signal_T), pointer :: FirstSignal        ! The first signal we're dealing with
@@ -932,18 +1000,11 @@ contains
 
     ! Intermediate minor-frame tangent quantities calculated from LOS, for QTM
     type (VectorValue_T) :: Q_EarthRadC_sq
-    type (VectorValue_T) :: Q_Incline
-    type (VectorValue_T) :: Q_LOS
     type (VectorValue_T), target :: Q_PhiTan
     type (VectorValue_T) :: Q_TanHt
 
     ! Coarse-zeta grid tangent quantities interpreted from intermediate
     ! minor-frame tangent quantities calculated from LOS, for QTM.
-    type (ECR_T) :: LOS(2,no_tan_hts)    ! (1,:) are intersection or tangent,    
-                                         ! (2,:) are unit vector along                                            
-                                         ! lines-of-sight.
-    real(rp) :: Incline(no_tan_hts)      ! Inclination of plane containing LOS
-                                         ! and Earth center, degrees
     real(rp) :: EarthRadC_sq(no_tan_hts) ! Square of minor axis of plane-projected
                                          ! ellipse, meters^2
     real(rp) :: TanHt(no_tan_hts)        ! Tangent heights, meters
@@ -1038,6 +1099,8 @@ contains
     print_TScat_detail = switchDetail(switches, 'psct' )
     print_more_points = switchDetail(switches, 'ZMOR' ) > -1
     do_more_points = switchDetail(switches, 'zmor') > -1
+
+    usingQTM = associated(Q_LOS)
 
     ! Nullify all our pointers that are allocated because the first thing
     ! Allocate_Test does is ask if they're associated.  If we don't nullify
@@ -1146,17 +1209,20 @@ contains
     ! Then finish the vertical part of the Metrics-3D calculation.
     ! For now, do them all, until a profiler says this expense is significant.
 
-    if ( temp_der ) then
-      call two_d_hydrostatic ( Grids_tmp, &
-        &  (/ (refGPH%template%surfs(1,1), j=windowStart,windowFinish) /), &
-        &  0.001*refGPH%values(1,windowStart:windowFinish), z_glgrid, &
-        &  t_glgrid, h_glgrid, dhdz_glgrid, &
-        &  dh_dt_glgrid, DDHDHDTL0=ddhidhidtl0 )
-    else
-      call two_d_hydrostatic ( Grids_tmp, &
-        &  (/ (refGPH%template%surfs(1,1), j=windowStart,windowFinish) /), &
-        &  0.001*refGPH%values(1,windowStart:windowFinish), z_glgrid, &
-        &  t_glgrid, h_glgrid, dhdz_glgrid )
+    if ( .not. usingQTM ) then ! For QTM, we need a different t_glgrid,
+                               ! h_glgrid, etc. for each pointing.
+      if ( temp_der ) then
+        call two_d_hydrostatic ( Grids_tmp, &
+          &  spread(refGPH%template%surfs(1,1),1,windowFinish-windowStart+1), &
+          &  refGPH%values(1,windowStart:windowFinish), z_glgrid, &
+          &  t_glgrid, h_glgrid, dhdz_glgrid, &
+          &  dh_dt_glgrid, DDHDHDTL0=ddhidhidtl0 )
+      else
+        call two_d_hydrostatic ( Grids_tmp, &
+          &  spread(refGPH%template%surfs(1,1),1,windowFinish-windowStart+1), &
+          &  refGPH%values(1,windowStart:windowFinish), z_glgrid, &
+          &  t_glgrid, h_glgrid, dhdz_glgrid )
+      end if
     end if
 
     call Trace_End ( 'ForwardModel.Hydrostatic', &
@@ -1200,18 +1266,6 @@ contains
           & call output( '(Skipping loop of pointings)', advance='yes' )
       else if ( .not. FwdModelConf%generateTScat ) then
 
-        if ( usingQTM ) then ! Find facets under the path and vertices
-                             ! adjacent to it, assuming all pointings are
-                             ! in a vertical plane.  If pointings are not
-                             ! in a vertical plane, QTM_Facets_Under_Path
-                             ! should be used for each line of sight.
-          call path%new_path
-          path%lines(:,1) = LOS(:,1)
-          call path%get_path_ready
-          call QTM_Facets_Under_Path ( path, QTM_hGrid%QTM_tree, facets, &
-                                     & vertices )
-        end if
-
         do ptg_i = 1, no_tan_hts
 
           Vel_Rel = est_los_vel(ptg_i) / speedOfLight
@@ -1236,14 +1290,12 @@ contains
               &                 tan_press=tan_press(ptg_i), &
               &                 est_scGeocAlt=est_scGeocAlt(ptg_i) )
           else
-            call path%new_path
-            path%lines(:,1) = LOS(:,ptg_i)
+            call QTM_paths(ptg_i)%new_path
             call one_pointing ( ptg_i, vel_rel, r_eq,               &
               &                 tan_loc=tan_pt_geod(ptg_i),         &
               &                 tan_press=tan_press(ptg_i),         &
               &                 est_scGeocAlt=est_scGeocAlt(ptg_i), &
-              &                 path=path, s=s, facets=facets,      &
-              &                 vertices=vertices )
+              &                 path=QTM_paths(ptg_i), s=s, f_and_v=f_and_v )
           end if
         end do ! ptg_i
 
@@ -1358,8 +1410,6 @@ contains
     ! If hGrids were QTM, destroy intermediate minor-frame quantities
     if ( usingQTM ) then
       call DestroyVectorQuantityValue ( Q_EarthRadC_sq, forWhom='Q_EarthRadC_sq' )
-      call DestroyVectorQuantityValue ( Q_Incline, forWhom='Q_Incline' )
-      call DestroyVectorQuantityValue ( Q_LOS, forWhom='Q_LOS' )
       call DestroyVectorQuantityValue ( Q_PhiTan, forWhom='Q_PhiTan' )
       call DestroyVectorQuantityValue ( Q_TanHt, forWhom='Q_TanHt' )
     end if
@@ -1386,7 +1436,7 @@ contains
     ! for convolution and stuff for clouds.
 
       use Geometry, only: Orbit_Plane_Minor_Axis_sq
-      use interpolate_MIF_to_tan_press_m, only: interpolate_MIF_to_tan_press
+      use Interpolate_MIF_to_Tan_Press_m, only: Interpolate_MIF_to_Tan_Press
       use Intrinsic, only: L_EarthRefl, L_ECRtoFOV, L_GPH,  &
         & L_LOSVel, L_SurfaceHeight, L_OrbitInclination, L_REFGPH, &
         & L_ScGeocAlt, L_SpaceRadiance
@@ -1403,10 +1453,10 @@ contains
       MAF = fmStat%maf
 
       if ( usingQTM ) then
-        ! Compute minor-frame tangent quantities from LOS provided by level 1
+        ! Compute minor-frame tangent quantities from the minor-frame
+        ! lines-of-sight (Q_LOS) provided by level 1.
         call tangent_quantities ( MAF, fwdModelConf, fwdModelIn, fwdModelExtra, &
-                                & Q_EarthRadC_sq, Q_Incline, Q_LOS, Q_PhiTan, &
-                                & Q_TanHt )
+                                & Q_LOS, Q_EarthRadC_sq, Q_PhiTan, Q_TanHt )
         phiTan => Q_PhiTan ! Use the calculated one, not the one in FwdModelIn
       end if
 
@@ -1491,29 +1541,33 @@ contains
       ! interpolate Tan_Phi, ScGeocAlt and LOSVel from MIFs to pointings
       if ( .not. FwdModelConf%generateTScat ) then
         if ( .not. usingQTM ) then
+          ! At pressure levels PTan, interpolate
+          ! phitan,  scgeocalt,     losvel, to
+          ! tan_phi, est_scgeocalt, est_los_vel
+          ! at pressure levels given by Tan_Press
           call interpolate_MIF_to_tan_press ( nlvl, maf, ptan, phitan, &
             & scgeocalt, losvel, tan_press, &
             & tan_phi, est_scgeocalt, est_los_vel )
-          ! Create minor-frame values, all the same
-          !!!!! I don't remember why we want these for the non-QTM case !!!!!
-          call cloneVectorQuantity ( Q_Incline, phitan )
-          call cloneVectorQuantity ( Q_earthRadC_sq, phitan )
 
-          Q_Incline%values = orbIncline%values(1,MAF)
+          ! Create minor-frame values, all the same:
+          ! Q_earthRadC_sq is an array of orbit-plane-projected Earth radii,
+          ! all the same, used for convolution.
+          call cloneVectorQuantity ( Q_earthRadC_sq, phitan )
           Q_EarthRadC_sq%values = &
-            & orbit_plane_minor_axis_sq ( Q_Incline%values * deg2rad )
+            & orbit_plane_minor_axis_sq ( orbIncline%values(1,MAF) * deg2rad )
           ! Create coarse-grid tangent-point values, all the same
           earthradc_sq = &
             & orbit_plane_minor_axis_sq ( orbIncline%values(1,maf) * deg2rad )
         else
+          ! At pressure levels PTan, interpolate
+          ! phitan,  scgeocalt,     losvel,      Q_EarthRadC_sq, Q_TanHt to
+          ! tan_phi, est_scgeocalt, est_los_vel, earthRadC_sq,   tanHt
+          ! at pressure levels given by Tan_Press
           call interpolate_MIF_to_tan_press ( nlvl, maf, ptan, phitan, &
             & scgeocalt, losvel, tan_press, &
             & tan_phi, est_scgeocalt, est_los_vel, &
-            & Q_EarthRadC_sq, Q_Incline, Q_LOS, Q_TanHt, &
-            & earthRadC_sq,   incline,   LOS,   tanHt, tan_pt_Geod  )
-          ! Q_EarthRadC_sq, Q_Incline, Q_LOS, Q_TanHt are interpolated to
-          ! earthRadC_sq,   incline,   LOS,   tanHt by
-          ! interpolate_MIF_to_tan_press
+            & Q_EarthRadC_sq, Q_TanHt, &
+            & earthRadC_sq,   tanHt, tan_pt_Geod  )
         end if
       else ! Generating TScat
         ! Compute the square of the minor axis of the orbit plane projected
@@ -3666,8 +3720,8 @@ contains
 
   ! ...............................................  One_Pointing  .....
     subroutine One_Pointing ( Ptg_i, Vel_Rel, R_Eq, Tan_Phi, Tan_Loc, QTM,  &
-      & Tan_Press, Est_SCGeocAlt, Path, S, Facets, Vertices, Scat_Zeta,     &
-      & Scat_Phi, Scat_Ht, Xi, Scat_Index, Scat_Tan_Ht, Forward, Rev, Which )
+      & Tan_Press, Est_SCGeocAlt, Path, S, F_and_V, Scat_Zeta, Scat_Phi, &
+      & Scat_Ht, Xi, Scat_Index, Scat_Tan_Ht, Forward, Rev, Which )
 
       use Generate_QTM_m, only: QTM_Tree_t
       use Get_Chi_Angles_M, only: Get_Chi_Angles
@@ -3704,10 +3758,9 @@ contains
       type(s_QTM_t), allocatable, intent(out), optional :: S(:) ! Positions on
         ! the line of sight are Path%Lines(:,1) + s%s*Path%Lines(:,2).
         ! Present if UsingQTM.
-      integer, intent(in), optional :: Facets(:) ! Indices in QTM tree of
-                                       ! facets under Path.  Present only for QTM.
-      integer, intent(in), optional :: Vertices(:) ! Indices in QTM of vertices
-                                       ! adjacent to Path.  Present only for QTM.
+      type(facets_and_vertices_t), intent(in), optional :: F_and_V(:) ! Indices
+                                       ! of facets and vertices under Path.
+                                       ! Present only for QTM.
 
       ! The following are all present iff fwdModelConf%generateTScat
       real(rp), intent(in), optional :: Scat_Zeta   ! of scattering point
@@ -3801,6 +3854,22 @@ contains
 
       else ! QTM
 
+        ! Interpolate temperatures that are adjacent to the path onto T_GLgrid
+        ! and compute H_GLgrid etc. at those places.  The second extent of
+        ! T_GLgrid etc. is the maximum number of vertices adjacent to any path.
+        if ( temp_der ) then
+          call two_d_hydrostatic ( Grids_tmp, &
+            &  spread(refGPH%template%surfs(1,1),1,size(f_and_v(ptg_i)%vertices)), &
+            &  refGPH%values(1,:), z_glgrid, &
+            &  t_glgrid, h_glgrid, dhdz_glgrid, &
+            &  dh_dt_glgrid, DDHDHDTL0=ddhidhidtl0, vertices=f_and_v(ptg_i)%vertices )
+        else
+          call two_d_hydrostatic ( Grids_tmp, &
+            &  spread(refGPH%template%surfs(1,1),1,size(f_and_v(ptg_i)%vertices)), &
+            &  refGPH%values(1,:), z_glgrid, &
+            &  t_glgrid, h_glgrid, dhdz_glgrid, vertices=f_and_v(ptg_i)%vertices )
+        end if
+
         if ( associated(surfaceHeight) ) then
           call QTM_tangent_metrics ( tan_loc, QTM, h_glgrid, tan_ind_f, & ! in
             &                 h_surf, tan_ht_s, &                     ! output
@@ -3824,7 +3893,8 @@ contains
         call path%get_path_ready ! Calculate tangent or reflection, and
                                  ! continuation of the path thereafter.
         call metrics_3d_QTM ( path, QTM_hGrid%QTM_tree, h=h_glgrid, s=s, &
-          & tangent_index=tan_ind_f, pad=NG, facets=facets, which=horizontal )
+          & tangent_index=tan_ind_f, pad=NG, facets=f_and_v(ptg_i)%facets, &
+          & which=horizontal )
         ! ECR coordinates of points on the line-of-sight are
         ! Path%Lines(1,1) + S%s(:tan_ind_f) * Path%Lines(2,1) from the
         ! instrument to the tangent, and
@@ -4135,11 +4205,11 @@ contains
         ! and Req_s, which are gotten from Tangent_Metrics and Height_Metrics.
         if ( temp_der ) then
           ! Est_SCgeocAlt is in meters, but Get_Chi_Angles wants it in km.
-          call get_chi_angles ( 0.001*est_scGeocAlt, n_path_c(tan_pt_c), &
+          call get_chi_angles ( 0.001_rp*est_scGeocAlt, n_path_c(tan_pt_c), &
              & tan_ht_s, tan_phi, req_s, 0.0_rp, ptg_angles(ptg_i),      &
              & tan_dh_dt, tan_d2h_dhdt, dx_dt(ptg_i,:), d2x_dxdt(ptg_i,:) )
         else
-          call get_chi_angles ( 0.001*est_scGeocAlt, n_path_c(tan_pt_c), &
+          call get_chi_angles ( 0.001_rp*est_scGeocAlt, n_path_c(tan_pt_c), &
              & tan_ht_s, tan_phi, req_s, 0.0_rp, ptg_angles(ptg_i) )
         end if
       end if
@@ -4478,6 +4548,10 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.371  2016/11/09 00:38:10  vsnyder
+! Move Interpolate_MIF_to_Tan_Press to a separate model.  Get list of facets
+! and pass it to Metrics_3D.  Other stuff for inching toward 3D model.
+!
 ! Revision 2.370  2016/11/03 19:11:47  vsnyder
 ! Inching toward 3D forward model
 !
