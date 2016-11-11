@@ -13,22 +13,18 @@
 module Tangent_Quantities_m
 !=============================================================================
 
-  ! Given vectors C and U that define lines of sight of the form C + s * U,
-  ! and therefore also define plane-projected ellipses that are the
-  ! intersections of the Earth with the planes defined by the lines of sight
-  ! and the Earth center, calculate the positions of the geodetic tangents
-  ! or Earth intersections.
-
-  ! Produce new LOS representations where C' gives the geodetic tangent
-  ! location, and U' is an unit vector.  In the LOS representation C' + s * U',
-  ! the tangent is at s == 0.
+  ! Find the minor-frame line of sight quantity (LOS).  It represents two
+  ! vectors C and U that define lines of sight of the form C + s * U, and
+  ! therefore also define plane-projected ellipses that are the intersections
+  ! of the Earth with the planes defined by the lines of sight and the Earth
+  ! center, calculate the positions of the geodetic tangents or Earth
+  ! intersections.
 
   ! For each tangent or intersection, compute
   ! (1) its geodetic angle in degrees from the Equator in the plane-projected
-  !     ellipse,
-  ! (2) the inclination of that plane,
-  ! (3) the square of the minor axis of the plane-projected ellipse, and
-  ! (4) the tangent height, i.e., the geodetic height above the plane-projected
+  !     ellipse (PhiTan),
+  ! (2) the square of the minor axis of the plane-projected ellipse, and
+  ! (3) the tangent height, i.e., the geodetic height above the plane-projected
   !     ellipse (zero, not negative, for an intersection).
 
   implicit NONE
@@ -46,15 +42,14 @@ module Tangent_Quantities_m
 contains
 
   subroutine Tangent_Quantities ( MAF, FwdModelConf, FwdModelIn, FwdModelExtra, &
-                                & EarthRadC_sq, Incline, LOS, PhiTan, TanHt )
+                                & LOS, EarthRadC_sq, PhiTan, TanHt )
 
     use Constants, only: Rad2Deg
     use ForwardModelConfig, only: ForwardModelConfig_T
     use Earth_Constants, only: EarthRadA ! major axis, meters
     use Geolocation_0, only: ECR_t, Norm2, RG
     use Geometry, only: Orbit_Plane_Minor_Axis_sq, XZ_to_Geod
-    use Intrinsic, only: l_mifLOS, l_mifRadC, l_orbitInclination, l_phiTan, &
-                       & l_tngtGeodAlt
+    use Intrinsic, only: l_mifRadC, l_phiTan, l_tngtGeodAlt
     use Line_And_Ellipsoid_m, only: Exact_Line_Nearest_Ellipsoid, &
                                   & Line_And_Ellipsoid
     use VectorsModule, only: CloneVectorQuantity, RV, Vector_T, VectorValue_T
@@ -63,10 +58,12 @@ contains
     type(forwardModelConfig_T), intent(in) :: FwdModelConf
     type(vector_t), intent(in) :: FwdModelIn, FwdModelExtra
 
-    type(vectorValue_t), intent(out) :: EarthRadC_sq ! m^2
-    type(vectorValue_t), intent(out) :: Incline ! Degrees, geocentric
-    type(vectorValue_t), intent(out) :: LOS     ! LOS as C' + s U'
-    type(vectorValue_t), intent(out) :: PhiTan  ! Degrees, geodetic, w.r.t.
+    type(vectorValue_t), intent(in) :: LOS      ! LOS as C' + s U'
+
+    type(vectorValue_t), intent(out) :: EarthRadC_sq ! Square of  minor axis of
+                                                ! plane-projected ellipse, m^2
+    type(vectorValue_t), intent(out) :: PhiTan  ! Degrees from equator,
+                                                ! geodetic, w.r.t.
                                                 ! plane-projected ellipse
     type(vectorValue_t), intent(out) :: TanHt   ! Geodetic height, above plane-
                                                 ! projected ellipse, meters
@@ -75,6 +72,7 @@ contains
     type(ECR_t) :: Equator, Normal, Pole ! of plane-projected ellipse
     real(rv) :: H ! TanHt proxy
     integer :: I
+    real(rv) :: Incline
     type(ECR_t), allocatable :: Intersections(:) ! of LOS with Earth, if any
     type(ECR_t) :: Line(2) ! C vector, U' vector
     real(rv) :: P ! PhiTan proxy
@@ -85,21 +83,14 @@ contains
 
     ! Get quantities
     call cloneVectorQuantity ( earthRadC_sq, GetQuantity ( l_mifRadC ) )
-    call cloneVectorQuantity ( incline, GetQuantity ( l_orbitInclination ) )
-    call cloneVectorQuantity ( LOS, GetQuantity ( l_mifLOS ) )
     call cloneVectorQuantity ( phiTan, GetQuantity ( l_phiTan ) )
     call cloneVectorQuantity ( tanHt, GetQuantity ( l_tngtGeodAlt ) )
 
     ! Verify the quantities have compatible templates to LOS, and if
     ! they are compatible, create values components for them.
     call check_compatible_and_create ( earthRadC_sq, "EarthRadC_sq" )
-    call check_compatible_and_create ( incline, "Incline" )
     call check_compatible_and_create ( phiTan, "PhiTan" )
     call check_compatible_and_create ( tanHt, "TanHt" )
-
-    ! Check that LOS has at least 6 channels (two ECR quantities).
-    ! We don't care if the others have more than one (maybe we should).
-    if ( LOS%template%noChans < 6 ) call wrongShape ( LOS, "LOS", 6 )
 
     do i = 1, LOS%template%noSurfs
       ! Get input LOS as two ECR vectors, and replace U with U'.
@@ -137,10 +128,10 @@ contains
                                     ! to the Equator.
       ! Inclination of plane containing LOS and Earth center = 90 - atan(Z / R).
       ! Maybe we need to worry here about ascending vs. descending.
-      incline%values(i,MAF) = 90.0 - rad2deg * atan2 ( normal%xyz(3), r )
+      incline = 90.0 - rad2deg * atan2 ( normal%xyz(3), r )
       ! (Minor axis)**2 of ellipse in plane containing LOS and Earth center.
       earthRadC_sq%values(i,MAF) = &
-        & orbit_plane_minor_axis_sq ( incline%values(i,MAF) )
+        & orbit_plane_minor_axis_sq ( incline )
       ! Unit vector along the intersection of the plane-projected ellipse and
       ! the Equator = North_Pole .cross. Normal = (0,0,1) .cross. Normal.
       equator = ECR_t ( [ -normal%xyz(2), normal%xyz(1), 0.0_rg ] ) / r
@@ -230,22 +221,6 @@ contains
         & instrumentModule=fwdModelConf%signals(1)%instrumentModule )
     end function GetQuantity
 
-    subroutine WrongShape ( V, Name, Shape )
-      use MLSMessageModule, only: MLSMSG_Error
-      use MoreMessage, only: MLSMessage
-      type(vectorValue_t), intent(in) :: V
-      character(*), intent(in) :: Name
-      integer, intent(in) :: Shape
-      if ( v%template%name == 0 ) then
-        call MLSMessage ( MLSMSG_Error, moduleName, &
-          & "Quantity " // name // " does not have %d ECR components.", shape )
-      else
-        call MLSMessage ( MLSMSG_Error, moduleName, &
-          & "Quantity %s does not have %d ECR components.", &
-          & [ v%template%name, shape ] )
-      end if
-    end subroutine WrongShape
-
   end subroutine Tangent_Quantities
 
 !=============================================================================
@@ -262,6 +237,11 @@ contains
 end module Tangent_Quantities_m
 
 ! $Log$
+! Revision 2.6  2016/11/11 01:57:38  vsnyder
+! Eliminate Incline argument because nobody used it.  Don't check LOS chans
+! because that's done earlier, which also allows to eliminate Wrong_Shape
+! internal subroutine.  Spiff some comments.
+!
 ! Revision 2.5  2016/11/09 00:34:13  vsnyder
 ! Don't put first line reference at the tangent point.  Use .crossnorm. for
 ! cross products that should return unit vectors.  Specify intents for
