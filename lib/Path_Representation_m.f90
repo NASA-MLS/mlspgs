@@ -57,6 +57,11 @@ module Path_Representation_m
     logical :: F   ! Flag at a point on or near the path
   end type Flag_t
 
+  type, public :: Facets_and_Vertices_t
+    integer, allocatable :: Facets(:)   ! Indices in QTM_Tree%Q
+    integer, allocatable :: Vertices(:) ! Indices in QTM_Tree%Geo_In
+  end type Facets_and_Vertices_t
+
   public :: Path_Continuation
 
 !---------------------------- RCS Module Info ------------------------------
@@ -189,6 +194,9 @@ contains
 end module Path_Representation_m
 
 ! $Log$
+! Revision 2.6  2016/11/11 01:46:41  vsnyder
+! Add Facets_and_Vertices_t
+!
 ! Revision 2.5  2016/11/08 02:04:56  vsnyder
 ! Use Exact_Line_Nearest_Ellipsoid
 !
