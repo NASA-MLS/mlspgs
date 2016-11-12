@@ -45,7 +45,7 @@ module Metrics_3D_m
 
 contains
 
-  subroutine Metrics_3D_QTM ( Path, QTM_Tree, H, S, Tangent_Index, Pad, Facets, &
+  subroutine Metrics_3D_QTM ( Path, QTM_Tree, H, S, Tangent_Index, Pad, F_and_V, &
                             & Which )
     ! Given a line defined by a point in ECR, and a vector in ECR parallel
     ! to that line, compute all intersections of that line with a face of
@@ -70,7 +70,7 @@ contains
     ! last one is farthest from Path%Lines(1,1).
 
     use Generate_QTM_m, only: QTM_Tree_t
-    use Path_Representation_m, only: Path_t
+    use Path_Representation_m, only: Facets_and_Vertices_t, Path_t
     use QTM_Interpolation_Weights_3D_m, only: S_QTM_t
 
     type(path_t), intent(inout) :: Path ! Path%Lines(1,1) + s * Path%Lines(2,1)
@@ -79,7 +79,7 @@ contains
                                    ! Path%Lines(2,1) + s * Path%Lines(2,2)
                                    ! defines the line after the tangent point.
     type(QTM_Tree_t), intent(inout), target :: QTM_Tree
-    real(rg), intent(in), contiguous :: H(:,:) ! Heights X size(QTM_Tree%Geo_in)
+    real(rg), intent(in), contiguous :: H(:,:) ! Heights X # vertices near path
                                    ! The second subscript is the QTM vertex
                                    ! serial number, also used as a subscript
                                    ! for QTM_Tree%Geo_in.
@@ -88,7 +88,8 @@ contains
     integer, intent(out) :: Tangent_Index ! Index in S of tangent or
                                    ! intersection.
                                    ! S(Tangent_Index) == S(Tangent_Index+1)
-    integer, intent(in) :: Facets(:) ! Facets under Path
+    type(Facets_and_Vertices_t), intent(in) :: F_and_V ! Facets and vertices
+                                   ! under Path
     integer, intent(in) :: Pad     ! Amount of padding to introduce in S between
                                    ! before-the-tangent and after-the-tangent.
     integer, intent(in), optional :: Which ! Which intersections to detect,
@@ -107,7 +108,7 @@ contains
     ! tangent or Earth-surface intersection.
     do i = 1, 2
       call Metrics_3D_QTM_1 ( path%Lines(:,i), path%sMin(i), path%sMax(i), &
-        & QTM_tree, h, s_int(i)%s, facets, which )
+        & QTM_tree, h, s_int(i)%s, f_and_v, which )
     end do
     ! Concatenate the two halves of the path, with Pad copies of the tangent
     ! between.  s(tangent_index:tangent_index+pad+1) should all be the same.
@@ -120,7 +121,7 @@ contains
   end subroutine Metrics_3D_QTM
 
   subroutine Metrics_3D_QTM_1 ( Line, SMin, SMax, QTM_Tree, H, Intersections, &
-                              & Facets, Which )
+                              & F_and_V, Which )
 
     ! Given a line defined by a point in ECR, and a vector in ECR parallel
     ! to that line, compute all intersections of that line with a face of
@@ -160,6 +161,7 @@ contains
     use Line_And_Cone_m, only: Line_And_Cone
     use Line_And_Ellipsoid_m, only: Line_And_Sphere
     use Line_And_Plane_m, only: Line_And_Plane
+    use Path_Representation_m, only: Facets_and_Vertices_t
     use QTM_m, only: Stack_t
     use QTM_Interpolation_Weights_3D_m, only: S_QTM_t, Cone_Face, &
       & Top_Face, X_Face, Y_Face
@@ -170,13 +172,14 @@ contains
                                            ! Line(2) is made an unit vector here
     real(rg), intent(in) :: SMin, SMax     ! Reject intersections outside this range
     type(QTM_tree_t), intent(inout) :: QTM_Tree
-    real(rg), intent(in), contiguous :: H(:,:) ! Heights X size(QTM_Tree%Geo_in)
+    real(rg), intent(in), contiguous :: H(:,:) ! Heights X # vertices near path
     type(S_QTM_t), intent(out), allocatable :: Intersections(:) ! S-values of
                                            ! intersections of Line with any
                                            ! surface of any prism of the
                                            ! QTM-based 3D grid, provided they
                                            ! are within [SMin, SMax]
-    integer, intent(in) :: Facets(:)       ! Facets under Line
+    type(Facets_and_Vertices_t), intent(in) :: F_and_V ! Facets and vertices
+                                           ! under Path
     integer, intent(in), optional :: Which ! Which intersections to detect,
                                            ! default all
 
@@ -301,7 +304,7 @@ contains
       integer :: N_H           ! Number of QTM vertices to use for height
                                ! interpolation
       integer :: N_Out         ! How much of Outside is used
-      type(S_QTM_t) :: Outside(size(h,1)) ! Intersections with surfaces of
+      type(S_QTM_t) :: Outside(n_height) ! Intersections with surfaces of
                                ! constant height outside the QTM
       real(rg), allocatable :: S(:) ! Intersections of Line with
                                ! a surface at constant height above the Earrh
@@ -344,13 +347,14 @@ contains
                & norm2(QTM_tree%geo_in(ser(2))%ecr() - &
                       &QTM_tree%geo_in(ser(1))%ecr())
         eta(2) = 1 - eta(1)
-        i_h(1) = min(ser(1),size(h,2))
-        i_h(2) = min(ser(2),size(h,2))
+        i_h(1:2) = min(ser(1:2),size(h,2))
+        i_h(1:2) = QTM_tree%path_vertices(i_h(1:2))
       else ! This interpolates in a plane; maybe it should be the same
            ! as in Intersect_Line_And_Horizontal_Boundary
         n_h = 3 ! Number of QTM vertices to use for height interpolation
         ser = QTM_tree%q(f)%ser
         i_h = min(QTM_tree%q(f)%ser,size(h,2))
+        i_h = QTM_tree%path_vertices(i_h)
         ! Compute the interpolation coefficients in ZOT coordinates.
         z = geo_to_ZOT ( geod )
         call triangle_interpolate ( QTM_tree%q(f)%z%x, QTM_tree%q(f)%z%y, &
@@ -390,7 +394,7 @@ contains
       type(ECR_t) :: CC                 ! Circumcenter of facet V (see
                                         ! below) = V(3) + C, or its centroid
       type(ECR_t) :: Center             ! Center of sphere containing facet V
-      integer :: F                      ! Index of a facet, from Facets(:)
+      integer :: F                      ! Index of a facet, from F_and_V%Facets(:)
       real(rg) :: G(3)                  ! Normalized geocentric angular
                                         ! distance coordinates
       type(h_v_geod) :: Geod            ! Geodetic coordinates of CC
@@ -410,8 +414,8 @@ contains
       type(ECR_t) :: V(3)               ! Vertices of a horizontal boundary
                                         ! surface above a QTM facet
 
-      do i = 1, size(facets)
-        f = facets(i)
+      do i = 1, size(f_and_v%facets)
+        f = f_and_v%facets(i)
         ! We know qtm_tree%q(f)%depth == qtm_tree%level, f.e., it's a facet
         ! at the finest level of refinement.
         do j = 1, n_height
@@ -419,7 +423,8 @@ contains
           do k = 1, 3
           ! Get geodetic coordinates of vertices of QTM facet V at height
           ! H(j,.) above the Earth's surface.
-            l = min(qtm_tree%q(f)%ser(k),size(h,2)) ! Coherent?
+            l = qtm_tree%q(f)%ser(k)
+            l = min(qtm_tree%path_vertices(l),size(h,2)) ! Coherent?
             geod_f(k) = h_v_geod ( QTM_tree%geo_in(qtm_tree%q(f)%ser(k))%lon, &
                                  & QTM_tree%geo_in(qtm_tree%q(f)%ser(k))%lat, &
                                  & h(j,l) )
@@ -479,7 +484,7 @@ contains
     subroutine Intersect_Line_And_Latitude_Cone
       ! Get all intersections of Line with latitude cones of the QTM.
       real(rg) :: Eta_h(2)    ! Interpolation coefficient for longitude
-      integer :: F            ! Index of a facet, from Facets(:)
+      integer :: F            ! Index of a facet, from F_and_V%Facets(:)
       class(h_v_t), allocatable :: Geo     ! H_V_Geoc or H_V_Geod, depending
                               ! upon QTM_tree%geo_in
       integer :: H1, H2       ! Subscripts for second dimension
@@ -515,9 +520,11 @@ contains
                & s_int(j) >= SMin .and. s_int(j) <= SMax
           if ( keep ) then
             s1 = qtm_tree%q(f)%ser(qtm_tree%q(f)%xn)
-            h1 = min(s1,ubound(h,2))
+            h1 = qtm_tree%path_vertices(s1)
+            h1 = min(h1,ubound(h,2))
             s2 = qtm_tree%q(f)%ser(qtm_tree%q(f)%yn)
-            h2 = min(s2,ubound(h,2))
+            h2 = qtm_tree%path_vertices(s2)
+            h2 = min(h2,ubound(h,2))
             eta_h(1) = ( QTM_tree%geo_in(s2)%lon%d - geo%lon%d ) / &
                      & ( QTM_tree%geo_in(s2)%lon%d - QTM_tree%geo_in(s1)%lon%d )
             eta_h(2) = 1 - eta_h(2)
@@ -545,7 +552,7 @@ contains
       ! that are not on latitude cones.  These are faces for which one vertex
       ! of the QTM is a polar vertex and the other one is not.
       real(rg) :: Eta_h(2)    ! Interpolation coefficient for latitude
-      integer :: F            ! Index of a facet, from Facets(:)
+      integer :: F            ! Index of a facet, from F_and_v%facets(:)
       integer, parameter :: Faces(2) = [ X_face, Y_face ]
       type(h_v_geod) :: Geod_f(2,2) ! Geodetic coordinates of a point on a plane
       type(h_v_geod) :: Geod_int    ! Geodetic coordinates of intersection
@@ -568,8 +575,8 @@ contains
       allocate ( v_int(2*size(QTM_Tree%QTM_lats)) )
       n_vert = 0
       hit = .false.
-   facet: do i = 1, size(facets) ! Examine all the facets under the path
-        f = facets(i)
+   facet: do i = 1, size(f_and_v%facets) ! Examine all the facets under the path
+        f = f_and_v%facets(i)
         ! F is the index of a facet of the finest refinement.
         ! Get indices of vertices of edges not on a latitude cone.
         ! One of the vertices of such an edge will be the pole node.
@@ -583,7 +590,8 @@ contains
               ! Get geodetic and then ECR coordinates of vertices of vertical
               ! plane K at heights H(j:j+1,.) above the Earth's surface.
               do n = 0, 1
-                sn(n) = min(qtm_tree%q(f)%ser(v(m,k)),size(h,2))
+                sn(n) = qtm_tree%q(f)%ser(v(m,k))
+                sn(n) = min(qtm_tree%path_vertices(sn(n)),size(h,2))
                 geod_f(m,n+1) = h_v_geod ( QTM_tree%geo_in(qtm_tree%q(f)%ser(v(m,k)))%lon, &
                                          & QTM_tree%geo_in(qtm_tree%q(f)%ser(v(m,k)))%lat, &
                                          & h(j+n,sn(n)) )
@@ -648,6 +656,10 @@ contains
 end module Metrics_3D_m
 
 ! $Log$
+! Revision 2.9  2016/11/12 01:40:56  vsnyder
+! Replace Facets argument with F_and_V.  Subscript H with index of vertex
+! near path instead of QTM serial number.
+!
 ! Revision 2.8  2016/11/09 00:36:13  vsnyder
 ! Remove Metrics_3D_Grid, pass in list of facets to use
 !
