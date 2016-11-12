@@ -19,7 +19,7 @@ module QTM_Tangent_Metrics_m
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
-  private :: not_used_here 
+  private :: not_used_here
 !---------------------------------------------------------------------------
 
 contains
@@ -45,8 +45,8 @@ contains
                                        ! (lon,lat, ht) degrees, m
     type(QTM_Tree_t), intent(in) :: QTM   ! Horizontal grid
     real(rp), intent(in) :: H_Ref(:,:) ! Geodetic heights (above Earth Reference
-                                       ! Ellipsoid) by fine zeta and QTM grid
-                                       ! serial number, km
+                                       ! Ellipsoid) by fine zeta and index of
+                                       ! vertex near the path, km
     integer, intent(in) :: Tan_Ind_f   ! First (vertical) index of tangent
                                        ! point in H_Ref, which is on the fine
                                        ! zeta grid.
@@ -74,7 +74,10 @@ contains
 
     type(value_t) :: Eta(3)            ! Interpolation coefficients
 
-    ! Get interpolation coefficients and QTM serial numbers from QTM to Tan_Pt
+    ! Get interpolation coefficients and QTM serial numbers from QTM to Tan_Pt.
+    ! Serial numbers put into Eta%n will necessarily be serial numbers of
+    ! vertices adjacent to the path, so subscripting qtm%path_vertices with
+    ! Eta%n will be meaningful.
     call QTM_Interpolation_Weights ( QTM, Tan_Pt, Eta )
 
     if ( present(surf_height) ) then
@@ -85,8 +88,9 @@ contains
     else
       ! If we don't have the actual surface height, we set the surface
       ! reference at the input z_ref and adjust r_eq and h_tan relative
-      ! to this, and adjust h_ref accordingly.
-      h_surf = dot_product ( h_ref(1,eta%n), eta%v )
+      ! to this, and adjust h_ref accordingly.  H_Ref is adjacent to the
+      ! path, so index it using the inverse of f_and_v%vertices.
+      h_surf = dot_product ( h_ref(1,qtm%path_vertices(eta%n)), eta%v )
     end if
 
     if ( present(tan_press) .and. present(surf_temp) .and. present(z_ref) .and. &
@@ -98,9 +102,12 @@ contains
       h_tan = dot_product ( surf_temp(eta%n),eta%v ) * &
             & (tan_press-z_ref)/14.8
     else
-      h_tan = dot_product ( h_ref(tan_ind_f,eta%n), eta%v ) - h_surf
+      ! H_Ref is adjacent to the path, so index it using the inverse of
+      ! f_and_v%vertices.
+      h_tan = dot_product ( h_ref(tan_ind_f,qtm%path_vertices(eta%n)), eta%v ) - &
+              h_surf
     end if
-    
+
   end subroutine QTM_Tangent_Metrics
 
 !--------------------------- end bloc --------------------------------------
@@ -116,6 +123,9 @@ contains
 end module QTM_Tangent_Metrics_m
 
 ! $Log$
+! Revision 2.5  2016/11/12 01:38:18  vsnyder
+! Use subscript of vertex near path instead of QTM serial number for H_Ref
+!
 ! Revision 2.4  2016/11/11 01:58:36  vsnyder
 ! Make computation involving Z_Ref contingent upon Z_Ref being present.
 !
