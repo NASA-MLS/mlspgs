@@ -3744,7 +3744,8 @@ contains
       real(rp), intent(in), optional :: Tan_Phi     ! orbit angle at tangent, radians
       class(h_v_geod), intent(in), optional :: Tan_Loc   ! (lon,Lat,ht)
                                        ! degrees and km, for QTM case
-      type(QTM_tree_t), intent(in), optional :: QTM ! for QTM case
+      type(QTM_tree_t), intent(inout), optional :: QTM ! for QTM case; only
+        ! QTM%Path_Vertices is changed here.
       real(rp), intent(in), optional :: Tan_Press     ! hPa, not zeta
       real(rp), intent(in), optional :: Est_SCGeocAlt ! Est S/C geocentric
         ! altitude /m, used only to compute chi angles for convolution
@@ -3854,6 +3855,13 @@ contains
 
       else ! QTM
 
+        ! Put the inverse of F_and_V%Vertices in QTM%Path_Vertices.  The values
+        ! therein are used to index elements of arrays that only exist
+        ! adjacent to the path.
+        do i_start = 1, size(f_and_v(ptg_i)%vertices) ! I_Start is a temp here
+          QTM%path_vertices(f_and_v(ptg_i)%vertices(i_start)) = i_start
+        end do
+
         ! Interpolate temperatures that are adjacent to the path onto T_GLgrid
         ! and compute H_GLgrid etc. at those places.  The second extent of
         ! T_GLgrid etc. is the maximum number of vertices adjacent to any path.
@@ -3892,8 +3900,8 @@ contains
 
         call path%get_path_ready ! Calculate tangent or reflection, and
                                  ! continuation of the path thereafter.
-        call metrics_3d_QTM ( path, QTM_hGrid%QTM_tree, h=h_glgrid, s=s, &
-          & tangent_index=tan_ind_f, pad=NG, facets=f_and_v(ptg_i)%facets, &
+        call metrics_3d_QTM ( path, QTM, h=h_glgrid, s=s, &
+          & tangent_index=tan_ind_f, pad=NG, f_and_v=f_and_v(ptg_i), &
           & which=horizontal )
         ! ECR coordinates of points on the line-of-sight are
         ! Path%Lines(1,1) + S%s(:tan_ind_f) * Path%Lines(2,1) from the
@@ -4548,6 +4556,15 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.372  2016/11/11 02:06:27  vsnyder
+! For QTM, get LOS from MIF LOS before FullForwardModelAuto.  Use it to
+! calculate facets and vertices on all paths.  Use maximum number of vertices
+! on any path as the horizontal extent for temperature-related arrays.  Pass
+! Vertices array to Two_D_Hydrostatic.  Don't call Two_D_Hydrostatic before
+! the loop over sidebands.  Pass RefGPH values as m instead of km because
+! Two_D_Hydrostatic does the conversion now.  Other stuff for inching toward
+! 3D QTM model.
+!
 ! Revision 2.371  2016/11/09 00:38:10  vsnyder
 ! Move Interpolate_MIF_to_Tan_Press to a separate model.  Get list of facets
 ! and pass it to Metrics_3D.  Other stuff for inching toward 3D model.
