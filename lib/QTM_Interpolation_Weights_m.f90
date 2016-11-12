@@ -39,8 +39,8 @@ module QTM_Interpolation_Weights_m
 
 contains
 
-  subroutine QTM_Interpolation_Weights_Geo ( QTM_Tree, Point, Weights, Stack, &
-                                           & Used )
+  subroutine QTM_Interpolation_Weights_Geo ( QTM_Tree, Point, Weights, Facet, &
+                                           & Stack, Used )
 
     ! Get the horizontal interpolation weights for Point in the QTM.  This is
     ! the routine that actually does the work for Point being in some kind of
@@ -56,6 +56,7 @@ contains
     type(QTM_tree_t), intent(in) :: QTM_Tree
     class(h_t), intent(in) :: Point
     type(value_t), intent(out) :: Weights(3)
+    integer, intent(in), optional :: Facet
     type(stack_t), intent(inout), optional :: Stack
     class(h_t), intent(out), optional :: Used ! The point used for interpolation
 
@@ -64,7 +65,11 @@ contains
     type(h_t) :: P    ! Coordinates of boundary point nearest to Point.
     type(ZOT_t) :: Z  ! ZOT coordinates of Point.
 
-    f = QTM_tree%find_facet ( point, stack )
+    if ( present(facet) ) then
+      f = facet
+    else
+      f = QTM_tree%find_facet ( point, stack )
+    end if
     inside = f > 0
     if ( inside ) inside = all(QTM_tree%Q(f)%ser > 0)
     if ( inside ) then
@@ -88,7 +93,7 @@ contains
         call triangle_interpolate ( QTM_tree%Q(f)%z%x, QTM_tree%Q(f)%z%y, &
                                   & z%x, z%y, weights%v )
       else ! Shouldn't get here
-        weights = value_t(1,0)
+        weights = value_t(1,1,1,0)
       end if
       if ( present(used) ) then
         used%lon = p%lon
@@ -120,18 +125,20 @@ contains
 
     if ( present(stack) ) then
       do i = 1, size(point) ! Assume size(point) == size(weights,2)
-        call QTM_Interpolation_Weights ( QTM_Tree, point(i), weights(:,i), stack )
+        call QTM_Interpolation_Weights ( QTM_Tree, point(i), weights(:,i), &
+          & stack=stack )
       end do
     else
       do i = 1, size(point) ! Assume size(point) == size(weights,2)
-        call QTM_Interpolation_Weights ( QTM_Tree, point(i), weights(:,i), myStack )
+        call QTM_Interpolation_Weights ( QTM_Tree, point(i), weights(:,i), &
+          & stack=myStack )
       end do
     end if
 
   end subroutine QTM_Interpolation_Weights_Geo_list
 
-  subroutine QTM_Interpolation_Weights_ZOT ( QTM_Tree, Point, Weights, Stack, &
-                                           & Used )
+  subroutine QTM_Interpolation_Weights_ZOT ( QTM_Tree, Point, Weights, Facet, &
+                                           & Stack, Used )
 
     ! Get the horizontal interpolation weights for Point in the QTM.
     ! This is a 2D-only routine.
@@ -145,6 +152,7 @@ contains
     type(QTM_tree_t), intent(in) :: QTM_Tree
     type(ZOT_t), intent(in) :: Point
     type(value_t), intent(out) :: Weights(3)
+    integer, intent(in), optional :: Facet
     type(stack_t), intent(inout), optional :: Stack
     type(ZOT_t), intent(out), optional :: Used ! The point used for interpolation
 
@@ -152,7 +160,11 @@ contains
     integer :: F      ! Index in QTM_Tree of facet containing Point, if any.
     type(ZOT_t) :: P  ! Coordinates of boundary point nearest to Point.
 
-    f = QTM_tree%find_facet ( point, stack )
+    if ( present(facet) ) then
+      f = facet
+    else
+      f = QTM_tree%find_facet ( point, stack )
+    end if
     inside = f > 0
     if ( inside ) inside = all(QTM_tree%Q(f)%ser > 0)
     if ( inside ) then
@@ -171,7 +183,7 @@ contains
         call triangle_interpolate ( QTM_tree%Q(f)%z%x, QTM_tree%Q(f)%z%y, &
                                   & point%x, point%y, weights%v )
       else ! Shouldn't get here
-        weights = value_t(1,0)
+        weights = value_t(1,1,1,0)
       end if
       if ( present(used) ) used = p
     end if
@@ -198,11 +210,13 @@ contains
 
     if ( present(stack) ) then
       do i = 1, size(point) ! Assume size(point) == size(weights,2)
-        call QTM_Interpolation_Weights ( QTM_Tree, point(i), weights(:,i), stack )
+        call QTM_Interpolation_Weights ( QTM_Tree, point(i), weights(:,i), &
+          & stack=stack )
       end do
     else
       do i = 1, size(point) ! Assume size(point) == size(weights)
-        call QTM_Interpolation_Weights ( QTM_Tree, point(i), weights(:,i), myStack )
+        call QTM_Interpolation_Weights ( QTM_Tree, point(i), weights(:,i), &
+          & stack=myStack )
       end do
     end if
 
@@ -222,6 +236,9 @@ contains
 end module QTM_Interpolation_Weights_m
 
 ! $Log$
+! Revision 2.7  2016/11/12 01:34:06  vsnyder
+! Add Facet argument for routines with scalar Point, in case we know it
+!
 ! Revision 2.6  2016/11/02 22:55:15  vsnyder
 ! Remove Weight_t in favor of Value_t in Path_Representation_m
 !

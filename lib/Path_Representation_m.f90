@@ -23,14 +23,14 @@ module Path_Representation_m
 
   type, public :: Path_t
     ! A path is represented by two lines, one from the instrument to the
-    ! tangent, and one from the tangent onward. The given line is the one
-    ! from the instrument to the tangent, represented by
+    ! tangent or intersection, and one from there onward. The given line is the
+    ! one from the instrument to the tangent or intersection, represented by
     ! Lines(1,1) + s * Lines(2,1). A line defined by
     ! Lines(1,2) + s * Lines(2,2) is produced, which is the continuation
     ! of Lines(:,1) after the tangent point if Lines(:,1) does not
     ! intersect the Earth reference ellipsoid, or the reflection of
     ! Lines(:,1) if it does intersect the Earth reference ellipsoid. 
-    ! Lines(2,1) and Lines(2,2) are unit vectors.
+    ! Lines(2,1) and Lines(2,2) are made to be unit vectors.
     type(ECR_t) :: Lines(2,2)
     real(rg) :: SMax(2), SMin(2) ! Interesting intervals of S along Lines
     logical :: Ready = .false.   ! Lines(:,2), SMin and SMax have been computed.
@@ -40,21 +40,17 @@ module Path_Representation_m
   end type Path_t
 
   type, public :: Value_t
-    integer :: N   ! Position in array-element order to which V is germane. 
-                   ! If it's a position in a rank-2 array, its array-element
-                   ! order is computed by Element_Position in Array_Stuff. 
-                   ! If there is none (which shouldn't happen), N is one and
-                   ! V is zero.
-    real(rg) :: V  ! Value at a point on or near the path
+    integer :: N = 0  ! Serial number of QTM vertex to which V is germane.
+    integer :: NP = 1 ! Subscript of vertex near the path to which V is germane.
+    integer :: NZ = 1 ! Vertical subscript of layer below vertex to which V is germane.
+    real(rg) :: V = 0 ! Value at a point on or near the path
   end type Value_t
 
   type, public :: Flag_t
-    integer :: N   ! Position in array-element order to which F is germane. 
-                   ! If it's a position in a rank-2 array, its array-element
-                   ! order is computed by Element_Position in Array_Stuff. 
-                   ! If there is none (which shouldn't happen), N is one and
-                   ! F is zero.
-    logical :: F   ! Flag at a point on or near the path
+    integer :: N = 0  ! Serial number of QTM vertex to which F is germane.
+    integer :: NP = 1 ! Subscript of vertex near the path to which F is germane.
+    integer :: NZ = 1 ! Vertical subscript of layer below vertex to which F is germane.
+    logical :: F = .false. ! Flag at a point on or near the path
   end type Flag_t
 
   type, public :: Facets_and_Vertices_t
@@ -194,6 +190,9 @@ contains
 end module Path_Representation_m
 
 ! $Log$
+! Revision 2.7  2016/11/12 01:32:23  vsnyder
+! Add NP and NZ components to Value_t and Flag_t, and default initialize
+!
 ! Revision 2.6  2016/11/11 01:46:41  vsnyder
 ! Add Facets_and_Vertices_t
 !
