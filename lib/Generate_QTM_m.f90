@@ -92,6 +92,10 @@ module Generate_QTM_m
     class(lat_t), allocatable :: QTM_Lats(:) ! Unique latitudes within QTM.
                                ! They're geocentric or geodetic, depending upon
                                ! the dynamic type of Geo_In.
+    integer, allocatable :: Path_Vertices(:) ! Mapping from QTM vertex indices
+                               ! to indices adjacent to a line of sight.
+                               ! Filled separately for each path.  Inverse of
+                               ! Facets_and_Vertices_t%vertices.
   contains
     procedure :: Find_Facet_ECR
     procedure :: Find_Facet_Geo
@@ -308,6 +312,11 @@ contains
       Q_temp(:) = QTM_Trees%Q(1:QTM_Trees%n)
       call move_alloc ( Q_temp, QTM_Trees%Q )
     end if
+
+    ! Allocate Path_Vertices so Get_Lines_of_Sight has a place to
+    ! store the mapping from QTM vertices to vertices adjacent to
+    ! line of sight path.
+    allocate ( QTM_Trees%path_vertices(QTM_Trees%n_in) )
 
     if ( QTM_Trees%n_in /= size(QTM_Trees%ZOT_In) ) then
       ! Reallocate ZOT etc. to the correct size
@@ -778,6 +787,9 @@ contains
 end module Generate_QTM_m
 
 ! $Log$
+! Revision 2.22  2016/11/12 01:31:28  vsnyder
+! Add Path_Vertices, to store mapping from QTM to vertices near the path
+!
 ! Revision 2.21  2016/11/03 20:52:51  vsnyder
 ! Return negative facet number for point outside QTM
 !
