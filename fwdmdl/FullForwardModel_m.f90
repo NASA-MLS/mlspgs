@@ -2412,7 +2412,8 @@ contains
         ! Assuming observer zetas got put into Z_psig as they should have been,
         ! this should hit one element exactly.
         i_z = minloc(abs(z_psig-scat_zeta),1)
-        if ( abs(z_psig(i_z)-scat_zeta) > 10.0 * epsilon(scat_zeta) * abs(scat_zeta) ) then
+        if ( abs(z_psig(i_z)-scat_zeta) > &
+          & sqrt(max(epsilon(scat_zeta),epsilon(z_psig))) * abs(scat_zeta) ) then
           call output ( scat_zeta, before="Scattering point Zeta ", advance="yes" )
           call dump ( z_psig, name="Zeta grid" )
           call MLSMessage ( MLSMSG_Error, moduleName, &
@@ -4556,6 +4557,10 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.373  2016/11/12 01:42:32  vsnyder
+! Put the inverse of F_and_V%Vertices into QTM_Tree%Path_Vertices.  Replace
+! Facets argument to Metrics_3D with F_and_V.
+!
 ! Revision 2.372  2016/11/11 02:06:27  vsnyder
 ! For QTM, get LOS from MIF LOS before FullForwardModelAuto.  Use it to
 ! calculate facets and vertices on all paths.  Use maximum number of vertices
