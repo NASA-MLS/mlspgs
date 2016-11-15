@@ -89,7 +89,7 @@ contains ! =====     Public Procedures     =============================
     use init_tables_module, only: f_additional, f_attrName, f_attrValue, &
       & f_destroy, f_dontpack, f_file, f_hdfversion, &
       & f_metadataonly, f_metaname, f_moleculesecondderivatives, f_overlaps, &
-      & f_packed, f_quantities, f_time, f_type, f_writecountermaf, &
+      & f_packed, f_quantities, f_reset, f_time, f_type, f_writecountermaf, &
       & field_first, field_last, &
       & l_l2aux, l_l2cf, l_l2dgg, l_l2gp, l_l2pc, &
       & s_boolean, s_case, s_catenate, s_copy, &
@@ -99,13 +99,13 @@ contains ! =====     Public Procedures     =============================
     use intrinsic, only: lit_indices
     use L2AUXData, only: L2AUXData_t
     use L2GPData, only: L2GPData_t, &
-      & AddL2GPToDatabase, writemastersfileattributes
+      & AddL2GPToDatabase, writeMastersFileAttributes
     use L2PC_m, only: outputHDF5L2PC
     use L2ParInfo, only: parallel
     use matrixModule_1, only: matrix_database_t
     use matrixTools, only: dumpblocks
     use MLSCommon, only: MLSfile_t, tai93_range_t, filenamelen
-    use MLSL2timings, only: section_times, total_times
+    use MLSL2Timings, only: section_times, total_times
     use MLSPCF2, only: MLSPCF_L2GP_End, &
       & MLSPCF_L2GP_Start, MLSPCF_L2DGG_Start, MLSPCF_L2DGG_End
     use MLSStringlists, only: switchdetail
@@ -113,7 +113,7 @@ contains ! =====     Public Procedures     =============================
     use moretree, only: get_label_and_spec, get_spec_id, get_boolean
     use next_tree_node_m, only: next_tree_node, next_tree_node_state
     use output_m, only: blanks, output, revertoutput, switchoutput
-    use time_m, only: time_now
+    use time_m, only: SayTime, time_now
     use trace_m, only: trace_begin, trace_end
     use tree, only: decorate, decoration, nsons, subtree, sub_rosa
     use vectorsModule, only: vector_t
@@ -163,6 +163,7 @@ contains ! =====     Public Procedures     =============================
     character(len=8) :: OUTPUTTYPESTR   ! 'l2gp', 'l2aux', etc.
     logical :: PACKED                   ! Do we pack this l2pc?
     integer :: QUANTITIESNODE           ! A tree node
+    logical :: reset
     integer :: SECONDDERIVNODE
     integer :: SON                      ! Of Root -- spec_args or named node
     type(next_tree_node_state) :: State ! of tree traverser
@@ -223,8 +224,26 @@ contains ! =====     Public Procedures     =============================
       L2CFNODE = key
 
       if ( MLSSelecting .and. &
-        & .not. any( get_spec_id(key) == (/ s_endselect, s_select, s_case /) ) ) cycle
+        & .not. any( get_spec_id(key) == (/ s_endselect, s_select, s_case /) ) ) &
+        & cycle
 
+      reset = .false.
+      do field_no = 2, nsons(key) ! fields of the "time" specification
+        gson = subtree(field_no, key)   ! An assign node
+        if ( nsons(gson) > 1 ) then
+          fieldValue = decoration(subtree(2,gson)) ! The field's value
+        else
+          fieldValue = gson
+        end if
+        field_index = decoration(subtree(1,gson))
+        got(field_index) = .true.
+        select case ( field_index )   ! Field name
+        case ( f_reset )
+          reset = Get_Boolean ( gson )
+        case default
+          ! Shouldn't get here if the type checker worked
+        end select
+      end do ! j = 2, nsons(key)
       select case ( get_spec_id(key) )
       case ( s_Boolean )
         call decorate ( key,  BooleanFromFormula ( name, key ) )
@@ -428,8 +447,8 @@ contains ! =====     Public Procedures     =============================
         end select
 
       case ( s_time )
-        if ( timing ) then
-          call sayTime
+        if ( timing .and. .not. reset ) then
+          call sayTime ( 'Output_Close', t1=t1, cumulative=.false. )
         else
           call time_now ( t1 )
           timing = .true.
@@ -517,21 +536,8 @@ contains ! =====     Public Procedures     =============================
         & 'Problem with Output_Close section' )
     end if
 
-    if ( timing ) call sayTime
+    if ( timing ) call sayTime ( 'Output_Close', cumulative=.false. )
     call trace_end ( "Output_Close", cond=toggle(gen) )
-
-  contains
-    subroutine SayTime
-      call time_now ( t2 )
-      if ( total_times ) then
-        call output ( "Total time = " )
-        call output ( dble(t2), advance = 'no' )
-        call blanks ( 4, advance = 'no' )
-      end if
-      call output ( "Timing for Output_Close =" )
-      call output ( DBLE(t2 - t1), advance = 'yes' )
-      timing = .false.
-    end subroutine SayTime
 
   end subroutine Output_Close
 
@@ -2307,6 +2313,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.201  2016/11/15 21:18:15  pwagner
+! Use SayTime from time_m instead of local implementation
+!
 ! Revision 2.200  2016/06/01 23:26:48  pwagner
 ! Be forgiving of Copy commands directed to non-existent files
 !
