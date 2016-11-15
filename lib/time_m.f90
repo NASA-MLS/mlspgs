@@ -26,12 +26,15 @@ module TIME_M
 ! === (start of toc) ===
 !     c o n t e n t s
 !     - - - - - - - -
+!   datatypes
+! retry_config_t          retry configuration type
+! sayTime_config_t        say time configuration type
+! time_config_t           time configuration type
 
+!   subrouttines and functions
 ! begin                   announce the time of day of starting
 ! finish                  announce the time of day and CPU time of finishing
-
-! retry_config_t          retry configuration type
-! time_config_t           time configuration type
+! ms_to_hms               convert millisec to (hour,minute,sec)
 
 ! init_retry              Initialize the retry mechanism
 ! retry                   Engage retry mechanism that monitors iterations,
@@ -53,7 +56,7 @@ module TIME_M
 ! set_time_config          Explicitly set start time in time_config_t
 !                            formatted as array of integer values returned 
 !                            by intrinsic date_and_time
-!                         (/ year,month,day,t-t_utc,hour,minutes,s,ms /)
+!                          (/ year,month,day,t-t_utc,hour,minutes,s,ms /)
 !                          E.g., input (/ -1, i=1,8 /) to make next call
 !                          to time_now return 0
 ! time_now                 Returns time according to time_config: as
@@ -70,8 +73,10 @@ module TIME_M
 ! init_retry ( [int successful_result], [int failed_result] )
 ! int retry ( int trial_value, [real delay], [int max_retries], &
 !   [real max_retrying_time] )
-! sayTime ( [char* Operation], [real t1], [real t2] )
-! configureSayTime ( [real t1], [char timingUnits] )
+! ms_to_hms ( int ms, int hrs, int mins, int secs )
+! sayTime ( [char* Operation], [real t1], [real t2], [log cumulative] )
+! configureSayTime ( [real t1], [char timingUnits], [log reset], &
+!     [log showTimingUnits], [char* Preamble], [char* Coda] )
 ! set_time_config ( real values(8) )
 ! time_now ( float t, [int invalues(8)] )
 ! wait ( float t, [int err] )
@@ -82,12 +87,12 @@ module TIME_M
 ! Note:
 ! float means either real or double precision types
 ! === (end of api) ===
-  public :: BEGIN, FINISH, &
-   & INIT_RETRY, MS_to_HMS, RETRY, RETRY_SUCCESS, &
+  public :: begin, finish, &
+   & init_retry, ms_to_hms, retry, retry_success, &
    & sayTime, configureSayTime, set_time_config, &
-   & TIME_NOW, TIME_NOW_D, TIME_NOW_S, &
-   & TOO_MANY_RETRIES, TRY_AGAIN, &
-   & WAIT, WAIT_FOR_EVENT
+   & time_now, time_now_d, time_now_s, &
+   & too_many_retries, try_again, &
+   & wait, wait_for_event
 
   interface TIME_NOW
     module procedure TIME_NOW_D
@@ -132,7 +137,8 @@ module TIME_M
     real                 :: startT1 = 0.
     logical              :: sayUnits = .false.
     character(len=1)     :: TimingUnits = 's'
-    character(len=16)    :: Preamble = ''
+    character(len=16)    :: Preamble = ''  ! Instead of 'Timing for' at start
+    character(len=16)    :: Coda = ''      ! Print at end of line
   end type sayTime_config_t
 
   integer, parameter :: MICROSPERS = 1000000 ! How many micros in a s
@@ -148,7 +154,8 @@ module TIME_M
   type(time_config_t), public, save :: time_config
   type(sayTime_config_t), public, save :: sayTime_config
 
-  double precision, private :: Start_CPU_time
+  double precision, private, save :: Start_CPU_time
+  integer         , private, save :: Start_WallClockSeconds = 0
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -159,10 +166,14 @@ module TIME_M
 contains
 
   subroutine BEGIN ( SHOW )
-    ! Announce the time of day of starting
+    ! Announce the time of day of starting; set start time
+    ! for calculating elapsed cpu when calling finish
     use HIGHOUTPUT, only: OUTPUT_DATE_AND_TIME
     character(len=*), intent(in) :: SHOW
+    double precision :: dt2
     call cpu_time ( start_CPU_time )
+    call time_Now( dt2 )
+    Start_WallClockSeconds = dt2
     call output_date_and_time ( msg=show )
   end subroutine BEGIN
 
@@ -171,9 +182,12 @@ contains
     use HIGHOUTPUT, only: OUTPUT_DATE_AND_TIME
     character(len=*), intent(in) :: SHOW
     double precision :: Finish_CPU_time
+    double precision :: Finish_WallClockSeconds
     call cpu_time ( finish_CPU_time )
+    call time_now ( Finish_WallClockSeconds )
     call output_date_and_time ( msg=show, &
-      & CPU_seconds = finish_CPU_time - start_CPU_time )
+      & CPU_seconds = finish_CPU_time - start_CPU_time, &
+      & WallClock_Seconds = int(Finish_WallClockSeconds-Start_WallClockSeconds) )
   end subroutine FINISH
 
   subroutine INIT_RETRY ( SUCCESSFUL_RESULT, FAILED_RESULT )
@@ -282,7 +296,9 @@ contains
   ! ----------------------------------------------  sayTime  -----
   subroutine sayTime ( Operation, t1, t2, cumulative )
   use output_m, only: blanks, newLine, output
-  ! Print stepwise and cumulative time usage
+  ! Print stepwise and cumulative time usage for sequence of operations
+  ! Or show time since start of run (if t1 is 0)
+  ! Skip printing total time if cumulative is both present and FALSE
     character(len=*), optional, intent(in) :: Operation
     real, optional, intent(in)             :: t1       ! Time at last op
     real, optional, intent(out)            :: t2       ! Time at current op
@@ -290,7 +306,7 @@ contains
     ! Internal variables
     double precision                       :: dt1 
     double precision                       :: dt2 
-    logical                                :: myCumulative 
+    logical                                :: myCumulative ! local
     integer                                :: timeDivisor
     character(len=*), parameter            :: TIMEFORMSMALL = '(F10.2)'
     character(len=*), parameter            :: TIMEFORMBIG = '(1PE10.2)'
@@ -326,6 +342,8 @@ contains
     if ( sayTime_config%sayUnits ) &
       & call output( trim(sayTime_config%timingUnits), advance='no' )
     if ( .not. present(t1) ) then
+      if ( len_trim(sayTime_config%Coda) > 0 ) &
+        & call output( trim(sayTime_config%Coda), advance='no' )
       call newLine
       sayTime_config%startT1 = dt2
       return
@@ -338,17 +356,20 @@ contains
       if ( sayTime_config%sayUnits ) &
         & call output( trim(sayTime_config%timingUnits), advance='no' )
     endif
+    if ( len_trim(sayTime_config%Coda) > 0 ) &
+      & call output( trim(sayTime_config%Coda), advance='no' )
     call newLine
   end subroutine sayTime
 
   ! ----------------------------------------------  configureSayTime  -----
-  subroutine configureSayTime ( t1, units, reset, showTimingUnits, Preamble )
+  subroutine configureSayTime ( t1, units, reset, showTimingUnits, Preamble, Coda )
   ! set start time or timing units to be used by sayTime
     real, optional, intent(in)             :: t1
     character(len=*), optional, intent(in) :: units
     logical, optional, intent(in)          :: reset
     logical, optional, intent(in)          :: showTimingUnits
     character(len=*), optional, intent(in) :: Preamble
+    character(len=*), optional, intent(in) :: Coda
     ! Local variables
     logical                                :: myReset
     ! Executable
@@ -360,7 +381,8 @@ contains
     endif
     if ( present(units) ) sayTime_config%timingUnits = units
     if ( present(showTimingUnits) ) sayTime_config%sayUnits = showTimingUnits
-    if ( present(Preamble) ) sayTime_config%Preamble = units
+    if ( present(Preamble) ) sayTime_config%Preamble = Preamble
+    if ( present(Coda) ) sayTime_config%Coda = Coda
   end subroutine configureSayTime
 
   subroutine set_time_config ( VALUES )
@@ -481,6 +503,9 @@ contains
 end module TIME_M
 
 !$Log$
+!Revision 2.19  2016/11/15 19:26:13  pwagner
+!May write distinctive Coda at end of line when sayTime; can track both CPU and wallClockSeconds
+!
 !Revision 2.18  2016/11/03 20:54:51  pwagner
 !Added sayTime and configureSayTime
 !
