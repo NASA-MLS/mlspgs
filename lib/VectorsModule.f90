@@ -2270,6 +2270,8 @@ contains ! =====     Public Procedures     =============================
     end if
     if ( .not. associated(qty%values) ) then
       call output( 'values array is not associated', advance='yes' )
+    else if ( size(qty%values) < 1 ) then
+      call output( 'values is a 0-size array', advance='yes' )
     else if ( myDetails > 0 ) then
       call newLine
       call remap ( qty%values, value4, &
@@ -3496,6 +3498,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.206  2016/07/28 01:42:27  vsnyder
+! Refactoring dump and diff
+!
 ! Revision 2.205  2016/05/27 00:14:05  vsnyder
 ! Publish RV because this seems like a logical place to get it
 !
