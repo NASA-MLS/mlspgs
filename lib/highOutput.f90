@@ -101,7 +101,7 @@ module HIGHOUTPUT
 ! char* numToChars ( value, [char* format] )
 ! output_date_and_time ( [log date], [log time], [char* from_where], 
 !          [char* msg], [char* dateFormat], [char* timeFormat], 
-!          [double CPU_seconds], [char* advance] )
+!          [double CPU_seconds], [int wallClock_seconds], [char* advance] )
 ! outputCalendar ( [char* date], [char* datenote], [char* notes(:)], 
 !          [dontwrap] )
 ! outputList ( values(:), [char* sep], [char* delims] )
@@ -1304,10 +1304,12 @@ contains
 
   ! ---------------------------------------  OUTPUT_DATE_AND_TIME  -----
   subroutine OUTPUT_DATE_AND_TIME ( date, time, &
-    & from_where, msg, dateFormat, timeFormat, CPU_Seconds, advance )
+    & from_where, msg, dateFormat, timeFormat, &
+    & CPU_Seconds, wallClock_Seconds, advance )
     ! Output nicely-formatted date, time, and extra message
     ! We'll assume we won't want this line stamped with date and time
     ! (for fear of being redundant, which we fear)
+    ! Optionally print CPU and wall clock usage, too.
     logical, intent(in), optional :: date ! output date as character string
     logical, intent(in), optional :: time ! output time as character string
     character(len=*), intent(in), optional :: FROM_WHERE
@@ -1315,6 +1317,7 @@ contains
     character(len=*), intent(in), optional :: DATEFORMAT
     character(len=*), intent(in), optional :: TIMEFORMAT
     double precision, intent(in), optional :: CPU_Seconds
+    integer, intent(in), optional          :: wallClock_Seconds
     character(len=*), intent(in), optional :: ADVANCE
 
     character(len=16) :: dateString
@@ -1359,7 +1362,8 @@ contains
     if ( present(advance) ) my_adv = advance
     call blanks ( 3 )
     call output_ ( trim(msg), from_where=from_where, &
-      & advance=merge ( 'no ', my_adv, present(CPU_seconds) ), &
+      & advance=merge ( 'no ', my_adv, present(CPU_seconds) .or. &
+      & present(WallClock_seconds) ), &
       & DONT_STAMP=DONT_STAMP )
     if ( present(CPU_seconds) ) then
       hh = CPU_seconds / 3600
@@ -1370,6 +1374,17 @@ contains
       ms = nint(1000 * (seconds-ss))
       write ( timeString, '(2(i2.2,":"),i2.2,".",i3.3)' ) hh, mm, ss, ms
       call output_ ( '   CPU time ' // trim(timeString), from_where=from_where, &
+        & advance=merge ( 'no ', my_adv, present(WallClock_seconds)), &
+        & DONT_STAMP=DONT_STAMP )
+    end if
+    if ( present(WallClock_seconds) ) then
+      hh = WallClock_seconds / 3600
+      my_cpu = WallClock_seconds - hh * 3600
+      mm = my_cpu / 60
+      seconds = my_cpu - mm * 60
+      ss = seconds
+      write ( timeString, '(2(i2.2,":"),i2.2)' ) hh, mm, ss
+      call output_ ( '   wall clock time ' // trim(timeString), from_where=from_where, &
         & advance=my_adv, DONT_STAMP=DONT_STAMP )
     end if
   end subroutine OUTPUT_DATE_AND_TIME
@@ -2204,6 +2219,9 @@ contains
 end module HIGHOUTPUT
 
 ! $Log$
+! Revision 2.13  2016/11/15 19:27:19  pwagner
+! May print elapsed WallClock_seconds at Finish
+!
 ! Revision 2.12  2016/09/22 22:21:16  pwagner
 ! May specify format in call to addRow
 !
