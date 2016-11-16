@@ -180,7 +180,11 @@ then
   . ${PGE_ROOT}/science_env.sh
 elif [ -r "$PGSBIN/pgs-env.ksh" ]
 then
+  # Oops, this stomps on any PCF we might have selected
+  # so save it to be restored
+  PCF=$PGS_PC_INFO_FILE
   . $PGSBIN/pgs-env.ksh
+  export PGS_PC_INFO_FILE=$PCF
 fi
 PGS_PC_INFO_FILE=ppccff
 SLVPROG=ssllaavveessccrriipptt
@@ -568,6 +572,9 @@ do_the_call $all_my_opts
 exit 0
 
 # $Log$
+# Revision 1.39  2016/10/20 23:26:31  pwagner
+# Append chunk stderr to chunk log
+#
 # Revision 1.38  2016/09/23 00:13:07  pwagner
 # Reduce default switches for opt and glob
 #

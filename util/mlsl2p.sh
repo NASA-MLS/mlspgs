@@ -227,7 +227,11 @@ then
   . ${PGE_ROOT}/science_env.sh
 elif [ -r "$PGSBIN/pgs-env.ksh" ]
 then
+  # Oops, this stomps on any PCF we might have selected
+  # so save it to be restored
+  PCF=$PGS_PC_INFO_FILE
   . $PGSBIN/pgs-env.ksh
+  export PGS_PC_INFO_FILE=$PCF
 fi
 
 # The logs will be written as separate files into ${JOBDIR}/pvmlog
@@ -458,6 +462,9 @@ else
 fi
 
 # $Log$
+# Revision 1.34  2016/10/20 23:24:55  pwagner
+# cat master.l2cfname to stdout and to master stdout
+#
 # Revision 1.33  2016/05/17 17:07:52  pwagner
 # 'dot' job.env if found; Obey CAPTURE_MT
 #
