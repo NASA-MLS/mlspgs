@@ -147,7 +147,7 @@ contains
   subroutine Height_Metrics (  phi_t, tan_ind, p_basis, h_ref, h_surf, &
                             &  tan_ht_s, z_ref, r_eq,                  &
                             ! Outputs:
-                            &  req_s, vert_inds, h_grid, p_grid,       &
+                            &  req_s, vert_inds, h_path, p_path,       &
                             ! Optional inputs:
                             &  h_tol, forward )
 
@@ -194,9 +194,9 @@ contains
     !                                    earth radius of pressure reference
     !                                    surface at Phi_T, km
     integer, intent(out) :: Vert_Inds(:) ! What to use in h_ref, 1:n_path
-    real(rp), intent(out) :: H_grid(:) ! computed heights, referenced to
+    real(rp), intent(out) :: H_Path(:) ! computed path heights, referenced to
                                        ! equivalent circular Earth center, km
-    real(rp), intent(out) :: P_grid(:) ! computed phi's, radians
+    real(rp), intent(out) :: P_Path(:) ! computed path phi's, radians
 
     ! optional inputs
     real(rp), optional, intent(in) :: H_Tol ! Height tolerance in kilometers
@@ -272,8 +272,8 @@ contains
     ! The tangent points and the zero-thickness layer between them are special
     stat(n_tan:n_tan+ngp1) = good
 
-    ! p_basis and p_grid are phi's in offset radians relative to
-    ! phi_t, that is, the phi_t, p_basis or p_grid = 0.0 is phi_t.
+    ! p_basis and p_path are phi's in offset radians relative to
+    ! phi_t, that is, the phi_t, p_basis or p_path = 0.0 is phi_t.
     ! The phi basis is wholly independent of phi_t
 
     if ( tan_ht_s < 0.0 ) then ! Earth-intersecting ray
@@ -288,14 +288,14 @@ contains
         phi_offset(:n_tan+ng) = phi_t
         phi_offset(n_tan+ngp1:) = phi_t - theta
       end if
-      ! This expression for p_grid puts the midpoint of the path at the
+      ! This expression for p_path puts the midpoint of the path at the
       ! reflection point.
-      p_grid(n_tan:n_tan+ngp1) = 0.5 * ( phi_offset(n_tan) + phi_offset(n_tan+ngp1) )
-      h_grid(n_tan:n_tan+ngp1) = req_s
+      p_path(n_tan:n_tan+ngp1) = 0.5 * ( phi_offset(n_tan) + phi_offset(n_tan+ngp1) )
+      h_path(n_tan:n_tan+ngp1) = req_s
     else
       phi_offset = phi_t
-      p_grid(n_tan:n_tan+ngp1) = phi_offset(n_tan:n_tan+ngp1)
-      h_grid(n_tan:n_tan+ngp1) = tan_ht
+      p_path(n_tan:n_tan+ngp1) = phi_offset(n_tan:n_tan+ngp1)
+      h_path(n_tan:n_tan+ngp1) = tan_ht
     end if
 
     ! Only use the parts of the reference grids that are germane to the
@@ -314,7 +314,7 @@ contains
         & print '(a)', &
         & '   I J   K     offset   TAN_HT   HREF(K,J) HREF(K,J+1)    A        B    phi sign    C&
         &            D(K,J)        D(K,J+1)   STAT', &
-        & '      P          phi    H_GRID   HREF(K,J) HREF(K,J+1)  H(TRIG)    D           N   Diffs'
+        & '      P          phi    H_PATH   HREF(K,J) HREF(K,J+1)  H(TRIG)    D           N   Diffs'
 
     no_bad_fits = n_path - ngp1 - 1 ! Exclude coarse tangent points and fine
                                     ! points between them
@@ -329,12 +329,12 @@ contains
       h = max(tan_ht,h_ref(k,1)+r_eq) ! or h_ref(k,1) - h_surf + req_s
       p = acos(tan_ht/h) * phi_sign(i1) + phi_offset(i1)
       if ( p >= p_basis(1) ) exit     ! phi is monotone
-      p_grid(i1) = p
-      h_grid(i1) = h
+      p_path(i1) = p
+      h_path(i1) = h
       no_bad_fits = no_bad_fits - 1
       stat(i1) = good
         if ( debug ) &
-          & print fmt, i1, 0, k, ang*p_grid(i1), h_grid(i1), '  Below p_basis'
+          & print fmt, i1, 0, k, ang*p_path(i1), h_path(i1), '  Below p_basis'
 
     end do
     do i2 = n_path, 1, -1
@@ -343,16 +343,16 @@ contains
       h = max(tan_ht,h_ref(k,p_coeffs)+r_eq)
       p = acos(tan_ht/h) * phi_sign(i2) + phi_offset(i2)
       if ( p <= p_basis(p_coeffs) ) exit  ! phi is monotone
-      p_grid(i2) = p
-      h_grid(i2) = h
+      p_path(i2) = p
+      h_path(i2) = h
       no_bad_fits = no_bad_fits - 1
       stat(i2) = good
         if ( debug ) &
-          & print fmt, i2, p_coeffs, k, ang*p_grid(i2), h_grid(i2), '  Above p_basis'
+          & print fmt, i2, p_coeffs, k, ang*p_path(i2), h_path(i2), '  Above p_basis'
     end do
       if ( debug ) then
-        print fmt, ( n_tan+j, 0, vert_inds(n_tan+j), ang*p_grid(n_tan+j), &
-                   & h_grid(n_tan+j), '  Tangent point', j = 0, ngp1 )
+        print fmt, ( n_tan+j, 0, vert_inds(n_tan+j), ang*p_path(n_tan+j), &
+                   & h_path(n_tan+j), '  Tangent point', j = 0, ngp1 )
       end if
 
     !{ Let $H_{ij}$ denote an element of {\tt H\_ref}.  Remember that all
@@ -395,10 +395,10 @@ path: do i = i1, i2
         call Solve_H_Phi ( p_basis(j:j+1), phi_offset(i), phi_sign(i), &
           &                h_ref(k,j:j+1), a, b, c, &
           &                tan_ht, r_eq, my_h_tol, i /= i2 .or. j /= p_coeffs-1, &
-          &                h_grid(i), p_grid(i), stat(i), outside )
-        if ( IEEE_Is_NaN(p_grid(i)) ) stat(i) = NaN_sol
+          &                h_path(i), p_path(i), stat(i), outside )
+        if ( IEEE_Is_NaN(p_path(i)) ) stat(i) = NaN_sol
         if ( i > 1 .and. stat(i) >= good ) then
-          if ( p_grid(i) < p_grid(i-1) ) then ! Phi out of order, can't be right
+          if ( p_path(i) < p_path(i-1) ) then ! Phi out of order, can't be right
             stat(i) = order
           end if
         end if
@@ -452,8 +452,8 @@ path: do i = i1, i2
             print "(i4,'#',10(1x,a:))", i, nStat(stat(i:min(size(stat),i+9)))
           end do
         end if
-        call dump ( h_grid, 'H_Grid before 1d fixup' )
-        call dump ( rad2deg*p_grid, 'P_Grid (degrees) before 1d fixup' )
+        call dump ( h_path, 'H_Path before 1d fixup' )
+        call dump ( rad2deg*p_path, 'P_Path (degrees) before 1d fixup' )
         call dump ( z_ref, 'Z_Ref' )
       end if
       ! We shouldn't get here at all, so don't worry about efficiency
@@ -463,7 +463,7 @@ path: do i = i1, i2
         do i1 = 1, n_path
           if ( stat(i1) < good ) then
             ! Interpolate to tangent phi as a first guess
-            h_grid(i1) = dot_product(h_ref(vert_inds(i1),:),eta_t) + r_eq
+            h_path(i1) = dot_product(h_ref(vert_inds(i1),:),eta_t) + r_eq
           end if
         end do
         ! Make sure H is monotone increasing away from the tangent point
@@ -471,14 +471,14 @@ path: do i = i1, i2
         i2 = 1
         do k = -1, 1, 2
           do j = i1, i2, k
-            if ( h_grid(j) <= h_grid(j-k) ) then
+            if ( h_path(j) <= h_path(j-k) ) then
               do i = j+k, i2, k
-                if ( h_grid(j-k) < h_grid(i) ) exit
+                if ( h_path(j-k) < h_path(i) ) exit
               end do
               if ( i == i2+k  ) then ! ran off the end
-                h_grid(j) = h_grid(j-k) + 1.0 ! use SWAG method
+                h_path(j) = h_path(j-k) + 1.0 ! use SWAG method
               else
-                h_grid(j) = h_grid(j-k) + (h_grid(i)-h_grid(j-k)) * &
+                h_path(j) = h_path(j-k) + (h_path(i)-h_path(j-k)) * &
                   & ( z_ref(vert_inds(j)) - z_ref(vert_inds(j-k))) / &
                   & ( z_ref(vert_inds(i)) - z_ref(vert_inds(j-k)))
               end if
@@ -488,7 +488,7 @@ path: do i = i1, i2
           i2 = n_path
         end do
         ! Just do them all to make sure they're consistent
-        p_grid = acos(tan_ht/h_grid) * phi_sign + phi_offset
+        p_path = acos(tan_ht/h_path) * phi_sign + phi_offset
       else
         do j = n_tan-1, 2, -1
           if ( stat(j) == good ) cycle
@@ -498,10 +498,10 @@ path: do i = i1, i2
           do i1 = j, n_tan
             if ( stat(i1) == good ) exit
           end do
-          h_grid(j) = h_grid(i1) + (h_grid(i2)-h_grid(i1)) * &
+          h_path(j) = h_path(i1) + (h_path(i2)-h_path(i1)) * &
             & ( z_ref(vert_inds(j)) - z_ref(vert_inds(i1))) / &
             & ( z_ref(vert_inds(i2)) - z_ref(vert_inds(i1)))
-          p_grid(j) = acos(tan_ht/h_grid(j)) * phi_sign(j) + phi_offset(j)
+          p_path(j) = acos(tan_ht/h_path(j)) * phi_sign(j) + phi_offset(j)
         end do
         do j = n_tan+ngp1+1, n_path-1
           if ( stat(j) == good ) cycle
@@ -511,15 +511,15 @@ path: do i = i1, i2
           do i1 = j, n_tan+ngp1, -1
             if ( stat(i1) == good ) exit
           end do
-          h_grid(j) = h_grid(i1) + (h_grid(i2)-h_grid(i1)) * &
+          h_path(j) = h_path(i1) + (h_path(i2)-h_path(i1)) * &
             & ( z_ref(vert_inds(j)) - z_ref(vert_inds(i1))) / &
             & ( z_ref(vert_inds(i2)) - z_ref(vert_inds(i1)))
-          p_grid(j) = acos(tan_ht/h_grid(j)) * phi_sign(j) + phi_offset(j)
+          p_path(j) = acos(tan_ht/h_path(j)) * phi_sign(j) + phi_offset(j)
         end do
       end if
       if ( switchDetail(switches,'mhpx') > -1 ) then
-        call dump ( h_grid, name='H_Grid after 1d fixup' )
-        call dump ( rad2deg*p_grid, name='P_Grid (degrees) after 1d fixup' )
+        call dump ( h_path, name='H_Path after 1d fixup' )
+        call dump ( rad2deg*p_path, name='P_Path (degrees) after 1d fixup' )
         if ( switchDetail(switches,'mhpx') > 0 ) &
           & call MLSMessage ( MLSMSG_Error, moduleName, 'Halt requested by mhpx1' )
       end if
@@ -529,10 +529,10 @@ path: do i = i1, i2
       if ( n_path >= 4 ) then
         ! Put the reflection point on the same side of the Earth as the rest
         ! of the path.
-        if ( abs(p_grid(n_tan-1) - p_grid(n_tan)) > 0.9 * pi ) then
+        if ( abs(p_path(n_tan-1) - p_path(n_tan)) > 0.9 * pi ) then
           ! Reflection point on the wrong side of the earth
-          p_grid(n_tan:n_tan+ngp1) = mod(p_grid(n_tan:n_tan+ngp1) + &
-            & sign(pi,p_grid(n_tan-1) - p_grid(n_tan)),pix2)
+          p_path(n_tan:n_tan+ngp1) = mod(p_path(n_tan:n_tan+ngp1) + &
+            & sign(pi,p_path(n_tan-1) - p_path(n_tan)),pix2)
         end if
       end if
     end if
@@ -544,11 +544,11 @@ path: do i = i1, i2
     if ( do_dumps >= 0 ) then
       call output ( tan_ht_s, before='tan_ht_s = ' )
       call output ( req_s, before=', r_eq+h_surf = ', advance='yes' )
-      call dump ( rad2deg*p_grid, name='p_grid (degrees) before refractive correction', &
+      call dump ( rad2deg*p_path, name='P_Path (degrees) before refractive correction', &
         & format='(f14.8)', options=options )
       if ( h_phi_dump < 0 ) &
         & call dump ( rad2deg*p_basis, name='p_basis (degrees)', format='(f14.6)', options=options )
-      call dump ( h_grid, name='h_grid', format='(f14.6)', options=options )
+      call dump ( h_path, name='h_path', format='(f14.6)', options=options )
       if ( do_dumps >= 1 ) call dump ( z_ref, name='z_ref', options=options )
     end if
 
@@ -593,7 +593,7 @@ path: do i = i1, i2
     &                      p_basis, phi_offset, phi_sign, h_ref, a, b, c, &
     &                      tan_ht, r_eq, tol, inside, &
                              ! outputs and inouts
-    &                      h_grid, phi, stat, outside )
+    &                      h_path, phi, stat, outside )
 
     use MLSKinds, only: RP
     use Output_m, only: OUTPUT
@@ -620,7 +620,7 @@ path: do i = i1, i2
     real(rp), intent(in) :: Tol        ! Height tolerance for Newton convergence,
                                        ! km
     logical, intent(in) :: Inside      ! P_Basis(2) is not the last one in the grid
-    real(rp), intent(inout) :: H_Grid  ! H solution, inout in case there is none
+    real(rp), intent(inout) :: H_Path  ! H solution, inout in case there is none
     real(rp), intent(out) :: Phi       ! Phi solution
     integer, intent(inout) :: Stat     ! "good" or "grid" or "complex" or unchanged
     logical, intent(out) :: Outside    ! Newton iteration converged to a point
@@ -634,7 +634,7 @@ path: do i = i1, i2
     integer :: N       ! Newton iteration counter
     integer, parameter :: NMax = 10 ! Maximum number of Newton iterations
     real(rp) :: P, P2  ! Candidate solution, p^2
-    real(rp) :: P_Grid ! Candidate phi solution
+    real(rp) :: P_Path ! Candidate path phi solution
     real(rp) :: Secm1  ! Sec(p) - 1
     real(rp) :: Secp   ! Sec(p) = 1/Cos(p), to compute SecM1 when p > p8Tol
 
@@ -669,7 +669,7 @@ path: do i = i1, i2
           & p = phi_sign*acos(tan_ht/max(tan_ht,0.5*(h_ref(1)+h_ref(2))+r_eq))
       end if
     end if
-    p_grid = p + phi_offset
+    p_path = p + phi_offset
     !{Use P in Newton iterations with an expansion for $\sec(\phi)$ that is
     ! higher order than two.  We don't use $\sec(\phi)-1$ for small $\phi$
     ! because it suffers cancellation.  Rather, use more terms of its Taylor
@@ -685,10 +685,10 @@ path: do i = i1, i2
       end if
       d = a*secM1 + b*p + c
         if ( debug ) dd(n) = d
-      h_grid = tan_ht * secp
-      h = h_grid - r_eq  ! to test against h_ref
+      h_path = tan_ht * secp
+      h = h_path - r_eq  ! to test against h_ref
       if ( abs(d) < tol ) then ! difference is small enough
-        if ( (p_grid-p_basis(1)) * (p_grid-p_basis(2)) <= 0.0 .and. &
+        if ( (p_path-p_basis(1)) * (p_path-p_basis(2)) <= 0.0 .and. &
                ! Converged within bounds?
                 &  ( (h-h_ref(1))*(h-h_ref(2)) <= 0.0 .or. &
                ! or the difference in reference heights is within tolerance and
@@ -698,18 +698,18 @@ path: do i = i1, i2
           &      abs(h-h_ref(2)) < tol ) ) ) then
           ! Not extrapolating in phi
           stat = good
-          if ( debug ) call debug1 ( 1, n, 'GOOD', p_grid )
-          phi = p_grid
+          if ( debug ) call debug1 ( 1, n, 'GOOD', p_path )
+          phi = p_path
           return
         end if
-        if ( p_grid > p_basis(2) .and. abs(a*(h-h_ref(2))) > tan_ht*abs(d) &
+        if ( p_path > p_basis(2) .and. abs(a*(h-h_ref(2))) > tan_ht*abs(d) &
           & .and. inside ) then
           ! Phi is beyond the range, and H is outside by more than the
           ! move.  Go on to the next columns of H_ref and P_Basis.
           outside = .true. ! phi is monotone; the rest are in the next column
-          phi = p_grid ! so phi has a defined value, even if it's no good
+          phi = p_path ! so phi has a defined value, even if it's no good
           if ( debug ) then
-            call debug1 ( 1, n, 'OUTSIDE', p_grid )
+            call debug1 ( 1, n, 'OUTSIDE', p_path )
           end if
           return           ! or even farther over
         end if
@@ -720,43 +720,43 @@ path: do i = i1, i2
         deriv = a * secp * sign(sqrt(secp**2-1.0),p) + b ! a sec(p) tan(p) + b
       end if
         if ( newtonDetails ) then
-          call debug1 ( 1, 0, 'STEP ' // merge('P','S',abs(p) < P8Tol), p_grid, p, deriv )
+          call debug1 ( 1, 0, 'STEP ' // merge('P','S',abs(p) < P8Tol), p_path, p, deriv )
         end if
       p = p - d / deriv ! do the Newton step
-      p_grid = p + phi_offset
+      p_path = p + phi_offset
     end do ! n
     ! Newton iteration failed to converge.  Use the break point if the
     ! result is very near to it.  We'll probably find it in the next
     ! panel, but just in case....
       if ( debug ) then
         if ( .not. outside ) then
-          call debug1 ( max(n-3,1), n-1, merge('CONVERGE', 'BOUNDS  ', abs(d) < tol), p_grid, &
+          call debug1 ( max(n-3,1), n-1, merge('CONVERGE', 'BOUNDS  ', abs(d) < tol), p_path, &
             & p_print=p )
         else
-          call debug1 ( max(n-3,1), n-1, 'NONE', p_grid, p_print=p )
+          call debug1 ( max(n-3,1), n-1, 'NONE', p_path, p_print=p )
         end if
       end if
-    phi = p_grid ! make sure it has a defined value, even if it's no good
+    phi = p_path ! make sure it has a defined value, even if it's no good
     if ( stat < grid1 ) then
       if ( abs(h-h_ref(1)) <  0.1 .and. &
-        & abs(p_grid-p_basis(1)) < abs(p_grid-p_basis(2)) ) then
-        h_grid = h_ref(1) + r_eq
-        if ( h_grid > tan_ht ) then
+        & abs(p_path-p_basis(1)) < abs(p_path-p_basis(2)) ) then
+        h_path = h_ref(1) + r_eq
+        if ( h_path > tan_ht ) then
           phi = p_basis(1)
           stat = grid1
           if ( debug ) call debug1 ( 1, 0, 'GRID 1', phi )
         end if
       else if ( abs(h-h_ref(2)) <  0.1 .and. &
-        & abs(p_grid-p_basis(2)) < abs(p_grid-p_basis(1)) ) then
-        h_grid = h_ref(2) + r_eq
-        if ( h_grid > tan_ht ) then
+        & abs(p_path-p_basis(2)) < abs(p_path-p_basis(1)) ) then
+        h_path = h_ref(2) + r_eq
+        if ( h_path > tan_ht ) then
           phi = p_basis(2)
           stat = grid2
           if ( debug ) call debug1 ( 1, 0, 'GRID 2', phi )
         end if
       end if
     end if
-    if ( p_grid > p_basis(2) .and. inside ) then
+    if ( p_path > p_basis(2) .and. inside ) then
       outside = .true. ! phi is monotone; the rest are in the next column
       return           ! or even farther over
     end if
@@ -779,7 +779,7 @@ path: do i = i1, i2
         if ( abs(cos(p)*(h+r_eq)-tan_ht) > 5.0e-4 * cos(p) ) oops='TRIG'
         if ( why /= '' ) oops(6:) = why
       100 format (f11.5,f10.3,f10.3,f11.3,f10.3,1p,g14.6,i3,11g10.2)
-        write (*, 100, advance='no') ang*phi, h_grid, &
+        write (*, 100, advance='no') ang*phi, h_path, &
           & h_ref(1)+r_eq, h_ref(2)+r_eq, &
         ! & tan_ht / cos(p), &
           & tan_ht * ( 1.0_rp + p2*((c2+p2*(c4+p2*c6))) ), & ! ~ tan_ht * sec(p)
@@ -797,42 +797,43 @@ path: do i = i1, i2
   ! -----------------------------------------------  More_Metrics  -----
   subroutine More_Metrics ( &
           ! Inputs:
-          & Tan_Ind, N_Tan, P_Basis, Vert_Inds, T_Ref, dHidZij, P_Grid, &
+          & Tan_Ind, N_Tan, T_Sv, Vert_Inds, T_Ref, dHidZij, P_Path,   &
           ! Outputs:
-          & T_Grid, dHitdZi,                                            &
+          & T_Path, dHitdZi,                                           &
           ! Optional inputs:
-          & ddHidHidTl0, dHidTlm, T_Deriv_Flag, Z_Basis, Z_Ref,         &
+          & ddHidHidTl0, dHidTlm, Z_Ref,                               &
           ! Optional outputs:
-          & ddHtdHtdTl0, dHitdTlm, dHtdTl0, dHtdZt,                     &
+          & ddHtdHtdTl0, dHitdTlm, dHtdTl0, dHtdZt,                    &
           & Do_Calc_Hyd, Do_Calc_T, Eta_zxp, NZ_Zxp, NNZ_Zxp, Tan_Phi_t )
 
-    ! This subroutine computes metrics-related things after H_Grid and
-    ! P_Grid are computed by Height_Metrics, and then perhaps augmented
+    ! This subroutine computes metrics-related things after H_Path and
+    ! P_Path are computed by Height_Metrics, and then perhaps augmented
     ! with, for example, the minimum Zeta point.
 
-    use DUMP_0, only: DUMP
-    use DUMP_NZ_M, only: DUMP_NZ
-    use GET_ETA_MATRIX_M, only: GET_ETA_SPARSE, MULTIPLY_ETA_COLUMN_SPARSE
-    use MLSKINDS, only: RP
-    use MLSSTRINGLISTS, only: SWITCHDETAIL
-    use TOGGLES, only: SWITCHES
+    use Dump_0, only: Dump
+    use Dump_NZ_m, only: Dump_NZ
+    use Get_Eta_Matrix_m, only: Get_Eta_Sparse, Multiply_Eta_Column_Sparse
+    use Load_Sps_Data_m, only: Grids_t
+    use MLSKinds, only: RP
+    use MLSStringLists, only: SwitchDetail
+    use Toggles, only: Switches
+
     ! inputs:
 
     integer, intent(in) :: Tan_Ind      ! Tangent height index, 1 = center of
     !                                     longest path
     integer, intent(in) :: N_Tan        ! Tangent index in path, usually n_path/2
-    real(rp), intent(in) :: P_Basis(:)  ! Horizontal temperature representation
-    !                                     basis
+    type(grids_t), intent(in) :: T_Sv   ! Temperature state vector
     integer, intent(in) :: Vert_Inds(:) ! First (vertical) subscripts for
     !                                    [zt]_ref  at points on the path
-    real(rp), intent(in) :: T_Ref(:,:)  ! Temperatures at Z_Ref X P_Basis
-    real(rp), intent(in) :: dHidZij(:,:)! Vertical derivative at Z_Ref X P_Basis
-    real(rp), intent(in) :: P_Grid(:)   ! Phi's on the path
+    real(rp), intent(in) :: T_Ref(:,:)  ! Temperatures at Z_Ref X t_sv%phi_basis
+    real(rp), intent(in) :: dHidZij(:,:)! Vertical derivative at Z_Ref X t_sv%phi_basis
+    real(rp), intent(in) :: P_Path(:)   ! Phi's on the path
 
     ! outputs:
 
-    real(rp), intent(out) :: T_Grid(:) ! computed temperatures
-    real(rp), intent(out) :: dHitdZi(:)! derivative of height wrt zeta
+    real(rp), intent(out) :: T_Path(:)  ! computed temperatures on the path
+    real(rp), intent(out) :: dHitdZi(:) ! derivative of height wrt zeta
     !                                    --may be useful in future computations
 
     ! optional inputs
@@ -844,10 +845,6 @@ path: do i = i1, i2
     !          derivatives. This gets adjusted so that at ref_h(1,@tan phi)) is
     !          0.0 for all temperature coefficients.
     !          This is height X zeta_basis X phi_basis
-    logical, optional, intent(in) :: T_Deriv_Flag(:)  ! User's deriv. flags for
-    !          Temperature.  Needed only if present(dHidTlm).
-    real(rp), optional, intent(in) :: Z_Basis(:) ! Vertical temperature basis.
-    !          Needed only if present(dHidTlm).
     real(rp), optional, intent(in) :: Z_Ref(:)   ! -log pressures (zetas) for
     !          which derivatives are needed.  Only the parts from the tangent
     !          outward are used.  Needed only if present(dHidTlm).
@@ -858,7 +855,7 @@ path: do i = i1, i2
     !          derivatives of height w.r.t T_Ref at the tangent only -- used
     !          for antenna affects. Computed if present(dHidTlm).
     real(rp), optional, intent(out) :: dHitdTlm(:,:)   ! Derivative of path
-    !          position wrt temperature state vector (z_basis X phi_basis)
+    !          position wrt temperature state vector (t_sv%zet_basis X t_sv%phi_basis)
     real(rp), optional, intent(out) :: dHtdTl0(:)      ! First order derivatives
     !          of height w.r.t T_Ref at the tangent only.  Computed if
     !          present(dHidTlm).
@@ -883,15 +880,15 @@ path: do i = i1, i2
 
     integer :: Do_Dumps    ! <0 = no dump, >=0 = dump, >0 = stop
     integer :: I           ! Subscript, loop inductor
-    integer :: N_PATH      ! Path length = size(vert_inds)
+    integer :: N_Path      ! Path length = size(vert_inds)
 
-    logical :: NOT_ZERO_P(size(vert_inds),size(p_basis))
-    integer :: col1(size(vert_inds))        ! First nonzero in rows of Eta_P
-    integer :: col2(size(vert_inds))        ! Last nonzero in rows of Eta_P
-    integer :: NZ_P(size(vert_inds),size(p_basis)) ! Nonzeros in columns of Eta_P
-    integer :: NNZ_P(size(p_basis))         ! Numbers of rows in NZ_P
+    logical :: Not_Zero_p(size(vert_inds),t_sv%l_p(1))
+    integer :: col1(size(vert_inds))         ! First nonzero in rows of Eta_P
+    integer :: col2(size(vert_inds))         ! Last nonzero in rows of Eta_P
+    integer :: NZ_p(size(vert_inds),t_sv%l_p(1)) ! Nonzeros in columns of Eta_P
+    integer :: NNZ_p(t_sv%l_p(1)) ! Numbers of rows in NZ_P
 
-    real(rp) :: ETA_P(size(vert_inds),size(p_basis))
+    real(rp) :: Eta_p(size(vert_inds),t_sv%l_p(1))
 
 !   It would be nice to do this the first time only, but the
 !   retrieve command in the L2CF can now change switches
@@ -902,15 +899,15 @@ path: do i = i1, i2
     n_path = size(vert_inds)
 
     ! Interpolate Temperature (T_Ref) and the vertical height derivative
-    ! (dHidZij) to the path (T_Grid and dHitdZi).
+    ! (dHidZij) to the path (T_Path and dHitdZi).
 
     nnz_p = 0
     eta_p = 0.0
     not_zero_p = .false.
-    call get_eta_sparse ( p_basis, p_grid(:n_path), eta_p, 1, n_path, &
+    call get_eta_sparse ( t_sv%phi_basis, p_path(:n_path), eta_p, 1, n_path, &
       & nz_p, nnz_p, col1, col2, not_zero_p )
     do i = 1, n_path
-      t_grid(i) = dot_product(t_ref(vert_inds(i),col1(i):col2(i)), &
+      t_path(i) = dot_product(t_ref(vert_inds(i),col1(i):col2(i)), &
         & eta_p(i,col1(i):col2(i)))
       ! compute the vertical derivative grid
       dHitdZi(i) = dot_product(dHidZij(vert_inds(i),col1(i):col2(i)), &
@@ -928,12 +925,12 @@ path: do i = i1, i2
           & eta_p(n_tan,col1(n_tan):col2(n_tan)))
 
       ! compute temperature derivatives
-      if ( present(dHidTlm) ) call Temperature_Derivatives ( size(z_basis) )
+      if ( present(dHidTlm) ) call Temperature_Derivatives
     end if
 
     if ( do_dumps >= 0 ) then
       call dump ( t_ref, name='t_ref', format='(1pg14.6)', options=options )
-      call dump ( t_grid(:n_path), name='t_grid', format='(1pg14.6)', options=options )
+      call dump ( t_path(:n_path), name='T_Path', format='(1pg14.6)', options=options )
       call dump ( dHitdZi(:n_path), name='dHitdZi', format='(1pg14.6)', options=options )
       call dump ( eta_p, name='eta_p', format='(1pg14.6)', options=options )
       call dump ( col1, name='col1', options=options )
@@ -944,17 +941,15 @@ path: do i = i1, i2
 
   contains
 
-    subroutine Temperature_Derivatives ( Z_Coeffs )
-      ! This is a subroutine instead of inline so that the references to the
-      ! size of Z_Basis in the dimensions of automatic variables are only
-      ! attempted if Z_Basis is present.  But we could have used size(T_Ref,1).
+    subroutine Temperature_Derivatives
+
       use GLNP, only: NGP1
-      integer, intent(in) :: Z_Coeffs     ! size(z_basis)
-      real(rp) :: ETA_T2(n_path,z_coeffs) ! Path X Zeta
-      integer :: NZ_T2(n_path,z_coeffs)   ! Nonzeros in Eta_T2
-      integer :: NNZ_T2(z_coeffs)         ! Numbers of rows in NZ_T2
-      integer :: I, J, SV_P, SV_T, SV_Z   ! Loop inductors and subscripts
-      integer :: P_Coeffs                 ! size(p_basis)
+      real(rp) :: ETA_T2(n_path,t_sv%l_z(1)) ! Path X Zeta
+      integer :: NZ_T2(n_path,t_sv%l_z(1))   ! Nonzeros in Eta_T2
+      integer :: NNZ_T2(t_sv%l_z(1))         ! Numbers of rows in NZ_T2
+      integer :: I, J, SV_P, SV_T, SV_Z      ! Loop inductors and subscripts
+      integer :: P_Coeffs                    ! t_sv%l_p(1)
+      integer :: Z_Coeffs                    ! t_sv%l_z(1)
 
       ! Adjust the 2d hydrostatic temperature derivative relative to the
       ! surface. Even though this is updated on every invocation, that is,
@@ -964,13 +959,15 @@ path: do i = i1, i2
       ! the same as starting from the original dHidTlm and updating with the
       ! latest phi_t.  The algebra is horrible, but Maple has verified this.
 
+      p_coeffs = t_sv%l_p(1)
+      z_coeffs = t_sv%l_z(1)
+
       do i = 1, z_coeffs
         dHidTlm(:,i,:) = dHidTlm(:,i,:) - &
           & dot_product ( dHidTlm(1,i,col1(n_tan):col2(n_tan)), &
                         & eta_p(n_tan,col1(n_tan):col2(n_tan)) )
       end do
 
-      p_coeffs = size(p_basis)
       j = z_coeffs * p_coeffs
       dHtdTl0 = RESHAPE(dHidTlm(tan_ind,:,:) * SPREAD(eta_p(n_tan,:),1,z_coeffs),&
                      & (/j/))
@@ -979,14 +976,15 @@ path: do i = i1, i2
                    ddHidHidTl0(tan_ind,:,:) * SPREAD(eta_p(n_tan,:),1,z_coeffs), &
                      & (/j/))
 
-      ! Compute Zeta interpolation coefficients, noting where the zeros are
+      ! Compute Zeta interpolation coefficients from the temperature zeta
+      ! basis to reference zetas, noting where the nonzeros are
       nnz_t2 = 0
       eta_t2 = 0.0
       ! Get_Eta_Sparse is called twice because Z_Ref is sorted on N_Tan:1:-1
       ! and on N_Tan+ngp1:
-      call get_eta_sparse ( z_basis, z_ref(vert_inds), eta_t2, &
+      call get_eta_sparse ( t_sv%zet_basis, z_ref(vert_inds), eta_t2, &
         & n_tan, 1, nz_t2, nnz_t2, .true. )
-      call get_eta_sparse ( z_basis, z_ref(vert_inds), eta_t2, &
+      call get_eta_sparse ( t_sv%zet_basis, z_ref(vert_inds), eta_t2, &
         & n_tan+ngp1, size(vert_inds), nz_t2, nnz_t2, .true. )
 
       ! Compute Zeta X Phi interpolation coefficients, noting where the zeros
@@ -1001,7 +999,7 @@ path: do i = i1, i2
       do sv_p = 1 , p_coeffs
         do sv_z = 1 , z_coeffs
           sv_t = sv_t + 1
-          if ( t_deriv_flag(sv_t) ) then
+          if ( t_sv%deriv_flags(sv_t) ) then
             dHitdTlm(:,sv_t) = max(dHidTlm(vert_inds,sv_z,sv_p),0.0_rp) * eta_p(:,sv_p)
             do_calc_hyd(:,sv_t) = dHitdTlm(:,sv_t) /= 0.0_rp
           else
@@ -1021,7 +1019,7 @@ path: do i = i1, i2
   ! ------------------------------------------------  More_Points  -----
                          ! Inputs:
   subroutine More_Points (  phi_t, tan_ind, p_basis, z_ref, h_ref, r_eq,  &
-                         &  h_surf, h_tan, p_grid,                        &
+                         &  h_surf, h_tan, p_path,                        &
                          ! Outputs:
                          &  z_new, h_new, p_new, n_new,                   &
                          ! Optional inputs:
@@ -1046,7 +1044,7 @@ path: do i = i1, i2
                                        ! surface
     real(rp), intent(in) :: H_Tan      ! Tangent height above H_Surf -- negative
     !                                     for Earth-intersecting ray
-    real(rp), intent(in) :: p_grid(:)  ! From Height_Metrics
+    real(rp), intent(in) :: p_path(:)  ! From Height_Metrics
 
     ! outputs:
     real(rp), intent(out) :: z_new(:)  ! computed addional zetas
@@ -1112,7 +1110,7 @@ path: do i = i1, i2
             ! What's going on?
             n_new = n_new - 1
           else
-            if ( minval(abs(p_new(n_new)-p_grid)) < 1.0e-4 ) then
+            if ( minval(abs(p_new(n_new)-p_path)) < 1.0e-4 ) then
               ! New one is too close to a grid point -- ignore it.
               stat = no_sol
               n_new = n_new - 1
@@ -1144,6 +1142,9 @@ path: do i = i1, i2
 end module Metrics_m
 
 ! $Log$
+! Revision 2.77  2016/10/18 00:25:37  vsnyder
+! Improve comments, some cannobball polishing
+!
 ! Revision 2.76  2016/08/20 00:55:08  vsnyder
 ! Correct comments about units for Phi_t and P_Basis in Tangent_Metrics
 !
