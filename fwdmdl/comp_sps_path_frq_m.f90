@@ -404,6 +404,11 @@ contains
 ! in the loop (hiding inside of matmul), so there's really no point to
 ! sending in do_calc_zp.
 
+! This assumes there is only one species in Grids_x, or that none of the
+! species before Sps_I depend upon frequency.  Otherwise, more care needs
+! to be taken with the relationship between subscripts for Eta_zp and
+! grids_x%values.  Compare to Comp_Sps_Path_No_Frq
+
     use MLSCommon, only: RP
     use Load_sps_data_m, only: Grids_T
 
@@ -467,20 +472,17 @@ contains
 
 ! Internal declarations
 
-    integer :: f_inda, f_indb
-    integer :: no_mol, n_f
-    integer :: sps_i
-    integer :: v_inda, v_indb
-    integer :: w_inda, w_indb
-    integer :: sv_f, sv_zp
+    integer :: F_inda, F_indb
+    integer :: No_mol, Nw
+    integer :: Sps_i
+    integer :: V_inda ! , V_indb
+    integer :: W_inda, W_indb
 
 ! Begin executable code:
 
     no_mol = ubound(grids_x%l_z,1)
 
     f_indb = 0
-    f_indb = 0
-    v_indb = 0
     w_indb = 0
     do sps_i = 1, no_mol
 
@@ -488,16 +490,17 @@ contains
 
       f_inda = f_indb
       f_indb = grids_x%l_f(sps_i) ! Index of last one for sps_i
-      v_inda = v_indb
-      v_indb = grids_x%l_v(sps_i) ! Index of last one for sps_i
       w_inda = w_indb
       w_indb = w_inda + (Grids_x%l_z(sps_i) - Grids_x%l_z(sps_i-1)) * &
                         (Grids_x%l_p(sps_i) - Grids_x%l_p(sps_i-1))
 
       ! Compute Sps_Path only for sps that don't depend on frequency
       if ( f_indb-f_inda == 1 ) then
+
+        v_inda = grids_x%l_v(sps_i-1)
+        nw = w_indb - w_inda
         sps_path(:,sps_i) = &
-          & matmul(eta_zp(:,w_inda+1:w_indb), grids_x%values(v_inda+1:v_indb))
+          & matmul(eta_zp(:,w_inda+1:w_indb), grids_x%values(v_inda+1:v_inda+nw))
 
         if ( grids_x%lin_log(sps_i)) sps_path(:,sps_i) = exp(sps_path(:,sps_i))
 
@@ -539,19 +542,24 @@ contains
 
 ! Internal declarations
 
-    integer :: v_inda, v_indb, w_inda, w_indb
+    integer :: Nw
+    integer :: V_inda
+    integer :: W_inda, W_indb
 
 ! Begin executable code:
 
     v_inda = grids_x%l_v(the_sps-1) ! Index of last one for the_sps - 1
-    v_indb = grids_x%l_v(the_sps)   ! Index of last one for the_sps
-    w_inda = w_inda + (Grids_x%l_z(the_sps-1) - Grids_x%l_z(the_sps-1-1)) * &
-                      (Grids_x%l_p(the_sps-1) - Grids_x%l_p(the_sps-1-1))
-    w_indb = w_inda + (Grids_x%l_z(the_sps) - Grids_x%l_z(the_sps-1)) * &
-                      (Grids_x%l_p(the_sps) - Grids_x%l_p(the_sps-1))
+    ! Calculate subscripts for eta_zp
+    w_indb = 0
+    do nw = 1, the_sps
+      w_inda = w_indb
+      w_indb = w_inda + (Grids_x%l_z(nw) - Grids_x%l_z(nw-1)) * &
+                        (Grids_x%l_p(nw) - Grids_x%l_p(nw-1))
+    end do
 
+    nw = w_indb - w_inda
     sps_path = &
-      & matmul(eta_zp(:,w_inda+1:w_indb), grids_x%values(v_inda+1:v_indb))
+      & matmul(eta_zp(:,w_inda+1:w_indb), grids_x%values(v_inda+1:v_inda+nw))
 
     if ( grids_x%lin_log(the_sps)) sps_path = exp(sps_path)
 
@@ -570,6 +578,9 @@ contains
 end module Comp_Sps_Path_Frq_m
 !
 ! $Log$
+! Revision 2.36  2016/11/17 03:13:23  vsnyder
+! Repair errors calculating subscripts for Eta_zp in Comp_1_Sps_Path_No_Frq
+!
 ! Revision 2.35  2016/11/17 01:46:45  vsnyder
 ! Remove feature to calculate without frequency interpolation in the
 ! routines designed to do it, if Frq < 1.0.  Use the routines that don't
