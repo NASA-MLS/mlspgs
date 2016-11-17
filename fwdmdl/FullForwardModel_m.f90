@@ -275,7 +275,9 @@ contains
         & ermsg=ermsg )
       no_sv_p_t = grids_tmp%l_p(1) ! size of temperature's horizontal grid ==
                                    ! windowFinish - windowStart + 1.
-      sv_t_len = grids_tmp%p_len   ! zeta X phi == n_t_zeta * no_sv_p_t
+      sv_t_len = grids_tmp%p_len   ! zeta X phi == n_t_zeta * no_sv_p_t =
+                                   ! grids_tmp%l_p(1) * grids_tmp%l_l(1) =
+                                   ! size(grids_tmp%values,1)
     end if
 
     spect_der = present ( jacobian ) .and. FwdModelConf%spect_der
@@ -468,10 +470,15 @@ contains
   ! This is the full radiative transfer forward model, the workhorse code.
   ! It's called FullForwardModelAuto because most of the variable-size
   ! work arrays are automatic arrays, instead of being explicitly allocated
-  ! and deallocated.
+  ! and deallocated.  Their extents are sufficient for the longest path
+  ! through the atmosphere on which the radiative-transfer equation is
+  ! integrated.  If they were allocated in One_Pointing with an extent
+  ! appropriate to each path, much more time would be spent in the storage
+  ! manager.
 
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
-    use Comp_ETA_DoCalc_No_Frq_M, only: Comp_ETA_DoCalc_No_Frq
+    use Comp_ETA_DoCalc_No_Frq_M, only: Comp_ETA_DoCalc_No_Frq, &
+      & Spread_Eta_FZP_from_Eta_ZP
     use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_Frq, &
     ! & Comp_SPS_Path_Frq_NZ, &
       & Comp_SPS_Path_No_Frq, Comp_1_SPS_Path_No_Frq
@@ -676,12 +683,12 @@ contains
                                         ! H_Glgrid etc.
 
     ! Cloud arrays are on the same grids as temperature
-    logical :: Do_Calc_Tscat(max_f,s_i*size(grids_tmp%values)) ! 'Avoid zeros' indicator
-    logical :: Do_Calc_Salb(max_f,s_i*size(grids_tmp%values))  ! 'Avoid zeros' indicator
-    logical :: Do_Calc_cext(max_f,s_i*size(grids_tmp%values))  ! 'Avoid zeros' indicator
-    logical :: Do_Calc_Tscat_ZP(max_f,s_i*grids_tmp%p_len)     ! 'Avoid zeros' indicator
-    logical :: Do_Calc_Salb_ZP(max_f,s_i*grids_tmp%p_len)      ! 'Avoid zeros' indicator
-    logical :: Do_Calc_Cext_ZP(max_f,s_i*grids_tmp%p_len)      ! 'Avoid zeros' indicator
+    logical :: Do_Calc_Tscat(max_f,s_i*sv_t_len)    ! 'Avoid zeros' indicator
+    logical :: Do_Calc_Salb(max_f,s_i*sv_t_len)     ! 'Avoid zeros' indicator
+    logical :: Do_Calc_cext(max_f,s_i*sv_t_len)     ! 'Avoid zeros' indicator
+    logical :: Do_Calc_Tscat_ZP(max_f,s_i*sv_t_len) ! 'Avoid zeros' indicator
+    logical :: Do_Calc_Salb_ZP(max_f,s_i*sv_t_len)  ! 'Avoid zeros' indicator
+    logical :: Do_Calc_Cext_ZP(max_f,s_i*sv_t_len)  ! 'Avoid zeros' indicator
 
     real(r8), parameter :: Frq_0 = 0.0_r8     ! Fake for comp_sps_Path_frq
 
@@ -713,7 +720,7 @@ contains
     real(rp) :: DTanh_DT_C(max_c)     ! 1/tanh1_c d/dT tanh1_c
     real(rp) :: DTanh_DT_F(max_f)     ! 1/tanh1_f d/dT tanh1_f
     real(rp) :: dTScat_df(s_ts*max_c,size(grids_f%values))   ! on coarse path w.r.t. SVE
-    real(rp) :: dTScat_dT(s_ts*max_c,size(grids_tmp%values)) ! on coarse path w.r.t. SVE
+    real(rp) :: dTScat_dT(s_ts*max_c,sv_t_len) ! on coarse path w.r.t. SVE
     real(rp) :: H_Path(max_f)         ! Heights on path (km)
     real(rp) :: H_Path_C(max_c)       ! H_Path on coarse grid (km)
     real(rp) :: H_Path_F(max_f)       ! H_Path on fine grid (km)
@@ -768,7 +775,9 @@ contains
     real(rp) :: DBeta_DV_Path_F(max_f,s_lc*size(fwdModelConf%lineCenter)) ! dBeta_dv on fine grid
     real(rp) :: DBeta_DW_Path_C(max_c,s_lw*size(fwdModelConf%lineWidth)) ! dBeta_dw on coarse grid
     real(rp) :: DBeta_DW_Path_F(max_f,s_lw*size(fwdModelConf%lineWidth)) ! dBeta_dw on fine grid
-    real(rp) :: DH_DT_Path(max_f,s_t*sv_t_len)     ! dH/dT on path
+    real(rp), target :: DH_DT_Path_1(s_t*max_f*sv_t_len) ! for dH/dT on path Zeta X Phi
+    real(rp), pointer :: DH_DT_Path(:,:)           ! dH/dT on path X (Zeta * Phi)
+    real(rp), pointer :: DH_DT_Path_3(:,:,:)       ! dH/dT on path X Zeta X Phi
     real(rp) :: DH_DT_Path_C(max_c,s_t*sv_t_len)   ! DH_DT_Path on coarse grid
     real(rp) :: DH_DT_Path_F(max_f,s_t*sv_t_len)   ! DH_DT_Path on fine grid
     real(rp) :: DHDZ_GLGrid(maxVert,no_sv_p_t) ! dH/dZ on glGrid surfs
@@ -864,12 +873,16 @@ contains
 
     ! 'Avoid zeros' indicators
     logical :: Do_Calc_FZP(max_f, size(grids_f%values))
-    logical :: Do_Calc_Hyd(max_f, sv_t_len)
-    logical :: Do_Calc_Hyd_C(max_c, sv_t_len)  ! DO_Calc_HYD on coarse grid
+    logical, target :: Do_Calc_Hyd_1(s_t * max_f * sv_t_len) ! dH_dT_Path /= 0
+    logical, pointer :: Do_Calc_Hyd(:,:)     ! dH_dT_Path /= 0 on path X (Zeta * Phi)
+    logical, pointer :: Do_Calc_Hyd_3(:,:,:) ! dH_dT_Path /= 0 on path X Zeta X Phi
+    logical :: Do_Calc_Hyd_C(max_c, sv_t_len)  ! DO_Calc_Hyd on coarse grid
     logical :: Do_Calc_N(max_f, size(grids_n%values) ) ! on entire grid
-    logical :: Do_Calc_T(max_f, sv_t_len)
-    logical :: Do_Calc_T_C(max_c, sv_t_len)    ! DO_Calc_T on coarse grid
-    logical :: Do_Calc_T_F(max_f, sv_t_len)    ! DO_Calc_T on fine grid
+    logical, target :: Do_Calc_T_1(s_t* max_f * sv_t_len)
+    logical, pointer :: Do_Calc_T(:,:)         ! path Z X temp (Z * phi )
+    logical, pointer :: Do_Calc_T_3(:,:,:)     ! path Z X temp Z X temp phi
+    logical :: Do_Calc_T_C(max_c, s_t*sv_t_len)! DO_Calc_T on coarse path
+    logical :: Do_Calc_T_F(max_f, s_t*sv_t_len)! DO_Calc_T on fine path
     logical :: Do_Calc_V(max_f, size(grids_v%values) ) ! on entire grid
     logical :: Do_Calc_W(max_f, size(grids_w%values) ) ! on entire grid
     logical :: Do_Calc_ZP(max_f,grids_f%p_len) ! same shape as eta_zp
@@ -915,12 +928,12 @@ contains
     real(rp), pointer :: DACsStaging(:,:) ! Temporary space for DACS radiances
 
     ! Cloud arrays have the same grids as temperature
-    real(rp) :: ETA_Tscat(max_f,s_i*size(grids_tmp%values))
-    real(rp) :: ETA_Tscat_ZP(max_f,s_i*grids_tmp%p_len)
-    real(rp) :: ETA_Salb(max_f,s_i*size(grids_tmp%values))
-    real(rp) :: ETA_Salb_ZP(max_f,s_i*grids_tmp%p_len)
-    real(rp) :: ETA_Cext(max_f,s_i*size(grids_tmp%values))
-    real(rp) :: ETA_Cext_ZP(max_f,s_i*grids_tmp%p_len)
+    real(rp) :: ETA_Tscat(max_f,s_i*sv_t_len)
+    real(rp) :: ETA_Tscat_ZP(max_f,s_i*sv_t_len)
+    real(rp) :: ETA_Salb(max_f,s_i*sv_t_len)
+    real(rp) :: ETA_Salb_ZP(max_f,s_i*sv_t_len)
+    real(rp) :: ETA_Cext(max_f,s_i*sv_t_len)
+    real(rp) :: ETA_Cext_ZP(max_f,s_i*sv_t_len)
     real(rp) :: Cext_Path(max_f,s_i)    ! Cloud extinction on path
     real(rp) :: Salb_Path(max_f,s_i)    ! Single Scattering Albedo on path
     real(rp) :: Tscat_Path(max_f,s_i*fwdModelConf%num_scattering_angles) ! TScat on path
@@ -1014,11 +1027,28 @@ contains
     type (VectorValue_T) :: scat_alb
     type (VectorValue_T) :: cld_ext
 
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    !!!!!                                                          !!!!!
+    !!!!! If an array has an extent of No_SV_P_T or SV_T_Len, in   !!!!!
+    !!!!! the QTM case it needs to be subscripted using the index  !!!!!
+    !!!!! of a vertex adjacent to the path, in the extracted       !!!!!
+    !!!!! subset of the entire state vector.  The mapping from QTM !!!!!
+    !!!!! indices to path-adjacent indices is QTM%Path_Vertices(). !!!!!
+    !!!!! The inverse mapping, to put derivatives into the correct !!!!!
+    !!!!! places in the Jacobian, is F_and_V%Vertices.             !!!!!
+    !!!!!                                                          !!!!!
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
     ! Executable code --------------------------------------------------------
     ! ------------------------------------------------------------------------
 
     call trace_begin ( me, 'FullForwardModelAuto, MAF=', index=fmstat%maf, &
       & cond=toggle(emit) )
+
+    ! Get two-d pointer to dh_dt_path_1, do_calc_hyd_1 and do_calc_t_1
+    dh_dt_path(1:max_f,1:s_t*sv_t_len) => dh_dt_path_1
+    do_calc_hyd(1:max_f,1:s_t*sv_t_len) => do_calc_hyd_1
+    do_calc_t(1:max_f,1:s_t*sv_t_len) => do_calc_t_1
 
     ! Fill REAL local variables with NaN if requested
     if ( NaN_Fill ) then
@@ -2263,7 +2293,7 @@ contains
       real(r4) :: K_Atmos_TScat(noUsedChannels,size(rads,2),s_a*size(grids_f%values))
       real(rp) :: K_Atmos_p(s_a*size(grids_f%values)) ! K_Atmos convolved with P
       real(r4) :: K_Temp_TScat(noUsedChannels,size(rads,2),s_t*sv_t_len)
-      real(rp) :: K_Temp_p(s_t*size(grids_tmp%values)) ! K_Temp convolved with P
+      real(rp) :: K_Temp_p(s_t*sv_t_len) ! K_Temp convolved with P
       real(rp) :: LogIWC       ! log10(iwc)
       real(rp) :: P_On_Xi(size(rads,2)) ! P * sin(abs(theta)) interpolated
                                ! to scattering point IWC and T for each xi
@@ -3000,17 +3030,16 @@ contains
       call comp_sps_path_frq ( Grids_f, Frq, eta_zp(:npf,:), &
         & do_calc_zp, sps_path(:npf,:),                      &
         & eta_fzp(:npf,:), do_calc_fzp(:npf,:),              &
-        & firstSignal%lo, thisSideband )
+        & firstSignal%lo, thisSideband, already_spread=.true. )
 !         ! Send all of eta_zp so comp_sps_path_frq_nz doesn't get an array
 !         ! bounds error when it's clearing parts indexed by nz_zp.
-! I don't know why this doesn't work
+! I don't know why this doesn't work -- maybe nz_... and nnz_... have not
+! been computed?
 !         call comp_sps_path_frq_nz ( Grids_f, Frq, eta_zp, nz_zp, nnz_zp, &
 !           & do_calc_zp, sps_path(:npf,:),                                &
 !           & do_calc_fzp, eta_fzp(:npf,:), nz_fzp, nnz_fzp,               &
 !           & firstSignal%lo, thisSideband )
 
-!c      sps_path_c(i_start:i_end,:) = sps_path(c_inds(i_start:i_end),:)
-!c      sps_path_c(i_start:i_end,:) = sps_path(ngp1*i_start-ng:ngp1*i_end-ng:ngp1,:)
       associate ( sps_path_x => sps_path(1:npf:ngp1,:) )
         sps_path_c(i_start:i_end,:) = sps_path_x(i_start:i_end,:)
       end associate
@@ -3064,20 +3093,19 @@ contains
           &  phi_path(1:npf), eta_tscat_zp(1:npf,:),       &
           &  do_calc_tscat_zp(1:npf,:), tan_pt=tan_pt_f )
 
-        call comp_sps_path_frq ( grids_tscat,                &
-          & frq_0, eta_tscat_zp(1:npf,:),                    &
-          & do_calc_tscat_zp(1:npf,:), tscat_path(1:npf,:),  &
-          & eta_tscat(1:npf,:), do_calc_tscat(1:npf,:) )
+!         call comp_sps_path_frq ( grids_tscat,                &
+!           & frq_0, eta_tscat_zp(1:npf,:),                    &
+!           & do_calc_tscat_zp(1:npf,:), tscat_path(1:npf,:),  &
+!           & eta_tscat(1:npf,:), do_calc_tscat(1:npf,:) )
 
-! I don't know why this doesn't work
-!           call comp_sps_path_no_frq ( Grids_tscat, eta_tscat_zp(1:npf,:), &
-!             & tscat_path(1:npf,:) )
+        call comp_sps_path_no_frq ( Grids_tscat, eta_tscat_zp(1:npf,:), &
+          & tscat_path(1:npf,:) )
 
         ! project Tscat onto LOS
         call interp_tscat ( tscat_path(1:npf,:), Scat_ang(:), &
           & phi_path(1:npf), tt_path(1:npf,:) )
 
-        if ( .not. cld_fine ) then                 ! interpolate onto gl grids along the LOS
+        if ( .not. cld_fine ) then  ! interpolate onto gl grids along the LOS
 
           scat_alb%template = temp%template
           cld_ext%template  = temp%template
@@ -3092,34 +3120,29 @@ contains
             &  phi_path(1:npf), eta_salb_zp(1:npf,:),       &
             &  do_calc_salb_zp(1:npf,:), tan_pt=tan_pt_f )
 
-          call comp_sps_path_frq ( Grids_salb,               &
-            & frq_0, eta_salb_zp(1:npf,:),                   &
-            & do_calc_salb_zp(1:npf,:), salb_path(1:npf,:),  &
-            & eta_salb(1:npf,:), do_calc_salb(1:npf,:) )
+!           call comp_sps_path_frq ( Grids_salb,               &
+!             & frq_0, eta_salb_zp(1:npf,:),                   &
+!             & do_calc_salb_zp(1:npf,:), salb_path(1:npf,:),  &
+!             & eta_salb(1:npf,:), do_calc_salb(1:npf,:) )
 
-! I don't know why this doesn't work
-!             call comp_sps_path_no_frq ( Grids_salb, eta_salb_zp(1:npf,:), &
-!               & salb_path(1:npf,:) )
+          call comp_sps_path_no_frq ( Grids_salb, eta_salb_zp(1:npf,:), &
+            & salb_path(1:npf,:) )
 
           call comp_eta_docalc_no_frq ( Grids_cext, z_path, &
             &  phi_path(1:npf), eta_cext_zp(1:npf,:),       &
             &  do_calc_cext_zp(1:npf,:), tan_pt=tan_pt_f )
 
-          call comp_sps_path_frq ( Grids_cext,               &
-            & frq_0, eta_cext_zp(1:npf,:),                   &
-            & do_calc_cext_zp(1:npf,:), cext_path(1:npf,:),  &
-            & eta_cext(1:npf,:), do_calc_cext(1:npf,:) )
+!           call comp_sps_path_frq ( Grids_cext,               &
+!             & frq_0, eta_cext_zp(1:npf,:),                   &
+!             & do_calc_cext_zp(1:npf,:), cext_path(1:npf,:),  &
+!             & eta_cext(1:npf,:), do_calc_cext(1:npf,:) )
 
-! I don't know why this doesn't work
-!             call comp_sps_path_no_frq ( Grids_cext,  eta_cext_zp(1:npf,:), &
-!               & cext_path(1:npf,:) )
+          call comp_sps_path_no_frq ( Grids_cext,  eta_cext_zp(1:npf,:), &
+            & cext_path(1:npf,:) )
 
           beta_path_cloud_c(1:npc) = cext_path(1:npf:ngp1,1)
-!c          beta_path_cloud_c(1:npc) = cext_path(c_inds,1)
           w0_path_c(1:npc) = salb_path(1:npf:ngp1,1)
-!c          w0_path_c(1:npc) = salb_path(c_inds,1)
           tt_path_c(1:npc) = tt_path(1:npf:ngp1,1)
-!c          tt_path_c(1:npc) = tt_path(c_inds,1)
 
         else
 
@@ -3862,6 +3885,8 @@ contains
         ! Put the inverse of F_and_V%Vertices in QTM%Path_Vertices.  The values
         ! therein are used to index elements of arrays that only exist
         ! adjacent to the path.
+        QTM%path_vertices = 0 ! If this turns out to be expensive, keep an
+                              ! "old F_and_V" and use it to put zeros here.
         do i_start = 1, size(f_and_v(ptg_i)%vertices) ! I_Start is a temp here
           QTM%path_vertices(f_and_v(ptg_i)%vertices(i_start)) = i_start
         end do
@@ -3981,7 +4006,9 @@ contains
         ! Get t_path (and dhdz_path, which we don't need yet) so we can
         ! calculate the refractive index.  We don't do this for QTM because
         ! the horizontal coordinate isn't Phi, which is what's adjusted here.
-        call more_metrics ( tan_ind_f, tan_pt_f, Grids_tmp%phi_basis,  &
+        ! T_path, dhdz_path, and eta_zp will be gotten again later, with
+        ! slightly different phi.
+        call more_metrics ( tan_ind_f, tan_pt_f, Grids_tmp,            &
           &  vert_inds(1:npf), t_glgrid, dhdz_glgrid, phi_path(1:npf), &
           &  t_path(1:npf), dhdz_path(1:npf) )
         ! Compute refractive index on the path.
@@ -4016,13 +4043,12 @@ contains
       ! Get other metrics-related quantities: t_path, dhdz_path, dh_dt_path...
       if ( .not.present(QTM) ) then
         if ( temp_der ) then
-          call more_metrics ( tan_ind_f, tan_pt_f, Grids_tmp%phi_basis,    &
+          call more_metrics ( tan_ind_f, tan_pt_f, Grids_tmp,              &
             &  vert_inds(1:npf), t_glgrid, dhdz_glgrid, phi_path(1:npf),   &
             &  t_path(1:npf), dhdz_path(1:npf),                            &
             !  Stuff for temperature derivatives:
             &  ddHidHidTl0 = ddhidhidtl0, dHidTlm = dh_dt_glgrid,          &
-            &  T_Deriv_Flag = Grids_tmp%deriv_flags,                       &
-            &  Z_Basis = Grids_tmp%zet_basis, Z_Ref=z_glgrid,              &
+            &  Z_Ref=z_glgrid,                                             &
             &  ddHtdHtdTl0 = tan_d2h_dhdt, dHitdTlm = dh_dt_path(1:npf,:), &
             &  dHtdTl0 = tan_dh_dt, Do_Calc_Hyd = do_calc_hyd(1:npf,:),    &
             &  Do_Calc_T = do_calc_t, Eta_zxp = eta_zxp_t,                 &
@@ -4037,20 +4063,24 @@ contains
           eta_zxp_t_c(1:npc,:) = eta_zxp_t(1:npf:ngp1,:)
           t_der_path_flags(1:npf) = any(do_calc_t(1:npf,:),2)
         else
-          call more_metrics ( tan_ind_f, tan_pt_f, Grids_tmp%phi_basis,    &
+          call more_metrics ( tan_ind_f, tan_pt_f, Grids_tmp ,             &
             &  vert_inds(1:npf), t_glgrid, dhdz_glgrid, phi_path(1:npf),   &
             &  t_path(1:npf), dhdz_path(1:npf) )
         end if
       else
         if ( temp_der ) then
+          dh_dt_path_3(1:max_f,1:n_t_zeta,1:s_t*no_sv_p_t) => dh_dt_path_1
+          do_calc_hyd_3(1:max_f,1:n_t_zeta,1:s_t*no_sv_p_t) => do_calc_hyd_1
+          do_calc_t_3(1:max_f,1:n_t_zeta,1:s_t*no_sv_p_t) => do_calc_t_1
           call more_metrics_3d ( S, tan_pt_f, t_glgrid, dhdz_glgrid,         &
             & t_path(1:npf), dhdz_path(1:npf),                               &
             !  Stuff for temperature derivatives:
             &  QTM_hGrid%QTM_tree, ddHidHidTl0 = ddhidhidtl0,                &
-            &  dHidTlm = dh_dt_glgrid, T_Deriv_Flag = Grids_tmp%deriv_flags, &
-            &  Z_Basis = Grids_tmp%zet_basis, Z_Ref=z_glgrid,                &
-            &  ddHtdHtdTl0 = tan_d2h_dhdt, dHitdTlm = dh_dt_path(1:npf,:),   &
-            &  dHtdTl0 = tan_dh_dt, Eta_zQT = eta_zQT )
+            &  dHidTlm = dh_dt_glgrid, T_Sv = Grids_tmp, Z_Ref=z_glgrid,     &
+            &  ddHtdHtdTl0 = tan_d2h_dhdt, dHitdTlm = dh_dt_path_3(1:npf,:,:), &
+            &  dHtdTl0 = tan_dh_dt, Eta_zQT = eta_zQT, &
+            &  do_calc_t = do_calc_t_3(1:npf,:,:), &
+            &  do_calc_hyd = do_calc_hyd_3(1:npf,:,:) )
         else
           call more_metrics_3d ( S, tan_pt_f, t_glgrid, dhdz_glgrid, &
             & t_path(1:npf), dhdz_path(1:npf) )
@@ -4069,20 +4099,14 @@ contains
         &  phi_path(1:npf), eta_zp, do_calc_zp, tan_pt=tan_pt_f, &
         &  your_nz_zp=nz_zp, your_nnz_zp=nnz_zp )
 
+      call spread_eta_fzp_from_eta_zp ( Grids_f, &
+                                      & eta_zp(1:npf,:), do_calc_zp(:npf,:), &
+                                      & eta_fzp(1:npf,:), do_calc_fzp(:npf,:) )
+
       ! Compute sps_path with a FAKE frequency, mainly to get the
       ! WATER (H2O) contribution for refraction calculations, but also
       ! to compute sps_path for all those with no frequency component
-      call comp_sps_path_frq ( Grids_f,           &
-        & frq_0, eta_zp(1:npf,:),                 &
-        & do_calc_zp(1:npf,:), sps_path(1:npf,:), &
-        & eta_fzp(1:npf,:), do_calc_fzp(:npf,:) )
-!       ! Send all of eta_zp so comp_sps_path_frq_nz doesn't get an array
-!       ! bounds error when it's clearing parts indexed by nz_zp.
-! I don't know why this doesn't work
-!       call comp_sps_path_frq_nz ( Grids_f,                         &
-!         & frq_0, eta_zp, nz_zp, nnz_zp,                            &
-!         & do_calc_zp(1:npf,:), sps_path(1:npf,:),                  &
-!         & do_calc_fzp(1:npf,:), eta_fzp(1:npf,:), nz_fzp, nnz_fzp )
+      call comp_sps_path_no_frq ( Grids_f, eta_zp(1:npf,:), sps_path(1:npf,:) )
 
       ! Compute the refractive index - 1
       if ( h2o_ind > 0 ) then
@@ -4560,6 +4584,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.375  2016/11/14 21:10:47  vsnyder
+! Change scat zeta tolerance test from relative to absolute
+!
 ! Revision 2.374  2016/11/14 19:17:12  vsnyder
 ! Change scat zeta tolerance to 'half the bits match'
 !
