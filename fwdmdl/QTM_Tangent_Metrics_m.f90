@@ -75,9 +75,6 @@ contains
     type(value_t) :: Eta(3)            ! Interpolation coefficients
 
     ! Get interpolation coefficients and QTM serial numbers from QTM to Tan_Pt.
-    ! Serial numbers put into Eta%n will necessarily be serial numbers of
-    ! vertices adjacent to the path, so subscripting qtm%path_vertices with
-    ! Eta%n will be meaningful.
     call QTM_Interpolation_Weights ( QTM, Tan_Pt, Eta )
 
     if ( present(surf_height) ) then
@@ -87,25 +84,28 @@ contains
       h_surf = dot_product ( surf_height(eta%n), eta%v )
     else
       ! If we don't have the actual surface height, we set the surface
-      ! reference at the input z_ref and adjust r_eq and h_tan relative
-      ! to this, and adjust h_ref accordingly.  H_Ref is adjacent to the
-      ! path, so index it using the inverse of f_and_v%vertices.
-      h_surf = dot_product ( h_ref(1,qtm%path_vertices(eta%n)), eta%v )
+      ! reference at the input z_ref and adjust r_eq and h_tan relative to
+      ! this, and adjust h_ref accordingly.  H_Ref is adjacent to the path,
+      ! so index it using the inverse of f_and_v%vertices, which would be
+      ! qtm%path_vertices(eta%n) if we hadn't already computed it and put it
+      ! into eta%np..
+      h_surf = dot_product ( h_ref(1,eta%np), eta%v )
     end if
 
     if ( present(tan_press) .and. present(surf_temp) .and. present(z_ref) .and. &
       &  .not. present(surf_height) ) then
       ! Earth intersecting ray. Compute GP height (km) of tangent pressure
       ! below surface. This will be negative because tan_press < z_ref.
-      ! present(tan_press) requires present(surf_temp).  We don't need to
-      ! subtract h_surf here because this gives km from the z_ref surface.
+      ! present(tan_press) requires present(surf_temp) and present(z_ref). 
+      ! We don't need to subtract h_surf here because this gives km from
+      ! the z_ref surface.
       h_tan = dot_product ( surf_temp(eta%n),eta%v ) * &
             & (tan_press-z_ref)/14.8
     else
       ! H_Ref is adjacent to the path, so index it using the inverse of
-      ! f_and_v%vertices.
-      h_tan = dot_product ( h_ref(tan_ind_f,qtm%path_vertices(eta%n)), eta%v ) - &
-              h_surf
+      ! f_and_v%vertices, which would be qtm%path_vertices(eta%n) if we
+      ! hadn't already computed it and put it into eta%np.
+      h_tan = dot_product ( h_ref(tan_ind_f,eta%np), eta%v ) - h_surf
     end if
 
   end subroutine QTM_Tangent_Metrics
@@ -123,6 +123,9 @@ contains
 end module QTM_Tangent_Metrics_m
 
 ! $Log$
+! Revision 2.6  2016/11/17 01:48:49  vsnyder
+! Use eta%np instead of qtm%path_vertices(eta%n)
+!
 ! Revision 2.5  2016/11/12 01:38:18  vsnyder
 ! Use subscript of vertex near path instead of QTM serial number for H_Ref
 !
