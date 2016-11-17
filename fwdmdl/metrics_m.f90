@@ -151,7 +151,7 @@ contains
                             ! Optional inputs:
                             &  h_tol, forward )
 
-    !{ This subroutine computes {\tt h\_grid} and {\tt p\_grid} that define
+    !{ This subroutine computes {\tt h\_path} and {\tt p\_path} that define
     !  a 2-d integration path.  These points are at the intersections of the
     !  line of sight given by $H = H_\text{tan} \sec \phi$ and the heights of
     !  surfaces of constant $\zeta$ represented in piecewise linear segments
@@ -586,7 +586,7 @@ path: do i = i1, i2
   !
   ! The solution is only acceptable if $\phi_1 \leq \phi \leq \phi_2$ and
   ! $(h_1 - h) (h_2-h) \leq 0$ or $|h_1 - h| \leq \tau$ or $|h_2 - h| \leq
-  ! \tau$, where $\phi$ is {\tt p\_grid}, $h$ is {\tt h\_grid}, and $\tau$
+  ! \tau$, where $\phi$ is {\tt p\_path}, $h$ is {\tt h\_path}, and $\tau$
   ! is the height tolerance {\tt tol}.
 
   subroutine Solve_H_Phi ( & ! inputs
@@ -1142,6 +1142,9 @@ path: do i = i1, i2
 end module Metrics_m
 
 ! $Log$
+! Revision 2.78  2016/11/17 01:39:45  vsnyder
+! Change path variable names from xyz_grid to xyz_path
+!
 ! Revision 2.77  2016/10/18 00:25:37  vsnyder
 ! Improve comments, some cannobball polishing
 !
