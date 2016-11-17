@@ -16,6 +16,7 @@ module Comp_Eta_Docalc_No_Frq_m
   implicit NONE
   private
   public :: Comp_Eta_Docalc_No_Frq, Comp_Eta_fzp
+  public :: Spread_Eta_FZP_from_Eta_ZP
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -29,7 +30,8 @@ contains
 
   subroutine Comp_Eta_Docalc_No_Frq ( Grids_x, Path_Zeta, Path_Phi, &
                                     & Eta_zp, Do_Calc_zp, Sps, Tan_Pt, &
-                                    & Your_NZ_Zp, Your_NNZ_Zp )
+                                    & Your_NZ_Zp, Your_NNZ_Zp, &
+                                    & Eta_fzp, Do_Calc_fzp )
 
     use GLNP, only: NG, NGP1
     use MLSCommon, only: RP
@@ -63,6 +65,11 @@ contains
     ! the rest of it undefined.
     real(rp), intent(inout) :: Eta_zp(:,:) ! Eta_z * Eta_phi for each state
 !                           vector element. This is the same length as values.
+    ! Spread out from Eta_zp and Do_Calc_zp if present.  This copies the same
+    ! value for all frequencies if a species is frequency dependent.
+    real(rp), intent(out), optional :: Eta_fzp(:,:)
+    logical, intent(inout), optional :: Do_Calc_fzp(:,:)
+
 ! Notes:
 ! units of z_basis must be same as zeta_path (usually -log(P)) and units of
 ! phi_basis must be the same as phi_path (either radians or degrees).
@@ -153,6 +160,12 @@ contains
 
     end do
 
+    if ( present(eta_fzp) .and. present(do_calc_fzp) ) then
+      call spread_eta_fzp_from_eta_zp ( grids_x, eta_zp, do_calc_zp, &
+                                      &          eta_fzp, do_calc_fzp )
+
+    end if
+
   end subroutine Comp_Eta_Docalc_No_Frq
 
 ! -------------------------------------------------  Comp_Eta_fzp  -----
@@ -222,6 +235,66 @@ contains
 
   end subroutine Comp_Eta_fzp
 
+! -----------------------------------  Spread_Eta_FZP_from_Eta_ZP  -----
+  subroutine Spread_Eta_FZP_from_Eta_ZP ( Grids_x, Eta_ZP, Do_Calc_ZP, &
+                                        &          Eta_FZP, Do_Calc_FZP )
+
+    ! For species that have no frequency dependence, Eta_ZP = Eta_FZP.
+    ! For those that do have frequency dependence, spread out Eta_ZP for
+    ! all the frequencies.  Do the same for Do_Calc_ZP and DO_Calc_FZP,
+    ! but also include Grids_x%deriv_flags.
+
+    use Load_sps_data_m, only: Grids_T
+    use MLSCommon, only: RP
+
+    type (grids_t), intent(in) :: Grids_x  ! All the needed coordinates
+    real(rp), intent(in) :: Eta_zp(:,:)    ! Path X (Eta_z x Eta_phi)
+            ! First dimension is same as sps_values.
+    logical, intent(in) :: Do_Calc_Zp(:,:) ! logical indicating whether there
+            ! is a contribution for this state vector element
+    real(rp), intent(out) :: Eta_Fzp(:,:)  ! Path X (Eta_f x Eta_z x Eta_phi)
+            ! First dimension is same as sps_values.
+    logical, intent(out) :: Do_Calc_Fzp(:,:) ! indicates whether
+            ! there is a contribution for this state vector element. Same
+            ! shape as Eta_Fzp.
+
+    integer :: F_Inda ! First frequency for one species
+    integer :: F_Indb ! Last frequency for one species
+    integer :: N_F    ! Number of frequencies for one species
+    integer :: Sps_I  ! Species index
+    integer :: Sv_F   ! State vector index for FZP
+    integer :: Sv_ZP  ! State vector index for ZP only
+    integer :: V_Inda ! First value index for FZP
+    integer :: W_Inda ! First ZP index for one species
+    integer :: W_Indb ! Last ZP index for one species
+
+    f_inda = 0
+    w_inda = 0
+
+    do sps_i = 1, ubound(grids_x%l_z,1)
+
+      f_indb = grids_x%l_f(sps_i)
+      n_f = f_indb - f_inda
+
+      v_inda = grids_x%l_v(sps_i-1) ! One element before the first one
+      w_indb = w_inda + (Grids_x%l_z(sps_i) - Grids_x%l_z(sps_i-1)) * &
+                        (Grids_x%l_p(sps_i) - Grids_x%l_p(sps_i-1))
+      do sv_zp = w_inda + 1, w_indb
+        do sv_f = 1, n_f
+          v_inda = v_inda + 1
+          eta_fzp(:,v_inda) = eta_zp(:,sv_zp) ! Spread eta_zp
+          do_calc_fzp(:,v_inda) = do_calc_zp(:,sv_zp) .and. & ! Spread do_calc_zp
+                                & Grids_x%deriv_flags(v_inda)
+        end do
+      end do
+
+      f_inda = f_indb
+      w_inda = w_indb
+
+    end do
+
+  end subroutine Spread_Eta_FZP_from_Eta_ZP
+
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
   character (len=*), parameter :: IdParm = &
@@ -235,6 +308,11 @@ contains
 end module Comp_Eta_Docalc_No_Frq_m
 
 ! $Log$
+! Revision 2.21  2016/11/17 01:28:34  vsnyder
+! Add Spread_Eta_FZP_from_Eta_ZP.  Use it to spread Eta_zp and Do_Calc_zp
+! to Eta_fzp and Do_Calc_fzp in Comp_Eta_Docalc_No_Frq if the latter two
+! arguments are present.
+!
 ! Revision 2.20  2016/10/24 22:17:47  vsnyder
 ! Use Get_Eta_ZP
 !
