@@ -123,6 +123,11 @@ module Indexed_Values_m
     type(value_QTM_3d_t) :: V(12) = value_QTM_3d_t()
   end type Value_QTM_3D_List_t
 
+  interface Dump
+    module procedure Dump_Value_1D_List
+!     module procedure Dump_Value_1D_List_d, Dump_Value_1D_List_s
+  end interface
+
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
@@ -130,6 +135,11 @@ module Indexed_Values_m
 !---------------------------------------------------------------------------
 
 contains
+
+  subroutine Dump_Value_1D_List ( Value, Name )
+    use Output_m, only: NewLine, Output
+    include "Dump_Value_1D_List.f9h"
+  end subroutine Dump_Value_1D_List
 
 !=============================================================================
 !--------------------------- end bloc --------------------------------------
@@ -145,6 +155,9 @@ contains
 end module Indexed_Values_m
 
 ! $Log$
+! Revision 2.2  2016/11/23 20:07:43  vsnyder
+! Add Dump_Value_1D_List
+!
 ! Revision 2.1  2016/11/23 00:05:48  vsnyder
 ! Initial commit
 !

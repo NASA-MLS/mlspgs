@@ -34,10 +34,10 @@
     ! Coefficients below Basis(1) are all 1.0
     do i = 1, n_grid
       if ( grid(i) > basis(1) ) exit
-!       eta(i) = value_1D_list_t(rk)(n=1,v=[value_1d_t(rk)(1,1.0_rk), &
-!                                         & value_1d_t(rk)(0,0.0_rk)])
-      eta(i) = value_1D_list_t(n=1,v=[value_1d_t(1,1.0_rk), &
-                                    & value_1d_t(0,0.0_rk)])
+!       eta(i) = value_1D_list_t(rk)(n=1,v=[value_1d_t(rk)(n=1,v=1.0_rk), &
+!                                         & value_1d_t(rk)(n=0,v=0.0_rk)])
+      eta(i) = value_1D_list_t(n=1,v=[value_1d_t(n=1,v=1.0_rk), &
+                                    & value_1d_t(n=0,v=0.0_rk)])
     end do
     ! Coefficients between Basis(1) and Basis(n_basis) are "hat" functions
     do j = 2, n_basis
@@ -46,11 +46,13 @@
         if ( grid(i) > basis(j) ) exit
         if ( basis(j-1) < grid(i) ) then
 !           eta(i) = value_1D_list_t(rk)(n=2, &
-!             v=[value_1d_t(rk)(j,(basis(j)-grid(i)) * del_basis), &
-!              & value_1d_t(rk)(j-1,(grid(i)-basis(j-1)) * del_basis) ] )
+!             v=[value_1d_t(rk)(n=j-1,v=(basis(j)-grid(i)) * del_basis), &
+!              & value_1d_t(rk)(n=j,v=(grid(i)-basis(j-1)) * del_basis) ] )
           eta(i) = value_1D_list_t(n=2, &
-            v=[value_1d_t(j,(basis(j)-grid(i)) * del_basis), &
-             & value_1d_t(j-1,(grid(i)-basis(j-1)) * del_basis) ] )
+            v=[value_1d_t(n=j-1,v=(basis(j)-grid(i)) * del_basis), &
+             & value_1d_t(n=j,v=(grid(i)-basis(j-1)) * del_basis) ] )
+          if ( eta(i)%v(1)%v == 0.0 ) &
+            & eta(i) = value_1D_list_t(n=1,v=[eta(i)%v(2),value_1d_t()])
         end if
         i = i + 1
       end do
@@ -58,10 +60,10 @@
     ! Coefficients above Basis(n_basis) are all 1.0
     do i = n_grid, i, -1
       if ( basis(n_basis) >= grid(i) ) exit
-!       eta(i) = value_1D_list_t(rk)(n=1,v=[value_1d_t(rk)(n_basis,1.0_rk), &
-!                                         & value_1d_t(rk)(0,0.0_rk)])
-      eta(i) = value_1D_list_t(n=1,v=[value_1d_t(n_basis,1.0_rk), &
-                                    & value_1d_t(0,0.0_rk)])
+!       eta(i) = value_1D_list_t(rk)(n=1,v=[value_1d_t(rk)(n=n_basis,v=1.0_rk), &
+!                                         & value_1d_t(rk)(n=0,v=0.0_rk)])
+      eta(i) = value_1D_list_t(n=1,v=[value_1d_t(n=n_basis,v=1.0_rk), &
+                                    & value_1d_t(n=0,v=0.0_rk)])
     end do
   else
     block
@@ -71,10 +73,10 @@
       ! Coefficients below Basis(p(1)) are all 1.0
       do i = 1, n_grid
         if ( grid(i) > basis(p(1)) ) exit
-!         eta(i) = value_1D_list_t(rk)(n=1,v=[value_1d_t(rk)(p(1),1.0_rk), &
-!                                           & value_1d_t(rk)(0,0.0_rk)])
-        eta(i) = value_1D_list_t(n=1,v=[value_1d_t(p(1),1.0_rk), &
-                                      & value_1d_t(0,0.0_rk)])
+!         eta(i) = value_1D_list_t(rk)(n=1,v=[value_1d_t(rk)(n=p(1),v=1.0_rk), &
+!                                           & value_1d_t(rk)(n=0,v=0.0_rk)])
+        eta(i) = value_1D_list_t(n=1,v=[value_1d_t(n=p(1),v=1.0_rk), &
+                                      & value_1d_t(n=0,v=0.0_rk)])
       end do
       ! Coefficients between Basis(p(1)) and Basis(p(n_basis)) are "hat" functions
       do j = 2, n_basis
@@ -83,11 +85,13 @@
           if ( grid(i) > basis(p(j)) ) exit
           if ( basis(p(j-1)) < grid(i) ) then
 !             eta(i) = value_1D_list_t(rk)(n=2, &
-!               v=[value_1d_t(rk)(p(j),(basis(p(j))-grid(i)) * del_basis), &
-!                & value_1d_t(rk)(p(j-1),(grid(i)-basis(p(j-1))) * del_basis) ] )
+!               v=[value_1d_t(rk)(n=p(j-1),v=(basis(p(j))-grid(i)) * del_basis), &
+!                & value_1d_t(rk)(n=p(j),v=(grid(i)-basis(p(j-1))) * del_basis) ] )
             eta(i) = value_1D_list_t(n=2, &
-              v=[value_1d_t(p(j),(basis(p(j))-grid(i)) * del_basis), &
-               & value_1d_t(p(j-1),(grid(i)-basis(p(j-1))) * del_basis) ] )
+              v=[value_1d_t(n=p(j-1),v=(basis(p(j))-grid(i)) * del_basis), &
+               & value_1d_t(n=p(j),v=(grid(i)-basis(p(j-1))) * del_basis) ] )
+            if ( eta(i)%v(1)%v == 0.0 ) &
+              & eta(i) = value_1D_list_t(n=1,v=[eta(i)%v(2),value_1d_t()])
           end if
           i = i + 1
         end do
@@ -95,15 +99,18 @@
       ! Coefficients above Basis(p(n_basis)) are all 1.0
       do i = n_grid, i, -1
         if ( basis(p(n_basis)) >= grid(i) ) exit
-!         eta(i) = value_1D_list_t(rk)(n=1,v=[value_1d_t(rk)(p(n_basis),1.0_rk), &
-!                                           & value_1d_t(rk)(0,0.0_rk)])
-        eta(i) = value_1D_list_t(n=1,v=[value_1d_t(p(n_basis),1.0_rk), &
-                                      & value_1d_t(0,0.0_rk)])
+!         eta(i) = value_1D_list_t(rk)(n=1,v=[value_1d_t(rk)(n=p(n_basis),v=1.0_rk), &
+!                                           & value_1d_t(rk)(n=0,v=0.0_rk)])
+        eta(i) = value_1D_list_t(n=1,v=[value_1d_t(n=p(n_basis),v=1.0_rk), &
+                                      & value_1d_t(n=0,v=0.0_rk)])
       end do
     end block
   end if
 
 ! $Log$
+! Revision 2.2  2016/11/23 20:07:10  vsnyder
+! Correct reported index, add component names to constructors
+!
 ! Revision 2.1  2016/11/23 00:05:47  vsnyder
 ! Initial commit
 !
