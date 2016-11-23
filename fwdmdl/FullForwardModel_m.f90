@@ -492,11 +492,12 @@ contains
     use ForwardModelVectorTools, only: GetQuantityForForwardModel
     use Geolocation_0, only: H_V_Geod
     use Geometry, only: Get_R_EQ
+    use Get_Eta_List_m, only: Eta_List_1D
     use Get_ETA_Matrix_M, only: Eta_D_T ! Type for Eta struct
     use Get_IEEE_NaN_m, only: Fill_IEEE_NaN
     use HessianModule_1, only: Hessian_T
     use HGridsDatabase, only: HGrid_T
-    use Indexed_Values_m, only: Value_QTM_2D_List_t
+    use Indexed_Values_m, only: Value_1D_List_t, Value_QTM_2D_List_t
     use Intrinsic, only: L_A, L_GeocAltitude, L_GeodAltitude, &
       & L_Radiance, L_TScat, L_VMR, L_Zeta
     use Load_SPS_Data_M, only: DestroyGrids_T, Dump, Grids_T
@@ -988,6 +989,9 @@ contains
 
     type (Tau_T) :: Tau_LBL, Tau_PFA
 
+    type (Value_1D_List_t) :: Eta_ZZ(maxVert)      ! Interpolation coefficients
+                                                   ! from temperature Zeta to
+                                                   ! GL zeta
     type (Value_QTM_2D_List_t) :: Eta_zQT(s_qtm*max_f) ! Interpolation coefficients
                                   ! from 3D QTM to path for temperature
 
@@ -1215,38 +1219,37 @@ contains
     call Trace_Begin ( me_Hydro, 'ForwardModel.Hydrostatic', &
       & cond=toggle(emit) .and. levels(emit) > 0 )
 
+    ! Get interpolation coefficients from temperature's zetas to Z_GLGrid.
+    ! Temperature is coherent and stacked, so Eta_ZZ is applicable everywhere.
+
+    call eta_list_1d ( Grids_tmp%zet_basis, z_glgrid, eta_zz, sorted=.true. )
+
     ! Insert into bill's 2d hydrostatic equation.
-    ! The phi input for this program are the orbit plane projected
+    ! The phi inputa for this subprogram are the orbit plane projected
     ! geodetic locations of the temperature phi basis -- not necessarily
     ! the tangent phi's, which may be somewhat different.
 
     ! For 2D, temperature's windowStart:windowFinish are correct here.
     ! RefGPH and temperature have the same horizontal basis.
-    ! RefGPH is in meters, but Two_D_Hydrostatic wants it in km.
-    ! RefGPH is assumed to be coherent, and to have one surface, so Surfs
-    ! is spread out to the same extent as the window.
 
-    ! For QTM, WindowStart:WindowFinish is the entire grid.  We could do the
-    ! calculations only for serial numbers in the path description.  This would
-    ! entail splitting the Metrics-3D calculation into two parts: First,
+    ! For QTM, WindowStart:WindowFinish is the entire grid.  We do the
+    ! calculations only for serial numbers in the path description.  This
+    ! entails splitting the Metrics-3D calculation into two parts: First,
     ! identify the facets that the path crosses and gather the vertex
     ! serial numbers.  Then do the hydrostatic calculation for those vertices.
     ! Then finish the vertical part of the Metrics-3D calculation.
-    ! For now, do them all, until a profiler says this expense is significant.
 
     if ( .not. usingQTM ) then ! For QTM, we need a different t_glgrid,
                                ! h_glgrid, etc. for each pointing.
       if ( temp_der ) then
-        call two_d_hydrostatic ( Grids_tmp, &
-          &  spread(refGPH%template%surfs(1,1),1,windowFinish-windowStart+1), &
+        call two_d_hydrostatic ( Grids_tmp, refGPH%template%surfs(1,1), &
           &  refGPH%values(1,windowStart:windowFinish), z_glgrid, &
-          &  t_glgrid, h_glgrid, dhdz_glgrid, &
-          &  dh_dt_glgrid, DDHDHDTL0=ddhidhidtl0 )
+          &  t_glgrid, h_glgrid, dhdz_glgrid, eta_zz, &
+          &  dHidTlm=dh_dt_glgrid, ddHdHdTl0=ddhidhidtl0 )
       else
-        call two_d_hydrostatic ( Grids_tmp, &
-          &  spread(refGPH%template%surfs(1,1),1,windowFinish-windowStart+1), &
+        call two_d_hydrostatic ( Grids_tmp, refGPH%template%surfs(1,1), &
           &  refGPH%values(1,windowStart:windowFinish), z_glgrid, &
-          &  t_glgrid, h_glgrid, dhdz_glgrid )
+          &  t_glgrid, h_glgrid, dhdz_glgrid, eta_zz )
       end if
     end if
 
@@ -3879,16 +3882,16 @@ contains
         ! set of vertices, which would require T_GLgrid etc. to be larger,
         ! perhaps as large as the entire QTM.
         if ( temp_der ) then
-          call two_d_hydrostatic ( Grids_tmp, &
-            &  spread(refGPH%template%surfs(1,1),1,size(f_and_v(ptg_i)%vertices)), &
+          call two_d_hydrostatic ( Grids_tmp, refGPH%template%surfs(1,1), &
             &  refGPH%values(1,:), z_glgrid, &
-            &  t_glgrid, h_glgrid, dhdz_glgrid, &
-            &  dh_dt_glgrid, DDHDHDTL0=ddhidhidtl0, vertices=f_and_v(ptg_i)%vertices )
+            &  t_glgrid, h_glgrid, dhdz_glgrid, eta_zz, &
+            &  dHidTlm=dh_dt_glgrid, ddHdHdTl0=ddhidhidtl0, &
+            &  vertices=f_and_v(ptg_i)%vertices )
         else
-          call two_d_hydrostatic ( Grids_tmp, &
-            &  spread(refGPH%template%surfs(1,1),1,size(f_and_v(ptg_i)%vertices)), &
+          call two_d_hydrostatic ( Grids_tmp, refGPH%template%surfs(1,1), &
             &  refGPH%values(1,:), z_glgrid, &
-            &  t_glgrid, h_glgrid, dhdz_glgrid, vertices=f_and_v(ptg_i)%vertices )
+            &  t_glgrid, h_glgrid, dhdz_glgrid, eta_zz, &
+            &  vertices=f_and_v(ptg_i)%vertices )
         end if
 
         if ( associated(surfaceHeight) ) then
@@ -4566,6 +4569,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.377  2016/11/23 00:14:36  vsnyder
+! Use types from Indexed_Values_m.  Some cannonball polishing.
+!
 ! Revision 2.376  2016/11/17 01:45:26  vsnyder
 ! Use Comp_Sps_Path_No_Frq to get H2O for phi refractive correction.  Some
 ! work on QTM also.
