@@ -40,11 +40,12 @@ contains
   subroutine Fill_Matrix_From_Weights ( Weights, Matrix )
     ! Create a column-sparse matrix block from Weights and N_Weights
 
+    use Indexed_Values_m, only: Value_QTM_2D_List_t
     use MatrixModule_0, only: CreateBlock, M_Column_Sparse, MatrixElement_t
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-    use QTM_Interpolation_Weights_3D_m, only: Weight_ZQ_t
 
-    type(weight_ZQ_t), intent(in) :: Weights(:)
+!     type(Value_QTM_2D_List_t(rg)), intent(in) :: Weights(:)
+    type(Value_QTM_2D_List_t), intent(in) :: Weights(:)
     type(matrixElement_t), intent(inout) :: Matrix
 
     integer :: I, J
@@ -76,8 +77,8 @@ contains
     ! Fill the nonzeroes locators (matrix%r2 and matrix%r1) and the values
     do i = 1, nCols
       do j = 1, weights(i)%n
-        matrix%r2(nVal+1:nVal+j) = weights(i)%w(j)%n
-        matrix%value1(nVal+1:nVal+j) = weights(i)%w(j)%v
+        matrix%r2(nVal+1:nVal+j) = weights(i)%v(j)%n
+        matrix%value1(nVal+1:nVal+j) = weights(i)%v(j)%v
       end do
       nVal = nVal + weights(i)%n
       matrix%r1(i) = nVal
@@ -96,9 +97,9 @@ contains
 
     use Generate_QTM_m, only: QTM_Tree_t
     use Geolocation_0, only: ECR_t, RG
+    use Indexed_Values_m, only: Value_QTM_2D_List_t
     use MatrixModule_0, only: MatrixElement_T
-    use QTM_Interpolation_Weights_3D_m, only: QTM_Interpolation_Weights, S_QTM_T, &
-      & Weight_ZQ_t
+    use QTM_Interpolation_Weights_3D_m, only: QTM_Interpolation_Weights, S_QTM_T
 
     type(QTM_tree_t), intent(in) :: QTM_Tree
     real(rg), intent(in) :: Heights(:,:) ! Extents are (heights, QTM_Tree%N_In)
@@ -112,7 +113,8 @@ contains
     type(S_QTM_t), intent(in) :: Points(:) ! Points along Line
     type(matrixElement_t), intent(inout), optional :: Matrix ! Weights
 
-    type(weight_ZQ_t) :: Weights(size(points))
+!     type(Value_QTM_2D_List_t(rg)) :: Weights(size(points))
+    type(Value_QTM_2D_List_t) :: Weights(size(points))
 
     if ( size(heights,2) == 1 ) then ! Coherent heights
       call QTM_Interpolation_Weights ( QTM_Tree, Heights(:,1), &
@@ -138,9 +140,9 @@ contains
 
     use Generate_QTM_m, only: QTM_Tree_t
     use Geolocation_0, only: ECR_t, RG
+    use Indexed_Values_m, only: Value_QTM_2D_List_t
     use MatrixModule_0, only: MatrixElement_T
-    use QTM_Interpolation_Weights_3D_m, only: QTM_Interpolation_Weights, S_QTM_T, &
-      & Weight_ZQ_t
+    use QTM_Interpolation_Weights_3D_m, only: QTM_Interpolation_Weights, S_QTM_T
   
     type(QTM_tree_t), intent(in) :: QTM_Tree
     real(rg), intent(in) :: Heights(:)   ! Extents are (heights, QTM_Tree%N_In)
@@ -154,7 +156,8 @@ contains
     type(S_QTM_t), intent(in) :: Points(:) ! Points along Line
     type(matrixElement_t), intent(inout), optional :: Matrix ! Weights
 
-    type(weight_ZQ_t) :: Weights(size(points))
+!     type(Value_QTM_2D_List_t(rg)) :: Weights(size(points))
+    type(Value_QTM_2D_List_t) :: Weights(size(points))
 
     call QTM_interpolation_weights ( QTM_Tree, &
                          & heights, line, points, weights )
@@ -177,6 +180,9 @@ contains
 end module QTM_Interpolation_Weights_3D_1
 
 ! $Log$
+! Revision 2.4  2016/11/23 00:10:47  vsnyder
+! Use types from Indexed_Values_m instead of Weights_ZQ_t
+!
 ! Revision 2.3  2016/11/02 22:57:30  vsnyder
 ! New name for weight component of Weights_ZQ_t
 !

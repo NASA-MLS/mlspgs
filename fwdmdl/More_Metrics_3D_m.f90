@@ -38,10 +38,11 @@ contains
           & Do_Calc_T, Do_Calc_Hyd, Tan_T )
 
     use Generate_QTM_m, only: QTM_Tree_t
+    use Indexed_Values_m, only: Value_QTM_2D_List_t
     use Load_Sps_Data_m, only: Grids_t
     use MLSKinds, only: RP
     use QTM_Interpolation_Weights_3D_m, only: QTM_Interpolation_Weights, &
-      & S_QTM_t, Weight_ZQ_t
+      & S_QTM_t
 
     ! Inputs
 
@@ -88,7 +89,7 @@ contains
     !          if present(dHidTlm).
     real(rp), optional, intent(out) :: dHtdZt      ! Height derivative wrt
     !          pressure at the tangent.  Computed if present(dHidTlm).
-    type(weight_ZQ_t), optional, intent(out) :: Eta_zQT(:) ! Interpolation
+    type(Value_QTM_2D_List_t), optional, intent(out) :: Eta_zQT(:) ! Interpolation
     !          coefficients from QTM to path for temperature.
     logical, optional, intent(out) :: Do_Calc_T(:,:,:)     ! Eta_zQT /= 0 on
     !          path Z X temperature Z X temperature QTM grid
@@ -97,8 +98,8 @@ contains
     real(rp), optional, intent(out) :: Tan_T ! temperature at the tangent
 
     integer :: I
-    integer :: IZ     ! Zeta index
-    integer :: NC     ! Number of S(i)%Coeff to use
+    integer :: IZ     ! Zeta index in Z_Ref, first subscript of T_Ref, dHidZij
+    integer :: NC     ! Number of S(i)%Coeff%v to use
     integer :: N_Path ! Size(S)
 
     n_path = size(s)
@@ -107,12 +108,14 @@ contains
     ! temperature and dHidZij were interpolated onto the GL grid by
     ! Two_D_Hydrostatic. The horizontal interpolation coefficients from
     ! vertices adjacent to the path onto the path, were computed and put into
-    ! S%Coeff by Metrics_3D.
+    ! S%Coeff%v by Metrics_3D.
     do i = 1, n_path
-      nc = s(i)%n_coeff
-      iz = s(i)%h_ind
-      t_path(i) =  dot_product ( t_ref(iz,s(i)%pv(:nc)),   s(i)%coeff(:nc) )
-      dHitdZi(i) = dot_product ( dHidZij(iz,s(i)%pv(:nc)), s(i)%coeff(:nc) )
+      nc = s(i)%coeff%n
+      iz = max(s(i)%h_ind,1) ! h_ind == zero for reflection below H_GLGrid
+      t_path(i) =  dot_product ( t_ref(iz,s(i)%coeff%v(:nc)%np),   &
+                               & s(i)%coeff%v(:nc)%v )
+      dHitdZi(i) = dot_product ( dHidZij(iz,s(i)%coeff%v(:nc)%np), &
+                               & s(i)%coeff%v(:nc)%v )
     end do
 
     ! Optional tangent quantities.
@@ -153,34 +156,38 @@ contains
       p_coeffs = t_sv%l_p(1)
       z_coeffs = t_sv%l_z(1)
 
-      nc = tp%n_coeff
+      nc = tp%coeff%n
       do sv_z = 1, z_coeffs
         dHidTlm(:,sv_z,:) = dHidTlm(:,sv_z,:) - &
-          & dot_product ( dHidTlm(1,sv_z,tp%pv(:nc)), tp%coeff(:nc) )
+          & dot_product ( dHidTlm(1,sv_z,tp%coeff%v(:nc)%np), &
+                        & tp%coeff%v(:nc)%v )
       end do
-
-      iz = tp%h_ind
+ 
+      iz = max(tp%h_ind,1) ! h_ind == zero for reflection below H_GLGrid
       dHtdTl0 = 0
       ddHtdHtdTl0 = 0
       dH2(1:z_coeffs,1:size(t_ref,2)) => dHtdTl0
       ddH2(1:z_coeffs,1:size(t_ref,2)) => ddHtdHtdTl0
       do sv_z = 1, z_coeffs
-        dH2(sv_z,tp%pv(:nc)) = dHidTlm(iz,sv_z,tp%pv(:nc)) * tp%coeff(:nc)
-        ddH2(sv_z,tp%pv(:nc)) = ddHidHidTl0(iz,sv_z,tp%pv(:nc)) * tp%coeff(:nc)
+        dH2(sv_z,tp%coeff%v(:nc)%np) = &
+          & dHidTlm(iz,sv_z,tp%coeff%v(:nc)%np) * tp%coeff%v(:nc)%v
+        ddH2(sv_z,tp%coeff%v(:nc)%np) = &
+          & ddHidHidTl0(iz,sv_z,tp%coeff%v(:nc)%np) * tp%coeff%v(:nc)%v
       end do
 
       dF2(1:z_coeffs,1:p_coeffs) => t_sv%deriv_flags
       dHitdTlm = 0          ! Sparse representation might be desirable some day
       do_calc_hyd = .false. ! Sparse representation might be desirable some day
-      do is = 1, size(s)         ! Path length
-        do ic = 1, s(ip)%n_coeff ! # horizontal interpolation coefficients
-          ip = s(ip)%pv(ic)      ! Index among adjacent profiles
-          w = s(is)%coeff(ic)    ! Horizontal interpolation coefficient from
-                                 ! profile IP to path point IS
-          do sv_z = 1, z_coeffs  ! Zeta levels of profiles
-            if ( dF2(sv_z,s(is)%ser(ic)) ) then ! Derivative flag for temperature
+      do is = 1, n_path             ! Path length
+        iz = max(s(is)%h_ind,1)     ! h_ind == zero for reflection below H_GLGrid
+        do ic = 1, s(ip)%coeff%n    ! # horizontal interpolation coefficients
+          ip = s(ip)%coeff%v(ic)%np ! Index among path-adjacent profiles
+          w = s(is)%coeff%v(ic)%v   ! Horizontal interpolation coefficient from
+                                    ! profile IP to path point IS
+          do sv_z = 1, z_coeffs     ! Zeta levels of profiles
+            if ( dF2(sv_z,s(is)%coeff%v(ic)%n) ) then ! Derivative flag for temperature
               dHitdTlm(is,sv_z,ip) = &
-                & max(dHidTlm(s(is)%h_ind,sv_z,ip),0.0_rp) * w
+                & max(dHidTlm(iz,sv_z,ip),0.0_rp) * w
               do_calc_hyd(is,sv_z,ip) = dHitdTlm(is,sv_z,ip) /= 0
             end if
           end do
@@ -188,13 +195,14 @@ contains
       end do
 
       ! Get coefficients to interpolate from temperature (zeta, adjacent-to-path)
-      ! basis to the path, noting where nonzeros are relative to the QTM
+      ! basis to the path, noting where nonzeros are, relative to the QTM
       call QTM_Interpolation_Weights ( QTM_Tree, t_sv%zet_basis, s, z_ref, eta_zQT )
       do_calc_t = .false.
-      do is = 1, size(s)         ! Path length
+      do is = 1, n_path          ! Path length
+        iz = max(s(is)%h_ind,1)  ! h_ind == zero for reflection below H_GLGrid
         do ic = 1, eta_zQT(is)%n ! Number of nonzero coefficients
           !         path Z      temperature Z        QTM serial #
-          do_calc_t(s(is)%h_ind,eta_zQT(is)%w(ic)%nz,eta_zQT(is)%w(ic)%n) = &
+          do_calc_t(iz,eta_zQT(is)%v(ic)%nz,eta_zQT(is)%v(ic)%n) = &
             & .true. ! There are only nonzero coefficients in eta_zQT
         end do
       end do
@@ -216,6 +224,9 @@ contains
 end module More_Metrics_3D_m
 
 ! $Log$
+! Revision 2.4  2016/11/23 00:12:28  vsnyder
+! Use types from Indexed_Values_m.
+!
 ! Revision 2.3  2016/11/17 01:47:40  vsnyder
 ! Use the Grids_t structure for temperature instead of pieces of it
 !
