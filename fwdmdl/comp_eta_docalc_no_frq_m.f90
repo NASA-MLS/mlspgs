@@ -33,10 +33,9 @@ contains
                                     & Your_NZ_Zp, Your_NNZ_Zp, &
                                     & Eta_fzp, Do_Calc_fzp )
 
-    use GLNP, only: NG, NGP1
+    use GLNP, only: NG
     use MLSCommon, only: RP
-    use Get_Eta_Matrix_m, only: Get_Eta_Sparse, Multiply_Eta_Column_Sparse, &
-                              & Get_Eta_ZP
+    use Get_Eta_Matrix_m, only: Get_Eta_ZP
     use Load_Sps_Data_m, only: Grids_T
 
 ! Input:
@@ -44,18 +43,18 @@ contains
     type (grids_t), intent(in) :: Grids_x  ! All the needed coordinates
 
     real(rp), intent(in) :: Path_Zeta(:) ! zeta values along path for which
-!                           species vmr is needed.
+                          ! species vmr is needed.
     real(rp), intent(in) :: Path_Phi(:) ! phi values along path for which
-!                           species vmr is needed.
+                          ! species vmr is needed.
     integer, intent(in), optional :: SPS ! Only do this species if present
     integer, intent(in), optional :: Tan_Pt ! Tangent point; path_zeta is sorted
-!                           before and after tangent point
+                          ! before and after tangent point
 
 ! Inout:
 
-    logical, intent(inout), optional :: Do_Calc_zp(:,:) ! Indicates whether there
-!                           is a contribution for this state vector element.
-!                           This is the same length as values.
+    logical, intent(inout), optional :: Do_Calc_zp(:,:) ! Do_Calc_zp(p,v)
+                           ! indicates whether there is a contribution for 
+                           ! state vector element V at point P on the path.
     integer, intent(inout), optional, target :: Your_NZ_ZP(:,:) ! Nonzeros in eta_zp
     integer, intent(inout), optional, target :: Your_NNZ_ZP(:)  ! Number of nonzeros in eta_zp
 
@@ -64,7 +63,7 @@ contains
     ! Marked inout so that we can clear only the nonzeros without making
     ! the rest of it undefined.
     real(rp), intent(inout) :: Eta_zp(:,:) ! Eta_z * Eta_phi for each state
-!                           vector element. This is the same length as values.
+                          ! vector element. This is the same length as values.
     ! Spread out from Eta_zp and Do_Calc_zp if present.  This copies the same
     ! value for all frequencies if a species is frequency dependent.
     real(rp), intent(out), optional :: Eta_fzp(:,:)
@@ -84,6 +83,7 @@ contains
       & maxval(Grids_x%l_p(1:ubound(Grids_x%l_p,1))-Grids_x%l_p(0:ubound(Grids_x%l_p,1)-1)))
     real(rp) :: Eta_z(1:size(path_zeta), & ! == size(path_zeta)
       & maxval(Grids_x%l_z(1:ubound(Grids_x%l_z,1))-Grids_x%l_z(0:ubound(Grids_x%l_z,1)-1)))
+    integer :: NZ                          ! Size(Eta_FZP,1)
     integer :: NZ_P(1:size(Eta_p,1),1:size(Eta_p,2))
     integer :: NZ_Z(1:size(Eta_z,1),1:size(Eta_z,2))
     integer :: NNZ_P(1:size(Eta_p,2))
@@ -160,9 +160,11 @@ contains
 
     end do
 
-    if ( present(eta_fzp) .and. present(do_calc_fzp) ) then
-      call spread_eta_fzp_from_eta_zp ( grids_x, eta_zp, do_calc_zp, &
-                                      &          eta_fzp, do_calc_fzp )
+    if ( present(eta_fzp) .and. present(do_calc_zp) .and. present(do_calc_fzp) ) then
+      nz = size(eta_fzp,1)
+      call spread_eta_fzp_from_eta_zp ( grids_x, &
+                                      & eta_zp(:nz,:), do_calc_zp(:nz,:), &
+                                      & eta_fzp(:nz,:), do_calc_fzp(:nz,:) )
 
     end if
 
@@ -308,6 +310,9 @@ contains
 end module Comp_Eta_Docalc_No_Frq_m
 
 ! $Log$
+! Revision 2.22  2016/11/23 20:10:05  vsnyder
+! Remove unused use names and variables
+!
 ! Revision 2.21  2016/11/17 01:28:34  vsnyder
 ! Add Spread_Eta_FZP_from_Eta_ZP.  Use it to spread Eta_zp and Do_Calc_zp
 ! to Eta_fzp and Do_Calc_fzp in Comp_Eta_Docalc_No_Frq if the latter two
