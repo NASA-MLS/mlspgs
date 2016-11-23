@@ -80,6 +80,25 @@ module Indexed_Values_m
     type(value_2d_t) :: V(4) = value_2d_t()
   end type Value_2D_List_t
 
+  ! For one interpolation weight from a three-dimensional rectangular array,
+  ! such as a state vector.
+  type, extends(value_2D_t) :: Value_3D_t
+  ! real(rk) :: V = 0.0    ! Value to be applied at N or NP
+  ! integer :: N = 0       ! Second (probably zeta) subscript at which to apply V
+  ! integer :: NP = 0      ! Third (probably phi) subscript at which to apply V
+    integer :: NF = 0      ! First (probaly frequency) subscript at which to apply V
+  end type Value_3D_t
+
+  ! For interpolating to a list (probably an integration path) from a three-
+  ! dimensional rectangular array, such as a state vector, assuming trilinear
+  ! interpolation.
+  type :: Value_3D_List_t ! ( RK )
+!     integer, kind :: RK
+    integer :: N = 8       ! Number of useful elements of V
+!     type(value_3d_t(rk)) :: V(8) = value_3d_t(rk)()
+    type(value_3d_t) :: V(8) = value_3d_t()
+  end type Value_3D_List_t
+
   ! For one interpolation weight from a QTM, or an extract of it onto
   ! an array of profiles adjacent to an integration path, with a zeta basis
   ! at each vertex.
@@ -155,6 +174,9 @@ contains
 end module Indexed_Values_m
 
 ! $Log$
+! Revision 2.3  2016/11/23 21:32:59  vsnyder
+! Add Value_3D_*, Dump
+!
 ! Revision 2.2  2016/11/23 20:07:43  vsnyder
 ! Add Dump_Value_1D_List
 !
