@@ -39,20 +39,6 @@ module Path_Representation_m
     procedure :: New_Path
   end type Path_t
 
-  type, public :: Value_t
-    integer :: N = 0  ! Serial number of QTM vertex to which V is germane.
-    integer :: NP = 1 ! Subscript of vertex near the path to which V is germane.
-    integer :: NZ = 1 ! Vertical subscript of layer below vertex to which V is germane.
-    real(rg) :: V = 0 ! Value at a point on or near the path
-  end type Value_t
-
-  type, public :: Flag_t
-    integer :: N = 0  ! Serial number of QTM vertex to which F is germane.
-    integer :: NP = 1 ! Subscript of vertex near the path to which F is germane.
-    integer :: NZ = 1 ! Vertical subscript of layer below vertex to which F is germane.
-    logical :: F = .false. ! Flag at a point on or near the path
-  end type Flag_t
-
   type, public :: Facets_and_Vertices_t
     integer, allocatable :: Facets(:)   ! Indices in QTM_Tree%Q
     integer, allocatable :: Vertices(:) ! Indices in QTM_Tree%Geo_In
@@ -190,6 +176,9 @@ contains
 end module Path_Representation_m
 
 ! $Log$
+! Revision 2.8  2016/11/23 00:06:55  vsnyder
+! Remove Value_t in favor of types in Indexed_Values_m
+!
 ! Revision 2.7  2016/11/12 01:32:23  vsnyder
 ! Add NP and NZ components to Value_t and Flag_t, and default initialize
 !
