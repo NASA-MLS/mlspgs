@@ -34,11 +34,11 @@ contains
 
   ! Compute the surface height and the tangent height at Tan_Pt.
 
-    use Geolocation_0, only: H_v_geod
+    use Geolocation_0, only: H_v_geod !, RG
     use Generate_QTM_m, only: QTM_Tree_t
     use MLSKinds, only: RP
     use QTM_Interpolation_Weights_m, only: QTM_Interpolation_Weights
-    use Path_Representation_m, only: Value_t
+    use Indexed_Values_m, only: Value_QTM_2D_list_t
 
     ! Inputs:
     class(h_v_geod), intent(in) :: Tan_Pt ! Tangent point coordinates
@@ -72,16 +72,17 @@ contains
                                        ! above mean sea level (whatever that
                                        ! means) on QTM grid.
 
-    type(value_t) :: Eta(3)            ! Interpolation coefficients
+!     type(value_QTM_2D_list_t(rg)) :: Eta ! Interpolation coefficients
+    type(value_QTM_2D_list_t) :: Eta   ! Interpolation coefficients
 
     ! Get interpolation coefficients and QTM serial numbers from QTM to Tan_Pt.
-    call QTM_Interpolation_Weights ( QTM, Tan_Pt, Eta )
+    call QTM_Interpolation_Weights ( QTM, Tan_Pt%h_t, Eta )
 
     if ( present(surf_height) ) then
       ! We set the surface reference at the actual surface height if we
       ! have it, and adjust r_eq and h_tan relative to this, and adjust
       ! h_ref accordingly.
-      h_surf = dot_product ( surf_height(eta%n), eta%v )
+      h_surf = dot_product ( surf_height(eta%v%n), eta%v%v )
     else
       ! If we don't have the actual surface height, we set the surface
       ! reference at the input z_ref and adjust r_eq and h_tan relative to
@@ -89,7 +90,7 @@ contains
       ! so index it using the inverse of f_and_v%vertices, which would be
       ! qtm%path_vertices(eta%n) if we hadn't already computed it and put it
       ! into eta%np..
-      h_surf = dot_product ( h_ref(1,eta%np), eta%v )
+      h_surf = dot_product ( h_ref(1,eta%v%np), eta%v%v )
     end if
 
     if ( present(tan_press) .and. present(surf_temp) .and. present(z_ref) .and. &
@@ -99,13 +100,13 @@ contains
       ! present(tan_press) requires present(surf_temp) and present(z_ref). 
       ! We don't need to subtract h_surf here because this gives km from
       ! the z_ref surface.
-      h_tan = dot_product ( surf_temp(eta%n),eta%v ) * &
+      h_tan = dot_product ( surf_temp(eta%v%n),eta%v%v ) * &
             & (tan_press-z_ref)/14.8
     else
       ! H_Ref is adjacent to the path, so index it using the inverse of
       ! f_and_v%vertices, which would be qtm%path_vertices(eta%n) if we
       ! hadn't already computed it and put it into eta%np.
-      h_tan = dot_product ( h_ref(tan_ind_f,eta%np), eta%v ) - h_surf
+      h_tan = dot_product ( h_ref(tan_ind_f,eta%v%np), eta%v%v ) - h_surf
     end if
 
   end subroutine QTM_Tangent_Metrics
@@ -123,6 +124,9 @@ contains
 end module QTM_Tangent_Metrics_m
 
 ! $Log$
+! Revision 2.7  2016/11/23 00:12:28  vsnyder
+! Use types from Indexed_Values_m.
+!
 ! Revision 2.6  2016/11/17 01:48:49  vsnyder
 ! Use eta%np instead of qtm%path_vertices(eta%n)
 !
