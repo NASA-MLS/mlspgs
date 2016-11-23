@@ -158,6 +158,7 @@ contains
     use Center_of_Sphere_m, only: Center_of_Sphere, Circumcenter
     use Generate_QTM_m, only: QTM_Tree_t
     use Geolocation_0, only: H_Geod, H_V_Geoc, H_V_Geod, H_V_t
+    use Indexed_Values_m, only: Value_QTM_1D_List_t
     use Line_And_Cone_m, only: Line_And_Cone
     use Line_And_Ellipsoid_m, only: Line_And_Sphere
     use Line_And_Plane_m, only: Line_And_Plane
@@ -370,9 +371,11 @@ contains
           if ( s(j) >= sMin .and. s(j) <= sMax ) then
             n_out = n_out + 1
             outside(n_out) = S_QTM_t( s=s(j), face=-inside(i_edge)%face,  &
-                                    & facet=f, h=want_h, h_ind=j, n_coeff=n_h )
-            outside(n_out)%coeff(:n_h) = eta(:n_h)
-            outside(n_out)%ser(:n_h) = ser(:n_h)
+                                    & facet=f, h=want_h, h_ind=j, &
+!                                     & coeff=value_QTM_1D_List_t(rg)(n_h) )
+                                    & coeff=value_QTM_1D_List_t(n_h) )
+            outside(n_out)%coeff%v(:n_h)%v = eta(:n_h)
+            outside(n_out)%coeff%v(:n_h)%n = ser(:n_h)
           end if
         end do
       end do
@@ -462,8 +465,10 @@ contains
             if ( keep ) then
               n_top = n_top + 1
               top_int(n_top) = S_QTM_t(s=s_int(k), facet=f, h=geod%v, &
-                             & face=top_face, n_coeff=3, h_ind=j,     &
-                             & ser=qtm_tree%q(f)%ser )
+                             & face=top_face, h_ind=j, &
+!                              & coeff=value_QTM_1D_List_t(rg)() )
+                             & coeff=value_QTM_1D_List_t(n=3) )
+              top_int(n_top)%coeff%v%n = qtm_tree%q(f)%ser
               do l = 1, 3 ! Compute horizontal interpolation coefficients.
                           ! Use normalized geocentric angular distances.
                           ! C and CC are temporary variables here
@@ -472,9 +477,9 @@ contains
                 c = QTM_tree%geo_in(qtm_tree%q(f)%ser(l))%ecr(norm=.true.)
                 g(f) = acos( cc .dot. c )
               end do
-              top_int(n_top)%coeff(1) = 0.5 * ( 1.0 - g(2) - g(3) )
-              top_int(n_top)%coeff(2) = 0.5 * ( 1.0 - g(1) - g(3) )
-              top_int(n_top)%coeff(3) = 0.5 * ( 1.0 - g(1) - g(2) )
+              top_int(n_top)%coeff%v(1)%v = 0.5 * ( 1.0 - g(2) - g(3) )
+              top_int(n_top)%coeff%v(2)%v = 0.5 * ( 1.0 - g(1) - g(3) )
+              top_int(n_top)%coeff%v(3)%v = 0.5 * ( 1.0 - g(1) - g(2) )
             end if
           end do
         end do
@@ -539,9 +544,9 @@ contains
             cone_int(n_cone)%facet = f
             cone_int(n_cone)%h = geo%v
             cone_int(n_cone)%face = cone_face
-            cone_int(n_cone)%n_coeff = 2
-            cone_int(n_cone)%ser(:2) = qtm_tree%q(f)%ser([s1,s2])
-            cone_int(n_cone)%coeff(:2) = eta_h
+            cone_int(n_cone)%coeff%n=2
+            cone_int(n_cone)%coeff%v(:2)%n = qtm_tree%q(f)%ser([s1,s2])
+            cone_int(n_cone)%coeff%v(:2)%v = eta_h
            end if
         end do
       end do
@@ -628,10 +633,11 @@ contains
                   ! Intersection is within vertical range too
                   n_vert = n_vert + 1
                   v_int(n_vert) = S_QTM_t( s=s_int, facet=f, h=geod_int%v, &
-                                         & face=faces(m), n_coeff=2 )
-                  v_int(n_vert)%ser(:2) = qtm_tree%q(f)%ser(v(:,1))
+                                         & face=faces(m), &
+!                                          & coeff=value_QTM_1D_List_t(rg)(n=2) )
+                                         & coeff=value_QTM_1D_List_t(n=2) )
                   ! Interpolation coefficients are in latitude only.
-                  v_int(n_vert)%coeff(:2) = eta_h
+                  v_int(n_vert)%coeff%v(:2)%v = eta_h
                   hit(j,v(2,k)) = .true.
                 end if
               end if
@@ -656,6 +662,9 @@ contains
 end module Metrics_3D_m
 
 ! $Log$
+! Revision 2.10  2016/11/23 00:12:28  vsnyder
+! Use types from Indexed_Values_m.
+!
 ! Revision 2.9  2016/11/12 01:40:56  vsnyder
 ! Replace Facets argument with F_and_V.  Subscript H with index of vertex
 ! near path instead of QTM serial number.
