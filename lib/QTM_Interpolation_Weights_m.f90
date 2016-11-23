@@ -51,7 +51,7 @@ contains
     ! Geo coordinates.  This is a 2D-only routine.
 
     use Generate_QTM_m, only: QTM_Tree_t
-    use Geolocation_0, only: H_t, RG
+    use Geolocation_0, only: H_t! , RG
     use Nearest_Polygon_Point_m, only: Nearest_Polygon_Point
     use Indexed_Values_m, only: Value_QTM_1D_List_t
     use QTM_m, only: Geo_to_ZOT, Stack_t, ZOT_t
@@ -116,7 +116,7 @@ contains
     ! Geo coordinates.  This is a 2D-only routine.
 
     use Generate_QTM_m, only: QTM_Tree_t
-    use Geolocation_0, only: H_t, RG
+    use Geolocation_0, only: H_t! , RG
     use Indexed_Values_m, only: Value_QTM_1D_list_t
     use QTM_m, only: Stack_t
 
@@ -151,7 +151,7 @@ contains
 
     use QTM_m, only: Stack_T, ZOT_t
     use Generate_QTM_m, only: QTM_Tree_t
-    use Geolocation_0, only: RG
+!     use Geolocation_0, only: RG
     use Nearest_Polygon_Point_m, only: Nearest_Polygon_Point
     use Indexed_Values_m, only: Value_QTM_1D_list_t
     use Triangle_Interpolate_m, only: Triangle_Interpolate
@@ -206,7 +206,7 @@ contains
 
     use QTM_m, only: Stack_T, ZOT_t
     use Generate_QTM_m, only: QTM_Tree_t
-    use Geolocation_0, only: RG
+!     use Geolocation_0, only: RG
     use Indexed_Values_m, only: Value_QTM_1D_list_t
 
     type(QTM_tree_t), intent(in) :: QTM_Tree
@@ -241,7 +241,7 @@ contains
     ! is for 3D.
 
     use Generate_QTM_m, only: QTM_Tree_t
-    use Geolocation_0, only: H_t, RG
+    use Geolocation_0, only: H_t! , RG
     use Nearest_Polygon_Point_m, only: Nearest_Polygon_Point
     use Indexed_Values_m, only: Value_QTM_2D_List_t
     use QTM_m, only: Geo_to_ZOT, Stack_t, ZOT_t
@@ -307,7 +307,7 @@ contains
     ! is for 3D.
 
     use Generate_QTM_m, only: QTM_Tree_t
-    use Geolocation_0, only: H_t, RG
+    use Geolocation_0, only: H_t! , RG
     use Indexed_Values_m, only: value_QTM_2D_List_t
     use QTM_m, only: Stack_t
 
@@ -343,7 +343,7 @@ contains
 
     use QTM_m, only: Stack_T, ZOT_t
     use Generate_QTM_m, only: QTM_Tree_t
-    use Geolocation_0, only: RG
+!     use Geolocation_0, only: RG
     use Nearest_Polygon_Point_m, only: Nearest_Polygon_Point
     use Indexed_Values_m, only: value_QTM_2D_List_t
     use Triangle_Interpolate_m, only: Triangle_Interpolate
@@ -399,7 +399,7 @@ contains
 
     use QTM_m, only: Stack_T, ZOT_t
     use Generate_QTM_m, only: QTM_Tree_t
-    use Geolocation_0, only: RG
+!     use Geolocation_0, only: RG
     use Indexed_Values_m, only: value_QTM_2D_List_t
 
     type(QTM_tree_t), intent(in) :: QTM_Tree
@@ -439,6 +439,9 @@ contains
 end module QTM_Interpolation_Weights_m
 
 ! $Log$
+! Revision 2.9  2016/11/23 20:08:45  vsnyder
+! Comment out Use...RG until processors support KPDT
+!
 ! Revision 2.8  2016/11/23 00:09:36  vsnyder
 ! Use types from Indexed_Values_m.  Add _2d routines to do horizontal
 ! interpolation for later 3D interpolation.
