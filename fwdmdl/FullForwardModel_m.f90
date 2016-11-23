@@ -477,8 +477,7 @@ contains
   ! manager.
 
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
-    use Comp_ETA_DoCalc_No_Frq_M, only: Comp_ETA_DoCalc_No_Frq, &
-      & Spread_Eta_FZP_from_Eta_ZP
+    use Comp_ETA_DoCalc_No_Frq_M, only: Comp_ETA_DoCalc_No_Frq
     use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_Frq, &
     ! & Comp_SPS_Path_Frq_NZ, &
       & Comp_SPS_Path_No_Frq, Comp_1_SPS_Path_No_Frq
@@ -493,10 +492,11 @@ contains
     use ForwardModelVectorTools, only: GetQuantityForForwardModel
     use Geolocation_0, only: H_V_Geod
     use Geometry, only: Get_R_EQ
-    use Get_ETA_Matrix_M, only: ETA_D_T ! TYPE FOR ETA STRUCT
+    use Get_ETA_Matrix_M, only: Eta_D_T ! Type for Eta struct
     use Get_IEEE_NaN_m, only: Fill_IEEE_NaN
     use HessianModule_1, only: Hessian_T
     use HGridsDatabase, only: HGrid_T
+    use Indexed_Values_m, only: Value_QTM_2D_List_t
     use Intrinsic, only: L_A, L_GeocAltitude, L_GeodAltitude, &
       & L_Radiance, L_TScat, L_VMR, L_Zeta
     use Load_SPS_Data_M, only: DestroyGrids_T, Dump, Grids_T
@@ -514,7 +514,7 @@ contains
     use Path_Representation_m, only: Facets_and_Vertices_t, Path_t
     use Physics, only: SpeedOfLight
     use PointingGrid_M, only: PointingGrids, PointingGrid_T
-    use QTM_Interpolation_Weights_3D_m, only: S_QTM_t, Weight_ZQ_t
+    use QTM_Interpolation_Weights_3D_m, only: S_QTM_t
     use Slabs_sw_m, only: AllocateSLABS, DestroyCompleteSLABS, SLABS_Struct
     use TAU_M, only: Destroy_TAU, Dump, TAU_T
     use Toggles, only: Emit, Levels, Switches, Toggle
@@ -683,14 +683,9 @@ contains
                                         ! H_Glgrid etc.
 
     ! Cloud arrays are on the same grids as temperature
-    logical :: Do_Calc_Tscat(max_f,s_i*sv_t_len)    ! 'Avoid zeros' indicator
-    logical :: Do_Calc_Salb(max_f,s_i*sv_t_len)     ! 'Avoid zeros' indicator
-    logical :: Do_Calc_cext(max_f,s_i*sv_t_len)     ! 'Avoid zeros' indicator
     logical :: Do_Calc_Tscat_ZP(max_f,s_i*sv_t_len) ! 'Avoid zeros' indicator
     logical :: Do_Calc_Salb_ZP(max_f,s_i*sv_t_len)  ! 'Avoid zeros' indicator
     logical :: Do_Calc_Cext_ZP(max_f,s_i*sv_t_len)  ! 'Avoid zeros' indicator
-
-    real(r8), parameter :: Frq_0 = 0.0_r8     ! Fake for comp_sps_Path_frq
 
     real(r8) :: WC(s_i*fwdModelConf%no_cloud_species, max_f)
     real(r8) :: Scat_ang(s_i*fwdModelConf%num_scattering_angles)
@@ -782,15 +777,15 @@ contains
     real(rp) :: DH_DT_Path_F(max_f,s_t*sv_t_len)   ! DH_DT_Path on fine grid
     real(rp) :: DHDZ_GLGrid(maxVert,no_sv_p_t) ! dH/dZ on glGrid surfs
     real(rp) :: DX_DT(no_tan_hts,s_t*sv_t_len)     ! (No_tan_hts, nz*np)
-    real(rp) :: ETA_FZP(max_f,size(grids_f%values)) ! Eta_z x Eta_p * Eta_f
-    real(rp) :: ETA_IWC_ZP(max_f,max(s_i,s_ts)*grids_iwc%p_len)
-    real(rp) :: ETA_Mag_ZP(max_f,grids_mag%p_len)  ! Eta_z x Eta_p x Eta_x
-    real(rp) :: ETA_ZP(max_f,grids_f%p_len)        ! Eta_z x Eta_p on Path X SV
-    real(rp) :: ETA_ZXP_N(max_f,size(grids_n%values)) ! Eta_z x Eta_p for N
-    real(rp) :: ETA_ZXP_T(max_f,s_t*sv_t_len)      ! Eta_t_z x Eta_t_p
-    real(rp) :: ETA_ZXP_T_C(max_c,s_t*sv_t_len)    ! ETA_ZXP_T on coarse grid
-    real(rp) :: ETA_ZXP_V(max_f,size(grids_v%values)) ! Eta_z x Eta_p for V
-    real(rp) :: ETA_ZXP_W(max_f,size(grids_w%values)) ! Eta_z x Eta_p for W
+    real(rp) :: Eta_FZP(max_f,size(grids_f%values)) ! Eta_z x Eta_p * Eta_f
+    real(rp) :: Eta_IWC_ZP(max_f,max(s_i,s_ts)*grids_iwc%p_len)
+    real(rp) :: Eta_Mag_ZP(max_f,grids_mag%p_len)  ! Eta_z x Eta_p x Eta_x
+    real(rp) :: Eta_ZP(max_f,grids_f%p_len)        ! Eta_z x Eta_p on Path X SV
+    real(rp) :: Eta_ZXP_N(max_f,size(grids_n%values)) ! Eta_z x Eta_p for N
+    real(rp) :: Eta_ZXP_T(max_f,s_t*sv_t_len)      ! Eta_t_z x Eta_t_p
+    real(rp) :: Eta_ZXP_T_C(max_c,s_t*sv_t_len)    ! Eta_ZXP_T on coarse grid
+    real(rp) :: Eta_ZXP_V(max_f,size(grids_v%values)) ! Eta_z x Eta_p for V
+    real(rp) :: Eta_ZXP_W(max_f,size(grids_w%values)) ! Eta_z x Eta_p for W
     real(rp) :: H_GLGrid(maxVert,no_sv_p_t)        ! H on glGrid surfs (km)
     real(rp) :: IWC_Path(max_f,max(max(s_i,s_ts),s_ts)) ! IWC on path
     real(rp), target :: Mag_Path(s_p*max_f,4)      ! Magnetic field on path
@@ -928,12 +923,12 @@ contains
     real(rp), pointer :: DACsStaging(:,:) ! Temporary space for DACS radiances
 
     ! Cloud arrays have the same grids as temperature
-    real(rp) :: ETA_Tscat(max_f,s_i*sv_t_len)
-    real(rp) :: ETA_Tscat_ZP(max_f,s_i*sv_t_len)
-    real(rp) :: ETA_Salb(max_f,s_i*sv_t_len)
-    real(rp) :: ETA_Salb_ZP(max_f,s_i*sv_t_len)
-    real(rp) :: ETA_Cext(max_f,s_i*sv_t_len)
-    real(rp) :: ETA_Cext_ZP(max_f,s_i*sv_t_len)
+    real(rp) :: Eta_Tscat(max_f,s_i*sv_t_len)
+    real(rp) :: Eta_Tscat_ZP(max_f,s_i*sv_t_len)
+    real(rp) :: Eta_Salb(max_f,s_i*sv_t_len)
+    real(rp) :: Eta_Salb_ZP(max_f,s_i*sv_t_len)
+    real(rp) :: Eta_Cext(max_f,s_i*sv_t_len)
+    real(rp) :: Eta_Cext_ZP(max_f,s_i*sv_t_len)
     real(rp) :: Cext_Path(max_f,s_i)    ! Cloud extinction on path
     real(rp) :: Salb_Path(max_f,s_i)    ! Single Scattering Albedo on path
     real(rp) :: Tscat_Path(max_f,s_i*fwdModelConf%num_scattering_angles) ! TScat on path
@@ -993,7 +988,7 @@ contains
 
     type (Tau_T) :: Tau_LBL, Tau_PFA
 
-    type (weight_ZQ_t) :: Eta_zQT(s_qtm*max_f) ! Interpolation coefficients
+    type (Value_QTM_2D_List_t) :: Eta_zQT(s_qtm*max_f) ! Interpolation coefficients
                                   ! from 3D QTM to path for temperature
 
     type (VectorValue_T), pointer :: BoundaryPressure
@@ -3093,11 +3088,6 @@ contains
           &  phi_path(1:npf), eta_tscat_zp(1:npf,:),       &
           &  do_calc_tscat_zp(1:npf,:), tan_pt=tan_pt_f )
 
-!         call comp_sps_path_frq ( grids_tscat,                &
-!           & frq_0, eta_tscat_zp(1:npf,:),                    &
-!           & do_calc_tscat_zp(1:npf,:), tscat_path(1:npf,:),  &
-!           & eta_tscat(1:npf,:), do_calc_tscat(1:npf,:) )
-
         call comp_sps_path_no_frq ( Grids_tscat, eta_tscat_zp(1:npf,:), &
           & tscat_path(1:npf,:) )
 
@@ -3120,22 +3110,12 @@ contains
             &  phi_path(1:npf), eta_salb_zp(1:npf,:),       &
             &  do_calc_salb_zp(1:npf,:), tan_pt=tan_pt_f )
 
-!           call comp_sps_path_frq ( Grids_salb,               &
-!             & frq_0, eta_salb_zp(1:npf,:),                   &
-!             & do_calc_salb_zp(1:npf,:), salb_path(1:npf,:),  &
-!             & eta_salb(1:npf,:), do_calc_salb(1:npf,:) )
-
           call comp_sps_path_no_frq ( Grids_salb, eta_salb_zp(1:npf,:), &
             & salb_path(1:npf,:) )
 
           call comp_eta_docalc_no_frq ( Grids_cext, z_path, &
             &  phi_path(1:npf), eta_cext_zp(1:npf,:),       &
             &  do_calc_cext_zp(1:npf,:), tan_pt=tan_pt_f )
-
-!           call comp_sps_path_frq ( Grids_cext,               &
-!             & frq_0, eta_cext_zp(1:npf,:),                   &
-!             & do_calc_cext_zp(1:npf,:), cext_path(1:npf,:),  &
-!             & eta_cext(1:npf,:), do_calc_cext(1:npf,:) )
 
           call comp_sps_path_no_frq ( Grids_cext,  eta_cext_zp(1:npf,:), &
             & cext_path(1:npf,:) )
@@ -3851,7 +3831,7 @@ contains
 
       ! Compute the height of the pressure reference surface and the
       ! tangent height above that surface.
-      if ( .not.present(QTM) ) then
+      if ( .not. present(QTM) ) then
         if ( associated(surfaceHeight) ) then
           call tangent_metrics ( tan_phi, Grids_tmp%phi_basis,      &
             &                    h_glgrid, tan_ind_f,               & ! in
@@ -3894,6 +3874,10 @@ contains
         ! Interpolate temperatures that are adjacent to the path onto T_GLgrid
         ! and compute H_GLgrid etc. at those places.  The second extent of
         ! T_GLgrid etc. is the maximum number of vertices adjacent to any path.
+        ! The hydrostatic calculation for the non-QTM case is done before the
+        ! pointing loop.  For the QTM case, each pointing might cross a different
+        ! set of vertices, which would require T_GLgrid etc. to be larger,
+        ! perhaps as large as the entire QTM.
         if ( temp_der ) then
           call two_d_hydrostatic ( Grids_tmp, &
             &  spread(refGPH%template%surfs(1,1),1,size(f_and_v(ptg_i)%vertices)), &
@@ -3929,6 +3913,8 @@ contains
 
         call path%get_path_ready ! Calculate tangent or reflection, and
                                  ! continuation of the path thereafter.
+                                 ! The reflection is from the surface of the
+                                 ! Earth, not the reference pressure surface.
         call metrics_3d_QTM ( path, QTM, h=h_glgrid, s=s, &
           & tangent_index=tan_ind_f, pad=NG, f_and_v=f_and_v(ptg_i), &
           & which=horizontal )
@@ -3950,7 +3936,7 @@ contains
       if ( tan_ht_s <= 0.0 ) e_rflty = earthRefl%values(1,1)
 
       ! If we're integrating from a scattering point, find where it is.
-      if ( present(scat_zeta) ) then
+      if ( present(scat_zeta) .and. .not. present(QTM) ) then
         call Find_Scattering_Point ( Scat_Zeta, Scat_Phi, Scat_Ht, Xi, &
                                    & Scat_Index, Tan_Phi, Npc, Npf, &
                                    & Print_Incopt, Print_IncRad, &
@@ -3975,7 +3961,7 @@ contains
       ! Look for path crossings at zetas below the tangent point.
       ! These can only happen if the minimum zeta isn't at the tangent,
       ! and the ray isn't an earth-intersecting ray.
-      if ( tan_ht_s > 0.0 .and. .not. usingQTM ) call Lower_Path_Crossings ( &
+      if ( tan_ht_s > 0.0 .and. .not. present(QTM) ) call Lower_Path_Crossings ( &
         & Tan_Ht_s, Tan_Ht, Tan_Phi, Tan_Ind_f, grids_tmp%Phi_Basis, NZ_IF, &
         & Z_Coarse, Z_GLGrid, H_GLGrid, Vert_Inds, Req_S, H_Surf, Phi_Path, &
         & H_Path, NPC, NPF, T_GLGrid, Do_More_Points, Do_Zmin, &
@@ -3994,7 +3980,7 @@ contains
 
       ! The 0.5 factor is to compensate for the GL weights adding up to 2.0
       ! because the GL abscissae are on -1..+1.  This is a place where attention
-      ! will be needed if .usingQTM .and. .not. Zeta_Only
+      ! will be needed if present(QTM) .and. .not. Zeta_Only
       del_zeta(1:npc:npc-1) = 0.0_rp ! First and last ones
       del_zeta(2:tan_pt_c) = 0.5_rp * ( z_coarse(1:tan_pt_c-1) - &
         &                               z_coarse(2:tan_pt_c) )
@@ -4041,7 +4027,7 @@ contains
       end if
 
       ! Get other metrics-related quantities: t_path, dhdz_path, dh_dt_path...
-      if ( .not.present(QTM) ) then
+      if ( .not. present(QTM) ) then
         if ( temp_der ) then
           call more_metrics ( tan_ind_f, tan_pt_f, Grids_tmp,              &
             &  vert_inds(1:npf), t_glgrid, dhdz_glgrid, phi_path(1:npf),   &
@@ -4067,7 +4053,7 @@ contains
             &  vert_inds(1:npf), t_glgrid, dhdz_glgrid, phi_path(1:npf),   &
             &  t_path(1:npf), dhdz_path(1:npf) )
         end if
-      else
+      else ! QTM
         if ( temp_der ) then
           dh_dt_path_3(1:max_f,1:n_t_zeta,1:s_t*no_sv_p_t) => dh_dt_path_1
           do_calc_hyd_3(1:max_f,1:n_t_zeta,1:s_t*no_sv_p_t) => do_calc_hyd_1
@@ -4097,15 +4083,11 @@ contains
       ! cleared without violating array bounds.
       call comp_eta_docalc_no_frq ( Grids_f, z_path(1:npf), &
         &  phi_path(1:npf), eta_zp, do_calc_zp, tan_pt=tan_pt_f, &
-        &  your_nz_zp=nz_zp, your_nnz_zp=nnz_zp )
+        &  your_nz_zp=nz_zp, your_nnz_zp=nnz_zp, &
+        &  eta_fzp=eta_fzp(1:npf,:), do_calc_fzp=do_calc_fzp(:npf,:) )
 
-      call spread_eta_fzp_from_eta_zp ( Grids_f, &
-                                      & eta_zp(1:npf,:), do_calc_zp(:npf,:), &
-                                      & eta_fzp(1:npf,:), do_calc_fzp(:npf,:) )
-
-      ! Compute sps_path with a FAKE frequency, mainly to get the
-      ! WATER (H2O) contribution for refraction calculations, but also
-      ! to compute sps_path for all those with no frequency component
+      ! Compute sps_path for all those with no frequency component, especially
+      ! to get WATER (H2O) contribution for refraction calculations.
       call comp_sps_path_no_frq ( Grids_f, eta_zp(1:npf,:), sps_path(1:npf,:) )
 
       ! Compute the refractive index - 1
@@ -4584,6 +4566,10 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.376  2016/11/17 01:45:26  vsnyder
+! Use Comp_Sps_Path_No_Frq to get H2O for phi refractive correction.  Some
+! work on QTM also.
+!
 ! Revision 2.375  2016/11/14 21:10:47  vsnyder
 ! Change scat zeta tolerance test from relative to absolute
 !
