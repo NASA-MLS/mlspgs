@@ -11,9 +11,9 @@
 
 ! subroutine Interpolate_2D_P ( Field, Eta, Path )
 !   ! Interpolate Field * Eta to Path
-!   real(rk), intent(in) :: Field(:,:)
-!   type(value_1D_p_t), intent(in) :: Eta(:)    ! Size(Eta) assumed to be
-!   real(rk), intent(out) :: Path(:,:)          ! the same as Size(Path,2)
+!   real(rk), intent(in) :: Field(:,:)          ! Size(Field,1) assumed to be
+!   type(value_1D_p_t), intent(in) :: Eta(:)
+!   real(rk), intent(out) :: Path(:,:)          ! the same as Size(Path,1)
 
     integer :: I
 
@@ -23,6 +23,9 @@
     end do
 
 ! $Log$
+! Revision 2.2  2016/11/29 00:28:39  vsnyder
+! Correct some comments
+!
 ! Revision 2.1  2016/11/29 00:19:00  vsnyder
 ! Initial commit
 !
