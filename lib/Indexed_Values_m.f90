@@ -28,12 +28,25 @@ module Indexed_Values_m
   implicit NONE
   public
 
+  ! Inheritance heirarchy:
+
+  ! Value_1D_t -> Value_QTM_1D_t -> Value_QTM_2D_t -> Value_QTM_3D_t
+  !            -> Value_2D_t -> Value_3D_t
+
   ! For one interpolation weight from a 1D array
   type :: Value_1D_t ! ( RK )
 !     integer, kind :: RK
     real(rk) :: V = 0.0    ! Value to be applied at N
     integer :: N = 0       ! Subscript at which to apply V
   end type Value_1D_t
+
+  ! For one interpolation weight from a 1D array to a 1D array
+  type :: Value_1D_p_t ! ( RK )
+!     integer, kind :: RK
+    real(rk) :: V = 0.0    ! Value to be applied at N
+    integer :: N = 0       ! Subscript at which to apply V
+    integer :: P = 0       ! Subscript at which interpolated value accumulates
+  end type Value_1D_p_t
 
   ! For interpolating to a list from a 1D array, assuming linear interolation
   type :: Value_1D_List_t ! ( RK )
@@ -75,7 +88,7 @@ module Indexed_Values_m
   ! interpolation.
   type :: Value_2D_List_t ! ( RK )
 !     integer, kind :: RK
-    integer :: N = 4       ! Number of useful elements of V
+    integer :: N = 4       ! Number of useful elements of V Value_QTM_2D_t
 !     type(value_2d_t(rk)) :: V(4) = value_2d_t(rk)()
     type(value_2d_t) :: V(4) = value_2d_t()
   end type Value_2D_List_t
@@ -147,6 +160,17 @@ module Indexed_Values_m
 !     module procedure Dump_Value_1D_List_d, Dump_Value_1D_List_s
   end interface
 
+  interface Interpolate
+    module procedure Interpolate_1D_List
+!     module procedure Interpolate_1D_List_d, Interpolate_1D_List_s
+    module procedure Interpolate_1D_P
+!     module procedure Interpolate_1D_P_d, Interpolate_1D_P_s
+    module procedure Interpolate_2D_List
+!     module procedure Interpolate_2D_List_d, Interpolate_2D_List_s
+    module procedure Interpolate_2D_P
+!     module procedure Interpolate_2D_P_d, Interpolate_2D_P_s
+  end interface
+
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
@@ -159,6 +183,45 @@ contains
     use Output_m, only: NewLine, Output
     include "Dump_Value_1D_List.f9h"
   end subroutine Dump_Value_1D_List
+
+  subroutine Interpolate_1D_List ( Field, Eta, Path )
+    ! Interpolate Field * Eta to Path, where the subscript for Path is
+    ! the same as the subscript for Eta.
+    real(rk), intent(in) :: Field(:)
+    type(value_1D_list_t), intent(in) :: Eta(:) ! Size(Eta) assumed to be
+    real(rk), intent(out) :: Path(:)            ! the same as Size(Path)
+    include "Interpolate_1D_List.f9h"
+  end subroutine Interpolate_1D_List
+
+  subroutine Interpolate_1D_P ( Field, Eta, Path )
+    ! Interpolate Field * Eta to Path, where the subscript for Path is
+    ! in Eta.
+    real(rk), intent(in) :: Field(:)
+    type(value_1D_p_t), intent(in) :: Eta(:)    ! Size(Eta) assumed to be
+    real(rk), intent(out) :: Path(:)            ! the same as Size(Path)
+    include "Interpolate_1D_P.f9h"
+  end subroutine Interpolate_1D_P
+
+  subroutine Interpolate_2D_List ( Field, Eta, Path )
+    ! Interpolate Field * Eta to Path, where the subscript for Path is
+    ! the same as the subscript for Eta.
+    real(rk), intent(in) :: Field(:,:)
+    type(value_2D_list_t), intent(in) :: Eta(:) ! Size(Eta) assumed to be
+    real(rk), intent(out) :: Path(:)            ! the same as Size(Path)
+    include "Interpolate_2D_List.f9h"
+  end subroutine Interpolate_2D_List
+
+  subroutine Interpolate_2D_P ( Field, Eta, Path )
+    ! Interpolate Field * Eta to Path, where the second subscript for Field
+    ! and Path is in Eta.  The same interpolation is applied to all of the
+    ! first subscripts for Field and Path, which are assumed to have the
+    ! same extents.  This is for quantities that have several components that
+    ! don't depend upon a basis grid, such as magnetic fields.
+    real(rk), intent(in) :: Field(:,:)          ! Size(Field,1) assumed to be
+    type(value_1D_p_t), intent(in) :: Eta(:)
+    real(rk), intent(out) :: Path(:,:)          ! the same as Size(Path,1)
+    include "Interpolate_2D_P.f9h"
+  end subroutine Interpolate_2D_P
 
 !=============================================================================
 !--------------------------- end bloc --------------------------------------
@@ -174,6 +237,9 @@ contains
 end module Indexed_Values_m
 
 ! $Log$
+! Revision 2.4  2016/11/29 00:28:54  vsnyder
+! Add interpolators
+!
 ! Revision 2.3  2016/11/23 21:32:59  vsnyder
 ! Add Value_3D_*, Dump
 !
