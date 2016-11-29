@@ -309,7 +309,7 @@ module Hydrostatic_m
 ! geometric heights. Reference height is now an input
 
     use Geometry, only: EarthRadA, EarthRadB, GM, J2, J4, W
-    use Indexed_Values_m, only: Value_1D_List_t
+    use Indexed_Values_m, only: Interpolate, Value_1D_List_t
     use MLSKinds, only: RP, IP
     use Physics, only: BoltzMeters => Boltz ! Avogadro * k * ln10 / mmm m^2/(K s^2)
     use Piq_int_m, only: piq_int
@@ -361,7 +361,7 @@ module Hydrostatic_m
 
 ! begin the code
 
-    call trace_begin ( me, 'Hydrostatic_All', &
+    call trace_begin ( me, 'Hydrostatic_All_ZZ', &
       & cond=toggle(emit) .and. levels(emit) > 2 )
 
     n_coeffs = size(t_basis)
@@ -379,11 +379,7 @@ module Hydrostatic_m
     end where
 
 ! compute t_grid using what is effectively a sparse matrix multiply
-    do i = 1, size(t_grid)
-      t_grid(i) = eta_zz(i)%v(1)%v * t_coeffs(eta_zz(i)%v(1)%n)
-      if ( eta_zz(i)%n == 2 ) t_grid(i) = t_grid(i) + &
-                & eta_zz(i)%v(2)%v * t_coeffs(eta_zz(i)%v(2)%n)
-    end do
+    call interpolate ( t_coeffs, eta_zz, t_grid )
 
 !{ Compute surface acceleration and effective earth radius.  First,
 !  evaluate the Legendre polynomials $P_2(\sin\lambda) = \frac32 \sin^2\lambda
@@ -580,7 +576,7 @@ module Hydrostatic_m
 !   \frac{\eta^T_{lm}}{\mathcal{M}(\zeta_{\,l})} \\
 !  \end{split}\end{equation*}
 
-    call trace_end ( 'Hydrostatic_All', &
+    call trace_end ( 'Hydrostatic_All_ZZ', &
       & cond=toggle(emit) .and. levels(emit) > 2 )
 
   end subroutine Hydrostatic_All_ZZ
@@ -772,6 +768,9 @@ module Hydrostatic_m
 end module Hydrostatic_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.27  2016/11/23 20:10:59  vsnyder
+! Add Hydrostatic_All_ZZ, which uses an Eta list instead of computing it anew
+!
 ! Revision 2.26  2016/04/28 18:04:12  vsnyder
 ! More TeXnicalities
 !
