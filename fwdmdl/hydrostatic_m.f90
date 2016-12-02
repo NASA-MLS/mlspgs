@@ -309,7 +309,7 @@ module Hydrostatic_m
 ! geometric heights. Reference height is now an input
 
     use Geometry, only: EarthRadA, EarthRadB, GM, J2, J4, W
-    use Indexed_Values_m, only: Interpolate, Value_1D_List_t
+    use Indexed_Values_m, only: Interpolate, Value_1D_p_t
     use MLSKinds, only: RP, IP
     use Physics, only: BoltzMeters => Boltz ! Avogadro * k * ln10 / mmm m^2/(K s^2)
     use Piq_int_m, only: piq_int
@@ -325,7 +325,7 @@ module Hydrostatic_m
 !                                         heights are needed
     real(rp), intent(in) :: Z_Ref       ! reference pressure in zeta = -log10(P)
     real(rp), intent(in) :: H_Ref       ! reference geopotential height in km
-    type(value_1D_list_t), intent(in) :: Eta_ZZ(:) ! Interpolation coefficients
+    type(value_1D_p_t), intent(in) :: Eta_ZZ(:) ! Interpolation coefficients
                                         ! from T_Basis to Z_Grid
 
 ! Outputs
@@ -545,11 +545,10 @@ module Hydrostatic_m
 ! this derivative is useful for antenna derivatives
       if ( present(ddhdhdtq) ) then
         ddHdHdTq = (2.0_rp/(spread(h_grid,2,n_coeffs)+r_eff)) * dhidtq
-        do i = 1, size(eta_zz) ! Assumed to be same size as T_Grid
-          do k = 1, eta_zz(i)%n ! 1 or 2
-            j = eta_zz(i)%v(k)%n
-            ddHdHdTq(i,j) = ddHdHdTq(i,j) + eta_zz(i)%v(k)%v / t_grid(i)
-          end do
+        do k = 1, size(eta_zz) ! Assumed to be same size as T_Grid
+          i = eta_zz(k)%p
+          j = eta_zz(k)%n
+          ddHdHdTq(i,j) = ddHdHdTq(i,j) + eta_zz(k)%v / t_grid(i)
         end do
       end if
     end if
@@ -768,6 +767,9 @@ module Hydrostatic_m
 end module Hydrostatic_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.28  2016/11/29 00:29:18  vsnyder
+! Use interpolator in Indexed_Values_m
+!
 ! Revision 2.27  2016/11/23 20:10:59  vsnyder
 ! Add Hydrostatic_All_ZZ, which uses an Eta list instead of computing it anew
 !

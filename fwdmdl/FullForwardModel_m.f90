@@ -497,7 +497,7 @@ contains
     use Get_IEEE_NaN_m, only: Fill_IEEE_NaN
     use HessianModule_1, only: Hessian_T
     use HGridsDatabase, only: HGrid_T
-    use Indexed_Values_m, only: Value_1D_List_t, Value_QTM_2D_List_t
+    use Indexed_Values_m, only: Value_1D_p_t, Value_QTM_2D_List_t
     use Intrinsic, only: L_A, L_GeocAltitude, L_GeodAltitude, &
       & L_Radiance, L_TScat, L_VMR, L_Zeta
     use Load_SPS_Data_M, only: DestroyGrids_T, Dump, Grids_T
@@ -989,9 +989,14 @@ contains
 
     type (Tau_T) :: Tau_LBL, Tau_PFA
 
-    type (Value_1D_List_t) :: Eta_ZZ(maxVert)      ! Interpolation coefficients
+    type (value_1D_p_t) :: Eta_ZZ(2*maxVert)       ! Interpolation coefficients
                                                    ! from temperature Zeta to
-                                                   ! GL zeta
+                                                   ! GL zeta.  Since this is a
+                                                   ! 1D interpolation, there can
+                                                   ! be at most two nonzero
+                                                   ! coefficients of T zeta
+                                                   ! for each element GL zeta.
+    integer :: N_ZZ               ! Number of used elements in  Eta_ZZ
     type (Value_QTM_2D_List_t) :: Eta_zQT(s_qtm*max_f) ! Interpolation coefficients
                                   ! from 3D QTM to path for temperature
 
@@ -1222,7 +1227,7 @@ contains
     ! Get interpolation coefficients from temperature's zetas to Z_GLGrid.
     ! Temperature is coherent and stacked, so Eta_ZZ is applicable everywhere.
 
-    call eta_list_1d ( Grids_tmp%zet_basis, z_glgrid, eta_zz, sorted=.true. )
+    call eta_list_1d ( Grids_tmp%zet_basis, z_glgrid, eta_zz, n_zz, sorted=.true. )
 
     ! Insert into bill's 2d hydrostatic equation.
     ! The phi inputa for this subprogram are the orbit plane projected
@@ -1244,12 +1249,12 @@ contains
       if ( temp_der ) then
         call two_d_hydrostatic ( Grids_tmp, refGPH%template%surfs(1,1), &
           &  refGPH%values(1,windowStart:windowFinish), z_glgrid, &
-          &  t_glgrid, h_glgrid, dhdz_glgrid, eta_zz, &
+          &  t_glgrid, h_glgrid, dhdz_glgrid, eta_zz(:n_zz), &
           &  dHidTlm=dh_dt_glgrid, ddHdHdTl0=ddhidhidtl0 )
       else
         call two_d_hydrostatic ( Grids_tmp, refGPH%template%surfs(1,1), &
           &  refGPH%values(1,windowStart:windowFinish), z_glgrid, &
-          &  t_glgrid, h_glgrid, dhdz_glgrid, eta_zz )
+          &  t_glgrid, h_glgrid, dhdz_glgrid, eta_zz(:n_zz) )
       end if
     end if
 
@@ -3884,13 +3889,13 @@ contains
         if ( temp_der ) then
           call two_d_hydrostatic ( Grids_tmp, refGPH%template%surfs(1,1), &
             &  refGPH%values(1,:), z_glgrid, &
-            &  t_glgrid, h_glgrid, dhdz_glgrid, eta_zz, &
+            &  t_glgrid, h_glgrid, dhdz_glgrid, eta_zz(:n_zz), &
             &  dHidTlm=dh_dt_glgrid, ddHdHdTl0=ddhidhidtl0, &
             &  vertices=f_and_v(ptg_i)%vertices )
         else
           call two_d_hydrostatic ( Grids_tmp, refGPH%template%surfs(1,1), &
             &  refGPH%values(1,:), z_glgrid, &
-            &  t_glgrid, h_glgrid, dhdz_glgrid, eta_zz, &
+            &  t_glgrid, h_glgrid, dhdz_glgrid, eta_zz(:n_zz), &
             &  vertices=f_and_v(ptg_i)%vertices )
         end if
 
@@ -4569,6 +4574,10 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.378  2016/11/23 21:35:13  vsnyder
+! Compute Eta_ZZ to interpolate from Temperature's zeta basis to the GL
+! zeta grid, and use it for hydrostatic calculations.
+!
 ! Revision 2.377  2016/11/23 00:14:36  vsnyder
 ! Use types from Indexed_Values_m.  Some cannonball polishing.
 !
