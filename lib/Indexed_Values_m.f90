@@ -32,6 +32,18 @@ module Indexed_Values_m
 
   ! Value_1D_t -> Value_QTM_1D_t -> Value_QTM_2D_t -> Value_QTM_3D_t
   !            -> Value_2D_t -> Value_3D_t
+  ! Value_List (abstract) ->
+  !            -> Value_1D_List_t
+  !            -> Value_1D_p_t
+  !            -> Value_QTM_1D_List_t
+  !            -> Value_2D_List_t
+  !            -> Value_3D_List_t
+  !            -> Value_QTM_2D_List_t
+  !            -> Value_QTM_3D_List_t
+
+  type :: Value_List ! ( RK ) ! Base type for Value_*List_t
+!     integer, kind :: RK
+  end type Value_List
 
   ! For one interpolation weight from a 1D array
   type :: Value_1D_t ! ( RK )
@@ -41,7 +53,7 @@ module Indexed_Values_m
   end type Value_1D_t
 
   ! For one interpolation weight from a 1D array to a 1D array
-  type :: Value_1D_p_t ! ( RK )
+  type, extends(Value_List) :: Value_1D_p_t ! ( RK )
 !     integer, kind :: RK
     real(rk) :: V = 0.0    ! Value to be applied at N
     integer :: N = 0       ! Subscript at which to apply V
@@ -49,7 +61,7 @@ module Indexed_Values_m
   end type Value_1D_p_t
 
   ! For interpolating to a list from a 1D array, assuming linear interolation
-  type :: Value_1D_List_t ! ( RK )
+  type, extends(Value_List) :: Value_1D_List_t ! ( RK )
 !     integer, kind :: RK
     integer :: N = 2       ! Number of useful elements of V
 !     type(value_1d_t(rk)) :: V(2) = value_1d_t(rk)()
@@ -68,7 +80,7 @@ module Indexed_Values_m
   ! For interpolating to a list (probably an integration path) from a QTM,
   ! or an extract of it onto an array of profiles adjacent to an integration
   ! path.
-  type :: Value_QTM_1D_List_t ! ( RK )
+  type, extends(Value_List) :: Value_QTM_1D_List_t ! ( RK )
 !     integer, kind :: RK
     integer :: N = 3       ! Number of useful elements of V
 !     type(value_QTM_1d_t(rk)) :: V(3) = value_QTM_1d_t(rk)()
@@ -86,7 +98,7 @@ module Indexed_Values_m
   ! For interpolating to a list (probably an integration path) from a two-
   ! dimensional rectangular array, such as a state vector, assuming bilinear
   ! interpolation.
-  type :: Value_2D_List_t ! ( RK )
+  type, extends(Value_List) :: Value_2D_List_t ! ( RK )
 !     integer, kind :: RK
     integer :: N = 4       ! Number of useful elements of V Value_QTM_2D_t
 !     type(value_2d_t(rk)) :: V(4) = value_2d_t(rk)()
@@ -105,7 +117,7 @@ module Indexed_Values_m
   ! For interpolating to a list (probably an integration path) from a three-
   ! dimensional rectangular array, such as a state vector, assuming trilinear
   ! interpolation.
-  type :: Value_3D_List_t ! ( RK )
+  type, extends(Value_List) :: Value_3D_List_t ! ( RK )
 !     integer, kind :: RK
     integer :: N = 8       ! Number of useful elements of V
 !     type(value_3d_t(rk)) :: V(8) = value_3d_t(rk)()
@@ -126,7 +138,7 @@ module Indexed_Values_m
   ! For interpolating to a list (probably an integration path) from a QTM,
   ! or an extract of it onto an array of profiles adjacent to an integration
   ! path, with a zeta basis at each profile.
-  type :: Value_QTM_2D_List_t ! ( RK )
+  type, extends(Value_List) :: Value_QTM_2D_List_t ! ( RK )
 !     integer, kind :: RK
     integer :: N = 6       ! Number of useful elements of V
 !     type(value_QTM_2d_t(rk)) :: V(6) = value_QTM_2d_t(rk)()
@@ -148,7 +160,7 @@ module Indexed_Values_m
   ! For interpolating to a list (probably an integration path) from a QTM,
   ! or an extract of it onto an array of profiles adjacent to an integration
   ! path, with a zeta basis and frequency basis at each profile.
-  type :: Value_QTM_3D_List_t ! ( RK )
+  type, extends(Value_List) :: Value_QTM_3D_List_t ! ( RK )
 !     integer, kind :: RK
     integer :: N = 12      ! Number of useful elements of V
 !     type(value_QTM_3d_t(rk)) :: V(12) = value_QTM_3d_t(rk)()
@@ -156,8 +168,9 @@ module Indexed_Values_m
   end type Value_QTM_3D_List_t
 
   interface Dump
-    module procedure Dump_Value_1D_List
+    module procedure Dump_Value_1D_List, Dump_Value_1D_p_List
 !     module procedure Dump_Value_1D_List_d, Dump_Value_1D_List_s
+!     module procedure Dump_Value_1D_p_List_d, Dump_Value_1D_p_List_s
   end interface
 
   interface Interpolate
@@ -165,10 +178,27 @@ module Indexed_Values_m
 !     module procedure Interpolate_1D_List_d, Interpolate_1D_List_s
     module procedure Interpolate_1D_P
 !     module procedure Interpolate_1D_P_d, Interpolate_1D_P_s
+    module procedure Interpolate_QTM_1D_List
+!     module procedure Interpolate_QTM_1D_List_d, Interpolate_QTM_1D_List_s
     module procedure Interpolate_2D_List
 !     module procedure Interpolate_2D_List_d, Interpolate_2D_List_s
     module procedure Interpolate_2D_P
 !     module procedure Interpolate_2D_P_d, Interpolate_2D_P_s
+    module procedure Interpolate_QTM_2D_List
+!     module procedure Interpolate_QTM_2D_List_d, Interpolate_QTM_2D_List_s
+    module procedure Interpolate_3D_List
+!     module procedure Interpolate_3D_List_d, Interpolate_3D_List_s
+    module procedure Interpolate_QTM_3D_List
+!     module procedure Interpolate_QTM_3D_List_d, Interpolate_QTM_3D_List_s
+  end interface
+
+  interface Interpolate_Polymorphic
+    module procedure Interpolate_Polymorphic_1D
+!     module procedure Interpolate_Polymorphic_1D_d, Interpolate_Polymorphic_1D_s
+    module procedure Interpolate_Polymorphic_2D
+!     module procedure Interpolate_Polymorphic_2D_d, Interpolate_Polymorphic_2D_s
+    module procedure Interpolate_Polymorphic_3D
+!     module procedure Interpolate_Polymorphic_3D_d, Interpolate_Polymorphic_3D_s
   end interface
 
 !---------------------------- RCS Module Info ------------------------------
@@ -183,6 +213,52 @@ contains
     use Output_m, only: NewLine, Output
     include "Dump_Value_1D_List.f9h"
   end subroutine Dump_Value_1D_List
+
+  subroutine Dump_Value_1D_p_List ( Value, Name )
+    use Output_m, only: Output
+    include "Dump_Value_1D_p_List.f9h"
+  end subroutine Dump_Value_1D_p_List
+
+  subroutine Interpolate_Polymorphic_1D ( Field, Eta, Path )
+    ! Select one interpolator, depending upon the type of Eta
+    real(rk), intent(in) :: Field(:)
+    class(value_list), intent(in) :: Eta(:)     ! Size(Eta) assumed to be
+    real(rk), intent(out) :: Path(:)            ! the same as Size(Path)
+    select type ( Eta )
+    type is ( value_1D_list_t )
+      call interpolate ( field, eta, path )
+    type is ( value_1D_p_t )
+      call interpolate ( field, eta, path )
+    type is ( value_QTM_1D_list_t )
+      call interpolate ( field, eta, path )
+    end select
+  end subroutine Interpolate_Polymorphic_1D
+
+  subroutine Interpolate_Polymorphic_2D ( Field, Eta, Path )
+    ! Select one of the interpolators, depending upon the type of Eta
+    real(rk), intent(in) :: Field(:,:)
+    class(value_list), intent(in) :: Eta(:)     ! Size(Eta) assumed to be
+    real(rk), intent(out) :: Path(:)            ! the same as Size(Path)
+    select type ( Eta )
+    type is ( value_2D_list_t )
+      call interpolate ( field, eta, path )
+    type is ( value_QTM_2D_list_t )
+      call interpolate ( field, eta, path )
+    end select
+  end subroutine Interpolate_Polymorphic_2D
+
+  subroutine Interpolate_Polymorphic_3D ( Field, Eta, Path )
+    ! Select one interpolator, depending upon the type of Eta
+    real(rk), intent(in) :: Field(:,:,:)
+    class(value_list), intent(in) :: Eta(:)     ! Size(Eta) assumed to be
+    real(rk), intent(out) :: Path(:)            ! the same as Size(Path)
+    select type ( Eta )
+    type is ( value_3D_list_t )
+      call interpolate ( field, eta, path )
+    type is ( value_QTM_3D_list_t )
+      call interpolate ( field, eta, path )
+    end select
+  end subroutine Interpolate_Polymorphic_3D
 
   subroutine Interpolate_1D_List ( Field, Eta, Path )
     ! Interpolate Field * Eta to Path, where the subscript for Path is
@@ -201,6 +277,15 @@ contains
     real(rk), intent(out) :: Path(:)            ! the same as Size(Path)
     include "Interpolate_1D_P.f9h"
   end subroutine Interpolate_1D_P
+
+  subroutine Interpolate_QTM_1D_List ( Field, Eta, Path )
+    ! Interpolate Field * Eta to Path, where the subscript for Path is
+    ! the same as the subscript for Eta.
+    real(rk), intent(in) :: Field(:)
+    type(value_QTM_1D_list_t), intent(in) :: Eta(:) ! Size(Eta) assumed to be
+    real(rk), intent(out) :: Path(:)                ! the same as Size(Path)
+    include "Interpolate_1D_List.f9h"
+  end subroutine Interpolate_QTM_1D_List
 
   subroutine Interpolate_2D_List ( Field, Eta, Path )
     ! Interpolate Field * Eta to Path, where the subscript for Path is
@@ -223,6 +308,33 @@ contains
     include "Interpolate_2D_P.f9h"
   end subroutine Interpolate_2D_P
 
+  subroutine Interpolate_QTM_2D_List ( Field, Eta, Path )
+    ! Interpolate Field * Eta to Path, where the subscript for Path is
+    ! the same as the subscript for Eta.
+    real(rk), intent(in) :: Field(:,:)
+    type(value_QTM_2D_list_t), intent(in) :: Eta(:) ! Size(Eta) assumed to be
+    real(rk), intent(out) :: Path(:)                ! the same as Size(Path)
+    include "Interpolate_2D_List.f9h"
+  end subroutine Interpolate_QTM_2D_List
+
+  subroutine Interpolate_3D_List ( Field, Eta, Path )
+    ! Interpolate Field * Eta to Path, where the subscript for Path is
+    ! the same as the subscript for Eta.
+    real(rk), intent(in) :: Field(:,:,:)
+    type(value_3D_list_t), intent(in) :: Eta(:) ! Size(Eta) assumed to be
+    real(rk), intent(out) :: Path(:)            ! the same as Size(Path)
+    include "Interpolate_3D_List.f9h"
+  end subroutine Interpolate_3D_List
+
+  subroutine Interpolate_QTM_3D_List ( Field, Eta, Path )
+    ! Interpolate Field * Eta to Path, where the subscript for Path is
+    ! the same as the subscript for Eta.
+    real(rk), intent(in) :: Field(:,:,:)
+    type(value_QTM_3D_list_t), intent(in) :: Eta(:) ! Size(Eta) assumed to be
+    real(rk), intent(out) :: Path(:)                ! the same as Size(Path)
+    include "Interpolate_3D_List.f9h"
+  end subroutine Interpolate_QTM_3D_List
+
 !=============================================================================
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
@@ -237,6 +349,10 @@ contains
 end module Indexed_Values_m
 
 ! $Log$
+! Revision 2.5  2016/12/02 01:58:44  vsnyder
+! Move argument declarations here from include files.  Add 2D P interpolator.
+! Add Dump_Value_1D_p_List.
+!
 ! Revision 2.4  2016/11/29 00:28:54  vsnyder
 ! Add interpolators
 !
