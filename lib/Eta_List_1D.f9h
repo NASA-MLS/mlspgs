@@ -13,11 +13,10 @@
 
   ! Compute Eta for linear interpolation from Basis to Grid
 
-  real(rk), intent(in) :: Basis(:)
-  real(rk), intent(in) :: Grid(:)
-!   type(value_1D_list_t(rk)), intent(out) :: Eta(:) ! size(grid)
-  type(value_1D_list_t), intent(out) :: Eta(:) ! size(grid)
-  logical, intent(in), optional :: Sorted ! "Basis is sorted" -- default true
+! real(rk), intent(in) :: Basis(:)
+! real(rk), intent(in) :: Grid(:)
+! type(value_1D_list_t(rk)), intent(out) :: Eta(:) ! size(grid)
+! logical, intent(in), optional :: Sorted ! "Basis is sorted" -- default true
 
   real(rk) :: Del_Basis
   integer :: I, J
@@ -108,6 +107,9 @@
   end if
 
 ! $Log$
+! Revision 2.3  2016/12/02 02:03:54  vsnyder
+! Move dummy argument declarations from include files to Indexed_Values_m
+!
 ! Revision 2.2  2016/11/23 20:07:10  vsnyder
 ! Correct reported index, add component names to constructors
 !
