@@ -12,7 +12,7 @@
 ! subroutine Interpolate_2D_List_* ( Field, Eta, Path )
 !   ! Interpolate Field * Eta to Path
 !   real(rk), intent(in) :: Field(:,:)
-!   type(value_1D_list_t), intent(in) :: Eta(:) ! Size(Eta) assumed to be
+!   type(value_2D_list_t), intent(in) :: Eta(:) ! Size(Eta) assumed to be
 !   real(rk), intent(out) :: Path(:)            ! the same as Size(Path)
 
     integer :: I, J
@@ -24,6 +24,9 @@
     end do
 
 ! $Log$
+! Revision 2.2  2016/12/02 02:03:07  vsnyder
+! Correct a comment
+!
 ! Revision 2.1  2016/11/29 00:07:58  vsnyder
 ! Initial commit
 !

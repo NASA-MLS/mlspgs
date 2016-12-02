@@ -17,9 +17,6 @@
 !   type(value_1D_list_t(rk)), intent(in) :: A(:)
 !   type(value_qtm_1d_list_t(rk)), intent(in) :: B(:)
 !   type(value_qtm_2d_list_t(rk)), intent(out) :: C(:)
-    type(value_1D_list_t), intent(in) :: A(:)
-    type(value_qtm_1d_list_t), intent(in) :: B(:)
-    type(value_qtm_2d_list_t), intent(out) :: C(:)
 
     ! Assume size(A) == size(B) == size(C)
 
@@ -40,6 +37,9 @@
     end do
 
 ! $Log$
+! Revision 2.2  2016/12/02 02:03:54  vsnyder
+! Move dummy argument declarations from include files to Indexed_Values_m
+!
 ! Revision 2.1  2016/11/23 21:30:30  vsnyder
 ! Initial commit
 !
