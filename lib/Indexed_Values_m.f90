@@ -167,6 +167,10 @@ module Indexed_Values_m
     type(value_QTM_3d_t) :: V(12) = value_QTM_3d_t()
   end type Value_QTM_3D_List_t
 
+  interface Convert
+    module procedure Convert_QTM_1D_to_P
+  end interface
+
   interface Dump
     module procedure Dump_Value_1D_List, Dump_Value_1D_p_List
 !     module procedure Dump_Value_1D_List_d, Dump_Value_1D_List_s
@@ -208,6 +212,29 @@ module Indexed_Values_m
 !---------------------------------------------------------------------------
 
 contains
+
+  subroutine Convert_QTM_1D_to_P ( From, To, N, Path )
+    type(value_QTM_1D_List_t), intent(in) :: From(:)
+    type(value_1D_p_t), intent(out) :: To(:)
+    integer, intent(out) :: N             ! Number of elements put into To
+    logical, intent(in), optional :: Path ! Use NP component of From
+    integer :: I, J
+    logical :: MyPath
+
+    myPath = .false.
+    if ( present(path) ) myPath = path
+    n = 0
+    do i = 1, size(from)
+      do j = 1, from(i)%n
+        n = n + 1
+        if ( myPath ) then
+          to(n) = value_1D_p_t(v=from(i)%v(j)%v, n=from(i)%v(j)%np, p=i )
+        else
+          to(n) = value_1D_p_t(v=from(i)%v(j)%v, n=from(i)%v(j)%n, p=i )
+        end if
+      end do
+    end do
+  end subroutine Convert_QTM_1D_to_P
 
   subroutine Dump_Value_1D_List ( Value, Name )
     use Output_m, only: NewLine, Output
@@ -349,6 +376,9 @@ contains
 end module Indexed_Values_m
 
 ! $Log$
+! Revision 2.6  2016/12/03 02:43:46  vsnyder
+! Add Convert_QTM_1D_to_P
+!
 ! Revision 2.5  2016/12/02 01:58:44  vsnyder
 ! Move argument declarations here from include files.  Add 2D P interpolator.
 ! Add Dump_Value_1D_p_List.
