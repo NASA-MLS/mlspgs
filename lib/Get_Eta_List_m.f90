@@ -34,11 +34,14 @@ module Get_Eta_List_m
     module procedure Eta_List_1D_2D_3D!_d, Eta_List_1D_2D_3D_s
     module procedure Eta_List_1D_QTM_1D_2D!_d, Eta_List_1D_QTM_1D_2D_s
     module procedure Eta_List_1D_QTM_2D_3D!_d, Eta_List_1D_QTM_2D_3D_s
+    module procedure Eta_List_1D_1D_p_2D
+    module procedure Eta_1D_p_QTM_1D_2D!_d, Eta_1D_p_QTM_1D_2D_s
   end interface
 
   ! Use this type to create an array of Eta lists, potentially of different
   ! types and sizes.
   type :: Eta_Lists_t
+    integer :: N ! Number of elements of Eta currently in use.
     class(value_list), allocatable :: Eta(:)
   end type Eta_Lists_t
 
@@ -146,8 +149,8 @@ contains
     include "Eta_List_1D_2D_3D.f9h"
   end subroutine Eta_List_1D_2D_3D
 
-  ! Compute Eta to interpolate from a 2-D QTM basis and a 1-D vertical
-  ! basis to a 1-D grid.  The matrix C is the outer product of
+  ! Compute Eta to interpolate from a 1-D vertical basis and a 1-D QTM
+  ! basis to a 2-D QTM grid.  The matrix C is the outer product of
   ! interpolation matrices A and B, all represented as sparse lists.
   subroutine Eta_List_1D_QTM_1D_2D ( A, B, C )
 !   type(value_1D_list_t(rk)), intent(in) :: A(:)
@@ -159,9 +162,22 @@ contains
     include "Eta_List_1D_QTM_1D_2D.f9h"
   end subroutine Eta_List_1D_QTM_1D_2D
 
-  ! Compute Eta to interpolate from a 2-D QTM basis, a 1-D vertical, and a
-  ! 1-D frequency  basis to a 1-D grid.  The matrix C is the outer product
-  ! of interpolation matrices A and B, all represented as sparse lists.
+  ! Compute Eta to interpolate from a 1-D vertical basis and a 1-D QTM
+  ! basis to a 2-D QTM grid.  The matrix C is the outer product of
+  ! interpolation matrices A and B, all represented as sparse lists.
+  subroutine Eta_1D_p_QTM_1D_2D ( A, B, C )
+!   type(value_1D_p_t(rk)), intent(in) :: A(:)
+!   type(value_qtm_1d_list_t(rk)), intent(in) :: B(:)
+!   type(value_qtm_2d_list_t(rk)), intent(out) :: C(:)
+    type(value_1D_p_t), intent(in) :: A(:)
+    type(value_qtm_1d_list_t), intent(in) :: B(:)
+    type(value_qtm_2d_list_t), intent(out) :: C(:)
+    include "Eta_1D_p_QTM_1D_2D.f9h"
+  end subroutine Eta_1D_p_QTM_1D_2D
+
+  ! Compute Eta to interpolate from a 1-D frequency  basis and a 2-D QTM basis
+  ! to a 3-D QTM grid.  The matrix C is the outer product of interpolation
+  ! matrices A and B, all represented as sparse lists.
   subroutine Eta_List_1D_QTM_2D_3D ( A, B, C )
 !   type(value_1D_list_t(rk)), intent(in) :: A(:)
 !   type(value_qtm_2d_list_t(rk)), intent(in) :: B(:)
@@ -187,6 +203,11 @@ contains
 end module Get_Eta_List_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.4  2016/12/03 02:46:11  vsnyder
+! Add N component to Eta_Lists_t.  Add Eta_List_1D_1D_p_2D and
+! Eta_1D_p_QTM_1D_2D to Eta_List_1D generic.  Add Eta_1D_p_QTM_1D_2D.
+! Correct some comments.
+!
 ! Revision 2.3  2016/12/02 02:02:01  vsnyder
 ! Move dummy argument declarations here from include files.  Add Eta_Lists_t.
 ! Add 1D Eta P generators.  Add outer product of 1D P Etas.
