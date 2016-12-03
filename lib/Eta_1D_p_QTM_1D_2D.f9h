@@ -9,7 +9,7 @@
 ! export authority as may be required before exporting such information to
 ! foreign countries or providing access to foreign persons.
 
-! subroutine Eta_List_1D_QTM_1D_2D_* ( A, B, C )
+! subroutine Eta_1D_p_QTM_1D_2D_* ( A, B, C )
 
     ! Compute the outer product C of interpolation matrices A and B,
     ! each represented as a sparse list.
@@ -36,6 +36,9 @@
     end do
 
 ! $Log$
+! Revision 2.2  2016/12/03 02:42:52  vsnyder
+! Correct a comment
+!
 ! Revision 2.1  2016/12/03 02:40:48  vsnyder
 ! Initial commit
 !
