@@ -159,7 +159,9 @@ begin Fill
   ;; Fill radiance related vectors
   Transfer, source=measurement, destination=y$1
   Transfer, source=measurementNoise, destination=yNoise$1
-end Fill})
+end Fill
+})
+; end definition of setupPhase
 
 
 ;; This form depends on whether the output diagnostics are to
@@ -214,17 +216,18 @@ end Fill
 !ifdef(flagSuppressRegularOutput,{
   !define(flagSkipWritingDiagnostics,{yes})
 })
-!ifdef(flagAvoidDirectWrite,{
-  !define(flagSkipWritingDiagnostics,{yes})
-})
 
 !ifdef(flagSkipWritingDiagnostics,{},{
-  begin Join 
-    {!forall(joinOneDiagnostic,!outputRetrievalDiagnostics)},
-    {!forall(directWriteOneDiagnostic,!outputRetrievalDiagnostics)}
-  end Join
+begin Join 
+!ifdef(flagAvoidDirectWrite,{
+    !forall(joinOneDiagnostic,!outputRetrievalDiagnostics)
+},{
+    !forall(directWriteOneDiagnostic,!outputRetrievalDiagnostics)
+})
+end Join
 })
 })
+; end definition of completePhase
 
 ; ------------------------------------------------------------- High resolution
 
@@ -232,11 +235,13 @@ end Fill
 ;; standard resolution equivalents
 !define(oneHiResTransfer,{Fill, quantity=state.$1, method=vector, $
   sourceQuantity=state.!trimHR($1), /interpolate!nl})
-!define(initHiRes,{begin Fill
+!define(initHiRes,{
+begin Fill
   Fill, quantity=state.Temperature_HR, method=vector, $
     sourceQuantity=state.Temperature, /interpolate
   !forall(oneHiResTransfer,!allHiResMolecules)
-end Fill})
+end Fill
+})
 
 ; ------------------------------------------------------------- Diversions
 
@@ -1221,6 +1226,9 @@ Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, $
 })})
 
 ; $Log$
+; Revision 1.156  2016/09/14 20:10:04  pwagner
+; Implement flagSkipWritingDiagnostics
+;
 ; Revision 1.155  2014/12/10 23:05:47  pwagner
 ; Correct erroneous calculation of AscDescMode; now based on geodAngle
 ;
