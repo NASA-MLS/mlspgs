@@ -459,7 +459,8 @@ contains
 
   pure elemental function Phi_To_Lat_Rad_D ( Phi, Beta ) result ( Lat )
     integer, parameter :: RK = kind(0.0d0)
-    real(rk) :: Lat              ! Latitude, radians (geocentric or geodetic)
+    real(rk) :: Lat              ! Latitude, radians (geocentric or geodetic,
+                                 ! depending on Phi)
     real(rk), intent(in) :: Phi  ! Orbit angle, radians (geocentric or geodetic)
     real(rk), intent(in) :: Beta ! Orbit inclination, radians
     lat = asin( sin(phi) * sin(beta) )
@@ -467,11 +468,10 @@ contains
 
   pure elemental function Phi_To_Lat_Rad_S ( Phi, Beta ) result ( Lat )
     integer, parameter :: RK = kind(0.0e0)
-    real(rk) :: Lat              ! Latitude, radians (geocentric or geodetic)
+    real(rk) :: Lat              ! Latitude, radians (geocentric or geodetic,
+                                 ! depending on Phi)
     real(rk), intent(in) :: Phi  ! Orbit angle, radians (geocentric or geodetic)
     real(rk), intent(in) :: Beta ! Orbit inclination, radians
-    real(rk) :: Csq ! Square of ratio of minor to major axis lengths of Earth-
-                    ! projected orbit-plane ellipse
     lat = asin( sin(phi) * sin(beta) )
   end function Phi_To_Lat_Rad_S
 
@@ -751,6 +751,9 @@ contains
 end module Geometry
 
 ! $Log$
+! Revision 2.34  2016/12/07 23:00:55  vsnyder
+! Remove unused use name
+!
 ! Revision 2.33  2016/09/02 00:23:25  vsnyder
 ! Add GeodToGeocLatRad, correct Phi_To_Lat
 !
