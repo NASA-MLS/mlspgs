@@ -122,11 +122,13 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! int NCopies (char* str, char* substring, [log overlap])
 ! ReadCompleteLineWithoutComments (int unit, char* fullLine, [log eof], &
 !       & [char commentChar], [char continuationChar])
-! readNumFromBaseN (char* strs, real float, int N, [char* options])
-! readIntFromBaseN (char* strs, int int, int N, [char* options])
-! readIntsFromChars (char* strs[(:)], int ints[(:)], char* forbiddens)
-! readNumsFromChars (char* strs[(:)], num num[(:)], char* forbiddens)
-! readRomanNumerals (char* strs, int int)
+! readNumFromBaseN ( char* strs, real float, int N, [char* options] )
+! readIntFromBaseN ( char* strs, int int, int N, [char* options] )
+! readIntsFromChars ( char* strs[(:)], int ints[(:)], &
+!       & [char* forbiddens], [char* ignore] )
+! readNumsFromChars ( char* strs[(:)], num num[(:)], &
+!       & [char* forbiddens], [char* ignore] )
+! readRomanNumerals ( char* strs, int int )
 ! char* remap ( char* str, char* old, char* new )
 ! char* Replace ( char* str, char oldChar, char newChar, [int max] )
 ! char* ReplaceNonAscii ( char* str, char newChar, [char* exceptions] )
@@ -1336,7 +1338,7 @@ contains
     include 'ReadANumFromChars.f9h'
   end subroutine readAnIntFromChars
 
-  SUBROUTINE readIntArrayFromChars (strs, ints, forbiddens)
+  SUBROUTINE readIntArrayFromChars (strs, ints, forbiddens, ignore)
     ! takes an array of strings and returns integer array
     ! using Fortran "read"
     ! If any element of string array is blank or contains one of forbiddens
@@ -1348,6 +1350,7 @@ contains
     CHARACTER (LEN=*), INTENT(in), dimension(:) ::   strs
     integer, intent(out), dimension(:)          ::   ints
     CHARACTER (LEN=*), INTENT(in), optional     ::   forbiddens
+    character (len=*), optional, intent(in)     :: ignore
 
     !----------Local vars----------!
     INTEGER :: i, arrSize
@@ -1360,7 +1363,7 @@ contains
      return
    endif
    do i=1, arrSize
-     call readAnIntFromChars(strs(i), ints(i), forbiddens)
+     call readAnIntFromChars(strs(i), ints(i), forbiddens, ignore)
    enddo
 
   END SUBROUTINE readIntArrayFromChars
@@ -1379,10 +1382,11 @@ contains
     include 'ReadANumFromChars.f9h'
   end subroutine readADoubleFromChars
 
-  SUBROUTINE ReadRealArrayFromChars (strs, nums, forbiddens)
+  SUBROUTINE ReadRealArrayFromChars (strs, nums, forbiddens, ignore)
     character (len=*), intent(in), dimension(:) ::   strs
     real, intent(out), dimension(:)             ::   nums
     character (len=*), intent(in), optional     ::   forbiddens
+    character (len=*), optional, intent(in)     :: ignore
 
     !----------Local vars----------!
     integer :: i, arrSize
@@ -1395,15 +1399,16 @@ contains
      return
    endif
    do i=1, arrSize
-     call readARealFromChars(strs(i), nums(i), forbiddens)
+     call readARealFromChars(strs(i), nums(i), forbiddens, ignore)
    enddo
 
   END SUBROUTINE ReadRealArrayFromChars
 
-  SUBROUTINE ReadDoubleArrayFromChars (strs, nums, forbiddens)
+  SUBROUTINE ReadDoubleArrayFromChars (strs, nums, forbiddens, ignore)
     character (len=*), intent(in), dimension(:) ::   strs
-    double precision, intent(out), dimension(:)             ::   nums
+    double precision, intent(out), dimension(:) ::   nums
     character (len=*), intent(in), optional     ::   forbiddens
+    character (len=*), optional, intent(in)     :: ignore
 
     !----------Local vars----------!
     integer :: i, arrSize
@@ -1416,7 +1421,7 @@ contains
      return
    endif
    do i=1, arrSize
-     call readADoubleFromChars(strs(i), nums(i), forbiddens)
+     call readADoubleFromChars(strs(i), nums(i), forbiddens, ignore)
    enddo
 
   END SUBROUTINE ReadDoubleArrayFromChars
@@ -3211,6 +3216,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.102  2016/12/08 00:15:41  pwagner
+! readNumsFromChars can now ignore non-numerical stuff
+!
 ! Revision 2.101  2014/09/11 18:23:57  pwagner
 ! Added isDigits
 !
