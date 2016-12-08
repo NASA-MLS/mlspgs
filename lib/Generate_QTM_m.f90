@@ -297,8 +297,11 @@ contains
     ! Create the root and top two hemispheres in the tree.
     QTM_Trees%n = 3
     QTM_Trees%Q(1)%son = [ 0, 0,  2,  3 ]; QTM_Trees%Q(1)%depth=0 ! Root
+    QTM_Trees%Q(1)%geo = h_t(lon_t(-90),90); QTM_Trees%Q(1)%Z = ZOT_t(-1,1)
     QTM_Trees%Q(2)%depth=0 ! Northern hemisphere
+    QTM_Trees%Q(2)%geo = h_t(lon_t(-90),90); QTM_Trees%Q(2)%Z = ZOT_t(-1,1)
     QTM_Trees%Q(3)%depth=0 ! Southern hemisphere
+    QTM_Trees%Q(3)%geo = h_t(lon_t(-90),-90); QTM_Trees%Q(3)%Z = ZOT_t(-1,1)
     do hemisphere = 2, 3
       do quadrant = 0, 3 ! Octant number = 4*hemisphere + octant
         octant = 4*hemisphere + quadrant
@@ -829,6 +832,10 @@ contains
 end module Generate_QTM_m
 
 ! $Log$
+! Revision 2.24  2016/12/08 02:41:06  vsnyder
+! Fill Geo and Z components of first three tree vertices, just so they don't
+! have undefined values, in case somebody wants to print them.
+!
 ! Revision 2.23  2016/12/08 02:22:35  vsnyder
 ! Corrected three mistakes concerning re-allocating components as QTM grew:
 ! 1. Checked size before increment requirement.  2-3. After computing new
