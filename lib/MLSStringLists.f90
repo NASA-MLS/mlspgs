@@ -13,13 +13,13 @@
 module MLSStringLists               ! Module to treat string lists
 !=============================================================================
 
+  use MLSCommon, only: bareFNLen
+  use MLSFinds, only: findFirst, findLast
+  use MLSStrings, only: capitalize, lowerCase, nCopies, &
+    & ReadIntsFromChars, ReadNumsFromChars, replace, reverse, &
+    & SplitDetails, splitNest, streq, trim_safe, writeIntsToChars
   use Printit_m, only: MLSMSG_allocate, MLSMSG_deallocate, &
     & MLSMSG_Error, MLSMSG_Warning, printItOut
-  use MLSCommon, only: bareFNLen
-  use MLSFinds, only: findFirst
-  use MLSStrings, only: capitalize, lowerCase, nCopies, &
-    & ReadIntsFromChars, replace, reverse, &
-    & SplitDetails, splitNest, streq, trim_safe, writeIntsToChars
 
   implicit none
   private
@@ -74,6 +74,7 @@ module MLSStringLists               ! Module to treat string lists
 ! ParseOptions       Parse options from commandline
 ! PutHashElement     puts value into hash list corresponding to key string
 ! ReadIntsFromList   Read an array of ints from a string list
+! ReadNumsFromList   Read an array of floats from a string list
 ! RemoveElemFromList removes occurrence(s) of elem from a string list
 ! RemoveHashArray    Removes key strings and corresponding values
 !                      based on a named array
@@ -137,6 +138,8 @@ module MLSStringLists               ! Module to treat string lists
 !   char* elem, log countEmpty, [char inseparator], [log part_match])
 ! ReadIntsFromList(strlist inList, int ints(:), &
 !    & [char inseparator])
+! ReadNumsFromList(strlist inList, num nums(:), &
+!    & [char inseparator], [char* ignore], [int error])
 ! RemoveElemFromList(strlist inList, strlist outList, char* elem, &
 !    & [char inseparator], [char* options])
 ! RemoveHashArray (hash {keys = values}, char* key, 
@@ -265,7 +268,8 @@ module MLSStringLists               ! Module to treat string lists
    & insertHashElement, intersection, isInList, &
    & list2Array, loopOverFormula, listMatches, &
    & nCharsInFormat, numStringElements, &
-   & optionDetail, parseOptions, putHashElement, readIntsFromList, &
+   & optionDetail, parseOptions, putHashElement, &
+   & readIntsFromList, ReadNumsFromList, &
    & removeElemFromList, removeListFromList, removeNumFromList, &
    & removeHashArray, removeHashElement, removeSwitchFromList, &
    & replaceSubstring, reverseList, reverseStrings, &
@@ -312,6 +316,11 @@ module MLSStringLists               ! Module to treat string lists
   interface MakeStringHashElement
     module procedure PutHashElement_str
     module procedure PutHashElement_strarray
+  end interface
+
+  interface ReadNumsFromList
+    module procedure ReadRealArrayFromString
+    module procedure ReadDoubleArrayFromString
   end interface
 
   interface RemoveHashElement
@@ -1990,8 +1999,8 @@ contains
   ! if the optional arg ignoreLeadingSpaces is TRUE, "a, b, c" is
   ! treated like "a,b,c"; otherwise the leading spaces are retained
 
-  subroutine List2Array(inList, outArray, countEmpty, inseparator, &
-   & IgnoreLeadingSpaces)
+  subroutine List2Array( inList, outArray, countEmpty, inseparator, &
+   & IgnoreLeadingSpaces )
     ! Dummy arguments
     character (len=*), intent(in)                 :: inList
     character (len=*), dimension(:), intent(out)  :: outArray
@@ -2744,6 +2753,63 @@ contains
 100   continue
     if ( present(error) ) error = status
   end subroutine ReadIntsFromList
+
+  ! --------------------------------------------------  ReadNumsFromList  -----
+  subroutine ReadDoubleArrayFromString ( inList, nums, separator, ignore, error )
+    ! Takes a list and reads it as an array of floats
+    ! E.g., given '6.32 0 9.05'  returns (/ 6.32, 0., 9.05 /)
+    ! Ignores any non-numerical stuff found in ignore if you supply ignore
+    !--------Argument--------!
+    character (len=*), intent(in)                        :: inList
+    double precision, dimension(:), intent(out)          :: nums
+    integer, optional, intent(out)                       :: error
+    character (len=*), optional, intent(in)              :: separator
+    character (len=*), optional, intent(in)              :: ignore
+    ! Method:
+    ! (1) Turn list to an array
+    ! (2) Read each array element separately into a float
+    integer                                              :: elem
+    integer                                              :: nElems
+    character(len=16), dimension(MAXSTRELEMENTLENGTH)    :: strArray
+    !
+    if ( present(error) ) error = 0
+    call List2Array( inList, strArray, &
+      & countEmpty=.false., inseparator=separator )
+    nElems = FindLast ( strArray, ' ', reverse=.true. )
+    if ( nElems < 1 ) then
+      if ( present(error) ) error = -999
+      return
+    endif
+    call readNumsFromChars( strArray(:nElems), nums(:nElems), ignore=ignore )
+  end subroutine ReadDoubleArrayFromString
+
+  subroutine ReadRealArrayFromString ( inList, nums, separator, ignore, error )
+    ! Takes a list and reads it as an array of floats
+    ! E.g., given '6.32 0 9.05'  returns (/ 6.32, 0., 9.05 /)
+    ! Ignores any non-numerical stuff found in ignore if you supply ignore
+    !--------Argument--------!
+    character (len=*), intent(in)                        :: inList
+    real, dimension(:), intent(out)                      :: nums
+    integer, optional, intent(out)                       :: error
+    character (len=*), optional, intent(in)              :: separator
+    character (len=*), optional, intent(in)              :: ignore
+    ! Method:
+    ! (1) Turn list to an array
+    ! (2) Read each array element separately into a float
+    integer                                              :: elem
+    integer                                              :: nElems
+    character(len=16), dimension(MAXSTRELEMENTLENGTH)    :: strArray
+    !
+    if ( present(error) ) error = 0
+    call List2Array( inList, strArray, &
+      & countEmpty=.false., inseparator=separator )
+    nElems = FindLast ( strArray, ' ', reverse=.true. )
+    if ( nElems < 1 ) then
+      if ( present(error) ) error = -999
+      return
+    endif
+    call readNumsFromChars( strArray(:nElems), nums(:nElems), ignore=ignore )
+  end subroutine ReadRealArrayFromString
 
   ! --------------------------------------------------  RemoveElemFromList  -----
   subroutine RemoveElemFromList ( inList, outList, elem, inseparator, &
@@ -4464,6 +4530,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.71  2016/12/08 00:16:41  pwagner
+! Added ReadNumsFromList
+!
 ! Revision 2.70  2016/01/20 00:20:44  pwagner
 ! Added optional arg options to Intersection to allow wildcard matches
 !
