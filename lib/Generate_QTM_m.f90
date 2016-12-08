@@ -235,8 +235,8 @@ contains
 
     type(QTM_Tree_t), intent(inout), target :: QTM_Trees
 
-    integer :: H(2,hash_size()) ! Assume QK = kind(0) for now, until we have
-                          ! a generic Hash module
+    integer, allocatable :: H(:,:) ! Assume QK = kind(0) for now, until
+                          ! we have a generic Hash module
     type(h_t), pointer :: Geo(:) ! Nonpolymorphic handle for QTM_Trees%geo_in
     integer :: Hemisphere ! 2 = north, 3 = south
     integer, allocatable :: I1_Temp(:)   ! 1-dimensional integer temp
@@ -268,6 +268,13 @@ contains
     QTM_Trees%polygon_ZOT_centroid = &
       & ZOT_t(sum(QTM_Trees%polygon_ZOT%x)/size(QTM_Trees%polygon_ZOT), &
            &  sum(QTM_Trees%polygon_ZOT%y)/size(QTM_Trees%polygon_ZOT) )
+
+    ! Now that we know the centroid of the polygon, we can calculate the
+    ! fraction of the Earth's surface occupied by a spherical cap whose angular
+    ! extent is the maximum angle between any polygon vertex and the centroid,
+    ! and use that fraction to calculate the hash size.
+
+    allocate ( h(2,hash_size(QTM_Trees)) )
 
     if ( QTM_Trees%in%x < -10 .or. QTM_Trees%in%y < -10 ) then
       if ( QTM_Trees%in_geo%lon%d < -500 .or. QTM_Trees%in_geo%lat < -500 ) return
@@ -480,7 +487,9 @@ contains
       ! used for interpolation.  The original coordinates, not the
       ! disambiguated ones, should be used for plotting in the ZOT projection.
 
-      use Hash, only: Inserted, Lookup_And_Insert
+      use Hash, only: Full, Inserted, Lookup_And_Insert
+      use MLSMessageModule, only: MLSMSG_Error
+      use MoreMessage, only: MLSMessage
 
       type(QTM_node_t), intent(inout) :: QTM ! Vertex of QTM tree
       integer, intent(in) :: Node  ! Which node 1..3
@@ -505,34 +514,44 @@ contains
 
       integer(qk) :: CZ ! z%condense_ZOT()
       integer :: Loc    ! Where was it put or found in the hash table
+      integer :: N      ! Size(QTM_Trees%ZOT_in) before adding the vertex
       integer :: Stat   ! "Inserted" if Z%condense_ZOT() inserted in H
       real(rg) :: X, Y
 
       if ( QTM%ser(node) /= 0 ) return ! Already has a serial number
       cz = qtm%z(node)%condense_ZOT()
-      loc = 0 ! Start lookup at z%condense_ZOT()
+      loc = 0 ! Start lookup at mod(z%condense_ZOT(),size(h,2))
       do
         call lookup_and_insert ( cz, h, .true., loc, stat )
+        if ( stat == full ) then
+          call MLSMessage ( MLSMSG_Error, moduleName, &
+            & 'Hash table, allocated with %d elements, is full.', size(h,2) )
+        end if
         if ( stat == inserted ) then
-          if ( QTM_Trees%n_in >= size(QTM_Trees%ZOT_in) ) then
+          QTM_Trees%n_in = QTM_Trees%n_in + 1
+          n = size(QTM_Trees%ZOT_in)
+          if ( QTM_Trees%n_in >= n ) then
             ! Make ZOT_in etc twice as big as before
-            allocate ( z_temp ( 2*size(QTM_Trees%ZOT_in) ) )
+            n = 2 * n
+            allocate ( z_temp ( n ) )
             z_temp(1:QTM_Trees%n_in) = QTM_Trees%ZOT_in(1:QTM_Trees%n_in)
             call move_alloc ( z_temp, QTM_Trees%ZOT_in )
-            allocate ( i1_temp ( 2*size(QTM_Trees%ZOT_in) ) )
-            i1_temp = QTM_Trees%n_adjacent_in(1:QTM_Trees%n_in)
+            allocate ( i1_temp ( n ) )
+            i1_temp(1:QTM_Trees%n_in) = &
+              & QTM_Trees%n_adjacent_in(1:QTM_Trees%n_in)
             call move_alloc ( i1_temp, QTM_Trees%n_adjacent_in )
-            allocate ( i2_temp(6,2*size(QTM_Trees%ZOT_in)) )
-            i2_temp = QTM_Trees%adjacent_in(1:6,1:QTM_Trees%n_in)
+            allocate ( i2_temp(6,n) )
+            i2_temp(1:6,1:QTM_Trees%n_in) = &
+              & QTM_Trees%adjacent_in(1:6,1:QTM_Trees%n_in)
             call move_alloc ( i2_temp, QTM_Trees%adjacent_in )
           end if
-          QTM_Trees%n_in = QTM_Trees%n_in + 1
           ! Disambiguate ZOT coordinates, because the outer edges of the ZOT
           ! projection represent each edge of the southern hemisphere of the
           ! original octahedron twice.
           x = merge(qtm%z(node)%x,abs(qtm%z(node)%x),abs(qtm%z(node)%y)/=1.0_rg)
           y = merge(qtm%z(node)%y,abs(qtm%z(node)%y),abs(qtm%z(node)%x)/=1.0_rg)
           QTM_Trees%ZOT_in(QTM_Trees%n_in) = zot_t(x,y)
+          QTM_Trees%n_adjacent_in(QTM_Trees%n_in) = 0
           h(2,loc) = QTM_Trees%n_in ! Remember coordinates' serial number
           exit
         end if
@@ -761,16 +780,39 @@ contains
 
   ! -----     Private Procedures     -----------------------------------
 
-  ! Compute a hash table size that is at least 2**QTM_Depth + 2, and that
-  ! has no prime factors less than 11.
-  pure integer function Hash_Size ( ) result ( NH )
-    use QTM_m, only: QTM_Depth
-    nh = 2**(2*QTM_depth)+3
+  ! Compute a hash table size that is big enough to represent all the
+  ! vertices that might be in the polygon, and that has no prime factors
+  ! less than 11.
+
+  pure integer function Hash_Size ( QTM_Trees ) result ( NH )
+
+    type(QTM_Tree_t), intent(in) :: QTM_Trees
+    type(ECR_t) :: Centroid ! Polygon centroid
+    integer :: I
+    real(rg) :: MinCos      ! minimum of cos(between Centroid and Point)
+    type(ECR_t) :: Point    ! A polygon vertex
+
+    ! The area of a spherical cap of angular extent A is 2 pi R^2 ( 1 - cos(A)).
+    ! A spherical cap that encloses the polygon has an angular extent of
+    ! the maximum angle between any vertex and the centroid.  The area of the
+    ! Earth (as a sphere) is 4 pi R^2.  So the fraction of the Earth covered
+    ! by a spherical cap big enough to enclose the polygon is is
+    ! 0.5 * ( 1 - cos(A) ).
+
+    minCos = 2
+    centroid = QTM_Trees%polygon_geo_centroid%surf_ECR(norm=.true.)
+    do i = 1, size(QTM_Trees%polygon_geo)
+      point = QTM_Trees%polygon_geo(i)%surf_ECR(norm=.true.)
+      minCos = min(minCos, point .dot. centroid)
+    end do
+
+    nh = ceiling(2**(2*QTM_Trees%level-1) * (1 - minCos)) + 3
     do
       if ( mod(nh,2) /= 0 .and. mod(nh,3) /= 0 .and. mod(nh,5) /= 0 .and. &
          & mod(nh,7) /= 0 ) exit
       nh = nh + 1
     end do
+
   end function Hash_Size
 
 !=============================================================================
@@ -787,6 +829,15 @@ contains
 end module Generate_QTM_m
 
 ! $Log$
+! Revision 2.23  2016/12/08 02:22:35  vsnyder
+! Corrected three mistakes concerning re-allocating components as QTM grew:
+! 1. Checked size before increment requirement.  2-3. After computing new
+! size and allocating i1_temp and i2_temp, assigned to them without (1:n_in),
+! so they were automatically reallocated to the old size.  Calculate the hash
+! table size using the fraction of the Earth's surface occupied by a
+! spherical cap with a radial extent equal to the maximum angle between any
+! polygon vertex and its centroid, instead of the whole Earth.
+!
 ! Revision 2.22  2016/11/12 01:31:28  vsnyder
 ! Add Path_Vertices, to store mapping from QTM to vertices near the path
 !
