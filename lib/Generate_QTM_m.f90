@@ -791,16 +791,18 @@ contains
 
     type(QTM_Tree_t), intent(in) :: QTM_Trees
     type(ECR_t) :: Centroid ! Polygon centroid
-    integer :: I
+    integer :: I, L
     real(rg) :: MinCos      ! minimum of cos(between Centroid and Point)
     type(ECR_t) :: Point    ! A polygon vertex
 
     ! The area of a spherical cap of angular extent A is 2 pi R^2 ( 1 - cos(A)).
-    ! A spherical cap that encloses the polygon has an angular extent of
-    ! the maximum angle between any vertex and the centroid.  The area of the
-    ! Earth (as a sphere) is 4 pi R^2.  So the fraction of the Earth covered
-    ! by a spherical cap big enough to enclose the polygon is is
-    ! 0.5 * ( 1 - cos(A) ).
+    ! A spherical cap that encloses the polygon has an angular extent of the
+    ! maximum angle between any vertex and the centroid.  The area of the Earth
+    ! (as a sphere) is 4 pi R^2.  So the fraction of the Earth covered by a
+    ! spherical cap big enough to enclose the polygon is 0.5 * ( 1 - cos(A) ). 
+    ! We also need to allow for vertices adjacent to the polygon by adding the
+    ! equivalent of one more parallel of latitude, which is done by multiplying
+    ! the area by 1 + 1.0 / 2**level
 
     minCos = 2
     centroid = QTM_Trees%polygon_geo_centroid%surf_ECR(norm=.true.)
@@ -809,7 +811,9 @@ contains
       minCos = min(minCos, point .dot. centroid)
     end do
 
-    nh = ceiling(2**(2*QTM_Trees%level-1) * (1 - minCos)) + 3
+    l = 2 ** ( QTM_Trees%level - 1 )
+
+    nh = ceiling(2* l * l * (1 + 2.0/l) * (1 - minCos)) + 3
     do
       if ( mod(nh,2) /= 0 .and. mod(nh,3) /= 0 .and. mod(nh,5) /= 0 .and. &
          & mod(nh,7) /= 0 ) exit
@@ -832,6 +836,9 @@ contains
 end module Generate_QTM_m
 
 ! $Log$
+! Revision 2.25  2016/12/09 00:44:26  vsnyder
+! Extra space in hash table for boundary vertices
+!
 ! Revision 2.24  2016/12/08 02:41:06  vsnyder
 ! Fill Geo and Z components of first three tree vertices, just so they don't
 ! have undefined values, in case somebody wants to print them.
