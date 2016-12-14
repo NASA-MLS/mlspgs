@@ -50,7 +50,7 @@ module Dump_Options
 !      ---            -------
 !       @              show differences in the goldbrick-style
 !       B              show Bandwidth, % of array that is non-zero
-!       H              show rank, TheShape of array
+!       H              show rank, shape of array
 !       L              laconic; skip printing name, size of array
 !       N              Show where NaNs and Infs are located
 !       R              rms       -- min, max, etc.
@@ -59,7 +59,7 @@ module Dump_Options
 !       g              gaps      
 !       l              collapse (last index)
 !       r              ratios    -- min, max, etc. of differences' ratios
-!       s              stats     -- number of differences
+!       s              stats     -- number, % of differences
 !       p              transpose 
 !       t              trim      
 !       u              unique    
@@ -280,26 +280,26 @@ contains
       ! The following are in order according to their option letters
       call output( '     ' // dopt_aubrick     // '              show aubrick, diffs in goldbrick style', advance='yes' )
       call output( '     ' // dopt_bandwidth   // '              show Bandwidth, % of array that is non-zero', advance='yes' )
-      call output( '     ' // dopt_shape       // '              show rank, TheShape of array', advance='yes' )
+      call output( '     ' // dopt_shape       // '              show rank, shape of array', advance='yes' )
       call output( '     ' // dopt_laconic     // '              laconic; skip printing name, size of array', advance='yes' )
       call output( '     ' // dopt_NaNs        // '              show where NaNs and Infs are located', advance='yes' )
       call output( '     ' // dopt_RMS         // '              rms       -- min, max, etc.', advance='yes' )
       call output( '     ' // dopt_table       // '              table of % vs. amount of differences (pdf)', advance='yes' )
       call output( '     ' // dopt_clean       // '              clean', advance='yes' )
-      call output( '     ' // dopt_clean       // '              direct', advance='yes' )
+      call output( '     ' // dopt_direct      // '              direct', advance='yes' )
       call output( '     ' // dopt_gaps        // '              gaps      ', advance='yes' )
       call output( '     ' // dopt_collapse    // '              collapse (last index)', advance='yes' )
       call output( '     ' // dopt_ratios      // '              ratios    -- min, max, etc. of difference ratios', advance='yes' )
-      call output( '     ' // dopt_stats       // '              stats     -- number of differences', advance='yes' )
+      call output( '     ' // dopt_stats       // '              stats     -- number, % of differences', advance='yes' )
       call output( '     ' // dopt_transpose   // '              transpose (for rank 2 arrays only)', advance='yes' )
       call output( '     ' // dopt_trim        // '              trim      ', advance='yes' )
       call output( '     ' // dopt_unique      // '              unique    ', advance='yes' )
       call output( '     ' // dopt_verbose     // '              verbose   ', advance='yes' )
       call output( '     ' // dopt_cyclic      // '              cyclic    ', advance='yes' )
       call output( '     ' // dopt_wholeArray  // '              wholearray', advance='yes' )
-      call output( '      W[i]           wholearray, looping over ith index', advance='yes' )
-      call output( '                     (for rank 3 and 4 arrays only)', advance='yes' )
-      call output( '      1 or 2 or ..   ignored; calling routine is free to interpret', advance='yes' )
+      call output( '     W[i]           wholearray, looping over ith index', advance='yes' )
+      call output( '                    (for rank 3 and 4 arrays only)', advance='yes' )
+      call output( '     1 or 2 or ..   ignored; calling routine is free to interpret', advance='yes' )
       call output( ' ', advance='yes' )
       call output( 'An exception is the behavior of w (wholearray):', advance='yes' )
       call output( 'if all {@HNRblrs} are FALSE, i.e. unset, the whole array is dumped (or diffed)', advance='yes' )
@@ -364,11 +364,20 @@ contains
   end subroutine Set_Options
 
   ! -----------------------------------------------  TheDumpBegins -----
+  ! A warm-up subroutine that transfers the options string to the Dopts
   subroutine TheDumpBegins ( Options, ThisIsADiff )
     use Output_m, only: StampOptions
     character(len=*), intent(in), optional :: Options
     logical, intent(in), optional          :: ThisIsADiff
     logical :: MyDiff
+    ! Executable
+    ! Were we called with the trigger '?'?
+    if ( present(options) ) then
+      if ( index( options, '?' ) > 0 ) then
+        call DumpDumpOptions ( options )
+        stop
+      endif
+    endif
     myDiff = .false.
     if ( present(thisIsADiff) ) myDiff = thisIsADiff
     nameHasBeenPrinted = .false.
@@ -399,6 +408,9 @@ contains
 end module Dump_Options
 
 ! $Log$
+! Revision 2.4  2016/12/14 01:20:55  pwagner
+! Print meaning of all options if options is '?'
+!
 ! Revision 2.3  2016/09/09 20:09:51  pwagner
 ! Added Au (Gold) brick option removing some hay from the stack of statistics
 !
