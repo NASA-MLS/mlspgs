@@ -16,11 +16,11 @@ module HIGHOUTPUT
   ! See also dump_0 and output_m
   
   use Dates_module, only:  buildCalendar, daysInMonth, &
-    & Reformatdate, reformatTime, utc_to_yyyymmdd
-  use Machine, only: crash_burn, exit_with_status, nevercrash
+    & ReformatDate, reformatTime, utc_to_yyyymmdd
+  use Machine, only: crash_burn, exit_with_status, neverCrash
   use MLSCommon, only: MLSDebug, MLSVerbose
-  use MLSFinds, only: findfirst
-  use MLSStringlists, only: expandStringRange, getStringElement, &
+  use MLSFinds, only: findFirst
+  use MLSStringLists, only: expandStringRange, getStringElement, &
     & List2Array, nCharsInFormat, numStringElements, switchDetail, wrap
   use MLSStrings, only: lowercase, ncopies, &
     & Trim_safe, writeIntsToChars
@@ -32,11 +32,11 @@ module HIGHOUTPUT
     & TimeStampOptions, timeStampOptions_t, &
     & BothPrUnit, invalidPrUnit, MSGLogPrUnit, &
     & OutputLines, outputLinesPrUnit, stdoutPrUnit
-  use Printit_m, only: assembleFullLine, get_config, &
+  use PrintIt_m, only: assembleFullLine, get_config, &
     & MLSMSG_Crash, MLSMSG_Debug, &
     & MLSMSG_Severity_to_quit, &
     & MLSMSG_Warning, &
-    & PrintitOut, MLSMessageConfig
+    & PrintItOut, MLSMessageConfig
   use Toggles, only: switches
   implicit none
   private
@@ -51,26 +51,26 @@ module HIGHOUTPUT
 !                            *-----------------------------------------------*
 !                            *            Your message here                  *
 !                            *-----------------------------------------------*
-! BeVerbose                Do extra printing?
+! BeVerbose                Should we do extra printing?
 ! blanksToColumn           print blanks [or fill chars] out to specified column
 ! blanksToTab              print blanks [or fill chars] out to next tab stop
 ! dump                     dump output or stamp options
 ! dumpsize                 print a nicely-formatted memory size 
 ! dumptabs                 print the current tab stop positions
 ! getStamp                 get stamp being added to every output
-! headLine                 print a line with extra formatting features
+! headLine                 print a line with eye-catching features
 !                           e.g., '*-------  Your message here   -------*'
-! LetsDebug                Do debug printing?
-! numNeedsFormat           return what format is need to output num
-! numToChars               return what would be printed by output
+! LetsDebug                Should we do debug printing?
+! numNeedsFormat           return what format is needed to output num
+! numToChars               return what string would be printed by output
 ! outputCalendar           output nicely-formatted calendar page
 ! output_date_and_time     print nicely formatted date and time
 ! outputList               output array as comma-separated list; e.g. '(1,2,..)'
 ! outputNamedValue         print nicely formatted name and value
-! outputTable              output 2-darray as cells in table
+! outputTable              output 2-d array as cells in table
 ! resettabs                restore tab stops to what was in effect at start
 ! restoreSettings          restore default settings for output, stamps, tabs
-! setStamp                 set stamp to be added to every output automatically
+! setStamp                 set stamp to be automatically printed on every line
 ! setTabs                  set tab stops (to be used by tab)
 ! startTable               initialize a 2-d table of cells to be output later
 ! tab                      move to next tab stop
@@ -103,7 +103,7 @@ module HIGHOUTPUT
 !          [char* msg], [char* dateFormat], [char* timeFormat], 
 !          [double CPU_seconds], [int wallClock_seconds], [char* advance] )
 ! outputCalendar ( [char* date], [char* datenote], [char* notes(:)], 
-!          [dontwrap] )
+!          [log dontwrap, [log moonPhases] ] )
 ! outputList ( values(:), [char* sep], [char* delims] )
 ! outputNamedValue ( char* name, value, [char* advance],
 !          [char colon], [char fillChar], [char* Before], [char* After], 
@@ -1129,11 +1129,13 @@ contains
   end function numToChars_single
 
   ! ---------------------------------------  OUTPUTCALENDAR  -----
-  subroutine OUTPUTCALENDAR ( date, datenote, notes, dontWrap )
-    ! output a nicely-formatted calendar of current month with
-    ! today's date in "bold"
+  subroutine OUTPUTCALENDAR ( date, datenote, notes, dontWrap, moonPhases )
+    use dates_module, only: NextMoon
+    use MLSStringLists, only: CatLists
+    ! output a nicely-formatted calendar of the current month with
+    ! today's date marked in "bold"
     ! Args
-    character(len=*), intent(in), optional :: date ! date instead of current one
+    character(len=*), intent(in), optional :: date ! use date instead of today
     ! dateNote, (notes), if present, is (an array of)
     ! stringLists, (one per day in the month,)
     character(len=*), optional :: dateNote ! Note for the current date
@@ -1143,10 +1145,12 @@ contains
     ! which will be printed on a separate line within the square
     character(len=*), dimension(:), optional :: notes
     logical, optional                        :: dontWrap ! Dont wrap notes to fit
+    logical, optional                        :: moonPhases ! Show new, full moons
     ! Internal variables
     integer, parameter :: MAXNOTELENGTH = 256
     ! This should be modified for internationalization; e.g. with
     ! an include statement or suchlike
+    ! The next two arrays may be customized for non-English users
     character(len=*), dimension(12), parameter :: MONTHNAME = (/ &
       & 'January  ', 'February ', 'March    ', 'April    ', 'May      ', &
       & 'June     ', 'July     ', 'August   ', 'September', 'October  ', &
@@ -1162,13 +1166,17 @@ contains
     integer :: col1
     integer :: col2
     character(len=16) :: date2, dateString
+    character(len=16) :: fullDate, newDate
     integer :: day
     integer, dimension(6,7) :: days, daysOfYear
     integer :: ErrTyp
+    integer :: FullMoonDay
     integer :: iwk
     integer :: month
     logical :: myDontWrap
+    integer :: NewMoonDay
     character(len=10) :: noteString
+    character(len=128), dimension(42) :: myNotes
     integer :: numRows
     integer :: numWeeks
     integer :: row
@@ -1185,6 +1193,8 @@ contains
       dateString = '' ! Intel 12 and earlier doesn't fill with blanks
       call date_and_time ( date=dateString )
     end if
+    myNotes = ' '
+    if ( present(notes) ) myNotes(1:size(notes) ) = notes
     col1 = index(lowercase(dateString), 't')
     if ( col1 > 0 ) then
       date2 = dateString(1:col1-1)
@@ -1196,6 +1206,28 @@ contains
     call utc_to_yyyymmdd( date2, ErrTyp, year, month, day )
     if ( month < 0 ) then
     end if
+    FullMoonDay = 0
+    NewMoonDay = 0
+    if ( present(moonPhases) ) then
+      if ( moonPhases) then
+        fullDate = nextMoon( date2(1:8) // '01', 'full' )
+        newDate = nextMoon( date2(1:8) // '01', 'new' )
+        read ( fullDate(9:10), * ) FullMoonDay
+        read ( newDate(9:10), * ) NewMoonDay
+        ! Add these to notes if present
+        if ( present(notes) ) then
+          do aday=1, min( size(notes), daysInMonth( month, year ) )
+            if ( aday == FullMoonday ) then
+              myNotes(aday) = catLists( 'Full moon', myNotes(aday), inseparator )
+              ! call outputnamedValue ( 'fullmoonday', trim(myNotes(aday)) )
+            elseif ( aday == newMoonday ) then
+              myNotes(aday) = catLists( 'New moon', myNotes(aday), inseparator )
+              ! call outputnamedValue ( 'newmoonday', trim(myNotes(aday)) )
+            endif
+          enddo
+        endif
+      endif
+    endif
     call buildCalendar( year, month, days, daysOfYear )
     ! Temporary use of   w i d e  tabstops
     call settabs( '14-210+14' )
@@ -1227,9 +1259,9 @@ contains
     if ( present(notes) ) then
       do aday=1, min( size(notes), daysInMonth( month, year ) )
         if ( myDontWrap ) then
-          wrappedNote = notes(aday)
+          wrappedNote = myNotes(aday)
         else
-          call wrap( notes(aday), wrappedNote, 10, '/' )
+          call wrap( myNotes(aday), wrappedNote, 10, '/' )
         end if
         numRows = max( numRows, &
           & NumStringElements( wrappedNote, countEmpty, inseparator ) + 2 &
@@ -1274,15 +1306,19 @@ contains
           else if( present(notes) ) then
             if ( days(iwk, wkdy) <= size(notes) ) then
               if ( myDontWrap ) then
-                wrappedNote = notes(days(iwk, wkdy))
+                wrappedNote = myNotes(days(iwk, wkdy))
               else
-                call wrap( notes(days(iwk, wkdy)), wrappedNote, 10, '/' )
+                call wrap( myNotes(days(iwk, wkdy)), wrappedNote, 10, '/' )
               end if
               call GetStringElement ( wrappedNote, noteString, &
                 & row-1, countEmpty, inseparator )
               if ( noteString == inseparator ) noteString = ' '
               call output_( noteString )
             end if
+          else if ( days(iwk, wkdy) == FullMoonday .and. row < 3 ) then
+            call output_( 'Full moon' )
+          else if ( days(iwk, wkdy) == NewMoonday .and. row < 3 ) then
+            call output_( 'New moon' )
           end if
           if ( today ) then
             call blanksToColumn(col2-1)
@@ -2219,6 +2255,9 @@ contains
 end module HIGHOUTPUT
 
 ! $Log$
+! Revision 2.14  2016/12/14 01:22:40  pwagner
+! outputCalendar prints new, full moons if moonphases present and ttrue
+!
 ! Revision 2.13  2016/11/15 19:27:19  pwagner
 ! May print elapsed WallClock_seconds at Finish
 !
