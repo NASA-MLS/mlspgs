@@ -18,7 +18,7 @@ module MLSStringLists               ! Module to treat string lists
   use MLSStrings, only: capitalize, lowerCase, nCopies, &
     & ReadIntsFromChars, ReadNumsFromChars, replace, reverse, &
     & SplitDetails, splitNest, streq, trim_safe, writeIntsToChars
-  use Printit_m, only: MLSMSG_allocate, MLSMSG_deallocate, &
+  use PrintIt_m, only: MLSMSG_Allocate, MLSMSG_Deallocate, &
     & MLSMSG_Error, MLSMSG_Warning, printItOut
 
   implicit none
@@ -93,6 +93,7 @@ module MLSStringLists               ! Module to treat string lists
 ! StringElementNum   Returns element number of test string in string list
 ! SwitchDetail       Returns detail level of switch in list of switches
 ! unquote            Removes surrounding [quotes]
+! unwrap             Unwrap a multi-line string to a single line
 ! wrap               Wrap a string to fit within prescribed width
 !                      using separator as newline
 ! === (end of toc) ===
@@ -168,6 +169,7 @@ module MLSStringLists               ! Module to treat string lists
 ! int SwitchDetail(strlist inList, char* test_switch, [char* options])
 !      by default, options is "-f" to ignore leading spaces
 ! char* unquote (char* str, [char* quotes], [char* cquotes], [char* options])
+! char* unwrap ( char* str )
 ! wrap ( char* str, char* outstr, int width, [char inseparator], &
 !   & [char break], [char mode], [char* quotes], [int addedLines] )
 
@@ -275,7 +277,7 @@ module MLSStringLists               ! Module to treat string lists
    & replaceSubstring, reverseList, reverseStrings, &
    & snipList, sortArray, sortList, stringElement, stringElementNum, &
    & switchDetail, &
-   & unquote, wrap
+   & unquote, unwrap, wrap
 
   interface BooleanValue
     module procedure BooleanValue_log, BooleanValue_str
@@ -329,6 +331,10 @@ module MLSStringLists               ! Module to treat string lists
     ! module procedure RemoveHashElement_log
   end interface
 
+  interface unwrap
+    module procedure unwrap_array, unwrap_list
+  end interface
+
   ! Public data
   character(len=16), public, save :: STRINGLISTOPTIONS = ' '
 
@@ -340,7 +346,8 @@ module MLSStringLists               ! Module to treat string lists
   integer, public, parameter :: lenORSIZETOOSMALL=-999
   
   ! A limitation among string list operations
-  integer, private, parameter :: MAXSTRLISTLENGTH = 4*4096
+  integer, private, parameter :: MaxNumStrings       = 4096
+  integer, private, parameter :: MAXSTRLISTLENGTH    = 4*4096
   integer, private, parameter :: MAXSTRELEMENTLENGTH = BareFNlen
 
   character (len=1), parameter    :: COMMA = ','
@@ -4228,6 +4235,50 @@ contains
     end subroutine RemoveAnyQuotedStrings
   end function unquote
 
+  ! ---------------------unwrap ---------------
+  ! Unwrap str by replacing separators (meaning line feeds) between 2 breaks
+  ! with a single break
+  ! option         values                             default     
+  ! inseparator --                                      ','       
+  ! break       --                                      ' '       
+  ! mode        -- 'soft' or 'hard'                    'hard'
+  ! mode        -- don't break within quoted strings   (none)     
+  function unwrap_array( strings ) result( outstr )
+    ! Args
+    character (len=*), dimension(:), intent(in)   :: strings
+    character (len=MAXSTRLISTLENGTH)              :: outstr
+    ! Internal variables
+    logical, parameter                            :: countEmpty = .true.
+    integer                                       :: i
+    ! Executable
+    outstr = ' '
+    if ( size(strings) < 1 ) return
+    outstr = strings(1)
+    do i=2, size(strings)
+      outstr = trim(outstr) // ' ' // strings(i)
+    enddo
+  end function unwrap_array
+
+  function unwrap_list( str, inseparator, break ) result( outstr )
+    ! Args
+    character (len=*), intent(in)                 :: str
+    character (len=MAXSTRLISTLENGTH)              :: outstr
+    character (len=*), optional, intent(in)       :: inseparator ! if not ','
+    character (len=*), optional, intent(in)       :: break ! if not ' '
+    ! Internal variables
+    logical, parameter                            :: countEmpty = .true.
+    integer                                       :: n
+    character (len=256), dimension(:), pointer    :: strings => null()
+    ! Executable
+    outstr = ' '
+    n = NumStringElements( str, countEmpty, inseparator )
+    if ( n < 1 ) return
+    allocate( strings(1:n) )
+    call list2Array( str, strings, countEmpty, inseparator=inseparator )
+    outstr = unwrap( strings )
+    deallocate( strings )
+  end function unwrap_list
+
   ! ---------------------wrap ---------------
   ! Wrap str by putting separators (meaning line feeds) between 2 breaks
   ! so no line exceeds width
@@ -4319,23 +4370,23 @@ contains
     integer, intent(in)                           :: width
     character (len=*), optional, intent(in)       :: inseparator ! if not ','
     character (len=*), optional, intent(in)       :: break ! if not ' '
-    character (len=*), optional, intent(in)       :: mode ! if not 'hard'
+    character (len=*), optional, intent(in)       :: mode ! if not 'hard', then 'soft'
     integer, optional, intent(in)                 :: offset
     integer, optional, intent(out)                :: lastPos
     integer, optional, intent(inout)              :: addedLines ! by wrapping
     ! Internal variables
-    character (len=4)               :: separator
-    integer :: dsnext
-    integer :: dsp
-    integer :: ko
-    integer :: kp
-    character(len=1) :: myBreak
-    integer :: myLastPos
-    character(len=1) :: myMode
-    integer :: myOffset
-    integer :: nextwidth
-    integer :: so
-    integer :: sp
+    integer                                       :: dsnext    
+    integer                                       :: dsp       
+    integer                                       :: ko        
+    integer                                       :: kp        
+    character(len=1)                              :: myBreak   
+    character(len=1)                              :: myMode    
+    integer                                       :: myLastPos 
+    integer                                       :: myOffset  
+    integer                                       :: nextwidth 
+    integer                                       :: so        
+    integer                                       :: sp        
+    character (len=2)                             :: separator 
     ! Executable
     if(present(inseparator)) then
       separator = inseparator
@@ -4350,9 +4401,6 @@ contains
     if ( present(offset) ) myOffset = offset
     outstr = str
     if ( len_trim(str) <= width ) return
-    ! print *, 'str ', str
-    ! print *, 'len_trim(str) ', len_trim(str)
-    ! print *, 'len(outstr) ', len(outstr)
     so = 1 ! this is the current character number of str
     ko = 1 ! this is the current character number of outstr
     myLastPos = ko + myOffset
@@ -4362,11 +4410,24 @@ contains
       if ( so == 1 ) nextwidth = max( 1, nextwidth-myOffset )
       ! print *, 'nextwidth ', nextwidth
       if ( nextwidth < 1 ) exit
-      ! does the rest of str fit within nextwidth?
+      ! does the rest of str fit within nextwidth? If so, copy it to outstr, and we're done
       if ( nextwidth >= len_trim(str) - so + 1 ) then
         outstr(ko:ko + nextwidth - 1) = str(so:so + nextwidth - 1)
         myLastPos = myLastPos + nextWidth
         exit
+      endif
+      ! Is there a separator between here and nextwidth?
+      dsp = ( index( str(so:so+nextwidth-1), trim(separator), back=.true. ) )
+      if ( dsp > 0 ) then
+        ! Yes, so we break there
+        myLastPos = 1
+        sp = so + dsp - 2 + len_trim(separator)
+        kp = ko + dsp - 2 + len_trim(separator)
+        outstr(ko:kp) = str(so:sp)
+        ko = kp + 1
+        so = sp + 1
+        if ( present(addedLines) ) addedLines = addedLines + 1
+        cycle
       endif
       select case (lowerCase(myMode))
       case ('h')
@@ -4377,7 +4438,7 @@ contains
         dsp = index( str(so:so+nextwidth-1), myBreak, back=.true. )
         ! print *, 'so, ko ', so, ko
         ! print *, 'dsp ', dsp
-        if ( dsp > 0 .and. dsp < nextwidth ) then
+        if ( dsp > 0 .and. dsp < nextwidth+1 ) then
           ! Yes, so we break there
           myLastPos = 1
           sp = so - 1 + dsp
@@ -4407,7 +4468,7 @@ contains
         ! even though the resulting width may be slightly greater than planned
         ! 1st: try to wrap within width
         dsp = index( str(so:so+nextwidth-1), myBreak, back=.true. )
-        if ( dsp > 0 .and. dsp < nextwidth ) then
+        if ( dsp > 0 .and. dsp < nextwidth+1 ) then
           myLastPos = 1
           ! Yes, so we break there
           sp = so - 1 + dsp
@@ -4530,6 +4591,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.72  2016/12/14 01:23:21  pwagner
+! Added unwrap
+!
 ! Revision 2.71  2016/12/08 00:16:41  pwagner
 ! Added ReadNumsFromList
 !
