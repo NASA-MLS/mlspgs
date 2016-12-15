@@ -23,6 +23,7 @@ adopted
 angle
 AscDescMode
 ascii
+asmls
 
 b                # polarization
 baseline
@@ -249,6 +250,9 @@ zonalavg
 temperature
 
 # $Log$
+# Revision 2.74  2016/12/15 18:22:54  pwagner
+# Added asmls instrument
+#
 # Revision 2.73  2016/08/30 23:43:45  vsnyder
 # Add ECR and TngtGeodLat
 #
