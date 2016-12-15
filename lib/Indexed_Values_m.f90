@@ -175,6 +175,8 @@ module Indexed_Values_m
     module procedure Dump_Value_1D_List, Dump_Value_1D_p_List
 !     module procedure Dump_Value_1D_List_d, Dump_Value_1D_List_s
 !     module procedure Dump_Value_1D_p_List_d, Dump_Value_1D_p_List_s
+    module procedure Dump_Value_2D_List
+!     module procedure Dump_Value_2D_List_d, Dump_Value_2D_List_s
   end interface
 
   interface Interpolate
@@ -238,13 +240,27 @@ contains
 
   subroutine Dump_Value_1D_List ( Value, Name )
     use Output_m, only: NewLine, Output
+!     type(value_1D_list_t(rk)), intent(in) :: Value(:)
+    type(value_1D_list_t), intent(in) :: Value(:)
+    character(len=*), intent(in), optional :: Name
     include "Dump_Value_1D_List.f9h"
   end subroutine Dump_Value_1D_List
 
   subroutine Dump_Value_1D_p_List ( Value, Name )
     use Output_m, only: Output
+!     type(value_1D_list_t(rk)), intent(in) :: Value(:)
+    type(value_1D_p_t), intent(in) :: Value(:)
+    character(len=*), intent(in), optional :: Name
     include "Dump_Value_1D_p_List.f9h"
   end subroutine Dump_Value_1D_p_List
+
+  subroutine Dump_Value_2D_List ( Value, Name )
+    use Output_m, only: NewLine, Output
+!     type(value_2D_list_t(rk)), intent(in) :: Value(:)
+    type(value_2D_list_t), intent(in) :: Value(:)
+    character(len=*), intent(in), optional :: Name
+    include "Dump_Value_2D_List.f9h"
+  end subroutine Dump_Value_2D_List
 
   subroutine Interpolate_Polymorphic_1D ( Field, Eta, Path )
     ! Select one interpolator, depending upon the type of Eta
@@ -376,6 +392,9 @@ contains
 end module Indexed_Values_m
 
 ! $Log$
+! Revision 2.7  2016/12/15 18:45:09  vsnyder
+! Move argument declarations from includes to Indexed_Values
+!
 ! Revision 2.6  2016/12/03 02:43:46  vsnyder
 ! Add Convert_QTM_1D_to_P
 !
