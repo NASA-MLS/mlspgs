@@ -12,8 +12,8 @@
 ! subroutine Dump_Value_1D_List* ( Value, Name )
 
 !     type(value_1D_list_t(rk)), intent(in) :: Value(:)
-    type(value_1D_list_t), intent(in) :: Value(:)
-    character(len=*), intent(in), optional :: Name
+!     type(value_1D_list_t), intent(in) :: Value(:)
+!     character(len=*), intent(in), optional :: Name
 
     integer :: I, J
 
@@ -29,6 +29,9 @@
     end do
 
 ! $Log$
+! Revision 2.2  2016/12/15 18:45:09  vsnyder
+! Move argument declarations from includes to Indexed_Values
+!
 ! Revision 2.1  2016/11/23 20:12:04  vsnyder
 ! Initial commit
 !
