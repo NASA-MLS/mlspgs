@@ -11,18 +11,18 @@
 
 module Init_MLSSignals_m
 
-  use INTRINSIC, only: ADD_IDENT, BEGIN, D, F, FIELD_FIRST, G, L, &
-    & LAST_INTRINSIC_LIT, LAST_INTRINSIC_SPEC, N, NADP, NDP, NP, NR, P, S, &
-    & SPEC_FIRST, T, T_BOOLEAN, T_NUMERIC, T_NUMERIC_RANGE, T_POLARIZATION, &
-    & T_STRING, Z
+  use intrinsic, only: add_ident, begin, d, f, field_first, g, l, &
+    & last_intrinsic_lit, last_intrinsic_spec, n, nadp, ndp, np, nr, p, s, &
+    & spec_first, t, t_boolean, t_numeric, t_numeric_range, t_polarization, &
+    & t_string, z
 
-  use INTRINSIC, only: DATA_TYPE_INDICES, DU, FIELD_INDICES, FUNC_INDICES, &
-    & LIT_INDICES, PARM_INDICES, PHYQ_DIMENSIONLESS, PHYQ_FREQUENCY, &
-    & SECTION_INDICES, SPEC_INDICES
+  use intrinsic, only: data_type_indices, du, field_indices, func_indices, &
+    & lit_indices, parm_indices, phyq_dimensionless, phyq_frequency, &
+    & section_indices, spec_indices
 
-  use INTRINSIC, only: L_EMLS, L_UMLS, L_XPTL1
-  use MOLECULES, only: INIT_MOLECULES, LAST_MOLECULE, LAST_MOLECULE_TYPE
-  implicit NONE
+  use intrinsic, only: l_asmls, l_emls, l_umls, l_xptl1
+  use molecules, only: init_molecules, last_molecule, last_molecule_type
+  implicit none
 
   public
 
@@ -174,7 +174,7 @@ contains
 
     call make_tree ( (/ &
              begin, t+t_instrumentType, &
-             l+l_emls, l+l_umls, l+l_xptl1, n+n_dt_def /) )
+             l+l_asmls, l+l_emls, l+l_umls, l+l_xptl1, n+n_dt_def /) )
     call make_tree ( (/ &
       begin, s+s_module, &          ! Must be after module
              begin, f+f_Aura, t+t_boolean, n+n_field_type, &
@@ -232,6 +232,9 @@ contains
 end module Init_MLSSignals_m
 
 ! $Log$
+! Revision 2.33  2016/12/15 18:23:27  pwagner
+! Added asmls instrument
+!
 ! Revision 2.32  2014/04/22 00:07:48  vsnyder
 ! Put InstrumentType's index in the range of type indices
 !
