@@ -88,7 +88,7 @@ type :: limb_oa_t ! 1784 bytes
    integer :: ptg_fov_bo_diag_mmif_num
    integer :: ref_mmif
    integer :: ref_solar_illum
-   integer :: ref_time(2)
+   integer :: ref_time(2) ! (1) => 1000*year + day, (2) => ms of day for ref MIF
    integer :: sat_geod_status
    real :: earth_geod_rad(32)
    real :: grnw_sid_time
@@ -129,6 +129,9 @@ end type Pad_T
 end module Rad_File_Contents
 
 ! $Log$
+! Revision 1.4  2015/04/21 01:11:08  vsnyder
+! Add comments about file structure
+!
 ! Revision 1.3  2015/01/22 02:18:56  vsnyder
 ! PGS_Interfaces.f90
 !
