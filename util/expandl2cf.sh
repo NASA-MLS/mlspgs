@@ -82,6 +82,7 @@
 #     and is in your PATH
 # (3) Nobody uses the "dotfile"--should we remove it as an option?
 # (4) Should we include an example showing no overridepaths.sh?
+# (5) How about substituting a variable for the ';' comment character?
 # --------------- End expandl2cf.sh help
 # --------------- expandl2cf.sh example
 # Example:
@@ -534,12 +535,30 @@ fi
 if [ "$wrap" = "yes" ]
 then
   mv $templ2cf $stempl2cf
-  WRAPOPTS="-v -blank 1"
+  # WRAPOPTS="-v -blank 1"
+  WRAPOPTS="-blank 1"
   if [ "$WIDTH" != "" ]
   then
     WRAPOPTS="$WRAPOPTS -width $WIDTH"
   fi
-  wrapLines $WRAPOPTS -i $stempl2cf > $templ2cf
+  if [ "$verbose" = "yes" ]
+  then
+    WRAPOPTS="-v $WRAPOPTS"
+    echo " ; --- expandl2cf.sh settings ---"      > $templ2cf
+    echo " ; dotfile: $dotfile"                  >> $templ2cf
+    echo " ; dryrun: $dryrun"                    >> $templ2cf
+    echo " ; envfile: $envfile"                  >> $templ2cf
+    # echo " ; macros: $macros"                    >> $templ2cf
+    echo " ; macrofile: $macrofile"              >> $templ2cf
+    echo " ; dryrun: $dryrun"                    >> $templ2cf
+    echo " ; expandmacros: $expandmacros"        >> $templ2cf
+    echo " ; mypath: $mypath"                    >> $templ2cf
+    echo " ; M4: $M4"                            >> $templ2cf
+    echo " ; --- End expandl2cf.sh settings ---" >> $templ2cf
+    wrapLines $WRAPOPTS -i $stempl2cf            >> $templ2cf
+  else
+    wrapLines $WRAPOPTS -i $stempl2cf            > $templ2cf
+  fi
   rm $stempl2cf
 fi
 
@@ -598,6 +617,9 @@ fi
 
 exit 0
 # $Log$
+# Revision 1.11  2016/06/01 16:34:20  pwagner
+# Expand l2cf even if debug; fallback for IDENTMAKER now in util
+#
 # Revision 1.10  2013/12/04 21:36:58  pwagner
 # env variable WIDTH can set width if wrapping lines
 #
