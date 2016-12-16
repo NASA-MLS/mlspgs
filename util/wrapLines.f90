@@ -72,7 +72,7 @@ program wrapLines
     character(len=1)    :: BREAK              = ','
     character(len=1)    :: comment            = ';'
     character(len=1)    :: MODE               = 's'
-    character(len=3)    :: eol                = ', $'
+    character(len=3)    :: eol                = ' $'
     character(len=3)    :: quotes             = '''"'
     character(len=255)  :: inputFile          = ' '     ! input filename       
     character(len=255)  :: macrosFile         = 'none'  ! output filename       
@@ -258,6 +258,7 @@ contains
     ! Added for command-line processing
      type ( options_T ), intent(in)   :: options
      ! Local variables
+     print *, c // ' --- wrapLines settings ---'
      print *, c // 'verbose?                 ', options%verbose
      print *, c // 'summarize?               ', options%summarize
      print *, c // 'wrap?                    ', options%doWrap
@@ -278,6 +279,7 @@ contains
      print *, c // 'input  file              ', trim(options%inputFile)
      endif
      print *, c // 'macros file              ', trim(options%macrosFile)
+     print *, c // ' --- End wrapLines settings ---'
     end subroutine dumpSettings
 
 !------------------------- get_options  ---------------------
@@ -390,6 +392,9 @@ contains
   end subroutine print_help
 end program wrapLines
 ! $Log$
+! Revision 1.5  2012/08/14 21:15:43  pwagner
+! l2cf could have uncommented comment lines; fixed
+!
 ! Revision 1.4  2012/08/07 18:04:46  pwagner
 ! Can wrap a supplied filename instead of stdin
 !
