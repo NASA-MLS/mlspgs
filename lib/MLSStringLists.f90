@@ -17,7 +17,7 @@ module MLSStringLists               ! Module to treat string lists
   use MLSFinds, only: findFirst, findLast
   use MLSStrings, only: capitalize, lowerCase, nCopies, &
     & ReadIntsFromChars, ReadNumsFromChars, replace, reverse, &
-    & SplitDetails, splitNest, streq, trim_safe, writeIntsToChars
+    & SplitDetails, splitNest, squeeze, streq, trim_safe, writeIntsToChars
   use PrintIt_m, only: MLSMSG_Allocate, MLSMSG_Deallocate, &
     & MLSMSG_Error, MLSMSG_Warning, printItOut
 
@@ -4384,9 +4384,10 @@ contains
     integer                                       :: myLastPos 
     integer                                       :: myOffset  
     integer                                       :: nextwidth 
+    logical, parameter                            :: NoConsecutiveSpaces = .true.
     integer                                       :: so        
     integer                                       :: sp        
-    character (len=2)                             :: separator 
+    character(len=4)                              :: separator 
     ! Executable
     if(present(inseparator)) then
       separator = inseparator
@@ -4408,6 +4409,8 @@ contains
       ! how big is next width?
       nextwidth = min(width, len_trim(str) - so + 1)
       if ( so == 1 ) nextwidth = max( 1, nextwidth-myOffset )
+      ! print *, 'separator ', separator
+      ! print *, 'len_trim(separator) ', len_trim(separator)
       ! print *, 'nextwidth ', nextwidth
       if ( nextwidth < 1 ) exit
       ! does the rest of str fit within nextwidth? If so, copy it to outstr, and we're done
@@ -4468,22 +4471,28 @@ contains
         ! even though the resulting width may be slightly greater than planned
         ! 1st: try to wrap within width
         dsp = index( str(so:so+nextwidth-1), myBreak, back=.true. )
+        ! print *, '(nextwidth+1: ', nextwidth+1
+        ! print *, '(break) dsp: ', dsp
         if ( dsp > 0 .and. dsp < nextwidth+1 ) then
           myLastPos = 1
           ! Yes, so we break there
-          sp = so - 1 + dsp
-          kp = ko + dsp - 2 + len_trim(separator)
-          outstr(ko:kp) = str(so:sp-1) // trim(separator)
-          ko = ko + dsp + len_trim(separator) - 1
+          sp = so + dsp - 1
+          kp = ko + dsp - 1 + len_trim(separator)
+          outstr(ko:) = str(so:sp) // trim(separator)
+          ! print *, 'in:  ', str(so:sp)
+          ! print *, 'out: ', outstr(ko:kp)
+          ko = kp + 1
           if ( present(addedLines) ) addedLines = addedLines + 1
           ! Now treat possibility that next chars might be spaces, too
           if ( len_trim(myBreak) > 0 ) sp = sp + 1
           dsnext = findFirst( trim_safe(str(sp:)), ' ', reverse=.true. )
           if ( dsnext < 1 ) exit
-          so = sp + dsnext - 1
+          sp = sp + dsnext
+          so = sp - 1
         else
           ! Look for next break starting with width
           dsp = index( trim_safe(str(so+nextwidth-1:)), myBreak )
+          ! print *, '(break in width) dsp: ', dsp
           if ( dsp > 0 ) then
             myLastPos = 1
             ! Yes, so we break there
@@ -4491,17 +4500,20 @@ contains
             sp = so - 1 + dsp
             kp = ko + dsp - 2 + len_trim(separator)
             outstr(ko:kp) = str(so:sp-1) // trim(separator)
+            ! print *, outstr(ko:kp)
             ko = ko + dsp + len_trim(separator) - 1
             if ( present(addedLines) ) addedLines = addedLines + 1
             ! Now treat possibility that next chars might be spaces, too
             if ( len_trim(myBreak) > 0 ) sp = sp + 1
             dsnext = findFirst( trim_safe(str(sp:)), ' ', reverse=.true. )
             if ( dsnext < 1 ) exit
-            so = sp + dsnext - 1
+            sp = sp + dsnext
+            so = sp - 1
           else
             ! No, so we must give up any further wrapping
             dsnext = min( len(str) - so, len(outstr) - ko )
             outstr(ko:ko+dsnext) = str(so:so+dsnext)
+            ! print *, outstr(ko:ko+dsnext)
             myLastPos = myLastPos + dsnext
             exit
           endif
@@ -4510,6 +4522,10 @@ contains
         ! What were you thinking? 'h' or 's' are the only modes we coded
       end select
     enddo
+    ! Remove consecutive spaces?
+    if ( len_trim(myBreak) == 0 .and. NoConsecutiveSpaces ) then
+      outstr = squeeze( outstr )
+    endif
     if ( present(lastPos) ) lastPos = myLastPos
   end subroutine wrap_noQuotes
 
@@ -4591,6 +4607,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.73  2016/12/16 21:57:09  pwagner
+! Fixed a long-standing error in wrap; hopefully w/o committing new ones
+!
 ! Revision 2.72  2016/12/14 01:23:21  pwagner
 ! Added unwrap
 !
