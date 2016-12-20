@@ -873,18 +873,22 @@ CONVSRCS = $(shell ${REECHO} -nf -prefixn=$(CONFDIR)/conv_uars/ ${CONVSRCS_BARE}
 conv_uars: $(CONFDIR)/$(MLSCFILE) $(CONVSRCS) utctotai
 	echo $(CONVSRCS)
 	echo $(CONVSRCS_BARE)
+	mv lib/PseudoToolkit.f90 lib/PseudoToolkit.f90-hide; \
 	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
           -c $(MLSCONFG) -p $@ -M $(MAKE) -O short_name=conv_uars_main -m lib \
-          -C $(MLSCFILE) $(CONVSRCS) 
+          -C $(MLSCFILE) $(CONVSRCS); \
+	  mv lib/PseudoToolkit.f90-hide lib/PseudoToolkit.f90
 
 UARSRECL_BARE =  $(shell ${REECHO} -dirn $(CONFDIR)/conv_uars/ -excl conv_uars.f90)
 UARSRECL = $(shell ${REECHO} -nf -prefixn=$(CONFDIR)/conv_uars/ ${UARSRECL_BARE})
 Dump_UARS_File: $(CONFDIR)/$(MLSCFILE) $(UARSRECL) utctotai
 	echo $(UARSRECL)
 	echo $(UARSRECL_BARE)
+	mv lib/PseudoToolkit.f90 lib/PseudoToolkit.f90-hide; \
 	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
           -c $(MLSCONFG) -p $@ -M $(MAKE) -O short_name=Dump_UARS_File_main -m lib \
           -C $(MLSCFILE) $(UARSRECL) 
+	  mv lib/PseudoToolkit.f90-hide lib/PseudoToolkit.f90
 
 dateconverter: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/dateconverter.f90 l1--itm
 	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
@@ -1455,6 +1459,9 @@ tools: chunktimes checkpvmup compare dateconverter extinctionmaker \
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.16  2016/10/18 17:50:11  pwagner
+# Added targets to build tools and tarfiles without toolkit or without MLSMessage
+#
 # Revision 1.15  2016/10/04 00:31:11  pwagner
 # IHDFEOS5INC and IHDFEOSINC fixed
 #
