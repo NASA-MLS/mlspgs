@@ -70,10 +70,12 @@ program Conv_UARS
   type(limb_oa_t) :: Limb_OA(0:1)
   type(pad_t) :: Pad
 
-  character (len=17) :: UTC_Time
   character (len=25) :: AsciiUTC(0:1)
+  character (len=17) :: UTC_Time
   character (len=8) :: N_Str
   character (len=8) :: YrDoy_str = 'yyyydnnn'
+  character (len=2048) :: CmdLine
+  character (len=127) :: IOMSG
   real(r8) :: dVI, dVIN                ! delta V angle, |delta V|, ECI, per MAF
   real(r8) :: ECI(6,1), ECR(6,1)       ! Position, velocity, for conversions
   real(r8) :: GIRD_Time
@@ -89,7 +91,7 @@ program Conv_UARS
   MAF1 = 1
   MAFn = -1  ! Signal to get it from the header
 
-  noargs = COMMAND_ARGUMENT_COUNT()
+  noargs = command_argument_count()
   if (noargs == 0) then
     print '(a)', 'No input file provided.'
     print '(2a)', 'Using defaults: Input ', trim(inFile)
@@ -101,10 +103,14 @@ program Conv_UARS
 
     do while (i <= noargs)
 
-      call GET_COMMAND_ARGUMENT (i, arg)
+      call get_command_argument (i, arg)
 
       select case (arg)
       case default
+        if ( arg(1:1) == '-' ) then
+          call usage
+          go to 9
+        end if
         infile = TRIM(arg)                 ! input filename
         if (noargs < 3) then
           print *, 'Missing output directory argument? Too few args!'
@@ -112,7 +118,7 @@ program Conv_UARS
         end if
       case ('-b', '--backdate')
         i = i + 1
-        call GET_COMMAND_ARGUMENT (i, n_str)  ! how many days to backdate times in file
+        call get_command_argument (i, n_str)  ! how many days to backdate times in file
         read( n_str, * ) n_days
         ! Now we must take account for how mmaf_time actually encodes dates
         ! It uses a convention that the year contains 1000 days
@@ -126,14 +132,14 @@ program Conv_UARS
         if ( n_days > 364 ) n_days = 1000 * (n_days/365)
       case ( '-M', '--MAF' )
         i = i + 1
-        call GET_COMMAND_ARGUMENT (i, n_str) ! First MAF
+        call get_command_argument (i, n_str) ! First MAF
         read ( n_str, * ) MAF1
         i = i + 1
-        call GET_COMMAND_ARGUMENT (i, n_str) ! Last MAF
+        call get_command_argument (i, n_str) ! Last MAF
         read ( n_str, * ) MAFn
       case ('-o', '--outdir')
         i = i + 1
-        call GET_COMMAND_ARGUMENT (i, out_dir)  ! next argument for out dir
+        call get_command_argument (i, out_dir)  ! next argument for out dir
       case ('-h', '--help')
         call usage
         go to 9
@@ -141,6 +147,9 @@ program Conv_UARS
       i = i + 1   ! Next argument
     end do
   end if
+
+  call get_command ( cmdLine )
+  print '(a)', trim(cmdLine)
 
   ! The length computed by
   ! inquire ( iolength=i ) limb_hdr(1), limb_stat(1), limb_rad(1), limb_oa(1)
@@ -151,10 +160,11 @@ program Conv_UARS
   inquire ( iolength = inlen ) &
     & limb_hdr(0), limb_stat(0), limb_rad(0), limb_oa(0), pad
   open ( unit=in_unit, file=infile, status="OLD", form="UNFORMATTED", &
-       & access="DIRECT", recl=inlen, iostat=error )
+       & access="DIRECT", recl=inlen, iostat=error, iomsg=iomsg )
 
   if (error /= 0) then
-    print *, 'No such input file: '//infile
+    print '(a,i0,2a/a)', 'Error status ', error, ' while opening ', trim(infile), &
+      & trim(iomsg)
     go to 9
   end if
 
@@ -413,6 +423,9 @@ contains
 end program Conv_UARS
 
 ! $Log$
+! Revision 1.8  2015/04/21 02:27:08  vsnyder
+! Create attributes for some components' units
+!
 ! Revision 1.7  2015/04/21 01:18:54  vsnyder
 ! Use swap routines in Swap_OA_Rec_m.  Get record size using INQUIRE with
 ! IOLENGTH=.  Spiff some printing.  Print usage with -h or --help option.
