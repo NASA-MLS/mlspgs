@@ -328,7 +328,7 @@ contains
                              & Limb_Hdr, Limb_Stat, Limb_Rad, Limb_OA )
 
     use OA_File_Contents, only: EMLS_OA_t
-    use SDPToolkit, only: PGS_TD_UTCtoTAI
+    use SDPToolkit, only: PGS_SMF_GetMsg, PGS_S_Success, PGS_TD_UTCtoTAI
     use Time_m, only: MS_to_HMS
     use UARS_to_EMLS_OA_m, only: UARS_to_EMLS_OA
 
@@ -339,6 +339,7 @@ contains
     type(limb_stat_t), intent(inout) :: Limb_Stat
     type(limb_rad_t), intent(inout) :: Limb_Rad
     type(limb_oa_t), intent(inout) :: Limb_OA
+    character(255) :: Err, Msg
 
     real :: rad(15*6,32), rad6(15,6,32), prec(15*6,32), prec6(15,6,32)
     equivalence (rad, rad6), (prec, prec6)
@@ -374,6 +375,13 @@ contains
     ! get and save the GIRD time:
 
     stat = PGS_TD_UTCtoTAI (utc_time, tai_time)
+    if ( stat /= PGS_S_Success ) then
+      print '(a,i0)', 'Status from PGS_TD_UTCtoTAI = ', stat
+      print '(a)', 'Is the environment variable PGSHOME set?'
+      call PGS_SMF_GetMsg ( stat, err, msg )
+      print '(a)', trim(err), trim(msg)
+      stop
+    end if
     gird_time = tai_time + TAItoGIRD
 
     ! write radiances etc. to file:
@@ -423,6 +431,9 @@ contains
 end program Conv_UARS
 
 ! $Log$
+! Revision 1.9  2016/12/21 20:37:41  vsnyder
+! Fiddle some command-line stuff
+!
 ! Revision 1.8  2015/04/21 02:27:08  vsnyder
 ! Create attributes for some components' units
 !
