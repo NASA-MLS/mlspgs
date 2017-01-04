@@ -10,7 +10,34 @@
 ! foreign countries or providing access to foreign persons.
 
 module Call_Stack_m
+  ! Datatype and related procedures for a Stack capable of tracing execution
+  ! may dump a walkback of callers, memory usage, timings, etc.
+  
+  ! See also MLSMessage
+! === (start of toc) ===
+!     c o n t e n t s
+!     - - - - - - - -
 
+!     (parameters)
+! Say_Date                display date at each push, pop
+! Say_When                display time at each push, pop
+! Show_Sys_Memory         display memory usage at each push, pop
+! sys_memory_ch           memory usage units (e.g., 'kb')
+! sys_memory_convert      memory usage units converted to kb
+!
+!     (data type)
+! Stack_t                 the stack type
+
+!     (subroutines and functions)
+! Deallocate_Stack        Recover storage from stack array
+! Dump_Stack              print walkback
+! Get_Frame               get an item from within the stack without altering it
+! Pop_Stack               pop top frame off stack
+! Push_Stack              push new frame onto stack
+! Stack_Depth             get stack depth
+! Top_Stack               get the top frame from the stack without altering it
+
+! === (end of toc) ===
   implicit none
   private
 
@@ -69,7 +96,8 @@ contains ! ====     Public Procedures     ==============================
 
 ! ---------------------------------------------------  Dump_Stack  -----
   subroutine Dump_Stack ( Top, Before, Where, Size, SysSize, CPU, DoDepth, Rev, &
-                        & Index, String, StringIndex, ShowTime, Used, Advance )
+                        & Index, String, StringIndex, ShowTime, Used, Advance, &
+                        StackIsEmpty )
     ! Dump the call stack.  If Top is present and true, dump only the top
     ! frame.  If Before is present, print it after "depth" dots and before
     ! anything else.  If Where is present and true, and the Tree component
@@ -96,6 +124,7 @@ contains ! ====     Public Procedures     ==============================
     character(len=*), optional, intent(in) :: String
     integer, optional, intent(in) :: StringIndex
     logical, intent(in), optional :: ShowTime   ! Show time when we dumped
+    logical, intent(out), optional :: StackIsEmpty ! Return true if stack is empty
     character(len=*), optional :: Used
     character(len=*), intent(in), optional :: Advance ! Default 'yes'
 
@@ -111,11 +140,16 @@ contains ! ====     Public Procedures     ==============================
     error = .not. allocated(stack)
     if ( .not. error ) error = stack_ptr < lbound(stack,1)
     if ( error ) then
-      call output ( "*****" )
-      if ( present(before) ) call output ( " " // before )
-      call output ( " There is no stack to dump *****", advance='yes' )
+      if ( present( StackIsEmpty ) ) then
+        StackIsEmpty = .true.
+      else
+        call output ( "*****" )
+        if ( present(before) ) call output ( " " // before )
+        call output ( " There is no stack to dump *****", advance='yes' )
+      endif
       return
     end if
+    if ( present( StackIsEmpty ) ) StackIsEmpty = .false.
 
     myAdvance = 'yes'
     myCPU = .false.; myDoDepth = .true.; myRev = .false.
@@ -345,7 +379,7 @@ contains ! ====     Public Procedures     ==============================
   subroutine Push_Stack_I ( Name, Root, Index, String, Before, Where, Advance )
     ! Push the stack.  If Before or Where are present, dump the new top frame.
     use Allocate_Deallocate, only: Test_Allocate, NoBytesAllocated
-    use highoutput, only: outputnamedvalue
+    use HighOutput, only: OutputNamedValue
     use Memory_m, only: Memory_Used
     use Output_m, only: Output
     use String_Table, only: Display_String
@@ -485,6 +519,9 @@ contains ! ====     Public Procedures     ==============================
 end module Call_Stack_m
 
 ! $Log$
+! Revision 2.33  2017/01/04 19:16:53  pwagner
+! Optional arg StackIsEmpty to Dump_Stack prevents printing if stackIsEmpty
+!
 ! Revision 2.32  2016/03/25 00:36:34  pwagner
 ! More diagnostics if verbose
 !
