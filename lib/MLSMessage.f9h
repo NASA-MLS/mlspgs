@@ -1079,6 +1079,7 @@ contains
     integer, save :: Line_len=0         ! Number of saved characters in line.
     integer :: LogFileUnit
     logical :: My_adv
+    logical :: StackIsEmpty
 
     ! Executable code
     MLSMSG_Severity_so_far = max( MLSMSG_Severity_so_far, severity )
@@ -1125,7 +1126,7 @@ contains
         call dumpFile( MLSMessageConfig%MLSFile )
       end if
       ! Here's a chance to use our (separate) call stack
-      call dump_stack( where=.true., CPU=.true. )
+      call dump_stack( where=.true., CPU=.true., StackIsEmpty=StackIsEmpty )
       if ( MLSMessageConfig%SendErrMsgToMaster .and. &
         & MLSMessageConfig%masterTID > 0 ) call LastGasp(ModulenameIn, Message )
       call get_config ( logFileUnit = logFileUnit )
@@ -1140,6 +1141,9 @@ contains
 
 !
 ! $Log$
+! Revision 2.43  2017/01/04 19:17:57  pwagner
+! Optional arg StackIsEmpty to Dump_Stack prevents printing if stackIsEmpty
+!
 ! Revision 2.42  2016/11/03 20:53:19  pwagner
 ! RestoreConfig defaults to being less complete
 !
