@@ -46,7 +46,7 @@ MODULE L1LogUtils
   INTEGER :: unit ! for writing log file
   INTEGER :: eng_warns, eng_errs, sci_warns, sci_errs
   INTEGER :: MAF_dif, PGS_stat, last_MIF
-  REAL(R8) :: last_TAI
+  REAL(R8) :: last_TAI, SciEngDiff
   REAL :: MAF_dur, MIF_dur
   TYPE (TAI93_Range_T) :: TAI_range
 
@@ -191,34 +191,50 @@ CONTAINS
        ! code to 25 hours (90000 seconds) Anyone who runs for more
        ! than 24 hours will have to fashion their own L1CF file.</whd
        ! comment>
-       
-       IF ( ABS(BeginEnd%SciTAI(1) - BeginEnd%EngTAI(1)) > L1Config%Calib%DiffBeginEndEng ) THEN 
+       SciEngDiff=ABS(BeginEnd%SciTAI(1) - BeginEnd%EngTAI(1))
+       IF ( SciEngDiff > L1Config%Calib%DiffBeginEndEng ) THEN 
          CALL MLSMessage ( MLSMSG_Info, ModuleName, &
          & "start time difference between science and engineering data too big")
          ! The messages sent by OutputNamedVariable go to STDOUT
          CALL OutputNamedValue(ModuleName,&
               & "start time difference between science and engineering data too big")
+
          msg=ModuleName//"L1CF PARAMETER DiffBeginEndEng"
          CALL OutputNamedValue(msg,L1Config%Calib%DiffBeginEndEng)
+
          msg=ModuleName//"BeginEnd%SciTAI(1)"
          CALL OutputNamedValue(msg,BeginEnd%SciTAI(1))
+
          msg=ModuleName//"BeginEnd%EngTAI(1)"
          CALL OutputNamedValue(msg,BeginEnd%EngTAI(1))
-         CALL MLSMessage ( MLSMSG_Error, ModuleName, "Aborting!")
-       ENDIF
 
-       IF ( ABS(BeginEnd%SciTAI(2) - BeginEnd%EngTAI(2)) > L1Config%Calib%DiffBeginEndEng ) THEN 
+          msg=moduleName//"Start Time Difference"
+          CALL OutputNamedValue(msg,SciEngDiff)
+          
+          CALL MLSMessage ( MLSMSG_Error, ModuleName, "Aborting!")
+       ENDIF
+       SciEngDiff=ABS(BeginEnd%SciTAI(2) - BeginEnd%EngTAI(2))
+       IF ( SciEngDiff > L1Config%Calib%DiffBeginEndEng ) THEN 
           CALL MLSMessage ( MLSMSG_Info, ModuleName, &
             "end time difference between science and engineering data too big")
          ! The messages sent by OutputNamedVariable go to STDOUT
           CALL OutputNamedValue(ModuleName,&
                & "end time difference between science and engineering data too big")
+
           msg=ModuleName//"L1CF PARAMETER DiffBeginEndEng"
           CALL OutputNamedValue(msg,L1Config%Calib%DiffBeginEndEng)
+
+
           msg=ModuleName//"BeginEnd%SciTAI(2)"
           CALL OutputNamedValue(msg,BeginEnd%SciTAI(2))
+
           msg=ModuleName//"BeginEnd%EngTAI(2)"
           CALL OutputNamedValue(msg,BeginEnd%EngTAI(2))
+
+          msg=moduleName//"End Time Difference"
+          CALL OutputNamedValue(msg,SciEngDiff)
+
+
           CALL MLSMessage ( MLSMSG_Error, ModuleName, "Aborting!")
         ENDIF
 
@@ -671,6 +687,9 @@ END MODULE L1LogUtils
 !=============================================================================
 
 ! $Log$
+! Revision 2.22  2017/01/05 21:24:12  whdaffer
+! A few more tweaks to the last modification.
+!
 ! Revision 2.21  2017/01/05 21:10:03  whdaffer
 ! Modified ExamineEngData to give some more useful information when
 ! failures arising from start/end time comparisons larger than
