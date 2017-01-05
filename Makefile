@@ -402,7 +402,7 @@ TAR=tar
 # for code reuse of debugging
 # They allow us to forego the toolkit and associated hdf libraries
 NO_MLSMESS_LIB := $(shell ${REECHO} -dir lib -path lib \
-dates_module.f90  MLSFinds.f90        numToChars.f9h  PseudoToolkit.f90\
+dates_module.f90  MLSFinds.f90        numToChars.f9h  PseudoToolkit.ps90\
 findunique.f9h    MLSKinds.f90        output_m.f90    ReadANumFromChars.f9h\
 isafillvalue.f9h  MLSStringLists.f90  \
 MLSCommon.f90     MLSStrings.f90      PrintIt_m.f90\
@@ -417,7 +417,7 @@ NO_TOOLKIT_LIB := $(shell ${REECHO} -dir lib -path lib \
 addRow.f9h        MLSKinds.f90              output_m.f90\
 dates_module.f90  MLSMessage.f9h            output_name_value_pair.f9h\
 findunique.f9h    MLSMessageSubstitute.f90  PrintIt_m.f90\
-highOutput.f90    mlsmessagetest.f90        PseudoToolkit.f90\
+highOutput.f90    mlsmessagetest.f90        PseudoToolkit.ps90\
 isafillvalue.f9h  MLSStringLists.f90        ReadANumFromChars.f9h\
 MLSCommon.f90     MLSStrings.f90            \
 MLSFinds.f90      numToChars.f9h            toggles_core.f90\
@@ -833,17 +833,27 @@ $(utctotai_sources): $(MLSBIN)/utctotai.shar
 #    make MY_PROG=/path/to/it/myprog.f90 withouttoolkit
 # to omit even MLSMessage
 #    make MY_PROG=/path/to/it/myprog.f90 withoutmlsmessage
-withouttoolkit: $(CONFDIR)/$(MLSCFILE) $(MY_PROG)
-	   $(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
-      -c $(MLSCONFG) -p $@ -M $(MAKE) \
-	   -C $(MLSCFILE) -O DONT_LINK_TOOLKIT=yes \
-            $(MY_PROG) $(NO_TOOLKIT)
+#
+# This next sequence is a bit of quackery-hackery needed
+# to make PseudoToolkit available as a fortran source file
+# only when needed, but hidden behind the gauzy guise of its ps90
+# file extension when not needed
+ps90tof90: $(CONFDIR)/$(MLSCFILE) lib/PseudoToolkit.ps90
+	/bin/rm -fr lib/pseudo
+	mkdir lib/pseudo
+	cp lib/PseudoToolkit.ps90 lib/pseudo/PseudoToolkit.f90
 
-withoutmlsmessage: $(CONFDIR)/$(MLSCFILE) $(MY_PROG)
+withouttoolkit: $(CONFDIR)/$(MLSCFILE) $(MY_PROG) ps90tof90
 	   $(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
       -c $(MLSCONFG) -p $@ -M $(MAKE) \
 	   -C $(MLSCFILE) -O DONT_LINK_TOOLKIT=yes \
-            $(MY_PROG) $(NO_MLSMESS)
+            $(MY_PROG) $(NO_TOOLKIT) lib/pseudo/PseudoToolkit.f90
+
+withoutmlsmessage: $(CONFDIR)/$(MLSCFILE) $(MY_PROG) ps90tof90
+	   $(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+      -c $(MLSCONFG) -p $@ -M $(MAKE) \
+	   -C $(MLSCFILE) -O DONT_LINK_TOOLKIT=yes \
+            $(MY_PROG) $(NO_MLSMESS) lib/pseudo/PseudoToolkit.f90
 
 # build and install some of the executables out of util
 checkpvmup: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/checkpvmup.c
@@ -873,22 +883,18 @@ CONVSRCS = $(shell ${REECHO} -nf -prefixn=$(CONFDIR)/conv_uars/ ${CONVSRCS_BARE}
 conv_uars: $(CONFDIR)/$(MLSCFILE) $(CONVSRCS) utctotai
 	echo $(CONVSRCS)
 	echo $(CONVSRCS_BARE)
-	mv lib/PseudoToolkit.f90 lib/PseudoToolkit.f90-hide; \
 	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
           -c $(MLSCONFG) -p $@ -M $(MAKE) -O short_name=conv_uars_main -m lib \
-          -C $(MLSCFILE) $(CONVSRCS); \
-	  mv lib/PseudoToolkit.f90-hide lib/PseudoToolkit.f90
+          -C $(MLSCFILE) $(CONVSRCS)
 
 UARSRECL_BARE =  $(shell ${REECHO} -dirn $(CONFDIR)/conv_uars/ -excl conv_uars.f90)
 UARSRECL = $(shell ${REECHO} -nf -prefixn=$(CONFDIR)/conv_uars/ ${UARSRECL_BARE})
 Dump_UARS_File: $(CONFDIR)/$(MLSCFILE) $(UARSRECL) utctotai
 	echo $(UARSRECL)
 	echo $(UARSRECL_BARE)
-	mv lib/PseudoToolkit.f90 lib/PseudoToolkit.f90-hide; \
 	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
           -c $(MLSCONFG) -p $@ -M $(MAKE) -O short_name=Dump_UARS_File_main -m lib \
           -C $(MLSCFILE) $(UARSRECL) 
-	  mv lib/PseudoToolkit.f90-hide lib/PseudoToolkit.f90
 
 dateconverter: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/dateconverter.f90 l1--itm
 	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
@@ -896,18 +902,14 @@ dateconverter: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/dateconverter.f90 l1--itm
 	-C $(MLSCFILE) $(MLSBIN)/$@.f90
 
 ECItoECR: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/ECItoECR.f90 l1--itm
-	mv lib/PseudoToolkit.f90 lib/PseudoToolkit.f90-hide; \
 	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
    -c $(MLSCONFG) -p $@ -M $(MAKE) -m lib \
-	-C $(MLSCFILE) $(MLSBIN)/$@.f90; \
-	  mv lib/PseudoToolkit.f90-hide lib/PseudoToolkit.f90
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
 
 ECRtoECI: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/ECRtoECI.f90 l1--itm
-	mv lib/PseudoToolkit.f90 lib/PseudoToolkit.f90-hide; \
 	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
    -c $(MLSCONFG) -p $@ -M $(MAKE) -m lib \
-	-C $(MLSCFILE) $(MLSBIN)/$@.f90; \
-	  mv lib/PseudoToolkit.f90-hide lib/PseudoToolkit.f90
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
 
 end_stmts: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/end_stmts.f90
 	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
@@ -1473,6 +1475,9 @@ tools: chunktimes checkpvmup compare dateconverter extinctionmaker \
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.18  2017/01/05 01:01:42  pwagner
+# Now builds EC.. to EC..; must fix PseudoToolkit fiddling
+#
 # Revision 1.17  2016/12/20 17:47:08  pwagner
 # Repaired broken build commands for conv_uars and Dump_UARS_File; PseudoToolkit is troublesome
 #

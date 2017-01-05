@@ -167,11 +167,9 @@ $(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/$(MLSCFILE)
           -c "$(MLSF95)" -p "$(MLSPLAT)" -cf "$(MLSCFILE)" -nc
 
 depends:
-	mv $(libmls_sources)/PseudoToolkit.f90 $(libmls_sources)/PseudoToolkit.f90-hide; \
 	temp_name_1=`${UNIQUE_NAME} 1` ;\
 	$(MLSBIN)/makemakedep.sh  -p $$temp_name_1 \
      $(OMIT_PREFXD) $(depends_where) ; \
-	mv $(libmls_sources)/PseudoToolkit.f90-hide $(libmls_sources)/PseudoToolkit.f90; \
      mv $$temp_name_1 Makefile.dep
 
 ghostbuster:
@@ -217,6 +215,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude test
 
 # $Log$
+# Revision 1.2  2016/03/19 00:02:21  pwagner
+# Should calculate dependencies properly even if use-ing SPDToolkit
+#
 # Revision 1.1  2015/08/12 17:32:24  pwagner
 # Switched from MakeFC to Makefile
 #
