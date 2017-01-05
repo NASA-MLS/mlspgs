@@ -25,6 +25,7 @@ program ECItoECR
   ! Optionally, accept a -I argument to specify a file from which to
   ! read ECI coordinates (time and ellipse still on the command line).
 
+  use, intrinsic :: ISO_Fortran_ENV, only: Input_Unit
   use SDPToolkit, only: PGS_CSC_ECItoECR, PGS_S_Success, PGS_SMF_GetMsg
 
   implicit NONE
@@ -36,6 +37,7 @@ program ECItoECR
   integer :: I, J
   character(127) :: IOMSG
   character(127) :: Line ! Command-line argument, or from the file
+  integer :: LUN = 10    ! For input
   integer :: Stat
 
   call get_environment_variable ( 'PGSHOME', line )
@@ -62,7 +64,7 @@ o:do
       print '(a)',  ' Options:'
       print '(2a)', '  -e[ ]tag  => Earth Ellipse Tag, default ', trim(earthEllipseTag)
       print '(a)',  '  -h        => This output'
-      print '(a)',  '  -i[ ]file => Read more input from file'
+      print '(a)',  '  -i[ ]file => Read more input from file, -i - for stdin'
       stop
     case ( '-I', '-i' )
       if ( line(3:) == '' ) then
@@ -70,11 +72,15 @@ o:do
         call get_command_argument ( i, line(3:) )
       end if
       file = .true.
-      open ( 10, file=adjustl(line(3:)), status='old', iostat=stat, iomsg=iomsg )
-      if ( stat /= 0 ) then
-        print '(a,i0,2a/a)', 'Error ', stat, ' while trying to open ', &
-          & trim(adjustl(line(3:))), trim(iomsg)
-        stop
+      if ( adjustl(line(3:)) == '-' ) then
+        lun = input_unit
+      else
+        open ( 10, file=adjustl(line(3:)), status='old', iostat=stat, iomsg=iomsg )
+        if ( stat /= 0 ) then
+          print '(a,i0,2a/a)', 'Error ', stat, ' while trying to open ', &
+            & trim(adjustl(line(3:))), trim(iomsg)
+          stop
+        end if
       end if
     case default
       asciiUTC = line
@@ -108,10 +114,10 @@ o:do
         print '(a)', trim(line), trim(iomsg)
         stop
       end if
-      print '(3f12.3)', ECR(1:3)
+      print '(1p,3g15.7)', ECR(1:3)
     end if
     if ( .not. file ) exit
-    read ( 10, '(a)', end=9 ) line
+    read ( lun, '(a)', end=9 ) line
     read ( line, *, iostat=stat, iomsg=iomsg ) ECI(1:3)
     if ( stat /= 0 ) then
       print '(a,i0,2a/a)', 'Error ', stat, ' while trying to read ', &
@@ -137,3 +143,6 @@ contains
 end program ECItoECR
 
 ! $Log$
+! Revision 1.1  2017/01/05 00:29:15  vsnyder
+! Initial commit
+!
