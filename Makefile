@@ -895,6 +895,20 @@ dateconverter: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/dateconverter.f90 l1--itm
    -c $(MLSCONFG) -p $@ -M $(MAKE) -m lib \
 	-C $(MLSCFILE) $(MLSBIN)/$@.f90
 
+ECItoECR: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/ECItoECR.f90 l1--itm
+	mv lib/PseudoToolkit.f90 lib/PseudoToolkit.f90-hide; \
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) -m lib \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90; \
+	  mv lib/PseudoToolkit.f90-hide lib/PseudoToolkit.f90
+
+ECRtoECI: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/ECRtoECI.f90 l1--itm
+	mv lib/PseudoToolkit.f90 lib/PseudoToolkit.f90-hide; \
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) -m lib \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90; \
+	  mv lib/PseudoToolkit.f90-hide lib/PseudoToolkit.f90
+
 end_stmts: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/end_stmts.f90
 	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
    -c $(MLSCONFG) -p $@ -M $(MAKE) \
@@ -1459,6 +1473,9 @@ tools: chunktimes checkpvmup compare dateconverter extinctionmaker \
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.17  2016/12/20 17:47:08  pwagner
+# Repaired broken build commands for conv_uars and Dump_UARS_File; PseudoToolkit is troublesome
+#
 # Revision 1.16  2016/10/18 17:50:11  pwagner
 # Added targets to build tools and tarfiles without toolkit or without MLSMessage
 #
