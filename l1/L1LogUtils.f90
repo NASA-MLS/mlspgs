@@ -67,14 +67,15 @@ CONTAINS
     use EngUtils, ONLY: NextEngMAF
     use EngTbls, ONLY: EngMAF, EngPkt
     !use MLSL1Common, ONLY: MaxdataGaps, MaxErroneousCounterMAFs
-    USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Warning
-
+    USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Warning, MLSMSG_Info
+    USE HighOutput, ONLY: outputNamedValue
     
     logical :: first = .TRUE.
     logical :: more_data = .TRUE.
     integer :: counterMAF = 0
     integer, save :: dataGaps = 0
     integer, save :: erroneousCounterMAFs = 0
+    character(len=512) :: msg
 
     WRITE (unit, *) 'MaxDataGaps = ', L1Config%Calib%MaxDataGaps
     WRITE (unit, *) 'MaxErroneousCounterMAFs = ', L1Config%Calib%MaxErroneousCounterMAFs
@@ -158,16 +159,68 @@ CONTAINS
        BeginEnd%EngMAFno(2) = EngMAF%MAFno
        BeginEnd%EngTAI(2) = EngMAF%secTAI
        BeginEnd%TotalMAFcount(2) = EngMAF%TotalMAF
-       
-       ! Check for utterly bogus times
+
+       ! <vp comment> Check for utterly bogus times
        ! signaled by mismatch between Engineering and Science times
        ! If they are more than 1 week apart, exit with error status
-       if ( abs(BeginEnd%SciTAI(1) - BeginEnd%EngTAI(1)) > L1Config%Calib%DiffBeginEndEng ) &
-         & CALL MLSMessage ( MLSMSG_Error, ModuleName, &
-            "mismatched start times between science and engineering data" )
-       if ( abs(BeginEnd%SciTAI(2) - BeginEnd%EngTAI(2)) > L1Config%Calib%DiffBeginEndEng ) &
-         & CALL MLSMessage ( MLSMSG_Error, ModuleName, &
-            "mismatched end times between science and engineering data" )
+       ! </vp comment>
+
+       ! <whd comment> By the time we get to this point, *all* of the
+       ! science MAFs have been read (ExamineSciData is called before
+       ! this routine and it loops through all the science data), so
+       ! BeginEnd%SciTAI(1) is the start time of the *first* MAF and
+       ! BeginEnd%SciTAI(2) is the start time of the *last* MAF of the
+       ! run. However, in this section we're looping through the
+       ! Engineering MAFs, so BeginEnd%EngTAI(1) is the begin time of
+       ! the first Engineering MAF and, at each interation,
+       ! BeginEnd%EngTAI(2) the start time for the MAF that's just
+       ! been read. Therefore for the first MAF,
+       ! BeginEnd%EngTAI(1)=BeginEnd%EngTAI(2) and the `end'
+       ! comparisons are between the last Science MAF and the *first*
+       ! Eng MAF. This doesn't seem to me to be a very useful
+       ! comparison, but it's how the code is written, and I'm not
+       ! going to change it now. (If someone does change this, please
+       ! modify this comment accordingly)
+       !
+       ! Therefore,L1Config%Calib%DiffBeginEndEng (which controls how
+       ! large that difference is allowed to be and which is in the
+       ! L1CF file read during the startup of the Level1 run) should
+       ! be large enough to allow for such a comparison during any
+       ! normal run. Normally, the runs are for 24 hours and L1 adds
+       ! some sloop, so I suggest setting this parameter in the L1CF
+       ! code to 25 hours (90000 seconds) Anyone who runs for more
+       ! than 24 hours will have to fashion their own L1CF file.</whd
+       ! comment>
+       
+       IF ( ABS(BeginEnd%SciTAI(1) - BeginEnd%EngTAI(1)) > L1Config%Calib%DiffBeginEndEng ) THEN 
+         CALL MLSMessage ( MLSMSG_Info, ModuleName, &
+         & "start time difference between science and engineering data too big")
+         ! The messages sent by OutputNamedVariable go to STDOUT
+         CALL OutputNamedValue(ModuleName,&
+              & "start time difference between science and engineering data too big")
+         msg=ModuleName//"L1CF PARAMETER DiffBeginEndEng"
+         CALL OutputNamedValue(msg,L1Config%Calib%DiffBeginEndEng)
+         msg=ModuleName//"BeginEnd%SciTAI(1)"
+         CALL OutputNamedValue(msg,BeginEnd%SciTAI(1))
+         msg=ModuleName//"BeginEnd%EngTAI(1)"
+         CALL OutputNamedValue(msg,BeginEnd%EngTAI(1))
+         CALL MLSMessage ( MLSMSG_Error, ModuleName, "Aborting!")
+       ENDIF
+
+       IF ( ABS(BeginEnd%SciTAI(2) - BeginEnd%EngTAI(2)) > L1Config%Calib%DiffBeginEndEng ) THEN 
+          CALL MLSMessage ( MLSMSG_Info, ModuleName, &
+            "end time difference between science and engineering data too big")
+         ! The messages sent by OutputNamedVariable go to STDOUT
+          CALL OutputNamedValue(ModuleName,&
+               & "end time difference between science and engineering data too big")
+          msg=ModuleName//"L1CF PARAMETER DiffBeginEndEng"
+          CALL OutputNamedValue(msg,L1Config%Calib%DiffBeginEndEng)
+          msg=ModuleName//"BeginEnd%SciTAI(2)"
+          CALL OutputNamedValue(msg,BeginEnd%SciTAI(2))
+          msg=ModuleName//"BeginEnd%EngTAI(2)"
+          CALL OutputNamedValue(msg,BeginEnd%EngTAI(2))
+          CALL MLSMessage ( MLSMSG_Error, ModuleName, "Aborting!")
+        ENDIF
 
        more_data = (EngMAF%secTAI <= BeginEnd%SciTAI(2))
        IF (.NOT. more_data) more_data = (EngMAF%MAFno /= BeginEnd%SciMAFno(2))
@@ -618,6 +671,12 @@ END MODULE L1LogUtils
 !=============================================================================
 
 ! $Log$
+! Revision 2.21  2017/01/05 21:10:03  whdaffer
+! Modified ExamineEngData to give some more useful information when
+! failures arising from start/end time comparisons larger than
+! DiffBeginEndEng occur. Also greatly expanded comments to explain these
+! comparisons
+!
 ! Revision 2.20  2016/05/10 20:41:23  mmadatya
 ! To get the error-checking parameters from the l1 configuration file instead of them being hard-coded into the source code
 !
