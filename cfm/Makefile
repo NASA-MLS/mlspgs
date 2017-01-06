@@ -108,7 +108,7 @@ $(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/$(MLSCFILE)
           -c "$(MLSF95)" -p "$(MLSPLAT)" -cf "$(MLSCFILE)" -nc
 
 depends:
-         temp_name_1=`${UNIQUE_NAME} 1` ;\
+	temp_name_1=`${UNIQUE_NAME} 1` ;\
 	$(MLSBIN)/makemakedep.sh  -p $$temp_name_1 \
      $(OMIT_PREFXD) $(depends_where) ; \
      mv $$temp_name_1 Makefile.dep
@@ -156,6 +156,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mockup
 
 # $Log$
+# Revision 1.3  2017/01/05 18:45:56  pwagner
+# Changed method of disguising PseudoToolkit
+#
 # Revision 1.2  2016/03/03 18:42:05  pwagner
 # Usual method of hiding files in lib fails from cfm; need long-term fix
 #
