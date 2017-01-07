@@ -136,13 +136,13 @@ contains
   ! Remember--MAFs start at 0, not 1
   function L2ProfileToL1MAF ( profile, fileDatabase ) result( MAF )
     use dump_0, only: dump
-    use l1bdata, only: l1bdata_t, namelen, &
-      & assemblel1bqtyname, deallocatel1bdata, &
-      & readl1bdata 
+    use L1BData, only: L1BData_t, nameLen, &
+      & assembleL1BQtyName, deallocateL1BData, &
+      & readL1BData 
     use L2GPData, only: L2GPData_t, L2GPNameLen, maxSwathNamesBufSize, &
       & readL2GPData, destroyL2GPContents
-    use MLSFiles, only: hdfversion_5, &
-      & MLS_inqswath, getmlsfilebytype
+    use MLSFiles, only: HDFVersion_5, &
+      & MLS_inqswath, getMLSFileByType
     use MLSKinds, only: r8
     use MLSMessageModule, only: MLSMessage, &
       & MLSMSG_Warning
@@ -246,7 +246,7 @@ contains
     use MLSL2Options, only: checkPaths, L2CFNode, level1_HDFVersion, &
       & need_L1BFiles, specialDumpFile, stopAfterSection, toolkit, &
       & MLSMessage
-    use MLSL2Timings, only: section_times, total_times
+    use MLSL2Timings, only: section_times
     use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning
     use MLSPCF2, only: MLSPCF_l2gp_start, MLSPCF_l2gp_end, &
       & MLSPCF_l2dgm_start, MLSPCF_l2dgm_end, MLSPCF_l2fwm_full_start, &
@@ -338,7 +338,7 @@ contains
     logical :: TIMING              ! For S_Time
     logical :: StartTimeIsAbsolute, stopTimeIsAbsolute
     integer :: Status
-    real :: T1, T2                 ! For S_Time
+    real :: T1                 ! For S_Time
     real(r8) :: Start_time_from_1stMAF, End_time_from_1stMAF
     logical :: verbose
     logical :: verboser
@@ -799,7 +799,7 @@ contains
       if ( .not. wasAlreadyOpen ) call mls_CloseFile(L1BFile)
       call DeallocateL1BData ( BO_stat )
       if ( OUTPUTTHISMONTHSCAL ) then
-        call outputCalendar( l2pcf%startutc, dateNote=BO_today )
+        call outputCalendar( l2pcf%startutc, dateNote=BO_today, moonphases=.true. )
       else
         call output ( 'Bright objects today:', advance='yes' )
         call output ( trim_safe(BO_today), advance='yes' )
@@ -1335,6 +1335,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.171  2016/11/09 17:20:01  pwagner
+! Fixed error when l2cf processes param
+!
 ! Revision 2.170  2016/11/08 17:32:35  pwagner
 ! Use SayTime subroutine from time_m module; process /reset field
 !
