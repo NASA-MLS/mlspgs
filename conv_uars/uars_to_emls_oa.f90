@@ -43,7 +43,8 @@ contains ! ============= Public procedures ===================================
     use OA_File_Contents, only: EMLS_OA_t
     use Rad_File_Contents, only: Limb_OA_t
     use Rotation_m, only: Rotate_3d
-    use SDPToolkit, only: PGS_CSC_ECItoECR, PGS_CSC_ECRtoECI, PGS_CSC_GeoToECR
+    use SDPToolkit, only: PGS_CSC_ECItoECR, PGS_CSC_ECRtoECI, PGS_CSC_GeoToECR, &
+      & PGS_S_Success, PGS_SMF_GetMsg
 
     ! Args
     integer, intent(in) :: N_Days
@@ -56,6 +57,7 @@ contains ! ============= Public procedures ===================================
     integer :: I
     integer :: M
     integer :: MIF_Range(2)
+    integer :: R                   ! Reference MIF number, from limb_oa%ref_mmif
     integer :: Stat
     real(r8) :: CosAlf
     real(r8) :: CosEps
@@ -86,10 +88,18 @@ contains ! ============= Public procedures ===================================
     real(r8) :: Theta
     real(r8) :: TngtVel(3)
     real(r8) :: Xi
+    character(255) :: Err, Msg
 
     integer, parameter :: Moon_In_FOV = int(z'04000400') ! bits to set for EMLS
-    real, parameter :: MIF_Inc = 65.536 / noMIFs   ! increment per MIF in seconds
+    real(r8), parameter :: MIF_Inc = 65.536 / noMIFs   ! increment per MIF in seconds
+
+    ! Offsets from first MIF in milliseconds.  Offsets are from first MIF, not
+    ! reference MIF, because the AsciiUTC used for PGS_CSC_ECRtoECI and
+    ! PGS_CSC_ECItoECR is for the first MIF.
     real(r8), parameter :: Offsets(noMIFs) = [ ( (m-1) * mif_inc, m = 1, noMIFs ) ]
+
+    ! Reference MIF number
+    r = limb_oa%ref_mmif
 
     emls_oa%sc_geocalt = limb_oa%sat_gcrad * 1000.0   ! MIF resolved, meters
 
@@ -115,7 +125,7 @@ contains ! ============= Public procedures ===================================
       emls_oa%sc_ypr_rate(:,m) = limb_oa%ypr_rate
     end do
 
-  ! Calculate TAI time at start of frame:
+  ! Calculate TAI time at start of frame (MIF 1, not ref MIF):
 
     call frame_TAI ( limb_oa, secTAI93, asciiUTC, n_days, forgedSecs  )
 
@@ -124,30 +134,37 @@ contains ! ============= Public procedures ===================================
   ! spacecraft MIF TAI:
 
     do m = 1, noMIFs
-       emls_oa%sc_MIF_TAI(m) = sectai93 + (m-1) * mif_inc - forgedsecs
+       emls_oa%sc_MIF_TAI(m) = secTAI93 + (m-1) * mif_inc - forgedsecs
     end do
 
-  ! spacecraft ECR position at the first MIF:
+  ! spacecraft ECR position at the reference MIF:
 
     stat = pgs_csc_geotoecr ( limb_oa%sat_long*Deg2Rad, &
                               limb_oa%sat_geod_lat*Deg2Rad, &
                               limb_oa%sat_geod_alt*1000.0d0, &
                               earthEllipseTag, posecr )
+    if ( stat /= PGS_S_Success ) then
+      print '(a,i0)', 'Status from PGS_CSC_GeoToECR = ', stat
+      print '(a)', 'Is the environment variable PGSHOME set?'
+      call PGS_SMF_GetMsg ( stat, err, msg )
+      print '(a)', trim(err), trim(msg)
+      stop
+    end if
 
-  ! Convert spacecraft ECR position in meters (and zero velocity) at the first
-  ! MIF to ECI:
+  ! Convert spacecraft ECR position in meters (and zero velocity) at the
+  ! reference MIF to ECI:
 
-    ecrV(1:3,1) = posECR
-    ecrV(4:6,1) = 0
-    stat = pgs_csc_ecrtoeci ( 1, asciiUTC, offsets, ecrV, eciV )
+    ecrV(1:3,r) = posECR
+    ecrV(4:6,r) = 0
+    stat = pgs_csc_ecrtoeci ( 1, asciiUTC, offsets(r), ecrV(:,r), eciV(:,r) )
 
-  ! Get SC velocity (in meters/sec) at the first MIF in ECI:
+  ! Get SC velocity (in meters/sec) at the reference MIF in ECI:
 
-    eciV(4:6,1) = limb_oa%sat_vel * 1000.0
+    eciV(4:6,r) = limb_oa%sat_vel * 1000.0
 
-  ! Normal to the orbit plane in ECI, at the first MIF, is the cross
+  ! Normal to the orbit plane in ECI, at the reference MIF, is the cross
   ! product of the spacecraft position and velocity vectors
-    orb_norm = cross ( eciV(1:3,1), eciV(4:6,1) )
+    orb_norm = cross ( eciV(1:3,r), eciV(4:6,r) )
 
   !{ Angle between consecutive MIFs = $|V|\, T\, \sin(\theta) / |H|$, where
   !  $H$ is the spacecraft position vector, $V$ is the spacecraft velocity
@@ -155,13 +172,16 @@ contains ! ============= Public procedures ===================================
   !  duration.
     delta = mif_inc * norm2 ( orb_norm ) / emls_oa%sc_geocalt(1)**2
 
-  ! Rotate ECI positions and velocities after the first MIF about the normal
-  ! to the orbit plane by Delta * ( MIF# - 1 ).  Adjust the velocity vector
-  ! length at each MIF according to the total relative change during the MAF.
-    do m = 2, noMIFs
-      call rotate_3d ( eciV(1:3,1), delta * ( m-1 ), orb_norm, eciV(1:3,m) )
-      call rotate_3d ( eciV(4:6,1), dVI * ( m-1 ), orb_norm, eciV(4:6,m) )
-      eciV(4:6,m) = eciV(4:6,m) * ( ( m-1) * dVIN + 1.0 )
+  ! Rotate ECI positions and velocities before and after the reference MIF
+  ! about the normal to the orbit plane by Delta * ( MIF# - R ).  Adjust the
+  ! velocity vector length at each MIF according to the total relative change
+  ! during the MAF.
+
+    do m = 1, noMIFs
+      if ( m == r ) cycle ! Don't rotate eciV at the reference MIF
+      call rotate_3d ( eciV(1:3,r), delta * ( m-r ), orb_norm, eciV(1:3,m) )
+      call rotate_3d ( eciV(4:6,r), dVI * ( m-r ), orb_norm, eciV(4:6,m) )
+      eciV(4:6,m) = eciV(4:6,m) * ( ( m-r) * dVIN + 1.0 )
     end do
     ! Set the length of the SC ECR position vector to the SC Geocentric Altitude.
     ! The ECR length gotten using PGS_CSC_GeoToECR's computation of SC position
@@ -192,17 +212,15 @@ contains ! ============= Public procedures ===================================
       emls_oa%sc_geodalt(m) = geod(3)
     end do
 
-  ! Get GHz ECR, geoc_alt, geoc_lat:
+  ! Get GHz ECR, geoc_alt, geoc_lat from MIF-resolved quantities in the input.
 
     do m = 1, noMIFs
       stat = pgs_csc_geotoecr (limb_oa%tngt_long(m)*Deg2Rad, &
            limb_oa%tngt_geod_lat(m)*Deg2Rad, limb_oa%tngt_geod_alt(m)*1000.0d0, &
-           earthEllipseTag, posecr) !emls_oa%ECR(:,m))
+           earthEllipseTag, posecr) ! emls_oa%ECR(:,m))
       emls_oa%ECR(:,m) = posecr
-      emls_oa%geoc_alt(m) = SQRT (emls_oa%ECR(1,m)**2 + emls_oa%ECR(2,m)**2 + &
-           emls_oa%ECR(3,m)**2)
-      emls_oa%geoc_lat(m) = Rad2Deg * ATAN2 (posecr(3) , &
-           SQRT (posecr(1)**2 + posecr(2)**2))
+      emls_oa%geoc_alt(m) = norm2 (emls_oa%ECR(:,m) )
+      emls_oa%geoc_lat(m) = Rad2Deg * ATAN2 ( posecr(3), norm2(posecr(1:2)) )
     end do
 
   !{ Calculate ECRtoFOV.  Let $\alpha$ be the azimuth angle, $\epsilon$ be
@@ -229,8 +247,9 @@ contains ! ============= Public procedures ===================================
       coseps = COS (emls_oa%scanAngle(m)*Deg2Rad)
       sineps = SIN (emls_oa%scanAngle(m)*Deg2Rad)
 
-      ! Changed to account for rotation of axes during ascan
-      xi = 113.6 + emls_oa%scanAngle(m) - 23.3 ! p.30 of UARS MLS cal.report, B1 is pointing reference
+      ! Changed to account for rotation of axes during a scan
+      ! p.39 of UARS MLS cal.report, B1 is pointing reference
+      xi = 113.6 + emls_oa%scanAngle(m) - 23.3
       cosxi = COS (xi*Deg2Rad)
       sinxi = SIN (xi*Deg2Rad)
 
@@ -362,7 +381,7 @@ contains ! ============= Public procedures ===================================
 
   subroutine Frame_TAI ( limb_oa, SecTAI93, AsciiUTC, n_days, ForgedSecs )
 
-  ! Calculate TAI time at start of frame:
+  ! Calculate TAI time at start of frame.
 
     use Dates_Module, only: SecondsBetween2UTCs
     use MLSKinds, only: R8
@@ -388,7 +407,7 @@ contains ! ============= Public procedures ===================================
     integer :: Year
     integer :: YrDoy
 
-    mif1_ms = (limb_oa%ref_mmif - 1) * 2048   ! millisecs of MIF 1
+    mif1_ms = (limb_oa%ref_mmif - 1) * 2048   ! millisecs from MIF 1 to ref MIF
     yrdoy = limb_oa%ref_time(1)  ! - n_days   ! 1000*year plus day of year
     ms = limb_oa%ref_time(2)     ! millisecs of day for ref_mmif
     ms = ms - mif1_ms            ! millisecs at start of MAF
@@ -427,8 +446,6 @@ contains ! ============= Public procedures ===================================
       end if
     end if
 
-! print '(a,i0)', 'ForgedSecs ', forgedSecs
-
     if ( present(asciiUTC) ) asciiUTC = myAsciiUTC
 
   end subroutine Frame_TAI
@@ -446,6 +463,9 @@ contains ! ============= Public procedures ===================================
 end module uars_to_emls_oa_m
 
 ! $Log$
+! Revision 1.8  2015/04/21 01:13:25  vsnyder
+! Comment out printing ForgedSecs
+!
 ! Revision 1.7  2015/01/24 02:09:16  vsnyder
 ! MIF resolve most quantities
 !
