@@ -172,6 +172,7 @@ contains
       ! (3) redirect the stdout from Command to it
       ! (4) read its contents into cmd_output
       ! (5) delete it
+      cmd_output = ' '
       call getids( pid, gid )
       write( tempfilename, * ) pid
       tempfilename = '/tmp/Execute_temp.' // adjustl(tempfilename)
@@ -782,6 +783,9 @@ contains
 end module MACHINE
 
 ! $Log$
+! Revision 1.17  2016/03/29 18:59:31  pwagner
+! is_a_directory works poperly now
+!
 ! Revision 1.16  2016/02/29 19:46:08  pwagner
 ! Exploit c bindings for usleep, sleep
 !
