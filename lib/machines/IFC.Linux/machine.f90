@@ -152,6 +152,7 @@ contains
       ! (3) redirect the stdout from Command to it
       ! (4) read its contents into cmd_output
       ! (5) delete it
+      cmd_output = ' '
       call getids( pid, gid )
       write( tempfilename, * ) pid
       tempfilename = '/tmp/Execute_temp.' // adjustl(tempfilename)
@@ -374,17 +375,17 @@ contains
 
   ! ----------------- comment-out the following routine with v15 -----------
   ! Because v14 and earlier don't support this
-  subroutine execute_command_line( Command, wait, exitstat )
-    ! Dummy args
-    character(len=*), intent(in)   :: Command
-    logical, optional, intent(in)  :: wait
-    integer, optional, intent(out) :: exitstat
-    ! Internal variables
-    integer                        :: status
-    ! Executable
-    status = system( Command )
-    if ( present(exitstat) ) exitstat = status
-  end subroutine execute_command_line
+  ! subroutine execute_command_line( Command, wait, exitstat )
+  !   ! Dummy args
+  !   character(len=*), intent(in)   :: Command
+  !   logical, optional, intent(in)  :: wait
+  !   integer, optional, intent(out) :: exitstat
+  !   ! Internal variables
+  !   integer                        :: status
+  !   ! Executable
+  !   status = system( Command )
+  !   if ( present(exitstat) ) exitstat = status
+  ! end subroutine execute_command_line
   
 ! ----------------------------------------------  not_used_here  -----
 !--------------------------- end bloc --------------------------------------
@@ -400,6 +401,9 @@ contains
 end module MACHINE
 
 ! $Log$
+! Revision 1.14  2016/02/29 19:45:52  pwagner
+! Exploit c bindings for usleep, sleep
+!
 ! Revision 1.13  2016/02/28 23:59:46  pwagner
 ! Added USleep needed here
 !
