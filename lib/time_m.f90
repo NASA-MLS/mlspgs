@@ -13,13 +13,13 @@
 module TIME_M
 !=============================================================================
 
-! Compute either CPU time, in arbitrary units, or wall-clock time, in
-! seconds since midnight.  And some other time-related computations.
+! Compute or print either CPU time, in arbitrary units, or wall-clock time, in
+! seconds since midnight.  And some other time-related actions.
 
-  use DATES_MODULE, only: YYYYMMDD_TO_DAI
-  use machine, only: USleep
+  use Dates_module, only: YYYYMMDD_to_DAI
+  use Machine, only: USleep
   use Optional_m, only: Default
-  use PRINTIT_M, only: MLSMSG_WARNING, PRINTITOUT
+  use PrintIt_m, only: MLSMSG_Warning, PrintItOut
   implicit none
   private
 
@@ -32,8 +32,9 @@ module TIME_M
 ! time_config_t           time configuration type
 
 !   subrouttines and functions
-! begin                   announce the time of day of starting
-! finish                  announce the time of day and CPU time of finishing
+! begin                   announce the time of day at beginning
+! dump                    dump either of the time of day configurations
+! finish                  announce the time of day and consumed CPU time at finish
 ! ms_to_hms               convert millisec to (hour,minute,sec)
 
 ! init_retry              Initialize the retry mechanism
@@ -87,12 +88,17 @@ module TIME_M
 ! Note:
 ! float means either real or double precision types
 ! === (end of api) ===
-  public :: begin, finish, &
+  public :: begin, dump, finish, &
    & init_retry, ms_to_hms, retry, retry_success, &
    & sayTime, configureSayTime, set_time_config, &
    & time_now, time_now_d, time_now_s, &
    & too_many_retries, try_again, &
    & wait, wait_for_event
+
+  interface Dump
+    module procedure Dump_SayTime
+    module procedure Dump_TimeConfig
+  end interface
 
   interface TIME_NOW
     module procedure TIME_NOW_D
@@ -110,18 +116,6 @@ module TIME_M
     module procedure wait_for_events
   end interface
 
-  ! This is the time configuration type
-  public :: time_config_t
-  type time_config_t
-    integer, dimension(8) :: starttime = -1  ! Reset on first call to time_now
-    integer          :: startdaysoff = 0
-    ! Divide by this before returning time_now or waiting
-    integer          :: time_divisor = 1  
-    logical          :: use_wall_clock = .false.
-    integer          :: wait_time = 100 ! How many mus to sleep waiting for event
-    logical          :: wallClockIsElapsedFromStart = .true. ! return 0 for 1st call
-  end type time_config_t
-
   ! This is the retry configuration type
   public :: retry_config_t
   type retry_config_t
@@ -131,15 +125,28 @@ module TIME_M
     real    :: init_t0
   end type retry_config_t
 
-  ! This is the sayTime configuration type
+  ! There are two time configurations:
+  ! This is the sayTime configuration type used wheen you call sayTime()
   public :: sayTime_config_t
   type sayTime_config_t
-    real                 :: startT1 = 0.
-    logical              :: sayUnits = .false.
     character(len=1)     :: TimingUnits = 's'
-    character(len=16)    :: Preamble = ''  ! Instead of 'Timing for' at start
-    character(len=16)    :: Coda = ''      ! Print at end of line
+    real                 :: startT1     = 0.
+    logical              :: sayUnits    = .false.
+    character(len=16)    :: Preamble    = ''  ! Instead of 'Timing for' at start
+    character(len=16)    :: Coda        = ''      ! Print at end of line
   end type sayTime_config_t
+
+  ! This is the time configuration type used when you call time_now()
+  public :: time_config_t
+  type time_config_t
+    ! Divide by time_divisor before returning time_now or waiting
+    integer, dimension(8) :: starttime                   = -1  ! Reset on first call to time_now
+    integer               :: startdaysoff                = 0
+    integer               :: time_divisor                = 1  
+    logical               :: use_wall_clock              = .false.
+    integer               :: wait_time                   = 100 ! How many mus to sleep waiting for event
+    logical               :: wallClockIsElapsedFromStart = .true. ! return 0 for 1st call
+  end type time_config_t
 
   integer, parameter :: MICROSPERS = 1000000 ! How many micros in a s
   integer, parameter :: SUCCESSFUL_DEFAULT = 0
@@ -148,8 +155,6 @@ module TIME_M
   integer, parameter :: RETRY_SUCCESS = TRY_AGAIN - 1
   integer, parameter :: TOO_MANY_RETRIES = RETRY_SUCCESS - 1
   !                                              so first value is 0.0
-  ! logical, parameter :: WALLCLOCKISELAPSEDFROMSTART = .true.
-
   type(retry_config_t), public, save :: retry_config
   type(time_config_t), public, save :: time_config
   type(sayTime_config_t), public, save :: sayTime_config
@@ -168,24 +173,50 @@ contains
   subroutine BEGIN ( SHOW )
     ! Announce the time of day of starting; set start time
     ! for calculating elapsed cpu when calling finish
-    use HIGHOUTPUT, only: OUTPUT_DATE_AND_TIME
+    use highOutput, only: Output_Date_and_Time
     character(len=*), intent(in) :: SHOW
     double precision :: dt2
     call cpu_time ( start_CPU_time )
     call time_Now( dt2 )
     Start_WallClockSeconds = dt2
-    call output_date_and_time ( msg=show )
+    call Output_Date_and_Time ( msg=show )
   end subroutine BEGIN
+
+  subroutine Dump_SayTime ( config )
+    ! Dump the SayTime config
+    use highOutput, only: headLine, outputNamedValue
+    type(sayTime_config_t), intent(in) :: config
+    call headLine ( 'SayTime Configuration' )
+    call outputNamedValue ( 'timing units', config%TimingUnits )
+    call outputNamedValue ( 'start t1    ', config%startT1     )
+    call outputNamedValue ( 'say units   ', config%sayUnits    )
+    call outputNamedValue ( 'preamble    ', config%Preamble    )
+    call outputNamedValue ( 'coda        ', config%Coda        )
+  end subroutine Dump_SayTime
+
+  subroutine Dump_TimeConfig ( config )
+    ! Dump the SayTime config
+    use highOutput, only: headLine, outputNamedValue
+    type(time_config_t), intent(in) :: config
+    call headLine ( 'Time Configuration' )
+    call outputNamedValue ( 'start (date)            ', config%starttime(1:3)              )
+    call outputNamedValue ( 'start (time)            ', config%starttime(5:7)              )
+    call outputNamedValue ( 'days after 2001-01-01   ', config%startdaysoff                )
+    call outputNamedValue ( 'time divisor            ', config%time_divisor                )
+    call outputNamedValue ( 'wall clock?             ', config%use_wall_clock              )
+    call outputNamedValue ( 'event wait time         ', config%wait_time                   )
+    call outputNamedValue ( 'start wall clock from 0?', config%wallClockIsElapsedFromStart )
+  end subroutine Dump_TimeConfig
 
   subroutine FINISH ( SHOW )
     ! Announce the time of day and CPU time of finishing
-    use HIGHOUTPUT, only: OUTPUT_DATE_AND_TIME
+    use highOutput, only: Output_Date_and_Time
     character(len=*), intent(in) :: SHOW
     double precision :: Finish_CPU_time
     double precision :: Finish_WallClockSeconds
     call cpu_time ( finish_CPU_time )
     call time_now ( Finish_WallClockSeconds )
-    call output_date_and_time ( msg=show, &
+    call Output_Date_and_Time ( msg=show, &
       & CPU_seconds = finish_CPU_time - start_CPU_time, &
       & WallClock_Seconds = int(Finish_WallClockSeconds-Start_WallClockSeconds) )
   end subroutine FINISH
@@ -295,7 +326,7 @@ contains
 
   ! ----------------------------------------------  sayTime  -----
   subroutine sayTime ( Operation, t1, t2, cumulative )
-  use output_m, only: blanks, newLine, output
+  use Output_m, only: Blanks, NewLine, Output
   ! Print stepwise and cumulative time usage for sequence of operations
   ! Or show time since start of run (if t1 is 0)
   ! Skip printing total time if cumulative is both present and FALSE
@@ -503,6 +534,9 @@ contains
 end module TIME_M
 
 !$Log$
+!Revision 2.20  2017/01/11 23:25:02  pwagner
+!May now Dump the two time configs
+!
 !Revision 2.19  2016/11/15 19:26:13  pwagner
 !May write distinctive Coda at end of line when sayTime; can track both CPU and wallClockSeconds
 !
