@@ -10,69 +10,70 @@
 ! foreign countries or providing access to foreign persons.
 
 program MLSL2
-  use allocate_deallocate, only: allocatelogunit, set_garbage_collection, &
-    & trackallocates
+  use Allocate_DeAllocate, only: AllocateLogUnit, set_garbage_collection, &
+    & TrackAllocates
   use Call_Stack_m, only: Show_Sys_Memory, sys_memory_ch, sys_memory_convert
-  use chunkDivide_m, only: chunkDivideConfig
-  use declaration_table, only: allocate_decl, deallocate_decl, dump_decl
+  use ChunkDivide_m, only: ChunkDivideConfig
+  use Declaration_Table, only: Allocate_decl, deAllocate_decl, Dump_decl
   use EmpiricalGeometry, only: DestroyEmpiricalGeometry
   use HDF, only: dfacc_rdonly
-  use highoutput, only: dump, headLine, outputNamedValue
-  use init_tables_module, only: init_tables
-  use io_stuff, only: write_textFile
-  use intrinsic, only: get_type, l_ascii, l_tkgen, lit_indices
+  use HighOutput, only: Dump, headLine, OutputNamedValue
+  use Init_Tables_module, only: init_Tables
+  use Io_stuff, only: Write_textFile
+  use Intrinsic, only: Get_type, l_ascii, l_tkgen, lit_indices
   use L2GPData, only: avoidUnlimitedDims
   use L2ParInfo, only: parallel, initParallel, accumulateSlaveArguments, &
     & SlaveArguments, transmitSlaveArguments
-  use leakcheck_m, only: leakcheck
-  use lexer_core, only: init_lexer
-  use machine, only: getarg, hp, io_error, USleep
-  use MLSCommon, only: MLSFile_t, MLSNamesAreDebug, MLSnamesAreVerbose
-  use MLSFiles, only: filestringtable, &
-    & addFileToDatabase, deallocate_filedatabase, dump, &
-    & initializeMLSfile, MLS_openfile, MLS_closefile
-  use MLSHDF5, only: MLS_h5open, MLS_h5close
-  use MLSL2Options, only: allocFile, aura_l1bfiles, &
-    & checkl2cf, checkleak, checkPaths, countchunks, current_version_id, &
-    & default_hdfversion_read, default_hdfversion_write, do_dump, dump_tree, &
-    & l2cf_unit, level1_hdfversion, maxChunkSize, need_l1bfiles, &
-    & normal_exit_status, noteFile, numSwitches, &
-    & originalCmds, output_print_unit, &
-    & patch, processOptions, quit_error_threshold, &
-    & recl, restartWarnings, runtimeValues, &
-    & sectionsToSkip, sectionTimes, sectionTimingUnits, &
-    & sharedPCF, showDefaults, & ! sips_version, &
-    & skipDirectWrites, skipDirectWritesOriginal, &
-    & skipRetrieval, skipRetrievalOriginal, slavesCleanUpSelves, slaveMAF, &
-    & specialDumpFile, stateFilledBySkippedRetrievals, &
-    & stopAfterSection, stopWithError, &
-    & timing, toolkit, totaltimes, uniqueID
-  use MLSL2Timings, only: run_start_time, section_times, total_times, &
-    & add_to_section_timing, dump_section_timings
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Debug, &
-    & MLSMessageConfig, MLSMSG_Error, MLSMSG_Severity_to_quit, &
-    & MLSMSG_Success, MLSMSG_Warning, dumpConfig, MLSMessageExit
+  use LeakCheck_m, only: LeakCheck
+  use Lexer_core, only: init_lexer
+  use Machine, only: Getarg, hp, io_error, USleep
+  use MLSCommon, only: MLSFile_t, MLSNamesAreDebug, MLSNamesAreVerbose
+  use MLSFiles, only: FileStringTable, &
+    & AddFileToDatabase, DeAllocate_FileDatabase, Dump, &
+    & InitializeMLSFile, MLS_OpenFile, MLS_CloseFile
+  use MLSHDF5, only: MLS_H5Open, MLS_H5Close
+  use MLSL2Options, only: AllocFile, Aura_L1BFiles, &
+    & CheckL2CF, CheckLeak, checkPaths, countChunks, current_Version_id, &
+    & Default_HDFVersion_Read, default_HDFVersion_Write, do_Dump, Dump_Tree, &
+    & L2cf_Unit, level1_HDFVersion, maxChunkSize, need_L1BFiles, &
+    & Normal_exit_status, noteFile, numSwitches, &
+    & OriginalCmds, Output_print_Unit, &
+    & Patch, processOptions, Quit_error_threshold, &
+    & Recl, restartWarnings, runTimeValues, &
+    & SectionsToSkip, SectionTimes, SectionTimingUnits, &
+    & SharedPCF, showDefaults, & ! sips_Version, &
+    & SkipDirectWrites, SkipDirectWritesOriginal, &
+    & SkipRetrieval, SkipRetrievalOriginal, SlavesCleanUpSelves, SlaveMAF, &
+    & SpecialDumpFile, stateFilledBySkippedRetrievals, &
+    & StopAfterSection, stopWithError, &
+    & Timing, toolkit, totalTimes, uniqueID
+  use MLSL2Timings, only: run_start_Time, Section_Times, total_Times, &
+    & Add_to_Section_Timing, Dump_Section_Timings
+  use MLSMessageModule, only: MLSMSG_Debug, &
+    & MLSMessageConfig, MLSMSG_Error, MLSMSG_Severity_to_Quit, &
+    & MLSMSG_Success, MLSMSG_Warning, DumpConfig, MLSMessage, MLSMessageExit
   use MLSPCF2 ! everything
   use MLSStrings, only: trim_safe
-  use MLSStringLists, only: expandstringrange, PutHashElement, switchdetail
-  use output_m, only: blanks, output, &
-    & invalidprunit, msglogprunit, outputoptions, stampoptions, stdoutprunit
-  use parser, only: clean_up_parser, configuration
-  use parser_table_m, only:  destroy_parser_table, parser_table_t
-  use parser_tables_l2cf, only: init_parser_table
-  use printit_m, only: set_config, stdoutlogunit
-  use pvm, only: clearpvmargs, freepvmargs
-  use SDPToolkit, only: PGSD_dem_30arc, PGSD_dem_90arc, &
-    & PGSD_dem_elev, PGSD_dem_water_land, usesdptoolkit, pgs_dem_close
-  use string_table, only: destroy_char_table, destroy_hash_table, &
-    & destroy_string_table, get_string, addinunit
-  use symbol_table, only: destroy_symbol_table
-  use time_m, only: begin, finish, SayTime, time_now, time_config
-  use toggles, only: levels, syn, switches, toggle
-  use track_m, only: reportleaks
-  use tree, only: allocate_tree, deallocate_tree, nsons, subtree
-  use tree_checker, only: check_tree
-  use tree_walker, only: walk_tree_to_do_MLS_l2
+  use MLSStringLists, only: ExpandStringRange, PutHashElement, SwitchDetail
+  use Output_m, only: Blanks, Output, &
+    & InvalidPrUnit, MSGLogPrUnit, OutputOptions, StampOptions, StdoutPrUnit
+  use Parser, only: clean_up_Parser, Configuration
+  use Parser_Table_m, only:  Destroy_Parser_Table, Parser_Table_t
+  use Parser_Tables_l2cf, only: init_Parser_Table
+  use Printit_m, only: Set_Config, StdoutLogUnit
+  use PVM, only: ClearPVMArgs, FreePVMArgs
+  use SDPToolkit, only: PGSD_DEM_30arc, PGSD_DEM_90arc, &
+    & PGSD_DEM_elev, PGSD_DEM_water_land, UseSDPToolkit, PGS_DEM_Close
+  use String_Table, only: Destroy_char_Table, Destroy_hash_Table, &
+    & Destroy_String_Table, Get_String, addinUnit
+  use Symbol_Table, only: Destroy_symbol_Table
+  use Time_m, only: sayTime_Config, Time_Config, begin, ConfigureSayTime, Dump, finish, &
+    & SayTime, Time_now
+  use Toggles, only: levels, syn, switches, toggle
+  use Track_m, only: ReportLeaks
+  use Tree, only: Allocate_Tree, deAllocate_Tree, nsons, subTree
+  use Tree_checker, only: check_Tree
+  use Tree_Walker, only: Walk_Tree_to_do_MLS_l2
 
   ! === (start of toc) ===
   !     c o n t e n t s
@@ -185,10 +186,10 @@ program MLSL2
   !---------------- Task (1) ------------------
 
   call time_now ( t0 )
-  call mls_h5open ( error )
+  call MLS_H5Open ( error )
   if (error /= 0) then
       call MLSMessage ( MLSMSG_Error, moduleName, &
-        & "Unable to mls_h5open" )
+        & "Unable to MLS_H5Open" )
       if ( not_used_here() ) print *, "This never gets executed"
   end if
 ! Initialize the lexer, symbol table, and tree checker's tables:
@@ -294,15 +295,15 @@ program MLSL2
 
   UseSDPToolkit = toolkit    ! Redundant, but may be needed in lib
 
-  if ( time_config%use_wall_clock ) call time_now(run_start_time)
+  if ( time_config%use_wall_clock ) call time_now( run_start_time )
   ! If checking paths, run as a single-chunk case in serial mode
   if ( checkPaths ) then
     parallel%master = .false.
     parallel%slave = .false.
     parallel%chunkRange = '1'
     stopWithError = .false.
-    ! Issue warning about l2pc files
-    call MLSMessage ( MLSMSG_Warning, ModuleName, &
+    ! Nio longer issue warning about l2pc files
+    if ( .false. ) call MLSMessage ( MLSMSG_Warning, ModuleName, &
     & 'checkPaths will fail if l2pc files only on local disks but master runs' &
     & // ' on front end' )
   end if
@@ -354,17 +355,17 @@ program MLSL2
   ! print *, 'len_trim(line) ', len_trim(line)
   if ( line /= ' ' ) then
     MLSL2CF%name = line
-    call mls_openFile(MLSL2CF, status)
+    call mls_openFile( MLSL2CF, status )
     if ( status /= 0 ) then
       MLSL2CF%name = trim(line) // L2CFNAMEEXTENSION
-      call mls_openFile(MLSL2CF, status)
+      call MLS_OpenFile(MLSL2CF, status)
     end if
     if ( status /= 0 ) then
       call io_error ( "While opening L2CF", status, line )
       call MLSMessage ( MLSMSG_Error, moduleName, &
         & "Unable to open L2CF file: " // trim(line), MLSFile=MLSL2CF )
     else if(switchDetail(switches, 'pro') >= 0) then
-      call announce_success(MLSL2CF%name, l2cf_unit)
+      call announce_success( MLSL2CF%name, l2cf_unit )
     end if
     inunit = l2cf_unit
   else if ( TOOLKIT .and. .not. showDefaults ) then
@@ -380,7 +381,7 @@ program MLSL2
       call MLSMessage ( MLSMSG_Error, moduleName, &
         & "Unable to open L2CF file named in pcf", MLSFile=MLSL2CF )
     else if(switchDetail(switches, 'pro') >= 0) then
-      call announce_success(MLSL2CF%name, inunit)
+      call announce_success( MLSL2CF%name, inunit )
     end if
   end if
   error = status
@@ -432,6 +433,9 @@ program MLSL2
   else
     root = -1
   end if
+  ! call configureSayTime ( Coda=' ** (in s) **' )
+  call dump ( Time_config )
+  call dump ( sayTime_config )
   if ( timing ) call SayTime ( 'Parsing the L2CF', cumulative=.false. )
 
   !---------------- Task (6) ------------------
@@ -475,8 +479,8 @@ program MLSL2
     call add_to_section_timing( 'main', t2 )
 
     if(error /= 0) then
-       call MLSMessage(MLSMSG_Error, ModuleName, &
-       & 'error in check_tree: probably need to repair l2cf ' )
+       call MLSMessage( MLSMSG_Error, ModuleName, &
+       & 'error in check_tree: probably need to repair l2cf ', MLSFile=MLSL2CF )
     end if
 
     if ( checkLeak ) then
@@ -554,7 +558,7 @@ program MLSL2
       endif
       if (error /= 0) then
          call MLSMessage ( MLSMSG_Error, moduleName, &
-          & "Unable to mls_close" )
+          & "Unable to MLS_Close" )
       end if
     end if
   end if
@@ -842,6 +846,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.221  2017/01/11 23:56:53  pwagner
+! Dumps both time configs; Dump MLSFile type if l2cf error
+!
 ! Revision 2.220  2016/11/08 17:30:57  pwagner
 ! Use SayTime subroutine from time_m module
 !
