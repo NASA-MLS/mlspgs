@@ -21,6 +21,7 @@ module Hunt_m
   use MLSFinds, only: FindFirst, FindLast
   use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning, &
     & Crash_burn, MLSMessage
+  use Optional_m, only: Default, HowWeHandle_log
   use Pure_Hunt_m, only: PureHunt ! because others get it from here
 
   implicit none
@@ -224,6 +225,9 @@ end module Hunt_m
 !=============================================================================
 
 ! $Log$
+! Revision 2.5  2017/01/13 23:52:17  pwagner
+! Let procedures from Optional_m handle exceptions
+!
 ! Revision 2.4  2016/09/09 00:12:26  vsnyder
 ! Moved PureHunt into a module of its own
 !
