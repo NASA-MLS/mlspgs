@@ -18,7 +18,7 @@ module MLSFiles               ! Utility file routines
   use HDFeos5, only: HE5_swclose, HE5_swopen, HE5_swinqswath, &
     & HE5_gdopen, HE5_gdclose, &
     & HE5f_acc_trunc, HE5f_acc_rdonly, HE5f_acc_rdwr
-  use HighOutput, only: OutputNamedValue, OutputTable
+  use HighOutput, only: AddRow, OutputNamedValue, OutputTable, StartTable
   use Intrinsic, only: l_ascii, l_hdfeos, l_hdf, l_open, &
     & L_swath, l_tkgen, l_zonalavg, lit_indices
   use Io_stuff, only: get_lun
@@ -841,71 +841,51 @@ contains
     integer                          ::      myDetails
     character(len=MAXFILENAMELENGTH) ::      name
     character(len=MAXFILENAMELENGTH) ::      path
+    character(len=MAXFILENAMELENGTH) ::      str
 
     ! Executable code
     myDetails = 0
     if ( present(details) ) myDetails = details
     call split_path_name(MLSFile%Name, Path, Name)
-    if ( myDetails >  -1 ) &
-      & call output ( 'MLS File Info (full name): ', advance='yes')                                  
-    ! call output ( '(name) ')                                  
-    call output ( trim(MLSFile%Name), advance='yes')                                  
-    if ( myDetails < 0 ) return
-    call output ( '    path         : ')                                
-    call output ( trim(path), advance='yes')                                  
-    call output ( '    name         : ')
-    call output ( trim(name), advance='yes')                                  
-    if ( UseSDPToolkit .and. MLSFile%shortName /= ' ' )  then
-      call output ( '    short name   : ')                                
-      call output ( trim(MLSFile%shortName), advance='yes')                                  
+    call startTable
+    call addRow ( 'File Info', ' ' )
+    call addRow ( 'full name', trim(MLSFile%Name) )
+    ! If details < 0, show only this name
+    if ( myDetails > -1 ) then
+      call addRow ( 'path', trim(path) )
+      call addRow ( 'name', trim(name) )
+      if ( UseSDPToolkit .and. MLSFile%shortName /= ' ' ) &
+        & call addRow ( 'short name', trim(MLSFile%shortName) )
+      call addRow ( 'Type', MLSFile%TypeStr )
+      if ( FILESTRINGTABLE ) then
+        call get_string ( lit_indices(MLSFile%Type), str, strip=.true. )
+        call addRow ( 'Type(int)', trim(str) )
+      endif
+      call addRow ( 'Access', trim(accessType(MLSFile%access)) )
+      call addRow ( 'Access (int)', MLSFile%access )
+      call addRow ( 'content', trim(MLSFile%content) )
+      call addRow ( 'content', trim(MLSFile%content) )
+      call addRow ( 'last Operation', trim(MLSFile%lastOperation) )
+      call addRow ( 'still open?', MLSFile%FileId%f_id )
+      ! If details < 1, don't show any FileID info
+      if ( myDetails > 0 ) then
+        call addRow ( 'File ID', MLSFile%stillOpen )
+        if ( MLSFile%FileId%grp_id > 0 ) &
+          & call addRow ( 'Group ID', MLSFile%FileId%grp_id )
+        if ( MLSFile%FileId%sd_id > 0 ) &
+          & call addRow ( 'Dataset ID', MLSFile%FileId%sd_id )
+        if ( UseSDPToolkit )  then
+          call addRow ( 'PCF ID', MLSFile%PCFId )
+          call addRow ( 'PCF Range', (/MLSFile%PCFidRange%Bottom, MLSFile%PCFidRange%Top /) )
+        endif
+        if ( any(MLSFile%type == (/l_hdf, l_swath, l_hdfeos, l_zonalavg /) ) ) &
+          & call addRow ( 'hdf version', MLSFile%HDFVersion )
+        if ( MLSFile%recordLength > 0 ) &
+          & call addRow ( 'record length', MLSFile%recordLength )
+        call addRow ( 'error code', MLSFile%errorCode )
+      endif
     endif
-    call output ( '    Type         : ')                                
-    call output ( trim(MLSFile%TypeStr), advance='yes')                                  
-    if ( FILESTRINGTABLE ) then
-    call output ( '    Type(int)    : ')                                
-    call display_string ( lit_indices(MLSFile%Type), strip=.true.)                                  
-    call output(' ', advance='yes')
-    endif
-    call output ( '    Access       : ')                                
-    ! call output ( trim(MLSFile%accessStr), advance='yes')                                  
-    call output ( trim(accessType(MLSFile%access)), advance='yes')                                  
-    call output ( '    Access (int) : ')                                
-    call output ( MLSFile%access, advance='yes')                                  
-    call output ( '    content      : ')                                
-    call output ( trim(MLSFile%content), advance='yes')                                  
-    call output ( '    last Operatn : ')                                
-    call output ( trim(MLSFile%lastOperation), advance='yes')                                  
-    call output ( '    still open? : ')                                
-    call output ( MLSFile%stillOpen, advance='yes')                                  
-    if ( myDetails < 1 ) return
-    call output ( '    File ID      : ')                                
-    call output ( MLSFile%FileId%f_id, advance='yes')
-    if ( MLSFile%FileId%grp_id > 0 ) then
-      call output ( '    Group ID     : ')                              
-      call output ( MLSFile%FileId%grp_id, advance='yes')                                
-    endif
-    if ( MLSFile%FileId%sd_id > 0 ) then
-      call output ( '    DataSet ID   : ')                              
-      call output ( MLSFile%FileId%sd_id, advance='yes')
-    endif
-    if ( UseSDPToolkit )  then
-      call output ( '    PCF ID       : ')                                
-      call output ( MLSFile%PCFId, advance='yes')                                
-      call output ( '    PCF Range    : ')                                
-      call output ( (/MLSFile%PCFidRange%Bottom, MLSFile%PCFidRange%Top /), &
-        & advance='yes')                                  
-    endif
-    ! if ( any(MLSFile%type == (/'hdf  ', 'swath' /) ) ) then
-    if ( any(MLSFile%type == (/l_hdf, l_swath, l_hdfeos, l_zonalavg /) ) ) then
-      call output ( '    hdf version  : ')                              
-      call output ( MLSFile%HDFVersion, advance='yes')
-    endif
-    if ( MLSFile%recordLength > 0 )  then
-      call output ( '    record length: ')                              
-      call output ( MLSFile%recordLength, advance='yes')                                
-    endif
-    call output ( '    error code   : ')                                
-    call output ( MLSFile%errorCode, advance='yes')                                  
+    call outputTable ( sep='|', border='-' )
   end subroutine Dump_MLSFile
 
   ! --------------------------------------------  split_path_name  -----
@@ -2493,6 +2473,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.106  2017/01/13 01:27:27  pwagner
+! Dump_MLSFile now uses OutputTable
+!
 ! Revision 2.105  2016/09/21 00:38:41  pwagner
 ! May Dump filedatabase as a table
 !
