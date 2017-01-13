@@ -694,7 +694,10 @@ contains ! =====     Public Procedures     =============================
             call copyGrid( grid, tempGrid )
           end if
         end if
-        if ( Griddeddatabase(gridIndex)%empty ) then
+        if ( litDescription == 'none' ) then
+          call announce_success( FilenameString, 'dao not found--carry on', &
+             & fieldNameString )
+        elseif ( Griddeddatabase(gridIndex)%empty ) then
           call output( 'File was probably not ' // &
             & trim(litDescription), advance='yes' )
         else if ( description == 'dao' ) then
@@ -709,7 +712,7 @@ contains ! =====     Public Procedures     =============================
           if( switchDetail(switches, 'pro') > -1 ) &                            
             & call announce_success(FilenameString, 'dao', & 
              & fieldNameString, MLSFile=GriddedFile)    
-        else
+        elseif ( litDescription /= 'none' ) then
           call announce_success(FilenameString, 'dao not found--carry on', &
              & fieldNameString, MLSFile=GriddedFile)
         end if
@@ -790,7 +793,10 @@ contains ! =====     Public Procedures     =============================
             call copyGrid( grid, tempGrid )
           end if
         end if
-        if ( Griddeddatabase(gridIndex)%empty ) then
+        if ( litDescription == 'none' ) then
+          call announce_success( FilenameString, 'geos5 not found--carry on', &                    
+             & fieldNameString )
+        elseif ( Griddeddatabase(gridIndex)%empty ) then
           call output( 'File was probably not ' // &
             & trim(litDescription), advance='yes' )
         else
@@ -803,9 +809,9 @@ contains ! =====     Public Procedures     =============================
           if( switchDetail(switches, 'pro') > -1 ) &                            
             & call announce_success(FilenameString, 'geos5', &                    
              & fieldNameString, MLSFile=GriddedFile)    
-        else
-          call announce_success(FilenameString, 'geos5 not found--carry on', &                    
-             & fieldNameString, MLSFile=GriddedFile)
+        elseif ( litDescription /= 'none' ) then
+          call announce_success( FilenameString, 'geos5 not found--carry on', &                    
+             & fieldNameString, MLSFile=GriddedFile )
         end if
         ! If we were asked to downsample gridded data to a coarser mesh, do so
         if ( downsample .and. .not. Griddeddatabase(gridIndex)%empty ) then
@@ -1464,6 +1470,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.118  2017/01/13 01:31:40  pwagner
+! Avoid excess output when feeling around for right meteorology file type
+!
 ! Revision 2.117  2016/09/30 20:33:46  pwagner
 ! verboser was used w/o being defined; fixed
 !
