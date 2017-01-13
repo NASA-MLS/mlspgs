@@ -1858,9 +1858,9 @@ contains
   end subroutine timeStamp_logical
 
   ! ------------------ Private procedures -------------------------
-  ! .............................................  addItemToDatabase  .....
+  ! .............................................  addCellRowToDatabase  .....
   ! Add an additional row to end of cellDatabase
-  integer function addItemToDatabase ( database, item )
+  integer function addCellRowToDatabase ( database, item )
     ! Args
     character(len=*), dimension(:,:), pointer  :: database
     character(len=*), dimension(2)             :: item
@@ -1885,10 +1885,10 @@ contains
     database(newSize,:) = ' '
     database(newSize,:) = adjustl(item)
 
-    ! include "addItemToDatabase.f9h" 
+    ! include "addCellRowToDatabase.f9h" 
 
-    addItemToDatabase = newSize
-  end function addItemToDatabase
+    addCellRowToDatabase = newSize
+  end function addCellRowToDatabase
 
   ! .............................................  getOption  .....
   ! This family of subroutines parses a multipart advance arg into
@@ -2255,6 +2255,9 @@ contains
 end module HIGHOUTPUT
 
 ! $Log$
+! Revision 2.15  2017/01/13 01:28:32  pwagner
+! Rename internal procedure to addCellRowToDatabase
+!
 ! Revision 2.14  2016/12/14 01:22:40  pwagner
 ! outputCalendar prints new, full moons if moonphases present and ttrue
 !
