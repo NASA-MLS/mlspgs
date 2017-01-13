@@ -12,7 +12,7 @@
 ! $Id$
 
 !  subroutine HuntArray_r* ( list, values, indices, start, allowTopValue, allowBelowValue, &
-!    & nearest )
+!    & nearest, logSpace, fail )
     ! Local variables
     real(rk) :: N, D                    ! Numerator, denominator for secant
     real(rk) :: thisValue
@@ -36,59 +36,32 @@
     integer :: searchDirection  ! (in index space) 
     integer :: oldSearchDirection ! Previous value of above
     integer :: oldIndex                 ! Previous value of index
+    integer :: severity          ! Warning or Error?
 
 
     ! Executable code
     if ( present(fail) ) fail = .false. ! Assume it will work
     listLen = size(list)
     valuesLen = size(values)
-
-    if ( present(allowTopValue) ) then
-      useAllowTopValue = allowTopValue
-    else
-      useAllowTopValue = .false.
-    end if
-
-    if ( present(allowBelowValue) ) then
-      useAllowBelowValue = allowBelowValue
-    else
-      useAllowBelowValue = .false.
-    end if
-
-    if ( present(nearest) ) then
-      useNearest = nearest
-    else
-      useNearest = .false.
-    end if
-
-    if ( present(logSpace) ) then
-      useLogSpace = logSpace
-    else
-      useLogSpace = .false.
-    end if
+    useAllowTopValue = Default( allowTopValue, .false. )
+    useAllowBelowValue = Default( allowBelowValue, .false. )
+    useNearest = Default( nearest, .false. )
+    useLogSpace = Default( logspace, .false. )
 
     if ( useNearest .and. useAllowBelowValue ) then
+      severity = HowWeHandle_log( fail, MLSMSG_Error, MLSMSG_Warning )
       call dump(values, 'values')
       call dump(list, 'list')
-      if ( present(fail) ) then
-        call MLSMessage ( MLSMSG_Warning, &
-          & ModuleName, "Can't set nearest and allowBelowValue in Hunt" )
-        fail = .true.
-        return
-      end if
-      call MLSMessage ( MLSMSG_Error, &
-        & ModuleName, "Can't set nearest and allowBelowValue in Hunt" )
+      call MLSMessage ( severity, &
+        & ModuleName, "Can't set both nearest and allowBelowValue in Hunt" )
+      return
     elseif ( size(indices) < valuesLen ) then
+      severity = HowWeHandle_log( fail, MLSMSG_Error, MLSMSG_Warning )
       call dump(values, 'values')
       call dump(list, 'list')
-      if ( present(fail) ) then
-        call MLSMessage ( MLSMSG_Warning, ModuleName, &
+      call MLSMessage ( severity, ModuleName, &
         & "Result array is too small" )
-        fail = .true.
-        return
-      end if
-      call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & "Result array is too small" )
+      return
     endif
 
     ! Try to work out the direction, also skip if there's only one value
@@ -289,6 +262,9 @@
 ! end subroutine HuntArray_r*
 
 ! $Log$
+! Revision 1.14  2014/04/29 17:28:08  pwagner
+! More diagnostics if things go wrong
+!
 ! Revision 1.13  2011/08/20 00:47:59  vsnyder
 ! Check for NaN if it looks like lists are screwy
 !
