@@ -162,6 +162,7 @@ contains
     ! Executable code
     call trace_begin ( me, "ReadGriddedData_MLSFile", lcf_where, &
       & cond=toggle(gen) .and. levels(gen) > 0 )
+    if ( present(litDescription) ) litDescription = 'none'
     myDefer = .false.
     if ( present(deferReading) ) myDefer = deferReading
     myVerbose = deebug
@@ -2690,6 +2691,9 @@ contains
 end module ncep_dao
 
 ! $Log$
+! Revision 2.84  2017/01/13 01:29:47  pwagner
+! Pre-initialize litDescription = 'none' in ReadGriddedData
+!
 ! Revision 2.83  2016/09/22 22:22:47  pwagner
 ! Change message to acknowledge version may be later than geos5_7
 !
