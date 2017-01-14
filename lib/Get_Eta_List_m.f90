@@ -11,41 +11,32 @@
 
 module Get_Eta_List_m
 
-  use Indexed_Values_m, only: Value_List, Value_1D_List_t, Value_1D_p_t, &
+  use Indexed_Values_m, only: Value_1D_List_t, Value_1D_p_t, &
     & Value_1D_t, Value_2D_List_t, Value_3D_List_t, &
-    & Value_QTM_1D_List_t, Value_QTM_2D_List_t, Value_QTM_3D_List_t
+    & Value_QTM_1D_List_t, Value_QTM_2D_List_t, Value_QTM_3D_List_t, &
+    & Value_1D_Lists_t, Value_1D_Lists_t, Value_1D_Lists_t
+
 
   implicit NONE
 
   private
 
-  ! Type
-  public :: Eta_Lists_t
-
   ! Procedures
-  public :: Dump, Dump_Eta_Lists
-  public :: Eta_List_1D
-  public :: Eta_List_1D_Polymorphic_D
-  public :: Eta_List_1D_Polymorphic_S
-  public :: Eta_List_1D_Polymorphic_Scalar_D
-  public :: Eta_List_1D_Polymorphic_Scalar_S
   public :: Eta_1D_p_QTM_1D_2D!_d, Eta_1D_p_QTM_1D_2D_s
   public :: Eta_List_1D_1D_2D!_d, Eta_List_1D_1D_2D_s
   public :: Eta_List_1D_1D_p_2D
   public :: Eta_List_1D_2D_3D!_d, Eta_List_1D_2D_3D_s
-  public :: Eta_List_1D_D, Eta_List_1D_S
+  public :: Eta_List_1D_D, Eta_Lists_1D_D, Eta_List_1D_S, Eta_Lists_1D_S
   public :: Eta_List_1D_p_D
   public :: Eta_List_1D_p_S
   public :: Eta_List_1D_QTM_1D_2D!_d, Eta_List_1D_QTM_1D_2D_s
   public :: Eta_List_1D_QTM_2D_3D!_d, Eta_List_1D_QTM_2D_3D_s
+  public :: Get_Eta_List
 
   ! Compute Eta to interpolate from Basis to Grid
-  interface Eta_List_1D
-    module procedure Eta_List_1D_Polymorphic_D
-    module procedure Eta_List_1D_Polymorphic_S
-    module procedure Eta_List_1D_Polymorphic_Scalar_D
-    module procedure Eta_List_1D_Polymorphic_Scalar_S
-    module procedure Eta_List_1D_D, Eta_List_1D_S
+  interface Get_Eta_List
+    module procedure Eta_List_1D_D, Eta_Lists_1D_D
+    module procedure Eta_List_1D_S, Eta_Lists_1D_S
     module procedure Eta_List_1D_p_D, Eta_List_1D_p_S
     module procedure Eta_List_1D_1D_2D!_d, Eta_List_1D_1D_2D_s
     module procedure Eta_List_1D_2D_3D!_d, Eta_List_1D_2D_3D_s
@@ -55,17 +46,6 @@ module Get_Eta_List_m
     module procedure Eta_1D_p_QTM_1D_2D!_d, Eta_1D_p_QTM_1D_2D_s
   end interface
 
-  interface Dump
-    module procedure Dump_Eta_Lists
-  end interface
-
-  ! Use this type to create an array of Eta lists, potentially of different
-  ! types and sizes.
-  type :: Eta_Lists_t
-    integer :: N ! Number of elements of Eta currently in use.
-    class(value_list), allocatable :: Eta(:)
-  end type Eta_Lists_t
-
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
@@ -74,118 +54,80 @@ module Get_Eta_List_m
 
 contains
 
-  ! Select an Eta-list generator depending upon the dynamic type of the
-  ! Eta component of the argument.
-  subroutine Eta_List_1D_Polymorphic_D ( Basis, Grid, Eta, N, Sorted )
-    integer, parameter :: RK = kind(0.0d0)
-    real(rk), intent(in) :: Basis(:)
-    real(rk), intent(in) :: Grid(:)
-    class(eta_lists_t), intent(inout) :: Eta(:) ! InOut so as not to reallocate
-                                             ! the Eta component
-    integer, intent(in) :: N                 ! Which Eta%Eta to compute
-    logical, intent(in), optional :: Sorted  ! "Basis is sorted" -- default true
-    call eta_list_1d ( basis, grid, eta(n), sorted )
-  end subroutine Eta_List_1D_Polymorphic_D
-
-  subroutine Eta_List_1D_Polymorphic_S ( Basis, Grid, Eta, N, Sorted )
-    integer, parameter :: RK = kind(0.0e0)
-    real(rk), intent(in) :: Basis(:)
-    real(rk), intent(in) :: Grid(:)
-    class(eta_lists_t), intent(inout) :: Eta(:) ! InOut so as not to reallocate
-                                             ! the Eta component
-    integer, intent(in) :: N                 ! Which Eta%Eta to compute
-    logical, intent(in), optional :: Sorted  ! "Basis is sorted" -- default true
-    call eta_list_1d ( basis, grid, eta(n), sorted )
-  end subroutine Eta_List_1D_Polymorphic_S
-
-  subroutine Eta_List_1D_Polymorphic_Scalar_D ( Basis, Grid, Eta, Sorted )
-    integer, parameter :: RK = kind(0.0d0)
-    real(rk), intent(in) :: Basis(:)
-    real(rk), intent(in) :: Grid(:)
-    class(eta_lists_t), intent(inout) :: Eta ! InOut so as not to reallocate
-                                             ! the Eta component
-    logical, intent(in), optional :: Sorted  ! "Basis is sorted" -- default true
-    ! Select Type is needed because eta_list_1d isn't type bound (can't be
-    ! because Eta_z(i)%eta is not a scalar), and the Eta_z(i)%eta component
-    ! is polymorphic.  Maybe they should be type-bound to the types in
-    ! Indexed_Values_m, which would reverse the dependence between
-    ! Indexed_Values_m and Get_Eta_List_m, or requiring to incorporate
-    ! Get_Eta_List_m. into Indexed_Values_m.
-    select type ( this_eta => eta%eta )
-    type is ( value_1D_list_t )
-      call eta_list_1d ( basis, grid, this_eta, sorted )
-      eta%n = size(grid)
-    type is ( value_1D_p_t )
-      call eta_list_1d ( basis, grid, this_eta, eta%n, sorted )
-    end select
-  end subroutine Eta_List_1D_Polymorphic_Scalar_D
-
-  subroutine Eta_List_1D_Polymorphic_Scalar_S ( Basis, Grid, Eta, Sorted )
-    integer, parameter :: RK = kind(0.0e0)
-    real(rk), intent(in) :: Basis(:)
-    real(rk), intent(in) :: Grid(:)
-    class(eta_lists_t), intent(inout) :: Eta ! InOut so as not to reallocate
-                                             ! the Eta component
-    logical, intent(in), optional :: Sorted  ! "Basis is sorted" -- default true
-    ! Select Type is needed because eta_list_1d isn't type bound (can't be
-    ! because Eta_z(i)%eta is not a scalar), and the Eta_z(i)%eta component
-    ! is polymorphic.  Maybe they should be type-bound to the types in
-    ! Indexed_Values_m, which would reverse the dependence between
-    ! Indexed_Values_m and Get_Eta_List_m, or requiring to incorporate
-    ! Get_Eta_List_m. into Indexed_Values_m.
-    select type ( this_eta => eta%eta )
-    type is ( value_1D_list_t )
-      call eta_list_1d ( basis, grid, this_eta, sorted )
-      eta%n = size(grid)
-    type is ( value_1D_p_t )
-      call eta_list_1d ( basis, grid, this_eta, eta%n, sorted )
-    end select
-  end subroutine Eta_List_1D_Polymorphic_Scalar_S
-
   ! Compute Eta to interpolate from 1-D Basis to 1-D Grid.
-  subroutine Eta_List_1D_D ( Basis, Grid, Eta, Sorted )
+  subroutine Eta_List_1D_D ( Basis, Grid, Eta, Row1, RowN, Sorted )
     integer, parameter :: RK = kind(0.0d0)
     real(rk), intent(in) :: Basis(:)
     real(rk), intent(in) :: Grid(:)
   !   type(value_1D_list_t(rk)), intent(out) :: Eta(:) ! size(grid)
     type(value_1D_list_t), intent(out) :: Eta(:) ! size(grid)
+    integer, intent(in), optional :: Row1, RowN
     logical, intent(in), optional :: Sorted ! "Basis is sorted" -- default true
     include "Eta_List_1D.f9h"
   end subroutine Eta_List_1D_D
 
   ! Compute Eta to interpolate from 1-D Basis to 1-D Grid.
-  subroutine Eta_List_1D_S ( Basis, Grid, Eta, Sorted )
+  subroutine Eta_List_1D_S ( Basis, Grid, Eta, Row1, RowN, Sorted )
     integer, parameter :: RK = kind(0.0e0)
     real(rk), intent(in) :: Basis(:)
     real(rk), intent(in) :: Grid(:)
   !   type(value_1D_list_t(rk)), intent(out) :: Eta(:) ! size(grid)
     type(value_1D_list_t), intent(out) :: Eta(:) ! size(grid)
+    integer, intent(in), optional :: Row1, RowN
     logical, intent(in), optional :: Sorted ! "Basis is sorted" -- default true
     include "Eta_List_1D.f9h"
   end subroutine Eta_List_1D_S
 
+  ! Compute Eta to interpolate from 1-D Basis to 1-D Grid.
+  subroutine Eta_Lists_1D_D ( Basis, Grid, Eta, Row1, RowN, Sorted )
+    integer, parameter :: RK = kind(0.0d0)
+    real(rk), intent(in) :: Basis(:)
+    real(rk), intent(in) :: Grid(:)
+  !   type(value_1D_list_t(rk)), intent(inout) :: Eta
+    type(value_1D_lists_t), intent(inout) :: Eta
+    integer, intent(in), optional :: Row1, RowN
+    logical, intent(in), optional :: Sorted ! "Basis is sorted" -- default true
+    call get_eta_list ( basis, grid, eta%eta, Row1, RowN, sorted )
+    eta%n = size(grid)
+  end subroutine Eta_Lists_1D_D
+
+  ! Compute Eta to interpolate from 1-D Basis to 1-D Grid.
+  subroutine Eta_Lists_1D_S ( Basis, Grid, Eta, Row1, RowN, Sorted )
+    integer, parameter :: RK = kind(0.0e0)
+    real(rk), intent(in) :: Basis(:)
+    real(rk), intent(in) :: Grid(:)
+  !   type(value_1D_list_t(rk)), intent(inout) :: Eta
+    type(value_1D_lists_t), intent(inout) :: Eta
+    integer, intent(in), optional :: Row1, RowN
+    logical, intent(in), optional :: Sorted ! "Basis is sorted" -- default true
+    call get_eta_list ( basis, grid, eta%eta, Row1, RowN, sorted )
+    eta%n = size(grid)
+  end subroutine Eta_Lists_1D_S
+
   ! Compute Eta to interpolate from 1-D Basis to 1-D Grid, returning also
   ! the amount of Eta actually used.
-  subroutine Eta_List_1D_p_D ( Basis, Grid, Eta, N, Sorted )
+  subroutine Eta_List_1D_p_D ( Basis, Grid, Eta, N, Row1, RowN, Sorted )
     integer, parameter :: RK = kind(0.0d0)
     real(rk), intent(in) :: Basis(:)
     real(rk), intent(in) :: Grid(:)
   !   type(value_1D_p_t(rk)), intent(out) :: Eta(:) ! 2*size(grid)
     type(value_1D_p_t), intent(out) :: Eta(:) ! 2*size(grid)
     integer, intent(out) :: N
+    integer, intent(in), optional :: Row1, RowN
     logical, intent(in), optional :: Sorted ! "Basis is sorted" -- default true
     include "Eta_List_1D_p.f9h"
   end subroutine Eta_List_1D_p_D
 
   ! Compute Eta to interpolate from 1-D Basis to 1-D Grid, returning also
   ! the amount of Eta actually used.
-  subroutine Eta_List_1D_p_S ( Basis, Grid, Eta, N, Sorted )
+  subroutine Eta_List_1D_p_S ( Basis, Grid, Eta, N, Row1, RowN, Sorted )
     integer, parameter :: RK = kind(0.0e0)
     real(rk), intent(in) :: Basis(:)
     real(rk), intent(in) :: Grid(:)
   !   type(value_1D_p_t(rk)), intent(out) :: Eta(:) ! 2*size(grid)
     type(value_1D_p_t), intent(out) :: Eta(:) ! 2*size(grid)
     integer, intent(out) :: N
+    integer, intent(in), optional :: Row1, RowN
     logical, intent(in), optional :: Sorted ! "Basis is sorted" -- default true
     include "Eta_List_1D_p.f9h"
   end subroutine Eta_List_1D_p_S
@@ -277,20 +219,6 @@ contains
     include "Eta_List_1D_QTM_2D_3D.f9h"
   end subroutine Eta_List_1D_QTM_2D_3D
 
-  subroutine Dump_Eta_Lists ( Eta, Name )
-    use Indexed_Values_m, only: Dump
-    type(eta_lists_t), intent(in) :: Eta
-    character(*), intent(in), optional :: Name
-    select type ( this_eta => eta%eta )
-    type is ( value_1d_list_t )
-      call dump ( this_eta(:eta%n), name )
-    type is ( value_1D_p_t )
-      call dump ( this_eta(:eta%n), name )
-!   type is ( value_QTM_2D_list_t )
-!     call dump ( this_eta, name )
-    end select
-  end subroutine Dump_Eta_Lists
-
 !=========================================================================
 
 !--------------------------- end bloc --------------------------------------
@@ -306,6 +234,10 @@ contains
 end module Get_Eta_List_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.6  2017/01/14 01:50:46  vsnyder
+! Eliminate polymorphic interpolators.  Add Row1 and RowN arguments to some
+! of the interpolators.  Move dump routine to Indexed_Values_m.f90
+!
 ! Revision 2.5  2016/12/15 18:45:50  vsnyder
 ! Add more dumps
 !
