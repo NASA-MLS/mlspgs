@@ -40,6 +40,15 @@ module Indexed_Values_m
   !            -> Value_3D_List_t
   !            -> Value_QTM_2D_List_t
   !            -> Value_QTM_3D_List_t
+  ! Value_Lists (abstract) ->
+  !            -> Value_1D_Lists_t
+  !            -> Value_1D_Lists_t
+  !            -> Value_1D_Lists_t
+  !            -> Value_2D_Lists_t
+  !            -> Value_3D_Lists_t
+  !            -> Value_QTM_1D_Lists_t
+  !            -> Value_QTM_2D_Lists_t
+  !            -> Value_QTM_3D_Lists_t
 
   type :: Value_List ! ( RK ) ! Base type for Value_*List_t
 !     integer, kind :: RK
@@ -100,7 +109,7 @@ module Indexed_Values_m
   ! interpolation.
   type, extends(Value_List) :: Value_2D_List_t ! ( RK )
 !     integer, kind :: RK
-    integer :: N = 4       ! Number of useful elements of V Value_QTM_2D_t
+    integer :: N = 4       ! Number of useful elements of V
 !     type(value_2d_t(rk)) :: V(4) = value_2d_t(rk)()
     type(value_2d_t) :: V(4) = value_2d_t()
   end type Value_2D_List_t
@@ -167,6 +176,41 @@ module Indexed_Values_m
     type(value_QTM_3d_t) :: V(12) = value_QTM_3d_t()
   end type Value_QTM_3D_List_t
 
+  ! Use this type to create an array of lists, potentially of different sizes.
+  type, abstract :: Value_Lists
+    integer :: N ! Number of elements of Eta currently in use.
+  end type Value_Lists
+
+  type, extends(value_Lists) :: Value_1D_Lists_t
+!   integer :: N ! Number of elements of Eta currently in use.
+    type(value_1D_list_t), allocatable :: Eta(:)
+  end type Value_1D_Lists_t
+
+  type, extends(value_Lists) :: Value_2D_Lists_t
+!   integer :: N ! Number of elements of Eta currently in use.
+    type(value_2D_list_t), allocatable :: Eta(:)
+  end type Value_2D_Lists_t
+
+  type, extends(value_Lists) :: Value_3D_Lists_t
+!   integer :: N ! Number of elements of Eta currently in use.
+    type(value_3D_list_t), allocatable :: Eta(:)
+  end type Value_3D_Lists_t
+
+  type, extends(value_Lists) :: Value_QTM_1D_Lists_t
+!   integer :: N ! Number of elements of Eta currently in use.
+    type(value_QTM_1D_list_t), allocatable :: Eta(:)
+  end type Value_QTM_1D_Lists_t
+
+  type, extends(value_Lists) :: Value_QTM_2D_Lists_t
+!   integer :: N ! Number of elements of Eta currently in use.
+    type(value_QTM_2D_list_t), allocatable :: Eta(:)
+  end type Value_QTM_2D_Lists_t
+
+  type, extends(value_Lists) :: Value_QTM_3D_Lists_t
+!   integer :: N ! Number of elements of Eta currently in use.
+    type(value_QTM_3D_list_t), allocatable :: Eta(:)
+  end type Value_QTM_3D_Lists_t
+
   interface Convert
     module procedure Convert_QTM_1D_to_P
   end interface
@@ -180,22 +224,17 @@ module Indexed_Values_m
   end interface
 
   interface Interpolate
-    module procedure Interpolate_1D_List
-!     module procedure Interpolate_1D_List_d, Interpolate_1D_List_s
-    module procedure Interpolate_1D_P
-!     module procedure Interpolate_1D_P_d, Interpolate_1D_P_s
-    module procedure Interpolate_QTM_1D_List
-!     module procedure Interpolate_QTM_1D_List_d, Interpolate_QTM_1D_List_s
-    module procedure Interpolate_2D_List
-!     module procedure Interpolate_2D_List_d, Interpolate_2D_List_s
-    module procedure Interpolate_2D_P
-!     module procedure Interpolate_2D_P_d, Interpolate_2D_P_s
-    module procedure Interpolate_QTM_2D_List
-!     module procedure Interpolate_QTM_2D_List_d, Interpolate_QTM_2D_List_s
-    module procedure Interpolate_3D_List
-!     module procedure Interpolate_3D_List_d, Interpolate_3D_List_s
-    module procedure Interpolate_QTM_3D_List
-!     module procedure Interpolate_QTM_3D_List_d, Interpolate_QTM_3D_List_s
+    module procedure Interpolate_1D_List!_d, Interpolate_1D_List_s
+    module procedure Interpolate_1D_Lists!_d, Interpolate_1D_Lists_s
+    module procedure Interpolate_1D_P!_d, Interpolate_1D_P_s
+    module procedure Interpolate_QTM_1D_List!_d, Interpolate_QTM_1D_List_s
+    module procedure Interpolate_2D_List!_d, Interpolate_2D_List_s
+    module procedure Interpolate_2D_Lists!_d, Interpolate_2D_Lists_s
+    module procedure Interpolate_2D_P!_d, Interpolate_2D_P_s
+    module procedure Interpolate_QTM_2D_List!_d, Interpolate_QTM_2D_List_s
+    module procedure Interpolate_3D_List!_d, Interpolate_3D_List_s
+    module procedure Interpolate_3D_Lists!_d, Interpolate_3D_Lists_s
+    module procedure Interpolate_QTM_3D_List!_d, Interpolate_QTM_3D_List_s
   end interface
 
   interface Interpolate_Polymorphic
@@ -238,27 +277,33 @@ contains
     end do
   end subroutine Convert_QTM_1D_to_P
 
-  subroutine Dump_Value_1D_List ( Value, Name )
+  subroutine Dump_Value_1D_List ( Value, Name, Format )
+    use Dump_Options, only: SDFormatDefault
     use Output_m, only: NewLine, Output
 !     type(value_1D_list_t(rk)), intent(in) :: Value(:)
     type(value_1D_list_t), intent(in) :: Value(:)
     character(len=*), intent(in), optional :: Name
+    character(len=*), intent(in), optional :: Format
     include "Dump_Value_1D_List.f9h"
   end subroutine Dump_Value_1D_List
 
-  subroutine Dump_Value_1D_p_List ( Value, Name )
+  subroutine Dump_Value_1D_p_List ( Value, Name, Format )
+    use Dump_Options, only: SDFormatDefault
     use Output_m, only: Output
 !     type(value_1D_list_t(rk)), intent(in) :: Value(:)
     type(value_1D_p_t), intent(in) :: Value(:)
     character(len=*), intent(in), optional :: Name
+    character(len=*), intent(in), optional :: Format
     include "Dump_Value_1D_p_List.f9h"
   end subroutine Dump_Value_1D_p_List
 
-  subroutine Dump_Value_2D_List ( Value, Name )
+  subroutine Dump_Value_2D_List ( Value, Name, Format )
+    use Dump_Options, only: SDFormatDefault
     use Output_m, only: NewLine, Output
 !     type(value_2D_list_t(rk)), intent(in) :: Value(:)
     type(value_2D_list_t), intent(in) :: Value(:)
     character(len=*), intent(in), optional :: Name
+    character(len=*), intent(in), optional :: Format
     include "Dump_Value_2D_List.f9h"
   end subroutine Dump_Value_2D_List
 
@@ -312,6 +357,15 @@ contains
     include "Interpolate_1D_List.f9h"
   end subroutine Interpolate_1D_List
 
+  subroutine Interpolate_1D_Lists ( Field, Eta, Path )
+    ! Interpolate Field * Eta to Path, where the subscript for Path is
+    ! the same as the subscript for Eta.
+    real(rk), intent(in) :: Field(:)
+    type(value_1D_lists_t), intent(in) :: Eta   ! Eta%n assumed to be
+    real(rk), intent(out) :: Path(:)            ! the same as Size(Path)
+    call interpolate_1d_list ( field, eta%eta(:eta%n), path )
+  end subroutine Interpolate_1D_Lists
+
   subroutine Interpolate_1D_P ( Field, Eta, Path )
     ! Interpolate Field * Eta to Path, where the subscript for Path is
     ! in Eta.
@@ -338,6 +392,15 @@ contains
     real(rk), intent(out) :: Path(:)            ! the same as Size(Path)
     include "Interpolate_2D_List.f9h"
   end subroutine Interpolate_2D_List
+
+  subroutine Interpolate_2D_Lists ( Field, Eta, Path )
+    ! Interpolate Field * Eta to Path, where the subscript for Path is
+    ! the same as the subscript for Eta.
+    real(rk), intent(in) :: Field(:,:)
+    type(value_2D_lists_t), intent(in) :: Eta   ! Eta%n assumed to be
+    real(rk), intent(out) :: Path(:)            ! the same as Size(Path)
+    call interpolate_2d_list ( field, eta%eta(:eta%n), path )
+  end subroutine Interpolate_2D_Lists
 
   subroutine Interpolate_2D_P ( Field, Eta, Path )
     ! Interpolate Field * Eta to Path, where the second subscript for Field
@@ -369,6 +432,15 @@ contains
     include "Interpolate_3D_List.f9h"
   end subroutine Interpolate_3D_List
 
+  subroutine Interpolate_3D_Lists ( Field, Eta, Path )
+    ! Interpolate Field * Eta to Path, where the subscript for Path is
+    ! the same as the subscript for Eta.
+    real(rk), intent(in) :: Field(:,:,:)
+    type(value_3D_lists_t), intent(in) :: Eta   ! Size(Eta) assumed to be
+    real(rk), intent(out) :: Path(:)            ! the same as Size(Path)
+    call interpolate_3d_list ( field, eta%eta(:eta%n), path )
+  end subroutine Interpolate_3D_Lists
+
   subroutine Interpolate_QTM_3D_List ( Field, Eta, Path )
     ! Interpolate Field * Eta to Path, where the subscript for Path is
     ! the same as the subscript for Eta.
@@ -392,6 +464,9 @@ contains
 end module Indexed_Values_m
 
 ! $Log$
+! Revision 2.8  2017/01/14 01:46:12  vsnyder
+! Add List of Lists, add Format argument to dumps
+!
 ! Revision 2.7  2016/12/15 18:45:09  vsnyder
 ! Move argument declarations from includes to Indexed_Values
 !
