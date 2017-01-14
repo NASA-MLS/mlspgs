@@ -25,8 +25,8 @@
     do i = 1, size(a)
       c(i)%n = a(i)%n * b(i)%n
       l = 0
-      do j = 1, a(i)%n
-        do k = 1, b(i)%n
+      do k = 1, b(i)%n
+        do j = 1, a(i)%n
           l = l + 1
           c(i)%v(l)%n = a(i)%v(j)%n
           c(i)%v(l)%np = b(i)%v(k)%n
@@ -36,6 +36,9 @@
     end do
 
 ! $Log$
+! Revision 2.3  2017/01/14 01:42:26  vsnyder
+! Run A list faster than B list to put things in same order as array Eta
+!
 ! Revision 2.2  2016/12/02 02:03:54  vsnyder
 ! Move dummy argument declarations from include files to Indexed_Values_m
 !
