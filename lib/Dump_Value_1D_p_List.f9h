@@ -16,17 +16,24 @@
 !     character(len=*), intent(in), optional :: Name
 
     integer :: I
+    character(len=64) :: MyFormat
+    myFormat = sdFormatDefault
+    if ( present(format) ) myFormat = format
 
     if ( present(name) ) call output ( name, advance='yes' )
 
     do i = 1, size(value)
+      if ( value(i)%p == 0 .and. value(i)%n == 0 ) cycle
       call output ( i, places=4, after='# ' )
       call output ( value(i)%p, before = 'New(', after=') = ' )
       call output ( value(i)%n, before='Old(', after = ') * ' )
-      call output ( value(i)%v, advance='yes' )
+      call output ( value(i)%v, advance='yes', format=myFormat )
     end do
 
 ! $Log$
+! Revision 2.3  2017/01/14 01:47:56  vsnyder
+! Add Format argument
+!
 ! Revision 2.2  2016/12/15 18:45:09  vsnyder
 ! Move argument declarations from includes to Indexed_Values
 !
