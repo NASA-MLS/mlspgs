@@ -16,22 +16,28 @@
 !     character(len=*), intent(in), optional :: Name
 
     integer :: I, J
+    character(len=64) :: MyFormat
+    myFormat = sdFormatDefault
+    if ( present(format) ) myFormat = format
 
     if ( present(name) ) call output ( name, advance='yes' )
 
     do i = 1, size(value)
       if ( value(i)%n == 0 ) cycle
       if ( all(value(i)%v%n == 0) ) cycle
-      call output ( i, places=4, after='# ' )
+      call output ( i, places=4, after='#' )
       do j = 1, value(i)%n
-        call output ( value(i)%v(j)%n, places=4, before='(', after=', ' )
-        call output ( value(i)%v(j)%np, places=4, after='): ' )
-        call output ( value(i)%v(j)%v, format='(1pg14.6)' )
+        call output ( value(i)%v(j)%n, before=' (', after=',' )
+        call output ( value(i)%v(j)%np, after='): ' )
+        call output ( value(i)%v(j)%v, format=myFormat )
       end do
       call newLine
     end do
 
 ! $Log$
+! Revision 2.3  2017/01/14 01:30:44  vsnyder
+! Make list dump and 2D sparse array dump look alike
+!
 ! Revision 2.2  2017/01/11 23:42:18  vsnyder
 ! Don't print empty elements
 !
