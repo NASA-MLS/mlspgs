@@ -60,7 +60,8 @@ contains
     use HessianModule_1, only: Hessian_T
     use HGridsDatabase, only: HGrid_T
     use Interpolate_MIF_to_Tan_Press_m, only: Get_Lines_of_Sight
-    use Intrinsic, only: Lit_Indices, L_MIFLOS, L_PhiTan, L_PTan, L_TScat, L_VMR
+    use Intrinsic, only: Lit_Indices, L_MIFLOS, L_None, L_PhiTan, L_PTan, &
+      & L_TScat, L_VMR
     use Load_SPS_Data_M, only: DestroyGrids_T, Dump, EmptyGrids_T, Grids_T, &
       & Load_One_Item_Grid, Load_SPS_Data
     use MatrixModule_1, only: Matrix_T
@@ -128,6 +129,7 @@ contains
     integer :: No_sv_p_T        ! number of phi basis for temperature
     integer :: No_Tan_Hts       ! Number of tangent heights
     integer :: NoUsedChannels   ! Number of channels used
+    integer :: N_Frq_Dep        ! Number of frequency-dependent VMRs
     integer :: N_T_zeta         ! Number of zetas for temperature
     integer :: Stat             ! From allocate
     integer :: SurfaceTangentIndex  ! Index in tangent grid of earth's
@@ -373,6 +375,14 @@ contains
       max_f = 2 * maxVert + ngp1   ! Maximum fine path, including minimum Zeta panel
     end if
 
+    n_frq_dep = 0
+    if ( usingQTM ) then
+      do k = 1, size(fwdModelConf%beta_group)
+        if ( fwdModelConf%beta_group(k)%qty%qty%template% &
+           & frequencyCoordinate /= l_none ) n_frq_dep = n_frq_dep + 1
+      end do
+    end if
+        
     ! Allocate and fill spectroscopy derivative grids.  They'll be empty
     ! if fwdModelConf%line* has size zero.
     call load_sps_data ( FwdModelConf, phitan, fmStat%maf, grids_v, &
@@ -412,7 +422,7 @@ contains
                               & grids_n, grids_v, grids_w,                     &
                               & ptan, phitan, temp, QTM_HGrid, Q_LOS,          &
                               & QTM_Paths, f_and_v, no_mol, noUsedChannels,    &
-                              & no_sv_p_t, n_t_zeta, sv_t_len, nlvl,           &
+                              & no_sv_p_t, n_frq_dep, n_t_zeta, sv_t_len, nlvl,&
                               & no_tan_hts, surfaceTangentIndex,  max_c,       &
                               & maxVert, max_f, ptan_der,                      &
                               & s_t, s_a, s_h, s_lc, s_lw, s_td, s_p, s_pfa,   &
@@ -459,7 +469,7 @@ contains
                              & grids_n, grids_v, grids_w, ptan,                &
                              & phitan, temp, QTM_HGrid, Q_LOS, QTM_Paths,      &
                              & f_and_v, no_mol, noUsedChannels, no_sv_p_t,     &
-                             & n_t_zeta, sv_t_len, nlvl, no_tan_hts,           &
+                             & n_frq_dep, n_t_zeta, sv_t_len, nlvl, no_tan_hts,&
                              & surfaceTangentIndex,                            &
                              & max_c, maxVert, max_f, ptan_der,                &
                              & s_t, s_a, s_h, s_lc, s_lw, s_td, s_p, s_pfa,    &
@@ -478,9 +488,12 @@ contains
 
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
     use Comp_ETA_DoCalc_No_Frq_M, only: Comp_ETA_DoCalc_No_Frq
+    use Comp_ETA_DoCalc_Sparse_m, only: Comp_ETA_DoCalc_Sparse
     use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_Frq, &
     ! & Comp_SPS_Path_Frq_NZ, &
       & Comp_SPS_Path_No_Frq, Comp_1_SPS_Path_No_Frq
+    use Comp_Sps_Path_Sparse_m, only: Value_2d_Lists_F_t, &
+      & Value_QTM_2D_Lists_f_t
     use Compute_GL_Grid_M, only: Compute_GL_Grid
     use Constants, only: Deg2Rad, Rad2Deg
     use Convolution_m, only: Convolution, Convolution_Setup
@@ -492,13 +505,14 @@ contains
     use ForwardModelVectorTools, only: GetQuantityForForwardModel
     use Geolocation_0, only: H_V_Geod
     use Geometry, only: Get_R_EQ
-    use Get_Eta_List_m, only: Eta_List_1D
+    use Get_Eta_List_m, only: Get_Eta_List
     use Get_ETA_Matrix_M, only: Eta_D_T ! Type for Eta struct
     use Get_IEEE_NaN_m, only: Fill_IEEE_NaN
     use HessianModule_1, only: Hessian_T
     use HGridsDatabase, only: HGrid_T
-    use Indexed_Values_m, only: Value_1D_p_t, Value_QTM_2D_List_t
-    use Intrinsic, only: L_A, L_GeocAltitude, L_GeodAltitude, &
+    use Indexed_Values_m, only: Value_QTM_2D_Lists_t, Value_QTM_3D_Lists_t, &
+      & Value_1D_Lists_t, Value_3d_Lists_t
+    use Intrinsic, only: L_A, L_GeocAltitude, L_GeodAltitude, L_None, &
       & L_Radiance, L_TScat, L_VMR, L_Zeta
     use Load_SPS_Data_M, only: DestroyGrids_T, Dump, Grids_T
     use MatrixModule_1, only: Matrix_T
@@ -557,6 +571,7 @@ contains
     integer, intent(in) :: No_Mol           ! Number of molecules
     integer, intent(in) :: NoUsedChannels   ! Number of channels used
     integer, intent(in) :: No_sv_p_T        ! number of phi basis for temperature
+    integer, intent(in) :: N_Frq_Dep        ! Number of frequency-dependent VMRs
     integer, intent(in) :: N_T_zeta         ! Number of zetas for temperature
     integer, intent(in) :: Sv_T_len         ! Number of t_phi*t_zeta in the window
     integer, intent(in) :: Nlvl             ! Number of levels in coarse zeta grid
@@ -989,17 +1004,27 @@ contains
 
     type (Tau_T) :: Tau_LBL, Tau_PFA
 
-    type (value_1D_p_t) :: Eta_ZZ(2*maxVert)       ! Interpolation coefficients
-                                                   ! from temperature Zeta to
-                                                   ! GL zeta.  Since this is a
-                                                   ! 1D interpolation, there can
-                                                   ! be at most two nonzero
-                                                   ! coefficients of T zeta
-                                                   ! for each element GL zeta.
-    integer :: N_ZZ               ! Number of used elements in  Eta_ZZ
-    type (Value_QTM_2D_List_t) :: Eta_zQT(s_qtm*max_f) ! Interpolation coefficients
-                                  ! from 3D QTM to path for temperature
-
+    type (Value_3d_Lists_t) :: Eta_fzp_list((1-s_qtm)*size(fwdModelConf%beta_group))
+    type (Value_QTM_3D_Lists_t) :: Eta_fzQ(n_frq_dep) ! Interpolation coefficients
+                                  ! for frequency-dependent species, computed
+                                  ! from Eta_zQ and frequency grids.
+    type (Value_1D_Lists_t) :: Eta_p(max_f)         ! Interpolation coefficients
+                                  ! from phi basis to path
+    type (Value_2d_Lists_F_t) :: Eta_zp_list((1-s_qtm)*size(fwdModelConf%beta_group))
+    type (value_QTM_2D_lists_f_t) :: Eta_zQ(s_qtm*size(grids_f%values)) ! Interpolation
+                                  ! coefficients from 3D QTM state vector to
+                                  ! path for VMRs, taking only zeta and QTM
+                                  ! position into account.  For each frequency-
+                                  ! dependent VMR, there's an index into Eta_fzQ.
+    type (Value_QTM_2D_Lists_t) :: Eta_zQT ! Interpolation coefficients
+                                  ! from 3D QTM to path for temperature.
+    type (Value_1D_Lists_t) :: Eta_Z(size(fwdModelConf%beta_group)) ! Interpolation
+                                  ! from zeta for each VMR to GL zeta.
+    type (Value_1D_Lists_t) :: Eta_zzT ! Interpolation coefficients from
+                                  ! temperature Zeta to GL zeta.  Since this is
+                                  ! a 1D interpolation, there can be at most
+                                  ! two nonzero coefficients of T zeta for each
+                                  ! element GL zeta.
     type (VectorValue_T), pointer :: BoundaryPressure
     type (VectorValue_T), pointer :: EarthRefl     ! Earth reflectivity
     type (VectorValue_T), pointer :: ECRtoFOV      ! Rotation matrices
@@ -1225,9 +1250,10 @@ contains
       & cond=toggle(emit) .and. levels(emit) > 0 )
 
     ! Get interpolation coefficients from temperature's zetas to Z_GLGrid.
-    ! Temperature is coherent and stacked, so Eta_ZZ is applicable everywhere.
+    ! Temperature is coherent and stacked, so Eta_zzT is applicable everywhere.
 
-    call eta_list_1d ( Grids_tmp%zet_basis, z_glgrid, eta_zz, n_zz, sorted=.true. )
+    allocate ( eta_zzt%eta(maxVert) )
+    call get_eta_list ( Grids_tmp%zet_basis, z_glgrid, eta_zzT, sorted=.true. )
 
     ! Insert into bill's 2d hydrostatic equation.
     ! The phi inputa for this subprogram are the orbit plane projected
@@ -1249,17 +1275,54 @@ contains
       if ( temp_der ) then
         call two_d_hydrostatic ( Grids_tmp, refGPH%template%surfs(1,1), &
           &  refGPH%values(1,windowStart:windowFinish), z_glgrid, &
-          &  t_glgrid, h_glgrid, dhdz_glgrid, eta_zz(:n_zz), &
+          &  t_glgrid, h_glgrid, dhdz_glgrid, eta_zzT%eta(:eta_zzT%n), &
           &  dHidTlm=dh_dt_glgrid, ddHdHdTl0=ddhidhidtl0 )
       else
         call two_d_hydrostatic ( Grids_tmp, refGPH%template%surfs(1,1), &
           &  refGPH%values(1,windowStart:windowFinish), z_glgrid, &
-          &  t_glgrid, h_glgrid, dhdz_glgrid, eta_zz(:n_zz) )
+          &  t_glgrid, h_glgrid, dhdz_glgrid, eta_zzT%eta(:eta_zzT%n) )
       end if
     end if
 
     call Trace_End ( 'ForwardModel.Hydrostatic', &
       & cond=toggle(emit) .and. levels(emit) > 0 )
+
+    ! Allocate space for the Eta_z components for each quantity.
+    do i = 1, size(beta_group)
+      allocate ( eta_z(i)%eta(max_f) )
+    end do
+
+    ! Allocate space for the Eta_zQ components for each quantity, and the
+    ! Eta_fzQ components for each frequency-dependent quantity.  The Eta_zQ
+    ! values interpolate from the state vector onto the path, so they're
+    ! computed for each path.  Eta_fzQ are computed from the frequency grid
+    ! for frequency-dependent species, and its Etq_zQ, for each frequency.
+    k = 0 ! Index of frequency-dependent VMR
+    if ( usingQTM ) then
+      do i = 1, size(beta_group)
+        allocate ( eta_zQ(i)%eta(max_f) )
+        if ( beta_group(i)%qty%qty%template%frequencyCoordinate /= l_none ) then
+          k = k + 1
+          allocate ( eta_fzQ(k)%eta(max_f) )
+          eta_zQ(i)%frq_index = k
+      ! else
+      !   eta_zQ(i)%frq_index = 0 ! default initialized
+        end if
+      end do
+      allocate ( eta_zqT%eta(max_f) )
+    else
+      do i = 1, size(beta_group)
+        allocate ( eta_p(i)%eta(max_f) )
+        allocate ( eta_zp_list(i)%eta(max_f) )
+        if ( beta_group(i)%qty%qty%template%frequencyCoordinate /= l_none ) then
+          k = k + 1
+          allocate ( eta_fzp_list(k)%eta(max_f) )
+          eta_zp_list(i)%frq_index = k
+      ! else
+      !   eta_zQ(i)%frq_index = 0 ! default initialized
+        end if
+      end do
+    end if
 
     ! Loop over sidebands ----------------------------------------------------
     call Trace_Begin ( me_SidebandLoop, 'ForwardModel.SidebandLoop', &
@@ -3738,6 +3801,8 @@ contains
       & Tan_Press, Est_SCGeocAlt, Path, S, F_and_V, Scat_Zeta, Scat_Phi, &
       & Scat_Ht, Xi, Scat_Index, Scat_Tan_Ht, Forward, Rev, Which )
 
+use Dump_Row_Sparse_m, only: Dump_Row_Sparse
+use Indexed_Values_m, only: Dump
       use Generate_QTM_m, only: QTM_Tree_t
       use Get_Chi_Angles_M, only: Get_Chi_Angles
       use Get_Eta_Matrix_M, only: Get_Eta_Stru
@@ -3889,13 +3954,13 @@ contains
         if ( temp_der ) then
           call two_d_hydrostatic ( Grids_tmp, refGPH%template%surfs(1,1), &
             &  refGPH%values(1,:), z_glgrid, &
-            &  t_glgrid, h_glgrid, dhdz_glgrid, eta_zz(:n_zz), &
+            &  t_glgrid, h_glgrid, dhdz_glgrid, eta_zzT%eta(:eta_zzT%n), &
             &  dHidTlm=dh_dt_glgrid, ddHdHdTl0=ddhidhidtl0, &
             &  vertices=f_and_v(ptg_i)%vertices )
         else
           call two_d_hydrostatic ( Grids_tmp, refGPH%template%surfs(1,1), &
             &  refGPH%values(1,:), z_glgrid, &
-            &  t_glgrid, h_glgrid, dhdz_glgrid, eta_zz(:n_zz), &
+            &  t_glgrid, h_glgrid, dhdz_glgrid, eta_zzT%eta(:eta_zzT%n), &
             &  vertices=f_and_v(ptg_i)%vertices )
         end if
 
@@ -4072,7 +4137,7 @@ contains
             &  QTM_hGrid%QTM_tree, ddHidHidTl0 = ddhidhidtl0,                &
             &  dHidTlm = dh_dt_glgrid, T_Sv = Grids_tmp, Z_Ref=z_glgrid,     &
             &  ddHtdHtdTl0 = tan_d2h_dhdt, dHitdTlm = dh_dt_path_3(1:npf,:,:), &
-            &  dHtdTl0 = tan_dh_dt, Eta_zQT = eta_zQT, &
+            &  dHtdTl0 = tan_dh_dt, Eta_zQT = eta_zQT%eta, &
             &  do_calc_t = do_calc_t_3(1:npf,:,:), &
             &  do_calc_hyd = do_calc_hyd_3(1:npf,:,:) )
         else
@@ -4086,13 +4151,39 @@ contains
 
       ! Compute eta_zp & do_calc_zp (for Zeta & Phi only)
 
-      ! It is important to send all of eta_zp, do_calc_zp, nz_zp and
-      ! nnz_zp so that nonzeros from previous invocations can be
-      ! cleared without violating array bounds.
-      call comp_eta_docalc_no_frq ( Grids_f, z_path(1:npf), &
-        &  phi_path(1:npf), eta_zp, do_calc_zp, tan_pt=tan_pt_f, &
-        &  your_nz_zp=nz_zp, your_nnz_zp=nnz_zp, &
-        &  eta_fzp=eta_fzp(1:npf,:), do_calc_fzp=do_calc_fzp(:npf,:) )
+      if ( .not. usingQTM ) then
+        ! It is important to send all of eta_zp, do_calc_zp, nz_zp and
+        ! nnz_zp so that nonzeros from previous invocations can be
+        ! cleared without violating array bounds.
+        call comp_eta_docalc_no_frq ( Grids_f, z_path(1:npf), &
+          &  phi_path(1:npf), eta_zp, do_calc_zp, tan_pt=tan_pt_f, &
+          &  your_nz_zp=nz_zp, your_nnz_zp=nnz_zp, &
+          &  eta_fzp=eta_fzp(1:npf,:), do_calc_fzp=do_calc_fzp(:npf,:) )
+! block
+! integer :: I, J, K
+! k = 0
+! do i = 1, 1 ! ubound(grids_f%l_p,1)
+! j = k + 1
+! k = k + (grids_f%l_p(i)-grids_f%l_p(i-1)) * (grids_f%l_z(i)-grids_f%l_z(i-1))
+! call output ( i, before='Eta_ZP(', after=')', advance='yes' )
+! call dump_row_sparse ( eta_zp(:,j:k), width=6, &
+! bounds2= [ grids_f%l_z(i)-grids_f%l_z(i-1), grids_f%l_p(i)-grids_f%l_p(i-1) ] )
+! end do
+! end block
+! call comp_eta_docalc_sparse ( beta_group, z_path(1:npf), eta_z, phi_path(1:npf), &
+! & eta_p, eta_zp_list%value_2d_lists_t )
+! call dump ( deg2rad*beta_group(1)%qty%qty%template%phi(1,:), 'beta_group(1)%qty%qty%template%phi' )
+! call dump ( phi_path(1:npf), 'Phi_Path (radians) in fullForwardModel' )
+! call dump ( eta_p(1)%eta(1:eta_p(1)%n), 'Eta_p list' )
+! do i = 1, 1 ! size(beta_group)
+! call dump ( eta_z(i)%eta(1:eta_z(i)%n), 'Eta_z list' )
+! call dump ( eta_zp_list(i)%value_2d_lists_t%eta, 'Eta_ZP_List' )
+! end do
+! stop
+      else
+!         call comp_eta_docalc_sparse ( beta_group, z_path, eta_z, &
+!           & s%coeff, eta_zQ%value_QTM_2d_lists_t )
+      end if
 
       ! Compute sps_path for all those with no frequency component, especially
       ! to get WATER (H2O) contribution for refraction calculations.
@@ -4574,6 +4665,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.379  2016/12/02 02:04:50  vsnyder
+! Use 'P' Eta list for Eta_ZZ
+!
 ! Revision 2.378  2016/11/23 21:35:13  vsnyder
 ! Compute Eta_ZZ to interpolate from Temperature's zeta basis to the GL
 ! zeta grid, and use it for hydrostatic calculations.
