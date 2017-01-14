@@ -309,7 +309,8 @@ module Hydrostatic_m
 ! geometric heights. Reference height is now an input
 
     use Geometry, only: EarthRadA, EarthRadB, GM, J2, J4, W
-    use Indexed_Values_m, only: Interpolate, Value_1D_p_t
+    use Indexed_Values_m, only: Interpolate_Polymorphic, Value_List, &
+      & Value_1D_List_t, Value_1D_p_t
     use MLSKinds, only: RP, IP
     use Physics, only: BoltzMeters => Boltz ! Avogadro * k * ln10 / mmm m^2/(K s^2)
     use Piq_int_m, only: piq_int
@@ -325,7 +326,7 @@ module Hydrostatic_m
 !                                         heights are needed
     real(rp), intent(in) :: Z_Ref       ! reference pressure in zeta = -log10(P)
     real(rp), intent(in) :: H_Ref       ! reference geopotential height in km
-    type(value_1D_p_t), intent(in) :: Eta_ZZ(:) ! Interpolation coefficients
+    class(value_list), intent(in) :: Eta_ZZ(:) ! Interpolation coefficients
                                         ! from T_Basis to Z_Grid
 
 ! Outputs
@@ -379,7 +380,7 @@ module Hydrostatic_m
     end where
 
 ! compute t_grid using what is effectively a sparse matrix multiply
-    call interpolate ( t_coeffs, eta_zz, t_grid )
+    call interpolate_polymorphic ( t_coeffs, eta_zz, t_grid )
 
 !{ Compute surface acceleration and effective earth radius.  First,
 !  evaluate the Legendre polynomials $P_2(\sin\lambda) = \frac32 \sin^2\lambda
@@ -545,11 +546,21 @@ module Hydrostatic_m
 ! this derivative is useful for antenna derivatives
       if ( present(ddhdhdtq) ) then
         ddHdHdTq = (2.0_rp/(spread(h_grid,2,n_coeffs)+r_eff)) * dhidtq
-        do k = 1, size(eta_zz) ! Assumed to be same size as T_Grid
-          i = eta_zz(k)%p
-          j = eta_zz(k)%n
-          ddHdHdTq(i,j) = ddHdHdTq(i,j) + eta_zz(k)%v / t_grid(i)
-        end do
+        select type ( eta_zz )
+        type is ( value_1d_p_t )
+          do k = 1, size(eta_zz)
+            i = eta_zz(k)%p
+            j = eta_zz(k)%n
+            ddHdHdTq(i,j) = ddHdHdTq(i,j) + eta_zz(k)%v / t_grid(i)
+          end do
+        type is ( value_1d_list_t )
+          do k = 1, size(eta_zz) ! Assumed to be same size as T_Grid
+            do i = 1, eta_zz(k)%n
+              j = eta_zz(k)%v(i)%n
+              ddHdHdTq(k,j) = ddHdHdTq(k,j) + eta_zz(k)%v(i)%v / t_grid(k)
+            end do
+          end do
+        end select
       end if
     end if
 
@@ -767,6 +778,9 @@ module Hydrostatic_m
 end module Hydrostatic_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.29  2016/12/02 02:04:50  vsnyder
+! Use 'P' Eta list for Eta_ZZ
+!
 ! Revision 2.28  2016/11/29 00:29:18  vsnyder
 ! Use interpolator in Indexed_Values_m
 !

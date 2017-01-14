@@ -39,7 +39,7 @@ contains
     use Constants, only: Deg2Rad
     use Geometry, only: GeodToGeocLat
     use Hydrostatic_m, only: Hydrostatic
-    use Indexed_Values_m, only: Value_1D_p_t
+    use Indexed_Values_m, only: Value_List
     use Intrinsic, only: L_Geodetic
     use Load_sps_data_m, only: Grids_T
     use MLSKinds, only: RP, IP
@@ -68,7 +68,7 @@ contains
 
     ! Optional inputs
 
-    type(value_1D_p_t), intent(in), optional :: Eta_ZZ(:) ! Interpolation
+    class(value_list), intent(in), optional :: Eta_ZZ(:) ! Interpolation
                                            ! coefficients from
                                            ! Grids_tmp%Zet_Basis to Z_Grid
     integer, optional, intent(in) :: Vertices(:) ! to select a subset of
@@ -274,6 +274,9 @@ contains
 end module Two_D_Hydrostatic_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.30  2016/12/02 02:04:50  vsnyder
+! Use 'P' Eta list for Eta_ZZ
+!
 ! Revision 2.29  2016/11/23 20:11:35  vsnyder
 ! Use Hydrostatic_All_ZZ if Eta_ZZ is present
 !
