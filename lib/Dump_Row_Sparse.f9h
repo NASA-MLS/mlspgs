@@ -35,7 +35,7 @@
   do row = 1, size(array,1)
     if ( .not. any(array(row,:) /= 0) ) cycle
     pos = 0
-    call output ( row, places=4, after='# ' )
+    call output ( row, places=4, after='#' )
     do col = 1, size(array,2)
       if ( array(row,col) /= 0 ) then
         if ( pos >= myWidth ) then
@@ -46,7 +46,7 @@
         pos = pos + 1
         if ( present(bounds2) ) then
           subs = subscripts ( col, bounds2 )
-          call output ( subs(1), before='(' )
+          call output ( subs(1), before=' (' )
           do i = 2, size(subs)
             call output ( subs(i), before=',' )
           end do
@@ -61,6 +61,9 @@
   end do
 
 ! $Log$
+! Revision 2.2  2017/01/14 01:30:44  vsnyder
+! Make list dump and 2D sparse array dump look alike
+!
 ! Revision 2.1  2017/01/13 21:01:40  vsnyder
 ! Initial commit
 !
