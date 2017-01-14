@@ -9,13 +9,16 @@
 ! export authority as may be required before exporting such information to
 ! foreign countries or providing access to foreign persons.
 
-! subroutine Dump_Value_1D_List* ( Value, Name )
+! subroutine Dump_Value_1D_List* ( Value, Name, Format )
 
 !     type(value_1D_list_t(rk)), intent(in) :: Value(:)
 !     type(value_1D_list_t), intent(in) :: Value(:)
 !     character(len=*), intent(in), optional :: Name
 
     integer :: I, J
+    character(len=64) :: MyFormat
+    myFormat = sdFormatDefault
+    if ( present(format) ) myFormat = format
 
     if ( present(name) ) call output ( name, advance='yes' )
 
@@ -25,12 +28,15 @@
       call output ( i, places=4, after='# ' )
       do j = 1, value(i)%n
         call output ( value(i)%v(j)%n, places=4, after=': ' )
-        call output ( value(i)%v(j)%v, format='(1pg14.6)' )
+        call output ( value(i)%v(j)%v, format=myFormat )
       end do
       call newLine
     end do
 
 ! $Log$
+! Revision 2.4  2017/01/14 01:47:56  vsnyder
+! Add Format argument
+!
 ! Revision 2.3  2017/01/11 23:42:18  vsnyder
 ! Don't print empty elements
 !

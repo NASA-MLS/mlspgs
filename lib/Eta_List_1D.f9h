@@ -9,104 +9,167 @@
 ! export authority as may be required before exporting such information to
 ! foreign countries or providing access to foreign persons.
 
-! subroutine Eta_List_1D_* ( Basis, Grid, Eta, Sorted )
+! subroutine Eta_List_1D_* ( Basis, Grid, Eta, Row1, RowN, Sorted )
 
-  ! Compute Eta for linear interpolation from Basis to Grid
+! Compute Eta for linear interpolation from Basis to Grid. Basis is assumed
+! to be sorted.  Grid is sorted here if Sorted is present and false.
+! If Row1 is absent, 1 is assumed.  If RowN is absent, size(Grid) is assumed.
+! Elements min(row1,rowN) .. max(row1,rowN) are computed.
 
 ! real(rk), intent(in) :: Basis(:)
 ! real(rk), intent(in) :: Grid(:)
 ! type(value_1D_list_t(rk)), intent(out) :: Eta(:) ! size(grid)
-! logical, intent(in), optional :: Sorted ! "Basis is sorted" -- default true
+! logical, intent(in), optional :: Sorted ! "Grid is sorted" -- default true
 
   real(rk) :: Del_Basis
-  integer :: I, J
+  integer :: I, J, MyRow1, MyRowN
   logical :: MySorted
   integer :: N_Basis, N_Grid
+
+  n_grid = size(grid)
+  if ( n_grid == 0 ) return
+  n_basis = size(basis)
 
   mySorted = .true.
   if ( present(sorted) ) mySorted = sorted
 
-  n_basis = size(basis)
-  n_grid = size(grid)
+  myRow1 = 1
+  myRowN = n_grid
+  if ( present(row1) ) myRow1 = min(row1,n_grid)
+  if ( present(rowN) ) myRowN = min(rowN,n_grid)
 
   if ( mySorted ) then
-    ! Coefficients below Basis(1) are all 1.0
-    do i = 1, n_grid
-      if ( grid(i) > basis(1) ) exit
-!       eta(i) = value_1D_list_t(rk)(n=1,v=[value_1d_t(rk)(n=1,v=1.0_rk), &
-!                                         & value_1d_t(rk)(n=0,v=0.0_rk)])
-      eta(i) = value_1D_list_t(n=1,v=[value_1d_t(n=1,v=1.0_rk), &
-                                    & value_1d_t(n=0,v=0.0_rk)])
-    end do
-    ! Coefficients between Basis(1) and Basis(n_basis) are "hat" functions
-    do j = 2, n_basis
-      del_basis = 1.0_rk / ( basis(j) - basis(j-1) )
-      do while ( i <= n_grid )
-        if ( grid(i) > basis(j) ) exit
-        if ( basis(j-1) < grid(i) ) then
-!           eta(i) = value_1D_list_t(rk)(n=2, &
-!             v=[value_1d_t(rk)(n=j-1,v=(basis(j)-grid(i)) * del_basis), &
-!              & value_1d_t(rk)(n=j,v=(grid(i)-basis(j-1)) * del_basis) ] )
-          eta(i) = value_1D_list_t(n=2, &
-            v=[value_1d_t(n=j-1,v=(basis(j)-grid(i)) * del_basis), &
-             & value_1d_t(n=j,v=(grid(i)-basis(j-1)) * del_basis) ] )
-          if ( eta(i)%v(1)%v == 0.0 ) &
-            & eta(i) = value_1D_list_t(n=1,v=[eta(i)%v(2),value_1d_t()])
-        end if
-        i = i + 1
-      end do
-    end do
-    ! Coefficients above Basis(n_basis) are all 1.0
-    do i = n_grid, i, -1
-      if ( basis(n_basis) >= grid(i) ) exit
-!       eta(i) = value_1D_list_t(rk)(n=1,v=[value_1d_t(rk)(n=n_basis,v=1.0_rk), &
-!                                         & value_1d_t(rk)(n=0,v=0.0_rk)])
-      eta(i) = value_1D_list_t(n=1,v=[value_1d_t(n=n_basis,v=1.0_rk), &
-                                    & value_1d_t(n=0,v=0.0_rk)])
-    end do
-  else
-    block
-      use Sort_m, only: SortP
-      integer :: P(size(basis))
-      call sortp ( grid, 1, n_grid, p ) ! grid(p(:)) are now sorted
-      ! Coefficients below Basis(p(1)) are all 1.0
-      do i = 1, n_grid
-        if ( grid(i) > basis(p(1)) ) exit
-!         eta(i) = value_1D_list_t(rk)(n=1,v=[value_1d_t(rk)(n=p(1),v=1.0_rk), &
-!                                           & value_1d_t(rk)(n=0,v=0.0_rk)])
-        eta(i) = value_1D_list_t(n=1,v=[value_1d_t(n=p(1),v=1.0_rk), &
+    if ( grid(myRow1) > grid(myRowN) ) then ! Grid is in the opposite order
+      i = myRow1
+      myRow1 = myRowN
+      myRowN = i
+    end if
+
+    if ( myRow1 < myRowN ) then
+      ! Coefficients below Basis(1) are all 1.0
+      do i = myRow1, myRowN
+        if ( grid(i) > basis(1) ) exit
+  !       eta(i) = value_1D_list_t(rk)(n=1,v=[value_1d_t(rk)(n=1,v=1.0_rk), &
+  !                                         & value_1d_t(rk)(n=0,v=0.0_rk)])
+        eta(i) = value_1D_list_t(n=1,v=[value_1d_t(n=1,v=1.0_rk), &
                                       & value_1d_t(n=0,v=0.0_rk)])
       end do
-      ! Coefficients between Basis(p(1)) and Basis(p(n_basis)) are "hat" functions
+      ! Coefficients between Basis(1) and Basis(n_basis) are "hat" functions
       do j = 2, n_basis
-        del_basis = 1.0_rk / ( basis(p(j)) - basis(j-1) )
-        do while ( i <= n_grid )
-          if ( grid(i) > basis(p(j)) ) exit
-          if ( basis(p(j-1)) < grid(i) ) then
-!             eta(i) = value_1D_list_t(rk)(n=2, &
-!               v=[value_1d_t(rk)(n=p(j-1),v=(basis(p(j))-grid(i)) * del_basis), &
-!                & value_1d_t(rk)(n=p(j),v=(grid(i)-basis(p(j-1))) * del_basis) ] )
+        del_basis = 1.0_rk / ( basis(j) - basis(j-1) )
+        do while ( i <= myRowN )
+          if ( grid(i) > basis(j) ) exit
+          if ( basis(j-1) < grid(i) ) then
+  !           eta(i) = value_1D_list_t(rk)(n=2, &
+  !             v=[value_1d_t(rk)(n=j-1,v=(basis(j)-grid(i)) * del_basis), &
+  !              & value_1d_t(rk)(n=j,v=(grid(i)-basis(j-1)) * del_basis) ] )
             eta(i) = value_1D_list_t(n=2, &
-              v=[value_1d_t(n=p(j-1),v=(basis(p(j))-grid(i)) * del_basis), &
-               & value_1d_t(n=p(j),v=(grid(i)-basis(p(j-1))) * del_basis) ] )
+              v=[value_1d_t(n=j-1,v=(basis(j)-grid(i)) * del_basis), &
+               & value_1d_t(n=j,v=(grid(i)-basis(j-1)) * del_basis) ] )
             if ( eta(i)%v(1)%v == 0.0 ) &
               & eta(i) = value_1D_list_t(n=1,v=[eta(i)%v(2),value_1d_t()])
           end if
           i = i + 1
         end do
       end do
-      ! Coefficients above Basis(p(n_basis)) are all 1.0
-      do i = n_grid, i, -1
-        if ( basis(p(n_basis)) >= grid(i) ) exit
-!         eta(i) = value_1D_list_t(rk)(n=1,v=[value_1d_t(rk)(n=p(n_basis),v=1.0_rk), &
-!                                           & value_1d_t(rk)(n=0,v=0.0_rk)])
-        eta(i) = value_1D_list_t(n=1,v=[value_1d_t(n=p(n_basis),v=1.0_rk), &
+      ! Coefficients above Basis(n_basis) are all 1.0
+      do i = myRowN, i, -1
+        if ( basis(n_basis) > grid(i) ) exit
+  !       eta(i) = value_1D_list_t(rk)(n=1,v=[value_1d_t(rk)(n=n_basis,v=1.0_rk), &
+  !                                         & value_1d_t(rk)(n=0,v=0.0_rk)])
+        eta(i) = value_1D_list_t(n=1,v=[value_1d_t(n=n_basis,v=1.0_rk), &
                                       & value_1d_t(n=0,v=0.0_rk)])
+      end do
+    else
+      ! Coefficients below Basis(1) are all 1.0
+      do i = myRow1, myRowN, -1
+        if ( grid(i) > basis(1) ) exit
+  !       eta(i) = value_1D_list_t(rk)(n=1,v=[value_1d_t(rk)(n=1,v=1.0_rk), &
+  !                                         & value_1d_t(rk)(n=0,v=0.0_rk)])
+        eta(i) = value_1D_list_t(n=1,v=[value_1d_t(n=1,v=1.0_rk), &
+                                      & value_1d_t(n=0,v=0.0_rk)])
+      end do
+      ! Coefficients between Basis(1) and Basis(n_basis) are "hat" functions
+      do j = 2, n_basis
+        del_basis = 1.0_rk / ( basis(j) - basis(j-1) )
+        do while ( i > myRowN )
+          if ( grid(i) > basis(j) ) exit
+          if ( basis(j-1) < grid(i) ) then
+  !           eta(i) = value_1D_list_t(rk)(n=2, &
+  !             v=[value_1d_t(rk)(n=j-1,v=(basis(j)-grid(i)) * del_basis), &
+  !              & value_1d_t(rk)(n=j,v=(grid(i)-basis(j-1)) * del_basis) ] )
+            eta(i) = value_1D_list_t(n=2, &
+              v=[value_1d_t(n=j-1,v=(basis(j)-grid(i)) * del_basis), &
+               & value_1d_t(n=j,v=(grid(i)-basis(j-1)) * del_basis) ] )
+            if ( eta(i)%v(1)%v == 0.0 ) &
+              & eta(i) = value_1D_list_t(n=1,v=[eta(i)%v(2),value_1d_t()])
+          end if
+          i = i + 1
+        end do
+      end do
+      ! Coefficients above Basis(n_basis) are all 1.0
+      do i = myRowN, i
+        if ( basis(n_basis) > grid(i) ) exit
+  !       eta(i) = value_1D_list_t(rk)(n=1,v=[value_1d_t(rk)(n=n_basis,v=1.0_rk), &
+  !                                         & value_1d_t(rk)(n=0,v=0.0_rk)])
+        eta(i) = value_1D_list_t(n=1,v=[value_1d_t(n=n_basis,v=1.0_rk), &
+                                      & value_1d_t(n=0,v=0.0_rk)])
+      end do
+    end if
+  else ! Grid needs to be sorted
+    block
+      use Sort_m, only: SortP
+      integer :: P(n_grid), IP
+      call sortp ( grid, 1, n_grid, p ) ! grid(p(:)) are now sorted
+      ! Coefficients below Basis(1) are all 1.0
+      if ( myRow1 > myRown ) then
+        i = myRow1
+        myRow1 = myRowN
+        myRowN = i
+      end if
+      do i = myRow1, myRowN
+        ip = p(i)
+        if ( grid(ip) > basis(1) ) exit
+!         eta(ip) = value_1D_list_t(rk)(n=1,v=[value_1d_t(rk)(n=1,v=1.0_rk), &
+!                                     & value_1d_t(rk)(n=0,v=0.0_rk)])
+        eta(ip) = value_1D_list_t(n=1,v=[value_1d_t(n=1,v=1.0_rk), &
+                                & value_1d_t(n=0,v=0.0_rk)])
+      end do
+      ! Coefficients between Basis(1) and Basis(n_basis) are "hat" functions
+      do j = 2, n_basis
+        del_basis = 1.0_rk / ( basis(j) - basis(j-1) )
+        do while ( i <= myRowN )
+          ip = p(i)
+          if ( grid(ip) > basis(j) ) exit
+          if ( basis(j-1) < grid(ip) ) then
+!             eta(ip) = value_1D_list_t(rk)(n=2, &
+!               v=[value_1d_t(rk)(n=j-1,v=(basis(j)-grid(ip)) * del_basis), &
+!                & value_1d_t(rk)(n=j,v=(grid(ip)-basis(j-1)) * del_basis) ] )
+            eta(ip) = value_1D_list_t(n=2, &
+              v=[value_1d_t(n=j-1,v=(basis(j)-grid(ip)) * del_basis), &
+               & value_1d_t(n=j,v=(grid(ip)-basis(j-1)) * del_basis) ] )
+            if ( eta(ip)%v(1)%v == 0.0 ) &
+              & eta(ip) = value_1D_list_t(n=1,v=[eta(ip)%v(2),value_1d_t()])
+          end if
+          i = i + 1
+        end do
+      end do
+      ! Coefficients above Basis(n_basis) are all 1.0
+      do i = myRowN, i, -1
+        ip = p(i)
+        if ( basis(n_basis) >= grid(ip) ) exit
+!         eta(ip) = value_1D_list_t(rk)(n=1,v=[value_1d_t(rk)(n=n_basis,v=1.0_rk), &
+!                                     & value_1d_t(rk)(n=0,v=0.0_rk)])
+        eta(ip) = value_1D_list_t(n=1,v=[value_1d_t(n=n_basis,v=1.0_rk), &
+                                & value_1d_t(n=0,v=0.0_rk)])
       end do
     end block
   end if
 
 ! $Log$
+! Revision 2.4  2017/01/14 01:51:17  vsnyder
+! Add Row1 and RowN arguments
+!
 ! Revision 2.3  2016/12/02 02:03:54  vsnyder
 ! Move dummy argument declarations from include files to Indexed_Values_m
 !
