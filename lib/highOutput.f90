@@ -24,12 +24,12 @@ module HIGHOUTPUT
     & List2Array, nCharsInFormat, numStringElements, switchDetail, wrap
   use MLSStrings, only: lowercase, ncopies, &
     & Trim_safe, writeIntsToChars
-  use Output_m, only: Advance_is_yes_or_no, blanks, getOutputStatus, &
+  use Output_m, only: Advance_is_yes_or_no, Blanks, GetOutputStatus, &
     & Newline, &
     & Output, Output_ => output_char_nocr, &
     & RestoreSettings, &
-    & OutputOptions, outputOptions_t, stampOptions, stampOptions_t, &
-    & TimeStampOptions, timeStampOptions_t, &
+    & OutputOptions, OutputOptions_t, StampOptions, StampOptions_t, &
+    & TimeStampOptions, TimeStampOptions_t, &
     & BothPrUnit, invalidPrUnit, MSGLogPrUnit, &
     & OutputLines, outputLinesPrUnit, stdoutPrUnit
   use PrintIt_m, only: assembleFullLine, get_config, &
@@ -46,6 +46,8 @@ module HIGHOUTPUT
 !     - - - - - - - -
 !     (subroutines and functions)
 ! addRow                   add name, value row to a 2-d table of cells
+! addRow_header            add a single line stretched across an entire row
+! addRow_divider           add a row composed of a single, repeated character
 ! alignToFit               align printed argument to fit column range
 ! banner                   surround message with stars and stripes; e.g.,
 !                            *-----------------------------------------------*
@@ -80,6 +82,8 @@ module HIGHOUTPUT
 
 ! === (start of api) ===
 ! addRow ( char* name, value )
+! addRow_header ( char* name, char alignment )
+! addRow_divider ( char char )
 ! alignToFit ( char* chars, int columnRange(2), char alignment, [int skips] )
 ! banner ( char* chars, [int columnRange(2)], [char alignment], [int skips], 
 !    [int lineLength], [char mode], [char pattern] )
@@ -138,7 +142,7 @@ module HIGHOUTPUT
 !
 ! To understand the codes for dateformat and timeFormat, see the dates_module
 ! 
-  public :: addRow, alignToFit, &
+  public :: addRow, addRow_divider, addRow_header, alignToFit, &
     & banner, beVerbose, blanksToColumn, blanksToTab, &
     & dump, dumpSize, dumpTabs, getStamp, headLine, &
     & letsDebug, nextColumn, nextTab, numNeedsFormat, numToChars, &
@@ -319,6 +323,23 @@ contains
     real, dimension(:), intent(in)     :: value
     include 'addRow.f9h'
   end subroutine addRow_sngl_array
+
+  subroutine addRow_header ( name, alignment )
+    character(len=*), intent(in)          :: name
+    character(len=1), intent(in)          :: alignment !: 'l(eft)', 'c', or 'r'
+    character(len=MAXCELLSIZE), dimension(2)   :: item = ' '
+    integer                                    :: newSize
+    item(1) = '<<' // alignment // '>>' // name
+    newSize = addCellRowToDatabase( cellDatabase, item )
+  end subroutine addRow_header
+
+  subroutine addRow_divider ( char )
+    character(len=1), intent(in)          :: char
+    character(len=MAXCELLSIZE), dimension(2)   :: item = ' '
+    integer                                    :: newSize
+    item(1) = '<<' // 'd' // '>>' // char
+    newSize = addCellRowToDatabase( cellDatabase, item )
+  end subroutine addRow_divider
 
   ! -----------------------------------------------------  ALIGNTOFIT  -----
   ! Align chars to fit within column range
@@ -2041,6 +2062,13 @@ contains
   !      a special value of interior, null (achar(0)) inserts an empty line
   ! (5)  the first row can be treated as special, and separated from the second
   !      by a wall of special headliner characters
+  ! (6)  If any row begins with the special formatting sequence '<<', then
+  !      one of the following occurs:
+  !      special format             action
+  !          <<l>>xxxx       merge:  left-aligned xxx stretched across table
+  !          <<c>>xxxx       merge:  centered xxx stretched across table
+  !          <<r>>xxxx       merge:  right-aligned xxx stretched across table
+  !          <<d>>x          divider: inserts a wall of x's
   subroutine outputTableArray ( array, sep, border, cellWidth, &
     & interior, headliner, alignment )
     ! Args
@@ -2052,9 +2080,11 @@ contains
     character(len=1), optional, intent(in)         :: headliner ! 1st row are headers
     character(len=1), optional, intent(in)         :: alignment ! L, R, or C
     ! Local variables
+    character(len=1)                               :: align
     character(len=MAXCELLSIZE)                     :: cell
     integer                                        :: i
     integer                                        :: j
+    integer                                        :: k
     integer                                        :: left
     integer                                        :: minWidth
     character(len=1)                               :: myAlignment
@@ -2100,6 +2130,31 @@ contains
       if ( len_trim(myBorder) > 0 ) then
         call output( myBorder, advance='no' )
         right = right + 1
+      endif
+      ! Special formatting?
+      k = index(array(i,1), '<<' )
+      if ( k > 0 ) then
+        align = array(i,1)(k+2:k+2)
+        select case ( lowercase(align))
+        case ('l') ! left-aligned merge
+          call blanks ( leftPadding )
+          call output( trim(array(i,1)(k+5:)), advance='no' )
+        case ('c') ! centered merge
+          call aligntofit ( trim(array(i,1)(k+5:)), &
+            & (/ right, totalWidth /), 'c' )
+        case ('r') ! right-aligned merge
+          call aligntofit ( trim(array(i,1)(k+5:)), &
+            & (/ right, totalWidth /), 'r' )
+        case ('d') ! wall of chars
+          call blanksToColumn( totalWidth, fillChar=array(i,1)(k+5:k+5) )
+        end select
+        if ( len_trim(myBorder) > 0 ) then
+          call blanksToColumn( totalWidth )
+          call output( myBorder, advance='yes' )
+        else
+          call newLine
+        endif
+        cycle
       endif
       do j=1, size(array,2)
         left = right + 1 + leftPadding
@@ -2255,6 +2310,9 @@ contains
 end module HIGHOUTPUT
 
 ! $Log$
+! Revision 2.16  2017/01/19 23:33:23  pwagner
+! New procedures to add an internal wall or merge cells across a cell table
+!
 ! Revision 2.15  2017/01/13 01:28:32  pwagner
 ! Rename internal procedure to addCellRowToDatabase
 !
