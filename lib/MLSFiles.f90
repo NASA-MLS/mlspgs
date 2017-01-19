@@ -18,7 +18,8 @@ module MLSFiles               ! Utility file routines
   use HDFeos5, only: HE5_swclose, HE5_swopen, HE5_swinqswath, &
     & HE5_gdopen, HE5_gdclose, &
     & HE5f_acc_trunc, HE5f_acc_rdonly, HE5f_acc_rdwr
-  use HighOutput, only: AddRow, OutputNamedValue, OutputTable, StartTable
+  use HighOutput, only: AddRow, AddRow_divider, AddRow_header, &
+    & OutputNamedValue, OutputTable, StartTable
   use Intrinsic, only: l_ascii, l_hdfeos, l_hdf, l_open, &
     & L_swath, l_tkgen, l_zonalavg, lit_indices
   use Io_stuff, only: get_lun
@@ -848,7 +849,8 @@ contains
     if ( present(details) ) myDetails = details
     call split_path_name(MLSFile%Name, Path, Name)
     call startTable
-    call addRow ( 'File Info', ' ' )
+    call addRow_header ( 'File Info', 'c' )
+    call addRow_divider ( '-' )
     call addRow ( 'full name', trim(MLSFile%Name) )
     ! If details < 0, show only this name
     if ( myDetails > -1 ) then
@@ -864,12 +866,12 @@ contains
       call addRow ( 'Access', trim(accessType(MLSFile%access)) )
       call addRow ( 'Access (int)', MLSFile%access )
       call addRow ( 'content', trim(MLSFile%content) )
-      call addRow ( 'content', trim(MLSFile%content) )
       call addRow ( 'last Operation', trim(MLSFile%lastOperation) )
-      call addRow ( 'still open?', MLSFile%FileId%f_id )
+      call addRow ( 'still open?', MLSFile%stillOpen )
       ! If details < 1, don't show any FileID info
       if ( myDetails > 0 ) then
-        call addRow ( 'File ID', MLSFile%stillOpen )
+        call addRow_divider ( '-' )
+        call addRow ( 'File ID', MLSFile%FileId%f_id )
         if ( MLSFile%FileId%grp_id > 0 ) &
           & call addRow ( 'Group ID', MLSFile%FileId%grp_id )
         if ( MLSFile%FileId%sd_id > 0 ) &
@@ -2473,6 +2475,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.107  2017/01/19 23:35:01  pwagner
+! Improve appeearance when dumping an MLSFile
+!
 ! Revision 2.106  2017/01/13 01:27:27  pwagner
 ! Dump_MLSFile now uses OutputTable
 !
