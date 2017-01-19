@@ -21,12 +21,14 @@ module Dump_1
     & ResetTabs, SetTabs
   use MLSStringLists, only: GetStringElement, NumStringElements
   use MLSStrings, only: LowerCase, WriteIntsToChars
+  use Optional_m, only: Exception_t
   use Output_m, only: Blanks, NewLine, Output
 
-  implicit NONE
+  implicit none
   private
 
-  public :: Dump, DumpDates, DumpLists, DumpNamedValues, DumpTable, DumpTextfile
+  public :: Dump, DumpDates, DumpException, DumpLists, DumpNamedValues, &
+    & DumpTable, DumpTextfile
 
 ! === (start of toc) ===
 !     c o n t e n t s
@@ -35,6 +37,7 @@ module Dump_1
 
 !     (subroutines and functions)
 ! DumpDates          Dump 1-d array of tai93 (s. after 1 jan 1993)
+! DumpException      Dump an Exception datatype
 ! DumpLists          Dump a 2d array as a set of lists
 ! DumpNamedValues    Dump an array of paired names and values
 ! DumpSums           Dump after summing successive array values
@@ -44,6 +47,7 @@ module Dump_1
 
 ! === (start of api) ===
 ! DumpDates ( dble dates(:), [int width], [char* dateFormat], [char* timeFormat] )
+! DumpException ( exception_t Exception )
 ! DumpLists ( Array, [char* Name], [int Width], [char* Sep], [char* Delims] )
 !       where array can be a 2d array of chars or ints
 ! dumpNamedValues ( values, strlist names,
@@ -628,6 +632,39 @@ contains
     call dump( dates, name, width=width )
   end subroutine Dump_TAI
 
+  ! -----------------------------------------------  DumpException  -----
+  ! This dumps a table of the Exception type's components
+  subroutine DumpException ( Exception, WhereAmI, Message )
+    use HighOutput, only: AddRow, AddRow_divider, AddRow_header, &
+      & OutputTable, StartTable
+    ! Args
+    type(Exception_t), intent(in)          :: Exception
+    character(len=*), intent(in), optional :: WhereAmI ! Where are we dumping from?
+    character(len=*), intent(in), optional :: Message  ! Anything else to say?
+    ! Internal variables
+    ! Executebls
+    call startTable
+    if ( present(WhereAmI) ) then
+      call addRow_header ( '(Exception Info) ' // trim(WhereAmI), 'c' )
+    else
+      call addRow_header ( 'Exception Info', 'c' )
+    endif
+    call addRow_divider ( '-' )
+    call addRow ( 'name        ', trim(Exception%Name)  )
+    call addRow ( 'where       ', trim(Exception%Where) )
+    call addRow ( 'id          ', Exception%id          )
+    call addRow_divider ( '-' )
+    call addRow ( 'condition   ', Exception%condition   )
+    call addRow ( 'try_number  ', Exception%try_number  )
+    call addRow ( 'severity    ', Exception%severity    )
+    call addRow ( 'verboseness ', Exception%verboseness )
+    call addRow ( 'int_result  ', Exception%int_result  )
+    call addRow ( 'sngl_result ', Exception%sngl_result )
+    call addRow ( 'char_result ', trim(Exception%char_result) )
+    call outputTable ( sep='|', border='-' )
+    if ( present(Message) ) call output( trim(Message), advance='yes' )
+  end subroutine DumpException
+
   ! -----------------------------------------------  DumpTextfile  -----
   ! This dumps a table of values and headers
   ! The headside determines on which of the 4 sides 
@@ -666,6 +703,9 @@ contains
 end module Dump_1
 
 ! $Log$
+! Revision 2.4  2017/01/19 23:31:41  pwagner
+! Can DumpException
+!
 ! Revision 2.3  2016/09/22 22:52:42  pwagner
 ! Dump_Hash_Str can now take optional ExtraValues arg
 !
