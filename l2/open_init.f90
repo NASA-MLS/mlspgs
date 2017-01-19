@@ -19,13 +19,13 @@ module Open_Init
   ! Reads user params as PCF-supplied config data  |
   ! -----------------------------------------------
 
-  use HighOutput, only: addRow, beVerbose, &
-    & OutputNamedValue, outputTable, startTable
-  use MLSCommon, only: fileNameLen, MLSFile_t, nameLen, TAI93_Range_t
-  use MLSL2Options, only: specialDumpFile, Toolkit
-  use MLSStringLists, only: array2List, catLists, &
+  use HighOutput, only: AddRow, AddRow_divider, AddRow_header, BeVerbose, &
+    & OutputNamedValue, OutputTable, StartTable
+  use MLSCommon, only: FileNameLen, MLSFile_t, NameLen, TAI93_Range_t
+  use MLSL2Options, only: SpecialDumpFile, Toolkit
+  use MLSStringLists, only: Array2List, CatLists, &
     & switchDetail
-  use Output_m, only: Blanks, newLine, Output, switchOutput, revertOutput
+  use Output_m, only: Blanks, NewLine, Output, SwitchOutput, RevertOutput
 
   implicit none
 
@@ -71,11 +71,11 @@ contains ! =====     Public Procedures     =============================
     use Dates_Module, only: UTC_To_YYYYMMDD
     use Dump_1, only: Dump
     use HDF, only: dfacc_rdonly
-    use intrinsic, only: l_hdf
-    use L1BData, only: findMaxMaf, readL1BAttribute
+    use intrinsic, only: L_HDF
+    use L1BData, only: FindMaxMaf, ReadL1BAttribute
     use L2GPData, only: col_species_keys, col_species_hash
     use MLSFiles, only: wildCardHDFVersion, &
-      & addFileToDatabase, initializeMLSFile, MLS_Openfile
+      & AddFileToDatabase, InitializeMLSFile, MLS_OpenFile
     use MLSKinds, only: r8
     use MLSL2Timings, only: section_times, total_times
     use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning, MLSMessage
@@ -93,7 +93,7 @@ contains ! =====     Public Procedures     =============================
       &                MLSPCF_L2_param_switches, &
       &                MLSPCF_Pcf_start
     use MLSStrings, only: lowercase
-    use PCFHdr, only: globalattributes, createpcfannotation, filltai93attribute
+    use PCFHdr, only: GlobalAttributes, CreatePCFAnnotation, FillTAI93Attribute
     use SDPToolkit, only: max_orbits, pgs_pc_getfilesize, pgs_td_utctotai,&
       &    pgs_pc_getconfigdata, pgs_pc_getreference, pgs_s_success, &
       &    pgstd_e_no_leap_secs
@@ -501,6 +501,8 @@ contains ! =====     Public Procedures     =============================
     call DumpL1BDatabase ( filedatabase, Details )
 
     call startTable
+    call addRow_header ( 'Run Info', 'c' )
+    call addRow_divider ( '-' )
     call addRow ( 'Start Time', CCSDSStartTime )
     call addRow ( 'End Time', CCSDSEndTime )
 
@@ -530,9 +532,9 @@ contains ! =====     Public Procedures     =============================
 
   ! ---------------------------------------------  DumpL1BDatabase  -----
   subroutine DumpL1BDatabase ( filedatabase, Details )
-    use L1BData, only: L1BData_t, nameLen, precisionSuffix, &
-      & assembleL1BQtyName, deallocateL1BData, Dump, &
-      & readL1BData 
+    use L1BData, only: L1BData_t, NameLen, PrecisionSuffix, &
+      & AssembleL1BQtyName, DeallocateL1BData, Dump, &
+      & ReadL1BData 
     ! Arguments
     type (MLSFile_T), dimension(:), pointer :: FILEDATABASE
     integer, intent(in)                     :: Details
@@ -553,6 +555,8 @@ contains ! =====     Public Procedures     =============================
     ! Executable
     if(associated(filedatabase)) then
       call startTable
+      call addRow_header ( 'Run Info', 'c' )
+      call addRow_divider ( '-' )
       if ( specialDumpFile /= ' ' .and. Details > -2 ) &
         & call switchOutput( specialDumpFile, keepOldUnitOpen=.true. )
     else
@@ -672,6 +676,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.113  2017/01/19 23:56:44  pwagner
+! Improve appeearance when dumping Run Info
+!
 ! Revision 2.112  2016/11/08 17:31:47  pwagner
 ! Use SayTime subroutine from time_m module
 !
