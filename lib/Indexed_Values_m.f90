@@ -221,6 +221,8 @@ module Indexed_Values_m
 !     module procedure Dump_Value_1D_p_List_d, Dump_Value_1D_p_List_s
     module procedure Dump_Value_2D_List
 !     module procedure Dump_Value_2D_List_d, Dump_Value_2D_List_s
+    module procedure Dump_Value_3D_List
+!     module procedure Dump_Value_3D_List_d, Dump_Value_3D_List_s
   end interface
 
   interface Interpolate
@@ -306,6 +308,16 @@ contains
     character(len=*), intent(in), optional :: Format
     include "Dump_Value_2D_List.f9h"
   end subroutine Dump_Value_2D_List
+
+  subroutine Dump_Value_3D_List ( Value, Name, Format )
+    use Dump_Options, only: SDFormatDefault
+    use Output_m, only: NewLine, Output
+!     type(value_2D_list_t(rk)), intent(in) :: Value(:)
+    type(value_3D_list_t), intent(in) :: Value(:)
+    character(len=*), intent(in), optional :: Name
+    character(len=*), intent(in), optional :: Format
+    include "Dump_Value_2D_List.f9h" ! Yeah, it works here too
+  end subroutine Dump_Value_3D_List
 
   subroutine Interpolate_Polymorphic_1D ( Field, Eta, Path )
     ! Select one interpolator, depending upon the type of Eta
@@ -464,6 +476,9 @@ contains
 end module Indexed_Values_m
 
 ! $Log$
+! Revision 2.9  2017/01/21 01:59:53  vsnyder
+! Add Dump_Value_3D_List
+!
 ! Revision 2.8  2017/01/14 01:46:12  vsnyder
 ! Add List of Lists, add Format argument to dumps
 !
