@@ -892,19 +892,20 @@ contains
       end if
       call newLine
     end do
-    call dump ( the_grid%l_f(i1:in), 'The_grid%l_f' )
-    call dump ( the_grid%l_z(i1:in), 'The_grid%l_z' )
-    call dump ( the_grid%l_p(i1:in), 'The_grid%l_p' )
-    call dump ( the_grid%l_x(i1:in), 'The_grid%l_x' )
-    call dump ( the_grid%l_v(i1:in), 'The_grid%l_v' )
-    call dump ( the_grid%windowStart, 'The_grid%WindowStart' )
-    call dump ( the_grid%windowFinish, 'The_grid%WindowFinish' )
-    call dump ( the_grid%lin_log, 'The_grid%Lin_Log' )
+    call dump ( the_grid%l_f(i1-1:in), 'The_grid%l_f' )
+    call dump ( the_grid%l_z(i1-1:in), 'The_grid%l_z' )
+    call dump ( the_grid%l_p(i1-1:in), 'The_grid%l_p' )
+    call dump ( the_grid%l_x(i1-1:in), 'The_grid%l_x' )
+    call dump ( the_grid%l_v(i1-1:in), 'The_grid%l_v' )
+    call dump ( the_grid%windowStart(i1:in), 'The_grid%WindowStart' )
+    call dump ( the_grid%windowFinish(i1:in), 'The_grid%WindowFinish' )
+    call dump ( the_grid%lin_log(i1:in), 'The_grid%Lin_Log' )
     if ( myDetails > 0 ) then
-      call dump ( the_grid%min_val, 'The_grid%Min_Val' )
-      call dump ( the_grid%frq_basis, 'The_grid%Frq_Basis' )
-      call dump ( the_grid%coherent, 'The_grid%Coherent' )
-      call dump ( the_grid%stacked, 'The_grid%Stacked' )
+      call dump ( the_grid%min_val(i1:in), 'The_grid%Min_Val' )
+      call dump ( the_grid%frq_basis(the_grid%l_f(i1-1)+1:the_grid%l_f(in)), &
+        & 'The_grid%Frq_Basis' )
+      call dump ( the_grid%coherent(i1:in), 'The_grid%Coherent' )
+      call dump ( the_grid%stacked(i1:in), 'The_grid%Stacked' )
       do i = i1, in
         kx = the_grid%l_x(i) - the_grid%l_x(i-1)
         ! NZ for geolocation fields:
@@ -984,6 +985,9 @@ contains
 end module LOAD_SPS_DATA_M
 
 ! $Log$
+! Revision 2.116  2016/11/02 01:30:46  vsnyder
+! Remove unused USE name
+!
 ! Revision 2.115  2016/09/21 00:14:20  vsnyder
 ! Use IsQTM function
 !
