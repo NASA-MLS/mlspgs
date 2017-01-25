@@ -10,70 +10,71 @@
 ! foreign countries or providing access to foreign persons.
 
 program MLSL2
-  use Allocate_DeAllocate, only: AllocateLogUnit, set_garbage_collection, &
+  use Allocate_DeAllocate, only: AllocateLogUnit, Set_Garbage_Collection, &
     & TrackAllocates
-  use Call_Stack_m, only: Show_Sys_Memory, sys_memory_ch, sys_memory_convert
-  use ChunkDivide_m, only: ChunkDivideConfig
-  use Declaration_Table, only: Allocate_decl, deAllocate_decl, Dump_decl
+  use Call_Stack_M, only: Show_Sys_Memory, Sys_Memory_Ch, Sys_Memory_Convert
+  use ChunkDivide_M, only: ChunkDivideConfig
+  use Declaration_Table, only: Allocate_Decl, DeAllocate_Decl, Dump_Decl
+  use Dump_1, only: Dump
   use EmpiricalGeometry, only: DestroyEmpiricalGeometry
-  use HDF, only: dfacc_rdonly
-  use HighOutput, only: Dump, headLine, OutputNamedValue
-  use Init_Tables_module, only: init_Tables
-  use Io_stuff, only: Write_textFile
-  use Intrinsic, only: Get_type, l_ascii, l_tkgen, lit_indices
-  use L2GPData, only: avoidUnlimitedDims
-  use L2ParInfo, only: parallel, initParallel, accumulateSlaveArguments, &
-    & SlaveArguments, transmitSlaveArguments
-  use LeakCheck_m, only: LeakCheck
-  use Lexer_core, only: init_lexer
-  use Machine, only: Getarg, hp, io_error, USleep
-  use MLSCommon, only: MLSFile_t, MLSNamesAreDebug, MLSNamesAreVerbose
+  use HDF, only: Dfacc_Rdonly
+  use HighOutput, only: Dump, HeadLine, OutputNamedValue
+  use Init_Tables_Module, only: Init_Tables
+  use Io_Stuff, only: Write_TextFile
+  use Intrinsic, only: Get_Type, L_Ascii, L_Tkgen, Lit_Indices
+  use L2GPData, only: AvoidUnlimitedDims
+  use L2ParInfo, only: Parallel, InitParallel, AccumulateSlaveArguments, &
+    & SlaveArguments, TransmitSlaveArguments
+  use LeakCheck_M, only: LeakCheck
+  use Lexer_Core, only: Init_Lexer
+  use Machine, only: Getarg, Hp, Io_Error, USleep
+  use MLSCommon, only: MLSFile_T, MLSNamesAreDebug, MLSNamesAreVerbose
   use MLSFiles, only: FileStringTable, &
     & AddFileToDatabase, DeAllocate_FileDatabase, Dump, &
     & InitializeMLSFile, MLS_OpenFile, MLS_CloseFile
   use MLSHDF5, only: MLS_H5Open, MLS_H5Close
   use MLSL2Options, only: AllocFile, Aura_L1BFiles, &
-    & CheckL2CF, CheckLeak, checkPaths, countChunks, current_Version_id, &
-    & Default_HDFVersion_Read, default_HDFVersion_Write, do_Dump, Dump_Tree, &
-    & L2cf_Unit, level1_HDFVersion, maxChunkSize, need_L1BFiles, &
-    & Normal_exit_status, noteFile, numSwitches, &
-    & OriginalCmds, Output_print_Unit, &
-    & Patch, processOptions, Quit_error_threshold, &
-    & Recl, restartWarnings, runTimeValues, &
+    & CheckL2CF, CheckLeak, CheckPaths, CountChunks, Current_Version_Id, &
+    & Default_HDFVersion_Read, Default_HDFVersion_Write, Do_Dump, Dump_Tree, &
+    & L2cf_Unit, Level1_HDFVersion, MaxChunkSize, Need_L1BFiles, &
+    & Normal_Exit_Status, NoteFile, NumSwitches, &
+    & OriginalCmds, Output_Print_Unit, &
+    & Patch, PhasesToSkip, ProcessOptions, Quit_Error_Threshold, &
+    & Recl, RestartWarnings, RunTimeValues, &
     & SectionsToSkip, SectionTimes, SectionTimingUnits, &
-    & SharedPCF, showDefaults, & ! sips_Version, &
+    & SharedPCF, ShowDefaults, & ! Sips_Version, &
     & SkipDirectWrites, SkipDirectWritesOriginal, &
     & SkipRetrieval, SkipRetrievalOriginal, SlavesCleanUpSelves, SlaveMAF, &
-    & SpecialDumpFile, stateFilledBySkippedRetrievals, &
-    & StopAfterSection, stopWithError, &
-    & Timing, toolkit, totalTimes, uniqueID
-  use MLSL2Timings, only: run_start_Time, Section_Times, total_Times, &
-    & Add_to_Section_Timing, Dump_Section_Timings
+    & SpecialDumpFile, StateFilledBySkippedRetrievals, &
+    & StopAfterSection, StopWithError, &
+    & Timing, Toolkit, TotalTimes, UniqueID
+  use MLSL2Timings, only: Run_Start_Time, Section_Times, Total_Times, &
+    & Add_To_Section_Timing, Dump_Section_Timings
   use MLSMessageModule, only: MLSMSG_Debug, &
-    & MLSMessageConfig, MLSMSG_Error, MLSMSG_Severity_to_Quit, &
+    & MLSMessageConfig, MLSMSG_Error, MLSMSG_Severity_To_Quit, &
     & MLSMSG_Success, MLSMSG_Warning, DumpConfig, MLSMessage, MLSMessageExit
-  use MLSPCF2 ! everything
-  use MLSStrings, only: trim_safe
+  use MLSPCF2 ! Everything
+  use MLSStrings, only: Trim_Safe
   use MLSStringLists, only: ExpandStringRange, PutHashElement, SwitchDetail
-  use Output_m, only: Blanks, Output, &
+  use Output_M, only: Blanks, Output, &
     & InvalidPrUnit, MSGLogPrUnit, OutputOptions, StampOptions, StdoutPrUnit
-  use Parser, only: clean_up_Parser, Configuration
-  use Parser_Table_m, only:  Destroy_Parser_Table, Parser_Table_t
-  use Parser_Tables_l2cf, only: init_Parser_Table
-  use Printit_m, only: Set_Config, StdoutLogUnit
+  use Parser, only: Clean_Up_Parser, Configuration
+  use Parser_Table_M, only: Destroy_Parser_Table, Parser_Table_T
+  use Parser_Tables_L2cf, only: Init_Parser_Table
+  use Printit_M, only: Set_Config, StdoutLogUnit
   use PVM, only: ClearPVMArgs, FreePVMArgs
   use SDPToolkit, only: PGSD_DEM_30arc, PGSD_DEM_90arc, &
-    & PGSD_DEM_elev, PGSD_DEM_water_land, UseSDPToolkit, PGS_DEM_Close
-  use String_Table, only: Destroy_char_Table, Destroy_hash_Table, &
-    & Destroy_String_Table, Get_String, addinUnit
-  use Symbol_Table, only: Destroy_symbol_Table
-  use Time_m, only: sayTime_Config, Time_Config, begin, ConfigureSayTime, Dump, finish, &
-    & SayTime, Time_now
-  use Toggles, only: levels, syn, switches, toggle
-  use Track_m, only: ReportLeaks
-  use Tree, only: Allocate_Tree, deAllocate_Tree, nsons, subTree
-  use Tree_checker, only: check_Tree
-  use Tree_Walker, only: Walk_Tree_to_do_MLS_l2
+    & PGSD_DEM_Elev, PGSD_DEM_Water_Land, useSDPToolkit, PGS_DEM_Close
+  use String_Table, only: Destroy_Char_Table, Destroy_Hash_Table, &
+    & Destroy_String_Table, Get_String, AddinUnit
+  use Symbol_Table, only: Destroy_Symbol_Table
+  use Time_M, only: SayTime_Config, Time_Config, Begin, ConfigureSayTime, Dump, Finish, &
+    & SayTime, Time_Now
+  use Toggles, only: Levels, Syn, Switches, Toggle
+  use Track_M, only: ReportLeaks
+  use Tree, only: Allocate_Tree, DeAllocate_Tree, NSons, SubTree
+  use Tree_Checker, only: Check_Tree
+  use Tree_Walker, only: Walk_Tree_To_Do_MLS_L2
 
   ! === (start of toc) ===
   !     c o n t e n t s
@@ -502,7 +503,7 @@ program MLSL2
       if ( timing ) &
         & call output ( "-------- Processing Begun ------ ", advance='yes' )
       call walk_tree_to_do_MLS_L2 ( root, error, first_section, countChunks, &
-        & filedatabase, sectionsToSkip )
+        & filedatabase )
       if ( timing ) then
         call output ( "-------- Processing Ended ------ ", advance='yes' )
         call SayTime ( 'Processing mlsl2', t1=0., cumulative=.false. )
@@ -662,11 +663,13 @@ contains
   ! Show current run-time settings resulting from
   ! command-line, MLSL2Options, etc.
 !     use, intrinsic :: ISO_FORTRAN_ENV, only: Compiler_Options, Compiler_Version
-    use PRINTIT_M, only: GET_CONFIG
+    use Printit_m, only: Get_Config
     character(len=1), parameter :: fillChar = '1' ! fill blanks with '. .'
     character(len=255) :: Command ! Command that executed the program
     integer :: LogFileUnit
     character(len=8) :: string
+    ! Executable
+    ! Always show how we were invoked and what the l2cf is
     call getarg ( 0, command )
     if ( command /= '' ) then
       call output ( ' mlsl2 invoked as: ', advance='no' )
@@ -681,8 +684,9 @@ contains
 !     call output ( compiler_options(), advance='yes' )
 !     call output ( 'Compiler version ' )
 !     call output ( compiler_version(), advance='yes' )
-    if( SwitchDetail(switches, 'opt') > 0 .or. showDefaults ) then
-      call blanks(80, fillChar='-', advance='yes')
+    ! Now show a nicely-formatted list of all run-time options
+    if( SwitchDetail( switches, 'opt') > 0 .or. showDefaults ) then
+      call blanks( 80, fillChar='-', advance='yes' )
       call headline( 'Summary of run time options', fillChar='-', before='*', after='*' )
       call outputNamedValue ( 'Use toolkit panoply', toolkit, advance='yes', &
         & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
@@ -720,7 +724,7 @@ contains
       if ( parallel%slave ) then
         call outputNamedValue ( 'Master task number', parallel%masterTid, advance='yes', &
         & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-        call outputNamedValue ( 'Note file', noteFile, advance='yes', &
+        call outputNamedValue ( 'Note file', trim(noteFile), advance='yes', &
         & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       end if
       if ( len_trim(stopAfterSection) > 0 ) then
@@ -737,8 +741,6 @@ contains
         & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       call outputNamedValue ( 'Skip all retrievals?', SKIPRETRIEVAL, advance='yes', &
         & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-      call outputNamedValue ( 'Skip these sections?', trim_safe(sectionsToSkip), advance='yes', &
-        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       call outputNamedValue ( 'Unretrieved states fill', STATEFILLEDBYSKIPPEDRETRIEVALS, advance='yes', &
         & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       call outputNamedValue ( 'Using wall clock instead of cpu time?', time_config%use_wall_clock, advance='yes', &
@@ -748,18 +750,6 @@ contains
         & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       call outputNamedValue ( 'Number of switches set', numSwitches, advance='yes', &
         & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-      if ( switches /= ' ' ) then
-        call outputNamedValue ( '(All switches)', trim(switches), advance='yes', &
-          & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-      end if
-      if ( MLSNamesAreDebug /= ' ' ) then
-        call outputNamedValue ( '(Modules to debug)', trim(MLSNamesAreDebug), advance='yes', &
-          & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-      end if
-      if ( MLSNamesAreVerbose /= ' ' ) then
-        call outputNamedValue ( '(Modules are verbose)', trim(MLSNamesAreVerbose), advance='yes', &
-          & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-      end if
       call outputNamedValue ( 'Standard output unit', outputOptions%prunit, advance='yes', &
         & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       call get_config ( logFileUnit = logFileUnit )
@@ -801,11 +791,22 @@ contains
         & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       call outputNamedValue ( 'Avoid creating file on first directWrite?', patch, advance='yes', &
         & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-      call blanks(80, fillChar='-', advance='yes')
-      call dump(outputOptions)
-      call dump(stampOptions)
-      call dumpConfig
-      call blanks(80, fillChar='-', advance='yes')
+      call Blanks( 80, fillChar='-', advance='yes' )
+      ! Dump special settings and configurations
+      if ( len_trim(switches) > 0 ) &
+        & call Dump( switches, 'All Switches' )
+      if ( len_trim(MLSNamesAreDebug) > 0 ) &
+        & call Dump( MLSNamesAreDebug, 'Modules to debug' )
+      if ( len_trim(MLSNamesAreVerbose) > 0 ) &
+        & call Dump( MLSNamesAreDebug, 'Modules are verbose' )
+      if ( len_trim(SectionsToSkip) > 0 ) &
+        & call Dump( SectionsToSkip, 'Sections to Skip' )
+      if ( len_trim(PhasesToSkip) > 0 ) &
+        & call Dump( PhasesToSkip, 'Phases to Skip' )
+      call Dump( OutputOptions )
+      call Dump( StampOptions )
+      call DumpConfig
+      call Blanks( 80, fillChar='-', advance='yes' )
     end if
   end subroutine Dump_settings
 
@@ -846,6 +847,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.222  2017/01/25 18:10:22  pwagner
+! May skip certain Phases named in phasesToSkip cmdline opt
+!
 ! Revision 2.221  2017/01/11 23:56:53  pwagner
 ! Dumps both time configs; Dump MLSFile type if l2cf error
 !
