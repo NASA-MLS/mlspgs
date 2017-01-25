@@ -16,16 +16,16 @@ module OUTPUT_M
   ! See also dump_0 and printit_m
   ! For higher-level procedures, see highOutput
 
-  use dates_module, only:reformatDate, reformatTime
-  use machine, only: crash_burn, exit_with_status, neverCrash
-  use MLSCommon, only: filenamelen, finite_signal, &
-    & is_what_ieee
-  use MLSStringLists, only: nCharsInFormat
-  use MLSStrings, only: replaceNonAscii, lowercase, &
-    & readintsfromchars, stretch, trim_safe
-  use PrintIt_m, only: assemblefullline, get_config, &
-    & MLSMSG_Crash, MLSMSG_Debug, MLSMSG_info, MLSMSG_Error, &
-    & MLSMSG_Severity_to_quit, printItOut, &
+  use Dates_Module, only: ReformatDate, ReformatTime
+  use Machine, only: Crash_Burn, Exit_With_Status, NeverCrash
+  use MLSCommon, only: Filenamelen, Finite_Signal, &
+    & Is_What_Ieee
+  use MLSStringLists, only: NCharsInFormat
+  use MLSStrings, only: ReplaceNonAscii, Lowercase, &
+    & Readintsfromchars, Stretch, Trim_Safe
+  use PrintIt_M, only: Assemblefullline, Get_Config, &
+    & MLSMSG_Crash, MLSMSG_Debug, MLSMSG_Info, MLSMSG_Error, &
+    & MLSMSG_Severity_To_Quit, PrintItOut, &
     & MLSMessageConfig
 
   implicit none
@@ -1107,18 +1107,24 @@ contains
     logical, optional, intent(in) :: DONT_STAMP
     character(len=*), intent(in), optional :: format ! consistent with generic
     character(len=2) :: LINE
+    character(len=2), dimension(2), parameter :: TruthValues = &
+      & (/ 'T ', 'F ' /)
+    integer, parameter :: true  = 1 ! Index in TruthValues
+    integer, parameter :: false = 2
     if ( log ) then
-      line=' T'
+      line = TruthValues( true ) ! ' T'
     else
-      line=' F'
+      line = TruthValues( false ) ! ' F'
     end if
     if ( present(before) ) call output_ ( before, DONT_STAMP=DONT_STAMP )
     call output_ ( line, advance=advance, DONT_STAMP=DONT_STAMP )
   end subroutine OUTPUT_LOGICAL
 
   ! ---------------------------------------------  OUTPUT_LOGICAL  -----
-  subroutine OUTPUT_LOGICAL_ARRAY ( logs, ADVANCE, BEFORE, DONT_STAMP, ONLYIF, format )
-  ! Output LOG to PRUNIT using at most PLACES (default zero) places
+  subroutine OUTPUT_LOGICAL_ARRAY ( logs, &
+    & ADVANCE, BEFORE, DONT_STAMP, ONLYIF, format )
+    ! Output LOG to PRUNIT using at most PLACES (default zero) places
+    ! Optionally, print non-blank only if T (or F)
     logical, dimension(:), intent(in) :: logs
     character(len=*), intent(in), optional :: ADVANCE
     character(len=*), intent(in), optional :: BEFORE
@@ -1150,7 +1156,8 @@ contains
         call SeparateElements( i, size(logs) )
       end do
     endif
-    if ( present(advance) ) call output_ ( '', advance=advance, DONT_STAMP=DONT_STAMP )
+    if ( present(advance) ) &
+      & call output_ ( '', advance=advance, DONT_STAMP=DONT_STAMP )
   end subroutine OUTPUT_LOGICAL_ARRAY
 
   ! ----------------------------------------------  OUTPUT_SINGLE  -----
@@ -1639,6 +1646,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.128  2017/01/25 17:13:44  pwagner
+! Output logicals so they line up with integers
+!
 ! Revision 2.127  2016/10/18 17:46:28  pwagner
 ! Added advancedOptions; may insert extra args in advance='..'
 !
