@@ -16,24 +16,25 @@ module QuantityTemplates         ! Quantities within vectors
   ! This module defines the `quantities' that make up vectors and their
   ! template information.
 
-  use Allocate_deallocate, only: allocate_test, deallocate_test
+  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
   use Dump_0, only: Dump
-  use Expr_m, only: Expr_check
-  use HGridsDatabase, only: HGrid_t, Dump
-  use HighOutput, only: outputNamedValue
-  use Intrinsic, only: L_geodetic, L_geodAltitude, L_none, L_phitan, &
-    & L_VMR, L_QTM, lit_indices, Phyq_angle, Phyq_dimensionless, &
-    & Phyq_frequency, Phyq_indices, Phyq_time, Phyq_vmr
-  use MLSFillValues, only: rerank
-  use MLSKinds, only: rt => r8 ! rt is "kind of real components of template"
+  use Expr_M, only: Expr_Check
+  use HGridsDatabase, only: HGrid_T, Dump
+  use HighOutput, only: OutputNamedValue
+  use Intrinsic, only: L_Geodetic, L_GeodAltitude, L_None, L_Phitan, &
+    & L_VMR, L_QTM, Lit_Indices, Phyq_Angle, Phyq_Dimensionless, &
+    & Phyq_Frequency, Phyq_Indices, Phyq_Time, Phyq_Vmr
+  use MLSFillValues, only: Rerank
+  use MLSKinds, only: Rt => R8 ! Rt Is "kind Of Real Components Of Template"
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
-  use MLSFinds, only: findfirst
-  use MLSStringLists, only: switchDetail
-  use MLSStrings, only: lowercase, writeIntsToChars
-  use Output_m, only: output
-  use String_table, only: isStringInTable
-  use Toggles, only: switches
-  use Tree, only: nsons, subtree
+  use MLSFillValues, only: NaNFunction
+  use MLSFinds, only: Findfirst
+  use MLSStringLists, only: SwitchDetail
+  use MLSStrings, only: Lowercase, WriteIntsToChars
+  use Output_M, only: Output
+  use String_Table, only: IsStringInTable
+  use Toggles, only: Switches
+  use Tree, only: Nsons, Subtree
 
   implicit NONE
   private
@@ -414,10 +415,13 @@ contains
     logical, intent(in), optional :: Phi
 
     call createLatitudeFields ( Qty, NoSurfsToAllocate, What )
+    Qty%geodLat = NaNFunction(0._rt)
     call createLongitudeFields ( Qty, NoSurfsToAllocate, What )
+    Qty%Lon = NaNFunction(0._rt)
     call createSurfsFields ( Qty, What )
     if ( present(phi) ) then
       if ( phi ) call createPhiFields ( Qty, What )
+      Qty%phi = NaNFunction(0._rt)
     end if
 
   end subroutine CreateGeolocationFields
@@ -583,7 +587,7 @@ contains
 
   ! ----------------------------  DestroyQuantityTemplateDatabase  -----
   subroutine DestroyQuantityTemplateDatabase ( database )
-    use output_m, only: blanks
+    use Output_m, only: Blanks
     ! Dummy argument
 
     use Allocate_Deallocate, only: Test_Deallocate
@@ -620,9 +624,9 @@ contains
   ! -------------------------------------  Dump_Quantity_Template  -----
   subroutine Dump_Quantity_Template ( Qty, Details, NoL2CF, What )
 
-    use MLSSignals_m, only: signals, dump, getRadiometerName, getModuleName
-    use Output_m, only: blanks, newLine
-    use vGridsDatabase, only: dump
+    use MLSSignals_M, only: Signals, Dump, GetRadiometerName, GetModuleName
+    use Output_M, only: Blanks, NewLine
+    use VGridsDatabase, only: Dump
 
     type(QuantityTemplate_T), intent(in) :: Qty
     integer, intent(in), optional :: Details ! <= 0 => Don't dump arrays
@@ -1324,9 +1328,9 @@ contains
     ! Therefore we must do a bit of table lookups
     use Declaration_Table, only: Decls, Get_Decl, Phys_Unit_Name
     use Intrinsic, only: L_Dimensionless
-    use MLSHDF5, only: getHDF5Attribute
-    use MLSSignals_m, only: getRadiometerIndex, getModuleIndex, &
-      & getSignalIndex
+    use MLSHDF5, only: GetHDF5Attribute
+    use MLSSignals_m, only: GetRadiometerIndex, GetModuleIndex, &
+      & GetSignalIndex
 
     ! Arguments
     integer, intent(in) :: dsID
@@ -1399,7 +1403,8 @@ contains
     ! Local variables
     integer :: noSurfsToAllocate        ! For allocations
     integer :: noInstancesToAllocate    ! For allocations
-
+    logical :: Verbose
+    logical :: Verboser
     character(63) :: What
 
     ! Executable code
@@ -1408,7 +1413,8 @@ contains
     else
       what = "qty"
     end if
-
+    verbose = ( switchDetail(switches, 'qtmp' ) > -1 )
+    verboser = ( switchDetail(switches, 'qtmp' ) > 0 )
     qty%quantityType = 0
     qty%noChans = 1
     qty%noInstances = 1
@@ -1529,17 +1535,19 @@ contains
     else
       nullify ( qty%surfIndex, qty%chanIndex )
     end if
+    if ( verbose ) &
+      & call outputnamedvalue ( 'grandTotalInstances (from setup)', qty%grandTotalInstances )
 
-    ! if ( switchDetail(switches, 'qtmp') > -1 ) call dump(qty, details=0, noL2CF=.true.)
+    if ( verboser )  call dump(qty, details=0, noL2CF=.true.)
   end subroutine SetupNewQuantityTemplate
 
   ! ---------------------------  WriteAttributes_QuantityTemplate  -----
   subroutine WriteAttributes_QuantityTemplate ( dsID, NAME, &
     & QT, NOL2CF )
 
-    use MLSHDF5, only: makeHDF5Attribute
-    use MLSSignals_m, only: getRadiometerName, getModuleName, &
-      & getSignalName
+    use MLSHDF5, only: MakeHDF5Attribute
+    use MLSSignals_m, only: GetRadiometerName, GetModuleName, &
+      & GetSignalName
 
     ! Arguments
     integer, intent(in) :: dsID
@@ -1840,9 +1848,9 @@ contains
     ! Given a DS, File or GroupID, find the character-valued attribute
     ! for the attribute named attrName of the dataset name
     ! Look up its id in the lit indices and return that id as LitID
-    use intrinsic, only: first_lit, last_auto_lit
-    use MLSHDF5, only: getHDF5Attribute
-    use string_table, only: add_char, lookup
+    use Intrinsic, only: First_Lit, Last_Auto_Lit
+    use MLSHDF5, only: GetHDF5Attribute
+    use String_Table, only: Add_Char, Lookup
     ! Args
     integer, intent(in)           :: dsID      ! dataset, file or group ID
     character(len=*), intent(in)  :: attrName  ! attribute name
@@ -1866,9 +1874,9 @@ contains
     ! Given a DS, File or GroupID, find the character-valued attribute
     ! for the attribute named attrName of the dataset name
     ! Look up its id in the string table and return that id as strID
-    use MLSHDF5, only: getHDF5Attribute
-    use string_table, only: add_char, lookup
-    use tree_types, only: add_char
+    use MLSHDF5, only: GetHDF5Attribute
+    use String_Table, only: Add_Char, Lookup
+    use Tree_Types, only: Add_Char
     ! Args
     integer, intent(in)           :: dsID      ! dataset, file or group ID
     character(len=*), intent(in)  :: attrName  ! attribute name
@@ -1979,7 +1987,7 @@ contains
   ! --------------------------------------------  myDisplayString  -----
   subroutine myDisplayString ( index, advance, before )
     ! Given a string index, display the string or an error message
-    use String_Table, only: display_string, how_many_strings
+    use String_Table, only: Display_String, How_Many_Strings
     integer, intent(in) :: index
     character(len=*), intent(in), optional :: advance
     character(len=*), intent(in), optional :: before
@@ -1999,7 +2007,7 @@ contains
   ! ------------------------------------------------  myGetString  -----
   subroutine myGetString ( index, what, strip )
     ! Given a string index, Get the string or an error message
-    use string_table, only: get_string, how_many_strings
+    use String_Table, only: Get_String, How_Many_Strings
     integer, intent(in)           :: index
     character(len=*), intent(out) :: what
     logical, intent(in), optional :: strip
@@ -2276,6 +2284,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.117  2016/10/01 01:37:28  vsnyder
+! Make QTM_Tree component of HGrid_t allocatable
+!
 ! Revision 2.116  2016/08/30 20:27:24  vsnyder
 ! Add IsQTM type-bound function
 !
