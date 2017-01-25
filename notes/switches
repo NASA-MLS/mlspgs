@@ -168,7 +168,8 @@ Switches (set by -S option in mlsl2's command line):
  TScat   => Print TScat matrix
  vir     => Dump 'virgin' matrix (before forming KTK)
  xvec    => 'X' vector during Newton iteration
- walk    => trace walkback on every warning message; dump state in tree_walker
+ walk    => trace call stack walkback on every warning message
+ walker  => dump more in tree_walker
  zdet    => Print while determining min(zeta)
  zmor    => Add more zeta points
  ZMOR    => Print while adding more zeta points
@@ -225,6 +226,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.100  2016/05/02 23:30:20  vsnyder
+ Remove ptg, which is not used in FullForwardModel
+
  Revision 1.99  2016/01/23 03:00:23  vsnyder
  Add polr
 
