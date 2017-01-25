@@ -13,13 +13,13 @@
 module MLSStringLists               ! Module to treat string lists
 !=============================================================================
 
-  use MLSCommon, only: bareFNLen
-  use MLSFinds, only: findFirst, findLast
-  use MLSStrings, only: capitalize, lowerCase, nCopies, &
-    & ReadIntsFromChars, ReadNumsFromChars, replace, reverse, &
-    & SplitDetails, splitNest, squeeze, streq, trim_safe, writeIntsToChars
+  use MLSCommon, only: BareFNLen
+  use MLSFinds, only: FindFirst, FindLast
+  use MLSStrings, only: Capitalize, IsAlphabet, LowerCase, NCopies, &
+    & ReadIntsFromChars, ReadNumsFromChars, Replace, Reverse, &
+    & SplitDetails, SplitNest, Squeeze, StrEq, Trim_safe, WriteIntsToChars
   use PrintIt_m, only: MLSMSG_Allocate, MLSMSG_Deallocate, &
-    & MLSMSG_Error, MLSMSG_Warning, printItOut
+    & MLSMSG_Error, MLSMSG_Warning, PrintItOut
 
   implicit none
   private
@@ -51,6 +51,8 @@ module MLSStringLists               ! Module to treat string lists
 ! BooleanValue       Evaluate a boolean formula: e.g. 'p and not {q or r)'
 ! BuildHash          Builds a hash out of a hash constructor like
 !                     [ 100mb : 0.5ppmv, 50mb : 0.1ppmv, 31mb : 0.12ppmv ]
+! CapitalizeArray    Capitalize each line of an array of lists
+! CapitalizeList     Capitalize the 1st char in each element of a list
 ! catLists           cats 2 string lists, taking care if either one is blank
 ! EvaluateFormula    Evaluates a string formula, substituting character values
 !                      for occurrences like ${3} with 3rd arg
@@ -105,6 +107,9 @@ module MLSStringLists               ! Module to treat string lists
 ! BuildHash (char* Constructor, char* values, &
 !   & [char* operator], [char separator], [char* options])
 ! char* catLists (char* str1, char* str2)
+! CapitalizeArray ( char* inArray(:), char* outArray(:), &
+!   & [char inseparator], [char* ignore] )
+! char* CapitalizeList ( char* str, [char inseparator], [char* ignore] )
 ! ExpandStringRange (char* str, char* outst)
 ! ExtractSubString (char* str, char* outstr, char* sub1, char* sub2, &
 !       & [char* how], [log no_trim])
@@ -121,7 +126,7 @@ module MLSStringLists               ! Module to treat string lists
 ! GetUniqueStrings (char* inList(:), char* outList(:), int noUnique, 
 !   [char* extra(:)], [char* fillValue], [char* options])
 ! char* intersection ( char* str1, char* str2, [char* options] )
-! log IsInList(strlist stringList, char* string, [char* options])
+! log IsInList ( strlist stringList, char* string, [char* options] )
 ! List2Array (strlist inList, char* outArray(:), log countEmpty,
 !   [char inseparator], [log IgnoreLeadingSpaces])
 ! char* listMatches (strlist stringList, char* string, [char* options] )
@@ -263,7 +268,8 @@ module MLSStringLists               ! Module to treat string lists
 !     first w/o the extra arg, and the second time with the extra arg
 ! === (end of api) ===
 
-  public :: array2List, booleanValue, buildHash, catLists, &
+  public :: array2List, booleanValue, buildHash, &
+   & CapitalizeArray, CapitalizeList, catLists, &
    & evaluateFormula, expandStringRange, extractSubstring, &
    & getHashElement, getStringElement, &
    & getUniqueInts, getUniqueStrings, getUniqueList, &
@@ -340,15 +346,15 @@ module MLSStringLists               ! Module to treat string lists
 
   ! Error return values from:
   ! GetHashElement (int args)
-  integer, public, parameter :: KEYNOTFOUND=-1
-  integer, public, parameter :: KEYBEYONDHASHSIZE=KEYNOTFOUND-1
+  integer, public, parameter      :: KEYNOTFOUND = -1
+  integer, public, parameter      :: KEYBEYONDHASHSIZE = KEYNOTFOUND-1
   ! strings2Ints
-  integer, public, parameter :: lenORSIZETOOSMALL=-999
+  integer, public, parameter      :: lenORSIZETOOSMALL = -999
   
   ! A limitation among string list operations
-  integer, private, parameter :: MaxNumStrings       = 4096
-  integer, private, parameter :: MAXSTRLISTLENGTH    = 4*4096
-  integer, private, parameter :: MAXSTRELEMENTLENGTH = BareFNlen
+  integer, private, parameter     :: MaxNumStrings       = 4096
+  integer, private, parameter     :: MAXSTRLISTLENGTH    = 4*4096
+  integer, private, parameter     :: MAXSTRELEMENTLENGTH = BareFNlen
 
   character (len=1), parameter    :: COMMA = ','
   character (len=1), parameter    :: BLANK = ' '   ! Returned for any element empty
@@ -357,7 +363,7 @@ module MLSStringLists               ! Module to treat string lists
   logical, private, save          :: caseSensitive       
   logical, private, save          :: ignoreLeadingSpaces 
   character(len=1), private, save :: separator           
-  logical, parameter          :: deeBug = .false.
+  logical, parameter              :: deeBug = .false.
   
 contains
 
@@ -684,6 +690,87 @@ contains
     enddo
   end subroutine BuildHash
 
+  ! -------------------------------------------------  CapitalizeArray  -----
+  subroutine CapitalizeArray ( inArray, outArray, inseparator, ignore )
+    ! Capitalize the 1st char of line of an array
+    ! If size(inseparator) > 1, do the same for each of its elements
+    !--------Argument--------!
+    character (len=*), dimension(:), intent(in)            :: inArray
+    character (len=*), dimension(:), intent(out)           :: outArray
+    character (len=*), optional, intent(in)                :: ignore ! Don't change any of these
+    character (len=1), dimension(:), optional, intent(in)  :: inseparator
+    ! Local variables
+    integer                                                :: i
+    integer                                                :: j
+    ! Executable
+    if ( .not. present(inseparator) ) then
+      do i=1, size(inArray)
+        outArray(i) = CapitalizeList( inArray(i), ignore=ignore )
+      enddo
+      return
+    endif
+    do i=1, size(inArray)
+      outArray(i) = CapitalizeList( inArray(i), inseparator(1), ignore )
+    enddo
+    if ( size(inseparator) < 2 ) return
+    do j=2, size(inseparator)
+      do i=1, size(inArray)
+        outArray(i) = CapitalizeList( outArray(i), inseparator(j), ignore )
+      enddo
+    enddo
+  end subroutine CapitalizeArray
+
+  ! -------------------------------------------------  CapitalizeList  -----
+  function CapitalizeList ( STR, inseparator, ignore ) result ( OUTSTR )
+    ! Capitalize the 1st char of each element of a list
+    ! E.g., given str = 'hot,dog,2tommy' 
+    ! returns 'Hot,Dog,2Tommy'
+    !--------Argument--------!
+    character (len=*), intent(in)                 :: STR
+    character (len=1), optional, intent(in)       :: inseparator
+    character (len=*), optional, intent(in)       :: ignore ! Don't change any of these
+    character (len=len(str)+9) :: OUTSTR
+
+    !----------Local vars----------!
+    integer                             :: i
+    integer                             :: j
+    integer                             :: k
+    integer                             :: m
+    integer                             :: n
+    character (len=len(str)+9)          :: temp
+    character (len=1)                   :: separator
+    character, dimension(len(str)+9)    :: temp1d
+    !----------executable part----------!
+    if(present(inseparator)) then
+      separator = inseparator
+    else
+      separator = comma
+    endif
+    n = NumStringElements ( str, countEmpty, inseparator )
+    outstr = ' '
+    if ( n < 1 ) return
+    do i=1, n
+      call GetStringElement ( str, temp, i, countEmpty, inSeparator )
+      m = len_trim(temp)
+      temp1d(1:m) = temp(1:m)
+      j = FindFirst ( IsAlphabet(temp1d(1:m)) )
+      if ( IsInList ( ignore, temp, options='-fc' ) ) then
+        ! Nothing to do here
+      elseif ( j > 0 ) then
+        temp(j:j) = Capitalize(temp(j:j))
+      endif
+      outstr = catLists( outstr, trim_safe(temp), inseparator=inseparator )
+    enddo
+  end function CapitalizeList
+
+  ! -------------------------------------------------  catLists  -----
+  ! This family lets you Build up a String List from scratch
+  ! Typical usage
+  ! List = ' ' ! Intialize String List
+  ! do i = 1, n
+  !   List = catLists ( List, str(i) ) ! Cat str(i) ono List end
+  ! enddo
+  !
   ! -------------------------------------------------  catLists_int  -----
   function catLists_int (STR1, INT, inseparator) result (OUTSTR)
     ! appends an int onto end of a string list, taking care if it is blank
@@ -749,6 +836,7 @@ contains
     ! returns 'a,b,c,d,e,f'
     ! if either is blank, returns the other
     ! if both blank, returns a blank
+    !
     !--------Argument--------!
     character (len=*), intent(in) :: STR1
     character (len=*), intent(in) :: STR2
@@ -1969,7 +2057,7 @@ contains
   ! stringList == ' '  => always FALSE
   function IsInList( stringList, string, options ) result(itIs)
     ! Dummy arguments
-    character (len=*), intent(in)                 :: stringlist
+    character (len=*), optional, intent(in)       :: stringlist
     character (len=*), intent(in)                 :: string
     character (len=*), optional, intent(in)       :: options
     logical                                       :: itIs
@@ -1980,6 +2068,7 @@ contains
     character(len=max(len(stringList), len(string))) :: element
     ! Executable
     itIs = .false.
+    if ( .not. present(stringList) ) return
     if ( len_trim(stringList) < 1 .or. len_trim(string) < 1 ) return
     n = NumStringElements( stringList, countEmpty )
     do i=1, n
@@ -3952,9 +4041,13 @@ contains
       if ( index(myOptions, 'f') > 0 ) listElement = adjustl(listElement)
       if ( trim(listElement) /= ' ' .and. &
           & index(trim(listElement), trim(switch)) == 1 ) then
-        detail = 0
         startOfDetails = len_trim( switch ) + 1
-        if ( startOfDetails > len_trim( listElement ) ) exit
+        if ( startOfDetails > len_trim( listElement ) ) then
+          detail = 0
+          exit
+        endif
+        ! To prevent false matches, like "walk" being matched by "walker"
+        if ( isAlphabet( listElement(startOfDetails:startOfDetails) ) ) cycle
         ! Because we have sometimes allowed a "?" to be a switch
         ! (Perhaps too permissive of us)
         call ReadIntsFromChars( trim(listElement(startOfDetails:)), detail, &
@@ -4607,6 +4700,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.74  2017/01/25 21:12:36  pwagner
+! Corrected bug in SwitchDetail; added CapitalizeList
+!
 ! Revision 2.73  2016/12/16 21:57:09  pwagner
 ! Fixed a long-standing error in wrap; hopefully w/o committing new ones
 !
