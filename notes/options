@@ -113,6 +113,7 @@ Note: use "-T2" and not "--T2" because -T2 has one 'letter'
   --[n]shar[edPCF]: Do [not] adjust PCFids so levels 1 and 2 can share same PCF
   --[n]skipDir[ectWrites]: Do [not] skip all the directWrites; speedy snooping
   --[n]skipRetr[ieval]: Do [not] skip all the Retrievals; a pre-flight checkout
+  --skipPh[ases] 'list': Skip all the phases in list (e.g, 'CorePlusR2,Methanol')
   --skipSec[tions] 'list': Skip all the sections in list (e.g, 'Join,Output')
   --slave[ ]<master-tid>: This is a slave; <master-tid>
     is the id of the master.  This option is set by a master
@@ -171,6 +172,9 @@ by the equal-signs -- stuff outside that space, like these
 comments, will be ignored when responding to mlsl2 -?)
 
  $Log$
+ Revision 1.72  2016/11/04 19:29:24  pwagner
+ --nquit is like Energizer Bunny(TM)
+
  Revision 1.71  2015/09/24 22:11:39  pwagner
  Added --maxChunkSize option
 

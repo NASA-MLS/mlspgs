@@ -19,7 +19,7 @@ module TREE_WALKER
 
   public :: WALK_TREE_TO_DO_MLS_L2
   
-  logical, parameter :: COMPLAINIFSKIPPEDEVERYCHUNK = .true.
+  logical, parameter :: ComplainIfSkippedEveryChunk = .true.
   logical, parameter :: MustCheckForCorruptFileDatabase = .false.
 
 !---------------------------- RCS Ident Info -------------------------------
@@ -31,87 +31,88 @@ module TREE_WALKER
 contains ! ====     Public Procedures     ==============================
   ! -------------------------------------  WALK_TREE_TO_DO_MLS_L2  -----
   subroutine WALK_TREE_TO_DO_MLS_L2 ( ROOT, ERROR_FLAG, FIRST_SECTION, &
-    & COUNTCHUNKS, FILEDATABASE, SECTIONSTOSKIP )
+    & COUNTCHUNKS, FILEDATABASE )
 
-    use Algebra_m, only: algebra
-    use Allocate_deallocate, only: allocate_test, deallocate_test
-    use AntennaPatterns_m, only: destroy_ant_patterns_database
-    use ChunkDivide_m, only: chunkDivide, destroyChunkDatabase
-    use Chunks_m, only: dump, MLSChunk_t
+    use Algebra_M, only: Algebra
+    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+    use AntennaPatterns_M, only: Destroy_Ant_Patterns_Database
+    use ChunkDivide_M, only: ChunkDivide, DestroyChunkDatabase
+    use Chunks_M, only: Dump, MLSChunk_T
     use Construct, only: MLSL2Construct, MLSL2Deconstruct, &
       & ConstructMIFGeolocation, DestroyMIFGeolocation
-    use DirectWrite_m, only: directdata_t, destroydirectdatabase
-    use Dump_0, only: dump
-    use EmpiricalGeometry, only: forgetOptimumLon0
-    use FGrid, only: fgrid_t, destroyFGridDatabase, dump
+    use DirectWrite_M, only: DirectData_T, DestroydirectDatabase
+    use Dump_0, only: Dump
+    use EmpiricalGeometry, only: ForgetOptimumLon0
+    use FGrid, only: Fgrid_T, DestroyFGridDatabase, Dump
     use Fill, only: MLSL2Fill
-    use ForwardModelConfig, only: forwardModelConfig_t, &
+    use ForwardModelConfig, only: ForwardModelConfig_T, &
       & DestroyFwmConfigDatabase, &
       & StripForwardModelConfigDatabase
-    use ForwardModelSupport, only: printForwardModelTiming
-    use Global_settings, only: set_global_settings
-    use GriddedData, only: griddedData_t, destroyGriddedDataDatabase, dump
-    use HessianModule_1, only: destroyHessianDatabase, hessian_t
-    use HGridsDatabase, only: HGrids_t
-    use HGrid, only: computeAllHGridOffsets, DestroyHGridGeoLocations
-    use HighOutput, only: beVerbose, getStamp, headLine, outputNamedValue, &
-      & setStamp
-    use Init_tables_module, only: l_chisqchan, l_chisqmmaf, l_chisqmmif,  &
-      & Section_first, section_last, &
-      & Z_algebra, z_chunkdivide,  z_construct, z_fill, z_globalsettings, &
-      & Z_join, z_mergegrids, z_MLSsignals, z_output, z_readapriori,      &
-      & Z_retrieve, z_spectroscopy
-    use Intrinsic, only: section_indices
-    use Join, only: MLSl2join
+    use ForwardModelSupport, only: PrintForwardModelTiming
+    use Global_Settings, only: Set_Global_Settings
+    use GriddedData, only: GriddedData_T, DestroyGriddedDataDatabase, Dump
+    use HessianModule_1, only: DestroyHessianDatabase, Hessian_T
+    use HGridsDatabase, only: HGrids_T
+    use HGrid, only: ComputeAllHGridOffsets, DestroyHGridGeoLocations
+    use HighOutput, only: BeVerbose, GetStamp, HeadLine, OutputNamedValue, &
+      & SetStamp
+    use Init_Tables_Module, only: L_Chisqchan, L_Chisqmmaf, L_Chisqmmif, &
+      & Section_First, Section_Last, &
+      & Z_Algebra, Z_Chunkdivide, Z_Construct, Z_Fill, Z_Globalsettings, &
+      & Z_Join, Z_Mergegrids, Z_MLSsignals, Z_Output, Z_Readapriori, &
+      & Z_Retrieve, Z_Spectroscopy
+    use Intrinsic, only: Section_Indices
+    use Join, only: MLSL2Join
     use L1BData, only: CheckForCorruptFileDatabase
-    use L2AUXData, only: destroyL2AUXDatabase, L2AUXData_t, dump
-    use L2FWMParallel, only: L2FWMSlaveTask, launchFWMSlaves
-    use L2GPData, only: destroyL2GPDatabase, L2GPData_t, dump
-    use L2Parallel, only: getChunkInfoFromMaster, L2MasterTask
-    use L2Parinfo, only: parallel, closeparallel
-    use L2PC_m, only: destroyL2PCDatabase, destroyBinSelectorDatabase
-    use L2PCBins_m, only: flushlockedbins
-    use MatrixModule_1, only: destroyMatrixDatabase, matrix_database_t
-    use MergeGridsModule, only: mergeGrids
-    use MLSCommon, only: tai93_range_t, MLSFile_t
-    use MLSL2Options, only: aura_L1BFiles, checkPaths, currentChunkNumber, &
-      & L2CFNode, need_L1BFiles, &
-      & SkipDirectWrites, skipDirectWritesOriginal, &
-      & SkipRetrieval, slavesCleanUpSelves, specialDumpFile, stopAfterSection, &
-      & MLSMessage, toolkit
+    use L2AUXData, only: DestroyL2AUXDatabase, L2AUXData_T, Dump
+    use L2FWMParallel, only: L2FWMSlaveTask, LaunchFWMSlaves
+    use L2GPData, only: DestroyL2GPDatabase, L2GPData_T, Dump
+    use L2Parallel, only: GetChunkInfoFromMaster, L2MasterTask
+    use L2Parinfo, only: Parallel, CloseParallel
+    use L2PC_M, only: DestroyL2PCDatabase, DestroyBinSelectorDatabase
+    use L2PCBins_M, only: FlushLockedBins
+    use MatrixModule_1, only: DestroyMatrixDatabase, Matrix_Database_T
+    use MergeGridsModule, only: MergeGrids
+    use MLSCommon, only: TAI93_Range_T, MLSFile_T
+    use MLSL2Options, only: Aura_L1BFiles, &
+      & CheckPaths, CurrentChunkNumber, CurrentPhaseName, &
+      & L2CFNode, MLSMessage, Need_L1BFiles, PhasesToSkip, &
+      & SectionsToSkip, SkipDirectWrites, SkipDirectWritesOriginal, &
+      & SkipRetrieval, SlavesCleanUpSelves, SpecialDumpFile, StopAfterSection, &
+      & Toolkit
     use MLSMessageModule, only: MLSMSG_Allocate, MLSMSG_Info, &
-      & MLSMSG_Error, summarizeWarnings
-    use MLSPCF2, only: MLSPCF_Spectroscopy_end
-    use MLSFinds, only: findFirst
-    use MLSSignals_m, only: bands, destroyBandDatabase, destroyModuleDatabase, &
-      & DestroyRadiometerDatabase, destroySignalDatabase, &
-      & DestroySpectrometerTypeDatabase, isSpacecraftAura, &
-      & MLSSignals, modules, radiometers, &
-      & Signals, spectrometerTypes
-    use MLSStringLists, only: expandStringRange, isInList, switchDetail
-    use MLSStrings, only: lowercase
-    use MLSL2Timings, only: add_to_section_timing, total_times
-    use Next_tree_node_m, only: dump, &
-      & Next_tree_node, next_tree_node_state
-    use Open_init, only: openAndInitialize
-    use OutputAndClose, only: output_close
-    use Output_m, only: blanks, output, &
-      & ResumeOutput, revertOutput, switchOutput
-    use PointingGrid_m, only: destroy_pointing_grid_database
-    use QuantityTemplates, only: quantityTemplate_t, &
-      & destroyQuantityTemplateDatabase
-    use ReadApriori, only: read_apriori
-    use RetrievalModule, only: retrieve
-    use SpectroscopyCatalog_m, only: destroy_line_database, &
-      & Destroy_spectcat_database, spectroscopy
-    use String_table, only: get_string
-    use Time_m, only: SayTime, time_now
-    use Toggles, only: gen, switches, toggle
-    use Trace_m, only: trace_begin, trace_end
-    use Tree, only: decoration, subtree
-    use VectorsModule, only: destroyVectorDatabase, dump_vectors, &
-      & Vector_t, vectorTemplate_t
-    use VGridsDatabase, only: destroyVGridDatabase, VGrids
+      & MLSMSG_Error, SummarizeWarnings
+    use MLSPCF2, only: MLSPCF_Spectroscopy_End
+    use MLSFinds, only: FindFirst
+    use MLSSignals_M, only: Bands, DestroyBandDatabase, DestroyModuleDatabase, &
+      & DestroyRadiometerDatabase, DestroySignalDatabase, &
+      & DestroySpectrometerTypeDatabase, IsSpacecraftAura, &
+      & MLSSignals, Modules, Radiometers, &
+      & Signals, SpectrometerTypes
+    use MLSStringLists, only: ExpandStringRange, IsInList, SwitchDetail
+    use MLSStrings, only: Lowercase
+    use MLSL2Timings, only: Add_To_Section_Timing, Total_Times
+    use Next_Tree_Node_M, only: Dump, &
+      & Next_Tree_Node, Next_Tree_Node_State
+    use Open_Init, only: OpenAndInitialize
+    use OutputAndClose, only: Output_Close
+    use Output_M, only: Blanks, Output, &
+      & ResumeOutput, RevertOutput, SwitchOutput
+    use PointingGrid_M, only: Destroy_Pointing_Grid_Database
+    use QuantityTemplates, only: QuantityTemplate_T, &
+      & DestroyQuantityTemplateDatabase
+    use ReadApriori, only: Read_Apriori
+    use RetrievalModule, only: Retrieve
+    use SpectroscopyCatalog_M, only: Destroy_Line_Database, &
+      & Destroy_Spectcat_Database, Spectroscopy
+    use String_Table, only: Get_String
+    use Time_M, only: SayTime, Time_Now
+    use Toggles, only: Gen, Switches, Toggle
+    use Trace_M, only: Trace_Begin, Trace_End
+    use Tree, only: Decoration, Subtree
+    use VectorsModule, only: DestroyVectorDatabase, Dump_Vectors, &
+      & Vector_T, VectorTemplate_T
+    use VGridsDatabase, only: DestroyVGridDatabase, VGrids
 
     integer, intent(in) ::     ROOT        ! Root of the abstract syntax tree
     integer, intent(out) ::    ERROR_FLAG  ! Nonzero means failure
@@ -119,7 +120,6 @@ contains ! ====     Public Procedures     ==============================
     logical, intent(in) ::     COUNTCHUNKS ! Just count, print, and quit
 
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
-    character(len=*), intent(in) :: SECTIONSTOSKIP
     ! Internal variables
     logical ::                                   canWriteL2PC
     integer ::                                   chunkNo ! Index of Chunks
@@ -158,6 +158,7 @@ contains ! ====     Public Procedures     ==============================
     character(len=24) ::                         textCode
     type (Vector_T), dimension(:), pointer ::    Vectors
     logical :: verbose
+    logical :: verboser
     logical :: warnOnDestroy        ! Whether to warn before destroying dbs
 
     ! Arguments for Construct not declared above:
@@ -166,7 +167,8 @@ contains ! ====     Public Procedures     ==============================
     type (VectorTemplate_T), dimension(:), pointer :: VectorTemplates
 
     ! Executable
-    verbose = BeVerbose ( 'walk', -1 )
+    verbose = BeVerbose ( 'walker', -1 )
+    verboser = BeVerbose ( 'walker', 0 )
     call trace_begin ( me, 'WALK_TREE_TO_DO_MLS_L2', &
       & subtree(first_section,root), index=first_section, cond=toggle(gen) )
     call time_now ( t1 )
@@ -228,7 +230,7 @@ contains ! ====     Public Procedures     ==============================
 
         ! -------------------------------------------------------- Init sections
       case ( z_globalsettings )
-        if ( verbose ) call Dump ( state, 'at globalsttings' )
+        if ( verboser ) call Dump ( state, 'at globalsettings' )
         call set_global_settings ( son, forwardModelConfigDatabase, &
           & filedatabase, fGrids, l2gpDatabase, DirectDatabase, processingRange )
         call add_to_section_timing ( 'global_settings', t1, now_stop )
@@ -241,7 +243,7 @@ contains ! ====     Public Procedures     ==============================
           call CheckForCorruptFileDatabase( filedatabase )
         endif
       case ( z_mlsSignals )
-        if ( verbose ) call Dump ( state, 'at mlsSignals' )
+        if ( verboser ) call Dump ( state, 'at mlsSignals' )
         call MLSSignals ( son )
         if ( switchDetail(switches,'tps') > -1 ) then
           ! call test_parse_signals
@@ -259,7 +261,7 @@ contains ! ====     Public Procedures     ==============================
           return
         end if
       case ( z_spectroscopy )
-        if ( verbose ) call Dump ( state, 'at spectroscopy' )
+        if ( verboser ) call Dump ( state, 'at spectroscopy' )
         call spectroscopy ( son, &
           & TOOLKIT, mlspcf_spectroscopy_end, fileDatabase )
         call add_to_section_timing ( 'spectroscopy', t1, now_stop )
@@ -268,7 +270,7 @@ contains ! ====     Public Procedures     ==============================
           return
         end if
       case ( z_readapriori )
-        if ( verbose ) call Dump ( state, 'at readapriori' )
+        if ( verboser ) call Dump ( state, 'at readapriori' )
         if ( .not. ( stopBeforeChunkLoop .or. parallel%master ) ) &
           & call read_apriori ( son , &
           & l2gpDatabase, l2auxDatabase, griddedDataBase, fileDataBase )
@@ -292,7 +294,7 @@ contains ! ====     Public Procedures     ==============================
           return
         end if
       case ( z_chunkdivide )
-        if ( verbose ) call Dump ( state, 'at chunkdivide' )
+        if ( verboser ) call Dump ( state, 'at chunkdivide' )
         if ( parallel%slave .and. .not. parallel%fwmParallel ) then
           call GetChunkInfoFromMaster ( chunks, chunkNo )
           firstChunk = chunkNo
@@ -350,7 +352,7 @@ contains ! ====     Public Procedures     ==============================
         ! Now construct, fill, join and retrieve live inside the 'chunk loop'
       case ( z_construct, z_fill, z_join, z_retrieve )
         if ( doneWithChunks ) cycle
-        if ( verbose ) call Dump ( state, 'at other' )
+        if ( verboser ) call Dump ( state, 'at other' )
         ! Do special stuff in some parallel cases, or where there are
         ! no chunks.
         if ( .not. associated(chunks) ) then
@@ -419,7 +421,7 @@ contains ! ====     Public Procedures     ==============================
             & COMPLAINIFSKIPPEDEVERYCHUNK ) &
               & call MLSMessage ( MLSMSG_Error, ModuleName, &
               & 'We have skipped every chunk' )
-          if ( verbose ) call Dump( save1, 'save1' )
+          if ( verboser ) call Dump( save1, 'save1' )
           do chunkNo = firstChunk, lastChunk ! --------------------- Chunk loop
             state = save1 ! Back up so first repeated section is next
             call resumeOutput ! In case the last phase was  silent
@@ -444,14 +446,19 @@ subtrees:   do
               ! in the outer loop
               save2 = state ! before advancing to section below
               son = next_tree_node(root,state)
-              if ( verbose ) call Dump ( state, 'inner state' )
+              if ( verboser ) call Dump ( state, 'inner state' )
               if ( son == 0 ) exit subtrees
               L2CFNODE = son
               section_index = decoration(subtree(1,son))
               call get_string ( section_indices(section_index), section_name, &
                 & strip=.true. )
+              ! Are we to skip this section? Reasons could be
+              ! (1) It's in the list of sections to Skip
+              ! (2) The phase is one we've been asked to skip
               if( skipSections(section_index) ) &
                 & section_index = SECTION_FIRST - 1 ! skip
+              if ( isInList( PhasesToSkip, trim(currentPhaseName), '-fc' ) ) &
+                & section_index = SECTION_FIRST - 2 ! skip
               select case ( section_index ) ! section index
               case ( z_algebra )
                 call algebra ( son, vectors, matrices, chunks(chunkNo), forwardModelConfigDatabase )
@@ -484,7 +491,8 @@ subtrees:   do
                 call add_to_section_timing ( 'join', t1, now_stop )
               case ( z_retrieve )
                 if ( .not. checkPaths) &
-                & call retrieve ( son, vectors, matrices, hessians, forwardModelConfigDatabase, &
+                & call retrieve ( son, vectors, matrices, hessians, &
+                  & forwardModelConfigDatabase, &
                   & chunks(chunkNo), fileDataBase )
                 call add_to_section_timing ( 'retrieve', t1, now_stop )
               case ( z_output )
@@ -492,6 +500,13 @@ subtrees:   do
               case default
                 ! exit subtrees
                 ! This may simply be a skipped section
+                if ( verbose ) then
+                  if ( section_index == SECTION_FIRST - 1 ) then
+                    call output ( 'Skipping this section', advance='yes' )
+                  else
+                    call output ( 'Skipping ' // trim(currentPhaseName), advance='yes' )
+                  endif
+                endif
               end select
             end do subtrees
 
@@ -598,8 +613,8 @@ subtrees:   do
       ! Deallocate and utterly destroy all the arrays we allocated
       ! Some are known to us, ebing arrays of user-defined datatypes
       ! These we try to deallocate first
-      use FilterShapes_m, only: Destroy_filter_shapes_database, &
-        & Destroy_dacs_filter_database
+      use FilterShapes_M, only: Destroy_Filter_Shapes_Database, &
+        & Destroy_Dacs_Filter_Database
       logical, intent(in), optional :: Early ! If so, can't deallocate everything
       ! Local variables
       logical :: myEarly
@@ -733,6 +748,9 @@ subtrees:   do
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.206  2016/11/08 17:31:26  pwagner
+! Use SayTime subroutine from time_m module
+!
 ! Revision 2.205  2016/09/21 00:40:17  pwagner
 ! Usually dump FileDB as a table
 !
