@@ -12,7 +12,7 @@
 !=============================================================================
 MODULE MLSStrings               ! Some low level string handling stuff
 !=============================================================================
-  use MLSFinds, only: findFirst, findNext
+  use MLSFinds, only: FindFirst, FindNext
   implicit none
   private
 
@@ -135,7 +135,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! char* Reverse ( char* str )
 ! char* Reverse_trim ( char* str )
 ! char* Rot13 ( char* str, [int nn], [char* otp], [log inverse] )
-! char* shiftLRC (char* str, [char* position], [char fillChar])
+! char* shiftLRC ( char* str, [char* position], [char fillChar] )
 ! int size_trim ( char* str(:) )
 ! SplitDetails ( char *str, char* switch, int details )
 ! SplitNest ( char *str, char* part1, char* part2, char* part3, [char* parens] )
@@ -143,16 +143,16 @@ MODULE MLSStrings               ! Some low level string handling stuff
 !       & [log threeWay], [char* delimiter])
 ! char* squeeze (char* str, [char* options])
 ! char* StartCase (char* str, [char separator])
-! log streq (char* str1, char* str2, [char* options])
-! log streq (char* str1(:), char* str2, [char* options])
-! log streq (char* str1, char* str2(:), [char* options])
-! char* stretch (char* str, [char* options])
-! strings2Ints (char* strs(:), int ints(:,:))
-! char* trim_safe (char* str)
+! log streq ( [char* str1], [char* str2], [char* options] )
+! log streq ( char* str1(:), char* str2, [char* options] )
+! log streq ( char* str1, char* str2(:), [char* options] )
+! char* stretch ( char* str, [char* options] )
+! strings2Ints ( char* strs(:), int ints(:,:) )
+! char* trim_safe ( char* str )
 ! TrueList ( logical* list, char* str )
 ! char* unasciify ( char* str, [char* how] )
-! unWrapLines (char* inLines(:), char* outLines(:), &
-!              [int nout], [char escape], [char comment])
+! unWrapLines ( char* inLines(:), char* outLines(:), &
+!              [int nout], [char escape], [char comment] )
 ! writeIntAsBaseN (int int, int N, char* strs, [char* options])
 ! writeIntsToChars (int ints(:), char* strs(:))
 ! writeRomanNumerals (int int, char* strs)
@@ -254,6 +254,12 @@ MODULE MLSStrings               ! Some low level string handling stuff
   integer, public, parameter :: STRINGCONTAINSFORBIDDENS=-999
   ! strings2Ints
   integer, public, parameter :: LENORSIZETOOSMALL=-999
+  ! streq max input str lengths
+  ! (We had to resort to this hard-wired limit after we made
+  ! the possibly bone-headed decision to let
+  ! str1 and str2 be optional args)
+  integer, public, parameter :: MaxStreqLen  = 2048
+  integer, public, parameter :: MaxSubstrLen = 256
 
   logical, private, save          :: caseSensitive       
   logical, private, save          :: ignoreLeadingSpaces
@@ -2150,7 +2156,7 @@ contains
   end function streq_array2
 
   ! -------------------------------------------------  streq_scalar  -----
-  function streq_scalar (STR1, STR2, OPTIONS) result (relation)
+  function streq_scalar ( str1, str2, options ) result ( relation )
     ! Are two strings "equal" where equality is modified by
     ! (w) Wildcard * (off by default) which allows 'a*' to equal 'abcd'
     ! (c) case insensitive (off by default) which allows 'ABCD' to equal 'abcd'
@@ -2170,10 +2176,13 @@ contains
     ! Trailing spaces are always ignored; e.g. streq('abcd ', 'abcd') is TRUE
     ! Only one of str1, str2 may contain wildcards
     !--------Argument--------!
-    character (len=*), intent(in) :: STR1
-    character (len=*), intent(in) :: STR2
-    character (len=*), intent(in), optional  :: OPTIONS
-    logical                       :: RELATION
+    ! str1 and str2 are optional so we can streq on optional args
+    ! and always return false
+    ! (But should we return false even when the sense is reversed?)
+    character (len=*), intent(in), optional  :: str1
+    character (len=*), intent(in), optional  :: str2
+    character (len=*), intent(in), optional  :: options
+    logical                                  :: relation
 
     ! Internal variables
     integer, parameter :: MAXNUMWILDCARDS = 10 ! How many '*' in the pattern
@@ -2187,13 +2196,20 @@ contains
     logical :: reverseSense
     integer :: spos
     ! If len(str) is used for ptrn and substrs, Intel Fortran 10.0.023 crashes
-    character(len=max(len(str1), len(str2))) :: str
-    character(len=max(len(str1), len(str2))) :: ptrn  ! The one with '*'
-    character(len=max(len(str1), len(str2))), dimension(MAXNUMWILDCARDS+1) :: substrs
+    character(len=MaxStreqLen)    :: str
+    character(len=MaxStreqLen)    :: ptrn  ! The one with '*'
+    character(len=MaxSubstrLen), dimension(MAXNUMWILDCARDS+1) :: substrs
     logical :: head
     logical :: wildcard
     logical, parameter :: deebug = .false.
     !----------Executable part----------!
+    ! Check for any absent atr1, str2
+    relation = ( present(str1) .and. present(str2) )
+    if ( .not. relation ) return
+    ! Check for length violations
+    relation = ( len(str1) <= MaxStreqLen .and. len(str2) <= MaxStreqLen )
+    if ( .not. relation ) return
+    !
     relation = .FALSE.
     myOptions = ' '
     if ( present(options) ) myOptions = lowercase(options)
@@ -2872,6 +2888,8 @@ contains
     ! If non_standard is chosen, check for exceptional abbreviations
     ! like 'im' for 999, or 'cic' for 199
     !
+    ! Note: The '4' option mnioned above doesn't seem tto be operative.
+    ! Did you change your mind?
     !--------Argument--------!
     integer, intent(in)                     ::   num
     character (len=*), intent(out)          ::   str
@@ -3216,6 +3234,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.103  2017/01/25 21:10:17  pwagner
+! str1 and str2 args to streq now optional
+!
 ! Revision 2.102  2016/12/08 00:15:41  pwagner
 ! readNumsFromChars can now ignore non-numerical stuff
 !
