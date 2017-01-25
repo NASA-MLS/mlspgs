@@ -15,25 +15,25 @@ module MLSL2Options              !  Options and Settings for the MLSL2 program
 
   use Dump_0, only: Dump
   use Dump_1, only: Dump
-  use HDF, only: dfacc_rdwr
+  use HDF, only: Dfacc_Rdwr
   use HighOutput, only: Banner, OutputNamedValue
-  use intrinsic, only: l_ascii, l_hours, l_minutes, l_seconds
-  use, intrinsic :: ISO_Fortran_Env, only: Error_Unit
-  use MLScommon, only: MLSFile_t, MLSNamesAreDebug, MLSNamesAreVerbose
+  use Intrinsic, only: L_Ascii, L_Hours, L_Minutes, L_Seconds
+  use, Intrinsic :: ISO_Fortran_Env, only: Error_Unit
+  use MLSCommon, only: MLSFile_T, MLSNamesAreDebug, MLSNamesAreVerbose
   use MLSFiles, only: WildCardHDFVersion, HDFVersion_4, HDFVersion_5, Dump
   use MLSMEssageModule, only: MLSMessageConfig, &
-    & MLSMsg_error, MLSMsg_info, MLSMsg_testWarning, &
-    & MLSMSG_Severity_to_quit, MLSMsg_severity_to_walkback, MLSMsg_warning, &
-    & Bummer, sayMessage => MLSMessage
-  use MLSPCF2, only: MLSPCF_l1b_rad_end, MLSPCF_l1b_rad_start
+    & MLSMsg_Error, MLSMsg_Info, MLSMsg_TestWarning, &
+    & MLSMSG_Severity_To_Quit, MLSMsg_Severity_To_Walkback, MLSMsg_Warning, &
+    & Bummer, SayMessage => MLSMessage
+  use MLSPCF2, only: MLSPCF_L1b_Rad_End, MLSPCF_L1b_Rad_Start
   use MLSStringLists, only: EvaluateFormula
-  use MLSStrings, only: isComment, isDigits, lowerCase, &
-    & readIntsFromChars, Replace, writeIntsToChars
-  use PCFHdr, only: globalAttributes
-  use output_m, only: outputOptions, &
-    & invalidPrUnit, StdoutPrUnit, MSGLogPrUnit, bothPrUnit, &
-    & output
-  use printit_m, only: defaultLogUnit, get_config, stdoutLogUnit
+  use MLSStrings, only: IsComment, IsDigits, LowerCase, &
+    & ReadIntsFromChars, Replace, WriteIntsToChars
+  use PCFHdr, only: GlobalAttributes
+  use Output_M, only: OutputOptions, &
+    & InvalidPrUnit, StdoutPrUnit, MSGLogPrUnit, BothPrUnit, &
+    & Output
+  use Printit_M, only: DefaultLogUnit, Get_Config, StdoutLogUnit
 
   implicit none
   public
@@ -59,7 +59,7 @@ module MLSL2Options              !  Options and Settings for the MLSL2 program
   ! The following should be TRUE if run with level 1 as a single PGE
   ! sharing a single PCF; i.e., for the near real-time (nrt)
   ! (in which case we need to move some of the "mobile" PCF ids)
-  logical :: SHAREDPCF                               =  .false. 
+  logical :: SharedPCF                               =  .false. 
 
   ! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
@@ -69,7 +69,7 @@ module MLSL2Options              !  Options and Settings for the MLSL2 program
   character(LEN=versIDLen), dimension(2)    :: current_version_id = (/ &
     & 'v4.23 swdev team               ' , & 
     & 'See license terms for copyright'/)
-  character(LEN=32)    :: uniqueID                    = ' '
+  character(LEN=32)    :: UniqueID                    = ' '
      
   ! Set the following to MSGLOGPRUNIT before delivering to sips;
   ! (its possible values and their effects on normal output:
@@ -78,57 +78,57 @@ module MLSL2Options              !  Options and Settings for the MLSL2 program
   ! MSGLOGPRUNIT   sent to Log file (via MLSMessage)
   ! BOTHPRUNIT     both stdout and Log file
   ! > 0            Fortran 'unit=OUTPUT_PRINT_UNIT')
-  integer            :: OUTPUT_PRINT_UNIT             = MSGLOGPRUNIT ! -2
+  integer            :: Output_print_unit             = MSGLOGPRUNIT ! -2
 
   ! Set the following to MLSMSG_Error before delivering to sips;
   ! when set higher, it allows program keep going despite errors
   ! when set lower, the program would quit even on warnings
-  integer            :: QUIT_ERROR_THRESHOLD          = MLSMSG_Error
+  integer            :: Quit_error_threshold          = MLSMSG_Error
 
   ! Set the following to 2 before delivering to sips;
   ! If 0, you won't be able to distinguish normal termination
   ! from some abnormal ones (e.g. in parser) (a bad thing)
   ! if 2, status will be 2 only if run complete         
   ! and without error (a good thing)
-  integer, parameter :: NORMAL_EXIT_STATUS            = 2
+  integer, parameter :: Normal_exit_status            = 2
 
   ! ---------------------------------------------------------------
   ! None of the following need to be changed before delivery to sips
   
-  ! Assume hdf files w/o explicit hdfVersion field are this 
-  ! 4 corresponds to hdf4, 5 to hdf5 in L2GP, L2AUX, etc.        
-  integer            :: DEFAULT_HDFVERSION_WRITE      = HDFVERSION_5
-  ! Set to WILDCARDHDFVERSION if you wish to autodetect such files  
+  ! Assume HDF files w/o explicit HDFVersion field are this 
+  ! 4 corresponds to HDF4, 5 to HDF5 in L2GP, L2AUX, etc.        
+  integer            :: Default_HDFversion_write      = HDFversion_5
+  ! Set to WildcardHDFversion if you wish to autodetect such files  
   ! on input
-  integer            :: DEFAULT_HDFVERSION_READ       = WILDCARDHDFVERSION  
-  integer            :: LEVEL1_HDFVERSION             = WILDCARDHDFVERSION  
+  integer            :: Default_HDFversion_read       = WildcardHDFversion  
+  integer            :: Level1_HDFversion             = WildcardHDFversion  
 
-  ! The following is FALSE only for runs that don't need orbit/attitude info
-  logical            :: NEED_L1BFILES                 = .true.
-  ! The following is FALSE only for runs that use non-Aura satellite data
-  logical            :: AURA_L1BFILES                 = .true.
+  ! The following is FALSe only for runs that don't need orbit/attitude info
+  logical            :: Need_L1BFiles                 = .true.
+  ! The following is FALSe only for runs that use non-Aura satellite data
+  logical            :: Aura_L1BFiles                 = .true.
   ! Set if run must not create file, instead just append to it
-  logical            :: PATCH                         = .false. 
+  logical            :: Patch                         = .false. 
   ! Whether to restart printing identical warnings at each new phase
-  logical            :: RESTARTWARNINGS               = .true.
+  logical            :: RestartWarnings               = .true.
   ! Whether to run slave tasks in the background
   ! (needed if they are to allow the wrapper script to forcibly terminate
   ! hanging slave tasks)
-  logical            :: RUNINBACKGROUND               = .false.
-  ! File name to which to write "Finished" after slave sends sig_finished
-  character(len=255) :: NOTEFILE                      = ' '
+  logical            :: RunInBackground               = .false.
+  ! File name to which to write "finished" after slave sends sig_finished
+  character(len=255) :: NoteFile                      = ' '
   ! What units to use in summarizing timings at end of run
-  integer            :: SECTIONTIMINGUNITS            = L_SECONDS
-  character(len=32)  :: currentPhaseName              = ' '
-  integer            :: currentChunkNumber            = 0
+  integer            :: SectionTimingUnits            = L_seconds
+  character(len=32)  :: CurrentPhaseName              = ' '
+  integer            :: CurrentChunkNumber            = 0
   
   ! Whether to skip doing the direct writes--quicker when snooping
-  logical            :: SKIPDIRECTWRITES              = .false.    
-  logical            :: SKIPDIRECTWRITESORIGINAL      = .false.    
+  logical            :: SkipDirectWrites              = .false.    
+  logical            :: SkipDirectwritesOriginal      = .false.    
   ! Whether to skip doing the retrieval--a pre-flight checkout of paths, etc.
-  logical            :: SKIPRETRIEVAL                 = .false.        
+  logical            :: SkipRetrieval                 = .false.        
   ! A holding place for the above, allowing us to skip for some phases only
-  logical            :: SKIPRETRIEVALORIGINAL         = .false. 
+  logical            :: SkipRetrievalOriginal         = .false. 
   ! Whether each slave deallocates all its arrays, pointers, etc.
   ! Sometimes slaves die or take too long to finish cleaning up
   ! But if system fails to reclaim memory properly, subsequent slaves
@@ -137,24 +137,24 @@ module MLSL2Options              !  Options and Settings for the MLSL2 program
   logical            :: slavesCleanUpSelves           = .true.
   ! Will we be using a pvm channel to pipe data to an
   ! external running process, e.g. idl?
-  logical            :: SNOOPINGACTIVE                = .false.
-  character(len=132) :: SNOOPNAME                     = ''
+  logical            :: SnoopingActive                = .false.
+  character(len=132) :: SnoopName                     = ''
 
   ! In case special dumps are to go to a special dumpfile
-  character(len=255) :: SPECIALDUMPFILE               = ' '
-  ! What to fill state, outputSD with if skipping retrieval
-  real               :: STATEFILLEDBYSKIPPEDRETRIEVALS = 0.
+  character(len=255) :: SpecialDumpfile               = ' '
+  ! What to fill state, outputsd with if skipping retrieval
+  real               :: StateFilledBySkippedretrievals = 0.
   ! Whether to stop after a certain section: which section it is
-  character(len=16)  :: STOPAFTERSECTION              = ' ' ! Blank means 'no'
+  character(len=16)  :: StopAfterSection              = ' ' ! Blank means 'no'
 
   ! Whether to exit with status 1 no matter what
-  logical            :: STOPWITHERROR                 = .false.         
+  logical            :: StopWithError                 = .false.         
   ! Whether to do only a pre-flight checkout of paths
-  logical            :: CHECKPATHS                    = .false.         
+  logical            :: CheckPaths                    = .false.         
 
-  logical            :: TOOLKIT                       = .true. ! SIPS_VERSION 
-  logical, parameter :: WRITEFILEATTRIBUTES           = .false.               
-  logical            :: MLSL2DEBUG                    = .false.               
+  logical            :: Toolkit                       = .true. ! SIPS_VERSION 
+  logical, parameter :: WriteFileAttributes           = .false.               
+  logical            :: MLSL2Debug                    = .false.               
   ! --------------------------------------------------------------------------
 
   character(len=2048) :: command_line ! All the opts
@@ -166,18 +166,19 @@ module MLSL2Options              !  Options and Settings for the MLSL2 program
   integer :: DO_DUMP = 0           ! Dump declaration table if > 0
   integer :: DUMP_TREE = -1        ! Dump tree after parsing
   ! Wouldn't it be better to use get_lun at the moment we open the l2cf?
-  integer, parameter :: L2CF_UNIT = 20  ! Unit # if L2CF is opened by Fortran
-  integer :: L2CFNODE        = 0        ! Line #, Col # of L2CF being executed
-  integer :: L2CFERRORNODE   = 0        ! Line #, Col # of L2CF at 1st error
-  integer :: NUMSWITCHES
-  integer :: RECL            = 20000    ! Record length for l2cf (but see --recl opt)
+  integer, parameter :: L2CF_Unit = 20  ! Unit # if L2CF is opened by Fortran
+  integer :: L2CFNode        = 0        ! Line #, Col # of L2CF being executed
+  integer :: L2CFErrornode   = 0        ! Line #, Col # of L2CF at 1st error
+  integer :: Numswitches
+  integer :: Recl            = 20000    ! Record length for l2cf (but see --recl opt)
   integer :: MaxChunkSize    = 21     ! Max chunk size for l2gp DirectWrites
-  character(len=128) :: SECTIONSTOSKIP = ''
-  logical :: SECTIONTIMES    = .false.  ! Show times in each section
-  logical :: TOTALTIMES      = .false.  ! Show total times from start
-  logical :: SHOWDEFAULTS    = .false.  ! Just print default opts and quit
-  integer :: SLAVEMAF        = 0        ! Slave MAF for fwmParallel mode
-  logical :: TIMING          = .false.  ! -T option is set
+  character(len=128) :: phasesToSkip   = ''
+  character(len=128) :: SectionsToSkip = ''
+  logical :: SectionTimes    = .false.  ! Show times in each section
+  logical :: TotalTimes      = .false.  ! Show total times from start
+  logical :: ShowDefaults    = .false.  ! Just print default opts and quit
+  integer :: SlaveMAF        = 0        ! Slave MAF for fwmParallel mode
+  logical :: Timing          = .false.  ! -T option is set
   ! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
   ! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -185,10 +186,10 @@ module MLSL2Options              !  Options and Settings for the MLSL2 program
   ! We sometimes call these runtime values or runtime macros
 
   ! Suggestion: settle on a standard name and use it exclusively
-  integer, parameter :: RTVSTRINGLENGTH               = 1024
-  integer, parameter :: RTVARRAYLENGTH                = 128
+  integer, parameter :: RTVStringLength               = 1024
+  integer, parameter :: RTVArrayLength                = 128
   
-  type :: runTimeValues_T
+  type :: RunTimeValues_T
     character(len=1)                   :: sep = achar(0)
     ! Two arrays bound as a {keys=>values} hash
     character(len=RTVSTRINGLENGTH)     :: lkeys       = &
@@ -266,10 +267,14 @@ contains
   !
   ! In certain other cases we must repeat printing the message via the
   ! output module's commands
+  
+  ! The above is too vague. What determines these cases? Specifically
+  ! (a) When  do we call output instead of MLSMessage? When are we mute?
+  ! (b) When must we call output and MLSMessage both?
   subroutine MLSMessage ( Severity, ModuleNameIn, Message, &
     & Advance, MLSFile, Status, Item )
     use Lexer_Core, only: Get_Where
-    use MLSStringlists, only: SwitchDetail
+    use MLSStringLists, only: SwitchDetail
     use Toggles, only: Switches
     use Tree, only: Where
     integer, intent(in) :: Severity ! e.g. MLSMSG_Error
@@ -397,29 +402,29 @@ contains
   ! (2) parsing cmdline, if supplied as an arg
   ! The return value will be the filename (if any)
   function ProcessOptions ( cmdLine, separator ) result ( fileName )
-    use allocate_deallocate, only: AllocateLogUnit, trackAllocates, &
-      & clearOnAllocate, allocate_test, deallocate_test
-    use Evaluate_Variable_m, only: Define_Variable_As_String
-    use io_stuff, only: get_lun, get_nLines, read_textFile
-    use l2ParInfo, only: parallel, initparallel, accumulateslavearguments, &
-      & sniplastslaveargument
-    use lexer_m, only: capidentifiers
-    use machine, only: getarg, hp, io_error, nevercrash
-    use matrixmodule_0, only: checkblocks, subblocklength
-    use MLSCommon, only: filenamelen
-!   use MLSfiles, only: initializeMLSfile
-!   use MLSfiles, only: MLS_openfile
-    use MLSMessageModule, only: setconfig
-    use MLSStringlists, only: catlists, &
-      & getstringelement, getuniquelist, &
-      & numstringelements, removeswitchfromlist, &
-      & sortlist, stringelement, switchdetail, unquote
-    use PCFHdr, only: globalattributes
-    use printit_m, only: set_config
-    use set_toggles_m, only: set_toggles
-    use string_table, only: add_include_directory, do_listing
-    use time_m, only: time_config
-    use toggles, only: switches
+    use Allocate_Deallocate, only: AllocateLogUnit, TrackAllocates, &
+      & ClearOnAllocate, Allocate_Test, Deallocate_Test
+    use Evaluate_Variable_M, only: Define_Variable_As_String
+    use Io_Stuff, only: Get_Lun, Get_NLines, Read_TextFile
+    use L2ParInfo, only: Parallel, InitParallel, AccumulateSlaveArguments, &
+      & SnipLastSlaveArgument
+    use Lexer_M, only: CapIdentifiers
+    use Machine, only: Getarg, Hp, Io_Error, NeverCrash
+    use Matrixmodule_0, only: CheckBlocks, SubblockLength
+    use MLSCommon, only: FileNameLen
+    ! use MLSfiles, only: InitializeMLSfile
+    ! use MLSfiles, only: MLS_Openfile
+    use MLSMessageModule, only: Setconfig
+    use MLSStringLists, only: Catlists, &
+      & Getstringelement, Getuniquelist, &
+      & Numstringelements, Removeswitchfromlist, &
+      & Sortlist, Stringelement, Switchdetail, Unquote
+    use PCFHdr, only: GlobalAttributes
+    use Printit_M, only: Set_Config
+    use Set_Toggles_M, only: Set_Toggles
+    use String_Table, only: Add_Include_Directory, Do_Listing
+    use Time_M, only: Time_Config
+    use Toggles, only: Switches
     ! Args
     character(len=*), intent(in), optional :: cmdLine
     character(len=1), intent(in), optional :: separator
@@ -887,6 +892,10 @@ cmds: do
           SKIPDIRECTWRITES = switch
         else if ( line(3+n:10+n) == 'skipretr' ) then
           SKIPRETRIEVAL = switch
+        else if ( line(3+n:8+n) == 'skipph' ) then
+          i = i + 1
+          call myNextArgument( i, inLine, entireLine, line )
+          phasesToSkip = lowercase(line)
         else if ( line(3+n:9+n) == 'skipsec' ) then
           i = i + 1
           call myNextArgument( i, inLine, entireLine, line )
@@ -1235,8 +1244,8 @@ jloop:do while ( j < len_trim(line) )
   ! Now some things it makes no sense to overwrite, so it makes
   ! no sense to restore them either; e.g., CHECKPATHS, parallel, etc.
   subroutine restoreDefaults ( complete )
-  use MLSMessageModule, only: restoreConfig
-  use toggles, only: init_toggle
+  use MLSMessageModule, only: RestoreConfig
+  use Toggles, only: Init_Toggle
     logical, intent(in), optional            :: complete ! Restore even quit, crash!
     ! Internal variables
     logical                                  :: myComplete
@@ -1286,7 +1295,7 @@ jloop:do while ( j < len_trim(line) )
     myDetails = SwitchDetail( switches, 'bool' )
     if ( present(details) ) myDetails = details
     
-    if ( myDetails < 1 ) then
+    if ( myDetails < -1 ) then
       call dump( countEmpty, runTimeValues%lkeys, runTimeValues%lvalues, &
         & 'Run-time macros', separator=runTimeValues%sep )
     else
@@ -1320,8 +1329,8 @@ jloop:do while ( j < len_trim(line) )
   ! ---------------------------------------  RemoveRuntimeBoolean  -----
   ! Remove the named runtime macros
   subroutine RemoveRuntimeBoolean ( NAME )
-  use MLSStringLists, only: getHashElement, &
-    & removeHashArray, removeHashElement
+  use MLSStringLists, only: GetHashElement, &
+    & RemoveHashArray, RemoveHashElement
     ! Dummy args
     character(len=*), intent(in) :: NAME
     ! Internal variables
@@ -1362,6 +1371,9 @@ end module MLSL2Options
 
 !
 ! $Log$
+! Revision 2.110  2017/01/25 18:05:59  pwagner
+! May skip certain Phases named in phasesToSkip cmdline opt
+!
 ! Revision 2.109  2016/11/04 19:30:54  pwagner
 ! restoreDefaults less complete by default
 !
