@@ -1,0 +1,42 @@
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! subroutine Eta_List_1D_2D_3D_* ( A, B, C )
+
+    ! Compute the outer product C of interpolation matrices A and B,
+    ! each represented as a sparse list.
+
+!   type(value_1D_list_t(rk)), intent(in) :: A
+!   type(value_2D_list_t(rk)), intent(in) :: B(:)
+!   type(value_3D_list_t(rk)), intent(out) :: C(:)
+
+    ! Assume size(B) == size(C)
+
+    integer :: I, J, K, L
+
+    do i = 1, size(b)
+      c(i)%n = a%n * b(i)%n
+      l = 0
+      do j = 1, a%n
+        do k = 1, b(i)%n
+          l = l + 1
+          c(i)%v(l)%nf = a%v(j)%n
+          c(i)%v(l)%n = b(i)%v(k)%n
+          c(i)%v(l)%np = b(i)%v(k)%np
+          c(i)%v(l)%v = a%v(j)%v * b(i)%v(k)%v
+        end do
+      end do
+    end do
+
+! $Log$
+! Revision 2.1  2017/01/27 19:32:47  vsnyder
+! Initial commit
+!
