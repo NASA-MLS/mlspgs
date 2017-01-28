@@ -104,7 +104,7 @@
             if ( eta(i)%v(1)%v == 0.0 ) &
               & eta(i) = value_1D_list_t(n=1,v=[eta(i)%v(2),value_1d_t()])
           end if
-          i = i + 1
+          i = i - 1
         end do
       end do
       ! Coefficients above Basis(n_basis) are all 1.0
@@ -167,6 +167,9 @@
   end if
 
 ! $Log$
+! Revision 2.6  2017/01/28 02:47:48  vsnyder
+! Correct descending order case
+!
 ! Revision 2.5  2017/01/27 02:43:40  vsnyder
 ! Handle the one-element case
 !
