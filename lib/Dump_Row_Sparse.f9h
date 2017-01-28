@@ -9,22 +9,26 @@
 ! export authority as may be required before exporting such information to
 ! foreign countries or providing access to foreign persons.
 
-! subroutine Dump_Row_Sparse_* ( Array, Name, Width, Format )
+! subroutine Dump_Row_Sparse_* ( Array, Name, Width, Format, Bounds2 )
 !   real(rk), intent(in) :: Array(:,:)
 !   character(*), intent(in), optional :: Name
-!   integer, intent(in), optional :: Width     ! Array elements per line
+!   integer, intent(in), optional :: Width      ! Array elements per line
 !   character(*), intent(in), optional :: Format
+!   integer, intent(in), optional :: Bounds2(:) ! Bounds of 2nd dim array
 
   integer :: I, Row, Col, Pos
   character(len=64) :: MyFormat
-  integer :: MyWidth
+  integer :: MyWidth, NS
   integer, allocatable :: Subs(:)
 
   myFormat = sdFormatDefault
   if ( present(format) ) myFormat = format
 
   ! If it's allocated, Subs gets deleted automatically at the end.
-  if ( present(bounds2) ) allocate ( subs(size(bounds2,1)) )
+  if ( present(bounds2) ) then
+    ns = size(bounds2,1)
+    allocate ( subs(ns) )
+  end if
 
   ! Number of nonzero elements per line.
   myWidth = 5
@@ -45,9 +49,9 @@
         end if
         pos = pos + 1
         if ( present(bounds2) ) then
-          subs = subscripts ( col, bounds2 )
+          subs(1:ns) = subscripts ( col, bounds2 )
           call output ( subs(1), before=' (' )
-          do i = 2, size(subs)
+          do i = 2, ns
             call output ( subs(i), before=',' )
           end do
           call output ( '): ' )
@@ -61,6 +65,9 @@
   end do
 
 ! $Log$
+! Revision 2.3  2017/01/28 03:06:41  vsnyder
+! Don't reallocate subs for every row if bounds2 is present
+!
 ! Revision 2.2  2017/01/14 01:30:44  vsnyder
 ! Make list dump and 2D sparse array dump look alike
 !
