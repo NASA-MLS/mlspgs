@@ -165,8 +165,8 @@ if [ $conv_stat != 0 ] ; then
 fi
 
 # Update the PCF file with the correct L1OA filename and L1BRAD filename based on the conv_uars program
-TEMP_L1BOA_File=` grep '^rad file:' ./$CONV_UARS_LOG | awk '{print $3}'`
-TEMP_L1BRAD_File=` grep '^OA file:' ./$CONV_UARS_LOG | awk '{print $3}'`
+TEMP_L1BRAD_File=` grep '^rad file:' ./$CONV_UARS_LOG | awk '{print $3}'`
+TEMP_L1BOA_File=` grep '^OA file:' ./$CONV_UARS_LOG | awk '{print $3}'`
 
 echo "The conv_uars program generate two files:"
 echo $TEMP_L1BOA_File
@@ -197,6 +197,9 @@ call_genmet $genmet_PGE $PCF $L1BRAD $ODL_L1BRAD_File $MCF_L1BRAD_File
 /bin/rm -rf $TEMP_DIR
 
 # $Log$
+# Revision 1.3  2015/05/27 17:41:38  pwagner
+# Fixed obscure bug by setting environment variables
+#
 # Revision 1.2  2014/11/25 01:07:17  pwagner
 #  Fixed errors in obtaining names of temporary l1b files
 #
