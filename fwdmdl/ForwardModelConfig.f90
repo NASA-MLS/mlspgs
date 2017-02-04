@@ -16,11 +16,11 @@ module ForwardModelConfig
 ! Set up the forward model configuration, except for actually processing
 ! the command.
 
-  use MLSKINDS, only: R8, RP
-  use MLSSIGNALS_M, only: SIGNAL_T
-  use SPECTROSCOPYCATALOG_M, only: CATALOG_T
-  use VECTORSMODULE, only: VECTORVALUE_T
-  use VGRIDSDATABASE, only: VGRID_T, DESTROYVGRIDCONTENTS, DUMP
+  use MLSKinds, only: R8, RP
+  use MLSSignals_M, only: Signal_T
+  use SpectroscopyCatalog_M, only: Catalog_T
+  use VectorsModule, only: RV, VectorValue_T
+  use VGridsDatabase, only: VGrid_T, DestroyVGridContents, Dump
 
   implicit NONE
   private
@@ -31,11 +31,11 @@ module ForwardModelConfig
     module procedure Dump_ForwardModelConfigDatabase, Dump_Qty_Stuff
   end interface Dump
 
-  public :: ADDFORWARDMODELCONFIGTODATABASE, DERIVEFROMFORWARDMODELCONFIG
-  public :: DESTROYFWMCONFIGDATABASE, DESTROYFORWARDMODELDERIVED
-  public :: DUMP, NULLIFYFORWARDMODELCONFIG
-  public :: PVMPACKFWMCONFIG, PVMUNPACKFWMCONFIG
-  public :: STRIPFORWARDMODELCONFIGDATABASE
+  public :: AddForwardModelConfigToDatabase, DeriveFromForwardModelConfig
+  public :: DestroyFWMConfigDatabase, DestroyForwardModelDerived
+  public :: Dump, NullifyForwardModelConfig
+  public :: PVMPackFWMConfig, PVMUnpackFWMConfig
+  public :: StripForwardModelConfigDatabase
  
   ! Public Types:
 
@@ -45,7 +45,13 @@ module ForwardModelConfig
   ! created or when one arrives by way of PVMUnpackFWMConfig.
 
   type, public :: QtyStuff_T ! So we can have an array of pointers to QTY's
-    type (VectorValue_T), pointer :: QTY => NULL()
+    type (VectorValue_T), pointer :: Qty => NULL()
+    real(rv), pointer :: Value1(:) => NULL()      ! For logBasis quantities
+                                                  ! Freq * Vert * Horiz
+    real(rv), pointer :: Values(:,:) => NULL()    ! Associated with Value1
+                                                  ! Freq * Vert x Horiz
+    real(rv), pointer :: Values3(:,:,:) => NULL() ! Associated with Value1
+                                                  ! Freq x Vert x Horiz
     logical :: FoundInFirst = .false.
     logical :: WasSpecific = .false.
     logical :: DerivOK = .false. ! There is a place for the forward model to
@@ -266,14 +272,14 @@ contains
   ! -------------------------------  DeriveFromForwardModelConfig  -----
   subroutine DeriveFromForwardModelConfig ( FwdModelConf )
 
-    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST
-    use MLSMESSAGEMODULE, only: MLSMESSAGE,  MLSMSG_ERROR, MLSMSG_WARNING
-    use MLSSTRINGLISTS, only: SWITCHDETAIL
-    use PFADATABASE_M, only: DUMP
-    use READ_MIE_M, only: F_S
-    use OUTPUT_M, only: OUTPUT
-    use SPECTROSCOPYCATALOG_M, only: DUMP
-    use TOGGLES, only: SWITCHES
+    use Allocate_Deallocate, only: Allocate_Test
+    use MLSMessageModule, only: MLSMessage,  MLSMsg_Error, MLSMsg_Warning
+    use MLSStringLists, only: SwitchDetail
+    use PFADatabase_M, only: Dump
+    use Read_Mie_M, only: F_S
+    use Output_M, only: Output
+    use SpectroscopyCatalog_M, only: Dump
+    use Toggles, only: Switches
 
     type (ForwardModelConfig_T), intent(inout) :: FwdModelConf
     integer :: DumpFwm = -2                ! -2 = not called yet, -1 = no dumps,
@@ -328,11 +334,11 @@ contains
 
       ! Work out which channels are used.
 
-      use ALLOCATE_DEALLOCATE, only: TEST_ALLOCATE
+      use Allocate_Deallocate, only: Test_Allocate
       use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
-      use FILTERSHAPES_M, only: DACSFILTERSHAPES, FILTERSHAPES
-      use MLSFINDS, only: FINDFIRST
-      use MLSSIGNALS_M, only: MATCHSIGNAL
+      use FilterShapes_M, only: DACSFilterShapes, FilterShapes
+      use MLSFinds, only: FindFirst
+      use MLSSignals_M, only: MatchSignal
 
       type(channels_T), pointer :: Channels(:)
       integer :: UsedDACSSignals(:)          ! Indices in FwdModelConf_T%Signals
@@ -392,7 +398,7 @@ contains
     ! ...............................................  DACS_Stuff  .....
     subroutine DACS_Stuff ( DACsStaging, UsedDACSSignals )
 
-      use FILTERSHAPES_M, only: DACSFILTERSHAPES
+      use FilterShapes_M, only: DACSFilterShapes
 
       ! Identify which of our signals are DACS and how many unique DACS are involved
       ! Allocate and compute UsedDACSSignals and allocate DACsStaging.
@@ -439,15 +445,15 @@ contains
     ! ................................................  PFA_Stuff  .....
     subroutine PFA_Stuff
 
-      use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST
-      use INTRINSIC, only: LIT_INDICES
-      use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
-      use MLSSIGNALS_M, only: DISPLAYSIGNALNAME
-      use MOLECULES, only: L_CLOUDICE
-      use MORETREE, only: STARTERRORMESSAGE
-      use PFADATABASE_M, only: TEST_AND_FETCH_PFA
-      use READ_MIE_M, only: BETA_C_A, BETA_C_S
-      use STRING_TABLE, only: DISPLAY_STRING
+      use Allocate_Deallocate, only: Allocate_Test
+      use Intrinsic, only: Lit_Indices
+      use MLSMessageModule, only: MLSMessage, MLSMsg_Error
+      use MLSSignals_M, only: DisplaySignalName
+      use Molecules, only: L_CloudIce
+      use MoreTree, only: StartErrorMessage
+      use PFADatabase_M, only: Test_And_Fetch_PFA
+      use Read_Mie_M, only: Beta_C_A, Beta_C_S
+      use String_Table, only: Display_String
 
       integer :: B                    ! Index for beta groups
       integer :: Channel              ! Index in fwdModelConf%channels
@@ -501,16 +507,16 @@ contains
 
     ! ...............................  SpectroscopyCatalogExtract  .....
     subroutine SpectroscopyCatalogExtract
-      use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, TEST_ALLOCATE
+      use Allocate_Deallocate, only: Allocate_Test, Test_Allocate
       use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
-      use INTRINSIC, only: LIT_INDICES, L_NONE
-      use MLSSIGNALS_M, only: GETRADIOMETERFROMSIGNAL
-      use MLSSTRINGLISTS, only: SWITCHDETAIL
-      use MORETREE, only: STARTERRORMESSAGE
-      use SPECTROSCOPYCATALOG_M, only: CATALOG, EMPTY_CAT, LINE_T, &
-        & LINES, MOSTLINES
-      use STRING_TABLE, only: DISPLAY_STRING ! , GET_STRING
-      use TOGGLES, only: SWITCHES
+      use Intrinsic, only: Lit_Indices, L_None
+      use MLSSignals_M, only: GetRadiometerFromSignal
+      use MLSStringLists, only: SwitchDetail
+      use MoreTRee, only: StartErrorMessage
+      use SpectroscopyCatalog_M, only: Catalog, Empty_Cat, Line_T, &
+        & Lines, MostLines
+      use String_Table, only: Display_String ! , Get_String
+      use Toggles, only: Switches
 
       integer(c_intptr_t) :: Addr         ! For tracing
       integer :: B         ! Beta_group index
@@ -518,7 +524,7 @@ contains
       logical :: DoThis    ! Flag for lines in catalog item
       integer :: I
       integer :: L         ! Index for lines, or number of lines
-      integer, pointer :: LINEFLAG(:) ! /= 0 => Use this line
+      integer, pointer :: LineFlag(:) ! /= 0 => Use this line
       integer :: M         ! Index for beta_group's molecule-size stuff
       integer :: N         ! Molecule index, L_... from Intrinsic
       integer :: NoLinesMsg = -1 ! From switches
@@ -716,7 +722,7 @@ contains
   subroutine DestroyForwardModelDerived ( FwdModelConf )
     ! Destroy stuff in FwdModelConf derived for one forward model run
 
-    use ALLOCATE_DEALLOCATE, only: DEALLOCATE_TEST, TEST_DEALLOCATE
+    use Allocate_Deallocate, only: Deallocate_Test, Test_Deallocate
     use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
 
     type ( ForwardModelConfig_T ), intent(inout) :: FwdModelConf
@@ -781,13 +787,13 @@ contains
   end subroutine NullifyForwardModelConfig
 
   ! --------------------------------------------- PVMPackFwmConfig -----
-  subroutine PVMPackFWMConfig ( config )
-    use PVMIDL, only: PVMIDLPACK
-    use MOREPVM, only: PVMPACKLITINDEX, PVMPACKSTRINGINDEX
-    use MLSSIGNALS_M, only: PVMPACKSIGNAL
-    use VGRIDSDATABASE, only: PVMPACKVGRID
+  subroutine PVMPackFWMConfig ( Config )
+    use PVMIDL, only: PVMIDLPack
+    use MorePVM, only: PVMPackLitIndex, PVMpackStringIndex
+    use MLSSignals_M, only: PVMPackSignal
+    use VGridsDatabase, only: PVMPackVGrid
     ! Dummy arguments
-    type ( ForwardModelConfig_T ), intent(in) :: CONFIG
+    type ( ForwardModelConfig_T ), intent(in) :: Config
     ! Local variables
     integer :: I                        ! Loop counter
 
@@ -882,24 +888,24 @@ contains
   end subroutine PVMPackFWMConfig
 
   ! ----------------------------------------- PVMUnpackFWMConfig ---------
-  subroutine PVMUnpackFWMConfig ( CONFIG )
-    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, TEST_ALLOCATE
+  subroutine PVMUnpackFWMConfig ( Config )
+    use Allocate_Deallocate, only: Allocate_Test, Test_Allocate
     use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
-    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
-    use MLSSIGNALS_M, only: PVMUNPACKSIGNAL
-    use MOREPVM, only: PVMUNPACKLITINDEX, PVMUNPACKSTRINGINDEX
-    use PVMIDL, only: PVMIDLUNPACK
-    use VGRIDSDATABASE, only: PVMUNPACKVGRID
+    use MLSMessageModule, only: MLSMessage, MLSMsg_Error
+    use MLSSignals_M, only: PVMUnpackSignal
+    use MorePVM, only: PVMUnpackLitIndex, PVMUnpackStringIndex
+    use PVMIDL, only: PVMIDLUnpack
+    use VGridsDatabase, only: PVMUnpackVGrid
     ! Dummy arguments
-    type ( ForwardModelConfig_T ), intent(out) :: CONFIG
+    type ( ForwardModelConfig_T ), intent(out) :: Config
     ! Local variables
-    integer, parameter     :: ISMAX = 11 ! Number of integers to unpack
-    integer, parameter     :: LSMAX = 32 ! Number of logicals to unpack
+    integer, parameter     :: ISMax = 11 ! Number of integers to unpack
+    integer, parameter     :: LSMax = 32 ! Number of logicals to unpack
     integer(c_intptr_t) :: Addr         ! For tracing
     integer :: INFO                     ! Flag from PVM
     logical :: FLAG                     ! A flag from the sender
-    integer, dimension(ISMAX) :: IS     ! Temporary array, for integer scalars
-    logical, dimension(LSMAX) :: LS     ! Temporary array, for logical scalars
+    integer, dimension(ISMax) :: IS     ! Temporary array, for integer scalars
+    logical, dimension(LSMax) :: LS     ! Temporary array, for logical scalars
     real(r8), dimension(3) :: RS        ! Temporary array, for reals
     integer :: I                        ! Loop counter
     integer :: N                        ! Array size
@@ -1052,20 +1058,20 @@ contains
   end subroutine PVMUnpackFWMConfig
 
   ! --------------------------  StripForwardModelConfigDatabase --------
-  subroutine StripForwardModelConfigDatabase ( database )
+  subroutine StripForwardModelConfigDatabase ( Database )
     ! This routine removes the non-global forward model configs from the database
-    use ALLOCATE_DEALLOCATE, only: TEST_ALLOCATE, TEST_DEALLOCATE
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
     use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
 
     ! Dummy arguments
-    type (ForwardModelConfig_T), dimension(:), pointer :: DATABASE
+    type (ForwardModelConfig_T), dimension(:), pointer :: Database
 
     ! Local variables
-    type (ForwardModelConfig_T), dimension(:), pointer :: TMPDATABASE
+    type (ForwardModelConfig_T), dimension(:), pointer :: TmpDatabase
     integer(c_intptr_t) :: Addr         ! For tracing
-    integer :: CONFIG                   ! Loop counter
+    integer :: Config                   ! Loop counter
     integer :: N
-    integer :: STATUS
+    integer :: Status
 
     ! Executable code
     ! Clear out dying configs
@@ -1098,21 +1104,21 @@ contains
 
   ! ------------------------------------ DestroyOneForwardModelConfig --
   subroutine DestroyOneForwardModelConfig ( Config, Deep )
-    use ALLOCATE_DEALLOCATE, only: DEALLOCATE_TEST, TEST_DEALLOCATE
+    use Allocate_Deallocate, only: Deallocate_Test, Test_Deallocate
     use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
-    use MLSSIGNALS_M, only: DESTROYSIGNALDATABASE
+    use MLSSignals_M, only: DestroySignalDatabase
 
     ! Dummy arguments
     type ( ForwardModelConfig_T), intent(inout) :: config
-    logical, optional, intent(in) :: DEEP ! Do a really deep destroy
+    logical, optional, intent(in) :: Deep ! Do a really deep destroy
 
     ! Local variables
     integer(c_intptr_t) :: Addr         ! For tracing
     integer :: B                        ! Subscript for Beta_Group
     integer :: S                        ! 1 = LSB, 2 = USB, or
                                         ! size in bytes of an object to deallocate
-    integer :: STATUS                   ! Flag from allocate etc.
-    logical :: MYDEEP                   ! Copy of deep
+    integer :: Status                   ! Flag from allocate etc.
+    logical :: MyDeep                   ! Copy of deep
 
     ! Executable code
     myDeep = .false.
@@ -1194,11 +1200,11 @@ contains
   ! --------------------------------------------  Dump_Beta_Group  -----
   subroutine Dump_Beta_Group ( Beta_Group, Name, Sidebands, Details )
 
-    use DUMP_0, only: DUMP
-    use INTRINSIC, only: LIT_INDICES
-    use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT
-    use PFADATABASE_M, only: DUMP, PFADATA
-    use STRING_TABLE, only: DISPLAY_STRING
+    use Dump_0, only: Dump
+    use Intrinsic, only: Lit_Indices
+    use Output_M, only: Blanks, NewLine, Output
+    use PFADatabase_M, only: Dump, PFAData
+    use String_Table, only: Display_String
 
     type(beta_group_t), intent(in) :: Beta_Group(:)
     character(len=*), intent(in), optional :: Name
@@ -1280,14 +1286,14 @@ contains
   subroutine Dump_ForwardModelConfigDatabase ( Database, &
     & Where, Details, SkipPFA, QuantityTemplatesDB )
 
-    use MORETREE, only: STARTERRORMESSAGE
-    use OUTPUT_M, only: OUTPUT
-    use QUANTITYTEMPLATES, only: QUANTITYTEMPLATE_T
+    use MoreTree, only: StartErrorMessage
+    use Output_M, only: Output
+    use QuantityTemplates, only: QuantityTemplate_T
 
     type (forwardModelConfig_T), pointer, dimension(:) :: Database
     integer, optional, intent(in) :: Where ! Tree node index
     integer, intent(in), optional :: Details ! for Dump_Beta_Group
-    logical, optional, intent(in) :: skipPFA
+    logical, optional, intent(in) :: SkipPFA
     type (quantityTemplate_t), pointer, optional, dimension(:) :: QuantityTemplatesDB
 
     ! Local variables
@@ -1309,25 +1315,25 @@ contains
   subroutine Dump_ForwardModelConfig ( Config, Where, &
     & Details, SkipPFA, QuantityTemplatesDB )
 
-    use DUMP_0, only: DUMP
-    use INTRINSIC, only: LIT_INDICES, PHYQ_INDICES
-    use LEXER_CORE, only: PRINT_SOURCE
-    use MLSSIGNALS_M, only: GETNAMEOFSIGNAL, MAXSIGLEN, MODULES
-    use OUTPUT_M, only: NEWLINE, OUTPUT
-    use QUANTITYTEMPLATES, only: QUANTITYTEMPLATE_T
-    use STRING_TABLE, only: DISPLAY_STRING
-    use TREE, only: NULL_TREE, Where_At => Where
+    use Dump_0, only: Dump
+    use Intrinsic, only: Lit_Indices, PHYQ_Indices
+    use Lexer_Core, only: Print_Source
+    use MLSSignals_M, only: GetNameOfSignal, MaxSigLen, Modules
+    use Output_M, only: NewLine, Output
+    use QuantityTemplates, only: QuantityTemplate_T
+    use String_Table, only: Display_String
+    use Tree, only: Null_Tree, Where_At => Where
 
     type (forwardModelConfig_T), intent(in) :: Config
     character(len=*), intent(in), optional :: Where
     integer, intent(in), optional :: Details ! for Dump_Beta_Group
-    logical, optional, intent(in) :: skipPFA
+    logical, optional, intent(in) :: SkipPFA
     type (quantityTemplate_t), pointer, optional, dimension(:) :: QuantityTemplatesDB
 
     ! Local variables
     logical :: dumpPFA
     integer :: J, S                          ! Loop counters
-    integer :: MYDETAILS
+    integer :: MyDetails
     integer :: S1, S2                        ! Sideband limits
     character (len=MaxSigLen) :: SignalName  ! A line of text
 
@@ -1519,12 +1525,12 @@ contains
   end subroutine Dump_ForwardModelConfig
 
   ! ---------------------------------------------  Dump_Qty_Stuff  -----
-  subroutine Dump_Qty_Stuff ( Qty, details )
-    use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
-    use OUTPUT_M, only: NEWLINE, OUTPUT
-    use VECTORSMODULE, only: DUMP
-    type(qtyStuff_t), intent(in) :: Qty
-    integer, optional, intent(in) :: details
+  subroutine Dump_Qty_Stuff ( Qty, Details )
+    use HighOutput, only: OutputNamedValue
+    use Output_M, only: NewLine, Output
+    use VectorsModule, only: Dump
+    type(QtyStuff_t), intent(in) :: Qty
+    integer, optional, intent(in) :: Details
     if ( associated(qty%qty) ) then
       call dump ( qty%qty, details=details )
     else
@@ -1548,6 +1554,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.136  2016/05/02 23:31:50  vsnyder
+! Add QtyStuff component for temperature
+!
 ! Revision 2.135  2015/08/25 17:21:47  vsnyder
 ! PhiWindow is a tuple, with the first element specifying the angles or
 ! number of profiles/MAFs before the tangent point, and the second
