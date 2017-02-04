@@ -215,6 +215,10 @@ module Indexed_Values_m
     module procedure Convert_QTM_1D_to_P
   end interface
 
+  interface Dot_Product
+    module procedure Dot_Product_1D!_d, Dot_Product_1D_s
+  end interface
+
   interface Dump
     module procedure Dump_Value_1D_List, Dump_Value_1D_p_List
 !     module procedure Dump_Value_1D_List_d, Dump_Value_1D_List_s
@@ -279,11 +283,18 @@ contains
     end do
   end subroutine Convert_QTM_1D_to_P
 
+  pure function Dot_Product_1D ( Vector, List ) result ( Dot )
+    real(rk), intent(in) :: Vector(:)
+    type(value_1d_list_t), intent(in) :: List
+    real(rk) :: Dot
+    dot = sum ( vector(list%v(:list%n)%n) * list%v(:list%n)%v )
+  end function Dot_Product_1D!_d
+
   subroutine Dump_Value_1D_List ( Value, Name, Format )
     use Dump_Options, only: SDFormatDefault
     use Output_m, only: NewLine, Output
 !     type(value_1D_list_t(rk)), intent(in) :: Value(:)
-    type(value_1D_list_t), intent(in) :: Value(:)
+    class(value_1D_list_t), intent(in) :: Value(:)
     character(len=*), intent(in), optional :: Name
     character(len=*), intent(in), optional :: Format
     include "Dump_Value_1D_List.f9h"
@@ -293,7 +304,7 @@ contains
     use Dump_Options, only: SDFormatDefault
     use Output_m, only: Output
 !     type(value_1D_list_t(rk)), intent(in) :: Value(:)
-    type(value_1D_p_t), intent(in) :: Value(:)
+    class(value_1D_p_t), intent(in) :: Value(:)
     character(len=*), intent(in), optional :: Name
     character(len=*), intent(in), optional :: Format
     include "Dump_Value_1D_p_List.f9h"
@@ -303,7 +314,7 @@ contains
     use Dump_Options, only: SDFormatDefault
     use Output_m, only: NewLine, Output
 !     type(value_2D_list_t(rk)), intent(in) :: Value(:)
-    type(value_2D_list_t), intent(in) :: Value(:)
+    class(value_2D_list_t), intent(in) :: Value(:)
     character(len=*), intent(in), optional :: Name
     character(len=*), intent(in), optional :: Format
     include "Dump_Value_2D_List.f9h"
@@ -313,10 +324,10 @@ contains
     use Dump_Options, only: SDFormatDefault
     use Output_m, only: NewLine, Output
 !     type(value_2D_list_t(rk)), intent(in) :: Value(:)
-    type(value_3D_list_t), intent(in) :: Value(:)
+    class(value_3D_list_t), intent(in) :: Value(:)
     character(len=*), intent(in), optional :: Name
     character(len=*), intent(in), optional :: Format
-    include "Dump_Value_2D_List.f9h" ! Yeah, it works here too
+    include "Dump_Value_3D_List.f9h"
   end subroutine Dump_Value_3D_List
 
   subroutine Interpolate_Polymorphic_1D ( Field, Eta, Path )
@@ -476,6 +487,10 @@ contains
 end module Indexed_Values_m
 
 ! $Log$
+! Revision 2.10  2017/02/04 02:06:41  vsnyder
+! Add Dot_Product.  Make the list argument of some dumps polymorphic so
+! it will work with extensions (but it only dumps the parent part).
+!
 ! Revision 2.9  2017/01/21 01:59:53  vsnyder
 ! Add Dump_Value_3D_List
 !
