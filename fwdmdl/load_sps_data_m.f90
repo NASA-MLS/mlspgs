@@ -23,6 +23,11 @@ module Load_SPS_Data_M
   public :: FindInGrid
   public :: EmptyGrids_t, Destroygrids_t, Dump, Dump_Grids
 
+  type, public :: C_t ! "Contents" type, to get an array of pointers
+    real(rp), pointer :: V4(:,:,:,:) => NULL() ! Frq X Zeta X Phi X Cross
+    logical, pointer :: L4(:,:,:,:) => NULL() ! Frq X Zeta X Phi X Cross
+  end type C_t
+
   type, public :: Grids_T                 ! Fit all Gridding categories
     type(qtyStuff_t), pointer :: QtyStuff(:) => null()
     integer,  pointer :: l_f(:) => null() ! Last entry in frq_basis per sps
@@ -35,7 +40,9 @@ module Load_SPS_Data_M
     integer,  pointer :: windowstart(:) => null()! horizontal starting index
                                           ! from l2gp for 2D, or 1 for QTM
     integer,  pointer :: windowfinish(:) => null()! horizontal ending index
-                                          ! from l2gp for 2D per sps
+                                          ! from l2gp for 2D per sps, or the
+                                          ! number of vertices adjacent to the
+                                          ! path for QTM
     integer,  pointer :: mol(:) => null()       ! Qty molecule, l_...
     integer,  pointer :: Z_coord(:) => null()   ! l_geo[cd]Altitude, l_zeta
     logical,  pointer :: Coherent(:) => null()  ! From each Qty template
@@ -57,7 +64,7 @@ module Load_SPS_Data_M
                                                 ! molecules
     real(rp), pointer :: phi_basis(:) => null() ! phi  grid entries for all
                                                 ! molecules, radians
-    real(rp), pointer :: cross_angles(:) => null() ! cross-angles  grid entries
+    real(rp), pointer :: cross_angles(:) => null() ! cross-angles grid entries
                                                 ! for all molecules, degrees
     real(rp), pointer :: values(:) => null()    ! species values (eg vmr).
     ! For 2D, this is really a four-dimensional quantity dimensioned frequency
@@ -67,7 +74,9 @@ module Load_SPS_Data_M
     ! Fortran's column-major array-element order.
     logical,  pointer :: deriv_flags(:) => null() ! flags to do derivatives,
                                                 ! corresponding to the values
-                                                ! component.
+    type(c_t), pointer :: C(:) => null()        ! Contents pointers, associated
+                                                ! with parts of Values(:) and
+                                                ! Deriv_Flags.
   contains
     procedure :: IsQTM
   end type Grids_T
@@ -444,11 +453,12 @@ contains
   ! Create the part of the Grids_T structure that depends on the
   ! number of values and lengths of bases
 
-    use Allocate_Deallocate, only: Allocate_test
+    use Allocate_Deallocate, only: Allocate_Test, Test_Allocate
 
     type (Grids_T), intent(inout) :: Grids_X
 
-    integer :: N
+    integer :: N, Stat
+    character(127) :: ERMSG
 
     n = ubound(grids_x%l_z,1)
 
@@ -464,6 +474,8 @@ contains
                        & ModuleName )
     call allocate_test ( Grids_x%deriv_flags, Grids_x%l_v(n), 'Grids_x%deriv_flags', &
                        & ModuleName )
+    allocate ( Grids_x%c(n), stat=stat, errmsg=ermsg )
+    call test_allocate ( stat, moduleName, 'Grids_x%C', ermsg=ermsg )
 
   end subroutine Create_Grids_2
 
@@ -555,6 +567,7 @@ contains
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use Molecules, only: L_CloudIce, L_H2O
     use MoreMessage, only: MLSMessage
+    use To_Log_Basis_m, only: To_Log_Basis
     use VectorsModule, only: M_FullDerivatives, VectorValue_T
 
     ! For which molecules do we compute dBeta_df?
@@ -668,13 +681,12 @@ contains
       Grids_x%values(pv+1:qv) = reshape(qty%value4(1:kf,1:kz,ws:wf,1:kx), &
                                       & (/qv-pv/))
     end if
+
     !  mixing ratio values are manipulated if it's log basis
     Grids_x%lin_log(ii) = qty%template%logBasis
     if ( qty%template%logBasis ) then
       Grids_x%min_val(ii) = qty%template%minValue
-      where ( Grids_x%values(pv+1:qv) <= grids_x%min_val(ii) ) &
-           & Grids_x%values(pv+1:qv) = grids_x%min_val(ii)
-      Grids_x%values(pv+1:qv) = log(Grids_x%values(pv+1:qv))
+      call to_log_basis ( Grids_x%values(pv+1:qv), qty%template%minValue )
     end if
 
     ! set 'do derivative' flags
@@ -697,6 +709,12 @@ contains
     else
       grids_x%deriv_flags(pv+1:qv) = .false.
     end if
+
+    ! Associate components of Grids_x%c with parts of Grids_x%Values
+    ! and Grids_x%Deriv_Flags.
+    
+    Grids_x%c(ii)%v4(1:kf,1:kz,ws:wf,1:kx) => Grids_x%values(pv+1:qv)
+    Grids_x%c(ii)%l4(1:kf,1:kz,ws:wf,1:kx) => Grids_x%deriv_flags(pv+1:qv)
 
   end subroutine Fill_Grids_2
 
@@ -794,6 +812,8 @@ contains
     call allocate_test(grids_x%z_coord,0,'grids_x%z_coord',modulename)
     call allocate_test(grids_x%coherent,0,'grids_x%coherent',modulename)
     call allocate_test(grids_x%stacked,0,'grids_x%stacked',modulename)
+    allocate ( Grids_x%c(0), stat=stat )
+    call test_allocate ( stat, moduleName, 'Grids_x%C' )
 
   end subroutine EmptyGrids_t
 
@@ -833,6 +853,10 @@ contains
     call deallocate_test(grids_x%z_coord,'Grids_x%z_coord',modulename)
     call deallocate_test(grids_x%coherent,'Grids_x%coherent',modulename)
     call deallocate_test(grids_x%stacked,'Grids_x%stacked',modulename)
+    if ( associated(Grids_x%c) ) then
+      deallocate ( Grids_x%c, stat=stat, errmsg=ermsg )
+      call test_deallocate ( stat, moduleName, 'Grids_x%C', ermsg=ermsg )
+    end if
 
   end subroutine DestroyGrids_t
 
@@ -985,6 +1009,9 @@ contains
 end module LOAD_SPS_DATA_M
 
 ! $Log$
+! Revision 2.117  2017/01/21 03:09:39  vsnyder
+! Spiff the dump
+!
 ! Revision 2.116  2016/11/02 01:30:46  vsnyder
 ! Remove unused USE name
 !
