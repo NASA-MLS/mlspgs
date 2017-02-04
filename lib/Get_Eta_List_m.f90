@@ -25,6 +25,7 @@ module Get_Eta_List_m
   public :: Eta_1D_p_QTM_1D_2D!_d, Eta_1D_p_QTM_1D_2D_s
   public :: Eta_List_1D_1D_2D!_d, Eta_List_1D_1D_2D_s
   public :: Eta_List_1D_1D_p_2D
+  public :: Eta_List_0D_2D_3D!_d, Eta_List_0D_2D_3D_s
   public :: Eta_List_1D_2D_3D!_d, Eta_List_1D_2D_3D_s
   public :: Eta_List_1D_D, Eta_Lists_1D_D, Eta_List_1D_S, Eta_Lists_1D_S
   public :: Eta_List_1D_p_D
@@ -39,6 +40,7 @@ module Get_Eta_List_m
     module procedure Eta_List_1D_S, Eta_Lists_1D_S
     module procedure Eta_List_1D_p_D, Eta_List_1D_p_S
     module procedure Eta_List_1D_1D_2D!_d, Eta_List_1D_1D_2D_s
+    module procedure Eta_List_0D_2D_3D!_d, Eta_List_0D_2D_3D_s
     module procedure Eta_List_1D_2D_3D!_d, Eta_List_1D_2D_3D_s
     module procedure Eta_List_1D_QTM_1D_2D!_d, Eta_List_1D_QTM_1D_2D_s
     module procedure Eta_List_1D_QTM_2D_3D!_d, Eta_List_1D_QTM_2D_3D_s
@@ -156,7 +158,7 @@ contains
 
   ! Compute Eta to interpolate from 2-D basis to 1-D grid.  The matrix C
   ! is the outer product of interpolation matrices A and B, all represented
-  ! as sparse lists.
+  ! as sparse lists.  This assumes size(A) == size(B) == size(C).
   subroutine Eta_List_1D_1D_2D ( A, B, C )
 !   type(value_1D_list_t(rk)), intent(in) :: A(:)
 !   type(value_1D_list_t(rk)), intent(in) :: B(:)
@@ -169,7 +171,22 @@ contains
 
   ! Compute Eta to interpolate from 3-D basis to 1-D grid.  The matrix C
   ! is the outer product of interpolation matrices A and B, all represented
-  ! as sparse lists.
+  ! as sparse lists.  This assumes size(B) == size(C).  B and C are both
+  ! coefficient lists to interpolate onto the same path.  A is a single
+  ! interpolator set, e.g., for frequency, that applies everywhere on the path.
+  subroutine Eta_List_0D_2D_3D ( A, B, C )
+!   type(value_1D_list_t(rk)), intent(in) :: A(:)
+!   type(value_2D_list_t(rk)), intent(in) :: B(:)
+!   type(value_3D_list_t(rk)), intent(out) :: C(:)
+    type(value_1D_list_t), intent(in) :: A
+    type(value_2D_list_t), intent(in) :: B(:)
+    type(value_3D_list_t), intent(out) :: C(:)
+    include "Eta_List_0D_2D_3D.f9h"
+  end subroutine Eta_List_0D_2D_3D
+
+  ! Compute Eta to interpolate from 3-D basis to 1-D grid.  The matrix C
+  ! is the outer product of interpolation matrices A and B, all represented
+  ! as sparse lists.  This assumes size(A) == size(B) == size(C).
   subroutine Eta_List_1D_2D_3D ( A, B, C )
 !   type(value_1D_list_t(rk)), intent(in) :: A(:)
 !   type(value_2D_list_t(rk)), intent(in) :: B(:)
@@ -183,6 +200,7 @@ contains
   ! Compute Eta to interpolate from a 1-D vertical basis and a 1-D QTM
   ! basis to a 2-D QTM grid.  The matrix C is the outer product of
   ! interpolation matrices A and B, all represented as sparse lists.
+  !   This assumes size(A) == size(B) == size(C).
   subroutine Eta_List_1D_QTM_1D_2D ( A, B, C )
 !   type(value_1D_list_t(rk)), intent(in) :: A(:)
 !   type(value_qtm_1d_list_t(rk)), intent(in) :: B(:)
@@ -196,6 +214,7 @@ contains
   ! Compute Eta to interpolate from a 1-D vertical basis and a 1-D QTM
   ! basis to a 2-D QTM grid.  The matrix C is the outer product of
   ! interpolation matrices A and B, all represented as sparse lists.
+  ! This assumes size(A) == size(B) == size(C).
   subroutine Eta_1D_p_QTM_1D_2D ( A, B, C )
 !   type(value_1D_p_t(rk)), intent(in) :: A(:)
 !   type(value_qtm_1d_list_t(rk)), intent(in) :: B(:)
@@ -209,6 +228,7 @@ contains
   ! Compute Eta to interpolate from a 1-D frequency  basis and a 2-D QTM basis
   ! to a 3-D QTM grid.  The matrix C is the outer product of interpolation
   ! matrices A and B, all represented as sparse lists.
+  ! This assumes size(A) == size(B) == size(C).
   subroutine Eta_List_1D_QTM_2D_3D ( A, B, C )
 !   type(value_1D_list_t(rk)), intent(in) :: A(:)
 !   type(value_qtm_2d_list_t(rk)), intent(in) :: B(:)
@@ -234,6 +254,9 @@ contains
 end module Get_Eta_List_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.7  2017/02/04 02:04:19  vsnyder
+! Add Eta_List_0D_2D_3D
+!
 ! Revision 2.6  2017/01/14 01:50:46  vsnyder
 ! Eliminate polymorphic interpolators.  Add Row1 and RowN arguments to some
 ! of the interpolators.  Move dump routine to Indexed_Values_m.f90
