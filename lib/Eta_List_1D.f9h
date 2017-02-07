@@ -166,7 +166,16 @@
     end block
   end if
 
+  if ( present(rev) ) then
+    ! Basis list was reversed because it was in descending order.  Invert
+    ! the list indices in Eta to correspond to the original basis list.
+    if ( rev ) call invert_list_index ( eta, n_basis )
+  end if
+
 ! $Log$
+! Revision 2.7  2017/02/07 03:49:00  vsnyder
+! Add support for inverted basis
+!
 ! Revision 2.6  2017/01/28 02:47:48  vsnyder
 ! Correct descending order case
 !
