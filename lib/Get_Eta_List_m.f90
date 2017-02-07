@@ -11,8 +11,8 @@
 
 module Get_Eta_List_m
 
-  use Indexed_Values_m, only: Value_1D_List_t, Value_1D_p_t, &
-    & Value_1D_t, Value_2D_List_t, Value_3D_List_t, &
+  use Indexed_Values_m, only: Invert_List_Index, Value_1D_List_t, &
+    & Value_1D_p_t, Value_1D_t, Value_2D_List_t, Value_3D_List_t, &
     & Value_QTM_1D_List_t, Value_QTM_2D_List_t, Value_QTM_3D_List_t, &
     & Value_1D_Lists_t, Value_1D_Lists_t, Value_1D_Lists_t
 
@@ -57,7 +57,7 @@ module Get_Eta_List_m
 contains
 
   ! Compute Eta to interpolate from 1-D Basis to 1-D Grid.
-  subroutine Eta_List_1D_D ( Basis, Grid, Eta, Row1, RowN, Sorted )
+  subroutine Eta_List_1D_D ( Basis, Grid, Eta, Row1, RowN, Sorted, Rev )
     integer, parameter :: RK = kind(0.0d0)
     real(rk), intent(in) :: Basis(:)
     real(rk), intent(in) :: Grid(:)
@@ -65,11 +65,12 @@ contains
     type(value_1D_list_t), intent(out) :: Eta(:) ! size(grid)
     integer, intent(in), optional :: Row1, RowN
     logical, intent(in), optional :: Sorted ! "Basis is sorted" -- default true
+    logical, intent(in), optional :: Rev    ! Basis list is reversed
     include "Eta_List_1D.f9h"
   end subroutine Eta_List_1D_D
 
   ! Compute Eta to interpolate from 1-D Basis to 1-D Grid.
-  subroutine Eta_List_1D_S ( Basis, Grid, Eta, Row1, RowN, Sorted )
+  subroutine Eta_List_1D_S ( Basis, Grid, Eta, Row1, RowN, Sorted, Rev )
     integer, parameter :: RK = kind(0.0e0)
     real(rk), intent(in) :: Basis(:)
     real(rk), intent(in) :: Grid(:)
@@ -77,6 +78,7 @@ contains
     type(value_1D_list_t), intent(out) :: Eta(:) ! size(grid)
     integer, intent(in), optional :: Row1, RowN
     logical, intent(in), optional :: Sorted ! "Basis is sorted" -- default true
+    logical, intent(in), optional :: Rev    ! Basis list is reversed
     include "Eta_List_1D.f9h"
   end subroutine Eta_List_1D_S
 
@@ -254,6 +256,9 @@ contains
 end module Get_Eta_List_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.8  2017/02/07 03:49:00  vsnyder
+! Add support for inverted basis
+!
 ! Revision 2.7  2017/02/04 02:04:19  vsnyder
 ! Add Eta_List_0D_2D_3D
 !
