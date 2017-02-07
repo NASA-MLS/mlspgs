@@ -252,6 +252,10 @@ module Indexed_Values_m
 !     module procedure Interpolate_Polymorphic_3D_d, Interpolate_Polymorphic_3D_s
   end interface
 
+  interface Invert_List_Index
+    module procedure Invert_1D_List_Index!_d, Invert_1D_List_Index_s
+  end interface
+
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
@@ -473,6 +477,17 @@ contains
     include "Interpolate_3D_List.f9h"
   end subroutine Interpolate_QTM_3D_List
 
+  ! Useful in case the order of the basis was reversed
+  subroutine Invert_1D_List_Index ( Eta, N_Basis )
+    ! Replace Eta(:)%v(:)%n with n_basis + 1 - Eta(:)%v(:)%n
+    type(value_1d_list_t), intent(inout) :: Eta(:)
+    integer, intent(in) :: N_Basis
+    integer :: I
+    do i = 1, size(eta)
+      eta(i)%v%n = n_basis + 1 - eta(i)%v%n
+    end do
+  end subroutine Invert_1D_List_Index
+
 !=============================================================================
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
@@ -487,6 +502,9 @@ contains
 end module Indexed_Values_m
 
 ! $Log$
+! Revision 2.11  2017/02/07 03:48:40  vsnyder
+! Add Invert_1D_List_Index
+!
 ! Revision 2.10  2017/02/04 02:06:41  vsnyder
 ! Add Dot_Product.  Make the list argument of some dumps polymorphic so
 ! it will work with extensions (but it only dumps the parent part).
