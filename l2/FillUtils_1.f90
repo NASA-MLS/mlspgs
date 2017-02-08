@@ -13,94 +13,94 @@
 module FillUtils_1                     ! Procedures used by Fill
   !=============================================================================
 
-  use Allocate_deallocate, only: allocate_test, deallocate_test
-  use Chunks_m, only: MLSChunk_t
-  use Constants, only: deg2rad, ln10, rad2deg
-  use Dump_0, only: dump
-  use Expr_m, only: expr, expr_check, getindexflagsfromlist
-  use GriddedData, only: griddedData_t, dump, wrapGriddedData
-  use HDF5, only: HSize_t, H5DOpen_f, H5DClose_f
-  use HighOutput, only: beVerbose, outputNamedValue
-  use Init_tables_module, only: f_measurements, f_totalpowervector, &
-    & f_weightsvector, &
-    & l_addnoise, l_baseline, l_binmax, l_binmean, l_binmin, l_bintotal, &
-    & l_boundarypressure, l_boxcar, l_chisqbinned, l_chisqchan, &
-    & l_chisqmmaf, l_chisqmmif, &
-    & l_cloudinducedradiance, l_cloudminmax, &
-    & l_columnabundance, &
-    & l_dnwt_flag, l_dnwt_chisqminnorm, l_dnwt_chisqnorm, l_dnwt_chisqratio, &
-    & l_dobsonunits, l_du, &
-    & l_ecrtofov, &
-    & l_fieldazimuth, l_fieldelevation, l_fieldstrength, &
-    & l_geocaltitude, l_geodaltitude, l_GPH, l_GHzAzim, &
-    & l_height, l_isotoperatio, &
-    & l_l1bmafbaseline, l_l1bmif_tai, &
-    & l_limbsidebandfraction, l_losvel, &
-    & l_lslocal, l_lsglobal, l_lsweighted, &
-    & l_magneticfield, l_max, l_mean, l_min, l_molcm2, &
-    & l_noisebandwidth, l_none, l_noradspermif, l_noradsbinned, &
-    & l_orbitinclination, l_ascdescmode, &
-    & l_pressure, l_ptan,  l_quality, &
-    & l_radiance, l_refGPH, &
-    & l_refltemp, &
-    & l_sceci, l_scecr, l_scgeocalt, l_scveleci, l_scvelecr, &
-    & l_singlechannelradiance, &
-    & l_status, l_surfacetype, l_systemtemperature, &
-    & l_temperature, l_time, l_tngtECI, l_tngtECR, l_tngtGeocAlt, &
-    & l_tngtGeodAlt, l_tngtGeodLat, l_totalPowerWeight, l_vmr, &
-    & l_xyz, l_zeta
-  use Intrinsic, only: field_indices, lit_indices, &
-    & phyq_angle, phyq_dimensionless, phyq_indices, phyq_invalid, &
-    & phyq_length, phyq_pressure, phyq_temperature, phyq_zeta
-  use L1BData, only: deallocateL1BData, dump, getl1bfile, L1BData_t, &
-    & precisionsuffix, readL1BData, assemblel1bqtyname
-  use L2GPData, only: L2GPData_t, readL2GPData, destroyL2GPcontents
-  use L2AUXData, only: L2AUXData_t, maxsdnamesbufsize, &
-    & readL2AUXData, destroyL2AUXcontents
-  use L3ascii, only: l3ascii_interp_field
-  use ManipulateVectorQuantities, only: doFGridsMatch, doHGridsMatch, &
-    & doVGridsMatch, doQtysDescribeSameThing
-  use MatrixModule_0, only: matrixElement_t, m_full, &
-    & createBlock, sparsify, matrixInversion
-  use MatrixModule_1, only: dump, findBlock, matrix_spd_t, updateDiagonal
-  ! note: if you ever want to include defined assignment for matrices, please
-  ! carefully check out the code around the call to snoop.
-  use MLSCommon, only: MLSFile_t, defaultUndefinedValue
-  use MLSFiles, only: hdfversion_5, dump, getMLSFileByType
-  use MLSFillvalues, only: isFillValue, isFinite, &
-    & Monotonize, removeFillValues
-  use MLSKinds, only: r4, r8, rm, rp, rv
-  use MLSL2options, only: aura_l1bfiles, L2CFErrorNode, L2CFNode, toolkit
-  use MLSMessagemodule, only: MLSMessage, MLSMSG_error, MLSMSG_warning
-  use MLSNumerics, only: coefficients_r8, interpolateArraySetup, &
-    & InterpolateArrayTeardown, interpolateValues, hunt
-  use MLSFinds, only: findFirst, findLast
-  use MLSSignals_m, only: getFirstChannel, getSignalName, getModuleName, &
-    & GetSignal, isModuleSpacecraft, signal_t, signals
-  use MLSStringLists, only: getHashElement, numStringElements, &
-    & StringElement, switchDetail
-  use MLSStrings, only: indexes, lowerCase, writeIntsToChars
-  use Molecules, only: l_H2O
-  use Monotone, only: isMonotonic
-  use Output_m, only: blanks, newline, output
-  use QuantityTemplates, only: quantityTemplate_t
-  use RHifromH2O, only: H2OprecfromRHi, RHifromH2O_factor, RHiprecfromH2O
-  use ScanModelModule, only: getBasisGPH, get2dHydrostaticTangentPressure, &
+  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+  use Chunks_M, only: MLSChunk_T
+  use Constants, only: Deg2rad, Ln10, Rad2deg
+  use Dump_0, only: Dump
+  use Expr_M, only: Expr, Expr_Check, GetindexFlagsfromlist
+  use GriddedData, only: GriddedData_T, Dump, WrapGriddedData
+  use HDF5, only: HSize_T, H5DOpen_F, H5DClose_F
+  use HighOutput, only: BeVerbose, OutputNamedValue
+  use Init_Tables_Module, only: F_Measurements, F_TotalpowerVector, &
+    & F_WeightsVector, &
+    & L_Addnoise, L_Baseline, L_Binmax, L_Binmean, L_Binmin, L_Bintotal, &
+    & L_Boundarypressure, L_Boxcar, L_Chisqbinned, L_Chisqchan, &
+    & L_ChisqmMAF, L_ChisqmMIF, &
+    & L_CloudinducedRadiance, L_Cloudminmax, &
+    & L_Columnabundance, &
+    & L_Dnwt_Flag, L_Dnwt_Chisqminnorm, L_Dnwt_Chisqnorm, L_Dnwt_Chisqratio, &
+    & L_Dobsonunits, L_Du, &
+    & L_Ecrtofov, &
+    & L_Fieldazimuth, L_Fieldelevation, L_Fieldstrength, &
+    & L_Geocaltitude, L_Geodaltitude, L_GPH, L_GHzAzim, &
+    & L_Height, L_Isotoperatio, &
+    & L_L1bMAFbaseline, L_L1bMIF_Tai, &
+    & L_Limbsidebandfraction, L_Losvel, &
+    & L_Lslocal, L_Lsglobal, L_Lsweighted, &
+    & L_Magneticfield, L_Max, L_Mean, L_Min, L_Molcm2, &
+    & L_Noisebandwidth, L_None, L_NoradsperMIF, L_Noradsbinned, &
+    & L_Orbitinclination, L_Ascdescmode, &
+    & L_Pressure, L_Ptan, L_Quality, &
+    & L_Radiance, L_RefGPH, &
+    & L_Refltemp, &
+    & L_Sceci, L_Scecr, L_Scgeocalt, L_Scveleci, L_Scvelecr, &
+    & L_SingleChannelRadiance, &
+    & L_Status, L_Surfacetype, L_Systemtemperature, &
+    & L_Temperature, L_Time, L_TngtECI, L_TngtECR, L_TngtGeocAlt, &
+    & L_TngtGeodAlt, L_TngtGeodLat, L_TotalPowerWeight, L_Vmr, &
+    & L_Xyz, L_Zeta
+  use Intrinsic, only: Field_Indices, Lit_Indices, &
+    & Phyq_Angle, Phyq_Dimensionless, Phyq_Indices, Phyq_Invalid, &
+    & Phyq_Length, Phyq_Pressure, Phyq_Temperature, Phyq_Zeta
+  use L1BData, only: DeallocateL1BData, Dump, GetL1BFile, L1BData_T, &
+    & Precisionsuffix, ReadL1BData, AssembleL1Bqtyname
+  use L2GPData, only: L2GPData_T, ReadL2GPData, DestroyL2GPcontents
+  use L2AUXData, only: L2AUXData_T, Maxsdnamesbufsize, &
+    & ReadL2AUXData, DestroyL2AUXcontents
+  use L3ascii, only: L3ascii_Interp_Field
+  use ManipulateVectorQuantities, only: DoFGridsMatch, DoHGridsMatch, &
+    & DoVGridsMatch, DoQtysDescribeSameThing
+  use MatrixModule_0, only: MatrixElement_T, M_Full, &
+    & CreateBlock, Sparsify, MatrixInversion
+  use MatrixModule_1, only: Dump, FindBlock, Matrix_Spd_T, UpdateDiagonal
+  ! Note: If You Ever Want To Include Defined Assignment For Matrices, Please
+  ! Carefully Check Out The Code Around The Call To Snoop.
+  use MLSCommon, only: MLSFile_T, DefaultUndefinedValue
+  use MLSFiles, only: Hdfversion_5, Dump, GetMLSFileByType
+  use MLSFillValues, only: IsFillValue, IsFinite, &
+    & Monotonize, RemoveFillValues
+  use MLSKinds, only: R4, R8, Rm, Rp, Rv
+  use MLSL2options, only: Aura_L1bFiles, L2CFErrorNode, L2CFNode, Toolkit
+  use MLSMessagemodule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
+  use MLSNumerics, only: Coefficients_R8, InterpolateArraySetup, &
+    & InterpolateArrayTeardown, InterpolateValues, Hunt
+  use MLSFinds, only: FindFirst, FindLast
+  use MLSSignals_M, only: GetFirstChannel, GetSignalName, GetModuleName, &
+    & GetSignal, IsModuleSpacecraft, Signal_T, Signals
+  use MLSStringLists, only: GetHashElement, NumStringElements, &
+    & StringElement, SwitchDetail
+  use MLSStrings, only: Indexes, LowerCase, WriteIntsToChars
+  use Molecules, only: L_H2O
+  use Monotone, only: IsMonotonic
+  use Output_M, only: Blanks, Newline, Output
+  use QuantityTemplates, only: QuantityTemplate_T
+  use RHifromH2O, only: H2OprecfromRHi, RHifromH2O_Factor, RHiprecfromH2O
+  use ScanModelModule, only: GetBasisGPH, Get2dHydrostaticTangentPressure, &
     & GetGPHPrecision
-  use SpectroscopyCatalog_m, only: catalog
-  use String_table, only: display_string, get_string
-  use Toggles, only: gen, levels, switches, toggle
-  use Trace_m, only: trace_begin, trace_end
-  use Tree, only: decoration, subtree, nsons, subtree
+  use SpectroscopyCatalog_M, only: Catalog
+  use String_Table, only: Display_String, Get_String
+  use Toggles, only: Gen, Levels, Switches, Toggle
+  use Trace_M, only: Trace_Begin, Trace_End
+  use Tree, only: Decoration, Subtree, Nsons, Subtree
   use VectorsModule, only: &
-    & clearUnderMask, cloneVectorQuantity, copyVector, createMask, &
-    & destroyVectorinfo, destroyVectorQuantityMask, &
-    & destroyVectorQuantityValue, dump, &
-    & getVectorqtyByTemplateIndex, getVectorQuantityByType, &
-    & isVectorqtyMasked, MaskVectorqty, &
-    & validateVectorQuantity, Vector_t, &
-    & VectorValue_t, m_cloud, m_fill, m_ignore, m_linalg
-  use VGridsDatabase, only: vgrid_t, getUnitForVerticalCoordinate
+    & ClearUnderMask, CloneVectorQuantity, CopyVector, CreateMask, &
+    & DestroyVectorinfo, DestroyVectorQuantityMask, &
+    & DestroyVectorQuantityValue, Dump, DumpQuantityMask, &
+    & GetVectorqtyByTemplateIndex, GetVectorQuantityByType, &
+    & IsVectorqtyMasked, MaskVectorqty, &
+    & ValidateVectorQuantity, Vector_T, &
+    & VectorValue_T, M_Cloud, M_Fill, M_Ignore, M_Linalg
+  use VGridsDatabase, only: Vgrid_T, GetUnitForVerticalCoordinate
 
   implicit none
   private
@@ -212,7 +212,7 @@ contains ! =====     Public Procedures     =============================
     ! ------------------------------------------- AddGaussianNoise -----
     subroutine AddGaussianNoise ( key, quantity, sourceQuantity, &
               & noiseQty, multiplier, spread, ignoreTemplate )
-      use MLSRandomNumber, only: DRANG
+      use MLSRandomNumber, only: DRang
       ! A special fill: quantity = sourceQuantity + g() noiseQty
       ! where g() is a random number generator with mean 0 and std. dev. 1
       ! Generalized into ( a sourceQuantity + b g() noiseQty )
@@ -291,7 +291,7 @@ contains ! =====     Public Procedures     =============================
     subroutine ANNOUNCE_ERROR ( WhereWasIt, CODE, &
       & EXTRAMESSAGE, QTY, EXTRAINFO, QUITNOW )
 
-      use MORETREE, only: GET_FIELD_ID, STARTERRORMESSAGE
+      use Moretree, only: Get_Field_Id, Starterrormessage
 
       integer, intent(in) :: WhereWasIt   ! Tree node WhereWasIt error was noticed
       integer, intent(in) :: CODE    ! Code for error message
@@ -780,7 +780,7 @@ contains ! =====     Public Procedures     =============================
 
     ! ------------------------------------------- ComputeTotalPower
     subroutine ComputeTotalPower ( key, vectors )
-      use MoreTree, only: GET_FIELD_ID
+      use MoreTree, only: Get_field_id
 
       ! Arguments
       integer, intent(in) :: KEY        ! Tree node
@@ -1913,7 +1913,7 @@ contains ! =====     Public Procedures     =============================
     ! Compute derivative of source quantity w.r.t. dim listed
     subroutine DerivativeOfSource ( DERIVATIVE, SOURCE, XQUANTITY, &
       & DIMLIST, IGNORETEMPLATE )
-      use MANIPULATIONUTILS, only: MANIPULATE
+      use Manipulationutils, only: Manipulate
 
       type (VectorValue_T), pointer       :: DERIVATIVE
       type (VectorValue_T), pointer       :: SOURCE
@@ -2047,7 +2047,7 @@ contains ! =====     Public Procedures     =============================
     ! If they don't, and /interpolate not set, then raise an exception
     ! (no more silent inerpolations)
     subroutine FromAnother ( quantity, sourceQuantity, ptan, &
-      & key, ignoreTemplate, spreadflag, interpolate, force )
+      & key, ignoreTemplate, spreadflag, interpolate, force, sourceMask )
       type (VectorValue_T), intent(inout) :: QUANTITY
       type (VectorValue_T), pointer :: SOURCEQUANTITY
       type (VectorValue_T), pointer :: PTAN
@@ -2056,16 +2056,19 @@ contains ! =====     Public Procedures     =============================
       logical, intent(in) :: SPREADFLAG ! If set spread across instances
       logical, intent(in) :: INTERPOLATE ! If set spread across summed dimension
       logical, intent(in) :: FORCE ! Copy as much as will fit
+      logical, intent(in) :: sourceMask ! Obey source masking bits
       ! Local parameters
       integer :: inst
       integer :: instanceLen
       integer :: noInstances
       integer :: surf
       ! Executable
+      noInstances = Quantity%template%noInstances
       if ( associated ( ptan ) .and. interpolate ) then
         call FromInterpolatedQty ( quantity, sourceQuantity, &
           & key, ignoreTemplate, ptan )
-      else if ( quantity%template%name /= sourceQuantity%template%name ) then
+      else if ( (quantity%template%name /= sourceQuantity%template%name) &
+        & .and. .not. sourceMask ) then
         if ( .not. interpolate .and. .not. ignoreTemplate ) then
           call Announce_Error ( key, No_Error_Code, &
             & 'Quantity and sourceQuantity do not have the same template' )
@@ -2114,6 +2117,31 @@ contains ! =====     Public Procedures     =============================
             quantity%values(surf,:) = sourceQuantity%values(surf,:)
           end if
         end do
+      elseif ( sourceMask .and. associated(sourceQuantity%Mask) ) then
+        ! Instead of obeying quantity's mask bits, use mask bits from source
+        ! Either value fo value copy, or, if the sizes don't match
+        ! copy the first unmasked value from source into element 1 of quantity
+        ! call output ( 'using mask from source quantity', advance='yes' )
+        ! call dumpQuantityMask( sourceQuantity )
+        ! call outputNamedValue( 'shape(source)', shape(sourceQuantity%values) )
+        ! call outputNamedValue( 'shape(qty)', shape(quantity%values) )
+        if ( size(quantity%values) == size(sourceQuantity%values) ) then
+          where ( iand ( ichar(sourceQuantity%Mask(:,:)), m_Fill ) == 0 )
+            quantity%values(:,:) = sourceQuantity%values(:,:)
+          end where
+        elseif ( size(quantity%values(1,:)) == size(sourceQuantity%values(1,:)) ) then
+          do inst = 1, noInstances
+            surf = FindFirst ( iand ( ichar(sourceQuantity%Mask(:,inst)), m_Fill ) == 0 )
+            ! call outputNamedValue ( 'surf', surf )
+            if ( surf > 0 ) quantity%values(1,inst) = sourceQuantity%values(surf,inst)
+            ! if ( surf > 0 ) call outputNamedValue ( 'sQ(surf)', sourceQuantity%values(surf,inst) ) 
+          enddo
+        else
+          surf = FindFirst ( iand ( ichar(sourceQuantity%Mask(:,1)), m_Fill ) == 0 )
+          ! call outputNamedValue ( 'surf', surf )
+          if ( surf > 0 ) quantity%values(1,1) = sourceQuantity%values(surf,1)
+          ! if ( surf > 0 ) call outputNamedValue ( 'sQ(surf)', sourceQuantity%values(surf,1) ) 
+        endif
       else
         ! Just a straight copy
         ! If we have a Mask and we're going to obey it then do so
@@ -2404,10 +2432,10 @@ contains ! =====     Public Procedures     =============================
     ! If source quantity is present use geoid data to make it
     ! relative to geoid instead of ellipsoid
     subroutine GeoidData ( quantity, sourceQuantity, resolution )
-      use, intrinsic :: ISO_C_BINDING, only: C_SHORT
-      use SDPTOOLKIT, only: PGSd_DEM_30ARC, PGSd_DEM_90ARC, PGSd_DEM_GEOID, &
-        & PGSd_DEM_DEGREE !, &
-        !& PGS_DEM_GETQUALITYDATA, PGS_DEM_GETSIZE, PGS_DEM_SORTMODELS
+      use, Intrinsic :: Iso_C_Binding, only: C_Short
+      use Sdptoolkit, only: Pgsd_Dem_30arc, Pgsd_Dem_90arc, Pgsd_Dem_Geoid, &
+        & Pgsd_Dem_Degree !, &
+        !& Pgs_Dem_GetqualityData, Pgs_Dem_Getsize, Pgs_Dem_Sortmodels
       type(VectorValue_T), intent(inout)        :: QUANTITY
       type(VectorValue_T), intent(in), optional :: SOURCEQUANTITY
       integer, intent(in), optional             :: RESOLUTION
@@ -2626,7 +2654,7 @@ contains ! =====     Public Procedures     =============================
     ! ----------------------------------------------  LOSVelocity  -----
     subroutine LOSVelocity ( key, qty, tngtECI, scECI, scVel )
       ! A special fill from geometry arguments
-      use Geometry, only: OMEGA => W
+      use Geometry, only: Omega => W
       integer, intent(in) :: KEY
       type (VectorValue_T), intent(inout) :: QTY
       type (VectorValue_T), intent(in) :: TngtECI
@@ -2703,7 +2731,7 @@ contains ! =====     Public Procedures     =============================
 
     ! ---------------------------------------------  NoRadsPerMIF  -----
     subroutine NoRadsPerMif ( key, quantity, measQty, asPercentage )
-      use BitStuff, only: BITEQ
+      use BitStuff, only: Biteq
       ! Count number of valid (i.e., not Masked) radiances
       ! optionally compute it as a percentage of largest number possible
       ! The largest number possible takes into account
@@ -2764,10 +2792,10 @@ contains ! =====     Public Procedures     =============================
     subroutine PhiTanWithRefraction ( key, quantity, &
       & H2O, orbIncline, ptan, refGPH, temperature, ignoreTemplate )
 
-      use Geometry, only: EARTHRADA, EARTHRADB, GEODTOGEOCLAT
-      use Hydrostatic_M, only: HYDROSTATIC
-      use Phi_Refractive_Correction_m, only: PHI_REFRACTIVE_CORRECTION_UP
-      use Refraction_m, only: REFRACTIVE_INDEX
+      use Geometry, only: Earthrada, Earthradb, Geodtogeoclat
+      use Hydrostatic_M, only: Hydrostatic
+      use Phi_Refractive_Correction_M, only: Phi_Refractive_Correction_Up
+      use Refraction_M, only: Refractive_Index
 
       integer, intent(in) :: KEY          ! Tree node, for error messages
       type (VectorValue_T), intent(inout) :: QUANTITY ! PhiTan quantity to update
@@ -3524,9 +3552,9 @@ contains ! =====     Public Procedures     =============================
 !MJF
     ! --------------------------------------------  FromASCIIFile  -----
     subroutine FromAsciiFile ( key, quantity, filename, badRange )
-      use IO_STUFF, only: GET_LUN
+      use Io_stuff, only: Get_lun
       use Lexer_Core, only: Get_Where
-      use MACHINE, only: IO_ERROR
+      use Machine, only: Io_error
       use Tree, only: Where
       integer, intent(in) :: KEY        ! Tree node
       type (VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
@@ -3954,7 +3982,7 @@ contains ! =====     Public Procedures     =============================
       & manipulation, key, ignoreTemplate, &
       & spreadflag, dimList, &
       & c )
-      use manipulationUtils, only: maxManipulationLen, Manipulate
+      use ManipulationUtils, only: MaxManipulationLen, Manipulate
       type (VectorValue_T), intent(inout) :: QUANTITY
       type (VectorValue_T), pointer :: A
       type (VectorValue_T), pointer :: B
@@ -4672,7 +4700,7 @@ contains ! =====     Public Procedures     =============================
     ! --------------------------------------  Hydrostatically_GPH  -----
     subroutine Hydrostatically_GPH ( key, quantity, &
       & temperatureQuantity, refGPHQuantity )
-      use manipulateVectorQuantities, only: DoHGridsMatch, DoVGridsMatch
+      use ManipulateVectorQuantities, only: DoHGridsMatch, DoVGridsMatch
       ! Fill GPH hydrostatically
       integer, intent(in) :: key          ! For messages
       type (VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
@@ -4710,7 +4738,7 @@ contains ! =====     Public Procedures     =============================
       & temperatureQuantity, refGPHQuantity, H2OQuantity, &
       & orbitInclinationQuantity, phiTanQuantity, geocAltitudeQuantity, &
       & maxIterations, phiWindow, phiWindowUnits, chunkNo )
-      use manipulateVectorQuantities, only: DoHGridsMatch, &
+      use ManipulateVectorQuantities, only: DoHGridsMatch, &
         & findClosestInstances
       ! Fill PTan quantity hydrostatically
       integer, intent(in) :: key          ! For messages
@@ -5137,7 +5165,7 @@ contains ! =====     Public Procedures     =============================
     ! ----------------------------------------  WithReichlerWMOTP  -----
     subroutine WithReichlerWMOTP ( tpPres, temperature )
 
-      use wmoTropopause, only: extraTropics, TWMO
+      use WMOTropopause, only: extraTropics, TWMO
       ! Implements the algorithm published in GRL
       ! Loosely called the "Reichler" algorithm
       ! Ideas the same as in WithWMOTropopause
@@ -6255,8 +6283,8 @@ contains ! =====     Public Procedures     =============================
 
     ! ----------------------------------------  ManipulateVectors  -----
     subroutine ManipulateVectors ( MANIPULATION, DEST, A, B, C, BOOLEANNAME )
-    use MLSL2Options, only: runTimeValues
-    use MLSStrings, only: strEq
+    use MLSL2Options, only: RunTimeValues
+    use MLSStrings, only: StrEq
       ! Manipulate common items in a, b, copying result to those in dest
       integer, intent(in) :: MANIPULATION
       type (Vector_T), intent(in)            :: A, B
@@ -6892,8 +6920,8 @@ contains ! =====     Public Procedures     =============================
     ! ------------------------------------------  TransferVectors  -----
     subroutine TransferVectors ( source, dest, skipMask, interpolate, &
       & booleanname )
-    use MLSL2Options, only: runTimeValues
-    use MLSStrings, only: strEq
+    use MLSL2Options, only: RunTimeValues
+    use MLSStrings, only: StrEq
       ! Copy common items in source to those in dest
       type (Vector_T), intent(in) :: SOURCE
       type (Vector_T), intent(inout) :: DEST
@@ -6980,9 +7008,9 @@ contains ! =====     Public Procedures     =============================
       & source, method, dontMask, interpolate, &
       & ignorenegative, ignorezero, measvector, modelvector, &
       & noisevector, ptan, booleanname )
-    use MLSL2Options, only: runTimeValues
-    use MLSStrings, only: strEq
-    use dump_0, only: dump
+    use MLSL2Options, only: RunTimeValues
+    use MLSStrings, only: StrEq
+    use Dump_0, only: Dump
       integer, intent(in)            :: KEY
       type (Vector_T), pointer       :: DEST
       type (Vector_T), pointer       :: SOURCE
@@ -7239,7 +7267,7 @@ contains ! =====     Public Procedures     =============================
     ! ----------------------------------------------  QtyFromFile  -----
     subroutine QtyFromFile ( key, quantity, MLSFile, &
       & filetype, options, sdname, spread, interpolate )
-      use MLSHDF5, only: matchHDF5Attributes
+      use MLSHDF5, only: MatchHDF5Attributes
       integer, intent(in) :: KEY        ! Tree node
       type (VectorValue_T), intent(inout) :: QUANTITY ! Radiance quantity to modify
       type (MLSFile_T), pointer   :: MLSFile
@@ -7292,7 +7320,7 @@ contains ! =====     Public Procedures     =============================
     subroutine VectorFromFile ( key, Vector, MLSFile, &
       & filetype, options, spread, interpolate )
       use Dump_1, only: Dump
-      use MLSHDF5, only: getAllHDF5DSNames, matchHDF5Attributes
+      use MLSHDF5, only: GetAllHDF5DSNames, MatchHDF5Attributes
       integer, intent(in) :: KEY        ! Tree node
       type (Vector_T), intent(inout) :: Vector
       type (MLSFile_T), pointer   :: MLSFile
@@ -7482,7 +7510,7 @@ contains ! =====     Public Procedures     =============================
     ! -----------------------------------------  NamedQtyFromFile  -----
     subroutine NamedQtyFromFile ( key, quantity, MLSFile, &
       & filetype, name, spread, interpolate, homogeneous )
-      use MLSHDF5, only: getHDF5Attribute, getHDF5DSDims, loadFromHDF5DS
+      use MLSHDF5, only: GetHDF5Attribute, GetHDF5DSDims, LoadFromHDF5DS
       integer, intent(in) :: KEY        ! Tree node
       type (VectorValue_T), intent(inout) :: QUANTITY ! Radiance quantity to modify
       type (MLSFile_T), pointer   :: MLSFile
@@ -7668,6 +7696,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.129  2017/02/08 19:22:00  pwagner
+! /sourceMask causes vector Fills to obey mask from source, not destination
+!
 ! Revision 2.128  2016/10/20 19:18:30  vsnyder
 ! Use tngtECE%value3 and scVel%value3, which eliminates the need to calculate
 ! 2D subscripts for XYZ, MIF, MAF, and eliminates a seg fault with NAG build
