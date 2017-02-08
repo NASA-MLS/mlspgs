@@ -13,8 +13,8 @@
 module Fill                     ! Create vectors and fill them.
   !=============================================================================
 
-  use MLSCommon, only: MLSFile_T, defaultUndefinedValue
-  use MLSKinds, only: r8, rv
+  use MLSCommon, only: MLSFile_T, DefaultUndefinedValue
+  use MLSKinds, only: R8, Rv
   ! This module performs the Fill operation in the Level 2 software.
   ! This takes a vector template, and creates and fills an appropriate vector
 
@@ -54,191 +54,191 @@ contains ! =====     Public Procedures     =============================
     ! This is the main routine for the module.  It parses the relevant lines
     ! of the l2cf and works out what to do.
 
-    use allocate_deallocate, only: test_allocate, test_deallocate
-    use chunks_m, only: MLSChunk_t
-    use destroycommand_m, only: destroyCommand
-    use dumpCommand_m, only: booleanFromAnyGoodRadiances, &
-      & booleanFromAnygoodvalues, &
-      & booleanFromCatchwarning, booleanFromComparingQtys, booleanFromFormula, &
-      & dumpcommand, ExecuteCommand, initializerepeat, nextrepeat, &
-      & MLSCase, MLSEndSelect, MLSSelect, MLSSelecting, &
-      & repeat=>skip, skip
-    use expr_m, only: expr
-    use FillUtils_1, only: addgaussiannoise, applybaseline, autoFillVector, &
-      & computetotalpower, derivativeofsource, Fillcovariance, &
-      & extractsinglechannel, Fillerror, fromanother, fromgrid, &
-      & fromL2GP, fromprofile, gather, geoiddata, losvelocity, &
-      & chisqchan, chisqmmaf, chisqmmif, chisqratio, &
-      & colabundance, foldedRadiance, phitanwithrefraction, &
-      & iwcfromextinction, rhifromortoh2o, noradspermif, &
-      & rhiprecisionfromortoh2o, withestnoise, &
-      & hydrostatically_gph, hydrostatically_ptan, fromsplitsideband, &
-      & gphprecision, fromisotope, fromasciifile, rotatemagneticfield, &
-      & explicit, froml1b, &
-      & froml2aux, usingmagneticmodel, &
-      & frominterpolatedqty, fromlosgrid, NearestProfiles, &
-      & bymanipulation, manipulateVectors, withreflectortemperature, &
-      & withascordesc, withreichlerwmotp, &
-      & withwmotropopause, withbinresults, withboxcarfunction, &
-      & statusQuantity, qualityfromchisq, convergencefromchisq, &
-      & usingleastsquares, offsetRadianceQuantity, resetunusedRadiances, &
-      & scaleoverlaps, scatter, spreadchannelFill, transferVectors, &
-      & transferVectorsbymethod, uncompressRadiance, &
-      & qtyfromfile, Vectorfromfile, announce_error, &
-      ! codes for announce_error:
-      & badestnoiseFill, badgeocaltitudeQuantity, badisotopeFill, &
-      & badlosgridFill, badlosvelFill, badrefgphQuantity, badgphQuantity, &
-      & badrefractFill, badscvelecrQuantity, badtemperatureQuantity, &
-      & bothfractionandlength, missingfield, &
-      & needgeocaltitude, needh2o, needorbitinclination, needtemprefgph, &
-      & negativePhiWindow, nocodefor, no_error_code, noexplicitvaluesgiven, &
-      & nosourcegridgiven, nosourcel2auxgiven, nosourceL2GPgiven, &
-      & notimplemented, notplain, notspd, &
-      & wrongunits
-    use forwardModelConfig, only: forwardmodelconfig_t
-    use forwardModelSupport, only: fillfwdmodeltimings
-    use global_settings, only: brightobjects
-    use griddeddata, only: griddeddata_t
-    use hessianmodule_1, only: addhessiantodatabase, createemptyhessian, &
-      & streamlinehessian, hessian_t
-    use HGridsDatabase, only: HGrids_t
-    use highoutput, only: outputnamedvalue
-    ! we need many things from init_tables_module.  first the fields:
-    use init_tables_module, only: f_a, f_additional, f_allowmissing, &
-      & f_aprioriprecision, f_aspercentage, f_autofill, f_avoidbrightobjects, &
-      & f_b, f_badrange, f_baselinequantity, f_bin, f_block, &
-      & f_boundarypressure, f_boxcarmethod, &
-      & f_c, f_centervertically, f_channel, f_channels, f_columns, f_count, &
-      & f_destination, f_diagonal, f_dimlist, &
-      & f_dontlatch, f_dontmask, &
-      & f_ecrtofov, f_earthradius, f_exact, f_excludebelowbottom, &
-      & f_explicitvalues, f_expr, f_extinction, &
-      & f_fieldecr, f_file, f_flags, f_force, f_shape, &
-      & f_fraction, f_fromprecision, &
-      & f_geocaltitudequantity, f_geolocation, f_gphquantity, &
-      & f_height, f_heightrange, f_hessian, &
-      & f_highbound, f_h2oquantity, f_h2oprecisionquantity, f_hGrid, &
-      & f_ifmissinggmao, &
-      & f_ignorenegative, f_ignoregeolocation, f_ignoretemplate, f_ignorezero, &
-      & f_instances, f_integrationtime, f_internalvgrid, &
-      & f_interpolate, f_invert, f_intrinsic, f_isprecision, &
-      & f_lengthscale, f_logspace, f_losqty, f_lowbound, f_lsb, f_lsbfraction, &
-      & f_manipulation, f_matrix, f_maxiterations, f_maxvalue, f_measurements, &
-      & f_method, f_minnormqty, f_minvalue, f_model, f_multiplier, &
-      & f_nofinegrid, f_noise, f_noisebandwidth, f_noPCFid, f_normqty, &
-      & f_noZeros, f_offsetamount, f_options, f_orbitinclination, f_phitan, &
-      & f_phiwindow, f_phizero, f_precision, f_precisionfactor, &
-      & f_profile, f_profilevalues, f_ptanquantity, &
-      & f_quadrature, f_quantity, f_quantitynames, &
-      & f_radiancequantity, f_ratioquantity, f_refract, &
-      & f_refgphquantity, f_refgphprecisionquantity, f_referenceMIF, f_regular, &
-      & f_reset, f_resetseed, f_rhiprecisionquantity, f_rhiquantity, f_rank, &
-      & f_rows, f_scale, f_scaleinsts, f_scaleratio, f_scalesurfs, f_sceci, &
-      & f_scvel, f_scveleci, f_scvelecr, f_sdname, f_seed, f_skipmask, &
-      & f_source, f_sourcegrid, f_sourcel2aux, f_sourcel2gp, &
-      & f_sourcequantity, f_sourcevgrid, f_spread, f_start, f_status, f_stride, &
-      & f_suffix, f_surface, &
-      & f_systemtemperature, f_temperaturequantity, f_tempprecisionquantity, &
-      & f_template, f_tngteci, f_terms, f_totalpowerquantity, &
-      & f_type, f_unit, f_usb, f_usbfraction, f_vector, f_vmrquantity, &
-      & f_wherefill, f_wherenotfill, f_width, &
-      & field_first, field_last
-    ! now the literals:
-    use init_tables_module, only: l_addnoise, l_applybaseline, l_ascenddescend, &
-      & l_asciifile, l_binmax, l_binmean, l_binmin, l_bintotal, &
-      & l_boundarypressure, l_boxcar, l_chisqchan, &
-      & l_chisqmmaf, l_chisqmmif, l_chisqratio, l_cholesky, &
-      & l_cloudice, l_cloudextinction, &
-      & l_combinechannels, l_columnabundance, l_convergenceratio, &
-      & l_derivative, l_dobsonunits, l_du, &
-      & l_estimatednoise, l_explicit, l_extractchannel, l_fold, &
-      & l_fwdmodeltiming, l_fwdmodelmean, l_fwdmodelstddev, &
-      & l_gather, l_geocaltitude, l_geodaltitude, l_geolocation, &
-      & l_geoiddata, l_gph, l_gphprecision, l_gphresettogeoid, l_gridded, &
-      & l_h2ofromrhi, l_h2oprecisionfromrhi, l_hdf, l_hydrostatic, &
-      & l_isotope, l_iwcfromextinction, l_kronecker, &
-      & l_l1b, l_l2gp, l_l2aux, &
-      & l_losvel, l_lsglobal, l_lslocal, l_lsweighted, &
-      & l_magazel, l_magneticmodel, &
-      & l_manipulate, l_mean, l_modifytemplate, l_molcm2, &
-      & l_negativeprecision, l_none, &
-      & l_noradspermif, l_offsetradiance, &
-      & l_phasetiming, l_phitan, &
-      & l_plain, l_profile, l_ptan,  l_quality, &
-      & l_rectanglefromlos, l_refgph, l_refract, &
-      & l_reflectortempmodel, l_resetunusedradiances, l_rhi, &
-      & l_rhifromh2o, l_rhiprecisionfromh2o, l_rotatefield, l_scaleoverlaps, &
-      & l_sectiontiming, l_scatter, l_scvelecr, l_spd, l_spreadchannel, &
-      & l_splitsideband, l_status, l_swapvalues, &
-      & l_temperature, l_tngtgeodalt, &
-      & l_tngtgeocalt, l_uncompressradiance, l_vector, l_vgrid, l_vmr, l_wmotropopause, &
-      & l_zeta
-    ! now the specifications:
-    use init_tables_module, only: s_anygoodvalues, s_anygoodradiances, &
-      & s_case, s_catchwarning, s_compare, s_computetotalpower, s_destroy, &
-      & s_diff, s_directread, s_dump, s_endselect, s_execute, &
-      & s_fill, s_fillcovariance, s_filldiagonal, &
-      & s_flagcloud, s_flushl2pcbins, s_flushpfa, s_hessian, &
-      & s_load, s_matrix,  s_negativeprecision, s_phase, s_populatel2pcbin, &
-      & s_reevaluate, s_repeat, s_restrictrange, &
-      & s_select, s_changeSettings, s_skip, s_snoop, s_streamlinehessian, s_subset, &
-      & s_time, s_transfer, s_updatemask, s_vector
-    ! now some arrays
-    use intrinsic, only: lit_indices, &
-      & phyq_angle, phyq_dimensionless, phyq_invalid, phyq_length, &
-      & phyq_profiles
-    use, intrinsic :: iso_c_binding, only: c_intptr_t, c_loc
-    use L1BData, only: deallocateL1BData, L1BData_t, readL1BData
-    use L2GPData, only: L2GPData_t, col_species_hash, col_species_keys
-    use L2AUXdata, only: L2AUXData_t
-    use L2PC_m, only: populatel2pcbinbyname, loadhessian, loadmatrix, loadvector
-    use L2PCBins_m, only: flushlockedbins
-    use manipulateVectorQuantities, only: doHGridsMatch, &
-      & fillWithCombinedChannels
-    use matrixModule_1, only: addToMatrixDatabase, createEmptyMatrix, &
-      & getActualMatrixFromDatabase, getDiagonal, &
-      & getkindfrommatrixdatabase, getfrommatrixdatabase, k_plain, k_spd, &
-      & matrix_cholesky_t, matrix_database_t, matrix_kronecker_t, matrix_spd_t, &
-      & matrix_t, nullifymatrix
-    ! note: if you ever want to include defined assignment for matrices, please
-    ! carefully check out the code around the call to snoop.
-    use MLSFiles, only: HDFVersion_5, getMlsFileByType
-    use MLSL2Options, only: l2cfnode, &
-      & skipRetrieval, specialDumpFile, MLSMessage
-    use MLSL2Timings, only: section_times, total_times, &
-      & addPhaseToPhaseNames, fillTimings, finishTimings
-    use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning, &
-      & MLSMsg_l1bread, MLSMessageReset
-    use MLSPcf2, only: mlspcf_l2apriori_start, mlspcf_l2apriori_end
-    use MLSRandomnumber, only: mls_random_seed, math77_ran_pack
-    use MLSStringlists, only: catlists, gethashelement, &
-      & numstringelements, puthashelement, &
-      & stringelement, stringelementnum
-    use MLSStrings, only: lowercase
-    use molecules, only: l_h2o
-    use moretree, only: get_boolean, get_field_id, get_label_and_spec, &
-      & get_spec_id
-    use next_tree_node_m, only: next_tree_node, next_tree_node_state
-    use output_m, only: blanks, output, revertoutput, switchoutput
-    use PFAData_m, only: flush_PFAData
-    use quantityTemplates, only: quantityTemplate_t, &
-      & modifyQuantityTemplate
-    use readAPriori, only: APrioriFiles
-    use snoopMLSL2, only: snoop
-    use string_table, only: get_string
-    use subsetmodule, only: applymasktoquantity, restrictrange, &
-      & setupflagcloud, setupsubset, updatemask
-    use time_m, only: SayTime, time_now
-    use toggles, only: gen, levels, toggle
-    use trace_m, only: trace_begin, trace_end
-    use tree, only: decorate, decoration, nsons, sub_rosa, subtree, where
-    use VectorsModule, only: addVectortodatabase, &
-      & clearmask, cloneVectorQuantity, createVector, &
-      & dumpQuantitymask, &
-      & getVectorQtybytemplateindex, &
-      & validateVectorQuantity, Vector_t, &
-      & Vectortemplate_t, Vectorvalue_t, m_fill
-    use VGridsDatabase, only: VGrids
+ use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+ use Chunks_M, only: MLSChunk_T
+ use Destroycommand_M, only: DestroyCommand
+ use DumpCommand_M, only: BooleanFromAnyGoodRadiances, &
+   & BooleanFromAnygoodValues, &
+   & BooleanFromCatchwarning, BooleanFromComparingQtys, BooleanFromFormula, &
+   & Dumpcommand, ExecuteCommand, Initializerepeat, Nextrepeat, &
+   & MLSCase, MLSEndSelect, MLSSelect, MLSSelecting, &
+   & Repeat=>skip, Skip
+ use Expr_M, only: Expr
+ use FillUtils_1, only: Addgaussiannoise, Applybaseline, AutoFillVector, &
+   & Computetotalpower, Derivativeofsource, Fillcovariance, &
+   & Extractsinglechannel, Fillerror, Fromanother, Fromgrid, &
+   & FromL2GP, Fromprofile, Gather, GeoidData, Losvelocity, &
+   & Chisqchan, Chisqmmaf, Chisqmmif, Chisqratio, &
+   & Colabundance, FoldedRadiance, Phitanwithrefraction, &
+   & Iwcfromextinction, Rhifromortoh2o, Noradspermif, &
+   & Rhiprecisionfromortoh2o, Withestnoise, &
+   & Hydrostatically_Gph, Hydrostatically_Ptan, Fromsplitsideband, &
+   & Gphprecision, Fromisotope, Fromasciifile, Rotatemagneticfield, &
+   & Explicit, Froml1b, &
+   & Froml2aux, Usingmagneticmodel, &
+   & Frominterpolatedqty, Fromlosgrid, NearestProfiles, &
+   & Bymanipulation, ManipulateVectors, Withreflectortemperature, &
+   & Withascordesc, Withreichlerwmotp, &
+   & Withwmotropopause, Withbinresults, Withboxcarfunction, &
+   & StatusQuantity, Qualityfromchisq, Convergencefromchisq, &
+   & Usingleastsquares, OffsetRadianceQuantity, ResetunusedRadiances, &
+   & Scaleoverlaps, Scatter, SpreadchannelFill, TransferVectors, &
+   & TransferVectorsbymethod, UncompressRadiance, &
+   & Qtyfromfile, Vectorfromfile, Announce_Error, &
+ ! Codes For Announce_Error:
+   & BadestnoiseFill, BadgeocaltitudeQuantity, BadisotopeFill, &
+   & BadlosgridFill, BadlosvelFill, BadrefgphQuantity, BadgphQuantity, &
+   & BadrefractFill, BadscvelecrQuantity, BadtemperatureQuantity, &
+   & Bothfractionandlength, Missingfield, &
+   & Needgeocaltitude, Needh2o, Needorbitinclination, Needtemprefgph, &
+   & NegativePhiWindow, Nocodefor, No_Error_Code, NoexplicitValuesgiven, &
+   & Nosourcegridgiven, Nosourcel2auxgiven, NosourceL2GPgiven, &
+   & Notimplemented, Notplain, Notspd, &
+   & Wrongunits
+ use ForwardModelConfig, only: Forwardmodelconfig_T
+ use ForwardModelSupport, only: Fillfwdmodeltimings
+ use Global_Settings, only: Brightobjects
+ use GriddedData, only: GriddedData_T
+ use Hessianmodule_1, only: AddhessiantoDatabase, Createemptyhessian, &
+   & Streamlinehessian, Hessian_T
+ use HGridsDatabase, only: HGrids_T
+ use HighOutput, only: OutputnamedValue
+ ! We Need Many Things From Init_Tables_Module. First The Fields:
+ use Init_Tables_Module, only: F_A, F_Additional, F_Allowmissing, &
+   & F_Aprioriprecision, F_Aspercentage, F_Autofill, F_Avoidbrightobjects, &
+   & F_B, F_Badrange, F_Baselinequantity, F_Bin, F_Block, &
+   & F_Boundarypressure, F_Boxcarmethod, &
+   & F_C, F_Centervertically, F_Channel, F_Channels, F_Columns, F_Count, &
+   & F_Destination, F_Diagonal, F_Dimlist, &
+   & F_Dontlatch, F_DontMask, &
+   & F_Ecrtofov, F_Earthradius, F_Exact, F_Excludebelowbottom, &
+   & F_ExplicitValues, F_Expr, F_Extinction, &
+   & F_Fieldecr, F_File, F_Flags, F_Force, F_Shape, &
+   & F_Fraction, F_Fromprecision, &
+   & F_Geocaltitudequantity, F_Geolocation, F_Gphquantity, &
+   & F_Height, F_Heightrange, F_Hessian, &
+   & F_Highbound, F_H2oquantity, F_H2oprecisionquantity, F_HGrid, &
+   & F_Ifmissinggmao, &
+   & F_Ignorenegative, F_Ignoregeolocation, F_IgnoreTemplate, F_Ignorezero, &
+   & F_Instances, F_Integrationtime, F_Internalvgrid, &
+   & F_Interpolate, F_Invert, F_Intrinsic, F_Isprecision, &
+   & F_Lengthscale, F_Logspace, F_Losqty, F_Lowbound, F_Lsb, F_Lsbfraction, &
+   & F_Manipulation, F_Matrix, F_Maxiterations, F_MaxValue, F_Measurements, &
+   & F_Method, F_Minnormqty, F_MinValue, F_Model, F_Multiplier, &
+   & F_Nofinegrid, F_Noise, F_Noisebandwidth, F_NoPCFid, F_Normqty, &
+   & F_NoZeros, F_Offsetamount, F_Options, F_Orbitinclination, F_Phitan, &
+   & F_Phiwindow, F_Phizero, F_Precision, F_Precisionfactor, &
+   & F_Profile, F_ProfileValues, F_Ptanquantity, &
+   & F_Quadrature, F_Quantity, F_Quantitynames, &
+   & F_Radiancequantity, F_Ratioquantity, F_Refract, &
+   & F_Refgphquantity, F_Refgphprecisionquantity, F_ReferenceMIF, F_Regular, &
+   & F_Reset, F_Resetseed, F_Rhiprecisionquantity, F_Rhiquantity, F_Rank, &
+   & F_Rows, F_Scale, F_Scaleinsts, F_Scaleratio, F_Scalesurfs, F_Sceci, &
+   & F_Scvel, F_Scveleci, F_Scvelecr, F_Sdname, F_Seed, F_SkipMask, &
+   & F_Source, F_Sourcegrid, F_Sourcel2aux, F_Sourcel2gp, F_SourceMask, &
+   & F_Sourcequantity, F_Sourcevgrid, F_Spread, F_Start, F_Status, F_Stride, &
+   & F_Suffix, F_Surface, &
+   & F_Systemtemperature, F_Temperaturequantity, F_Tempprecisionquantity, &
+   & F_Template, F_Tngteci, F_Terms, F_Totalpowerquantity, &
+   & F_Type, F_Unit, F_Usb, F_Usbfraction, F_Vector, F_Vmrquantity, &
+   & F_Wherefill, F_Wherenotfill, F_Width, &
+   & Field_First, Field_Last
+ ! Now The Literals:
+ use Init_Tables_Module, only: L_Addnoise, L_Applybaseline, L_Ascenddescend, &
+   & L_Asciifile, L_Binmax, L_Binmean, L_Binmin, L_Bintotal, &
+   & L_Boundarypressure, L_Boxcar, L_Chisqchan, &
+   & L_Chisqmmaf, L_Chisqmmif, L_Chisqratio, L_Cholesky, &
+   & L_Cloudice, L_Cloudextinction, &
+   & L_Combinechannels, L_Columnabundance, L_Convergenceratio, &
+   & L_Derivative, L_Dobsonunits, L_Du, &
+   & L_Estimatednoise, L_Explicit, L_Extractchannel, L_Fold, &
+   & L_Fwdmodeltiming, L_Fwdmodelmean, L_Fwdmodelstddev, &
+   & L_Gather, L_Geocaltitude, L_Geodaltitude, L_Geolocation, &
+   & L_GeoidData, L_Gph, L_Gphprecision, L_Gphresettogeoid, L_Gridded, &
+   & L_H2ofromrhi, L_H2oprecisionfromrhi, L_Hdf, L_Hydrostatic, &
+   & L_Isotope, L_Iwcfromextinction, L_Kronecker, &
+   & L_L1b, L_L2gp, L_L2aux, &
+   & L_Losvel, L_Lsglobal, L_Lslocal, L_Lsweighted, &
+   & L_Magazel, L_Magneticmodel, &
+   & L_Manipulate, L_Mean, L_ModifyTemplate, L_Molcm2, &
+   & L_Negativeprecision, L_None, &
+   & L_Noradspermif, L_Offsetradiance, &
+   & L_Phasetiming, L_Phitan, &
+   & L_Plain, L_Profile, L_Ptan, L_Quality, &
+   & L_Rectanglefromlos, L_Refgph, L_Refract, &
+   & L_Reflectortempmodel, L_Resetunusedradiances, L_Rhi, &
+   & L_Rhifromh2o, L_Rhiprecisionfromh2o, L_Rotatefield, L_Scaleoverlaps, &
+   & L_Sectiontiming, L_Scatter, L_Scvelecr, L_Spd, L_Spreadchannel, &
+   & L_Splitsideband, L_Status, L_SwapValues, &
+   & L_Temperature, L_Tngtgeodalt, &
+   & L_Tngtgeocalt, L_Uncompressradiance, L_Vector, L_Vgrid, L_Vmr, L_Wmotropopause, &
+   & L_Zeta
+ ! Now The Specifications:
+ use Init_Tables_Module, only: S_AnygoodValues, S_Anygoodradiances, &
+   & S_Case, S_Catchwarning, S_Compare, S_Computetotalpower, S_Destroy, &
+   & S_Diff, S_Directread, S_Dump, S_Endselect, S_Execute, &
+   & S_Fill, S_Fillcovariance, S_Filldiagonal, &
+   & S_Flagcloud, S_Flushl2pcbins, S_Flushpfa, S_Hessian, &
+   & S_Load, S_Matrix, S_Negativeprecision, S_Phase, S_Populatel2pcbin, &
+   & S_Reevaluate, S_Repeat, S_Restrictrange, &
+   & S_Select, S_ChangeSettings, S_Skip, S_Snoop, S_Streamlinehessian, S_Subset, &
+   & S_Time, S_Transfer, S_UpdateMask, S_Vector
+ ! Now Some Arrays
+ use Intrinsic, only: Lit_Indices, &
+   & Phyq_Angle, Phyq_Dimensionless, Phyq_Invalid, Phyq_Length, &
+   & Phyq_Profiles
+ use, Intrinsic :: Iso_C_Binding, only: C_Intptr_T, C_Loc
+ use L1BData, only: DeallocateL1BData, L1BData_T, ReadL1BData
+ use L2GPData, only: L2GPData_T, Col_Species_Hash, Col_Species_Keys
+ use L2AUXData, only: L2AUXData_T
+ use L2PC_M, only: Populatel2pcbinbyname, Loadhessian, Loadmatrix, LoadVector
+ use L2PCBins_M, only: Flushlockedbins
+ use ManipulateVectorQuantities, only: DoHGridsMatch, &
+   & FillWithCombinedChannels
+ use MatrixModule_1, only: AddToMatrixDatabase, CreateEmptyMatrix, &
+   & GetActualMatrixFromDatabase, GetDiagonal, &
+   & GetkindfrommatrixDatabase, GetfrommatrixDatabase, K_Plain, K_Spd, &
+   & Matrix_Cholesky_T, Matrix_Database_T, Matrix_Kronecker_T, Matrix_Spd_T, &
+   & Matrix_T, Nullifymatrix
+ ! Note: If You Ever Want To Include Defined Assignment For Matrices, Please
+ ! Carefully Check Out The Code Around The Call To Snoop.
+ use MLSFiles, only: HDFVersion_5, GetMLSFileByType
+ use MLSL2Options, only: L2cfnode, &
+   & SkipRetrieval, SpecialDumpFile, MLSMessage
+ use MLSL2Timings, only: Section_Times, Total_Times, &
+   & AddPhaseToPhaseNames, FillTimings, FinishTimings
+ use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning, &
+   & MLSMsg_L1bread, MLSMessageReset
+ use MLSPcf2, only: MLSpcf_L2apriori_Start, MLSpcf_L2apriori_End
+ use MLSRandomNumber, only: MLS_Random_Seed, Math77_Ran_Pack
+ use MLSStringlists, only: Catlists, GethashElement, &
+   & NumstringElements, PuthashElement, &
+   & StringElement, StringElementnum
+ use MLSStrings, only: Lowercase
+ use Molecules, only: L_H2o
+ use Moretree, only: Get_Boolean, Get_Field_Id, Get_Label_And_Spec, &
+   & Get_Spec_Id
+ use Next_Tree_Node_M, only: Next_Tree_Node, Next_Tree_Node_State
+ use Output_M, only: Blanks, Output, RevertOutput, SwitchOutput
+ use PFAData_M, only: Flush_PFAData
+ use QuantityTemplates, only: QuantityTemplate_T, &
+   & ModifyQuantityTemplate
+ use ReadAPriori, only: APrioriFiles
+ use SnoopMLSL2, only: Snoop
+ use String_Table, only: Get_String
+ use Subsetmodule, only: ApplyMasktoquantity, Restrictrange, &
+   & Setupflagcloud, Setupsubset, UpdateMask
+ use Time_M, only: SayTime, Time_Now
+ use Toggles, only: Gen, Levels, Toggle
+ use Trace_M, only: Trace_Begin, Trace_End
+ use Tree, only: Decorate, Decoration, Nsons, Sub_Rosa, Subtree, Where
+ use VectorsModule, only: AddVectortoDatabase, &
+   & ClearMask, CloneVectorQuantity, CreateVector, &
+   & DumpQuantityMask, &
+   & GetVectorQtybyTemplateindex, &
+   & ValidateVectorQuantity, Vector_T, &
+   & VectorTemplate_T, VectorValue_T, M_Fill
+ use VGridsDatabase, only: VGrids
 
     ! Dummy arguments
     integer, intent(in)                               :: ROOT ! Of the FILL section in the AST
@@ -521,6 +521,7 @@ contains ! =====     Public Procedures     =============================
     logical :: SKIPMASK                 ! Flag for transfer
     integer :: SON                      ! Of root, an n_spec_args or a n_named
     integer :: SOURCE                   ! l_rows or l_colums for adoption
+    logical :: SOURCEMASK               ! obey Masking bits from source
     integer :: SOURCEQUANTITYINDEX      ! in the quantities database
     integer :: SOURCEVECTORINDEX        ! In the vector database
     logical :: SKIPFILL                 ! Don't execute Fill command
@@ -638,6 +639,7 @@ contains ! =====     Public Procedures     =============================
       scaleInstances = -1.0
       scaleRatio = 1.0
       scaleSurfs = -1.0
+      sourcemask = .false.
       spreadFlag = .false.
 !     strict = .false.
       surfNode = 0
@@ -1240,8 +1242,8 @@ contains ! =====     Public Procedures     =============================
 
     ! ---------------------------------------------- DoStreamline  -----
     subroutine DoStreamline
-      use init_tables_module, only: f_geodangle, f_hessian, &
-        & f_scaleheight, f_surface, f_threshold
+      use Init_Tables_Module, only: F_Geodangle, F_Hessian, &
+        & F_Scaleheight, F_Surface, F_Threshold
       real(r8) :: GEODANGLE        ! For StreamlineHessian
       real(r8) :: SCALEHEIGHT      ! Scale height for StreamlineHessian
       integer :: SURFACE           ! Number of surfaces for StreamlineHessian
@@ -1277,7 +1279,7 @@ contains ! =====     Public Procedures     =============================
     ! ------------------------------------------------ directReadCommand -----
     subroutine directReadCommand
       use DirectWrite_m, only: DirectRead
-      use L2PC_M, only: readCompleteHDF5L2PCFile
+      use L2PC_M, only: ReadCompleteHDF5L2PCFile
       ! Now we're on actual directRead instructions.
       logical, parameter :: DEEBUG = .false.
       integer :: EXPRUNITS(2)             ! From expr
@@ -1420,12 +1422,12 @@ contains ! =====     Public Procedures     =============================
     subroutine FillCommand
     ! Now we're on actual Fill instructions.
       use Declaration_Table, only: Base_Unit, Range
-!     use DUMP_0, only: DUMP
-      use Init_tables_module, only: L_Geodetic, L_None
-      use Intrinsic, only: lit_indices, t_boolean, t_numeric
-      use String_table, only: display_string
-      use Vector_qty_expr_m, only: dot, vector_qty_expr
-      use Vectorsmodule, only: destroyvectorquantitymask, destroyvectorquantityvalue, &
+      ! use DUMP_0, only: DUMP
+      use Init_Tables_Module, only: L_Geodetic, L_None
+      use Intrinsic, only: Lit_Indices, T_Boolean, T_Numeric
+      use String_Table, only: Display_String
+      use Vector_Qty_Expr_M, only: Dot, Vector_Qty_Expr
+      use Vectorsmodule, only: DestroyVectorquantityMask, DestroyVectorquantityValue, &
         & Dump_Vector_Quantity
       double precision :: Number
       integer :: Stat
@@ -1813,6 +1815,8 @@ contains ! =====     Public Procedures     =============================
           l2auxIndex = decoration(decoration(gson))
         case ( f_sourceL2GP )           ! Which L2GPDatabase entry to use
           l2gpIndex=decoration(decoration(gson))
+        case ( f_sourceMask )
+          sourceMask = get_boolean ( gson )
         case ( f_sourceGrid )
           gridIndex=decoration(decoration(gson))
         case ( f_sourceQuantity )       ! When filling from a vector, what vector/quantity
@@ -2068,7 +2072,7 @@ contains ! =====     Public Procedures     =============================
             & 'Boxcar Fill with width=1 results in straightforward copy' )
           call FromAnother ( quantity, sourceQuantity, ptanQuantity, &
             & key, ignoreTemplate=.true., spreadflag=.false., &
-            & interpolate=.false., force=.false. )
+            & interpolate=.false., force=.false., sourceMask=.false. )
         elseif (  mod ( width, 2 ) == 0 ) then
           call MLSMessage ( MLSMSG_Warning, ModuleName, &
             & 'Boxcar Fill called with even width: adding one to make it odd' )
@@ -3085,7 +3089,7 @@ contains ! =====     Public Procedures     =============================
         sourceQuantity => GetVectorQtyByTemplateIndex( &
           & vectors(sourceVectorIndex), sourceQuantityIndex )
         call FromAnother ( quantity, sourceQuantity, ptanQuantity, &
-          & key, ignoreTemplate, spreadflag, interpolate, force )
+          & key, ignoreTemplate, spreadflag, interpolate, force, sourceMask )
       case ( l_uncompressRadiance )
         if ( .not. got(f_systemTemperature) ) &
           & call Announce_Error ( key, No_Error_Code, &
@@ -3182,15 +3186,15 @@ contains ! =====     Public Procedures     =============================
     ! ............................................  Get_File_Name  .....
     subroutine Get_File_Name ( fileIndex, pcfCode, &
       & fileType, fileDataBase, MLSFile, MSG, pcfEndCode )
-      use fillUtils_1, only: announce_error
-      use hdf, only: dfacc_rdonly
-      use intrinsic, only: l_ascii, l_hdf
+      use FillUtils_1, only: Announce_Error
+      use Hdf, only: Dfacc_Rdonly
+      use Intrinsic, only: L_Ascii, L_Hdf
       use MLSCommon, only: MLSFile_T
       use MLSFiles, only: HDFVersion_5, &
-        & AddInitializeMLSFile, GetPCFromRef, split_path_name
-      use MLSL2Options, only: toolkit
-      use SDPToolkit, only: pgs_pc_getreference
-      use string_table, only: get_string
+        & AddInitializeMLSFile, GetPCFromRef, Split_Path_Name
+      use MLSL2Options, only: Toolkit
+      use SDPToolkit, only: Pgs_Pc_Getreference
+      use String_Table, only: Get_String
       ! Dummy args
       integer, intent(in) :: fileIndex ! index into string table
       integer, intent(in) :: pcfCode
@@ -3268,6 +3272,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.464  2017/02/08 17:55:28  pwagner
+! /sourceMask causes vector Fills to obey mask from source, not destination
+!
 ! Revision 2.463  2016/11/08 17:32:57  pwagner
 ! Use SayTime subroutine from time_m module; process /reset field
 !
