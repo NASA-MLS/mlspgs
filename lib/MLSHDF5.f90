@@ -29,47 +29,47 @@ module MLSHDF5
   use Dump_0, only: Dump
   use Dump_1, only: DumpNamedValues
   use Hdf, only: DFACC_RDOnly
-  use HighOutput, only: outputNamedValue
-  use Intrinsic, only: l_hdf
-  use MLSCommon, only: MLSFile_t
-  use MLSDataInfo, only: MLSDataInfo_t, query_mlsdata
-  use MLSFiles, only: HDFVersion_5, Dump, initializeMLSFile, MLS_Openfile
-  use MLSKinds, only: r8
+  use HighOutput, only: OutputNamedValue
+  use Intrinsic, only: L_Hdf
+  use MLSCommon, only: MLSFile_T
+  use MLSDataInfo, only: MLSDataInfo_T, Query_MLSData
+  use MLSFiles, only: HDFVersion_5, Dump, InitializeMLSFile, MLS_Openfile
+  use MLSKinds, only: R8
   use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Info, MLSMSG_Warning, &
     & MLSMessage
-  use MLSFinds, only: findFirst
-  use MLSStringLists, only: catLists, isInList, &
-    & GetStringElement, Intersection, numStringElements, stringElement
-  use MLSStrings, only: indexes, lowercase, replace, trim_safe
-  use Output_m, only: newline, output
-  use Trace_m, only: trace_begin, trace_end
-  ! Let's break down our use, parameters first
-  use HDF5, only: h5f_acc_rdonly_f, h5f_acc_rdwr_f, &
-    & H5G_Group_f, H5p_dataset_create_f, &
-    & H5sis_simple_f, & ! h5soffset_simple_f, &
-    & H5s_scalar_f, h5s_select_set_f, h5s_unlimited_f, &
-    & H5t_ieee_f32le, h5t_ieee_f64le, h5t_ieee_f64le, &
-    & H5t_native_double, h5t_native_real, h5t_std_i32le, &
-    & H5t_native_character, h5t_native_integer, h5t_string, h5t_string_f, &
-    & Hid_t, hsize_t, size_t
-  ! Now routines
-  use HDF5, only: h5aclose_f, h5acreate_f, &
-    & H5aget_name_f, h5aget_num_attrs_f, &
-    & H5aget_space_f, h5aget_type_f, h5aopen_idx_f, h5aopen_name_f, &
-    & H5aread_f, h5awrite_f, h5adelete_f, &
-    & H5dcreate_f, h5dextend_f, h5dget_space_f, h5dget_type_f, h5dopen_f, &
-    & H5dread_f, h5dwrite_f, h5dclose_f, h5dget_create_plist_f, &
-    & H5eset_auto_f, &
-    & H5fopen_f, h5fclose_f, &
-    & H5gopen_f, h5gclose_f, &
-    & h5gn_members_f, h5gget_obj_info_idx_f, &
-    & H5pcreate_f, h5pset_chunk_f, h5pset_fill_value_f, &
-    & H5pget_chunk_f, h5pget_fill_value_f, &
-    & H5sclose_f, &
-    & H5screate_f, h5screate_simple_f, h5sget_simple_extent_ndims_f, &
-    & H5sget_simple_extent_dims_f, h5sselect_hyperslab_f, &
-    & H5tclose_f, h5tcopy_f, h5tequal_f, h5tget_class_f, h5tget_size_f, &
-    & H5tset_size_f
+  use MLSFinds, only: FindFirst
+  use MLSStringLists, only: CatLists, IsInList, &
+    & GetStringElement, Intersection, NumStringElements, StringElement
+  use MLSStrings, only: Indexes, Lowercase, Replace, Trim_Safe
+  use Output_M, only: Newline, Output
+  use Trace_M, only: Trace_Begin, Trace_End
+  ! Let's Break Down Our Use, Parameters First
+  use HDF5, only: H5f_Acc_Rdonly_F, H5f_Acc_Rdwr_F, &
+    & H5G_Group_F, H5p_Dataset_Create_F, &
+    & H5sis_Simple_F, & ! H5soffset_Simple_F, &
+    & H5s_Scalar_F, H5s_Select_Set_F, H5s_Unlimited_F, &
+    & H5t_Ieee_F32le, H5t_Ieee_F64le, H5t_Ieee_F64le, &
+    & H5t_Native_Double, H5t_Native_Real, H5t_Std_I32le, &
+    & H5t_Native_Character, H5t_Native_Integer, H5t_String, H5t_String_F, &
+    & Hid_T, Hsize_T, Size_T
+  ! Now Routines
+  use HDF5, only: H5aclose_F, H5acreate_F, &
+    & H5aget_Name_F, H5aget_Num_Attrs_F, &
+    & H5aget_Space_F, H5aget_Type_F, H5aopen_Idx_F, H5aopen_Name_F, &
+    & H5aread_F, H5awrite_F, H5adelete_F, &
+    & H5dcreate_F, H5dextend_F, H5dget_Space_F, H5dget_Type_F, H5dopen_F, &
+    & H5dread_F, H5dwrite_F, H5dclose_F, H5dget_Create_Plist_F, &
+    & H5eset_Auto_F, &
+    & H5fopen_F, H5fclose_F, &
+    & H5gopen_F, H5gclose_F, &
+    & H5gn_Members_F, H5gget_Obj_Info_Idx_F, &
+    & H5pcreate_F, H5pset_Chunk_F, H5pset_Fill_Value_F, &
+    & H5pget_Chunk_F, H5pget_Fill_Value_F, &
+    & H5sclose_F, &
+    & H5screate_F, H5screate_Simple_F, H5sget_Simple_Extent_Ndims_F, &
+    & H5sget_Simple_Extent_Dims_F, H5sselect_Hyperslab_F, &
+    & H5tclose_F, H5tcopy_F, H5tequal_F, H5tget_Class_F, H5tget_Size_F, &
+    & H5tset_Size_F
 
   implicit NONE
   private
@@ -345,7 +345,7 @@ contains ! ======================= Public Procedures =========================
   subroutine MLS_h5close ( error )
     ! Arguments
   ! To switch to/from hdfeos5.1.6(+) uncomment next line
-    use H5LIB, only: H5CLOSE_F
+    use H5Lib, only: H5Close_f
     integer, intent(out) :: error          ! Trouble if /= 0
     error = 0
     call h5close_f ( error )
@@ -355,7 +355,7 @@ contains ! ======================= Public Procedures =========================
   subroutine MLS_h5open ( error )
     ! Arguments
   ! To switch to/from hdfeos5.1.6(+) uncomment next line
-    use H5LIB, only: H5OPEN_F
+    use H5Lib, only: H5Open_f
     integer, intent(out) :: error          ! Trouble if /= 0
     error = 0
     call h5open_f ( error )
@@ -1259,7 +1259,7 @@ contains ! ======================= Public Procedures =========================
   ! -----------------------------------  MakeHDF5Attribute_textFile  -----
   subroutine MakeHDF5Attribute_textFile ( textFile, itemID, name , &
    & skip_if_already_there, maxLineLen )
-    use IO_STUFF, only: read_textFile
+    use IO_Stuff, only: Read_TextFile
     integer, intent(in) :: ITEMID       ! Group etc. to make attr to.
     character (len=*), intent(in) :: NAME ! Name of attribute
     character (len=*), intent(in) :: TEXTFILE ! name of textfile
@@ -3554,7 +3554,7 @@ contains ! ======================= Public Procedures =========================
   ! --------------------------------------  SaveAsHDF5DS_textFile  -----
   subroutine SaveAsHDF5DS_textFile ( textFile, locID, name, &
     & maxLineLen, fromNull )
-    use IO_STUFF, only: read_textFile
+    use IO_Stuff, only: Read_TextFile
     ! This routine writes the contents of a textfile as a char-valued dataset
     integer, intent(in) :: LOCID           ! Where to place it (group/file)
     character (len=*), intent(in) :: NAME  ! Name for this dataset
@@ -4363,7 +4363,7 @@ contains ! ======================= Public Procedures =========================
   subroutine LoadFromHDF5DS_intarr1 ( MLSFile, name, value, &
     & start, count, stride, block, MissingOK )
     ! This routine loads a predefined array with values from a DS
-    use H5GLOBAL, only: H5T =>  H5T_NATIVE_INTEGER ! HDF type
+    use H5Global, only: H5T =>  H5T_Native_Integer ! HDF type
     type (MLSFile_T)   :: MLSFile
     character (len=*), intent(in) :: NAME ! Name for this dataset
     integer, intent(out) :: VALUE(:)      ! The array itself
@@ -4387,7 +4387,7 @@ contains ! ======================= Public Procedures =========================
   subroutine LoadFromHDF5DS_intarr2 ( MLSFile, name, value, &
     & start, count, stride, block, MissingOK )
     ! This routine loads a predefined array with values from a DS
-    use H5GLOBAL, only: H5T =>  H5T_NATIVE_INTEGER ! HDF type
+    use H5Global, only: H5T =>  H5T_Native_Integer ! HDF type
     type (MLSFile_T)   :: MLSFile
     character (len=*), intent(in) :: NAME ! Name for this dataset
     integer, intent(out) :: VALUE(:,:)    ! The array itself
@@ -4411,7 +4411,7 @@ contains ! ======================= Public Procedures =========================
   subroutine LoadFromHDF5DS_intarr3 ( MLSFile, name, value, &
     & start, count, stride, block, MissingOK )
     ! This routine loads a predefined array with values from a DS
-    use H5GLOBAL, only: H5T =>  H5T_NATIVE_INTEGER ! HDF type
+    use H5Global, only: H5T =>  H5T_Native_Integer ! HDF type
     type (MLSFile_T)   :: MLSFile
     character (len=*), intent(in) :: NAME ! Name for this dataset
     integer, intent(out) :: VALUE(:,:,:)    ! The array itself
@@ -4435,7 +4435,7 @@ contains ! ======================= Public Procedures =========================
   subroutine LoadFromHDF5DS_intarr4 ( MLSFile, name, value, &
     & start, count, stride, block, MissingOK )
     ! This routine loads a predefined array with values from a DS
-    use H5GLOBAL, only: H5T =>  H5T_NATIVE_INTEGER ! HDF type
+    use H5Global, only: H5T =>  H5T_Native_Integer ! HDF type
     type (MLSFile_T)   :: MLSFile
     character (len=*), intent(in) :: NAME  ! Name for this dataset
     integer, intent(out) :: VALUE(:,:,:,:) ! The array itself
@@ -4485,7 +4485,7 @@ contains ! ======================= Public Procedures =========================
   subroutine LoadFromHDF5DS_dblarr1 ( MLSFile, name, value, &
     & start, count, stride, block, MissingOK )
     ! This routine loads a predefined array with values from a DS
-    use H5GLOBAL, only: H5T =>  H5T_NATIVE_DOUBLE ! HDF type
+    use H5Global, only: H5T =>  H5T_Native_Double ! hdf type
     type (MLSFile_T)   :: MLSFile
     character (len=*), intent(in) :: NAME     ! Name for this dataset
     double precision, intent(out) :: VALUE(:) ! The array itself
@@ -4509,7 +4509,7 @@ contains ! ======================= Public Procedures =========================
   subroutine LoadFromHDF5DS_dblarr2 ( MLSFile, name, value, &
     & start, count, stride, block, MissingOK )
     ! This routine loads a predefined array with values from a DS
-    use H5GLOBAL, only: H5T =>  H5T_NATIVE_DOUBLE ! HDF type
+    use H5Global, only: H5T =>  H5T_Native_Double ! hdf type
     type (MLSFile_T)   :: MLSFile
     character (len=*), intent(in) :: NAME       ! Name for this dataset
     double precision, intent(out) :: VALUE(:,:) ! The array itself
@@ -4533,7 +4533,7 @@ contains ! ======================= Public Procedures =========================
   subroutine LoadFromHDF5DS_dblarr3 ( MLSFile, name, value, &
     & start, count, stride, block, MissingOK )
     ! This routine loads a predefined array with values from a DS
-    use H5GLOBAL, only: H5T =>  H5T_NATIVE_DOUBLE ! HDF type
+    use H5Global, only: H5T =>  H5T_Native_Double ! hdf type
     type (MLSFile_T)   :: MLSFile
     character (len=*), intent(in) :: NAME ! Name for this dataset
     double precision, intent(out) :: VALUE(:,:,:) ! The array itself
@@ -4557,7 +4557,7 @@ contains ! ======================= Public Procedures =========================
   subroutine LoadFromHDF5DS_dblarr4 ( MLSFile, name, value, &
     & start, count, stride, block, MissingOK )
     ! This routine loads a predefined array with values from a DS
-    use H5GLOBAL, only: H5T =>  H5T_NATIVE_DOUBLE ! HDF type
+    use H5Global, only: H5T =>  H5T_Native_Double ! hdf type
     type (MLSFile_T)   :: MLSFile
     character (len=*), intent(in) :: NAME ! Name for this dataset
     double precision, intent(out) :: VALUE(:,:,:,:) ! The array itself
@@ -4581,7 +4581,7 @@ contains ! ======================= Public Procedures =========================
   subroutine LoadFromHDF5DS_snglarr1 ( MLSFile, name, value, &
     & start, count, stride, block, MissingOK )
     ! This routine loads a predefined array with values from a DS
-    use H5GLOBAL, only: H5T =>  H5T_NATIVE_REAL ! HDF type
+    use H5Global, only: H5T =>  H5T_Native_Real ! hdf type
     type (MLSFile_T)   :: MLSFile
     character (len=*), intent(in) :: NAME ! Name for this dataset
     real, intent(out) :: VALUE(:)         ! The array itself
@@ -4605,7 +4605,7 @@ contains ! ======================= Public Procedures =========================
   subroutine LoadFromHDF5DS_snglarr2 ( MLSFile, name, value, &
     & start, count, stride, block, MissingOK )
     ! This routine loads a predefined array with values from a DS
-    use H5GLOBAL, only: H5T =>  H5T_NATIVE_REAL ! HDF type
+    use H5Global, only: H5T =>  H5T_Native_Real ! hdf type
     type (MLSFile_T)   :: MLSFile
     character (len=*), intent(in) :: NAME ! Name for this dataset
     real, intent(out) :: VALUE(:,:)       ! The array itself
@@ -4629,7 +4629,7 @@ contains ! ======================= Public Procedures =========================
   subroutine LoadFromHDF5DS_snglarr3 ( MLSFile, name, value, &
     & start, count, stride, block, MissingOK )
     ! This routine loads a predefined array with values from a DS
-    use H5GLOBAL, only: H5T =>  H5T_NATIVE_REAL ! HDF type
+    use H5Global, only: H5T =>  H5T_Native_Real ! hdf type
     type (MLSFile_T)   :: MLSFile
     character (len=*), intent(in) :: NAME ! Name for this dataset
     real, intent(out) :: VALUE(:,:,:)     ! The array itself
@@ -4653,7 +4653,7 @@ contains ! ======================= Public Procedures =========================
   subroutine LoadFromHDF5DS_snglarr4 ( MLSFile, name, value, &
     & start, count, stride, block, MissingOK )
     ! This routine loads a predefined array with values from a DS
-    use H5GLOBAL, only: H5T =>  H5T_NATIVE_REAL ! HDF type
+    use H5Global, only: H5T =>  H5T_Native_Real ! hdf type
     type (MLSFile_T)   :: MLSFile
     character (len=*), intent(in) :: NAME ! Name for this dataset
     real, intent(out) :: VALUE(:,:,:,:)   ! The array itself
@@ -4798,7 +4798,7 @@ contains ! ======================= Public Procedures =========================
   subroutine LoadPtrFromHDF5DS_intarr2 ( locID, name, value )
     ! This routine allocates a pointer array and loads it with values from a DS
     use Allocate_Deallocate, only: Allocate_Test
-    use H5GLOBAL, only: H5T =>  H5T_NATIVE_INTEGER ! HDF type
+    use H5Global, only: H5T =>  H5T_Native_Integer ! hdf type
     integer, intent(in) :: LOCID          ! Where to place it (group/file)
     character (len=*), intent(in) :: NAME ! Name for this dataset
     integer, pointer :: VALUE(:,:)        ! The array itself
@@ -4812,7 +4812,7 @@ contains ! ======================= Public Procedures =========================
   subroutine LoadPtrFromHDF5DS_intarr3 ( locID, name, value )
     ! This routine allocates a pointer array and loads it with values from a DS
     use Allocate_Deallocate, only: Allocate_Test
-    use H5GLOBAL, only: H5T =>  H5T_NATIVE_INTEGER ! HDF type
+    use H5Global, only: H5T =>  H5T_Native_Integer ! hdf type
     integer, intent(in) :: LOCID          ! Where to place it (group/file)
     character (len=*), intent(in) :: NAME ! Name for this dataset
     integer, pointer :: VALUE(:,:,:)      ! The array itself
@@ -4826,7 +4826,7 @@ contains ! ======================= Public Procedures =========================
   subroutine LoadPtrFromHDF5DS_intarr4 ( locID, name, value )
     ! This routine allocates a pointer array and loads it with values from a DS
     use Allocate_Deallocate, only: Allocate_Test
-    use H5GLOBAL, only: H5T =>  H5T_NATIVE_INTEGER ! HDF type
+    use H5Global, only: H5T =>  H5T_Native_Integer ! hdf type
     integer, intent(in) :: LOCID          ! Where to place it (group/file)
     character (len=*), intent(in) :: NAME ! Name for this dataset
     integer, pointer :: VALUE(:,:,:,:)    ! The array itself
@@ -4903,7 +4903,7 @@ contains ! ======================= Public Procedures =========================
   subroutine LoadPtrFromHDF5DS_dblarr2 ( locID, name, value )
     ! This routine allocates a pointer array and loads it with values from a DS
     use Allocate_Deallocate, only: Allocate_Test
-    use H5GLOBAL, only: H5T =>  H5T_NATIVE_DOUBLE ! HDF type
+    use H5Global, only: H5T =>  H5T_Native_Double ! hdf type
     integer, intent(in) :: LOCID          ! Where to place it (group/file)
     character (len=*), intent(in) :: NAME ! Name for this dataset
     double precision, pointer :: VALUE(:,:) ! The array itself
@@ -4917,7 +4917,7 @@ contains ! ======================= Public Procedures =========================
   subroutine LoadPtrFromHDF5DS_dblarr3 ( locID, name, value )
     ! This routine allocates a pointer array and loads it with values from a DS
     use Allocate_Deallocate, only: Allocate_Test
-    use H5GLOBAL, only: H5T =>  H5T_NATIVE_DOUBLE ! HDF type
+    use H5Global, only: H5T =>  H5T_Native_Double ! hdf type
     integer, intent(in) :: LOCID          ! Where to place it (group/file)
     character (len=*), intent(in) :: NAME ! Name for this dataset
     double precision, pointer :: VALUE(:,:,:) ! The array itself
@@ -4931,7 +4931,7 @@ contains ! ======================= Public Procedures =========================
   subroutine LoadPtrFromHDF5DS_dblarr4 ( locID, name, value )
     ! This routine allocates a pointer array and loads it with values from a DS
     use Allocate_Deallocate, only: Allocate_Test
-    use H5GLOBAL, only: H5T =>  H5T_NATIVE_DOUBLE ! HDF type
+    use H5Global, only: H5T =>  H5T_Native_Double ! hdf type
     integer, intent(in) :: LOCID          ! Where to place it (group/file)
     character (len=*), intent(in) :: NAME ! Name for this dataset
     double precision, pointer :: VALUE(:,:,:,:) ! The array itself
@@ -4981,7 +4981,7 @@ contains ! ======================= Public Procedures =========================
   subroutine LoadPtrFromHDF5DS_snglarr2 ( locID, name, value )
     ! This routine allocates a pointer array and loads it with values from a DS
     use Allocate_Deallocate, only: Allocate_Test
-    use H5GLOBAL, only: H5T =>  H5T_NATIVE_REAL ! HDF type
+    use H5Global, only: H5T =>  H5T_Native_Real ! hdf type
     integer, intent(in) :: LOCID          ! Where to place it (group/file)
     character (len=*), intent(in) :: NAME ! Name for this dataset
     real, pointer :: VALUE(:,:)           ! The array itself
@@ -4995,7 +4995,7 @@ contains ! ======================= Public Procedures =========================
   subroutine LoadPtrFromHDF5DS_snglarr3 ( locID, name, value )
     ! This routine allocates a pointer array and loads it with values from a DS
     use Allocate_Deallocate, only: Allocate_Test
-    use H5GLOBAL, only: H5T =>  H5T_NATIVE_REAL ! HDF type
+    use H5Global, only: H5T =>  H5T_Native_Real ! hdf type
     integer, intent(in) :: LOCID          ! Where to place it (group/file)
     character (len=*), intent(in) :: NAME ! Name for this dataset
     real, pointer :: VALUE(:,:,:)         ! The array itself
@@ -5009,7 +5009,7 @@ contains ! ======================= Public Procedures =========================
   subroutine LoadPtrFromHDF5DS_snglarr4 ( locID, name, value )
     ! This routine allocates a pointer array and loads it with values from a DS
     use Allocate_Deallocate, only: Allocate_Test
-    use H5GLOBAL, only: H5T =>  H5T_NATIVE_REAL ! HDF type
+    use H5Global, only: H5T =>  H5T_Native_Real ! hdf type
     integer, intent(in) :: LOCID          ! Where to place it (group/file)
     character (len=*), intent(in) :: NAME ! Name for this dataset
     real, pointer :: VALUE(:,:,:,:)       ! The array itself
@@ -5069,7 +5069,7 @@ contains ! ======================= Public Procedures =========================
 
   ! -------------------------------  WriteLitIndexAsHDF5Attribute  -----
   subroutine WriteLitIndexAsHDF5Attribute ( itemID, name, index )
-    use Intrinsic, only: LIT_INDICES
+    use Intrinsic, only: Lit_Indices
     integer, intent(in) :: ITEMID        ! Group etc. to make attr. for
     character(len=*), intent(in) :: NAME ! Name of attribute
     integer, intent(in) :: INDEX         ! String index
@@ -5089,7 +5089,7 @@ contains ! ======================= Public Procedures =========================
 
   ! ----------------------------  WriteStringIndexAsHDF5Attribute  -----
   subroutine WriteStringIndexAsHDF5Attribute ( itemID, name, index )
-    use String_table, only: GET_STRING
+    use String_table, only: Get_string
     integer, intent(in) :: ITEMID        ! Group etc. to make attr. for
     character(len=*), intent(in) :: NAME ! Name of attribute
     integer, intent(in) :: INDEX         ! String index
@@ -5815,6 +5815,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.139  2017/02/09 23:45:48  pwagner
+! Made more uses CamelCase
+!
 ! Revision 2.138  2016/08/09 18:12:16  pwagner
 ! Made IsHDF5DSPresent generic
 !
