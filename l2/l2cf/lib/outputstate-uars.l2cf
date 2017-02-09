@@ -1,0 +1,50 @@
+!divert(-1)
+; $Id$
+;; Except for special sids or l2pc runs, quantities are stored
+;; using DirectWrite commands in Join sections during the loop of chunks
+;; The remaining Output section task would then be to catenate the
+;; split DGG/DGM files and Copy any standard products to individual
+;; files.
+!divert!dnl
+;; Skip all output if requested to do so
+!ifdef(flagSuppressRegularOutput,{
+!clearDivert(!joinedDGGDivert,!joinedDGMDivert)
+},{
+!ifdef(flagAvoidDirectWrite,{
+;; Do any standard outputs?
+!include(outputstdprods-uars.l2cf)
+},{
+;; otherwise it was done with direct write; so must Copy
+!include(copystdprods-uars.l2cf)
+})
+
+begin Output
+;; Now output the L2CF (but only if asked)
+!ifdef(flagWriteL2CFToDGM,{
+Output, type=l2cf, $
+  file='!DGMFileName'})
+
+;; Now output the L2CF template file (but only if asked)
+!ifdef(flagWriteL2CFTemplateToDGM,{
+Copy, inputFile='l2cf.template', inputtype=ascii, type=l2aux, $
+  file='!DGMFileName'})
+
+;; Now output the master ident file (but only if asked)
+!ifdef(flagWriteIdentToDGM,{
+Copy, inputFile='master.ident', inputtype=ascii, type=l2aux, $
+  file='!DGMFileName'})
+
+;; These days pretty well everything is written with directWrite
+;; statements, except maybe matrices
+
+;; Now output any averaging kernel.
+!ifdef(matrixFilenameWord,{},{!define(matrixFilenameWord,{Full})})
+!ifdef(flagGotMatrices,{
+Output,  quantities=[ !undivert(!matrixDivert) ], type=l2pc, $
+  file='!outpathl2mtx/MLS-UARS_L2MTX-!matrixFilenameWord_!l2version_!day.h5'
+  })
+})
+end Output
+!divert(-1)
+; $Log$
+!divert!dnl
