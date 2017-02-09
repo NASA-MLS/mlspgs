@@ -103,6 +103,12 @@ run_prog()
 echo "We were called as $0 $@"
 NORMAL_STATUS=2
 
+# We print the file license.txt to stdout
+if [ -f $PGE_BINARY_DIR/license.txt ]
+then
+  cat $PGE_BINARY_DIR/license.txt
+fi
+
 # If the first arguments is "-Ef" then source the file of environment settings"
 if [ "$1" = "-Ef" ]
 then
@@ -117,7 +123,11 @@ then
   . ${PGE_ROOT}/science_env.sh
 elif [ -r "$PGSBIN/pgs-env.ksh" ]
 then
+  # Oops, this stomps on any PCF we might have selected
+  # so save it to be restored
+  PCF=$PGS_PC_INFO_FILE
   . $PGSBIN/pgs-env.ksh
+  export PGS_PC_INFO_FILE=$PCF
 fi
 # Use the following line to add extra options to MLSPROG
 EXTRA_OPTIONS="$OTHEROPTS mlseexxttrraa"
@@ -231,6 +241,9 @@ else
 fi
 
 # $Log$
+# Revision 1.14  2016/05/17 17:07:14  pwagner
+# 'dot' job.env if found
+#
 # Revision 1.13  2016/05/12 17:00:14  pwagner
 # Obey CAPTURE_MT by capturing time, mmory footpint to stderr
 #
