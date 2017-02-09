@@ -13,37 +13,37 @@ module L1BData
 
   ! Reading and interacting with Level 1B data (HDF4 or HDF5)
 
-  use Allocate_Deallocate, only: Allocate_test, Deallocate_test, Test_Allocate
-  use Diff_1, only: Diff, Diff_fun
+  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test, Test_Allocate
+  use Diff_1, only: Diff, Diff_Fun
   use Dump_Options, only: NameOnEachLine, StatsOnOneLine
   use Dump_0, only: Dump
   use Dump_1, only: Dump
   use HDF, only: DFACC_Rdonly, SFGInfo, SFN2Index, SFSelect, &
-    & SFRData_f90, &
+    & SFRData_F90, &
     & SFRCData, SFENDACC, DFNT_Char8, DFNT_Int32, DFNT_Float64, &
     & DFNT_Float32
   use HighOutput, only: OutputNamedValue
   use IEEE_Arithmetic, only: IEEE_Is_Finite
-  use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
-  use Intrinsic, only: l_HDF
-  use Lexer_core, only: print_source
-  use machine, only: crash_burn
-  use MLSCommon, only: MLSFile_t, &
-    & UnDefinedValue, fileNameLen, nameLen
-  use MLSFiles, only: fileNotFound, HDFVersion_4, HDFVersion_5, &
-    & AddFileToDatabase, getMLSFileByType, initializeMLSfile, &
+  use, Intrinsic :: ISO_C_Binding, only: C_Intptr_T, C_Loc
+  use Intrinsic, only: L_HDF
+  use Lexer_Core, only: Print_Source
+  use Machine, only: Crash_Burn
+  use MLSCommon, only: MLSFile_T, &
+    & UnDefinedValue, FileNameLen, NameLen
+  use MLSFiles, only: FileNotFound, HDFVersion_4, HDFVersion_5, &
+    & AddFileToDatabase, GetMLSFileByType, InitializeMLSfile, &
     & MLS_OpenFile, MLS_CloseFile
   use MLSHDF5, only: GetAllHDF5DSNames, SaveAsHDF5DS
-  use MLSKinds, only: r4, r8
+  use MLSKinds, only: R4, R8
   use MLSMessageModule, only: MLSMSG_Error, &
     & MLSMSG_L1BRead, MLSMSG_Warning, MLSMessage
-  use MLSStrings, only: indexes, streq
-  use MLSStringLists, only: numStringElements, ReplaceSubstring, switchDetail
-  use Moretree, only: get_field_id
-  use Output_m, only: newLine, output
-  use String_table, only: get_string
-  use Trace_m, only: trace_begin, trace_end
-  use Tree, only: nsons, sub_rosa, subtree, dump_tree_node, where
+  use MLSStrings, only: Indexes, Streq
+  use MLSStringLists, only: NumStringElements, ReplaceSubstring, SwitchDetail
+  use Moretree, only: Get_Field_Id
+  use Output_M, only: NewLine, Output
+  use String_Table, only: Get_String
+  use Trace_M, only: Trace_Begin, Trace_End
+  use Tree, only: Nsons, Sub_Rosa, Subtree, Dump_Tree_Node, Where
 
   implicit none
 
@@ -323,7 +323,7 @@ contains ! ============================ MODULE PROCEDURES ======================
   function AssembleL1BQtyName ( name, hdfVersion, isTngtQty, &
     & InstrumentName, dont_compress_name) &
     & result(QtyName)
-    use MLSStrings, only: compressString, streq
+    use MLSStrings, only: CompressString, Streq
     ! Returns a QtyName to be found in the L1b file
     ! If given InstrumentName, name should be a fragment:
     ! e.g., name='VelECI' and InstrumentName='sc'
@@ -575,8 +575,8 @@ contains ! ============================ MODULE PROCEDURES ======================
   ! ----------------------------------------  CpL1BData  -----
   subroutine CpL1BData ( L1BFile1, L1BFile2, QuantityName, NewName, l2aux )
 
-    use toggles, only: gen, levels, toggle
-    use trace_m, only: trace_begin, trace_end
+    use Toggles, only: Gen, Levels, Toggle
+    use Trace_M, only: Trace_Begin, Trace_End
     ! Dummy arguments
     type(MLSFile_T), pointer                :: L1BFile1
     type(MLSFile_T), pointer                :: L1BFile2
@@ -659,8 +659,8 @@ contains ! ============================ MODULE PROCEDURES ======================
   subroutine DiffL1BData ( l1bData1, l1bData2, &
     & details, options, numDiffs, mafStart, mafEnd, l1bValues1, l1bValues2, &
     & Period )
-  use MLSFillValues, only: essentiallyEqual
-  use MLSStrings, only: asciify, isAllAscii
+  use MLSFillValues, only: EssentiallyEqual
+  use MLSStrings, only: Asciify, IsAllAscii
     ! Diff two l1brad quantities
     type( L1BData_T ), intent(inout) :: L1bData1
     type( L1BData_T ), intent(inout) :: L1bData2
@@ -1042,8 +1042,8 @@ contains ! ============================ MODULE PROCEDURES ======================
   ! This means, e.g. if the attribute is attached to a ds, opening
   ! that ds.
   ! Afterwards we atempt to cleanup, closing the ds.
-    use MLSHDF5, only: isHDF5ItemPresent
-    use MLSFiles, only: dump
+    use MLSHDF5, only: IsHDF5ItemPresent
+    use MLSFiles, only: Dump
     use HDF5, only: H5DOpen_F, H5GClose_F, H5GOpen_F
 
     type (MLSFile_T), dimension(:), pointer :: FILEDATABASE
@@ -1179,7 +1179,7 @@ contains ! ============================ MODULE PROCEDURES ======================
   ! ------------------------------------------------  FindL1BData  -----
   integer function FindL1BData ( filedatabase, fieldName, hdfVersion )
 
-  use MLSHDF5, only: isHDF5DSPresent
+  use MLSHDF5, only: IsHDF5DSPresent
 
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
     ! integer, dimension(:), intent(in) :: files ! File handles
@@ -1264,7 +1264,7 @@ contains ! ============================ MODULE PROCEDURES ======================
   ! Find maximum MAF among files (using counterMAF arrays)
   ! If there is no counterMAF, just return the isze of the MAFStartTimeTAI
 
-  use MLSHDF5, only: isHDF5DSPresent
+  use MLSHDF5, only: IsHDF5DSPresent
 
     type(MLSFile_T), pointer               :: L1BFile ! File handles
     integer, optional, intent(out)         :: minMAF
@@ -1338,7 +1338,7 @@ contains ! ============================ MODULE PROCEDURES ======================
   ! -------------------------------------------------  IsL1BGappy  -----
   logical function IsL1BGappy ( l1bData, ignoreGlobalAttrs )
     ! Look for gaps in l1bData, returning true if any found
-  use PCFHdr, only: globalAttributes
+  use PCFHdr, only: GlobalAttributes
 
     ! Dummy arguments
     type (L1BData_T), intent(in) :: l1bData
@@ -1373,7 +1373,7 @@ contains ! ============================ MODULE PROCEDURES ======================
   ! -------------------------------------------------  showL1BGaps  -----
   subroutine showL1BGaps ( l1bData, ignoreGlobalAttrs )
     ! Look for gaps in l1bData, returning true if any found
-  use PCFHdr, only: globalAttributes
+  use PCFHdr, only: GlobalAttributes
 
     ! Dummy arguments
     type (L1BData_T), intent(in) :: l1bData
@@ -1499,7 +1499,7 @@ contains ! ============================ MODULE PROCEDURES ======================
   ! ----------------------------------  ReadL1BAttribute_intarr1l  -----
   subroutine ReadL1BAttribute_intarr1 ( L1BFile, value, AttrName, Flag )
 
-    use MLSHDF5, only: isHDF5AttributePresent, getHDF5Attribute
+    use MLSHDF5, only: IsHDF5AttributePresent, GetHDF5Attribute
     use HDF5, only: H5GClosE_F, H5GOpen_F
 
     ! Dummy arguments
@@ -1555,7 +1555,7 @@ contains ! ============================ MODULE PROCEDURES ======================
   ! -----------------------------------  ReadL1BAttribute_dblarr1  -----
   subroutine ReadL1BAttribute_dblarr1 ( L1BFile, value, AttrName, Flag )
 
-    use MLSHDF5, only: isHDF5AttributePresent, getHDF5Attribute
+    use MLSHDF5, only: IsHDF5AttributePresent, GetHDF5Attribute
     use HDF5, only: H5GClose_F, H5GOpen_F
 
     ! Dummy arguments
@@ -1787,8 +1787,8 @@ contains ! ============================ MODULE PROCEDURES ======================
   ! In time we will do away with most file-handle based interfaces
   subroutine ReadL1BData_fileHandle ( L1FileHandle, QuantityName, L1bData, NoMAFs, Flag, &
     & FirstMAF, LastMAF, NEVERFAIL, hdfVersion, dontPad, L2AUX )
-    use toggles, only: gen, levels, toggle
-    use trace_m, only: trace_begin, trace_end
+    use Toggles, only: Gen, Levels, Toggle
+    use Trace_M, only: Trace_Begin, Trace_End
     ! Dummy arguments
     character(len=*), intent(in)   :: QUANTITYNAME ! Name of SD to read
     integer, intent(in)            :: L1FILEHANDLE ! From HDF
@@ -1837,10 +1837,10 @@ contains ! ============================ MODULE PROCEDURES ======================
   subroutine ReadL1BData_MLSFile ( L1BFile, QuantityName, L1bData, NoMAFs, Flag, &
     & FirstMAF, LastMAF, NEVERFAIL, dontPad, L2AUX )
     use MLSFiles, only: Dump
-    use MLSFillValues, only: isFillValue
-    use PCFHdr, only: globalAttributes
-    use toggles, only: gen, levels, switches, toggle
-    use trace_m, only: trace_begin, trace_end
+    use MLSFillValues, only: IsFillValue
+    use PCFHdr, only: GlobalAttributes
+    use Toggles, only: Gen, Levels, Switches, Toggle
+    use Trace_M, only: Trace_Begin, Trace_End
     ! Dummy arguments
     character(len=*), intent(in)   :: QUANTITYNAME ! Name of SD to read
     type(MLSFile_T), pointer       :: L1BFile
@@ -1981,8 +1981,8 @@ contains ! ============================ MODULE PROCEDURES ======================
   ! ----------------------------------------  ReadL1BData_MF_hdf4  -----
   subroutine ReadL1BData_MF_hdf4 ( L1BFile, QuantityName, L1bData, &
     & NoMAFs, Flag, FirstMAF, LastMAF, NEVERFAIL, L2AUX )
-    use toggles, only: gen, levels, toggle
-    use trace_m, only: trace_begin, trace_end
+    use Toggles, only: Gen, Levels, Toggle
+    use Trace_M, only: Trace_Begin, Trace_End
 
     ! Dummy arguments
     character(len=*), intent(in)   :: QUANTITYNAME ! Name of SD to read
@@ -2276,12 +2276,12 @@ contains ! ============================ MODULE PROCEDURES ======================
   subroutine ReadL1BData_MF_hdf5 ( L1BFile, QuantityName, L1bData, NoMAFs, &
     & Flag, FirstMAF, LastMAF, NEVERFAIL, L2AUX )
     use Allocate_Deallocate, only: Test_Allocate
-    use MLSFillValues, only: isFillValue
-    use HDF5, only: HSize_t
-    use MLSHDF5, only: isHDF5DSPresent, loadFromHDF5DS, &
-      & getHDF5DSRank, getHDF5DSDims, getHDF5DSQType
-    use toggles, only: gen, levels, toggle
-    use trace_m, only: trace_begin, trace_end
+    use MLSFillValues, only: IsFillValue
+    use HDF5, only: HSize_T
+    use MLSHDF5, only: IsHDF5DSPresent, LoadFromHDF5DS, &
+      & GetHDF5DSRank, GetHDF5DSDims, GetHDF5DSQType
+    use Toggles, only: Gen, Levels, Toggle
+    use Trace_M, only: Trace_Begin, Trace_End
 
     ! Dummy arguments
     character(len=*), intent(in)   :: QUANTITYNAME ! Name of SD to read
@@ -3015,6 +3015,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.118  2017/02/09 23:46:46  pwagner
+! Made more uses CamelCase
+!
 ! Revision 2.117  2016/10/19 00:09:15  pwagner
 ! Added ConvertL1BData
 !
