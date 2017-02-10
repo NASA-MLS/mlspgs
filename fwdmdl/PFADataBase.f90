@@ -17,11 +17,11 @@ module PFADataBase_m
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test, &
     & Test_Allocate
   use HighOutput, only: OutputNamedValue
-  use MLSkinds, only: R4
-  use MLScommon, only: FileNameLen
-  use MLSsignals_m, only: MaxSigLen, Signal_t
-  use Molecules, only: First_molecule, Last_molecule
-  use Vgridsdatabase, only: VGrid_t
+  use MLSKinds, only: R4
+  use MLSCommon, only: FileNameLen
+  use MLSSignals_M, only: MaxSigLen, Signal_T
+  use Molecules, only: First_Molecule, Last_Molecule
+  use VGridsDatabase, only: VGrid_T
   ! use FOR HDF5 INTENTIONALLY LAST TO AVOID LONG LF95 COMPILE TIMES
   use HDF5, only: hid_t
 
@@ -266,13 +266,13 @@ contains ! =====     Public Procedures     =============================
   ! ----------------------------------------------  Dump_PFADatum  -----
   subroutine Dump_PFADatum ( PFADatum, Details, Index )
 
-    use DUMP_0, only: DUMP
-    use INTRINSIC, only: LIT_INDICES
-    use MLSSIGNALS_M, only: DISPLAYSIGNALNAME
-    use PHYSICS, only: SPEEDOFLIGHT
-    use STRING_TABLE, only: DISPLAY_STRING
-    use OUTPUT_M, only: NEWLINE, OUTPUT
-    use VGRIDSDATABASE, only: DUMP
+    use Dump_0, only: Dump
+    use Intrinsic, only: Lit_Indices
+    use MLSsignals_M, only: Displaysignalname
+    use Physics, only: Speedoflight
+    use String_Table, only: Display_String
+    use Output_M, only: Newline, Output
+    use VgridsDatabase, only: Dump
 
     type(PFAData_t), intent(in) :: PFADatum
     integer, intent(in), optional :: Details ! <=-2 -> Signal and molecule if data
@@ -406,9 +406,9 @@ contains ! =====     Public Procedures     =============================
 
   ! ------------------------------------------  Dump_PFAFileDatum  -----
   subroutine Dump_PFAFileDatum ( PFAFileDatum, Details )
-    use MLSSIGNALS_M, only: MAXSIGLEN
-    use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT
-    use STRING_TABLE, only: DISPLAY_STRING
+    use MLSsignals_M, only: Maxsiglen
+    use Output_M, only: Blanks, Newline, Output
+    use String_Table, only: Display_String
     type(PFAFile_t), intent(in) :: PFAFileDatum
     integer, intent(in), optional :: Details ! -4 (default) => file names,
                                              ! -3 => group names too
@@ -671,19 +671,19 @@ contains ! =====     Public Procedures     =============================
   integer function Process_PFA_File_datum ( PFAFileDatum, Where )
 
     use Allocate_Deallocate, only: Allocate_Test
-    use MLSHDF5, only: LOADPTRFROMHDF5DS
-    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, &
-      & MLSMSG_SEVERITY_TO_QUIT, MLSMSG_WARNING
-    use MLSSIGNALS_M, only: SIGNALS
-    use MOREMESSAGE, only: MLSMESSAGE
-    use MORETREE, only: GETLITINDEXFROMSTRING, GETSTRINGINDEXFROMSTRING
-    use PARSE_SIGNAL_M, only: PARSE_SIGNAL
-    use PrintIt_m, only: Set_Config
-    ! HDF5 INTENTIONALLY LAST TO AVOID LONG LF95 COMPILES
-    use HDF5, only: H5GCLOSE_F, H5GOPEN_F
-    use TOGGLES, only: GEN, TOGGLE
-    use TRACE_M, only: TRACE_BEGIN, TRACE_END
-    use TREE, only: Where_At => Where
+    use MLSHdf5, only: Loadptrfromhdf5ds
+    use MLSMessagemodule, only: MLSmessage, MLSmsg_Error, &
+      & MLSMsg_Severity_To_Quit, MLSmsg_Warning
+    use MLSSignals_M, only: Signals
+    use Moremessage, only: MLSmessage
+    use Moretree, only: Getlitindexfromstring, Getstringindexfromstring
+    use Parse_Signal_M, only: Parse_Signal
+    use Printit_M, only: Set_Config
+    ! Hdf5 Intentionally Last To Avoid Long Lf95 Compiles
+    use Hdf5, only: H5gclose_F, H5gopen_F
+    use Toggles, only: Gen, Toggle
+    use Trace_M, only: Trace_Begin, Trace_End
+    use Tree, only: Where_At => Where
 
     type(PFAFile_t) :: PFAFileDatum
     integer, intent(in) :: Where  ! tree node index, for error messages and tracing
@@ -696,6 +696,7 @@ contains ! =====     Public Procedures     =============================
     integer :: Me = -1                 ! String index for trace
     character(len=molNameLen), pointer :: MyMolecules(:)
     character(len=maxSigLen), pointer :: MySignalStrings(:) ! From the HDF5
+    integer :: MLSMSG_Severity_to_quit_old
     integer :: SB                      ! Sideband, from the signal
     integer, pointer :: SignalIndices(:)
     integer :: STAT                    ! From HDF5 open or read, or allocate
@@ -791,13 +792,14 @@ contains ! =====     Public Procedures     =============================
     ! Now hook the tables to the FindPFA structure
     ! Report all errors instead of quitting on the first one
     error = .false.
+    MLSMSG_Severity_to_quit_old = MLSMSG_Severity_to_quit
     MLSMSG_Severity_to_quit = MLSMSG_Error + 1
     call set_config ( severity_to_quit = MLSMSG_Severity_to_quit )
     do g = 1, ubound(PFAFileDatum%ix,1)
       error = error .or. &
         & hookTableToFindPFA ( f, g, PFAData(PFAFileDatum%ix(g)), PFAFileDatum%ix(g) ) /= 0
     end do
-    MLSMSG_Severity_to_quit = MLSMSG_Error
+    MLSMSG_Severity_to_quit = MLSMSG_Severity_to_quit_old ! MLSMSG_Error
     call set_config ( severity_to_quit = MLSMSG_Severity_to_quit )
     if ( error ) call MLSMessage ( MLSMSG_Error, moduleName, &
       & 'Errors while hooking up and finding PFA tables' )
@@ -840,14 +842,14 @@ contains ! =====     Public Procedures     =============================
   ! from FileName. Otherwise the PFA data for the Cartesian product of
   ! TheMolecules and TheSignals are read from FileName.
 
-    use INTRINSIC, only: LIT_INDICES
-    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
-    use MOREMESSAGE, only: MLSMESSAGE
-    use MORETREE, only: GETSTRINGINDEXFROMSTRING
-    use PARSE_SIGNAL_M, only: GET_INDIVIDUAL_SIGNALS
+    use Intrinsic, only: Lit_Indices
+    use MLSmessagemodule, only: MLSmessage, MLSmsg_Error
+    use Moremessage, only: MLSmessage
+    use Moretree, only: Getstringindexfromstring
+    use Parse_Signal_M, only: Get_Individual_Signals
     use Tree, only: Where_At => Where
-    ! HDF5 INTENTIONALLY LAST TO AVOID LONG LF95 COMPILES
-    use HDF5, only: H5FCLOSE_F, H5GCLOSE_F
+    ! Hdf5 Intentionally Last To Avoid Long Lf95 Compiles
+    use Hdf5, only: H5fclose_F, H5gclose_F
 
     integer, intent(in) :: FileNameIndex
     integer, intent(in) :: FileTypeIndex ! HDF5 is all we can do
@@ -970,10 +972,10 @@ contains ! =====     Public Procedures     =============================
     ! necessary data sets and add any grids that aren't already in VGrids.
     ! Return a pointer associated with the datum.
 
-    use INTRINSIC, only: LIT_INDICES
-    use MLSHDF5, only: LOADPTRFROMHDF5DS
-    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
-    use MOREMESSAGE, only: MLSMESSAGE
+    use Intrinsic, only: Lit_Indices
+    use MLSHDF5, only: LoadptrfromHDF5ds
+    use MLSMessagemodule, only: MLSMessage, MLSMSG_Error
+    use Moremessage, only: MLSMessage
 
     integer, intent(in) :: Molecule ! first_molecule : last_molecule
     integer, intent(in) :: Signal   ! 1 : size(signals)
@@ -1035,15 +1037,15 @@ contains ! =====     Public Procedures     =============================
 
   ! ------------------------------------------  Write_PFADatabase  -----
   subroutine Write_PFADatabase ( FileName, FileType )
-    use INTRINSIC, only: LIT_INDICES
-    use MLSHDF5, only: SAVEASHDF5DS
-    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
-    use MLSSIGNALS_M, only: MAXSIGLEN
-!   use MLSSTRINGS, only: CAPITALIZE
-    use STRING_TABLE, only: GET_STRING
-    ! HDF5 INTENTIONALLY LAST TO AVOID LONG LF95 COMPILES
-    use HDF5, only: H5FCREATE_F, H5FCLOSE_F, &
-      & H5F_ACC_TRUNC_F, H5GCLOSE_F, H5GCREATE_F
+    use Intrinsic, only: Lit_Indices
+    use MLSHDF5, only: SaveasHDF5ds
+    use MLSMessagemodule, only: MLSMessage, MLSMSG_Error
+    use MLSSignals_M, only: Maxsiglen
+    ! use MLSStrings, only: Capitalize
+    use String_Table, only: Get_String
+    ! HDF5 Intentionally Last To Avoid Long Lf95 Compiles
+    use HDF5, only: H5fcreate_F, H5fclose_F, &
+      & H5f_Acc_Trunc_F, H5gclose_F, H5gcreate_F
 
     character(len=*), intent(in) :: FileName, FileType
 
@@ -1091,15 +1093,15 @@ contains ! =====     Public Procedures     =============================
 
     ! Write the PFADatum on FileName using the format given by FileType
 
-    use MLSHDF5, only: MAKEHDF5ATTRIBUTE, SAVEASHDF5DS, WRITELITINDEXASHDF5ATTRIBUTE
-    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
-    use MLSSIGNALS_M, only: MAXSIGLEN, GETNAMEOFSIGNAL
-    use MLSSTRINGLISTS, only: SWITCHDETAIL
-    use OUTPUT_M, only: OUTPUT
-    use STRING_TABLE, only: GET_STRING, STRING_LENGTH
-    use TOGGLES, only: SWITCHES
-    use HDF5, only: H5FCREATE_F, H5FCLOSE_F, & ! HDF5 use INTENTIONALLY LAST
-      & H5F_ACC_TRUNC_F, H5GCLOSE_F, H5GCREATE_F
+    use MLSHDF5, only: MakeHDF5attribute, SaveasHDF5ds, WritelitindexasHDF5attribute
+    use MLSMessagemodule, only: MLSMessage, MLSMSG_Error
+    use MLSSignals_M, only: Maxsiglen, Getnameofsignal
+    use MLSStringlists, only: Switchdetail
+    use Output_M, only: Output
+    use String_Table, only: Get_String, String_Length
+    use Toggles, only: Switches
+    use HDF5, only: H5fcreate_F, H5fclose_F, & ! HDF5 use Intentionally Last
+      & H5f_Acc_Trunc_F, H5gclose_F, H5gcreate_F
 
     type(PFAData_t), intent(in) :: PFADatum
     character(len=*), intent(in) :: FileName, FileType
@@ -1287,16 +1289,16 @@ contains ! =====     Public Procedures     =============================
   ! Read dAbsDwc and dAbsDnc if and only if Derivs is true.  Add any
   ! grids that aren't already in VGrids.
 
-    use INTRINSIC, only: L_THETA, L_ZETA, LIT_INDICES
-    use MLSHDF5, only: GETHDF5ATTRIBUTE, ISHDF5ATTRIBUTEPRESENT, LOADPTRFROMHDF5DS, &
-      & READLITINDEXFROMHDF5ATTR
-    use MLSMESSAGEMODULE, only: MLSMSG_ERROR
-    use MLSSIGNALS_M, only: GETSIGNALNAME, MAXSIGLEN, SIGNALS
-    use MOREMESSAGE, only: MLSMESSAGE
-    use MORETREE, only: GETSTRINGINDEXFROMSTRING
-    use PARSE_SIGNAL_M, only: PARSE_SIGNAL
-!     use VGRIDSDATABASE, only: ADDVGRIDIFNECESSARY, VGRIDS ! RS=KIND FOR SURFS
-    use VGRIDSDATABASE, only: RS ! RS=KIND FOR SURFS
+    use Intrinsic, only: L_Theta, L_Zeta, Lit_Indices
+    use MLSHDF5, only: GetHDF5attribute, IsHDF5attributepresent, LoadptrfromHDF5ds, &
+      & ReadlitindexfromHDF5attr
+    use MLSMessagemodule, only: MLSMSG_Error
+    use MLSSignals_M, only: Getsignalname, Maxsiglen, Signals
+    use MoreMessage, only: MLSMessage
+    use Moretree, only: Getstringindexfromstring
+    use Parse_Signal_M, only: Parse_Signal
+    ! use VgridsDatabase, only: Addvgridifnecessary, Vgrids ! Rs=kind For Surfs
+    use VgridsDatabase, only: Rs ! Rs=kind For Surfs
 
     integer(hid_t), intent(in) :: GroupId
     type(PFAData_T), target :: PFADatum
@@ -1415,6 +1417,9 @@ contains ! =====     Public Procedures     =============================
 end module PFADataBase_m
 
 ! $Log$
+! Revision 2.53  2017/02/10 01:08:20  pwagner
+! Report all PFA errors before quitting
+!
 ! Revision 2.52  2015/03/28 02:00:00  vsnyder
 ! Added stuff to trace allocate/deallocate addresses
 !
