@@ -472,7 +472,7 @@ contains ! =====     Public procedures     =============================
              l+l_fieldStrength, l+l_fieldElevation, l+l_fieldAzimuth, &
              l+l_nameFragment, l+l_sza, l+l_TScat, n+n_dt_def, &
       begin, t+t_boxCarMethod, l+l_max, l+l_mean, l+l_min, n+n_dt_def, &
-      begin, t+t_chunkDivideMethod, l+l_fixed, l+l_even, l+l_orbital, l+l_PE, n+n_dt_def, &
+      begin, t+t_chunkDivideMethod, l+l_fixed, l+l_even, l+l_orbital, l+l_polygon, l+l_PE, n+n_dt_def, &
       begin, t+t_cloud_der, l+l_iwc_low_height, l+l_iwc_high_height, l+l_iwp, &
              l+l_none,n+n_dt_def, &
       begin, t+t_criticalModule, l+l_both, l+l_either, l+l_ghz, l+l_none, &
@@ -1076,12 +1076,13 @@ contains ! =====     Public procedures     =============================
              begin, f+f_scECI, vectorQuantity(), &
              begin, f+f_seed, numeric(phyq_dimensionless), &
              begin, f+f_shape, numeric(), &
-             begin, f+f_sourceQuantities, field_spec(s_quantity), &
-             begin, f+f_sourceQuantity, vectorQuantity(), &
-             begin, f+f_sourceL2GP, field_spec(s_l2gp), &
-             begin, f+f_sourceL2AUX, field_spec(s_l2aux), &
              begin, f+f_sourceGrid, field_spec( s_gridded, s_merge, s_concatenate, &
                                              &  s_ConvertEtaToP, s_wmoTrop ), &
+             begin, f+f_sourceL2GP, field_spec(s_l2gp), &
+             begin, f+f_sourceL2AUX, field_spec(s_l2aux), &
+             begin, f+f_sourceMask, boolean(), &
+             begin, f+f_sourceQuantities, field_spec(s_quantity), &
+             begin, f+f_sourceQuantity, vectorQuantity(), &
              begin, f+f_sourceVGrid, field_spec(s_vGrid), &
              begin, f+f_spread, boolean(), &
              begin, f+f_start, numeric(phyq_dimensionless), &
@@ -2085,8 +2086,8 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
-! Revision 2.629  2016/11/08 17:29:54  pwagner
-! Add /reset field to time command
+! Revision 2.630  2017/02/10 21:55:20  pwagner
+! Added the polygon method for ChunkDivide; /sourcemask field for Fill
 !
 ! Revision 2.628  2016/10/21 23:27:09  vsnyder
 ! Remove unused USE name
