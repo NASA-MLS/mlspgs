@@ -29,7 +29,7 @@ module ChunkDivide_m
       & f_saveobstructions, f_scanlowerlimit, f_scanupperlimit, &
       & f_skipl1bcheck, f_upperoverlap, &
       & field_first, field_last, l_both, l_either, l_even, &
-      & l_fixed, f_maxgap, l_orbital, l_pe, s_chunkdivide, s_dump
+      & l_fixed, l_polygon, f_maxgap, l_orbital, l_pe, s_chunkdivide, s_dump
   use intrinsic, only: l_none, field_indices, lit_indices, phyq_angle, &
       & phyq_dimensionless, phyq_length, phyq_mafs, phyq_time
   use l1bdata, only: l1bdata_t, readl1bdata, getl1bfile, namelen, &
@@ -39,13 +39,16 @@ module ChunkDivide_m
   use MLSKinds, only: r8, rp
   use MLSMessageModule, only: MLSMessage, MLSMsg_error, MLSMsg_warning
   use MLSNumerics, only: hunt
-  use MLSFinds, only: findfirst
+  use MLSFinds, only: findfirst, FindLongestStretch
   use MLSSignals_m, only: modules
   use MLSStringlists, only: switchDetail
   use output_m, only: blanks, output, &
       & revertOutput, switchOutput
+  use PCFHdr, only: globalAttributes
   use string_table, only: get_string, display_string
   use toggles, only: gen, levels, switches, toggle
+  use Polygon_m, only: Polygon_Inside, Polygon_Vertices
+  
 
   implicit none
   private
@@ -80,6 +83,8 @@ module ChunkDivide_m
   ! The chunk divide methods are:
   !
   ! Fixed - Ignore the L1B file, just give a fixed set of chunks as described
+  !  
+  ! Polygon - Used for QTM, ASMLS
   !
   ! PE - One chunk centred on the given orbit geodetic angle.
   !
@@ -264,6 +269,7 @@ contains ! ===================================== Public Procedures =====
         call dumpCommand ( son )
       case ( s_chunkDivide )
         call chunkDivideL2CF ( son )
+	call dump(ChunkDivideConfig)
         didOne = .true.
       end select
     end do
@@ -304,6 +310,12 @@ contains ! ===================================== Public Procedures =====
     select case ( ChunkDivideConfig%method )
     case ( l_fixed )
       call ChunkDivide_Fixed ( chunks )
+    case ( l_polygon )
+      if ( .not. NEED_L1BFILES ) then
+        call AnnounceError ( root, invalid, ChunkDivideConfig%method )
+      else
+        call ChunkDivide_Polygon ( mafRange, filedatabase, chunks )
+      endif
     case ( l_PE )
       if ( .not. NEED_L1BFILES ) then
         call AnnounceError ( root, invalid, ChunkDivideConfig%method )
@@ -487,6 +499,120 @@ contains ! ===================================== Public Procedures =====
       end do
 
     end subroutine ChunkDivide_Fixed
+    
+    !------------------------------------------- ChunkDivide_Polygon -----
+    subroutine ChunkDivide_Polygon ( mafRange, filedatabase, chunks )
+      ! integer, dimension(2), intent(in) :: MAFRANGE
+      use Allocate_Deallocate, only: Test_Allocate
+      use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
+      use Dump_Geolocation_m, only: Dump_H_t
+      use Geometry, only: To_XYZ
+      use PnPoly_m, only: PnPoly
+      type (MAFRange_T) :: MAFRange
+      type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
+      type (MLSChunk_T), dimension(:), pointer :: CHUNKS
+      
+      
+
+      ! Local variables
+      integer(c_intptr_t) :: Addr         ! For tracing
+      integer :: I                        ! Loop inductor
+      integer :: MAF
+      integer :: STATUS                   ! From allocate
+      integer :: MAXLENGTH                ! nint(config%maxLength)
+      integer :: LOWEROVERLAP             ! nint(config%lowerOverlap)
+      integer :: UPPEROVERLAP             ! nint(config%upperOverlap)
+      type (L1BData_T) :: lats            ! lats data
+      type (L1BData_T) :: lons            ! lats data
+      type (MLSFile_T), pointer             :: L1BFile
+      integer :: L1BFLAG                  ! error Flag
+      integer :: NoMAFs
+      character (len=NameLen) :: L1BItemName
+      logical, dimension(:), pointer :: ptsInPolygon
+      real(r8), dimension(3)         :: xyz
+      real(r8)                       :: xx, yy
+
+      ! Executable code
+      ! 1st-- read lats and lons from the l1b file
+      L1BFile => GetMLSFileByType( filedatabase, content='l1boa' )
+      if ( .not. associated(L1BFile) ) &
+        & call MLSMessage  ( MLSMSG_Error, ModuleName, &
+          & "Can't make progress in ChunkDivide_polygon without L1BOA files" )
+      l1bItemName = AssembleL1BQtyName ( 'tpGeodLat', L1BFile%HDFVersion, .false. )
+      call ReadL1BData ( L1BFile, l1bItemName, lats, noMAFs, &
+        & l1bFlag )
+      if ( l1bFlag==-1) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Where is ' // l1bItemName )
+      
+      l1bItemName = AssembleL1BQtyName ( 'tpLon', L1BFile%HDFVersion, .false. )
+      call ReadL1BData ( L1BFile, l1bItemName, lons, noMAFs, &
+        & l1bFlag )
+      if ( l1bFlag==-1) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Where is ' // l1bItemName )
+      
+      call allocate_test( ptsInPolygon, noMAFs, 'ptsInPolygon', &
+        & ModuleName )
+        
+      ! Now we'll check for whether the points are inside or outside the PolyGon
+      do MAF=1, NoMAFs
+        ! Use To_XYZ to get XX, YY, ZZ
+        ! The send XX, YY through Pn_Poly
+        ! Set to true or false depending on retrun value (-1 outside, +1 inside)
+        ! store in ptsInPolygon
+      enddo
+      ! Now dump ptsInPolygon
+
+      call output ( 'MARET ChunckDivide_Polygon is usign Fixed method exactly.\n' )
+      call output ( 'MARET vertices \n')
+      call dump_h_t ( polygon_vertices, &
+      & 'Polygon boundary vertices (lon,lat):', format='(f8.3)' )
+     
+      call output ( 'MARET Polygon_Inside \n')
+      call output ( polygon_inside%lon%d, before='Point inside polygon (lon,lat): (' )
+      call output ( polygon_inside%lat, before=',', after=')', advance='yes' )
+       
+      call output ( 'MARET mafRange \n')  
+       call output ( 'Corresponding MAF range ' )
+        call output ( mafRange%L2Cover(1) )
+        call output ( ' : ' )
+        call output ( mafRange%L2Cover(2), advance='yes' )
+        call output ( 'MAF range in L1B files ' )
+        call output ( mafRange%L1BCover(1) )
+        call output ( ' : ' )
+        call output ( mafRange%L1BCover(2), advance='yes' )
+        call output ( 'including overlapped days ' )
+        call output ( mafRange%Expanded(1) )
+        call output ( ' : ' )
+        call output ( mafRange%Expanded(2), advance='yes' )
+	
+	call output ( 'MARET before  FindLongestStretch  call ')
+	call FindLongestStretch ((chunks%lastMAFIndex - chunks%firstMAFIndex), 1, mafRange%L2Cover)
+	call output ( 'MARET after  FindLongestStretch  call ')
+	
+      swlevel = switchDetail(switches, 'chu' )
+      allocate ( chunks(ChunkDivideConfig%noChunks), stat=status )
+      addr = 0
+      if ( status == 0 .and. ChunkDivideConfig%noChunks > 0 ) &
+        & addr = transfer(c_loc(chunks(1)), addr)
+      call test_allocate ( status, moduleName, 'chunks', &
+        & uBounds = ChunkDivideConfig%noChunks, &
+        & elementSize = storage_size(chunks) / 8, address=addr )
+
+      maxLength = nint ( ChunkDivideConfig%maxLength )
+      lowerOverlap = nint ( ChunkDivideConfig%lowerOverlap )
+      upperOverlap = nint ( ChunkDivideConfig%upperOverlap )
+      do i = 1, ChunkDivideConfig%noChunks
+        chunks(i)%firstMAFIndex = max ( (i-1)*maxLength - lowerOverlap, 0 )
+        chunks(i)%lastMAFIndex = i*maxLength + upperOverlap - 1
+        chunks(i)%noMAFsUpperOverlap = upperOverlap
+        if ( i > 1 ) then
+          chunks(i)%noMAFsLowerOverlap = lowerOverlap
+        else
+          chunks(i)%noMAFsLowerOverlap = 0
+        end if
+      end do
+
+    end subroutine ChunkDivide_Polygon
 
     !---------------------------------------------- ChunkDivide_PE -----
     subroutine ChunkDivide_PE ( mafRange, filedatabase, chunks )
@@ -629,16 +755,25 @@ contains ! ===================================== Public Procedures =====
       ! This subroutine identifies, separates, and checks values from the section
       ! of the MLSCF (ChunkDivide) passed to Scan/Divide.
       use Init_Tables_Module, only: Field_Indices
+      use moreTree, only: get_boolean
       integer, intent(in) :: ROOT    ! Root of the ChunkDivide command
                                      ! MLSCF abstract syntax tree
       ! type (ChunkDivideConfig_T), intent(out) :: CONFIG ! Result of operation
 
-      integer, target, dimension(3) :: NeededForFixed = &
-        & (/ f_noChunks, f_maxLength, f_overlap /)
+      integer, target, dimension(2) :: NeededForFixed = &
+        & (/ f_maxLength, f_overlap /)
+        ! & (/ f_noChunks, f_maxLength, f_overlap /)
       integer, target, dimension(7) :: NotWantedForFixed = &
         & (/ f_noSlaves, f_homeModule, f_homeGeodAngle, f_scanLowerLimit, &
         &    f_scanUpperLimit, f_criticalModules, f_maxGap /)
-
+	
+      !MARET added for Polygon
+      integer, target, dimension(0) :: NeededForPolygon 
+      integer, target, dimension(10) :: NotWantedForPolygon = &
+        & (/ f_noSlaves, f_homeModule, f_homeGeodAngle, f_scanLowerLimit, &
+        &    f_scanUpperLimit, f_criticalModules, f_maxGap, f_noChunks, f_maxLength, f_overlap /)
+      !MARET ended for Polygon
+       
       integer, target, dimension(3) :: NeededForPE = &
         & (/ f_maxLength, f_homeModule, f_homeGeodAngle /)
       integer, target, dimension(7) :: NotWantedForPE = &
@@ -660,6 +795,7 @@ contains ! ===================================== Public Procedures =====
 
       ! Local variables
       integer :: FieldIndex               ! Of son of the ChunkDivide command
+      integer :: FieldValue
       integer :: GSON                     ! A son of son the ChunkDivide command node
       integer :: I                        ! Loop inductor
       integer :: J                        ! Another loop inductor
@@ -686,15 +822,25 @@ contains ! ===================================== Public Procedures =====
       ! Loop through the command identifying fields and storing values.
       do i = 2, nsons(root) ! Skip the command
         son = subtree(i,root)
+        if ( nsons(son) > 1 ) then
+          fieldValue = decoration(subtree(2,son)) ! The field's value
+        else
+          fieldValue = son
+        end if
         fieldIndex = get_field_id(son)
         got(fieldIndex) = .true.
         call trace_begin ( 'ChunkDivideL2CF.loop', root, &
           & string=field_indices(fieldIndex),&
           & cond=toggle(gen) .and. levels(gen) > 1 )
+        ! print *, 'fieldIndex ', fieldIndex
+        ! print *, 'nsons(son) ', nsons(son)
         if (nsons(son) > 1 ) then
           gson = subtree(2,son)
           call expr ( gson, units, value )
           log_value = nint(value(1)) /= 0
+        elseif (nsons(son) > 0 ) then
+          value = 0.0
+          log_value = get_boolean ( fieldValue )
         else
           value = 0.0
           log_value = .false.
@@ -769,6 +915,7 @@ contains ! ===================================== Public Procedures =====
           ChunkDivideConfig%maxGap = value(1)
           ChunkDivideConfig%maxGapFamily = units(1)
         case ( f_skipL1BCheck )
+          ! print *, 'processing f_skipL1BCheck ', log_value
           ChunkDivideConfig%skipL1BCheck = log_value
           if ( ChunkDivideConfig%skipL1BCheck ) &
             & call MLSMessage(MLSMSG_Warning, ModuleName, &
@@ -800,6 +947,18 @@ contains ! ===================================== Public Procedures =====
       case ( l_fixed )
         needed => NeededForFixed
         notWanted => NotWantedForFixed
+        ! We made NoChunks an optional parameter instead of a required one
+        ! So if it's not present, the default value, 0, will be
+        ! replaced with the number of MAFs in the level 1 files
+        ! If that's not what you want, then you had better overide the default
+        ! 0 with the actual number
+        if ( ChunkDivideConfig%NoChunks < 1 ) &
+          & ChunkDivideConfig%NoChunks = 1 + &
+          & (GlobalAttributes%LastMAFCtr - GlobalAttributes%FirstMAFCtr) / &
+          & ChunkDivideConfig%maxLength
+      case ( l_polygon )
+        needed => NeededForFixed
+        notWanted => NotWantedForFixed	
       case ( l_PE )
         needed => NeededForPE
         notWanted => NotWantedForPE
@@ -2678,6 +2837,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.120  2017/02/10 21:57:47  pwagner
+! Added the polygon method for ChunkDivide; NoChunks an optional parameter for fixed method
+!
 ! Revision 2.119  2015/10/03 00:31:01  pwagner
 ! Will now show number of chunks
 !
