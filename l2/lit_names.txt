@@ -147,6 +147,7 @@ orbital
 PE
 phaseTiming
 plain
+polygon
 profile
 
 quantity
@@ -184,6 +185,9 @@ weighted
 wmoTropopause
 
 # $Log$
+# Revision 2.77  2017/02/10 21:48:12  pwagner
+# Added the polygon method forChunkDivide
+#
 # Revision 2.76  2015/03/28 02:55:40  vsnyder
 # Paul added quantity for DirectWrite
 #
