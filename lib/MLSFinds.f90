@@ -33,6 +33,7 @@ module MLSFinds
 !                 formally, a set contains only unique elements, so this
 !                 will in fact reduce any improper set to a proper set
 ! FindNext      Find the next instead
+! FindLongestStretch    Find the longest stretch of integers
 ! === (end of toc) ===
 
 ! === (start of api) ===
@@ -60,6 +61,7 @@ module MLSFinds
 ! FindLongestInteger (int set(:), int probe, int range(2))
 ! FindLongestLogical (log condition(:), int range(2))
 ! FindLongestSubString (char* set, char* probe, int range(2), [log reverse])
+! FindLongestStretch( int which(:), int how_many, int range(2) )
 ! FindUniqueCharacter (char* set(:), char* unique(:), [int nUnique], [int(:) counts])
 ! FindUniqueCharacterSubString (char* set, char* unique, [int nUnique], [int(:) counts])
 ! FindUniqueInteger (int set(:), int unique(:), [int nUnique], [int(:) counts])
@@ -71,7 +73,7 @@ module MLSFinds
 ! === (end of api) ===
 
   public :: FINDALL, FINDFIRST, FINDLAST, FINDLONGESTRANGE, &
-    & FINDNEXT, FINDUNIQUE
+    & FINDNEXT, FINDUNIQUE, FINDLONGESTSTRETCH
 
   interface FINDFIRST
     module procedure FINDFIRSTINTEGER, FINDFIRSTLOGICAL, FINDFIRSTCHARACTER
@@ -277,7 +279,7 @@ contains ! =====     Public Procedures     =============================
     ! Return which substring i of set[i:i] = it
     ! Formal arguments
     character(len=*), intent(in)                 :: set
-    character(len=1), intent(in)                 :: it
+    character(len=*), intent(in)                 :: it
     integer, intent(out), dimension(:)           :: which
     integer, intent(out), optional               :: how_many
     character(len=*), intent(out), optional :: re_mainder
@@ -285,16 +287,21 @@ contains ! =====     Public Procedures     =============================
 
     ! local variables
     integer :: i, i_which, i_re_mainder
-    
+    integer :: itl     ! len(it)
+    integer :: ip      ! last index starting at i to fit it
+    ! Executable
     if ( len(set) < 1 .or. size(which) < 1 ) then
       if ( present(how_many) ) how_many = 0
       if ( present(re_mainder) ) re_mainder = ''
       return
     end if
+    itl = len(it)
     i_which = 0
     i_re_mainder = 0
     do i=1, len(set)
-      if ( set(i:i) == it ) then
+      ip = i + itl - 1
+      ip = min( ip, len(set) )
+      if ( set(i:ip) == it ) then
         i_which = i_which+1
         which(min(size(which), i_which)) = i
       else
@@ -876,6 +883,57 @@ contains ! =====     Public Procedures     =============================
     end if
     call FindLongestStretch( which, how_many, range )
   end subroutine FindLongestSubString
+  
+   subroutine FindLongestStretch( which, how_many, range )
+    ! Given an array of integers, return the longest
+    ! stretch of consecutive ones
+    integer, dimension(:), intent(in)  :: which
+    integer, intent(in)                :: how_many
+    integer, dimension(2), intent(out) :: range
+    ! Internal variables
+    integer :: firstWhich
+    integer :: i
+    logical :: inSequence
+    integer :: lastWhich
+    integer :: stretch
+    ! Executable
+    range = 0
+    if ( how_many < 1 ) return
+    range = which(1)
+    if ( how_many < 2 ) return
+    stretch = 1
+    firstWhich = which(1)
+    lastWhich = which(1)
+    do i=2, how_many
+      ! Are we still in sequence?
+      if ( (which(i)-lastWhich) > 1 ) then
+        ! Nope--our sequence ended with lastWhich
+        ! How does it compare with the previous record-holder?
+        inSequence = .false.
+        if ( lastWhich - firstWhich + 1 > stretch ) then
+          ! It is longer so it becomes our best bet
+          range(1) = firstWhich
+          range(2) = lastWhich
+          stretch = lastWhich - firstWhich + 1
+        ! else
+          ! Not longer, so we forget about it
+        end if
+        firstWhich = which(i)
+      else
+        ! Yes, we have extended our sequence
+        lastWhich = which(i)
+        inSequence = .true.
+      end if
+    end do
+    ! Did we end the loop still in sequence?
+    if ( inSequence ) then
+      if ( lastWhich - firstWhich + 1 > stretch ) then
+        ! It is longer so it becomes our new winner
+        range(1) = firstWhich
+        range(2) = lastWhich
+      end if
+    end if
+  end subroutine FindLongestStretch
 
   ! --------------------------------------------  FindNextCharacter  -----
   integer function FindNextCharacter ( Set, Probe, Current, &
@@ -1188,58 +1246,6 @@ contains ! =====     Public Procedures     =============================
     if ( present(counts) ) counts(1:num) = myCounts(1:num)
   end subroutine FindUniqueCharacterSubString
 
-! =====     Private Procedures     =====================================
-
-  subroutine FindLongestStretch( which, how_many, range )
-    ! Given an array of integers, return the longest
-    ! stretch of consecutive ones
-    integer, dimension(:), intent(in)  :: which
-    integer, intent(in)                :: how_many
-    integer, dimension(2), intent(out) :: range
-    ! Internal variables
-    integer :: firstWhich
-    integer :: i
-    logical :: inSequence
-    integer :: lastWhich
-    integer :: stretch
-    ! Executable
-    range = 0
-    if ( how_many < 1 ) return
-    range = which(1)
-    if ( how_many < 2 ) return
-    stretch = 1
-    firstWhich = which(1)
-    lastWhich = which(1)
-    do i=2, how_many
-      ! Are we still in sequence?
-      if ( (which(i)-lastWhich) > 1 ) then
-        ! Nope--our sequence ended with lastWhich
-        ! How does it compare with the previous record-holder?
-        inSequence = .false.
-        if ( lastWhich - firstWhich + 1 > stretch ) then
-          ! It is longer so it becomes our best bet
-          range(1) = firstWhich
-          range(2) = lastWhich
-          stretch = lastWhich - firstWhich + 1
-        ! else
-          ! Not longer, so we forget about it
-        end if
-        firstWhich = which(i)
-      else
-        ! Yes, we have extended our sequence
-        lastWhich = which(i)
-        inSequence = .true.
-      end if
-    end do
-    ! Did we end the loop still in sequence?
-    if ( inSequence ) then
-      if ( lastWhich - firstWhich + 1 > stretch ) then
-        ! It is longer so it becomes our new winner
-        range(1) = firstWhich
-        range(2) = lastWhich
-      end if
-    end if
-  end subroutine FindLongestStretch
 
   ! --------------------------------------------------  LowerCase  -----
   ! Needed here because MLSStrings uses MLSFinds
@@ -1278,6 +1284,9 @@ contains ! =====     Public Procedures     =============================
 end module MLSFinds
 
 ! $Log$
+! Revision 2.3  2017/02/11 00:29:42  pwagner
+! FindLongestStretch now public
+!
 ! Revision 2.2  2014/07/31 20:20:23  pwagner
 ! FindFirstCharacter can now find partial match
 !
