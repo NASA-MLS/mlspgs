@@ -89,8 +89,8 @@ CONTAINS
 
     EngMAFs = 0
     EngGaps = 0
-    DO
 
+    DO
        CALL NextEngMAF (more_data)
 
        IF (.NOT. more_data) EXIT
@@ -159,6 +159,7 @@ CONTAINS
        BeginEnd%EngMAFno(2) = EngMAF%MAFno
        BeginEnd%EngTAI(2) = EngMAF%secTAI
        BeginEnd%TotalMAFcount(2) = EngMAF%TotalMAF
+
 
        ! <vp comment> Check for utterly bogus times
        ! signaled by mismatch between Engineering and Science times
@@ -687,6 +688,9 @@ END MODULE L1LogUtils
 !=============================================================================
 
 ! $Log$
+! Revision 2.23  2017/02/14 17:55:14  whdaffer
+! Resolved conflict. Don't quite know how it came about, but it did.
+!
 ! Revision 2.22  2017/01/05 21:24:12  whdaffer
 ! A few more tweaks to the last modification.
 !
