@@ -838,12 +838,15 @@ contains ! ===================================== Public Procedures =====
           gson = subtree(2,son)
           call expr ( gson, units, value )
           log_value = nint(value(1)) /= 0
+          ! print *, 'Case 1 ', log_value
         elseif (nsons(son) > 0 ) then
           value = 0.0
           log_value = get_boolean ( fieldValue )
+          ! print *, 'Case 2 ', log_value
         else
           value = 0.0
           log_value = .false.
+          ! print *, 'Case 3 ', log_value
         end if
         ! Get value for this field if appropriate
         select case ( fieldIndex )
@@ -902,12 +905,14 @@ contains ! ===================================== Public Procedures =====
               & ChunkDivideConfig%criticalSignals(j-1), strip=.true. )
           end do
         case ( f_excludePostOverlaps )
-          ChunkDivideConfig%allowPostOverlaps = log_value
+          ! print *, 'processing f_excludePost.. ', log_value
+          ChunkDivideConfig%allowPostOverlaps = .not. log_value
           if ( .not. ChunkDivideConfig%allowPostOverlaps ) &
             & call MLSMessage(MLSMSG_Warning, ModuleName, &
             & 'You have elected to exclude MAFs after time range' )
         case ( f_excludePriorOverlaps )
-          ChunkDivideConfig%allowPriorOverlaps = log_value
+          ! print *, 'processing f_excludePrior.. ', log_value
+          ChunkDivideConfig%allowPriorOverlaps = .not. log_value
           if ( .not. ChunkDivideConfig%allowPriorOverlaps ) &
             & call MLSMessage(MLSMSG_Warning, ModuleName, &
             & 'You have elected to exclude MAFs prior to time range' )
@@ -915,7 +920,7 @@ contains ! ===================================== Public Procedures =====
           ChunkDivideConfig%maxGap = value(1)
           ChunkDivideConfig%maxGapFamily = units(1)
         case ( f_skipL1BCheck )
-          ! print *, 'processing f_skipL1BCheck ', log_value
+          print *, 'processing f_skipL1BCheck ', log_value
           ChunkDivideConfig%skipL1BCheck = log_value
           if ( ChunkDivideConfig%skipL1BCheck ) &
             & call MLSMessage(MLSMSG_Warning, ModuleName, &
@@ -2837,6 +2842,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.121  2017/02/15 00:48:26  pwagner
+! Repaired bugs in processing Boolean fields /exclude..
+!
 ! Revision 2.120  2017/02/10 21:57:47  pwagner
 ! Added the polygon method for ChunkDivide; NoChunks an optional parameter for fixed method
 !
