@@ -140,6 +140,8 @@ SETREADENV=$MLSTOOLS/set_read_env.sh
 H5REPACK=$LEVEL1_BINARY_DIR/h5repack
 NETCDFAUGMENT=$LEVEL1_BINARY_DIR/aug_hdfeos5
 L2GPDUMP=$LEVEL1_BINARY_DIR/l2gpdump
+BREAKER_PY=checknrtchunkforbreaks.py
+BREAKER_SAV=checknrtchunkforbreaks.sav
 if [ ! -x "$H5REPACK" ]
 then
   H5REPACK=$MLSTOOLS/H5REPACK
@@ -281,8 +283,21 @@ echo "export PGS_PC_INFO_FILE=$2" >> $JOBENV
 # from l2q
 # For level 2, we'll imitate the mlsl2p.sh script
 
-# (1) Create a single level 1 job and run it
 . $JOBDIR/$JOBENV
+
+if [ "$MUSTHAVEBREAKER" = "yes" ]
+then
+  cp $MLSTOOLS/$BREAKER_PY $MLSTOOLS/$BREAKER_SAV $JOBDIR
+  echo cp $MLSTOOLS/$BREAKER_PY $MLSTOOLS/$BREAKER_SAV $JOBDIR
+  if [ ! -x "$JOBDIR/$BREAKER_PY" ]
+  then
+    echo "$BREAKER_PY not found"
+    echo "It should have been in $MLSTOOLS"
+    exit 1
+  fi
+fi
+
+# (1) Create a single level 1 job and run it
 JOB1SCRIPT="job1script.sh"
 JOB1STDERR="job1script.stderr"
 echo "#!/bin/sh" > $JOB1SCRIPT
@@ -369,9 +384,31 @@ then
     hide_files *.he5 *.met *.xml *.h5
     exit 1
   fi
+  # Also check for chunk breaks, i.e. anomalously large
+  # derivatives [ds / dt] where 
+  # ds   distance between successive profiles
+  # dt   time between successive profiles
+  if [ "$MUSTHAVEBREAKER" = "yes" ]
+  then
+    echo "Check for gaps between profiles anomalously large"
+    cd $JOBDIR
+    ./$BREAKER_PY outputs/*L2GP-Temper*.he5
+    echo ./$BREAKER_PY outputs/*L2GP-Temper*.he5
+    return_status=`expr $?`
+    if [ "$return_status" != 0 ]
+    then
+      cd outputs
+      echo "Break detected in *L2GP-Temper*.he5, status $return_status"
+      hide_files *.he5 *.met *.xml *.h5
+      exit 1
+    fi
+  fi
 fi
 
 # $Log$
+# Revision 1.12  2016/05/19 19:48:46  pwagner
+# Hope we fixed the plast fix
+#
 # Revision 1.11  2016/05/19 17:32:49  pwagner
 # Restore PCF file name for master level 2
 #
