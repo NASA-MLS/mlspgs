@@ -388,6 +388,7 @@ removeTemplate
 rename
 repairGeolocations
 reset
+resetAll
 resetSeed
 residualSupplied
 resolution
@@ -544,6 +545,9 @@ yStar
 ZOT # Tells dump of HGrid whether to print QTM coordinates in ZOT or Geo
 
 # $Log$
+# Revision 2.263  2017/02/22 01:23:08  pwagner
+# New /resetAll switch clears all Masking bits
+#
 # Revision 2.262  2016/04/01 00:25:13  pwagner
 # Added fields for Execute command
 #
