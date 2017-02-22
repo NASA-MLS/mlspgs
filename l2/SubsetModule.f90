@@ -49,28 +49,28 @@ contains ! ========= Public Procedures ============================
     & IGNORE, REVERSE, ADDITIONAL, RESET, &
     & MASKBIT, HEIGHTNODE, SURFNODE, INSTANCESNODE, CHANNELSNODE )
 
-    use allocate_deallocate, only: allocate_test, deallocate_test
-    use dump_0, only: dump
-    use expr_m, only: expr, getindexflagsfromlist
-    use fillUtils_1, only: byManipulation
-    use highoutput, only: outputNamedValue
-    use init_tables_module, only: f_height, f_ptanquantity, f_quantity, f_surface
-    use init_tables_module, only: l_none, l_pressure, &
-      & l_zeta
-    use intrinsic, only: phyq_dimensionless, phyq_length, &
-      & phyq_mifs, phyq_pressure
-    use MLSKinds, only: r8, rv
-    use MLSStringLists, only: switchDetail
-    use MLSFinds, only: findFirst, findLast
-    use MLSStrings, only: trueList
-    use output_m, only: output
-    use toggles, only: switches
-    use tree, only: nsons, subtree, node_id
-    use tree_types, only: n_colon_less, n_less_colon, &
-      & n_less_colon_less
-    use vectorsModule, only: vectorValue_t, &
-      & clearMask, cloneVectorQuantity, createMask, dump, &
-      & reverseMask, setMask
+    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+    use Dump_0, only: Dump
+    use Expr_M, only: Expr, Getindexflagsfromlist
+    use FillUtils_1, only: ByManipulation
+    use Highoutput, only: OutputNamedValue
+    use Init_Tables_Module, only: F_Height, F_Ptanquantity, F_Quantity, F_Surface
+    use Init_Tables_Module, only: L_None, L_Pressure, &
+      & L_Zeta
+    use Intrinsic, only: Phyq_Dimensionless, Phyq_Length, &
+      & Phyq_Mifs, Phyq_Pressure
+    use MLSKinds, only: R8, Rv
+    use MLSStringLists, only: SwitchDetail
+    use MLSFinds, only: FindFirst, FindLast
+    use MLSStrings, only: TrueList
+    use Output_M, only: Output
+    use Toggles, only: Switches
+    use Tree, only: Nsons, Subtree, Node_Id
+    use Tree_Types, only: N_Colon_Less, N_Less_Colon, &
+      & N_Less_Colon_Less
+    use VectorsModule, only: VectorValue_T, &
+      & ClearMask, CloneVectorQuantity, CreateMask, Dump, &
+      & ReverseMask, SetMask
     ! Args
     type (VectorValue_T), pointer :: QTY
     type (VectorValue_T), pointer :: RAD
@@ -604,21 +604,21 @@ contains ! ========= Public Procedures ============================
   ! So be warned--
   ! d o c u m e n t   y o u r   c o d e
   subroutine RestrictRange ( key, vectors )
-    use allocate_deallocate, only: allocate_test, deallocate_test
-    use expr_m, only: expr
-    use vectorsModule, only: m_linalg, vector_t, vectorvalue_t, &
-      & createMask, getVectorQtyByTemplateIndex, getVectorQuantityByType, &
-      & setMask
-    use init_tables_module, only: f_quantity, f_ptanquantity, f_basisfraction, &
-      & f_minchannels, f_signals, f_measurements, f_mask
-    use init_tables_module, only: l_zeta, l_radiance
+    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+    use Expr_M, only: Expr
+    use VectorsModule, only: M_Linalg, Vector_T, Vectorvalue_T, &
+      & CreateMask, GetVectorQtyByTemplateIndex, GetVectorQuantityByType, &
+      & SetMask
+    use Init_Tables_Module, only: F_Quantity, F_Ptanquantity, F_Basisfraction, &
+      & F_Minchannels, F_Signals, F_Measurements, F_Mask
+    use Init_Tables_Module, only: L_Zeta, L_Radiance
     use ManipulateVectorQuantities, only: FindOneClosestInstance
-    use MLSKinds, only: r8
-    use MLSNumerics, only: hunt
-    use MLSSignals_m, only: signal_t
-    use moreTree, only: get_field_id
-    use parse_signal_m, only: expand_signal_list
-    use tree, only: nsons, subtree, decoration
+    use MLSKinds, only: R8
+    use MLSNumerics, only: Hunt
+    use MLSSignals_M, only: Signal_T
+    use MoreTree, only: Get_Field_Id
+    use Parse_Signal_M, only: Expand_Signal_List
+    use Tree, only: Nsons, Subtree, Decoration
 
     ! Dummy arguments
     integer, intent(in) :: KEY          ! Tree node
@@ -826,26 +826,27 @@ contains ! ========= Public Procedures ============================
   ! Mask setting business moved from here to workhorse subroutine.
   subroutine SetupSubset ( key, vectors )
 
-    use expr_m, only: expr
-    use init_tables_module, only: field_first, field_last
-    use init_tables_module, only: f_a, f_additional, f_channels, &
-      & f_height, f_heightRange, &
-      & f_ignore, f_instances, f_mask, f_maxValue, f_minValue, f_opticalDepth, &
-      & f_opticalDepthCutoff, f_PTanQuantity, f_quantity, f_radianceQuantity, &
-      & f_reset, f_reverse, f_sourceQuantity, f_surface, f_where
-    use init_tables_module, only: l_opticalDepth, &
-      & l_radiance
-    use intrinsic, only: phyq_dimensionless, phyq_invalid
-    use MLSKinds, only: r8
-    use MLSStringlists, only: switchDetail
-    use moreTree, only: get_field_id, get_boolean
-    use output_m, only: output
-    use string_table, only: display_string, get_string
-    use toggles, only: switches
-    use tree, only: nsons, sub_rosa, subtree, decoration
-    use vectorsModule, only: m_linalg, vector_t, vectorValue_t, &
-      & createMask, destroyVectorQuantityMask, dumpMask, &
-      & getVectorQtyByTemplateIndex
+    use Expr_M, only: Expr
+    use Init_Tables_Module, only: Field_First, Field_Last
+    use Init_Tables_Module, only: F_A, F_Additional, F_Channels, &
+      & F_Height, F_HeightRange, &
+      & F_Ignore, F_Instances, F_Mask, F_MaxValue, F_MinValue, F_OpticalDepth, &
+      & F_OpticalDepthCutoff, F_PTanQuantity, F_Quantity, F_RadianceQuantity, &
+      & F_Reset, F_ResetAll, F_Reverse, F_SourceQuantity, F_Surface, F_Where
+    use Init_Tables_Module, only: L_OpticalDepth, &
+      & L_Radiance
+    use Intrinsic, only: Phyq_Dimensionless, Phyq_Invalid
+    use MLSKinds, only: R8
+    use MLSStringlists, only: SwitchDetail
+    use MoreTree, only: Get_Field_Id, Get_Boolean
+    use Output_M, only: Output
+    use String_Table, only: Display_String, Get_String
+    use Toggles, only: Switches
+    use Tree, only: Nsons, Sub_Rosa, Subtree, Decoration
+    use VectorsModule, only: M_Linalg, Vector_T, VectorValue_T, &
+      & CreateMask, DestroyVectorQuantityMask, DumpMask, &
+      & GetVectorQtyByTemplateIndex
+
     integer, intent(in) :: KEY        ! Tree node
     type (Vector_T), dimension(:) :: VECTORS
 
@@ -882,6 +883,7 @@ contains ! ========= Public Procedures ============================
     logical :: Got(field_first:field_last)   ! "Got this field already"
     logical :: IGNORE                 ! Flag
     logical :: RESET                  ! Flag
+    logical :: RESETAll                  ! Flag
     logical :: ADDITIONAL             ! Flag
     logical :: REVERSE                ! Flag
 
@@ -898,6 +900,7 @@ contains ! ========= Public Procedures ============================
     opticalDepthCutoff = -999.99
     ignore = .false.
     reset = .false.
+    resetAll = .false.
     additional = .false.
     reverse = .false.
     maskBit = m_linalg
@@ -978,6 +981,8 @@ contains ! ========= Public Procedures ============================
         ignore = Get_Boolean ( son )
       case ( f_reset )
         reset = Get_Boolean ( son )
+      case ( f_resetAll )
+        resetAll = Get_Boolean ( son )
       case ( f_surface )
         surfNode = son
       case ( f_additional )
@@ -1034,7 +1039,8 @@ contains ! ========= Public Procedures ============================
       end if
       ! Check for exactly one of height, ignore, instances, reset, surface
       if ( count ( got ( &
-        & (/ f_height, f_ignore, f_instances, f_reset, f_surface, f_where /) &
+        & (/ f_height, f_ignore, f_instances, &
+        & f_reset, f_resetAll, f_surface, f_where /) &
         & ) ) /= 1 ) &
           & call announceError ( key, &
             & 'Subset must be exactly one of height, ignore, instances, ' // &
@@ -1051,12 +1057,17 @@ contains ! ========= Public Procedures ============================
     if ( got ( f_maxValue ) .and. ( maxUnit /= testUnit ) ) &
       & call AnnounceError ( key, WrongUnits, f_maxValue )
 
-    ! Pass all the field nodes to the workhorse subroutine
-    ! Let it set the mask
-    call ApplyMaskToQuantity( qty, rad, ptan, opticalDepth, a, &
-      & opticalDepthCutoff, maxvalue, minValue, heightRange, whereRange, &
-      & ignore, reverse, additional, reset, &
-      & maskBit, heightNode, surfNode, instancesNode, channelsNode )
+    if ( resetAll ) then
+      ! Simply Deallocatee the quantity's Mask
+      call DestroyVectorQuantityMask ( qty, 'SetUpSubset' )
+    else
+      ! Pass all the field nodes to the workhorse subroutine
+      ! Let it set the mask
+      call ApplyMaskToQuantity( qty, rad, ptan, opticalDepth, a, &
+        & opticalDepthCutoff, maxvalue, minValue, heightRange, whereRange, &
+        & ignore, reverse, additional, reset, &
+        & maskBit, heightNode, surfNode, instancesNode, channelsNode )
+    endif
 
     if ( switchDetail(switches,'msk') > -1 ) then
       call output ( 'Dumping mask' )
@@ -1076,20 +1087,20 @@ contains ! ========= Public Procedures ============================
 
   subroutine SetupFlagCloud ( key, vectors )
     
-    use allocate_deallocate, only: allocate_test, deallocate_test
-    use expr_m, only: expr, getindexflagsfromlist
-    use init_tables_module, only: field_first, field_last
-    use init_tables_module, only: f_quantity, f_ptanquantity, &
-      & f_height, f_cloudheight, f_channels, f_cloudchannels, f_cloudradiance, &
-      & f_cloudradiancecutoff, f_mask
-    use init_tables_module, only: l_radiance, l_cloudinducedradiance
-    use intrinsic, only: phyq_dimensionless, phyq_pressure
-    use MLSKinds, only: r8
-    use moretree, only: get_field_id
-    use vectorsModule, only: createMask, &
-      & getVectorQtyByTemplateIndex, setMask, vectorValue_t, vector_t, &
-      & m_cloud
-    use tree, only: nsons, subtree, decoration
+    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+    use Expr_M, only: Expr, Getindexflagsfromlist
+    use Init_Tables_Module, only: Field_First, Field_Last
+    use Init_Tables_Module, only: F_Quantity, F_Ptanquantity, &
+      & F_Height, F_Cloudheight, F_Channels, F_Cloudchannels, F_Cloudradiance, &
+      & F_Cloudradiancecutoff, F_Mask
+    use Init_Tables_Module, only: L_Radiance, L_Cloudinducedradiance
+    use Intrinsic, only: Phyq_Dimensionless, Phyq_Pressure
+    use MLSKinds, only: R8
+    use Moretree, only: Get_Field_Id
+    use VectorsModule, only: CreateMask, &
+      & GetVectorQtyByTemplateIndex, SetMask, VectorValue_T, Vector_T, &
+      & M_Cloud
+    use Tree, only: Nsons, Subtree, Decoration
 
     integer, intent(in) :: KEY        ! Tree node
     type (Vector_T), dimension(:) :: VECTORS
@@ -1323,14 +1334,14 @@ contains ! ========= Public Procedures ============================
   ! d o c u m e n t   y o u r   c o d e
   subroutine UpdateMask ( key, vectors )
 
-    use init_tables_module, only: field_first, field_last
-    use init_tables_module, only: f_quantity, f_sourceQuantity, &
-      & f_operation, f_sourceMask, f_mask
-    use init_tables_module, only: l_invert, l_copy, l_andMasks, l_orMasks
-    use moretree, only: get_field_id
-    use tree, only: nsons, subtree, decoration
-    use vectorsModule, only: getVectorQtyByTemplateIndex, vectorValue_t, &
-      & vector_t, createMask
+    use Init_Tables_Module, only: Field_First, Field_Last
+    use Init_Tables_Module, only: F_Quantity, F_SourceQuantity, &
+      & F_Operation, F_SourceMask, F_Mask
+    use Init_Tables_Module, only: L_Invert, L_Copy, L_AndMasks, L_OrMasks
+    use Moretree, only: Get_Field_Id
+    use Tree, only: Nsons, Subtree, Decoration
+    use VectorsModule, only: GetVectorQtyByTemplateIndex, VectorValue_T, &
+      & Vector_T, CreateMask
 
     integer, intent(in) :: KEY          ! Tree node
     type (Vector_T), dimension(:) :: VECTORS
@@ -1448,11 +1459,11 @@ contains ! ========= Public Procedures ============================
 
   subroutine AnnounceError ( NODE, STRING, FIELDINDEX, ANOTHERFIELDINDEX )
     
-    use intrinsic, only: field_indices
-    use lexer_core, only: print_source
-    use tree, only: where
+    use Intrinsic, only: Field_Indices
+    use Lexer_Core, only: Print_Source
+    use Tree, only: Where
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-    use output_m, only: output
+    use Output_M, only: Output
     use String_Table, only: Display_String
     
     integer, intent(in) :: NODE
@@ -1479,11 +1490,11 @@ contains ! ========= Public Procedures ============================
   ! -------------------------------------- GetMaskBit -------------
 
   function GetMaskBit ( node, single ) result ( maskBit )
-    use Tree, only: nsons, decoration, subtree
-    use Init_Tables_Module, only: l_cloud, l_fill, l_full_derivatives, &
-      & l_ignore, l_linalg, l_spare, l_tikhonov
-    use VectorsModule, only: m_cloud, m_fill, m_fullderivatives, m_linalg, &
-      & m_ignore, m_spare, m_tikhonov
+    use Tree, only: Nsons, Decoration, Subtree
+    use Init_Tables_Module, only: L_Cloud, L_Fill, L_Full_Derivatives, &
+      & L_Ignore, L_Linalg, L_Spare, L_Tikhonov
+    use VectorsModule, only: M_Cloud, M_Fill, M_Fullderivatives, M_Linalg, &
+      & M_Ignore, M_Spare, M_Tikhonov
 
     ! This routine parses the mask field in an l2cf command
     ! Dummy arguments
@@ -1531,6 +1542,9 @@ contains ! ========= Public Procedures ============================
 end module SubsetModule
  
 ! $Log$
+! Revision 2.37  2017/02/22 01:23:36  pwagner
+! New /resetAll switch clears all Masking bits
+!
 ! Revision 2.36  2016/05/19 23:17:56  pwagner
 ! Corrected what looked like an error in indexing
 !
