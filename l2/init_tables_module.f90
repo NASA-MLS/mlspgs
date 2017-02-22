@@ -31,9 +31,9 @@ module INIT_TABLES_MODULE
 
 ! Declaring the definitions is handled by the tree walker.
 
-  use Init_MLSSignals_m ! Everything. Init_MLSSignals, Field_First,
+  use Init_MLSSignals_M ! Everything. Init_MLSSignals, Field_First,
     ! Last_Signal_Field, Spec_First, Last_Signal_Spec, Numerous S_....
-  use Init_Spectroscopy_m ! Everything.
+  use Init_Spectroscopy_M ! Everything.
   use Intrinsic ! Everything. ADD_IDENT, BEGIN, D, F, FIRST_LIT,
     ! INIT_INTRINSIC, L, L_<several>, LAST_INTRINSIC_LIT,
     ! N, NADP, ND, NDP, NO_CHECK_EQ, NP, NR, P, S, T, <all>_INDICES,
@@ -41,7 +41,7 @@ module INIT_TABLES_MODULE
     ! T_STRING,s_TIME and Z are used here, but everything is included so
     ! that it can be gotten by USE INIT_TABLES_MODULE.
   use Molecules ! Everything.
-  use Units, only: init_units
+  use Units, only: Init_Units
   ! We're adding the following use statements to clue the makefiles'
   ! dependency calculator for srclib's tree_checker
   use Tree, only: ! build_tree, push_pseudo_terminal
@@ -1389,6 +1389,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_opticalDepthCutoff, numeric(phyq_dimensionless), &
              begin, f+f_reverse, boolean(), &
              begin, f+f_where, string(), &
+             begin, f+f_resetAll, boolean(), &
              begin, f+f_reset, boolean(), ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_restrictRange, &
@@ -2086,6 +2087,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.631  2017/02/22 01:23:07  pwagner
+! New /resetAll switch clears all Masking bits
+!
 ! Revision 2.630  2017/02/10 21:55:20  pwagner
 ! Added the polygon method for ChunkDivide; /sourcemask field for Fill
 !
