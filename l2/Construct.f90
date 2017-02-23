@@ -29,14 +29,46 @@ module Construct                ! The construct module for the MLS L2 sw.
   private :: not_used_here 
   !-----------------------------------------------------------------------------
 
+
+! === (start of toc) ===
+!     c o n t e n t s
+!     - - - - - - - -
+!
+!     (subroutines and functions)
+! MLSL2Construct          Process l2cf Commands in the Construct section
+! ConstructMIFGeolocation Construct the template frameworks on which to base
+!                           minor frame quantities for all modules (e.g., GHz)
+! DestroyMIFGeolocation   deallocate the template frameworks
+! MLSL2DeConstruct        Deallocate the Vector template databases
+! === (end of toc) ===
+
+! === (start of api) ===
+! MLSL2Construct ( int root, MLSFile_T filedatabase(:), &
+!      TAI93_Range_T processingRange, MLSChunk_T chunk, &
+!      QuantityTemplate_T quantityTemplatesBase(:), &
+!      VectorTemplate_T vectorTemplates(:), &
+!      vector_T vectors(:), &
+!      FGrid_T FGrids(:), &
+!      HGrids_T HGrids(:), &
+!      L2GPData_T l2gpDatabase(:), &
+!      ForwardModelConfig_T ForwardModelConfigDatabase(:), &
+!      GriddedData_T griddedDataBase(:), &
+!      QuantityTemplate_T mifGeolocation(:) )
+! ConstructMIFGeolocation ( QuantityTemplate_T mifGeolocation(:), &
+!      MLSFile_T filedatabase(:), MLSChunk_T chunk )
+! DestroyMIFGeolocation ( QuantityTemplate_T mifGeolocation(:) )
+! MLSL2DeConstruct ( VectorTemplate_T vectorTemplates(:), HGrids_T HGrids(:) )
+! === (end of api) ===
+
 contains ! =====     Public Procedures     =============================
 
   ! --------------------------------------------- DestroyMIFGeolocation --
   subroutine DestroyMIFGeolocation ( mifGeolocation )
     ! Deallocate mifGeolocations
-    use QuantityTemplates, only: DestroyQuantityTemplateDatabase, quantityTemplate_t
-    use Toggles, only: gen, toggle
-    use Trace_m, only: trace_begin, trace_end
+    use QuantityTemplates, only: DestroyQuantityTemplateDatabase, QuantityTemplate_T
+    use Toggles, only: Gen, Toggle
+    use Trace_M, only: Trace_Begin, Trace_End
+
     type (QuantityTemplate_T), dimension(:), pointer :: mifGeolocation
     
     ! Local variables
@@ -55,17 +87,17 @@ contains ! =====     Public Procedures     =============================
     ! information for the GHz and THz modules.  The software can then
     ! point to these for geolocation information for all minor frame
     ! quantities saving file IO and memory.
-    use Chunks_m, only: MLSChunk_t
-    use ConstructQuantityTemplates, only: constructMinorFrameQuantity
-    use HighOutput, only: BeVerbose, outputNamedValue
-    use QuantityTemplates, only: Dump, quantityTemplate_t
-    use MLSCommon, only: MLSFile_t
+    use Chunks_M, only: MLSChunk_T
+    use ConstructQuantityTemplates, only: ConstructMinorFrameQuantity
+    use HighOutput, only: BeVerbose, OutputNamedValue
+    use QuantityTemplates, only: Dump, QuantityTemplate_T
+    use MLSCommon, only: MLSFile_T
     use MLSL2Options, only: MLSMessage
-    use MLSSignals_m, only: modules
-    use MLSStringLists, only: switchDetail
+    use MLSSignals_M, only: Modules
+    use MLSStringLists, only: SwitchDetail
     use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Allocate
-    use Toggles, only: gen, switches, toggle
-    use Trace_m, only: trace_begin, trace_end
+    use Toggles, only: Gen, Switches, Toggle
+    use Trace_M, only: Trace_Begin, Trace_End
 
     type (QuantityTemplate_T), dimension(:), pointer :: mifGeolocation
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
@@ -116,43 +148,43 @@ contains ! =====     Public Procedures     =============================
 
   ! This is the `main' subroutine for this module
 
-    use chunks_m, only: MLSChunk_t
-    use constructQuantityTemplates, only: &
-      & createQtyTemplateFromMLSCFInfo, forgeMinorFrames
-    use constructVectorTemplates, only: createVecTemplateFromMLSCFInfo
-    use dumpCommand_m, only: booleanFromanyGoodRadiances, &
-      & booleanFromAnyGoodValues, &
-      & booleanFromCatchWarning, booleanFromComparingQtys, booleanFromFormula, &
-      & dumpCommand
-    use fgrid, only: fgrid_t
-    use forwardModelConfig, only: addForwardModelConfigToDatabase, &
-      & forwardModelConfig_t
-    use forwardModelSupport, only: constructForwardModelConfig
-    use griddedData, only: griddedData_t
-    use HGridsDatabase, only: addHGridToDatabase, HGrids_t
-    use HGrid, only: createHGridFromMLSCFInfo
-    use init_tables_module, only: f_reset, &
-      & s_anygoodvalues, s_anygoodradiances, &
-      & s_boolean, s_catchwarning, s_compare, s_dump, &
-      & s_forge, s_forwardmodel, s_hgrid, &
-      & s_phase, s_quantity, s_reevaluate, s_changesettings, s_time, s_vectortemplate
-    use L2GPdata, only: L2GPData_t
-    use MLSCommon, only: MLSFile_t, tai93_range_t
-    use MLSL2Options, only: l2cfnode, need_l1bfiles, specialDumpFile
-    use MLSL2Timings, only: section_times, total_times, addphaseToPhaseNames
+    use Chunks_M, only: MLSChunk_T
+    use ConstructQuantityTemplates, only: &
+      & CreateQtyTemplateFromMLSCFInfo, ForgeMinorFrames
+    use ConstructVectorTemplates, only: CreateVecTemplateFromMLSCFInfo
+    use DumpCommand_M, only: BooleanFromanyGoodRadiances, &
+      & BooleanFromAnyGoodValues, &
+      & BooleanFromCatchWarning, BooleanFromComparingQtys, BooleanFromFormula, &
+      & DumpCommand
+    use Fgrid, only: Fgrid_T
+    use ForwardModelConfig, only: AddForwardModelConfigToDatabase, &
+      & ForwardModelConfig_T
+    use ForwardModelSupport, only: ConstructForwardModelConfig
+    use GriddedData, only: GriddedData_T
+    use HGridsDatabase, only: AddHGridToDatabase, HGrids_T
+    use HGrid, only: CreateHGridFromMLSCFInfo
+    use Init_Tables_Module, only: F_Reset, &
+      & S_AnygoodValues, S_AnygoodRadiances, &
+      & S_Boolean, S_Catchwarning, S_Compare, S_Dump, &
+      & S_Forge, S_Forwardmodel, S_Hgrid, &
+      & S_Phase, S_Quantity, S_Reevaluate, S_Changesettings, S_Time, S_VectorTemplate
+    use L2GPData, only: L2GPData_T
+    use MLSCommon, only: MLSFile_T, Tai93_Range_T
+    use MLSL2Options, only: L2cfnode, Need_L1bFiles, SpecialDumpFile
+    use MLSL2Timings, only: Section_Times, Total_Times, AddphaseToPhaseNames
     use MLSMessageModule, only: MLSMessageReset
-    use moretree, only: get_field_id, get_boolean, get_label_and_spec, get_spec_id
-    use Next_Tree_Node_m, only: Next_Tree_Node, Next_Tree_Node_State
-    use output_m, only: blanks, output, &
-      & revertOutput, switchOutput
-    use quantityTemplates, only: addQuantityTemplateToDatabase, &
-      & quantityTemplate_t
-    use time_m, only: SayTime, time_now
-    use toggles, only: gen, levels, toggle
-    use trace_m, only: trace_begin, trace_end
-    use tree, only: decorate, nsons, subtree
-    use vectorsModule, only: addVectorTemplateToDatabase, &
-      & vector_t, vectorTemplate_t
+    use Moretree, only: Get_Field_Id, Get_Boolean, Get_Label_And_Spec, Get_Spec_Id
+    use Next_Tree_Node_M, only: Next_Tree_Node, Next_Tree_Node_State
+    use Output_M, only: Blanks, Output, &
+      & RevertOutput, SwitchOutput
+    use QuantityTemplates, only: AddQuantityTemplateToDatabase, &
+      & QuantityTemplate_T
+    use Time_M, only: SayTime, Time_Now
+    use Toggles, only: Gen, Levels, Toggle
+    use Trace_M, only: Trace_Begin, Trace_End
+    use Tree, only: Decorate, Nsons, Subtree
+    use VectorsModule, only: AddVectorTemplateToDatabase, &
+      & Vector_T, VectorTemplate_T
 
     ! Dummy arguments
     integer, intent(in) :: ROOT    ! Root of the tree for the Construct section
@@ -230,8 +262,13 @@ contains ! =====     Public Procedures     =============================
       case ( s_anygoodradiances )
         call decorate ( key, &
           & BooleanFromAnyGoodRadiances ( key, chunk, filedatabase ) )
+      case ( s_Boolean )
+        call decorate ( key,  BooleanFromFormula ( name, key ) )
       case ( s_catchWarning )
         call decorate ( key,  BooleanFromCatchWarning ( key ) )
+      case ( s_changeSettings )
+        call addPhaseToPhaseNames ( 0, key )
+
       case ( s_compare )
         call decorate ( key,  BooleanFromComparingQtys ( key, vectors ) )
       case ( s_dump )
@@ -250,20 +287,12 @@ contains ! =====     Public Procedures     =============================
           & processingRange, chunk ) ) )
       case ( s_phase )
         call addPhaseToPhaseNames ( name, key )
-      case ( s_changeSettings )
-        call addPhaseToPhaseNames ( 0, key )
-
       case ( s_quantity )
         call decorate ( key, AddQuantityTemplateToDatabase ( &
           & quantityTemplatesBase, CreateQtyTemplateFromMLSCfInfo ( name, key, &
             & fGrids, hGrids, filedatabase, chunk, mifGeolocation ) ) )
-      case ( s_Boolean )
-        call decorate ( key,  BooleanFromFormula ( name, key ) )
       case ( s_Reevaluate )
         call decorate ( key,  BooleanFromFormula ( 0, key ) )
-      case ( s_vectortemplate )
-        call decorate ( key, AddVectorTemplateToDatabase ( vectorTemplates, &
-          & CreateVecTemplateFromMLSCfInfo ( name, key, quantityTemplatesBase ) ) )
       case ( s_time )
         if ( timing .and. .not. reset ) then
           call sayTime
@@ -271,6 +300,9 @@ contains ! =====     Public Procedures     =============================
           call time_now ( t1 )
           timing = .true.
         end if
+      case ( s_vectortemplate )
+        call decorate ( key, AddVectorTemplateToDatabase ( vectorTemplates, &
+          & CreateVecTemplateFromMLSCfInfo ( name, key, quantityTemplatesBase ) ) )
       case default ! Can't get here if tree_checker worked correctly
       end select
       call trace_end ( "Construct.spec", cond=toggle(gen) .and. levels(gen) > 0 )
@@ -280,19 +312,6 @@ contains ! =====     Public Procedures     =============================
     call trace_end ( "MLSL2Construct", cond=toggle(gen) )
 
     if ( timing ) call sayTIme( "Timing for MLSL2Construct" )
-
-  contains
-    subroutine SayTimeHere
-      call time_now ( t2 )
-      if ( total_times ) then
-        call output ( "Total time = " )
-        call output ( dble(t2), advance = 'no' )
-        call blanks ( 4, advance = 'no' )
-      end if
-      call output ( "Timing for MLSL2Construct = " )
-      call output ( DBLE(t2 - t1), advance = 'yes' )
-      timing = .false.
-    end subroutine SayTimeHere
   end subroutine MLSL2Construct
 
   ! -------------------------------------------  MLSL2DeConstruct  -----
@@ -300,13 +319,13 @@ contains ! =====     Public Procedures     =============================
 
   ! DeConstruct the Vector template databases.
 
-    use HGridsDatabase, only: destroyHGridDatabase, HGrids_t
-    use MLSStringLists, only: switchDetail
-    use output_m, only: output
-    ! use quantityTemplates, only: destroyQuantityTemplateDatabase, &
-    !   & quantityTemplate_t
-    use toggles, only: switches
-    use vectorsModule, only: destroyVectorTemplateDatabase, vectorTemplate_t
+    use HGridsDatabase, only: DestroyHGridDatabase, HGrids_T
+    use MLSStringLists, only: SwitchDetail
+    use Output_M, only: Output
+    ! use QuantityTemplates, only: DestroyQuantityTemplateDatabase, &
+    ! & QuantityTemplate_T
+    use Toggles, only: Switches
+    use VectorsModule, only: DestroyVectorTemplateDatabase, VectorTemplate_T
 
     ! type (QuantityTemplate_T), dimension(:), pointer :: quantityTemplatesBase
     type (VectorTemplate_T), dimension(:), pointer :: vectorTemplates
@@ -343,6 +362,9 @@ end module Construct
 
 !
 ! $Log$
+! Revision 2.83  2017/02/23 21:45:18  pwagner
+! Removed unused internal subroutine; added toc and api
+!
 ! Revision 2.82  2016/11/08 17:33:51  pwagner
 ! process /reset field
 !
