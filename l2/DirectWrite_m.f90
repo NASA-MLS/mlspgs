@@ -24,26 +24,27 @@ module DirectWrite_m  ! alternative to Join/OutputAndClose methods
     ! or simply take too much time doing i/o
     ! so instead write them out chunk-by-chunk
 
-  use Allocate_deallocate, only: allocate_test
-  use HighOutput, only: beVerbose, LetsDebug, outputNamedValue, outputTable
-  use Init_tables_module, only: l_geodAltitude, l_pressure, l_zeta, &
-    & L_l2gp, l_l2aux, l_l2dgg, l_l2fwm
+  use Allocate_Deallocate, only: Allocate_Test
+  use HighOutput, only: BeVerbose, LetsDebug, OutputNamedValue, OutputTable
+  use Init_Tables_Module, only: L_GeodAltitude, L_Pressure, L_Zeta, &
+    & L_L2gp, L_L2aux, L_L2dgg, L_L2fwm
+  use L2ParInfo, only: Parallel
   use Machine, only: USleep
-  use MLSCommon, only: defaultUndefinedValue, Interval_T, MLSFile_T, &
+  use MLSCommon, only: DefaultUndefinedValue, Interval_T, MLSFile_T, &
     & InRange
-  use MLSKinds, only: rv
+  use MLSKinds, only: Rv
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
-  use MLSFiles, only: hdfversion_4, hdfversion_5, dump, MLS_Exists, &
-    & MLS_CloseFile, MLS_OpenFile, split_path_name
-  use MLSFinds, only: findFirst
-  use MLSHDFEOS, only: MLS_Swath_in_file
-  use MLSL2Options, only: writeFileAttributes
-  use MLSStringLists, only: switchDetail
-  use Output_m, only: blanks, output
+  use MLSFiles, only: HDFversion_4, HDFversion_5, Dump, MLS_Exists, &
+    & MLS_CloseFile, MLS_OpenFile, Split_Path_Name
+  use MLSFinds, only: FindFirst
+  use MLSHDFEOS, only: MLS_Swath_In_File
+  use MLSL2Options, only: WriteFileAttributes
+  use MLSStringLists, only: SwitchDetail
+  use Output_M, only: Blanks, Output
   use PCFHdr, only: GlobalAttributes
-  use String_table, only: get_string
-  use Toggles, only: switches
-  use VectorsModule, only: vector_t, vectorValue_t, dump
+  use String_Table, only: Get_String
+  use Toggles, only: Switches
+  use VectorsModule, only: Vector_T, VectorValue_T, Dump
 
   implicit none
   private
@@ -88,7 +89,7 @@ module DirectWrite_m  ! alternative to Join/OutputAndClose methods
     character(len=1024) :: fileName ! E.g., '/data/../MLS..H2O...he5'
   end type DirectData_T
   integer, parameter :: S2US  = 1000000 ! How many microseconds in a s
-  integer, parameter :: DELAY = 1*S2US  ! How long to sleep in microseconds
+  ! integer, parameter :: DELAY = 1*S2US  ! How long to sleep in microseconds
   logical, parameter :: DEEBUG = .false.
   logical, parameter :: MAYWRITEPOSTOVERLAPS = .true.
   ! For Announce_Error
@@ -175,13 +176,13 @@ contains ! ======================= Public Procedures =========================
   subroutine DirectRead_Quantity ( File, quantity, qtyName, &
     & chunkNo, options, rank )
 
-    use dates_module, only: tai93s2hid
-    use dump_0, only: dump
-    use hdf5, only: h5gclose_f, h5gopen_f
-    use MLSHDF5, only: GetHDF5Attribute, isHDF5GroupPresent, &
-      & getHDF5DSRank, loadFromHDF5DS
-    use MLSStringLists, only: optionDetail
-    use MLSStrings, only: writeIntsToChars
+    use Dates_Module, only: Tai93s2hid
+    use Dump_0, only: Dump
+    use HDF5, only: H5gclose_F, H5gopen_F
+    use MLSHDF5, only: GetHDF5Attribute, IsHDF5GroupPresent, &
+      & GetHDF5DSRank, LoadFromHDF5DS
+    use MLSStringLists, only: OptionDetail
+    use MLSStrings, only: WriteIntsToChars
     ! Args:
     type (VectorValue_T), intent(inout) :: QUANTITY
     character(len=*), intent(in) :: qtyName       ! Name of qty in output file
@@ -347,8 +348,8 @@ contains ! ======================= Public Procedures =========================
     
     ! Despite the name the routine takes vector quantities, not l2aux ones
     ! It dooes so an entrire vector's worth of vector quantities
-    use MLSStrings, only: writeIntsToChars
-    use string_table, only: get_string
+    use MLSStrings, only: WriteIntsToChars
+    use String_Table, only: Get_String
     ! Args:
     type (Vector_T), intent(in)   :: VECTOR
     type(MLSFile_T)               :: File
@@ -439,10 +440,10 @@ contains ! ======================= Public Procedures =========================
     ! status            status
     ! Convergence       Convergence
     ! AscDescMode       AscDescMode
-    use HDF, only: dfacc_create, dfacc_rdonly, dfacc_rdwr
-    use L2GPData, only: L2GPData_t, &
-      & appendL2GPData, destroyL2GPContents, dump
-    use readApriori, only: writeAPrioriAttributes
+    use HDF, only: Dfacc_Create, Dfacc_Rdonly, Dfacc_Rdwr
+    use L2GPData, only: L2GPData_T, &
+      & AppendL2GPData, DestroyL2GPContents, Dump
+    use ReadApriori, only: WriteAPrioriAttributes
     ! Args:
     type(MLSFile_T)               :: L2GPFile
     type (VectorValue_T), intent(in) :: QUANTITY
@@ -566,7 +567,8 @@ contains ! ======================= Public Procedures =========================
     endif
     if ( verbose ) call outputNamedValue( 'DW L2GP qty name', trim(sdName) )
     if ( verbose ) call dump( l2gp%chunkNumber, 'Appending chunkNumber' )
-    call usleep ( delay ) ! Should we make this parallel%delay?
+    ! call usleep ( delay ) ! Should we make this parallel%delay?
+    call usleep ( parallel%delay ) ! Done!
     call AppendL2GPData( l2gp, l2gpFile, &
       & sdName, offset, lastprofile=lastInstance, &
       & TotNumProfs=TotalProfs, createSwath=createSwath, &
@@ -590,9 +592,9 @@ contains ! ======================= Public Procedures =========================
     
     ! Despite the name the routine takes vector quantities, not l2aux ones
     ! It dooes so an entrire vector's worth of vector quantities
-    use chunks_m, only: MLSChunk_t
-    use forwardModelConfig, only: forwardModelConfig_t
-    use MLSStrings, only: writeIntsToChars
+    use Chunks_M, only: MLSChunk_T
+    use ForwardModelConfig, only: ForwardModelConfig_T
+    use MLSStrings, only: WriteIntsToChars
     ! Args:
     type(ForwardModelConfig_T), dimension(:), pointer :: FWModelConfig
     type (Vector_T), intent(in)   :: VECTOR
@@ -650,10 +652,10 @@ contains ! ======================= Public Procedures =========================
     ! so instead write them out chunk-by-chunk
     
     ! Despite the name the routine takes vector quantities, not l2aux ones
-    use chunks_m, only: MLSChunk_t
-    use chunkDivide_m, only: chunkDivideConfig
-    use forwardModelConfig, only: forwardModelConfig_t
-    use hdf, only: dfacc_rdonly
+    use Chunks_M, only: MLSChunk_T
+    use ChunkDivide_M, only: ChunkDivideConfig
+    use ForwardModelConfig, only: ForwardModelConfig_T
+    use HDF, only: Dfacc_Rdonly
 
     ! Args:
     type(ForwardModelConfig_T), dimension(:), pointer :: FWModelConfig
@@ -780,11 +782,11 @@ contains ! ======================= Public Procedures =========================
   subroutine DirectWrite_L2Aux_MF_hdf4 ( quantity, sdName, L2AUXFile, &
     & chunkNo, chunks, lowerOverlap, upperOverlap )
 
-    use chunks_m, only: MLSChunk_t
-    use hdf, only: sfn2index, sfselect, sfcreate, &
-      & sfendacc, dfnt_float32, sfwdata_f90
-    use intrinsic, only: l_none
-    use mlskinds, only: r4, r8
+    use Chunks_M, only: MLSChunk_T
+    use HDF, only: Sfn2index, Sfselect, Sfcreate, &
+      & Sfendacc, Dfnt_Float32, SfwData_F90
+    use Intrinsic, only: L_None
+    use MLSKinds, only: R4, R8
 
     ! Args:
     type (VectorValue_T), intent(in) :: QUANTITY
@@ -887,20 +889,20 @@ contains ! ======================= Public Procedures =========================
     & chunkNo, chunks, FWModelConfig, &
     & lowerOverlap, upperOverlap, single, options )
 
-    use chunks_m, only: MLSChunk_t
-    use chunkDivide_m, only: chunkdivideconfig
-    use forwardModelConfig, only: forwardmodelconfig_t
-    use forwardModelSupport, only: showfwdmodelnames
-    use hdf5, only: h5gclose_f, h5gopen_f
-    use intrinsic, only: l_none
-    use L2Auxdata, only:  l2auxdata_t, phasenameattributes, &
-      & destroyl2auxcontents, &
-      & setupnewl2auxrecord, writel2auxattributes
-    use MLSHDF5, only: ishdf5attributepresent, ishdf5dspresent, &
-      & makehdf5attribute, saveashdf5ds
-    use MLSL2Timings, only: showTimingNames
-    use PCFHdr, only: h5_writemlsfileattr, h5_writeglobalattr
-    use quantityTemplates, only: writeAttributes
+    use Chunks_M, only: MLSChunk_T
+    use ChunkDivide_M, only: Chunkdivideconfig
+    use ForwardModelConfig, only: Forwardmodelconfig_T
+    use ForwardModelSupport, only: Showfwdmodelnames
+    use HDF5, only: H5gclose_F, H5gopen_F
+    use Intrinsic, only: L_None
+    use L2AuxData, only: L2auxData_T, Phasenameattributes, &
+      & Destroyl2auxcontents, &
+      & Setupnewl2auxrecord, Writel2auxattributes
+    use MLSHDF5, only: IsHDF5attributepresent, IsHDF5dspresent, &
+      & MakeHDF5attribute, SaveasHDF5ds
+    use MLSL2Timings, only: ShowTimingNames
+    use PCFHdr, only: H5_WriteMLSFileattr, H5_Writeglobalattr
+    use QuantityTemplates, only: WriteAttributes
 
     ! Args:
     type (VectorValue_T), intent(in) :: QUANTITY
@@ -1133,12 +1135,12 @@ contains ! ======================= Public Procedures =========================
   subroutine DirectWrite_Quantity ( File, Quantity, QtyName, &
     & ChunkNo, Options, Rank, inputFile )
 
-    use HDF5, only: h5gclose_f, h5gcreate_f, h5gopen_f
-    use intrinsic, only: lit_indices
-    use MLSHDF5, only: ishdf5grouppresent, &
-      & makehdf5attribute, saveashdf5ds
+    use HDF5, only: H5gclose_F, H5gcreate_F, H5gopen_F
+    use Intrinsic, only: Lit_Indices
+    use MLSHDF5, only: IsHDF5grouppresent, &
+      & MakeHDF5attribute, SaveasHDF5ds
     use MLSL2Options, only: MLSMessage
-    use MLSSTrings, only: writeintstochars
+    use MLSSTrings, only: Writeintstochars
     use MoreMessage, only: MoreMLSMessage => MLSMessage
     ! Args:
     type(MLSFile_T)                  :: File
@@ -1529,9 +1531,9 @@ contains ! ======================= Public Procedures =========================
     & precision, quality, status, convergence, AscDescMode, &
     & l2gp, name, chunkNo, offset, firstInstance, lastInstance )
     use Dump_0, only: Dump
-    use intrinsic, only: l_none, lit_indices
-    use L2GPData, only: descendingRange, L2GPData_T, RGP, &
-      & setupNewL2GPRecord
+    use Intrinsic, only: L_None, Lit_Indices
+    use L2GPData, only: DescendingRange, L2GPData_T, RGP, &
+      & SetupNewL2GPRecord
     use QuantityTemplates, only: Dump
     ! Args:
     type (VectorValue_T), intent(in) :: quantity
@@ -1738,8 +1740,8 @@ contains ! ======================= Public Procedures =========================
   ! ---------------------------------------------  ANNOUNCE_ERROR  -----
   subroutine ANNOUNCE_ERROR ( Where, Full_message, Code, Penalty )
 
-    use lexer_core, only: print_source
-    use tree, only: where_at=>where
+    use Lexer_Core, only: Print_Source
+    use Tree, only: Where_At=>where
 
     ! Args:
     integer, intent(in) :: Where   ! Tree node where error was noticed
@@ -1781,6 +1783,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.86  2017/02/24 19:47:52  pwagner
+! Sleep time now same as parallel%delay
+!
 ! Revision 2.85  2016/09/21 00:39:46  pwagner
 ! Usually dump DirectDB as a table
 !
