@@ -1,0 +1,22 @@
+!divert(-1)
+; $Id$
+
+
+!define(retrophase,{InitPtan})
+
+!divert!dnl
+
+begin Fill
+  !define(flaggingBands,{1})
+  !define(flaggingRadiometers,{R1})!dnl
+  !makeQualityForOneProduct(product=Temperature,chisqScale=1.0,minRads=150,cloudMax=30K,cloudMin= -4K)
+  !makeStatusForOneProduct(product=Temperature,chisqScale=1.0,minRads=150,cloudMax=30K,cloudMin= -4K)
+  Skip, formula="not GHzScanHeightInvalid"
+  Fill, quantity=otherDiagnostics.statusTemperature_hr, method=explicit, $
+  explicitValues=!statusBadScan+!statusDoNotUse
+  Dump, text='GHzScanHeightInvalid, so ORing status with 1025.'
+
+
+end Fill
+
+; $Log$
