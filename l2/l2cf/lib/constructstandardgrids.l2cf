@@ -28,6 +28,7 @@ vGridMAFBaseline: vGrid, type=Logarithmic, coordinate=Zeta, $
   start=1mb, formula=[1:1]
 vGridExtinction: vGrid, type=Logarithmic, coordinate=Zeta, $
   start=1000mb, formula=[21:12,14:6,12:3]
+vGridRefGPHumls: vGrid, type=Explicit, coordinate=Zeta, values=10mb
 vGridRefGPH: vGrid, type=Explicit, coordinate=Zeta, values=100mb
 vGridRefIWC: vGrid, type=Explicit, coordinate=Zeta, values=32mb
 vGridRefIWP: vGrid, type=Explicit, coordinate=Zeta, values=650mb
@@ -76,7 +77,9 @@ vGridIterations: vGrid, type=Explicit, coordinate=Integer, $
 vGridPhases: vGrid, type=Explicit, coordinate=Integer, $
     values=[!allPhaseLevels]
 
-!ifdef(flagMagneticFieldOnHeightGrid,{!dnl
+;!ifdef(flagMagneticFieldOnHeightGrid,{!dnl
+!ifelse(!substr(!MagneticFieldGrid,0,3), {Alt},
+{!dnl
 vGridMag: vGrid, type=Linear, coordinate=geodAltitude, $
   start=-10 km, stop=150 km, number=17
 })
@@ -92,6 +95,9 @@ vGridWMO: VGrid, type=Logarithmic, coordinate=Zeta, $
 !divert(-1)
 
 ; $Log$
+; Revision 1.36  2015/03/27 17:57:59  pwagner
+; repaired error in prior commit
+;
 ; Revision 1.35  2015/02/27 21:37:33  pwagner
 ; Changes needed when Magnetic Field on Height Grid
 ;
