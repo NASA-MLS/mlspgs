@@ -66,7 +66,7 @@ begin Construct
     type=temperature
   GPH: Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=GPH
   GPH_HR: Quantity, vGrid=vGridHiRes, hGrid=hGridStandard, type=GPH
-  refGPH: Quantity, vGrid=vGridRefGPH, hGrid=hGridStandard, type=refGPH
+  refGPH: Quantity, vGrid=vGridRefGPHumls, hGrid=hGridStandard, type=refGPH
   refIWC: Quantity, vGrid=vGridRefIWC, hGrid=hGridStandard, type=CloudIce
   
   ;; ----------------------------------------- Volume mixing ratios
