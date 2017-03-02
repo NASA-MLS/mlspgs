@@ -20,11 +20,13 @@ module Load_SPS_Data_M
   public :: Load_Sps_Data, Load_One_Item_Grid, Load_Grid_From_Vector
   public :: Modify_Values_For_Supersat
   public :: Create_Grids_1, Create_Grids_2, Fill_Grids_1, Fill_Grids_2
-  public :: FindInGrid
+  public :: FindInGrid, Get_SPS_Bounds
   public :: EmptyGrids_t, Destroygrids_t, Dump, Dump_Grids
 
   type, public :: C_t ! "Contents" type, to get an array of pointers
+    real(rp), pointer :: V1(:) => NULL()      ! Frq * Zeta * Phi * Cross
     real(rp), pointer :: V4(:,:,:,:) => NULL() ! Frq X Zeta X Phi X Cross
+    logical, pointer :: L1(:) => NULL()       ! Frq * Zeta * Phi * Cross
     logical, pointer :: L4(:,:,:,:) => NULL() ! Frq X Zeta X Phi X Cross
   end type C_t
 
@@ -76,7 +78,7 @@ module Load_SPS_Data_M
                                                 ! corresponding to the values
     type(c_t), pointer :: C(:) => null()        ! Contents pointers, associated
                                                 ! with parts of Values(:) and
-                                                ! Deriv_Flags.
+                                                ! Deriv_Flags(:).
   contains
     procedure :: IsQTM
   end type Grids_T
@@ -104,7 +106,7 @@ contains
     use VectorsModule, only: VectorValue_T
 
     type (forwardModelConfig_T), intent(in) :: fwdModelConf
-    type (vectorValue_T), intent(in) ::  PHITAN  ! Tangent geodAngle component of
+    type (vectorValue_T), intent(in) ::  Phitan  ! Tangent geodAngle
     integer, intent(in) :: MAF
 
     type (Grids_T), intent(out) :: Grids_x   ! All the coordinates
@@ -712,9 +714,11 @@ contains
 
     ! Associate components of Grids_x%c with parts of Grids_x%Values
     ! and Grids_x%Deriv_Flags.
-    
-    Grids_x%c(ii)%v4(1:kf,1:kz,ws:wf,1:kx) => Grids_x%values(pv+1:qv)
-    Grids_x%c(ii)%l4(1:kf,1:kz,ws:wf,1:kx) => Grids_x%deriv_flags(pv+1:qv)
+
+    Grids_x%c(ii)%v1 => Grids_x%values(pv+1:qv)
+    Grids_x%c(ii)%v4(1:kf,1:kz,ws:wf,1:kx) => Grids_x%c(ii)%v1
+    Grids_x%c(ii)%l1 => Grids_x%deriv_flags(pv+1:qv)
+    Grids_x%c(ii)%l4(1:kf,1:kz,ws:wf,1:kx) => Grids_x%c(ii)%l1
 
   end subroutine Fill_Grids_2
 
@@ -779,7 +783,7 @@ contains
   end function IsQTM
 
   ! -----------------------------------------------  EmptyGrids_t  -----
-  subroutine EmptyGrids_t ( grids_x )
+  subroutine EmptyGrids_t ( Grids_x )
     ! Create a grids structure with all empty grids
     use Allocate_Deallocate, only: Allocate_test, Test_Allocate
 
@@ -816,6 +820,20 @@ contains
     call test_allocate ( stat, moduleName, 'Grids_x%C' )
 
   end subroutine EmptyGrids_t
+
+  ! ---------------------------------------------  Get_SPS_Bounds  -----
+  subroutine Get_SPS_Bounds ( Grids_x, SPS, V1, V2 )
+
+    ! Get the bounds in grids_x%values, etc., for SPS
+
+    type (Grids_T), intent(in) :: Grids_x
+    integer, intent(in) :: SPS
+    integer, intent(out) :: V1, V2
+
+    v1 = grids_x%l_v(sps-1)+1
+    v2 = grids_x%l_v(sps)
+
+  end subroutine Get_SPS_Bounds
 
   ! ---------------------------------------------  DestroyGrids_t  -----
   subroutine DestroyGrids_t ( grids_x )
@@ -1009,6 +1027,11 @@ contains
 end module LOAD_SPS_DATA_M
 
 ! $Log$
+! Revision 2.118  2017/02/04 02:13:56  vsnyder
+! Add type C_t and component C of that type, having components V4 and L4 to
+! view sections of Values and Deriv_Flags as rank-4 objects.
+! Use To_Log_Basis.
+!
 ! Revision 2.117  2017/01/21 03:09:39  vsnyder
 ! Spiff the dump
 !
