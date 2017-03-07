@@ -508,8 +508,8 @@ contains ! =====     Public procedures     =============================
       begin, t+t_geolocation, l+l_ECR, l+l_geocentric, l+l_geodetic, l+l_none, &
              n+n_dt_def, &
       begin, t+t_griddedOrigin, l+l_climatology, l+l_dao, l+l_geos5, &
-             l+l_geos5_7, l+l_gloria, l+l_merra, l+l_ncep, l+l_none, l+l_strat, &
-             l+l_surfaceHeight, n+n_dt_def, &
+             l+l_geos5_7, l+l_gloria, l+l_merra, l+l_merra_2, &
+             l+l_ncep, l+l_none, l+l_strat, l+l_surfaceHeight, n+n_dt_def, &
       begin, t+t_hGridType, l+l_explicit, l+l_fixed, l+l_fractional, &
              l+l_height, l+l_l2gp, l+l_QTM, l+l_regular, n+n_dt_def /) )
     call make_tree ( (/ &
@@ -2087,6 +2087,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.632  2017/03/07 21:20:30  pwagner
+! Support new meteorology origin: merra_2
+!
 ! Revision 2.631  2017/02/22 01:23:07  pwagner
 ! New /resetAll switch clears all Masking bits
 !
