@@ -12,47 +12,47 @@
 !=============================================================================
 module ReadAPriori
 
-  use Expr_m, only: expr
-  use HDF, only: dfacc_rdonly
-  use HighOutput, only: outputNamedValue
-  use Init_tables_module, only: f_auraInstrument, &
-    & f_date, f_dimlist, f_downsample, &
-    & f_field, f_file, f_grid, f_HDFVersion, f_missingvalue, f_noPCFid, &
-    & f_origin, f_quantitytype, f_sdname, f_deferReading, f_sum, f_swath, &
-    & field_first, field_last, &
-    & l_climatology, l_dao, l_geos5, l_geos5_7, l_gloria, &
-    & l_merra, l_ncep, l_none, l_strat, l_surfaceheight, &
-    & s_diff, s_dump, s_execute, s_gridded, s_l2aux, s_l2gp, s_readGriddedData
-  use Intrinsic, only: l_ascii, l_binary, l_hdfeos, l_hdf, l_swath, &
-    & phyq_dimensionless
-  use L2GPData, only: maxSwathNamesBufSize
-  use Lexer_core, only: print_source
-  use MLSCommon, only: filenamelen, MLSfile_t
-  use MLSFiles, only: filenotfound, &
-    & HDFVersion_4, HDFVersion_5, wildCardHDFVersion, &
-    & AddFileToDatabase, MLS_CloseFile, dump, getPCFromRef, initializeMLSFile, &
-    & MLS_HDF_Version, MLS_inqswath, MLS_openfile, split_path_name
-  use MLSl2Options, only: checkPaths, default_HDFVersion_read, L2CFNode, &
-    & RuntimeValues, specialDumpFile, toolkit, &
+  use Expr_M, only: Expr
+  use HDF, only: Dfacc_Rdonly
+  use HighOutput, only: OutputNamedValue
+  use Init_Tables_Module, only: F_AuraInstrument, &
+    & F_Date, F_Dimlist, F_Downsample, &
+    & F_Field, F_File, F_Grid, F_HDFVersion, F_MissingValue, F_NoPCFid, &
+    & F_Origin, F_Quantitytype, F_Sdname, F_DeferReading, F_Sum, F_Swath, &
+    & Field_First, Field_Last, &
+    & L_Climatology, L_Dao, L_Geos5, L_Geos5_7, L_Gloria, &
+    & L_Merra, L_Merra_2, L_Ncep, L_None, L_Strat, L_Surfaceheight, &
+    & S_Diff, S_Dump, S_Execute, S_Gridded, S_L2aux, S_L2gp, S_ReadGriddedData
+  use Intrinsic, only: L_Ascii, L_Binary, L_HDFeos, L_HDF, L_Swath, &
+    & Phyq_Dimensionless
+  use L2GPData, only: MaxSwathNamesBufSize
+  use Lexer_Core, only: Print_Source
+  use MLSCommon, only: Filenamelen, MLSFile_T
+  use MLSFiles, only: Filenotfound, &
+    & HDFVersion_4, HDFVersion_5, WildCardHDFVersion, &
+    & AddFileToDatabase, MLS_CloseFile, Dump, GetPCFromRef, InitializeMLSFile, &
+    & MLS_HDF_Version, MLS_Inqswath, MLS_OpenFile, Split_Path_Name
+  use MLSL2Options, only: CheckPaths, Default_HDFVersion_Read, L2CFNode, &
+    & RuntimeValues, SpecialDumpFile, Toolkit, &
     & DumpMacros, MLSMessage
-  use MLSMessagemodule, only: MLSMsg_error, MLSMsg_warning
+  use MLSMessagemodule, only: MLSMsg_Error, MLSMsg_Warning
   use MLSPCF2, only: &
-    & MLSPCF_l2apriori_start, MLSPCF_l2apriori_end, &
-    & MLSPCF_l2clim_start, MLSPCF_l2clim_end, &
-    & MLSPCF_l2dao_start, MLSPCF_l2dao_end, &
-    & MLSPCF_l2geos5_start, MLSPCF_l2geos5_end, &
-    & MLSPCF_l2ncep_start, MLSPCF_l2ncep_end, &
-    & MLSPCF_surfaceheight_start, MLSPCF_surfaceheight_end
-  use MLSStringLists, only: catLists, GetHashElement, switchDetail
-  use MLSStrings, only: lowercase
-  use MoreTree, only: get_boolean
-  use Output_m, only: blanks, output, revertOutput, switchOutput
+    & MLSPCF_L2apriori_Start, MLSPCF_L2apriori_End, &
+    & MLSPCF_L2clim_Start, MLSPCF_L2clim_End, &
+    & MLSPCF_L2dao_Start, MLSPCF_L2dao_End, &
+    & MLSPCF_L2geos5_Start, MLSPCF_L2geos5_End, &
+    & MLSPCF_L2ncep_Start, MLSPCF_L2ncep_End, &
+    & MLSPCF_Surfaceheight_Start, MLSPCF_Surfaceheight_End
+  use MLSStringLists, only: CatLists, GetHashElement, SwitchDetail
+  use MLSStrings, only: Lowercase
+  use MoreTree, only: Get_Boolean
+  use Output_M, only: Blanks, Output, RevertOutput, SwitchOutput
   use PCFHdr, only: GlobalAttributes
-  use SDPToolkit, only: pgs_s_success
-  use String_table, only: get_string
-  use Toggles, only: gen, switches, toggle
-  use Tree, only: decorate, decoration, nsons, &
-    &             sub_rosa, subtree, dump_tree_node, where
+  use SDPToolkit, only: Pgs_S_Success
+  use String_Table, only: Get_String
+  use Toggles, only: Gen, Switches, Toggle
+  use Tree, only: Decorate, Decoration, Nsons, &
+    & Sub_Rosa, Subtree, Dump_Tree_Node, Where
 
   implicit none
   private
@@ -146,18 +146,18 @@ contains ! =====     Public Procedures     =============================
 
   subroutine Read_apriori ( Root, L2GPDatabase, L2auxDatabase, GriddedDatabase, &
     & fileDataBase )
-    use dumpCommand_m, only: booleanFromFormula, ExecuteCommand, &
-      & MLSCase, MLSEndSelect, MLSSelect, MLSSelecting, skip
-    use griddedData, only: griddedData_t, dump
-    use init_tables_module, only: s_boolean, s_case, s_endselect, &
-      & s_select, s_skip
-    use L2AUXData, only: L2AUXData_t, dump
-    use L2GPData, only: L2GPData_t, dump
-    use MLSL2Timings, only: section_times
-    use moreTree, only: get_label_and_spec, get_spec_id
-    use next_tree_node_m, only: next_tree_node, next_tree_node_state
-    use trace_m, only: trace_begin, trace_end
-    use tree, only: decorate
+    use DumpCommand_M, only: BooleanFromFormula, ExecuteCommand, &
+      & MLSCase, MLSEndSelect, MLSSelect, MLSSelecting, Skip
+    use GriddedData, only: GriddedData_T, Dump
+    use Init_Tables_Module, only: S_Boolean, S_Case, S_Endselect, &
+      & S_Select, S_Skip
+    use L2AUXData, only: L2AUXData_T, Dump
+    use L2GPData, only: L2GPData_T, Dump
+    use MLSL2Timings, only: Section_Times
+    use MoreTree, only: Get_Label_And_Spec, Get_Spec_Id
+    use Next_Tree_Node_M, only: Next_Tree_Node, Next_Tree_Node_State
+    use Trace_M, only: Trace_Begin, Trace_End
+    use Tree, only: Decorate
     ! Dummy arguments
     integer, intent(in) :: ROOT    ! Of the Read a priori section in the AST
     type (l2gpdata_t), dimension(:), pointer :: L2GPDatabase
@@ -278,22 +278,23 @@ contains ! =====     Public Procedures     =============================
     & LastHeightPCF  , &
     & LastNCEPPCF     &
       )
-    use ChunkDivide_m, only: chunkDivideConfig
-    use Dumpcommand_m, only: dumpcommand
-    use GriddedData, only: rgr, griddedData_t, v_is_eta, v_is_pressure, &
-      & AddGriddedDataToDatabase, copyGrid, &
-      & DestroyGriddedData, downSampleGriddedData, dump, &
-      & Setupnewgriddeddata
-    use L2AUXData, only: L2AUXdata_t, addL2AUXtodatabase, &
-      &                  dump
-    use L2GPdata, only: l2GPdata_t, &
-      & Addl2GPtodatabase, dump
-    use Moretree, only: get_label_and_spec, get_spec_id
-    use Ncep_dao, only: read_climatology, readgriddeddata, readgloriafile
-    use Surfaceheight_m, only: open_surface_height_file, &
-      & Read_surface_height_file, close_surface_height_file
+    use ChunkDivide_M, only: ChunkDivideConfig
+    use Dumpcommand_M, only: Dumpcommand
+    use GriddedData, only: Rgr, GriddedData_T, V_Is_Eta, V_Is_Pressure, &
+      & AddGriddedDataToDatabase, CopyGrid, &
+      & DestroyGriddedData, DownSampleGriddedData, Dump, &
+      & SetupnewgriddedData
+    use L2AUXData, only: L2AUXData_T, AddL2AUXtoDatabase, &
+      & Dump
+    use L2GPData, only: L2GPData_T, &
+      & Addl2GPtoDatabase, Dump
+    use Moretree, only: Get_Label_And_Spec, Get_Spec_Id
+    use Ncep_Dao, only: ReadgriddedData
+    use ReadgriddedUtils, only: Read_Climatology, ReadgloriaFile
+    use Surfaceheight_M, only: Open_Surface_Height_File, &
+      & Read_Surface_Height_File, Close_Surface_Height_File
     use Toggles, only: Gen, Levels, Toggle
-    use Trace_m, only: trace_begin, trace_end
+    use Trace_M, only: Trace_Begin, Trace_End
 
     ! Dummy arguments
     integer, intent(in) :: ROOT    ! Of the Read a priori section in the AST
@@ -716,23 +717,25 @@ contains ! =====     Public Procedures     =============================
           call announce_success(FilenameString, 'dao not found--carry on', &
              & fieldNameString, MLSFile=GriddedFile)
         end if
-      case ( l_geos5, l_geos5_7, l_merra ) ! ------------ GMAO Data (GEOS5*)
+      case ( l_geos5, l_geos5_7, l_merra, l_merra_2 ) ! --- GMAO Data (GEOS5*)
         call get_pcf_id ( fileNameString, path, subString, l2apriori_version, &
           & mlspcf_l2geos5_start, mlspcf_l2geos5_end, 'geos5', got(f_file), &
           & LastGEOS5PCF, returnStatus, noPCFid, verbose, debug )
-        if (griddedOrigin == l_geos5_7) then ! since geos5_7 is HDF5
+        if ( &
+          & any( griddedOrigin == (/ l_geos5_7, l_merra_2 /) ) &
+          & ) then ! since geos5_7 and merra_2 are HDF5
             FileIndex = InitializeMLSFile(GriddedFile, content='gridded', &
             name=FilenameString, shortName=shortFileName, &
             type=l_hdf, access=DFACC_RDONLY, hdfVersion=HDFVERSION_5, &
             PCBottom=mlspcf_l2geos5_start, PCTop=mlspcf_l2geos5_end)
-        else ! and the rest is HDF-EOS
+        else ! and the rest are HDF-EOS
             FileIndex = InitializeMLSFile(GriddedFile, content = 'gridded', &
               & name=FilenameString, shortName=shortFileName, &
               & type=l_hdfeos, access=DFACC_RDONLY, hdfVersion=HDFVERSION_4, &
               & PCBottom=mlspcf_l2geos5_start, PCTop=mlspcf_l2geos5_end)
         end if
         GriddedFile%PCFId = LastGEOS5PCF
-        FileIndex = AddFileToDataBase(filedatabase, GriddedFile)
+        FileIndex = AddFileToDataBase( filedatabase, GriddedFile )
 
         ! We will decide whether it's geos4 or geos5 based on the field name
         select case ( lowercase(fieldNameString) )
@@ -753,8 +756,15 @@ contains ! =====     Public Procedures     =============================
           description = 'geos5'
           v_type = V_is_eta
         end select
-        if ( griddedOrigin == l_merra ) description = 'merra'
-        if ( griddedOrigin == l_geos5_7 ) description = 'geos5_7'
+        ! We may override these based on the origin field
+        select case ( griddedOrigin )
+        case ( l_merra ) 
+          description = 'merra'
+        case ( l_merra_2 ) 
+          description = 'merra_2'
+        case ( l_geos5_7 ) 
+          description = 'geos5_7'
+        end select
         if ( DEBUG ) then
           call outputNamedValue( 'fileName', fileNameString )
           call outputNamedValue( 'fieldName', fieldNameString )
@@ -763,7 +773,7 @@ contains ! =====     Public Procedures     =============================
         end if
 
         if ( .not. associated(grid) ) then
-          ! The gridded data needs to part of the database, even if the file
+          ! The gridded data needs to be part of the database, even if the file
           ! won't be found and the gridded data empty,
           ! so it can be merged w/o segment faulting
           gridIndex = AddGriddedDataToDatabase( GriddedDatabase, tempGrid )
@@ -963,8 +973,8 @@ contains ! =====     Public Procedures     =============================
     & noPCFid, PCBottom, PCTop, quantityType, &
     & LastAprioriPCF, Debug, &
     & L2AUX, L2AUXFile, fileDatabase )
-   use L2AUXData, only: L2AUXdata_t, addL2AUXtodatabase, &
-    &                  readL2AUXdata
+   use L2AUXData, only: L2AUXData_t, AddL2AUXToDatabase, &
+    &                  ReadL2AUXData
    ! Process an a priori l2gp
     ! Args:
     character(len=FileNameLen)              :: FileNameString   ! actual literal file name
@@ -1018,8 +1028,8 @@ contains ! =====     Public Procedures     =============================
     & LastAprioriPCF, HMOT, Debug, &
     & L2GP, L2GPFile )
     ! Process an a priori l2gp
-    use L2GPdata, only: l2GPdata_t, &
-      & readl2GPdata, dump
+    use L2GPData, only: L2GPData_T, &
+      & Readl2GPData, Dump
     ! Args:
     character(len=FileNameLen)     :: FileNameString   ! actual literal file name
     character(len=FileNameLen)     :: SWATHNAMESTRING ! actual literal swath name
@@ -1111,11 +1121,11 @@ contains ! =====     Public Procedures     =============================
     subroutine Get_PCF_Id ( FileNameString, Path, SubString, L2Apriori_Version, &
       & FirstPCF, LastPCF, Description, GotFile, PCF_Id, ReturnStatus, noPCFid, &
       & verbose, debug )
-      use MLSFiles, only: getpcfromref, split_path_name
-      use MLSL2Options, only: toolkit
-      use SDPToolkit, only: pgs_pc_getreference, pgs_s_success
+      use MLSFiles, only: Getpcfromref, Split_Path_Name
+      use MLSL2Options, only: Toolkit
+      use SDPToolkit, only: Pgs_Pc_Getreference, Pgs_S_Success
       use Toggles, only: Gen, Levels, Toggle
-      use Trace_m, only: trace_begin, trace_end
+      use Trace_M, only: Trace_Begin, Trace_End
 
       ! Args
       character(len=*), intent(inout) :: FileNameString
@@ -1470,6 +1480,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.119  2017/03/07 21:21:01  pwagner
+! Support new meteorology origin: merra_2
+!
 ! Revision 2.118  2017/01/13 01:31:40  pwagner
 ! Avoid excess output when feeling around for right meteorology file type
 !
