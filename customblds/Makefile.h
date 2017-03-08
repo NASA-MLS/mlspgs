@@ -234,13 +234,13 @@ string_table.o: string_table.mod
 	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
    -T string_table.o string_table.mod 
 
-# ncep_dao module doesn't play well with the lf95 undefined variable
+# readGriddedUtils module doesn't play well with the lf95 undefined variable
 # runtime checker because of endian swapping
-ncep_dao.mod:
-	$(UTILDIR)/newAifBdiff.sh -a ncep_dao.mod $(FC) -c $(NOUNASS) $(INC_PATHS) $(S)/ncep_dao.f90 $(FAFTER)
-ncep_dao.o: ncep_dao.mod
+readgriddedutils.mod:
+	$(UTILDIR)/newAifBdiff.sh -a readgriddedutils.mod $(FC) -c $(NOUNASS) $(INC_PATHS) $(S)/readGriddedUtils.f90 $(FAFTER)
+readGriddedUtils.o: readgriddedutils.mod
 	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
-   -T ncep_dao.o ncep_dao.mod 
+   -T readGriddedUtils.o readgriddedutils.mod 
 
 else # end ifndef CASCADE
 # i.e. CASCADE IS defined
@@ -381,10 +381,10 @@ Hdf.o:
 string_table.o:
 	$(FC) -c $(BUGGY) $(INC_PATHS) $(S)/string_table.f90 $(FAFTER)
 
-# ncep_dao module doesn't play well with the lf95 undefined variable
+# readGriddedUtils module doesn't play well with the lf95 undefined variable
 # runtime checker because of endian swapping
-ncep_dao.o:
-	$(FC) -c $(NOUNASS) $(INC_PATHS) $(S)/ncep_dao.f90 $(FAFTER)
+readGriddedUtils.o:
+	$(FC) -c $(NOUNASS) $(INC_PATHS) $(S)/readGriddedUtils.f90 $(FAFTER)
 
 endif  # end CASCADE
 endif  # END not doc
@@ -539,6 +539,9 @@ wvs-136-lines.pdf: wvs-136-lines.obj
 
 endif # end shortn_name == doc
 # $Log$
+# Revision 1.24  2016/11/04 23:26:58  pwagner
+# Now builds  doc/wvs-136 properly
+#
 # Revision 1.23  2016/06/08 00:00:41  pwagner
 # Prevent creating unwanted text files in lib, etc. with names of machine directories
 #

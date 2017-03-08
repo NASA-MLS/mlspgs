@@ -44,7 +44,7 @@ endif
 OMIT_PREFXD := $(shell ${REECHO} -prefix=-d $(OMIT_SRCS))
 
 #These modules require custom builds, so omit build commands from dependencies
-CUSTOM_BUILDS := Hdf.f90 string_table.f90 ncep_dao.f90
+CUSTOM_BUILDS := Hdf.f90 string_table.f90 readGriddedUtils.f90
 CUSTOM_PREFXD := $(shell ${REECHO} -prefix=-db $(CUSTOM_BUILDS))
 
 ifdef HDFINC
@@ -181,6 +181,9 @@ $(testsubdirs):
 	echo "Making $@"
 	$(MAKE) -f $(MakeFName) -C $@
 # $Log$
+# Revision 2.2  2016/03/02 00:56:12  pwagner
+# Omits compiling PseudoToolkit.f90
+#
 # Revision 2.1  2015/08/10 23:20:33  pwagner
 # After switching away from MakeFC
 #
