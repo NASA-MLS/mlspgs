@@ -39,9 +39,9 @@ begin Fill
   ;; which will be used later, incidentally
   !fillWithClimatology(refGPH)
   Fill, quantity=apriori.GPH, method=gridded, $
-    sourceGrid=gridrefGPH
+    sourceGrid=gridGPHWACCM
   Fill, quantity=apriori.GPH_HR, method=gridded, $
-    sourceGrid=gridrefGPH
+    sourceGrid=gridGPHWACCM
 })
   !ifdef(flagSetTopOfHCl,{
 
@@ -149,9 +149,9 @@ begin Fill
   !ifdef(flagPrecisionEstimates,{
   ; PEs have read in an apriori reference GPH from climatology
   },{
-!ifdef(flagUseOperationalGPH, {
+!ifdef(flagUseWACCMrefGPHapriori, {
 Fill, quantity=apriori.refGPH,$
-    method=gridded, sourceGrid=mergedGPH
+    method=gridded, sourceGrid=gridGPHWACCM
 },{
     Fill, quantity=apriori.refGPH, method=explicit, $
       explicitvalues=16 km,/spread})
@@ -636,6 +636,9 @@ end Fill
 !ifdef(flagdelaywriteapriori, {},{!include(writeapriori.l2cf)})
 !divert(-1)
 ;$Log$
+;Revision 1.1  2017/02/24 23:49:19  mjschwar
+;Adding umls specific code to standard parts
+;
 ;Revision 1.6  2015/10/06 17:43:07  pwagner
 ;Consistent with latest FillMagneticField api
 ;
