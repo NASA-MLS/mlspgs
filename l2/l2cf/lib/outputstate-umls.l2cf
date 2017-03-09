@@ -1,0 +1,9 @@
+
+begin Output
+
+;; We don't want standard product files, just concatinated DGG
+;; and DGM files 
+Sleep, time=10000us
+Catenate
+
+end Output
