@@ -745,12 +745,14 @@ Begin Fill
 !ifelse($1,{GPH}, {
   ;; Do fancy things to make the GPH agree with the temperature
   Fill, quantity=tempVectorState.!theQuantity, method=hydrostatic, $
-    refGPHQuantity=standardProducts.refGPH, temperatureQuantity=tempVectorState.temperature_hr
+    refGPHQuantity=state.refGPH, temperatureQuantity=tempVectorState.temperature_hr
   ;; Copy the flags over from temperature to GPH
   Fill, quantity=standardDiagnostics.status!theQuantity, method=vector, $
     sourceQuantity=standardDiagnostics.statusTemperature_hr, /ignoreTemplate
   Fill, quantity=standardDiagnostics.quality!theQuantity, method=vector, $
     sourceQuantity=standardDiagnostics.qualityTemperature_hr, /ignoreTemplate
+  Fill, quantity=standardDiagnostics.convergence!theQuantity, method=vector, $
+    sourceQuantity=standardDiagnostics.convergenceTemperature_hr, /ignoreTemplate
 End Fill
 
 ;; Because we clobbered our outputPrecision.gph, let's fill it again
@@ -1179,6 +1181,9 @@ Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, $
 })})
 
 ; $Log$
+; Revision 1.1  2017/02/24 23:49:19  mjschwar
+; Adding umls specific code to standard parts
+;
 ; Revision 1.3  2014/12/10 23:06:08  pwagner
 ; Correct erroneous calculation of AscDescMode; now based on geodAngle
 ;

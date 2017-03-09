@@ -228,6 +228,10 @@ changesyntax({@!})
 })})
 !define(tidyList,{!tidyOneWord({$1})!ifelse($#,1,{},{,!tidyList}(!shift($@)))})
 
+;; These surround each arg with quotes
+!define(quoteArg,{"$1"})
+!define(quoteList,{!quoteArg({$1})!ifelse($#,1,{},{,!quoteList}(!shift($@)))})
+
 ;; These remove left and right brackets
 !define(snipLBracket,{!translit({$1},{[})})
 !define(snipRBracket,{!translit({$1},{]})})
@@ -241,6 +245,9 @@ changesyntax({@!})
 ;; (for things like flaggingBands)
 !define(nargs, {$#})
 ;$Log$
+;Revision 1.21  2014/02/11 23:26:32  pwagner
+;Fixed various bugs in flattening lists
+;
 ;Revision 1.20  2013/12/03 23:55:24  pwagner
 ;These changes make removeItem work more reliably with list2pct
 ;

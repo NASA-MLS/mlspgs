@@ -17,7 +17,7 @@
 {!define(allRadiometers,{R1,R2,R3})})
 !define(allDACS,{DACS22,DACS23,DACS24,DACS25,DACS26})
 !define(allMBs,{MB27,MB28,MB29,MB30,MB31})
-!define(allBands,{!forloop({i},1,5,{!i, })6}) ; 1,2,3..34
+!define(allBands,{!forloop({i},1,6,{!i, })7}) ; 1,2,3..34
 !define(allBandLSBs,{!makelist({},{L},!allBands)})
 !define(allBandUSBs,{!makelist({},{U},!allBands)})
 !define(allspecFBs,{})
@@ -1011,12 +1011,14 @@ End Join
   !define(statusLowCloud,32)
 ;; Bit 6 - Missing gmao--fallback to climatology
   !define(statusMissingGMAO,64)
-;; Bit 7 - The retrieval was abandoned du to a numerical problem
+;; Bit 7 - The retrieval was abandoned due to a numerical problem
   !define(statusAbandonedRtrvl,128)
 ;; Bit 8 - This profile is based on too few radiances
   !define(statusTooFewRadiances,256)
 ;; Bit 9 - This level 2 run tasked with this profile crashed
   !define(statusL2Crashed,512)
+;; Bit 10 - This MAF's scan was bad
+  !define(statusBadScan,1024)
 
 ; --------------------------------------------- Cloud specific stuff
 
@@ -1177,6 +1179,9 @@ Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, $
 })})
 
 ; $Log$
+; Revision 1.3  2014/12/10 23:06:08  pwagner
+; Correct erroneous calculation of AscDescMode; now based on geodAngle
+;
 ; Revision 1.2  2014/12/02 18:58:10  pwagner
 ; May skip flagging for cloudy Status
 ;

@@ -13,8 +13,9 @@ begin Construct
   MaxOutOfRange: Boolean, formula="false"
   GHzScanHeightMif2: quantity, type=geolocation, module= GHz
   GHzScanHeightMif28: quantity, type=geolocation, module= GHz
+  referenceMIF: quantity, type=geolocation, module= GHz
   heightsTemplate: VectorTemplate, quantities = [ $
-    GHzScanHeightMif2, GHzScanHeightMif28 ]
+    GHzScanHeightMif2, GHzScanHeightMif28, referenceMIF ]
 end Construct
 begin Retrieve 
   Subset, quantity=apriori.tngtGeodAltGHz, mask=fill, surface=[ 2:2 ]

@@ -5,6 +5,8 @@
 ; Some phase(s) may not have Retrieve sections
 ; and so we'll need to know the last one
 !define(retrophase,{!phase})
+; If we can't fix all of the THz problems in level 1
+!ifdef(flagSumR5Rads,{!undefine(flagTooFewRadsByBand)})
 
 !divert!dnl
 ; This l2cf fragment does all the quality flagging for the Core+R5
@@ -38,6 +40,9 @@ begin Fill
 end Fill
 
 ; $Log$
+; Revision 1.13  2009/05/12 18:51:36  pwagner
+; Replaced Band 17 with Band 16
+;
 ; Revision 1.12  2006/11/01 19:13:14  pwagner
 ; Removed R3 as flagging radiometer
 ;
