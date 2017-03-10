@@ -711,7 +711,7 @@ contains ! =====     Public Procedures     =============================
     integer, dimension(2), intent(in), optional   :: chunks     ! range
     ! Local variables
     integer :: i, n
-    integer, dimension(:), pointer :: intrsctn
+    integer, dimension(:), allocatable :: intrsctn
     integer, dimension(4000) :: tempTimes  ! subscripts
     real(r8), dimension(2)  :: times
     integer :: useFreqs  
@@ -756,7 +756,7 @@ contains ! =====     Public Procedures     =============================
           ! Reverse sense (i.e., find outside of range)
           call FindInRange( ol2gp%latitude, latitudes, tempTimes, n, options='-r' )
         endif
-        intrsctn => Intersection( whichTimes(1:useTimes), tempTimes(1:n) )
+        intrsctn = Intersection( whichTimes(1:useTimes), tempTimes(1:n) )
         useTimes = size(intrsctn)
         whichTimes(1:useTimes) = intrsctn
         if ( DeeBug ) then
@@ -778,7 +778,7 @@ contains ! =====     Public Procedures     =============================
           ! Reverse sense (i.e., find outside of range)
           call FindInRange( ol2gp%longitude, longitudes, tempTimes, n, options='-r' )
         endif
-        intrsctn => Intersection( whichTimes(1:useTimes), tempTimes(1:n) )
+        intrsctn = Intersection( whichTimes(1:useTimes), tempTimes(1:n) )
         useTimes = size(intrsctn)
         whichTimes(1:useTimes) = intrsctn
         if ( DeeBug ) then
@@ -811,7 +811,7 @@ contains ! =====     Public Procedures     =============================
       call FindInRange( ol2gp%chunkNumber, chunks, tempTimes, n )
     endif
     if ( present(intimes) .or. present(hoursInDay) .or. present(chunks) ) then
-      intrsctn => Intersection( whichTimes(1:useTimes), tempTimes(1:n) )
+      intrsctn = Intersection( whichTimes(1:useTimes), tempTimes(1:n) )
       useTimes = size(intrsctn)
       whichTimes(1:useTimes) = intrsctn
       if ( DeeBug ) then
@@ -5418,6 +5418,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.225  2016/11/03 22:39:14  pwagner
+! Begin transition to the Time_m implmentation of sayTime
+!
 ! Revision 2.224  2016/09/07 22:46:21  pwagner
 ! Removed unused QuantityType component from L2GPData type
 !
