@@ -188,8 +188,8 @@ module MLSNumbers              ! Some number theoretic datatypes, procedures
   ! "1" is represnted by c%factors remaining unassoiated
   ! Should we move this datatype and its procedures to a separate module?
   type CompositeNum_T
-    integer, dimension(:), pointer  :: factors => null()
-    integer, dimension(:), pointer  :: powers => null()
+    integer, dimension(:), allocatable  :: factors
+    integer, dimension(:), allocatable  :: powers
   end type
 
   type RationalNum_T
@@ -604,7 +604,7 @@ contains
     integer                           :: na
     integer                           :: nb
     ! Executable
-    if (  associated(a%factors) .and. associated(b%factors) ) then
+    if (  allocated(a%factors) .and. allocated(b%factors) ) then
       ! c%factors = Intersection( a%factors, b%factors )
       ! c%powers =  Intersection( a%powers, b%powers )
       c = CompositeNum_T( &
@@ -686,7 +686,7 @@ contains
     if ( n < 1 ) then
       isEqual_int = .false.
       return
-    else if ( .not. associated(a%factors) ) then
+    else if ( .not. allocated(a%factors) ) then
       isEqual_int = ( n == 1 )
       return
     end if
@@ -715,7 +715,7 @@ contains
 
   logical function IsOne( A )
     type(CompositeNum_T), intent(in) :: A
-    isOne = ( .not. associated(A%factors) )
+    isOne = ( .not. allocated(A%factors) )
   end function IsOne
 
   ! --------------- IsPrime_composite --------------------
@@ -1273,6 +1273,9 @@ end module MLSNumbers
 
 !
 ! $Log$
+! Revision 2.4  2017/03/10 00:39:19  vsnyder
+! Make components of CompositeNum_T allocatable
+!
 ! Revision 2.3  2016/07/28 01:35:51  vsnyder
 ! Remove unused variable declaration
 !
