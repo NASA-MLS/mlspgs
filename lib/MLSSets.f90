@@ -552,7 +552,6 @@ contains ! =====     Public Procedures     =============================
   ! arrays of integers, characters
   function UnionInteger ( A, B ) result ( C )
 
-    use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_ERROR
     use Sort_M, only: SORT
 
     integer, intent(in) :: A(:), B(:)
@@ -575,9 +574,6 @@ contains ! =====     Public Procedures     =============================
       end do
     end do
 
-    allocate ( c(i), stat=stat )
-    if ( stat /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-      MLSMSG_Allocate // 'C in Intersection' )
     c = t(:i)
 
   end function UnionInteger
@@ -586,7 +582,6 @@ contains ! =====     Public Procedures     =============================
     ! Method:
     ! 1st go through a, adding all non-repeated elements
     ! Then go through b, adding any that haven't been added already
-    use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_ERROR
 
     character(len=*), dimension(:), intent(in) :: A, B
     character(len=len(a)), allocatable :: C(:) ! Intent(out) -- allocated here
@@ -621,10 +616,6 @@ contains ! =====     Public Procedures     =============================
     end do
     ! print *, 'size(c): ', size_c    
     ! print *, 'tc: ', tc(1:size_c)
-    if ( size_c < 1 ) return
-    allocate ( c(size_c), stat=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-      MLSMSG_Allocate // 'C in UnionCharacter' )
     c = tc(:size_c)
   end function UnionCharacter
 
@@ -673,6 +664,9 @@ contains ! =====     Public Procedures     =============================
 end module MLSSets
 
 ! $Log$
+! Revision 2.34  2017/03/10 00:59:01  vsnyder
+! Return an empty set instead of undefined result from UnionCharacter
+!
 ! Revision 2.33  2017/03/10 00:38:10  vsnyder
 ! Make results of Intersection, RelativeComplement, Union allocatable
 !
