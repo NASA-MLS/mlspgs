@@ -557,7 +557,7 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in) :: A(:), B(:)
     integer, allocatable :: C(:) ! Intent(out) -- allocated here
 
-    integer :: I, J, Stat, T(size(a)+size(b))
+    integer :: I, J, T(size(a)+size(b))
 
     t(1:size(a)) = a
     t(size(a)+1:size(t)) = b
@@ -586,7 +586,7 @@ contains ! =====     Public Procedures     =============================
     character(len=*), dimension(:), intent(in) :: A, B
     character(len=len(a)), allocatable :: C(:) ! Intent(out) -- allocated here
     ! Local variables
-    integer :: i, j, size_c, status
+    integer :: i, j, size_c
     character(len=len(a)), dimension(size(a)+size(b)) :: TC
     
     ! Executable
@@ -664,6 +664,9 @@ contains ! =====     Public Procedures     =============================
 end module MLSSets
 
 ! $Log$
+! Revision 2.35  2017/03/10 01:00:02  vsnyder
+! Remove declarations of unused variables
+!
 ! Revision 2.34  2017/03/10 00:59:01  vsnyder
 ! Return an empty set instead of undefined result from UnionCharacter
 !
