@@ -100,6 +100,7 @@ Switches (set by -S option in mlsl2's command line):
  mcf     => Dump lines read from MCF to create metadata control group db or
              show steps in creating group db
  mem[units] => Show system memory usage [in units; default is kB]
+ merra_2 => Show merra_2 meteorology fields as they are read
  mess[n] => How to prefix log messages: with (0) none, (1) severity,
             (2) module names, (3) both (actually the default)
  metd[n] => Dump nonoptional outputs from metrics, stop if n > 0
@@ -226,6 +227,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.101  2017/01/25 17:26:51  pwagner
+ Changed switch setting for tree_walker to '-Swalker'
+
  Revision 1.100  2016/05/02 23:30:20  vsnyder
  Remove ptg, which is not used in FullForwardModel
 
