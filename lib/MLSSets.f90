@@ -315,8 +315,8 @@ contains ! =====     Public Procedures     =============================
     use Sort_M, only: SORT
 
     integer, dimension(:), intent(in)      :: A, B
-    integer, dimension(:), pointer         :: C ! Intent(out) -- nullified and
-    character(len=*), optional, intent(in) :: options  ! then allocated here
+    integer, dimension(:), allocatable     :: C ! Intent(out) -- allocated here
+    character(len=*), optional, intent(in) :: options
 
     integer :: size_c, status
     integer :: I, J, K, Stat, TA(size(a)), TB(size(b)), TC(size(a)+size(b))
@@ -350,7 +350,6 @@ contains ! =====     Public Procedures     =============================
         end if
       end do
 
-      nullify ( c )
       allocate ( c(k), stat=stat )
       if ( stat /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
         MLSMSG_Allocate // 'C in IntersectionInteger' )
@@ -365,8 +364,8 @@ contains ! =====     Public Procedures     =============================
     use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_ERROR
 
     character(len=*), dimension(:), intent(in)   :: A, B
-    character(len=len(a)), dimension(:), pointer :: C ! Intent(out) -- nullified and 
-    character(len=*), optional, intent(in)       :: options    ! then allocated here
+    character(len=len(a)), allocatable :: C(:) ! Intent(out) -- allocated here
+    character(len=*), optional, intent(in)       :: options
     ! Local variables
     integer :: i, j, size_c, status
     character(len=len(a)), dimension(size(a)+size(b)) :: TC
@@ -512,9 +511,10 @@ contains ! =====     Public Procedures     =============================
   function RelativeComplementInteger ( A, B ) result ( C )
 
     integer, intent(in) :: A(:), B(:)
-    integer, pointer :: C(:) ! Intent(out) -- nullified and then allocated here
+    integer, allocatable :: C(:) ! Intent(out) -- allocated here
 
-    C => Intersection ( B, A, options = 'c' )
+!   call move_alloc ( Intersection ( B, A, options = 'c' ), c ) doesn't work
+    C = Intersection ( B, A, options = 'c' )
   end function RelativeComplementInteger
 
   function RelativeComplementCharacter ( A, B ) result ( C )
@@ -523,25 +523,28 @@ contains ! =====     Public Procedures     =============================
     ! If  not, add the element
 
     character(len=*), dimension(:), intent(in) :: A, B
-    character(len=len(a)), dimension(:), pointer :: C ! Intent(out) -- nullified and then allocated here
+    character(len=len(a)), allocatable :: C(:) ! Intent(out) -- allocated here
 
-    C => Intersection ( B, A, options = 'c' )
+!   call move_alloc ( Intersection ( B, A, options = 'c' ), c ) doesn't work
+    C = Intersection ( B, A, options = 'c' )
   end function RelativeComplementCharacter
 
   function RelativeComplementDouble ( A, B ) result ( C )
 
     double precision, intent(in) :: A(:), B(:)
-    double precision, pointer :: C(:) ! Intent(out) -- nullified and then allocated here
+    double precision, allocatable :: C(:) ! Intent(out) - allocated here
 
-    C => Intersection ( B, A, options = 'c' )
+!   call move_alloc ( Intersection ( B, A, options = 'c' ), c ) doesn't work
+    C = Intersection ( B, A, options = 'c' )
   end function RelativeComplementDouble
 
   function RelativeComplementReal ( A, B ) result ( C )
 
     real, intent(in) :: A(:), B(:)
-    real, pointer :: C(:) ! Intent(out) -- nullified and then allocated here
+    real, allocatable :: C(:) ! Intent(out) -- allocated here
 
-    C => Intersection ( B, A, options = 'c' )
+!   call move_alloc ( Intersection ( B, A, options = 'c' ), c ) doesn't work
+    C = Intersection ( B, A, options = 'c' )
   end function RelativeComplementReal
 
   ! ------------------------------------------------------  Union  -----
@@ -553,7 +556,7 @@ contains ! =====     Public Procedures     =============================
     use Sort_M, only: SORT
 
     integer, intent(in) :: A(:), B(:)
-    integer, pointer :: C(:) ! Intent(out) -- nullified and then allocated here
+    integer, allocatable :: C(:) ! Intent(out) -- allocated here
 
     integer :: I, J, Stat, T(size(a)+size(b))
 
@@ -586,7 +589,7 @@ contains ! =====     Public Procedures     =============================
     use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_ERROR
 
     character(len=*), dimension(:), intent(in) :: A, B
-    character(len=len(a)), dimension(:), pointer :: C ! Intent(out) -- nullified and then allocated here
+    character(len=len(a)), allocatable :: C(:) ! Intent(out) -- allocated here
     ! Local variables
     integer :: i, j, size_c, status
     character(len=len(a)), dimension(size(a)+size(b)) :: TC
@@ -618,7 +621,6 @@ contains ! =====     Public Procedures     =============================
     end do
     ! print *, 'size(c): ', size_c    
     ! print *, 'tc: ', tc(1:size_c)
-    nullify(c)
     if ( size_c < 1 ) return
     allocate ( c(size_c), stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
@@ -671,6 +673,9 @@ contains ! =====     Public Procedures     =============================
 end module MLSSets
 
 ! $Log$
+! Revision 2.33  2017/03/10 00:38:10  vsnyder
+! Make results of Intersection, RelativeComplement, Union allocatable
+!
 ! Revision 2.32  2014/08/06 23:19:11  vsnyder
 ! Remove USE for unreferenced identifier FINDALL
 !
