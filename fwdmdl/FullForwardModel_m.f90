@@ -38,6 +38,15 @@ module FullForwardModel_m
     ! included, the maximum diameter of the QTM would need to be included in
     ! those numbers of elements along the path.
 
+  logical :: Same_Facets ! The size of the union of the parts of the QTM
+    ! traversed by the paths of all MIFs in the MAF is less than twice the
+    ! length of the longest one.  Thereby, we can copy the subset of the
+    ! state vector of the MAF into Grids_Tmp and Grids_F once, instead of
+    ! allocating Grids_Tmp and Grids_F at first for the maximum number of
+    ! vertices needed for any MIF, and copying the appropriate subset of the
+    ! state vector in each pointing.  Sizes of automatic arrays in
+    ! FullForwardModelAuto demend upon them
+
 contains
 
   ! -------------------------------------------- FullForwardModel -----
@@ -70,7 +79,7 @@ contains
     use MLSStringLists, only: SwitchDetail
     use Molecules, only: L_CloudIce
     use MoreMessage, only: MLSMessage
-    use Path_Representation_m, only: Facets_and_Vertices_t, Path_t
+    use Path_Representation_m, only: Facets_and_Vertices_t, Path_t, Union_Paths
     use QTM_Facets_Under_Path_m, only: QTM_Facets_Under_Path
     use Tangent_Pressures_m, only: Tangent_Pressures
     use Toggles, only: Emit, Switches, Toggle
@@ -86,12 +95,12 @@ contains
     type(hessian_T), intent(inout), optional :: Hessian
 
     real(rp), allocatable :: Z_PSIG(:)    ! Surfs from Temperature, tangent grid
-                                          ! and species grids, sans duplicates.
+                                ! and species grids, sans duplicates.
     real(rp), allocatable :: Tan_Press(:) ! Pressures corresponding to Z_PSIG
 
     type (Facets_and_Vertices_t), allocatable :: F_and_V(:) ! Facets and
-                                          ! vertices under each path through
-                                          ! the QTM.
+                                ! vertices under each path through
+                                ! the QTM.
     type (Grids_T) :: Grids_tmp ! All the coordinates for TEMP
     type (Grids_T) :: Grids_f   ! All the coordinates for VMR
     type (Grids_T) :: Grids_IWC ! All the coordinates for IWC
@@ -102,6 +111,9 @@ contains
     type (HGrid_T), pointer :: QTM_HGrid  ! HGrid that has finest QTM resolution.
     type (Path_t), allocatable :: QTM_Paths(:)! LOS through QTM
     type (VectorValue_T), pointer :: CloudIce ! Ice water content
+    type (Facets_and_Vertices_t), allocatable :: Path_Union(:) ! Facets and
+                                ! vertices under all paths through
+                                ! the QTM.
     type (VectorValue_T), pointer :: PhiTan   ! Tangent geodAngle component of
                                 ! state vector (minor frame quantity)
     type (VectorValue_T), pointer :: PTan     ! Tangent pressure component of
@@ -115,6 +127,8 @@ contains
 
     integer :: Dump_Conf        ! for debugging, from -Sfmconf
     integer :: K                ! Loop inductor and subscript
+    integer :: Longest_QTM_path ! Path with greatest number of QTM vertices
+                                ! adjacent to the line of sight
     integer :: Max_C            ! Length of longest possible coarse path,
                                 ! Z_PSIG & Min Zeta & surface Zeta
     integer :: Max_F            ! Length of longest possible fine path
@@ -166,8 +180,17 @@ contains
 
     call get_species_data ( fwdModelConf, fwdModelIn, fwdModelExtra )
 
+    ! Get a shorter handle for the temperature quantity
+    temp => fwdModelConf%temp%qty
+
     no_mol = size(fwdModelConf%beta_group)
     noUsedChannels = size(fwdModelConf%channels)
+
+    ! Check whether temperature and all the mixing ratios either all have QTM
+    ! HGrid, or none do.  If so, find the QTM HGrid with the finest resolution.
+    ! (We currently require that if they're QTM they all have the same grid.)
+
+    call check_QTM ( fwdModelConf, QTM_HGrid, usingQTM )
 
     ! Compute the preselected integration grid (all surfs from temperature,
     ! tangent grid and species).  Tan_Press is thrown in for free.
@@ -194,12 +217,6 @@ contains
       & quantityType=l_phitan, config=fwdModelConf, &
       & instrumentModule=fwdModelConf%signals(1)%instrumentModule )
 
-    ! Copy the temperature quantity from the state vector via the
-    ! configuration into Grids_f.
-
-    temp => fwdModelConf%temp%qty
-    call load_one_item_grid ( grids_tmp, temp, fmStat%maf, phitan, fwdModelConf, .true. )
-
     ! Compute some derivative flags.  %derivOK needs to be computed BEFORE
     ! loading Grids_f.
     fwdModelConf%beta_group%qty%derivOK = fwdModelConf%moleculeDerivatives .and. &
@@ -210,22 +227,13 @@ contains
         & 'With config(%S): Temperature derivative requested but temperature is not in "first" state vector', &
         & datum=fwdModelConf%name )
 
-    ! Copy the mixing ratios from the state vector into Grids_f.
-
-    call load_sps_data ( FwdModelConf, phitan, fmStat%maf, grids_f )
-
     pTan => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
       & quantityType=l_ptan, foundInFirst=pTan_der, config=fwdModelConf, &
       & instrumentModule=fwdModelConf%signals(1)%instrumentModule )
     pTan_der = pTan_der .and. present ( jacobian )
 
     ! Compute some sizes
-    n_t_zeta = grids_tmp%l_z(1)  ! Number of zeta levels for temperature
-
-    ! Check whether temperature and all the mixing ratios either all have QTM
-    ! HGrid, or none do.  If so, find the QTM HGrid with the finest resolution.
-
-    call check_QTM ( grids_tmp, grids_f, QTM_HGrid, usingQTM )
+    n_t_zeta = temp%template%noSurfs ! Number of zeta levels for temperature
 
     if ( usingQTM ) then
       ! Find the facets and vertices under all the paths through the QTM.
@@ -236,6 +244,9 @@ contains
         & ermsg=ermsg )
       allocate ( F_and_V(no_tan_hts), stat=stat, errmsg=ermsg )
       call test_allocate ( stat, moduleName, "F_and_V", 1, no_tan_hts, &
+        & ermsg=ermsg )
+      allocate ( path_union(1), stat=stat, errmsg=ermsg )
+      call test_allocate ( stat, moduleName, "Path_Union", 1, 1, &
         & ermsg=ermsg )
       Q_LOS => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
         & quantityType=l_MIFLOS, config=fwdModelConf, &
@@ -261,13 +272,63 @@ contains
       ! to any path through the QTM.  All the other temperature-related
       ! quantities have the same horizontal grid.
 
+      ! If MIFs in a MAF might cover very different sets of facets of the QTM,
+      ! we need to know the longest one because components of Grids_Tmp
+      ! and Grids_F provide sizes of automatic arrays in FullForwardModelAuto,
+      ! and then re-create Grids_Tmp and Grids_F for each pointing.
+      ! Otherwise, assume the each MIF of a MAF covers approximately the same
+      ! set of facets.
       no_sv_p_t = 0
+      longest_QTM_path = 1
       do k = 1, no_tan_hts ! size(QTM_paths), size(F_and_V)
-        call QTM_Facets_Under_Path ( QTM_paths(k), QTM_HGrid%QTM_tree, F_and_V(k) )
-        no_sv_p_t = max(no_sv_p_t,size(f_and_v(k)%vertices))
+        call QTM_Facets_Under_Path ( QTM_paths(k), QTM_HGrid%QTM_tree, &
+          & F_and_V(k) )
+        if ( size(f_and_v(k)%vertices) > no_sv_p_t ) then
+          no_sv_p_t = size(f_and_v(k)%vertices)
+          longest_QTM_path = k
+        end if
+        call union_paths ( path_union(1), f_and_v(k) )
       end do
-      sv_t_len = no_sv_p_t * n_t_zeta
+      same_facets = size(path_union(1)%vertices) <= 2 * no_sv_p_t
+      if ( same_facets ) then
+        call move_alloc ( path_union, f_and_v )
+        longest_QTM_path = 1
+        no_sv_p_t = size(f_and_v(1)%vertices)
+      end if
+
+      ! Copy the temperature quantity from the state vector via the
+      ! configuration into Grids_tmp.  Automatic extents of arrays in
+      ! FullForwardModelAuto depend upon components of Grids_Tmp.
+
+      call load_one_item_grid ( grids_tmp, temp, fmStat%maf, phitan, fwdModelConf, &
+        & setDerivFlags=.true., subset=f_and_v(longest_QTM_path)%vertices, &
+        & short=.not. same_facets )
+
+      ! Copy the mixing ratios from the state vector via the configuration
+      ! into Grids_f.  Automatic extents of arrays in FullForwardModelAuto
+      ! depend upon components of Grids_F.
+
+      call load_sps_data ( FwdModelConf, phitan, fmStat%maf, grids_f, &
+        & subset=f_and_v(longest_QTM_path)%vertices, short=.not. same_facets )
+
+
     else
+
+      same_facets = .true. ! even when not QTM, One_Pointing looks at this
+
+      ! Copy the temperature quantity from the state vector via the
+      ! configuration into Grids_tmp.  Automatic extents of arrays in
+      ! FullForwardModelAuto depend upon components of Grids_Tmp.
+
+      call load_one_item_grid ( grids_tmp, temp, fmStat%maf, phitan, fwdModelConf, &
+        & setDerivFlags=.true. )
+
+      ! Copy the mixing ratios from the state vector via the
+      ! configuration into Grids_f.  Automatic extents of arrays in FullForwardModelAuto
+      ! depend upon components of Grids_F.
+
+      call load_sps_data ( FwdModelConf, phitan, fmStat%maf, grids_f )
+
       nullify ( Q_LOS )
       allocate ( QTM_Paths(0), stat=stat, errmsg=ermsg )
       call test_allocate ( stat, moduleName, "QTM_paths", 1, no_tan_hts, &
@@ -275,12 +336,10 @@ contains
       allocate ( F_and_V(0), stat=stat, errmsg=ermsg )
       call test_allocate ( stat, moduleName, "F_and_V", 1, no_tan_hts, &
         & ermsg=ermsg )
-      no_sv_p_t = grids_tmp%l_p(1) ! size of temperature's horizontal grid ==
-                                   ! windowFinish - windowStart + 1.
-      sv_t_len = grids_tmp%p_len   ! zeta X phi == n_t_zeta * no_sv_p_t =
-                                   ! grids_tmp%l_p(1) * grids_tmp%l_l(1) =
-                                   ! size(grids_tmp%values,1)
+      no_sv_p_t = grids_tmp%l_p(1)  ! size of temperature's horizontal grid ==
+                                    ! windowFinish - windowStart + 1.
     end if
+    sv_t_len = no_sv_p_t * n_t_zeta ! Number of temperature values
 
     spect_der = present ( jacobian ) .and. FwdModelConf%spect_der
     spect_der_center = spect_der .and. size(fwdModelConf%lineCenter) > 0
@@ -305,7 +364,7 @@ contains
               & 'or ExtraJacobian is not present', &
               & datum=(/ fwdModelConf%name, lit_indices(k), lit_indices(k) /) )
           end if
-        else
+        else if ( .not. usingQTM ) then
           ! Turn off deriv_flags where we don't want molecule derivatives,
           ! so we don't have to look at fwdModelConf%moleculeDerivatives
           grids_f%deriv_flags(grids_f%l_v(k-1)+1:grids_f%l_v(k)) = .false.
@@ -382,7 +441,7 @@ contains
            & frequencyCoordinate /= l_none ) n_frq_dep = n_frq_dep + 1
       end do
     end if
-        
+
     ! Allocate and fill spectroscopy derivative grids.  They'll be empty
     ! if fwdModelConf%line* has size zero.
     call load_sps_data ( FwdModelConf, phitan, fmStat%maf, grids_v, &
@@ -392,7 +451,8 @@ contains
     call load_sps_data ( FwdModelConf, phitan, fmStat%maf, grids_n, &
       & qtyStuffIn=fwdModelConf%lineWidth_TDep%qty )
 
-    if ( switchDetail(switches,'Grids') > -1 ) then ! dump the grids
+    if ( switchDetail(switches,'Grids') > -1 .and. .not. usingQTM ) then
+      ! dump the grids
       call dump ( grids_f, "Grids_f", details=9 )
       call dump ( grids_tmp, "Grids_tmp", details=9 )
       if ( size(fwdModelConf%lineCenter) > 0 ) call dump ( grids_v )
@@ -487,13 +547,10 @@ contains
   ! manager.
 
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
-    use Comp_ETA_DoCalc_No_Frq_M, only: Comp_ETA_DoCalc_No_Frq
-    use Comp_ETA_DoCalc_Sparse_m, only: Comp_ETA_DoCalc_Sparse
-    use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_Frq, &
-    ! & Comp_SPS_Path_Frq_NZ, &
-      & Comp_SPS_Path_No_Frq, Comp_1_SPS_Path_No_Frq
-    use Comp_Sps_Path_Sparse_m, only: Value_2d_Lists_F_t, &
-      & Value_QTM_2D_Lists_f_t
+    use Comp_Eta_DoCalc_No_Frq_M, only: Comp_Eta_DoCalc_No_Frq
+    use Comp_Eta_DoCalc_Sparse_m, only: Comp_Eta_DoCalc_Sparse
+    use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
+    use Comp_Sps_Path_Sparse_m, only: Comp_Sps_Path_Sparse
     use Compute_GL_Grid_M, only: Compute_GL_Grid
     use Constants, only: Deg2Rad, Rad2Deg
     use Convolution_m, only: Convolution, Convolution_Setup
@@ -511,7 +568,8 @@ contains
     use HessianModule_1, only: Hessian_T
     use HGridsDatabase, only: HGrid_T
     use Indexed_Values_m, only: Value_QTM_2D_Lists_t, Value_QTM_3D_Lists_t, &
-      & Value_1D_Lists_t, Value_3d_Lists_t
+      & Value_1D_List_t, Value_1D_Lists_t, Value_2D_List_t, Value_2D_Lists_t, &
+      & Value_3d_Lists_t
     use Intrinsic, only: L_A, L_GeocAltitude, L_GeodAltitude, L_None, &
       & L_Radiance, L_TScat, L_VMR, L_Zeta
     use Load_SPS_Data_M, only: DestroyGrids_T, Dump, Grids_T
@@ -585,18 +643,18 @@ contains
                                             ! where there's no GL space.
     integer, intent(in) :: Max_F            ! Length of longest possible path (all npf<max_f)
     logical, intent(in) :: PTan_Der
-    integer, intent(in) :: S_T  ! Multiplier for temp derivative sizes, 0 or 1
     integer, intent(in) :: S_A  ! Multiplier for atmos derivative sizes, 0 or 1
     integer, intent(in) :: S_H  ! Multiplier for atmos second derivative sizes, 0 or 1
+    integer, intent(in) :: S_I  ! Multiplier for ice/cloud sizes, 0 or 1
     integer, intent(in) :: S_LC ! Multiplier for line center deriv sizes, 0 or 1
     integer, intent(in) :: S_LW ! Multiplier for line width deriv sizes, 0 or 1
-    integer, intent(in) :: S_TD ! Multiplier for temp dependence deriv sizes, 0 or 1
     integer, intent(in) :: S_P  ! Multiplier for polarized sizes, 0 or 1
     integer, intent(in) :: S_PFA ! Multiplier for PFA sizes, 0 or 1
-    integer, intent(in) :: S_I  ! Multiplier for ice/cloud sizes, 0 or 1
+    integer, intent(in) :: S_QTM ! Multiplier for sizes of QTM-related stuff, 0 or 1
+    integer, intent(in) :: S_T  ! Multiplier for temp derivative sizes, 0 or 1
+    integer, intent(in) :: S_TD ! Multiplier for temp dependence deriv sizes, 0 or 1
     integer, intent(in) :: S_TG ! Multiplier for TScat generation sizes, 0 or 1
     integer, intent(in) :: S_TS ! Multiplier for using TScat tables, 0 or 1
-    integer, intent(in) :: S_QTM ! Multiplier for sizes of QTM-related stuff, 0 or 1
 
     type(matrix_T),  intent(inout), optional :: Jacobian
     type(matrix_T),  intent(inout), optional :: ExtraJacobian ! This is used
@@ -691,10 +749,12 @@ contains
     integer, target :: GL_Inds_B(max_c*ng) ! Base array for GL_INDS
     integer :: Grids(no_tan_hts)        ! Indices in ptgGrid for each tangent
     integer :: IPSD(s_i*max_f)
-    integer :: nz_d_delta_df(s_a*max_c,size(grids_f%values)) ! nonzeros in
-                                        ! d_delta_df
-    integer :: nnz_d_delta_df(size(grids_f%values)) ! Column lengths in
-                                        ! nz_d_delta_df
+    integer :: nz_d_delta_df(s_a*(ngp1+1),size(grids_f%values)) ! nonzeros in
+                                        ! d_delta_df; can never be more than one
+                                        ! at each end of a panel, + NG between,
+                                        ! per state vector element.
+    integer :: nnz_d_delta_df(s_a*size(grids_f%values)) ! Column lengths in
+                                        ! nz_d_delta_df.
     integer :: Vert_Inds(max_f)         ! Height indices of fine path in
                                         ! H_Glgrid etc.
 
@@ -796,9 +856,9 @@ contains
     real(rp) :: Eta_FZP(max_f,size(grids_f%values)) ! Eta_z x Eta_p * Eta_f
     real(rp) :: Eta_IWC_ZP(max_f,max(s_i,s_ts)*grids_iwc%p_len)
     real(rp) :: Eta_Mag_ZP(max_f,grids_mag%p_len)  ! Eta_z x Eta_p x Eta_x
-    real(rp) :: Eta_ZP(max_f,grids_f%p_len)        ! Eta_z x Eta_p on Path X SV
     real(rp) :: Eta_ZXP_N(max_f,size(grids_n%values)) ! Eta_z x Eta_p for N
     real(rp) :: Eta_ZXP_T(max_f,s_t*sv_t_len)      ! Eta_t_z x Eta_t_p
+    type(value_2d_list_t) :: Eta_ZXP_T_List(s_t*max_f) ! Zeta X Phi => Path
     real(rp) :: Eta_ZXP_T_C(max_c,s_t*sv_t_len)    ! Eta_ZXP_T on coarse grid
     real(rp) :: Eta_ZXP_V(max_f,size(grids_v%values)) ! Eta_z x Eta_p for V
     real(rp) :: Eta_ZXP_W(max_f,size(grids_w%values)) ! Eta_z x Eta_p for W
@@ -896,12 +956,9 @@ contains
     logical :: Do_Calc_T_F(max_f, s_t*sv_t_len)! DO_Calc_T on fine path
     logical :: Do_Calc_V(max_f, size(grids_v%values) ) ! on entire grid
     logical :: Do_Calc_W(max_f, size(grids_w%values) ) ! on entire grid
-    logical :: Do_Calc_ZP(max_f,grids_f%p_len) ! same shape as eta_zp
 
-    integer :: NZ_ZP(size(eta_zp,1),size(eta_zp,2)) ! same shape as eta_zp
-    integer :: NNZ_ZP(size(eta_zp,2))               ! number of columns of eta_zp
-!     integer :: NZ_FZP(max_f,size(grids_f%values))   ! same shape as eta_fzp
-!     integer :: NNZ_FZP(size(grids_f%values))        ! number of columns of eta_fzp
+    integer :: NZ_FZP(max_f,size(grids_f%values))   ! same shape as eta_fzp
+    integer :: NNZ_FZP(size(grids_f%values))        ! number of columns of eta_fzp
 
     integer :: NZ_ZXP_T(max_f,s_t*sv_t_len)         ! same shape as Eta_zxp_t
     integer :: NNZ_ZXP_T(s_t*sv_t_len)              ! number of columns of Eta_zxp_t
@@ -1004,14 +1061,18 @@ contains
 
     type (Tau_T) :: Tau_LBL, Tau_PFA
 
+    ! Interpolation coefficients from Freq X Zeta X Phi basis to path for all
+    ! species
     type (Value_3d_Lists_t) :: Eta_fzp_list((1-s_qtm)*size(fwdModelConf%beta_group))
     type (Value_QTM_3D_Lists_t) :: Eta_fzQ(n_frq_dep) ! Interpolation coefficients
                                   ! for frequency-dependent species, computed
                                   ! from Eta_zQ and frequency grids.
-    type (Value_1D_Lists_t) :: Eta_p(max_f)         ! Interpolation coefficients
-                                  ! from phi basis to path
-    type (Value_2d_Lists_F_t) :: Eta_zp_list((1-s_qtm)*size(fwdModelConf%beta_group))
-    type (value_QTM_2D_lists_f_t) :: Eta_zQ(s_qtm*size(grids_f%values)) ! Interpolation
+    ! Interpolation coefficients from phi basis to path for all species
+    type (Value_1D_Lists_t) :: Eta_p((1-s_qtm)*size(fwdModelConf%beta_group))
+    type(Value_1D_List_t) :: Eta_p_t(max_f) ! Interpolation coefficients from
+                                  ! phi basis to path for temperature
+    type (Value_2d_Lists_t) :: Eta_zp_list((1-s_qtm)*size(fwdModelConf%beta_group))
+    type (value_QTM_2D_lists_t) :: Eta_zQ(s_qtm*size(grids_f%values)) ! Interpolation
                                   ! coefficients from 3D QTM state vector to
                                   ! path for VMRs, taking only zeta and QTM
                                   ! position into account.  For each frequency-
@@ -1110,7 +1171,7 @@ contains
         & dBeta_dv_path_c, dBeta_dv_path_f, dBeta_dw_path_c, dBeta_dw_path_f, &
         & dh_dT_path, dh_dT_path_c, dh_dT_path_f )
       call fill_IEEE_NaN ( dhdz_glgrid, dx_dT, eta_fzp, eta_IWC_zp, eta_mag_zp, &
-        & eta_zp, eta_zxp_n, eta_zxp_T, eta_zxp_T_c, eta_zxp_T, eta_zxp_v, &
+        & eta_zxp_n, eta_zxp_T, eta_zxp_T_c, eta_zxp_T, eta_zxp_v, &
         & eta_zxp_w, h_glgrid, IWC_path, mag_path, rad_avg_path, radiances, &
         & spect_n_path, spect_v_path, spect_w_path, sps_path, sps_path_c, &
         & sps_path_f )
@@ -1185,33 +1246,18 @@ contains
     nnz_d_delta_df = 0
     d2_delta_df2 = 0.0
 
-    ! Put zeros into eta_zp so that comp_eta_docalc_no_frq doesn't need to
-    ! do it in every call.  Most of its time is spent doing this.  Instead,
-    ! when eta_zp is computed, the nonzeros (encoded by nz_zp and nnz_zp)
-    ! are first replaced by zeros.  Make Do_Calc_zp false because
-    ! Multiply_Eta_Column_Sparse (called from Comp_Eta_Docalc_No_Frq) is
-    ! only set where there are nonzeroes indicated by nz_zp, leaving
-    ! others undefined until nonzeroes land in the same place.
-
-    eta_zp = 0.0
-    nnz_zp = 0
-    do_calc_zp = .false.
-
-    ! Put zeros into eta_fzp so that comp_sps_path_frq_nz doesn't need to
-    ! do it in every call.  Instead, when eta_fzp is computed, the nonzeros
-    ! (encoded by nz_fzp and nnz_fzp) are first replaced by zeros.  Do_Calc_fzp
-    ! probably doesn't presently need to be preset to false, but if we ever
-    ! handle it sparsely as we do for Do_Calc_zp, it would only be set where
-    ! Eta_fzp is nonzero.
+    ! Put zeros into eta_fzp so that we don't need to fill all zeroes later. 
+    ! Instead, when eta_fzp is computed, the nonzeros (encoded by nz_fzp and
+    ! nnz_fzp) are first replaced by zeros.
 
     eta_fzp = 0.0
-!     nnz_fzp = 0
+    nnz_fzp = 0
     do_calc_fzp = .false.
 
     ! Put zeros into eta_zxp_t so that metrics doesn't need to do it in every
-    ! call. Instead, when eta_zp is computed, the nonzeros (encoded by nz_zp
-    ! and nnz_zp) are first replaced by zeros.  Metrics doesn't spend much
-    ! time doing this. We want this representation for dt_script_dt.
+    ! call. Instead, when eta_zxp_t is computed, the nonzeros (encoded by
+    ! nz_zxp_t and nnz_zxp_t) are first replaced by zeros.  Metrics doesn't
+    ! spend much time doing this. We want this representation for dt_script_dt.
 
     eta_zxp_t = 0.0
     nnz_zxp_t = 0
@@ -1297,16 +1343,11 @@ contains
     ! values interpolate from the state vector onto the path, so they're
     ! computed for each path.  Eta_fzQ are computed from the frequency grid
     ! for frequency-dependent species, and its Etq_zQ, for each frequency.
-    k = 0 ! Index of frequency-dependent VMR
     if ( usingQTM ) then
       do i = 1, size(beta_group)
         allocate ( eta_zQ(i)%eta(max_f) )
         if ( beta_group(i)%qty%qty%template%frequencyCoordinate /= l_none ) then
-          k = k + 1
-          allocate ( eta_fzQ(k)%eta(max_f) )
-          eta_zQ(i)%frq_index = k
-      ! else
-      !   eta_zQ(i)%frq_index = 0 ! default initialized
+          allocate ( eta_fzQ(i)%eta(max_f) )
         end if
       end do
       allocate ( eta_zqT%eta(max_f) )
@@ -1315,11 +1356,7 @@ contains
         allocate ( eta_p(i)%eta(max_f) )
         allocate ( eta_zp_list(i)%eta(max_f) )
         if ( beta_group(i)%qty%qty%template%frequencyCoordinate /= l_none ) then
-          k = k + 1
-          allocate ( eta_fzp_list(k)%eta(max_f) )
-          eta_zp_list(i)%frq_index = k
-      ! else
-      !   eta_zQ(i)%frq_index = 0 ! default initialized
+          allocate ( eta_fzp_list(i)%eta(max_f) )
         end if
       end do
     end if
@@ -2983,40 +3020,39 @@ contains
 
   ! ..............................................  One_Frequency  .....
     subroutine One_Frequency ( Ptg_i, Frq_i, Alpha_Path_c, Beta_Path_c,     &
-      & C_Inds, Del_S, Del_Zeta, Do_Calc_fzp, Do_Calc_zp, Do_GL, Frq,       &
-      & H_Path_C, Tan_Ht, IncOptDepth, P_Path, PFA, Ref_Corr, Sps_Path,     &
-      & Tau, T_Path_c, T_Script, Tanh1_c, TT_Path_c, W0_Path_c,             &
-      & Z_Path, I_Start, I_End, Inc_Rad_Path, RadV, dAlpha_dT_Path_C,       &
-      & H_Atmos_Frq, K_Atmos_Frq, K_Spect_dN_Frq, K_Spect_dV_Frq,           &
-      & K_Spect_dW_Frq, K_Temp_Frq )
+      & C_Inds, Del_S, Del_Zeta, Do_Calc_fzp, Do_GL, Frq, H_Path_C, Tan_Ht, &
+      & IncOptDepth, P_Path, PFA, Ref_Corr, Sps_Path, Tau, T_Path_c,        &
+      & T_Script, Tanh1_c, TT_Path_c, W0_Path_c, Z_Path, I_Start, I_End,    &
+      & Inc_Rad_Path, RadV, dAlpha_dT_Path_C, H_Atmos_Frq, K_Atmos_Frq,     &
+      & K_Spect_dN_Frq, K_Spect_dV_Frq, K_Spect_dW_Frq, K_Temp_Frq )
 
       ! Having arguments instead of using host association serves two
       ! purposes:  The array sizes are implicit, so we don't need explicitly
       ! to mention them, and the pointer attribute gets stripped during the
       ! trip through the CALL statement -- hopefully thereby helping optimizers.
-      use CS_EXPMAT_m, only: CS_EXPMAT
-      use DO_T_SCRIPT_m, only: TWO_D_T_SCRIPT, TWO_D_T_SCRIPT_CLOUD
+      use CS_ExpMat_m, only: CS_ExpMat
+      use Do_T_Script_m, only: Two_D_T_Script, Two_D_T_Script_Cloud
       use Dump_0, only: Dump_2x2xn
-      use D_T_SCRIPT_DTNP_m, only: DT_SCRIPT_DT
+      use D_T_Script_dTNP_m, only: DT_Script_dT
       use Dump_Path_m, only: Dump_Path, SPS_List
-      use Get_Beta_Path_m, only: GET_Beta_Path, GET_Beta_Path_CLOUD, &
-        & Get_Beta_Path_PFA, GET_Beta_Path_POLARIZED
-      use Get_DAlpha_DF_m, only: GET_DAlpha_DF, GET_D2Alpha_DF2
-      use Get_D_Deltau_Pol_m, only: GET_D_DELTAU_POL_DF, GET_D_DELTAU_POL_DT
-      use GET_ETA_MATRIX_m, only: SELECT_NZ_LIST
-      use INTERPOLATE_MIE_m, only: INTERPOLATE_MIE
-      use LOAD_SPS_DATA_m, only:  LOAD_ONE_ITEM_GRID
+      use Get_Beta_Path_m, only: Get_Beta_Path, Get_Beta_Path_Cloud, &
+        & Get_Beta_Path_PFA, Get_Beta_Path_Polarized
+      use Get_dAlpha_dF_m, only: Get_dAlpha_dF, Get_d2Alpha_dF2
+      use Get_D_Deltau_Pol_m, only: Get_d_Deltau_Pol_dF, Get_d_Deltau_Pol_dT
+      use Get_Eta_Matrix_m, only: Select_NZ_List
+      use Interpolate_Mie_m, only: Interpolate_Mie
+      use Load_Sps_data_m, only:  Load_One_Item_Grid
       USE L2PC_m, only: L2PC_T
-      use MCRT_m, only: MCRT_DER
-      use OPACITY_m, only: OPACITY
+      use MCRT_m, only: MCRT_Der
+      use Opacity_m, only: Opacity
       use Path_Contrib_m, only: Path_Contrib
-      use PHYSICS, only: H_OVER_K
-      use RAD_TRAN_m, only: RAD_TRAN_POL, DRAD_TRAN_DF, &
-        & D2RAD_TRAN_DF2, DRAD_TRAN_DT, DRAD_TRAN_DX
-      use SCATSOURCEFUNC, only: T_SCAT, INTERP_TSCAT
-      use TAU_m, only: GET_TAU
-      USE TSCAT_SUPPORT_m, only: GET_DB_DT, GET_TSCAT, GET_TSCAT_SETUP, &
-        & GET_TSCAT_TEARDOWN, MIE_FREQ_INDEX
+      use Physics, only: H_Over_K
+      use Rad_Tran_m, only: Rad_Tran_Pol, dRad_Tran_dF, &
+        & d2Rad_Tran_dF2, dRad_Tran_dT, dRad_Tran_dX
+      use ScatSourceFunc, only: T_Scat, Interp_TScat
+      use Tau_m, only: Get_Tau
+      use TScat_Support_m, only: Get_dB_dT, Get_TScat, Get_TScat_Setup, &
+        & Get_TScat_Teardown, Mie_Freq_Index
 
       integer, intent(in) :: Ptg_i        ! Pointing index
       integer, intent(in) :: Frq_i        ! Frequency loop index
@@ -3026,7 +3062,6 @@ contains
       real(rp), intent(in) :: Del_S(:)    ! Integration lengths along path
       real(rp), intent(in) :: Del_Zeta(:) ! Integration lengths in Zeta coords
       logical, intent(inout) :: Do_Calc_fzp(:,:) ! 'Avoid zeros' indicator
-      logical, intent(in) :: Do_Calc_zp(:,:) ! 'Avoid zeros' indicator
       logical, intent(out) :: Do_GL(:)    ! Where to do GL correction
       real(r8), intent(in) :: Frq         ! The frequency
       real(rp), intent(in) :: H_Path_C(:) ! Heights on coarse path
@@ -3050,17 +3085,17 @@ contains
       real(rp), intent(inout) :: Inc_Rad_Path(:) ! Incremental radiance along the path
       real(rp), intent(out) :: RadV       ! Radiance
       real(rp), intent(out) :: dAlpha_dT_Path_c(:) ! dAlpha/dT on coarse path
-      real(rp), intent(out) :: H_ATMOS_FRQ(:,:) ! d2I/(dVMRq dVMRr), ptg.frq X vmr-SVq X vmr-SVr
-      real(rp), intent(out) :: K_ATMOS_FRQ(:)  ! dI/dVMR, ptg.frq X vmr-SV
-      real(rp), intent(out) :: K_SPECT_DN_FRQ(:) ! ****
-      real(rp), intent(out) :: K_SPECT_DV_FRQ(:) ! ****
-      real(rp), intent(out) :: K_SPECT_DW_FRQ(:) ! ****
-      real(rp), intent(out) :: K_TEMP_FRQ(:)   ! dI/dT, ptg.frq X T-SV
+      real(rp), intent(out) :: H_Atmos_Frq(:,:) ! d2I/(dVMRq dVMRr), ptg.frq X vmr-SVq X vmr-SVr
+      real(rp), intent(out) :: K_Atmos_Frq(:)  ! dI/dVMR, ptg.frq X vmr-SV
+      real(rp), intent(out) :: K_Spect_dN_Frq(:) ! ****
+      real(rp), intent(out) :: K_Spect_dV_Frq(:) ! ****
+      real(rp), intent(out) :: K_Spect_dW_Frq(:) ! ****
+      real(rp), intent(out) :: K_Temp_Frq(:)   ! dI/dT, ptg.frq X T-SV
 
-      integer, pointer :: CG_INDS(:) ! Indices on coarse grid where GL needed
-      real(r8) :: FRQHK              ! 0.5 * Frq * H_Over_K
-      integer, pointer :: GL_INDS(:) ! Index of GL points -- subset of f_inds
-      integer :: I_STOP              ! Stop path integration before I_End
+      integer, pointer :: CG_Inds(:) ! Indices on coarse grid where GL needed
+      real(r8) :: FrqHK              ! 0.5 * Frq * H_Over_K
+      integer, pointer :: GL_Inds(:) ! Index of GL points -- subset of f_inds
+      integer :: I_Stop              ! Stop path integration before I_End
       integer :: J, L                ! Loop inductor and subscript
       integer :: Me = -1             ! String index for trace
       integer :: Mie_Frq_Index       ! Index of Frq in F_s in Read_Mie
@@ -3070,7 +3105,7 @@ contains
       logical :: PFA_or_not_pol      ! PFA .or. .not. fwdModelConf%polarized
       real(rp) :: PhiWindowRadians
       integer :: RadInL2PC           ! Which TScat radiance in L2PC to use
-      complex(rp) :: RAD_POL(2,2)    ! polarized radiance output of mcrt for one freq and pointing
+      complex(rp) :: Rad_Pol(2,2)    ! polarized radiance output of mcrt for one freq and pointing
         ! (-1,:,:) are Sigma_-, (0,:,:) are Pi, (+1,:,:) are Sigma_+
 
       type (Vector_T) :: dX, TScat   ! Clones of Column, Row vectors from TScat L2PC
@@ -3078,7 +3113,7 @@ contains
       type(L2PC_t), pointer :: L2PC  ! The selected TScat L2PC
 
       ! Cloud stuff
-      logical, parameter :: cld_fine = .false.
+      logical, parameter :: Cld_Fine = .false.
       real(r8), parameter :: TOL = 1.D-190
 
       call Trace_Begin ( me, 'ForwardModel.One_Frequency=', index=frq_i, &
@@ -3093,18 +3128,39 @@ contains
       phi_path_c => phi_path(1:npf:ngp1)
 
       ! Compute the sps_path for this Frequency
-      call comp_sps_path_frq ( Grids_f, Frq, eta_zp(:npf,:), &
-        & do_calc_zp, sps_path(:npf,:),                      &
-        & eta_fzp(:npf,:), do_calc_fzp(:npf,:),              &
-        & firstSignal%lo, thisSideband, already_spread=.true. )
-!         ! Send all of eta_zp so comp_sps_path_frq_nz doesn't get an array
-!         ! bounds error when it's clearing parts indexed by nz_zp.
-! I don't know why this doesn't work -- maybe nz_... and nnz_... have not
-! been computed?
-!         call comp_sps_path_frq_nz ( Grids_f, Frq, eta_zp, nz_zp, nnz_zp, &
-!           & do_calc_zp, sps_path(:npf,:),                                &
-!           & do_calc_fzp, eta_fzp(:npf,:), nz_fzp, nnz_fzp,               &
-!           & firstSignal%lo, thisSideband )
+      call comp_sps_path_sparse ( grids_f, frq, eta_zp_list, &
+      eta_fzp_list, sps_path(1:npf,:), firstSignal%lo, thisSideband )
+block
+! Get eta_fzp and do_calc_fzp from eta_fzp_list while we still need them
+use Get_Do_Calc_m, only: Clean_Out_Nonzeros, Get_Eta_Do_Calc
+use Load_SPS_Data_m, only: Get_SPS_Bounds
+! integer :: J
+integer :: SPS, V1, V2
+! integer :: MxC, MxE
+integer :: Four_D_Shape(4) ! F_Coeffs, Z_Coeffs, P_Coeffs, X_Coeffs
+
+call clean_out_nonzeros ( eta_fzp, do_calc_fzp, nz_fzp, nnz_fzp )
+! mxc = 0; mxe=0
+do sps = 1, size(eta_fzp_list)
+call get_sps_bounds ( grids_f, sps, v1, v2 ) ! 1D bounds
+four_d_shape = shape(grids_f%c(sps)%v4) ! Freq, Zeta, Phi, Cross
+if ( allocated(eta_fzp_list(sps)%eta) ) then ! there is frequency dependence
+call get_eta_do_calc ( eta_fzp_list(sps)%eta(:npf), four_d_shape(1:3), &
+  & eta_fzp(:,v1:v2), do_calc_fzp(:,v1:v2), nz_fzp(:,v1:v2), nnz_fzp(v1:v2), &
+  & derivFlags=grids_f%c(sps)%l1 )
+else ! there is no frequency dependence
+call get_eta_do_calc ( eta_zp_list(sps)%eta(:npf), four_d_shape(2:3), &
+  & eta_fzp(:,v1:v2), do_calc_fzp(:,v1:v2), nz_fzp(:,v1:v2), nnz_fzp(v1:v2), &
+  & derivFlags=grids_f%c(sps)%l1 )
+end if
+! do j = 1, size(do_calc_fzp,1)
+! mxc = max(count(do_calc_fzp(j,v1:v2)),mxc)
+! mxe = max(count(eta_fzp(j,v1:v2)/=0),mxe)
+! end do ! j
+end do ! sps
+! print '(3(a,i0))', 'Max Do_Calc_fzp per row per sps ', mxc, &
+! ' Max Eta_fzp per row per sps ', mxe
+end block
 
       associate ( sps_path_x => sps_path(1:npf:ngp1,:) )
         sps_path_c(i_start:i_end,:) = sps_path_x(i_start:i_end,:)
@@ -3574,7 +3630,7 @@ contains
             &  inc_rad_path, dAlpha_df_path_c(:npc,:), dAlpha_df_path_f,      &
             &  i_start, tan_pt_c, i_stop,                                     &
             &  size(d_delta_df,1), d_delta_df, nz_d_delta_df, nnz_d_delta_df, &
-            &  k_atmos_frq, dB_df, tau%tau(:,frq_i), nz_zp, nnz_zp,           &
+            &  k_atmos_frq, dB_df, tau%tau(:,frq_i), nz_fzp, nnz_fzp,         &
             &  alpha_path_c, beta_c_e_path_c(:npc),                           &
             &  dBeta_c_a_dIWC_path_c(:npc), dBeta_c_s_dIWC_path_c(:npc),      &
             &  dTScat_df, w0_path_c(:npc) )
@@ -3585,6 +3641,7 @@ contains
           ! dimensions of eta_fzp and dAlpha_df_path_f because these
           ! correspond to explicit-shape dummy arguments.  Doing so would
           ! cause the compiler to take a copy!
+
           call drad_tran_df ( max_f, gl_inds, del_zeta, Grids_f, eta_fzp,     &
             &  do_calc_fzp, do_gl, del_s, ref_corr, dsdz_gw_path,             &
             &  inc_rad_path, dAlpha_df_path_c(:npc,:), dAlpha_df_path_f,      &
@@ -3801,12 +3858,11 @@ contains
       & Tan_Press, Est_SCGeocAlt, Path, S, F_and_V, Scat_Zeta, Scat_Phi, &
       & Scat_Ht, Xi, Scat_Index, Scat_Tan_Ht, Forward, Rev, Which )
 
-use Dump_Row_Sparse_m, only: Dump_Row_Sparse
-use Indexed_Values_m, only: Dump
       use Generate_QTM_m, only: QTM_Tree_t
       use Get_Chi_Angles_M, only: Get_Chi_Angles
       use Get_Eta_Matrix_M, only: Get_Eta_Stru
       use GLNP, only: GW, NG
+      use Load_SPS_Data_M, only: Load_One_Item_Grid, Load_SPS_Data
       use Metrics_M, only: Height_Metrics, More_Metrics, Tangent_Metrics
       use Metrics_3D_m, only: Metrics_3D_QTM, Horizontal
       use Min_Zeta_m, only: Lower_Path_Crossings
@@ -3878,6 +3934,14 @@ use Indexed_Values_m, only: Dump
 
       call Trace_Begin ( me_Etc, 'ForwardModel.Metrics_Etc', &
         & cond=toggle(emit) .and. levels(emit) > 4 )
+
+      if ( .not. same_facets ) then ! Same_Facets is false only if UsingQTM
+        call load_one_item_grid ( grids_tmp, temp, fmStat%maf, phitan, fwdModelConf, &
+          & setDerivFlags=.true., subset=f_and_v(ptg_i)%vertices )
+
+        call load_sps_data ( FwdModelConf, phitan, fmStat%maf, grids_f, &
+          & subset=f_and_v(ptg_i)%vertices )
+      end if
 
       ! Compute the index in the pressure grids where the tangent is,
       ! assuming Zeta_Only if QTM.
@@ -4024,7 +4088,7 @@ use Indexed_Values_m, only: Dump
             & cond=toggle(emit) .and. levels(emit) > 3 )
           return ! No ray to trace
         end if
-        i_start = 1
+        i_start = 1;
         i_end = scat_index
       else
         i_start = 1
@@ -4065,22 +4129,19 @@ use Indexed_Values_m, only: Dump
         ! Get t_path (and dhdz_path, which we don't need yet) so we can
         ! calculate the refractive index.  We don't do this for QTM because
         ! the horizontal coordinate isn't Phi, which is what's adjusted here.
-        ! T_path, dhdz_path, and eta_zp will be gotten again later, with
+        ! T_path, dhdz_path, and eta_fzp will be gotten again later, with
         ! slightly different phi.
         call more_metrics ( tan_ind_f, tan_pt_f, Grids_tmp,            &
           &  vert_inds(1:npf), t_glgrid, dhdz_glgrid, phi_path(1:npf), &
-          &  t_path(1:npf), dhdz_path(1:npf) )
+          &  eta_p_t(1:npf), t_path(1:npf), dhdz_path(1:npf) )
         ! Compute refractive index on the path.
         if ( h2o_ind > 0 ) then
-          ! Compute eta_zp & do_calc_zp (Zeta & Phi only) for water.
-          ! It is important to send all of eta_zp, do_calc_zp, nz_zp and
-          ! nnz_zp so that nonzeros from previous invocations can be
-          ! cleared without violating array bounds.
-          call comp_eta_docalc_no_frq ( Grids_f, z_path(1:npf), &
-            &  phi_path(1:npf), eta_zp, do_calc_zp, tan_pt=tan_pt_f, &
-            &  your_nz_zp=nz_zp, your_nnz_zp=nnz_zp )
-          call comp_1_sps_path_no_frq ( Grids_f, h2o_ind, eta_zp(1:npf,:), &
-            & sps_path(1:npf,h2o_ind) )
+          ! Compute eta_zp_list (Zeta & Phi only) for water.
+          call comp_eta_docalc_sparse ( grids_f, h2o_ind, z_path(1:npf),  &
+                                      & eta_z(h2o_ind),  phi_path(1:npf), &
+                                      & eta_p(h2o_ind), eta_zp_list(h2o_ind) )
+          call comp_sps_path_sparse ( grids_f, h2o_ind, eta_zp_list(h2o_ind), &
+                                    & sps_path(1:npf,h2o_ind) )
           call refractive_index ( p_path(1:npf), t_path(1:npf), n_path_f(1:npf), &
             &  h2o_path=sps_path(1:npf, h2o_ind) )
         else
@@ -4104,12 +4165,13 @@ use Indexed_Values_m, only: Dump
         if ( temp_der ) then
           call more_metrics ( tan_ind_f, tan_pt_f, Grids_tmp,              &
             &  vert_inds(1:npf), t_glgrid, dhdz_glgrid, phi_path(1:npf),   &
-            &  t_path(1:npf), dhdz_path(1:npf),                            &
+            &  eta_p_t(1:npf), t_path(1:npf), dhdz_path(1:npf),            &
             !  Stuff for temperature derivatives:
             &  ddHidHidTl0 = ddhidhidtl0, dHidTlm = dh_dt_glgrid,          &
             &  Z_Ref=z_glgrid,                                             &
             &  ddHtdHtdTl0 = tan_d2h_dhdt, dHitdTlm = dh_dt_path(1:npf,:), &
             &  dHtdTl0 = tan_dh_dt, Do_Calc_Hyd = do_calc_hyd(1:npf,:),    &
+            &  eta_zp = eta_zxp_t_list(1:npf), &
             &  Do_Calc_T = do_calc_t, Eta_zxp = eta_zxp_t,                 &
             &  NZ_zxp = nz_zxp_t, NNZ_zxp = nnz_zxp_t )
           dh_dt_path_c(1:npc,:) = dh_dt_path(1:npf:ngp1,:)
@@ -4124,7 +4186,7 @@ use Indexed_Values_m, only: Dump
         else
           call more_metrics ( tan_ind_f, tan_pt_f, Grids_tmp ,             &
             &  vert_inds(1:npf), t_glgrid, dhdz_glgrid, phi_path(1:npf),   &
-            &  t_path(1:npf), dhdz_path(1:npf) )
+            &  eta_p_t(1:npf), t_path(1:npf), dhdz_path(1:npf) )
         end if
       else ! QTM
         if ( temp_der ) then
@@ -4132,7 +4194,7 @@ use Indexed_Values_m, only: Dump
           do_calc_hyd_3(1:max_f,1:n_t_zeta,1:s_t*no_sv_p_t) => do_calc_hyd_1
           do_calc_t_3(1:max_f,1:n_t_zeta,1:s_t*no_sv_p_t) => do_calc_t_1
           call more_metrics_3d ( S, tan_pt_f, t_glgrid, dhdz_glgrid,         &
-            & t_path(1:npf), dhdz_path(1:npf),                               &
+            &  t_path(1:npf), dhdz_path(1:npf),                              &
             !  Stuff for temperature derivatives:
             &  QTM_hGrid%QTM_tree, ddHidHidTl0 = ddhidhidtl0,                &
             &  dHidTlm = dh_dt_glgrid, T_Sv = Grids_tmp, Z_Ref=z_glgrid,     &
@@ -4149,46 +4211,21 @@ use Indexed_Values_m, only: Dump
       h_path_c(1:npc) = h_path(1:npf:ngp1)
       t_path_c(1:npc) = t_path(1:npf:ngp1)
 
-      ! Compute eta_zp & do_calc_zp (for Zeta & Phi only)
+      ! Compute eta_zp_list (for Zeta & Phi only)
 
       if ( .not. usingQTM ) then
-        ! It is important to send all of eta_zp, do_calc_zp, nz_zp and
-        ! nnz_zp so that nonzeros from previous invocations can be
-        ! cleared without violating array bounds.
-        call comp_eta_docalc_no_frq ( Grids_f, z_path(1:npf), &
-          &  phi_path(1:npf), eta_zp, do_calc_zp, tan_pt=tan_pt_f, &
-          &  your_nz_zp=nz_zp, your_nnz_zp=nnz_zp, &
-          &  eta_fzp=eta_fzp(1:npf,:), do_calc_fzp=do_calc_fzp(:npf,:) )
-! block
-! integer :: I, J, K
-! k = 0
-! do i = 1, 1 ! ubound(grids_f%l_p,1)
-! j = k + 1
-! k = k + (grids_f%l_p(i)-grids_f%l_p(i-1)) * (grids_f%l_z(i)-grids_f%l_z(i-1))
-! call output ( i, before='Eta_ZP(', after=')', advance='yes' )
-! call dump_row_sparse ( eta_zp(:,j:k), width=6, &
-! bounds2= [ grids_f%l_z(i)-grids_f%l_z(i-1), grids_f%l_p(i)-grids_f%l_p(i-1) ] )
-! end do
-! end block
-! call comp_eta_docalc_sparse ( beta_group, z_path(1:npf), eta_z, phi_path(1:npf), &
-! & eta_p, eta_zp_list%value_2d_lists_t )
-! call dump ( deg2rad*beta_group(1)%qty%qty%template%phi(1,:), 'beta_group(1)%qty%qty%template%phi' )
-! call dump ( phi_path(1:npf), 'Phi_Path (radians) in fullForwardModel' )
-! call dump ( eta_p(1)%eta(1:eta_p(1)%n), 'Eta_p list' )
-! do i = 1, 1 ! size(beta_group)
-! call dump ( eta_z(i)%eta(1:eta_z(i)%n), 'Eta_z list' )
-! call dump ( eta_zp_list(i)%value_2d_lists_t%eta, 'Eta_ZP_List' )
-! end do
-! stop
+        call comp_eta_docalc_sparse ( grids_f, z_path(1:npf), eta_z, &
+                                    & phi_path(1:npf), eta_p, eta_zp_list )
+
       else
-!         call comp_eta_docalc_sparse ( beta_group, z_path, eta_z, &
-!           & s%coeff, eta_zQ%value_QTM_2d_lists_t )
+        call comp_eta_docalc_sparse ( grids_f, z_path, eta_z, s(1:npf)%coeff, &
+                                    & eta_zQ )
       end if
 
       ! Compute sps_path for all those with no frequency component, especially
       ! to get WATER (H2O) contribution for refraction calculations.
-      call comp_sps_path_no_frq ( Grids_f, eta_zp(1:npf,:), sps_path(1:npf,:) )
-
+      call comp_sps_path_sparse ( Grids_f, eta_zp_list, &
+                                & eta_fzp_list, sps_path(1:npf,:) )
       ! Compute the refractive index - 1
       if ( h2o_ind > 0 ) then
         ! Even if we did the refractive correction we need to do this,
@@ -4512,14 +4549,12 @@ use Indexed_Values_m, only: Dump
         do frq_i = 1, size(frequencies)
           call one_frequency ( ptg_i, frq_i, alpha_path_c(:npc),                &
             & beta_path_c(:npc,:,frq_i), c_inds(:npc), del_s(:npc),             &
-            & del_zeta(:npc), do_calc_fzp(:npf,:), do_calc_zp(:npf,:),          &
-            & do_GL(:npc), frequencies(frq_i), h_path_c, tan_ht,                &
-            & incoptdepth(:npc), p_path(:npf), pfaFalse, ref_corr(:npc),        &
-            & sps_path(:npf,:), tau_lbl, t_path_c(:npc),                        &
+            & del_zeta(:npc), do_calc_fzp, do_GL(:npc), frequencies(frq_i),     &
+            & h_path_c, tan_ht, incoptdepth(:npc), p_path(:npf), pfaFalse,      &
+            & ref_corr(:npc), sps_path(:npf,:), tau_lbl, t_path_c(:npc),        &
             & t_script_lbl(:npc,frq_i), tanh1_c(:npc), tt_path_c(:s_i*npc),     &
-            & w0_path_c(:max(s_i,s_ts)*npc),                                    &
-            & z_path(:npf), i_start, i_end, inc_rad_path(:,frq_i), RadV(frq_i), &
-            & dAlpha_dT_path_c(:npc,frq_i),                                     &
+            & w0_path_c(:max(s_i,s_ts)*npc), z_path(:npf), i_start, i_end,      &
+            & inc_rad_path(:,frq_i), RadV(frq_i), dAlpha_dT_path_c(:npc,frq_i), &
             & H_Atmos_Frq(frq_i,:,:), K_Atmos_Frq(frq_i,:),                     &
             & K_Spect_dN_Frq(frq_i,:), K_Spect_dV_Frq(frq_i,:),                 &
             & K_Spect_dW_Frq(frq_i,:), K_Temp_Frq(frq_i,:) )
@@ -4552,14 +4587,12 @@ use Indexed_Values_m, only: Dump
         do frq_i = 1, size(channelCenters)
           call one_frequency ( ptg_i, frq_i, alpha_path_c(:npc),                &
             & beta_path_c(:npc,:,frq_i), c_inds(:npc), del_s(:npc),             &
-            & del_zeta(:npc), do_calc_fzp(:npf,:), do_calc_zp(:npf,:),          &
-            & do_GL(:npc),  channelCenters(frq_i), h_path_c, tan_ht,            &
-            & incoptdepth(:npc), p_path(:npf), pfaTrue, ref_corr(:npc),         &
-            & sps_path(:npf,:), tau_pfa, t_path_c(:npc),                        &
+            & del_zeta(:npc), do_calc_fzp, do_GL(:npc),  channelCenters(frq_i), &
+            & h_path_c, tan_ht, incoptdepth(:npc), p_path(:npf), pfaTrue,       &
+            & ref_corr(:npc), sps_path(:npf,:), tau_pfa, t_path_c(:npc),        &
             & t_script_pfa(:npc,frq_i), tanh1_c(:npc), tt_path_c(:s_i*npc),     &
-            & w0_path_c(:max(s_i,s_ts)*npc),                                    &
-            & z_path(:npf), i_start, i_end, rad_avg_path(:,frq_i), RadV(frq_i), &
-            & dAlpha_dT_path_c(:npc,frq_i),                                     &
+            & w0_path_c(:max(s_i,s_ts)*npc), z_path(:npf), i_start, i_end,      &
+            & rad_avg_path(:,frq_i), RadV(frq_i), dAlpha_dT_path_c(:npc,frq_i), &
             & H_Atmos_Frq(frq_i,:,:), K_Atmos_Frq(frq_i,:),                     &
             & K_Spect_dN_Frq(frq_i,:), K_Spect_dV_Frq(frq_i,:),                 &
             & K_Spect_dW_Frq(frq_i,:), K_Temp_Frq(frq_i,:) )
@@ -4665,6 +4698,9 @@ use Indexed_Values_m, only: Dump
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.380  2017/01/14 02:58:48  vsnyder
+! Inching toward 3D QTM forward model
+!
 ! Revision 2.379  2016/12/02 02:04:50  vsnyder
 ! Use 'P' Eta list for Eta_ZZ
 !
