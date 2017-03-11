@@ -78,12 +78,15 @@ module Indexed_Values_m
   end type Value_1D_List_t
 
   ! For one interpolation weight from a QTM, or an extract of it onto
-  ! an array of profiles adjacent to an integration path.
+  ! an array of profiles adjacent to an integration path, e.g., in Grids_t.
   type, extends(value_1D_t) :: Value_QTM_1D_t
   ! real(rk) :: V = 0.0    ! Value to be applied at N or NP
   ! integer :: N = 0       ! Index in QTM at which to apply V
     integer :: NP = 0      ! Index of path-adjacent part of QTM at which to
-                           ! apply V
+                           ! apply V, e.g., in Grids_t.  This is intentionally
+                           ! the same name as the second (probably Phi) subscript
+                           ! in Value_2D_t so that Interpolate_2D_List.f9h can be
+                           ! used for both interpolations.
   end type Value_QTM_1D_t
 
   ! For interpolating to a list (probably an integration path) from a QTM,
@@ -140,7 +143,10 @@ module Indexed_Values_m
   ! real(rk) :: V = 0.0    ! Value to be applied at (NZ, N or NP)
   ! integer :: N = 0       ! Index in QTM at which to apply V
   ! integer :: NP = 0      ! Index of path-adjacent part of QTM at which to
-                           ! apply V
+                           ! apply V, e.g., in Grids_t.  This is intentionally
+                           ! the same name as the second (probably Phi) subscript
+                           ! in Value_2D_t so that Interpolate_2D_List.f9h can be
+                           ! used for both interpolations.
     integer :: NZ = 0      ! Vertical (probably zeta) index
   end type Value_QTM_2D_t
 
@@ -161,7 +167,10 @@ module Indexed_Values_m
   ! real(rk) :: V = 0.0    ! Value to be applied at (NF, NZ, N or NP)
   ! integer :: N = 0       ! Index in QTM at which to apply V
   ! integer :: NP = 0      ! Index of path-adjacent part of QTM at which to
-                           ! apply V
+                           ! apply V, e.g., in Grids_t.  This is intentionally
+                           ! the same name as the second (probably Phi) subscript
+                           ! in Value_2D_t so that Interpolate_2D_List.f9h can be
+                           ! used for both interpolations.
   ! integer :: NZ = 0      ! Vertical (probably zeta) index
     integer :: NF = 0      ! Frequency subscript
   end type Value_QTM_3D_t
@@ -502,6 +511,9 @@ contains
 end module Indexed_Values_m
 
 ! $Log$
+! Revision 2.12  2017/03/11 00:47:23  vsnyder
+! Add more comments about NP component
+!
 ! Revision 2.11  2017/02/07 03:48:40  vsnyder
 ! Add Invert_1D_List_Index
 !
