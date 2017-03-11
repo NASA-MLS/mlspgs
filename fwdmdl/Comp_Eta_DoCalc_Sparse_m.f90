@@ -32,14 +32,14 @@ module Comp_Eta_DoCalc_Sparse_m
 
 contains
 
-  subroutine Comp_All_Eta_2D ( Beta_Group, Z_Path, Eta_Z, Phi_Path, Eta_Path, &
+  subroutine Comp_All_Eta_2D ( Grids_f, Z_Path, Eta_Z, Phi_Path, Eta_Path, &
     & Eta_zP )
 
-    use ForwardModelConfig, only: Beta_Group_t
     use Indexed_Values_m, only: Value_1D_Lists_t, Value_2D_Lists_t
+    use Load_Sps_Data_m, only: Grids_t
     use MLSKinds, only: RP
 
-    type(beta_group_t), intent(in) :: Beta_Group(:)
+    type(grids_t), intent(in) :: Grids_f      ! Quantity values
     real(rp), intent(in) :: Z_Path(:)         ! Zetas on the path
     type(value_1D_lists_t), intent(inout) :: Eta_Z(:) ! from VMR's zeta to path.
                                               ! InOut so as not to reallocate
@@ -47,54 +47,55 @@ contains
     real(rp), intent(in) :: Phi_Path(:)       ! Phis on the path
     type(value_1D_lists_t), intent(inout) :: Eta_Path(:) ! InOut so as not to
                                               ! reallocate Eta_Path%Eta
-    type(value_2D_lists_t), intent(inout) :: Eta_zP(:) ! InOut so as not to
+    class(value_2D_lists_t), intent(inout) :: Eta_zP(:) ! InOut so as not to
                                               ! reallocate Eta_zP%Eta
 
     integer :: I
 
-    do i = 1, size(beta_group)
-      call comp_one_eta_2d ( beta_group(i), z_path, eta_z(i), phi_path, &
+    do i = 1, size(grids_f%mol)
+      call comp_one_eta_2d ( grids_f, i, z_path, eta_z(i), phi_path, &
                            & eta_path(i), eta_zP(i) )
     end do
 
   end subroutine Comp_All_Eta_2D
 
-  subroutine Comp_All_Eta_QTM ( Beta_Group, Z_Path, Eta_Z,  Eta_Path, Eta_zQ )
+  subroutine Comp_All_Eta_QTM ( Grids_f, Z_Path, Eta_Z,  Eta_Path, Eta_zQ )
 
-    use ForwardModelConfig, only: Beta_Group_t
-    use Indexed_Values_m, only: Value_1D_Lists_t, Value_QTM_1D_Lists_t, &
+    use Indexed_Values_m, only: Value_1D_Lists_t, Value_QTM_1D_List_t, &
       & Value_QTM_2D_Lists_t
+    use Load_Sps_Data_m, only: Grids_t
     use MLSKinds, only: RP
 
-    type(beta_group_t), intent(in) :: Beta_Group(:)
+    type(grids_t), intent(in) :: Grids_f      ! Quantity values
     real(rp), intent(in) :: Z_Path(:)         ! Zetas on the path
     type(value_1D_lists_t), intent(inout) :: Eta_Z(:) ! from VMR's zeta to path.
                                               ! InOut so as not to reallocate
                                               ! Eta_Z%Eta
-    type(value_QTM_1D_lists_t), intent(in) :: Eta_Path(:) ! from VMR's Phi to
-                                              ! path.
-    type(value_QTM_2D_lists_t), intent(inout) :: Eta_zQ(:) ! InOut so as not to
+    type(value_QTM_1D_list_t), intent(in) :: Eta_Path(:) ! from Phi to path for
+                                              ! all species, because there's
+                                              ! only one QTM.
+    class(value_QTM_2D_lists_t), intent(inout) :: Eta_zQ(:) ! InOut so as not to
                                               ! reallocate Eta_zQ%Eta
 
     integer :: I
 
-    do i = 1, size(beta_group)
-      call comp_one_eta_QTM ( beta_group(i), z_path, eta_z(i), &
-                            & eta_path(i)%eta, eta_zQ(i)%eta )
+    do i = 1, size(grids_f%mol)
+      call comp_one_eta_QTM ( grids_f, i, z_path, eta_z(i), &
+                            & eta_path, eta_zQ(i)%eta )
     end do
 
   end subroutine Comp_All_Eta_QTM
 
-  subroutine Comp_One_Eta_2D ( Beta_Group, Z_Path, Eta_Z, Phi_Path, Eta_Path, &
+  subroutine Comp_One_Eta_2D ( Grids_f, N, Z_Path, Eta_Z, Phi_Path, Eta_Path, &
     & Eta_zP )
 
-    use Constants, only: Deg2Rad
-    use ForwardModelConfig, only: Beta_Group_t
     use Get_Eta_List_m, only: Get_Eta_List
     use Indexed_Values_m, only: Value_1D_Lists_t, Value_2D_lists_t
+    use Load_Sps_Data_m, only: Grids_t
     use MLSKinds, only: RP
 
-    type(beta_group_t), intent(in) :: Beta_Group
+    type(grids_t), intent(in) :: Grids_f      ! Quantity values
+    integer, intent(in) :: N                  ! Which quantity
     real(rp), intent(in) :: Z_Path(:)         ! Zetas on the path
     type(value_1D_lists_t), intent(inout) :: Eta_Z ! from VMR's Zeta to path.
                                               ! InOut so as not to reallocate
@@ -103,41 +104,52 @@ contains
     type(value_1D_lists_t), intent(inout) :: Eta_Path ! from VMR's Phi to path.
                                               ! InOut so as not to reallocate
                                               ! Eta_Z%Eta
-    type(value_2D_lists_t), intent(inout) :: Eta_zP ! InOut so as not to
+    class(value_2D_lists_t), intent(inout) :: Eta_zP ! InOut so as not to
                                               ! reallocate Eta_zP%Eta
 
+    integer :: I1, I2                         ! Boundaries from Grids_f%l_*
+
     eta_z%n = size(z_path,1)
-    call get_eta_list ( beta_group%qty%qty%template%surfs(:,1), z_path, &
-      & eta_z, sorted=.false. )
+    i1 = grids_f%l_z(n-1)+1
+    i2 = grids_f%l_z(n)
+    ! Get the Zeta interpolator list
+    call get_eta_list ( grids_f%zet_basis(i1:i2), z_path, eta_z, sorted=.false. )
     eta_path%n = size(phi_path,1)
-    call get_eta_list ( deg2rad*beta_group%qty%qty%template%phi(1,:), phi_path, &
-      & eta_path, sorted=.false. )
+    i1 = grids_f%l_p(n-1)+1
+    i2 = grids_f%l_p(n)
+    ! Get the Phi interpolator list
+    call get_eta_list ( grids_f%phi_basis(i1:i2), phi_path, eta_path, &
+      & sorted=.false. )
     eta_zP%n = eta_z%n
+    ! Compute the Zeta X Phi interpolator list from the other two
     call get_eta_list ( eta_z%eta(1:eta_z%n), eta_path%eta(1:eta_path%n), &
       & eta_zP%eta(1:eta_zP%n) )
-
   end subroutine Comp_One_Eta_2D
 
-  subroutine Comp_One_Eta_QTM ( Beta_Group, Z_Path, Eta_Z, Eta_Path, &
-    & Eta_zQ )
+  subroutine Comp_One_Eta_QTM ( Grids_f, N, Z_Path, Eta_Z, Eta_Path, Eta_zQ )
 
-    use ForwardModelConfig, only: Beta_Group_t
     use Get_Eta_List_m, only: Get_Eta_List
     use Indexed_Values_m, only: Value_1D_Lists_t, Value_1D_Lists_t, &
       & Value_QTM_1D_List_t, Value_QTM_2D_list_t
+    use Load_Sps_Data_m, only: Grids_t
     use MLSKinds, only: RP
 
-    type(beta_group_t), intent(in) :: Beta_Group
+    type(grids_t), intent(in) :: Grids_f      ! Quantity values
+    integer, intent(in) :: N                  ! Which quantity
     real(rp), intent(in) :: Z_Path(:)         ! Zetas on the path
     type(value_1D_lists_t), intent(inout) :: Eta_Z ! from VMR's zeta to path.
                                               ! InOut so as not to reallocate
                                               ! Eta_Z%Eta
-    type(value_QTM_1D_list_t), intent(in) :: Eta_Path(:) ! from VMR's Phi to path.
-    type(value_QTM_2D_list_t), intent(inout) :: Eta_zQ(:)
+    type(value_QTM_1D_list_t), intent(in) :: Eta_Path(:) ! from Phi to path.
+    class(value_QTM_2D_list_t), intent(inout) :: Eta_zQ(:)
+
+    integer :: I1, I2                         ! Boundaries from Grids_f%l_*
 
     eta_z%n = size(z_path,1)
-    call get_eta_list ( beta_group%qty%qty%template%surfs(:,1), z_path, &
-        & eta_z, sorted=.true. )
+    i1 = grids_f%l_z(n-1)+1
+    i2 = grids_f%l_z(n)
+    ! Get the Zeta interpolator list
+    call get_eta_list ( grids_f%zet_basis(i1:i2), z_path, eta_z, sorted=.false. )
     eta_zQ%n = eta_z%n
     call get_eta_list ( eta_z%eta(1:eta_z%n), eta_path, eta_zQ )
 
@@ -156,6 +168,9 @@ contains
 end module Comp_Eta_DoCalc_Sparse_m
 
 ! $Log$
+! Revision 2.3  2017/03/11 00:51:18  vsnyder
+! Use Grids_F instead of Beta_Group
+!
 ! Revision 2.2  2017/01/14 01:57:09  vsnyder
 ! Eliminate polymorphic interpolators.  Add arguments to return 1D Etas.
 ! Assume Z_Path and Phi_Path are not sorted.  Use template%Phi as radians
