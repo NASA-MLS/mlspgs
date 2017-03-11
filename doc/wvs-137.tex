@@ -1,0 +1,205 @@
+\documentclass[11pt]{article}
+\usepackage{alltt}
+\usepackage[fleqn]{amsmath}
+\usepackage{floatflt}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage[strings]{underscore}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9in
+
+\newcommand{\docname}{wvs-137}
+\newcommand{\docdate}{15 December 2016}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+    \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\bf\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\bf\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\newcommand{\Z}{$\zeta$}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Van\\
+Subject: \>Interpolation coefficient lists\\
+From: \>Van Snyder\\
+%Reference: \>
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-20pt}
+
+\section{Horizontal basis}
+
+In the EMLS case, the horizontal basis is orbit geodetic angle, a
+one-dimensional space.  In the SMLS case, the horizontal basis is a QTM, a
+two-dimensional space.  In both cases, the discrete positions in the
+horizontal basis at which profiles are represented are simply enumerated. 
+In the EMLS case, the enumeration corresponds directly to orbit angle.  In
+the SMLS case, vertices within the QTM are enumerated as the grid is
+refined to the desired level, if the vertex of a facet at the desired
+level of refinement is either within the specified polygon, or immediately
+adjacent to it.  There is no fixed predetermined relationship between the
+index of a vertex and its position within the horizontal basis.  From the
+point of view of organization of data within the forward model, both sets
+of points in the horizontal basis are one-dimensional computational
+objects.
+
+\section{One-dimensional interpolation}
+
+One-dimensional interpolation coefficients are matrices having a number of
+rows equal to the number of interpolated values to be produced, and a
+number of columns equal to the number of values from which to interpolate.
+
+\subsection{Interpolating from one space dimension}
+
+There are two formats in mlsl2 of one-dimensional lists of coefficients to
+interpolate from a one-dimensional grid to a one-dimensional grid.
+
+Both are representations of sparse matrices.
+
+In the first format, the row number of the matrix is the position of the
+coefficient in the list.  Each element of the list is represented by a
+structure of type {\tt Value_1D_List_t} that contains the number of
+nonzero coefficients, and space for two coefficients.  Each coefficient is
+represented by a structure of type {\tt Value_1D_t} that contains a
+coefficient value, and a column number.
+
+\begin{centering}
+\includegraphics[scale=1.0]{wvs-137-1}\\
+\end{centering}
+
+If one has an array {\tt Eta} of {\tt Value_1D_List_t} coefficients, the
+value of the {\tt P}$^\text{th}$ interpolated element of the array {\tt
+Grid} is determined by interpolating from the {\tt Basis} array:
+
+{\tt\begin{verbatim}
+  grid(p) = sum( [ ( eta(p)%v(i)%v * basis(eta(p)%v(i)%n), i = 1, eta(p)%n  ) ]
+\end{verbatim}}
+
+In the second format, the row and column numbers of the matrix, and the
+coefficient value, are represented in a list element of type {\tt
+Value_1D_p_t}.
+
+\begin{centering}
+\includegraphics[scale=1.0]{wvs-137-2}\\
+\end{centering}
+
+Assuming the array {\tt Grid} is initially zero, accumulating an
+interpolated value from the {\tt Basis} array is done using:
+
+{\tt\begin{verbatim}
+  grid(eta(i)%p) = grid(eta(i)%p) + eta(i)%v * basis(eta(i)%n
+\end{verbatim}}
+
+\subsection{Interpolating from QTM}
+
+Each facet of a QTM has three vertices.  Interpolating from the vertices
+to a point within the facet requires three coefficients.  Each element of
+the list is represented by a structure of type {\tt Value_QTM_1D_List_t}. 
+Each coefficient is represented by a structure of type {\tt
+Value_QTM_1D_t}.  As with the first case above, the position in the
+interpolated-result array, and therefore the row number within the matrix
+is given by the position of the coefficient object of type {\tt
+Value_QTM_1D_List_t} within the coefficient array, and the column number
+of the matrix, and therefore the index of the facet, is given by a
+component of the structure of type {\tt Value_QTM_1D_t}.
+
+For the QTM, there are two possibilities of an index.  To diverge for a
+moment, recall that the number of \Z\ levels used to represent the ray
+being traced is the union of the sets of \Z\ levels of temperature and all
+species entering into the calculation, augmented with three intercalated
+levels for Gauss-Legendre (GL) quadrature.  This is a larger set of \Z\
+levels.  To calculate the height corresponding to each \Z\ level used
+during ray tracing, it is necessary to have the temperature interpolated
+from the state vector into those levels.  In the EMLS case, the path of
+integration is within the set of profiles, passing through each one.  In
+the SMLS case, the path of integration is above a subset of the facets of
+the QTM, but usually does not cross over all of them.  Therefore, the
+hydrostatic equilibrium computation is needed at only a subset of vertices
+of the QTM, and therefore temperature is needed on \Z-GL surfaces only on
+a number of profiles equal to the number of vertices of facets above which
+the path of integration passes.  Temperature is represented by an array
+that is separate from the state vector, for which the horizontal extent is
+this number of vertices, and height is represented by a similar array. 
+One index in the {\tt Value_QTM_1D_t} structure is the index of the
+profile in the QTM, and the other is the index of the horizontal position
+in the separate array of height, and temperature interpolated to \Z-GL
+levels.
+
+\begin{centering}
+\includegraphics[scale=1.0]{wvs-137-3}\\
+\end{centering}
+
+\section{Two-dimensional interpolation}
+
+Two-dimensional interpolation is considered to be interpolation from an
+horizontal position and a vertical position onto, for example, a position
+along the line of sight.  In the EMLS case, this is interpolation from two
+space dimensions to one space dimension.  In the SMLS case, the horizontal
+basis is a two-dimensional QTM grid.  Vertices in the grid are, however,
+simply enumerated.  From the point of view of the computation, there are
+two dimensions in both cases:  What horizontal basis element is used, and
+what vertical basis element is used.
+
+
+\label{lastpage}
+\vspace*{-0.1in} % Somehow, this causes lastpage to be defined
+\end{document}
+
+% $Id$
