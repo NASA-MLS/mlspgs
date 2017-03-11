@@ -40,11 +40,17 @@ module Path_Representation_m
   end type Path_t
 
   type, public :: Facets_and_Vertices_t
+    integer :: NF=0                     ! Number of used elements in Facets
+    integer :: NV=0                     ! Number of used elements in Vertices
     integer, allocatable :: Facets(:)   ! Indices in QTM_Tree%Q
     integer, allocatable :: Vertices(:) ! Indices in QTM_Tree%Geo_In
   end type Facets_and_Vertices_t
 
-  public :: Path_Continuation
+  public :: Path_Continuation, Union_Paths
+
+  interface Union_Paths
+    procedure Add_One_Path_To_Union, Add_Paths_To_Union
+  end interface
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -162,6 +168,38 @@ contains
     end if
   end subroutine Path_Continuation
 
+  subroutine Add_One_Path_To_Union ( Unions, Path )
+    ! Construct the union of union%facets with path%facets, and the union of
+    ! union%vertices with path%vertices.
+    use MLSSets, only: Union
+    type(facets_and_vertices_t), intent(inout) :: Unions
+    type(facets_and_vertices_t), intent(in) :: Path
+
+!   call move_alloc ( union(union%facets,path%facets), union%facets ) ! doesn't work
+    if ( allocated(unions%facets) ) then
+      unions%facets = union(unions%facets,path%facets)
+    else
+      unions%facets = path%facets
+    end if
+    unions%nf = size(unions%facets)
+!   call move_alloc ( union(unions%vertices,path%vertices), unions%vertices ) ! doesn't work
+    if ( allocated(unions%vertices) ) then
+      unions%vertices = union(unions%vertices,path%vertices)
+    else
+      unions%vertices = path%vertices
+    end if
+    unions%nv = size(unions%vertices)
+  end subroutine Add_One_Path_To_Union
+
+  subroutine Add_Paths_To_Union ( Unions, Paths )
+    type(facets_and_vertices_t), intent(inout) :: Unions
+    type(facets_and_vertices_t), intent(in) :: Paths(:)
+    integer :: I
+    do i = 1, size(paths)
+      call union_paths ( unions, paths(i) )
+    end do
+  end subroutine Add_Paths_To_Union
+
 !=============================================================================
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
@@ -176,6 +214,9 @@ contains
 end module Path_Representation_m
 
 ! $Log$
+! Revision 2.9  2017/03/11 00:47:39  vsnyder
+! Add Union_paths
+!
 ! Revision 2.8  2016/11/23 00:06:55  vsnyder
 ! Remove Value_t in favor of types in Indexed_Values_m
 !
