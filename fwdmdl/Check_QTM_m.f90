@@ -29,52 +29,53 @@ module Check_QTM_m
 contains
 
   ! --------------------------------------------------  Check_QTM  -----
-  subroutine Check_QTM ( Grids_Tmp, Grids_f, QTM_HGrid, UsingQTM )
+  subroutine Check_QTM ( FwdModelConf, QTM_HGrid, UsingQTM )
     ! Check whether temperature and all species either all have QTM HGrid,
     ! or none do.  If they all do, set UsingQTM and find the QTM HGrid with
     ! the finest resolution and associate it with QTM_HGrid.  At least for now,
     ! require all the QTM grids to have the same resolution.
 
+    use ForwardModelConfig, only: ForwardModelConfig_T, QtyStuff_T
     use HGridsDatabase, only: HGrid_T
     use Intrinsic, only: Lit_Indices, L_Temperature
-    use Load_SPS_Data_M, only: Grids_T
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use Output_m, only: NewLine, Output
     use String_Table, only: Display_String
     use Toggles, only: Emit, Levels, Toggle
     use Trace_M, only: Trace_Begin, Trace_End
 
-    type (Grids_T), intent(in) :: Grids_Tmp  ! All the coordinates for Temperature
-    type (Grids_T), intent(in) :: Grids_f    ! All the coordinates for VMR
+    type(forwardModelConfig_T), intent(in) :: FwdModelConf
     type (HGrid_T), pointer, intent(out) :: QTM_HGrid ! HGrid that has finest QTM resolution.
     logical, intent(out) :: UsingQTM         ! Temperature and all species have QTM hGrids
 
     integer :: I, K     ! Loop indices
     integer :: Me = -1  ! String index for trace
     integer :: Pos
+    type (qtyStuff_t), pointer :: QtyStuff(:)
     logical :: QTM_fail
-    logical :: SpsQTM   ! Species being examined in Grids_F has QTM hGrid
+    logical :: SpsQTM   ! Species being examined has QTM hGrid
     integer, parameter :: Width = 100 ! of line for list of quantities
 
     call trace_begin ( me, 'ForwardModel.Check_QTM', &
       & cond=toggle(emit) .and. levels(emit) > 0  )
 
     QTM_fail = .false.  ! Assume no errors
+    qtyStuff => fwdModelConf%beta_group%qty
 
     ! Verify that temperature and all the species either all have QTM hGrids
     ! or none do.  If they all do, set QTM_HGrid to the one with the finest
     ! resolution.
-    QTM_hGrid => grids_tmp%qtyStuff(1)%qty%template%the_hGrid
-    usingQTM = grids_tmp%isQTM(1)
-    do k = 1, size(grids_f%qtyStuff)
-      spsQTM = grids_f%isQTM(k)
+    QTM_hGrid => fwdModelConf%temp%qty%template%the_hGrid
+    usingQTM = fwdModelConf%temp%qty%template%isQTM()
+    do k = 1, size(qtyStuff)
+      spsQTM = qtyStuff(k)%qty%template%isQTM()
       QTM_fail = QTM_fail .or. ( spsQTM .neqv. usingQTM )
-      if ( .not. QTM_fail .and. usingQTM .and. spsQTM ) then
+      if ( .not. QTM_fail .and. spsQTM ) then
         QTM_fail = QTM_fail .or. QTM_hGrid%QTM_tree%level /= &
-                 & grids_f%qtyStuff(k)%qty%template%the_hGrid%QTM_tree%level
+                 & qtyStuff(k)%qty%template%the_hGrid%QTM_tree%level
         if ( QTM_hGrid%QTM_tree%level < &
-           & grids_f%qtyStuff(k)%qty%template%the_hGrid%QTM_tree%level ) &
-           & QTM_hGrid => grids_f%qtyStuff(k)%qty%template%the_hGrid
+           & qtyStuff(k)%qty%template%the_hGrid%QTM_tree%level ) &
+           & QTM_hGrid => qtyStuff(k)%qty%template%the_hGrid
       end if
     end do
     if ( QTM_fail ) then
@@ -84,10 +85,10 @@ contains
         pos = 0
         if ( i == 1 .eqv. usingQTM ) call display_string ( &
           & lit_indices(l_temperature), before=' ', pos=pos, width=width )
-        do k = 1, size(grids_f%qtyStuff)
-          spsQTM = grids_f%isQTM(k)
+        do k = 1, size(qtyStuff)
+          spsQTM = qtyStuff(k)%qty%template%isQTM()
           if ( i == 1 .eqv. spsQTM ) call display_string ( &
-            & lit_indices(grids_f%qtyStuff(k)%qty%template%quantityType), &
+            & lit_indices(qtyStuff(k)%qty%template%quantityType), &
             & before=' ', pos=pos, width=width )
         end do
         call newLine
@@ -99,7 +100,7 @@ contains
 
     if ( .not. usingQTM ) nullify ( QTM_HGrid )
 
-    call trace_end ( 'ForwardModel.Both_Sidebands_Setup', &
+    call trace_end ( 'ForwardModel.Check_QTM', &
       & cond=toggle(emit) .and. levels(emit) > 0  )
 
   end subroutine Check_QTM
@@ -117,6 +118,9 @@ contains
 end module Check_QTM_m
 
 ! $Log$
+! Revision 2.6  2017/03/11 00:50:20  vsnyder
+! Use forward model config instead of Grids_F and Grids_Tmp
+!
 ! Revision 2.5  2016/10/05 20:44:58  vsnyder
 ! Require all QTM grids to have the same resolution
 !
