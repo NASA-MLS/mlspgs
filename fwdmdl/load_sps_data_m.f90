@@ -24,10 +24,10 @@ module Load_SPS_Data_M
   public :: EmptyGrids_t, Destroygrids_t, Dump, Dump_Grids
 
   type, public :: C_t ! "Contents" type, to get an array of pointers
-    real(rp), pointer :: V1(:) => NULL()      ! Frq * Zeta * Phi * Cross
-    real(rp), pointer :: V4(:,:,:,:) => NULL() ! Frq X Zeta X Phi X Cross
-    logical, pointer :: L1(:) => NULL()       ! Frq * Zeta * Phi * Cross
-    logical, pointer :: L4(:,:,:,:) => NULL() ! Frq X Zeta X Phi X Cross
+    real(rp), pointer, contiguous :: V1(:) => NULL()      ! Frq * Zeta * Phi * Cross
+    real(rp), pointer, contiguous :: V4(:,:,:,:) => NULL() ! Frq X Zeta X Phi X Cross
+    logical, pointer, contiguous :: L1(:) => NULL()       ! Frq * Zeta * Phi * Cross
+    logical, pointer, contiguous :: L4(:,:,:,:) => NULL() ! Frq X Zeta X Phi X Cross
   end type C_t
 
   type, public :: Grids_T                 ! Fit all Gridding categories
@@ -97,8 +97,8 @@ contains
 
   ! ----------------------------------------------  Load_SPS_Data  -----
 
-  subroutine Load_Sps_Data ( FwdModelConf, Phitan, MAF, &
-                           & Grids_x, QtyStuffIn )
+  subroutine Load_Sps_Data ( FwdModelConf, Phitan, MAF, Grids_x, &
+                           & QtyStuffIn, Subset, Short )
 
     use ForwardModelConfig, only: ForwardModelConfig_t, QtyStuff_T
     use Toggles, only: Emit, Levels, Toggle
@@ -109,14 +109,18 @@ contains
     type (vectorValue_T), intent(in) ::  Phitan  ! Tangent geodAngle
     integer, intent(in) :: MAF
 
-    type (Grids_T), intent(out) :: Grids_x   ! All the coordinates
+    type (Grids_T), intent(out) :: Grids_x     ! All the coordinates
 
     type (qtyStuff_t), intent(in), optional , target :: QtyStuffIn(:)
+    integer, intent(in), optional :: Subset(:) ! Subset of horizontal basis,
+                                               ! primarily for QTM
+    logical, intent(in), optional :: Short     ! Don't do Fill_Grids_2
 
     ! Local variables:
 
+    logical :: Long      ! true if short is absent, else .not. short
     integer :: Me = -1   ! String index cache for tracing
-    integer :: mol, no_mol
+    integer :: Mol, No_Mol
 
     type (qtyStuff_t), pointer :: QtyStuff(:)
 
@@ -130,6 +134,7 @@ contains
 
     no_mol = size( qtyStuff )
 
+    ! Stuff that doesn't depend on the numbers of values or lengths of bases
     call create_grids_1 ( Grids_x, no_mol )
 
     do mol = 1, no_mol
@@ -143,7 +148,7 @@ contains
         grids_x%l_z(mol) = grids_x%l_z(mol-1)
         grids_x%s_ind(mol) = 0
       else
-        call fill_grids_1 ( grids_x, mol, maf, phitan, fwdModelConf )
+        call fill_grids_1 ( grids_x, mol, maf, phitan, fwdModelConf, subset )
       end if
 
     end do
@@ -152,13 +157,17 @@ contains
 
     call create_grids_2 ( Grids_x )
 
-    do mol = 1, no_mol
-      ! Fill the zeta, phi, freq. basis and value components.
-      if ( associated(qtyStuff(mol)%qty) ) &
-        & call fill_grids_2 ( grids_x, mol, qtyStuff(mol)%qty, &
-          & fwdModelConf%moleculeDerivatives(mol) .and. &
-          & qtyStuff(mol)%derivOK )
-    end do
+    long = .true.
+    if ( present(short) ) long = .not. short
+    if ( long ) then
+      do mol = 1, no_mol
+        ! Fill the zeta, phi, freq. basis and value components.
+        if ( associated(qtyStuff(mol)%qty) ) &
+          & call fill_grids_2 ( grids_x, mol, qtyStuff(mol)%qty, &
+            & fwdModelConf%moleculeDerivatives(mol) .and. &
+            & qtyStuff(mol)%derivOK, subset=subset )
+      end do
+    end if
 
 ! ** ZEBUG - Simulate qty%values for EXTINCTION, using the N2 function
 !  (Some code here ...)
@@ -210,7 +219,7 @@ contains
 
   ! -----------------------------------------  Load_One_Item_Grid  -----
   subroutine Load_One_Item_Grid ( Grids_X, Qty, Maf, Phitan, FwdModelConf, &
-    & SetDerivFlags, SetTscatFlag, Across )
+    & SetDerivFlags, SetTscatFlag, Across, Subset, Short )
   ! A simplification of Load_Sps_Data to load a grid that has only one
   ! quantity in it.
 
@@ -227,8 +236,12 @@ contains
     logical, intent(in), optional :: SetDerivFlags
     logical, intent(in), optional :: SetTscatFlag
     logical, intent(in), optional :: Across ! Viewing angle is not in orbit plane
+    integer, intent(in), optional :: Subset(:) ! Subset of horizontal basis,
+                                               ! primarily for QTM
+    logical, intent(in), optional :: Short     ! Don't do Fill_Grids_2
 
     type(vectorValue_t) :: QtyStuff
+    logical :: Long      ! true if short is absent, else .not. short
     logical :: MyAcross, MyFlag
     integer :: II, No_Ang
 
@@ -275,18 +288,21 @@ contains
 
        grids_x%qtyStuff(1)%qty => qty
        if ( present(phitan) ) then
-         call fill_grids_1 ( grids_x, 1, maf, phitan, fwdModelConf )
+         call fill_grids_1 ( grids_x, 1, maf, phitan, fwdModelConf, subset )
        else if ( myAcross ) then
          call MLSMessage ( MLSMSG_Error, moduleName, &
          & 'Cross-track viewing needs PhiTan quantity' )
        else
          ! Use the whole phi space for the window
-         call fill_grids_1 ( grids_x, 1, maf )
+         call fill_grids_1 ( grids_x, 1, maf, subset=subset )
        end if
 
        call create_grids_2 ( grids_x )
 
-       call fill_grids_2 ( grids_x, 1, qty, setDerivFlags )
+       long = .true.
+       if ( present(short) ) long = .not. short
+       if ( long ) &
+         & call fill_grids_2 ( grids_x, 1, qty, setDerivFlags, subset=subset )
 
     end if
 
@@ -482,7 +498,7 @@ contains
   end subroutine Create_Grids_2
 
   ! -----------------------------------------------  Fill_Grids_1  -----
-  subroutine Fill_Grids_1 ( Grids_x, II, Maf, Phitan, FwdModelConf )
+  subroutine Fill_Grids_1 ( Grids_x, II, Maf, Phitan, FwdModelConf, Subset )
   ! Fill in the size information for the II'th element of Grids_x
 
     use ForwardModelConfig, only: ForwardModelConfig_t
@@ -496,6 +512,8 @@ contains
     integer, intent(in) :: MAF
     type (vectorValue_T), intent(in), optional :: PHITAN  ! Tangent geodAngle
     type(forwardModelConfig_T), intent(in), optional :: FwdModelConf
+    integer, intent(in), optional :: Subset(:) ! Subset of horizontal basis,
+                                               ! primarily for QTM
 
     integer :: KF ! Number of frequencies
     integer :: KP ! Number of horizontal coordinates
@@ -508,7 +526,10 @@ contains
         & call MLSMessage ( MLSMSG_Error, moduleName, &
            & 'Cannot load a quantity that is unstacked or incoherent' )
 
-      if ( qty%template%isQTM() ) then
+      if ( present(subset) ) then
+        grids_x%windowStart(ii) = 1
+        grids_x%windowFinish(ii) = size(subset)
+      else if ( qty%template%isQTM() ) then
         grids_x%windowStart(ii) = 1
         grids_x%windowFinish(ii) = size(qty%template%the_hGrid%QTM_tree%geo_in)
       else if ( present(phitan) ) then
@@ -558,7 +579,7 @@ contains
   end subroutine Fill_Grids_1
 
   ! -----------------------------------------------  Fill_Grids_2  -----
-  subroutine Fill_Grids_2 ( Grids_x, II, Qty, SetDerivFlags, Phi_Offset )
+  subroutine Fill_Grids_2 ( Grids_x, II, Qty, SetDerivFlags, Phi_Offset, Subset )
   ! Fill the zeta, phi, freq. basis and value components for the II'th
   ! "molecule" in Grids_x.
 
@@ -582,8 +603,10 @@ contains
     type(vectorValue_T), intent(in) :: QTY     ! An arbitrary vector quantity
     logical, intent(in), optional :: SetDerivFlags
     real(rp), intent(in), optional :: Phi_Offset ! Radians
+    integer, intent(in), optional :: Subset(:) ! Subset of horizontal basis,
+                                               ! primarily for QTM
 
-    integer :: I, J, K, KF, KP, KX, KZ, L, N, PF, PP, PV, PX, PZ
+    integer :: H, I, J, K, KF, KP, KX, KZ, L, N, PF, PP, PV, PX, PZ
     integer :: QF, QP, QV, QX, QZ, WF, WS
     integer :: InstOr1
     logical :: PackFrq ! Need to pack the frequency "dimension"
@@ -608,6 +631,14 @@ contains
     wf = Grids_x%windowFinish(ii)
     kp = wf - ws + 1
 
+    ! Associate components of Grids_x%c with parts of Grids_x%Values
+    ! and Grids_x%Deriv_Flags.
+
+    Grids_x%c(ii)%v1 => Grids_x%values(pv+1:qv)
+    Grids_x%c(ii)%v4(1:kf,1:kz,ws:wf,1:kx) => Grids_x%c(ii)%v1
+    Grids_x%c(ii)%l1 => Grids_x%deriv_flags(pv+1:qv)
+    Grids_x%c(ii)%l4(1:kf,1:kz,ws:wf,1:kx) => Grids_x%c(ii)%l1
+
     select case ( qty%template%verticalCoordinate )
     case ( l_geocAltitude ) ! This will be used for interpolation with
                             ! H_Path, which is in geodetic height measured
@@ -618,14 +649,16 @@ contains
       n = pz
       ! The order for zet_basis is surfs (fastest), instances, cross angles
       do k = px+1, qx
+        h = k
+        if ( present(subset) ) h = subset(k)
         do j = ws, wf
           instOr1 = merge(1,j,qty%template%coherent)
           do i = 1, qty%template%noSurfs
             l = merge(1,i,qty%template%stacked)
             n = n + 1
             ! Get geodetic coordinates equivalent to geocentric coordinates
-            geod = xyz_to_geod ( to_xyz ( qty%template%geodLat3(l,j,k), &
-                                        & qty%template%lon3(l,j,k) ) * &
+            geod = xyz_to_geod ( to_xyz ( qty%template%geodLat3(l,j,h), &
+                                        & qty%template%lon3(l,j,h) ) * &
                                         & qty%template%surfs(i,instOr1) )
             ! Get height above the geoid in kilometers
             Grids_x%zet_basis(n) = geod(3)/1000.0
@@ -671,24 +704,26 @@ contains
       & packFrq = size(qty%template%frequencies) /= qty%template%noChans
 
     if ( packFrq ) then ! Only the values for which we have frequencies
-      Grids_x%values(pv+1:qv) = &
-        & reshape(qty%values( pack( (/ ( i, i = 1, kf*kz ) /), &
-          &                         (/ ( qty%template%channels, i = 1, kz ) /) ), &
-          &                   ws:wf ), &
-          &       (/qv-pv/) )
+      if ( present(subset) ) then
+        Grids_x%c(ii)%v4 = qty%value4(qty%template%chanInds,1:kz,subset,1:kx)
+      else
+        Grids_x%c(ii)%v4 = qty%value4(qty%template%chanInds,1:kz,ws:wf,1:kx)
+      end if
     else ! All the values
-      ! qv - pv == (wf - ws + 1) * kf * kz here
       ! kz = noSurfs * noCrossTrack here
       ! shape(qty%value4) = [ freqs, zetas, instances, cross-angles ]
-      Grids_x%values(pv+1:qv) = reshape(qty%value4(1:kf,1:kz,ws:wf,1:kx), &
-                                      & (/qv-pv/))
+      if ( present(subset) ) then
+        Grids_x%c(ii)%v4 = qty%value4(1:kf,1:kz,subset,1:kx)
+      else
+        Grids_x%c(ii)%v4 = qty%value4(1:kf,1:kz,ws:wf,1:kx)
+      end if
     end if
 
     !  mixing ratio values are manipulated if it's log basis
     Grids_x%lin_log(ii) = qty%template%logBasis
     if ( qty%template%logBasis ) then
       Grids_x%min_val(ii) = qty%template%minValue
-      call to_log_basis ( Grids_x%values(pv+1:qv), qty%template%minValue )
+      call to_log_basis ( Grids_x%c(ii)%v1, qty%template%minValue )
     end if
 
     ! set 'do derivative' flags
@@ -700,8 +735,13 @@ contains
         if ( any(qty%template%molecule == Which_dBeta_df) ) &
           grids_x%where_dBeta_df(ii) = count(grids_x%where_dBeta_df /= 0) + 1
         if ( associated(qty%mask) ) then
-          Grids_x%deriv_flags(pv+1:qv) = reshape(( iand (M_FullDerivatives, &
-            & ichar(qty%mask)) == 0),(/qv-pv/))
+          if ( present(subset) ) then
+            Grids_x%c(ii)%l4 = &
+              & iand( M_FullDerivatives, ichar(qty%mask4(1:kf,1:kz,subset,1:kx) ) ) == 0
+          else
+            Grids_x%c(ii)%l4 = &
+              & iand( M_FullDerivatives, ichar(qty%mask4(1:kf,1:kz,ws:wf,1:kx) ) ) == 0
+          end if
         else
           Grids_x%deriv_flags(pv+1:qv) = .true.
         end if
@@ -711,14 +751,6 @@ contains
     else
       grids_x%deriv_flags(pv+1:qv) = .false.
     end if
-
-    ! Associate components of Grids_x%c with parts of Grids_x%Values
-    ! and Grids_x%Deriv_Flags.
-
-    Grids_x%c(ii)%v1 => Grids_x%values(pv+1:qv)
-    Grids_x%c(ii)%v4(1:kf,1:kz,ws:wf,1:kx) => Grids_x%c(ii)%v1
-    Grids_x%c(ii)%l1 => Grids_x%deriv_flags(pv+1:qv)
-    Grids_x%c(ii)%l4(1:kf,1:kz,ws:wf,1:kx) => Grids_x%c(ii)%l1
 
   end subroutine Fill_Grids_2
 
@@ -1027,6 +1059,9 @@ contains
 end module LOAD_SPS_DATA_M
 
 ! $Log$
+! Revision 2.119  2017/03/02 00:31:58  vsnyder
+! Add %L1, %V1 components of C_t, add Get_SPS_Bounds
+!
 ! Revision 2.118  2017/02/04 02:13:56  vsnyder
 ! Add type C_t and component C of that type, having components V4 and L4 to
 ! view sections of Values and Deriv_Flags as rank-4 objects.
