@@ -49,7 +49,6 @@ module Metrics_m
 ! real, parameter :: Ang = 1.0     ! .not. degrees
   character(*), parameter :: Fmt = '( i4,i2,i4,f12.5,f10.3,a )'
 
-
 contains
 
   ! --------------------------------------------  Tangent_Metrics  -----
@@ -62,11 +61,11 @@ contains
 
   ! Compute the surface height and the tangent height at Phi_T.
 
-    use GET_ETA_MATRIX_M, only: GET_ETA_SPARSE
-    use MLSKINDS, only: RP
-    use MLSSTRINGLISTS, only: SWITCHDETAIL
-    use OUTPUT_M, only: OUTPUT
-    use TOGGLES, only: SWITCHES
+    use Get_Eta_Matrix_M, only: Get_Eta_Sparse
+    use MLSKinds, only: RP
+    use MLSStringLists, only: SwitchDetail
+    use Output_M, only: Output
+    use Toggles, only: Switches
 
     ! inputs:
 
@@ -98,7 +97,7 @@ contains
     ! Otherwise we have Surf_Height.
     real(rp), optional, intent(in) :: Z_Ref        ! Zeta corresponding to H_Ref(1,:)
     real(rp), optional, intent(in) :: Tan_press    ! Tangent pressure
-    real(rp), optional, intent(in) :: Surf_temp(:) ! Surface temperature at phi_basis
+    real(rp), optional, intent(in) :: Surf_temp(:) ! Surface temperature at p_basis
     real(rp), optional, intent(in) :: Surf_height(:) ! Surface height in km
                                        ! above mean sea level (whatever that
                                        ! means) on P_Basis.
@@ -160,16 +159,16 @@ contains
     ! If the ray is an Earth-intersecting ray it is assumed to reflect from
     ! the pressure reference surface, not the geometric Earth surface.
 
-    use CONSTANTS, only: PI, RAD2DEG
-    use DUMP_0, only: DUMP
-    use GET_ETA_MATRIX_M, only: GET_ETA_SPARSE
+    use Constants, only: Pi, Rad2Deg
+    use Dump_0, only: Dump
+    use Get_Eta_Matrix_M, only: Get_Eta_Sparse
     use GLNP, only: NG, NGP1
-    use IEEE_ARITHMETIC, only: IEEE_IS_NAN
-    use MLSKINDS, only: RP
-    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING
-    use MLSSTRINGLISTS, only: SWITCHDETAIL
-    use OUTPUT_M, only: OUTPUT
-    use TOGGLES, only: SWITCHES
+    use IEEE_Arithmetic, only: IEEE_Is_NaN
+    use MLSKinds, only: RP
+    use MLSMessageModule, only: MLSMessage, MLSMsg_Error, MLSMsg_Warning
+    use MLSStringLists, only: SwitchDetail
+    use Output_M, only: Output
+    use Toggles, only: Switches
 
     ! inputs:
 
@@ -210,12 +209,12 @@ contains
     integer :: H_Phi_Dump  ! <0 = no dump, >=0 = dump, >0 = stop
     integer :: I, I1, I2, IBAD, J, K
     logical :: MyForward   ! Default .true., else Forward if it's present
-    integer :: NO_BAD_FITS
-    integer :: NO_GRID_FITS
-    integer :: N_PATH      ! Path length = 2*(n_vert+ngp1-tan_ind)
+    integer :: No_Bad_Fits
+    integer :: No_Grid_Fits
+    integer :: N_Path      ! Path length = 2*(n_vert+ngp1-tan_ind)
     integer :: N_Tan       ! Tangent index in path, (N_Path - ngp1 + 1)/2
     integer :: N_Vert      ! Size(H_ref,1)
-    integer :: P_COEFFS    ! Size(P_basis)
+    integer :: P_Coeffs    ! Size(P_basis)
 
     integer :: Stat(size(vert_inds))
 
@@ -231,15 +230,15 @@ contains
     real(rp) :: Theta      ! 2.0_rp*Acos(tan_ht/req_s), angle between incident
                            ! and reflected ray for subsurface tangent height
 
-    real(rp) :: ETA_T(size(p_basis)) ! Interpolating coefficients
-    real(rp) :: PHI_OFFSET(size(vert_inds)) ! Orbit projected tangent geodetic
+    real(rp) :: Eta_T(size(p_basis)) ! Interpolating coefficients
+    real(rp) :: Phi_Offset(size(vert_inds)) ! Orbit projected tangent geodetic
                            ! angle if the ray is not an earth intersecting
                            ! ray.  Otherwise the orbit projected tangent
                            ! geodetic angle of the ray between the instrument
                            ! and the intersection point, then the orbit projected
                            ! tangent geodetic angle of the reflected ray.
 
-    real(rp) :: PHI_SIGN(size(vert_inds))   ! +/- 1.0
+    real(rp) :: Phi_Sign(size(vert_inds))   ! +/- 1.0
 
     real(rp), parameter :: Pix2 = 2.0*pi
 
@@ -443,7 +442,7 @@ path: do i = i1, i2
         end do
       end if
     if ( no_bad_fits > 0 ) then
-      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+      call MLSMessage ( MLSMsg_Warning, ModuleName, &
         & "Height_Metrics failed to find H/Phi solution for some path segment" )
       if ( switchDetail(switches,'mhpx') > -1 ) then
         call dumpInput ( 1 )
@@ -596,7 +595,7 @@ path: do i = i1, i2
     &                      h_path, phi, stat, outside )
 
     use MLSKinds, only: RP
-    use Output_m, only: OUTPUT
+    use Output_m, only: Output
 
     real(rp), intent(in) :: P_Basis(2) ! Coordinates for H_Ref.
     real(rp), intent(in) :: Phi_Offset ! Offset from center of path.  Either the
@@ -798,21 +797,23 @@ path: do i = i1, i2
   subroutine More_Metrics ( &
           ! Inputs:
           & Tan_Ind, N_Tan, T_Sv, Vert_Inds, T_Ref, dHidZij, P_Path,   &
+          & Eta_P,                                                     &
           ! Outputs:
           & T_Path, dHitdZi,                                           &
           ! Optional inputs:
           & ddHidHidTl0, dHidTlm, Z_Ref,                               &
           ! Optional outputs:
           & ddHtdHtdTl0, dHitdTlm, dHtdTl0, dHtdZt,                    &
-          & Do_Calc_Hyd, Do_Calc_T, Eta_zxp, NZ_Zxp, NNZ_Zxp, Tan_Phi_t )
+          & Eta_ZP, Do_Calc_Hyd, Do_Calc_T, Eta_zxp, NZ_Zxp, NNZ_Zxp, Tan_Phi_t )
 
     ! This subroutine computes metrics-related things after H_Path and
     ! P_Path are computed by Height_Metrics, and then perhaps augmented
     ! with, for example, the minimum Zeta point.
 
     use Dump_0, only: Dump
-    use Dump_NZ_m, only: Dump_NZ
-    use Get_Eta_Matrix_m, only: Get_Eta_Sparse, Multiply_Eta_Column_Sparse
+    use Get_Eta_List_m, only: Get_Eta_List
+    use Indexed_Values_m, only: Dot_Product, Dump, Value_1D_List_t, &
+      & Value_2D_List_t
     use Load_Sps_Data_m, only: Grids_t
     use MLSKinds, only: RP
     use MLSStringLists, only: SwitchDetail
@@ -829,6 +830,10 @@ path: do i = i1, i2
     real(rp), intent(in) :: T_Ref(:,:)  ! Temperatures at Z_Ref X t_sv%phi_basis
     real(rp), intent(in) :: dHidZij(:,:)! Vertical derivative at Z_Ref X t_sv%phi_basis
     real(rp), intent(in) :: P_Path(:)   ! Phi's on the path
+    type(Value_1D_List_t), intent(inout) :: Eta_P(:) ! Interpolating coefficients
+                                        ! from Temperature's Phi basis to P_Path.
+                                        ! InOut so as not to default initialize
+                                        ! everything.
 
     ! outputs:
 
@@ -851,16 +856,18 @@ path: do i = i1, i2
 
     ! Optional outputs.
 
-    real(rp), optional, intent(out) :: ddHtdHtdTl0(:)  ! Second order
+    real(rp), optional, intent(out), target :: ddHtdHtdTl0(:)  ! Second order
     !          derivatives of height w.r.t T_Ref at the tangent only -- used
     !          for antenna affects. Computed if present(dHidTlm).
     real(rp), optional, intent(out) :: dHitdTlm(:,:)   ! Derivative of path
     !          position wrt temperature state vector (t_sv%zet_basis X t_sv%phi_basis)
-    real(rp), optional, intent(out) :: dHtdTl0(:)      ! First order derivatives
+    real(rp), optional, intent(out), target :: dHtdTl0(:)      ! First order derivatives
     !          of height w.r.t T_Ref at the tangent only.  Computed if
     !          present(dHidTlm).
     real(rp), optional, intent(out) :: dHtdZt          ! Height derivative wrt
     !          pressure at the tangent.  Computed if present(dHidTlm).
+    type(Value_2D_List_t), optional, intent(out) :: Eta_ZP(:) ! Interpolating
+    !          coefficients from Zeta X Phi to the path
     logical, optional, intent(out) :: Do_Calc_Hyd(:,:) ! Nonzero locator for
     !          hydrostatic calculations.  Computed if present(dHidTlm).
     !          This is Path X StateVector = Path X ( Zeta * Phi )
@@ -882,14 +889,6 @@ path: do i = i1, i2
     integer :: I           ! Subscript, loop inductor
     integer :: N_Path      ! Path length = size(vert_inds)
 
-    logical :: Not_Zero_p(size(vert_inds),t_sv%l_p(1))
-    integer :: col1(size(vert_inds))         ! First nonzero in rows of Eta_P
-    integer :: col2(size(vert_inds))         ! Last nonzero in rows of Eta_P
-    integer :: NZ_p(size(vert_inds),t_sv%l_p(1)) ! Nonzeros in columns of Eta_P
-    integer :: NNZ_p(t_sv%l_p(1)) ! Numbers of rows in NZ_P
-
-    real(rp) :: Eta_p(size(vert_inds),t_sv%l_p(1))
-
 !   It would be nice to do this the first time only, but the
 !   retrieve command in the L2CF can now change switches
 !   if ( do_dumps < 0 ) then ! First time only
@@ -901,29 +900,20 @@ path: do i = i1, i2
     ! Interpolate Temperature (T_Ref) and the vertical height derivative
     ! (dHidZij) to the path (T_Path and dHitdZi).
 
-    nnz_p = 0
-    eta_p = 0.0
-    not_zero_p = .false.
-    call get_eta_sparse ( t_sv%phi_basis, p_path(:n_path), eta_p, 1, n_path, &
-      & nz_p, nnz_p, col1, col2, not_zero_p )
+    call get_eta_list ( t_sv%phi_basis, p_path(:n_path), eta_p, sorted=.true. )
     do i = 1, n_path
-      t_path(i) = dot_product(t_ref(vert_inds(i),col1(i):col2(i)), &
-        & eta_p(i,col1(i):col2(i)))
-      ! compute the vertical derivative grid
-      dHitdZi(i) = dot_product(dHidZij(vert_inds(i),col1(i):col2(i)), &
-        & eta_p(i,col1(i):col2(i)))
+      ! We don't use Interpolate from Indexed_Values_m because
+      ! t_ref(vert_inds(i),:) would be a copy.  So we do one row at a time.
+      t_path(i) = dot_product ( t_ref(vert_inds(i),:), eta_p(i) )
+      dHitdZi(i) = dot_product ( dHidZij(vert_inds(i),:), eta_p(i) )
     end do
-
     ! Now for the optional tangent quantities.  
     if ( n_tan <= n_path ) then
       ! Why aren't these two just t_ref(n_tan) and dHitdZi(n_tan)?
       if ( present(tan_phi_t) ) &
-        & tan_phi_t = dot_product(t_ref(tan_ind,col1(n_tan):col2(n_tan)), &
-          & eta_p(n_tan,col1(n_tan):col2(n_tan)))
+        & tan_phi_t = dot_product ( t_ref(tan_ind,:), eta_p(i) )
       if ( present(dhtdzt) ) &
-        & dhtdzt = dot_product(dHidZij(tan_ind,col1(n_tan):col2(n_tan)), &
-          & eta_p(n_tan,col1(n_tan):col2(n_tan)))
-
+        & dhtdzt = dot_product ( dHidZij(tan_ind,:), eta_p(i) )
       ! compute temperature derivatives
       if ( present(dHidTlm) ) call Temperature_Derivatives
     end if
@@ -932,10 +922,7 @@ path: do i = i1, i2
       call dump ( t_ref, name='t_ref', format='(1pg14.6)', options=options )
       call dump ( t_path(:n_path), name='T_Path', format='(1pg14.6)', options=options )
       call dump ( dHitdZi(:n_path), name='dHitdZi', format='(1pg14.6)', options=options )
-      call dump ( eta_p, name='eta_p', format='(1pg14.6)', options=options )
-      call dump ( col1, name='col1', options=options )
-      call dump ( col2, name='col2', options=options )
-      call dump_nz ( nz_p, nnz_p, what=' in More_Metrics' )
+      call dump ( eta_p, name='Eta_P', format='(1pg14.6)' )
       if ( do_dumps > 0 ) stop
     end if
 
@@ -943,13 +930,20 @@ path: do i = i1, i2
 
     subroutine Temperature_Derivatives
 
-      use GLNP, only: NGP1
-      real(rp) :: ETA_T2(n_path,t_sv%l_z(1)) ! Path X Zeta
-      integer :: NZ_T2(n_path,t_sv%l_z(1))   ! Nonzeros in Eta_T2
-      integer :: NNZ_T2(t_sv%l_z(1))         ! Numbers of rows in NZ_T2
-      integer :: I, J, SV_P, SV_T, SV_Z      ! Loop inductors and subscripts
-      integer :: P_Coeffs                    ! t_sv%l_p(1)
-      integer :: Z_Coeffs                    ! t_sv%l_z(1)
+      use Array_Stuff, only: Element_Position
+      use Get_Do_Calc_m, only: Get_Eta_Do_Calc
+      use GLNP, only: NG, NGP1
+      logical :: Change                      ! Interpolator got set to zero
+      real(rp), pointer :: ddHtdHtdTl0_2(:,:) ! Zeta X Path
+      real(rp), pointer :: dHtdTl0_2(:,:)    ! Zeta X Path
+      type(Value_1D_List_t) :: Eta_Z(n_path) ! Interpolating coefficients
+      integer :: I, J, K, SV_P, SV_T, SV_Z   ! Loop inductors and subscripts
+      integer :: P_Coeffs                    ! # of phi's, t_sv%l_p(1)
+      integer :: Two_D_Bounds(2)             ! [ Z_Coeffs, P_Coeffs ]
+      integer :: Two_Subs(2)                 ! [ Sv_Z, Sv_P ]
+      integer :: Z_Coeffs                    ! # of zetas, t_sv%l_z(1)
+      equivalence ( two_d_bounds(1), z_coeffs ), ( two_d_bounds(2), p_coeffs )
+      equivalence ( two_subs(1), sv_z ), ( two_subs(2), sv_p )
 
       ! Adjust the 2d hydrostatic temperature derivative relative to the
       ! surface. Even though this is updated on every invocation, that is,
@@ -959,58 +953,77 @@ path: do i = i1, i2
       ! the same as starting from the original dHidTlm and updating with the
       ! latest phi_t.  The algebra is horrible, but Maple has verified this.
 
-      p_coeffs = t_sv%l_p(1)
-      z_coeffs = t_sv%l_z(1)
+      p_coeffs = t_sv%l_p(1) ! Also sets two_d_bounds(2)
+      z_coeffs = t_sv%l_z(1) ! Also sets two_d_bounds(1)
 
       do i = 1, z_coeffs
         dHidTlm(:,i,:) = dHidTlm(:,i,:) - &
-          & dot_product ( dHidTlm(1,i,col1(n_tan):col2(n_tan)), &
-                        & eta_p(n_tan,col1(n_tan):col2(n_tan)) )
+          & dot_product ( dHidTlm(1,i,:), eta_p(n_tan) )
       end do
 
-      j = z_coeffs * p_coeffs
-      dHtdTl0 = RESHAPE(dHidTlm(tan_ind,:,:) * SPREAD(eta_p(n_tan,:),1,z_coeffs),&
-                     & (/j/))
+      dHtdTl0_2(1:z_coeffs,1:p_coeffs) => dHtdTl0 ( 1 : z_coeffs * p_coeffs )
+      ddHtdHtdTl0_2(1:z_coeffs,1:p_coeffs) => ddHtdHtdTl0 ( 1 : z_coeffs * p_coeffs )
 
-      ddHtdHtdTl0 = RESHAPE( &
-                   ddHidHidTl0(tan_ind,:,:) * SPREAD(eta_p(n_tan,:),1,z_coeffs), &
-                     & (/j/))
+      j = z_coeffs * p_coeffs
+
+      dHtdTl0_2 = 0
+      ddHtdHtdTl0_2 = 0
+      ! Now fill the places that have nonzero Phi interpolating coefficients
+      do i = 1, z_coeffs
+        dHtdTl0_2(i,eta_p(n_tan)%v(:eta_p(n_tan)%n)%n) = &
+          dHidTlm(tan_ind,i,eta_p(n_tan)%v(:eta_p(n_tan)%n)%n) * &
+            eta_p(n_tan)%v(:eta_p(n_tan)%n)%v
+        ddHtdHtdTl0_2(i,eta_p(n_tan)%v(:eta_p(n_tan)%n)%n) = &
+          ddHidHidTl0(tan_ind,i,eta_p(n_tan)%v(:eta_p(n_tan)%n)%n) * &
+            eta_p(n_tan)%v(:eta_p(n_tan)%n)%v
+      end do
 
       ! Compute Zeta interpolation coefficients from the temperature zeta
       ! basis to reference zetas, noting where the nonzeros are
-      nnz_t2 = 0
-      eta_t2 = 0.0
-      ! Get_Eta_Sparse is called twice because Z_Ref is sorted on N_Tan:1:-1
-      ! and on N_Tan+ngp1:
-      call get_eta_sparse ( t_sv%zet_basis, z_ref(vert_inds), eta_t2, &
-        & n_tan, 1, nz_t2, nnz_t2, .true. )
-      call get_eta_sparse ( t_sv%zet_basis, z_ref(vert_inds), eta_t2, &
-        & n_tan+ngp1, size(vert_inds), nz_t2, nnz_t2, .true. )
 
-      ! Compute Zeta X Phi interpolation coefficients, noting where the zeros
-      ! are.  This is ultimately the same as Comp_Eta_Docalc_No_Frq, but that
-      ! doesn't return the Eta_P it computes, which we use above for a one-D
-      ! interpolation.
-      call multiply_eta_column_sparse ( eta_t2, nz_t2, nnz_t2, eta_p, nz_p, nnz_p, &
-        & eta_zxp, nz_zxp, nnz_zxp, do_calc_t )
+      ! Get_Eta_List is called twice because Z_Ref is sorted on N_Tan:1:-1
+      ! and on N_Tan+ngp1:n_path.  This avoids sorting.
+      call get_eta_list ( t_sv%zet_basis, z_ref(vert_inds(1:n_tan)), eta_z(1:n_tan) )
+      eta_z(n_tan+1:n_tan+ng)%n = 0 ! Between the two tangent point elements
+      call get_eta_list ( t_sv%zet_basis, z_ref(vert_inds(n_tan+ngp1:n_path)), &
+      eta_z(n_tan+ngp1:n_path) )
 
-      ! Compute the path temperature derivative, noting where the zeros are
-      sv_t = 0
-      do sv_p = 1 , p_coeffs
-        do sv_z = 1 , z_coeffs
-          sv_t = sv_t + 1
-          if ( t_sv%deriv_flags(sv_t) ) then
-            dHitdTlm(:,sv_t) = max(dHidTlm(vert_inds,sv_z,sv_p),0.0_rp) * eta_p(:,sv_p)
-            do_calc_hyd(:,sv_t) = dHitdTlm(:,sv_t) /= 0.0_rp
-          else
-            do_calc_hyd(:,sv_t) = .false.
-            dHitdTlm(:,sv_t) = 0.0
-            eta_zxp(nz_zxp(:nnz_zxp(sv_t),sv_t),sv_t) = 0.0
-            do_calc_t(nz_zxp(:nnz_zxp(sv_t),sv_t),sv_t) = .false.
-            nnz_zxp(sv_t) = 0
-          end if
+      ! Compute interpolation coefficients from Zeta X Phi to the path, noting
+      ! where the zeros are.
+      call get_eta_list ( eta_z, eta_p, eta_zp )
+      ! Compute the path temperature derivative, noting where the nonzeros are
+      dHitdTlm = 0
+      do i = 1, n_path
+        change = .false.
+        do j = 1, eta_p(i)%n ! At most two nonzero coefficients
+          sv_p = eta_p(i)%v(j)%n
+          do sv_z = 1, z_coeffs
+            sv_t = element_position ( two_subs, two_d_bounds )
+!           sv_t = element_position ( [ sv_z, sv_p ], [ z_coeffs, p_coeffs ] )
+            if ( t_sv%deriv_flags(sv_t) ) then
+              dHitdTlm(i,sv_t) = max(dHidTlm(vert_inds(i),sv_z,sv_p),0.0_rp) * &
+                  & eta_p(i)%v(j)%v
+            else
+              change = .true.
+              dHitdTlm(i,sv_t) = 0.0
+            end if
+          end do
         end do
+        if ( change ) then ! Make some interpolators zero because
+                           ! t_sv%deriv_flags was false
+          k = eta_zp(i)%n
+          do j = 1, k ! At most four values to check
+            ! L4 is associated with Deriv_Flags
+            if ( .not. t_sv%c(1)%l4(1,eta_zp(i)%v(j)%n,eta_zp(i)%v(j)%np,1) ) &
+              & eta_zp(i)%v(j)%v = 0
+          end do
+          eta_zp(i)%n = count(eta_zp(i)%v(1:k)%v/=0)
+          eta_zp(i)%v(1:eta_zp(i)%n) = pack(eta_zp(i)%v(1:k),eta_zp(i)%v(1:k)%v/=0)
+        end if
       end do
+      do_calc_hyd = dHitdTlm /= 0.0_rp
+! Temp while the forward model still needs Eta_zxp and Do_Calc_t
+call get_eta_do_calc ( eta_zp(1:n_path), two_d_bounds, eta_zxp, do_calc_t, nz_zxp, nnz_zxp )
 
     end subroutine Temperature_Derivatives
 
@@ -1142,6 +1155,9 @@ path: do i = i1, i2
 end module Metrics_m
 
 ! $Log$
+! Revision 2.79  2016/11/17 02:06:12  vsnyder
+! Correct some LaTeX
+!
 ! Revision 2.78  2016/11/17 01:39:45  vsnyder
 ! Change path variable names from xyz_grid to xyz_path
 !
