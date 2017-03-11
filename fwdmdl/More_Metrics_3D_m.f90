@@ -196,7 +196,8 @@ contains
 
       ! Get coefficients to interpolate from temperature (zeta, adjacent-to-path)
       ! basis to the path, noting where nonzeros are, relative to the QTM
-      call QTM_Interpolation_Weights ( QTM_Tree, t_sv%zet_basis, s, z_ref, eta_zQT )
+      call QTM_Interpolation_Weights ( QTM_Tree, t_sv%zet_basis, s, z_ref, &
+        & eta_zQT(:size(z_ref)) )
       do_calc_t = .false.
       do is = 1, n_path          ! Path length
         iz = max(s(is)%h_ind,1)  ! h_ind == zero for reflection below H_GLGrid
@@ -224,6 +225,9 @@ contains
 end module More_Metrics_3D_m
 
 ! $Log$
+! Revision 2.5  2017/03/11 00:54:13  vsnyder
+! Pass correct-size result array to Comp_Sps_Path_Sparse_m
+!
 ! Revision 2.4  2016/11/23 00:12:28  vsnyder
 ! Use types from Indexed_Values_m.
 !
