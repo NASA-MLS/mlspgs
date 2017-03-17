@@ -30,7 +30,7 @@ module readGriddedUtils ! Collection of subroutines to read TYPE GriddedData_T
   use MLSCommon, only: LineLen, NameLen, FileNameLen, &
     & UndefinedValue, MLSFile_T
   use MLSFiles, only: FileNotFound, HDFversion_5, Dump, InitializeMLSFile, &
-    & GetPCFromRef, MLS_HDF_Version, MLS_OpenFile, MLS_CloseFile, &
+    & GetPCFromRef, MLS_Exists, MLS_HDF_Version, MLS_OpenFile, MLS_CloseFile, &
     & Split_Path_Name, MLS_OpenFile, MLS_CloseFile
   use MLSKinds, only: R4, R8
   use MLSMessageModule, only: MLSMsg_Error, MLSMsg_Info, MLSMsg_Warning, &
@@ -383,8 +383,8 @@ contains
     ! read the field, field should be either PL or T
     call GetHDF5DSRank (geos5file%fileid%f_id, capitalize(actual_field_name), rank)
     if (rank /= 4) then
-        call announce_error (lcf_where, &
-        capitalize(actual_field_name) // " must be a 3-dim array: " // geos5file%name)
+        call announce_error ( lcf_where, &
+        trim(capitalize(actual_field_name)) // " must be a 4-dim array: (geos57)" // geos5file%name)
     end if
 
     call GetHDF5DSDims (geos5file%fileid%f_id, capitalize(actual_field_name), dim4)
@@ -1168,8 +1168,10 @@ contains
     integer :: error, rank
     character(len=256) :: errormsg
     integer :: i, i1, i2, i3            ! looping indexes
+    integer :: itime, ilat, ilon, ilev
     integer, dimension(4) :: idim4
     character (len=MAXSDNAMESBUFSIZE) :: mySdList
+    logical                        :: mySum
     integer :: S                     ! Size in bytes of an object to deallocate
     real(r8), dimension(:), pointer :: temp1d => null()
     real(r8), dimension(:,:,:,:), pointer :: temp4d => null()
@@ -1184,6 +1186,8 @@ contains
     else
       actual_field_name=DEFAULTGEOS5FIELDNAME
     end if
+    mySum = .false.
+    if ( present(sumDelp) ) mySum = sumDelp
     nullify( temp1d, temp4d )
     DEEBUG = ( index(lowercase(actual_field_name), 'inq') > 0 )
     verbose = ( switchDetail(switches, 'merra_2') > -1 ) .or. DEEBUG
@@ -1249,7 +1253,8 @@ contains
 
     ! Get lats
     call GetHDF5DSRank (geos5file%fileid%f_id, 'lat', rank)
-    if (rank /= 1) call announce_error(lcf_where, "lat must be a 1-dim array: " // geos5file%name)
+    if (rank /= 1) &
+      & call announce_error(lcf_where, "lat must be a 1-dim array: " // geos5file%name)
 
     call GetHDF5DSDims(geos5file%fileid%f_id, 'lat', dim1)
     the_g_data%noLats = dim1(1)
@@ -1264,7 +1269,8 @@ contains
 
     ! Get heights
     call GetHDF5DSRank (geos5file%fileid%f_id, 'lev', rank)
-    if (rank /= 1) call announce_error(lcf_where, "lev must be a 1-dim array: " // geos5file%name)
+    if (rank /= 1) &
+      & call announce_error(lcf_where, "lev must be a 1-dim array: " // geos5file%name)
     
     call GetHDF5DSDims (geos5file%fileid%f_id, 'lev', dim1)
     the_g_data%noheights = dim1(1)
@@ -1284,26 +1290,34 @@ contains
     the_g_data%heightsunits = 'hPa' ! the units is according the file_specification
 
     ! The following is according to Merra_2 file specification
-    ! We could actually read the 'units' attribute
-    select case ( lowercase(actual_field_name) )
-    case ( 'h' )
-        the_units = 'm'
-    case ( 'pl', 'ps' )
-        the_units = 'Pa'
-    case ( 't' )
-        the_units = 'K'
-    case default
+    ! First: try to read the 'units' attribute
+    if (.not. ReadHDF5Attribute(geos5file%fileid%f_id, actual_field_name, &
+        & 'units', the_g_data%units, error=errormsg) ) then
+      call announce_error ( lcf_where, errormsg // ' in file ' &
+      & // geos5file%name, non_fatal=.true. )
+      select case ( lowercase(actual_field_name) )
+      case ( 'h' )
+          the_units = 'm'
+      case ( 'pl', 'ps', 'delp' )
+          the_units = 'Pa'
+      case ( 't' )
+          the_units = 'K'
+      case default
         call announce_error( lcf_where, &
           & "Unexpected field name: " // actual_field_name, non_fatal=.true. )
-    end select
-    
-    the_g_data%units = the_units
+      end select
+      the_g_data%units = the_units
+    else
+      call outputNamedValue( 'Name of units attribute for ' &
+        & // trim(actual_field_name), &
+        & the_g_data%units )
+    endif
 
     ! read the field, field should be either PL or T
     call GetHDF5DSRank (geos5file%fileid%f_id, capitalize(actual_field_name), rank)
     if (rank /= 4) then
         call announce_error (lcf_where, &
-        capitalize(actual_field_name) // " must be a 3-dim array: " // geos5file%name)
+        trim(capitalize(actual_field_name)) // " must be a 4-dim array: (merra2)" // geos5file%name)
     end if
 
     call GetHDF5DSDims (geos5file%fileid%f_id, capitalize(actual_field_name), dim4)
@@ -1346,6 +1360,33 @@ contains
     call LoadFromHDF5DS ( geos5file%fileid%f_id, &
       & capitalize(actual_field_name), temp4d )
 
+    if ( mySum ) then
+      ! If we are so asked
+      ! Sum up all the delps, starting from the top of the atmosphere
+      nullify(temp1d)
+      call allocate_test( temp1d, idim4(2)+1, 'temp1d', &
+        & ModuleName // 'Read__Merra_2' )
+      do itime=1, idim4(4) ! ntime
+        do ilat=1, idim4(2) ! nlat
+          do ilon=1, idim4(1) ! nlon
+            temp1d = 0.0
+            ! temp1d(nlev+1) = 1.0 ! We must assume the topmost level is 1 hPa
+            ! do ilev=nlev, 1, -1
+            !  temp1d(ilev) = temp1d(ilev+1) + all_the_fields(ilon, ilat, ilev, itime)
+            temp1d(1) = 1.0 ! We must assume the topmost level is 1 hPa
+            do ilev=1, idim4(3)
+              temp1d(ilev+1) = temp1d(ilev) + temp4d(ilon, ilat, ilev, itime)
+            end do
+            do ilev=1, idim4(3)
+              temp4d(ilon, ilat, ilev, itime) = &
+                & 0.5*( temp1d(ilev) + temp1d(ilev+1) )
+            end do
+          end do
+        end do
+      end do
+      call deallocate_test( temp1d, 'temp1d', &
+        & ModuleName // 'Read__Merra_2' )
+    end if
     allocate ( the_g_data%field &
       & (idim4(3), idim4(2), idim4(1), 1, 1, idim4(4)), &
       & STAT=error )
@@ -2200,6 +2241,7 @@ contains
     integer, parameter :: version=1
     character (LEN=FileNameLen)            :: fname   ! Physical file name
     character (LEN=FileNameLen)            :: path    ! Physical path
+    character (LEN=FileNameLen)            :: ExactName    ! Full and exact path
 
     ! These determine how much extra to output
     logical, parameter :: debug=.false.
@@ -2241,18 +2283,26 @@ contains
 
     if ( use_PCF ) then
       call split_path_name(ClimFile%name, path, fname)
-      processCli = GetPCFromRef(fname, mlspcf_l2clim_start, mlspcf_l2clim_end, &
-        & .true., ErrType, version, debugOption=debug)
+      processCli = GetPCFromRef( fname, mlspcf_l2clim_start, mlspcf_l2clim_end, &
+        & .true., ErrType, version, debugOption=debug, ExactName=ExactName )
       if(ErrType /= 0) then
         call announce_error ( root, &
           &"Climatology file name " // trim(fname) // " unmatched in PCF", &
           & 'error number: ', extra_number=ErrType)
         go to 9
       end if
+      if ( mls_exists(trim(ExactName)) /= 0 ) then
+        ErrType = FILENOTFOUND
+        go to 9
+      endif
       ErrType = Pgs_io_gen_openF ( processCli, PGSd_IO_Gen_RSeqFrm, 0, &
         cliUnit, version )
     else
       fname = climFile%name
+      if ( mls_exists(trim(fname)) /= 0 ) then
+        ErrType = FILENOTFOUND
+        go to 9
+      endif
       ! use Fortran open
       if(debug) call output('opening ' // fname, advance = 'yes')
       call MLS_OpenFile( ClimFile )
@@ -2487,6 +2537,9 @@ contains
 end module readGriddedUtils
 
 ! $Log$
+! Revision 2.2  2017/03/17 00:08:40  pwagner
+! May read DELP fron merra_2 native; quit with apt mesg if cant read climatology
+!
 ! Revision 2.1  2017/03/07 21:18:10  pwagner
 ! First commit
 !
