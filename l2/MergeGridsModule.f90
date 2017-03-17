@@ -18,11 +18,11 @@ module MergeGridsModule
   use Allocate_Deallocate, only: Allocate_Test, Byte_Size, Bytes, &
     & Deallocate_Test, Test_Allocate, Test_Deallocate
   use HighOutput, only: OutputNamedValue
-  use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
-  use MLSL2Options, only: MLSMessage, l2cfNode
+  use, Intrinsic :: ISO_C_Binding, only: C_Intptr_T, C_Loc
+  use MLSL2Options, only: MLSMessage, L2cfNode
   use MLSMessagemodule, only: MLSMsg_Error, MLSMsg_Warning
-  use ncep_dao, only: readGriddedData
-  use output_m, only: blanks, output
+  use Ncep_Dao, only: ReadGriddedData
+  use Output_M, only: Blanks, Output
   implicit none
   private
 
@@ -41,26 +41,26 @@ contains ! ===================================  Public procedures  =====
   subroutine MergeGrids ( ROOT, L2GPDATABASE, L2AUXDATABASE, &
     & GRIDDEDDATABASE, FILEDATABASE )
 
-    use DumpCommand_m, only: booleanFromEmptyGrid, booleanFromFormula, &
-      & dumpCommand, ExecuteCommand, &
-      & MLSCase, MLSEndSelect, MLSSelect, MLSSelecting, skip
-    use GriddedData, only: griddedData_T, &
-      & addGriddedDataToDatabase, destroyGriddedData
-    use Init_tables_module, only: f_grid, &
-      & s_boolean, s_case, s_concatenate, s_concatenateGrids, s_convertEtaToP, &
-      & s_delete, s_diff, s_dump, s_endSelect, s_execute, s_gridded, &
-      & s_isGridEmpty, s_merge, s_mergeGrids, s_reevaluate, s_select, s_skip, &
-      & s_wmotrop, s_wmotropfromgrids
-    use L2AUXData, only: l2auxdata_t
-    use L2GPData, only: l2gpdata_t
-    use MLSCommon, only: mlsfile_t
-    use MLSStringlists, only: switchDetail
-    use MoreTree, only: get_label_and_spec, get_spec_id
-    use Next_Tree_Node_m, only: next_tree_node, next_tree_node_state
-    use ReadAPriori, only: processOneAprioriFile
-    use Trace_M, only: trace_begin, trace_end
-    use Tree, only: nsons, subtree, decorate, decoration
-    use Toggles, only: gen, switches, toggle
+    use DumpCommand_M, only: BooleanFromEmptyGrid, BooleanFromFormula, &
+      & DumpCommand, ExecuteCommand, &
+      & MLSCase, MLSEndSelect, MLSSelect, MLSSelecting, Skip
+    use GriddedData, only: GriddedData_T, &
+      & AddGriddedDataToDatabase, DestroyGriddedData
+    use Init_Tables_Module, only: F_Grid, &
+      & S_Boolean, S_Case, S_Concatenate, S_ConcatenateGrids, S_ConvertEtaToP, &
+      & S_Delete, S_Diff, S_Dump, S_EndSelect, S_Execute, S_Gridded, &
+      & S_IsGridEmpty, S_Merge, S_MergeGrids, S_Reevaluate, S_Select, S_Skip, &
+      & S_Wmotrop, S_Wmotropfromgrids
+    use L2AUXData, only: L2auxData_T
+    use L2GPData, only: L2gpData_T
+    use MLSCommon, only: MLSFile_T
+    use MLSStringlists, only: SwitchDetail
+    use MoreTree, only: Get_Label_And_Spec, Get_Spec_Id
+    use Next_Tree_Node_M, only: Next_Tree_Node, Next_Tree_Node_State
+    use ReadAPriori, only: ProcessOneAprioriFile
+    use Trace_M, only: Trace_Begin, Trace_End
+    use Tree, only: Nsons, Subtree, Decorate, Decoration
+    use Toggles, only: Gen, Switches, Toggle
 
     integer, intent(in) :: ROOT         ! Tree root
     type (l2gpdata_t), dimension(:), pointer :: L2GPDatabase
@@ -196,12 +196,12 @@ contains ! ===================================  Public procedures  =====
   ! ----------------------------------------------  ConvertEtaToP  -----
   type (griddedData_T) function ConvertEtaToP ( root, griddedDataBase ) &
     & result ( newGrid )
-    use GriddedData, only: griddedData_t, dump, nullifyGriddedData, &
-      & convertFromEtaLevelGrids
-    use Init_tables_module, only: F_A, F_B, F_GRID
-    use Toggles, only: gen, toggle
-    use Trace_M, only: trace_begin, trace_end
-    use Tree, only: nsons, subtree, decoration
+    use GriddedData, only: GriddedData_T, Dump, NullifyGriddedData, &
+      & ConvertFromEtaLevelGrids
+    use Init_Tables_Module, only: F_A, F_B, F_GRID
+    use Toggles, only: Gen, Toggle
+    use Trace_M, only: Trace_Begin, Trace_End
+    use Tree, only: Nsons, Subtree, Decoration
     ! use VGridsDatabase, only: VGrid_T, VGrids, ConvertVGrid
     
     integer, intent(in) :: ROOT         ! Tree node
@@ -262,12 +262,18 @@ contains ! ===================================  Public procedures  =====
         endif
       case ( f_grid )
         v => griddedDataBase ( decoration ( decoration ( value ) ) )
+        ! Did we fail reading v?
+        if ( .not. associated(v) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'The v (climatology?) grid for the conversion is not associated' )
         ! Did we defer reading v?
         if ( v%empty .and. v%deferReading ) then
           call readGriddedData ( v%sourceFileName, son, v%description, &
             & v%verticalCoordinate, v, returnStatus, &
             & v%dimList, TRIM(v%fieldNames), v%missingValue )
         endif
+        ! Did we succeed in reading v (at last?)
+        if ( v%empty )  call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'The v (climatology?) grid for the conversion is empty' )
 !       case ( f_VGrid )
 !         v => VGrids ( decoration ( decoration ( value ) ) )
       end select
@@ -308,13 +314,13 @@ contains ! ===================================  Public procedures  =====
 
   ! ------------------------------------------------  Concatenate  -----
   function Concatenate ( root, griddedDataBase ) result ( newGrid )
-    use griddedData, only: griddedData_T, dump, &
-      & concatenateGriddedData, copyGrid, destroyGriddedData, nullifyGriddedData
-    use init_tables_module, only: f_a, f_b, f_deleteGrids, f_sourceGrid
-    use moreTree, only: get_boolean, get_field_id
-    use toggles, only: gen, toggle
-    use trace_m, only: trace_begin, trace_end
-    use tree, only: nsons, subtree, decoration
+    use GriddedData, only: GriddedData_T, Dump, &
+      & ConcatenateGriddedData, CopyGrid, DestroyGriddedData, NullifyGriddedData
+    use Init_Tables_Module, only: F_A, F_B, F_DeleteGrids, F_SourceGrid
+    use MoreTree, only: Get_Boolean, Get_Field_Id
+    use Toggles, only: Gen, Toggle
+    use Trace_M, only: Trace_Begin, Trace_End
+    use Tree, only: Nsons, Subtree, Decoration
     
     integer, intent(in) :: ROOT         ! Tree node
     type (griddedData_T), dimension(:), pointer :: griddedDataBase ! Database
@@ -470,8 +476,8 @@ contains ! ===================================  Public procedures  =====
 
   ! ------------------------------------------  DeleteGriddedData  -----
   subroutine DeleteGriddedData ( root, griddedDataBase )
-    use Tree, only: nsons, subtree, decoration
-    use GriddedData, only: destroygriddeddata, griddedData_t
+    use Tree, only: Nsons, Subtree, Decoration
+    use GriddedData, only: DestroygriddedData, GriddedData_T
     use Init_Tables_Module, only: F_Grid
     ! This routine deletes the grid indicated by the l2cf
     integer, intent(in) :: ROOT         ! Tree node
@@ -505,18 +511,18 @@ contains ! ===================================  Public procedures  =====
   ! ----------------------------------------- MergeOneGrid
   type (griddedData_T) function MergeOneGrid ( root, griddedDataBase ) &
     & result ( newGrid )
-    use Dump_0, only: dump
-    use Expr_m, only: expr
-    use GriddedData, only: griddedData_t, rgr, v_is_pressure, &
-      & copyGrid, dump, nullifyGriddedData, &
-      & setupNewGriddedData, sliceGriddedData, wrapGriddedData
-    use Init_tables_module, only: f_climatology, f_height, &
-      & f_operational, f_scale
-    use MLSKinds, only: r8
-    use MLSFillValues, only: essentiallyEqual
-    use Toggles, only: gen, toggle
-    use Trace_M, only: trace_begin, trace_end
-    use Tree, only: nsons, subtree, decoration
+    use Dump_0, only: Dump
+    use Expr_M, only: Expr
+    use GriddedData, only: GriddedData_T, Rgr, V_Is_Pressure, &
+      & CopyGrid, Dump, NullifyGriddedData, &
+      & SetupNewGriddedData, SliceGriddedData, WrapGriddedData
+    use Init_Tables_Module, only: F_Climatology, F_Height, &
+      & F_Operational, F_Scale
+    use MLSKinds, only: R8
+    use MLSFillValues, only: EssentiallyEqual
+    use Toggles, only: Gen, Toggle
+    use Trace_M, only: Trace_Begin, Trace_End
+    use Tree, only: Nsons, Subtree, Decoration
 
     integer, intent(in) :: ROOT         ! Tree node
     type (griddedData_T), dimension(:), pointer :: griddedDataBase ! Database
@@ -839,20 +845,20 @@ contains ! ===================================  Public procedures  =====
   ! --------------------------------------------  wmoTropFromGrid  -----
   type (griddedData_T) function wmoTropFromGrid ( root, griddedDataBase ) &
     & result ( newGrid )
-    use dump_0, only: dump
-    use griddeddata, only: griddedData_t, dump, v_is_pressure, v_is_eta, &
-      & nullifyGriddedData, &
-      & doGriddedDataMatch, &
-      & setupnewGriddedData
-    use init_tables_module, only: f_a, f_b, f_grid
-    use MLSCommon, only: defaultundefinedvalue
-    use MLSFillvalues, only: isfillvalue, removefillvalues
+    use Dump_0, only: Dump
+    use GriddedData, only: GriddedData_T, Dump, V_Is_Pressure, V_Is_Eta, &
+      & NullifyGriddedData, &
+      & DoGriddedDataMatch, &
+      & SetupnewGriddedData
+    use Init_Tables_Module, only: F_A, F_B, F_Grid
+    use MLSCommon, only: DefaultundefinedValue
+    use MLSFillValues, only: IsfillValue, RemovefillValues
     use MLSStats1, only: MLSMin, MLSMax, MLSMean
-    use MLSStrings, only: lowercase
-    use toggles, only: gen, toggle
-    use trace_m, only: trace_begin, trace_end
-    use tree, only: nsons, subtree, decoration
-    use WMOTropopause, only: extraTropics, twmo
+    use MLSStrings, only: Lowercase
+    use Toggles, only: Gen, Toggle
+    use Trace_M, only: Trace_Begin, Trace_End
+    use Tree, only: Nsons, Subtree, Decoration
+    use WMOTropopause, only: ExtraTropics, Twmo
     ! Implements the algorithm published in GRL
 
     integer, intent(in) :: ROOT         ! Tree node
@@ -1188,6 +1194,9 @@ contains ! ===================================  Public procedures  =====
 end module MergeGridsModule
 
 ! $Log$
+! Revision 2.62  2017/03/17 00:38:10  pwagner
+! Quit with apt message if ConvertEtaToP has no climatology file to use
+!
 ! Revision 2.61  2016/04/01 00:27:15  pwagner
 ! May now Execute a single command or a script of lines from l2cf
 !
