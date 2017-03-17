@@ -242,6 +242,8 @@ contains
 
     ! Check that the dates are going to work out
     if ( maxval ( a%dateEnds ) > minval ( b%dateStarts ) ) then
+      call Dump( a, details=0 )
+      call Dump( b, details=0 )
       call output( 'Ending date of a: ', advance='no' )
       call output( maxval ( a%dateEnds ), format='(1pe16.9)', advance='yes' )
       call output( 'Starting date of b: ', advance='no' )
@@ -385,6 +387,7 @@ contains
     integer :: Me = -1                  ! String index for trace cacheing
     real(rgr), dimension(TGrid%noHeights) :: pEta
     logical, parameter :: DEEBUG = .false.
+    logical            :: why
 
     ! Executable code
     call trace_begin ( me, 'ConvertFromEtaLevelGrids' , cond=.false. )
@@ -393,6 +396,7 @@ contains
     if ( .not. DoGriddeddataMatch( PGrid, TGrid ) ) then
       call DumpGriddedData( PGrid )
       call DumpGriddedData( TGrid )
+      why = DoGriddeddataMatch( PGrid, TGrid, SayWhyNot=.true. )
       call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Gridded T,P data must match' )
     endif
@@ -634,17 +638,42 @@ contains
   end subroutine DiffGriddedData
 
   ! ----------------------------------------  DoGriddeddataMatch  -----
-  function DoGriddeddataMatch ( a, b ) result( match )
+  function DoGriddeddataMatch ( a, b, sayWhyNot ) result( match )
     ! Test whether two griddeddata have same shapes, are on same geolocations
     ! and so on
     ! They may have different name, description, and unit information
     ! And the field values may differ
     type(GriddedData_T), intent(in) :: a
     type(GriddedData_T), intent(in) :: b
+    logical, optional, intent(in)   :: sayWhyNot
     logical                         :: match
     ! local variables
+    logical                         :: verbose
     ! Executable
+    verbose = .false.
+    if ( present(sayWhyNot) ) verbose = sayWhyNot
     match = .true.
+    if ( verbose ) then
+      if ( a%empty .or. b%empty ) call explain( 'One empty, the other not' )
+      if ( any( shape(a%field) /= shape(b%field) ) ) call explain( 'shapes dont match' )
+      if ( a%verticalCoordinate /= b%verticalcoordinate ) call explain( 'vertical coords diff' )
+      if ( a%noHeights /= b%noHeights ) call explain( 'noHeights diff' )
+      if ( any( a%Heights /= b%Heights ) ) call explain( 'Heights diff' )
+      if ( lowercase(a%heightsUnits) /= lowercase(b%heightsUnits) ) call explain( 'height units idff' )
+      ! if ( lowercase(a%Units) /= lowercase(b%Units) ) call explain( 'One empty, the other not' )
+      if ( a%noLats /= b%noLats ) call explain( 'noLats diff' )
+      if ( a%noLons /= b%noLons ) call explain( 'nolens diff' )
+      if ( a%noLsts /= b%noLsts ) call explain( 'noLsts diff' )
+      if ( a%noSzas /= b%noSzas ) call explain( 'noSzas diff' )
+      if ( a%noDates /= b%noDates ) call explain( 'nodates difft' )
+      if ( a%missingValue /= b%missingValue ) call explain( 'missing values diff' )
+      if ( any( a%Lats /= b%Lats ) ) call explain( 'lats diff' )
+      if ( any( a%Lons /= b%Lons ) ) call explain( 'lons diff' )
+      if ( any( a%Lsts /= b%Lsts ) ) call explain( 'lsts diff' )
+      if ( any( a%Szas /= b%Szas ) ) call explain( 'szas diff' )
+      if ( any( a%DateStarts /= b%DateStarts ) ) call explain( 'dateStarts diff' )
+      if ( any( a%DateEnds /= b%DateEnds ) ) call explain( 'DateEnds diff' )
+    endif
     if ( a%empty .and. b%empty ) return
     match = .false.
     if ( a%empty .or. b%empty ) return
@@ -667,6 +696,11 @@ contains
     if ( any( a%DateStarts /= b%DateStarts ) ) return
     if ( any( a%DateEnds /= b%DateEnds ) ) return
     match = .true.
+  contains
+    subroutine explain( message )
+      character(len=*), intent(in) :: message
+      call output( trim(message), advance='yes' )
+    end subroutine explain
   end function DoGriddeddataMatch
 
   ! ---------------------------------------- DownSampleGriddedData ------
@@ -1813,6 +1847,9 @@ end module GriddedData
 
 !
 ! $Log$
+! Revision 2.81  2017/03/17 00:10:49  pwagner
+! Optionally sayWhyNot if not DoGriddeddataMatch
+!
 ! Revision 2.80  2016/07/28 01:42:27  vsnyder
 ! Refactoring dump and diff
 !
