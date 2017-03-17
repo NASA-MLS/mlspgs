@@ -194,6 +194,17 @@ contains ! =====     Public Procedures     =============================
     & call output ( '============ Read APriori ============', advance='yes' )  
     ! Are we picking up again where we left off in the last
     ! readAPriori section?
+    ! We'll have to pre-process any Booleans in this section to see
+    do 
+      son = next_tree_node ( root, state )
+      if ( son == 0 ) exit
+      call get_label_and_spec ( son, name, key )
+      L2CFNODE= key
+      select case( get_spec_id(key) )
+      case ( s_Boolean )
+        call decorate ( key,  BooleanFromFormula ( name, key ) )
+      end select
+    enddo
     call GetHashElement( runTimeValues%lkeys, runTimeValues%lvalues, &
       & 'carryover', cvalue, countEmpty=countEmpty, &
       & inseparator=runTimeValues%sep )
@@ -210,6 +221,7 @@ contains ! =====     Public Procedures     =============================
     end if
     if ( verboser ) call outputNamedValue ( 'mlspcf_l2geos5_start', mlspcf_l2geos5_start )
     if ( verboser ) call outputNamedValue ( 'lastGEOS5PCF', lastGEOS5PCF )
+    if ( verboser ) call outputNamedValue ( 'carryOver', carryOver )
 
     do 
       son = next_tree_node ( root, state )
@@ -718,6 +730,7 @@ contains ! =====     Public Procedures     =============================
              & fieldNameString, MLSFile=GriddedFile)
         end if
       case ( l_geos5, l_geos5_7, l_merra, l_merra_2 ) ! --- GMAO Data (GEOS5*)
+        call outputNamedvalue( 'LastGEOS5PCF', LastGEOS5PCF )
         call get_pcf_id ( fileNameString, path, subString, l2apriori_version, &
           & mlspcf_l2geos5_start, mlspcf_l2geos5_end, 'geos5', got(f_file), &
           & LastGEOS5PCF, returnStatus, noPCFid, verbose, debug )
@@ -1480,6 +1493,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.120  2017/03/17 00:13:43  pwagner
+! runtime Boolean CarryOver given better chance to work properly
+!
 ! Revision 2.119  2017/03/07 21:21:01  pwagner
 ! Support new meteorology origin: merra_2
 !
