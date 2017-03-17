@@ -1184,7 +1184,7 @@ op:     do j = 2, nsons(theTree)
         & call AnnounceError ( IrrelevantFwmParameter, root, &
         & "do_conv, do_freq_avg, do_1d, incl_cld, frequency" )
      if ( .not. associated(L2PCDatabase) ) & 
-        & call AnnounceError ( NeedL2PCFiles, root )
+        & call AnnounceError ( NeedL2PCFiles, root, warn=.true. )
     case default
       info%isRadianceModel = .false.
     end select
@@ -1416,6 +1416,7 @@ op:     do j = 2, nsons(theTree)
 
     use Intrinsic, only: Lit_Indices
     use MoreTree, only: StartErrorMessage
+    use Optional_M, only: Default
     use Output_M, only: Output
     use String_Table, only: Display_String
     use Tree, only: Decoration
@@ -1426,12 +1427,14 @@ op:     do j = 2, nsons(theTree)
     integer, intent(in), optional :: What ! Optional extra, usually string index
     logical, optional, intent(in) :: Warn ! Warning if TRUE
     ! Internal variables
-    logical :: onlyWarn
+    ! logical :: onlyWarn
     ! Executable
-    onlyWarn = .false.
-    if ( present(warn) ) onlyWarn = warn
-    if ( .not. onlyWarn ) error = max(error,1)
-    ! if ( .not. present(warn) ) error = max(error,1)
+    ! onlyWarn = .false.
+    ! if ( present(warn) ) onlyWarn = warn
+    ! if ( .not. onlyWarn ) error = max(error,1)
+    ! If warn is both  present and true, then leave error unchanged
+    ! (so a prior error condition remains in effect)
+    error = merge( error, max(error,1), Default( warn, .false. ) )
     call startErrorMessage ( where )
     call output ( ' ForwardModelSupport complained: ' )
     select case ( code )
@@ -1555,7 +1558,7 @@ op:     do j = 2, nsons(theTree)
       call output ( '(no specific description of this error)', advance='yes' )
     end select
     if ( present(extraMessage) ) call output ( extraMessage, advance='yes' )
-    if ( .not. onlyWarn ) &
+    if ( error /= 0 ) &
       & call output ( '(Set to stop due to error)', advance='yes' )
   end subroutine AnnounceError
 
@@ -1572,6 +1575,9 @@ op:     do j = 2, nsons(theTree)
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.186  2017/03/17 17:27:02  pwagner
+! Downgraded NeedL2PCFiles mesg from Error to Warning
+!
 ! Revision 2.185  2017/03/17 00:12:24  pwagner
 ! Quit with apt message if linear fwdmdl has no l2pc files to use
 !
