@@ -51,7 +51,8 @@ module ForwardModelSupport
   integer, parameter :: LineParamTwice         = LineNotMolecule + 1
   integer, parameter :: MIFTransformation_signals = LineParamTwice + 1
   integer, parameter :: NeedBothXYStar         = MIFTransformation_signals + 1
-  integer, parameter :: NegativePhiWindow      = NeedBothXYStar + 1
+  integer, parameter :: NeedL2PCFiles          = NeedBothXYStar + 1
+  integer, parameter :: NegativePhiWindow      = NeedL2PCFiles + 1
   integer, parameter :: Nested                 = NegativePhiWindow + 1
   integer, parameter :: NoArray                = Nested + 1
   integer, parameter :: NoBetaGroup            = NoArray + 1
@@ -76,34 +77,34 @@ contains ! =====     Public Procedures     =============================
   subroutine ForwardModelGlobalSetup ( Root, any_errors, fileDataBase )
     ! Process the forwardModel specification to produce ForwardModelInfo.
 
-    use ANTENNAPATTERNS_M, only: OPEN_ANTENNA_PATTERNS_FILE, &
-      & READ_ANTENNA_PATTERNS_FILE, CLOSE_ANTENNA_PATTERNS_FILE
-    use FILTERSHAPES_M, only: OPEN_FILTER_SHAPES_FILE, &
-      & READ_FILTER_SHAPES_FILE, READ_DACS_FILTER_SHAPES_FILE, &
-      & CLOSE_FILTER_SHAPES_FILE
-    use INIT_TABLES_MODULE, only: F_ANTENNAPATTERNS, F_DACSFILTERSHAPES, &
-      & F_FILTERSHAPES, F_L2PC, F_MIETABLES, F_PFAFILES, F_POINTINGGRIDS, &
+    use Antennapatterns_M, only: Open_Antenna_Patterns_File, &
+      & Read_Antenna_Patterns_File, Close_Antenna_Patterns_File
+    use Filtershapes_M, only: Open_Filter_Shapes_File, &
+      & Read_Filter_Shapes_File, Read_Dacs_Filter_Shapes_File, &
+      & Close_Filter_Shapes_File
+    use Init_Tables_Module, only: F_Antennapatterns, F_Dacsfiltershapes, &
+      & F_Filtershapes, F_L2pc, F_Mietables, F_PfaFiles, F_Pointinggrids, &
       & F_Polygon
-    use INTRINSIC, only: L_ASCII, L_HDF
-    use L2PARINFO, only: PARALLEL
-    use L2PC_M, only: READCOMPLETEHDF5L2PCFILE
-    use MLSCOMMON, only: MLSFILE_T
-    use MLSPCF2, only: MLSPCF_ANTPATS_START, MLSPCF_FILTSHPS_START, &
-      &          MLSPCF_DACSFLTSH_START, MLSPCF_PTGGRIDS_START, &
-      &          MLSPCF_Polygon_Start, &
-      &          MLSPCF_L2PC_START, MLSPCF_L2PC_END, &
-      &          MLSPCF_MIETABLES_START, &
-      &          MLSPCF_PFA_START, MLSPCF_PFA_END
-    use MORETREE, only: GET_FIELD_ID
-    use PFADATABASE_M, only: PROCESS_PFA_FILE
-    use POINTINGGRID_M, only: CLOSE_POINTING_GRID_FILE, &
-      & OPEN_POINTING_GRID_FILE, READ_POINTING_GRID_FILE
-    use Polygon_m, only: Close_Polygon_File, Open_Polygon_File, &
+    use Intrinsic, only: L_Ascii, L_HDF
+    use L2parinfo, only: Parallel
+    use L2pc_M, only: ReadcompleteHDF5l2pcFile
+    use MLSCommon, only: MLSFile_T
+    use MLSPcf2, only: MLSPcf_Antpats_Start, MLSPcf_Filtshps_Start, &
+      & MLSPcf_Dacsfltsh_Start, MLSPcf_Ptggrids_Start, &
+      & MLSPcf_Polygon_Start, &
+      & MLSPcf_L2pc_Start, MLSPcf_L2pc_End, &
+      & MLSPcf_Mietables_Start, &
+      & MLSPcf_Pfa_Start, MLSPcf_Pfa_End
+    use Moretree, only: Get_Field_Id
+    use PfaDatabase_M, only: Process_Pfa_File
+    use Pointinggrid_M, only: Close_Pointing_Grid_File, &
+      & Open_Pointing_Grid_File, Read_Pointing_Grid_File
+    use Polygon_M, only: Close_Polygon_File, Open_Polygon_File, &
       & Read_Polygon_File
-    use READ_MIE_M, only: READ_MIE
-    use TOGGLES, only: GEN, LEVELS, TOGGLE
-    use TRACE_M, only: TRACE_BEGIN, TRACE_END
-    use TREE, only: NSONS, SUB_ROSA, SUBTREE
+    use Read_Mie_M, only: Read_Mie
+    use Toggles, only: Gen, Levels, Toggle
+    use Trace_M, only: Trace_Begin, Trace_End
+    use Tree, only: Nsons, Sub_Rosa, Subtree
 
     integer, intent(in) :: Root         ! of the forwardModel specification.
     !                                     Indexes a "spec_args" vertex.
@@ -226,14 +227,14 @@ contains ! =====     Public Procedures     =============================
     ! ............................................  Get_File_Name  .....
     subroutine Get_File_Name ( pcfCode, &
       & fileType, fileDataBase, MLSFile, MSG, pcfEndCode )
-      use HDF, only: DFACC_RDONLY
-      use INIT_TABLES_MODULE, only: FIELD_INDICES
-      use MLSCOMMON, only: MLSFILE_T
-      use MLSFILES, only: HDFVERSION_5, &
-        & ADDINITIALIZEMLSFILE, GETPCFROMREF, SPLIT_PATH_NAME
-      use MLSL2OPTIONS, only: TOOLKIT
-      use SDPTOOLKIT, only: PGS_PC_GETREFERENCE
-      use STRING_TABLE, only: GET_STRING
+      use HDF, only: Dfacc_Rdonly
+      use Init_Tables_Module, only: Field_Indices
+      use MLSCommon, only: MLSFile_T
+      use MLSFiles, only: HDFversion_5, &
+        & AddinitializeMLSFile, Getpcfromref, Split_Path_Name
+      use MLSL2options, only: Toolkit
+      use Sdptoolkit, only: Pgs_Pc_Getreference
+      use String_Table, only: Get_String
       ! Dummy args
       integer, intent(in) :: pcfCode
       integer, intent(in) :: fileType ! f_l2pc, f_antennaPatterns, etc.
@@ -292,18 +293,18 @@ contains ! =====     Public Procedures     =============================
   type (BinSelector_T) function CreateBinSelectorFromMLSCFINFO ( root ) &
     & result ( binSelector )
 
-    use EXPR_M, only: EXPR
-    use INIT_TABLES_MODULE, only: FIELD_FIRST, FIELD_LAST
-    use INIT_TABLES_MODULE, only: L_NAMEFRAGMENT, L_VMR, L_TEMPERATURE, &
-      & L_LATITUDE, L_SZA
-    use INIT_TABLES_MODULE, only: F_COST, F_HEIGHT, F_MOLECULE, F_TYPE, &
-      & F_NAMEFRAGMENT, F_EXACT
-    use INTRINSIC, only: PHYQ_ANGLE, PHYQ_DIMENSIONLESS, PHYQ_INVALID, &
-      & PHYQ_PRESSURE, PHYQ_TEMPERATURE, PHYQ_VMR
-    use L2PC_M, only: BINSELECTOR_T, BINSELECTORS, CREATEDEFAULTBINSELECTORS
-    use MLSKINDS, only: R8
-    use MORETREE, only: GET_FIELD_ID, GET_BOOLEAN
-    use TREE, only: DECORATION, NSONS, SUB_ROSA, SUBTREE
+    use Expr_M, only: Expr
+    use Init_Tables_Module, only: Field_First, Field_Last
+    use Init_Tables_Module, only: L_Namefragment, L_Vmr, L_Temperature, &
+      & L_Latitude, L_Sza
+    use Init_Tables_Module, only: F_Cost, F_Height, F_Molecule, F_Type, &
+      & F_Namefragment, F_Exact
+    use Intrinsic, only: Phyq_Angle, Phyq_Dimensionless, Phyq_Invalid, &
+      & Phyq_Pressure, Phyq_Temperature, Phyq_Vmr
+    use L2pc_M, only: Binselector_T, Binselectors, Createdefaultbinselectors
+    use MLSKinds, only: R8
+    use Moretree, only: Get_Field_Id, Get_Boolean
+    use Tree, only: Decoration, Nsons, Sub_Rosa, Subtree
 
     integer, intent(in) :: ROOT         ! Tree node
     ! Local variables
@@ -390,50 +391,51 @@ contains ! =====     Public Procedures     =============================
 
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test, &
       & Test_Allocate
-    use Declaration_Table, only: Range, Value_t
-    use EXPR_M, only: EXPR
-    use FORWARDMODELCONFIG, only: DUMP, FORWARDMODELCONFIG_T, &
-      & LINECENTER, LINEWIDTH, LINEWIDTH_TDEP, &
-      & NULLIFYFORWARDMODELCONFIG, SPECTROPARAM_T
-  ! use highoutput, only: outputnamedvalue
-    use INIT_TABLES_MODULE, only: FIELD_FIRST, FIELD_LAST
-    use INIT_TABLES_MODULE, only: L_FULL, L_SCAN, L_LINEAR, L_CLOUDFULL, L_HYBRID, &
-      & L_POLARLINEAR
-    use INIT_TABLES_MODULE, only:  F_ALLLINESFORRADIOMETER, &
-      & F_ALLLINESINCATALOG, F_ATMOS_DER, F_ATMOS_SECOND_DER, &
-      & F_BINSELECTORS, F_CHANNELS, F_CLOUD_DER, F_DEFAULT_SPECTROSCOPY, &
-      & F_DIFFERENTIALSCAN, F_DO_1D, F_DO_BASELINE, F_DO_CONV, &
-      & F_DO_FREQ_AVG, F_FORCESIDEBANDFRACTION, F_FREQUENCY, F_FRQTOL, &
-      & F_IGNOREHESSIAN, F_INCL_CLD, F_INTEGRATIONGRID, F_I_SATURATION, &
-      & F_LINEARSIDEBAND, F_LINECENTER, F_LINEWIDTH, F_LINEWIDTH_TDEP, &
-      & F_LOCKBINS, F_LSBLBLMOLECULES, F_LSBPFAMOLECULES, F_MODULE, &
-      & F_MOLECULEDERIVATIVES, F_MOLECULES, F_MOLECULESECONDDERIVATIVES, &
-      & F_NABTERMS, F_NAZIMUTHANGLES, F_NCLOUDSPECIES, F_NMODELSURFS, &
-      & F_NO_DUP_MOL, F_NSCATTERINGANGLES, F_NSIZEBINS, F_PATHNORM, &
-      & F_PHIWINDOW, F_NoMagneticField, F_POLARIZED, F_ReferenceMIF, F_REFRACT, &
-      & F_SCANAVERAGE, F_SIGNALS, F_SKIPOVERLAPS, F_SPECIFICQUANTITIES, &
-      & F_SPECT_DER, F_SWITCHINGMIRROR, F_TANGENTGRID, F_TEMP_DER, F_TOLERANCE, &
-      & F_TRANSFORMMIFEXTINCTION, F_TRANSFORMMIFRHI, F_TSCATMIF, F_TYPE, &
-      & F_USBLBLMOLECULES, F_USBPFAMOLECULES, F_useTSCAT, F_XSTAR, F_YSTAR
-    use INTRINSIC, only: L_NONE, L_CLEAR, PHYQ_Angle, PHYQ_Dimensionless, &
-      & PHYQ_Profiles
-    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
-    use L2PC_M, only: BINSELECTORS, DEFAULTSELECTOR_LATITUDE, CREATEDEFAULTBINSELECTORS
-    use MLSKINDS, only: R8
-    use MLSL2OPTIONS, only: L2CFNODE, MLSMESSAGE
-    use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_WARNING
-    use MLSNUMERICS, only: HUNT
-    use MLSSIGNALS_M, only: SIGNALS
-    use MOLECULES, only: L_CLOUDICE
-    use MORETREE, only: GET_BOOLEAN, GET_FIELD_ID
-    use MLSSTRINGLISTS, only: SWITCHDETAIL
-    use PARSE_SIGNAL_M, only: PARSE_SIGNAL
-    use STRING_TABLE, only: GET_STRING
-    use TOGGLES, only: GEN, LEVELS, SWITCHES, TOGGLE
-    use TRACE_M, only: TRACE_BEGIN, TRACE_END
-    use TREE, only: DECORATION, NODE_ID, NSONS, NULL_TREE, SUB_ROSA, SUBTREE
-    use TREE_TYPES, only: N_ARRAY
-    use VGRIDSDATABASE, only: VGRIDS
+    use Declaration_Table, only: Range, Value_T
+    use Expr_M, only: Expr
+    use Forwardmodelconfig, only: Dump, Forwardmodelconfig_T, &
+      & Linecenter, Linewidth, Linewidth_Tdep, &
+      & Nullifyforwardmodelconfig, Spectroparam_T
+    ! use HighOutput, only: OutputnamedValue
+    use Init_Tables_Module, only: Field_First, Field_Last
+    use Init_Tables_Module, only: L_Full, L_Scan, L_Linear, L_Cloudfull, L_Hybrid, &
+      & L_Polarlinear
+    use Init_Tables_Module, only: F_Alllinesforradiometer, &
+      & F_Alllinesincatalog, F_Atmos_Der, F_Atmos_Second_Der, &
+      & F_Binselectors, F_Channels, F_Cloud_Der, F_Default_Spectroscopy, &
+      & F_Differentialscan, F_Do_1d, F_Do_Baseline, F_Do_Conv, &
+      & F_Do_Freq_Avg, F_Forcesidebandfraction, F_Frequency, F_Frqtol, &
+      & F_Ignorehessian, F_Incl_Cld, F_Integrationgrid, F_I_Saturation, &
+      & F_Linearsideband, F_Linecenter, F_Linewidth, F_Linewidth_Tdep, &
+      & F_Lockbins, F_Lsblblmolecules, F_Lsbpfamolecules, F_Module, &
+      & F_Moleculederivatives, F_Molecules, F_Moleculesecondderivatives, &
+      & F_Nabterms, F_Nazimuthangles, F_Ncloudspecies, F_Nmodelsurfs, &
+      & F_No_Dup_Mol, F_Nscatteringangles, F_Nsizebins, F_Pathnorm, &
+      & F_Phiwindow, F_Nomagneticfield, F_Polarized, F_ReferenceMIF, F_Refract, &
+      & F_Scanaverage, F_Signals, F_Skipoverlaps, F_Specificquantities, &
+      & F_Spect_Der, F_Switchingmirror, F_Tangentgrid, F_Temp_Der, F_Tolerance, &
+      & F_TransformMIFextinction, F_TransformMIFrhi, F_TscatMIF, F_Type, &
+      & F_Usblblmolecules, F_Usbpfamolecules, F_Usetscat, F_Xstar, F_Ystar
+    use Intrinsic, only: L_None, L_Clear, Phyq_Angle, Phyq_Dimensionless, &
+      & Phyq_ProFiles
+    use, Intrinsic :: Iso_C_Binding, only: C_Intptr_T, C_Loc
+    use L2pc_M, only: Binselectors, Defaultselector_Latitude, L2pcDatabase, &
+      & Createdefaultbinselectors
+    use MLSKinds, only: R8
+    use MLSL2options, only: L2cfnode, MLSMessage
+    use MLSMessagemodule, only: MLSMSG_Error, MLSMSG_Warning
+    use MLSNumerics, only: Hunt
+    use MLSSignals_M, only: Signals
+    use Molecules, only: L_Cloudice
+    use Moretree, only: Get_Boolean, Get_Field_Id
+    use MLSStringlists, only: Switchdetail
+    use Parse_Signal_M, only: Parse_Signal
+    use String_Table, only: Get_String
+    use Toggles, only: Gen, Levels, Switches, Toggle
+    use Trace_M, only: Trace_Begin, Trace_End
+    use Tree, only: Decoration, Node_Id, Nsons, Null_Tree, Sub_Rosa, Subtree
+    use Tree_Types, only: N_Array
+    use VgridsDatabase, only: Vgrids
 
     integer, intent(in) :: NAME         ! The name of the config
     integer, intent(in) :: ROOT         ! of the forwardModel specification.
@@ -1181,7 +1183,8 @@ op:     do j = 2, nsons(theTree)
       if ( any(got( (/f_do_conv,f_do_freq_avg,f_do_1d,f_incl_cld,f_frequency /) )) ) &
         & call AnnounceError ( IrrelevantFwmParameter, root, &
         & "do_conv, do_freq_avg, do_1d, incl_cld, frequency" )
-
+     if ( .not. associated(L2PCDatabase) ) & 
+        & call AnnounceError ( NeedL2PCFiles, root )
     case default
       info%isRadianceModel = .false.
     end select
@@ -1244,7 +1247,7 @@ op:     do j = 2, nsons(theTree)
     ! ..........................................  ValidateSignals  .....
     subroutine ValidateSignals
       use MLSSignals_m, only: GetSidebandStartStop
-      use MLSFillValues, only: ESSENTIALLYEQUAL
+      use MLSFillValues, only: EssentiallyEqual
 
       ! Make sure all the signals we're dealing with are same module,
       ! radiometer and sideband.
@@ -1322,8 +1325,8 @@ op:     do j = 2, nsons(theTree)
   !  Fill and return an array of forward Model Names
 
     use ForwardModelConfig, only: ForwardModelConfig_T
-    use MLSStringLists, only: catLists
-    use String_Table, only: GET_STRING
+    use MLSStringLists, only: CatLists
+    use String_Table, only: Get_String
 
     type(ForwardModelConfig_T), dimension(:), pointer :: FWModelConfig
     character(len=2000) :: fwdNames
@@ -1345,8 +1348,8 @@ op:     do j = 2, nsons(theTree)
   !  Print mean, std_dev for timing FullforwardModel
 
     use ForwardModelConfig, only: ForwardModelConfig_T
-    use Output_m, only: BLANKS, Output
-    use String_Table, only: GET_STRING
+    use Output_m, only: Blanks, Output
+    use String_Table, only: Get_String
 
     ! Dummy argument
     type(ForwardModelConfig_T), dimension(:), pointer :: FWModelConfig
@@ -1498,6 +1501,9 @@ op:     do j = 2, nsons(theTree)
     case ( NeedBothXYStar )
       call output ( 'X/YStar must either be both present or both absent', &
         & advance='yes' )
+    case ( NeedL2PCFiles )
+      call output ( 'This kind of fwmdl (linear or polar linear) requires l2pc files', &
+        & advance='yes' )
     case ( NegativePhiWindow )
       call output ( 'PhiWindow is not allowed to be negative', advance='yes' )
     case ( Nested )
@@ -1566,6 +1572,9 @@ op:     do j = 2, nsons(theTree)
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.185  2017/03/17 00:12:24  pwagner
+! Quit with apt message if linear fwdmdl has no l2pc files to use
+!
 ! Revision 2.184  2016/05/02 23:30:46  vsnyder
 ! Comment out unused USE
 !
