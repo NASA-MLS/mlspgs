@@ -311,7 +311,6 @@ contains
       call load_sps_data ( FwdModelConf, phitan, fmStat%maf, grids_f, &
         & subset=f_and_v(longest_QTM_path)%vertices, short=.not. same_facets )
 
-
     else
 
       same_facets = .true. ! even when not QTM, One_Pointing looks at this
@@ -749,11 +748,11 @@ contains
     integer, target :: GL_Inds_B(max_c*ng) ! Base array for GL_INDS
     integer :: Grids(no_tan_hts)        ! Indices in ptgGrid for each tangent
     integer :: IPSD(s_i*max_f)
-    integer :: nz_d_delta_df(s_a*(ngp1+1),size(grids_f%values)) ! nonzeros in
+    integer :: nz_d_delta_df(2*(ngp1+1),s_a*size(grids_f%values)) ! nonzeros in
                                         ! d_delta_df; can never be more than one
                                         ! at each end of a panel, + NG between,
                                         ! per state vector element.
-    integer :: nnz_d_delta_df(s_a*size(grids_f%values)) ! Column lengths in
+    integer :: nnz_d_delta_df(size(nz_d_delta_df,2)) ! Column lengths in
                                         ! nz_d_delta_df.
     integer :: Vert_Inds(max_f)         ! Height indices of fine path in
                                         ! H_Glgrid etc.
@@ -4698,6 +4697,9 @@ end block
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.381  2017/03/11 00:58:13  vsnyder
+! Many changes leading to 3D/QTM model
+!
 ! Revision 2.380  2017/01/14 02:58:48  vsnyder
 ! Inching toward 3D QTM forward model
 !
