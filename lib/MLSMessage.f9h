@@ -163,15 +163,15 @@
   type(MLSCallStack_t), save :: MLSCallStack
   
   ! Public procedures
-  public :: bummer, crash_burn, dumpconfig, restoreconfig, setconfig
-  public :: MLSMessage, MLSMessage_, MLSMessagesetup
-  public :: MLSMessageexit, MLSMessageinquire, MLSMessageinternalfile
-  public :: MLSMessageclose, MLSMessagereset, pvmerrormessage
-  public :: reporttkstatus
-  public :: MLSMessagecalls, stopwitherrormsg, summarizewarnings
+  public :: Bummer, Crash_Burn, DumpConfig, RestoreConfig, SetConfig
+  public :: MLSMessage, MLSMessage_, MLSMessageSetup
+  public :: MLSMessageexit, MLSMessageInquire, MLSMessageInternalFile
+  public :: MLSMessageClose, MLSMessageReset, PVMErrorMessage
+  public :: ReportTKStatus
+  public :: MLSMessageCalls, StopWithErrorMsg, SummarizeWarnings
 
-  interface MLSMESSAGE
-    module procedure MLSMESSAGE_
+  interface MLSMessage
+    module procedure MLSMessage_
   end interface
 
   interface bummer
@@ -245,6 +245,8 @@ contains
     type(MLSMessageConfig_T) :: myConfig
     character(len=prefixLen) :: Prefix
     logical :: Toolkit
+    character(len=*), parameter                    :: colonel  = &
+      & ': : : : : : : : : : : : : : : : : : :'
     ! Executable
     if ( present(config) ) then
       myConfig = config
@@ -252,18 +254,18 @@ contains
       myConfig = MLSMessageConfig
     end if
     call get_config ( logFileUnit=logFileUnit, prefix=prefix, useToolKit=toolkit )
-    call dump ( 'dumping ', charValue='MLS Message Config' )
-    call dump ( ':', charValue=': : : : : : : : : : : : :' )
-    call dump ( 'logFileUnit             ', intValue= logFileUnit )
-    call dump ( 'meaning                 ', charValue= LogUnitName(logFileUnit))
+    call PrintItOut( colonel, MLSMSG_Info )
+    call dump ( 'dumping ', charValue='MLS Message Config'                            )
+    call PrintItOut( colonel, MLSMSG_Info )
+    call dump ( 'logFileUnit             ', intValue= logFileUnit                     )
+    call dump ( 'meaning                 ', charValue= LogUnitName(logFileUnit)       )
     call dump ( 'limitWarnings           ', intValue= myConfig%limitWarnings          )
     call dump ( 'masterTID               ', intValue= myConfig%masterTID              )
-    call dump ( 'extra prefix            ', charValue=prefix                 )
+    call dump ( 'extra prefix            ', charValue=prefix                          )
     call dump ( 'extra Info              ', charValue=myConfig%Info                   )
-    call dump ( 'useToolkit              ', logValue= toolkit             )
-    call dump ( 'Max Module name length  ', intValue= myConfig%MaxModuleNameLength  )
+    call dump ( 'useToolkit              ', logValue= toolkit                         )
+    call dump ( 'Max Module name length  ', intValue= myConfig%MaxModuleNameLength    )
     call dump ( 'Max Severity length     ', intValue= myConfig%MaxSeverityNameLength  )
-    call dump ( 'CrashOnAnyError         ', logValue= myConfig%CrashOnAnyError        )
     call dump ( 'SendErrMsgToMaster      ', logValue= myConfig%SendErrMsgToMaster     )
     call dump ( 'ShowCumulativeSeverity  ', logValue= myConfig%ShowCumulativeSeverity )
     call dump ( 'Trace calls             ', logValue= myConfig%StackTrace             )
@@ -283,6 +285,11 @@ contains
     call dump ( 'Skip Severity thr       ', intValue=myConfig%skipSeverityThr         )
     call dump ( 'Skip Messages thr       ', intValue=myConfig%skipMessageThr          )
     call dump ( 'Suppress Debugs         ', logValue=myConfig%suppressDebugs          )
+
+    call dump ( 'Allowed to crash        ', logValue= .not. NeverCrash                )
+    call dump ( 'Crash on any error      ', logValue= myConfig%CrashOnAnyError        )
+    call dump ( 'Crash on this msg       ', charValue= myConfig%CrashIfMsgSays        )
+    call PrintItOut( colonel, MLSMSG_Info )
   end subroutine DumpConfig
 
   ! ------------------------------------------------  MLSMessage_  -----
@@ -330,11 +337,13 @@ contains
     if ( any( severity == (/MLSMSG_Warning, MLSMSG_TestWarning/) ) .and. &
       & ( MLSMSGWarnings%totalnumwarnings > TOTALNUMWARNINGSMAX - 1 ) ) then
       if ( present(status) ) status = myStatus
+      if ( MessageMeansCrash ( Message ) ) call Crash_Burn
       return
     else if ( MLSMSGWarnings%totalnumwarnings > TOTALNUMWARNINGSMAX - 2 ) then
       msgPlusNotice = '(Max Warnings reached)' // message
       msgLength = min(warningLength+len('(Max Warnings reached)'), MAXMESSLENGTH)
     end if
+    if ( MessageMeansCrash ( Message ) ) call Crash_Burn
     if ( severity == MLSMSG_Warning ) MLSMSGWarnings%lastWarningMsg = message
     nosubsequentwarnings = .false.
     if ( any( severity == (/MLSMSG_Warning, MLSMSG_TestWarning/) ) &
@@ -914,7 +923,6 @@ contains
     ! Executable
     myComplete                               = present(complete)
     if ( myComplete )   myComplete           = complete
-    print *, 'Entered RestoreConfig; myComplete ', myComplete
     MLSMessageConfig%limitWarnings           = 1000 
     MLSMessageConfig%prefix                  = ' '  
     MLSMessageConfig%skipModuleNamesThr      = MLSMSG_Success ! Always show module   
@@ -995,33 +1003,6 @@ contains
   end subroutine SummarizeWarnings
 
   ! Private procedures
-
-  ! ---------------------------------------------------  dumpFile  -----
-  subroutine dumpFile ( MLSFile  )
-    ! Show everything about it
-    type(MLSFile_T) :: MLSFile
-    integer, parameter :: SEVERE = MLSMSG_Error
-    ! Executable code
-    call printitout ( 'MLS File Info: ', MLSMSG_Info )                                  
-    call dump ( '(name) ', charValue=trim(MLSFile%Name))                                  
-    call dump ( 'short name ', charValue=trim(MLSFile%shortName))                                  
-    call dump ( '    Type (int)   : ', MLSFile%Type)
-    call dump ( '    Type         : ', charValue=trim(MLSFile%TypeStr))
-    call dump ( '    Access       : ', charValue=trim(accessDFACCToStr(MLSFile%access)))
-    call dump ( '    content      : ', charValue=trim(MLSFile%content))
-    call dump ( '    last Operatn : ', charValue=trim(MLSFile%lastOperation))
-    call dump ( '    File ID      : ', MLSFile%FileId%f_id)
-    call dump ( '    Group ID     : ', MLSFile%FileId%grp_id)
-    call dump ( '    DataSet ID   : ', MLSFile%FileId%sd_id)
-    call dump ( '    PCF ID       : ', MLSFile%PCFId)
-    call dump ( '    PCF Range    : ', MLSFile%PCFidRange%Bottom)
-    call dump ( '                 : ', MLSFile%PCFidRange%Top)
-    call dump ( '    hdf version  : ', MLSFile%HDFVersion)
-    call dump ( '    record length: ', MLSFile%recordLength)
-    call dump ( '    Open?        : ', logValue= MLSFile%StillOpen)
-    call dump ( '    error code   : ', MLSFile%errorCode)
-  end subroutine dumpFile
-
   ! -----------------------------------------------------  dump  -----
   subroutine dump ( name, intValue, charValue, logValue, trimName  )
     ! In any way we're asked
@@ -1044,14 +1025,52 @@ contains
       write(value, '(l10)') logValue
     end if
     if ( present(charValue) ) then
-      line = name // ' : ' // trim(charvalue)
+      line = name // '  :' // trim(charvalue)
       if ( myTrim ) line = trim(name) // ' : ' // trim(charvalue)
     else
-      line = name // ' : ' // trim(value)
+      line = name // '  :' // trim(value)
       if ( myTrim ) line = trim(name) // ' : ' // trim(value)
     end if
-    call printitout( trim(line), MLSMSG_Info )
+    call PrintItOut( trim(line), MLSMSG_Info )
   end subroutine dump
+
+  ! ---------------------------------------------------  DumpFile  -----
+  subroutine DumpFile ( MLSFile  )
+    ! Show everything about it
+    type(MLSFile_T) :: MLSFile
+    integer, parameter :: SEVERE = MLSMSG_Error
+    ! Executable code
+    call printitout ( 'MLS File Info: ', MLSMSG_Info )                                  
+    call dump ( '(name) ', charValue=trim(MLSFile%Name))                                  
+    call dump ( 'short name ', charValue=trim(MLSFile%shortName))                                  
+    call dump ( '    Type (int)   : ', MLSFile%Type)
+    call dump ( '    Type         : ', charValue=trim(MLSFile%TypeStr))
+    call dump ( '    Access       : ', charValue=trim(accessDFACCToStr(MLSFile%access)))
+    call dump ( '    content      : ', charValue=trim(MLSFile%content))
+    call dump ( '    last Operatn : ', charValue=trim(MLSFile%lastOperation))
+    call dump ( '    File ID      : ', MLSFile%FileId%f_id)
+    call dump ( '    Group ID     : ', MLSFile%FileId%grp_id)
+    call dump ( '    DataSet ID   : ', MLSFile%FileId%sd_id)
+    call dump ( '    PCF ID       : ', MLSFile%PCFId)
+    call dump ( '    PCF Range    : ', MLSFile%PCFidRange%Bottom)
+    call dump ( '                 : ', MLSFile%PCFidRange%Top)
+    call dump ( '    hdf version  : ', MLSFile%HDFVersion)
+    call dump ( '    record length: ', MLSFile%recordLength)
+    call dump ( '    Open?        : ', logValue= MLSFile%StillOpen)
+    call dump ( '    error code   : ', MLSFile%errorCode)
+  end subroutine DumpFile
+
+  ! ---------------------------------------------------  MessageMeansCrash  -----
+  function MessageMeansCrash ( Message ) result ( goCrash )
+    ! Does the Message contain the fatal string causing us to Crash?
+    character(len=*), intent(in)        :: message
+    logical                             :: goCrash ! Does Message contain fatal string?
+    ! Executable
+    goCrash = .false.
+    if ( len_trim(Message) < 1 &
+      & .or. len_trim(MLSMessageConfig%CrashIfMsgSays) < 1 ) return
+    goCrash = index( trim(Message), trim(MLSMessageConfig%CrashIfMsgSays) ) > 0
+  end function MessageMeansCrash
 
   ! ----------------------------------------------  MLSMessageStd  -----
   subroutine MLSMessageStd ( Severity, ModuleNameIn, Message, &
@@ -1141,6 +1160,9 @@ contains
 
 !
 ! $Log$
+! Revision 2.44  2017/03/23 16:22:45  pwagner
+! Programs may optionally crash when MLSMessage logs fatal string
+!
 ! Revision 2.43  2017/01/04 19:17:57  pwagner
 ! Optional arg StackIsEmpty to Dump_Stack prevents printing if stackIsEmpty
 !
