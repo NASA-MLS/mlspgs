@@ -150,7 +150,6 @@ program MLSL2
   character(len=*), parameter :: L2CFNAMEEXTENSION = ".l2cf"
   logical, parameter          :: WAITFORSCRIPT     = .true.
 
-  character(len=24) :: arg
   integer :: ERROR                 ! Error flag from check_tree
   integer :: FIRST_SECTION         ! Index of son of root of first n_cf node
   logical :: garbage_collection_by_dt = .false. ! Collect garbage after each deallocate_test?
@@ -698,7 +697,7 @@ contains
         & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       call outputNamedValue ( 'Range of chunks', trim_safe(parallel%chunkRange), advance='yes', &
         & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-      call outputNamedValue ( 'uniqueID ID', uniqueID, advance='yes', &
+      call outputNamedValue ( 'uniqueID ID', trim(uniqueID), advance='yes', &
         & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       call outputNamedValue ( 'Show system memory usage?', &
         & Show_Sys_Memory, advance='yes', &
@@ -723,9 +722,11 @@ contains
         & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       if ( parallel%slave ) then
         call outputNamedValue ( 'Master task number', parallel%masterTid, advance='yes', &
-        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-        call outputNamedValue ( 'Note file', trim(noteFile), advance='yes', &
-        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
+          & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
+        if ( len_trim(noteFile) > 0 ) then
+          call output ( '*  Note file:', advance='yes' )
+          call output ( '*    ' // trim(noteFile), advance='yes' )
+        end if
       end if
       if ( len_trim(stopAfterSection) > 0 ) then
         call outputNamedValue ( 'Stop after section', trim_safe(stopAfterSection), advance='yes', &
@@ -847,6 +848,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.223  2017/03/23 16:57:38  pwagner
+! Improved Dump_settings appearance
+!
 ! Revision 2.222  2017/01/25 18:10:22  pwagner
 ! May skip certain Phases named in phasesToSkip cmdline opt
 !
