@@ -13,9 +13,9 @@
 module PrintIt_m
 
   ! use ISO_FORTRAN_ENV, only: ERROR_UNIT, OUTPUT_UNIT
-  use Machine, only: crash_burn, exit_with_status, neverCrash
-  use MLSCommon, only: MLSFile_t
-  use SDPToolkit, only: useSDPToolkit, pgs_smf_generateStatusReport
+  use Machine, only: Crash_Burn, Exit_With_Status, NeverCrash
+  use MLSCommon, only: MLSFile_T
+  use SDPToolkit, only: UseSDPToolkit, Pgs_Smf_GenerateStatusReport
 
   implicit none
   private
@@ -70,6 +70,8 @@ module PrintIt_m
     !  1: Print every one only once
     integer :: limitWarnings           = 1000 ! Max number each warning
     integer :: masterTID               = -1 ! Where to send error msg
+    character (len=prefixLen) :: CrashIfMsgSays &
+      &                                = ''   ! Crash if any msg has this string
     character (len=prefixLen) :: prefix &
       &                                = ''   ! Prefix to every msg
     ! Instead of showing both module names and severity for every message
@@ -426,6 +428,9 @@ contains
 end module PrintIt_m
 
 ! $Log$
+! Revision 2.9  2017/03/23 16:22:03  pwagner
+! Programs may optionally crash when MLSMessage logs fatal string
+!
 ! Revision 2.8  2015/05/06 20:40:49  pwagner
 ! May prefix Warnings or worse with, e.g., phase and chunk num
 !
