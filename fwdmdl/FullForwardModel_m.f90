@@ -748,10 +748,8 @@ contains
     integer, target :: GL_Inds_B(max_c*ng) ! Base array for GL_INDS
     integer :: Grids(no_tan_hts)        ! Indices in ptgGrid for each tangent
     integer :: IPSD(s_i*max_f)
-    integer :: nz_d_delta_df(2*(ngp1+1),s_a*size(grids_f%values)) ! nonzeros in
-                                        ! d_delta_df; can never be more than one
-                                        ! at each end of a panel, + NG between,
-                                        ! per state vector element.
+    integer :: nz_d_delta_df(max_f,s_a*size(grids_f%values)) ! nonzeros in
+                                        ! each column of d_delta_df.
     integer :: nnz_d_delta_df(size(nz_d_delta_df,2)) ! Column lengths in
                                         ! nz_d_delta_df.
     integer :: Vert_Inds(max_f)         ! Height indices of fine path in
@@ -3159,6 +3157,7 @@ end if
 end do ! sps
 ! print '(3(a,i0))', 'Max Do_Calc_fzp per row per sps ', mxc, &
 ! ' Max Eta_fzp per row per sps ', mxe
+! print '(a,i0)', 'Maxval(NNZ_Fzp) = ', Maxval(NNZ_Fzp)
 end block
 
       associate ( sps_path_x => sps_path(1:npf:ngp1,:) )
@@ -4697,6 +4696,9 @@ end block
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.382  2017/03/20 23:25:40  vsnyder
+! Double row dimension of Nz_d_Delta_df
+!
 ! Revision 2.381  2017/03/11 00:58:13  vsnyder
 ! Many changes leading to 3D/QTM model
 !
