@@ -224,13 +224,15 @@ contains
 
   ! ------------------------------------------------  Crash_Burn  -----
   ! crash, burn unless ..
-  subroutine Crash_Burn( name )
+  subroutine Crash_Burn( Name, Message )
     ! arg
-    character(len=*), optional, intent(in) :: name
+    character(len=*), optional, intent(in) :: Name
+    character(len=*), optional, intent(in) :: Message
     ! Internal args
     character(len=prefixLen) :: myName
     myName = '(undefined)'
-    if ( present(name) ) myName = name
+    if ( present(Name) ) myName = Name
+    if ( present(Message) ) call PrintItOut( Message, MLSMSG_Info )
     if ( .not. dontCrashHere(myName) ) call crash_burn_rude
   end subroutine Crash_Burn
 
@@ -337,13 +339,13 @@ contains
     if ( any( severity == (/MLSMSG_Warning, MLSMSG_TestWarning/) ) .and. &
       & ( MLSMSGWarnings%totalnumwarnings > TOTALNUMWARNINGSMAX - 1 ) ) then
       if ( present(status) ) status = myStatus
-      if ( MessageMeansCrash ( Message ) ) call Crash_Burn
+      if ( MessageMeansCrash ( Message ) ) call Crash_Burn ( Message=Message )
       return
     else if ( MLSMSGWarnings%totalnumwarnings > TOTALNUMWARNINGSMAX - 2 ) then
       msgPlusNotice = '(Max Warnings reached)' // message
       msgLength = min(warningLength+len('(Max Warnings reached)'), MAXMESSLENGTH)
     end if
-    if ( MessageMeansCrash ( Message ) ) call Crash_Burn
+    if ( MessageMeansCrash ( Message ) ) call Crash_Burn ( Message=Message )
     if ( severity == MLSMSG_Warning ) MLSMSGWarnings%lastWarningMsg = message
     nosubsequentwarnings = .false.
     if ( any( severity == (/MLSMSG_Warning, MLSMSG_TestWarning/) ) &
@@ -817,7 +819,8 @@ contains
         end if
       end if
       call MLSMessageClose
-      if ( status == 1 .and. MLSMessageConfig%CrashOnAnyError ) call crash_burn
+      if ( status == 1 .and. MLSMessageConfig%CrashOnAnyError ) &
+        & call crash_burn
       call exit_with_status ( status  )
     else
       if (present(farewell)) then
@@ -1160,6 +1163,9 @@ contains
 
 !
 ! $Log$
+! Revision 2.45  2017/03/24 22:54:55  pwagner
+! Ensure Message is printed before MessageMeansCrash causes Crash_and_Burn
+!
 ! Revision 2.44  2017/03/23 16:22:45  pwagner
 ! Programs may optionally crash when MLSMessage logs fatal string
 !
