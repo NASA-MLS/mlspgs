@@ -1156,7 +1156,7 @@ jloop:do while ( j < len_trim(line) )
       logical :: exitLoop
       character(len=fileNameLen)      :: filename
       character(len=len(inLine)+32)   :: line
-      character(len=32)               :: name
+      character(len=fileNameLen)      :: name
       character(len=fileNameLen)      :: valu
       logical, parameter              :: countEmpty = .true.
       character(len=1), parameter     :: eqls = '='
@@ -1164,10 +1164,28 @@ jloop:do while ( j < len_trim(line) )
       call SubstituteRuntimeBoolean ( inLine, line )
       call getStringElement( line, name, 1, countEmpty, eqls )
       call getStringElement( line, valu, 2, countEmpty, eqls )
+
+      ! -------------------------------------------------------------
+      ! This mechanism optionally sets level 2 to crash with
+      ! a walkback
+      ! if it logs a message containing a fatal string
+      ! E.g., put the next line in your opts file
+      ! CrashIfMsgSays=Drop. Dead.
+      ! and your run will automatically crash at the point where it logs
+      ! any message containing the string "Drop. Dead."
+      if ( lowercase(name) == 'crashifmsgsays' ) then
+        NeverCrash = .false.
+        MLSMessageConfig%CrashIfMsgSays = valu
+        return
+      ! See also open_init for the same mechanism implemented in the PCF
+      ! -------------------------------------------------------------
+      endif
+
       ! Beware of cases where valu conatins an embedded space
       ! Replace such spaces with '%'
       if ( len_trim(name) < 1 .or. name == eqls ) return
       if ( len_trim(valu) > 0 ) valu = Replace ( trim(valu), ' ', '%' )
+
       ! Special cases:
       ! We prefer to store these in valu
       ! because it is long enough to hold, e.g., mutiple switches
@@ -1371,6 +1389,9 @@ end module MLSL2Options
 
 !
 ! $Log$
+! Revision 2.111  2017/03/24 22:59:23  pwagner
+! Made new opts file name CrashIfMsgSays that tells level 2 to crash with walkback if special msg logged
+!
 ! Revision 2.110  2017/01/25 18:05:59  pwagner
 ! May skip certain Phases named in phasesToSkip cmdline opt
 !
