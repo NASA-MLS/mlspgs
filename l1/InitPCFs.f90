@@ -13,14 +13,27 @@
 MODULE InitPCFs ! Init PCF data used by MLSL1 program
 !=============================================================================
 
-  USE SDPToolkit, ONLY: PGS_S_SUCCESS
-  USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Info
-  USE MLSL1Common, ONLY : FileNameLen
-  IMPLICIT NONE
+  use SDPToolkit, ONLY: PGS_S_SUCCESS
+  use MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Info, &
+    & MLSMessageConfig
+  use MLSL1Common, ONLY : FileNameLen
+  use Machine, ONLY : NeverCrash
+  implicit none
 
-  PRIVATE
+  private
 
-  PUBLIC :: L1PCF, PCFData_T, GetPCFParameters
+  public :: L1PCF, PCFData_T, GetPCFParameters
+
+  ! -------------------------------------------------------------------
+  ! The next parameter optionally sets level 1 to crash with a walkback
+  ! if it logs a message containing a fatal string
+  ! E.g., put the next line in your PCF
+  ! 1005|CrashMsg|Drop. Dead.
+  ! and your run will automatically crash at the point where it logs
+  ! any message containing the string "Drop. Dead."
+  
+  integer, parameter :: mlspcf_l1_param_CrashMsg = 1005
+  ! -------------------------------------------------------------------
   
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -48,8 +61,8 @@ CONTAINS
    SUBROUTINE GetPCFParameters
 !------------------------------------
 
-     USE MLSPCF1, ONLY: mlspcf_l1_param_StartUTC, mlspcf_l1_param_EndUTC, &
-          mlspcf_l1_param_OutputVersion, mlspcf_l1_param_Cycle
+   use MLSPCF1, only: MLSPcf_L1_Param_StartUTC, MLSPcf_L1_Param_EndUTC, &
+     & MLSPcf_L1_Param_OutputVersion, MLSPcf_L1_Param_Cycle
 
 ! This subroutine retrieves the User-Defined Runtime Parameters from the PCF
 ! and stores them in variables used in the MLSL1 code.
@@ -103,6 +116,14 @@ CONTAINS
         CALL MLSMessage (MLSMSG_Error, ModuleName, msr)
      ENDIF
 
+     returnStatus = PGS_PC_GetConfigData ( mlspcf_l1_param_CrashMsg, msr )
+     ! We'll allow you to either omit the PCFid or leave it blank
+     ! to side-step this hair-trigger option
+     IF ( returnStatus /= PGS_S_SUCCESS ) return
+     if ( len_trim(msr) < 1 ) return
+     NeverCrash = .false.
+     MLSMessageConfig%CrashIfMsgSays = msr
+
    END SUBROUTINE GetPCFParameters
 
   logical function not_used_here()
@@ -116,6 +137,9 @@ CONTAINS
 END MODULE InitPCFs
 
 ! $Log$
+! Revision 2.8  2017/03/24 22:57:06  pwagner
+! Made new PCFid 1005 that tells level 1 to crash with walkback if special msg logged
+!
 ! Revision 2.7  2016/03/15 22:17:59  whdaffer
 ! Merged whd-rel-1-0 back onto main branch. Most changes
 ! are to comments, but there's some modification to Calibration.f90
