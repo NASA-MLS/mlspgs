@@ -19,13 +19,13 @@ module Open_Init
   ! Reads user params as PCF-supplied config data  |
   ! -----------------------------------------------
 
-  use HighOutput, only: AddRow, AddRow_divider, AddRow_header, BeVerbose, &
+  use HighOutput, only: AddRow, AddRow_Divider, AddRow_Header, BeVerbose, &
     & OutputNamedValue, OutputTable, StartTable
-  use MLSCommon, only: FileNameLen, MLSFile_t, NameLen, TAI93_Range_t
+  use MLSCommon, only: FileNameLen, MLSFile_T, NameLen, TAI93_Range_T
   use MLSL2Options, only: SpecialDumpFile, Toolkit
   use MLSStringLists, only: Array2List, CatLists, &
-    & switchDetail
-  use Output_m, only: Blanks, NewLine, Output, SwitchOutput, RevertOutput
+    & SwitchDetail
+  use Output_M, only: Blanks, NewLine, Output, SwitchOutput, RevertOutput
 
   implicit none
 
@@ -53,6 +53,18 @@ module Open_Init
   integer, parameter :: NUMDOIs    = 27
   logical, parameter :: ALWAYSGETSWITCHESCONFIG = .false.
   integer, private ::   ERROR
+
+  ! -------------------------------------------------------------------
+  ! The next parameter optionally sets level 2 to crash with a walkback
+  ! if it logs a message containing a fatal string
+  ! E.g., put the next line in your PCF
+  ! 2008|CrashMsg|Drop. Dead.
+  ! and your run will automatically crash at the point where it logs
+  ! any message containing the string "Drop. Dead."
+  
+  integer, parameter :: mlspcf_l2_param_CrashMsg = 2008
+  ! See also MLSL2Options for the same mechanism implemented in the opts file
+  ! -------------------------------------------------------------------
   
 contains ! =====     Public Procedures     =============================
 
@@ -70,37 +82,39 @@ contains ! =====     Public Procedures     =============================
 
     use Dates_Module, only: UTC_To_YYYYMMDD
     use Dump_1, only: Dump
-    use HDF, only: dfacc_rdonly
-    use intrinsic, only: L_HDF
+    use HDF, only: Dfacc_Rdonly
+    use Intrinsic, only: L_HDF
     use L1BData, only: FindMaxMaf, ReadL1BAttribute
-    use L2GPData, only: col_species_keys, col_species_hash
-    use MLSFiles, only: wildCardHDFVersion, &
+    use L2GPData, only: Col_Species_Keys, Col_Species_Hash
+    use MLSFiles, only: WildCardHDFVersion, &
       & AddFileToDatabase, InitializeMLSFile, MLS_OpenFile
-    use MLSKinds, only: r8
-    use MLSL2Timings, only: section_times, total_times
-    use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning, MLSMessage
-    use MLSPCF2, only: MLSPCF_L1b_oa_start, mlspcf_l1b_rad_end, &
-      &                MLSPCF_L1b_rad_start, &
-      &                MLSPCF_L2_param_pgeversion, &
-      &                MLSPCF_L2_param_cycle, &
-      &                MLSPCF_L2_param_ccsdsstartid, &
-      &                MLSPCF_L2_param_ccsdsendid, &
-      &                MLSPCF_L2_param_col_spec_keys, &
-      &                MLSPCF_L2_param_col_spec_mcfnames      , &
-      &                MLSPCF_L2_param_col_spec_doinames      , &
-      &                MLSPCF_L2_param_spec_keys, &
-      &                MLSPCF_L2_param_spec_mcfnames      , &
-      &                MLSPCF_L2_param_switches, &
-      &                MLSPCF_Pcf_start
-    use MLSStrings, only: lowercase
+    use MLSKinds, only: R8
+    use MLSL2Timings, only: Section_Times, Total_Times
+    use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning, MLSMessage, &
+      & MLSMessageConfig
+    use MLSPCF2, only: MLSPCF_L1b_Oa_Start, MLSPcf_L1b_Rad_End, &
+      & MLSPCF_L1b_Rad_Start, &
+      & MLSPCF_L2_Param_Pgeversion, &
+      & MLSPCF_L2_Param_Cycle, &
+      & MLSPCF_L2_Param_Ccsdsstartid, &
+      & MLSPCF_L2_Param_Ccsdsendid, &
+      & MLSPCF_L2_Param_Col_Spec_Keys, &
+      & MLSPCF_L2_Param_Col_Spec_Mcfnames, &
+      & MLSPCF_L2_Param_Col_Spec_Doinames, &
+      & MLSPCF_L2_Param_Spec_Keys, &
+      & MLSPCF_L2_Param_Spec_Mcfnames, &
+      & MLSPCF_L2_Param_Switches, &
+      & MLSPCF_Pcf_Start
+    use MLSStrings, only: Lowercase
+    use Machine, only: NeverCrash
     use PCFHdr, only: GlobalAttributes, CreatePCFAnnotation, FillTAI93Attribute
-    use SDPToolkit, only: max_orbits, pgs_pc_getfilesize, pgs_td_utctotai,&
-      &    pgs_pc_getconfigdata, pgs_pc_getreference, pgs_s_success, &
-      &    pgstd_e_no_leap_secs
-    use Time_m, only: sayTime, time_now
-    use Toggles, only: gen, levels, switches, toggle
-    use Trace_m, only: trace_begin, trace_end
-    use WriteMetadata, only: L2PCF, MCFCaseSensitive
+    use SDPToolkit, only: Max_Orbits, Pgs_Pc_GetFilesize, Pgs_Td_Utctotai,&
+      & Pgs_Pc_GetconfigData, Pgs_Pc_Getreference, Pgs_S_Success, &
+      & Pgstd_E_No_Leap_Secs
+    use Time_M, only: SayTime, Time_Now
+    use Toggles, only: Gen, Levels, Switches, Toggle
+    use Trace_M, only: Trace_Begin, Trace_End
+    use WriteMetaData, only: L2PCF, MCFCaseSensitive
 
     ! Arguments
 
@@ -380,7 +394,16 @@ contains ! =====     Public Procedures     =============================
         & switches = catLists(trim(switches), trim(extra_switches))
     end if
 
-    ! This hackery-quackery allows us to use the PCF to
+    returnStatus = pgs_pc_getConfigData( mlspcf_l2_param_CrashMsg, &
+      & extra_switches )
+    if ( returnstatus == PGS_S_SUCCESS ) then
+      if ( len_trim(extra_switches) > 0 ) then
+        NeverCrash = .false.
+        MLSMessageConfig%CrashIfMsgSays = extra_switches
+      endif
+    endif
+
+    ! This hackery-quackery uses the PCF to
     ! input elements of a string array without using up
     ! a bunch of PCFids
     ! So we accept that the strings are file names
@@ -480,8 +503,8 @@ contains ! =====     Public Procedures     =============================
     ! logfile name
   
     use Dump_1, only: Dump
-    use L2GPData, only: col_species_keys, col_species_hash
-    use WriteMetadata, only: L2PCF
+    use L2GPData, only: Col_Species_Keys, Col_Species_Hash
+    use WriteMetaData, only: L2PCF
 
     ! Arguments
     type (MLSFile_T), dimension(:), pointer :: FILEDATABASE
@@ -676,6 +699,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.114  2017/03/24 22:58:18  pwagner
+! Made new PCFid 2008 that tells level 2 to crash with walkback if special msg logged
+!
 ! Revision 2.113  2017/01/19 23:56:44  pwagner
 ! Improve appeearance when dumping Run Info
 !
