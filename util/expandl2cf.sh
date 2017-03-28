@@ -419,7 +419,10 @@ while [ "$more_opts" = "yes" ] ; do
     esac
 done
 
-if [ -f "$dotfile" ]
+if [ -f "./$dotfile" ]
+then
+  . "./$dotfile"
+elif [ -f "$dotfile" ]
 then
   . "$dotfile"
 fi
@@ -617,6 +620,9 @@ fi
 
 exit 0
 # $Log$
+# Revision 1.12  2016/12/16 22:00:01  pwagner
+# verbose setting affects us and wrapLines, too
+#
 # Revision 1.11  2016/06/01 16:34:20  pwagner
 # Expand l2cf even if debug; fallback for IDENTMAKER now in util
 #

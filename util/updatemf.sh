@@ -121,7 +121,7 @@ my_dot()
    temp1=`get_unique_name updatemf`
    sed 's/\(^[^ ][^ ]*\)=\(.*\)/\1="\2"/; s/\"\"\(.*\)\"\"/\"\1\"/' \
       "$1" > $temp1
-   . "$temp1"
+   . ./"$temp1"
    rm "$temp1"
 }
 
@@ -350,6 +350,9 @@ fi
 exit 0
 
 # $Log$
+# Revision 1.10  2014/01/29 21:03:03  pwagner
+# Added -d and -v commandline opts
+#
 # Revision 1.9  2014/01/28 19:39:00  pwagner
 # Create new Makefile only if different
 #
