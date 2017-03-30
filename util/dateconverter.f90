@@ -13,13 +13,13 @@
 program dateconverter
 !=================================
 
-   use Dates_module, only: addDaysToUTC, addHoursToUTC, addSecondsToUTC, &
-     & Dateform, dayOfWeek, fromUARSDate, hoursInDay, &
-     & ReformatDate, resetStartingDate, secondsInDay, splitDateTime, &
-     & Tai93s2utc, toUARSDate, yyyymmdd_to_dai
-   use Machine, only: hp, getarg
-   use MLSStringLists, only: expandStringRange
-   use MLSStrings, only: lowercase, ncopies, readNumsFromChars
+   use Dates_Module, only: AddDaysToUTC, AddHoursToUTC, AddSecondsToUTC, &
+     & Dateform, DayOfWeek, FromUARSDate, HoursInDay, &
+     & ReformatDate, ResetStartingDate, SecondsInDay, SplitDateTime, &
+     & Tai93s2utc, ToUARSDate, Yyyymmdd_To_Dai
+   use Machine, only: Hp, Getarg
+   use MLSStringLists, only: ExpandStringRange
+   use MLSStrings, only: Lowercase, Ncopies, ReadNumsFromChars
 
    implicit none
 
@@ -366,6 +366,8 @@ contains
       write (*,*) '               by default output will complement input'
       write (*,*) '               e.g., "2004 October 01" <=> 2004-d275'
       write (*,*) '               special codes:'
+      write (*,*) '               uars means uars dates'
+      write (*,*) '                    e.g., 1991-11-01 becomes d0051'
       write (*,*) '               utc fuses date and time'
       write (*,*) '                    e.g., 2007-274T23:59:59.9999Z'
       write (*,*) '               sec prints seconds-in-day'
@@ -414,6 +416,9 @@ END PROGRAM dateconverter
 !==================
 
 ! $Log$
+! Revision 1.10  2015/06/24 18:03:01  pwagner
+! Fix some bugs related to uars input
+!
 ! Revision 1.9  2015/06/23 23:54:16  pwagner
 ! Can canvert to and from uars dates
 !
