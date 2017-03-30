@@ -210,6 +210,7 @@ SHELL = /bin/sh
 # install-ln     -- mv program mlsln from sub-subs to INSTALLDIR
 #                    also create shell script in INSTALLDIR for the program
 #                    where ln is one of {l1 l2 l3 l3d l3m nrt}
+# install-mlstools -- build executables, tools, move to MLSTOOLSDIR
 # install-nrt    -- build near-real time executables, script, move to INSTALLDIR
 # mostlyclean    -- deletes uniquely-named sub-sub-directories
 # partialclean   -- deletes only *.o, *.mod from sub-subs
@@ -789,7 +790,30 @@ install-l3d: l3 l3m
 
 install-l3m: l3m
 	@$(MAKE) -f $(MakeFName) install LEVELS=l3m
-
+# The following assumes you have somewhere defined MLSTOOLSDIR
+install-mlstools:
+	@if [ "$(MLSTOOLSDIR)" = "" ] ; then \
+  echo "MLSTOOLSDIR not defined, so unable to install" ; \
+  exit 1 ; \
+  fi; \
+  $(MAKE) -f $(MakeFName) tools; \
+  cd $(INSTALLDIR); \
+  cp chunktimes checkpvmup compare dateconverter extinctionmaker \
+  heconvert h5subset h5cat hl Goldbrick_More \
+  killmaster \
+  l1bcat l1bdiff l1bdump l1h5subset \
+  l2auxcat l2auxchi l2auxdump l2gpcat l2gpdiff l2gpdump \
+  l2pcdiff l2pcdump l2q lr \
+  machineok misalignment Spartacus tellMasterToQuit WordSplit wrapLines \
+  $(MLSTOOLSDIR); \
+  cd $(MLSHOME); \
+  cd util; \
+  cp jobstat-sips.sh ronin.sh slavetmpltntk.sh slavetmplt.sh \
+  tkreset.sh zeros.sh $(MLSTOOLSDIR); \
+  cp zeros.sh $(MLSTOOLSDIR)/misalignment.sh; \
+  cd ../scripts; \
+  cp l1pcffrag_generator.pl $(MLSTOOLSDIR)
+  
 install-nrt: install-l1 install-l2 l2q
 	@cp $(MLSBIN)/mlsnrt*.sh $(INSTALLDIR)
 
@@ -1475,6 +1499,9 @@ tools: chunktimes checkpvmup compare dateconverter extinctionmaker \
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.19  2017/01/05 18:45:04  pwagner
+# Changed method of disguising PseudoToolkit
+#
 # Revision 1.18  2017/01/05 01:01:42  pwagner
 # Now builds EC.. to EC..; must fix PseudoToolkit fiddling
 #
