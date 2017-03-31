@@ -18,7 +18,7 @@ module Rad_Tran_m
   public :: d2Rad_Tran_dF2
   public :: Get_All_d_Delta_df
   public :: Get_d_Delta_df_f, Get_d_Delta_df_linlog
-  public :: Get_d_Delta_df_linlog_f, Get_d_Delta_dx
+  public :: Get_d_Delta_df_linlog_f
   public :: Get_d2_Delta_df2_linlog
   public :: Get_Do_Calc
   private :: Get_Do_Calc_Indexed, Get_Inds
@@ -334,7 +334,7 @@ contains
 
 ! Begin code
 
-    call get_all_d_delta_df ( max_f, gl_inds, del_zeta, Grids_f, eta_fzp,    & 
+    call get_all_d_delta_df ( max_f, gl_inds, del_zeta, grids_f, eta_fzp,    & 
                             & do_calc_fzp, do_gl, del_s, ref_cor, ds_dz_gw,  & 
                             & dAlpha_df_c, dAlpha_df_f, LD, d_delta_df,      & 
                             & nz_d_delta_df, nnz_d_delta_df, nothing )
@@ -873,10 +873,10 @@ contains
         if ( no_to_gl > 0 ) &
           & call get_inds ( do_gl, do_calc, more_inds, all_inds )
 
-        call get_d_delta_dx ( inds, gl_inds, all_inds, more_inds, &
+        call get_d_delta_df ( inds, gl_inds, all_inds, more_inds, &
           & eta_fzp(:,sv_i), dAlpha_dT_path_c, dAlpha_dT_path_f,  &
           & del_s, del_zeta, ds_dz_gw, singularity, &
-          & d_delta_dt(:,sv_i) ) ! No ref_cor yet
+          & d_delta_dt(:,sv_i) ) ! No ref_cor yet, no Lin_Log for temperature
 
         i_begin = max(inds(1)-1, i_start)
 
@@ -1221,7 +1221,7 @@ contains
 
         ! Everything in d_delta_df not indexed by nz_d_delta_df is already zero
         d_delta_df(nz_d_delta_df(:nnz_d_delta_df(sv_i),sv_i),sv_i) = 0.0
-        nnz_d_delta_df(sv_i) = 0
+        nnz_d_delta_df(sv_i) = 0 ! Number of nonzeros in column sv_i is now zero
 
         ! Skip the masked derivatives, according to the l2cf inputs
 
@@ -1254,8 +1254,8 @@ contains
         !  for $(\phi_l,\zeta_m)$.  {\tt sv_i} flattens $(k,l,m)$ to one index.
         call get_d_delta_df ( inds, gl_inds, all_inds, more_inds, &
           & eta_fzp(:,sv_i), dAlpha_df_c(:,sps_i), dAlpha_df_f(:,sps_i), &
-          & del_s, del_zeta, ds_dz_gw, grids_f%lin_log(sps_i),    &
-          & grids_f%values(sv_i), singularity, d_delta_df(:,sv_i), ref_cor )
+          & del_s, del_zeta, ds_dz_gw, singularity, d_delta_df(:,sv_i), &
+          & ref_cor, grids_f%lin_log(sps_i), grids_f%values(sv_i) )
 
       end do ! sv_i
 
@@ -1300,91 +1300,14 @@ contains
     end if
   end subroutine Get_Do_Calc
 
-  ! .............................................  Get_d_delta_dx  .....
-  subroutine Get_d_delta_dx ( Inds, GL_Inds, All_inds, More_inds, eta_fzp, &
-    & dAlpha_dx_path_c, dAlpha_dx_path_f, Del_s, Del_Zeta, ds_dz_gw,       &
-    & Singularity, d_delta_dx, Ref_cor )
-
-    ! Get d_delta_dx.  For species for which beta does not depend upon
-    ! mixing ratio this gets d_delta_df if dAlpha_dx_path_* is beta_path_*.
-
-    use GLNP, only: NG, NGP1
-    use MLSKinds, only: RP
-
-    integer, intent(in) :: Inds(:)       ! Indices on coarse path needing calc
-    integer, intent(in) :: GL_Inds(:)    ! Gauss-Legendre grid indices
-    integer, intent(in) :: All_inds(:)   ! Indices on GL grid for stuff
-                                         ! used to make GL corrections
-    integer, intent(in) :: More_inds(:)  ! Indices on the coarse path where
-                                         ! GL corrections get applied.
-    real(rp), intent(in) :: eta_fzp(*)   ! representation basis function.
-    real(rp), intent(in) :: dAlpha_dx_path_c(*) ! on coarse grid.
-    real(rp), intent(in) :: dAlpha_dx_path_f(*) ! cross section on GL grid.
-    real(rp), intent(in) :: Del_s(:)     ! unrefracted path length.
-    real(rp), intent(in) :: Del_zeta(:)  ! path -log(P) differences on the
-      !              main grid.  This is for the whole coarse path, not just
-      !              the part up to the black-out
-    real(rp), intent(in) :: ds_dz_gw(:)  ! ds/dh * dh/dz * GL weights
-    real(rp), intent(out) :: singularity(:) ! integrand on left edge of coarse
-                               ! grid panel -- singular at tangent pt.
-                               ! Actually just work space we don't want
-                               ! to allocate on every invocation.
-    real(rp), intent(inout) :: d_delta_dx(:) ! Derivative of delta.
-                               ! intent(inout) so the unreferenced
-                               ! elements do not become undefined.
-    real(rp), intent(in), optional :: Ref_cor(:) ! refracted to unrefracted
-                                           !  path length ratios.
-
-    integer :: AA, GA, I, II
-
-    do i = 1, size(inds)
-      ii = inds(i)
-      singularity(ii) = dAlpha_dx_path_c(ii) * eta_fzp(ii*ngp1-ng)
-      d_delta_dx(ii) = singularity(ii) * del_s(ii)
-    end do ! i
-
-    !{ Apply Gauss-Legendre quadrature to compute $\int_{\zeta_i}^{\zeta_{i-1}}
-    !  \frac{\partial \alpha(s)}{\partial f^k_{lm}} \frac{\text{d}
-    !  s}{\text{d} h} \frac{\text{d}h}{\text{d}\zeta} \, \text{d} s$ to the
-    !  panels indicated by {\tt more\_inds}.  Here, $\frac{\partial
-    !  \alpha(s)}{\partial f^k_{lm}} = \beta^k(s) \eta^k_{lm}(s)$.  We
-    !  remove the singularity introduced at the tangent point by
-    !  $\frac{\text{d} s}{\text{d} h}$ by writing
-    !  $\int_{\zeta_i}^{\zeta_{i-1}} G(\zeta) \frac{\text{d}s}{\text{d}h}
-    !  \frac{\text{d}h}{\text{d}\zeta} \text{d}\zeta = G(\zeta_i)
-    !  \int_{\zeta_i}^{\zeta_{i-1}} \frac{\text{d}s}{\text{d}h}
-    !  \frac{\text{d}h}{\text{d}\zeta} \text{d}\zeta +
-    !  \int_{\zeta_i}^{\zeta_{i-1}} \left[ G(\zeta) - G(\zeta_i) \right]
-    !  \frac{\text{d}s}{\text{d}h} \frac{\text{d}h}{\text{d}\zeta}
-    !  \text{d}\zeta$.  The first integral is easy -- it's just $G(\zeta_i)
-    !  (\zeta_{i-1}-\zeta_i)$.  Here, it is {\tt d\_delta\_df}. In the
-    !  second integral, $G(\zeta)$ is {\tt dAlpha_dx_path\_f * eta\_zxp\_f
-    !  * sps\_path} -- which have already been evaluated at the appropriate
-    !  abscissae~-- and $G(\zeta_i)$ is {\tt singularity}. The weights  are
-    !  {\tt gw}.
-
-    do i = 1, size(all_inds)
-      aa = all_inds(i)
-      ga = gl_inds(aa)
-      ii = more_inds(i)
-      d_delta_dx(ii) = d_delta_dx(ii) + &
-        & del_zeta(ii) * &
-        & sum( (eta_fzp(ga:ga+ng-1) * dAlpha_dx_path_f(aa:aa+ng-1) - &
-             &  singularity(ii)) * ds_dz_gw(ga:ga+ng-1) )
-    end do
-
-    ! Refraction correction
-    if ( present(ref_cor) ) d_delta_dx(inds) = ref_cor(inds) * d_delta_dx(inds)
-
-  end subroutine Get_d_delta_dx
-
   ! .............................................  Get_d_delta_df  .....
   subroutine Get_d_delta_df ( Inds, GL_Inds, All_inds, More_inds, eta_fzp, &
-    & dAlpha_df_path_c, dAlpha_df_path_f, Del_s, Del_Zeta, ds_dz_gw, lin_log, grids_v, &
-    & Singularity, d_delta_dx, Ref_cor )
+    & dAlpha_df_path_c, dAlpha_df_path_f, Del_s, Del_Zeta, ds_dz_gw, &
+    & Singularity, d_delta_df, Ref_cor, lin_log, grids_v )
 
-    ! Get d_delta_dx.  For species for which beta does not depend upon
-    ! mixing ratio this gets d_delta_df if dAlpha_dx_path_* is beta_path_*.
+    ! Get d_delta_df or d_delta_dT.  For species for which beta does not
+    ! depend upon mixing ratio this gets d_delta_df if dAlpha_dx_path_* is
+    ! beta_path_*.
 
     use GLNP, only: NG, NGP1
     use MLSKinds, only: RP
@@ -1396,32 +1319,33 @@ contains
     integer, intent(in) :: More_inds(:)  ! Indices on the coarse path where
                                          ! GL corrections get applied.
     real(rp), intent(in) :: Eta_fzp(*)   ! representation basis function on
-                                         ! fine grid.
+                                         ! entire grid.
     real(rp), intent(in) :: dAlpha_df_path_c(*) ! dAlpha_df on coarse grid.
-    real(rp), intent(in) :: dAlpha_df_path_f(*) ! dAlpha_df on GL grid.
+    real(rp), intent(in) :: dAlpha_df_path_f(*) ! dAlpha_df on GL grid within
+                                         ! subset of coarse path that needs GL.
     real(rp), intent(in) :: Del_s(:)     ! unrefracted path length.
     real(rp), intent(in) :: Del_zeta(:)  ! path -log(P) differences on the
       !              main grid.  This is for the whole coarse path, not just
       !              the part up to the black-out
     real(rp), intent(in) :: ds_dz_gw(:)  ! ds/dh * dh/dz * GL weights
-    logical, intent(in) :: lin_log       ! logarithmic interpolation was used
-    real(rp), intent(in) :: Grids_v      ! Grids_f%values(sv_i)
     real(rp), intent(out) :: Singularity(:) ! integrand on left edge of coarse
                                ! grid panel -- singular at tangent pt.
                                ! Actually just work space we don't want
                                ! to allocate on every invocation.
-    real(rp), intent(inout) :: d_Delta_dx(:) ! Derivative of delta.
+    real(rp), intent(inout) :: d_Delta_df(:) ! Derivative of delta.
                                ! intent(inout) so the unreferenced
                                ! elements do not become undefined.
     real(rp), intent(in), optional :: Ref_cor(:) ! refracted to unrefracted
-                                           !  path length ratios.
+                                         !  path length ratios.
+    logical, intent(in), optional :: lin_log  ! logarithmic interpolation was used
+    real(rp), intent(in), optional :: Grids_v ! Grids_f%values(sv_i)
 
     integer :: AA, GA, I, II
 
     do i = 1, size(inds)
       ii = inds(i)
       singularity(ii) = dAlpha_df_path_c(ii) * eta_fzp(ii*ngp1-ng)
-      d_delta_dx(ii) = singularity(ii) * del_s(ii)
+      d_delta_df(ii) = singularity(ii) * del_s(ii)
     end do ! i
 
     !{ Apply Gauss-Legendre quadrature to compute $\int_{\zeta_i}^{\zeta_{i-1}}
@@ -1439,7 +1363,7 @@ contains
     !  \frac{\text{d}s}{\text{d}h} \frac{\text{d}h}{\text{d}\zeta}
     !  \text{d}\zeta$.  The first integral is easy -- it's just $G(\zeta_i)
     !  (\zeta_{i-1}-\zeta_i)$.  Here, it is {\tt d\_delta\_df}. In the
-    !  second integral, $G(\zeta)$ is {\tt dAlpha_dx_path\_f * eta\_zxp\_f
+    !  second integral, $G(\zeta)$ is {\tt dAlpha_df_path\_f * eta\_zxp\_f
     !  * sps\_path} -- which have already been evaluated at the appropriate
     !  abscissae~-- and $G(\zeta_i)$ is {\tt singularity}. The weights  are
     !  {\tt gw}.
@@ -1448,17 +1372,19 @@ contains
       aa = all_inds(i)
       ga = gl_inds(aa)
       ii = more_inds(i)
-      d_delta_dx(ii) = d_delta_dx(ii) + &
+      d_delta_df(ii) = d_delta_df(ii) + &
         & del_zeta(ii) * &
         & sum( (eta_fzp(ga:ga+ng-1) * dAlpha_df_path_f(aa:aa+ng-1) - &
              &  singularity(ii)) * ds_dz_gw(ga:ga+ng-1) )
     end do
 
     ! Refraction correction
-    if ( present(ref_cor) ) d_delta_dx(inds) = ref_cor(inds) * d_delta_dx(inds)
+    if ( present(ref_cor) ) d_delta_df(inds) = ref_cor(inds) * d_delta_df(inds)
 
-    ! Logarithmic interpolation correction
-    if ( lin_log ) d_delta_dx(inds) = d_delta_dx(inds) * exp(-grids_v)
+    if ( present(lin_log) ) then
+      ! Logarithmic interpolation correction
+      if ( lin_log ) d_delta_df(inds) = d_delta_df(inds) * exp(-grids_v)
+    end if
 
   end subroutine Get_d_delta_df
 
@@ -1881,10 +1807,10 @@ contains
 
   ! Set Do_Calc if Do_Calc_All(1::ngp1), or Do_GL and any of the corresponding
   ! Do_Calc_All(f_inds) flags are set.
-  ! Get_Do_Calc_Indexed determines that get_d_Delta_df needs to integrate a
+  ! Get_Do_Calc_Indexed determines that Get_d_Delta_df needs to integrate a
   ! panel if Do_Calc_All(1::ngp1) is true, which means the interpolating
   ! coefficient is nonzero, or if Do_GL is true and Do_Calc_All(f_inds) is
-  ! true, which means that GL was needed, even if an interpolating
+  ! true, which means that GL was needed, even if some interpolating
   ! coefficient is zero.
 
     use GLNP, ONLY: Ng, NGP1
@@ -2040,6 +1966,9 @@ contains
 end module RAD_TRAN_M
 
 ! $Log$
+! Revision 2.34  2017/03/31 00:46:30  vsnyder
+! Remove Get_d_delta_dx because it's subsumed by Get_d_delta_df
+!
 ! Revision 2.33  2017/03/17 20:19:23  vsnyder
 ! Cannonball polishing -- changed two variable names
 !
