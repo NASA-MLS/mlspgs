@@ -21,12 +21,12 @@ module Convolve_All_m
 
   implicit NONE
   private
-  public :: CONVOLVE_OTHER_DERIV, CONVOLVE_RADIANCE, CONVOLVE_TEMPERATURE_DERIV
-  public :: CONVOLVE_RADIANCE_NORMALIZATION, CONVOLVE_TEMPERATURE_DERIV_NORMALIZATION
-  public :: CONVOLVE_OTHER_SECOND_DERIV
-  public :: INTERPOLATE_RADIANCE, INTERPOLATE_OTHER_DERIV
-  public :: INTERPOLATE_TEMPERATURE_DERIV
-  public :: STORE_OTHER_DERIV, STORE_TEMPERATURE_DERIV
+  public :: Convolve_Other_Deriv, Convolve_Radiance, Convolve_Temperature_Deriv
+  public :: Convolve_Radiance_Normalization, Convolve_Temperature_Deriv_Normalization
+  public :: Convolve_Other_Second_Deriv
+  public :: Interpolate_Radiance, Interpolate_Other_Deriv
+  public :: Interpolate_Temperature_Deriv
+  public :: Store_Other_Deriv, Store_Temperature_Deriv
 
   interface Store_Other_Deriv
     module procedure Store_Other_Deriv_1D, Store_Other_Deriv_2D
@@ -52,23 +52,23 @@ contains
   ! Convolve the radiance, and maybe dRadiance/dPtan, with the antenna pattern
 
     use FOV_Convolve_m, only: Convolve_Support_t, FOV_Convolve_1d
-    use MatrixModule_1, only: FINDBLOCK, MATRIX_T
+    use MatrixModule_1, only: FindBlock, Matrix_t
     use MLSKinds, only: R8, RP, RV
     use VectorsModule, only: VectorValue_T
 
     ! Required inputs
     type(convolve_support_t), intent(in) :: Convolve_Support
     integer, intent(in) :: MAF
-    integer, intent(in) :: CHANNEL
+    integer, intent(in) :: Channel
     real(rp), intent(in) :: Rad_In(:)   ! input radiances
     real(r8), intent(in) :: SbRatio
     logical, intent(in) :: Update       ! "add to radiance, don't overwrite"
-    type(vectorvalue_t), intent(in) :: PTAN ! Only for some indices
+    type(vectorvalue_t), intent(in) :: PTAN ! Only to get some indices
     real(rv), pointer :: MIF_Times(:,:) ! Disassociated if no scan average, q.v.
     real(rv), pointer :: DeadTime(:,:)  ! Disassociated if no scan average, q.v.
 
     ! Output
-    type (VectorValue_T), intent(inout) :: RADIANCE   ! Output radiances
+    type (VectorValue_T), intent(inout) :: Radiance   ! Output radiances
 
     ! Optional if PTan derivative processed.  All or none.
     type (Matrix_t), optional, intent(inout) :: Jacobian
@@ -131,25 +131,26 @@ contains
   subroutine Convolve_Temperature_Deriv ( Convolve_Support, MAF, Channel, &
            & Rad_In, Rad_FFT, SbRatio, Update, Radiance, Temp, Grids_Tmp, &
            & surf_angle, MIF_Times, DeadTime, di_dT, dx_dT, d2x_dxdT, &
-           & dxdt_tan, dxdt_surface, Jacobian, RowFlags )
+           & dxdt_tan, dxdt_surface, F_and_V, Jacobian, RowFlags )
 
     use Fov_Convolve_m, only: Convolve_Support_T, &
       & FOV_Convolve_Temp_Derivs
     use Load_sps_data_m, only: Grids_T
-    use MatrixModule_1, only: FINDBLOCK, GetFullBlock, MATRIX_T
+    use MatrixModule_1, only: FindBlock, GetFullBlock, Matrix_t
     use MLSKinds, only: R8, RP, RV
+    use Path_Representation_m, only: Facets_and_Vertices_t
     use VectorsModule, only: VectorValue_T
 
     ! Inputs
     type(convolve_support_t), intent(in) :: Convolve_Support
     integer, intent(in) :: MAF
-    integer, intent(in) :: CHANNEL
+    integer, intent(in) :: Channel
     real(rp), intent(in) :: Rad_In(:)  ! input radiances
     real(r8), intent(in) :: Rad_FFT(:) ! convolved radiance on FFT grid
     real(r8), intent(in) :: SbRatio
     logical, intent(in) :: Update      ! "add to Jacobian, don't overwrite"
-    type (VectorValue_T), intent(in) :: RADIANCE ! Only for some indices
-    type (vectorvalue_t), intent(in) :: TEMP     ! Only for some indices
+    type (VectorValue_T), intent(in) :: Radiance ! Only to get some indices
+    type (vectorvalue_t), intent(in) :: Temp     ! Only to get some indices
     type (Grids_T), intent(in) :: Grids_Tmp      ! Temperature's grids, etc.
     real(rp), intent(in) :: Surf_angle ! An angle that defines the
     !                      Earth surface.
@@ -165,12 +166,17 @@ contains
     !                      temperature on chi_in
     real(rp), intent(in) :: dxdT_surface(:,:) ! derivative of angle
     !                      wrt temperature at the surface
+    type (Facets_and_Vertices_t) :: F_and_V(:) ! Facets and vertices under each
+    !                      path through a QTM.  Used to map columns of dI_dT
+    !                      etc. to columns of Jacobian.  If not QTM,
+    !                      F_and_V()%vertices is not allocated.
 
     ! Outputs
     type (Matrix_t), intent(inout) :: Jacobian
     logical, intent(inout) :: rowFlags(:) ! Flag to calling code
 
     ! Local variables
+    integer :: Cols(grids_tmp%windowStart(1):grids_tmp%windowFinish(1))
     integer :: Col, JF, K, NoChans, NoPtan, N_T_Zeta, Row, SV_I
     real(r8) :: dRad_dT_out(size(convolve_support%del_chi_out), &
                 & temp%template%noSurfs*( &
@@ -190,28 +196,51 @@ contains
       & d2x_dxdT, dxdt_tan - SPREAD(dxdt_surface(1,:),1,noPtan), &
       & grids_tmp%deriv_flags, dRad_dT_out )
 
-    ! Load the Temp. derivative values into the Jacobian
-    ! First, find index location in Jacobian and set the derivative flags
+    ! Load the Temperature derivative values into the Jacobian.
+    ! First, find index location in Jacobian and set the derivative flags.
 
     row = FindBlock( Jacobian%row, radiance%index, maf )
     rowFlags(row) = .TRUE.
 
+    do jf = grids_tmp%windowStart(1), grids_tmp%windowFinish(1)
+
+      cols(jf) = FindBlock ( Jacobian%col, temp%index, jf )
+      call getFullBlock ( jacobian, row, cols(jf), 'temperature' )
+
+    end do
+
     sv_i = 0
     do jf = grids_tmp%windowStart(1), grids_tmp%windowFinish(1)
 
-      col = FindBlock ( Jacobian%col, temp%index, jf )
-      call getFullBlock ( jacobian, row, col, 'temperature' )
+      if ( allocated(f_and_v(1)%vertices) ) then
 
-      do k = 1, n_t_zeta
+        do k = 1, n_t_zeta
 
-        ! Load derivatives for this (zeta & phi) if needed :
+          ! Load derivatives for this (zeta & phi) if needed :
 
-        sv_i = sv_i + 1
-        if ( grids_tmp%deriv_flags(sv_i) ) &
-          & call loadMatrixValue ( dRad_dT_out(:,sv_i), &
-            & jacobian%block(row,col)%values(channel::noChans,k), sbRatio, &
-            & update )
-      end do
+          sv_i = sv_i + 1
+          if ( grids_tmp%deriv_flags(sv_i) ) then
+            col = cols(f_and_v(k)%vertices(jf))
+            call loadMatrixValue ( dRad_dT_out(:,sv_i), &
+              & jacobian%block(row,col)%values(channel::noChans,k), sbRatio, &
+              & update )
+          end if
+        end do
+
+      else
+
+        do k = 1, n_t_zeta
+
+          ! Load derivatives for this (zeta & phi) if needed :
+
+          sv_i = sv_i + 1
+          if ( grids_tmp%deriv_flags(sv_i) ) &
+            & call loadMatrixValue ( dRad_dT_out(:,sv_i), &
+              & jacobian%block(row,cols(jf))%values(channel::noChans,k), sbRatio, &
+              & update )
+        end do
+
+      end if
 
     end do
 
@@ -229,7 +258,7 @@ contains
   ! Convolve the radiance, and maybe dRadiance/dPtan, with the antenna pattern
 
     use FOV_Convolve_m, only: Convolve_Support_t, FOV_Convolve_1d
-    use MatrixModule_1, only: FINDBLOCK, MATRIX_T
+    use MatrixModule_1, only: FindBlock, Matrix_t
     use MLSKinds, only: R8, RP, RV
     use MLSNumerics, only: InterpolateValues    ! IGOR
     use VectorsModule, only: VectorValue_T
@@ -237,16 +266,16 @@ contains
     ! Required inputs
     type(convolve_support_t), intent(in) :: Convolve_Support
     integer, intent(in) :: MAF
-    integer, intent(in) :: CHANNEL
+    integer, intent(in) :: Channel
     real(rp), intent(in) :: Rad_In(:)   ! input radiances, I
     real(r8), intent(in) :: SbRatio
     logical, intent(in) :: Update       ! "add to radiance, don't overwrite"
-    type(vectorvalue_t), intent(in) :: PTAN ! Only for some indices
+    type(vectorvalue_t), intent(in) :: PTan ! Only to get some indices
     real(rv), pointer :: MIF_Times(:,:) ! Disassociated if no scan average, q.v.
     real(rv), pointer :: DeadTime(:,:)  ! Disassociated if no scan average, q.v.
 
     ! Output
-    type (VectorValue_T), intent(inout) :: RADIANCE   ! Output radiances, IA = I*G
+    type (VectorValue_T), intent(inout) :: Radiance   ! Output radiances, IA = I*G
 
     ! Optional if PTan derivative processed.  All or none.
     type (Matrix_t), optional, intent(inout) :: Jacobian
@@ -293,9 +322,9 @@ contains
 
     ! IGOR
     call InterpolateValues ( convolve_support%del_chi_out, sRad, convolve_support%del_chi_in, sRad_out, &
-                                 & METHOD='S', extrapolate='C' )
+                           & METHOD='S', extrapolate='C' )
 
-    ! I_diff = I - IA            ! IGOR:
+    ! I_diff = I - IA                 ! IGOR:
     
     rad_diff = rad_in - sRad_out      ! IGOR
 
@@ -335,13 +364,15 @@ contains
   subroutine Convolve_Temperature_Deriv_Normalization ( Convolve_Support, MAF, Channel, &
            & Rad_Diff, Rad_Diff_FFT, SbRatio, Update, Radiance, Temp, Grids_Tmp, &
            & surf_angle, MIF_Times, DeadTime, di_dT, dx_dT, d2x_dxdT, &
-           & dxdt_tan, dxdt_surface, Jacobian, RowFlags )
+           & dxdt_tan, dxdt_surface, F_and_V, Jacobian, RowFlags )
 
     use Fov_Convolve_m, only: Convolve_Support_T, &
-      & FOV_Convolve_Temp_Derivs, FOV_Convolve_Temp_Derivs_Normalization
+!     & FOV_Convolve_Temp_Derivs, &
+      & FOV_Convolve_Temp_Derivs_Normalization
     use Load_sps_data_m, only: Grids_T
-    use MatrixModule_1, only: FINDBLOCK, GetFullBlock, MATRIX_T
+    use MatrixModule_1, only: FindBlock, GetFullBlock, Matrix_t
     use MLSKinds, only: R8, RP, RV
+    use Path_Representation_m, only: Facets_and_Vertices_t
     use VectorsModule, only: VectorValue_T
 
     ! Inputs
@@ -352,8 +383,8 @@ contains
     real(r8), intent(in) :: Rad_Diff_FFT(:) ! FFT(Rad_Diff) = FFT(I-IA)            ! IGOR
     real(r8), intent(in) :: SbRatio
     logical, intent(in) :: Update      ! "add to Jacobian, don't overwrite"
-    type (VectorValue_T), intent(in) :: RADIANCE ! Only for some indices
-    type (vectorvalue_t), intent(in) :: TEMP     ! Only for some indices
+    type (VectorValue_T), intent(in) :: Radiance ! Only to get some indices
+    type (vectorvalue_t), intent(in) :: Temp     ! Only to get some indices
     type (Grids_T), intent(in) :: Grids_Tmp      ! Temperature's grids, etc.
     real(rp), intent(in) :: Surf_angle ! An angle that defines the
     !                      Earth surface.
@@ -369,12 +400,17 @@ contains
     !                      temperature on chi_in
     real(rp), intent(in) :: dxdT_surface(:,:) ! derivative of angle
     !                      wrt temperature at the surface
+    type (Facets_and_Vertices_t) :: F_and_V(:) ! Facets and vertices under each
+    !                      path through a QTM.  Used to map columns of dI_dT
+    !                      etc. to columns of Jacobian.  If not QTM,
+    !                      F_and_V()%vertices is not allocated.
 
     ! Outputs
     type (Matrix_t), intent(inout) :: Jacobian
     logical, intent(inout) :: rowFlags(:) ! Flag to calling code
 
     ! Local variables
+    integer :: Cols(grids_tmp%windowStart(1):grids_tmp%windowFinish(1))
     integer :: Col, JF, K, NoChans, NoPtan, N_T_Zeta, Row, SV_I
     real(r8) :: dRad_dT_out(size(convolve_support%del_chi_out), &
                 & temp%template%noSurfs*( &
@@ -399,29 +435,51 @@ contains
       & d2x_dxdT, dxdt_tan - SPREAD(dxdt_surface(1,:),1,noPtan), &
       & grids_tmp%deriv_flags, dRad_dT_out )   ! IGOR
 
-
-    ! Load the Temp. derivative values into the Jacobian
-    ! First, find index location in Jacobian and set the derivative flags
+    ! Load the Temperature derivative values into the Jacobian.
+    ! First, find index location in Jacobian and set the derivative flags.
 
     row = FindBlock( Jacobian%row, radiance%index, maf )
     rowFlags(row) = .TRUE.
 
+    do jf = grids_tmp%windowStart(1), grids_tmp%windowFinish(1)
+
+      cols(jf) = FindBlock ( Jacobian%col, temp%index, jf )
+      call getFullBlock ( jacobian, row, cols(jf), 'temperature' )
+
+    end do
+
     sv_i = 0
     do jf = grids_tmp%windowStart(1), grids_tmp%windowFinish(1)
 
-      col = FindBlock ( Jacobian%col, temp%index, jf )
-      call getFullBlock ( jacobian, row, col, 'temperature' )
+      if ( allocated(f_and_v(1)%vertices) ) then
 
-      do k = 1, n_t_zeta
+        do k = 1, n_t_zeta
 
-        ! Load derivatives for this (zeta & phi) if needed :
+          ! Load derivatives for this (zeta & phi) if needed :
 
-        sv_i = sv_i + 1
-        if ( grids_tmp%deriv_flags(sv_i) ) &
-          & call loadMatrixValue ( dRad_dT_out(:,sv_i), &
-            & jacobian%block(row,col)%values(channel::noChans,k), sbRatio, &
-            & update )
-      end do
+          sv_i = sv_i + 1
+          if ( grids_tmp%deriv_flags(sv_i) ) then
+            col = cols(f_and_v(k)%vertices(jf))
+            call loadMatrixValue ( dRad_dT_out(:,sv_i), &
+              & jacobian%block(row,col)%values(channel::noChans,k), sbRatio, &
+              & update )
+          end if
+        end do
+
+      else
+
+        do k = 1, n_t_zeta
+
+          ! Load derivatives for this (zeta & phi) if needed :
+
+          sv_i = sv_i + 1
+          if ( grids_tmp%deriv_flags(sv_i) ) &
+            & call loadMatrixValue ( dRad_dT_out(:,sv_i), &
+              & jacobian%block(row,cols(jf))%values(channel::noChans,k), sbRatio, &
+              & update )
+        end do
+
+      end if
 
     end do
 
@@ -430,24 +488,25 @@ contains
   ! ----------------------------------------  Convolve_OtherDeriv  -----
   subroutine Convolve_Other_Deriv ( Convolve_Support, MAF, Channel, &
              & SbRatio, Update, Radiance, Qtys, Grids_f, MIF_Times, &
-             & DeadTime, dI_df, Jacobian, RowFlags, ExtraJacobian, &
-             & Derivs )
+             & DeadTime, dI_df, F_and_V, Jacobian, RowFlags, &
+             & ExtraJacobian, Derivs )
 
     use ForwardModelConfig, only: QtyStuff_T
     use Fov_Convolve_m, only: Convolve_Support_T, &
       & FOV_Convolve_2d
     use Load_sps_data_m, only: Grids_T
-    use MatrixModule_1, only: FINDBLOCK, GetFullBlock, MATRIX_T
+    use MatrixModule_1, only: FindBlock, GetFullBlock, Matrix_t
     use MLSKinds, only: R8, RP, RV
+    use Path_Representation_m, only: Facets_and_Vertices_t
     use VectorsModule, only: VectorValue_T
 
     ! Inputs
     type(convolve_support_t), intent(in) :: Convolve_Support
     integer, intent(in) :: MAF
-    integer, intent(in) :: CHANNEL
+    integer, intent(in) :: Channel
     real(r8), intent(in) :: SbRatio
     logical, intent(in) :: Update      ! "add to Jacobian, don't overwrite"
-    type (VectorValue_T), intent(in) :: RADIANCE ! Only for some indices
+    type (VectorValue_T), intent(in) :: Radiance ! Only to get some indices
     type(QtyStuff_T), intent(in) :: Qtys(:)
     type (Grids_T), intent(in) :: Grids_f
     real(rv), pointer :: MIF_Times(:,:) ! Disassociated if no scan average, q.v.
@@ -455,6 +514,10 @@ contains
     real(rp), intent(in) :: dI_df(:,:) ! mixing ratio derivatives or any
     !                                    parameter for which a simple
     !                                    convolution will suffice
+    type (Facets_and_Vertices_t) :: F_and_V(:) ! Facets and vertices under each
+    !                      path through a QTM.  Used to map columns of dI_dT
+    !                      etc. to columns of Jacobian.  If not QTM,
+    !                      F_and_V()%vertices is not allocated.
 
     ! Outputs
     type (Matrix_t), intent(inout), target :: Jacobian
@@ -470,6 +533,7 @@ contains
                                                ! hasn't been set.
 
     ! Local variables
+    integer :: Cols(minval(grids_f%windowStart(:),1):maxval(grids_f%windowFinish(:),1))
     integer :: Row, Col
     integer :: JF
     integer :: K
@@ -516,19 +580,42 @@ contains
 
       do jf = Grids_f%windowStart(sps_i), Grids_f%windowfinish(sps_i)
 
-        col = FindBlock ( myJacobian%col, qtys(sps_i)%qty%index, jf)
-        call getFullBlock ( myJacobian, row, col, 'atmospheric' )
+        cols(jf) = FindBlock ( myJacobian%col, qtys(sps_i)%qty%index, jf)
+        call getFullBlock ( myJacobian, row, cols(jf), 'atmospheric' )
 
-        do k = 1, nfz
+      end do
 
-          ! load derivatives for this (zeta & phi) if needed:
+      do jf = Grids_f%windowStart(sps_i), Grids_f%windowfinish(sps_i)
 
-          sv_f = sv_f + 1
-          if ( Grids_f%deriv_flags(sv_f) ) &
-            & call loadMatrixValue ( drad_df_out(:,sv_f), &
-              & myJacobian%block(row,col)%values(channel::noChans,k), sbRatio, &
-              & update )
-        end do
+        if ( allocated(f_and_v(1)%vertices) ) then
+
+          do k = 1, nfz
+
+            ! load derivatives for this (zeta & phi) if needed:
+
+            sv_f = sv_f + 1
+            if ( Grids_f%deriv_flags(sv_f) ) then
+              col = cols(f_and_v(k)%vertices(jf))
+              call loadMatrixValue ( drad_df_out(:,sv_f), &
+                & myJacobian%block(row,col)%values(channel::noChans,k), sbRatio, &
+                & update )
+            end if
+          end do
+
+        else
+
+          do k = 1, nfz
+
+            ! load derivatives for this (zeta & phi) if needed:
+
+            sv_f = sv_f + 1
+            if ( Grids_f%deriv_flags(sv_f) ) &
+              & call loadMatrixValue ( drad_df_out(:,sv_f), &
+                & myJacobian%block(row,cols(jf))%values(channel::noChans,k), sbRatio, &
+                & update )
+          end do
+
+        end if
 
       end do
 
@@ -544,26 +631,26 @@ contains
     use ForwardModelConfig, only: QtyStuff_T
     use Fov_Convolve_m, only: Convolve_Support_T, &
       & FOV_Convolve_3d
-    use HessianModule_0, only: DUMP
-    use HessianModule_1, only: HESSIAN_T
-    use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
+    use HessianModule_0, only: Dump
+    use HessianModule_1, only: Hessian_t
+    use HighOutput, only: OutputNamedValue
     use Load_sps_data_m, only: Grids_T, Dump
     use MLSFillValues, only: isNaN
     use MLSKinds, only: R8, RP, RV
-    use MatrixModule_1, only: FINDBLOCK
+    use MatrixModule_1, only: FindBlock
     use MLSStringLists, only: switchDetail
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Warning
-    use output_m, only: resumeOutput, suspendOutput
-    use TOGGLES, only: switches
+    use MLSMessageModule, only: MLSMessage, MLSMsg_Warning
+    use Output_m, only: ResumeOutput, SuspendOutput
+    use Toggles, only: Switches
     use VectorsModule, only: VectorValue_T
 
     ! Inputs
     type(convolve_support_t), intent(in) :: Convolve_Support
     integer, intent(in) :: MAF
-    integer, intent(in) :: CHANNEL
+    integer, intent(in) :: Channel
     real(r8), intent(in) :: SbRatio    ! Sideband ratio
     logical, intent(in) :: Update      ! "add to Jacobian, don't overwrite"
-    type (VectorValue_T), intent(in) :: RADIANCE ! Only for some indices
+    type (VectorValue_T), intent(in) :: Radiance ! Only to get some indices
     type(QtyStuff_T), intent(in) :: Qtys(:)
     type (Grids_T), intent(in) :: Grids_f
     real(rv), pointer :: MIF_Times(:,:) ! Disassociated if no scan average, q.v.
@@ -707,7 +794,7 @@ contains
 
     ! Interpolate the radiance from Chi_In to Chi_Out, and maybe dI/dPTan too.
 
-    use MatrixModule_1, only: FINDBLOCK, MATRIX_T
+    use MatrixModule_1, only: FindBlock, Matrix_t
     use MLSKinds, only: R8, RP, RV
     use MLSNumerics, only: Coefficients => Coefficients_r8, InterpolateValues
     use ScanAverage_m, only: ScanAverage
@@ -716,12 +803,12 @@ contains
     ! Required inputs
     type(coefficients), intent(in) :: Coeffs
     integer, intent(in) :: MAF
-    integer, intent(in) :: CHANNEL
+    integer, intent(in) :: Channel
     real(rp), intent(in) :: Chi_In(:)  ! input pointing angles radians
     real(rp), intent(in) :: Rad_In(:)   ! input radiances
     real(r8), intent(in) :: SbRatio
     logical, intent(in) :: Update       ! "add to radiance, don't overwrite"
-    type(vectorvalue_t), intent(in) :: PTAN ! Only for some indices
+    type(vectorvalue_t), intent(in) :: PTan ! Only to get some indices
     real(rp), intent(in) :: Chi_Out(:) ! output pointing angles radians
 
     ! output
@@ -791,12 +878,13 @@ contains
   ! ------------------------------  Interpolate_Temperature_Deriv  -----
   subroutine Interpolate_Temperature_Deriv ( Coeffs, MAF, Channel, Chi_In, &
            & SbRatio, Update, Chi_Out, Radiance, Temp, Grids_Tmp, &
-           & MIF_Times, DeadTime, di_dT, Jacobian, RowFlags )
+           & MIF_Times, DeadTime, di_dT, F_and_V, Jacobian, RowFlags )
 
     use Load_sps_data_m, only: Grids_T
     use MatrixModule_1, only: FINDBLOCK, GetFullBlock, MATRIX_T
     use MLSKinds, only: R8, RP, RV
     use MLSNumerics, only: Coefficients => Coefficients_r8, InterpolateValues
+    use Path_Representation_m, only: Facets_and_Vertices_t
     use ScanAverage_m, only: ScanAverage
     use VectorsModule, only: VectorValue_T
 
@@ -808,19 +896,24 @@ contains
     real(r8), intent(in) :: SbRatio
     logical, intent(in) :: Update      ! "add to Jacobian, don't overwrite"
     real(rp), intent(in) :: Chi_Out(:) ! output pointing angles radians
-    type (VectorValue_T), intent(in) :: RADIANCE ! Only for some indices
-    type (vectorvalue_t), intent(in) :: TEMP     ! Only for some indices
+    type (VectorValue_T), intent(in) :: RADIANCE ! Only to get some indices
+    type (vectorvalue_t), intent(in) :: TEMP     ! Only to get some indices
     type (Grids_T), intent(in) :: Grids_Tmp      ! Temperature's grids, etc.
     real(rv), pointer :: MIF_Times(:,:) ! Disassociated if no scan average, q.v.
     real(rv), pointer :: DeadTime(:,:)  ! Disassociated if no scan average, q.v.
     real(rp), intent(in) :: dI_dT(:,:) ! derivative of radiance wrt
     !                      temperature on chi_in
+    type (Facets_and_Vertices_t) :: F_and_V(:) ! Facets and vertices under each
+    !                      path through a QTM.  Used to map columns of dI_dT
+    !                      etc. to columns of Jacobian.  If not QTM,
+    !                      F_and_V()%vertices is not allocated.
 
     ! Outputs
     type (Matrix_t), intent(inout) :: Jacobian
     logical, intent(inout) :: rowFlags(:) ! Flag to calling code
 
     ! Local variables
+    integer :: Cols(grids_tmp%windowStart(1):grids_tmp%windowFinish(1))
     integer :: Col, JF, JZ, K, NoChans, Row, SV_I
     real(r8) :: dRad_dT_in(size(chi_in)), dRad_dT_out(size(chi_out))
     real(rv), pointer :: MIF_Times_for_MAF(:)
@@ -829,7 +922,6 @@ contains
 
     if ( associated(MIF_Times) ) MIF_Times_for_MAF => MIF_Times(:,maf)
 
-    sv_i = 0
     k = size(chi_in)
     noChans = radiance%template%noChans
 
@@ -838,30 +930,64 @@ contains
 
     do jf = grids_tmp%windowStart(1), grids_tmp%windowFinish(1)
 
-      col = FindBlock ( Jacobian%col, temp%index, jf )
-      call getFullBlock ( jacobian, row, col, 'temperature' )
+      cols(jf) = FindBlock ( Jacobian%col, temp%index, jf )
+      call getFullBlock ( jacobian, row, cols(jf), 'temperature' )
 
-      do jz = 1, temp%template%noSurfs
+    end do
 
-        ! Check if derivatives are needed for this (zeta & phi) :
+    sv_i = 0
+    do jf = grids_tmp%windowStart(1), grids_tmp%windowFinish(1)
 
-        sv_i = sv_i + 1
-        if ( grids_tmp%deriv_flags(sv_i) ) then
-          dRad_dT_in = di_dt(1:k,sv_i)
-          if ( associated(MIF_Times) ) then
-            call scanAverage ( MIF_Times_for_MAF, deadTime(1,1), &
-              & chi_in, chi_out, dRad_dT_in, dRad_dT_out )
-          else
-            call InterpolateValues ( coeffs, chi_in, dRad_dT_in, &
-                                   & chi_out, dRad_dT_out, &
-                                   & method = 'S', extrapolate = 'C' )
+      if ( allocated(f_and_v(1)%vertices) ) then
+
+        do jz = 1, temp%template%noSurfs
+
+          ! Check if derivatives are needed for this (zeta & phi) :
+
+          sv_i = sv_i + 1
+          if ( grids_tmp%deriv_flags(sv_i) ) then
+            dRad_dT_in = di_dt(1:k,sv_i)
+            if ( associated(MIF_Times) ) then
+              call scanAverage ( MIF_Times_for_MAF, deadTime(1,1), &
+                & chi_in, chi_out, dRad_dT_in, dRad_dT_out )
+            else
+              call InterpolateValues ( coeffs, chi_in, dRad_dT_in, &
+                                     & chi_out, dRad_dT_out, &
+                                     & method = 'S', extrapolate = 'C' )
+            end if
+            col = cols(f_and_v(jz)%vertices(jf))
+            call loadMatrixValue ( dRad_dT_out, &
+              & jacobian%block(row,col)%values(channel::noChans,jz), sbRatio, &
+              & update )
           end if
-          call loadMatrixValue ( dRad_dT_out, &
-            & jacobian%block(row,col)%values(channel::noChans,jz), sbRatio, &
-            & update )
-        end if
 
-      end do
+        end do
+
+      else
+
+        do jz = 1, temp%template%noSurfs
+
+          ! Check if derivatives are needed for this (zeta & phi) :
+
+          sv_i = sv_i + 1
+          if ( grids_tmp%deriv_flags(sv_i) ) then
+            dRad_dT_in = di_dt(1:k,sv_i)
+            if ( associated(MIF_Times) ) then
+              call scanAverage ( MIF_Times_for_MAF, deadTime(1,1), &
+                & chi_in, chi_out, dRad_dT_in, dRad_dT_out )
+            else
+              call InterpolateValues ( coeffs, chi_in, dRad_dT_in, &
+                                     & chi_out, dRad_dT_out, &
+                                     & method = 'S', extrapolate = 'C' )
+            end if
+            call loadMatrixValue ( dRad_dT_out, &
+              & jacobian%block(row,cols(jf))%values(channel::noChans,jz), sbRatio, &
+              & update )
+          end if
+
+        end do
+
+      end if
 
     end do
 
@@ -870,26 +996,27 @@ contains
   ! ------------------------------------  Interpolate_Other_Deriv  -----
   subroutine Interpolate_Other_Deriv ( Coeffs, MAF, Channel, Chi_In, &
              & SbRatio, Update, Chi_Out, Radiance, Qtys, Grids_f, &
-             & MIF_Times, DeadTime, dI_df, Jacobian, RowFlags, Linear, &
+             & MIF_Times, DeadTime, dI_df, F_and_V, Jacobian, RowFlags, Linear, &
              & Derivs, ExtraJacobian )
 
     use ForwardModelConfig, only: QtyStuff_T
     use Load_sps_data_m, only: Grids_T
-    use MatrixModule_1, only: FINDBLOCK, GetFullBlock, MATRIX_T
+    use MatrixModule_1, only: FindBlock, GetFullBlock, Matrix_t
     use MLSKinds, only: R8, RP, RV
     use MLSNumerics, only: Coefficients => Coefficients_r8, InterpolateValues
+    use Path_Representation_m, only: Facets_and_Vertices_t
     use ScanAverage_m, only: ScanAverage
     use VectorsModule, only: VectorValue_T
 
     ! Inputs
     type(coefficients), intent(in) :: Coeffs
     integer, intent(in) :: MAF
-    integer, intent(in) :: CHANNEL
+    integer, intent(in) :: Channel
     real(rp), intent(in) :: Chi_In(:)  ! input pointing angles radians
     real(r8), intent(in) :: SbRatio
     logical, intent(in) :: Update      ! "add to Jacobian, don't overwrite"
     real(rp), intent(in) :: Chi_Out(:) ! output pointing angles radians
-    type (VectorValue_T), intent(in) :: RADIANCE ! Only for some indices
+    type (VectorValue_T), intent(in) :: Radiance ! Only to get some indices
     type(QtyStuff_T), intent(in) :: Qtys(:)
     type (Grids_T), intent(in) :: Grids_f
     real(rv), pointer :: MIF_Times(:,:) ! Disassociated if no scan average, q.v.
@@ -897,6 +1024,10 @@ contains
     real(rp), intent(in) :: dI_df(:,:) ! mixing ratio derivatives or any
     !                                    parameter for which a simple
     !                                    convolution will suffice
+    type (Facets_and_Vertices_t) :: F_and_V(:) ! Facets and vertices under each
+    !                      path through a QTM.  Used to map columns of dI_dT
+    !                      etc. to columns of Jacobian.  If not QTM,
+    !                      F_and_V()%vertices is not allocated.
 
     ! Outputs
     type (Matrix_t), intent(inout), target :: Jacobian
@@ -913,6 +1044,7 @@ contains
     type (Matrix_t), intent(inout), optional, target :: ExtraJacobian
 
     ! Local variables
+    integer :: Cols(minval(grids_f%windowStart(:),1):maxval(grids_f%windowFinish(:),1))
     integer :: Col, IS, JF, K, NFZ, NoChans, Row, SV_F
     type (Matrix_t), pointer :: MyJacobian
     logical :: MyLinear
@@ -949,34 +1081,71 @@ contains
 
       do jf = Grids_f%windowStart(is), Grids_f%windowfinish(is)
 
-        col = FindBlock ( myJacobian%col, qtys(is)%qty%index, jf)
-        call getFullBlock ( myJacobian, row, col, 'atmospheric' )
+        cols(jf) = FindBlock ( myJacobian%col, qtys(is)%qty%index, jf)
+        call getFullBlock ( myJacobian, row, cols(jf), 'atmospheric' )
 
-        do k = 1, nfz
+      end do
 
-          ! Check if derivatives are needed for this (zeta & phi) :
+      do jf = Grids_f%windowStart(is), Grids_f%windowfinish(is)
 
-          sv_f = sv_f + 1
-          if ( Grids_f%deriv_flags(sv_f) ) then
-            dRad_df_in = di_df(:,sv_f)
-            if ( associated(MIF_Times) ) then
-              call scanAverage ( MIF_Times_for_MAF, deadTime(1,1), &
-                & chi_in, chi_out, dRad_df_in, dRad_df_out )
-            else if ( myLinear ) then
-              call InterpolateValues ( chi_in, dRad_df_in, &
-                                     & chi_out, dRad_df_out, &
-                                     & method = 'L', extrapolate = 'C' )
-            else
-              call InterpolateValues ( coeffs, chi_in, dRad_df_in, &
-                                     & chi_out, dRad_df_out, &
-                                     & method = 'S', extrapolate = 'C' )
+        if ( allocated(f_and_v(1)%vertices) ) then
+
+          do k = 1, nfz
+
+            ! Check if derivatives are needed for this (zeta & phi) :
+
+            sv_f = sv_f + 1
+            if ( Grids_f%deriv_flags(sv_f) ) then
+              dRad_df_in = di_df(:,sv_f)
+              if ( associated(MIF_Times) ) then
+                call scanAverage ( MIF_Times_for_MAF, deadTime(1,1), &
+                  & chi_in, chi_out, dRad_df_in, dRad_df_out )
+              else if ( myLinear ) then
+                call InterpolateValues ( chi_in, dRad_df_in, &
+                                       & chi_out, dRad_df_out, &
+                                       & method = 'L', extrapolate = 'C' )
+              else
+                call InterpolateValues ( coeffs, chi_in, dRad_df_in, &
+                                       & chi_out, dRad_df_out, &
+                                       & method = 'S', extrapolate = 'C' )
+              end if
+              col = cols(f_and_v(k)%vertices(jf))
+              call loadMatrixValue ( dRad_df_out, &
+                & myJacobian%block(row,col)%values(channel::noChans,k), &
+                & sbRatio, update )
             end if
-            call loadMatrixValue ( dRad_df_out, &
-              & myJacobian%block(row,col)%values(channel::noChans,k), &
-              & sbRatio, update )
-          end if
 
-        end do
+          end do
+
+        else
+
+          do k = 1, nfz
+
+            ! Check if derivatives are needed for this (zeta & phi) :
+
+            sv_f = sv_f + 1
+            if ( Grids_f%deriv_flags(sv_f) ) then
+              dRad_df_in = di_df(:,sv_f)
+              if ( associated(MIF_Times) ) then
+                call scanAverage ( MIF_Times_for_MAF, deadTime(1,1), &
+                  & chi_in, chi_out, dRad_df_in, dRad_df_out )
+              else if ( myLinear ) then
+                call InterpolateValues ( chi_in, dRad_df_in, &
+                                       & chi_out, dRad_df_out, &
+                                       & method = 'L', extrapolate = 'C' )
+              else
+                call InterpolateValues ( coeffs, chi_in, dRad_df_in, &
+                                       & chi_out, dRad_df_out, &
+                                       & method = 'S', extrapolate = 'C' )
+              end if
+              call loadMatrixValue ( dRad_df_out, &
+                & myJacobian%block(row,cols(jf))%values(channel::noChans,k), &
+                & sbRatio, update )
+            end if
+
+          end do
+
+        end if
 
       end do
 
@@ -986,48 +1155,75 @@ contains
 
   ! ---------------------------------  Store_Temperature_Deriv_1D  -----
   subroutine Store_Temperature_Deriv_1d ( MAF, Row_0, Radiance, Temp, &
-                                        & Grids_Tmp, di_dT, Jacobian )
+                                        & Grids_Tmp, di_dT, F_and_V, Jacobian )
 
     use Load_sps_data_m, only: Grids_T
-    use MatrixModule_1, only: FINDBLOCK, GetFullBlock, MATRIX_T
+    use MatrixModule_1, only: FindBlock, GetFullBlock, Matrix_t
     use MLSKinds, only: RP
+    use Path_Representation_m, only: Facets_and_Vertices_t
     use VectorsModule, only: VectorValue_T
 
     ! Inputs
     integer, intent(in) :: MAF
     integer, intent(in) :: Row_0 ! within the block, (channel-1)*noChans+zeta
-    type (VectorValue_T), intent(in) :: RADIANCE ! Only for some indices
-    type (Vectorvalue_t), intent(in) :: TEMP     ! Only for some indices
+    type (VectorValue_T), intent(in) :: Radiance ! Only to get some indices
+    type (Vectorvalue_t), intent(in) :: Temp     ! Only to get some indices
     type (Grids_T), intent(in) :: Grids_Tmp      ! Temperature's grids, etc.
     real(rp), intent(in) :: dI_dT(:) ! derivative of radiance in Row_0 wrt
     !                                  temperature state vector coordinates
+    type (Facets_and_Vertices_t) :: F_and_V(:) ! Facets and vertices under each
+    !                      path through a QTM.  Used to map columns of dI_dT
+    !                      etc. to columns of Jacobian.  If not QTM,
+    !                      F_and_V()%vertices is not allocated.
 
     ! Outputs
     type (Matrix_t), intent(inout) :: Jacobian
 
     ! Local variables
+    integer :: Cols(grids_tmp%windowStart(1):grids_tmp%windowFinish(1))
     integer :: Col, JF, JZ, Row_1, SV_I
 
     ! Start here
-
-    sv_i = 0
 
     row_1 = FindBlock ( Jacobian%row, radiance%index, maf )
 
     do jf = grids_tmp%windowStart(1), grids_tmp%windowFinish(1)
 
-      col = FindBlock ( Jacobian%col, temp%index, jf )
-      call getFullBlock ( jacobian, row_1, col, 'temperature' )
+      cols(jf) = FindBlock ( Jacobian%col, temp%index, jf )
+      call getFullBlock ( jacobian, row_1, cols(jf), 'temperature' )
 
-      do jz = 1, temp%template%noSurfs
+    end do
 
-        ! Check if derivatives are needed for this (zeta & phi) :
+    sv_i = 0
+    do jf = grids_tmp%windowStart(1), grids_tmp%windowFinish(1)
 
-        sv_i = sv_i + 1
-        if ( grids_tmp%deriv_flags(sv_i) ) &
-          & jacobian%block(row_1,col)%values(row_0,jz) = dI_dT(sv_i)
+      if ( allocated(f_and_v(1)%vertices) ) then
 
-      end do
+        do jz = 1, temp%template%noSurfs
+
+          ! Check if derivatives are needed for this (zeta & phi) :
+
+          sv_i = sv_i + 1
+          if ( grids_tmp%deriv_flags(sv_i) ) then
+            col = cols(f_and_v(jz)%vertices(jf))
+            jacobian%block(row_1,col)%values(row_0,jz) = dI_dT(sv_i)
+          end if
+
+        end do
+
+      else
+
+        do jz = 1, temp%template%noSurfs
+
+          ! Check if derivatives are needed for this (zeta & phi) :
+
+          sv_i = sv_i + 1
+          if ( grids_tmp%deriv_flags(sv_i) ) &
+            & jacobian%block(row_1,cols(jf))%values(row_0,jz) = dI_dT(sv_i)
+
+        end do
+
+      end if
 
     end do
 
@@ -1035,49 +1231,77 @@ contains
 
   ! ------------------------------------  Store_Temperature_Deriv_2D  -----
   subroutine Store_Temperature_Deriv_2D ( MAF, Channel, Radiance, Temp, &
-                                        & Grids_Tmp, di_dT, Jacobian )
+                                        & Grids_Tmp, di_dT, F_and_V, Jacobian )
 
     use Load_sps_data_m, only: Grids_T
-    use MatrixModule_1, only: FINDBLOCK, GetFullBlock, MATRIX_T
+    use MatrixModule_1, only: FindBlock, GetFullBlock, Matrix_t
     use MLSKinds, only: RP
+    use Path_Representation_m, only: Facets_and_Vertices_t
     use VectorsModule, only: VectorValue_T
 
     ! Inputs
     integer, intent(in) :: MAF
-    integer, intent(in) :: CHANNEL
-    type (VectorValue_T), intent(in) :: RADIANCE ! Only for some indices
-    type (vectorvalue_t), intent(in) :: TEMP     ! Only for some indices
+    integer, intent(in) :: Channel
+    type (VectorValue_T), intent(in) :: Radiance ! Only to get some indices
+    type (vectorvalue_t), intent(in) :: Temp     ! Only to get some indices
     type (Grids_T), intent(in) :: Grids_Tmp      ! Temperature's grids, etc.
     real(rp), intent(in) :: dI_dT(:,:) ! derivative of radiance wrt
     !                      temperature on chi_in
+    type (Facets_and_Vertices_t) :: F_and_V(:) ! Facets and vertices under each
+    !                      path through a QTM.  Used to map columns of dI_dT
+    !                      etc. to columns of Jacobian.  If not QTM,
+    !                      F_and_V()%vertices is not allocated.
 
     ! Outputs
     type (Matrix_t), intent(inout) :: Jacobian
 
     ! Local variables
+    integer :: Cols(grids_tmp%windowStart(1):grids_tmp%windowFinish(1))
     integer :: Col, JF, JZ, NoChans, Row, SV_I
 
     ! Start here
 
-    sv_i = 0
     noChans = radiance%template%noChans
 
     row = FindBlock ( Jacobian%row, radiance%index, maf )
 
     do jf = grids_tmp%windowStart(1), grids_tmp%windowFinish(1)
 
-      col = FindBlock ( Jacobian%col, temp%index, jf )
-      call getFullBlock ( jacobian, row, col, 'temperature' )
+      cols(jf) = FindBlock ( Jacobian%col, temp%index, jf )
+      call getFullBlock ( jacobian, row, cols(jf), 'temperature' )
 
-      do jz = 1, temp%template%noSurfs
+    end do
 
-        ! Check if derivatives are needed for this (zeta & phi) :
+    sv_i = 0
+    do jf = grids_tmp%windowStart(1), grids_tmp%windowFinish(1)
 
-        sv_i = sv_i + 1
-        if ( grids_tmp%deriv_flags(sv_i) ) &
-          & jacobian%block(row,col)%values(channel::noChans,jz) = dI_dT(:,sv_i)
+      if ( allocated(f_and_v(1)%vertices) ) then
 
-      end do
+        do jz = 1, temp%template%noSurfs
+
+          ! Check if derivatives are needed for this (zeta & phi) :
+
+          sv_i = sv_i + 1
+          if ( grids_tmp%deriv_flags(sv_i) ) then
+            col = cols(f_and_v(jz)%vertices(jf))
+            jacobian%block(row,col)%values(channel::noChans,jz) = dI_dT(:,sv_i)
+          end if
+
+        end do
+
+      else
+
+        do jz = 1, temp%template%noSurfs
+
+          ! Check if derivatives are needed for this (zeta & phi) :
+
+          sv_i = sv_i + 1
+          if ( grids_tmp%deriv_flags(sv_i) ) &
+            & jacobian%block(row,cols(jf))%values(channel::noChans,jz) = dI_dT(:,sv_i)
+
+        end do
+
+      end if
 
     end do
 
@@ -1085,23 +1309,29 @@ contains
 
   ! ---------------------------------------  Store_Other_Deriv_1D  -----
   subroutine Store_Other_Deriv_1D ( MAF, Row_0, Radiance, Qtys, Grids_f, &
-                                  & dI_df, Jacobian, ExtraJacobian, Derivs )
+                                  & dI_df, F_and_V, Jacobian, ExtraJacobian, &
+                                  & Derivs )
 
     use ForwardModelConfig, only: QtyStuff_T
     use Load_sps_data_m, only: Grids_T
-    use MatrixModule_1, only: FINDBLOCK, GetFullBlock, MATRIX_T
+    use MatrixModule_1, only: FindBlock, GetFullBlock, Matrix_t
     use MLSKinds, only: RP
+    use Path_Representation_m, only: Facets_and_Vertices_t
     use VectorsModule, only: VectorValue_T
 
     ! Inputs
     integer, intent(in) :: MAF
     integer, intent(in) :: Row_0 ! within the block, (channel-1)*noChans+zeta
-    type (VectorValue_T), intent(in) :: RADIANCE ! Only for some indices
+    type (VectorValue_T), intent(in) :: Radiance ! Only to get some indices
     type(QtyStuff_T), intent(in) :: Qtys(:)
     type (Grids_T), intent(in) :: Grids_f
     real(rp), intent(in) :: dI_df(:) ! mixing ratio derivatives or any
     !                                  parameter for which a simple
     !                                  convolution will suffice
+    type (Facets_and_Vertices_t) :: F_and_V(:) ! Facets and vertices under each
+    !                      path through a QTM.  Used to map columns of dI_dT
+    !                      etc. to columns of Jacobian.  If not QTM,
+    !                      F_and_V()%vertices is not allocated.
 
     ! Output
     type (Matrix_t), intent(inout), target :: Jacobian
@@ -1116,6 +1346,7 @@ contains
                                                ! hasn't been set.
 
     ! Local variables
+    integer :: Cols(minval(grids_f%windowStart(:),1):maxval(grids_f%windowFinish(:),1))
     integer :: Col, IS, JF, K, NFZ, Row_1, SV_F
     type (Matrix_t), pointer :: MyJacobian
 
@@ -1140,18 +1371,40 @@ contains
 
       do jf = Grids_f%windowStart(is), Grids_f%windowfinish(is)
 
-        col = FindBlock ( myJacobian%col, qtys(is)%qty%index, jf)
-        call getFullBlock ( myJacobian, row_1, col, 'atmospheric' )
+        cols(jf) = FindBlock ( myJacobian%col, qtys(is)%qty%index, jf)
+        call getFullBlock ( myJacobian, row_1, cols(jf), 'atmospheric' )
 
-        do k = 1, nfz
+      end do
 
-          ! Check if derivatives are needed for this (zeta & phi) :
+      do jf = Grids_f%windowStart(is), Grids_f%windowfinish(is)
 
-          sv_f = sv_f + 1
-          if ( Grids_f%deriv_flags(sv_f) ) &
-            & myJacobian%block(row_1,col)%values(row_0,k) = di_df(sv_f)
+        if ( allocated(f_and_v(1)%vertices) ) then
 
-        end do
+          do k = 1, nfz
+
+            ! Check if derivatives are needed for this (zeta & phi) :
+
+            sv_f = sv_f + 1
+            if ( Grids_f%deriv_flags(sv_f) ) then
+              col = cols(f_and_v(k)%vertices(jf))
+              myJacobian%block(row_1,col)%values(row_0,k) = di_df(sv_f)
+            end if
+
+          end do
+
+        else
+
+          do k = 1, nfz
+
+            ! Check if derivatives are needed for this (zeta & phi) :
+
+            sv_f = sv_f + 1
+            if ( Grids_f%deriv_flags(sv_f) ) &
+              & myJacobian%block(row_1,cols(jf))%values(row_0,k) = di_df(sv_f)
+
+          end do
+
+      end if
 
       end do
 
@@ -1161,23 +1414,29 @@ contains
 
   ! ---------------------------------------  Store_Other_Deriv_2D  -----
   subroutine Store_Other_Deriv_2D ( MAF, Channel, Radiance, Qtys, Grids_f, &
-                                  & dI_df, Jacobian, ExtraJacobian, Derivs )
+                                  & dI_df, F_and_V, Jacobian, ExtraJacobian, &
+                                  & Derivs )
 
     use ForwardModelConfig, only: QtyStuff_T
     use Load_sps_data_m, only: Grids_T
-    use MatrixModule_1, only: FINDBLOCK, GetFullBlock, MATRIX_T
+    use MatrixModule_1, only: FindBlock, GetFullBlock, Matrix_t
     use MLSKinds, only: RP
+    use Path_Representation_m, only: Facets_and_Vertices_t
     use VectorsModule, only: VectorValue_T
 
     ! Inputs
     integer, intent(in) :: MAF
-    integer, intent(in) :: CHANNEL
-    type (VectorValue_T), intent(in) :: RADIANCE ! Only for some indices
+    integer, intent(in) :: Channel
+    type (VectorValue_T), intent(in) :: Radiance ! Only to get some indices
     type(QtyStuff_T), intent(in) :: Qtys(:)
     type (Grids_T), intent(in) :: Grids_f
     real(rp), intent(in) :: dI_df(:,:) ! mixing ratio derivatives or any
     !                                    parameter for which a simple
     !                                    convolution will suffice
+    type (Facets_and_Vertices_t) :: F_and_V(:) ! Facets and vertices under each
+    !                      path through a QTM.  Used to map columns of dI_dT
+    !                      etc. to columns of Jacobian.  If not QTM,
+    !                      F_and_V()%vertices is not allocated.
 
     ! Outputs
     type (Matrix_t), intent(inout), target :: Jacobian
@@ -1192,6 +1451,7 @@ contains
                                                ! hasn't been set.
 
     ! Local variables
+    integer :: Cols(minval(grids_f%windowStart(:),1):maxval(grids_f%windowFinish(:),1))
     integer :: Col, IS, JF, K, NFZ, NoChans, Row, SV_F
     type (Matrix_t), pointer :: MyJacobian
 
@@ -1218,18 +1478,40 @@ contains
 
       do jf = Grids_f%windowStart(is), Grids_f%windowfinish(is)
 
-        col = FindBlock ( myJacobian%col, qtys(is)%qty%index, jf)
-        call getFullBlock ( myJacobian, row, col, 'atmospheric' )
+        cols(jf) = FindBlock ( myJacobian%col, qtys(is)%qty%index, jf)
+        call getFullBlock ( myJacobian, row, cols(jf), 'atmospheric' )
 
-        do k = 1, nfz
+      end do
 
-          ! Check if derivatives are needed for this (zeta & phi) :
+      do jf = Grids_f%windowStart(is), Grids_f%windowfinish(is)
 
-          sv_f = sv_f + 1
-          if ( Grids_f%deriv_flags(sv_f) ) &
-            & myJacobian%block(row,col)%values(channel::noChans,k) = di_df(:,sv_f)
+        if ( allocated(f_and_v(1)%vertices) ) then
 
-        end do
+          do k = 1, nfz
+
+            ! Check if derivatives are needed for this (zeta & phi) :
+
+            sv_f = sv_f + 1
+            if ( Grids_f%deriv_flags(sv_f) ) then
+              col = cols(f_and_v(k)%vertices(jf))
+              myJacobian%block(row,col)%values(channel::noChans,k) = di_df(:,sv_f)
+            end if
+
+          end do
+
+        else
+
+          do k = 1, nfz
+
+            ! Check if derivatives are needed for this (zeta & phi) :
+
+            sv_f = sv_f + 1
+            if ( Grids_f%deriv_flags(sv_f) ) &
+              & myJacobian%block(row,cols(jf))%values(channel::noChans,k) = di_df(:,sv_f)
+
+          end do
+
+        end if
 
       end do
 
@@ -1306,13 +1588,13 @@ contains
     myErr = 0
     if ( n > size(out) ) then
       myErr = 1
-    endif
+    end if
     if ( n < size(out) ) then
       myErr = myErr + 2
-    endif
+    end if
     if ( any(isNaN(in)) ) then
       myErr = myErr + 4
-    endif
+    end if
     if ( present(err) ) err = myErr
     if ( any(myErr == (/1, 4, 5, 6/)) ) return
     if ( update ) then
@@ -1352,6 +1634,9 @@ contains
 end module Convolve_All_m
 
 ! $Log$
+! Revision 2.25  2017/03/31 00:47:10  vsnyder
+! Use F_and_V to map to Jacobian
+!
 ! Revision 2.24  2014/01/09 00:26:39  pwagner
 ! Some procedures formerly in output_m now got from highOutput
 !
