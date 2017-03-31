@@ -332,8 +332,10 @@ contains
       allocate ( QTM_Paths(0), stat=stat, errmsg=ermsg )
       call test_allocate ( stat, moduleName, "QTM_paths", 1, no_tan_hts, &
         & ermsg=ermsg )
-      allocate ( F_and_V(0), stat=stat, errmsg=ermsg )
-      call test_allocate ( stat, moduleName, "F_and_V", 1, no_tan_hts, &
+      ! One element is needed because routines in Convolve_All_m test whether
+      ! its Vertices component is allocated.
+      allocate ( F_and_V(1), stat=stat, errmsg=ermsg )
+      call test_allocate ( stat, moduleName, "F_and_V", 1, 1, &
         & ermsg=ermsg )
       no_sv_p_t = grids_tmp%l_p(1)  ! size of temperature's horizontal grid ==
                                     ! windowFinish - windowStart + 1.
@@ -1275,8 +1277,8 @@ contains
       &                      IWC, scatteringAngles )
     else
       if ( FwdModelConf%incl_cld ) call cloud_setup
-      call convolution_setup ( DH_DZ_Out, DX_DH_Out, DXDT_Surface, &
-                             & DXDT_Tan, Q_EarthRadC_sq, Est_ScGeocAlt, &
+      call convolution_setup ( dh_dz_out, dx_dh_out, dxdT_surface, &
+                             & dxdT_tan, Q_EarthRadC_sq, Est_ScGeocAlt, &
                              & FwdModelConf, &
                              & FwdModelExtra, FwdModelIn, Grids_f, Grids_tmp, &
                              & L1BMIF_TAI, MAF, MIFDeadTime, &
@@ -1425,7 +1427,8 @@ contains
               &                 tan_loc=tan_pt_geod(ptg_i),         &
               &                 tan_press=tan_press(ptg_i),         &
               &                 est_scGeocAlt=est_scGeocAlt(ptg_i), &
-              &                 path=QTM_paths(ptg_i), s=s, f_and_v=f_and_v )
+              &                 path=QTM_paths(ptg_i), s=s,         &
+              &                 f_and_v=f_and_v(ptg_i) )
           end if
         end do ! ptg_i
 
@@ -1438,8 +1441,8 @@ contains
         & cond=toggle(emit) .and. levels(emit) > 2 )
 
       if ( .not. fwdModelConf%generateTScat ) call convolution & ! or interpolate to ptan
-        ( DH_DZ_OUT, DX_DH_OUT, DX_DT, DXDT_Surface, &
-        & DXDT_TAN, D2X_DXDT, &
+        ( dh_dz_out, dx_dh_out, dx_dT, dxdT_surface, &
+        & dxdT_tan, d2x_dxdT, f_and_v, &
         & Q_EarthRadC_sq, Est_ScGeocAlt, FirstSignal, FmStat, &
         & FwdModelConf, FwdModelExtra, FwdModelIn, FwdModelOut, &
         & Grids_f, Grids_n, Grids_tmp, Grids_v, Grids_w, &
@@ -1568,7 +1571,7 @@ contains
       use Geometry, only: Orbit_Plane_Minor_Axis_sq
       use Interpolate_MIF_to_Tan_Press_m, only: Interpolate_MIF_to_Tan_Press
       use Intrinsic, only: L_EarthRefl, L_ECRtoFOV, L_GPH,  &
-        & L_LOSVel, L_SurfaceHeight, L_OrbitInclination, L_REFGPH, &
+        & L_LOSVel, L_SurfaceHeight, L_OrbitInclination, L_RefGPH, &
         & L_ScGeocAlt, L_SpaceRadiance
       use ManipulateVectorQuantities, only: DoHGridsMatch
       use Tangent_Quantities_m, only: Tangent_Quantities
@@ -2369,19 +2372,19 @@ contains
       ! Generate tables of TScat and its derivatives w.r.t. temperature
       ! and IWC.  The geometric calculations are described in wvs_074.
 
-      use CONSTANTS, only: PI
-      use CONVOLVE_ALL_M, only: STORE_OTHER_DERIV, STORE_TEMPERATURE_DERIV
-      use FORWARDMODELCONFIG, only: QTYSTUFF_T
-      use GET_ETA_MATRIX_M, only: GET_ETA_SPARSE, GET_ETA_1D_HUNT
-      USE LOAD_SPS_DATA_M, only: FINDINGRID
-      use MLSNUMERICS, only: COEFFICIENTS_R8, INTERPOLATEARRAYSETUP, &
-        & INTERPOLATEARRAYTEARDOWN
-      use MLSSIGNALS_M, only: GETNAMEOFSIGNAL
-      use MOLECULES, only: L_CLOUDICE
-      use READ_MIE_M, only: DP_DIWC, DP_DT, F_S, IWC_S, P, T_S, THETA_S
-      use SORT_M, only: SORTP
-      use TSCAT_SUPPORT_M, only: INTERPOLATE_P_TO_THETA_E
-      use VECTORSMODULE, only: DUMP
+      use Constants, only: PI
+      use Convolve_All_m, only: Store_Other_Deriv, Store_Temperature_Deriv
+      use ForwardModelConfig, only: QtyStuff_t
+      use Get_Eta_Matrix_m, only: Get_Eta_Sparse, Get_Eta_1D_Hunt
+      USE Load_SPS_Data_m, only: FindInGrid
+      use MLSNumerics, only: Coefficients=>Coefficients_r8, &
+        & InterpolateArraySetup, InterpolateArrayTeardown
+      use MLSSignals_m, only: GetNameOfSignal
+      use Molecules, only: L_CloudIce
+      use Read_Mie_m, only: DP_DIWC, DP_DT, F_S, IWC_S, P, T_S, Theta_S
+      use Sort_m, only: Sortp
+      use Tscat_Support_m, only: Interpolate_P_To_Theta_E
+      use VectorsModule, only: Dump
 
       real(rp) :: DPhi         ! Scat_Phi - Phi_Ref
       real(rp) :: DPhi_Xi      ! dPhi - xi = psi in wvs-074
@@ -2452,14 +2455,14 @@ contains
 
       character(128) :: Sig    ! Signal name, scratch for debug output
 
-      type (Coefficients_r8) :: Coeffs_Theta_e_Xi ! To interpolate from Theta_e to Xi
+      type (coefficients) :: Coeffs_Theta_e_Xi ! To interpolate from Theta_e to Xi
       type (QtyStuff_T) :: TScats(noUsedChannels)
       type (VectorValue_T), pointer :: TScat
 
       real(rp), parameter :: PIX2 = 2.0_rp * pi
       real(rp), parameter :: PID2 = 0.5 * pi
 
-      call Trace_Begin ( me, 'Generate_TScat', cond=toggle(emit) )
+      call trace_begin ( me, 'Generate_TScat', cond=toggle(emit) )
       switch42 = switchDetail(switches,"42") > -1
       if ( switch42 ) write ( 42, '(a)' ) &
         & 'Phi_Ref  Scat_Phi  Scat_Ht   Scat_Zeta      Xi     Rad    Signal'
@@ -2634,13 +2637,13 @@ contains
                 k_atmos_p = 0.0
                 call store_other_deriv ( phi_i, surf_i, TScat, &
                                        & beta_group%qty, Grids_f, k_atmos_p, &
-                                       & jacobian )
+                                       & f_and_v, jacobian )
               end if
               if ( temp_der ) then
                 k_temp_p = 0.0
                 call store_temperature_deriv ( phi_i, surf_i, TScat, &
                                        & temp, grids_tmp, k_temp_p, &
-                                       & jacobian )
+                                       & f_and_v, jacobian )
               end if
             end do
             cycle
@@ -2952,11 +2955,11 @@ contains
             if ( atmos_der ) &
               & call store_other_deriv ( phi_i, surf_i, TScat, &
                                        & beta_group%qty, Grids_f, k_atmos_p, &
-                                       & jacobian )
+                                       & f_and_v, jacobian )
             if ( temp_der ) then
               call store_temperature_deriv ( phi_i, surf_i, TScat, &
                                        & temp, grids_tmp, k_temp_p, &
-                                       & jacobian )
+                                       & f_and_v, jacobian )
               if ( print_TScat_deriv > 1 ) then
                 call output ( f_i, before='K_temp_TScat(' )
                 call output ( i_r, before=',sort_xi(:' )
@@ -3039,7 +3042,7 @@ contains
       use Get_Eta_Matrix_m, only: Select_NZ_List
       use Interpolate_Mie_m, only: Interpolate_Mie
       use Load_Sps_data_m, only:  Load_One_Item_Grid
-      USE L2PC_m, only: L2PC_T
+      use L2PC_m, only: L2PC_T
       use MCRT_m, only: MCRT_Der
       use Opacity_m, only: Opacity
       use Path_Contrib_m, only: Path_Contrib
@@ -3129,6 +3132,7 @@ contains
       eta_fzp_list, sps_path(1:npf,:), firstSignal%lo, thisSideband )
 block
 ! Get eta_fzp and do_calc_fzp from eta_fzp_list while we still need them
+! to compute derivatives.
 use Get_Do_Calc_m, only: Clean_Out_Nonzeros, Get_Eta_Do_Calc
 use Load_SPS_Data_m, only: Get_SPS_Bounds
 ! integer :: J
@@ -3420,14 +3424,17 @@ end block
       do j = i_start+1, tan_pt_c
         if ( .not. do_gl(j) ) &
           & incoptdepth(j) = incoptdepth(j) + &
-            & ( alpha_path_c(j-1) - alpha_path_c(j) ) * dsdz_c(j-1)*del_zeta(j)
+            & ( alpha_path_c(j-1) - alpha_path_c(j) ) * dsdz_c(j-1) * del_zeta(j)
       end do
       do j = tan_pt_c+1, i_end-1
         if ( .not. do_gl(j) ) &
           & incoptdepth(j) = incoptdepth(j) + &
-            & ( alpha_path_c(j+1) - alpha_path_c(j) ) * dsdz_c(j+1)*del_zeta(j)
+            & ( alpha_path_c(j+1) - alpha_path_c(j) ) * dsdz_c(j+1) * del_zeta(j)
       end do
 
+      ! Get indices for GL points only for panels that need GL, then copy
+      ! temperature and mixing ratios only for those points to T_Path_f and
+      ! Sps_Path_f
       call get_GL_inds ( do_gl, tan_pt_c, gl_inds_b, ngl, cg_inds_b, ncg )
       cg_inds => cg_inds_b(:ncg)
       gl_inds => gl_inds_b(:ngl)
@@ -3450,7 +3457,7 @@ end block
           & dTanh_dT_f(1:ngl) = frqhk / t_path_f(1:ngl)**2 * &
             & ( tanh1_f(1:ngl) - 1.0_rp / tanh1_f(1:ngl) )
 
-        ! The derivatives that get_Beta_path computes depend on which
+        ! The derivatives that get_Beta_path computes depend upon which
         ! derivative arrays are allocated, not which ones are present.
         ! This avoids having multiple paths through the code, each with a
         ! different set of optional arguments.
@@ -3861,7 +3868,7 @@ end block
       use Get_Eta_Matrix_M, only: Get_Eta_Stru
       use GLNP, only: GW, NG
       use Load_SPS_Data_M, only: Load_One_Item_Grid, Load_SPS_Data
-      use Metrics_M, only: Height_Metrics, More_Metrics, Tangent_Metrics
+      use Metrics_m, only: Height_Metrics, More_Metrics, Tangent_Metrics
       use Metrics_3D_m, only: Metrics_3D_QTM, Horizontal
       use Min_Zeta_m, only: Lower_Path_Crossings
       use More_Metrics_3D_m, only: More_Metrics_3D
@@ -3893,7 +3900,7 @@ end block
       type(s_QTM_t), allocatable, intent(out), optional :: S(:) ! Positions on
         ! the line of sight are Path%Lines(:,1) + s%s*Path%Lines(:,2).
         ! Present if UsingQTM.
-      type(facets_and_vertices_t), intent(in), optional :: F_and_V(:) ! Indices
+      type(facets_and_vertices_t), intent(in), optional :: F_and_V ! Indices
                                        ! of facets and vertices under Path.
                                        ! Present only for QTM.
 
@@ -3935,10 +3942,10 @@ end block
 
       if ( .not. same_facets ) then ! Same_Facets is false only if UsingQTM
         call load_one_item_grid ( grids_tmp, temp, fmStat%maf, phitan, fwdModelConf, &
-          & setDerivFlags=.true., subset=f_and_v(ptg_i)%vertices )
+          & setDerivFlags=.true., subset=f_and_v%vertices )
 
         call load_sps_data ( FwdModelConf, phitan, fmStat%maf, grids_f, &
-          & subset=f_and_v(ptg_i)%vertices )
+          & subset=f_and_v%vertices )
       end if
 
       ! Compute the index in the pressure grids where the tangent is,
@@ -4002,8 +4009,8 @@ end block
         ! adjacent to the path.
         QTM%path_vertices = 0 ! If this turns out to be expensive, keep an
                               ! "old F_and_V" and use it to put zeros here.
-        do i_start = 1, size(f_and_v(ptg_i)%vertices) ! I_Start is a temp here
-          QTM%path_vertices(f_and_v(ptg_i)%vertices(i_start)) = i_start
+        do i_start = 1, size(f_and_v%vertices) ! I_Start is a temp here
+          QTM%path_vertices(f_and_v%vertices(i_start)) = i_start
         end do
 
         ! Interpolate temperatures that are adjacent to the path onto T_GLgrid
@@ -4014,16 +4021,16 @@ end block
         ! set of vertices, which would require T_GLgrid etc. to be larger,
         ! perhaps as large as the entire QTM.
         if ( temp_der ) then
-          call two_d_hydrostatic ( Grids_tmp, refGPH%template%surfs(1,1), &
+          call two_d_hydrostatic ( grids_tmp, refGPH%template%surfs(1,1), &
             &  refGPH%values(1,:), z_glgrid, &
             &  t_glgrid, h_glgrid, dhdz_glgrid, eta_zzT%eta(:eta_zzT%n), &
             &  dHidTlm=dh_dt_glgrid, ddHdHdTl0=ddhidhidtl0, &
-            &  vertices=f_and_v(ptg_i)%vertices )
+            &  vertices=f_and_v%vertices )
         else
-          call two_d_hydrostatic ( Grids_tmp, refGPH%template%surfs(1,1), &
+          call two_d_hydrostatic ( grids_tmp, refGPH%template%surfs(1,1), &
             &  refGPH%values(1,:), z_glgrid, &
             &  t_glgrid, h_glgrid, dhdz_glgrid, eta_zzT%eta(:eta_zzT%n), &
-            &  vertices=f_and_v(ptg_i)%vertices )
+            &  vertices=f_and_v%vertices )
         end if
 
         if ( associated(surfaceHeight) ) then
@@ -4051,7 +4058,7 @@ end block
                                  ! The reflection is from the surface of the
                                  ! Earth, not the reference pressure surface.
         call metrics_3d_QTM ( path, QTM, h=h_glgrid, s=s, &
-          & tangent_index=tan_ind_f, pad=NG, f_and_v=f_and_v(ptg_i), &
+          & tangent_index=tan_ind_f, pad=NG, f_and_v=f_and_v, &
           & which=horizontal )
         ! ECR coordinates of points on the line-of-sight are
         ! Path%Lines(1,1) + S%s(:tan_ind_f) * Path%Lines(2,1) from the
@@ -4696,6 +4703,11 @@ end block
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.383  2017/03/24 00:10:43  vsnyder
+! Change the first extent of nz_d_delta_df back to max_f because the number
+! of nonzeroes in a column of d_delta_df is not limited unless the vertical
+! grids are the same for all species.
+!
 ! Revision 2.382  2017/03/20 23:25:40  vsnyder
 ! Double row dimension of Nz_d_Delta_df
 !
