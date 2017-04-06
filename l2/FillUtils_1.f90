@@ -4969,7 +4969,8 @@ contains ! =====     Public Procedures     =============================
     ! is in ascending or descending mode: +1 is ascending, -1 is descending
     ! method:
     ! We read the s/c velocity and look at the sign of its z component
-    subroutine WithAscOrDesc ( key, quantity, chunk, fileDatabase, HGrids, PtanQuantity )
+    subroutine WithAscOrDesc ( key, quantity, chunk, fileDatabase, HGrids, &
+      & PtanQuantity, manipulation )
     use HGridsDatabase, only: HGrids_T
     use MLSNumerics, only: ClosestElement
 
@@ -4980,6 +4981,11 @@ contains ! =====     Public Procedures     =============================
       type (MLSFile_T), dimension(:), pointer    :: FILEDATABASE
       type (HGrids_T), dimension(:), pointer     :: HGrids
       type (VectorValue_T), pointer              :: PtanQuantity
+      ! manipulation can be either
+      ! 's' scVelECI
+      ! 'g' Geodlat
+      ! If it is blank, we'll assume to read scVelECI from the L1BOA
+      integer                                    :: manipulation
       ! Local variables
       integer                                    :: heightMAF
       real(r8), dimension(:,:), allocatable :: HEIGHTS ! might be ptan.
@@ -4993,33 +4999,70 @@ contains ! =====     Public Procedures     =============================
       integer :: Me = -1                ! String index for trace
       integer                                    :: noMAFs
       integer                                    :: noSurfs
+      character(len=1)                           :: SourceType ! 'g' or 's'
+      character(len=1)                           :: string
+      logical :: verbose
       ! Executable
+      verbose = BeVerbose( 'fill', 0 )
+      if ( verbose ) then
+        call output( 'Made it to WithAscOrDesc subroutine', advance='yes' )
+        call outputnamedValue ( 'manipulation', manipulation )
+      endif
       call trace_begin ( me, 'FillUtils_1.WithAscOrDesc', key, &
         & cond=toggle(gen) .and. levels(gen) > 1 )
       if ( .not. ValidateVectorQuantity ( quantity, &
         & quantityType=(/l_surfaceType, l_AscDescMode/) ) ) &
-        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & call MLSMessage ( MLSMSG_Warning, ModuleName, &
         & "Invalid quantity for Ascend/Descend fill.")
+      SourceType = 's'
+      if ( manipulation > 0 ) then
+        call get_string ( manipulation, string, strip=.true. )
+        SourceType = lowercase(string)
+      endif
+      L1BOAFile => GetMLSFileByType( filedatabase, content='l1boa' )
+      if ( verbose ) then
+        call Dump( L1BOAFile )
+        call outputnamedValue ( 'SourceType', SourceType )
+      endif
+      select case (SourceType)
+      case ('s')
+        call ReadL1BData ( L1BOAFile, 'sc/VelECI', L1BDATA, noMAFs, &
+          & flag=l1bError, firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
+          & NeverFail= .true., &
+          & dontPad=DONTPAD )
+        if ( .not. associated( L1BData%dpField ) ) then
+          call trace_end ( 'FillUtils_1.WithAscOrDesc', &
+            & cond=toggle(gen) .and. levels(gen) > 1 )
+          return
+        end if
 
-      L1BOAFile => GetMLSFileByType(filedatabase, content='l1boa')
-      call ReadL1BData ( L1BOAFile, 'sc/VelECI', L1BDATA, noMAFs, &
-        & flag=l1bError, firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
-        & NeverFail= .true., &
-        & dontPad=DONTPAD )
-      if ( .not. associated( L1BData%dpField ) ) then
-        call trace_end ( 'FillUtils_1.WithAscOrDesc', &
-          & cond=toggle(gen) .and. levels(gen) > 1 )
-        return
-      end if
+      case ('g')
+        call ReadL1BData ( L1BOAFile, 'GHz/GeodAngle', L1BDATA, noMAFs, &
+          & flag=l1bError, firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
+          & NeverFail= .true., &
+          & dontPad=DONTPAD )
+        if ( .not. associated( L1BData%dpField ) ) then
+          call trace_end ( 'FillUtils_1.WithAscOrDesc', &
+            & cond=toggle(gen) .and. levels(gen) > 1 )
+          return
+        end if
+      case default
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & "Invalid source quantity for Ascend/Descend fill." // string )
+      end select
       noSurfs = quantity%template%noSurfs
+      if ( verbose ) call outputnamedValue ( 'noSurfs', noSurfs )
       ! Work out vertical coordinate if needed
-      call Allocate_test ( Heights, ptanQuantity%template%nosurfs, &
-        & ptanQuantity%template%noinstances, 'Heights', ModuleName )
       if ( associated ( ptanQuantity ) .and. .not. Quantity%template%minorFrame ) then
+        call Allocate_test ( Heights, ptanQuantity%template%nosurfs, &
+          & ptanQuantity%template%noinstances, 'Heights', ModuleName )
         Heights = ptanQuantity%values
       else
+        call Allocate_test ( Heights, nosurfs, &
+          & quantity%template%noInstances, 'Heights', ModuleName )
         Heights = Quantity%template%surfs
       end if
+      if ( verbose ) call outputnamedValue ( 'noInstances', quantity%template%noInstances )
       do i=1, quantity%template%noInstances
         maf = Hgrids(quantity%template%hGridIndex)%the_hGrid%maf(i)
         if ( maf < 1 ) maf = i
@@ -5028,12 +5071,20 @@ contains ! =====     Public Procedures     =============================
         do j=1, noSurfs
           call ClosestElement ( Quantity%template%surfs(j,maf)*1._r8, &
             & Heights(:, heightMAF), indices )
-          quantity%values(j,i) = sign(1._rv, &
-          & L1BData%dpField(3, indices(1), maf))
+          select case (SourceType)
+          case ('s')
+            quantity%values(j,i) = sign(1._rv, &
+              & L1BData%dpField(3, indices(1), maf))
+          case ('g')
+            if ( indices(1) < 2 ) indices(1) = 2 ! In case it was 1
+            quantity%values(j,i) = sign(1._rv, &
+              & L1BData%dpField(1, indices(1), maf) - &
+              & L1BData%dpField(1, indices(1)-1,maf) &
+              & )
+          end select
         end do
       end do
-      if ( associated ( ptanQuantity ) .and. .not. Quantity%template%minorFrame ) &
-        & call Deallocate_test ( Heights, 'Heights', ModuleName )
+      call Deallocate_test ( Heights, 'Heights', ModuleName )
       call deallocateL1BData ( L1BData ) ! Avoid memory leaks
       call trace_end ( 'FillUtils_1.WithAscOrDesc', &
         & cond=toggle(gen) .and. levels(gen) > 1 )
@@ -7696,6 +7747,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.130  2017/04/06 23:43:34  pwagner
+! May choose to base on asc/desc mode on GHz/GeodAngle via manipulation field
+!
 ! Revision 2.129  2017/02/08 19:22:00  pwagner
 ! /sourceMask causes vector Fills to obey mask from source, not destination
 !
