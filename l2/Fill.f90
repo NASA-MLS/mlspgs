@@ -574,6 +574,7 @@ contains ! =====     Public Procedures     =============================
     if ( specialDumpFile /= ' ' ) &
       & call switchOutput( specialDumpFile, keepOldUnitOpen=.true. )
 
+    ! Don't initialize field values here--instead place them after the do below
     fillerror = 0
     templateIndex = -1
     vectorIndex = -1
@@ -581,6 +582,10 @@ contains ! =====     Public Procedures     =============================
     repeatLoop = .false. ! By default, we will not repeat
     call InitializeRepeat
 
+    ! If the Command Repeat is within the section
+    ! and Repeat(key) is evaluated as true, e.g.
+    ! Repeat, Boolean=OK ; or you give it a list to repeat over
+    ! Repeat, values=["a", "amigo", "3", "4-sassafras"]
     repeat_loop: do ! RepeatLoop
     ! Loop over the lines in the configuration file
 
@@ -593,6 +598,7 @@ contains ! =====     Public Procedures     =============================
       L2CFNode = key
       if ( MLSSelecting .and. &
         & .not. any( get_spec_id(key) == (/ s_endselect, s_select, s_case /) ) ) cycle
+      ! Initialize fields
       additional = .false.
       allowMissing = .false.
       asPercentage = .false.
@@ -623,6 +629,7 @@ contains ! =====     Public Procedures     =============================
       interpolate = .false.
       invert = .false.
       isPrecision = .false.
+      manipulation = 0
       maxValue = huge(0.0_r8)
       maxValueUnit = 0
       minValue = -huge(0.0_r8)
@@ -2012,8 +2019,11 @@ contains ! =====     Public Procedures     =============================
           & quadrature, dontMask, ignoreTemplate )
 
       case ( l_ascenddescend )
+        if ( .not. got(f_manipulation) ) &
+          & call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          & 'Defaulting to read sc/VelECI from L1BOA file for Asc/Desc mode Fill' )
         call WithAscOrDesc ( key, quantity, chunks(chunkNo), fileDatabase, &
-          & hgrids, ptanQuantity )
+          & hgrids, ptanQuantity, manipulation )
 
       case ( l_asciiFile )
         if ( .not. got ( f_file ) ) &
@@ -3274,6 +3284,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.466  2017/04/06 23:43:10  pwagner
+! May choose to base on asc/desc mode on GHz/GeodAngle via manipulation field
+!
 ! Revision 2.465  2017/03/23 16:44:40  pwagner
 ! Improved message printed when unable to time sections
 !
