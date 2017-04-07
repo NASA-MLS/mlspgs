@@ -136,8 +136,8 @@ contains ! =====     Public Procedures     =============================
       & F_Rows, F_Scale, F_Scaleinsts, F_Scaleratio, F_Scalesurfs, F_Sceci, &
       & F_Scvel, F_Scveleci, F_Scvelecr, F_Sdname, F_Seed, F_SkipMask, &
       & F_Source, F_Sourcegrid, F_Sourcel2aux, F_Sourcel2gp, F_SourceMask, &
-      & F_Sourcequantity, F_Sourcevgrid, F_Spread, F_Start, F_Status, F_Stride, &
-      & F_Suffix, F_Surface, &
+      & F_Sourcequantity, F_SourceType, F_Sourcevgrid, F_Spread, F_Start, &
+      & F_Status, F_Stride, F_Suffix, F_Surface, &
       & F_Systemtemperature, F_Temperaturequantity, F_Tempprecisionquantity, &
       & F_Template, F_Tngteci, F_Terms, F_Totalpowerquantity, &
       & F_Type, F_Unit, F_Usb, F_Usbfraction, F_Vector, F_Vmrquantity, &
@@ -522,6 +522,7 @@ contains ! =====     Public Procedures     =============================
     integer :: SON                      ! Of root, an n_spec_args or a n_named
     integer :: SOURCE                   ! l_rows or l_colums for adoption
     logical :: SOURCEMASK               ! obey Masking bits from source
+    integer :: SOURCETYPE               ! String index
     integer :: SOURCEQUANTITYINDEX      ! in the quantities database
     integer :: SOURCEVECTORINDEX        ! In the vector database
     logical :: SKIPFILL                 ! Don't execute Fill command
@@ -647,6 +648,7 @@ contains ! =====     Public Procedures     =============================
       scaleRatio = 1.0
       scaleSurfs = -1.0
       sourcemask = .false.
+      sourceType = 0
       spreadFlag = .false.
 !     strict = .false.
       surfNode = 0
@@ -1829,6 +1831,8 @@ contains ! =====     Public Procedures     =============================
         case ( f_sourceQuantity )       ! When filling from a vector, what vector/quantity
           sourceVectorIndex = decoration(decoration(subtree(1,gson)))
           sourceQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+        case ( f_sourceType )
+          sourceType = sub_rosa ( gson )
         case ( f_sourceVGrid )
           vGridIndex=decoration(decoration(gson))
         case ( f_spread ) ! For explicit fill, note that gson here is not same as others
@@ -2019,11 +2023,11 @@ contains ! =====     Public Procedures     =============================
           & quadrature, dontMask, ignoreTemplate )
 
       case ( l_ascenddescend )
-        if ( .not. got(f_manipulation) ) &
+        if ( .not. got(f_sourceType) ) &
           & call MLSMessage ( MLSMSG_Warning, ModuleName, &
           & 'Defaulting to read sc/VelECI from L1BOA file for Asc/Desc mode Fill' )
         call WithAscOrDesc ( key, quantity, chunks(chunkNo), fileDatabase, &
-          & hgrids, ptanQuantity, manipulation )
+          & hgrids, ptanQuantity, sourceType )
 
       case ( l_asciiFile )
         if ( .not. got ( f_file ) ) &
@@ -3284,6 +3288,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.467  2017/04/07 18:46:17  pwagner
+! sourceType used when choosing how to Fill ascenddescend
+!
 ! Revision 2.466  2017/04/06 23:43:10  pwagner
 ! May choose to base on asc/desc mode on GHz/GeodAngle via manipulation field
 !
