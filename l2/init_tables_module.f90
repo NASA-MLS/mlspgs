@@ -1083,6 +1083,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_sourceMask, boolean(), &
              begin, f+f_sourceQuantities, field_spec(s_quantity), &
              begin, f+f_sourceQuantity, vectorQuantity(), &
+             begin, f+f_sourceType, string(), &
              begin, f+f_sourceVGrid, field_spec(s_vGrid), &
              begin, f+f_spread, boolean(), &
              begin, f+f_start, numeric(phyq_dimensionless), &
@@ -2087,6 +2088,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.633  2017/04/07 18:45:56  pwagner
+! sourceType used when choosing how to Fill ascenddescend
+!
 ! Revision 2.632  2017/03/07 21:20:30  pwagner
 ! Support new meteorology origin: merra_2
 !
