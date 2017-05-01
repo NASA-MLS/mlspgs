@@ -482,8 +482,12 @@ begin Construct
 
   tngtGeocAltGHz: Quantity, type=tngtGeocAlt, module=GHz, $
    coordinate=geocAltitude
+
+  
   })
 
+  tngtGeodAltGHz: Quantity, type=tngtGeodAlt, module=GHz, $
+   coordinate=geodAltitude
   earthReflectivity: quantity, type=earthRefl
   orbitInclination: Quantity, type=orbitInclination, module=SC
   spaceRadiance: quantity, type=spaceRadiance
@@ -501,7 +505,7 @@ begin Construct
   !define(lesserState, {magneticField, $
     fieldAzimuth, fieldElevation, fieldStrength, $
     earthReflectivity, orbitInclination, spaceRadiance, $
-    scGeocAlt, tngtGeocAltGHz, scECI, tngtECIGHz, $
+    scGeocAlt, tngtGeocAltGHz, tngtGeodAltGHz, scECI, tngtECIGHz, $
     scVelECR, scVelECI, losVelGHz, ECRtoFOV})
 
   ;; ------------------------------------------- Now define vector templates
@@ -620,9 +624,10 @@ begin Construct
   chunkNumMMAF: quantity, type=geolocation, module= GHz
   geodLatMMAF: quantity, type=geolocation, module= GHz
   solarZenithMMAF: quantity, type=geolocation, module= GHz
+  profileNum: quantity, type=geolocation, module= GHz
   timingTemplate: VectorTemplate, quantities = [ $
-    phaseTiming, sectionTiming, chunkNumMMAF, geodLatMMAF, solarZenithMMAF $
-    ]
+    phaseTiming, sectionTiming, chunkNumMMAF, geodLatMMAF, solarZenithMMAF, $
+    profileNum ]
 
 end Construct
   ; These temporary vectors, which must be declared
