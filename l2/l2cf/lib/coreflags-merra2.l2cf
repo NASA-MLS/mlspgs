@@ -1,0 +1,28 @@
+!divert(-1)
+; $Id$
+
+
+!define(retrophase,{InitPtan})
+
+!divert!dnl
+
+begin Fill
+  !define(flaggingBands,{1})
+  !define(flaggingRadiometers,{R1})!dnl
+  !makeQualityForOneProduct(product=Temperature,chisqScale=1.0,minRads=150,cloudMax=30K,cloudMin= -4K)
+  !makeStatusForOneProduct(product=Temperature,chisqScale=1.0,minRads=150,cloudMax=30K,cloudMin= -4K)
+  !makeQualityForOneProduct(product=GPH,chisqScale=1.0,minRads=150,cloudMax=30K,cloudMin= -4K)
+  !makeStatusForOneProduct(product=GPH,chisqScale=1.0,minRads=150,cloudMax=30K,cloudMin= -4K)
+  Dump, text='In coreflags-merra2.l2cf'
+  Dump, boolean=GHzScanHeightInvalid
+  Skip, formula="not GHzScanHeightInvalid"
+  Fill, quantity=otherDiagnostics.statusTemperature_hr, method=explicit, $
+  explicitValues=!statusBadScan+!statusDoNotUse
+  Fill, quantity=otherDiagnostics.statusGPH_hr, method=explicit, $
+  explicitValues=!statusBadScan+!statusDoNotUse
+  Dump, text='GHzScanHeightInvalid, so ORing status with 1025.'
+
+
+end Fill
+
+; $Log$
