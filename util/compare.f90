@@ -138,8 +138,8 @@ program COMPARE
   end if
 
   if ( all ) then
-    print *, '  Max Abs     Max Abs           Rel at Max  Max Rel           Abs at Max'
-    print *, '  Value       Diff         At   Abs Diff    Diff         At   Rel Diff'
+    print '(a)', '   Max Abs     Max Abs           Rel at Max  Max Rel           Abs at Max  Rel to Max'
+    print '(a)', '   Value       Diff         At   Abs Diff    Diff         At   Rel Diff    Abs Value'
   end if
 
   do
@@ -244,9 +244,9 @@ program COMPARE
       end if
       if ( .not. ( rmax <= 0.0 .or. rmax >= 0.0 ) ) anyNaN(3) = .true.
       if ( all ) then
-        print '(1p,2g12.5,i6,g12.5,g12.5,i6,g12.5,1x,a)', vmax, &
+        print '(1p,2g12.5,i6,g12.5,g12.5,i6,2g12.5,1x,a)', vmax, &
           & amax, lamax, 2.0 * abs(r1(lamax)-r2(lamax)) / abs(r1(lamax)+r2(lamax)), &
-          & rmax, lrmax, 2.0 * abs(r1(lrmax)-r2(lrmax)), trim(line1)
+          & rmax, lrmax, 2.0 * abs(r1(lrmax)-r2(lrmax)), rmaxv, trim(line1)
       end if
       if ( doStats ) then
         call stats ( r1, avg(1), stdev(1) )
@@ -341,6 +341,9 @@ contains
 end program
 
 ! $Log$
+! Revision 1.21  2014/10/08 21:57:03  vsnyder
+! Add 'RelMaxVal block' to summary header
+!
 ! Revision 1.20  2014/10/08 20:22:21  vsnyder
 ! Add block label for RelMaxVal
 !
