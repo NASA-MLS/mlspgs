@@ -5,8 +5,8 @@
 \topmargin -0.25in
 \textheight 9in
 
-\newcommand{\docname}{\bf wvs-090}
-\newcommand{\docdate}{10 February 2010}
+\newcommand{\docname}{\bf wvs-090r3}
+\newcommand{\docdate}{10 May 2017}
 
 \begin{document}
 
@@ -50,7 +50,7 @@ equilibrium without scattering for isotropic radiation is given by
 \frac{\text{d} I(s)}{\text{d} s} + \beta(s) I(s) = \beta(s) B(s)
 \end{equation}
 
-where $\beta(s)$ is the absorption coefficient for one chemical specie at one
+where $\beta(s)$ is the absorption coefficient for one chemical species at one
 frequency, and $B(s)$ is the Planck radiation function given by
 
 \begin{equation}
@@ -60,7 +60,7 @@ B(s) = \frac{h \nu}
 
 The solution of Equation (\ref{one}) is usually written
 
-\begin{equation}
+\begin{equation}\label{three}
 I(s) = I(s_0) \exp\left(-\int_{s_0}^s \beta(s^\prime) \,\text{d}s^\prime \right) +
        \int_{s_0}^s B(s) \beta(s)
         \,\exp\left(- \int_{s_0}^s \beta(s^\prime) \,\text{d}s^\prime \right)
@@ -69,19 +69,25 @@ I(s) = I(s_0) \exp\left(-\int_{s_0}^s \beta(s^\prime) \,\text{d}s^\prime \right)
 
 When several chemical species are involved, $\beta(s)$ is replaced by
 $\alpha(s) = \sum_k f_k(s) \,\beta_k(s)$, where $f_k(s)$ is the volume mixing
-ratio of the $k^\text{th}$ chemical specie.  The exponential factor is denoted
-by $\MT(s)$, giving
+ratio of the $k^\text{th}$ chemical species.  The exponential factor is denoted
+by $\MT(s)$.  Observing that $\frac{\text{d}\MT(s)}{\text{d}s} = -\beta(s)
+\MT(s)$, Equation (\ref{three}) can be written
 
 \begin{equation}
-I(s) = I(s_0) \MT(s_0) + \int_{s_0}^s B(s)\, \beta(s)\, \MT(s) \,\text{d}s\,.
+I(s) = I(s_0) \MT(s_0) + \int_{s_0}^s B(s)\, \beta(s)\, \MT(s) \,\text{d}s =
+I(s_0) \MT(s_0) - \int_{s_0}^s B(s)\, \frac{\text{d}\MT(s)}{\text{d}s}
+ \text{d}s\,.
 \end{equation}
 
 This is further transformed by integrating by parts, making $B(s)$ the variable
 of integration, giving
 
-\begin{equation}
-I(s) = I(s_0) \MT(s_0) + \int_{B(s_0)}^{B(s)} \MT(B) \,\text{d} B\,.
-\end{equation}
+\begin{equation}\begin{split}
+I(s) = \,& I(s_0) \MT(s_0) -B(s) \MT(s) + B(s_0) \MT(s_0) +
+\int_{s_0}^{s} \MT(B) \, \frac{\text{d} B(s)}{\text{d} s}\, \text{d} s \\
+     = \,& I(s_0) \MT(s_0) -B(s) \MT(s) + B(s_0) \MT(s_0) +
+\int_{B(s_0)}^{B(s)} \MT(B) \,\text{d} B \,.
+\end{split}\end{equation}
 
 This is evaluated as a quadrature in the form
 
@@ -135,7 +141,7 @@ where $\Upsilon$ is Earth reflectivity if the ray intersects the Earth surface
 and 1 otherwise,
 
 \begin{equation}
- \Delta\delta_{j \rightarrow j-1} = \sum_i \Delta\delta_{j \rightarrow j-1}^k
+ \Delta\delta_{j \rightarrow j-1} = \sum_k \Delta\delta_{j \rightarrow j-1}^k
 \end{equation}
 
 and
@@ -144,7 +150,7 @@ and
  \Delta\delta_{j \rightarrow j-1}^k =
   \frac{\Delta s_{j \rightarrow j-1}^\text{refr}}
        {\Delta s_{j \rightarrow j-1}}
-  \int_{s_i}^{s_{i-1}} f^k(s) \beta^k(s) \text{d} s\,'
+  \int_{s_i}^{s_{i-1}} f^k(s) \beta^k(s)\, \text{d} s\,'\,.
 \end{equation}
 
 \label{lastpage}
@@ -153,6 +159,9 @@ and
 % $Id$
 
 % $Log$
+% Revision 1.3  2012/09/19 02:11:27  vsnyder
+% Correct a typo
+%
 % Revision 1.2  2012/03/30 20:41:42  vsnyder
 % Repair graphics stuff
 %
