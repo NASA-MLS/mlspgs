@@ -13,18 +13,20 @@
 program l2gpdiff ! show diffs between swaths in two different files
 !=================================
 
-   use Dump_Options, only: dumpDumpOptions, dumpTableSide, &
-     & StatsOnOneLine, rmsFormat
-   use HighOutput, only: outputNamedValue
-   use L2GPData, only: Diff, maxSwathNamesBufSize
-   use Machine, only: hp, getarg
+   use Dump_Options, only: DumpDumpOptions, DumpTableSide, &
+     & StatsOnOneLine, RmsFormat
+   use HighOutput, only: OutputNamedValue
+   use Io_Stuff, only: Get_Lun
+   use L2GPData, only: Diff, MaxSwathNamesBufSize
+   use Machine, only: Hp, Getarg
    use MLSFiles, only: MLS_Exists, HDFVersion_5, MLS_InqSwath
    use MLSHDF5, only: MLS_H5Open, MLS_H5Close
-   use MLSStringLists, only: catLists, ExpandStringRange
+   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+   use MLSStringLists, only: CatLists, ExpandStringRange
    use MLSStrings, only: LowerCase, WriteIntsToChars
-   use Output_m, only: resumeOutput, suspendOutput, output
-   use PrintIt_m, only: Set_Config
-   use Time_M, only: Time_Now, time_config
+   use Output_M, only: ResumeOutput, SuspendOutput, Output
+   use PrintIt_M, only: Set_Config
+   use Time_M, only: Time_Now, Time_Config
    
    implicit none
 
@@ -220,7 +222,7 @@ program l2gpdiff ! show diffs between swaths in two different files
   call mls_h5close(error)
 contains
 !------------------------- get_filenames ---------------------
-    subroutine get_filename(filename, options)
+    subroutine get_filename( filename, options )
     ! Added for command-line processing
      character(LEN=255), intent(out) :: filename          ! filename
      type ( options_T ), intent(inout) :: options
@@ -310,6 +312,16 @@ contains
       else if ( filename(1:3) == '-s ' ) then
         options%stats = .true.
         exit
+      else if ( filename(1:3) == '-S1' ) then
+        call getarg ( i+1+hp, Chars )
+        call read_swath_names ( Chars, options%swaths1 )
+        i = i + 1
+        exit
+      else if ( filename(1:3) == '-S2' ) then
+        call getarg ( i+1+hp, Chars )
+        call read_swath_names ( Chars, options%swaths2 )
+        i = i + 1
+        exit
       else if ( filename(1:3) == '-s1' ) then
         call getarg ( i+1+hp, options%swaths1 )
         i = i + 1
@@ -396,8 +408,12 @@ contains
       write (*,*) '   -s2 "swath1,swath2,.."'
       write (*,*) '               =>   diff only swath1,swath2,..'
       write (*,*) '                    from even-numbered files in list'
+      write (*,*) '   -S1 filename'
+      write (*,*) '               => read -s1 swath names from filename'
+      write (*,*) '   -S2 filename'
+      write (*,*) '               => read -s2 swath names from filename'
       write (*,*) '   -v          => switch on verbose mode'
-      write (*,*) '   -silent         => switch on silent mode'
+      write (*,*) '   -silent     => switch on silent mode'
       write (*,*) '                     (printing only if diffs found)'
       write (*,*) '   -debug      => dump options, etc.'
       write (*,*) '   -ignore     => ignore bad chunks'
@@ -425,6 +441,35 @@ contains
     write(*,'(a)') trim(string)
   end subroutine print_string
 
+!------------------------- read_swath_names ---------------------
+  subroutine read_swath_names( filename, swathnames )
+    character(len=*), intent(in)    :: filename
+    character(len=*), intent(out)   :: swathnames
+    !
+    character(len=len(swathnames))  :: line
+    integer                         :: lun
+    integer                         :: stat
+    !
+    swathnames = ' '
+      ! Find a free logical unit number
+      call get_lun( lun, msg=.false. )
+      if ( lun < 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+        & "No logical unit numbers available" )
+      open ( unit=lun, file=filename,&
+        & status='old', form='formatted', &
+        & access='sequential', iostat=stat )
+      if ( stat /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+        & "Unable to open swaths file " // filename )
+      do
+        read ( unit=lun, fmt=*, iostat=stat ) line
+        if ( stat < 0 ) exit
+        if ( line(1:1) /= '#' ) swathnames = trim(swathnames) // ',' // trim(line)
+      enddo
+      ! Crude hackery-quackery coming right up
+      if ( swathnames(1:1) == ',' ) swathnames = swathnames(2:)
+
+  end subroutine read_swath_names
+
 !------------------------- SayTime ---------------------
   subroutine SayTime ( What, startTime )
     character(len=*), intent(in) :: What
@@ -445,6 +490,9 @@ end program l2gpdiff
 !==================
 
 ! $Log$
+! Revision 1.26  2016/09/09 20:38:27  pwagner
+! Added Au (Gold) brick option removing some hay from the stack of statistics
+!
 ! Revision 1.25  2016/08/09 22:45:26  pwagner
 ! Consistent with splitting of Dunp_0
 !
