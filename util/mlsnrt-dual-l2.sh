@@ -43,6 +43,8 @@
 # (11) Two environment variables are defined, locating the two l2cf files
 #      (a) L2CF_A: the first l2cf
 #      (b) L2CF_B: the second l2cf
+# (12) If POSTL2SCRIPT is defined, it will be executed after the two
+#      master tasks are complete
 #
 # Copyright 2017, by the California Institute of Technology. ALL
 # RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
@@ -440,6 +442,7 @@ L1JOBENV=$JOBENV
 JOBDIR_A=$L1JOBDIR/a
 JOBDIR_B=$L1JOBDIR/b
 export OTHEROPTS="$otheropts"
+/bin/rm -f $L1JOBDIR/temp_a $L1JOBDIR/temp_b
 
 create_and_run_Level_2 $JOBDIR_A $L1PCF $L2CF_A $L1JOBDIR/temp_a
 create_and_run_Level_2 $JOBDIR_B $L1PCF $L2CF_B $L1JOBDIR/temp_b
@@ -455,6 +458,16 @@ do
     echo "Finished job1 and job2"
   fi
 done
+
+# DDid we define a script to run after (a) and (b)?
+# Perhaps to combine their std prods?
+if [ "$POSTL2SCRIPT" != "" ]
+then
+  # If so, then pass it the args
+  $POSTL2SCRIPT outputs a/outputs b/outputs
+else
+  echo "POSTL2SCRIPT was not defined, so no post l2 script to run"
+fi
 
 echo "Check that the number of profiles is within range"
 #pwd
@@ -505,3 +518,6 @@ then
 fi
 
 # $Log$
+# Revision 1.1  2017/05/13 00:03:23  pwagner
+# First commit
+#
