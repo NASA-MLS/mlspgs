@@ -13,27 +13,27 @@
 program l2gpcat ! catenates split L2GPData files, e.g. dgg
 !=================================
 
-   use dump_0, only: Dump
+   use Dump_0, only: Dump
    use HDF, only: DFACC_Create, DFACC_RDonly, DFACC_RdWr
-   use HDF5, only: H5FIs_HDF5_f   
-   use Intrinsic, only: l_swath
-   use io_stuff, only: read_textfile
+   use HDF5, only: H5FIs_HDF5_F
+   use Intrinsic, only: L_Swath
+   use Io_Stuff, only: Read_TextFile
    use L2GPData, only: L2GPData_T, L2GPNameLen, MAXSWATHNAMESBUFSIZE, RGP, &
-     & AppendL2GPData, cpHE5GlobalAttrs, cpL2GPData, DestroyL2GPContents, &
+     & AppendL2GPData, CpHE5GlobalAttrs, CpL2GPData, DestroyL2GPContents, &
      & ExtractL2GPRecord, ReadL2GPData, WriteL2GPData
-   use Machine, only: hp, getarg
-   use MLSCommon, only: MLSFile_t, L2Metadata_T
+   use Machine, only: Hp, Getarg
+   use MLSCommon, only: MLSFile_T, L2MetaData_T
    use MLSFiles, only: MLS_Exists, MLS_CloseFile, MLS_OpenFile, &
      & HDFVersion_4, HDFVersion_5, MLS_InqSwath, InitializeMLSFile
    use MLSHDF5, only: MLS_H5Open, MLS_H5Close
    use MLSFinds, only: FindFirst, FindLast
-   use MLSStringLists, only: catLists, GetStringElement, &
+   use MLSStringLists, only: CatLists, GetStringElement, &
      & Intersection, NumStringElements, RemoveElemFromList, &
      & StringElement, StringElementNum
-   use MLSStrings, only: asciify
-   use output_m, only: output
-   use PrintIt_m, only: Set_Config
-   use Time_M, only: Time_Now, time_config
+   use MLSStrings, only: Asciify
+   use Output_M, only: Output
+   use PrintIt_M, only: Set_Config
+   use Time_M, only: Time_Now, Time_Config
    
    implicit none
 
@@ -505,11 +505,13 @@ contains
         else
           ! print *, 'k (before extraction): ', k
           call ExtractL2GPRecord ( ol2gp, l2gp, rTimes=(/ k, M /) )
-          if ( options%timing ) call sayTime( 'Extracting record (k > 1 )', tLast )
+          if ( options%timing ) &
+            & call sayTime( 'Extracting record (k > 1 )', tLast )
           tlast = t2
           ! print *, 'k (after extraction): ', k
           ! print *, 'should be writing'
-          if ( options%verbose ) call dump( l2gp%GeodAngle, 'appended Geod. angle' )
+          if ( options%verbose ) &
+            & call dump( l2gp%GeodAngle, 'appended Geod. angle' )
           if ( DEEBUG ) print *, 'About to append ', trim(swath)
           ! call usleep ( delay ) ! Should we make this parallel%delay?
           call AppendL2GPData ( l2gp, options%outputFile, &
@@ -531,7 +533,8 @@ contains
         if ( DEEBUG ) then
           call ReadL2GPData( options%outputFile, swath, ol2gp )
           ! print *, 'nTimes(total): ', ol2gp%nTimes
-          if ( options%verbose ) call dump( ol2gp%GeodAngle, 'stored Geod. angle' )
+          if ( options%verbose ) &
+            & call dump( ol2gp%GeodAngle, 'stored Geod. angle' )
           call DestroyL2GPContents( ol2gp )
         endif
       enddo
@@ -543,10 +546,13 @@ contains
 !------------------------- copy_swaths ---------------------
   subroutine copy_swaths
     ! logical, parameter :: DEEBUG = .true.
-    if ( options%verbose ) print *, 'Copy l2gp data to: ', trim(options%outputFile)
+    if ( options%verbose ) &
+      & print *, 'Copy l2gp data to: ', trim(options%outputFile)
     do i=1, n_filenames
       call time_now ( tFile )
       if ( options%verbose ) print *, 'Copying from: ', trim(filenames(i))
+      if ( options%verbose .and. len_trim(options%swathNames) > 0 ) &
+        & print *, 'swath names: ', trim(options%swathNames)
       if ( options%noDupSwaths .or. options%swathNames /= ' ' ) then
         numswathsperfile = mls_InqSwath ( trim(filenames(i)), &
           & swathList, listSize, hdfVersion=hdfVersion1)
@@ -574,6 +580,10 @@ contains
           do j=1, numswathssofar
             call GetStringElement(swathListAll, swath, j, countEmpty)
             swathList1 = swathList
+            if ( DEEBUG ) then
+              print *, 'Removing ', trim(swath)
+              print *, trim(swathListAll)
+            endif
             call RemoveElemFromList (swathList1, swathList, trim(swath))
             ! Crude hAck--really should fix removeElem procedure
             if ( swathList(1:1) == ',' ) then
@@ -586,6 +596,7 @@ contains
             print *, trim(swathList)
           endif
         endif
+        if (len_trim(swathList) < 1 ) return ! Because there are none to copy
         if ( any( (/options%freqs(2), options%levels(2), &
           & options%profiles(2)/) > 0 ) &
           & ) then
@@ -790,6 +801,9 @@ end program L2GPcat
 !==================
 
 ! $Log$
+! Revision 1.24  2016/08/25 22:52:52  pwagner
+! Can now successfully cat all 351 chunks of Pleiades-style dgg
+!
 ! Revision 1.23  2016/06/13 23:27:46  pwagner
 ! Added -g commandline option
 !

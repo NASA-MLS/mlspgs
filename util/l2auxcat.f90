@@ -15,28 +15,28 @@ program L2AUXcat ! catenates split L2AUX files, e.g. dgm
 
    use Dump_0, only: Dump
    use Dump_1, only: Dump
-   use Hdf, only: DFACC_Create, DFACC_RDWR, DFACC_RDOnly
-   use HDF5, only: H5FIs_HDF5_f, H5GCreate_f, H5GClose_f
-   use Intrinsic, only: l_hdf
-   use io_stuff, only: get_lun, read_textfile
-   use L2AUXData, only: L2AUXData_t, L2AUXRANK, maxSDNamesBufSize, &
-     & cpL2AUXData, destroyL2AUXContents, readL2AUXData, SetupNewL2AUXRecord, &
+   use HDF, only: DFACC_Create, DFACC_RDWR, DFACC_RDOnly
+   use HDF5, only: H5FIs_HDF5_F, H5GCreate_F, H5GClose_F
+   use Intrinsic, only: L_HDF
+   use Io_Stuff, only: Get_Lun, Read_TextFile
+   use L2AUXData, only: L2AUXData_T, L2AUXRANK, MaxSDNamesBufSize, &
+     & CpL2AUXData, DestroyL2AUXContents, ReadL2AUXData, SetupNewL2AUXRecord, &
      & ResizeL2AUXData, WriteL2AUXData
-   use machine, only: hp, getarg
+   use Machine, only: Hp, Getarg
    use MLSFiles, only: HDFVersion_5, Dump, InitializeMLSFile, &
      & MLS_OpenFile, MLS_CloseFile
    use MLSFinds, only: FindFirst, FindLast
-   use MLSCommon, only: MLSFile_T, defaultUndefinedValue
-   use MLSHDF5, only: GetAllHDF5DSNames, mls_h5open, mls_h5close
-   use MLSKinds, only: r8
-   use MLSStrings, only: asciify
-   use MLSStringLists, only: catLists, GetStringElement, &
+   use MLSCommon, only: MLSFile_T, DefaultUndefinedValue
+   use MLSHDF5, only: GetAllHDF5DSNames, MLS_H5open, MLS_H5close
+   use MLSKinds, only: R8
+   use MLSStrings, only: Asciify
+   use MLSStringLists, only: CatLists, GetStringElement, &
      & Intersection, NumStringElements, &
      & RemoveElemFromList, StringElement, StringElementNum
-   use output_m, only: output
-   use PCFHdr, only: h5_ReadGlobalAttr, h5_WriteGlobalAttr
-   use PrintIt_m, only: Set_Config
-   use Time_M, only: Time_Now, time_config
+   use Output_M, only: Output
+   use PCFHdr, only: H5_ReadGlobalAttr, H5_WriteGlobalAttr
+   use PrintIt_M, only: Set_Config
+   use Time_M, only: Time_Now, Time_Config
 
    implicit none
 
@@ -80,7 +80,7 @@ program L2AUXcat ! catenates split L2AUX files, e.g. dgm
   ! character (len=MAXFILENAMEESIZE) :: allInputFiles
   logical, parameter :: COUNTEMPTY = .false.
   logical     :: createdYet
-  logical, parameter :: DEEBUG = .true.
+  logical, parameter :: DEEBUG = .false.
   character(len=255) :: filename          ! input filename
   integer            :: n_filenames
   integer     ::  i, j, status, error ! Counting indices & Error flags
@@ -312,9 +312,16 @@ contains
       if ( options%verbose ) then
         print *, 'Copying from: ', trim(options%filenames(i))
       endif
-      if ( options%noDupDSNames.or. options%DSNames /= ' ' ) then
+      if ( options%noDupDSNames .or. options%DSNames /= ' ' ) then
         call GetAllHDF5DSNames (trim(options%filenames(i)), '/', mysdList)
-        numdsets = NumStringElements(trim(mysdList), COUNTEMPTY)
+        numdsets = NumStringElements( trim(mysdList), COUNTEMPTY )
+        ! Remove metadata, etc.
+        call RemoveElemFromList ( mysdList, tempSdList, 'HDFEOS INFORMATION/coremetadata.0' )
+        call RemoveElemFromList ( tempSdList, mysdList, 'HDFEOS INFORMATION/xmlmetadata' )
+        call RemoveElemFromList ( mysdList, tempSdList, 'PCF' )
+        call RemoveElemFromList ( tempSdList, mysdList, 'l2cf' )
+        call RemoveElemFromList ( mysdList, tempSdList, 'leap seconds' )
+        call RemoveElemFromList ( tempSdList, mysdList, 'utc pole' )
         if ( options%DSNames /= ' ' ) then
           tempSdList = mysdList
           mysdList = Intersection( options%DSNames, tempSdList )
@@ -405,6 +412,10 @@ contains
         i = i + 1
       else if ( filename(1:3) == '-f ' ) then
         call getarg ( i+1+hp, filename )
+        i = i + 1
+        exit
+      else if ( filename(1:3) == '-g ' ) then
+        call getarg ( i+1+hp, options%glAttrFile )
         i = i + 1
         exit
       else if ( filename(1:3) == '-Sf' ) then
@@ -527,6 +538,9 @@ end program L2AUXcat
 !==================
 
 ! $Log$
+! Revision 1.8  2016/08/25 22:56:29  pwagner
+! Can now successfully cat all 351 chunks of Pleiades-style dgm
+!
 ! Revision 1.7  2016/06/13 23:26:41  pwagner
 ! Added commandline option -F; upped max num of input files tto 750
 !
