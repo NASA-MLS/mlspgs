@@ -96,7 +96,7 @@ I=batch_l2gpcat
 l2gpcat=`which l2gpcat 2>/dev/null`
 if [ ! -x "$l2gpcat" ]
 then
-  command=$MLSTOOLS/l2gpcat
+  l2gpcat=$MLSTOOLS/l2gpcat
 fi
 split_path="`echo $0 | sed 's/'$I'/split_path/'`"
 l2gpcat_opts="-cat"
@@ -258,6 +258,9 @@ do
 done
 
 # $Log$
+# Revision 1.5  2012/04/05 20:11:07  pwagner
+# nrt2 option cats the extra nrt standard prods from 2nd generation
+#
 # Revision 1.4  2009/12/10 18:52:58  pwagner
 # Attempts to find command first in PATH, then inder MLSTOOLS
 #
