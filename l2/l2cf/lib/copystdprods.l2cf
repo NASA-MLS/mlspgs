@@ -92,9 +92,12 @@ Copy, $
 })
 
 !ifdef(flagNRT,{
-;; OK, seem to have flagNRT
+!ifdef(flagSkipOtherStdProds,{
+},{
+;; OK, seem to have flagNRT, plus we want other std prods
 !forall(copyStandardProductWithoutColumn,!ColumnStdProds)
 !forall(copyApriori,!ColumnStdProds)
+})
 },{
 
 !define(copyStandardProductWithColumn, {Copy, $
@@ -212,6 +215,9 @@ begin Output
 end Output
 !divert(-1)
 ; $Log$
+; Revision 1.8  2016/06/15 22:04:29  pwagner
+; We organize control flow around flagNRT more rationally
+;
 ; Revision 1.7  2014/12/10 23:07:20  pwagner
 ; Asc/Desc quantity alculations needs ptanQuantity
 ;
