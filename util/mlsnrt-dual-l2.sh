@@ -411,11 +411,19 @@ echo "export PGS_PC_INFO_FILE=$2" >> $JOBENV
 
 . $JOBDIR/$JOBENV
 
+# Do we have an outputs subdirectory of JOBDIR for std prods?
+if [ -d "$JOBDIR/outputs" ]
+then
+  STDPRODDIR="$JOBDIR/outputs"
+else
+  STDPRODDIR="$JOBDIR"
+fi
+
 if [ "$MUSTHAVEBREAKER" = "yes" ]
 then
-  cp $MLSTOOLS/$BREAKER_PY $MLSTOOLS/$BREAKER_SAV $JOBDIR
-  echo cp $MLSTOOLS/$BREAKER_PY $MLSTOOLS/$BREAKER_SAV $JOBDIR
-  if [ ! -x "$JOBDIR/$BREAKER_PY" ]
+  cp $MLSTOOLS/$BREAKER_PY $MLSTOOLS/$BREAKER_SAV $STDPRODDIR
+  echo cp $MLSTOOLS/$BREAKER_PY $MLSTOOLS/$BREAKER_SAV $STDPRODDIR
+  if [ ! -x "$STDPRODDIR/$BREAKER_PY" ]
   then
     echo "$BREAKER_PY not found"
     echo "It should have been in $MLSTOOLS"
@@ -459,7 +467,7 @@ do
   fi
 done
 
-# DDid we define a script to run after (a) and (b)?
+# Did we define a script to run after (a) and (b)?
 # Perhaps to combine their std prods?
 if [ "$POSTL2SCRIPT" != "" ]
 then
@@ -470,17 +478,7 @@ else
 fi
 
 echo "Check that the number of profiles is within range"
-#pwd
-#ls
-if [ -d outputs ]
-then
-#  ls outputs/*
-  cd outputs
-else
-  echo "Separate outputs directory not found"
-fi
-#pwd
-#ls
+cd $STDPRODDIR
 $L2GPDUMP -status *L2GP-Temper*.he5
 files=`extant_files *L2GP-Temp*.he5`
 echo "$files"
@@ -502,15 +500,27 @@ then
   # dt   time between successive profiles
   if [ "$MUSTHAVEBREAKER" = "yes" ]
   then
-    echo "Check for gaps between profiles anomalously large"
-    cd $JOBDIR
-    ./$BREAKER_PY outputs/*L2GP-Temper*.he5
-    echo ./$BREAKER_PY outputs/*L2GP-Temper*.he5
+    echo "Check for anomalously large gaps between profiles"
+    file=*L2GP-Temper*.he5
+    # Unfortunately, BREAKER_PY expects the file to have a string like
+    # _yyyydDoythhmm.he5 in its name. If it dosn't the script treats
+    # the name as if it were a directory and gets sore when it
+    # turns out not to be a directory.
+    # So we'll check if the file name instead looks like _yyyydDoy.he5
+    # and if it does, we'll copy it a file with a more complaisant name
+    file2=`echo $file | sed '/_20[0-9][0-9]d[0-9][0-9][0-9]\.he5/ s/\.he5/t0000.he5/'`
+    if [ "$file2" != "$file" ]
+    then
+      cp $file $file2
+    fi
+    echo ./$BREAKER_PY --verbose $file2
+    echo ./$BREAKER_PY --verbose $file2 > $BREAKER_PY.out
+    ./$BREAKER_PY --verbose $file2 >> $BREAKER_PY.out
     return_status=`expr $?`
+    cat $BREAKER_PY.out
     if [ "$return_status" != 0 ]
     then
-      cd outputs
-      echo "Break detected in *L2GP-Temper*.he5, status $return_status"
+      echo "Break detected in $file, status $return_status"
       hide_files *.he5 *.met *.xml *.h5
       exit 1
     fi
@@ -518,6 +528,9 @@ then
 fi
 
 # $Log$
+# Revision 1.3  2017/05/19 19:08:01  pwagner
+# Correct names of BREAKER_PY and _SAV
+#
 # Revision 1.2  2017/05/17 22:25:02  pwagner
 # Uses POSTL2SCRIPT to cat product files of the 2 masters
 #
