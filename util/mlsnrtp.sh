@@ -297,7 +297,7 @@ if [ "$MUSTHAVEBREAKER" = "yes" ]
 then
   cp $MLSTOOLS/$BREAKER_PY $MLSTOOLS/$BREAKER_SAV $STDPRODDIR
   echo cp $MLSTOOLS/$BREAKER_PY $MLSTOOLS/$BREAKER_SAV $STDPRODDIR
-  if [ ! -x "$JOBDIR/$BREAKER_PY" ]
+  if [ ! -x "$STDPRODDIR/$BREAKER_PY" ]
   then
     echo "$BREAKER_PY not found"
     echo "It should have been in $MLSTOOLS"
@@ -418,6 +418,9 @@ then
 fi
 
 # $Log$
+# Revision 1.14  2017/05/19 20:31:11  pwagner
+# Should now work both at scf and at sips
+#
 # Revision 1.13  2017/02/16 23:52:57  pwagner
 # Added gap detector
 #
