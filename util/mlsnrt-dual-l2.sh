@@ -289,8 +289,8 @@ SETREADENV=$MLSTOOLS/set_read_env.sh
 H5REPACK=$LEVEL1_BINARY_DIR/h5repack
 NETCDFAUGMENT=$LEVEL1_BINARY_DIR/aug_hdfeos5
 L2GPDUMP=$LEVEL1_BINARY_DIR/l2gpdump
-BREAKER_PY=checknrtchunkforbreaks.py
-BREAKER_SAV=checknrtchunkforbreaks.sav
+BREAKER_PY=checknrtgranuleforbreaks.py
+BREAKER_SAV=checknrtgranuleforbreaks.sav
 if [ ! -x "$H5REPACK" ]
 then
   H5REPACK=$MLSTOOLS/H5REPACK
@@ -518,6 +518,9 @@ then
 fi
 
 # $Log$
+# Revision 1.2  2017/05/17 22:25:02  pwagner
+# Uses POSTL2SCRIPT to cat product files of the 2 masters
+#
 # Revision 1.1  2017/05/13 00:03:23  pwagner
 # First commit
 #
