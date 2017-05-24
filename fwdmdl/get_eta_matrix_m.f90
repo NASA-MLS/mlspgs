@@ -73,37 +73,35 @@ module Get_Eta_Matrix_m
 contains
 
 ! ---------------------------------------  Dump_Eta_Column_Sparse  -----
-  subroutine Dump_Eta_Column_Sparse ( Eta, Nz, NNz, Name )
+  subroutine Dump_Eta_Column_Sparse ( Eta, Nz, NNz, Name, Short )
     use Dump_0, only: Dump
     use Output_m, only: NewLine, Output
     real(rp), intent(in) :: Eta(:,:)
     integer, intent(in) :: Nz(:,:) ! Nonzeroes in each column
     integer, intent(in) :: NNz(:)  ! Number of nonzeroes in each column
     character(len=*), intent(in), optional :: Name
-    integer :: I, J
+    logical, intent(in), optional :: Short ! "Don't print zero columns"
+    integer :: I, J, K
+    logical :: MyShort
 
     if ( present(name) ) call output ( name, advance='yes' )
+    myShort = .false.
+    if ( present(short) ) myShort = short
     do j = 1, size(eta,2)
-      if ( nnz(j) > 5 ) then
-        if ( nnz(j) == size(eta,1) ) then
-          call output ( j, before='All rows in column ', after=' are nonzero', &
+      if ( myShort .and. nnz(j) == 0 ) cycle
+      if ( nnz(j) == size(eta,1) ) then
+        call output ( j, before='All rows in column ', after=' are nonzero', &
             & advance='yes' )
-        else if ( all(nz(2:nnz(j),j) == nz(1:nnz(j)-1,j)+1) ) then
-          call output ( nz(1,j), before='Rows ' )
-          call output ( nz(nnz(j),j), before=' through ' )
-          call output ( j, before=' of column ', after=' are nonzero', advance='yes' )
-        else
-          call output ( j, before='Nonzero rows in column ', advance='yes' )
-          call dump ( nz(:nnz(j),j) )
-        end if
         call dump ( eta(nz(:nnz(j),j),j), name='Values' )
       else
         call output ( j, before='Nonzeroes in column ', after=':' )
-        do i = 1, nnz(j)
-          call output ( nz(i,j), format='(i4)' )
-          call output ( eta(nz(i,j),j), format='(1pg14.6)' )
+        do i = 1, nnz(j), 5
+          do k = i, min(nnz(j),i+4)
+            call output ( nz(k,j), format='(i4)' )
+            call output ( eta(nz(k,j),j), format='(1pg14.6)' )
+          end do
+          call newLine
         end do
-        call newLine
       end if
     end do
   end subroutine Dump_Eta_Column_Sparse
@@ -1512,6 +1510,9 @@ contains
 end module Get_Eta_Matrix_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.27  2016/10/18 00:29:13  vsnyder
+! Add Get_Eta_ZP
+!
 ! Revision 2.26  2013/05/13 23:40:52  vsnyder
 ! Check for zero size grid
 !
