@@ -3186,7 +3186,8 @@ contains ! =====     Public Procedures     =============================
     if ( nnz == 0 ) then ! Empty
       if ( inplace ) nullify ( z ) ! Don't try to deallocate it later;
                                    ! CreateBlock will deallocate it now:
-      call createBlock ( b, size(z,1), size(z,2), M_Absent, forWhom="SparsifyA" )
+      call createBlock ( b, size(b%values,1), size(b%values,2), M_Absent, &
+                       & forWhom="SparsifyA" )
     else if ( nnz <= int(sparsity * size(z)) ) then ! sparse
       kind = M_Banded
       do j = 1, size(z,2)
@@ -3738,6 +3739,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.24  2017/05/31 00:34:58  vsnyder
+! Do not inquire shape of nullified pointer in SparsifyA
+!
 ! Revision 2.23  2016/07/28 01:42:27  vsnyder
 ! Refactoring dump and diff
 !
