@@ -3161,6 +3161,7 @@ contains ! =====     Public Procedures     =============================
     integer :: NNZC(size(z,2))     ! Number of nonzeroes in a column of Z
     integer :: R1(size(z,2))       ! Row number of first nonzero in a column
     real(rm), save :: SQ_EPS = -1.0_rm  ! sqrt(epsilon(1.0_rm))
+    integer :: ZShape(2)           ! shape(Z)
     real(r4) :: ZT(size(z,2))      ! Maximum value in a column of Z, then
       ! max(sqrt(sq_eps*zt),tiny(1.0_rm)).  Elements less than this threshold
       ! in magnitude are considered to be zero.
@@ -3184,9 +3185,10 @@ contains ! =====     Public Procedures     =============================
     end do ! j
     nnz = sum(nnzc)
     if ( nnz == 0 ) then ! Empty
+      zShape = shape(z)
       if ( inplace ) nullify ( z ) ! Don't try to deallocate it later;
                                    ! CreateBlock will deallocate it now:
-      call createBlock ( b, size(b%values,1), size(b%values,2), M_Absent, &
+      call createBlock ( b, zShape(1), zShape(2), M_Absent, &
                        & forWhom="SparsifyA" )
     else if ( nnz <= int(sparsity * size(z)) ) then ! sparse
       kind = M_Banded
@@ -3739,6 +3741,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.25  2017/06/01 01:05:00  vsnyder
+! Try to repair the bug introduced in previous commit
+!
 ! Revision 2.24  2017/05/31 00:34:58  vsnyder
 ! Do not inquire shape of nullified pointer in SparsifyA
 !
