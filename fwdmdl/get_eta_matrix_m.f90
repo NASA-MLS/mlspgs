@@ -19,6 +19,7 @@ module Get_Eta_Matrix_m
   public :: Eta_D_T, Eta_S_T
   public :: Dump, Dump_Eta_Column_Sparse
   public :: Eta_Func, Eta_Func_1d, Eta_Func_2d
+  public :: Get_Column_Sparsity
   public :: Get_Eta_Column_Sparse, Get_Eta_Column_Sparse_fl_nz, Get_Eta_Sparse
   public :: Get_Eta_Sparse_1d, Get_Eta_Sparse_1d_fl, Get_Eta_Sparse_1d_nz
   public :: Get_Eta_Sparse_2d, Get_Eta_Sparse_2d_fl, Get_Eta_Sparse_2d_fl_nz
@@ -73,20 +74,24 @@ module Get_Eta_Matrix_m
 contains
 
 ! ---------------------------------------  Dump_Eta_Column_Sparse  -----
-  subroutine Dump_Eta_Column_Sparse ( Eta, Nz, NNz, Name, Short )
+  subroutine Dump_Eta_Column_Sparse ( Eta, Nz, NNz, Name, Short, Show_NZ )
     use Dump_0, only: Dump
     use Output_m, only: NewLine, Output
     real(rp), intent(in) :: Eta(:,:)
     integer, intent(in) :: Nz(:,:) ! Nonzeroes in each column
     integer, intent(in) :: NNz(:)  ! Number of nonzeroes in each column
     character(len=*), intent(in), optional :: Name
-    logical, intent(in), optional :: Short ! "Don't print zero columns"
-    integer :: I, J, K
-    logical :: MyShort
+    logical, intent(in), optional :: Short   ! "Don't print zero columns", default false
+    logical, intent(in), optional :: Show_NZ ! "Print zeroes", default true
+    integer :: I, J, L
+    logical :: MyShort, MyShow_NZ
+    logical :: Saw_NZ
 
     if ( present(name) ) call output ( name, advance='yes' )
     myShort = .false.
     if ( present(short) ) myShort = short
+    myShow_NZ = .true.
+    if ( present(show_NZ) ) myShow_NZ = show_NZ
     do j = 1, size(eta,2)
       if ( myShort .and. nnz(j) == 0 ) cycle
       if ( nnz(j) == size(eta,1) ) then
@@ -94,14 +99,21 @@ contains
             & advance='yes' )
         call dump ( eta(nz(:nnz(j),j),j), name='Values' )
       else
-        call output ( j, before='Nonzeroes in column ', after=':' )
-        do i = 1, nnz(j), 5
-          do k = i, min(nnz(j),i+4)
-            call output ( nz(k,j), format='(i4)' )
-            call output ( eta(nz(k,j),j), format='(1pg14.6)' )
-          end do
-          call newLine
+        l = 0
+        saw_nz = .false.
+        do i = 1, nnz(j)
+          if ( .not. myShow_NZ .and. eta(nz(i,j),j) == 0 ) cycle
+          if ( .not. saw_nz ) call output ( j, before='Nonzeroes in column ', after=':' )
+          saw_nz = .true.
+          l = l + 1
+          if ( l > 5 ) then
+            l = 0
+            call newLine
+          end if
+          call output ( nz(i,j), format='(i4)' )
+          call output ( eta(nz(i,j),j), format='(1pg14.6)' )
         end do
+        if ( saw_nz ) call newLine
       end if
     end do
   end subroutine Dump_Eta_Column_Sparse
@@ -153,7 +165,31 @@ contains
 
   end function Eta_Func_1d
 
-!-----------------------------------------------  Get_Eta_1d_Hunt  -----
+! ------------------------------------------  Get_Column_Sparsity  -----
+  subroutine Get_Column_Sparsity ( A, Nz, NNz )
+    ! This isn't very efficient because it fills Nz and NNz with zeroes.
+    ! If one knew that they had been filled with zeroes ab initio, and then
+    ! kept properly, one could make Nz and NNz intent(inout) and use NNz
+    ! to put zeroes into Nz.
+    real(rp), intent(in) :: A(:,:)
+    integer, intent(out) :: Nz(:,:) ! Nonzeroes in each column
+    integer, intent(out) :: NNz(:)  ! Number of nonzeroes in each column
+    integer :: I, J
+
+    nnz = 0
+    do j = 1, size(a,2)
+      nz(:,j) = 0
+      do i = 1, size(a,1)
+        if ( a(i,j) /= 0.0 ) then
+          nnz(j) = nnz(j) + 1
+          nz(nnz(j),j) = i
+        end if
+      end do
+    end do
+
+  end subroutine Get_Column_Sparsity
+
+! ----------------------------------------------  Get_Eta_1d_Hunt  -----
   subroutine Get_Eta_1d_Hunt ( Basis, Grid_Pt, Eta, IX )
   ! Find Grid_Pt in Basis, then compute Eta(1:2).  Use constant
   ! interpolation of Grid_Pt is below or above Basis.
@@ -1510,6 +1546,9 @@ contains
 end module Get_Eta_Matrix_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.28  2017/05/24 20:29:49  vsnyder
+! Spiff a dump
+!
 ! Revision 2.27  2016/10/18 00:29:13  vsnyder
 ! Add Get_Eta_ZP
 !
