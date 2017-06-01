@@ -83,7 +83,7 @@ contains ! ============= Public procedures ===================================
       & f_molecule, f_radiometer, f_reflector, f_sgrid, f_signal, f_stacked, &
       & f_type, f_vgrid, f_xgrid, field_first, field_last, l_channel, &
       & l_explicit, l_geocaltitude, l_lostransfunc, l_matrix3x3, l_none, &
-      & l_phitan, l_true, l_xyz, l_zeta, lit_indices
+      & l_phitan, l_true, l_xyz, l_zeta
     use MLSCommon, only: MLSFile_t
     use MLSKinds, only: rk => r8
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
@@ -94,7 +94,7 @@ contains ! ============= Public procedures ===================================
     use parse_signal_m, only: parse_signal
     use quantityTemplates, only: nullifyQuantityTemplate, pointQuantityToHGrid, &
       & quantityTemplate_t, setupNewQuantityTemplate
-    use string_table, only: get_string, display_string
+    use string_table, only: get_string
     use toggles, only: gen, levels, toggle
     use trace_m, only: trace_begin, trace_end
     use tree, only: decoration, node_id, nsons, sub_rosa, subtree
@@ -533,27 +533,27 @@ contains ! ============= Public procedures ===================================
     & qty, noChans, regular, instanceLen, NoCrossTrack, &
     & filedatabase, chunk, mifGeolocation )
 
-    use chunks_m, only: MLSChunk_t
+    use Chunks_m, only: MLSChunk_t
     use Dump_0, only: Dump
     use Dump_1, only: Dump
-    use highOutput, only: BeVerbose, LetsDebug, outputNamedValue
-    use init_tables_module, only: l_geodaltitude, l_none, lit_indices
+    use HighOutput, only: BeVerbose, LetsDebug, OutputNamedValue
+    use Init_tables_module, only: l_geodaltitude, l_none
     use L1BData, only: L1BData_t, readL1BData, deallocateL1BData, &
-      & assemblel1bqtyname
+      & AssembleL1bQtyName
     use MLSCommon, only: MLSFile_t, nameLen
     use MLSKinds, only: rk => r8
-    use MLSFiles, only: HDFVersion_5, Dump, getMLSFileByType
+    use MLSFiles, only: HDFVersion_5, Dump, GetMLSFileByType
     use MLSHDF5, only: GetAllHDF5DSNames, IsHDF5DSPresent
     use MLSMessageModule, only: MLSMessage, &
       & MLSMSG_Error, MLSMSG_L1BRead, MLSMSG_Warning
-    use MLSSignals_m, only:  Dump_Modules, getModuleName, &
-      & isAnyModuleSpacecraft, isModuleSpacecraft
-    use output_m, only: output
-    use quantityTemplates, only: quantityTemplate_t, &
-      & dump, setupNewQuantityTemplate
-    use string_table, only: display_string
-    use toggles, only: gen, levels, toggle
-    use trace_m, only: trace_begin, trace_end
+    use MLSSignals_m, only:  Dump_Modules, GetModuleName, &
+      & IsAnyModuleSpacecraft, isModuleSpacecraft
+    use Output_m, only: Output
+    use QuantityTemplates, only: QuantityTemplate_t, &
+      & Dump, setupNewQuantityTemplate
+    use String_table, only: Display_string
+    use Toggles, only: Gen, Levels, Toggle
+    use Trace_m, only: Trace_begin, Trace_end
 
     ! This routine constructs a minor frame based quantity.
 
@@ -1597,6 +1597,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.203  2017/06/01 22:49:15  vsnyder
+! Remove unused USE names
+!
 ! Revision 2.202  2016/11/04 23:05:48  pwagner
 ! Define some potentially undefined qty components
 !
