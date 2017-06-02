@@ -35,6 +35,7 @@
 !ifdef(flagUsingPCF, 
 {
 ; This L2CF fragment reads and merges the merra data for the GPH
+; 1st: pressure-level surfaces
 begin ReadApriori
   
   merra2GPHInput1: gridded, origin=none
@@ -53,6 +54,7 @@ begin MergeGrids
   delete, grid=merra2GPHInputNext
 end MergeGrids 
 
+; Next: native-level surfaces
 begin ReadApriori
   ; The following runtime Boolean prevents resetting to the lowest PCFid
   CarryOver: Boolean, formula="true"
@@ -90,16 +92,17 @@ end MergeGrids
 },{
 
 ; This L2CF fragment reads and merges the merra2 data for the GPH
+; 1st: pressure-level surfaces
 begin ReadApriori
   
   merra2GPHInput1: gridded, origin=none
   merra2GPHInputNext: gridded, origin=none
   readGriddedData, grid=merra2GPHInput1, origin=merra_2, field='H', $
     dimList='XDim,YDim,Height,Time' , date='00:00:00', $
-    file='!inpathmerrapd/MERRA2_!merra2stream1.inst6_3d_ana_Np.!gmaodate.nc4'
+    file='!inpathmerrapd/MERRA2_!merra2stream1.inst6_3d_ana_Np.!merra2Day1.nc4'
   readGriddedData, grid=merra2GPHInputNext, origin=merra_2, field='H', $
     dimList='XDim,YDim,Height,Time' , date='00:00:00', $
-    file='!inpathmerrapn/MERRA2_!merra2stream2.inst6_3d_ana_Np.!gmaodate.nc4' 
+    file='!inpathmerrapn/MERRA2_!merra2stream2.inst6_3d_ana_Np.!merra2Day2.nc4' 
 end ReadApriori
 
 begin MergeGrids
@@ -110,6 +113,7 @@ begin MergeGrids
   delete, grid=merra2GPHInputNext
 end MergeGrids 
 
+; Next: native-level surfaces
 begin ReadApriori
   ; The following runtime Boolean prevents resetting to the lowest PCFid
   CarryOver: Boolean, formula="true"
@@ -119,16 +123,16 @@ begin ReadApriori
   nvmerra2PressureInputNext: gridded, origin=none
   readGriddedData, grid=nvmerra2TemperatureInput1, origin=merra_2, field='T', $
     dimList='XDim,YDim,Height,Time' , date='00:00:00', $
-    file='!inpathmerrapd/MERRA2_!merra2stream1.inst6_3d_ana_Np.!gmaodate.nc4'
+    file='!inpathmerrand/MERRA2_!merra2stream1.inst6_3d_ana_Nv.!merra2Day1.nc4'
   readGriddedData, grid=nvmerra2TemperatureInputNext, origin=merra_2, field='T', $
     dimList='XDim,YDim,Height,Time' , date='00:00:00', $
-    file='!inpathmerrapn/MERRA2_!merra2stream2.inst6_3d_ana_Np.!gmaodate.nc4'
+    file='!inpathmerrann/MERRA2_!merra2stream2.inst6_3d_ana_Nv.!merra2Day2.nc4'
   readGriddedData, grid=nvmerra2PressureInput1, origin=merra_2, field='DELP', $
     dimList='XDim,YDim,Height,Time' , date='00:00:00', $
-    file='!inpathmerrapd/MERRA2_!merra2stream1.inst6_3d_ana_Np.!gmaodate.nc4', /sum 
+    file='!inpathmerrand/MERRA2_!merra2stream1.inst6_3d_ana_Nv.!merra2Day1.nc4', /sum 
   readGriddedData, grid=nvmerra2PressureInputNext, origin=merra_2, field='DELP', $
     dimList='XDim,YDim,Height,Time' , date='00:00:00', $
-    file='!inpathmerrapn/MERRA2_!merra2stream2.inst6_3d_ana_Np.!gmaodate.nc4', /sum 
+    file='!inpathmerrann/MERRA2_!merra2stream2.inst6_3d_ana_Nv.!merra2Day2.nc4', /sum 
 end ReadApriori
 
 begin MergeGrids
@@ -149,3 +153,6 @@ begin MergeGrids
 end MergeGrids 
 })
 ;$Log$
+;Revision 1.1  2017/05/01 20:51:53  pwagner
+;First commit
+;
