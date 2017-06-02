@@ -71,7 +71,7 @@ contains
   ! ------------------------------------  Open_Filter_Shapes_File  -----
   subroutine Open_Filter_Shapes_File ( Filename, Lun, FileIndex )
 
-    use IO_stuff, only: Get_Lun
+    use IO_Stuff, only: Get_Lun
     use Machine, only: IO_Error
     use String_Table, only: Create_String
 
@@ -96,14 +96,15 @@ contains
 
   ! ------------------------------------  Read_Filter_Shapes_File  -----
   subroutine Read_Filter_Shapes_File ( Lun, FileIndex, Where )
-    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST, &
+    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test, &
       & Test_Allocate, Test_Deallocate
-    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
-    use MACHINE, only: IO_ERROR
-    use MLSSTRINGLISTS, only: SWITCHDETAIL
-    use PARSE_SIGNAL_M, only: PARSE_SIGNAL
-    use TOGGLES, only: GEN, SWITCHES, TOGGLE
-    use TRACE_M, only: TRACE_BEGIN, TRACE_END
+    use HighOutput, only: OutputnamedValue
+    use, Intrinsic :: Iso_C_Binding, only: C_Intptr_T, C_Loc
+    use Machine, only: Io_Error
+    use MLSStringlists, only: Switchdetail
+    use Parse_Signal_M, only: Parse_Signal
+    use Toggles, only: Gen, Switches, Toggle
+    use Trace_M, only: Trace_Begin, Trace_End
 
     integer, intent(in) :: Lun          ! Logical unit number to read it
     integer, intent(in) :: FileIndex    ! In the string table
@@ -139,13 +140,13 @@ contains
     do ! Loop over filter shapes
       call read_a_line ( lun, line, status ) ! Read the signal
       if ( status < 0 ) exit
-      if ( status > 0 ) go to 99
+      if ( status > 0 ) call myError( '1st read_a_line' ) ! go to 99
       ! Read the lhs, rhs and number_in_shape
       read ( lun, filter, iostat=status )
-      if ( status /= 0 ) go to 99
+      if ( status /= 0 ) call myError( '1st read filter' ) ! go to 99
       ! Skip the shape, using LHS for a temp
       read ( lun, *, iostat=status ) (lhs, i = 1, number_in_shape)
-      if ( status /= 0 ) go to 99
+      if ( status /= 0 ) call myError( '1st read lhs, rhs, ..' ) ! go to 99
       numFilterShapes = numFilterShapes + 1
     end do
     rewind ( lun )
@@ -173,7 +174,7 @@ contains
     do ! Loop over filter shapes
       call read_a_line ( lun, line, status ) ! Read the signal
       if ( status < 0 ) exit
-      if ( status > 0 ) go to 99
+      if ( status > 0 ) call myError( '2nd read_a_line' ) ! go to 99
       n = n + 1
       filterShapes(n)%file = fileIndex
       sigName = line
@@ -192,7 +193,7 @@ contains
 
       ! Read the lhs, rhs and number_in_shape
       read ( lun, filter, iostat=status )
-      if ( status /= 0 ) go to 99
+      if ( status /= 0 ) call myError( '2nd read filter' ) ! go to 99
 
       call allocate_test ( filterShapes(n)%filterGrid,&
         & number_in_shape, 'filterShapes(n)%filterGrid', ModuleName )
@@ -200,12 +201,12 @@ contains
         & number_in_shape, 'filterShapes(n)%filterShape', ModuleName )
 
       ! Read the shape array and calculate the associated abscissae
-      dx = ( rhs - lhs ) / (number_in_shape - 1)
+      dx = ( rhs - lhs ) / max( (number_in_shape - 1), 1 )
       do i = 1, number_in_shape
         filterShapes(n)%filterGrid(i) = lhs + (i-1) * dx
       end do ! i
       read ( lun, *, iostat=status ) filterShapes(n)%filterShape
-      if ( status /= 0 ) go to 99
+      if ( status /= 0 ) call myError( 'reading filtershape' ) ! go to 99
 
     end do ! Loop over filter shapes
 
@@ -217,18 +218,25 @@ contains
  99 call io_error ( "While reading the filter shape file", status )
     call MLSMessage ( MLSMSG_Error, moduleName, "Input error" )
 
+  contains
+    subroutine myError ( mesg )
+      character(len=*), intent(in)         :: mesg
+      call outputNamedValue( 'numFilterShapes', numFilterShapes )
+      call io_error ( mesg, status )
+      call MLSMessage ( MLSMSG_Error, moduleName, "Input error" )
+    end subroutine myError
   end subroutine Read_Filter_Shapes_File
 
   ! -------------------------------  Read_DACS_Filter_Shapes_File  -----
   subroutine Read_DACS_Filter_Shapes_File ( Lun, FileIndex, Where )
-    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST, &
+    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test, &
       & Test_Allocate, Test_Deallocate
-    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
-    use MACHINE, only: IO_ERROR
-    use MLSSTRINGLISTS, only: SWITCHDETAIL
-    use PARSE_SIGNAL_M, only: PARSE_SIGNAL
-    use TOGGLES, only: GEN, SWITCHES, TOGGLE
-    use TRACE_M, only: TRACE_BEGIN, TRACE_END
+    use, Intrinsic :: Iso_C_Binding, only: C_Intptr_T, C_Loc
+    use Machine, only: Io_Error
+    use MLSStringlists, only: Switchdetail
+    use Parse_Signal_M, only: Parse_Signal
+    use Toggles, only: Gen, Switches, Toggle
+    use Trace_M, only: Trace_Begin, Trace_End
 
     integer, intent(in) :: Lun          ! Logical unit number to read it
     integer, intent(in) :: FileIndex    ! In the string table
@@ -587,6 +595,9 @@ contains
 end module FilterShapes_m
 
 ! $Log$
+! Revision 2.29  2015/03/28 01:58:31  vsnyder
+! Added stuff to trace allocate/deallocate addresses
+!
 ! Revision 2.28  2014/09/05 20:47:36  vsnyder
 ! More complete and accurate allocate/deallocate size tracking
 !
