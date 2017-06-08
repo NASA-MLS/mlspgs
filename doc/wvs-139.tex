@@ -2,49 +2,49 @@
 
 \usepackage{amsmath}
 
-\ifx\pdfoutput\undefined
-  \pdfoutput=0
-  \usepackage{hyperref}
-  \hypersetup{%
-    hypertex,%
-    plainpages,%
-    hyperindex=true,%
-    hypertexnames=false%
-  }
-  % Specify the driver for the color package
-  \ExecuteOptions{dvips}
-  %\ExecuteOptions{xdvi}
-\else
-  \ifnum\pdfoutput>0
-    \usepackage{hyperref}
-    \hypersetup{%
-      pdftex,%
-      plainpages,%
-      hyperindex=true,%
-      pdfpagelabels,%
-      hypertexnames=false,%
-      colorlinks=true,%
-      linktocpage=true,%
-    }
-    % Specify the driver for the color package
-    \ExecuteOptions{pdftex}
-  \else
-    \usepackage{hyperref}
-    \hypersetup{%
-      hypertex,%
-      plainpages,%
-      hyperindex=true,%
-      hypertexnames=false%
-    }
-    % Specify the driver for the color package
-    \ExecuteOptions{dvips}
-    %\ExecuteOptions{xdvi}
-  \fi
-\fi
-
-\hyperbaseurl{}
-\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
-\newcommand\h[1]{#1 (\hr{#1})}
+% \ifx\pdfoutput\undefined
+%   \pdfoutput=0
+%   \usepackage{hyperref}
+%   \hypersetup{%
+%     hypertex,%
+%     plainpages,%
+%     hyperindex=true,%
+%     hypertexnames=false%
+%   }
+%   % Specify the driver for the color package
+%   \ExecuteOptions{dvips}
+%   %\ExecuteOptions{xdvi}
+% \else
+%   \ifnum\pdfoutput>0
+%     \usepackage{hyperref}
+%     \hypersetup{%
+%       pdftex,%
+%       plainpages,%
+%       hyperindex=true,%
+%       pdfpagelabels,%
+%       hypertexnames=false,%
+%       colorlinks=true,%
+%       linktocpage=true,%
+%     }
+%     % Specify the driver for the color package
+%     \ExecuteOptions{pdftex}
+%   \else
+%     \usepackage{hyperref}
+%     \hypersetup{%
+%       hypertex,%
+%       plainpages,%
+%       hyperindex=true,%
+%       hypertexnames=false%
+%     }
+%     % Specify the driver for the color package
+%     \ExecuteOptions{dvips}
+%     %\ExecuteOptions{xdvi}
+%   \fi
+% \fi
+% 
+% \hyperbaseurl{}
+% \newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+% \newcommand\h[1]{#1 (\hr{#1})}
 
 \newcommand{\newframe}[2][]{\begin{frame}\frametitle{\hfill #2 \hfil}}
 \renewcommand{\d}{\text{d}}
@@ -248,7 +248,10 @@ The Full Forward Model evaluates
 $\frac{\partial I(s_m,\mathbf{x})}{\partial x^k}$ by differentiating
 Equation (\ref{two}), which leads to an expression different from Equation
 (\ref{four}), but which is necessarily equivalent as can be shown (with
-some difficulty -- see \h{wvs-100}) by integrating by parts.
+some difficulty -- see
+% \h{wvs-100}%
+wvs-100%
+) by integrating by parts.
 \vspace*{0.1in}
 
 The original advantage of this approach is that $I(s,\mathbf{x})$ is not
@@ -412,3 +415,6 @@ at each frequency.
 % $Id$
 
 % $Log$
+% Revision 1.2  2017/06/08 01:27:55  vsnyder
+% Update after presentation
+%
