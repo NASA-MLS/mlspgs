@@ -11,8 +11,8 @@
 \topmargin -0.5in
 \textheight 9in
 
-\newcommand{\docname}{wvs-100r4}
-\newcommand{\docdate}{24 January 2011}
+\newcommand{\docname}{wvs-100r5}
+\newcommand{\docdate}{7 June 2017}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
@@ -96,20 +96,20 @@ through which the path of integration passes
 \begin{split}
 \frac{\partial I(s_m)}{\partial f^k_{lm}}
 =\,&
- \int_{s_0}^{s_m} \T(s,s_m) \beta^k(s) \mu^k_{lm}(s)
+ \int_{s_0}^{s_m} \T(s) \beta^k(s) \mu^k_{lm}(s)
   ( B(s) - I(s) ) \,\d s \\
 =\,&
- -\T(s_0,s_m) \left( I(s_0) - B(s_0) \right)
+ -\T(s_m) \left( I(s_0) - B(s_0) \right)
    \int_{s_0}^{s_m} \beta^k(\sigma) \mu^k_{lm}(\sigma) \,\d \sigma \,+ \\
 \,&
- \int_{s_0}^{s_m} \T(s,s_m) \frac{\partial B(s)}{\partial s}
+ \int_{s_0}^{s_m} \T(s) \frac{\partial B(s)}{\partial s}
   \left( \int_s^{s_m} \beta^k(\sigma) \mu^k_{lm}(\sigma) \,\d \sigma
   \right) \,\d s \\
-=\,& -I(s_0) \T(s_0,s_m)
+=\,& -I(s_0) \T(s_m)
      \int_{s_0}^{s_m} \beta^k(\sigma) \mu^k_{lm}(\sigma)\, \d \sigma \,+ \\
 \,&
 \int_{s_0}^{s_m}
- \T(s,s_m) B(s) \left( \beta^k(s) \mu^k_{lm}(s) -
+ \T(s) B(s) \left( \beta^k(s) \mu^k_{lm}(s) -
  \alpha(s) \int_s^{s_m} \beta^k(\sigma) \mu^k_{lm}(\sigma)\, \d \sigma \right)
  \, \d s
 \end{split}}
@@ -130,8 +130,8 @@ The clear-sky non-scattering radiative transfer equation is
 The solution of Equation (\ref{rad}) can be written
 
 \begin{equation}\label{first}
-I(s_m) = I(s_0) \T(s_0,s_m) +
- \int_{s_0}^{s_m} \T(s,s_m) \alpha(s) B(s) \,
+I(s_m) = I(s_0) \T(s_m) +
+ \int_{s_0}^{s_m} \T(s) \alpha(s) B(s) \,
   \d s\,,
 \end{equation}
 
@@ -140,7 +140,7 @@ of the path away from the instrument, $B(s)$ is the Planck function $\frac{h
 \nu}k \left( \exp\left(\frac{h \nu}{k T(s)}\right) -1\right)^{-1}$,
 
 \begin{equation}\label{two}
-\T(s,s_m) = \exp\left( - \int_s^{s_m} \alpha(\sigma)
+\T(s) = \exp\left( - \int_{s_0}^s \alpha(\sigma)
  \, \d \sigma \right)
  \,,
 \end{equation}
@@ -158,10 +158,10 @@ The derivative of Equation (\ref{first}) with respect to $f^k_{lm}$ is
 
 \begin{equation}\label{six}
 \frac{\partial I(s_m)}{\partial f^k_{lm}}
-= I(s_0) \frac{\partial \T(s_0,s_m)}{\partial f^k_{lm}} +
+= I(s_0) \frac{\partial \T(s_m)}{\partial f^k_{lm}} +
 \int_{s_0}^{s_m}
- \T(s,s_m) \frac{\partial \alpha(s)}{\partial f^k_{lm}} B(s) +
- \frac{\partial \T(s,s_m)}{\partial f^k_{lm}} \alpha(s) B(s)
+ \T(s) \frac{\partial \alpha(s)}{\partial f^k_{lm}} B(s) +
+ \frac{\partial \T(s)}{\partial f^k_{lm}} \alpha(s) B(s)
  \, \d s \,.
 \end{equation}
 
@@ -177,7 +177,7 @@ coefficient for the $k^\text{th}$ species at $s$, into Equation
 (\ref{two}) gives
 
 \begin{equation}\label{tau}
-\T(s,s_m) = \exp\left( - \int_s^{s_m} \sum_{k=1}^{N_s} \beta^k(\sigma) \mu^k_{lm}(\sigma) f^k_{lm}
+\T(s) = \exp\left( - \int_s^{s_m} \sum_{k=1}^{N_s} \beta^k(\sigma) \mu^k_{lm}(\sigma) f^k_{lm}
  \, \d \sigma \right) \,.
 \end{equation}
 
@@ -187,28 +187,28 @@ From Equations (\ref{two}), (\ref{three}) and (\ref{tau})
 \frac{\partial \alpha(s)}{\partial f^k_{lm}}
 =\,& \beta^k(s) \mu^k_{lm}(s)
 \text{ and } \\
-\frac{\partial \T(s,s_m)}{\partial f^k_{lm}}
-=\,& -\T(s,s_m) \, \frac{\partial}{\partial f^k_{lm}}
+\frac{\partial \T(s)}{\partial f^k_{lm}}
+=\,& -\T(s) \, \frac{\partial}{\partial f^k_{lm}}
                 \int_s^{s_m} \alpha(\sigma) \,\d \sigma
-=    -\T(s,s_m) \int_s^{s_m}
+=    -\T(s) \int_s^{s_m}
                 \frac{\partial}{\partial f^k_{lm}}\, \alpha(\sigma) \,\d \sigma \\
-=\,& -\T(s,s_m) \int_s^{s_m} \beta^k(\sigma) \mu^k_{lm}(\sigma) \d \sigma
+=\,& -\T(s) \int_s^{s_m} \beta^k(\sigma) \mu^k_{lm}(\sigma) \d \sigma
 \end{split}\end{equation}
 
 Substituting Equation (\ref{dT}) into Equation (\ref{six}) we have
 
 \begin{equation}\boxed{\begin{split}\label{dI_dfklm}
 \frac{\partial I(s_m)}{\partial f^k_{lm}}
-=\,& -I(s_0) \T(s_0,s_m)
+=\,& -I(s_0) \T(s_m)
      \int_{s_0}^{s_m} \beta^k(\sigma) \mu^k_{lm}(\sigma)\, \d \sigma \,+ \\
 \,&
 \int_{s_0}^{s_m}
- \T(s,s_m) B(s) \left( \beta^k(s) \mu^k_{lm}(s) -
+ \T(s) B(s) \left( \beta^k(s) \mu^k_{lm}(s) -
  \alpha(s) \int_s^{s_m} \beta^k(\sigma) \mu^k_{lm}(\sigma)\, \d \sigma \right)
  \, \d s\,.
 \end{split}}\end{equation}
 
-Even assuming that $\T(s,s_m)$ has been saved during evaluation of
+Even assuming that $\T(s)$ has been saved during evaluation of
 $I(s_m)$ using Equation (\ref{first}), this is a double integral because
 of the inner integral $\int_s^{s_m} \beta^k(\sigma) \mu^k_{lm}(\sigma)\,
 \d \sigma$, which is different for every different value of $\{k,l,m\}$.
@@ -251,33 +251,33 @@ $\frac{\partial I(s_0)}{\partial f^k_{lm}}=0$ to get
 
 \begin{equation}\label{drad}\boxed{
 \frac{\partial I(s_m)}{\partial f^k_{lm}} =
- \int_{s_0}^{s_m} \T(s,s_m) \beta^k(s) \mu^k_{lm}(s)
+ \int_{s_0}^{s_m} \T(s) \beta^k(s) \mu^k_{lm}(s)
   ( B(s) - I(s) ) \,\d s
 \,.}
 \end{equation}
 
 This is actually the same as Equation (\ref{dI_dfklm}). To see this,
 substitute Equation (\ref{first}) for $I(s)$ in Equation (\ref{drad}) and
-use $\T(s_0,s) \T(s,s_m) = \T(s_0,s_m)$ and $\T(\sigma,s) \T(s,s_m) =
+use $\T(s) \T(s) = \T(s_m)$ and $\T(\sigma,s) \T(s) =
 \T(\sigma,s_m)$ to get
 
 \begin{equation}\begin{split}
 \frac{\partial I(s_m)}{\partial f^k_{lm}}
 =\,& \dots\,
--\int_{s_0}^{s_m} \T(s,s_m) \beta^k(s) \mu^k_{lm}(s) I(s) \,\d s \\
+-\int_{s_0}^{s_m} \T(s) \beta^k(s) \mu^k_{lm}(s) I(s) \,\d s \\
 =\,& \dots\,
--\int_{s_0}^{s_m} \T(s,s_m) \beta^k(s) \mu^k_{lm}(s)
-\left[ I(s_0) \T(s_0,s) +
+-\int_{s_0}^{s_m} \T(s) \beta^k(s) \mu^k_{lm}(s)
+\left[ I(s_0) \T(s) +
  \int_{s_0}^s \T(\sigma,s) \alpha(\sigma) B(\sigma) \,\d\sigma
 \right] \d s\\
 =\,& \dots\,
--I(s_0) \T(s_0,s_m) \int_{s_0}^{s_m} \beta^k(s) \mu^k_{lm}(s) \,\d s \\
+-I(s_0) \T(s_m) \int_{s_0}^{s_m} \beta^k(s) \mu^k_{lm}(s) \,\d s \\
 \,&\phantom{\dots\,}
-- \int_{s_0}^{s_m} \T(s,s_m) \beta^k(s) \mu^k_{lm}(s)
+- \int_{s_0}^{s_m} \T(s) \beta^k(s) \mu^k_{lm}(s)
     \int_{s_0}^s \T(\sigma,s) \alpha(\sigma) B(\sigma) \,\d\sigma
      \,\d s \\
 =\,& \dots\,
--I(s_0) \T(s_0,s_m) \int_{s_0}^{s_m} \beta^k(s) \mu^k_{lm}(s) \,\d s \\
+-I(s_0) \T(s_m) \int_{s_0}^{s_m} \beta^k(s) \mu^k_{lm}(s) \,\d s \\
 \,&\phantom{\dots\,}
 - \int_{s_0}^{s_m} \beta^k(s) \mu^k_{lm}(s)
     \int_{s_0}^s \T(\sigma,s_m) \alpha(\sigma) B(\sigma) \,\d\sigma
@@ -291,9 +291,9 @@ Exchanging the order of integration in the final integral above, Equation
 \begin{equation}\boxed{\begin{split}\label{dI_dfklm2}
 \frac{\partial I(s_m)}{\partial f^k_{lm}}
 =\,&
--I(s_0) \T(s_0,s_m) \int_{s_0}^{s_m} \beta^k(s) \mu^k_{lm}(s) \,\d s\, + \\
+-I(s_0) \T(s_m) \int_{s_0}^{s_m} \beta^k(s) \mu^k_{lm}(s) \,\d s\, + \\
 \,&
-\int_{s_0}^{s_m} \T(s,s_m) B(s)
+\int_{s_0}^{s_m} \T(s) B(s)
  \left( \beta^k(s) \mu^k_{lm}(s)
  - \alpha(s)
    \int_s^{s_m} \beta^k(\sigma) \mu^k_{lm}(\sigma) \,\d \sigma
@@ -321,8 +321,11 @@ $T_{lm}$.  To account for temperature, compute the derivative of Equation
 \end{equation}
 
 Proceeding as above, exchange the order of differentiation, use
-$\frac{\partial \alpha(s)}{\partial T_{lm}} = \beta^k(s)
-\mu^T_{lm}(s)$, and rearrange the equation to the usual form to get
+$\frac{\partial \alpha(s)}{\partial T_{lm}} =
+ \frac{\partial \alpha(s)}{\partial T(s)}
+  \frac{\partial T(s)}{\partial T_{lm}} =
+ \frac{\partial \alpha(s)}{\partial T(s)} \mu^T_{lm}(s)$, and rearrange the
+equation to the usual form to get
 
 \begin{equation}\begin{split}
 \frac{\d}{\d s} \frac{\partial I(s)}{\partial T_{lm}} +
@@ -341,7 +344,7 @@ $\frac{\partial I(s_0)}{\partial T_{lm}}=0$ to get
 
 \begin{equation}\label{drad_dT}\boxed{
 \frac{\partial I(s_m)}{\partial T_{lm}} =
- \int_{s_0}^{s_m} \T(s,s_m)\mu^T_{lm}(s)
+ \int_{s_0}^{s_m} \T(s)\mu^T_{lm}(s)
   \left[ \frac{\partial \alpha(s)}{\partial T(s)} ( B(s) - I(s) ) +
   \alpha(s) \frac{\partial B(s)}{\partial T(s)} \right] \,\d s
 \,.}
@@ -409,7 +412,7 @@ independent variable, giving
 \begin{equation}\boxed{\begin{split}\label{dIdT_two}
 \frac{\partial I(\xi_m)}{\partial T_{lm}}
 =\,&
-\int_{s_0}^{s_m} \T(s,s_m) \mu^T_{lm}(s)
+\int_{s_0}^{s_m} \T(s) \mu^T_{lm}(s)
   \left[ \frac{\partial \alpha(s)}{\partial T(s)} ( B(s) - I(s) )
    + \alpha(s) \frac{\partial B(s)}{\partial T(s)} \right]
       \, \d s\,\, \\
@@ -444,7 +447,7 @@ An important difference between Equation (\ref{drad})
 \setcounter{equation}{\value{foo}}
 \begin{equation}\boxed{
 \frac{\partial I(s_m)}{\partial f^k_{lm}} =
- \int_{s_0}^{s_m} \T(s,s_m) \beta^k(s) \mu^k_{lm}(s)
+ \int_{s_0}^{s_m} \T(s) \beta^k(s) \mu^k_{lm}(s)
   ( B(s) - I(s) ) \,\d s
 \,.}
 \end{equation}
@@ -457,7 +460,7 @@ and (\ref{dI_dfklm}) or (\ref{dI_dfklm2}) is that integrals of the form
 \int_s^{s_m} \beta^k(\sigma) \mu^k_{lm}(\sigma) \,\d \sigma
 \end{equation}
 
-do not appear in Equation (\ref{drad}).  Assuming that $\T(s,s_m)$ and
+do not appear in Equation (\ref{drad}).  Assuming that $\T(s)$ and
 $I(s)$ have been saved during evaluation of $I(s_m)$ using Equation
 (\ref{first}), Equation (\ref{drad}) is a single integral, not a double
 integral, and is therefore less costly to evaluate than Equation
@@ -480,13 +483,13 @@ factor of three.  In addition to the reduction in computation cost, the
 complexity of the {\tt rad\_tran\_m} module would be substantially
 reduced.
 
-If $\T(s,s_m) \alpha(s) = \frac{\partial \T(s,s_m)}{\partial s}$ is
+If $\T(s) \alpha(s) = \frac{\partial \T(s)}{\partial s}$ is
 substituted in Equation (\ref{first}), and then the integral is integrated
 by parts, Equation (\ref{first}) becomes
 
 \begin{equation}\label{fifteen}
-I(s_m) = \T(s_0,s_m) \left( I(s_0) - B(s_0) \right) + B(s_m) -
- \int_{s_0}^{s_m} \T(s,s_m) \frac{\partial B(s)}{\partial s} \,\d s\,.
+I(s_m) = \T(s_m) \left( I(s_0) - B(s_0) \right) + B(s_m) -
+ \int_{s_0}^{s_m} \T(s) \frac{\partial B(s)}{\partial s} \,\d s\,.
 \end{equation}
 
 Taking derivatives of this representation and using Equation (\ref{dT}) we
@@ -495,10 +498,10 @@ have
 \begin{equation}\begin{split}\label{sixteen}
 \frac{\partial I(s_m)}{\partial f^k_{lm}}
 =\,&
- -\T(s_0,s_m) \left( I(s_0) - B(s_0) \right)
+ -\T(s_m) \left( I(s_0) - B(s_0) \right)
    \int_{s_0}^{s_m} \beta^k(\sigma) \mu^k_{lm}(\sigma) \,\d \sigma \,+ \\
 \,&
- \int_{s_0}^{s_m} \T(s,s_m) \frac{\partial B(s)}{\partial s}
+ \int_{s_0}^{s_m} \T(s) \frac{\partial B(s)}{\partial s}
   \left( \int_s^{s_m} \beta^k(\sigma) \mu^k_{lm}(\sigma) \,\d \sigma
   \right) \,\d s \,.
 \end{split}\end{equation}
@@ -518,6 +521,9 @@ central difference, which can introduce substantial error.
 % $Id$
 
 % $Log$
+% Revision 1.6  2013/05/18 01:57:57  vsnyder
+% Trivial tweaks to spacing
+%
 % Revision 1.5  2011/02/05 01:31:52  vsnyder
 % Add temperature derivatives section
 %
