@@ -524,10 +524,12 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
 ;; products' vector
 !define(makeStandardProduct,{!dnl
   Fill, quantity=standardProducts.$1, method=vector, sourceQuantity=state.$1
-  Fill, quantity=standardPrecision.$1, method=vector, sourceQuantity=outputPrecision.$1
+  Fill, quantity=standardPrecision.$1, method=vector, sourceQuantity=outputPrecision.$1!dnl
+  !ifelse($1,{refGPH}, {}, {
   Fill, quantity=standardDiagnostics.status$1, method=vector, sourceQuantity=otherDiagnostics.status$1
   Fill, quantity=standardDiagnostics.quality$1, method=vector, sourceQuantity=otherDiagnostics.quality$1
   Fill, quantity=standardDiagnostics.convergence$1, method=vector, sourceQuantity=otherDiagnostics.convergence$1
+  })
 })
 !define(makeStandardProductMergeDiag,{!dnl
   Fill, quantity=standardProducts.$1, method=vector, sourceQuantity=state.$1
@@ -1181,6 +1183,9 @@ Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, $
 })})
 
 ; $Log$
+; Revision 1.2  2017/03/09 01:50:19  mjschwar
+; *** empty log message ***
+;
 ; Revision 1.1  2017/02/24 23:49:19  mjschwar
 ; Adding umls specific code to standard parts
 ;
