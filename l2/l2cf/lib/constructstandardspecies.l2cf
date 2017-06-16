@@ -811,10 +811,10 @@ begin Construct
   chunkNumMMAF: quantity, type=geolocation, module= GHz
   geodLatMMAF: quantity, type=geolocation, module= GHz
   solarZenithMMAF: quantity, type=geolocation, module= GHz
-  ProfileNum: quantity, type=geolocation, module= GHz
+  profileNum: quantity, type=geolocation, module= GHz
   timingTemplate: VectorTemplate, quantities = [ $
     phaseTiming, sectionTiming, chunkNumMMAF, geodLatMMAF, solarZenithMMAF, $
-    ProfileNum ]
+    profileNum ]
 
 end Construct
   ; These temporary vectors, which must be declared
@@ -828,6 +828,9 @@ begin Fill
 end Fill
 !divert(-1)
 ;$Log$
+;Revision 1.130  2015/12/01 21:45:20  pwagner
+;Added ProfileNum to geolocation quantities
+;
 ;Revision 1.129  2015/05/18 17:47:07  pwagner
 ;Added APriori phase marker; more use of flagMagneticFieldOnHeightGrid
 ;
