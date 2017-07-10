@@ -1107,7 +1107,7 @@ contains
         & runTimeValues%lkeys, runTimeValues%lvalues, &
         & inseparator=runTimeValues%sep )
     else
-      call output( 'Using default value for bare Boolean declaration', &
+      if ( verbose ) call output( 'Using default value for bare Boolean declaration', &
         & advance='yes' )
       if ( verboser ) then
         call output( trim(nameString) // ' = ', advance='no' )
@@ -3108,6 +3108,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.132  2017/07/10 23:09:51  pwagner
+! Print less if not verbose
+!
 ! Revision 2.131  2017/02/22 18:01:56  pwagner
 ! Declaring a runtime Boolean without an initial value no longer generates a Warning
 !
