@@ -192,6 +192,8 @@
       call output( '(The two arrays are exactly equal)', advance='yes' )
       return
     end if
+    numTot = size( Array1  )
+    numEqual = count( (/ Array1 == Array2 /) )
     if ( dopts(RMS)%v .or. dopts(myRatios)%v .or. dopts(AuBrick)%v ) then
       call allstats(array1, &
         & addedData=.false., min=refmin, max=refmax, rms=refrms)
@@ -228,6 +230,9 @@
     include "donewithdiff.f9h"
 !   end subroutine DIFF_1D_DOUBLE
 ! $Log$
+! Revision 2.21  2017/07/10 18:20:38  pwagner
+! Must not neglect to compute numTot, numEqual even if all equal
+!
 ! Revision 2.20  2016/10/06 20:20:49  pwagner
 ! parts commom to unfiltered and filtered diffs moved to donewithdiff.f9h
 !
