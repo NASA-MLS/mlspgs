@@ -1131,15 +1131,15 @@ contains
   subroutine Read_MERRA_2( GEOS5File, lcf_where, v_type, &
     & the_g_data, GeoDimList, fieldName, date, sumDelp )
 
-    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
-    use Dates_Module, only: UTC2TAI93s
-    use Dump_1, only: Dump
-    use HDF5, only: Hsize_T
-    use MLSHDF5, only: GetAllHDF5DSNames, &
-      & GetHDF5DSRank, GethDF5DSDims, LoadFromHDF5DS, &
-      & ReadHDF5Attribute
-    use MLSStringLists, only: SwitchDetail
-    use Toggles, only: Switches
+  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+  use Dates_Module, only: GetStartingDate, UTC2TAI93s
+  use Dump_1, only: Dump
+  use HDF5, only: Hsize_T
+  use MLSHDF5, only: GetAllHDF5DSNames, &
+    & GetHDF5DSRank, GethDF5DSDims, LoadFromHDF5DS, &
+    & ReadHDF5Attribute
+  use MLSStringLists, only: SwitchDetail
+  use Toggles, only: Switches
 
     ! This routine reads a gmao merra2 file, named something like
     ! MERRA2_200.inst6_3d_ana_Np.19980724.nc4
@@ -1324,6 +1324,7 @@ contains
     idim4 = dim4
 
     the_g_data%nodates = idim4(4)
+    if ( verbose ) call outputnamedValue ( 'nodates', the_g_data%nodates )
     ! call Dump( geos5file )
 
     ! Now assign values to DateStarts and Ends
@@ -1349,7 +1350,12 @@ contains
         &   year, '-',  month, '-', day, 'T', hour, ':', minute, ':', second
       the_g_data%datestarts(i) = utc2tai93s(datestring)
     enddo
-    if ( verbose ) call Dump( the_g_data%datestarts, 'datestarts field' )
+    if ( verbose ) then
+      call outputNamedValue( 'datestring', trim(datestring) )
+      call GetStartingDate( datestring )
+      call outputNamedValue( 'Starting date', trim(datestring) )
+      call Dump( the_g_data%datestarts, 'datestarts field' )
+    endif
     ! Next we will read an attribute called "begin_date"
     the_g_data%dateends = the_g_data%datestarts
     call deallocate_test ( temp1d, "temp1d", moduleName )
@@ -1743,7 +1749,7 @@ contains
       & He5_Gdnentries, He5_Gdinqgrid, He5_Gdinqdims, He5_Gdinqflds, &
       & He5_Gdfldinfo, He5_Gdgridinfo
     use MLSHDFeos, only: Hsizes
-    use HDF5, only: SIZE_T
+    use HDF5, only: Size_T
 
     ! This routine reads a ncep stratospheric combined product file,
     ! named something like nmct_030126.he5
@@ -2537,6 +2543,9 @@ contains
 end module readGriddedUtils
 
 ! $Log$
+! Revision 2.3  2017/07/10 18:21:33  pwagner
+! Print more if verbose
+!
 ! Revision 2.2  2017/03/17 00:08:40  pwagner
 ! May read DELP fron merra_2 native; quit with apt mesg if cant read climatology
 !
