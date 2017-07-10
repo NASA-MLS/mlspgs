@@ -129,6 +129,19 @@ call ilocate ( tmpdate, indate, idate1, idate2 )
 if ( DEEBUG ) then
   call outputNamedValue( 'idate1, idate2', (/idate1, idate2/) )
 endif
+! Something would have to go seriously wrong for the next to occur
+if ( idate2 < 1 .or. idate1 > size(field%field, 6) ) then
+  call outputNamedValue( 'idate1, idate2', (/idate1, idate2/) )
+  call outputNamedValue ( 'shape(field)', shape(field%field) )
+  if ( present(date) ) call outputNamedValue ( 'Date', Date )
+  call outputNamedValue ( 'inDate', inDate )
+  call outputNamedValue ( 'tmpdate', tmpdate )
+  call outputNamedValue ( 'noYear', field%noYear )
+  call Dump( field%dateStarts, 'field%dateStarts' )
+  call Dump( field%dateEnds, 'field%dateEnds' )
+  call MLSMessage ( MLSMSG_Error, ModuleName, &
+    & 'The date index is out of its allowed range' )
+endif
 call ilocate ( tmpalt, inalt, ialt1, ialt2 )
 ! We now know that the desired point is inside the 6-D hypercuboid 
 ! bin of the array field%field(ialt1:ialt2, ilat1:ilat2, .......)
@@ -266,6 +279,9 @@ call deallocate_test ( tmpdate, 'tmpdate', moduleName )
 call deallocate_test ( tmpalt, 'tmpalt', moduleName )
 deallocate ( hcube )
 ! $Log$
+! Revision 2.9  2017/07/10 18:24:32  pwagner
+! Try to catch range errors for idate1, idate2
+!
 ! Revision 2.8  2014/05/28 21:57:19  pwagner
 ! Prevent defining hcube for index 2 when idate1 == idate2
 !
