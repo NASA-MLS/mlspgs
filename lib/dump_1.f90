@@ -589,6 +589,7 @@ contains
     ! Args
     use Dates_Module, only: MaxUTCStrLength, ReformatDate, ReformatTime, &
       & SplitDateTime, TAI93s2UTC
+    use HighOutput, only: OutputNamedValue
     use MLSStrings, only: LowerCase
     double precision, dimension(:)       :: TAIDates ! tai93 (s)
     character(len=*), optional           :: Name
@@ -599,7 +600,8 @@ contains
     character(len=16)                    :: Date, Time
     character(len=maxUTCStrLength), dimension(size(taiDates)) &
       &                                  :: Dates
-    integer                              :: Error
+    logical                              :: Debug
+    integer                              :: Error ! Should we check on this?
     integer                              :: I
     ! Executable
     if ( size(taidates) < 1 ) then
@@ -609,6 +611,7 @@ contains
     do i = 1, size(taiDates)
       dates(i) = tai93s2utc( taiDates(i) )
     end do
+    if ( Debug ) call outputNamedValue( 'last date (utc)', dates(size(taiDates)) )
     if ( present(dateFormat) .or. present(timeFormat) ) then
       do i = 1, size(taiDates)
         call splitDateTime( dates(i), error, date, time )
@@ -703,6 +706,9 @@ contains
 end module Dump_1
 
 ! $Log$
+! Revision 2.5  2017/07/10 18:44:44  pwagner
+! May print a little more in Dump_TAI
+!
 ! Revision 2.4  2017/01/19 23:31:41  pwagner
 ! Can DumpException
 !
