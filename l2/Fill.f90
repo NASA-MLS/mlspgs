@@ -112,7 +112,7 @@ contains ! =====     Public Procedures     =============================
       & F_Destination, F_Diagonal, F_Dimlist, &
       & F_Dontlatch, F_DontMask, &
       & F_Ecrtofov, F_Earthradius, F_Exact, F_Excludebelowbottom, &
-      & F_ExplicitValues, F_Expr, F_Extinction, &
+      & F_ExplicitValues, F_Expr, F_ExpandMask, F_Extinction, &
       & F_Fieldecr, F_File, F_Flags, F_Force, F_Shape, &
       & F_Fraction, F_Fromprecision, &
       & F_Geocaltitudequantity, F_Geolocation, F_Gphquantity, &
@@ -130,11 +130,12 @@ contains ! =====     Public Procedures     =============================
       & F_Phiwindow, F_Phizero, F_Precision, F_Precisionfactor, &
       & F_Profile, F_ProfileValues, F_Ptanquantity, &
       & F_Quadrature, F_Quantity, F_Quantitynames, &
-      & F_Radiancequantity, F_Ratioquantity, F_Refract, &
-      & F_Refgphquantity, F_Refgphprecisionquantity, F_ReferenceMIF, F_Regular, &
-      & F_Reset, F_Resetseed, F_Rhiprecisionquantity, F_Rhiquantity, F_Rank, &
-      & F_Rows, F_Scale, F_Scaleinsts, F_Scaleratio, F_Scalesurfs, F_Sceci, &
-      & F_Scvel, F_Scveleci, F_Scvelecr, F_Sdname, F_Seed, F_SkipMask, &
+      & F_Radiancequantity, F_Rank, F_Ratioquantity, F_Refract, F_Refgphquantity, &
+      & F_Refgphprecisionquantity, F_ReferenceMIF, F_Regular, &
+      & F_ReplaceMissingValue, F_Reset, F_Resetseed, &
+      & F_Rows, F_Rhiprecisionquantity, F_Rhiquantity, &
+      & F_Scale, F_Scaleinsts, F_Scaleratio, F_Scalesurfs, F_Sceci, &
+      & F_Scvel, F_Scveleci, F_Scvelecr, F_Sdname, F_Seed, F_SkipMask, F_SkipValues, &
       & F_Source, F_Sourcegrid, F_Sourcel2aux, F_Sourcel2gp, F_SourceMask, &
       & F_Sourcequantity, F_SourceType, F_Sourcevgrid, F_Spread, F_Start, &
       & F_Status, F_Stride, F_Suffix, F_Surface, &
@@ -367,6 +368,7 @@ contains ! =====     Public Procedures     =============================
     integer :: ERRORCODE                ! 0 unless error; returned by called routines
     logical :: EXACT                    ! Set STATUS to value exactly, don't OR bits
     logical :: EXCLUDEBELOWBOTTOM       ! If set in binmax/binmin does not consider stuff below bottom
+    logical :: ExpandMask               ! Flag for transfer
     character(len=16)  :: explicitUnit  ! E.g., DU
     integer :: Expr_Type                ! From expr
     logical :: Extinction               ! Flag for cloud extinction calculation
@@ -501,6 +503,7 @@ contains ! =====     Public Procedures     =============================
     integer :: REFGPHPRECISIONQUANTITYINDEX      ! in the quantities database
     integer :: REFGPHPRECISIONVECTORINDEX        ! In the vector database
     logical :: REPEATLOOP               ! Do we repeat this section?
+    real(rv) :: replaceMissingValue     ! hat do we replace missing Values with?
     logical :: RESET
     logical :: RESETSEED                ! Let mls_random_seed choose new seed
     integer :: RHIPRECISIONQUANTITYINDEX         ! in the quantities database
@@ -519,6 +522,7 @@ contains ! =====     Public Procedures     =============================
     integer :: SEEDNODE                 ! For the parser
     integer, dimension(2) :: SHP
     logical :: SKIPMASK                 ! Flag for transfer
+    logical :: SKIPValues               ! Flag for transfer
     integer :: SON                      ! Of root, an n_spec_args or a n_named
     integer :: SOURCE                   ! l_rows or l_colums for adoption
     logical :: SOURCEMASK               ! obey Masking bits from source
@@ -640,6 +644,7 @@ contains ! =====     Public Procedures     =============================
       noPCFid = .false.
       noZeros = .false.
       options = ' '
+      replaceMissingValue = 0.
       reset = .false.
       resetSeed = .false.
       refract = .false.
@@ -977,7 +982,7 @@ contains ! =====     Public Procedures     =============================
             fraction = gson
             call announce_error ( key, notImplemented, "Decay" ) !???
           case ( f_invert )
-            invert = get_boolean ( subtree(j,key) )
+            invert = get_boolean ( gson )
           !      case ( f_superDiagonal )
           !        superDiagonal = gson
           !        call announce_error ( key, notImplemented, "SuperDiagonal" ) !???
@@ -1076,8 +1081,10 @@ contains ! =====     Public Procedures     =============================
         call trace_begin ( me_transfer, "Fill.Transfer", key, &
           & cond=toggle(gen) .and. levels(gen) > 1 )
         nullify( destVector, measvector, modelvector, noisevector, sourceVector )
+        ExpandMask = .false.
         interpolate = .false.
         skipMask = .false.
+        skipValues = .false.
         booleanName = ' '
         do j = 2, nsons(key)
           gson = subtree(j,key)  ! The argument
@@ -1107,12 +1114,14 @@ contains ! =====     Public Procedures     =============================
             dontLatch = get_boolean ( gson )
           case ( f_dontMask )
             dontMask = get_boolean ( gson )
+          case ( f_ExpandMask )
+            ExpandMask = get_boolean ( gson )
           case ( f_ignoreNegative )
             ignoreNegative = get_boolean ( gson )
           case ( f_ignoreZero )
             ignoreZero = get_boolean ( gson )
           case ( f_interpolate )
-            interpolate = get_boolean ( fieldValue )
+            interpolate = get_boolean ( gson )
           case ( f_manipulation )
             manipulation = sub_rosa ( gson )
           case ( f_method )   ! How ? (if not default copy)
@@ -1134,7 +1143,9 @@ contains ! =====     Public Procedures     =============================
             call get_string ( sub_rosa(gson), booleanName, strip=.true. )
             booleanName = lowerCase(booleanName)
           case ( f_skipMask )
-            skipMask = get_boolean ( fieldValue )
+            skipMask = get_boolean ( gson )
+          case ( f_skipValues )
+            skipValues = get_boolean ( gson )
           case default ! Can't get here if type checker worked
           end select
         end do
@@ -1162,8 +1173,8 @@ contains ! =====     Public Procedures     =============================
             & noiseVector, ptanQuantity, booleanName )
         else if ( got(f_source) ) then
           call TransferVectors ( vectors(sourceVectorIndex), &
-            & vectors(destinationVectorIndex), skipMask, interpolate, &
-            & booleanName )
+            & vectors(destinationVectorIndex), &
+            & expandMask, skipMask, skipValues, interpolate, booleanName )
         else
           call MLSMessage ( MLSMSG_Error, ModuleName, &
             & 'Transfer command requires either source or a to be present' )
@@ -1786,6 +1797,9 @@ contains ! =====     Public Procedures     =============================
           referenceMIFunits = unitAsArray(1)
         case ( f_regular )
           regular = get_boolean ( gson )
+        case(f_replaceMissingValue)
+          call expr ( gson, unitAsArray, valueAsArray )
+          replaceMissingValue = valueAsArray(1)
         case ( f_resetSeed )
           resetSeed = get_boolean ( gson )
         case ( f_rhiPrecisionQuantity ) ! For converting to h2o precision
@@ -1929,14 +1943,14 @@ contains ! =====     Public Procedures     =============================
         call ApplyMaskToQuantity( quantity, &
           & radQuantity, ptanQuantity, odQuantity, nullQuantity, 0._r8, &
           & maxValue, minValue, heightRange, whereRange, &
-          & .false., .false., additional=.true., reset=.false., &
+          & .false., .false., additional=.true., expandMask=.false., reset=.false., &
           & maskBit=M_Fill, heightNode=0, surfNode=0, &
           & instancesNode=instancesNode, channelsNode=0 )
       else
         call ApplyMaskToQuantity( quantity, &
           & radQuantity, ptanQuantity, odQuantity, nullQuantity, 0._r8, &
           & maxValue, minValue, heightRange, whereRange, &
-          & .false., .false., additional=.true., reset=.false., &
+          & .false., .false., additional=.true., expandMask=.false., reset=.false., &
           & maskBit=M_Fill, heightNode=heightNode, surfNode=surfNode, &
           & instancesNode=instancesNode, channelsNode=channelsNode )
       endif
@@ -2385,9 +2399,8 @@ contains ! =====     Public Procedures     =============================
       case ( l_gridded ) ! ------------  Fill from gridded data  -----
         if ( .not. got(f_sourceGrid) ) &
           & call Announce_Error ( key, noSourceGridGiven )
-        call FromGrid &
-          & ( quantity, griddedDataBase(gridIndex), allowMissing, errorCode )
-        ! call outputNamedValue( 'error code', errorCode )
+        call FromGrid ( quantity, griddedDataBase(gridIndex), &
+            & allowMissing, replaceMissingValue, errorCode )
         if ( errorCode /= 0 ) call Announce_error ( key, errorCode )
 
       case ( l_l1b ) ! --------------------  Fill from L1B data  -----
@@ -3288,6 +3301,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.468  2017/07/10 18:50:47  pwagner
+! Transfer may /expandMask to all masking bits; may /skipValues to transfer only mask; Fill may replaceMissingValue=
+!
 ! Revision 2.467  2017/04/07 18:46:17  pwagner
 ! sourceType used when choosing how to Fill ascenddescend
 !
