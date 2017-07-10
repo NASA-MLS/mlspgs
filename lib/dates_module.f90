@@ -18,13 +18,13 @@ module dates_module
   ! time representations (TAI93) while this module maintains
   ! its own internal database of leap seconds.
 
-  use MLSCommon,        only: nameLen
-  use MLSFinds,         only: findFirst
-  use MLSStringlists,   only: getStringElement, numStringElements
-  use MLSStrings,       only: capitalize, charToInt, depunctuate, &
-    & indexes, isAlphabet, isDigits, lowercase, &
-    & reverse_trim, readIntsFromChars, splitWords, writeIntsToChars
-  use printit_m, only: MLSMSG_Warning, printItOut
+  use MLSCommon, only: NameLen
+  use MLSFinds, only: FindFirst
+  use MLSStringlists, only: GetStringElement, NumStringElements
+  use MLSStrings, only: Capitalize, CharToInt, Depunctuate, &
+    & Indexes, IsAlphabet, IsDigits, Lowercase, &
+    & Reverse_Trim, ReadIntsFromChars, SplitWords, WriteIntsToChars
+  use Printit_M, only: MLSMSG_Warning, PrintItOut
 
   implicit none
   private
@@ -80,6 +80,7 @@ module dates_module
 ! eudtf2daysince     eudtf -> days since starting date
 ! FromUARSDate       Converts a uars date, e.g. 'd0007' to yyyy-mm-dd
 ! gethid             like tai93s2hid but neither pure nor a function (what?)
+! GetStartingDate    Return starting date for the tai format
 ! hoursbetween2utcs  How many hours between 2 date-times
 ! hoursinday         How many hours since the start of the day
 ! isUTCInRange       Is the utc a date within allowable range of dates?
@@ -138,6 +139,7 @@ module dates_module
 ! int daysbetween2utcs (char* utc1, char* utc2)
 ! int daysInMonth (int month, int year)
 ! gethid( dble tai, [log leapsec] )
+! GetStartingDate ( char* Date )
 ! int hoursbetween2utcs (char* utc1, char* utc2)
 ! dble hoursinday (char* utc1)
 ! log IsUTCInRange ( char* utc,  [char* utc1], [char* utc2] )
@@ -277,7 +279,7 @@ module dates_module
     & cal2eudtf, ccsds2tai, ccsds2eudtf, ccsdsa2b, ccsdsb2a, &
     & dai_to_yyyymmdd, dateform, datesbetween2utcs, dayofweek, &
     & daysbetween2utcs, daysinmonth, daysince2eudtf, days_in_year, &
-    & eudtf2cal, eudtf2daysince, FromUARSDate, gethid, &
+    & eudtf2cal, eudtf2daysince, FromUARSDate, gethid, Getstartingdate, &
     & hoursbetween2utcs, hoursinday, isUTCInRange, &
     & lastday, nextmoon, precedesutc, reformatdate, reformattime, &
     & resetstartingdate, restorestartingdate, &
@@ -323,7 +325,7 @@ module dates_module
   end interface
 
   interface YYYYMMDD_TO_DOY
-    module procedure YYYYMMDD_TO_DOY_INTS
+    module procedure YYYYMMDD_TO_DOY_INTS, yyyymmdd_to_doy_str
   end interface
 
   ! utc_to_yyyymmdd
@@ -435,7 +437,8 @@ module dates_module
   ! This accounts for the number of days between the dates
   ! '1993-01-01' and '2001-01-01':
   ! 6 non-leap years and 2 leap years
-  integer :: DAI93TODAI01 = 6*365 + 2*366
+  integer, parameter :: DAI93TODAI01    = 6*365 + 2*366
+  integer            :: DAISTARTTODAI01 = DAI93TODAI01
   
 contains
   ! ---------------------------------------------  adddaystoutc  -----
@@ -627,7 +630,9 @@ contains
     type(MLSDATE_TIME_T)           :: datetime
     ! Executable
     dateTime = tai93s2datetime( tai93s, leapsec )
-    ! print *, 'dateTime&seconds, leap ', dateTime%seconds, dateTime%leapseconds
+    ! print *, 'StartingDate (TAI,MLS) ', TAIStartingDate, MLSStartingDate
+    ! print *, 'dateTime&dai,seconds, leap ', &
+    !   & dateTime%dai, dateTime%seconds, dateTime%leapseconds
     utc = datetime2utc( datetime, leapsec )
   end function tai93s2utc
 
@@ -667,6 +672,16 @@ contains
     utc = trim(utc) // 'T' // adjustl(hhmmss)
   end function datetime2utc
 
+  ! Get the starting date
+  subroutine GetStartingDate ( TAIStartDate, MLSStartDate, DateOffset )
+    character(len=*), optional, intent(out) :: TAIStartDate
+    character(len=*), optional, intent(out) :: MLSStartDate
+    integer, optional, intent(out)          :: DateOffset
+    if ( present(TAIStartDate) ) TAIStartDate = TAIStartingDate
+    if ( present(MLSStartDate) ) MLSStartDate = MLSStartingDate
+    if ( present(dateOffset) )   DateOffset   = DAISTARTTODAI01
+  end subroutine GetStartingDate
+
   ! Reset the starting date
   subroutine resetStartingDate ( newTAIDate, newMLSDate )
     character(len=*), optional, intent(in) :: newTAIDate
@@ -674,14 +689,14 @@ contains
     ! print *, 'Resetting starting date to ' // newdate
     if ( present(newTAIDate) ) TAIStartingDate = newTAIDate
     if ( present(newMLSDate) ) MLSStartingDate = newMLSDate
-    DAI93TODAI01 = daysbetween2utcs( TAIStartingDate, MLSStartingDate )
+    DAISTARTTODAI01 = daysbetween2utcs( TAIStartingDate, MLSStartingDate )
   end subroutine resetStartingDate
 
   ! Restore the starting date
   subroutine RestoreStartingDate
     TAIStartingDate = '19930101'
     MLSStartingDate = '20010101'
-    DAI93TODAI01 = 6*365 + 2*366
+    DAISTARTTODAI01 = DAI93TODAI01
   end subroutine RestoreStartingDate
 
   ! Converts TAI93 in seconds to an MLS DateTime datatype
@@ -705,7 +720,7 @@ contains
       datetime%seconds = tai93s - 86400*dai93
     endif
     ! Now apply offset converting dai93 to dai (2001)
-    datetime%dai = dai93 - DAI93TODAI01 ! daysbetween2utcs( '1993-01-01', '2001-01-01' )
+    datetime%dai = dai93 - DAISTARTTODAI01 ! DAI93TODAI01
     call reducedatetime( datetime, leapsec )
   end function tai93s2datetime
 
@@ -1259,6 +1274,7 @@ contains
     integer :: ErrTyp
     integer :: loss
     integer :: mydai
+    integer :: gain
     character(len=16) :: mystartingDate
     !----------Executable part----------!
    if(present(startingDate)) then
@@ -1266,28 +1282,42 @@ contains
    else
       mystartingDate=MLSStartingDate
    endif
-   call utc_to_yyyymmdd_ints(mystartingDate, ErrTyp, yyyy, mm, dd, nodash=.true.)
-   if ( dai < 0 ) return
+   call utc_to_yyyymmdd_ints( mystartingDate, ErrTyp, yyyy, mm, dd, nodash=.true. )
    call yyyymmdd_to_doy_str(mystartingDate, doy1)
-   ! Here's what we do:
-   ! Given doy1 (the day-of-year of the starting date)
-   ! we keep trying to add dai to it
-   ! If the result is greater than the number of days in that year (yyyy),
-   ! we increment the starting date's year counter (yyyy), its doy1,
-   ! and reduce the dai accordingly and try again
-   ! If the result is less than the number of days in that year
-   ! Then compute mm and dd for yyyy-(doy1+dai)
-   mydai = dai
-   ! print *, 'mydai, yyyy at start ', mydai, yyyy
-   do
-     if ( mydai + doy1 <= days_in_year(yyyy) ) exit
-     ! What we said we'd do
-     loss = days_in_year(yyyy) - doy1 + 1
-     yyyy = yyyy + 1
-     doy1 = 1
-     mydai = mydai - loss
-   enddo
-   ! print *, 'mydai, yyyy at finish ', mydai, yyyy
+   if ( dai >= 0 ) then
+     mydai = dai
+     ! Here's what we do:
+     ! Given doy1 (the day-of-year of the starting date)
+     ! we keep trying to add dai to it
+     ! If the result is greater than the number of days in that year (yyyy),
+     ! we increment the starting date's year counter (yyyy), its doy1,
+     ! and reduce the dai accordingly and try again
+     ! If the result is less than the number of days in that year
+     ! Then compute mm and dd for yyyy-(doy1+dai)
+     ! print *, 'mydai, yyyy at start ', mydai, yyyy
+     do
+       if ( mydai + doy1 <= days_in_year(yyyy) ) exit
+       ! What we said we'd do
+       loss = days_in_year(yyyy) - doy1 + 1
+       yyyy = yyyy + 1
+       doy1 = 1
+       mydai = mydai - loss
+     enddo
+     ! print *, 'mydai, yyyy at finish ', mydai, yyyy
+   else
+     ! Since dai is negative, we'll reduce yyyy to compensate
+     ! This is the reverse of what we do above, incidentally
+     mydai = dai
+     ! print *, 'mydai, yyyy at start ', mydai, yyyy
+     do
+       if ( mydai > 0 ) exit
+       gain = days_in_year(yyyy-1) - doy1 + 1
+       yyyy = yyyy - 1
+       doy1 = 1
+       mydai = mydai + gain
+     enddo
+     ! print *, 'mydai, yyyy at finish ', mydai, yyyy
+   endif
    ! Now convert from doy to mmdd
    doy1 = 0 ! How many days into year yyyy added by prior months
    do mm=1, 12
@@ -2996,6 +3026,9 @@ contains
 
 end module dates_module
 ! $Log$
+! Revision 2.42  2016/09/14 00:23:14  pwagner
+! Added isUTCInRange so we can check for invalid utc values
+!
 ! Revision 2.41  2016/08/08 22:56:11  pwagner
 ! Added leap second to 2016
 !
