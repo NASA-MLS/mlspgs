@@ -221,6 +221,7 @@ contains ! =====     Public Procedures     =============================
     end if
     if ( verboser ) call outputNamedValue ( 'mlspcf_l2geos5_start', mlspcf_l2geos5_start )
     if ( verboser ) call outputNamedValue ( 'lastGEOS5PCF', lastGEOS5PCF )
+    if ( verboser ) call outputNamedValue ( 'LastClimPCF', LastClimPCF )
     if ( verboser ) call outputNamedValue ( 'carryOver', carryOver )
 
     do 
@@ -730,7 +731,7 @@ contains ! =====     Public Procedures     =============================
              & fieldNameString, MLSFile=GriddedFile)
         end if
       case ( l_geos5, l_geos5_7, l_merra, l_merra_2 ) ! --- GMAO Data (GEOS5*)
-        call outputNamedvalue( 'LastGEOS5PCF', LastGEOS5PCF )
+        if ( verbose ) call outputNamedvalue( 'LastGEOS5PCF', LastGEOS5PCF )
         call get_pcf_id ( fileNameString, path, subString, l2apriori_version, &
           & mlspcf_l2geos5_start, mlspcf_l2geos5_end, 'geos5', got(f_file), &
           & LastGEOS5PCF, returnStatus, noPCFid, verbose, debug )
@@ -882,9 +883,15 @@ contains ! =====     Public Procedures     =============================
         call get_pcf_id ( fileNameString, path, subString, l2apriori_version, &
           & mlspcf_l2clim_start, mlspcf_l2clim_end, 'climatology', got(f_file), &
           & LastClimPCF, returnStatus, noPCFid, verbose, debug )
-        call outputnamedValue ( 'fileNameString', trim(fileNameString) )
-        call outputnamedValue ( 'noPCFid', noPCFid )
-        call outputnamedValue ( 'returnStatus', returnStatus )
+        if ( Debug ) then
+          call outputnamedValue ( 'got(f_file)', got(f_file) )
+          call outputnamedValue ( 'fileNameString', trim(fileNameString) )
+          call outputnamedValue ( 'path', trim(path) )
+          call outputnamedValue ( 'subString', trim(subString) )
+          call outputnamedValue ( 'noPCFid', noPCFid )
+          call outputnamedValue ( 'returnStatus', returnStatus )
+          call outputnamedValue ( 'LastClimPCF', LastClimPCF )
+        endif
         if ( TOOLKIT .and. returnStatus /= PGS_S_SUCCESS ) then
           call announce_error ( son, &
             & 'PCF number not found to supply' // &
@@ -910,7 +917,9 @@ contains ! =====     Public Procedures     =============================
             & missingValue )
           if ( returnStatus /= 0 ) &
             & call Announce_error ( field, &                               
-            & 'read_climatology unsuccessful--check file name and path')  
+            & 'read_climatology unsuccessful--check file name and path') 
+          call outputNamedValue( 'climatology desc.', &
+            & GriddedDatabase(size(GriddedDatabase))%description )
         end if
         if ( .not. associated(GriddedDatabase) ) go to 9  ! Last chance
 
@@ -1165,12 +1174,15 @@ contains ! =====     Public Procedures     =============================
       end if
 
       ! Now parse file and field names
-      ! call outputNamedValue ( 'fileNameString', trim(fileNameString) )
-      ! call outputNamedValue ( 'got file?', gotFile )
-      ! call output('PCFBottom, lastPCF: ')
-      ! call output( (/ PCFBottom, lastPCF /), advance='yes' )
+      if ( debug ) then
+        call outputNamedValue ( 'fileNameString', trim(fileNameString) )
+        call outputNamedValue ( 'got file?', gotFile )
+        call output('PCFBottom, lastPCF: ')
+        call output( (/ PCFBottom, lastPCF /), advance='yes' )
+      endif
+      call split_path_name ( fileNameString, path, subString )
       if ( TOOLKIT .and. gotFile .and. .not. noPCFid ) then
-        call split_path_name ( fileNameString, path, subString )
+        call output( 'Calling getPCFromRef with ' // trim(subString), advance='yes' )
         pcf_id = getPCFromRef ( subString, PCFBottom, lastPCF, TOOLKIT, &
           &                     returnStatus, l2Apriori_Version, DEBUG, &
           &                     exactName = fileNameString )
@@ -1493,6 +1505,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.121  2017/07/10 23:04:52  pwagner
+! Print less if not verbose
+!
 ! Revision 2.120  2017/03/17 00:13:43  pwagner
 ! runtime Boolean CarryOver given better chance to work properly
 !
