@@ -80,7 +80,7 @@ contains ! =====     Public Procedures     =============================
     ! the necessary inputs via the l2cf and
     ! processing user inputs during global settings section
 
-    use Dates_Module, only: UTC_To_YYYYMMDD
+    use Dates_Module, only: UTC_To_YYYYMMDD, PrecedesUTC, resetStartingDate
     use Dump_1, only: Dump
     use HDF, only: Dfacc_Rdonly
     use Intrinsic, only: L_HDF
@@ -303,27 +303,35 @@ contains ! =====     Public Procedures     =============================
     call outputNamedValue ( 'First MAF', GlobalAttributes%FirstMAFCtr )
     ! Get the Start and End Times from PCF
 
-    returnStatus = pgs_pc_getConfigData(mlspcf_l2_param_CCSDSStartId, &
-                                           CCSDSStartTime)
+    returnStatus = pgs_pc_getConfigData( mlspcf_l2_param_CCSDSStartId, &
+                                           CCSDSStartTime )
     if ( returnstatus /= PGS_S_SUCCESS .and. TOOLKIT ) then
       call announce_error ( "Missing pcf param: CCSDSStartTime" )
     end if
 
-    returnStatus = pgs_td_utctotai (CCSDSStartTime, processingrange%starttime)
+    returnStatus = pgs_td_utctotai ( CCSDSStartTime, processingrange%starttime )
     !   ??? Is PGSTD_E_NO_LEAP_SECS an OK status ???
     if ( returnstatus /= PGS_S_SUCCESS .and. &
       &  returnstatus /= PGSTD_E_NO_LEAP_SECS ) &
-        & call announce_error ( "Could not convert UTC Start time to TAI" )
+      & call announce_error ( "Could not convert UTC Start time to TAI" )
     if ( returnstatus == PGSTD_E_NO_LEAP_SECS ) &
-      & call MLSMessage ( MLSMSG_Error, ModuleName, 'No leap second information' )
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'No leap second information' )
 
-   returnStatus = pgs_pc_getConfigData(mlspcf_l2_param_CCSDSEndId, &
-                                          CCSDSEndTime)
+   ! Is CCSDSStartTime before tai93 onset?
+   call outputNamedValue ( 'CCSDSStartTime', CCSDSStartTime )
+   if ( precedesUTC ( CCSDSStartTime, '1993-01-01' ) ) then
+     call outputNamedValue ( 'StartTime precedes tai93 onset', CCSDSStartTime )
+     if ( .false. ) call ResetStartingDate( '1961-01-01' )
+   endif
+   returnStatus = pgs_pc_getConfigData( mlspcf_l2_param_CCSDSEndId, &
+                                          CCSDSEndTime )
     if ( returnstatus /= PGS_S_SUCCESS .and. TOOLKIT ) then
       call announce_error ( "Missing pcf param: CCSDSEndTime" )
     end if
 
-    returnStatus = pgs_td_utctotai (CCSDSEndTime, processingrange%endtime)
+    returnStatus = pgs_td_utctotai ( CCSDSEndTime, processingrange%endtime )
+    call outputNamedValue ( 'CCSDSEndTime', CCSDSEndTime )
     !   ??? Is PGSTD_E_NO_LEAP_SECS an OK status ???
     if ( returnstatus /= PGS_S_SUCCESS .and. &
       & returnstatus /= PGSTD_E_NO_LEAP_SECS) &
@@ -699,6 +707,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.115  2017/07/10 18:55:35  pwagner
+! Warn if starting date precedes start of tai93
+!
 ! Revision 2.114  2017/03/24 22:58:18  pwagner
 ! Made new PCFid 2008 that tells level 2 to crash with walkback if special msg logged
 !
