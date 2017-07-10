@@ -11,9 +11,9 @@
 
 module GLOBAL_SETTINGS
 
-  use MLSCommon, only: FileNameLen, MLSFile_t, nameLen, tai93_range_t
+  use MLSCommon, only: FileNameLen, MLSFile_T, NameLen, Tai93_Range_T
   use HighOutput, only: BeVerbose, OutputCalendar, OutputNamedValue
-  use Output_m, only: Blanks, NewLine, Output, &
+  use Output_M, only: Blanks, NewLine, Output, &
     & RevertOutput, SwitchOutput
 
   implicit none
@@ -207,74 +207,74 @@ contains
     & fileDatabase, FGrids, L2GPDatabase, directDatabase, processingRange )
 
     use BitStuff, only: IsBitSet
-    use Dates_module, only: isUTCInRange, PrecedesUTC, resetStartingDate, &
-      & SecondsBetween2UTCs, Utc2tai93s, UTC_To_yyyymmdd
-    use Declaration_table, only: Named_value, Redeclare, str_value
-    use DirectWrite_m, only: DirectData_t, &
+    use Dates_Module, only: IsUTCInRange, PrecedesUTC, ResetStartingDate, &
+      & SecondsBetween2UTCs, Utc2tai93s, UTC_To_Yyyymmdd
+    use Declaration_Table, only: Named_Value, Redeclare, Str_Value
+    use DirectWrite_M, only: DirectData_T, &
       & AddDirectToDatabase, Dump, SetupNewDirect
-    use DumpCommand_m, only: DumpCommand
+    use DumpCommand_M, only: DumpCommand
     use Dump_1, only: Dump
-    use EmpiricalGeometry, only: initEmpiricalGeometry
-    use FGrid, only: addFGridToDatabase, createFGridFromMLSCFInfo, Dump, fgrid_t
-    use ForwardModelConfig, only: addForwardModelConfigToDatabase, Dump, &
-      & ForwardModelConfig_t
-    use ForwardModelSupport, only: constructForwardModelConfig, &
-      & ForwardModelGlobalsetup, createBinSelectorFromMLSCFInfo
-    use HDF, only: dfacc_create
-    use IGRF_Int, only: Read_gh
-    use Init_tables_module, only: f_File, f_reset, f_type, &
-      & L_L2GP, l_l2dgg, l_l2fwm, &
-      & Parm_indices, &
-      & First_parm, last_parm, p_brightobjects, &
-      & P_cycle, p_endtime, p_igrf_File, p_instrument, &
-      & P_leapsecFile, p_output_version_String, p_PFAFile, p_Starttime, &
-      & S_binselector, s_directwriteFile, s_Dump, s_empiricalgeometry, &
-      & S_fgrid, s_flushPFA, s_forwardModel, s_forwardModelglobal, &
-      & S_l1boa, s_l1brad, s_l2parsf, s_makePFA, s_PFAData, s_ReadPFA, &
-      & S_tgrid, s_time, s_vgrid, s_writePFA
-    use Intrinsic, only: l_hdf, l_swath, spec_indices
-    use L1BData, only: L1BData_t, NameLen, &
-      & AssembleL1BQtyName, deallocateL1BData, Dump, findMaxMaf, &
-      & L1BRadsetup, L1BOASetup, ReadL1BAttribute, ReadL1BData 
-    use L2GPData, only: L2GPData_t
-    use L2PC_m, only: addbinselectortoDatabase, binselectors
+    use EmpiricalGeometry, only: InitEmpiricalGeometry
+    use FGrid, only: AddFGridToDatabase, CreateFGridFromMLSCFInfo, Dump, Fgrid_T
+    use ForwardModelConfig, only: AddForwardModelConfigToDatabase, Dump, &
+      & ForwardModelConfig_T
+    use ForwardModelSupport, only: ConstructForwardModelConfig, &
+      & ForwardModelGlobalsetup, CreateBinSelectorFromMLSCFInfo
+    use HDF, only: Dfacc_Create
+    use IGRF_Int, only: Read_Gh
+    use Init_Tables_Module, only: F_File, F_Reset, F_Type, &
+      & L_L2GP, L_L2dgg, L_L2fwm, &
+      & Parm_Indices, &
+      & First_Parm, Last_Parm, P_Brightobjects, &
+      & P_Cycle, P_Endtime, P_Igrf_File, P_Instrument, &
+      & P_LeapsecFile, P_Output_Version_String, P_PFAFile, P_Starttime, &
+      & S_Binselector, S_DirectwriteFile, S_Dump, S_Empiricalgeometry, &
+      & S_Fgrid, S_FlushPFA, S_ForwardModel, S_ForwardModelglobal, &
+      & S_L1boa, S_L1brad, S_L2parsf, S_MakePFA, S_PFAData, S_ReadPFA, &
+      & S_Tgrid, S_Time, S_Vgrid, S_WritePFA
+    use Intrinsic, only: L_HDF, L_Swath, Spec_Indices
+    use L1BData, only: L1BData_T, NameLen, &
+      & AssembleL1BQtyName, DeallocateL1BData, Dump, FindMaxMaf, &
+      & L1BRadsetup, L1BOASetup, ReadL1BAttribute, ReadL1BData
+    use L2GPData, only: L2GPData_T
+    use L2PC_M, only: AddbinselectortoDatabase, Binselectors
     use MLSFiles, only: Filenotfound, HDFVersion_5, &
       & AddFiletoDatabase, GetPCFromref, GetMLSFileByName, GetMLSFileByType, &
-      & InitializemlsFile, MLS_CloseFile, MLS_OpenFile, split_path_Name
+      & InitializeMLSFile, MLS_CloseFile, MLS_OpenFile, Split_Path_Name
     use MLSHDF5, only: GetAllHDF5GroupNames
-    use MLSKinds, only: r8
-    use MLSL2Options, only: checkPaths, L2CFNode, level1_HDFVersion, &
-      & Need_L1BFiles, specialDumpFile, stopAfterSection, toolkit, &
+    use MLSKinds, only: R8
+    use MLSL2Options, only: CheckPaths, L2CFNode, Level1_HDFVersion, &
+      & Need_L1BFiles, SpecialDumpFile, StopAfterSection, Toolkit, &
       & MLSMessage
-    use MLSL2Timings, only: section_times
+    use MLSL2Timings, only: Section_Times
     use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning
-    use MLSPCF2, only: MLSPCF_L2GP_Start, MLSPCF_L2GP_end, &
-      & MLSPCF_l2dgm_Start, MLSPCF_l2dgm_end, MLSPCF_l2fwm_full_Start, &
-      & MLSPCF_l2fwm_full_end, &
-      & MLSPCF_l2dgg_Start, MLSPCF_l2dgg_end
-    use MLSStrings, only: hhmmss_value, lowerCase, trim_safe
-    use MLSStringLists, only: array2List, catLists, switchDetail, &
+    use MLSPCF2, only: MLSPCF_L2GP_Start, MLSPCF_L2GP_End, &
+      & MLSPCF_L2dgm_Start, MLSPCF_L2dgm_End, MLSPCF_L2fwm_Full_Start, &
+      & MLSPCF_L2fwm_Full_End, &
+      & MLSPCF_L2dgg_Start, MLSPCF_L2dgg_End
+    use MLSStrings, only: Hhmmss_Value, LowerCase, Trim_Safe
+    use MLSStringLists, only: Array2List, CatLists, SwitchDetail, &
       & NumStringElements, StringElement, StringElementNum
-    use MLSSignals_m, only: instrument, modules, Dump_Modules, GetModuleName
-    use MoreTree, only: Get_boolean, Get_field_id, Get_label_and_spec, &
-      & Get_spec_id, StartErrorMessage
-    use Next_tree_node_m, only: next_tree_node, next_tree_node_state
-    use PFAData_m, only: Get_PFAData_from_l2cf, flush_PFAData, make_PFAData, &
-      & Read_PFAData, write_PFAData
-    use PFADatabase_m, only: process_PFA_File
-    use PCFHDR, only: globalAttributes, fillTAI93Attribute
+    use MLSSignals_M, only: Instrument, Modules, Dump_Modules, GetModuleName
+    use MoreTree, only: Get_Boolean, Get_Field_Id, Get_Label_And_Spec, &
+      & Get_Spec_Id, StartErrorMessage
+    use Next_Tree_Node_M, only: Next_Tree_Node, Next_Tree_Node_State
+    use PFAData_M, only: Get_PFAData_From_L2cf, Flush_PFAData, Make_PFAData, &
+      & Read_PFAData, Write_PFAData
+    use PFADatabase_M, only: Process_PFA_File
+    use PCFHDR, only: GlobalAttributes, FillTAI93Attribute
     use ReadAPriori, only: APrioriFiles
-    use SDPToolkit, only: Max_orbits, MLS_UTCToTAI, &
-      & PGSD_dem_30arc, PGSD_dem_90arc, &
-      & PGSD_dem_elev, PGSD_dem_water_land, &
-      & PGS_dem_open, PGS_s_success
-    use String_table, only: display_String, Get_String
-    use Time_m, only: SayTime, time_now
-    use Toggles, only: gen, switches, toggle
-    use Trace_m, only: trace_begin, trace_end
-    use Tree, only: decorate, decoration, node_id, nsons, sub_rosa, subtree, &
-      & Dump_tree_node
-    use Tree_types, only: n_equal
+    use SDPToolkit, only: Max_Orbits, MLS_UTCToTAI, &
+      & PGSD_Dem_30arc, PGSD_Dem_90arc, &
+      & PGSD_Dem_Elev, PGSD_Dem_Water_Land, &
+      & PGS_Dem_Open, PGS_S_Success
+    use String_Table, only: Display_String, Get_String
+    use Time_M, only: SayTime, Time_Now
+    use Toggles, only: Gen, Switches, Toggle
+    use Trace_M, only: Trace_Begin, Trace_End
+    use Tree, only: Decorate, Decoration, Node_Id, Nsons, Sub_Rosa, Subtree, &
+      & Dump_Tree_Node
+    use Tree_Types, only: N_Equal
     use VGrid, only: CreateVGridFromMLSCFInfo
     use VGridsDatabase, only: AddVGridToDatabase, VGrids
     use WriteMetaData, only: L2PCF
@@ -925,17 +925,17 @@ contains
           call output(returnStatus, advance='yes')
         end if
       elseif ( NEGATIVETAI93OK ) then
-        call ResetStartingDate( '1961-01-01' )
+        if ( .false. ) call ResetStartingDate( '1961-01-01' )
         call output( 'The starting time is before our nominal 1993 start date', advance='yes' )
         call output( '(but we allow it to go negative)', advance='yes' )
         processingrange%starttime = &
           & -secondsbetween2utcs ( start_time_string, '1993-01-01' )
-        call ResetStartingDate( '1993-01-01' )
+        if ( .false. ) call ResetStartingDate( '1961-01-01' ) ! ( '1993-01-01' )
       else
         ! The starting time is before our nominal 1993 start date
         ! We'll use the dates_module as a fallback
         call output( 'The starting time is before our nominal 1993 start date', advance='yes' )
-        call ResetStartingDate( '1961-01-01' )
+        if ( .false. ) call ResetStartingDate( '1961-01-01' )
         processingrange%starttime = &
           & secondsbetween2utcs ( '1961-01-01', start_time_string )
       endif
@@ -959,17 +959,17 @@ contains
           call output(returnStatus, advance='yes')
         end if
       elseif ( NEGATIVETAI93OK ) then
-        call ResetStartingDate( '1961-01-01' )
+        if ( .false. ) call ResetStartingDate( '1961-01-01' )
         call output( 'The ending time is before our nominal 1993 start date', advance='yes' )
         call output( '(but we allow it to go negative)', advance='yes' )
         processingrange%endtime = &
           & -secondsbetween2utcs ( end_time_string, '1993-01-01' )
-        call ResetStartingDate( '1993-01-01' )
+        if ( .false. ) call ResetStartingDate( '1961-01-01' ) ! ( '1993-01-01' )
       else
         ! The starting time is before our nominal 1993 start date
         ! We'll use the dates_module as a fallback
         call output( 'The starting time is before our nominal 1993 start date', advance='yes' )
-        call ResetStartingDate( '1961-01-01' )
+        if ( .false. ) call ResetStartingDate( '1961-01-01' )
         processingrange%endtime = &
           & secondsbetween2utcs ( '1961-01-01', end_time_string )
       endif
@@ -1001,7 +1001,7 @@ contains
           call output(returnStatus, advance='yes')
         end if
       elseif ( NEGATIVETAI93OK ) then
-        call ResetStartingDate( '1961-01-01' )
+        if ( .false. ) call ResetStartingDate( '1961-01-01' )
         call output( 'The starting time is before our nominal 1993 start date', advance='yes' )
         call output( '(but we allow it to go negative)', advance='yes' )
         call outputNamedValue( 'start_time_string', trim(start_time_string) )
@@ -1010,11 +1010,11 @@ contains
           & -secondsbetween2utcs ( start_time_string, '1993-01-01' )
         processingrange%endtime = &
           & -secondsbetween2utcs ( end_time_string, '1993-01-01' )
-        call ResetStartingDate( '1993-01-01' )
+        if ( .false. ) call ResetStartingDate( '1961-01-01' ) ! ( '1993-01-01' )
       else
         ! The starting time is before our nominal 1993 start date
         ! We'll use the dates_module as a fallback
-        call ResetStartingDate( '1961-01-01' )
+        if ( .false. ) call ResetStartingDate( '1961-01-01' )
         processingrange%starttime = &
           & secondsbetween2utcs ( '1961-01-01', start_time_string )
         processingrange%endtime = &
@@ -1101,9 +1101,9 @@ contains
       & filedatabase, DirectDatabase, ForwardModelConfigDatabase, &
       & LeapSecFileName, details )
     use Dump_1, only: Dump
-    use HighOutput, only: AddRow, AddRow_divider, AddRow_header, &
+    use HighOutput, only: AddRow, AddRow_Divider, AddRow_Header, &
       & OutputTable, StartTable
-    use Open_init, only: DumpL1BDatabase
+    use Open_Init, only: DumpL1BDatabase
       ! Dump info obtained during OpenAndInitialize and global_settings:
       ! L1B databse
       ! L1OA file
@@ -1338,6 +1338,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.173  2017/01/19 23:52:03  pwagner
+! Improve appeearance when dumping Run Info
+!
 ! Revision 2.172  2017/01/07 01:14:51  pwagner
 ! Print moon phases on calendar
 !
