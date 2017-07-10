@@ -77,7 +77,7 @@
         ! call output( 'done with PrintRMSetc.', advance='yes')
       end if
     end if
-    if ( dopts(stats)%v .and. .not. thisIsADiff ) then
+    if ( dopts(stats)%v ) then
       ! Count how many meet our desired relationship w.r.t. FillValue
       select case ( fillvaluerelation )
       case ( '=' )
@@ -92,11 +92,11 @@
       numFill = size(array) - numNonFill
       ! call output( 'about to dump %', advance='yes' )
       if ( (PRINTFILLVALUE .or. present(FillValue)) .and. &
-        & numFill+numNonFill > 0 ) then
+        & numFill+numNonFill > 0 .and. .not. thisIsADiff ) then
         call output( 'Compared with ', advance='no' )
         call output( myFillValue, advance='no' )
       end if
-      call printPercentages ( equal=numFill, unEqual=numNonFill )
+      if ( .not. thisIsADiff ) call printPercentages ( equal=numFill, unEqual=numNonFill )
     end if
     if ( dopts(collapseIt)%v .and. myRank > 1 ) then
       call dumpCollapsedArray( array, name, &
@@ -165,6 +165,9 @@
     end if
     ! call output('Leaving dumpstats', advance='no')
 ! $Log$
+! Revision 2.37  2017/07/10 18:27:09  pwagner
+! Correct bugs that caused unwanted printing
+!
 ! Revision 2.36  2016/07/28 01:42:27  vsnyder
 ! Refactoring dump and diff
 !
