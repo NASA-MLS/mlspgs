@@ -183,6 +183,7 @@ contains
     the_g_data%description  = '(none)'
     the_g_data%units        = '(none)'
     the_g_data%equivalentLatitude = .false.
+    the_g_data%noYear = .false.
     returnStatus = mls_hdf_version(GriddedFile%Name)
     if ( returnStatus == FILENOTFOUND ) then
       call SetupNewGriddedData ( the_g_data, empty=.true. )
@@ -356,7 +357,7 @@ contains
     if ( present(litDescription) ) litDescription = LIT_DESCRIPTION
 
 9   continue
-    call trace_end ( "rprocessOneAprioriFile", &
+    call trace_end ( "ReadGriddedData_MLSFile", &
       & cond=toggle(gen) .and. levels(gen) > 0 )
 
   end subroutine ReadGriddedData_MLSFile
@@ -565,6 +566,9 @@ contains
 end module ncep_dao
 
 ! $Log$
+! Revision 2.86  2017/07/10 18:22:46  pwagner
+! Correct arg to trace_end; preset noYear
+!
 ! Revision 2.85  2017/03/07 21:17:35  pwagner
 ! The specific procedures for each origin type moved to a Utils module
 !
