@@ -44,15 +44,15 @@ contains ! ========= Public Procedures ============================
   ! call to restrict heights, channels, and horizontal instances
   ! instead of having each command process the l2cf fields
   ! separately
-  subroutine ApplyMaskToQuantity ( QTY, RAD, PTAN, OPTICALDEPTH, A, &
-    & OPTICALDEPTHCUTOFF, MAXVALUE, MINVALUE, HEIGHTRANGE, WHERERANGE, &
-    & IGNORE, REVERSE, ADDITIONAL, RESET, &
-    & MASKBIT, HEIGHTNODE, SURFNODE, INSTANCESNODE, CHANNELSNODE )
+  subroutine ApplyMaskToQuantity ( qty, rad, ptan, opticaldepth, a, &
+    & opticaldepthcutoff, maxvalue, minvalue, heightrange, whererange, &
+    & ignore, reverse, additional, expandMask, reset, &
+    & maskbit, heightnode, surfnode, instancesnode, channelsnode )
 
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
     use Dump_0, only: Dump
     use Expr_M, only: Expr, Getindexflagsfromlist
-    use FillUtils_1, only: ByManipulation
+    use FillUtils_1, only: ByManipulation, M_All
     use Highoutput, only: OutputNamedValue
     use Init_Tables_Module, only: F_Height, F_Ptanquantity, F_Quantity, F_Surface
     use Init_Tables_Module, only: L_None, L_Pressure, &
@@ -85,6 +85,7 @@ contains ! ========= Public Procedures ============================
     logical, intent(in)           :: IGNORE
     logical, intent(in)           :: REVERSE
     logical, intent(in)           :: ADDITIONAL
+    logical, intent(in)           :: ExpandMask
     logical, intent(in)           :: RESET
     integer, intent(in)           :: MASKBIT             ! Bits corresponding to Mask
     integer, intent(in)           :: HEIGHTNODE          ! Tree node
@@ -250,6 +251,13 @@ contains ! ========= Public Procedures ============================
     endif
     ! Now we loop over the instances
     do instance = 1, qty%template%noInstances
+      ! Have we been asked to expand the original mask?
+      if ( expandMask ) then
+        where (ichar(qty%mask ( :, instance )) /= 0 )
+          qty%mask ( :, instance ) = char(M_All)
+        end where
+        cycle
+      endif
       ! Possibly save original mask
       if ( additional ) originalMask = qty%mask ( :, instance )
       if ( .not. doThisInstance(instance) ) then
@@ -828,7 +836,7 @@ contains ! ========= Public Procedures ============================
 
     use Expr_M, only: Expr
     use Init_Tables_Module, only: Field_First, Field_Last
-    use Init_Tables_Module, only: F_A, F_Additional, F_Channels, &
+    use Init_Tables_Module, only: F_A, F_Additional, F_Channels, F_ExpandMask, &
       & F_Height, F_HeightRange, &
       & F_Ignore, F_Instances, F_Mask, F_MaxValue, F_MinValue, F_OpticalDepth, &
       & F_OpticalDepthCutoff, F_PTanQuantity, F_Quantity, F_RadianceQuantity, &
@@ -883,8 +891,9 @@ contains ! ========= Public Procedures ============================
     logical :: Got(field_first:field_last)   ! "Got this field already"
     logical :: IGNORE                 ! Flag
     logical :: RESET                  ! Flag
-    logical :: RESETAll                  ! Flag
+    logical :: RESETAll               ! Flag
     logical :: ADDITIONAL             ! Flag
+    logical :: ExpandMask             ! Flag
     logical :: REVERSE                ! Flag
 
     ! Executable code
@@ -902,6 +911,7 @@ contains ! ========= Public Procedures ============================
     reset = .false.
     resetAll = .false.
     additional = .false.
+    ExpandMask = .false.
     reverse = .false.
     maskBit = m_linalg
     minUnit = 0
@@ -987,6 +997,8 @@ contains ! ========= Public Procedures ============================
         surfNode = son
       case ( f_additional )
         additional = Get_Boolean ( son )
+      case ( f_ExpandMask )
+        ExpandMask = Get_Boolean ( son )
       case ( f_reverse )
         reverse = Get_Boolean ( son )
       case ( f_where )
@@ -1065,7 +1077,7 @@ contains ! ========= Public Procedures ============================
       ! Let it set the mask
       call ApplyMaskToQuantity( qty, rad, ptan, opticalDepth, a, &
         & opticalDepthCutoff, maxvalue, minValue, heightRange, whereRange, &
-        & ignore, reverse, additional, reset, &
+        & ignore, reverse, additional, expandMask, reset, &
         & maskBit, heightNode, surfNode, instancesNode, channelsNode )
     endif
 
@@ -1542,6 +1554,9 @@ contains ! ========= Public Procedures ============================
 end module SubsetModule
  
 ! $Log$
+! Revision 2.38  2017/07/10 18:50:00  pwagner
+! Transfer may /expandMask to all masking bits; may /skipValues to transfer only mask; Fill may replaceMissingValue=
+!
 ! Revision 2.37  2017/02/22 01:23:36  pwagner
 ! New /resetAll switch clears all Masking bits
 !
