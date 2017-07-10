@@ -13,21 +13,21 @@
 module L3ascii ! Collections of Hugh's subroutines to handle TYPE GriddedData_T
 !=============================================================================
 
-  use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
-  use DUMP_0, only: DUMP
-  use GRIDDEDDATA, only: DESTROYGRIDDEDDATA, GRIDDEDDATA_T, V_IS_PRESSURE, &
-    & V_IS_ALTITUDE, V_IS_GPH, V_IS_THETA, RGR
-  use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
-  use LEXER_CORE, only: PRINT_SOURCE
-  use MLSCOMMON, only: LINELEN, NAMELEN, UNDEFINEDVALUE
-  use MLSKINDS, only: R4, R8
-  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_WARNING
-  use MLSSTRINGS, only: CAPITALIZE, &
-    & COUNT_WORDS, READCOMPLETELINEWITHOUTCOMMENTS
-  use OUTPUT_M, only: OUTPUT
-  use TREE, only: DUMP_TREE_NODE, WHERE
+  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+  use Dump_0, only: Dump
+  use GriddedData, only: DestroygriddedData, GriddedData_T, V_Is_Pressure, &
+    & V_Is_Altitude, V_Is_Gph, V_Is_Theta, Rgr
+  use HighOutput, only: OutputnamedValue
+  use Lexer_Core, only: Print_Source
+  use MLSCommon, only: Linelen, Namelen, UndefinedValue
+  use MLSKinds, only: R4, R8
+  use MLSMessagemodule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
+  use MLSStrings, only: Capitalize, &
+    & Count_Words, Readcompletelinewithoutcomments
+  use Output_M, only: Output
+  use Tree, only: Dump_Tree_Node, Where
 
-  implicit NONE
+  implicit none
   private
 
 !---------------------------- RCS Module Info ------------------------------
@@ -96,8 +96,8 @@ contains
 
   subroutine L3ascii_read_field ( Unit, Field, End_of_file, ErrType )
     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
-    use Dates_module, only: ccsds2tai    ! Shoud use SDP Toolkit eventually. 
-    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
+    use Dates_Module, only: Ccsds2tai    ! Shoud use SDP Toolkit eventually. 
+    use, Intrinsic :: ISO_C_Binding, only: C_Intptr_T, C_Loc
     use Toggles, only: Gen, Levels, Toggle
     use Trace_m, only: Trace_Begin, Trace_End
     ! ----Arguments ----!
@@ -902,6 +902,9 @@ end module L3ascii
 
 !
 ! $Log$
+! Revision 2.42  2017/07/10 18:25:14  pwagner
+! More CamelCase
+!
 ! Revision 2.41  2015/03/28 00:57:46  vsnyder
 ! Stuff to trace allocate/deallocate addresses -- mostly commented out
 ! because NAG build 1017 doesn't yet allow arrays as arguments to C_LOC.
