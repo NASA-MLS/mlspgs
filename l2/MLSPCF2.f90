@@ -112,6 +112,9 @@ MODULE MLSPCF2
    INTEGER, PARAMETER :: mlspcf_l2clim_start = 22200
    INTEGER, PARAMETER :: mlspcf_l2clim_end = 22299
    !
+   INTEGER, PARAMETER :: mlspcf_l2ascii_start = 22300
+   INTEGER, PARAMETER :: mlspcf_l2ascii_end = 22399
+   !
    INTEGER, PARAMETER :: mlspcf_mobile_l2gp_start = 30000
    INTEGER, PARAMETER :: mlspcf_mobile_l2gp_end = 30569
    !
@@ -151,6 +154,9 @@ contains
 END MODULE MLSPCF2
 
 ! $Log$
+! Revision 2.28  2017/07/10 18:53:23  pwagner
+! Added mlspcf_l2ascii_start, mlspcf_l2ascii_end
+!
 ! Revision 2.27  2016/01/29 00:48:54  pwagner
 ! Added Polygon file
 !
