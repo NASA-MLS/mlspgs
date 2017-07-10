@@ -157,6 +157,7 @@ excludeBelowBottom
 excludePostOverlaps
 excludePriorOverlaps
 extendedAverage
+expandMask
 explicitValues
 expr
 extendible
@@ -387,6 +388,7 @@ removeQuantities
 removeTemplate
 rename
 repairGeolocations
+replaceMissingValue
 reset
 resetAll
 resetSeed
@@ -431,6 +433,7 @@ skipDirectWrites
 skipDirectWritesif
 skipL1BCheck
 skipMask
+skipValues
 skipOverlaps
 skipRetrieval
 skipRetrievalif
@@ -546,6 +549,9 @@ yStar
 ZOT # Tells dump of HGrid whether to print QTM coordinates in ZOT or Geo
 
 # $Log$
+# Revision 2.265  2017/07/10 18:48:28  pwagner
+# Transfer may /expandMask to all masking bits; may /skipValues to transfeer only mask; Fill may replaceMissingValue=
+#
 # Revision 2.264  2017/04/07 18:45:19  pwagner
 # sourceType used when choosing how to Fill ascenddescend
 #
