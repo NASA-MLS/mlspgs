@@ -121,6 +121,7 @@ module FillUtils_1                     ! Procedures used by Fill
   logical, parameter :: DEEBUG = .FALSE.                 ! Usually FALSE
   logical, parameter :: UNIFORMCHISQRATIO = .FALSE.
   integer, public :: FILLERROR
+  integer, public, parameter            :: M_All = 127 ! 2**7 - 1
 
   ! -999.99 ! Same as %template%badvalue
   real, parameter ::    UNDEFINED_VALUE = DEFAULTUNDEFINEDVALUE
@@ -438,6 +439,7 @@ contains ! =====     Public Procedures     =============================
     ! ------------------------------------------- ApplyBaseline ----------
     subroutine ApplyBaseline ( key, quantity, baselineQuantity, &
       & quadrature, dontMask, ignoreTemplate )
+      use HighOutput, only: outputNamedValue
       integer, intent(in) :: KEY        ! Tree node
       type (VectorValue_T), intent(inout) :: QUANTITY ! Radiance quantity to modify
       type (VectorValue_T), intent(in) :: BASELINEQUANTITY ! L1B MAF baseline to use
@@ -452,9 +454,10 @@ contains ! =====     Public Procedures     =============================
       integer :: Me = -1                ! String index for trace
       integer :: numProfs
       logical :: skipMe
+      logical :: debug
 
       ! Executable code
-
+      debug = ignoreTemplate
       call trace_begin ( me, 'FillUtils_1.ApplyBaseline', key, &
         & cond=toggle(gen) .and. levels(gen) > 1 )
       if ( .not. ignoreTemplate ) then
@@ -471,13 +474,20 @@ contains ! =====     Public Procedures     =============================
       end if
       ind = 1
       numProfs = size( quantity%values ( ind, : ) )
+      if ( debug ) then
+        call outputNamedValue( 'quadrature', quadrature )
+        call outputNamedValue( 'dontMask', quadrature )
+        call outputNamedValue( 'masked Quantity?', associated(Quantity%Mask) )
+      endif
       if ( quadrature ) then
         do mif = 1, quantity%template%noSurfs
           do chan = 1, quantity%template%noChans
+            ! if ( .not. dontMask .and. associated(Quantity%Mask) ) then
             if ( .not. dontMask .and. associated(baselineQuantity%Mask) ) then
               do i=1, numProfs
                 skipMe = .not. dontMask .and. &
                   &  isVectorQtyMasked(baselineQuantity, chan, i, m_linAlg)
+                  ! &  isVectorQtyMasked(Quantity, chan, i, m_linAlg)
                 if ( .not. skipMe )  &
                 & quantity%values ( ind, i ) = sqrt ( &
                   & quantity%values ( ind, i )**2 + &
@@ -493,10 +503,12 @@ contains ! =====     Public Procedures     =============================
       else
         do mif = 1, quantity%template%noSurfs
           do chan = 1, quantity%template%noChans
+            ! if ( .not. dontMask .and. associated(Quantity%Mask) ) then
             if ( .not. dontMask .and. associated(baselineQuantity%Mask) ) then
               do i=1, numProfs
                 skipMe = .not. dontMask .and. &
                   &  isVectorQtyMasked(baselineQuantity, chan, i, m_linalg)
+                  ! &  isVectorQtyMasked(Quantity, chan, i, m_linalg)
                 if ( .not. skipMe )  &
                 & quantity%values ( ind, i ) = &
                   & quantity%values ( ind, i ) + &
@@ -5800,12 +5812,15 @@ contains ! =====     Public Procedures     =============================
     end subroutine UsingLeastSquares
 
     ! -------------------------------------------------  FromGrid  -----
-    subroutine FromGrid(quantity, grid, allowMissing, errorCode)
+    subroutine FromGrid( quantity, grid, allowMissing, replaceMissingValue, &
+      & errorCode )
+      use QuantityTemplates, only: Dump
       ! Dummy arguments
       type (VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
       type (GriddedData_T), intent(inout) :: GRID ! Grid to fill it from
       ! Needs to be inout because we wrap it.
       logical, intent(in) :: ALLOWMISSING ! If set missing data in grid ok
+      real(rv), intent(in) :: replaceMissingValue ! Replace missing data in grid with
       integer, intent(out) :: ERRORCODE   ! Error code (one of constants defined above)
 
       ! Local variables
@@ -5816,6 +5831,7 @@ contains ! =====     Public Procedures     =============================
       integer :: Me = -1                  ! String index for trace
       real(rv) :: newValue
       logical :: noGrid
+      logical :: verbose
       ! Executable code
       call trace_begin ( me, 'FillUtils_1.FromGrid', &
         & cond=toggle(gen) .and. levels(gen) > 1 )
@@ -5824,6 +5840,7 @@ contains ! =====     Public Procedures     =============================
       ! DEEBUG = ( grid%quantityName == 'TEMPERATURE' .or. &
       !   & grid%description == 'Temperature' )
       check = (BeVerbose( 'cgrid', -1 ))
+      verbose = (BeVerbose( 'grid', -1 )) ! .or. .true.
       if ( check ) call outputNamedValue( 'check', check )
       noGrid = .not. associated(grid%field)
       if ( .not. noGrid ) noGrid = grid%empty
@@ -5855,6 +5872,10 @@ contains ! =====     Public Procedures     =============================
         call outputNamedValue( '(noSurfs,noInstances)', &
           & (/ quantity%template%noSurfs,quantity%template%noInstances /) )
       end if
+      if ( verbose ) then
+        call Dump( quantity%template, details=1 )
+        call Dump( quantity%template%time(:,1), 'template dates' )
+      endif
       do instance = 1, quantity%template%noInstances
         if ( .not. quantity%template%stacked) instIndex=instance
 
@@ -5876,8 +5897,10 @@ contains ! =====     Public Procedures     =============================
             & debug=.false. )
             ! & debug=(instance==1 .and. surf==1 .and. grid%quantityName == 'CO') )
           if ( newValue >= nearest ( grid%missingValue, -1.0 ) .and. &
-            &  newValue <= nearest ( grid%missingValue,  1.0 ) .and. &
-            & .not. allowMissing ) errorCode = MissingDataInGrid
+            &  newValue <= nearest ( grid%missingValue,  1.0 ) ) then
+            if ( .not. allowMissing ) errorCode = MissingDataInGrid
+            if ( replaceMissingValue /= 0. ) newValue = replaceMissingValue
+          endif
           quantity%values(surf,instance) = newValue
         end do                            ! End surface loop
       end do                              ! End instance loop
@@ -6969,14 +6992,17 @@ contains ! =====     Public Procedures     =============================
     end subroutine SpreadChannelFill
 
     ! ------------------------------------------  TransferVectors  -----
-    subroutine TransferVectors ( source, dest, skipMask, interpolate, &
+    subroutine TransferVectors ( source, dest, &
+      & expandMask, skipMask, skipValues, interpolate, &
       & booleanname )
     use MLSL2Options, only: RunTimeValues
     use MLSStrings, only: StrEq
       ! Copy common items in source to those in dest
       type (Vector_T), intent(in) :: SOURCE
       type (Vector_T), intent(inout) :: DEST
+      logical, intent(in) :: ExpandMask
       logical, intent(in) :: SKIPMask
+      logical, intent(in) :: SKIPValues
       logical, intent(in) :: INTERPOLATE
       character(len=*), intent(in), optional :: BOOLEANNAME
 
@@ -6995,6 +7021,15 @@ contains ! =====     Public Procedures     =============================
         & cond=toggle(gen) .and. levels(gen) > 2  )
       verbose = ( BeVerbose( 'bool', -1 ) )
       verboser = ( switchDetail(switches, 'bool') > 0 )
+      ! Can't have /interpolate and /skipValues at the same time
+      if ( interpolate .and. skipValues ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & "May not have both /interpolate and /skipValues" )
+      ! Can't have /skipMask and /expandMask at the same time
+      if ( skipMask .and. expandMask ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & "May not have both /skipMask and /expandMask" )
+
       n = 0
       ! If we're given a BooleanName, try to interpret it as a container for
       ! quantity names
@@ -7022,11 +7057,16 @@ contains ! =====     Public Procedures     =============================
           if ( .not. any( streq(names, qName, options='-cf' ) )  ) cycle
         end if
         if ( verboser .and. n > 0 ) call output( 'Transferring quantities named ' // trim(qName), advance='yes' )
-        dq%values = sq%values
+        if ( .not. skipValues ) dq%values = sq%values
         if ( .not. skipMask ) then
           if ( associated(sq%Mask) ) then
             if ( .not. associated(dq%Mask)) call CreateMask ( dq )
             dq%Mask = sq%Mask
+            if ( expandmask ) then
+              where ( ichar(sq%Mask) /= 0 )
+                dq%Mask = char(M_All)
+              end where
+            endif
           else
             call destroyVectorQuantityMask ( dq )
           end if
@@ -7392,49 +7432,48 @@ contains ! =====     Public Procedures     =============================
       character (LEN=10*MAXLISTLENGTH)        :: attrvalues
       integer :: SQI                      ! Quantity index in source
       character (len=80) :: Str
+      logical :: verbose
 
       ! Executable code
       call trace_begin ( me, 'FillUtils_1.VectorFromFile', key, &
         & cond=toggle(gen) .and. levels(gen) > 1 )
       homogeneous = index(lowercase(options), 'h') > 0
-      call output( 'Now in VectorFromFile', advance='yes' )
+      verbose = index(lowercase(options), 'v') > 0
       call GetAllHDF5DSNames( MLSFile, DSNames )
-      call dump( DSNames )
+      if ( verbose ) then
+        call output( 'Now in VectorFromFile', advance='yes' )
+        call dump( DSNames )
+      endif
+      ! Do we access the dataset by attribute(s)? (Most efficient way)
+      if ( index(lowercase(options), 'a') > 0 ) then
+        call ByAttribute
+        call trace_end ( 'FillUtils_1.VectorFromFile', &
+          & cond=toggle(gen) .and. levels(gen) > 1 )
+        return
+      endif
       do dsi=1, NumStringElements( trim(DSNames), countEmpty )
         do sqi = 1, size ( vector%quantities )
           quantity => vector%quantities(sqi)
-          ! How do we access the dataset to read? By name or by attribute?
-          if ( index(lowercase(options), 'a') < 1 ) then
-            ! By name
-            if ( index(lowercase(options), 'num') < 1 ) then
-              if ( quantity%template%name < 1 ) &
-                & call Announce_Error ( key, no_Error_Code, &
-                &   'template name is 0?' )
-              call get_string( quantity%template%name, Name )
-            else
-              call writeIntsToChars ( sqi, Name )
-              Name = 'Quantity ' // trim(Name)
-            end if
-            if ( lowercase(trim(name)) /= &
-              & lowercase(StringElement( DSNames, dsi, countEmpty )) ) &
-              & cycle
-            if ( addSlash ) Name = '/' // Name
-            if ( DEEBUG ) then
-              call outputNamedValue( 'shape(values)' // trim(name), &
-                & shape(quantity%values) )
-              call dump( MLSFile )
-            end if
+          ! How do we access the dataset to read? By name or by num?
+          if ( index(lowercase(options), 'num') < 1 ) then
+          ! By name
+            if ( quantity%template%name < 1 ) &
+              & call Announce_Error ( key, no_Error_Code, &
+              &   'template name is 0?' )
+            call get_string( quantity%template%name, Name )
           else
-            ! By attribute
-            attrnames  = 'TemplateName,tempQtyType'
-            call Get_String ( quantity%template%name, str, strip=.true. )
-            attrvalues = str
-            call Get_String ( lit_indices(quantity%template%quantityType), &
-              & str, strip=.true. )
-            attrvalues = trim(attrvalues) // ',' // str
-            call MatchHDF5Attributes ( MLSFile, attrNames, attrValues, name )
-            ! call Announce_Error ( key, no_Error_Code, &
-            ! &   'Unable to read Vector from File by attribute yet' )
+          ! By num
+            call writeIntsToChars ( sqi, Name )
+            Name = 'Quantity ' // trim(Name)
+          end if
+          if ( lowercase(trim(name)) /= &
+            & lowercase(StringElement( DSNames, dsi, countEmpty )) ) &
+            & cycle
+          if ( addSlash ) Name = '/' // Name
+          if ( DEEBUG ) then
+            call outputNamedValue( 'shape(values)' // trim(name), &
+              & shape(quantity%values) )
+            call dump( MLSFile )
           end if
           if ( len_trim(name) > 0 ) &
             & call NamedQtyFromFile ( key, quantity, MLSFile, &
@@ -7443,6 +7482,29 @@ contains ! =====     Public Procedures     =============================
       end do
       call trace_end ( 'FillUtils_1.VectorFromFile', &
         & cond=toggle(gen) .and. levels(gen) > 1 )
+    contains
+      subroutine ByAttribute
+        ! By attribute
+        do sqi = 1, size ( vector%quantities )
+          quantity => vector%quantities(sqi)
+          attrnames  = 'TemplateName,tempQtyType'
+          call Get_String ( quantity%template%name, str, strip=.true. )
+          attrvalues = str
+          call Get_String ( lit_indices(quantity%template%quantityType), &
+            & str, strip=.true. )
+          attrvalues = trim(attrvalues) // ',' // str
+          call MatchHDF5Attributes ( MLSFile, attrNames, attrValues, name )
+          if ( verbose ) then
+            call outputnamedValue ( 'sqi', sqi )
+            call outputnamedValue ( 'attrNames', trim(attrNames) )
+            call outputnamedValue ( 'attrValues', trim(attrValues) )
+            call outputnamedValue ( 'name', trim(name) )
+          endif
+          if ( len_trim(name) > 0 ) &
+            & call NamedQtyFromFile ( key, quantity, MLSFile, &
+            & filetype, name, spread, interpolate, homogeneous )
+        enddo
+      end subroutine ByAttribute
     end subroutine VectorFromFile
 
     ! =====  Private procedures  =======================================
@@ -7590,7 +7652,7 @@ contains ! =====     Public Procedures     =============================
       ! Executable code
       call trace_begin ( me, 'FillUtils_1.NamedQtyFromFile', key, &
         & cond=toggle(gen) .and. levels(gen) > 2 )
-      verbose = ( switchDetail(switches, 'fill') > -1 )
+      verbose = ( switchDetail(switches, 'fill') > 0 )
       call GetHDF5DSDims ( MLSFile, name, DIMS )
       dimInts = max(dims, int(1,hsize_t))
       select case (lowercase(fileType))
@@ -7615,8 +7677,10 @@ contains ! =====     Public Procedures     =============================
           call outputNamedValue( 'spread', spread )
           call outputNamedvalue( 'shape(quantity%values)', shape(quantity%values) )
           call outputNamedvalue( 'shape(values)', shape(values) )
+          call outputNamedvalue( 'values(1,1,1)', values(1,1,1) )
         end if
         if ( spread ) then
+          if ( verbose ) call output( '/spead option invoked', advance='yes' )
           quantity%values = values(1,1,1)
         else if ( interpolate .and. allocated(quantity%template%surfs) ) then
           ! Must we interpolate according to surface heights?
@@ -7632,8 +7696,10 @@ contains ! =====     Public Procedures     =============================
           call GetHDF5Attribute( MLSFile, 'surfs', surfs )
           if ( all(surfs == quantity%template%surfs(:,1)) ) then
             ! No need, the heights are all the same
+            if ( verbose ) call output( 'All heights the same', advance='yes' )
             call fillMyInstances( quantity%values, values )
           else if ( noSurfs == dimInts(1)*dimInts(2) ) then
+            if ( verbose ) call output( 'Must interpolate according to surface height', advance='yes' )
             call FromProfile( quantity, surfs, &
               & real( &
               & reshape( values(:,:,1), (/ dimInts(1)*dimInts(2) /) ), &
@@ -7653,6 +7719,7 @@ contains ! =====     Public Procedures     =============================
           end if
           MLSFile%fileID%sd_id = 0
         else if ( size(quantity%values(:,1)) == size(values(:,:,1) ) ) then
+          if ( verbose ) call output( 'instance lengths match', advance='yes' )
           do instance = 1, size(quantity%values(1,:))
             quantity%values(:,instance) = &
               & reshape( values(:,:,1), (/ dimInts(1)*dimInts(2) /) )
@@ -7661,6 +7728,7 @@ contains ! =====     Public Procedures     =============================
           call Announce_Error ( 0, no_Error_Code, &
             'sizes of read and filled datasets dont match' )
         else
+          if ( verbose ) call output( 'Needed to reshape', advance='yes' )
           quantity%values = reshape( values, (/ dimInts(1)*dimInts(2), dimInts(3) /) )
         end if
         call DeAllocate_test ( values, 'values read from file', ModuleName )
@@ -7747,6 +7815,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.131  2017/07/10 18:52:32  pwagner
+! Transfer may /expandMask to all masking bits; may /skipValues to transfer only mask; Fill may replaceMissingValue=; correct Transfer by attribute
+!
 ! Revision 2.130  2017/04/06 23:43:34  pwagner
 ! May choose to base on asc/desc mode on GHz/GeodAngle via manipulation field
 !
