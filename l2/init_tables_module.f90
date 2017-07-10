@@ -1061,6 +1061,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_refGPHPrecisionQuantity, vectorQuantity(), &
              begin, f+f_referenceMIF, numeric(), & ! dimless or length
              begin, f+f_regular, boolean(), &
+             begin, f+f_replaceMissingValue, numeric(), &
              begin, f+f_resetSeed, boolean(), &
              begin, f+f_rhiPrecisionQuantity, vectorQuantity(), &
              begin, f+f_rhiQuantity, vectorQuantity() /), &
@@ -1243,7 +1244,9 @@ contains ! =====     Public procedures     =============================
              begin, f+f_noise, field_spec(s_vector), &
              begin, f+f_ptanQuantity, vectorQuantity(), &
              begin, f+f_quantityNames, field_spec(s_Boolean), &
+             begin, f+f_expandMask, boolean(), &
              begin, f+f_skipMask, boolean(), &
+             begin, f+f_skipValues, boolean(), &
              ndp+n_spec_def /) )
     call make_tree( (/ &
       begin, s+s_negativePrecision, &
@@ -2088,6 +2091,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.634  2017/07/10 18:48:51  pwagner
+! Transfer may /expandMask to all masking bits; may /skipValues to transfeer only mask; Fill may replaceMissingValue=
+!
 ! Revision 2.633  2017/04/07 18:45:56  pwagner
 ! sourceType used when choosing how to Fill ascenddescend
 !
