@@ -415,8 +415,14 @@ echo "export PGS_PC_INFO_FILE=$2" >> $JOBENV
 if [ -d "$JOBDIR/outputs" ]
 then
   STDPRODDIR="$JOBDIR/outputs"
+  OUTPUTS_A=a/outputs
+  OUTPUTS_B=b/outputs
+  OUTPUTS_C=outputs
 else
   STDPRODDIR="$JOBDIR"
+  OUTPUTS_A=a
+  OUTPUTS_B=b
+  OUTPUTS_C=./
 fi
 
 if [ "$MUSTHAVEBREAKER" = "yes" ]
@@ -453,7 +459,9 @@ export OTHEROPTS="$otheropts"
 /bin/rm -f $L1JOBDIR/temp_a $L1JOBDIR/temp_b
 
 create_and_run_Level_2 $JOBDIR_A $L1PCF $L2CF_A $L1JOBDIR/temp_a
+PCF_A=$myPCF
 create_and_run_Level_2 $JOBDIR_B $L1PCF $L2CF_B $L1JOBDIR/temp_b
+PCF_B=$myPCF
 
 # Wait for both masters to finish
 done="no"
@@ -472,7 +480,7 @@ done
 if [ "$POSTL2SCRIPT" != "" ]
 then
   # If so, then pass it the args
-  $POSTL2SCRIPT outputs a/outputs b/outputs
+  $POSTL2SCRIPT $OUTPUTS_C $OUTPUTS_A $OUTPUTS_B $PCF_A $PCF_B
 else
   echo "POSTL2SCRIPT was not defined, so no post l2 script to run"
 fi
@@ -528,6 +536,9 @@ then
 fi
 
 # $Log$
+# Revision 1.4  2017/05/19 20:49:13  pwagner
+# Repaired errors in operating BREAKER_PY
+#
 # Revision 1.3  2017/05/19 19:08:01  pwagner
 # Correct names of BREAKER_PY and _SAV
 #
