@@ -94,11 +94,19 @@ do
   echo "cwd/a_dir $cwd/$a_dir"
   #ls $cwd/$a_dir
   #ls $cwd/$a_dir | grep "L2GP-${i}_" | grep -e 'he5$'
-  name1=`ls $a_dir | grep "L2GP-${i}_" | grep -e 'he5$'`
-  if [ ! -f "$a_dir/$name1" ]
+  if [ "$#" -lt "4" ]
   then
-    echo "Sorry: unable to find $name1"
-    exit 1
+    echo No PCF supplied, so we will look in $a_dir
+    name1=`ls $a_dir | grep "L2GP-${i}_" | grep -e 'he5$'`
+    if [ ! -f "$a_dir/$name1" ]
+    then
+      echo "Sorry: unable to find $i as $name1"
+      exit 1
+    fi
+  else
+    echo Hope to find name of this file in PCF $4
+    grep "L2GP-${i}_" $4 | awk -F'|' '{print $2}'
+    name1=`grep "L2GP-${i}_" $4 | awk -F'|' '{print $2}'`
   fi
   echo "name1 $name1"
   a_file=$a_dir/$name1
@@ -139,3 +147,6 @@ a_file=$a_dir/$name1
 $l2auxcat -nodup -v -o $c_file -g $b_file $b_file $a_file
 cp $b_file.xml $c_dir
 # $Log$
+# Revision 1.1  2017/05/17 22:26:44  pwagner
+# First commit
+#
