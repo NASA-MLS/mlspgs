@@ -60,6 +60,7 @@ program COMPARE
   integer :: N
   character(len=3) :: NaNString
   real(rk) :: NaNValue
+  logical :: NoZero = .false.     ! Don't compare where either one is zero, -Z
   real(rk), allocatable, dimension(:) :: R1, R2  ! Inputs
   real(rk), allocatable, dimension(:) :: RD      ! Relative difference of R1, R2
   real(rk) :: RelAtAmaxG
@@ -111,6 +112,8 @@ program COMPARE
           verbose = .true.
         else if ( line1(j:j) == 'z' ) then
           zero = .true.
+        else if ( line1(j:j) == 'Z' ) then
+          noZero = .true.
         else
           call usage
         end if
@@ -221,6 +224,9 @@ program COMPARE
     if ( any( .not. (r2 <= 0.0 .or. r2 >= 0.0) ) ) anyNaN(2) = .true.
 
     ad = abs(r1 - r2)
+    if ( noZero ) then
+      where ( r1 == 0 .or. r2 == 0 ) ad = 0
+    end if
     lamax = maxloc(ad,1)
     amax = ad(lamax)
     if ( amax > 0.0 .or. all .and. zero .or. doStats ) then
@@ -341,6 +347,9 @@ contains
 end program
 
 ! $Log$
+! Revision 1.22  2017/05/02 01:01:13  vsnyder
+! Print maxdiff/maxval if -a
+!
 ! Revision 1.21  2014/10/08 21:57:03  vsnyder
 ! Add 'RelMaxVal block' to summary header
 !
