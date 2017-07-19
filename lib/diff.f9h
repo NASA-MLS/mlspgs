@@ -83,19 +83,20 @@
     alreadySbtrcted = .false.
     myPCTFormat  = DefaultPCTFormat
     if ( PCTFormat /= '*' ) myPCTFormat = PCTFormat
-    call theDumpBegins ( options, thisIsADiff )
-
-    if ( debug ) call DumpDumpOptions
     if ( len_trim(name1) < 1 ) then
       DiffName = ' '
     else if ( len_trim(name2) < 1 ) then
-      DiffName = trim(name1) // ' (diff)'
+      DiffName = trim(name1)
     else
       DiffName = trim(name1) // ' - ' // trim(name2)
     end if
 
+    call theDumpBegins ( options, thisIsADiff, DiffName )
+
+    if ( debug ) call DumpDumpOptions
     if ( DEBUG ) then
       call output( '(in diff)', advance='yes' )
+      call outputNamedValue( 'DiffName', trim(DiffName) )
       call outputNamedValue( 'Stats', dopts(stats)%v )
       call outputNamedValue( 'Ratios', dopts(myRatios)%v )
       call outputNamedValue( 'RMS', dopts(RMS)%v )
@@ -234,10 +235,12 @@
       if ( product(shape(inArray1)) > TOOMANYELEMENTS ) then
         call outputNamedValue( 'Array size excessive for pcts', product(shape(inArray1)) )
         if ( dopts(wholeArray)%v ) then
+          if ( DEBUG ) call output( '1st call to dump', advance='yes' )
           call dump( Array1-Array2, trim(DiffName), &
             & real(0.,kind(inArray1)), WIDTH, FORMAT, &
             & LBOUND, options )
         else
+          if ( DEBUG ) call output( '2nd call to dump', advance='yes' )
           call dump( Array1(1:numNonFill)-Array2(1:numNonFill), trim(DiffName), &
             & real(0.,kind(inArray1)), WIDTH, FORMAT, &
             & LBOUND, options )
@@ -256,10 +259,12 @@
       end do
       alreadySbtrcted = .true.
       if ( dopts(wholeArray)%v ) then
+          if ( DEBUG ) call output( '3rd call to dump', advance='yes' )
         call dump( Array1, trim(DiffName), &
           & real(0.,kind(inArray1)), WIDTH, FORMAT, &
           & LBOUND, options )
       else if ( .not. PRINTEXTRADUMP ) then
+          if ( DEBUG ) call output( '4th call to dump', advance='yes' )
         call dump( Array1(1:numNonFill), trim(DiffName), &
           & real(0.,kind(inArray1)), WIDTH, FORMAT, &
           & LBOUND, options )
@@ -281,6 +286,7 @@
         Array2(i) = tmax
       end do
     end if
+          if ( DEBUG ) call output( '5th call to dump', advance='yes' )
     if ( PRINTEXTRADUMP ) call dump(Array1, trim(DiffName), &
       & real(0.,kind(inArray1)), WIDTH, FORMAT, &
       & LBOUND, options )
@@ -291,6 +297,9 @@
 
 !   end subroutine DIFF_1D_DOUBLE
 ! $Log$
+! Revision 2.37  2017/07/19 22:40:37  pwagner
+! May print Name during theDumpBegins
+!
 ! Revision 2.36  2016/10/21 23:12:05  vsnyder
 ! Make sure T1 is defined
 !
