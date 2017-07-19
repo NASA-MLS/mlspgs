@@ -25,15 +25,18 @@ module Dump_0
 ! and separate Dump_1.f90 module
 
   use BitStuff, only: MaxBitNumber, WhichBitsAreSet
-  use Dump_Options, only: AfterSub, MyBandwidth=>Bandwidth, Clean, CollapseIt, &
-    & CollapseOptions,  DefaultDumpOptions, DefaultMaxLon, DefaultPCTFormat, &
+  use Dump_Options, only: AfterSub, AuBrick, MyBandwidth=>Bandwidth, &
+    & Clean, CollapseIt, CollapseOptions,  &
+    & DefaultDumpOptions, DefaultMaxLon, DefaultPCTFormat, &
     & DefaultWidth, Dopt_Collapse, Dopt_Transpose, DiffRMSMeansRMS, &
     & DontDumpIfAllEqual, Dopts, Gaps, IntPlaces, Laconic, MaxNumNANs, &
     & NameHasBeenPrinted, NameOnEachLine, NaNs, OnlyWholeArray, PCTFormat, &
-    & PrintFillValue, PrintNameIfDiff, Ratios, RMS, RMSFormat, SDFormatDefault, &
-    & SDFormatDefaultCmplx, Stats, StatsOnOneLine, &
-    & TheDumpBegins, ItsShape, MyTranspose=>Transpose, TrimIt, Unique, Verbose, WholeArray
-  use HighOutput, only: NumNeedsFormat, OutputNamedValue
+    & PrintFillValue, PrintNameAtLineEnd, PrintNameIfDiff, &
+    & Ratios, RMS, RMSFormat, &
+    & SDFormatDefault, SDFormatDefaultCmplx, Stats, StatsOnOneLine, &
+    & TheDumpBegins, ItsShape, MyTranspose=>Transpose, &
+    & TrimIt, Unique, Verbose, WholeArray
+  use HighOutput, only: BlanksToColumn, NumNeedsFormat, OutputNamedValue
   use MLSFillValues, only: Bandwidth, Collapse, &
     & InfFunction, IsFinite, IsInfinite, IsNaN, NaNFunction, &
     & WhereAreTheInfs, WhereAreTheNaNs
@@ -45,7 +48,7 @@ module Dump_0
   use Output_m, only: OutputOptions, StampOptions, &
     & Blanks, Newline, Output
 
-  implicit NONE
+  implicit none
   private
 
 ! === (start of toc) ===
@@ -53,7 +56,16 @@ module Dump_0
 !     - - - - - - - -
 
 !     (subroutines and functions)
-! Dump                     dump an array to output
+! Dump                     Dump an array to output
+! Dump_2x2xN               Dump polarized incremental optical depth
+! Empty                    Print mesg that array is empty
+! FinishLine               Print a newLine, optionally echoing the item name
+! ILog10                   Returns integer part of base-10 log of an int
+! Name_And_Size            Print array name and its shape
+
+! PrintName                Print the item name unless already done so
+! PrintRMSetc              Prints a nicely-formatted list of min, max, etc
+! TheDumpEnds              Housekeeping
 ! === (end of toc) ===
 
 ! === (start of api) ===
@@ -63,13 +75,21 @@ module Dump_0
 !       where array can be a 1, 2, or 3d array of
 !       chars, ints, reals, or doubles,
 !       and fillValue is a scalar of the same type, if present
+! Dump_2x2xN ( cmplx array(2, 2, :) &
+!      [, char* name] [, char* Format] [, char* Options] )
+! Empty ( [ char* Name ] )
+! FinishLine
+! int ILog10 ( int int )
+! PrintName ( char* Name [, log nameHasBeenPrintedAlready] )
+! PrintRMSetc ( char* Name, num min, num max, num rms, num mean )
+! TheDumpEnds
 !
 ! Options are described in Dump_Options
 ! === (end of api) ===
 
   public :: &
     & Dump, Dump_2x2xN, Empty, FinishLine, ILog10, Name_And_Size, &
-    & TheDumpEnds
+    & PrintName, PrintRMSEtc, TheDumpEnds
 
   ! =====     Public Generics     ======================================
 
@@ -130,6 +150,7 @@ module Dump_0
   logical           :: DumpTheseZeros
   character(len=16) :: MyOptions
   character(len=16) :: MyPCTFormat
+  character(len=64) :: OldNameOnEachLine
   integer           :: Bwidth, myRank, numNonFill, numFill, indx2BSliced, iSlice
   real              :: Pctnzero
   logical, save     :: ThisIsADiff = .false.
@@ -1206,12 +1227,40 @@ contains
   ! Print a newLine, optionally echoing the item name
   subroutine FinishLine
     ! Executable
-    if ( len_trim(nameOnEachLine) > 1 ) then
+    if ( len_trim(nameOnEachLine) < 1 ) then
+    ! No op
+    elseif( PrintNameAtLineEnd ) then
+      call blanksToColumn ( 80-len_trim(nameOnEachLine) )
+      call output ( trim(nameOnEachLine), advance='no' )
+    else
       call blanks (2)
       call output ( trim(nameOnEachLine), advance='no' )
     end if
     call newLine
   end subroutine FinishLine
+
+  ! -------------------------------------------------  PrintName  -----
+  ! Print the item name unless already done so
+  subroutine PrintName ( Name, nameHasBeenPrintedAlready )
+    character(len=*), intent(in), optional        :: Name
+    logical, optional                             :: nameHasBeenPrintedAlready
+    character(len=64)                             :: myName
+    ! Executable
+    if ( present(nameHasBeenPrintedAlready) ) then
+      if ( nameHasBeenPrintedAlready ) return
+    endif
+    myName = NameOnEachLine
+    if ( present(name) ) myName = name
+    if( PrintNameAtLineEnd ) then
+      call blanksToColumn ( 80-len_trim(myName) )
+      call output ( trim(myName), advance='no' )
+    else
+      call blanks (2)
+      call output ( trim(myName), advance='no' )
+    end if
+    call newLine
+    if ( present(nameHasBeenPrintedAlready) ) nameHasBeenPrintedAlready = .true.
+  end subroutine PrintName
 
   ! -----------------------------------------------------  ILOG10  -----
   integer function ILOG10(int)
@@ -1517,7 +1566,7 @@ contains
   ! ------------------------------------------------  PrintRMSetc  -----
   ! This family of routines prints a nicely-formatted list of min, max, etc.
   ! using output
-  subroutine PrintRMSetc_Double ( Name, min, max, rms, mean  )
+  subroutine PrintRMSetc_Double ( Name, min, max, rms, mean )
     character(len=*), intent(in), optional :: Name
     double precision, intent(in) :: min
     double precision, intent(in) :: max
@@ -1532,7 +1581,7 @@ contains
     outputOptions%sdFormatDefault = originalSDFormat
   end subroutine PrintRMSetc_Double
 
-  subroutine PrintRMSetc_Real ( Name, min, max, rms, mean  )
+  subroutine PrintRMSetc_Real ( Name, min, max, rms, mean )
     character(len=*), intent(in), optional :: Name
     real, intent(in) :: min
     real, intent(in) :: max
@@ -1546,7 +1595,7 @@ contains
     outputOptions%sdFormatDefault = originalSDFormat
   end subroutine PrintRMSetc_Real
 
-  subroutine PrintRMSetc_int ( Name, in_min, in_max, rms, mean  )
+  subroutine PrintRMSetc_int ( Name, in_min, in_max, rms, mean )
     character(len=*), intent(in), optional :: Name
     integer, intent(in)        :: in_min
     integer, intent(in)        :: in_max
@@ -1694,6 +1743,9 @@ contains
 end module Dump_0
 
 ! $Log$
+! Revision 2.141  2017/07/19 22:42:53  pwagner
+! Added PrintName; may PrintNameAtLineEnd; PrintRMSetc now public
+!
 ! Revision 2.140  2016/10/20 23:05:41  pwagner
 ! Separated row, column indexes in 2d arrays
 !
