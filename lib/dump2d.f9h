@@ -28,7 +28,7 @@
 !   integer, dimension(MAXNUMELEMENTS) :: counts
 !   double precision, dimension(MAXNUMELEMENTS) :: elements
     ! Executable
-    call theDumpBegins ( options )
+    call theDumpBegins ( options, Name=Name )
     if ( dopts(myTranspose)%v ) then
       call dump ( transpose(array), name, &
         & fillvalue, width, format, lbound, &
@@ -66,6 +66,9 @@
 !    include 'dump2db.f9h'
 !   end subroutine DUMP_2D_INTEGER
 ! $Log$
+! Revision 2.12  2017/07/19 22:49:46  pwagner
+! Pass Name to theDumpBegins
+!
 ! Revision 2.11  2016/07/28 01:42:27  vsnyder
 ! Refactoring dump and diff
 !
