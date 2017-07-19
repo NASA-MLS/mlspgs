@@ -1675,6 +1675,7 @@ contains ! =====     Public Procedures     =============================
     logical :: diffGeosMeanBadChunks
     logical :: fillsInL2GP1
     logical :: fillsInL2GP2
+    logical :: goldbrick
     integer :: instance
     type (l2gpData_T) ::          L2GP2Temp
     integer :: MYDETAILS
@@ -1702,6 +1703,8 @@ contains ! =====     Public Procedures     =============================
     if ( mySilent ) call suspendOutput
     myVerbose = .false.
     if ( present(options) ) myVerbose = index(options, 'v') > 0
+    goldbrick = .false.
+    if ( present(options) ) goldbrick = index(options, '@') > 0
 
     myNumDiffs = 0
 
@@ -1857,7 +1860,11 @@ contains ! =====     Public Procedures     =============================
       endif
     endif
 
-    if ( .not. skipGeos ) call diffGeoLocations( l2gp1, l2gp2Temp )
+    if ( .not. skipGeos ) then
+      ! call output( 'calling diffGeoLocations', advance='yes' )
+      ! call outputNamedValue( 'nameOnEachLine', trim(nameOnEachLine) )
+      call diffGeoLocations( l2gp1, l2gp2Temp )
+    endif
     if ( myDetails < 1 )  then
       call doneHere
       return
@@ -1878,7 +1885,7 @@ contains ! =====     Public Procedures     =============================
     if ( statsOnOneLine ) NameOnEachLine = trim(trim(l2gp1%name)) // '%Precisions'
     if ( any(l2gp1%l2gpPrecision /= l2gp2Temp%l2gpPrecision) .and. &
       & SwitchDetail(lowercase(myFields), 'l2gpprecision', '-fc') > -1 ) then
-      call diff ( l2gp1%l2gpPrecision, 'l2gp%l2gpPrecision', &
+      call diff ( l2gp1%l2gpPrecision, 'l2gpPrecision', &
         &         l2gp2Temp%l2gpPrecision, ' ', &
         & options=options, fillValue=l2gp1%MissingValue )
       myNumDiffs = myNumDiffs + count( l2gp1%l2gpPrecision /= l2gp2Temp%l2gpPrecision )
@@ -1890,7 +1897,7 @@ contains ! =====     Public Procedures     =============================
     if ( statsOnOneLine ) NameOnEachLine = trim(trim(l2gp1%name)) // '%status'
     if ( any(l2gp1%status /= l2gp2Temp%status) .and. &
       & SwitchDetail(lowercase(myFields), 'status', '-fc') > -1 ) then
-      call diff ( l2gp1%status, 'l2gp%status', &
+      call diff ( l2gp1%status, 'status', &
         &         l2gp2Temp%status, ' ', &
         & options=options )
       myNumDiffs = myNumDiffs + count( l2gp1%status /= l2gp2Temp%status )
@@ -1902,7 +1909,7 @@ contains ! =====     Public Procedures     =============================
     if ( statsOnOneLine ) NameOnEachLine = trim(trim(l2gp1%name)) // '%quality'
     if ( any(l2gp1%quality /= l2gp2Temp%quality) .and. &
       & SwitchDetail(lowercase(myFields), 'quality', '-fc') > -1 ) then
-      call diff ( l2gp1%quality, 'l2gp%quality', &
+      call diff ( l2gp1%quality, 'quality', &
         &         l2gp2Temp%quality, ' ', &
         & options=options )
       myNumDiffs = myNumDiffs + count( l2gp1%quality /= l2gp2Temp%quality )
@@ -1914,7 +1921,7 @@ contains ! =====     Public Procedures     =============================
     if ( statsOnOneLine ) NameOnEachLine = trim(trim(l2gp1%name)) // '%convergence'
     if ( any(l2gp1%convergence /= l2gp2Temp%convergence) .and. &
       & SwitchDetail(lowercase(myFields), 'convergence', '-fc') > -1 ) then
-      call diff ( l2gp1%convergence, 'l2gp%convergence', &
+      call diff ( l2gp1%convergence, 'convergence', &
         &         l2gp2Temp%convergence, ' ', &
         & options=options )
       myNumDiffs = myNumDiffs + count( l2gp1%convergence /= l2gp2Temp%convergence )
@@ -1940,34 +1947,46 @@ contains ! =====     Public Procedures     =============================
       endif
       if ( any(l2gp1%latitude /= l2gp2%latitude) .and. &
         & SwitchDetail(lowercase(myFields), 'lat', '-fc') > -1 ) then
-          call diff ( l2gp1%latitude, 'l2gp%latitude', &
+          call diff ( l2gp1%latitude, 'latitude', &
             &         l2gp2%latitude, ' ', &
             & options=options )
         myNumDiffs = myNumDiffs + count( l2gp1%latitude /= l2gp2%latitude )
       endif
       if ( any(l2gp1%longitude /= l2gp2%longitude) .and. &
         & SwitchDetail(lowercase(myFields), 'lon', '-fc') > -1 ) then
+        if ( goldbrick ) then
+          call diff ( l2gp1%longitude, 'longitude', &
+            &         l2gp2%longitude, ' ', &
+            & options=options )
+        else
           call dump ( &
             & diff_fun( l2gp1%longitude, l2gp2%longitude, &
             &         auxvalue=360._rgp, &
             &         options=AddOntoOptions('p',options) ), &
-            & 'l2gp%longitude', &
+            & 'longitude', &
             & options=options )
+        endif
         myNumDiffs = myNumDiffs + count( l2gp1%longitude /= l2gp2%longitude )
       endif
       if ( any(l2gp1%solarTime /= l2gp2%solarTime) .and. &
         & SwitchDetail(lowercase(myFields), 'solartime', '-fc') > -1 ) then
+        if ( goldbrick ) then
+          call diff ( l2gp1%solarTime, 'solarTime', &
+            &         l2gp2%solarTime, ' ', &
+            & options=options )
+        else
           call dump ( &
             & diff_fun( l2gp1%solarTime, l2gp2%solarTime, &
             &         auxvalue=24._rgp, &
             &         options=AddOntoOptions('p',options) ), &
-            & 'l2gp%solarTime', &
+            & 'solarTime', &
             & options=options )
+        endif
         myNumDiffs = myNumDiffs + count( l2gp1%solarTime /= l2gp2%solarTime )
       endif
       if ( any(l2gp1%solarZenith /= l2gp2%solarZenith) .and. &
         & SwitchDetail(lowercase(myFields), 'solarzenith', '-fc') > -1 ) then
-          call diff ( l2gp1%solarZenith, 'l2gp%solarZenith', &
+          call diff ( l2gp1%solarZenith, 'solarZenith', &
             &         l2gp2%solarZenith, ' ', &
             & options=options )
         badChunks = .true.
@@ -1975,14 +1994,14 @@ contains ! =====     Public Procedures     =============================
       endif
       if ( any(l2gp1%losAngle /= l2gp2%losAngle) .and. &
         & SwitchDetail(lowercase(myFields), 'losangle', '-fc') > -1 ) then
-          call diff ( l2gp1%losAngle, 'l2gp%losAngle', &
+          call diff ( l2gp1%losAngle, 'losAngle', &
             &         l2gp2%losAngle, ' ', &
             & options=options )
         myNumDiffs = myNumDiffs + count( l2gp1%losAngle /= l2gp2%losAngle )
       endif
       if ( any(l2gp1%geodAngle /= l2gp2%geodAngle) .and. &
         & SwitchDetail(lowercase(myFields), 'geodangle', '-fc') > -1 ) then
-          call diff ( l2gp1%geodAngle, 'l2gp%geodAngle', &
+          call diff ( l2gp1%geodAngle, 'geodAngle', &
             &         l2gp2%geodAngle, ' ', &
             & options=options )
         ! badChunks = .true.
@@ -1990,7 +2009,7 @@ contains ! =====     Public Procedures     =============================
       endif
       if ( any(l2gp1%time /= l2gp2%time) .and. &
         & SwitchDetail(lowercase(myFields), 'time', '-fc') > -1 ) then
-          call diff ( l2gp1%time, 'l2gp%time', &
+          call diff ( l2gp1%time, ' time', &
             &         l2gp2%time, ' ', &
             & options=options )
         ! badChunks = .true.
@@ -1998,8 +2017,8 @@ contains ! =====     Public Procedures     =============================
       endif
       if ( any(l2gp1%chunkNumber /= l2gp2%chunkNumber) .and. &
         & SwitchDetail(lowercase(myFields), 'chunknumber', '-fc') > -1 ) then
-        call diff ( l2gp1%chunkNumber, 'l2gp1%chunkNumber', &
-          &         l2gp2%chunkNumber, 'l2gp2%chunkNumber', &
+        call diff ( l2gp1%chunkNumber, 'chunkNumber', &
+          &         l2gp2%chunkNumber, ' ', &
             & options=options )
         myNumDiffs = myNumDiffs + count( l2gp1%chunkNumber /= l2gp2%chunkNumber )
       endif
@@ -2007,7 +2026,7 @@ contains ! =====     Public Procedures     =============================
       if ( associated(l2gp1%frequency) .and.  associated(l2gp2%frequency)) then
         if ( any(l2gp1%frequency /= l2gp2%frequency) .and. &
           & SwitchDetail(lowercase(myFields), 'freq', '-fc') > -1 ) then
-          call diff ( l2gp1%frequency, 'l2gp%frequency', &
+          call diff ( l2gp1%frequency, 'frequency', &
             &         l2gp2%frequency, ' ', &
             & options=options )
         myNumDiffs = myNumDiffs + count( l2gp1%frequency /= l2gp2%frequency )
@@ -5418,6 +5437,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.226  2017/03/10 00:40:19  vsnyder
+! Make intrsctn allocatable
+!
 ! Revision 2.225  2016/11/03 22:39:14  pwagner
 ! Begin transition to the Time_m implmentation of sayTime
 !
