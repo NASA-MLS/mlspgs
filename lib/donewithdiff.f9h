@@ -47,13 +47,7 @@
         end if
       end if
       if ( dopts(AuBrick)%v ) then
-        if ( .not. nameHasBeenPrinted ) then
-          if ( len_trim(DiffName) > 0 ) then
-            call output( trim(DiffName), advance='yes' )
-            nameHasBeenPrinted = .true.
-          end if
-        end if
-        ! nameHasBeenPrinted = .false.
+        call PrintName ( DiffName, NameHasBeenPrinted )
         
         call output( ' ** Reference values (min : max, rms): ', advance='no' )
         call output( refmin, advance='no' )
@@ -79,13 +73,7 @@
         call newLine
       end if
       if ( dopts(myRatios)%v ) then
-        if ( .not. nameHasBeenPrinted ) then
-          if ( len_trim(DiffName) > 0 ) then
-            call output( trim(DiffName), advance='yes' )
-            nameHasBeenPrinted = .true.
-          end if
-        end if
-        ! nameHasBeenPrinted = .false.
+        call PrintName ( DiffName, NameHasBeenPrinted )
         
         call output( 'Maximum difference: ', advance='no' )
         call output( exvalues(1), advance='no' )
@@ -100,23 +88,15 @@
         call output( ' )', advance='no' )
         call finishLine
         ! nameHasBeenPrinted = .false.
-        call printRMSetc( 'ratio', minratio, maxratio, rmsratio, meanratio )
+        call printRMSetc( '(ratio)                                   ' // &
+          & trim(DiffName), &
+          & minratio, maxratio, rmsratio, meanratio )
       end if
       if ( dopts(RMS)%v ) then
-        if ( .not. nameHasBeenPrinted ) then
-          if ( len_trim(DiffName) > 0 ) then
-            call output( trim(DiffName), advance='yes' )
-            nameHasBeenPrinted = .true.
-          end if
-        end if
-        ! nameHasBeenPrinted = .false.
         call printRMSetc( 'value', minvalue, maxvalue, rmsvalue, meanvalue )
       end if
       if ( dopts(table)%v ) then
-        if ( .not. nameHasBeenPrinted ) then
-          if ( len_trim(DiffName) > 0 ) call output( trim(DiffName), advance='yes' )
-          nameHasBeenPrinted = .true.
-        end if
+        call PrintName ( DiffName, NameHasBeenPrinted )
         call output( '% of arrays nearer than', advance='yes' )
         theTable(:,1) = gaps
         theTable(:,2) = pcts
@@ -145,10 +125,7 @@
           formats(2:7) = rmsFormat
           formats(1) = myPCTFormat ! '(0pf6.1)'
         end if
-        if ( .not. nameHasBeenPrinted ) then
-          if ( len_trim(DiffName) > 0 ) call output( trim(DiffName), advance='yes' )
-          nameHasBeenPrinted = .true.
-        end if
+        call PrintName ( DiffName, NameHasBeenPrinted )
         call dumpTable ( theTable, &
           & (/ '%          ', &
           &    'max diffs  ', &
@@ -160,10 +137,7 @@
           & headside=dumpTableSide, formats=formats )
       end if
       if ( dopts(stats)%v ) then
-        if ( .not. nameHasBeenPrinted ) then
-          if ( len_trim(DiffName) > 0 ) call output( trim(DiffName), advance='yes' )
-          nameHasBeenPrinted = .true.
-        end if
+        call PrintName ( DiffName, NameHasBeenPrinted )
         ! Now to show how near the two arrays are
         if ( numNonFill < size(Array1) .and. numNonFill > 0 ) &
           & call outputNamedValue( 'count(NonFill), count(Fill)', &
@@ -182,6 +156,7 @@
         call finishLine
       end if
       outputOptions%sdFormatDefault = originalSDFormat
+      NameOnEachLine = ' '
       
     end subroutine doneWithDiff
 
@@ -264,6 +239,9 @@
   end subroutine SayTime
 
 ! $Log$
+! Revision 2.3  2017/07/19 22:47:22  pwagner
+! Use PrintName procedure; pass DiffName to printRMSetc
+!
 ! Revision 2.2  2017/07/10 18:32:57  pwagner
 ! Take greater care with printing DiffName
 !
