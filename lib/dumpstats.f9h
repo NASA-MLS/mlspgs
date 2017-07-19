@@ -16,12 +16,7 @@
 ! $RCSfile$
 
     ! call output('Entering dumpstats', advance='no')
-    if ( present(name) .and. .not. nameHasBeenPrinted .and. &
-      & .not. dopts(onlyWholeArray)%v ) then
-      call output ( trim(name) //'   ' , advance='no' )
-      nameHasBeenPrinted = .true.
-    endif
-    if ( dopts(verbose)%v .and. present(name) ) nameOnEachLine = name
+    call PrintName ( Name, NameHasBeenPrinted )
     if ( dopts(itsShape)%v ) then
       call outputNamedValue( 'rank', myRank, advance='no' )
       call output( '   shape  ', advance='no' )
@@ -36,8 +31,11 @@
       call output( '   % /= 0  ', advance='no' )
       call output( pctnzero, advance='yes' )
     endif
-    if ( any(shape(array) == 0) ) return
-    if ( dopts(RMS)%v .or. dopts(ratios)%v .or. dopts(NaNs)%v ) then
+    if ( any(shape(array) == 0) ) then
+      return
+    endif
+    if ( dopts(RMS)%v .or. dopts(AuBrick)%v .or. &
+      & dopts(ratios)%v .or. dopts(NaNs)%v ) then
       if ( .not. any(isfinite(array)) ) then
         call output ('(no finite values found in array) ', advance='yes')
       elseif ( .not. all(isfinite(array)) ) then
@@ -67,13 +65,13 @@
         call printRMSetc ( Name, mlsmin(array, fillValue), &
           & mlsmax(array, fillValue), &
           & mlsstddev(array, fillValue), &
-          & mlsmean(array, fillValue)  )
+          & mlsmean(array, fillValue) )
         ! call output( 'done with PrintRMSetc.', advance='yes')
       else
         ! call output( 'dumpstats w/o FillValue ' // trim(name) , advance='no' )
         call printRMSetc ( Name, minval(array), maxval(array), &
           & sqrt(sum(array*array)/(size(array)+0.)), &
-          & mean=sum(array)/(size(array)+0.)  )
+          & mean=sum(array)/(size(array)+0.) )
         ! call output( 'done with PrintRMSetc.', advance='yes')
       end if
     end if
@@ -163,8 +161,12 @@
         return
       end if
     end if
+    nameOnEachLine = OldNameOnEachLine
     ! call output('Leaving dumpstats', advance='no')
 ! $Log$
+! Revision 2.38  2017/07/19 22:45:20  pwagner
+! Use PrintName procedure
+!
 ! Revision 2.37  2017/07/10 18:27:09  pwagner
 ! Correct bugs that caused unwanted printing
 !
