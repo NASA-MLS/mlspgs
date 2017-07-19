@@ -10,6 +10,7 @@
 ! foreign countries or providing access to foreign persons.
 
 module Dump_Options
+  use Machine, only: Crash_Burn
 
   ! Options for Dump_0, Dump_1, Diff_1, and maybe others.
   ! Variables shared between those modules and derived from the options.
@@ -48,6 +49,7 @@ module Dump_Options
 ! (for dump or diff)
 !   character         meaning
 !      ---            -------
+!       ?              show meaning of all available options
 !       @              show differences in the goldbrick-style
 !       B              show Bandwidth, % of array that is non-zero
 !       H              show rank, shape of array
@@ -66,6 +68,7 @@ module Dump_Options
 !       v              verbose
 !       w              wholearray
 !       W[i]           wholearray, looping over ith index (for rank 3 and 4 arrays only)
+!       X              crash with walkback at TheDumpBegins
 !       1 or 2 or ..   ignored; calling routine is free to interpret
 
 ! An exception is the behavior of wholearray:
@@ -94,6 +97,7 @@ module Dump_Options
   character, parameter :: Dopt_Bandwidth   = 'B'
   character, parameter :: Dopt_Clean       = 'c'
   character, parameter :: Dopt_Collapse    = 'l'
+  character, parameter :: Dopt_Crash       = 'X'
   character, parameter :: Dopt_Cyclic      = 'y'
   character, parameter :: Dopt_Direct      = 'd'
   character, parameter :: Dopt_Gaps        = 'g'
@@ -117,6 +121,7 @@ module Dump_Options
     enumerator :: Bandwidth
     enumerator :: Clean
     enumerator :: CollapseIt
+    enumerator :: Crash
     enumerator :: Cyclic
     enumerator :: Direct
     enumerator :: ItsShape
@@ -159,28 +164,29 @@ module Dump_Options
 
   ! The following character strings can include one or more options listed above
   ! E.g., '-crt' turns on Clean, RMS, and TrimIt
-  character(len=8)  :: DefaultDiffOptions = ' '
-  character(len=8)  :: DefaultDumpOptions = ' '
+  character(len=8)  :: DefaultDiffOptions     = ' '
+  character(len=8)  :: DefaultDumpOptions     = ' '
 
-  integer           :: DefaultMaxLon      = 128
-  integer           :: DefaultWidth       = 10
-  character(len=8)  :: DumpTableSide      = 'top'
-  logical           :: DiffRMSMeansRMS    = .false.
-  logical           :: DontDumpIfAllEqual = .true.
-  logical           :: FilterFillsFromRMS = .false.
-  logical           :: PrintFillValue     = .true.
-  logical           :: PrintNameIfDiff    = .true.
-  logical           :: StatsOnOneLine     = .true.
-  character(len=16) :: NameOnEachLine     = ' '
+  integer           :: DefaultMaxLon          = 128
+  integer           :: DefaultWidth           = 10
+  character(len=8)  :: DumpTableSide          = 'top'
+  logical           :: DiffRMSMeansRMS        = .false.
+  logical           :: DontDumpIfAllEqual     = .true.
+  logical           :: FilterFillsFromRMS     = .false.
+  logical           :: PrintFillValue         = .true.
+  logical           :: PrintNameAtLineEnd     = .false.
+  logical           :: PrintNameIfDiff        = .true.
+  logical           :: StatsOnOneLine         = .true.
+  character(len=64) :: NameOnEachLine         = ' '
 
   ! This determines how a higher-rank array is collapsed to a lower-rank one
   character(len=16) :: CollapseOptions = 'num[+]all[+]'
 
   ! These determine how dumped numerical data (s.p. or d.p.) will be formatted
-  character(len=2)  :: IntPlaces = '6' ! how many places
-  integer           :: MaxNumNANs= 60  ! how many NaNs to show
-  character(len=16) :: PCTFormat = '*' ! * means default format
-  character(len=16) :: RMSFormat = '*' ! * means default format
+  character(len=2)  :: IntPlaces       = '6' ! how many places
+  integer           :: MaxNumNANs      = 60  ! how many NaNs to show
+  character(len=16) :: PCTFormat       = '*' ! * means default format
+  character(len=16) :: RMSFormat       = '*' ! * means default format
   character(len=16) :: SDFormatDefault = '(1pg14.6)'
   character(*), parameter :: SDFormatDefaultCmplx = &
     & '(1x,"(",1pg13.6,",",1pg13.6,")")'
@@ -198,6 +204,7 @@ module Dump_Options
   data dopts(bandwidth)  / option_t('bandwidth',  dopt_bandwidth,  .false. ) /
   data dopts(clean)      / option_t('clean',      dopt_clean,      .false. ) /
   data dopts(collapseIt) / option_t('collapse',   dopt_collapse,   .false. ) /
+  data dopts(crash)      / option_t('crash',      dopt_crash,      .false. ) /
   data dopts(cyclic)     / option_t('cyclic',     dopt_cyclic,     .false. ) /
   data dopts(direct)     / option_t('direct',     dopt_direct,     .false. ) /
   data dopts(gaps)       / option_t('gaps',       dopt_gaps,       .false. ) /
@@ -286,6 +293,7 @@ contains
       call output( '     ' // dopt_RMS         // '              rms       -- min, max, etc.', advance='yes' )
       call output( '     ' // dopt_table       // '              table of % vs. amount of differences (pdf)', advance='yes' )
       call output( '     ' // dopt_clean       // '              clean', advance='yes' )
+      call output( '     ' // dopt_crash       // '              crash', advance='yes' )
       call output( '     ' // dopt_direct      // '              direct', advance='yes' )
       call output( '     ' // dopt_gaps        // '              gaps      ', advance='yes' )
       call output( '     ' // dopt_collapse    // '              collapse (last index)', advance='yes' )
@@ -365,13 +373,16 @@ contains
 
   ! -----------------------------------------------  TheDumpBegins -----
   ! A warm-up subroutine that transfers the options string to the Dopts
-  subroutine TheDumpBegins ( Options, ThisIsADiff )
-    use Output_m, only: StampOptions
+  subroutine TheDumpBegins ( Options, ThisIsADiff, Name )
+    use HighOutput, only: OutputNamedValue
+    use Output_m, only: Output, StampOptions
     character(len=*), intent(in), optional :: Options
     logical, intent(in), optional          :: ThisIsADiff
+    character(len=*), intent(in), optional :: Name
     logical :: MyDiff
     ! Executable
     ! Were we called with the trigger '?'?
+    ! call output( 'Entering TheDumpBegins', advance='yes' )
     if ( present(options) ) then
       if ( index( options, '?' ) > 0 ) then
         call DumpDumpOptions ( options )
@@ -393,6 +404,13 @@ contains
       &         dopts(ratios)%v .or. dopts(RMS)%v .or. dopts(itsShape)%v .or. &
       &         dopts(stats)%v .or. dopts(table)%v .or. dopts(NaNs)%v)
     nameHasBeenPrinted = nameHasBeenPrinted .or. dopts(laconic)%v
+    if ( dopts(verbose)%v .and. present(name) ) then
+      nameOnEachLine = name
+    else
+      nameOnEachLine = ' '
+    endif
+    ! call outputNamedValue( 'NameOnEachLine', trim(NameOnEachLine) )
+    if ( dopts(crash)%v ) call Crash_Burn
   end subroutine TheDumpBegins
 
 !--------------------------- end bloc --------------------------------------
@@ -408,6 +426,9 @@ contains
 end module Dump_Options
 
 ! $Log$
+! Revision 2.5  2017/07/19 22:38:31  pwagner
+! Added Crash, PrintNameAtLineEnd
+!
 ! Revision 2.4  2016/12/14 01:20:55  pwagner
 ! Print meaning of all options if options is '?'
 !
