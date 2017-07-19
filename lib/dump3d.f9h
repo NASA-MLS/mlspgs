@@ -28,7 +28,7 @@
 !   integer, dimension(MAXNUMELEMENTS) :: counts             
 !   double precision, dimension(MAXNUMELEMENTS) :: elements  
     ! Executable
-    call theDumpBegins ( options )
+    call theDumpBegins ( options, Name=Name )
     myRank = 3
     if ( dopts(unique)%v ) then
       call FindUnique( reshape( array, (/ product(shape(array)) /) ), &
@@ -57,6 +57,9 @@
 !    include 'dump3db.f9h'
 ! end subroutine DUMP_3D_DOUBLE
 ! $Log$
+! Revision 2.11  2017/07/19 22:49:46  pwagner
+! Pass Name to theDumpBegins
+!
 ! Revision 2.10  2016/07/28 01:42:27  vsnyder
 ! Refactoring dump and diff
 !
