@@ -28,7 +28,7 @@
 !   integer :: NumZeroRows
 !   integer :: nUnique
     ! Executable
-    call theDumpBegins ( options )
+    call theDumpBegins ( options, Name=Name )
     myRank = 1
     myFillValue = 0
     if ( present(FillValue) ) myFillValue=FillValue
@@ -62,6 +62,9 @@
 !    include 'dump1db.f9h'
 !   end subroutine DUMP_1D_INTEGER
 ! $Log$
+! Revision 2.9  2017/07/19 22:49:46  pwagner
+! Pass Name to theDumpBegins
+!
 ! Revision 2.8  2016/07/28 01:42:27  vsnyder
 ! Refactoring dump and diff
 !
