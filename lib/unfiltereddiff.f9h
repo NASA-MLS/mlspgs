@@ -83,16 +83,17 @@
     thisIsADiff = .true.  ! For special dumps
     myPCTFormat  = DefaultPCTFormat
     if ( PCTFormat /= '*' ) myPCTFormat = PCTFormat
-    call theDumpBegins ( options, thisIsADiff )
 
     if ( len_trim(name1) < 1 ) then
       DiffName = ' '
     else if ( len_trim(name2) < 1 ) then
-      DiffName = trim(name1) // ' (diff)'
+      DiffName = trim(name1)
     else
       DiffName = trim(name1) // ' - ' // trim(name2)
     end if
     fillValue = NaNFunction( 1._rk )
+
+    call theDumpBegins ( options, thisIsADiff, DiffName )
 
     if ( DEBUG ) then
       call output( '(in unfiltered diff)', advance='yes' )
@@ -230,6 +231,9 @@
     include "donewithdiff.f9h"
 !   end subroutine DIFF_1D_DOUBLE
 ! $Log$
+! Revision 2.22  2017/07/19 22:40:05  pwagner
+! May print Name during theDumpBegins
+!
 ! Revision 2.21  2017/07/10 18:20:38  pwagner
 ! Must not neglect to compute numTot, numEqual even if all equal
 !
