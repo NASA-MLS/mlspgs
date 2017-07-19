@@ -15,10 +15,10 @@ module Diff_1
 
   use Dump_Options, only: AuBrick, &
     & DefaultPCTFormat, DiffRMSMeansRMS, Direct, Dopts, DumpTableSide, &
-    & NameHasBeenPrinted, NaNs, PCTFormat, PrintNameIfDiff, &
+    & NameOnEachLine, NameHasBeenPrinted, NaNs, PCTFormat, PrintNameIfDiff, &
     & MyRatios=>Ratios, RMS, RMSFormat, Stats, StatsOnOneLine, Table, &
-    & TheDumpBegins, WholeArray, DumpDumpOptions
-  use Dump_0, only: Dump, FinishLine
+    & TheDumpBegins, Verbose, WholeArray, DumpDumpOptions
+  use Dump_0, only: Dump, FinishLine, PrintName, PrintRMSEtc
   use Dump_1, only: DumpTable
   use HighOutput, only: OutputNamedValue
   use IEEE_Arithmetic, only: IEEE_Is_Finite
@@ -85,10 +85,6 @@ module Diff_1
     module procedure FilteredDiff_2D_Double, FilteredDiff_2D_Integer, FilteredDiff_2D_Real
     module procedure FilteredDiff_3D_Double, FilteredDiff_3D_Real
     module procedure FilteredDiff_4D_Double, FilteredDiff_4D_Real
-  end interface
-
-  interface PrintRMSetc
-    module procedure PrintRMSetc_Double, PrintRMSetc_Int, PrintRMSetc_Real
   end interface
 
   interface UnfilteredDiff  ! dump UnfilteredDiffs between pair of n-d arrays of numeric type
@@ -658,53 +654,6 @@ contains
     include "diff.f9h"
   end subroutine FilteredDiff_4D_Real
 
-  ! ------------------------------------------------  PrintRMSetc  -----
-  ! This family of routines prints a nicely-formatted list of min, max, etc.
-  ! using output
-  subroutine PrintRMSetc_Double ( Name, min, max, rms, mean  )
-    character(len=*), intent(in), optional :: Name
-    double precision, intent(in) :: min
-    double precision, intent(in) :: max
-    double precision, intent(in) :: rms
-    double precision, intent(in), optional :: mean
-    !
-    character(len=16) :: originalSDFormat
-    !
-    originalSDFormat = outputOptions%sdFormatDefault
-    outputOptions%sdFormatDefault = rmsFormat
-    include 'printRMSetc.f9h'
-    outputOptions%sdFormatDefault = originalSDFormat
-  end subroutine PrintRMSetc_Double
-
-  subroutine PrintRMSetc_Real ( Name, min, max, rms, mean  )
-    character(len=*), intent(in), optional :: Name
-    real, intent(in) :: min
-    real, intent(in) :: max
-    real, intent(in) :: rms
-    real, intent(in), optional :: mean
-    character(len=16) :: originalSDFormat
-    !
-    originalSDFormat = outputOptions%sdFormatDefault
-    outputOptions%sdFormatDefault = rmsFormat
-    include 'printRMSetc.f9h'
-    outputOptions%sdFormatDefault = originalSDFormat
-  end subroutine PrintRMSetc_Real
-
-  subroutine PrintRMSetc_Int ( Name, in_min, in_max, rms, mean  )
-    character(len=*), intent(in), optional :: Name
-    integer, intent(in)        :: in_min
-    integer, intent(in)        :: in_max
-    real, intent(in)           :: rms
-    real, intent(in), optional :: mean
-    ! Internal variables
-    real                       :: min
-    real                       :: max
-    ! Executable
-    min = in_min
-    max = in_max
-    include 'printRMSetc.f9h'
-  end subroutine printRMSetc_Int
-
  ! ---------------------------------------------  SelfDiff_Double  -----
   subroutine SelfDiff_Double ( Array, Name, &
     & FillValue, Width, Format, waves, LBound, Options )
@@ -1038,6 +987,9 @@ contains
 end module Diff_1
 
 ! $Log$
+! Revision 2.6  2017/07/19 22:48:46  pwagner
+! Get PrintRMSetc from Dump_0
+!
 ! Revision 2.5  2016/10/21 23:12:50  vsnyder
 ! Remove unused USE name
 !
