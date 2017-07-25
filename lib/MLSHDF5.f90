@@ -61,7 +61,7 @@ module MLSHDF5
     & H5dread_F, H5dwrite_F, H5dclose_F, H5dget_Create_Plist_F, &
     & H5eset_Auto_F, &
     & H5fopen_F, H5fclose_F, &
-    & H5gopen_F, H5gclose_F, &
+    & H5gopen_F, H5gclose_F, h5gCreate_f, &
     & H5gn_Members_F, H5gget_Obj_Info_Idx_F, &
     & H5pcreate_F, H5pset_Chunk_F, H5pset_Fill_Value_F, &
     & H5pget_Chunk_F, H5pget_Fill_Value_F, &
@@ -82,7 +82,7 @@ module MLSHDF5
     & IsHDF5AttributeInFile, IsHDF5AttributePresent, IsHDF5DSInFile, &
     & IsHDF5DSPresent, IsHDF5GroupPresent, IsHDF5ItemPresent, &
     & LoadFromHDF5DS, LoadPtrFromHDF5DS, &
-    & MakeHDF5Attribute, MatchHDF5Attributes, &
+    & MakeHDF5Attribute, MakeNestedGroups, MatchHDF5Attributes, &
     & MLS_H5Open, MLS_H5Close, ReadHDF5Attribute, &
     & ReadLitIndexFromHDF5Attr, ReadStringIndexFromHDF5Attr, SaveAsHDF5DS, &
     & WriteLitIndexAsHDF5Attribute, WriteStringIndexAsHDF5Attribute
@@ -114,6 +114,7 @@ module MLSHDF5
 ! LoadFromHDF5DS       Retrieves a dataset
 ! LoadPtrFromHDF5DS    Allocates an array and retrieves a dataset
 ! MakeHDF5Attribute    Turns an arg into an attribute
+! MakeNestedGroups       Create a nested sequence of groups; e.g. a/b/c/../z
 ! MatchHDF5Attributes  Finds a dataset with matching attributes
 ! mls_h5close          Closes interface to hdf5; call once at end of run
 ! mls_h5open           Opens interface to hdf5; call once at start of run
@@ -152,6 +153,7 @@ module MLSHDF5
 !       lowBound only for rank-1 arrays
 ! MakeHDF5Attribute (int itemID, char name, value,
 !       [log skip_if_already_there])
+! MakeNestedGroups (int itemID, char groupnames(:))
 ! MatchHDF5Attributes (MLSFile_T MLSFile, char attrnames, char attrvalues,
 !       char name)
 ! SaveAsHDF5DS (int locID, char name, value)
@@ -1762,6 +1764,51 @@ contains ! ======================= Public Procedures =========================
   9 call trace_end ( cond=.false. )
 
   end subroutine MakeHDF5AttributeDSN_dblarr1
+
+  ! --------------------------------------  MakeNestedGroups  -----
+  ! Make a nested set of groups, beginning with groupNames(1)
+  ! and ending with groupNames(n)
+  ! If innermostID present, it will contain grpID(n)
+  ! Otherwise, we'll close all the grpIDs
+  subroutine MakeNestedGroups ( locID, groupNames, innermostID )
+    integer, intent(in)                         :: locID  ! Where to base groups at
+    character (len=*), intent(in), dimension(:) :: groupNames
+    integer, intent(out), optional              :: innermostID ! grpID(n)
+
+    ! Local variables
+    integer :: containerID              ! ID for container
+    integer :: grpID                    ! ID for new group
+    integer :: i
+    integer, dimension(size(groupNames)) :: IDs
+    integer :: Me = -1                  ! String index for trace cacheing
+    integer :: STATUS                   ! Flag from HDF5
+
+    ! Executable code
+    call trace_begin ( me, 'MakeNestedGroups', cond=.false. )
+    containerID = locID
+    ! call dump( groupNames, 'groupNames' )
+    ! call outputNamedValue( 'size(groupNames)', size(groupNames) )
+    do i=1, size(groupNames)
+      ! call outputNamedValue( 'groupName(i)', trim(groupnames(i)) )
+      if ( .not. IsHDF5GroupPresent ( containerID, trim(groupnames(i))) ) then
+        !  Must create this group
+        call h5gCreate_f ( containerID, trim(groupnames(i)), grpID, status )
+      else
+        ! Must open this group
+        call h5gopen_f ( containerID, trim(groupnames(i)), grpID, status )
+      endif
+      containerID = grpID
+      iDs(i) = grpID
+    enddo
+    if ( present(innermostID) ) then
+      innermostID = containerID
+    else
+      do i=1, size(groupNames)
+        call h5gclose_f ( IDs(i), status )
+      enddo
+    endif
+    call trace_end ( cond=.false. )
+  end subroutine MakeNestedGroups
 
   ! ---------------------------------------  GetHDF5Attribute_int  -----
   subroutine GetHDF5Attribute_int ( MLSFile, name, value )
@@ -5815,6 +5862,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.140  2017/07/25 22:30:34  pwagner
+! Added MakeNestedGroups
+!
 ! Revision 2.139  2017/02/09 23:45:48  pwagner
 ! Made more uses CamelCase
 !
