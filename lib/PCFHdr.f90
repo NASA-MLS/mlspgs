@@ -20,33 +20,35 @@ module PCFHdr
 
 ! See Background below for background and suggestion
 
-   use Dates_module, only: utc_to_date, utc_to_yyyymmdd, utcform
-   use HDF, only: dfacc_rdwr, dfacc_write, an_file_desc
-   use HighOutput, only: outputNamedValue
-   use Intrinsic, only: l_hdfeos, l_hdf, l_swath
-   use MLSCommon, only: filenamelen, mlsfile_t, filenamelen, namelen
-   use MLSFiles, only: getPCFromRef, hdfversion_4, hdfversion_5, &
-     & IniTializeMLSFile, mls_closefile, mls_openfile, mls_openfile, mls_closefile
-   use MLSKinds, only: r8
-   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Fileopen, &
-     & MLSMSG_Warning
-   use MLSStrings, only: lowercase
-   use Output_m, only: output
-   use Sdptoolkit, only: pgsd_pc_uref_length_max, pgs_s_success, &
-     & Pgsd_met_group_name_l, pgs_io_gen_closef, pgs_io_gen_openf, &
-     & Pgsd_io_gen_rdirunf, pgs_pc_getreference, &
-     & Pgs_td_asciitime_atob, pgs_td_asciitime_btoa, &
-     & Usesdptoolkit, max_orbits
-   implicit none
-   public :: globalAttributes_t, &
-     & createPCFAnnotation, dumpGlobalAttributes,  &
-     & fillTAI93Attribute, &
-     & h5_readGlobalAttr, h5_readMLSFileAttr, he5_readMLSFileAttr, &
-     & h5_writeGlobalAttr, he5_writeglobalAttr, he5_readGlobalAttr, &
-     & h5_writeMLSFileAttr, he5_writeMLSFileAttr, &
-     & inputInputPointer, writeInputPointer, &
-     & writeLeapSecHDFEOSAttr, writeLeapSecHDF5DS, writePCF2Hdr, &
-     & writeUTCPoleHDFEOSAttr, writeUTCPoleHDF5DS
+  use Dates_Module, only: Utc_To_Date, Utc_To_Yyyymmdd, Utcform, &
+    & Yyyymmdd_To_Doy, YyyyDoy_To_Mmdd
+  use HDF, only: Dfacc_Rdwr, Dfacc_Write, An_File_Desc
+  use HighOutput, only: OutputNamedValue
+  use Intrinsic, only: L_HDFeos, L_HDF, L_Swath
+  use MLSCommon, only: Filenamelen, MLSFile_T, Filenamelen, Namelen
+  use MLSFiles, only: GetPCFromRef, HDFversion_4, HDFversion_5, &
+    & IniTializeMLSFile, MLS_CloseFile, MLS_OpenFile, MLS_OpenFile, MLS_CloseFile
+  use MLSKinds, only: R8
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Fileopen, &
+    & MLSMSG_Warning
+  use MLSStrings, only: Lowercase
+  use Output_M, only: Output
+  use Sdptoolkit, only: Pgsd_Pc_Uref_Length_Max, Pgs_S_Success, &
+    & Pgsd_Met_Group_Name_L, Pgs_Io_Gen_Closef, Pgs_Io_Gen_Openf, &
+    & Pgsd_Io_Gen_Rdirunf, Pgs_Pc_Getreference, &
+    & Pgs_Td_Asciitime_Atob, Pgs_Td_Asciitime_Btoa, &
+    & Usesdptoolkit, Max_Orbits
+  implicit none
+  public :: GlobalAttributes_T, &
+    & CreatePCFAnnotation, DumpGlobalAttributes, &
+    & FillTAI93Attribute, &
+    & GranuleDay, GranuleDayOfYear, GranuleMonth, GranuleYear, &
+    & H5_ReadGlobalAttr, H5_ReadMLSFileAttr, He5_ReadMLSFileAttr, &
+    & H5_WriteGlobalAttr, He5_WriteglobalAttr, He5_ReadGlobalAttr, &
+    & H5_WriteMLSFileAttr, He5_WriteMLSFileAttr, &
+    & InputInputPointer, WriteInputPointer, &
+    & WriteLeapSecHDFEOSAttr, WriteLeapSecHDF5DS, WritePCF2Hdr, &
+    & WriteUTCPoleHDFEOSAttr, WriteUTCPoleHDF5DS
    private
 
 ! === (start of toc) ===                                                 
@@ -66,6 +68,10 @@ module PCFHdr
 ! dumpGlobalAttributes     dumps the global attributes
 ! FillTAI93Attribute       Fill the TAI93 component of the global attribute 
 !                           based on theStartUTC component
+! GranuleDay               Return the granule's day in its month
+! GranuleDayOfYear         Return the granule's day in its year
+! GranuleMonth             Return the granule's month
+! GranuleYear              Return the granule's year
 ! h5_readglobalattr        reads the global attributes from an hdf5-formatted file
 ! h5_writeglobalattr       writes the global attributes to an hdf5-formatted file
 ! he5_writeglobalattr      writes the global attributes to an hdfeos5-formatted file
@@ -78,10 +84,29 @@ module PCFHdr
 ! WritePCF2Hdr             Write the PCF into an HDF or HDF-EOS file
 ! WriteutcPoleHDFEOSAttr   Write contents of utcPole file as hdfeos5 attribute
 ! WriteutcPoleHDF5DS       Write contents of utcPole file as hdf5 dataset
-! === (end of toc) ===                                                   
+! === (end of toc) ===      
+                                             
 ! === (start of api) ===
-! log inRange( int arg, Range_T range )
-! log is_what_ieee( int what, num arg )
+! CreatePCFAnnotation ( int mlspcfN_pcf_start, char* anText(:) )
+! dumpGlobalAttributes     dumps the global attributes
+! FillTAI93Attribute       Fill the TAI93 component of the global attribute 
+!                           based on theStartUTC component
+! GranuleDay               Return the granule's day in its month
+! GranuleDayOfYear         Return the granule's day in its year
+! GranuleMonth             Return the granule's month
+! GranuleYear              Return the granule's year
+! h5_readglobalattr        reads the global attributes from an hdf5-formatted file
+! h5_writeglobalattr       writes the global attributes to an hdf5-formatted file
+! he5_writeglobalattr      writes the global attributes to an hdfeos5-formatted file
+! he5_readglobalattr       reads the global attributes from an hdfeos5-formatted file
+! InputInputpointer        Prepare Input for WriteInputpointer
+! sw_writeglobalattr       writes the global attributes for an hdfeos5 swath
+! WriteInputpointer        Write Inputpointer metadata
+! WriteLeapSecHDFEOSAttr   Write contents of leapsec file as hdfeos5 attribute
+! WriteLeapSecHDF5DS       Write contents of leapsec file as hdf5 dataset
+! WritePCF2Hdr             Write the PCF into an HDF or HDF-EOS file
+! WriteutcPoleHDFEOSAttr   Write contents of utcPole file as hdfeos5 attribute
+! WriteutcPoleHDF5DS       Write contents of utcPole file as hdf5 dataset
 ! === (end of api) ===
 
 !---------------------------- RCS Module Info ------------------------------
@@ -99,8 +124,9 @@ module PCFHdr
 ! It also contains 
 ! (a) two routines that prepare and write the input pointer
 ! to metadata, still used by Level 1
-! (b) routines for reading and writing file-level attributes
+! (b) routines for dumping, reading and writing file-level attributes
 ! in particular hdfeos5 and plain hdf5
+! (c) functions returning the day, month, etc. of the data date, aka granule
 
 ! Suggestion:
 ! Create a brrand new module, named something like GlobalAttributes.f90
@@ -137,9 +163,13 @@ module PCFHdr
     character(len=GA_VALUE_LENGTH) :: EndUTC = ''
     character(len=GA_VALUE_LENGTH) :: DOI = '' ! E.g., '10.5083/AURA/MLS/DATA201'
     character(len=GA_VALUE_LENGTH) :: productionLoc = ' '
-    integer                        :: GranuleMonth                  = 0
-    integer                        :: GranuleDay                    = 0
+    ! Note that the next 3 may refer to either of 2 formats
+    ! (a) yyyy-mm-dd if GranuleMonth > 0
+    ! (b) yyyy-Doy if GranuleMonth < 0
+    integer                        :: GranuleMonth                  = 0 ! < 0 if day is Doy
+    integer                        :: GranuleDay                    = 0 ! 0 < Day < 32 of month > 0
     integer                        :: GranuleYear                   = 0
+
     real(r8)                       :: TAI93At0zOfGranule            = 0.d0
     integer                        :: FirstMAFCtr                   = BIGGESTMAFCTR
     integer                        :: LastMAFCtr                    = 0
@@ -160,6 +190,22 @@ module PCFHdr
   integer, public, save            :: PCFHDR_DEFAULT_HDFVERSION = HDFVERSION_5
   logical, parameter               :: DEBUG = .false.
 
+  interface GranuleDay
+    module procedure GranuleDay_Fun
+  end interface
+  
+  interface GranuleDayOfYear
+    module procedure GranuleDayOfYear_fun
+  end interface
+  
+  interface GranuleMonth
+    module procedure GranuleMonth_Fun
+  end interface
+  
+  interface GranuleYear
+    module procedure GranuleYear_Fun
+  end interface
+  
   interface h5_writeglobalattr
     module procedure h5_writeglobalattr_fileID, h5_writeglobalattr_MLSFile
   end interface
@@ -267,7 +313,7 @@ contains
    SUBROUTINE FillTAI93Attribute ( LeapSecFileName )
 !----------------------------------------
 
-    use SDPTOOLKIT, only: MLS_UTCTOTAI, PGS_TD_UTCTOTAI
+    use SDPToolkit, only: MLS_UTCToTAI, PGS_TD_UTCToTAI
 !  Fill the TAI93 component of the global attribute based on the
 !  StartUTC component
 
@@ -308,6 +354,144 @@ contains
 !------------------------------------
    END SUBROUTINE FillTAI93Attribute
 !------------------------------------
+
+  ! ------------ GranuleDayOfYear ---------------
+  ! These functions return day, month, etc. of the current data date
+  function GranuleDayOfYear_fun () result (dayOfYear)
+    ! Arguments
+    integer :: month
+    ! Local variables
+    integer :: year
+    integer :: dayOfYear
+    integer :: status
+    character (len=UTC_A_VALUE_LENGTH) :: asciiutc_a
+    character (len=UTC_B_VALUE_LENGTH) :: asciiutc_b
+    character(len=1) :: whatUTCForm
+    ! Executable
+    dayofYear = -999
+    if ( GlobalAttributes%GranuleYear <= 0 ) then
+      whatUTCForm = utcForm(GlobalAttributes%StartUTC)
+      if ( DEBUG ) then
+        call outputNamedValue( 'utc form', whatUTCForm )
+        call outputNamedValue( 'StartUTC', trim(GlobalAttributes%StartUTC) )
+      endif
+      select case (whatUTCForm)
+      case ('a')
+        asciiutc_a = GlobalAttributes%StartUTC
+        status = pgs_td_asciitime_atob(asciiutc_a, asciiutc_b)
+        if ( status /= 0 ) then
+          call outputNamedValue( 'StartUTC', GlobalAttributes%StartUTC )
+          CALL MLSMessage(MLSMSG_Error, ModuleName, &
+          & 'Unable to convert utc A to B formats')
+        endif
+      case ('b')
+        asciiutc_b = GlobalAttributes%StartUTC
+      case default
+        asciiutc_b = GlobalAttributes%StartUTC
+      end select
+      call utc_to_yyyymmdd(asciiutc_b, status, &
+        & year, month, dayOfYear) 
+      if ( DEBUG ) call outputNamedValue( 'asciiutc_b', trim(asciiutc_b) )
+      if ( status /= 0 ) &
+        & CALL MLSMessage(MLSMSG_Warning, ModuleName, &
+        & 'Unable to extract year, day of year from utc B format')
+    elseif ( GlobalAttributes%GranuleMonth <= 0 ) then
+      dayOfYear = GlobalAttributes%GranuleDay
+    else
+      call yyyymmdd_to_Doy ( GlobalAttributes%GranuleYear, &
+        & GlobalAttributes%GranuleMonth, &
+        & GlobalAttributes%GranuleDay, dayOfYear )
+    endif
+  end function GranuleDayOfYear_fun
+
+  function GranuleDay_fun () result (day)
+    ! Arguments
+    integer :: month
+    ! Local variables
+    integer :: year
+    integer :: day
+    integer :: status
+    character (len=UTC_A_VALUE_LENGTH) :: asciiutc_a
+    character (len=UTC_B_VALUE_LENGTH) :: asciiutc_b
+    ! Executable
+    day = 0
+    if ( GlobalAttributes%GranuleYear <= 0 ) then
+      asciiutc_b = GlobalAttributes%StartUTC
+      status = pgs_td_asciitime_btoa(asciiutc_b, asciiutc_a)
+      if ( status /= 0 ) &
+        & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+        & 'Unable to convert utc B to A formats')
+      call utc_to_yyyymmdd(asciiutc_a, status, &
+        & year, month, day) 
+      if ( status /= 0 ) &
+        & CALL MLSMessage(MLSMSG_Warning, ModuleName, &
+        & 'Unable to extract year, month, day from utc A format')
+    elseif ( GlobalAttributes%GranuleMonth > 0 ) then
+      day = GlobalAttributes%GranuleDay
+    else
+      call yyyyDoy_to_mmdd ( GlobalAttributes%GranuleYear, &
+        & Month, Day, &
+        & GlobalAttributes%GranuleDay )
+    endif
+  end function GranuleDay_fun
+
+  function GranuleMonth_fun () result (month)
+    ! Arguments
+    integer :: month
+    ! Local variables
+    integer :: year
+    integer :: day
+    integer :: status
+    character (len=UTC_A_VALUE_LENGTH) :: asciiutc_a
+    character (len=UTC_B_VALUE_LENGTH) :: asciiutc_b
+    ! Executable
+    month = 0
+    if ( GlobalAttributes%GranuleYear <= 0 ) then
+      asciiutc_b = GlobalAttributes%StartUTC
+      status = pgs_td_asciitime_btoa(asciiutc_b, asciiutc_a)
+      if ( status /= 0 ) &
+        & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+        & 'Unable to convert utc B to A formats')
+      call utc_to_yyyymmdd(asciiutc_a, status, &
+        & year, month, day) 
+      if ( status /= 0 ) &
+        & CALL MLSMessage(MLSMSG_Warning, ModuleName, &
+        & 'Unable to extract year, month, day from utc A format')
+    elseif ( GlobalAttributes%GranuleMonth > 0 ) then
+      month = GlobalAttributes%GranuleMonth
+    else
+      call yyyyDoy_to_mmdd ( GlobalAttributes%GranuleYear, &
+        & Month, Day, &
+        & GlobalAttributes%GranuleDay )
+    endif
+  end function GranuleMonth_fun
+
+  function GranuleYear_fun () result (Year)
+    ! Arguments
+    integer :: Year
+    ! Local variables
+    integer :: month
+    integer :: day
+    integer :: status
+    character (len=UTC_A_VALUE_LENGTH) :: asciiutc_a
+    character (len=UTC_B_VALUE_LENGTH) :: asciiutc_b
+    ! Executable
+    Year = 0
+    if ( GlobalAttributes%GranuleYear <= 0 ) then
+      asciiutc_b = GlobalAttributes%StartUTC
+      status = pgs_td_asciitime_btoa(asciiutc_b, asciiutc_a)
+      if ( status /= 0 ) &
+        & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+        & 'Unable to convert utc B to A formats')
+      call utc_to_yyyymmdd(asciiutc_a, status, &
+        & year, Year, day) 
+      if ( status /= 0 ) &
+        & CALL MLSMessage(MLSMSG_Warning, ModuleName, &
+        & 'Unable to extract year, Year, day from utc A format')
+    else
+      Year = GlobalAttributes%GranuleYear
+    endif
+  end function GranuleYear_fun
 
 !------------------------------------------------------------
    SUBROUTINE h5_readMLSFileAttr ( MLSFile )
@@ -375,7 +559,7 @@ contains
    SUBROUTINE he5_readMLSFileAttr (MLSFile)
 !------------------------------------------------------------
 
-    use MLSHDFEOS, only: HE5_EHRDGLATT
+    use MLSHDFEOS, only: HE5_EHRDGlAtt
 ! Brief description of subroutine
 ! This subroutine reads the components of an MLSFile_t 
 ! as attributes from an hdfeos5-formatted file
@@ -626,7 +810,7 @@ contains
 
       use HDF5, only:  H5GClose_f, H5GOpen_f
       use MLSHDF5, only: ISHDF5AttributePresent, makeHDF5Attribute
-      use highOutput, only: BeVerbose
+      use HighOutput, only: BeVerbose
       ! Brief description of subroutine
       ! This subroutine writes the components of an MLSFile_t 
       ! as attributes for an hdf5-formatted file
@@ -732,8 +916,8 @@ contains
    SUBROUTINE he5_writeglobalattr_FileID ( fileID, dayNum, DOI, skip_if_already_there )
 !------------------------------------------------------------
 
-    use HDFEOS5, only: HE5T_Native_int, &
-      & HE5T_Native_Double, MLS_Chartype
+    use HDFEOS5, only: HE5T_Native_Int, &
+      & HE5T_Native_Double, MLS_CharType
     use MLSHDFEOS, only: HE5_EHWRGlAtt, HSize, MLS_EhwrGlAtt, MLS_IsGlAtt
 ! Brief description of subroutine
 ! This subroutine writes the global attributes for an hdfeos5 file
@@ -851,8 +1035,8 @@ contains
    SUBROUTINE he5_writeMLSFileAttr ( MLSFile )
 !------------------------------------------------------------
 
-    use HDFEOS5, only: HE5T_NATIVE_INT, MLS_CHARTYPE
-    use MLSHDFEOS, only: HE5_EHWRGLATT, HSIZE, MLS_EHWRGLATT
+   use HDFeos5, only: He5t_Native_Int, MLS_Chartype
+   use MLSHDFeos, only: He5_Ehwrglatt, Hsize, MLS_Ehwrglatt
 ! Brief description of subroutine
 ! This subroutine writes the components of an MLSFile_t 
 ! as attributes for an hdfeos5-formatted file
@@ -920,8 +1104,8 @@ contains
      & ProcessLevel, DayofYear, TAI93At0zOfGranule, returnStatus)
 !------------------------------------------------------------
 
-    use HDFEOS5, only: HE5_EHINQGLATTS
-    use MLSHDFEOS, only: MAXDLISTLENGTH, HE5_EHRDGLATT
+     use HDFeos5, only: He5_Ehinqglatts
+     use MLSHDFeos, only: Maxdlistlength, He5_Ehrdglatt
 ! Brief description of subroutine
 ! This subroutine reads the global attributes from an hdf-eos5 file
 
@@ -1110,9 +1294,9 @@ contains
    SUBROUTINE sw_writeglobalattr (swathID)
 !------------------------------------------------------------
 
-      use HDFEOS5, only: HE5T_NATIVE_INT, HE5T_NATIVE_DOUBLE, MLS_charType
-      use HE5_SWAPI, only: HE5_SWWRATTR
-      use MLSHDFEOS, only: HSIZE, MLS_SWWRATTR
+     use HDFeos5, only: He5t_Native_Int, He5t_Native_Double, MLS_Chartype
+     use He5_Swapi, only: He5_Swwrattr
+     use MLSHDFeos, only: Hsize, MLS_Swwrattr
 ! Brief description of subroutine
 ! This subroutine writes the global attributes for an hdfeos5 swath
 
@@ -1236,7 +1420,7 @@ contains
 
    subroutine WriteLeapSecHDFEOSAttr (fileID)
      ! Write contents of leapsec file as hdfeos5 attribute to file
-    use MLSHDFEOS, only: MLS_EHWRGLATT
+    use MLSHDFEOS, only: MLS_EHWrGlAtt
      ! Args
      integer, intent(in) :: fileID
      ! Internal variables
@@ -1260,7 +1444,7 @@ contains
 
    subroutine WriteLeapSecHDF5DS (fileID)
      ! Write contents of leapsec file as hdf5 dataset to file
-    use MLSHDF5, only: SAVEASHDF5DS
+    use MLSHDF5, only: SaveAsHDF5DS
      ! Args
      integer, intent(in) :: fileID
      ! Internal variables
@@ -1450,9 +1634,9 @@ contains
    SUBROUTINE WritePCF2Hdr_hdf5 (fileID, anText, name)
 !----------------------------------------
 
-      use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
-      use HDF5, only: H5GCLOSE_F, H5GOPEN_F
-      use MLSHDF5, only: ISHDF5DSPRESENT, MAKEHDF5ATTRIBUTE, SAVEASHDF5DS
+     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+     use HDF5, only: H5gclose_F, H5gopen_F
+     use MLSHDF5, only: IsHDF5dspresent, MakeHDF5attribute, SaveasHDF5ds
 ! Brief description of subroutine
 ! This subroutine writes the PCF into an HDF5 file as 
 ! (1) a datset if MAKEDATASET is TRUE
@@ -1520,8 +1704,8 @@ contains
    SUBROUTINE WritePCF2Hdr_hdfeos5 (fileID, anText)
 !----------------------------------------
 
-      use HDFEOS5, only: MLS_CHARTYPE
-      use MLSHDFEOS, only: HSIZE, HE5_EHWRGLATT
+     use HDFeos5, only: MLS_Chartype
+     use MLSHDFeos, only: Hsize, He5_Ehwrglatt
 ! Brief description of subroutine
 ! This subroutine writes the PCF into an HDF-EOS5 file as an attribute.
 ! It does so as file level attributes
@@ -1573,7 +1757,7 @@ contains
 
    subroutine WriteutcPoleHDFEOSAttr (fileID)
      ! Write contents of utcPole file as hdfeos5 attribute to file
-    use MLSHDFEOS, only: MLS_EHWRGLATT
+    use MLSHDFEOS, only: MLS_EHWrGlAtt
      ! Args
      integer, intent(in) :: fileID
      ! Internal variables
@@ -1598,7 +1782,7 @@ contains
 
    subroutine WriteutcPoleHDF5DS (fileID)
      ! Write contents of leapsec file as hdf5 dataset to file
-    use MLSHDF5, only: SAVEASHDF5DS
+    use MLSHDF5, only: SaveAsHDF5DS
      ! Args
      integer, intent(in) :: fileID
      ! Internal variables
@@ -1622,103 +1806,6 @@ contains
    end subroutine WriteutcPoleHDF5DS
 
 !----------- Internal Procedures --------------
-  function GranuleDayOfYear_fun () result (dayOfYear)
-    ! Arguments
-    integer :: month
-    ! Local variables
-    integer :: year
-    integer :: dayOfYear
-    integer :: status
-    character (len=UTC_A_VALUE_LENGTH) :: asciiutc_a
-    character (len=UTC_B_VALUE_LENGTH) :: asciiutc_b
-    character(len=1) :: whatUTCForm
-    ! Executable
-    dayofYear = -999
-    if ( GlobalAttributes%GranuleMonth <= 0 .or. .not. useSDPToolkit ) then
-      dayOfYear = GlobalAttributes%GranuleDay
-    else
-      whatUTCForm = utcForm(GlobalAttributes%StartUTC)
-      if ( DEBUG ) then
-        call outputNamedValue( 'utc form', whatUTCForm )
-        call outputNamedValue( 'StartUTC', trim(GlobalAttributes%StartUTC) )
-      endif
-      select case (whatUTCForm)
-      case ('a')
-        asciiutc_a = GlobalAttributes%StartUTC
-        status = pgs_td_asciitime_atob(asciiutc_a, asciiutc_b)
-        if ( status /= 0 ) then
-          call outputNamedValue( 'StartUTC', GlobalAttributes%StartUTC )
-          CALL MLSMessage(MLSMSG_Error, ModuleName, &
-          & 'Unable to convert utc A to B formats')
-        endif
-      case ('b')
-        asciiutc_b = GlobalAttributes%StartUTC
-      case default
-        asciiutc_b = GlobalAttributes%StartUTC
-      end select
-      call utc_to_yyyymmdd(asciiutc_b, status, &
-        & year, month, dayOfYear) 
-      if ( DEBUG ) call outputNamedValue( 'asciiutc_b', trim(asciiutc_b) )
-      if ( status /= 0 ) &
-        & CALL MLSMessage(MLSMSG_Warning, ModuleName, &
-        & 'Unable to extract year, day of year from utc B format')
-    endif
-  end function GranuleDayOfYear_fun
-
-  function GranuleDay_fun () result (day)
-    ! Arguments
-    integer :: month
-    ! Local variables
-    integer :: year
-    integer :: day
-    integer :: status
-    character (len=UTC_A_VALUE_LENGTH) :: asciiutc_a
-    character (len=UTC_B_VALUE_LENGTH) :: asciiutc_b
-    ! Executable
-    day = 0
-    if ( GlobalAttributes%GranuleMonth > 0 .or. .not. useSDPToolkit ) then
-      day = GlobalAttributes%GranuleDay
-    else
-      asciiutc_b = GlobalAttributes%StartUTC
-      status = pgs_td_asciitime_btoa(asciiutc_b, asciiutc_a)
-      if ( status /= 0 ) &
-        & CALL MLSMessage(MLSMSG_Error, ModuleName, &
-        & 'Unable to convert utc B to A formats')
-      call utc_to_yyyymmdd(asciiutc_a, status, &
-        & year, month, day) 
-      if ( status /= 0 ) &
-        & CALL MLSMessage(MLSMSG_Warning, ModuleName, &
-        & 'Unable to extract year, month, day from utc A format')
-    endif
-  end function GranuleDay_fun
-
-  function GranuleMonth_fun () result (month)
-    ! Arguments
-    integer :: month
-    ! Local variables
-    integer :: year
-    integer :: day
-    integer :: status
-    character (len=UTC_A_VALUE_LENGTH) :: asciiutc_a
-    character (len=UTC_B_VALUE_LENGTH) :: asciiutc_b
-    ! Executable
-    month = 0
-    if ( GlobalAttributes%GranuleMonth > 0 .or. .not. useSDPToolkit ) then
-      month = GlobalAttributes%GranuleMonth
-    else
-      asciiutc_b = GlobalAttributes%StartUTC
-      status = pgs_td_asciitime_btoa(asciiutc_b, asciiutc_a)
-      if ( status /= 0 ) &
-        & CALL MLSMessage(MLSMSG_Error, ModuleName, &
-        & 'Unable to convert utc B to A formats')
-      call utc_to_yyyymmdd(asciiutc_a, status, &
-        & year, month, day) 
-      if ( status /= 0 ) &
-        & CALL MLSMessage(MLSMSG_Warning, ModuleName, &
-        & 'Unable to extract year, month, day from utc A format')
-    endif
-  end function GranuleMonth_fun
-
   function int_to_char (int) result (chars)
     ! Arguments
     integer , intent(in) :: int
@@ -1758,6 +1845,9 @@ end module PCFHdr
 !================
 
 !# $Log$
+!# Revision 2.69  2017/07/25 22:29:35  pwagner
+!# Made 4 functions public that return granules day, month, dayofyear, year
+!#
 !# Revision 2.68  2016/07/26 17:44:31  pwagner
 !# Deebug may be turned on by switch; print clearer message
 !#
