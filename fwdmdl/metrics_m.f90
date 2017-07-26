@@ -941,6 +941,7 @@ path: do i = i1, i2
       integer :: P_Coeffs                    ! # of phi's, t_sv%l_p(1)
       integer :: Two_D_Bounds(2)             ! [ Z_Coeffs, P_Coeffs ]
       integer :: Two_Subs(2)                 ! [ Sv_Z, Sv_P ]
+      integer :: WS                          ! t_sv%window_start(1)
       integer :: Z_Coeffs                    ! # of zetas, t_sv%l_z(1)
       equivalence ( two_d_bounds(1), z_coeffs ), ( two_d_bounds(2), p_coeffs )
       equivalence ( two_subs(1), sv_z ), ( two_subs(2), sv_p )
@@ -1012,9 +1013,10 @@ path: do i = i1, i2
         if ( change ) then ! Make some interpolators zero because
                            ! t_sv%deriv_flags was false
           k = eta_zp(i)%n
+          ws = t_sv%windowStart(1)
           do j = 1, k ! At most four values to check
             ! L4 is associated with Deriv_Flags
-            if ( .not. t_sv%c(1)%l4(1,eta_zp(i)%v(j)%n,eta_zp(i)%v(j)%np,1) ) &
+            if ( .not. t_sv%c(1)%l4(1,eta_zp(i)%v(j)%n,ws+eta_zp(i)%v(j)%np-1,1) ) &
               & eta_zp(i)%v(j)%v = 0
           end do
           eta_zp(i)%n = count(eta_zp(i)%v(1:k)%v/=0)
@@ -1155,6 +1157,9 @@ call get_eta_do_calc ( eta_zp(1:n_path), two_d_bounds, eta_zxp, do_calc_t, nz_zx
 end module Metrics_m
 
 ! $Log$
+! Revision 2.80  2017/03/11 00:56:05  vsnyder
+! Use list interpolation in More_Metrics, cosmetic changes
+!
 ! Revision 2.79  2016/11/17 02:06:12  vsnyder
 ! Correct some LaTeX
 !
