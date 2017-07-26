@@ -23,19 +23,23 @@
     integer :: I, J, K, L
 
     do i = 1, size(a)
-      c(i)%n = a(i)%n * b(i)%n
       l = 0
       do k = 1, b(i)%n
         do j = 1, a(i)%n
+          if ( a(i)%v(j)%n == 0 .or. b(i)%v(k)%n == 0 ) cycle
           l = l + 1
           c(i)%v(l)%n = a(i)%v(j)%n
           c(i)%v(l)%np = b(i)%v(k)%n
           c(i)%v(l)%v = a(i)%v(j)%v * b(i)%v(k)%v
         end do
       end do
+      c(i)%n = l
     end do
 
 ! $Log$
+! Revision 2.4  2017/07/26 20:06:44  vsnyder
+! Don't construct list element with zero subscript
+!
 ! Revision 2.3  2017/01/14 01:42:26  vsnyder
 ! Run A list faster than B list to put things in same order as array Eta
 !
