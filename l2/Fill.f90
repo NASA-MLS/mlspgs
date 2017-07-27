@@ -41,6 +41,7 @@ module Fill                     ! Create vectors and fill them.
   private :: not_used_here
 !---------------------------------------------------------------------------
 
+  logical, parameter :: countEmpty = .true. ! Except where overriden locally
   logical, parameter :: USEREICHLER = .true.
 
 contains ! =====     Public Procedures     =============================
@@ -102,11 +103,11 @@ contains ! =====     Public Procedures     =============================
     use Hessianmodule_1, only: AddhessiantoDatabase, Createemptyhessian, &
       & Streamlinehessian, Hessian_T
     use HGridsDatabase, only: HGrids_T
-    use HighOutput, only: OutputnamedValue
+    use HighOutput, only: OutputNamedValue
     ! We Need Many Things From Init_Tables_Module. First The Fields:
     use Init_Tables_Module, only: F_A, F_Additional, F_Allowmissing, &
       & F_Aprioriprecision, F_Aspercentage, F_Autofill, F_Avoidbrightobjects, &
-      & F_B, F_Badrange, F_Baselinequantity, F_Bin, F_Block, &
+      & F_B, F_Badrange, F_Baselinequantity, F_Bin, F_Block, F_Boolean, &
       & F_Boundarypressure, F_Boxcarmethod, &
       & F_C, F_Centervertically, F_Channel, F_Channels, F_Columns, F_Count, &
       & F_Destination, F_Diagonal, F_Dimlist, &
@@ -115,7 +116,7 @@ contains ! =====     Public Procedures     =============================
       & F_ExplicitValues, F_Expr, F_ExpandMask, F_Extinction, &
       & F_Fieldecr, F_File, F_Flags, F_Force, F_Shape, &
       & F_Fraction, F_Fromprecision, &
-      & F_Geocaltitudequantity, F_Geolocation, F_Gphquantity, &
+      & F_Geocaltitudequantity, F_Geolocation, F_Gphquantity, F_GroupName, &
       & F_Height, F_Heightrange, F_Hessian, &
       & F_Highbound, F_H2oquantity, F_H2oprecisionquantity, F_HGrid, &
       & F_Ifmissinggmao, &
@@ -205,7 +206,7 @@ contains ! =====     Public Procedures     =============================
     ! Carefully Check Out The Code Around The Call To Snoop.
     use MLSFiles, only: HDFVersion_5, GetMLSFileByType
     use MLSL2Options, only: L2cfnode, &
-      & SkipRetrieval, SpecialDumpFile, MLSMessage
+      & RuntimeValues, SkipRetrieval, SpecialDumpFile, MLSMessage
     use MLSL2Timings, only: Section_Times, &
       & AddPhaseToPhaseNames, FillTimings, FinishTimings
     use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning, &
@@ -221,6 +222,8 @@ contains ! =====     Public Procedures     =============================
       & Get_Spec_Id
     use Next_Tree_Node_M, only: Next_Tree_Node, Next_Tree_Node_State
     use Output_M, only: Output, RevertOutput, SwitchOutput
+    use PCFHdr, only: GlobalAttributes, &
+      & GranuleDay, GranuleDayOfYear, GranuleMonth, GranuleYear
     use PFAData_M, only: Flush_PFAData
     use QuantityTemplates, only: QuantityTemplate_T, &
       & ModifyQuantityTemplate
@@ -1301,6 +1304,7 @@ contains ! =====     Public Procedures     =============================
       use DirectWrite_m, only: DirectRead
       use L2PC_M, only: ReadCompleteHDF5L2PCFile
       ! Now we're on actual directRead instructions.
+      character(len=1024) :: BoolKey      ! The boolean's key
       logical, parameter :: DEEBUG = .false.
       integer :: EXPRUNITS(2)             ! From expr
       real (r8) :: EXPRVALUE(2)           ! From expr
@@ -1309,6 +1313,7 @@ contains ! =====     Public Procedures     =============================
       integer :: fileType
       character(len=8) :: fileTypeStr
       logical :: geolocation
+      character(len=32) :: groupName
       integer :: gson
       ! integer :: hdfversion
       logical :: interpolate
@@ -1322,6 +1327,7 @@ contains ! =====     Public Procedures     =============================
       got = .false.
       ! hdfVersion = DEFAULT_HDFVERSION_READ
       file = 0
+      groupName = ' '
       options = ' '
       binname = 0
       rank = 0
@@ -1335,6 +1341,12 @@ contains ! =====     Public Procedures     =============================
         if ( nsons(gson) > 1) gson = subtree(2,gson) ! Now value of said argument
         got(fieldIndex)=.TRUE.
         select case ( fieldIndex )
+        case ( f_Boolean )
+          call get_string ( sub_rosa(gson), BoolKey, strip=.true. )
+          BoolKey = lowerCase(BoolKey)
+          call GetHashElement( runTimeValues%lkeys, runTimeValues%lvalues, &
+            & trim(BoolKey), groupName, countEmpty, &
+            & inseparator=runTimeValues%sep )
         case ( f_quantity )
           vectorIndex = decoration(decoration(subtree(1,gson)))
           quantityIndex = decoration(decoration(decoration(subtree(2,gson))))
@@ -1362,6 +1374,10 @@ contains ! =====     Public Procedures     =============================
           if ( DEEBUG ) call outputNamedValue ( 'Processing file field', file )
         case ( f_geolocation )
             geolocation = get_boolean ( gson )
+        case ( f_groupName )
+          if ( DEEBUG ) call output ( 'Begin Processing groupName field', advance='yes' )
+          call get_string ( sub_rosa(gson), groupName, strip=.true. )
+          if ( DEEBUG ) call output ( 'Processing groupName field', advance='yes' )
         case ( f_options )
           if ( DEEBUG ) call output ( 'Begin Processing options field', advance='yes' )
           call get_string ( sub_rosa(gson), options, strip=.true. )
@@ -1434,7 +1450,7 @@ contains ! =====     Public Procedures     =============================
       else
         vector => vectors(vectorIndex)
         call VectorFromFile ( key, vector, MLSFile, &
-          & filetypestr, options, spread, interpolate )
+          & filetypestr, options, spread, interpolate, groupName )
       end if
     end subroutine directReadCommand
 
@@ -2298,6 +2314,10 @@ contains ! =====     Public Procedures     =============================
           if ( Chunks(ChunkNo)%abandoned ) quantity%values = 1
         case ( 'chunk' )
           quantity%values = ChunkNo
+        case ( 'day' )
+          quantity%values = GranuleDay()
+        case ( 'dayofyear' )
+          quantity%values = GranuleDayOfYear()
         case ( '1stmaf' )
           quantity%values = Chunks(ChunkNo)%firstMAFIndex
         ! Things about our Quantity template
@@ -2309,6 +2329,8 @@ contains ! =====     Public Procedures     =============================
           quantity%values = quantity%template%lon
         case ( 'losangle' )
           quantity%values = quantity%template%losangle
+        case ( 'month' )
+          quantity%values = GranuleMonth()
         case ( 'phi' )
           quantity%values = quantity%template%phi
         case ( 'solartime' )
@@ -2319,6 +2341,8 @@ contains ! =====     Public Procedures     =============================
           quantity%values = quantity%template%surfs
         case ( 'time' )
           quantity%values = quantity%template%time
+        case ( 'year' )
+          quantity%values = GranuleYear()
         ! Try to infer the profile number corresponding to each maf
         case ( 'profile' )
           if ( .not. got(f_hgrid) )  &
@@ -3301,6 +3325,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.469  2017/07/27 16:57:37  pwagner
+! Geolocations now add day, month, etc.; DirectRead may look under groupName
+!
 ! Revision 2.468  2017/07/10 18:50:47  pwagner
 ! Transfer may /expandMask to all masking bits; may /skipValues to transfer only mask; Fill may replaceMissingValue=
 !
