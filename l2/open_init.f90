@@ -80,7 +80,8 @@ contains ! =====     Public Procedures     =============================
     ! the necessary inputs via the l2cf and
     ! processing user inputs during global settings section
 
-    use Dates_Module, only: UTC_To_YYYYMMDD, PrecedesUTC, resetStartingDate
+    use Dates_Module, only: UTC_To_YYYYMMDD, PrecedesUTC, ResetStartingDate, &
+      & YyyyDoy_To_Mmdd
     use Dump_1, only: Dump
     use HDF, only: Dfacc_Rdonly
     use Intrinsic, only: L_HDF
@@ -129,7 +130,7 @@ contains ! =====     Public Procedures     =============================
     ! The following parameters will only be needed if PCF ids are missing
     character(len=*), parameter :: DEFAULTANTEXT= &
       & 'PCF file number missing from PCF--add this line'
-
+    integer                      :: dd
     integer                      :: Details   ! How much info about l1b files to dump
     character(len=NameLen), dimension(NumDOIs) :: doiArray
     character(len=len(switches)) :: extra_switches
@@ -141,6 +142,7 @@ contains ! =====     Public Procedures     =============================
     type (MLSFile_T), pointer    :: L1BPtr
     integer                      :: L1FileHandle
     integer :: Me = -1           ! String index for trace
+    integer                      :: mm
     character (len=fileNameLen)  :: name
     integer                      :: numFiles
 
@@ -455,6 +457,13 @@ contains ! =====     Public Procedures     =============================
     call utc_to_yyyymmdd(GlobalAttributes%StartUTC, returnStatus, &
       & GlobalAttributes%GranuleYear, GlobalAttributes%GranuleMonth, &
       & GlobalAttributes%GranuleDay) 
+    ! If mm < 0, then it's yyyy-Doy format, so let's find the actual
+    ! month and store it as a negative integer in GranuleMonth
+    if ( GlobalAttributes%GranuleMonth == -1 ) then
+      call yyyyDoy_to_mmdd( GlobalAttributes%GranuleYear, &
+        & mm, dd, GlobalAttributes%GranuleDay )
+      GlobalAttributes%GranuleMonth = -mm
+    endif
     call FillTAI93Attribute
     
     ! Get name of Parallel Staging file (not any more)
@@ -707,6 +716,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.116  2017/07/27 16:41:51  pwagner
+! If yyyy-Doy, store actual actual month number as neg int. in GlobalAttributes%GranuleMonth
+!
 ! Revision 2.115  2017/07/10 18:55:35  pwagner
 ! Warn if starting date precedes start of tai93
 !
