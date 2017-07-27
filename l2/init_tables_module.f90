@@ -1147,6 +1147,7 @@ contains ! =====     Public procedures     =============================
                     n+n_or, &
              begin, f+f_formula, string(), &
              begin, f+f_inputBoolean, field_spec(s_Boolean), &
+             begin, f+f_truncate, boolean(), &
              begin, f+f_label, string(), &
              begin, f+f_literal, boolean(), &
              begin, f+f_manipulation, string(), &
@@ -1208,9 +1209,10 @@ contains ! =====     Public procedures     =============================
 
     call make_tree( (/ &
       begin, s+s_label, &
+             begin, f+f_Boolean, field_spec(s_Boolean), &
              begin, f+f_quantity, vectorQuantity(), &
              begin, f+f_vector, field_spec(s_vector), &
-             begin, f+f_label, string(req), &
+             begin, f+f_label, string(), &
              begin, f+f_prefixSignal, boolean(), &
              begin, f+f_suffixLabel, boolean(), &
              ndp+n_spec_def /) )
@@ -1290,9 +1292,11 @@ contains ! =====     Public procedures     =============================
              nadp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_directRead, &
+             begin, f+f_Boolean, field_spec(s_Boolean), &
              begin, f+f_bin, string(), &
              begin, f+f_file, string(), &
              begin, f+f_geolocation, boolean(), &
+             begin, f+f_groupName, string(), &
              begin, f+f_hdfVersion, numeric(phyq_dimensionless,req=req), &
              begin, f+f_interpolate, boolean(), &
              begin, f+f_noPCFid, boolean(), &
@@ -1308,8 +1312,10 @@ contains ! =====     Public procedures     =============================
              ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_directWrite, &
+             begin, f+f_Boolean, field_spec(s_Boolean), &
              begin, f+f_convergence, vectorQuantity(), &
              begin, f+f_file, string(), &
+             begin, f+f_groupName, string(), &
              begin, f+f_hdfVersion, numeric(phyq_dimensionless,req=req), &
              begin, f+f_inputFile, string(), &
              begin, f+f_lowerOverlap, boolean(), &
@@ -2091,6 +2097,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.635  2017/07/27 16:38:55  pwagner
+! Reevaluate may take /truncate; label may take Boolean; DirectWrite may take Boolean or groupName
+!
 ! Revision 2.634  2017/07/10 18:48:51  pwagner
 ! Transfer may /expandMask to all masking bits; may /skipValues to transfeer only mask; Fill may replaceMissingValue=
 !
