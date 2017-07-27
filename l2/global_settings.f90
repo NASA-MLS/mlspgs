@@ -208,7 +208,7 @@ contains
 
     use BitStuff, only: IsBitSet
     use Dates_Module, only: IsUTCInRange, PrecedesUTC, ResetStartingDate, &
-      & SecondsBetween2UTCs, Utc2tai93s, UTC_To_Yyyymmdd
+      & SecondsBetween2UTCs, Utc2tai93s, UTC_To_Yyyymmdd, YyyyDoy_To_Mmdd
     use Declaration_Table, only: Named_Value, Redeclare, Str_Value
     use DirectWrite_M, only: DirectData_T, &
       & AddDirectToDatabase, Dump, SetupNewDirect
@@ -314,6 +314,7 @@ contains
     character(len=namelen) :: L1bItemName
     integer :: L1BFLAG
     integer :: Me = -1             ! String index for trace
+    integer :: MM, DD
     real(r8) :: MINTIME, MAXTIME   ! Time Span in L1B file data
     character(len=namelen) :: modulenames
     integer :: NAME                ! Sub-rosa index of name of vGrid or hGrid
@@ -749,6 +750,13 @@ contains
       call utc_to_yyyymmdd(GlobalAttributes%StartUTC, returnStatus, &
         & GlobalAttributes%GranuleYear, GlobalAttributes%GranuleMonth, &
         & GlobalAttributes%GranuleDay) 
+      ! If mm < 0, then it's yyyy-Doy format, so let's find the actual
+      ! month and store it as a negative integer in GranuleMonth
+      if ( GlobalAttributes%GranuleMonth == -1 ) then
+        call yyyyDoy_to_mmdd( GlobalAttributes%GranuleYear, &
+          & mm, dd, GlobalAttributes%GranuleDay )
+        GlobalAttributes%GranuleMonth = -mm
+      endif
       ! We'll possibly need the first and last MAF counter numbers, especially
       ! if gaps occur
       ! For now, just look for them in l1boa
@@ -1338,6 +1346,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.174  2017/07/10 18:58:16  pwagner
+! CamelCase; abandon all the extra ResetStartingDates
+!
 ! Revision 2.173  2017/01/19 23:52:03  pwagner
 ! Improve appeearance when dumping Run Info
 !
