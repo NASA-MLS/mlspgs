@@ -13,7 +13,8 @@
 module Join                     ! Join together chunk based data.
 !=============================================================================
 
-  use MLSStringLists, only: switchDetail
+  use MLSStringLists, only: GetHashElement, SwitchDetail
+  use MLSStrings, only: LowerCase
   ! This module performs the 'join' task in the MLS level 2 software.
 
   implicit none
@@ -34,6 +35,7 @@ module Join                     ! Join together chunk based data.
 
   integer :: ERROR
   logical, parameter :: CATENATESPLITS  = .true.
+  logical, parameter :: countEmpty = .true. ! Except where overriden locally
   integer, parameter :: NO_ERROR_CODE   = 0
   integer, parameter :: NotAllowed      = 1
 
@@ -49,40 +51,40 @@ contains ! =====     Public Procedures     =============================
     & Matrices, Hessians )
     ! Imports
 
-    use Allocate_Deallocate, only: Test_Allocate
-    use Chunks_m, only: MLSChunk_t
-    use DirectWrite_m, only: DirectData_t
-    use Dumpcommand_m, only: DumpCommand, ExecuteCommand, &
-      & MLSCase, MLSEndSelect, MLSSelect, MLSSelecting, Skip
-    use ForwardModelConfig, only: ForwardModelConfig_t
-    use HessianModule_1, only: Hessian_t
-    use HGridsDatabase, only: HGrids_t
-    use highOutput, only: beVerbose, letsDebug, outputNamedValue
-    use Init_Tables_Module, only: f_reset, &
-      & s_l2gp, s_l2aux, s_time, s_directwrite, &
-      & s_endselect, s_case, s_diff, s_dump, s_execute, s_label, s_select, &
-      & s_skip
-    use L2GPData, only: L2GPData_t
-    use L2AuxData, only: l2AuxData_t
-    use L2ParInfo, only: Parallel, WaitForDirectWritePermission
-    use Lexer_core, only: Print_Source
-    use MatrixModule_1, only: Matrix_Database_t
-    use MLSCommon, only: MLSFile_t
-    use MLSL2Options, only: CheckPaths, L2CFNode, &
-      & SkipDirectWrites, SpecialDumpFile, MLSMessage
-    use MLSL2Timings, only: Section_Times, Total_Times, &
-      & Add_to_DirectWrite_Timing, Add_to_Section_Timing
-    use MLSMessageModule, only: MLSMSG_Error
-    use MoreTree, only: get_boolean, get_field_id, Get_Label_and_Spec, &
-      & Get_Spec_Id
-    use Next_Tree_Node_m, only: Init_Next_Tree_Node, Next_Tree_Node, &
-      & Next_Tree_Node_State
-    use Output_m, only: Blanks, Output, RevertOutput, SwitchOutput
-    use Toggles, only: Gen, Toggle, Switches
-    use Tree, only: Where_at => Where, nsons, subtree
-    use Time_m, only: SayTime, Time_Now
-    use Trace_m, only: Trace_Begin, Trace_End
-    use VectorsModule, only: Vector_t
+   use Allocate_Deallocate, only: Test_Allocate
+   use Chunks_M, only: MLSChunk_T
+   use DirectWrite_M, only: DirectData_T
+   use Dumpcommand_M, only: DumpCommand, ExecuteCommand, &
+     & MLSCase, MLSEndSelect, MLSSelect, MLSSelecting, Skip
+   use ForwardModelConfig, only: ForwardModelConfig_T
+   use HessianModule_1, only: Hessian_T
+   use HGridsDatabase, only: HGrids_T
+   use HighOutput, only: BeVerbose, LetsDebug, OutputNamedValue
+   use Init_Tables_Module, only: F_Reset, &
+     & S_L2gp, S_L2aux, S_Time, S_Directwrite, &
+     & S_Endselect, S_Case, S_Diff, S_Dump, S_Execute, S_Label, S_Select, &
+     & S_Skip
+   use L2GPData, only: L2GPData_T
+   use L2AuxData, only: L2AuxData_T
+   use L2ParInfo, only: Parallel, WaitForDirectWritePermission
+   use Lexer_Core, only: Print_Source
+   use MatrixModule_1, only: Matrix_Database_T
+   use MLSCommon, only: MLSFile_T
+   use MLSL2Options, only: CheckPaths, L2CFNode, &
+     & SkipDirectWrites, SpecialDumpFile, MLSMessage
+   use MLSL2Timings, only: Section_Times, Total_Times, &
+     & Add_To_DirectWrite_Timing, Add_To_Section_Timing
+   use MLSMessageModule, only: MLSMSG_Error
+   use MoreTree, only: Get_Boolean, Get_Field_Id, Get_Label_And_Spec, &
+     & Get_Spec_Id
+   use Next_Tree_Node_M, only: Init_Next_Tree_Node, Next_Tree_Node, &
+     & Next_Tree_Node_State
+   use Output_M, only: Blanks, Output, RevertOutput, SwitchOutput
+   use Toggles, only: Gen, Toggle, Switches
+   use Tree, only: Where_At => Where, Nsons, Subtree
+   use Time_M, only: SayTime, Time_Now
+   use Trace_M, only: Trace_Begin, Trace_End
+   use VectorsModule, only: Vector_T
 
     ! Dummy arguments
     integer, intent(in) :: ROOT    ! Of the JOIN section in the AST
@@ -402,56 +404,55 @@ contains ! =====     Public Procedures     =============================
     & FWModelConfig, HGrids, makeRequest, create, theFile, &
     & noExtraWrites, namedFile )
     ! Imports
-    use allocate_deallocate, only: allocate_test, deallocate_test
-    use chunks_m, only: mlschunk_t
-    use directWrite_m, only: directData_t, &
-      & directWrite, dump, &
-      & expandDirectdb, expandSDNames, fileNameToID
-    use dump_0, only: dump
-    use expr_m, only: expr
-    use forwardModelConfig, only: forwardModelConfig_t
-    use hdf, only: dfacc_create, dfacc_rdwr
-    use HGridsDatabase, only: HGrids_t
-    use highOutput, only: outputNamedValue
-    use init_tables_module, only: f_ascDescMode, f_convergence, f_file, &
-      & f_hdfVersion, f_inputFile, &
-      & f_label, f_lowerOverlap, f_noPCFid, f_options, &
-      & f_precision, f_prefixSignal, f_quality, f_rank, &
-      & f_single, f_source, f_status, f_type, f_upperOverlap, f_vector, &
-      & field_first, field_last
-    use init_tables_module, only: l_l2gp, l_l2aux, l_l2dgg, l_l2fwm, &
-      & l_magneticField, l_pressure, l_quantity, l_zeta
-    use intrinsic, only: l_none, l_hdf, l_swath, lit_indices, phyq_dimensionless
-    use l2parinfo, only: parallel, logDirectwriteRequest, finishedDirectwrite
-    use manipulateVectorQuantities, only: doHGridsMatch
-    use MLSCommon, only: fileNameLen, MLSFile_t, l2Metadata_t
+    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+    use Chunks_M, only: MLSChunk_T
+    use DirectWrite_M, only: DirectData_T, &
+      & DirectWrite, Dump, &
+      & ExpandDirectdb, ExpandSDNames, FileNameToID
+    use Dump_0, only: Dump
+    use Expr_M, only: Expr
+    use ForwardModelConfig, only: ForwardModelConfig_T
+    use HDF, only: Dfacc_Create, Dfacc_Rdwr
+    use HGridsDatabase, only: HGrids_T
+    use HighOutput, only: OutputNamedValue
+    use Init_Tables_Module, only: F_AscDescMode, F_Boolean, F_Convergence, &
+      & F_File, F_GroupName, F_HDFVersion, F_InputFile, &
+      & F_Label, F_LowerOverlap, F_NoPCFid, F_Options, &
+      & F_Precision, F_PrefixSignal, F_Quality, F_Rank, &
+      & F_Single, F_Source, F_Status, F_Type, F_UpperOverlap, F_Vector, &
+      & Field_First, Field_Last
+    use Init_Tables_Module, only: L_L2gp, L_L2aux, L_L2dgg, L_L2fwm, &
+      & L_MagneticField, L_Pressure, L_Quantity, L_Zeta
+    use Intrinsic, only: L_None, L_HDF, L_Swath, Lit_Indices, Phyq_Dimensionless
+    use L2parinfo, only: Parallel, LogDirectwriteRequest, FinishedDirectwrite
+    use ManipulateVectorQuantities, only: DoHGridsMatch
+    use MLSCommon, only: FileNameLen, MLSFile_T, L2MetaData_T
     use MLSFiles, only: HDFVersion_5, &
-      & addInitializeMLSFile, dump, getMLSFileByName, getPCFromRef, &
-      & mls_CloseFile, mls_OpenFile, split_path_name
-    use MLSFinds, only: findFirst, findNext
-    use MLSHdfeos, only: mls_swath_in_file
-    use MLSKinds, only: r8
-    use MLSL2Options, only: checkPaths, &
-      & default_HDFVersion_Write, maxChunkSize, patch, skipDirectWrites, &
-      & toolkit
+      & AddInitializeMLSFile, Dump, GetMLSFileByName, GetPCFromRef, &
+      & MLS_CloseFile, MLS_OpenFile, Split_Path_Name
+    use MLSFinds, only: FindFirst, FindNext
+    use MLSHDFeos, only: MLS_Swath_In_File
+    use MLSKinds, only: R8
+    use MLSL2Options, only: CheckPaths, Default_HDFVersion_Write, &
+      & MaxChunkSize, Patch, RuntimeValues, SkipDirectWrites, Toolkit
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
-    use MLSPCF2, only: MLSPCF_l2gp_start, MLSPCF_l2gp_end, &
-      & MLSPCF_l2dgm_start, MLSPCF_l2dgm_end, MLSPCF_l2fwm_full_start, &
-      & MLSPCF_l2fwm_full_end, &
-      & MLSPCF_l2dgg_start, MLSPCF_l2dgg_end
-    use MLSSignals_m, only: getsignalname
-    use moretree, only: get_field_id, get_boolean
-    use output_m, only: blanks, output
-    use outputAndClose, only: add_metadata
-    use string_table, only: display_string, get_string
-    use symbol_table, only: enter_terminal
-    use symbol_types, only: t_string
-    use time_m, only: time_now
-    use toggles, only: gen, toggle, switches
-    use trace_m, only: trace_begin, trace_end
-    use tree, only: decoration, nsons, sub_rosa, subtree
-    use vectorsModule, only: vector_t, vectorValue_t, validateVectorQuantity, &
-      & getVectorQtyByTemplateIndex
+    use MLSPCF2, only: MLSPCF_L2gp_Start, MLSPCF_L2gp_End, &
+      & MLSPCF_L2dgm_Start, MLSPCF_L2dgm_End, MLSPCF_L2fwm_Full_Start, &
+      & MLSPCF_L2fwm_Full_End, &
+      & MLSPCF_L2dgg_Start, MLSPCF_L2dgg_End
+    use MLSSignals_M, only: Getsignalname
+    use Moretree, only: Get_Field_Id, Get_Boolean
+    use Output_M, only: Blanks, Output
+    use OutputAndClose, only: Add_MetaData
+    use String_Table, only: Display_String, Get_String
+    use Symbol_Table, only: Enter_Terminal
+    use Symbol_Types, only: T_String
+    use Time_M, only: Time_Now
+    use Toggles, only: Gen, Toggle, Switches
+    use Trace_M, only: Trace_Begin, Trace_End
+    use Tree, only: Decoration, Nsons, Sub_Rosa, Subtree
+    use VectorsModule, only: Vector_T, VectorValue_T, ValidateVectorQuantity, &
+      & GetVectorQtyByTemplateIndex
     ! Dummy arguments
     integer, intent(in) :: NODE         ! Of the JOIN section in the AST
     integer, intent(in) :: TICKET       ! Ticket number from master
@@ -479,6 +480,7 @@ contains ! =====     Public Procedures     =============================
     integer, save :: NOCREATEDFILES=0   ! Number of files created
     ! Local variables
     integer :: AFILE
+    character(len=1024) :: BoolKey      ! The boolean's key
     logical :: CREATEFILEFLAG           ! Flag (often copy of create)
     logical, dimension(:), pointer :: CREATETHISSOURCE
     logical :: CREATETHISSWATH
@@ -499,6 +501,7 @@ contains ! =====     Public Procedures     =============================
     logical, dimension(field_first:field_last) :: GOT
     logical :: GOTSOURCE                ! TRUE if already had a source field
     integer :: GSON                     ! Son of son
+    character(len=1024) :: groupName    ! Store sdName under this group
     integer :: HANDLE                   ! File handle from hdf/hdf-eos
     character(len=1024) :: HDFNAME      ! Output swath/sd name
     integer :: HDFNAMEINDEX             ! String index for output name
@@ -589,6 +592,7 @@ contains ! =====     Public Procedures     =============================
     error = 0
     file = 0
     filename = 'undefined'
+    groupname = ' '
     inputFile = 'undefined'
     lowerOverlap = .false.
     got = .false.
@@ -608,6 +612,12 @@ contains ! =====     Public Procedures     =============================
       fieldIndex = get_field_id ( son )
       got ( fieldIndex ) = .true.
       select case ( fieldIndex )
+      case ( f_Boolean )
+        call get_string ( sub_rosa(subtree(2,son)), BoolKey, strip=.true. )
+        BoolKey = lowerCase(BoolKey)
+        call GetHashElement( runTimeValues%lkeys, runTimeValues%lvalues, &
+          & trim(BoolKey), groupName, countEmpty, &
+          & inseparator=runTimeValues%sep )
       case ( f_source, f_vector )
         noSources = noSources + 1
         gotsource = .true.
@@ -635,6 +645,8 @@ contains ! =====     Public Procedures     =============================
         hdfVersion = exprValue(1)
       case ( f_noPCFid )
         noPCFid = get_boolean ( son )
+      case ( f_groupName )
+        call get_string ( sub_rosa(subtree(2,son)), groupName, strip=.true. )
       case ( f_options )
         call get_string ( sub_rosa(subtree(2,son)), options, strip=.true. )
       case ( f_file )
@@ -1222,7 +1234,7 @@ contains ! =====     Public Procedures     =============================
             call DirectWrite ( directFile, vector, &
               & chunkNo, chunks, FWModelConfig, &
               & lowerOverlap=lowerOverlap, upperOverlap=upperOverlap, &
-              & single=single, options=options )
+              & single=single, options=options, groupName=groupName )
           case ( l_quantity )
             call DirectWrite ( directFile, &
               & vector, &
@@ -1602,23 +1614,26 @@ contains ! =====     Public Procedures     =============================
   ! ------------------------------------------ LabelVectorQuantity -----
   subroutine LabelVectorQuantity ( node, vectors )
 !     use highOutput, only: outputNamedValue
-    use init_tables_module, only: f_label, f_prefixsignal, &
-      & f_quantity, f_vector
-    use MLSSignals_m, only: getSignalName
-    use moretree, only: get_field_id, get_boolean
-    use symbol_table, only: enter_terminal
-    use symbol_types, only: t_string
-    use string_table, only: get_string
-    use tree, only: nsons, subtree, sub_rosa, decoration
-    use vectorsModule, only: vector_t, vectorvalue_t, &
-      & getVectorQuantity, getVectorQtyByTemplateIndex
+    use Init_Tables_Module, only: F_Boolean, F_Label, F_Prefixsignal, &
+      & F_Quantity, F_Vector
+    use MLSL2Options, only: RuntimeValues
+    use MLSSignals_M, only: GetSignalName
+    use Moretree, only: Get_Field_Id, Get_Boolean
+    use Symbol_Table, only: Enter_Terminal
+    use Symbol_Types, only: T_String
+    use String_Table, only: Get_String
+    use Tree, only: Nsons, Subtree, Sub_Rosa, Decoration
+    use VectorsModule, only: Vector_T, VectorValue_T, &
+      & GetVectorQuantity, GetVectorQtyByTemplateIndex
     ! Dummy arguments
     integer, intent(in) :: NODE          ! Tree node for l2cf line
     type (Vector_T), dimension(:), pointer :: VECTORS ! Vectors database
     ! Local variables
+    character(len=1024) :: BoolKey      ! The boolean's key
     integer :: FIELDINDEX               ! Type of field
     integer :: KEYNO                    ! Field index
     integer :: LABEL                    ! String index
+    character(len=1024) :: LABELSTR     ! The label itself
     integer :: QUANTITYINDEX            ! Index into quantities database
     integer :: SON                      ! Tree node
     integer :: SOURCE                   ! Tree node
@@ -1629,8 +1644,6 @@ contains ! =====     Public Procedures     =============================
     character(len=8) :: whatToLabel     ! 'quantity' or 'vector'
     ! Executable code
     type (VectorValue_T), pointer :: QTY ! The quantity
-    character(len=1024) :: LABELSTR     ! The label itself
-    ! character(len=128)  :: QTYSTR       ! The template name
 
     prefixSignal = .false.
     ! Loop over the fields of the mlscf line
@@ -1652,6 +1665,14 @@ contains ! =====     Public Procedures     =============================
         ! suffixLabel = get_boolean ( son )
       case ( f_label )
         label = sub_rosa(subtree(2,son))
+      case ( f_Boolean )
+        call get_string ( sub_rosa(subtree(2,son)), BoolKey, strip=.true. )
+        BoolKey = lowerCase(BoolKey)
+        call GetHashElement( runTimeValues%lkeys, runTimeValues%lvalues, &
+          & trim(BoolKey), labelStr, countEmpty, &
+          & inseparator=runTimeValues%sep )
+        ! How to get an index for this possibly new name
+        label = enter_terminal ( trim(labelStr), t_string, caseSensitive=.true. )
       case default ! Can't get here if tree_checker worked properly
       end select
     end do
@@ -1705,26 +1726,26 @@ contains ! =====     Public Procedures     =============================
   subroutine JoinQuantities ( node, vectors, l2gpDatabase, l2auxDatabase, &
     & chunkNo, chunks )
 
-    use chunks_m, only: mlschunk_t
-    ! use expr_m, only: expr
-    use init_tables_module, only: &
-      & f_precision, f_prefixsignal, f_source, f_sdname, f_swath, field_first, &
-      & field_last
-    use init_tables_module, only: l_pressure, l_zeta, s_l2aux, s_l2gp
-    use intrinsic, only: l_none! , phyq_dimensionless
-    use l2auxdata, only: l2auxdata_t
-    use l2gpdata, only: l2gpdata_t
-    use l2parinfo, only: parallel, slavejoin
-    ! use mlskinds, only: r8
+    use Chunks_M, only: MLSChunk_T
+    ! use Expr_M, only: Expr
+    use Init_Tables_Module, only: &
+      & F_Precision, F_Prefixsignal, F_Source, F_Sdname, F_Swath, Field_First, &
+      & Field_Last
+    use Init_Tables_Module, only: L_Pressure, L_Zeta, S_L2aux, S_L2gp
+    use Intrinsic, only: L_None!, Phyq_Dimensionless
+    use L2auxData, only: L2auxData_T
+    use L2gpData, only: L2gpData_T
+    use L2parinfo, only: Parallel, Slavejoin
+    ! use MLSKinds, only: R8
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-    use MLSSignals_m, only: getsignalname
-    use moretree, only: get_boolean, get_field_id, get_spec_id
-    use string_table, only: get_string
-    use symbol_table, only: enter_terminal
-    use symbol_types, only: t_string
-    use tree, only: decoration, nsons, null_tree, sub_rosa, subtree
-    use vectorsModule, only: getVectorQtyByTemplateIndex, &
-      & validateVectorQuantity, vector_t, vectorValue_t
+    use MLSSignals_M, only: Getsignalname
+    use Moretree, only: Get_Boolean, Get_Field_Id, Get_Spec_Id
+    use String_Table, only: Get_String
+    use Symbol_Table, only: Enter_Terminal
+    use Symbol_Types, only: T_String
+    use Tree, only: Decoration, Nsons, Null_Tree, Sub_Rosa, Subtree
+    use VectorsModule, only: GetVectorQtyByTemplateIndex, &
+      & ValidateVectorQuantity, Vector_T, VectorValue_T
 
     ! Dummy arguments
     integer, intent(in) :: NODE         ! The start of the l2cf line
@@ -1891,16 +1912,16 @@ contains ! =====     Public Procedures     =============================
     & precision, l2gpDatabase, chunkNo, &
     & firstInstance, lastInstance, nameString )
 
-    use init_tables_module, only: l_pressure, l_zeta
-    use intrinsic, only: l_none
-    use l2gpdata, only: addl2gptodatabase, expandl2gpdatainplace, &
-      & l2gpdata_t, setupnewl2gprecord, rgp
-    use MLSKinds, only: rv
-    use string_table, only: get_string
-    use toggles, only: gen, toggle, levels
-    use trace_m, only: trace_begin, trace_end
-    use tree, only: decorate, decoration
-    use vectorsModule, only: vectorValue_t
+    use Init_Tables_Module, only: L_Pressure, L_Zeta
+    use Intrinsic, only: L_None
+    use L2gpData, only: Addl2GPtoDatabase, Expandl2GPDatainplace, &
+      & L2gpData_T, Setupnewl2GPrecord, Rgp
+    use MLSKinds, only: Rv
+    use String_Table, only: Get_String
+    use Toggles, only: Gen, Toggle, Levels
+    use Trace_M, only: Trace_Begin, Trace_End
+    use Tree, only: Decorate, Decoration
+    use VectorsModule, only: VectorValue_T
 
     ! Dummy arguments
     integer, intent(in) :: KEY          ! spec_args to Decorate with the L2GP index
@@ -2063,18 +2084,18 @@ contains ! =====     Public Procedures     =============================
   subroutine JoinL2AUXQuantities ( key, name, quantity, l2auxDatabase, &
    & chunks, firstInstance, lastInstance )
 
-    use chunks_m, only: mlschunk_t
-    use intrinsic, only: l_geodangle, l_maf
-    use l2auxdata, only: addl2auxtodatabase, resizel2auxdata, &
-      & l2auxdata_t, l2auxrank, setupnewl2auxrecord
-    use MLSKinds, only: r4, r8
+    use Chunks_M, only: MLSChunk_T
+    use Intrinsic, only: L_Geodangle, L_Maf
+    use L2auxData, only: Addl2auxtoDatabase, Resizel2auxData, &
+      & L2auxData_T, L2auxrank, Setupnewl2auxrecord
+    use MLSKinds, only: R4, R8
     use MLSMessagemodule, only: MLSMessage, MLSMSG_Error
-    use output_m, only: output
-    use string_table, only: display_string
-    use toggles, only: gen, toggle, levels, switches
-    use trace_m, only: trace_begin, trace_end
-    use tree, only: decorate, decoration
-    use vectorsModule, only: vectorValue_t
+    use Output_M, only: Output
+    use String_Table, only: Display_String
+    use Toggles, only: Gen, Toggle, Levels, Switches
+    use Trace_M, only: Trace_Begin, Trace_End
+    use Tree, only: Decorate, Decoration
+    use VectorsModule, only: VectorValue_T
 
     ! Dummy arguments
     integer, intent(in) :: KEY     ! spec_args to decorate with the L2AUX index
@@ -2303,9 +2324,9 @@ contains ! =====     Public Procedures     =============================
   function explicitFile ( node ) result ( gotTheFile )
     ! Loop overs fields in DirectWrite command to discover whether
     ! the file is explicitly named
-    use init_tables_module, only: f_file
-    use moretree, only: get_field_id
-    use tree, only: nsons, subtree
+    use Init_Tables_Module, only: F_File
+    use Moretree, only: Get_Field_Id
+    use Tree, only: Nsons, Subtree
     ! Args
     integer, intent(in) :: node
     logical :: gotTheFile
@@ -2328,11 +2349,11 @@ contains ! =====     Public Procedures     =============================
   ! ---------------------------------------------  Announce_Error  -----
   subroutine ANNOUNCE_ERROR ( where, CODE, ExtraMessage, FIELDINDEX, Penalty )
 
-    use intrinsic, only: field_indices
-    use lexer_core, only: print_source
-    use output_m, only: output
-    use string_table, only: display_string
-    use tree, only: Where_At => Where
+    use Intrinsic, only: Field_Indices
+    use Lexer_Core, only: Print_Source
+    use Output_M, only: Output
+    use String_Table, only: Display_String
+    use Tree, only: Where_At => Where
 
     integer, intent(in) :: where   ! Tree node where error was noticed
     integer, intent(in) :: CODE    ! Code for error message
@@ -2380,6 +2401,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.179  2017/07/27 17:03:53  pwagner
+! DirectWrite-ing an entire vector may put it under a named group
+!
 ! Revision 2.178  2016/11/08 17:34:15  pwagner
 ! Use SayTime subroutine from time_m module; process /reset field
 !
