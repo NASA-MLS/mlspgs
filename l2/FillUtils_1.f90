@@ -7409,16 +7409,17 @@ contains ! =====     Public Procedures     =============================
 
     ! -------------------------------------------  VectorFromFile  -----
     subroutine VectorFromFile ( key, Vector, MLSFile, &
-      & filetype, options, spread, interpolate )
+      & filetype, options, spread, interpolate, groupName )
       use Dump_1, only: Dump
       use MLSHDF5, only: GetAllHDF5DSNames, MatchHDF5Attributes
-      integer, intent(in) :: KEY        ! Tree node
+      integer, intent(in)            :: KEY        ! Tree node
       type (Vector_T), intent(inout) :: Vector
-      type (MLSFile_T), pointer   :: MLSFile
-      character(len=*), intent(in) :: FILETYPE
-      character(len=*), intent(in) :: OPTIONS
-      logical, intent(in)                    :: spread
-      logical, intent(in)                    :: interpolate
+      type (MLSFile_T), pointer      :: MLSFile
+      character(len=*), intent(in)   :: FILETYPE
+      character(len=*), intent(in)   :: OPTIONS
+      character(len=*), intent(in)   :: groupName
+      logical, intent(in)            :: spread
+      logical, intent(in)            :: interpolate
 
       ! Local variables
       integer :: DSI                      ! Dataset index in file
@@ -7475,9 +7476,12 @@ contains ! =====     Public Procedures     =============================
               & shape(quantity%values) )
             call dump( MLSFile )
           end if
-          if ( len_trim(name) > 0 ) &
-            & call NamedQtyFromFile ( key, quantity, MLSFile, &
-            & filetype, name, spread, interpolate, homogeneous )
+          if ( len_trim(name) > 0 ) then
+            if ( len_trim(groupName) > 0 ) &
+              & name = trim(groupName) // '/' // name
+            call NamedQtyFromFile ( key, quantity, MLSFile, &
+              & filetype, name, spread, interpolate, homogeneous )
+          endif
         end do
       end do
       call trace_end ( 'FillUtils_1.VectorFromFile', &
@@ -7815,6 +7819,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.132  2017/07/27 16:59:42  pwagner
+! VectorFromFile may read qties from a named group
+!
 ! Revision 2.131  2017/07/10 18:52:32  pwagner
 ! Transfer may /expandMask to all masking bits; may /skipValues to transfer only mask; Fill may replaceMissingValue=; correct Transfer by attribute
 !
