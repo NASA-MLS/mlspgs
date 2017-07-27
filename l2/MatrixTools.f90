@@ -558,8 +558,8 @@ contains ! =====  Public procedures  ===================================
           case default
           end select
           if ( .not. diagonal ) then
-            call output ( mb%nRows, before=' ' )
-            call output ( mb%nCols, before='x' )
+            call output ( noRowChannels*noRowSurfaces, before=' ' )
+            call output ( noColChannels*noColSurfaces, before='x' )
           end if
 
           if ( mb%kind /= m_absent .and. details > 0 ) then
@@ -935,6 +935,9 @@ contains ! =====  Public procedures  ===================================
 end module MatrixTools
 
 ! $Log$
+! Revision 1.47  2016/07/28 03:27:34  vsnyder
+! Cannonball polishing
+!
 ! Revision 1.46  2016/07/28 00:40:34  vsnyder
 ! Remove unreferenced USE
 !
