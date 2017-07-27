@@ -21,7 +21,7 @@ module SidsModule
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
-  private :: not_used_here 
+  private :: not_used_here
 !---------------------------------------------------------------------------
 
 contains
@@ -76,8 +76,8 @@ contains
 
     integer(c_intptr_t) :: Addr         ! For tracing
     integer :: Error                    ! >= indicates an error occurred
-    integer :: EXPRUNITS(2)             ! From expr
-    real(r8) :: EXPRVALUE(2)            ! From expr
+    integer :: ExprUnits(2)             ! From expr
+    real(r8) :: ExprValue(2)            ! From expr
     integer :: Field                    ! Of the "sids" specification
     integer :: config                   ! Index for config loop
     integer, dimension(:), pointer :: Configs ! Forward model configs
@@ -94,22 +94,22 @@ contains
     integer :: IxJacobian               ! Index of Jacobian in matrix database
     type(hessian_T), pointer :: Hessian ! The Hessian matrix
     type(matrix_T), pointer :: Jacobian ! The Jacobian matrix
-    integer :: COL                      ! Column in jacobian
-    integer :: ELEMENT                  ! Index
-    integer :: INSTANCE                 ! Index
-    integer :: LOOPEND                  ! Loop limit
+    integer :: Col                      ! Column in jacobian
+    integer :: Element                  ! Index
+    integer :: Instance                 ! Index
+    integer :: LoopEnd                  ! Loop limit
     integer :: MAF1                     ! Loop limit
     integer :: MAF2                     ! Loop limit
     integer :: MAF                      ! Index
     integer :: Me = -1                  ! String index for trace
-    integer :: QUANTITY                 ! Index
-    logical :: GETANAJAC                ! Forward model needs to compute analytical Jacobians
-    integer :: ROWINSTANCE              ! From jacobian
-    integer :: ROWQUANTITY              ! From jacobian
-    integer :: ROW                      ! Row in jacobian
-    integer :: SINGLEMAF                ! From l2cf
+    integer :: Quantity                 ! Index
+    logical :: GetAnaJac                ! Forward model needs to compute analytical Jacobians
+    integer :: RowInstance              ! From jacobian
+    integer :: RowQuantity              ! From jacobian
+    integer :: Row                      ! Row in jacobian
+    integer :: SingleMAF                ! From l2cf
     integer :: Son                      ! Of ROOT
-    integer :: STATUS                   ! Flag
+    integer :: Status                   ! Flag
     integer :: SwitchLen                ! LEN_TRIM(Switches) on entry
     integer :: SwitchLenCur             ! LEN_TRIM(Switches) after command processing
     integer, allocatable :: ToKeep(:)   ! Molecule cross derivatives to keep
@@ -119,11 +119,12 @@ contains
                                         ! them all if this ends up empty as a
                                         ! result of no config specifying
                                         ! moleculeSecondDerivatives.
-    logical :: DESTROYJACOBIAN          ! Flag
-    logical :: DOTHISONE                ! Flag
-    logical :: DOTSCAT                  ! Flag
-    logical :: MIRRORHESSIAN            ! Flag
-    logical :: SHOWPTB
+    logical :: DestroyJacobian          ! Flag
+    logical :: DoThisOne                ! Flag
+    logical :: DoTScat                  ! Flag
+    logical :: MirrorHessian            ! Flag
+    logical :: ShowPtb                  ! From -Sptb command-line option
+    integer :: ShowPtbLevel             ! Number from -Sptb#
     real ::    T1
     type (MatrixElement_T), pointer :: M0 ! A block from the jacobian
 
@@ -180,7 +181,7 @@ contains
         ixHessian =  decoration(subtree(2,son)) ! hessian: hessian vertex
       case ( f_perturbation )
         perturbation => vectorDatabase(decoration(decoration(subtree(2,son))))
-      case ( f_singleMAF ) 
+      case ( f_singleMAF )
         call expr ( subtree(2,son), exprUnits, exprValue )
         singleMAF = exprValue(1)
       case ( f_switches )
@@ -192,7 +193,8 @@ contains
       end select
     end do ! i = 2, nsons(root)
 
-    showptb = switchDetail( switches, 'ptb' ) > -1 .and. associated( perturbation)
+    showPtbLevel = switchDetail( switches, 'ptb' )
+    showptb = showPtbLevel > -1 .and. associated( perturbation )
 
     ! Now if we weren't given a forward model extra, point it to the forwardModelIn
     ! This seems rather cheesy.  However, the alternative is changing a lot of
@@ -282,16 +284,19 @@ contains
       ! Now loop over the MAFs / forward model configs and run the models
       if ( doThisOne ) then
         fmStat%newScanHydros = .true.
-        
+
         if ( ixJacobian > 0 ) then
           call allocate_test ( fmStat%rows, jacobian%row%nb, 'fmStat%rows', &
             & ModuleName )
         else ! because it's not optional in many places in the forward model
           call allocate_test ( fmStat%rows, 0, 'fmStat%rows', ModuleName )
         end if
-        
-        if ( showptb ) then
-          call dump( perturbation%quantities(quantity), details=-1 )
+
+        if ( showptb .and. instance == 1 ) then
+          call dump( perturbation%quantities(quantity), details=showPtbLevel-1, &
+            & name='Perturbation', vector=perturbation )
+          call dump ( saveState%quantities(quantity), details=showPtbLevel-1, &
+            & name='Save State', vector=saveState )
         end if
 
         ! Loop over forward model configs
@@ -318,7 +323,7 @@ contains
             & configDatabase(configs(config)), &
             & details=switchDetail( switches, 'fiw' ) &
             & )
-          if ( skipretrieval ) cycle
+          if ( skipRetrieval ) cycle
           ! Loop over mafs
           do maf = maf1, maf2
             fmStat%maf = maf
@@ -362,7 +367,7 @@ contains
         call DestroyForwardModelIntermediate ! in case scan model got used
         fmStat%newScanHydros = .true.
         if ( skipRetrieval ) cycle
-        
+
         ! Place the numerical derivative result into Jacobian if needed
         if ( associated ( perturbation ) ) then
           ! Where to store deviation in Jacobian or Hessian
@@ -380,8 +385,8 @@ contains
                 rowInstance = jacobian%row%inst(row)
                 ! Is there any deviation to store?
                 if ( maxval ( abs ( &
-                  & deviation%quantities(rowQuantity)%values(:,rowInstance))) /= 0.0 ) then
-                  
+                   & deviation%quantities(rowQuantity)%values(:,rowInstance))) /= 0.0 ) then
+
                   ! If so, this column of the block (creating if necessary)
                   m0 => jacobian%block(row,col)
                   if ( m0%kind == M_Absent ) then
@@ -393,7 +398,7 @@ contains
                     & 'Unable to fill banded/column sparse blocks numerically')
                   m0%values(:,element) = &
                     & deviation%quantities(rowQuantity)%values(:,rowInstance)/thisPtb
-                  
+
                 end if                    ! Anything to place?
               end do                      ! Loop over rows
             else
@@ -512,6 +517,9 @@ contains
 end module SidsModule
 
 ! $Log$
+! Revision 2.76  2017/07/27 01:41:50  vsnyder
+! Better debug printing
+!
 ! Revision 2.75  2015/03/28 02:51:19  vsnyder
 ! Added stuff to trace allocate/deallocate addresses
 !
