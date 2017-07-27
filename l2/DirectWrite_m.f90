@@ -39,7 +39,7 @@ module DirectWrite_m  ! alternative to Join/OutputAndClose methods
   use MLSFinds, only: FindFirst
   use MLSHDFEOS, only: MLS_Swath_In_File
   use MLSL2Options, only: WriteFileAttributes
-  use MLSStringLists, only: SwitchDetail
+  use MLSStringLists, only: List2Array, NumStringElements, SwitchDetail
   use Output_M, only: Blanks, Output
   use PCFHdr, only: GlobalAttributes
   use String_Table, only: Get_String
@@ -88,6 +88,8 @@ module DirectWrite_m  ! alternative to Join/OutputAndClose methods
     character(len=1024) :: fileNameBase ! E.g., 'H2O'
     character(len=1024) :: fileName ! E.g., '/data/../MLS..H2O...he5'
   end type DirectData_T
+  
+  logical, parameter :: countEmpty = .true.
   integer, parameter :: S2US  = 1000000 ! How many microseconds in a s
   ! integer, parameter :: DELAY = 1*S2US  ! How long to sleep in microseconds
   logical, parameter :: DEEBUG = .false.
@@ -583,7 +585,7 @@ contains ! ======================= Public Procedures =========================
   ! ------------------------------------------- DirectWriteVector_L2Aux_MF --------
   subroutine DirectWriteVector_L2Aux_MF ( L2AUXFile, Vector, &
     & chunkNo, chunks, FWModelConfig, &
-    & lowerOverlap, upperOverlap, single, options )
+    & lowerOverlap, upperOverlap, single, options, groupName )
 
     ! Purpose:
     ! Write plain hdf-formatted files ala l2aux for datasets that
@@ -605,18 +607,23 @@ contains ! ======================= Public Procedures =========================
     logical, intent(in), optional :: upperOverlap
     logical, intent(in), optional :: single       ! Write only the 1st instance
     character(len=*), intent(in), optional :: options
+    character(len=*), intent(in), optional :: groupName
     ! Local parameters
     integer                       :: j
     logical                       :: nameQtyByTemplate
     type (VectorValue_T), pointer :: QUANTITY
     type (VectorValue_T), pointer :: PRECISION
     character(len=32)             :: SDNAME       ! Name of sd in output file
-    logical :: verbose
+    logical                       :: useGroupName
+    logical                       :: verbose
     ! Executable
     verbose = BeVerbose ( 'direct', -1 )
     nameQtyByTemplate = .true.
     if ( present(options) ) nameQtyByTemplate = &
       & .not. ( index(options, 'num') > 0 )
+    useGroupName = .false.
+    if ( present(options) ) useGroupName = &
+      & ( index(options, 'g') > 0 ) .and. present( groupName )
     nullify(precision)
     if ( verbose ) then
       if ( vector%name > 0 ) then
@@ -634,6 +641,7 @@ contains ! ======================= Public Procedures =========================
         call writeIntsToChars ( j, sdName )
         sdName = 'Quantity ' // trim(sdName)
       endif
+      if ( useGroupName ) sdName = trim(groupName) // '/' // sdName
       call DirectWrite_L2Aux_MF ( L2AUXFile, quantity, precision, sdName, &
         & chunkNo, chunks, FWModelConfig, &
         & lowerOverlap, upperOverlap, single, options )
@@ -899,7 +907,8 @@ contains ! ======================= Public Procedures =========================
       & Destroyl2auxcontents, &
       & Setupnewl2auxrecord, Writel2auxattributes
     use MLSHDF5, only: IsHDF5attributepresent, IsHDF5dspresent, &
-      & MakeHDF5attribute, SaveasHDF5ds
+      & IsHDF5GroupPresent, &
+      & MakeHDF5Attribute, MakeNestedGroups, SaveasHDF5ds
     use MLSL2Timings, only: ShowTimingNames
     use PCFHdr, only: H5_WriteMLSFileattr, H5_Writeglobalattr
     use QuantityTemplates, only: WriteAttributes
@@ -920,15 +929,19 @@ contains ! ======================= Public Procedures =========================
     logical :: addQtyAttributes
     logical :: already_there
     ! logical :: attributes_there
+    character(len=128) :: barename
     integer :: first_maf
+    character(len=128), dimension(25) :: groupNames
     integer :: grp_id
     type (L2AUXData_T) :: l2aux
     integer :: last_maf
     type ( MLSChunk_T ) :: LASTCHUNK    ! The last chunk in the file
     logical :: mySingle
+    integer :: n
     integer :: NODIMS                   ! Also index of maf dimension
     integer :: Num_qty_values
     character(len=8) :: overlaps        ! 'lower', 'upper', or 'none'
+    character(len=1024) :: path
     integer :: returnStatus
     integer :: SIZES(3)                 ! HDF array sizes
     integer :: START(3)                 ! HDF array starting position
@@ -1038,6 +1051,17 @@ contains ! ======================= Public Procedures =========================
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Number of 3d array elements to write > number stored in qty values', &
         & MLSFile=L2AUXFile )
+      ! Is here a '/' in sdname?
+      if ( index( sdname, '/' ) > 0 ) then
+        ! Do the containing groups exist yet?
+        call split_path_name ( sdname, path, bareName )
+        if ( .not. IsHDF5GroupPresent( L2AUXFile%fileID%f_id, trim(path)) ) then
+          call List2Array ( path, groupnames, countEmpty, inseparator='/' )
+          n = NumStringElements ( path, countEmpty, inseparator='/' )
+          n = max( n, 2 )
+          call MakeNestedGroups( L2AUXFile%fileID%f_id, groupNames(1:n-1) )
+        endif
+      endif
       call SaveAsHDF5DS( L2AUXFile%fileID%f_id, trim(sdName), &
         & real( &
         &   reshape(quantity%values(:,first_maf:last_maf), sizes(1:3)) &
@@ -1783,6 +1807,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.87  2017/07/27 17:02:08  pwagner
+! If an sdName contains one or more '/', will attempt ot open or create nested hdf5 groups
+!
 ! Revision 2.86  2017/02/24 19:47:52  pwagner
 ! Sleep time now same as parallel%delay
 !
