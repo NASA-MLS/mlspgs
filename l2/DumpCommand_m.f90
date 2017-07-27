@@ -26,7 +26,7 @@ module DumpCommand_M
   public :: BooleanFromAnyGoodValues
   public :: BooleanFromCatchWarning
   public :: BooleanFromComparingQtys
-  public :: BooleanFromEmptygrid, booleanFromEmptySwath
+  public :: BooleanFromEmptygrid, BooleanFromEmptySwath
   public :: BooleanFromFormula
   public :: DumpCommand, ExecuteCommand
   public :: InitializeRepeat, NextRepeat
@@ -361,7 +361,7 @@ contains
     use Init_Tables_Module, only: F_Boolean, F_Message
     use MLSL2Options, only: RuntimeValues
     use MLSMessageModule, only: MLSMessageInquire
-    use MLSStringlists, only: NumStringElements, PutHashElement
+    use MLSStringLists, only: NumStringElements, PutHashElement
     use MLSStrings, only: Lowercase
     use String_Table, only: Get_String
     use Tree, only: Decoration, Nsons, Sub_Rosa, Subtree
@@ -869,8 +869,10 @@ contains
     ! [a=a.qty], [b=b.qty], [c=value], [values=..], [/literal]
     use Dump_0, only: Dump
     use Expr_M, only: Expr
-    use Init_Tables_Module, only: F_A, F_B, F_Boolean, F_C, F_Evaluate, F_Expr, &
-      & F_Formula, F_Inputboolean, F_Label, F_Literal, F_Manipulation, F_Values, &
+    use Init_Tables_Module, only: F_A, F_B, F_Boolean, F_C, &
+      & F_Evaluate, F_Expr, &
+      & F_Formula, F_Inputboolean, F_Truncate, &
+      & F_Label, F_Literal, F_Manipulation, F_Values, &
       & Field_First, Field_Last
     use Manipulationutils, only: Manipulate
     use MLSKinds, only: R8, Rv
@@ -906,6 +908,7 @@ contains
     integer :: fieldValue
     character(len=255) :: formula
     logical, dimension(field_first:field_last) :: GOT
+    logical :: truncate
     integer :: J
     integer :: keyNo
     character(len=80) :: KEYSTRING
@@ -928,9 +931,10 @@ contains
     verboser = BeVerbose ( 'bool', 0 )
     nullify( aQuantity, bQuantity )
     c = 0._rv
-    evaluate= .false.
-    literal= .false.
-    tvalue= .false.
+    evaluate = .false.
+    truncate = .false.
+    literal = .false.
+    tvalue = .false.
     got = .false.
     if ( name > 0 ) then
       call get_string(name, nameString)
@@ -989,6 +993,10 @@ contains
         call get_string ( sub_rosa(subtree(2,son)), formula, strip=.true. )
         tvalue = myBooleanValue (formula)
         if ( verbose ) call outputNamedValue ( 'tvalue', trim(formula) )
+      case ( f_truncate )
+        ! call output( 'processing truncate', advance='yes' )
+        truncate = get_boolean ( fieldValue )
+        if ( verbose ) call outputNamedValue( 'truncate', truncate )
       case ( f_label )
         call get_string ( sub_rosa(subtree(2,son)), formula, strip=.true. )
         literal = .true.
@@ -1092,6 +1100,7 @@ contains
       call Manipulate( tQuantity, AQuantity, BQuantity, C, formula, &
         & .false., '' )
       formula = numToChars ( tQuantity%values(1,1) )
+      if ( truncate ) formula = numToChars ( int(tQuantity%values(1,1)) )
       call insertHashElement ( nameString, formula, &
         & runTimeValues%lkeys, runTimeValues%lvalues, &
         & inseparator=runTimeValues%sep )
@@ -1121,7 +1130,7 @@ contains
       & inseparator=runTimeValues%sep )
     if ( verbose ) &
       & call dumpBooleans
-  end function BOOLEANFROMFORMULA
+  end function BooleanFromFormula
 
   ! ------------------------------------------------  DumpCommand  -----
   subroutine DumpCommand ( root, quantityTemplatesDB, &
@@ -2373,7 +2382,7 @@ contains
 
   subroutine  NEXTREPEAT
     use MLSL2Options, only: RuntimeValues
-    use MLSStringlists, only: GetHashElement, PutHashElement
+    use MLSStringLists, only: GetHashElement, PutHashElement
     use MLSStrings, only: Readintsfromchars, Writeintstochars
     ! Internal variables
     character(len=64) :: cvalue
@@ -2415,7 +2424,7 @@ contains
   ! a wildcard matching anything
     use Init_Tables_Module, only: F_Boolean, F_Label, F_Options
     use MLSL2Options, only: RuntimeValues
-    use MLSStringlists, only: GetHashElement
+    use MLSStringLists, only: GetHashElement
     use MLSStrings, only: Lowercase, Streq
     use Moretree, only: Get_Field_Id
     use String_Table, only: Get_String
@@ -2487,7 +2496,7 @@ contains
   ! the Label field or value of the Boolean field
     use Init_Tables_Module, only: F_Boolean, F_Label
     use MLSL2Options, only: RuntimeValues
-    use MLSStringlists, only: GetHashElement
+    use MLSStringLists, only: GetHashElement
     use MLSStrings, only: Lowercase
     use Moretree, only: Get_Field_Id
     use String_Table, only: Get_String
@@ -2598,7 +2607,7 @@ contains
   logical function skip ( root, name )
     use Init_Tables_Module, only: F_Boolean, F_Formula, F_Values
     use MLSL2Options, only: RuntimeValues
-    use MLSStringlists, only: BooleanValue, GetHashElement, PutHashElement
+    use MLSStringLists, only: BooleanValue, GetHashElement, PutHashElement
     use MLSStrings, only: Lowercase, ReadintsFromChars, WriteIntsToChars
     use Moretree, only: Get_Field_Id
     use String_Table, only: Get_String
@@ -2755,7 +2764,7 @@ contains
   ! ---------------------------------------------  myBooleanValue  -----
   function myBooleanValue ( FORMULA ) result ( BVALUE )
     use MLSL2Options, only: RuntimeValues
-    use MLSStringlists, only: BooleanValue, GetStringElement
+    use MLSStringLists, only: BooleanValue, GetStringElement
     use MLSStrings, only: Lowercase, ReadNumsFromChars
     ! Calculate the boolean value according to
     ! (1) The logical value of its formula, if the formula
@@ -2928,7 +2937,7 @@ contains
     use MLSL2Options, only: Checkpaths, Need_L1bFiles, &
       & RuntimeValues, Skipretrieval
     use MLSL2Options, only: CurrentChunkNumber, CurrentPhaseName
-    use MLSStringlists, only: GetHashElement
+    use MLSStringLists, only: GetHashElement
     use MLSStrings, only: Lowercase, WriteIntsToChars
     ! Args
     character(len=*), intent(in) :: arg
@@ -3108,6 +3117,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.133  2017/07/27 16:55:02  pwagner
+! Reevaluate may take /truncate to keep integer part only
+!
 ! Revision 2.132  2017/07/10 23:09:51  pwagner
 ! Print less if not verbose
 !
