@@ -1,9 +1,9 @@
 ; Grammar for grammar
 
-; Semicolon noit within a string enclosed in quotes or apostrophes
+; Semicolon not within a string enclosed in quotes or apostrophes
 ; introduces a comment, which continues to the end of the line.
 
-; Define the terminal symbols using names from the Symbol_Types module.
+; Define the terminal symbols using names from your Symbol_Types module.
 ; The syntax is "grammar term = symbol name".  "grammar term" can be
 ; either a name, or a string enclosed in quotes or apostrophes.
 
@@ -21,7 +21,7 @@ string = t_string
 ; LHS ( -> RHS ( => ACT '?' ? ) ? EOS )+
 ; where LHS is a nonterminal symbol,
 ;       RHS is a sequence of terminal and nonterminal symbols,
-;       ACT is the name of a tree node from the Tree_Types module of a
+;       ACT is the name of a tree node from your Tree_Types module, or a
 ;           number,
 ;       EOS means "end of statement", which is end of line or the
 ;           beginning of a comment, unless the production is continued by
@@ -73,3 +73,6 @@ action -> name
 ; $Id$
 
 ; $Log$
+; Revision 1.2  2014/01/14 00:19:16  vsnyder
+; Added CVS comments
+;
