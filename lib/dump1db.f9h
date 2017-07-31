@@ -40,7 +40,8 @@
       call output ( array(1), format=myFormat, advance='yes' )
     else
       call name_and_size ( name, dopts(clean)%v, size(array), theShape )
-      if ( present(name) .and. .not. dopts(laconic)%v ) call newLine
+      if ( present(name) .and. .not. dopts(laconic)%v ) &
+        & call newLine ( dont_make_blank_line=.true. )
       do j = 1, size(array), myWidth
         DumpTheseZeros = dopts(clean)%v .or. &
           & any(array(j:min(j+2*myWidth-1, size(array))) /= myFillValue)
@@ -66,6 +67,9 @@
     call theDumpEnds
 !   end subroutine DUMP_1D_COMPLEX
 ! $Log$
+! Revision 2.6  2017/07/31 23:18:55  pwagner
+! Try to avoid printing unwanted blank lines
+!
 ! Revision 2.5  2016/07/28 01:42:27  vsnyder
 ! Refactoring dump and diff
 !
