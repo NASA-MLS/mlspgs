@@ -18,7 +18,6 @@
       originalSDFormat = outputOptions%sdFormatDefault
       outputOptions%sdFormatDefault = rmsFormat
       thisIsADiff = .false.   ! Reset
-      if ( .not. PRINTMINMAXWITHRMS ) return
       originalSDFormat = outputOptions%sdFormatDefault
       outputOptions%sdFormatDefault = rmsFormat
       if ( DEBUG ) call outputNamedValue( 'maxval(1-2)', maxval(Array1-Array2))
@@ -157,6 +156,7 @@
       end if
       outputOptions%sdFormatDefault = originalSDFormat
       NameOnEachLine = ' '
+      call theDumpEnds
       
     end subroutine doneWithDiff
 
@@ -239,6 +239,9 @@
   end subroutine SayTime
 
 ! $Log$
+! Revision 2.4  2017/07/31 23:08:52  pwagner
+! Calls theDumpEnds on exit
+!
 ! Revision 2.3  2017/07/19 22:47:22  pwagner
 ! Use PrintName procedure; pass DiffName to printRMSetc
 !
