@@ -100,6 +100,7 @@ module Dump_Options
   character, parameter :: Dopt_Crash       = 'X'
   character, parameter :: Dopt_Cyclic      = 'y'
   character, parameter :: Dopt_Direct      = 'd'
+  character, parameter :: Dopt_Dot         = '.'
   character, parameter :: Dopt_Gaps        = 'g'
   character, parameter :: Dopt_Laconic     = 'L'
   character, parameter :: Dopt_NaNs        = 'N'
@@ -124,6 +125,7 @@ module Dump_Options
     enumerator :: Crash
     enumerator :: Cyclic
     enumerator :: Direct
+    enumerator :: Dot
     enumerator :: ItsShape
     enumerator :: Gaps
     enumerator :: Laconic
@@ -193,7 +195,7 @@ module Dump_Options
 
   type :: Option_T
     character(10) :: Name  ! Option's name
-    character :: Char      ! Letter that selects option
+    character :: Char      ! Character that selects option
     logical :: V           ! Value of the option
   end type Option_T
 
@@ -207,6 +209,7 @@ module Dump_Options
   data dopts(crash)      / option_t('crash',      dopt_crash,      .false. ) /
   data dopts(cyclic)     / option_t('cyclic',     dopt_cyclic,     .false. ) /
   data dopts(direct)     / option_t('direct',     dopt_direct,     .false. ) /
+  data dopts(dot)        / option_t('dot',        dopt_dot,        .false. ) /
   data dopts(gaps)       / option_t('gaps',       dopt_gaps,       .false. ) /
   data dopts(itsShape)   / option_t('shape',      dopt_shape,      .false. ) /
   data dopts(laconic)    / option_t('laconic',    dopt_laconic,    .false. ) /
@@ -426,6 +429,9 @@ contains
 end module Dump_Options
 
 ! $Log$
+! Revision 2.6  2017/07/31 22:18:22  vsnyder
+! Option to print FALSE as dot to make it easier to see TRUE
+!
 ! Revision 2.5  2017/07/19 22:38:31  pwagner
 ! Added Crash, PrintNameAtLineEnd
 !
