@@ -68,7 +68,6 @@
     real                                     :: t2
     real(rk), dimension(MAXPCTS,7)           :: TheTable
     logical, parameter                       :: PrintReferenceValues = .false.
-    logical, parameter                       :: PrintMinMaxWithRMS = .true.
     logical, parameter                       :: PrintExtraDump = .false.
     logical, parameter                       :: DEBUG = .false.
     real(rk), dimension(MAXPCTS), parameter  :: PCTAges = &
@@ -231,6 +230,9 @@
     include "donewithdiff.f9h"
 !   end subroutine DIFF_1D_DOUBLE
 ! $Log$
+! Revision 2.23  2017/07/31 23:00:05  pwagner
+! Remove unneeded param
+!
 ! Revision 2.22  2017/07/19 22:40:05  pwagner
 ! May print Name during theDumpBegins
 !
