@@ -14,10 +14,10 @@ module Diff_1
   ! Dump differences of arrays
 
   use Dump_Options, only: AuBrick, &
-    & DefaultPCTFormat, DiffRMSMeansRMS, Direct, Dopts, DumpTableSide, &
-    & NameOnEachLine, NameHasBeenPrinted, NaNs, PCTFormat, PrintNameIfDiff, &
-    & MyRatios=>Ratios, RMS, RMSFormat, Stats, StatsOnOneLine, Table, &
-    & TheDumpBegins, Verbose, WholeArray, DumpDumpOptions
+    & DefaultPCTFormat, Direct, Dopts, DumpDumpOptions, DumpTableSide, &
+    & NameOnEachLine, NameHasBeenPrinted, NaNs, PCTFormat, &
+    & MyRatios=>Ratios, RMS, RMSFormat, Stats, Table, &
+    & TheDumpBegins, TheDumpEnds, WholeArray
   use Dump_0, only: Dump, FinishLine, PrintName, PrintRMSEtc
   use Dump_1, only: DumpTable
   use HighOutput, only: OutputNamedValue
@@ -27,8 +27,8 @@ module Diff_1
     & WhereAreTheInfs, WhereAreTheNaNs
   use MLSMessageModule, only: MLSMessage, MLSMSG_Warning
   use MLSStats1, only: AllStats, HowFar, HowNear, MLSStdDev, Ratios, Reset, &
-    & Stat_t
-  use Output_m, only: OutputOptions, Blanks, NewLine, Output
+    & Stat_T
+  use Output_m, only: OutputOptions, NewLine, Output
   use Time_M, only: Time_Now
 
   implicit none
@@ -963,7 +963,6 @@ contains
     real                                     :: t1 = 0
     real                                     :: t2 = 0
     real(rk), dimension(MAXPCTS,7)           :: TheTable
-    logical, parameter                       :: PrintMinMaxWithRMS = .true.
     logical, parameter                       :: DEBUG = .false.
     real(rk), dimension(MAXPCTS), parameter  :: PCTAges = &
       & (/ 99.9, 99.8, 99.7, 99.5, 99., 98., 97., 95., 90., 80. /)
@@ -987,6 +986,9 @@ contains
 end module Diff_1
 
 ! $Log$
+! Revision 2.7  2017/07/31 23:06:41  pwagner
+! Removed unneeded param
+!
 ! Revision 2.6  2017/07/19 22:48:46  pwagner
 ! Get PrintRMSetc from Dump_0
 !

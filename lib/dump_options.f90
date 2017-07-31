@@ -11,11 +11,14 @@
 
 module Dump_Options
   use Machine, only: Crash_Burn
+  use MLSStrings, only: LowerCase
 
   ! Options for Dump_0, Dump_1, Diff_1, and maybe others.
   ! Variables shared between those modules and derived from the options.
 
 
+! TheDumpBegins            Housekeeping
+! TheDumpEnds              Housekeeping
 ! Most of the optional parameters have default values
 ! logically set to FALSE or 0, ' ',  or '*' where appropriate
 
@@ -149,6 +152,7 @@ module Dump_Options
 !     (parameters)
 ! CollapseOptions          options determining what and how to dump collapsed
 !                           representations of multidimensional arrays
+! CrashAtBeginning         if set to crash on dump, crash at beginning not end
 ! DefaultDiffOptions       switches to set default DIFF values for CLEAN, TRIM, etc.
 ! DefaultDumpOptions       same as above, but for DUMP
 ! DiffRMSMeansRMS          print abs min, max, etc. when DIFF has RMS set TRUE
@@ -169,6 +173,7 @@ module Dump_Options
   character(len=8)  :: DefaultDiffOptions     = ' '
   character(len=8)  :: DefaultDumpOptions     = ' '
 
+  logical           :: CrashAtBeginning       = .false.
   integer           :: DefaultMaxLon          = 128
   integer           :: DefaultWidth           = 10
   character(len=8)  :: DumpTableSide          = 'top'
@@ -201,6 +206,7 @@ module Dump_Options
 
   ! Options for Dumps and Diffs
   type(option_t) :: Dopts(numOpt)
+  logical, dimension(numOpt) :: DoptsDefaultVs = .false.
 
   data dopts(aubrick)    / option_t('aubrick',    dopt_aubrick,    .false. ) /
   data dopts(bandwidth)  / option_t('bandwidth',  dopt_bandwidth,  .false. ) /
@@ -240,7 +246,7 @@ contains
     ! (if arg is "?") available options and their meanings
     ! (if no arg) default options
     use HighOutput, only: OutputNamedValue
-    use MLSStrings, only: Trim_safe
+    use MLSStrings, only: Trim_Safe
     use Output_m, only: Blanks, Output
     character(len=*), intent(in), optional :: OptionString
     logical, intent(in), optional          :: ThisIsADiff
@@ -350,22 +356,29 @@ contains
   end subroutine RestoreDumpConfig
 
   ! ------------------------------------------------  Set_Options  -----
-  subroutine Set_Options ( OptionString, DefaultOptionString )
+  subroutine Set_Options ( OptionString, DefaultOptionString, keyword )
     ! Set the values in Options according to what characters are in
     ! DefaultOptionString, if it's present, else set them false.  Then
     ! turn on options in OptionString.
     character(*), intent(in), optional :: OptionString
     character(*), intent(in), optional :: DefaultOptionString
+    character(*), intent(in), optional :: KeyWord
     integer :: I
 
-    dopts%v = .false.
     if ( present(defaultOptionString) ) then
       do i = 1, size(dopts)
-        dopts(i)%v = index(defaultOptionString, dopts(i)%char) > 0
+        doptsDefaultVs(i) = index(defaultOptionString, dopts(i)%char) > 0
       end do
-    else
-      dopts%v = .false.
     end if
+    if ( present(keyword) ) then
+      select case (lowercase(keyword))
+      case ( 'crash' )
+        doptsDefaultVs(crash) = .true.
+      case ( 'restore' )
+        doptsDefaultVs = .false.
+      end select
+    endif
+    dopts%v = doptsDefaultVs
     if ( present(optionString) ) then
       do i = 1, size(dopts)
         dopts(i)%v = dopts(i)%v .or. index(optionString, dopts(i)%char) > 0
@@ -377,8 +390,8 @@ contains
   ! -----------------------------------------------  TheDumpBegins -----
   ! A warm-up subroutine that transfers the options string to the Dopts
   subroutine TheDumpBegins ( Options, ThisIsADiff, Name )
-    use HighOutput, only: OutputNamedValue
-    use Output_m, only: Output, StampOptions
+    ! use HighOutput, only: OutputNamedValue
+    use Output_m, only: StampOptions
     character(len=*), intent(in), optional :: Options
     logical, intent(in), optional          :: ThisIsADiff
     character(len=*), intent(in), optional :: Name
@@ -394,7 +407,7 @@ contains
     endif
     myDiff = .false.
     if ( present(thisIsADiff) ) myDiff = thisIsADiff
-    nameHasBeenPrinted = .false.
+!    nameHasBeenPrinted = .false.
     stampOptions%neverStamp = .true. ! So we don't interrupt tables of numbers
     call set_options ( options, &
       & merge(defaultDiffOptions,defaultDumpOptions,myDiff) )
@@ -413,8 +426,16 @@ contains
       nameOnEachLine = ' '
     endif
     ! call outputNamedValue( 'NameOnEachLine', trim(NameOnEachLine) )
-    if ( dopts(crash)%v ) call Crash_Burn
+    if ( dopts(crash)%v .and. CrashAtBeginning ) call Crash_Burn
   end subroutine TheDumpBegins
+
+  ! -------------------------------------------------  TheDumpEnds -----
+  subroutine TheDumpEnds
+    use Output_m, only: StampOptions
+    stampOptions%neverStamp = .false.
+    if ( dopts(crash)%v .and. .not. CrashAtBeginning ) call Crash_Burn
+    nameHasBeenPrinted = .false.
+  end subroutine TheDumpEnds
 
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
@@ -429,6 +450,9 @@ contains
 end module Dump_Options
 
 ! $Log$
+! Revision 2.7  2017/07/31 23:04:24  pwagner
+! Moved TheDumpEnds here; tried to prevent repeating Name; default to crash at end of Dump
+!
 ! Revision 2.6  2017/07/31 22:18:22  vsnyder
 ! Option to print FALSE as dot to make it easier to see TRUE
 !
