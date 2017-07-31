@@ -14,14 +14,14 @@ module Dump_1
   ! 1.  Dump routines that use dump_0 but aren't elementary.
   ! 2.  Other dumps that don't use dump_0, and aren't elementary.
 
-  use Dump_Options, only: AfterSub, Clean, Dopts, Laconic, TheDumpBegins
-  use Dump_0, only: Dump, Empty, FinishLine, ILog10, Name_And_Size, &
-    & TheDumpEnds
+  use Dump_Options, only: AfterSub, Clean, Dopts, Laconic, &
+    & TheDumpBegins, TheDumpEnds
+  use Dump_0, only: Dump, Empty, FinishLine, ILog10, Name_And_Size
   use HighOutput, only: AlignToFit, BlanksToTab, NumToChars, OutputList, &
     & ResetTabs, SetTabs
   use MLSStringLists, only: GetStringElement, NumStringElements
   use MLSStrings, only: LowerCase, WriteIntsToChars
-  use Optional_m, only: Exception_t
+  use Optional_m, only: Exception_T
   use Output_m, only: Blanks, NewLine, Output
 
   implicit none
@@ -638,7 +638,7 @@ contains
   ! -----------------------------------------------  DumpException  -----
   ! This dumps a table of the Exception type's components
   subroutine DumpException ( Exception, WhereAmI, Message )
-    use HighOutput, only: AddRow, AddRow_divider, AddRow_header, &
+    use HighOutput, only: AddRow, AddRow_Divider, AddRow_Header, &
       & OutputTable, StartTable
     ! Args
     type(Exception_t), intent(in)          :: Exception
@@ -706,6 +706,9 @@ contains
 end module Dump_1
 
 ! $Log$
+! Revision 2.6  2017/07/31 23:07:39  pwagner
+! TheDumpEnds now got from dump_options
+!
 ! Revision 2.5  2017/07/10 18:44:44  pwagner
 ! May print a little more in Dump_TAI
 !
