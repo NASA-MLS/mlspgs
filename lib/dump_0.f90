@@ -28,7 +28,7 @@ module Dump_0
   use Dump_Options, only: AfterSub, AuBrick, MyBandwidth=>Bandwidth, &
     & Clean, CollapseIt, CollapseOptions,  &
     & DefaultDumpOptions, DefaultMaxLon, DefaultPCTFormat, &
-    & DefaultWidth, Dopt_Collapse, Dopt_Transpose, DiffRMSMeansRMS, &
+    & DefaultWidth, Dopt_Collapse, Dopt_Transpose, Dot, DiffRMSMeansRMS, &
     & DontDumpIfAllEqual, Dopts, Gaps, IntPlaces, Laconic, MaxNumNANs, &
     & NameHasBeenPrinted, NameOnEachLine, NaNs, OnlyWholeArray, PCTFormat, &
     & PrintFillValue, PrintNameAtLineEnd, PrintNameIfDiff, &
@@ -486,9 +486,15 @@ contains
           call output ( j+base, max(4,ilog10(size(array))+1) , advance='no' )
           call output ( afterSub , advance='no' )
         end if
-        do k = j, min(j+33, size(array))
-          call output ( array(k) , advance='no' )
-        end do
+        if ( dopts(dot)%v ) then ! print .false. as a dot
+          do k = j, min(j+33, size(array))
+            call output ( merge('T','.',array(k)) , advance='no' )
+          end do
+        else
+          do k = j, min(j+33, size(array))
+            call output ( array(k) , advance='no' )
+          end do
+        end if
         call newLine
       end do
     end if
@@ -816,9 +822,15 @@ contains
             call output ( j, places=max(4,ilog10(size( Array,2))+1) , advance='no' )
             call output ( afterSub , advance='no' )
           end if
-          do k = j, min(j+myWidth-1, size( Array,2))
-            call output ( array(i,k) , advance='no' )
-          end do
+          if ( dopts(dot)%v ) then
+            do k = j, min(j+33, size(array))
+              call output ( merge('T','.',array(i,k)) , advance='no' )
+            end do
+          else
+            do k = j, min(j+33, size(array))
+              call output ( array(i,k) , advance='no' )
+            end do
+          end if
           call newLine
         end do ! j
       end do ! i
@@ -1743,6 +1755,9 @@ contains
 end module Dump_0
 
 ! $Log$
+! Revision 2.142  2017/07/31 22:18:22  vsnyder
+! Option to print FALSE as dot to make it easier to see TRUE
+!
 ! Revision 2.141  2017/07/19 22:42:53  pwagner
 ! Added PrintName; may PrintNameAtLineEnd; PrintRMSetc now public
 !
