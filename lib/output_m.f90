@@ -79,7 +79,7 @@ module OUTPUT_M
 ! flushOutputLines ( [int prUnit] )
 ! int getOutputStatus( char* name )
 ! log isOutputSuspended ()
-! NewLine
+! NewLine ( [log dont_make_blank_line] )
 ! output ( char* chars, [char* advance], [char* from_where], 
 !          [log dont_log], [char* log_chars], [char* insteadOfBlank],
 !          [log dont_stamp], [int newlineval] )
@@ -523,7 +523,15 @@ contains
   end function isOutputSuspended
 
   ! ----------------------------------------------------  NewLine  -----
-  subroutine NewLine
+  subroutine NewLine ( dont_make_blank_line )
+    ! Args
+    ! If the following is TRUE, avoid
+    ! adding a blank line; that means don't add
+    ! a new line if at column 1
+    logical, optional, intent(in) :: dont_make_blank_line
+    if ( present( dont_make_blank_line ) ) then
+      if ( dont_make_blank_line .and. ATCOLUMNNUMBER == 1 ) return
+    endif
     call output_ ( '', advance='yes' )
   end subroutine NewLine
 
@@ -1646,6 +1654,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.129  2017/07/31 23:01:22  pwagner
+! NewLine can be asked not to make a blank line
+!
 ! Revision 2.128  2017/01/25 17:13:44  pwagner
 ! Output logicals so they line up with integers
 !
