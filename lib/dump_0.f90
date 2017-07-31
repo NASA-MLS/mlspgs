@@ -34,7 +34,7 @@ module Dump_0
     & PrintFillValue, PrintNameAtLineEnd, PrintNameIfDiff, &
     & Ratios, RMS, RMSFormat, &
     & SDFormatDefault, SDFormatDefaultCmplx, Stats, StatsOnOneLine, &
-    & TheDumpBegins, ItsShape, MyTranspose=>Transpose, &
+    & TheDumpBegins, TheDumpEnds, ItsShape, MyTranspose=>Transpose, &
     & TrimIt, Unique, Verbose, WholeArray
   use HighOutput, only: BlanksToColumn, NumNeedsFormat, OutputNamedValue
   use MLSFillValues, only: Bandwidth, Collapse, &
@@ -65,7 +65,6 @@ module Dump_0
 
 ! PrintName                Print the item name unless already done so
 ! PrintRMSetc              Prints a nicely-formatted list of min, max, etc
-! TheDumpEnds              Housekeeping
 ! === (end of toc) ===
 
 ! === (start of api) ===
@@ -82,14 +81,13 @@ module Dump_0
 ! int ILog10 ( int int )
 ! PrintName ( char* Name [, log nameHasBeenPrintedAlready] )
 ! PrintRMSetc ( char* Name, num min, num max, num rms, num mean )
-! TheDumpEnds
 !
 ! Options are described in Dump_Options
 ! === (end of api) ===
 
   public :: &
     & Dump, Dump_2x2xN, Empty, FinishLine, ILog10, Name_And_Size, &
-    & PrintName, PrintRMSEtc, TheDumpEnds
+    & PrintName, PrintRMSEtc
 
   ! =====     Public Generics     ======================================
 
@@ -1248,7 +1246,7 @@ contains
       call blanks (2)
       call output ( trim(nameOnEachLine), advance='no' )
     end if
-    call newLine
+    call newLine ( dont_make_blank_line=.true. )
   end subroutine FinishLine
 
   ! -------------------------------------------------  PrintName  -----
@@ -1303,11 +1301,6 @@ contains
     end if
 
   end subroutine Name_And_Size
-
-  ! -------------------------------------------------  TheDumpEnds -----
-  subroutine TheDumpEnds
-    stampOptions%neverStamp = .false.
-  end subroutine TheDumpEnds
 
   ! =====     Private Procedures     ===================================
 
@@ -1755,6 +1748,9 @@ contains
 end module Dump_0
 
 ! $Log$
+! Revision 2.143  2017/07/31 23:05:47  pwagner
+! Moved TheDumpEnds to dump_options; try to avoid blank lines
+!
 ! Revision 2.142  2017/07/31 22:18:22  vsnyder
 ! Option to print FALSE as dot to make it easier to see TRUE
 !
