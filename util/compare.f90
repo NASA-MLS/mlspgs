@@ -235,7 +235,7 @@ program COMPARE
       m = rd > 0.0
       rd = 2.0 * ad / rd
       if ( any(m) ) then
-        lrmax = maxloc(rd,1,mask=abs(r1 + r2)/=0.0)
+        lrmax = maxloc(rd,1,mask=m)
         rmax = rd(lrmax)
       else
         lrmax = -1
@@ -285,7 +285,7 @@ program COMPARE
 
   end do
 
-  if ( rmaxg > 0.0 .or. zero .or. anyNan(3) ) then
+  if ( rmaxvg > 0.0 .or. zero .or. anyNan(3) ) then
     print '(a/1p,5g13.6,1x,a)', &
       & " RelMaxVal    MaxRel       where MaxAbs MaxAbs       where MaxRel RelMaxVal block", &
       & rmaxvg, rmaxg, absAtRmaxG, amaxG, relAtAmaxG, trim(rmaxb)
@@ -347,6 +347,9 @@ contains
 end program
 
 ! $Log$
+! Revision 1.23  2017/07/15 00:12:33  vsnyder
+! Add -Z option
+!
 ! Revision 1.22  2017/05/02 01:01:13  vsnyder
 ! Print maxdiff/maxval if -a
 !
