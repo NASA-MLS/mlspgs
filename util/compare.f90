@@ -57,7 +57,7 @@ program COMPARE
   logical :: LOUD = .true.        ! Messages about unequal file lengths etc.
   character(127) :: Line1, line2
   logical, allocatable, dimension(:) :: M    ! abs(r1+r2) > 0.0
-  integer :: N
+  integer :: N, N1, N2            ! Numbers of values
   character(len=3) :: NaNString
   real(rk) :: NaNValue
   logical :: NoZero = .false.     ! Don't compare where either one is zero, -Z
@@ -164,27 +164,40 @@ program COMPARE
 
     if ( verbose ) print *, 'Read control lines from both files'
     if ( (end .neqv. status /= 0) .and. loud ) then
-      print *, 'Input file lengths unequal'
+      print '(a)', 'Input file lengths unequal'
       same = .false.
     end if
     if ( end .or. status /= 0 ) exit
 
     if ( line1 /= line2 ) then
       if ( loud ) then
-        print *, 'Control lines differ:'
-        print *, trim(line1)
-        print *, trim(line2)
+        print '(a)', 'Control lines differ:'
+        print '(a)', trim(line1)
+        print '(a)', trim(line2)
       end if
       if ( .not. cont ) exit
     end if
 
-    read ( line2(i2+1:), *, iostat=status, iomsg=errmsg ) n
+    read ( line1(i1+1:), *, iostat=status, iomsg=errmsg ) n1
+    if ( status /= 0 ) then
+      print '("Unable to read number N from ",a)', trim(line1(i1+1:))
+      print '("Status = ", i0, ", Message = ",a)', status, trim(errmsg)
+      exit
+    end if
+    read ( line2(i2+1:), *, iostat=status, iomsg=errmsg ) n2
     if ( status /= 0 ) then
       print '("Unable to read number N from ",a)', trim(line2(i2+1:))
       print '("Status = ", i0, ", Message = ",a)', status, trim(errmsg)
       exit
     end if
 
+    if ( n1 /= n2 ) then
+      print '("Block sizes ", i0, " and ", i1, " differ"/a/a)', n1, n2, &
+        & trim(line1(i1+1:)), trim(line2(i2+1:))
+      exit
+    end if
+
+    n = n1
     if ( verbose ) print *, 'Allocating space for blocks of ', n
     allocate ( ad(n), r1(n), r2(n), rd(n), m(n) )
 
@@ -347,6 +360,9 @@ contains
 end program
 
 ! $Log$
+! Revision 1.24  2017/08/01 02:32:36  vsnyder
+! Use rmaxvg to decide whether to print summary
+!
 ! Revision 1.23  2017/07/15 00:12:33  vsnyder
 ! Add -Z option
 !
