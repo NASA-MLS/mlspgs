@@ -518,8 +518,10 @@ then
   kill -9 $pgepid
   kill -9 $pgepid2
   exit 1
+else
+  echo "pgepid and pgepid2 are both $pgepid2" >> "$LOGFILE"
 fi
-pgepid=pgepid2
+pgepid=$pgepid2
 # Did the launch fail immediately?
 if [ "$pgepid" = "" ]
 then
@@ -572,6 +574,9 @@ do_the_call $all_my_opts
 exit 0
 
 # $Log$
+# Revision 1.40  2016/11/16 19:26:50  pwagner
+# Avoids stomping on an already-selected PCF
+#
 # Revision 1.39  2016/10/20 23:26:31  pwagner
 # Append chunk stderr to chunk log
 #
