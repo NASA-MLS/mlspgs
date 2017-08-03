@@ -1265,10 +1265,10 @@ contains
       call blanksToColumn ( 80-len_trim(myName) )
       call output ( trim(myName), advance='no' )
     else
-      call blanks (2)
+      if ( .not. dopts(Clean)%v ) call blanks (2)
       call output ( trim(myName), advance='no' )
     end if
-    call newLine
+    if ( .not. dopts(Clean)%v ) call newLine
     if ( present(nameHasBeenPrintedAlready) ) nameHasBeenPrintedAlready = .true.
   end subroutine PrintName
 
@@ -1748,6 +1748,9 @@ contains
 end module Dump_0
 
 ! $Log$
+! Revision 2.144  2017/08/03 20:37:31  pwagner
+! Try harder to avoid messing up dumps called with 'c(lean)'
+!
 ! Revision 2.143  2017/07/31 23:05:47  pwagner
 ! Moved TheDumpEnds to dump_options; try to avoid blank lines
 !
