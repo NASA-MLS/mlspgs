@@ -45,6 +45,11 @@ contains ! =====     Public Procedures     =============================
 
   ! This is the main routine for the Join block.  This one just goes
   ! through the tree and dispatches work to other routines.
+  ! Broadly it does so in two sweeps:
+  ! The first sweep focuses on the DirectWrite commands
+  ! The second sweep picks up any other command
+  ! Both sweeps must be sensitive to contol structures
+  ! like Skip and Select
 
   subroutine MLSL2Join ( root, vectors, l2gpDatabase, l2auxDatabase, &
     & DirectDataBase, chunkNo, chunks, FWModelConfig, filedatabase, HGrids, &
@@ -72,14 +77,14 @@ contains ! =====     Public Procedures     =============================
    use MLSCommon, only: MLSFile_T
    use MLSL2Options, only: CheckPaths, L2CFNode, &
      & SkipDirectWrites, SpecialDumpFile, MLSMessage
-   use MLSL2Timings, only: Section_Times, Total_Times, &
+   use MLSL2Timings, only: Section_Times, &
      & Add_To_DirectWrite_Timing, Add_To_Section_Timing
    use MLSMessageModule, only: MLSMSG_Error
    use MoreTree, only: Get_Boolean, Get_Field_Id, Get_Label_And_Spec, &
      & Get_Spec_Id
    use Next_Tree_Node_M, only: Init_Next_Tree_Node, Next_Tree_Node, &
      & Next_Tree_Node_State
-   use Output_M, only: Blanks, Output, RevertOutput, SwitchOutput
+   use Output_M, only: Output, RevertOutput, SwitchOutput
    use Toggles, only: Gen, Toggle, Switches
    use Tree, only: Where_At => Where, Nsons, Subtree
    use Time_M, only: SayTime, Time_Now
@@ -121,7 +126,7 @@ contains ! =====     Public Procedures     =============================
     integer :: NODIRECTWRITESCOMPLETED  ! Counter
     integer :: NOEXTRAWRITES            ! Correction to NODIRECTWRITES
     character(len=16) :: outputTyp
-    integer :: PASS                     ! Loop counter
+    ! integer :: PASS                     ! Loop counter
     logical :: reset
     integer :: SON                      ! Tree node
     integer :: SPECID                   ! Type of l2cf line this is
@@ -132,7 +137,6 @@ contains ! =====     Public Procedures     =============================
     character(len=4096) :: THEFILE  ! Which file permission granted for
     logical :: TIMING                   ! Flag
     real :: T1                          ! Time we started
-    real :: T2                          ! Time we finished
     real :: timeSpentWaiting
     logical :: namedFile                ! set true if DirectWrite named file
     logical :: DEEBUG
@@ -154,13 +158,34 @@ contains ! =====     Public Procedures     =============================
         autoDirectWrite = any(DirectDataBase%autoType > 0)
       end if
     end if
+    ! First we'll just do any DirectWrite commands
+    ! These may require waiting for permission if we're a slave
+    call AnyDirectWrites
+    
+    ! Next we'll perform any of the other commands
+    ! like the Dump, Diff, or the outmoded l2gp and l2aux
+    ! (which were the classic Join specs)
+    call AnyOtherCommands
+    
+    if ( specialDumpFile /= ' ' ) &
+      & call revertOutput
+    ! Check for errors
+    if ( error /= 0 ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, 'Error in Join section' )
+
+    call trace_end ( "MLSL2Join", cond=toggle(gen) )
+    if ( timing ) call sayTime ( 'Join', t1=t1, cumulative=.false. )
+
+contains
+  subroutine AnyDirectWrites
     ! This is going to be somewhat atypical, as the code may run in 'passes'
-    ! In pass 1 we do all the regular join statements and count the direct writes
+    ! If we are a slave run in parrallel, we make many passes
+    ! In pass 1 we simply count the direct writes
     ! In pass 2 we log all our direct write requests.
     ! In the later passes (as many as there are direct writes) we do the
     ! direct writes we've been given permission for.
-
-    ! In the non-parallel slave mode, one pass is sufficient.
+    integer :: pass
+    ! othrwise one pass is sufficient.
 
     error = 0
     pass = 1
@@ -193,6 +218,8 @@ contains ! =====     Public Procedures     =============================
       end if
       
       ! Simply loop over lines in the l2cf
+      ! related to DiretWrites;
+      ! e.g., the Label commands which endoww the datasets with Names
       call init_next_tree_node ( state )
       do 
         son = next_tree_node ( root, state )
@@ -216,17 +243,8 @@ contains ! =====     Public Procedures     =============================
           & .not. any( get_spec_id(key) == (/ s_endselect, s_select, s_case /) ) ) cycle
         specId = get_spec_id ( key )
         select case ( specId )
-        case ( s_diff, s_dump ) ! ======================= Diff, Dump ==========
-          ! Handle disassociated pointers by allocating them with zero size
-          status = 0
-          if ( CHECKPATHS ) cycle
-          if ( .not. associated(vectors) ) allocate ( vectors(0), stat=status )
-          call test_allocate ( status, moduleName, 'Vectors', (/0/), (/0/) )
-          call dumpCommand ( key, vectors=vectors, HGrids=HGrids, &
-            & ForwardModelConfigs=FWModelConfig, FileDataBase=FileDataBase, &
-            & MatrixDatabase=matrices, HessianDatabase=Hessians )
-        case ( s_execute ) ! ======================== ExecuteCommand ==========
-          call ExecuteCommand ( key )
+        ! We should care only about DirectWrite, Label, and Control Structures
+        ! (Like Case, SSkip, etc.)
         case ( s_skip ) ! ============================== Skip ==========
           ! We'll skip the rest of the section if the Boolean cond'n is TRUE
           if ( Skip(key) ) exit
@@ -248,12 +266,6 @@ contains ! =====     Public Procedures     =============================
               call time_now ( t1 )
               timing = .true.
             end if
-          end if
-        case ( s_l2gp, s_l2aux )
-          ! Only do these the first time round
-          if ( pass == 1 .and. .not. checkpaths ) then
-            call JoinQuantities ( key, vectors, l2gpDatabase, l2auxDatabase, &
-              & chunkNo, chunks )
           end if
         case ( s_label )
           ! Only do these the first time round
@@ -363,26 +375,94 @@ contains ! =====     Public Procedures     =============================
           & 'We received permission to write, but could not find node' )
       end if
     end do passLoop                     ! End loop over passes
+  end subroutine AnyDirectWrites
 
-    if ( specialDumpFile /= ' ' ) &
-      & call revertOutput
-    ! Check for errors
-    if ( error /= 0 ) &
-      & call MLSMessage ( MLSMSG_Error, ModuleName, 'Error in Join section' )
+  subroutine AnyOtherCommands
+    ! Whatever isn't a DirectWrite
 
-    call trace_end ( "MLSL2Join", cond=toggle(gen) )
-    if ( timing ) call sayTime ( 'Join', t1=t1, cumulative=.false. )
+    error = 0
+      
+    ! Simply loop over lines in the l2cf
+    ! (Except or the DirectWrites which we already did)
+    call init_next_tree_node ( state )
+    do 
+      son = next_tree_node ( root, state )
+      if ( son == 0 ) exit
+      call get_label_and_spec ( son, label, key )
+      L2CFNODE = key
+      reset = .false.
+
+      do j = 2, nsons(key) ! fields of the "time" specification
+        gson = subtree(j, key)
+        field = get_field_id(gson)   ! tree_checker prevents duplicates
+        if (nsons(gson) > 1 ) gson = subtree(2,gson) ! Gson is value
+        select case ( field )
+        case ( f_reset )
+          reset = Get_Boolean ( gson )
+        case default
+          ! Shouldn't get here if the type checker worked
+        end select
+      end do ! j = 2, nsons(key)
+      if ( MLSSelecting .and. &
+        & .not. any( get_spec_id(key) == (/ s_endselect, s_select, s_case /) ) ) cycle
+      specId = get_spec_id ( key )
+      select case ( specId )
+      case ( s_diff, s_dump ) ! ======================= Diff, Dump ==========
+        ! Handle disassociated pointers by allocating them with zero size
+        status = 0
+        if ( CHECKPATHS ) cycle
+        if ( .not. associated(vectors) ) allocate ( vectors(0), stat=status )
+        call test_allocate ( status, moduleName, 'Vectors', (/0/), (/0/) )
+        call dumpCommand ( key, vectors=vectors, HGrids=HGrids, &
+          & ForwardModelConfigs=FWModelConfig, FileDataBase=FileDataBase, &
+          & MatrixDatabase=matrices, HessianDatabase=Hessians )
+      case ( s_execute ) ! ======================== ExecuteCommand ==========
+        call ExecuteCommand ( key )
+      case ( s_skip ) ! ============================== Skip ==========
+        ! We'll skip the rest of the section if the Boolean cond'n is TRUE
+        if ( Skip(key) ) exit
+      case ( s_select ) ! ============ Start of select .. case ==========
+        ! We'll start seeking a matching case
+        call MLSSelect (key)
+      case ( s_case ) ! ============ seeking matching case ==========
+        ! We'll continue seeking a match unless the case is TRUE
+        call MLSCase (key)
+      case ( s_endSelect ) ! ============ End of select .. case ==========
+        ! We'done with seeking a match
+        call MLSEndSelect (key)
+      case ( s_time )
+            if ( timing .and. .not. reset ) then
+              call sayTime ( 'Join', t1=t1, cumulative=.false. )
+            else
+              call time_now ( t1 )
+              timing = .true.
+            end if
+      case ( s_l2gp, s_l2aux )
+        ! Don't do these if we're just checking paths
+        if ( .not. checkpaths ) then
+          call JoinQuantities ( key, vectors, l2gpDatabase, l2auxDatabase, &
+            & chunkNo, chunks )
+        end if
+      case ( s_label )
+        ! Don't do these if we're just checking paths
+        if ( .not. checkpaths ) then
+          call LabelVectorQuantity ( son, vectors )
+        end if
+      end select
+    end do                            ! End loop over l2cf lines
+
+  end subroutine AnyOtherCommands
 
   end subroutine MLSL2Join
 
   ! -----------------------------------------  DirectWriteCommand  -----
   ! 
-  ! Direct write is probably going to become the predominant form
-  ! of output in the software, as the other forms have become a
-  ! little too intensive.
+  ! Direct write is the preferred method for writing hdf-formatted
+  ! quantities, with the exception of Spectroscopy and Matrices
+  ! like l2pcs and TScat
 
-  ! This routine may be called by a standalone run, or by a slave.
-  ! If called by a standalone run, just do the write and return.
+  ! This routine may be called by a serial run, or by a slave.
+  ! If called by a serial run, just do the write and return.
 
   ! For a slave it will be called many times for each direct write.  The first
   ! is a pass through to check the syntax etc.
@@ -2401,6 +2481,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.180  2017/08/03 21:41:04  pwagner
+! Split MLSL2Join into calls to 2 internal procedures; fix problem of not doing DirecWrites if section contains Dump, /stop
+!
 ! Revision 2.179  2017/07/27 17:03:53  pwagner
 ! DirectWrite-ing an entire vector may put it under a named group
 !
