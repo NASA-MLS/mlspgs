@@ -114,7 +114,7 @@ module MLSHDF5
 ! LoadFromHDF5DS       Retrieves a dataset
 ! LoadPtrFromHDF5DS    Allocates an array and retrieves a dataset
 ! MakeHDF5Attribute    Turns an arg into an attribute
-! MakeNestedGroups       Create a nested sequence of groups; e.g. a/b/c/../z
+! MakeNestedGroups     Create a nested sequence of groups; e.g. a/b/c/../z
 ! MatchHDF5Attributes  Finds a dataset with matching attributes
 ! mls_h5close          Closes interface to hdf5; call once at end of run
 ! mls_h5open           Opens interface to hdf5; call once at start of run
@@ -1790,7 +1790,10 @@ contains ! ======================= Public Procedures =========================
     ! call outputNamedValue( 'size(groupNames)', size(groupNames) )
     do i=1, size(groupNames)
       ! call outputNamedValue( 'groupName(i)', trim(groupnames(i)) )
-      if ( .not. IsHDF5GroupPresent ( containerID, trim(groupnames(i))) ) then
+      if ( len_trim(groupnames(i)) < 1 ) then
+        iDs(i) = -1
+        cycle
+      elseif ( .not. IsHDF5GroupPresent ( containerID, trim(groupnames(i))) ) then
         !  Must create this group
         call h5gCreate_f ( containerID, trim(groupnames(i)), grpID, status )
       else
@@ -1804,7 +1807,7 @@ contains ! ======================= Public Procedures =========================
       innermostID = containerID
     else
       do i=1, size(groupNames)
-        call h5gclose_f ( IDs(i), status )
+        if ( IDs(i) > 0 ) call h5gclose_f ( IDs(i), status )
       enddo
     endif
     call trace_end ( cond=.false. )
@@ -5862,6 +5865,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.141  2017/08/04 19:42:14  pwagner
+! Fixed case when groupName starts with /
+!
 ! Revision 2.140  2017/07/25 22:30:34  pwagner
 ! Added MakeNestedGroups
 !
