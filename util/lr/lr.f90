@@ -134,8 +134,9 @@ program LR
   call open_input ( line, unit=input_unit )
   call AddInUnit( input_unit )
 
-  ! Open output table file
-  call get_command_argument ( i+1, table )
+  ! Get output table file name
+  call get_command_argument ( i+1, line )
+  if ( line /= '' ) table = line
 
   ! Open output listing file
   call get_command_argument ( i+2, line )
@@ -302,6 +303,9 @@ contains
 end program LR
 
 ! $Log$
+! Revision 1.11  2016/01/29 23:26:52  pwagner
+! Updated to conform with newer string_table
+!
 ! Revision 1.10  2014/08/06 20:54:00  vsnyder
 ! Simplify test for producing table file.  Print version with usage.
 ! Add -V option to print version.
