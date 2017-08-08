@@ -915,9 +915,14 @@ contains ! =====     Public Procedures     =============================
             & GriddedDatabase, returnStatus, &
             & mlspcf_l2apriori_start, mlspcf_l2apriori_end, &
             & missingValue )
-          if ( returnStatus /= 0 ) &
-            & call Announce_error ( field, &                               
-            & 'read_climatology unsuccessful--check file name and path') 
+          if ( returnStatus /= 0 ) then
+            call Announce_error ( field, &                               
+            & 'read_climatology unsuccessful--check file name and path' )
+            ! Now crash gracefully instead of getting a reference to a
+            ! disassociated GriddedDatabase pointer.
+            call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & 'read_climatology unsuccessful--check file name and path' )
+          end if
           call outputNamedValue( 'climatology desc.', &
             & GriddedDatabase(size(GriddedDatabase))%description )
         end if
@@ -1505,6 +1510,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.122  2017/08/08 20:46:28  vsnyder
+! Stop with error instead of seg fault if climatology not successfully read
+!
 ! Revision 2.121  2017/07/10 23:04:52  pwagner
 ! Print less if not verbose
 !
