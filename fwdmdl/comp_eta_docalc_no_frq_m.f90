@@ -81,9 +81,9 @@ contains
 
     real(rp) :: Eta_p(1:size(path_phi), &  ! size(path_phi) == size(path_zeta)
       & maxval(Grids_x%l_p(1:ubound(Grids_x%l_p,1))-Grids_x%l_p(0:ubound(Grids_x%l_p,1)-1)))
-    real(rp) :: Eta_z(1:size(path_zeta), & ! == size(path_zeta)
+    real(rp) :: Eta_z(1:size(path_zeta), &
       & maxval(Grids_x%l_z(1:ubound(Grids_x%l_z,1))-Grids_x%l_z(0:ubound(Grids_x%l_z,1)-1)))
-    integer :: NZ                          ! Size(Eta_FZP,1)
+    integer :: NZ                          ! Size(Path_Zeta,1)
     integer :: NZ_P(1:size(Eta_p,1),1:size(Eta_p,2))
     integer :: NZ_Z(1:size(Eta_z,1),1:size(Eta_z,2))
     integer :: NNZ_P(1:size(Eta_p,2))
@@ -106,6 +106,11 @@ contains
       do n_p = 1, size(nnz_zp)
         eta_zp(nz_zp(:nnz_zp(n_p),n_p),n_p) = 0.0
       end do
+      if ( present(do_calc_zp) ) then
+        do n_p = 1, size(nnz_zp)
+          do_calc_zp(nz_zp(:nnz_zp(n_p),n_p),n_p) = .false.
+        end do
+      end if
     end if
     nnz_z = 0
     nnz_p = 0
@@ -310,6 +315,9 @@ contains
 end module Comp_Eta_Docalc_No_Frq_m
 
 ! $Log$
+! Revision 2.23  2017/08/09 20:34:37  vsnyder
+! Set formerly-true values of do_calc_zp false before computing new true ones
+!
 ! Revision 2.22  2016/11/23 20:10:05  vsnyder
 ! Remove unused use names and variables
 !
