@@ -70,21 +70,21 @@ contains
 
     ! Compute dtaudn = delta = indefinite sum of (-incoptdepth).
 
-    dtaudn(i_start) = 0.0_rk
-    do last = i_start+1, min(tan_pt, i_end)
-      dtaudn(last) = dtaudn(last-1) - incoptdepth(last)
-      if ( dtaudn(last) < black_out ) go to 19
-    end do
+o:  block
+      dtaudn(i_start) = 0.0_rk
+      do last = i_start+1, min(tan_pt, i_end)
+        dtaudn(last) = dtaudn(last-1) - incoptdepth(last)
+        if ( dtaudn(last) < black_out ) exit o
+      end do
 
-    if ( last == tan_pt+1 ) dtaudn(tan_pt+1) = dtaudn(tan_pt)
+      if ( last == tan_pt+1 ) dtaudn(tan_pt+1) = dtaudn(tan_pt)
 
-    do last = max(i_start+1,tan_pt+2), i_end
-      dtaudn(last) = dtaudn(last-1) - incoptdepth(last-1)
-      if ( dtaudn(last) < black_out ) go to 19
-    end do
-    last = i_end
-
-19  continue
+      do last = max(i_start+1,tan_pt+2), i_end
+        dtaudn(last) = dtaudn(last-1) - incoptdepth(last-1)
+        if ( dtaudn(last) < black_out ) exit o
+      end do
+    end block o
+    last = last - 1 ! either i_end or one before the black out
 
     ! compute the tau path derivative dTau/ds ~ exp(delta) d delta/ds.
 
@@ -98,8 +98,8 @@ contains
     ! find where the tau derivative is large.  Remember, tau is monotone
     ! decreasing, so "large" means "large and negative."
 
-    where ( dtaudn(i_start:last) < myTol ) do_gl(i_start:last) = .true.
     do_gl(:i_start) = .false. ! irrelevant
+    do_gl(i_start+1:last) = dtaudn(i_start+1:last) < myTol
     do_gl(last+1:) = .false.  ! Tau is blacked out, so no point in doing GL
 
   end subroutine Path_Contrib_Scalar
@@ -219,28 +219,41 @@ contains
     do_gl(1:n_path:n_path-1) = .FALSE.
 
     ngl = 0
-    if ( present(ncg) ) ncg = 0
-    ! The complication here arises from two sources.  First, we never doing
+    ! The complication here arises from two sources.  First, we never do
     ! GL between the two tangent points, so we never insert GL points
     ! between tan_pt and tan_pt+1.  Second, before the tangent point, DO_GL
     ! indicates that we need GL in the previous panel, while after the tangent
     ! point, DO_GL indicates that we need GL in the next panel.
-    i1 = 2
-    i2 = tan_pt
-    do j = 0, ngp1, ngp1
-      do i = i1, i2
-        if ( do_gl(i) ) then
-          ngl = ngl + ng
-          gl_inds(ngl-ng+1:ngl) = Ngp1 * (i - 1) + glix + j
-          if ( present(ncg) ) then
+    if ( present(ncg) ) then ! Implies present(cg_inds)
+      ncg = 0
+      i1 = 2
+      i2 = tan_pt
+      do j = 0, ngp1, ngp1
+        do i = i1, i2
+          if ( do_gl(i) ) then
+            ngl = ngl + ng
+            gl_inds(ngl-ng+1:ngl) = Ngp1 * (i - 1) + glix + j
             ncg = ncg + 1
             cg_inds(ncg) = i
           end if
-        end if
+        end do
+        i1 = tan_pt+1
+        i2 = n_path - 1
       end do
-      i1 = tan_pt+1
-      i2 = n_path - 1
-    end do
+    else
+      i1 = 2
+      i2 = tan_pt
+      do j = 0, ngp1, ngp1
+        do i = i1, i2
+          if ( do_gl(i) ) then
+            ngl = ngl + ng
+            gl_inds(ngl-ng+1:ngl) = Ngp1 * (i - 1) + glix + j
+          end if
+        end do
+        i1 = tan_pt+1
+        i2 = n_path - 1
+      end do
+    end if
 
   end subroutine Get_GL_inds
 
@@ -258,6 +271,11 @@ contains
 end module Path_Contrib_M
 
 ! $Log$
+! Revision 2.26  2013/05/18 00:34:44  vsnyder
+! Insert NG fine-grid (GL) points between tangent points, thereby
+! regularizing coarse-grid spacing, and reducing significantly the need
+! to use c_inds to extract coarse-grid points from the composite grid.
+!
 ! Revision 2.25  2011/07/29 01:58:56  vsnyder
 ! Make CG_INDS, NCG optional
 !
