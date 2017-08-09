@@ -258,13 +258,13 @@ contains
 !--------------------------------------------------  DRad_Tran_df  -----
 ! This is the radiative transfer derivative wrt mixing ratio model
 
-  subroutine DRad_Tran_df ( max_f, gl_inds, del_zeta, Grids_f, eta_fzp,       & 
-                          & do_calc_fzp, do_gl, del_s, ref_cor, ds_dz_gw,     & 
-                          & inc_rad_path, dAlpha_df_c, dAlpha_df_f, i_start,  & 
-                          & tan_pt, i_stop, LD, d_delta_df, nz_d_delta_df,    &
-                          & nnz_d_delta_df, drad_df, dB_df, Tau, nz_zxp,      &
-                          & nnz_zxp, alpha_path_c, Beta_c_e,                  &
-                          & dBeta_c_a_dIWC, dBeta_c_s_dIWC, dTScat_df, W0 )
+  subroutine DRad_Tran_df ( max_f, gl_inds, del_zeta, Grids_f,  eta_fzp,     &
+                          & do_calc_fzp, do_gl, del_s, ref_cor, ds_dz_gw,    &
+                          & inc_rad_path, dAlpha_df_c, dAlpha_df_f, i_start, &
+                          & tan_pt, i_stop, LD, d_delta_df, nz_d_delta_df,   &
+                          & nnz_d_delta_df, drad_df, dB_df, Tau, nz_zxp,     &
+                          & nnz_zxp, alpha_path_c, Beta_c_e, dBeta_c_a_dIWC, &
+                          & dBeta_c_s_dIWC, dTScat_df, W0 )
 
     use d_T_Script_dTnp_m, only: dT_Script
     use Load_SPS_Data_m, ONLY: Grids_t
@@ -288,7 +288,8 @@ contains
       !                                        do gl integrations
     real(rp), intent(in) :: Ref_Cor(:)       ! refracted to unrefracted path
       !                                        length ratios.
-    real(rp), intent(in) :: Del_s(:)         ! unrefracted path length.
+    real(rp), intent(in) :: Del_s(:)         ! unrefracted coarse path panel
+      !                                        length.
     real(rp), intent(in) :: ds_dz_gw(:)      ! path length wrt zeta derivative *
       !              gw on the entire grid.  Only the gl_inds part is used.
     real(rp), intent(in) :: Inc_Rad_Path(:)  ! incremental radiance along the
@@ -334,10 +335,11 @@ contains
 
 ! Begin code
 
-    call get_all_d_delta_df ( max_f, gl_inds, del_zeta, grids_f, eta_fzp,    & 
-                            & do_calc_fzp, do_gl, del_s, ref_cor, ds_dz_gw,  & 
-                            & dAlpha_df_c, dAlpha_df_f, LD, d_delta_df,      & 
-                            & nz_d_delta_df, nnz_d_delta_df, nothing )
+    call get_all_d_delta_df ( max_f, tan_pt, gl_inds, del_zeta, grids_f,   & 
+                            & eta_fzp, do_calc_fzp, do_gl, del_s, ref_cor, & 
+                            & ds_dz_gw, dAlpha_df_c, dAlpha_df_f, LD,      & 
+                            & d_delta_df, nz_d_delta_df, nnz_d_delta_df,   &
+                            &  nothing )
 
     Do_TScat = size(dB_df) > 0
 
@@ -460,8 +462,8 @@ contains
                             & do_calc_fzp, do_gl, del_s, ref_cor, ds_dz_gw, &
                             & inc_rad_path, d2Alpha_df2_c, d2Alpha_df2_f,   &
                             & i_start, tan_pt, i_stop, LD, d_delta_df,      &
-                            & nz_d_delta_df, nnz_d_delta_df,                &
-                            & d2_delta_df2, d2rad_df2 )
+                            & nz_d_delta_df, nnz_d_delta_df,d2_delta_df2,   &
+                            & d2rad_df2 )
 
     use Load_SPS_Data_m, ONLY: Grids_t
     use MLSKinds, only: RP
@@ -521,10 +523,11 @@ contains
 
 ! Begin code
 
-    call get_all_d2_delta_df2( max_f, gl_inds, del_zeta, Grids_f, eta_fzp,   &
-                             & do_calc_fzp, do_gl, del_s, ref_cor, ds_dz_gw, &
-                             & d2Alpha_df2_c, d2Alpha_df2_f, nz_d_delta_df,  &
-                             & nnz_d_delta_df, d2_delta_df2, nothing )
+    call get_all_d2_delta_df2( max_f, tan_pt, gl_inds, del_zeta, Grids_f,    &
+                             & eta_fzp, do_calc_fzp, do_gl, del_s, ref_cor,  &
+                             & ds_dz_gw, d2Alpha_df2_c, d2Alpha_df2_f,       &
+                             & nz_d_delta_df, nnz_d_delta_df, d2_delta_df2,  &
+                             & nothing )
 
     do sps_i = 1, ubound(Grids_f%l_z,1)
 
@@ -562,11 +565,11 @@ contains
 
 !-------------------------------------------- Get_All_d2_Delta_df2 -----
 
-  subroutine Get_All_d2_Delta_df2 ( max_f, gl_inds, del_zeta, Grids_f,       &
-                              & eta_fzp, do_calc_fzp, do_gl, del_s, ref_cor, &
-                              & ds_dz_gw, d2Alpha_df2_c, d2Alpha_df2_f,      &
-                              & nz_d_delta_df, nnz_d_delta_df, d2_delta_df2, &
-                              & nothing )
+  subroutine Get_All_d2_Delta_df2 ( max_f, tan_pt_c, gl_inds, del_zeta,       &
+                              & Grids_f, eta_fzp, do_calc_fzp, do_gl, del_s,  &
+                              & ref_cor, ds_dz_gw, d2Alpha_df2_c,             &
+                              & d2Alpha_df2_f, nz_d_delta_df, nnz_d_delta_df, &
+                              & d2_delta_df2, nothing )
 
     use LOAD_SPS_DATA_M, ONLY: GRIDS_T
     use MLSKinds, only: RP
@@ -574,6 +577,8 @@ contains
 ! Inputs
 
     integer, intent(in) :: Max_f             ! Leading dimension of d2Alpha_df2_f
+    integer, intent(in) :: Tan_Pt_C          ! Index of tangent point in coarse
+      !                                        path
     integer, intent(in) :: gl_inds(:)        ! Gauss-Legendre grid indices
     real(rp), intent(in) :: del_zeta(:)      ! path -log(P) differences on the
       !              main grid.  This is for the whole coarse path, not just
@@ -660,7 +665,7 @@ contains
         
             ! find where the non zeros are along the path (for q)
 
-            call get_do_calc_indexed ( size(do_gl), do_calc_fzp(:,q), &
+            call get_do_calc_indexed ( size(do_gl), tan_pt_c, do_calc_fzp(:,q), &
               & gl_inds, do_gl, do_calc_q, n_inds_q, nz_d_delta_df(:,q) )
             
             nnz_d_delta_df(q) = n_inds_q
@@ -681,7 +686,7 @@ contains
             !
             ! find where the non zeros are along the path (for r)
             !
-            call get_do_calc_indexed ( size(do_gl), do_calc_fzp(:,r), &
+            call get_do_calc_indexed ( size(do_gl), tan_pt_c, do_calc_fzp(:,r), &
               & gl_inds, do_gl, do_calc_r, n_inds_r, nz_d_delta_df(:,r) )
 
             nnz_d_delta_df(r) = n_inds_r
@@ -889,7 +894,9 @@ contains
       do_calc(2:tan_pt) =          do_calc(tan_pt)   .or. do_calc(2:tan_pt)          .or. do_calc(1:tan_pt-1)
       do_calc(tan_pt+1:n_path-1) = do_calc(tan_pt+1) .or. do_calc(tan_pt+1:n_path-1) .or. do_calc(tan_pt+2:n_path)
 
-! Since this is a layer boundary calculation we must require
+! This is a layer calculation.  Before the tangent point, boundary J refers
+! to the layer from J-1 to J.  After the tangent point, boundary J refers
+! to the layer from J to J+1.  Therefore, we must require
 
       do_calc((/1,n_path/)) = .false.
 
@@ -1095,7 +1102,7 @@ contains
 
 ! find where the non zeros are along the path
 
-        call get_do_calc_indexed ( size(do_gl), do_calc_fzp(:,sv_i), &
+        call get_do_calc_indexed ( size(do_gl), tan_pt, do_calc_fzp(:,sv_i), &
           & gl_inds, do_gl, do_calc, n_inds, inds_B )
 
         d_delta_dx = 0.0_rp
@@ -1136,10 +1143,11 @@ contains
 
 !--------------------------------------------  Get_All_d_Delta_df  -----
 
-  subroutine Get_All_d_Delta_df ( max_f, gl_inds, del_zeta, Grids_f, eta_fzp,   &
-                                & do_calc_fzp, do_gl, del_s, ref_cor, ds_dz_gw, &
-                                & dAlpha_df_c, dAlpha_df_f, LD, d_delta_df,     &
-                                & nz_d_delta_df, nnz_d_delta_df, nothing )
+  subroutine Get_All_d_Delta_df ( Max_f, Tan_Pt_C, GL_Inds, Del_Zeta, Grids_f, &
+                                & Eta_fzp, Do_Calc_fzp, Do_GL, Del_s, Ref_Cor, &
+                                & ds_dz_gw, dAlpha_df_c, dAlpha_df_f, LD,      &
+                                & d_Delta_df, Nz_d_Delta_df, NNz_d_Delta_df,   &
+                                & Nothing )
 
     !{ Compute
     !  \begin{equation}
@@ -1158,8 +1166,10 @@ contains
 ! Inputs
 
     integer, intent(in) :: Max_f            ! Leading dimension of dAlpha_df_f
+    integer, intent(in) :: Tan_Pt_C         ! Index of tangent point in coarse
+      !                                       path
     integer, intent(in) :: GL_Inds(:)       ! Gauss-Legendre grid indices
-    real(rp), intent(in) :: del_zeta(:)     ! path -log(P) differences on the
+    real(rp), intent(in) :: Del_Zeta(:)     ! path -log(P) differences on the
       !              main grid.  This is for the whole coarse path, not just
       !              the part up to the black-out
     type (Grids_T), intent(in) :: Grids_f    ! All the coordinates
@@ -1169,9 +1179,9 @@ contains
       !                                        not zero on the fine path.
     logical, intent(in) :: Do_GL(:)          ! A logical indicating where to
       !                                        do gl integrations
+    real(rp), intent(in) :: Del_s(:)         ! unrefracted path length.
     real(rp), intent(in) :: Ref_Cor(:)       ! refracted to unrefracted path
       !                                        length ratios.
-    real(rp), intent(in) :: Del_s(:)         ! unrefracted path length.
     real(rp), intent(in) :: ds_dz_gw(:)      ! path length wrt zeta derivative *
       !              gw on the entire grid.  Only the gl_inds part is used.
     real(rp), intent(in) :: dAlpha_df_c(:,:) ! On the coarse path
@@ -1181,9 +1191,9 @@ contains
 
 ! Outputs
 
-    real(rp), intent(inout) :: d_Delta_df(ld,*) ! path x sve.  derivative of
-      !              delta wrt mixing ratio state vector element. (K)
-      !              Initially set to zero by caller.
+    real(rp), intent(inout) :: d_Delta_df(ld,*) ! coarse path x sve.
+      !              Derivative of delta wrt mixing ratio state vector element.
+      !              (K). Initially set to zero by caller.
     integer, intent(inout), target :: Nz_d_Delta_df(:,:) ! Nonzeros in d_delta_df
     integer, intent(inout) :: NNz_d_Delta_df(:) ! Column lengths in nz_delta_df
     logical, intent(out) :: Nothing(:)      ! "Nothing to do for this s.v. element
@@ -1218,7 +1228,7 @@ contains
     do sps_i = 1, ubound(Grids_f%l_z,1)
 
       do sv_i = Grids_f%l_v(sps_i-1)+1, Grids_f%l_v(sps_i)
-
+ 
         ! Everything in d_delta_df not indexed by nz_d_delta_df is already zero
         d_delta_df(nz_d_delta_df(:nnz_d_delta_df(sv_i),sv_i),sv_i) = 0.0
         nnz_d_delta_df(sv_i) = 0 ! Number of nonzeros in column sv_i is now zero
@@ -1230,9 +1240,8 @@ contains
 
         ! find where the non zeros are along the path
 
-        call get_do_calc_indexed ( size(do_gl), do_calc_fzp(:,sv_i), &
+        call get_do_calc_indexed ( size(do_gl), tan_pt_c, do_calc_fzp(:,sv_i), &
           & gl_inds, do_gl, do_calc, n_inds, nz_d_delta_df(:,sv_i) )
-
         nnz_d_delta_df(sv_i) = n_inds
         nothing(sv_i) = n_inds == 0
         if ( nothing(sv_i) ) cycle
@@ -1264,7 +1273,7 @@ contains
   end subroutine Get_All_d_Delta_df
 
   ! ------------------------------------------------  Get_Do_Calc  -----
-  subroutine Get_Do_Calc ( Do_Calc_c, do_calc_fzp, Do_GL, Do_Calc, N_Inds, Inds )
+  subroutine Get_Do_Calc ( Do_Calc_c, Do_Calc_fzp, Do_GL, Do_Calc, N_Inds, Inds )
 
   ! Set Do_Calc if Do_Calc_c or Do_GL and any of the corresponding Do_Calc_fzp
   ! flags are set.
@@ -1802,7 +1811,7 @@ contains
 ! =====     Private Procedures     =====================================
 
   ! ----------------------------------------  Get_Do_Calc_Indexed  -----
-  subroutine Get_Do_Calc_Indexed ( N, Do_Calc_All, F_Inds, Do_GL, &
+  subroutine Get_Do_Calc_Indexed ( N, Tan_Pt_C, Do_Calc_All, F_Inds, Do_GL, &
     & Do_Calc, N_Inds, Inds )
 
   ! Set Do_Calc if Do_Calc_All(1::ngp1), or Do_GL and any of the corresponding
@@ -1815,12 +1824,14 @@ contains
 
     use GLNP, ONLY: Ng, NGP1
 
-    integer, intent(in) :: N ! sizes on coarse grid
+    integer, intent(in) :: N              ! sizes on coarse grid
+    integer, intent(in) :: Tan_Pt_C       ! Index of tangent point in coarse grid
 
 #if defined NAG
 !   Assumed-shape arguments are slower than assumed size
     logical, intent(in) :: Do_Calc_all(*) ! On the entire path
     integer, intent(in) :: F_Inds(*)      ! Indices in Do_Calc_All for fine grid
+                                          ! GL points on panels needing GL.
     logical, intent(in) :: Do_GL(*)       ! Where on coarse grid to do GL
     logical, intent(out) :: Do_Calc(*)    ! Where on coarse grid to do calc.
     integer, intent(out) :: N_Inds        ! count(do_calc)
@@ -1829,6 +1840,7 @@ contains
 !   Contiguous assumed-shape arguments are no slower than assumed size
     logical, contiguous, intent(in) :: Do_Calc_all(:) ! On the entire path
     integer, contiguous, intent(in) :: F_Inds(:)      ! Indices in Do_Calc_All for fine grid
+                                                      ! GL points on panels needing GL.
     logical, contiguous, intent(in) :: Do_GL(:)       ! Where on coarse grid to do GL
     logical, contiguous, intent(out) :: Do_Calc(:)    ! Where on coarse grid to do calc.
     integer,             intent(out) :: N_Inds        ! count(do_calc)
@@ -1837,6 +1849,7 @@ contains
 !   Assumed-shape arguments are faster than assumed size because of copying
     logical, intent(in) :: Do_Calc_all(:) ! On the entire path
     integer, intent(in) :: F_Inds(:)      ! Indices in Do_Calc_All for fine grid
+                                          ! GL points on panels needing GL.
     logical, intent(in) :: Do_GL(:)       ! Where on coarse grid to do GL
     logical, intent(out) :: Do_Calc(:)    ! Where on coarse grid to do calc.
     integer, intent(out) :: N_Inds        ! count(do_calc)
@@ -1845,6 +1858,7 @@ contains
 !   We don't know whether assumed-shape or assumed size arguments are faster
     logical, intent(in) :: Do_Calc_all(:) ! On the entire path
     integer, intent(in) :: F_Inds(:)      ! Indices in Do_Calc_All for fine grid
+                                          ! GL points on panels needing GL.
     logical, intent(in) :: Do_GL(:)       ! Where on coarse grid to do GL
     logical, intent(out) :: Do_Calc(:)    ! Where on coarse grid to do calc.
     integer, intent(out) :: N_Inds        ! count(do_calc)
@@ -1859,6 +1873,8 @@ contains
 !     do_calc = do_calc_all(1::ngp1)
     i = 1 - Ng
     n_inds = 0
+!     do_calc(1:n) = do_calc_all(ngp1-ng:n*ngp1:ngp1)
+!     do_calc(tan_pt_c) = .false. ! Don't do GL between tangent points
     do p_i = 1, n
       do_calc(p_i) = do_calc_all(ngp1*p_i-ng)
       if ( do_gl(p_i) ) then
@@ -1908,13 +1924,17 @@ contains
     implicit NONE
 
   ! Inputs
-    logical, intent(in) :: Do_GL(:)          ! path flag indicating where to do
-      !                                        gl integrations.
-    logical, intent(in) :: Do_Calc(:)
-
+    logical, intent(in) :: Do_GL(:)      ! Coarse path flag indicating where to
+      !                                    do gl integrations.
+    logical, intent(in) :: Do_Calc(:)    ! Coarse path flag indicating where
+                                         ! any interpolating coeffient is nonzero
   ! Outputs
-    integer, intent(out) :: More_Inds(:)
-    integer, intent(out) :: All_Inds(:)
+    integer, intent(out) :: More_Inds(:) ! Indices on coarse path where GL is
+                                         ! to be used.
+    integer, intent(out) :: All_Inds(:)  ! First index in GL_Inds of a fine-path
+                                         ! point where a GL ordinate is to be
+                                         ! computed.  The remaining NG-1 indices
+                                         ! are consecutive.
 
     integer :: I, J, L, P_I
 !   integer :: K
@@ -1966,6 +1986,9 @@ contains
 end module RAD_TRAN_M
 
 ! $Log$
+! Revision 2.35  2017/08/09 20:47:34  vsnyder
+! Add Tan_Pt_C argument, but it isn't actually used yet
+!
 ! Revision 2.34  2017/03/31 00:46:30  vsnyder
 ! Remove Get_d_delta_dx because it's subsumed by Get_d_delta_df
 !
