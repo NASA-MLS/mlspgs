@@ -39,7 +39,8 @@ contains
                                             ! grids_f%where_dBeta_df where
                                             ! those are nonzero, else the
                                             ! array is not referenced.
-    type(grids_t), intent(in) :: Grids_f    ! For lin_log and mol components.
+    type(grids_t), intent(in) :: Grids_f    ! Only lin_log and mol components
+                                            ! per sps, not state-vector values.
     real(rp), intent(out) :: dAlpha_df(:,:) ! Path X Sps.
 
     !{ Compute $\frac{\partial \alpha(s)}{\partial f^k(s)}$ or
@@ -252,6 +253,9 @@ contains
 end module Get_dAlpha_df_m
 
 ! $Log$
+! Revision 2.8  2017/08/09 20:21:06  vsnyder
+! Spiff a comment
+!
 ! Revision 2.7  2011/07/08 21:09:40  yanovsky
 ! Include subroutine Get_d2Alpha_df2 in a list of public subroutines
 !
