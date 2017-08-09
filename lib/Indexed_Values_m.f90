@@ -300,7 +300,13 @@ contains
     real(rk), intent(in) :: Vector(:)
     type(value_1d_list_t), intent(in) :: List
     real(rk) :: Dot
-    dot = sum ( vector(list%v(:list%n)%n) * list%v(:list%n)%v )
+!     integer :: I
+!     dot = sum ( vector(list%v(:list%n)%n) * list%v(:list%n)%v )
+    dot = dot_product ( vector(list%v(:list%n)%n), list%v(:list%n)%v )
+!     dot = 0.0
+!     do i = 1, list%n
+!       if ( list%v(i)%n /= 0 ) dot = dot + vector(list%v(i)%n) * list%v(i)%v
+!     end do
   end function Dot_Product_1D!_d
 
   subroutine Dump_Value_1D_List ( Value, Name, Format )
@@ -511,6 +517,10 @@ contains
 end module Indexed_Values_m
 
 ! $Log$
+! Revision 2.13  2017/08/09 20:32:48  vsnyder
+! Add commented-out version of Dot_Product_1D that checks for zero
+! subscripts, in case we can't find where the zeros come from.
+!
 ! Revision 2.12  2017/03/11 00:47:23  vsnyder
 ! Add more comments about NP component
 !
