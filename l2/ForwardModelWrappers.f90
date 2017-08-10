@@ -58,7 +58,7 @@ contains ! ============= Public Procedures ==========================
     use MLSStringLists, only: SwitchDetail
     use MoreMessage, only: MLSMessage
     use PolarLinearModel_m, only: PolarLinearModel
-    use ScanModelModule, only: ScanForwardModel, TwoDScanForwardModel
+    use ScanModelModule, only: TwoDScanForwardModel
     use String_Table, only: Create_String, Display_String
     use SwitchingMirrorModel_m, only: SwitchingMirrorModel
     use Time_m, only: Time_Now
@@ -376,12 +376,19 @@ contains ! ============= Public Procedures ==========================
         call PolarLinearModel ( config, FwdModelIn, FwdModelExtra, &
           FwdModelOut, fmStat, Jacobian, vectors )
         call add_to_retrieval_timing( 'polar_linear' )
-      case ( l_scan )
-        call trace_begin ( Me_ScanForwardModel, 'ScanForwardModel', cond=.false. )
-        call ScanForwardModel ( config, FwdModelIn, FwdModelExtra, &
-          FwdModelOut, fmStat, Jacobian )
-        call add_to_retrieval_timing( 'scan_fwm' )
-      case ( l_scan2d )
+!       case ( l_scan )
+!         call MLSMessage ( MLSMSG_Error, moduleName, &
+!           & 'The 1d scan model is broken and will not be fixed; ' // &
+!           & 'please use type=scan2d instead', &
+!           & datum=config%name )
+!         call trace_begin ( Me_ScanForwardModel, 'ScanForwardModel', cond=.false. )
+!         call ScanForwardModel ( config, FwdModelIn, FwdModelExtra, &
+!           FwdModelOut, fmStat, Jacobian )
+!         call add_to_retrieval_timing( 'scan_fwm' )
+      case ( l_scan, l_scan2d )
+        if ( config%fwmType == l_scan ) &
+          & call MLSMessage ( MLSMSG_Warning, &
+          & ModuleName, 'The 1d scan model is broken; using 2d instead' )
         call trace_begin ( Me_Scan2DForwardModel, 'Scan2DForwardModel', &
           & cond=.false. )
         call TwoDScanForwardModel ( config, FwdModelIn, FwdModelExtra, &
@@ -785,6 +792,9 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelWrappers
 
 ! $Log$
+! Revision 2.80  2017/08/10 22:49:05  pwagner
+! Redirects any SScan forward model call to Scan2D
+!
 ! Revision 2.79  2016/02/27 01:41:09  vsnyder
 ! Don't get literal names from both Init_Tables_Module and Molecules; doing
 ! so confuses ifort 16.0.2.
