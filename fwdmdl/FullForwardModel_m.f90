@@ -551,6 +551,9 @@ contains
     use Comp_Eta_DoCalc_No_Frq_M, only: Comp_Eta_DoCalc_No_Frq
     use Comp_Eta_DoCalc_Sparse_m, only: Comp_Eta_DoCalc_Sparse
     use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
+use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_Frq, &
+! & Comp_SPS_Path_Frq_NZ, &
+  & Comp_SPS_Path_No_Frq, Comp_1_SPS_Path_No_Frq
     use Comp_Sps_Path_Sparse_m, only: Comp_Sps_Path_Sparse
     use Compute_GL_Grid_M, only: Compute_GL_Grid
     use Constants, only: Deg2Rad, Rad2Deg
@@ -722,6 +725,7 @@ contains
     logical, parameter :: PFAFalse = .false.
     logical, parameter :: PFATrue = .true.
     logical :: Print_Frq          ! For debugging, from -Sffrq
+    integer :: Print_Deltau_Pol   ! For debugging, from -Sdeltaupol
     logical :: Print_Incopt       ! For debugging, from -Sincp
     logical :: Print_IncRad       ! For debugging, from -Sincr
     integer :: Print_Mag          ! For debugging, from -Smag#
@@ -750,7 +754,7 @@ contains
     integer, target :: GL_Inds_B(max_c*ng) ! Base array for GL_INDS
     integer :: Grids(no_tan_hts)        ! Indices in ptgGrid for each tangent
     integer :: IPSD(s_i*max_f)
-    integer :: nz_d_delta_df(max_f,s_a*size(grids_f%values)) ! nonzeros in
+    integer :: nz_d_delta_df(max_c,s_a*size(grids_f%values)) ! nonzeros in
                                         ! each column of d_delta_df.
     integer :: nnz_d_delta_df(size(nz_d_delta_df,2)) ! Column lengths in
                                         ! nz_d_delta_df.
@@ -852,9 +856,10 @@ contains
     real(rp) :: DH_DT_Path_F(max_f,s_t*sv_t_len)   ! DH_DT_Path on fine grid
     real(rp) :: DHDZ_GLGrid(maxVert,no_sv_p_t) ! dH/dZ on glGrid surfs
     real(rp) :: DX_DT(no_tan_hts,s_t*sv_t_len)     ! (No_tan_hts, nz*np)
-    real(rp) :: Eta_FZP(max_f,size(grids_f%values)) ! Eta_z x Eta_p * Eta_f
+    real(rp) :: Eta_FZP(max_f,size(grids_f%values)) ! Path x Eta_f * Eta_z * Eta_p
     real(rp) :: Eta_IWC_ZP(max_f,max(s_i,s_ts)*grids_iwc%p_len)
     real(rp) :: Eta_Mag_ZP(max_f,grids_mag%p_len)  ! Eta_z x Eta_p x Eta_x
+real(rp) :: Eta_ZP(max_f,grids_f%p_len)        ! Eta_z x Eta_p on Path X SV
     real(rp) :: Eta_ZXP_N(max_f,size(grids_n%values)) ! Eta_z x Eta_p for N
     real(rp) :: Eta_ZXP_T(max_f,s_t*sv_t_len)      ! Eta_t_z x Eta_t_p
     type(value_2d_list_t) :: Eta_ZXP_T_List(s_t*max_f) ! Zeta X Phi => Path
@@ -914,7 +919,7 @@ contains
     complex(rp) :: dBeta_dT_Polarized_Path_F(-1:1,s_p*s_t*2*max_f,no_mol)
     complex(rp) :: DE_DF(2,2,s_p*s_a*max_c,size(grids_f%values)) ! DE/Df in Michael's notes
     complex(rp) :: DE_DT(2,2,s_p*s_t*max_c,sv_t_len) ! DE/DT in Michael's notes
-    complex(rp) :: DelTAU_POL(2,2,s_p*max_c) ! E in Michael's notes
+    complex(rp) :: DelTau_Pol(2,2,s_p*max_c) ! E in Michael's notes
 !   complex(rp) :: DINCOPTDEPTH_POL_DT(2,2,s_p*s_t*max_c) ! D Incoptdepth_Pol / DT
 !   complex(rp) :: GL_DELTA_Polarized(-1:1,s_p*max_f)
     complex(rp) :: IncOptDepth_Pol(2,2,s_p*max_c)
@@ -955,7 +960,10 @@ contains
     logical :: Do_Calc_T_F(max_f, s_t*sv_t_len)! DO_Calc_T on fine path
     logical :: Do_Calc_V(max_f, size(grids_v%values) ) ! on entire grid
     logical :: Do_Calc_W(max_f, size(grids_w%values) ) ! on entire grid
+logical :: Do_Calc_ZP(max_f,grids_f%p_len) ! same shape as eta_zp
 
+integer :: NZ_ZP(size(eta_zp,1),size(eta_zp,2)) ! same shape as eta_zp
+integer :: NNZ_ZP(size(eta_zp,2))               ! number of columns of eta_zp
     integer :: NZ_FZP(max_f,size(grids_f%values))   ! same shape as eta_fzp
     integer :: NNZ_FZP(size(grids_f%values))        ! number of columns of eta_fzp
 
@@ -1204,6 +1212,7 @@ contains
     dump_rad_pol = switchDetail(switches, 'dpri') + 1
     dump_TScat = switchDetail(switches, 'dsct' ) > -1
     print_Frq = switchDetail(switches, 'ffrq' ) > -1
+    print_Deltau_Pol = switchDetail(switches, 'deltaupol' )
     print_Incopt = switchDetail(switches, 'incp' ) > -1
     print_IncRad = switchDetail(switches, 'incr' ) > -1
     print_Mag = switchDetail(switches, 'mag')
@@ -1248,6 +1257,9 @@ contains
     ! Put zeros into eta_fzp so that we don't need to fill all zeroes later. 
     ! Instead, when eta_fzp is computed, the nonzeros (encoded by nz_fzp and
     ! nnz_fzp) are first replaced by zeros.
+ eta_zp = 0.0
+ nnz_zp = 0
+ do_calc_zp = .false.
 
     eta_fzp = 0.0
     nnz_fzp = 0
@@ -3135,34 +3147,31 @@ block
 ! to compute derivatives.
 use Get_Do_Calc_m, only: Clean_Out_Nonzeros, Get_Eta_Do_Calc
 use Load_SPS_Data_m, only: Get_SPS_Bounds
-! integer :: J
 integer :: SPS, V1, V2
-! integer :: MxC, MxE
 integer :: Four_D_Shape(4) ! F_Coeffs, Z_Coeffs, P_Coeffs, X_Coeffs
-
 call clean_out_nonzeros ( eta_fzp, do_calc_fzp, nz_fzp, nnz_fzp )
-! mxc = 0; mxe=0
 do sps = 1, size(eta_fzp_list)
 call get_sps_bounds ( grids_f, sps, v1, v2 ) ! 1D bounds
-four_d_shape = shape(grids_f%c(sps)%v4) ! Freq, Zeta, Phi, Cross
-if ( allocated(eta_fzp_list(sps)%eta) ) then ! there is frequency dependence
-call get_eta_do_calc ( eta_fzp_list(sps)%eta(:npf), four_d_shape(1:3), &
-  & eta_fzp(:,v1:v2), do_calc_fzp(:,v1:v2), nz_fzp(:,v1:v2), nnz_fzp(v1:v2), &
-  & derivFlags=grids_f%c(sps)%l1 )
-else ! there is no frequency dependence
-call get_eta_do_calc ( eta_zp_list(sps)%eta(:npf), four_d_shape(2:3), &
-  & eta_fzp(:,v1:v2), do_calc_fzp(:,v1:v2), nz_fzp(:,v1:v2), nnz_fzp(v1:v2), &
-  & derivFlags=grids_f%c(sps)%l1 )
-end if
-! do j = 1, size(do_calc_fzp,1)
-! mxc = max(count(do_calc_fzp(j,v1:v2)),mxc)
-! mxe = max(count(eta_fzp(j,v1:v2)/=0),mxe)
-! end do ! j
+eta_fzp(tan_pt_f+1:tan_pt_f+ng,v1:v2) = 0
+do_calc_fzp(tan_pt_f+1:tan_pt_f+ng,v1:v2) = .false.
+four_d_shape = shape(grids_f%c(sps)%v4) ! Freq, Zeta, Phi, Cross  
+if ( allocated(eta_fzp_list(sps)%eta) ) then ! there is frequency dependence     
+call get_eta_do_calc ( eta_fzp_list(sps)%eta(:npf), four_d_shape(1:3), &         
+  & eta_fzp(:,v1:v2), do_calc_fzp(:,v1:v2), nz_fzp(:,v1:v2), nnz_fzp(v1:v2), &   
+  & derivFlags=grids_f%c(sps)%l1 )                                               
+else ! there is no frequency dependence                                          
+call get_eta_do_calc ( eta_zp_list(sps)%eta(:npf), four_d_shape(2:3), &          
+  & eta_fzp(:,v1:v2), do_calc_fzp(:,v1:v2), nz_fzp(:,v1:v2), nnz_fzp(v1:v2), &   
+  & derivFlags=grids_f%c(sps)%l1 )                                               
+end if                                                                           
 end do ! sps
-! print '(3(a,i0))', 'Max Do_Calc_fzp per row per sps ', mxc, &
-! ' Max Eta_fzp per row per sps ', mxe
-! print '(a,i0)', 'Maxval(NNZ_Fzp) = ', Maxval(NNZ_Fzp)
+
 end block
+      ! Compute the sps_path for this Frequency
+      call comp_sps_path_frq ( Grids_f, Frq, eta_zp(:npf,:), &
+        & do_calc_zp(:npf,:), sps_path(:npf,:),              &
+        & eta_fzp(:npf,:), do_calc_fzp(:npf,:),              &
+        & firstSignal%lo, thisSideband, already_spread=.true. )
 
       associate ( sps_path_x => sps_path(1:npf:ngp1,:) )
         sps_path_c(i_start:i_end,:) = sps_path_x(i_start:i_end,:)
@@ -3400,6 +3409,8 @@ end block
           call cs_expmat ( incoptdepth_pol(:,:,j), deltau_pol(:,:,j) )
         end do
 
+        if ( print_deltau_pol > -1 ) call dump_2x2xn ( deltau_pol, 'Deltau_Pol' )
+
         ! Determine where to do GL
         call path_contrib ( deltau_pol(:,:,1:npc), tan_pt_c, e_rflty, &
            & fwdModelConf%tolerance, do_gl )
@@ -3418,9 +3429,11 @@ end block
       !
       ! Where we do GL, the second integral is approximated using GL (in
       ! {\tt Get_Tau}).  Where we don't do GL, approximate it using the
-      ! trapezoid rule (here).  There is already a factor of 0.5 in
-      ! {\tt del_zeta}, to compensate for the GL weights summing to 2.0.
+      ! trapezoid rule (here).  We don't use dsdz_c because ds/dh is singular
+      ! at the tangent, therefore ds/dh dh/dz dz /= ds.
 
+      ! There is already a factor of 0.5 in
+      ! del_zeta, to compensate for the GL weights summing to 2.0.
       do j = i_start+1, tan_pt_c
         if ( .not. do_gl(j) ) &
           & incoptdepth(j) = incoptdepth(j) + &
@@ -3478,13 +3491,15 @@ end block
 
       if ( print_incopt ) then
         call sps_list ( fwdModelConf )
+        call output ( tan_pt_c, before='Tan_pt_c = ' )
+        call output ( tan_pt_f, before=' Tan_pt_f = ', advance='yes' )
         call dump ( beta_path_c(i_start:i_end,:), name="Beta_Path_C", lbound=i_start )
         call dump ( sps_path_c(i_start:i_end,:), name="SPS_Path_C", lbound=i_start )
         call dump ( alpha_path_c(i_start:i_end), name="Alpha_Path_C", lbound=i_start )
         call dump ( incoptdepth(i_start+1:i_end-1), name="Incoptdepth", lbound=i_start+1 )
         call dump ( del_s(i_start+1:i_end-1), name="Del_s", lbound=i_start+1 )
-        call dump ( gl_inds, name="GL_Inds" )
-        call dump ( cg_inds, name="CG_Inds" )
+        call dump ( gl_inds, name="GL_Inds -- fine path indices needing GL integrands" )
+        call dump ( cg_inds, name="CG_Inds -- coarse path indices needing GL" )
       end if
 
       if ( .not. fwdModelConf%polarized ) then
@@ -3499,7 +3514,7 @@ end block
         call get_tau ( frq_i, gl_inds, cg_inds, i_start, e_rflty,  &
           & del_zeta, alpha_path_c, ref_corr(:i_end), incoptdepth(:i_end), &
           & tan_pt_c, alpha_path_f(1:ngl), dsdz_gw_path, tau )
-        i_stop = tau%i_stop(frq_i)
+        i_stop = tau%i_stop(frq_i) ! total_opacity(i_stop) < underflow for exp
 
         if ( .not. pfa .or. .not. fwdModelConf%anyLBL(sx) ) then
           ! Not doing PFA, or doing PFA but haven't done LBL.
@@ -3570,7 +3585,7 @@ end block
 
         call rad_tran_pol ( tan_pt_c, gl_inds, cg_inds, e_rflty, del_zeta,        &
           & alpha_path_polarized(:,1:npc), ref_corr, incoptdepth_pol(:,:,1:npc),  &
-          & deltau_pol(:,:,1:npc), Alpha_path_polarized_f(:,1:ngl), dsdz_gw_path, &
+          & deltau_pol(:,:,1:npc), alpha_path_polarized_f(:,1:ngl), dsdz_gw_path, &
           & ct, stcp, stsp, t_script, dump_rad_pol, prod_pol(:,:,1:npc),          &
           & tau_pol(:,:,1:npc), rad_pol, p_stop )
 
@@ -3626,26 +3641,34 @@ end block
 
         if ( fwdModelConf%useTScat ) then
 
-          ! It is important NOT to put :nfp and :ngl bounds on the first
-          ! dimensions of eta_fzp and dAlpha_df_path_f because these
-          ! correspond to explicit-shape dummy arguments.  Doing so would
-          ! cause the compiler to take a copy!
+          ! It is important NOT to put :npf and :ngl bounds on the first
+          ! dimensions of eta_fzp and dAlpha_df_path_f, or put a :npc bound
+          ! on the first dimension of d_delta_df, because these correspond
+          ! to explicit-shape dummy arguments.  Doing so would cause the
+          ! compiler to take a copy, and the first dimension of the actual
+          ! argument might well be different from the first dimension of the
+          ! dummy argument, which would be a catastrophe!
+
           call drad_tran_df ( max_f, gl_inds, del_zeta, Grids_f, eta_fzp,     &
             &  do_calc_fzp, do_gl, del_s, ref_corr, dsdz_gw_path,             &
             &  inc_rad_path, dAlpha_df_path_c(:npc,:), dAlpha_df_path_f,      &
             &  i_start, tan_pt_c, i_stop,                                     &
             &  size(d_delta_df,1), d_delta_df, nz_d_delta_df, nnz_d_delta_df, &
-            &  k_atmos_frq, dB_df, tau%tau(:,frq_i), nz_fzp, nnz_fzp,         &
+!             &  k_atmos_frq, dB_df, tau%tau(:,frq_i), nz_fzp, nnz_fzp,         &
+&  k_atmos_frq, dB_df, tau%tau(:,frq_i), nz_zp, nnz_zp,         &
             &  alpha_path_c, beta_c_e_path_c(:npc),                           &
             &  dBeta_c_a_dIWC_path_c(:npc), dBeta_c_s_dIWC_path_c(:npc),      &
             &  dTScat_df, w0_path_c(:npc) )
 
-        else
+        else ! not TScat
 
-          ! It is important NOT to put :nfp and :ngl bounds on the first
-          ! dimensions of eta_fzp and dAlpha_df_path_f because these
-          ! correspond to explicit-shape dummy arguments.  Doing so would
-          ! cause the compiler to take a copy!
+          ! It is important NOT to put :npf and :ngl bounds on the first
+          ! dimensions of eta_fzp and dAlpha_df_path_f, or put a :npc bound
+          ! on the first dimension of d_delta_df, because these correspond
+          ! to explicit-shape dummy arguments.  Doing so would cause the
+          ! compiler to take a copy, and the first dimension of the actual
+          ! argument might well be different from the first dimension of the
+          ! dummy argument, which would be a catastrophe!
 
           call drad_tran_df ( max_f, gl_inds, del_zeta, Grids_f, eta_fzp,     &
             &  do_calc_fzp, do_gl, del_s, ref_corr, dsdz_gw_path,             &
@@ -3653,7 +3676,6 @@ end block
             &  i_start, tan_pt_c, i_stop,                                     &
             &  size(d_delta_df,1), d_delta_df, nz_d_delta_df, nnz_d_delta_df, &
             &  k_atmos_frq, dB_df )
-
         end if
 
         if ( atmos_second_der ) then
@@ -3681,11 +3703,11 @@ end block
           ! VMR derivatives for polarized radiance.
           ! Compute DE / Df from D Incoptdepth_pol / Df and put it
           ! into DE_DF.
-          call Get_D_Deltau_Pol_DF ( ct, stcp, stsp, Grids_f,               &
-            &  beta_path_polarized(:,1:p_stop,:), tanh1_c(:npc), eta_fzp,   &
-            &  do_calc_fzp, sps_path, del_s, incoptdepth_pol(:,:,1:p_stop), &
-            &  ref_corr(1:p_stop), d_delta_df(1:npc,:), nz_d_delta_df,      &
-            &  nnz_d_delta_df, de_df(:,:,1:p_stop,:) )
+          call Get_D_Deltau_Pol_DF ( ct, stcp, stsp, Grids_f, tan_pt_c,       &
+            &  beta_path_polarized(:,1:p_stop,:), tanh1_c(:npc), eta_fzp,     &
+            &  do_calc_fzp, sps_path, del_s, incoptdepth_pol(:,:,1:p_stop),   &
+            &  ref_corr(1:p_stop), d_delta_df, nz_d_delta_df, nnz_d_delta_df, &
+            &  de_df(:,:,1:p_stop,:) )
 
           ! Compute D radiance / Df from Tau, Prod, T_Script
           ! and DE / Df.
@@ -4093,7 +4115,7 @@ end block
             & cond=toggle(emit) .and. levels(emit) > 3 )
           return ! No ray to trace
         end if
-        i_start = 1;
+        i_start = 1
         i_end = scat_index
       else
         i_start = 1
@@ -4147,6 +4169,15 @@ end block
                                       & eta_p(h2o_ind), eta_zp_list(h2o_ind) )
           call comp_sps_path_sparse ( grids_f, h2o_ind, eta_zp_list(h2o_ind), &
                                     & sps_path(1:npf,h2o_ind) )
+! Compute eta_zp & do_calc_zp (Zeta & Phi only) for water.
+! It is important to send all of eta_zp, do_calc_zp, nz_zp and
+! nnz_zp so that nonzeros from previous invocations can be
+! cleared without violating array bounds.
+call comp_eta_docalc_no_frq ( Grids_f, z_path(1:npf), &
+  &  phi_path(1:npf), eta_zp, do_calc_zp, tan_pt=tan_pt_f, &
+  &  your_nz_zp=nz_zp, your_nnz_zp=nnz_zp )
+call comp_1_sps_path_no_frq ( Grids_f, h2o_ind, eta_zp(1:npf,:), &
+  & sps_path(1:npf,h2o_ind) )
           call refractive_index ( p_path(1:npf), t_path(1:npf), n_path_f(1:npf), &
             &  h2o_path=sps_path(1:npf, h2o_ind) )
         else
@@ -4221,6 +4252,13 @@ end block
       if ( .not. usingQTM ) then
         call comp_eta_docalc_sparse ( grids_f, z_path(1:npf), eta_z, &
                                     & phi_path(1:npf), eta_p, eta_zp_list )
+! It is important to send all of eta_zp, do_calc_zp, nz_zp and
+! nnz_zp so that nonzeros from previous invocations can be
+! cleared without violating array bounds.
+call comp_eta_docalc_no_frq ( Grids_f, z_path(1:npf), &
+  &  phi_path(1:npf), eta_zp, do_calc_zp, tan_pt=tan_pt_f, &
+  &  your_nz_zp=nz_zp, your_nnz_zp=nnz_zp, &
+  &  eta_fzp=eta_fzp(1:npf,:), do_calc_fzp=do_calc_fzp(:npf,:) )
 
       else
         call comp_eta_docalc_sparse ( grids_f, z_path, eta_z, s(1:npf)%coeff, &
@@ -4703,6 +4741,10 @@ end block
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.384  2017/03/31 00:49:43  vsnyder
+! Use F_and_V to map to Jacobian for QTM.  Make F_and_V scalar in
+! One_Pointing.  Cosmetic changes.
+!
 ! Revision 2.383  2017/03/24 00:10:43  vsnyder
 ! Change the first extent of nz_d_delta_df back to max_f because the number
 ! of nonzeroes in a column of d_delta_df is not limited unless the vertical
