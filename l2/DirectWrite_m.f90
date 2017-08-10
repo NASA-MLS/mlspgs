@@ -47,6 +47,54 @@ module DirectWrite_m  ! alternative to Join/OutputAndClose methods
   use VectorsModule, only: Vector_T, VectorValue_T, Dump
 
   implicit none
+
+! === (start of toc) ===
+!     c o n t e n t s
+!     - - - - - - - -
+
+!     (data types and parameters)
+! DirectData_T                    An L2AUX or L2GP data file
+
+!     (subroutines and functions)
+! AddDirectToDatabase             Adds a direct data type to a database of that type
+! DestroyDirectDatabase           Deallocates all the arrays for entire database
+! DirectRead                      Read the quantity from a file
+! DirectWrite                     Write the quantity to a file; or
+!                                   Write every quantity in a vector;
+!                                   May be either l2gp or l2aux
+! Dump                            Prints info on one direct or entire database
+! ExpandDirectDB                  Expands a db if needed, or else
+!                                   returns the matching direct
+! ExpandSDNames                   Expands the array direct%sdNames if needed
+! FileNameToID                    returns filename's index if found in db
+! SetupNewDirect                  Allocates the arrays for a direct
+! === (end of toc) ===
+
+! === (start of api) ===
+!     (user-defined types)
+! DirectData_T  ( int type, int autoType, int fileIndex, int Handle, &
+!    int NSDNames, char* sdNames(:), char* fileNameBase, char* fileName )
+
+!     (subroutines and functions)
+! AddDirectToDatabase AddDirectToDatabase( &
+!   DirectData_T database(:), DirectData_T item )
+! SetupNewDirect ( DirectData_T directData, int NsdNames )
+! DestroyDirectDB ( DirectData_T database(:) )
+! DirectRead ( MLSFile_T File, VectorValue_T quantity, char* qtyName, &
+!    & int chunkNo, [char* options], [int rank] )
+! ResizeL2AUXData ( L2AUXData_T l2aux, int newSize )
+! int AddL2AUXToDatabase ( *L2AUXData_T DATABASE(:), L2AUXData_T ITEM )
+! DestroyL2AUXDatabase ( *L2AUXData_T DATABASE(:) )
+! Dump ( l2auxData_T L2aux(:), [char* Name], [int Details], [char* options] )
+!    or Dump ( l2auxData_T L2aux, [int Details], [char* options] )
+! ReadL2AUXData ( int sd_id, char* quantityname, l2auxData_T l2aux, 
+!    [int firstProf], [int lastProf] )
+! WriteHDF5Data ( real(r8) array(:,:,:), int l2FileHandle, int returnStatus, 
+!    char* sdName )
+! WriteL2AUXData ( l2auxData_T l2aux, int l2FileHandle, int returnStatus, 
+!    [char* sdName], [int NoMAFS], [log WriteCounterMAF], [char* DimNames] )
+! === (end of api) ===
+
   private
   public :: DirectData_T, &
     & AddDirectToDatabase, &
@@ -898,17 +946,17 @@ contains ! ======================= Public Procedures =========================
     & lowerOverlap, upperOverlap, single, options )
 
     use Chunks_M, only: MLSChunk_T
-    use ChunkDivide_M, only: Chunkdivideconfig
-    use ForwardModelConfig, only: Forwardmodelconfig_T
+    use ChunkDivide_M, only: ChunkDivideConfig
+    use ForwardModelConfig, only: ForwardModelConfig_T
     use ForwardModelSupport, only: Showfwdmodelnames
     use HDF5, only: H5gclose_F, H5gopen_F
     use Intrinsic, only: L_None
-    use L2AuxData, only: L2auxData_T, Phasenameattributes, &
-      & Destroyl2auxcontents, &
-      & Setupnewl2auxrecord, Writel2auxattributes
+    use L2AuxData, only: L2AuxData_T, PhaseNameAttributes, &
+      & DestroyL2Auxcontents, &
+      & SetupnewL2Auxrecord, WriteL2Auxattributes, WriteHDF5Data
     use MLSHDF5, only: IsHDF5attributepresent, IsHDF5dspresent, &
       & IsHDF5GroupPresent, &
-      & MakeHDF5Attribute, MakeNestedGroups, SaveasHDF5ds
+      & MakeHDF5Attribute, MakeNestedGroups
     use MLSL2Timings, only: ShowTimingNames
     use PCFHdr, only: H5_WriteMLSFileattr, H5_Writeglobalattr
     use QuantityTemplates, only: WriteAttributes
@@ -1051,22 +1099,11 @@ contains ! ======================= Public Procedures =========================
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Number of 3d array elements to write > number stored in qty values', &
         & MLSFile=L2AUXFile )
-      ! Is here a '/' in sdname?
-      if ( index( sdname, '/' ) > 0 ) then
-        ! Do the containing groups exist yet?
-        call split_path_name ( sdname, path, bareName )
-        if ( .not. IsHDF5GroupPresent( L2AUXFile%fileID%f_id, trim(path)) ) then
-          call List2Array ( path, groupnames, countEmpty, inseparator='/' )
-          n = NumStringElements ( path, countEmpty, inseparator='/' )
-          n = max( n, 2 )
-          call MakeNestedGroups( L2AUXFile%fileID%f_id, groupNames(1:n-1) )
-        endif
-      endif
-      call SaveAsHDF5DS( L2AUXFile%fileID%f_id, trim(sdName), &
-        & real( &
+      call WriteHDF5Data (  real( &
         &   reshape(quantity%values(:,first_maf:last_maf), sizes(1:3)) &
-        & ), start, sizes, may_add_to=.true., adding_to=already_there, &
-        & fillValue=DEFAULTUNDEFINEDVALUE )
+        & ), L2AUXFile%FileID%f_id, &
+        & returnStatus, trim(sdname), already_there, &
+        & start, sizes )
     else
       total_DS_size = sizes(1)*sizes(2)
       if ( DEEBUG ) then
@@ -1077,11 +1114,11 @@ contains ! ======================= Public Procedures =========================
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Number of 2d array elements to write > number stored in qty values', &
         & MLSFile=L2AUXFile )
-      call SaveAsHDF5DS( L2AUXFile%fileID%f_id, trim(sdName), &
-        & real( &
+      call WriteHDF5Data (  real( &
         &   reshape(quantity%values(:,first_maf:last_maf), sizes(1:2)) &
-        & ), start, sizes, may_add_to=.true., adding_to=already_there, &
-        & fillValue=DEFAULTUNDEFINEDVALUE)
+        & ), L2AUXFile%FileID%f_id, &
+        & returnStatus, trim(sdname), already_there, &
+        & start(1:2), sizes(1:2) )
     endif
 
     ! call mls_CloseFile(L2AUXFILE)
@@ -1807,6 +1844,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.88  2017/08/10 22:47:36  pwagner
+! Use WriteHDF5Data from L2AuxData
+!
 ! Revision 2.87  2017/07/27 17:02:08  pwagner
 ! If an sdName contains one or more '/', will attempt ot open or create nested hdf5 groups
 !
