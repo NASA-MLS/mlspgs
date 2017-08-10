@@ -23,37 +23,37 @@ module ScanModelModule          ! Scan model and associated calculations
   ! vector.  This was never used in UMLS V5, and so it is not clear that it
   ! will ever be required.
 
-  use Allocate_deallocate, only: allocate_test, deallocate_test
-  use Constants, only: deg2rad, ln10, pi
-  use ForwardModelConfig, only: forwardmodelconfig_t
-  use ForwardModelIntermediate, only:  forwardmodelstatus_t
-  use ForwardModelVectortools, only: getquantityforforwardmodel
-  use Geometry, only: earthrada, earthradb, earthsurfacegph, geodtogeoclat, &
-    & G0, gm, j2, j4, omega => w
-  use Init_tables_module, only: l_refgph, l_zeta
-  use Intrinsic, only: l_heightoffset, l_none, l_ptan, l_scanresidual, &
-    & L_temperature, l_tngtgeocalt, l_vmr, l_phitan, l_orbitinclination, &
-    & Phyq_length
-  use ManipulateVectorQuantities, only: findClosestInstances, &
+  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+  use Constants, only: Deg2rad, Ln10, Pi
+  use ForwardModelConfig, only: Forwardmodelconfig_T
+  use ForwardModelIntermediate, only: Forwardmodelstatus_T
+  use ForwardModelVectortools, only: Getquantityforforwardmodel
+  use Geometry, only: Earthrada, Earthradb, Earthsurfacegph, Geodtogeoclat, &
+    & G0, Gm, J2, J4, Omega => W
+  use Init_Tables_Module, only: L_Refgph, L_Zeta
+  use Intrinsic, only: L_Heightoffset, L_None, L_Ptan, L_Scanresidual, &
+    & L_Temperature, L_Tngtgeocalt, L_Vmr, L_Phitan, L_Orbitinclination, &
+    & Phyq_Length
+  use ManipulateVectorQuantities, only: FindClosestInstances, &
     & Findinstancewindow
-  use MatrixModule_0, only: destroyBlock, matrixElement_t, m_absent, &
-    & M_full, updateDiagonal
-  use MatrixModule_1, only: createBlock, findBlock, matrix_t, &
-    & CreateEmptyMatrix, destroyMatrix, clearMatrix
+  use MatrixModule_0, only: DestroyBlock, MatrixElement_T, M_Absent, &
+    & M_Full, UpdateDiagonal
+  use MatrixModule_1, only: CreateBlock, FindBlock, Matrix_T, &
+    & CreateEmptyMatrix, DestroyMatrix, ClearMatrix
   use MLSKinds, only: R8, RP, RV
   use MLSMessagemodule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
-  use MLSNumerics, only : hunt, interpolateValues
-  use MLSStringLists, only: switchDetail
-  use Molecules, only: l_h2o
-  use Output_m, only: output
-  use QuantityTemplates, only: dump
-  use Refraction_m, only: MaxRefraction, Refractive_Index, &
-    & Refractive_Index_Deriv, Refractive_Index_f
-  use Toggles, only: emit, toggle, switches
-  use Trace_m, only: trace_begin, trace_end
-  use VectorsModule, only : validatevectorquantity, &
-    & Vector_t, vectortemplate_t, vectorvalue_t, createvector, &
-    & Constructvectortemplate, destroyvectorinfo
+  use MLSNumerics, Only : Hunt, InterpolateValues
+  use MLSStringLists, only: SwitchDetail
+  use Molecules, only: L_H2o
+  use Output_M, only: Output
+  use QuantityTemplates, only: Dump
+  use Refraction_M, only: MaxRefraction, Refractive_Index, &
+    & Refractive_Index_Deriv, Refractive_Index_F
+  use Toggles, only: Emit, Toggle, Switches
+  use Trace_M, only: Trace_Begin, Trace_End
+  use VectorsModule, only: ValidateVectorquantity, &
+    & Vector_T, VectorTemplate_T, VectorValue_T, CreateVector, &
+    & ConstructVectorTemplate, DestroyVectorinfo
 
   implicit none
 
@@ -94,7 +94,7 @@ contains ! =============== Subroutines and functions ==========================
   ! -----------------------------  DestroyForwardModelIntemediate  -----
   subroutine DestroyForwardModelIntermediate
 
-    use Allocate_Deallocate, only: Deallocate_test
+    use Allocate_Deallocate, only: Deallocate_Test
 
     ! Exectuable code
 
@@ -109,10 +109,10 @@ contains ! =============== Subroutines and functions ==========================
     ! that a 2d forward model must consider
     ! for the range of mafs [maf1, maf2]
   subroutine DumpInstanceWindows ( STATE, EXTRA, MAF1, MAF2, FMCONF, DETAILS )
-    use Dump_0, only: dump
-    use ForwardModelConfig, only: dump
-    use MLSStrings, only: writeIntsToChars
-    use HighOutput, only: headLine, outputNamedValue
+    use Dump_0, only: Dump
+    use ForwardModelConfig, only: Dump
+    use MLSStrings, only: WriteIntsToChars
+    use HighOutput, only: HeadLine, OutputNamedValue
     ! Args
     type (Vector_T), intent(in) :: STATE ! The state vector
     type (Vector_T), intent(in) :: EXTRA ! Other stuff in the state vector
@@ -162,8 +162,8 @@ contains ! =============== Subroutines and functions ==========================
   subroutine GetBasisGPH ( temp, refGPH, gph, R, RT, belowRef )
     ! This function takes a state vector, containing one and only one
     ! temperature and reference geopotential height quantity, and returns
-    use Physics, only: boltz
-    use Trace_m, only: trace_begin, trace_end
+    use Physics, only: Boltz
+    use Trace_M, only: Trace_Begin, Trace_End
 
     ! Dummy arguments
     type (VectorValue_T), intent(IN) :: TEMP ! The temperature field
@@ -306,9 +306,9 @@ contains ! =============== Subroutines and functions ==========================
     ! This function takes a state vector, containing one and only one
     ! temperature and reference geopotential height precisions, and
     ! returns the GPH precision.
-    use HighOutput, only: outputNamedValue
-    use Physics, only: boltz
-    use Trace_m, only: trace_begin, trace_end
+    use HighOutput, only: OutputNamedValue
+    use Physics, only: Boltz
+    use Trace_M, only: Trace_Begin, Trace_End
 
     ! Dummy arguments
     type (VectorValue_T), intent(IN) :: TEMPPREC ! The temperature precision
@@ -563,9 +563,9 @@ contains ! =============== Subroutines and functions ==========================
     ! new 2D scan model 'backwards'
     ! Dummy arguments
 
-    use Dump_0, only: dump
-    use Output_m, only: output
-    use Quantitytemplates, only: quantityTemplate_t
+    use Dump_0, only: Dump
+    use Output_M, only: Output
+    use QuantityTemplates, only: QuantityTemplate_T
 
     type (VectorValue_T), intent(inout) :: PTAN ! Tangent pressure sv. component
     type (VectorValue_T), intent(in) :: TEMP ! Temperature
@@ -1040,9 +1040,10 @@ contains ! =============== Subroutines and functions ==========================
     type (VectorValue_T), pointer :: RESIDUAL ! Resulting component of fwmOut
     type (VectorValue_T), pointer :: TEMP ! Temperature component of state
 
-    call trace_begin ( me, 'ScanForwardModel', cond=toggle(emit) )
-
     ! Executable code -----------------------
+    call MLSMessage( MLSMSG_Error, ModuleName,&
+      & 'The 1d Scan model is broken; how could you get here?' )
+    call trace_begin ( me, 'ScanForwardModel', cond=toggle(emit) )
 
     ! Identify the vector quantities from state/extra
     temp => getQuantityForForwardModel ( state, extra, &
@@ -1582,11 +1583,11 @@ contains ! =============== Subroutines and functions ==========================
   subroutine TwoDScanForwardModel ( fmConf, state, extra, fwmOut, &
   & fmStat, jacobian, chunkNo )
 
-    use Get_eta_matrix_m, only: get_eta_sparse
-    use Output_m, only: blanks, output
-    use Physics, only: boltz
-    use Piq_int_m, only: piq_int
-    use Time_m, only: time_now
+    use Get_Eta_Matrix_M, only: Get_Eta_Sparse
+    use Output_M, only: Blanks, Output
+    use Physics, only: Boltz
+    use Piq_Int_M, only: Piq_Int
+    use Time_M, only: Time_Now
 
   ! This is a two D version of ScanForwardModel
   ! inputs
@@ -2217,6 +2218,9 @@ contains ! =============== Subroutines and functions ==========================
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.89  2017/08/10 22:44:12  pwagner
+! Exit witth eror message if buggy 1s Scan Model called
+!
 ! Revision 2.88  2016/08/12 00:31:25  pwagner
 ! Seems to restore tthe gold brick
 !
