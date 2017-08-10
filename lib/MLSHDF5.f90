@@ -3751,60 +3751,100 @@ contains ! ======================= Public Procedures =========================
 
   ! ---------------------------------------  SaveAsHDF5DS_dblarr1  -----
   subroutine SaveAsHDF5DS_dblarr1 ( locID, name, value, &
-    & finalShape, fillValue, adding_to )
+    & start, count, stride, block, may_add_to, adding_to, fillValue )
     ! This routine does the initial work of creating a dataset
     integer, intent(in) :: LOCID          ! Where to place it (group/file)
     character (len=*), intent(in) :: NAME ! Name for this dataset
     double precision, intent(in) :: VALUE(:)     ! The array itself
     double precision, optional, intent(in) :: FILLVALUE
-    integer, dimension(1), optional, intent(in) :: FINALSHAPE
-    logical, optional, intent(in)     :: adding_to
 
+    integer, dimension(:), optional, intent(in) :: start
+                                 ! Starting coordinatess of hyperslab
+    integer, dimension(:), optional, intent(in) :: count
+                                 ! Num of blocks to select from dataspace
+    integer, dimension(:), optional, intent(in) :: stride
+                                 ! How many elements to move in each direction
+    integer, dimension(:), optional, intent(in) :: block
+                                 ! Size of element block
+    logical, optional, intent(in)               :: may_add_to
+                                 ! May call again to add to same dataset
+    logical, optional, intent(in)               :: adding_to
+                                 ! Calling again to add to same dataset
     include 'SaveAsHDF5DS_dblarr.f9h'
 
   end subroutine SaveAsHDF5DS_dblarr1
 
   ! ---------------------------------------  SaveAsHDF5DS_dblarr2  -----
   subroutine SaveAsHDF5DS_dblarr2 ( locID, name, value, &
-    & finalShape, fillValue, adding_to )
+    & start, count, stride, block, may_add_to, adding_to, fillValue )
     ! This routine does the initial work of creating a dataset
     integer, intent(in) :: LOCID          ! Where to place it (group/file)
     character (len=*), intent(in) :: NAME ! Name for this dataset
     double precision, intent(in) :: VALUE(:,:)  ! The array itself
     double precision, optional, intent(in) :: FILLVALUE
-    integer, dimension(2), optional, intent(in) :: FINALSHAPE
-    logical, optional, intent(in)     :: adding_to
 
+    integer, dimension(:), optional, intent(in) :: start
+                                 ! Starting coordinatess of hyperslab
+    integer, dimension(:), optional, intent(in) :: count
+                                 ! Num of blocks to select from dataspace
+    integer, dimension(:), optional, intent(in) :: stride
+                                 ! How many elements to move in each direction
+    integer, dimension(:), optional, intent(in) :: block
+                                 ! Size of element block
+    logical, optional, intent(in)               :: may_add_to
+                                 ! May call again to add to same dataset
+    logical, optional, intent(in)               :: adding_to
+                                 ! Calling again to add to same dataset
     include 'SaveAsHDF5DS_dblarr.f9h'
 
   end subroutine SaveAsHDF5DS_dblarr2
 
   ! ---------------------------------------  SaveAsHDF5DS_dblarr3  -----
   subroutine SaveAsHDF5DS_dblarr3 ( locID, name, value, &
-    & finalShape, fillValue, adding_to )
+    & start, count, stride, block, may_add_to, adding_to, fillValue )
     ! This routine does the initial work of creating a dataset
     integer, intent(in) :: LOCID          ! Where to place it (group/file)
     character (len=*), intent(in) :: NAME ! Name for this dataset
     double precision, intent(in) :: VALUE(:,:,:)  ! The array itself
     double precision, optional, intent(in) :: FILLVALUE
-    integer, dimension(3), optional, intent(in) :: FINALSHAPE
-    logical, optional, intent(in)     :: adding_to
 
+    integer, dimension(:), optional, intent(in) :: start
+                                 ! Starting coordinatess of hyperslab
+    integer, dimension(:), optional, intent(in) :: count
+                                 ! Num of blocks to select from dataspace
+    integer, dimension(:), optional, intent(in) :: stride
+                                 ! How many elements to move in each direction
+    integer, dimension(:), optional, intent(in) :: block
+                                 ! Size of element block
+    logical, optional, intent(in)               :: may_add_to
+                                 ! May call again to add to same dataset
+    logical, optional, intent(in)               :: adding_to
+                                 ! Calling again to add to same dataset
     include 'SaveAsHDF5DS_dblarr.f9h'
 
   end subroutine SaveAsHDF5DS_dblarr3
 
   ! ---------------------------------------  SaveAsHDF5DS_dblarr4  -----
   subroutine SaveAsHDF5DS_dblarr4 ( locID, name, value, &
-    & finalShape, fillValue, adding_to )
+    & start, count, stride, block, may_add_to, adding_to, fillValue )
     ! This routine does the initial work of creating a dataset
     integer, intent(in) :: LOCID          ! Where to place it (group/file)
     character (len=*), intent(in) :: NAME ! Name for this dataset
     double precision, intent(in) :: VALUE(:,:,:,:)  ! The array itself
     double precision, optional, intent(in) :: FILLVALUE
-    integer, dimension(4), optional, intent(in) :: FINALSHAPE
-    logical, optional, intent(in)     :: adding_to
 
+    integer, dimension(:), optional, intent(in) :: start
+                                 ! Starting coordinatess of hyperslab
+    integer, dimension(:), optional, intent(in) :: count
+                                 ! Num of blocks to select from dataspace
+    integer, dimension(:), optional, intent(in) :: stride
+                                 ! How many elements to move in each direction
+    integer, dimension(:), optional, intent(in) :: block
+                                 ! Size of element block
+    logical, optional, intent(in)               :: may_add_to
+                                 ! May call again to add to same dataset
+    logical, optional, intent(in)               :: adding_to
+                                 ! Calling again to add to same dataset
     include 'SaveAsHDF5DS_dblarr.f9h'
 
   end subroutine SaveAsHDF5DS_dblarr4
@@ -5865,6 +5905,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.142  2017/08/10 22:42:23  pwagner
+! Make apis for d.p. SaveAsHDF5DS like s.p.
+!
 ! Revision 2.141  2017/08/04 19:42:14  pwagner
 ! Fixed case when groupName starts with /
 !
