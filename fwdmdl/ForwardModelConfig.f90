@@ -374,7 +374,7 @@ contains
                 channels(channel)%shapeInds(sx) = MatchSignal ( &
                   & filterShapes%signal, fwdModelConf%signals(sigInd), &
                   & sideband = thisSideband, channel=channels(channel)%used )
-                if ( channels(channel)%shapeInds(sx) == 0 ) &
+                if ( channels(channel)%shapeInds(sx) == 0 .and. fwdModelConf%do_freq_avg) &
                   & call MLSMessage ( MLSMSG_Error, ModuleName, &
                   &    "No matching channel shape information" )
               end do
@@ -1554,6 +1554,11 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.137  2017/02/04 02:17:40  vsnyder
+! Undo all-caps switch in USE statements and some declarations.  Add Values1,
+! Values (rank 2) and Values3 pointers to QtyStuff_t, but they're not used
+! yet, and might never be used.
+!
 ! Revision 2.136  2016/05/02 23:31:50  vsnyder
 ! Add QtyStuff component for temperature
 !
