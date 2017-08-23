@@ -13,6 +13,7 @@
 module MLSStringLists               ! Module to treat string lists
 !=============================================================================
 
+  use LexicalSort, only: Sort
   use MLSCommon, only: BareFNLen
   use MLSFinds, only: FindFirst, FindLast
   use MLSStrings, only: Capitalize, IsAlphabet, LowerCase, NCopies, &
@@ -3546,25 +3547,19 @@ contains
 
     ! Local variables
     logical                                :: casesensitive
+    logical, parameter                     :: DeeBUG = .false.
+    integer                                :: elem, nElems
     character(len=1)                       :: LeftRight
     logical                                :: shorterfirst
     logical                                :: switchable
-    integer                                :: elem, nElems
     integer, parameter                     :: MAXCHARVALUE = 256
-    integer, dimension(:), allocatable     :: chValue, cvInvBN
-    integer, dimension(:), allocatable     :: binNumber, invBinNumber 
-    integer, dimension(:), allocatable     :: jsort, inTheBin
-    integer                                :: numBins, oldNumBins
-    integer                                :: i, bin, ck, strPos
-    integer                                :: status
+    integer, dimension(:), allocatable     :: invBinNumber 
     integer                                :: maxStrPos
-    logical                                :: allTheSameInThisBin
     character (len=16)                     :: myOptions  
-    character (len=1)                      :: theChar  
+    integer                                :: status
     character (len=MAXSTRELEMENTLENGTH), dimension(:), allocatable    &
       &                                    :: stringArray
     character (len=MAXSTRELEMENTLENGTH)    :: theString  
-    logical, parameter                     :: DeeBUG = .false.
 
     ! Executable code
     myOptions = ' '
@@ -3579,14 +3574,12 @@ contains
     if ( size(outIntArray) <= 0 .or. nElems <= 0 ) then
       return
     endif
-    allocate (stringArray(nElems), chValue(nElems), cvInvBN(nElems), &
-     & binNumber(nElems), invBinNumber(nElems), &
-     & jsort(nElems), inTheBin(nElems), &
+    allocate (stringArray(nElems), &
+     & invBinNumber(nElems), &
      & STAT=status)
     if (status /= 0) CALL myMessage(MLSMSG_Error, ModuleName, &
          & MLSMSG_Allocate//"stringArray, etc. in SortArray")
     outIntArray = 0
-    numBins = 1
     maxStrPos = 1                ! This will hold max string LENGTH needed
     do elem = 1, nElems    
       outIntArray(elem) = 1
@@ -3615,151 +3608,25 @@ contains
         stringArray(elem) = adjustr(theString(1:maxStrPos))
       endif
     enddo                  
-    do strPos = 1, maxStrPos
-      
-      if ( DEEBUG ) then
-        print *, 'string position: ', strPos
-        print *, 'array of bins: ', (outIntArray(elem), elem=1, nElems)
-      endif
-      do elem = 1, nElems
-        theChar = stringArray(elem)(strPos:strPos)
-        if ( stringArray(elem) == ' ' ) then
-          chValue(elem) = MAXCHARVALUE
-        elseif ( theChar == ' ' ) then
-          chValue(elem) = 0
-        elseif ( CaseSensitive ) then
-          chValue(elem) = IACHAR(theChar)
-        elseif (IACHAR("a") <= IACHAR(theChar) .and. &
-          & IACHAR(theChar) <= IACHAR("z") ) then
-          chValue(elem) = 2*IACHAR(Capitalize(theChar)) - IACHAR("A") + 1
-        elseif (IACHAR("A") <= IACHAR(theChar) .and. &
-          & IACHAR(theChar) <= IACHAR("Z") ) then
-          chValue(elem) = 2*IACHAR(theChar) - IACHAR("A")
-        elseif (IACHAR("Z") < IACHAR(theChar) ) then
-          chValue(elem) = 2*IACHAR(theChar)
-        else
-          chValue(elem) = IACHAR(theChar)
-        endif
-      enddo
-      if ( DEEBUG ) print *, 'array of chValues: ', (chValue(elem), elem=1, nElems)
-      oldNumBins = numBins
-      do elem=1, nElems
-        binNumber(elem) = outIntArray(elem)
-      enddo
-      numBins = 0
-      ck = 0
-      if ( DEEBUG ) print *, 'number of bins: ', oldNumBins
-      do bin=1, oldNumBins
-        if ( DEEBUG ) print *, 'bin number: ', bin
-        call warm_up(bin)
-        if ( DEEBUG ) then
-          print *, 'number in bin: ', inTheBin(bin)
-          print *, 'array of invBinNumber: ', &
-           & (invBinNumber(elem), elem=1, inTheBin(bin))
-          print *, 'array of cvInvBN: ', (cvInvBN(elem), elem=1, inTheBin(bin))
-        endif
-        call tie_breaker(bin)
-        if ( DEEBUG ) print *, 'array of jsort: ', (jsort(elem), elem=1, inTheBin(bin))
-        numBins = numBins + 1
-        ck = cvInvBN(jsort(1))
-        do i=1, inTheBin(bin)
-          if ( ck /= cvInvBN(jsort(i)) .or. &
-           & ( &
-           &  allTheSameInThisBin .and. i > 1 &
-           & ) &
-           & ) then
-            numBins = numBins + 1
-            ck = cvInvBN(jsort(i))
-          endif
-          outIntArray(invBinNumber(jsort(i))) = numBins
-        enddo
-      enddo
-      if ( numBins >= min(nElems, size(outIntArray)) ) exit
-    enddo
-    if ( DEEBUG ) then
-      print *, 'Final number of bins: ', numBins
-      print *, 'Sorting order: ', (outIntArray(i), i=1, nElems)
-    endif
 
-    ! Undo the tricky business of turning spaced into DELs
-    if ( Switchable ) then
-      do elem = 1, nElems
-          stringArray(elem) = Replace( inStrArray(elem), achar(127), ' ' )
-      enddo
-    endif
-    if ( present(sortedArray) ) then
-      do elem=1, nElems
-        i = max(1, outIntArray(elem))
-        i = min(i, nElems, size(sortedArray))
-        if ( ShorterFirst ) then
-          sortedArray(i) = adjustl(stringArray(elem))
-        else
-          sortedArray(i) = stringArray(elem)
-        endif
-      enddo
-    endif
-    if ( LeftRight == 'R' ) then
+    ! Now we let sort do the work
+    call sort( stringArray, .not. caseSensitive, outIntArray )
+
+    ! Were we asked to return the sorted array?
+    if ( present(sortedArray) ) sortedArray = inStrArray( outIntArray )
+    
+    ! What about left-right?
+    if ( LeftRight == 'L' ) then
       ! Need to 'invert' outIntArray
+      invBinNumber = outIntArray
       do elem=1, nElems
-        do i=1, nElems
-          if ( outIntArray(i) == elem ) invBinNumber(elem) = i
-        enddo
-      enddo
-      do elem=1, nElems
-        outIntArray(elem) = invBinNumber(elem)
+        outIntArray(invBinNumber(elem)) = elem
       enddo
     endif
-    deallocate (stringArray, chValue, cvInvBN, binNumber, invBinNumber, &
-     & jsort, inTheBin, STAT=status)
+    deallocate (stringArray, invBinNumber, &
+     & STAT=status)
     if (status /= 0) CALL myMessage(MLSMSG_Error, ModuleName, &
          & MLSMSG_DeAllocate//"stringArray, etc. in SortArray")
-
-   contains
-     subroutine warm_up(theBin)
-       ! Form array invBinNumber = {i[j], j=1 .. }
-       ! such that binNumber[i] = theBin
-       ! then form cvInvBN = {c[j] = chValue[i[j]], j=1..}
-       integer, intent(in) :: theBin
-       integer :: j, i
-       j=0
-       do i=1, nElems
-         if ( binNumber(i) == theBin ) then
-           j=j+1
-           invBinNumber(j) = i
-           cvInvBN(j) = chValue(i)
-         endif
-       enddo
-       inTheBin(theBin) = j
-     end subroutine warm_up
-     subroutine tie_breaker(theBin)
-       ! Form array jsort = j[k] = {j_1, j_2, .., j_N}
-       ! sorted so that c[j_1} <= c[j_2] <= .. <= c{j_N]
-       ! This is a naive selection sort--make any improvements you wish
-       ! (Order N^2 sorting algorithms are inefficient)
-       integer, intent(in)      :: theBin
-       integer                  :: kp, k, ck, jsortie
-       character (len=MAXSTRELEMENTLENGTH)  :: stringElement  
-       allTheSameInThisBin = (inTheBin(theBin) /= 1)
-       stringElement = stringArray(invBinNumber(1))
-       do k=1, inTheBin(theBin)
-         jsort(k) = k
-         allTheSameInThisBin = allTheSameInThisBin .and. &
-           & stringElement == stringArray(invBinNumber(k))
-       enddo
-       if ( inTheBin(theBin) == 1 .or. allTheSameInThisBin) return
-       do k=1, inTheBin(theBin) - 1
-         ck = cvInvBN(jsort(k))
-         do kp=k+1, inTheBin(theBin)
-           if ( cvInvBN(jsort(kp)) < ck ) then
-           ! Pull the old switcheroo
-             ck = cvInvBN(jsort(kp))
-             jsortie = jsort(kp)
-             jsort(kp) = jsort(k)
-             jsort(k) = jsortie
-           endif
-         enddo
-       enddo
-     end subroutine tie_breaker
 
   end subroutine SortArray
 
@@ -4700,6 +4567,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.75  2017/08/23 16:43:48  pwagner
+! Fixed bugs in SortArray; now Uses LexicalSort
+!
 ! Revision 2.74  2017/01/25 21:12:36  pwagner
 ! Corrected bug in SwitchDetail; added CapitalizeList
 !
