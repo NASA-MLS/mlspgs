@@ -66,7 +66,7 @@ module GriddedData ! Contains the derived TYPE GriddedData_T
 ! NullifyGriddedData Nullify all its pointer components
 ! SetupNewGriddedData
 !                    What the name says
-! SliceGriddedData   Resample grid at supplied coords
+! SliceGriddedData   Resample grid at supplied coords (Consider renaming it)
 ! WrapGriddedData    Add extra points in longitude beyond +/-180
 !                     and in solar time beyond 0..24 to aid in interpolations
 ! === (end of toc) ===
@@ -187,7 +187,7 @@ contains
   subroutine ConcatenateGriddedData_2 ( A, B, X )
     ! This routine takes two grids A and B, B dated after A and tries
     ! to produce a third grid which is a combination of A and B
-    use MLSFILLVALUES, only: ESSENTIALLYEQUAL
+    use MLSFillValues, only: EssentiallyEqual
     type ( GriddedData_T ), intent(in) :: A
     type ( GriddedData_T ), intent(in) :: B
     type ( GriddedData_T ), intent(inout) :: X ! inout to let us deallocate it
@@ -285,7 +285,7 @@ contains
     ! This routine takes an array of grids and a set of index values
     ! to produce a third grid which is a combination database elements
     ! at the index values
-    use MLSFILLVALUES, only: ESSENTIALLYEQUAL
+    use MLSFillValues, only: EssentiallyEqual
     type ( GriddedData_T ), dimension(:), intent(in) :: database
     integer, dimension(:), intent(in) :: indices ! index values
     type ( GriddedData_T ), intent(inout) :: X ! inout to let us deallocate it
@@ -375,7 +375,7 @@ contains
   subroutine ConvertFromEtaLevelGrids ( TGrid, PGrid, NGrid, OutGrid )
     ! Converts two eta-level grids, one of them pressures, 
     ! to a pressure-level Grid
-    use MLSNUMERICS, only: INTERPOLATEVALUES, USELOOKUPTABLE
+    use MLSNumerics, only: Interpolatevalues, Uselookuptable
     use dump_0, only: DUMP
     type ( GriddedData_T ), intent(in)  :: TGrid  ! E.g., T on eta surfaces
     type ( GriddedData_T ), intent(in)  :: PGrid  ! Pressures on eta surfaces
@@ -566,7 +566,7 @@ contains
 
   ! --------------------------------------------  DiffGriddedData  -----
   subroutine DiffGriddedData ( GriddedData1, GriddedData2, options )
-    use Diff_1, only: DIFF
+    use Diff_1, only: Diff
 
     ! Imitating what dump_pointing_grid_database does, but for gridded data
     ! which may come from climatology, ncep, dao
@@ -845,6 +845,7 @@ contains
     integer :: MYDETAILS
     character(len=16) :: myOptions
     integer :: numElmnts
+    integer :: numSurfs
     character(len=32) :: oldInfo
 
     ! Executable code
@@ -958,6 +959,7 @@ contains
       call output ( GriddedData%verticalCoordinate, advance='yes' )
     end if
     call output(' heights units ' // trim(GriddedData%heightsUnits), advance='yes')
+    numSurfs = GriddedData%noHeights
     call output ( ' No. of heights = ' )
     call output ( GriddedData%noHeights, advance='yes' )
     if ( myDetails >= 0 ) call dump ( GriddedData%heights, &
@@ -1069,11 +1071,11 @@ contains
           & '    gridded field values sliced through heights =', &
           & FillValue=GriddedData%MissingValue )
         if ( size(GriddedData%field, 2 ) > 1 ) &
-          & call dump ( GriddedData%field(1,:,1,1,1,1), &
+          & call dump ( GriddedData%field(numSurfs,:,1,1,1,1), &
           & '    gridded field values sliced through lats =', &
           & FillValue=GriddedData%MissingValue )
         if ( size(GriddedData%field, 3 ) > 1 ) &
-          & call dump ( GriddedData%field(1,1,:,1,1,1), &
+          & call dump ( GriddedData%field(numSurfs,1,:,1,1,1), &
           & '    gridded field values sliced through lons =', &
           & FillValue=GriddedData%MissingValue )
         if ( size(GriddedData%field, 4 ) > 1 ) &
@@ -1275,6 +1277,9 @@ contains
   end subroutine NullifyGriddedData
 
   ! ---------------------------------------- SliceGriddedData ------
+  ! 1st suggestion:
+  ! Rename this procedure something more apt
+  ! E.g., 'Regrid' or 'Resample'
   ! Here would be a good place to describe the purpose and method of this
   ! procedure (hint, hint)
   ! I (paw) did not write this but I can take a stab at it
@@ -1303,7 +1308,7 @@ contains
   subroutine SliceGriddedData ( grid, slice, &
     & heights, lats, lons, lsts, szas, dates, missingValue )
 
-    use MLSFillValues, only: ESSENTIALLYEQUAL
+    use MLSFillValues, only: EssentiallyEqual
     use MLSNumerics, only: HUNT
 
     type ( GriddedData_T ), intent(inout) :: GRID ! Input grid
@@ -1492,7 +1497,13 @@ contains
       ! Note, I'm not going to be terribly graceful about going over the
       ! year boundary, or for that matter leap years etc.
       yearNumber = int ( minval(modifiedInDates) / noSecondsInMeanYear )
+      if ( minval(modifiedInDates) < 0. ) yearNumber = yearNumber - 1
       modifiedInDates = modifiedInDates - yearNumber * noSecondsInMeanYear
+      if ( deebug ) then
+        call outputNamedValue( 'yearNumber', yearNumber )
+        call outputNamedValue( 'modifiedInDates', modifiedInDates(1) )
+        call outputNamedValue( 'meanGridDates', meanGridDates(1) )
+      endif
     endif
     if ( grid%noDates == 1 ) then
       dateI = 1
@@ -1847,6 +1858,9 @@ end module GriddedData
 
 !
 ! $Log$
+! Revision 2.82  2017/08/23 16:45:25  pwagner
+! Fixed bug when Dates are before 1993
+!
 ! Revision 2.81  2017/03/17 00:10:49  pwagner
 ! Optionally sayWhyNot if not DoGriddeddataMatch
 !
