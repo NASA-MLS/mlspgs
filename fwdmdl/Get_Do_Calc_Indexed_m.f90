@@ -17,7 +17,7 @@ module Get_Do_Calc_Indexed_m
   public :: Get_Do_Calc_Indexed_Coarse, Get_Do_Calc_Indexed_GL
 
   interface Get_Do_Calc_Indexed
-    module procedure :: Get_Do_Calc_Indexed_Coarse, Get_Do_Calc_Indexed_GL
+    module procedure Get_Do_Calc_Indexed_Coarse, Get_Do_Calc_Indexed_GL
   end interface
 
 !---------------------------- RCS Module Info ------------------------------
@@ -140,6 +140,9 @@ contains
 end module Get_Do_Calc_Indexed_m
 
 ! $Log$
+! Revision 2.2  2017/08/25 22:49:25  pwagner
+! Removed :: that NAG hated
+!
 ! Revision 2.1  2017/08/09 19:57:55  vsnyder
 ! Initial commit
 !
