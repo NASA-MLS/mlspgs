@@ -16,8 +16,14 @@
     real(rk), dimension(size(b))                   :: b1
     ! Executable
     if ( DEEBUG ) then
-      call dump_name_v_pairs(shape(a), width=4)
-      call dump_name_v_pairs(shape(b), width=4)
+      ! call dump_name_v_pairs(shape(a), width=4)
+      ! call dump_name_v_pairs(shape(b), width=4)
+      call output( 'shape(a): ', advance='no' )
+      call blanks( 1 )
+      call output( shape(a), advance='yes' )
+      call output( 'shape(b): ', advance='no' )
+      call blanks( 1 )
+      call output( shape(b), advance='yes' )
     endif
     if ( present(precision) ) then
       call filterValues(reshape ( a, (/size(a)/)), a1, &
@@ -32,3 +38,6 @@
     btab = reshape(b1, shape(a))
 
 ! $Log$
+! Revision 1.1  2005/12/23 03:09:33  vsnyder
+! Initial commit
+!
