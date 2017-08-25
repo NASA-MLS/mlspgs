@@ -13,25 +13,27 @@
 module MLSFillValues              ! Some FillValue-related stuff
 !=============================================================================
 
-  use allocate_deallocate, only: allocate_test, deallocate_test
-  use ieee_arithmetic, only: isFinite => ieee_is_finite, isNaN => ieee_is_NaN, &
-    & ieee_is_finite, ieee_is_NaN
-  use MLSCommon, only: fill_signal, inf_signal, NaN_signal, undefinedvalue, &
-    & is_what_ieee, MLSFill_t, MLSFills
-  use MLSKinds ! everything
-  use MLSMessageModule, only: mlsmessage, mlsmsg_error
-  use MLSFinds, only: findAll, findFirst, findLast
-  use MLSStringLists, only: extractSubstring 
-  use MLSStrings, only: lowercase
+  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test, &
+    & Test_Allocate, Test_Deallocate
+  use Ieee_Arithmetic, only: IsFinite => Ieee_Is_Finite, IsNaN => Ieee_Is_NaN, &
+    & Ieee_Is_Finite, Ieee_Is_NaN
+  use MLSCommon, only: Fill_Signal, Inf_Signal, NaN_Signal, UndefinedValue, &
+    & Is_What_Ieee, MLSFill_T, MLSFills
+  use MLSKinds ! Everything
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+  use MLSFinds, only: FindAll, FindFirst, FindLast
+  use MLSStringLists, only: ExtractSubstring
+  use MLSStrings, only: Lowercase
+  use Output_M, only: Blanks, Output
 
   implicit none
 
   private
 
-  public :: addMLSFillToDatabase, Dump
+  public :: AddMLSFillToDatabase, Dump
   public :: Bandwidth, Collapse, Depopulate, Repopulate
   public :: EmbedArray, EssentiallyEqual, ExtractArray
-  public :: extremum
+  public :: Extremum
   public :: FillFunction, InfFunction, NaNFunction
   public :: FilterValues
   public :: GatherArray
@@ -40,7 +42,7 @@ module MLSFillValues              ! Some FillValue-related stuff
   public :: IsFinite, IsInfinite, IsNaN
   public :: Monotonize
   public :: RemoveFillValues, ReorderFillValues, ReplaceFillValues, ReRank
-  public :: roundUpOrDown
+  public :: RoundUpOrDown
   public :: WhereAreTheFills, WhereAreTheNaNs, WhereAreTheInfs
 
 !---------------------------- RCS Module Info ------------------------------
@@ -51,7 +53,7 @@ module MLSFillValues              ! Some FillValue-related stuff
 
 ! This module contains stuff related to:
 ! (1) fill values
-! (2) embedding/extracting blocs of elements
+! (2) embedding/extracting blocs  or hyperslabs of elements
 ! (3) monotonic increasing or decreasing arrays
 ! (4) Some miscellaneous procedures identifying Finite, NaN, or Inf, quantities
 ! (All but (1) should perhaps be relocated into other modules)
@@ -152,7 +154,7 @@ module MLSFillValues              ! Some FillValue-related stuff
 !   & [nprec values[:], [char* options] )
 ! Repopulate ( array[:,:,:], int i[:], int j[:],  int k[:], int n, &
 !   & [nprec values[:], [char* options] )
-! Monotonize_1dint( values, [Period], [FillValue], [log strict] )
+! Monotonize( values, [Period], [FillValue], [log strict] )
 ! nprec roundUpOrDown( nprec value )
 ! WhereAreTheFills ( array, [which(:)], [int howMany], [mode], [inds(:,:)] )
 ! WhereAreTheInfs ( array, [which(:)], [int howMany], [mode], [inds(:,:)] )
@@ -290,15 +292,6 @@ module MLSFillValues              ! Some FillValue-related stuff
     module procedure IsNaN_CHARACTER
   end interface
   
-  interface output
-    module procedure output_str, output_int, output_real, output_dble
-  end interface
-  
-  interface outputNamedValue
-    module procedure outputNamedValue_real, outputNamedValue_int, &
-      & outputNamedValue_str
-  end interface
-  
   interface RemoveFillValues
     module procedure RemoveFill1d_r4, RemoveFill1d_r8, RemoveFill1d_int
     ! I'm not certain it makes sense to do this except in 1-d
@@ -387,7 +380,7 @@ module MLSFillValues              ! Some FillValue-related stuff
 
 contains
 
-  !-------------------------------------------  `  -----
+  !-------------------------------------------  AddFillValueToDatabase  -----
   integer function AddFillValueToDatabase( FillValue, &
     & tol, condition, yourDatabase )
 
@@ -418,7 +411,7 @@ contains
     AddFillValueToDatabase = addMLSFillTypeToDatabase( item, yourDatabase )
   end function AddFillValueToDatabase
 
-  !-------------------------------------------  `  -----
+  !-------------------------------------------  addMLSFillTypeToDatabase  -----
   integer function addMLSFillTypeToDatabase( ITEM, yourDatabase )
 
     ! This function adds an MLSFill data type to a database of said types,
@@ -446,7 +439,6 @@ contains
     ! creating a new database if it doesn't exist.  The result value is
     ! the size -- where MLSFill is put.
 
-    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
     use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
 
     ! Dummy arguments
@@ -760,7 +752,6 @@ contains
   ! This family of routines replace a bloc of elements in a larger
   ! array with corresponding elements from a smaller
   subroutine EmbedArray_1d_int ( ibloc, iarray, start, count, stride, block, options )
-    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
     integer, dimension(:), pointer :: ibloc
     integer, dimension(:), pointer :: iarray ! The larger array
     integer, parameter :: RK = R4
@@ -787,21 +778,18 @@ contains
   end subroutine EmbedArray_1d_int
 
   subroutine EmbedArray_1d_r4 ( slab, array, start, count, stride, block, options )
-    use Allocate_Deallocate, only: Allocate_Test
     integer, parameter :: RK = R4
     character, parameter :: DIRECTION = 'm'
     include 'EmbedExtract_1d.f9h'
   end subroutine EmbedArray_1d_r4
 
   subroutine EmbedArray_1d_r8 ( slab, array, start, count, stride, block, options )
-    use Allocate_Deallocate, only: Allocate_Test
     integer, parameter :: RK = R8
     character, parameter :: DIRECTION = 'm'
     include 'EmbedExtract_1d.f9h'
   end subroutine EmbedArray_1d_r8
 
   subroutine ExtractArray_1d_int ( ibloc, iarray, start, count, stride, block, options )
-    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
     integer, dimension(:), pointer :: ibloc
     integer, dimension(:) :: iarray ! The larger array
     integer, parameter :: RK = R4
@@ -833,70 +821,60 @@ contains
   end subroutine ExtractArray_1d_int
 
   subroutine ExtractArray_1d_r4 ( slab, array, start, count, stride, block, options )
-    use Allocate_Deallocate, only: Allocate_Test
     integer, parameter :: RK = R4
     character, parameter :: DIRECTION = 'x'
     include 'EmbedExtract_1d.f9h'
   end subroutine ExtractArray_1d_r4
 
   subroutine ExtractArray_1d_r8 ( slab, array, start, count, stride, block, options )
-    use Allocate_Deallocate, only: Allocate_Test
     integer, parameter :: RK = R8
     character, parameter :: DIRECTION = 'x'
     include 'EmbedExtract_1d.f9h'
   end subroutine ExtractArray_1d_r8
 
   subroutine EmbedArray_2d_r4 ( slab, array, start, count, stride, block, options )
-    use Allocate_Deallocate, only: Allocate_Test
     integer, parameter :: RK = R4
     character, parameter :: DIRECTION = 'm'
     include 'EmbedExtract_2d.f9h'
   end subroutine EmbedArray_2d_r4
 
   subroutine EmbedArray_2d_r8 ( slab, array, start, count, stride, block, options )
-    use Allocate_Deallocate, only: Allocate_Test
     integer, parameter :: RK = R8
     character, parameter :: DIRECTION = 'm'
     include 'EmbedExtract_2d.f9h'
   end subroutine EmbedArray_2d_r8
 
   subroutine ExtractArray_2d_r4 ( slab, array, start, count, stride, block, options )
-    use Allocate_Deallocate, only: Allocate_Test
     integer, parameter :: RK = R4
     character, parameter :: DIRECTION = 'x'
     include 'EmbedExtract_2d.f9h'
   end subroutine ExtractArray_2d_r4
 
   subroutine ExtractArray_2d_r8 ( slab, array, start, count, stride, block, options )
-    use Allocate_Deallocate, only: Allocate_Test
     integer, parameter :: RK = R8
     character, parameter :: DIRECTION = 'x'
     include 'EmbedExtract_2d.f9h'
   end subroutine ExtractArray_2d_r8
 
   subroutine EmbedArray_3d_r4 ( slab, array, start, count, stride, block, options )
-    use Allocate_Deallocate, only: Allocate_Test
     integer, parameter :: RK = R4
     character, parameter :: DIRECTION = 'm'
     include 'EmbedExtract_3d.f9h'
   end subroutine EmbedArray_3d_r4
 
   subroutine EmbedArray_3d_r8 ( slab, array, start, count, stride, block, options )
-    use Allocate_Deallocate, only: Allocate_Test
     integer, parameter :: RK = R8
     character, parameter :: DIRECTION = 'm'
     include 'EmbedExtract_3d.f9h'
   end subroutine EmbedArray_3d_r8
 
   subroutine ExtractArray_3d_r4 ( slab, array, start, count, stride, block, options )
-    use Allocate_Deallocate, only: Allocate_Test
     integer, parameter :: RK = R4
     character, parameter :: DIRECTION = 'x'
     include 'EmbedExtract_3d.f9h'
   end subroutine ExtractArray_3d_r4
 
   subroutine ExtractArray_3d_r8 ( slab, array, start, count, stride, block, options )
-    use Allocate_Deallocate, only: Allocate_Test
     integer, parameter :: RK = R8
     character, parameter :: DIRECTION = 'x'
     include 'EmbedExtract_3d.f9h'
@@ -1917,7 +1895,7 @@ contains
   ! May be used instead of BridgeMissing Values
   ! if Fill Values are -999.99
   ! Will also handle Periodic arrays, e.g. angles
-  ! optional arg strict will insist that values[i] < valies[i+1]
+  ! optional arg strict will insist that values[i] < values[i+1]
   subroutine Monotonize_1dint( values, Period, FillValue, strict )
     ! Args
     integer, dimension(:), intent(inout) :: values
@@ -2046,13 +2024,6 @@ contains
     ! Executable
     rounded = int( value )
     sgn = sign(1._rk, value )
-    ! The following just gives frac = sgn * ( value - rounded )
-    !select case (sgn)
-    !case (1)
-    !  frac = value - rounded
-    !case (-1)
-    !  frac = -( value - rounded )
-    !end select
     frac = sgn * ( value - rounded )
     if ( frac > 0.5_rk ) rounded = rounded + sgn
   end function roundUpOrDown_r4
@@ -2068,13 +2039,6 @@ contains
     ! Executable
     rounded = int( value )
     sgn = sign(1._rk, value )
-    ! The following just gives frac = sgn * ( value - rounded )
-    !select case (sgn)
-    !case (1)
-    !  frac = value - rounded
-    !case (-1)
-    !  frac = -( value - rounded )
-    !end select
     frac = sgn * ( value - rounded )
     if ( frac > 0.5_rk ) rounded = rounded + sgn
   end function roundUpOrDown_r8
@@ -2397,7 +2361,7 @@ contains
     keepgoing = .false.
     if ( present(dontstop) ) keepgoing=dontstop
     if ( .not. keepgoing ) then
-      call output('*** Error in MLSCommon module ***', advance='yes')
+      call output('*** Error in MLSFillValues module ***', advance='yes')
     endif
     call output(trim(message), advance='no')
     call blanks(3)
@@ -2407,124 +2371,6 @@ contains
     if ( .not. keepgoing ) stop
   end subroutine announce_error
 
-  subroutine blanks(num, advance)
-    integer, intent(in) :: num
-    character(len=*), optional, intent(in) :: advance
-    integer :: i
-    character(len=3) :: myAdvance
-    myAdvance = 'no'
-    if ( present(advance) ) myAdvance = advance
-    do i=1, num
-      write(*, '(a1)', advance='no') ' '
-    enddo
-    if ( myAdvance == 'yes' ) write(*, '(a1)', advance='yes') ''
-    
-  end subroutine blanks
-
-  subroutine output_one_char(str)
-    character(len=1), intent(in) :: str
-    write(*, '(a1)', advance='no') str
-    
-  end subroutine output_one_char
-
-  subroutine output_str(str, advance)
-    character(len=*), intent(in) :: str
-    character(len=*), optional, intent(in) :: advance
-    integer :: i
-    do i=1, len(str)
-      call output_one_char(str(i:i))
-    enddo
-    if ( .not. present(advance) ) return
-    if ( advance=='yes' ) call blanks( 0, advance='yes' )
-    
-  end subroutine output_str
-
-  subroutine output_int(int, advance)
-    integer, intent(in) :: int
-    character(len=*), optional, intent(in) :: advance
-    character(len=16) :: str
-    write(str, '(i12)') int
-    ! write(*, '(a1)', advance=advance) trim(str)
-    call output( trim(str), advance )
-    
-  end subroutine output_int
-
-  subroutine output_real(val, advance)
-    real, intent(in) :: val
-    character(len=*), optional, intent(in) :: advance
-    character(len=16) :: str
-    write(str, '(1pg12.2)') val
-    ! write(*, '(a1)', advance=advance) trim(str)
-    call output( trim(str), advance )
-    
-  end subroutine output_real
-
-  subroutine output_dble(val, advance)
-    double precision, intent(in) :: val
-    character(len=*), optional, intent(in) :: advance
-    character(len=16) :: str
-    write(str, '(1pg12.2)') val
-    ! write(*, '(a1)', advance=advance) trim(str)
-    call output( trim(str), advance )
-    
-  end subroutine output_dble
-
-  subroutine outputNamedValue_int(name, int)
-    character(len=*), intent(in) :: name
-    integer, intent(in) :: int
-    character(len=16) :: str
-    write(*, '(a1)', advance='no') trim(name) // ': '
-    write(str, '(i12)') int
-    write(*, '(a1)', advance='yes') trim(str)
-    
-  end subroutine outputNamedValue_int
-
-  subroutine outputNamedValue_real(name, val)
-    character(len=*), intent(in) :: name
-    real, intent(in) :: val
-    character(len=16) :: str
-    write(*, '(a1)', advance='no') trim(name) // ': '
-    write(str, '(f12.2)') val
-    write(*, '(a1)', advance='yes') trim(str)
-    
-  end subroutine outputNamedValue_real
-
-  subroutine outputNamedValue_str(name, str)
-    character(len=*), intent(in) :: name
-    character(len=*), intent(in) :: str
-    write(*, '(a1)', advance='no') trim(name) // ': '
-    write(*, '(a1)', advance='yes') trim(str)
-    
-  end subroutine outputNamedValue_str
-
-  ! ----------------------------------  DUMP_NAME_V_PAIRS  -----
-  subroutine DUMP_NAME_V_PAIRS ( VALUES, WIDTH )
-    integer, intent(in)                         :: values(:)
-    integer, intent(in), optional :: WIDTH ! How many pairs per line (1)?
-    
-    integer :: J, K, L
-    integer :: MyWidth
-    character(len=24) :: myName
-    MyWidth = 1
-    if ( present(width) ) myWidth = max(width, 1)
-    if ( size(values) < 1 ) return
-    l = 0
-    do j=1, size(values), MyWidth
-      do k=1, MyWidth
-        call blanks(3, advance='no')
-        l = l + 1
-        if ( l <= size(values) ) then
-          write(myName, *) 'integer # ', l, ': '
-          call output(myName,  advance='no')
-          call blanks(3, advance='no')
-          write(*,'(i4)', advance='no') values(l)
-        end if
-      end do
-      call output(' ', advance='yes')
-    end do
-
-  end subroutine DUMP_NAME_V_PAIRS
-  
   subroutine rerank( address, shp, indices )
     ! Find multidimensional set of indices in an array
     ! with shape shp corresponding to 1-d address
@@ -3096,6 +2942,9 @@ end module MLSFillValues
 
 !
 ! $Log$
+! Revision 2.36  2017/08/25 00:18:10  pwagner
+! Dropped all the internal output routines in favor of Output_m
+!
 ! Revision 2.35  2016/01/13 00:45:44  pwagner
 ! May optionally stutter instead of interpolate
 !
