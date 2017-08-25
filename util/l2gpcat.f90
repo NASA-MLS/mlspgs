@@ -16,6 +16,7 @@ program l2gpcat ! catenates split L2GPData files, e.g. dgg
    use Dump_0, only: Dump
    use HDF, only: DFACC_Create, DFACC_RDonly, DFACC_RdWr
    use HDF5, only: H5FIs_HDF5_F
+   use HighOutput, only: OutputNamedValue
    use Intrinsic, only: L_Swath
    use Io_Stuff, only: Read_TextFile
    use L2GPData, only: L2GPData_T, L2GPNameLen, MAXSWATHNAMESBUFSIZE, RGP, &
@@ -26,6 +27,7 @@ program l2gpcat ! catenates split L2GPData files, e.g. dgg
    use MLSFiles, only: MLS_Exists, MLS_CloseFile, MLS_OpenFile, &
      & HDFVersion_4, HDFVersion_5, MLS_InqSwath, InitializeMLSFile
    use MLSHDF5, only: MLS_H5Open, MLS_H5Close
+   use MLSFillValues, only: Monotonize
    use MLSFinds, only: FindFirst, FindLast
    use MLSStringLists, only: CatLists, GetStringElement, &
      & Intersection, NumStringElements, RemoveElemFromList, &
@@ -67,6 +69,7 @@ program l2gpcat ! catenates split L2GPData files, e.g. dgg
     logical ::               columnsOnly = .false.
     logical ::               ignoreFills = .false.      ! catenate swaths with same name
     logical ::               noDupSwaths = .false.      ! cp 1st, ignore rest   
+    logical ::               monotonize = .true.        ! apply to geod. ang.
     character(len=3) ::      convert= ' '               ! e.g., '425'
     character(len=255) ::    swathNames = ' '           ! which swaths to copy
     character(len=255) ::    rename = ' '               ! how to rename them
@@ -450,6 +453,9 @@ contains
             cycle
           endif
         endif
+        if ( options%monotonize ) &
+          & call Monotonize( ol2gp%GeodAngle )
+          ! & call Monotonize( ol2gp%GeodAngle, FillValue=-999.99 )
         ! if ( i == 1 ) then
         if ( .not. wroteAlready ) then
           status = InitializeMLSFile( l2gpFile, type=l_swath, access=DFACC_CREATE, &
@@ -475,8 +481,10 @@ contains
         ! 1st, is there nearly 360 deg offset between a, and b?
         ! (If so, we'll assume a periodic wrap occurred)
         if ( abs(b(1)-a(N)) > 300._rgp ) then
+        ! if ( abs(b(1)-maxval(a)) > 300._rgp ) then
           ! add or subtract the requsite 360 deg from a
           j = int( sign(1.01_rgp, b(1)-a(N)) )
+          if ( DEEBUG ) call outputNamedvalue ( 'j', j )
           a(1:N) = a(1:N) + j*360._rgp
         endif
         ! Find k
@@ -801,6 +809,9 @@ end program L2GPcat
 !==================
 
 ! $Log$
+! Revision 1.25  2017/05/17 22:21:59  pwagner
+! Works properly with dual-l2 nrt scripts
+!
 ! Revision 1.24  2016/08/25 22:52:52  pwagner
 ! Can now successfully cat all 351 chunks of Pleiades-style dgg
 !
