@@ -79,7 +79,7 @@ contains
       end do
       do i = 1, size(eta,1)
         do j = 1, eta(i)%n
-          k = element_position([eta(i)%v(j)%n,eta(i)%v(j)%np], two_d_bounds)
+          k = element_position([eta(i)%v(j)%j,eta(i)%v(j)%jp], two_d_bounds)
           do_calc(i,k) = .true.
           nnz(k) = nnz(k) + 1
           nz(nnz(k),k) = i
@@ -89,7 +89,7 @@ contains
       do_calc = .false.
       do i = 1, size(eta,1)
         do j = 1, eta(i)%n
-          do_calc( i,element_position([eta(i)%v(j)%n,eta(i)%v(j)%np], &
+          do_calc( i,element_position([eta(i)%v(j)%j,eta(i)%v(j)%jp], &
                                      & two_d_bounds) ) = .true.
         end do
       end do
@@ -122,7 +122,7 @@ contains
       call clean_out_nonzeros ( eta_array, do_calc, nz, nnz )
       do i = 1, n_path
         do j = 1, eta(i)%n
-          k = element_position([eta(i)%v(j)%n,eta(i)%v(j)%np], two_d_bounds)
+          k = element_position([eta(i)%v(j)%j,eta(i)%v(j)%jp], two_d_bounds)
           eta_array(i,k) = eta(i)%v(j)%v
           do_calc(i,k) = .true.
           nnz(k) = nnz(k) + 1
@@ -134,7 +134,7 @@ contains
       do_calc = .false.
       do i = 1, n_path
         do j = 1, eta(i)%n
-          k = element_position([eta(i)%v(j)%n,eta(i)%v(j)%np], two_d_bounds)
+          k = element_position([eta(i)%v(j)%j,eta(i)%v(j)%jp], two_d_bounds)
           eta_array(i,k) = eta(i)%v(j)%v
           do_calc(i,k) = .true.
         end do
@@ -144,7 +144,7 @@ contains
     if ( present(derivFlags) ) then
       do i = 1, n_path
         do j = 1, eta(i)%n
-          k = element_position([eta(i)%v(j)%n,eta(i)%v(j)%np], two_d_bounds)
+          k = element_position([eta(i)%v(j)%j,eta(i)%v(j)%jp], two_d_bounds)
           do_calc(i,k) = do_calc(i,k) .and. derivFlags(k)
         end do
       end do
@@ -178,7 +178,7 @@ contains
       call clean_out_nonzeros ( eta_array, do_calc, nz, nnz )
       do i = 1, n_path
         do j = 1, eta(i)%n
-          k = element_position([eta(i)%v(j)%nf,eta(i)%v(j)%n,eta(i)%v(j)%np], &
+          k = element_position([eta(i)%v(j)%jf,eta(i)%v(j)%j,eta(i)%v(j)%jp], &
                              & three_d_bounds)
           eta_array(i,k) = eta(i)%v(j)%v
           do_calc(i,k) = .true.
@@ -191,7 +191,7 @@ contains
       do_calc = .false.
       do i = 1, n_path
         do j = 1, eta(i)%n
-          k = element_position([eta(i)%v(j)%nf,eta(i)%v(j)%n,eta(i)%v(j)%np], &
+          k = element_position([eta(i)%v(j)%jf,eta(i)%v(j)%j,eta(i)%v(j)%jp], &
                              & three_d_bounds)
           eta_array(i,k) = eta(i)%v(j)%v
           do_calc(i,k) = .true.
@@ -202,7 +202,7 @@ contains
     if ( present(derivFlags) ) then
       do i = 1, n_path
         do j = 1, eta(i)%n
-          k = element_position([eta(i)%v(j)%n,eta(i)%v(j)%np], three_d_bounds)
+          k = element_position([eta(i)%v(j)%j,eta(i)%v(j)%jp], three_d_bounds)
           do_calc(i,k) = do_calc(i,k) .and. derivFlags(k)
         end do
       end do
@@ -223,6 +223,9 @@ contains
 end module Get_Do_Calc_m
 
 ! $Log$
+! Revision 2.3  2017/08/28 20:28:08  livesey
+! Changed the n,nf,np,nz elements to j,jf,...
+!
 ! Revision 2.2  2017/03/02 00:34:30  vsnyder
 ! Add Clean_Out_NonZeros and Get_Eta_Do_Calc_3
 !
