@@ -79,7 +79,7 @@ contains
     if ( inside ) inside = all(QTM_tree%Q(f)%ser > 0)
     if ( inside ) then
       z = geo_to_ZOT ( point )
-      weights%v%n = QTM_tree%Q(f)%ser
+      weights%v%j = QTM_tree%Q(f)%ser
       call triangle_interpolate ( QTM_tree%Q(f)%z%x, QTM_tree%Q(f)%z%y, &
                                 & z%x, z%y, weights%v%v )
       if ( present(used) ) then
@@ -94,7 +94,7 @@ contains
       inside = f > 0
       if ( inside ) inside = all(QTM_tree%Q(f)%ser > 0)
       if ( inside ) then
-        weights%v%n = QTM_tree%Q(f)%ser
+        weights%v%j = QTM_tree%Q(f)%ser
         call triangle_interpolate ( QTM_tree%Q(f)%z%x, QTM_tree%Q(f)%z%y, &
                                   & z%x, z%y, weights%v%v )
       else ! Shouldn't get here
@@ -176,7 +176,7 @@ contains
     inside = f > 0
     if ( inside ) inside = all(QTM_tree%Q(f)%ser > 0)
     if ( inside ) then
-      weights%v%n = QTM_tree%Q(f)%ser
+      weights%v%j = QTM_tree%Q(f)%ser
       call triangle_interpolate ( QTM_tree%Q(f)%z%x, QTM_tree%Q(f)%z%y, &
                                 & point%x, point%y, weights%v%v )
       if ( present(used) ) used = point
@@ -187,7 +187,7 @@ contains
       inside = f > 0
       if ( inside ) inside = all(QTM_tree%Q(f)%ser > 0)
       if ( inside ) then
-        weights%v%n = QTM_tree%Q(f)%ser
+        weights%v%j = QTM_tree%Q(f)%ser
         call triangle_interpolate ( QTM_tree%Q(f)%z%x, QTM_tree%Q(f)%z%y, &
                                   & point%x, point%y, weights%v%v )
       else ! Shouldn't get here
@@ -269,7 +269,7 @@ contains
     if ( inside ) inside = all(QTM_tree%Q(f)%ser > 0)
     if ( inside ) then
       z = geo_to_ZOT ( point )
-      weights%v(1:3)%n = QTM_tree%Q(f)%ser
+      weights%v(1:3)%j = QTM_tree%Q(f)%ser
       call triangle_interpolate ( QTM_tree%Q(f)%z%x, QTM_tree%Q(f)%z%y, &
                                 & z%x, z%y, weights%v(1:3)%v )
       if ( present(used) ) then
@@ -284,7 +284,7 @@ contains
       inside = f > 0
       if ( inside ) inside = all(QTM_tree%Q(f)%ser > 0)
       if ( inside ) then
-        weights%v(1:3)%n = QTM_tree%Q(f)%ser
+        weights%v(1:3)%j = QTM_tree%Q(f)%ser
         call triangle_interpolate ( QTM_tree%Q(f)%z%x, QTM_tree%Q(f)%z%y, &
                                   & z%x, z%y, weights%v(1:3)%v )
       else ! Shouldn't get here
@@ -368,7 +368,7 @@ contains
     inside = f > 0
     if ( inside ) inside = all(QTM_tree%Q(f)%ser > 0)
     if ( inside ) then
-      weights%v(1:3)%n = QTM_tree%Q(f)%ser
+      weights%v(1:3)%j = QTM_tree%Q(f)%ser
       call triangle_interpolate ( QTM_tree%Q(f)%z%x, QTM_tree%Q(f)%z%y, &
                                 & point%x, point%y, weights%v(1:3)%v )
       if ( present(used) ) used = point
@@ -379,7 +379,7 @@ contains
       inside = f > 0
       if ( inside ) inside = all(QTM_tree%Q(f)%ser > 0)
       if ( inside ) then
-        weights%v(1:3)%n = QTM_tree%Q(f)%ser
+        weights%v(1:3)%j = QTM_tree%Q(f)%ser
         call triangle_interpolate ( QTM_tree%Q(f)%z%x, QTM_tree%Q(f)%z%y, &
                                   & point%x, point%y, weights%v(1:3)%v )
       else ! Shouldn't get here
@@ -439,6 +439,9 @@ contains
 end module QTM_Interpolation_Weights_m
 
 ! $Log$
+! Revision 2.10  2017/08/28 20:27:47  livesey
+! Changed the n,nf,np,nz elements to j,jf,...
+!
 ! Revision 2.9  2016/11/23 20:08:45  vsnyder
 ! Comment out Use...RG until processors support KPDT
 !
