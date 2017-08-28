@@ -51,8 +51,8 @@
         if ( grid(i) > basis(1) ) exit
   !       eta(i) = value_1D_list_t(rk)(n=1,v=[value_1d_t(rk)(n=1,v=1.0_rk), &
   !                                         & value_1d_t(rk)(n=0,v=0.0_rk)])
-        eta(i) = value_1D_list_t(n=1,v=[value_1d_t(n=1,v=1.0_rk), &
-                                      & value_1d_t(n=0,v=0.0_rk)])
+        eta(i) = value_1D_list_t(n=1,v=[value_1d_t(j=1,v=1.0_rk), &
+                                      & value_1d_t(j=0,v=0.0_rk)])
       end do
       ! Coefficients between Basis(1) and Basis(n_basis) are "hat" functions
       do j = 2, n_basis
@@ -64,14 +64,14 @@
   !             v=[value_1d_t(rk)(n=j-1,v=(basis(j)-grid(i)) * del_basis), &
   !              & value_1d_t(rk)(n=j,v=(grid(i)-basis(j-1)) * del_basis) ] )
             eta(i) = value_1D_list_t(n=2, &
-              v=[value_1d_t(n=j-1,v=(basis(j)-grid(i)) * del_basis), &
-               & value_1d_t(n=j,v=(grid(i)-basis(j-1)) * del_basis) ] )
+              v=[value_1d_t(j=j-1,v=(basis(j)-grid(i)) * del_basis), &
+               & value_1d_t(j=j,v=(grid(i)-basis(j-1)) * del_basis) ] )
             if ( eta(i)%v(1)%v == 0.0 ) & ! eta(i)%v(2)%v cannot be zero because
                                           ! basis(j-1) < grid(i)
 !               & eta(i) = value_1D_list_t(rk)(n=1, &
 !                 & v=[eta(i)%v(2),value_1d_t(rk)(n=0,v=0.0_rk)])
               & eta(i) = value_1D_list_t(n=1, &
-                & v=[eta(i)%v(2),value_1d_t(n=0,v=0.0_rk)])
+                & v=[eta(i)%v(2),value_1d_t(j=0,v=0.0_rk)])
           end if
           i = i + 1
         end do
@@ -81,8 +81,8 @@
         if ( basis(n_basis) > grid(i) ) exit
   !       eta(i) = value_1D_list_t(rk)(n=1,v=[value_1d_t(rk)(n=n_basis,v=1.0_rk), &
   !                                         & value_1d_t(rk)(n=0,v=0.0_rk)])
-        eta(i) = value_1D_list_t(n=1,v=[value_1d_t(n=n_basis,v=1.0_rk), &
-                                      & value_1d_t(n=0,v=0.0_rk)])
+        eta(i) = value_1D_list_t(n=1,v=[value_1d_t(j=n_basis,v=1.0_rk), &
+                                      & value_1d_t(j=0,v=0.0_rk)])
       end do
     else
       ! Coefficients below Basis(1) are all 1.0
@@ -90,8 +90,8 @@
         if ( grid(i) > basis(1) ) exit
   !       eta(i) = value_1D_list_t(rk)(n=1,v=[value_1d_t(rk)(n=1,v=1.0_rk), &
   !                                         & value_1d_t(rk)(n=0,v=0.0_rk)])
-        eta(i) = value_1D_list_t(n=1,v=[value_1d_t(n=1,v=1.0_rk), &
-                                      & value_1d_t(n=0,v=0.0_rk)])
+        eta(i) = value_1D_list_t(n=1,v=[value_1d_t(j=1,v=1.0_rk), &
+                                      & value_1d_t(j=0,v=0.0_rk)])
       end do
       ! Coefficients between Basis(1) and Basis(n_basis) are "hat" functions
       do j = 2, n_basis
@@ -103,14 +103,14 @@
   !             v=[value_1d_t(rk)(n=j-1,v=(basis(j)-grid(i)) * del_basis), &
   !              & value_1d_t(rk)(n=j,v=(grid(i)-basis(j-1)) * del_basis) ] )
             eta(i) = value_1D_list_t(n=2, &
-              v=[value_1d_t(n=j-1,v=(basis(j)-grid(i)) * del_basis), &
-               & value_1d_t(n=j,v=(grid(i)-basis(j-1)) * del_basis) ] )
+              v=[value_1d_t(j=j-1,v=(basis(j)-grid(i)) * del_basis), &
+               & value_1d_t(j=j,v=(grid(i)-basis(j-1)) * del_basis) ] )
             if ( eta(i)%v(1)%v == 0.0 ) & ! eta(i)%v(2)%v cannot be zero because
                                           ! basis(j-1) < grid(i)
 !               & eta(i) = value_1D_list_t(rk)(n=1, &
 !                 & v=[eta(i)%v(2),value_1d_t(rk)(n=0,v=0.0_rk)])
               & eta(i) = value_1D_list_t(n=1, &
-                & v=[eta(i)%v(2),value_1d_t(n=0,v=0.0_rk)])
+                & v=[eta(i)%v(2),value_1d_t(j=0,v=0.0_rk)])
           end if
           i = i - 1
         end do
@@ -120,8 +120,8 @@
         if ( basis(n_basis) > grid(i) ) exit
   !       eta(i) = value_1D_list_t(rk)(n=1,v=[value_1d_t(rk)(n=n_basis,v=1.0_rk), &
   !                                         & value_1d_t(rk)(n=0,v=0.0_rk)])
-        eta(i) = value_1D_list_t(n=1,v=[value_1d_t(n=n_basis,v=1.0_rk), &
-                                      & value_1d_t(n=0,v=0.0_rk)])
+        eta(i) = value_1D_list_t(n=1,v=[value_1d_t(j=n_basis,v=1.0_rk), &
+                                      & value_1d_t(j=0,v=0.0_rk)])
       end do
     end if
   else ! Grid needs to be sorted
@@ -140,8 +140,8 @@
         if ( grid(ip) > basis(1) ) exit
 !         eta(ip) = value_1D_list_t(rk)(n=1,v=[value_1d_t(rk)(n=1,v=1.0_rk), &
 !                                     & value_1d_t(rk)(n=0,v=0.0_rk)])
-        eta(ip) = value_1D_list_t(n=1,v=[value_1d_t(n=1,v=1.0_rk), &
-                                & value_1d_t(n=0,v=0.0_rk)])
+        eta(ip) = value_1D_list_t(n=1,v=[value_1d_t(j=1,v=1.0_rk), &
+                                & value_1d_t(j=0,v=0.0_rk)])
       end do
       ! Coefficients between Basis(1) and Basis(n_basis) are "hat" functions
       do j = 2, n_basis
@@ -154,14 +154,14 @@
 !               v=[value_1d_t(rk)(n=j-1,v=(basis(j)-grid(ip)) * del_basis), &
 !                & value_1d_t(rk)(n=j,v=(grid(ip)-basis(j-1)) * del_basis) ] )
             eta(ip) = value_1D_list_t(n=2, &
-              v=[value_1d_t(n=j-1,v=(basis(j)-grid(ip)) * del_basis), &
-               & value_1d_t(n=j,v=(grid(ip)-basis(j-1)) * del_basis) ] )
+              v=[value_1d_t(j=j-1,v=(basis(j)-grid(ip)) * del_basis), &
+               & value_1d_t(j=j,v=(grid(ip)-basis(j-1)) * del_basis) ] )
             if ( eta(ip)%v(1)%v == 0.0 ) & ! eta(i)%v(2)%v cannot be zero because
                                           ! basis(j-1) < grid(i)
 !               & eta(ip) = value_1D_list_t(rk)(n=1, &
 !                 & v=[eta(ip)%v(2),value_1d_t(rk)(n=0,v=0.0_rk)])
               & eta(ip) = value_1D_list_t(n=1, &
-                & v=[eta(ip)%v(2),value_1d_t(n=0,v=0.0_rk)])
+                & v=[eta(ip)%v(2),value_1d_t(j=0,v=0.0_rk)])
           end if
           i = i + 1
         end do
@@ -172,8 +172,8 @@
         if ( basis(n_basis) >= grid(ip) ) exit
 !         eta(ip) = value_1D_list_t(rk)(n=1,v=[value_1d_t(rk)(n=n_basis,v=1.0_rk), &
 !                                     & value_1d_t(rk)(n=0,v=0.0_rk)])
-        eta(ip) = value_1D_list_t(n=1,v=[value_1d_t(n=n_basis,v=1.0_rk), &
-                                & value_1d_t(n=0,v=0.0_rk)])
+        eta(ip) = value_1D_list_t(n=1,v=[value_1d_t(j=n_basis,v=1.0_rk), &
+                                & value_1d_t(j=0,v=0.0_rk)])
       end do
     end block
   end if
@@ -185,6 +185,9 @@
   end if
 
 ! $Log$
+! Revision 2.9  2017/08/28 20:27:47  livesey
+! Changed the n,nf,np,nz elements to j,jf,...
+!
 ! Revision 2.8  2017/08/09 19:51:15  vsnyder
 ! Spiff some comments
 !
