@@ -375,7 +375,7 @@ contains
 !                                     & coeff=value_QTM_1D_List_t(rg)(n_h) )
                                     & coeff=value_QTM_1D_List_t(n_h) )
             outside(n_out)%coeff%v(:n_h)%v = eta(:n_h)
-            outside(n_out)%coeff%v(:n_h)%n = ser(:n_h)
+            outside(n_out)%coeff%v(:n_h)%j = ser(:n_h)
           end if
         end do
       end do
@@ -468,7 +468,7 @@ contains
                              & face=top_face, h_ind=j, &
 !                              & coeff=value_QTM_1D_List_t(rg)() )
                              & coeff=value_QTM_1D_List_t(n=3) )
-              top_int(n_top)%coeff%v%n = qtm_tree%q(f)%ser
+              top_int(n_top)%coeff%v%j = qtm_tree%q(f)%ser
               do l = 1, 3 ! Compute horizontal interpolation coefficients.
                           ! Use normalized geocentric angular distances.
                           ! C and CC are temporary variables here
@@ -545,7 +545,7 @@ contains
             cone_int(n_cone)%h = geo%v
             cone_int(n_cone)%face = cone_face
             cone_int(n_cone)%coeff%n=2
-            cone_int(n_cone)%coeff%v(:2)%n = qtm_tree%q(f)%ser([s1,s2])
+            cone_int(n_cone)%coeff%v(:2)%j = qtm_tree%q(f)%ser([s1,s2])
             cone_int(n_cone)%coeff%v(:2)%v = eta_h
            end if
         end do
@@ -662,6 +662,9 @@ contains
 end module Metrics_3D_m
 
 ! $Log$
+! Revision 2.11  2017/08/28 20:28:08  livesey
+! Changed the n,nf,np,nz elements to j,jf,...
+!
 ! Revision 2.10  2016/11/23 00:12:28  vsnyder
 ! Use types from Indexed_Values_m.
 !
