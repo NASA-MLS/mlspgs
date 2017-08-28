@@ -39,7 +39,7 @@
       if ( grid(i) > basis(1) ) exit
       n = n + 1
 !       eta(n) = value_1D_p_t(rk)(v=1.0_rk, n=1, p=i)
-      eta(n) = value_1D_p_t(v=1.0_rk, n=1, p=i)
+      eta(n) = value_1D_p_t(v=1.0_rk, j=1, p=i)
     end do
     ! Coefficients between Basis(1) and Basis(n_basis) are "hat" functions
     do j = 2, n_basis
@@ -53,7 +53,7 @@
             if ( v(k) /= 0.0 ) then
               n = n + 1
 !               eta(n) = value_1D_p_t(rk)(v=v(k), n=j+k-2, p=i )
-              eta(n) = value_1D_p_t(v=v(k), n=j+k-2, p=i )
+              eta(n) = value_1D_p_t(v=v(k), j=j+k-2, p=i )
             end if
           end do
         end if
@@ -65,7 +65,7 @@
       if ( basis(n_basis) >= grid(i) ) exit
       n = n + 1
 !       eta(n) = value_1D_p_t(rk)(v=1.0_rk, n=n_basis, p=i)
-      eta(n) = value_1D_p_t(v=1.0_rk, n=n_basis, p=i)
+      eta(n) = value_1D_p_t(v=1.0_rk, j=n_basis, p=i)
     end do
   else
     block
@@ -77,7 +77,7 @@
         if ( grid(i) > basis(1) ) exit
         n = n + 1
 !         eta(n) = value_1D_p_t(rk)(v=1.0_rk, n=p(1), p=i)
-        eta(n) = value_1D_p_t(v=1.0_rk, n=p(1), p=i)
+        eta(n) = value_1D_p_t(v=1.0_rk, j=p(1), p=i)
       end do
       ! Coefficients between Basis(1) and Basis(n_basis) are "hat" functions
       do j = 2, n_basis
@@ -91,7 +91,7 @@
               if ( v(k) /= 0.0 ) then
                 n = n + 1
 !                 eta(n) = value_1D_p_t(rk)(v=v(k), n=p(j+k-2), p=i )
-                eta(n) = value_1D_p_t(v=v(k), n=p(j+k-2), p=i )
+                eta(n) = value_1D_p_t(v=v(k), j=p(j+k-2), p=i )
               end if
             end do
           end if
@@ -103,12 +103,15 @@
         if ( basis(n_basis) >= grid(i) ) exit
         n = n + 1
 !         eta(n) = value_1D_p_t(rk)(v=1.0_rk, n=p(n_basis), p=i)
-        eta(n) = value_1D_p_t(v=1.0_rk, n=p(n_basis), p=i)
+        eta(n) = value_1D_p_t(v=1.0_rk, j=p(n_basis), p=i)
       end do
     end block
   end if
 
 ! $Log$
+! Revision 2.2  2017/08/28 20:27:47  livesey
+! Changed the n,nf,np,nz elements to j,jf,...
+!
 ! Revision 2.1  2016/12/02 01:55:26  vsnyder
 ! Initial commit
 !
