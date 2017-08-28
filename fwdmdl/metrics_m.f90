@@ -971,11 +971,11 @@ path: do i = i1, i2
       ddHtdHtdTl0_2 = 0
       ! Now fill the places that have nonzero Phi interpolating coefficients
       do i = 1, z_coeffs
-        dHtdTl0_2(i,eta_p(n_tan)%v(:eta_p(n_tan)%n)%n) = &
-          dHidTlm(tan_ind,i,eta_p(n_tan)%v(:eta_p(n_tan)%n)%n) * &
+        dHtdTl0_2(i,eta_p(n_tan)%v(:eta_p(n_tan)%n)%j) = &
+          dHidTlm(tan_ind,i,eta_p(n_tan)%v(:eta_p(n_tan)%n)%j) * &
             eta_p(n_tan)%v(:eta_p(n_tan)%n)%v
-        ddHtdHtdTl0_2(i,eta_p(n_tan)%v(:eta_p(n_tan)%n)%n) = &
-          ddHidHidTl0(tan_ind,i,eta_p(n_tan)%v(:eta_p(n_tan)%n)%n) * &
+        ddHtdHtdTl0_2(i,eta_p(n_tan)%v(:eta_p(n_tan)%n)%j) = &
+          ddHidHidTl0(tan_ind,i,eta_p(n_tan)%v(:eta_p(n_tan)%n)%j) * &
             eta_p(n_tan)%v(:eta_p(n_tan)%n)%v
       end do
 
@@ -997,7 +997,7 @@ path: do i = i1, i2
       do i = 1, n_path
         change = .false.
         do j = 1, eta_p(i)%n ! At most two nonzero coefficients
-          sv_p = eta_p(i)%v(j)%n
+          sv_p = eta_p(i)%v(j)%j
           do sv_z = 1, z_coeffs
             sv_t = element_position ( two_subs, two_d_bounds )
 !           sv_t = element_position ( [ sv_z, sv_p ], [ z_coeffs, p_coeffs ] )
@@ -1016,7 +1016,7 @@ path: do i = i1, i2
           ws = t_sv%windowStart(1)
           do j = 1, k ! At most four values to check
             ! L4 is associated with Deriv_Flags
-            if ( .not. t_sv%c(1)%l4(1,eta_zp(i)%v(j)%n,ws+eta_zp(i)%v(j)%np-1,1) ) &
+            if ( .not. t_sv%c(1)%l4(1,eta_zp(i)%v(j)%j,ws+eta_zp(i)%v(j)%jp-1,1) ) &
               & eta_zp(i)%v(j)%v = 0
           end do
           eta_zp(i)%n = count(eta_zp(i)%v(1:k)%v/=0)
@@ -1157,6 +1157,11 @@ call get_eta_do_calc ( eta_zp(1:n_path), two_d_bounds, eta_zxp, do_calc_t, nz_zx
 end module Metrics_m
 
 ! $Log$
+! Revision 2.81  2017/07/26 20:05:22  vsnyder
+! When the L4 component of Grids_t is constructed, the low bound for the
+! first subscript is WindowStart, not 1.  That needs to be considered when
+! looking at L4.
+!
 ! Revision 2.80  2017/03/11 00:56:05  vsnyder
 ! Use list interpolation in More_Metrics, cosmetic changes
 !

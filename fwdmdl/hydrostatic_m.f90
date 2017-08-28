@@ -550,13 +550,13 @@ module Hydrostatic_m
         type is ( value_1d_p_t )
           do k = 1, size(eta_zz)
             i = eta_zz(k)%p
-            j = eta_zz(k)%n
+            j = eta_zz(k)%j
             ddHdHdTq(i,j) = ddHdHdTq(i,j) + eta_zz(k)%v / t_grid(i)
           end do
         type is ( value_1d_list_t )
           do k = 1, size(eta_zz) ! Assumed to be same size as T_Grid
             do i = 1, eta_zz(k)%n
-              j = eta_zz(k)%v(i)%n
+              j = eta_zz(k)%v(i)%j
               ddHdHdTq(k,j) = ddHdHdTq(k,j) + eta_zz(k)%v(i)%v / t_grid(k)
             end do
           end do
@@ -778,6 +778,9 @@ module Hydrostatic_m
 end module Hydrostatic_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.30  2017/01/14 02:57:11  vsnyder
+! Make Eta_ZZ polymorphic
+!
 ! Revision 2.29  2016/12/02 02:04:50  vsnyder
 ! Use 'P' Eta list for Eta_ZZ
 !
