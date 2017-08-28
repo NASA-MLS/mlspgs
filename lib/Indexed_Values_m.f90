@@ -58,14 +58,14 @@ module Indexed_Values_m
   type :: Value_1D_t ! ( RK )
 !     integer, kind :: RK
     real(rk) :: V = 0.0    ! Value to be applied at N
-    integer :: N = 0       ! Subscript at which to apply V
+    integer :: J = 0       ! Subscript at which to apply V
   end type Value_1D_t
 
   ! For one interpolation weight from a 1D array to a 1D array
   type, extends(Value_List) :: Value_1D_p_t ! ( RK )
 !     integer, kind :: RK
     real(rk) :: V = 0.0    ! Value to be applied at N
-    integer :: N = 0       ! Subscript at which to apply V
+    integer :: J = 0       ! Subscript at which to apply V
     integer :: P = 0       ! Subscript at which interpolated value accumulates
   end type Value_1D_p_t
 
@@ -81,8 +81,8 @@ module Indexed_Values_m
   ! an array of profiles adjacent to an integration path, e.g., in Grids_t.
   type, extends(value_1D_t) :: Value_QTM_1D_t
   ! real(rk) :: V = 0.0    ! Value to be applied at N or NP
-  ! integer :: N = 0       ! Index in QTM at which to apply V
-    integer :: NP = 0      ! Index of path-adjacent part of QTM at which to
+  ! integer :: J = 0       ! Index in QTM at which to apply V
+    integer :: JP = 0      ! Index of path-adjacent part of QTM at which to
                            ! apply V, e.g., in Grids_t.  This is intentionally
                            ! the same name as the second (probably Phi) subscript
                            ! in Value_2D_t so that Interpolate_2D_List.f9h can be
@@ -103,8 +103,8 @@ module Indexed_Values_m
   ! as a state vector.
   type, extends(value_1D_t) :: Value_2D_t
   ! real(rk) :: V = 0.0    ! Value to be applied at N or NP
-  ! integer :: N = 0       ! First (probably zeta) subscript at which to apply V
-    integer :: NP = 0      ! Second (probably phi) subscript at which to apply V
+  ! integer :: J = 0       ! First (probably zeta) subscript at which to apply V
+    integer :: JP = 0      ! Second (probably phi) subscript at which to apply V
   end type Value_2D_t
 
   ! For interpolating to a list (probably an integration path) from a two-
@@ -121,9 +121,9 @@ module Indexed_Values_m
   ! such as a state vector.
   type, extends(value_2D_t) :: Value_3D_t
   ! real(rk) :: V = 0.0    ! Value to be applied at N or NP
-  ! integer :: N = 0       ! Second (probably zeta) subscript at which to apply V
-  ! integer :: NP = 0      ! Third (probably phi) subscript at which to apply V
-    integer :: NF = 0      ! First (probaly frequency) subscript at which to apply V
+  ! integer :: J = 0       ! Second (probably zeta) subscript at which to apply V
+  ! integer :: JP = 0      ! Third (probably phi) subscript at which to apply V
+    integer :: JF = 0      ! First (probaly frequency) subscript at which to apply V
   end type Value_3D_t
 
   ! For interpolating to a list (probably an integration path) from a three-
@@ -141,13 +141,13 @@ module Indexed_Values_m
   ! at each vertex.
   type, extends(value_QTM_1D_t) :: Value_QTM_2D_t
   ! real(rk) :: V = 0.0    ! Value to be applied at (NZ, N or NP)
-  ! integer :: N = 0       ! Index in QTM at which to apply V
-  ! integer :: NP = 0      ! Index of path-adjacent part of QTM at which to
+  ! integer :: J = 0       ! Index in QTM at which to apply V
+  ! integer :: JP = 0      ! Index of path-adjacent part of QTM at which to
                            ! apply V, e.g., in Grids_t.  This is intentionally
                            ! the same name as the second (probably Phi) subscript
                            ! in Value_2D_t so that Interpolate_2D_List.f9h can be
                            ! used for both interpolations.
-    integer :: NZ = 0      ! Vertical (probably zeta) index
+    integer :: JZ = 0      ! Vertical (probably zeta) index
   end type Value_QTM_2D_t
 
   ! For interpolating to a list (probably an integration path) from a QTM,
@@ -164,15 +164,15 @@ module Indexed_Values_m
   ! an array of profiles adjacent to an integration path, with a zeta basis
   ! and a frequency basis at each vertex.
   type, extends(value_QTM_2D_t) :: Value_QTM_3D_t
-  ! real(rk) :: V = 0.0    ! Value to be applied at (NF, NZ, N or NP)
-  ! integer :: N = 0       ! Index in QTM at which to apply V
-  ! integer :: NP = 0      ! Index of path-adjacent part of QTM at which to
+  ! real(rk) :: V = 0.0    ! Value to be applied at (JF, JZ, J or JP)
+  ! integer :: J = 0       ! Index in QTM at which to apply V
+  ! integer :: JP = 0      ! Index of path-adjacent part of QTM at which to
                            ! apply V, e.g., in Grids_t.  This is intentionally
                            ! the same name as the second (probably Phi) subscript
                            ! in Value_2D_t so that Interpolate_2D_List.f9h can be
                            ! used for both interpolations.
-  ! integer :: NZ = 0      ! Vertical (probably zeta) index
-    integer :: NF = 0      ! Frequency subscript
+  ! integer :: JZ = 0      ! Vertical (probably zeta) index
+    integer :: JF = 0      ! Frequency subscript
   end type Value_QTM_3D_t
 
   ! For interpolating to a list (probably an integration path) from a QTM,
@@ -288,9 +288,9 @@ contains
       do j = 1, from(i)%n
         n = n + 1
         if ( myPath ) then
-          to(n) = value_1D_p_t(v=from(i)%v(j)%v, n=from(i)%v(j)%np, p=i )
+          to(n) = value_1D_p_t(v=from(i)%v(j)%v, j=from(i)%v(j)%jp, p=i )
         else
-          to(n) = value_1D_p_t(v=from(i)%v(j)%v, n=from(i)%v(j)%n, p=i )
+          to(n) = value_1D_p_t(v=from(i)%v(j)%v, j=from(i)%v(j)%j, p=i )
         end if
       end do
     end do
@@ -302,7 +302,7 @@ contains
     real(rk) :: Dot
 !     integer :: I
 !     dot = sum ( vector(list%v(:list%n)%n) * list%v(:list%n)%v )
-    dot = dot_product ( vector(list%v(:list%n)%n), list%v(:list%n)%v )
+    dot = dot_product ( vector(list%v(:list%n)%j), list%v(:list%n)%v )
 !     dot = 0.0
 !     do i = 1, list%n
 !       if ( list%v(i)%n /= 0 ) dot = dot + vector(list%v(i)%n) * list%v(i)%v
@@ -499,7 +499,7 @@ contains
     integer, intent(in) :: N_Basis
     integer :: I
     do i = 1, size(eta)
-      eta(i)%v%n = n_basis + 1 - eta(i)%v%n
+      eta(i)%v%j = n_basis + 1 - eta(i)%v%j
     end do
   end subroutine Invert_1D_List_Index
 
@@ -517,6 +517,9 @@ contains
 end module Indexed_Values_m
 
 ! $Log$
+! Revision 2.14  2017/08/28 20:27:47  livesey
+! Changed the n,nf,np,nz elements to j,jf,...
+!
 ! Revision 2.13  2017/08/09 20:32:48  vsnyder
 ! Add commented-out version of Dot_Product_1D that checks for zero
 ! subscripts, in case we can't find where the zeros come from.
