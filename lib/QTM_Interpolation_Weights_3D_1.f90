@@ -77,7 +77,7 @@ contains
     ! Fill the nonzeroes locators (matrix%r2 and matrix%r1) and the values
     do i = 1, nCols
       do j = 1, weights(i)%n
-        matrix%r2(nVal+1:nVal+j) = weights(i)%v(j)%n
+        matrix%r2(nVal+1:nVal+j) = weights(i)%v(j)%j
         matrix%value1(nVal+1:nVal+j) = weights(i)%v(j)%v
       end do
       nVal = nVal + weights(i)%n
@@ -180,6 +180,9 @@ contains
 end module QTM_Interpolation_Weights_3D_1
 
 ! $Log$
+! Revision 2.5  2017/08/28 20:27:47  livesey
+! Changed the n,nf,np,nz elements to j,jf,...
+!
 ! Revision 2.4  2016/11/23 00:10:47  vsnyder
 ! Use types from Indexed_Values_m instead of Weights_ZQ_t
 !
