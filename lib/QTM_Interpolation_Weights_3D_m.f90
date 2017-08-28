@@ -137,42 +137,42 @@ contains
 
     ! Combine horizontal and vertical interpolation coefficients
     if ( index == 0 ) then
-      weights%v(4:6)%n = 0 ! Constant vertical extrapolation below Heights(:)
+      weights%v(4:6)%j = 0 ! Constant vertical extrapolation below Heights(:)
     else if ( index >= size(heights) ) then
       do j = 1, 3
-        weights%v(j)%nz = size(heights)
+        weights%v(j)%jz = size(heights)
       end do
-      weights%v(4:6)%n = 0 ! Constant vertical extrapolation above Heights(:)
+      weights%v(4:6)%j = 0 ! Constant vertical extrapolation above Heights(:)
     else
       dH = heights(index+1) - heights(index)
       if ( dH == 0 ) then ! shouldn't happen if Heights(:) are distinct
-        weights%v(4:6)%n = 0 ! Don't use points other than at Height Index
+        weights%v(4:6)%j = 0 ! Don't use points other than at Height Index
       else
         w = ( heights(index+1) - point%v ) / dh
         if ( w == 1.0_rg ) then
           do j = 1, 3
-            weights%v(j)%nz = index
+            weights%v(j)%jz = index
           end do
-          weights%v(4:6)%n = 0 ! Don't use points other than at Height Index
+          weights%v(4:6)%j = 0 ! Don't use points other than at Height Index
         else if ( w == 0.0_rg ) then
           do j = 1, 3
-            weights%v(j)%nz = index + 1
+            weights%v(j)%jz = index + 1
           end do
-          weights%v(4:6)%n = 0 ! Don't use points other than at Height Index + 1
+          weights%v(4:6)%j = 0 ! Don't use points other than at Height Index + 1
         else
           weights%v(4:6)%v = weights%v(1:3)%v * ( 1.0_rg - w )
           weights%v(1:3)%v = weights%v(1:3)%v * w
           do j = 1, 3
-            weights%v(j+3)%nz = index + 1
-            weights%v(j)%nz = index
+            weights%v(j+3)%jz = index + 1
+            weights%v(j)%jz = index
           end do
         end if
       end if
     end if
 
-    where ( weights%v%v == 0 ) weights%v%n = 0
-    weights%n = count ( weights%v%n /= 0 ) 
-    weights%v = pack ( weights%v,weights%v%n /= 0 )
+    where ( weights%v%v == 0 ) weights%v%j = 0
+    weights%n = count ( weights%v%j /= 0 ) 
+    weights%v = pack ( weights%v,weights%v%j /= 0 )
 !     weights%v(weights%n+1:) = value_QTM_2D_t(rg)(0,0,0,0)
     weights%v(weights%n+1:) = value_QTM_2D_t(0,0,0,0)
 
@@ -213,7 +213,7 @@ contains
     if ( size(heights,2) == 1 ) then ! Coherent heights
       call QTM_Interpolation_Weights ( QTM_Tree, Heights(:,1), &
                                      & Point, Weights, Facet, Stack, Used )
-      weights%v%np = 1
+      weights%v%jp = 1
       return
     end if
 
@@ -222,14 +222,14 @@ contains
       & Stack, Used )
 
     ! Default is constant vertical extrapolation outside range of Heights(:)
-    weights%v(4:6)%n = 0
+    weights%v(4:6)%j = 0
     ! Get vertical interpolation coefficients
     do p = 1, 3
       index = 0
-      s = weights%v(p)%n
+      s = weights%v(p)%j
       if ( s /= 0 ) then
         s = QTM_tree%path_vertices(s)
-        weights%v(p)%np = s
+        weights%v(p)%jp = s
         call hunt ( heights(:,s), point%v, index, &
                   & allowTopValue=.true., allowBelowValue = .true. )
       end if
@@ -238,31 +238,31 @@ contains
       if ( index /= 0 ) then
         dH = heights(index+1,s) - heights(index,s)
         if ( dH == 0 ) then ! shouldn't happen if Heights(:) are distinct
-          weights%v(p+3)%n = 0 ! Don't use points other than at Height Index
-          weights%v(p+3)%nz = 0
+          weights%v(p+3)%j = 0 ! Don't use points other than at Height Index
+          weights%v(p+3)%jz = 0
         else
           w = ( heights(index+1,p) - point%v ) / dh
           if ( w == 1.0_rg ) then
-            weights%v(p)%nz = index
+            weights%v(p)%jz = index
           else if ( w == 0.0_rg ) then
-            weights%v(p)%nz = index+1
+            weights%v(p)%jz = index+1
           else
             ! Same horizontal coefficients at both levels
-            weights%v(p+3)%n = weights%v(p)%n
-            weights%v(p+3)%np = weights%v(p)%np
+            weights%v(p+3)%j = weights%v(p)%j
+            weights%v(p+3)%jp = weights%v(p)%jp
             weights%v(p+3)%v = weights%v(p)%v * ( 1.0_rg - w )
             weights%v(p)%v = weights%v(p)%v * w
-            weights%v(p+3)%nz = index + 1
-            weights%v(p)%nz =index
+            weights%v(p+3)%jz = index + 1
+            weights%v(p)%jz =index
           end if
         end if
       end if
 
     end do ! p
 
-    where ( weights%v%v == 0 ) weights%v%n = 0 ! Don't use zero weights
-    weights%n = count ( weights%v%n /= 0 )
-    weights%v = pack ( weights%v,weights%v%n /= 0 )
+    where ( weights%v%v == 0 ) weights%v%j = 0 ! Don't use zero weights
+    weights%n = count ( weights%v%j /= 0 )
+    weights%v = pack ( weights%v,weights%v%j /= 0 )
 !     weights%v(weights%n+1:) = value_QTM_2D_t(rg)(0,0,0,0)
     weights%v(weights%n+1:) = value_QTM_2D_t(0,0,0,0)
 
@@ -317,7 +317,7 @@ contains
         ! Interpolate in height at the X and Y, X and P, or Y and P nodes
         ! of the QTM.
         jlo = 1; jhi = nh
-        np(1:2) = QTM_tree%path_vertices(points(i)%coeff%v(1:2)%n)
+        np(1:2) = QTM_tree%path_vertices(points(i)%coeff%v(1:2)%j)
         call weight_1d ( heights(:,np(1)), g%v, jlo, jhi, w(:,1) )
         call weight_1d ( heights(:,np(2)), g%v, jlo, jhi, w(:,2) )
         ! Assume that it's extremely rare to hit a vertex, so compute four
@@ -325,11 +325,11 @@ contains
         weights(i)%v%v = [ w(:,1)*points(i)%coeff%v(1)%v, &
                          & w(:,2)*points(i)%coeff%v(2)%v, &
                          & 0.0_rg, 0.0_rg ]
-        weights(i)%v%n = &
-          & [ points(i)%coeff%v(1)%n, points(i)%coeff%v(1)%n, &
-            & points(i)%coeff%v(2)%n, points(i)%coeff%v(2)%n, 0, 0 ]
-        weights(i)%v%np = [ np(1), np(1), np(2), np(2), 0, 0 ]
-        weights(i)%v%nz = [ jlo, jhi, jlo, jhi, 0, 0 ]
+        weights(i)%v%j = &
+          & [ points(i)%coeff%v(1)%j, points(i)%coeff%v(1)%j, &
+            & points(i)%coeff%v(2)%j, points(i)%coeff%v(2)%j, 0, 0 ]
+        weights(i)%v%jp = [ np(1), np(1), np(2), np(2), 0, 0 ]
+        weights(i)%v%jz = [ jlo, jhi, jlo, jhi, 0, 0 ]
 
       case ( inside_prism ) ! Use the general method
         call QTM_interpolation_weights ( QTM_tree, heights, g, weights(i) )
@@ -337,20 +337,20 @@ contains
         ! Get the two vertical interpolation weights
         do j = 1, 3
           jlo = 1; jhi = nh
-          np(j) = QTM_tree%path_vertices(points(i)%coeff%v(j)%n)
+          np(j) = QTM_tree%path_vertices(points(i)%coeff%v(j)%j)
           call weight_1d ( heights(:,np(j)), points(i)%h, jlo, jhi, w(:,1) )
           ! Compute the outer product of the vertical and horizontal
           ! interpolation coefficients
           weights(i)%v(2*j-1:2*j)%v = w(:,1)*points(i)%coeff%v(j)%v
-          weights(i)%v(2*j-1:2*j)%n = points(i)%coeff%v(j)%n
-          weights(i)%v(2*j-1:2*j)%np = np(j)
-          weights(i)%v(2*j-1:2*j)%nz = [ jlo, jhi ]
+          weights(i)%v(2*j-1:2*j)%j = points(i)%coeff%v(j)%j
+          weights(i)%v(2*j-1:2*j)%jp = np(j)
+          weights(i)%v(2*j-1:2*j)%jz = [ jlo, jhi ]
         end do
       end select
 
-      where ( weights(i)%v%v == 0 ) weights(i)%v%n = 0 ! Don't use zero weights(i)
-      weights(i)%n = count ( weights(i)%v%n /= 0 )
-      weights(i)%v = pack ( weights(i)%v,weights(i)%v%n /= 0 )
+      where ( weights(i)%v%v == 0 ) weights(i)%v%j = 0 ! Don't use zero weights(i)
+      weights(i)%n = count ( weights(i)%v%j /= 0 )
+      weights(i)%v = pack ( weights(i)%v,weights(i)%v%j /= 0 )
 !       weights(i)%v(weights(i)%n+1:) = value_QTM_2D_t(rg)(0,0,0,0)
       weights(i)%v(weights(i)%n+1:) = value_QTM_2D_t(0,0,0,0)
 
@@ -398,53 +398,53 @@ contains
       ! Get horizontal interpolation weights; serial numbers are gotten later
       weights(i)%v(1:3)%v = points(i)%coeff%v%v
       ! Default is constant vertical extrapolation outside range of Heights(:)
-      weights(i)%v(4:6)%n = 0
+      weights(i)%v(4:6)%j = 0
       do p = 1, 3
         index = 0
-        s = weights(i)%v(p)%n
+        s = weights(i)%v(p)%j
         if ( s /= 0 ) then
           np = QTM_tree%path_vertices(s)
-          weights(i)%v(p)%np = np
-          weights(i)%v(p+3)%np = np
+          weights(i)%v(p)%jp = np
+          weights(i)%v(p+3)%jp = np
           ! Get vertical interpolation indices
           call hunt ( heights(:,np), path_heights(i), index, &             
                     & allowTopValue=.true., allowBelowValue = .true. )
         end if
         ! Combine horizontal and vertical interpolation coefficients
         if ( index == 0 ) then !   below range of Heights(:)
-          weights(i)%v(p)%nz = 1 ! Constant vertical extrapolation
+          weights(i)%v(p)%jz = 1 ! Constant vertical extrapolation
         else if ( index >= size(heights,1) ) then
-          weights(i)%v(p)%nz = size(heights,1) ! Constant vertical extrapolation
+          weights(i)%v(p)%jz = size(heights,1) ! Constant vertical extrapolation
         else
           dH = heights(index+1,np) - heights(index,np)
           if ( dH == 0 ) then ! shouldn't happen if Heights(:) are distinct
-            weights(i)%v(p)%nz = index
+            weights(i)%v(p)%jz = index
           else
             w = ( heights(index+1,np) - path_heights(i) ) / dh
             if ( w == 1.0_rg ) then
-              weights(i)%v(p)%nz = index
+              weights(i)%v(p)%jz = index
             else if ( w == 0.0_rg ) then
-              weights(i)%v(p)%nz = index+1
+              weights(i)%v(p)%jz = index+1
             else
               v = weights(i)%v(p)%v
               weights(i)%v(p) = &
 !                 & value_QTM_2D_t(rg) ( n = points(i)%coeff%v(p)%n, np = np, &
-                & value_QTM_2D_t ( n = points(i)%coeff%v(p)%n, np = np, &
-                                     & nz = index, &
+                & value_QTM_2D_t ( j = points(i)%coeff%v(p)%j, jp = np, &
+                                     & jz = index, &
                                      & v = v * ( 1.0_rg - w ) )
               weights(i)%v(p+3) = &
 !                 & value_QTM_2D_t(rg) ( n = points(i)%coeff%v(p)%n, np = np, &
-                & value_QTM_2D_t ( n = points(i)%coeff%v(p)%n, np = np, &
-                                     & nz = index + 1, v = v * w )
+                & value_QTM_2D_t ( j = points(i)%coeff%v(p)%j, jp = np, &
+                                     & jz = index + 1, v = v * w )
             end if
           end if
         end if
 
       end do ! p
 
-      where ( weights(i)%v%v == 0 ) weights(i)%v%n = 0
-      weights(i)%n = count ( weights(i)%v%n /= 0 ) 
-      weights(i)%v = pack ( weights(i)%v,weights(i)%v%n /= 0 )
+      where ( weights(i)%v%v == 0 ) weights(i)%v%j = 0
+      weights(i)%n = count ( weights(i)%v%j /= 0 ) 
+      weights(i)%v = pack ( weights(i)%v,weights(i)%v%j /= 0 )
 !       weights(i)%v(weights(i)%n+1:6) = value_QTM_2D_t(rg)(0,0,0,0)
       weights(i)%v(weights(i)%n+1:6) = value_QTM_2D_t(0,0,0,0)
 
@@ -502,11 +502,11 @@ contains
         ! interpolation coefficients
         weights(i)%v(1:6)%v = [ w*points(i)%coeff%v(1)%v, &
                               & w*points(i)%coeff%v(2)%v, 0.0_rg, 0.0_rg ]
-        weights(i)%v(1:6)%n = &
-          & [ points(i)%coeff%v(1)%n, points(i)%coeff%v(1)%n, &
-            & points(i)%coeff%v(2)%n, points(i)%coeff%v(2)%n, 0, 0 ]
-        weights(i)%v(1:6)%np = [ QTM_tree%path_vertices(weights(i)%v(1:4)%n), 0, 0 ]
-        weights(i)%v(1:6)%nz = [ jlo, jhi, jlo, jhi, 0, 0 ]
+        weights(i)%v(1:6)%j = &
+          & [ points(i)%coeff%v(1)%j, points(i)%coeff%v(1)%j, &
+            & points(i)%coeff%v(2)%j, points(i)%coeff%v(2)%j, 0, 0 ]
+        weights(i)%v(1:6)%jp = [ QTM_tree%path_vertices(weights(i)%v(1:4)%j), 0, 0 ]
+        weights(i)%v(1:6)%jz = [ jlo, jhi, jlo, jhi, 0, 0 ]
       case ( inside_prism ) ! Use the general method
         call QTM_interpolation_weights ( QTM_tree, heights, g, weights(i) )
       case ( top_face )
@@ -519,18 +519,18 @@ contains
         weights(i)%v(1:6)%v = [ w*points(i)%coeff%v(1)%v, &
                               & w*points(i)%coeff%v(2)%v, &
                               & w*points(i)%coeff%v(3)%v ]
-        weights(i)%v(1:6)%n = &
-          & [ points(i)%coeff%v(1)%n, points(i)%coeff%v(1)%n, &
-            & points(i)%coeff%v(2)%n, points(i)%coeff%v(2)%n, &
-            & points(i)%coeff%v(3)%n, points(i)%coeff%v(3)%n ]
-        weights(i)%v(1:6)%np = QTM_tree%path_vertices(weights(i)%v(1:6)%n)
-        weights(i)%v(1:6)%nz = [ jlo, jhi, jlo, jhi, jlo, jhi ]
+        weights(i)%v(1:6)%j = &
+          & [ points(i)%coeff%v(1)%j, points(i)%coeff%v(1)%j, &
+            & points(i)%coeff%v(2)%j, points(i)%coeff%v(2)%j, &
+            & points(i)%coeff%v(3)%j, points(i)%coeff%v(3)%j ]
+        weights(i)%v(1:6)%jp = QTM_tree%path_vertices(weights(i)%v(1:6)%j)
+        weights(i)%v(1:6)%jz = [ jlo, jhi, jlo, jhi, jlo, jhi ]
       end select
 
-      where ( weights(i)%v%v == 0 ) weights(i)%v%n = 0
-      weights(i)%n = count ( weights(i)%v%n /= 0 ) 
-      weights(i)%v = pack ( weights(i)%v,weights(i)%v%n /= 0 )
-!       weights(i)%v(weights(i)%n+1:6) = value_QTM_2D_t(rg)(0,0,0,0)
+      where ( weights(i)%v%v == 0 ) weights(i)%v%j = 0
+      weights(i)%n = count ( weights(i)%v%j /= 0 ) 
+      weights(i)%v = pack ( weights(i)%v,weights(i)%v%j /= 0 )
+!       weights(i)%v(weights(i)%j+1:6) = value_QTM_2D_t(rg)(0,0,0,0)
       weights(i)%v(weights(i)%n+1:6) = value_QTM_2D_t(0,0,0,0)
 
     end do
@@ -542,7 +542,7 @@ contains
 
     ! Construct interpolation weights and positions for a point in a 3D grid
     ! for which the horizontal grid is QTM.  The 3D grid is assumed to be
-    ! stacked and coherent.  Weights%W%N are array element order positions,
+    ! stacked and coherent.  Weights%W%J are array element order positions,
     ! which can be converted to 2D subscripts (height, QTM serial number)
     ! by the Subscripts function in the Array_Stuff module.
 
@@ -569,47 +569,47 @@ contains
     ! Combine horizontal and vertical interpolation coefficients
     do i = 1, size(points)
       ! Get horizontal interpolation weights; serial numbers are gotten later
-      weights(i)%v(1:3)%n = points(i)%coeff%v%n
-      where ( weights(i)%v(1:3)%n /= 0 ) &
-        & weights(i)%v(1:3)%np = QTM_tree%path_vertices(weights(i)%v(1:3)%n)
+      weights(i)%v(1:3)%j = points(i)%coeff%v%j
+      where ( weights(i)%v(1:3)%j /= 0 ) &
+        & weights(i)%v(1:3)%jp = QTM_tree%path_vertices(weights(i)%v(1:3)%j)
       weights(i)%v(1:3)%v = points(i)%coeff%v%v
       index = indices(i)
       if ( index == 0 ) then
-        weights(i)%v(4:)%n = 0  ! Constant vertical extrapolation
+        weights(i)%v(4:)%j = 0  ! Constant vertical extrapolation
                                 !   below range of Heights(:)
       else if ( index >= size(heights,1) ) then
         do j = 1, 3
-          weights(i)%v(j)%n = points(i)%coeff%v(j)%n
-          weights(i)%v(j)%nz = size(heights,1)
+          weights(i)%v(j)%j = points(i)%coeff%v(j)%j
+          weights(i)%v(j)%jz = size(heights,1)
         end do
-        weights(i)%v(4:)%n = 0  ! Constant vertical extrapolation
+        weights(i)%v(4:)%j = 0  ! Constant vertical extrapolation
                                 !   above range of Heights(:)
       else
         dH = heights(index+1) - heights(index)
         if ( dH == 0 ) then ! shouldn't happen if Heights(:) are distinct
-          weights(i)%v(4:6)%n = 0 ! Don't use points other than at Height Index
+          weights(i)%v(4:6)%j = 0 ! Don't use points other than at Height Index
         else
           w = ( heights(index+1) - path_heights(i) ) / dh
           if ( w == 1.0_rg ) then
-            weights(i)%v(1:3)%nz = index
-            weights(i)%v(4:)%n = 0 ! Don't use points other than at Height Index
+            weights(i)%v(1:3)%jz = index
+            weights(i)%v(4:)%j = 0 ! Don't use points other than at Height Index
           else if ( w == 0.0_rg ) then
-            weights(i)%v(j)%nz = index + 1
-            weights(i)%v(4:)%n = 0 ! Don't use points other than at Height Index
+            weights(i)%v(j)%jz = index + 1
+            weights(i)%v(4:)%j = 0 ! Don't use points other than at Height Index
           else
             weights(i)%v(4:6)%v = weights(i)%v(1:3)%v * ( 1.0_rg - w )
             weights(i)%v(1:3)%v = weights(i)%v(1:3)%v * w
-            weights(i)%v(4:6)%n = weights(i)%v(1:3)%n
-            weights(i)%v(4:6)%np = weights(i)%v(1:3)%np
-            weights(i)%v(1:6)%nz = [ index, index+1, index, index+1, index, index+1 ]
+            weights(i)%v(4:6)%j = weights(i)%v(1:3)%j
+            weights(i)%v(4:6)%jp = weights(i)%v(1:3)%jp
+            weights(i)%v(1:6)%jz = [ index, index+1, index, index+1, index, index+1 ]
           end if
         end if
       end if
 
-      where ( weights(i)%v%v == 0 ) weights(i)%v%n = 0
-      weights(i)%n = count ( weights(i)%v%n /= 0 ) 
-      weights(i)%v = pack ( weights(i)%v,weights(i)%v%n /= 0 )
-!       weights(i)%v(weights(i)%n+1:) = value_QTM_2D_t(rg)(0,0,0,0)
+      where ( weights(i)%v%v == 0 ) weights(i)%v%j = 0
+      weights(i)%n = count ( weights(i)%v%j /= 0 ) 
+      weights(i)%v = pack ( weights(i)%v,weights(i)%v%j /= 0 )
+!       weights(i)%v(weights(i)%j+1:) = value_QTM_2D_t(rg)(0,0,0,0)
       weights(i)%v(weights(i)%n+1:) = value_QTM_2D_t(0,0,0,0)
 
     end do ! i
@@ -630,6 +630,9 @@ contains
 end module QTM_Interpolation_Weights_3D_m
 
 ! $Log$
+! Revision 2.13  2017/08/28 20:27:47  livesey
+! Changed the n,nf,np,nz elements to j,jf,...
+!
 ! Revision 2.12  2016/11/23 00:11:21  vsnyder
 ! Delete Weights_ZQ_t.  Use types from Indexed_Values_m.
 !
