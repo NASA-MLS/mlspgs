@@ -112,9 +112,9 @@ contains
     do i = 1, n_path
       nc = s(i)%coeff%n
       iz = max(s(i)%h_ind,1) ! h_ind == zero for reflection below H_GLGrid
-      t_path(i) =  dot_product ( t_ref(iz,s(i)%coeff%v(:nc)%np),   &
+      t_path(i) =  dot_product ( t_ref(iz,s(i)%coeff%v(:nc)%jp),   &
                                & s(i)%coeff%v(:nc)%v )
-      dHitdZi(i) = dot_product ( dHidZij(iz,s(i)%coeff%v(:nc)%np), &
+      dHitdZi(i) = dot_product ( dHidZij(iz,s(i)%coeff%v(:nc)%jp), &
                                & s(i)%coeff%v(:nc)%v )
     end do
 
@@ -159,7 +159,7 @@ contains
       nc = tp%coeff%n
       do sv_z = 1, z_coeffs
         dHidTlm(:,sv_z,:) = dHidTlm(:,sv_z,:) - &
-          & dot_product ( dHidTlm(1,sv_z,tp%coeff%v(:nc)%np), &
+          & dot_product ( dHidTlm(1,sv_z,tp%coeff%v(:nc)%jp), &
                         & tp%coeff%v(:nc)%v )
       end do
  
@@ -169,10 +169,10 @@ contains
       dH2(1:z_coeffs,1:size(t_ref,2)) => dHtdTl0
       ddH2(1:z_coeffs,1:size(t_ref,2)) => ddHtdHtdTl0
       do sv_z = 1, z_coeffs
-        dH2(sv_z,tp%coeff%v(:nc)%np) = &
-          & dHidTlm(iz,sv_z,tp%coeff%v(:nc)%np) * tp%coeff%v(:nc)%v
-        ddH2(sv_z,tp%coeff%v(:nc)%np) = &
-          & ddHidHidTl0(iz,sv_z,tp%coeff%v(:nc)%np) * tp%coeff%v(:nc)%v
+        dH2(sv_z,tp%coeff%v(:nc)%jp) = &
+          & dHidTlm(iz,sv_z,tp%coeff%v(:nc)%jp) * tp%coeff%v(:nc)%v
+        ddH2(sv_z,tp%coeff%v(:nc)%jp) = &
+          & ddHidHidTl0(iz,sv_z,tp%coeff%v(:nc)%jp) * tp%coeff%v(:nc)%v
       end do
 
       dF2(1:z_coeffs,1:p_coeffs) => t_sv%deriv_flags
@@ -181,11 +181,11 @@ contains
       do is = 1, n_path             ! Path length
         iz = max(s(is)%h_ind,1)     ! h_ind == zero for reflection below H_GLGrid
         do ic = 1, s(ip)%coeff%n    ! # horizontal interpolation coefficients
-          ip = s(ip)%coeff%v(ic)%np ! Index among path-adjacent profiles
+          ip = s(ip)%coeff%v(ic)%jp ! Index among path-adjacent profiles
           w = s(is)%coeff%v(ic)%v   ! Horizontal interpolation coefficient from
                                     ! profile IP to path point IS
           do sv_z = 1, z_coeffs     ! Zeta levels of profiles
-            if ( dF2(sv_z,s(is)%coeff%v(ic)%n) ) then ! Derivative flag for temperature
+            if ( dF2(sv_z,s(is)%coeff%v(ic)%j) ) then ! Derivative flag for temperature
               dHitdTlm(is,sv_z,ip) = &
                 & max(dHidTlm(iz,sv_z,ip),0.0_rp) * w
               do_calc_hyd(is,sv_z,ip) = dHitdTlm(is,sv_z,ip) /= 0
@@ -203,7 +203,7 @@ contains
         iz = max(s(is)%h_ind,1)  ! h_ind == zero for reflection below H_GLGrid
         do ic = 1, eta_zQT(is)%n ! Number of nonzero coefficients
           !         path Z      temperature Z        QTM serial #
-          do_calc_t(iz,eta_zQT(is)%v(ic)%nz,eta_zQT(is)%v(ic)%n) = &
+          do_calc_t(iz,eta_zQT(is)%v(ic)%jz,eta_zQT(is)%v(ic)%j) = &
             & .true. ! There are only nonzero coefficients in eta_zQT
         end do
       end do
@@ -225,6 +225,9 @@ contains
 end module More_Metrics_3D_m
 
 ! $Log$
+! Revision 2.6  2017/08/28 20:28:08  livesey
+! Changed the n,nf,np,nz elements to j,jf,...
+!
 ! Revision 2.5  2017/03/11 00:54:13  vsnyder
 ! Pass correct-size result array to Comp_Sps_Path_Sparse_m
 !

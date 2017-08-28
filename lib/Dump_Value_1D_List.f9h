@@ -27,13 +27,16 @@
 !       if ( all(value(i)%v%n == 0) ) cycle
       call output ( i, places=4, after='# ' )
       do j = 1, value(i)%n
-        call output ( value(i)%v(j)%n, places=4, after=': ' )
+        call output ( value(i)%v(j)%j, places=4, after=': ' )
         call output ( value(i)%v(j)%v, format=myFormat )
       end do
       call newLine
     end do
 
 ! $Log$
+! Revision 2.6  2017/08/28 20:27:47  livesey
+! Changed the n,nf,np,nz elements to j,jf,...
+!
 ! Revision 2.5  2017/02/04 02:02:53  vsnyder
 ! Print an element with all zero values so one can spot bugs that shouldn't
 ! have kept them.
