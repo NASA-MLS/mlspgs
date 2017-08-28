@@ -82,7 +82,7 @@ contains
       ! We set the surface reference at the actual surface height if we
       ! have it, and adjust r_eq and h_tan relative to this, and adjust
       ! h_ref accordingly.
-      h_surf = dot_product ( surf_height(eta%v%n), eta%v%v )
+      h_surf = dot_product ( surf_height(eta%v%j), eta%v%v )
     else
       ! If we don't have the actual surface height, we set the surface
       ! reference at the input z_ref and adjust r_eq and h_tan relative to
@@ -90,7 +90,7 @@ contains
       ! so index it using the inverse of f_and_v%vertices, which would be
       ! qtm%path_vertices(eta%n) if we hadn't already computed it and put it
       ! into eta%np..
-      h_surf = dot_product ( h_ref(1,eta%v%np), eta%v%v )
+      h_surf = dot_product ( h_ref(1,eta%v%jp), eta%v%v )
     end if
 
     if ( present(tan_press) .and. present(surf_temp) .and. present(z_ref) .and. &
@@ -100,13 +100,13 @@ contains
       ! present(tan_press) requires present(surf_temp) and present(z_ref). 
       ! We don't need to subtract h_surf here because this gives km from
       ! the z_ref surface.
-      h_tan = dot_product ( surf_temp(eta%v%n),eta%v%v ) * &
+      h_tan = dot_product ( surf_temp(eta%v%j),eta%v%v ) * &
             & (tan_press-z_ref)/14.8
     else
       ! H_Ref is adjacent to the path, so index it using the inverse of
       ! f_and_v%vertices, which would be qtm%path_vertices(eta%n) if we
       ! hadn't already computed it and put it into eta%np.
-      h_tan = dot_product ( h_ref(tan_ind_f,eta%v%np), eta%v%v ) - h_surf
+      h_tan = dot_product ( h_ref(tan_ind_f,eta%v%jp), eta%v%v ) - h_surf
     end if
 
   end subroutine QTM_Tangent_Metrics
@@ -124,6 +124,9 @@ contains
 end module QTM_Tangent_Metrics_m
 
 ! $Log$
+! Revision 2.8  2017/08/28 20:28:08  livesey
+! Changed the n,nf,np,nz elements to j,jf,...
+!
 ! Revision 2.7  2016/11/23 00:12:28  vsnyder
 ! Use types from Indexed_Values_m.
 !
