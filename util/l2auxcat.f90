@@ -19,12 +19,12 @@ program L2AUXcat ! catenates split L2AUX files, e.g. dgm
    use HDF5, only: H5FIs_HDF5_F, H5GCreate_F, H5GClose_F
    use Intrinsic, only: L_HDF
    use Io_Stuff, only: Get_Lun, Read_TextFile
-   use L2AUXData, only: L2AUXData_T, L2AUXRANK, MaxSDNamesBufSize, &
-     & CpL2AUXData, DestroyL2AUXContents, ReadL2AUXData, SetupNewL2AUXRecord, &
+   use L2AUXData, only: L2AUXData_T, MaxSDNamesBufSize, &
+     & CpL2AUXData, DestroyL2AUXContents, ReadL2AUXData, &
      & ResizeL2AUXData, WriteL2AUXData
    use Machine, only: Hp, Getarg
    use MLSFiles, only: HDFVersion_5, Dump, InitializeMLSFile, &
-     & MLS_OpenFile, MLS_CloseFile
+     & MLS_OpenFile, MLS_CloseFile, Split_Path_Name
    use MLSFinds, only: FindFirst, FindLast
    use MLSCommon, only: MLSFile_T, DefaultUndefinedValue
    use MLSHDF5, only: GetAllHDF5DSNames, MLS_H5open, MLS_H5close
@@ -61,15 +61,15 @@ program L2AUXcat ! catenates split L2AUX files, e.g. dgm
 ! LF95.Linux/test [options] [input files] -o [output file]
 
   integer, parameter ::   MAXFILES = 750
-  integer, parameter ::   MAXFILENAMEESIZE = 255*MAXFILES
   type options_T
     logical            :: verbose = .false.
     character(len=255) :: glAttrFile= ''                ! file with global attrs
     character(len=255) :: outputFile= 'default.h5'      ! output filename
     character(len=255) :: inputFile= ''                 ! file with list of inputs       
-    logical ::            noDupDSNames = .false.        ! cp 1st, ignore rest
-    logical ::            ignoreFills  = .false.
+    logical            :: noDupDSNames = .false.        ! cp 1st, ignore rest
+    logical            :: ignoreFills  = .false.
     logical            :: list = .false.
+    logical            :: flatten = .false.
     character(len=255) :: DSNames = ' '                 ! which datasets to copy
     character(len=255) :: rename = ' '                  ! how to rename them
     character(len=255), dimension(MAXFILES) :: filenames
@@ -77,11 +77,11 @@ program L2AUXcat ! catenates split L2AUX files, e.g. dgm
 
   type ( options_T ) :: options
 
-  ! character (len=MAXFILENAMEESIZE) :: allInputFiles
   logical, parameter :: COUNTEMPTY = .false.
   logical     :: createdYet
   logical, parameter :: DEEBUG = .false.
   character(len=255) :: filename          ! input filename
+  character(LEN=255)                :: groupname
   integer            :: n_filenames
   integer     ::  i, j, status, error ! Counting indices & Error flags
   integer     :: elem
@@ -116,7 +116,7 @@ program L2AUXcat ! catenates split L2AUX files, e.g. dgm
      n_filenames = n_filenames + 1
      options%filenames(n_filenames) = filename
   enddo
-  ! Did we use the -F commandline option to supply the input file lisi?
+  ! Did we use the -F commandline option to supply the input file list?
   if ( len_trim(options%inputFile) > 0 ) then
     print *, 'inputFile :', trim(options%inputFile)
     ! call read_file ( options%inputFile, allInputFiles )
@@ -304,6 +304,11 @@ contains
   ! Copy l2aux data from one of the filenames to the outputFile
   ! Copy all the MAFs
   subroutine catenate_all
+    character(len=128) :: grpname
+    character(len=128) :: itemname
+    character(len=16) :: myOptions
+    myOptions = ' '
+    if ( options%verbose ) myOptions = '-v'
     if ( options%verbose ) print *, 'Copy l2aux data to: ', trim(options%outputFile)
     numdsetssofar = 0
     sdListAll = ''
@@ -312,16 +317,16 @@ contains
       if ( options%verbose ) then
         print *, 'Copying from: ', trim(options%filenames(i))
       endif
+      call GetAllHDF5DSNames (trim(options%filenames(i)), '/', mysdList)
+      numdsets = NumStringElements( trim(mysdList), COUNTEMPTY )
+      ! Remove metadata, etc.
+      call RemoveElemFromList ( mysdList, tempSdList, 'HDFEOS INFORMATION/coremetadata.0' )
+      call RemoveElemFromList ( tempSdList, mysdList, 'HDFEOS INFORMATION/xmlmetadata' )
+      call RemoveElemFromList ( mysdList, tempSdList, 'PCF' )
+      call RemoveElemFromList ( tempSdList, mysdList, 'l2cf' )
+      call RemoveElemFromList ( mysdList, tempSdList, 'leap seconds' )
+      call RemoveElemFromList ( tempSdList, mysdList, 'utc pole' )
       if ( options%noDupDSNames .or. options%DSNames /= ' ' ) then
-        call GetAllHDF5DSNames (trim(options%filenames(i)), '/', mysdList)
-        numdsets = NumStringElements( trim(mysdList), COUNTEMPTY )
-        ! Remove metadata, etc.
-        call RemoveElemFromList ( mysdList, tempSdList, 'HDFEOS INFORMATION/coremetadata.0' )
-        call RemoveElemFromList ( tempSdList, mysdList, 'HDFEOS INFORMATION/xmlmetadata' )
-        call RemoveElemFromList ( mysdList, tempSdList, 'PCF' )
-        call RemoveElemFromList ( tempSdList, mysdList, 'l2cf' )
-        call RemoveElemFromList ( mysdList, tempSdList, 'leap seconds' )
-        call RemoveElemFromList ( tempSdList, mysdList, 'utc pole' )
         if ( options%DSNames /= ' ' ) then
           tempSdList = mysdList
           mysdList = Intersection( options%DSNames, tempSdList )
@@ -347,14 +352,35 @@ contains
         endif
         call cpL2AUXData( trim(options%filenames(i)), &
         & trim(options%outputFile), create2=.not. createdYet, &
-        & hdfVersion=HDFVERSION_5, sdList=mysdList, rename=rename )
+        & hdfVersion=HDFVERSION_5, sdList=mysdList, rename=rename, options=myOptions )
+        tempSdList = sdListAll
+        sdListAll = catlists(tempSdList, mysdList)
+        numdsetssofar = NumStringElements(sdListAll, countEmpty)
+      elseif ( options%flatten ) then
+        sdListAll = ' '
+        do j=1, numdsets
+          call GetStringElement( mysdList, sdName, j, countEmpty )
+          call split_path_name ( sdName, grpname, itemname )
+          ! Did we create a group to put all the datsets under?
+          if ( len_trim(groupname) > 0 ) &
+            & itemname = trim(groupname) // '/' // itemname
+          print *, 'sdname: ', trim(sdName)
+          print *, 'grpname: ', trim(grpname)
+          print *, 'itemname: ', trim(itemname)
+          sdListAll = catLists ( sdListAll,  itemname )
+        enddo
+        print *, 'sdListAll: ', trim(sdListAll)
+        ! stop
+        call cpL2AUXData( trim(options%filenames(i)), &
+        & trim(options%outputFile), create2=.not. createdYet, &
+        & hdfVersion=HDFVERSION_5, sdList=mysdList, rename=sdListAll, options=myOptions )
         tempSdList = sdListAll
         sdListAll = catlists(tempSdList, mysdList)
         numdsetssofar = NumStringElements(sdListAll, countEmpty)
       else
-        call cpL2AUXData(trim(options%filenames(i)), &
+        call cpL2AUXData( trim(options%filenames(i)), &
         & trim(options%outputFile), create2=.not. createdYet, &
-        & hdfVersion=HDFVERSION_5)
+        & hdfVersion=HDFVERSION_5, options=myOptions )
       endif
       call sayTime('copying this file', tFile)
       createdYet = .true.
@@ -371,7 +397,6 @@ contains
      integer                           :: error = 1
      integer                           :: fileaccess
      integer, save                     :: i = 1
-     character(LEN=255)                :: groupname
      integer                           :: grp_id
      integer                           :: status
   ! Get inputfile name, process command-line args
@@ -389,6 +414,9 @@ contains
         exit
       elseif ( filename(1:3) == '-v ' ) then
         options%verbose = .true.
+        exit
+      elseif ( filename(1:5) == '-flat' ) then
+        options%flatten = .true.
         exit
       elseif ( filename(1:3) == '-l ' ) then
         options%list = .true.
@@ -506,6 +534,8 @@ contains
       write (*,*) '               (may be repeated)'
       write (*,*) ' -o ofile      => copy data sets to ofile'
       write (*,*) ' -v            => switch on verbose mode'
+      write (*,*) ' -flatten      => copy the datasets to the root / of ofile'
+      write (*,*) '                  or to gname if -create gname among options'
       write (*,*) ' -l            => just list l2aux names in files'
       write (*,*) ' -ign          => ignore MAFs with Fill Values'
       write (*,*) ' -nodup        => if dup dataset names, cp 1st only'
@@ -538,6 +568,9 @@ end program L2AUXcat
 !==================
 
 ! $Log$
+! Revision 1.9  2017/05/17 22:21:25  pwagner
+! Works properly with dual-l2 nrt scripts
+!
 ! Revision 1.8  2016/08/25 22:56:29  pwagner
 ! Can now successfully cat all 351 chunks of Pleiades-style dgm
 !
