@@ -135,6 +135,9 @@ else
    MLSCFILE=.configure
 endif
 
+# This is just the default if you type  a bare "make"
+alltargets: all
+
 SRCLIB=srclib
 -include $(SRCLIB)/Makefile.h
 # This will set our MLS platform, compiler. etc.
@@ -524,8 +527,6 @@ lib:
 blas:
 	$(MAKE) -f $(MakeFName) -C $@
 
-# l1, l2, etc. require Parser_tables
-#l1 l2 $(tools): lib/$(MLSCONFG)/parser.o
 l1--itm: l1
 	$(MAKE) -f $(MakeFName) -C l1 PROG=init_tables_module.o MARK_ALL_AS_UPTODATE=no
 
@@ -625,11 +626,11 @@ help--scripts:
 	@sed -n '/'$(SCRIPTS)'help/,/End '$(SCRIPTS)'help/ p' $(CONFDIR)/$(MakeFName) \
 		| sed -n 's/^..//p' | sed '1 d; $$ d'
 
-disthelp:
-	$(CONFDIR)/README.MakeFC
+disthelp: $(CONFDIR)/README.MakeFC
+	chmod a+x $(CONFDIR)/README.MakeFC; $(CONFDIR)/README.MakeFC
 
-firsthelp:
-	$(CONFDIR)/BEFORE.mls
+firsthelp: $(CONFDIR)/BEFORE.mls
+	chmod a+x $(CONFDIR)/BEFORE.mls; $(CONFDIR)/BEFORE.mls
 
 help:
 	@$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
@@ -1138,10 +1139,6 @@ moonscan: $(CONFDIR)/$(MLSCFILE) install-l1
 	cat Calibration.f9h; \
 	touch Calibration.f9h
 
-
-#lib/$(MLSCONFG)/parser.o: lr
-#	$(MAKE) -C lib parser.o
-
 remake_gh: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/remake_gh.f90
 	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
    -c $(MLSCONFG) -p $@ -M $(MAKE) -O LDOPTS=-static \
@@ -1445,27 +1442,15 @@ show_copy:
 
 #----------------------- Bare target dependencies
 
-#$(LEVELS): lib
-
-#$(OTHER_SUBDIRS): lib
-
-#lib: blas
-
 all: $(SUBDIRS)
 
 subdirs: $(SUBDIRS)
-
-#l2: fwdmdl cloudfwdm
-
-#l3m: l3
-
-# install: $(LEVELS)
 
 install-all: install tools install-cfm install-fullcfm install-idlcfm
 
 update:
 
-# Make these source-file tools in the util directory
+# Make these source-file tools from the util directory
 tools: chunktimes checkpvmup compare dateconverter extinctionmaker \
   heconvert h5subset h5cat hl Goldbrick_More \
   killmaster \
@@ -1474,7 +1459,7 @@ tools: chunktimes checkpvmup compare dateconverter extinctionmaker \
   l2pcdiff l2pcdump l2q lr \
   machineok misalignment Spartacus tellMasterToQuit WordSplit wrapLines
 
-.PHONY: all configure clean clean_config conv_uars\
+.PHONY: all alltargets configure clean clean_config conv_uars\
   configure_pvm configure_fopts configure_full configure_help configure_subdirs\
   dateconverter depends distclean disttar distarz distarg disthelp \
   doc doc--api doc--toc extinctionmaker \
@@ -1499,6 +1484,9 @@ tools: chunktimes checkpvmup compare dateconverter extinctionmaker \
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.20  2017/03/30 23:37:13  pwagner
+# Add install-mlstools target
+#
 # Revision 1.19  2017/01/05 18:45:04  pwagner
 # Changed method of disguising PseudoToolkit
 #
