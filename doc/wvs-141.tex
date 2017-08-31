@@ -12,8 +12,8 @@
 \topmargin -0.5in
 \textheight 9in
 
-\newcommand{\docname}{wvs-141}
-\newcommand{\docdate}{30 August 2017}
+\newcommand{\docname}{wvs-141r1}
+\newcommand{\docdate}{31 August 2017}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
@@ -99,11 +99,14 @@ of the circle:
 (x_b-x)^2+(y_b-y)^2 = \,& r^2 \\
 \end{split}\end{equation}
 
-Subtracting these equations gives
+Subtracting these equations, or observing that the triangle
+$\mathbf{p}\mathbf{p}_a\mathbf{p}_b$ is an equilateral triangle, and
+therefore $(\mathbf{p}_b - \mathbf{p}_a)\cdot (\mathbf{p}_b - \mathbf{p})
+= (\mathbf{p}_a - \mathbf{p}_b)\cdot (\mathbf{p}_a - \mathbf{p})$, gives
 
 \begin{equation}\label{two}
 (x_a-x_b)\,x + (y_a-y_b)\,y = w \text{ where }
-w = \frac12(x_a^2 - x_b^2 +y_a^2 - y_b^2)
+w = \frac12(x_a^2 - x_b^2 +y_a^2 - y_b^2)\,.
 \end{equation}
 
 Solving Equation (\ref{two}) for $x$ and $y$ in terms of each other gives
@@ -215,14 +218,19 @@ small, a much simpler solution is possible.
 \includegraphics[scale=0.95]{wvs-141-1}\\
 \end{centering}
 
-In \h{wvs-048}, and in the current version of {\tt Metrics}, the surfaces
-of constant $\zeta$ are straight lines and the line of sight is a secant,
-and intersections are found by a Newton iteration.  The ``Two solutions
-for some $\zeta$s'' figure illustrates how $\phi$ could be out of order,
-if solution 1 is chosen for the first $\zeta$, solution 2 for the second,
-and solution 3 for the third (using the above-described method), or the
-Newton iteration converges to those solutions (in the current version of
-{\tt Metrics}).
+Vertical lines in the two diagrams on the left of the figure, and diagonal
+lines in the right diagram, are lines of constant $\phi$.  Curved lines in
+the two diagrams on the left are the heights on surfaces of constant
+$\zeta$.
+
+In \h{wvs-048}, and in the current version of {\tt Metrics}, the heights
+on surfaces of constant $\zeta$ are straight lines and the line of sight
+is a secant, and intersections are found by a Newton iteration.  The ``Two
+solutions for some $\zeta$s'' figure illustrates how $\phi$ could be out
+of order, if solution 1 is chosen for the first $\zeta$, solution 2 for
+the second, and solution 3 for the third (using the above-described
+method), or the Newton iteration converges to those solutions (in the
+current version of {\tt Metrics}).
 
 \label{lastpage}
 \vspace*{-0.1in} % Somehow, this causes lastpage to be defined
@@ -231,3 +239,6 @@ Newton iteration converges to those solutions (in the current version of
 % $Id$
 
 % $Log$
+% Revision 1.1  2017/08/31 01:07:44  vsnyder
+% Initial commit
+%
