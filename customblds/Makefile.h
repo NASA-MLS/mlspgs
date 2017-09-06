@@ -559,8 +559,21 @@ wvs-137-3.eps: wvs-137-3.obj
 wvs-137-3.pdf: wvs-137-3.obj
 	tgif -print -pdf -page 1 -color wvs-137-3.obj
 
+wvs-141.dvi: wvs-141.tex wvs-141-1.eps
+
+wvs-141.pdf: wvs-141.tex wvs-141-1.pdf
+
+wvs-141-1.eps: wvs-141-1.obj
+	tgif -print -eps -page 1 -color wvs-141-1.obj
+
+wvs-141-1.pdf: wvs-141-1.obj
+	tgif -print -pdf -page 1 -color wvs-141-1.obj
+
 endif # end shortn_name == doc
 # $Log$
+# Revision 1.26  2017/03/28 23:58:10  pwagner
+# Now builds  doc/wvs-137 properly
+#
 # Revision 1.25  2017/03/08 00:11:55  pwagner
 # ncep_dao doesn't need custom, but readGriddedUtils does
 #
