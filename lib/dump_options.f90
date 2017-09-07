@@ -181,7 +181,9 @@ module Dump_Options
   logical           :: DontDumpIfAllEqual     = .true.
   logical           :: FilterFillsFromRMS     = .false.
   logical           :: PrintFillValue         = .true.
+  logical           :: PrintNameAsHeadline    = .false.
   logical           :: PrintNameAtLineEnd     = .false.
+  logical           :: PrintNameInBanner      = .false.
   logical           :: PrintNameIfDiff        = .true.
   logical           :: StatsOnOneLine         = .true.
   character(len=64) :: NameOnEachLine         = ' '
@@ -450,6 +452,9 @@ contains
 end module Dump_Options
 
 ! $Log$
+! Revision 2.8  2017/09/07 23:44:30  pwagner
+! Added PrintNameAsHeadline and PrintNameInBanner options to dump
+!
 ! Revision 2.7  2017/07/31 23:04:24  pwagner
 ! Moved TheDumpEnds here; tried to prevent repeating Name; default to crash at end of Dump
 !
