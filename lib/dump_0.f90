@@ -46,7 +46,7 @@ module Dump_0
   use MLSStringLists, only: CatLists, NumStringElements, OptionDetail
   use MLSStrings, only: delete, Indexes, ReadIntsFromChars
   use Output_m, only: OutputOptions, StampOptions, &
-    & Blanks, Newline, Output
+    & Blanks, GetOutputStatus, Newline, Output
 
   implicit none
   private
@@ -1254,6 +1254,8 @@ contains
   subroutine PrintName ( Name, nameHasBeenPrintedAlready )
     character(len=*), intent(in), optional        :: Name
     logical, optional                             :: nameHasBeenPrintedAlready
+    ! Local variables
+    logical                                       :: atLineStart
     character(len=64)                             :: myName
     ! Executable
     if ( present(nameHasBeenPrintedAlready) ) then
@@ -1261,11 +1263,12 @@ contains
     endif
     myName = NameOnEachLine
     if ( present(name) ) myName = name
+    atLineStart = ( getOutputStatus( 'start' ) == 1 )
     if( PrintNameAtLineEnd ) then
       call blanksToColumn ( 80-len_trim(myName) )
       call output ( trim(myName), advance='no' )
     else
-      if ( .not. dopts(Clean)%v ) call blanks (2)
+      if ( .not. dopts(Clean)%v .and. .not. atLineStart ) call blanks (2)
       call output ( trim(myName), advance='no' )
     end if
     if ( .not. dopts(Clean)%v ) call newLine
@@ -1748,6 +1751,9 @@ contains
 end module Dump_0
 
 ! $Log$
+! Revision 2.145  2017/09/07 20:59:35  pwagner
+! Dont print 2 spaces before name
+!
 ! Revision 2.144  2017/08/03 20:37:31  pwagner
 ! Try harder to avoid messing up dumps called with 'c(lean)'
 !
