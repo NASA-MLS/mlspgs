@@ -57,6 +57,7 @@ module OUTPUT_M
 ! blanks                   print specified number of blanks [or fill chars]
 ! flushOutputLines         print the current outputLines; then reset to ''
 ! getOutputStatus          returns normally private data
+! printOutputStatus        prints normally private data
 ! isOutputSuspended        returns TRUE if output is suspended
 ! newline                  print a newline
 ! output                   print argument
@@ -92,6 +93,7 @@ module OUTPUT_M
 !       'y[es]', 't[rue]'  advance to next line after printing
 !       'n[o]', 'f[alse]'  don't advance to next line after printing
 !       'stderr'  print to stderr instead of default
+! printOutputStatus
 ! resumeOutput
 ! revertOutput
 ! restoreSettings ( [log useToolkit] )
@@ -134,7 +136,7 @@ module OUTPUT_M
 
   public :: addToIndent, Advance_is_yes_or_no, Beep, blanks, &
     & flushOutputLines, getOutputStatus, newline, &
-    & output, output_char_nocr, &
+    & output, output_char_nocr, printOutputStatus, &
     & resetIndent, restoreSettings, resumeOutput, revertOutput, &
     & setFillPattern, suspendOutput, switchOutput
 
@@ -258,7 +260,7 @@ module OUTPUT_M
   integer, save, private :: ATCOLUMNNUMBER = 1  ! Where we'll print next
   ! See below for uses of indentBy
   integer, save, private :: INDENTBY       = 0  ! How many spaces to indent
-  logical, save, private :: ATLINESTART = .true.  ! Whether to stamp if notpost
+  logical, save, private :: ATLINESTART = .true.! Are we at the line's start?
   integer, save, private :: LINESSINCELASTSTAMP = 0
   logical, private, parameter :: LOGEXTRABLANKS = .false.
   integer, private, parameter :: RECLMAX = 1024  ! This is NAG's limit
@@ -515,6 +517,23 @@ contains
       status = merge(1, 0, silentRunning)
     endif
   end function getOutputStatus
+
+  ! ---------------------------------------------- printOutputStatus
+  ! Returns certain normally private data
+  ! intended for modules like highOutput and maybe some others
+  ! result will be an integer
+  ! equal to the value of integer-valued data
+  ! or to 1 if the logical-valued data is TRUE, 0 if FALSE
+  subroutine printOutputStatus
+    ! Args
+    ! Executable
+    print *,  'atColumnNumber ', atColumnNumber            ! This is the "physical" column
+    print *,  'atColumnNumber - indentBy ', atColumnNumber - indentBy ! This is the "virtual" column
+    print *,  'indentBy ', indentBy
+    print *,  'atLineStart? ', merge(1, 0, atLineStart)
+    print *,  'linesSincelastStamp ', linesSincelastStamp
+    print *,  'silentRunning ', merge(1, 0, silentRunning)
+  end subroutine printOutputStatus
 
   ! ----------------------------------------------  isOutputSuspended  -----
   logical function isOutputSuspended ()
@@ -1654,6 +1673,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.130  2017/09/07 20:58:29  pwagner
+! Added printOutputStatus
+!
 ! Revision 2.129  2017/07/31 23:01:22  pwagner
 ! NewLine can be asked not to make a blank line
 !
