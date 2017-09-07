@@ -30,13 +30,14 @@ module Dump_0
     & DefaultDumpOptions, DefaultMaxLon, DefaultPCTFormat, &
     & DefaultWidth, Dopt_Collapse, Dopt_Transpose, Dot, DiffRMSMeansRMS, &
     & DontDumpIfAllEqual, Dopts, Gaps, IntPlaces, Laconic, MaxNumNANs, &
-    & NameHasBeenPrinted, NameOnEachLine, NaNs, OnlyWholeArray, PCTFormat, &
-    & PrintFillValue, PrintNameAtLineEnd, PrintNameIfDiff, &
-    & Ratios, RMS, RMSFormat, &
+    & NameHasBeenPrinted, NameOnEachLine, NaNs, OnlyWholeArray, &
+    & PCTFormat, PrintFillValue, PrintNameAsHeadline, PrintNameAtLineEnd, &
+    & PrintNameIfDiff, PrintNameInBanner, Ratios, RMS, RMSFormat, &
     & SDFormatDefault, SDFormatDefaultCmplx, Stats, StatsOnOneLine, &
     & TheDumpBegins, TheDumpEnds, ItsShape, MyTranspose=>Transpose, &
     & TrimIt, Unique, Verbose, WholeArray
-  use HighOutput, only: BlanksToColumn, NumNeedsFormat, OutputNamedValue
+  use HighOutput, only: Banner, BlanksToColumn, Headline, &
+    & NumNeedsFormat, OutputNamedValue
   use MLSFillValues, only: Bandwidth, Collapse, &
     & InfFunction, IsFinite, IsInfinite, IsNaN, NaNFunction, &
     & WhereAreTheInfs, WhereAreTheNaNs
@@ -1263,15 +1264,21 @@ contains
     endif
     myName = NameOnEachLine
     if ( present(name) ) myName = name
+    if ( len_trim(myName) < 1 ) return
     atLineStart = ( getOutputStatus( 'start' ) == 1 )
-    if( PrintNameAtLineEnd ) then
+    if( PrintNameAsHeadline .and. atLineStart ) then
+      call Headline( trim(myName), FillChar='-', before='* ', after=' *' )
+    elseif( PrintNameInBanner .and. atLineStart ) then
+      call Banner( trim(myName) )
+    elseif( PrintNameAtLineEnd ) then
       call blanksToColumn ( 80-len_trim(myName) )
       call output ( trim(myName), advance='no' )
+      if ( .not. dopts(Clean)%v ) call newLine
     else
       if ( .not. dopts(Clean)%v .and. .not. atLineStart ) call blanks (2)
       call output ( trim(myName), advance='no' )
+      if ( .not. dopts(Clean)%v ) call newLine
     end if
-    if ( .not. dopts(Clean)%v ) call newLine
     if ( present(nameHasBeenPrintedAlready) ) nameHasBeenPrintedAlready = .true.
   end subroutine PrintName
 
@@ -1751,6 +1758,9 @@ contains
 end module Dump_0
 
 ! $Log$
+! Revision 2.146  2017/09/07 23:44:30  pwagner
+! Added PrintNameAsHeadline and PrintNameInBanner options to dump
+!
 ! Revision 2.145  2017/09/07 20:59:35  pwagner
 ! Dont print 2 spaces before name
 !
