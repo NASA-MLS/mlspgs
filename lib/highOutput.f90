@@ -9,35 +9,35 @@
 ! export authority as may be required before exporting such information to
 ! foreign countries or providing access to foreign persons.
 
-module HIGHOUTPUT
+module HighOutput
 
   ! Very high level printing and formatting
   
   ! See also dump_0 and output_m
   
-  use Dates_module, only:  buildCalendar, daysInMonth, &
-    & ReformatDate, reformatTime, utc_to_yyyymmdd
-  use Machine, only: crash_burn, exit_with_status, neverCrash
+  use Dates_Module, only: BuildCalendar, DaysInMonth, &
+    & ReformatDate, ReformatTime, Utc_To_Yyyymmdd
+  use Machine, only: Crash_Burn, Exit_With_Status, NeverCrash
   use MLSCommon, only: MLSDebug, MLSVerbose
-  use MLSFinds, only: findFirst
-  use MLSStringLists, only: expandStringRange, getStringElement, &
-    & List2Array, nCharsInFormat, numStringElements, switchDetail, wrap
-  use MLSStrings, only: lowercase, ncopies, &
-    & Trim_safe, writeIntsToChars
-  use Output_m, only: Advance_is_yes_or_no, Blanks, GetOutputStatus, &
+  use MLSFinds, only: FindFirst
+  use MLSStringLists, only: ExpandStringRange, GetStringElement, &
+    & List2Array, NCharsInFormat, NumStringElements, SwitchDetail, Wrap
+  use MLSStrings, only: Lowercase, Ncopies, &
+    & Trim_Safe, WriteIntsToChars
+  use Output_M, only: Advance_Is_Yes_Or_No, Blanks, GetOutputStatus, &
     & Newline, &
-    & Output, Output_ => output_char_nocr, &
+    & Output, Output_ => Output_Char_Nocr, &
     & RestoreSettings, &
-    & OutputOptions, OutputOptions_t, StampOptions, StampOptions_t, &
-    & TimeStampOptions, TimeStampOptions_t, &
-    & BothPrUnit, invalidPrUnit, MSGLogPrUnit, &
-    & OutputLines, outputLinesPrUnit, stdoutPrUnit
-  use PrintIt_m, only: assembleFullLine, get_config, &
+    & OutputOptions, OutputOptions_T, StampOptions, StampOptions_T, &
+    & TimeStampOptions, TimeStampOptions_T, &
+    & BothPrUnit, InvalidPrUnit, MSGLogPrUnit, &
+    & OutputLines, OutputLinesPrUnit, StdoutPrUnit
+  use PrintIt_M, only: AssembleFullLine, Get_Config, &
     & MLSMSG_Crash, MLSMSG_Debug, &
-    & MLSMSG_Severity_to_quit, &
+    & MLSMSG_Severity_To_Quit, &
     & MLSMSG_Warning, &
     & PrintItOut, MLSMessageConfig
-  use Toggles, only: switches
+  use Toggles, only: Switches
   implicit none
   private
 
@@ -45,38 +45,38 @@ module HIGHOUTPUT
 !     c o n t e n t s
 !     - - - - - - - -
 !     (subroutines and functions)
-! addRow                   add name, value row to a 2-d table of cells
-! addRow_header            add a single line stretched across an entire row
-! addRow_divider           add a row composed of a single, repeated character
-! alignToFit               align printed argument to fit column range
-! banner                   surround message with stars and stripes; e.g.,
+! AddRow                   add name, value row to a 2-d table of cells
+! AddRow_header            add a single line stretched across an entire row
+! AddRow_divider           add a row composed of a single, repeated character
+! AlignToFit               align printed argument to fit column range
+! Banner                   surround message with stars and stripes; e.g.,
 !                            *-----------------------------------------------*
 !                            *            Your message here                  *
 !                            *-----------------------------------------------*
 ! BeVerbose                Should we do extra printing?
-! blanksToColumn           print blanks [or fill chars] out to specified column
-! blanksToTab              print blanks [or fill chars] out to next tab stop
-! dump                     dump output or stamp options
-! dumpsize                 print a nicely-formatted memory size 
-! dumptabs                 print the current tab stop positions
-! getStamp                 get stamp being added to every output
-! headLine                 print a line with eye-catching features
+! BlanksToColumn           print blanks [or fill chars] out to specified column
+! BlanksToTab              print blanks [or fill chars] out to next tab stop
+! Dump                     dump output or stamp options
+! Dumpsize                 print a nicely-formatted memory size 
+! Dumptabs                 print the current tab stop positions
+! GetStamp                 get stamp being added to every output
+! HeadLine                 print a line with eye-catching features
 !                           e.g., '*-------  Your message here   -------*'
 ! LetsDebug                Should we do debug printing?
-! numNeedsFormat           return what format is needed to output num
-! numToChars               return what string would be printed by output
-! outputCalendar           output nicely-formatted calendar page
-! output_date_and_time     print nicely formatted date and time
-! outputList               output array as comma-separated list; e.g. '(1,2,..)'
-! outputNamedValue         print nicely formatted name and value
-! outputTable              output 2-d array as cells in table
-! resettabs                restore tab stops to what was in effect at start
-! restoreSettings          restore default settings for output, stamps, tabs
-! setStamp                 set stamp to be automatically printed on every line
-! setTabs                  set tab stops (to be used by tab)
-! startTable               initialize a 2-d table of cells to be output later
-! tab                      move to next tab stop
-! timestamp                print argument with a timestamp manually
+! NumNeedsFormat           return what format is needed to output num
+! NumToChars               return what string would be printed by output
+! OutputCalendar           output nicely-formatted calendar page
+! Output_date_and_time     print nicely formatted date and time
+! OutputList               output array as comma-separated list; e.g. '(1,2,..)'
+! OutputNamedValue         print nicely formatted name and value
+! OutputTable              output 2-d array as cells in table
+! Resettabs                restore tab stops to what was in effect at start
+! RestoreSettings          restore default settings for output, stamps, tabs
+! SetStamp                 set stamp to be automatically printed on every line
+! SetTabs                  set tab stops (to be used by tab)
+! StartTable               initialize a 2-d table of cells to be output later
+! Tab                      move to next tab stop
+! Timestamp                print argument with a timestamp manually
 !                            (both stdout and logged output)
 ! === (end of toc) ===
 
@@ -142,6 +142,14 @@ module HIGHOUTPUT
 !
 ! To understand the codes for dateformat and timeFormat, see the dates_module
 ! 
+! To use this module to build a 2d table of names and values
+! (1) Call startTable
+! (2) Optionally call addRow_header
+! (3) Optionally call addRow_divider
+! (4) For each name, value pair
+!     (a) call AddRow
+!     (b) call AddRow_Divider
+! (5) Call OutputTable
   public :: addRow, addRow_divider, addRow_header, alignToFit, &
     & banner, beVerbose, blanksToColumn, blanksToTab, &
     & dump, dumpSize, dumpTabs, getStamp, headLine, &
@@ -221,20 +229,25 @@ module HIGHOUTPUT
     module procedure timestamp_char, timestamp_integer, timestamp_logical
   end interface
   
-  integer, parameter :: MAXCELLSIZE = 128 ! How many chars can 1 cell hold
   ! Used for automatic assembly of a table to be neatly formatted and output
   ! The table holds two columns:
   ! names and values  
+  ! It might look something like the following
+  ! ------------------------------------------------------------
+  ! - names  values                                            -
+  ! ------------------------------------------------------------
+  ! - true   true                                              -
+  ! - false  false                                             -
+  ! - count  count                                             -
+  ! - l2cf   /users/mmadatya/l2tests/ASMLS/AS-01-009-QTM.l2cf  -
+  ! ------------------------------------------------------------
+  integer, parameter :: MAXCELLSIZE = 128 ! How many chars can 1 cell hold
   character(len=MAXCELLSIZE), dimension(:,:), pointer :: cellDatabase => null()
-
-  ! We can use the OutputLines mechanism for user-controlled
-  ! buffering, filtering, grep-ing, or whatever
-  ! integer, parameter :: MAXOUTPUTLINESLEN = 2048 ! How many chars it can hold
-  ! character(len=MAXOUTPUTLINESLEN), public, save     :: OUTPUTLINES = ' '
 
   integer, private, parameter :: MAXNUMTABSTOPS = 24
   integer, save, private :: WRAPPASTCOLNUM = 0  ! Don't print beyond (if > 0)
   integer, save, private :: OLDWRAPPASTCOLNUM = 0
+
   ! These next tab stops can be reset using the procedure setTabs
   ! the default values correspond to range coded '5-120+5'
   ! (read as from 5 to 120 in intervals of 5)
@@ -242,6 +255,7 @@ module HIGHOUTPUT
   integer, dimension(MAXNUMTABSTOPS), save, private :: TABSTOPS = &
     & (/ 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, &
     &   65, 70, 75, 80, 85, 90, 95,100,105,110,115,120 /)
+
   ! For certain numerical values we will use list directed '*' format
   ! unless optional FORMAT specifier supplied
   double precision, parameter, dimension(3) :: DPREFERDEFAULTFORMAT = &
@@ -461,9 +475,10 @@ contains
   ! *-----------------------------------------------*
   ! *            Your message here                  *
   ! *-----------------------------------------------*
+  ! proclaiming its great importance to an uncaring world.
   ! For multiline messages, you may divide them into elements of
   ! a character array, or else a longer character scalar and
-  ! supply LineLength for the routine to wrap at word boundaries
+  ! supply LineLength asking the routine to wrap at word boundaries
   subroutine BANNER_CHARS ( chars, &
     & columnRange, alignment, skips, lineLength, mode, pattern )
     character(len=*), intent(in)                :: CHARS
@@ -497,7 +512,7 @@ contains
       call wrap( chars, wrappedChars, width=LineLength-4, &
         & inseparator=achar(0), addedLines=addedLines, mode=mode )
       addedLines = addedLines + 1
-      allocate(lines(addedLines))
+      allocate( lines(addedLines) )
       lines = ' '
       call List2Array( wrappedChars, lines, &
         & countEmpty=.true., inseparator=achar(0) )
@@ -917,8 +932,8 @@ contains
   subroutine HEADLINE ( CHARS, fillChar, Before, After, &
     & COLUMNRANGE, ALIGNMENT, SKIPS )
     character(len=*), intent(in)                :: CHARS
-    character(len=1), intent(in), optional :: fillChar      ! For padding
-    character(len=*), intent(in), optional :: Before, After ! text to print
+    character(len=1), intent(in), optional      :: fillChar      ! For padding
+    character(len=*), intent(in), optional      :: Before, After ! text to print
     ! If columnRange(1) < 1, just use starting columns; otherwise move to
     integer, dimension(2), optional, intent(in) :: COLUMNRANGE
     character(len=1), intent(in), optional      :: ALIGNMENT ! L, R, C, or J
@@ -956,7 +971,7 @@ contains
       rightpadding = len(after) - 1
     end if
     call blanksToColumn( myFullColumnRange(1), advance='no' )
-    if ( present(before) ) call output(before, advance='no' )
+    if ( present(before) ) call output( before, advance='no' )
     if ( mySkips == 0 .and. myAlignment == 'C' .and. myFillChar /= ' ' ) then
       ! OK, final adjustments of myColumnRange
       myColumnRange(1) = &
@@ -970,8 +985,8 @@ contains
       if ( present(after) ) call output(after, advance='no' )
     else
       call aligntofit( chars, myColumnRange, myAlignment, skips )
-      call blanksToColumn(myFullColumnRange(2)-rightpadding, advance='no' )
-      if ( present(after) ) call output(after, advance='no' )
+      call blanksToColumn( myFullColumnRange(2)-rightpadding, advance='no' )
+      if ( present(after) ) call output( after, advance='no' )
     end if
     call newLine
   end subroutine HEADLINE
@@ -1151,7 +1166,7 @@ contains
 
   ! ---------------------------------------  OUTPUTCALENDAR  -----
   subroutine OUTPUTCALENDAR ( date, datenote, notes, dontWrap, moonPhases )
-    use dates_module, only: NextMoon
+    use Dates_Module, only: NextMoon
     use MLSStringLists, only: CatLists
     ! output a nicely-formatted calendar of the current month with
     ! today's date marked in "bold"
@@ -1518,6 +1533,7 @@ contains
   ! dont_stamp: override setting to stamp end of each line
   ! By means of optional args you can create a line like
   ! *   name                   value   *
+  ! See also startTable, addRow, outputTable
   subroutine output_nvp_whatever ( name, &
    & chvalue, ivalue, cmvalue, dbvalue, snvalue, &
    & ADVANCE, colon, fillChar, Before, After, TABN, TABC, TABA, DONT_STAMP )
@@ -1952,31 +1968,6 @@ contains
   end subroutine getOption_log
 
   ! ------------------------------------  myMessage  -----
-  subroutine myMessage_old ( severity, name, line, advance )
-    ! Args
-    integer, intent(in)           :: severity
-    character(len=*), intent(in) :: name
-    character(len=*), intent(in) :: line
-    character (len=*), intent(in), optional :: Advance ! Do not advance
-    !                                 if present and the first character is 'N'
-    !                                 or 'n'
-    ! Local variables
-    integer :: nChars
-    character(len=len(line) + len(name) + 3) :: thus
-    ! Executable
-    nChars = len(line)
-    thus = line
-    if ( len_trim(name) > 0 ) then
-      nChars = len(line) + len(name) + 3
-      thus = '(' // trim(name) // ') ' // line
-    end if
-    if ( severity > MLSMSG_Warning ) then
-      call PrintItOut( thus(1:nChars), SEVERITY, exitStatus = 1  )
-    else
-      call PrintItOut( thus(1:nChars), SEVERITY  )
-    end if
-  end subroutine myMessage_old
-
   subroutine myMessage ( Severity, ModuleNameIn, Message, &
     & Advance )
 
@@ -2310,6 +2301,9 @@ contains
 end module HIGHOUTPUT
 
 ! $Log$
+! Revision 2.17  2017/09/07 23:43:40  pwagner
+! Improved comments; removed unused myMessage_old
+!
 ! Revision 2.16  2017/01/19 23:33:23  pwagner
 ! New procedures to add an internal wall or merge cells across a cell table
 !
