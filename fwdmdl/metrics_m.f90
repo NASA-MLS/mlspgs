@@ -900,7 +900,7 @@ path: do i = i1, i2
     ! Interpolate Temperature (T_Ref) and the vertical height derivative
     ! (dHidZij) to the path (T_Path and dHitdZi).
 
-    call get_eta_list ( t_sv%phi_basis, p_path(:n_path), eta_p, sorted=.true. )
+    call get_eta_list ( t_sv%phi_basis, p_path(:n_path), eta_p, sorted=.false. )
     do i = 1, n_path
       ! We don't use Interpolate from Indexed_Values_m because
       ! t_ref(vert_inds(i),:) would be a copy.  So we do one row at a time.
@@ -1157,6 +1157,9 @@ call get_eta_do_calc ( eta_zp(1:n_path), two_d_bounds, eta_zxp, do_calc_t, nz_zx
 end module Metrics_m
 
 ! $Log$
+! Revision 2.82  2017/08/28 20:28:08  livesey
+! Changed the n,nf,np,nz elements to j,jf,...
+!
 ! Revision 2.81  2017/07/26 20:05:22  vsnyder
 ! When the L4 component of Grids_t is constructed, the low bound for the
 ! first subscript is WindowStart, not 1.  That needs to be considered when
