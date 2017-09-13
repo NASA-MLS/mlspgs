@@ -29,6 +29,8 @@ module Metrics_m
                                             ! Grid1 and Grid2 have to be the last two
   integer, parameter, public :: Grid1 = 5   ! Close to left grid point
   integer, parameter, public :: Grid2 = 6   ! Close to right grid point
+  character(5), parameter :: nStat(no_sol:grid2) = &
+    & (/ 'none ', 'NaN  ', 'order', 'cmplx', 'good ', 'grid1', 'grid2' /)
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -39,6 +41,7 @@ module Metrics_m
   ! Private stuff
   real(rp), parameter :: DefaultTol = 0.001_rp ! km, for Solve_h_phi
   ! To control debugging
+  logical, parameter :: Bin42 = .false. ! Write inputs on unit 42 if failure
   logical, parameter :: Debug = .false.
   logical, parameter :: NewtonDetails = .true. .and. debug
   logical, parameter :: ComplexDebug = .true. .and. debug
@@ -177,7 +180,8 @@ contains
     !                                    longest path
     real(rp), intent(in) :: P_basis(:) ! Horizontal temperature representation
     !                                    basis, radians
-    real(rp), intent(in) :: H_ref(:,:) ! Heights by z_ref and p_basis, km
+    real(rp), intent(in) :: H_ref(:,:) ! Heights above R_Eq by z_ref and
+                                       ! p_basis, km
     real(rp), intent(in) :: H_Surf     ! Height of the pressure reference
     !                                    surface z_ref(1) above R_eq at phi_t, km
     real(rp), intent(in) :: Tan_Ht_s   ! Tangent height above H_Surf -- negative
@@ -226,6 +230,7 @@ contains
     real(rp) :: H          ! Tentative solution for H
     real(rp) :: My_H_Tol   ! Tolerance in kilometers for height convergence
     real(rp) :: P          ! Tentative solution for phi
+    real(rp) :: Start      ! Starting phi for Newton iteration if > -0.5*huge(0.0_rp)
     real(rp) :: Tan_Ht     ! tan_ht_s + Req_s
     real(rp) :: Theta      ! 2.0_rp*Acos(tan_ht/req_s), angle between incident
                            ! and reflected ray for subsurface tangent height
@@ -243,8 +248,7 @@ contains
     real(rp), parameter :: Pix2 = 2.0*pi
 
     ! For debugging
-    character(5), parameter :: nStat(no_sol:grid2) = &
-      & (/ 'none ', 'NaN  ', 'order', 'cmplx', 'good ', 'grid1', 'grid2' /)
+    logical, parameter :: TestStat = .false. ! Test whether any stat < good
 
 !   It would be nice to do this the first time only, but the
 !   retrieve command in the L2CF can now change switches
@@ -391,17 +395,34 @@ path: do i = i1, i2
           no_grid_fits = no_grid_fits - 1
           no_bad_fits = no_bad_fits + 1
         end if
+        start = -0.5*huge(0.0_rp)
+        if ( i > 1 .and. i < n_path ) then
+          if ( stat(i) == complex .and. stat(i-1) == good .and. stat(i+1) == good) then
+            ! Complex starting point last time.  Start halfway between two good ones.
+            start = 0.5 * ( p_path(i-1) + p_path(i+1) ) ! Solve_H_Phi subtracts phi_offset
+            if ( newtonDetails ) &
+              print '(2(a,i0),2(a,3f11.5),2(a,f11.5))', 'Phi(',i-1,':',i+1,')', &
+                & p_path(i-1:i+1), ' =', p_path(i-1:i+1)*rad2deg, &
+                & ' Starting phi ', start, ' = ', start*rad2deg
+          end if
+        end if
         call Solve_H_Phi ( p_basis(j:j+1), phi_offset(i), phi_sign(i), &
           &                h_ref(k,j:j+1), a, b, c, &
           &                tan_ht, r_eq, my_h_tol, i /= i2 .or. j /= p_coeffs-1, &
-          &                h_path(i), p_path(i), stat(i), outside )
+          &                start, h_path(i), p_path(i), stat(i), outside )
         if ( IEEE_Is_NaN(p_path(i)) ) stat(i) = NaN_sol
+        ! Test for phi out of order.
         if ( i > 1 .and. stat(i) >= good ) then
-          if ( p_path(i) < p_path(i-1) ) then ! Phi out of order, can't be right
-            stat(i) = order
+          if ( p_path(i) < p_path(i-1) .and. stat(i-1) >= good ) then
+            stat(i) = order ! Phi out of order, can't be right
           end if
         end if
-        if ( stat(i) >= good ) then ! good < grid1 < grid2
+        if ( i < n_path .and. stat(i) >= good ) then
+          if ( p_path(i) > p_path(i+1) .and. stat(i+1) >= good ) then
+            stat(i) = order ! Phi out of order, can't be right
+          end if
+        end if
+        if ( stat(i) >= good ) then ! still good (good < grid1 < grid2)
           no_bad_fits = no_bad_fits - 1
           if ( stat(i) >= grid1 ) no_grid_fits = no_grid_fits + 1
         end if
@@ -428,7 +449,7 @@ path: do i = i1, i2
               call output ( phi_t, before='  Phi_T = ' )
               call output ( rad2deg*phi_t, before=" = " )
               call output ( tan_ind, before=', tan_ind = ', advance='yes' )
-              call dump ( h_ref, name='h_ref' )
+              call dump ( h_ref(k,:), name='h_ref', lbound=k )
               call dump ( rad2deg*p_basis, name='p_basis (degrees)' )
             end if
         end if
@@ -437,23 +458,26 @@ path: do i = i1, i2
 
       if ( debug ) then
         print *, 'no_bad_fits =', no_bad_fits, ', no_grid+fits =', no_grid_fits
-        do i = 1, size(stat), 10
-          print "(i4,'#',10(1x,a:))", i, nStat(stat(i:min(size(stat),i+9)))
-        end do
+        call dump ( nStat(stat), name='Stat' )
       end if
     if ( no_bad_fits > 0 ) then
       call MLSMessage ( MLSMsg_Warning, ModuleName, &
         & "Height_Metrics failed to find H/Phi solution for some path segment" )
+      if ( bin42 ) then
+        rewind 42
+        write ( 42 ) shape(p_path), shape(h_ref), shape(p_basis), phi_t, &
+                   & tan_ind, h_surf, tan_ht_s, r_eq
+        write ( 42 ) p_basis, h_ref, z_ref
+        rewind 42
+      end if
       if ( switchDetail(switches,'mhpx') > -1 ) then
         call dumpInput ( 1 )
         if ( .not. debug ) then
-          do i = 1, size(stat), 10
-            print "(i4,'#',10(1x,a:))", i, nStat(stat(i:min(size(stat),i+9)))
-          end do
+          call dump ( nStat(stat), name='Stat' )
         end if
         call dump ( h_path, 'H_Path before 1d fixup' )
         call dump ( rad2deg*p_path, 'P_Path (degrees) before 1d fixup' )
-        call dump ( z_ref, 'Z_Ref' )
+        call dump ( z_ref(tan_ind:), 'Z_Ref', lbound=tan_ind )
       end if
       ! We shouldn't get here at all, so don't worry about efficiency
       if ( stat(1) < good .or. stat(n_path) < good ) then
@@ -522,6 +546,12 @@ path: do i = i1, i2
         if ( switchDetail(switches,'mhpx') > 0 ) &
           & call MLSMessage ( MLSMSG_Error, moduleName, 'Halt requested by mhpx1' )
       end if
+    else if ( testStat ) then
+      if ( any(stat < good) ) then
+        call dump ( nStat(stat), name='Stat' )
+        call MLSMessage ( MLSMSG_Error, moduleName, &
+          & 'No_Bad_Fits = 0 but some stat < good' )
+      end if
     end if
 
     if ( tan_ht_s < 0.0 ) then ! Earth-intersecting ray
@@ -547,31 +577,37 @@ path: do i = i1, i2
         & format='(f14.8)', options=options )
       if ( h_phi_dump < 0 ) &
         & call dump ( rad2deg*p_basis, name='p_basis (degrees)', format='(f14.6)', options=options )
-      call dump ( h_path, name='h_path', format='(f14.6)', options=options )
-      if ( do_dumps >= 1 ) call dump ( z_ref, name='z_ref', options=options )
+      call dump ( h_path, name='h_path (km from center of equivalent circular Earth)', &
+        & format='(f14.6)', options=options )
+      call dump ( nStat(stat), name='Stat' )
+      if ( do_dumps >= 1 ) &
+        & call dump ( z_ref(tan_ind:), name='z_ref', options=options, lbound=tan_ind )
     end if
 
   contains
 
     subroutine DumpInput ( FirstRow )
       integer, intent(in) :: FirstRow
-      call output ( tan_ht_s, before='tan_ht_s = ' )
-      call output ( req_s, before=', r_eq+h_surf = ' )
-      call dump ( rad2deg*p_basis, name='p_basis (degrees)', format='(f14.6)', options=options )
-      call output ( phi_t, before='phi_t = ', format='(f11.8)' )
+      call output ( tan_ht_s, before='Tan_Ht_s = ' )
+      call output ( req_s, before=', R_Eq+H_Surf = ' )
+      call dump ( rad2deg*p_basis, name='P_Basis (degrees)', format='(f14.6)', options=options )
+      call output ( phi_t, before='Phi_t = ', format='(f11.8)' )
       call output ( rad2deg*phi_t, before=" = ", format='(f13.8)' )
-      call output ( h_surf, before =', h_surf = ' )
-      call output ( tan_ind, before=', tan_ind = ', advance='yes' )
+      call output ( h_surf, before =', H_Surf = ' )
+      call output ( tan_ind, before=', Tan_Ind = ', advance='yes' )
+      call output ( r_eq, before='R_Eq ' )
+      call dump ( z_ref(tan_ind:), name=' Z_Ref ', lbound=tan_ind )
       if ( tan_ht_s < 0.0 ) then
-        call output ( n_tan, before='phi_offset (' )
+        call output ( n_tan, before='Phi_Offset (' )
         call output ( n_tan+ngp1, before=':', after=') (radians) ' )
         call dump ( phi_offset(n_tan:n_tan+ngp1), options='c' ) ! clean=.true.
-        call output ( n_tan, before='phi_offset (' )
+        call output ( n_tan, before='Phi_Offset (' )
         call output ( n_tan+ngp1, before=':', after=') (degrees) ' )
         call dump ( rad2deg*phi_offset(n_tan:n_tan+ngp1), options='c' ) ! clean=.true.
       end if
-      call dump ( h_ref(firstRow:n_vert,:), name='h_ref', format='(f14.7)',options=options )
-      if ( debug ) call dump ( vert_inds, name='vert_inds' )
+      call dump ( h_ref(firstRow:n_vert,:), name='H_Ref', format='(f14.7)', &
+        & options=options, lbound=firstRow )
+      if ( debug ) call dump ( vert_inds, name='Vert_Inds' )
     end subroutine DumpInput
 
   end subroutine Height_Metrics
@@ -590,7 +626,7 @@ path: do i = i1, i2
 
   subroutine Solve_H_Phi ( & ! inputs
     &                      p_basis, phi_offset, phi_sign, h_ref, a, b, c, &
-    &                      tan_ht, r_eq, tol, inside, &
+    &                      tan_ht, r_eq, tol, inside, start, &
                              ! outputs and inouts
     &                      h_path, phi, stat, outside )
 
@@ -605,7 +641,7 @@ path: do i = i1, i2
                                        ! and the tangent point for the reflected
                                        ! ray on the other side.
     real(rp), intent(in) :: Phi_Sign   ! Which way from tangent?
-    real(rp), intent(in) :: H_Ref(2)   ! Height reference.
+    real(rp), intent(in) :: H_Ref(2)   ! Height reference, km above R_Eq.
       ! A, B and C are coefficients of a quadratic approximation to the solution
     real(rp), intent(in) :: A          ! (p_basis(2)-p_basis(1)) * tan_ht
     real(rp), intent(in) :: B          ! -(h_ref(2) - h_ref(1))
@@ -619,13 +655,14 @@ path: do i = i1, i2
     real(rp), intent(in) :: Tol        ! Height tolerance for Newton convergence,
                                        ! km
     logical, intent(in) :: Inside      ! P_Basis(2) is not the last one in the grid
+    real(rp), intent(in) :: Start      ! Start here if > -0.5*huge(0.0_rp)
     real(rp), intent(inout) :: H_Path  ! H solution, inout in case there is none
     real(rp), intent(out) :: Phi       ! Phi solution
     integer, intent(inout) :: Stat     ! "good" or "grid" or "complex" or unchanged
     logical, intent(out) :: Outside    ! Newton iteration converged to a point
                                        ! outside p_basis(1:2)
 
-    real(rp) :: D      ! B^2 - 4 a c
+    real(rp) :: D      ! B^2 - 4 A C
     real(rp) :: Deriv  ! Derivative of A (sec(p)-1 ) + B p + C or
                        ! its polynomial approximation if p < p8Tol
     real(rp) :: H      ! tan_ht * ( 1.0_rp + secM1 ) - r_eq,
@@ -648,27 +685,35 @@ path: do i = i1, i2
     real(rp), parameter :: P8Tol = 0.2
 
     ! For debugging output
-    real(rp) :: DD(merge(0,10,debug))
+    real(rp) :: DD(merge(10,0,debug))
 
     if ( stat == order ) stat = no_sol
     outside = .false.
-    ! Solve 1/2 a p^2 + b p + c to start
-    d = b*b - 2.0 * a * c
-    if ( d < 0.0 ) then ! Complex solution, assume 1-d pressure
-      p = phi_sign*acos(tan_ht/max(tan_ht,0.5*(h_ref(1)+h_ref(2))+r_eq))
-      if ( stat < good ) &
-        & stat = complex ! In case Newton iteration doesn't converge
-        if ( debug ) call output ( p + phi_offset, format='(f15.5)', &
-          & after='  Complex starting point', advance='yes' )
-    else
-      p = (-b + phi_sign * sqrt(d) ) / a
-      if ( p < p_basis(1)-phi_offset .or. p > p_basis(2)-phi_offset ) then
-        p = (-b - phi_sign * sqrt(d) ) / a
-        if ( p < p_basis(1)-phi_offset .or. p > p_basis(2)-phi_offset ) &
-          & p = phi_sign*acos(tan_ht/max(tan_ht,0.5*(h_ref(1)+h_ref(2))+r_eq))
+    if ( start < -0.25*huge(0.0_rp) ) then
+      ! Solve 1/2 a p^2 + b p + c to start
+      d = b*b - 2.0 * a * c
+      if ( d < 0.0 ) then ! Complex starting solution, assume 1-d pressure
+        p = phi_sign*acos(tan_ht/max(tan_ht,0.5*(h_ref(1)+h_ref(2))+r_eq))
+        if ( stat < good ) &
+          & stat = complex ! In case Newton iteration doesn't converge
+          if ( debug ) then
+            call output ( p + phi_offset, format='(f11.5)', &
+              & before='Complex starting point' )
+            call output ( ( p + phi_offset) * rad2deg, format='(f11.5)', &
+              & before=' radians = ', after=' degrees', advance='yes' )
+          end if
+      else
+        p = (-b + phi_sign * sqrt(d) ) / a
+        if ( p < p_basis(1)-phi_offset .or. p > p_basis(2)-phi_offset ) then
+          p = (-b - phi_sign * sqrt(d) ) / a
+          if ( p < p_basis(1)-phi_offset .or. p > p_basis(2)-phi_offset ) &
+            & p = phi_sign*acos(tan_ht/max(tan_ht,0.5*(h_ref(1)+h_ref(2))+r_eq))
+        end if
       end if
+    else
+      p = start - phi_offset
     end if
-    p_path = p + phi_offset
+    p_path = sign(p,phi_sign) + phi_offset
     !{Use P in Newton iterations with an expansion for $\sec(\phi)$ that is
     ! higher order than two.  We don't use $\sec(\phi)-1$ for small $\phi$
     ! because it suffers cancellation.  Rather, use more terms of its Taylor
@@ -697,7 +742,7 @@ path: do i = i1, i2
           &      abs(h-h_ref(2)) < tol ) ) ) then
           ! Not extrapolating in phi
           stat = good
-          if ( debug ) call debug1 ( 1, n, 'GOOD', p_path )
+          if ( debug ) call debug1 ( 1, n, 'GOOD', p_path, p_print=p )
           phi = p_path
           return
         end if
@@ -708,8 +753,9 @@ path: do i = i1, i2
           outside = .true. ! phi is monotone; the rest are in the next column
           phi = p_path ! so phi has a defined value, even if it's no good
           if ( debug ) then
-            call debug1 ( 1, n, 'OUTSIDE', p_path )
+            call debug1 ( 1, n, 'OUTSIDE', p_path, p_print=p )
           end if
+          if ( debug ) call debug2
           return           ! or even farther over
         end if
       end if
@@ -722,7 +768,7 @@ path: do i = i1, i2
           call debug1 ( 1, 0, 'STEP ' // merge('P','S',abs(p) < P8Tol), p_path, p, deriv )
         end if
       p = p - d / deriv ! do the Newton step
-      p_path = p + phi_offset
+      p_path = sign(p,phi_sign) + phi_offset
     end do ! n
     ! Newton iteration failed to converge.  Use the break point if the
     ! result is very near to it.  We'll probably find it in the next
@@ -757,8 +803,8 @@ path: do i = i1, i2
     end if
     if ( p_path > p_basis(2) .and. inside ) then
       outside = .true. ! phi is monotone; the rest are in the next column
-      return           ! or even farther over
     end if
+    if ( debug ) call debug2
 
   contains
     subroutine debug1 ( K, L, Why, Phi, P_print, Deriv )
@@ -791,6 +837,13 @@ path: do i = i1, i2
         write (*, '(2x,a)') trim(adjustl(oops))
       end if
     end subroutine
+
+    subroutine debug2
+      call output ( phi, before='Phi ', format='(f11.5)' )
+      call output ( phi*rad2deg, before=' = ', format='(f11.5)' )
+      call output ( stat, before=' stat ', after=' = ' )
+      call output ( nStat(stat), advance='yes' )
+    end subroutine debug2
   end subroutine Solve_H_Phi
 
   ! -----------------------------------------------  More_Metrics  -----
@@ -900,10 +953,10 @@ path: do i = i1, i2
     ! Interpolate Temperature (T_Ref) and the vertical height derivative
     ! (dHidZij) to the path (T_Path and dHitdZi).
 
-    call get_eta_list ( t_sv%phi_basis, p_path(:n_path), eta_p, sorted=.false. )
+    call get_eta_list ( t_sv%phi_basis, p_path(:n_path), eta_p, sorted=.true. )
     do i = 1, n_path
       ! We don't use Interpolate from Indexed_Values_m because
-      ! t_ref(vert_inds(i),:) would be a copy.  So we do one row at a time.
+      ! t_ref(vert_inds,:) would be a copy.  So we do one row at a time.
       t_path(i) = dot_product ( t_ref(vert_inds(i),:), eta_p(i) )
       dHitdZi(i) = dot_product ( dHidZij(vert_inds(i),:), eta_p(i) )
     end do
@@ -1113,6 +1166,7 @@ call get_eta_do_calc ( eta_zp(1:n_path), two_d_bounds, eta_zxp, do_calc_t, nz_zx
           call Solve_H_Phi ( p_basis(j-1:j), phi_t, sign(1.0_rp,phi_t-p_basis(j-1)), &
           &                h_ref(i,j-1:j), a, b, c, &
           &                tan_ht, req_s, my_h_tol, i /= tan_ind .or. j /= p_coeffs, &
+          &                -0.5*huge(0.0_rp), & ! Start
           &                h_new(n_new), p_new(n_new), stat, outside )
           if ( stat >= grid1 ) then
             if ( minval(abs(h_new(n_new)- h_ref(i,j-1:j))) > my_h_tol ) then
@@ -1157,6 +1211,9 @@ call get_eta_do_calc ( eta_zp(1:n_path), two_d_bounds, eta_zxp, do_calc_t, nz_zx
 end module Metrics_m
 
 ! $Log$
+! Revision 2.83  2017/09/08 16:44:33  pwagner
+! Fixes bug that broke Platinum brick
+!
 ! Revision 2.82  2017/08/28 20:28:08  livesey
 ! Changed the n,nf,np,nz elements to j,jf,...
 !
