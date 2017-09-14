@@ -39,6 +39,7 @@ module ChunkDivideConfig_m
     integer :: upperOverlapFamily = PHYQ_Invalid
     integer :: noSlaves = 0             ! Number of slave nodes [even]
     integer :: homeModule = l_none      ! Which module to consider [orbital]
+    integer :: module = l_none  
     real(rp) :: homeGeodAngle = 0.0     ! Aim for one chunk to start here [orbital]
     logical   :: scanLLSet = .false.    ! True if scan lower limit should be used
     logical   :: scanULSet = .false.    ! True if scan upper limit should be used
@@ -190,6 +191,9 @@ contains ! ===================================  Public Procedures  =====
 end module ChunkDivideConfig_m
 
 ! $Log$
+! Revision 2.5  2017/09/14 23:17:26  pwagner
+! Added module component to ChunkDivideConfig_T
+!
 ! Revision 2.4  2014/08/06 23:26:45  vsnyder
 ! Remove USE for Switches and SwitchDetail, which are not referenced
 !
