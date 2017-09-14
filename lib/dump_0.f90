@@ -254,7 +254,7 @@ contains
       call finishLine
     else
       call name_and_size ( name, dopts(clean)%v, size(array) )
-      if ( present(name) .and. .not. dopts(laconic)%v ) call newLine
+      if ( getOutputStatus( 'start' ) /= 1 ) call newLine
       do j = 1, size(array), MyWidth
         DumpTheseZeros = dopts(clean)%v .or. &
           & any(array(j:min(j+2*myWidth-1, size(array))) /= myFillValue)
@@ -268,7 +268,7 @@ contains
         end if
         if ( DumpTheseZeros ) then
           do k = j, min(j+MyWidth-1, size(array))
-              call output ( array(k)(1:lon) // ' ' , advance='no' )
+              call output ( ' ' // array(k)(1:lon) // ' ' , advance='no' )
           end do
           call newLine
           numZeroRows = 0
@@ -457,7 +457,7 @@ contains
       call finishLine
     else if ( dopts(gaps)%v ) then
       call name_and_size ( name, dopts(clean)%v, size(array) )
-      if ( present(name) .and. .not. dopts(laconic)%v ) call newLine
+      if ( getOutputStatus( 'start' ) /= 1 ) call newLine
       k = 0
       if ( size(array)/100 > 100 )  call showColumnNums( 100 )
       do j=1, size(array), 100
@@ -479,7 +479,7 @@ contains
       call showColumnNums( 100 )
     else
       call name_and_size ( name, dopts(clean)%v, size(array) )
-      if ( present(name) .and. .not. dopts(laconic)%v ) call newLine
+      if ( getOutputStatus( 'start' ) /= 1 ) call newLine
       do j = 1, size(array), 34
         if (.not. dopts(clean)%v) then
           call output ( j+base, max(4,ilog10(size(array))+1) , advance='no' )
@@ -570,7 +570,7 @@ contains
       call dump ( array(:,1), name, fillValue=fillValue, maxlon=maxlon, options=options )
     else
       call name_and_size ( name, dopts(clean)%v, size(array) )
-      if ( present(name) .and. .not. dopts(laconic)%v ) call newLine
+      if ( getOutputStatus( 'start' ) /= 1 ) call newLine
       do i = 1, size( Array,1)
         do j = 1, size( Array,2), MyWidth
           DumpTheseZeros = dopts(clean)%v .or. &
@@ -590,7 +590,7 @@ contains
           end if
           if ( DumpTheseZeros ) then
             do k = j, min(j+myWidth-1, size( Array,2))
-                call output ( array(i,k)(1:lon) // ' ' , advance='no' )
+                call output ( ' ' // array(i,k)(1:lon) // ' ' , advance='no' )
             end do
             call newLine
             numZeroRows = 0
@@ -813,7 +813,7 @@ contains
       call finishLine
     else
       call name_and_size ( name, dopts(clean)%v, size(array) )
-      if ( present(name) .and. .not. dopts(laconic)%v ) call newLine
+      if ( getOutputStatus( 'start' ) /= 1 ) call newLine
       do i = 1, size( Array,1)
         do j = 1, size( Array,2), myWidth
           if (.not. dopts(clean)%v) then
@@ -891,7 +891,7 @@ contains
       call empty ( name )
     else
       call name_and_size ( name, dopts(clean)%v, size(array) )
-      if ( present(name) .and. .not. dopts(laconic)%v ) call newLine
+      if ( getOutputStatus( 'start' ) /= 1 ) call newLine
       do j = 1, size( Array,3)
         if (.not. dopts(clean)%v) then
           call output ( j, max(3,ilog10(size(array))+1) , advance='no' )
@@ -931,7 +931,7 @@ contains
       call empty ( name )
     else
       call name_and_size ( name, dopts(clean)%v, size(array) )
-      if ( present(name) .and. .not. dopts(laconic)%v ) call newLine
+      if ( getOutputStatus( 'start' ) /= 1 ) call newLine
       do j = 1, size( Array,3)
         if (.not. dopts(clean)%v) then
           call output ( j, max(3,ilog10(size(array))+1) , advance='no' )
@@ -990,7 +990,7 @@ contains
         & maxlon=maxlon, options=options, width=width )
     else
       call name_and_size ( name, dopts(clean)%v, size(array) )
-      if ( present(name) .and. .not. dopts(laconic)%v ) call newLine
+      if ( getOutputStatus( 'start' ) /= 1 ) call newLine
       do i = 1, size( Array,1)
         do j = 1, size( Array,2)
           do k = 1, size( Array,3), MyWidth
@@ -1011,7 +1011,7 @@ contains
             end if
           if ( DumpTheseZeros ) then
               do l = k, min(k+MyWidth-1, size( Array,3))
-                  call output ( array(i,j,l)(1:lon) // ' ' , advance='no' )
+                  call output ( ' ' // array(i,j,l)(1:lon) // ' ' , advance='no' )
               end do
               call newLine
               numZeroRows = 0
@@ -1298,7 +1298,12 @@ contains
     if ( present(name) .and. .not. dopts(laconic)%v ) then
       if ( len_trim(name) < 1 ) return
       if ( .not. nameHasBeenPrinted ) then
-        call output ( name , advance='no' )
+        if ( .not. clean .and. .not. present(theShape) ) then
+          call PrintName ( Name, NameHasBeenPrinted )
+          return
+        else
+          call output ( name , advance='no' )
+        endif
         if ( present(theShape) ) call output ( theShape , advance='no' )
       end if
       if ( clean ) then 
@@ -1758,6 +1763,9 @@ contains
 end module Dump_0
 
 ! $Log$
+! Revision 2.147  2017/09/14 18:31:14  pwagner
+! Take care to skip a space when dumping chars; aso not to print an unwanted blank line
+!
 ! Revision 2.146  2017/09/07 23:44:30  pwagner
 ! Added PrintNameAsHeadline and PrintNameInBanner options to dump
 !
