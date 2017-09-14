@@ -575,12 +575,12 @@ path: do i = i1, i2
       call output ( req_s, before=', r_eq+h_surf = ', advance='yes' )
       call dump ( rad2deg*p_path, name='P_Path (degrees) before refractive correction', &
         & format='(f14.8)', options=options )
-      if ( h_phi_dump < 0 ) &
+      if ( h_phi_dump < 0 .and. do_dumps >= 1 ) &
         & call dump ( rad2deg*p_basis, name='p_basis (degrees)', format='(f14.6)', options=options )
       call dump ( h_path, name='h_path (km from center of equivalent circular Earth)', &
         & format='(f14.6)', options=options )
-      call dump ( nStat(stat), name='Stat' )
-      if ( do_dumps >= 1 ) &
+      if ( do_dumps >= 2 ) call dump ( nStat(stat), name='Stat' )
+      if ( do_dumps >= 2 ) &
         & call dump ( z_ref(tan_ind:), name='z_ref', options=options, lbound=tan_ind )
     end if
 
@@ -971,12 +971,12 @@ path: do i = i1, i2
       if ( present(dHidTlm) ) call Temperature_Derivatives
     end if
 
-    if ( do_dumps >= 0 ) then
+    if ( do_dumps >= 1 ) then
       call dump ( t_ref, name='t_ref', format='(1pg14.6)', options=options )
       call dump ( t_path(:n_path), name='T_Path', format='(1pg14.6)', options=options )
       call dump ( dHitdZi(:n_path), name='dHitdZi', format='(1pg14.6)', options=options )
       call dump ( eta_p, name='Eta_P', format='(1pg14.6)' )
-      if ( do_dumps > 0 ) stop
+      if ( do_dumps > 1 ) stop
     end if
 
   contains
@@ -1211,6 +1211,13 @@ call get_eta_do_calc ( eta_zp(1:n_path), two_d_bounds, eta_zxp, do_calc_t, nz_zx
 end module Metrics_m
 
 ! $Log$
+! Revision 2.84  2017/09/13 19:39:24  vsnyder
+! Move nStat to module scope so more routines can use it.  Add unformatted
+! output of inputs if debugging.  Add more debugging output.  Add more
+! checking on phi order.  Add method to recover from complex starting point.
+! Correct missing application of Phi_Sign, which caused phi to be out of
+! order.  Some cannonball polishing.
+!
 ! Revision 2.83  2017/09/08 16:44:33  pwagner
 ! Fixes bug that broke Platinum brick
 !
