@@ -17,31 +17,32 @@ program extinctionmaker
 ! Needed by joint TES-MLS retrieval
 
 ! Optionally, creates "ExtinctionR3-OzoneOnly"
-! which would be used by a joint TES-MLS ozone retrieval
-   use Dump_0, only: DUMP
+
+! Or, creates both extra swaths
+   use Dump_0, only: Dump
    use Diff_1, only: SelfDiff
-   use Hdf, only: DFACC_RDWR, DFACC_RDOnly
-   use HDF5, only: h5fis_hdf5_f
-   use Intrinsic, only: l_hdf, l_swath
-   use L2AUXData, only: L2AUXData_t,  maxSDNamesBufSize, &
+   use HDF, only: DFACC_Rdwr, DFACC_RDOnly
+   use HDF5, only: H5fis_HDF5_F
+   use Intrinsic, only: L_HDF, L_Swath
+   use L2AUXData, only: L2AUXData_T, MaxSDNamesBufSize, &
      & ReadL2AUXData, DestroyL2AUXContents
-   use L2GPData, only: L2GPData_t, rgp, &
-     & DestroyL2GPContents, readL2GPData, writeL2GPData
-   use machine, only: hp, getarg
+   use L2GPData, only: L2GPData_T, Rgp, &
+     & DestroyL2GPContents, ReadL2GPData, WriteL2GPData
+   use Machine, only: Hp, Getarg
    use MLSCommon, only: MLSFile_T
    use MLSFiles, only: HDFVERSION_5, Dump, InitializeMLSFile, &
      & MLS_OpenFile, MLS_CloseFile
-   use MLSFillvalues, only: isFillValue, Monotonize
-   use MLSHDF5, only: GetAllHDF5DSNames, mls_h5open, mls_h5close
-   use MLSHDFEOS, only: MLS_swath_in_file
-   use MLSKinds, only: r8
+   use MLSFillValues, only: IsFillValue, Monotonize
+   use MLSHDF5, only: GetAllHDF5DSNames, MLS_H5open, MLS_H5close
+   use MLSHDFEOS, only: MLS_Swath_In_File
+   use MLSKinds, only: R8
    use MLSNumerics, only: InterpolateValues
    use MLSStats1, only: MLSMin
-   use MLSStrings, only: lowercase
-   use Monotone, only: isMonotonic
-   use output_m, only: output
-   use PrintIt_m, only: Set_Config
-   use Time_M, only: Time_Now, time_config
+   use MLSStrings, only: Lowercase
+   use Monotone, only: IsMonotonic
+   use Output_M, only: Output
+   use PrintIt_M, only: Set_Config
+   use Time_M, only: Time_Now, Time_Config
 
    implicit none
 
@@ -63,10 +64,17 @@ program extinctionmaker
 ! IFC.Linux/test [options] dgg dgm
 
   integer, parameter ::          MAXFILES = 100
+  ! The following may one of
+  !    C              for CO (default)
+  !    O              for ozone
+  !    *              for both
+  character(len=*), parameter   :: Ozone = 'O'
+  character(len=*), parameter   :: CO =    'C'
+  character(len=*), parameter   :: Both  = '*'
   type options_T
     logical     :: debug   = .false.
     logical     :: dryrun  = .false.
-    character   :: species = 'C'                     ! for CO (default)
+    character   :: species = CO     
     logical     :: verbose = .false.
     ! In filenames array         element #1 dgg       element #2 dgm
     character(len=255), dimension(MAXFILES) :: filenames
@@ -84,7 +92,7 @@ program extinctionmaker
   !
   call set_config ( useToolkit = .false., logFileUnit = -1 )
   time_config%use_wall_clock = .true.
-  CALL mls_h5open(error)
+  call mls_h5open( error )
   n_filenames = 0
   do      ! Loop over filenames
      call get_filename ( filename, n_filenames, options )
@@ -103,50 +111,52 @@ program extinctionmaker
   if ( n_filenames < 1 ) then
     if ( options%verbose ) print *, 'Sorry must supply dgg and dgm file names'
   else
-    call create_swath
+    select case ( options%species )
+    case ( CO, Ozone )
+      call create_swath ( options%species )
+    case ( Both )
+      call create_swath ( CO )
+      call create_swath ( Ozone )
+    case default
+      print *, 'I expected species to be C, O, or *, not ', options%species
+      stop
+    end select
   endif
-  call mls_h5close(error)
-  call SayTime( 'Creating swath' )
+  call mls_h5close( error )
+  call SayTime( 'Creating swath(s)' )
 contains
 
   ! Create swath named "ExtinctionR3-FinalExt"
   ! Or else "ExtinctionR3-OzoneOnly"
-  subroutine create_swath
-    type(l2auxData_T)        :: Geodlat
-    type(l2auxData_T)        :: MIFExrinction
-    type(l2auxData_T)        :: ptan
-    type(MLSFile_T)          :: L2AUXFile
-    type(MLSFile_T)          :: L2GPFile
-    type(L2GPData_T)         :: l2gp
-    integer                  :: dggAccess
-    integer                  :: instance
-    integer                  :: MAF
-    real(rgp)                :: maxLatOffset
-    integer, dimension(3)    :: ptanShp
-    character(len=128)       :: PTanDSName
-    character(len=128)       :: MiFXDSName
-    character(len=128)       :: ExtnDSName
-    integer                  :: status
-    logical                  :: v3
+  subroutine create_swath ( species )
+    ! Args:
+    character(len=1), intent(in)      :: species
+    ! Internal variables
+    type(l2auxData_T)                 :: Geodlat
+    type(l2auxData_T)                 :: MIFExrinction
+    type(l2auxData_T)                 :: ptan
+    type(MLSFile_T)                   :: L2AUXFile
+    type(MLSFile_T)                   :: L2GPFile
+    type(L2GPData_T)                  :: l2gp
+    integer                           :: dggAccess
+    integer                           :: instance
+    integer                           :: MAF
+    real(rgp)                         :: maxLatOffset
+    integer, dimension(3)             :: ptanShp
+    character(len=128)                :: PTanDSName
+    character(len=128)                :: MiFXDSName
+    character(len=128)                :: ExtnDSName
+    integer                           :: status
+    logical                           :: v3
+    ! Executable
     ! Open dgm file
-    print *, 'Entered create_swath'
+    print *, 'Entered create_swath for ', species
     call GetAllHDF5DSNames ( options%filenames(2), '/', sdList )
-    if ( options%verbose ) print *, trim(sdList)
-    if ( index( sdList, 'GHz.MifExtinction-CorePlusR3' ) < 1 ) then
-      if ( options%verbose ) print *, 'The dgg and dgm files seem to be v3, not v4'
-      return
-    endif
+    if ( options%debug ) print *, trim(sdList)
     if ( .not. MLS_swath_in_file ( &
       & options%filenames(1), 'O3-StdProd', HDFVERSION_5 &
       & ) ) then
       if ( options%verbose ) print *, 'The dgg is missing ozone; typo?'
-    endif
-    v3 = MLS_swath_in_file ( &
-      & options%filenames(1), "ExtinctionR3-FinalExt", HDFVERSION_5 &
-      & )
-    if ( v3 ) then
-      if ( options%verbose ) print *, 'The dgg and dgm files seem to be v3, not v4'
-      if ( .not. options%debug ) return
     endif
     status = InitializeMLSFile( L2AUXFile, type=l_hdf, access=DFACC_RDONLY, &
       & content='l2aux', name=options%filenames(2), hdfVersion=HDFVERSION_5 )
@@ -162,18 +172,32 @@ contains
     
     ! Are we aiming to create the extinction for CO retrieval, or for ozone?
     PTanDSName = 'GHz.ptan-CorePlusR3'
-    select case ( options%species )
-    case ( 'C' )
+    select case ( species )
+    case ( CO )
       MiFXDSName = 'GHz.MifExtinction-CorePlusR3'
       ExtnDSName = 'ExtinctionR3-FinalExt'
-    case ( 'O' )
+    case ( Ozone )
       ! PTanDSName = 'GHz.ptan-OzoneOnly' ! No--we never wrote this to the dgm file
       MiFXDSName = 'GHz.MifExtinction-OzoneOnly'
       ExtnDSName = 'ExtinctionR3-OzoneOnly'
     case default
-      print *, 'I expected species to be either C or O, not ', options%species
+      print *, 'I expected species to be either C or O, not ', species
       stop
     end select
+    if ( index( sdList, trim(MiFXDSName) ) < 1 ) then
+      if ( options%verbose ) &
+        & print *, trim(sdList)
+      print *, 'The dgm file is missing its needed extinction ', MiFXDSName
+      return
+    endif
+    v3 = MLS_swath_in_file ( &
+      & options%filenames(1), trim(ExtnDSName), HDFVERSION_5 &
+      & )
+    if ( v3 ) then
+      if ( options%verbose ) &
+        & print *, 'The dgg may be v3, not v4, or else you already processed it'
+      if ( .not. options%debug ) return
+    endif
     call Readl2auxData( l2auxFile%FileID%f_id, PTanDSName, ptan, &
       & hdfVersion=HDFVERSION_5 )
     call Readl2auxData( l2auxFile%FileID%f_id, MiFXDSName, MIFExrinction, &
@@ -265,7 +289,7 @@ contains
   end subroutine create_swath
 
 !------------------------- get_filename ---------------------
-    subroutine get_filename(filename, n_filenames, options)
+    subroutine get_filename( filename, n_filenames, options )
     ! Added for command-line processing
      character(len=255), intent(out)   :: filename          ! filename
      integer, intent(in)               :: n_filenames
@@ -289,7 +313,10 @@ contains
         options%dryrun = .true.
         exit
       elseif ( lowercase(filename(1:3)) == '-oz' ) then
-        options%species = 'O'
+        options%species = Ozone
+        exit
+      elseif ( lowercase(filename(1:3)) == '-bo' ) then
+        options%species = Both
         exit
       elseif ( filename(1:3) == '-v ' ) then
         options%verbose = .true.
@@ -327,15 +354,16 @@ contains
 !------------------------- print_help ---------------------
   subroutine print_help
   ! Print brief but helpful message
-      write (*,*) &
-      & 'Usage:extinctionmaker [options] dgg_file dgm_file'
-      write (*,*) ' Options: '
-      write (*,*) ' -d          => switch on debug mode'
-      write (*,*) ' -dryrun     => switch on dryrun mode'
-      write (*,*) ' -ozone      => create ozone extinction instead of CO'
-      write (*,*) ' -v          => switch on verbose mode'
-      write (*,*) ' -h          => print brief help'
-      stop
+    write (*,*) &
+    & 'Usage:extinctionmaker [options] dgg_file dgm_file'
+    write (*,*) ' Options: '
+    write (*,*) ' -d          => switch on debug mode'
+    write (*,*) ' -dryrun     => switch on dryrun mode'
+    write (*,*) ' -ozone      => create ozone extinction instead of CO'
+    write (*,*) ' -both       => create both extinctions'
+    write (*,*) ' -v          => switch on verbose mode'
+    write (*,*) ' -h          => print brief help'
+    stop
   end subroutine print_help
 !------------------------- SayTime ---------------------
   subroutine SayTime ( What, startTime )
@@ -357,6 +385,9 @@ end program extinctionmaker
 !==================
 
 ! $Log$
+! Revision 1.3  2016/08/23 18:33:47  pwagner
+! SelfDiff was moved to Diff_1
+!
 ! Revision 1.2  2016/07/28 01:46:37  vsnyder
 ! Refactor diff and dump
 !
