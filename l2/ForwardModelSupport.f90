@@ -16,9 +16,9 @@ module ForwardModelSupport
 
   implicit none
   private
-  public :: CONSTRUCTFORWARDMODELCONFIG, FORWARDMODELGLOBALSETUP, &
-    & CREATEBINSELECTORFROMMLSCFINFO, PRINTFORWARDMODELTIMING, &
-    & RESETFORWARDMODELTIMING, SHOWFWDMODELNAMES, FILLFWDMODELTIMINGS
+  public :: ConstructForwardModelConfig, ForwardModelGlobalSetup, &
+    & CreateBinSelectorFromMLSCFInfo, PrintForwardModelTiming, &
+    & ResetForwardModelTiming, ShowFwdModelNames, FillFwdModelTimings
 
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: ModuleName= &
@@ -289,8 +289,8 @@ contains ! =====     Public Procedures     =============================
 
   end subroutine ForwardModelGlobalSetup
 
-  ! -----------------------------  CreateBinSelectorFromMLSCFINFO  -----
-  type (BinSelector_T) function CreateBinSelectorFromMLSCFINFO ( root ) &
+  ! -----------------------------  CreateBinSelectorFromMLSCFInfo  -----
+  type (BinSelector_T) function CreateBinSelectorFromMLSCFInfo ( root ) &
     & result ( binSelector )
 
     use Expr_M, only: Expr
@@ -381,7 +381,7 @@ contains ! =====     Public Procedures     =============================
     if ( ( wantedUnit /= phyq_invalid ) .and. ( wantedUnit /= costUnit ) ) &
       & call AnnounceError ( 0, son, extraMessage='Wrong units for cost' )
 
-  end function CreateBinSelectorFromMLSCFINFO
+  end function CreateBinSelectorFromMLSCFInfo
 
   ! --------------------------------  ConstructForwardModelConfig  -----
   type (forwardModelConfig_T) function ConstructForwardModelConfig &
@@ -1266,7 +1266,7 @@ op:     do j = 2, nsons(theTree)
 
   end function ConstructForwardModelConfig
 
-  ! ------------------------------FillFwdModelTimings  -----
+  ! ----------------------------------------  FillFwdModelTimings  -----
   subroutine FillFwdModelTimings ( timings, FWModelConfig, which )
   !  Fill and return an array of time, mean, std_dev for timing FullforwardModel
 
@@ -1319,7 +1319,7 @@ op:     do j = 2, nsons(theTree)
 
   end subroutine FillFwdModelTimings
 
-  ! ------------------------------ShowFwdModelNames  -----
+  ! --------------------------------------------ShowFwdModelNames  -----
   function ShowFwdModelNames ( FWModelConfig ) result (fwdNames)
 
   !  Fill and return an array of forward Model Names
@@ -1575,6 +1575,9 @@ op:     do j = 2, nsons(theTree)
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.187  2017/09/14 18:36:26  vsnyder
+! Cannonball polishing
+!
 ! Revision 2.186  2017/03/17 17:27:02  pwagner
 ! Downgraded NeedL2PCFiles mesg from Error to Warning
 !
