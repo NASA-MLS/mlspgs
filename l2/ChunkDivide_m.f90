@@ -268,7 +268,7 @@ contains ! ===================================== Public Procedures =====
         call dumpCommand ( son )
       case ( s_chunkDivide )
         call chunkDivideL2CF ( son )
-	call dump(ChunkDivideConfig)
+        call dump(ChunkDivideConfig)
         didOne = .true.
       end select
     end do
@@ -583,11 +583,11 @@ contains ! ===================================== Public Procedures =====
         call output ( mafRange%Expanded(1) )
         call output ( ' : ' )
         call output ( mafRange%Expanded(2), advance='yes' )
-	
-	call output ( 'MARET before  FindLongestStretch  call ')
-	call FindLongestStretch ((chunks%lastMAFIndex - chunks%firstMAFIndex), 1, mafRange%L2Cover)
-	call output ( 'MARET after  FindLongestStretch  call ')
-	
+
+        call output ( 'MARET before  FindLongestStretch  call ')
+        call FindLongestStretch ((chunks%lastMAFIndex - chunks%firstMAFIndex), 1, mafRange%L2Cover)
+        call output ( 'MARET after  FindLongestStretch  call ')
+
       swlevel = switchDetail(switches, 'chu' )
       allocate ( chunks(ChunkDivideConfig%noChunks), stat=status )
       addr = 0
@@ -765,7 +765,7 @@ contains ! ===================================== Public Procedures =====
       integer, target, dimension(7) :: NotWantedForFixed = &
         & (/ f_noSlaves, f_homeModule, f_homeGeodAngle, f_scanLowerLimit, &
         &    f_scanUpperLimit, f_criticalModules, f_maxGap /)
-	
+
       !MARET added for Polygon
       integer, target, dimension(0) :: NeededForPolygon 
       integer, target, dimension(10) :: NotWantedForPolygon = &
@@ -967,7 +967,7 @@ contains ! ===================================== Public Procedures =====
           & ChunkDivideConfig%maxLength
       case ( l_polygon )
         needed => NeededForFixed
-        notWanted => NotWantedForFixed	
+        notWanted => NotWantedForFixed
       case ( l_PE )
         needed => NeededForPE
         notWanted => NotWantedForPE
@@ -2846,6 +2846,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.123  2017/09/14 18:36:13  vsnyder
+! Remove tab formatting to eliminate compiler warnings
+!
 ! Revision 2.122  2017/03/06 19:55:48  pwagner
 ! Corrected remaining mistakes in evaluating logical values
 !
