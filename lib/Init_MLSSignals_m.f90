@@ -184,7 +184,7 @@ contains
       begin, s+s_radiometer, &          ! Must be after module
              begin, f+f_lo, t+t_numeric, nr+n_field_type+du*PHYQ_FREQUENCY, &
              begin, f+f_suffix, t+t_string, nr+n_field_type, &
-             begin, f+f_module, s+s_module, nr+n_field_spec, &
+             begin, f+f_module, s+s_module, n+n_field_spec, &
              begin, f+f_polarization, t+t_polarization, n+n_field_type, &
              begin, f+f_singleSideband, t+t_numeric, nr+n_field_type+du*PHYQ_DIMENSIONLESS, &
              ndp+n_spec_def, &
@@ -209,6 +209,7 @@ contains
              begin, f+f_channels, t+t_numeric_range, n+n_field_type+du*PHYQ_FREQUENCY, &
              begin, f+f_direction, t+t_numeric, nr+n_field_type+du*PHYQ_DIMENSIONLESS, &
              begin, f+f_radiometer, s+s_radiometer, n+n_field_spec+du*PHYQ_DIMENSIONLESS, &
+             begin, f+f_module, s+s_module, n+n_field_spec, &
              begin, f+f_spectrometer, t+t_numeric, nr+n_field_type+du*PHYQ_DIMENSIONLESS, &
              begin, f+f_switch, t+t_numeric, nr+n_field_type+du*PHYQ_DIMENSIONLESS, &
              ndp+n_spec_def /) )
@@ -232,6 +233,9 @@ contains
 end module Init_MLSSignals_m
 
 ! $Log$
+! Revision 2.34  2017/09/15 15:44:18  livesey
+! Updated to allow modules to be defferred until signal definition
+!
 ! Revision 2.33  2016/12/15 18:23:27  pwagner
 ! Added asmls instrument
 !
