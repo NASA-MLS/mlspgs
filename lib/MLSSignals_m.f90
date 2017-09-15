@@ -274,6 +274,8 @@ contains
     integer, parameter :: UnneededRadiometer = WrongUnits + 1 ! Radiomter spec in wrong place
     integer, parameter :: NoDeferredRadiometer = UnneededRadiometer + 1 ! Radiometer spec needed
     integer, parameter :: PriorTrouble = NoDeferredRadiometer + 1
+    integer, parameter :: noModuleSpecified = PriorTrouble + 1 ! No module in either signal or radimoeter
+    integer, parameter :: conflictingModules = noModuleSpecified + 1 ! Module in signal and radiometer differ
 
     error = 0
     timing = .false.
@@ -353,6 +355,7 @@ contains
         radiometer%polarization = l_a
         radiometer%prefix = name
         radiometer%singleSideband = 0
+        radiometer%instrumentModule = 0
         do j = 2, nsons(key)
           son = subtree(j,key)
           field = decoration(subtree(1,son))
@@ -385,6 +388,7 @@ contains
           & cond=toggle(gen) .and. levels(gen) > 0 )
         signal%sideband = 0
         signal%radiometer = 0
+        signal%instrumentModule = 0
         do j = 2, nsons(key)
           son = subtree(j,key)
           field = decoration(subtree(1,son))
@@ -401,6 +405,8 @@ contains
             signal%direction = nint(value(1))
           case ( f_radiometer )
             signal%radiometer = decoration(decoration(gson))
+          case ( f_module )
+            signal%instrumentModule = decoration(decoration(gson))
           case ( f_spectrometer )
             ! Front end should be checking units now, but just in case....
             call expr_check ( gson, units, value, field, phyq_dimensionless )
@@ -426,7 +432,17 @@ contains
         if ( associated(radiometers) .and. associated(bands) .and. &
            & associated(spectrometerTypes) ) then
           signal%lo = radiometers(signal%radiometer)%lo
-          signal%instrumentModule = radiometers(signal%radiometer)%instrumentModule
+          ! The instrument module may have been supplied here, or as part of the radiometer specification
+          ! either way, make sure they're consistent
+          if ( signal%instrumentModule == 0 ) then
+            if ( radiometers(signal%radiometer)%instrumentModule == 0 ) &
+              & call announceError ( noModuleSpecified )
+            signal%instrumentModule = radiometers(signal%radiometer)%instrumentModule
+          else
+            if ( ( radiometers(signal%radiometer)%instrumentModule /= 0 ) .and. &
+                 ( radiometers(signal%radiometer)%instrumentModule /= signal%instrumentModule ) ) &
+              & call announceError ( conflictingModules )
+          end if
           signal%spectrometerType = bands(signal%band)%spectrometerType
           signal%singleSideband = radiometers(signal%radiometer)%singleSideband
           signal%centerFrequency = bands(signal%band)%centerFrequency
@@ -665,6 +681,10 @@ contains
         call output ( 'Radiometer field supplied when not necessary', advance='yes' )
       case ( noDeferredRadiometer )
         call output ( 'Radiometer field neeed for this signal as not specified in band', advance='yes' )
+      case ( noModuleSpecified )
+        call output ( 'No module found in either signal or radiometer definition', advance='yes' )
+      case ( conflictingModules )
+        call output ( 'Module given in signal and in radiometer conflict', advance='yes' )
       end select
     end subroutine AnnounceError
 
@@ -1074,9 +1094,13 @@ oc:       do
     call output ( '   Polarization: ' )
     call display_string (lit_indices(radiometer%polarization))
     call output ( '   Module: ')
-    call output ( radiometer%instrumentModule )
-    call output ( ' - ' )
-    call display_string ( modules(radiometer%instrumentModule)%name, advance='yes' ) 
+    if ( radiometer%instrumentModule /= 0 ) then
+      call output ( radiometer%instrumentModule )
+      call output ( ' - ' )
+      call display_string ( modules(radiometer%instrumentModule)%name, advance='yes' ) 
+    else
+      call output ( '<undefined>', advance='yes' )
+    end if
     call output ( '   LO: ')
     call output ( radiometer%lo )
     call output ( '   Single sideband: ' )
@@ -2054,6 +2078,9 @@ oc:       do
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.112  2017/09/15 15:44:18  livesey
+! Updated to allow modules to be defferred until signal definition
+!
 ! Revision 2.111  2016/09/21 00:38:09  pwagner
 ! Change appearance of Dump_Modules
 !
