@@ -32,9 +32,8 @@
       call output( pctnzero, advance='yes' )
     endif
     if ( any(shape(array) == 0) ) then
-      return
-    endif
-    if ( dopts(RMS)%v .or. dopts(AuBrick)%v .or. &
+      ! We do nothing
+    elseif ( dopts(RMS)%v .or. dopts(AuBrick)%v .or. &
       & dopts(ratios)%v .or. dopts(NaNs)%v ) then
       if ( .not. any(isfinite(array)) ) then
         call output ('(no finite values found in array) ', advance='yes')
@@ -75,7 +74,9 @@
         ! call output( 'done with PrintRMSetc.', advance='yes')
       end if
     end if
-    if ( dopts(stats)%v ) then
+    if ( any(shape(array) == 0) ) then
+      ! We do nothing
+    elseif ( dopts(stats)%v ) then
       ! Count how many meet our desired relationship w.r.t. FillValue
       select case ( fillvaluerelation )
       case ( '=' )
@@ -164,6 +165,9 @@
     nameOnEachLine = OldNameOnEachLine
     ! call output('Leaving dumpstats', advance='no')
 ! $Log$
+! Revision 2.39  2017/09/15 22:36:30  pwagner
+! If empty skip but dont return to caller just yet
+!
 ! Revision 2.38  2017/07/19 22:45:20  pwagner
 ! Use PrintName procedure
 !
