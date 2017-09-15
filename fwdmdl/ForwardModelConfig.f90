@@ -368,27 +368,31 @@ contains
             channels(channel)%used = i + channels(channel)%origin - 1
             channels(channel)%signal = sigInd
             channels(channel)%dacs = FindFirst ( usedDACSSignals, sigind )
-            if ( channels(channel)%dacs == 0 ) then
-              do thisSideband = fwdModelConf%sidebandStart, fwdModelConf%sidebandStop, 2
-                sx = (thisSideband +3) / 2
-                channels(channel)%shapeInds(sx) = MatchSignal ( &
-                  & filterShapes%signal, fwdModelConf%signals(sigInd), &
-                  & sideband = thisSideband, channel=channels(channel)%used )
-                if ( channels(channel)%shapeInds(sx) == 0 .and. fwdModelConf%do_freq_avg) &
-                  & call MLSMessage ( MLSMSG_Error, ModuleName, &
-                  &    "No matching channel shape information" )
-              end do
-            else
-              do thisSideband = fwdModelConf%sidebandStart, fwdModelConf%sidebandStop, 2
-                sx = (thisSideband +3) / 2
-                channels(channel)%shapeInds(sx) = MatchSignal ( &
-                  & DACSFilterShapes%filter%signal, fwdModelConf%signals(sigInd), &
-                  & sideband = thisSideband, channel=channels(channel)%used )
-                if ( channels(channel)%shapeInds(sx) == 0 ) &
-                  & call MLSMessage ( MLSMSG_Error, ModuleName, &
-                  &    "No matching DACS channel shape information" )
-              end do
-            end if ! filter bank or DACS
+            ! Look for channel shape information, but we only need to
+            ! do this if we've been asked to perform frequeny averaging
+            if ( fwdModelConf%do_freq_avg ) then
+              if ( channels(channel)%dacs == 0 ) then
+                do thisSideband = fwdModelConf%sidebandStart, fwdModelConf%sidebandStop, 2
+                  sx = (thisSideband +3) / 2
+                  channels(channel)%shapeInds(sx) = MatchSignal ( &
+                    & filterShapes%signal, fwdModelConf%signals(sigInd), &
+                    & sideband = thisSideband, channel=channels(channel)%used )
+                  if ( channels(channel)%shapeInds(sx) == 0) &
+                    & call MLSMessage ( MLSMSG_Error, ModuleName, &
+                    &    "No matching channel shape information" )
+                end do
+              else
+                do thisSideband = fwdModelConf%sidebandStart, fwdModelConf%sidebandStop, 2
+                  sx = (thisSideband +3) / 2
+                  channels(channel)%shapeInds(sx) = MatchSignal ( &
+                    & DACSFilterShapes%filter%signal, fwdModelConf%signals(sigInd), &
+                    & sideband = thisSideband, channel=channels(channel)%used )
+                  if ( channels(channel)%shapeInds(sx) == 0 ) &
+                    & call MLSMessage ( MLSMSG_Error, ModuleName, &
+                    &    "No matching DACS channel shape information" )
+                end do
+              end if ! filter bank or DACS
+            end if ! Need filter shape information
           end if
         end do
       end do
@@ -1554,6 +1558,10 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.138  2017/08/17 16:29:54  livesey
+! Allowed there to be a missing filter shapes file if frequency
+! averaging is not being called for
+!
 ! Revision 2.137  2017/02/04 02:17:40  vsnyder
 ! Undo all-caps switch in USE statements and some declarations.  Add Values1,
 ! Values (rank 2) and Values3 pointers to QtyStuff_t, but they're not used
