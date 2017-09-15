@@ -907,10 +907,11 @@ contains ! ===================================== Public Procedures =====
         if (nsons(son) > 1 ) then
           gson = subtree(2,son)
           call expr ( gson, units, value )
-          log_value = nint(value(1)) /= 0
+          ! log_value = get_boolean ( fieldValue )
         elseif (nsons(son) > 0 ) then
           value = 0.0
           log_value = get_boolean ( fieldValue )
+          ! print *, 'log_value ', log_value
         else
           value = 0.0
           log_value = .false.
@@ -985,12 +986,12 @@ contains ! ===================================== Public Procedures =====
               & ChunkDivideConfig%criticalSignals(j-1), strip=.true. )
           end do
         case ( f_excludePostOverlaps )
-          ChunkDivideConfig%allowPostOverlaps = log_value
+          ChunkDivideConfig%allowPostOverlaps = .not. get_boolean ( fieldValue ) ! log_value
           if ( .not. ChunkDivideConfig%allowPostOverlaps ) &
             & call MLSMessage(MLSMSG_Warning, ModuleName, &
             & 'You have elected to exclude MAFs after time range' )
         case ( f_excludePriorOverlaps )
-          ChunkDivideConfig%allowPriorOverlaps = log_value
+          ChunkDivideConfig%allowPriorOverlaps = .not. get_boolean ( fieldValue ) ! log_value
           if ( .not. ChunkDivideConfig%allowPriorOverlaps ) &
             & call MLSMessage(MLSMSG_Warning, ModuleName, &
             & 'You have elected to exclude MAFs prior to time range' )
@@ -999,18 +1000,18 @@ contains ! ===================================== Public Procedures =====
           ChunkDivideConfig%maxGapFamily = units(1)
         case ( f_skipL1BCheck )
           ! print *, 'processing f_skipL1BCheck ', log_value
-          ChunkDivideConfig%skipL1BCheck = log_value
+          ChunkDivideConfig%skipL1BCheck = get_boolean ( fieldValue ) ! log_value
           if ( ChunkDivideConfig%skipL1BCheck ) &
             & call MLSMessage(MLSMSG_Warning, ModuleName, &
             & 'You have elected to skip checking the l1b data for problems' )
         case ( f_crashIfPhiNotMono )
-          ChunkDivideConfig%crashIfPhiNotMono = log_value
+          ChunkDivideConfig%crashIfPhiNotMono = get_boolean ( fieldValue ) ! log_value
           if ( ChunkDivideConfig%crashIfPhiNotMono ) &
             & call MLSMessage(MLSMSG_Warning, ModuleName, &
             & 'You have elected to crash if phi, the master geodetic angle, is' // &
             & ' not monotonic' )
         case ( f_saveObstructions )
-          ChunkDivideConfig%saveObstructions = log_value
+          ChunkDivideConfig%saveObstructions = get_boolean ( fieldValue ) ! log_value
           if ( ChunkDivideConfig%saveObstructions ) &
             & call MLSMessage(MLSMSG_Warning, ModuleName, &
             & 'You have elected to save obstructions (possibly for Output_Close)' )
@@ -2925,6 +2926,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.125  2017/09/15 22:15:39  pwagner
+! Correct bugs in evaluating excludeOverlap fields
+!
 ! Revision 2.124  2017/09/14 23:19:36  pwagner
 ! Fixed some errors in ChunkDivide_Polygon
 !
