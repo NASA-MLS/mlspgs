@@ -1225,7 +1225,7 @@ contains
   subroutine Empty ( Name )
     character(len=*), intent(in), optional :: Name
 
-    if ( present(name) ) then
+    if ( present(name) .and. .not. NameHasBeenPrinted ) then
       call output ( name , advance='no' )
       call output ( ' is ' , advance='no' )
       nameHasBeenPrinted = .true.
@@ -1763,6 +1763,9 @@ contains
 end module Dump_0
 
 ! $Log$
+! Revision 2.148  2017/09/15 22:37:55  pwagner
+! Dont repeat name if empty
+!
 ! Revision 2.147  2017/09/14 18:31:14  pwagner
 ! Take care to skip a space when dumping chars; aso not to print an unwanted blank line
 !
