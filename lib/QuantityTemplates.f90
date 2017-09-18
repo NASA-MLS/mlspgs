@@ -665,7 +665,7 @@ contains
     call output ( qty%grandtotalinstances,  before=' grandtotalinstances = ' )
     call output ( qty%noCrossTrack,         before=' NoCrossTrack = ' )
     call newLine
-    call Blanks( 6 )
+    call blanks( 6 )
     call output ( trim(merge('  ','in',qty%coherent)) // 'coherent ' )
     call output ( trim(merge('   ','non',qty%stacked)) // 'stacked ' )
     call output ( trim(merge('  ','ir',qty%regular)) // 'regular ' )
@@ -679,10 +679,11 @@ contains
     call output ( qty%noInstancesUpperOverlap, advance='yes' )
     if ( .not. myNoL2CF .and. isStringInTable( qty%unit, phyq_indices) ) then
       call myDisplayString ( phyq_indices(qty%unit), before='      Unit = ' )
+    else
+      call blanks ( 5 )
     end if
     call output ( qty%badValue, before=' BadValue = ' )
-    call output ( ' InstanceLen = ' )
-    call output ( qty%InstanceLen, advance='yes' )
+    call output ( qty%InstanceLen, before=' InstanceLen = ', advance='yes' )
     if ( .not. myNoL2CF .and. &
       & isStringInTable( qty%horizontalCoordinate, lit_indices) ) &
       & call myDisplayString ( lit_indices(qty%horizontalCoordinate), &
@@ -717,7 +718,8 @@ contains
       call output ( trim(str), advance='yes' )
     end if
     if ( .not. myNoL2CF ) then
-      call output ( '     ' )
+      if ( qty%quantityType == l_vmr .or. qty%instrumentModule /= 0 ) &
+        & call output ( '     ' )
       if ( qty%quantityType == l_vmr ) then
         call output ( ' Molecule = ' )
         if ( isStringInTable( qty%molecule, lit_indices ) ) &
@@ -728,14 +730,15 @@ contains
         call GetModuleName ( qty%instrumentModule, str )
         call output ( trim(str) )
       end if
-      call newLine
+      if ( qty%quantityType == l_vmr .or. qty%instrumentModule /= 0 ) &
+        & call newLine
     end if
-    
-    if ( .not. associated (qty%the_HGrid) ) then
-      call output ( 'qty%the_HGrid not associated', advance='yes' )
-    else
+
+    if ( associated (qty%the_HGrid) ) then
       call Dump( qty%the_HGrid )
-    endif
+    else
+      call output ( '      No The_HGrid', advance='yes' )
+    end if
     if ( myDetails > 0 ) then
       if ( qty%signal /= 0 ) then
         call output ( '      Signal ' )
@@ -752,18 +755,18 @@ contains
         if ( qty%noCrossTrack == 1 ) then
           call dump ( reshape ( qty%phi, &
             & [ size(qty%geodLat,1),qty%noInstances] ), &
-            & '      Phi = ' )
+            & '      Phi' )
         else
           call dump ( reshape ( qty%phi, &
             & [ size(qty%geodLat,1),qty%noInstances,qty%noCrossTrack] ), &
-            & '      Phi = ' )
+            & '      Phi' )
         end if
       else
         call output ( '      No Phi' )
       end if
 
       if ( allocated(qty%surfs) ) then
-        call dump ( qty%surfs, '      Surfs = ' )
+        call dump ( qty%surfs, '      Surfs' )
       else
         call output ( '      No Surfs' )
       end if
@@ -773,14 +776,14 @@ contains
         if ( allocated(qty%geodlat) ) then
           call dump ( reshape ( qty%geodlat, &
             & [ size(qty%geodLat,1),qty%noInstances,qty%noCrossTrack] ), &
-            & '      GeodLat = ' )
+            & '      GeodLat' )
         else
           call output ( '      No GeodLat' )
         end if
         if ( allocated(qty%lon) ) then
           call dump ( reshape ( qty%lon, &
-            & [ size(qty%geodLat,1),qty%noInstances,qty%noCrossTrack] ), &
-            & '      Lon = ' )
+            & [ size(qty%geodlat,1),qty%noInstances,qty%noCrossTrack] ), &
+            & '      Lon' )
         else
           call output ( '      No Lon' )
         end if
@@ -794,7 +797,7 @@ contains
         if ( isStringInTable( qty%frequencyCoordinate, lit_indices ) ) &
           & call myDisplayString ( lit_indices(qty%frequencyCoordinate), &
           & before='      FrequencyCoordinate = ', advance='yes' )
-        call dump ( qty%frequencies, ' Frequencies = ' )
+        call dump ( qty%frequencies, ' Frequencies ' )
       end if
     else
       if ( associated(qty%frequencies)  .and. .not. myNoL2CF .and. &
@@ -829,7 +832,7 @@ contains
       real(rt), intent(in), pointer :: Array(:,:)
       character(*), intent(in) :: Name
       if ( associated(array) ) then
-        call dump ( array, '      ' // trim(name) // ' = ' )
+        call dump ( array, '      ' // trim(name) )
       else
         call output ( '      No ' // trim(name), advance='yes' )
       end if
@@ -2284,6 +2287,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.118  2017/01/25 17:19:26  pwagner
+! Now require setting verboser for some Dumps
+!
 ! Revision 2.117  2016/10/01 01:37:28  vsnyder
 ! Make QTM_Tree component of HGrid_t allocatable
 !
