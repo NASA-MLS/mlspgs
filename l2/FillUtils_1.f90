@@ -7819,11 +7819,15 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.133  2017/09/20 00:02:58  vsnyder
+! Shorten a log comment so compilers don't complain
+!
 ! Revision 2.132  2017/07/27 16:59:42  pwagner
 ! VectorFromFile may read qties from a named group
 !
 ! Revision 2.131  2017/07/10 18:52:32  pwagner
-! Transfer may /expandMask to all masking bits; may /skipValues to transfer only mask; Fill may replaceMissingValue=; correct Transfer by attribute
+! Transfer may /expandMask to all masking bits; may /skipValues to transfer
+! only mask; Fill may replaceMissingValue=; correct Transfer by attribute
 !
 ! Revision 2.130  2017/04/06 23:43:34  pwagner
 ! May choose to base on asc/desc mode on GHz/GeodAngle via manipulation field
