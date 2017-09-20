@@ -397,6 +397,26 @@ contains
         end do
       end do
 
+      if ( fwdModelConf%do_freq_avg ) then
+        ! Check again whether we have channel shapes.  We can't just check in
+        ! ConstructForwardModelConfig whether frequency averaging was requested
+        ! and both FilterShapes and DACSFilterShapes are associated, because if
+        ! there are no DACS (or only DACS) then one of them might be harmlessly
+        ! disassociated.  To check in ConstructForwardModelConfig, it would be
+        ! necessary to determine whether any channels are DACS channels, which
+        ! is only done here.
+        ier = 0
+        do i = 1, channel
+          do thisSideband = fwdModelConf%sidebandStart, fwdModelConf%sidebandStop, 2
+            sx = (thisSideband + 3) / 2
+            if ( channels(channel)%shapeInds(sx) == 0 ) ier = 1
+          end do
+        end do
+        if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+           & "Frequency averaging requested but there is no channel " // &
+           & "shape information for some channel" )
+      end if
+
     end subroutine Channel_Stuff
 
     ! ...............................................  DACS_Stuff  .....
@@ -1558,6 +1578,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.139  2017/09/15 15:45:18  livesey
+! Modified to allow omission of filter shapes file under appropriate circumstances
+!
 ! Revision 2.138  2017/08/17 16:29:54  livesey
 ! Allowed there to be a missing filter shapes file if frequency
 ! averaging is not being called for
