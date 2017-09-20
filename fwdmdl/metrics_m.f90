@@ -136,11 +136,6 @@ contains
       h_tan = dot_product(h_ref(tan_ind_f,first:last),eta_t(first:last)) - h_surf
     end if
 
-    if ( switchDetail(switches,'metd') > -1 ) then
-      call output ( h_tan, before='H_Tan = ' )
-      call output ( h_surf, before=', H_Surf = ', advance='yes' )
-    end if
-
   end subroutine Tangent_Metrics
 
   ! ---------------------------------------------  Height_Metrics  -----
@@ -180,8 +175,8 @@ contains
     !                                    longest path
     real(rp), intent(in) :: P_basis(:) ! Horizontal temperature representation
     !                                    basis, radians
-    real(rp), intent(in) :: H_ref(:,:) ! Heights above R_Eq by z_ref and
-                                       ! p_basis, km
+    real(rp), intent(in) :: H_ref(:,:) ! Geodetic heights (above R_Eq) by z_ref
+                                       ! and p_basis, km
     real(rp), intent(in) :: H_Surf     ! Height of the pressure reference
     !                                    surface z_ref(1) above R_eq at phi_t, km
     real(rp), intent(in) :: Tan_Ht_s   ! Tangent height above H_Surf -- negative
@@ -572,7 +567,8 @@ path: do i = i1, i2
 
     if ( do_dumps >= 0 ) then
       call output ( tan_ht_s, before='tan_ht_s = ' )
-      call output ( req_s, before=', r_eq+h_surf = ', advance='yes' )
+      call output ( req_s, before=' km, r_eq+h_surf = ' )
+      call output ( h_surf, before=' km, h_surf = ', after=' km', advance='yes' )
       call dump ( rad2deg*p_path, name='P_Path (degrees) before refractive correction', &
         & format='(f14.8)', options=options )
       if ( h_phi_dump < 0 .and. do_dumps >= 1 ) &
@@ -1211,6 +1207,9 @@ call get_eta_do_calc ( eta_zp(1:n_path), two_d_bounds, eta_zxp, do_calc_t, nz_zx
 end module Metrics_m
 
 ! $Log$
+! Revision 2.85  2017/09/14 19:42:24  vsnyder
+! Better control over what's dumped using metd#
+!
 ! Revision 2.84  2017/09/13 19:39:24  vsnyder
 ! Move nStat to module scope so more routines can use it.  Add unformatted
 ! output of inputs if debugging.  Add more debugging output.  Add more
