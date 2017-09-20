@@ -74,41 +74,95 @@ module Get_Eta_Matrix_m
 contains
 
 ! ---------------------------------------  Dump_Eta_Column_Sparse  -----
-  subroutine Dump_Eta_Column_Sparse ( Eta, Nz, NNz, Name, Short, Show_NZ )
+  subroutine Dump_Eta_Column_Sparse ( Eta, Nz, NNz, Name, Short, Show_NZ, &
+    & Grids_f, ZP_only )
+    use Array_Stuff, only: Subscripts
     use Dump_0, only: Dump
-    use Output_m, only: NewLine, Output
+    use intrinsic, only: Lit_Indices
+    use Load_SPS_Data_m, only: Grids_t
+    use Output_m, only: Blanks, NewLine, Output
+    use String_Table, only: Display_String
     real(rp), intent(in) :: Eta(:,:)
     integer, intent(in) :: Nz(:,:) ! Nonzeroes in each column
     integer, intent(in) :: NNz(:)  ! Number of nonzeroes in each column
     character(len=*), intent(in), optional :: Name
     logical, intent(in), optional :: Short   ! "Don't print zero columns", default false
     logical, intent(in), optional :: Show_NZ ! "Print zeroes", default true
-    integer :: I, J, L
-    logical :: MyShort, MyShow_NZ
+    type (grids_t), intent(in), optional :: Grids_f ! to compute subscripts
+    logical, intent(in), optional :: ZP_Only ! No Freq coordinate for Eta cols
+    integer :: Dims(4), I, J, L, M, MP, Places, Q, Subs(4)
+    logical :: MyShort, MyShow_NZ, MyZP
     logical :: Saw_NZ
 
-    if ( present(name) ) call output ( name, advance='yes' )
+    if ( present(name) .and. .not. present(grids_f) ) then
+      call output ( name )
+      call output ( ' state-vector-index ( path-index eta )*', advance='yes' )
+    end if
     myShort = .false.
     if ( present(short) ) myShort = short
     myShow_NZ = .true.
     if ( present(show_NZ) ) myShow_NZ = show_NZ
-    do j = 1, size(eta,2)
+    myZP = .false.
+    if ( present(ZP_Only) ) myZP = ZP_Only
+    q = 0
+    m = 0
+    do j = 1, size(eta,2) ! Corresponds to elements of grids_f%l_...
       if ( myShort .and. nnz(j) == 0 ) cycle
+      if ( present(grids_f) ) then
+        if ( j > m ) then
+          do while ( j > m ) ! In case several columns got skipped
+            mp = m
+            q = q + 1
+            if ( myZP ) then
+              m = m + ( grids_f%l_z(q) - grids_f%l_z(q-1) ) * &
+                      ( grids_f%l_p(q) - grids_f%l_p(q-1) )
+            else
+              m = grids_f%l_v(q)
+            end if
+          end do
+          if ( present(name) ) then
+            call output ( name )
+            call blanks ( 1 )
+          end if
+          call display_string ( lit_indices(grids_f%mol(q)) )
+          if ( myZP ) then
+            dims = [ size(eta,1), &
+                   & grids_f%l_z(q) - grids_f%l_z(q-1), &
+                   & grids_f%l_p(q) - grids_f%l_p(q-1), 1 ]
+          else
+            dims = [ size(eta,1), &
+                   & grids_f%l_f(q) - grids_f%l_f(q-1), &
+                   & grids_f%l_z(q) - grids_f%l_z(q-1), &
+                   & grids_f%l_p(q) - grids_f%l_p(q-1) ]
+          end if
+          call showList ( dims, dims, '' )
+          dims = [dims(2:), 1]
+          call output ( ' state-vector-index ( path-index eta )*', advance='yes' )
+        end if
+      end if
+      places = 5
+      if ( present(grids_f) ) then
+        subs = subscripts ( j-mp, dims )
+        places = sum(int(log10(real(subs)))) + count(dims/=1) + 3
+      end if
       if ( nnz(j) == size(eta,1) ) then
-        call output ( j, before='All rows in column ', after=' are nonzero', &
-            & advance='yes' )
+        call output ( 'All rows in column ' )
+        call showList ( dims, subs, ' are nonzero' )
         call dump ( eta(nz(:nnz(j),j),j), name='Values' )
       else
         l = 0
         saw_nz = .false.
+        call showList ( dims, subs, '' )
         do i = 1, nnz(j)
           if ( .not. myShow_NZ .and. eta(nz(i,j),j) == 0 ) cycle
-          if ( .not. saw_nz ) call output ( j, before='Nonzeroes in column ', after=':' )
+          if ( .not. saw_nz .and. .not. present(grids_f) ) &
+            & call output ( j, places=4, after='#' )
           saw_nz = .true.
           l = l + 1
           if ( l > 5 ) then
-            l = 0
+            l = 1
             call newLine
+            call blanks ( places )
           end if
           call output ( nz(i,j), format='(i4)' )
           call output ( eta(nz(i,j),j), format='(1pg14.6)' )
@@ -116,6 +170,26 @@ contains
         if ( saw_nz ) call newLine
       end if
     end do
+  contains
+    subroutine ShowList ( Dims, Subs, After )
+      ! Print "(" subs where dims/=1 ")"
+      integer, intent(in) :: Dims(4), Subs(4)
+      character(*), intent(in) :: After
+      integer :: S
+      if ( present(grids_f) ) then
+        do s = 1, 3
+          if ( dims(s) /= 1 ) exit
+        end do
+        call output ( subs(s), before="(" )
+        do while ( s < 4 )
+          s = s + 1
+          if ( dims(s) /= 1 ) call output ( subs(s), before="," )
+        end do
+        call output ( ")" )
+      else
+        call output ( j, places=4, after=after )
+      end if
+    end subroutine ShowList
   end subroutine Dump_Eta_Column_Sparse
 
 ! --------------------------------------------------  Eta_Func_1d  -----
@@ -1546,6 +1620,9 @@ contains
 end module Get_Eta_Matrix_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.29  2017/06/01 22:50:25  vsnyder
+! Add Get_Column_Sparsity, more dump spiffing
+!
 ! Revision 2.28  2017/05/24 20:29:49  vsnyder
 ! Spiff a dump
 !
