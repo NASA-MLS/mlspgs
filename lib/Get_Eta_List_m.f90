@@ -64,7 +64,7 @@ contains
   !   type(value_1D_list_t(rk)), intent(out) :: Eta(:) ! size(grid)
     type(value_1D_list_t), intent(out) :: Eta(:) ! size(grid)
     integer, intent(in), optional :: Row1, RowN
-    logical, intent(in), optional :: Sorted ! "Basis is sorted" -- default true
+    logical, intent(in), optional :: Sorted ! "Grid is sorted" -- default true
     logical, intent(in), optional :: Rev    ! Basis list is reversed
     include "Eta_List_1D.f9h"
   end subroutine Eta_List_1D_D
@@ -77,7 +77,7 @@ contains
   !   type(value_1D_list_t(rk)), intent(out) :: Eta(:) ! size(grid)
     type(value_1D_list_t), intent(out) :: Eta(:) ! size(grid)
     integer, intent(in), optional :: Row1, RowN
-    logical, intent(in), optional :: Sorted ! "Basis is sorted" -- default true
+    logical, intent(in), optional :: Sorted ! "Grid is sorted" -- default true
     logical, intent(in), optional :: Rev    ! Basis list is reversed
     include "Eta_List_1D.f9h"
   end subroutine Eta_List_1D_S
@@ -118,7 +118,7 @@ contains
     type(value_1D_p_t), intent(out) :: Eta(:) ! 2*size(grid)
     integer, intent(out) :: N
     integer, intent(in), optional :: Row1, RowN
-    logical, intent(in), optional :: Sorted ! "Basis is sorted" -- default true
+    logical, intent(in), optional :: Sorted ! "Grid is sorted" -- default true
     include "Eta_List_1D_p.f9h"
   end subroutine Eta_List_1D_p_D
 
@@ -132,7 +132,7 @@ contains
     type(value_1D_p_t), intent(out) :: Eta(:) ! 2*size(grid)
     integer, intent(out) :: N
     integer, intent(in), optional :: Row1, RowN
-    logical, intent(in), optional :: Sorted ! "Basis is sorted" -- default true
+    logical, intent(in), optional :: Sorted ! "Grid is sorted" -- default true
     include "Eta_List_1D_p.f9h"
   end subroutine Eta_List_1D_p_S
 
@@ -256,6 +256,9 @@ contains
 end module Get_Eta_List_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.9  2017/09/20 00:07:05  vsnyder
+! Correct comments for 'sorted' argument to say 'grid is sorted'
+!
 ! Revision 2.8  2017/02/07 03:49:00  vsnyder
 ! Add support for inverted basis
 !
