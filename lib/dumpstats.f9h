@@ -101,10 +101,12 @@
       call dumpCollapsedArray( array, name, &
         & fillValue, trim(snipOption(options, dopt_Collapse)) // 'L' )
       ! call output('Leaving dumpstats', advance='no')
+      call theDumpEnds
       return
     endif
     if ( .not. dopts(wholeArray)%v ) then
       ! call output('Leaving dumpstats', advance='no')
+      call theDumpEnds
       return
     endif
 
@@ -125,6 +127,7 @@
         call output( ' values are ', advance='no' )
         call output( InfFunction(1.), FORMAT=SDFORMATDEFAULT, advance='yes' )
         ! call output('Leaving dumpstats', advance='no')
+        call theDumpEnds
         return
       elseif ( all(isNaN(array)) ) then
         if ( dopts(laconic)%v .or. nameHasBeenPrinted ) then
@@ -141,6 +144,7 @@
         call output( ' values are ', advance='no' )
         call output( NaNFunction(1.), FORMAT=SDFORMATDEFAULT, advance='yes' )
         ! call output('Leaving dumpstats', advance='no')
+        call theDumpEnds
         return
       elseif ( .not. all(isFinite(array)) ) then
         ! we'll need to dump to see where the NaNs and Infs are
@@ -159,12 +163,16 @@
         call output( ' values are ', advance='no' )
         call output( minval(array), advance='yes' )
         ! call output('Leaving dumpstats', advance='no')
+        call theDumpEnds
         return
       end if
     end if
     nameOnEachLine = OldNameOnEachLine
     ! call output('Leaving dumpstats', advance='no')
 ! $Log$
+! Revision 2.40  2017/09/20 00:03:00  pwagner
+! Try harder not to skip printing name if prior dump was all 0
+!
 ! Revision 2.39  2017/09/15 22:36:30  pwagner
 ! If empty skip but dont return to caller just yet
 !
