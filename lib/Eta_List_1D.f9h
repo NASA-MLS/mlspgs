@@ -25,6 +25,7 @@
   integer :: I, J, MyRow1, MyRowN
   logical :: MySorted
   integer :: N_Basis, N_Grid
+  logical, parameter :: CheckSorted = .false. ! Check whether Grid is sorted
 
   n_grid = size(grid)
   if ( n_grid == 0 ) return
@@ -43,6 +44,27 @@
       i = myRow1
       myRow1 = myRowN
       myRowN = i
+    end if
+
+    if ( checkSorted ) then
+      block
+        use Dump_0, only: Dump
+        use MLSMessageModule, only: MLSMessage, MLSMSG_Crash
+        use Output_m, only: Output
+        j = sign(1,myRowN-myRow1)
+        do i = myRow1, myRowN-j, j
+          if ( grid(i) > grid(i+j) ) then
+            call dump ( grid(min(myRow1,myRowN):max(myRow1,myRowN)), 'Grid', &
+              & lBound=min(myRow1,myRowN) )
+            call output ( i, before='Grid(' )
+            call output ( grid(i), before=' ) = ' )
+            call output ( i+j, before=' < Grid(' )
+            call output ( grid(i+j), before=' ) = ', advance='yes' )
+            call MLSMessage ( MLSMSG_Crash, moduleName, &
+              & "You lied!  Grid is claimed to be sorted, but it isn't" )
+          end if
+        end do
+      end block
     end if
 
     if ( myRow1 <= myRowN ) then
@@ -84,7 +106,7 @@
         eta(i) = value_1D_list_t(n=1,v=[value_1d_t(j=n_basis,v=1.0_rk), &
                                       & value_1d_t(j=0,v=0.0_rk)])
       end do
-    else
+    else ! myRow1 > myRowN, process in the opposite order
       ! Coefficients below Basis(1) are all 1.0
       do i = myRow1, myRowN, -1
         if ( grid(i) > basis(1) ) exit
@@ -138,10 +160,10 @@
       do i = myRow1, myRowN
         ip = p(i)
         if ( grid(ip) > basis(1) ) exit
-!         eta(ip) = value_1D_list_t(rk)(n=1,v=[value_1d_t(rk)(n=1,v=1.0_rk), &
-!                                     & value_1d_t(rk)(n=0,v=0.0_rk)])
+!         eta(ip) = value_1D_list_t(rk)(n=1,v=[value_1d_t(rk)(j=1,v=1.0_rk), &
+!                                            & value_1d_t(rk)(j=0,v=0.0_rk)])
         eta(ip) = value_1D_list_t(n=1,v=[value_1d_t(j=1,v=1.0_rk), &
-                                & value_1d_t(j=0,v=0.0_rk)])
+                                       & value_1d_t(j=0,v=0.0_rk)])
       end do
       ! Coefficients between Basis(1) and Basis(n_basis) are "hat" functions
       do j = 2, n_basis
@@ -151,15 +173,15 @@
           if ( grid(ip) > basis(j) ) exit
           if ( basis(j-1) < grid(ip) ) then
 !             eta(ip) = value_1D_list_t(rk)(n=2, &
-!               v=[value_1d_t(rk)(n=j-1,v=(basis(j)-grid(ip)) * del_basis), &
-!                & value_1d_t(rk)(n=j,v=(grid(ip)-basis(j-1)) * del_basis) ] )
+!               v=[value_1d_t(rk)(j=j-1,v=(basis(j)-grid(ip)) * del_basis), &
+!                & value_1d_t(rk)(j=j,v=(grid(ip)-basis(j-1)) * del_basis) ] )
             eta(ip) = value_1D_list_t(n=2, &
               v=[value_1d_t(j=j-1,v=(basis(j)-grid(ip)) * del_basis), &
                & value_1d_t(j=j,v=(grid(ip)-basis(j-1)) * del_basis) ] )
             if ( eta(ip)%v(1)%v == 0.0 ) & ! eta(i)%v(2)%v cannot be zero because
                                           ! basis(j-1) < grid(i)
-!               & eta(ip) = value_1D_list_t(rk)(n=1, &
-!                 & v=[eta(ip)%v(2),value_1d_t(rk)(n=0,v=0.0_rk)])
+!               & eta(ip) = value_1D_list_t(rk)(j=1, &
+!                 & v=[eta(ip)%v(2),value_1d_t(rk)(j=0,v=0.0_rk)])
               & eta(ip) = value_1D_list_t(n=1, &
                 & v=[eta(ip)%v(2),value_1d_t(j=0,v=0.0_rk)])
           end if
@@ -173,7 +195,7 @@
 !         eta(ip) = value_1D_list_t(rk)(n=1,v=[value_1d_t(rk)(n=n_basis,v=1.0_rk), &
 !                                     & value_1d_t(rk)(n=0,v=0.0_rk)])
         eta(ip) = value_1D_list_t(n=1,v=[value_1d_t(j=n_basis,v=1.0_rk), &
-                                & value_1d_t(j=0,v=0.0_rk)])
+                                       & value_1d_t(j=0,v=0.0_rk)])
       end do
     end block
   end if
@@ -185,6 +207,9 @@
   end if
 
 ! $Log$
+! Revision 2.10  2017/09/20 00:05:15  vsnyder
+! Add check for under control of logical parameter
+!
 ! Revision 2.9  2017/08/28 20:27:47  livesey
 ! Changed the n,nf,np,nz elements to j,jf,...
 !
