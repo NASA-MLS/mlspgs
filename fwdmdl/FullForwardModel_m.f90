@@ -549,7 +549,7 @@ contains
 
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
     use Comp_Eta_DoCalc_No_Frq_M, only: Comp_Eta_DoCalc_No_Frq
-    use Comp_Eta_DoCalc_Sparse_m, only: Comp_Eta_DoCalc_Sparse
+    use Comp_Eta_DoCalc_List_m, only: Comp_Eta_DoCalc_List
     use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
 use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_Frq, &
 ! & Comp_SPS_Path_Frq_NZ, &
@@ -1075,8 +1075,8 @@ integer :: NNZ_ZP(size(eta_zp,2))               ! number of columns of eta_zp
                                   ! for frequency-dependent species, computed
                                   ! from Eta_zQ and frequency grids.
     ! Interpolation coefficients from phi basis to path for all species
-    type (Value_1D_Lists_t) :: Eta_p((1-s_qtm)*size(fwdModelConf%beta_group))
-    type(Value_1D_List_t) :: Eta_p_t(max_f) ! Interpolation coefficients from
+    type (Value_1D_Lists_t) :: Eta_p_List((1-s_qtm)*size(fwdModelConf%beta_group))
+    type (Value_1D_List_t) :: Eta_p_t(max_f) ! Interpolation coefficients from
                                   ! phi basis to path for temperature
     type (Value_2d_Lists_t) :: Eta_zp_list((1-s_qtm)*size(fwdModelConf%beta_group))
     type (value_QTM_2D_lists_t) :: Eta_zQ(s_qtm*size(grids_f%values)) ! Interpolation
@@ -1086,7 +1086,7 @@ integer :: NNZ_ZP(size(eta_zp,2))               ! number of columns of eta_zp
                                   ! dependent VMR, there's an index into Eta_fzQ.
     type (Value_QTM_2D_Lists_t) :: Eta_zQT ! Interpolation coefficients
                                   ! from 3D QTM to path for temperature.
-    type (Value_1D_Lists_t) :: Eta_Z(size(fwdModelConf%beta_group)) ! Interpolation
+    type (Value_1D_Lists_t) :: Eta_Z_List(size(fwdModelConf%beta_group)) ! Interpolation
                                   ! from zeta for each VMR to GL zeta.
     type (Value_1D_Lists_t) :: Eta_zzT ! Interpolation coefficients from
                                   ! temperature Zeta to GL zeta.  Since this is
@@ -1313,7 +1313,7 @@ integer :: NNZ_ZP(size(eta_zp,2))               ! number of columns of eta_zp
     call get_eta_list ( Grids_tmp%zet_basis, z_glgrid, eta_zzT, sorted=.true. )
 
     ! Insert into bill's 2d hydrostatic equation.
-    ! The phi inputa for this subprogram are the orbit plane projected
+    ! The phi inputs for this subprogram are the orbit plane projected
     ! geodetic locations of the temperature phi basis -- not necessarily
     ! the tangent phi's, which may be somewhat different.
 
@@ -1328,7 +1328,8 @@ integer :: NNZ_ZP(size(eta_zp,2))               ! number of columns of eta_zp
     ! Then finish the vertical part of the Metrics-3D calculation.
 
     if ( .not. usingQTM ) then ! For QTM, we need a different t_glgrid,
-                               ! h_glgrid, etc. for each pointing.
+                               ! h_glgrid, etc. for each pointing, so it's
+                               ! done later.
       if ( temp_der ) then
         call two_d_hydrostatic ( Grids_tmp, refGPH%template%surfs(1,1), &
           &  refGPH%values(1,windowStart:windowFinish), z_glgrid, &
@@ -1344,9 +1345,9 @@ integer :: NNZ_ZP(size(eta_zp,2))               ! number of columns of eta_zp
     call Trace_End ( 'ForwardModel.Hydrostatic', &
       & cond=toggle(emit) .and. levels(emit) > 0 )
 
-    ! Allocate space for the Eta_z components for each quantity.
+    ! Allocate space for the Eta_z_List components for each quantity.
     do i = 1, size(beta_group)
-      allocate ( eta_z(i)%eta(max_f) )
+      allocate ( eta_z_list(i)%eta(max_f) )
     end do
 
     ! Allocate space for the Eta_zQ components for each quantity, and the
@@ -1364,7 +1365,7 @@ integer :: NNZ_ZP(size(eta_zp,2))               ! number of columns of eta_zp
       allocate ( eta_zqT%eta(max_f) )
     else
       do i = 1, size(beta_group)
-        allocate ( eta_p(i)%eta(max_f) )
+        allocate ( eta_p_list(i)%eta(max_f) )
         allocate ( eta_zp_list(i)%eta(max_f) )
         if ( beta_group(i)%qty%qty%template%frequencyCoordinate /= l_none ) then
           allocate ( eta_fzp_list(i)%eta(max_f) )
@@ -1640,13 +1641,9 @@ integer :: NNZ_ZP(size(eta_zp,2))               ! number of columns of eta_zp
       losVel => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
         & quantityType=l_losVel, instrumentModule=firstSignal%instrumentModule, &
         & config=fwdModelConf )
-      orbIncline => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
-        & quantityType=l_orbitInclination, config=fwdModelConf )
       scGeocAlt => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
         & quantityType=l_scGeocAlt, config=fwdModelConf )
       ! Now the others:
-      gph => GetQuantityForForwardModel (fwdModelIn, fwdModelExtra, &
-        & quantityType=l_gph, config=fwdModelConf )
       earthRefl => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
         & quantityType=l_earthRefl, config=fwdModelConf )
       refGPH => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
@@ -1658,6 +1655,14 @@ integer :: NNZ_ZP(size(eta_zp,2))               ! number of columns of eta_zp
       if ( FwdModelConf%polarized ) then
         ECRtoFOV => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
           & quantityType=l_ECRtoFOV, config=fwdModelConf )
+      end if
+      if ( FwdModelConf%incl_cld ) then
+        gph => GetQuantityForForwardModel (fwdModelIn, fwdModelExtra, &
+          & quantityType=l_gph, config=fwdModelConf )
+      end if
+      if ( FwdModelConf%generateTScat .or. .not. usingQTM ) then
+        orbIncline => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
+          & quantityType=l_orbitInclination, config=fwdModelConf )
       end if
 
       ! Check that RefGPH and Temp have the same hGrid.  This is not checked in
@@ -4164,9 +4169,9 @@ end block
         ! Compute refractive index on the path.
         if ( h2o_ind > 0 ) then
           ! Compute eta_zp_list (Zeta & Phi only) for water.
-          call comp_eta_docalc_sparse ( grids_f, h2o_ind, z_path(1:npf),  &
-                                      & eta_z(h2o_ind),  phi_path(1:npf), &
-                                      & eta_p(h2o_ind), eta_zp_list(h2o_ind) )
+          call comp_eta_docalc_list ( grids_f, h2o_ind, z_path(1:npf),  &
+                                      & eta_z_list(h2o_ind),  phi_path(1:npf), &
+                                      & eta_p_list(h2o_ind), eta_zp_list(h2o_ind) )
           call comp_sps_path_sparse ( grids_f, h2o_ind, eta_zp_list(h2o_ind), &
                                     & sps_path(1:npf,h2o_ind) )
 ! Compute eta_zp & do_calc_zp (Zeta & Phi only) for water.
@@ -4250,8 +4255,8 @@ call comp_1_sps_path_no_frq ( Grids_f, h2o_ind, eta_zp(1:npf,:), &
       ! Compute eta_zp_list (for Zeta & Phi only)
 
       if ( .not. usingQTM ) then
-        call comp_eta_docalc_sparse ( grids_f, z_path(1:npf), eta_z, &
-                                    & phi_path(1:npf), eta_p, eta_zp_list )
+        call comp_eta_docalc_list ( grids_f, z_path(1:npf), eta_z_list, &
+                                    & phi_path(1:npf), eta_p_list, eta_zp_list )
 ! It is important to send all of eta_zp, do_calc_zp, nz_zp and
 ! nnz_zp so that nonzeros from previous invocations can be
 ! cleared without violating array bounds.
@@ -4261,7 +4266,7 @@ call comp_eta_docalc_no_frq ( Grids_f, z_path(1:npf), &
   &  eta_fzp=eta_fzp(1:npf,:), do_calc_fzp=do_calc_fzp(:npf,:) )
 
       else
-        call comp_eta_docalc_sparse ( grids_f, z_path, eta_z, s(1:npf)%coeff, &
+        call comp_eta_docalc_list ( grids_f, z_path, eta_z_list, s(1:npf)%coeff, &
                                     & eta_zQ )
       end if
 
@@ -4741,6 +4746,11 @@ call comp_eta_docalc_no_frq ( Grids_f, z_path(1:npf), &
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.385  2017/08/10 00:15:53  vsnyder
+! Add Tan_Pt_C in calls to Get_d_Deltau_Pol_df.  Do trapezoidal update using
+! Del_s instead of Del_z because ds/dh is singular at the tangent.  More
+! stuff getting ready for QTM.
+!
 ! Revision 2.384  2017/03/31 00:49:43  vsnyder
 ! Use F_and_V to map to Jacobian for QTM.  Make F_and_V scalar in
 ! One_Pointing.  Cosmetic changes.
