@@ -1,0 +1,132 @@
+\documentclass[11pt]{article}
+\usepackage{alltt}
+\usepackage[fleqn]{amsmath}
+\usepackage{floatflt}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage[strings]{underscore}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9in
+
+\newcommand{\docname}{wvs-143}
+\newcommand{\docdate}{20 September 2017}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+   
+\usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\bf\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\bf\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Nathaniel, Bill, Van\\
+Subject: \>Determining what part of the path to integrate\\
+From: \>Van Snyder\\
+%Reference: \\
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-20pt}
+
+If the instrument is not within the atmosphere, the entire path through
+the atmosphere is integrated.  If the instrument is within the atmosphere,
+only the part of the path in the instrument viewing direction should be
+integrated.
+
+If the height of the instrument is greater than the highest height in the
+{\tt h_ref} array in the Full Forward Model the instrument is considered
+not to be within the atmosphere.  The {\tt h_ref} array records the height
+of each $\zeta$ surface for each profile, computed using the temperatures
+along each profile, assuming hydrostatic equilibrium.
+
+The vectors $\mathbf{S}$ to the instrument and $\mathbf{T}$ to the tangent
+point, both in ECR coordinates, together with the matrix $\mathbf{E}$,
+which gives the rotation from ECR to FOV coordinates can be used to
+determine which part of the path to integrate.
+
+The third column of $\mathbf{E}$, denoted $\mathbf{E}_3$, is an unit
+vector in the direction of the line-of-sight of the instrument.  If
+$(\mathbf{T} - \mathbf{S}) \cdot \mathbf{E}_3 > 0$ the tangent point is in
+the direction of the line of sight, the part of the path that should be
+integrated begins at the end opposite the tangent point from the
+instrument, and the tangent point is on that path.  Otherwise, the part of
+the path that should be integrated begins at the end on the same side of
+the tangent point as the instrument.
+
+If the path of integration does not reflect from the Earth's surface, the
+problem is somewhat simpler.  Let the endpoints of a path of integration
+that passes entirely through the atmosphere be $\mathbf{P}_1$ and
+$\mathbf{P}_2$.  If $(\mathbf{P}_1 - \mathbf{S}) \cdot \mathbf{E}_3 > 0$,
+the beginning point of the path of integration is $\mathbf{P}_1$, else it
+is $\mathbf{P}_2$.
+
+The vectors $\mathbf{S}$ and $\mathbf{T}$ are minor frame quantities in
+the forward model.  The MIF used to define them should be chosen such that
+$\mathbf{T}$ is nearest to the tangent point on the path of integration.
+
+The path of integration ends at the point on the path of integration that
+is nearest to the instrument, which can be computed using the method
+described in \h{wvs-142}.
+
+\label{lastpage}
+\vspace*{-0.1in} % Somehow, this causes lastpage to be defined
+\end{document}
+
+% $Id$
+
+% $Log$
