@@ -193,8 +193,8 @@ sed  "s:$L1JOBDIR:$1:" $myPCF > $myPCF.temp
 sed  "/MLS-Aura_L1B/ s:/zonk:$L1JOBDIR:" $myPCF.temp > $myPCF
 # Replace the l2cf name and path
 n=951
-name=`split_path.sh -f $3`
-path=`split_path.sh -p $3`
+name=`$SPLIT_PATH -f $3`
+path=`$SPLIT_PATH -p $3`
 b=`echo "$n|$name|$path||||1"`
 sed  "/^951|/ c $b" $myPCF > $myPCF.temp
 
@@ -286,6 +286,7 @@ otheropts="$OTHEROPTS --sharedPCF -g --wall --submit l2q --delay 20000 -S'l2q,gl
 SPARTACUS=$MLSTOOLS/Spartacus
 RONIN=$MLSTOOLS/ronin.sh
 SETREADENV=$MLSTOOLS/set_read_env.sh
+SPLIT_PATH=$MLSTOOLS/split_path.sh
 H5REPACK=$LEVEL1_BINARY_DIR/h5repack
 NETCDFAUGMENT=$LEVEL1_BINARY_DIR/aug_hdfeos5
 L2GPDUMP=$LEVEL1_BINARY_DIR/l2gpdump
@@ -314,7 +315,7 @@ defined_or_exit PGE_ROOT "$PGE_ROOT"
 defined_or_exit MLSTOOLS "$MLSTOOLS"
 executable_or_exit Spartacus "$SPARTACUS"
 executable_or_exit ronin.sh "$RONIN"
-executable_or_exit split_path.sh "split_path.sh"
+executable_or_exit split_path.sh "$SPLIT_PATH"
 defined_or_exit L2CF_A "$L2CF_A"
 defined_or_exit L2CF_B "$L2CF_B"
 
@@ -440,7 +441,7 @@ fi
 if [ "$LEVEL2ONLY" != "yes" ]
 then
   # (2) Create the level 1 job and run it
-  create_and_run_Level_1
+  create_and_run_Level_1 $@
 fi
 
 # (3) Create the 2 level 2 job and run them
@@ -536,6 +537,9 @@ then
 fi
 
 # $Log$
+# Revision 1.5  2017/07/13 17:40:19  pwagner
+# If JOBDIR lacks an outputs subdirectory, so will a and b
+#
 # Revision 1.4  2017/05/19 20:49:13  pwagner
 # Repaired errors in operating BREAKER_PY
 #
