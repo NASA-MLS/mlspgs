@@ -569,8 +569,21 @@ wvs-141-1.eps: wvs-141-1.obj
 wvs-141-1.pdf: wvs-141-1.obj
 	tgif -print -pdf -page 1 -color wvs-141-1.obj
 
+wvs-142.dvi: wvs-142.tex wvs-142-1.eps
+
+wvs-142.pdf: wvs-142.tex wvs-142-1.pdf
+
+wvs-142-1.eps: wvs-142-1.obj
+	tgif -print -eps -page 1 -color wvs-142-1.obj
+
+wvs-142-1.pdf: wvs-142-1.obj
+	tgif -print -pdf -page 1 -color wvs-142-1.obj
+
 endif # end shortn_name == doc
 # $Log$
+# Revision 1.27  2017/09/06 18:59:05  pwagner
+# Now builds wvs-141.tex successfully
+#
 # Revision 1.26  2017/03/28 23:58:10  pwagner
 # Now builds  doc/wvs-137 properly
 #
