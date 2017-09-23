@@ -12,8 +12,8 @@
 \topmargin -0.5in
 \textheight 9in
 
-\newcommand{\docname}{wvs-142}
-\newcommand{\docdate}{21 September 2017}
+\newcommand{\docname}{wvs-142r1}
+\newcommand{\docdate}{22 September 2017}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
@@ -93,16 +93,17 @@ point on the line that is nearest to $\mathbf{P}$.
 
 \includegraphics{wvs-142-1}
 
-The point $\mathbf{N}$ on $\mathcal{L}(s)$ that is nearest to $\mathbf{P}$
-is on a line that is perpendicular to $\mathcal{L}(s)$ and that passes
-through $\mathbf{P}$.
+The point $\mathbf{N}(\hat{s})$ on $\mathcal{L}(s)$ that is nearest to
+$\mathbf{P}$ is on a line that is perpendicular to $\mathcal{L}(s)$ and
+that passes through $\mathbf{P}$.
 
 From the diagram, it is clear that the distance $\hat{s}$ along
 $\mathcal{L}(s)$ from $\mathbf{C}$ to $\mathbf{N}(\hat{s})$ is the length
-of the projection of $\mathbf{P}$ onto $\mathcal{L}(s)$, or $\hat{s} =
-(\mathbf{P} - \mathbf{C}) \cdot \mathbf{U}$.  Therefore the point
-$\mathbf{N}(\hat{s}) = \mathbf{C} + \hat{s}\, \mathbf{U}$.  The distance
-from $\mathbf{N}$ to $\mathbf{P}$ is $|\mathbf{P} - \mathbf{N}|$.
+of the projection of $\mathbf{P}-\mathbf{C}$ onto $\mathcal{L}(s)$, or
+$\hat{s} = (\mathbf{P} - \mathbf{C}) \cdot \mathbf{U}$.  Therefore the
+vector to the point $\mathbf{N}(\hat{s}) = \mathbf{C} + \hat{s}\,
+\mathbf{U}$.  The distance from $\mathbf{N}(\hat{s})$ to $\mathbf{P}$ is
+$|\mathbf{P} - \mathbf{N}(\hat{s})|$.
 
 \label{lastpage}
 \vspace*{-0.1in} % Somehow, this causes lastpage to be defined
@@ -111,3 +112,6 @@ from $\mathbf{N}$ to $\mathbf{P}$ is $|\mathbf{P} - \mathbf{N}|$.
 % $Id$
 
 % $Log$
+% Revision 1.1  2017/09/21 23:12:46  vsnyder
+% Initial commit
+%
