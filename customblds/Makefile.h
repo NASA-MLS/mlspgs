@@ -579,8 +579,21 @@ wvs-142-1.eps: wvs-142-1.obj
 wvs-142-1.pdf: wvs-142-1.obj
 	tgif -print -pdf -page 1 -color wvs-142-1.obj
 
+wvs-144.dvi: wvs-144.tex Sparse.eps
+
+wvs-144.pdf: wvs-144.tex Sparse.pdf
+
+Sparse.eps: Sparse.obj
+	tgif -print -eps -page 1 -color Sparse.obj
+
+Sparse.pdf: Sparse.obj
+	tgif -print -pdf -page 1 -color Sparse.obj
+
 endif # end shortn_name == doc
 # $Log$
+# Revision 1.28  2017/09/22 17:58:52  pwagner
+# Added wvs-142
+#
 # Revision 1.27  2017/09/06 18:59:05  pwagner
 # Now builds wvs-141.tex successfully
 #
