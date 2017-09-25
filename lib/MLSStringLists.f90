@@ -75,18 +75,19 @@ module MLSStringLists               ! Module to treat string lists
 ! NumStringElements  Returns number of elements in string list
 ! OptionDetail       Returns detail or arg of option in list of options
 ! ParseOptions       Parse options from commandline
-! PutHashElement     puts value into hash list corresponding to key string
+! PutHashElement     Puts value into hash list corresponding to key string
 ! ReadIntsFromList   Read an array of ints from a string list
 ! ReadNumsFromList   Read an array of floats from a string list
-! RemoveElemFromList removes occurrence(s) of elem from a string list
+! RemoveElemFromList Removes occurrence(s) of elem from a string list
 ! RemoveHashArray    Removes key strings and corresponding values
 !                      based on a named array
 ! RemoveHashElement  Removes key string and corresponding value
-! RemoveListFromList removes occurrence(s) of elems in a string list from another
-! RemoveNumFromList  removes a numbered elem from a string list
+! RemoveListFromList Removes occurrence(s) of elems in a string list from another
+! RemoveNumFromList  Removes a numbered elem from a string list
+! RemoveOption       Removes an option from a list of options
 ! RemoveSwitchFromList  
-!                    removes a switch from a list of switches
-! ReplaceSubString   replaces occurrence(s) of sub1 with sub2 in a string
+!                    Removes a switch from a list of switches
+! ReplaceSubString   Replaces occurrence(s) of sub1 with sub2 in a string
 ! ReverseList        Turns 'abc,def,ghi' -> 'ghi,def,abc'
 ! ReverseStrings     Turns (/'abc','def','ghi'/) -> (/'ghi','def','abc'/)
 ! SnipList           Like RemoveElemFromList, but a function
@@ -135,7 +136,7 @@ module MLSStringLists               ! Module to treat string lists
 ! int nCharsinFormat ( char* Format )
 ! int NumStringElements(strlist inList, log countEmpty, &
 !   & [char inseparator], [int Longestlen])
-! char* optionDetail(strlist inList, &
+! char* optionDetail ( strlist inList, &
 !     [char single_option], [char* multi_option], [int pattern], &
 !     [char delims(2)] )
 ! ParseOptions(strlist cmdline, char* opts_out(:), &
@@ -157,8 +158,10 @@ module MLSStringLists               ! Module to treat string lists
 !    & [char inseparator], [char* options])
 ! RemoveNumFromList(strlist inList, strlist outList, int nElement, &
 !    & [char inseparator], [char* options])
-! RemoveSwitchFromList(strlist inList, strlist outList, char* switch, &
-!    & [char inseparator], [char* options])
+! char* RemoveOption ( strlist inList, strlist outList, char* option, &
+!    & [int pattern], [char delims(2)] )
+! RemoveSwitchFromList( strlist inList, strlist outList, char* switch, &
+!    & [char inseparator], [char* options] )
 ! ReplaceSubString (char* str, char* outstr, char* sub1, char* sub2, &
 !       & [char* which], [log no_trim])
 ! strlist ReverseList (strlist str, [char inseparator])
@@ -280,7 +283,7 @@ module MLSStringLists               ! Module to treat string lists
    & optionDetail, parseOptions, putHashElement, &
    & readIntsFromList, ReadNumsFromList, &
    & removeElemFromList, removeListFromList, removeNumFromList, &
-   & removeHashArray, removeHashElement, removeSwitchFromList, &
+   & removeHashArray, removeHashElement, removeOption, removeSwitchFromList, &
    & replaceSubstring, reverseList, reverseStrings, &
    & snipList, sortArray, sortList, stringElement, stringElementNum, &
    & switchDetail, &
@@ -2409,9 +2412,10 @@ contains
     if ( present(multi_option) ) test_multi = multi_option
     if ( test_multi == ' ' ) test_multi = char(0) ! NULL
     myPattern = 0
-    if ( present(pattern) .and. &
-      & any(myPattern == (/0, 1, 2, 3, 4 /)) &  ! accept legal values only
-      & ) myPattern = pattern
+    if ( present(pattern) ) then
+      if ( any(Pattern == (/0, 1, 2, 3, 4 /)) &  ! accept legal values only
+        & ) myPattern = pattern
+    endif
     if ( adjustl(inList) == '*' ) then
       detail = 'yes'
       return
@@ -3134,6 +3138,78 @@ contains
       outList = catLists( outList, trim(elem), inseparator )
     enddo
   end subroutine RemoveNumFromList
+
+  ! --------------------------------------------------  RemoveOption  -----
+  subroutine RemoveOption( inOptions, outOptions, option, &
+    & pattern, delims )
+    ! Args
+    character(len=*), intent(in)              :: inOptions
+    character(len=*), intent(in)              :: option
+    character(len=*), intent(out)             :: outOptions
+    integer, optional, intent(in)             :: pattern
+    character (len=1), dimension(2), optional, &
+     & intent(in)                             :: delims
+    ! Internal variables
+    integer :: bloc
+    logical, parameter :: COUNTEMPTY = .true.
+    character :: cquotes, quotes
+    character (len=len(inOptions))             :: listBloc ! space-separated
+    integer :: j
+    integer :: myPattern
+    integer :: numDashes
+    ! Executable
+    outOptions = inOptions
+    if ( len_trim(option) < 1 ) return
+    outOptions = ' '
+    myPattern = 0
+    if ( present(pattern) ) then
+      if ( any(Pattern == (/0, 1, 2, 3, 4 /)) &  ! accept legal values only
+        & ) myPattern = pattern
+    endif
+    quotes = '['
+    cquotes = ']'
+    if ( present(delims) ) then
+      quotes = delims(1)
+      cquotes = delims(2)
+    endif
+    if ( option(1:2) == '--' ) then
+      numDashes = 2
+    elseif ( option(1:1) == '-' ) then
+      numDashes = 1
+    else
+      numDashes = 0
+    endif
+    select case (myPattern)
+    case ( 0,1 )
+      ! '-ab[arg] --xyz=arg
+      ! '-a -b arg --xyz=arg'
+      do bloc = 1, NumStringElements( inOptions, countEmpty, inseparator=' ' )
+        listBloc = StringElement( inOptions, bloc, countEmpty, inseparator=' ' )
+        ! does this block begin with one "-" or two?
+        if ( numDashes == 2 .and. listBloc(1:2) == '--' ) then
+          if ( listBloc == option ) listBloc = ' '
+        elseif ( listBloc(1:2) == '--' ) then
+          ! no match
+        elseif ( numDashes == 1 .and. listBloc(1:1) == '-' ) then
+          j = index( listBloc, option(2:2) )
+          listBloc = listBloc(1:j-1) // listBloc(j+1:)
+        endif
+        outOptions = trim(outOptions) // ' ' // listBloc
+      enddo
+    case ( 2, 3 )
+      ! '-a -b arg -xyz arg' or
+      ! '-a -b arg --xyz arg'
+      print *, 'Sorry--unable to remove option for pattern ', myPattern
+      stop
+    case ( 4 )
+      ! '-a -barg --xyz arg'
+      print *, 'Sorry--unable to remove option for pattern ', myPattern
+      stop
+    case default
+      print *, 'Sorry--unable to remove option for pattern ', myPattern
+      stop
+    end select
+  end subroutine RemoveOption
 
   ! --------------------------------------------------  RemoveSwitchFromList  -----
   subroutine RemoveSwitchFromList( inSwitches, outSwitches, switch, &
@@ -4567,6 +4643,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.76  2017/09/25 17:24:19  pwagner
+! New subroutine to RemoveOption from option string
+!
 ! Revision 2.75  2017/08/23 16:43:48  pwagner
 ! Fixed bugs in SortArray; now Uses LexicalSort
 !
