@@ -11,7 +11,7 @@
 
 module DumpCommand_M
 
-! Process a "dump" command. Or say whether to "skip" remainder of section.
+! Process a "dump" command. Or a flow control command.
 ! Or functions to set a run-time "Boolean" flag.
 ! (Should these latter functions be moved into a special run-time module?)
 
@@ -50,20 +50,20 @@ module DumpCommand_M
 ! runtime Boolean datase a pair (key => named_Boolean, value => its_value)
 ! where the value is determined by whether condition is true or false
 !    function                 condition
-! booleanFromAnyGoodRadiances
+! BooleanFromAnyGoodRadiances
 !               Any of the radiances have non-negative precisions
-! booleanFromAnyGoodValues
+! BooleanFromAnyGoodValues
 !               The quantity has any useable values (based on precision, status)
-! booleanFromCatchWarning
+! BooleanFromCatchWarning
 !               The last command resulted in a (optionally specific) warning
-! booleanFromComparingQuantities
+! BooleanFromComparingQuantities
 !               The first quantity stands in specified relation to the second
 !               E.g., formula="all a > b"
-! booleanFromEmptyGrid
+! BooleanFromEmptyGrid
 !               The specified GriddedData is empty
-! booleanFromEmptySwath
+! BooleanFromEmptySwath
 !               The specified swath in the specified file has no useable data
-! booleanFromFormula
+! BooleanFromFormula
 !               (a) Evaluate the formula; it may be one of the forms
 !               (1) Contains only "or", "and", "not" => logical result
 !               (2) Contains "lhs rel rhs" where
@@ -74,7 +74,7 @@ module DumpCommand_M
 !
 ! The following subroutines depart from the sbove pattern
 ! DumpCommand    Process the Dump command, dumping any of the allowed datatypes
-! Execute        Execute the dhell command specified in text
+! ExecuteCommand Execute the shell command specified in text
 ! InitializeRepeat
 !                Set the Repeat counter "count" to 0
 ! NextRepeat     Add 1 to Repeat counter "count",
@@ -100,7 +100,7 @@ module DumpCommand_M
 !    type (HGrids_T) HGrids(:), &
 !    type (GriddedData_T) GriddedDataBase(:), type (MLSFile_T) FileDataBase(:), &
 !    type (Matrix_Database_T) MatrixDataBase(:), type (Hessian_T) HessianDataBase(:) )
-! Execute ( int root )
+! ExecuteCommand ( int root )
 ! InitializeRepeat
 ! NextRepeat
 ! MLSCase ( int root )
@@ -109,8 +109,8 @@ module DumpCommand_M
 ! Skip ( int root, char* name )
 ! === (end of api) ===
 
-  interface EVALUATOR
-    module procedure EVALUATOR_SCA, EVALUATOR_ARRAY
+  interface Evaluator
+    module procedure Evaluator_Sca, Evaluator_Array
   end interface
 
   interface outputLater
@@ -1145,7 +1145,7 @@ contains
     use ChunkDivideConfig_M, only: ChunkDivideConfig, Dump
     use Declaration_Table, only: Dump_A_Decl, Decls, Get_Decl, Variable
     use Diff_1, only: Diff
-    use Dump_Options, only: RMSFormat
+    use Dump_Options, only: PrintNameAsHeadline, PrintNameInBanner, RMSFormat
     use Dump_0, only: Dump
     use Expr_M, only: Expr
     use FilterShapes_M, only: Dump_Filter_Shapes_Database, &
@@ -1197,7 +1197,8 @@ contains
       & Dump, Dump_All, Getradiometerindex
     use MLSStrings, only: Indexes, LowerCase, &
       & ReadIntsFromChars, Stretch, WriteIntsToChars
-    use MLSStringLists, only: GetHashElement, OptionDetail, SwitchDetail
+    use MLSStringLists, only: GetHashElement, OptionDetail, RemoveOption, &
+      & SwitchDetail
     use Moretree, only: Get_Boolean, Get_Field_Id, Get_Spec_Id
     use PCFHdr, only: DumpGlobalAttributes
     use PfaDatabase_M, only: Dump, Dump_PfaDatabase, Dump_PfaFileDatabase, &
@@ -1269,8 +1270,10 @@ contains
     integer :: MUL
     integer :: N
     character(len=80) :: NAMESTRING  ! E.g., 'L2PC-band15-SZASCALARHIRES'
+    logical :: oldPrintNameAsHeadline
+    logical :: oldPrintNameInBanner
     type (MLSFile_T), pointer :: OneMLSFile
-    character(len=80) :: OPTIONSSTRING  ! E.g., '-rbs' (see dump_0.f90)
+    character(len=80) :: optionsString  ! E.g., '-rbs' (see dump_0.f90)
     type (vectorValue_T), pointer :: QUANTITY
     integer :: QuantityIndex
     integer :: QuantityIndex2
@@ -1281,6 +1284,7 @@ contains
     integer :: Son
     integer, dimension(3) :: START, COUNT, STRIDE, BLOCK
     integer :: STARTNODE
+    character(len=80) :: TempOptionsString  ! E.g., '-rbs' (see dump_0.f90)
     character(20) :: TempText
     type(time_t) :: Time
     character(10) :: TimeOfDay
@@ -1348,8 +1352,10 @@ contains
     startNode = 0
     GotFirst = .false.
     details = 0 - DetailReduction
-    OPTIONSSTRING = '-'
-    got= .false.
+    OptionsString = '-'
+    got = .false.
+    oldPrintNameAsHeadline = PrintNameAsHeadline
+    oldPrintNameInBanner   = PrintNameInBanner
     toStderr = .false.
     asBanner = .false.
     asHeadLine = .false.
@@ -1932,8 +1938,7 @@ contains
         GotFirst = DiffOrDump == s_diff
       case ( f_options )
         call get_string ( sub_rosa(gson), optionsString, strip=.true. )
-        ! optionsString = lowerCase(optionsString)
-        ! call outputNamedValue( 'options', trim(optionsString) )
+        if ( verbose ) call outputNamedValue( 'options', trim(optionsString) )
         toStderr = optionDetail( optionsString, 'e', 'Err' ) == 'yes'
         asBanner = optionDetail( optionsString, 'B', 'Banner' ) == 'yes'
         headLineChars = optionDetail( optionsString, 'H', 'Headline' )
@@ -1941,6 +1946,16 @@ contains
         lineLenChars = optionDetail( optionsString, 'L', 'Linelength' )
         if ( lineLenChars /= 'no' ) &
           & call readIntsFromChars ( lineLenChars, lineLength )
+        if ( asHeadline ) then
+          PrintNameAsHeadline = .true.
+          call removeOption( optionsString, tempOptionsString, '-H' )
+          call removeOption( tempOptionsString, optionsString, '--Headline' )
+        endif
+        if ( asBanner ) then
+          PrintNameInBanner = .true.
+          call removeOption( optionsString, tempOptionsString, '-B' )
+          call removeOption( tempOptionsString, optionsString, '--Banner' )
+        endif
       case ( f_pfaData )
         do i = 2, nsons(son)
           look = decoration(decoration(subtree(i,son)))
@@ -2129,6 +2144,8 @@ contains
       end select
     end do
     if ( got(f_dumpFile) ) call revertOutput
+    PrintNameAsHeadline = oldPrintNameAsHeadline
+    PrintNameInBanner = oldPrintNameInBanner
 
     call trace_end ( 'DumpCommand', cond=toggle(gen) )
 
@@ -3117,6 +3134,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.134  2017/09/26 16:24:34  pwagner
+! May use options field to set text as Headline or Banner
+!
 ! Revision 2.133  2017/07/27 16:55:02  pwagner
 ! Reevaluate may take /truncate to keep integer part only
 !
