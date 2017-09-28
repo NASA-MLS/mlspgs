@@ -12,8 +12,8 @@
 \topmargin -0.5in
 \textheight 9in
 
-\newcommand{\docname}{wvs-143r1}
-\newcommand{\docdate}{25 September 2017}
+\newcommand{\docname}{wvs-143r2}
+\newcommand{\docdate}{28 September 2017}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
@@ -120,10 +120,12 @@ Compute a vector $\mathbf{T}_g$ to the Earth's surface at the longitude
 and geodetic latitude of $\mathbf{T}_r$, in ECR co\"ordinates, and a
 vector $\mathbf{V}_r = \mathbf{T}_r - \mathbf{T}_g$, normal to the Earth's
 surface at $\mathbf{T}_g$ (every point on $\mathbf{T}_g + s\,
-\mathbf{V}_r$ has the same longitude and geodetic latitude).  For each $m$
-there is a vector $\mathbf{V}_m = \mathbf{T}_m - \mathbf{T}_g$, and a
-geodetic tangent height $\hat{h}_m = |\mathbf{V}_m|$ if $\mathbf{T}_m
-\cdot \mathbf{V}_m > 0$ or $\hat{h}_m = -|\mathbf{V}_m|$ otherwise.
+\mathbf{V}_r$ has the same longitude and geodetic latitude).  Compute an
+unit vector $\hat{\mathbf{V}}_r = \mathbf{V}_r / |\mathbf{V}_r|$.  For
+each $m$ there is a vector $\mathbf{V}_m = \mathbf{T}_m - \mathbf{T}_g$,
+and a geodetic tangent height $\hat{h}_m = |\mathbf{V}_m|$ if
+$\mathbf{T}_m \cdot \mathbf{V}_m > 0$ or $\hat{h}_m = -|\mathbf{V}_m|$
+otherwise.
 
 Compute a set of numbers $\{h_i\}$ where $h_i \geq 0$ are geodetic heights
 corresponding to $\{\zeta_i\}$, computed from hydrostatic equilibrium
@@ -131,9 +133,9 @@ using temperatures on a geodetic profile at $\mathbf{T}_g$, and $h_i<0$
 are arbitrary pre-specified heights.  Use only the subset $\{h_i | h_i
 \geq \hat{h}_m\}$.
 
-Compute vectors $\{\mathbf{T}_i = \mathbf{T}_g + h_i \mathbf{V}_r \}$. 
-Represent the points on path $i$ of integration parametrically as the loci
-of points on the line given by $\mathcal{L}_i(s) = \mathbf{C}_i +
+Compute vectors $\{\mathbf{T}_i = \mathbf{T}_g + h_i \hat{\mathbf{V}}_r
+\}$.  Represent the points on path $i$ of integration parametrically as
+the loci of points on the line given by $\mathcal{L}_i(s) = \mathbf{C}_i +
 s\,\mathbf{U}_i$, where $\mathbf{U}_i = \frac{\mathbf{N}_r \times
 \mathbf{T}_i}{|\mathbf{N}_r \times \mathbf{T}_i|}$, and $\mathbf{C}_i =
 \mathbf{T}_i$ if $|\mathbf{T}_i| \geq |\mathbf{T}_g|$.  If $|\mathbf{T}_i|
@@ -164,6 +166,9 @@ $\mathbf{S}_m$.
 % $Id$
 
 % $Log$
+% Revision 1.2  2017/09/26 23:08:32  vsnyder
+% Almost completely revised
+%
 % Revision 1.1  2017/09/21 23:12:46  vsnyder
 % Initial commit
 %
