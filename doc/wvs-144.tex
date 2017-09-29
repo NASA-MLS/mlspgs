@@ -12,8 +12,8 @@
 \topmargin -0.5in
 \textheight 9in
 
-\newcommand{\docname}{wvs-144}
-\newcommand{\docdate}{22 September 2017}
+\newcommand{\docname}{wvs-144r1}
+\newcommand{\docdate}{29 September 2017}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
@@ -106,18 +106,18 @@ index ({\tt C}).  The value is never zero.
 
 For interpolation from a one-dimensional horizontal ($\phi$) or vertical
 ($\zeta$) basis, there are at most two nonzeros per row.  For
-interpolation from a QTM horizontal basis, there are at most three
-nonzeros per row.  For interpolation from a rectangular two-dimensional
-($\zeta \times \phi$ or lat $\times$ lon) basis, there are at most four
-nonzeros per row.  For interpolation from a QTM two-dimensional horizontal
-basis, there are at most three nonzeros per row.  For a three-dimensional
-quantity with a QTM horizontal basis, there are at most six nonzeros per
-row.  For a three-dimensional quantity with a lat $\times$ lon horizontal
-basis, there are at most eight nonzeros per row.  If the basis includes
+interpolation from a rectangular two-dimensional ($\zeta \times \phi$ or
+lat $\times$ lon) basis, there are at most four nonzeros per row.  For
+interpolation from a QTM two-dimensional horizontal basis, there are at
+most three nonzeros per row.  For a three-dimensional quantity with a QTM
+horizontal basis, there are at most six nonzeros per row.  For a
+three-dimensional quantity with a lat $\times$ lon horizontal basis,
+there are at most eight nonzeros per row.  If the basis includes
 frequency, the number of nonzeroes is doubled.  For higher-dimensional
 bases, especially for ones with QTM or lat $\times$ lon horizontal bases,
-the size of a non-sparse representation would be very much larger than the
-sparse representation, and consist mostly of elements with zero values.
+the size of a non-sparse representation would be very much larger than
+the sparse representation, and consist mostly of elements with zero
+values.
 
 To traverse a row, one starts with the value in the {\tt Rows} array,
 which gives the index within the {\tt E} (for ``element'') array of the
@@ -173,3 +173,6 @@ vector quantity.
 % $Id$
 
 % $Log$
+% Revision 1.1  2017/09/22 23:59:59  vsnyder
+% Initial commit
+%
