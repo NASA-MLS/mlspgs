@@ -68,6 +68,7 @@ module OUTPUT_M
 ! resumeOutput             resume output
 ! setFillPattern           set a special Fill pattern 
 !                           (that can be used in call to blanks, banner, etc.)
+! setOutputStatus          sets normally private data
 ! suspendOutput            suspend output
 ! switchOutput             switch output to a new named file, 
 !                            or else to 'stdout'
@@ -98,6 +99,7 @@ module OUTPUT_M
 ! revertOutput
 ! restoreSettings ( [log useToolkit] )
 ! setFillPattern ( pattern, [fillChar] )
+! setOutputStatus( char* name, int value )
 ! suspendOutput
 ! switchOutput ( char* filename, [int unit] )
 ! === (end of api) ===
@@ -138,7 +140,7 @@ module OUTPUT_M
     & flushOutputLines, getOutputStatus, newline, &
     & output, output_char_nocr, printOutputStatus, &
     & resetIndent, restoreSettings, resumeOutput, revertOutput, &
-    & setFillPattern, suspendOutput, switchOutput
+    & setFillPattern, setOutputStatus, suspendOutput, switchOutput
 
   ! These types made public because the class instances are public
   public :: outputOptions_t
@@ -1369,6 +1371,30 @@ contains
       & outputOptions%patterns(patternNum) = '(' // pattern // ')'
   end subroutine setFillPattern
 
+  ! ---------------------------------------------- setOutputStatus
+  ! Returns certain normally private data
+  ! Sets for modules like highOutput and maybe some others
+  ! Effect will be an integer
+  ! equal to value if integer-valued data
+  ! or to TRUE if value is 1
+  subroutine setOutputStatus( name, value )
+    ! Args
+    character(len=*), intent(in) :: name
+    integer, intent(in)          :: value
+    ! Executable
+    if ( index(lowercase(name), 'physicalcolumn' ) > 0 ) then
+      atColumnNumber = value           ! This is the "physical" column
+    elseif( index(lowercase(name), 'indent' ) > 0 ) then
+      indentBy = value
+    elseif( index(lowercase(name), 'start' ) > 0 ) then
+      atLineStart = ( value == 1 )
+    elseif( index(lowercase(name), 'lines' ) > 0 ) then
+      linesSincelastStamp = value
+    elseif( index(lowercase(name), 'silent' ) > 0 ) then
+      silentRunning = ( value == 1 )
+    endif
+  end subroutine setOutputStatus
+
   ! ----------------------------------------------  suspendOutput  -----
   subroutine suspendOutput 
   ! suspend outputting to PRUNIT.
@@ -1673,6 +1699,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.131  2017/09/29 00:19:01  pwagner
+! Added setOutputStatus
+!
 ! Revision 2.130  2017/09/07 20:58:29  pwagner
 ! Added printOutputStatus
 !
