@@ -61,11 +61,12 @@ module OUTPUT_M
 ! isOutputSuspended        returns TRUE if output is suspended
 ! newline                  print a newline
 ! output                   print argument
+! printOutputStatus        print normally private settings and options
 ! resetIndent              set indenting back to 0
 ! restoreSettings          restore default settings for output, stamps, tabs
 ! revertOutput             revert output to file used before switchOutput
 !                           if you will revert, keepOldUnitOpen when switching
-! resumeOutput             resume output
+! resumeOutput             resume suspended output
 ! setFillPattern           set a special Fill pattern 
 !                           (that can be used in call to blanks, banner, etc.)
 ! setOutputStatus          sets normally private data
@@ -94,7 +95,7 @@ module OUTPUT_M
 !       'y[es]', 't[rue]'  advance to next line after printing
 !       'n[o]', 'f[alse]'  don't advance to next line after printing
 !       'stderr'  print to stderr instead of default
-! printOutputStatus
+! printOutputStatus ( [char* keywords] )
 ! resumeOutput
 ! revertOutput
 ! restoreSettings ( [log useToolkit] )
@@ -204,6 +205,22 @@ module OUTPUT_M
                                             &  '(~ )            ' , &
                                             &  '(= ~ )          ' /)
                                             !   12345678901234567890
+    ! Here are samples of the special patterns above
+    !       Special patterns used in blanks
+    ! pattern
+    !  0                                                                 
+    !  1 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .   
+    !  2  . .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .   
+    !  3  .  ..  ..  ..  ..  ..  ..  ..  ..  ..  ..  ..  ..  ..  ..  .   
+    !  4  .   ..   ..   ..   ..   ..   ..   ..   ..   ..   ..   ..   .   
+    !  5  .. .... .... .... .... .... .... .... .... .... .... .... ..   
+    !  6 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -   
+    !  7  - -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -   
+    !  8  -  --  --  --  --  --  --  --  --  --  --  --  --  --  --  -   
+    !  9  - .. - .. - .. - .. - .. - .. - .. - .. - .. - .. - .. - ..    
+    !  A = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =   
+    !  B ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~   
+    !  C  = ~ = ~ = ~ = ~ = ~ = ~ = ~ = ~ = ~ = ~ = ~ = ~ = ~ = ~ = ~    
     character(len=FileNameLen) :: name = 'stdout'
     character(len=3)  :: advanceDefault = 'no' ! if advance=.. missing
     character(len=12) :: sdFormatDefault = '*' ! * means default format spec
@@ -215,12 +232,13 @@ module OUTPUT_M
   type advancedOptions_T
     logical :: stretch             = .false. ! p r i n t  l i k e  t h i s   ?
     logical :: bannered            = .false. ! print as a banner
-    logical :: headered            = .false. ! print as a header
+    logical :: headered            = .false. ! print as a headline
     type(outputOptions_T) :: originalOptions
   end type
 
   type(advancedOptions_T), public, save :: advancedOptions
   type(outputOptions_T), public, save   :: outputOptions
+  type(outputOptions_T), private, save  :: DefaultOutputOptions
 
   ! This is the type for configuring whether and how to automatically stamp
   ! lines sent to stdout
@@ -237,10 +255,11 @@ module OUTPUT_M
     character(len=16) :: dateFormat = ' '
     character(len=16) :: timeFormat = 'hh:mm'
     integer :: interval = 1 ! 1 means stamp every line; n means every nth line
-    character(len=8) :: TIMESTAMPSTYLE = 'post' ! 'pre' or 'post'
+    character(len=8) :: timeStampStyle = 'post' ! 'pre' or 'post'
   end type
 
-  type(stampOptions_T), public, save :: STAMPOPTIONS ! Could leave this private
+  type(stampOptions_T), public, save :: stampOptions ! Could leave this private
+  type(stampOptions_T), private, save :: DefaultStampOptions
 
   ! This is the type for configuring how the timeStamp stamps its lines)
   type timeStampOptions_T
@@ -253,7 +272,8 @@ module OUTPUT_M
     character(len=8) :: TIMESTAMPSTYLE = 'post' ! 'pre' or 'post'
   end type
 
-  type(timeStampOptions_T), public, save :: TIMESTAMPOPTIONS ! Could leave this private
+  type(timeStampOptions_T), public, save :: TimeStampOptions ! Could leave this private
+  type(timeStampOptions_T), private, save :: DefaultTimeStampOptions
 
   ! Private parameters
   character(len=2), parameter :: defaultNewLineCode = achar(0) // 'n' ! not '%n'
@@ -521,13 +541,13 @@ contains
   end function getOutputStatus
 
   ! ---------------------------------------------- printOutputStatus
-  ! Returns certain normally private data
-  ! intended for modules like highOutput and maybe some others
-  ! result will be an integer
-  ! equal to the value of integer-valued data
-  ! or to 1 if the logical-valued data is TRUE, 0 if FALSE
-  subroutine printOutputStatus
+  ! Prints certain normally private data
+  ! revealing what settings and options are in force
+  subroutine printOutputStatus ( keywords )
     ! Args
+    character(len=*), optional, intent(in) :: keywords
+    ! Internal variables
+    integer                                :: i
     ! Executable
     print *,  'atColumnNumber ', atColumnNumber            ! This is the "physical" column
     print *,  'atColumnNumber - indentBy ', atColumnNumber - indentBy ! This is the "virtual" column
@@ -535,6 +555,30 @@ contains
     print *,  'atLineStart? ', merge(1, 0, atLineStart)
     print *,  'linesSincelastStamp ', linesSincelastStamp
     print *,  'silentRunning ', merge(1, 0, silentRunning)
+    if ( .not. present(keywords) ) return
+    ! keyword tells which Output Options to print
+    if ( ok ( 'unit'   ) )  print *, 'prUnit          ', outputOptions%prUnit
+    if ( ok ( 'name'   ) )  print *, 'name            ', trim(outputOptions%name)
+    if ( ok ( 'newlin' ) )  print *, 'newLineVal      ', outputOptions%newLineVal
+    if ( ok ( 'sddef ' ) )  print *, 'sdFormatDefault ', outputOptions%sdFormatDefault
+    if ( ok ( 'parent' ) )  print *, 'parentName      ', outputOptions%parentName
+    if ( ok ( 'pattern' ))  then
+      call output( 'Special patterns used in blanks ', advance='yes' )
+      do i=1, numPatterns
+        call output( 'pattern: ', advance='no' )
+        call output( outputOptions%specialFillChars( i:i ), advance='no' )
+        call blanks(1)
+        call blanks( 64, FillChar=outputOptions%specialFillChars( i:i ) )
+        call NewLine
+      enddo
+    endif
+  contains
+    logical function ok ( arg )
+      ! Tell us whether keyword means it's ok to print arg
+      ! '*' is the wildcard
+      character(len=*), intent(in)   :: arg
+      ok = ( keywords == '*' .or. index( lowercase(keywords), arg ) > 0 )
+    end function ok
   end subroutine printOutputStatus
 
   ! ----------------------------------------------  isOutputSuspended  -----
@@ -1269,52 +1313,11 @@ contains
   ! optionally set to use or ignore Toolkit
     use PrintIt_m, only: DefaultLogUnit, Set_Config, StdoutLogUnit
     logical, optional, intent(in) :: useToolkit
-    outputOptions%prunit               = stdoutprunit
-    outputOptions%prunitLiteral        = .false.
-    outputOptions%MLSMSG_Level         = MLSMSG_Info
-    outputOptions%newLineVal           = 10 ! 13
-    outputOptions%nArrayElmntsPerLine  = 7
-    outputOptions%nBlanksBtwnElmnts    = 3
-    outputOptions%BUFFERED             = .true.
-    outputOptions%SKIPMLSMSGLOGGING    = .false.
-    outputOptions%logParent            = .false.
-    outputOptions%usePatternedBlanks   = .true. 
-    outputOptions%specialFillChars     = '0123456789ABC'
-    outputOptions%patterns             = (/ & ! on consecutive lines
-                                            &  '                ' , &
-                                            &  '(. )            ' , &
-                                            &  '(. .)           ' , &
-                                            &  '(.  .)          ' , &
-                                            &  '(.   .)         ' , &
-                                            &  '(.. ..)         ' , &
-                                            &  '(- )            ' , &
-                                            &  '(- -)           ' , &
-                                            &  '(-  -)          ' , &
-                                            &  '(- .. )         ' , &
-                                            &  '(= )            ' , &
-                                            &  '(~ )            ' , &
-                                            &  '(= ~)           ' /)
-                                            !   12345678901234567890
-    outputOptions%name                 = 'stdout'
-    outputOptions%advanceDefault       = 'no'
-    outputOptions%sdFormatDefault      = '*'
-    outputOptions%arrayElmntSeparator  = ' '
+    outputOptions = DefaultOutputOptions
 
-    stampOptions%neverStamp            = .false.
-    stampOptions%post                  = .true.
-    stampOptions%showTime              = .false.
-    stampOptions%textCode              = ' '
-    stampOptions%dateFormat            = ' '
-    stampOptions%timeFormat            = 'hh:mm'
-    stampOptions%interval              = 1
-    stampOptions%TIMESTAMPSTYLE        = 'post'
+    stampOptions = DefaultStampOptions
 
-    timeStampOptions%post              = .true.
-    timeStampOptions%showDate          = .false.
-    timeStampOptions%textCode          = ' '
-    timeStampOptions%dateFormat        = 'yyyy-mm-dd'
-    timeStampOptions%timeFormat        = 'hh:mm:ss'
-    timeStampOptions%TIMESTAMPSTYLE    = 'post'
+    timeStampOptions = DefaultTimeStampOptions
     if ( .not. present(useToolkit) ) return
     call set_config ( useToolkit = useToolkit, &
       & logFileUnit=merge(defaultLogUnit, stdoutLogUnit, useToolkit) )
@@ -1356,7 +1359,7 @@ contains
 
   ! ----------------------------------------------  setFillPattern  -----
   subroutine setFillPattern ( pattern, fillChar )
-  ! Set a special Fill pattern that can be used in a call to blanks
+  ! Override and set a special Fill pattern that can be used in a call to blanks
   ! e.g., by call blanks, FillChar='0' )
     character(len=1), optional, intent(in) :: fillChar
     character(len=*), optional, intent(in) :: pattern
@@ -1699,6 +1702,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.132  2017/10/03 21:42:54  pwagner
+! Added printOutputStatus; improved comments showing patterns
+!
 ! Revision 2.131  2017/09/29 00:19:01  pwagner
 ! Added setOutputStatus
 !
