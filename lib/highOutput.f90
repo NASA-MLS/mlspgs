@@ -267,7 +267,61 @@ module HighOutput
   character(len=12), private :: sdNeedsFragment = '(1pg14'
 
   ! This is the type for configuring how to automatically style 
-  ! special output formats; e.g., baanner
+  ! special output formats; e.g., Banner
+  ! Note the effect on the "bars" part of "stars and bars"
+  ! of choosing different HeadlineFill or BannerPattern characters:
+!------------------------------------------------------------------------------*
+!                            Test Banner Pattern: -                            *
+!------------------------------------------------------------------------------*
+!*******************************************************************************
+!                            Test Banner Pattern: *                            *
+!*******************************************************************************
+!++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*
+!                            Test Banner Pattern: +                            *
+!++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*
+!##############################################################################*
+!                            Test Banner Pattern: #                            *
+!##############################################################################*
+!                                                                              *
+!                            Test Banner Pattern: 0                            *
+!                                                                              *
+!. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .   *
+!                            Test Banner Pattern: 1                            *
+!. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .   *
+! . .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .  *
+!                            Test Banner Pattern: 2                            *
+! . .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .  *
+! .  ..  ..  ..  ..  ..  ..  ..  ..  ..  ..  ..  ..  ..  ..  ..  ..  ..  ..  . *
+!                            Test Banner Pattern: 3                            *
+! .  ..  ..  ..  ..  ..  ..  ..  ..  ..  ..  ..  ..  ..  ..  ..  ..  ..  ..  . *
+! .   ..   ..   ..   ..   ..   ..   ..   ..   ..   ..   ..   ..   ..   ..   .  *
+!                            Test Banner Pattern: 4                            *
+! .   ..   ..   ..   ..   ..   ..   ..   ..   ..   ..   ..   ..   ..   ..   .  *
+! .. .... .... .... .... .... .... .... .... .... .... .... .... .... .... ..  *
+!                            Test Banner Pattern: 5                            *
+! .. .... .... .... .... .... .... .... .... .... .... .... .... .... .... ..  *
+!- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -   *
+!                            Test Banner Pattern: 6                            *
+!- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -   *
+! - -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -  *
+!                            Test Banner Pattern: 7                            *
+! - -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -  *
+! -  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  - *
+!                            Test Banner Pattern: 8                            *
+! -  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  - *
+! - .. - .. - .. - .. - .. - .. - .. - .. - .. - .. - .. - .. - .. - .. - ..   *
+!                            Test Banner Pattern: 9                            *
+! - .. - .. - .. - .. - .. - .. - .. - .. - .. - .. - .. - .. - .. - .. - ..   *
+!= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =   *
+!                            Test Banner Pattern: A                            *
+!= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =   *
+!~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~   *
+!                            Test Banner Pattern: B                            *
+!~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~   *
+! = ~ = ~ = ~ = ~ = ~ = ~ = ~ = ~ = ~ = ~ = ~ = ~ = ~ = ~ = ~ = ~ = ~ = ~ = ~  *
+!                            Test Banner Pattern: C                            *
+! = ~ = ~ = ~ = ~ = ~ = ~ = ~ = ~ = ~ = ~ = ~ = ~ = ~ = ~ = ~ = ~ = ~ = ~ = ~  *
+
   type StyleOptions_T
     ! Headline
     character(len=1) :: HeadLineAlignment        = 'C'
@@ -278,7 +332,7 @@ module HighOutput
     integer          :: HeadLineSkips            = 0
     ! Banner
     character(len=1) :: BannerAlignment          = 'C'
-    character(len=1) :: BannerPattern            = ' '
+    character(len=1) :: BannerPattern            = '-'
     integer, dimension(2) :: BannerColumnrange   = (/ 1, 80 /)
     integer          :: BannerSkips              = 0
     integer          :: BannerLength             = 0
@@ -2376,6 +2430,9 @@ contains
 end module HIGHOUTPUT
 
 ! $Log$
+! Revision 2.19  2017/10/03 21:44:11  pwagner
+! restored bars to Banner; improved comments showing effect of BannerPattern
+!
 ! Revision 2.18  2017/09/29 00:20:27  pwagner
 ! Added Styled output and options; options as an arg to OutputNamedValue
 !
