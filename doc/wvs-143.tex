@@ -12,8 +12,8 @@
 \topmargin -0.5in
 \textheight 9in
 
-\newcommand{\docname}{wvs-143r2}
-\newcommand{\docdate}{28 September 2017}
+\newcommand{\docname}{wvs-143r3}
+\newcommand{\docdate}{2 October 2017}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
@@ -75,13 +75,15 @@
 \begin{tabbing}
 \phantom{References: }\= \\
 To: \>Nathaniel, Bill, Van\\
-Subject: \>Geometric definition of path of integration\\
+Subject: \>Definition of path of integration\\
 From: \>Van Snyder\\
 %Reference: \\
 \end{tabbing}
 
 \parindent 0pt \parskip 6pt
 \vspace{-20pt}
+
+\section{By interpolating in tangent height}
 
 If the instrument is not within the atmosphere, the entire path through
 the atmosphere is integrated.  If the instrument is within the atmosphere,
@@ -102,19 +104,21 @@ column of $\mathbf{E}_m$, denoted $\mathbf{E}_{3m}$, is an unit vector in
 the direction of the line-of-sight of the instrument, in ECR
 co\"ordinates.  Each line of sight can be represented parametrically as
 the line whose loci are given by $\mathcal{L}_m(s) = \mathbf{S}_m +
-s\,\mathbf{E}_{3m}$. Assume there are several MIFs, and therefore there is
-some MIF number $r$ such that $|\mathbf{T}_r| \neq 0$.  The number $r$
-might be specified in the {\tt l2cf}, or if $|\mathbf{T}_r| = 0$ it might
-be re-calculated according to some to-be-specified algorithm.
+s\,\mathbf{E}_{3m}$.
 
-Compute $\mathbf{N}_r = \mathbf{E}_{3r} \times \mathbf{T}_r$, the vector
-normal to the plane that would contain all field-of-view vectors if the
-instrument moves and scans in that plane.
+Assume there are several MIFs, and therefore there is some MIF number $r$
+such that $|\mathbf{T}_r| \neq 0$.  The number $r$ might be specified in
+the {\tt l2cf}, or if $|\mathbf{T}_r| = 0$ it might be re-calculated
+according to some to-be-specified algorithm.
 
 \begin{floatingfigure}{3.1in}
 \includegraphics[width=3in]{wvs-143-1}
 \end{floatingfigure}
 \vspace*{0.1in}
+
+Compute $\mathbf{N}_r = \mathbf{E}_{3r} \times \mathbf{T}_r$, the vector
+normal to the plane that would contain all field-of-view vectors if the
+instrument moves and scans in that plane.
 
 Compute a vector $\mathbf{T}_g$ to the Earth's surface at the longitude
 and geodetic latitude of $\mathbf{T}_r$, in ECR co\"ordinates, and a
@@ -159,6 +163,41 @@ point nearest to $-\infty \mathbf{U}_i$.  If the path intersects the
 Earth's surface, this might not be on the segment nearest to
 $\mathbf{S}_m$.
 
+\section{By interpolating angles}
+
+
+\begin{floatingfigure}{3.1in}
+\includegraphics[width=3in]{wvs-143-2}
+\end{floatingfigure}
+\vspace*{0.1in}
+
+Let $\mathbf{T}_1$ and $\mathbf{T}_2$, and $\mathbf{S}_1$ and
+$\mathbf{S}_2$, be tangent and instrument positions, respectively,  and let
+$\mathbf{L}_1$ and $\mathbf{L}_2$ be line-of-sight unit vectors, in ECR
+co\"ord\-in\-ates at consecutive MIF numbers $m_1$ and $m_2$.  Assume all
+vectors are in a single plane with normal $\mathbf{N} = \mathbf{S}_1
+\times \mathbf{L}_1$.
+
+Let $\mathbf{A}_T$, $\mathbf{A}_S$ and $\mathbf{A}_L$ be angles between
+$\mathbf{T}_1$ and $\mathbf{T}_2$, $\mathbf{S}_1$ and $\mathbf{S}_2$, and
+$\mathbf{L}_1$ and $\mathbf{L}_2$, respectively.  Let $\zeta_1$ and
+$\zeta_2$ be tangent pressures at those MIF numbers.  Let $\zeta$ be the
+desired tangent pressure.  Let $\mathbf{T}_\zeta$, $\mathbf{S}_\zeta$, and
+$\mathbf{L}_\zeta$ be the tangent, instrument position, and line-of-sight
+vectors for the desired $\zeta$.
+
+Compute an interplating coefficient $\eta = ( \zeta_2 - \zeta ) / (
+\zeta_2 - \zeta_1)$.  Rotate the vectors $\mathbf{T}_1$, $\mathbf{S}_1$,
+and $\mathbf{L}_1$ about $\mathbf{N}$ toward $\mathbf{T}_2$,
+$\mathbf{S}_2$, and $\mathbf{L}_2$ by angles $\eta\,\mathbf{A}_T$,
+$\eta\,\mathbf{A}_S$, and $\eta\,\mathbf{A}_L$, giving $\mathbf{T}_\zeta$,
+$\mathbf{S}_\zeta$, and $\mathbf{L}_\zeta$, respectively, as described in
+\h{wvs-122}.  Scale the lengths of the vectors $\mathbf{T}_\zeta$,
+$\mathbf{S}_\zeta$, and $\mathbf{L}_\zeta$ such that $|\mathbf{T}_\zeta| =
+\eta |\mathbf{T}_1| + ( 1 - \eta ) |\mathbf{T}_2|$, and
+$|\mathbf{S}_\zeta| = \eta |\mathbf{S}_1| + ( 1 - \eta ) |\mathbf{S}_2|$. 
+$\mathbf{L}_\zeta$ remains an unit vector.
+
 \label{lastpage}
 \vspace*{-0.1in} % Somehow, this causes lastpage to be defined
 \end{document}
@@ -166,6 +205,9 @@ $\mathbf{S}_m$.
 % $Id$
 
 % $Log$
+% Revision 1.3  2017/09/28 23:12:01  vsnyder
+% Need an unit vector in the direction of V_r
+%
 % Revision 1.2  2017/09/26 23:08:32  vsnyder
 % Almost completely revised
 %
