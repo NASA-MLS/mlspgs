@@ -822,11 +822,11 @@ contains
             call output ( afterSub , advance='no' )
           end if
           if ( dopts(dot)%v ) then
-            do k = j, min(j+33, size(array))
+            do k = j, min(j+33, size(array,2))
               call output ( merge('T','.',array(i,k)) , advance='no' )
             end do
           else
-            do k = j, min(j+33, size(array))
+            do k = j, min(j+33, size(array,2))
               call output ( array(i,k) , advance='no' )
             end do
           end if
@@ -1763,6 +1763,9 @@ contains
 end module Dump_0
 
 ! $Log$
+! Revision 2.149  2017/10/11 20:56:23  pwagner
+! Fixed bug in Dump_2D_Logical
+!
 ! Revision 2.148  2017/09/15 22:37:55  pwagner
 ! Dont repeat name if empty
 !
