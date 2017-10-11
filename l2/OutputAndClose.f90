@@ -2288,8 +2288,9 @@ contains ! =====     Public Procedures     =============================
             do obst=1, size(obstructions)
               obstruction_mafs(obst, :) = obstructions(obst)%mafs
             enddo
-            call SaveAsHDF5DS( sdfID, 'obstructions_range', obstructions%range )
-            call SaveAsHDF5DS( sdfID, 'obstructions_mafs', obstruction_mafs )
+            call SaveAsHDF5DS( sdfID, 'obstructions_range', &
+              & merge( 1, 0, obstructions%range ) )
+            call SaveAsHDF5DS( sdfID, 'obstruction_mafs', obstruction_mafs )
             call deallocate_test( obstruction_mafs, &
               & 'obstruction_mafs', ModuleName )
           endif
@@ -2313,6 +2314,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.203  2017/10/11 23:58:40  pwagner
+! Write obstructions%range as ints: 1 for T, 0 for F
+!
 ! Revision 2.202  2017/07/10 23:09:13  pwagner
 ! Use MLSPCF_l2ascii_start, end for copying ascii files instead of MLSPCF_L2Clim_start
 !
