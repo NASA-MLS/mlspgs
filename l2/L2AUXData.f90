@@ -723,6 +723,7 @@ contains ! =====     Public Procedures     =============================
   ! ----------------------------------------  Dump_L2AUX_DataBase  -----
 
   subroutine Dump_L2AUX_DataBase ( L2aux, Name, Details, Options )
+    use HighOutput, only: StyledOutput
 
     ! Dummy arguments
     type (l2auxData_T), intent(in) ::          L2AUX(:)
@@ -736,8 +737,7 @@ contains ! =====     Public Procedures     =============================
     call output ( '============ L2AUX Data Base ============', advance='yes' )
     call output ( ' ', advance='yes' )
     if ( present(name) ) then
-      call output ( 'L2AUX Database name: ', advance='no' )
-      call output ( name, advance='yes' )
+      call StyledOutput ( name, options )
     end if
     if ( size(l2aux) < 1 ) then
       call output ( '**** L2AUX Database empty ****', advance='yes' )
@@ -855,10 +855,10 @@ contains ! =====     Public Procedures     =============================
   end subroutine ReadL2AUXData_FileHandle
 
   !-----------------------------------------------  ReadL2AUXData_MLSFile  -----
-  subroutine ReadL2AUXData_MLSFile(L2AUXFile, quantityname, l2aux, inQuantityType, &
-    & firstProf, lastProf, checkDimNames)
+  subroutine ReadL2AUXData_MLSFile( L2AUXFile, quantityname, l2aux, inQuantityType, &
+    & firstProf, lastProf, checkDimNames )
 
- use MLSFiles, only: HDFVersion_4, HDFVersion_5, &
+ use MLSFiles, only: Dump, HDFVersion_4, HDFVersion_5, &
    & MLS_CloseFile, MLS_OpenFile
  use Trace_M, only: Trace_Begin, Trace_End
 
@@ -900,6 +900,7 @@ contains ! =====     Public Procedures     =============================
         & 'Unable to open l2aux file for reading', MLSFile=L2AUXFile)
     end if
     if ( deebug ) print *, 'Must choose to read based on ', L2AUXFile%hdfVersion
+    if ( deebug ) call Dump ( L2AUXFILE )
     select case (L2AUXFile%hdfVersion)
     case (HDFVERSION_4)
       call ReadL2AUXData_MF_hdf4(L2AUXFile, quantityname, quantityType, l2aux, &
@@ -917,7 +918,7 @@ contains ! =====     Public Procedures     =============================
   end subroutine ReadL2AUXData_MLSFile
 
   ! -----------------------------------------  ReadL2AUXData_MF_hdf4  -----
-  subroutine ReadL2AUXData_MF_hdf4(L2AUXFile, quantityname, quantityType, l2aux, &
+  subroutine ReadL2AUXData_MF_hdf4( L2AUXFile, quantityname, quantityType, l2aux, &
     & firstProf, lastProf, checkDimNames )
 
     ! This routine reads an l2aux file, returning a filled data structure and the
@@ -1073,8 +1074,8 @@ contains ! =====     Public Procedures     =============================
 
 
   ! -----------------------------------------  ReadL2AUXData_MF_hdf5  -----
-  subroutine ReadL2AUXData_MF_hdf5(L2AUXFile, quantityname, quantityType, l2aux, &
-    & firstProf, lastProf, checkDimNames)
+  subroutine ReadL2AUXData_MF_hdf5( L2AUXFile, quantityname, quantityType, l2aux, &
+    & firstProf, lastProf, checkDimNames )
     use L1BData, only: L1BData_T, ReadL1BData
 
     ! This routine reads an l2aux file, returning a filled data structure and the
@@ -1102,8 +1103,10 @@ contains ! =====     Public Procedures     =============================
     integer, dimension(L2AUXRank) :: dim_families
     integer, dimension(L2AUXRank) :: data_dim_sizes
     integer                       :: status
+    integer                       :: L1BNumType
     ! Executable
-    CALL ReadL1BData(L2AUXFile, QuantityName, L1BDATA1, NoMAFs, status, &
+    call output( 'Attempting to read ' // trim(quantityname), advance='yes' )
+    CALL ReadL1BData( L2AUXFile, QuantityName, L1BDATA1, NoMAFs, status, &
       & FirstMAF=firstProf, LastMAF=lastProf, NEVERFAIL=NEVERFAIL, &
       & dontPad=.true., L2AUX=.true. )
     if ( status /= 0 ) &
@@ -1111,20 +1114,49 @@ contains ! =====     Public Procedures     =============================
       & 'Unable to read ' &
       & // trim(QuantityName) // ' (perhaps too unlike a radiance)', MLSFile=L2AUXFile )
 
-    dim_families(1) = l_channel                      
-    data_dim_sizes = shape(L1BDATA1%DpField)
-    if ( deebug ) print *, 'shape(L1BDATA1%DpField): ', shape(L1BDATA1%DpField)
-    dim_families(2) = l_mif                          
-    dim_families(3) = l_maf                          
-    call SetupNewl2auxRecord ( l2aux, inputDimFamilies=dim_families, &
-     & inputDimSizes=data_dim_sizes, inputDimStarts=(/1,1,1/), &
-     & inputQuantityType=quantityType )
-    l2aux%values = L1BDATA1%DpField
-    deallocate(L1BDATA1%DpField, stat=status)
+    dim_families(1) = l_channel
+    select case ( L1BDATA1%data_type(1:1) )
+    case ( 'd' )
+      data_dim_sizes = shape(L1BDATA1%DpField)
+      if ( deebug ) print *, 'shape(L1BDATA1%DpField): ', shape(L1BDATA1%DpField)
+      dim_families(2) = l_mif                          
+      dim_families(3) = l_maf                          
+      call SetupNewl2auxRecord ( l2aux, inputDimFamilies=dim_families, &
+       & inputDimSizes=data_dim_sizes, inputDimStarts=(/1,1,1/), &
+       & inputQuantityType=quantityType )
+      l2aux%values = L1BDATA1%DpField
+      deallocate( L1BDATA1%DpField, stat=status )
+    case ( 'i' )
+      data_dim_sizes = shape(L1BDATA1%IntField)
+      if ( deebug ) print *, 'shape(L1BDATA1%IntField): ', shape(L1BDATA1%IntField)
+      dim_families(2) = l_mif                          
+      dim_families(3) = l_maf                          
+      call SetupNewl2auxRecord ( l2aux, inputDimFamilies=dim_families, &
+       & inputDimSizes=data_dim_sizes, inputDimStarts=(/1,1,1/), &
+       & inputQuantityType=quantityType )
+      l2aux%values = L1BDATA1%IntField
+      deallocate( L1BDATA1%IntField, stat=status )
+    case ( 'c' )
+      data_dim_sizes = shape(L1BDATA1%CharField)
+      if ( deebug ) print *, 'shape(L1BDATA1%CharField): ', shape(L1BDATA1%CharField)
+      dim_families(2) = l_mif                          
+      dim_families(3) = l_maf                          
+      call SetupNewl2auxRecord ( l2aux, inputDimFamilies=dim_families, &
+       & inputDimSizes=data_dim_sizes, inputDimStarts=(/1,1,1/), &
+       & inputQuantityType=quantityType )
+      l2aux%values = iachar(L1BDATA1%CharField(:,:,:)(1:1))
+      deallocate( L1BDATA1%CharField, stat=status )
+    case default
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to cope with type l1bdata%' // trim(L1BDATA1%data_type) // &
+      &  'while reading' // &
+      & trim(QuantityName), MLSFile=L2AUXFile )
+    end select
     if ( status /= 0 ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to deallocate l1bdata%dpField while reading' &
-      & // trim(QuantityName), MLSFile=L2AUXFile )
+      & 'Unable to deallocate l1bdata%' // trim(L1BDATA1%data_type) // &
+      &  'while reading' // &
+      & trim(QuantityName), MLSFile=L2AUXFile )
   end subroutine ReadL2AUXData_MF_hdf5
 
   ! ---------------------------------------------  WriteHDF5Data  -----
@@ -1420,8 +1452,8 @@ contains ! =====     Public Procedures     =============================
   end subroutine WriteL2AUXData_MF_hdf5
 
   ! ----------------------------------------  WriteL2AUXData_MF_hdf4  -----
-  subroutine WriteL2AUXData_MF_hdf4(l2aux, L2AUXFile, returnStatus, sdName, &
-    & NoMAFS, WriteCounterMAF, DimNames, Reuse_dimNames)
+  subroutine WriteL2AUXData_MF_hdf4( l2aux, L2AUXFile, returnStatus, sdName, &
+    & NoMAFS, WriteCounterMAF, DimNames, Reuse_dimNames )
   ! Write l2aux to the file with l2FileHandle
   ! Optionally, write a bogus CounterMAF sd so the
   ! resulting file can masquerade as an l1BRad
@@ -2067,6 +2099,9 @@ end module L2AUXData
 
 
 ! $Log$
+! Revision 2.102  2017/10/11 23:55:55  pwagner
+! Take pains to read int- and char-valued datasets, too
+!
 ! Revision 2.101  2017/08/10 22:46:13  pwagner
 ! Add WriteHDF5Data
 !
