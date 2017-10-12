@@ -13,30 +13,30 @@
 program l1bdiff ! diffs two l1b or L2AUX files
 !=================================
 
-   use Allocate_deallocate, only: allocate_test, deallocate_test
-   use Diff_1, only: Diff, selfDiff
-   use Dump_Options, only: diffRMSMeansrms, RMSFormat, statsOnOneLine, &
-     & dumpDumpOptions
+   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+   use Diff_1, only: Diff, SelfDiff
+   use Dump_Options, only: DiffRMSMeansrms, RMSFormat, StatsOnOneLine, &
+     & DumpDumpOptions
    use Dump_1, only: Dump
-   use HDF, only: dfacc_create, dfacc_read
-   use HDF5, only: h5fis_HDF5_f, &
-     & H5gclose_f, h5gopen_f, h5gcreate_f
-   use Highoutput, only: outputnamedvalue
-   use L1bdata, only: L1BData_t, namelen, &
-     & ContractL1BData, deallocateL1BData, diff, readL1Bdata
-   use Machine, only: hp, getarg
-   use MLSFiles, only: fileNotFound, wildcardHDFVersion, &
-     & MLS_exists, MLS_HDF_version, MLS_sfstart, MLS_sfend, &
+   use HDF, only: Dfacc_Create, Dfacc_Read
+   use HDF5, only: H5fis_HDF5_F, &
+     & H5gclose_F, H5gopen_F, H5gcreate_F
+   use HighOutput, only: OutputnamedValue
+   use L1bData, only: L1BData_T, Namelen, &
+     & ContractL1BData, DeallocateL1BData, Diff, ReadL1BData
+   use Machine, only: Hp, Getarg
+   use MLSFiles, only: FileNotFound, WildcardHDFVersion, &
+     & MLS_Exists, MLS_HDF_Version, MLS_Sfstart, MLS_Sfend, &
      & HDFVersion_5
-   use MLSHDF5, only: getAllHDF5DSNames, MLS_h5open, MLS_h5close
-   use MLSKinds, only: r8
+   use MLSHDF5, only: GetAllHDF5DSNames, MLS_H5open, MLS_H5close
+   use MLSKinds, only: R8
    use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning, &
      & MLSMessage
-   use MLSStringLists, only: getStringElement, numStringElements
-   use MLSStrings, only: lowercase, replace, streq, writeIntsToChars
-   use Output_m, only: resumeOutput, suspendOutput, output
-   use Printit_m, only: set_config
-   use Time_m, only: time_now, time_config
+   use MLSStringLists, only: GetStringElement, NumStringElements
+   use MLSStrings, only: Lowercase, Replace, Streq, WriteIntsToChars
+   use Output_M, only: ResumeOutput, SuspendOutput, Output
+   use Printit_M, only: Set_Config
+   use Time_M, only: Time_Now, Time_Config
 
    implicit none
 
@@ -57,7 +57,7 @@ program l1bdiff ! diffs two l1b or L2AUX files
 ! Then run it
 ! LF95.Linux/test [options] [input files]
 
-  type options_T
+  type Options_T
     logical     :: halfwaves = .false.
     logical     :: self = .false.
     logical     :: silent = .false.
@@ -84,9 +84,9 @@ program l1bdiff ! diffs two l1b or L2AUX files
     character(len=255) :: skipList= ''  ! what SDs to skip
     character(len=255) :: referenceFileName= 'default.h5'  ! reference filename
     character(len=80)  :: dumpOptions       = ' '
-  end type options_T
+  end type Options_T
 
-  type ( options_T ) ::          options
+  type ( Options_T ) ::          options
   integer, parameter ::          MAXDS = 300
   integer, parameter ::          MAXSDNAMESBUFSIZE = MAXDS*namelen
   integer, parameter ::          MAXFILES = 100
@@ -187,7 +187,7 @@ contains
     ! Added for command-line processing of options, filenames
      character(LEN=255), intent(out)       :: filename          ! filename
      integer, intent(in)                   :: n_filenames
-     type ( options_T ), intent(inout)     :: options
+     type ( Options_T ), intent(inout)     :: options
      ! Local variables
      integer ::                         error = 1
      integer, save ::                   i = 1
@@ -303,40 +303,40 @@ contains
 !------------------------- print_help ---------------------
   subroutine print_help
   ! Print brief but helpful message
-      write (*,*) &
-      & 'Usage:l1bdiff [options] [filenames]'
-      write (*,*) &
-      & ' If no filenames supplied, you will be prompted to supply one'
-      write (*,*) ' Options: -f filename => add filename to list of filenames'
-      write (*,*) '                  (can do the same w/o the -f)'
-      write (*,*) '   -d list     => just diff the SDs in list'
-      write (*,*) '   -g group    => find SDs under group path'
-      write (*,*) '   -ascii      => diff even character-valued fields'
-      write (*,*) '   -l2aux      => the files are l2aux, not l1b'
-      write (*,*) '   -v          => switch on verbose mode'
-      write (*,*) '   -self       => dump successive differences'
-      write (*,*) '                  between values in same file'
-      write (*,*) '   -half       => (1) (if with -self) '
-      write (*,*) '                  show no. of 1/2 waves'
-      write (*,*) '                  (2) (otherwise)'
-      write (*,*) '                  diff 1/2 of channels (so DACS wont crash)'
-      write (*,*) '   -hdf version=> hdf version (default is 5)'
-      write (*,*) '   -one        => print name on each line (dont)'
-      write (*,*) '   -opt opts   => pass opts to dump routines'
-      write (*,*) '                  e.g., "?" to list available ones'
-      write (*,*) '   -silent     => switch on silent mode'
-      write (*,*) '                 (printing only if diffs found)'
-      write (*,*) '   -unique     => dump only unique elements'
-      write (*,*) '   -l          => just list sd names in files'
-      write (*,*) '   -maf m1,m2  => just diff in the range [m1,m2]'
-      write (*,*) '   -moff offset=> 2nd data set starts after 1st'
-      write (*,*) '   -au         => format like goldbrick'
-      write (*,*) '   -rms        => just print mean, rms'
-      write (*,*) '   -s          => just show number of differences'
-      write (*,*) '   -skip list  => skip diffing the SDs in list'
-      write (*,*) '   -t[able]    => table of % vs. amount of differences (pdf)'
-      write (*,*) '   -h          => print brief help'
-      stop
+    write (*,*) &
+    & 'Usage:l1bdiff [options] [filenames]'
+    write (*,*) &
+    & ' If no filenames supplied, you will be prompted to supply one'
+    write (*,*) ' Options: -f filename => add filename to list of filenames'
+    write (*,*) '                  (can do the same w/o the -f)'
+    write (*,*) '   -d list     => just diff the SDs in list'
+    write (*,*) '   -g group    => find SDs under group path'
+    write (*,*) '   -ascii      => diff even character-valued fields'
+    write (*,*) '   -l2aux      => the files are l2aux, not l1b'
+    write (*,*) '   -v          => switch on verbose mode'
+    write (*,*) '   -self       => dump successive differences'
+    write (*,*) '                  between values in same file'
+    write (*,*) '   -half       => (1) (if with -self) '
+    write (*,*) '                  show no. of 1/2 waves'
+    write (*,*) '                  (2) (otherwise)'
+    write (*,*) '                  diff 1/2 of channels (so DACS wont crash)'
+    write (*,*) '   -hdf version=> hdf version (default is 5)'
+    write (*,*) '   -one        => print name on each line (dont)'
+    write (*,*) '   -opt opts   => pass opts to dump routines'
+    write (*,*) '                  e.g., "?" to list available ones'
+    write (*,*) '   -silent     => switch on silent mode'
+    write (*,*) '                 (printing only if diffs found)'
+    write (*,*) '   -unique     => dump only unique elements'
+    write (*,*) '   -l          => just list sd names in files'
+    write (*,*) '   -maf m1,m2  => just diff in the range [m1,m2]'
+    write (*,*) '   -moff offset=> 2nd data set starts after 1st'
+    write (*,*) '   -au         => format like goldbrick'
+    write (*,*) '   -rms        => just print mean, rms'
+    write (*,*) '   -s          => just show number of differences'
+    write (*,*) '   -skip list  => skip diffing the SDs in list'
+    write (*,*) '   -t[able]    => table of % vs. amount of differences (pdf)'
+    write (*,*) '   -h          => print brief help'
+    stop
   end subroutine print_help
 !------------------------- SayTime ---------------------
   subroutine SayTime ( What, startTime )
@@ -365,7 +365,7 @@ contains
     character (len=*), intent(in) :: file1 ! Name of file 1
     character (len=*), intent(in) :: file2 ! Name of file 2
     integer, intent(in)           :: hdfVersion
-    type ( options_T )            :: options
+    type ( Options_T )            :: options
 
     ! Local
     logical, parameter            :: countEmpty = .true.
@@ -605,9 +605,9 @@ contains
         elseif ( options%oneD .and. associated(L1bData%dpField) ) then
           ! We will store L1BData%dpField in a values array
           nsize = product(shape(L1bData%dpField))
-
           call dump( L1bData%dpField-L1bData2%dpField, &
             & options=myOptions )
+          ! We use dump instead of diff (but why?)
           ! stop
           call allocate_test(l1bValues1, nsize, 'l1bValues1', ModuleName )
           l1bValues1 = reshape( L1bData%dpField, (/nsize/) )
@@ -648,7 +648,6 @@ contains
                 & options=myOptions )
             endif
           else
-            ! print *, 'About to form dpField = dpField1 - dpField2'
             L1bData%dpField = L1bData%dpField - L1bData2%dpField(:,:,1+options%moff:)
             if ( options%silent ) then
             elseif ( .false. .and. all(L1bData%dpField == 0.d0) ) then
@@ -702,7 +701,7 @@ contains
 
     character (len=*), intent(in) :: file1 ! Name of file 1
     integer, intent(in)           :: hdfVersion
-    type ( options_T )            :: options
+    type ( Options_T )            :: options
 
     ! Local
     logical, parameter            :: countEmpty = .true.
@@ -834,6 +833,9 @@ end program l1bdiff
 !==================
 
 ! $Log$
+! Revision 1.35  2016/10/05 20:14:53  pwagner
+! Implemented Au (Gold) option
+!
 ! Revision 1.34  2016/08/09 22:41:40  pwagner
 ! Consistent with splitting of Dunp_0
 !
