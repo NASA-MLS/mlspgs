@@ -60,6 +60,14 @@ executable_or_exit()
 #
 
 I=postl2script
+# Is there an env file we are supposed to source?
+ENVFILE=job.env
+if [ -f "$ENVFILE" ]
+then
+ . ./"$ENVFILE"
+fi
+
+# Now check on possible candidates for l2gpcat and l2auxcat
 l2gpcat=`which l2gpcat 2>/dev/null`
 if [ ! -x "$l2gpcat" ]
 then
@@ -144,9 +152,13 @@ b_file=$b_dir/$name1
 c_file=$c_dir/$name1
 echo "a,b,c_file $a_file $b_file $c_file"
 a_file=$a_dir/$name1
+echo $l2auxcat -nodup -v -o $c_file -g $b_file $b_file $a_file
 $l2auxcat -nodup -v -o $c_file -g $b_file $b_file $a_file
 cp $b_file.xml $c_dir
 # $Log$
+# Revision 1.2  2017/07/13 17:42:31  pwagner
+# Fixed error when species in b but not in a
+#
 # Revision 1.1  2017/05/17 22:26:44  pwagner
 # First commit
 #
