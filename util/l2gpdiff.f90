@@ -14,7 +14,7 @@ program l2gpdiff ! show diffs between swaths in two different files
 !=================================
 
    use Dump_Options, only: DumpDumpOptions, DumpTableSide, &
-     & StatsOnOneLine, RmsFormat
+     & PrintNameAtLineEnd, StatsOnOneLine, RmsFormat
    use HighOutput, only: OutputNamedValue
    use Io_Stuff, only: Get_Lun
    use L2GPData, only: Diff, MaxSwathNamesBufSize
@@ -38,15 +38,8 @@ program l2gpdiff ! show diffs between swaths in two different files
   character (len=len(idParm)) :: Id = idParm
 !---------------------------------------------------------------------------
 
-! To use this, copy it into
-! mlspgs/tests/lib
-! then enter "make depends" followed by "make"
-
-
-! Then run it
-! LF95.Linux/test [options] [input files]
   integer, parameter ::          MAXFIELDSLENGTH = 256
-  type options_T
+  type Options_T
     character(len=MAXFIELDSLENGTH) :: chunks = '*' ! wild card means 'all'
     character(len=MAXFIELDSLENGTH) :: pressures = '*' ! wild card means 'all'
     character(len=255) ::  geoBoxNames = '' ! which geolocation names to box
@@ -72,9 +65,9 @@ program l2gpdiff ! show diffs between swaths in two different files
     logical     ::         showMissing     = .false.
     logical     ::         ignoreBadChunks = .false.
     integer     ::         numDiffs = 0
-  end type options_T
+  end type Options_T
   
-  type ( options_T ) :: options
+  type ( Options_T ) :: options
 
   integer, parameter                      :: MAXFILES = 100
   integer, parameter                      :: MAXNCHUNKS = 50
@@ -102,6 +95,7 @@ program l2gpdiff ! show diffs between swaths in two different files
   time_config%use_wall_clock = .true.
   CALL mls_h5open(error)
   statsOnOneLine = .false.
+  ! PrintNameAtLineEnd = .true.
   n_filenames = 0
   do      ! Loop over filenames, options
      call get_filename(filename, options)
@@ -224,8 +218,8 @@ contains
 !------------------------- get_filenames ---------------------
     subroutine get_filename( filename, options )
     ! Added for command-line processing
-     character(LEN=255), intent(out) :: filename          ! filename
-     type ( options_T ), intent(inout) :: options
+     character(len=255), intent(out)   :: filename
+     type ( Options_T ), intent(inout) :: options
      ! Local variables
      integer ::                         error = 1
      integer, save ::                   i = 1
@@ -350,13 +344,13 @@ contains
 !------------------------- dumpProgramOptions ---------------------
   subroutine dumpProgramOptions
     ! dump options
-    call outputNamedValue( 'chunks', trim(options%chunks) )
-    call outputNamedValue( 'pressures', trim(options%pressures) )
-    call outputNamedValue( 'geoBoxNames', trim(options%geoBoxNames) )
-    call outputNamedValue( 'fields', trim(options%fields) )
-    call outputNamedValue( 'headSide', trim(options%headSide) )
-    call outputNamedValue( 'swaths1', trim(options%swaths1) )
-    call outputNamedValue( 'swaths2', trim(options%swaths2) )
+    call outputNamedValue( 'chunks', trim(options%chunks)             )
+    call outputNamedValue( 'pressures', trim(options%pressures)       )
+    call outputNamedValue( 'geoBoxNames', trim(options%geoBoxNames)   )
+    call outputNamedValue( 'fields', trim(options%fields)             )
+    call outputNamedValue( 'headSide', trim(options%headSide)         )
+    call outputNamedValue( 'swaths1', trim(options%swaths1)           )
+    call outputNamedValue( 'swaths2', trim(options%swaths2)           )
     call outputNamedValue( 'nGeoBoxDims    ', options%nGeoBoxDims     )
     call outputNamedValue( 'geoBoxLowBound ', options%geoBoxLowBound  )
     call outputNamedValue( 'geoBoxHiBound  ', options%geoBoxHiBound   )
@@ -378,61 +372,62 @@ contains
 !------------------------- print_help ---------------------
   subroutine print_help
   ! Print brief but helpful message
-      write (*,*) &
-      & 'Usage:l2gpdiff [options] [filenames]'
-      write (*,*) &
-      & ' diffs swaths between paired l2gp files [2k] and [2k - 1]'
-      write (*,*) &
-      & ' each file contains one or more swaths, each swath many named fields'
-      write (*,*) &
-      & ' optionally restrict diffs to certain fields, chunks, etc.'
-      write (*,*) ' Options: -f filename => add filename to list of filenames'
-      write (*,*) '                  (can do the same w/o the -f)'
-      write (*,*) '   -chunks "c1,c2,.."'
-      write (*,*) '               =>   diff only chunks c1, c2,..'
-      write (*,*) '   -fields "f1,f2,.."'
-      write (*,*) '               =>   diff only fields f1, f2,..'
-      write (*,*) '   -geo name lo,hi  '
-      write (*,*) '               => diff only geobox low <= geo <= hi'
-      write (*,*) '               where geo in {latitude, longitude, time, pressure}'
-      write (*,*) '               (may be repeated)'
-      write (*,*) '               if hi < lo then dump is outside geobox'
-      write (*,*) '   -pressures "p1,p2,.."'
-      write (*,*) '               =>   diff only at pressures p1,p2,..'
-      write (*,*) '   -D details  => level of details to show'
-      write (*,*) '   -d options  => pass options to dump routines'
-      write (*,*) '                  e.g., "?" to list available ones'
-      write (*,*) '   -force      => force diff even if swath names differ'
-      write (*,*) '   -s1 "swath1,swath2,.."'
-      write (*,*) '               =>   diff only swath1,swath2,..'
-      write (*,*) '   -s2 "swath1,swath2,.."'
-      write (*,*) '               =>   diff only swath1,swath2,..'
-      write (*,*) '                    from even-numbered files in list'
-      write (*,*) '   -S1 filename'
-      write (*,*) '               => read -s1 swath names from filename'
-      write (*,*) '   -S2 filename'
-      write (*,*) '               => read -s2 swath names from filename'
-      write (*,*) '   -v          => switch on verbose mode'
-      write (*,*) '   -silent     => switch on silent mode'
-      write (*,*) '                     (printing only if diffs found)'
-      write (*,*) '   -debug      => dump options, etc.'
-      write (*,*) '   -ignore     => ignore bad chunks'
-      write (*,*) '   -matchTimes => only matching profile times'
-      write (*,*) '   -au         => format like goldbrick'
-      write (*,*) '   -rms        => just print mean, rms'
-      write (*,*) '   -s          => just show number of differences'
-      write (*,*) '   -one        => print name on each line (dont)'
-      write (*,*) '   -side "s"   => print stat headers on one of'
-      write (*,*) '                   {"top", "left", "right", "bottom"}'
-      write (*,*) '   -t[able]    => table of % vs. amount of differences (pdf)'
-      write (*,*) '   -miss       => just show which swaths are missing'
-      write (*,*) '   -h          => print brief help'
-      write (*,*) ' (Notes)'
-      write (*,*) ' (1) The -D and -fields options should be mutually exclusive'
-      write (*,*) ' (2) -s1 lets you pick out which swaths to diff'
-      write (*,*) ' (3) -s2 along with -force diffs swaths despite different names'
-      write (*,*) ' (4) the list of chunks may include the range operator "-"'
-      stop
+    write (*,*) &
+    & 'Usage:l2gpdiff [options] [filenames]'
+    write (*,*) &
+    & ' diffs swaths between paired l2gp files [2k] and [2k - 1]'
+    write (*,*) &
+    & ' each file contains one or more swaths, each swath many named fields'
+    write (*,*) &
+    & ' optionally restrict diffs to certain fields, chunks, etc.'
+    write (*,*) 'Options: -f filename => add filename to list of filenames'
+    write (*,*) '                 (can do the same w/o the -f)'
+    write (*,*) '  -chunks "c1,c2,.."'
+    write (*,*) '              =>   diff only chunks c1, c2,..'
+    write (*,*) '  -fields "f1,f2,.."'
+    write (*,*) '              =>   diff only fields f1, f2,..'
+    write (*,*) '  -geo name lo,hi  '
+    write (*,*) '              => diff only geobox low <= geo <= hi'
+    write (*,*) '                 where geo is one of''
+    write (*,*) '                  {latitude, longitude, time, pressure}'
+    write (*,*) '                 (may be repeated)'
+    write (*,*) '                 if hi < lo then dump is outside geobox'
+    write (*,*) '  -pressures "p1,p2,.."'
+    write (*,*) '              =>   diff only at pressures p1,p2,..'
+    write (*,*) '  -D details  => level of details to show'
+    write (*,*) '  -d options  => pass options to dump routines'
+    write (*,*) '                 e.g., "?" to list available ones'
+    write (*,*) '  -force      => force diff even if swath names differ'
+    write (*,*) '  -s1 "swath1,swath2,.."'
+    write (*,*) '              =>   diff only swath1,swath2,..'
+    write (*,*) '  -s2 "swath1,swath2,.."'
+    write (*,*) '              =>   diff only swath1,swath2,..'
+    write (*,*) '                   from even-numbered files in list'
+    write (*,*) '  -S1 filename'
+    write (*,*) '              => read -s1 swath names from filename'
+    write (*,*) '  -S2 filename'
+    write (*,*) '              => read -s2 swath names from filename'
+    write (*,*) '  -v          => switch on verbose mode'
+    write (*,*) '  -silent     => switch on silent mode'
+    write (*,*) '                    (printing only if diffs found)'
+    write (*,*) '  -debug      => dump options, etc.'
+    write (*,*) '  -ignore     => ignore bad chunks'
+    write (*,*) '  -matchTimes => only matching profile times'
+    write (*,*) '  -au         => format like goldbrick'
+    write (*,*) '  -rms        => just print mean, rms'
+    write (*,*) '  -s          => just show number of differences'
+    write (*,*) '  -one        => print name on each line (dont)'
+    write (*,*) '  -side "s"   => print stat headers on one of'
+    write (*,*) '                  {"top", "left", "right", "bottom"}'
+    write (*,*) '  -t[able]    => table of % vs. amount of differences (pdf)'
+    write (*,*) '  -miss       => just show which swaths are missing'
+    write (*,*) '  -h          => print brief help'
+    write (*,*) '(Notes)'
+    write (*,*) '(1) The -D and -fields options should be mutually exclusive'
+    write (*,*) '(2) -s1 lets you pick out which swaths to diff'
+    write (*,*) '(3) -s2 along with -force diffs swaths despite different names'
+    write (*,*) '(4) the list of chunks may include the range operator "-"'
+    stop
   end subroutine print_help
 
 !------------------------- print_string ---------------------
@@ -490,6 +485,9 @@ end program l2gpdiff
 !==================
 
 ! $Log$
+! Revision 1.27  2017/05/13 00:04:09  pwagner
+! Added -S1 and -S2 cmdline options
+!
 ! Revision 1.26  2016/09/09 20:38:27  pwagner
 ! Added Au (Gold) brick option removing some hay from the stack of statistics
 !
