@@ -19,7 +19,7 @@ program l2gpcat ! catenates split L2GPData files, e.g. dgg
    use HighOutput, only: OutputNamedValue
    use Intrinsic, only: L_Swath
    use Io_Stuff, only: Read_TextFile
-   use L2GPData, only: L2GPData_T, L2GPNameLen, MAXSWATHNAMESBUFSIZE, RGP, &
+   use L2GPData, only: L2GPData_T, L2GPNameLen, MaxSwathNamesBufSize, RGP, &
      & AppendL2GPData, CpHE5GlobalAttrs, CpL2GPData, DestroyL2GPContents, &
      & ExtractL2GPRecord, ReadL2GPData, WriteL2GPData
    use Machine, only: Hp, Getarg
@@ -107,10 +107,10 @@ program l2gpcat ! catenates split L2GPData files, e.g. dgg
   real        :: tFile
   character(len=255) ::    rename = ' '               ! how to rename them
   character(len=L2GPNameLen)          :: swath
-  character(len=MAXSWATHNAMESBUFSIZE) :: swathList
-  character(len=MAXSWATHNAMESBUFSIZE) :: swathList1
-  character(len=MAXSWATHNAMESBUFSIZE) :: swathListAll
-  character(len=MAXSWATHNAMESBUFSIZE) :: swathListOut
+  character(len=MaxSwathNamesBufSize) :: swathList
+  character(len=MaxSwathNamesBufSize) :: swathList1
+  character(len=MaxSwathNamesBufSize) :: swathListAll
+  character(len=MaxSwathNamesBufSize) :: swathListOut
   type (L2Metadata_T) :: l2metaData
   integer :: listSize
   integer :: NUMSWATHSPERFILE
@@ -751,35 +751,34 @@ contains
 !------------------------- print_help ---------------------
   subroutine print_help
   ! Print brief but helpful message
-      write (*,*) &
-      & 'Usage:l2gpcat [options] [filenames]'
-      write (*,*) &
-      & ' If no filenames supplied, you will be prompted to supply one'
-      write (*,*) ' Options: -f filename   => add filename to list of filenames'
-      write (*,*) '                  (can do the same w/o the -f)'
-      write (*,*) ' -F infile     => read list of filenames from infile'
-      write (*,*) ' -g glattrfile => read global attrs from glattrfile'
-      write (*,*) ' -o ofile      => copy swaths to ofile'
-      write (*,*) ' -425          => convert from hdf4 to hdf5'
-      write (*,*) ' -524          => convert from hdf5 to hdf4'
-      write (*,*) ' -t            => show detailed timings'
-      write (*,*) ' -v            => switch on verbose mode'
-      write (*,*) ' -append       => append or overwrite swaths with same name'
-      write (*,*) ' -cat          => catenate swaths with same name'
-      write (*,*) ' -ignoreFills  => ignore profiles with Fill Values'
-      write (*,*) '                  useful for combining independently-run chunks'
-      write (*,*) ' -nodup        => if dup swath names, cp 1st only'
-      write (*,*) ' -freqs m n    => keep only freqs in range m n'
-      write (*,*) ' -levels m n   => keep only levels in range m n'
-      write (*,*) ' -profiles m n => keep only profiles in range m n'
-      write (*,*) ' -nprofiles m n => keep only if nProfs is in range m n'
-      write (*,*) ' -s name1,name2,..'
-      write (*,*) '    => copy only swaths so named; otherwise all'
-      write (*,*) ' -r rename1,rename2,..'
-      write (*,*) '    => if and how to rename the copied swaths'
-      write (*,*) ' -overlap n    => max num profiles in overlap'
-      write (*,*) ' -h            => print brief help'
-      stop
+    write (*,*) &
+    & 'Usage:l2gpcat [options] [filenames]'
+    write (*,*) 'Options: '
+    write (*,*) '-f filename   => add filename to list of filenames'
+    write (*,*) '                 (can do the same w/o the -f)'
+    write (*,*) '-F infile     => read list of filenames from infile'
+    write (*,*) '-g glattrfile => read global attrs from glattrfile'
+    write (*,*) '-o ofile      => copy swaths to ofile'
+    write (*,*) '-425          => convert from hdf4 to hdf5'
+    write (*,*) '-524          => convert from hdf5 to hdf4'
+    write (*,*) '-t            => show detailed timings'
+    write (*,*) '-v            => switch on verbose mode'
+    write (*,*) '-append       => append or overwrite swaths with same name'
+    write (*,*) '-cat          => catenate swaths with same name'
+    write (*,*) '-ignoreFills  => ignore profiles with Fill Values'
+    write (*,*) '                 useful for combining independently-run chunks'
+    write (*,*) '-nodup        => if dup swath names, cp 1st only'
+    write (*,*) '-freqs m n    => keep only freqs in range m n'
+    write (*,*) '-levels m n   => keep only levels in range m n'
+    write (*,*) '-profiles m n => keep only profiles in range m n'
+    write (*,*) '-nprofiles m n => keep only if nProfs is in range m n'
+    write (*,*) '-s name1,name2,..'
+    write (*,*) '              => copy only swaths so named; otherwise all'
+    write (*,*) '-r rename1,rename2,..'
+    write (*,*) '              => if and how to rename the copied swaths'
+    write (*,*) '-overlap n    => max num profiles in overlap'
+    write (*,*) '-h            => print brief help'
+    stop
   end subroutine print_help
 !------------------------- SayTime ---------------------
   subroutine SayTime ( What, startTime )
@@ -809,6 +808,9 @@ end program L2GPcat
 !==================
 
 ! $Log$
+! Revision 1.26  2017/08/25 00:20:21  pwagner
+! Fixed bug when rolling up new dual-phase nrt
+!
 ! Revision 1.25  2017/05/17 22:21:59  pwagner
 ! Works properly with dual-l2 nrt scripts
 !

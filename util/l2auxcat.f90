@@ -61,7 +61,7 @@ program L2AUXcat ! catenates split L2AUX files, e.g. dgm
 ! LF95.Linux/test [options] [input files] -o [output file]
 
   integer, parameter ::   MAXFILES = 750
-  type options_T
+  type Options_T
     logical            :: verbose = .false.
     character(len=255) :: glAttrFile= ''                ! file with global attrs
     character(len=255) :: outputFile= 'default.h5'      ! output filename
@@ -73,9 +73,9 @@ program L2AUXcat ! catenates split L2AUX files, e.g. dgm
     character(len=255) :: DSNames = ' '                 ! which datasets to copy
     character(len=255) :: rename = ' '                  ! how to rename them
     character(len=255), dimension(MAXFILES) :: filenames
-  end type options_T
+  end type Options_T
 
-  type ( options_T ) :: options
+  type ( Options_T ) :: options
 
   logical, parameter :: COUNTEMPTY = .false.
   logical     :: createdYet
@@ -88,13 +88,13 @@ program L2AUXcat ! catenates split L2AUX files, e.g. dgm
   logical     :: is_hdf5
   type(MLSFile_t)                   :: L2AUXFile1
   type(MLSFile_t)                   :: L2AUXFile2
-  character (len=MAXSDNAMESBUFSIZE) :: mySdList
+  character (len=MaxSDNamesBufSize) :: mySdList
   integer :: numdsets
   integer :: numdsetssofar
   character(len=255) ::    rename = ' '               ! how to rename them
-  character(len=MAXSDNAMESBUFSIZE) :: sdListAll
+  character(len=MaxSDNamesBufSize) :: sdListAll
   character(len=255) :: sdName
-  character (len=MAXSDNAMESBUFSIZE) :: tempSdList
+  character (len=MaxSDNamesBufSize) :: tempSdList
   real        :: t1
   real        :: t2
   real        :: tFile
@@ -391,7 +391,7 @@ contains
     ! Added for command-line processing
      character(LEN=255), intent(out)   :: filename          ! filename
      integer, intent(in)               :: n_filenames
-     type ( options_T ), intent(inout) :: options
+     type ( Options_T ), intent(inout) :: options
      ! Local variables
      type(MLSFile_t)                   :: L2AUXFile
      integer                           :: error = 1
@@ -522,31 +522,30 @@ contains
 !------------------------- print_help ---------------------
   subroutine print_help
   ! Print brief but helpful message
-      write (*,*) &
-      & 'Usage:l2auxcat [options] [filenames]'
-      write (*,*) &
-      & ' If no filenames supplied, you will be prompted to supply one'
-      write (*,*) ' Options: -f filename => add filename to list of filenames'
-      write (*,*) '                (can do the same w/o the -f)'
-      write (*,*) ' -F infile     => read list of filenames from infile'
-      write (*,*) ' -g glattrfile => read global attrs from glattrfile'
-      write (*,*) ' -create gname => create group named gname'
-      write (*,*) '               (may be repeated)'
-      write (*,*) ' -o ofile      => copy data sets to ofile'
-      write (*,*) ' -v            => switch on verbose mode'
-      write (*,*) ' -flatten      => copy the datasets to the root / of ofile'
-      write (*,*) '                  or to gname if -create gname among options'
-      write (*,*) ' -l            => just list l2aux names in files'
-      write (*,*) ' -ign          => ignore MAFs with Fill Values'
-      write (*,*) ' -nodup        => if dup dataset names, cp 1st only'
-      write (*,*) ' -h            => print brief help'
-      write (*,*) ' -s name1,name2,..'
-      write (*,*) '               => copy only datasets so named; otherwise all'
-      write (*,*) ' -r rename1,rename2,..'
-      write (*,*) '               => if and how to rename the copied datasets'
-      write (*,*) ' -Sf file      => copy data only sets named in file'
-      write (*,*) ' -Rf file      => rename them according to names in file'
-      stop
+    write (*,*) &
+    & 'Usage:l2auxcat [options] [filenames]'
+    write (*,*) ' Options: '
+    write (*,*) '-f filename   => add filename to list of filenames'
+    write (*,*) '               (can do the same w/o the -f)'
+    write (*,*) '-F infile     => read list of filenames from infile'
+    write (*,*) '-g glattrfile => read global attrs from glattrfile'
+    write (*,*) '-create gname => create group named gname'
+    write (*,*) '              (may be repeated)'
+    write (*,*) '-o ofile      => copy data sets to ofile'
+    write (*,*) '-v            => switch on verbose mode'
+    write (*,*) '-flatten      => copy the datasets to the root / of ofile'
+    write (*,*) '                 or to gname if -create gname among options'
+    write (*,*) '-l            => just list l2aux names in files'
+    write (*,*) '-ign          => ignore MAFs with Fill Values'
+    write (*,*) '-nodup        => if dup dataset names, cp 1st only'
+    write (*,*) '-h            => print brief help'
+    write (*,*) '-s name1,name2,..'
+    write (*,*) '              => copy only datasets so named; otherwise all'
+    write (*,*) '-r rename1,rename2,..'
+    write (*,*) '              => if and how to rename the copied datasets'
+    write (*,*) '-Sf file      => copy data only sets named in file'
+    write (*,*) '-Rf file      => rename them according to names in file'
+    stop
   end subroutine print_help
 !------------------------- SayTime ---------------------
   subroutine SayTime ( What, startTime )
@@ -568,6 +567,9 @@ end program L2AUXcat
 !==================
 
 ! $Log$
+! Revision 1.10  2017/08/30 23:03:21  pwagner
+! Added the -flatten commandline option
+!
 ! Revision 1.9  2017/05/17 22:21:25  pwagner
 ! Works properly with dual-l2 nrt scripts
 !
