@@ -13,57 +13,49 @@
 PROGRAM L2GPDump ! dumps L2GPData files
 !=================================
 
-   use Allocate_deallocate, only: allocate_test, deallocate_test
-   use Bitstuff, only: isbitset
+   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+   use Bitstuff, only: Isbitset
    use Dump_1, only: Dump
    use Dump_Options, only: SDFormatDefault, DumpDumpOptions
-   use HDF, only: dfacc_read
-   use HDF5, only: h5fclose_f, h5gopen_f, h5gclose_f, h5fis_hdf5_f   
-   use Highoutput, only: outputnamedvalue
-   use Intrinsic, only: l_swath
-   use L2GPdata, only: L2GPdata_t, L2GPnamelen, maxswathnamesbufsize, rgp, &
-     & ContractL2GPrecord, dump, dumprange, readL2GPdata, destroyL2GPcontents, &
+   use HDF, only: Dfacc_Read
+   use HDF5, only: H5fclose_F, H5gopen_F, H5gclose_F, H5fis_HDF5_F
+   use HighOutput, only: OutputNamedValue
+   use Intrinsic, only: L_Swath
+   use L2GPData, only: L2GPData_T, L2GPnamelen, Maxswathnamesbufsize, Rgp, &
+     & ContractL2GPrecord, Dump, Dumprange, ReadL2GPData, DestroyL2GPcontents, &
      & SetupnewL2GPrecord
-   use Machine, only: hp, getarg
-   use MLSCommon, only: MLSfile_t
-   use MLSFiles, only: hdfversion_5, initializeMLSfile, MLS_inqswath, &
-     & MLS_closefile, MLS_openfile, split_path_name
-   use MLSFillvalues, only: isNaN
-   use MLSHdf5, only: MLS_h5open, MLS_h5close
-   use MLSHdfeos, only: MLS_isglatt, he5_ehrdglatt
+   use Machine, only: Hp, Getarg
+   use MLSCommon, only: MLSFile_T
+   use MLSFiles, only: HDFversion_5, InitializeMLSFile, MLS_Inqswath, &
+     & MLS_CloseFile, MLS_OpenFile, Split_Path_Name
+   use MLSFillValues, only: IsNaN
+   use MLSHDF5, only: MLS_H5open, MLS_H5close
+   use MLSHDFeos, only: MLS_Isglatt, He5_Ehrdglatt
    use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning, &
      & MLSMessage
    use MLSStats1, only: StatsOnOneLine
-   use MLSStringLists, only: catLists, expandStringRange, &
-     & GetStringElement, Intersection, numStringElements, readIntsFromList, &
-     & StringElement, stringElementNum
-   use MLSStrings, only: lowercase, readnumsfromchars
-   use Output_m, only: blanks, newline, output, &
-     & Resumeoutput, suspendoutput
-   use Printit_m, only: set_config
+   use MLSStringLists, only: CatLists, ExpandStringRange, &
+     & GetStringElement, Intersection, NumStringElements, ReadIntsFromList, &
+     & StringElement, StringElementNum
+   use MLSStrings, only: Lowercase, Readnumsfromchars
+   use Output_M, only: Blanks, Newline, Output, &
+     & ResumeOutput, SuspendOutput
+   use Printit_M, only: Set_Config
    
    implicit none
 
 !------------------- RCS Ident Info -----------------------
-   CHARACTER(LEN=130) :: Id = &                                                    
+   character(len=130) :: Id = &                                                    
    "$Id$"
-   CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile$"
+   character (len=*), parameter :: ModuleName= "$RCSfile$"
 !----------------------------------------------------------
 
 ! Brief description of program
 ! This program dumps L2GPData files
 
-! To use this, copy it into
-! mlspgs/tests/lib
-! then enter "make depends" followed by "make"
-
-
-! Then run it
-! LF95.Linux/test [options] [filenames]
-
   integer, parameter :: MAXNCHUNKS = 50
 
-  type options_T
+  type Options_T
      character(len=255) ::  chunks = '*' ! wild card means 'all'
      integer, dimension(2)::chunkRange = 0
      real, dimension(2)  :: hoursRange = 0.
@@ -92,10 +84,10 @@ PROGRAM L2GPDump ! dumps L2GPData files
      real    ::             QualityCutOff = -1. ! Show % above, below this
      logical ::             StatusBits = .false. ! Show % with various status bits set
      logical ::             merge = .false. ! Show % after merging input files
-  end type options_T
+  end type Options_T
 
-  type ( options_T ) :: options
-  character(LEN=255) :: filename          ! filename
+  type ( Options_T ) :: options
+  character(len=255) :: filename          ! filename
   integer            :: n_filenames
   integer     ::  error ! Counting indices & Error flags
   logical     :: is_hdf5
@@ -137,6 +129,8 @@ PROGRAM L2GPDump ! dumps L2GPData files
          & trim(filename), trim(options%attrInquiry) )
      else
        if ( options%verbose ) print *, 'Dumping swaths in ', trim(filename)
+       call OutputNamedValue( 'Dumping L2GP File',  trim(filename), &
+         & options='--Headline' )
        call dump_one_file(trim(filename), options)
      endif
      call resumeOutput
@@ -157,11 +151,11 @@ PROGRAM L2GPDump ! dumps L2GPData files
   call mls_h5close(error)
 contains
 !------------------------- get_filename ---------------------
-    subroutine get_filename(filename, n_filenames, options)
+    subroutine get_filename( filename, n_filenames, options )
     ! Added for command-line processing
      character(len=255), intent(out) :: filename          ! filename
      integer, intent(in) ::             n_filenames
-     type ( options_T ) :: options
+     type ( Options_T ) :: options
      integer ::                         error = 1
      integer, save ::                   i = 1
      character(len=255) :: argstr
@@ -367,8 +361,8 @@ contains
   end subroutine print_help
   
   function IsAttributeInFile( file, attribute ) result(sooDesu)
-    use MLSHDF5, only: ISHDF5ITEMPRESENT
-    use HDF5, only: H5FOPEN_F, H5F_ACC_RDONLY_F
+    use MLSHDF5, only: IsHDF5itempresent
+    use HDF5, only: H5fopen_F, H5f_Acc_Rdonly_F
     ! Dummy args
     character(len=*), intent(in) :: file
     character(len=*), intent(in) :: attribute
@@ -392,8 +386,8 @@ contains
   end function IsAttributeInFile
 
   function IsDSInFile( file, DS ) result(sooDesu)
-    use MLSHDF5, only: ISHDF5ITEMPRESENT
-    use HDF5, only: H5FOPEN_F, H5F_ACC_RDONLY_F
+    use MLSHDF5, only: IsHDF5itempresent
+    use HDF5, only: H5fopen_F, H5f_Acc_Rdonly_F
     ! Dummy args
     character(len=*), intent(in) :: file
     character(len=*), intent(in) :: DS
@@ -445,7 +439,7 @@ contains
    subroutine dump_one_file(filename, options)
     ! Dummy args
     character(len=*), intent(in) :: filename          ! filename
-    type ( options_T ) :: options
+    type ( Options_T ) :: options
     ! Local variables
     logical, parameter            :: countEmpty = .true.
     integer :: File1
@@ -524,7 +518,7 @@ contains
 
    subroutine myPcts( options, inl2gp, swath )
      ! Args
-     type ( options_T ), intent(in)  :: options
+     type ( Options_T ), intent(in)  :: options
      type (L2GPData_T), intent(in)   :: inl2gp
      character(len=*), intent(in)    :: swath
      ! Internal variables
@@ -656,7 +650,7 @@ contains
 
    subroutine myDump( options, l2gp, swath )
      ! Args
-     type ( options_T ), intent(in)  :: options
+     type ( Options_T ), intent(in)  :: options
      type (L2GPData_T), intent(in)   :: l2gp
      character(len=*), intent(in)    :: swath
      ! Internal variables
@@ -763,7 +757,7 @@ contains
 
    subroutine showSummary
      ! output number good, unuseable profiles
-     call outputNamedValue( 'Number of good profiles', numGood )
+     call OutputNamedValue( 'Number of good profiles', numGood )
      call outputNamedValue( 'Number of unuseable profiles', numNotUseable )
      call outputNamedValue( 'Number with odd status set', numOddStatus )
    end subroutine showSummary
@@ -773,6 +767,9 @@ end program L2GPDump
 !==================
 
 ! $Log$
+! Revision 1.22  2016/08/09 22:45:26  pwagner
+! Consistent with splitting of Dunp_0
+!
 ! Revision 1.21  2016/04/06 00:00:17  pwagner
 ! -one cmdline option added; prints name on each line
 !
