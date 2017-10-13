@@ -579,6 +579,22 @@ wvs-142-1.eps: wvs-142-1.obj
 wvs-142-1.pdf: wvs-142-1.obj
 	tgif -print -pdf -page 1 -color wvs-142-1.obj
 
+wvs-143.dvi: wvs-143.tex wvs-143-1.eps wvs-143-2.eps
+
+wvs-143.pdf: wvs-143.tex wvs-143-1.pdf wvs-143-2.pdf
+
+wvs-143-1.eps: wvs-143-1.obj
+	tgif -print -eps -page 1 -color wvs-143-1.obj
+
+wvs-143-1.pdf: wvs-143-1.obj
+	tgif -print -pdf -page 1 -color wvs-143-1.obj
+
+wvs-143-2.eps: wvs-143-2.obj
+	tgif -print -eps -page 1 -color wvs-143-2.obj
+
+wvs-143-2.pdf: wvs-143-2.obj
+	tgif -print -pdf -page 1 -color wvs-143-2.obj
+
 wvs-144.dvi: wvs-144.tex Sparse.eps
 
 wvs-144.pdf: wvs-144.tex Sparse.pdf
@@ -591,6 +607,9 @@ Sparse.pdf: Sparse.obj
 
 endif # end shortn_name == doc
 # $Log$
+# Revision 1.29  2017/09/25 23:20:15  pwagner
+# Can now build wvs-144
+#
 # Revision 1.28  2017/09/22 17:58:52  pwagner
 # Added wvs-142
 #
