@@ -12,8 +12,8 @@
 \topmargin -0.5in
 \textheight 9in
 
-\newcommand{\docname}{wvs-129}
-\newcommand{\docdate}{4 February 2016}
+\newcommand{\docname}{wvs-129r1}
+\newcommand{\docdate}{12 October 2017}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
@@ -105,8 +105,9 @@ where $\mathbf{V} = [ 0, 0, v ]^T$,
 \mathbf{M} = \mathbf{D} \mathbf{D}^T - \sin^2 \theta \,\, \mathbf{I} \,,
 \end{equation}
 %
-$\mathbf{D} = [ 0, 0, 1 ]^T$, $\theta$ is the latitude ($90^\circ-\theta$
-is the cone angle), and $\mathbf{I}$ is the identity matrix.
+$\mathbf{D} = [ 0, 0, 1 ]^T$, $\theta$ is the latitude where the cone
+intersects the Earth's surface ($90^\circ-\theta$ is the cone angle), and
+$\mathbf{I}$ is the identity matrix.
 
 Define a line by
 %
@@ -118,12 +119,16 @@ where $\mathbf{C}$ is a point on the line, and $\mathbf{U}$ is a
 vector along the line, and substitute this into Equation (\ref{one}),
 giving
 %
-\begin{equation}
-(\mathbf{C} + t\mathbf{U-V})^T \mathbf{M} (\mathbf{C} + t\mathbf{U-V}) = 0\,.
-\end{equation}
+\begin{equation}\begin{split}\label{four}
+&(\mathbf{C} + t\, \mathbf{U-V})^T \mathbf{M} (\mathbf{C} + t\, \mathbf{U-V}) = 0
+\text{ or} \\
+& \mathbf{U}^T \mathbf{M} \mathbf{U} \, t^2 +
+  2 \, \mathbf{U}^T \mathbf{M} ( \mathbf{C} - \mathbf{V} ) \, t +
+  ( \mathbf{C} - \mathbf{V} )^T \mathbf{M} ( \mathbf{C} - \mathbf{V} ) = 0 \\
+\end{split}\end{equation}
 %
-The points where the line intersects the cone are given by the roots of
-the polynomial
+The points where the line intersects the cone are given by the values of
+$t$ that are roots of Equation (\ref{four}), which can be written as
 %
 \begin{equation}
 a_2 t^2 + 2\, a_1 t + a_0 = 0
@@ -132,13 +137,16 @@ a_2 t^2 + 2\, a_1 t + a_0 = 0
 where
 %
 \begin{equation}\begin{split}
-a_2 =\,& u_3^2 - \mathbf{U} \cdot \mathbf{U} \sin^2 \theta
+a_2 =\,& \mathbf{U}^T \mathbf{M} \mathbf{U}
+    = u_3^2 - \mathbf{U} \cdot \mathbf{U} \sin^2 \theta
     =  u_3^2 - |\mathbf{U}|^2 \sin^2 \theta \\
 \,& \\
-a_1 =\,& (c_3-v) u_3 - (\mathbf{C-V}) \cdot \mathbf{U} \sin^2 \theta \\
+a_1 =\,& \mathbf{U}^T \mathbf{M} ( \mathbf{C} - \mathbf{V} )
+    = (c_3-v) \, u_3 - (\mathbf{C-V}) \cdot \mathbf{U}\, \sin^2 \theta \\
 \,& \\
-a_0 =\,& (c_3-v)^2 - (\mathbf{C-V}) \cdot (\mathbf{C-V}) \sin^2 \theta
-    = (c_3-v)^2 - |\mathbf{C-V}|^2 \sin^2 \theta \,. \\
+a_0 =\,& ( \mathbf{C} - \mathbf{V} )^T \mathbf{M} ( \mathbf{C} - \mathbf{V} ) \\
+    =\,& (c_3-v)^2 - (\mathbf{C-V}) \cdot (\mathbf{C-V})\, \sin^2 \theta
+    = (c_3-v)^2 - |\mathbf{C-V}|^2\, \sin^2 \theta \,. \\
 \end{split}\end{equation}
 %
 If the latitude $\theta$ is geocentric, $v = 0$.  If the latitude is
@@ -158,3 +166,6 @@ polar radii of the Earth, respectively.
 % $Id$
 
 % $Log$
+% Revision 1.1  2016/02/05 00:26:55  vsnyder
+% Initial commit
+%
