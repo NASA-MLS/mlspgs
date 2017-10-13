@@ -1,0 +1,167 @@
+\documentclass[11pt]{article}
+\usepackage{alltt}
+\usepackage[fleqn]{amsmath}
+\usepackage{floatflt}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage[strings]{underscore}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9in
+
+\newcommand{\docname}{wvs-146}
+\newcommand{\docdate}{12 October 2017}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+   
+\usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\bf\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\bf\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Van\\
+Subject: \>Radii of curvature of an oblate spheroid\\
+From: \>Van Snyder\\
+%Reference: \\
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-20pt}
+
+\section{Definitions}
+
+Let $a$ be the equatorial radius, and $c$ the polar radius of the Earth,
+an oblate spheroid.
+
+Let $\lambda$ be geocentric latitude.
+
+If a surface is cut by a plane that includes its normal at a point, there
+is a curve in that plane.  Assuming the surface is smooth, the curvature
+of the curve at the point of the normal is defined.
+
+Among all the planes that include the normal, the curvature of the curve
+in one of the planes is maximum, and the curvature in another one is
+minimum.  These curvatures are the \emph{principal
+curvatures}\footnote{Harry Lass, {\bf Vector and Tensor Analysis},
+McGraw-Hill (1950) pp 71--78.}, denoted $\kappa_1$ and $\kappa_2$,
+respectively, which are roots of
+
+\begin{equation}
+(E G - F^2)\, \kappa^2 - ( e G + g E - 2 f F )\, \kappa + ( e g - f^2 ) = 0
+\end{equation}
+
+where $E$, $F$, and $G$ are coefficients of the first fundamental form for
+an oblate spheroid:
+
+\begin{equation}\begin{split}
+E = \,& a^2 \sin^2 \lambda \\
+F = \,& 0 \\
+G = \,& a^2 \cos^2 \lambda + c^2 \sin^2 \lambda
+\end{split}\end{equation}
+
+and $e$, $f$, and $g$ are coefficients of the second fundamental form:
+
+\begin{equation}\begin{split}
+g = \,& \frac{a c}
+             {\sqrt{G}} \\
+f = \,& 0 \\
+e = \,& g \sin^2 \lambda\\
+\end{split}\end{equation}
+
+\section{Gaussian curvature of oblate spheroid}
+
+The Gaussian curvature $K$ is the product of the principal curvatures:
+
+\begin{equation}
+K = \kappa_1 \kappa_2
+= \frac{ e g - f^2 }{ E G -F^2}
+= \frac{ e g }{ E G }
+= \frac{c^2}{G^2}
+\end{equation}
+
+and the radius of Gaussian curvature $\sqrt{1/K} = \frac{G}c$ is the
+geometric mean of the principal radii of curvature.
+
+\section{Mean curvature of oblate spheroid}
+
+The mean curvature $H$ is the average of the principal curvatures:
+
+\begin{equation}
+H = \frac12(\kappa_1 + \kappa_2) = \frac{e G + g E - 2 f F}{2\,(E G -F^2)}
+= \frac{e G + g E}{2\, E\, G}
+= \frac{c(a^2+G)}{2\,a \,G^{3/2}}
+\end{equation}
+
+and the radius of mean curvature is $1/H$.  The average of the principal
+radii of curvature is
+
+\begin{equation}
+\frac12 \left( \frac1{\kappa_1} + \frac1{\kappa_2} \right)
+= \frac{H}{K}
+= \frac{(a^2+G) \sqrt{G}}{2\,a\,c}
+\neq \frac2{\kappa_1 + \kappa_2}\,.
+\end{equation}
+
+\section{Curvature of a sphere}
+
+For a sphere, $a = c = r$, $G = r^2$, $K = 1/r^2$, and $H = 1/r$, as
+exected.
+
+\label{lastpage}
+\vspace*{-0.1in} % Somehow, this causes lastpage to be defined
+\end{document}
