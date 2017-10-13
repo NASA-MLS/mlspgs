@@ -12,8 +12,8 @@
 \topmargin -0.5in
 \textheight 9in
 
-\newcommand{\docname}{wvs-131r3}
-\newcommand{\docdate}{18 March 2016}
+\newcommand{\docname}{wvs-131r4}
+\newcommand{\docdate}{12 October 2017}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
@@ -140,6 +140,10 @@ becomes
 (\mathbf{M} \mathbf{V} ) = 1
 \end{equation}
 
+which will give zero, one, or two solutions for $s$ depending whether the
+line does not intersect the ellipsoid, is tangent to it, or intersects it
+twice.
+
 A method to determine the points on a line and ellipsoid that are nearest
 to each other is described in wvs-030 \hr{wvs-030}.
 
@@ -158,6 +162,9 @@ For the case of a sphere with radius $r$, Equation (\ref{five}) becomes
 % $Id$
 
 % $Log$
+% Revision 1.5  2016/03/19 01:39:34  vsnyder
+% Correct first-order term for s
+%
 % Revision 1.4  2016/03/17 18:58:28  vsnyder
 % Write matrix-vector products correctly, replace t with s
 %
