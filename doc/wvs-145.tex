@@ -96,7 +96,8 @@ The Full Forward Model has several loops
 \begin{alltt}
 Sideband-independent initialization -- Hydrostatic \\
 do sideband = ... \\
-\hspace*{0.1in} Sideband-dependent initialization \\
+\hspace*{0.1in} Sideband-dependent initialization -- find \\
+\hspace*{0.1in} state-vector quantities and compute $\zeta$ grids \\
 \hspace*{0.1in} do path = ... \\
 \hspace*{0.2in}   Metrics calculation for one path\\
 \hspace*{0.2in}   do frequency = ... \\
@@ -134,7 +135,7 @@ In $(\phi,h)$ co\"ordinates, a \textcolor{red}{path of integration} is $H
 $\phi_i$ and $\phi_{i+1}$ is approximated as a \textcolor{green}{straight
 line}, which introduces an error of at most 0.56 km at the midpoint. 
 Metrics solves for $(\phi,h)$ at the intersections of the
-\textcolor{red}{red} and \textcolor{green}{green} lines.
+\textcolor{red}{red} and \textcolor{green}{green} lines (see wvs-048).
 
 \vspace*{-0.50in}
 \hspace*{0.1in}\includegraphics[width=4in,height=3.3in,clip]{wvs-048-grid2}
@@ -149,7 +150,7 @@ Modeling radiative transfer consists of solving the clear-sky
 non-scattering radiative-transfer equation
 
 \begin{equation}\label{one}
-\frac{\text{d} I}{\text{d} s} + \alpha\,I = \alpha\, B
+\frac{\d I}{\d s} + \alpha\,I = \alpha\, B
 \end{equation}
 
 for $I(s_\mathcal{M},\nu)$, where $I(s,\nu)$ is radiative intensity,
@@ -162,12 +163,149 @@ and solving the variational equations obtained by differentiating Equation
 (\ref{one}) with respect to mixing ratio and temperature at every element
 of the state vector
 
-\begin{equation}
-\frac{\text{d}\, \partial_x I}{\text{d} s} + \alpha\,\partial_x I =
+\begin{equation}\label{two}
+\frac{\d\, \partial_x I}{\d s} + \alpha\,\partial_x I =
 \alpha\, \partial_x B + ( B - I ) \, \partial_x \alpha \,.
 \end{equation}
 
 to compute a Jacobian matrix for the Newton method.
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Radiative Transfer}
+
+Equations (\ref{one}) and (\ref{two}) are of the same form:
+
+\begin{equation}
+\frac{\d y}{\d s} + \alpha y = R
+\end{equation}
+
+where $y = I$ and $R = \alpha B$ in the radiance case, and $y = \partial_x
+I$ and $R = \alpha \partial_x B + (B - I) \partial_x \alpha$ in the
+variational case.
+
+Both can be solved explicitly as quadratures:
+
+\begin{equation}\label{four}
+y(s_\mathcal{M}) = y(s_0)\, \mathcal{T}(s_0,s_\mathcal{M}) +
+ \int_{s_0}^{s_\mathcal{M}} \mathcal{T}(s,s_\mathcal{M})\, \alpha(s) \,
+ R(s)\, \d s \,,
+\end{equation}
+
+where
+
+\begin{equation}\label{five}
+\mathcal{T}(s,s_\mathcal{M}) = \exp \left( -\int_s^{s_\mathcal{M}}
+ \alpha(\sigma)\, \d \sigma \right ) \,.
+\end{equation}
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Radiative Transfer (derivatives)}
+
+We want derivatives of radiance with respect to geophysical quantities at
+positions in the state vector, not with respect to geophysical quantities
+at positions on the path of integration.  Values on the path are provided
+using interpolation:
+
+\begin{equation}
+x(s) = \sum_i \eta_i(s) x_i \,.
+\end{equation}
+
+Therefore
+
+\begin{equation}
+\frac{\partial I(s)}{\partial x_i} =
+ \frac{\partial I(s)}{\partial x} \frac{\partial x}{\partial x_i} =
+ \eta_i(s) \frac{\partial I(s)}{\partial x}\,,
+\end{equation}
+
+and similarly for $\partial_{x_i} \alpha$ and $\partial_{x_i} B$.  This
+has important implications for Equation (\ref{four}).  Because we use
+bilinear interpolation, for each $i$, $\eta_i(s)$ is nonzero for only two
+panels of the integration, and therefore $R(s)$ is nonzero for only two
+panels of the integration.
+
+Further, $\partial_x B = 0$ if $x$ is temperature.
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Radiative Transfer (integration)}
+
+The quadrature in Equation (\ref{five}) is initially estimated by
+rectangles over panels bounded by intersections of the path of integration
+with surfaces of constant pressure.
+
+An error estimate is computed using the difference of $\alpha(s)$ at the
+edges of the panel.
+
+In panels where the error is sufficiently small, the rectangular estimate
+is replaced by a trapezoidal estimate.
+
+Where the error is too large, a three-point Gauss-Legendre rule is used by
+interpolating state vector values within the panel.
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Radiative Transfer (integration in $\zeta$ co\"ordinates)}
+
+A further complication is that the integrations in Equations (\ref{four})
+and (\ref{five}) are carried out with $\zeta = -\log_{10} P$ as the
+independent coordinate, by multiplying by
+$\frac{\d s}{\d h} \frac{\d h}{\d \zeta}$, giving
+
+\begin{equation}
+\frac{\d y}{\d \zeta} + \alpha\,y =
+ \frac{\d y}{\d s} \frac{\d s}{\d h} \frac{\d h}{\d \zeta} +
+ \alpha\,y\, \frac{\d s}{\d h} \frac{\d h}{\d \zeta} =
+ R \frac{\d s}{\d h} \frac{\d h}{\d \zeta}\,.
+\end{equation}
+
+With orbit geodetic angle $\phi$ as the master horizontal coordinate, we
+have
+
+\begin{equation}\label{nine}
+s = \sqrt{h(s)^2 - h_t^2} \text{ and }
+\frac{\d s}{\d h} = \frac{h(s)}{\sqrt{h(s)^2 - h_t^2}}\,,
+\end{equation}
+
+where the relationship between $h(s)$ and $\phi$ has been worked out by
+{\tt metrics}.
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Radiative Transfer (integration in $\zeta$ co\"ordinates)}
+
+From Equation (\ref{nine}), it is clear there is a square-root singularity
+at the tangent point.  Quadratures are based upon approximating integrands
+by polynomials, and error estimates are based upon integrand derivatives. 
+The square root is not a polynomial, so the error estimates do not apply. 
+The square-root singularity is canceled by subtracting and adding the
+singular term:
+
+\begin{equation}\begin{split}
+\int_{\zeta_i}^{\zeta_{i+1}} \mathcal{G}(\zeta)
+ \frac{\d s}{\d h} \frac{\d h}{\d \zeta} \d \zeta = \,&
+\int_{\zeta_i}^{\zeta_{i+1}} (\mathcal{G}(\zeta) - \mathcal{G}(\zeta_i))\,
+ \frac{\d s}{\d h} \frac{\d h}{\d \zeta} \d \zeta\, + \\
+ \,& \mathcal{G}(\zeta_i) \int_{\zeta_i}^{\zeta_{i+1}}
+  \frac{\d s}{\d h} \frac{\d h}{\d \zeta} \d \zeta \,, \\
+\end{split}\end{equation}
+
+but the last term is simply $\mathcal{G}(\zeta_i) ( s_{i+1} - s )$.  This
+reduces the effect of the singularity if $\mathcal{G}(\zeta) -
+\mathcal{G}(\zeta_i) \rightarrow 0$ faster than $\frac{\d s}{\d h}
+\rightarrow \infty$.
 
 \end{frame}
 
@@ -231,3 +369,6 @@ which the computed path would be incident on the antenna.
 % $Id$
 
 % $Log$
+% Revision 1.1  2017/10/13 19:09:57  vsnyder
+% Initial commit
+%
