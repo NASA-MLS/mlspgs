@@ -13,20 +13,20 @@
 module MLSNumerics              ! Some low level numerical stuff
 !=============================================================================
 
-  use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
-  use DUMP_0, only : DUMP
-  use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
-  use Hunt_M, only: Hunt, HuntBox, HuntRange
-  use MATRIXMODULE_0, only: CREATEBLOCK, M_ABSENT, MATRIXELEMENT_T, SPARSIFY
-  use MLSFILLVALUES, only: ISFILLVALUE, RERANK
-  use MLSKINDS, only: I4, R4, R8, RM
-  use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_WARNING, &
-    & MLSMESSAGE
-  use MLSFINDS, only: FINDFIRST, FINDLAST
-  use MLSSTRINGS, only: CAPITALIZE, TRIM_SAFE
-  use OUTPUT_M, only: BLANKS, OUTPUT
-  use Pure_Hunt_m, only: PureHunt
-  use SYMM_TRI, only: FACTOR_SYMM_TRI, SOLVE_FACTORED_SYMM_TRI
+ use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+ use Dump_0, Only : Dump
+ use HighOutput, only: OutputNamedValue
+ use Hunt_M, only: Hunt, Huntbox, Huntrange
+ use MatrixModule_0, only: Createblock, M_Absent, MatrixElement_T, Sparsify
+ use MLSFillValues, only: IsfillValue, Rerank
+ use MLSKinds, only: I4, R4, R8, Rm
+ use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning, &
+   & MLSMessage
+ use MLSFinds, only: Findfirst, Findlast
+ use MLSStrings, only: Capitalize, Trim_Safe
+ use Output_M, only: Blanks, Output
+ use Pure_Hunt_M, only: Purehunt
+ use Symm_Tri, only: Factor_Symm_Tri, Solve_Factored_Symm_Tri
 
   implicit none
 
@@ -94,6 +94,7 @@ module MLSNumerics              ! Some low level numerical stuff
 ! === (end of toc) ===
 
 ! === (start of api) ===
+! nprec  Average ( nprec A(:) )
 ! Battleship( int extern fun, int root, [int n1], [int maxPhase1], [int ns(:)], &
 !    [int b], [char* options], [int status] )
 ! Battleship( log extern fun, int root, [int n1], [int maxPhase1], [int ns(:)], &
@@ -1141,16 +1142,12 @@ contains
 
 ! ---------------------------------------------------------  Dump  -----
   subroutine DumpCoefficients_r4 ( Coeffs, Name )
-    use Dump_0, only: Dump
-    use Output_m, only: Output
     type(coefficients_r4), intent(in) :: Coeffs
     character(len=*), optional, intent(in) :: Name
     include 'DumpCoefficients.f9h'
   end subroutine DumpCoefficients_r4
 
   subroutine DumpCoefficients_r8 ( Coeffs, Name )
-    use Dump_0, only: Dump
-    use Output_m, only: Output
     type(coefficients_r8), intent(in) :: Coeffs
     character(len=*), optional, intent(in) :: Name
     include 'DumpCoefficients.f9h'
@@ -2475,16 +2472,12 @@ contains
 ! ....................................................  D_CSPLINE  .....
   ! This family was moved here from fwdmdl
   subroutine D_CSPLINE (XIN, XOUT, YIN, YOUT, NIN, NOUT, YMIN, YMAX)
-    ! use D_HUNT_M, only: HUNT
-    ! use D_PCSPL_M, only: PCSPL
     integer, parameter :: RK = kind(0.0d0)
     include 'cspline.f9h'
   end subroutine D_CSPLINE
 
 ! ....................................................  S_CSPLINE  .....
   subroutine S_CSPLINE (XIN, XOUT, YIN, YOUT, NIN, NOUT, YMIN, YMAX)
-    ! use S_HUNT_M, only: HUNT
-    ! use S_PCSPL_M, only: PCSPL
     integer, parameter :: RK = kind(0.0e0)
     include 'cspline.f9h'
   end subroutine S_CSPLINE
@@ -2516,6 +2509,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.93  2017/10/17 23:41:31  pwagner
+! Removed unused stuff
+!
 ! Revision 2.92  2016/09/14 20:13:19  vsnyder
 ! Get PureHunt from Pure_Hunt_m
 !
