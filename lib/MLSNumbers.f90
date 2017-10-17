@@ -15,10 +15,11 @@ module MLSNumbers              ! Some number theoretic datatypes, procedures
 
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
   use Dump_0, only: Dump
-  use HighOutput, only: HeadLine
+  use HighOutput, only: StyledOutput
   use MLSFinds, only: FindFirst, FindLast
   use MLSSets, only: Intersection, Union
   use MLSStringLists, only: ReadIntsFromList
+  use Optional_m, only: Default
   use Output_m, only: Output
 
   implicit none
@@ -55,6 +56,8 @@ module MLSNumbers              ! Some number theoretic datatypes, procedures
 !                             as its log (base 10)
 ! EvaluateCompositeNum     Express a CompositeNum_T as an integer
 ! Factorial                Compute n!, returned as a composite
+! Fibonacci                Compute F[n], the nth number in the Fibonacci sequence
+!                            1, 1, 2, 3, 5, .., (F[n-1]+F[n-2])
 ! GreatestCommonDivisor    Find the gcd of two composite nums
 ! inRange                  Is the int represented by the composite num in range?
 !                           (processor-dependent)
@@ -92,6 +95,7 @@ module MLSNumbers              ! Some number theoretic datatypes, procedures
 ! type(compNum) factorial ( int n, [int k] )
 ! GreatestCommonDivisor ( compNum A, compNum B, compNum C )
 ! int IntFactorial ( int n, [int k] )
+! int Fibonacci ( int n, [int F1], [int F2] )
 ! Invert ( rationalNum R )
 ! log inRange( compNum C )
 ! log isEqual( compNum A, compNum B )
@@ -199,6 +203,13 @@ module MLSNumbers              ! Some number theoretic datatypes, procedures
 
   ! How many factors can CompositeNum_T hold?
   integer, parameter :: MAXNUMFACTORS = 128
+
+  ! How many Fibonacci numbers do we track?
+  integer, parameter :: MAXNUMFIBS = 12
+  integer, dimension(MAXNUMFIBS), save :: fibnumbers = (/ &
+    & 1 ,           1 ,           2 ,           3 ,           5 , &
+    & 8 ,          13 ,          21 ,          34 ,          55 , &
+    & 89 ,         144 /)
 
   ! How many primes do we track?
   integer, parameter :: MAXNUMPRIMES = 1229
@@ -392,11 +403,13 @@ contains
 
   ! --------------- Dump_composite --------------------
   ! Dump a Composite, dumping its components
-  subroutine Dump_composite( C )
+  subroutine Dump_composite( C, options )
     ! Args
     type(CompositeNum_T), intent(in)    :: C
+    character(len=*), optional, intent(in) :: options
     ! Executable
-    call headLine( 'Dump of composite number' )
+    call StyledOutput( 'Dump of composite number', &
+      & Default( options, '--Headline') )
     if ( isOne ( c ) ) then
       call output( '1 (its factors are unassociated)', advance='yes' )
     else
@@ -407,13 +420,15 @@ contains
 
   ! --------------- Dump_rational --------------------
   ! Dump a Rational, dumping its components
-  subroutine Dump_rational( C )
+  subroutine Dump_rational( C, options )
     ! Args
     type(RationalNum_T), intent(in)    :: C
+    character(len=*), optional, intent(in) :: options
     ! Executable
-    call headLine( 'Dump of rational number; first the numerator' )
+    call StyledOutput( 'Dump of rational number; first the numerator', &
+      & Default( options, '--Headline') )
     call Dump( C%numerator )
-    call headLine( 'next the denominator' )
+    call StyledOutput( 'next the denominator', Default( options, '--Headline') )
     call Dump( C%denominator )
   end subroutine Dump_rational
 
@@ -585,6 +600,57 @@ contains
     end if
 
   end function IntFactorial
+
+  ! --------------- Fibonacci --------------------
+  ! Find the inth number in the Fibonacci sequence
+  ! 1, 1, 2, 3, 5, ..
+  ! using the fact that
+  ! F[n] = F[n-1] + F[n-2]
+  ! 
+  ! Optionally, use the generalized Fibonacci seuence
+  ! where you supply F[1] and F[2]
+  recursive function Fibonacci( n, f1, f2 ) result ( f )
+    ! Args
+    integer, intent(in)               :: n
+    integer, optional, intent(in)     :: f1
+    integer, optional, intent(in)     :: f2
+    integer                           :: f
+    ! Internal variables
+    integer                            :: fnm2 ! F[n-2]
+    integer                            :: fnm1 ! F[n-1]
+    integer                            :: i
+    ! Executable
+    if ( present(f1) .and. present(f2) ) then
+      ! Generalized Fibonacci sequence
+      if ( n < 2 ) then
+        f = f1
+      elseif ( n == 2 ) then
+        f = f2
+      else
+        fnm2 = f1
+        fnm1 = f2
+        do i=3, n
+          ! Fib's rule
+          f = fnm1 + fnm2
+          ! Get ready for the next iteration
+          fnm2 = fnm1
+          fnm1 = f
+        enddo
+      endif
+      return
+    endif
+    f = 1
+    if ( n < 3 ) return
+    if ( n <= MAXNUMFIBS ) then
+      f = fibnumbers(n)
+     elseif( n > 46 ) then
+       f = -1
+     else
+       ! This form is a million times slower (no exaggeration)
+       ! f = Fibonacci(n-1) + Fibonacci(n-2)
+       f = Fibonacci( n, 1, 1 )
+     endif
+  end function Fibonacci
 
   ! --------------- GreatestCommonDivisor --------------------
   ! Find the gcd of two composite nums
@@ -1273,6 +1339,9 @@ end module MLSNumbers
 
 !
 ! $Log$
+! Revision 2.5  2017/10/17 23:40:40  pwagner
+! Added Fibonacci
+!
 ! Revision 2.4  2017/03/10 00:39:19  vsnyder
 ! Make components of CompositeNum_T allocatable
 !
