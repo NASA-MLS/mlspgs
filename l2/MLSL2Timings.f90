@@ -10,39 +10,38 @@
 ! foreign countries or providing access to foreign persons.
 
 !=============================================================================
-MODULE MLSL2Timings              !  Timings for the MLSL2 program sections
+module MLSL2Timings              !  Timings for the MLSL2 program sections
 !=============================================================================
 
-  use allocate_deallocate, only: allocate_test, deallocate_test
-  use Call_Stack_m, only: sys_memory_ch, sys_memory_convert, sys_memory_max
-!  use Dump_0, only: Dump
-  use HighOutput, only: banner, outputNamedValue
-  use Init_tables_module, only: f_additional, f_debug, f_options, f_silent, &
-    & f_skipdirectwrites, f_skipdirectwritesif, &
-    & f_skipretrieval, f_skipretrievalif, f_stamp, f_verbose, &
-    & field_first, field_last
-  use intrinsic, only: l_hours, l_minutes, l_seconds
-  use L2Parinfo, only: parallel
+  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+  use Call_Stack_M, only: Sys_Memory_Ch, Sys_Memory_Convert, Sys_Memory_Max
+  use HighOutput, only: Banner, OutputNamedValue
+  use Init_Tables_Module, only: F_Additional, F_Debug, F_Options, F_Silent, &
+    & F_Skipdirectwrites, F_Skipdirectwritesif, &
+    & F_Skipretrieval, F_Skipretrievalif, F_Stamp, F_Verbose, &
+    & Field_First, Field_Last
+  use Intrinsic, only: L_Hours, L_Minutes, L_Seconds
+  use L2Parinfo, only: Parallel
   use MLSCommon, only: MLSDebug, MLSVerbose, &
     & MLSDebugSticky, MLSVerboseSticky
-  use MLSL2Options, only: command_line, currentPhaseName, &
-    & dumpMacros, originalCmds, &
-    & processOptions, restartWarnings, restoreDefaults, runtimeValues, &
-    & sectionTimingUnits, skipDirectwrites, skipDirectwritesOriginal, &
-    & skipRetrieval, skipRetrievalOriginal, &
-    & stopAfterSection
+  use MLSL2Options, only: Command_Line, CurrentPhaseName, &
+    & DumpMacros, OriginalCmds, &
+    & ProcessOptions, RestartWarnings, RestoreDefaults, RuntimeValues, &
+    & SectionTimingUnits, SkipDirectwrites, SkipDirectwritesOriginal, &
+    & SkipRetrieval, SkipRetrievalOriginal, &
+    & StopAfterSection
   use MLSMessageModule, only: MLSMessageConfig, MLSMessage, MLSMessageReset, &
     & MLSMSG_Error
-  use MLSStrings, only: lowercase 
-  use MLSStringLists, only: booleanValue, catlists, getStringElement, &
-    & numStringElements, stringElementNum, switchDetail
-  use moreTree, only: get_boolean
-  use output_m, only: blanks, newLine, output, &
-    & resumeOutput, suspendOutput
-  use string_table, only: get_string
-  use time_m, only: time_now
-  use toggles, only: switches
-  use tree, only: decoration, nsons, sub_rosa, subtree
+  use MLSStrings, only: Lowercase
+  use MLSStringLists, only: BooleanValue, Catlists, GetStringElement, &
+    & NumStringElements, StringElementNum, SwitchDetail
+  use MoreTree, only: Get_Boolean
+  use Output_M, only: StampOptions, Blanks, NewLine, Output, &
+    & ResumeOutput, SuspendOutput
+  use String_Table, only: Get_String
+  use Time_M, only: Time_Now
+  use Toggles, only: Switches
+  use Tree, only: Decoration, Nsons, Sub_Rosa, Subtree
 
   implicit none
 
@@ -319,6 +318,8 @@ contains ! =====     Public Procedures     =============================
         print *, trim(section_name), ' is section we just finished'
         print *, ' Stop now? ', now_stop
       endif
+      if ( now_stop ) call Banner ( '** Stopping after ' // &
+      & trim(section_name) // ' as requested **' )
     endif
   end subroutine add_to_section_timing
 
@@ -345,7 +346,7 @@ contains ! =====     Public Procedures     =============================
     integer :: field_index
     integer :: fieldValue
     logical, dimension(field_first:field_last) :: GOT
-    integer :: interval
+    ! integer :: interval
     integer :: keyNo
     logical, save :: LASTPHASEOVERWROTEOPTS = .false.
     character(len=1) :: null
@@ -480,13 +481,13 @@ contains ! =====     Public Procedures     =============================
     endif
 
     if ( detail < 2 ) then
-      interval = 25 ! print header once every 25 lines
+      StampOptions%interval = 25 ! print header once every 25 lines
     elseif ( detail < 3 ) then
       ! -Sphase2
-      interval = 10 ! print header once every 10 lines
+      StampOptions%interval = 10 ! print header once every 10 lines
     else
       ! -Sphase3 or more
-      interval = 1 ! stamp every line with time, phase name
+      StampOptions%interval = 1 ! stamp every line with time, phase name
     endif
     
     if ( name < 1 ) return
@@ -1026,6 +1027,9 @@ END MODULE MLSL2Timings
 
 !
 ! $Log$
+! Revision 2.68  2017/10/18 00:01:08  pwagner
+! interval had been a temporary local variable, instead of StampOptions component; fixed
+!
 ! Revision 2.67  2016/07/28 01:44:41  vsnyder
 ! Remove unused USE
 !
