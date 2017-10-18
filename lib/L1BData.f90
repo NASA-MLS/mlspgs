@@ -13,7 +13,8 @@ module L1BData
 
   ! Reading and interacting with Level 1B data (HDF4 or HDF5)
 
-  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test, Test_Allocate
+  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test, &
+    & Test_Allocate, Test_DeAllocate
   use Diff_1, only: Diff, Diff_Fun
   use Dump_Options, only: NameOnEachLine, StatsOnOneLine
   use Dump_0, only: Dump
@@ -33,7 +34,7 @@ module L1BData
   use MLSFiles, only: FileNotFound, HDFVersion_4, HDFVersion_5, &
     & AddFileToDatabase, GetMLSFileByType, InitializeMLSfile, &
     & MLS_OpenFile, MLS_CloseFile
-  use MLSHDF5, only: GetAllHDF5DSNames, SaveAsHDF5DS
+  use MLSHDF5, only: MaxNDSNames, GetAllHDF5DSNames, SaveAsHDF5DS
   use MLSKinds, only: R4, R8
   use MLSMessageModule, only: MLSMSG_Error, &
     & MLSMSG_L1BRead, MLSMSG_Warning, MLSMessage
@@ -42,6 +43,7 @@ module L1BData
   use Moretree, only: Get_Field_Id
   use Output_M, only: NewLine, Output
   use String_Table, only: Get_String
+  use Toggles, only: Gen, Levels, Switches, Toggle
   use Trace_M, only: Trace_Begin, Trace_End
   use Tree, only: Nsons, Sub_Rosa, Subtree, Dump_Tree_Node, Where
 
@@ -323,7 +325,7 @@ contains ! ============================ MODULE PROCEDURES ======================
   function AssembleL1BQtyName ( name, hdfVersion, isTngtQty, &
     & InstrumentName, dont_compress_name) &
     & result(QtyName)
-    use MLSStrings, only: CompressString, Streq
+    use MLSStrings, only: CompressString
     ! Returns a QtyName to be found in the L1b file
     ! If given InstrumentName, name should be a fragment:
     ! e.g., name='VelECI' and InstrumentName='sc'
@@ -575,8 +577,6 @@ contains ! ============================ MODULE PROCEDURES ======================
   ! ----------------------------------------  CpL1BData  -----
   subroutine CpL1BData ( L1BFile1, L1BFile2, QuantityName, NewName, l2aux )
 
-    use Toggles, only: Gen, Levels, Toggle
-    use Trace_M, only: Trace_Begin, Trace_End
     ! Dummy arguments
     type(MLSFile_T), pointer                :: L1BFile1
     type(MLSFile_T), pointer                :: L1BFile2
@@ -1787,8 +1787,6 @@ contains ! ============================ MODULE PROCEDURES ======================
   ! In time we will do away with most file-handle based interfaces
   subroutine ReadL1BData_fileHandle ( L1FileHandle, QuantityName, L1bData, NoMAFs, Flag, &
     & FirstMAF, LastMAF, NEVERFAIL, hdfVersion, dontPad, L2AUX )
-    use Toggles, only: Gen, Levels, Toggle
-    use Trace_M, only: Trace_Begin, Trace_End
     ! Dummy arguments
     character(len=*), intent(in)   :: QUANTITYNAME ! Name of SD to read
     integer, intent(in)            :: L1FILEHANDLE ! From HDF
@@ -1839,8 +1837,6 @@ contains ! ============================ MODULE PROCEDURES ======================
     use MLSFiles, only: Dump
     use MLSFillValues, only: IsFillValue
     use PCFHdr, only: GlobalAttributes
-    use Toggles, only: Gen, Levels, Switches, Toggle
-    use Trace_M, only: Trace_Begin, Trace_End
     ! Dummy arguments
     character(len=*), intent(in)   :: QUANTITYNAME ! Name of SD to read
     type(MLSFile_T), pointer       :: L1BFile
@@ -1856,7 +1852,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     ! Local variables
     logical :: alreadyOpen
     logical :: DEEBug
-    character(len=1024) :: DSNames
+    character(len=MaxNDSNames*128) :: DSNames
     logical :: isScalar
     type(l1bdata_t) :: L1BDATATMP
     integer :: Me = -1                  ! String index for trace
@@ -1915,10 +1911,10 @@ contains ! ============================ MODULE PROCEDURES ======================
       else
         call MLSMessage ( MLSMSG_Warning, ModuleName // '/ReadL1BData_MLSFile', &
           & 'Failed to find '//trim(QuantityName)//' in l1b files')
+        call OutputNamedValue ( 'read status flag', flag )
+        call OutputNamedValue ( 'data type', trim(L1bData%data_type) )
         call Dump ( L1BFile, details=2 )
         call GetAllHDF5DSNames( L1BFile, DSNames )
-        call Dump ( DSNames, 'DSNames' )
-        call GetAllHDF5DSNames( L1BFile%name, '/', DSNames )
         call Dump ( DSNames, 'DSNames' )
         call crash_burn
         NOMAFS = -1
@@ -1981,8 +1977,6 @@ contains ! ============================ MODULE PROCEDURES ======================
   ! ----------------------------------------  ReadL1BData_MF_hdf4  -----
   subroutine ReadL1BData_MF_hdf4 ( L1BFile, QuantityName, L1bData, &
     & NoMAFs, Flag, FirstMAF, LastMAF, NEVERFAIL, L2AUX )
-    use Toggles, only: Gen, Levels, Toggle
-    use Trace_M, only: Trace_Begin, Trace_End
 
     ! Dummy arguments
     character(len=*), intent(in)   :: QUANTITYNAME ! Name of SD to read
@@ -2275,13 +2269,10 @@ contains ! ============================ MODULE PROCEDURES ======================
   ! ----------------------------------------  ReadL1BData_MF_hdf5  -----
   subroutine ReadL1BData_MF_hdf5 ( L1BFile, QuantityName, L1bData, NoMAFs, &
     & Flag, FirstMAF, LastMAF, NEVERFAIL, L2AUX )
-    use Allocate_Deallocate, only: Test_Allocate
     use MLSFillValues, only: IsFillValue
     use HDF5, only: HSize_T
     use MLSHDF5, only: IsHDF5DSPresent, LoadFromHDF5DS, &
       & GetHDF5DSRank, GetHDF5DSDims, GetHDF5DSQType
-    use Toggles, only: Gen, Levels, Toggle
-    use Trace_M, only: Trace_Begin, Trace_End
 
     ! Dummy arguments
     character(len=*), intent(in)   :: QUANTITYNAME ! Name of SD to read
@@ -2449,6 +2440,7 @@ contains ! ============================ MODULE PROCEDURES ======================
       if ( DEEBUG) print *, 'getting counterMAF dims'
       call GetHDF5DSDims(L1FileHandle, '/counterMAF', cmdims, cmmaxDims)
       if ( DEEBUG) print *, cmdims, cmmaxDims
+      if ( DEEBUG) print *, 'l1bData%noMAFs', l1bData%noMAFs
       ! allocate(countermaf_ptr(MAX_NOMAFS))
       ! countermaf_ptr = 0
       if ( present(FirstMAF) ) then
@@ -2458,22 +2450,29 @@ contains ! ============================ MODULE PROCEDURES ======================
       else if ( cmdims(1) /= l1bData%noMAFs ) then
         flag = CANTREADCOUNTERMAF
         if ( MyNeverFail ) then
-          deallocate(dims, maxDims, cmdims, cmmaxdims)
-          go to 9
+          ! deallocate(dims, maxDims, cmdims, cmmaxdims)
+          ! go to 9
+          ! Since we aren't reading these, just make them internally consistent
+          do i = 1, l1bData%noMAFs
+            l1bData%counterMAF(i) = l1bData%firstMAF + i - 1
+          end do
+          flag = 0
         end if
-        call output('Quantity name: ', advance = 'no')
-        call output(Quantityname, advance = 'yes')
-        call output('Quantity rank: ', advance = 'no')
-        call output(rank, advance = 'yes')
-        call output('Quantity dims: ', advance = 'no')
-        call output(int(dims), advance = 'yes')
-        call output('Quantity noMAFs: ', advance = 'no')
-        call output(l1bData%noMAFs, advance = 'yes')
-        call output('counterMAF dims: ', advance = 'no')
-        call output(int(cmdims), advance = 'yes')
-        call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & 'Sorry--ReadL1BData_hdf5 says counterMaf sized differently from ' &
-          & // trim(QuantityName), MLSFile=L1BFile )
+        if ( DEEBug ) then
+          call output('Quantity name: ', advance = 'no')
+          call output(Quantityname, advance = 'yes')
+          call output('Quantity rank: ', advance = 'no')
+          call output(rank, advance = 'yes')
+          call output('Quantity dims: ', advance = 'no')
+          call output(int(dims), advance = 'yes')
+          call output('Quantity noMAFs: ', advance = 'no')
+          call output(l1bData%noMAFs, advance = 'yes')
+          call output('counterMAF dims: ', advance = 'no')
+          call output(int(cmdims), advance = 'yes')
+          call MLSMessage ( MLSMSG_Warning, ModuleName, &
+            & 'Sorry--ReadL1BData_hdf5 says counterMaf sized differently from ' &
+            & // trim(QuantityName), MLSFile=L1BFile )
+        endif
       else
         if ( DEEBUG) print *, 'reading counterMAF '
         ! This intermediate cm_array shouldn't be necessary
@@ -2676,7 +2675,7 @@ contains ! ============================ MODULE PROCEDURES ======================
         & 'Sorry--LoadFromHDF5DS not yet rewritten for type char(:,:,:).', MLSFile=L1BFile)
       l1bdata%data_type = 'integer'
     case default
-      l1bdata%data_type = 'unknown'
+      l1bdata%data_type = trim(Qtype) // Char_rank ! 'unknown'
       flag = UNKNOWNDATATYPE
       deallocate(dims, maxDims)
       if ( MyNeverFail ) go to 9
@@ -2706,7 +2705,6 @@ contains ! ============================ MODULE PROCEDURES ======================
     ! (depending on whether it's (a) or (b) methods that apply;
     !   not sure which so we'll code for either; uh-oh, looking like it's (b))
     ! Arguments
-    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
     use MLSFillValues, only: IsFillValue
     type(l1bdata_t), intent(inout) :: L1BDATA ! Result
     ! Local variables
@@ -3015,6 +3013,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.119  2017/10/18 22:46:52  pwagner
+! Dont crash if a DS has more/fewer MAFs than counterMAF
+!
 ! Revision 2.118  2017/02/09 23:46:46  pwagner
 ! Made more uses CamelCase
 !
