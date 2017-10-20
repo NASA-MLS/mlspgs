@@ -86,6 +86,8 @@
 # -i regexp         regexp used to catch include dependencies; e.g.
 #                    '\!include\(([^)]+)' catches "include('file.txt')"
 #                    '\\input\{([^)]+)}'  catches "\input{cfm-reference.tex}"
+#                    '\\includegraphics\[width=3in\]\{([^}]+)'  catches "\includegraphics[width=3in]{wvs-143-1}"
+# -extra ext        add ".ext" to files caught by regexp
 #
 # P.A. Wagner (May 15 2002)
 # Copyright 2005, by the California Institute of Technology. ALL
@@ -145,6 +147,7 @@ $obj_ext = '';
 $long_line = '';
 $long_file = '';
 $delimiter = ' ';
+$extra_ext = '';
 $term_char = "\\";
 $comment_char = "#";
 $include_pattern = '\!include\(([^)]+)';
@@ -155,6 +158,10 @@ while ($more_opts) {
       shift;
    } elsif ($ARGV[0] =~ /^-i/) {
       $include_pattern = $ARGV[1];
+      shift;
+      shift;
+   } elsif ($ARGV[0] =~ /^-extra/) {
+      $extra_ext = $ARGV[1];
       shift;
       shift;
    } elsif ($ARGV[0] =~ /^-s/) {
@@ -206,9 +213,9 @@ if ($source_ext ne '') {
 #  note: the final argument in the subroutine call below works for m4 files only
   if ($source_file ne '') {
   #  note: the final argument in the subroutine call below works for m4 files only
-    &MakeDependsGeneral("$source_file", "$obj_ext", $include_pattern);
+    &MakeDependsGeneral("$source_file", "$obj_ext", $extra_ext);
   } else {
-  &MakeDependsGeneral("*.$source_ext", "$obj_ext", $include_pattern);
+  &MakeDependsGeneral("*.$source_ext", "$obj_ext", $include_pattern, $extra_ext);
   }
 } elsif ($long_file ne '') {
   &ReadAndSplit("$long_file", "$delimiter", "$term_char", "$comment_char");
@@ -355,7 +362,7 @@ sub MakeDepends {
       while (<FILE>) {
          /$pattern/i && push(@incs, $1);
          }
-      if (defined @incs) {
+      if (@incs) {
          $file =~ s/\.[^.]+$/.o/;
          print MAKEFILE "$file: ";
          &PrintWords(length($file) + 2, 0, @incs);
@@ -374,14 +381,23 @@ sub MakeDependsGeneral {
    local($lang) = @_[0];
    local($obj_ext) = @_[1];
    local($pattern) = @_[2];
+   local($extra_ext) = @_[3];
    #
+   if ($extra_ext ne '') {
+     $extra_ext =~ s/^/\./;
+   }
    # print MAKEFILE "# $pattern: ";
    foreach $file (<${lang}>) {
       open(FILE, $file) || warn "Cannot open $file: $!\n";
       while (<FILE>) {
-         /$pattern/i && push(@incs, $1);
+        if ($extra_ext ne '') {
+         /$pattern/i && push(@incs, $1.$extra_ext);
          }
-      if (defined @incs || $SELF_DEPENDS) {
+        else {
+         /$pattern/i && push(@incs, $1);
+        }
+         }
+      if (@incs || $SELF_DEPENDS) {
          if ($SELF_DEPENDS) {
 		     @incs = reverse(@incs);
            push(@incs, $file);
@@ -612,7 +628,7 @@ sub MakeDependsf90 {
            }
            print "\n";
          }
-      if (defined @incs || defined @modules || $var_1_mod) {
+      if (@incs || @modules || $var_1_mod) {
          ($objfile = $file) =~ s/\.f90$/.o/;
          undef @dependencies;
          if ( $var_1_mod ) {
@@ -702,6 +718,9 @@ sub MakeDependsf90 {
      }
    }
 # $Log$
+# Revision 1.17  2010/01/05 01:52:43  pwagner
+# More usefule with LaTeX files
+#
 # Revision 1.16  2007/06/08 23:08:41  vsnyder
 # Add PRE reference to BUILD_PART2
 #
