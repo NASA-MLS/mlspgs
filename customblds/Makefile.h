@@ -605,8 +605,27 @@ Sparse.eps: Sparse.obj
 Sparse.pdf: Sparse.obj
 	tgif -print -pdf -page 1 -color Sparse.obj
 
+wvs-145.dvi: wvs-145.tex wvs-145-1.eps wvs-145-2.eps
+
+wvs-145.pdf: wvs-145.tex wvs-145-1.pdf wvs-145-2.pdf
+
+wvs-145-1.eps: wvs-145-1.obj
+	tgif -print -eps -page 1 -color wvs-145-1.obj
+
+wvs-145-1.pdf: wvs-145-1.obj
+	tgif -print -pdf -page 1 -color wvs-145-1.obj
+
+wvs-145-2.eps: wvs-145-2.obj
+	tgif -print -eps -page 1 -color wvs-145-2.obj
+
+wvs-145-2.pdf: wvs-145-2.obj
+	tgif -print -pdf -page 1 -color wvs-145-2.obj
+
 endif # end shortn_name == doc
 # $Log$
+# Revision 1.30  2017/10/13 16:33:48  pwagner
+# Added build cmds for wvs-143
+#
 # Revision 1.29  2017/09/25 23:20:15  pwagner
 # Can now build wvs-144
 #
