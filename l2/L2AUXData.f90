@@ -197,8 +197,8 @@ contains ! =====     Public Procedures     =============================
 
   ! ------------------------------------------------- cpL2AUXData_MLSFile  -----
 
-  subroutine cpL2AUXData_MLSFile(L2AUXFile1, L2AUXFile2, &
-    & create2, sdList, rename, options)
+  subroutine cpL2AUXData_MLSFile( L2AUXFile1, L2AUXFile2, &
+    & create2, sdList, rename, options )
     use Dump_1, only: Dump
     use MLSFiles, only: AreTheSameFile
     use MLSHDF5, only: GetAllHDF5DSNames
@@ -1074,8 +1074,9 @@ contains ! =====     Public Procedures     =============================
 
 
   ! -----------------------------------------  ReadL2AUXData_MF_hdf5  -----
-  subroutine ReadL2AUXData_MF_hdf5( L2AUXFile, quantityname, quantityType, l2aux, &
-    & firstProf, lastProf, checkDimNames )
+  subroutine ReadL2AUXData_MF_hdf5( L2AUXFile, quantityname, quantityType, &
+    & L2AUX, firstProf, lastProf, checkDimNames )
+    use HighOutput, only: BeVerbose
     use L1BData, only: L1BData_T, ReadL1BData
 
     ! This routine reads an l2aux file, returning a filled data structure and the
@@ -1105,7 +1106,8 @@ contains ! =====     Public Procedures     =============================
     integer                       :: status
     integer                       :: L1BNumType
     ! Executable
-    call output( 'Attempting to read ' // trim(quantityname), advance='yes' )
+    if ( BeVerbose( 'l2aux', 0 ) ) &
+      & call output( 'Attempting to read ' // trim(quantityname), advance='yes' )
     CALL ReadL1BData( L2AUXFile, QuantityName, L1BDATA1, NoMAFs, status, &
       & FirstMAF=firstProf, LastMAF=lastProf, NEVERFAIL=NEVERFAIL, &
       & dontPad=.true., L2AUX=.true. )
@@ -2099,6 +2101,9 @@ end module L2AUXData
 
 
 ! $Log$
+! Revision 2.103  2017/10/20 20:05:07  pwagner
+! Reduce default printing
+!
 ! Revision 2.102  2017/10/11 23:55:55  pwagner
 ! Take pains to read int- and char-valued datasets, too
 !
