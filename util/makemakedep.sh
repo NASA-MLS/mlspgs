@@ -42,6 +42,7 @@
 # -i regexp     regexp used to catch include dependencies; e.g.
 #                '\!include\(([^)]+)' catches "include('file.txt')"
 #                '\\input\{([^)]+)}'  catches "\input{cfm-reference.tex}"
+# -extra ext    add ".ext" to files caught by regexp
 # -mod case     .mod-style of dependencies where case is one of {lower, UPPER}
 #               with build commands below each target
 # -h[elp]       print brief help message; exit
@@ -269,6 +270,7 @@ orthodox="yes"
 s_pattern="f90"
 o_pattern="o"
 regexp=""
+extra_ext=""
 source_file=""
 dep_file="Makefile.dep"
 me="$0"
@@ -356,6 +358,11 @@ while [ "$more_opts" = "yes" ] ; do
        shift
       shift
        ;;
+    -extra )
+      extra_ext="$2"
+       shift
+      shift
+       ;;
     -S )
       source_file="$2"
        shift
@@ -409,6 +416,7 @@ then
    echo " dont_build_list list: $dont_build_list "  
    echo " excl_from_objs_list list: $excl_from_objs_list "  
    echo " regexp: $regexp "  
+   echo " extra_ext: $extra_ext "  
    echo " source_file: $source_file "  
    echo " s_pattern: $s_pattern "  
    echo " o_pattern: $o_pattern "  
@@ -542,6 +550,11 @@ else
     the_DEPMAKER="$the_DEPMAKER -i $regexp"
   fi
 
+#  tack on the extra_ext if non-empty
+  if [ "$extra_ext" != "" ] ; then
+    the_DEPMAKER="$the_DEPMAKER -extra $extra_ext"
+  fi
+
   if [ "$orthodox" = "yes" ]
   then
     if [ $PRINT_TOO_MUCH = "1" ]
@@ -578,6 +591,9 @@ then
 fi
 exit
 # $Log$
+# Revision 1.30  2015/11/18 22:02:24  pwagner
+# Repaired possible problem with dsuffix; cosmetic changes
+#
 # Revision 1.29  2010/01/05 01:53:04  pwagner
 # More usefule with LaTeX files
 #
