@@ -24,14 +24,14 @@ program l1bdiff ! diffs two l1b or L2AUX files
    use HighOutput, only: OutputnamedValue
    use L1bData, only: L1BData_T, Namelen, &
      & ContractL1BData, DeallocateL1BData, Diff, ReadL1BData
-   use Machine, only: Hp, Getarg
+   use Machine, only: Hp, Getarg, NeverCrash
    use MLSFiles, only: FileNotFound, WildcardHDFVersion, &
      & MLS_Exists, MLS_HDF_Version, MLS_Sfstart, MLS_Sfend, &
      & HDFVersion_5
    use MLSHDF5, only: GetAllHDF5DSNames, MLS_H5open, MLS_H5close
    use MLSKinds, only: R8
    use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning, &
-     & MLSMessage
+     & MLSMessageConfig, MLSMessage
    use MLSStringLists, only: GetStringElement, NumStringElements
    use MLSStrings, only: Lowercase, Replace, Streq, WriteIntsToChars
    use Output_M, only: ResumeOutput, SuspendOutput, Output
@@ -107,6 +107,8 @@ program l1bdiff ! diffs two l1b or L2AUX files
   time_config%use_wall_clock = .true.
   DIFFRMSMEANSRMS = .true.
   CALL mls_h5open(error)
+  NeverCrash = .false.
+  MLSMessageConfig%crashOnAnyError = .true.
   statsOnOneLine = .false.
   n_filenames = 0
   do      ! Loop over filenames
@@ -833,6 +835,9 @@ end program l1bdiff
 !==================
 
 ! $Log$
+! Revision 1.36  2017/10/12 18:58:27  pwagner
+! CamelCase more use statements
+!
 ! Revision 1.35  2016/10/05 20:14:53  pwagner
 ! Implemented Au (Gold) option
 !
