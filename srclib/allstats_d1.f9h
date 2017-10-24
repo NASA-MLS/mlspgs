@@ -43,8 +43,6 @@
         real(rk), dimension(FN_STDDEV)                 :: stats
         real(rk)                                       :: x1, x2
         real(rk), dimension(:), pointer                :: xtab => null()
-        real(rk), dimension(:), pointer                :: xmed1 => null()
-        real(rk), dimension(:), pointer                :: xmed2 => null()
         real(rk)                                       :: absMu, sigma
 !        logical, parameter :: DEEBUG = .true.
         ! Executable
@@ -210,6 +208,9 @@ contains
 ! end subroutine sllstats*
 
 ! $Log$
+! Revision 1.12  2012/06/22 20:27:44  pwagner
+! Specify advance arg because we may now set default to 'yes'
+!
 ! Revision 1.11  2011/07/27 00:04:11  pwagner
 ! Removed obsolete code; use FN_names to enumerate stats array
 !
