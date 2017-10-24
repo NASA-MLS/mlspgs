@@ -13,22 +13,22 @@
 module ManipulationUtils        ! operations to manipulate quantities
   !=============================================================================
 
-  use Allocate_deallocate, only: allocate_test, deallocate_test
-  use Dates_module, only: tai93s2hid
-  use Dump_0, only: dump
-  use HighOutput, only: outputNamedValue
-  use MLSKinds, only: rv
+  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+  use Dates_Module, only: Tai93s2hid
+  use Dump_0, only: Dump
+  use HighOutput, only: OutputNamedValue
+  use MLSKinds, only: Rv
   use MLSL2Options, only: MLSMessage
   use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning
-  use MLSFinds, only: findFirst, findLast, findNext
+  use MLSFinds, only: FindFirst, FindLast, FindNext
   use MLSStats1, only: MLSCount, MLSMin, MLSMax, MLSMean, MLSMedian, &
-    & MLSRMS, MLSstddev
-  use MLSStringLists, only: array2List, catLists, getStringElement, &
-    & List2Array, numStringElements, &
+    & MLSRMS, MLSStddev
+  use MLSStringLists, only: Array2List, CatLists, GetStringElement, &
+    & List2Array, NumStringElements, &
     & ReplaceSubstring
-  use MLSStrings, only: indexes, lowerCase, nCopies, splitNest, stretch
-  use Output_m, only: output
-  use VectorsModule, only: vectorValue_t, m_fill, reshapeVectorValue
+  use MLSStrings, only: Indexes, LowerCase, NCopies, SplitNest, Stretch
+  use Output_M, only: Output
+  use VectorsModule, only: VectorValue_T, M_Fill, ReshapeVectorValue
   ! This module allows us to do algebraic operations on vector quantities
   ! saving the result in a vector quantity
   ! See also Algebra Module (though I never got Algebra to work--paw)
@@ -56,6 +56,8 @@ module ManipulationUtils        ! operations to manipulate quantities
      real(rv), dimension(:,:), pointer :: VALUES => NULL() ! shaped like a
   end type arrayTemp_T
   
+  ! These keep track of already-evaluated quantities, whose
+  ! order of evaluation is 
   type(arrayTemp_T), dimension(:), save, pointer :: primitives => null()
 
   logical, parameter :: COUNTEMPTY = .true.
@@ -107,14 +109,19 @@ contains ! =====     Public Procedures     =============================
     character(len=MAXMANIPULATIONLEN) :: part2
     character(len=MAXMANIPULATIONLEN) :: part3
     character(len=4) :: vchar
-    integer, parameter :: NFUNNAMES = 26
+    integer, parameter :: NFUNNAMES = 26 ! 41
     character(len=8), dimension(NFUNNAMES) :: FUNCOLONS
     character(len=8), dimension(NFUNNAMES), parameter :: FUNNAMES = &
       & (/ 'stddev  ', 'rms     ', 'median  ', 'mean    ', 'max     ', &
       &    'min     ', 'count   ', 'slip    ', 'shift   ', 'channel ', &
       &    'surface ', 'instance', 'height  ', 'lon     ', 'lat     ', &
       &    'sza     ', 'map     ', 'log10   ', 'log     ', 'ln      ', &
-      &    'exp     ', 'ifpos   ', 'ifneg   ', 'sign    ', 'abs     ' ,&
+      &    'exp     ', 'ifpos   ', 'ifneg   ', 'sign    ', 'abs     ',&
+!     &    'sin     ', 'cos     ', 'tan     ', &
+!     &    'sindeg  ', 'cosdeg  ', 'tandeg  ', &
+!     &    'asin    ', 'acos    ', 'atan    ', &
+!     &    'sinh    ', 'cosh    ', 'tanh    ', &
+!     &    'asinh   ', 'acosh   ', 'atanh   ', &
       &    'trunc   '/)
       
     ! logical, parameter :: DEEBUG = .true.
@@ -616,12 +623,28 @@ contains ! =====     Public Procedures     =============================
 
   function evaluatePrimitive( STR, A, B, C, &
     & SPREADFLAG, DIMLIST ) result(VALUE)
+    use Constants, only: Rad2Deg
     ! Evaluate an expression composed entirely of
     ! (0) constants ('c')
     ! (1) primitives (e.g., '2')
     ! (2) unary operators ('-')
     ! (3) binary operators {'+', '-', '*', '/','<','>'}
     ! (4) recognized functions {'map:', 'exp:', ..}
+    ! -- Note the following conventions, which are not intuitive --
+    ! The word "binary" above means the op takes two args, not that its 
+    !     values are binary
+    ! The word "primitive" means that the integer, say "2" is an index into the 
+    !     array Primitives(:); see part%values = primitives(partID)%values
+    ! A bare numerical value, like "6" has to be prefixed by "$" to protect
+    !     it from being interpreted as such a primitive
+    ! All recognized functions have been suffixed by a colon ":" before
+    !     arriving here; this was done automatically to distinguish "("
+    !     used in function args from "(" used to group operands
+    ! We don't keep a list of these recognized functions, although we ought to
+    ! Except for shift, slip, and the statistical functions, 
+    !     each op or function is performed element-by-element
+    ! "<" (">") returns the min (max) of the corresponding elements
+    !     in the two args
     ! Dummy args
     character(len=*)                :: STR
     integer                         :: VALUE
@@ -795,6 +818,12 @@ contains ! =====     Public Procedures     =============================
         if ( deebug ) then
           print *, 'Carry out a ', trim(op)
         endif
+        ! We now replace newone with result of either a
+        ! (1) operation taking two operands
+        !    y = y op x, where y is newone, and x is part
+        ! (2) unary function
+        !    y = function(x)
+        if ( DEEBUG ) call outputNamedValue( 'op', op )
         select case(op)
         case ('nul')
             newone%values = part%values
@@ -851,6 +880,57 @@ contains ! =====     Public Procedures     =============================
               newone%values = log10(part%values)
             elsewhere
               newone%values = 0.
+            end where
+        ! hyperbolic functions
+        case ('sinh')
+            newone%values = sinh( part%values )
+        case ('cosh')
+            newone%values = cosh( part%values )
+        case ('tanh')
+            newone%values = tanh( part%values )
+        ! trig functions of radian-valued args
+        case ('sin')
+            newone%values = sin( part%values )
+        case ('cos')
+            newone%values = cos( part%values )
+        case ('tan')
+            newone%values = tan( part%values )
+        ! trig functions of degree-valued args
+        case ('sindeg')
+            newone%values = sin( part%values/Rad2deg )
+        case ('cosdeg')
+            newone%values = cos( part%values/Rad2deg )
+        case ('tandeg')
+            newone%values = tan( part%values/Rad2deg )
+        ! inverse trig functions to radian-valued values
+        case ('asin')
+            where ( abs(part%values) > 1._rv )
+              newone%values = 0.
+            elsewhere
+              newone%values = asin( part%values )
+            end where
+        case ('acos')
+            where ( abs(part%values) > 1._rv )
+              newone%values = 0.
+            elsewhere
+              newone%values = acos( part%values )
+            end where
+        case ('atan')
+            newone%values = atan( part%values )
+        ! inverse hyperbolic functions to radian-valued values
+        case ('asinh')
+            newone%values = log( part%values + sqrt(part%values**2 + 1.) )
+        case ('acosh')
+            where ( abs(part%values) > 1._rv )
+              newone%values = 0.
+            elsewhere
+              newone%values = log( part%values + sqrt(part%values**2 - 1.) )
+            end where
+        case ('atanh')
+            where ( abs(part%values) > 1._rv )
+              newone%values = 0.
+            elsewhere
+              newone%values = 0.5*log( (1. + part%values)/(1. - part%values))
             end where
         ! You can use map to reshape quantities with equal total
         ! size, but distributed differently among channels, sirfs, instances
@@ -1002,6 +1082,7 @@ contains ! =====     Public Procedures     =============================
             call outputNamedValue( 'dimList', dimList )
             call outputNamedValue( 'average', average )
             call outputNamedValue( 'avg', avg )
+            call outputNamedValue( 'op', op )
           endif
           select case (avg)
           case ( 'c' )
@@ -1353,7 +1434,7 @@ contains ! =====     Public Procedures     =============================
   end subroutine ParensForAll
 
   function isBalanced ( str ) result ( itIs )
-    use MLSStrings, only: ncopies
+    use MLSStrings, only: NCopies
     ! Are numbers of '(' and ')' in str equal?
     character(len=*), intent(in) :: str
     logical                      :: itIs
@@ -1396,6 +1477,9 @@ end module ManipulationUtils
 
 !
 ! $Log$
+! Revision 2.19  2017/10/24 23:26:19  pwagner
+! Added trg and hyperbolic functions; improved comments
+!
 ! Revision 2.18  2015/05/11 17:57:17  pwagner
 ! Repaired another parsing error
 !
