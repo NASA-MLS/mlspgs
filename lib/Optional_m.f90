@@ -121,12 +121,17 @@ module Optional_m
 
 contains
 
-  function Default_Char ( Opt, Default ) result ( R )
+  function Default_Char ( Opt, Default, additional ) result ( R )
+    ! The optional arg additional (if true) adds on the characters in
+    ! Default even if Opt is present
     character(len=*), intent(in), optional           :: Opt
     character(len=*), intent(in)                     :: Default
+    logical, intent(in), optional                    :: Additional
     character(len=max(DefaultCharLen, len(default))) :: R
     r = default
     if ( present(opt) ) r = opt
+    if ( .not. present(additional) .or. .not. present(opt) ) return
+    if ( additional ) r = trim(opt) // trim(Default)
   end function Default_Char
 
   double precision function Default_Double ( Opt, Default ) result ( R )
@@ -285,6 +290,9 @@ contains
 end module Optional_m
 
 ! $Log$
+! Revision 2.4  2017/10/27 23:13:09  pwagner
+! Default_Char can now taked optional arg additional
+!
 ! Revision 2.3  2017/01/19 23:31:03  pwagner
 ! Add the Exception_t data type and Raise and Pass_or_Catch functions
 !
