@@ -18,10 +18,10 @@
   ! depending on options, it may instead integrate, differentiate, interpolate
   ! or bias the search downward or upward
 
-  ! function UseLookUpTable_r4 ( x, table, x1, x2, xtable, options, &
-  !    & xS, xE, yBottom, yTop ) &
-  !    & result(value)
-  !  integer, parameter :: RK = R4
+  ! function UseLookUpTable_r4 ( x, table, x1, x2, xtable, &
+  !   & missingValue, options, xS, xE, yBottom, yTop ) &
+  !   & result(value)
+  !   integer, parameter :: RK = R4
   !   ! Formal arguments
   real(rk), intent(in)                        :: x
   real(rk), dimension(:), intent(in)          :: table
@@ -65,7 +65,7 @@
     ! Since we're generating an x table, it's sorted by birthright
     if ( index(myOptions, 'p') < 1 ) myOptions = trim_safe(myOptions) // 'p'
   else
-    ! What? no x array? Shouldn't his be an error?
+    ! What? No x array? Should this be an error?
     return
   endif
   xStart = minval(myXTable)
@@ -94,7 +94,8 @@
   else
     ! an unsorted x table can't be used for any other option
     if ( len_trim(myOptions) > 0 ) call MLSMessage &
-      & ( MLSMSG_Error, ModuleName, "x table must be sorted in UseLookUpTable")
+      & ( MLSMSG_Error, ModuleName, &
+      & "x table must be sorted in UseLookUpTable with option " // trim(myOptions))
     ! We'll need to ignore any xi that are outside [XStart, xEnd] [yBottom, yTop]
     y1 = minval(table)
     y2 = maxval(table)
@@ -127,7 +128,7 @@ contains
     real(rk), dimension(:), intent(in) :: myXTable
     real(rk), dimension(:), intent(in) :: table
     ! Internal variables
-    real(r8) :: dfdx, d2fdx2, eps, S, T, xp, xq, xr
+    real(r8) :: dfdx, d2fdx2, eps, S, T, xp, xq, xr, dxR, dxL, dfdxR, dfdxL
     real(rk) :: dx
     integer :: p, q, r
     ! Now according to options, which operation do we approximate?
@@ -136,6 +137,7 @@ contains
       ! So far ignoring xStart and xEnd
       ! uncertain how to interpret them: would we want
       ! integral from xStart to x or from x to xEnd?
+      ! What we'll do is integrate from (x[1] to x[nSize]
       ! S i m p s o n ' s   r u l e
       dx = myXTable(2) - myXTable(1)
       S = simpsons ( nSize, dx, table )
@@ -152,9 +154,10 @@ contains
       ! ------------- d i f f e r e n t i a t i o n  ------------
       ! To calculate derivatives, we will assume x values in table
       ! are evenly spaced
-      ! In the following xp, xq and xr are the 3 points closest to x
+      ! In the following, xp, xq and xr are the 3 points closest to x
       ! xp        xq  x      xr
-      ! Then we use the following facts
+      ! Then we use the following facts which are
+      ! consistent with central difference approximations
       ! f'(xq)  = ( f(xr) - f(xp) ) / ( xr - xp )
       ! f''(xq) = ( f(xr) + f(xp) - 2 f(xq) ) / ( xr - xq )^2
       call ClosestElement ( x, myXTable, indices, 'l' // subOptions )
@@ -172,6 +175,7 @@ contains
           return
         endif
       endif
+      ! Work out which indices are p, q, and r
       ! Which is closer, lower or upper?
       if ( myXTable(upper) - x < x - myXTable(lower) ) then
         p = lower
@@ -192,15 +196,24 @@ contains
       dfdx = ( table(r) - table(p) ) / ( xr - xp )
       ! The following formula only works if p != q != r
       d2fdx2 = ( table(r) + table(p) - 2*table(q) ) / ( (.5*(xr - xp) )**2 )
+      ! Are we uniformly spaced?
+      dxL = xq - xp
+      dxR = xr - xq
       if ( p == q .or. q == r ) then
         d2fdx2 = 0.
         ! print *, 'Zeroed 2nd derivative'
+      elseif ( dxL /= dxR ) then
+        dfdxR = (table(r) - table(q))/dxR
+        dfdxL = (table(q) - table(p))/dxL
+        d2fdx2 = (dfdxR - dfdxL) / (0.5*(dxR+dxL))
       endif
       if ( index(myOptions, '2') > 0 ) then
         value = d2fdx2
       elseif ( index(myOptions, '1') > 0 ) then
+        ! Approximate derivative corrected by 2nd derivative
         value = dfdx + (x-xq)*d2fdx2
       else
+        ! Approximate function corrected by both derivatives
         value = table(q) + (x-xq)*( dfdx + 0.5*(x-xq)*d2fdx2 )
       endif
     elseif ( index(myOptions, 'l') > 0 ) then
@@ -246,6 +259,9 @@ contains
   end subroutine doTheDirtyDeed
   ! end subroutine UseLookUpTable_r4
 ! $Log$
+! Revision 1.5  2008/09/16 18:17:36  pwagner
+! Had sometimes used absent optional args
+!
 ! Revision 1.4  2007/08/07 23:58:03  pwagner
 ! Many changes, new options, improvements
 !
