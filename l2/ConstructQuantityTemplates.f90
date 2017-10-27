@@ -1290,7 +1290,7 @@ contains ! ============= Public procedures ===================================
       l_lostransfunc, l_losvel, l_lowestretrievedpressure, &
       l_massmeandiameterice, l_massmeandiameterwater, l_magneticfield, &
       l_mifdeadtime, l_mifextinction, l_mifextinctionextrapolation, &
-      l_mifExtinctionform, l_mifExtinctionv2, l_mifLOS, &
+      l_mifExtinctionform, l_mifExtinctionv2, &
       l_mifRadC, l_mifRHI, &
       l_noisebandwidth, l_noradspermif, l_noradsbinned, &
       l_numgrad, l_numj, l_numnewt, &
@@ -1301,7 +1301,7 @@ contains ! ============= Public procedures ===================================
       l_scanresidual, l_scatteringangle, l_sceci, l_scecr, l_scveleci, &
       l_scvelecr, l_scgeocalt, l_spaceradiance, l_status, &
       l_strayradiance, l_surfaceheight, l_surfacetype, l_systemtemperature, &
-      l_temperature, l_tngteci, l_tngtgeodalt, l_tngtgeocalt, &
+      l_temperature, l_tngteci, l_tngtecr, l_tngtgeodalt, l_tngtgeocalt, &
       l_totalpowerweight, l_tscat, l_vmr
     use Init_Tables_Module, only:  phyq_angle, phyq_colmabundance, &
      & phyq_dimensionless, phyq_extinction, phyq_frequency,&
@@ -1422,7 +1422,7 @@ contains ! ============= Public procedures ===================================
       l_mifExtinctionForm, phyq_dimensionless, none, next, &
       l_mifExtinctionV2, phyq_extinction, p_flexibleVHGrid, &
         & p_minorFrame, p_radiometer, p_mustBeZeta, next, &
-      l_mifLOS, phyq_length, p_minorFrame, p_module, next, &
+      phyq_length, p_minorFrame, p_module, next, &
       l_mifRadC, phyq_length, p_minorFrame, p_module, next, &
       l_mifRHI, phyq_dimensionless, p_flexibleVHGrid, &
         & p_minorFrame, p_radiometer, p_mustBeZeta, next, &
@@ -1468,6 +1468,7 @@ contains ! ============= Public procedures ===================================
       l_systemTemperature, phyq_temperature, p_signal, next, &
       l_temperature, phyq_temperature, p_hGrid, p_vGrid, p_mustbezeta, next, &
       l_tngtECI, phyq_length, p_minorFrame, p_module, p_xyz, next, &
+      l_tngtECR, phyq_length, p_minorFrame, p_module, p_xyz, next, &
       l_tngtGeocAlt, phyq_length, p_minorFrame, p_module, next, &
       l_tngtGeodAlt, phyq_length, p_minorFrame, p_module, next, &
       l_totalPowerWeight, phyq_dimensionless, p_signal, next, &
@@ -1597,6 +1598,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.204  2017/10/27 01:29:46  vsnyder
+! Remove L_MIFLOS
+!
 ! Revision 2.203  2017/06/01 22:49:15  vsnyder
 ! Remove unused USE names
 !
