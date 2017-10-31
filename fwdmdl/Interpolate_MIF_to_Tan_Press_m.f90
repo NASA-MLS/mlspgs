@@ -45,7 +45,7 @@ contains
     real(rk), intent(in) :: Tan_Press(:)          ! Tangent pressure levels
                                                   ! where the output quantities
                                                   ! are desired, zeta.
-    type(vectorValue_t), intent(in):: Q_LOS       ! Minor frame LOS as C + s U
+    type(Path_t), intent(in):: Q_LOS(:)           ! Minor frame LOS as C + s U
 
     ! Output
     type(path_t), intent(out) :: Path(:)          ! Interpolated to Tan_Press
@@ -53,7 +53,7 @@ contains
     ! Local variables
     integer :: I, J
     integer :: P(ptan%template%noSurfs) ! Permutation result of sorting Z_MIF
-    real(rk) :: Q_LOS_P(6,ptan%template%noSurfs)  ! Permuted from Q_LOS%Value3
+    real(rk) :: Q_LOS_P(size(Q_LOS))              ! Permuted from Q_LOS%lines(:,1)
     real(rk) :: Z_MIF(0:ptan%template%noSurfs)    ! Zetas for sorting MIFs
                                                   ! 0'th is a sentinel
 
@@ -72,14 +72,11 @@ contains
     ! Q_LOS%value3, from which we interpolate.
     call insertion_sort ( z_mif, p )
 
-    ! Permute Q_LOS to correspond to Z_MIF, to avoid a vector subscript in
-    ! the second actual argument to InterpolateValues
-    Q_LOS_P = Q_LOS%value3(1:6,p,maf)
-
     do i = 1, 2 ! 1 = C, 2 = U
       ! Extrapolate for subsurface values, if necessary.
       do j = 1, 3 ! XYZ
-        call interpolateValues ( z_mif(1:), Q_LOS_P(3*i-3+j,1:), &
+        Q_LOS_P = Q_LOS(p)%lines(i,1)%xyz(j)
+        call interpolateValues ( z_mif(1:), Q_LOS_P, &
                                & tan_press, path%lines(i,1)%xyz(j), &
                                & METHOD = 'L', EXTRAPOLATE='A' )
       end do
@@ -230,6 +227,9 @@ contains
 end module Interpolate_MIF_to_Tan_Press_m
 
 ! $Log$
+! Revision 2.3  2017/10/31 17:36:15  vsnyder
+! Change QTM path from vector quantity to Path_t
+!
 ! Revision 2.2  2016/11/11 02:01:48  vsnyder
 ! Add Get_Lines_of_Sight to compute LOS to Tan_Press levels from MIF LOS.
 ! Eliminate LOS from computations done by Interpolate_MIF_to_Tan_Press.
