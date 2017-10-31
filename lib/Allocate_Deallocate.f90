@@ -62,6 +62,8 @@ module Allocate_Deallocate
     ! For allocatable instead of pointer, with scalar arguments for bounds
     module procedure AllocateA_Test_Integer_1D, AllocateA_Test_Integer_2D
     module procedure AllocateA_Test_Integer_3D, AllocateA_Test_Integer_4D
+    module procedure AllocateA_Test_Logical_1D, AllocateA_Test_Logical_2D
+    module procedure AllocateA_Test_Logical_3D
     module procedure AllocateA_Test_RealR4_1D, AllocateA_Test_RealR4_2D
     module procedure AllocateA_Test_RealR4_3D, AllocateA_Test_RealR4_4D
     module procedure AllocateA_Test_RealR8_1D, AllocateA_Test_RealR8_2D
@@ -104,6 +106,8 @@ module Allocate_Deallocate
     ! For allocatable instead of pointer argument
     module procedure DeallocateA_Test_Integer_1D, DeallocateA_Test_Integer_2D
     module procedure DeallocateA_Test_Integer_3D, DeallocateA_Test_Integer_4D
+    module procedure DeallocateA_Test_Logical_1D, DeallocateA_Test_Logical_2D
+    module procedure DeallocateA_Test_Logical_3D
     module procedure DeallocateA_Test_RealR4_1D, DeallocateA_Test_RealR4_2D
     module procedure DeallocateA_Test_RealR4_3D, DeallocateA_Test_RealR4_4D
     module procedure DeallocateA_Test_RealR8_1D, DeallocateA_Test_RealR8_2D
@@ -1041,6 +1045,64 @@ contains
     integer, parameter :: Default = 0
     include "AllocateA_Test_4D_a.f9h"
   end subroutine AllocateA_Test_Integer_4d_a
+  ! -----------------------------------  Allocate_Test_Integer_1d  -----
+  subroutine AllocateA_Test_Logical_1d ( To_Allocate, Dim1, &
+    & ItsName, ModuleName, LowBound, Fill )
+    logical, allocatable, dimension(:) :: To_Allocate
+    integer, intent(in) :: Dim1    ! Upper bound of first dim. of To_Allocate
+    character(len=*), intent(in) :: ItsName, ModuleName
+    integer, intent(in), optional :: LowBound     ! Lower bound, default 1
+    logical, intent(in), optional :: Fill
+    logical, parameter :: Default = .false.
+    include "AllocateA_Test_1D.f9h"
+  end subroutine AllocateA_Test_Logical_1d
+  ! ----------------------------------  AllocateA_Test_Logical_2d  -----
+  subroutine AllocateA_Test_Logical_2d ( To_Allocate, Dim1, Dim2, &
+    & ItsName, ModuleName, Low1, Low2, Fill )
+    logical, allocatable, dimension(:,:) :: To_Allocate
+    integer, intent(in) :: Dim1    ! Upper bound of first dim. of To_Allocate
+    integer, intent(in) :: Dim2    ! Upper bound of second dim. of To_Allocate
+    character(len=*), intent(in) :: ItsName, ModuleName
+    integer, intent(in), optional :: Low1, Low2 ! Low bounds for dimensions
+    logical, intent(in), optional :: Fill
+    logical, parameter :: Default = .false.
+    include "AllocateA_Test_2D.f9h"
+  end subroutine AllocateA_Test_Logical_2d
+  ! --------------------------------  AllocateA_Test_Logical_2d_a  -----
+  subroutine AllocateA_Test_Logical_2d_a ( To_Allocate, Dim, &
+    & ItsName, ModuleName, Low, Fill )
+    logical, allocatable, dimension(:,:) :: To_Allocate
+    integer, intent(in) :: Dim(2)  ! Upper bounds of To_Allocate
+    character(len=*), intent(in) :: ItsName, ModuleName
+    integer, intent(in), optional :: Low(2) ! Low bounds for dimensions
+    logical, intent(in), optional :: Fill
+    logical, parameter :: Default = .false.
+    include "AllocateA_Test_2D_a.f9h"
+  end subroutine AllocateA_Test_Logical_2d_a
+  ! ----------------------------------  AllocateA_Test_Logical_3d  -----
+  subroutine AllocateA_Test_Logical_3d ( To_Allocate, Dim1, Dim2, Dim3, &
+    & ItsName, ModuleName, Low1, Low2, Low3, Fill )
+    logical, allocatable, dimension(:,:,:) :: To_Allocate
+    integer, intent(in) :: Dim1    ! Upper bound of first dim. of To_Allocate
+    integer, intent(in) :: Dim2    ! Upper bound of second dim. of To_Allocate
+    integer, intent(in) :: Dim3    ! Upper bound of third dim. of To_Allocate
+    character(len=*), intent(in) :: ItsName, ModuleName
+    integer, intent(in), optional :: Low1, Low2, Low3 ! Low bounds for dimensions
+    logical, intent(in), optional :: Fill
+    logical, parameter :: Default = .false.
+    include "AllocateA_Test_3D.f9h"
+  end subroutine AllocateA_Test_Logical_3d
+  ! --------------------------------  AllocateA_Test_Logical_3d_a  -----
+  subroutine AllocateA_Test_Logical_3d_a ( To_Allocate, Dim, &
+    & ItsName, ModuleName, Low, Fill )
+    logical, allocatable, dimension(:,:,:) :: To_Allocate
+    integer, intent(in) :: Dim(3)  ! Upper bounds of To_Allocate
+    character(len=*), intent(in) :: ItsName, ModuleName
+    integer, intent(in), optional :: Low(3) ! Low bounds for dimensions
+    logical, intent(in), optional :: Fill
+    logical, parameter :: Default = .false.
+    include "AllocateA_Test_3D_a.f9h"
+  end subroutine AllocateA_Test_Logical_3d_a
   ! -----------------------------------  AllocateA_Test_RealR8_1d  -----
   subroutine AllocateA_Test_RealR8_1d ( To_Allocate, Dim1, &
     & ItsName, ModuleName, LowBound, Fill )
@@ -1393,6 +1455,21 @@ contains
     integer, allocatable, dimension(:,:,:,:) :: To_Deallocate
     include "DeallocateA_Test.f9h"
   end subroutine DeallocateA_Test_Integer_4d
+  ! --------------------------------  DeallocateA_Test_Logical_1d  -----
+  subroutine DeallocateA_Test_Logical_1d ( To_Deallocate, ItsName, ModuleName )
+    logical, allocatable, dimension(:) :: To_Deallocate
+    include "DeallocateA_Test.f9h"
+  end subroutine DeallocateA_Test_Logical_1d
+  ! --------------------------------  DeallocateA_Test_Logical_2d  -----
+  subroutine DeallocateA_Test_Logical_2d ( To_Deallocate, ItsName, ModuleName )
+    logical, allocatable, dimension(:,:) :: To_Deallocate
+    include "DeallocateA_Test.f9h"
+  end subroutine DeallocateA_Test_Logical_2d
+  ! --------------------------------  DeallocateA_Test_Logical_3d  -----
+  subroutine DeallocateA_Test_Logical_3d ( To_Deallocate, ItsName, ModuleName )
+    logical, allocatable, dimension(:,:,:) :: To_Deallocate
+    include "DeallocateA_Test.f9h"
+  end subroutine DeallocateA_Test_Logical_3d
   ! ----------------------------------  DeallocateA_Test_RealR8_1d  -----
   subroutine DeallocateA_Test_RealR8_1d ( To_Deallocate, ItsName, ModuleName )
     double precision, allocatable, dimension(:) :: To_Deallocate
@@ -2036,6 +2113,9 @@ contains
 end module Allocate_Deallocate
 
 ! $Log$
+! Revision 2.53  2017/10/31 23:42:57  vsnyder
+! Add allocatable logical array support
+!
 ! Revision 2.52  2016/09/07 23:54:37  vsnyder
 ! Add support for allocatable integer arrays
 !
