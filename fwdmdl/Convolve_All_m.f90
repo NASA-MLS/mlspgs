@@ -796,12 +796,12 @@ contains
 
     use MatrixModule_1, only: FindBlock, Matrix_t
     use MLSKinds, only: R8, RP, RV
-    use MLSNumerics, only: Coefficients => Coefficients_r8, InterpolateValues
+    use MLSNumerics, only: Coefficients, InterpolateValues
     use ScanAverage_m, only: ScanAverage
     use VectorsModule, only: VectorValue_T
 
     ! Required inputs
-    type(coefficients), intent(in) :: Coeffs
+    type(coefficients(rp)), intent(in) :: Coeffs
     integer, intent(in) :: MAF
     integer, intent(in) :: Channel
     real(rp), intent(in) :: Chi_In(:)  ! input pointing angles radians
@@ -883,13 +883,13 @@ contains
     use Load_sps_data_m, only: Grids_T
     use MatrixModule_1, only: FINDBLOCK, GetFullBlock, MATRIX_T
     use MLSKinds, only: R8, RP, RV
-    use MLSNumerics, only: Coefficients => Coefficients_r8, InterpolateValues
+    use MLSNumerics, only: Coefficients, InterpolateValues
     use Path_Representation_m, only: Facets_and_Vertices_t
     use ScanAverage_m, only: ScanAverage
     use VectorsModule, only: VectorValue_T
 
     ! Inputs
-    type(coefficients), intent(in) :: Coeffs
+    type(coefficients(rp)), intent(in) :: Coeffs
     integer, intent(in) :: MAF
     integer, intent(in) :: CHANNEL
     real(rp), intent(in) :: Chi_In(:)  ! input pointing angles radians
@@ -1003,13 +1003,13 @@ contains
     use Load_sps_data_m, only: Grids_T
     use MatrixModule_1, only: FindBlock, GetFullBlock, Matrix_t
     use MLSKinds, only: R8, RP, RV
-    use MLSNumerics, only: Coefficients => Coefficients_r8, InterpolateValues
+    use MLSNumerics, only: Coefficients, InterpolateValues
     use Path_Representation_m, only: Facets_and_Vertices_t
     use ScanAverage_m, only: ScanAverage
     use VectorsModule, only: VectorValue_T
 
     ! Inputs
-    type(coefficients), intent(in) :: Coeffs
+    type(coefficients(rp)), intent(in) :: Coeffs
     integer, intent(in) :: MAF
     integer, intent(in) :: Channel
     real(rp), intent(in) :: Chi_In(:)  ! input pointing angles radians
@@ -1634,6 +1634,9 @@ contains
 end module Convolve_All_m
 
 ! $Log$
+! Revision 2.26  2017/10/31 23:49:35  vsnyder
+! Make Coefficients a parameterized type
+!
 ! Revision 2.25  2017/03/31 00:47:10  vsnyder
 ! Use F_and_V to map to Jacobian
 !
