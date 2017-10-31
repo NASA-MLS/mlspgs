@@ -164,7 +164,7 @@
 
       lb = 2
       ub = noOld-1
-      if ( associated(coeffs%row) ) lb = 1 ! periodic continuity
+      if ( allocated(coeffs%row) ) lb = 1 ! periodic continuity
 
       call Allocate_Test ( oldSecondlower, noNew, width, "oldSecondlower", ModuleName )
       call Allocate_Test ( oldSecondupper, noNew, width, "oldSecondupper", ModuleName )
@@ -192,7 +192,7 @@
         where ( oldSecond(ind,:) /= 0.0_rk ) &
           & oldSecond(ind,:) = 6.0 * oldSecond(ind,:) / coeffs%dx(ind)
       end do
-      if ( associated(coeffs%row) ) then ! periodic continuity
+      if ( allocated(coeffs%row) ) then ! periodic continuity
         call allocate_test ( r1, width, "R1", moduleName )
         call allocate_test ( r2, width, "R2", moduleName )
         r1 = oldSecond(1,:)  ! in case of periodic continuity
@@ -202,7 +202,7 @@
       ! Now compute (most of) the RHS in oldSecond
       oldSecond(2:ub,:) = oldSecond(2:ub,:) - oldSecond(1:ub-1,:)
 
-      if ( .not. associated(coeffs%row) ) then ! not periodic continuity
+      if ( .not. allocated(coeffs%row) ) then ! not periodic continuity
         ! RHS is already complete
         call solve_factored_symm_tri ( coeffs%dx(lb:ub-1), coeffs%p, coeffs%o, &
           oldSecond(lb:ub,:) )
@@ -274,6 +274,9 @@
 ! end subroutine InterpolateUsingSetup_r*
 
 ! $Log$
+! Revision 1.11  2010/02/04 23:16:13  vsnyder
+! Remove declaration for unreferenced name
+!
 ! Revision 1.10  2009/12/22 01:58:43  vsnyder
 ! Compute RHS correctly -- stay within array bounds
 !

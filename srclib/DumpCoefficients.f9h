@@ -12,7 +12,7 @@
 ! $RCSfile$
 
 ! subroutine DumpCoefficients_r* ( Coeffs, Name )
-!   type(coefficients_r*), intent(in) :: Coeffs )
+!   type(coefficients(r*)), intent(in) :: Coeffs )
 !   character(len=*), optional, intent(in) :: Name
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
@@ -21,28 +21,31 @@
 !---------------------------------------------------------------------------
 
     if ( present(name) ) call output ( name, advance='yes' )
-    if ( associated(coeffs%lowerInds) ) call dump ( coeffs%lowerInds, name='LowerInds' )
-    if ( associated(coeffs%a) ) call dump ( coeffs%a, name='A' )
-    if ( associated(coeffs%b) ) call dump ( coeffs%b, name='B' )
-    if ( associated(coeffs%gap) ) call dump ( coeffs%gap, name='Gap' )
-    if ( associated(coeffs%c) ) call dump ( coeffs%c, name='C' )
-    if ( associated(coeffs%d) ) call dump ( coeffs%d, name='D' )
-    if ( associated(coeffs%e) ) call dump ( coeffs%e, name='C' )
-    if ( associated(coeffs%f) ) call dump ( coeffs%f, name='D' )
-    if ( associated(coeffs%ai) ) call dump ( coeffs%ai, name='AI' )
-    if ( associated(coeffs%bi) ) call dump ( coeffs%bi, name='BI' )
-    if ( associated(coeffs%ci) ) call dump ( coeffs%ci, name='CI' )
-    if ( associated(coeffs%di) ) call dump ( coeffs%di, name='DI' )
-    if ( associated(coeffs%dx) ) call dump ( coeffs%dx, name='dX' )
-    if ( associated(coeffs%o) ) call dump ( coeffs%o, name='O' )
-    if ( associated(coeffs%p) ) call dump ( coeffs%p, name='P' )
-    if ( associated(coeffs%row) ) call dump ( coeffs%row, name='Row' )
-    if ( associated(coeffs%col) ) call dump ( coeffs%col, name='Col' )
-    if ( associated(coeffs%badValue) ) call dump ( coeffs%badValue, name='BadValue' )
+    if ( allocated(coeffs%lowerInds) ) call dump ( coeffs%lowerInds, name='LowerInds' )
+    if ( allocated(coeffs%a) ) call dump ( coeffs%a, name='A' )
+    if ( allocated(coeffs%b) ) call dump ( coeffs%b, name='B' )
+    if ( allocated(coeffs%gap) ) call dump ( coeffs%gap, name='Gap' )
+    if ( allocated(coeffs%c) ) call dump ( coeffs%c, name='C' )
+    if ( allocated(coeffs%d) ) call dump ( coeffs%d, name='D' )
+    if ( allocated(coeffs%e) ) call dump ( coeffs%e, name='C' )
+    if ( allocated(coeffs%f) ) call dump ( coeffs%f, name='D' )
+    if ( allocated(coeffs%ai) ) call dump ( coeffs%ai, name='AI' )
+    if ( allocated(coeffs%bi) ) call dump ( coeffs%bi, name='BI' )
+    if ( allocated(coeffs%ci) ) call dump ( coeffs%ci, name='CI' )
+    if ( allocated(coeffs%di) ) call dump ( coeffs%di, name='DI' )
+    if ( allocated(coeffs%dx) ) call dump ( coeffs%dx, name='dX' )
+    if ( allocated(coeffs%o) ) call dump ( coeffs%o, name='O' )
+    if ( allocated(coeffs%p) ) call dump ( coeffs%p, name='P' )
+    if ( allocated(coeffs%row) ) call dump ( coeffs%row, name='Row' )
+    if ( allocated(coeffs%col) ) call dump ( coeffs%col, name='Col' )
+    if ( allocated(coeffs%badValue) ) call dump ( coeffs%badValue, name='BadValue' )
 
 ! end subroutine DumpCoefficients_r*
 
 ! $Log$
+! Revision 1.3  2009/11/17 23:44:47  vsnyder
+! Add Name argument
+!
 ! Revision 1.2  2009/06/20 02:32:44  vsnyder
 ! Precompute more stuff, handle identical abscissae, in spline case
 !

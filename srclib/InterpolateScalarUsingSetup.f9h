@@ -142,7 +142,7 @@
 
       lb = 2
       ub = noOld-1
-      if ( associated(coeffs%row) ) lb = 1 ! periodic continuity
+      if ( allocated(coeffs%row) ) lb = 1 ! periodic continuity
 
       call Allocate_Test ( oldSecondlower, noNew, "oldSecondlower", ModuleName )
       call Allocate_Test ( oldSecondupper, noNew, "oldSecondupper", ModuleName )
@@ -176,7 +176,7 @@
       ! Now compute (most of) the RHS in oldSecond
       oldSecond(2:ub) = oldSecond(2:ub) - oldSecond(1:ub-1)
 
-      if ( .not. associated(coeffs%row) ) then ! not periodic continuity
+      if ( .not. allocated(coeffs%row) ) then ! not periodic continuity
         ! RHS is already complete
         call solve_factored_symm_tri ( coeffs%dx(lb:ub-1), coeffs%p, coeffs%o, &
           oldSecond(lb:ub) )
@@ -231,6 +231,9 @@
 ! end subroutine InterpolateScalarUsingSetup_r*
 
 ! $Log$
+! Revision 1.8  2009/12/22 01:58:43  vsnyder
+! Compute RHS correctly -- stay within array bounds
+!
 ! Revision 1.7  2009/12/08 21:44:21  vsnyder
 ! Provide splines with periodic boundary conditions, use Symm_Tri
 !
