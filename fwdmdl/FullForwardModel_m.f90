@@ -69,8 +69,8 @@ contains
     use HessianModule_1, only: Hessian_T
     use HGridsDatabase, only: HGrid_T
     use Interpolate_MIF_to_Tan_Press_m, only: Get_Lines_of_Sight
-    use Intrinsic, only: Lit_Indices, L_MIFLOS, L_None, L_PhiTan, L_PTan, &
-      & L_TScat, L_VMR
+    use Intrinsic, only: Lit_Indices, L_ECRtoFOV, L_None, L_PhiTan, L_PTan, &
+      & L_ScECR, L_TScat, L_VMR
     use Load_SPS_Data_M, only: DestroyGrids_T, Dump, EmptyGrids_T, Grids_T, &
       & Load_One_Item_Grid, Load_SPS_Data
     use MatrixModule_1, only: Matrix_T
@@ -114,12 +114,16 @@ contains
     type (Facets_and_Vertices_t), allocatable :: Path_Union(:) ! Facets and
                                 ! vertices under all paths through
                                 ! the QTM.
+    type (VectorValue_T), pointer :: ECRtoFOV ! Rotation matrix from ECR to
+                                ! field-of-view (minor frame quantity)
     type (VectorValue_T), pointer :: PhiTan   ! Tangent geodAngle component of
                                 ! state vector (minor frame quantity)
     type (VectorValue_T), pointer :: PTan     ! Tangent pressure component of
                                 ! state vector (minor frame quantity)
-    type (VectorValue_T), pointer :: Q_LOS    ! Line-of-sight, for QTM,
+    type (Path_T), allocatable :: Q_LOS(:)    ! Line-of-sight, for QTM,
                                 ! minor frame quantity
+    type (VectorValue_T), pointer :: ScECR    ! Instrument position in ECR
+                                ! (minor frame quantity)
     type (VectorValue_T), pointer :: Temp     ! Temperature component of
                                 ! state vector
 
@@ -239,6 +243,7 @@ contains
       ! Find the facets and vertices under all the paths through the QTM.
       ! The largest number of vertices in any of them is the horizontal
       ! extent of grids related to temperature.
+
       allocate ( QTM_Paths(no_tan_hts), stat=stat, errmsg=ermsg )
       call test_allocate ( stat, moduleName, "QTM_paths", 1, no_tan_hts, &
         & ermsg=ermsg )
@@ -248,21 +253,21 @@ contains
       allocate ( path_union(1), stat=stat, errmsg=ermsg )
       call test_allocate ( stat, moduleName, "Path_Union", 1, 1, &
         & ermsg=ermsg )
-      Q_LOS => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
-        & quantityType=l_MIFLOS, config=fwdModelConf, &
-        & instrumentModule=fwdModelConf%signals(1)%instrumentModule )
 
-      ! Check that Q_LOS has at least 6 channels (two ECR quantities).
-      if ( Q_LOS%template%noChans < 6 ) then
-        if ( Q_LOS%template%name == 0 ) then
-          call MLSMessage ( MLSMSG_Error, moduleName, &
-            & "Quantity MIF LOS does not have %d ECR components.", 6 )
-        else
-          call MLSMessage ( MLSMSG_Error, moduleName, &
-            & "Quantity %s does not have %d ECR components.", &
-            & [ Q_LOS%template%name, 6 ] )
-        end if
-      end if
+      ! Get Q_LOS ( C, U ) vectors for all MIFs for the MAF
+      ! The third column of ECRtoFOV is an unit vector in the direction of
+      ! the line of sight from the instrument.
+      ECRtoFOV => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
+        & quantityType=l_ECRtoFOV, config=fwdModelConf )
+      allocate ( Q_LOS(ECRtoFOV%template%noSurfs), stat=stat, errmsg=ermsg )
+      call test_allocate ( stat, moduleName, "Q_LOS", 1, 1, &
+        & ermsg=ermsg )
+      scECR => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
+        & quantityType=l_scECR, config=fwdModelConf )
+      do k = 1, size(Q_LOS)
+        Q_LOS(k)%lines(1,1)%xyz = scECR%value3(1:3,k,fmstat%maf)    ! C vec
+        Q_LOS(k)%lines(2,1)%xyz = ECRtoFOV%value3(7:9,k,fmstat%maf) ! U vec
+      end do
 
       call get_lines_of_sight ( fmStat%maf, pTan, tan_press, Q_LOS, QTM_paths )
 
@@ -328,7 +333,6 @@ contains
 
       call load_sps_data ( FwdModelConf, phitan, fmStat%maf, grids_f )
 
-      nullify ( Q_LOS )
       allocate ( QTM_Paths(0), stat=stat, errmsg=ermsg )
       call test_allocate ( stat, moduleName, "QTM_paths", 1, no_tan_hts, &
         & ermsg=ermsg )
@@ -627,7 +631,7 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_Frq, &
                                             ! state vector (minor frame quantity)
     type (VectorValue_T), intent(in) :: Temp ! Temperature component of state vector
     type (HGrid_T), pointer, intent(in) :: QTM_HGrid ! HGrid that has finest QTM resolution.
-    type (VectorValue_T), pointer :: Q_LOS  ! Minor-frame lines of sight for QTM
+    type (Path_t), allocatable :: Q_LOS(:)  ! Minor-frame lines of sight for QTM
     type (Path_t), intent(inout) :: QTM_Paths(:) ! LOS through QTM
     type (Facets_and_Vertices_t), intent(in) :: F_and_V(:) ! of QTM under path
     integer, intent(in) :: No_Mol           ! Number of molecules
@@ -1087,7 +1091,7 @@ integer :: NNZ_ZP(size(eta_zp,2))               ! number of columns of eta_zp
     type (Value_QTM_2D_Lists_t) :: Eta_zQT ! Interpolation coefficients
                                   ! from 3D QTM to path for temperature.
     type (Value_1D_Lists_t) :: Eta_Z_List(size(fwdModelConf%beta_group)) ! Interpolation
-                                  ! from zeta for each VMR to GL zeta.
+                                  ! from zeta basis for each VMR to GL zeta.
     type (Value_1D_Lists_t) :: Eta_zzT ! Interpolation coefficients from
                                   ! temperature Zeta to GL zeta.  Since this is
                                   ! a 1D interpolation, there can be at most
@@ -1228,7 +1232,7 @@ integer :: NNZ_ZP(size(eta_zp,2))               ! number of columns of eta_zp
     print_more_points = switchDetail(switches, 'ZMOR' ) > -1
     do_more_points = switchDetail(switches, 'zmor') > -1
 
-    usingQTM = associated(Q_LOS)
+    usingQTM = s_QTM /= 0
 
     ! Nullify all our pointers that are allocated because the first thing
     ! Allocate_Test does is ask if they're associated.  If we don't nullify
@@ -1435,7 +1439,7 @@ integer :: NNZ_ZP(size(eta_zp,2))               ! number of columns of eta_zp
               &                 tan_press=tan_press(ptg_i), &
               &                 est_scGeocAlt=est_scGeocAlt(ptg_i) )
           else
-            call QTM_paths(ptg_i)%new_path
+            call QTM_paths(ptg_i)%new_path ! Initialize to empty
             call one_pointing ( ptg_i, vel_rel, r_eq,               &
               &                 tan_loc=tan_pt_geod(ptg_i),         &
               &                 tan_press=tan_press(ptg_i),         &
@@ -4746,6 +4750,11 @@ call comp_eta_docalc_no_frq ( Grids_f, z_path(1:npf), &
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.386  2017/09/20 01:18:49  vsnyder
+! Change name of Comp_Eta_DoCalc_Sparse to Comp_Eta_DoCalc_List.  Change
+! names of Eta_p and Eta_z to Eta_p_List and Eta_z_list.  Get some state
+! vector quantities only if they're needed.
+!
 ! Revision 2.385  2017/08/10 00:15:53  vsnyder
 ! Add Tan_Pt_C in calls to Get_d_Deltau_Pol_df.  Do trapezoidal update using
 ! Del_s instead of Del_z because ds/dh is singular at the tangent.  More
