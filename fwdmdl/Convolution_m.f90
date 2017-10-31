@@ -61,8 +61,8 @@ contains
     use MatrixModule_1, only: Matrix_T
     use MLSKinds, only: RP, RV, R4, R8
     use MLSMessageModule, only: MLSMessage, MLSMsg_Warning
-    use MLSNumerics, only: Average, Coefficients => Coefficients_R8, &
-      & InterpolateArraySetup, InterpolateArrayTeardown
+    use MLSNumerics, only: Average, Coefficients, InterpolateArraySetup, &
+      & InterpolateArrayTeardown
     use MLSSignals_M, only: AreSignalsSuperset, Signal_T
     use MLSStringLists, only: SwitchDetail
     use Path_Representation_m, only: Facets_and_Vertices_t
@@ -138,7 +138,7 @@ contains
     real(rp) :: ThisFraction     ! A sideband fraction
     logical :: Update            ! Just update radiances etc.
     integer :: WhichPattern      ! Index of antenna pattern
-    type (Coefficients) :: Coeffs ! For interpolation
+    type (Coefficients(rp)) :: Coeffs ! For interpolation
     type (Convolve_Support_T) :: Convolve_Support
     type (VectorValue_T), pointer :: ElevOffset       ! Elevation offset
     type (VectorValue_T), pointer :: SidebandFraction ! The sideband fraction to use
@@ -529,6 +529,9 @@ contains
 end module Convolution_m
 
 ! $Log$
+! Revision 2.10  2017/10/31 23:49:35  vsnyder
+! Make Coefficients a parameterized type
+!
 ! Revision 2.9  2017/03/31 00:47:10  vsnyder
 ! Use F_and_V to map to Jacobian
 !

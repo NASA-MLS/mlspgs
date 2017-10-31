@@ -16,6 +16,8 @@ module Path_Representation_m
   ! Types to represent information about the path of integration of the
   ! radiative-transfer equation, and information along it.
 
+  ! Procedures to calculate the path.
+
   use Geolocation_0, only: ECR_t, RG
 
   implicit NONE
@@ -46,7 +48,8 @@ module Path_Representation_m
     integer, allocatable :: Vertices(:) ! Indices in QTM_Tree%Geo_In
   end type Facets_and_Vertices_t
 
-  public :: Path_Continuation, Union_Paths
+  public :: Geometric_Path, Path_Continuation, Tangent_Geodetic_Coordinates
+  public :: Union_Paths
 
   interface Union_Paths
     procedure Add_One_Path_To_Union, Add_Paths_To_Union
@@ -60,7 +63,72 @@ module Path_Representation_m
 
 contains
 
-  subroutine Get_Path_Ready ( Path )
+  subroutine Geometric_Path ( FwdModelIn, FwdModelExtra, MAF, Ref_MIF, &
+                            & Tngt, Tngt_Geod, H, Path )
+
+    ! Use the instrument position, tangent position, and line-of-sight, for
+    ! a specified MAF and reference MIF, to calculate segments of the path
+    ! of integration.  See wvs-143.
+
+    use Geolocation_0, only: ECR_t, H_V_Geod, Norm2
+    use Intrinsic, only: L_ECRtoFOV, L_ScECR
+    use MLSKinds, only: RP
+    use VectorsModule, only: GetVectorQuantityByType, Vector_T, VectorValue_T
+
+    type(vector_t), intent(in) :: FwdModelIn, FwdModelExtra
+    integer, intent(in) :: MAF
+    integer, intent(in) :: Ref_MIF
+    type(ECR_t), intent(in) :: Tngt           ! Tangent position at MAF and
+                                              ! Ref_MIF
+    type(h_v_geod), intent(in) :: Tngt_Geod   ! Geodetic surface coordinates of
+                                              ! the tangent at MAF and Ref_MIF,
+                                              ! from Tangent_Geodetic_Coordinates
+    real(rp), intent(in) :: H                 ! Geodetic height at the tangent
+                                              ! point on the integration path
+    type(path_t), intent(out) :: Path
+
+    real(rp) :: Dist                          ! | tngt - inst |
+    type(vectorValue_t), pointer :: ECRtoFOV
+    type(ECR_t) :: Fwm_Tngt                   ! Forward model's tangent position
+    type(ECR_t) :: Inst                       ! Instrument position
+    type(ECR_t) :: LOS                        ! Line-of-sight from third column
+                                              ! of ECRtoFOV
+    type(ECR_t) :: Normal                     ! Normal to viewing plane
+    type(vectorValue_t), pointer :: ScECR     ! Instrument position
+    type(ECR_t) :: Tngt_surf                  ! Vector to Tngt_Geod
+    type(ECR_t) :: V                          ! Unit vector in tangent direction
+
+    ECRtoFOV => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+      & quantityType=l_ECRtoFOV )
+    scECR => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+      & quantityType=l_scECR )
+
+    inst%xyz = scECR%value3(1:3,ref_MIF,MAF)
+    dist = norm2 ( tngt - inst )
+
+    los%xyz = ECRtoFOV%value3(7:9,ref_MIF,MAF) ! Third column is LOS
+
+    normal = los .cross. tngt            ! Normal to viewing plane
+    tngt_surf = tngt_geod%ECR()          ! Surface ECR of tangent
+    v = tngt - tngt_surf                 ! V_r = T_r - T_g in wvs-143
+    v = v / v%norm2()                    ! Unit vector \hat{V} in wvs-143
+    fwm_tngt = tngt_surf + h * v         ! \mathbf{T}_i in wvs-143.
+    los = normal%cross_norm ( fwm_tngt ) ! U_i in wvs-143
+    path%lines(2,1) = normal .cross. fwm_tngt ! LOS for FWM
+    path%lines(1,1) = fwm_tngt - dist * path%lines(2,1) ! Put the reference near
+                                         ! the instrument.  Using this instead
+                                         ! of Fwm_Tngt puts it outside the
+                                         ! reference ellipsoid, an assumption
+                                         ! by Path%Get_Path_Ready
+    call path%get_path_ready ( inst )    ! Compute path%lines(:,2), either
+                                         ! a continuation after the tangent,
+                                         ! or a reflection from the Earth's
+                                         ! surface.  Fill path%sMin and
+                                         ! path%sMax.
+
+  end subroutine Geometric_Path
+
+  subroutine Get_Path_Ready ( Path, Instrument )
 
     ! Given a line defined by a point in ECR, and a vector in ECR parallel
     ! to that line, compute the position of the tangent on that line, and
@@ -77,7 +145,10 @@ contains
     ! The tangent or surface-intersection point is Path%Lines(1,2).
 
     class(path_t), intent(inout) :: Path
+    type(ECR_t), intent(in), optional :: Instrument ! Position in ECR
 
+    type(ECR_t) :: D_Inst ! Instrument - path%lines(1,1)
+    real(rg) :: S_Inst    ! S-value of instrument position
     real(rg) :: Tangent   ! S-value of tangent point
     real(rg) :: Tan_Dir   ! +/- 1; Tan_Dir * Lines(2,i) is directed from
                           ! Lines(1,i) toward the tangent point.
@@ -95,10 +166,15 @@ contains
     ! segments, to account (approximately) for refraction.
     call path_continuation ( path%lines, tangent )
     tan_dir = sign(1.0_rg,tangent)
+    if ( present(instrument) ) then
+      d_inst = instrument - path%lines(1,1)
+      s_inst = d_inst%norm2() - tangent
+    end if
     if ( tan_dir >= 0 ) then
       ! Direction of Path%Lines(2,1) is from Path%Lines(1,1) toward tangent,
       ! therefore direction of Path%Lines(2,2) is from tangent toward +infinity
       path%sMin(1) = -sqrt(huge(0.0_rg)) ! Allow intersections before Lines(1,1)
+      if ( present(instrument) ) path%sMin(1) = s_inst
       path%sMax(1) = tangent             ! Disallow intersections after tangent
       path%sMin(2) = 0                   ! Disallow intersections before tangent
       path%sMax(2) = sqrt(huge(0.0_rg))  ! Allow intersections arbitrarily far away
@@ -108,6 +184,7 @@ contains
       path%sMin(1) = tangent             ! Disallow intersections before tangent
       path%sMax(1) = sqrt(huge(0.0_rg))  ! Allow intersections arbitrarily far away
       path%sMin(2) = -sqrt(huge(0.0_rg)) ! Allow intersections arbitrarily far away
+      if ( present(instrument) ) path%sMin(2) = s_inst
       path%sMax(2) = 0                   ! Disallow intersections after tangent
     end if
 
@@ -168,6 +245,36 @@ contains
     end if
   end subroutine Path_Continuation
 
+  function Tangent_Geodetic_Coordinates ( FwdModelIn, FwdModelExtra, MAF, &
+                                        & Ref_MIF ) result ( Tngt_Geod )
+
+    !{ Compute the surface geodetic coordinates of the tangent at the
+    !  specified reference MIF and MAF.  The result is $\mathbf{T}_g$
+    !  in wvs-143.
+
+    use Geolocation_0, only: ECR_t, H_V_Geod
+    use Intrinsic, only: L_TngtECR
+    use VectorsModule, only: GetVectorQuantityByType, Vector_T, VectorValue_T
+
+    type(vector_t), intent(in) :: FwdModelIn, FwdModelExtra
+    integer, intent(in) :: MAF
+    integer, intent(in) :: Ref_MIF
+
+    type(h_v_geod) :: Tngt_Geod  ! Tangent geodetic coordinates at surface
+
+    type(ECR_t) :: Tngt                       ! Tangent position
+    type(vectorValue_t), pointer :: TngtECR   ! Tangent position
+
+    tngtECR => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+      & quantityType=l_tngtECR )
+    tngt%xyz = tngtECR%value3(1:3,ref_MIF,MAF) ! Tangent ECR at ref MIF and MAF
+    tngt_geod = tngt%geod ( )            ! Geodetic coordinates of ref tangent
+    tngt_geod%v = 0                      ! Surface geod. coordinates of tangent
+
+  end function Tangent_Geodetic_Coordinates
+
+  ! Specific procedures for Union_Paths generic:
+
   subroutine Add_One_Path_To_Union ( Unions, Path )
     ! Construct the union of union%facets with path%facets, and the union of
     ! union%vertices with path%vertices.
@@ -214,6 +321,9 @@ contains
 end module Path_Representation_m
 
 ! $Log$
+! Revision 2.10  2017/10/31 23:45:31  vsnyder
+! Add Geometric_Path and Tangent_Geodetic_Coordinates
+!
 ! Revision 2.9  2017/03/11 00:47:39  vsnyder
 ! Add Union_paths
 !
