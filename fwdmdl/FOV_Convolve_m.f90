@@ -15,7 +15,7 @@ module FOV_Convolve_m
 
   use AntennaPatterns_m, only: AntennaPattern_T
   use MLSKinds, only: R8
-  use MLSNumerics, only: Coefficients => Coefficients_r8
+  use MLSNumerics, only: Coefficients
 
   implicit NONE
   private
@@ -42,8 +42,8 @@ module FOV_Convolve_m
   type, public :: Convolve_Support_T
     real(r8), dimension(no_fft) :: angles ! Basis for FFT
     type(antennaPattern_t), pointer :: AntennaPattern ! For temperature derivs
-    type(coefficients) :: Coeffs_1 ! for chi_in-init_angle -> angles(ffth:no_fft)
-    type(coefficients) :: Coeffs_2 ! for angles(ffth:no_fft)-ang_step -> chi_out-init_angle
+    type(coefficients(r8)) :: Coeffs_1 ! for chi_in-init_angle -> angles(ffth:no_fft)
+    type(coefficients(r8)) :: Coeffs_2 ! for angles(ffth:no_fft)-ang_step -> chi_out-init_angle
     real(r8), pointer :: del_chi_in(:) => NULL(), del_chi_out(:) => NULL()
     real(r8) :: Init_angle
     real(r8), dimension(no_fft) :: p, dp  ! From antenna pattern
@@ -330,7 +330,7 @@ contains
     & dx_dT_out, di_dT_flag, dRad_dT_out )
 
     use MLSKinds, only: Rp, Rv, R8
-    use MLSNumerics, only: Coefficients=>Coefficients_r8, Hunt, &
+    use MLSNumerics, only: Coefficients, Hunt, &
       & InterpolateArraySetup, InterpolateArrayTeardown, InterpolateValues
     use ScanAverage_m, only: ScanAverage
 
@@ -360,7 +360,7 @@ contains
     real(rp), optional, intent(out) :: dRad_dT_out(:,:) ! output radiance
     !                       derivatives wrt temperature.
 
-    type(coefficients) :: Coeffs_t ! for chi_in-init_angle -> angles(ffth+zero_out_s+1:no_fft)
+    type(coefficients(r8)) :: Coeffs_t ! for chi_in-init_angle -> angles(ffth+zero_out_s+1:no_fft)
     integer :: AAAPN, I, J, K, N_Coeffs, Zero_out_s, Zero_out_t
     real(r8), dimension(no_fft) :: dp, rad_fft1, rad_fft2, rad_fft3
     real(r8) :: drad_dT_temp(size(convolve_support%del_chi_out))
@@ -536,7 +536,7 @@ contains
 
     use MLSKinds, only: Rp, Rv, R8
 !   use output_m, only: outputNamedValue                       ! IGOR
-    use MLSNumerics, only: Coefficients=>Coefficients_r8, Hunt, &
+    use MLSNumerics, only: Coefficients, Hunt, &
       & InterpolateArraySetup, InterpolateArrayTeardown, InterpolateValues
     use ScanAverage_m, only: ScanAverage
 
@@ -566,7 +566,7 @@ contains
     real(rp), optional, intent(out) :: dRad_dT_out(:,:) ! output radiance
     !                       derivatives wrt temperature.
 
-    type(coefficients) :: Coeffs_t ! for chi_in-init_angle -> angles(ffth+zero_out_s+1:no_fft)
+    type(coefficients(r8)) :: Coeffs_t ! for chi_in-init_angle -> angles(ffth+zero_out_s+1:no_fft)
     integer :: AAAPN, I, J, K, N_Coeffs, Zero_out_s, Zero_out_t
     real(r8), dimension(no_fft) :: dp, rad_fft1, rad_fft2, rad_fft3
     real(r8) :: drad_dT_temp(size(convolve_support%del_chi_out))
@@ -860,6 +860,9 @@ contains
 end module FOV_Convolve_m
 
 ! $Log$
+! Revision 2.18  2017/10/31 23:49:35  vsnyder
+! Make Coefficients a parameterized type
+!
 ! Revision 2.17  2013/06/12 02:19:37  vsnyder
 ! Cruft removal
 !
