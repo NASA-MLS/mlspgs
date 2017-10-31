@@ -723,7 +723,7 @@ contains
     ! generation, using periodic spline interpolation.
 
     use MLSKinds, only: Rp
-    use MLSNumerics, only: Coefficients_r8, InterpolateValues
+    use MLSNumerics, only: Coefficients, InterpolateValues
 
     real(rp), intent(in) :: P(0:,0:,:) ! P or dP_dT or dP_dIWC on T x IWC x Theta
     real(rp), intent(in) :: Eta_T_IWC(0:,0:) ! 2x2, to interpolate to T, IWC
@@ -731,7 +731,7 @@ contains
     integer, intent(in) :: Beg_Pos_Theta ! 1 or 2, depending on whether
                                        ! theta_e(1) is nonzero or zero
     real(rp), intent(in) :: Xis(:) ! Angles on which radiative transfer calculated
-    type(coefficients_r8), intent(in) :: Coeffs ! To interpolate from Theta_e to Xis
+    type(coefficients(rp)), intent(in) :: Coeffs ! To interpolate from Theta_e to Xis
     real(rp), intent(out) :: P_on_Xi(:) ! Interpolated result
 
     real(rp) :: P_T_IWC(size(p,3)) ! P interpolated to T and IWC
@@ -904,6 +904,9 @@ contains
 end module TScat_Support_m
 
 ! $Log$
+! Revision 2.14  2017/10/31 23:49:36  vsnyder
+! Make Coefficients a parameterized type
+!
 ! Revision 2.13  2016/11/11 02:38:41  vsnyder
 ! Associate the Phi_Path_C pointer before using it
 !
