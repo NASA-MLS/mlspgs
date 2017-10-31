@@ -72,7 +72,7 @@ module FillUtils_1                     ! Procedures used by Fill
   use MLSKinds, only: R4, R8, Rm, Rp, Rv
   use MLSL2options, only: Aura_L1bFiles, L2CFErrorNode, L2CFNode, Toolkit
   use MLSMessagemodule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
-  use MLSNumerics, only: Coefficients_R8, InterpolateArraySetup, &
+  use MLSNumerics, only: Coefficients, InterpolateArraySetup, &
     & InterpolateArrayTeardown, InterpolateValues, Hunt
   use MLSFinds, only: FindFirst, FindLast
   use MLSSignals_M, only: GetFirstChannel, GetSignalName, GetModuleName, &
@@ -5947,7 +5947,7 @@ contains ! =====     Public Procedures     =============================
       integer :: INSTANCE               ! Loop counter
       integer :: Me = -1                ! String index for trace
       integer :: THISPROFILE            ! Index
-      type (Coefficients_R8) :: COEFFS  ! For interpolation
+      type (Coefficients(r8)) :: COEFFS  ! For interpolation
       real (r8), dimension(quantity%template%noSurfs) :: outZeta
       real (r4), dimension(:,:,:), pointer :: SOURCE
 
@@ -7819,6 +7819,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.134  2017/10/31 23:47:33  vsnyder
+! Make Coefficients a parameterized type
+!
 ! Revision 2.133  2017/09/20 00:02:58  vsnyder
 ! Shorten a log comment so compilers don't complain
 !
