@@ -170,7 +170,8 @@ module MLSNumerics              ! Some low level numerical stuff
   public :: Setup, Simpsons, SimpsonsSub, SolveQuadratic
   public :: UseLookupTable
 
-  type, public :: Coefficients_R4
+  type, public :: Coefficients ( RK )
+    integer, kind :: RK
     private
     !{ Coefficients for linear interpolation:  Let $\{x\} =$ {\tt oldX} and
     !  $\{\chi\} =$ {\tt newX}.  Then
@@ -185,11 +186,11 @@ module MLSNumerics              ! Some low level numerical stuff
     !  Coefficients for differentiation in the linear case (and of the linear
     !  terms in the spline case) are just $-1$ and $+1$, so they're not
     !  computed here.
-    integer, pointer :: LowerInds(:) => NULL()
-    real(r4), pointer :: A(:) => NULL(), B(:) => NULL(), Gap(:) => NULL()
+    integer, allocatable :: LowerInds(:)
+    real(rk), allocatable :: A(:), B(:), Gap(:)
     !{ Coefficients for spline interpolation:
     !  $C = (A^3-A) \frac{g^2}6$.  $D = (B^3-B) \frac{g^2}6$.
-    real(r4), pointer :: C(:) => NULL(), D(:) => NULL()
+    real(rk), allocatable :: C(:), D(:)
     !{ {\tt dX(i)} $= \delta_i = x_i-x_{i-1}$ for $1 < i \leq$ {\tt size(oldX)} and
     !  $\Delta_i = x_{i+1}-x_{i-1} = \delta_i + \delta_{i+1}$ for $1 < i <$
     !  {\tt size(oldX)}.
@@ -202,19 +203,19 @@ module MLSNumerics              ! Some low level numerical stuff
     !  superdiagonal of $U$.  The nonzero part of each row of the original
     !  system is of the form $[\delta_{i-1},\, 2 \Delta_i ,\, \delta_i]$.
     !  See wvs-086.
-    real(r4), pointer :: dX(:) => NULL(), P(:) => NULL(), O(:) => NULL()
+    real(rk), allocatable :: dX(:), P(:), O(:)
     !{ In the periodic continuity case, {\tt Col} is the rightmost column of
     !  $U$ and {\tt Row} is the bottom row of $L$.  During the backsolve, the
     !  last element of {\tt Col} is used instead of the last element of $o$,
     !  and the last element of {\tt Row} is used instead of the last element
     !  of $\delta$.
-    real(r4), pointer :: Col(:) => NULL(), Row(:) => NULL()
+    real(rk), allocatable :: Col(:), Row(:)
     !{ Coefficients for spline derivatives:
     !  $E = \frac{\text{d}C}{\text{d}A} = \frac6g \frac{\text{d}C}{\text{d}x}
     !     = 3 A^2 - 1$.
     !  $F = \frac{\text{d}D}{\text{d}A} = \frac6g \frac{\text{d}D}{\text{d}x}
     !     = 3 B^2 - 1$.
-    real(r4), pointer :: E(:) => NULL(), F(:) => NULL()
+    real(rk), allocatable :: E(:), F(:)
     !{ Coefficients for integration:
     !  $\int A \text{d}x =  \frac{x(x_{i+1}-\frac{x}2)}g$.
     !  $\int B \text{d}x = -\frac{x(x_i    -\frac{x}2)}g
@@ -223,70 +224,11 @@ module MLSNumerics              ! Some low level numerical stuff
     !                      \left( \int A \text{d}x + \frac{g A^4}4 \right)$.
     !  $\int D \text{d}x = -\frac{g^2}6
     !                      \left( \int B \text{d}x - \frac{g B^4}4 \right)$.
-    real(r4), pointer :: AI(:) => NULL(), BI(:) => NULL(), &
-      &                  CI(:) => NULL(), DI(:) => NULL()
+    real(rk), allocatable :: AI(:), BI(:), &
+      &                  CI(:), DI(:)
     ! Stuff for extrapolation == "B"ad
-    logical, pointer :: BadValue(:) => NULL()
-  end type Coefficients_R4
-
-  type, public :: Coefficients_R8
-    private
-    !{ Coefficients for linear interpolation:  Let $\{x\} =$ {\tt oldX} and
-    !  $\{\chi\} =$ {\tt newX}.  Then
-    !  {\tt Gap(j)} $= g_j = x_{i+1}-x_i$, $A_j = \frac{x_{i+1}-\chi_j}{g_j}$,    
-    !                                  and $B_j = 1-A_j = \frac{\chi_j-x_i}{g_j}$,
-    !  where $i$ is such that $x_i \leq \chi_j < x_{i+1}$ for $1 \leq j \leq$
-    !  {\tt size(newX)}.
-    !  {\tt lowerInds} = $\{i\, |\, x_i \leq \chi_j < x_{i+1},\,1 \leq j \leq$
-    !  {\tt size(newX)}$\}$.
-    !  $|\{g\}| = |\{A\}| = |\{B\}|$, and
-    !  others that depend upon them, $=|\{\chi\}|$ = {\tt size(newX)}.
-    !  Coefficients for differentiation in the linear case (and of the linear
-    !  terms in the spline case) are just $-1$ and $+1$, so they're not
-    !  computed here.
-    integer, pointer :: LowerInds(:) => NULL()
-    real(r8), pointer :: A(:) => NULL(), B(:) => NULL(), Gap(:) => NULL()
-    !{ Coefficients for spline interpolation:
-    !  $C = (A^3-A) \frac{g^2}6$.  $D = (B^3-B) \frac{g^2}6$.
-    real(r8), pointer :: C(:) => NULL(), D(:) => NULL()
-    !{ {\tt dX(i)} $= \delta_i = x_i-x_{i-1}$ for $1 < i \leq$ {\tt size(oldX)} and
-    !  $\Delta_i = x_{i+1}-x_{i-1} = \delta_i + \delta_{i+1}$ for $1 < i <$
-    !  {\tt size(oldX)}.
-    !  {\tt P(i)} $= p_i = \frac1{\delta_i o_{i-1} + 2 \Delta_i}$ and
-    !  {\tt O(i)} $= o_i = -\delta_{i+1} p_i$
-    !  for $1 < i <$ {\tt size(oldX)} and zero at the ends.
-    !  $p_i$ is the inverse of the diagonal of $L$ in the $LU$ factorization
-    !  of the symmetric tridiagonal linear system for splines, $\delta_i$ is
-    !  the subdiagonal of $L$, and $o_i$ is the negative of the
-    !  superdiagonal of $U$.  The nonzero part of each row of the original
-    !  system is of the form $[\delta_{i-1},\, 2 \Delta_i ,\, \delta_i]$.
-    !  See wvs-086.
-    real(r8), pointer :: dX(:) => NULL(), P(:) => NULL(), O(:) => NULL()
-    !{ In the periodic continuity case, {\tt Col} is the rightmost column of
-    !  $U$ and {\tt Row} is the bottom row of $L$.  During the backsolve, the
-    !  last element of {\tt Col} is used instead of the last element of $o$,
-    !  and the last element of {\tt Row} is used instead of the last element
-    !  of $\delta$.
-    real(r8), pointer :: Col(:) => NULL(), Row(:) => NULL()
-    !{ Coefficients for spline derivatives:
-    !  $E = \frac{\text{d}C}{\text{d}A} = \frac6g \frac{\text{d}C}{\text{d}x}
-    !     = 3 A^2 - 1$.
-    !  $F = \frac{\text{d}D}{\text{d}A} = \frac6g \frac{\text{d}D}{\text{d}x}
-    !     = 3 B^2 - 1$.
-    real(r8), pointer :: E(:) => NULL(), F(:) => NULL()
-    !{ Coefficients for integration:
-    !  $\int A \text{d}x =  \frac{x(x_{i+1}-\frac{x}2)}g$.
-    !  $\int B \text{d}x = -\frac{x(x_i    -\frac{x}2)}g
-    !                    = x - \int A \text{d}x$.\\
-    !  $\int C \text{d}x = -\frac{g^2}6
-    !                      \left( \int A \text{d}x + \frac{g A^4}4 \right)$.
-    !  $\int D \text{d}x = -\frac{g^2}6
-    !                      \left( \int B \text{d}x - \frac{g B^4}4 \right)$.
-    real(r8), pointer :: AI(:) => NULL(), BI(:) => NULL(), &
-      &                  CI(:) => NULL(), DI(:) => NULL()
-    ! Stuff for extrapolation == "B"ad
-    logical, pointer :: BadValue(:) => NULL()
-  end type Coefficients_R8
+    logical, allocatable :: BadValue(:)
+  end type Coefficients
 
   ! This is a family of datatypes, the uniformly discretized function:
   ! a list of function values y[i]
@@ -319,32 +261,21 @@ module MLSNumerics              ! Some low level numerical stuff
   ! Another family of datatypes may someday be implemented,
   ! which would utilize non-uniformly spaced x values
 
-  type, public :: UnifDiscreteFn_r4
+  type, public :: UnifDiscreteFn ( RK )
+    integer, kind :: RK
     integer :: N = 0                               ! The number of values xi
     character(len=8) :: BC = 'clamped'             ! boundary conditions
     character(len=1) :: method = ' '               ! which of closest xi to use
-    real(r4) :: x1                                 ! x1 <= xi <= x2
-    real(r4) :: x2
-    real(r4) :: yLeft  = 0.                        ! Assume all x < x1 are this
-    real(r4) :: yRight = 0.                        ! Assume all x > x2 are this
-    real(r4), dimension(:), pointer :: y => null() ! y(xi)
-    ! type(Coefficients_R4) :: Coeffs                ! in case we'll use splines
-  end type UnifDiscreteFn_r4
-
-  type, public :: UnifDiscreteFn_r8
-    integer :: N = 0                               ! The number of values xi
-    character(len=8) :: BC = 'clamped'             ! boundary conditions
-    character(len=1) :: method = ' '               ! which of closest xi to use
-    real(r8) :: x1                                 ! x1 <= xi <= x2
-    real(r8) :: x2
-    real(r8) :: yLeft  = 0.                        ! Assume all y < x1 are this
-    real(r8) :: yRight = 0.                        ! Assume all y > x2 are this
-    real(r8), dimension(:), pointer :: y => null() ! y(xi)
-    ! type(Coefficients_R8) :: Coeffs                ! in case we'll use splines
-  end type UnifDiscreteFn_r8
+    real(rk) :: x1                                 ! x1 <= xi <= x2
+    real(rk) :: x2
+    real(rk) :: yLeft  = 0.                        ! Assume all x < x1 are this
+    real(rk) :: yRight = 0.                        ! Assume all x > x2 are this
+    real(rk), dimension(:), pointer :: y => null() ! y(xi)
+    ! type(Coefficients(rk)) :: Coeffs                ! in case we'll use splines
+  end type UnifDiscreteFn
 
   ! No use for a class member of this datatype yet
-  ! type(UnifDiscreteFn_r8), save :: MLSUDF
+  ! type(UnifDiscreteFn(r8)), save :: MLSUDF
 
   interface Average
     module procedure Average_D, Average_S
@@ -984,7 +915,7 @@ contains
   ! This family of routines deallocates a uniDiscFunction's arrays
   subroutine destroyUnifDiscreteFn_r4 ( UDF )
     ! Args
-    type(UnifDiscreteFn_r4) :: UDF ! Intent(out) would clobber retainable values
+    type(UnifDiscreteFn(r4)) :: UDF ! Intent(out) would clobber retainable values
     ! Executable
     UDF%N       = 0
     call deallocate_test ( UDF%y, "UDF%y", ModuleName )
@@ -992,7 +923,7 @@ contains
 
   subroutine destroyUnifDiscreteFn_r8 ( UDF )
     ! Args
-    type(UnifDiscreteFn_r8) :: UDF ! Intent(out) would clobber retainable values
+    type(UnifDiscreteFn(r8)) :: UDF ! Intent(out) would clobber retainable values
     ! Executable
     UDF%N       = 0
     call deallocate_test ( UDF%y, "UDF%y", ModuleName )
@@ -1011,7 +942,7 @@ contains
     integer, parameter :: RK = kind(0.0e0)
     ! Args
     real(rk), intent(in)                 :: x
-    type(UnifDiscreteFn_r4), intent(in)       :: UDF
+    type(UnifDiscreteFn(r4)), intent(in)       :: UDF
     real(rk)                             :: value
     ! Internal variables
     real(rk) :: arg
@@ -1042,7 +973,7 @@ contains
     integer, parameter :: RK = kind(0.0d0)
     ! Args
     real(rk), intent(in)                 :: x
-    type(UnifDiscreteFn_r8), intent(in)       :: UDF
+    type(UnifDiscreteFn(r8)), intent(in)       :: UDF
     real(rk)                             :: value
     ! Internal variables
     real(rk) :: arg
@@ -1082,7 +1013,7 @@ contains
     integer, parameter :: RK = kind(0.0e0)
     ! Args
     real(rk), intent(in)                 :: x
-    type(UnifDiscreteFn_r4), intent(in)       :: UDF
+    type(UnifDiscreteFn(r4)), intent(in)       :: UDF
     real(rk)                             :: value
     ! Internal variables
     real(rk) :: arg
@@ -1113,7 +1044,7 @@ contains
     integer, parameter :: RK = kind(0.0d0)
     ! Args
     real(rk), intent(in)                 :: x
-    type(UnifDiscreteFn_r8), intent(in)       :: UDF
+    type(UnifDiscreteFn(r8)), intent(in)       :: UDF
     real(rk)                             :: value
     ! Internal variables
     real(rk) :: arg
@@ -1142,20 +1073,20 @@ contains
 
 ! ---------------------------------------------------------  Dump  -----
   subroutine DumpCoefficients_r4 ( Coeffs, Name )
-    type(coefficients_r4), intent(in) :: Coeffs
+    type(coefficients(r4)), intent(in) :: Coeffs
     character(len=*), optional, intent(in) :: Name
     include 'DumpCoefficients.f9h'
   end subroutine DumpCoefficients_r4
 
   subroutine DumpCoefficients_r8 ( Coeffs, Name )
-    type(coefficients_r8), intent(in) :: Coeffs
+    type(coefficients(r8)), intent(in) :: Coeffs
     character(len=*), optional, intent(in) :: Name
     include 'DumpCoefficients.f9h'
   end subroutine DumpCoefficients_r8
 
   subroutine DumpUnifDiscreteFn_r4 ( UDF, name, details )
     ! Args
-    type(UnifDiscreteFn_r4) :: UDF ! Intent(out) would clobber retainable values
+    type(UnifDiscreteFn(r4)) :: UDF ! Intent(out) would clobber retainable values
     character(len=*), optional, intent(in) :: name
     integer, optional, intent(in) :: details
     ! Internal variables
@@ -1187,7 +1118,7 @@ contains
 
   subroutine DumpUnifDiscreteFn_r8 ( UDF, name, details )
     ! Args
-    type(UnifDiscreteFn_r8) :: UDF ! Intent(out) would clobber retainable values
+    type(UnifDiscreteFn(r8)) :: UDF ! Intent(out) would clobber retainable values
     character(len=*), optional, intent(in) :: name
     integer, optional, intent(in) :: details
     ! Internal variables
@@ -1230,7 +1161,7 @@ contains
     integer, parameter :: RK = kind(0.0e0)
     ! Args
     real(rk), intent(in)                 :: x
-    type(UnifDiscreteFn_r4), intent(in)       :: UDF
+    type(UnifDiscreteFn(r4)), intent(in)       :: UDF
     real(rk)                             :: value
     ! Internal variables
     real(rk) :: arg
@@ -1268,7 +1199,7 @@ contains
     integer, parameter :: RK = kind(0.0d0)
     ! Args
     real(rk), intent(in)                 :: x
-    type(UnifDiscreteFn_r8), intent(in)       :: UDF
+    type(UnifDiscreteFn(r8)), intent(in)       :: UDF
     real(rk)                             :: value
     ! Internal variables
     real(rk) :: arg
@@ -1318,7 +1249,7 @@ contains
     integer, parameter :: RK = kind(0.0e0)
     ! Args
     real(rk), intent(in)                 :: y
-    type(UnifDiscreteFn_r4), intent(in)  :: UDF
+    type(UnifDiscreteFn(r4)), intent(in)  :: UDF
     real(rk), optional, intent(in)       :: xS
     real(rk), optional, intent(in)       :: xE
     real(rk)                             :: x
@@ -1334,7 +1265,7 @@ contains
     integer, parameter :: RK = kind(0.0d0)
     ! Args
     real(rk), intent(in)                 :: y
-    type(UnifDiscreteFn_r8), intent(in)  :: UDF
+    type(UnifDiscreteFn(r8)), intent(in)  :: UDF
     real(rk), optional, intent(in)       :: xS
     real(rk), optional, intent(in)       :: xE
     real(rk)                             :: x
@@ -1420,7 +1351,7 @@ contains
   function IFApproximate_r4 ( UDF, xS, xE ) result(value)
     integer, parameter :: RK = kind(0.0e0)
     ! Args
-    type(UnifDiscreteFn_r4), intent(in)  :: UDF
+    type(UnifDiscreteFn(r4)), intent(in)  :: UDF
     real(rk), optional, intent(in)       :: xS
     real(rk), optional, intent(in)       :: xE
     real(rk)                             :: value
@@ -1454,7 +1385,7 @@ contains
   function IFApproximate_r8 ( UDF, xS, xE ) result(value)
     integer, parameter :: RK = kind(0.0d0)
     ! Args
-    type(UnifDiscreteFn_r8), intent(in)  :: UDF
+    type(UnifDiscreteFn(r8)), intent(in)  :: UDF
     real(rk), optional, intent(in)       :: xS
     real(rk), optional, intent(in)       :: xE
     real(rk)                             :: value
@@ -1529,7 +1460,7 @@ contains
                                               ! dimension of OldY, NewY, default
                                               ! false.
 
-    type(coefficients_r4) :: Coeffs
+    type(coefficients(r4)) :: Coeffs
 
     include "InterpolateArray.f9h"
 
@@ -1560,7 +1491,7 @@ contains
                                               ! dimension of OldY, NewY, default
                                               ! false.
 
-    type(coefficients_r8) :: Coeffs
+    type(coefficients(r8)) :: Coeffs
 
     include "InterpolateArray.f9h"
 
@@ -1575,7 +1506,7 @@ contains
 
     real(rk), intent(in) :: OldX(:), NewX(:)
     character(len=*), intent(in) :: Method
-    type(coefficients_R4), intent(out) :: Coeffs
+    type(coefficients(r4)), intent(out) :: Coeffs
     character(len=*), intent(in), optional :: Extrapolate ! See comments above
     integer, intent(in), optional :: Width ! Second dimension for OldY when
                                            ! interpolations get done
@@ -1601,7 +1532,7 @@ contains
 
     real(rk), intent(in) :: OldX(:), NewX(:)
     character(len=*), intent(in) :: Method
-    type(coefficients_R8), intent(out) :: Coeffs
+    type(coefficients(r8)), intent(out) :: Coeffs
     character(len=*), intent(in), optional :: Extrapolate ! See comments above
     integer, intent(in), optional :: Width ! Second dimension for OldY when
                                            ! interpolations get done
@@ -1622,7 +1553,7 @@ contains
 
   subroutine InterpolateArrayTeardown_r4 ( Coeffs )
 
-    type(coefficients_R4), intent(inout) :: Coeffs
+    type(coefficients(r4)), intent(inout) :: Coeffs
 
     include "InterpolateArrayTeardown.f9h"
 
@@ -1632,7 +1563,7 @@ contains
 
   subroutine InterpolateArrayTeardown_r8 ( Coeffs )
 
-    type(coefficients_R8), intent(inout) :: Coeffs
+    type(coefficients(r8)), intent(inout) :: Coeffs
 
     include "InterpolateArrayTeardown.f9h"
 
@@ -1651,7 +1582,7 @@ contains
     real(rk), intent(in) :: OldX(:), OldY(:,:), NewX(:)
     real(rk), intent(out) :: NewY(:,:)
     logical, intent(in) :: Second
-    type(coefficients_r8) :: Coeffs
+    type(coefficients(r8)) :: Coeffs
 
     include 'InterpolateExtrapolate.f9h'
 
@@ -1669,7 +1600,7 @@ contains
     real(rk), intent(in) :: OldX(:), OldY(:), NewX(:)
     real(rk), intent(out) :: NewY(:)
     logical, intent(in) :: Second
-    type(coefficients_r8) :: Coeffs
+    type(coefficients(r8)) :: Coeffs
 
     include 'InterpolateExtrapolate_1.f9h'
 
@@ -1688,7 +1619,7 @@ contains
     real(rk), intent(in) :: OldX(:), OldY(:,:), NewX(:)
     real(rk), intent(out) :: NewY(:,:)
     logical, intent(in) :: Second
-    type(coefficients_r4) :: Coeffs
+    type(coefficients(r4)) :: Coeffs
 
     include 'InterpolateExtrapolate.f9h'
 
@@ -1706,7 +1637,7 @@ contains
     real(rk), intent(in) :: OldX(:), OldY(:), NewX(:)
     real(rk), intent(out) :: NewY(:)
     logical, intent(in) :: Second
-    type(coefficients_r4) :: Coeffs
+    type(coefficients(r4)) :: Coeffs
 
     include 'InterpolateExtrapolate_1.f9h'
 
@@ -1773,7 +1704,7 @@ contains
     integer, parameter :: RK = kind(0.0e0)
 
     ! Dummy arguments
-    type(coefficients_r4), intent(in) :: Coeffs
+    type(coefficients(r4)), intent(in) :: Coeffs
     real(rk), dimension(:), intent(in) :: oldX
     real(rk), dimension(:), intent(in) :: oldY
     real(rk), dimension(:), intent(in) :: newX
@@ -1799,7 +1730,7 @@ contains
     integer, parameter :: RK = kind(0.0d0)
 
     ! Dummy arguments
-    type(coefficients_r8), intent(in) :: Coeffs
+    type(coefficients(r8)), intent(in) :: Coeffs
     real(rk), dimension(:), intent(in) :: oldX
     real(rk), dimension(:), intent(in) :: oldY
     real(rk), dimension(:), intent(in) :: newX
@@ -1826,7 +1757,7 @@ contains
     integer, parameter :: RK = kind(0.0e0)
 
     ! Dummy arguments
-    type(coefficients_r4), intent(in) :: Coeffs
+    type(coefficients(r4)), intent(in) :: Coeffs
     real(rk), dimension(:), intent(in) :: oldX
     real(rk), dimension(:,:), intent(in) :: oldY   ! See Second argument below
     real(rk), dimension(:), intent(in) :: newX
@@ -1856,7 +1787,7 @@ contains
     integer, parameter :: RK = kind(0.0d0)
 
     ! Dummy arguments
-    type(coefficients_r8), intent(in) :: Coeffs
+    type(coefficients(r8)), intent(in) :: Coeffs
     real(rk), dimension(:), intent(in) :: oldX
     real(rk), dimension(:,:), intent(in) :: oldY   ! See Second argument below
     real(rk), dimension(:), intent(in) :: newX
@@ -1969,7 +1900,7 @@ contains
     real(rk), intent(out) :: ZNew(:,:)
     character (len=*), intent(in) :: XMethod, YMethod ! See comments above
     character (len=*), optional, intent(in) :: XExtrapolate, YExtrapolate ! See comments above
-    type(coefficients_r4) :: XCoeffs, YCoeffs
+    type(coefficients(r4)) :: XCoeffs, YCoeffs
     include 'Interpolate_2d_Composite.f9h'
   end subroutine Interpolate_2d_Composite_r4
 
@@ -1992,7 +1923,7 @@ contains
     real(rk), intent(out) :: ZNew(:,:)
     character (len=*), intent(in) :: XMethod, YMethod ! See comments above
     character (len=*), optional, intent(in) :: XExtrapolate, YExtrapolate ! See comments above
-    type(coefficients_r8) :: XCoeffs, YCoeffs
+    type(coefficients(r8)) :: XCoeffs, YCoeffs
     include 'Interpolate_2d_Composite.f9h'
   end subroutine Interpolate_2d_Composite_r8
 
@@ -2052,7 +1983,7 @@ contains
     & y, BC, method, yLeft, yRight, fun )
     integer, parameter :: RK = kind(0.0e0)
     ! Args
-    type(UnifDiscreteFn_r4) :: UDF ! Intent(out) would clobber defaults
+    type(UnifDiscreteFn(r4)) :: UDF ! Intent(out) would clobber defaults
     integer, intent(in)  :: N
     real(rk), intent(in) :: x1
     real(rk), intent(in) :: x2
@@ -2084,7 +2015,7 @@ contains
     & y, BC, method, yLeft, yRight, fun )
     integer, parameter :: RK = kind(0.0d0)
     ! Args
-    type(UnifDiscreteFn_r8) :: UDF ! Intent(out) would clobber defaults
+    type(UnifDiscreteFn(r8)) :: UDF ! Intent(out) would clobber defaults
     integer, intent(in)  :: N
     real(rk), intent(in) :: x1
     real(rk), intent(in) :: x2
@@ -2264,7 +2195,7 @@ contains
     integer, parameter :: RK = R4
     ! Args
     real(rk), dimension(:), pointer      :: xArray
-    type(UnifDiscreteFn_r4), intent(in)       :: UDF
+    type(UnifDiscreteFn(r4)), intent(in)       :: UDF
     ! Internal variables
     integer :: i
     ! Executable
@@ -2279,7 +2210,7 @@ contains
     integer, parameter :: RK = R8
     ! Args
     real(rk), dimension(:), pointer      :: xArray
-    type(UnifDiscreteFn_r8), intent(in)       :: UDF
+    type(UnifDiscreteFn(r8)), intent(in)       :: UDF
     ! Internal variables
     integer :: i
     ! Executable
@@ -2364,7 +2295,7 @@ contains
     integer, parameter :: RK = R4
     ! Args
     real(rk), intent(in)                 :: x ! Given this x
-    type(UnifDiscreteFn_r4), intent(in)       :: UDF
+    type(UnifDiscreteFn(r4)), intent(in)       :: UDF
     real(rk), intent(out)                :: p ! reposition it here
     integer, intent(out)                 :: itsSign
     ! Internal variables
@@ -2407,7 +2338,7 @@ contains
     integer, parameter :: RK = R8
     ! Args
     real(rk), intent(in)                 :: x ! Given this x
-    type(UnifDiscreteFn_r8), intent(in)       :: UDF
+    type(UnifDiscreteFn(r8)), intent(in)       :: UDF
     real(rk), intent(out)                :: p ! reposition it here
     integer, intent(out)                 :: itsSign
     ! Internal variables
@@ -2509,6 +2440,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.94  2017/10/31 23:46:29  vsnyder
+! Make Coefficients and UnifDiscreteFn parameterized types
+!
 ! Revision 2.93  2017/10/17 23:41:31  pwagner
 ! Removed unused stuff
 !
