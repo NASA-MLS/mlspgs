@@ -125,7 +125,7 @@ contains ! =====     Public Procedures     =============================
     use MLSKINDS, only: R8, RM, RV
     use MLSSIGNALS_M, only: SIGNAL_T
     use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
-    use MLSNUMERICS, only: COEFFICIENTS_R8, HUNT, INTERPOLATEARRAYSETUP, &
+    use MLSNUMERICS, only: Coefficients, HUNT, INTERPOLATEARRAYSETUP, &
       & INTERPOLATEARRAYTEARDOWN, INTERPOLATEVALUES
     use MLSSTRINGLISTS, only: SWITCHDETAIL
     use MOLECULES, only: ISEXTINCTION
@@ -137,7 +137,7 @@ contains ! =====     Public Procedures     =============================
     use VECTORSMODULE, only: ASSIGNMENT(=), OPERATOR(-), OPERATOR(+), &
       & OPERATOR(/=), CLONEVECTOR,  DESTROYVECTORINFO, DUMP, &
       & GETVECTORQUANTITYINDEXBYNAME, GETVECTORQUANTITYBYTYPE, M_LINALG, &
-      & VECTOR_T, VECTORVALUE_T
+      & RV, VECTOR_T, VECTORVALUE_T
     use SORT_M, only: SORTP
 
     ! Dummy arguments
@@ -208,7 +208,7 @@ contains ! =====     Public Procedures     =============================
     real (rm), dimension(:,:), pointer :: dense  ! Densified matrix from l2pc
     real (rm), dimension(:,:), pointer :: kBit ! Remapped values of l2pc
 
-    type(coefficients_r8) :: Coeffs     ! For interpolation
+    type(coefficients(rv)) :: Coeffs    ! For interpolation
     type(vector_T) :: XP                ! Same form as xStar, contents as x
     type(vector_T) :: YP                ! Same form as yStar,=kstar*(xp-xStar)
     type(vector_T) :: DELTAX            ! xp-xStar
@@ -805,6 +805,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.92  2016/04/13 00:47:57  vsnyder
+! Use operator(/=) from VectorsModule instead of AreEqual function
+!
 ! Revision 2.91  2015/08/25 17:24:32  vsnyder
 ! PhiWindow is a tuple, with the first element specifying the angles or
 ! number of profiles/MAFs before the tangent point, and the second

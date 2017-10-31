@@ -64,6 +64,7 @@ contains
     use ForwardModelConfig, only: Dump, ForwardModelConfig_T
     use ForwardModelIntermediate, only: ForwardModelStatus_T
     use ForwardModelVectorTools, only: GetQuantityForForwardModel
+    use Geolocation_0, only: ECR_t
     use Get_Magnetic_Field_m, only: Get_Magnetic_Field
     use Get_Species_Data_M, only:  Get_Species_Data
     use HessianModule_1, only: Hessian_T
@@ -109,7 +110,8 @@ contains
     type (Grids_T) :: Grids_v   ! All the spectroscopy(V) coordinates
     type (Grids_T) :: Grids_w   ! All the spectroscopy(W) coordinates
     type (HGrid_T), pointer :: QTM_HGrid  ! HGrid that has finest QTM resolution.
-    type (Path_t), allocatable :: QTM_Paths(:)! LOS through QTM
+    type (Path_t), allocatable :: QTM_Paths(:)! LOS through QTM at tangent
+                                ! pressures given by Tan_Press
     type (VectorValue_T), pointer :: CloudIce ! Ice water content
     type (Facets_and_Vertices_t), allocatable :: Path_Union(:) ! Facets and
                                 ! vertices under all paths through
@@ -122,7 +124,10 @@ contains
                                 ! state vector (minor frame quantity)
     type (Path_T), allocatable :: Q_LOS(:)    ! Line-of-sight, for QTM,
                                 ! minor frame quantity
-    type (VectorValue_T), pointer :: ScECR    ! Instrument position in ECR
+    type (ECR_t), allocatable :: ScECR(:)     ! Instrument positions for each
+                                ! QTM_Paths position, interpolated from PTan
+                                ! to Tan_Press
+    type (VectorValue_T), pointer :: ScECR_MIF ! Instrument position in ECR
                                 ! (minor frame quantity)
     type (VectorValue_T), pointer :: Temp     ! Temperature component of
                                 ! state vector
@@ -262,14 +267,15 @@ contains
       allocate ( Q_LOS(ECRtoFOV%template%noSurfs), stat=stat, errmsg=ermsg )
       call test_allocate ( stat, moduleName, "Q_LOS", 1, 1, &
         & ermsg=ermsg )
-      scECR => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
+      ScECR_MIF => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
         & quantityType=l_scECR, config=fwdModelConf )
       do k = 1, size(Q_LOS)
-        Q_LOS(k)%lines(1,1)%xyz = scECR%value3(1:3,k,fmstat%maf)    ! C vec
-        Q_LOS(k)%lines(2,1)%xyz = ECRtoFOV%value3(7:9,k,fmstat%maf) ! U vec
+        Q_LOS(k)%lines(1,1)%xyz = ScECR_MIF%value3(1:3,k,fmstat%maf) ! C vec
+        Q_LOS(k)%lines(2,1)%xyz = ECRtoFOV%value3(7:9,k,fmstat%maf)  ! U vec
       end do
 
-      call get_lines_of_sight ( fmStat%maf, pTan, tan_press, Q_LOS, QTM_paths )
+      call get_lines_of_sight ( fmStat%maf, pTan, tan_press, Q_LOS, &
+                              & QTM_paths, scECR )
 
       ! Compute the maximum horizontal extent of arrays related to temperature.
       ! Temperature is extracted from the state vector and put onto a grid that
@@ -597,6 +603,7 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_Frq, &
     use PointingGrid_M, only: PointingGrids, PointingGrid_T
     use QTM_Interpolation_Weights_3D_m, only: S_QTM_t
     use Slabs_sw_m, only: AllocateSLABS, DestroyCompleteSLABS, SLABS_Struct
+    use Sparse_m, only: Sparse_t
     use TAU_M, only: Destroy_TAU, Dump, TAU_T
     use Toggles, only: Emit, Levels, Switches, Toggle
     use Trace_M, only: Trace_Begin, Trace_End
@@ -1080,9 +1087,12 @@ integer :: NNZ_ZP(size(eta_zp,2))               ! number of columns of eta_zp
                                   ! from Eta_zQ and frequency grids.
     ! Interpolation coefficients from phi basis to path for all species
     type (Value_1D_Lists_t) :: Eta_p_List((1-s_qtm)*size(fwdModelConf%beta_group))
+    type (sparse_t) :: Eta_p_Sparse((1-s_qtm)*size(fwdModelConf%beta_group)) ! Interpolation
+                                  ! from phi basis for each VMR to path phi.
     type (Value_1D_List_t) :: Eta_p_t(max_f) ! Interpolation coefficients from
                                   ! phi basis to path for temperature
     type (Value_2d_Lists_t) :: Eta_zp_list((1-s_qtm)*size(fwdModelConf%beta_group))
+    type (sparse_t) :: Eta_zp_Sparse((1-s_qtm)*size(fwdModelConf%beta_group))
     type (value_QTM_2D_lists_t) :: Eta_zQ(s_qtm*size(grids_f%values)) ! Interpolation
                                   ! coefficients from 3D QTM state vector to
                                   ! path for VMRs, taking only zeta and QTM
@@ -1090,6 +1100,8 @@ integer :: NNZ_ZP(size(eta_zp,2))               ! number of columns of eta_zp
                                   ! dependent VMR, there's an index into Eta_fzQ.
     type (Value_QTM_2D_Lists_t) :: Eta_zQT ! Interpolation coefficients
                                   ! from 3D QTM to path for temperature.
+    type (sparse_t) :: Eta_z_Sparse(size(fwdModelConf%beta_group)) ! Interpolation
+                                  ! from zeta for each VMR to path GL zeta.
     type (Value_1D_Lists_t) :: Eta_Z_List(size(fwdModelConf%beta_group)) ! Interpolation
                                   ! from zeta basis for each VMR to GL zeta.
     type (Value_1D_Lists_t) :: Eta_zzT ! Interpolation coefficients from
@@ -2398,8 +2410,8 @@ integer :: NNZ_ZP(size(eta_zp,2))               ! number of columns of eta_zp
       use ForwardModelConfig, only: QtyStuff_t
       use Get_Eta_Matrix_m, only: Get_Eta_Sparse, Get_Eta_1D_Hunt
       USE Load_SPS_Data_m, only: FindInGrid
-      use MLSNumerics, only: Coefficients=>Coefficients_r8, &
-        & InterpolateArraySetup, InterpolateArrayTeardown
+      use MLSNumerics, only: Coefficients, InterpolateArraySetup, &
+        & InterpolateArrayTeardown
       use MLSSignals_m, only: GetNameOfSignal
       use Molecules, only: L_CloudIce
       use Read_Mie_m, only: DP_DIWC, DP_DT, F_S, IWC_S, P, T_S, Theta_S
@@ -2476,7 +2488,7 @@ integer :: NNZ_ZP(size(eta_zp,2))               ! number of columns of eta_zp
 
       character(128) :: Sig    ! Signal name, scratch for debug output
 
-      type (coefficients) :: Coeffs_Theta_e_Xi ! To interpolate from Theta_e to Xi
+      type (coefficients(rp)) :: Coeffs_Theta_e_Xi ! To interpolate from Theta_e to Xi
       type (QtyStuff_T) :: TScats(noUsedChannels)
       type (VectorValue_T), pointer :: TScat
 
@@ -4268,6 +4280,38 @@ call comp_eta_docalc_no_frq ( Grids_f, z_path(1:npf), &
   &  phi_path(1:npf), eta_zp, do_calc_zp, tan_pt=tan_pt_f, &
   &  your_nz_zp=nz_zp, your_nnz_zp=nnz_zp, &
   &  eta_fzp=eta_fzp(1:npf,:), do_calc_fzp=do_calc_fzp(:npf,:) )
+block
+use comp_eta_docalc_sparse_m, only: comp_eta_docalc_sparse
+use get_eta_matrix_m, only: dump_eta_column_sparse
+use load_sps_data_m, only: Dump
+use indexed_values_m, only: Dump
+use intrinsic, only: Lit_Indices
+use sparse_eta_m, only: Sparse_Eta_1D
+use sparse_m, only: add_element, create_sparse, dump
+use String_Table, only: Display_String
+integer :: I, J, L
+call dump ( grids_f, 'Grids_f' )
+call dump ( grids_f%zet_basis(1:grids_f%l_z(1)), name='Zet_Basis' )
+call dump ( Z_Path(:npf), name='Z_Path' )
+call comp_eta_docalc_sparse ( grids_f, tan_pt_f, z_path(1:npf), eta_z_sparse, &
+& phi_path(1:npf), eta_p_sparse, eta_zp_sparse )
+do l = 1, 1 ! size(eta_p_list)
+call dump ( eta_z_sparse(l), 'Eta_Z_Sparse', colon=.true. )
+call display_string ( lit_indices(beta_group(l)%molecule), before='eta_z_List ', advance='yes' )
+call dump ( eta_z_list(l)%eta(1:npf) )
+end do
+do l = 1, 1 ! size(eta_p_list)
+call dump ( eta_p_sparse(l), 'Eta_P_Sparse', colon=.true. )
+call display_string ( lit_indices(beta_group(l)%molecule), before='Eta_p_List ', advance='yes' )
+call dump ( eta_p_list(l)%eta(1:npf) )
+end do
+do l = 1, 1 ! size(eta_zp_list)
+call display_string ( lit_indices(beta_group(l)%molecule), before='Eta_zp_List ', advance='yes' )
+call dump ( eta_zp_list(l)%eta )
+call dump ( Eta_zp_sparse(l), name='Eta_zp_Sparse' )
+end do ! l
+stop
+end block
 
       else
         call comp_eta_docalc_list ( grids_f, z_path, eta_z_list, s(1:npf)%coeff, &
@@ -4750,6 +4794,9 @@ call comp_eta_docalc_no_frq ( Grids_f, z_path(1:npf), &
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.387  2017/10/31 17:36:46  vsnyder
+! Change QTM path from type MIFLOS vector quantity to Path_T
+!
 ! Revision 2.386  2017/09/20 01:18:49  vsnyder
 ! Change name of Comp_Eta_DoCalc_Sparse to Comp_Eta_DoCalc_List.  Change
 ! names of Eta_p and Eta_z to Eta_p_List and Eta_z_list.  Get some state
