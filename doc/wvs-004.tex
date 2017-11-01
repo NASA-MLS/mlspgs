@@ -26,7 +26,7 @@
 \usepackage{longtable}
 \usepackage{listings}
 \usepackage{xr}
-\usepackage[letterpaper,breaklinks,bookmarksopen=true,hypertex,
+\usepackage[breaklinks,bookmarksopen=true,
 %     extension=dvi,dvips,
      pdftitle={Configuration File Parser Users' Guide},
      pdfsubject={EOS MLS software},
@@ -412,7 +412,7 @@ Within a section, there are three kinds of specifications:
     values, are specified by the program.
 
   \item A variable definition of the form \emph{name := expression}.  The
-    set of valid parameter names is not specified by the program. Once a
+    set of valid variable names is not specified by the program. Once a
     variable has been assigned a value, a subsequent assignment cannot
     change its type.
 
@@ -1367,6 +1367,10 @@ different type declarations.)
 \end{document}
 
 % $Log$
+% Revision 1.7  2014/01/23 02:54:23  vsnyder
+% Add IF, SELECT and DO constructs.  Completely revise "Crash course in
+% language analysis" to reflect LR instead of LL.  Display new grammar.
+%
 % Revision 1.6  2013/06/15 01:51:45  vsnyder
 % More on instructions to make graphics
 %
