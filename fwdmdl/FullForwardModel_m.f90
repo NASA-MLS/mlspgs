@@ -124,9 +124,6 @@ contains
                                 ! state vector (minor frame quantity)
     type (Path_T), allocatable :: Q_LOS(:)    ! Line-of-sight, for QTM,
                                 ! minor frame quantity
-    type (ECR_t), allocatable :: ScECR(:)     ! Instrument positions for each
-                                ! QTM_Paths position, interpolated from PTan
-                                ! to Tan_Press
     type (VectorValue_T), pointer :: ScECR_MIF ! Instrument position in ECR
                                 ! (minor frame quantity)
     type (VectorValue_T), pointer :: Temp     ! Temperature component of
@@ -275,7 +272,7 @@ contains
       end do
 
       call get_lines_of_sight ( fmStat%maf, pTan, tan_press, Q_LOS, &
-                              & QTM_paths, scECR )
+                              & QTM_paths )
 
       ! Compute the maximum horizontal extent of arrays related to temperature.
       ! Temperature is extracted from the state vector and put onto a grid that
@@ -4794,6 +4791,9 @@ end block
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.388  2017/10/31 23:49:35  vsnyder
+! Make Coefficients a parameterized type
+!
 ! Revision 2.387  2017/10/31 17:36:46  vsnyder
 ! Change QTM path from type MIFLOS vector quantity to Path_T
 !
