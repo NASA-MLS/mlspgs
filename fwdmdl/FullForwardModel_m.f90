@@ -64,7 +64,6 @@ contains
     use ForwardModelConfig, only: Dump, ForwardModelConfig_T
     use ForwardModelIntermediate, only: ForwardModelStatus_T
     use ForwardModelVectorTools, only: GetQuantityForForwardModel
-    use Geolocation_0, only: ECR_t
     use Get_Magnetic_Field_m, only: Get_Magnetic_Field
     use Get_Species_Data_M, only:  Get_Species_Data
     use HessianModule_1, only: Hessian_T
@@ -4277,38 +4276,38 @@ call comp_eta_docalc_no_frq ( Grids_f, z_path(1:npf), &
   &  phi_path(1:npf), eta_zp, do_calc_zp, tan_pt=tan_pt_f, &
   &  your_nz_zp=nz_zp, your_nnz_zp=nnz_zp, &
   &  eta_fzp=eta_fzp(1:npf,:), do_calc_fzp=do_calc_fzp(:npf,:) )
-block
-use comp_eta_docalc_sparse_m, only: comp_eta_docalc_sparse
-use get_eta_matrix_m, only: dump_eta_column_sparse
-use load_sps_data_m, only: Dump
-use indexed_values_m, only: Dump
-use intrinsic, only: Lit_Indices
-use sparse_eta_m, only: Sparse_Eta_1D
-use sparse_m, only: add_element, create_sparse, dump
-use String_Table, only: Display_String
-integer :: I, J, L
-call dump ( grids_f, 'Grids_f' )
-call dump ( grids_f%zet_basis(1:grids_f%l_z(1)), name='Zet_Basis' )
-call dump ( Z_Path(:npf), name='Z_Path' )
-call comp_eta_docalc_sparse ( grids_f, tan_pt_f, z_path(1:npf), eta_z_sparse, &
-& phi_path(1:npf), eta_p_sparse, eta_zp_sparse )
-do l = 1, 1 ! size(eta_p_list)
-call dump ( eta_z_sparse(l), 'Eta_Z_Sparse', colon=.true. )
-call display_string ( lit_indices(beta_group(l)%molecule), before='eta_z_List ', advance='yes' )
-call dump ( eta_z_list(l)%eta(1:npf) )
-end do
-do l = 1, 1 ! size(eta_p_list)
-call dump ( eta_p_sparse(l), 'Eta_P_Sparse', colon=.true. )
-call display_string ( lit_indices(beta_group(l)%molecule), before='Eta_p_List ', advance='yes' )
-call dump ( eta_p_list(l)%eta(1:npf) )
-end do
-do l = 1, 1 ! size(eta_zp_list)
-call display_string ( lit_indices(beta_group(l)%molecule), before='Eta_zp_List ', advance='yes' )
-call dump ( eta_zp_list(l)%eta )
-call dump ( Eta_zp_sparse(l), name='Eta_zp_Sparse' )
-end do ! l
-stop
-end block
+! block
+! use comp_eta_docalc_sparse_m, only: comp_eta_docalc_sparse
+! use get_eta_matrix_m, only: dump_eta_column_sparse
+! use load_sps_data_m, only: Dump
+! use indexed_values_m, only: Dump
+! use intrinsic, only: Lit_Indices
+! use sparse_eta_m, only: Sparse_Eta_1D
+! use sparse_m, only: add_element, create_sparse, dump
+! use String_Table, only: Display_String
+! integer :: I, J, L
+! call dump ( grids_f, 'Grids_f' )
+! call dump ( grids_f%zet_basis(1:grids_f%l_z(1)), name='Zet_Basis' )
+! call dump ( Z_Path(:npf), name='Z_Path' )
+! call comp_eta_docalc_sparse ( grids_f, tan_pt_f, z_path(1:npf), eta_z_sparse, &
+! & phi_path(1:npf), eta_p_sparse, eta_zp_sparse )
+! do l = 1, 1 ! size(eta_p_list)
+! call dump ( eta_z_sparse(l), 'Eta_Z_Sparse', colon=.true. )
+! call display_string ( lit_indices(beta_group(l)%molecule), before='eta_z_List ', advance='yes' )
+! call dump ( eta_z_list(l)%eta(1:npf) )
+! end do
+! do l = 1, 1 ! size(eta_p_list)
+! call dump ( eta_p_sparse(l), 'Eta_P_Sparse', colon=.true. )
+! call display_string ( lit_indices(beta_group(l)%molecule), before='Eta_p_List ', advance='yes' )
+! call dump ( eta_p_list(l)%eta(1:npf) )
+! end do
+! do l = 1, 1 ! size(eta_zp_list)
+! call display_string ( lit_indices(beta_group(l)%molecule), before='Eta_zp_List ', advance='yes' )
+! call dump ( eta_zp_list(l)%eta )
+! call dump ( Eta_zp_sparse(l), name='Eta_zp_Sparse' )
+! end do ! l
+! stop
+! end block
 
       else
         call comp_eta_docalc_list ( grids_f, z_path, eta_z_list, s(1:npf)%coeff, &
@@ -4791,6 +4790,9 @@ end block
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.389  2017/11/01 00:09:32  vsnyder
+! Remove recently-added ScECR because it's not needed
+!
 ! Revision 2.388  2017/10/31 23:49:35  vsnyder
 ! Make Coefficients a parameterized type
 !
