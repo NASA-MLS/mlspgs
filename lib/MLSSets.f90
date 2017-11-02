@@ -21,7 +21,10 @@ module MLSSets
 ! We usually do not check whether the elements are in fact unique
 ! (you can use IsProperSet to check or FindUnique to ensure this) 
 ! so some operations may not work properly if you supply arrays with
-! duplicate elements
+! duplicate elements.
+
+! You may also call Union with any args, proper or not, 
+! sure that it will return only unique elements.
 
 ! A point about null sets:
 ! Not all operations have been checked thoroughly for correctness
@@ -43,7 +46,7 @@ module MLSSets
 ! while a sequence's elements are necessarily homogeneous. From this
 ! standpoint, we might say that all the procedures in this module
 ! treat sequences, not sets
-  use MLSFINDS, only: FINDFIRST, FINDUNIQUE
+  use MLSFinds, only: FindFirst, FindUnique
 
   implicit none
   private
@@ -99,10 +102,10 @@ module MLSSets
 
 ! === (end of api) ===
 
-  public :: FINDINTERSECTION, &
-    & INTERSECT, INTERSECTION, ISPROPERSET, ISPROPERSUBSET, ISSUBSET, &
-    & RELATIVECOMPLEMENT, &
-    & UNION, UNIONSIZE
+  public :: FindIntersection, &
+    & Intersect, Intersection, IsProperSet, IsProperSubset, IsSubset, &
+    & RelativeComplement, &
+    & Union, Unionsize
 
   interface FindIntersection
     module procedure FindIntersectionInteger, FindIntersectionReal, &
@@ -115,7 +118,8 @@ module MLSSets
 
   interface Intersection
     module procedure IntersectionInteger, IntersectionCharacter
-    module procedure IntersectionReal, IntersectionDouble
+    module procedure IntersectionReal, IntersectionDouble, &
+      & IntersectionVector
   end interface
 
   interface IsProperSet
@@ -136,7 +140,7 @@ module MLSSets
   end interface
 
   interface Union
-    module procedure UnionInteger, UnionCharacter
+    module procedure UnionInteger, UnionCharacter, UnionVector
   end interface
 
 !---------------------------- RCS Ident Info -------------------------------
@@ -311,7 +315,7 @@ contains ! =====     Public Procedures     =============================
   function IntersectionInteger ( A, B, options ) result ( C )
     ! A faster algorithm is used if we're not reversing
 
-    use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_ERROR
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error
     use Sort_M, only: SORT
 
     integer, dimension(:), intent(in)      :: A, B
@@ -361,7 +365,7 @@ contains ! =====     Public Procedures     =============================
     ! method:
     ! Go though a, checking for each element whether a match is found in (b)
     ! If  so found, add the element
-    use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_ERROR
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error
 
     character(len=*), dimension(:), intent(in)   :: A, B
     character(len=len(a)), allocatable :: C(:) ! Intent(out) -- allocated here
@@ -380,7 +384,7 @@ contains ! =====     Public Procedures     =============================
     ! method:
     ! Go though a, checking for each element whether a match is found in (b)
     ! If  so found, add the element
-    use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_ERROR
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error
 
     double precision, dimension(:), intent(in) :: A, B
     double precision, dimension(:), pointer    :: C ! Intent(out) -- nullified and then allocated here
@@ -399,7 +403,7 @@ contains ! =====     Public Procedures     =============================
     ! method:
     ! Go though a, checking for each element whether a match is found in (b)
     ! If  so found, add the element
-    use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_ERROR
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error
 
     real, dimension(:), intent(in)         :: A, B
     real, dimension(:), pointer            :: C ! Intent(out) -- nullified and
@@ -413,6 +417,63 @@ contains ! =====     Public Procedures     =============================
     
     include 'Intersection.f9h'
   end function IntersectionReal
+
+  function IntersectionVector ( A, B, options ) result ( C )
+    ! A vector is represented as an array of integers (1d)
+    ! Thus an array of vectors is a 2d array of integers
+    ! A and B must have the same lower and upper bounds for their first index
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error
+
+    integer, dimension(:,:), intent(in) :: A, B
+    integer, allocatable :: C(:,:) ! Intent(out) -- allocated here
+    character(len=*), optional, intent(in) :: options  ! then allocated here
+    ! Local variables
+    integer :: i, j, size_c, status
+    integer, dimension(size(a,1),size(a,2)+size(b,2)) :: TC
+    logical :: myComplement
+    logical :: myReverse
+    logical :: stdIntersection
+    
+    ! Executable
+    myComplement = .false.
+    myReverse = .false.
+    if ( present(options) ) myComplement = index( options, 'c' ) > 0
+    if ( present(options) ) myReverse = index( options, 'r' ) > 0
+    stdIntersection = .not. (myComplement .or. myReverse )
+    size_c = 0
+    do i=1, size(a,2)
+      ! Don't redo a repeated element
+      if ( i > 1 ) then
+        j = findFirst( a(:,:i-1), a(:,i) )
+        if ( j > 0 ) cycle
+      endif
+      j = findFirst( b, a(:,i) )
+      if ( (stdIntersection .and. j > 0) .or. &
+        & (.not. stdIntersection .and. j < 1) ) then
+        size_c = size_c + 1
+        TC(:,size_c) = a(:,i)
+      endif
+    enddo
+    ! Now switch to looping over B
+    if ( myReverse ) then
+      do i=1, size(b,2)
+        ! Don't redo a repeated element
+        if ( i > 1 ) then
+          j = findFirst( b(:,:i-1), b(:,i) )
+          if ( j > 0 ) cycle
+        endif
+        j = findFirst( a, b(:,i) )
+        if ( j < 1 ) then
+          size_c = size_c + 1
+          TC(:,size_c) = b(:,i)
+        endif
+      enddo
+    endif
+    ! print *, 'size(c): ', size_c    
+    ! print *, 'tc: ', tc(1:size_c)
+    if ( size_c < 1 ) return
+    c = tc(:,:size_c)
+  end function IntersectionVector
 
   ! --------------------------------------------------  IsProperSet  -----
   ! This family of functions returns TRUE if A is a proper set; i.e.
@@ -649,6 +710,47 @@ contains ! =====     Public Procedures     =============================
 
   end function UnionSize
 
+  function UnionVector ( A, B ) result ( C )
+    ! A vector is represented as an array of integers (1d)
+    ! Thus an array of vectors is a 2d array of integers
+    ! A and B must have the same lower and upper bounds for their first index
+
+    integer, dimension(:,:), intent(in) :: A, B
+    integer, allocatable :: C(:,:) ! Intent(out) -- allocated here
+    ! Local variables
+    integer :: i, j, size_c
+    integer, dimension(size(a,1),size(a,2)+size(b,2)) :: TC
+    
+    ! Executable
+    ! print *, 'size(a): ', size(a)    
+    ! print *, 'a: ', a(1:size(a))
+    size_c = 0
+    do i=1, size(a,2)
+      ! Don't redo a repeated element
+      if ( i > 1 ) then
+        j = findFirst( a(:,:i-1), a(:,i) )
+        if ( j > 0 ) cycle
+      end if
+      size_c = size_c + 1
+      TC(:,size_c) = a(:,i)
+    end do
+
+    ! print *, 'size(b): ', size(b)    
+    ! print *, 'b: ', b(1:size(b))
+    do i=1, size(b,2)
+      ! Don't redo an already-added element
+      if ( size_c > 0 ) then
+        j = findFirst( tc(:,:size_c), b(:,i) )
+        if ( j > 0 ) cycle
+      end if
+      size_c = size_c + 1
+      TC(:,size_c) = b(:,i)
+    end do
+    ! print *, 'size(c): ', size_c    
+    ! print *, 'tc: ', tc(1:size_c)
+    c = tc(:,:size_c)
+  end function UnionVector
+
 ! =====     Private Procedures     =====================================
 
 !--------------------------- end bloc --------------------------------------
@@ -664,6 +766,9 @@ contains ! =====     Public Procedures     =============================
 end module MLSSets
 
 ! $Log$
+! Revision 2.36  2017/11/02 00:07:52  pwagner
+! Intersection and Union can now take vectors as args
+!
 ! Revision 2.35  2017/03/10 01:00:02  vsnyder
 ! Remove declarations of unused variables
 !
