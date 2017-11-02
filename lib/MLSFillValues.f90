@@ -2371,42 +2371,51 @@ contains
     if ( .not. keepgoing ) stop
   end subroutine announce_error
 
+  ! Find multidimensional set of indices in an array
+  ! with shape shp corresponding to 1-d address
+  !
+  ! We shall assume that the first index is the fastest, then the 2nd, ..
+  ! Our method is the following:
+  ! Let the size of the kth index be s[k]
+  ! Then we seek the array i[k] such that
+  ! address = i[1] + s[1] ( i[2] + s[2] ( i[3] + .. + i[N] ) .. )
+  ! (Where we assume 0-based indexing, like c, 
+  !   rather than 1-based, as Fortran uses)
+  ! We can build this by parts as follows
+  ! a[N]   = i[N]
+  ! a[N-1] = i[N-1] + s[N-1] i[N]
+  ! a[N-2] = i[N-2] + s[N-2] ( i[N-1] + s[N-1] i[N] )
+  ! .   .   .
+  ! a[1] = address
+  ! Where N is the rank of the array
+  ! Note then that the recurrences hold
+  ! a[N-1] - a[N] s[N-1]   = i[N-1]
+  ! a[N-2] - a[N-1] s[N-2] = i[N-2]
+  ! .   .   .
+  ! a[1] - a[2] s[1]       = i[1]
+  !
+  ! From this last we realize that
+  ! i[1] = a[1] mod(s[1])
+  ! Solve it for i[1], then a[2] = ( a[1] - i[1] ) / s[1]
+  ! Then for succeeding values of k
+  ! i[k] = a[k] mod(s[k])
+
+  ! Remember to modify each of these if we wish to use
+  ! Fortran-style indexes which start at 1, not 0, as follows
+  !
+  ! i'[k] = i[k] + 1, k > 1
+  ! i'[1] = i[1]
+  ! address = i'[1] + s[1] ( i'[2] - 1 + s[2] ( i[3] - 1 + .. + i[N] ) .. )
+  ! Actually, let's just use Subscripts from Array_Stuff
   subroutine rerank( address, shp, indices )
-    ! Find multidimensional set of indices in an array
-    ! with shape shp corresponding to 1-d address
-    !
-    ! We shall assume that the first index is the fastest, then the 2nd, ..
-    ! Our method is the following:
-    ! Let the size of the kth index be s[k]
-    ! Then we seek the array i[k] such that
-    ! address = i[1] + s[1] ( i[2] + s[2] ( i[3] + .. + i[N] ) .. )
-    ! (Where we assume 0-based indexing, like c, 
-    !   rather than 1-based, as Fortran uses)
-    ! We can build this by parts as follows
-    ! a[N]   = i[N]
-    ! a[N-1] = i[N-1] + s[N-1] i[N]
-    ! a[N-2] = i[N-2] + s[N-2] ( i[N-1] + s[N-1] i[N] )
-    ! .   .   .
-    ! a[1] = address
-    ! Where N is the rank of the array
-    ! Note then that the recurrences hold
-    ! a[N-1] - a[N] s[N-1]   = i[N-1]
-    ! a[N-2] - a[N-1] s[N-2] = i[N-2]
-    ! .   .   .
-    ! a[1] - a[2] s[1]       = i[1]
-    !
-    ! From this last we realize that
-    ! i[1] = a[1] mod(s[1])
-    ! Solve it for i[1], then a[2] = ( a[1] - i[1] ) / s[1]
-    ! Then for succeeding values of k
-    ! i[k] = a[k] mod(s[k])
-    
-    ! Remember to modify each of these if we wish to use
-    ! Fortran-style indexes which start at 1, not 0, as follows
-    !
-    ! i'[k] = i[k] + 1, k > 1
-    ! i'[1] = i[1]
-    ! address = i'[1] + s[1] ( i'[2] - 1 + s[2] ( i[3] - 1 + .. + i[N] ) .. )
+    use Array_Stuff, only: Subscripts
+    integer, intent(in)                :: address
+    integer, dimension(:), intent(in)  :: shp
+    integer, dimension(:), intent(out) :: indices
+    indices = Subscripts( address, shp )
+  end subroutine rerank
+
+  subroutine rerank_old( address, shp, indices )
     integer, intent(in)                :: address
     integer, dimension(:), intent(in)  :: shp
     integer, dimension(:), intent(out) :: indices
@@ -2427,7 +2436,7 @@ contains
       aofk = ( aofk - indices(k) ) / shp(k)
     enddo
     indices = indices + OFFSET ! Converting to Fortran-style, beginning with 1
-  end subroutine rerank
+  end subroutine rerank_old
   
   subroutine swap_int( first, second )
     ! Swap first and second args
@@ -2942,6 +2951,9 @@ end module MLSFillValues
 
 !
 ! $Log$
+! Revision 2.37  2017/11/02 00:06:50  pwagner
+! rerank uses Subscripts from Array_Stuff now
+!
 ! Revision 2.36  2017/08/25 00:18:10  pwagner
 ! Dropped all the internal output routines in favor of Output_m
 !
