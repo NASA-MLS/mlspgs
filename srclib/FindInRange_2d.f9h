@@ -1,0 +1,59 @@
+! Copyright 2017, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id$
+
+    ! subroutine FindInRange_2d_r4 ( list, vrange, which, how_many, options )
+    ! Return all pairs of indices at which
+    ! values of list are within vrange, inclusive
+    ! E.g., list( which(1, i), which(2, i) ) for i = 1 .. how_many
+    ! If none, return (/ 0, .., 0 /)
+    ! Special interpretation: inclusive means
+    ! if vrange(1) == vrange(2), any values of list also == vrange
+    ! are within that range
+    ! Unlike Hunt, list need not be monotonic
+    ! options may include any of the following characters
+    !    character            meaning
+    !    ---------            -------
+    !       a                 ignore sign
+    !       r                 reverse sense (i.e. find outside range)
+    !       c                 (not applicable; issue warning)
+    ! Note: reversing sense reverses special interpretation, too
+    ! so if vrange(1) == vrange(2), will count only values of list /= vrange
+    ! I hope that's clear
+    ! (as mud)
+    ! Dummy args
+    ! real(rk), dimension(:,:)             :: list
+    ! real(rk), dimension(2)               :: vrange
+    character(len=*), optional, intent(in) :: options
+    integer, dimension(:,:), intent(out)   :: which
+    integer, optional, intent(out)         :: how_many
+    ! Local variables
+    logical :: cyclic
+    integer :: i, n
+    integer, dimension(size(which))        :: which_1d ! Result as 1d array
+    ! Executable
+    which = 0
+    if ( present(how_many) ) how_many=0
+    cyclic = ( index(Default(Options, ' '), 'c') > 0 )
+    if ( cyclic ) call MLSMessage &
+      & ( MLSMSG_Warning, ModuleName, "cyclic option meaningless for" // &
+      & " 2d FindInRange")
+    call FindInRange( reshape(list, (/ size(list,1)*size(list,2) /) ), &
+      & vrange, which_1d, how_many=N, options=options )
+    if ( n < 1 ) return
+    ! call dump ( which_1d(1:n), '1d which' )
+    do i=1, N
+      call rerank( which_1d(i), shape(list), which(:,i) )
+    enddo
+    ! call dump ( which(:,1:n), '2d which', width=10 )
+    if ( present(how_many) ) how_many=n
+    ! $Log$
