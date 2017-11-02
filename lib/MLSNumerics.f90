@@ -24,6 +24,7 @@ module MLSNumerics              ! Some low level numerical stuff
    & MLSMessage
  use MLSFinds, only: Findfirst, Findlast
  use MLSStrings, only: Capitalize, Trim_Safe
+ use Optional_M, only: Default
  use Output_M, only: Blanks, Output
  use Pure_Hunt_M, only: Purehunt
  use Symm_Tri, only: Factor_Symm_Tri, Solve_Factored_Symm_Tri
@@ -39,6 +40,12 @@ module MLSNumerics              ! Some low level numerical stuff
 
   ! This module contains some low level numerical stuff, hunting, interpolating,
   ! approximating roots, derivatives, integrals, and some stray functions
+  ! An area of focus is approximating functions that are expensive to evaluate
+  ! by assembling a lookup table of precomputed values
+  ! (a) Using an array of its values at regularly spaced arguments
+  ! (b) Using an array of its values at an array of specified arguments
+  ! (c) Like (a) but using a user-defined datatype, the UnifDiscreteFn
+  !
 ! === (start of toc) ===
 !     c o n t e n t s
 !     - - - - - - - -
@@ -60,6 +67,7 @@ module MLSNumerics              ! Some low level numerical stuff
 ! dFdxApproximate          Compute derivative using UnifDiscreteFn
 ! Dump                     Dump Coefficients structure
 ! Dump                     Dump uniform discrete function structure
+! F_Of_X                   Use any recognized method to approximate f
 ! FApproximate             Use Uniformly Discretized Fn as an approximation
 ! FInvApproximate          Use it to invert a function (may not be unique)
 ! FillLookUpTable          Fill table with evaluations at regularly-spaced args
@@ -86,11 +94,13 @@ module MLSNumerics              ! Some low level numerical stuff
 !                          interpolation
 ! LinearInterpolate        Do a single linear interpolation in n dimensions
 ! PureHunt                 Like Hunt, but may be quicker due to optimization
+! ReadLookUpTable          Read a LookUpTable from a text file
 ! Setup                    Fill y values in UniDiscFunction
 ! Simpsons                 Apply Simpson's rule to integrate--function form
 ! SimpsonsSub              Apply Simpson's rule to integrate--a subroutine
 ! UseLookUpTable           Use LookUpTable to approximate function
-!                            (or its derivatives or integral)
+!                            (or its derivatives or its integral)
+! WriteLookUpTable         Write a LookUpTable to a text file
 ! === (end of toc) ===
 
 ! === (start of api) ===
@@ -109,12 +119,15 @@ module MLSNumerics              ! Some low level numerical stuff
 ! nprec  d2Fdx2Approximate ( nprec x, UnifDiscreteFn_nprec UDF )
 ! Dump ( coefficients_nprec Coeffs )
 ! Dump ( UnifDiscreteFn_nprec UDF, [int Details] )
+! nprec  F_Of_X
+!         (see FApproximate and UseLookupTable)
 ! nprec  FApproximate ( nprec x, UnifDiscreteFn_nprec UDF )
 ! nprec  FInvApproximate ( nprec y, UnifDiscreteFn_nprec UDF, &
 !     [nprec xS], [nprec xE] )
 ! FillLookUpTable ( nprec extern fun, nprec table(:), nprec x1, nprec x2, &
 !   [int N], [nprec xtable(:)] )
 ! FindInRange ( num list(:), num vrange(2), int which(:), [how_many], [options] )
+! FindInRange_2d ( num list(:,:), num vrange(2), int which(:,:), [how_many], [options] )
 ! Hunt ( nprec list, nprec values, int indices(:), &
 !   [int start], [log allowTopValue], [log allowBelowValue], &
 !   [log nearest], [log logSpace], [log fail] )
@@ -136,12 +149,13 @@ module MLSNumerics              ! Some low level numerical stuff
 ! Interpolate_Regular_To_Irregular ( XOld, YOld, ZOld, &
 !   XYNew, ZNew, XMethod, YMethod, [XExtrapolate], [YExtrapolate] )
 ! InterpolateArraySetup ( nprec OldX(:), nprec NewX(:), char* Method, &
-!   coefficients_nprec Coeffs, &[log Extrapolate], [int Width], [log DyByDx], 
+!   coefficients_nprec Coeffs, &[log Extrapolate], [int Width], [log DyByDx],
 !   [matrixElement_T dNewByDOld], [log IntYdX] )
 ! InterpolateArrayTeardown ( Coefficients_nprec Coeffs )
 ! nprec LinearInterpolate ( nprec values(:,:,..,:), nprec coords(:), &
 !    nprec verts(:,:,..,:) )
 ! PureHunt ( nprec element, nprec array, int n, int jlo, int jhi )
+! ReadLookUpTable ( char* filename, int n, nprec x(:), nprec y(:) )
 ! Setup ( UnifDiscreteFn_nprec UDF, int N, nprec x1, nprec x2, [ nprec y(:)], &
 !    [char* BC], [nprec yLeft], [nprec yRight], [extern nprec fun] )
 ! nprec Simpsons ( int n, nprec h, nprec y(:) )
@@ -149,6 +163,8 @@ module MLSNumerics              ! Some low level numerical stuff
 ! nprec UseLookUpTable ( nprec x, nprec table(:), [nprec x1], [nprec x2], &
 !    [nprec xtable(:), [nprec missingValue], [char* options], &
 !    [nprec xS], [nprec xE] )
+! WriteLookUpTable ( char* filename, int n, nprec x(:), nprec y(:) )
+
 ! In the above types, "nprec" can be either r4 or r8. num can be any of
 ! int, r4, or r8. A, B, Precision, and array can be any 
 ! multidimensional arrays up to rank 3. In a scalar context A and B may be scalars
@@ -157,7 +173,7 @@ module MLSNumerics              ! Some low level numerical stuff
   public :: Average, Battleship, BivariateLinearInterpolation
   public :: ClosestElement
   public :: Destroy, dFdXApproximate, d2FdX2Approximate, Dump
-  public :: FApproximate, FillLookupTable, FindInRange, FinvApproximate
+  public :: F_Of_X, FApproximate, FindInRange, FinvApproximate
   public :: Hunt, HuntBox, HuntRange, IfApproximate
   public :: InterpolateArraySetup, InterpolateArrayTeardown
   public :: InterpolateExtrapolate
@@ -168,7 +184,7 @@ module MLSNumerics              ! Some low level numerical stuff
   public :: LinearInterpolate
   public :: PureHunt
   public :: Setup, Simpsons, SimpsonsSub, SolveQuadratic
-  public :: UseLookupTable
+  public :: FillLookupTable, ReadLookupTable, UseLookupTable, WriteLookupTable
 
   type, public :: Coefficients ( RK )
     integer, kind :: RK
@@ -233,9 +249,12 @@ module MLSNumerics              ! Some low level numerical stuff
   ! This is a family of datatypes, the uniformly discretized function:
   ! a list of function values y[i]
   ! evaluated over uniformly-spaced x-values x[i] ( = x1 + (i-1) dx )
-  ! called sometimes a look up table
+  ! which some call a look up table
   ! (although that name unfairly limits its suggested use)
-
+  ! In our usage it is an alternative to the *LookupTable procedures
+  ! implemented in this module, for they are not limited by requiring
+  ! that the x-values be uniformly spaced (or even monotonic)
+  
   ! By default when we use one of these datatypes to approximate the
   ! actual function at some x we 
   ! choose the corresponding y at the xi closest to x
@@ -258,8 +277,11 @@ module MLSNumerics              ! Some low level numerical stuff
   ! In cases where a conflict seems to arise between the actions
   ! dictated by "method" and "BC", "BC" will prevail
 
-  ! Another family of datatypes may someday be implemented,
-  ! which would utilize non-uniformly spaced x values
+  ! Notes and limitations:
+  ! Another family of datatypes may someday be needed,
+  !    which would utilize non-uniformly spaced x values
+  ! Another BC type may someday be needed,
+  !    which would permit extrapolating x values outside [x1, x2] range
 
   type, public :: UnifDiscreteFn ( RK )
     integer, kind :: RK
@@ -319,6 +341,12 @@ module MLSNumerics              ! Some low level numerical stuff
   interface Dump
     module procedure DumpCoefficients_r4, DumpCoefficients_r8
     module procedure DumpUnifDiscreteFn_r4, DumpUnifDiscreteFn_r8
+  end interface
+
+  interface F_Of_X
+    module procedure FApproximate_r4, FApproximate_r8
+    module procedure FLookup_r4, FLookup_r8
+    module procedure FXYLookup_r4, FXYLookup_r8
   end interface
 
   interface FApproximate
@@ -390,6 +418,10 @@ module MLSNumerics              ! Some low level numerical stuff
     module procedure reposit_r4, reposit_r8
   end interface
 
+  interface ReadLookUpTable
+    module procedure ReadLookUpTable_r4, ReadLookUpTable_r8
+  end interface
+  
   interface SetUp
     module procedure InterpolateArraySetup_r4, InterpolateArraySetup_r8
     module procedure setUpUnifDiscreteFn_r4, setUpUnifDiscreteFn_r8
@@ -409,6 +441,10 @@ module MLSNumerics              ! Some low level numerical stuff
 
   interface UseLookUpTable
     module procedure UseLookUpTable_r4, UseLookUpTable_r8
+  end interface
+  
+  interface WriteLookUpTable
+    module procedure WriteLookUpTable_r4, WriteLookUpTable_r8
   end interface
 
   ! These are arrays in name only used when implementing cubic splines
@@ -1147,7 +1183,64 @@ contains
     end if
     call dump ( UDF%y, name='y' )
   end subroutine DumpUnifDiscreteFn_r8
+! -------------------------------------------------  FLookup_r4  -----
 
+  ! This family of routines uses lookup tables to approximate F
+
+  ! Args: (* means optional)
+  ! x        pt at which to evaluate
+  ! x1, x2   (if present) lower, upper bounds of x range
+  ! xtable   (if present) x values (should be monotonic)
+  ! ytable   y values
+
+  function FLookup_r4 ( x, x1, x2, ytable, options ) result(value)
+    integer, parameter :: RK = kind(0.0e0)
+    ! Args
+    real(rk), intent(in)                        :: x
+    real(rk), dimension(:), intent(in)          :: ytable
+    real(rk), intent(in)                        :: x1
+    real(rk), intent(in)                        :: x2
+    character(len=*), optional, intent(in)      :: options
+    real(rk)                                    :: value    ! x are presorted
+    value = UseLookUpTable_r4 ( x, ytable, x1, x2, options=options )
+  end function FLookup_r4
+
+  function FLookup_r8 ( x, x1, x2, ytable, options ) result(value)
+    integer, parameter :: RK = kind(0.0d0)
+    ! Args
+    real(rk), intent(in)                        :: x
+    real(rk), dimension(:), intent(in)          :: ytable
+    real(rk), intent(in)                        :: x1
+    real(rk), intent(in)                        :: x2
+    character(len=*), optional, intent(in)      :: options
+    real(rk)                                    :: value    ! x are presorted
+    value = UseLookUpTable_r8 ( x, ytable, x1, x2, options=options )
+  end function FLookup_r8
+
+  function FXYLookup_r4 ( x, xtable, ytable, options ) result(value)
+    integer, parameter :: RK = kind(0.0e0)
+    ! Args
+    real(rk), intent(in)                        :: x
+    real(rk), dimension(:), intent(in)          :: xtable
+    real(rk), dimension(:), intent(in)          :: ytable
+    character(len=*), optional, intent(in)      :: options
+    real(rk)                                    :: value    ! x are presorted
+    value = UseLookUpTable_r4 ( x, ytable, xtable=xtable, &
+      & options=Default(options, '-p', additional=.true.) )
+  end function FXYLookup_r4
+
+  function FXYLookup_r8 ( x, xtable, ytable, options ) result(value)
+    integer, parameter :: RK = kind(0.0d0)
+    ! Args
+    real(rk), intent(in)                        :: x
+    real(rk), dimension(:), intent(in)          :: xtable
+    real(rk), dimension(:), intent(in)          :: ytable
+    character(len=*), optional, intent(in)      :: options
+    real(rk)                                    :: value    ! x are presorted
+    value = UseLookUpTable_r8 ( x, ytable, xtable=xtable, &
+      & options=Default(options, '-p', additional=.true.) )
+  end function FXYLookup_r8
+    
 ! -------------------------------------------------  FApproximate  -----
 
   ! This family of routines use a uniDiscFunction to approximate a 
@@ -1338,6 +1431,30 @@ contains
     real(rk), dimension(2) :: vrange
     include 'FindInRange.f9h'
   end subroutine FindInRange_r8
+
+  subroutine FindInRange_2d_int ( list, vrange, which, how_many, options )
+    integer, parameter :: RK = kind(0.0e0)
+    ! Dummy args
+    integer, dimension(:,:) :: list
+    integer, dimension(2) :: vrange
+    include 'FindInRange_2d.f9h'
+  end subroutine FindInRange_2d_int
+
+  subroutine FindInRange_2d_r4 ( list, vrange, which, how_many, options )
+    integer, parameter :: RK = kind(0.0e0)
+    ! Dummy args
+    real(rk), dimension(:,:) :: list
+    real(rk), dimension(2) :: vrange
+    include 'FindInRange_2d.f9h'
+  end subroutine FindInRange_2d_r4
+
+  subroutine FindInRange_2d_r8 ( list, vrange, which, how_many, options )
+    integer, parameter :: RK = kind(0.0d0)
+    ! Dummy args
+    real(rk), dimension(:,:) :: list
+    real(rk), dimension(2) :: vrange
+    include 'FindInRange_2d.f9h'
+  end subroutine FindInRange_2d_r8
 
 ! ------------------------------------------------  IFApproximate  -----
 
@@ -1976,6 +2093,37 @@ contains
     include "LinearInterpolate_4d.f9h"
   end function LinearInterpolate_4d_r8
 
+! ----------------------------------------------  ReadLookUpTable  -----
+
+  ! This family of routines Reads a table from a file where it is stored
+  ! Something like this (although without the "!")
+  ! Celsius2Fahrenheit.txt
+  ! file of Celsius Fahrenheit conversions
+  ! C        F
+  ! -40.   -40.
+  !  0.     32.
+  ! 1.e2   212
+  !
+  ! Returning
+  ! N = 3
+  ! x = (-40., 0., 1.e2)
+  ! y = (-40., 32., 212.)
+  ! Note:
+  ! We ignore lines with non-numerical values
+  ! You may use the resulting x and y arrays as args to UseLookUpTable
+  ! where
+  !       x -> xtable
+  !       y -> table
+  subroutine ReadLookUpTable_r4 ( filename, N, x, y )
+    integer, parameter :: RK = kind(0.0e0)
+    include 'ReadLookUpTable.f9h'
+  end subroutine ReadLookUpTable_r4
+
+  subroutine ReadLookUpTable_r8 ( filename, N, x, y )
+    integer, parameter :: RK = kind(0.0d0)
+    include 'ReadLookUpTable.f9h'
+  end subroutine ReadLookUpTable_r8
+
 ! --------------------------------------------------------  SetUp  -----
 
   ! This family of routines sets up a uniDiscFunction of the appropriate type
@@ -2140,6 +2288,31 @@ contains
     integer, parameter :: RK = kind(0.0d0)
     include 'UseLookUpTable.f9h'
   end function UseLookUpTable_r8 
+
+! ----------------------------------------------  WriteLookUpTable  -----
+
+  ! This family of routines Writes a table to a file where it is stored
+  ! Something like this (although without the "!")
+  ! Celsius2Fahrenheit.txt
+  ! file of Celsius Fahrenheit conversions
+  ! C        F
+  ! -40.   -40.
+  !  0.     32.
+  ! 1.e2   212
+  !
+  ! Given the input
+  ! N = 3
+  ! x = (-40., 0., 1.e2)
+  ! y = (-40., 32., 212.)
+  subroutine WriteLookUpTable_r4 ( filename, N, x, y )
+    integer, parameter :: RK = kind(0.0e0)
+    include 'WriteLookUpTable.f9h'
+  end subroutine WriteLookUpTable_r4
+
+  subroutine WriteLookUpTable_r8 ( filename, N, x, y )
+    integer, parameter :: RK = kind(0.0d0)
+    include 'WriteLookUpTable.f9h'
+  end subroutine WriteLookUpTable_r8
 
 !==================== Private Procedures ===============================
 ! ...........................................  BattleRealToInt_r4  .....
@@ -2440,6 +2613,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.95  2017/11/02 00:09:38  pwagner
+! Added Read,WriteLookupTable, 2d versions of FindInRange, and F_Of_X
+!
 ! Revision 2.94  2017/10/31 23:46:29  vsnyder
 ! Make Coefficients and UnifDiscreteFn parameterized types
 !
