@@ -120,7 +120,12 @@
     enddo
     subOptions=' '
   endif
-  call doTheDirtyDeed ( nSize2, xTable2(1:nSize2), table2(1:nSize2) )
+  ! Check that our xTable is in ascending order
+  if ( xTable2(1) < xTable2(nSize2) ) then
+    call doTheDirtyDeed ( nSize2, xTable2(1:nSize2), table2(1:nSize2) )
+  else
+    call doTheDirtyDeed ( nSize2, xTable2(nSize2:1:-1), table2(nSize2:1:-1) )
+  endif
 contains
   subroutine doTheDirtyDeed( nSize, myXTable, table )
     ! Args
@@ -259,6 +264,9 @@ contains
   end subroutine doTheDirtyDeed
   ! end subroutine UseLookUpTable_r4
 ! $Log$
+! Revision 1.6  2017/10/27 23:10:34  pwagner
+! Improvements esp. when not x are not evenly spaced
+!
 ! Revision 1.5  2008/09/16 18:17:36  pwagner
 ! Had sometimes used absent optional args
 !
