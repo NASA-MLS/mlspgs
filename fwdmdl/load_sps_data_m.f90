@@ -316,7 +316,7 @@ contains
     use Constants, only: Deg2Rad
     use ForwardModelConfig, only: ForwardModelConfig_t
     use Intrinsic, only: L_Clear_110RH_Below_Top, L_Clear_0RH
-    use MLSFillValues, only: EssentiallyEqual
+    use HyperSlabs, only: EssentiallyEqual
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use MLSNumerics, only: Hunt
     use RHIFromH2O, only: RHIFromH2O_Factor
@@ -914,9 +914,9 @@ contains
   subroutine Dump_Grids ( The_Grid, Name, Details, OneGrid )
   ! Dump The_Grid
 
-    use Constants, only: rad2deg
+    use Constants, only: Rad2Deg
     use Dump_0, only: Dump
-    use Intrinsic, only: lit_indices
+    use Intrinsic, only: Lit_Indices
     use Output_M, only: NewLine, Output
     use String_Table, only: Display_String
 
@@ -1059,6 +1059,10 @@ contains
 end module LOAD_SPS_DATA_M
 
 ! $Log$
+! Revision 2.120  2017/03/11 00:57:54  vsnyder
+! Make components of C_t contiguous.  Add Subset and Short arguments.  Use
+! components of C_t in more places.
+!
 ! Revision 2.119  2017/03/02 00:31:58  vsnyder
 ! Add %L1, %V1 components of C_t, add Get_SPS_Bounds
 !
