@@ -891,11 +891,12 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in)                :: how_many
     integer, dimension(2), intent(out) :: range
     ! Internal variables
-    integer :: firstWhich
-    integer :: i
-    logical :: inSequence
-    integer :: lastWhich
-    integer :: stretch
+    logical, parameter                 :: DEEBug = .false.
+    integer                            :: firstWhich
+    integer                            :: i
+    logical                            :: inSequence
+    integer                            :: lastWhich
+    integer                            :: stretch
     ! Executable
     range = 0
     if ( how_many < 1 ) return
@@ -906,6 +907,14 @@ contains ! =====     Public Procedures     =============================
     lastWhich = which(1)
     do i=2, how_many
       ! Are we still in sequence?
+      if ( DEEBug ) then
+        print *, "i is"
+        print *, i
+        print *, "which(i)"
+        print *, which(i)
+        print *, "lastWhich"
+        print *, lastWhich
+      endif
       if ( (which(i)-lastWhich) > 1 ) then
         ! Nope--our sequence ended with lastWhich
         ! How does it compare with the previous record-holder?
@@ -919,6 +928,7 @@ contains ! =====     Public Procedures     =============================
           ! Not longer, so we forget about it
         end if
         firstWhich = which(i)
+        lastWhich = which(i)
       else
         ! Yes, we have extended our sequence
         lastWhich = which(i)
@@ -1284,6 +1294,9 @@ contains ! =====     Public Procedures     =============================
 end module MLSFinds
 
 ! $Log$
+! Revision 2.4  2017/11/03 21:12:06  uid9452
+! Must update lastWhich in FindLongestStretch
+!
 ! Revision 2.3  2017/02/11 00:29:42  pwagner
 ! FindLongestStretch now public
 !
