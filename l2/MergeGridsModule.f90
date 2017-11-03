@@ -519,7 +519,7 @@ contains ! ===================================  Public procedures  =====
     use Init_Tables_Module, only: F_Climatology, F_Height, &
       & F_Operational, F_Scale
     use MLSKinds, only: R8
-    use MLSFillValues, only: EssentiallyEqual
+    use HyperSlabs, only: EssentiallyEqual
     use Toggles, only: Gen, Toggle
     use Trace_M, only: Trace_Begin, Trace_End
     use Tree, only: Nsons, Subtree, Decoration
@@ -1194,6 +1194,9 @@ contains ! ===================================  Public procedures  =====
 end module MergeGridsModule
 
 ! $Log$
+! Revision 2.63  2017/11/03 20:59:27  pwagner
+! Most array gymnastics moved from MLSFillValues to HyperSlabs module
+!
 ! Revision 2.62  2017/03/17 00:38:10  pwagner
 ! Quit with apt message if ConvertEtaToP has no climatology file to use
 !
