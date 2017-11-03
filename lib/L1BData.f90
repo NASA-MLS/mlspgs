@@ -15,6 +15,7 @@ module L1BData
 
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test, &
     & Test_Allocate, Test_DeAllocate
+  use HyperSlabs, only: EssentiallyEqual
   use Diff_1, only: Diff, Diff_Fun
   use Dump_Options, only: NameOnEachLine, StatsOnOneLine
   use Dump_0, only: Dump
@@ -659,7 +660,6 @@ contains ! ============================ MODULE PROCEDURES ======================
   subroutine DiffL1BData ( l1bData1, l1bData2, &
     & details, options, numDiffs, mafStart, mafEnd, l1bValues1, l1bValues2, &
     & Period )
-  use MLSFillValues, only: EssentiallyEqual
   use MLSStrings, only: Asciify, IsAllAscii
     ! Diff two l1brad quantities
     type( L1BData_T ), intent(inout) :: L1bData1
@@ -3013,6 +3013,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.120  2017/11/03 19:59:37  pwagner
+! Most array gymnastics moved from MLSFillValues to HyperSlabs module
+!
 ! Revision 2.119  2017/10/18 22:46:52  pwagner
 ! Dont crash if a DS has more/fewer MAFs than counterMAF
 !
