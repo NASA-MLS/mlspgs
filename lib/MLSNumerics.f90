@@ -14,11 +14,12 @@ module MLSNumerics              ! Some low level numerical stuff
 !=============================================================================
 
  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+ use HyperSlabs, only: Rerank
  use Dump_0, Only : Dump
  use HighOutput, only: OutputNamedValue
  use Hunt_M, only: Hunt, Huntbox, Huntrange
  use MatrixModule_0, only: Createblock, M_Absent, MatrixElement_T, Sparsify
- use MLSFillValues, only: IsfillValue, Rerank
+ use MLSFillValues, only: IsfillValue
  use MLSKinds, only: I4, R4, R8, Rm
  use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning, &
    & MLSMessage
@@ -2613,6 +2614,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.96  2017/11/03 19:56:36  pwagner
+! Most array gymnastics moved from MLSFillValues to HyperSlabs module
+!
 ! Revision 2.95  2017/11/02 00:09:38  pwagner
 ! Added Read,WriteLookupTable, 2d versions of FindInRange, and F_Of_X
 !
