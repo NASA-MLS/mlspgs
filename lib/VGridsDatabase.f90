@@ -14,16 +14,17 @@ module VGridsDatabase
 !=============================================================================
 
   use Allocate_Deallocate, only: Deallocate_Test
-  use intrinsic, only: L_ANGLE, L_ETA, L_GEODALTITUDE, L_GPH, L_INTEGER, &
-    & L_NONE, L_PRESSURE, L_THETA, L_ZETA, &
+  use HyperSlabs, only: EssentiallyEqual
+  use Intrinsic, only: L_Angle, L_Eta, L_Geodaltitude, L_Gph, L_Integer, &
+    & L_None, L_Pressure, L_Theta, L_Zeta, &
     & PHYQ_Dimensionless, PHYQ_Pressure, PHYQ_Zeta, PHYQ_Temperature, &
     & PHYQ_Length, PHYQ_Angle, PHYQ_Invalid
-  use MLSKinds, only: RS => R8  ! Real kind for Surfs
-  use MLSMessageModule, only: & ! Message logging
+  use MLSKinds, only: RS => R8 ! Real Kind For Surfs
+  use MLSMessageModule, only: & ! Message Logging
     & MLSMessage, MLSMSG_Error, &
     & PVMErrorMessage
 
-  implicit NONE
+  implicit none
   private
 
   ! Define the vGrid data type.  This is used to store all the vGrid
@@ -279,7 +280,6 @@ contains
   ! -------------------------------------------  DoVGridsMatch_VG  -----
   logical function DoVGridsMatch_VG ( A, B, RelErr )
     ! Returns true if A and B are essentially the same VGrid.
-    use MLSFillValues, only: ESSENTIALLYEQUAL
     type (vGrid_T), intent(in) :: A
     type (vGrid_T), intent(in) :: B
     real(rs), intent(in), optional :: RelErr ! "essentially equal" means
@@ -303,10 +303,10 @@ contains
 
   ! -----------------------------------------------  Dump_a_VGrid  -----
   subroutine Dump_a_VGrid ( VGrid, Details, What )
-    use Dump_0, only: DUMP
+    use Dump_0, only: Dump
     use Intrinsic, only: Lit_Indices
-    use OUTPUT_M, only: NEWLINE, OUTPUT
-    use STRING_TABLE, only: DISPLAY_STRING
+    use Output_M, only: Newline, Output
+    use String_Table, only: Display_String
     type(vGrid_T), intent(in) :: VGrid
     integer, intent(in), optional :: Details ! <= 0 => Don't dump arrays
     !                                        ! >0   => Do dump arrays
@@ -338,7 +338,7 @@ contains
   subroutine Dump_VGrids ( VGrids, Details, Where )
 
     use MoreTree, only: StartErrorMessage
-    use OUTPUT_M, only: OUTPUT
+    use Output_M, only: Output
     type(vGrid_T), pointer :: VGrids(:)             ! The database
     integer, intent(in), optional :: Details ! <= 0 => Don't dump arrays
     !                                        ! >0   => Do dump arrays
@@ -466,6 +466,9 @@ contains
 end module VGridsDatabase
 
 ! $Log$
+! Revision 2.29  2017/11/03 20:02:31  pwagner
+! Most array gymnastics moved from MLSFillValues to HyperSlabs module
+!
 ! Revision 2.28  2015/03/28 01:43:46  vsnyder
 ! Added stuff to trace allocate/deallocate addresses
 !
