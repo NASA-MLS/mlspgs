@@ -109,32 +109,35 @@ contains ! =====     Public Procedures     =============================
     character(len=MAXMANIPULATIONLEN) :: part2
     character(len=MAXMANIPULATIONLEN) :: part3
     character(len=4) :: vchar
-    integer, parameter :: NFUNNAMES = 26 ! 41
-    character(len=8), dimension(NFUNNAMES) :: FUNCOLONS
+    integer, parameter :: NFUNNAMES = 41
+    character(len=16), dimension(NFUNNAMES) :: FUNCOLONS
     character(len=8), dimension(NFUNNAMES), parameter :: FUNNAMES = &
       & (/ 'stddev  ', 'rms     ', 'median  ', 'mean    ', 'max     ', &
       &    'min     ', 'count   ', 'slip    ', 'shift   ', 'channel ', &
       &    'surface ', 'instance', 'height  ', 'lon     ', 'lat     ', &
       &    'sza     ', 'map     ', 'log10   ', 'log     ', 'ln      ', &
       &    'exp     ', 'ifpos   ', 'ifneg   ', 'sign    ', 'abs     ',&
-!     &    'sin     ', 'cos     ', 'tan     ', &
-!     &    'sindeg  ', 'cosdeg  ', 'tandeg  ', &
-!     &    'asin    ', 'acos    ', 'atan    ', &
-!     &    'sinh    ', 'cosh    ', 'tanh    ', &
-!     &    'asinh   ', 'acosh   ', 'atanh   ', &
+      &    'sin     ', 'cos     ', 'tan     ', &
+      &    'sindeg  ', 'cosdeg  ', 'tandeg  ', &
+      &    'asin    ', 'acos    ', 'atan    ', &
+      &    'sinh    ', 'cosh    ', 'tanh    ', &
+      &    'asinh   ', 'acosh   ', 'atanh   ', &
       &    'trunc   '/)
       
     ! logical, parameter :: DEEBUG = .true.
     ! Executable
+    ! Hackery-quackery alert!
+    ! We surround the function names with colons ":"
+    ! to prevent confusion of, say, "acos" with "cos"
     do iFun = 1, NFUNNAMES
-      FUNCOLONS(iFun) = trim(FunNames(iFun)) // ':'
+      FUNCOLONS(iFun) = ':' // trim(FunNames(iFun)) // ':'
     enddo
+    if ( DeeBug ) call Dump( Funcolons, 'functions with colons' )
     mstr = str
     if ( DeeBUG ) print *, 'mstr: ', trim(mstr)
     MapFunction = ( index(mstr, 'map' ) > 0 )
     nullify(primitives)
     np = 0
-
 
     ! Find any terms composed of digits (i.e., literal numbers) ddd and
     ! mark each as val(ddd)
@@ -178,6 +181,11 @@ contains ! =====     Public Procedures     =============================
       if ( index( collapsedstr, '(' ) < 1 ) exit
       collapsedstr = stretch( collapsedstr, options='o[(]' )
       call SplitNest ( collapsedstr, part1, part2, part3 )
+      if ( DEEBug ) then
+        print *, 'part1: ', trim(part1)
+        print *, 'part2: ', trim(part2)
+        print *, 'part3: ', trim(part3)
+      endif
       ! For Pete's sake, is this a bug you're coding around?
       if ( ncopies( trim(part2), ':' ) > 1 ) then
         call ParensForAll ( collapsedstr, mstr )
@@ -196,7 +204,7 @@ contains ! =====     Public Procedures     =============================
       elseif ( any( indexes( trim(part2), FunColons) > 1 ) .and. &
         &  .not. alreadyValParens ) then
         alreadyValParens = .true.
-        iFun = FindFirst( indexes( trim(part2), FunColons) > 1 )
+        iFun = FindFirst( indexes( ':' // trim(part2), FunColons) > 1 )
         mstr = ParenthesizeFun( collapsedstr, trim(FunNames(iFun)) )
         if ( DeeBUG ) then
           print *, 'Adding parens to Fun ', part2, FunNames(iFun)
@@ -480,7 +488,13 @@ contains ! =====     Public Procedures     =============================
       ! but not if it's (already) parenthetical or parentheses are not balanced
       if ( ( index(element, '*') > 0 .or. index(element, '/') > 0 .or. &
         & index(element, '^') > 0 ) .and. &
-        & .not. isParenthetical(element) .and. isBalanced(element) ) then
+        & ( &
+        &   .not. isParenthetical(element) .and. isBalanced(element) &
+        & .or. &
+        &   ncopies( trim(element), '('           ) == 0 &
+        &   .and. ncopies( trim(element), ')'           ) == 1 &
+        & ) &
+        & ) then
         if ( DEEBUG ) print *, 'element to be parenthesized: ', trim(element)
         element = '(' // trim(element) // ')'
       endif
@@ -921,13 +935,17 @@ contains ! =====     Public Procedures     =============================
         case ('asinh')
             newone%values = log( part%values + sqrt(part%values**2 + 1.) )
         case ('acosh')
+            if ( DeeBug ) then
+              call output( 'Evaluating acosh', advance='yes' )
+              call Dump ( part%values, 'args of acosh' )
+            endif
             where ( abs(part%values) > 1._rv )
-              newone%values = 0.
-            elsewhere
               newone%values = log( part%values + sqrt(part%values**2 - 1.) )
+            elsewhere
+              newone%values = 0.
             end where
         case ('atanh')
-            where ( abs(part%values) > 1._rv )
+            where ( abs(part%values) >= 1._rv )
               newone%values = 0.
             elsewhere
               newone%values = 0.5*log( (1. + part%values)/(1. - part%values))
@@ -1077,7 +1095,6 @@ contains ! =====     Public Procedures     =============================
           NoChans     = a%template%NoChans
           NoInstances = a%template%NoInstances
           NoSurfs     = a%template%NoSurfs
-          ! if ( dontSumHeights .and. dontSumInstances ) then
           if ( DEEBUG ) then
             call outputNamedValue( 'dimList', dimList )
             call outputNamedValue( 'average', average )
@@ -1477,6 +1494,9 @@ end module ManipulationUtils
 
 !
 ! $Log$
+! Revision 2.20  2017/11/03 21:01:57  pwagner
+! Fixed another bug, this time for similar function names (e.g., cos and acos)
+!
 ! Revision 2.19  2017/10/24 23:26:19  pwagner
 ! Added trg and hyperbolic functions; improved comments
 !
