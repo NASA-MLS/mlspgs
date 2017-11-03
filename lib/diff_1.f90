@@ -13,6 +13,7 @@ module Diff_1
 
   ! Dump differences of arrays
 
+  use HyperSlabs, only: HalfWaves
   use Dump_Options, only: AuBrick, &
     & DefaultPCTFormat, Direct, Dopts, DumpDumpOptions, DumpTableSide, &
     & NameOnEachLine, NameHasBeenPrinted, NaNs, PCTFormat, &
@@ -22,7 +23,7 @@ module Diff_1
   use Dump_1, only: DumpTable
   use HighOutput, only: OutputNamedValue
   use IEEE_Arithmetic, only: IEEE_Is_Finite
-  use MLSFillValues, only: FilterValues, HalfWaves, NaNFunction, &
+  use MLSFillValues, only: FilterValues, NaNFunction, &
     & ReorderFillValues, ReplaceFillValues, &
     & WhereAreTheInfs, WhereAreTheNaNs
   use MLSMessageModule, only: MLSMessage, MLSMSG_Warning
@@ -986,6 +987,9 @@ contains
 end module Diff_1
 
 ! $Log$
+! Revision 2.8  2017/11/03 20:02:02  pwagner
+! Most array gymnastics moved from MLSFillValues to HyperSlabs module
+!
 ! Revision 2.7  2017/07/31 23:06:41  pwagner
 ! Removed unneeded param
 !
