@@ -17,6 +17,7 @@ module QuantityTemplates         ! Quantities within vectors
   ! template information.
 
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+  use HyperSlabs, only: Rerank
   use Dump_0, only: Dump
   use Expr_M, only: Expr_Check
   use HGridsDatabase, only: HGrid_T, Dump
@@ -24,11 +25,10 @@ module QuantityTemplates         ! Quantities within vectors
   use Intrinsic, only: L_Geodetic, L_GeodAltitude, L_None, L_Phitan, &
     & L_VMR, L_QTM, Lit_Indices, Phyq_Angle, Phyq_Dimensionless, &
     & Phyq_Frequency, Phyq_Indices, Phyq_Time, Phyq_Vmr
-  use MLSFillValues, only: Rerank
   use MLSKinds, only: Rt => R8 ! Rt Is "kind Of Real Components Of Template"
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
   use MLSFillValues, only: NaNFunction
-  use MLSFinds, only: Findfirst
+  use MLSFinds, only: FindFirst
   use MLSStringLists, only: SwitchDetail
   use MLSStrings, only: Lowercase, WriteIntsToChars
   use Output_M, only: Output
@@ -499,7 +499,7 @@ contains
 
   ! ----------------------------  DestroyQuantityTemplateContents  -----
   subroutine DestroyQuantityTemplateContents ( qty )
-    use string_table, only: get_string
+    use String_Table, only: Get_String
     ! Dummy argument
     type (QuantityTemplate_T), intent(inout) :: QTY
     ! Local variables
@@ -2287,6 +2287,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.119  2017/09/18 19:30:41  vsnyder
+! Spiff the dump
+!
 ! Revision 2.118  2017/01/25 17:19:26  pwagner
 ! Now require setting verboser for some Dumps
 !

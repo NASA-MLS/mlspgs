@@ -13,40 +13,40 @@
 module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
 !=============================================================================
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+  use HyperSlabs, only: ExtractArray, GatherBloc
   use BitStuff, only: DumpBitNames
   use Constants, only: Deg2Rad
-  use Diff_1, only: diff, diff_fun
+  use Diff_1, only: Diff, Diff_Fun
   use Dump_Options, only: StatsOnOneLine, NameOnEachLine
   use Dump_0, only: Dump
   use Dump_1, only: Dump
   use Geometry, only: EarthRadA
-  use HDF, only: dfacc_rdonly, dfacc_read, dfacc_create, dfacc_rdwr, &
-    & Dfnt_float32, dfnt_int32, dfnt_float64
-  use HighOutput, only: beVerbose, outputNamedValue
-  use Intrinsic ! "units" type literals, beginning with l_
-  use MLSCommon, only: defaultUndefinedValue, interval_T, &
-    & MLSFile_t, L2Metadata_t
+  use HDF, only: Dfacc_Rdonly, Dfacc_Read, Dfacc_Create, Dfacc_Rdwr, &
+    & Dfnt_Float32, Dfnt_Int32, Dfnt_Float64
+  use HighOutput, only: BeVerbose, OutputNamedValue, StyledOutput
+  use Intrinsic ! "units" Type Literals, Beginning With L
+  use MLSCommon, only: DefaultUndefinedValue, Interval_T, &
+    & MLSFile_T, L2MetaData_T
   use MLSFiles, only: FileNotFound, &
-    & HDFVersion_4, HDFversion_5, wildcardHDFversion, &
-    & Dump, initializeMLSFile, MLS_closeFile, MLS_exists, MLS_openFile, &
-    & MLS_HDF_version, MLS_inqswath
-  use MLSKinds, only: r4, r8, rt
-  use MLSFillValues, only: extractArray, gatherArray, &
-    & IsfillValue, replacefillValues
+    & HDFVersion_4, HDFversion_5, WildcardHDFversion, &
+    & Dump, InitializeMLSFile, MLS_CloseFile, MLS_Exists, MLS_OpenFile, &
+    & MLS_HDF_Version, MLS_Inqswath
+  use MLSKinds, only: R4, R8, Rt
+  use MLSFillValues, only: IsfillValue, ReplacefillValues
   use MLSHDFEOS, only: HSize
   use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning, MLSMessage
-  use MLSNumerics, only: findInRange
-  use MLSFinds, only: findFirst, findLast, findUnique
-  use MLSSets, only: findIntersection, intersection
-  use MLSStrings, only: capitalize, lowercase
-  use MLSStringLists, only: extractSubstring, &
-    & GetHashElement, getStringElement, getUniqueList, &
-    & List2Array, numStringElements, removeListFromList, replaceSubstring, &
-    & StringElementNum, switchDetail
-  use Output_m, only: blanks, output, resumeOutput, suspendOutput
-  use String_table, only: display_string
-  use Time_M, only: SayTime, configureSayTime, Time_Now
-  use Trace_m, only: trace_begin, trace_end
+  use MLSNumerics, only: FindInRange
+  use MLSFinds, only: FindFirst, FindLast, FindUnique
+  use MLSSets, only: FindIntersection, Intersection
+  use MLSStrings, only: Capitalize, Lowercase
+  use MLSStringLists, only: ExtractSubstring, &
+    & GetHashElement, GetStringElement, GetUniqueList, &
+    & List2Array, NumStringElements, RemoveListFromList, ReplaceSubstring, &
+    & StringElementNum, SwitchDetail
+  use Output_M, only: Blanks, Output, ResumeOutput, SuspendOutput
+  use String_Table, only: Display_String
+  use Time_M, only: SayTime, ConfigureSayTime, Time_Now
+  use Trace_M, only: Trace_Begin, Trace_End
 
   implicit none
 
@@ -435,7 +435,7 @@ contains ! =====     Public Procedures     =============================
     ! This call has been altered recently, so that it can be used to create
     ! a swath as well as adding to one. 
 
-    use MLSHDFEOS, only: MLS_swath_in_file
+    use MLSHDFEOS, only: MLS_Swath_In_File
 
     ! Arguments
 
@@ -842,37 +842,37 @@ contains ! =====     Public Procedures     =============================
       call dump( whichLevels(1:useLevels), 'whichLevels' )
       call dump( whichTimes(1:useTimes), 'whichTimes' )
     endif
-    call GatherArray ( l2gp%pressures    , ol2gp%pressures    , &
+    call GatherBloc ( l2gp%pressures    , ol2gp%pressures    , &
       & whichLevels(1:useLevels) )
-    call GatherArray ( l2gp%frequency    , ol2gp%frequency    , &
+    call GatherBloc ( l2gp%frequency    , ol2gp%frequency    , &
       & whichFreqs(1:useFreqs) )
-    call GatherArray ( l2gp%latitude     , ol2gp%latitude     , &
+    call GatherBloc ( l2gp%latitude     , ol2gp%latitude     , &
       & whichTimes(1:useTimes) )
-    call GatherArray ( l2gp%longitude    , ol2gp%longitude    , &
+    call GatherBloc ( l2gp%longitude    , ol2gp%longitude    , &
       & whichTimes(1:useTimes) )
-    call GatherArray ( l2gp%solarTime    , ol2gp%solarTime    , &
+    call GatherBloc ( l2gp%solarTime    , ol2gp%solarTime    , &
       & whichTimes(1:useTimes) )
-    call GatherArray ( l2gp%solarZenith  , ol2gp%solarZenith  , &
+    call GatherBloc ( l2gp%solarZenith  , ol2gp%solarZenith  , &
       & whichTimes(1:useTimes) )
-    call GatherArray ( l2gp%losAngle     , ol2gp%losAngle     , &
+    call GatherBloc ( l2gp%losAngle     , ol2gp%losAngle     , &
       & whichTimes(1:useTimes) )
-    call GatherArray ( l2gp%geodAngle    , ol2gp%geodAngle    , &
+    call GatherBloc ( l2gp%geodAngle    , ol2gp%geodAngle    , &
       & whichTimes(1:useTimes) )
-    call GatherArray ( l2gp%time         , ol2gp%time         , &
+    call GatherBloc ( l2gp%time         , ol2gp%time         , &
       & whichTimes(1:useTimes) )
-    call GatherArray ( l2gp%chunkNumber  , ol2gp%chunkNumber  , &
+    call GatherBloc ( l2gp%chunkNumber  , ol2gp%chunkNumber  , &
       & whichTimes(1:useTimes) )
-    call GatherArray ( l2gp%l2gpValue    , ol2gp%l2gpValue    , &
+    call GatherBloc ( l2gp%l2gpValue    , ol2gp%l2gpValue    , &
       & whichFreqs(1:useFreqs), whichLevels(1:useLevels), whichTimes(1:useTimes) )
-    call GatherArray ( l2gp%l2gpPrecision, ol2gp%l2gpPrecision, &
+    call GatherBloc ( l2gp%l2gpPrecision, ol2gp%l2gpPrecision, &
       & whichFreqs(1:useFreqs), whichLevels(1:useLevels), whichTimes(1:useTimes) )
-    call GatherArray ( l2gp%status       , ol2gp%status       , &
+    call GatherBloc ( l2gp%status       , ol2gp%status       , &
       & whichTimes(1:useTimes) )
-    call GatherArray ( l2gp%quality      , ol2gp%quality      , &
+    call GatherBloc ( l2gp%quality      , ol2gp%quality      , &
       & whichTimes(1:useTimes) )
-    call GatherArray ( l2gp%convergence  , ol2gp%convergence  , &
+    call GatherBloc ( l2gp%convergence  , ol2gp%convergence  , &
       & whichTimes(1:useTimes) )
-    ! call GatherArray ( l2gp%AscDescMode    , ol2gp%AscDescMode    , &
+    ! call GatherBloc ( l2gp%AscDescMode    , ol2gp%AscDescMode    , &
     !   & whichTimes(1:useTimes) )
     do i=1, useTimes
       l2gp%AscDescMode(i) = ol2gp%AscDescMode(whichTimes(i))
@@ -884,8 +884,8 @@ contains ! =====     Public Procedures     =============================
   ! vector quantity
 
   subroutine ConvertL2GPToQuantity ( l2gp, Quantity )
-    use quantityTemplates, only: setUpNewQuantityTemplate
-    use vectorsModule, only: vectorValue_t, createVectorValue
+    use QuantityTemplates, only: SetUpNewQuantityTemplate
+    use VectorsModule, only: VectorValue_T, CreateVectorValue
     ! Dummy arguments
     type (L2GPData_T), intent(in)   ::     l2gp
     type (VectorValue_T), intent(out)  ::  Quantity
@@ -909,8 +909,8 @@ contains ! =====     Public Procedures     =============================
 
   subroutine cpHE5GlobalAttrs( File1Handle, File2Handle, status )
   ! Copy global attributes from file 1 to file 2
-    use PCfhdr, only: globalAttributes_t, globalAttributes, &
-      & dumpGlobalAttributes, HE5_Readglobalattr, HE5_Writeglobalattr
+    use PCfhdr, only: GlobalAttributes_T, GlobalAttributes, &
+      & DumpGlobalAttributes, HE5_Readglobalattr, HE5_Writeglobalattr
     ! Args
     integer, intent(in)                          :: File1Handle
     integer, intent(in)                          :: File2Handle
@@ -968,7 +968,7 @@ contains ! =====     Public Procedures     =============================
     ! which guarantees that any profiles with Fill values among the
     ! geolocations are marked with DANGERWILLROBINSON status
 
-    use HGridsDatabase, only: HGrid_t
+    use HGridsDatabase, only: HGrid_T
     ! Arguments
 
     type (L2Metadata_T) :: l2metaData
@@ -1119,7 +1119,7 @@ contains ! =====     Public Procedures     =============================
     ! If file2 doesn't exist yet, or if create2 is TRUE, it'll create it
     ! Optionally repairs l2gpdata
 
-    use HGridsDatabase, only: hgrid_t
+    use HGridsDatabase, only: HGrid_T
     ! Arguments
 
     type (L2Metadata_T) :: l2metaData
@@ -1283,7 +1283,7 @@ contains ! =====     Public Procedures     =============================
     ! (see cpL2GPData_fileID)
     ! If L2GPfile2 doesn't exist yet, or if create2 is TRUE, it'll create it
     ! Optionally repairs l2gpdata
-    use HGridsDatabase, only: HGrid_t
+    use HGridsDatabase, only: HGrid_T
     ! Arguments
 
     type (L2Metadata_T) :: l2metaData
@@ -1355,8 +1355,8 @@ contains ! =====     Public Procedures     =============================
   subroutine cpL2GPDataToAttribute( L2GPfile1, L2GPfile2, &
     & swathname, attrname )
     !------------------------------------------------------------------------
-    use HDFEOS5, only: HE5T_native_real
-    use MLSHDFEOS, only: HE5_ehwrglatt, hsize
+    use HDFEOS5, only: HE5T_Native_Real
+    use MLSHDFEOS, only: HE5_EhwrGlAtt, HSize
 
     ! Given MLSFiles L2GPfile1 and L2GPfile2,
     ! This routine copies the l2gpdata named swathname from 1 to the
@@ -2430,8 +2430,7 @@ contains ! =====     Public Procedures     =============================
     call output ( '============ L2GP Data Base ============', advance='yes' )
     call output ( ' ', advance='yes' )
     if ( present(name) ) then
-      call output ( 'L2GP Database name: ', advance='no' )
-      call output ( name, advance='yes' )
+      call StyledOutput ( 'L2GP Database name: ' // trim(Name), options )
     endif
     if ( size(l2gp) < 1 ) then
       call output ( '**** L2GP Database empty ****', advance='yes' )
@@ -2590,8 +2589,8 @@ contains ! =====     Public Procedures     =============================
     FillValue = real(l2gp%MissingValue, r8)
     FillValueGP = l2gp%MissingValue
     if ( showMe(.true., myFields, 'swathname') ) then
-      call output ( 'L2GP Data: (swath name) ')
-      call output ( trim(l2gp%name) )
+      call StyledOutput ( 'L2GP Data: (swath name) ' // trim(l2gp%name), &
+        & options='--Banner' )
       if ( NAMEINDEXEVERSET ) then
         call output ( ', (parser name) ')
         if(l2gp%nameIndex > 0) then
@@ -2605,15 +2604,6 @@ contains ! =====     Public Procedures     =============================
         call output ( ' ', advance='yes')
       endif
     endif
-!     if ( showMe(.true., myFields, 'quantitytype') ) then
-!       call output ( 'Quantity type: ')
-!       if ( l2gp%QuantityType > 0 ) then
-!         call display_string ( lit_indices(l2gp%QuantityType), &
-!           &             strip=.true., advance='yes' )
-!       else
-!         call output ( '(the QType Index was 0) ', advance='yes')
-!       endif
-!     endif
 
     if ( showMe(myDetails > -2, myFields, 'ntimes') ) then
       call output ( 'nTimes: ')
@@ -2768,7 +2758,7 @@ contains ! =====     Public Procedures     =============================
   subroutine DumpL2GP_attributes_hdf5( l2FileHandle, l2gp, swathName )
   use HE5_SWAPI, only: HE5_SWRdattr, HE5_SWRdlattr
   use MLSHDFEOS, only: MLS_SWAttach, MLS_SWDetach, HE5_EHRdglatt
-  use PCFHdr, only:  globalAttributes_t, HE5_ReadGlobalAttr
+  use PCFHdr, only:  GlobalAttributes_T, HE5_ReadGlobalAttr
     ! Brief description of subroutine
     ! This subroutine dumps the attributes for an l2gp
     ! These include
@@ -2833,11 +2823,11 @@ contains ! =====     Public Procedures     =============================
     else
        name=l2gp%name
     endif
-    call output ( 'L2GP Attributes: (swath name) ')
-    call output ( trim(name), advance='yes' )
+    call outputNamedValue ( 'L2GP Attributes: (swath name) ', trim(name), &
+      & options = '-H' )
     if ( any( rgp /= (/ r4, r8 /) ) ) then
       call MLSMessage ( MLSMSG_Error, ModuleName, & 
-        & 'Attributes have unrecognized numeric data type; should be r4 or r8')
+        & 'Attributes have unrecognized numeric data type; should be r4 or r8' )
     endif
     call List2Array(GeolocationTitles, theTitles, .true.)
     call List2Array(GeolocationUnits, theUnits, .true.)
@@ -3738,8 +3728,8 @@ contains ! =====     Public Procedures     =============================
   use HDFEOS, only: SWInqdims
   use HDFEOS5, only: HE5_SWInqdims, HE5_SWInqdflds, HE5_SWFldinfo
   use MLSHDFEOS, only: MLS_SWAttach, MLS_SWDetach, MLS_SWDiminfo, MLS_SWRdfld
-  use MLSStringLists, only: isInList
-  use HDF5, only: size_t
+  use MLSStringLists, only: IsInList
+  use HDF5, only: Size_T
     !------------------------------------------------------------------------
 
     ! This routine reads an L2GP file, returning a filled data structure and the !
@@ -4155,7 +4145,7 @@ contains ! =====     Public Procedures     =============================
   subroutine OutputL2GP_createFile_MF (l2gp, L2GPFile, &
     & swathName, nLevels, notUnlimited, compressTimes)
 
-  use HDFEOS5, only: HE5S_Unlimited_f
+  use HDFEOS5, only: HE5S_Unlimited_F
   use MLSHDFEOS, only: MLS_SWDetach, &
     & MLS_Swcreate, MLS_DFldsetup, MLS_GFldsetup, MLS_SWDefdim
     ! Brief description of subroutine
@@ -4671,7 +4661,7 @@ contains ! =====     Public Procedures     =============================
   !----------------------------------------  OutputL2GP_attributes_MF  -----
   subroutine OutputL2GP_attributes_MF(l2gp, L2GPFile, swathName)
 
-  use HDFEOS5, only: HE5T_Native_int, HE5T_Native_real, HE5T_Native_double, &
+  use HDFEOS5, only: HE5T_Native_Int, HE5T_Native_Real, HE5T_Native_Double, &
     & MLS_Chartype
   use HE5_SWAPI, only: HE5_SWWrattr, HE5_SWWrlattr
   use MLSHDFEOS, only: MLS_ISGlatt, &
@@ -5141,7 +5131,7 @@ contains ! =====     Public Procedures     =============================
 
   !-----------------------------------------  RepairL2GP_HGrid  -----
   subroutine RepairL2GP_HGrid ( L2GP, HGrid, fields, offset, options )
-    use HGridsDatabase, only: HGrid_t
+    use HGridsDatabase, only: HGrid_T
     ! This routine repairs l2gp1 using values from HGrid
     ! wherever the first has fillvalues
     
@@ -5397,7 +5387,7 @@ contains ! =====     Public Procedures     =============================
 
   elemental function TimeToHoursInDay( time, l2gp ) result( hid )
     ! Given r8 time as tai(s), return rgp hid
-    use Dates_module, only: TAI93S2HID
+    use Dates_Module, only: TAI93S2HID
     ! Args:
     real(r8), intent(in)                      :: time
     type (L2GPData_T), optional, intent(in)   :: l2gp
@@ -5437,6 +5427,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.227  2017/07/19 22:51:50  pwagner
+! Improved appearance and consistency when Diffing L2GPData types; esp. if gold brick
+!
 ! Revision 2.226  2017/03/10 00:40:19  vsnyder
 ! Make intrsctn allocatable
 !

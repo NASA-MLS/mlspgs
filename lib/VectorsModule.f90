@@ -113,29 +113,29 @@ module VectorsModule            ! Vectors in the MLS PGS suite
 
   ! --------------------------------------------------------------------------
 
-  use allocate_deallocate, only: allocate_test, deallocate_test, test_allocate, &
-    & test_deallocate
-  use, intrinsic :: iso_c_binding, only: c_intptr_t, c_loc
-  use bitStuff, only: dumpBitNames, isBitSet
+  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test, Test_Allocate, &
+    & Test_Deallocate
+  use HyperSlabs, only: ExtractArray
+  use, Intrinsic :: Iso_C_Binding, only: C_Intptr_T, C_Loc
+  use BitStuff, only: DumpBitNames, IsBitSet
   use Diff_1, only: Diff
-  use dump_0, only: dump
-  use highOutput, only: outputNamedValue
-  use intrinsic, only: lit_indices, phyq_invalid, l_vmr
-  use lexer_core, only: where_t
-  use MLSFillValues, only: extractArray
-  use MLSFinds, only: findFirst, findUnique
-  use MLSKinds, only: r8, rv
+  use Dump_0, only: Dump
+  use HighOutput, only: OutputNamedValue
+  use Intrinsic, only: Lit_Indices, Phyq_Invalid, L_Vmr
+  use Lexer_Core, only: Where_T
+  use MLSFinds, only: FindFirst, FindUnique
+  use MLSKinds, only: R8, Rv
   use MLSMessageModule, only: MLSMessage, MLSMessageConfig, MLSMSG_Error, &
     & MLSMSG_Warning
-  use MLSSignals_m, only: modules, signals, getSignalName
-  use output_m, only: blanks, newline, output
-  use quantityTemplates, only: quantityTemplate_t, checkIntegrity, &
-    & copyQuantityTemplate, destroyQuantityTemplateContents, dump, &
-    & nullifyQuantityTemplate
-  use string_table, only: display_string, get_string_rude=>get_string, &
-    & isStringInTable, string_length
-  use symbol_table, only: enter_terminal
-  use symbol_types, only: t_identifier
+  use MLSSignals_M, only: Modules, Signals, GetSignalName
+  use Output_M, only: Blanks, Newline, Output
+  use QuantityTemplates, only: QuantityTemplate_T, CheckIntegrity, &
+    & CopyQuantityTemplate, DestroyQuantityTemplateContents, Dump, &
+    & NullifyQuantityTemplate
+  use String_Table, only: Display_String, Get_String_Rude=>get_String, &
+    & IsStringInTable, String_Length
+  use Symbol_Table, only: Enter_Terminal
+  use Symbol_Types, only: T_Identifier
 
   implicit none
   private
@@ -796,7 +796,7 @@ contains ! =====     Public Procedures     =============================
   ! Check whether a vector quantity has any NaNs in any of its VALUES, returning
   ! TRUE if so.
   ! This doesn't check the quantity templates.
-    use ieee_arithmetic, only: ieee_is_nan
+    use IEEE_Arithmetic, only: IEEE_Is_Nan
     type (VectorValue_t), intent(in) :: VectorQuantity
     integer, intent(in) :: Print ! <= 0 => No printing
                                  !  > 0 => Call dump with details = print - 1
@@ -1166,8 +1166,8 @@ contains ! =====     Public Procedures     =============================
     & highBound, lowBound, noValues, where ) &
     & result ( vector )
 
-    use toggles, only: gen, levels, toggle
-    use trace_m, only: trace_begin, trace_end
+    use Toggles, only: Gen, Levels, Toggle
+    use Trace_M, only: Trace_Begin, Trace_End
 
   ! This routine creates an empty vector according to a given template
   ! Its mask is not allocated.  Use CreateMask if one is needed.
@@ -1675,8 +1675,8 @@ contains ! =====     Public Procedures     =============================
   contains
     ! - - - - - - - - - - -  OutputNiceSurface
     subroutine OutputNiceSurface ( value, coordinate )
-      use intrinsic, only: l_angle, l_geodaltitude, l_gph, l_none, &
-        & l_pressure, l_theta, l_zeta
+      use Intrinsic, only: L_Angle, L_Geodaltitude, L_Gph, L_None, &
+        & L_Pressure, L_Theta, L_Zeta
       real(r8), intent(in) :: VALUE
       integer, intent(in) :: COORDINATE
       ! Executable code
@@ -1733,8 +1733,8 @@ contains ! =====     Public Procedures     =============================
   !                   only if bit NOT set at all heights, channels
   !
   subroutine DumpQuantityMask ( VECTORQUANTITY, DETAILS, OPTIONS )
-    use MLSStringLists, only: expandStringRange, optionDetail
-    use MLSStrings, only: readNumsFromChars
+    use MLSStringLists, only: ExpandStringRange, OptionDetail
+    use MLSStrings, only: ReadNumsFromChars
     type (VectorValue_T), intent(in)       :: VectorQuantity
     integer, intent(in), optional          :: DETAILS ! if < 0 just dump summary
     character(len=*), optional, intent(in) :: options
@@ -1918,7 +1918,7 @@ contains ! =====     Public Procedures     =============================
     & COHERENT, STACKED, REGULAR, MINORFRAME, MAJORFRAME, &
     & THENDITCHAFTERDUMP, CLEAN )
 
-    use Lexer_Core, only: print_source
+    use Lexer_Core, only: Print_Source
 
     ! dump quantities in vector according to whether they match
     ! all of the optional args: name, ..,majorframe
@@ -2307,7 +2307,7 @@ contains ! =====     Public Procedures     =============================
 
   ! ---------------------------------------  Dump_Vector_Template  -----
   subroutine Dump_Vector_Template ( VECTOR_TEMPLATE, DETAILS, QUANTITIES )
-    use QuantityTemplates, only: dump
+    use QuantityTemplates, only: Dump
     type(VectorTemplate_T), intent(in) :: VECTOR_TEMPLATE
     integer, intent(in), optional :: DETAILS ! <= 0 => Don't dump arrays
                                              ! > 0  => Do dump arrays
@@ -2567,7 +2567,7 @@ contains ! =====     Public Procedures     =============================
 
   function GetVectorQuantityIndexByName_char ( VECTOR, QUANTITYNAME, &
     & NOERR ) result( index )
-    use MLSStrings, only: lowercase
+    use MLSStrings, only: Lowercase
 
   ! Given a quantity name, this function returns the index
   ! of the quantity within the vector matching that name.
@@ -2613,8 +2613,8 @@ contains ! =====     Public Procedures     =============================
   ! specified type, as well as the specified molecule and/or radiometer
   ! index, is returned.
 
-    use MLSSignals_m, only: getRadiometerName
-    use molecules, only: isExtinction
+    use MLSSignals_m, only: GetRadiometerName
+    use Molecules, only: IsExtinction
 
     ! Dummy arguments
     type (Vector_T), intent(in) :: VECTOR
@@ -2950,7 +2950,7 @@ contains ! =====     Public Procedures     =============================
 
   ! --------------------------------------------  RemapVectorMask  -----
   subroutine RemapVectorMask ( Value )
-    use Pointer_Rank_Remapping, only: remap
+    use Pointer_Rank_Remapping, only: Remap
     type ( vectorValue_t ) :: Value
     call remap ( value%mask1, value%mask, &
       & (/ value%template%noChans *     &
@@ -2971,7 +2971,7 @@ contains ! =====     Public Procedures     =============================
 
   ! -------------------------------------------  RemapVectorValue  -----
   subroutine RemapVectorValue ( Value )
-    use Pointer_Rank_Remapping, only: remap
+    use Pointer_Rank_Remapping, only: Remap
     type ( vectorValue_t ) :: Value
     call remap ( value%value1, value%values, &
       & (/ value%template%noChans *     &
@@ -3498,6 +3498,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.207  2016/11/15 19:29:55  pwagner
+! Prevent error from 0-size arrays when remapping pointer rank
+!
 ! Revision 2.206  2016/07/28 01:42:27  vsnyder
 ! Refactoring dump and diff
 !
