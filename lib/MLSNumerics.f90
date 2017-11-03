@@ -364,6 +364,7 @@ module MLSNumerics              ! Some low level numerical stuff
 
   interface FindInRange
     module procedure FindInRange_int, FindInRange_r4, FindInRange_r8
+    module procedure FindInRange_2d_int, FindInRange_2d_r4, FindInRange_2d_r8
   end interface
 
   interface IFApproximate
@@ -2614,6 +2615,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.97  2017/11/03 23:34:06  pwagner
+! Fixed error where we omitted module procedure FindInRange_2d versions
+!
 ! Revision 2.96  2017/11/03 19:56:36  pwagner
 ! Most array gymnastics moved from MLSFillValues to HyperSlabs module
 !
