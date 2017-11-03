@@ -14,6 +14,7 @@ module GriddedData ! Contains the derived TYPE GriddedData_T
   use Allocate_Deallocate, only: Allocate_Test, Byte_Size, Bytes, &
     & Deallocate_Test, NoBytesAllocated, &
     & Test_Allocate, Test_Deallocate
+  use HyperSlabs, only: EssentiallyEqual
   use Dates_Module, only: TAI2CCSDS
   use Dump_0, only: Dump
   use Dump_1, only: DumpDates
@@ -187,7 +188,6 @@ contains
   subroutine ConcatenateGriddedData_2 ( A, B, X )
     ! This routine takes two grids A and B, B dated after A and tries
     ! to produce a third grid which is a combination of A and B
-    use MLSFillValues, only: EssentiallyEqual
     type ( GriddedData_T ), intent(in) :: A
     type ( GriddedData_T ), intent(in) :: B
     type ( GriddedData_T ), intent(inout) :: X ! inout to let us deallocate it
@@ -285,7 +285,6 @@ contains
     ! This routine takes an array of grids and a set of index values
     ! to produce a third grid which is a combination database elements
     ! at the index values
-    use MLSFillValues, only: EssentiallyEqual
     type ( GriddedData_T ), dimension(:), intent(in) :: database
     integer, dimension(:), intent(in) :: indices ! index values
     type ( GriddedData_T ), intent(inout) :: X ! inout to let us deallocate it
@@ -376,7 +375,7 @@ contains
     ! Converts two eta-level grids, one of them pressures, 
     ! to a pressure-level Grid
     use MLSNumerics, only: Interpolatevalues, Uselookuptable
-    use dump_0, only: DUMP
+    use dump_0, only: Dump
     type ( GriddedData_T ), intent(in)  :: TGrid  ! E.g., T on eta surfaces
     type ( GriddedData_T ), intent(in)  :: PGrid  ! Pressures on eta surfaces
     type ( GriddedData_T ), intent(in)  :: NGrid  ! What surfaces to use
@@ -537,8 +536,8 @@ contains
 
     use Allocate_Deallocate, only: Test_Deallocate
 
-    use Toggles, only: TOGGLE, GEN
-    use Trace_M, only: TRACE_BEGIN, TRACE_END
+    use Toggles, only: Toggle, Gen
+    use Trace_M, only: Trace_begin, Trace_end
 
     ! Dummy argument
     type (GriddedData_T), dimension(:), pointer :: Database
@@ -815,10 +814,10 @@ contains
 
   ! --------------------------------------------  DumpGriddedData  -----
   subroutine DumpGriddedData ( GriddedData, Details, options )
-    use Dump_0, only: dump
-    use ieee_arithmetic, only: ieee_is_finite, ieee_is_nan
-    use Intrinsic, only: lit_indices, spec_indices
-    use String_Table, only: display_string
+    use Dump_0, only: Dump
+    use Ieee_Arithmetic, only: Ieee_Is_Finite, Ieee_Is_Nan
+    use Intrinsic, only: Lit_Indices, Spec_Indices
+    use String_Table, only: Display_String
 
     ! Imitating what dump_pointing_grid_database does, but for gridded data
     ! which may come from climatology, ncep, dao
@@ -1308,8 +1307,7 @@ contains
   subroutine SliceGriddedData ( grid, slice, &
     & heights, lats, lons, lsts, szas, dates, missingValue )
 
-    use MLSFillValues, only: EssentiallyEqual
-    use MLSNumerics, only: HUNT
+    use MLSNumerics, only: Hunt
 
     type ( GriddedData_T ), intent(inout) :: GRID ! Input grid
     real(rgr), dimension(:,:,:,:,:,:), intent(out) :: SLICE ! Result
@@ -1858,6 +1856,9 @@ end module GriddedData
 
 !
 ! $Log$
+! Revision 2.83  2017/11/03 20:01:16  pwagner
+! Most array gymnastics moved from MLSFillValues to HyperSlabs module
+!
 ! Revision 2.82  2017/08/23 16:45:25  pwagner
 ! Fixed bug when Dates are before 1993
 !
