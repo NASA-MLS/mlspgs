@@ -24,6 +24,7 @@ module Dump_0
 ! This has become too long--we may split it, putting diffs into a higher-level
 ! and separate Dump_1.f90 module
 
+  use HyperSlabs, only: Bandwidth, Collapse
   use BitStuff, only: MaxBitNumber, WhichBitsAreSet
   use Dump_Options, only: AfterSub, AuBrick, MyBandwidth=>Bandwidth, &
     & Clean, CollapseIt, CollapseOptions,  &
@@ -38,8 +39,7 @@ module Dump_0
     & TrimIt, Unique, Verbose, WholeArray
   use HighOutput, only: Banner, BlanksToColumn, Headline, &
     & NumNeedsFormat, OutputNamedValue
-  use MLSFillValues, only: Bandwidth, Collapse, &
-    & InfFunction, IsFinite, IsInfinite, IsNaN, NaNFunction, &
+  use MLSFillValues, only: InfFunction, IsFinite, IsInfinite, IsNaN, NaNFunction, &
     & WhereAreTheInfs, WhereAreTheNaNs
   use MLSFinds, only: FindUnique
   use MLSStats1, only: FillValueRelation, &
@@ -1763,6 +1763,9 @@ contains
 end module Dump_0
 
 ! $Log$
+! Revision 2.150  2017/11/03 20:01:40  pwagner
+! Most array gymnastics moved from MLSFillValues to HyperSlabs module
+!
 ! Revision 2.149  2017/10/11 20:56:23  pwagner
 ! Fixed bug in Dump_2D_Logical
 !
