@@ -1247,7 +1247,7 @@ op:     do j = 2, nsons(theTree)
     ! ..........................................  ValidateSignals  .....
     subroutine ValidateSignals
       use MLSSignals_m, only: GetSidebandStartStop
-      use MLSFillValues, only: EssentiallyEqual
+      use HyperSlabs, only: EssentiallyEqual
 
       ! Make sure all the signals we're dealing with are same module,
       ! radiometer and sideband.
@@ -1575,6 +1575,9 @@ op:     do j = 2, nsons(theTree)
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.188  2017/11/03 20:59:08  pwagner
+! Most array gymnastics moved from MLSFillValues to HyperSlabs module
+!
 ! Revision 2.187  2017/09/14 18:36:26  vsnyder
 ! Cannonball polishing
 !
