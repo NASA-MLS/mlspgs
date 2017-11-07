@@ -30,13 +30,16 @@ $1,{O3_HR}, {
    {  source=aPriori.$1_HR, precision=aPrioriPrecision.$1_HR},
    {  source=aPriori.$1, precision=aPrioriPrecision.$1})})
   
+!ifdef(allAprioriProducts,{},{
+!define(allAprioriProducts,{!allStandardProducts})
+})
 !divert!dnl
 
   !ifdef(flagWriteAPrioriToDGG,{
 begin Join
-  !forall(LabelOneAPQuantity,!allStandardProducts)
+  !forall(LabelOneAPQuantity,!allAprioriProducts)
   DirectWrite, hdfVersion=!hdfVersion, $
-  type=l2dgg !forall(DirectWriteOneAPQuantity,!allStandardProducts)
+  type=l2dgg !forall(DirectWriteOneAPQuantity,!allAprioriProducts)
   
 end Join
 ;begin Join
@@ -47,6 +50,9 @@ end Join
   })
 !divert(-1)
 ;$Log$
+;Revision 1.6  2016/01/05 00:34:13  pwagner
+;Supplied command to resume output
+;
 ;Revision 1.5  2014/12/11 17:53:10  pwagner
 ;Ascend/Descend Mode no longer used in all l2gp and dgg DirectWrites so not Filled
 ;
