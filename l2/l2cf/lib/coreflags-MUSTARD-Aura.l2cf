@@ -25,6 +25,15 @@ begin Fill
   !makeQualityForOneProduct(product=GPH,chisqScale=1.0,minRads=150,cloudMax=30K,cloudMin= -4K)
   !makeStatusForOneProduct(product=GPH,chisqScale=1.0,minRads=150,cloudMax=30K,cloudMin= -4K)
 
+  ;; ------------------------------------ O3-FinalPtan
+  !define(flaggingBands,{1})
+  !define(flaggingRadiometers,{R1A,R1B})!dnl
+  !makeQualityForOneProduct(product=O3,chisqScale=1.0,minRads=150,cloudMax=30K,cloudMin= -4K)
+  !makeStatusForOneProduct(product=O3,chisqScale=1.0,minRads=150,cloudMax=30K,cloudMin= -4K)
+
 end Fill
 
 ; $Log$
+; Revision 1.1  2015/11/18 18:36:30  pwagner
+; Added for vam1.00
+;
