@@ -480,11 +480,13 @@ contains ! =====     Public Procedures     =============================
       call resumeOutput
     endif
 
-    if ( detail < 2 ) then
-      StampOptions%interval = 25 ! print header once every 25 lines
+    if ( .not. got(f_stamp) ) then
+      ! No stamp, no separate headline
+    elseif ( detail < 2 ) then
+      StampOptions%interval = 25 ! print a separate headline once every 25 lines
     elseif ( detail < 3 ) then
       ! -Sphase2
-      StampOptions%interval = 10 ! print header once every 10 lines
+      StampOptions%interval = 10 ! print a separate headline once every 10 lines
     else
       ! -Sphase3 or more
       StampOptions%interval = 1 ! stamp every line with time, phase name
@@ -492,6 +494,8 @@ contains ! =====     Public Procedures     =============================
     
     if ( name < 1 ) return
     call add_to_phase_timing( trim(phaseString) )
+    if ( got(f_stamp) ) &
+      & stampOptions%textCode = ': : ' // trim(phaseString) // ' : :'
     call outputNamedValue( 'Resetting to 0 sys_memory which was', sys_memory_max )
     sys_memory_max     = 0.0
     if ( switchDetail ( switches, 'bool' ) > 0 ) &
@@ -1027,6 +1031,9 @@ END MODULE MLSL2Timings
 
 !
 ! $Log$
+! Revision 2.69  2017/11/15 00:18:11  pwagner
+! Stamp with phase name if /stamp; dont reset interval unless /stamp
+!
 ! Revision 2.68  2017/10/18 00:01:08  pwagner
 ! interval had been a temporary local variable, instead of StampOptions component; fixed
 !
