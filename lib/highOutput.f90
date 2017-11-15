@@ -704,7 +704,6 @@ contains
     character(len=*), intent(in), optional :: fillchar  ! default is ' '
     logical, intent(in), optional          :: dont_stamp ! Prevent double-stamping
     ! Internal variables
-    integer :: atColumn
     integer :: nblanks
     ! Executable
     if ( getOutputStatus( 'physicalcolumn' ) == 1 ) then
@@ -837,6 +836,8 @@ contains
      call blanks(80, fillChar='-', advance='yes')
     call headline( 'Summary of automatic stamp options', &
       & fillChar='-', before='*', after='*' )
+     call outputNamedValue ( 'never stamp', options%neverStamp, advance='yes', &
+       & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
      call outputNamedValue ( 'stamp end of line', options%post, advance='yes', &
        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
      call outputNamedValue ( 'show time', options%showTime, advance='yes', &
@@ -2191,6 +2192,7 @@ contains
   !          <<d>>x          divider: inserts a wall of x's
   subroutine outputTableArray ( array, sep, border, cellWidth, &
     & interior, headliner, alignment )
+    ! use Dump_0, only: Dump
     ! Args
     character(len=*), dimension(:,:),intent(in)    :: array
     character(len=1), optional, intent(in)         :: sep       ! between cols
@@ -2217,6 +2219,7 @@ contains
     integer, parameter                             :: leftPadding = 1
     integer, parameter                             :: rightPadding = 1
     integer                                        :: totalWidth
+    logical, parameter                             :: debug=.false.
     ! Executable
     minWidth = 3 ! Don't know why, but this works
     if ( present(cellWidth) ) minWidth = cellWidth
@@ -2243,6 +2246,20 @@ contains
       totalWidth = totalWidth + widths(j) + leftPadding + rightPadding
       if ( j > 1 .and. j < size(array,2) ) totalWidth = totalWidth + 1
     enddo
+    if ( debug ) then
+      ! call dump( widths, 'widths' )
+      call outputNamedValue( 'totalWidth', totalWidth )
+      do i=1, size(array,1)
+        call output ( i, advance='no' )
+        call blanks(2)
+        call output( trim(array(i, 1)), advance='yes' )
+      enddo
+      do i=1, size(array,1)
+        call output ( i, advance='no' )
+        call blanks(2)
+        call output( trim(array(i, 2)), advance='yes' )
+      enddo
+    endif
     if ( len_trim(myBorder) > 0 ) &
       & call output( repeat( myBorder, totalWidth ), advance='yes' )
     do i=1, size(array,1)
@@ -2430,6 +2447,9 @@ contains
 end module HIGHOUTPUT
 
 ! $Log$
+! Revision 2.20  2017/11/15 00:01:51  pwagner
+! Print options%neverStamp as part of Dump
+!
 ! Revision 2.19  2017/10/03 21:44:11  pwagner
 ! restored bars to Banner; improved comments showing effect of BannerPattern
 !
