@@ -15,6 +15,9 @@ module Fill                     ! Create vectors and fill them.
 
   use MLSCommon, only: MLSFile_T, DefaultUndefinedValue
   use MLSKinds, only: R8, Rv
+  use HighOutput, only: Dump
+  use Output_M, only: OutputOptions, StampOptions
+  use MLSMessageModule, only: DumpConfig
   ! This module performs the Fill operation in the Level 2 software.
   ! This takes a vector template, and creates and fills an appropriate vector
 
@@ -103,7 +106,7 @@ contains ! =====     Public Procedures     =============================
     use Hessianmodule_1, only: AddhessiantoDatabase, Createemptyhessian, &
       & Streamlinehessian, Hessian_T
     use HGridsDatabase, only: HGrids_T
-    use HighOutput, only: OutputNamedValue
+    use HighOutput, only: LetsDebug, OutputNamedValue
     ! We Need Many Things From Init_Tables_Module. First The Fields:
     use Init_Tables_Module, only: F_A, F_Additional, F_Allowmissing, &
       & F_Aprioriprecision, F_Aspercentage, F_Autofill, F_Avoidbrightobjects, &
@@ -222,8 +225,7 @@ contains ! =====     Public Procedures     =============================
       & Get_Spec_Id
     use Next_Tree_Node_M, only: Next_Tree_Node, Next_Tree_Node_State
     use Output_M, only: Output, RevertOutput, SwitchOutput
-    use PCFHdr, only: GlobalAttributes, &
-      & GranuleDay, GranuleDayOfYear, GranuleMonth, GranuleYear
+    use PCFHdr, only: GranuleDay, GranuleDayOfYear, GranuleMonth, GranuleYear
     use PFAData_M, only: Flush_PFAData
     use QuantityTemplates, only: QuantityTemplate_T, &
       & ModifyQuantityTemplate
@@ -361,6 +363,7 @@ contains ! =====     Public Procedures     =============================
     integer :: EARTHRADIUSQTYINDEX
     integer :: EARTHRADIUSVECTORINDEX
     character(len=256) :: EXTRAOBJECTS  ! Which bright objects to avoid
+    logical :: Debug
     integer :: Diagonal                 ! Index of diagonal vector in database
     !                                     -- for Covariance
     character(len=16) :: DIMLIST        ! 's', 'c', or 'i' in manipulation's shift
@@ -1072,11 +1075,20 @@ contains ! =====     Public Procedures     =============================
 
       case ( s_phase ) ! ===============================  Phase ==
         ! Set the name for this phase
+        debug = LetsDebug ( 'phase', 4 )
         call addPhaseToPhaseNames ( vectorname, key )
-
+        if ( debug ) then
+          call Dump( OutputOptions )
+          call Dump( StampOptions )
+          call DumpConfig
+        endif
+ 
       case ( s_changeSettings ) ! ===============================  changeSettings ==
         ! Change settings for this phase
         call addPhaseToPhaseNames ( 0, key )
+        call Dump( OutputOptions )
+        call Dump( StampOptions )
+        call DumpConfig
 
       case ( s_transfer ) ! ===============================  Transfer ==
         ! Here we're on a transfer instruction
@@ -3325,6 +3337,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.470  2017/11/15 00:38:35  pwagner
+! Must Dump options for output if debugging a phase or changing settings
+!
 ! Revision 2.469  2017/07/27 16:57:37  pwagner
 ! Geolocations now add day, month, etc.; DirectRead may look under groupName
 !
