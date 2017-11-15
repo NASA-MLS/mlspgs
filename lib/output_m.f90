@@ -440,7 +440,6 @@ contains
     integer :: numSoFar
     character(len=16) :: pattern
     integer :: patternLength
-    character(len=1) :: patternChar
     integer :: patternNum
     integer :: theRest
     ! Executable
@@ -494,7 +493,7 @@ contains
   ! print or log OutputLines
   ! then reset to ''
   subroutine flushOutputLines ( prUnit )
-    use, intrinsic :: ISO_Fortran_Env, only: Output_Unit
+    ! use, intrinsic :: ISO_Fortran_Env, only: Output_Unit
     ! Args
     integer, optional, intent(in) :: prUnit ! How do you want 'em?
     ! Local arguments
@@ -932,7 +931,7 @@ contains
         ! Time to add stamp as a page header on its own line
         stamped_chars = stamp(' ')
         stamped = .true.
-        if ( doIt ) then
+        if ( doIt .and. len_trim(stamped_chars) > 0 ) then
           write ( theUnit, '(a)', advance='yes' ) trim(stamped_chars)
         end if
       end if
@@ -1702,6 +1701,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.133  2017/11/15 00:00:17  pwagner
+! Avoid adding unwanted blank lines when stamping
+!
 ! Revision 2.132  2017/10/03 21:42:54  pwagner
 ! Added printOutputStatus; improved comments showing patterns
 !
