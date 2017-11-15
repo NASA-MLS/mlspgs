@@ -12,7 +12,9 @@
 module GLOBAL_SETTINGS
 
   use MLSCommon, only: FileNameLen, MLSFile_T, NameLen, Tai93_Range_T
-  use HighOutput, only: BeVerbose, OutputCalendar, OutputNamedValue
+  use HighOutput, only: AddRow, AddRow_Divider, AddRow_Header, &
+    & BeVerbose, OutputCalendar, OutputNamedValue, OutputTable, StartTable, &
+    & StyledOutput
   use Output_M, only: Blanks, NewLine, Output, &
     & RevertOutput, SwitchOutput
 
@@ -136,7 +138,7 @@ contains
   ! Remember--MAFs start at 0, not 1
   function L2ProfileToL1MAF ( profile, fileDatabase ) result( MAF )
     use Dump_0, only: Dump
-    use L1BData, only: L1BData_t, NameLen, &
+    use L1BData, only: L1BData_T, NameLen, &
       & AssembleL1BQtyName, DeallocateL1BData, &
       & ReadL1BData 
     use L2GPData, only: L2GPData_t, L2GPNameLen, MaxSwathNamesBufSize, &
@@ -1109,8 +1111,6 @@ contains
       & filedatabase, DirectDatabase, ForwardModelConfigDatabase, &
       & LeapSecFileName, details )
     use Dump_1, only: Dump
-    use HighOutput, only: AddRow, AddRow_Divider, AddRow_Header, &
-      & OutputTable, StartTable
     use Open_Init, only: DumpL1BDatabase
       ! Dump info obtained during OpenAndInitialize and global_settings:
       ! L1B databse
@@ -1220,26 +1220,35 @@ contains
         'Prohibited parameter or specification in GlobalSettings section' )
     end subroutine NotAllowed
 
-    ! ---------------------------------------------  proclaim  -----
-    subroutine proclaim ( Name, l1_type, hdfVersion )
-      character(LEN=*), intent(in)   :: Name
-      character(LEN=*), intent(in)   :: l1_type
-      integer, optional,  intent(in) :: hdfVersion
+  ! ---------------------------------------------  proclaim  -----
+  subroutine proclaim ( FullName, l1_type, hdfVersion )
+    use MLSFiles, only: MLS_HDF_Version, Split_Path_Name, WildCardHDFVersion
+    character(len=*), intent(in)   :: FullName
+    character(len=*), intent(in)   :: l1_type
+    integer, optional,  intent(in) :: hdfVersion
 
-      call output ( 'Level 1 product type : ' )
-      call output ( trim(l1_type), advance='no')
-      if ( present(hdfVersion) ) then
-        call blanks(4)
-        call output ( 'hdf ' )
-        call output ( hdfVersion, advance='yes')
+    ! Local variables
+    integer                        :: myhdfVersion
+    character(len=len(FullName))   :: name, path
+    integer, save                  :: trip = 0
+    ! Executable
+    trip = trip + 1
+    if ( trip < 2 ) call StyledOutput ( 'Level 1 products', options='--Banner' )
+    call split_path_name ( FullName, path, name )
+    call StartTable
+    call addRow ( 'type', trim(l1_type) )
+    if ( present(hdfVersion) ) then
+      if ( hdfVersion == WildCardHDFVersion ) then
+        myhdfVersion = mls_hdf_version(trim(Name))
       else
-        call output ( ' ', advance='yes')
+        myhdfVersion = hdfVersion
       end if
-      call blanks(15)
-      call output ( 'name : ' )
-      call blanks(8)
-      call output ( trim(Name), advance='yes')
-    end subroutine proclaim
+      call addRow ( 'hdf version', myhdfVersion )
+    end if
+    call addRow ( 'path', trim(path) )
+    call addRow ( 'name', trim(name) )
+    Call OutputTable ( sep='|', border='-' )
+  end subroutine proclaim
 
     ! --------------------------  CreateDirectTypeFromMLSCFInfo  -----
     function CreateDirectTypeFromMLSCFInfo ( root, DirectFile ) result (Direct)
@@ -1346,6 +1355,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.175  2017/07/27 16:42:38  pwagner
+! If yyyy-Doy, store actual actual month number as neg int. in GlobalAttributes%GranuleMonth
+!
 ! Revision 2.174  2017/07/10 18:58:16  pwagner
 ! CamelCase; abandon all the extra ResetStartingDates
 !
