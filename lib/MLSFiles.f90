@@ -12,43 +12,43 @@
 !===============================================================================
 module MLSFiles               ! Utility file routines
   !=============================================================================
-  use HDF, only: dfacc_create, dfacc_rdonly, dfacc_read, dfacc_rdwr, &
-    & Sfstart, sfend
-  use HDFeos, only: gdclose, gdopen, swclose, swopen, swinqswath
-  use HDFeos5, only: HE5_swclose, HE5_swopen, HE5_swinqswath, &
-    & HE5_gdopen, HE5_gdclose, &
-    & HE5f_acc_trunc, HE5f_acc_rdonly, HE5f_acc_rdwr
-  use HighOutput, only: AddRow, AddRow_divider, AddRow_header, &
+  use HDF, only: Dfacc_Create, Dfacc_Rdonly, Dfacc_Read, Dfacc_Rdwr, &
+    & Sfstart, Sfend
+  use HDFeos, only: Gdclose, Gdopen, Swclose, Swopen, Swinqswath
+  use HDFeos5, only: HE5_Swclose, HE5_Swopen, HE5_Swinqswath, &
+    & HE5_Gdopen, HE5_Gdclose, &
+    & HE5f_Acc_Trunc, HE5f_Acc_Rdonly, HE5f_Acc_Rdwr
+  use HighOutput, only: AddRow, AddRow_Divider, AddRow_Header, &
     & OutputNamedValue, OutputTable, StartTable
-  use Intrinsic, only: l_ascii, l_hdfeos, l_hdf, l_open, &
-    & L_swath, l_tkgen, l_zonalavg, lit_indices
-  use Io_stuff, only: get_lun
-  use Machine, only: io_error
-  use MLSCommon, only: bareFNLen, fileNameLen, FileIds_T, MLSFile_t, Range_t, &
+  use Intrinsic, only: L_Ascii, L_HDFeos, L_HDF, L_Open, &
+    & L_Swath, L_Tkgen, L_Zonalavg, Lit_Indices
+  use Io_Stuff, only: Get_Lun
+  use Machine, only: Io_Error
+  use MLSCommon, only: BareFNLen, FileNameLen, FileIds_T, MLSFile_T, Range_T, &
     & InRange
   use MLSMessageModule, only: MLSMessage, MLSMSG_Crash, MLSMSG_Error, &
     & MLSMSG_Warning
-  use MLSFinds, only: findfirst
-  use MLSStrings, only: capitalize, lowercase
-  use MLSStringLists, only: extractSubstring, &
+  use MLSFinds, only: Findfirst
+  use MLSStrings, only: Capitalize, Lowercase
+  use MLSStringLists, only: ExtractSubstring, &
     & ReplaceSubstring, SortArray
-  use Output_m, only: Blanks, Output
+  use Output_M, only: Blanks, Output
   use SDPtoolkit, only: &
-    & PGS_pc_getreference, PGS_s_success, &
-    & PGSd_io_gen_rseqfrm, PGSd_io_gen_rsequnf, & 
-    & PGSd_io_gen_rdirfrm, PGSd_io_gen_rdirunf, & 
-    & PGSd_io_gen_wseqfrm, PGSd_io_gen_wsequnf, & 
-    & PGSd_io_gen_wdirfrm, PGSd_io_gen_wdirunf, & 
-    & PGSd_io_gen_useqfrm, PGSd_io_gen_usequnf, & 
-    & PGSd_io_gen_udirfrm, PGSd_io_gen_udirunf, & 
-    & PGSd_io_gen_aseqfrm, PGSd_io_gen_asequnf, &
-    & PGS_io_gen_closef, PGS_io_gen_openf, PGSd_pc_file_path_max, &
+    & PGS_Pc_Getreference, PGS_S_Success, &
+    & PGSd_Io_Gen_Rseqfrm, PGSd_Io_Gen_Rsequnf, &
+    & PGSd_Io_Gen_Rdirfrm, PGSd_Io_Gen_Rdirunf, &
+    & PGSd_Io_Gen_Wseqfrm, PGSd_Io_Gen_Wsequnf, &
+    & PGSd_Io_Gen_Wdirfrm, PGSd_Io_Gen_Wdirunf, &
+    & PGSd_Io_Gen_Useqfrm, PGSd_Io_Gen_Usequnf, &
+    & PGSd_Io_Gen_Udirfrm, PGSd_Io_Gen_Udirunf, &
+    & PGSd_Io_Gen_Aseqfrm, PGSd_Io_Gen_Asequnf, &
+    & PGS_Io_Gen_Closef, PGS_Io_Gen_Openf, PGSd_Pc_File_Path_Max, &
     & UseSDPtoolkit
-!   In the long run, we'll try putting interfaces to these in SDPToolkit.f90
-!   Until then, just declare them as external
-!    & PGS_MET_SFstart, PGS_MET_SFend, &
-  use String_table, only: display_string, get_string
-  use HDF5, only: size_t
+  ! In The Long Run, We'll Try Putting Interfaces To These In SDPToolkit.f90
+  ! Until Then, Just Declare Them As External
+  ! & PGS_MET_SFstart, PGS_MET_SFend, &
+  use String_Table, only: Display_String, Get_String
+  use HDF5, only: Size_T
 
   implicit none
 
@@ -781,7 +781,6 @@ contains
   ! ------------------------------------------  Dump_FileDataBase  -----
 
   subroutine Dump_FileDataBase ( database, Name, details, table )
-
     ! Dummy arguments
     type (MLSFile_T), intent(in) ::           database(:)
     character(len=*), intent(in), optional :: Name
@@ -800,9 +799,7 @@ contains
     myTable = .false.
     if ( present(Table) ) myTable = Table
     n = size(database)
-    
     call output ( '============ MLS File Data Base ============', advance='yes' )
-    call output ( ' ', advance='yes' )
     if ( present(name) ) then
       call output ( 'MLS File Database name: ', advance='no' )
       call output ( name, advance='yes' )
@@ -851,11 +848,10 @@ contains
     call startTable
     call addRow_header ( 'File Info', 'c' )
     call addRow_divider ( '-' )
-    call addRow ( 'full name', trim(MLSFile%Name) )
+    if ( len_trim(path) > 0 ) call addRow ( 'path', trim(path) )
+    call addRow ( 'name', trim(name) )
     ! If details < 0, show only this name
     if ( myDetails > -1 ) then
-      call addRow ( 'path', trim(path) )
-      call addRow ( 'name', trim(name) )
       if ( UseSDPToolkit .and. MLSFile%shortName /= ' ' ) &
         & call addRow ( 'short name', trim(MLSFile%shortName) )
       call addRow ( 'Type', MLSFile%TypeStr )
@@ -908,7 +904,7 @@ contains
 
     ! Arguments
 
-    use Machine, only: FILSEP ! / or :\
+    use Machine, only: Filsep ! / or :\
 
     character (len=*), intent(in) :: full_file_name
     character (len=*), intent(out) :: path
@@ -1052,7 +1048,7 @@ contains
   function hdf2hdf5_fileaccess(FileAccesshdf4) result (FileAccesshdf5)
 
     use HDF5, only: &
-     & H5F_ACC_RDONLY_F, H5F_ACC_RDWR_F, H5F_ACC_EXCL_F
+      & H5f_Acc_Rdonly_F, H5f_Acc_Rdwr_F, H5f_Acc_Excl_F
     ! Arguments
 
     integer, intent(IN)       :: FileAccesshdf4
@@ -1147,9 +1143,9 @@ contains
   ! by calling special toolkit function
   
   function mls_sfstart(FileName, FileAccess, hdfVersion, addingmetadata)
-    use HDF5, only: H5FOPEN_F, H5FCREATE_F
+    use HDF5, only: H5fopen_F, H5fcreate_F
     use HDF5, only: &
-     & H5F_ACC_RDONLY_F, H5F_ACC_RDWR_F, H5F_ACC_TRUNC_F
+      & H5f_Acc_Rdonly_F, H5f_Acc_Rdwr_F, H5f_Acc_Trunc_F
     ! Arguments
 
     character (len=*), intent(in) :: FILENAME
@@ -1329,7 +1325,7 @@ contains
   function mls_hdf_version(FileName, preferred_version, AccessType) &
    & result (hdf_version)
 
-   use HDF5, only: H5FIS_HDF5_F
+   use HDF5, only: H5FIs_HDF5_F
    ! Arguments
 
     character (len=*), intent(in)  :: FILENAME                                  
@@ -1408,9 +1404,9 @@ contains
 ! Returns file_id
 ! By default, hdfVersion is WILDCARDHDFVERSION meaning it autodetects
 ! which version to open the filename under
-   use HDF5, only: H5FOPEN_F, H5FCREATE_F, H5FIS_HDF5_F
-   use HDF5, only: &
-     & H5F_ACC_RDONLY_F, H5F_ACC_RDWR_F, H5F_ACC_EXCL_F
+    use HDF5, only: H5fopen_F, H5fcreate_F, H5fis_HDF5_F
+    use HDF5, only: &
+      & H5f_Acc_Rdonly_F, H5f_Acc_Rdwr_F, H5f_Acc_Excl_F
 !
 ! External Variables
 !
@@ -1599,7 +1595,7 @@ contains
 ! By default, hdfVersion is WILDCARDHDFVERSION meaning it autodetects
 ! which version to close the filename under
 ! so unless you supply hdfVersion, you'd better supply filename
-    use HDF5, only: H5FCLOSE_F
+    use HDF5, only: H5FClose_F
 !
 ! External Variables
 !
@@ -2014,7 +2010,7 @@ contains
     & hdfVersion, debugOption, inp_rec_length) &
     &  result (theFileHandle)
 
-    use IO_Stuff, only: GET_LUN
+    use IO_Stuff, only: Get_Lun
 
     ! Dummy arguments
     integer,  intent(OUT)  :: ErrType
@@ -2475,6 +2471,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.108  2017/11/15 00:09:31  pwagner
+! Improve appearance Dumping each MLSFile
+!
 ! Revision 2.107  2017/01/19 23:35:01  pwagner
 ! Improve appeearance when dumping an MLSFile
 !
