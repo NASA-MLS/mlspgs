@@ -46,7 +46,7 @@ module ReadAPriori
   use MLSStringLists, only: CatLists, GetHashElement, SwitchDetail
   use MLSStrings, only: Lowercase
   use MoreTree, only: Get_Boolean
-  use Output_M, only: Blanks, Output, RevertOutput, SwitchOutput
+  use Output_M, only: Output, RevertOutput, SwitchOutput
   use PCFHdr, only: GlobalAttributes
   use SDPToolkit, only: Pgs_S_Success
   use String_Table, only: Get_String
@@ -322,9 +322,7 @@ contains ! =====     Public Procedures     =============================
     integer :: LastHeightPCF
     integer :: LastNCEPPCF
     ! Local Variables
-    character(len=MAXSWATHNAMESBUFSIZE) :: ALLSWATHNAMES ! Buffer to get info back.
     integer :: AURAINST             ! index of 'MLS' in AuraInstrument='MLS'
-    integer :: COMMAPOS                 ! For parsing string
     integer :: DATE             ! in case using GMAO backgr
     character(len=FileNameLen) :: DATESTRING ! 'X,Y,..'
     logical :: DEBUG
@@ -363,14 +361,11 @@ contains ! =====     Public Procedures     =============================
     integer :: L2Index             ! In the l2gp or l2aux database
     integer :: L2Name              ! Sub-rosa index of L2[aux/gp] label
 !     integer :: lastAPrioriVersion
-    integer :: LISTSIZE                 ! Size of string from SWInqSwath
     character(len=16) :: litDescription
     integer :: Me = -1             ! String index for trace
     real(rgr) ::    missingValue = 0.
     logical :: noPCFid
-    integer :: NOSWATHS                 ! In an input file
     character(len=FileNameLen) :: path   ! path of actual literal file name
-    type (MLSFile_T), pointer :: pL2AUXFile
     integer :: QUANTITYTYPE             ! Lit index of quantity type
     integer :: ReturnStatus
     integer :: SdName        ! sub-rosa index of name in sdName='name'
@@ -392,7 +387,6 @@ contains ! =====     Public Procedures     =============================
       & cond=toggle(gen) .and. levels(gen) > 0 )
 
     nullify(grid)
-    allswathnames = ' '
     hdfVersion = DEFAULT_HDFVERSION_READ
     HMOT = ' '
     L2apriori_version = 1
@@ -831,7 +825,7 @@ contains ! =====     Public Procedures     =============================
         end if
         if ( returnStatus == 0 ) then
           if( switchDetail(switches, 'pro') > -1 ) &                            
-            & call announce_success(FilenameString, 'geos5', &                    
+            & call announce_success(FilenameString, description, &                    
              & fieldNameString, MLSFile=GriddedFile)    
         elseif ( litDescription /= 'none' ) then
           call announce_success( FilenameString, 'geos5 not found--carry on', &                    
@@ -1000,8 +994,7 @@ contains ! =====     Public Procedures     =============================
     & noPCFid, PCBottom, PCTop, quantityType, &
     & LastAprioriPCF, Debug, &
     & L2AUX, L2AUXFile, fileDatabase )
-   use L2AUXData, only: L2AUXData_t, AddL2AUXToDatabase, &
-    &                  ReadL2AUXData
+   use L2AUXData, only: L2AUXData_T, ReadL2AUXData
    ! Process an a priori l2gp
     ! Args:
     character(len=FileNameLen)              :: FileNameString   ! actual literal file name
@@ -1019,7 +1012,6 @@ contains ! =====     Public Procedures     =============================
     integer :: FileIndex
     integer :: hdfVersion               ! 4 or 5 (corresp. to hdf4 or hdf5)
     integer :: L2apriori_version               ! 4 or 5 (corresp. to hdf4 or hdf5)
-    integer :: L2Index             ! In the l2gp or l2aux database
 
     character(len=FileNameLen) :: path   ! path of actual literal file name
     type (MLSFile_T), pointer :: pL2AUXFile
@@ -1056,7 +1048,7 @@ contains ! =====     Public Procedures     =============================
     & L2GP, L2GPFile )
     ! Process an a priori l2gp
     use L2GPData, only: L2GPData_T, &
-      & Readl2GPData, Dump
+      & Readl2GPData
     ! Args:
     character(len=FileNameLen)     :: FileNameString   ! actual literal file name
     character(len=FileNameLen)     :: SWATHNAMESTRING ! actual literal swath name
@@ -1398,35 +1390,40 @@ contains ! =====     Public Procedures     =============================
 ! =====     Private Procedures     =====================================
 
   ! ---------------------------------------------  announce_success  -----
-  subroutine announce_success ( Name, l2_type, quantityName, &
+  subroutine announce_success ( FullName, l2_type, quantityName, &
     & hdfVersion, MLSFile )
-    character(LEN=*), intent(in)   :: Name
-    character(LEN=*), intent(in)   :: l2_type
+    use HighOutput, only: AddRow, &
+      & OutputTable, StartTable, StyledOutput
+    ! Args
+    character(len=*), intent(in)   :: FullName
+    character(len=*), intent(in)   :: l2_type
     integer, optional,  intent(in) :: hdfVersion
-    character(LEN=*), intent(in) :: quantityName
+    character(len=*), intent(in) :: quantityName
     type(MLSFile_T), optional :: MLSFile
 
     ! Local variables
     integer                        :: myhdfVersion
-    call output ( 'Level 2 apriori product type : ' )
-    call output ( trim(l2_type), advance='no' )
+    character(len=len(FullName))   :: name, path
+    integer, save                  :: trip = 0
+    ! Executable
+    trip = trip + 1
+    if ( trip < 2 ) &
+      & call StyledOutput ( 'Level 2 apriori products', options='--Banner' )
+    call split_path_name ( FullName, path, name )
+    call StartTable
+    call addRow ( 'type', trim(l2_type) )
     if ( present(hdfVersion) ) then
-      call blanks(4)
-      call output ( 'hdf ' )
       if ( hdfVersion == WILDCARDHDFVERSION ) then
         myhdfVersion = mls_hdf_version(trim(Name))
       else
         myhdfVersion = hdfVersion
       end if
-      call output ( myhdfVersion, advance='no' )
+      call addRow ( 'hdf ver', myhdfVersion )
     end if
-    call output ( '', advance='yes' )
-    call blanks(15)
-    call output ( 'name:     ', advance='no' )
-    call output ( trim(Name), advance='yes' )
-    call blanks(15)
-    call output ( 'quantity: ', advance='no' )           
-    call output ( trim(quantityName), advance='yes' )      
+    call addRow ( 'path', trim(path) )
+    call addRow ( 'name', trim(name) )
+    call addRow ( 'quantity', trim(quantityName) )
+    Call OutputTable ( sep='|', border='-' )
     if ( present(MLSFile) .and. switchdetail(switches, 'apr' ) > -1 ) &
       & call dump(MLSFile)
   end subroutine announce_success
@@ -1510,6 +1507,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.123  2017/11/15 00:11:24  pwagner
+! Use OutputTable to Dump list of level 1 files
+!
 ! Revision 2.122  2017/08/08 20:46:28  vsnyder
 ! Stop with error instead of seg fault if climatology not successfully read
 !
