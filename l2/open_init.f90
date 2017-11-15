@@ -20,7 +20,7 @@ module Open_Init
   ! -----------------------------------------------
 
   use HighOutput, only: AddRow, AddRow_Divider, AddRow_Header, BeVerbose, &
-    & OutputNamedValue, OutputTable, StartTable
+    & OutputNamedValue, OutputTable, StartTable, StyledOutput
   use MLSCommon, only: FileNameLen, MLSFile_T, NameLen, TAI93_Range_T
   use MLSL2Options, only: SpecialDumpFile, Toolkit
   use MLSStringLists, only: Array2List, CatLists, &
@@ -90,7 +90,7 @@ contains ! =====     Public Procedures     =============================
     use MLSFiles, only: WildCardHDFVersion, &
       & AddFileToDatabase, InitializeMLSFile, MLS_OpenFile
     use MLSKinds, only: R8
-    use MLSL2Timings, only: Section_Times, Total_Times
+    use MLSL2Timings, only: Section_Times
     use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning, MLSMessage, &
       & MLSMessageConfig
     use MLSPCF2, only: MLSPCF_L1b_Oa_Start, MLSPcf_L1b_Rad_End, &
@@ -150,7 +150,7 @@ contains ! =====     Public Procedures     =============================
     character(len=16)            :: RUNID
     integer                      :: Status, Size ! From allocate
 
-    real                         :: T1, T2                      ! for timing 
+    real                         :: T1                      ! for timing 
     logical                      :: TIMING                                   
     ! Executable
     integer :: OrbNum(max_orbits) = 0
@@ -248,6 +248,10 @@ contains ! =====     Public Procedures     =============================
       L1BFile%hdfVersion = WILDCARDHDFVERSION
       call mls_openFile(L1BFile, returnStatus)
       if ( returnStatus == 0 ) then
+        if( switchDetail(switches, 'pro') > -1 ) then  
+          call announce_success(L1BFile%name, 'l1brad', &                     
+          & hdfVersion=L1BFile%HDFVersion)                    
+        end if
         numFiles = addFileToDatabase(filedatabase, L1BFile)
         ifl1 = ifl1 + 1
       end if
@@ -487,24 +491,33 @@ contains ! =====     Public Procedures     =============================
 ! =====     Private Procedures     =====================================
 
   ! ---------------------------------------------  announce_success  -----
-  subroutine announce_success ( Name, l1_type, hdfVersion )
-    character(LEN=*), intent(in)   :: Name
-    character(LEN=*), intent(in)   :: l1_type
+  subroutine announce_success ( FullName, l1_type, hdfVersion )
+    use MLSFiles, only: MLS_HDF_Version, Split_Path_Name, WildCardHDFVersion
+    character(len=*), intent(in)   :: FullName
+    character(len=*), intent(in)   :: l1_type
     integer, optional,  intent(in) :: hdfVersion
 
-    call output ( 'Level 1 product type : ' )
-    call output ( trim(l1_type), advance='no')
+    ! Local variables
+    integer                        :: myhdfVersion
+    character(len=len(FullName))   :: name, path
+    integer, save                  :: trip = 0
+    ! Executable
+    trip = trip + 1
+    call split_path_name ( FullName, path, name )
+    if ( trip < 2 ) call StyledOutput ( 'Level 1 products', options='--Banner' )
+    call StartTable
+    call addRow ( 'type', trim(l1_type) )
     if ( present(hdfVersion) ) then
-      call blanks(4)
-      call output ( 'hdf ' )
-      call output ( hdfVersion, advance='yes')
-    else
-      call output ( ' ', advance='yes')
+      if ( hdfVersion == WildCardHDFVersion ) then
+        myhdfVersion = mls_hdf_version(trim(Name))
+      else
+        myhdfVersion = hdfVersion
+      end if
+      call addRow ( 'hdf version', myhdfVersion )
     end if
-    call blanks(15)
-    call output ( 'name : ' )
-    call blanks(8)
-    call output ( trim(Name), advance='yes')
+    call addRow ( 'path', trim(path) )
+    call addRow ( 'name', trim(name) )
+    Call OutputTable ( sep='|', border='-' )
   end subroutine announce_success
 
   ! ------------------------------------------  Dump_open_init  -----
@@ -716,6 +729,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.117  2017/11/15 00:15:49  pwagner
+! Use OutputTable to Dump list of level 1 files
+!
 ! Revision 2.116  2017/07/27 16:41:51  pwagner
 ! If yyyy-Doy, store actual actual month number as neg int. in GlobalAttributes%GranuleMonth
 !
