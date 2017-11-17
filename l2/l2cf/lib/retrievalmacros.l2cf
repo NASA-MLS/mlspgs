@@ -567,7 +567,7 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
 ;; Some are stored accompanied by a column abundance: ColumnStdProds
 ;; In particular, this overrides the outmoded macros
 ;; storeStandardProductWith[out]Column
-!define(HiResStdProds,{H2O, Temperature, RHI, GPH})!dnl
+!ifdef(HiResStdProds, {}, {!define(HiResStdProds,{H2O, Temperature, RHI, GPH})})!dnl
 ;;  !define(ColumnStdProds,{O3,CO,SO2,HNO3,H2O,HCN,CH3CN,BrO,ClO,HCl,HO2,HOCl,N2O,OH})!dnl
 ;; We're planning on only O3 accompanying its column
 !ifdef(ColumnStdProds,{},{!define(ColumnStdProds,{O3})})!dnl
@@ -883,6 +883,8 @@ Begin Fill
     temperatureQuantity=tempVectorState.temperature_hr, refGPHQuantity=tempVectorState.refGPH, $
     internalVgrid=vGridWMO
 End Fill
+
+!ifdef(flagSkipPTrop, {}, {
 !ifdef(flagUseGEOS5PTrop,
 {!dnl
 Begin Join
@@ -954,6 +956,8 @@ Begin Join
 End Join
 })
 })
+})
+
 }, $1,{Temperature_HR}, {
   DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
     source=tempVectorState.$1, precision=tempVectorPrecision.$1, $
@@ -1226,6 +1230,9 @@ Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, $
 })})
 
 ; $Log$
+; Revision 1.157  2016/12/06 19:56:53  pwagner
+; Repaired errors introduced with flagSkipWritingDiagnostics
+;
 ; Revision 1.156  2016/09/14 20:10:04  pwagner
 ; Implement flagSkipWritingDiagnostics
 ;
