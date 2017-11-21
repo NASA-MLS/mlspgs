@@ -124,7 +124,15 @@ contains
             call output ( name )
             call blanks ( 1 )
           end if
-          call display_string ( lit_indices(grids_f%mol(q)) )
+          if ( grids_f%mol(q) /= 0 ) then
+            call display_string ( lit_indices(grids_f%mol(q)) )
+            call blanks ( 1 )
+          end if
+          if ( grids_f%qty(q) > 0 ) then
+            call display_string ( lit_indices(grids_f%qty(q)), &
+              & before='quantity: ' )
+            call blanks ( 1 )
+          end if
           if ( myZP ) then
             dims = [ size(eta,1), &
                    & grids_f%l_z(q) - grids_f%l_z(q-1), &
@@ -152,11 +160,15 @@ contains
       else
         l = 0
         saw_nz = .false.
-        call showList ( dims, subs, '' )
         do i = 1, nnz(j)
           if ( .not. myShow_NZ .and. eta(nz(i,j),j) == 0 ) cycle
-          if ( .not. saw_nz .and. .not. present(grids_f) ) &
-            & call output ( j, places=4, after='#' )
+          if ( .not. saw_nz ) then
+            if ( present(grids_f) ) then
+              call showList ( dims, subs, '' )
+            else
+              call output ( j, places=4, after='#' )
+            end if
+          end if
           saw_nz = .true.
           l = l + 1
           if ( l > 5 ) then
@@ -1620,6 +1632,9 @@ contains
 end module Get_Eta_Matrix_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.30  2017/09/20 01:06:04  vsnyder
+! Embellish the dump
+!
 ! Revision 2.29  2017/06/01 22:50:25  vsnyder
 ! Add Get_Column_Sparsity, more dump spiffing
 !
