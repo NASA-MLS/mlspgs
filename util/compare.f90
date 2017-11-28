@@ -67,6 +67,7 @@ program COMPARE
   real(rk) :: RMAX = -huge(0.0)   ! Maximum relative difference for one R1, R2 pair
   character(127) :: RMAXB = ''    ! Label of block having largest value of RMAXV
   real(rk) :: RMAXG = -huge(0.0)  ! Global maximum of all values of RMAX
+  real(rk) :: RMAXL = -huge(0.0)  ! Relative at max abs diff (LAMAX)
   real(rk) :: RMAXV = -huge(0.0)  ! Difference relative to VMAX
   real(rk) :: RMAXVG = -huge(0.0) ! Global maximum of all values of RMAXV
   integer :: Status
@@ -263,8 +264,11 @@ program COMPARE
       end if
       if ( .not. ( rmax <= 0.0 .or. rmax >= 0.0 ) ) anyNaN(3) = .true.
       if ( all ) then
+        rmaxl = 0
+        if ( abs(r1(lamax)+r2(lamax)) > 0 ) &
+          & rmaxl = 2.0 * abs(r1(lamax)-r2(lamax)) / abs(r1(lamax)+r2(lamax))
         print '(1p,2g12.5,i6,g12.5,g12.5,i6,2g12.5,1x,a)', vmax, &
-          & amax, lamax, 2.0 * abs(r1(lamax)-r2(lamax)) / abs(r1(lamax)+r2(lamax)), &
+          & amax, lamax, 2.0 * rmaxl, &
           & rmax, lrmax, 2.0 * abs(r1(lrmax)-r2(lrmax)), rmaxv, trim(line1)
       end if
       if ( doStats ) then
@@ -360,6 +364,9 @@ contains
 end program
 
 ! $Log$
+! Revision 1.25  2017/08/01 02:57:18  vsnyder
+! Don't compare unequal-size records
+!
 ! Revision 1.24  2017/08/01 02:32:36  vsnyder
 ! Use rmaxvg to decide whether to print summary
 !
