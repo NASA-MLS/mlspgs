@@ -142,8 +142,8 @@ program COMPARE
   end if
 
   if ( all ) then
-    print '(a)', '   Max Abs     Max Abs           Rel at Max  Max Rel           Abs at Max  Rel to Max'
-    print '(a)', '   Value       Diff         At   Abs Diff    Diff         At   Rel Diff    Abs Value'
+    print '(a)', '   Max Abs     Max Abs            Rel at Max  Max Rel            Abs at Max  Rel to Max'
+    print '(a)', '   Value       Diff          At   Abs Diff    Diff          At   Rel Diff    Abs Value'
   end if
 
   do
@@ -267,8 +267,8 @@ program COMPARE
         rmaxl = 0
         if ( abs(r1(lamax)+r2(lamax)) > 0 ) &
           & rmaxl = 2.0 * abs(r1(lamax)-r2(lamax)) / abs(r1(lamax)+r2(lamax))
-        print '(1p,2g12.5,i6,g12.5,g12.5,i6,2g12.5,1x,a)', vmax, &
-          & amax, lamax, 2.0 * rmaxl, &
+        print '(1p,2(2g12.5,i7),2g12.5,1x,a)', vmax, &
+          & amax, lamax, rmaxl, &
           & rmax, lrmax, 2.0 * abs(r1(lrmax)-r2(lrmax)), rmaxv, trim(line1)
       end if
       if ( doStats ) then
@@ -364,6 +364,9 @@ contains
 end program
 
 ! $Log$
+! Revision 1.26  2017/11/28 01:46:49  vsnyder
+! Don't compute Rel at Max Abs Diff = NaN for identical zero results
+!
 ! Revision 1.25  2017/08/01 02:57:18  vsnyder
 ! Don't compare unequal-size records
 !
