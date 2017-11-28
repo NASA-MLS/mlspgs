@@ -1,0 +1,962 @@
+\makeatletter\let\ifGm@compatii\relax\makeatother
+\documentclass[landscape]{beamer}
+
+\usepackage{alltt}
+\usepackage{amsmath}
+\usepackage{color}
+\usepackage{graphicx}
+\usepackage{longtable}
+
+% \ifx\pdfoutput\undefined
+%   \pdfoutput=0
+%   \usepackage{hyperref}
+%   \hypersetup{%
+%     hypertex,%
+%     plainpages,%
+%     hyperindex=true,%
+%     hypertexnames=false%
+%   }
+%   % Specify the driver for the color package
+%   \ExecuteOptions{dvips}
+%   %\ExecuteOptions{xdvi}
+% \else
+%   \ifnum\pdfoutput>0
+%     \usepackage{hyperref}
+%     \hypersetup{%
+%       pdftex,%
+%       plainpages,%
+%       hyperindex=true,%
+%       pdfpagelabels,%
+%       hypertexnames=false,%
+%       colorlinks=true,%
+%       linktocpage=true,%
+%     }
+%     % Specify the driver for the color package
+%     \ExecuteOptions{pdftex}
+%   \else
+%     \usepackage{hyperref}
+%     \hypersetup{%
+%       hypertex,%
+%       plainpages,%
+%       hyperindex=true,%
+%       hypertexnames=false%
+%     }
+%     % Specify the driver for the color package
+%     \ExecuteOptions{dvips}
+%     %\ExecuteOptions{xdvi}
+%   \fi
+% \fi
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
+
+\newcommand{\newframe}[2][]{\begin{frame}\frametitle{\hfill #2 \hfil}}
+\renewcommand{\d}{\text{d}}
+
+\title{Configuration File Processing
+\thanks{See {\tt mlspgs/doc/wvs-004} for more detail}}
+
+\author{Van Snyder}
+
+\date{1 November 2017}
+
+
+\begin{document}
+
+\begin{frame}
+  \Large
+  \titlepage
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Configuration File Processing}
+
+\Large
+
+Configuration file processing consists of
+
+\begin{itemize}
+
+\item parsing the configuration file -- converting it to a form easier to
+      use for subsequent purposes,
+
+\item checking types of entities and units of numeric ones, and
+
+\item traversing the internal representation to drive program operations.
+
+\end{itemize}
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Crash Course in Language Analysis -- Terminology}
+
+\Large
+
+An \emph{alphabet} is a set of symbols.  Sets are denoted by upper-case
+Latin letters.
+
+A \emph{language} is a set of sequences (or strings) from an alphabet.  A
+sequence is denoted by a lower-case Latin letter.
+
+A \emph{sentence} is a sequence from that set.  It might or might not
+include the empty string, denoted $\lambda$ here.
+
+The \emph{concatenation} $xy$ of two sequences is a sequence that consists
+of the first sequence ($x$) followed by the second one ($y$).  $\lambda$
+is the identity for concatenation: $x\lambda = \lambda x = x$.
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Operator Definitions}
+
+\begin{longtable}{clll}
+\multicolumn{2}{c}{\bf Operator} & {\bf Operands} & {\bf Meaning} \\
+\hline
+$\rightarrow$  & produces & Symbol and sequence & Later\dots\\
+$\Rightarrow$  & derives  & Sequences           & Later\dots\\
+$\cup$         & union    & Sets $A$ and $B$    & Everything that is in \\
+               &          &                     & either $A$ or $B$ \\
+$\in$          & in       & Element $x$ and a set $S$
+                                                & $x$ is in (a member of)
+                                                  $S$ \\
+$\wedge$       & and      & Propositions $x$ and $y$
+                                                & $x$ and $y$ are both
+                                                  true \\
+$\vee$         & or       & Propositions $x$ and $y$
+                                                & $x$ or $y$ or both are
+                                                  true \\
+\end{longtable}
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{More Terminology}
+
+\Large
+
+The \emph{concatenation} $PQ$ of two sets $P$ and $Q$ is defined as
+$\{xy \,|\, x \in P \wedge y \in Q\}$.
+
+The simplest language over a set is the \emph{closure} of the alphabet. 
+It contains all possible sequences, including $\lambda$.  It is denoted by
+a postfix superscript asterisk, e.g. $T^*$.  $T^*$ is the solution of the
+equation $T^* = \{\lambda\} \cup T T^*$.  Don't try to solve by
+fixed-point iteration -- if $T$ is not empty the solution is infinite.
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Grammars}
+
+A \emph{grammar} is a set of rules for producing a language. 
+Mathematically, a grammar $G$ is a four-tuple $G = ( T, N, P, S )$, in
+which $T$ and $N$ are disjoint alphabets, called \emph{terminal} and
+\emph{nonterminal} (more later), $P$ is a set of of \emph{productions}
+(more below), and $S \in N$ is a distinguished symbol called the
+\emph{starting symbol}.
+
+Notational conventions:
+
+\begin{itemize}
+
+\item Upper-case letters from the beginning of the Latin alphabet (and
+      $S$) denote symbols from $N$.
+
+\item Lower-case letters from the beginning of the Latin alphabet denote
+      symbols from $T$.
+
+\item Lower-case letters from the end of the Latin alphabet denote symbols
+      from $T^*$.
+
+\item Lower-case letters from the Greek alphabet denote sequences from $(T
+      \cup N)^*$.
+
+\item Upper-case letters from the end of the Latin alphabet (except $S$)
+      denote symbols from $(T \cup N)$.
+
+\end{itemize}
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Grammars (cont.)}
+
+A \emph{production} is a statement of the form $A \rightarrow \alpha$.  If
+one has a sequence of symbols from $(T \cup N)^*$ in which $A$ appears, it
+is permissible to replace $A$ with $\alpha$.
+
+A \emph{derivation} consists of this replacement.  The definition of $A
+\rightarrow \alpha$ is ``$\beta A \gamma \Rightarrow \beta \alpha \gamma$
+is permitted by the grammar.''  In this derivation step, $A$ \emph{produces}
+$\alpha$.
+
+A \emph{derivation sequence} consists of zero or more derivations.  It is
+denoted $\Rightarrow^*$.
+
+A \emph{leftmost} (resp. \emph{rightmost}) \emph{derivation sequence} is a
+derivation sequence in which the leftmost (resp. rightmost) symbol from
+$N$ is chosen for replacement at each step.
+
+A \emph{sentential form} is a sequence $\xi \in ( T \cup N )^*$ such that
+$S \Rightarrow^* \xi$.
+
+A \emph{phrase} is a sequence $\zeta \in ( T \cup N )^*$ such that
+$A \Rightarrow^* \zeta$ for some $A \in N$.
+
+A \emph{sentence} is a sentential form consisting only of symbols from
+$T$.
+
+The \emph{language} $L(G)$ generated by a grammar $G$ is $L(G) = \{ x | S
+\Rightarrow^* x \wedge x \in T^* \}$ is the set of its sentences.
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Example (cont.)}
+
+$G = (T,\, N,\, P,\, S)$ where \\[5pt]
+
+$T = \{ +,\, *,\, a,\, b,\, c\}$\\[5pt]
+
+$N = \{E,\, T,\, N\}$
+
+\begin{tabbing}
+$P = \{$ \=  $E \rightarrow T \,|\, E + T $ \\
+     \> $T \rightarrow N\,|\, T * N$ \\
+     \> $N \rightarrow a \,|\, b \,|\, c\,$ \}
+\end{tabbing}
+
+$S = E$\\[5pt]
+
+where $X \rightarrow \alpha \,|\, \beta$ is shorthand for $\{ X
+\rightarrow \alpha\} \cup \{X \rightarrow \beta\}$.\\[5pt]
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Example (cont.)}
+
+Leftmost derivation of {$E \Rightarrow^*$ \tt a + b * c}:
+
+$E \Rightarrow E + T \Rightarrow T + T \Rightarrow N + T \Rightarrow a + T
+\Rightarrow a + T * N \Rightarrow a + N * N \Rightarrow a + b * N
+\Rightarrow a + b * c$.
+
+The process \emph{terminates} when the sequence consists entirely of
+terminal symbols.  This can be visualized by the following tree:\\[5pt]
+
+\begin{centering}
+\includegraphics*[scale=0.5]{wvs-147-1} \\
+\end{centering}
+
+If you trace out the leaves of this \emph{derivation tree} by a
+depth-first left-to-right traversal, you get the derived text
+\color{red}{\tt a + b * c}.
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Example (cont.)}
+
+The derivation tree has too much extraneous information.  A more useful
+representation is the \emph{abstract syntax tree}.  Here \emph{abstract}
+means ``uninteresting information has been removed.''\\[10pt]
+
+\begin{centering}
+\includegraphics*[scale=0.8]{wvs-147-2} \\
+\end{centering}
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Producing an Abstract Syntax Tree}
+
+A sequence of characters is difficult to work with, so we prefer to have
+an abstract syntax tree.
+
+Producing the abstract syntax tree consists of three steps:
+
+\begin{enumerate}
+
+\item Collect characters together into \emph{tokens}, which represent
+      terminal symbols.  This process is called \emph{lexing}.  It
+      recognizes the \emph{lexicon}, which is the set of sequences of
+      characters from which terminal symbols are produced.
+
+\item Analyze sequences of tokens to recognize which productions apply.
+      This process is called \emph{parsing}.
+
+\item Produce an abstract syntax tree.  This process is called
+      \emph{translating}.
+
+\end{enumerate}
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Lexicon -- General}
+
+A \emph{regular expression} is a notation for denoting a language with a
+particularly simple structure.  Let $a$, $p$ and $q$ be regular
+expressions.  Then:\\[3pt]
+
+{\small
+\begin{tabular}{|c|c|l|}
+     \hline
+{\bf Regular}                 & {\bf Denoted} &                   \\
+{\bf expression}              & {\bf set}     & {\bf Description} \\
+     \hline
+     \hline
+$\emptyset$ & $\emptyset$     & The empty set\\
+     \hline
+$\lambda$   & \{ $\lambda$ \} & The set consisting of the empty \\
+            &                 & sequence\\
+     \hline
+$a$         & \{ $a$ \}       & The symbol $a$ from the alphabet\\
+     \hline
+$p \mid q$  & $P \cup Q$      & Any sequence in either $P$ or $Q$\\
+     \hline
+$pq$        & $PQ$            & The concatentation of $P$ and $Q$\\
+     \hline
+$p^*$       & $P^*$           & The reflexive and transitive closure \\
+            &                 & (zero or more) of $P$\\
+     \hline
+$p^+$       & $P P^*$         & The transitive closure (one or more) \\
+            &                 & of $P$\\
+     \hline
+$p?$        & $P \cup \{ \lambda \}$ & $P$ or the empty sequence\\
+     \hline
+\end{tabular}
+}
+\\[3pt]
+Parentheses are used for grouping.  The $\mid$ symbol has a meaning here
+different from its meaning within a set constructor.
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Configuration File Lexicon}
+
+End-of-line shall not appear within a symbol in the lexicon.
+
+Three terminal symbols are defined by regular expressions.  Others appear
+in the configuration file exactly as they appear in the grammar (but
+without quotation).  Let $L$ be the set of letters, $D$ be the set of
+digits, and not$(x)$ be the set of characters other than $x$.\\[3pt]
+
+{\small
+`name' $= L(\{\text{`\_'}\} \cup L \cup D)^*$ (cannot begin with \_).
+
+
+`number' $= D^+ ( \text{`.'} D^* ) ? ( \{ \text{`D' `E' `d` `e'} \ \}
+            \{ \ \text{`+' `-'} \ \}? D^+) ?$
+
+
+`string' $= (\{\ ' \ \} ( (\text{not}(')^*) \mid ({'} {'}) )^* \{\ ' \ \} )
+       \mid (\{\ " \ \} ( (\text{not}(")^*) \mid (" ") )^* \{\ " \ \} ) $
+}
+\\[3pt]
+
+\small
+Strings are surrounded by quotes or apostrophes.  If surrounded by one,
+the other can appear, or two of the surrounding one denote only one
+appearance.
+
+These three symbols are called \emph{pseudo-terminal} because they have an
+internal structure -- but it's defined by the lexicon, not the grammar.
+
+Comments begin with a semicolon and continue to the end of the line.
+
+A statement may be continued onto another line by \$ not in a comment. 
+Otherwise, end-of-line denotes the end of a statement.
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Configuration File Grammar}
+
+A configuration file is divided into sections that begin with the word
+{\tt begin} followed by a section name and end with the word {\tt end}
+followed by the same section name.  Section names are not arbitrary; they
+are specified by the program.  The program also imposes restrictions on
+their order.
+
+Within a section, there are three kinds of statements:
+
+\begin{itemize}
+
+  \item A parameter definition of the form \emph{name = expression}.  The
+    set of valid parameter definition names, and the types of their
+    values, are specified by the program.
+
+  \item A variable definition of the form \emph{name := expression}.  The
+    set of valid variable names is not specified by the program. Once a
+    variable has been assigned a value, a subsequent assignment cannot
+    change its type.
+
+\end{itemize}
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Configuration File Grammar}
+
+(Statements cont.)
+
+\begin{itemize}
+
+  \item A specification of the form \emph{[ label: ] name [, fields] },
+    where the label and fields are optional.  Each field is of the form
+    \emph{name = expression} or \emph{/name}.  The set of valid
+    specification names for each section, the set of valid field names for
+    each specification, the type of value for each field, and the units of
+    numeric values of fields, are specified by the program.  The form
+    \emph{/name} is only valid for fields that can have logical or boolean
+    values, and is equivalent to \emph{name=true}.
+
+    The type of the value of a field or parameter can be numeric, a
+    string, an enumerator, or the label of a specification.  The set of
+    enumeration types, and the enumerators of each type, are specified by
+    the program.
+
+\end{itemize}
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Configuration File Grammar}
+
+(Statements cont.)
+
+
+Variable definitions can occur outside sections.
+
+Either surrounding sections and variable definitions, or within sections,
+{\tt case}, {\tt if}, {\tt do}, and {\tt do while} constructs, having
+the same syntax and semantics as in Fortran (except that the ``=" sign in
+the {\tt do} construct is replaced by ``:="), may appear.  An additional
+{\tt do} construct, with only one expression, may appear.  The type of
+the expression may be any type, and it is assumed to be an array (a scalar
+is considered to be an array of length one in this context); the body of
+the construct is invoked once for each element of the expression. 
+Constructs must be correctly nested.
+
+An {\tt exit} or {\tt cycle} statement may appear within a {\tt do}
+construct, with the same semantics as in Fortran, except that if the
+statement is within a section, the label referenced in the statement may
+not refer to a {\tt do} construct enclosing a section.
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Configuration File Grammar}
+
+\Large
+Complete formal specification of the Configuration File grammar is in {\tt
+mlspgs/util/lr/l2cf.grm} and {\tt mlspgs/doc/wvs-004}.
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+% \newframe{Configuration File Grammar -- Formal Specification}
+% 
+% The starting symbol is {\tt cf} (for ``configuration file'').  Terminal
+% symbols are quoted (except {\tt EOS+} is also quoted because of a
+% requirement of the parser generator).  The symbol {\tt =$>$} means
+% \emph{generates} here (more later), instead of \emph{derives} as it does
+% above.  The productions are:
+% \vspace*{-6pt}
+% 
+% {\footnotesize\tt\begin{alltt}
+% cf -> cfs
+% 
+% \vspace*{-4pt}
+% \begin{tabbing}
+% cfs \= -> one\_cf \\
+%     \> -> include \\
+%     \> -> cfs one\_cf
+% \end{tabbing}
+% \vspace*{-7pt}
+% 
+% \begin{tabbing}
+% one\_cf \= -> \= EOS ; blank lines are OK \\
+%         \> -> \= select case '(' expr ')' 'EOS+' cases\_outer end select
+%         EOS \\
+%         \> \> => n\_select \\
+%         \> -> construct\_label do do\_header EOS cfs end do EOS => n\_do
+%         \\
+%         \> -> construct\_label do while '(' expr ')' EOS cfs end do EOS \\
+%         \> \>  => n\_while \\
+%         \> -> if\_stmt\_outer more\_if\_outer end if EOS => n\_if \\
+%         \> -> cycle\_stmt \\
+%         \> -> exit\_stmt \\
+%         \> -> name ':=' value EOS => n\_variable \\
+%         \> -> begin name EOS specs end name EOS => n\_cf
+% \end{tabbing}
+% 
+% \end{alltt}}
+% 
+% \end{frame}
+% 
+% % -----------------------------------------------------------------------------
+% 
+% \newframe{Configuration File Grammar -- Formal Specification (cont.)}
+% 
+% {\footnotesize\tt\begin{alltt}
+% \begin{tabbing}
+% cases\_outer \= -> case\_test\_outer \\
+%              \> -> case\_test\_outer cases\_outer \\
+%              \> -> case default EOS cfs => n\_default \\
+% 
+% \end{tabbing}
+% case\_test\_outer -> case '(' expr ')' EOS cfs => n\_test
+% 
+% \begin{tabbing}
+% construct\_label \= -> \\
+%                 \> -> name ':' => n\_named
+% \end{tabbing}
+% 
+% \begin{tabbing}
+% do\_header \= -> name ':=' expr\_array => n\_do\_head \\
+%           \> -> name ':=' expr ',' expr => n\_do\_head \\
+%           \> -> name ':=' expr ',' expr ',' expr => n\_do\_head
+% \end{tabbing}
+% 
+% expr\_array -> expr => n\_array
+% 
+% \end{alltt}}
+% 
+% \end{frame}
+% 
+% % -----------------------------------------------------------------------------
+% 
+% \newframe{Configuration File Grammar -- Formal Specification (cont.)}
+% 
+% {\footnotesize\tt\begin{alltt}
+% if\_stmt\_outer -> if '(' expr ')' then EOS cfs => n\_test
+% 
+% \begin{tabbing}
+% more\_if\_outer \= -> \\
+%                 \> -> else if\_stmt\_outer more\_if\_outer \\
+%                 \> -> else EOS cfs => n\_else \\
+% \end{tabbing}
+% 
+% \begin{tabbing}
+% cycle\_stmt \= -> cycle EOS => n\_cycle \\
+%             \> -> cycle name EOS => n\_cycle \\
+% 
+% \end{tabbing}
+% 
+% \begin{tabbing}
+% exit\_stmt \= -> exit EOS => n\_exit \\
+%            \> -> exit name EOS => n\_exit \\
+% \end{tabbing}
+% 
+% \begin{tabbing}
+% 'EOS+' \= -> EOS \\
+%        \> -> 'EOS+' EOS \\
+% \end{tabbing}
+% 
+% \end{alltt}}
+% 
+% \end{frame}
+% 
+% % -----------------------------------------------------------------------------
+% 
+% \newframe{Configuration File Grammar -- Formal Specification (cont.)}
+% 
+% {\footnotesize\tt\begin{alltt}
+% \begin{tabbing}
+% specs \= -> \\
+%       \> -> specs spec
+% \end{tabbing}
+% 
+% \begin{tabbing}
+% spec \= -> one\_spec EOS \\
+%      \> -> include
+% \end{tabbing}
+% ; "value" is either a scalar or an array enclosed in brackets
+% 
+% \begin{tabbing}
+% one\_spec \= -> \= ; blank lines are OK \\
+%           \> -> \> select case '(' expr ')' 'EOS+' cases end select EOS \\
+%           \>    \> => n\_select \\
+%           \> -> \> construct\_label do while '(' expr ')' EOS specs end do
+%           EOS \\
+%           \>     \> => n\_while \\
+%           \> -> \> construct\_label do do\_header EOS specs end do EOS =>
+%           n\_do \\
+%           \> -> \> if\_stmt more\_if end if => n\_if \\
+%           \> -> \> cycle\_stmt \\
+%           \> -> \> exit\_stmt \\
+%           \> -> \> name ':=' value => n\_variable \\
+%           \> -> \> name ':' spec\_rest => n\_named \\
+%           \> -> \> spec\_rest \\
+%           \> -> \> name '=' value => n\_equal
+% \end{tabbing}
+% \end{alltt}}
+% 
+% \end{frame}
+% 
+% % -----------------------------------------------------------------------------
+% 
+% \newframe{Configuration File Grammar -- Formal Specification (cont.)}
+% 
+% {\footnotesize\tt\begin{alltt}
+% 
+% ; We need to consume the EOS here so it won't be the first \\
+% ; token we see after closing the include file.
+% 
+% include -> '\#include' string EOS => 9 ; 9 means include a file
+% 
+% \begin{tabbing}
+% cases \= -> case\_test \\
+%       \> -> case\_test cases \\
+%       \> -> case default EOS specs => n\_default
+% \end{tabbing}
+% 
+% ; "expr" is a scalar
+% 
+% case\_test -> case '(' expr ')' EOS specs => n\_test
+% 
+% if\_stmt -> if '(' expr ')' then EOS specs => n\_test
+% 
+% \begin{tabbing}
+% more\_if \= -> \\
+%          \> -> else if\_stmt more\_if \\
+%          \> -> else EOS specs => n\_else
+% \end{tabbing}
+% 
+% spec\_rest -> name fields => n\_spec\_args
+% \end{alltt}}
+% 
+% \end{frame}
+% 
+% % -----------------------------------------------------------------------------
+% 
+% \newframe{Configuration File Grammar -- Formal Specification (cont.)}
+% 
+% {\footnotesize\tt\begin{alltt}
+% \begin{tabbing}
+% fields \= -> \\
+%        \> -> ',' field fields
+% \end{tabbing}
+% 
+% \begin{tabbing}
+% field \= -> name '=' value => n\_asg \\
+%       \> -> '/' name => n\_set\_one
+% \end{tabbing}
+% 
+% ; "value" can be an array enclosed in brackets, or an array of \\
+% ; arrays, but not any deeper nesting of arrays.
+% 
+% \begin{tabbing}
+% value \= -> expr \\
+%       \> -> '[' value2\_list ']'
+% \end{tabbing}
+% 
+% \begin{tabbing}
+% value2\_list \= -> value2 \\
+%              \> -> value2\_list ',' value2
+% \end{tabbing}
+% 
+% \begin{tabbing}
+% value2 \= -> expr \\
+%        \> -> '[' exprs ']' => n\_array
+% \end{tabbing}
+% \end{alltt}}
+% 
+% \end{frame}
+% 
+% % -----------------------------------------------------------------------------
+% 
+% \newframe{Configuration File Grammar -- Formal Specification (cont.)}
+% 
+% {\footnotesize\tt\begin{alltt}
+% \begin{tabbing}
+% exprs \= -> expr \\
+%       \> -> exprs ',' expr
+% \end{tabbing}
+% 
+% \begin{tabbing}
+% expr \= -> cond \\
+%      \> -> test '?' expr '!' expr => n\_cond
+% \end{tabbing}
+% 
+% \begin{tabbing}
+% cond \= -> limit \\
+%      \> -> limit ':'   limit => n\_colon \\
+%      \> -> limit ':<'  limit => n\_less \\
+%      \> -> limit '<:'  limit => n\_less\_colon \\
+%      \> -> limit '<:<' limit => n\_less
+% \end{tabbing}
+% 
+% \begin{tabbing}
+% limit \= -> lterm \\
+%       \> -> limit or lterm => n\_or
+% \end{tabbing}
+% 
+% \begin{tabbing}
+% lterm \= -> lnot \\
+%       \> -> lterm and lnot => n\_and
+% \end{tabbing}
+% 
+% \begin{tabbing}
+% lnot \= -> test \\
+%      \> -> not test => n\_not
+% \end{tabbing}
+% \end{alltt}}
+% 
+% \end{frame}
+% 
+% % -----------------------------------------------------------------------------
+% 
+% \newframe{Configuration File Grammar -- Formal Specification (cont.)}
+% 
+% {\footnotesize\tt\begin{alltt}
+% \begin{tabbing}
+% test \= -> lfactor \\
+%      \> -> lfactor '<'  lfactor => n\_less \\
+%      \> -> lfactor '<=' lfactor => n\_less\_eq \\
+%      \> -> lfactor '>'  lfactor => n\_greater \\
+%      \> -> lfactor '>='lfactor => n\_greater\_eq \\
+%      \> -> lfactor '==' lfactor => n\_equal\_equal \\
+%      \> -> lfactor '/=' lfactor => n\_not\_equal
+% \end{tabbing}
+% 
+% \begin{tabbing}
+% lfactor \= -> term \\
+%         \> -> '+' term => n\_plus \\
+%         \> -> '-' term => n\_minus \\
+%         \> -> lfactor '+' term => n\_plus \\
+%         \> -> lfactor '-' term => n\_minus
+% \end{tabbing}
+% 
+% \begin{tabbing}
+% term \= -> factor \\
+%      \> -> term '*' factor => n\_mult \\
+%      \> -> term '/' factor => n\_div \\
+%      \> -> term '$\setminus$' factor => n\_into
+% \end{tabbing}
+% 
+% \begin{tabbing}
+% factor \= -> primary \\
+%        \> -> primary '\^{}' factor => n\_pow
+% \end{tabbing}
+% \end{alltt}}
+% 
+% \end{frame}
+% 
+% % -----------------------------------------------------------------------------
+% 
+% \newframe{Configuration File Grammar -- Formal Specification (cont.)}
+% 
+% {\footnotesize\tt\begin{alltt}
+% \begin{tabbing}
+% primary \= -> name dots => n\_dot? \\
+%         \> -> number \\
+%         \> -> number name => n\_unit \\
+%         \> -> string \\
+%         \> -> '(' expr ')' \\
+%         \> -> '(' expr ')' name => n\_unit \\
+%         \> -> name '[' expr ']' => n\_subscript \\
+%         \> -> func\_ref \\
+%         \> -> func\_ref name => n\_unit
+% \end{tabbing}
+% 
+% func\_ref -> name '(' value2\_list ')' => n\_func\_ref
+% 
+% \begin{tabbing}
+% dots \= -> \\
+%      \> -> dot name dots
+% \end{tabbing}
+% \end{alltt}}
+% 
+% \end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Translation}
+
+\parskip 4pt
+
+The {\tt =$>$} notation at the end of a production specifies an internal
+vertex to generate in the abstract syntax tree.  Its sons are translations
+of the right-hand-side of the production.  If a production does not
+generate an internal vertex, the translation of its left-hand-side
+nonterminal symbol is the sequence of translations of the right-hand side.
+The translation of a pseudo-terminal is its string index, called
+\emph{sub-rosa} information because it is passed ``under the table''
+through the parser, from the lexer to subsequent phases.
+
+True terminal symbols, such as operators or punctuation, do not have any
+automatic translation.
+
+The notation ``{\tt =$>$ x ?}'' means ``generate {\tt x} if and only if it
+would have more than one son.''
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Translation (cont.)}
+
+\vspace*{-6pt}
+\small
+To return to our simple example, with generation specified:
+\vspace*{-6pt}
+\begin{tabbing}
+     \= $E$ \= $\rightarrow T $ \\
+     \>     \> $ \rightarrow E + T \Rightarrow\, '+' $ \\
+     \> $T$ \> $ \rightarrow N $ \\
+     \>     \> $ \rightarrow T * N \Rightarrow\, '*' $ \\
+     \> $N$ \> $ \rightarrow a \,|\, b \,|\, c$
+\end{tabbing}
+\vspace*{-6pt}
+
+The MLS parsing method, called LR, produces the reverse of a rightmost
+derivation, i.e., for the example {\tt a + b * c}, the reverse of
+
+$E \Rightarrow E + T \Rightarrow E + T * N \Rightarrow E + T * c
+\Rightarrow E + N * c \Rightarrow E + b * c \Rightarrow T + b * c
+\Rightarrow N + b * c \Rightarrow a + b * c$ is produced.
+
+We use ``Cambridge Polish'' notation $< x\, y\, z\, \dots >$ for a subtree
+to denote $x$ at the root with sons $y\,z\,\dots$.
+
+The reverse of the second step consists of recognizing that $T * N$ should
+be \emph{reduced} to $T$ using the fourth production.  The translation of
+$T * N$ at that point is the sequence ({\tt b c}), the concatenation of
+the translations of $T$ and $N$, so the translation $\mathcal{T} =\, < *\,
+b\, c >$ is constructed, and becomes the translation of $T$ upon
+reduction.
+
+When $E + T$ is reduced to $E$, the translation of $E + T$ is the sequence
+({\tt a}~$\mathcal{T})$, so the translation $< +\, a\,\, \mathcal{T} \,>$
+is generated, and the complete translation is $< +\, a\, < *\, b\, c >
+\,>$.
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Translation (cont.)}
+
+{\Large\bfseries
+$E \Rightarrow E + T \Rightarrow E + T * N \Rightarrow E + T * c
+\Rightarrow E + N * c \Rightarrow E + b * c \Rightarrow T + b * c
+\Rightarrow N + b * c \Rightarrow a + b * c$}
+
+\vspace*{0.25in}
+\includegraphics[scale=0.95]{wvs-147-3}
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Type checking}
+
+Type checking verifies that
+
+\begin{itemize}
+
+\item sections are in allowed order,
+
+\item a parameter declaration or a specification is allowed in a section,
+
+\item fields of a specification are of the correct types, and
+
+\item numeric parameter values or specification field values have allowed
+      units.
+
+\end{itemize}
+
+Type checking also constructs symbol and declaration tables, and connects
+references to declarations.
+
+Symbol table entries are indexed by the string index passed through the
+parser as ``sub-rosa'' information for pseudo-terminal symbols.
+
+A symbol might have several declarations, which are linked from the symbol
+table entry.
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Type checking -- (cont).}
+
+Type checking rules are represented by subtrees specified by {\tt
+init\_tables\_module}.  They have the same representation as subtrees
+produced by the parser.  They are constructed before the parser runs, and
+then connected to the abstract syntax tree as a left brother:
+
+\begin{centering}
+\includegraphics[scale=0.7]{wvs-147-4}\\[5pt]
+\end{centering}
+
+The type checker then traverses the entire tree.
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Type checking -- (cont).}
+
+Different kinds of type checking requirements are represented by different
+trees.  An enumeration type is represented by $<$ {\tt dt\_def type-name
+enumerator \dots} $>$.  For example, the type ``{\tt module}'' is
+represented by
+
+\begin{centering}
+\includegraphics[scale=0.5]{wvs-147-5}\\[5pt]
+\end{centering}
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Type checking -- (cont).}
+
+In the figure, the notation beside a tree vertex, e.g. {\tt t\_module}, is
+an integer called a \emph{decoration}.  It is added by the type checker. 
+For ``{\tt module}'' it is the index of a type name.  For ``{\tt ghz}''
+and {\tt thz}'' it is the index of an enumeration literal.
+
+\vspace*{0.1in}
+The dotted lines indicate indexing in the symbol table using the string
+index.  The type checker creates the declaration table entries, which
+indicate that ``{\tt module}'' is a type name (and might have other
+declarations), and ``{\tt ghz}'' and ``{\tt thz}'' are enumeration literal
+names (and might have other declarations), and in both cases provides the
+tree index for their declarations (the root of the type definition tree, a
+vertex of type ``{\tt dt\_def}'').
+
+\end{frame}
+
+\end{document}
+
+% $Id$
+
+% $Log$
