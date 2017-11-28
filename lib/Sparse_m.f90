@@ -19,9 +19,10 @@ module Sparse_m
 
   private
   public :: Sparse_t
-  public :: Create_Sparse, Destroy_Sparse, Add_Element, Resize_Sparse
-  public :: Row_Dot_Vec, Sparse_Dot_Vec, Vec_Dot_Col, Vec_Dot_Sparse
-  public :: Dump_Sparse, Dump
+  public :: Create_Sparse, Destroy_Sparse, Add_Element, Empty_Sparse, List_Sparse
+  public :: Resize_Sparse, Row_Dot_Vec, Row_Times_Vec, Sparse_Clear_Vec
+  public :: Sparse_Dot_Matrix, Sparse_Dot_Vec, Vec_Dot_Col, Vec_Dot_Sparse
+  public :: Dump_Sparse, Dump, Check_Column_Dup
 
   type :: Sparse_Element_t ! One element in a sparse matrix
     real(rp) :: V
@@ -37,19 +38,28 @@ module Sparse_m
     ! Rows and columns are circular lists, so last element points to first:
     integer, allocatable :: Rows(:) ! Last element in each row
     integer, allocatable :: Cols(:) ! Last element in each col
+    integer :: NRows = 0            ! How many rows are filled
+    ! Sub-dimensions are useful if an element of an array of Sparse_t
+    ! represents a subset of columns of a larger array.
+    integer :: Col1 = 0 ! One less than first column in larger array
     integer, allocatable :: LBnd(:) ! Column sub-dimension lower bounds
     integer, allocatable :: UBnd(:) ! Column sub-dimension upper bounds
     type(sparse_element_t), allocatable :: E(:) ! nonzero elements
   contains
     procedure :: Create => Create_Sparse
+    procedure :: Empty => Empty_Sparse
     procedure :: Add_Element_Stru
     procedure :: Add_Element_Value
     procedure :: Add_Elements_Stru
     generic :: Add_Element => Add_Element_Stru, Add_Element_Value, Add_Elements_Stru
     procedure :: Resize => Resize_Sparse
     procedure :: Destroy => Destroy_Sparse
+    procedure :: Check_Column_Dup
     procedure :: Dump => Dump_Sparse
+    procedure :: List => List_Sparse
     procedure :: Row_Dot_Vec
+    procedure :: Row_Times_Vec
+    procedure :: Clear_Vec => Sparse_Clear_Vec
     procedure :: Sparse_Dot_Vec
     procedure, pass(sparse) :: Vec_Dot_Col
     procedure, pass(sparse) :: Vec_Dot_Sparse
@@ -67,7 +77,7 @@ module Sparse_m
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
   private :: not_used_here 
-!---------------------------------------------------------------------------
+!---------------------------------------------------------- -----------------
 
 contains
 
@@ -75,7 +85,7 @@ contains
     ! Create a sparse matrix representation
     use Allocate_Deallocate, only: Allocate_Test, Test_Allocate
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-    class(sparse_t), intent(inout) :: Sparse  ! The matrix
+    class(sparse_t), intent(out) :: Sparse    ! The sparse matrix
     integer, intent(in) :: NR                 ! Number of rows
     integer, intent(in) :: NC                 ! Number of cols
     integer, intent(in), optional :: NE       ! Initial size ( sparse%e )
@@ -87,7 +97,6 @@ contains
     character(127) :: Msg
     integer :: Stat
 
-    call destroy_sparse ( sparse )
     call allocate_test ( sparse%rows, nr, "Sparse%Rows", moduleName, fill=0 )
     call allocate_test ( sparse%cols, nc, "Sparse%Cols", moduleName, fill=0 )
     if ( present(uBnd) ) then ! Store column sub-dimension bounds
@@ -100,7 +109,7 @@ contains
         sparse%lBnd = uBnd ! Just to allocate it
         sparse%lBnd(:) = 1
       end if
-    else ! Column doesn't have subdimensions
+    else ! Column doesn't have sub-dimensions
       sparse%uBnd = [nc]
       sparse%lBnd = [1]
     end if
@@ -114,8 +123,7 @@ contains
 
   subroutine Add_Element_Stru ( Sparse, E )
     ! Add an element with value E%V at row E%NR and column E&NC of Sparse
-    use Allocate_Deallocate, only: Allocate_Test, Test_Allocate
-    class(sparse_t), intent(inout) :: Sparse  ! The matrix
+    class(sparse_t), intent(inout) :: Sparse  ! The sparse matrix
     type(sparse_element_t), intent(in) :: E  ! Element to add at (e%nr,e%nc)
 
     call add_element_value ( sparse, e%v, e%nr, e%nc )
@@ -124,14 +132,13 @@ contains
 
   subroutine Add_Element_Value ( Sparse, V, R, C )
     ! Add an element with value V at row R and column C of Sparse
-    use Allocate_Deallocate, only: Allocate_Test, Test_Allocate
+    use Allocate_Deallocate, only: Test_Allocate
 
-    class(sparse_t), intent(inout) :: Sparse  ! The matrix
+    class(sparse_t), intent(inout) :: Sparse ! The sparse matrix
     real(rp), intent(in) :: V                ! The value of the element
     integer, intent(in) :: R                 ! The row of the element
     integer, intent(in) :: C                 ! The col of the element
 
-    type(sparse_element_t), allocatable :: E(:)
     integer :: FC, FR, NC, NE, New, NR, Stat
     character(127) :: Msg
 
@@ -170,8 +177,7 @@ contains
 
   subroutine Add_Elements_Stru ( Sparse, E )
     ! Add elements with values E%V at rows E%NR and columns E%NC of Sparse
-    use Allocate_Deallocate, only: Allocate_Test, Test_Allocate
-    class(sparse_t), intent(inout) :: Sparse     ! The matrix
+    class(sparse_t), intent(inout) :: Sparse     ! The sparse matrix
     type(sparse_element_t), intent(in) :: E(:)   ! Elements to add at (e%nr,e%nc)
 
     integer :: I
@@ -182,29 +188,85 @@ contains
 
   end subroutine Add_Elements_Stru
 
-  subroutine Dump_Sparse ( Sparse, Name, Format, Colon, Row )
+  subroutine Check_Column_Dup ( Sparse, Name, Found )
+    use Output_m, only: Output
+    class(sparse_t), intent(in) :: Sparse         ! The sparse matrix
+    character(*), intent(in) :: Name
+    logical, intent(out), optional :: Found       ! Found a duplicate
+    integer :: C, R0, R1, R2
+    logical :: Named
+    named = .false.
+    if ( present(found) ) found=.false.
+    do c = 1, size(sparse%cols)
+      r0 = sparse%cols(c)
+      if ( r0 == 0 ) cycle
+      r1 = r0
+      do
+        r1 = sparse%e(r1)%nc ! Next element in same column
+        if ( r1 == r0 ) exit
+        r2 = sparse%e(r1)%nc
+        do
+          r2 = sparse%e(r2)%nc
+          if ( r1 /= r2 ) then
+            if ( sparse%e(r1)%r == sparse%e(r2)%r .and. &
+               & sparse%e(r1)%c == sparse%e(r2)%c ) then
+              if ( .not. named ) call output ( 'In sparse matrix ' // trim(name), &
+                & advance='yes' )
+              named=.true.
+              if ( present(found) ) found=.true.
+              call output ( c, before='In column ' )
+              call output ( r1, before=', elements ' )
+              call output ( r2, before=' and ' )
+              call output ( sparse%e(r1)%r, before=' are duplicates for row ' )
+              if  ( sparse%e(r1)%v == sparse%e(r2)%v ) then
+                call output ( '.  Values are the same.' , advance='yes' )
+              else
+                call output ( '.  Values differ.' , advance='yes' )
+              end if
+            end if
+          end if
+          if ( r2 == r0 ) exit
+        end do
+      end do
+    end do
+  end subroutine Check_Column_Dup
+  
+  subroutine Dump_Sparse ( Sparse, Name, Format, Colon, This, Offset, Transpose )
     use Array_Stuff, only: Subscripts
     use Dump_Options, only: SDFormatDefault
     use Output_m, only: Blanks, NewLine, Output
     use String_Table, only: Display_String
-    class(sparse_t), intent(in) :: Sparse         ! The matrix
+    class(sparse_t), intent(in) :: Sparse         ! The sparse matrix
     character(*), intent(in), optional :: Name    ! Print it if present
     character(*), intent(in), optional :: Format  ! Else sdFormatDefault
     logical, intent(in), optional :: Colon        ! Single subscript followed by
                                                   ! colon instead of within
                                                   ! parentheses, default false
-    integer, intent(in), optional :: Row          ! Only dump this row
+    integer, intent(in), optional :: This         ! Only dump this row or column
+                                                  ! (depending on transpose)
+    logical, intent(in), optional :: Offset       ! Print column numbers starting
+                                                  ! at 1 instead of their positions
+                                                  ! in Grids_t
+    logical, intent(in), optional :: Transpose    ! Dump transpose -- each row
+                                                  ! of output is a column
 
     integer :: CS(size(sparse%uBnd,1))
-    integer :: I, J, K, L, R1, R2, S
+    integer :: C1, C2, I, J, K, L, R1, R2, S
     logical :: More  ! Can print more than the name
     logical :: MyColon
     character(len=64) :: MyFormat
+    logical :: MyOffset
+    logical :: MyTranspose
+    integer :: Places
 
-    myFormat = sdFormatDefault
-    if ( present(format) ) myFormat = format
     myColon = .false.
     if ( present(colon) ) myColon = colon
+    myFormat = sdFormatDefault
+    if ( present(format) ) myFormat = format
+    MyOffset = .false.
+    if ( present(offset) ) MyOffset = offset
+    MyTranspose = .false.
+    if ( present(Transpose) ) MyTranspose = transpose .and. size(cs,1) > 1
 
     ! Print the name and dimensions
     if ( present(name) ) call output ( name )
@@ -213,7 +275,7 @@ contains
       call display_string ( sparse%what )
     end if
     if ( present(name) .or. sparse%what /= 0 ) then
-      call output ( size(sparse%rows), before='(' )
+      call output ( sparse%nRows, before='(' )
       if ( any(sparse%lBnd /= 1 .or. sparse%uBnd /= 1) ) then
         do s = 1, size(sparse%ubnd)
           if ( sparse%ubnd(s) - sparse%lbnd(s) > 0 ) then
@@ -228,8 +290,6 @@ contains
       call output ( ')', advance='yes' )
     end if
 
-    ! Print the nonzero array elements, their row numbers and their column
-    ! sub-dimension subscripts
     more = .true. ! Assume sparse%rows and sparse%e are allocated
     if ( .not. allocated(sparse%rows) ) then
       call output ( 'Sparse%Rows not allocated', advance='yes' )
@@ -240,85 +300,147 @@ contains
       more = .false.
     end if
     if ( more ) then
-      r1 = 1
-      r2 = size(sparse%rows,1)
-      if ( present(row) ) then
-        r1 = row
-        r2 = row
-      end if
-      do i = r1, r2
-        j = sparse%rows(i)                     ! First column
-        if ( j == 0 ) cycle                    ! Don't dump an empty row
-        call output ( i, places=4, after="#" ) ! Row number
-        k = 0
-        do
-          if ( k == 5 ) then
-            call newLine
-            call blanks ( 5 )
-          end if
-          j = sparse%e(j)%nr                   ! Next column in this row
-          k = k + 1
+      if ( myTranspose ) then
+        ! Print the nonzero array elements, their column sub-dimension
+        ! subscripts and their row numbers.
+        c1 = 1
+        c2 = size(sparse%cols,1)
+        if ( present(this) ) then
+          c1 = this
+          c2 = this
+        end if
+        do i = c1, c2
+          j = sparse%cols(i)                     ! First row
+          if ( j == 0 ) cycle                    ! Don't dump an empty column
           cs = subscripts ( sparse%e(j)%c, sparse%uBnd, sparse%lBnd )
-          if ( size(cs) == 1 .and. myColon ) then
-            call output ( cs(1), places=4, after=": " )
-          else
-            call output ( cs(1), before=" (" )
-            do l = 2, size(cs)
-              call output ( cs(l), before="," )
-            end do
-            call output ( ") " )
-          end if
-          call output ( sparse%e(j)%v, format=myFormat )
-          if ( j == sparse%rows(i) ) exit      ! No more columns this row
+          if ( myOffset ) cs = cs - sparse%lBnd + 1
+          call output ( cs(1), before="(" )
+          do l = 2, size(cs)
+            call output ( cs(l), before="," )
+          end do
+          call output ( ")" )
+          places = sum(int(log10(real(cs)))) + size(cs) + 3
+          k = 0
+          do
+            if ( k == 5 ) then
+              call newLine
+              call blanks ( places )
+              k = 0
+            end if
+            j = sparse%e(j)%nc                   ! Next row in this column
+            k = k + 1
+            call output ( sparse%e(j)%r, places=4 )
+            call output ( sparse%e(j)%v, format=myFormat )
+            if ( j == sparse%cols(i) ) exit      ! No more columns this row
+          end do ! Rows
+          call newLine
         end do ! Columns
-        call newLine
-      end do ! Rows
+      else
+        ! Print the nonzero array elements, their row numbers and their
+        ! column sub-dimension subscripts.
+        r1 = 1
+        r2 = sparse%nRows
+        if ( r2 == 0 ) r2 = size(sparse%rows,1)
+        if ( present(this) ) then
+          r1 = this
+          r2 = this
+        end if
+        do i = r1, r2
+          j = sparse%rows(i)                     ! First column
+          if ( j == 0 ) cycle                    ! Don't dump an empty row
+          call output ( i, places=4, after="#" ) ! Row number
+          k = 0
+          do
+            if ( k == 5 ) then
+              call newLine
+              call blanks ( 5 )
+            end if
+            j = sparse%e(j)%nr                   ! Next column in this row
+            k = k + 1
+            cs = subscripts ( sparse%e(j)%c, sparse%uBnd, sparse%lBnd )
+            if ( myOffset ) cs = cs - sparse%lBnd + 1
+            if ( size(cs) == 1 .and. myColon ) then
+              call output ( cs(1), places=5, after=": " )
+            else
+              call output ( cs(1), before=" (" )
+              do l = 2, size(cs)
+                call output ( cs(l), before="," )
+              end do
+              call output ( ") " )
+            end if
+            call output ( sparse%e(j)%v, format=myFormat )
+            if ( j == sparse%rows(i) ) exit      ! No more columns this row
+          end do ! Columns
+          call newLine
+        end do ! Rows
+      end if
     end if
 
   end subroutine Dump_Sparse
 
-  subroutine Destroy_Sparse ( Sparse )
-    ! Create a sparse matrix representation
-    use Allocate_Deallocate, only: Deallocate_Test, Test_Deallocate
-    class(sparse_t), intent(inout) :: Sparse  ! The matrix
-
-    character(127) :: Msg
-    integer :: Stat
-
-    sparse%ne = 0
-    call deallocate_test ( sparse%rows, "Sparse%Rows", moduleName )
-    call deallocate_test ( sparse%cols, "Sparse%Cols", moduleName )
-    if ( allocated(sparse%e) ) then
-      deallocate ( sparse%e, stat=stat, errmsg=msg )
-      call test_deallocate ( stat, moduleName, "Sparse%E", ermsg=msg )
-    end if
-
+  subroutine Destroy_Sparse ( Sparse_Not_Used )
+    ! Destroy a sparse matrix representation by default initializing it,
+    ! which deallocates any of its allocated allocatable components.
+    class(sparse_t), intent(out) :: Sparse_Not_Used  ! The sparse matrix
   end subroutine Destroy_Sparse
 
-  pure real(rp) function Row_Dot_Vec ( Sparse, R, Vector ) result ( D )
-    ! Compute dot product of row R of Sparse with Vector
-    class(sparse_t), intent(in) :: Sparse  ! The matrix
-    integer, intent(in) :: R               ! Which row to multiply by Vector
-    real(rp), intent(in) :: Vector(:)      ! The vector
+  subroutine Empty_Sparse ( Sparse )
+    ! Set Sparse%ne, sparse%rows, and sparse%cols to zero to make it effectively
+    ! empty, but without deallocating everything.  Useful if the next time it's
+    ! used it will have the same number (or fewer) of rows and columns.
+    class(sparse_t), intent(inout) :: Sparse
+    sparse%ne = 0
+    if ( allocated(sparse%rows) ) sparse%rows = 0
+    if ( allocated(sparse%cols) ) sparse%cols = 0
+  end subroutine Empty_Sparse
 
-    integer :: NC                          ! Next column in the row
+  subroutine List_Sparse ( Sparse, Name )
+    ! List the contents of Sparse_t without trying to follow the links for
+    ! rows and columns.  Useful for debugging if the structure is messed up.
+    use Dump_0, only: Dump
+    use Output_m, only: NewLine, Output
+    use String_Table, only: Display_String
+    class(sparse_t), intent(in) :: Sparse
+    character(*), intent(in), optional :: Name
+    integer :: F, L ! Locations of first, last nonzeros in sparse%col
+    integer :: I
 
-    d = 0.0
-    nc = sparse%rows(r)                    ! Last element in the row
-    if ( nc /= 0 ) then                    ! Any columns in this row?
-      do
-        d = d + sparse%e(nc)%v * vector(sparse%e(nc)%c)
-        nc = sparse%e(nc)%nc               ! Next column in the row
-        if ( nc == sparse%rows(r) ) exit   ! back to the last one?
-      end do
+    if ( present(name) ) call output ( name )
+    if ( sparse%what /= 0 ) then
+      if ( present(name) ) call output ( ' ' )
+      call display_string ( sparse%what )
     end if
-
-  end function Row_Dot_Vec
+    if ( present(name) .or. sparse%what /= 0 ) call newLine
+    if ( .not. allocated(sparse%rows) ) then
+      call output ( 'Sparse matrix not initialized', advance='yes' )
+      return
+    end if
+    call dump ( sparse%rows(1:sparse%nRows), name='Rows' )
+    do f = 1, size(sparse%cols)
+      if ( sparse%cols(f) /= 0 ) exit
+    end do
+    do l = size(sparse%cols), 1, -1
+      if ( sparse%cols(l) /= 0 ) exit
+    end do
+    call dump ( sparse%cols(f:l), name='Cols', lbound=f )
+    call dump ( sparse%lbnd, name='Lbnd' )
+    call dump ( sparse%ubnd, name='Ubnd' )
+    if ( sparse%ne /= 0 ) &
+      & call output ( '         R    C   NR   NC   V', advance='yes' )
+    do i = 1, sparse%ne
+      call output ( i, places=4, after='#' )
+      call output ( sparse%e(i)%r, places=5 )
+      call output ( sparse%e(i)%c, places=5 )
+      call output ( sparse%e(i)%nr, places=5 )
+      call output ( sparse%e(i)%nc, places=5 )
+      call output ( sparse%e(i)%v, before='  ', advance='yes' )
+    end do
+  end subroutine List_Sparse
 
   subroutine Resize_Sparse ( Sparse, NE )
     ! Resize Sparse%E with new size NE
-    use Allocate_Deallocate, only: Allocate_Test, Test_Allocate, Test_Deallocate
-    class(sparse_t), intent(inout) :: Sparse  ! The matrix
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+    class(sparse_t), intent(inout) :: Sparse  ! The sparse matrix
     integer, intent(in), optional :: NE       ! New size for Sparse%E,
                                               ! Default Sparse%NE
 
@@ -337,15 +459,90 @@ contains
 
   end subroutine Resize_Sparse
 
+  pure real(rp) function Row_Dot_Vec ( Sparse, R, Vector ) result ( D )
+    ! Compute dot product of row R of Sparse with Vector
+    class(sparse_t), intent(in) :: Sparse  ! The sparse matrix
+    integer, intent(in) :: R               ! Which row to multiply by Vector
+    real(rp), intent(in) :: Vector(:)      ! The vector
+
+    integer :: J                           ! Column index in the row
+
+    d = 0.0
+    j = sparse%rows(r)                     ! Last element in the row
+    if ( j /= 0 ) then                     ! Any columns in this row?
+      do
+        d = d + sparse%e(j)%v * vector(sparse%e(j)%c)
+        j = sparse%e(j)%nr                ! Next column in the row
+        if ( j == sparse%rows(r) ) exit   ! back to the last one?
+      end do
+    end if
+
+  end function Row_Dot_Vec
+
+  subroutine Row_Times_Vec ( Sparse, R, Vector, Product )
+    ! Store the product of the nonzero elements of row R of Sparse and
+    ! corresponding elements of Vector in corresponding elements of Product.
+    ! This is an element-by-element product.  Product is not initially made
+    ! zero.
+    class(sparse_t), intent(in) :: Sparse  ! The sparse matrix
+    integer, intent(in) :: R               ! Which row to multiply by Vector
+    real(rp), intent(in) :: Vector(:)      ! The vector
+    real(rp), intent(inout) :: Product(:)  ! Elements corresponding to nonzeroes
+                                           ! in row R are replaced
+    integer :: J
+    j = sparse%rows(r)  ! Last element in row R
+    if ( j == 0 ) return
+    do
+      j = sparse%e(j)%nr   ! Element in next column of row R
+      product(sparse%e(j)%c) = sparse%e(j)%v * vector(sparse%e(j)%c)
+      if ( j == sparse%rows(r) ) exit
+    end do
+  end subroutine Row_Times_Vec
+
+  subroutine Sparse_Clear_Vec ( Sparse, R, Vector )
+    ! Clear elements of Vector that correspond to nonzero elements of row R
+    ! of Sparse.  This is used to clean up after Row_Times_Vec
+    class(sparse_t), intent(in) :: Sparse  ! The sparse matrix
+    integer, intent(in) :: R               ! Which row to multiply by Vector
+    real(rp), intent(inout) :: Vector(:)   ! The vector
+    integer :: J
+    j = sparse%rows(r)  ! Last element in row R
+    if ( j == 0 ) return
+    do
+      j = sparse%e(j)%nr   ! Element in next column of row R
+      vector(sparse%e(j)%c) = 0
+      if ( j == sparse%rows(r) ) exit
+    end do
+  end subroutine Sparse_Clear_Vec
+
+  subroutine Sparse_Dot_Matrix ( Sparse, Matrix, Prod )
+    ! Multiply Sparse by Matrix producing Product
+    class(sparse_t), intent(in) :: Sparse  ! The sparse matrix
+    real(rp), intent(in) :: Matrix(:,:)    ! The matrix Sparse is to multiply
+    real(rp), intent(out) :: Prod(:,:)
+
+    integer :: C, R
+
+    do r = 1, size(sparse%rows)
+      do c = 1, size(matrix,2)
+        prod(r,c) = row_dot_vec ( sparse, r, matrix(:,c) )
+      end do
+    end do
+
+  end subroutine Sparse_Dot_Matrix
+
   subroutine Sparse_Dot_Vec ( Sparse, Vector, Prod )
     ! Multiply Sparse by Vector producing Product
-    class(sparse_t), intent(in) :: Sparse  ! The matrix
+    class(sparse_t), intent(in) :: Sparse  ! The sparse matrix
     real(rp), intent(in) :: Vector(:)      ! The vector Sparse is to multiply
     real(rp), intent(out) :: Prod(:)
 
+    integer :: N  ! Number of rows to use
     integer :: R
 
-    do r = 1, size(sparse%rows)
+    n = sparse%nRows
+    if ( n == 0 ) n = size(sparse%rows)
+    do r = 1, n
       prod(r) = row_dot_vec ( sparse, r, vector )
     end do
 
@@ -354,7 +551,7 @@ contains
   pure real(rp) function Vec_Dot_Col ( Vector, Sparse, C ) result ( D )
     ! Compute dot product of Vector with column C of Sparse
     real(rp), intent(in) :: Vector(:)      ! The vector
-    class(sparse_t), intent(in) :: Sparse  ! The matrix
+    class(sparse_t), intent(in) :: Sparse  ! The sparse matrix
     integer, intent(in) :: C               ! Which col to multiply by Vector
 
     integer :: NR                          ! Next row in the column
@@ -374,7 +571,7 @@ contains
   subroutine Vec_Dot_Sparse ( Vector, Sparse, Prod )
     ! Multiply Sparse by Vector producing Product
     real(rp), intent(in) :: Vector(:)      ! The vector Sparse is to multiply
-    class(sparse_t), intent(in) :: Sparse  ! The matrix
+    class(sparse_t), intent(in) :: Sparse  ! The sparse matrix
     real(rp), intent(out) :: Prod(:)
 
     integer :: C
@@ -398,6 +595,11 @@ contains
 end module Sparse_m
 
 ! $Log$
+! Revision 2.2  2017/11/28 23:58:02  vsnyder
+! Add Empty_Sparse, List_Sparse, Row_Times_Vec, Sparse_Clear_Vec,
+! Sparse_Dot_Matrix, Check_Column_Dup routines.  Add NRows element. Add
+! transposed dump.  Correct some bugs.  Some cannonball polishing.
+!
 ! Revision 2.1  2017/11/01 18:52:11  vsnyder
 ! Initial commit
 !
