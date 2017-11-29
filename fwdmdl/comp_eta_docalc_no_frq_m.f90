@@ -34,7 +34,7 @@ contains
                                     & Eta_fzp, Do_Calc_fzp )
 
     use GLNP, only: NG
-    use MLSCommon, only: RP
+    use MLSKinds, only: RP
     use Get_Eta_Matrix_m, only: Get_Eta_ZP
     use Load_Sps_Data_m, only: Grids_T
 
@@ -164,7 +164,6 @@ contains
       end if
 
     end do
-
     if ( present(eta_fzp) .and. present(do_calc_zp) .and. present(do_calc_fzp) ) then
       nz = size(eta_fzp,1)
       call spread_eta_fzp_from_eta_zp ( grids_x, &
@@ -315,6 +314,9 @@ contains
 end module Comp_Eta_Docalc_No_Frq_m
 
 ! $Log$
+! Revision 2.24  2017/11/29 00:41:33  vsnyder
+! Get RP from MLSKinds instead of MLSCommon
+!
 ! Revision 2.23  2017/08/09 20:34:37  vsnyder
 ! Set formerly-true values of do_calc_zp false before computing new true ones
 !
