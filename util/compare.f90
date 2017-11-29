@@ -164,8 +164,8 @@ program COMPARE
     end do
 
     if ( verbose ) print *, 'Read control lines from both files'
-    if ( (end .neqv. status /= 0) .and. loud ) then
-      print '(a)', 'Input file lengths unequal'
+    if ( (end .neqv. status /= 0) ) then
+      if ( loud ) print '(a)', 'Input file lengths unequal'
       same = .false.
     end if
     if ( end .or. status /= 0 ) exit
@@ -312,6 +312,8 @@ program COMPARE
       & avgsr, stdevr, avgsa, stdeva
   else if ( same ) then
     print *, 'Identical'
+  else ! Print this even -q option, but there's no input at all.
+    print *, 'File lengths unequal, probably one was empty'
   end if
 
   if ( anyNaN(1) ) print *, trim(file1), ' has a NaN somewhere'
@@ -364,6 +366,9 @@ contains
 end program
 
 ! $Log$
+! Revision 1.27  2017/11/28 21:51:48  vsnyder
+! Make AT fields wider
+!
 ! Revision 1.26  2017/11/28 01:46:49  vsnyder
 ! Don't compute Rel at Max Abs Diff = NaN for identical zero results
 !
