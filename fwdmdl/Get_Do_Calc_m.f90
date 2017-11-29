@@ -46,15 +46,20 @@ contains
     ! Clean out old nonzeros in Eta_Array and old true values in Do_Calc
     use MLSKinds, only: RP
     real(rp), intent(inout) :: Eta_Array(:,:)
-    logical, intent(inout) :: Do_Calc(:,:)      ! Same shape as Eta_Array
-    integer, intent(inout) :: NZ(:,:) ! Row subscripts of nonzeros
-    integer, intent(inout) :: NNZ(:)  ! How many nonzeros in a column
+    logical, intent(inout), optional :: Do_Calc(:,:) ! Same shape as Eta_Array
+    integer, intent(inout), optional :: NZ(:,:)      ! Row subscripts of nonzeros
+    integer, intent(inout), optional :: NNZ(:)       ! How many nonzeros in a column
     integer :: I
-    do i = 1, size(eta_array,2)
-      eta_array(nz(:nnz(i),i),i) = 0
-      do_calc(nz(:nnz(i),i),i) = .false.
-      nnz(i) = 0
-    end do
+    if ( present(nz) ) then
+      do i = 1, size(eta_array,2)
+        eta_array(nz(:nnz(i),i),i) = 0
+        if ( present(do_calc) ) do_calc(nz(:nnz(i),i),i) = .false.
+        nnz(i) = 0
+      end do
+    else
+      eta_array = 0
+      if ( present(do_calc) ) do_calc=.false.
+    end if
   end subroutine Clean_Out_Nonzeros
 
   subroutine Get_Do_Calc_2 ( Eta, Two_D_Bounds, Do_Calc, NZ, NNZ )
@@ -118,8 +123,8 @@ contains
 
     n_path = size(eta)
 
+    call clean_out_nonzeros ( eta_array, do_calc, nz, nnz )
     if ( present(nz) ) then
-      call clean_out_nonzeros ( eta_array, do_calc, nz, nnz )
       do i = 1, n_path
         do j = 1, eta(i)%n
           k = element_position([eta(i)%v(j)%j,eta(i)%v(j)%jp], two_d_bounds)
@@ -130,8 +135,6 @@ contains
         end do
       end do
     else
-      eta_array = 0
-      do_calc = .false.
       do i = 1, n_path
         do j = 1, eta(i)%n
           k = element_position([eta(i)%v(j)%j,eta(i)%v(j)%jp], two_d_bounds)
@@ -174,8 +177,8 @@ contains
     n_path = size(eta)
 
     ! Clean out old nonzeros in Eta_Array and old true values in Do_Calc
+    call clean_out_nonzeros ( eta_array, do_calc, nz, nnz )
     if ( present(nz) ) then
-      call clean_out_nonzeros ( eta_array, do_calc, nz, nnz )
       do i = 1, n_path
         do j = 1, eta(i)%n
           k = element_position([eta(i)%v(j)%jf,eta(i)%v(j)%j,eta(i)%v(j)%jp], &
@@ -187,8 +190,6 @@ contains
         end do
       end do
     else
-      eta_array = 0
-      do_calc = .false.
       do i = 1, n_path
         do j = 1, eta(i)%n
           k = element_position([eta(i)%v(j)%jf,eta(i)%v(j)%j,eta(i)%v(j)%jp], &
@@ -223,6 +224,11 @@ contains
 end module Get_Do_Calc_m
 
 ! $Log$
+! Revision 2.4  2017/11/29 00:44:07  vsnyder
+! Make Do_Calc, NZ, NNZ optional in Clean_Out_Nonzeros.  Only use them if
+! they're present.  Use Clean_Out_Nonzeros in Get_Eta_Do_Calc* for cases
+! when Do_Calc etc are absent.
+!
 ! Revision 2.3  2017/08/28 20:28:08  livesey
 ! Changed the n,nf,np,nz elements to j,jf,...
 !
