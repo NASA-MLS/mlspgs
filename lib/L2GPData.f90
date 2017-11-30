@@ -38,6 +38,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   use MLSNumerics, only: FindInRange
   use MLSFinds, only: FindFirst, FindLast, FindUnique
   use MLSSets, only: FindIntersection, Intersection
+  use MLSStats1, only: MLSMin
   use MLSStrings, only: Capitalize, Lowercase
   use MLSStringLists, only: ExtractSubstring, &
     & GetHashElement, GetStringElement, GetUniqueList, &
@@ -1095,10 +1096,10 @@ contains ! =====     Public Procedures     =============================
           & notUnlimited=notUnlimited)
       endif
 
-      l2metaData%minLat= minval(l2gp%latitude)
-      l2metaData%maxLat= maxval(l2gp%latitude)
-      l2metaData%minLon= minval(l2gp%longitude)
-      l2metaData%maxLon= maxval(l2gp%longitude)
+      l2metaData%minLat = mlsmin( l2gp%latitude, l2gp%MissingValue )
+      l2metaData%maxLat = maxval(l2gp%latitude)
+      l2metaData%minLon = mlsmin( l2gp%longitude, l2gp%MissingValue )
+      l2metaData%maxLon = maxval(l2gp%longitude)
 
       call DestroyL2GPContents ( l2gp )
     enddo
@@ -5427,6 +5428,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.228  2017/11/03 19:59:08  pwagner
+! Most array gymnastics moved from MLSFillValues to HyperSlabs module
+!
 ! Revision 2.227  2017/07/19 22:51:50  pwagner
 ! Improved appearance and consistency when Diffing L2GPData types; esp. if gold brick
 !
