@@ -37,7 +37,7 @@ module MLSL2Timings              !  Timings for the MLSL2 program sections
     & NumStringElements, StringElementNum, SwitchDetail
   use MoreTree, only: Get_Boolean
   use Output_M, only: StampOptions, Blanks, NewLine, Output, &
-    & ResumeOutput, SuspendOutput
+    & RestoreSettings, ResumeOutput, SuspendOutput
   use String_Table, only: Get_String
   use Time_M, only: Time_Now
   use Toggles, only: Switches
@@ -493,9 +493,13 @@ contains ! =====     Public Procedures     =============================
     endif
     
     if ( name < 1 ) return
+    if ( got(f_stamp) ) then
+      stampOptions%neverStamp = .false.
+      stampOptions%textCode = ': : ' // trim(phaseString) // ' : :'
+    else
+      call restoreSettings( 'stamp' )
+    endif
     call add_to_phase_timing( trim(phaseString) )
-    if ( got(f_stamp) ) &
-      & stampOptions%textCode = ': : ' // trim(phaseString) // ' : :'
     call outputNamedValue( 'Resetting to 0 sys_memory which was', sys_memory_max )
     sys_memory_max     = 0.0
     if ( switchDetail ( switches, 'bool' ) > 0 ) &
@@ -1031,6 +1035,9 @@ END MODULE MLSL2Timings
 
 !
 ! $Log$
+! Revision 2.70  2017/11/30 20:52:08  pwagner
+! Added optional /stamp field to phase spec
+!
 ! Revision 2.69  2017/11/15 00:18:11  pwagner
 ! Stamp with phase name if /stamp; dont reset interval unless /stamp
 !
