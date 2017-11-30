@@ -1786,12 +1786,20 @@ contains
   ! ----------------------------------------------  RestoreSettings  -----
   ! Restore tab stops to what was in effect at start
   ! Optionally returning them as an integer array
-  subroutine RestoreSettings ( usetoolkit )
+  subroutine RestoreSettings ( settings )
     ! Args
-    logical, optional, intent(in) :: useToolkit
+    character(len=*), optional, intent(in) :: settings
+    ! Local variables
+    character(len=*), parameter            :: allSettings = &
+      & 'style'
+    character(len=64)                      :: mySettings 
     ! Executable
-    call RestoreOutputSettings ( useToolkit )
-    StyleOptions = DefaultStyleOptions
+    call RestoreOutputSettings ( settings )
+    mySettings = ' '
+    if ( present(settings) ) mySettings = settings
+    if ( index(mySettings, '*') > 0 ) mySettings = allSettings
+    mySettings = lowercase(mySettings)
+    if ( index(mySettings, 'style') > 0 ) StyleOptions = DefaultStyleOptions
   end subroutine RestoreSettings 
 
   ! ----------------------------------------------  setStamp  -----
@@ -2447,6 +2455,9 @@ contains
 end module HIGHOUTPUT
 
 ! $Log$
+! Revision 2.21  2017/11/30 20:48:59  pwagner
+! RestoreSettings may now restore all or just some
+!
 ! Revision 2.20  2017/11/15 00:01:51  pwagner
 ! Print options%neverStamp as part of Dump
 !
