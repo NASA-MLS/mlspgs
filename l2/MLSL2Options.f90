@@ -30,8 +30,8 @@ module MLSL2Options              !  Options and Settings for the MLSL2 program
   use MLSStrings, only: IsComment, IsDigits, LowerCase, &
     & ReadIntsFromChars, Replace, WriteIntsToChars
   use PCFHdr, only: GlobalAttributes
-  use Output_M, only: OutputOptions, &
-    & InvalidPrUnit, StdoutPrUnit, MSGLogPrUnit, BothPrUnit, &
+  use Output_M, only: AdvancedOptions, OutputOptions, StampOptions, &
+    & TimeStampOptions, InvalidPrUnit, StdoutPrUnit, MSGLogPrUnit, BothPrUnit, &
     & Output
   use Printit_M, only: DefaultLogUnit, Get_Config, StdoutLogUnit
 
@@ -1014,6 +1014,8 @@ cmds: do
         else if ( line(3+n:10+n) == 'verbose ' ) then
           switches = catLists( trim(switches), &
             & 'l2q,glob,mas,bool1,opt1,log,pro1,time,apr,phase' )
+          StampOptions%showTime = .true.
+          StampOptions%dateFormat = 'yyyy-mm-dd'
         else if ( line(3+n:8+n) == 'versid' ) then
           i = i + 1
           call myNextArgument( i, inLine, entireLine, line )
@@ -1179,6 +1181,23 @@ jloop:do while ( j < len_trim(line) )
         return
       ! See also open_init for the same mechanism implemented in the PCF
       ! -------------------------------------------------------------
+      endif
+      
+      ! ---------------------------------------------------------------
+      ! Special means for setting OutputOptions, AdvancedOptions, 
+      ! StampOptions, or TimeStampOptions
+      if ( lowercase(name) == 'outputoptions' ) then
+        read(valu,*) OutputOptions
+        return
+      elseif ( lowercase(name) == 'advancedoptions' ) then
+        read(valu,*) AdvancedOptions
+        return
+      elseif ( lowercase(name) == 'stampoptions' ) then
+        read(valu,*) StampOptions
+        return
+      elseif ( lowercase(name) == 'timestampoptions' ) then
+        read(valu,*) TimeStampOptions
+        return
       endif
 
       ! Beware of cases where valu conatins an embedded space
@@ -1389,6 +1408,9 @@ end module MLSL2Options
 
 !
 ! $Log$
+! Revision 2.112  2017/11/30 20:57:10  pwagner
+! opts file mechanism may now set OutputOptions, AdvancedOptions, etc.
+!
 ! Revision 2.111  2017/03/24 22:59:23  pwagner
 ! Made new opts file name CrashIfMsgSays that tells level 2 to crash with walkback if special msg logged
 !
