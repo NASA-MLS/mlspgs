@@ -148,6 +148,7 @@ module Dump_Options
   integer, private, parameter :: NumOpt = WholeArray
 
   logical :: NameHasBeenPrinted = .false.
+  logical :: OldNeverStamp
 
 !     (parameters)
 ! CollapseOptions          options determining what and how to dump collapsed
@@ -410,6 +411,7 @@ contains
     myDiff = .false.
     if ( present(thisIsADiff) ) myDiff = thisIsADiff
 !    nameHasBeenPrinted = .false.
+    OldNeverStamp = stampOptions%neverStamp
     stampOptions%neverStamp = .true. ! So we don't interrupt tables of numbers
     call set_options ( options, &
       & merge(defaultDiffOptions,defaultDumpOptions,myDiff) )
@@ -434,7 +436,7 @@ contains
   ! -------------------------------------------------  TheDumpEnds -----
   subroutine TheDumpEnds
     use Output_m, only: StampOptions
-    stampOptions%neverStamp = .false.
+    stampOptions%neverStamp = OldNeverStamp ! Restore just this component
     if ( dopts(crash)%v .and. .not. CrashAtBeginning ) call Crash_Burn
     nameHasBeenPrinted = .false.
   end subroutine TheDumpEnds
@@ -452,6 +454,9 @@ contains
 end module Dump_Options
 
 ! $Log$
+! Revision 2.9  2017/11/30 20:47:31  pwagner
+! Now wont stamp on stampOptions%neverStamp
+!
 ! Revision 2.8  2017/09/07 23:44:30  pwagner
 ! Added PrintNameAsHeadline and PrintNameInBanner options to dump
 !
