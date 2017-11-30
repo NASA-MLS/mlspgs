@@ -149,7 +149,7 @@ module Dump_0
   logical           :: DumpTheseZeros
   character(len=16) :: MyOptions
   character(len=16) :: MyPCTFormat
-  character(len=64) :: OldNameOnEachLine
+  character(len=*), parameter :: OldNameOnEachLine = ' ' ! Should be in dump_options
   integer           :: Bwidth, myRank, numNonFill, numFill, indx2BSliced, iSlice
   real              :: Pctnzero
   logical, save     :: ThisIsADiff = .false.
@@ -1763,6 +1763,9 @@ contains
 end module Dump_0
 
 ! $Log$
+! Revision 2.151  2017/11/30 20:46:19  pwagner
+! Avoid leaving OldNameOnEachLine undefined
+!
 ! Revision 2.150  2017/11/03 20:01:40  pwagner
 ! Most array gymnastics moved from MLSFillValues to HyperSlabs module
 !
