@@ -98,7 +98,7 @@ module OUTPUT_M
 ! printOutputStatus ( [char* keywords] )
 ! resumeOutput
 ! revertOutput
-! restoreSettings ( [log useToolkit] )
+! restoreSettings ( [char* settings] )
 ! setFillPattern ( pattern, [fillChar] )
 ! setOutputStatus( char* name, int value )
 ! suspendOutput
@@ -247,7 +247,7 @@ module OUTPUT_M
   ! they will appear alone as page headers
   ! (As an alternative, use timeStamp to stamp only individual lines)
   type stampOptions_T
-    logical :: neverStamp = .false.  ! if true, forget about automatic stamping
+    logical :: neverStamp = .true.  ! if true, forget about automatic stamping
     logical :: post       = .true.      ! Put stamp at end of line?
     logical :: showTime   = .false. ! Don't show date or time unless TRUE
     character(len=24) :: textCode = ' '
@@ -1307,17 +1307,28 @@ contains
   end subroutine OUTPUT_STRING
 
   ! ----------------------------------------------  restoreSettings  -----
-  subroutine restoreSettings ( USETOOLKIT )
+  subroutine restoreSettings ( settings )
   ! resume outputting to PRUNIT.
   ! optionally set to use or ignore Toolkit
     use PrintIt_m, only: DefaultLogUnit, Set_Config, StdoutLogUnit
-    logical, optional, intent(in) :: useToolkit
-    outputOptions = DefaultOutputOptions
+    character(len=*), optional, intent(in) :: settings
+    ! Local variables
+    character(len=*), parameter            :: allSettings = &
+      & 'toolkit,stamp,output,time'
+    character(len=len(allSettings))        :: mySettings 
+    logical                                :: useToolkit
+    ! Executable
+    mySettings = ' '
+    if ( present(settings) ) mySettings = settings
+    if ( index(mySettings, '*') > 0 ) mySettings = allSettings
+    mySettings = lowercase(mySettings)
+    if ( index(mySettings, 'output') > 0 ) outputOptions = DefaultOutputOptions
 
-    stampOptions = DefaultStampOptions
+    if ( index(mySettings, 'stamp') > 0 ) stampOptions = DefaultStampOptions
 
-    timeStampOptions = DefaultTimeStampOptions
-    if ( .not. present(useToolkit) ) return
+    if ( index(mySettings, 'time') > 0 ) timeStampOptions = DefaultTimeStampOptions
+    useToolkit = ( index(mySettings, 'toolkit') > 0 )
+    if ( .not. useToolkit ) return
     call set_config ( useToolkit = useToolkit, &
       & logFileUnit=merge(defaultLogUnit, stdoutLogUnit, useToolkit) )
   end subroutine restoreSettings
@@ -1701,6 +1712,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.134  2017/11/30 20:50:13  pwagner
+! RestoreSettings may now restore all or just some
+!
 ! Revision 2.133  2017/11/15 00:00:17  pwagner
 ! Avoid adding unwanted blank lines when stamping
 !
