@@ -773,7 +773,9 @@ Begin Fill
   Fill, quantity=tempVectorPrecision.!theQuantity, method=gphPrecision, $
     refGPHPrecisionquantity=tempVectorPrecision.refGPH, $
     tempPrecisionQuantity=tempVectorPrecision.temperature_hr
-
+;; and make this the new standardPrecision
+  Fill, quantity=standardPrecision.!theQuantity, method=vector, $
+    sourceQuantity=tempVectorPrecision.!theQuantity
 ;; Do we correct for the Geoid offset w.r.t the reference ellipsoid?
 !ifdef(flagCorrectGPHForGeoid, {
 end Fill
@@ -1230,6 +1232,9 @@ Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, $
 })})
 
 ; $Log$
+; Revision 1.158  2017/11/17 17:34:12  pwagner
+; May prefine macors HiResStdProds, flagSkipPTrop
+;
 ; Revision 1.157  2016/12/06 19:56:53  pwagner
 ; Repaired errors introduced with flagSkipWritingDiagnostics
 ;
