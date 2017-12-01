@@ -12,15 +12,15 @@
 !=============================================================================
 module MLSStats1                 ! Calculate statistics of rank n arrays
 !=============================================================================
-  use Allocate_Deallocate, only: allocate_test, deallocate_test
+  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
   use HighOutput, only: OutputNamedValue
-  use MLSKinds, only: r4, r8
+  use MLSKinds, only: R4, R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use MLSFinds, only: FindAll, FindFirst, FindLast
-  use MLSStringLists, only: catlists
-  use MLSStrings, only: lowercase
-  use Output_m, only: blanks, newline, output
-  use Sort_m, only: sort, sortp
+  use MLSStringLists, only: Catlists
+  use MLSStrings, only: Lowercase
+  use Output_M, only: Blanks, Newline, Output
+  use Sort_M, only: Sort, Sortp
 
   implicit none
 ! === (start of toc) ===
@@ -28,12 +28,13 @@ module MLSStats1                 ! Calculate statistics of rank n arrays
 !     - - - - - - - -
 
 !     (data types and parameters)
-! STAT_T                          Basic user-defined data type
+! STAT_T                          Basic user-defined data type containing
+!                                  all standard statistics
 ! FILLVALUERELATION               Whether to use '=' (default) or '<', '>'
 
 !     (subroutines and functions)
 ! ALLSTATS                        Computes some or all standard statistics
-! DUMP                            Prints a STAT_T
+! DUMP                            Prints a STAT_T with all standard statistics
 ! MLSMIN                          Finds min of an array
 !                                   (excluding FillValues or negative precisions)
 ! MLSMAX, MLSMEAN, MLSMEDIAN,
@@ -102,13 +103,13 @@ module MLSStats1                 ! Calculate statistics of rank n arrays
 ! === (end of api) ===
   private
   
-  public :: STAT_T             ! The data type
-  public :: ALLSTATS, DUMP, HOWFAR, HOWNEAR, RATIOS, STATISTICS  ! subroutines
-  public :: MLSCOUNT ! Another function
-  public :: MLSMIN, MLSMAX, MLSMEAN, MLSMEDIAN, MLSSTDDEV, MLSRMS ! functions
-  public :: PDF
-  public :: RESET
-  public :: STATFUNCTION
+  public :: Stat_t             ! the data type
+  public :: Allstats, Dump, Howfar, Hownear, Ratios, Statistics  ! subroutines
+  public :: MLScount ! another function
+  public :: MLSmin, MLSmax, MLSmean, MLSmedian, MLSstddev, MLSrms ! functions
+  public :: Pdf
+  public :: Reset
+  public :: Statfunction
   
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -162,8 +163,8 @@ module MLSStats1                 ! Calculate statistics of rank n arrays
   ! (Would making fillValue a component makes sense?)
 
   type Stat_T
-    integer :: count = 0      ! If > 0, merging data from prior call(s)
-    integer :: fillcount = 0  ! Number of times fillValues ignored
+    integer  :: count = 0     ! If > 0, merging data from prior call(s)
+    integer  :: fillcount = 0 ! Number of times fillValues ignored
     real(r8) :: max
     real(r8) :: mean
     real(r8) :: median        ! incorrect if merging data
@@ -172,7 +173,7 @@ module MLSStats1                 ! Calculate statistics of rank n arrays
     real(r8) :: rms
     integer, dimension(3) :: indexing = 0  !index of  (/ max, median, min /)
     ! The next 3 deal with histogramming data
-    integer :: nbins = 0  !NCELLS; put > 2 if histogramming
+    integer  :: nbins = 0  !NCELLS; put > 2 if histogramming
     real(r8), dimension(2) :: bounds = 1.d0 ! X1, X2; put X2 > X1
     integer, dimension(:), pointer :: bincount => null() ! IHIST
   end type Stat_T
@@ -185,7 +186,7 @@ module MLSStats1                 ! Calculate statistics of rank n arrays
   logical, public, save          :: showIndexing = .false. ! show where max, min
   logical, public, save          :: statsOnOneLine = .false.
 
-  interface ALLSTATS
+  interface allstats
     module procedure allstats_d1r4, allstats_d2r4, allstats_d3r4, allstats_d4r4
     module procedure allstats_d1r8, allstats_d2r8, allstats_d3r8, allstats_d4r8
   end interface
@@ -1258,9 +1259,10 @@ contains
       ! This family of routines, keeping a given percentage of points
       ! in two arrays "near" each other in value,
       ! Returns the statistics of the remaining differences
-      ! where nearness is defined as within a gap either
-      ! of absolute value
-      ! or of relative value
+      ! where nearness is defined as within a gap according to mode; either
+      !  mode      gap
+      !  'abs'  absolute value
+      !  'rel'  relative value
       ! i.e., if absolute gap
       ! | array1(i) - array2(i) | < gap
       ! if relative gap
@@ -1421,8 +1423,9 @@ contains
       ! This family of routines finds the percentages of points
       ! in two arrays "near" each other in value
       ! where nearness is defined as within a gap either
-      ! of absolute value
-      ! or of relative value
+      !  mode      gap
+      !  'abs'  absolute value
+      !  'rel'  relative value
       ! i.e., if absolute gap
       ! | array1(i) - array2(i) | < gap
       ! if relative gap
@@ -2430,6 +2433,9 @@ end module MLSStats1
 
 !
 ! $Log$
+! Revision 2.27  2017/12/01 01:22:08  pwagner
+! CamelCase use statements; improved comments
+!
 ! Revision 2.26  2016/09/09 20:37:32  pwagner
 ! Improved explanation of ratios, including args and usage
 !
