@@ -14,24 +14,24 @@ program l1bdump ! dumps an l1b or L2AUX file
 !=================================
 
    use Dump_0, only: Dump
-   use Dump_Options, only: rmsFormat
-   use Hdf, only: DFACC_READ
-   use HDF5, only: H5FIS_HDF5_F, &
-     & H5GCLOSE_F, H5GOPEN_F
-   use L1BData, only: L1BData_T, namelen, &
-     & DeallocateL1BData, dump, readL1BData
-   use MACHINE, only: HP, GETARG
-   use MLSFiles, only: FILENOTFOUND, WildcardHDFVersion, &
-     & MLS_EXISTS, MLS_HDF_VERSION, MLS_SFSTART, MLS_SFEND, &
-     & HDFVERSION_5
-   use MLSHDF5, only: GetAllHDF5DSNames, MLS_H5Open, MLS_H5CLOSE
-   use MLSMessageModule, only: MLSMSG_ERROR, MLSMSG_Warning, &
+   use Dump_Options, only: Rmsformat
+   use HDF, only: Dfacc_Read
+   use HDF5, only: H5fis_HDF5_F, &
+     & H5gclose_F, H5gopen_F
+   use L1bData, only: L1bData_T, Namelen, &
+     & DeallocateL1BData, Dump, ReadL1BData
+   use Machine, only: Hp, Getarg
+   use MLSFiles, only: Filenotfound, WildcardHDFversion, &
+     & MLS_Exists, MLS_HDF_Version, MLS_Sfstart, MLS_Sfend, &
+     & HDFversion_5
+   use MLSHDF5, only: GetallHDF5dsnames, MLS_H5open, MLS_H5close
+   use MLSMessagemodule, only: MLSMSG_Error, MLSMSG_Warning, &
      & MLSMessage
-   use MLSStringLists, only: Getstringelement, numSTRINGELEMENTS
-   use MLSStrings, only: Replace, streq
-   use output_m, only: Resumeoutput, suspendoutput, output
-   use PrintIt_m, only: Set_Config
-   use Time_M, only: Time_now, time_config
+   use MLSStringlists, only: GetstringElement, NumstringElements
+   use MLSStrings, only: Replace, Streq
+   use Output_M, only: ResumeOutput, SuspendOutput, Output
+   use Printit_M, only: Set_Config
+   use Time_M, only: Time_Now, Time_Config
    
    implicit none
 
@@ -416,41 +416,46 @@ contains
    !    print *, streq( '*l2cf*', sdname, '-w' )
         ! Allocate and fill l2aux
       if ( options%debug ) print *, 'About to read ', trim(sdName)
+      if ( options%maf2 > options%maf1 ) then
+        call ReadL1BData ( sdfid1, trim(sdName), L1bData, NoMAFs, status, &
+          & hdfVersion=the_hdfVersion, &
+          & firstMAF=options%maf1, LastMAF=options%maf2, &
+          & NEVERFAIL=.true., l2aux=options%l2aux )
+      else
         call ReadL1BData ( sdfid1, trim(sdName), L1bData, NoMAFs, status, &
           & hdfVersion=the_hdfVersion, NEVERFAIL=.true., l2aux=options%l2aux )
-        if ( status /= 0 .and. .not. options%silent ) then
-	       call MLSMessage ( MLSMSG_Warning, ModuleName, &
-          	& 'Unable to find ' // trim(sdName) // ' in ' // trim(File1) )
-          call DeallocateL1BData ( l1bData )
-          cycle
-        endif
-        if ( options%timing ) call SayTime( 'Reading l1bdata 1', stime )
-        stime = t2
+      endif
+      if ( status /= 0 .and. .not. options%silent ) then
+	     call MLSMessage ( MLSMSG_Warning, ModuleName, &
+              & 'Unable to find ' // trim(sdName) // ' in ' // trim(File1) )
+        call DeallocateL1BData ( l1bData )
+        cycle
+      endif
+      if ( options%timing ) call SayTime( 'Reading l1bdata 1', stime )
+      stime = t2
 
-        if ( associated(L1bData%charField) .and. .not. options%ascii .and. &
-          & .not. options%silent ) then
-	       call MLSMessage ( MLSMSG_Warning, ModuleName, &
-            & 'Skipping dump of char-valued ' // trim(sdName) )
-          call DeallocateL1BData ( l1bData )
-          cycle
-        endif
-        maf1 = 1
-        if ( options%maf1 > 0 ) maf1 = options%maf1
-        maf2 = NoMAFs
-        if ( options%maf2 > 0 ) maf2 = options%maf2
-        if ( options%verbose ) then
-          print *, 'About to dump :: ' // trim(sdName) // ' ::'
-        elseif ( .not. options%silent ) then
-          print *, ':: ' // trim(sdName) // ' ::'
-        endif
-        mustdump = .true.
-        myOptions = options%dumpOptions
-        if ( mustdump ) myOptions = Replace ( myOptions, 'h', ' ' )
-        ! print *, mustdump
-        ! print *, trim(myOptions)
-          call dump(L1bData, options=myOptions )
-        if ( options%timing ) call SayTime( 'Doing the dump', stime )
-        stime = t2
+      if ( associated(L1bData%charField) .and. .not. options%ascii .and. &
+        & .not. options%silent ) then
+	     call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          & 'Skipping dump of char-valued ' // trim(sdName) )
+        call DeallocateL1BData ( l1bData )
+        cycle
+      endif
+      maf1 = 1
+      if ( options%maf1 > 0 ) maf1 = options%maf1
+      maf2 = NoMAFs
+      if ( options%maf2 > 0 ) maf2 = options%maf2
+      if ( options%verbose ) then
+        print *, 'About to dump :: ' // trim(sdName) // ' ::'
+      elseif ( .not. options%silent ) then
+        print *, ':: ' // trim(sdName) // ' ::'
+      endif
+      mustdump = .true.
+      myOptions = options%dumpOptions
+      if ( mustdump ) myOptions = Replace ( myOptions, 'h', ' ' )
+        call dump(L1bData, options=myOptions )
+      if ( options%timing ) call SayTime( 'Doing the dump', stime )
+      stime = t2
     enddo ! Loop of datasets
     if ( the_hdfVersion == HDFVERSION_5) call h5gClose_f (grpID, status)
     if ( status /= 0 .and. .not. options%silent ) then
@@ -473,6 +478,9 @@ end program l1bdump
 !==================
 
 ! $Log$
+! Revision 1.4  2016/10/04 22:22:38  pwagner
+! Builds properly with some Dumps moved to Dump_1
+!
 ! Revision 1.3  2014/03/07 21:43:51  pwagner
 ! Name_Len changed to nameLen; got from MLSCommon
 !

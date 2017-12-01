@@ -13,35 +13,35 @@
 program l2auxdump ! dumps datasets, attributes from L2AUX files
 !=================================
 
-   use Allocate_deallocate, only: allocate_test, deallocate_test
-   use Dates_module, only: tai93s2hid
-   use Dump_1, only: dump
-   use Dump_Options, only: defaultMaxLon, defaultWidth, dumpDumpOptions, &
+   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+   use Dates_Module, only: Tai93s2hid
+   use Dump_1, only: Dump
+   use Dump_Options, only: DefaultMaxLon, DefaultWidth, DumpDumpOptions, &
      & IntPlaces
-   use HDF, only: dfacc_read
-   use HDF5, only: h5fis_hdf5_f, h5gclose_f, h5gopen_f
-   use Highoutput, only: dump
-   use L1BData, only: L1BData_t, nameLen, precisionSuffix, &
-     & DeallocateL1Bdata, readL1Bdata
-   use Machine, only: hp, getarg
-   use MLSCommon, only: r8
+   use HDF, only: Dfacc_Read
+   use HDF5, only: H5fis_HDF5_F, H5gclose_F, H5gopen_F
+   use HighOutput, only: Dump
+   use L1BData, only: L1BData_T, NameLen, PrecisionSuffix, &
+     & DeallocateL1BData, ReadL1BData
+   use Machine, only: Hp, Getarg
+   use MLSCommon, only: R8
    use MLSFiles, only: FileNotFound, &
      & MLS_Exists, MLS_SFStart, MLS_SFEnd, &
      & HDFVersion_5, MLS_HDF_Version, WildCardHDFVersion
-   use MLSFillValues, only: isNaN
-   use MLSHDF5, only: maxNDSNames, dumpHDF5Attributes, dumpHDF5DS, &
-     & GetAllHDF5AttrNames, getAllHDF5DSNames, &
+   use MLSFillValues, only: IsNaN
+   use MLSHDF5, only: MaxNDSNames, DumpHDF5Attributes, DumpHDF5DS, &
+     & GetAllHDF5AttrNames, GetAllHDF5DSNames, &
      & MLS_H5Open, MLS_H5Close
    use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning, &
      & MLSMessage
-   use MLSStats1, only: fillValueRelation, Stat_t, statsOnOneLine, &
-     & Dump, statistics
-   use MLSStringLists, only: catlists, getStringElement, Intersection, &
-     & NumStringElements, stringElementNum
-   use MLSStrings, only: indexes, lowercase, streq, trim_safe
-   use Output_m, only: output, switchOutput
-   use Printit_m, only: set_config
-   use Time_m, only: time_now, time_config
+   use MLSStats1, only: FillValueRelation, Stat_T, StatsOnOneLine, &
+     & Dump, Statistics
+   use MLSStringLists, only: Catlists, GetStringElement, Intersection, &
+     & NumStringElements, StringElementNum
+   use MLSStrings, only: Indexes, Lowercase, Streq, Trim_Safe
+   use Output_M, only: Output, SwitchOutput
+   use Printit_M, only: Set_Config
+   use Time_M, only: Time_Now, Time_Config
    
    implicit none
 
@@ -164,7 +164,7 @@ program l2auxdump ! dumps datasets, attributes from L2AUX files
     end if
     if ( options%datasets /= ' ' ) then
       if ( options%radiances .or.  options%TAI .or. &
-        & options%timereads .or. options%anyNaNs ) then
+        & options%timereads .or. options%anyNaNs .or. options%firstMAF > 0 ) then
         call dumpRadiances ( filenames(i), hdfVersion, options )
         sdfid1 = mls_sfstart( filenames(i), DFACC_READ, hdfVersion=hdfVersion )
       elseif ( options%useFillValue ) then
@@ -479,7 +479,9 @@ contains
 
     isl1boa = (index(trim(mysdList), 'GHz/') > 0)
     if ( isl1boa .and. .not. &
-      & ( options%timereads .or. options%anyNaNs .or. options%TAI ) &
+      & ( &
+      & options%timereads .or. options%anyNaNs .or. &
+      & options%TAI .or. options%firstMAF > 0 ) &
       & ) then
       call MLSMessage ( MLSMSG_Warning, ModuleName, &
         & 'l1boa file contains no radiances ' // trim(File1) )
@@ -551,8 +553,13 @@ contains
           & hdfVersion=the_hdfVersion, NEVERFAIL=.true., L2AUX=.true. )
       endif
       if ( status /= 0 ) then
-	     call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        call MLSMessage ( MLSMSG_Warning, ModuleName, &
           & 'Unable to find ' // trim(sdName)  // PRECISIONSUFFIX // &
+          & ' in ' // trim(File1) )
+        cycle
+      elseif ( .not. associated(L1bRadiance%DpField) ) then
+        call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          & 'no f.p. values of ' // trim(sdName)  // &
           & ' in ' // trim(File1) )
         cycle
       endif
@@ -632,6 +639,9 @@ end program l2auxdump
 !==================
 
 ! $Log$
+! Revision 1.23  2016/08/09 22:45:26  pwagner
+! Consistent with splitting of Dunp_0
+!
 ! Revision 1.22  2016/04/05 23:57:38  pwagner
 ! -one cmdline option added; prints name on each line
 !
