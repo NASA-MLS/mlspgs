@@ -44,6 +44,7 @@ module MLSNumbers              ! Some number theoretic datatypes, procedures
 !                                                            n
 ! BinomialCoef             Compute the binomial coefficient ( )
 !                                                            m
+! BigPrime                 nth prime (for n up to 10^8)
 ! Copy                     Copy one Composite or rational into a second
 ! Create                   Represent an integer as a CompositeNum_T,
 !                            or a ratio between two ints as a rational
@@ -58,6 +59,8 @@ module MLSNumbers              ! Some number theoretic datatypes, procedures
 ! Factorial                Compute n!, returned as a composite
 ! Fibonacci                Compute F[n], the nth number in the Fibonacci sequence
 !                            1, 1, 2, 3, 5, .., (F[n-1]+F[n-2])
+! FindAllPrimes            Compute all the prime numbers the supplied array
+!                            can hold
 ! GreatestCommonDivisor    Find the gcd of two composite nums
 ! inRange                  Is the int represented by the composite num in range?
 !                           (processor-dependent)
@@ -72,14 +75,15 @@ module MLSNumbers              ! Some number theoretic datatypes, procedures
 !                            r^n = (a/b)^n = a^n / b^n
 ! Reduce                   Reduce numerator and denomincator of a rational number
 !                            by dividing out their gcd
-! isEqual                  Are the two args equal?
-! isPrime                  Is arg prime?
-! nextPrime                Next prime > arg
-! prime                    nth prime
-! primeFactors             break arg into its prime factors
+! IsEqual                  Are the two args equal?
+! IsPrime                  Is arg prime?
+! NextPrime                Next prime > arg
+! Prime                    nth prime (if n < 1230)
+! PrimeFactors             break arg into its prime factors
 ! === (end of toc) ===
 
 ! === (start of api) ===
+! int BigPrime( int n, [int primes(:)] )
 ! int BinomialCoef ( int n, int m )
 ! Copy ( compNum A, compNum C )
 ! Copy ( rationalNum A, rationalNum C )
@@ -93,31 +97,43 @@ module MLSNumbers              ! Some number theoretic datatypes, procedures
 ! Estimate ( real logn, rationalNum R )
 ! EvaluateCompositeNum ( int n, compNum C )
 ! type(compNum) factorial ( int n, [int k] )
+! int Fibonacci( int n, int f1, int f2 )
+! FindAllPrimes( int primes(:) )
 ! GreatestCommonDivisor ( compNum A, compNum B, compNum C )
 ! int IntFactorial ( int n, [int k] )
 ! int Fibonacci ( int n, [int F1], [int F2] )
 ! Invert ( rationalNum R )
-! log inRange( compNum C )
-! log isEqual( compNum A, compNum B )
-! log isEqual( rationalNum A, rationalNum B )
-! log isEqual( int n, compNum C )
-! log isPrime( compNum C )
+! log InRange( compNum C )
+! log IsEqual( compNum A, compNum B )
+! log IsEqual( rationalNum A, rationalNum B )
+! log IsEqual( int n, compNum C )
+! log IsPrime( compNum C )
 ! LeastCommonMultiple ( compNum A, compNum B, compNum C )
-! dble logBinomialCoef ( int n, int m )
-! dble logFactorial ( int n, [int k] )
+! dble LogBinomialCoef ( int n, int m )
+! dble LogFactorial ( int n, [int k] )
 ! Multiply ( compNum A, compNum B, compNum C )
 ! Multiply ( rationalNum A, rationalNum B, rationalNum C )
 ! Power ( n, compNum C )
 ! Power ( n, rationalNum C )
 ! Reduce ( compNum A, compNum B, compNum C )
 ! Reduce ( rationalNum R )
-! log isPrime(int n)
-! int nextPrime(int n)
-! int prime(int n)
-! int primeFactors( int n, int[:] factors, [int[:] powers] )
+! log IsPrime( int n, [int primes(:)] )
+! int NextPrime( int n, [int primes(:)] )
+! int Prime( int n )
+! int PrimeFactors( int n, int[:] factors, [int[:] powers] )
+!
+! Note: This module uses only prime numbers below 10000 efficiently
+! and correctly
+! They account for the first 1229 such primes.
+! For larger prime numbers, the function prime poops out, returning -999.
+! Instead use BigPrime. It may be slow but it can handle primes below 10^8.
+! For still larger primes, or to precompute enough primes to efficiently
+! use them later, BigPrime, NextPrime, and isPrime can accept
+! an optional array primes. You can use FindAllPrimes to precompute them.
 ! === (end of api) ===
 
-  public :: isPrime, isEqual, nextPrime, prime, primeFactors
+  public :: BigPrime, FindAllPrimes, IsPrime, IsEqual, NextPrime, Prime, &
+    & PrimeFactors
   public :: CompositeNum_T, RationalNum_T
   public :: Copy, Create, Destroy, Dump, Estimate
   public :: EstimateCompositeNum, EvaluateCompositeNum, InRange
@@ -223,6 +239,43 @@ module MLSNumbers              ! Some number theoretic datatypes, procedures
     & /)
 
 contains
+
+  ! --------------- BigPrime --------------------
+  function BigPrime( n, primes ) result( next )
+    ! Returns the next prime number greater than the arg n
+    ! Method:
+    ! Check if n < MAXNUMPRIMES
+    ! If n < MAXNUMPRIMES use prime(n)
+    ! otherwise, loop over nextprime however many times you need
+    ! (This may be agonizingly slow so please be patient!)
+    ! Args
+    integer :: next
+    integer, intent(in) :: n ! E.g., if n=100 returns 101 which is next prime > 100
+    integer, optional, dimension(:), intent(in) :: primes ! instead of primenumbrs
+    integer :: i
+    integer :: nprimes
+    ! Executable
+    if ( present(primes) ) then
+      nprimes = size(primes)
+      if ( n <= nprimes ) then
+        next = primes(n)
+        return
+      end if
+      next = primes(nprimes)
+      do i=nprimes+1, n
+        next = nextprime( next+2, primes )
+      enddo
+      return
+    endif
+    if ( n <= MAXNUMPRIMES ) then
+      next = prime(n)
+      return
+    end if
+    next = prime(MAXNUMPRIMES)
+    do i=MAXNUMPRIMES+1, n
+      next = nextprime(next+2)
+    enddo
+  end function BigPrime
 
   ! --------------- BinomialCoef --------------------
   !                               n
@@ -652,6 +705,30 @@ contains
      endif
   end function Fibonacci
 
+  ! --------------- FindAllPrimes --------------------
+  ! Precompute an array of the first n primes where
+  ! n is the size of the array that is to hold them.
+  subroutine FindAllPrimes( primes )
+    ! Args
+    integer, dimension(:), intent(out)        :: primes
+    ! Local variables
+    integer                                   :: i
+    integer                                   :: n
+    ! Executable
+    n = size(primes)
+    if ( n <= MAXNUMPRIMES ) then
+      primes = primenumbers(1:n)
+      return
+    endif
+   ! Now Fill primes array
+   do i=1, MAXNUMPRIMES
+     primes(i) = primenumbers( i )
+   enddo
+   do i=MAXNUMPRIMES+1, n
+     primes(i) = Bigprime( i, primes(:i-1) )
+   enddo
+  end subroutine FindAllPrimes
+
   ! --------------- GreatestCommonDivisor --------------------
   ! Find the gcd of two composite nums
   ! Method:
@@ -1046,7 +1123,7 @@ contains
   end subroutine Reduce_Rational
 
   ! --------- IsPrime ------------------
-  logical function IsPrime_int(n)
+  logical function IsPrime_int( n, primes )
     ! Return TRUE if arg is prime, FALSE if not
     ! Method:
     ! if n is < M (largest of stored array) primenumbers,
@@ -1057,33 +1134,94 @@ contains
     ! by a prime too large to be in the array
     ! Args
     integer, intent(in) :: n
-    ! Internal variables
-    integer :: kM
-    integer :: sqrtn
+    integer, optional, dimension(:), intent(in) :: primes ! instead of primenumbrs
+    integer, parameter                          :: nBins = 2000
     ! Executable
     isPrime_int = .false.
     if ( n < 2 ) return
+    if ( present(primes) ) then
+      call myPoorCode( n, primes )
+    else
+      call myPoorCode( n, primenumbers )
+    endif
+  contains
+    subroutine myPoorCode( n, primenumbers )
+    ! Args
+    integer, intent(in) :: n
+    integer, dimension(:), intent(in) :: primenumbers
+    ! Internal variables
+    integer :: kM    ! p_k^2 < n for k = 1 .. kM
+    integer :: M     ! size(primenumbers)
+    integer :: sqrtn
     ! Due to poor coding practices, we must initialize the primenumbers array
     ! by attempting to access it via the prime function
     kM = prime(1)
+    M = size(primenumbers)
     ! print *, 'maxval(primenumbers): ', maxval(primenumbers)
-    if ( n < maxval(primenumbers)+1 ) then
-      isPrime_int = any(n == primenumbers)
+    isPrime_int = .false.
+    if ( n < primenumbers(M)+1 ) then
+      ! kM = FindFirst( primenumbers > n )
+      kM = FindFirstHere( primenumbers, n, nBins )
+      if ( kM < 2 ) return
+      isPrime_int = any(n == primenumbers(1:kM-1))
       return
     end if
     sqrtn = sqrt(n * 1.0)
-    kM = FindFirst( primenumbers > sqrtn )
-    if ( kM < 1 ) kM = MAXNUMPRIMES
+    ! kM = FindFirst( primenumbers > sqrtn )
+    kM = FindFirstHere( primenumbers, sqrtn, nBins )
+    if ( kM < 1 ) kM = size(primenumbers)
     ! print *, 'kM: ', kM
-    isPrime_int = all( mod(n, primenumbers) > 0 )
+    isPrime_int = all( mod(n, primenumbers(:kM)) > 0 )
+    end subroutine myPoorCode
+
+    integer function FindFirstHere ( array, probe, nBins )
+    ! Find the first array element > probe
+    ! Exploit the fact that the arrays is monotonically increaing
+    ! by subdividing it into nBins
+    ! and choosing the bin over which to search
+    !
+    ! Note: Someday we should look into adding nBins as an optional arg
+    ! to the FindFirst function in the MLSFinds module
+    ! Args
+    integer, dimension(:), intent(in) :: array
+    integer, intent(in)               :: probe
+    integer, intent(in)               :: nBins
+    ! Internal variables
+    integer                           :: BinSize
+    integer                           :: iBin
+    integer                           :: k1
+    integer                           :: k2
+    integer                           :: M
+    ! Executable
+    M = size(array)
+    ! Don't let bins become too small
+    BinSize =  M/nBins
+    if ( BinSize < 5 ) then
+      FindFirstHere = FindFirst( array > probe )
+    else
+      FindFirstHere = 0
+      k2 = 0
+      do iBin=1, nBins
+        k1 = k2 + 1
+        k2 = min(M, k2+BinSize)
+        ! Have we reached the proper bin yet?
+        if ( array(k2) > probe ) then
+          ! Apply an offset stemming from the array section k1:k2
+          FindFirstHere = k1 - 1 + FindFirst( array(k1:k2) > probe )
+          return
+        endif
+      enddo
+    endif
+    end function FindFirstHere
   end function IsPrime_int
 
-  function NextPrime(n) result(next)
+  function NextPrime( n, primes ) result( next )
     ! Returns the next prime number greater than the arg n
     ! Method:
     ! Starting with n, we'll check each integer until we find one that is prime
     ! Args
     integer, intent(in) :: n ! E.g., if n=100 returns 101 which is next prime > 100
+    integer, optional, dimension(:), intent(in) :: primes ! instead of primenumbrs
     integer :: next
     ! Executable
     next = 2
@@ -1092,7 +1230,7 @@ contains
     ! (Because no even integer > 2 is prime)
     next = n + ( 1 - mod(n, 2) )
     do
-      if ( isPrime(next) ) return
+      if ( isPrime( next, primes ) ) return
       next = next + 2
     end do
   end function NextPrime
@@ -1339,6 +1477,9 @@ end module MLSNumbers
 
 !
 ! $Log$
+! Revision 2.6  2017/12/06 01:02:58  pwagner
+! Added BigPrime, FindAllPrimes; improved performance
+!
 ! Revision 2.5  2017/10/17 23:40:40  pwagner
 ! Added Fibonacci
 !
