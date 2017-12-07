@@ -1435,7 +1435,6 @@ contains
   end subroutine FindInRange_r8
 
   subroutine FindInRange_2d_int ( list, vrange, which, how_many, options )
-    integer, parameter :: RK = kind(0.0e0)
     ! Dummy args
     integer, dimension(:,:) :: list
     integer, dimension(2) :: vrange
@@ -2615,6 +2614,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.98  2017/12/07 02:22:11  vsnyder
+! Remove unused parameter declaration
+!
 ! Revision 2.97  2017/11/03 23:34:06  pwagner
 ! Fixed error where we omitted module procedure FindInRange_2d versions
 !
