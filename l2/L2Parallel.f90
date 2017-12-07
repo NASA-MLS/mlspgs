@@ -1280,6 +1280,7 @@ contains
       ! true, this routine will invoke MLSMessage with MLSError code
       logical, intent(in) :: isKillMaster
       character (len=*), intent(in) :: killMasterMsg
+      integer :: Chunk ! Loop index
 
       do chunk = 1, noChunks
         if ( chunkTids(chunk) /= 0 ) then
@@ -1799,6 +1800,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.114  2017/12/07 01:01:23  vsnyder
+! Don't use host-associated variable as a DO index
+!
 ! Revision 2.113  2016/02/29 19:50:46  pwagner
 ! Usleep got from machine module instead of being an external
 !
