@@ -923,6 +923,7 @@ repeat_loop: do ! RepeatLoop
       logical, intent(in) :: D_Reg     ! Dump regularization
       integer, intent(in) :: D_Fnorm   ! Dump the revised norm of F
 
+      integer :: J                     ! Loop index
       integer :: T
       character(*), parameter :: Which(2) = (/ 'Vertical  ', 'Horizontal' /)
 
@@ -2998,6 +2999,9 @@ NEWT: do ! Newton iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.357  2017/12/07 01:01:23  vsnyder
+! Don't use host-associated variable as a DO index
+!
 ! Revision 2.356  2015/05/05 00:12:47  vsnyder
 ! Make sure 0 < mu <= 1 in BoundMove
 !
