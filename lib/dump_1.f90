@@ -600,7 +600,7 @@ contains
     character(len=16)                    :: Date, Time
     character(len=maxUTCStrLength), dimension(size(taiDates)) &
       &                                  :: Dates
-    logical                              :: Debug
+    logical, parameter                   :: Debug = .false.
     integer                              :: Error ! Should we check on this?
     integer                              :: I
     ! Executable
@@ -706,6 +706,9 @@ contains
 end module Dump_1
 
 ! $Log$
+! Revision 2.7  2017/12/07 02:41:07  vsnyder
+! Give DEEBUG a value, and make it a parameter
+!
 ! Revision 2.6  2017/07/31 23:07:39  pwagner
 ! TheDumpEnds now got from dump_options
 !
