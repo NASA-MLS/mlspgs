@@ -114,6 +114,15 @@ GZIPLEVEL="1"
 MLSL2PLOG="$JOBDIR/mlsl2p.log"
 #             ^^^---- "yes" if progress of chunks thru phases recorded
 
+if [ -f "$MLSL2PLOG" ]
+then
+  mv $MLSL2PLOG $MLSL2PLOG.1
+fi
+
+echo "$MLSL2PLOG"
+echo "$MLSL2PLOG" > "$MLSL2PLOG"
+env | sort >> "$MLSL2PLOG"
+
 SAVEJOBSTATS="yes"
 #             ^^^---- "yes" if progress of chunks thru phases recorded
 
@@ -134,12 +143,14 @@ verbose=`echo "$otheropts" | grep -i verbose`
 # Check that assumptions are valid
 if [ "$PGS_PC_INFO_FILE" = "" ]
 then
+  echo 'PGS_PC_INFO_FILE undefined' >> "$MLSL2PLOG"
   echo 'PGS_PC_INFO_FILE undefined'
   echo 'usage:'
   echo 'PGS_PC_Shell.sh (pge) 0111 (PCF_file) 25 -v'
   exit 1
 elif [ "$PVM_HOSTS_INFO" = "" ]
 then
+  echo 'PVM_HOSTS_INFO undefined' >> "$MLSL2PLOG"
   echo 'PVM_HOSTS_INFO undefined'
   echo 'It should be the path and name of the host file'
   echo 'a text file containing the hosts available'
@@ -147,11 +158,13 @@ then
   exit 1
 elif [ "$JOBDIR" = "" ]
 then
+  echo 'JOBDIR undefined' >> "$MLSL2PLOG"
   echo 'JOBDIR undefined'
   echo 'It should be the path where the job is run'
   exit 1
 elif [ "$PGE_ROOT" = "" ]
 then
+  echo 'PGE_ROOT undefined' >> "$MLSL2PLOG"
   echo 'PGE_ROOT undefined'
   echo 'It should be the path where the science_env.sh script is kept'
   exit 1
@@ -171,10 +184,12 @@ fi
 
 if [ ! -x "$PGE_BINARY"  ]
 then
+  echo "$PGE_BINARY doesn't exist!" >> "$MLSL2PLOG"
   echo "$PGE_BINARY doesn't exist!"
   exit 1
 elif [ ! -r "$PGE_SCRIPT_DIR/slavetmplt.sh"  ]
 then
+  echo "slavetmplt.sh not in $PGE_SCRIPT_DIR" >> "$MLSL2PLOG"
   echo "slavetmplt.sh not in $PGE_SCRIPT_DIR"
   exit 1
 fi
@@ -198,13 +213,6 @@ if [ ! -x "$MISALIGNMENT" ]
 then
   MISALIGNMENT=$MLSTOOLS/misalignment
 fi
-if [ -f "$MLSL2PLOG" ]
-then
-  mv $MLSL2PLOG $MLSL2PLOG.1
-fi
-
-echo "$MLSL2PLOG"
-echo "$MLSL2PLOG" > "$MLSL2PLOG"
 
 masterlog="${JOBDIR}/exec_log/process.stdout"
 if [ "$MASTERLOG" != "" ]
@@ -219,20 +227,24 @@ then
   cat $PGE_BINARY_DIR/license.txt >> "$MLSL2PLOG"
 fi
 
+# Oops, this stomps on any PCF we might have selected
+# so save it to be restored
+echo "Original PCF: $PGS_PC_INFO_FILE" >> "$MLSL2PLOG"
+PCF=$PGS_PC_INFO_FILE
 if [ -r "$JOBDIR/job.env"  ]
 then
   . $JOBDIR/job.env
+  PCF=$PGS_PC_INFO_FILE
 elif [ -r "$PGE_ROOT/science_env.sh"  ]
 then
   . ${PGE_ROOT}/science_env.sh
 elif [ -r "$PGSBIN/pgs-env.ksh" ]
 then
-  # Oops, this stomps on any PCF we might have selected
-  # so save it to be restored
-  PCF=$PGS_PC_INFO_FILE
   . $PGSBIN/pgs-env.ksh
-  export PGS_PC_INFO_FILE=$PCF
 fi
+PGS_PC_INFO_FILE=$PCF
+export PGS_PC_INFO_FILE
+echo "new PCF: $PGS_PC_INFO_FILE" >> "$MLSL2PLOG"
 
 # The logs will be written as separate files into ${JOBDIR}/pvmlog
 # before being catenated at end of run
@@ -462,6 +474,9 @@ else
 fi
 
 # $Log$
+# Revision 1.35  2016/11/16 19:26:50  pwagner
+# Avoids stomping on an already-selected PCF
+#
 # Revision 1.34  2016/10/20 23:24:55  pwagner
 # cat master.l2cfname to stdout and to master stdout
 #
