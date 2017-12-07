@@ -411,7 +411,6 @@ contains ! =====     Public Procedures     =============================
     integer :: H2OPRECISIONQUANTITYINDEX         ! in the quantities database
     integer :: H2OPRECISIONVECTORINDEX           ! In the vector database
     integer :: J                        ! Loop indices for section, spec, expr
-    integer :: IBO
     logical :: IGNOREGEOLOCATION        ! Don't copy geolocation to vector qua
     logical :: IGNORENEGATIVE           ! Don't sum chi^2 at values of noise < 0
     logical :: IGNORETEMPLATE           ! Don't check compatible--just fill values
@@ -1280,6 +1279,7 @@ contains ! =====     Public Procedures     =============================
       use Init_Tables_Module, only: F_Geodangle, F_Hessian, &
         & F_Scaleheight, F_Surface, F_Threshold
       real(r8) :: GEODANGLE        ! For StreamlineHessian
+      integer :: J                 ! Loop index
       real(r8) :: SCALEHEIGHT      ! Scale height for StreamlineHessian
       integer :: SURFACE           ! Number of surfaces for StreamlineHessian
       real(r8) :: THRESHOLD
@@ -1483,7 +1483,8 @@ contains ! =====     Public Procedures     =============================
       integer :: fieldValue
       integer :: Geolocation
       integer :: hGridIndex
-      integer :: I
+      integer :: I, IBo
+      integer :: J
       integer :: JJ
       integer :: L1BFLAG
       integer :: MAF
@@ -3337,6 +3338,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.471  2017/12/07 01:01:23  vsnyder
+! Don't use host-associated variable as a DO index
+!
 ! Revision 2.470  2017/11/15 00:38:35  pwagner
 ! Must Dump options for output if debugging a phase or changing settings
 !
