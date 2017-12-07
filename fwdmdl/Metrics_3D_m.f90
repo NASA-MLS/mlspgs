@@ -186,7 +186,7 @@ contains
 
     type(S_QTM_t), allocatable :: Cone_Int(:) ! All intersections of Line with
                                            ! a latitude cone of the QTM
-    integer :: I, J, K
+    integer :: K
     type(S_QTM_t), allocatable :: Inside(:) ! [ Cone_Int, V_Int, Top_Int ]
     integer :: MyWhich                     ! Which intersections to detect
     integer :: N_Cone                      ! Number of intersections of Line
@@ -198,7 +198,7 @@ contains
                                            ! with a vertical face of a prism of
                                            ! the QTM that is not on a latitude
                                            ! cone
-    integer, allocatable :: P(:) ! Permutation vector for sorting
+    integer, allocatable :: P(:)           ! Permutation vector for sorting
     type(stack_t) :: Stack                 ! To make QTM searches faster
     type(S_QTM_t) :: Tangent ! SMin or SMax, whichever has the smaller magnitude
     type(S_QTM_t) :: Top_Int(2*ubound(h,1)) ! All intersections of Line with the
@@ -300,8 +300,10 @@ contains
       real(rg) :: Eta(3)       ! Interpolation coefficients to compute height
       integer :: F             ! Index of facet containing Edge or Geod
       type(H_V_Geod) :: Geod   ! Geodetic coordinates of Inside(I_edge)
+      integer :: I             ! Loop index and subscript
       integer :: I_Edge        ! Index in sorted Inside of edge of QTM polygon
       integer :: I_H(3)        ! Second subscripts of H
+      integer :: J             ! Loop index and subscript
       integer :: N_H           ! Number of QTM vertices to use for height
                                ! interpolation
       integer :: N_Out         ! How much of Outside is used
@@ -662,6 +664,9 @@ contains
 end module Metrics_3D_m
 
 ! $Log$
+! Revision 2.12  2017/12/07 02:43:57  vsnyder
+! Don't use host-associated DO indices; make them local
+!
 ! Revision 2.11  2017/08/28 20:28:08  livesey
 ! Changed the n,nf,np,nz elements to j,jf,...
 !
