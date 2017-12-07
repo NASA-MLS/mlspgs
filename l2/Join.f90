@@ -110,7 +110,6 @@ contains ! =====     Public Procedures     =============================
     ! Local variables
     logical :: AUTODIRECTWRITE
     logical :: CREATEFILE               ! Flag
-    integer :: DBINDEX
     logical :: DIDTHEWRITE
     integer :: DIRECTWRITENODEGRANTED   ! Which request was granted
     real :: DWT1                        ! Time we started
@@ -118,7 +117,6 @@ contains ! =====     Public Procedures     =============================
     real :: DWT22                       ! Time we finished, too
     integer :: field
     integer :: gson
-    integer :: j
     integer :: KEY                      ! Tree node
     integer :: Label                    ! Not actually used
     integer :: Me = -1                  ! String index for trace
@@ -184,7 +182,9 @@ contains
     ! In pass 2 we log all our direct write requests.
     ! In the later passes (as many as there are direct writes) we do the
     ! direct writes we've been given permission for.
-    integer :: pass
+    integer :: DBINDEX
+    integer :: J
+    integer :: Pass
     ! othrwise one pass is sufficient.
 
     error = 0
@@ -379,6 +379,7 @@ contains
 
   subroutine AnyOtherCommands
     ! Whatever isn't a DirectWrite
+    integer :: J
 
     error = 0
       
@@ -2481,6 +2482,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.181  2017/12/07 01:01:23  vsnyder
+! Don't use host-associated variable as a DO index
+!
 ! Revision 2.180  2017/08/03 21:41:04  pwagner
 ! Split MLSL2Join into calls to 2 internal procedures; fix problem of not doing DirecWrites if section contains Dump, /stop
 !
