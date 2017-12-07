@@ -644,6 +644,7 @@ contains
 
     subroutine DumpStack ( What )
       character(len=*), intent(in), optional :: What
+      integer :: M
       ! call printItOut ( trim(MLSCallStack), MLSMSG_info )
       if ( MLSCallStack%silent ) return
       if ( present(name) ) name = '' ! In case the stack is weird
@@ -1163,6 +1164,9 @@ contains
 
 !
 ! $Log$
+! Revision 2.46  2017/12/07 02:21:32  vsnyder
+! Remove unused variable declaration
+!
 ! Revision 2.45  2017/03/24 22:54:55  pwagner
 ! Ensure Message is printed before MessageMeansCrash causes Crash_and_Burn
 !
