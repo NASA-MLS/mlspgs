@@ -21,6 +21,8 @@
 # expandl2cf.sh [opt1] ..  [optn] template
 #
 #    O p t i o n s
+# -Cf file            use combined definitions found in file for environment 
+#                       and macros
 # -I path             pass -I path to m4
 # -Dmacro             pass -Dmacro to m4; may be repeated
 # -Df file            pass macro definitions found in file, too
@@ -62,13 +64,16 @@
 #     and "-i" is not among the command line options,
 #     it will have the same effect as if
 #       /some/path/to/template.m4
-#     was the final the command-line argument
+#     was the template in command-line arguments
 # (6) Use a dot file in place of an env file
 #     (or in addition)
 #     if you need to use shell control structures or other features
 #     For an example of this see -example--dotfile
 # Result:
 #     An expanded l2cf is written using appropriate macros
+# Other settings in the .macros or .env file and their effect:
+#   WIDTH          maximum line length if wrapping lines
+#   IDENTMAKER     use this instead of $HOME/mlspgs/util/identl2cf.sh
 # Other uses:
 # (PCF)
 #     expandl2cf.sh can also be used to expand a PCF template
@@ -81,7 +86,7 @@
 # (2) The -w option assumes that wrapLines exists, is executable,
 #     and is in your PATH
 # (3) Nobody uses the "dotfile"--should we remove it as an option?
-# (4) Should we include an example showing no overridepaths.sh?
+# (4) Nobody uses overridepaths.sh--should we omit mentioning it?
 # (5) How about substituting a variable for the ';' comment character?
 # --------------- End expandl2cf.sh help
 # --------------- expandl2cf.sh example
@@ -294,6 +299,7 @@ write_file_to_stdout()
 #****************************************************************
 
 cmdline="$0 $@"
+combfile=""
 debug="no"
 dotfile=""
 dryrun="no"
@@ -322,6 +328,11 @@ while [ "$more_opts" = "yes" ] ; do
     # echo "option: $1"
     case "$1" in
 
+    -Cf )
+       shift
+       combfile="$1"
+       shift
+       ;;
     -Df )
        shift
        macrofile="$1"
@@ -429,6 +440,16 @@ fi
 
 SETREAD=`which set_read_env.sh`
 
+# Did we use a single file combining env and macros?
+# If so, disgorge the separate env and macros files
+if [ -f "$combfile" ]
+then
+  envfile="$combfile".env
+  macrofile="$combfile".macros
+  sed -n '/- e n v/,/- m 4   m/ p' $combfile | sed '$ d' > $envfile
+  sed -n '/- m 4   m/,$ p' $combfile | sed '1 d' > $macrofile
+fi
+
 if [ -f "$envfile" ]
 then
     . $SETREAD < $envfile
@@ -492,6 +513,7 @@ then
   echo "l2cf: $l2cf"
   echo "templ2cf: $templ2cf"
   echo "PATH $PATH"
+  echo "M4PATH $M4PATH"
 fi
 
 if [ "$1" = "" -a "$TEMPLATE" = "" ]
@@ -620,6 +642,9 @@ fi
 
 exit 0
 # $Log$
+# Revision 1.13  2017/03/28 20:34:50  pwagner
+# Handle case where . is not in PATH
+#
 # Revision 1.12  2016/12/16 22:00:01  pwagner
 # verbose setting affects us and wrapLines, too
 #
