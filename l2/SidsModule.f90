@@ -484,6 +484,7 @@ contains
 
     ! -----------------------------------------------  Get_ToKeep  -----
     subroutine Get_ToKeep
+      integer :: Config, I ! Loop index
       integer :: ToKeepGuess(sum( (/ ( count(configDatabase(configs(config))%moleculeSecondDerivatives), &
                                      & config = 1, size(configs) ) /) ) )
       i = 0
@@ -517,6 +518,9 @@ contains
 end module SidsModule
 
 ! $Log$
+! Revision 2.77  2017/12/07 01:01:24  vsnyder
+! Don't use host-associated variable as a DO index
+!
 ! Revision 2.76  2017/07/27 01:41:50  vsnyder
 ! Better debug printing
 !
