@@ -13,15 +13,14 @@
 module MLSStringLists               ! Module to treat string lists
 !=============================================================================
 
-  use LexicalSort, only: Sort
   use MLSCommon, only: BareFNLen
   use MLSFinds, only: FindFirst, FindLast
   use MLSStrings, only: Capitalize, IsAlphabet, LowerCase, NCopies, &
     & ReadIntsFromChars, ReadNumsFromChars, Replace, Reverse, &
-    & SplitDetails, SplitNest, Squeeze, StrEq, Trim_safe, WriteIntsToChars
-  use PrintIt_m, only: MLSMSG_Allocate, MLSMSG_Deallocate, &
+    & SplitDetails, SplitNest, Squeeze, StrEq, Trim_Safe, WriteIntsToChars
+  use PrintIt_M, only: MLSMSG_Allocate, MLSMSG_Deallocate, &
     & MLSMSG_Error, MLSMSG_Warning, PrintItOut
-
+  use Sort_M, only: Sortp
   implicit none
   private
 
@@ -3683,10 +3682,14 @@ contains
         theString = adjustl(stringArray(elem))
         stringArray(elem) = adjustr(theString(1:maxStrPos))
       endif
-    enddo                  
+    enddo
+    ! Are we case-sensitive?
+    if ( .not. caseSensitive ) then
+      stringArray = lowercase( stringArray )
+    endif
 
-    ! Now we let sort do the work
-    call sort( stringArray, .not. caseSensitive, outIntArray )
+    ! Now we let asortp do the work
+    call sortp( stringArray, 1, nElems, outIntArray )
 
     ! Were we asked to return the sorted array?
     if ( present(sortedArray) ) sortedArray = inStrArray( outIntArray )
@@ -4643,6 +4646,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.77  2017/12/07 22:06:12  pwagner
+! Using sort_m instead of LexicalSort
+!
 ! Revision 2.76  2017/09/25 17:24:19  pwagner
 ! New subroutine to RemoveOption from option string
 !
