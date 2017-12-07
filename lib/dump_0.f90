@@ -31,12 +31,12 @@ module Dump_0
     & DefaultDumpOptions, DefaultMaxLon, DefaultPCTFormat, &
     & DefaultWidth, Dopt_Collapse, Dopt_Transpose, Dot, DiffRMSMeansRMS, &
     & DontDumpIfAllEqual, Dopts, Gaps, IntPlaces, Laconic, MaxNumNANs, &
-    & NameHasBeenPrinted, NameOnEachLine, NaNs, OnlyWholeArray, &
+    & NameHasBeenPrinted, NameOnEachLine, NaNs, &
     & PCTFormat, PrintFillValue, PrintNameAsHeadline, PrintNameAtLineEnd, &
-    & PrintNameIfDiff, PrintNameInBanner, Ratios, RMS, RMSFormat, &
+    & PrintNameInBanner, Ratios, RMS, RMSFormat, &
     & SDFormatDefault, SDFormatDefaultCmplx, Stats, StatsOnOneLine, &
     & TheDumpBegins, TheDumpEnds, ItsShape, MyTranspose=>Transpose, &
-    & TrimIt, Unique, Verbose, WholeArray
+    & TrimIt, Unique, WholeArray
   use HighOutput, only: Banner, BlanksToColumn, Headline, &
     & NumNeedsFormat, OutputNamedValue
   use MLSFillValues, only: InfFunction, IsFinite, IsInfinite, IsNaN, NaNFunction, &
@@ -46,7 +46,7 @@ module Dump_0
     & MLSMax, MLSMean, MLSMin, MLSStdDev
   use MLSStringLists, only: CatLists, NumStringElements, OptionDetail
   use MLSStrings, only: delete, Indexes, ReadIntsFromChars
-  use Output_m, only: OutputOptions, StampOptions, &
+  use Output_m, only: OutputOptions, &
     & Blanks, GetOutputStatus, Newline, Output
 
   implicit none
@@ -145,12 +145,11 @@ module Dump_0
 
   ! These are private variables declared module-wide purely for convenience
   integer, parameter :: MaxNumElements          = 2000
-  logical, parameter :: DEEBUG                  = .false.
   logical           :: DumpTheseZeros
   character(len=16) :: MyOptions
   character(len=16) :: MyPCTFormat
   character(len=*), parameter :: OldNameOnEachLine = ' ' ! Should be in dump_options
-  integer           :: Bwidth, myRank, numNonFill, numFill, indx2BSliced, iSlice
+  integer           :: Bwidth, myRank, numNonFill, numFill, indx2BSliced
   real              :: Pctnzero
   logical, save     :: ThisIsADiff = .false.
   integer           :: How_many
@@ -1038,7 +1037,7 @@ contains
     character(len=*), intent(in), optional :: options
     character(len=*), intent(in), optional :: TheShape
 
-    integer :: Base, I, J, K, L
+    integer :: Base, I, ISlice, J, K, L
     integer :: NumZeroRows
     complex(rk) :: myFillValue
     character(len=64) :: MyFormat
@@ -1073,7 +1072,7 @@ contains
     character(len=*), intent(in), optional :: options
     character(len=*), intent(in), optional :: TheShape
 
-    integer :: Base, I, J, K, L
+    integer :: Base, I, ISlice, J, K, L
     integer :: NumZeroRows
     complex(rk) :: myFillValue
     character(len=64) :: MyFormat
@@ -1107,7 +1106,7 @@ contains
     character(len=*), intent(in), optional :: options
     character(len=*), intent(in), optional :: TheShape
 
-    integer :: Base, I, J, K, L
+    integer :: Base, I, ISlice, J, K, L
     integer :: NumZeroRows
     double precision :: myFillValue
     character(len=64) :: myFormat
@@ -1134,7 +1133,7 @@ contains
     character(len=*), intent(in), optional :: options
     character(len=*), intent(in), optional :: TheShape
 
-    integer :: Base, I, J, K, L
+    integer :: Base, I, ISlice, J, K, L
     integer :: NumZeroRows
     integer, dimension(3) :: which
     integer :: how_many
@@ -1164,7 +1163,7 @@ contains
     character(len=*), intent(in), optional :: options
     character(len=*), intent(in), optional :: TheShape
 
-    integer :: Base, I, J, K, L
+    integer :: Base, I, ISlice, J, K, L
     integer :: NumZeroRows
     real    :: myFillValue
     character(len=64) :: MyFormat
@@ -1190,7 +1189,7 @@ contains
     integer, intent(in), optional :: Lbound
     character(len=*), intent(in), optional :: Options
 
-    integer :: J
+    integer :: ISlice, J
     character(len=64) :: MyFormat
     integer :: nUnique
     integer, dimension(MaxNumElements) :: Counts
@@ -1211,7 +1210,7 @@ contains
     integer, intent(in), optional :: Lbound
     character(len=*), intent(in), optional :: Options
 
-    integer :: J
+    integer :: ISlice, J
     character(len=64) :: MyFormat
     integer :: nUnique
     integer, dimension(MaxNumElements) :: Counts
@@ -1763,6 +1762,11 @@ contains
 end module Dump_0
 
 ! $Log$
+! Revision 2.152  2017/12/07 02:40:10  vsnyder
+! Remove some unreferenced use named.  Delete some unreferenced variable
+! declarations.  Don't use host-associated DO index variables; make them
+! local.
+!
 ! Revision 2.151  2017/11/30 20:46:19  pwagner
 ! Avoid leaving OldNameOnEachLine undefined
 !
