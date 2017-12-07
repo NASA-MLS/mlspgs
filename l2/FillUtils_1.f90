@@ -7489,6 +7489,7 @@ contains ! =====     Public Procedures     =============================
     contains
       subroutine ByAttribute
         ! By attribute
+        integer :: SQI ! Loop index
         do sqi = 1, size ( vector%quantities )
           quantity => vector%quantities(sqi)
           attrnames  = 'TemplateName,tempQtyType'
@@ -7819,6 +7820,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.135  2017/12/07 01:01:23  vsnyder
+! Don't use host-associated variable as a DO index
+!
 ! Revision 2.134  2017/10/31 23:47:33  vsnyder
 ! Make Coefficients a parameterized type
 !
