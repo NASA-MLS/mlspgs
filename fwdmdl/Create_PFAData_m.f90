@@ -78,7 +78,6 @@ contains ! =====     Public Procedures     =============================
     logical :: Error
     integer :: I        ! Index for signals associated with a line, or lines in catalog
     integer :: Ix       ! Position in PFAData of a sought PFADatum if nonzero
-    integer :: L        ! Index for lines in catalog
     logical, pointer :: LINEFLAG(:) ! Use this line
     integer :: M        ! Index for Molecules
     logical, target :: MaxLineFlag(mostLines)
@@ -373,6 +372,7 @@ contains ! =====     Public Procedures     =============================
     ! ....................................  Work_Out_Spectroscopy  .....
     subroutine Work_Out_Spectroscopy
       use MLSSignals_m, only: GETRADIOMETERFROMSIGNAL
+      integer :: I, L
       skipIt = .false. ! Assume there will be lines and/or continuum
       ! Don't deallocate lines by mistake -- myCatalog is a shallow copy
       nullify ( myCatalog%lines )
@@ -437,6 +437,9 @@ contains ! =====     Public Procedures     =============================
 end module Create_PFAData_m
 
 ! $Log$
+! Revision 2.29  2017/12/07 02:42:49  vsnyder
+! Don't use host-associated DO indices; make them local
+!
 ! Revision 2.28  2013/08/30 03:56:23  vsnyder
 ! Revise use of trace_begin and trace_end
 !
