@@ -251,7 +251,6 @@ module MLSL2Options              !  Options and Settings for the MLSL2 program
   public :: processOptions
   public :: removeRuntimeBoolean
   public :: restoreDefaults
-  integer, private :: i ! For loop constructor below
 
   logical, private, parameter :: countEmpty = .true. ! Except where overriden locally
   
@@ -438,7 +437,7 @@ contains
     logical :: exitLoop
     logical :: Field_Is_Include      ! Field is include file path, not L2CF name
     integer, dimension(100)           :: iarray
-    integer :: J, K
+    integer :: I, J
     character(len=2048) :: LINE      ! Into which is read the command args
     integer :: N
     integer :: nLines
@@ -569,7 +568,7 @@ cmds: do
       logical, intent(out)         :: exitLoop
       logical, intent(in)          :: entireLine ! is inLine entire cmdline?
       ! Internal variables
-      integer :: iActual
+      integer :: iActual, K
       character(len=2048) :: LINE      ! Into which is read the command args
       ! Executable
       line = inLine
@@ -1026,9 +1025,7 @@ cmds: do
           !   print *, current_version_id(j)
           ! end do
         else if ( line(3+n:10+n) == 'version ' ) then
-          do j=1, size(current_version_id)
-            print *, current_version_id(j)
-          end do
+          print '(a)', current_version_id
           stop
         else if ( line(3+n:7+n) == 'wall ' ) then
           time_config%use_wall_clock = switch
@@ -1408,6 +1405,9 @@ end module MLSL2Options
 
 !
 ! $Log$
+! Revision 2.113  2017/12/07 01:01:23  vsnyder
+! Don't use host-associated variable as a DO index
+!
 ! Revision 2.112  2017/11/30 20:57:10  pwagner
 ! opts file mechanism may now set OutputOptions, AdvancedOptions, etc.
 !
