@@ -479,6 +479,7 @@ contains ! =====  Public procedures  ===================================
       integer, dimension(:), pointer :: RowSurfInds ! Indices
       integer, dimension(:), pointer :: ColSurfInds ! Indices
 
+      integer :: ColInstance, RowInstance         ! Do index variables
       real(rm), dimension(:,:), pointer :: Val    ! The values from the block
       real(rm), dimension(:), pointer :: Val_1D   ! The diagonal
       real(r8), dimension(:,:), pointer :: ToDump ! The 2D matrix to dump
@@ -935,6 +936,9 @@ contains ! =====  Public procedures  ===================================
 end module MatrixTools
 
 ! $Log$
+! Revision 1.48  2017/07/27 01:40:43  vsnyder
+! Print the correct sizes of rows and columns
+!
 ! Revision 1.47  2016/07/28 03:27:34  vsnyder
 ! Cannonball polishing
 !
