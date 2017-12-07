@@ -14,8 +14,7 @@ module PFADataBase_m
   ! Read PFA data.  Build a database.  Provide for access to it.
   ! Write PFA data.
 
-  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test, &
-    & Test_Allocate
+  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
   use HighOutput, only: OutputNamedValue
   use MLSKinds, only: R4
   use MLSCommon, only: FileNameLen
@@ -1417,6 +1416,9 @@ contains ! =====     Public Procedures     =============================
 end module PFADataBase_m
 
 ! $Log$
+! Revision 2.54  2017/12/07 02:41:56  vsnyder
+! Remove unreferenced use name
+!
 ! Revision 2.53  2017/02/10 01:08:20  pwagner
 ! Report all PFA errors before quitting
 !
