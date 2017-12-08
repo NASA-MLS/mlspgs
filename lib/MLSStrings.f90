@@ -13,6 +13,7 @@
 MODULE MLSStrings               ! Some low level string handling stuff
 !=============================================================================
   use MLSFinds, only: FindFirst, FindNext
+  use Optional_M, only: Default
   implicit none
   private
 
@@ -98,7 +99,8 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! === (start of api) ===
 ! char* asciify ( char* str, [char* how] )
 ! char* Capitalize (char* str)
-! CatStrings ( char* strings(:), char* sep, char* stringsCat, int L )
+! CatStrings ( char* strings(:), char* sep, char* stringsCat, &
+!      & int L, [char* options] )
 ! int charToInt (char str)
 ! char* CompressString (char* str)
 ! int count_quotes (char* str, char lquote, char rquote)
@@ -164,6 +166,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! it may include any of the following (poss. in combination, e.g. "-wc")
 ! w    Wildcard * which allows 'a*' to equal 'abcd'
 ! c    case insensitive which allows 'ABCD' to equal 'abcd'
+! e    permit empty string elements
 ! f    flush left which allows 'abcd' to equal '  abcd'
 ! h    check only that the heads match; allows 'oldman' to match 'old'
 ! n    reverse sense of match (where appropriate)
@@ -420,7 +423,7 @@ contains
     !----------Executable part----------!
     outstr=str
 
-    do i=1, len(str)
+    do i=1, len_trim(str) ! Won't need to Capitalize trailing spaces
        icode=iachar(outstr(i:i))
        if ( icode >=iachar("a") .and. icode <= iachar("z")) then
           outstr(i:i)=achar(icode+offset)
@@ -430,21 +433,29 @@ contains
   end function Capitalize
 
   ! -------------------------------------------------  CatStrings  -----
-  subroutine CatStrings ( Strings, Sep, StringsCat, L )
+  subroutine CatStrings ( Strings, Sep, StringsCat, L, options )
   ! Concatenate Strings with Sep between them, giving StringsCat(:L-1)
     character(len=*), intent(in) :: Strings(:)
     character(len=*), intent(in) :: Sep
     character(len=*), intent(out) :: StringsCat
     integer, intent(out) :: L
+    character(len=*), optional, intent(in) :: options
+    ! Internal variables
+    logical :: CountEmpty
     integer :: I, N, T, W
+    ! Executable
+    countEmpty = ( index( Default( Options, StringOptions), 'e') > 0 )
     w = len(sep)
     l = len_trim(strings(1)) + 1
     stringsCat(:l-1) = strings(1)(:l-1)
     do i = 2, size(strings)
       t = len_trim(strings(i))
+      if ( t < 1 .and. .not. CountEmpty ) cycle
       n = l + t + w
+      n = min( len(StringsCat) + 1, n )
       stringsCat(l:n-1) = sep // strings(i)(:t)
       l = n
+      if ( l > len(StringsCat) ) return
     end do
   end subroutine CatStrings
 
@@ -453,7 +464,7 @@ contains
     ! This converts the input character to its integer value, if
     ! it has one
     ! e.g., '9' returns 9
-    ! 'a' or '0' or ' ' all return 0
+    ! 'a' or '0' or ' ' , indeed anything else all return 0
     !--------Argument--------!
     character (len=1), intent(in) :: str
     !---------result---------!
@@ -1030,7 +1041,7 @@ contains
     !----------Executable part----------!
     outstr=str
 
-    DO i = 1, LEN(str)
+    DO i = 1, len_trim(str) ! Won't need to Lowercase trailing spaces
        icode=IACHAR(outstr(i:i))
        IF ( icode >=IACHAR("A") .AND. icode <= IACHAR("Z")) THEN
           outstr(i:i)=achar(icode+offset)
@@ -3234,6 +3245,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.104  2017/12/08 00:28:44  pwagner
+! Add optional 'options' arg to CatStrings; by default will not cat empty string
+!
 ! Revision 2.103  2017/01/25 21:10:17  pwagner
 ! str1 and str2 args to streq now optional
 !
