@@ -3153,6 +3153,7 @@ it remains with the value of 1.
   SortQualify::SortAndQualify by calling UpdateCalVectors
 
 ** Calling tree
+
    + MLSL1G
      + SortAndQualify
 
@@ -3169,47 +3170,136 @@ it remains with the value of 1.
          appropriately and moves the current data to the end of the
          structure.
 
-       + QualifyCurrentMaf: Set flags that say whether a MIF is usable
-         or should be 'd'iscarded (CurMAFdata%ChanType(MIF)%X, where
-         X=FB,MB,WF and DACS). If there's been a change in
-         attentuation, either because it's changed or because the
-         attenuation has maxed out, set a Wall for all of the
-         channels. This has the effect of skipping the next 2 MAFs
-         (see BankWalCnt%FB. Get the switching mirror position and
-         compare with the predicted locations given in the L1CF config
-         file, store what's read in the telemetry in the variable
-         CurMAFdata%SciPkt(MIF)%GHz_sw_pos and also
+       + QualifyCurrentMaf: Start by assuming that all MIFs for the
+         current MAF should be 'D'iscarded. Set flags that say whether
+         a MIF is usable or should remain as 'D'iscarded
+         (CurMAFdata%ChanType(MIF)%X, where X=FB,MB,WF and DACS). If
+         there's been a change in attentuation, either because it's
+         changed or because the attenuation has maxed out, set a Wall
+         for all of the channels. This has the effect of skipping the
+         next 2 MAFs (see BankWalCnt%FB). Get the switching mirror
+         position and compare with the predicted locations given in
+         the L1CF config file, store what's read in the telemetry in
+         the variable CurMAFdata%SciPkt(MIF)%GHz_sw_pos and also
          CurMAFdata%ChanType(MIF)%FB(:,1:14) (slots 15:19 are THz
-         slots) as well as %MB, %WF and %DACS. Set a flag saying that
-         there is a least 1 S and 1 T MIF. Does some scaling of DACS
-         data I don't understand. Check to see if a 'bank' is `off',
-         in the sense that the difference between `target' and `space'
-         counts is < 100 counts.  Declare a `Wall' for that
-         bank/channel if true. Check FB(13),MF(5),WF(2) and
-         DACS(1). check for bright objects. For changes in the GHz
-         switch network.
+         slots) as well as %MB, %WF and %DACS. Whether the MIF is kept
+         or not depends on configuration settings. If
+         GHz_seq_use=='match' and it doesn't match with the values
+         predicted by the quantities {limb,space,target,discard}MIFs
+         (which list the MIFs that should be 'limb','space','target'
+         or 'discard' MIFs) then 'D'iscard that MIF. If
+         GHz_seq_use==override, use whatever's in the telemetry
+         stream. Set a flag saying that there is a least 1 S and 1 T
+         MIF. Does some scaling of DACS data I don't understand. Check
+         to see if a 'bank' is `off', in the sense that the difference
+         between `target' and `space' counts is < 100 counts.  Declare
+         a `Wall' for that bank/channel if true. Check
+         FB(13),MF(5),WF(2) and DACS(1). check for bright objects. For
+         changes in the GHz switch network. If at least 1 of the MIFs
+         is a 'S'pace MIF and 1 is a 'T'arget MIF, set
+         CurMAFdata%CalType = .TRUE., that is, say that this MAF can
+         be used in a calibration. Finally, look at altitudes that
+         have positive precisions and are above the minimum altitude
+         to be considered instances of 'space in the limb view', to be
+         used when the config file requests calibrations using those
+         MIFs (the 'LS' cals) 
 
-       + (if CalWinFul) QualifyWindow
-       + UpdateCalVectors (Sets CalSWSeq and CalSwSeqLS vectors that
-         record where the GHz switching mirror is on a MIF by MIF
-         basis by looking at the position read from telemetry and
-         stored in CalWin%MAFdata(...)%SciPkt(...)%GHz_Sw_pos.)
-     + Calibrate
-       + SetComVecs
-	 + calcComVecs
-       + For index=start_index,end_index
-	 + InterpCals ; for space counts
-	 + InterpCals ; target counts
-	 + For each altitude ; space in limb port
-	   + InterpCals ; limb/space counts
-       + ChiSquare
-     + CalcLimbRads
-     + OutputL1Bdata
-     + LatBinRads
+       + (if CalWinFul) QualifyWindow. (vp code comment: Qualify the
+         calibration window for spikes, walls, etc.) When
+         CalWin%MAFdata%BankWall%FB(...) == 1 (true), set wallindx (a
+         MAF based quantity) to 1, i.e. setting an index for the MAFs
+         that have been walled off. Then find the beginning/ending
+         MAFs that have walls, and iterate over the MIFs in those
+         MAFs, marking the individual MIFs with a 'D' (discard).
+       + UpdateCalVectors : set a pointer CurMafdata to each MAF in
+         the current calibration window, and record the first and last
+         MIF. Then, for 'S', 'T' and 'L' returning
+         {space,target,limb}_{cnts,qual,time} respectively. For 'LS'
+         type calibrations, do the same except only for the altitudes
+         that are in range call
+	 + SetCalVectors: Set cal_{time,cnts,qual} to (-1,0,0) for %X
+           (X=FB,MB,WF and DACS). Whether or not to do 'LS' type
+           calculations is determined by a `altmask' passed in. Then,
+           For each MIF in this MAF, check to see if it's a cal_type
+           MIF (i.e., for this call, check to see if it's an 'S', 'L',
+           'T' or 'LS' depending on the `cal_type' parameter that was
+           passed, set the appropriate MIFs in the three output
+           quantities (time,cnts,qual): _cnts is just the
+           CurMAFdata%SciPkt(MIF)%X, _qual == 1 and _time =
+           startMIF(MAF) + offset, where startMIF(MAF) is just a
+           counter into the entirety of the calibration window
+
+     + if (do_calib) then 
+       + Calibrate : Taking `windex' to be the index of the central
+         MAF in the current calibration window, start
+         {start,end}_index to the MIFs contained therein and
+         cal_index(1) to be the start of the MAF before the current
+         MAF and cal_index(2) to be the beginning of the MAF after the
+         `central MAF' (NB, cal_index should always be
+         end_index+1!). At this point, call...
+	 + SetComVecs : Return (If CalSwSeq == ComVecSwSeq) because
+           the sequence hasn't changed, otherwise, call...
+	   + CalcComVecs: For each MIF in the central MAF, call...
+
+	     + Interpolate::QuadInterpW with cal_{time,weight,qual),
+               MIF and nvec, return ComVec(MIF,:), error(MIF) and a
+               status. This routine calculate thes time centered in
+               the index of the MIF for which it was called (tvec),
+               the `apoVec' (which is the cal_weight*cal_qual) and
+               then does the following calculations. comVec is a
+               [0:150, 150*WinMAFs] array. Still trying to figure out
+               that dimensionality.
+
+	       + x1=tvec*apoVec
+	       + x2=tvec*x1 ;; tvec*tvec*apoVec = tvec^2*apoVec
+	       + x3=tvec*x2 ;; tvec^3*apoVec
+	       + x4=tvec*x3 ;; tvec^4*apoVec
+	       + sx1=sum(x1) ;  (think IDL's total(x1)
+	       + sx2=sum(x2)
+	       + sx3=sum(x3)
+	       + sx4=sum(x4)
+	       + comVec=apoVec*(sx2*sx4-sx3^2) -
+                 sx1*(sx1*sx4-x2*sx3) + sx2*(x1*sx3-x2*sx2)
+	       + comVec /= Sum(comVec)
+	       + error=sum(comVec^2)
+		 
+	 + For index=start_index,end_index
+	   + InterpCals ; for space counts
+	   + InterpCals ; target counts
+	   + For each altitude ; space in limb port
+	     + InterpCals ; limb/space counts
+	 + ChiSquare
+       + CalcLimbRads
+       + OutputL1Bdata
+       + LatBinRads
 
    SortQualify::SortAndQualify 
    UpdateCalVectors
    SetCalVectors
+
+
+
+   don't know where this came from.
+
+(Sets CalSWSeq and CalSwSeqLS vectors that
+         record where the GHz switching mirror is on a MIF by MIF
+         basis by looking at the position read from telemetry and
+         stored in
+         CalWin%MAFdata(...)%SciPkt(...)%GHz_Sw_pos.). MAFdata(...) is
+         MAF based; SciPkt(...) is MIF based.
+
+
+
+*** Walls
+    Things that can cause Walls.
+
+    1. Bad checksum
+    2. Changes in attenuation
+    3. Bright objects in the FOV
+    4. The GHz switch network changing.
+    5. The band being off (band 13, a notable case of this.) This is
+       determined by the space counts and the target counts being <
+       100 counts different.
 
 ** In Calibration:
 
