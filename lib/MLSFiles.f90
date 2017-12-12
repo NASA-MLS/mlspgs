@@ -12,6 +12,7 @@
 !===============================================================================
 module MLSFiles               ! Utility file routines
   !=============================================================================
+  use Dump_0, only: Dump
   use HDF, only: Dfacc_Create, Dfacc_Rdonly, Dfacc_Read, Dfacc_Rdwr, &
     & Sfstart, Sfend
   use HDFeos, only: Gdclose, Gdopen, Swclose, Swopen, Swinqswath
@@ -502,9 +503,9 @@ contains
     integer, dimension(:), allocatable &
      &                                :: intArray
     character (LEN=MAXFILENAMELENGTH) :: MatchName, TryName, NameOnly
-    character (LEN=BareFNLen), dimension(:), allocatable &
+    character (LEN=MAXFILENAMELENGTH), dimension(:), allocatable &
      &                                :: nameArray
-    integer                       ::     numberPCs
+    integer                           :: numberPCs
     character(len=8)                  :: options
     character (LEN=MAXFILENAMELENGTH) :: PhysicalName, MatchPath
     character (LEN=*), parameter      :: UNASSIGNEDFILENAME = '*'
@@ -595,6 +596,11 @@ contains
     unsortedArray = nameArray
     call SortArray( unsortedArray, intArray, &
      & sortedArray=nameArray, options=options )
+    if ( DeeBug ) then
+      call outputNamedvalue ( 'numberPCs', numberPCs )
+      call Dump( intArray,  'array of ints' )
+      call Dump( nameArray, 'sorted array of names' )
+    endif
     do notThePC = 1, numberPCs
       thePC = intArray(notThePC) + PCBottom - 1         
       NameOnly = nameArray(notThePC)            
@@ -2471,6 +2477,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.109  2017/12/12 21:25:32  pwagner
+! Raise char length limit of nameArray in GetPCFromRef
+!
 ! Revision 2.108  2017/11/15 00:09:31  pwagner
 ! Improve appearance Dumping each MLSFile
 !
