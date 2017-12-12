@@ -3631,10 +3631,11 @@ contains
     integer, dimension(:), allocatable     :: invBinNumber 
     integer                                :: maxStrPos
     character (len=16)                     :: myOptions  
+    ! integer, dimension(size(outintarray))  :: originalintarray
     integer                                :: status
-    character (len=MAXSTRELEMENTLENGTH), dimension(:), allocatable    &
+    character (len=len(inStrArray)), dimension(:), allocatable    &
       &                                    :: stringArray
-    character (len=MAXSTRELEMENTLENGTH)    :: theString  
+    character (len=len(inStrArray))        :: theString  
 
     ! Executable code
     myOptions = ' '
@@ -3689,7 +3690,16 @@ contains
     endif
 
     ! Now we let asortp do the work
-    call sortp( stringArray, 1, nElems, outIntArray )
+    call sortp( stringArray, 1, nElems, outIntArray ) ! This is OriginalIntArray
+    ! Now the outIntArray is inversely related to the OriginalIntArray:
+    ! (1) stringArray(OriginalIntArray(i)) = inStrArray(i)
+    ! (2) stringArray(i) = inStrArray(outIntArray(i))
+    ! So: inStrArray(outIntArray(OriginalIntArray(i))) =
+    ! stringArray(OriginalIntArray(i)) = inStrArray(i)
+    ! Or outIntArray(OriginalIntArray(i)) = i
+    ! do elem = 1, nElems  
+    !   outIntArray(OriginalIntArray(elem)) = elem
+    ! enddo
 
     ! Were we asked to return the sorted array?
     if ( present(sortedArray) ) sortedArray = inStrArray( outIntArray )
@@ -4646,6 +4656,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.78  2017/12/12 21:22:12  pwagner
+! Remove limit on character lengths in SortArray
+!
 ! Revision 2.77  2017/12/07 22:06:12  pwagner
 ! Using sort_m instead of LexicalSort
 !
