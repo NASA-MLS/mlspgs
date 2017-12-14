@@ -388,7 +388,7 @@ contains
     write (*,*) '              =>   diff only fields f1, f2,..'
     write (*,*) '  -geo name lo,hi  '
     write (*,*) '              => diff only geobox low <= geo <= hi'
-    write (*,*) '                 where geo is one of''
+    write (*,*) '                 where geo is one of'
     write (*,*) '                  {latitude, longitude, time, pressure}'
     write (*,*) '                 (may be repeated)'
     write (*,*) '                 if hi < lo then dump is outside geobox'
@@ -485,6 +485,9 @@ end program l2gpdiff
 !==================
 
 ! $Log$
+! Revision 1.28  2017/10/12 20:27:44  pwagner
+! Monkeyed with appearance of help page; removed outdated build notes
+!
 ! Revision 1.27  2017/05/13 00:04:09  pwagner
 ! Added -S1 and -S2 cmdline options
 !
