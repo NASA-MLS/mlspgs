@@ -232,6 +232,9 @@ module HighOutput
     module procedure timestamp_char, timestamp_integer, timestamp_logical
   end interface
   
+  ! When Calling OutputNamedValue with character values, should we trim them?
+  logical, public                      :: TrimCharacterValues = .true.
+  
   ! Used for automatic assembly of a table to be neatly formatted and output
   ! The table holds two columns:
   ! names and values  
@@ -339,6 +342,7 @@ module HighOutput
   end type
   type(StyleOptions_T), private, save  :: DefaultStyleOptions
   type(StyleOptions_T), public, save   :: StyleOptions
+
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
@@ -1658,7 +1662,29 @@ contains
    & ADVANCE, colon, fillChar, Before, After, TABN, TABC, TABA, DONT_STAMP, options )
     character(len=*), intent(in)          :: name
     character(len=*), intent(in)          :: value
-    include 'output_name_value_pair.f9h'
+    character(len=*), intent(in), optional :: ADVANCE
+    character(len=1), intent(in), optional :: COLON
+    character(len=1), intent(in), optional :: fillChar
+    integer, intent(in), optional :: TABN
+    integer, intent(in), optional :: TABC
+    integer, intent(in), optional :: TABA
+    logical, intent(in), optional :: DONT_STAMP
+    character(len=*), intent(in), optional :: Before, After ! text to print
+    character(len=*), intent(in), optional :: options
+    if ( TrimCharacterValues ) then
+      call possiblyTrimmedvalue ( name, trim(value), &
+        & ADVANCE, colon, fillChar, Before, After, TABN, TABC, TABA, DONT_STAMP, options )
+    else
+      call possiblyTrimmedvalue ( name, value, &
+        & ADVANCE, colon, fillChar, Before, After, TABN, TABC, TABA, DONT_STAMP, options )
+    endif
+  contains
+    subroutine possiblyTrimmedvalue ( name, value, &
+      & ADVANCE, colon, fillChar, Before, After, TABN, TABC, TABA, DONT_STAMP, options )
+      character(len=*), intent(in)          :: name
+      character(len=*), intent(in)          :: value
+      include 'output_name_value_pair.f9h'
+    end subroutine possiblyTrimmedvalue
   end subroutine output_nvp_character
 
   subroutine output_nvp_complex ( name, value, &
@@ -2455,6 +2481,9 @@ contains
 end module HIGHOUTPUT
 
 ! $Log$
+! Revision 2.22  2017/12/14 23:20:48  pwagner
+! Added TrimCharacterValues
+!
 ! Revision 2.21  2017/11/30 20:48:59  pwagner
 ! RestoreSettings may now restore all or just some
 !
