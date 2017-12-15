@@ -184,7 +184,7 @@ module FillUtils_1                     ! Procedures used by Fill
       & extractsinglechannel, fillcovariance, fromanother, fromgrid, &
       & froml2gp, fromprofile, gather, geoiddata, losvelocity, &
       & chisqchan, chisqmmaf, chisqmmif, chisqratio, &
-      & colabundance, derivativeofsource, foldedradiance, phitanwithrefraction, &
+      & colabundance, derivativeofsource, foldedradiance, phitanwithrefraction, heightFromPressure, &
       & iwcfromextinction, rhifromortoh2o, noradspermif, &
       & rhiprecisionfromortoh2o, withestnoise, &
       & Hydrostatically_GPH, Hydrostatically_PTan, fromSplitSideband, &
@@ -2905,6 +2905,83 @@ contains ! =====     Public Procedures     =============================
       call trace_end ( 'FillUtils_1.PhiTanWithRefraction', &
         & cond=toggle(gen) .and. levels(gen) > 1 )
     end subroutine PhiTanWithRefraction
+    
+    ! -------------------------------------  HeightFromPressure  -----
+    subroutine HeightFromPressure ( key, quantity, &
+      & H2O, orbIncline, ptan, refGPH, temperature, ignoreTemplate )
+
+      use Geometry, only: Earthrada, Earthradb, Geodtogeoclat
+      use Hydrostatic_M, only: Hydrostatic
+      use Phi_Refractive_Correction_M, only: Phi_Refractive_Correction_Up
+      use Refraction_M, only: Refractive_Index
+
+      integer, intent(in) :: KEY          ! Tree node, for error messages
+      type (VectorValue_T), intent(inout) :: QUANTITY ! PhiTan quantity to update
+      type (VectorValue_T), intent(in) :: H2O         ! Water vapor
+      type (VectorValue_T), intent(in) :: OrbIncline  ! Orbital inclination
+      type (VectorValue_T), intent(in) :: PTan        ! Tangent pressure
+      type (VectorValue_T), intent(in) :: RefGPH      ! Reference GPH
+      type (VectorValue_T), intent(in) :: TEMPERATURE ! Temperature
+      logical, intent(in)              :: IGNORETEMPLATE
+
+      real(rp), dimension(quantity%template%noInstances) :: CP2, CSQ, REQ, SP2
+      real(rp) :: PhiCorrs(temperature%template%noInstances,temperature%template%noSurfs)
+      real(rp), dimension(temperature%template%noInstances) :: REQS
+      real(rv), dimension(temperature%template%noSurfs) :: Heights, N, PhiCorr, PS
+      integer :: I, J     ! Subscripts, loop inductors
+      integer :: Me = -1  ! String index for trace
+
+      ! Executable code
+      call trace_begin ( me, 'FillUtils_1.HeightFromPressure', key, &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
+      ! More sanity checks
+      if ( .not. ignoreTemplate ) then
+        if ( .not. ValidateVectorQuantity ( temperature, &
+          & quantityType=(/l_temperature/), coherent=.true., stacked=.true., &
+          & frequencyCoordinate=(/l_none/), verticalCoordinate=(/l_zeta/) ) ) &
+          & call Announce_error ( key, no_error_code, 'Problem with temperature quantity for phiTan fill' )
+        if ( .not. ValidateVectorQuantity ( H2O, &
+          & quantityType=(/l_vmr/), molecule=(/l_H2O/), coherent=.true., stacked=.true., &
+          & frequencyCoordinate=(/l_none/), verticalCoordinate=(/l_zeta/) ) ) &
+          & call Announce_error ( key, no_error_code, 'Problem with H2O quantity for phiTan fill' )
+        if ( .not. ValidateVectorQuantity ( refGPH, &
+          & quantityType = (/l_refGPH/), coherent=.true., stacked=.true., &
+          & verticalCoordinate=(/l_zeta/), frequencyCoordinate=(/l_none/), noSurfs=(/1/) ) ) &
+          & call Announce_Error ( key, badrefGPHQuantity )
+      end if
+      i = 0
+      if ( .not. DoHGridsMatch ( temperature, refGPH ) ) i = i + 1
+      if ( .not. DoHGridsMatch ( temperature, H2O ) ) i = i + 2
+      if ( .not. DoVGridsMatch ( temperature, H2O ) ) i = i + 8
+      if ( i /= 0 ) call Announce_Error ( key, no_error_code, &
+        & ' coordinates for temperature/refGPH/H2O disagree', &
+        & extraInfo = (/i/) )  
+
+      ! Interpolate REQ to temperature/H2O/refGPH hGrid
+      call InterpolateValues ( quantity%values(1,:), req, &
+        & temperature%template%phi(1,:), reqs, 'Linear', extrapolate='Constant' )
+
+      ! Get pressures corresponding to Temperature etc
+      ps = 10.0**(-temperature%template%surfs(:,1))
+      
+      ! The heights will vary depending on local pressure surfaces
+       do i = 1, temperature%template%noInstances
+
+         ! Get heights.  Temperature and RefGPH are on same hGrids.
+         ! RefGPH is in meters, but Hydrostatic wants it in km.
+         call Hydrostatic ( GeodToGeocLat ( temperature%template%geodLat(1,i) ), &
+           & temperature%template%surfs(:,1), temperature%values(:,i), &
+           & temperature%template%surfs(:,1), &
+           & refGPH%template%surfs(1,1), 0.001*refGPH%values(1,i), &
+           & heights )
+
+         quantity%values(:,i) = heights
+       end do
+       
+
+      call trace_end ( 'FillUtils_1.HeightFromPressure', &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
+    end subroutine HeightFromPressure
 
       ! ------------------------------------- RHiFromOrToH2O ----
     subroutine RHiFromOrToH2O ( key, quantity, &
@@ -7820,6 +7897,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.136  2017/12/15 18:33:19  mmadatya
+! Added heightFromPressure as new Fill method
+!
 ! Revision 2.135  2017/12/07 01:01:23  vsnyder
 ! Don't use host-associated variable as a DO index
 !
