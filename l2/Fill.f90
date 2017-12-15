@@ -73,7 +73,7 @@ contains ! =====     Public Procedures     =============================
       & Extractsinglechannel, Fillerror, Fromanother, Fromgrid, &
       & FromL2GP, Fromprofile, Gather, GeoidData, Losvelocity, &
       & Chisqchan, Chisqmmaf, Chisqmmif, Chisqratio, &
-      & Colabundance, FoldedRadiance, Phitanwithrefraction, &
+      & Colabundance, FoldedRadiance, Phitanwithrefraction, HeightFromPressure, &
       & Iwcfromextinction, Rhifromortoh2o, Noradspermif, &
       & Rhiprecisionfromortoh2o, Withestnoise, &
       & Hydrostatically_Gph, Hydrostatically_Ptan, Fromsplitsideband, &
@@ -170,7 +170,7 @@ contains ! =====     Public Procedures     =============================
       & L_Noradspermif, L_Offsetradiance, &
       & L_Phasetiming, L_Phitan, &
       & L_Plain, L_Profile, L_Ptan, L_Quality, &
-      & L_Rectanglefromlos, L_Refgph, L_Refract, &
+      & L_Rectanglefromlos, L_Refgph, L_Refract,  L_HeightFromPressure, &
       & L_Reflectortempmodel, L_Resetunusedradiances, L_Rhi, &
       & L_Rhifromh2o, L_Rhiprecisionfromh2o, L_Rotatefield, L_Scaleoverlaps, &
       & L_Sectiontiming, L_Scatter, L_Scvelecr, L_Spd, L_Spreadchannel, &
@@ -2917,7 +2917,30 @@ contains ! =====     Public Procedures     =============================
             & ptanQuantity, refGPHquantity, temperatureQuantity, &
             & ignoreTemplate )
         end if
-
+      
+      case (l_heightFromPressure )
+          if ( .not. all ( got ( (/ f_h2oQuantity, f_orbitinclination, &
+          & f_ptanQuantity, f_refGPHquantity, f_temperatureQuantity /) ) ) ) then
+            call Announce_error ( key, badRefractFill )
+            call Announce_error ( key, missingField, extraInfo= &
+              & (/ f_h2oQuantity, f_orbitinclination, &
+              & f_ptanQuantity, f_refGPHquantity, f_temperatureQuantity /) )
+          end if
+          h2oQuantity => GetVectorQtyByTemplateIndex( &
+            & vectors(h2oVectorIndex), h2oQuantityIndex)
+          orbitInclinationQuantity => GetVectorQtyByTemplateIndex( &
+            & vectors(orbitInclinationVectorIndex), orbitInclinationQuantityIndex)
+          ptanQuantity => GetVectorQtyByTemplateIndex( &
+            & vectors(ptanVectorIndex), ptanQuantityIndex)
+          refGPHquantity => GetVectorQtyByTemplateIndex( &
+            & vectors(refGPHVectorIndex), refGPHQuantityIndex)
+          temperatureQuantity => GetVectorQtyByTemplateIndex( &
+            & vectors(temperatureVectorIndex), temperatureQuantityIndex)
+          call HeightFromPressure ( key, quantity, h2oQuantity, &
+            & orbitInclinationQuantity, &
+            & ptanQuantity, refGPHquantity, temperatureQuantity, &
+            & ignoreTemplate )
+        
       case ( l_reflectorTempModel ) ! --------------- Reflector temperature model
         call WithReflectorTemperature ( key, quantity, phiZero, termsNode )
 
@@ -3338,6 +3361,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.472  2017/12/15 18:33:19  mmadatya
+! Added heightFromPressure as new Fill method
+!
 ! Revision 2.471  2017/12/07 01:01:23  vsnyder
 ! Don't use host-associated variable as a DO index
 !
