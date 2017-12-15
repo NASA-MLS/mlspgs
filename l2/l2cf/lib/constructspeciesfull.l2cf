@@ -788,6 +788,21 @@ begin Fill
   ADModeVector : Vector, template=ADModeTemplate
 end Fill
 
+; The next template is for the geoHeight
+begin Construct
+  ;; ----------------------------------------- geoHeight
+  geoHeight: Quantity, hGrid=hGridStandard,  vGrid=vGridStandard, type=geoHeight
+  geoHeight_hr: Quantity, hGrid=hGridStandard,  vGrid=vGridHiRes, type=geoHeight
+  
+  geoHeightTemplate: VectorTemplate, quantities = [ $
+    geoHeight, geoHeight_hr $
+    ]
+end Construct
+
+begin Fill
+  geoHeightVector : Vector, template=geoHeightTemplate
+end Fill
+
 ; These will be used after all the chunks have been processed.
 ; Still we are trying to get all the standard species constructed early.
 begin Construct
@@ -815,6 +830,9 @@ begin Fill
 end Fill
 !divert(-1)
 ;$Log$
+;Revision 1.7  2015/12/01 21:44:28  pwagner
+;Added ProfileNum to geolocation quantities
+;
 ;Revision 1.6  2015/10/06 17:38:36  pwagner
 ;restored missing baselineMIFBand17
 ;

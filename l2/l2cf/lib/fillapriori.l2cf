@@ -188,6 +188,27 @@ Fill, quantity=apriori.refGPH,$
     phiTan=apriori.phiTanTHz, $
     maxIterations=20, $
     !ifdef(flagStrict1D,{phiWindow=0 profiles},{phiWindow=4 degrees})
+     ;; Added to have geoHeight in the Swats
+  Fill, quantity=tempVectorState.h2o, method=heightFromPressure, $
+     ptanQuantity=apriori.ptanGHz, $
+     h2oQuantity=apriori.h2o, $
+     orbitInclination=apriori.orbitInclination, $
+     refGPHQuantity=apriori.refGPH, $
+     temperatureQuantity=apriori.temperature 
+  ;;  GeoHeight changes
+  Fill, quantity=geoHeightVector.geoHeight, method=heightFromPressure, $
+     ptanQuantity=apriori.ptanGHz, $
+     h2oQuantity=apriori.h2o, $
+     orbitInclination=apriori.orbitInclination, $
+     refGPHQuantity=apriori.refGPH, $
+     temperatureQuantity=apriori.temperature 
+  ;; GeoHeight for HiRes
+  Fill, quantity=geoHeightVector.geoHeight_hr, method=heightFromPressure, $
+     ptanQuantity=apriori.ptanGHz, $
+     h2oQuantity=apriori.h2o_hr, $
+     orbitInclination=apriori.orbitInclination, $
+     refGPHQuantity=apriori.refGPH, $
+     temperatureQuantity=apriori.temperature_hr
     }) ;; End if not skipHydrostatic
 
   }) ;; End if gotClimatology
@@ -778,6 +799,9 @@ end Fill
 !include(writeapriori.l2cf)
 !divert(-1)
 ;$Log$
+;Revision 1.164  2016/01/05 00:42:25  pwagner
+;MagneticFieldGrid may be defined
+;
 ;Revision 1.163  2015/05/19 22:43:16  pwagner
 ;Cant Fill fieldAzimuth, ct. if MagneticFieldOnHeightGrid
 ;

@@ -10,6 +10,9 @@
 $1,{GPH}, {
   Label, quantity=aPriori.$1_HR, label='$1-APriori'
   Label, quantity=aPrioriPrecision.$1_HR, label='$1-APrioriPrecision'},
+$1,{geoHeight}, {
+  Label, quantity=aPriori.$1_HR, label='$1-APriori'
+  Label, quantity=aPrioriPrecision.$1_HR, label='$1-APrioriPrecision'},
 $1,{H2O}, {
   Label, quantity=aPriori.$1, label='$1_LR-APriori'
   Label, quantity=aPrioriPrecision.$1, label='$1_LR-APrioriPrecision'},
@@ -27,6 +30,8 @@ $1,{O3_HR}, {
 !ifelse($1,{Temperature},
    {  source=aPriori.$1_HR, precision=aPrioriPrecision.$1_HR}, 
    $1,{GPH}, 
+   {  source=aPriori.$1_HR, precision=aPrioriPrecision.$1_HR},
+   $1,{geoHeight}, 
    {  source=aPriori.$1_HR, precision=aPrioriPrecision.$1_HR},
    {  source=aPriori.$1, precision=aPrioriPrecision.$1})})
   
@@ -50,6 +55,9 @@ end Join
   })
 !divert(-1)
 ;$Log$
+;Revision 1.7  2017/11/07 21:24:40  pwagner
+;Added allAprioriProducts to define which apriori swaths to write
+;
 ;Revision 1.6  2016/01/05 00:34:13  pwagner
 ;Supplied command to resume output
 ;
