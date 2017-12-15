@@ -1294,7 +1294,7 @@ contains ! ============= Public procedures ===================================
       l_mifRadC, l_mifRHI, &
       l_noisebandwidth, l_noradspermif, l_noradsbinned, &
       l_numgrad, l_numj, l_numnewt, &
-      l_opticaldepth, l_orbitinclination, l_ascdescmode, &
+      l_opticaldepth, l_orbitinclination, l_ascdescmode, l_geoheight, &
       l_phasetiming, l_phitan, l_ptan, l_quality, l_radiance, &
       l_refgph, l_refltemp, l_refltrans, l_reflrefl, l_reflspill, &
       l_rhi, l_singlechannelradiance, l_sizedistribution, &
@@ -1439,6 +1439,7 @@ contains ! ============= Public procedures ===================================
       l_opticalDepth, phyq_dimensionless, p_minorFrame, p_signal, next, &
       l_orbitInclination, phyq_angle, p_minorFrame, p_scModule, next, &
       l_AscDescMode, phyq_dimensionless, p_hGrid, next, & 
+      l_geoheight, phyq_dimensionless, p_hGrid, p_vGrid, next, &
       l_phaseTiming, phyq_dimensionless, p_vGrid, next, &
       l_phiTan, phyq_angle, p_minorFrame, p_module, next, &
       l_ptan, phyq_zeta, p_minorFrame, p_module, next, &
@@ -1598,6 +1599,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.205  2017/12/15 18:43:56  mmadatya
+! Added geoHeight as new quantity template
+!
 ! Revision 2.204  2017/10/27 01:29:46  vsnyder
 ! Remove L_MIFLOS
 !
