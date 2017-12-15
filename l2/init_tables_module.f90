@@ -496,7 +496,7 @@ contains ! =====     Public procedures     =============================
              l+l_modifyTemplate, l+l_negativePrecision, l+l_noRadsPerMIF, &
              l+l_offsetRadiance, l+l_phaseTiming, l+l_profile, &
              l+l_quality, l+l_rectanglefromlos, l+l_reflectorTempModel, &
-             l+l_refract, l+l_resetUnusedRadiances, l+l_RHIFromH2O, &
+             l+l_refract, l+l_heightFromPressure, l+l_resetUnusedRadiances, l+l_RHIFromH2O, &
              l+l_RHIPrecisionFromH2O, l+l_rotateField, l+l_scaleOverlaps, l+l_scatter, &
              l+l_sectionTiming, l+l_splitSideband, l+l_spreadChannel, &
              l+l_status, l+l_swapValues, l+l_uncompressRadiance, &
@@ -557,7 +557,7 @@ contains ! =====     Public procedures     =============================
              l+l_MIFExtinctionExtrapolation, l+l_MIFExtinctionForm, &
              l+l_MIFExtinctionv2, l+l_mifRHI, l+l_noiseBandwidth, &
              l+l_noRadsBinned, l+l_noRadsPerMIF, l+l_numGrad, l+l_numJ, &
-             l+l_numNewt, l+l_opticalDepth, l+l_orbitInclination, l+l_AscDescMode, &
+             l+l_numNewt, l+l_opticalDepth, l+l_orbitInclination, l+l_AscDescMode, l+l_geoHeight, &
              l+l_phaseTiming, l+l_phiTan, l+l_ptan, l+l_quality, l+l_radiance, &
              l+l_reflrefl, l+l_reflspill, l+l_refltemp, l+l_refltrans, &
              l+l_refGPH, l+l_rhi, l+l_scanResidual, l+l_scatteringAngle, &
@@ -1323,6 +1323,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_label, string(), &
              begin, f+f_options, string(), &
              begin, f+f_AscDescMode, vectorQuantity(), &
+             begin, f+f_geoHeight, vectorQuantity(), &
              begin, f+f_precision, vectorQuantity(), &
              begin, f+f_quality, vectorQuantity(), &
              begin, f+f_rank, numeric(phyq_dimensionless), &
@@ -2097,6 +2098,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.636  2017/12/15 18:29:56  mmadatya
+! Added geoHeight as new quantity template; heightFromPressure as new Fill method
+!
 ! Revision 2.635  2017/07/27 16:38:55  pwagner
 ! Reevaluate may take /truncate; label may take Boolean; DirectWrite may take Boolean or groupName
 !
