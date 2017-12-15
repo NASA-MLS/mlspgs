@@ -156,6 +156,7 @@ quantity
 rectanglefromlos
 reflectorTempModel
 refract
+heightFromPressure
 regular
 resetUnusedRadiances
 RHIFromH2O
@@ -186,6 +187,9 @@ weighted
 wmoTropopause
 
 # $Log$
+# Revision 2.79  2017/12/15 18:32:13  mmadatya
+# Added heightFromPressure as new Fill method
+#
 # Revision 2.78  2017/03/06 19:56:42  pwagner
 # Support new meteorology origin: merra_2
 #
