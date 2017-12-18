@@ -4859,6 +4859,8 @@ contains ! =====     Public Procedures     =============================
       units_name = 'K'
     case ('gph')
       units_name = 'm'
+    case ('geoheight')
+      units_name = 'km'
     case ('rhi')
       units_name = '%rhi'
     case ('iwc', 'iwp')
@@ -5428,6 +5430,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.229  2017/11/30 21:15:53  pwagner
+! Avoid writing MissingValue to metadata
+!
 ! Revision 2.228  2017/11/03 19:59:08  pwagner
 ! Most array gymnastics moved from MLSFillValues to HyperSlabs module
 !
