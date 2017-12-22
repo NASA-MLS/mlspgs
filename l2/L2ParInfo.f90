@@ -13,26 +13,26 @@ module L2ParInfo
   ! This module provides definitions needed by L2Parallel and other modules to
   ! manage the parallel aspects of the L2 code.
 
-  use allocate_deallocate, only: allocate_test, deallocate_test
-  use dump_0, only: dump
-  use highOutput, only: outputNamedValue
-  use io_stuff, only: get_lun
-  use machine, only: usleep
-  use MLSFinds, only: findfirst
+  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+  use Dump_0, only: Dump
+  use HighOutput, only: OutputNamedValue
+  use Io_Stuff, only: Get_Lun
+  use Machine, only: Usleep
+  use MLSFinds, only: Findfirst
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, PVMErrorMessage
-  use MLSStats1, only: allstats
-  use MLSStrings, only: lowercase
-  use MLSStringLists, only: getuniqueints, getuniquestrings, numstringelements, &
-    & removenumfromlist, stringelement, switchdetail
-  use morePVM, only: PVMpackstringindex, PVMunpackstringindex
-  use output_m, only: output
-  use PVM, only: infotag, &
+  use MLSStats1, only: Allstats
+  use MLSStrings, only: Lowercase
+  use MLSStringLists, only: Getuniqueints, Getuniquestrings, NumstringElements, &
+    & Removenumfromlist, StringElement, Switchdetail
+  use MorePVM, only: PVMpackstringindex, PVMunpackstringindex
+  use Output_M, only: Beep, Output
+  use PVM, only: Infotag, &
     & PVMfmytid, PVMfinitsend, PVMf90pack, PVMfsend, &
-    & PVMdatadefault, PVMf90unpack, nextPVMarg, PVMtaskexit, sig_abouttodie
+    & PVMDatadefault, PVMf90unpack, NextPVMarg, PVMtaskexit, Sig_Abouttodie
   use PVMidl, only: PVMidlpack
-  use quantityPVM, only: PVMsendquantity
-  use toggles, only: switches
-  use vectorsmodule, only: vectorvalue_t
+  use QuantityPVM, only: PVMsendquantity
+  use Toggles, only: Switches
+  use Vectorsmodule, only: VectorValue_T
 
   implicit none
   private
@@ -311,6 +311,8 @@ contains ! ==================================================================
       & call PVMErrorMessage ( info, 'unpacking finish acknowledgement')
       if ( signal /= SIG_AckFinish ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Got unrecognised signal from master' )
+      if ( DEEBUG ) call output ( 'Master acknowledged our completion', advance='yes' )
+      if ( DEEBUG ) call Beep ( 'Master acknowledged our completion' )
     else if ( parallel%master ) then
       call usleep(FIXDELAYFORSLAVESTDOUTBUFFER)
       if ( noSlaves < 1 ) go to 9
@@ -860,7 +862,7 @@ contains ! ==================================================================
   end function GetNiceTidString
 
   function what_options( clean, transpose, trim ) result( options )
-    use MLSSTRINGS, only: TRIM_SAFE
+    use MLSStrings, only: Trim_Safe
     logical, optional, intent(in) :: clean
     logical, optional, intent(in) :: transpose
     logical, optional, intent(in) :: trim
@@ -890,6 +892,9 @@ contains ! ==================================================================
 end module L2ParInfo
 
 ! $Log$
+! Revision 2.68  2017/12/22 00:31:05  pwagner
+! Made Use statements CamelCase
+!
 ! Revision 2.67  2016/03/23 20:12:42  pwagner
 ! Usleep not an external any more
 !
