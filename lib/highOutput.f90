@@ -28,7 +28,8 @@ module HighOutput
     & Newline, &
     & Output, Output_ => Output_Char_Nocr, &
     & RestoreOutputSettings => RestoreSettings, &
-    & OutputOptions, OutputOptions_T, StampOptions, StampOptions_T, &
+    & OutputOptions, OutputOptions_T, PatternOptions, PatternOptions_T, &
+    & StampOptions, StampOptions_T, &
     & TimeStampOptions, TimeStampOptions_T, &
     & BothPrUnit, InvalidPrUnit, MSGLogPrUnit, &
     & OutputLines, OutputLinesPrUnit, SetOutputStatus, StdoutPrUnit
@@ -187,7 +188,8 @@ module HighOutput
   end interface
 
   interface DUMP
-    module procedure DUMPOUTPUTOPTIONS, DUMPSTAMPOPTIONS, DUMPTIMESTAMPOPTIONS
+    module procedure DumpOutputOptions, DumpPatternOptions, &
+      & DumpStampOptions, DumpTimeStampOptions
   end interface
 
   interface DUMPSIZE
@@ -778,11 +780,9 @@ contains
       & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
     call outputNamedValue ( 'log Parent Name?', options%logParent, advance='yes', &
       & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-    call outputNamedValue ( 'use patterned blanks?', options%usePatternedBlanks, advance='yes', &
+    call outputNamedValue ( 'advanceDefault', options%advanceDefault, advance='yes', &
       & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-    call outputNamedValue ( 'special fills', trim(options%specialFillChars), advance='yes', &
-      & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-    call outputNamedValue ( 'lineup fills', trim(options%lineupFillChars), advance='yes', &
+    call outputNamedValue ( 'sdFormatDefault', options%sdFormatDefault, advance='yes', &
       & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
     call outputNamedValue ( 'tab stops', tabstops, advance='yes', &
       & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
@@ -831,6 +831,29 @@ contains
       end if
     end function PRUnitName
   end subroutine DumpOutputOptions
+
+  ! ---------------------------------------------- DumpPatternOptions -----
+  subroutine DumpPatternOptions( options )
+    ! Show output options
+    type(PatternOptions_T), intent(in) :: options
+    ! Internal variables
+    logical, parameter :: checkingTabbing = .false.
+    character(len=10), parameter :: decade = '1234567890'
+    character(len=1), parameter :: fillChar = '1' ! fill blanks with '. .'
+    integer :: i
+    ! Executable
+    call blanks(80, fillChar='-', advance='yes')
+    call headline( 'Summary of pattern options', &
+      & fillChar='-', before='*', after='*' )
+    call outputNamedValue ( 'use patterned blanks?', options%usePatternedBlanks, advance='yes', &
+      & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
+    call outputNamedValue ( 'special fills', trim(options%specialFillChars), advance='yes', &
+      & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
+    call outputNamedValue ( 'lineup fills', trim(options%lineupFillChars), advance='yes', &
+      & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
+    call newline
+    call blanks(80, fillChar='-', advance='yes')
+  end subroutine DumpPatternOptions
 
   ! ---------------------------------------------- DumpStampOptions -----
   subroutine DumpStampOptions( options )
@@ -2481,6 +2504,9 @@ contains
 end module HIGHOUTPUT
 
 ! $Log$
+! Revision 2.23  2017/12/22 00:25:24  pwagner
+! Add move some items from DumpOuputOptions to new DumpPatternOptions
+!
 ! Revision 2.22  2017/12/14 23:20:48  pwagner
 ! Added TrimCharacterValues
 !
