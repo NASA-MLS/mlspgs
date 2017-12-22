@@ -56,6 +56,7 @@ module OUTPUT_M
 ! Beep                     print message to error_unit
 ! blanks                   print specified number of blanks [or fill chars]
 ! flushOutputLines         print the current outputLines; then reset to ''
+! flushStdout              flush any buffered lines to stdout
 ! getOutputStatus          returns normally private data
 ! printOutputStatus        prints normally private data
 ! isOutputSuspended        returns TRUE if output is suspended
@@ -79,6 +80,7 @@ module OUTPUT_M
 ! char* Advance_is_yes_or_no ( [char* chars] )
 ! Beep ( [char* chars] )
 ! blanks ( int n_blanks, [char fillChar], [char* advance] )
+! flushStdout
 ! flushOutputLines ( [int prUnit] )
 ! int getOutputStatus( char* name )
 ! log isOutputSuspended ()
@@ -138,13 +140,14 @@ module OUTPUT_M
   logical, save, private :: OLDUNITSTILLOPEN = .TRUE.
 
   public :: addToIndent, Advance_is_yes_or_no, Beep, blanks, &
-    & flushOutputLines, getOutputStatus, newline, &
+    & flushOutputLines, flushStdout, getOutputStatus, newline, &
     & output, output_char_nocr, printOutputStatus, &
     & resetIndent, restoreSettings, resumeOutput, revertOutput, &
     & setFillPattern, setOutputStatus, suspendOutput, switchOutput
 
   ! These types made public because the class instances are public
   public :: outputOptions_t
+  public :: patternOptions_t
   public :: stampOptions_t
   public :: timestampOptions_t
 
@@ -187,6 +190,26 @@ module OUTPUT_M
     logical :: logParent           = .false. ! Show who called output, not output
     logical :: prUnitLiteral       = .false. ! output to prUnit even if < 0
     logical :: skipMLSMsgLogging   = .false.
+    character(len=FileNameLen) :: name = 'stdout'
+    character(len=3)  :: advanceDefault = 'no' ! if advance=.. missing
+    character(len=12) :: sdFormatDefault = '*' ! * means default format spec
+    character(len=1)  :: arrayElmntSeparator = ' '
+    character(len=27) :: parentName = "$RCSfile$"
+  end type
+
+  ! This is the type for advanced formatting options from the advance=..
+  type advancedOptions_T
+    logical :: stretch             = .false. ! p r i n t  l i k e  t h i s   ?
+    logical :: bannered            = .false. ! print as a banner
+    logical :: headered            = .false. ! print as a headline
+    type(outputOptions_T) :: originalOptions
+  end type
+
+  ! This is the type for showing special patterns in blanks or other occasions
+  ! where something interesting and eye-catching is desired.
+  ! These predefined settings should normally suit us well; don't change them
+  ! without testing!
+  type patternOptions_T
     logical :: usePatternedBlanks  = .true. ! Use patterns for special fillChars
     character(len=numPatterns) :: specialFillChars = '0123456789ABC'
     character(len=numPatterns) :: lineupFillChars =  'yynnnnynnnyyn' ! whether they line up
@@ -205,7 +228,7 @@ module OUTPUT_M
                                             &  '(~ )            ' , &
                                             &  '(= ~ )          ' /)
                                             !   12345678901234567890
-    ! Here are samples of the special patterns above
+    ! Here are samples of the special pre-defined patterns above
     !       Special patterns used in blanks
     ! pattern
     !  0                                                                 
@@ -221,23 +244,11 @@ module OUTPUT_M
     !  A = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =   
     !  B ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~   
     !  C  = ~ = ~ = ~ = ~ = ~ = ~ = ~ = ~ = ~ = ~ = ~ = ~ = ~ = ~ = ~    
-    character(len=FileNameLen) :: name = 'stdout'
-    character(len=3)  :: advanceDefault = 'no' ! if advance=.. missing
-    character(len=12) :: sdFormatDefault = '*' ! * means default format spec
-    character(len=1)  :: arrayElmntSeparator = ' '
-    character(len=27) :: parentName = "$RCSfile$"
-  end type
-
-  ! This is the type for advanced formatting options from the advance=..
-  type advancedOptions_T
-    logical :: stretch             = .false. ! p r i n t  l i k e  t h i s   ?
-    logical :: bannered            = .false. ! print as a banner
-    logical :: headered            = .false. ! print as a headline
-    type(outputOptions_T) :: originalOptions
   end type
 
   type(advancedOptions_T), public, save :: advancedOptions
   type(outputOptions_T), public, save   :: outputOptions
+  type(patternOptions_T), public, save  :: patternOptions
   type(outputOptions_T), private, save  :: DefaultOutputOptions
 
   ! This is the type for configuring whether and how to automatically stamp
@@ -263,13 +274,13 @@ module OUTPUT_M
 
   ! This is the type for configuring how the timeStamp stamps its lines)
   type timeStampOptions_T
-    logical :: post = .true.      ! Put stamp at end of line?
-    logical :: showDate = .false. ! Don't show date unless TRUE
+    logical           :: post = .true.      ! Put stamp at end of line?
+    logical           :: showDate = .false. ! Don't show date unless TRUE
     character(len=24) :: textCode = ' '
     ! Don't show date unless dateFormat is non-blank
-    character(len=16) :: dateFormat = 'yyyy-mm-dd'
-    character(len=16) :: timeFormat = 'hh:mm:ss'
-    character(len=8) :: TIMESTAMPSTYLE = 'post' ! 'pre' or 'post'
+    character(len=16) :: DateFormat     = 'yyyy-mm-dd'
+    character(len=16) :: TimeFormat     = 'hh:mm:ss'
+    character(len=8)  :: TimeStampStyle = 'post' ! 'pre' or 'post'
   end type
 
   type(timeStampOptions_T), public, save :: TimeStampOptions ! Could leave this private
@@ -444,12 +455,12 @@ contains
     integer :: theRest
     ! Executable
     if ( present(fillChar) ) then
-      if ( outputOptions%usePatternedBlanks .and. &
-        & index(outputOptions%specialFillChars, FILLCHAR) > 0 ) then
+      if ( patternOptions%usePatternedBlanks .and. &
+        & index(patternOptions%specialFillChars, FILLCHAR) > 0 ) then
         ! We need to try to fit our called-for pattern into n_blanks
         ! The 1st question is, how many times could it be done?
-        patternNum = index( outputOptions%specialFillChars, FillChar )
-        pattern = outputOptions%patterns(patternNum)
+        patternNum = index( patternOptions%specialFillChars, FillChar )
+        pattern = patternOptions%patterns(patternNum)
         ! The pattern length (adjusted for enclosing parentheses)
         patternLength = len_trim(pattern) - 2
         ! Now we assume we'll always want the first and blanks of n_blanks to be
@@ -463,7 +474,7 @@ contains
         ! In case we want latterns on consecutive lines to line up; viz
         ! a: . . . . . . Something
         ! xy:. . . . . . Something else
-        lineup = ( outputOptions%lineupFillChars(patternNum:patternNum) == 'y' )
+        lineup = ( patternOptions%lineupFillChars(patternNum:patternNum) == 'y' )
         if ( lineup ) then
           numSoFar = 0
           ! Make sure that we always begin on an even-numbered column
@@ -512,6 +523,15 @@ contains
     ! flush ( merge ( output_Unit, outputOptions%prUnit, outputOptions%prUnit < 0 ) )
     outputOptions%prUnit = oldPrUnit
   end subroutine flushOutputLines
+
+  ! ----------------------------------------------  flushOutputLines  -----
+  ! print or log OutputLines
+  ! then reset to ''
+  subroutine flushStdout
+    use, intrinsic :: ISO_Fortran_Env, only: Output_Unit
+    ! Executable
+    flush( Output_Unit )
+  end subroutine flushStdout
 
   ! ---------------------------------------------- getOutputStatus
   ! Returns certain normally private data
@@ -565,9 +585,9 @@ contains
       call output( 'Special patterns used in blanks ', advance='yes' )
       do i=1, numPatterns
         call output( 'pattern: ', advance='no' )
-        call output( outputOptions%specialFillChars( i:i ), advance='no' )
+        call output( patternOptions%specialFillChars( i:i ), advance='no' )
         call blanks(1)
-        call blanks( 64, FillChar=outputOptions%specialFillChars( i:i ) )
+        call blanks( 64, FillChar=patternOptions%specialFillChars( i:i ) )
         call NewLine
       enddo
     endif
@@ -1378,10 +1398,10 @@ contains
     ! Executable
     patternNum = 1
     if ( present(fillChar) ) &
-      & patternNum = index( outputOptions%specialFillChars, fillChar )
-    outputOptions%patterns(patternNum) = pattern
+      & patternNum = index( patternOptions%specialFillChars, fillChar )
+    patternOptions%patterns(patternNum) = pattern
     if ( index( pattern, '(' ) < 1 ) &
-      & outputOptions%patterns(patternNum) = '(' // pattern // ')'
+      & patternOptions%patterns(patternNum) = '(' // pattern // ')'
   end subroutine setFillPattern
 
   ! ---------------------------------------------- setOutputStatus
@@ -1712,6 +1732,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.135  2017/12/22 00:23:23  pwagner
+! Move some items from output to new patternOptions; add flushOutputLines
+!
 ! Revision 2.134  2017/11/30 20:50:13  pwagner
 ! RestoreSettings may now restore all or just some
 !
