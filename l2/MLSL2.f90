@@ -56,7 +56,7 @@ program MLSL2
   use MLSPCF2 ! Everything
   use MLSStrings, only: Trim_Safe
   use MLSStringLists, only: ExpandStringRange, PutHashElement, SwitchDetail
-  use Output_M, only: Blanks, Output, &
+  use Output_M, only: Beep, Blanks, flushStdout, Output, &
     & InvalidPrUnit, MSGLogPrUnit, OutputOptions, StampOptions, StdoutPrUnit
   use Parser, only: Clean_Up_Parser, Configuration
   use Parser_Table_M, only: Destroy_Parser_Table, Parser_Table_T
@@ -581,6 +581,8 @@ program MLSL2
   call finish ( 'ending mlsl2' )
   if ( parallel%slave .and. len_trim(noteFile) > 0 .and. WAITFORSCRIPT ) then
     ! cycle endlessly until wrapper script kills us
+    call output( ' Waiting for wrapper script to kill us', advance='yes' )
+    call flushStdout
     do
       call usleep ( 10000*parallel%delay )
     enddo
@@ -848,6 +850,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.224  2017/12/22 00:32:00  pwagner
+! Try harder to make slaves flush stdout buffer
+!
 ! Revision 2.223  2017/03/23 16:57:38  pwagner
 ! Improved Dump_settings appearance
 !
