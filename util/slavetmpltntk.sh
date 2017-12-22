@@ -57,6 +57,26 @@ add_option()
       fi
 }
 
+# Exit the entire script
+# If a separate stderr file exists, append it to our stdout
+Exit_With_Status()
+{
+   echo "Exit with status $1" >> "$LOGFILE"
+   echo "LOGFILE $LOGFILE" >> "$LOGFILE"
+   echo "STDERRFILE $STDERRFILE" >> "$LOGFILE"
+   # How many args?
+   if [ $# -lt 1 ]
+   then
+     exit 0
+   fi
+   if [ -f "$STDERRFILE" ]
+   then
+     echo cat "$STDERRFILE" >> "$LOGFILE"
+     cat "$STDERRFILE" >> "$LOGFILE"
+   fi
+   exit $1
+}
+
 #---------------------------- prepend_option
 # Accumulate a list of commandline options one-by-one
 # Useful to prevent adding the same option if it's already present
@@ -170,7 +190,19 @@ PGE_ROOT=ppggeerroott
 #env >> $LOGFILE
 PGSBIN=ppggssbbiinn
 #echo $PGSBIN >> $LOGFILE
-if [ -r "$PGE_ROOT/science_env.sh"  ]
+# **************************************************
+# These 2 sleep times can be reset here by hand 
+# or by one of the .env files below
+# pgestartdelay  how long to wait after starting pge to grep its tid
+# pgekilldelay   how long to wait per cycle before killing it
+#                  Note: this must be < WaitBeforeKillingSlaves in L2Parallel
+pgestartdelay=20
+pgekilldelay=120
+# **************************************************
+if [ -r "$JOBDIR/job.env"  ]
+then
+  . $JOBDIR/job.env
+elif [ -r "$PGE_ROOT/science_env.sh"  ]
 then
 . ${PGE_ROOT}/science_env.sh
 elif [ -r "$PGSBIN/pgs-env.ksh" ]
@@ -363,6 +395,14 @@ while [ "$more_opts" = "yes" ] ; do
        fi
        shift
        shift
+       # Are we setting to capture stderr?
+       a=`grep '^stderr=true' $OPTSFILE`
+       if [ "$a" != "" ]
+       then
+         CAPTURE_STDERR="yes"
+       fi
+       shift
+       shift
        ;;
     --set* )
        # set one cmdline opt
@@ -413,6 +453,14 @@ l2cf=$1
 
 otheropts="$otheropts $switches"
 
+if [ "$STDERRFILE" = "" ]
+then
+  if [ "$CAPTURE_MT" = "yes" -o "$CAPTURE_STDERR" = "yes"  ]
+  then
+    STDERRFILE="$LOGFILE.stderr"
+  fi
+fi
+
 echo "(running without toolkit panoply)" 2>&1 | tee -a "$LOGFILE"
 echo "masterTid: $masterTid" 2>&1 | tee -a "$LOGFILE"
 echo "masterIdent file: $masterIdent" 2>&1 | tee -a "$LOGFILE"
@@ -447,11 +495,6 @@ fi
 ulimit -s unlimited
 #ulimit -a >> "$ENVSETTINGS"
 
-if [ "$CAPTURE_MT" = "yes" -a "$STDERRFILE" = "" ]
-then
-  STDERRFILE="$LOGFILE.stderr"
-fi
-
 echo $PGE_BINARY --ntk -m --slave $masterTid $otheropts $l2cf 2>&1 >> "$LOGFILE"
 if [ "$runinbackground" != "yes" ]
 then
@@ -466,7 +509,8 @@ then
   else
     $PGE_BINARY --ntk -m --slave $masterTid $otheropts $l2cf 2>&1 >> "$LOGFILE"
   fi
-  exit 0
+  Exit_with_Status 0
+  # exit 0
 fi
 
 # Run pge in background
@@ -477,32 +521,36 @@ notdone="true"
 if [ "$CAPTURE_MT" = "yes" ]
 then
   /usr/bin/time -f 'M: %M t: %e' $PGE_BINARY --ntk -m --slave $masterTid --pidf "$NOTEFILE" $otheropts $l2cf  \
-    1>> "$LOGFILE" 2> "$STDERRFILE" 2>> "$LOGFILE" &
+    1>> "$LOGFILE" 2> "$STDERRFILE" &
 elif [ "$STDERRFILE" != "" ]
 then
   $PGE_BINARY --ntk -m --slave $masterTid --pidf "$NOTEFILE" $otheropts $l2cf  \
-    1>> "$LOGFILE" 2> "$STDERRFILE" 2>> "$LOGFILE" &
+    1>> "$LOGFILE" 2> "$STDERRFILE" &
 else
   $PGE_BINARY --ntk -m --slave $masterTid --pidf "$NOTEFILE" $otheropts $l2cf  \
     >> "$LOGFILE" &
 fi
 pgepid=$!
-echo "pge pid: $pgepid" 2>&1 >> "$LOGFILE"
-sleep 20
+echo "pge pid: $pgepid" "$LOGFILE"
+sleep $pgestartdelay
 
 # Did the launch fail immediately?
 if [ "$pgepid" = "" ]
 then
-  echo "Failed to launch $PGE_BINARY in background" 2>&1 >> "$LOGFILE"
+  echo "Failed to launch $PGE_BINARY in background" "$LOGFILE"
   exit 1
 fi
 
 # Write this pid to a uniquely-named file
 echo "$pgepid" > "$NOTEFILE"
 echo "$pgepid echoed to $NOTEFILE" >> "$LOGFILE"
+# Now cycle endlessly until we learn the pge we launched is finished
+# We do this so that we can
+# (1) append the stderr file onto the end of the logfile
+# (2) kill -9 in case it was left only "mostly dead"
 while [ "$notdone" = "true" ]
 do
-  sleep 120
+  sleep $pgekilldelay
   # Either of two signs that we finished:
   # the pge wrote Finished to the note file
   a=`grep Finished "$NOTEFILE"`
@@ -517,11 +565,16 @@ do
     notdone=disappeared
   fi
 done
-echo "$notdone; Returned from $PGE_BINARY with status $?" 2>&1 >> "$LOGFILE"
-echo "cat $NOTEFILE" 2>&1 >> "$LOGFILE"
-cat $NOTEFILE 2>&1 >> "$LOGFILE"
+echo "$notdone; Returned from $PGE_BINARY with status $?" >> "$LOGFILE"
+if [ -f "$STDERRFILE" ]
+then
+  echo cat "$STDERRFILE" >> "$LOGFILE"
+  cat "$STDERRFILE" >> "$LOGFILE"
+fi
+echo "cat $NOTEFILE" >> "$LOGFILE"
+cat $NOTEFILE >> "$LOGFILE"
 # For good measure, we alo kill the pge's own pid (n case it was left hanging)
-echo "killing $pgepid" 2>&1 >> "$LOGFILE"
+echo "killing $pgepid" >> "$LOGFILE"
 kill -9 "$pgepid"
 }
       
@@ -542,6 +595,9 @@ do_the_call $all_my_opts
 exit 0
 
 # $Log$
+# Revision 1.17  2016/10/20 23:26:31  pwagner
+# Append chunk stderr to chunk log
+#
 # Revision 1.16  2016/09/23 00:13:07  pwagner
 # Reduce default switches for opt and glob
 #

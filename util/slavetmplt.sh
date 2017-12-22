@@ -57,6 +57,26 @@ add_option()
       fi
 }
 
+# Exit the entire script
+# If a separate stderr file exists, append it to our stdout
+Exit_With_Status()
+{
+   echo "Exit with status $1" >> "$LOGFILE"
+   echo "LOGFILE $LOGFILE" >> "$LOGFILE"
+   echo "STDERRFILE $STDERRFILE" >> "$LOGFILE"
+   # How many args?
+   if [ $# -lt 1 ]
+   then
+     exit 0
+   fi
+   if [ -f "$STDERRFILE" ]
+   then
+     echo cat "$STDERRFILE" >> "$LOGFILE"
+     cat "$STDERRFILE" >> "$LOGFILE"
+   fi
+   exit $1
+}
+
 #---------------------------- prepend_option
 # Accumulate a list of commandline options one-by-one
 # Useful to prevent adding the same option if it's already present
@@ -172,6 +192,15 @@ PGE_ROOT=ppggeerroott
 #env >> $LOGFILE
 PGSBIN=ppggssbbiinn
 #echo $PGSBIN >> $LOGFILE
+# **************************************************
+# These 2 sleep times can be reset here by hand 
+# or by one of the .env files below
+# pgestartdelay  how long to wait after starting pge to grep its tid
+# pgekilldelay   how long to wait per cycle before killing it
+#                  Note: this must be < WaitBeforeKillingSlaves in L2Parallel
+pgestartdelay=20
+pgekilldelay=120
+# **************************************************
 if [ -r "$JOBDIR/job.env"  ]
 then
   . $JOBDIR/job.env
@@ -221,6 +250,7 @@ fi
 
 masterIdent="none"
 runinbackground="no"
+CAPTURE_STDERR="no"
 otheropts="-g --uid $pid"
 switches="--stdout out -S'slv,opt,log,pro,time,glob'"
 OPTSFILE="${JOBDIR}/slave.opts"
@@ -370,6 +400,12 @@ while [ "$more_opts" = "yes" ] ; do
        then
          runinbackground="yes"
        fi
+       # Are we setting to capture stderr?
+       a=`grep '^stderr=true' $OPTSFILE`
+       if [ "$a" != "" ]
+       then
+         CAPTURE_STDERR="yes"
+       fi
        shift
        shift
        ;;
@@ -421,11 +457,20 @@ done
 
 otheropts="$otheropts $switches"
 
+if [ "$STDERRFILE" = "" ]
+then
+  if [ "$CAPTURE_MT" = "yes" -o "$CAPTURE_STDERR" = "yes"  ]
+  then
+    STDERRFILE="$LOGFILE.stderr"
+  fi
+fi
+
 echo "PGS_PC_INFO_FILE: $PGS_PC_INFO_FILE" 2>&1 | tee -a "$LOGFILE"
 echo "masterTid: $masterTid" 2>&1 | tee -a "$LOGFILE"
 echo "masterIdent file: $masterIdent" 2>&1 | tee -a "$LOGFILE"
 echo "executable: $PGE_BINARY" 2>&1 | tee -a "$LOGFILE"
 echo "otheropts $otheropts" 2>&1 | tee -a "$LOGFILE"
+echo "STDERRFILE $STDERRFILE" 2>&1 | tee -a "$LOGFILE"
 
 if [ "$masterTid" = "" ]
 then
@@ -457,12 +502,6 @@ fi
 #env | sort > "$ENVSETTINGS"
 ulimit -s unlimited
 #ulimit -a >> "$ENVSETTINGS"
-
-if [ "$CAPTURE_MT" = "yes" -a "$STDERRFILE" = "" ]
-then
-  STDERRFILE="$LOGFILE.stderr"
-fi
-
 echo $PGE_BINARY --tk -m --slave $masterTid $otheropts 2>&1 >> "$LOGFILE"
 if [ "$runinbackground" != "yes" ]
 then
@@ -478,8 +517,9 @@ then
   else
     $PGE_BINARY --tk -m --slave $masterTid $otheropts 2>&1 >> "$LOGFILE"
   fi
-  echo "Returned from $PGE_BINARY with status $?" 2>&1 >> "$LOGFILE"
-  exit 0
+  echo "Returned from $PGE_BINARY with status $?" "$LOGFILE"
+  Exit_with_Status 0
+  # exit 0
 fi
 
 # Run pge in background
@@ -494,18 +534,18 @@ then
     "$LOGFILE" "$STDERRFILE" >> "$LOGFILE"
   /usr/bin/time -f 'M: %M t: %e' \
     $PGE_BINARY --tk -m --slave $masterTid --pidf "$NOTEFILE" $otheropts  \
-    1>> "$LOGFILE" 2> "$STDERRFILE" 2>> "$LOGFILE" &
+    1>> "$LOGFILE" 2> "$STDERRFILE" &
 elif [ "$STDERRFILE" != "" ]
 then
   $PGE_BINARY --tk -m --slave $masterTid --pidf "$NOTEFILE" $otheropts \
-    1>> "$LOGFILE" 2> "$STDERRFILE" 2>> "$LOGFILE" &
+    1>> "$LOGFILE" 2> "$STDERRFILE" &
 else
   $PGE_BINARY --tk -m --slave $masterTid --pidf "$NOTEFILE" $otheropts  \
     >> "$LOGFILE" &
 fi
 pgepid=$!
 echo "pge pid: $pgepid"  >> "$LOGFILE"
-sleep 20
+sleep $pgestartdelay
 echo "Find the pge's pid; call it pgepid2" >> "$LOGFILE"
 ps aux | grep "uid"  >> "$LOGFILE"
 ps aux | grep "uid $pid " | egrep -v '(grep|time)' >> "$LOGFILE"
@@ -517,7 +557,8 @@ then
   ps -l -p "$pgepid2" >> "$LOGFILE"
   kill -9 $pgepid
   kill -9 $pgepid2
-  exit 1
+  Exit_with_Status 1
+  # exit 1
 else
   echo "pgepid and pgepid2 are both $pgepid2" >> "$LOGFILE"
 fi
@@ -526,15 +567,20 @@ pgepid=$pgepid2
 if [ "$pgepid" = "" ]
 then
   echo "Failed to launch $PGE_BINARY in background" >> "$LOGFILE"
-  exit 1
+  Exit_with_Status 1
+  # exit 1
 fi
 
 # Write this pid to a uniquely-named file
 echo "$pgepid" > "$NOTEFILE"
 echo "$pgepid echoed to $NOTEFILE" >> "$LOGFILE"
+# Now cycle endlessly until we learn the pge we launched is finished
+# We do this so that we can
+# (1) append the stderr file onto the end of the logfile
+# (2) kill -9 in case it was left only "mostly dead"
 while [ "$notdone" = "true" ]
 do
-  sleep 120
+  sleep $pgekilldelay
   # Either of two signs that we finished:
   # the pge wrote Finished to the note file
   a=`grep Finished "$NOTEFILE"`
@@ -550,6 +596,11 @@ do
   fi
 done
 echo "$notdone; Returned from $PGE_BINARY with status $?" >> "$LOGFILE"
+if [ -f "$STDERRFILE" ]
+then
+  echo cat "$STDERRFILE" >> "$LOGFILE"
+  cat "$STDERRFILE" >> "$LOGFILE"
+fi
 echo "cat $NOTEFILE" >> "$LOGFILE"
 cat $NOTEFILE >> "$LOGFILE"
 # For good measure, we alo kill the pge's own pid (n case it was left hanging)
@@ -571,9 +622,13 @@ kill -9 "$pgepid"
 # e.g., "arg1 arg2" being passed as a single space-containing arg
 all_my_opts=$@
 do_the_call $all_my_opts
-exit 0
+  Exit_with_Status 0
+  # exit 0
 
 # $Log$
+# Revision 1.41  2017/08/02 22:33:04  pwagner
+# Fixed an error in defining pgepid
+#
 # Revision 1.40  2016/11/16 19:26:50  pwagner
 # Avoids stomping on an already-selected PCF
 #
