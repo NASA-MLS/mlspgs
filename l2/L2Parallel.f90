@@ -18,45 +18,45 @@ module L2Parallel
   ! does the chunk divide and then launches slave tasks for each chunk, and
   ! awaits their results in the Join section.
 
-  use allocate_deallocate, only: allocate_test, deallocate_test
-  use bitStuff, only: bitsToBooleans, booleansToBits
-  use chunks_m, only: dump, MLSChunk_t
-  use chunkDivide_m, only: chunkDivideConfig
-  use dump_0, only: dump
-  use highOutput, only: beVerbose, banner, outputNamedValue, timeStamp
-  use L2ParInfo, only: machine_t, parallel, &
-    & chunktag, giveuptag, grantedtag, notifytag, masterdumptag, petitiontag, &
-    & sig_tojoin, sig_finished, sig_ackfinish, sig_register, &
-    & sig_requestdirectwrite, sig_swearallegiance, sig_switchallegiance, &
-    & sig_directwritegranted, sig_directwritefinished, &
-    & sig_hostdied, sig_releasehost, sig_requesthost, sig_thankshost, &
-    & getnicetidstring, slavearguments, machinenamelen, getmachines, &
-    & machinefixedtag, directwriterequest_t, &
-    & dw_pending, dw_inprogress, dw_completed, &
-    & inflatedirectwriterequestdb, compactdirectwriterequestdb, dump, &
-    & addmachinetodatabase
-  use machine, only: shell_command, usleep
-  use MLSKinds, only: r8
+  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+  use BitStuff, only: BitsToBooleans, BooleansToBits
+  use Chunks_M, only: Dump, MLSChunk_T
+  use ChunkDivide_M, only: ChunkDivideConfig
+  use Dump_0, only: Dump
+  use HighOutput, only: BeVerbose, Banner, OutputNamedValue, TimeStamp
+  use L2ParInfo, only: Machine_T, Parallel, &
+    & Chunktag, Giveuptag, Grantedtag, Notifytag, Masterdumptag, Petitiontag, &
+    & Sig_Tojoin, Sig_Finished, Sig_Ackfinish, Sig_Register, &
+    & Sig_Requestdirectwrite, Sig_Swearallegiance, Sig_Switchallegiance, &
+    & Sig_Directwritegranted, Sig_Directwritefinished, &
+    & Sig_Hostdied, Sig_Releasehost, Sig_Requesthost, Sig_Thankshost, &
+    & Getnicetidstring, Slavearguments, Machinenamelen, Getmachines, &
+    & Machinefixedtag, Directwriterequest_T, &
+    & Dw_Pending, Dw_Inprogress, Dw_Completed, &
+    & Inflatedirectwriterequestdb, Compactdirectwriterequestdb, Dump, &
+    & AddmachinetoDatabase
+  use Machine, only: Shell_Command, Usleep
+  use MLSKinds, only: R8
   use MLSL2options, only: MLSMessage
   use MLSMessagemodule, only: MLSMSG_Error, MLSMSG_Warning, PVMErrorMessage
-  use MLSFinds, only: findall, findfirst
-  use MLSStringlists, only: catlists, expandstringrange, removenumfromlist, &
-    & replacesubstring, switchdetail
-  use MLSStrings, only: lowercase
-  use morePVM, only: PVMunpackstringindex, PVMpackstringindex
-  use MLSStrings, only: nAppearances
-  use output_m, only: blanks, output
-  use PVM, only: infotag, &
+  use MLSFinds, only: Findall, Findfirst
+  use MLSStringlists, only: Catlists, Expandstringrange, Removenumfromlist, &
+    & Replacesubstring, Switchdetail
+  use MLSStrings, only: Lowercase
+  use MorePVM, only: PVMunpackstringindex, PVMpackstringindex
+  use MLSStrings, only: NAppearances
+  use Output_M, only: Blanks, Output
+  use PVM, only: Infotag, &
     & PVMDatadefault, PVMFinitSend, PVMf90Pack, PVMFKill, &
     & PVMF90unpack, PVMtaskhost, &
-    & myPVMSpawn, PVMFCatchout, PVMFSend, PVMFNotify, PVMTaskExit, &
-    & getMachineNameFromTID, PVMFFreeBuf, sig_abouttodie
+    & MyPVMSpawn, PVMFCatchout, PVMFSend, PVMFNotify, PVMTaskExit, &
+    & GetMachineNameFromTID, PVMFFreeBuf, Sig_Abouttodie
   use PVMidl, only: PVMidlunpack
-  use string_table, only: display_string
-  use time_m, only: time_now
-  use toggles, only: gen, switches, toggle
-  use trace_m, only: trace_begin, trace_end
-  use writeMetadata, only: l2pcf
+  use String_Table, only: Display_String
+  use Time_M, only: Time_Now
+  use Toggles, only: Gen, Switches, Toggle
+  use Trace_M, only: Trace_Begin, Trace_End
+  use WriteMetaData, only: L2pcf
 
   implicit none
   private
@@ -77,6 +77,12 @@ module L2Parallel
   logical, parameter :: NOTFORGOTTEN = .false. ! Note the death of forgottens
   integer, save      :: FIXDELAYFORSLAVETOFINISH   = 1500000 ! 15000000 ! 15 sec
   integer, save      :: KILLINGSLAVESDELAY   = 1000000 ! 1 sec
+  ! ***********************************************************************
+  ! The following must be longer than the ???? setting in
+  ! slavettmplt.sh
+  integer, save      :: WaitBeforeKillingSlaves   = 130*1000000 ! 130 sec
+  !                      Note: This must be > pgekilldelay in slavetmplt.sh
+  ! ***********************************************************************
 
   ! Private types
   type StoredResult_T
@@ -1282,6 +1288,7 @@ contains
       character (len=*), intent(in) :: killMasterMsg
       integer :: Chunk ! Loop index
 
+      call usleep( WaitBeforeKillingSlaves ) ! This is 130 s
       do chunk = 1, noChunks
         if ( chunkTids(chunk) /= 0 ) then
           call usleep ( KILLINGSLAVESDELAY )
@@ -1800,6 +1807,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.115  2017/12/22 00:34:41  pwagner
+! WaitBeforeKillingSlaves; must be bigger than pgekilldelay
+!
 ! Revision 2.114  2017/12/07 01:01:23  vsnyder
 ! Don't use host-associated variable as a DO index
 !
