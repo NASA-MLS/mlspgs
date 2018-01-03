@@ -41,7 +41,7 @@ module ChunkDivide_m
   use MLSMessageModule, only: MLSMessage, MLSMsg_Error, MLSMsg_Warning
   use MLSNumerics, only: Hunt
   use MLSFinds, only: Findfirst, FindLongestStretch
-  use MLSSignals_M, only: Modules, GetModuleName
+  use MLSSignals_M, only: Dump, Modules, GetModuleName
   use MLSStringlists, only: SwitchDetail
   use Output_M, only: Blanks, Output, &
     & RevertOutput, SwitchOutput
@@ -281,8 +281,11 @@ contains ! ===================================== Public Procedures =====
     ! location of obstructions
     nullify ( obstructions )
     if ( .not. NEED_L1BFILES ) then
-      call output( 'Entered ChunkDivide w/o an l1boa file--hope thats OK', advance='yes' )
+      call output( 'Entered ChunkDivide w/o an l1boa file--hope thats OK', &
+        & advance='yes' )
     elseif ( ChunkDivideConfig%method /= l_fixed ) then
+      call output( 'We must survey the l1b data for this Chunk Divide method', &
+        & advance='yes' )
       call SurveyL1BData ( processingRange, filedatabase, mafRange )
       if ( swLevel > -1 ) then
         call output ( 'Requested time range ' )
@@ -1620,6 +1623,8 @@ contains ! ===================================== Public Procedures =====
         & call outputNamedValue( 'critical module', critical_module_str )
       if ( swLevel > -1 ) &
         & call outputNamedValue( 'critical bands', ChunkDivideConfig%criticalBands )
+      if ( swLevel > -1 ) &
+        & call outputNamedValue( 'size(signals)', size(signals) )
       do signalIndex=1, size(signals)
         if ( swLevel > -1 ) then
           call outputNamedValue( 'signal index', signalIndex )
@@ -1736,13 +1741,26 @@ contains ! ===================================== Public Procedures =====
         & 'goodness_changes', ModuleName )
       good_signals_now = .false.   ! Initializing
       signals_buffer = .false.
+      if ( swLevel > -1 ) then
+        call outputNamedValue ( 'shape(signals_buffer)', shape(signals_buffer) )
+        call outputNamedValue ( 'shape(goods_after_gap)', shape(goods_after_gap) )
+        call outputNamedValue ( 'shape(goodness_changes)', shape(goodness_changes) )
+      endif
       if ( associated(ChunkDivideConfig%criticalSignals) ) then
         criticalSignals => ChunkDivideConfig%criticalSignals
+        if ( swLevel > -1 ) then
+          call output('Critical Signals from config', advance='yes' ) 
+          call Dump (  criticalSignals )
+        endif
       elseif ( ChunkDivideConfig%chooseCriticalSignals ) then
         ! We can choose as critical signals all the signals belonging
         ! to a critical module
         call chooseCriticalSignals( criticalSignals )
         choseCriticalSignals = .true.
+        if ( swLevel > -1 ) then
+          call output('Critical Signals you chose', advance='yes' ) 
+          call Dump (  criticalSignals )
+        endif
       endif
       ! We'll need the index number for each of the critical signals
       call allocate_test( criticalIndices, size(criticalSignals),&
@@ -1762,13 +1780,16 @@ contains ! ===================================== Public Procedures =====
         call dump( criticalIndices, 'criticalIndices' )
       endif
       do signalIndex=1, size(signals)
-        call get_string( lit_indices(ChunkDivideConfig%criticalModules), signal_full, &
+        call get_string( lit_indices(ChunkDivideConfig%criticalModules), &
+          & signal_full, &
           & strip=.true. )
         critical_module_str = lowercase(signal_full)
-        call get_string( modules(signals(signalIndex)%instrumentModule)%name, signal_full, &
+        call get_string( modules(signals(signalIndex)%instrumentModule)%name, &
+          & signal_full, &
           & strip=.true. )
         module_str = lowercase(signal_full)
-        if ( swLevel >= VERBOSETHRESHOLD ) call outputNamedValue( 'module', module_str )
+        if ( swLevel >= VERBOSETHRESHOLD ) &
+          & call outputNamedValue( 'module', module_str )
         if ( ChunkDivideConfig%criticalModules == l_none ) then
           ! No module is critical for signal data being good
         elseif ( module_str /= critical_module_str ) then
@@ -1776,27 +1797,33 @@ contains ! ===================================== Public Procedures =====
         elseif ( .not. any(signalIndex == criticalIndices) ) then
           cycle
         endif
-        if ( swLevel >= VERBOSETHRESHOLD ) call dumpSignals( signals(signalIndex) )
-        if ( swLevel >= VERBOSETHRESHOLD ) call outputNamedValue( 'critical module', critical_module_str )
+        if ( swLevel >= VERBOSETHRESHOLD ) &
+          & call dumpSignals( signals(signalIndex) )
+        if ( swLevel >= VERBOSETHRESHOLD ) &
+          & call outputNamedValue( 'critical module', critical_module_str )
         if ( nmafs <= MAXMAFSINSET ) then
           good_signals_now(signalIndex) = &
             & any_good_signaldata ( signalIndex, signals(signalIndex)%sideband, &
             &   filedatabase, mafRange%Expanded(1), mafRange%Expanded(2), &
             &   signals_buffer(:,signalIndex), mafRange%Expanded )
         else
-          nmafsets = (nmafs-1)/MAXMAFSINSET + 1
-          mafset_end = mafRange%Expanded(1) - 1   ! A trick--mafset_start is mafRange(1)
+          nmafsets = (nmafs-1)/MAXMAFSINSET + 1   ! A trick--mafset_start
+          mafset_end = mafRange%Expanded(1) - 1   ! is mafRange(1)
           do mafset=1, nmafsets
             mafset_start = mafset_end + 1
             mafset_end = min ( mafRange%Expanded(2), mafset_end + MAXMAFSINSET )
             good_signals_now(signalIndex) = &
-              & any_good_signaldata ( signalIndex, signals(signalIndex)%sideband, &
+              &   any_good_signaldata ( signalIndex, &
+              &   signals(signalIndex)%sideband, &
               &   filedatabase, mafset_start, mafset_end, &
               &   signals_buffer(:,signalIndex), mafRange%Expanded )
           enddo
         endif
       enddo
-      if ( swlevel >= VERBOSETHRESHOLD ) call dump ( signals_buffer, 'signals_buffer' )
+      if ( swlevel > -1 ) &
+        & call outputNamedValue ( 'shape(signals_buffer)', shape(signals_buffer) )
+      if ( swlevel >= VERBOSETHRESHOLD ) &
+        & call dump ( signals_buffer, 'signals_buffer' )
 
       ! Task (1a): Find mafs where there is at least one signal which
       ! changes from either nogood to good or from good to nogood
@@ -2068,12 +2095,17 @@ contains ! ===================================== Public Procedures =====
       if ( .not. associated(L1BFile) ) &
         & call MLSMessage  ( MLSMSG_Error, ModuleName, &
           & "Can't make progress in SurveyL1BData without L1BOA files" )
-      ! call dump(L1BFile)
+      if ( swLevel > -1 ) then
+        call output( 'here is the L1BOA', advance='yes' )
+        call dump( L1BFile )
+      endif
       l1b_hdf_version = L1BFile%HDFVersion
       MAF_start = AssembleL1BQtyName ( 'MAFStartTimeTAI', l1b_hdf_version, &
         .false. )
-      ! tp_angle = AssembleL1BQtyName ( trim(modNameStr)//'.tpGeodAngle', l1b_hdf_version, &
-      !  .false. )
+      ! tp_angle = &
+      !  & AssembleL1BQtyName ( trim(modNameStr)//'.tpGeodAngle', &
+      !  & l1b_hdf_version, &
+      !  & .false. )
       ! Read time from the L1BOA file
       call ReadL1BData ( L1BFile, trim(MAF_start), taiTime, &
         & noMAFsRead, flag, &
@@ -2091,13 +2123,15 @@ contains ! ===================================== Public Procedures =====
 
       ! Check the validity of the MAF range returned
       if ( mafRange%L2Cover(1) == taiTime%noMAFs ) then
-        call outputNamedValue ( 'processingRange', (/ processingRange%startTime, processingRange%endTime /) )
+        call outputNamedValue ( 'processingRange', &
+          & (/ processingRange%startTime, processingRange%endTime /) )
         call outputNamedValue ( 'noMAFsRead', noMAFsRead )
         call dump ( taiTime%dpField(1,1,:), 'MAF_start' )
         call MLSMessage ( MLSMSG_Error, ModuleName, &
           & 'L1B data ends before requested processing range' )
       endif
-      if ( mafRange%L2Cover(1) == taiTime%noMAFs ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      if ( mafRange%L2Cover(1) == taiTime%noMAFs ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
           & 'L1B data ends before requested processing range' )
       mafRange%L2Cover = min ( noMAFsRead-1, max ( 0, mafRange%L2Cover - 1 ) )          ! Index from zero
       if ( mafRange%L2Cover(2) < mafRange%L2Cover(1) ) then
@@ -2119,7 +2153,7 @@ contains ! ===================================== Public Procedures =====
         mafRange%Expanded(2) = min( mafRange%L1BCover(2), &
           & mafRange%L2Cover(2) + nint(ChunkDivideConfig%upperOverlap) )
       endif
-      if ( sharedPCF ) return
+      ! Why was this here? if ( sharedPCF ) return
       noMAFS = mafRange%Expanded(2) - mafRange%Expanded(1) + 1
       ! Now look through the L1B data, first look for scan problems
       if ( ChunkDivideConfig%criticalModules /= l_none ) then
@@ -2182,10 +2216,11 @@ contains ! ===================================== Public Procedures =====
               scanMin = minval ( tpGeodAlt%dpField(1,:,maf) )
               orbyMax = maxval ( tpOrbY%dpField(1,:,maf) )
 
-              thisOneValid = ( scanMin >= ChunkDivideConfig%scanLowerLimit(1) .and. &
-                &              scanMin <= ChunkDivideConfig%scanLowerLimit(2) ) .and. &
-                &            ( scanMax >= ChunkDivideConfig%scanUpperLimit(1) .and. &
-                &              scanMax <= ChunkDivideConfig%scanUpperLimit(2) )
+              thisOneValid = ( &
+                &   scanMin >= ChunkDivideConfig%scanLowerLimit(1) .and. &
+                &   scanMin <= ChunkDivideConfig%scanLowerLimit(2) ) .and. ( &
+                &   scanMax >= ChunkDivideConfig%scanUpperLimit(1) .and. &
+                &   scanMax <= ChunkDivideConfig%scanUpperLimit(2) )
               if ( ChunkDivideConfig%maxOrbY > 0.0 ) then
                 thisOneValid = thisOneValid .and. orbYMax < ChunkDivideConfig%maxOrbY
               end if
@@ -2213,6 +2248,7 @@ contains ! ===================================== Public Procedures =====
       end if                              ! Consider scan issues
 
       ! Here we look at radiances and switch changes.
+      if ( swLevel > -1 ) call output ( 'NoteL1BRADChanges', advance='yes' )
       if ( .not. ChunkDivideConfig%skipL1BCheck ) &
         call NoteL1BRADChanges ( obstructions, mafRange, filedatabase )
 
@@ -2926,6 +2962,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.126  2018/01/03 01:15:22  pwagner
+! Prints a little more debugging info
+!
 ! Revision 2.125  2017/09/15 22:15:39  pwagner
 ! Correct bugs in evaluating excludeOverlap fields
 !
