@@ -1098,7 +1098,7 @@ contains ! =====     Public Procedures     =============================
     use MLSFillvalues, only: IsFillValue, Monotonize
     use MLSKinds, only: rk => r8
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
-    use MLSNumerics, only: hunt, interpolateValues, solveQuadratic
+    use MLSNumerics, only: hunt, interpolateValues
     use MLSStringLists, only: switchDetail
     use Monotone, only: IsMonotonic
     use Output_m, only: Output
@@ -1175,27 +1175,15 @@ contains ! =====     Public Procedures     =============================
     call trace_begin ( me, "CreateRegularHGrid", &
       & cond=toggle(gen) .and. levels(gen) > 1 .and. .not. computingOffsets )
     deebughere = deebug .or. ( switchDetail(switches, 'hgrid') > 0 ) ! e.g., 'hgrid1' 
-    warnIfNoProfs = single ! .false.
+    warnIfNoProfs = single ! .or. ChunkDivideConfig%maxLength < 2 ! .false.
+    ! call outputNamedValue ( 'maxLength', ChunkDivideConfig%maxLength, options='--Banner' )
+    ! call outputNamedValue ( 'warnIfNoProfs', warnIfNoProfs, options='--Banner' )
     verbose = deebughere
     if ( present(onlyComputingOffsets) ) then
       verbose = .not. onlyComputingOffsets
       warnIfNoProfs = warnIfNoProfs .or. onlyComputingOffsets
       deebughere = deebug .or. ( switchDetail(switches, 'hgrid') > 1 ) ! e.g., 'hgrid2' 
       ! verbose = verbose .or. deebughere
-    end if
-    if ( deebughere .and. .false.) then
-      print *, 'Checking quadratic solution'
-      do i=1, 10
-        a = 0.25
-        b = i - 5
-        c = 3
-        print *, 'a, b, c: ', a, b, c
-        print *, 'b^2 - 4 a c ', b**2 - 4*a*c
-        call SolveQuadratic( a, b, c, &
-              & r1, r2, imPart )
-        print *, 'r1, r2, ImPart: ', r1, r2, imPart
-      end do
-      stop
     end if
     L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
     if ( .not. associated(L1BFile) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -2598,6 +2586,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.147  2018/01/03 01:17:56  pwagner
+! Removed disused solving of a quadratic equation
+!
 ! Revision 2.146  2016/11/04 19:36:24  pwagner
 ! begin transition to sayTime from time_m
 !
