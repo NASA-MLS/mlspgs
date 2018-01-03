@@ -22,7 +22,7 @@
 ! logical, intent(in), optional :: Sorted ! "Grid is sorted" -- default true
 
   real(rk) :: Del_Basis
-  integer :: I, J, MyRow1, MyRowN
+  integer :: I, J, MyRow1, MyRowN, MySkip, MyTan_pt
   logical :: MySorted
   integer :: N_Basis, N_Grid
   logical, parameter :: CheckSorted = .false. ! Check whether Grid is sorted
@@ -38,6 +38,11 @@
   myRowN = n_grid
   if ( present(row1) ) myRow1 = min(row1,n_grid)
   if ( present(rowN) ) myRowN = min(rowN,n_grid)
+
+  myTan_pt = n_grid + 1
+  if ( present(tan_pt) ) myTan_pt = tan_pt
+  mySkip = 0
+  if ( present(skip) ) mySkip = skip
 
   if ( mySorted ) then
     if ( grid(myRow1) > grid(myRowN) ) then ! Grid is in the opposite order
@@ -70,6 +75,7 @@
     if ( myRow1 <= myRowN ) then
       ! Coefficients below Basis(1) are all 1.0
       do i = myRow1, myRowN
+        if ( i > myTan_pt .and. i <= myTan_pt + mySkip ) cycle
         if ( grid(i) > basis(1) ) exit
   !       eta(i) = value_1D_list_t(rk)(n=1,v=[value_1d_t(rk)(n=1,v=1.0_rk), &
   !                                         & value_1d_t(rk)(n=0,v=0.0_rk)])
@@ -81,25 +87,28 @@
         del_basis = 1.0_rk / ( basis(j) - basis(j-1) )
         do while ( i <= myRowN )
           if ( grid(i) > basis(j) ) exit
-          if ( basis(j-1) < grid(i) ) then
-  !           eta(i) = value_1D_list_t(rk)(n=2, &
-  !             v=[value_1d_t(rk)(n=j-1,v=(basis(j)-grid(i)) * del_basis), &
-  !              & value_1d_t(rk)(n=j,v=(grid(i)-basis(j-1)) * del_basis) ] )
-            eta(i) = value_1D_list_t(n=2, &
-              v=[value_1d_t(j=j-1,v=(basis(j)-grid(i)) * del_basis), &
-               & value_1d_t(j=j,v=(grid(i)-basis(j-1)) * del_basis) ] )
-            if ( eta(i)%v(1)%v == 0.0 ) & ! eta(i)%v(2)%v cannot be zero because
-                                          ! basis(j-1) < grid(i)
-!               & eta(i) = value_1D_list_t(rk)(n=1, &
-!                 & v=[eta(i)%v(2),value_1d_t(rk)(n=0,v=0.0_rk)])
-              & eta(i) = value_1D_list_t(n=1, &
-                & v=[eta(i)%v(2),value_1d_t(j=0,v=0.0_rk)])
+          if ( i <= myTan_pt .or. i > myTan_pt + mySkip ) then
+            if ( basis(j-1) < grid(i) ) then
+  !             eta(i) = value_1D_list_t(rk)(n=2, &
+  !               v=[value_1d_t(rk)(n=j-1,v=(basis(j)-grid(i)) * del_basis), &
+  !                & value_1d_t(rk)(n=j,v=(grid(i)-basis(j-1)) * del_basis) ] )
+              eta(i) = value_1D_list_t(n=2, &
+                v=[value_1d_t(j=j-1,v=(basis(j)-grid(i)) * del_basis), &
+                 & value_1d_t(j=j,v=(grid(i)-basis(j-1)) * del_basis) ] )
+              if ( eta(i)%v(1)%v == 0.0 ) & ! eta(i)%v(2)%v cannot be zero because
+                                            ! basis(j-1) < grid(i)
+!                 & eta(i) = value_1D_list_t(rk)(n=1, &
+!                   & v=[eta(i)%v(2),value_1d_t(rk)(n=0,v=0.0_rk)])
+                & eta(i) = value_1D_list_t(n=1, &
+                  & v=[eta(i)%v(2),value_1d_t(j=0,v=0.0_rk)])
+            end if
           end if
           i = i + 1
         end do
       end do
       ! Coefficients above Basis(n_basis) are all 1.0
       do i = myRowN, i, -1
+        if ( i > myTan_pt .and. i <= myTan_pt + mySkip ) cycle
         if ( basis(n_basis) > grid(i) ) exit
   !       eta(i) = value_1D_list_t(rk)(n=1,v=[value_1d_t(rk)(n=n_basis,v=1.0_rk), &
   !                                         & value_1d_t(rk)(n=0,v=0.0_rk)])
@@ -109,6 +118,7 @@
     else ! myRow1 > myRowN, process in the opposite order
       ! Coefficients below Basis(1) are all 1.0
       do i = myRow1, myRowN, -1
+        if ( i > myTan_pt .and. i <= myTan_pt + mySkip ) cycle
         if ( grid(i) > basis(1) ) exit
   !       eta(i) = value_1D_list_t(rk)(n=1,v=[value_1d_t(rk)(n=1,v=1.0_rk), &
   !                                         & value_1d_t(rk)(n=0,v=0.0_rk)])
@@ -120,25 +130,28 @@
         del_basis = 1.0_rk / ( basis(j) - basis(j-1) )
         do while ( i > myRowN )
           if ( grid(i) > basis(j) ) exit
-          if ( basis(j-1) < grid(i) ) then
-  !           eta(i) = value_1D_list_t(rk)(n=2, &
-  !             v=[value_1d_t(rk)(n=j-1,v=(basis(j)-grid(i)) * del_basis), &
-  !              & value_1d_t(rk)(n=j,v=(grid(i)-basis(j-1)) * del_basis) ] )
-            eta(i) = value_1D_list_t(n=2, &
-              v=[value_1d_t(j=j-1,v=(basis(j)-grid(i)) * del_basis), &
-               & value_1d_t(j=j,v=(grid(i)-basis(j-1)) * del_basis) ] )
-            if ( eta(i)%v(1)%v == 0.0 ) & ! eta(i)%v(2)%v cannot be zero because
-                                          ! basis(j-1) < grid(i)
-!               & eta(i) = value_1D_list_t(rk)(n=1, &
-!                 & v=[eta(i)%v(2),value_1d_t(rk)(n=0,v=0.0_rk)])
-              & eta(i) = value_1D_list_t(n=1, &
-                & v=[eta(i)%v(2),value_1d_t(j=0,v=0.0_rk)])
+          if ( i <= myTan_pt .or. i > myTan_pt + mySkip ) then
+            if ( basis(j-1) < grid(i) ) then
+  !             eta(i) = value_1D_list_t(rk)(n=2, &
+  !               v=[value_1d_t(rk)(n=j-1,v=(basis(j)-grid(i)) * del_basis), &
+  !                & value_1d_t(rk)(n=j,v=(grid(i)-basis(j-1)) * del_basis) ] )
+              eta(i) = value_1D_list_t(n=2, &
+                v=[value_1d_t(j=j-1,v=(basis(j)-grid(i)) * del_basis), &
+                 & value_1d_t(j=j,v=(grid(i)-basis(j-1)) * del_basis) ] )
+              if ( eta(i)%v(1)%v == 0.0 ) & ! eta(i)%v(2)%v cannot be zero because
+                                            ! basis(j-1) < grid(i)
+!                 & eta(i) = value_1D_list_t(rk)(n=1, &
+!                   & v=[eta(i)%v(2),value_1d_t(rk)(n=0,v=0.0_rk)])
+                & eta(i) = value_1D_list_t(n=1, &
+                  & v=[eta(i)%v(2),value_1d_t(j=0,v=0.0_rk)])
+            end if
           end if
           i = i - 1
         end do
       end do
       ! Coefficients above Basis(n_basis) are all 1.0
       do i = myRowN, i
+        if ( i > myTan_pt .and. i <= myTan_pt + mySkip ) cycle
         if ( basis(n_basis) > grid(i) ) exit
   !       eta(i) = value_1D_list_t(rk)(n=1,v=[value_1d_t(rk)(n=n_basis,v=1.0_rk), &
   !                                         & value_1d_t(rk)(n=0,v=0.0_rk)])
@@ -158,6 +171,7 @@
         myRowN = i
       end if
       do i = myRow1, myRowN
+        if ( i > myTan_pt .and. i <= myTan_pt + mySkip ) cycle
         ip = p(i)
         if ( grid(ip) > basis(1) ) exit
 !         eta(ip) = value_1D_list_t(rk)(n=1,v=[value_1d_t(rk)(j=1,v=1.0_rk), &
@@ -171,25 +185,28 @@
         do while ( i <= myRowN )
           ip = p(i)
           if ( grid(ip) > basis(j) ) exit
-          if ( basis(j-1) < grid(ip) ) then
-!             eta(ip) = value_1D_list_t(rk)(n=2, &
-!               v=[value_1d_t(rk)(j=j-1,v=(basis(j)-grid(ip)) * del_basis), &
-!                & value_1d_t(rk)(j=j,v=(grid(ip)-basis(j-1)) * del_basis) ] )
-            eta(ip) = value_1D_list_t(n=2, &
-              v=[value_1d_t(j=j-1,v=(basis(j)-grid(ip)) * del_basis), &
-               & value_1d_t(j=j,v=(grid(ip)-basis(j-1)) * del_basis) ] )
-            if ( eta(ip)%v(1)%v == 0.0 ) & ! eta(i)%v(2)%v cannot be zero because
-                                          ! basis(j-1) < grid(i)
-!               & eta(ip) = value_1D_list_t(rk)(j=1, &
-!                 & v=[eta(ip)%v(2),value_1d_t(rk)(j=0,v=0.0_rk)])
-              & eta(ip) = value_1D_list_t(n=1, &
-                & v=[eta(ip)%v(2),value_1d_t(j=0,v=0.0_rk)])
+          if ( i <= myTan_pt .or. i > myTan_pt + mySkip ) then
+            if ( basis(j-1) < grid(ip) ) then
+!               eta(ip) = value_1D_list_t(rk)(n=2, &
+!                 v=[value_1d_t(rk)(j=j-1,v=(basis(j)-grid(ip)) * del_basis), &
+!                  & value_1d_t(rk)(j=j,v=(grid(ip)-basis(j-1)) * del_basis) ] )
+              eta(ip) = value_1D_list_t(n=2, &
+                v=[value_1d_t(j=j-1,v=(basis(j)-grid(ip)) * del_basis), &
+                 & value_1d_t(j=j,v=(grid(ip)-basis(j-1)) * del_basis) ] )
+              if ( eta(ip)%v(1)%v == 0.0 ) & ! eta(i)%v(2)%v cannot be zero because
+                                            ! basis(j-1) < grid(i)
+!                 & eta(ip) = value_1D_list_t(rk)(j=1, &
+!                   & v=[eta(ip)%v(2),value_1d_t(rk)(j=0,v=0.0_rk)])
+                & eta(ip) = value_1D_list_t(n=1, &
+                  & v=[eta(ip)%v(2),value_1d_t(j=0,v=0.0_rk)])
+            end if
           end if
           i = i + 1
         end do
       end do
       ! Coefficients above Basis(n_basis) are all 1.0
       do i = myRowN, i, -1
+        if ( i > myTan_pt .and. i <= myTan_pt + mySkip ) cycle
         ip = p(i)
         if ( basis(n_basis) >= grid(ip) ) exit
 !         eta(ip) = value_1D_list_t(rk)(n=1,v=[value_1d_t(rk)(n=n_basis,v=1.0_rk), &
@@ -207,6 +224,9 @@
   end if
 
 ! $Log$
+! Revision 2.11  2018/01/03 23:48:54  vsnyder
+! Use MySkip because Skip might not be present
+!
 ! Revision 2.10  2017/09/20 00:05:15  vsnyder
 ! Add check for under control of logical parameter
 !
