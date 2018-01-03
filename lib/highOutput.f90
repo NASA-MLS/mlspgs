@@ -253,8 +253,9 @@ module HighOutput
   character(len=MAXCELLSIZE), dimension(:,:), pointer :: cellDatabase => null()
 
   integer, private, parameter :: MAXNUMTABSTOPS = 24
-  integer, save, private :: WRAPPASTCOLNUM = 0  ! Don't print beyond (if > 0)
+  integer, save, private :: OldNeverStamp
   integer, save, private :: OLDWRAPPASTCOLNUM = 0
+  integer, save, private :: WRAPPASTCOLNUM = 0  ! Don't print beyond (if > 0)
 
   ! These next tab stops can be reset using the procedure setTabs
   ! the default values correspond to range coded '5-120+5'
@@ -620,6 +621,10 @@ contains
       call outputnamedValue( 'LineLen', LineLen )
       call outputnamedValue( 'myColumnRange', myColumnRange )
     end if
+    ! Here we begin printing
+    ! Temporarily stop Stamping lines
+    OldNeverStamp = stampOptions%neverStamp
+    stampOptions%neverStamp = .true.
     ! Top border
     call output( '*' )
     call blanks ( lineLen-2, FillChar=myFillChar )
@@ -633,6 +638,8 @@ contains
     call output( '*' )
     call blanks ( lineLen-2, FillChar=myFillChar )
     call output( '*', advance = 'yes' )
+    ! Restore Stamping
+    stampOptions%neverStamp = OldNeverStamp
   end subroutine BANNER_CHARS
 
   subroutine BANNER_CHARARRAY ( charArray, &
@@ -675,6 +682,10 @@ contains
     ! define padding as the larger of columnrange(1) and 1
     padding = max( 1, myColumnRange(1) )
     LineLen = padding + myColumnRange(2) - 1
+    ! Here we begin printing
+    ! Temporarily stop Stamping lines
+    OldNeverStamp = stampOptions%neverStamp
+    stampOptions%neverStamp = .true.
     ! Top border
     call output( '*' )
     call blanks ( lineLen-2, FillChar=myFillChar )
@@ -690,6 +701,8 @@ contains
     call output( '*' )
     call blanks ( lineLen-2, FillChar=myFillChar )
     call output( '*', advance = 'yes' )
+    ! Restore Stamping
+    stampOptions%neverStamp = OldNeverStamp
   end subroutine BANNER_CHARARRAY
 
   ! -----------------------------------------------------  BEVERBOSE  -----
@@ -1377,6 +1390,10 @@ contains
     call buildCalendar( year, month, days, daysOfYear )
     ! Temporary use of   w i d e  tabstops
     call settabs( '14-210+14' )
+    ! Here we begin printing
+    ! Temporarily stop Stamping lines
+    OldNeverStamp = stampOptions%neverStamp
+    stampOptions%neverStamp = .true.
     call newline
     call alignToFit( trim(monthName(month)), (/ 1, 100 /), 'c', skips=1 )
     call newline
@@ -1480,8 +1497,9 @@ contains
     end do ! week
     call blanksToTab( 7, fillChar='-' )
     call newline
-    ! Restore tabstops
+    ! Restore tabstops, Stamping
     call settabs( '5-120+5' )
+    stampOptions%neverStamp = OldNeverStamp
   end subroutine OUTPUTCALENDAR
 
   ! ---------------------------------------  OUTPUT_DATE_AND_TIME  -----
@@ -2317,6 +2335,10 @@ contains
         call output( trim(array(i, 2)), advance='yes' )
       enddo
     endif
+    ! Here we begin printing
+    ! Temporarily stop Stamping lines
+    OldNeverStamp = stampOptions%neverStamp
+    stampOptions%neverStamp = .true.
     if ( len_trim(myBorder) > 0 ) &
       & call output( repeat( myBorder, totalWidth ), advance='yes' )
     do i=1, size(array,1)
@@ -2380,6 +2402,8 @@ contains
     enddo
     if ( len_trim(myBorder) > 0 ) &
       & call output( repeat( myBorder, totalWidth ), advance='yes' )
+    ! Restore Stamping
+    stampOptions%neverStamp = OldNeverStamp
   end subroutine outputTableArray
 
   ! ------------------------------------  SeparateElements  -----
@@ -2504,6 +2528,9 @@ contains
 end module HIGHOUTPUT
 
 ! $Log$
+! Revision 2.24  2018/01/03 01:13:51  pwagner
+! Prevent time stamps from interrupting tables, banners
+!
 ! Revision 2.23  2017/12/22 00:25:24  pwagner
 ! Add move some items from DumpOuputOptions to new DumpPatternOptions
 !
