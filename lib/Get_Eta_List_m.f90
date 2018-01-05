@@ -57,7 +57,7 @@ module Get_Eta_List_m
 contains
 
   ! Compute Eta to interpolate from 1-D Basis to 1-D Grid.
-  subroutine Eta_List_1D_D ( Basis, Grid, Eta, Row1, RowN, Sorted, Rev )
+  subroutine Eta_List_1D_D ( Basis, Grid, Eta, Row1, RowN, Sorted, Rev, Tan_Pt, Skip )
     integer, parameter :: RK = kind(0.0d0)
     real(rk), intent(in) :: Basis(:)
     real(rk), intent(in) :: Grid(:)
@@ -66,11 +66,13 @@ contains
     integer, intent(in), optional :: Row1, RowN
     logical, intent(in), optional :: Sorted ! "Grid is sorted" -- default true
     logical, intent(in), optional :: Rev    ! Basis list is reversed
+    integer, intent(in), optional :: Tan_Pt ! Tangent point in Grid
+    integer, intent(in), optional :: Skip   ! How many points to skip at Tan_Pt
     include "Eta_List_1D.f9h"
   end subroutine Eta_List_1D_D
 
   ! Compute Eta to interpolate from 1-D Basis to 1-D Grid.
-  subroutine Eta_List_1D_S ( Basis, Grid, Eta, Row1, RowN, Sorted, Rev )
+  subroutine Eta_List_1D_S ( Basis, Grid, Eta, Row1, RowN, Sorted, Rev, Tan_Pt, Skip )
     integer, parameter :: RK = kind(0.0e0)
     real(rk), intent(in) :: Basis(:)
     real(rk), intent(in) :: Grid(:)
@@ -79,11 +81,13 @@ contains
     integer, intent(in), optional :: Row1, RowN
     logical, intent(in), optional :: Sorted ! "Grid is sorted" -- default true
     logical, intent(in), optional :: Rev    ! Basis list is reversed
+    integer, intent(in), optional :: Tan_Pt ! Tangent point in Grid
+    integer, intent(in), optional :: Skip   ! How many points to skip at Tan_Pt
     include "Eta_List_1D.f9h"
   end subroutine Eta_List_1D_S
 
   ! Compute Eta to interpolate from 1-D Basis to 1-D Grid.
-  subroutine Eta_Lists_1D_D ( Basis, Grid, Eta, Row1, RowN, Sorted )
+  subroutine Eta_Lists_1D_D ( Basis, Grid, Eta, Row1, RowN, Sorted, Tan_Pt, Skip )
     integer, parameter :: RK = kind(0.0d0)
     real(rk), intent(in) :: Basis(:)
     real(rk), intent(in) :: Grid(:)
@@ -91,12 +95,15 @@ contains
     type(value_1D_lists_t), intent(inout) :: Eta
     integer, intent(in), optional :: Row1, RowN
     logical, intent(in), optional :: Sorted ! "Basis is sorted" -- default true
-    call get_eta_list ( basis, grid, eta%eta, Row1, RowN, sorted )
+    integer, intent(in), optional :: Tan_Pt ! Tangent point in Grid
+    integer, intent(in), optional :: Skip   ! How many points to skip at Tan_Pt
+    call get_eta_list ( basis, grid, eta%eta, Row1, RowN, sorted, Tan_Pt=tan_pt, &
+                      & Skip=skip )
     eta%n = size(grid)
   end subroutine Eta_Lists_1D_D
 
   ! Compute Eta to interpolate from 1-D Basis to 1-D Grid.
-  subroutine Eta_Lists_1D_S ( Basis, Grid, Eta, Row1, RowN, Sorted )
+  subroutine Eta_Lists_1D_S ( Basis, Grid, Eta, Row1, RowN, Sorted, Tan_Pt, Skip )
     integer, parameter :: RK = kind(0.0e0)
     real(rk), intent(in) :: Basis(:)
     real(rk), intent(in) :: Grid(:)
@@ -104,7 +111,10 @@ contains
     type(value_1D_lists_t), intent(inout) :: Eta
     integer, intent(in), optional :: Row1, RowN
     logical, intent(in), optional :: Sorted ! "Basis is sorted" -- default true
-    call get_eta_list ( basis, grid, eta%eta, Row1, RowN, sorted )
+    integer, intent(in), optional :: Tan_Pt ! Tangent point in Grid
+    integer, intent(in), optional :: Skip   ! How many points to skip at Tan_Pt
+    call get_eta_list ( basis, grid, eta%eta, Row1, RowN, sorted, Tan_Pt=tan_pt, &
+                      & Skip=skip )
     eta%n = size(grid)
   end subroutine Eta_Lists_1D_S
 
@@ -256,6 +266,9 @@ contains
 end module Get_Eta_List_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.10  2018/01/05 19:33:29  vsnyder
+! Add Tan_Pt and Skip optional arguments
+!
 ! Revision 2.9  2017/09/20 00:07:05  vsnyder
 ! Correct comments for 'sorted' argument to say 'grid is sorted'
 !
