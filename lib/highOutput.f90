@@ -253,7 +253,7 @@ module HighOutput
   character(len=MAXCELLSIZE), dimension(:,:), pointer :: cellDatabase => null()
 
   integer, private, parameter :: MAXNUMTABSTOPS = 24
-  integer, save, private :: OldNeverStamp
+  logical, save, private :: OldNeverStamp
   integer, save, private :: OLDWRAPPASTCOLNUM = 0
   integer, save, private :: WRAPPASTCOLNUM = 0  ! Don't print beyond (if > 0)
 
@@ -2528,6 +2528,9 @@ contains
 end module HIGHOUTPUT
 
 ! $Log$
+! Revision 2.25  2018/01/05 01:21:16  pwagner
+! Corrected data type for OldNeverStamp
+!
 ! Revision 2.24  2018/01/03 01:13:51  pwagner
 ! Prevent time stamps from interrupting tables, banners
 !
