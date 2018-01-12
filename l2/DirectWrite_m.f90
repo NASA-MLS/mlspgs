@@ -614,9 +614,9 @@ contains ! ======================= Public Procedures =========================
       call output(quantity%template%noInstancesUpperOverlap, advance='yes')
       call output('grandTotalInstances: ', advance='no')
       call output(quantity%template%grandTotalInstances, advance='yes')
+      call dump( l2gp%chunkNumber, 'Appending chunkNumber' )
     endif
     if ( verbose ) call outputNamedValue( 'DW L2GP qty name', trim(sdName) )
-    if ( verbose ) call dump( l2gp%chunkNumber, 'Appending chunkNumber' )
     ! call usleep ( delay ) ! Should we make this parallel%delay?
     call usleep ( parallel%delay ) ! Done!
     call AppendL2GPData( l2gp, l2gpFile, &
@@ -665,7 +665,7 @@ contains ! ======================= Public Procedures =========================
     logical                       :: useGroupName
     logical                       :: verbose
     ! Executable
-    verbose = BeVerbose ( 'direct', -1 )
+    verbose = BeVerbose ( 'direct', 0 )
     nameQtyByTemplate = .true.
     if ( present(options) ) nameQtyByTemplate = &
       & .not. ( index(options, 'num') > 0 )
@@ -738,8 +738,12 @@ contains ! ======================= Public Procedures =========================
     verbose = BeVerbose ( 'direct', 0 )
     alreadyOpen = L2AUXFile%stillOpen
     already_There = mls_exists( L2AUXFile%name ) == 0
-    if ( .not. already_There ) &
-      & call outputNamedValue( '  creating file', trim(L2AUXFile%name) )
+    if ( .not. already_There ) then
+      call outputNamedValue( '  creating file', trim(L2AUXFile%name) )
+    elseif ( verbose ) then
+      call outputNamedValue( '  no need to recreate file', trim(L2AUXFile%name) )
+      call outputNamedValue( '  already open?', alreadyOpen )
+    endif
     deebughere = ( deebug .or. sdname == sdDebug ) .and. .false.
     lastMAF = (quantity%template%instanceOffset+quantity%template%noInstances - &
         & quantity%template%noInstancesLowerOverlap - &
@@ -999,7 +1003,7 @@ contains ! ======================= Public Procedures =========================
     logical :: verbose
 
     ! executable code
-    verbose = BeVerbose ( 'direct', -1 )
+    verbose = BeVerbose ( 'direct', 0 )
     Num_qty_values = size(quantity%values, 1)*size(quantity%values, 2)
     addQtyAttributes = .false.
     if ( present(options) ) addQtyAttributes = ( index(options, 'A') > 0 )
@@ -1721,7 +1725,7 @@ contains ! ======================= Public Procedures =========================
     l2gp%time(firstProfile:lastProfile) = &
       & quantity%template%time(1,useFirstInstance:useLastInstance)
     l2gp%chunkNumber(firstProfile:lastProfile) = chunkNo
-    if ( verbose ) then
+    if ( deebug ) then
       call outputNamedValue( 'firstProfile, lastProfile', (/firstProfile, lastProfile /) )
       call outputNamedValue( 'chunkNos', l2gp%chunkNumber(firstProfile:lastProfile) )
     endif
@@ -1844,6 +1848,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.89  2018/01/12 00:22:34  pwagner
+! Reduce amount written by lowest verbose level
+!
 ! Revision 2.88  2017/08/10 22:47:36  pwagner
 ! Use WriteHDF5Data from L2AuxData
 !
