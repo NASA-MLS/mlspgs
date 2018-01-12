@@ -15,6 +15,7 @@ module Join                     ! Join together chunk based data.
 
   use MLSStringLists, only: GetHashElement, SwitchDetail
   use MLSStrings, only: LowerCase
+  use JoinUtils_1, only: Error, Announce_Error, DWSwath, DWHDF, DWQty
   ! This module performs the 'join' task in the MLS level 2 software.
 
   implicit none
@@ -28,16 +29,14 @@ module Join                     ! Join together chunk based data.
 !---------------------------------------------------------------------------
 
   ! logical, parameter, private :: FORCEDIRWRITEREOPEN = .false. ! Usually FALSE
-  logical, parameter, private :: SKIPMETADATA = .false. ! Usually FALSE
   real, parameter             :: timeReasonable = 500.
 
   ! Parameters for Announce_Error
 
-  integer :: ERROR
+  ! integer :: ERROR  ! Now got from JoinUtils
   logical, parameter :: CATENATESPLITS  = .true.
   logical, parameter :: countEmpty = .true. ! Except where overriden locally
   integer, parameter :: NO_ERROR_CODE   = 0
-  integer, parameter :: NotAllowed      = 1
 
 contains ! =====     Public Procedures     =============================
 
@@ -210,6 +209,8 @@ contains
           call output ( ticket )
           call output ( " node " )
           call output ( directWriteNodeGranted, advance='no' )
+          call output ( " create file? " )
+          call output ( createFile, advance='no' )
           call output ( " file " )
           call output ( trim(theFile), advance='yes' )
         end if
@@ -319,10 +320,12 @@ contains
             if ( son == directWriteNodeGranted ) then
               didTheWrite = .true.
               call time_now ( dwt2 )
-              if(DEEBUG)call print_source ( where_at(son) )
-              if(DEEBUG)print*,'Calling direct write to do the write'
-              if(DEEBUG)print*,'Asked to create file? ', createFile
-              if(DEEBUG)print*,'the file ', trim(theFile)
+              if ( DeeBug  ) then
+                call print_source ( where_at(son) )
+                print*,'Calling direct write to do the write'
+                print*,'Asked to create file? ', createFile
+                print*,'the file ', trim(theFile)
+              endif
               call DirectWriteCommand ( son, ticket, vectors, &
                 & DirectdataBase, filedatabase, &
                 & chunkNo, chunks, outputTyp, FWModelConfig, HGrids, &
@@ -488,8 +491,7 @@ contains
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
     use Chunks_M, only: MLSChunk_T
     use DirectWrite_M, only: DirectData_T, &
-      & DirectWrite, Dump, &
-      & ExpandDirectdb, ExpandSDNames, FileNameToID
+      & Dump, ExpandDirectdb, FileNameToID
     use Dump_0, only: Dump
     use Expr_M, only: Expr
     use ForwardModelConfig, only: ForwardModelConfig_T
@@ -507,15 +509,14 @@ contains
     use Intrinsic, only: L_None, L_HDF, L_Swath, Lit_Indices, Phyq_Dimensionless
     use L2parinfo, only: Parallel, LogDirectwriteRequest, FinishedDirectwrite
     use ManipulateVectorQuantities, only: DoHGridsMatch
-    use MLSCommon, only: FileNameLen, MLSFile_T, L2MetaData_T
+    use MLSCommon, only: FileNameLen, MLSFile_T
     use MLSFiles, only: HDFVersion_5, &
       & AddInitializeMLSFile, Dump, GetMLSFileByName, GetPCFromRef, &
-      & MLS_CloseFile, MLS_OpenFile, Split_Path_Name
+      & MLS_OpenFile, Split_Path_Name
     use MLSFinds, only: FindFirst, FindNext
-    use MLSHDFeos, only: MLS_Swath_In_File
     use MLSKinds, only: R8
     use MLSL2Options, only: CheckPaths, Default_HDFVersion_Write, &
-      & MaxChunkSize, Patch, RuntimeValues, SkipDirectWrites, Toolkit
+      & Patch, RuntimeValues, SkipDirectWrites, Toolkit
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
     use MLSPCF2, only: MLSPCF_L2gp_Start, MLSPCF_L2gp_End, &
       & MLSPCF_L2dgm_Start, MLSPCF_L2dgm_End, MLSPCF_L2fwm_Full_Start, &
@@ -524,7 +525,6 @@ contains
     use MLSSignals_M, only: Getsignalname
     use Moretree, only: Get_Field_Id, Get_Boolean
     use Output_M, only: Blanks, Output
-    use OutputAndClose, only: Add_MetaData
     use String_Table, only: Display_String, Get_String
     use Symbol_Table, only: Enter_Terminal
     use Symbol_Types, only: T_String
@@ -563,7 +563,6 @@ contains
     integer :: AFILE
     character(len=1024) :: BoolKey      ! The boolean's key
     logical :: CREATEFILEFLAG           ! Flag (often copy of create)
-    logical, dimension(:), pointer :: CREATETHISSOURCE
     logical :: CREATETHISSWATH
     logical :: DEEBUG
     type(MLSFile_T), pointer :: directFile
@@ -585,7 +584,6 @@ contains
     character(len=1024) :: groupName    ! Store sdName under this group
     integer :: HANDLE                   ! File handle from hdf/hdf-eos
     character(len=1024) :: HDFNAME      ! Output swath/sd name
-    integer :: HDFNAMEINDEX             ! String index for output name
     integer :: HDFVERSION               ! 4 or 5
     character(len=1024) :: inputFile    ! Input full filename
     integer :: i
@@ -600,12 +598,8 @@ contains
     integer :: MYFILE                   ! File permission granted for
     logical :: MYMAKEREQUEST            ! Copy of makeRequest
     character(len=FileNameLen) :: MYTHEFILE  ! File permission granted for
-    character(len=256), dimension(:), pointer :: NAMEBUFFER
     integer :: NEXTFILE
     integer :: NOSOURCES                ! No. things to output
-    integer :: NumPermitted             ! No. things permitted to output
-    integer :: NumOutput                ! No. things actually output
-    logical, parameter :: OPENHERE = .false.
     character(len=16) :: OPTIONS
     integer :: AscDescModeVECTOR
     integer :: AscDescModeQTYINDX
@@ -643,9 +637,7 @@ contains
     type(VectorValue_T), pointer :: STATUSQTY ! The quantities status
     type(VectorValue_T), pointer :: AscDescModeQTY ! The shared quantity AscDescMode
     type(DirectData_T), pointer  :: thisDirect ! => null()
-    type(Vector_T), pointer      :: Vector ! => null()
     real :: TimeIn, TimeSetUp, TimeWriting, timeToClose, TimeOut
-    type(L2Metadata_T) :: l2metaData
 
     ! Executable code
     DEEBUG = ( switchDetail(switches, 'direct') > 0 ) ! .or. SKIPDIRECTWRITES
@@ -666,6 +658,8 @@ contains
     myTheFile = 'undefined'   ! 0
     if ( present ( theFile ) ) myTheFile = theFile
     if ( present(noExtraWrites) ) noExtraWrites = 0
+    if ( DeeBug ) call outputNamedValue ( 'present(create)', present(create) )
+    if ( present(create) .and. DeeBug ) call outputNamedValue ( '(create)',create )
 
     ! lastFieldIndex = 0
     noSources = 0
@@ -871,88 +865,88 @@ contains
       enddo
     end if
 
-    ! if ( .not. (SKIPDIRECTWRITES .or. checkpaths) ) then
     if ( .not. checkpaths ) then
-    ! Now go through and do some sanity checking
-    nullify ( AscDescModeQty )
-    if ( got(f_AscDescMode) ) AscDescModeQty => GetVectorQtyByTemplateIndex ( vectors(AscDescModevector), &
-    & AscDescModeQtyIndx )
-    do source = 1, noSources
-      if ( sourceQuantities(source) < 1 ) cycle
-      qty => GetVectorQtyByTemplateIndex ( vectors(sourceVectors(source)), &
-      & sourceQuantities(source) )
-      if ( qty%label == 0 ) call Announce_Error ( son, no_error_code, &
-      & "Quantity does not have a label" )
-      if ( precisionVectors(source) /= 0 ) then
-        precQty => &
-          & GetVectorQtyByTemplateIndex ( vectors(precisionVectors(source)), &
-          & precisionQuantities(source) )
-        ! Check that this is compatible with its value quantity
-        if ( qty%template%name /= precQty%template%name ) &
-        & call Announce_Error ( son, no_error_code, &
-        & "Precision and quantity do not match" )
-      else
-        precQty => NULL()
-      end if
-      if ( qualityVectors(source) /= 0 ) then
-        qualityQty => &
-          & GetVectorQtyByTemplateIndex ( vectors(qualityVectors(source)), &
-          & qualityQuantities(source) )
-        ! Check that value and quality share same HGrid
-        if ( .not. DoHgridsMatch( qty, qualityQty ) ) &
-        & call Announce_Error ( son, no_error_code, &
-        & "Source and quality not on matching HGrids" )
-      else
-        qualityQty => NULL()
-      end if
-      if ( statusVectors(source) /= 0 ) then
-        statusQty => &
-          & GetVectorQtyByTemplateIndex ( vectors(statusVectors(source)), &
-          & statusQuantities(source) )
-        ! Check that value and quality share same HGrid
-        if ( .not. DoHgridsMatch( qty, statusQty ) ) &
-        & call Announce_Error ( son, no_error_code, &
-        & "Source and status not on matching HGrids" )
-      else
-        statusQty => NULL()
-      end if
-      if ( convergVectors(source) /= 0 ) then
-        convergQty => &
-          & GetVectorQtyByTemplateIndex ( vectors(convergVectors(source)), &
-          & convergQuantities(source) )
-        ! Check that value and convergence share same HGrid
-        if ( .not. DoHgridsMatch( qty, convergQty ) ) &
-        & call Announce_Error ( son, no_error_code, &
-        & "Source and convergence not on matching HGrids" )
-      else
-        convergQty => NULL()
-      end if
-      ! Now check that things make sense
-      if ( ValidateVectorQuantity ( qty, &
-        & coherent=.true., stacked=.true., regular=.true., &
-        & verticalCoordinate = (/ l_pressure, l_zeta, l_none/), &
-        & minorFrame=.false., majorFrame=.false. ) ) then
-        expectedType = l_l2gp
-      elseif ( qty%template%quantityType == l_magneticField ) then
-        expectedType = l_quantity
-      else
-        expectedType = l_l2aux
-      end if
-      if ( outputType /= expectedType .and. .not. &
-        & ( outputType == l_l2dgg .and. expectedType == l_l2gp ) &
-        &                           .and. .not.  &
-        & ( outputType == l_l2fwm .and. expectedType == l_l2aux ) ) then
-        call output ( "Offending quantity " )
-        call display_string ( qty%template%name, strip=.true., advance='yes' )
-        call output ( "Expected type " )
-        call display_string ( lit_indices(expectedType), advance='yes' )
-        call output ( "Output file type " )
-        call display_string ( lit_indices(outputType), advance='yes' )
-        call Announce_Error ( son, no_error_code, &
-          & "Inappropriate quantity for this file type in direct write", &
-          & Penalty=0 )
-      end if
-    end do
+      ! Now go through and do some sanity checking
+      ! On the way let's pick out Qty, PrecQty, .. to be written
+      nullify ( AscDescModeQty )
+      if ( got(f_AscDescMode) ) AscDescModeQty => GetVectorQtyByTemplateIndex ( vectors(AscDescModevector), &
+      & AscDescModeQtyIndx )
+      do source = 1, noSources
+        if ( sourceQuantities(source) < 1 ) cycle
+        qty => GetVectorQtyByTemplateIndex ( vectors(sourceVectors(source)), &
+        & sourceQuantities(source) )
+        if ( qty%label == 0 ) call Announce_Error ( son, no_error_code, &
+        & "Quantity does not have a label" )
+        if ( precisionVectors(source) /= 0 ) then
+          precQty => &
+            & GetVectorQtyByTemplateIndex ( vectors(precisionVectors(source)), &
+            & precisionQuantities(source) )
+          ! Check that this is compatible with its value quantity
+          if ( qty%template%name /= precQty%template%name ) &
+          & call Announce_Error ( son, no_error_code, &
+          & "Precision and quantity do not match" )
+        else
+          precQty => NULL()
+        end if
+        if ( qualityVectors(source) /= 0 ) then
+          qualityQty => &
+            & GetVectorQtyByTemplateIndex ( vectors(qualityVectors(source)), &
+            & qualityQuantities(source) )
+          ! Check that value and quality share same HGrid
+          if ( .not. DoHgridsMatch( qty, qualityQty ) ) &
+          & call Announce_Error ( son, no_error_code, &
+          & "Source and quality not on matching HGrids" )
+        else
+          qualityQty => NULL()
+        end if
+        if ( statusVectors(source) /= 0 ) then
+          statusQty => &
+            & GetVectorQtyByTemplateIndex ( vectors(statusVectors(source)), &
+            & statusQuantities(source) )
+          ! Check that value and quality share same HGrid
+          if ( .not. DoHgridsMatch( qty, statusQty ) ) &
+          & call Announce_Error ( son, no_error_code, &
+          & "Source and status not on matching HGrids" )
+        else
+          statusQty => NULL()
+        end if
+        if ( convergVectors(source) /= 0 ) then
+          convergQty => &
+            & GetVectorQtyByTemplateIndex ( vectors(convergVectors(source)), &
+            & convergQuantities(source) )
+          ! Check that value and convergence share same HGrid
+          if ( .not. DoHgridsMatch( qty, convergQty ) ) &
+          & call Announce_Error ( son, no_error_code, &
+          & "Source and convergence not on matching HGrids" )
+        else
+          convergQty => NULL()
+        end if
+        ! Now check that things make sense
+        if ( ValidateVectorQuantity ( qty, &
+          & coherent=.true., stacked=.true., regular=.true., &
+          & verticalCoordinate = (/ l_pressure, l_zeta, l_none/), &
+          & minorFrame=.false., majorFrame=.false. ) ) then
+          expectedType = l_l2gp
+        elseif ( qty%template%quantityType == l_magneticField ) then
+          expectedType = l_quantity
+        else
+          expectedType = l_l2aux
+        end if
+        if ( outputType /= expectedType .and. .not. &
+          & ( outputType == l_l2dgg .and. expectedType == l_l2gp ) &
+          &                           .and. .not.  &
+          & ( outputType == l_l2fwm .and. expectedType == l_l2aux ) ) then
+          call output ( "Offending quantity " )
+          call display_string ( qty%template%name, strip=.true., advance='yes' )
+          call output ( "Expected type " )
+          call display_string ( lit_indices(expectedType), advance='yes' )
+          call output ( "Output file type " )
+          call display_string ( lit_indices(outputType), advance='yes' )
+          call Announce_Error ( son, no_error_code, &
+            & "Inappropriate quantity for this file type in direct write", &
+            & Penalty=0 )
+        end if
+      end do
     end if
     
     ! Bail out at this stage if there is some kind of error.
@@ -1049,6 +1043,7 @@ contains
       if ( parallel%slave ) then
         createFileFlag = .false.
         if ( present ( create ) ) createFileFlag = create
+       if ( DeeBug ) call outputNamedValue( 'Were a slave; createFileFlag', createFileFlag )
       else if ( distributingSources ) then
         ! Short-circuit this direct write if outputType fails to match
         if ( myFile < 1 ) then
@@ -1064,6 +1059,7 @@ contains
         createFileFlag = .not. any ( createdFilenames == myFile )
         if ( createFileFlag ) then
           noCreatedFiles = noCreatedFiles + 1
+          if ( DeeBug ) call outputNamedValue( 'Incrementing noCreatedFiles', noCreatedFiles )
           if ( noCreatedFiles > maxFiles ) call MLSMessage ( &
             & MLSMSG_Error, ModuleName, 'Too many direct write files' )
           createdFilenames ( noCreatedFiles ) = myFile
@@ -1072,6 +1068,7 @@ contains
         createFileFlag = .not. any ( createdFilenames == file )
         if ( createFileFlag ) then
           noCreatedFiles = noCreatedFiles + 1
+          if ( DeeBug ) call outputNamedValue( 'Incrementing noCreatedFiles', noCreatedFiles )
           if ( noCreatedFiles > maxFiles ) call MLSMessage ( &
             & MLSMSG_Error, ModuleName, 'Too many direct write files' )
           createdFilenames ( noCreatedFiles ) = file
@@ -1156,8 +1153,10 @@ contains
       
       if ( createFileFlag .and. .not. patch ) then
         fileaccess = DFACC_CREATE
+        if ( DeeBUG ) call output( 'Setting file access to create', advance='yes' )
       else
         fileaccess = DFACC_RDWR
+        if ( DeeBUG ) call output( 'Setting file access to read/write', advance='yes' )
       end if
       if ( DeeBUG ) then
         print *, 'Trying to open ', trim(FileName)
@@ -1178,27 +1177,6 @@ contains
         end if
       end if
 
-      ! Some indicators of where to find the file in the PCF
-      ! and what type of file it will be (fileType will be redefined later)
-      select case ( outputType )
-      case ( l_l2gp )
-        PCBottom = mlspcf_l2gp_start
-        PCTop    = mlspcf_l2gp_end
-        fileType = l_swath
-      case ( l_l2dgg )
-        PCBottom = mlspcf_l2dgg_start
-        PCTop    = mlspcf_l2dgg_end
-        fileType = l_swath
-      case ( l_l2fwm )
-        PCBottom = mlspcf_l2fwm_full_start
-        PCTop    = mlspcf_l2fwm_full_end
-        fileType = l_hdf
-      case ( l_l2aux, l_hdf, l_quantity )
-        PCBottom = mlspcf_l2dgm_start
-        PCTop    = mlspcf_l2dgm_end
-        fileType = l_hdf
-      end select
-
       ! Call the l2gp open/create routine.  Filename is 'filename'
       ! file id should go into 'handle'
       if ( .not. TOOLKIT .or. noPCFid ) then
@@ -1208,6 +1186,12 @@ contains
         directFile => GetMLSFileByName( filedatabase, filename, &
           & ignore_paths=.true. )
       endif
+      select case ( outputType )
+      case ( l_l2gp, l_l2dgg )
+        fileType = l_swath
+      case ( l_l2fwm, l_l2aux, l_hdf, l_quantity )
+        fileType = l_hdf
+      end select
       if ( .not. associated(directFile) ) then
         if(DEEBUG) call MLSMessage(MLSMSG_Warning, ModuleName, &
           & 'No entry in filedatabase for ' // trim(filename) )
@@ -1218,384 +1202,68 @@ contains
           & PCBottom=PCBottom, PCTop=PCTop)
       end if
       directFile%access = FileAccess
-      if ( OPENHERE ) call mls_openFile(directFile, ErrorType)
       if(DEEBUG) call dump(directFile)
 
-      errorType = 0
+      ! Now write according to the type of DirectWrite File it is
+      ! Some indicators of where to find the file in the PCF
+      ! and what type of file it will be (fileType will be redefined later)
       select case ( outputType )
-      case ( l_l2gp, l_l2dgg )
-        ! Before opening file, see which swaths are already there
-        ! and which ones need to be created
-        if ( DeeBUG ) print *, 'Allocating ', noSources
-        nullify(createThisSource, nameBuffer)
-        call Allocate_test ( createThisSource, noSources, 'createThisSource', &
-          & ModuleName )
-        call Allocate_test ( nameBuffer, noSources, 'nameBuffer', &
-          & ModuleName )
-        if(DEEBUG)print *, 'Must we create this file?', createFileFlag
-        if ( .not. createFileFlag ) then
-          do source = 1, noSources
-            if(DEEBUG)print*,'Source:', source
-            if ( sourceQuantities(source) > 0 ) then
-              qty => GetVectorQtyByTemplateIndex ( &
-                & vectors(sourceVectors(source)), sourceQuantities(source) )
-            else
-              qty => GetVectorQtyByTemplateIndex ( &
-                & vectors(sourceVectors(source)), 1 )
-            end if
-            hdfNameIndex = qty%label
-            if(DEEBUG) &
-              & call display_string ( hdfNameIndex, strip=.true., advance='yes' )
-            call get_string ( hdfNameIndex, nameBuffer(source), strip=.true. )
-            if(DEEBUG)print*,'Done'
-          end do
-          if(DEEBUG)print *, '************** Checking for swaths in file ***************'
-          if(DEEBUG)call dump(directFile)
-          dummy = MLS_SWATH_IN_FILE(directFile%Name, nameBuffer, HdfVersion, &
-            & createThisSource, returnStatus )
-          if(DEEBUG)print*,'Got out of MLS_SWATH_IN_FILE'
-          if ( returnStatus /= 0 ) then
-            call MLSMessage(MLSMSG_Warning, ModuleName, &
-              & 'Unable to check on swath in ' // trim(filename) )
-          end if
-          if(DEEBUG)call dump( createThisSource, 'createThisSource' )
-          source = findFirst( createThisSource )
-          if(DEEBUG)call outputNamedValue ( 'source number of T', source )
-        else
-          createThisSource = .false.
-        end if
-      case ( l_l2aux, l_l2fwm, l_hdf, l_quantity )
-        ! Nothing special
-        ! (Why don't we need to know which SDs are there and which aren't?)
-      case default
-          call MLSMessage(MLSMSG_Warning, ModuleName, &
-          & 'Unrecognized output type ' // trim(directFile%name), &
-          & MLSFile=directFile )
+      case ( l_l2gp )
+        call DWSwath ( Son, Node, noSources, distributingSources, TimeIn, &
+    & Rank, Options, GroupName, Ticket, InputFile, myTheFile,  &
+    & chunkNo, createFileFlag, createthisswath, lowerOverlap, upperOverlap, &
+    & NoCreatedFiles, &
+    & sourceVectors, sourceQuantities, &
+    & precisionVectors, precisionQuantities, &
+    & qualityVectors, qualityQuantities, &
+    & statusVectors, statusQuantities, &
+    & convergVectors, convergQuantities, &
+    & vectors, DirectDatabase, directfiles, &
+    & directfile, thisDirect )
+      case ( l_l2dgg )
+        call DWSwath ( Son, Node, noSources, distributingSources, TimeIn, &
+    & Rank, Options, GroupName, Ticket, InputFile, myTheFile,  &
+    & chunkNo, createFileFlag, createthisswath, lowerOverlap, upperOverlap, &
+    & NoCreatedFiles, &
+    & sourceVectors, sourceQuantities, &
+    & precisionVectors, precisionQuantities, &
+    & qualityVectors, qualityQuantities, &
+    & statusVectors, statusQuantities, &
+    & convergVectors, convergQuantities, &
+    & vectors, DirectDatabase, directfiles, &
+    & directfile, thisDirect )
+      case ( l_l2fwm )
+        if ( DeeBug ) then
+          call Dump( createdFilenames(1:noCreatedFiles), 'Created Files' )
+          call OutputNamedValue ( 'NoCreatedFiles before DWHDF', NoCreatedFiles )
+        endif
+        call DWHDF ( Son, Node, noSources, distributingSources, TimeIn, &
+    & Rank, Options, GroupName, Ticket, InputFile, myTheFile,  &
+    & chunkNo, createFileFlag, createthisswath, lowerOverlap, upperOverlap, &
+    & NoCreatedFiles, &
+    & sourceVectors, sourceQuantities, &
+    & precisionVectors, precisionQuantities, &
+    & vectors, DirectDatabase, directfiles, &
+    & directfile, thisDirect, chunks, FWModelConfig, single )
+    if ( DeeBug ) call outputNamedValue ( 'NoCreatedFiles after DWHDF', NoCreatedFiles )
+      case ( l_l2aux, l_hdf )
+        call DWHDF ( Son, Node, noSources, distributingSources, TimeIn, &
+    & Rank, Options, GroupName, Ticket, InputFile, myTheFile,  &
+    & chunkNo, createFileFlag, createthisswath, lowerOverlap, upperOverlap, &
+    & NoCreatedFiles, &
+    & sourceVectors, sourceQuantities, &
+    & precisionVectors, precisionQuantities, &
+    & vectors, DirectDatabase, directfiles, &
+    & directfile, thisDirect, chunks, FWModelConfig, single )
+      case ( l_quantity )
+        call DWQty ( Son, Node, noSources, distributingSources, TimeIn, &
+    & Rank, Options, GroupName, Ticket, InputFile, myTheFile,  &
+    & chunkNo, createFileFlag, createthisswath, lowerOverlap, upperOverlap, &
+    & NoCreatedFiles, &
+    & sourceVectors, sourceQuantities, &
+    & vectors, DirectDatabase, directfiles, &
+    & directfile, thisDirect )
       end select
-      
-      if ( ErrorType /= 0 .and. OPENHERE ) then
-        print *, 'Tried to open ', trim(directFile%Name)
-        print *, 'ErrorType ', ErrorType
-        print *, 'Output Type ', OutputType
-        print *, 'Output Type ', OutputTypeStr
-        print *, 'FileAccess ', directFile%Access
-        print *, 'hdfVersion ', directFile%hdfVersion
-        print *, 'myFile ', myFile
-        print *, 'createFileFlag ', createFileFlag
-        call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & 'DirectWriteCommand unable to open ' // trim(filename), &
-          & MLSFIle=directFile )
-      end if
-      ! Loop over the quantities to output
-      NumPermitted = 0
-      NumOutput = 0
-      if(DEEBUG)print *, '************** Loop over quantities to output ***************'
-      do source = 1, noSources
-        ! At this point we're ready to write the data
-        ! Make certain that the sources match the permitted file
-        ! if the sources are being distributed, however
-        if ( distributingSources ) then
-          if ( DirectDataBase(directfiles(source))%filename /= myTheFile &
-            & .and. &
-            & DirectDataBase(directfiles(source))%filenameBase /= myTheFile &
-            & ) cycle
-        end if
-        NumPermitted = NumPermitted + 1
-        if ( sourceQuantities(source) < 1 ) then
-          ! This is the case where we write an entire vector
-          vector => vectors(sourceVectors(source))
-          select case ( outputType )
-          case ( l_l2gp, l_l2dgg )
-            call DirectWrite ( directFile, vector, &
-            & chunkNo, &
-            & createSwath=createthisswath, &
-            & lowerOverlap=lowerOverlap, upperOverlap=upperOverlap, &
-            & maxChunkSize=maxChunkSize )
-          case ( l_l2aux, l_l2fwm, l_hdf )
-            call DirectWrite ( directFile, vector, &
-              & chunkNo, chunks, FWModelConfig, &
-              & lowerOverlap=lowerOverlap, upperOverlap=upperOverlap, &
-              & single=single, options=options, groupName=groupName )
-          case ( l_quantity )
-            call DirectWrite ( directFile, &
-              & vector, &
-              & chunkNo, options=options, rank=rank )
-          case default
-          end select
-          cycle
-        end if
-        qty => GetVectorQtyByTemplateIndex ( vectors(sourceVectors(source)), &
-          & sourceQuantities(source) )
-        hdfNameIndex = qty%label
-        call get_string ( hdfNameIndex, hdfName, strip=.true. )
-        if ( TOOLKIT .or. CATENATESPLITS ) &
-          & call ExpandSDNames(thisDirect, trim(hdfName))
-        if ( (TOOLKIT .or. CATENATESPLITS) .and. DEEBUG ) call dump(thisDirect)
-        if ( precisionVectors(source) /= 0 ) then
-          precQty => GetVectorQtyByTemplateIndex &
-            & ( vectors(precisionVectors(source)), precisionQuantities(source) )
-          ! Check that this is compatible with its value quantitiy
-          if ( qty%template%name /= precQty%template%name ) &
-            & call Announce_Error ( son, no_error_code, &
-            & "Precision and quantity do not match" )
-        else
-          precQty => NULL()
-        end if
-        if ( qualityVectors(source) /= 0 ) then
-          qualityQty => &
-            & GetVectorQtyByTemplateIndex ( vectors(qualityVectors(source)), &
-            & qualityQuantities(source) )
-          ! Check that value and quality share same HGrid
-          if ( .not. DoHgridsMatch( qty, qualityQty ) ) &
-          & call Announce_Error ( son, no_error_code, &
-          & "Source and quality not on matching HGrids" )
-        else
-          qualityQty => NULL()
-        end if
-        if ( statusVectors(source) /= 0 ) then
-          statusQty => &
-            & GetVectorQtyByTemplateIndex ( vectors(statusVectors(source)), &
-            & statusQuantities(source) )
-          ! Check that value and quality share same HGrid
-          if ( .not. DoHgridsMatch( qty, statusQty ) ) &
-          & call Announce_Error ( son, no_error_code, &
-          & "Source and status not on matching HGrids" )
-        else
-          statusQty => NULL()
-        end if
-        if ( convergVectors(source) /= 0 ) then
-          convergQty => &
-            & GetVectorQtyByTemplateIndex ( vectors(convergVectors(source)), &
-            & convergQuantities(source) )
-          ! Check that value and convergence share same HGrid
-          if ( .not. DoHgridsMatch( qty, convergQty ) ) &
-          & call Announce_Error ( son, no_error_code, &
-          & "Source and convergence not on matching HGrids" )
-        else
-          convergQty => NULL()
-        end if
-        
-        if ( DeeBUG ) then
-          call output('CreateFileFlag: ', advance='no')
-          call output(createFileFlag, advance='yes')
-          call output('file access: ', advance='no')
-          call output(fileaccess, advance='yes')
-          call output('file handle: ', advance='no')
-          call output(handle, advance='yes')
-          call output('outputType: ', advance='no')
-          call output(outputType, advance='yes')
-          call output('sd name: ', advance='no')
-          call output(trim(hdfname), advance='yes')
-        end if
-        call time_now ( timeSetup )
-        if ( timeSetup-timeIn > timeReasonable .and. &
-          & switchDetail(switches,'dwreq') > -1 ) then
-          call output('Unreasonable set up time for ' // trim(hdfname), &
-            & advance='yes')
-        end if
-
-        ! Do the actual DirectWrite
-        ! (Why do we need to redefine fileType? Is add_metadata so stupid?)
-        select case ( outputType )
-        case ( l_l2gp, l_l2dgg )
-          ! Call the l2gp swath write routine.  This should write the 
-          ! non-overlapped portion of qty (with possibly precision in precQty)
-          ! into the l2gp swath named 'hdfName' starting at profile 
-          ! qty%template%instanceOffset + 1
-          ! May optionally supply first, last profiles
-          if ( DEEBUG) then
-            call dump(directFile, details=1)
-            call output('createSwath: ', advance='no')
-            call output(.not. createThisSource(source), advance='yes')
-            call outputNamedValue ( 'source number of DW', source )
-          end if
-          createthisswath = (.not. createThisSource(source))
-          ! We had a bug somewhere in hdfeos
-          ! When we created the first swath in an hdfeos file
-          ! mls_swath_in_file didn't find it
-          ! What we'll try is to create the swath, then close the file
-          ! and reset its access to read/write--could be that it was confused 
-          ! by the DFACC_CREATE
-          call DirectWrite ( directFile, &
-            & qty, precQty, qualityQty, statusQty, convergQty, AscDescModeQty, &
-            & hdfName, chunkNo, &
-            & createSwath=createthisswath, &
-            & lowerOverlap=lowerOverlap, upperOverlap=upperOverlap, &
-            & maxChunkSize=maxChunkSize )
-          if ( createthisswath ) then
-            if ( directFile%stillOpen ) &
-              & call mls_closeFile(directFile, errorType)
-            directFile%access = DFACC_RDWR
-          end if
-          if ( fileaccess == DFACC_CREATE ) then
-            ! OK, because the bug is still there (!), we'll repeat
-            call DirectWrite ( directFile, &
-              & qty, precQty, qualityQty, statusQty, convergQty, AscDescModeQty, &
-              & hdfName, chunkNo, &
-              & createSwath=createthisswath, &
-              & lowerOverlap=lowerOverlap, upperOverlap=upperOverlap, &
-              & maxChunkSize=maxChunkSize )
-          end if
-          NumOutput= NumOutput + 1
-          if ( outputType == l_l2dgg ) then
-            filetype=l_l2dgg
-          else
-            filetype=l_swath
-          end if
-        case ( l_l2aux, l_l2fwm, l_hdf )
-          if ( got(f_inputFile) ) then
-            ! Write the ascii file as if it contained the quantity's values
-            call DirectWrite ( directFile, qty, hdfName, &
-              & chunkNo, options=options, rank=rank, inputFile=inputFile  )
-          else
-            ! Call the l2aux sd write routine.  This should write the 
-            ! non-overlapped portion of qty (with possibly precision in precQty)
-            ! into the l2aux sd named 'hdfName' starting at profile 
-            ! qty%template%instanceOffset ( + 1 ? )
-            ! Note sure about the +1 in this case, probably depends whether it's a
-            ! minor frame quantity or not.  This mixed zero/one indexing is becoming
-            ! a real pain.  I wish I never went down that road!
-            call DirectWrite ( directFile, qty, precQty, hdfName, &
-              & chunkNo, chunks, FWModelConfig, &
-              & lowerOverlap=lowerOverlap, upperOverlap=upperOverlap, &
-              & single=single, options=options )
-          end if
-          NumOutput = NumOutput + 1
-          filetype=l_hdf
-        case ( l_quantity )
-          if ( got(f_inputFile) ) then
-            ! Write the ascii file as if it contained the quantity's values
-            call DirectWrite ( directFile, qty, hdfName, &
-              & chunkNo, options=options, rank=rank, inputFile=inputFile  )
-          else
-            ! Write the quantity with all its geolocations
-            ! call outputnamedValue( 'Calling DirectWrite with rank', rank )
-            call DirectWrite ( directFile, qty, hdfName, &
-              & chunkNo, options=options, rank=rank )
-          end if
-          NumOutput = NumOutput + 1
-          filetype=l_quantity
-        case default
-          call output('outputType: ', advance='no')
-          call output(outputType, advance='yes')
-          call MLSMessage ( MLSMSG_Error, ModuleName, &
-            & 'Unrecognized OutputType in ' // trim(filename) )
-        end select
-      end do ! End loop over swaths/sds
-      call time_now ( timeWriting )
-      if ( timeWriting-timeSetup > timeReasonable .and. &
-        & switchDetail(switches,'dwreq') > -1 ) then
-        call output('Unreasonable writing time for ' //trim(hdfname), advance='yes')
-      end if
-      
-      if ( DEEBUG ) then
-        print *, 'Num permitted to ', trim(FileName), ' ', NumPermitted
-        print *, 'Num actually output ', NumOutput
-      end if
-      if ( NumPermitted < 1 ) then
-        if ( parallel%slave) then
-          call Announce_Error ( son, no_error_code, &
-            & "NumPermitted=0", penalty=0 )
-          call MLSMessage ( MLSMSG_Warning, ModuleName, &
-            & 'No sources permitted for writing to  ' // trim(filename) )
-          call FinishedDirectWrite ( ticket )
-        else
-          ! But did we claim we were created this file? If so, decrement
-          if ( createFileFlag ) noCreatedFiles = noCreatedFiles - 1
-          if ( DEEBUG ) then
-            print *, 'No sources written to ', trim(FileName)
-            print *, 'FileAccess ', FileAccess
-            print *, 'hdfVersion ', hdfVersion
-            print *, 'myFile ', myFile
-            print *, 'createFileFlag ', createFileFlag
-            print *, 'noCreatedFiles ', noCreatedFiles
-          end if
-        end if
-        call DeallocateStuff
-        if ( any ( outputType == (/ l_l2gp, l_l2dgg /) ) ) then
-          call Deallocate_test ( createThisSource, 'createThisSource', ModuleName )
-          call Deallocate_test ( nameBuffer, 'nameBuffer', ModuleName )
-        end if
-
-        ! Don't forget to close file
-        select case ( outputType )
-        case ( l_l2gp, l_l2dgg, l_l2aux, l_l2fwm, l_hdf )
-          if ( OPENHERE ) call mls_closeFile(directFile, ErrorType)
-        case default
-          call output('outputType: ', advance='no')
-          call output(outputType, advance='yes')
-          call output('ErrorType: ', advance='no')
-          call output(ErrorType, advance='yes')
-          call MLSMessage ( MLSMSG_Error, ModuleName, &
-            & 'Tried to close Unrecognized OutputType in ' // trim(filename), &
-            & MLSFile=directFile )
-        end select
-        call time_now ( timeToClose )
-        if ( timeToClose-timeWriting > timeReasonable .and. &
-          & switchDetail(switches,'dwreq') > -1 ) then
-          call output('Unreasonable closing time for ' // trim(hdfname), &
-            & advance='yes')
-        end if
-        if ( errortype /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & 'DirectWriteCommand unable to close (1)' // trim(filename), &
-          & MLSFile=directFile )
-        call trace_end ( "DirectWriteCommand", &
-          & cond=toggle(gen) .and. switchDetail(switches, 'dwreq') > -1 )
-        return
-      end if
-      if ( isnewdirect .and. (TOOLKIT .or. CATENATESPLITS) ) then
-        thisDirect%type = outputType
-        thisDirect%fileNameBase = file_base
-      end if
-      
-      if ( DEEBug ) then
-        call output('outputType: ', advance='no')
-        call DISPLAY_STRING(lit_indices(outputType), advance='yes')
-        call output('fileType: ', advance='no')
-        call DISPLAY_STRING(lit_indices(fileType), advance='yes')
-      end if
-
-      ! Close the output file of interest (does this need to be split like this?)
-      select case ( outputType )
-      case ( l_l2gp, l_l2dgg )
-        if ( DeeBUG ) print *, 'Deallocating ', noSources
-        call Deallocate_test ( createThisSource, 'createThisSource', ModuleName )
-        call Deallocate_test ( nameBuffer, 'nameBuffer', ModuleName )
-        ! Call the l2gp close routine
-        if ( OPENHERE ) call mls_closeFile(directFile, errorType)
-        if ( DeeBUG ) then
-          print *, 'Tried to close ', trim(FIleName)
-          print *, 'Handle ', Handle
-          print *, 'hdfVersion ', hdfVersion
-          print *, 'errortype ', errortype
-        end if
-      case ( l_l2aux, l_l2fwm, l_hdf, l_quantity )
-        ! Call the l2aux close routine
-        if ( OPENHERE ) call mls_closeFile(directFile, errorType)
-      case default
-        call DISPLAY_STRING(lit_indices(outputType), before='outputType: ', advance='yes')
-        call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Tried to closeUnrecognized output type ' // trim(filename), &
-        & MLSFile=directFile )
-      end select
-      call time_now ( timeToClose )
-      if ( timeToClose-timeWriting > timeReasonable .and. &
-        & switchDetail(switches,'dwreq') > -1 ) then
-        call output('Unreasonable closing time for ' // trim(hdfname), &
-          & advance='yes')
-      end if
-      if ( errortype /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'DirectWriteCommand unable to close (2)' // trim(filename), &
-        & MLSFile=directFile )
-      if ( createFileFlag .and. TOOLKIT .and. .not. SKIPMETADATA .and. &
-        & .not. any( outputType == (/l_l2fwm, l_hdf /)) .and. &
-        & .not. (distributingSources .and. CATENATESPLITS) ) then
-        call add_metadata ( node, file_base, l2metaData, &
-          & hdfVersion, filetype, errortype, NumPermitted, thisDirect%sdNames )
-        if ( errortype /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & 'DirectWriteCommand unable to addmetadata to ' // trim(filename), &
-          & MLSFile=directFile )
-      end if
       
       ! Tell the master we're done
       if ( parallel%slave ) call FinishedDirectWrite ( ticket )
@@ -1694,7 +1362,6 @@ contains
 
   ! ------------------------------------------ LabelVectorQuantity -----
   subroutine LabelVectorQuantity ( node, vectors )
-!     use highOutput, only: outputNamedValue
     use Init_Tables_Module, only: F_Boolean, F_Label, F_Prefixsignal, &
       & F_Quantity, F_Vector
     use MLSL2Options, only: RuntimeValues
@@ -1789,7 +1456,6 @@ contains
         if ( len_trim(labelStr) == 0 ) then
           write( labelStr, '(a9,i3.3,a1)' ) 'quantity[', quantityIndex, ']'
         end if
-        ! call outputNamedValue( 'label string start', labelStr, advance='yes' )
         call Get_String( label, labelStr(len_trim(labelStr)+1:), strip=.true. )
         ! Attach the label
         vlabel = enter_terminal ( trim(labelStr), t_string, caseSensitive=.true. )
@@ -2427,47 +2093,6 @@ contains
     end do
   end function explicitFile
 
-  ! ---------------------------------------------  Announce_Error  -----
-  subroutine ANNOUNCE_ERROR ( where, CODE, ExtraMessage, FIELDINDEX, Penalty )
-
-    use Intrinsic, only: Field_Indices
-    use Lexer_Core, only: Print_Source
-    use Output_M, only: Output
-    use String_Table, only: Display_String
-    use Tree, only: Where_At => Where
-
-    integer, intent(in) :: where   ! Tree node where error was noticed
-    integer, intent(in) :: CODE    ! Code for error message
-    integer, intent(in), optional :: FIELDINDEX ! Extra information for msg
-    character (LEN=*), intent(in), optional :: ExtraMessage
-
-    integer, intent(in), optional :: Penalty
-    integer :: myPenalty
-
-    myPenalty = 1
-    if ( present(penalty) ) myPenalty = penalty
-    error = max( error, myPenalty )
-
-    call output ( '***** At ' )
-    if ( where > 0 ) then
-      call print_source ( where_at(where) )
-    else
-      call output ( '(no lcf tree available)' )
-    end if
-    call output ( ': ' )
-    select case ( code )
-      case ( NotAllowed )
-        call output( 'Field ' )
-        call display_string( field_indices(fieldIndex) )
-        call output( ' is not allowed in this context',advance='yes' )
-      case default
-        call output ( " command caused an unrecognized programming error", advance='yes' )
-    end select
-    if ( present(ExtraMessage) ) then
-      call output( ExtraMessage, advance='yes' )
-    end if
-  end subroutine ANNOUNCE_ERROR
-
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
   character (len=*), parameter :: IdParm = &
@@ -2482,6 +2107,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.182  2018/01/12 00:19:37  pwagner
+! Reorganized DirectWriteCommand; now Uses JoinUtils_1
+!
 ! Revision 2.181  2017/12/07 01:01:23  vsnyder
 ! Don't use host-associated variable as a DO index
 !
