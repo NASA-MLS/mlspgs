@@ -488,8 +488,8 @@ fi
 
 echo "Check that the number of profiles is within range"
 cd $STDPRODDIR
-$L2GPDUMP -status *L2GP-Temper*.he5
-files=`extant_files *L2GP-Temp*.he5`
+$L2GPDUMP -status *L2GP-O3*.he5
+files=`extant_files *L2GP-O3*.he5`
 echo "$files"
 if [ -f "$files" ]
 then
@@ -510,7 +510,7 @@ then
   if [ "$MUSTHAVEBREAKER" = "yes" ]
   then
     echo "Check for anomalously large gaps between profiles"
-    file=*L2GP-Temper*.he5
+    file=*L2GP-O3*.he5
     # Unfortunately, BREAKER_PY expects the file to have a string like
     # _yyyydDoythhmm.he5 in its name. If it dosn't the script treats
     # the name as if it were a directory and gets sore when it
@@ -537,6 +537,9 @@ then
 fi
 
 # $Log$
+# Revision 1.6  2017/09/22 17:27:50  pwagner
+# Corrected two bugs; split_path and create_and_run_Level_1
+#
 # Revision 1.5  2017/07/13 17:40:19  pwagner
 # If JOBDIR lacks an outputs subdirectory, so will a and b
 #
