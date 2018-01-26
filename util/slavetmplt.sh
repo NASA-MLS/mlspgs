@@ -250,7 +250,7 @@ fi
 
 masterIdent="none"
 runinbackground="no"
-CAPTURE_STDERR="no"
+CAPTURE_STDERR="yes"
 otheropts="-g --uid $pid"
 switches="--stdout out -S'slv,opt,log,pro,time,glob'"
 OPTSFILE="${JOBDIR}/slave.opts"
@@ -505,6 +505,7 @@ ulimit -s unlimited
 echo $PGE_BINARY --tk -m --slave $masterTid $otheropts 2>&1 >> "$LOGFILE"
 if [ "$runinbackground" != "yes" ]
 then
+  echo "Must run $PGE_BINARY in foreground" >> "$LOGFILE"
   # Run pge in foreground
   if [ "$CAPTURE_MT" = "yes" ]
   then
@@ -519,7 +520,7 @@ then
   fi
   echo "Returned from $PGE_BINARY with status $?" "$LOGFILE"
   Exit_with_Status 0
-  # exit 0
+  exit 0
 fi
 
 # Run pge in background
@@ -537,6 +538,7 @@ then
     1>> "$LOGFILE" 2> "$STDERRFILE" &
 elif [ "$STDERRFILE" != "" ]
 then
+  echo "Writing standard error to $STDERRFILE" >> "$LOGFILE"
   $PGE_BINARY --tk -m --slave $masterTid --pidf "$NOTEFILE" $otheropts \
     1>> "$LOGFILE" 2> "$STDERRFILE" &
 else
@@ -626,6 +628,9 @@ do_the_call $all_my_opts
   # exit 0
 
 # $Log$
+# Revision 1.42  2017/12/22 00:55:42  pwagner
+# Correct some bugs in saving stderrfile
+#
 # Revision 1.41  2017/08/02 22:33:04  pwagner
 # Fixed an error in defining pgepid
 #
