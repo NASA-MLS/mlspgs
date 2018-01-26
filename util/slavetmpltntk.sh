@@ -1,6 +1,6 @@
 #!/bin/sh
 # slavetmpltntk.sh
-# runs a slave task when mlsl2 is in parallel mode
+# runs a slave task when mlsl2 is in parallel mode w/o toolkit
 #
 # Copyright 2008, by the California Institute of Technology. ALL
 # RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
@@ -15,7 +15,7 @@
 
 # usage: not called directly, but as mlsl2.slave after being seded
 
-# Used by mlsl2 master task mlsl2p.sh to launch slave tasks in toolkit
+# Used by mlsl2 master task mlsl2p.sh to launch slave tasks w/o toolkit
 # environment when running mlsl2 in parallel mode
 # mlsl2p.sh sed's this file to replace ssllaavvee, ppggssbbiinn, etc.
 # as appropriate
@@ -23,6 +23,10 @@
 # The resulting script will be called by mlsl2 master task
 # It will attempt to set some toolkt-savvy environment variables
 # and then launch the regular mlsl2 binary
+
+# Note: Why don't you look into combining this with its
+# toolkit-aware counterpart slavetmplt.sh so you don't have
+# to maintain the two separate files?
 
 #---------------------------- add_option
 # Accumulate a list of commandline options one-by-one
@@ -498,6 +502,7 @@ ulimit -s unlimited
 echo $PGE_BINARY --ntk -m --slave $masterTid $otheropts $l2cf 2>&1 >> "$LOGFILE"
 if [ "$runinbackground" != "yes" ]
 then
+  echo "Must run $PGE_BINARY in foreground" >> "$LOGFILE"
   # Run pge in foreground
   if [ "$CAPTURE_MT" = "yes" ]
   then
@@ -510,7 +515,7 @@ then
     $PGE_BINARY --ntk -m --slave $masterTid $otheropts $l2cf 2>&1 >> "$LOGFILE"
   fi
   Exit_with_Status 0
-  # exit 0
+  exit 0
 fi
 
 # Run pge in background
@@ -595,6 +600,9 @@ do_the_call $all_my_opts
 exit 0
 
 # $Log$
+# Revision 1.18  2017/12/22 00:55:42  pwagner
+# Correct some bugs in saving stderrfile
+#
 # Revision 1.17  2016/10/20 23:26:31  pwagner
 # Append chunk stderr to chunk log
 #
