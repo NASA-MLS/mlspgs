@@ -16,6 +16,7 @@
 
 # --------------- SSType.sh help
 # returns the type if Intel SSE (streaming microarchitecture instruction set)
+# or Advanced Vector Extensions (AVX, also known as Sandy Bridge New Extensions)
 # supported by the host where the command is executed
 # E.g., on riverrun would return
 # SSSE3
@@ -32,30 +33,33 @@
 #Notes:
 #(1) Proper operation assumes that the following programs
 #    are in one of: your path, where MLSTOOLS is defined, or set using -d option
-#    hasSSE2  hasSSE3  hasSSSE3
+#    hasSSE2  hasSSE3  hasSSSE3 .. hasAVX2 (but see -p option)
 #(2) The pattern followed by the program names is the program to check on
-#    SSxxx is named "hasSSxxx"
+#    SSxxx is named "hasSSxxx" (but see below)
 #(3) We are assuming that these programs were built for the same bitness
 #    as the host where the commands are executed; e.g. 64-bit OS
-#(4) To add a new SSE, build /users/pwagner/docs/fortran/helloworld.f90
-#    enabling the SSE option to be tested, and rename the a.out "hasSSxxx"
+#(4) To add a new SSE or AV, build /users/pwagner/docs/fortran/helloworld.f90
+#    enabling the appropriate option to be tested, 
+#    and rename the a.out "hasSSxxx" or "hasAVxxx"
 # --------------- End SSType.sh help
-
 
 NORMAL_STATUS=0
 # The checking programs has*
-# were compiled using -x * with ifort 15.0.0 20140723
+# were compiled using -x * with ifort 17.0.0 20160721
+# Note: the following are arranged in order of ascending powers
+# i.e., chips that support hasAVX2 must also support hasAVX-I, hasAVX, ..
 # program    compiler option
 # -------        -------
-# hasSSE2       -x -xSSe2
-# hasSSE3       -x -xSSe3
-# hasSSE4.1     -x -xSSe4.1
-# hasSSE4.2     -x -xSSe4.2
-# hasSSSE3      -x -xSSSe3
-# hasAVX        -x -xAVX
-# hasAVX2       -x -xAVX2
-# Use the following line to add extra options to MLSPROG
-PROGS="hasSSE2  hasSSE3  hasSSE4.1  hasSSE4.2  hasSSSE3  hasAVX  hasAVX2"
+# hasSSE2       -xSSe2
+# hasSSE3       -xSSe3
+# hasSSSE3      -xSSSe3
+# hasSSE4.1     -xSSe4.1
+# hasSSE4.2     -xSSe4.2
+# hasAVX        -xAVX
+# hasAVX-I      -xCORE-AVX-I
+# hasAVX2       -xCORE-AVX2
+# Use the following line to add extra programs
+PROGS="hasSSE2  hasSSE3  hasSSE4.1  hasSSE4.2  hasSSSE3  hasAVX  hasAVX-I hasAVX2"
 me="$0"
 my_name=SSType.sh
 all="no"
@@ -96,7 +100,7 @@ done
 
 if [ "$verbose" = "yes" ]
 then
-  echo "tools directory $dir"
+  echo "Will search for progs in mls tools directory $dir"
   echo "programs to check $PROGS"
 fi
 #Is MLSTOOLS defined and is it a permissible directory?
@@ -108,25 +112,33 @@ response=""
 
 for PROG in $PROGS
 do
-  $PROG > /dev/null 2>&1
-  return_status=`expr $?`
-  SSstring=`echo $PROG | sed 's/has//'`
-  if [ "$return_status" = "$NORMAL_STATUS" ]
+  if [ ! -e "$PROG" ]
   then
-    if [ "$all" = "yes" ]
+    echo "$PROG is not executable; did you define MLSTOOLS? use -d option?"
+  else
+    ./$PROG > /dev/null 2>&1
+    return_status=`expr $?`
+    SSstring=`echo $PROG | sed 's/has//'`
+    if [ "$return_status" = "$NORMAL_STATUS" ]
     then
-      response="$response $SSstring"
-    else
-      response="$SSstring"
+      if [ "$all" = "yes" ]
+      then
+        response="$response $SSstring"
+      else
+        response="$SSstring"
+      fi
     fi
-  fi
-  if [ "$verbose" = "yes" ]
-  then
-    echo "$PROG returns $return_status"
+    if [ "$verbose" = "yes" ]
+    then
+      echo "$PROG returns $return_status"
+    fi
   fi
 done
 echo $response
 # $Log$
+# Revision 1.4  2015/01/22 01:11:58  pwagner
+# Expanded default PROGS; added new commandline opts
+#
 # Revision 1.3  2010/03/11 21:56:47  pwagner
 # May specify tools directory with -d option
 #
