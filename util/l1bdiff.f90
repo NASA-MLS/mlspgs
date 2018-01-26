@@ -105,7 +105,7 @@ program l1bdiff ! diffs two l1b or L2AUX files
   !
   call set_config ( useToolkit = .false., logFileUnit = -1 )
   time_config%use_wall_clock = .true.
-  DIFFRMSMEANSRMS = .true.
+  DIFFRMSMEANSRMS = .false.
   CALL mls_h5open(error)
   NeverCrash = .false.
   MLSMessageConfig%crashOnAnyError = .true.
@@ -135,7 +135,7 @@ program l1bdiff ! diffs two l1b or L2AUX files
     options%referenceFileName = filenames(n_filenames)
     n_filenames = n_filenames - 1
   endif
-  if ( options%rms ) rmsFormat = '(1pe9.2)'
+  if ( options%rms .or. options%AuBrick ) rmsFormat = '(1pe9.2)'
   if ( options%silent ) call suspendOutput
   ! options%dumpOptions = '-'
   if ( options%rms ) options%dumpOptions = trim(options%dumpOptions) // 'r'
@@ -835,6 +835,9 @@ end program l1bdiff
 !==================
 
 ! $Log$
+! Revision 1.37  2017/10/20 20:20:08  pwagner
+! Crash with a walkback if an error occurs
+!
 ! Revision 1.36  2017/10/12 18:58:27  pwagner
 ! CamelCase more use statements
 !
