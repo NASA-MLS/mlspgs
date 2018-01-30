@@ -37,6 +37,9 @@ module Load_SPS_Data_M
     integer,  pointer :: l_v(:) => null() ! Last entry in values per sps
     integer,  pointer :: l_x(:) => null() ! Last entry in cross angles per sps
     integer,  pointer :: l_z(:) => null() ! Last entry in zet_basis per sps
+    integer,  pointer :: l_zp(:) => null() ! Last entry in Zeta x Phi per sps;
+                                          ! Not the same if l_v if there is an
+                                          ! earlier frequency-dependent species
     integer :: P_Len = 0 ! \sum_{i=1}^n (l_z(i)-l_z(i-1))*(l_p(i)-l_p(i-1))*
                          !              (l_x(i)-l_x(i-1))
     integer,  pointer :: windowstart(:) => null()! horizontal starting index
@@ -438,16 +441,18 @@ contains
     call allocate_test ( Grids_x%l_v, n, 'Grids_x%l_v', moduleName, lowBound=0 )
     call allocate_test ( Grids_x%l_x, n, 'Grids_x%l_x', moduleName, lowBound=0 )
     call allocate_test ( Grids_x%l_z, n, 'Grids_x%l_z', moduleName, lowBound=0 )
+    call allocate_test ( Grids_x%l_zp, n, 'Grids_x%l_zp', moduleName, lowBound=0 )
     call allocate_test ( Grids_x%mol, n, 'Grids_x%mol', moduleName )
     call allocate_test ( Grids_x%qty, n, 'Grids_x%qty', moduleName )
     call allocate_test ( Grids_x%where_dBeta_df, n, 'Grids_x%where_dBeta_df', ModuleName )
     call allocate_test ( Grids_x%s_ind, last_molecule, &
       & 'Grids_x%S_ind', moduleName, lowBound=first_molecule, fill=0 )
-    grids_x%l_z(0) = 0
-    grids_x%l_p(0) = 0
     grids_x%l_f(0) = 0
-    grids_x%l_x(0) = 0
+    grids_x%l_p(0) = 0
     grids_x%l_v(0) = 0
+    grids_x%l_x(0) = 0
+    grids_x%l_z(0) = 0
+    grids_x%l_zp(0) = 0
     grids_x%p_len = 0
     grids_x%mol = 0
     grids_x%qty = 0
@@ -562,6 +567,7 @@ contains
       grids_x%l_v(ii) = grids_x%l_v(ii-1) + kf * kz * kp * kx
       grids_x%z_coord(ii) = qty%template%verticalCoordinate
       grids_x%l_z(ii) = grids_x%l_z(ii-1) + kz * merge(1,kx,qty%template%stacked)
+      grids_x%l_zp(ii) = grids_x%l_zp(ii-1) + kz * kp
       grids_x%p_len = grids_x%p_len + kz * kp * kx
       grids_x%mol(ii) = qty%template%molecule
       grids_x%qty(ii) = qty%template%quantityType
@@ -926,7 +932,7 @@ contains
                                              ! <= 1 => don't dump values
     integer, intent(in), optional :: OneGrid ! Only dump this grid
 
-    integer :: I, I1, IN, KX, MyDetails, NZG, NZV, W
+    integer :: I, I1, IN, KX, L1, MyDetails, NZG, NZV, W
 
     myDetails = 0
     if ( present(details) ) myDetails = details
@@ -944,6 +950,7 @@ contains
       i1 = oneGrid
       in = oneGrid
     end if
+    l1 = max(i1-1,1)
     do i = i1, in
       call output ( i )
       if ( the_grid%qtyStuff(i)%qty%template%name > 0 ) then
@@ -966,17 +973,18 @@ contains
       end if
       call newLine
     end do
-    call dump ( the_grid%l_f(i1-1:in), 'The_grid%l_f' )
-    call dump ( the_grid%l_z(i1-1:in), 'The_grid%l_z' )
-    call dump ( the_grid%l_p(i1-1:in), 'The_grid%l_p' )
-    call dump ( the_grid%l_x(i1-1:in), 'The_grid%l_x' )
-    call dump ( the_grid%l_v(i1-1:in), 'The_grid%l_v' )
+    call dump ( the_grid%l_f(l1:in), 'The_grid%l_f' )
+    call dump ( the_grid%l_z(l1:in), 'The_grid%l_z' )
+    call dump ( the_grid%l_p(l1:in), 'The_grid%l_p' )
+    call dump ( the_grid%l_x(l1:in), 'The_grid%l_x' )
+    call dump ( the_grid%l_v(l1:in), 'The_grid%l_v' )
+    call dump ( the_grid%l_zp(l1:in), 'The_grid%l_zp' )
     call dump ( the_grid%windowStart(i1:in), 'The_grid%WindowStart' )
     call dump ( the_grid%windowFinish(i1:in), 'The_grid%WindowFinish' )
     call dump ( the_grid%lin_log(i1:in), 'The_grid%Lin_Log' )
     if ( myDetails > 0 ) then
       call dump ( the_grid%min_val(i1:in), 'The_grid%Min_Val' )
-      call dump ( the_grid%frq_basis(the_grid%l_f(i1-1)+1:the_grid%l_f(in)), &
+      call dump ( the_grid%frq_basis(the_grid%l_f(l1)+1:the_grid%l_f(in)), &
         & 'The_grid%Frq_Basis' )
       call dump ( the_grid%coherent(i1:in), 'The_grid%Coherent' )
       call dump ( the_grid%stacked(i1:in), 'The_grid%Stacked' )
@@ -1059,6 +1067,9 @@ contains
 end module LOAD_SPS_DATA_M
 
 ! $Log$
+! Revision 2.121  2017/11/03 20:57:45  pwagner
+! Most array gymnastics moved from MLSFillValues to HyperSlabs module
+!
 ! Revision 2.120  2017/03/11 00:57:54  vsnyder
 ! Make components of C_t contiguous.  Add Subset and Short arguments.  Use
 ! components of C_t in more places.
