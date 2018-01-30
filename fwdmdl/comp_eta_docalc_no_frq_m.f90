@@ -243,7 +243,9 @@ contains
 
 ! -----------------------------------  Spread_Eta_FZP_from_Eta_ZP  -----
   subroutine Spread_Eta_FZP_from_Eta_ZP ( Grids_x, Eta_ZP, Do_Calc_ZP, &
-                                        &          Eta_FZP, Do_Calc_FZP )
+                                        &          Eta_FZP, Do_Calc_FZP, &
+                                        &          NZ_ZP, NNZ_ZP, &
+                                        &          NZ_FZP, NNZ_FZP, Sps )
 
     ! For species that have no frequency dependence, Eta_ZP = Eta_FZP.
     ! For those that do have frequency dependence, spread out Eta_ZP for
@@ -258,39 +260,61 @@ contains
             ! First dimension is same as sps_values.
     logical, intent(in) :: Do_Calc_Zp(:,:) ! logical indicating whether there
             ! is a contribution for this state vector element
-    real(rp), intent(out) :: Eta_Fzp(:,:)  ! Path X (Eta_f x Eta_z x Eta_phi)
+    real(rp), intent(inout) :: Eta_Fzp(:,:)  ! Path X (Eta_f x Eta_z x Eta_phi)
             ! First dimension is same as sps_values.
-    logical, intent(out) :: Do_Calc_Fzp(:,:) ! indicates whether
+    logical, intent(inout) :: Do_Calc_Fzp(:,:) ! indicates whether
             ! there is a contribution for this state vector element. Same
             ! shape as Eta_Fzp.
+    ! Assume all are present iff NZ_ZP is present
+    integer, intent(in), optional :: NZ_ZP(:,:)     ! Subscripts of zeroes in Eta_ZP
+    integer, intent(in), optional :: NNZ_ZP(:)      ! Number of nonzeroes in Eta_ZP
+    integer, intent(inout), optional :: NZ_FZP(:,:) ! Subscripts of zeroes in Eta_FZP
+    integer, intent(inout), optional :: NNZ_FZP(:)  ! Number of nonzeroes in Eta_FZP
+    integer, intent(in), optional :: Sps            ! Only spread this one
 
     integer :: F_Inda ! First frequency for one species
     integer :: F_Indb ! Last frequency for one species
     integer :: N_F    ! Number of frequencies for one species
-    integer :: Sps_I  ! Species index
+    integer :: Sps_I, Sps_N, Sps_1  ! Species index
     integer :: Sv_F   ! State vector index for FZP
     integer :: Sv_ZP  ! State vector index for ZP only
     integer :: V_Inda ! First value index for FZP
     integer :: W_Inda ! First ZP index for one species
     integer :: W_Indb ! Last ZP index for one species
 
+    sps_1 = 1
+    sps_n = ubound(grids_x%l_z,1)
+
     f_inda = 0
     w_inda = 0
 
-    do sps_i = 1, ubound(grids_x%l_z,1)
+    if ( present(sps) ) then
+      sps_1 = sps
+      sps_n = sps
+      f_inda = grids_x%l_f(sps_1-1)
+      w_inda = grids_x%l_zp(sps_1-1)
+    end if
+
+    do sps_i = sps_1, sps_n
 
       f_indb = grids_x%l_f(sps_i)
       n_f = f_indb - f_inda
 
       v_inda = grids_x%l_v(sps_i-1) ! One element before the first one
-      w_indb = w_inda + (Grids_x%l_z(sps_i) - Grids_x%l_z(sps_i-1)) * &
-                        (Grids_x%l_p(sps_i) - Grids_x%l_p(sps_i-1))
+      w_indb = grids_x%l_zp(sps_i)
       do sv_zp = w_inda + 1, w_indb
         do sv_f = 1, n_f
           v_inda = v_inda + 1
+          if ( present(sps) ) then
+            if ( sps_i /= sps ) cycle
+          end if
           eta_fzp(:,v_inda) = eta_zp(:,sv_zp) ! Spread eta_zp
           do_calc_fzp(:,v_inda) = do_calc_zp(:,sv_zp) .and. & ! Spread do_calc_zp
-                                & Grids_x%deriv_flags(v_inda)
+                                & grids_x%deriv_flags(v_inda)
+          if ( present(nz_zp) ) then
+            nz_fzp(:,v_inda) = nz_zp(:,sv_zp) ! Spread nz_zp
+            nnz_fzp(v_inda) = nnz_zp(sv_zp)
+          end if
         end do
       end do
 
@@ -314,6 +338,10 @@ contains
 end module Comp_Eta_Docalc_No_Frq_m
 
 ! $Log$
+! Revision 2.25  2018/01/30 02:55:43  vsnyder
+! Add spreading for NZ_ZP, NNZ_ZP.  Add SPS argument to
+! Spread_Eta_FZP_from_Eta_ZP.  Use L_ZP component of Grids_X.
+!
 ! Revision 2.24  2017/11/29 00:41:33  vsnyder
 ! Get RP from MLSKinds instead of MLSCommon
 !
