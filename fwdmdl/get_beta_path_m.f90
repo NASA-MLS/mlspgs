@@ -39,27 +39,36 @@ contains
         & dBeta_dt_path, dBeta_dw_path, dBeta_dn_path, dBeta_dv_path, &
         & dBeta_df_path, Where_dBeta_df, Sps_Path )
 
-    use DUMP_0, only: DUMP
-    use FORWARDMODELCONFIG, only: BETA_GROUP_T, LINECENTER, LINEWIDTH, LINEWIDTH_TDEP
-    use INTRINSIC, only: LIT_INDICES
-    use MLSKINDS, only: R8, RP, IP
-    use MLSSTRINGLISTS, only: SWITCHDETAIL
-    use MOLECULES, only: L_RHI
-    use OUTPUT_M, only: OUTPUT
-    use SLABS_SW_M, only: SLABS_STRUCT
-    use STRING_TABLE, only: DISPLAY_STRING
-    use TOGGLES, only: EMIT, LEVELS, SWITCHES, TOGGLE
-    use TRACE_M, only: TRACE_BEGIN, TRACE_END
+    use Dump_0, only: Dump
+    use ForwardModelConfig, only: Beta_Group_T, LineCenter, LineWidth, &
+      & LineWidth_Tdep
+    use Intrinsic, only: Lit_Indices
+    use MLSKinds, only: R8, RP, IP
+    use MLSStringLists, only: SwitchDetail
+    use Molecules, only: L_RHI
+    use Output_M, only: Output
+    use SLABS_SW_M, only: SLABS_Struct
+    use String_Table, only: Display_String
+    use Toggles, only: Emit, Levels, Switches, Toggle
+    use Trace_M, only: Trace_Begin, Trace_End
 
 ! Inputs:
 
     real(r8), intent(in) :: Frq          ! frequency in MHz
     real(r8), intent(in) :: Flo          ! LO frequency in MHz
-    real(rp), intent(in) :: P_path(:)    ! path pressures in hPa!
-    real(rp), intent(in) :: T_path(:)    ! path temperatures
+    real(rp), intent(in) :: P_path(:)    ! pressures on combined coarse & fine
+                                         ! path in hPa.  Use the subset
+                                         ! selected by path_inds.
+    real(rp), intent(in) :: T_path(:)    ! path temperatures, already selected
+                                         ! from combined coarse & fine path by
+                                         ! path_inds.
     real(rp), intent(in) :: Tanh_path(:) ! tanh(0.5*h_over_k*frq / t_path)
-    type (slabs_struct), dimension(:,:), intent(in) :: Gl_slabs
-    integer(ip), intent(in) :: Path_inds(:) ! indices for reading p_path and gl_slabs
+    type (slabs_struct), dimension(:,:), intent(in) :: Gl_slabs ! Single-line
+                                         ! absorption data on the combined
+                                         ! coarse & fine path.  Use the subset
+                                         ! selected by path_inds.
+    integer(ip), intent(in) :: Path_inds(:) ! indices in combined coarse & fine
+                                         ! path for reading p_path and gl_slabs.
 
     type (beta_group_t), intent(in), dimension(:) :: beta_group
     integer, intent(in) :: SX            ! Sideband index, 1 or 2.
@@ -68,7 +77,7 @@ contains
 
 ! Optional inputs.
 
-    logical, intent(in) :: t_der_path_flags(:)     ! where temperature derivatives
+    logical, intent(in) :: t_der_path_flags(:) ! where temperature derivatives
 !                               are needed. Only useful for subsetting.
     real(rp), intent(in) :: dTanh_dT(:)    ! dTanh( (-h nu) / (k T) ) / dT on path
 
@@ -82,16 +91,16 @@ contains
 
     real(rp), intent(out) :: beta_path(:,:) ! path beta for each species, km^{-1}
 
-! Optional outputs.  We use ASSOCIATED instead of PRESENT so that the
-! caller doesn't need multiple branches.  These would be INTENT(OUT) if
-! we could say so.
+! Optional outputs.  We use size(.)>0 instead of PRESENT so that the
+! caller doesn't need multiple branches.
 
-    real(rp), target :: dBeta_dT_path(:,:) ! Temperature
-    real(rp), target :: dBeta_dw_path(:,:) ! line width
-    real(rp), target :: dBeta_dn_path(:,:) ! line width t dep.
-    real(rp), target :: dBeta_dv_path(:,:) ! line position
-    real(rp), target :: dBeta_df_path(:,:) ! mixing ratio
-    ! Which column of dBeta_df_path to use for a molecule.  Do not compute if zero.
+    real(rp), target, intent(out) :: dBeta_dT_path(:,:) ! Temperature
+    real(rp), target, intent(out) :: dBeta_dw_path(:,:) ! line width
+    real(rp), target, intent(out) :: dBeta_dn_path(:,:) ! line width t dep.
+    real(rp), target, intent(out) :: dBeta_dv_path(:,:) ! line position
+    real(rp), target, intent(out) :: dBeta_df_path(:,:) ! mixing ratio
+    ! Which column of dBeta_df_path to use for a molecule.  Do not compute if
+    ! zero.
     integer, intent(in) :: Where_dBeta_df(:)
 
 ! Local variables.
@@ -239,18 +248,18 @@ contains
     & dBeta_dT_Path, dBeta_dw_Path, dBeta_dn_Path, dBeta_dv_Path, &
     & dBeta_dIWC_Path )
 
-    use DUMP_0, only: DUMP
-    use FORWARDMODELCONFIG, only: BETA_GROUP_T
-    use INTRINSIC, only: LIT_INDICES
-    use MLSKINDS, only: RP, R8
-    use MLSSTRINGLISTS, only: SWITCHDETAIL
-    use MOLECULES, only: L_CLOUDICE, L_RHI
-    use OUTPUT_M, only: OUTPUT
-    use PFADATABASE_M, only: PFADATA
-    use READ_MIE_M, only: BETA_C_A, DBETA_DIWC_C_A, DBETA_DT_C_A, &
-                        & BETA_C_S, DBETA_DIWC_C_S, DBETA_DT_C_S
-    use STRING_TABLE, only: DISPLAY_STRING
-    use TOGGLES, only: SWITCHES
+    use Dump_0, only: Dump
+    use ForwardModelConfig, only: Beta_Group_T
+    use Intrinsic, only: Lit_Indices
+    use MLSKinds, only: RP, R8
+    use MLSStringLists, only: SwitchDetail
+    use Molecules, only: L_Cloudice, L_RHI
+    use Output_M, only: Output
+    use PFADatabase_M, only: PFAData
+    use Read_Mie_M, only: Beta_C_A, DBeta_DIWC_C_A, DBeta_DT_C_A, &
+                        & Beta_C_S, DBeta_DIWC_C_S, DBeta_DT_C_S
+    use String_Table, only: Display_String
+    use Toggles, only: Switches
 
 ! Inputs
     real(r8), intent(in) :: Frq         ! Channel center frequency in MHz
@@ -259,7 +268,7 @@ contains
     integer, intent(in) :: Path_inds(:) ! indicies for reading P_path
     real(rp), intent(in) :: T_path(:)   ! path temperatures
     type(beta_group_t), intent(in) :: Beta_Group(:) ! PFA stuff for the beta group
-    integer, intent(in) :: SX            ! Sideband index, 1 or 2.
+    integer, intent(in) :: SX           ! Sideband index, 1 or 2.
     real(rp), intent(in) :: Vel_Rel     ! LOS Vel / C
     real(rp), intent(in) :: Sps_Path(:,:) ! VMR's, for nonlinear species
 
@@ -338,7 +347,7 @@ contains
       case default
         do j = 1, size(beta_group(i)%pfa(sx)%molecules)
           if ( beta_group(i)%pfa(sx)%data(frq_i,j)/= 0 ) then
-            call create_beta_path_pfa ( frq, p_path, path_inds, t_path, vel_rel, &
+            call create_beta_path_PFA ( frq, p_path, path_inds, t_path, vel_rel, &
               & PFAData(beta_group(i)%pfa(sx)%data(frq_i,j)),   &
               & beta_group(i)%pfa(sx)%ratio(j), beta_path(:,i), &
               & t_der_path_flags, dBdT, dBdw, dBdn, dBdv )
@@ -391,20 +400,20 @@ contains
   subroutine Get_Beta_Path_Polarized ( Frq, H, Beta_group, GL_slabs, &
                                      & Path_inds, Beta_path, dBeta_path_dT )
 
-    use DUMP_0, only: DUMP
-    use FORWARDMODELCONFIG, only: LBL_T
-    use INTRINSIC, only: LIT_INDICES
-    use MLSKINDS, only: R8, RP, IP
-    use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use Dump_0, only: Dump
+    use ForwardModelConfig, only: LBL_T
+    use Intrinsic, only: Lit_Indices
+    use MLSKinds, only: R8, RP, IP
+    use MLSStringLists, only: SwitchDetail
     use O2_ABS_CS_M, only: O2_ABS_CS, D_O2_ABS_CS_DT
-    use OUTPUT_M, only: OUTPUT
-    use SLABS_SW_M, only: SLABS_STRUCT
-    use STRING_TABLE, only: DISPLAY_STRING
-    use TOGGLES, only: SWITCHES
+    use Output_M, only: Output
+    use SLABS_SW_M, only: SLABS_Struct
+    use String_Table, only: Display_String
+    use Toggles, only: Switches
 
 ! Inputs:
 
-    real(r8), intent(in) :: Frq       ! frequency in MHz
+    real(r8), intent(in) :: Frq       ! Frequency in MHz
     real(rp), intent(in) :: H(:)      ! Magnetic field component in instrument
                                       ! polarization on the path
     type (slabs_struct), dimension(:,:), intent(in) :: GL_slabs
@@ -494,15 +503,16 @@ contains
   ! ----------------------------------------  Get_Beta_Path_Cloud  -----
   subroutine Get_Beta_Path_Cloud ( Frq, t_path, tt_path, path_inds, &
         & beta_path_cloud, w0_path, tt_path_c, IPSD, WC, fwdModelConf  )
-    use FORWARDMODELCONFIG, only: FORWARDMODELCONFIG_T
-    use CLOUD_EXTINCTION, only: GET_BETA_CLOUD
-    use MLSKINDS, only: R8, RP, IP
+
+    use ForwardModelConfig, only: ForwardModelConfig_T
+    use Cloud_Extinction, only: Get_Beta_Cloud
+    use MLSKinds, only: R8, RP, IP
 
 ! Inputs:
 
-    real(r8), intent(in) :: Frq             ! frequency in MHz
-    real(rp), intent(in) :: T_path(:)       ! path temperatures
-    real(rp), intent(in) :: tt_path(:,:)    ! scating source func on gl grids
+    real(r8), intent(in) :: Frq             ! Frequency in MHz
+    real(rp), intent(in) :: T_path(:)       ! Path temperatures
+    real(rp), intent(in) :: tt_path(:,:)    ! Scating source func on gl grids
 
 
     integer(ip), intent(in) :: Path_inds(:) ! indices for reading T_PATH
@@ -528,10 +538,10 @@ contains
 
 ! begin the code
 
-    NU  = fwdModelConf%NUM_SCATTERING_ANGLES
-    NUA = fwdModelConf%NUM_AZIMUTH_ANGLES
-    NAB = fwdModelConf%NUM_AB_TERMS
-    NR  = fwdModelConf%NUM_SIZE_BINS
+    NU  = fwdModelConf%Num_Scattering_Angles
+    NUA = fwdModelConf%Num_Azimuth_Angles
+    NAB = fwdModelConf%Num_AB_Terms
+    NR  = fwdModelConf%Num_Size_Bins
 
     n_path = size(path_inds)
 
@@ -572,13 +582,13 @@ contains
 !  running time was achieved.  Create_Beta is in the inner loop of the
 !  forward model.
 
-    use MLSKINDS, only: RP, R8, IP
-    use MOLECULES, only: L_N2, L_EXTINCTION, L_EXTINCTIONV2, L_H2O, &
-      & L_MIFEXTINCTION, L_O2
-    use SLABS_SW_M, only: DVOIGT_SPECTRAL, VOIGT_LORENTZ, &
-      & SLABS_LINES, SLABS_LINES_DT, SLABS_STRUCT, &
-      & SLABSWINT_LINES, SLABSWINT_LINES_DT
-    use SPECTROSCOPYCATALOG_M, only: CATALOG_T, LINES
+    use MLSKinds, only: RP, R8, IP
+    use Molecules, only: L_N2, L_Extinction, L_ExtinctionV2, L_H2O, &
+      & L_MIFExtinction, L_O2
+    use SLABS_SW_M, only: DVoigt_Spectral, Voigt_Lorentz, &
+      & SLABS_Lines, SLABS_Lines_DT, SLABS_Struct, &
+      & SLABSWint_Lines, SLABSWint_Lines_DT
+    use SpectroscopyCatalog_M, only: Catalog_T, Lines
 
 ! Inputs:
     real(rp), intent(in) :: pressure   ! pressure in hPa
@@ -606,13 +616,13 @@ contains
 ! Outputs
     real(rp), intent(out) :: beta_value         ! km^{-1}
 ! Optional outputs
-    real(rp), optional, intent(out) :: DBETA_DT ! Temperature derivative
-    real(rp), optional, intent(out) :: DBETA_DW ! line width derivative
-    real(rp), optional, intent(out) :: DBETA_DN ! temperature dependence deriv
-    real(rp), optional, intent(out) :: DBETA_DV ! line position derivative
+    real(rp), optional, intent(out) :: DBeta_DT ! Temperature derivative
+    real(rp), optional, intent(out) :: DBeta_DW ! line width derivative
+    real(rp), optional, intent(out) :: DBeta_DN ! temperature dependence deriv
+    real(rp), optional, intent(out) :: DBeta_DV ! line position derivative
 ! Optional for H2O -- Optional so PFA table generation can ignore it
     real(rp), optional, intent(in) :: SPS       ! Mixing ratio
-    real(rp), optional, intent(out) :: DBETA_DF ! mixing ratio derivative
+    real(rp), optional, intent(out) :: DBeta_DF ! mixing ratio derivative
 
 ! -----     Local variables     ----------------------------------------
 
@@ -769,13 +779,13 @@ contains
 !  should be called for primary and image separately. Compute dBeta_dT if it's
 !  associated.  Compute dBeta_dw, dBeta_dn, dBeta_dv if they're associated. 
 
-    use MLSKINDS, only: RP, R8
-    use MOLECULES, only: L_N2, L_EXTINCTION, L_EXTINCTIONV2, L_H2O, &
-      & L_MIFEXTINCTION, L_O2
-    use SLABS_SW_M, only: SLABS_STRUCT, &
-      & SLABS_LINES, SLABS_LINES_DALL, SLABS_LINES_DSPECTRAL, SLABS_LINES_DT, &
-      & SLABSWINT_LINES, &
-      & SLABSWINT_LINES_DALL, SLABSWINT_LINES_DSPECTRAL, SLABSWINT_LINES_DT
+    use MLSKinds, only: RP, R8
+    use Molecules, only: L_N2, L_Extinction, L_ExtinctionV2, L_H2O, &
+      & L_MIFExtinction, L_O2
+    use SLABS_SW_M, only: SLABS_Struct, &
+      & SLABS_Lines, SLABS_Lines_Dall, SLABS_Lines_DSpectral, SLABS_Lines_DT, &
+      & SLABSWint_Lines, &
+      & SLABSWint_Lines_Dall, SLABSWint_Lines_DSpectral, SLABSWint_Lines_DT
 
 ! Inputs:
     integer, intent(in) :: Path_inds(:)! Which Pressures to use
@@ -1041,9 +1051,9 @@ contains
   !%
   ! which can be expressed in matrix-vector form as $\xi^T Z \eta$.
 
-    use MLSNUMERICS, only: PUREHUNT
-    use MLSKINDS, only: RP, R8
-    use READ_MIE_M, only: F_S, IWC_S, T_S
+    use MLSNumerics, only: PureHunt
+    use MLSKinds, only: RP, R8
+    use Read_Mie_M, only: F_S, IWC_S, T_S
 
 ! Inputs:
     real(r8), intent(in) :: Frq         ! Channel center frequency in MHz
@@ -1114,9 +1124,9 @@ contains
   subroutine Create_Beta_Path_PFA ( Frq, P_Path, Path_Inds, T_Path, Vel_Rel, &
     & PFAD, Ratio, Beta_Path, T_Der_Path, dBdT, dBdw, dBdn, dBdv )
 
-    use MLSNUMERICS, only: PUREHUNT
-    use MLSKINDS, only: RP, R8
-    use PFADATABASE_M, only: PFADATA_T
+    use MLSNumerics, only: PureHunt
+    use MLSKinds, only: RP, R8
+    use PFADatabase_M, only: PFAData_T
 
 ! Inputs:
     real(r8), intent(in) :: Frq         ! Channel center frequency in MHz
@@ -1285,12 +1295,13 @@ contains
   function Abs_CS_Cont ( Cont, Temperature, Pressure, Frequency ) &
     & result(Abs_CS_Cont_r)
   ! real(rp) function Abs_CS_Cont ( Cont, Temperature, Pressure, Frequency )
-    use MLSKINDS, only: RP
 
-    real(rp), intent(in) :: CONT(:)     ! continuum parameters
-    real(rp), intent(in) :: TEMPERATURE ! in Kelvin
-    real(rp), intent(in) :: PRESSURE    ! in mbar
-    real(rp), intent(in) :: FREQUENCY   ! in MegaHertz
+    use MLSKinds, only: RP
+
+    real(rp), intent(in) :: Cont(:)     ! Continuum parameters
+    real(rp), intent(in) :: Temperature ! in Kelvin
+    real(rp), intent(in) :: Pressure    ! in mbar
+    real(rp), intent(in) :: Frequency   ! in MegaHertz
     real(rp) :: Abs_CS_Cont_r
 
     Abs_CS_Cont_r = cont(1) * pressure * pressure * frequency * frequency * &
@@ -1304,12 +1315,13 @@ contains
   pure &
   subroutine Abs_CS_Cont_dT ( Cont, Temperature, Pressure, Frequency, &
     & Beta, dBeta_dT )
-    use MLSKINDS, only: RP
 
-    real(rp), intent(in) :: CONT(:)     ! continuum parameters
-    real(rp), intent(in) :: TEMPERATURE ! in Kelvin
-    real(rp), intent(in) :: PRESSURE    ! in mbar
-    real(rp), intent(in) :: FREQUENCY   ! in MegaHertz
+    use MLSKinds, only: RP
+
+    real(rp), intent(in) :: Cont(:)     ! Continuum parameters
+    real(rp), intent(in) :: Temperature ! in Kelvin
+    real(rp), intent(in) :: Pressure    ! in mbar
+    real(rp), intent(in) :: Frequency   ! in MegaHertz
     real(rp), intent(out) :: Beta, dBeta_dT ! km^{-1}, km^{-1}/K
 
     real(rp) :: Onedt ! 1/T
@@ -1333,12 +1345,13 @@ contains
   pure &
   function Abs_CS_H2O_Cont ( Cont, Temperature, Pressure, Frequency, Sps ) &
     & result(Beta)
-    use MLSKINDS, only: RP
 
-    real(rp), intent(in) :: CONT(:)     ! continuum parameters
-    real(rp), intent(in) :: TEMPERATURE ! in Kelvin
-    real(rp), intent(in) :: PRESSURE    ! in mbar
-    real(rp), intent(in) :: FREQUENCY   ! in MegaHertz
+    use MLSKinds, only: RP
+
+    real(rp), intent(in) :: Cont(:)     ! Continuum parameters
+    real(rp), intent(in) :: Temperature ! in Kelvin
+    real(rp), intent(in) :: Pressure    ! in mbar
+    real(rp), intent(in) :: Frequency   ! in MegaHertz
     real(rp), intent(in), optional :: SPS ! Mixing ratio
     real(rp) :: Beta                    ! km^{-1}
     real(rp) :: dBdf
@@ -1368,12 +1381,13 @@ contains
   pure &
   subroutine Abs_CS_H2O_Cont_df ( Cont, Temperature, Pressure, Frequency, &
     & Sps, Beta, dBeta_df )
-    use MLSKINDS, only: RP
 
-    real(rp), intent(in) :: CONT(:)     ! continuum parameters
-    real(rp), intent(in) :: TEMPERATURE ! in Kelvin
-    real(rp), intent(in) :: PRESSURE    ! in mbar
-    real(rp), intent(in) :: FREQUENCY   ! in MegaHertz
+    use MLSKinds, only: RP
+
+    real(rp), intent(in) :: Cont(:)     ! Continuum parameters
+    real(rp), intent(in) :: Temperature ! in Kelvin
+    real(rp), intent(in) :: Pressure    ! in mbar
+    real(rp), intent(in) :: Frequency   ! in MegaHertz
     real(rp), intent(in) :: SPS         ! Mixing ratio
     real(rp), intent(out) :: Beta       ! km^{-1}
     real(rp), intent(out) :: dBeta_df
@@ -1399,12 +1413,13 @@ contains
   pure &
   subroutine Abs_CS_H2O_Cont_dT ( Cont, Temperature, Pressure, Frequency, &
     & SPS, Beta, dBeta_dT, dBeta_df )
-    use MLSKINDS, only: RP
 
-    real(rp), intent(in) :: CONT(:)     ! continuum parameters
-    real(rp), intent(in) :: TEMPERATURE ! in Kelvin
-    real(rp), intent(in) :: PRESSURE    ! in mbar
-    real(rp), intent(in) :: FREQUENCY   ! in MegaHertz
+    use MLSKinds, only: RP
+
+    real(rp), intent(in) :: Cont(:)     ! Continuum parameters
+    real(rp), intent(in) :: Temperature ! in Kelvin
+    real(rp), intent(in) :: Pressure    ! in mbar
+    real(rp), intent(in) :: Frequency   ! in MegaHertz
     real(rp), intent(in), optional :: SPS ! Mixing ratio
     real(rp), intent(out) :: Beta, dBeta_dT ! km^{-1}, km^{-1}/K
     real(rp), intent(out), optional :: dBeta_df ! Derivative w.r.t SPS
@@ -1452,15 +1467,16 @@ contains
   function Abs_CS_N2_Cont ( Cont, Temperature, Pressure, Frequency ) &
     & result(Abs_CS_N2_Cont_r)
   ! real(rp) Function Abs_CS_N2_cont ( Cont, Temperature, Pressure, Frequency )
-    use MLSKINDS, only: RP
 
-    real(rp), intent(in) :: CONT(:)     ! continuum parameters
-    real(rp), intent(in) :: TEMPERATURE ! in Kelvin
-    real(rp), intent(in) :: PRESSURE    ! in mbar
-    real(rp), intent(in) :: FREQUENCY   ! in MegaHertz
+    use MLSKinds, only: RP
+
+    real(rp), intent(in) :: Cont(:)     ! Continuum parameters
+    real(rp), intent(in) :: Temperature ! in Kelvin
+    real(rp), intent(in) :: Pressure    ! in mbar
+    real(rp), intent(in) :: Frequency   ! in MegaHertz
     real(rp) :: Abs_CS_N2_Cont_r
 
-    REAL(rp) :: THETA, FSQR, FSXT
+    REAL(rp) :: Theta, Fsqr, FSXT
 
 !{ Let $\theta = \frac{300}T$ and $f = p^2 \nu^2 \theta^{c_2}$. Then the N2
 !  continuum contribution to $\beta$ is\\
@@ -1484,15 +1500,15 @@ contains
   subroutine Abs_CS_N2_Cont_dT ( Cont, Temperature, Pressure, Frequency, &
     & Beta, dBeta_dT )
 
-    use MLSKINDS, only: RP
+    use MLSKinds, only: RP
 
-    real(rp), intent(in) :: CONT(:)     ! continuum parameters
-    real(rp), intent(in) :: TEMPERATURE ! in Kelvin
-    real(rp), intent(in) :: PRESSURE    ! in mbar
-    real(rp), intent(in) :: FREQUENCY   ! in MegaHertz
+    real(rp), intent(in) :: Cont(:)     ! Continuum parameters
+    real(rp), intent(in) :: Temperature ! in Kelvin
+    real(rp), intent(in) :: Pressure    ! in mbar
+    real(rp), intent(in) :: Frequency   ! in MegaHertz
     real(rp), intent(out) :: Beta, dBeta_dT ! km^{-1}, km^{-1}/K
 
-    real(rp) :: E1, E2, F, FSQR, FSXT, OneDT, THETA
+    real(rp) :: E1, E2, F, Fsqr, FSXT, OneDT, Theta
 
 !{ Let $\theta = \frac{300}T$ and $f = p^2 \nu^2 \theta^{c_2}$. Then the N2
 !  continuum contribution to $\beta$ is\\
@@ -1524,20 +1540,21 @@ contains
   function Abs_CS_O2_Cont ( Cont, Temperature, Pressure, Frequency ) &
     & result(Abs_CS_O2_Cont_r)
   ! real(rp) Function ABS_CS_O2_CONT ( Cont, Temperature, Pressure, Frequency )
-    use MLSKINDS, only: RP
+
+    use MLSKinds, only: RP
 
 !{ Let $\theta = \frac{300}T$, $f = (c_3 p \exp({c_4} \theta))^2$ and
 !  $D = \frac1{\nu^2 + f}$.
 !  Then the O2 continuum contribution to beta
 !  is $\beta = c_1 p^2 \nu^2 \exp({c_2} \theta) D$.
 
-    real(rp), intent(in) :: CONT(:)     ! continuum parameters
-    real(rp), intent(in) :: TEMPERATURE ! in Kelvin
-    real(rp), intent(in) :: PRESSURE    ! in mbar
-    real(rp), intent(in) :: FREQUENCY   ! in MegaHertz
+    real(rp), intent(in) :: Cont(:)     ! Continuum parameters
+    real(rp), intent(in) :: Temperature ! in Kelvin
+    real(rp), intent(in) :: Pressure    ! in mbar
+    real(rp), intent(in) :: Frequency   ! in MegaHertz
     real(rp) :: Abs_CS_O2_Cont_r
 
-    real(rp) :: THETA, FSQR
+    real(rp) :: Theta, Fsqr
 
     theta = log ( 300.0_rp / temperature )
     fsqr = frequency * frequency
@@ -1553,15 +1570,15 @@ contains
   subroutine Abs_CS_O2_Cont_dT ( Cont, Temperature, Pressure, Frequency, &
       & Beta, dBeta_dT )
 
-    use MLSKINDS, only: RP
+    use MLSKinds, only: RP
 
-    real(rp), intent(in) :: CONT(:)     ! continuum parameters
-    real(rp), intent(in) :: TEMPERATURE ! in Kelvin
-    real(rp), intent(in) :: PRESSURE    ! in mbar
-    real(rp), intent(in) :: FREQUENCY   ! in MegaHertz
+    real(rp), intent(in) :: Cont(:)     ! Continuum parameters
+    real(rp), intent(in) :: Temperature ! in Kelvin
+    real(rp), intent(in) :: Pressure    ! in mbar
+    real(rp), intent(in) :: Frequency   ! in MegaHertz
     real(rp), intent(out) :: Beta, dBeta_dT ! km^{-1}, km^{-1}/K
 
-    real(rp) :: D, F, FSQR, Onedt, THETA
+    real(rp) :: D, F, Fsqr, Onedt, Theta
 
 !{ Let $\theta = \frac{300}T$, $f = (c_3 p \theta^{c_4})^2$ and
 !  $D = \frac1{\nu^2 + f}$.
@@ -1596,6 +1613,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.120  2014/04/22 00:09:01  vsnyder
+! Remove unused identifiers
+!
 ! Revision 2.119  2014/04/04 19:43:10  vsnyder
 ! Move computation of QN from get_beta_path to o2_abs_cs.  This avoids the
 ! need for an array temp.
