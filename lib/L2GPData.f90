@@ -54,13 +54,13 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   private
   public :: L2GPdata_t
   public :: L2GPnamelen
-  public :: addL2GPToDatabase, appendL2GPData, &
-    & contractL2GPRecord, convertL2GPToQuantity, &
-    & cpHE5GlobalAttrs, cpL2GPdata, cpL2GPDataToAttribute, &
-    & destroyL2GPContents, destroyL2GPDatabase, &
+  public :: AddL2GPToDatabase, AppendL2GPData, &
+    & ContractL2GPRecord, ConvertL2GPToQuantity, &
+    & CpHE5GlobalAttrs, CpL2GPData, CpL2GPDataToAttribute, &
+    & DestroyL2GPContents, DestroyL2GPDatabase, &
     & Diff, DiffRange, Dump, DumpRange, &
-    & expandL2GPDataInPlace, extractL2GPRecord, isL2GPSetup, &
-    & readL2GPData, repairL2GP, setupNewL2GPRecord, writeL2GPData
+    & ExpandL2GPDataInPlace, ExtractL2GPRecord, IsL2GPSetup, &
+    & ReadL2GPData, RepairL2GP, SetupNewL2GPRecord, WriteL2GPData
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -72,7 +72,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
     module procedure ContractL2GPRecord_opt, ContractL2GPRecord_names
   end interface
 
-  interface DIFF
+  interface Diff
     module procedure DiffL2GPData
     module procedure DiffL2GPData_Chunks
     module procedure DiffL2GPData_Levels
@@ -80,11 +80,11 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
     module procedure DiffL2GPFiles_Name
   end interface
 
-  interface DIFFRANGE
+  interface Diffrange
     module procedure DiffL2GPData_RANGES
   end interface
 
-  interface DIFFSTATS
+  interface Diffstats
     module procedure DiffStatsInt
   end interface
 
@@ -111,9 +111,9 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   end interface
 
   interface cpL2GPData
-    module procedure cpL2GPData_fileID
-    module procedure cpL2GPData_fileName
-    module procedure cpL2GPData_MLSFile
+    module procedure CpL2GPData_fileID
+    module procedure CpL2GPData_fileName
+    module procedure CpL2GPData_MLSFile
   end interface
 
   interface RepairL2GP
@@ -122,8 +122,8 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   end interface
 
   interface writeL2GPData
-    module procedure writeL2GPData_fileID
-    module procedure writeL2GPData_MLSFile
+    module procedure WriteL2GPData_fileID
+    module procedure WriteL2GPData_MLSFile
   end interface
 
   ! This module defines datatypes and gives basic routines for storing and
@@ -273,8 +273,8 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
     & // &
     & 'molcm2,molcm2,molcm2,molcm2,molcm2,molcm2'
   character(len=16), dimension(10), parameter :: StatusBitNames = (/ &
-    & 'do not use      ', 'beware          ', '(unused)        ', &
-    & 'inform          ', 'high clouds     ', 'low clouds      ', &
+    & 'do not use      ', 'beware          ', 'inform          ', &
+    & 'post-processed  ', 'high clouds     ', 'low clouds      ', &
     & 'no meteorology  ', 'abandoned chunk ', 'too few radiance', &
     & 'mlsl2 crashed   ' /)
 !      123456789012345678901234567890123456789012345678901234567890
@@ -5430,6 +5430,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.230  2017/12/18 16:41:09  mmadatya
+! Added unit for new quantity geoHeight
+!
 ! Revision 2.229  2017/11/30 21:15:53  pwagner
 ! Avoid writing MissingValue to metadata
 !

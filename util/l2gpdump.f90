@@ -38,6 +38,7 @@ PROGRAM L2GPDump ! dumps L2GPData files
      & GetStringElement, Intersection, NumStringElements, ReadIntsFromList, &
      & StringElement, StringElementNum
    use MLSStrings, only: Lowercase, Readnumsfromchars
+   use Optional_M, only: Default
    use Output_M, only: Blanks, Newline, Output, &
      & ResumeOutput, SuspendOutput
    use Printit_M, only: Set_Config
@@ -96,13 +97,17 @@ PROGRAM L2GPDump ! dumps L2GPData files
   integer, save                   :: numGoodPrec = 0
   integer, save                   :: numNotUseable = 0
   integer, save                   :: numOddStatus = 0
+  integer, save                   :: numPostProcStatus = 0
   real, dimension(3), save        :: numTest = 0.
-  integer, parameter              :: MAXNUMBITSUSED = 9
+  integer, parameter              :: PostProcBitIndex = 4
+  integer, parameter              :: MAXNUMBITSUSED = 10 !9
   integer, dimension(MAXNUMBITSUSED), parameter :: bitNumber = &
-    & (/ 0, 1, 2, 4, 5, 6, 7, 8, 9 /)
+    & (/ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 /)
   integer, dimension(MAXNUMBITSUSED, 2), save :: bitCounts = 0
   character(len=*), parameter     :: bitNames = &
-    & '  dontuse,   bewary,     info,    hicld,    locld,   nogmao,abandoned,   toofew,    crash'
+    & '  dontuse,   bewary,     info,postprocd,' // &
+    & '    hicld,    locld,   nogmao,abandoned,   toofew,    crash'
+  !   01234567890123456789012345678901234567890123456789012345678901234567890123456789
   real(rgp), dimension(:), pointer :: values => null()
   ! Executable
   call set_config ( useToolkit = .false., logFileUnit = -1 )
@@ -516,18 +521,21 @@ contains
     enddo
    end subroutine dump_one_file
 
-   subroutine myPcts( options, inl2gp, swath )
+   subroutine myPcts( options, inl2gp, swath, silent )
      ! Args
      type ( Options_T ), intent(in)  :: options
      type (L2GPData_T), intent(in)   :: inl2gp
      character(len=*), intent(in)    :: swath
+     logical, optional, intent(in)   :: silent
      ! Internal variables
      integer                         :: bitindex, i, n
      type (L2GPData_T)               :: l2gp
+     logical                         :: mysilent
      logical, dimension(:), pointer  :: negativePrec => null() ! true if all prec < 0
      logical, dimension(:), pointer  :: oddStatus => null() ! true if all status odd
      ! Executable
-     if ( options%verbose ) print *, 'swath: ', trim(swath)
+     mysilent = Default ( silent, .false. ) 
+     if ( options%verbose .and. .not. mysilent ) print *, 'swath: ', trim(swath)
      ! Contract to just the levels and instances requested
      n = options%nGeoBoxDims
      if ( any(options%chunkRange /= 0) ) then
@@ -607,7 +615,7 @@ contains
              & count( l2gp%l2gpPrecision(:,:,i) == options%PrecisionCutOff )
          endif
        enddo
-       if ( .not. options%merge ) &
+       if ( .not. options%merge .and. .not. mysilent ) &
          & call showPercentages( numTest(3), numGoodPrec, 'precision', &
          & options%PrecisionCutOff, options%precCutoffRelation )
      endif
@@ -615,6 +623,7 @@ contains
      !   & (mod(l2gp%status, 2) > 0) ) )
      numNotUseable = numNotUseable + count ( negativePrec .or. oddStatus )
      numOddStatus = numOddStatus + count( oddStatus )
+     numPostProcStatus = numPostProcStatus + count(isBitSet( l2gp%status, bitNumber(PostProcBitIndex) ) )
      if ( options%statusBits ) then
        ! First, and last 3 bits are special
        ! For bit 0 we filter out only points with precision < 0
@@ -631,14 +640,21 @@ contains
        ! call outputNamedValue ( 'max status', maxval(l2gp%status) )
        ! call outputNamedValue ( 'min status', minval(l2gp%status) )
        do bitindex=2, MAXNUMBITSUSED-3
-         ! Bit 
-         bitCounts(bitindex, 2) = numGood
-         bitCounts(bitindex, 1) = bitCounts(bitindex, 1) + &
-           & count( .not. ( negativePrec .or. &
-           & (mod(l2gp%status, 2) > 0) ) .and. &
-           & isBitSet( l2gp%status, bitNumber(bitindex) ) )
+         if ( bitindex == PostProcBitIndex ) then
+           ! The bit for post-processing is special
+           bitCounts(PostProcBitIndex, 2) = bitCounts(PostProcBitIndex, 2) + &
+             & l2gp%nTimes
+           bitCounts(PostProcBitIndex,1) = numPostProcStatus
+         else
+           ! the other Bits
+           bitCounts(bitindex, 2) = numGood
+           bitCounts(bitindex, 1) = bitCounts(bitindex, 1) + &
+             & count( .not. ( negativePrec .or. &
+             & (mod(l2gp%status, 2) > 0) ) .and. &
+             & isBitSet( l2gp%status, bitNumber(bitindex) ) )
+         endif
        enddo
-       if ( .not. options%merge ) then
+       if ( .not. options%merge .and. .not. mysilent ) then
          call showStatusPct
          call showSummary
        endif
@@ -660,6 +676,8 @@ contains
      ! Dump the actual swath
      if ( options%verbose ) print *, 'swath: ', trim(swath)
      if ( options%verbose ) print *, 'dumpOptions: ', trim(options%dumpOptions)
+     ! This just fills some integer counters
+     call MyPcts ( options, l2gp, swath, silent=.true. )
      if ( options%nGeoBoxDims > 0 ) then
        call dumpRange( l2gp, &
          & options%geoBoxNames, options%geoBoxLowBound, options%geoBoxHiBound, &
@@ -767,6 +785,9 @@ end program L2GPDump
 !==================
 
 ! $Log$
+! Revision 1.23  2017/10/12 20:32:36  pwagner
+! More CamelCase is use statements; removed outdated build notes
+!
 ! Revision 1.22  2016/08/09 22:45:26  pwagner
 ! Consistent with splitting of Dunp_0
 !
