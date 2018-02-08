@@ -164,6 +164,7 @@
   
   ! Public procedures
   public :: Bummer, Crash_Burn, DumpConfig, RestoreConfig, SetConfig
+  public :: Dump_MLSFile
   public :: MLSMessage, MLSMessage_, MLSMessageSetup
   public :: MLSMessageexit, MLSMessageInquire, MLSMessageInternalFile
   public :: MLSMessageClose, MLSMessageReset, PVMErrorMessage
@@ -1038,12 +1039,17 @@ contains
     call PrintItOut( trim(line), MLSMSG_Info )
   end subroutine dump
 
-  ! ---------------------------------------------------  DumpFile  -----
-  subroutine DumpFile ( MLSFile  )
+  ! ---------------------------------------------------  DumpFile_old  -----
+  subroutine DumpFile_old ( MLSFile  )
     ! Show everything about it
-    type(MLSFile_T) :: MLSFile
-    integer, parameter :: SEVERE = MLSMSG_Error
+    type(MLSFile_T)      :: MLSFile
+    ! integer, parameter :: SEVERE = MLSMSG_Error
+    logical, parameter   :: UseMLSFileModuleDump = .true.
     ! Executable code
+    if ( UseMLSFileModuleDump ) then
+      call Dump_MLSFile( MLSFile )
+      return
+    endif
     call printitout ( 'MLS File Info: ', MLSMSG_Info )                                  
     call dump ( '(name) ', charValue=trim(MLSFile%Name))                                  
     call dump ( 'short name ', charValue=trim(MLSFile%shortName))                                  
@@ -1062,7 +1068,73 @@ contains
     call dump ( '    record length: ', MLSFile%recordLength)
     call dump ( '    Open?        : ', logValue= MLSFile%StillOpen)
     call dump ( '    error code   : ', MLSFile%errorCode)
-  end subroutine DumpFile
+  end subroutine DumpFile_old
+
+  ! ------------------------------------------ Dump_MLSFile ------------
+
+  subroutine Dump_MLSFile ( MLSFile, details )
+    use HighOutput, only: AddRow, AddRow_Divider, AddRow_Header, &
+      & OutputTable, StartTable
+    use Intrinsic, only: L_HDFeos, L_HDF, L_Swath, L_Zonalavg, Lit_Indices
+    use MLSCommon, only: AccessType, FileStringTable, Split_Path_Name
+    use String_Table, only: Get_String
+    ! Dummy arguments
+    type (MLSFile_T), intent(in)         ::      MLSFile
+    integer, intent(in), optional        ::      details
+    ! Local variables
+    integer                              ::      myDetails
+    character(len=PGSd_Pc_File_Path_Max) ::      name
+    character(len=PGSd_Pc_File_Path_Max) ::      path
+    character(len=PGSd_Pc_File_Path_Max) ::      str
+
+    ! Executable code
+    myDetails = 0
+    if ( present(details) ) myDetails = details
+    call split_path_name(MLSFile%Name, Path, Name)
+    call startTable
+    call addRow_header ( 'File Info', 'c' )
+    call addRow_divider ( '-' )
+    if ( len_trim(path) > 0 ) call addRow ( 'path', trim(path) )
+    call addRow ( 'name', trim(name) )
+    ! If details < 0, show only this name
+    if ( myDetails > -1 ) then
+      if ( UseSDPToolkit .and. MLSFile%shortName /= ' ' ) &
+        & call addRow ( 'short name', trim(MLSFile%shortName) )
+      call addRow ( 'Type', MLSFile%TypeStr )
+      if ( FILESTRINGTABLE ) then
+        call get_string ( lit_indices(MLSFile%Type), str, strip=.true. )
+        call addRow ( 'Type(int)', trim(str) )
+      endif
+      call addRow ( 'Access', trim(accessType(MLSFile%access)) )
+      call addRow ( 'Access (int)', MLSFile%access )
+      call addRow ( 'content', trim(MLSFile%content) )
+      call addRow ( 'last Operation', trim(MLSFile%lastOperation) )
+      call addRow ( 'still open?', MLSFile%stillOpen )
+      if ( &
+        & any(MLSFile%type == (/l_hdf, l_swath, l_hdfeos, l_zonalavg /) ) &
+        & .or. &
+        & MLSFile%TypeStr == 'hdf' &
+        & ) &
+        & call addRow ( 'hdf version', MLSFile%HDFVersion )
+      ! If details < 1, don't show any FileID info
+      if ( myDetails > 0 ) then
+        call addRow_divider ( '-' )
+        call addRow ( 'File ID', MLSFile%FileId%f_id )
+        if ( MLSFile%FileId%grp_id > 0 ) &
+          & call addRow ( 'Group ID', MLSFile%FileId%grp_id )
+        if ( MLSFile%FileId%sd_id > 0 ) &
+          & call addRow ( 'Dataset ID', MLSFile%FileId%sd_id )
+        if ( UseSDPToolkit )  then
+          call addRow ( 'PCF ID', MLSFile%PCFId )
+          call addRow ( 'PCF Range', (/MLSFile%PCFidRange%Bottom, MLSFile%PCFidRange%Top /) )
+        endif
+        if ( MLSFile%recordLength > 0 ) &
+          & call addRow ( 'record length', MLSFile%recordLength )
+        call addRow ( 'error code', MLSFile%errorCode )
+      endif
+    endif
+    call outputTable ( sep='|', border='-' )
+  end subroutine Dump_MLSFile
 
   ! ---------------------------------------------------  MessageMeansCrash  -----
   function MessageMeansCrash ( Message ) result ( goCrash )
@@ -1144,9 +1216,9 @@ contains
     if ( my_adv .and. severity >= MLSMSG_Severity_to_quit ) then
       ! Here's a chance to dump facts about last file we were reading/writing
       if ( present(MLSFile) ) then
-        call dumpFile(MLSFile)
+        call DumpFile_old( MLSFile )
       else if ( MLSMessageConfig%MLSFile%name /= ' ' ) then
-        call dumpFile( MLSMessageConfig%MLSFile )
+        call DumpFile_old( MLSMessageConfig%MLSFile )
       end if
       ! Here's a chance to use our (separate) call stack
       call dump_stack( where=.true., CPU=.true., StackIsEmpty=StackIsEmpty )
@@ -1164,6 +1236,9 @@ contains
 
 !
 ! $Log$
+! Revision 2.47  2018/02/08 23:20:55  pwagner
+! Improved appearance of Dump_MLSFile by use of outputTable
+!
 ! Revision 2.46  2017/12/07 02:21:32  vsnyder
 ! Remove unused variable declaration
 !

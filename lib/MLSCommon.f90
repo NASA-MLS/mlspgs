@@ -13,9 +13,10 @@
 module MLSCommon                ! Common definitions for the MLS software
 !=============================================================================
 
-  use ieee_arithmetic, only: ieee_is_finite, ieee_is_nan
+  use HDF, only: Dfacc_Create, Dfacc_Rdonly, Dfacc_Rdwr
+  use IEEE_Arithmetic, only: IEEE_Is_Finite, IEEE_Is_Nan
   use MLSKinds ! everything
-  use MLSStrings,  only: lowercase
+  use MLSStrings,  only: Lowercase
 
   implicit none
   private
@@ -63,14 +64,17 @@ module MLSCommon                ! Common definitions for the MLS software
 !               Retain value of MLSDebug thoughout pahse
 
 !     (subroutines and functions)
-! dontCrashHere May we skip otherwise obligatory crash in named modules?
-! inRange       does an argument lie within a specified range or interval
-! is_what_ieee  is an argument a specified ieee type
+! accessType       Converts DFACC_* <-> {l_create, l_rdwr, l_rdonly}
+! dontCrashHere    May we skip otherwise obligatory crash in named modules?
+! inRange          does an argument lie within a specified range or interval
+! is_what_ieee     is an argument a specified ieee type
+! split_path_name  splits the input path/name into path and name
 ! === (end of toc) ===                                                   
 ! === (start of api) ===
 ! log inRange( int arg, Range_T range )
 ! log inRange( real arg, Interval_T range )
 ! log is_what_ieee( type_signal what, num arg )
+! split_path_name (char* full_file_name, char* path, char* name, [char slash])
 ! === (end of api) ===
 
 !---------------------------- RCS Module Info ------------------------------
@@ -85,9 +89,11 @@ module MLSCommon                ! Common definitions for the MLS software
   ! We also put in these functions.
   ! Should they be relocated to other modules? Where?
 
-  public :: dontCrashHere
-  public :: inRange
-  public :: is_what_ieee
+  public :: AccessType
+  public :: DontCrashHere
+  public :: InRange
+  public :: Is_what_ieee
+  public :: Split_path_name
   
   ! User-defined datatypes
   public :: FileIDs_T
@@ -123,6 +129,17 @@ module MLSCommon                ! Common definitions for the MLS software
   integer, public, parameter :: NAN_SIGNAL    = INF_SIGNAL + 1
   integer, public, parameter :: FILL_SIGNAL   = NAN_SIGNAL + 1
   integer, public, parameter :: OLDFILL_SIGNAL= FILL_SIGNAL + 1
+
+  ! Unless you fill the string table with l_ quantities from intrinsic
+  ! make sure the next entry is .false. 
+  ! (or else it will segment fault in get_string)
+  ! MLSL2 does fill the string table, but many tools do not
+  logical, save, public :: FILESTRINGTABLE = .FALSE.
+
+  interface accessType
+    module procedure accessDFACCToStr
+    module procedure accessStrToDFACC
+  end interface
 
   ! Not just "is" but "=", because "is" may satisfy looser conditions
   interface equalsFillValue
@@ -234,11 +251,11 @@ module MLSCommon                ! Common definitions for the MLS software
   ! Stop passing file handles or names back & forth between routines
   ! -- pass one of these instead
   type MLSFile_T
-    character (LEN=16) :: content=""  ! e.g., 'l1brad', 'l2gp', 'l2aux', ..
-    character (LEN=8) :: lastOperation=""  ! 'open','close','read','write'
-    character (LEN=FileNameLen) :: Name=""  ! its name (usu. w/path)
-    character (LEN=ShortNameLen) :: ShortName=""  ! its short name; e.g. 'H2O'
-    character (LEN=8) :: typeStr=""  ! one of {'swath', 'hdf', ..}
+    character (len=16) :: content=""  ! e.g., 'l1brad', 'l2gp', 'l2aux', ..
+    character (len=8) :: lastOperation=""  ! 'open','close','read','write'
+    character (len=FileNameLen) :: Name=""  ! its name (usu. w/path)
+    character (len=ShortNameLen) :: ShortName=""  ! its short name; e.g. 'H2O'
+    character (len=8) :: typeStr=""  ! one of {'swath', 'hdf', ..}
     integer :: type=0  ! one of {l_swath, l_hdf, ..}
     integer :: access=0  ! one of {DFACC_RDONLY, DFACC_CREATE, ..}
     integer :: HDFVersion=0  ! its hdf version if hdf(eos)
@@ -256,8 +273,8 @@ module MLSCommon                ! Common definitions for the MLS software
     integer :: L1BOAId=0     ! The HDF ID (handle) for the L1BOA file
     ! Id(s) for the L1BRAD file(s)
     integer, dimension(:), pointer :: L1BRADIds=>NULL()
-    character (LEN=FileNameLen) :: L1BOAFileName=""  ! L1BOA file name
-    character (LEN=FileNameLen), dimension(:), pointer :: &
+    character (len=FileNameLen) :: L1BOAFileName=""  ! L1BOA file name
+    character (len=FileNameLen), dimension(:), pointer :: &
          & L1BRADFileNames=>NULL()
   end type L1BInfo_T
 
@@ -315,8 +332,52 @@ module MLSCommon                ! Common definitions for the MLS software
   
   type(MLSFill_T), public, save, dimension(:), pointer :: MLSFills => null()
 
-  contains
+contains
+  ! Now any public procedures and functions
+  !--------------------------------------------  accessType  -----
+  function accessDFACCToStr ( dfacc ) result(str)
 
+  ! This routine converts an hdf access type
+  ! like DFACC_RDONLY into a string like 'rdonly'
+  ! If access type is unrecognized, returns 'unknown'
+  ! Args
+  integer, intent(in)           :: dfacc
+  character(len=8)              :: str
+  ! Executable
+  select case (dfacc)
+  case (DFACC_CREATE)
+    str = 'create'
+  case (DFACC_RDONLY)
+    str = 'rdonly'
+  case (DFACC_RDWR)
+    str = 'rdwrite'
+  case default
+    str = 'unknown' ! Why not ' '? Or '?'
+  end select
+  end function accessDFACCToStr
+
+  function accessStrToDFACC ( str ) result(dfacc)
+
+  ! This routine converts a string like 'rdonly' into an hdf access type
+  ! like DFACC_RDONLY
+  ! If string is unrecognized, returns -999
+  ! Args
+  character(len=*), intent(in) :: str
+  integer                      :: dfacc
+  ! Executable
+  select case (lowercase(str(1:4)))
+  case ('crea')
+    dfacc = DFACC_CREATE
+  case ('rdon')
+    dfacc = DFACC_RDONLY
+  case ('rdwr')
+    dfacc = DFACC_RDWR
+  case default
+    dfacc = -999 ! why not DFACC_RDWR?
+  end select
+  end function accessStrToDFACC
+
+  !--------------------------------------------  DontCrashHere  -----
   ! May we skip otherwise obligatory crashes in named modules?
   ! We decide on the basis of whether the mocule
   logical function dontCrashHere( arg )
@@ -328,6 +389,7 @@ module MLSCommon                ! Common definitions for the MLS software
     dontCrashHere = index( lowercase(MLSNamesDontCrash), lowercase(trim(arg)) ) > 0
   end function dontCrashHere
 
+  !--------------------------------------------  InRange  -----
   ! This family of functions returns TRUE for arg(s) within the given range
   ! Like FindInRange, the range includes its endpoints;
   ! e.g. if arg = range%Bottom = range%Top, returns TRUE
@@ -357,6 +419,7 @@ module MLSCommon                ! Common definitions for the MLS software
     relation = (arg <= range%top) .and. (arg >= range%bottom)
   end function inRange_r8
 
+  !--------------------------------------------  Is_What_IEEE  -----
   elemental function is_what_ieee_r8( what, arg ) result( itIs )
     ! Args
     integer, intent(in)                       :: what ! a signal flag
@@ -445,6 +508,7 @@ module MLSCommon                ! Common definitions for the MLS software
     end select
   end function is_what_ieee_character
   
+  !--------------------------------------------  Is_A_Fill_Value  -----
   elemental function is_a_fill_value_int( arg ) result ( itIs )
     integer, intent(in) :: arg
     logical :: itIs
@@ -469,6 +533,7 @@ module MLSCommon                ! Common definitions for the MLS software
     include 'isafillvalue.f9h'
   end function is_a_fill_value_r8
   
+  !--------------------------------------------  WhatCondition  -----
   elemental function whatCondition ( c ) result ( what )
     ! Returns what condition id
     character(len=*), intent(in) :: c
@@ -487,6 +552,7 @@ module MLSCommon                ! Common definitions for the MLS software
     if ( index(c, '|') > 0 ) what = what + 10
   end function whatCondition
   
+  !--------------------------------------------  equalsFillValue  -----
   elemental function equalsFillValue_int( arg, theFillValue ) result( itsafill )
     integer, intent(in) :: arg
     real(r8), intent(in) :: theFillValue
@@ -510,6 +576,68 @@ module MLSCommon                ! Common definitions for the MLS software
     & max(real(undefinedTolerance, r8), abs(theFillValue*1.d-6)) )
   end function equalsFillValue_r8
 
+  ! --------------------------------------------  split_path_name  -----
+
+  ! This routine splits the input full_file_name
+  ! into its components path and name
+  ! where path may include one or more "/" or slash elements
+  ! (but one must be the terminating one; e.g., 'System/')
+  ! while name must have none (actually "/" comes from Machine%filsep).
+  ! special cases by example: full_file_name -> (path, name)
+  ! look.ma.no.slash -> (' ', 'look.ma.no.slash')
+  ! Luke/I/am/your/father/ -> ('Luke/I/am/your/father/', ' ')
+
+  ! optionally you may supply the slash divider
+  ! which must be a single character
+
+  elemental subroutine split_path_name ( full_file_name, path, name, slash )
+
+    ! Arguments
+
+    use Machine, only: Filsep ! / or :\
+
+    character (len=*), intent(in) :: full_file_name
+    character (len=*), intent(out) :: path
+    character (len=*), intent(out) :: name
+    character (len=1), optional, intent(in) :: slash
+
+    ! Local
+
+    character (len=1) :: mySlash
+    integer :: loc, n
+!   logical, parameter :: DEBUG = .false.
+
+    ! Begin
+
+    n = len_trim(full_file_name)
+
+    if ( n <= 0 ) then
+      path = ' '
+      name = ' '
+      return
+    end if
+
+    if ( present(slash) ) then
+      mySlash = slash
+    else
+      mySlash = filsep
+    end if
+
+    loc = scan(full_file_name(:n), mySlash, back=.true.)
+
+    if ( loc <= 0 ) then
+      path = ' '
+      name = adjustl(full_file_name)
+    else if ( loc == n ) then
+      path = adjustl(full_file_name)
+      name = ' '
+    else
+      path = adjustl(full_file_name(:loc))
+      name = adjustl(full_file_name(loc+1:))
+    end if
+
+  end subroutine split_path_name
+
 !=============================================================================
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
@@ -526,6 +654,9 @@ end module MLSCommon
 
 !
 ! $Log$
+! Revision 2.47  2018/02/08 23:18:00  pwagner
+! moved accessType and split_path_name here from MLSFiles
+!
 ! Revision 2.46  2015/06/30 18:39:10  pwagner
 ! May keep list of module names to exempt from annoying crashes
 !
