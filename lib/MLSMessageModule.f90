@@ -13,33 +13,36 @@
 module MLSMessageModule         ! Basic messaging for the MLSPGS suite
 !==============================================================================
 
-  use Call_stack_m, only: dump_stack ! used in mlsmessage.f9h, but not here
-                                     ! but... the makefile maker can't see it
-                                     ! in mlsmessage.f9h
-  use Highoutput, only: banner
-  use Machine, only: crash_burn_rude=>crash_burn, exit_with_status, nevercrash
-  use MLSCommon, only: mlsfile_t, mlsdebug, mlsverbose, &
-    & MLSDebugsticky, MLSVerboseSticky, dontCrashHere
-  use MLSStrings, only: capitalize
-  use Printit_m, only: assembleFullLine, get_config, logUnitName, prefixLen, &
-    & MLSMSG_allocate, MLSMSG_deallocate, &
-    & MLSMSG_crash, MLSMSG_debug, MLSMSG_error, MLSMSG_info, MLSMSG_success, &
-    & MLSMSG_testwarning, MLSMSG_warning, MLSMessageconfig_t, &
-    & Defaultlogunit, invalidlogunit, prefixlen, &
-    & Printitout, sniprcsfrom, &
-    & Stdoutlogunit, MLSMEssageconfig, &
-    & MLSMSG_severity_so_far, MLSMSG_severity_to_quit, MLSMSG_severity_to_walkback
-  use Sdptoolkit, only: pgs_s_success
+  use Call_Stack_M, only: Dump_Stack ! used in MLSMessage.f9h, but not here
+                                     ! but... the Makefile maker can't see it
+  use Intrinsic, only: L_HDFeos, &   ! in MLSMessage.f9h
+    & L_HDF, L_Swath, L_Zonalavg, Lit_Indices
 
+  use HighOutput, only: Banner
+  use Machine, only: Crash_Burn_Rude=>crash_Burn, Exit_With_Status, Nevercrash
+  use MLSCommon, only: MLSFile_T, MLSDebug, MLSVerbose, &
+    & MLSDebugsticky, MLSVerboseSticky, DontCrashHere
+  use MLSStrings, only: Capitalize
+  use Printit_M, only: AssembleFullLine, Get_Config, LogUnitName, PrefixLen, &
+    & MLSMSG_Allocate, MLSMSG_Deallocate, &
+    & MLSMSG_Crash, MLSMSG_Debug, MLSMSG_Error, MLSMSG_Info, MLSMSG_Success, &
+    & MLSMSG_Testwarning, MLSMSG_Warning, MLSMessageconfig_T, &
+    & Defaultlogunit, Invalidlogunit, Prefixlen, &
+    & Printitout, Sniprcsfrom, &
+    & Stdoutlogunit, MLSMEssageconfig, &
+    & MLSMSG_Severity_So_Far, MLSMSG_Severity_To_Quit, &
+    & MLSMSG_Severity_To_Walkback
+  use Sdptoolkit, only: Pgs_S_Success, PGSd_Pc_File_Path_Max, UseSDPtoolkit
   implicit none
   private
   
-  public :: MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
-    & MLSMSG_CRASH, MLSMSG_DEBUG, MLSMSG_ERROR, MLSMSG_INFO, MLSMSG_SUCCESS, &
-    & MLSMSG_TESTWARNING, MLSMSG_WARNING, MLSMESSAGECONFIG_T, &
-    & DEFAULTLOGUNIT, INVALIDLOGUNIT, PREFIXLEN, &
-    & STDOUTLOGUNIT, MLSMESSAGECONFIG, &
-    & MLSMSG_SEVERITY_SO_FAR, MLSMSG_SEVERITY_TO_QUIT, MLSMSG_SEVERITY_TO_WALKBACK
+  public :: MLSMSG_Allocate, MLSMSG_Deallocate, &
+    & MLSMSG_Crash, MLSMSG_Debug, MLSMSG_Error, MLSMSG_Info, MLSMSG_Success, &
+    & MLSMSG_Testwarning, MLSMSG_Warning, MLSMessageconfig_T, &
+    & Defaultlogunit, Invalidlogunit, Prefixlen, &
+    & Stdoutlogunit, MLSMessageconfig, &
+    & MLSMSG_Severity_So_Far, MLSMSG_Severity_To_Quit, &
+    & MLSMSG_Severity_To_Walkback
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -80,7 +83,7 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
   ! E.g., setting threshold to 0 will print every status, even success
 
   subroutine ReportTKStatus( status, ModuleNameIn, Message, Threshold )
-    use SDPTOOLKIT, only: PGS_SMF_TESTSTATUSLEVEL
+    use SDPToolkit, only: PGS_SMF_TestStatusLevel
     ! Dummy arguments
     integer, intent(in) :: status ! e.g. PGS_TD_NOLEAPSECFILE
     character (len=*), intent(in) :: ModuleNameIn ! Name of module (see below)
@@ -109,7 +112,7 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
     ! like DFACC_RDONLY into a string like 'rdonly'
     ! If access type is unrecognized, returns 'unknown'
 
-    use HDF, only: DFACC_CREATE, DFACC_RDONLY, DFACC_RDWR
+    use HDF, only: DFACC_Create, DFACC_RDOnly, DFACC_Rdwr
 
     ! Args
     integer, intent(in)           :: dfacc
@@ -131,8 +134,8 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
   ! We're a slave and we're about to expire
   ! Before we do, however, try to tell the master why
   subroutine LastGasp ( ModuleNameIn, Message )
-    use PVM, only: INFOTAG, &
-      & PVMDATADEFAULT, PVMFINITSEND, PVMF90PACK, SIG_ABOUTTODIE
+    use Pvm, only: Infotag, &
+      & PvmDatadefault, Pvmfinitsend, Pvmf90pack, Sig_Abouttodie
     character (len=*), intent(in) :: ModuleNameIn ! Name of module (see below)
     character (len=*), intent(in) :: Message ! Line of text
     ! Local variables
@@ -155,9 +158,9 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
   function level2severity ( level ) result(severity)
 
     ! This routine converts a toolkit levelmask to an mls severity
-    use SDPToolkit, only: &
-      & PGS_SMF_MASK_LEV_N, PGS_SMF_MASK_LEV_E, PGS_SMF_MASK_LEV_F, &
-      & PGS_SMF_MASK_LEV_W, PGS_SMF_MASK_LEV_M, PGS_SMF_MASK_LEV_S
+    use Sdptoolkit, only: &
+      & Pgs_Smf_Mask_Lev_N, Pgs_Smf_Mask_Lev_E, Pgs_Smf_Mask_Lev_F, &
+      & Pgs_Smf_Mask_Lev_W, Pgs_Smf_Mask_Lev_M, Pgs_Smf_Mask_Lev_S
     ! Args
     integer, intent(in)           :: level
     integer :: severity
@@ -195,6 +198,9 @@ end module MLSMessageModule
 
 !
 ! $Log$
+! Revision 2.51  2018/02/08 23:22:42  pwagner
+! Added what was needed from use Intrinsic to compile properly with Dump_MLSFile
+!
 ! Revision 2.50  2015/06/30 18:41:05  pwagner
 ! Added a conditional crash_burn
 !
