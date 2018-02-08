@@ -19,16 +19,15 @@ module MLSFiles               ! Utility file routines
   use HDFeos5, only: HE5_Swclose, HE5_Swopen, HE5_Swinqswath, &
     & HE5_Gdopen, HE5_Gdclose, &
     & HE5f_Acc_Trunc, HE5f_Acc_Rdonly, HE5f_Acc_Rdwr
-  use HighOutput, only: AddRow, AddRow_Divider, AddRow_Header, &
-    & OutputNamedValue, OutputTable, StartTable
+  use HighOutput, only: OutputNamedValue, OutputTable
   use Intrinsic, only: L_Ascii, L_HDFeos, L_HDF, L_Open, &
     & L_Swath, L_Tkgen, L_Zonalavg, Lit_Indices
   use Io_Stuff, only: Get_Lun
   use Machine, only: Io_Error
   use MLSCommon, only: BareFNLen, FileNameLen, FileIds_T, MLSFile_T, Range_T, &
-    & InRange
+    & AccessType, FileStringTable, InRange, Split_Path_Name
   use MLSMessageModule, only: MLSMessage, MLSMSG_Crash, MLSMSG_Error, &
-    & MLSMSG_Warning
+    & MLSMSG_Warning, Dump_MLSFile
   use MLSFinds, only: Findfirst
   use MLSStrings, only: Capitalize, Lowercase
   use MLSStringLists, only: ExtractSubstring, &
@@ -50,22 +49,21 @@ module MLSFiles               ! Utility file routines
   ! & PGS_MET_SFstart, PGS_MET_SFend, &
   use String_Table, only: Display_String, Get_String
   use HDF5, only: Size_T
-
   implicit none
 
   private 
 
-  public :: accesstype, addFiletodatabase, &
-  & addinitializeMLSFile, arethesameFile, &
-  & deallocate_Filedatabase, dump, &
-  & getMLSFilebyname, getMLSFilebytype, getpcfromref, &
-  & initializeMLSFile, &
-  & maskname, &
-  & MLS_closeFile, MLS_exists, MLS_hdf_version, MLS_inqswath, &
-  & MLS_openFile, MLS_sfstart, MLS_sfend, &
-  & readnchars, release_MLSFile, reserve_MLSFile, &
-  & rmFilefromdatabase, split_path_name, &
-  & transfer_MLSFile, unmaskname, unsplitname
+  public :: AddFiletoDatabase, &
+    & AddinitializeMLSFile, ArethesameFile, &
+    & Deallocate_FileDatabase, Dump, FileStringTable, &
+    & GetMLSFilebyname, GetMLSFilebytype, Getpcfromref, &
+    & InitializeMLSFile, &
+    & Maskname, &
+    & MLS_CloseFile, MLS_Exists, MLS_HDF_Version, MLS_Inqswath, &
+    & MLS_OpenFile, MLS_Sfstart, MLS_Sfend, &
+    & Readnchars, Release_MLSFile, Reserve_MLSFile, &
+    & RmFilefromDatabase, Split_Path_Name, &
+    & Transfer_MLSFile, UnMaskname, Unsplitname
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -98,7 +96,6 @@ module MLSFiles               ! Utility file routines
 ! WRONGHDFVERSION    Supplied hdf version differs from actual file version
 
 !     (subroutines and functions)
-! accessType         Converts DFACC_* <-> {l_create, l_rdwr, l_rdonly}
 ! AddFileToDataBase  Enters an MLSFile {FileName, id, ..} into the database
 ! AddInitializeMLSFile  AddFileToDataBase, initializes, and returns pointer to it
 ! AreTheSameFile     Returns TRUE if the two args are the same file
@@ -197,11 +194,6 @@ module MLSFiles               ! Utility file routines
   ! (must *not* be 4 or 5)
   integer, parameter, public :: WILDCARDHDFVERSION=HDFVERSION_4+HDFVERSION_5
 
-  ! Unless you fill the string table with l_ quantities from intrinsic
-  ! make sure the next entry is .false. 
-  ! (or else it will segment fault in get_string)
-  ! MLSL2 does fill the string table, but many tools do not
-  logical, save, public :: FILESTRINGTABLE = .FALSE.
   ! This isn't NameLen because it may have a path prefixed
   integer, parameter :: MAXFILENAMELENGTH=PGSd_PC_FILE_PATH_MAX
 
@@ -258,11 +250,6 @@ module MLSFiles               ! Utility file routines
   ! (Parser might change its case if it thinks it has seen the name before)
   character (len=*), parameter :: MASKINGTAPE = ')('
 
-  interface accessType
-    module procedure accessDFACCToStr
-    module procedure accessStrToDFACC
-  end interface
-
   interface DUMP
     module procedure Dump_MLSFile
     module procedure Dump_FileDatabase
@@ -291,50 +278,6 @@ module MLSFiles               ! Utility file routines
   logical, parameter :: DeeBug = .false.
 
 contains
-
-  !--------------------------------------------  accessDFACCToStr  -----
-  function accessDFACCToStr ( dfacc ) result(str)
-
-  ! This routine converts an hdf access type
-  ! like DFACC_RDONLY into a string like 'rdonly'
-  ! If access type is unrecognized, returns 'unknown'
-  ! Args
-  integer, intent(in)           :: dfacc
-  character(len=8)              :: str
-  ! Executable
-  select case (dfacc)
-  case (DFACC_CREATE)
-    str = 'create'
-  case (DFACC_RDONLY)
-    str = 'rdonly'
-  case (DFACC_RDWR)
-    str = 'rdwrite'
-  case default
-    str = 'unknown' ! Why not ' '? Or '?'
-  end select
-  end function accessDFACCToStr
-
-  !--------------------------------------------  accessStrToDFACC  -----
-  function accessStrToDFACC ( str ) result(dfacc)
-
-  ! This routine converts a string like 'rdonly' into an hdf access type
-  ! like DFACC_RDONLY
-  ! If string is unrecognized, returns -999
-  ! Args
-  character(len=*), intent(in) :: str
-  integer                      :: dfacc
-  ! Executable
-  select case (lowercase(str(1:4)))
-  case ('crea')
-    dfacc = DFACC_CREATE
-  case ('rdon')
-    dfacc = DFACC_RDONLY
-  case ('rdwr')
-    dfacc = DFACC_RDWR
-  case default
-    dfacc = -999 ! why not DFACC_RDWR?
-  end select
-  end function accessStrToDFACC
 
   !-------------------------------------------  AddFileToDatabase  -----
   integer function AddFileToDatabase ( DATABASE, ITEM )
@@ -834,126 +777,6 @@ contains
       
   end subroutine Dump_FileDataBase
 
-  ! ------------------------------------------ Dump_MLSFile ------------
-
-  subroutine Dump_MLSFile ( MLSFile, details )
-
-    ! Dummy arguments
-    type (MLSFile_T), intent(in) ::          MLSFile
-    integer, intent(in), optional          :: details
-    ! Local variables
-    integer                          ::      myDetails
-    character(len=MAXFILENAMELENGTH) ::      name
-    character(len=MAXFILENAMELENGTH) ::      path
-    character(len=MAXFILENAMELENGTH) ::      str
-
-    ! Executable code
-    myDetails = 0
-    if ( present(details) ) myDetails = details
-    call split_path_name(MLSFile%Name, Path, Name)
-    call startTable
-    call addRow_header ( 'File Info', 'c' )
-    call addRow_divider ( '-' )
-    if ( len_trim(path) > 0 ) call addRow ( 'path', trim(path) )
-    call addRow ( 'name', trim(name) )
-    ! If details < 0, show only this name
-    if ( myDetails > -1 ) then
-      if ( UseSDPToolkit .and. MLSFile%shortName /= ' ' ) &
-        & call addRow ( 'short name', trim(MLSFile%shortName) )
-      call addRow ( 'Type', MLSFile%TypeStr )
-      if ( FILESTRINGTABLE ) then
-        call get_string ( lit_indices(MLSFile%Type), str, strip=.true. )
-        call addRow ( 'Type(int)', trim(str) )
-      endif
-      call addRow ( 'Access', trim(accessType(MLSFile%access)) )
-      call addRow ( 'Access (int)', MLSFile%access )
-      call addRow ( 'content', trim(MLSFile%content) )
-      call addRow ( 'last Operation', trim(MLSFile%lastOperation) )
-      call addRow ( 'still open?', MLSFile%stillOpen )
-      ! If details < 1, don't show any FileID info
-      if ( myDetails > 0 ) then
-        call addRow_divider ( '-' )
-        call addRow ( 'File ID', MLSFile%FileId%f_id )
-        if ( MLSFile%FileId%grp_id > 0 ) &
-          & call addRow ( 'Group ID', MLSFile%FileId%grp_id )
-        if ( MLSFile%FileId%sd_id > 0 ) &
-          & call addRow ( 'Dataset ID', MLSFile%FileId%sd_id )
-        if ( UseSDPToolkit )  then
-          call addRow ( 'PCF ID', MLSFile%PCFId )
-          call addRow ( 'PCF Range', (/MLSFile%PCFidRange%Bottom, MLSFile%PCFidRange%Top /) )
-        endif
-        if ( any(MLSFile%type == (/l_hdf, l_swath, l_hdfeos, l_zonalavg /) ) ) &
-          & call addRow ( 'hdf version', MLSFile%HDFVersion )
-        if ( MLSFile%recordLength > 0 ) &
-          & call addRow ( 'record length', MLSFile%recordLength )
-        call addRow ( 'error code', MLSFile%errorCode )
-      endif
-    endif
-    call outputTable ( sep='|', border='-' )
-  end subroutine Dump_MLSFile
-
-  ! --------------------------------------------  split_path_name  -----
-
-  ! This routine splits the input full_file_name
-  ! into its components path and name
-  ! where path may include one or more "/" or slash elements
-  ! (but one must be the terminating one; e.g., 'System/')
-  ! while name must have none (actually "/" comes from Machine%filsep).
-  ! special cases by example: full_file_name -> (path, name)
-  ! look.ma.no.slash -> (' ', 'look.ma.no.slash')
-  ! Luke/I/am/your/father/ -> ('Luke/I/am/your/father/', ' ')
-
-  ! optionally you may supply the slash divider
-  ! which must be a single character
-
-  elemental subroutine split_path_name ( full_file_name, path, name, slash )
-
-    ! Arguments
-
-    use Machine, only: Filsep ! / or :\
-
-    character (len=*), intent(in) :: full_file_name
-    character (len=*), intent(out) :: path
-    character (len=*), intent(out) :: name
-    character (len=1), optional, intent(in) :: slash
-
-    ! Local
-
-    character (len=1) :: mySlash
-    integer :: loc, n
-!   logical, parameter :: DEBUG = .false.
-
-    ! Begin
-
-    n = len_trim(full_file_name)
-
-    if ( n <= 0 ) then
-      path = ' '
-      name = ' '
-      return
-    end if
-
-    if ( present(slash) ) then
-      mySlash = slash
-    else
-      mySlash = filsep
-    end if
-
-    loc = scan(full_file_name(:n), mySlash, back=.true.)
-
-    if ( loc <= 0 ) then
-      path = ' '
-      name = adjustl(full_file_name)
-    else if ( loc == n ) then
-      path = adjustl(full_file_name)
-      name = ' '
-    else
-      path = adjustl(full_file_name(:loc))
-      name = adjustl(full_file_name(loc+1:))
-    end if
-
-  end subroutine split_path_name
-
   ! --------------------------------------------  release_MLSFile  -----
 
   ! This routine releases an MLSFile
@@ -1264,7 +1087,7 @@ contains
 
   function mls_sfend(sdid, hdfVersion, addingMetadata)
 
-    use HDF5, only: H5FCLOSE_F
+    use HDF5, only: H5FClose_F
     ! Arguments
 
     integer, intent(IN)       :: sdid  
@@ -1482,6 +1305,7 @@ contains
     integer, optional, intent(out) :: error
     !
     logical, parameter :: CASESENSITIVE = .true.
+    ! logical, parameter :: DeeBug = .true.
     ! integer :: FileAccessType
     integer :: ioerror
     logical :: neededPCF
@@ -1492,8 +1316,8 @@ contains
     !
     if ( present(error) ) error = FILEALREADYOPEN
     if ( MLSFile%StillOpen ) return
-    ! print *, 'Opening ' // trim(MLSFile%name)
-    ! print *, 'type ', MLSFile%type
+    if ( DeeBug )  print *, 'Opening ' // trim(MLSFile%name)
+    if ( DeeBug )  print *, 'type ', MLSFile%type
     PCBottom = MLSFile%PCFidRange%Bottom
     PCTop = MLSFile%PCFidRange%Top
     record_length = MLSFile%recordLength
@@ -1513,10 +1337,10 @@ contains
      & any(MLSFile%type == (/l_hdf, l_swath, l_hdfeos, l_zonalavg /) ) .and. &
      & (MLSFile%HDFVersion == 0 .or. MLSFile%HDFVersion == WILDCARDHDFVERSION) &
      & .and. (MLSFile%name /= ' ') ) then
-     ! print *, 'MLSFile%type ' , MLSFile%type
-     ! print *, 'WILDCARDHDFVERSION ' , WILDCARDHDFVERSION
+     if ( DeeBug )  print *, 'MLSFile%type ' , MLSFile%type
+     if ( DeeBug )  print *, 'WILDCARDHDFVERSION ' , WILDCARDHDFVERSION
      MLSFile%HDFVersion = mls_hdf_version(trim(MLSFile%name))
-     ! print *, 'MLSFile%HDFVersion ' , MLSFile%HDFVersion
+     if ( DeeBug )  print *, 'MLSFile%HDFVersion ' , MLSFile%HDFVersion
     endif
     neededPCF = .true.
 
@@ -1528,7 +1352,7 @@ contains
     ! if ( toolbox_mode == 'pg' .and. MLSFile%recordLength /= 0 ) then
     if ( MLSFile%type == l_tkgen .and. MLSFile%recordLength /= 0 ) then
       if( PCTop > PCBottom ) then
-        ! print *, '1'
+        if ( DeeBug )  print *, '1'
         ! MLSFile%FileId%f_id = Mls_io_gen_openF ( 'pg', CASESENSITIVE, &
         MLSFile%FileId%f_id = Mls_io_gen_openF ( l_tkgen, CASESENSITIVE, &
         & ioerror, record_length, &
@@ -1536,7 +1360,7 @@ contains
         & PCBottom=PCBottom, PCTop=PCTop, &
         & inp_rec_length=MLSFile%recordLength)
       else
-        ! print *, '2'
+        if ( DeeBug )  print *, '2'
         ! print *, 'pg', CASESENSITIVE, &
         ! & ioerror, record_length, &
         ! & PGSd_IO_Gen_RSeqFrm, &
@@ -1545,50 +1369,53 @@ contains
         & ioerror, record_length, &
         & PGSd_IO_Gen_RSeqFrm, &
         & thePC=PCTop, inp_rec_length=MLSFile%recordLength)
-        ! print *, "After iogenopen, ioerror: ", ioerror
+        if ( DeeBug )  print *, "After iogenopen, ioerror: ", ioerror
       endif
     elseif ( MLSFile%recordLength /= 0 ) then
-      ! print *, '3'
+      if ( DeeBug )  print *, '3'
       ! MLSFile%FileId%f_id = mls_io_gen_openF(toolbox_mode, CASESENSITIVE, &
       MLSFile%FileId%f_id = mls_io_gen_openF(MLSFile%type, CASESENSITIVE, &
       & ioerror, record_length, MLSFile%access, &
       & MLSFile%Name, inp_rec_length=MLSFile%recordLength)
       neededPCF = .false.
     elseif ( .not. UseSDPToolkit ) then
-      ! print *, '4'
+      if ( DeeBug )  print *, '4'
       MLSFile%FileId%f_id = mls_io_gen_openF(MLSFile%type, CASESENSITIVE, &
       & ioerror, record_length, MLSFile%access, &
       & MLSFile%Name, hdfVersion=MLSFile%hdfVersion)
       neededPCF = .false.
     elseif( PCTop > PCBottom ) then
-      ! print *, '5'
-      ! print *, 'Trying to open ', trim(MLSFile%Name)
+      if ( DeeBug )  print *, '5'
+      if ( DeeBug )  print *, 'Trying to open ', trim(MLSFile%Name)
       ! print *, 'Toolbox mode ', trim(toolbox_mode)
-      ! print *, 'hdf version ', MLSFile%hdfVersion
+      if ( DeeBug )  print *, 'hdf version ', MLSFile%hdfVersion
       MLSFile%FileId%f_id = mls_io_gen_openF(MLSFile%type, CASESENSITIVE, &
       & ioerror, record_length, MLSFile%access, &
       & MLSFile%Name, MLSFile%PCFidRange%Bottom, MLSFile%PCFidRange%Top, &
       & hdfVersion=MLSFile%hdfVersion)
       neededPCF = .true.
+      if ( DeeBug )  print *, 'Did it'
     elseif( PCTop > 0 ) then
-      ! print *, '6'
+      if ( DeeBug )  print *, '6'
       MLSFile%FileId%f_id = mls_io_gen_openF(MLSFile%type, CASESENSITIVE, &
       & ioerror, record_length, MLSFile%access, &
       & MLSFile%Name, thePC=PCTop, &
       & hdfVersion=MLSFile%hdfVersion)
       neededPCF = .true.
     else
-      ! print *, '7'
+      if ( DeeBug )  print *, '7'
       MLSFile%FileId%f_id = mls_io_gen_openF(MLSFile%type, CASESENSITIVE, &
       & ioerror, record_length, MLSFile%access, &
       & MLSFile%Name, hdfVersion=MLSFile%hdfVersion)
       neededPCF = .false.
     endif
-      ! print *, 'ioerror: ', ioerror
+      if ( DeeBug )  print *, 'ioerror: ', ioerror
     if ( ioerror == 0 ) then
       MLSFile%StillOpen=.true.
       ! The next matches 'hg' and 'pg'
+      if ( DeeBug )  print *, 'About to call GetMLSFilePCFidFromName'
       if ( neededPCF ) call GetMLSFilePCFidFromName(MLSFile, ioerror)
+      if ( DeeBug )  print *, 'Done with that call'
     endif
     MLSFile%errorCode = ioerror
     MLSFile%lastOperation = 'open'
@@ -1787,6 +1614,8 @@ contains
     ioerror = 1
     if ( MLSFile%PCFidRange%top < 1 ) return
     if ( MLSFile%PCFidRange%top < MLSFile%PCFidRange%Bottom ) return
+    ! print *, 'MLSFile%PCFidRange%Bottom: ', MLSFile%PCFidRange%Bottom
+    ! print *, 'MLSFile%PCFidRange%top: ', MLSFile%PCFidRange%top
     do pcfid = MLSFile%PCFidRange%Bottom, MLSFile%PCFidRange%top
       version = 1
       ioerror = Pgs_pc_getReference(pcfid, version, name)
@@ -1795,6 +1624,7 @@ contains
         if ( trim(name) == trim(MLSFile%name) ) return
       endif
     enddo
+    ! print *, 'Failed to find a PCFid for: ', trim(MLSFile%name)
   end  subroutine GetMLSFilePCFidFromName
   elemental function strip_path(fullName) result(name)
     character(len=*), intent(in) :: fullName
@@ -1827,7 +1657,7 @@ contains
     & FileName, hdfVersion, debugOption ) &
     &  result (ErrType)
 
-    use HDF5, only: H5FCLOSE_F
+    use HDF5, only: H5FClose_F
     ! Dummy arguments
     integer  :: ErrType
     integer, intent(IN)  :: theFileHandle
@@ -2477,6 +2307,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.110  2018/02/08 23:16:41  pwagner
+! Moved Dump, accessType, and Split_path_name to other modules
+!
 ! Revision 2.109  2017/12/12 21:25:32  pwagner
 ! Raise char length limit of nameArray in GetPCFromRef
 !
