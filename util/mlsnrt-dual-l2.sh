@@ -24,13 +24,17 @@
 # (5) OTHEROPTS is defined as an environment variable
 #     It would contain other meaningful runtimeoptions, 
 #       e.g. OTHEROPTS="--skipRetrieval"
-# (6) l2q and pvm are both runnung
+# (6) l2q and pvm are both running
 # (7) MLSTOOLS is defined and oontains the following binary executables
 #     and scripts
 #     Spartacus
 #     ronin.sh
 #     set_read_env.sh
 #     split_path.sh
+#     l2gpdump
+#     resetl2gpstatus
+#     checknrtgranuleforbreaks.py
+#     checknrtgranuleforbreaks.sav
 # (8) $PGE_SCRIPT_DIR contains
 #       slavetmplt.sh and jobstat-sips.sh
 #     (or else define an enviromental variable (PVM_EP) and put them there)
@@ -290,6 +294,7 @@ SPLIT_PATH=$MLSTOOLS/split_path.sh
 H5REPACK=$LEVEL1_BINARY_DIR/h5repack
 NETCDFAUGMENT=$LEVEL1_BINARY_DIR/aug_hdfeos5
 L2GPDUMP=$LEVEL1_BINARY_DIR/l2gpdump
+RESETSTATUS=$LEVEL1_BINARY_DIR/resetl2gpstatus
 BREAKER_PY=checknrtgranuleforbreaks.py
 BREAKER_SAV=checknrtgranuleforbreaks.sav
 if [ ! -x "$H5REPACK" ]
@@ -303,6 +308,10 @@ fi
 if [ ! -x "$L2GPDUMP" ]
 then
   L2GPDUMP=$MLSTOOLS/l2gpdump
+fi
+if [ ! -x "$RESETSTATUS" ]
+then
+  RESETSTATUS=$MLSTOOLS/resetstatus
 fi
 
 # Last chance to find h5repack
@@ -495,7 +504,7 @@ if [ -f "$files" ]
 then
   echo "Checking $L2GPDUMP -status $files"
   count=`$L2GPDUMP -status "$files" \
-    | grep 'valid data co' | awk '{print $4}'`
+    | grep 'valid data co' | awk '{print $4}' | sed -n '1 p'`
   if [ "$count" -lt "$LOCOUNT" -o "$count" -gt "$HICOUNT" ]
   then
     echo "Too few or too many profiles; number was $count"
@@ -533,10 +542,36 @@ then
       hide_files *.he5 *.met *.xml *.h5
       exit 1
     fi
+    # A separate check on the Temperature file
+    # It is needed because the Temperature results from a separate l2cf
+    # whose ChunkDiivide section can permit bogus geolocations squelched by the CO
+    # We'll do this check only if we can find the RESETSTATUS tool
+    if [ ! -x "$RESETSTATUSRESETSTATUS" ]
+    then
+      file=*L2GP-Temperature*.he5
+      file2=`echo $file | sed '/_20[0-9][0-9]d[0-9][0-9][0-9]\.he5/ s/\.he5/t0000.he5/'`
+      if [ "$file2" != "$file" ]
+      then
+        cp $file $file2
+      fi
+      echo ./$BREAKER_PY --verbose $file2
+      echo ./$BREAKER_PY --verbose $file2 > $BREAKER_PY.out
+      ./$BREAKER_PY --verbose $file2 >> $BREAKER_PY.out
+      return_status=`expr $?`
+      cat $BREAKER_PY.out
+      if [ "$return_status" != 0 ]
+      then
+        echo "Break detected in $file, status $return_status"
+        $RESETSTATUSRESETSTATUS $file
+      fi
+    fi
   fi
 fi
 
 # $Log$
+# Revision 1.7  2018/01/26 18:42:12  pwagner
+# Tried to solve problem of lower yields due to breaks in mesospheric T
+#
 # Revision 1.6  2017/09/22 17:27:50  pwagner
 # Corrected two bugs; split_path and create_and_run_Level_1
 #
