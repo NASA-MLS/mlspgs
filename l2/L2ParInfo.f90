@@ -37,17 +37,18 @@ module L2ParInfo
   implicit none
   private
 
-  public :: L2PARALLELINFO_T, PARALLEL, MACHINE_T
-  public :: ADDMACHINENAMETODATABASE, ADDMACHINETODATABASE
-  public :: INITPARALLEL, CLOSEPARALLEL
-  public :: SLAVEJOIN
-  public :: GETNICETIDSTRING, SLAVEARGUMENTS
-  public :: ACCUMULATESLAVEARGUMENTS, LOGDIRECTWRITEREQUEST
-  public :: SNIPLASTSLAVEARGUMENT, TRANSMITSLAVEARGUMENTS
-  public :: FINISHEDDIRECTWRITE, MACHINENAMELEN, GETMACHINENAMES, GETMACHINES
-  public :: FWMSLAVEGROUP, DIRECTWRITEREQUEST_T
-  public :: INFLATEDIRECTWRITEREQUESTDB, WAITFORDIRECTWRITEPERMISSION
-  public :: COMPACTDIRECTWRITEREQUESTDB, DUMP
+  public :: L2parallelinfo_T, Parallel, Machine_T
+  public :: AddmachinenametoDatabase, AddmachinetoDatabase
+  public :: Initparallel, Closeparallel
+  public :: Slavejoin
+  public :: Getnicetidstring, Slavearguments
+  public :: Accumulateslavearguments, Logdirectwriterequest
+  public :: Sniplastslaveargument, Transmitslavearguments
+  public :: Finisheddirectwrite, Machinenamelen, Getmachinenames, Getmachines
+  public :: Fwmslavegroup, Directwriterequest_T
+  public :: Inflatedirectwriterequestdb, Waitfordirectwritepermission
+  public :: Compactdirectwriterequestdb, Dump
+  public :: SigToName, TagToName
   
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -284,6 +285,7 @@ contains ! ==================================================================
     myDontWait = .false.
     if ( present(dontWait) ) myDontWait = dontWait
     if ( parallel%slave ) then
+      myDontWait = .true.
       ! call MLSMessage ( MLSMSG_Info, ModuleName, &
       !  & 'About to call PVMFInitSend' )
       ! Send a request to finish
@@ -298,7 +300,7 @@ contains ! ==================================================================
       call PVMFSend ( parallel%masterTid, InfoTag, info )
       if ( info /= 0 ) &
         & call PVMErrorMessage ( info, 'sending finish packet' )
-      ! call MLSMessage ( MLSMSG_Info, ModuleName, &
+      ! call MLSMessage ( MLSMSG_Error, ModuleName, &
       !  & 'Hey--we did it' )
       if ( myDontWait ) go to 9
       ! Wait for an acknowledgement from the master
@@ -836,6 +838,78 @@ contains ! ==================================================================
     if ( DEEBUG ) call output( 'After snip: ' // trim(slaveArguments), advance='yes' )
   end subroutine SnipLastSlaveArgument
     
+  ! --------------------------------------------- SigToName ------
+  function SigToName( Sig ) result ( name )
+    integer, intent(in)           :: Sig
+    character(len=32)             :: name
+    ! Executable
+    select case ( Sig )
+    case ( SIG_AboutToDie )
+      name = 'AboutToDie'
+    case ( SIG_ToJoin )
+      name = 'ToJoin'
+    case ( SIG_Finished )
+      name = 'Finished'
+    case ( SIG_AckFinish )
+      name = 'AckFinish'
+    case ( SIG_Register )
+      name = 'Register'
+    case ( SIG_RequestDirectWrite )
+      name = 'RequestDirectWrite'
+    case ( SIG_DirectWriteGranted )
+      name = 'DirectWriteGranted'
+    case ( SIG_DirectWriteFinished )
+      name = 'DirectWriteFinished'
+    case ( SIG_NewSetUp )
+      name = 'NewSetUp'
+    case ( SIG_RunMAF )
+      name = 'RunMAF'
+    case ( SIG_SendResults )
+      name = 'SendResults'
+    case ( SIG_RequestHost )
+      name = 'RequestHost'
+    case ( SIG_ReleaseHost )
+      name = 'ReleaseHost'
+    case ( SIG_HostDied )
+      name = 'HostDied'
+    case ( SIG_ThanksHost )
+      name = 'ThanksHost'
+    case ( SIG_SwearAllegiance )
+      name = 'SwearAllegiance'
+    case ( SIG_SwitchAllegiance )
+      name = 'SwitchAllegiance'
+    case default
+      name = 'Unknown'
+    end select
+  end function SigToName
+    
+  ! --------------------------------------------- TagToName ------
+  function TagToName( tag ) result ( name )
+    integer, intent(in)           :: tag
+    character(len=24)             :: name
+    ! Executable
+    select case ( tag )
+    case ( Infotag )
+      name = 'Info'
+    case ( Chunktag )
+      name = 'Chunk'
+    case ( Notifytag )
+      name = 'Notify'
+    case ( Petitiontag )
+      name = 'Petition'
+    case ( Grantedtag )
+      name = 'Granted'
+    case ( MasterDumptag )
+      name = 'MasterDump'
+    case ( MachineFixedtag )
+      name = 'MachineFixed'
+    case ( GiveUptag )
+      name = 'GiveUp'
+    case default
+      name = 'Unknown'
+    end select
+  end function TagToName
+    
   ! --------------------------------------------- TransmitSlaveArguments ------
   subroutine TransmitSlaveArguments
     ! This routine transmits command line arguments to the slaves via pvm
@@ -892,6 +966,9 @@ contains ! ==================================================================
 end module L2ParInfo
 
 ! $Log$
+! Revision 2.69  2018/02/09 01:07:07  pwagner
+! Added functions to convert tags and sigs to corresponding names
+!
 ! Revision 2.68  2017/12/22 00:31:05  pwagner
 ! Made Use statements CamelCase
 !
