@@ -1176,13 +1176,17 @@ jloop:do while ( j < len_trim(line) )
         NeverCrash = .false.
         MLSMessageConfig%CrashIfMsgSays = valu
         return
+      endif
       ! See also open_init for the same mechanism implemented in the PCF
       ! -------------------------------------------------------------
-      endif
       
       ! ---------------------------------------------------------------
-      ! Special means for setting OutputOptions, AdvancedOptions, 
+      ! Special means for setting user-defined types:
+      ! OutputOptions, AdvancedOptions, 
       ! StampOptions, or TimeStampOptions
+      ! Of course, here is where you could
+      ! add similar means for setting other user-defined types
+      ! ---------------------------------------------------------------
       if ( lowercase(name) == 'outputoptions' ) then
         read(valu,*) OutputOptions
         return
@@ -1196,6 +1200,7 @@ jloop:do while ( j < len_trim(line) )
         read(valu,*) TimeStampOptions
         return
       endif
+      ! ---------------------------------------------------------------
 
       ! Beware of cases where valu conatins an embedded space
       ! Replace such spaces with '%'
@@ -1297,7 +1302,7 @@ jloop:do while ( j < len_trim(line) )
     SKIPDIRECTWRITESORIGINAL      = .false.    
     SKIPRETRIEVAL                 = .false.        
     SKIPRETRIEVALORIGINAL         = .false. 
-    slavesCleanUpSelves           = .false.
+    slavesCleanUpSelves           = .true.
     SPECIALDUMPFILE               = ' '
     STATEFILLEDBYSKIPPEDRETRIEVALS = 0.
     STOPAFTERSECTION              = ' ' ! Blank means 
@@ -1405,6 +1410,9 @@ end module MLSL2Options
 
 !
 ! $Log$
+! Revision 2.114  2018/02/09 01:05:40  pwagner
+! Improved comments
+!
 ! Revision 2.113  2017/12/07 01:01:23  vsnyder
 ! Don't use host-associated variable as a DO index
 !
