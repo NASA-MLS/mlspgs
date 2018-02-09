@@ -259,6 +259,7 @@ SHELL = /bin/sh
 # Mie_Tables_nohdf
 # MLS_h5ls       
 # remake_gh
+# resetl2gpstatus
 # Spartacus
 # UnwrapList
 # utctotai       
@@ -809,7 +810,7 @@ install-mlstools:
   $(MLSTOOLSDIR); \
   cd $(MLSHOME); \
   cd util; \
-  cp jobstat-sips.sh ronin.sh slavetmpltntk.sh slavetmplt.sh \
+  cp jobstat-sips.sh resetl2gpstatus ronin.sh slavetmpltntk.sh slavetmplt.sh \
   tkreset.sh zeros.sh $(MLSTOOLSDIR); \
   cp zeros.sh $(MLSTOOLSDIR)/misalignment.sh; \
   cd ../scripts; \
@@ -1144,6 +1145,11 @@ remake_gh: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/remake_gh.f90
    -c $(MLSCONFG) -p $@ -M $(MAKE) -O LDOPTS=-static \
 	-C $(MLSCFILE) $(MLSBIN)/$@.f90
 
+resetl2gpstatus: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/resetl2gpstatus.f90 l1--itm
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) -m lib \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
+
 Spartacus: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/Spartacus.f90 l2
 	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
    -c $(MLSCONFG) -p $@ -M $(MAKE) -m l2 \
@@ -1457,7 +1463,7 @@ tools: chunktimes checkpvmup compare dateconverter extinctionmaker \
   l1bcat l1bdiff l1bdump l1h5subset \
   l2auxcat l2auxchi l2auxdump l2gpcat l2gpdiff l2gpdump \
   l2pcdiff l2pcdump l2q lr \
-  machineok misalignment Spartacus tellMasterToQuit WordSplit wrapLines
+  machineok misalignment resetl2gpstatus Spartacus tellMasterToQuit WordSplit wrapLines
 
 .PHONY: all alltargets configure clean clean_config conv_uars\
   configure_pvm configure_fopts configure_full configure_help configure_subdirs\
@@ -1484,6 +1490,9 @@ tools: chunktimes checkpvmup compare dateconverter extinctionmaker \
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.21  2017/08/30 23:01:48  pwagner
+# A bare 'make' now makes 'all'
+#
 # Revision 1.20  2017/03/30 23:37:13  pwagner
 # Add install-mlstools target
 #
