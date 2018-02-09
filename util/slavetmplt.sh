@@ -519,7 +519,7 @@ then
     $PGE_BINARY --tk -m --slave $masterTid $otheropts 2>&1 >> "$LOGFILE"
   fi
   echo "Returned from $PGE_BINARY with status $?" "$LOGFILE"
-  Exit_with_Status 0
+  Exit_With_Status 0
   exit 0
 fi
 
@@ -559,7 +559,7 @@ then
   ps -l -p "$pgepid2" >> "$LOGFILE"
   kill -9 $pgepid
   kill -9 $pgepid2
-  Exit_with_Status 1
+  Exit_With_Status 1
   # exit 1
 else
   echo "pgepid and pgepid2 are both $pgepid2" >> "$LOGFILE"
@@ -569,7 +569,7 @@ pgepid=$pgepid2
 if [ "$pgepid" = "" ]
 then
   echo "Failed to launch $PGE_BINARY in background" >> "$LOGFILE"
-  Exit_with_Status 1
+  Exit_With_Status 1
   # exit 1
 fi
 
@@ -624,10 +624,13 @@ kill -9 "$pgepid"
 # e.g., "arg1 arg2" being passed as a single space-containing arg
 all_my_opts=$@
 do_the_call $all_my_opts
-  Exit_with_Status 0
+  Exit_With_Status 0
   # exit 0
 
 # $Log$
+# Revision 1.43  2018/01/26 01:29:58  pwagner
+# Tried to fix hanging when running in foreground
+#
 # Revision 1.42  2017/12/22 00:55:42  pwagner
 # Correct some bugs in saving stderrfile
 #

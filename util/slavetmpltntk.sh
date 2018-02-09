@@ -514,7 +514,7 @@ then
   else
     $PGE_BINARY --ntk -m --slave $masterTid $otheropts $l2cf 2>&1 >> "$LOGFILE"
   fi
-  Exit_with_Status 0
+  Exit_With_Status 0
   exit 0
 fi
 
@@ -600,6 +600,9 @@ do_the_call $all_my_opts
 exit 0
 
 # $Log$
+# Revision 1.19  2018/01/26 17:43:33  pwagner
+# Tried to fix hanging when running in foreground
+#
 # Revision 1.18  2017/12/22 00:55:42  pwagner
 # Correct some bugs in saving stderrfile
 #
