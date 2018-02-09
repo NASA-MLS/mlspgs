@@ -34,7 +34,7 @@ module L2Parallel
     & Machinefixedtag, Directwriterequest_T, &
     & Dw_Pending, Dw_Inprogress, Dw_Completed, &
     & Inflatedirectwriterequestdb, Compactdirectwriterequestdb, Dump, &
-    & AddmachinetoDatabase
+    & AddmachinetoDatabase, SigToName
   use Machine, only: Shell_Command, Usleep
   use MLSKinds, only: R8
   use MLSL2options, only: MLSMessage
@@ -61,8 +61,8 @@ module L2Parallel
   implicit none
   private
 
-  public :: L2MASTERTASK
-  public :: GETCHUNKINFOFROMMASTER
+  public :: L2MasterTask
+  public :: GetChunkinfoFromMaster
   
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -517,6 +517,7 @@ contains
           if ( chunk == 0 .and. signal /= sig_register ) then
             call output ( 'Signal is:' )
             call output ( signal )
+            call outputNamedValue ( ' meaning', SigToName(signal) )
             call TimeStamp ( ' Tid: ' // trim ( GetNiceTidString ( slaveTid ) ), &
               & advance='yes' )
             call MLSMessage ( MLSMSG_Warning, ModuleName, &
@@ -526,6 +527,7 @@ contains
         elseif ( machine == 0 ) then
           call output ( 'Signal is:' )
           call output ( signal )
+          call outputNamedValue ( ' meaning', SigToName(signal) )
           call TimeStamp ( ' Tid: ' // trim ( GetNiceTidString ( slaveTid ) ), &
             & advance='yes' )
           call MLSMessage ( MLSMSG_Warning, ModuleName, &
@@ -1807,6 +1809,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.116  2018/02/09 01:27:31  pwagner
+! Output the meaning along with the signal number
+!
 ! Revision 2.115  2017/12/22 00:34:41  pwagner
 ! WaitBeforeKillingSlaves; must be bigger than pgekilldelay
 !
