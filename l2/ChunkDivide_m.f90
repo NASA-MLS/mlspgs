@@ -40,7 +40,7 @@ module ChunkDivide_m
   use MLSKinds, only: R8, Rp
   use MLSMessageModule, only: MLSMessage, MLSMsg_Error, MLSMsg_Warning
   use MLSNumerics, only: Hunt
-  use MLSFinds, only: Findfirst, FindLongestStretch
+  use MLSFinds, only: Findfirst
   use MLSSignals_M, only: Dump, Modules, GetModuleName
   use MLSStringlists, only: SwitchDetail
   use Output_M, only: Blanks, Output, &
@@ -535,12 +535,12 @@ contains ! ===================================== Public Procedures =====
       character (len=NameLen) :: L1BItemName
       logical, dimension(:), pointer :: ptsInPolygon => null()
       real(r8), dimension(3)         :: xyz
-      real(r8)                       :: xx, yy
+      ! real(r8)                       :: xx, yy
       real(r8), dimension(:), ALLOCATABLE :: Vertices_XX, Vertices_YY
       real(r8), dimension(3)         :: PolyVert_XYZ
-      integer :: M1, M2, n
+      integer :: n
       integer, dimension(2) :: range
-      integer :: pointTest
+      ! integer :: pointTest
     
       ! Executable code
       ! 1st-- read lats and lons from the l1b file
@@ -590,7 +590,7 @@ contains ! ===================================== Public Procedures =====
     
       ! Now we'll check for whether the points are inside or outside the PolyGon
       call output ('before do MAF loop', advance='yes')
-      pointTest = 0
+      ! pointTest = 0
       do MAF=1, NoMAFs
          call output('lat = ')
          call output( lats%dpField(1,1,MAF) )
@@ -872,7 +872,7 @@ contains ! ===================================== Public Procedures =====
       integer :: GSON                     ! A son of son the ChunkDivide command node
       integer :: I                        ! Loop inductor
       integer :: J                        ! Another loop inductor
-      logical :: Log_Value                ! For boolean fields
+      ! logical :: Log_Value                ! For boolean fields
       integer :: Me = -1                  ! String index for trace cacheing
       integer :: numCriticalSignals       ! How many crit. Sigs
       integer :: signalsNode              ! Node where crit. Sig. begin
@@ -913,11 +913,11 @@ contains ! ===================================== Public Procedures =====
           ! log_value = get_boolean ( fieldValue )
         elseif (nsons(son) > 0 ) then
           value = 0.0
-          log_value = get_boolean ( fieldValue )
+          ! log_value = get_boolean ( fieldValue )
           ! print *, 'log_value ', log_value
         else
           value = 0.0
-          log_value = .false.
+          ! log_value = .false.
         end if
         ! Get value for this field if appropriate
         select case ( fieldIndex )
@@ -2056,7 +2056,6 @@ contains ! ===================================== Public Procedures =====
     subroutine SurveyL1BData ( processingRange, filedatabase, mafRange )
       ! This goes through the L1B data files and tries to spot possible
       ! obstructions.
-      use MLSL2Options, only: SharedPCF
       use Monotone, only: IsMonotonic
       type (TAI93_Range_T), intent(in) :: PROCESSINGRANGE
       type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
@@ -2096,7 +2095,7 @@ contains ! ===================================== Public Procedures =====
         & call MLSMessage  ( MLSMSG_Error, ModuleName, &
           & "Can't make progress in SurveyL1BData without L1BOA files" )
       if ( swLevel > -1 ) then
-        call output( 'here is the L1BOA', advance='yes' )
+        ! call output( 'here is the L1BOA', advance='yes' )
         call dump( L1BFile )
       endif
       l1b_hdf_version = L1BFile%HDFVersion
@@ -2431,15 +2430,15 @@ contains ! ===================================== Public Procedures =====
       tp_angle = AssembleL1BQtyName ( trim(modNameStr)//'.tpGeodAngle', &
         & l1b_hdf_version, &
         & .false. )
-      if ( swLevel > -1 ) &
+      if ( swLevel > 1 ) &
         & call output('Reading Geod Angle', advance='yes')
       call ReadL1BData ( L1BFile, trim(tp_angle), &
         & tpGeodAngle, noMAFsRead, flag, &
         & dontPad=DONTPAD )
-      if ( swLevel > -1 ) &
+      if ( swLevel > 1 ) &
         & call output('1st smoothing', advance='yes')
       call smoothOutDroppedMAFs(tpGeodAngle%dpField)
-      if ( swLevel > -1 ) &
+      if ( swLevel > 1 ) &
         & call output('2nd smoothing', advance='yes')
       call smoothOutDroppedMAFs(tpGeodAngle%dpField, monotonize=.true.)
       if ( swLevel > -1 ) &
@@ -2459,16 +2458,9 @@ contains ! ===================================== Public Procedures =====
       minTime = minval ( taiTime%dpField(1,1,m1:m2) )
       maxTime = maxval ( taiTime%dpField(1,1,m1:m2) )
       if ( swLevel > -1 ) then
-        call output ( 'Num MAFs in file: ' )
-        call output ( noMAFsRead, advance='yes' )
-        call output ( 'MAF time range: ' )
-        call output ( minTime )
-        call output ( ' : ' )
-        call output ( maxTime, advance='yes' )
-        call output ( 'Angle range: ' )
-        call output ( minAngle )
-        call output ( ' : ' )
-        call output ( maxAngle, advance='yes' )
+        call outputNamedValue ( 'Num MAFs in file', noMAFsRead )
+        call outputNamedValue ( 'MAF time range', (/minTime, maxTime/) )
+        call outputNamedValue ( 'Angle range', (/minAngle, maxAngle/) )
       end if
 
       ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -2483,12 +2475,9 @@ contains ! ===================================== Public Procedures =====
       end if
 
       if ( swLevel > -1 ) then
-        call output ( ' orbit  ', advance='no' )
-        call output ( orbit , advance='no' )
-        call output ( '    testAngle  ', advance='no' )
-        call output ( testAngle , advance='no' )
-        call output ( '    angleIncrement  ', advance='no' )
-        call output ( angleIncrement , advance='yes' )
+        call outputNamedValue ( 'orbit', orbit )
+        call outputNamedValue ( 'test Angle', testAngle )
+        call outputNamedValue ( 'angle Increment', angleIncrement )
       end if
       ! In my opinion (paw) here's what the following loop should do:
       ! Find the 1st MAF within HOMEACCURACY of home_angle
@@ -2524,15 +2513,11 @@ contains ! ===================================== Public Procedures =====
         testAngle = testAngle + angleIncrement
       end do homeHuntLoop
       if ( swLevel > -1 ) then
-        call output ( 'Test Angle  ' )
-        call output ( testAngle , advance='yes' )
-        call output ( 'Angle(home)  ' )
-        call output ( tpGeodAngle%dpField(1,1,home) , advance='yes' )
-        call output ( 'Home  ' )
-        call output ( home  )
-        call output ( 'Difference  ' )
-        call output (  abs ( tpGeodAngle%dpField(1,1,home) - &
-          & testAngle ) , advance='yes' )
+        call outputNamedValue ( 'Test Angle', TestAngle )
+        call outputNamedValue ( 'Angle(home)', tpGeodAngle%dpField(1,1,home) )
+        call outputNamedValue ( 'Home', Home )
+        call outputNamedValue ( 'Difference', &
+          & abs ( tpGeodAngle%dpField(1,1,home) - testAngle ) )
       end if
 
       ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -2962,6 +2947,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.127  2018/02/09 00:58:27  pwagner
+! Removed unused variables; wider use of outputNamedValue
+!
 ! Revision 2.126  2018/01/03 01:15:22  pwagner
 ! Prints a little more debugging info
 !
