@@ -1155,7 +1155,7 @@ contains
         fileaccess = DFACC_CREATE
         if ( DeeBUG ) call output( 'Setting file access to create', advance='yes' )
       else
-        fileaccess = DFACC_RDWR
+        fileaccess = DFACC_RDWR ! DFACC_CREATE ! DFACC_RDWR
         if ( DeeBUG ) call output( 'Setting file access to read/write', advance='yes' )
       end if
       if ( DeeBUG ) then
@@ -1187,10 +1187,33 @@ contains
           & ignore_paths=.true. )
       endif
       select case ( outputType )
-      case ( l_l2gp, l_l2dgg )
+      case ( l_l2gp )
         fileType = l_swath
-      case ( l_l2fwm, l_l2aux, l_hdf, l_quantity )
+        PCBottom = mlspcf_l2gp_start
+        PCTop    = mlspcf_l2gp_end
+      case ( l_l2dgg )
+        fileType = l_swath
+        PCBottom = mlspcf_l2dgg_start
+        PCTop    = mlspcf_l2dgg_end
+      case ( l_l2fwm )
         fileType = l_hdf
+        PCBottom = mlspcf_l2fwm_full_start
+        PCTop    = mlspcf_l2fwm_full_end
+      case ( l_l2aux )
+        fileType = l_hdf
+        PCBottom = mlspcf_l2dgm_start
+        PCTop    = mlspcf_l2dgm_end
+      ! The following do not yet have heir own PCFid ranges assigned to them
+      ! If they become used routinely in std or nrt processing, this
+      ! should be done
+      case ( l_hdf )
+        fileType = l_hdf
+        PCBottom = mlspcf_l2dgm_start
+        PCTop    = mlspcf_l2dgm_end
+      case ( l_quantity )
+        fileType = l_hdf
+        PCBottom = mlspcf_l2dgm_start
+        PCTop    = mlspcf_l2dgm_end
       end select
       if ( .not. associated(directFile) ) then
         if(DEEBUG) call MLSMessage(MLSMSG_Warning, ModuleName, &
@@ -2107,6 +2130,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.183  2018/02/09 00:56:16  pwagner
+! repaired bug that left PCBottom, PCTop undefined
+!
 ! Revision 2.182  2018/01/12 00:19:37  pwagner
 ! Reorganized DirectWriteCommand; now Uses JoinUtils_1
 !
