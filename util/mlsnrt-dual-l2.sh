@@ -546,7 +546,7 @@ then
     # It is needed because the Temperature results from a separate l2cf
     # whose ChunkDiivide section can permit bogus geolocations squelched by the CO
     # We'll do this check only if we can find the RESETSTATUS tool
-    if [ ! -x "$RESETSTATUSRESETSTATUS" ]
+    if [ -x "$RESETSTATUSRESETSTATUS" ]
     then
       file=*L2GP-Temperature*.he5
       file2=`echo $file | sed '/_20[0-9][0-9]d[0-9][0-9][0-9]\.he5/ s/\.he5/t0000.he5/'`
@@ -569,6 +569,9 @@ then
 fi
 
 # $Log$
+# Revision 1.8  2018/02/09 17:40:31  pwagner
+# Add feature to reset Status of Temperature file if it fails checknrt..
+#
 # Revision 1.7  2018/01/26 18:42:12  pwagner
 # Tried to solve problem of lower yields due to breaks in mesospheric T
 #
