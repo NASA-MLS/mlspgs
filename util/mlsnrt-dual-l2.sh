@@ -546,7 +546,7 @@ then
     # It is needed because the Temperature results from a separate l2cf
     # whose ChunkDiivide section can permit bogus geolocations squelched by the CO
     # We'll do this check only if we can find the RESETSTATUS tool
-    if [ -x "$RESETSTATUSRESETSTATUS" ]
+    if [ -x "$RESETSTATUS" ]
     then
       file=*L2GP-Temperature*.he5
       file2=`echo $file | sed '/_20[0-9][0-9]d[0-9][0-9][0-9]\.he5/ s/\.he5/t0000.he5/'`
@@ -562,13 +562,16 @@ then
       if [ "$return_status" != 0 ]
       then
         echo "Break detected in $file, status $return_status"
-        $RESETSTATUSRESETSTATUS $file
+        $RESETSTATUS $file
       fi
     fi
   fi
 fi
 
 # $Log$
+# Revision 1.9  2018/02/10 00:25:21  pwagner
+# Sense of test for executability of RESETSTATUSRESETSTATUS was reversed; fixed
+#
 # Revision 1.8  2018/02/09 17:40:31  pwagner
 # Add feature to reset Status of Temperature file if it fails checknrt..
 #
