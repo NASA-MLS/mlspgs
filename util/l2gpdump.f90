@@ -54,7 +54,10 @@ PROGRAM L2GPDump ! dumps L2GPData files
 ! Brief description of program
 ! This program dumps L2GPData files
 
-  integer, parameter :: MAXNCHUNKS = 50
+  ! This is just the maximum num of chunks you wish
+  ! to dump individually in case you don't want to dump them all
+  ! It's not the actual maximum number of chunks.
+  integer, parameter :: MAXNCHUNKS = 50 
 
   type Options_T
      character(len=255) ::  chunks = '*' ! wild card means 'all'
@@ -80,6 +83,7 @@ PROGRAM L2GPDump ! dumps L2GPData files
      integer            ::  nGeoBoxDims = 0
      real, dimension(4) ::  geoBoxLowBound
      real, dimension(4) ::  geoBoxHiBound
+     logical            ::  IgnorePrecisionForStatusBits = .true.
      real    ::             ConvergenceCutOff = -1. ! Show % above, below this
      real    ::             PrecisionCutOff = -1. ! Show % above, below this
      real    ::             QualityCutOff = -1. ! Show % above, below this
@@ -101,6 +105,7 @@ PROGRAM L2GPDump ! dumps L2GPData files
   real, dimension(3), save        :: numTest = 0.
   integer, parameter              :: PostProcBitIndex = 4
   integer, parameter              :: MAXNUMBITSUSED = 10 !9
+  ! The bit number starts at 0: bitNumber[1] = 0
   integer, dimension(MAXNUMBITSUSED), parameter :: bitNumber = &
     & (/ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 /)
   integer, dimension(MAXNUMBITSUSED, 2), save :: bitCounts = 0
@@ -621,6 +626,9 @@ contains
      endif
      ! numGood = count( .not. ( negativePrec .or. &
      !   & (mod(l2gp%status, 2) > 0) ) )
+     ! 
+     ! Do we ignore precisions when calculating % for Status bits?
+     if ( options%IgnorePrecisionForStatusBits ) negativePrec = .false.
      numNotUseable = numNotUseable + count ( negativePrec .or. oddStatus )
      numOddStatus = numOddStatus + count( oddStatus )
      numPostProcStatus = numPostProcStatus + count(isBitSet( l2gp%status, bitNumber(PostProcBitIndex) ) )
@@ -639,6 +647,19 @@ contains
        enddo
        ! call outputNamedValue ( 'max status', maxval(l2gp%status) )
        ! call outputNamedValue ( 'min status', minval(l2gp%status) )
+
+       ! Redefine oddStatus:
+       ! Include among it only the ones abandoned, too few, or crashed
+       oddStatus = .false.
+       do i=1, l2gp%nTimes
+         oddStatus(i) = isBitSet( l2gp%status(i), bitNumber(MAXNUMBITSUSED-2) ) &
+           & .or. &
+           & isBitSet( l2gp%status(i), bitNumber(MAXNUMBITSUSED-1) ) &
+           & .or. &
+           & isBitSet( l2gp%status(i), bitNumber(MAXNUMBITSUSED) )
+       enddo
+       ! If we're ignoring precisions, we might as well ignore DoNotUse, too
+       if ( options%IgnorePrecisionForStatusBits ) oddStatus = .false.
        do bitindex=2, MAXNUMBITSUSED-3
          if ( bitindex == PostProcBitIndex ) then
            ! The bit for post-processing is special
@@ -647,10 +668,9 @@ contains
            bitCounts(PostProcBitIndex,1) = numPostProcStatus
          else
            ! the other Bits
-           bitCounts(bitindex, 2) = numGood
+           bitCounts(bitindex, 2) = bitCounts(bitindex, 2) + l2gp%nTimes ! numGood
            bitCounts(bitindex, 1) = bitCounts(bitindex, 1) + &
-             & count( .not. ( negativePrec .or. &
-             & (mod(l2gp%status, 2) > 0) ) .and. &
+             & count( .not. ( negativePrec .or. oddStatus ) .and. &
              & isBitSet( l2gp%status, bitNumber(bitindex) ) )
          endif
        enddo
@@ -785,6 +805,9 @@ end program L2GPDump
 !==================
 
 ! $Log$
+! Revision 1.24  2018/02/03 00:25:48  pwagner
+! Correct Status Bit names; add post-processed
+!
 ! Revision 1.23  2017/10/12 20:32:36  pwagner
 ! More CamelCase is use statements; removed outdated build notes
 !
