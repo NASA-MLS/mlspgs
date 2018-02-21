@@ -17,7 +17,7 @@
 
 # Used by mlsl2 master task mlsl2p.sh to launch slave tasks in toolkit
 # environment when running mlsl2 in parallel mode
-# mlsl2p.sh sed's this file to replace ssllaavvee, ppggssbbiinn, etc.
+# mlsl2p.sh seds this file to replace ssllaavvee, ppggssbbiinn, etc.
 # as appropriate
 
 # The resulting script will be called by mlsl2 master task
@@ -520,7 +520,6 @@ then
   fi
   echo "Returned from $PGE_BINARY with status $?" "$LOGFILE"
   Exit_With_Status 0
-  exit 0
 fi
 
 # Run pge in background
@@ -560,7 +559,6 @@ then
   kill -9 $pgepid
   kill -9 $pgepid2
   Exit_With_Status 1
-  # exit 1
 else
   echo "pgepid and pgepid2 are both $pgepid2" >> "$LOGFILE"
 fi
@@ -570,7 +568,6 @@ if [ "$pgepid" = "" ]
 then
   echo "Failed to launch $PGE_BINARY in background" >> "$LOGFILE"
   Exit_With_Status 1
-  # exit 1
 fi
 
 # Write this pid to a uniquely-named file
@@ -624,10 +621,12 @@ kill -9 "$pgepid"
 # e.g., "arg1 arg2" being passed as a single space-containing arg
 all_my_opts=$@
 do_the_call $all_my_opts
-  Exit_With_Status 0
-  # exit 0
+Exit_With_Status 0
 
 # $Log$
+# Revision 1.44  2018/02/09 17:41:10  pwagner
+# Correct spelling error
+#
 # Revision 1.43  2018/01/26 01:29:58  pwagner
 # Tried to fix hanging when running in foreground
 #

@@ -17,7 +17,7 @@
 
 # Used by mlsl2 master task mlsl2p.sh to launch slave tasks w/o toolkit
 # environment when running mlsl2 in parallel mode
-# mlsl2p.sh sed's this file to replace ssllaavvee, ppggssbbiinn, etc.
+# mlsl2p.sh seds this file to replace ssllaavvee, ppggssbbiinn, etc.
 # as appropriate
 
 # The resulting script will be called by mlsl2 master task
@@ -515,7 +515,6 @@ then
     $PGE_BINARY --ntk -m --slave $masterTid $otheropts $l2cf 2>&1 >> "$LOGFILE"
   fi
   Exit_With_Status 0
-  exit 0
 fi
 
 # Run pge in background
@@ -597,9 +596,12 @@ kill -9 "$pgepid"
 # e.g., "arg1 arg2" being passed as a single space-containing arg
 all_my_opts=$@
 do_the_call $all_my_opts
-exit 0
+Exit_With_Status 0
 
 # $Log$
+# Revision 1.20  2018/02/09 17:41:28  pwagner
+# Correct spelling error
+#
 # Revision 1.19  2018/01/26 17:43:33  pwagner
 # Tried to fix hanging when running in foreground
 #
