@@ -1298,7 +1298,7 @@ contains ! ============= Public procedures ===================================
       l_phasetiming, l_phitan, l_ptan, l_quality, l_radiance, &
       l_refgph, l_refltemp, l_refltrans, l_reflrefl, l_reflspill, &
       l_rhi, l_singlechannelradiance, l_sizedistribution, &
-      l_scanresidual, l_scatteringangle, l_sceci, l_scecr, l_scveleci, &
+      l_scanresidual, l_scatteringangle, l_sceci, l_instecr, l_scecr, l_scveleci, &
       l_scvelecr, l_scgeocalt, l_spaceradiance, l_status, &
       l_strayradiance, l_surfaceheight, l_surfacetype, l_systemtemperature, &
       l_temperature, l_tngteci, l_tngtecr, l_tngtgeodalt, l_tngtgeocalt, &
@@ -1454,6 +1454,7 @@ contains ! ============= Public procedures ===================================
       l_scanResidual, phyq_length, p_minorFrame, p_module, next, &
       l_scatteringAngle, phyq_angle, p_vGrid, next, &
       l_scECI, phyq_length, p_minorFrame, p_scModule, p_xyz, next, &
+      l_instECR, phyq_length, p_minorFrame, p_Module, p_xyz, next, &
       l_scECR, phyq_length, p_minorFrame, p_scModule, p_xyz, next, &
       l_scGeocAlt, phyq_length, p_minorFrame, p_scModule, next, &
       l_scVelECI, phyq_velocity, p_minorFrame, p_scModule, p_xyz, next, &
@@ -1599,6 +1600,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.206  2018/02/23 22:04:45  mmadatya
+! Added l_instECR for ASMLS
+!
 ! Revision 2.205  2017/12/15 18:43:56  mmadatya
 ! Added geoHeight as new quantity template
 !
