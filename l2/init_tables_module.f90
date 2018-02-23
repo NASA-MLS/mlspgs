@@ -22,7 +22,6 @@ module INIT_TABLES_MODULE
 ! Don't edit field_parm.f9h and field_add.f9h directly
 ! nor declare fields and add_idents for fields to init_tables_module
 ! Instead add or delete any field names in field_names.txt
-
 ! It has happened that the allocate_test/deallocate_test caused
 ! a segment fault of the compiled code when the compiler
 ! is NAG--if that happens, try turning off optimization
@@ -222,7 +221,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_WMOTROP            = s_vGrid + 1
   integer, parameter :: S_WMOTROPFROMGRIDS   = s_wmoTrop + 1
   integer, parameter :: S_WRITEFILEATTRIBUTE = S_wmoTropFromGrids + 1
-  integer, parameter :: S_WRITEPFA           = S_writeFileAttribute + 1
+  integer, parameter :: S_SUBSAMPLE          = S_writeFileAttribute + 1
+  integer, parameter :: S_WRITEPFA           = S_subSample + 1
   integer, parameter :: SPEC_LAST = s_writePFA 
 
 ! Parameter names:
@@ -440,6 +440,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_wmoTrop) =                add_ident ( 'wmoTrop' )
     spec_indices(s_wmoTropfromGrids) =       add_ident ( 'wmoTropFromGrids' )
     spec_indices(s_writeFileAttribute) =     add_ident ( 'writeFileAttribute' )
+    spec_indices(s_subSample) =              add_ident ( 'subSample' )
     spec_indices(s_writePFA) =               add_ident ( 'writePFA' )
 
   ! Now initialize the units tables.  Init_Units depends on the lit tables
@@ -561,7 +562,7 @@ contains ! =====     Public procedures     =============================
              l+l_phaseTiming, l+l_phiTan, l+l_ptan, l+l_quality, l+l_radiance, &
              l+l_reflrefl, l+l_reflspill, l+l_refltemp, l+l_refltrans, &
              l+l_refGPH, l+l_rhi, l+l_scanResidual, l+l_scatteringAngle, &
-             l+l_scECI, l+l_scECR, l+l_scGeocAlt, l+l_scVelECI, l+l_scVelECR, &
+             l+l_scECI, l+l_instECR, l+l_scECR, l+l_scGeocAlt, l+l_scVelECI, l+l_scVelECR, &
              l+l_singleChannelRadiance, l+l_sizedistribution, &
              l+l_spaceRadiance, l+l_status, l+l_strayRadiance, &
              l+l_surfaceHeight, l+l_surfacetype, l+l_systemTemperature, &
@@ -749,6 +750,7 @@ contains ! =====     Public procedures     =============================
              nadp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_chunkDivide, &
+             begin, f+f_module, field_spec(s_module), &
              begin, f+f_method, field_type(t_chunkDivideMethod,req=req), &
              begin, f+f_noChunks, numeric(phyq_dimensionless), &
              begin, f+f_overlap, numeric(), & ! PHYQ_MAFs, PHYQ_Angle, PHYQ_Time
@@ -1075,6 +1077,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_scVelECI, vectorQuantity(), &
              begin, f+f_scVelECR, vectorQuantity(), &
              begin, f+f_scECI, vectorQuantity(), &
+             begin, f+f_sdname, string(), &
              begin, f+f_seed, numeric(phyq_dimensionless), &
              begin, f+f_shape, numeric(), &
              begin, f+f_sourceGrid, field_spec( s_gridded, s_merge, s_concatenate, &
@@ -1205,6 +1208,14 @@ contains ! =====     Public procedures     =============================
              begin, f+f_file, string(req), &
              begin, f+f_attrValue, string(req), &
              begin, f+f_type, field_type(t_outputType,req=req), &
+             ndp+n_spec_def /) )
+             
+    call make_tree ( (/ &
+      begin, s+s_subSample, &  ! Must be AFTER s_l2aux and s_l2gp
+             begin, f+f_file, string(), &
+             begin, f+f_hGrid, field_spec(s_hgrid), &
+             begin, f+f_type, field_type(t_outputType), &
+             begin, f+f_repairGeolocations, boolean(), &
              ndp+n_spec_def /) )
 
     call make_tree( (/ &
@@ -1888,7 +1899,7 @@ contains ! =====     Public procedures     =============================
       begin, z+z_output, s+s_Boolean, s+s_case, s+s_catenate, s+s_copy, &
              s+s_destroy, s+s_diff, s+s_dump, s+s_dumpblocks, s+s_endSelect, &
              s+s_execute, s+s_hgrid, s+s_isSwathEmpty, s+s_output, s+s_Reevaluate, &
-             s+s_select, s+s_Skip, s+s_Sleep, s+s_time, s+s_writeFileAttribute, &
+             s+s_select, s+s_Skip, s+s_Sleep, s+s_time, s+s_writeFileAttribute, s+s_subSample, &
              n+n_section /) )
 
   contains
@@ -2098,6 +2109,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.637  2018/02/23 22:08:12  mmadatya
+! Added l_instECR for ASMLS
+!
 ! Revision 2.636  2017/12/15 18:29:56  mmadatya
 ! Added geoHeight as new quantity template; heightFromPressure as new Fill method
 !
