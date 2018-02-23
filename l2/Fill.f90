@@ -523,6 +523,7 @@ contains ! =====     Public Procedures     =============================
     integer :: SCECIVECTORINDEX         ! In the vector database
     integer :: SCVELQUANTITYINDEX       ! In the quantities database
     integer :: SCVELVECTORINDEX         ! In the vector database
+    character(len=256) :: sdname
     integer, dimension(2) :: SEED       ! integers used by random_numbers
     integer :: SEEDNODE                 ! For the parser
     integer, dimension(2) :: SHP
@@ -1863,6 +1864,8 @@ contains ! =====     Public Procedures     =============================
           scVelQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
         case ( f_seed ) ! For explicitly setting mls_random_seed
           seedNode=subtree(j,key)
+        case ( f_sdname )
+           call get_string ( sub_rosa ( gson ), sdName, strip=.true. )
         case ( f_sourceL2AUX )          ! Which L2AUXDatabase entry to use
           l2auxIndex = decoration(decoration(gson))
         case ( f_sourceL2GP )           ! Which L2GPDatabase entry to use
@@ -3361,6 +3364,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.473  2018/02/23 22:09:23  mmadatya
+! Added l_instECR for ASMLS
+!
 ! Revision 2.472  2017/12/15 18:33:19  mmadatya
 ! Added heightFromPressure as new Fill method
 !
