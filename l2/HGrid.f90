@@ -17,7 +17,7 @@ module HGrid                    ! Horizontal grid information
     & L1BGeolocation, L1BSubsample
   use MLSCommon, only: MLSFile_t, nameLen, TAI93_Range_t
   use MLSFiles, only: HDFVersion_5, GetMLSFileByType
-  use MLSKinds, only: rk => r8
+  use MLSKinds, only: rk => r8, r8
   use MLSSignals_m, only: GetModuleName
   
   implicit none
@@ -271,6 +271,8 @@ contains ! =====     Public Procedures     =============================
         instrumentModule = decoration(decoration(subtree(2,son)))
         call GetModuleName ( instrumentModule , instrumentModuleName )
         hGrid%module = instrumentModule
+        call output('insrumentModuleName in the case f_module is ' )
+        call output(instrumentModuleName, advance='yes')
       case ( f_origin )
         call expr ( subtree(2,son), expr_units, expr_value )
         origin = expr_value(1)
@@ -387,8 +389,10 @@ contains ! =====     Public Procedures     =============================
       if ( .not. allocated(polygon_vertices) ) then
         call announce_error ( root, noPolygon )
       else
-        call create_QTM_hgrid ( polygon_inside, polygon_vertices, QTM_level, &
-          & hGrid )
+        call output('insrumentModuleName is ' )
+        call output(instrumentModuleName, advance='yes')
+        call create_QTM_hgrid ( filedatabase, polygon_inside, polygon_vertices, QTM_level, &
+          & hGrid, trim(instrumentModuleName) )
       end if
 
     case ( l_regular ) ! ----------------------- Regular ---------------
@@ -1006,7 +1010,7 @@ contains ! =====     Public Procedures     =============================
   end subroutine CreateMIFBasedHGrids
 
   ! -------------------------------------------  Create_QTM_HGrid  -----
-  subroutine Create_QTM_HGrid ( Polygon_Inside, Polygon_Vertices, Level, HGrid )
+  subroutine Create_QTM_HGrid ( filedatabase, Polygon_Inside, Polygon_Vertices, Level, HGrid, instrumentModuleName )
 
     ! Create a QTM within the specified polygon with the specified level
     ! of refinement.
@@ -1025,14 +1029,117 @@ contains ! =====     Public Procedures     =============================
     use MLSStringLists, only: SwitchDetail
     use QTM_Output, only: Write_QTM_Unformatted
     use Toggles, only: Switches
-
+    use Output_m, only: Output
+    use l1bdata, only: l1bdata_t, readl1bdata, getl1bfile, namelen, &
+      & assemblel1bqtyname, precisionsuffix, deallocatel1bdata, dump
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
+    use Geometry, only: To_XYZ
+    
+    type (MLSFile_T), dimension(:), pointer ::     FileDatabase
     type(h_t), intent(in) :: Polygon_Inside ! A point inside the polygon
     type(h_t), intent(in) :: Polygon_Vertices(:)
     integer, intent(in) :: Level
     type(hGrid_t), intent(inout) :: HGrid
+    character (len=*), intent(in) :: InstrumentModuleName
 
     integer :: I, QTMFile, Stat
-
+    type (L1BData_T) :: lats            ! lats data
+    type (L1BData_T) :: lons            ! lons data
+    type (MLSFile_T), pointer             :: L1BFile
+    integer :: L1BFLAG                  ! error Flag
+    integer :: NoMAFs
+    integer :: MAFsofar
+    character (len=NameLen) :: L1BItemName
+    real(r8), dimension(:, :), pointer :: xyz
+    real(r8), dimension(:, :), pointer :: xyz_p
+    integer :: MAF
+    integer :: noP
+    real(r8), dimension(:),  pointer :: r
+    real(r8) :: rsofar
+    type (L1BData_T) :: SolarTimes            ! SolarTime data
+    type (L1BData_T) ::SolarZenith
+    type (L1BData_T) ::MAFStartTimeTAI
+     
+    
+    call output ('Inside Create_QTM_HGrid', advance='yes' )
+    ! 1st-- read lats and lons from the l1b file
+    
+    L1BFile => GetMLSFileByType( filedatabase, content='l1boa' )  
+    if ( .not. associated(L1BFile) ) &
+          & call MLSMessage  ( MLSMSG_Error, ModuleName, &
+          & 'Can not make progress in  Create_QTM_HGrid without L1BOA files' )
+    l1bItemName = AssembleL1BQtyName (  instrumentModuleName//".tpGeodLat", L1BFile%HDFVersion, .false. )
+    call output (trim(l1bItemName), advance ='yes')
+    call ReadL1BData ( L1BFile, l1bItemName, lats, noMAFs, &
+        & l1bFlag )
+    if ( l1bFlag==-1) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Create_QTM_HGrid Where is ' // l1bItemName )
+    call output ('lats is ', advance='yes' )
+    call output( lats%dpField(1,1,1::NoMAFS), advance='yes')
+    call dump ( lats, 0)
+    l1bItemName = AssembleL1BQtyName ( instrumentModuleName//".tpLon", L1BFile%HDFVersion, .false. )
+    call output (trim(l1bItemName), advance ='yes')
+    call ReadL1BData ( L1BFile, l1bItemName, lons, noMAFs, &
+        & l1bFlag )
+    if ( l1bFlag==-1) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Create_QTM_HGrid Where is ' // l1bItemName )
+    call output ('lons is ' )
+    call output( lons%dpField(1,1,1::NoMAFS), advance='yes')
+    call dump ( lons, 0 ) 
+    
+    l1bItemName = AssembleL1BQtyName ( instrumentModuleName//".tpSolarTime", L1BFile%HDFVersion, .false. )
+    call output (trim(l1bItemName), advance ='yes')
+    call ReadL1BData ( L1BFile, l1bItemName, SolarTimes, noMAFs, &
+        & l1bFlag )
+    if ( l1bFlag==-1) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Create_QTM_HGrid Where is ' // l1bItemName )
+    call output ('SolarTimes is ' )
+    call output( SolarTimes%dpField(1,1,1::NoMAFS), advance='yes')
+    call dump ( SolarTimes, 0 ) 
+    
+    l1bItemName = AssembleL1BQtyName ( instrumentModuleName//".tpSolarZenith", L1BFile%HDFVersion, .false. )
+    call output (trim(l1bItemName), advance ='yes')
+    call ReadL1BData ( L1BFile, l1bItemName, SolarZenith, noMAFs, &
+        & l1bFlag )
+    if ( l1bFlag==-1) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Create_QTM_HGrid Where is ' // l1bItemName )
+    call output ('SolarZenith is ' )
+    call output( SolarZenith%dpField(1,1,1::NoMAFS), advance='yes')
+    call dump ( SolarZenith, 0 ) 
+   
+    l1bItemName = AssembleL1BQtyName ( "MAFStartTimeTAI", L1BFile%HDFVersion, .false. )
+    call output (trim(l1bItemName), advance ='yes')
+    call ReadL1BData ( L1BFile, l1bItemName, MAFStartTimeTAI, noMAFs, &
+        & l1bFlag )
+    if ( l1bFlag==-1) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Create_QTM_HGrid Where is ' // l1bItemName )
+    call output ('MAFStartTimeTAI is ' )
+    call output( MAFStartTimeTAI%dpField(1,1,1::NoMAFS), advance='yes')
+    call dump ( MAFStartTimeTAI, 0 )
+  
+    !Converting lats, lons to XYZ
+    call output ('Create_QTM_HGrid before do MAF loop', advance='yes')
+    allocate (xyz(3,NoMAFs), stat = stat)
+    call test_allocate (stat, moduleName, "xyz", &
+        & [3], [NoMAFS], storage_size(3*NoMAFs ) )
+    do MAF=1, NoMAFs
+       call output('lat = ')
+       call output( lats%dpField(1,1,MAF) )
+       call output ('  lon = ')   
+       call output( lons%dpField(1,1,MAF), advance='yes')
+       xyz(1:3,MAF) = to_xyz ( lats%dpField(1,1,MAF), lons%dpField(1,1,MAF))
+       call output ('xyz is ')
+       call output (xyz(1:3, MAF), advance='yes')
+    enddo
+    
+    call output('Testing xyz array after population', advance='yes')
+    do MAF = 1, NoMAFs
+       call output ('MAF = ')
+       call output (MAF)
+       call output (' , XYZ is ')
+       call output ( xyz(1:3, MAF), advance='yes')
+    enddo
+               
     allocate ( hGrid%QTM_tree, stat=stat )
     call test_allocate ( stat, moduleName, "hGrid%QTM_tree", &
       & [1], [1], storage_size(hGrid%QTM_tree) / 8 )
@@ -1063,6 +1170,51 @@ contains ! =====     Public Procedures     =============================
     hGrid%solarZenith(1,:) = 0
     hGrid%losAngle(1,:) = 0
 
+    allocate (xyz_p(3,hGrid%noProfs), stat = stat)
+    call test_allocate (stat, moduleName, "xyz_p", &
+        & [3], [hGrid%noProfs], storage_size(3*hGrid%noProfs ) )
+     
+    do noP=1, hGrid%noProfs
+       call output('lat for profile = ')
+       call output( hGrid%geodLat(1,noP) )
+       call output ('  lon for profile  = ')   
+       call output( hGrid%lon(1,noP), advance='yes')
+       xyz_p(1:3,noP) = to_xyz ( hGrid%geodLat(1,noP), hGrid%lon(1,noP))
+       call output ('xyz_p is ')
+       call output (xyz_p(1:3,noP), advance='yes')   
+    enddo 
+     
+    allocate (r(NoMAFs), stat = stat)
+    call test_allocate (stat, moduleName, "r", &
+        & [NoMAFs], [0], storage_size(NoMAFs) )
+        
+    call output('Ready to compute distance r', advance='yes')
+    
+    do  noP=1, hGrid%noProfs   
+       r = (xyz(1,:) - xyz_p(1,noP))**2 + &
+           &(xyz(2,:) - xyz_p(2,noP))**2 +  &
+           &(xyz(3,:) - xyz_p(3,noP))**2
+       call output('distance for ')
+       call output(noP)
+       call output ('  profile is ')
+       call output (r, advance='yes') 
+       rsofar = r(1)
+       MAFsofar = 1
+       do  MAF=2, noMAFS 
+         if(r(MAF) .GE. rsofar) cycle
+         rsofar = r(MAF)
+         MAFsofar = MAF
+       enddo        
+       call output ('rsofar is ')
+       call output (rsofar, advance = 'yes') 
+       call output ('MAFsofar is ')
+       call output (MAFsofar, advance = 'yes') 
+       hGrid%time(1,noP) =  MAFStartTimeTAI%dpField(1,1,MAFsofar)
+       hGrid%solarTime(1,noP) =  SolarTimes%dpField(1,1,MAFsofar)
+       hGrid%solarZenith(1,noP) =  SolarZenith%dpField(1,1,MAFsofar)      
+    enddo
+       
+    
     QTMFile = switchDetail ( switches, 'QTMFile' )
     if ( QTMFile > 0 ) then
       ! Write a Fortran unformatted file to make it easier to look at a QTM
@@ -2586,6 +2738,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.148  2018/02/23 22:20:51  mmadatya
+! Updates for Create_QTM_HGrid for ASMLS
+!
 ! Revision 2.147  2018/01/03 01:17:56  pwagner
 ! Removed disused solving of a quadratic equation
 !
