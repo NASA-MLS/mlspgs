@@ -43,7 +43,7 @@ module FillUtils_1                     ! Procedures used by Fill
     & L_Pressure, L_Ptan, L_Quality, &
     & L_Radiance, L_RefGPH, &
     & L_Refltemp, &
-    & L_Sceci, L_Scecr, L_Scgeocalt, L_Scveleci, L_Scvelecr, &
+    & L_Sceci, L_Scecr, L_Instecr, L_Scgeocalt, L_Scveleci, L_Scvelecr, &
     & L_SingleChannelRadiance, &
     & L_Status, L_Surfacetype, L_Systemtemperature, &
     & L_Temperature, L_Time, L_TngtECI, L_TngtECR, L_TngtGeocAlt, &
@@ -4204,7 +4204,7 @@ contains ! =====     Public Procedures     =============================
 
     ! radiances are named the same independent of hdf version
     subroutine FromL1B ( Root, Quantity, Chunk, FileDatabase, &
-      & IsPrecision, Suffix, Geolocation, PrecisionQuantity, BOMask )
+      & IsPrecision, Suffix, Geolocation, PrecisionQuantity, BOMask, sdName )
       use BitStuff, only: negativeIfBitPatternSet
       use Init_Tables_Module, only: l_ECR, l_geocentric, l_geodetic, l_none
       integer, intent(in)                        :: Root
@@ -4217,6 +4217,8 @@ contains ! =====     Public Procedures     =============================
       type (VectorValue_T), intent(in), optional :: PrecisionQuantity
       integer, intent(in), optional              :: BOMask ! A pattern of bits--
                                               ! set prec. neg. if matched
+                                   
+      character(len=256), intent(in), optional :: sdname
       ! Local variables
       integer                   :: BO_error
       type (L1BData_T)          :: BO_stat
@@ -4243,7 +4245,7 @@ contains ! =====     Public Procedures     =============================
         logical :: Tngt        ! IsTngtQty argument for AssembleL1BQtyName
       end type Finder_t
 
-      type(finder_t), parameter :: Finder(18) = [ &
+      type(finder_t), parameter :: Finder(19) = [ &
                    ! QtyType              Name       Module  Tngt
         & finder_t ( l_ECRtoFOV,         'ECRtoFOV',  '  ', .true.  ), &
         & finder_t ( l_GHzAzim,          'azimAngle', '  ', .true.  ), &
@@ -4255,6 +4257,7 @@ contains ! =====     Public Procedures     =============================
         & finder_t ( l_radiance,         '*SIGNAL*',  '  ', .false. ), &
         & finder_t ( l_scECI,            'ECI',       'sc', .false. ), &
         & finder_t ( l_scECR,            'ECR',       'sc', .false. ), &
+        & finder_t ( l_instECR,          'ECR',       '  ', .false. ), &
         & finder_t ( l_scGeocAlt,        'GeocAlt',   'sc', .false. ), &
         & finder_t ( l_scVelECI,         'VelECI',    'sc', .false. ), &
         & finder_t ( l_scVelECR,         'VelECR',    'sc', .false. ), &
@@ -7897,6 +7900,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.137  2018/02/23 22:09:52  mmadatya
+! Added l_instECR for ASMLS
+!
 ! Revision 2.136  2017/12/15 18:33:19  mmadatya
 ! Added heightFromPressure as new Fill method
 !
