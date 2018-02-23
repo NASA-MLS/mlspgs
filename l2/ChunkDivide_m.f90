@@ -40,7 +40,7 @@ module ChunkDivide_m
   use MLSKinds, only: R8, Rp
   use MLSMessageModule, only: MLSMessage, MLSMsg_Error, MLSMsg_Warning
   use MLSNumerics, only: Hunt
-  use MLSFinds, only: Findfirst
+  use MLSFinds, only: Findfirst, FindLongestStretch
   use MLSSignals_M, only: Dump, Modules, GetModuleName
   use MLSStringlists, only: SwitchDetail
   use Output_M, only: Blanks, Output, &
@@ -200,7 +200,7 @@ contains ! ===================================== Public Procedures =====
     use Allocate_Deallocate, only: Test_Deallocate
     use DumpCommand_m, only: DumpCommand
     use Expr_m, only: Expr
-    use HDF5, only: H5GClose_F, H5GOpen_F
+    use HDF5, only: H5GCLOSE_F, H5GOPEN_F
     use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     use Lexer_Core, only: Print_Source
     use MLSCommon, only: TAI93_Range_T
@@ -240,6 +240,7 @@ contains ! ===================================== Public Procedures =====
     integer, parameter :: invalid = Unnecessary + 1
     integer :: instrumentModule
     character (len=NameLen) :: InstrumentModuleName
+
     ! For timing
     logical :: Timing
     real :: T1
@@ -535,13 +536,13 @@ contains ! ===================================== Public Procedures =====
       character (len=NameLen) :: L1BItemName
       logical, dimension(:), pointer :: ptsInPolygon => null()
       real(r8), dimension(3)         :: xyz
-      ! real(r8)                       :: xx, yy
+      real(r8)                       :: xx, yy
       real(r8), dimension(:), ALLOCATABLE :: Vertices_XX, Vertices_YY
       real(r8), dimension(3)         :: PolyVert_XYZ
-      integer :: n
+      integer :: M1, M2, n
       integer, dimension(2) :: range
-      ! integer :: pointTest
-    
+      integer :: pointTest
+
       ! Executable code
       ! 1st-- read lats and lons from the l1b file
       L1BFile => GetMLSFileByType( filedatabase, content='l1boa' )
@@ -576,54 +577,54 @@ contains ! ===================================== Public Procedures =====
       do i = 1, n
         PolyVert_XYZ = to_xyz(polygon_vertices(i)%lat, polygon_vertices(i)%lon%d)
         call output ( polygon_vertices(i)%lon%d )
-        Vertices_XX(i)= PolyVert_XYZ(1)
-        call output ('   ')
+	Vertices_XX(i)= PolyVert_XYZ(1)
+	call output ('   ')
         call output ( polygon_vertices(i)%lat, advance='yes' )
-        Vertices_YY(i) = PolyVert_XYZ(2)
-        call output ('Vertices_XX,  Vertices_YY for polygon is ')
-        call output (Vertices_XX(i))
-        call output ('   ')
-        call output (Vertices_YY(i), advance='yes')
-        
+	Vertices_YY(i) = PolyVert_XYZ(2)
+	call output ('Vertices_XX,  Vertices_YY for polygon is ')
+	call output (Vertices_XX(i))
+	call output ('   ')
+	call output (Vertices_YY(i), advance='yes')
+	
       end do
-    
+   
     
       ! Now we'll check for whether the points are inside or outside the PolyGon
       call output ('before do MAF loop', advance='yes')
-      ! pointTest = 0
+      !pointTest = 0
       do MAF=1, NoMAFs
          call output('lat = ')
          call output( lats%dpField(1,1,MAF) )
-         call output ('  lon = ')   
-         call output( lons%dpField(1,1,MAF), advance='yes')
-         xyz = to_xyz ( lats%dpField(1,1,MAF), lons%dpField(1,1,MAF))
-         call output ('xyz is ')
-         call output (xyz, advance='yes')
-         call output(PnPoly(xyz(1), xyz(2), Vertices_XX, Vertices_YY ), advance='yes')
-         if ((PnPoly(xyz(1), xyz(2), Vertices_XX, Vertices_YY )) == 1)  then
-             ptsInPolygon(MAF) = .true.
-             !pointTest = pointTest + 1
-           !  if (MAF == 70) then
-           !    ptsInPolygon(MAF) = .false.
-           !  end if
-           !  if (MAF == 100) then
-            !    ptsInPolygon(MAF) = .false.
-           !  end if
-           !  if (MAF == 200) then
-           !     ptsInPolygon(MAF) = .false.
-           !  end if
-           !  if (MAF == 240) then
-           !     ptsInPolygon(MAF) = .false.
-           !  end if
-           !  if (MAF == 300) then
-           !     ptsInPolygon(MAF) = .false.
-          !   end if
-         else
-             !ptsInPolygon(MAF) = pointTest
-             !pointTest = 0 
-             ptsInPolygon(MAF) = .false.
-         end if
-         
+	 call output ('  lon = ')   
+	 call output( lons%dpField(1,1,MAF), advance='yes')
+	 xyz = to_xyz ( lats%dpField(1,1,MAF), lons%dpField(1,1,MAF))
+	 call output ('xyz is ')
+	 call output (xyz, advance='yes')
+	 call output(PnPoly(xyz(1), xyz(2), Vertices_XX, Vertices_YY ), advance='yes')
+	 if ((PnPoly(xyz(1), xyz(2), Vertices_XX, Vertices_YY )) == 1)  then
+	     ptsInPolygon(MAF) = .true.
+	     !pointTest = pointTest + 1
+	   !  if (MAF == 70) then
+	   !    ptsInPolygon(MAF) = .false.
+	   !  end if
+	   !  if (MAF == 100) then
+	    !    ptsInPolygon(MAF) = .false.
+	   !  end if
+	   !  if (MAF == 200) then
+	   !     ptsInPolygon(MAF) = .false.
+	   !  end if
+	   !  if (MAF == 240) then
+	   !     ptsInPolygon(MAF) = .false.
+	   !  end if
+	   !  if (MAF == 300) then
+	   !     ptsInPolygon(MAF) = .false.
+	  !   end if
+	 else
+	     !ptsInPolygon(MAF) = pointTest
+	     !pointTest = 0 
+	     ptsInPolygon(MAF) = .false.
+	 end if
+	 
         ! Use To_XYZ to get XX, YY, ZZ
         ! The send XX, YY through Pn_Poly
         ! Set to true or false depending on retrun value (-1 outside, +1 inside)
@@ -632,16 +633,16 @@ contains ! ===================================== Public Procedures =====
       ! Now dump ptsInPolygon
       call dump(ptsInPolygon, "ptsInPolygon")
 
-      call output ( 'MARET ChunckDivide_Polygon is usign Fixed method exactly.\n' )
-      call output ( 'MARET vertices \n')
+      call output ( 'ChunckDivide_Polygon is usign Fixed method exactly.\n' )
+      call output ( 'vertices \n')
       call dump_h_t ( polygon_vertices, &
       & 'Polygon boundary vertices (lon,lat):', format='(f8.3)' )
      
-      call output ( 'MARET Polygon_Inside \n')
+      call output ( 'Polygon_Inside \n')
       call output ( polygon_inside%lon%d, before='Point inside polygon (lon,lat): (' )
       call output ( polygon_inside%lat, before=',', after=')', advance='yes' )
        
-      call output ( 'MARET mafRange ', advance='yes')  
+      call output ( 'mafRange ', advance='yes')  
        call output ( 'Corresponding MAF range ')
         call output ( mafRange%L2Cover(1) )
         call output ( ' : ' )
@@ -654,14 +655,14 @@ contains ! ===================================== Public Procedures =====
         call output ( mafRange%Expanded(1) )
         call output ( ' : ' )
         call output ( mafRange%Expanded(2), advance='yes' )
-        
-        call output ( 'MARET before  FindLongestRange  call ', advance='yes')
-        call FindLongestRange (ptsInPolygon, .true., range)
-        call output ('range is ')
-        call output (range, advance='yes')
-        
-        call output ( 'MARET after  FindLongestRange  call ')
-        
+	
+	call output ( 'before  FindLongestRange  call ', advance='yes')
+	call FindLongestRange (ptsInPolygon, .true., range)
+	call output ('range is ')
+	call output (range, advance='yes')
+	
+	call output ( 'after  FindLongestRange  call ')
+	
       swlevel = switchDetail(switches, 'chu' )
       allocate ( chunks(ChunkDivideConfig%noChunks), stat=status )
       addr = 0
@@ -840,12 +841,12 @@ contains ! ===================================== Public Procedures =====
         & (/ f_noSlaves, f_homeModule, f_homeGeodAngle, f_scanLowerLimit, &
         &    f_scanUpperLimit, f_criticalModules, f_maxGap /)
         
-      !MARET added for Polygon
+      !added for Polygon
       integer, target, dimension(0) :: NeededForPolygon 
       integer, target, dimension(10) :: NotWantedForPolygon = &
         & (/ f_noSlaves, f_homeModule, f_homeGeodAngle, f_scanLowerLimit, &
         &    f_scanUpperLimit, f_criticalModules, f_maxGap, f_noChunks, f_maxLength, f_overlap /)
-      !MARET ended for Polygon
+      !ended for Polygon
        
       integer, target, dimension(3) :: NeededForPE = &
         & (/ f_maxLength, f_homeModule, f_homeGeodAngle /)
@@ -872,7 +873,7 @@ contains ! ===================================== Public Procedures =====
       integer :: GSON                     ! A son of son the ChunkDivide command node
       integer :: I                        ! Loop inductor
       integer :: J                        ! Another loop inductor
-      ! logical :: Log_Value                ! For boolean fields
+      logical :: Log_Value                ! For boolean fields
       integer :: Me = -1                  ! String index for trace cacheing
       integer :: numCriticalSignals       ! How many crit. Sigs
       integer :: signalsNode              ! Node where crit. Sig. begin
@@ -913,26 +914,25 @@ contains ! ===================================== Public Procedures =====
           ! log_value = get_boolean ( fieldValue )
         elseif (nsons(son) > 0 ) then
           value = 0.0
-          ! log_value = get_boolean ( fieldValue )
-          ! print *, 'log_value ', log_value
+          log_value = get_boolean ( fieldValue )
         else
           value = 0.0
-          ! log_value = .false.
+          log_value = .false.
         end if
         ! Get value for this field if appropriate
         select case ( fieldIndex )
         case ( f_method )
           ChunkDivideConfig%method = decoration ( gson )
         case ( f_module )
-          call output ('Inside case f_module', advance='yes')
+	  call output ('Inside case f_module', advance='yes')
           !ChunkDivideConfig%module = decoration ( gson )
-          instrumentModule = decoration(decoration(subtree(2,son)))
+	  instrumentModule = decoration(decoration(subtree(2,son)))
           call GetModuleName ( instrumentModule , instrumentModuleName )
-          call output ('insturmentModule name is   ')
-          call output (instrumentModule , advance='yes')
-          call output ('insturmentModuleNAME name is   ')
-          call output (instrumentModuleName , advance='yes')
-          ChunkDivideConfig%module = instrumentModule
+	  call output ('insturmentModule name is   ')
+	  call output (instrumentModule , advance='yes')
+	  call output ('insturmentModuleNAME name is   ')
+	  call output (instrumentModuleName , advance='yes')
+	  ChunkDivideConfig%module = instrumentModule
         case ( f_noChunks )
           ChunkDivideConfig%noChunks = nint ( value(1) )
         case ( f_maxLength )
@@ -955,7 +955,7 @@ contains ! ===================================== Public Procedures =====
           ChunkDivideConfig%noSlaves = value(1)
         case ( f_homeModule )
           ChunkDivideConfig%homeModule = decoration ( gson )
-          !instrumentModule = decoration(decoration(subtree(2,son)))
+	  !instrumentModule = decoration(decoration(subtree(2,son)))
           !call GetModuleName ( instrumentModule , instrumentModuleName )
           !ChunkDivideConfig%homeModule = instrumentModule
         case ( f_homeGeodAngle )
@@ -1199,7 +1199,7 @@ contains ! ===================================== Public Procedures =====
   ! -------------------------------------------- Dump Obstructions -----
   subroutine Dump_Obstructions ( obstructions )
 
-    use Output_M, only: Output
+    use Output_M, only: OUTPUT
 
     type (Obstruction_T), dimension(:), pointer :: obstructions
     ! Local variables
@@ -2056,7 +2056,8 @@ contains ! ===================================== Public Procedures =====
     subroutine SurveyL1BData ( processingRange, filedatabase, mafRange )
       ! This goes through the L1B data files and tries to spot possible
       ! obstructions.
-      use Monotone, only: IsMonotonic
+      use MLSL2Options, only: sharedPCF
+      use Monotone, only: isMonotonic
       type (TAI93_Range_T), intent(in) :: PROCESSINGRANGE
       type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
       type (MAFRange_T), intent(out) :: MAFRange
@@ -2095,7 +2096,7 @@ contains ! ===================================== Public Procedures =====
         & call MLSMessage  ( MLSMSG_Error, ModuleName, &
           & "Can't make progress in SurveyL1BData without L1BOA files" )
       if ( swLevel > -1 ) then
-        ! call output( 'here is the L1BOA', advance='yes' )
+        call output( 'here is the L1BOA', advance='yes' )
         call dump( L1BFile )
       endif
       l1b_hdf_version = L1BFile%HDFVersion
@@ -2430,15 +2431,15 @@ contains ! ===================================== Public Procedures =====
       tp_angle = AssembleL1BQtyName ( trim(modNameStr)//'.tpGeodAngle', &
         & l1b_hdf_version, &
         & .false. )
-      if ( swLevel > 1 ) &
+      if ( swLevel > -1 ) &
         & call output('Reading Geod Angle', advance='yes')
       call ReadL1BData ( L1BFile, trim(tp_angle), &
         & tpGeodAngle, noMAFsRead, flag, &
         & dontPad=DONTPAD )
-      if ( swLevel > 1 ) &
+      if ( swLevel > -1 ) &
         & call output('1st smoothing', advance='yes')
       call smoothOutDroppedMAFs(tpGeodAngle%dpField)
-      if ( swLevel > 1 ) &
+      if ( swLevel > -1 ) &
         & call output('2nd smoothing', advance='yes')
       call smoothOutDroppedMAFs(tpGeodAngle%dpField, monotonize=.true.)
       if ( swLevel > -1 ) &
@@ -2458,9 +2459,16 @@ contains ! ===================================== Public Procedures =====
       minTime = minval ( taiTime%dpField(1,1,m1:m2) )
       maxTime = maxval ( taiTime%dpField(1,1,m1:m2) )
       if ( swLevel > -1 ) then
-        call outputNamedValue ( 'Num MAFs in file', noMAFsRead )
-        call outputNamedValue ( 'MAF time range', (/minTime, maxTime/) )
-        call outputNamedValue ( 'Angle range', (/minAngle, maxAngle/) )
+        call output ( 'Num MAFs in file: ' )
+        call output ( noMAFsRead, advance='yes' )
+        call output ( 'MAF time range: ' )
+        call output ( minTime )
+        call output ( ' : ' )
+        call output ( maxTime, advance='yes' )
+        call output ( 'Angle range: ' )
+        call output ( minAngle )
+        call output ( ' : ' )
+        call output ( maxAngle, advance='yes' )
       end if
 
       ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -2475,9 +2483,12 @@ contains ! ===================================== Public Procedures =====
       end if
 
       if ( swLevel > -1 ) then
-        call outputNamedValue ( 'orbit', orbit )
-        call outputNamedValue ( 'test Angle', testAngle )
-        call outputNamedValue ( 'angle Increment', angleIncrement )
+        call output ( ' orbit  ', advance='no' )
+        call output ( orbit , advance='no' )
+        call output ( '    testAngle  ', advance='no' )
+        call output ( testAngle , advance='no' )
+        call output ( '    angleIncrement  ', advance='no' )
+        call output ( angleIncrement , advance='yes' )
       end if
       ! In my opinion (paw) here's what the following loop should do:
       ! Find the 1st MAF within HOMEACCURACY of home_angle
@@ -2513,11 +2524,15 @@ contains ! ===================================== Public Procedures =====
         testAngle = testAngle + angleIncrement
       end do homeHuntLoop
       if ( swLevel > -1 ) then
-        call outputNamedValue ( 'Test Angle', TestAngle )
-        call outputNamedValue ( 'Angle(home)', tpGeodAngle%dpField(1,1,home) )
-        call outputNamedValue ( 'Home', Home )
-        call outputNamedValue ( 'Difference', &
-          & abs ( tpGeodAngle%dpField(1,1,home) - testAngle ) )
+        call output ( 'Test Angle  ' )
+        call output ( testAngle , advance='yes' )
+        call output ( 'Angle(home)  ' )
+        call output ( tpGeodAngle%dpField(1,1,home) , advance='yes' )
+        call output ( 'Home  ' )
+        call output ( home  )
+        call output ( 'Difference  ' )
+        call output (  abs ( tpGeodAngle%dpField(1,1,home) - &
+          & testAngle ) , advance='yes' )
       end if
 
       ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -2887,34 +2902,34 @@ contains ! ===================================== Public Procedures =====
 
     end subroutine AddChunkToDatabase
 
-  type(MLSChunk_T) function CFM_ChunkDivide (processingRange, &
-     filedatabase, config) result(chunk)
+     type(MLSChunk_T) function CFM_ChunkDivide (processingRange, &
+        filedatabase, config) result(chunk)
 
-     type (TAI93_Range_T), intent(in) :: processingRange
-     type (MLSFile_T), dimension(:), pointer :: filedatabase
-     type(ChunkDivideConfig_T), intent(in) :: config
+        type (TAI93_Range_T), intent(in) :: processingRange
+        type (MLSFile_T), dimension(:), pointer :: filedatabase
+        type(ChunkDivideConfig_T), intent(in) :: config
 
-     type (MAFRange_T) :: MAFRange
-     type(MLSChunk_T), dimension(:), pointer :: chunks => null()
+        type (MAFRange_T) :: MAFRange
+        type(MLSChunk_T), dimension(:), pointer :: chunks => null()
 
-     ! Executables
-     chunkDivideConfig = config
+        ! Executables
+        chunkDivideConfig = config
 
-     nullify(chunkDivideConfig%criticalSignals)   ! Just for Sun's compiler
-     nullify(obstructions)
+        nullify(chunkDivideConfig%criticalSignals)   ! Just for Sun's compiler
+        nullify(obstructions)
 
-     ! not sure how to deal with obstruction, ignore it
-     if (chunkDivideConfig%method /= l_fixed) then
-        call SurveyL1BData ( processingRange, filedatabase, mafRange)
-     end if
+        ! not sure how to deal with obstruction, ignore it
+        if (chunkDivideConfig%method /= l_fixed) then
+           call SurveyL1BData ( processingRange, filedatabase, mafRange)
+        end if
 
-     if (chunkdivideconfig%method == l_orbital) then
-        call ChunkDivide_Orbital (mafRange, filedatabase, chunks)
-        chunk = chunks(1)
-     else
-        print *, "chunk divide method is unsupported"
-     end if
-  end function
+        if (chunkdivideconfig%method == l_orbital) then
+           call ChunkDivide_Orbital (mafRange, filedatabase, chunks)
+           chunk = chunks(1)
+        else
+           print *, "chunk divide method is unsupported"
+        end if
+     end function
 
   function what_options( clean, transpose, trim ) result( options )
     use MLSStrings, only: Trim_Safe
@@ -2947,6 +2962,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.128  2018/02/23 22:14:26  mmadatya
+! Updated for polygon for ASMLS
+!
 ! Revision 2.127  2018/02/09 00:58:27  pwagner
 ! Removed unused variables; wider use of outputNamedValue
 !
