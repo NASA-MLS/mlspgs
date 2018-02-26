@@ -734,6 +734,17 @@ contains ! =====     Public Procedures     =============================
         end if
       end if
 
+      if ( quantity%template%noSurfs <= 1 ) then
+        call announce_error ( valuesNode, no_error_code, &
+          & 'Bad value for quantity%template%noSurfs' )
+        go to 9
+      end if
+      if ( quantity%template%noCrossTrack <= 1 ) then
+        call announce_error ( valuesNode, no_error_code, &
+          & 'Bad value for quantity%template%noCrossTrack' )
+        go to 9
+      end if
+
       numChans = quantity%template%instanceLen / &
         & ( quantity%template%noSurfs * quantity%template%noCrossTrack )
       if ( numChans /= quantity%template%noChans ) then
@@ -785,7 +796,7 @@ contains ! =====     Public Procedures     =============================
         & call Deallocate_test ( values, 'values', ModuleName )
       ! No, don't do this, because sourceHeights might be our vgrid
       ! call Deallocate_test ( sourceHeights, 'sourceHeights', ModuleName )
-      call trace_end ( 'FillUtils_1.Explicit', &
+      9 call trace_end ( 'FillUtils_1.Explicit', &
         & cond=toggle(gen) .and. levels(gen) > 1 )
 
     end subroutine Explicit
@@ -7900,6 +7911,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.138  2018/02/26 19:04:53  livesey
+! More error messages.
+!
 ! Revision 2.137  2018/02/23 22:09:52  mmadatya
 ! Added l_instECR for ASMLS
 !
