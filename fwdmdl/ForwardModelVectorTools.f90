@@ -30,7 +30,8 @@ contains
 
   ! ---------------------------------  GetQuantityForForwardModel  -----
   function GetQuantityForForwardModel ( vector, otherVector, quantityType, &
-    & molecule, instrumentModule, radiometer, reflector, signal, sideband, &
+    & molecule, instrumentModule, supportedInstrumentModule, radiometer, &
+    & reflector, signal, sideband, &
     & molIndex, config, foundInFirst, wasSpecific, noError, matchQty, Frq )
 
     ! This function is in many senses like GetVectorQuantityByType, (to
@@ -58,6 +59,7 @@ contains
     integer, intent(in) :: QUANTITYTYPE ! Quantity type index (l_...)
     integer, intent(in),  optional :: MOLECULE     ! Molecule index (l_...)
     integer, intent(in),  optional :: INSTRUMENTMODULE ! Instrument module index
+    integer, intent(in),  optional :: SUPPORTEDINSTRUMENTMODULE ! Another instrument module index
     integer, intent(in),  optional :: RADIOMETER   ! Radiometer index
     integer, intent(in),  optional :: REFLECTOR    ! Reflector literal
     integer, intent(in),  optional :: SIGNAL       ! Signal index
@@ -127,7 +129,8 @@ contains
     ! If we can revert to the simpler GetVectorQuantityByType then do so.
     if ( useGetQuantityByType ) then
       GetQuantityForForwardModel => GetVectorQuantityByType ( vector, otherVector, &
-        & quantityType, molecule, instrumentModule, radiometer, reflector, signal, sideband, &
+        & quantityType, molecule, instrumentModule, supportedInstrumentModule, &
+        & radiometer, reflector, signal, sideband, &
         & foundInFirst, noError )
       return
     end if
@@ -313,7 +316,7 @@ contains
 
   ! ---------------------------------  GetQtyStuffForForwardModel  -----
   function GetQtyStuffForForwardModel ( vector, otherVector, quantityType, &
-    & molecule, instrumentModule, radiometer, reflector, signal, sideband, &
+    & molecule, instrumentModule, supportedInstrumentModule, radiometer, reflector, signal, sideband, &
     & molIndex, config, noError, matchQty, Frq )
 
     ! This function is in many senses like GetVectorQuantityByType, (to
@@ -331,6 +334,7 @@ contains
     integer, intent(in) :: QUANTITYTYPE ! Quantity type index (l_...)
     integer, intent(in),  optional :: MOLECULE     ! Molecule index (l_...)
     integer, intent(in),  optional :: INSTRUMENTMODULE ! Instrument module index
+    integer, intent(in),  optional :: SUPPORTEDINSTRUMENTMODULE ! Another instrument module index
     integer, intent(in),  optional :: RADIOMETER   ! Radiometer index
     integer, intent(in),  optional :: REFLECTOR    ! Reflector literal
     integer, intent(in),  optional :: SIGNAL       ! Signal index
@@ -344,9 +348,9 @@ contains
     type (QtyStuff_t) :: GetQtyStuffForForwardModel
 
     GetQtyStuffForForwardModel%qty => GetQuantityForForwardModel ( vector, &
-      & otherVector, quantityType, molecule, instrumentModule, radiometer, &
-      & reflector, signal, sideband, molIndex, config,                     &
-      & getQtyStuffForForwardModel%foundInFirst,                           &
+      & otherVector, quantityType, molecule, instrumentModule, supportedInstrumentModule, &xo
+      & radiometer, reflector, signal, sideband, molIndex, config, &
+      & getQtyStuffForForwardModel%foundInFirst, &
       & getQtyStuffForForwardModel%wasSpecific, noError, matchQty, Frq )
 
   end function GetQtyStuffForForwardModel
@@ -363,6 +367,9 @@ contains
 end module ForwardModelVectorTools
 
 ! $Log$
+! Revision 2.28  2018/02/27 00:51:01  livesey
+! Added the supportedInstrumentModule functionality to the various search routines to support A-SMLS
+!
 ! Revision 2.27  2014/07/18 23:14:29  pwagner
 ! Aimed for consistency in names passed to allocate_test
 !
