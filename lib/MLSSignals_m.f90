@@ -128,9 +128,20 @@ module MLSSignals_M
     integer :: Name                     ! Sub_rosa index of declaration's label
     integer :: Node                     ! Node of tree where module declared
     logical :: spaceCraft               ! Set if module is in fact s/c
+    integer :: supportedModule          ! See discssion below
     logical :: Aura  = .true.           ! Set if s/c is in fact Aura
     character(len=32) :: NameString = ' '  ! If not get_string (e.g., camelCase)
   end type Module_T
+  ! A-SMLS does things in a more complicated way, as the timing of the
+  ! different spectrometer modules varies.  This means that there need
+  ! to be multiple Spacecraft modules, with timings that are on the
+  ! same cadence as the corresponding spectrometer.  In these cases,
+  ! supportedModule is an index into the corresponding module.  That
+  ! is to say for each Spectrometer there will be two Module_Ts: one
+  ! containing the tangent pointing information as usual, the other
+  ! containing the spacecraft information on the same timing, for
+  ! which the "supportedModule" entry will point to the tangent
+  ! information
 
   ! This type defines a radiometer.
 
@@ -276,6 +287,7 @@ contains
     integer, parameter :: PriorTrouble = NoDeferredRadiometer + 1
     integer, parameter :: noModuleSpecified = PriorTrouble + 1 ! No module in either signal or radimoeter
     integer, parameter :: conflictingModules = noModuleSpecified + 1 ! Module in signal and radiometer differ
+    integer, parameter :: notSpacecraft = conflictingModules + 1 ! Had supportedModule set innappropriately
 
     error = 0
     timing = .false.
@@ -325,6 +337,7 @@ contains
         thisModule%name = name
         thisModule%spaceCraft = .false.
         thisModule%node = decoration(name)
+        thisModule%supportedModule = 0
         do j = 2,nsons(key)
           son = subtree(j,key)
           field = decoration(subtree(1,son))
@@ -337,14 +350,18 @@ contains
           select case ( field )
           case (f_Aura)
             thisModule%Aura = get_boolean(son)
-          case ( f_instrument )
+          case (f_instrument)
             instrument = decoration(gson)
           case (f_spaceCraft)
             thisModule%spacecraft = get_boolean(son)
+          case (f_supportedModule)
+            thisModule%supportedModule = decoration(decoration(gson))
           case default
             ! Shouldn't get here if parser worked
           end select
         end do
+        if ( .not. thisModule%spacecraft .and. thisModule%supportedModule /= 0 ) &
+          call announceError ( notSpacecraft )
         call decorate ( key, AddModuleToDatabase (modules, thisModule ) )
         call trace_end ( "MLSSignals.module", &
           & cond=toggle(gen) .and. levels(gen) > 0 )
@@ -685,6 +702,8 @@ contains
         call output ( 'No module found in either signal or radiometer definition', advance='yes' )
       case ( conflictingModules )
         call output ( 'Module given in signal and in radiometer conflict', advance='yes' )
+      case ( notSpacecraft )
+        call output ( 'Should only supply supportedModule for spacecraft modules', advance='yes' )
       end select
     end subroutine AnnounceError
 
@@ -1070,14 +1089,21 @@ oc:       do
     call headline( 'modules' )
     nullify( array )
     n = size(modules)
-    allocate( array(n+1, 3 ) )
+    allocate( array(n+1, 4 ) )
     array(1,1) = 'name'
     array(1,2) = 's/c'
     array(1,3) = 'Aura'
+    array(1,4) = 'Supports'
     array(2:n+1,1) = modules(:)%nameString
     do i=1, n
       if ( len_trim(modules(i)%nameString) < 1 ) &
         & call get_string( modules(i)%name, array(i+1,1) )
+      if ( modules(i)%supportedModule == 0 ) then
+        array(i+1,4) = '<none>'
+      else
+        call get_string ( modules(modules(i)%supportedModule)%name,&
+          & array(i+1,4) )
+      end if
     enddo
     array(2:n+1,2) = merge( 'T', 'F', modules(:)%spaceCraft )
     array(2:n+1,3) = merge( 'T', 'F', modules(:)%Aura )
@@ -2078,6 +2104,9 @@ oc:       do
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.113  2018/02/27 00:50:00  livesey
+! Added the supportedModule functionality to support A-SMLS
+!
 ! Revision 2.112  2017/09/15 15:44:18  livesey
 ! Updated to allow modules to be defferred until signal definition
 !
