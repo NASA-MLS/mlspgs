@@ -734,12 +734,12 @@ contains ! =====     Public Procedures     =============================
         end if
       end if
 
-      if ( quantity%template%noSurfs <= 1 ) then
+      if ( quantity%template%noSurfs < 1 ) then
         call announce_error ( valuesNode, no_error_code, &
           & 'Bad value for quantity%template%noSurfs' )
         go to 9
       end if
-      if ( quantity%template%noCrossTrack <= 1 ) then
+      if ( quantity%template%noCrossTrack < 1 ) then
         call announce_error ( valuesNode, no_error_code, &
           & 'Bad value for quantity%template%noCrossTrack' )
         go to 9
@@ -7911,6 +7911,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.139  2018/02/27 16:23:12  livesey
+! Fixed erroneous error message
+!
 ! Revision 2.138  2018/02/26 19:04:53  livesey
 ! More error messages.
 !
