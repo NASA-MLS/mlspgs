@@ -2437,7 +2437,7 @@ contains ! =====     Public Procedures     =============================
 
   ! ------------------------------------  GetVectorQuantityByType  -----
   function GetVectorQuantityByType ( vector, otherVector, quantityType, &
-    & molecule, instrumentModule, radiometer, reflector, signal, &
+    & molecule, instrumentModule, supportedInstrumentModule, radiometer, reflector, signal, &
     & sideband, foundInFirst, noError )
 
     ! Given a quantity type index (l_...), this function returns the first
@@ -2453,6 +2453,7 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in) :: QUANTITYTYPE ! Quantity type index (l_...)
     integer, intent(in),  optional :: MOLECULE     ! Molecule index (l_...)
     integer, intent(in),  optional :: INSTRUMENTMODULE ! Instrument module index
+    integer, intent(in),  optional :: SUPPORTEDINSTRUMENTMODULE ! Another instrument module index
     integer, intent(in),  optional :: RADIOMETER   ! Radiometer index
     integer, intent(in),  optional :: REFLECTOR   ! Reflector literal
     integer, intent(in),  optional :: SIGNAL       ! Signal index
@@ -2473,7 +2474,7 @@ contains ! =====     Public Procedures     =============================
 
     ! Look in the first vector
     index = GetVectorQuantityIndexByType ( vector, &
-      & quantityType, molecule, instrumentModule, radiometer, reflector, signal, &
+      & quantityType, molecule, instrumentModule, supportedInstrumentModule, radiometer, reflector, signal, &
       &   sideband, noError = present(otherVector) .or. myNoError)
     if ( index /= 0 ) then
       if ( present (foundInFirst) ) foundInFirst = .true.
@@ -2483,7 +2484,7 @@ contains ! =====     Public Procedures     =============================
       ! vector
       if ( present (otherVector) ) then
         index = GetVectorQuantityIndexByType ( otherVector, &
-          &  quantityType, molecule, instrumentModule, radiometer, reflector, signal, &
+          &  quantityType, molecule, instrumentModule, supportedInstrumentModule, radiometer, reflector, signal, &
           &  sideband, noError=myNoError )
         if ( present (foundInFirst) ) foundInFirst = .false.
         if ( index /= 0 ) &
@@ -2605,7 +2606,8 @@ contains ! =====     Public Procedures     =============================
 
   ! -------------------------------  GetVectorQuantityIndexByType  -----
   integer function GetVectorQuantityIndexByType ( vector, quantityType, &
-    & molecule, instrumentModule, radiometer, reflector, signal, sideband, noError )
+    & molecule, instrumentModule, supportedInstrumentModule, radiometer, &
+    & reflector, signal, sideband, noError )
 
   ! Given a quantity type index (l_...), this function returns the index
   ! of the first quantity within the vector that has that type.  If
@@ -2621,6 +2623,7 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in) :: QUANTITYTYPE ! Quantity type index (l_...)
     integer, intent(in), optional :: MOLECULE     ! Molecule index (l_...)
     integer, intent(in), optional :: INSTRUMENTMODULE ! Module index
+    integer, intent(in), optional :: SUPPORTEDINSTRUMENTMODULE ! Another module index
     integer, intent(in), optional :: RADIOMETER   ! Radiometer index
     integer, intent(in), optional :: REFLECTOR   ! Reflector literal
     integer, intent(in), optional :: SIGNAL       ! Signal Index
@@ -2645,6 +2648,10 @@ contains ! =====     Public Procedures     =============================
         end if
         if ( present(instrumentModule) ) then
           if ( qt%instrumentModule /= instrumentModule ) cycle
+        end if
+        if ( present(supportedInstrumentModule) ) then
+          if ( qt%instrumentModule == 0 ) cycle
+          if ( modules ( qt%instrumentModule )%supportedModule /= supportedInstrumentModule ) cycle
         end if
         if ( present(radiometer) ) then
           ! Somewhat trickier than one might think this one.  We don't
@@ -3498,6 +3505,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.208  2017/11/03 19:57:59  pwagner
+! Most array gymnastics moved from MLSFillValues to HyperSlabs module
+!
 ! Revision 2.207  2016/11/15 19:29:55  pwagner
 ! Prevent error from 0-size arrays when remapping pointer rank
 !
