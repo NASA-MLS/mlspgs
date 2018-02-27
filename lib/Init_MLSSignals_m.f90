@@ -56,7 +56,8 @@ module Init_MLSSignals_m
   integer, parameter :: F_start             = f_spectrometerType + 1
   integer, parameter :: F_step              = f_start + 1
   integer, parameter :: F_suffix            = f_step + 1
-  integer, parameter :: F_switch            = f_suffix + 1
+  integer, parameter :: F_supportedModule   = f_suffix + 1
+  integer, parameter :: F_switch            = f_supportedModule + 1
   integer, parameter :: F_width             = f_switch + 1
   integer, parameter :: Last_Signal_Field   = f_width
 
@@ -124,6 +125,7 @@ contains
     field_indices(f_start) =               add_ident ( 'start' )
     field_indices(f_step) =                add_ident ( 'step' )
     field_indices(f_suffix) =              add_ident ( 'suffix' )
+    field_indices(f_supportedModule) =     add_ident ( 'supportedModule' )
     field_indices(f_switch) =              add_ident ( 'switch' )
     field_indices(f_width) =               add_ident ( 'width' )
 
@@ -180,6 +182,7 @@ contains
              begin, f+f_Aura, t+t_boolean, n+n_field_type, &
              begin, f+f_instrument, t+t_instrumentType, n+n_field_type, &
              begin, f+f_spacecraft, t+t_boolean, n+n_field_type, &
+             begin, f+f_supportedModule, s+s_module, n+n_field_spec, &
              np+n_spec_def, &
       begin, s+s_radiometer, &          ! Must be after module
              begin, f+f_lo, t+t_numeric, nr+n_field_type+du*PHYQ_FREQUENCY, &
@@ -233,6 +236,9 @@ contains
 end module Init_MLSSignals_m
 
 ! $Log$
+! Revision 2.35  2018/02/27 00:49:43  livesey
+! Added the supportedModule functionality to support ASMLS
+!
 ! Revision 2.34  2017/09/15 15:44:18  livesey
 ! Updated to allow modules to be defferred until signal definition
 !
