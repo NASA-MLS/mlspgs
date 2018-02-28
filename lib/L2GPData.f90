@@ -17,7 +17,8 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   use BitStuff, only: DumpBitNames
   use Constants, only: Deg2Rad
   use Diff_1, only: Diff, Diff_Fun
-  use Dump_Options, only: StatsOnOneLine, NameOnEachLine
+  use Dump_Options, only: CrashAtBeginning, StatsOnOneLine, NameOnEachLine, &
+    & NameHasbeenPrinted
   use Dump_0, only: Dump
   use Dump_1, only: Dump
   use Geometry, only: EarthRadA
@@ -170,7 +171,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
 !       m              silent (mute)
 !       r              rms (or repair where appropriate)
 !       s              stats
-!       v              verbose  ! First some local parameters
+!       v              verbose
   ! Assume L2GP files w/o explicit hdfVersion field are this
   ! 4 corresponds to hdf4, 5 to hdf5 in L2GP, L2AUX, etc. 
   integer, parameter :: L2GPDEFAULT_HDFVERSION = HDFVERSION_5
@@ -292,7 +293,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
 
      ! First some variables we use for book keeping
 
-     character (LEN=L2GPNameLen) :: name ! Typically the swath name.
+     character (len=L2GPNameLen) :: name ! Typically the swath name.
      integer :: nameIndex       ! Used by the parser to keep track of the data
      ! integer :: QUANTITYTYPE = 0   ! E.g., l_temperature; (Where is this used?)
 
@@ -371,7 +372,7 @@ contains ! =====     Public Procedures     =============================
 
     character (len=*), intent(in) :: fileName ! Name of file to append to
     type( l2GPData_T ), intent(inout) :: l2gp ! What to append
-    character (LEN=*), optional, intent(IN) ::swathName!default->l2gp%swathName
+    character (len=*), optional, intent(IN) ::swathName!default->l2gp%swathName
     integer,intent(IN),optional   :: offset
     integer, intent(IN), optional ::lastProfile
     integer,intent(IN),optional   :: TotNumProfs
@@ -446,7 +447,7 @@ contains ! =====     Public Procedures     =============================
     type (L2GPData_T), intent(INOUT) :: l2gp
     ! This is the name the swath is given in the file. By default it is
     ! the name contained in l2gp
-    character (LEN=*), optional, intent(IN) ::swathName!default->l2gp%swathName
+    character (len=*), optional, intent(IN) ::swathName!default->l2gp%swathName
     ! This (offset) is the point in the swath at which the data is written. 
     ! First profile in the file has offset==0. If the swath in the file is 
     ! shorter than offset + ( num of profiles in l2gp) then it grows by magic
@@ -1871,7 +1872,7 @@ contains ! =====     Public Procedures     =============================
       return
     endif
 
-    if ( statsOnOneLine ) NameOnEachLine = trim(trim(l2gp1%name)) // '%values'
+    NameOnEachLine = merge( trim(trim(l2gp1%name)) // '%values', ' ', statsOnOneLine )
     if ( any(l2gp1%l2gpValue /= l2gp2Temp%l2gpValue) .and. &
       & SwitchDetail(lowercase(myFields), 'l2gpvalue', '-fc') > -1 ) then
       call diff ( l2gp1%l2gpValue, 'l2gp%l2gpValue', &
@@ -1883,7 +1884,7 @@ contains ! =====     Public Procedures     =============================
       call output('(values fields equal)', advance='yes')
     endif
 
-    if ( statsOnOneLine ) NameOnEachLine = trim(trim(l2gp1%name)) // '%Precisions'
+    NameOnEachLine = merge( trim(trim(l2gp1%name)) // '%Precisions', ' ', statsOnOneLine )
     if ( any(l2gp1%l2gpPrecision /= l2gp2Temp%l2gpPrecision) .and. &
       & SwitchDetail(lowercase(myFields), 'l2gpprecision', '-fc') > -1 ) then
       call diff ( l2gp1%l2gpPrecision, 'l2gpPrecision', &
@@ -1895,7 +1896,7 @@ contains ! =====     Public Procedures     =============================
       call output('(precision fields equal)', advance='yes')
     endif
 
-    if ( statsOnOneLine ) NameOnEachLine = trim(trim(l2gp1%name)) // '%status'
+    NameOnEachLine = merge( trim(trim(l2gp1%name)) // '%status', ' ', statsOnOneLine )
     if ( any(l2gp1%status /= l2gp2Temp%status) .and. &
       & SwitchDetail(lowercase(myFields), 'status', '-fc') > -1 ) then
       call diff ( l2gp1%status, 'status', &
@@ -1907,7 +1908,7 @@ contains ! =====     Public Procedures     =============================
       call output('(status fields equal)', advance='yes')
     endif
 
-    if ( statsOnOneLine ) NameOnEachLine = trim(trim(l2gp1%name)) // '%quality'
+    NameOnEachLine = merge( trim(trim(l2gp1%name)) // '%quality', ' ', statsOnOneLine )
     if ( any(l2gp1%quality /= l2gp2Temp%quality) .and. &
       & SwitchDetail(lowercase(myFields), 'quality', '-fc') > -1 ) then
       call diff ( l2gp1%quality, 'quality', &
@@ -1919,7 +1920,7 @@ contains ! =====     Public Procedures     =============================
       call output('(quality fields equal)', advance='yes')
     endif
 
-    if ( statsOnOneLine ) NameOnEachLine = trim(trim(l2gp1%name)) // '%convergence'
+    NameOnEachLine = merge( trim(trim(l2gp1%name)) // '%convergence', ' ', statsOnOneLine )
     if ( any(l2gp1%convergence /= l2gp2Temp%convergence) .and. &
       & SwitchDetail(lowercase(myFields), 'convergence', '-fc') > -1 ) then
       call diff ( l2gp1%convergence, 'convergence', &
@@ -1939,6 +1940,7 @@ contains ! =====     Public Procedures     =============================
       type(L2GPData_T) :: l2gp1
       type(L2GPData_T) :: l2gp2
       ! Executable
+      NameOnEachLine = merge( trim(trim(l2gp1%name)) // '%pressure', ' ', statsOnOneLine )
       if ( any(l2gp1%pressures /= l2gp2%pressures) .and. &
         & SwitchDetail(lowercase(myFields), 'pressure', '-fc') > -1 ) then
           call diff ( l2gp1%pressures, 'l2gp%pressures', &
@@ -1946,6 +1948,7 @@ contains ! =====     Public Procedures     =============================
             & options=options )
         myNumDiffs = myNumDiffs + count( l2gp1%pressures /= l2gp2%pressures )
       endif
+      NameOnEachLine = merge( trim(trim(l2gp1%name)) // '%latitude', ' ', statsOnOneLine )
       if ( any(l2gp1%latitude /= l2gp2%latitude) .and. &
         & SwitchDetail(lowercase(myFields), 'lat', '-fc') > -1 ) then
           call diff ( l2gp1%latitude, 'latitude', &
@@ -1953,6 +1956,7 @@ contains ! =====     Public Procedures     =============================
             & options=options )
         myNumDiffs = myNumDiffs + count( l2gp1%latitude /= l2gp2%latitude )
       endif
+      NameOnEachLine = merge( trim(trim(l2gp1%name)) // '%longitude', ' ', statsOnOneLine )
       if ( any(l2gp1%longitude /= l2gp2%longitude) .and. &
         & SwitchDetail(lowercase(myFields), 'lon', '-fc') > -1 ) then
         if ( goldbrick ) then
@@ -1969,6 +1973,7 @@ contains ! =====     Public Procedures     =============================
         endif
         myNumDiffs = myNumDiffs + count( l2gp1%longitude /= l2gp2%longitude )
       endif
+      NameOnEachLine = merge( trim(trim(l2gp1%name)) // '%solartime', ' ', statsOnOneLine )
       if ( any(l2gp1%solarTime /= l2gp2%solarTime) .and. &
         & SwitchDetail(lowercase(myFields), 'solartime', '-fc') > -1 ) then
         if ( goldbrick ) then
@@ -1985,14 +1990,17 @@ contains ! =====     Public Procedures     =============================
         endif
         myNumDiffs = myNumDiffs + count( l2gp1%solarTime /= l2gp2%solarTime )
       endif
+      NameOnEachLine = merge( trim(trim(l2gp1%name)) // '%solarzenith', ' ', statsOnOneLine )
+      CrashAtBeginning = .true.
       if ( any(l2gp1%solarZenith /= l2gp2%solarZenith) .and. &
         & SwitchDetail(lowercase(myFields), 'solarzenith', '-fc') > -1 ) then
           call diff ( l2gp1%solarZenith, 'solarZenith', &
             &         l2gp2%solarZenith, ' ', &
-            & options=options )
+            & options=trim(options) )
         badChunks = .true.
         myNumDiffs = myNumDiffs + count( l2gp1%solarZenith /= l2gp2%solarZenith )
       endif
+      NameOnEachLine = merge( trim(trim(l2gp1%name)) // '%losangle', ' ', statsOnOneLine )
       if ( any(l2gp1%losAngle /= l2gp2%losAngle) .and. &
         & SwitchDetail(lowercase(myFields), 'losangle', '-fc') > -1 ) then
           call diff ( l2gp1%losAngle, 'losAngle', &
@@ -2000,6 +2008,7 @@ contains ! =====     Public Procedures     =============================
             & options=options )
         myNumDiffs = myNumDiffs + count( l2gp1%losAngle /= l2gp2%losAngle )
       endif
+      NameOnEachLine = merge( trim(trim(l2gp1%name)) // '%geodangle', ' ', statsOnOneLine )
       if ( any(l2gp1%geodAngle /= l2gp2%geodAngle) .and. &
         & SwitchDetail(lowercase(myFields), 'geodangle', '-fc') > -1 ) then
           call diff ( l2gp1%geodAngle, 'geodAngle', &
@@ -2008,6 +2017,7 @@ contains ! =====     Public Procedures     =============================
         ! badChunks = .true.
         myNumDiffs = myNumDiffs + count( l2gp1%geodAngle /= l2gp2%geodAngle )
       endif
+      NameOnEachLine = merge( trim(trim(l2gp1%name)) // '%time', ' ', statsOnOneLine )
       if ( any(l2gp1%time /= l2gp2%time) .and. &
         & SwitchDetail(lowercase(myFields), 'time', '-fc') > -1 ) then
           call diff ( l2gp1%time, ' time', &
@@ -2016,6 +2026,7 @@ contains ! =====     Public Procedures     =============================
         ! badChunks = .true.
         myNumDiffs = myNumDiffs + count( l2gp1%time /= l2gp2%time )
       endif
+      NameOnEachLine = merge( trim(trim(l2gp1%name)) // '%chunknumber', ' ', statsOnOneLine )
       if ( any(l2gp1%chunkNumber /= l2gp2%chunkNumber) .and. &
         & SwitchDetail(lowercase(myFields), 'chunknumber', '-fc') > -1 ) then
         call diff ( l2gp1%chunkNumber, 'chunkNumber', &
@@ -2826,7 +2837,7 @@ contains ! =====     Public Procedures     =============================
     endif
     call outputNamedValue ( 'L2GP Attributes: (swath name) ', trim(name), &
       & options = '-H' )
-    if ( any( rgp /= (/ r4, r8 /) ) ) then
+    if ( .not. any( rgp /= (/ r4, r8 /) ) ) then
       call MLSMessage ( MLSMSG_Error, ModuleName, & 
         & 'Attributes have unrecognized numeric data type; should be r4 or r8' )
     endif
@@ -3740,7 +3751,7 @@ contains ! =====     Public Procedures     =============================
     ! (Some older files won't have this field)
     ! Arguments
 
-    character (LEN=*), intent(IN) :: swathname ! Name of swath
+    character (len=*), intent(IN) :: swathname ! Name of swath
     type(MLSFile_T)                :: L2GPFile
     integer, intent(IN), optional :: firstProf, lastProf ! Defaults to first and last
     type( L2GPData_T ), intent(OUT) :: l2gp ! Result
@@ -3749,16 +3760,16 @@ contains ! =====     Public Procedures     =============================
     logical, optional, intent(in) :: ReadData
 
     ! Local Parameters
-    character (LEN=*), parameter :: MLSMSG_INPUT = 'Error in input argument '
+    character (len=*), parameter :: MLSMSG_INPUT = 'Error in input argument '
     integer, parameter           :: MAXDIMSIZE = 4
     ! Local Variables
     character (len=80) :: DF_Name
     character (len=80) :: DF_Precision
-    character (LEN=80) :: dimlist
-    character (LEN=80) :: fieldlist
-    character (LEN=80) :: list
-    character (LEN=80) :: maxdimlist
-    character (LEN=8)  :: maxdimName
+    character (len=80) :: dimlist
+    character (len=80) :: fieldlist
+    character (len=80) :: list
+    character (len=80) :: maxdimlist
+    character (len=8)  :: maxdimName
     integer :: hdfVersion
     integer :: rank
     integer, dimension(MAXFNFIELDS) :: ranks
@@ -3766,7 +3777,7 @@ contains ! =====     Public Procedures     =============================
     integer, dimension(7) :: numberType
     integer, dimension(7) :: flddims
     integer(kind=size_t), dimension(7) :: hflddims
-    character (LEN=480) :: msr
+    character (len=480) :: msr
 
     integer, dimension(MAXDIMSIZE) :: dims
     integer :: first, freq, lev, nDims, nFlds, size, swid, status
@@ -4117,7 +4128,7 @@ contains ! =====     Public Procedures     =============================
 
     integer, intent(IN) :: l2FileHandle ! From swopen
     type (L2GPData_T), intent(INOUT) :: l2gp
-    character (LEN=*), optional, intent(IN) ::swathName!default->l2gp%swathName
+    character (len=*), optional, intent(IN) ::swathName!default->l2gp%swathName
     integer, optional, intent(in) :: hdfVersion
     logical, optional, intent(in) :: notUnlimited
     ! Exectuable code
@@ -4155,7 +4166,7 @@ contains ! =====     Public Procedures     =============================
     ! Arguments
     type(MLSFile_T)                :: L2GPFile
     type( L2GPData_T ), intent(inout) :: l2gp
-    character (LEN=*), optional, intent(IN) :: swathName ! Defaults to l2gp%swathName
+    character (len=*), optional, intent(IN) :: swathName ! Defaults to l2gp%swathName
     integer, optional, intent(in) :: nLevels
     logical, optional, intent(in) :: notUnlimited   !               as nTimes
     logical, optional, intent(in) :: compressTimes  ! don't store nTimesTotal
@@ -5284,7 +5295,7 @@ contains ! =====     Public Procedures     =============================
     ! Arguments
     type(MLSFile_T)                :: L2GPFile
     type (L2GPData_T), intent(INOUT) :: l2gp
-    character (LEN=*), optional, intent(IN) ::swathName!default->l2gp%swathName
+    character (len=*), optional, intent(IN) ::swathName!default->l2gp%swathName
     
     ! Brief description of subroutine
     ! This subroutine creates an alias for each of the two data fields
@@ -5338,7 +5349,7 @@ contains ! =====     Public Procedures     =============================
 
     type(MLSFile_T)                :: L2GPFile
     type (L2GPData_T), intent(INOUT) :: l2gp
-    character (LEN=*), optional, intent(IN) ::swathName!default->l2gp%swathName
+    character (len=*), optional, intent(IN) ::swathName!default->l2gp%swathName
     logical, optional, intent(in) :: notUnlimited
     ! Local
     logical :: alreadyOpen
@@ -5430,6 +5441,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.231  2018/02/03 00:24:49  pwagner
+! Correct Status Bit names; add post-processed
+!
 ! Revision 2.230  2017/12/18 16:41:09  mmadatya
 ! Added unit for new quantity geoHeight
 !
