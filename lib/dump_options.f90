@@ -10,17 +10,30 @@
 ! foreign countries or providing access to foreign persons.
 
 module Dump_Options
+  use HighOutput, only: Banner, BlanksToColumn, Headline, OutputNamedValue
   use Machine, only: Crash_Burn
   use MLSStrings, only: LowerCase
+  use output_m, only: StampOptions, Blanks, &
+    & GetOutputStatus, Newline, Output
 
   ! Options for Dump_0, Dump_1, Diff_1, and maybe others.
   ! Variables shared between those modules and derived from the options.
 
 
+! === (start of toc) ===
+!     c o n t e n t s
+!     - - - - - - - -
+!     (subroutines and functions)
+! DumpDumpOptions          Show actual dump, diff options
+!                            (or if arg is '?' help-fully show all available opts)
+! PrintName                Print the item name unless already done so
+! RestoreDumpConfig        Restore default values for dump settings
+! Set_Options              Set the values in Options using args
 ! TheDumpBegins            Housekeeping
 ! TheDumpEnds              Housekeeping
 ! Most of the optional parameters have default values
 ! logically set to FALSE or 0, ' ',  or '*' where appropriate
+! === (end of toc) ===
 
 !  optional args
 !  (dumps and diffs if the same)
@@ -248,9 +261,7 @@ contains
     ! (if current OptionString supplied) actual dump, diff options
     ! (if arg is "?") available options and their meanings
     ! (if no arg) default options
-    use HighOutput, only: OutputNamedValue
     use MLSStrings, only: Trim_Safe
-    use Output_m, only: Blanks, Output
     character(len=*), intent(in), optional :: OptionString
     logical, intent(in), optional          :: ThisIsADiff
     character(len=1), parameter :: FillChar = '1' ! fill blanks with '. .'
@@ -337,6 +348,38 @@ contains
     end if
   end subroutine DumpDumpOptions
 
+  ! -------------------------------------------------  PrintName  -----
+  ! Print the item name unless already done so
+  subroutine PrintName ( Name, nameHasBeenPrintedAlready )
+    character(len=*), intent(in), optional        :: Name
+    logical, optional                             :: nameHasBeenPrintedAlready
+    ! Local variables
+    logical                                       :: atLineStart
+    character(len=64)                             :: myName
+    ! Executable
+    if ( present(nameHasBeenPrintedAlready) ) then
+      if ( nameHasBeenPrintedAlready ) return
+    endif
+    myName = NameOnEachLine
+    if ( present(name) ) myName = name
+    if ( len_trim(myName) < 1 ) return
+    atLineStart = ( getOutputStatus( 'start' ) == 1 )
+    if( PrintNameAsHeadline .and. atLineStart ) then
+      call Headline( trim(myName), FillChar='-', before='* ', after=' *' )
+    elseif( PrintNameInBanner .and. atLineStart ) then
+      call Banner( trim(myName) )
+    elseif( PrintNameAtLineEnd ) then
+      call blanksToColumn ( 80-len_trim(myName) )
+      call output ( trim(myName), advance='no' )
+      if ( .not. dopts(Clean)%v ) call newLine
+    else
+      if ( .not. dopts(Clean)%v .and. .not. atLineStart ) call blanks (2)
+      call output ( trim(myName), advance='no' )
+      if ( .not. dopts(Clean)%v ) call newLine
+    end if
+    if ( present(nameHasBeenPrintedAlready) ) nameHasBeenPrintedAlready = .true.
+  end subroutine PrintName
+
   ! ------------------------------------------  RestoreDumpConfig  -----
   ! Restore default values for dump settings
   subroutine RestoreDumpConfig
@@ -394,7 +437,6 @@ contains
   ! A warm-up subroutine that transfers the options string to the Dopts
   subroutine TheDumpBegins ( Options, ThisIsADiff, Name )
     ! use HighOutput, only: OutputNamedValue
-    use Output_m, only: StampOptions
     character(len=*), intent(in), optional :: Options
     logical, intent(in), optional          :: ThisIsADiff
     character(len=*), intent(in), optional :: Name
@@ -410,7 +452,6 @@ contains
     endif
     myDiff = .false.
     if ( present(thisIsADiff) ) myDiff = thisIsADiff
-!    nameHasBeenPrinted = .false.
     OldNeverStamp = stampOptions%neverStamp
     stampOptions%neverStamp = .true. ! So we don't interrupt tables of numbers
     call set_options ( options, &
@@ -429,16 +470,20 @@ contains
     else
       nameOnEachLine = ' '
     endif
-    ! call outputNamedValue( 'NameOnEachLine', trim(NameOnEachLine) )
+    ! if ( present(name) .and. .not. NameHasBeenPrinted ) then
+    !  if ( len_trim(name) > 0 ) call PrintName ( Name, nameHasBeenPrinted )
+    !  nameHasBeenPrinted = .true.
+    ! endif
     if ( dopts(crash)%v .and. CrashAtBeginning ) call Crash_Burn
   end subroutine TheDumpBegins
 
   ! -------------------------------------------------  TheDumpEnds -----
   subroutine TheDumpEnds
-    use Output_m, only: StampOptions
+    ! call output( 'Entering TheDumpEnds', advance='yes' )
     stampOptions%neverStamp = OldNeverStamp ! Restore just this component
     if ( dopts(crash)%v .and. .not. CrashAtBeginning ) call Crash_Burn
     nameHasBeenPrinted = .false.
+    ! call outputNamedValue( 'Setting nameHasbeenPrinted to ', nameHasbeenPrinted )
   end subroutine TheDumpEnds
 
 !--------------------------- end bloc --------------------------------------
@@ -454,6 +499,9 @@ contains
 end module Dump_Options
 
 ! $Log$
+! Revision 2.10  2018/02/28 19:50:46  pwagner
+! Moved PrintName here from Dump_0
+!
 ! Revision 2.9  2017/11/30 20:47:31  pwagner
 ! Now wont stamp on stampOptions%neverStamp
 !
