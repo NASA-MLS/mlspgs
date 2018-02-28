@@ -109,7 +109,9 @@ Note: use "-T2" and not "--T2" because -T2 has one 'letter'
      This has effect only if the l2cf is not coming from standard input.
   --set opt=val: Set command-line option opt to value val; may reuse
      E.g., --set submit=l2q --set verbose=true
-  --setf opts_file: read opt=val pairs from file opts_file
+  --setf opts_file: read the above opt=val pairs from file opts_file
+    may also be used to set env values for wrapper script and for some
+    user-defined data types
   --[n]shar[edPCF]: Do [not] adjust PCFids so levels 1 and 2 can share same PCF
   --[n]skipDir[ectWrites]: Do [not] skip all the directWrites; speedy snooping
   --[n]skipRetr[ieval]: Do [not] skip all the Retrievals; a pre-flight checkout
@@ -155,6 +157,9 @@ Note: use "-T2" and not "--T2" because -T2 has one 'letter'
          examined later.
   @T in the configuration file dumps the string table 
          at that instant.
+Note that the stand-alone options file named in
+  --setf opts_file
+is recommended for being more flexible and reuseable. 
 ========================= end mlsl2 =========================
 
 The general pattern is to use one dash for single-letter options,
@@ -172,6 +177,9 @@ by the equal-signs -- stuff outside that space, like these
 comments, will be ignored when responding to mlsl2 -?)
 
  $Log$
+ Revision 1.73  2017/01/25 17:25:01  pwagner
+ May skip certain Phases named in phasesToSkip cmdline opt
+
  Revision 1.72  2016/11/04 19:29:24  pwagner
  --nquit is like Energizer Bunny(TM)
 
