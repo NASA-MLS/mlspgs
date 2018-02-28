@@ -186,6 +186,11 @@ else by commas in a single string. Thus to turn on both 'abc' and 'def',
 either use -Sabc -Sdef or -S"abc,def". Among other good things, this
 prevents accidentally turning on an unwanted 'cde' switch.
 
+An alternate way to turn on switches is via the --setf opts-file mecchanism
+Include a line in your opts-file like this
+ switches=abc,def
+to turn on the 2 switches 'abc' and 'def'.
+
 The MLSStringLists module contains a function SwitchDetail; assuming it
 was called as SwitchDetail(switches, 'foo') it returns 
 -1  means foo was not among switches
@@ -210,10 +215,14 @@ grep -i switchdetail */*.[fF]9* | grep -i 'switches' | sed 's/.*switches,//' \
 The same command, but replacing "switchdetail" with "index" will show all the 
 switches referred to by the "index(switches, .." method. 
 
-An alternate command
+Two alternate commands
 grep -i beverbose */*.[fF]9* | grep -v -i highoutput | sed 's/.*BeVerbose//' \
  | sed 's/(/( /' | awk '{print $2}' | sed 's/,//' | sort | uniq
 can be used to handle the instances of BeVerbose.
+
+grep -i letsdebug */*.[fF]9* | grep -v -i highoutput | sed 's/.*BeVerbose//' \
+ | sed 's/(/( /' | awk '{print $2}' | sed 's/,//' | sort | uniq
+can be used to handle the instances of LetsDebug.
 
 The resulting lists have grown too large to keep updating this list. We need
 a better tool to organize it.
@@ -227,6 +236,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.102  2017/03/10 17:20:45  pwagner
+ Added -Smerra_2
+
  Revision 1.101  2017/01/25 17:26:51  pwagner
  Changed switch setting for tree_walker to '-Swalker'
 
