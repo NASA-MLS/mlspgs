@@ -102,7 +102,7 @@ hide_files()
 #	The entry point where control is given to the script         *
 #****************************************************************
 #
-CHECKPATHS="no"
+CHECKPATHS="yes"
 #           ^^^---- "yes" if extra preflight non-retrieval run to check paths
 
 CHECKIDENTS="yes"
@@ -110,6 +110,18 @@ CHECKIDENTS="yes"
 
 GZIPLEVEL="1"
 #          ^^^---- compression level ("" means none)
+
+MLSL2PLOG="$JOBDIR/mlsl2p.log"
+#             ^^^---- "yes" if progress of chunks thru phases recorded
+
+if [ -f "$MLSL2PLOG" ]
+then
+  mv $MLSL2PLOG $MLSL2PLOG.1
+fi
+
+echo "$MLSL2PLOG"
+echo "$MLSL2PLOG" > "$MLSL2PLOG"
+env | sort >> "$MLSL2PLOG"
 
 SAVEJOBSTATS="yes"
 #             ^^^---- "yes" if progress of chunks thru phases recorded
@@ -135,6 +147,7 @@ then
   exit 1
 elif [ "$PVM_HOSTS_INFO" = "" ]
 then
+  echo 'PVM_HOSTS_INFO undefined' >> "$MLSL2PLOG"
   echo 'PVM_HOSTS_INFO undefined'
   echo 'It should be the path and name of the host file'
   echo 'a text file containing the hosts available'
@@ -142,11 +155,13 @@ then
   exit 1
 elif [ "$JOBDIR" = "" ]
 then
+  echo 'JOBDIR undefined' >> "$MLSL2PLOG"
   echo 'JOBDIR undefined'
   echo 'It should be the path where the job is run'
   exit 1
 elif [ "$PGE_ROOT" = "" ]
 then
+  echo 'PGE_ROOT undefined' >> "$MLSL2PLOG"
   echo 'PGE_ROOT undefined'
   echo 'It should be the path where the science_env.sh script is kept'
   exit 1
@@ -166,10 +181,12 @@ fi
 
 if [ ! -x "$PGE_BINARY"  ]
 then
+  echo "$PGE_BINARY doesn't exist!" >> "$MLSL2PLOG"
   echo "$PGE_BINARY doesn't exist!"
   exit 1
 elif [ ! -r "$PGE_SCRIPT_DIR/slavetmpltntk.sh"  ]
 then
+  echo "slavetmpltntk.sh not in $PGE_SCRIPT_DIR" >> "$MLSL2PLOG"
   echo "slavetmpltntk.sh not in $PGE_SCRIPT_DIR"
   exit 1
 fi
@@ -193,6 +210,7 @@ fi
 # We print the file license.txt to stdout
 if [ -f $PGE_BINARY_DIR/license.txt ]
 then
+  cat $PGE_BINARY_DIR/license.txt >> "$MLSL2PLOG"
   cat $PGE_BINARY_DIR/license.txt
 fi
 
@@ -232,7 +250,7 @@ chmod a+x $slave_script
 NORMAL_STATUS=2
 
 env
-#env | sort > ${JOBDIR}/mlsl2pntk.env
+env | sort >> "$MLSL2PLOG"
 ulimit -s unlimited
 ulimit -a
 #ulimit -a >> ${JOBDIR}/mlsl2pntk.env
@@ -289,6 +307,7 @@ LOGFILE="${JOBDIR}/pvmlog/mlsl2.log"
 if [ ! -w "$LOGFILE"  ]
 then
   echo "catenating slave logs in $LOGFILE"
+  echo "catenating slave logs in $LOGFILE" >> "$MLSL2PLOG"
   echo "catenating slave logs in $LOGFILE" > "$LOGFILE".1
   # This sleep is to give slave tasks extra time to complete stdout
   sleep 20
@@ -332,7 +351,9 @@ then
         filter=""
       fi
       echo "Packing $file into $packed"
+      echo "Packing $file into $packed" >> "$MLSL2PLOG"
       echo $H5REPACK -i "$file" -o "$packed" $filter
+      echo $H5REPACK -i "$file" -o "$packed" $filter >> "$MLSL2PLOG"
       $H5REPACK -i "$file" -o "$packed" $filter
       # Here we could insert some check involving h5diff if we were dubious
       mv "$packed" "$file"
@@ -364,6 +385,9 @@ else
 fi
 
 # $Log$
+# Revision 1.12  2016/01/05 00:45:08  pwagner
+# Correctly captures l2cf name to create job stats
+#
 # Revision 1.11  2015/12/09 01:32:41  pwagner
 # Tries harder to find h5repack and misalignment; fix small bug
 #
