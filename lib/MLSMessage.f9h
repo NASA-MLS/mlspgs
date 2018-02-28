@@ -284,14 +284,14 @@ contains
     call dump ( 'Severity to crash       ', intValue=MLSMSG_Severity_to_walkback      )
     call dump ( 'Severity so far         ', intValue=MLSMSG_Severity_so_far           )
     
-    call dump ( 'Skip ModNames thr       ', intValue=myConfig%skipModuleNamesThr      )
-    call dump ( 'Skip Severity thr       ', intValue=myConfig%skipSeverityThr         )
-    call dump ( 'Skip Messages thr       ', intValue=myConfig%skipMessageThr          )
+    call dump ( 'Skip ModNames threshhold', intValue=myConfig%skipModuleNamesThr      )
+    call dump ( 'Skip Severity threshhold', intValue=myConfig%skipSeverityThr         )
+    call dump ( 'Skip Messages threshhold', intValue=myConfig%skipMessageThr          )
     call dump ( 'Suppress Debugs         ', logValue=myConfig%suppressDebugs          )
 
     call dump ( 'Allowed to crash        ', logValue= .not. NeverCrash                )
     call dump ( 'Crash on any error      ', logValue= myConfig%CrashOnAnyError        )
-    call dump ( 'Crash on this msg       ', charValue= myConfig%CrashIfMsgSays        )
+    call dump ( 'Crash on this message   ', charValue= myConfig%CrashIfMsgSays        )
     call PrintItOut( colonel, MLSMSG_Info )
   end subroutine DumpConfig
 
@@ -1020,6 +1020,7 @@ contains
     character(len=132) :: line
     character(len=32)  :: value
     logical            :: myTrim
+    integer            :: myLen
     ! Executable
     myTrim = .false.
     if ( present(trimName) ) myTrim = trimName
@@ -1028,14 +1029,17 @@ contains
       write(value, '(i10)') intValue
     else if ( present(logValue) ) then
       write(value, '(l10)') logValue
-    end if
-    if ( present(charValue) ) then
-      line = name // '  :' // trim(charvalue)
-      if ( myTrim ) line = trim(name) // ' : ' // trim(charvalue)
-    else
-      line = name // '  :' // trim(value)
-      if ( myTrim ) line = trim(name) // ' : ' // trim(value)
-    end if
+    elseif ( present(charValue) ) then
+      ! If th character length is < 10, we want to flush right
+      myLen = len_trim(charValue)
+      if ( myLen > 10 ) then
+         value(1:10) = charValue(1:10)
+       else
+         value(10-mylen+1:10) = charValue(1:myLen)
+       endif
+    endif
+    line = name // '  :' // trim(value)
+    if ( myTrim ) line = trim(name) // ' : ' // trim(value)
     call PrintItOut( trim(line), MLSMSG_Info )
   end subroutine dump
 
@@ -1236,6 +1240,9 @@ contains
 
 !
 ! $Log$
+! Revision 2.48  2018/02/28 19:56:23  pwagner
+! Improved appearance of DumpConfig
+!
 ! Revision 2.47  2018/02/08 23:20:55  pwagner
 ! Improved appearance of Dump_MLSFile by use of outputTable
 !
