@@ -166,6 +166,103 @@ get_unique_name()
    fi
 }
       
+#---------------------------- launch_mlsl2_ntk
+#
+# launch the pge without the toolkit panoply
+launch_mlsl2_ntk()
+{
+echo $PGE_BINARY --ntk -m --slave $masterTid $otheropts $l2cf 2>&1 >> "$LOGFILE"
+if [ "$runinbackground" != "yes" ]
+then
+  echo "Must run $PGE_BINARY in foreground" >> "$LOGFILE"
+  # Run pge in foreground
+  if [ "$CAPTURE_MT" = "yes" ]
+  then
+    /echo usr/bin/time -f 'M: %M t: %e' $PGE_BINARY --ntk -m --slave $masterTid $otheropts $l2cf  "$LOGFILE"  "$STDERRFILE" >> "$LOGFILE"
+    /usr/bin/time -f 'M: %M t: %e' $PGE_BINARY --ntk -m --slave $masterTid $otheropts $l2cf  1>> "$LOGFILE" 2> "$STDERRFILE"
+  elif [ "$STDERRFILE" != "" ]
+  then
+    $PGE_BINARY --ntk -m --slave $masterTid $otheropts $l2cf 1>> "$LOGFILE" 2> "$STDERRFILE"
+  else
+    $PGE_BINARY --ntk -m --slave $masterTid $otheropts $l2cf 2>&1 >> "$LOGFILE"
+  fi
+  Exit_With_Status 0
+fi
+
+# Run pge in background
+echo "Must run $PGE_BINARY in background" >> "$LOGFILE"
+NOTEFILE=`echo "$LOGFILE" | sed 's/.log$/.note/'`
+notdone="true"
+
+if [ "$CAPTURE_MT" = "yes" ]
+then
+  /usr/bin/time -f 'M: %M t: %e' $PGE_BINARY --ntk -m --slave $masterTid --pidf "$NOTEFILE" $otheropts $l2cf  \
+    1>> "$LOGFILE" 2> "$STDERRFILE" &
+elif [ "$STDERRFILE" != "" ]
+then
+  $PGE_BINARY --ntk -m --slave $masterTid --pidf "$NOTEFILE" $otheropts $l2cf  \
+    1>> "$LOGFILE" 2> "$STDERRFILE" &
+else
+  $PGE_BINARY --ntk -m --slave $masterTid --pidf "$NOTEFILE" $otheropts $l2cf  \
+    >> "$LOGFILE" &
+fi
+}
+
+#---------------------------- launch_mlsl2_tk
+#
+# launch the pge assuming you have the toolkit panoply
+launch_mlsl2_tk()
+{
+echo $PGE_BINARY --tk -m --slave $masterTid $otheropts 2>&1 >> "$LOGFILE"
+if [ "$PGS_PC_INFO_FILE" = "" ]
+then
+  echo "PCF undefined" 2>&1 | tee -a "$LOGFILE"
+  exit 1
+fi
+if [ "$runinbackground" != "yes" ]
+then
+  echo "Must run $PGE_BINARY in foreground" >> "$LOGFILE"
+  # Run pge in foreground
+  if [ "$CAPTURE_MT" = "yes" ]
+  then
+    /usr/bin/time -f 'M: %M t: %e' \
+      $PGE_BINARY --tk -m --slave $masterTid $otheropts \
+       1>> "$LOGFILE" 2> "$STDERRFILE"
+  elif [ "$STDERRFILE" != "" ]
+  then
+    $PGE_BINARY --tk -m --slave $masterTid $otheropts 1>> "$LOGFILE" 2> "$STDERRFILE"
+  else
+    $PGE_BINARY --tk -m --slave $masterTid $otheropts 2>&1 >> "$LOGFILE"
+  fi
+  echo "Returned from $PGE_BINARY with status $?" "$LOGFILE"
+  Exit_With_Status 0
+fi
+
+# Run pge in background
+echo "Must run $PGE_BINARY in background" >> "$LOGFILE"
+NOTEFILE=`echo "$LOGFILE" | sed 's/.log$/.note/'`
+notdone="true"
+
+if [ "$CAPTURE_MT" = "yes" ]
+then
+  echo   /usr/bin/time -f 'M: %M t: %e' \
+    $PGE_BINARY --tk -m --slave $masterTid --pidf "$NOTEFILE" $otheropts  \
+    "$LOGFILE" "$STDERRFILE" >> "$LOGFILE"
+  /usr/bin/time -f 'M: %M t: %e' \
+    $PGE_BINARY --tk -m --slave $masterTid --pidf "$NOTEFILE" $otheropts  \
+    1>> "$LOGFILE" 2> "$STDERRFILE" &
+elif [ "$STDERRFILE" != "" ]
+then
+  echo "Writing standard error to $STDERRFILE" >> "$LOGFILE"
+  $PGE_BINARY --tk -m --slave $masterTid --pidf "$NOTEFILE" $otheropts \
+    1>> "$LOGFILE" 2> "$STDERRFILE" &
+else
+  $PGE_BINARY --tk -m --slave $masterTid --pidf "$NOTEFILE" $otheropts  \
+    >> "$LOGFILE" &
+fi
+
+}
+
 #---------------------------- do_the_call
 #
 # Put after a trip through the main program simply to
@@ -219,7 +316,7 @@ PGS_PC_INFO_FILE=ppccff
 SLVPROG=ssllaavveessccrriipptt
 OTHEROPTS=ootthheerrooppttss
 PGE_BINARY=ppggeebbiinnaarryy
-
+UsingPCF=UUssiinnggPPCCFF
 export PGS_PC_INFO_FILE PGSMEM_USESHM PGSHOME
 export FLIB_DVT_BUFFER=0
 
@@ -476,10 +573,6 @@ if [ "$masterTid" = "" ]
 then
   echo "masterTid undefined" 2>&1 | tee -a "$LOGFILE"
   exit 1
-elif [ "$PGS_PC_INFO_FILE" = "" ]
-then
-  echo "PCF undefined" 2>&1 | tee -a "$LOGFILE"
-  exit 1
 elif [ ! -x "$PGE_BINARY" ]
 then
   echo "$PGE_BINARY not found/executable" 2>&1 | tee -a "$LOGFILE"
@@ -502,47 +595,12 @@ fi
 #env | sort > "$ENVSETTINGS"
 ulimit -s unlimited
 #ulimit -a >> "$ENVSETTINGS"
-echo $PGE_BINARY --tk -m --slave $masterTid $otheropts 2>&1 >> "$LOGFILE"
-if [ "$runinbackground" != "yes" ]
+if [ "$UsingPCF" != "" ]
 then
-  echo "Must run $PGE_BINARY in foreground" >> "$LOGFILE"
-  # Run pge in foreground
-  if [ "$CAPTURE_MT" = "yes" ]
-  then
-    /usr/bin/time -f 'M: %M t: %e' \
-      $PGE_BINARY --tk -m --slave $masterTid $otheropts \
-       1>> "$LOGFILE" 2> "$STDERRFILE"
-  elif [ "$STDERRFILE" != "" ]
-  then
-    $PGE_BINARY --tk -m --slave $masterTid $otheropts 1>> "$LOGFILE" 2> "$STDERRFILE"
-  else
-    $PGE_BINARY --tk -m --slave $masterTid $otheropts 2>&1 >> "$LOGFILE"
-  fi
-  echo "Returned from $PGE_BINARY with status $?" "$LOGFILE"
-  Exit_With_Status 0
-fi
-
-# Run pge in background
-echo "Must run $PGE_BINARY in background" >> "$LOGFILE"
-NOTEFILE=`echo "$LOGFILE" | sed 's/.log$/.note/'`
-notdone="true"
-
-if [ "$CAPTURE_MT" = "yes" ]
-then
-  echo   /usr/bin/time -f 'M: %M t: %e' \
-    $PGE_BINARY --tk -m --slave $masterTid --pidf "$NOTEFILE" $otheropts  \
-    "$LOGFILE" "$STDERRFILE" >> "$LOGFILE"
-  /usr/bin/time -f 'M: %M t: %e' \
-    $PGE_BINARY --tk -m --slave $masterTid --pidf "$NOTEFILE" $otheropts  \
-    1>> "$LOGFILE" 2> "$STDERRFILE" &
-elif [ "$STDERRFILE" != "" ]
-then
-  echo "Writing standard error to $STDERRFILE" >> "$LOGFILE"
-  $PGE_BINARY --tk -m --slave $masterTid --pidf "$NOTEFILE" $otheropts \
-    1>> "$LOGFILE" 2> "$STDERRFILE" &
+  launch_mlsl2_tk
 else
-  $PGE_BINARY --tk -m --slave $masterTid --pidf "$NOTEFILE" $otheropts  \
-    >> "$LOGFILE" &
+  l2cf=$1
+  launch_mlsl2_ntk
 fi
 pgepid=$!
 echo "pge pid: $pgepid"  >> "$LOGFILE"
@@ -624,6 +682,9 @@ do_the_call $all_my_opts
 Exit_With_Status 0
 
 # $Log$
+# Revision 1.45  2018/02/21 21:20:23  pwagner
+# Remove unised exits
+#
 # Revision 1.44  2018/02/09 17:41:10  pwagner
 # Correct spelling error
 #
