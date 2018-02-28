@@ -27,18 +27,17 @@ module Dump_0
   use HyperSlabs, only: Bandwidth, Collapse
   use BitStuff, only: MaxBitNumber, WhichBitsAreSet
   use Dump_Options, only: AfterSub, AuBrick, MyBandwidth=>Bandwidth, &
-    & Clean, CollapseIt, CollapseOptions,  &
+    & Clean, CollapseIt, CollapseOptions, &
     & DefaultDumpOptions, DefaultMaxLon, DefaultPCTFormat, &
     & DefaultWidth, Dopt_Collapse, Dopt_Transpose, Dot, DiffRMSMeansRMS, &
     & DontDumpIfAllEqual, Dopts, Gaps, IntPlaces, Laconic, MaxNumNANs, &
     & NameHasBeenPrinted, NameOnEachLine, NaNs, &
-    & PCTFormat, PrintFillValue, PrintNameAsHeadline, PrintNameAtLineEnd, &
-    & PrintNameInBanner, Ratios, RMS, RMSFormat, &
+    & PCTFormat, PrintFillValue, PrintName, PrintNameAtLineEnd, &
+    & Ratios, RMS, RMSFormat, &
     & SDFormatDefault, SDFormatDefaultCmplx, Stats, StatsOnOneLine, &
     & TheDumpBegins, TheDumpEnds, ItsShape, MyTranspose=>Transpose, &
     & TrimIt, Unique, WholeArray
-  use HighOutput, only: Banner, BlanksToColumn, Headline, &
-    & NumNeedsFormat, OutputNamedValue
+  use HighOutput, only: BlanksToColumn, NumNeedsFormat, OutputNamedValue
   use MLSFillValues, only: InfFunction, IsFinite, IsInfinite, IsNaN, NaNFunction, &
     & WhereAreTheInfs, WhereAreTheNaNs
   use MLSFinds, only: FindUnique
@@ -1249,38 +1248,6 @@ contains
     call newLine ( dont_make_blank_line=.true. )
   end subroutine FinishLine
 
-  ! -------------------------------------------------  PrintName  -----
-  ! Print the item name unless already done so
-  subroutine PrintName ( Name, nameHasBeenPrintedAlready )
-    character(len=*), intent(in), optional        :: Name
-    logical, optional                             :: nameHasBeenPrintedAlready
-    ! Local variables
-    logical                                       :: atLineStart
-    character(len=64)                             :: myName
-    ! Executable
-    if ( present(nameHasBeenPrintedAlready) ) then
-      if ( nameHasBeenPrintedAlready ) return
-    endif
-    myName = NameOnEachLine
-    if ( present(name) ) myName = name
-    if ( len_trim(myName) < 1 ) return
-    atLineStart = ( getOutputStatus( 'start' ) == 1 )
-    if( PrintNameAsHeadline .and. atLineStart ) then
-      call Headline( trim(myName), FillChar='-', before='* ', after=' *' )
-    elseif( PrintNameInBanner .and. atLineStart ) then
-      call Banner( trim(myName) )
-    elseif( PrintNameAtLineEnd ) then
-      call blanksToColumn ( 80-len_trim(myName) )
-      call output ( trim(myName), advance='no' )
-      if ( .not. dopts(Clean)%v ) call newLine
-    else
-      if ( .not. dopts(Clean)%v .and. .not. atLineStart ) call blanks (2)
-      call output ( trim(myName), advance='no' )
-      if ( .not. dopts(Clean)%v ) call newLine
-    end if
-    if ( present(nameHasBeenPrintedAlready) ) nameHasBeenPrintedAlready = .true.
-  end subroutine PrintName
-
   ! -----------------------------------------------------  ILOG10  -----
   integer function ILOG10(int)
     integer, intent(in) :: int
@@ -1762,6 +1729,9 @@ contains
 end module Dump_0
 
 ! $Log$
+! Revision 2.153  2018/02/28 19:51:35  pwagner
+! Moved PrintName to dump_options
+!
 ! Revision 2.152  2017/12/07 02:40:10  vsnyder
 ! Remove some unreferenced use named.  Delete some unreferenced variable
 ! declarations.  Don't use host-associated DO index variables; make them
