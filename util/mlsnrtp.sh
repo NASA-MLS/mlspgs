@@ -278,6 +278,7 @@ echo ". $PGE_ROOT/pgs-env.ksh" >> $JOBENV
 echo "export PGSMEM_USESHM=$PGSMEM_USESHM" >> $JOBENV
 echo "export FLIB_DVT_BUFFER=$FLIB_DVT_BUFFER" >> $JOBENV
 echo "export PGS_PC_INFO_FILE=$2" >> $JOBENV
+echo "export UsingPCF=yes" >> $JOBENV
 
 # For the level 1 jobs, we'll have Spartacus request a host
 # from l2q
@@ -418,6 +419,9 @@ then
 fi
 
 # $Log$
+# Revision 1.15  2017/05/19 20:48:10  pwagner
+# repaired another error
+#
 # Revision 1.14  2017/05/19 20:31:11  pwagner
 # Should now work both at scf and at sips
 #
