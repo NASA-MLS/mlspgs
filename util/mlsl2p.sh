@@ -4,8 +4,16 @@
 #
 # Assumes that:
 
-# (1) It has been called from PGS_PC_Shell.sh as the (pge) in
-#  PGS_PC_Shell.sh (pge) 0111 (PCF_file) 25 -v
+# (1) 
+#  ----
+# (a) It has been called from PGS_PC_Shell.sh as the (pge) in
+#  PGS_PC_Shell.sh (pge) 0111 (PCF_file) 25 -v; or
+# (b) It has been called to work directly w/o the toolkit panoply
+#       with a single command-line arg: the l2cf file
+# (a) and (b) are distinguished by the env variable UsingPCF
+# If it's defined, and "yes" (or in fact just non-blank)
+# then we'll assume we have case(a). Otherwise, we have case (b)
+#  ----
 # (2) $PGE_BINARY_DIR contains mlsl2 and $PGE_SCRIPT_DIR contains
 #       slavetmplt.sh and jobstat-sips.sh
 #     (or else define an enviromental variable (PVM_EP) and put them there)
@@ -92,6 +100,125 @@ hide_files()
    mv $hide_files_result hidden
 }
 
+#------------------------------- run_mlsl2_ntk ------------
+#
+# Function to do one level 2 run after expanding an l2cf template
+# so: no toolkit is required
+# usage:
+# run_mlsl2_ntk [options] l2cf
+# args:
+# options        recognized cmdline args for mlsl2
+# l2cf           level 2 config file
+#
+
+run_mlsl2_ntk()
+{
+  echo "Running mlsl2 master w/o toolkit"
+  echo "args $@"
+  # First a pre-flight run to check paths                               
+  # If a problem, disclosed by exit status, exit before starting big run
+  if [ "$CHECKPATHS" = "yes" ]                                          
+  then                                                                  
+    $PGE_BINARY --checkPaths --ntk $otheropts $l2cf
+    return_status=`expr $?`                                             
+    if [ $return_status != $NORMAL_STATUS ]                             
+    then                                                                
+                                                                        
+       echo "Preflight checkPaths run ended badly"                      
+       echo "Possibly an error in pathnames; please check your l2cf"    
+                                                                        
+                                                                        
+                                                                        
+       exit 1                                                           
+    fi                                                                  
+  fi                                                                    
+                                                                        
+  # Next, create a fresh ident based on master task's binary executable 
+  if [ "$CHECKIDENTS" = "yes" ]                                         
+  then                                                                  
+    IDENTFILE="$JOBDIR/master.ident"                                    
+    rm -f "$IDENTFILE"                                                  
+    ident $PGE_BINARY > "$IDENTFILE"                                    
+  else                                                                  
+    IDENTFILE="none"                                                    
+  fi         
+  # Now we launch the master task itself to set everything in motion  
+  $PGE_BINARY --pge $slave_script --ntk --master $PVM_HOSTS_INFO \
+    --idents "$IDENTFILE" $otheropts $l2cf 2> $JOBDIR/master.l2cfname
+  return_status=`expr $?`
+}
+
+#------------------------------- run_mlsl2_tk ------------
+#
+# Function to do one level 2 run after expanding a pcf template
+# so this run requires the toolkit panoply
+# usage:
+# run_mlsl2_tk [options]
+# args:
+# options        recognized cmdline args for mlsl2
+#
+
+run_mlsl2_tk()
+{
+  # First a pre-flight run to check paths
+  # If a problem, disclosed by exit status, exit before starting big run
+  if [ "$CHECKPATHS" = "yes" ]
+  then
+    $PGE_BINARY --checkPaths --tk $otheropts 2> $JOBDIR/master.l2cfname
+    return_status=`expr $?`
+    if [ $return_status != $NORMAL_STATUS ]
+    then
+       cat $JOBDIR/master.l2cfname
+       echo "Preflight checkPaths run ended badly"
+       echo "Possibly an error in pathnames; please check your PCF"
+       cat $JOBDIR/master.l2cfname >> "$MLSL2PLOG"
+       echo "Preflight checkPaths run ended badly" >> "$MLSL2PLOG"
+       echo "Possibly an error in pathnames; please check your PCF" >> "$MLSL2PLOG"
+       exit 1
+    fi
+  fi
+
+  # Next, create a fresh ident based on master task's binary executable
+  if [ "$CHECKIDENTS" = "yes" ]
+  then
+    IDENTFILE="$JOBDIR/master.ident"
+    rm -f "$IDENTFILE"
+    ident $PGE_BINARY > "$IDENTFILE"
+  else
+    IDENTFILE="none"
+  fi
+
+  # HOSTNAME will be stored in metadata as ProductionLocation
+  # to trace provenance
+  if [ "$HOSTNAME" = "" ]
+  then
+    echo "Need HOSTNAME to trace provenance as ProductionLocation"
+    echo "Need HOSTNAME to trace provenance as ProductionLocation" >> "$MLSL2PLOG"
+    exit 1
+  fi
+
+    if [ "$CAPTURE_MT" = "yes" -a "$STDERRFILE" = "" ]
+    then
+      STDERRFILE=mlsl2p.stderr
+    fi
+
+  # Now we launch the master task itself to set everything in motion
+  if [ "$CAPTURE_MT" = "yes" ]
+  then
+    /usr/bin/time -f 'M: %M t: %e' $PGE_BINARY --pge $slave_script --tk --master $PVM_HOSTS_INFO \
+      --idents "$IDENTFILE" --loc "$HOSTNAME" $otheropts 2> "$STDERRFILE"
+  elif [ "$STDERRFILE" != "" ]
+  then
+    $PGE_BINARY --pge $slave_script --tk --master $PVM_HOSTS_INFO \
+      --idents "$IDENTFILE" --loc "$HOSTNAME" $otheropts 2> "$STDERRFILE"
+  else
+    $PGE_BINARY --pge $slave_script --tk --master $PVM_HOSTS_INFO \
+      --idents "$IDENTFILE" --loc "$HOSTNAME" $otheropts
+  fi
+  # Save return status
+  return_status=`expr $?`
+}
+
 #------------------------------- Main Program ------------
 
 #****************************************************************
@@ -141,7 +268,7 @@ otheropts="$OTHEROPTS -g --wall -S'mas,chu,opt1,log,pro,time'"
 verbose=`echo "$otheropts" | grep -i verbose`
 
 # Check that assumptions are valid
-if [ "$PGS_PC_INFO_FILE" = "" ]
+if [ "$PGS_PC_INFO_FILE" = "" -a "$UsingPCF" != "" ]
 then
   echo 'PGS_PC_INFO_FILE undefined' >> "$MLSL2PLOG"
   echo 'PGS_PC_INFO_FILE undefined'
@@ -264,92 +391,66 @@ fi
 
 export FLIB_DVT_BUFFER=0
 
-# Use sed to convert slavetmplt.sh into an executable script
-# The resulting script sets some toolkit-savvy environment variables
-# and then launches the regular mlsl2 binary when summoned to do so.
-SLV_SUF=slave
-slave_script=$JOBDIR/mlsl2.$SLV_SUF
-rm -f $slave_script
-sed "s=ppccff=${PGS_PC_INFO_FILE}=;
-s=ppggssmmeemmuusseesshhmm=${PGSMEM_USESHM}=;
-s=ssllaavveessccrriipptt=${slave_script}=;
-s=ootthheerrooppttss=\"${otheropts}\"=;
-s=ppggeebbiinnaarryy=${PGE_BINARY}=;
-s=ppggssbbiinn=${PGSBIN}=;
-s=jjoobbddiirr=${JOBDIR}=;
-s=ppggeerroott=${PGE_ROOT}=;" $PGE_SCRIPT_DIR/slavetmplt.sh > $slave_script
-chmod a+x $slave_script
-
-NORMAL_STATUS=2
-
 env
 env | sort >> "$MLSL2PLOG"
 ulimit -s unlimited
 ulimit -a
-#ulimit -a >> ${JOBDIR}/mlsl2p.env
-# First a pre-flight run to check paths
-# If a problem, disclosed by exit status, exit before starting big run
-if [ "$CHECKPATHS" = "yes" ]
+NORMAL_STATUS=2
+if [ "$UsingPCF" != "" ]
 then
-  $PGE_BINARY --checkPaths --tk $otheropts 2> $JOBDIR/master.l2cfname
-  return_status=`expr $?`
-  if [ $return_status != $NORMAL_STATUS ]
-  then
-     cat $JOBDIR/master.l2cfname
-     echo "Preflight checkPaths run ended badly"
-     echo "Possibly an error in pathnames; please check your PCF"
-     cat $JOBDIR/master.l2cfname >> "$MLSL2PLOG"
-     echo "Preflight checkPaths run ended badly" >> "$MLSL2PLOG"
-     echo "Possibly an error in pathnames; please check your PCF" >> "$MLSL2PLOG"
-     exit 1
-  fi
-fi
+  # Use sed to convert slavetmplt.sh into an executable script
+  # The resulting script sets some toolkit-savvy environment variables
+  # and then launches the regular mlsl2 binary when summoned to do so.
+  SLV_SUF=slave
+  slave_script=$JOBDIR/mlsl2.$SLV_SUF
+  rm -f $slave_script
+  sed "s=ppccff=${PGS_PC_INFO_FILE}=;
+  s=UUssiinnggPPCCFF=yes=;
+  s=ppggssmmeemmuusseesshhmm=${PGSMEM_USESHM}=;
+  s=ssllaavveessccrriipptt=${slave_script}=;
+  s=ootthheerrooppttss=\"${otheropts}\"=;
+  s=ppggeebbiinnaarryy=${PGE_BINARY}=;
+  s=ppggssbbiinn=${PGSBIN}=;
+  s=jjoobbddiirr=${JOBDIR}=;
+  s=ppggeerroott=${PGE_ROOT}=;" $PGE_SCRIPT_DIR/slavetmplt.sh > $slave_script
+  chmod a+x $slave_script
 
-# Next, create a fresh ident based on master task's binary executable
-if [ "$CHECKIDENTS" = "yes" ]
-then
-  IDENTFILE="$JOBDIR/master.ident"
-  rm -f "$IDENTFILE"
-  ident $PGE_BINARY > "$IDENTFILE"
+  run_mlsl2_tk
+  l2cf=$L2CF
 else
-  IDENTFILE="none"
-fi
-
-# HOSTNAME will be stored in metadata as ProductionLocation
-# to trace provenance
-if [ "$HOSTNAME" = "" ]
-then
-  echo "Need HOSTNAME to trace provenance as ProductionLocation"
-  echo "Need HOSTNAME to trace provenance as ProductionLocation" >> "$MLSL2PLOG"
-  exit 1
-fi
-
-  if [ "$CAPTURE_MT" = "yes" -a "$STDERRFILE" = "" ]
+  # Use sed to convert slavetmpltntk.sh into an executable script
+  # The resulting script sets some toolkit-savvy environment variables
+  # and then launches the regular mlsl2 binary when summoned to do so.
+  l2cf=$1
+  # Check that we were called prroperly
+  if [ ! -f "$l2cf" ]
   then
-    STDERRFILE=mlsl2p.stderr
+    echo 'Usage (w/o toolkit): mlsl2p.sh l2cf_file'
+    exit 1
   fi
+  SLV_SUF=slave
+  slave_script=$JOBDIR/mlsl2.$SLV_SUF
+  rm -f $slave_script
+  sed "s=ppggssmmeemmuusseesshhmm=${PGSMEM_USESHM}=;
+  s=UUssiinnggPPCCFF==;
+  s=ssllaavveessccrriipptt=${slave_script}=;
+  s=ootthheerrooppttss=\"${otheropts}\"=;
+  s=ppggeebbiinnaarryy=${PGE_BINARY}=;
+  s=ppggssbbiinn=${PGSBIN}=;
+  s=jjoobbddiirr=${JOBDIR}=;
+  s=ppggeerroott=${PGE_ROOT}=;" $PGE_SCRIPT_DIR/slavetmpltntk.sh > $slave_script
+  chmod a+x $slave_script
 
-# Now we launch the master task itself to set everything in motion
-if [ "$CAPTURE_MT" = "yes" ]
-then
-  /usr/bin/time -f 'M: %M t: %e' $PGE_BINARY --pge $slave_script --tk --master $PVM_HOSTS_INFO \
-    --idents "$IDENTFILE" --loc "$HOSTNAME" $otheropts 2> "$STDERRFILE"
-elif [ "$STDERRFILE" != "" ]
-then
-  $PGE_BINARY --pge $slave_script --tk --master $PVM_HOSTS_INFO \
-    --idents "$IDENTFILE" --loc "$HOSTNAME" $otheropts 2> "$STDERRFILE"
-else
-  $PGE_BINARY --pge $slave_script --tk --master $PVM_HOSTS_INFO \
-    --idents "$IDENTFILE" --loc "$HOSTNAME" $otheropts
+  run_mlsl2_ntk
 fi
-# Save return status
-return_status=`expr $?`
-
 echo SAVEJOBSTATS $SAVEJOBSTATS
 echo masterlog $masterlog
 echo PGE_SCRIPT_DIR/jobstat-sips.sh $PGE_SCRIPT_DIR/jobstat-sips.sh
 # Save record of progress thru phases
-l2cf=`grep -i 'Level 2 configuration file' $masterlog | head -1 | awk '{print $13}'`
+if [ -f "$masterlog" ]
+then
+  l2cf=`grep -i 'Level 2 configuration file' $masterlog | head -1 | awk '{print $13}'`
+fi
 if [ "$SAVEJOBSTATS" = "yes" -a -x "$PGE_SCRIPT_DIR/jobstat-sips.sh" -a -f "$l2cf" ]
 then
   # This sleep is to give slave tasks extra time to complete stdout
@@ -428,7 +529,7 @@ fi
 
 # augment level 2 product files to make them netcdf-compatible
 # (must not reverse order of repack, augment)
-if [ -x "$NETCDFAUGMENT" ]
+if [ -x "$NETCDFAUGMENT" -a "$UsingPCF" != "" ]
 then
   files=`extant_files *L2GP-[A-CE-Z]*.he5 *L2GP-DGG_*.he5`
   if [ "$files" = "" ]
@@ -474,6 +575,9 @@ else
 fi
 
 # $Log$
+# Revision 1.36  2017/12/07 22:49:20  pwagner
+# Try harder not to stomp on choice of PCF
+#
 # Revision 1.35  2016/11/16 19:26:50  pwagner
 # Avoids stomping on an already-selected PCF
 #
