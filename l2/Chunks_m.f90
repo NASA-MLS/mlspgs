@@ -31,7 +31,102 @@ module Chunks_m
 contains ! =====     Private Procedures     ============================
 
   ! ------------------------------------------------  Dump_Chunks  -----
-  subroutine Dump_Chunks ( Chunks )
+  subroutine Dump_Chunks ( Chunk )
+    ! Let's write them as a table instead of Dumping each one indivdually
+
+    use HighOutput, only: Tab, OutputNamedValue
+    use Output_m, only: Blanks, NewLine, Output
+
+    type(MLSChunk_t), intent(in) :: Chunk(:)
+    integer :: I
+    character(len=*), parameter :: The80 = &
+      & '12345678901234567890123456789012345678901234567890123456789012345678901234567890'
+    character(len=*), parameter :: TheDecades = &
+      & '         1         2         3         4         5         6         7         8'
+    call outputNamedValue ( 'Size(chunks)', size(chunk), options='--Headline' )
+    call output( The80, advance='yes' )
+    call output( TheDecades, advance='yes' )
+    ! Column headers: 3 lines
+    !                       MAF 
+    !            Index      Overlaps  Non-overlap        chunk non-overlap      phi
+    ! Chunk   First  Last  Lower Upper    First Last      size    size     start   end
+    call tab ( 3 )
+    call output( 'MAF', advance='yes' )
+    call tab ( 3 )
+    call output( 'Index', advance='no' )
+    call tab ( 7 )
+    call output( 'Overlaps', advance='no' )
+    call tab ( 10 )
+    call output( 'Non-overlaps', advance='no' )
+    call tab ( 14 )
+    call output( 'chunk', advance='no' )
+    call blanks ( 1 )
+    call output( 'Non-overlap', advance='no' )
+    call tab ( 18 )
+    call output( 'phi', advance='no' )
+    call newLine
+    
+    call output( 'chunk', advance='no' )
+    call tab
+    call output( 'First', advance='no' )
+    call tab
+    call output( 'Last', advance='no' )
+    call tab
+    call tab
+    call output( 'Lower', advance='no' )
+    call tab
+    call output( 'Upper', advance='no' )
+    call tab
+    call output( 'First', advance='no' )
+    call tab
+    call output( 'Last', advance='no' )
+    call tab
+    call tab
+    call output( 'size', advance='no' )
+    call tab
+    call output( 'size', advance='no' )
+    call tab
+    call tab
+    call output( 'start', advance='no' )
+    call tab
+    call output( 'end', advance='no' )
+    call newLine
+    do i = 1, size(chunk)
+      call output ( i, advance='no' )
+      call tab
+      call tab
+      call output ( chunk(i)%firstMAFIndex, advance='no' )
+      call tab
+      call tab
+      call output ( chunk(i)%lastMAFIndex, advance='no' )
+      call tab
+      call tab
+      call output ( chunk(i)%noMAFsLowerOverlap, advance='no' )
+      call tab
+      call tab
+      call output ( chunk(i)%noMAFsUpperOverlap, advance='no' )
+      call tab
+      call tab
+      call output ( chunk(i)%firstMAFIndex + chunk(i)%noMAFsLowerOverlap, advance='no' )
+      call tab
+      call tab
+      call output ( chunk(i)%lastMAFIndex - chunk(i)%noMAFsUpperOverlap, advance='no' )
+      call tab
+      call tab
+      call output ( chunk(i)%lastMAFIndex - chunk(i)%firstMAFIndex+1, advance='no' )
+      call tab
+      call output ( chunk(i)%lastMAFIndex - chunk(i)%firstMAFIndex &
+      & - chunk(i)%noMAFsUpperOverlap - chunk(i)%noMAFsLowerOverlap + 1, advance='no' )
+      call tab
+      call output ( chunk(i)%phiStart, advance='no', format='(F10.2)' )
+      call blanks( 1 )
+      call output ( chunk(i)%phiEnd, advance='no', format='(F10.2)' )
+      call NewLine
+    end do
+  end subroutine Dump_Chunks
+
+  subroutine Dump_Chunks_old ( Chunks )
+    ! Man, this one was terrible
 
     use Output_m, only: Output
 
@@ -43,7 +138,7 @@ contains ! =====     Private Procedures     ============================
       call output ( i, before=' Chunk ', advance='yes' )
       call dump(chunks(i))
     end do
-  end subroutine Dump_Chunks
+  end subroutine Dump_Chunks_old
 
   ! ---------------------------------------------  Dump_One_Chunk  -----
   subroutine Dump_One_Chunk ( Chunk )
@@ -106,6 +201,9 @@ contains ! =====     Private Procedures     ============================
 end module Chunks_m
 
 ! $Log$
+! Revision 2.11  2018/03/02 00:59:44  pwagner
+! Improve how ChunkDivide appears when Dump-ed
+!
 ! Revision 2.10  2016/07/28 00:41:41  vsnyder
 ! Remove unreferenced USE
 !
