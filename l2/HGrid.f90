@@ -271,8 +271,10 @@ contains ! =====     Public Procedures     =============================
         instrumentModule = decoration(decoration(subtree(2,son)))
         call GetModuleName ( instrumentModule , instrumentModuleName )
         hGrid%module = instrumentModule
-        call output('insrumentModuleName in the case f_module is ' )
-        call output(instrumentModuleName, advance='yes')
+        if ( deebug ) then
+          call output('insrumentModuleName in the case f_module is ' )
+          call output(instrumentModuleName, advance='yes')
+        endif
       case ( f_origin )
         call expr ( subtree(2,son), expr_units, expr_value )
         origin = expr_value(1)
@@ -2738,6 +2740,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.149  2018/03/02 00:58:17  pwagner
+! Reduce non-debug printing
+!
 ! Revision 2.148  2018/02/23 22:20:51  mmadatya
 ! Updates for Create_QTM_HGrid for ASMLS
 !
