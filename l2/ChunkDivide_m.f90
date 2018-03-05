@@ -1592,7 +1592,7 @@ contains ! ===================================== Public Procedures =====
 
     ! ----------------------------------------- ChooseCriticalSignals -----------
     subroutine ChooseCriticalSignals ( criticalSignals )
-      use MLSSignals_m, only: GetSignalName, Signals
+      use MLSSignals_m, only: Dump_Signals, GetSignalName, Signals
       use MLSStringLists, only: CatLists, List2Array
       use MLSStrings, only: Lowercase
 
@@ -1606,6 +1606,7 @@ contains ! ===================================== Public Procedures =====
       integer :: numCriticalSignals
       character(len=40) :: signal_full
       integer :: signalIndex
+      logical, dimension(:), pointer :: isSignalcritical => null()
       ! Executable
       swlevel = switchDetail(switches, 'chu' )
       if ( ChunkDivideConfig%criticalModules == l_none .and. &
@@ -1625,24 +1626,28 @@ contains ! ===================================== Public Procedures =====
         & call outputNamedValue( 'critical bands', ChunkDivideConfig%criticalBands )
       if ( swLevel > -1 ) &
         & call outputNamedValue( 'size(signals)', size(signals) )
+      call allocate_test( isSignalCritical, size(signals), 'isSignalCritical', &
+        & ModuleName )
       do signalIndex=1, size(signals)
-        if ( swLevel > -1 ) then
+        isSignalCritical(signalIndex) = &
+          & .not. isNotACriticalBand( signals(signalIndex)%Band )
+        if ( swLevel > -1 .and. .false. ) then
           call outputNamedValue( 'signal index', signalIndex )
           call GetSignalName( signalIndex, signal_full )
           call outputNamedValue( 'signal', signal_full )
           call outputNamedValue( 'band', signals(signalIndex)%Band )
           call outputNamedValue( 'critical?', &
             & .not. isNotACriticalBand( signals(signalIndex)%Band ) )
-          call get_string( modules(signals(signalIndex)%instrumentModule)%name, module_str, &
-            & strip=.true. )
+          call get_string( modules(signals(signalIndex)%instrumentModule)%name, &
+            &  module_str, strip=.true. )
           call outputNamedValue( 'module', module_str )
         endif
         if ( len_trim(ChunkDivideConfig%criticalBands) > 0 ) then
           ! See if the band is one of the critical bands
           if ( isNotACriticalBand( signals(signalIndex)%Band ) ) cycle
         elseif ( len_trim(critical_module_str) > 0 ) then
-          call get_string( modules(signals(signalIndex)%instrumentModule)%name, signal_full, &
-            & strip=.true. )
+          call get_string( modules(signals(signalIndex)%instrumentModule)%name, &
+            & signal_full, strip=.true. )
           module_str = lowercase(signal_full)
           if ( module_str /= critical_module_str ) cycle
         endif
@@ -1650,6 +1655,10 @@ contains ! ===================================== Public Procedures =====
         call GetSignalName( signalIndex, signal_full )
         criticalSignalStr = catLists( criticalSignalStr, signal_full )
       enddo
+      if ( swLevel > -1 ) &
+        call Dump_Signals( signals, isSignalCritical, 1 )
+      call deallocate_test( isSignalCritical,'isSignalCritical', &
+        & ModuleName )
       if ( numCriticalSignals < 1 ) return
       call allocate_test( criticalSignals, numCriticalSignals, 'criticalSignals', &
         & ModuleName )
@@ -2962,6 +2971,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.129  2018/03/05 19:51:56  pwagner
+! Now uses Dump_Signals
+!
 ! Revision 2.128  2018/02/23 22:14:26  mmadatya
 ! Updated for polygon for ASMLS
 !
