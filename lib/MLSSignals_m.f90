@@ -14,19 +14,19 @@ module MLSSignals_M
   ! Process the MLSSignals section of the L2 configuration file and deal with
   ! parsing signal request strings.
 
-  use Allocate_deallocate, only: allocate_test, deallocate_test
-  use Dump_0, only: dump
-  use Dump_1, only: dumpLists
-  use Expr_m, only: expr
-  use HighOutput, only: headLine, outputNamedValue, OutputTable
-  use Init_MLSSignals_m ! everything
-  use Intrinsic, only: field_first, field_indices, lit_indices, &
-    & Phyq_dimensionless, phyq_frequency, phyq_indices, s_time, l_a, l_emls
-  use MLSKinds, only: r8
+  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+  use Dump_0, only: Dump
+  use Dump_1, only: DumpLists
+  use Expr_M, only: Expr
+  use HighOutput, only: HeadLine, OutputNamedValue, OutputTable, Tab
+  use Init_MLSSignals_M ! Everything
+  use Intrinsic, only: Field_First, Field_Indices, Lit_Indices, &
+    & Phyq_Dimensionless, Phyq_Frequency, Phyq_Indices, S_Time, L_A, L_EMLS
+  use MLSKinds, only: R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, PVMErrorMessage
-  use MLSStrings, only: lowercase, capitalize
-  use Output_m, only: blanks, newline, output
-  use String_table, only: display_string, get_string
+  use MLSStrings, only: Lowercase, Capitalize
+  use Output_M, only: Blanks, Newline, Output
+  use String_Table, only: Display_String, Get_String
 
   implicit none
 
@@ -231,13 +231,13 @@ contains
   subroutine MLSSignals ( ROOT )
     ! Process the MLSSignals section of the L2 configuration file.
 
-    use MLSStringLists, only: switchdetail
-    use moreTree, only: get_boolean, get_label_and_spec, starterrormessage
-    use next_tree_node_m, only: next_tree_node, next_tree_node_state
-    use time_m, only: time_now
-    use toggles, only: gen, levels, switches, toggle
-    use trace_m, only: trace_begin, trace_end
-    use tree, only: decorate, decoration, nsons, sub_rosa, subtree
+    use MLSStringLists, only: Switchdetail
+    use MoreTree, only: Get_Boolean, Get_Label_And_Spec, StarterrorMessage
+    use Next_Tree_Node_M, only: Next_Tree_Node, Next_Tree_Node_State
+    use Time_M, only: Time_Now
+    use Toggles, only: Gen, Levels, Switches, Toggle
+    use Trace_M, only: Trace_Begin, Trace_End
+    use Tree, only: Decorate, Decoration, Nsons, Sub_Rosa, Subtree
 
     integer, intent(in) :: ROOT         ! The "cf" vertex for the section
 
@@ -1234,7 +1234,81 @@ oc:       do
   end subroutine DUMP_SIGNAL
 
   ! -----------------------------------------------  Dump_Signals  -----
-  subroutine DUMP_SIGNALS ( SIGNALS, DETAILS )
+  subroutine DUMP_SIGNALS ( Signals, isSignalCritical, Details, OtherChannels )
+    type (signal_T), intent(in)                 :: Signals(:)
+    logical, dimension(:), intent(in), optional :: isSignalCritical
+    integer, intent(in), optional               :: Details ! How verbose?
+    logical, pointer, optional                  :: OtherChannels(:)
+    logical, pointer                            :: Channels(:)
+    integer :: I
+    character(len=*), parameter                 :: The80 = &
+      & '12345678901234567890123456789012345678901234567890123456789012345678901234567890'
+    character(len=*), parameter                 :: TheDecades = &
+      & '         1         2         3         4         5         6         7         8'
+    character(len=2) :: str
+    integer :: myDetails
+    ! Executable
+    myDetails = 0
+    if ( present(Details) ) myDetails = Details
+    call outputNamedValue ( 'Size(signals)', size(signals), options='--Headline' )
+    call output( The80, advance='yes' )
+    call output( TheDecades, advance='yes' )
+    ! Column headers: 3 lines
+    ! Index   signal  band  critical module
+    call output( 'Index', advance='no' )
+    call tab ( 3 )
+    call output( 'signal', advance='no' )
+    call tab ( 7 )
+    call output( 'band', advance='no' )
+    call tab ( 9 )
+    call output( 'critical', advance='no' )
+    call tab ( 11 )
+    call output( 'module', advance='no' )
+    if ( myDetails > 0 ) then
+      call tab ( 13 )
+      call output( 'DACS', advance='no' )
+      call tab ( 15 )
+      call output( 'Sideband', advance='no' )
+      call tab ( 17 )
+      call output( 'Spectrometer', advance='no' )
+      call tab ( 19 )
+      call output( 'Channels', advance='no' )
+    endif
+    call NewLine
+    do i = 1, size(signals)
+      channels => signals(i)%channels
+      call output ( i )
+      call tab
+      call displaySignalName ( signals(i), otherChannels=otherChannels )
+      call tab ( 7 )
+      call output ( signals(i)%Band )
+      if ( present( isSignalCritical ) ) then
+        str = merge( 'y', 'n', isSignalCritical(i) )
+      else
+        str = '?'
+      endif
+      call tab ( 9 )
+      call output ( str )
+      call tab ( 11 )
+      call display_string ( modules(signals(i)%instrumentModule)%name, &
+        & advance='no' )
+      if ( myDetails > 0 ) then
+        call tab ( 13 )
+        call output ( signals(i)%dacs )
+        call tab ( 15 )
+        call output ( signals(i)%sideband )
+        call tab ( 17 )
+        call display_string ( spectrometerTypes(signals(i)%spectrometerType)%name )
+        call tab ( 19 )
+        call output( lbound(signals(i)%frequencies,1) )
+        call output( ':' )
+        call output( ubound(signals(i)%frequencies,1) )
+      endif
+      call NewLine
+    end do
+  end subroutine DUMP_SIGNALS
+
+  subroutine DUMP_SIGNALS_old ( SIGNALS, DETAILS )
     type (signal_T), intent(in) :: SIGNALS(:)
     logical, intent(in), optional :: Details ! false => don't dump frequencies
     integer :: I
@@ -1250,7 +1324,7 @@ oc:       do
       end if
       call dump ( signals(i), details )
     end do
-  end subroutine DUMP_SIGNALS
+  end subroutine DUMP_SIGNALS_old
 
   ! --------------------------------------  Dump_SpectrometerType  -----
   subroutine DUMP_SPECTROMETERTYPE ( SPECTROMETERTYPE, N )
@@ -2104,6 +2178,9 @@ oc:       do
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.114  2018/03/05 19:24:39  pwagner
+! Improved DUMP_SIGNALS
+!
 ! Revision 2.113  2018/02/27 00:50:00  livesey
 ! Added the supportedModule functionality to support A-SMLS
 !
