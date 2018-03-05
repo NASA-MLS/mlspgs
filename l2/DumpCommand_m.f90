@@ -1475,7 +1475,7 @@ contains
             if ( details > 1 ) then
               call dump_all
             elseif ( associated(signals) ) then
-              call dump ( signals, details=details>0 )
+              call dump ( signals, details=details )
             else
               call announceError ( son, noSignals )
             end if
@@ -3134,6 +3134,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.135  2018/03/05 19:49:38  pwagner
+! Consistent with details arg to Dump_Signals now being an int
+!
 ! Revision 2.134  2017/09/26 16:24:34  pwagner
 ! May use options field to set text as Headline or Banner
 !
