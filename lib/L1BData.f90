@@ -1537,7 +1537,7 @@ contains ! ============================ MODULE PROCEDURES ======================
           & 'Failed to find attribute in l1boa file'//AttrName, MLSFile=L1bFile)
       else
         if ( DEEBUG ) then
-          call output ('get attribute', advance='no')
+          call output ('get attribute ', advance='no')
           call output (AttrName, advance='yes')
         end if
         call GetHDF5Attribute(aID, AttrName, value)
@@ -1592,8 +1592,10 @@ contains ! ============================ MODULE PROCEDURES ======================
         call MLSMessage ( MLSMSG_Warning, ModuleName, &
           & 'Failed to find attribute in l1boa file'//AttrName, MLSFile=L1bFile)
       else
-        call output ('get attribute', advance='no')
-        call output (AttrName, advance='yes')
+        if ( DEEBUG ) then
+          call output ('get attribute ', advance='no')
+          call output (AttrName, advance='yes')
+        endif
         call GetHDF5Attribute(aID, AttrName, value)
       end if
       call h5gClose_f (aID, status)
@@ -3013,6 +3015,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.121  2018/03/05 19:25:38  pwagner
+! Reduce non-debug printing
+!
 ! Revision 2.120  2017/11/03 19:59:37  pwagner
 ! Most array gymnastics moved from MLSFillValues to HyperSlabs module
 !
