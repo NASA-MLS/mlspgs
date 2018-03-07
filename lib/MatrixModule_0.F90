@@ -792,20 +792,20 @@ contains ! =====     Public Procedures     =============================
     integer :: II, IJ         ! Subscripts in VALUES for I,I and I,J components
     !                           in the case of M_Banded
     integer :: NC             ! Number of columns
-    integer, pointer, dimension(:) :: R1      ! First nonzero row of Z (Banded)
+    integer, allocatable, dimension(:) :: R1      ! First nonzero row of Z (Banded)
     integer :: RZ             ! Starting row in Z for inner product (Banded)
     real(rm), save :: TOL = -1.0_rm
-    real(rm), pointer, dimension(:,:) :: XIN  ! A pointer to the input,
+    real(rm), allocatable, dimension(:,:) :: XIN  ! The input,
     !                           data, or a densified copy of it
     type(MatrixElement_T), pointer :: X       ! XOPT or Z, depending on whether
     !                           XOPT is present or absent, respectively.
     real(rm), pointer, dimension(:,:) :: ZT   ! A local full result that is
     !                           sparsified at the end.
-    real(rm), pointer, dimension(:,:) :: TST1, TST2 ! When using checkblock
+    real(rm), allocatable, dimension(:,:) :: TST1, TST2 ! When using checkblock
     logical :: OK                       ! For testing
 
+    nullify ( zt )
     if ( tol < 0.0_rm ) tol = sqrt(epsilon(0.0_rm))
-    nullify ( r1, xin, zt )
     x => z
     if ( present(xopt) ) x => xopt
     nc = x%nCols
@@ -902,7 +902,6 @@ contains ! =====     Public Procedures     =============================
     end select
 
     if ( checkBlocks ) then
-      nullify ( tst1, tst2 )
       call Allocate_test ( tst1, z%nRows, z%nCols, 'tst1', ModuleName )
       call Allocate_test ( tst2, z%nRows, z%nCols, 'tst2', ModuleName )
       call densify ( tst1, x )
@@ -1270,11 +1269,9 @@ contains ! =====     Public Procedures     =============================
 !       end if
       d = sqrt(d)
       zt(i,i) = d
-!$OMP PARALLEL DO
-      do j = i+1, nc
+      do concurrent ( j = i+1: nc )
         zt(i,j) = ( xin(i,j) - dot_product( zt(1:i-1,i), zt(1:i-1,j) ) ) / d
       end do ! j
-!$OMP END PARALLEL DO
     end do ! i
     if ( present(status) ) status = 0
   end subroutine DenseCholesky
@@ -2046,12 +2043,11 @@ contains ! =====     Public Procedures     =============================
 
     integer :: I, J, K, L, M, MZ, N
     integer :: XI_1, XI_N, XR_1, XR_N, YI_1, YI_N, YR_1, YR_N, CR_1, CR_N, C_N
-    integer :: RS, R0, R1, RN           ! Row indicies used for 'blocking' full/full
+    integer :: RS, R0, R1               ! Row indicies used for 'blocking' full/full
     logical :: MY_SUB, MY_UPD, MY_UPPER
     real(rm) :: S                            ! Sign, subtract => -1 else +1
     integer :: XD, YD
     character, pointer, dimension(:) :: XM, YM
-    real(rm) :: XY                           ! Product of columns of X and Y
     type(MatrixElement_T) :: Z               ! Temp for sparse * sparse
 
     real(rm), pointer, dimension(:,:) :: XDNS, YDNS, ZDNS, ZDNS2 ! For checking
@@ -2140,7 +2136,7 @@ contains ! =====     Public Procedures     =============================
           yr_n = yr_1 + yi_n - yi_1 ! last row index of yb
           mz = zb%nRows
           if ( my_upper ) mz = j
-!$OMP PARALLEL DO private ( xi_1, xi_n, xr_1, xr_n, cr_1, cr_n, c_n, xd, yd, xy )
+!$OMP PARALLEL DO private ( xi_1, xi_n, xr_1, xr_n, cr_1, cr_n, c_n, xd, yd )
           do i = 1, mz       ! Rows of Z = columns of XB
             ! Inner product of column I of XB with column J of YB
             if ( associated(xm) ) then
@@ -2161,9 +2157,9 @@ contains ! =====     Public Procedures     =============================
             xd = xi_1 + cr_1 - xr_1
             yd = yi_1 + cr_1 - yr_1
 
-            xy = dot_product( xb%values(xd:xd+c_n-1,1), &
-              &               yb%values(yd:yd+c_n-1,1) )
-            z%values(i,j) = z%values(i,j) + s * xy
+            z%values(i,j) = z%values(i,j) + &
+                          & s * dot_product ( xb%values(xd:xd+c_n-1,1), &
+                                            & yb%values(yd:yd+c_n-1,1) )
           end do ! i
 !$OMP END PARALLEL DO
         end do ! j
@@ -2236,17 +2232,16 @@ contains ! =====     Public Procedures     =============================
           if ( l < k ) cycle  ! Empty column in XB
           mz = 1
           if ( my_upper ) mz = i
-!$OMP PARALLEL DO private ( xy )
-          do j = mz, yb%nCols  ! Columns of ZB
+          do concurrent ( j = mz: yb%nCols ) ! Columns of ZB
             if ( associated(ym) ) then
               if ( iand(ichar(ym(j)),m_LinAlg) /= 0 ) cycle
             end if
             if ( l < k ) cycle
             ! Inner product of column I of XB with column J of YB
-            xy = dot_product( xb%values(k:l,1), yb%values(m:m+l-k,j) )
-            zb%values(i,j) = zb%values(i,j) + s * xy
+            zb%values(i,j) = zb%values(i,j) + &
+                           & s * dot_product ( xb%values(k:l,1), &
+                                             & yb%values(m:m+l-k,j) )
           end do ! j
-!$OMP END PARALLEL DO
         end do ! i
       end select
     case ( M_Column_sparse )
@@ -2367,7 +2362,7 @@ contains ! =====     Public Procedures     =============================
           end if
           mz = zb%nRows
           if ( my_upper ) mz = j
-!$OMP PARALLEL DO private ( k, l, xy )
+!$OMP PARALLEL DO private ( k, l )
           do i = 1, mz  ! Rows of Z = columns of XB
             if ( associated(xm) ) then
               if ( iand(ichar(xm(i)),m_LinAlg) /= 0 ) cycle
@@ -2376,8 +2371,9 @@ contains ! =====     Public Procedures     =============================
             l = xb%r1(i)
             if ( l < k ) cycle
             ! Inner product of column I of XB with column J of YB
-            xy = dot_product( xb%values(k:l,1), yb%values(xb%r2(k:l),j) )
-            zb%values(i,j) = zb%values(i,j) + s * xy
+            zb%values(i,j) = zb%values(i,j) + &
+                           & s * dot_product ( xb%values(k:l,1), &
+                                             & yb%values(xb%r2(k:l),j) )
           end do ! i
 !$OMP END PARALLEL DO
         end do ! j
@@ -2401,17 +2397,16 @@ contains ! =====     Public Procedures     =============================
           l = yb%r2(j)
           mz = zb%nRows
           if ( my_upper ) mz = j
-!$OMP PARALLEL DO private ( xy )
-          do i = 1, mz  ! Rows of Z = columns of XB
+          do concurrent ( i = 1: mz ) ! Rows of Z = columns of XB
             if ( associated(xm) ) then
               if ( iand(ichar(xm(i)),m_LinAlg) /= 0 ) cycle
             end if
             if ( l < k ) cycle
             ! Inner product of column I of XB with column J of YB
-            xy = dot_product( xb%values(m:m+l-k,i), yb%values(k:l,1) )
-            zb%values(i,j) = zb%values(i,j) + s * xy
+            zb%values(i,j) = zb%values(i,j) + &
+                           & s * dot_product ( xb%values(m:m+l-k,i), &
+                                             & yb%values(k:l,1) )
           end do ! i
-!$OMP END PARALLEL DO
         end do ! j
       case ( M_Column_sparse ) ! XB full, YB column-sparse
         do j = 1, zb%nCols    ! Columns of ZB
@@ -2422,23 +2417,21 @@ contains ! =====     Public Procedures     =============================
           l = yb%r1(j)
           mz = zb%nRows
           if ( my_upper ) mz = j
-!$OMP PARALLEL DO private ( xy )
-          do i = 1, mz  ! Rows of Z = columns of XB
+          do concurrent ( i = 1: mz ) ! Rows of Z = columns of XB
             if ( associated(xm) ) then
               if ( iand(ichar(xm(i)),m_LinAlg) /= 0 ) cycle
             end if
             ! Inner product of column I of XB with column J of YB
-            xy = dot_product( xb%values(yb%r2(k:l),i), yb%values(k:l,1) )
-            zb%values(i,j) = zb%values(i,j) + s * xy
+            zb%values(i,j) = zb%values(i,j) + &
+                           & s * dot_product ( xb%values(yb%r2(k:l),i), &
+                                             & yb%values(k:l,1) )
           end do ! i
-!$OMP END PARALLEL DO
         end do ! j
       case ( M_Full )         ! XB full, YB full
         if ( associated(xm) .or. associated(ym) ) then
           rs = max ( subBlockLength / xb%nCols, 1 )
           do r0 = 1, xb%nRows, rs
             r1 = min ( r0 + rs - 1, xb%nRows )
-            rn = r1 - r0 + 1
             do j = 1, zb%nCols  ! Columns of ZB
               if ( associated(ym) ) then
                 if ( iand(ichar(ym(j)),m_LinAlg) /= 0 ) then
@@ -2447,33 +2440,28 @@ contains ! =====     Public Procedures     =============================
               end if
               mz = zb%nRows
               if ( my_upper ) mz = j
-!$OMP PARALLEL DO private ( xy )
-              do i = 1, mz      ! Rows of Z = columns of XB
+              do concurrent ( i = 1: mz )     ! Rows of Z = columns of XB
                 if ( associated(xm) ) then
                   if ( iand(ichar(xm(i)),m_LinAlg) /= 0 ) then
                     cycle
                   end if
                 end if
-                xy = dot_product( xb%values(r0:r1,i), &
-                  &               yb%values(r0:r1,j) )
-                zb%values(i,j) = zb%values(i,j) + s * xy
+                zb%values(i,j) = zb%values(i,j) + &
+                               & s * dot_product( xb%values(r0:r1,i), &
+                  &                               yb%values(r0:r1,j) )
               end do ! i = 1, xb%nCols
-!$OMP END PARALLEL DO
             end do ! j = 1, yb%nCols
           end do ! r0
         else if ( my_upper ) then
           rs = max ( subBlockLength / xb%nCols, 1 )
           do r0 = 1, xb%nRows, rs
             r1 = min ( r0 + rs - 1, xb%nRows )
-            rn = r1 - r0 + 1
             do j = 1, zb%nCols  ! Columns of ZB
-!$OMP PARALLEL DO private ( xy )
-              do i = 1, j       ! Rows of Z = columns of XB
-                xy = dot_product( xb%values(r0:r1,i), &
-                  &               yb%values(r0:r1,j) )
-                zb%values(i,j) = zb%values(i,j) + s * xy
+              do concurrent ( i = 1: j )      ! Rows of Z = columns of XB
+                zb%values(i,j) = zb%values(i,j) + &
+                               & s * dot_product( xb%values(r0:r1,i), &
+                  &                               yb%values(r0:r1,j) )
               end do ! i
-!$OMP END PARALLEL DO
             end do ! j
           end do ! r0
         else
@@ -2863,13 +2851,11 @@ contains ! =====     Public Procedures     =============================
                 & "U matrix in SolveCholeskyM_0 is singular" )
             end if
           end if
-!$OMP PARALLEL DO
-          do j = 1, nc
+          do concurrent ( j = 1: nc )
             xs(i,j) = ( xs(i,j) - &
                     &   dot_product( u%values(u%r2(i-1)+1:u%r2(i)-1,1), &
                     &                xs(u%r1(i):i-1,j) ) ) / d
           end do ! j = 1, nc
-!$OMP END PARALLEL DO
         end do ! i = 1, n
       case ( M_Column_Sparse )
         do i = 1, n
@@ -2919,12 +2905,10 @@ contains ! =====     Public Procedures     =============================
                 & "U matrix in SolveCholeskyM_0 is singular" )
             end if
           end if
-!$OMP PARALLEL DO
-          do j = 1, nc
+          do concurrent ( j = 1: nc )
             xs(i,j) = ( xs(i,j) - &
                     &   dot_product( u%values(1:i-1,i), xs(1:i-1,j)) ) / d
           end do ! j = 1, nc
-!$OMP END PARALLEL DO
         end do ! i = 2, n
       end select
     else             ! solve U X = B for X
@@ -2958,12 +2942,10 @@ contains ! =====     Public Procedures     =============================
               & "U matrix in SolveCholeskyM_0 is singular" )
           end if
         end if
-!$OMP PARALLEL DO
-        do j = 1, nc
+        do concurrent ( j = 1: nc )
           xs(i,j) = ( xs(i,j) - &
                   &   dot_product(ud(i,i+1:n), xs(i+1:n,j)) ) / d
         end do ! j = 1, nc
-!$OMP END PARALLEL DO
       end do ! i = 1, n
       if ( u%kind /= M_Full ) &
         & call deallocate_test ( ud, "UD in SolveCholeskyM_0", ModuleName )
@@ -3633,6 +3615,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.27  2018/03/07 00:14:42  vsnyder
+! Made some pointers allocatable.  Converted some OMP loops to DO CONCURRENT
+!
 ! Revision 2.26  2017/12/07 02:32:59  vsnyder
 ! Remove preprocessor stuff because we no longer use lf95
 !
