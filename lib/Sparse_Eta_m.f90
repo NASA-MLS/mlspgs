@@ -19,13 +19,14 @@ module Sparse_Eta_m
   implicit NONE
 
   private
-  public :: Sparse_Eta_1D, Sparse_Eta_nD, Sparse_Eta_t
+  public :: Sparse_Eta_t
 
   type, extends(sparse_t) :: Sparse_Eta_t
     ! No new components
   contains
     procedure, pass(eta) :: Eta_1D => Sparse_Eta_1D
     procedure, pass(p) :: Eta_nD => Sparse_Eta_nD
+    generic :: Eta => Eta_1D, Eta_nD
   end type Sparse_Eta_t
 
 !---------------------------- RCS Module Info ------------------------------
@@ -57,6 +58,7 @@ contains
                                               ! default false
 
     logical, parameter :: CheckSorted = .false. ! Check whether Grid is sorted
+
     real(rp) :: Del_Basis
     integer :: I, J
     character(127) :: Msg
@@ -230,66 +232,84 @@ contains
 
   end subroutine Sparse_Eta_1D
 
-  subroutine Sparse_Eta_nD ( L, R, P, What, Resize )
+  subroutine Sparse_Eta_nD ( L, R, P, What, Resize, One_Row_OK )
 
     ! Compute P as the product of L and R, e.g. Freq and Zeta x Phi, for
     ! linear interpolation from an nD Basis (e.g. Freq x Zeta x Phi, to 1D
     ! Grid, e.g. line-of-sight).
 
     use MLSMessageModule, only: MLSMessage, MLSMsg_Error
+    use MoreMessage, only: MLSMessage
 
     class(sparse_eta_t), intent(in) :: L    ! Assume it's been created
     class(sparse_eta_t), intent(in) :: R    ! Assume it's been created
     class(sparse_eta_t), intent(out) :: P   ! Created here
     integer, intent(in), optional :: What   ! String index
     logical, intent(in), optional :: Resize ! Re-size Eta%E to Eta%NE
+    logical, intent(in), optional :: One_Row_OK ! OK if L has only one row,
+                                            ! e.g., for Frequency.  Apply that
+                                            ! row of L to every row of R.
 
     integer :: I       ! Row index
     integer :: J, K    ! Column indices
-    integer :: LL, LR  ! Index of last column in row of left, right factors
+    integer :: FL, FR  ! Index of final column in row of left, right factors
     integer :: M       ! Column dimension of L
+    logical :: OK      ! One_Row_OK, default false
+    integer :: LR, LRI ! L row index, increment
     real(rp) :: V      ! L(i,j) * R(i,k)
 
-    if ( l%nRows /= 0 .and. r%nRows /= 0 ) then
+    ok = .false.
+    if ( present(one_row_ok) ) ok = one_row_ok
+    lri = 1            ! Increment row for L
+    if ( ok .and. ( l%nRows == 1 .or. size(l%rows) == 1 ) ) then
+      lri = 0          ! Don't increment row for L
+    else if ( l%nRows /= 0 .and. r%nRows /= 0 ) then
       if ( l%nRows /= r%nRows ) &
       & call MLSMessage ( MLSMsg_Error, moduleName, &
-        & "L and R in Sparse_Eta_nD have different numbers of useful rows" )
+        & "L(%d) and R(%d) in Sparse_Eta_nD have different numbers of useful rows", &
+        & [ l%nRows, r%nRows ] )
       p%nRows = l%nRows
     else if ( size(l%rows) /= size(r%rows) ) then
       call MLSMessage ( MLSMsg_Error, moduleName, &
-        & "L and R in Sparse_Eta_nD have different row dimension extents" )
+        & "L(%d) and R(%d) in Sparse_Eta_nD have different row dimension extents", &
+        & [ size(l%rows), size(r%rows) ] )
     end if
 
-    call p%create ( size(l%rows), size(l%cols)*size(r%cols), 4*size(l%rows), &
+    call p%create ( size(r%rows), size(l%cols)*size(r%cols), 4*size(r%rows), &
                   & ubnd=[ l%ubnd, r%ubnd ], &
                   & lbnd=[ l%lbnd, r%lbnd ], what=what )
 
     m = size(l%cols)
 
-    ! Compute the column elements of P in each row as the products of
-    ! all elements of L with all elements of R in that row.
-    do i = 1, size(l%rows)
-      lr = r%rows(i)
-      if ( l%rows(i) == 0 .or. lr == 0 ) cycle ! Don't include empty row
-      k = r%e(lr)%nr ! First element of R in row I
-      if ( k /= 0 ) then
-        do
-          ll = l%rows(i)
-          j = l%e(ll)%nr       ! First element of L in row I
-          if ( j /= 0 ) then
-            do
-              v = l%e(j)%v * r%e(k)%v
-              if ( v /= 0.0 ) &
-                & call p%add_element ( v, i, m*(r%e(k)%c-1) + l%e(j)%c )
-              j = l%e(j)%nr             ! Next element of L in row I
-              if ( j == l%e(ll)%nr ) exit ! Back to the first element?
-            end do
-          end if
-          k = r%e(k)%nr               ! Next element of R in row I
-          if ( k == r%e(lr)%nr ) exit ! Back to the first element?
-        end do
+    ! Compute the column elements of P in each row as the outer product of
+    ! all elements of L in that row (or its only row) with all elements of R
+    ! in that row.
+    lr = 1
+    do i = 1, r%nRows
+      fr = r%rows(i)
+      if ( l%rows(lr) /= 0 .and. fr /= 0 ) then ! Don't include empty row
+        k = r%e(fr)%nr ! First element of R in row I
+        if ( k /= 0 ) then
+          do
+            fl = l%rows(lr)
+            j = l%e(fl)%nr       ! First element of L in row I
+            if ( j /= 0 ) then
+              do
+                v = l%e(j)%v * r%e(k)%v
+                if ( v /= 0.0 ) &
+                  & call p%add_element ( v, i, m*(r%e(k)%c-1) + l%e(j)%c )
+                j = l%e(j)%nr             ! Next element of L in row I
+                if ( j == l%e(fl)%nr ) exit ! Back to the first element?
+              end do
+            end if
+            k = r%e(k)%nr               ! Next element of R in row I
+            if ( k == r%e(fr)%nr ) exit ! Back to the first element?
+          end do
+        end if
       end if
+      lr = lr + lri
     end do ! rows
+    p%nRows = r%nRows
 
     if ( present(resize) ) then
       if ( resize ) call p%resize ( p%ne )
@@ -310,6 +330,11 @@ contains
 end module Sparse_Eta_m
 
 ! $Log$
+! Revision 2.3  2018/03/07 00:21:19  vsnyder
+! Don't make names of procedures that are type-bound public.  Add Eta generic
+! for Sparse_Eta_1D and Sparse_Eta_nD.  Allow the left factor in Sparse_Eta_nD
+! to have only one row.
+!
 ! Revision 2.2  2017/11/29 00:33:39  vsnyder
 ! Add Sparse_Eta_t as extension of Sparse_t.  Make Eta_1D and Eta_nD type-
 ! bound to Sparse_Eta_t.  Better criteria to create.  Ad hoc hand waving
