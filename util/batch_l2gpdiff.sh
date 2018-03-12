@@ -27,7 +27,7 @@
 #                         (if cycle2 is "none" then file name may lack cycle number)
 #    -profiles m n        Keep only profiles in range m n
 #    -l2gpdiff command    Use command instead of l2gpdiff
-#  (and all the normal l2gpdiff options; e.g. -rms -ignore are wise choices)
+#  (and all the normal l2gpdiff options; e.g. -au -rms -ignore are wise choices)
 #
 # Note:
 # (1) Each option is preceded by a dash
@@ -38,15 +38,15 @@
 # (5) Each comparison will be saved in the current working directory as str.diff
 #
 # Bugs and limitations
-# (1) l2gpdiff is assumed to exist, to be an executable, and to be in
-#     either your PATH or /software/toolkit/mlstools/l2gpdiff
+# (1) l2gpdiff is assumed to exist, to be an executable, and (in desc order)
+#     (a) defined by the env variables L2GPDIFF
+#     (b) in your PATH
+#     (c) /software/toolkit/mlstools/l2gpdiff
 # (2) The l2gp file names are assumed to match the pattern
 #      MLS-Aura_L2GP-xxxx_*.he5
-# (3) If multiple matches, we try always to pick out the last
+# (3) If multiple matches, we choose the last
 #      in alphabetical order (which may or may not have the highest cycle num:
-#      which is why we have the -c1 and -c2)
-# (4) Why don't you just make "-rms -ignore" the default options, either
-#      here or in l2gpdiff itself?
+#      that's why we have the -c1 and -c2)
 # --------------- End batch_l2gpdiff.sh help
 # Copyright 2005, by the California Institute of Technology. ALL
 # RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
@@ -150,7 +150,10 @@ keep=0
 me="$0"
 my_name=batch_l2gpdiff.sh
 I=batch_l2gpdiff
-L2GPDIFF=`which l2gpdiff 2> /dev/null`
+if [ "$L2GPDIFF" = "" ]
+then
+  L2GPDIFF=`which l2gpdiff 2> /dev/null`
+fi
 if [ ! -x "$L2GPDIFF" ]
 then
   L2GPDIFF=$MLSTOOLS/l2gpdiff
@@ -417,6 +420,9 @@ then
 fi
 exit
 # $Log$
+# Revision 1.18  2012/07/02 23:06:34  pwagner
+# The environment variable PRODUCTS now determines what is diffed
+#
 # Revision 1.17  2012/04/20 23:16:19  pwagner
 # Disabled more debugging messages
 #
