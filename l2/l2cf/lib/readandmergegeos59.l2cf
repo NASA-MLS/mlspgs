@@ -150,8 +150,10 @@ end MergeGrids
 !ifdef(flagSkipReadingGeos5Classic,{},{
 ; (1) Try to read them as geos5 classic; will return "empty" if unsuccessful
 begin ReadApriori
+  ChangeSettings, /silent
   readGriddedData, grid=gmaoPressureInput1, origin=geos5, field='PL', $
     dimList='XDim,YDim,Height,Time' , date='00:00:00' !geos5PFile1
+  ChangeSettings, silent=false
 end ReadApriori
 
 ; test
@@ -166,8 +168,10 @@ end MergeGrids
 !ifdef(flagSkipReadingMerra,{},{
 ; (2) Try to read them as merra reanalysis; will return "empty" if unsuccessful
 begin ReadApriori
+  ChangeSettings, /silent
   readGriddedData, grid=gmaoPressureInput1, origin=merra, field='DELP', $
     dimList='XDim,YDim,Height,Time' , date='00:00:00', /sum !geos5PFile1
+  ChangeSettings, silent=false
 end ReadApriori
 
 ; test
@@ -182,8 +186,10 @@ end MergeGrids
 !ifdef(flagSkipReadingGeos5,{},{
 ; (3) Try to read them as geos5_9 netcdf4/hdf5; will return "empty" if unsuccessful
 begin ReadApriori
+  ChangeSettings, /silent
   readGriddedData, grid=gmaoPressureInput1, origin=geos5_7, field='PL', $
     dimList='XDim,YDim,Height,Time' , date='00:00:00' !geos5PFile1
+  ChangeSettings, silent=false
 end ReadApriori
 
 ; test
@@ -410,6 +416,10 @@ begin MergeGrids
   ; If we don't have meterology, the next effectively copies the climatology
   MergeGrids, grid=mergedTemperature, operational=gmaoTemperatureInput1, $
     climatology=gridTemperature, height=1mb, scale=5km
+!ifdef(flagMustHaveMeteorology,{
+  Dump, text="No meteorology found; so must quit"
+  Dump, /CrashBurn
+}, {})
 end MergeGrids
 
 begin ReadApriori
@@ -428,6 +438,9 @@ begin MergeGrids
 end MergeGrids
 
 ;$Log$
+;Revision 1.5  2016/10/06 20:27:23  pwagner
+;May use flagSkipReading'Type' to shorten and simplify l2cf
+;
 ;Revision 1.4  2015/05/27 22:59:58  pwagner
 ;Needed to fix to work with MERRA again
 ;
