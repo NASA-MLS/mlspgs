@@ -15,36 +15,38 @@
 !     c o n t e n t s
 !     - - - - - - - -
 
-!     (parameters)
-! MLSMSG_SUCCESS           status returned when all went well
-! MLSMSG_DEBUG             should print only if debugging turned on
-! MLSMSG_INFO              fyi only
-! MLSMSG_WARNING           not fatal, but deserving of attention
-! MLSMSG_ERROR             quits after printing
-! MLSMSG_CRASH             should give traceback before quitting
-! MLSMSG_TESTWARNING       test to see if we would print this warning
+!     (data type)
+! MLSMessageConfig         configuration controlling where to print, etc.
+!     (severity levels)
+! MLSMSG_Success           status returned when all went well
+! MLSMSG_Debug             should print only if debugging turned on
+! MLSMSG_Info              fyi only
+! MLSMSG_Warning           not fatal, but deserving of attention
+! MLSMSG_Error             quits after printing
+! MLSMSG_Crash             should give traceback before quitting
+! MLSMSG_Testwarning       test to see if we would print this warning
 ! MLSMSG_Severity_so_far   worst severity level noted so far in this run
 ! MLSMSG_Severity_to_quit  severity level needed to quit
 ! MLSMSG_Severity_to_walkback
 !                          severity level needed to print callstack
-! MLSMSG_Allocate          mesg prefix for this type of error
-! MLSMSG_Fileopen          mesg prefix for this type of error
-! MLSMSG_Keyword           mesg prefix for this type of error
-! MLSMSG_L1BRead           mesg prefix for this type of error
-! MLSMSG_Duplicate         mesg prefix for this type of error
-! MLSMSG_DeAllocate        mesg prefix for this type of error
-! MLSMSG_PVM               mesg prefix for this type of error
-! MLSMessageConfig         configuration controlling where to print, etc.
+!     (message prefixes for errors during ..)
+! MLSMSG_Allocate          allocating an array
+! MLSMSG_Fileopen          opening a file
+! MLSMSG_Keyword           ???
+! MLSMSG_L1BRead           reading an l1b file
+! MLSMSG_Duplicate         ???
+! MLSMSG_DeAllocate        deallocating an array
+! MLSMSG_PVM               using a pvm library procedure
 
 !     (subroutines and functions)
-! bummer                   print error message with eye-catching effects
-! crash_burn               crash and burn unless called from an exempt module
-! dumpConfig               dump configuration
-! restoreConfig            restore configuration to its default state
+! Bummer                   print error message with eye-catching effects
+! Crash_burn               crash and burn unless called from an exempt module
+! DumpConfig               dump configuration
+! RestoreConfig            restore configuration to its default state
 ! MLSMessage               main messaging routine
 ! MLSMessageSetup          routine interface to change some parts of MLSMessageConfig
 ! MLSMessageCalls          manage calling stack 
-! MLSMessageClose          close MLSMessage log file; but see MLSMessageExit
+! MLSMessageClose          close MLSMessage log file; but without exiting
 ! MLSMessageExit           recommended way to finish main program
 ! MLSMessageInquire        Returns the requested info
 ! MLSMessageInternalFile   Returns the complete text that would be printed
@@ -53,19 +55,19 @@
 ! ReportTKStatus           converts SDP status to severity, prints if needed
 ! StopWithErrorMsg         report error msg, dump calling stack, stop
 ! SummarizeWarnings        show summary of how many warnings received
-
 ! === (end of toc) ===
 
 ! === (start of api) ===
-! bummer ( char* chars, &
+! Bummer ( char* chars, &
 !  [int columnRange(2)], [char alignment], [int skips], &
 !  [int severity] )
-! crash_burn ( [char* module_name] )
-! dumpConfig ( [MLSMessageConfig_T config] )
-! restoreConfig
+! Crash_burn ( [char* module_name] )
+! DumpConfig ( [MLSMessageConfig_T config] )
+! RestoreConfig
 ! MLSMessage ( int Severity, char* ModuleNameIn, char* Message, 
 !      [char* Advance], [MLSFile_T MLSFile], [status] )
 ! MLSMessageCalls ( char* command, [char* name] )
+! MLSMessageClose
 ! MLSMessageSetup ( [log SuppressDebugs], [int LogFileUnit], [char* Prefix],
 !      [log useToolkit], [log CrashOnAnyError] )
 ! MLSMessageExit ( [int status], [char* farewell] )
@@ -175,16 +177,16 @@
     module procedure MLSMessage_
   end interface
 
-  interface bummer
-    module procedure bummer_chars
-    module procedure bummer_chararray
+  interface Bummer
+    module procedure Bummer_chars
+    module procedure Bummer_chararray
   end interface
 
 contains
 
-  ! -----------------------------------------------------  bummer  -----
+  ! -----------------------------------------------------  Bummer  -----
   ! Call banner to print your error message, then call MLSMessage to stop
-  subroutine bummer_chars ( chars, &
+  subroutine Bummer_chars ( chars, &
     & columnRange, alignment, skips, lineLength, severity )
     character(len=*), intent(in)                :: CHARS
     ! If columnRange(1) < 1, just use starting columns; otherwise move to
@@ -202,9 +204,9 @@ contains
     call banner(  chars, columnrange, alignment, skips, linelength, mode='s' )
     call MLSMessage ( mySeverity, ModuleName, &
                   & '(See error message above)' )
-  end subroutine bummer_chars
+  end subroutine Bummer_chars
 
-  subroutine bummer_chararray ( charArray, &
+  subroutine Bummer_chararray ( charArray, &
     & columnRange, alignment, skips, severity )
     character(len=*), dimension(:), intent(in)  :: CHARARRAY
     ! If columnRange(1) < 1, just use starting columns; otherwise move to
@@ -221,7 +223,7 @@ contains
     call banner(  charArray, columnrange, alignment, skips )
     call MLSMessage ( mySeverity, ModuleName, &
                   & '(See error message above)' )
-  end subroutine bummer_chararray
+  end subroutine Bummer_chararray
 
   ! ------------------------------------------------  Crash_Burn  -----
   ! crash, burn unless ..
@@ -710,7 +712,7 @@ contains
 
   subroutine MLSMessageInquire( Warning_msg, timesWarned, &
     &  totalnumwarnings, LastWarningMsg  )
-    use MLSSTRINGS, only: LOWERCASE
+    use MLSStrings, only: Lowercase
     ! Args
     integer, optional, intent(out)          :: timesWarned ! how many times 
     character(len=*), optional, intent(in)  :: Warning_msg ! this happened
@@ -756,7 +758,7 @@ contains
   subroutine MLSMessageSetup ( SuppressDebugs, LogFileUnit, Prefix, useToolkit, &
     & CrashOnAnyError  )
 
-    use PrintIt_m, only: GET_CONFIG, SET_CONFIG, STDOUTLOGUNIT
+    use PrintIt_M, only: Get_Config, Set_Config, StdoutLogunit
 
     ! Dummy arguments
     logical, optional, intent(in) :: SuppressDebugs
@@ -791,7 +793,7 @@ contains
   ! This routine simply closes the MLSMessage log file if there is one.
   ! It does so by pointing further logged messages at stdout
   subroutine MLSMessageClose
-    use PrintIt_m, only: SET_CONFIG
+    use PrintIt_m, only: Set_Config
     ! Executable code
     call set_config ( logFileUnit = STDOUTLOGUNIT ) ! -1
   end subroutine MLSMessageClose
@@ -860,7 +862,7 @@ contains
     ! (4) Clear last Warning Msg
     !
     ! (Would it be better to have 4 different routines?)
-    use PrintIt_m, only: GET_CONFIG, SET_CONFIG
+    use PrintIt_m, only: Get_Config, Set_Config
     ! Args
     integer, intent(in), optional :: logFileUnit
     logical, intent(in), optional :: CrashOnAnyError
@@ -917,7 +919,7 @@ contains
   ! i.e., we wouldn't mess with masterTID or logFileUnit
 
   subroutine RestoreConfig ( complete )
-    use PrintIt_m, only: SET_CONFIG
+    use PrintIt_m, only: Set_Config
     ! The next won't work because of Intel v12 internal compiler error
     ! MLSMessageConfig = MLSMessageConfig_T()
     ! So instead,
@@ -1010,12 +1012,14 @@ contains
   ! Private procedures
   ! -----------------------------------------------------  dump  -----
   subroutine dump ( name, intValue, charValue, logValue, trimName  )
-    ! In any way we're asked
+    ! Print
+    ! name : value
+    ! where value is one of {intValue, charValue, logValue}
     character(len=*), intent(in) :: name
     integer, intent(in), optional :: intValue
     character(len=*), intent(in), optional :: charValue
     logical, intent(in), optional :: logValue
-    logical, intent(in), optional :: trimName
+    logical, intent(in), optional :: trimName ! Print only leading non-blank
     !
     character(len=132) :: line
     character(len=32)  :: value
@@ -1075,7 +1079,7 @@ contains
   end subroutine DumpFile_old
 
   ! ------------------------------------------ Dump_MLSFile ------------
-
+  ! Uses  OutputTable 
   subroutine Dump_MLSFile ( MLSFile, details )
     use HighOutput, only: AddRow, AddRow_Divider, AddRow_Header, &
       & OutputTable, StartTable
@@ -1153,13 +1157,15 @@ contains
   end function MessageMeansCrash
 
   ! ----------------------------------------------  MLSMessageStd  -----
-  subroutine MLSMessageStd ( Severity, ModuleNameIn, Message, &
-    & Advance, MLSFile )
+  ! After entering MLSMessage_,
+  ! this is where most calls to MLSMessage trickle down to
 
     ! Print a message (unless printing is suppressed).  If it has %[Nn]
     ! in it, replace that with newline.
+  subroutine MLSMessageStd ( Severity, ModuleNameIn, Message, &
+    & Advance, MLSFile )
 
-    use PRINTIT_M, only: GET_CONFIG
+    use PrintIt_m, only: Get_Config
     ! use CALL_STACK_M, only: DUMP_STACK
     ! Dummy arguments
     integer, intent(in) :: Severity ! e.g. MLSMSG_Error
@@ -1240,6 +1246,9 @@ contains
 
 !
 ! $Log$
+! Revision 2.49  2018/03/14 21:49:34  pwagner
+! Corrected desciptions in toc section
+!
 ! Revision 2.48  2018/02/28 19:56:23  pwagner
 ! Improved appearance of DumpConfig
 !
@@ -1287,7 +1296,7 @@ contains
 ! Fixed bug affecting call stack and another in StopWithErrorMsg
 !
 ! Revision 2.34  2014/04/22 16:28:59  pwagner
-! Added bummer--writes error message as an eye-catching banner
+! Added Bummer--writes error message as an eye-catching banner
 !
 ! Revision 2.33  2013/11/18 22:22:48  pwagner
 ! Sticky versions of verbose, debug available
