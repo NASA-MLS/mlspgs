@@ -367,6 +367,8 @@ contains ! =====     Public Procedures     =============================
     skipDirectwrites = skipDirectWritesoriginal
     skipRetrieval = skipRetrievalOriginal
     options = ' '
+    Phasestring = ' '
+    Chunkstring = ' '
     got= .false.
     do keyNo = 2, nsons(root)
       son = subtree(keyNo,root)
@@ -1035,6 +1037,9 @@ END MODULE MLSL2Timings
 
 !
 ! $Log$
+! Revision 2.71  2018/03/14 22:16:43  pwagner
+! Initialize Phasestring, Chunkstring to prevent printing nulls
+!
 ! Revision 2.70  2017/11/30 20:52:08  pwagner
 ! Added optional /stamp field to phase spec
 !
