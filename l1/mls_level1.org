@@ -3326,3 +3326,117 @@ it remains with the value of 1.
 
 
    
+
+* Lock states
+
+  The lock states are stored in the Science5 section of Engineering
+  Packet5 between bits 1520 and 1800, bytes 190-234. There are *three*
+  mnemonics to keep track of! See C&DH handbook, Engineering Packet 5,
+  page 45, Science Packet 5 and Appendix O, page 136.
+  
+  Table showing offsets into packet 5, the RIU ID, the RIU (don't ask
+  me what the difference is between the 'ID" and the name), the value
+  that it should have and what it means if it doesn't have that value.
+
+| Byte | RIU 'ID'  | RIU  |  nominal | bad band(s)/channel(s)   | FB/MB/WF/DACS/(species)         |
+|------+-----------+------+----------+--------------------------+---------------------------------|
+|  190 | SMO5      | FB05 |        1 | MB1 (Band 27)            | (HCN)                           |
+|  191 | SM07      | FB07 |        1 | MB3 (Band 29)            | (HOCl)                          |
+|  192 | SM08      | FB08 |        1 | MB2 (Band 28)            | (HO2)                           |
+|  193 | SM10      | FB10 |        1 | MB4 & MB5 (Bands 30,31)  | (HO2/BrO)                       |
+|  194 | SM11      | DAC1 |       13 | DACS1                    | ??                              |
+|  195 | SM12      | DAC2 |       13 | DACS2                    | ??                              |
+|  196 | SM01      | FB01 |        1 | Side A down converter. A | Only when Side A is on!         |
+|      |           |      |          | analog                   | Q: How do I know this?          |
+|      |           |      |          | data                     |                                 |
+|      |           |      |          | bad!                     |                                 |
+|  197 | SM02      | FB02 |        1 | Side B down-converter B  | Only when Side B is on!         |
+|      |           |      |          | analog                   | Q: How do I know this?          |
+|      |           |      |          | data                     |                                 |
+|      |           |      |          | bad                      |                                 |
+|  210 | GM05      | RCO0 |       14 | Band 1                   | FB1                             |
+|  211 | GM06      | RCO1 |       14 | Band 21                  | Band 21: FB11 (GSN sw4 nominal) |
+|      |           |      |          |                          | FB8 (GSN sw3)                   |
+|      |           |      |          |                          |                                 |
+|  212 | GM07(msb) | RCO2 | [194,12] | Bands 2-6. See [1]       | (All of R2)                     |
+|      |           |      |          |                          |                                 |
+|      |           |      |          |                          | Band 2: FB2                     |
+|      |           |      |          |                          | Band 3: FB3 (GSN sw 2, nominal) |
+|      |           |      |          |                          | null, if GSN sw2 doesn't        |
+|      |           |      |          |                          | pass Band 3                     |
+|      |           |      |          |                          | Band 4: FB4                     |
+|      |           |      |          |                          | FB8 (GSN sw3, non-nominal)      |
+|      |           |      |          |                          | Band 5: FB5                     |
+|      |           |      |          |                          | FB3 (GSN sw2, non-noninal)      |
+|      |           |      |          |                          | Band 6: FB6                     |
+|      |           |      |          |                          | FB3 (GSN sw2, non-nominal)      |
+|  213 | GM07(lsb) | RCO2 |          |                          | Same-same                       |
+|      |           |      |          |                          |                                 |
+|      |           |      |          |                          |                                 |
+|      |           |      |          |                          |                                 |
+|      |           |      |          |                          |                                 |
+|      |           |      |          |                          |                                 |
+|      |           |      |          |                          |                                 |
+|      |           |      |          |                          |                                 |
+|  214 | GM08(msb) | RCO3 | [194,12] | Bands 7-9.See [1]        | All of R3                       |
+|      |           |      |          |                          | Band 7: FB7                     |
+|      |           |      |          |                          | FB8 (GSN sw3, non-nominal)      |
+|      |           |      |          |                          | Band 8: FB8                     |
+|      |           |      |          |                          | null (if GSN sw doesn't         |
+|      |           |      |          |                          | pass Band 8)                    |
+|      |           |      |          |                          | Band 9: FB9                     |
+|      |           |      |          |                          | FB3 (GSN sw2, non-nominal)      |
+|  215 | GM08(lsb) | RCO3 |          |                          | same-same                       |
+|      |           |      |          |                          |                                 |
+|  216 | GM09(msb) | RCO4 | [129,12] | Bands 10-14.See [1]      | Band 10: FB10                   |
+|      |           |      |          |                          | FB8 (GSN sw3, non-nominal)      |
+|      |           |      |          |                          | Band 11: FB11                   |
+|      |           |      |          |                          | Band 12: FB12 (GSN sw4,         |
+|      |           |      |          |                          | non-nominal)                    |
+|      |           |      |          |                          | FB12 (GSN sw4, non-nominal)     |
+|      |           |      |          |                          | null (if GSN sw4 doesn't        |
+|      |           |      |          |                          | pass band 12                    |
+|      |           |      |          |                          | Band 13: FB13                   |
+|      |           |      |          |                          | FB8 (GSN sw3, non-nominal)      |
+|      |           |      |          |                          | Band 14: FB14                   |
+|      |           |      |          |                          | FB12 (GSN sw4, non-nominal)     |
+|  217 | GM09(lsb) | RCO4 |          |                          | same-same                       |
+
+
+| Byte | RIU 'ID' | RIU    | nominal | bad band(s)/channel(s)   | FB/MB/WF/DACS/(species)         |
+|------+----------+--------+---------+--------------------------+---------------------------------|
+|  218 | GM10     | SIF1 A |     255 | Band 1 [2]               | FB1                             |
+|  219 | GM11     | SIF1 B |     255 | Band 21                  | Band 21: FB12 (GSN sw4 nominal) |
+|      |          |        |         |                          | FB8 (GSN sw3, non-nominal)      |
+|      |          |        |         |                          |                                 |
+|  220 | GM12     | SIF2   |     255 | Bands 2-6                | See RCO2                        |
+|  221 | GM13     | SIF3   |     255 | Bands 7-9                | See RCO3                        |
+|  222 | GM14     | SIF4   |     243 | Bands 10-14              | See RCO4                        |
+|  224 | GM15     | GSN    |       0 | TBD                      |                                 |
+|  234 | TM03     | SIF5   |       0 | Only meaningful when THz |                                 |
+|      |          |        |         | is on, but still need    |                                 |
+|      |          |        |         | to know in case of       |                                 |
+|      |          |        |         | reprocessing             |                                 |
+
+
+** Questions
+
+   1. When GM05/RCO0 doesnot equal 14 (which affects Band 1): Does the
+      fact that B1F (PT) also gets split off and sent to Band 22
+      (DACS4)require that L1 set DACS4 bad too?
+
+   2. Same question for...
+      + Band 21 (B21F:PT) which also gets sent to FB12 if GSN switch 4
+        is set nominally, or to FB8 if GSN switch 3 is set for that route?
+      + And so on...
+
+
+* Footnotes
+
+[1] These are two byte quantities. The first byte in the list is
+the MSB, the seconds the LSB. They both must match their nominal
+values or the corresponding bands are marked bad
+
+[2] See also RCO0
+
+  
