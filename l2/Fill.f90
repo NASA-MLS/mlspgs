@@ -1086,9 +1086,9 @@ contains ! =====     Public Procedures     =============================
       case ( s_changeSettings ) ! ===============================  changeSettings ==
         ! Change settings for this phase
         call addPhaseToPhaseNames ( 0, key )
-        call Dump( OutputOptions )
-        call Dump( StampOptions )
-        call DumpConfig
+        ! call Dump( OutputOptions )
+        ! call Dump( StampOptions )
+        ! call DumpConfig
 
       case ( s_transfer ) ! ===============================  Transfer ==
         ! Here we're on a transfer instruction
@@ -3364,6 +3364,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.474  2018/03/14 22:52:32  pwagner
+! Reduce output when changing settings
+!
 ! Revision 2.473  2018/02/23 22:09:23  mmadatya
 ! Added l_instECR for ASMLS
 !
