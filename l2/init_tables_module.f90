@@ -1854,12 +1854,14 @@ contains ! =====     Public procedures     =============================
              s+s_forwardModelGlobal, s+s_l1brad, s+s_l1boa, &
              s+s_l2parsf, s+s_makePFA, s+s_pfaData, s+s_readPFA, &
              s+s_tGrid, s+s_time, s+s_vGrid, s+s_writePFA, n+n_section, &
-      begin, z+z_readapriori, s+s_time, s+s_diff, s+s_dump, s+s_gridded, &
+      begin, z+z_readapriori, s+s_time, s+s_changeSettings, &
+             s+s_diff, s+s_dump, s+s_gridded, &
              s+s_l2aux, s+s_l2gp, s+s_readGriddedData, s+s_snoop, s+s_case, &
              s+s_Boolean, s+s_endSelect, s+s_execute, s+s_select, n+n_section, &
-      begin, z+z_mergegrids, s+s_Boolean, s+s_case, s+s_concatenate, &
-             s+s_concatenateGrids, s+s_ConvertEtaToP, s+s_delete, s+s_diff, &
-             s+s_dump, s+s_endSelect, s+s_execute, s+s_Gridded, s+s_merge, &
+      begin, z+z_mergegrids, s+s_Boolean, s+s_case, s+s_changeSettings, &
+             s+s_concatenate, s+s_concatenateGrids, s+s_ConvertEtaToP,&
+             s+s_delete, s+s_diff, s+s_dump, &
+             s+s_endSelect, s+s_execute, s+s_Gridded, s+s_merge, &
              s+s_reevaluate, s+s_select, s+s_skip, s+s_time, s+s_isGridEmpty, &
              s+s_mergeGrids, s+s_vgrid, s+s_wmoTrop, s+s_wmoTropFromGrids, &
              n+n_section /) )
@@ -2109,6 +2111,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.638  2018/03/14 22:18:15  pwagner
+! May changeSettings in readApriori and MergeGrids sections
+!
 ! Revision 2.637  2018/02/23 22:08:12  mmadatya
 ! Added l_instECR for ASMLS
 !
