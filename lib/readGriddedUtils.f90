@@ -17,32 +17,32 @@ module readGriddedUtils ! Collection of subroutines to read TYPE GriddedData_T
   use Dump_0, Only : Dump
   use GriddedData, only: GriddedData_T, RGR, V_Is_Altitude, V_Is_GPH, &
     & V_Is_Pressure, V_Is_Theta, &
-    & AddGriddedDataToDatabase, Dump, SetupNewGriddedData, NullifyGriddedData
+    & AddGriddedDataToDatabase, Dump, SetupNewGriddedData
   use HDFeos, only: HDFe_NentDim, &
     & GDOpen, GDAttach, GDDetach, GDClose, GDFldinfo, &
     & GDInqGrid, GDNentries, GDInqDims, GDInqFlds
   use HDF, only: Dfacc_Create, Dfacc_Rdonly, Dfacc_Rdwr, &
     & Dfnt_Float32, Dfnt_Float64
   use HighOutput, only: OutputNamedValue
-  use Intrinsic, only: L_HDFeos
   use L3ASCII, only: L3ASCII_Read_Field
   use Lexer_Core, only: Print_Source
   use MLSCommon, only: LineLen, NameLen, FileNameLen, &
     & UndefinedValue, MLSFile_T
-  use MLSFiles, only: FileNotFound, HDFversion_5, Dump, InitializeMLSFile, &
-    & GetPCFromRef, MLS_Exists, MLS_HDF_Version, MLS_OpenFile, MLS_CloseFile, &
+  use MLSFiles, only: FileNotFound, Dump, &
+    & GetPCFromRef, MLS_Exists, MLS_OpenFile, MLS_CloseFile, &
     & Split_Path_Name, MLS_OpenFile, MLS_CloseFile
   use MLSKinds, only: R4, R8
   use MLSMessageModule, only: MLSMsg_Error, MLSMsg_Info, MLSMsg_Warning, &
-    & MLSMessage
+    & DumpConfig, MLSMessage
   use MLSStrings, only: Capitalize, HHMMSS_Value, Lowercase
   use MLSStringLists, only: GetStringElement, NumStringElements, &
-    & List2array, ReplaceSubstring, StringElementNum
+    & List2array, ReplaceSubstring, StringElementNum, SwitchDetail
   use Output_M, only: Output
   use SDPtoolkit, only: PGS_S_Success, &
     & PGS_Io_Gen_Closef, PGS_Io_Gen_Openf, PGSd_Io_Gen_Rseqfrm, &
     & PGSd_Gct_Inverse, &
     & UseSDPtoolkit
+  use Toggles, only: Switches
   use Tree, only: Dump_Tree_Node, Where
 
   implicit none
@@ -61,9 +61,9 @@ module readGriddedUtils ! Collection of subroutines to read TYPE GriddedData_T
 !     (subroutines and functions)
 ! Read_Climatology       read l3ascii-formatted climatology file
 ! Read_dao               read meteorology file in one of supported desciptions
-! Read_geos5_or_merra    read l3ascii-formatted climatology file
+! Read_geos5_or_merra    read a geos5 or merra meteorology file
 ! Read_geos5_7           read netCDF4-formatted meteorology file
-! Read_merra_2           read meteorology file in one of supported desciptions
+! Read_merra_2           read netCDF4-formatted meteorology merra file
 ! Read_ncep_gdas         read meteorology file in one of supported desciptions
 ! Read_ncep_strat        read meteorology file in one of supported desciptions
 ! ReadGloriaFile         read binary-formatted file designed by G. Manney
@@ -71,7 +71,7 @@ module readGriddedUtils ! Collection of subroutines to read TYPE GriddedData_T
 !
 ! === (end of toc) ===
 
-  public:: announce_error   
+  public:: Announce_error   
   public:: Read_Climatology   
   public:: Read_dao           
   public:: Read_geos5_or_merra
@@ -106,8 +106,8 @@ module readGriddedUtils ! Collection of subroutines to read TYPE GriddedData_T
   character (len=*), parameter :: lit_geos5 = 'geos5'
   integer, parameter :: MAXLISTLENGTH=Linelen ! Max length list of grid names
   integer, parameter :: NENTRIESMAX=200 ! Max num of entries
-  integer, parameter ::          MAXDS = 1024 ! 500
-  integer, parameter ::          MAXSDNAMESBUFSIZE = MAXDS*NAMELEN
+  integer, parameter :: MAXDS = 1024 ! 500
+  integer, parameter :: MAXSDNAMESBUFSIZE = MAXDS*NAMELEN
 contains
 
   ! ------------------------------------------------  announce_error  -----
@@ -116,9 +116,9 @@ contains
 
     ! Arguments
     integer, intent(in)    :: lcf_where
-    character(LEN=*), intent(in)    :: full_message
+    character(len=*), intent(in)    :: full_message
     logical, intent(in), optional :: use_toolkit
-    character(LEN=*), intent(in), optional    :: extra_message
+    character(len=*), intent(in), optional    :: extra_message
     integer, intent(in), optional    :: extra_number
     logical, intent(in), optional :: non_fatal
 
@@ -126,7 +126,7 @@ contains
     logical :: just_print_it
     logical :: its_non_fatal
     logical, parameter :: default_output_by_toolkit = .true.
-
+    logical :: verbose
     ! Executable
     its_non_fatal = .false.
     if(present(use_toolkit)) then
@@ -136,6 +136,7 @@ contains
     else
       just_print_it = .true.
     end if
+    verbose = ( SwitchDetail(switches, 'apr') > -1 )
     its_non_fatal = just_print_it
     if ( present(non_fatal) ) its_non_fatal = non_fatal
 
@@ -149,12 +150,14 @@ contains
         call output ( '(no lcf node available)' )
       end if
 
-      call output ( ': ' )
-      call output ( "The " );
-      if(lcf_where > 0) then
-        call dump_tree_node ( lcf_where, 0 )
-      else
-        call output ( '(no lcf tree available)' )
+      if ( verbose ) then
+        call output ( ': ' )
+        call output ( "The " );
+        if ( lcf_where > 0 ) then
+          call dump_tree_node ( lcf_where, 0 )
+        else
+          call output ( '(no lcf tree available)' )
+        end if
       end if
 
       call output(" Caused the following error:", advance='yes', &
@@ -196,8 +199,6 @@ contains
     use MLSHDF5, only: GetAllHDF5DSNames, &
       & GetHDF5DSRank, gethDF5DSDims, LoadFromHDF5DS, &
       & ReadHDF5Attribute
-    use MLSStringLists, only: SwitchDetail
-    use Toggles, only: Switches
 
     ! This routine reads a gmao geos5_7 file, named something like
     ! DAS.ops.asm.avg3_3d_Nv.GEOS571.20110930_0300.V01.nc4 (pressure with
@@ -213,9 +214,9 @@ contains
     integer, intent(IN) :: lcf_where    ! node of the lcf that provoked me
     integer, intent(IN) :: v_type       ! vertical coordinate; an 'enumerated' type
     type( GriddedData_T ) :: the_g_data ! Result
-    character (LEN=*), optional, intent(IN) :: GeoDimList ! Comma-delimited dim names
-    character (LEN=*), optional, intent(IN) :: fieldName ! Name of gridded field
-    character (LEN=*), optional, intent(IN) :: date ! date (offset)
+    character (len=*), optional, intent(IN) :: GeoDimList ! Comma-delimited dim names
+    character (len=*), optional, intent(IN) :: fieldName ! Name of gridded field
+    character (len=*), optional, intent(IN) :: date ! date (offset)
     logical, optional, intent(IN)           :: sumDelp ! sum the DELP to make PL
     ! Local variables
     character (len=NAMELEN) :: actual_field_name
@@ -461,9 +462,9 @@ contains
     integer, intent(IN) :: lcf_where    ! node of the lcf that provoked me
     integer, intent(IN) :: v_type       ! vertical coordinate; an 'enumerated' type
     type( GriddedData_T ) :: the_g_data ! Result
-    character (LEN=*), optional, intent(IN) :: GeoDimList ! Comma-delimited dim names
-    character (LEN=*), optional, intent(IN) :: fieldName ! Name of gridded field
-    character (LEN=*), optional, intent(IN) :: date ! date (offset)
+    character (len=*), optional, intent(IN) :: GeoDimList ! Comma-delimited dim names
+    character (len=*), optional, intent(IN) :: fieldName ! Name of gridded field
+    character (len=*), optional, intent(IN) :: date ! date (offset)
     logical, optional, intent(IN)           :: sumDelp ! sum the DELP to make PL
 
     ! Local Variables
@@ -874,8 +875,8 @@ contains
     integer, intent(IN) :: lcf_where    ! node of the lcf that provoked me
     integer, intent(IN) :: v_type       ! vertical coordinate; an 'enumerated' type
     type( GriddedData_T ) :: the_g_data ! Result
-    character (LEN=*), optional, intent(IN) :: GeoDimList ! Comma-delimited dim names
-    character (LEN=*), optional, intent(IN) :: fieldName ! Name of gridded field
+    character (len=*), optional, intent(IN) :: GeoDimList ! Comma-delimited dim names
+    character (len=*), optional, intent(IN) :: fieldName ! Name of gridded field
 
     ! Local Variables
     integer :: file_id, gd_id
@@ -1138,14 +1139,12 @@ contains
   use MLSHDF5, only: GetAllHDF5DSNames, &
     & GetHDF5DSRank, GethDF5DSDims, LoadFromHDF5DS, &
     & ReadHDF5Attribute
-  use MLSStringLists, only: SwitchDetail
-  use Toggles, only: Switches
 
     ! This routine reads a gmao merra2 file, named something like
     ! MERRA2_200.inst6_3d_ana_Np.19980724.nc4
 
     ! This file is formatted in the following way:
-    ! each gridded quantity, not an hdfeos grrid, by the way, is
+    ! each gridded quantity, not an hdfeos grid, by the way, is
     ! a rank 4 field, e.g. T or H, is given with dimensions
     ! 'Time, Height, YDim, XDim'
     ! We'll simply copy it into a single gridded data type
@@ -1155,9 +1154,9 @@ contains
     integer, intent(IN) :: lcf_where    ! node of the lcf that provoked me
     integer, intent(IN) :: v_type       ! vertical coordinate; an 'enumerated' type
     type( GriddedData_T ) :: the_g_data ! Result
-    character (LEN=*), optional, intent(IN) :: GeoDimList ! Comma-delimited dim names
-    character (LEN=*), optional, intent(IN) :: fieldName ! Name of gridded field
-    character (LEN=*), optional, intent(IN) :: date ! date (offset)
+    character (len=*), optional, intent(IN) :: GeoDimList ! Comma-delimited dim names
+    character (len=*), optional, intent(IN) :: fieldName ! Name of gridded field
+    character (len=*), optional, intent(IN) :: date ! date (offset)
     logical, optional, intent(IN)           :: sumDelp ! sum the DELP to make PL
     ! Local variables
     character (len=NAMELEN) :: actual_field_name
@@ -1454,8 +1453,8 @@ contains
     integer, intent(IN) :: lcf_where    ! node of the lcf that provoked me
     integer, intent(IN) :: v_type       ! vertical coordinate
     type( GriddedData_T ) :: the_g_data ! Result
-    character (LEN=*), optional, intent(IN) :: GeoDimList ! E.g., 'X.Y,..'
-    character (LEN=*), optional, intent(IN) :: gridName ! Name of grid
+    character (len=*), optional, intent(IN) :: GeoDimList ! E.g., 'X.Y,..'
+    character (len=*), optional, intent(IN) :: gridName ! Name of grid
     real(rgr), optional, intent(IN) :: missingValue
 
     ! Local Variables
@@ -1778,8 +1777,8 @@ contains
     integer, intent(IN) :: lcf_where    ! node of the lcf that provoked me
     integer, intent(IN) :: v_type       ! vertical coordinate
     type( GriddedData_T ) :: the_g_data ! Result
-    character (LEN=*), optional, intent(IN) :: GeoDimList ! E.g., 'X.Y,..'
-    character (LEN=*), optional, intent(IN) :: fieldName  ! Name of grid quant.
+    character (len=*), optional, intent(IN) :: GeoDimList ! E.g., 'X.Y,..'
+    character (len=*), optional, intent(IN) :: fieldName  ! Name of grid quant.
 
     ! Local Variables
     integer :: file_id
@@ -2245,9 +2244,9 @@ contains
 
     ! Local
     integer, parameter :: version=1
-    character (LEN=FileNameLen)            :: fname   ! Physical file name
-    character (LEN=FileNameLen)            :: path    ! Physical path
-    character (LEN=FileNameLen)            :: ExactName    ! Full and exact path
+    character (len=FileNameLen)            :: fname   ! Physical file name
+    character (len=FileNameLen)            :: path    ! Physical path
+    character (len=FileNameLen)            :: ExactName    ! Full and exact path
 
     ! These determine how much extra to output
     logical, parameter :: debug=.false.
@@ -2435,8 +2434,8 @@ contains
     type(MLSFile_T)                         :: GEOS5file
     integer, intent(IN)                     :: lcf_where    ! node of the lcf that provoked me
     type( GriddedData_T )                   :: the_g_data ! Result
-    character (LEN=*), optional, intent(IN) :: GeoDimList ! Comma-delimited dim names
-    character (LEN=*), optional, intent(IN) :: fieldName ! Name of gridded field
+    character (len=*), optional, intent(IN) :: GeoDimList ! Comma-delimited dim names
+    character (len=*), optional, intent(IN) :: fieldName ! Name of gridded field
 
     ! Local Variables
     integer :: file_id, gd_id
@@ -2543,6 +2542,9 @@ contains
 end module readGriddedUtils
 
 ! $Log$
+! Revision 2.4  2018/03/14 17:14:25  pwagner
+! Unless verbose, omit useless part of error mesg; correct toc desc of subroutines
+!
 ! Revision 2.3  2017/07/10 18:21:33  pwagner
 ! Print more if verbose
 !
