@@ -9,8 +9,7 @@
 ! export authority as may be required before exporting such information to
 ! foreign countries or providing access to foreign persons.
 
-
-module PrintIt_m
+module PrintIt_m ! Lowest-level module for printing, logging, etc.
 
   ! use ISO_FORTRAN_ENV, only: ERROR_UNIT, OUTPUT_UNIT
   use Machine, only: Crash_Burn, Exit_With_Status, NeverCrash
@@ -20,6 +19,57 @@ module PrintIt_m
   implicit none
   private
 
+! === (start of toc) ===
+!     c o n t e n t s
+!     - - - - - - - -
+
+!     (data type)
+! MLSMessageConfig         configuration controlling where to print, etc.
+!     (severity levels)
+! MLSMSG_Success           status returned when all went well
+! MLSMSG_Debug             should print only if debugging turned on
+! MLSMSG_Info              fyi only
+! MLSMSG_Warning           not fatal, but deserving of attention
+! MLSMSG_Error             quits after printing
+! MLSMSG_Crash             should give traceback before quitting
+! MLSMSG_Testwarning       test to see if we would print this warning
+! MLSMSG_Severity_so_far   worst severity level noted so far in this run
+! MLSMSG_Severity_to_quit  severity level needed to quit
+! MLSMSG_Severity_to_walkback
+!                          severity level needed to print callstack
+!     (message prefixes for errors during ..)
+! MLSMSG_Allocate          allocating an array
+! MLSMSG_Fileopen          opening a file
+! MLSMSG_Keyword           ???
+! MLSMSG_L1BRead           reading an l1b file
+! MLSMSG_Duplicate         ???
+! MLSMSG_DeAllocate        deallocating an array
+! MLSMSG_PVM               using a pvm library procedure
+!    (parameters)
+! PGS_S_Success            if status not this, then something went wrong
+! InvalidLogUnit           Log Unit must not be this
+! StdoutLogUnit            If tthis, Logging means printing to stdout
+! DefaultLogUnit           If tthis, Logging means using Toolkit
+
+!     (subroutines and functions)
+! assembleFullLine         Assemble the full line of output
+! get_config               Return any specified configuration setting
+! logUnitName              Return an appropriate name for the LogUnit number
+! PrintItOut               Print or log inLine; then return or quit
+! set_config               Set any specified configuration setting
+! snipRCSFrom              Trim nonsense involving RCS system from input "with"
+! === (end of toc) ===
+
+! === (start of api) ===
+! AssembleFullLine( int Severity, char* ModuleNameIn, char* Message, &
+!    & char* line, int line_len )
+! Get_Config(  [ log Asciify], [ int LogFileUnit], [char* Prefix], &
+!    & [int Severity_to_Quit], [log UseDefaultFormatStdout], [log UseToolkit] )
+! char(len=12) LogUnitName ( int LogUnit )
+! PrintItOut( char* InLine, int severity, [int line_len], [log noPrefix], &
+!    & [int exitStatus], [log noExit] )
+! char(len=*) SnipRCSFrom ( char* with )
+! === (end of api) ===
   public :: assembleFullLine, get_config, logUnitName, printItOut
   public :: set_config, snipRCSFrom
 
@@ -428,6 +478,9 @@ contains
 end module PrintIt_m
 
 ! $Log$
+! Revision 2.10  2018/03/14 21:48:19  pwagner
+! Added toc and api scections to comments
+!
 ! Revision 2.9  2017/03/23 16:22:03  pwagner
 ! Programs may optionally crash when MLSMessage logs fatal string
 !
