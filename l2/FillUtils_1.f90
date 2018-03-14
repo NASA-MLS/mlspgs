@@ -2921,10 +2921,8 @@ contains ! =====     Public Procedures     =============================
     subroutine HeightFromPressure ( key, quantity, &
       & H2O, orbIncline, ptan, refGPH, temperature, ignoreTemplate )
 
-      use Geometry, only: Earthrada, Earthradb, Geodtogeoclat
+      use Geometry, only: Geodtogeoclat
       use Hydrostatic_M, only: Hydrostatic
-      use Phi_Refractive_Correction_M, only: Phi_Refractive_Correction_Up
-      use Refraction_M, only: Refractive_Index
 
       integer, intent(in) :: KEY          ! Tree node, for error messages
       type (VectorValue_T), intent(inout) :: QUANTITY ! PhiTan quantity to update
@@ -2935,11 +2933,8 @@ contains ! =====     Public Procedures     =============================
       type (VectorValue_T), intent(in) :: TEMPERATURE ! Temperature
       logical, intent(in)              :: IGNORETEMPLATE
 
-      real(rp), dimension(quantity%template%noInstances) :: CP2, CSQ, REQ, SP2
-      real(rp) :: PhiCorrs(temperature%template%noInstances,temperature%template%noSurfs)
-      real(rp), dimension(temperature%template%noInstances) :: REQS
-      real(rv), dimension(temperature%template%noSurfs) :: Heights, N, PhiCorr, PS
-      integer :: I, J     ! Subscripts, loop inductors
+      real(rv), dimension(temperature%template%noSurfs) :: Heights
+      integer :: I        ! Subscripts, loop inductors
       integer :: Me = -1  ! String index for trace
 
       ! Executable code
@@ -2969,11 +2964,11 @@ contains ! =====     Public Procedures     =============================
         & extraInfo = (/i/) )  
 
       ! Interpolate REQ to temperature/H2O/refGPH hGrid
-      call InterpolateValues ( quantity%values(1,:), req, &
-        & temperature%template%phi(1,:), reqs, 'Linear', extrapolate='Constant' )
+      ! call InterpolateValues ( quantity%values(1,:), req, &
+      !   & temperature%template%phi(1,:), reqs, 'Linear', extrapolate='Constant' )
 
       ! Get pressures corresponding to Temperature etc
-      ps = 10.0**(-temperature%template%surfs(:,1))
+      ! ps = 10.0**(-temperature%template%surfs(:,1))
       
       ! The heights will vary depending on local pressure surfaces
        do i = 1, temperature%template%noInstances
@@ -7911,6 +7906,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.140  2018/03/14 22:54:12  pwagner
+! Stop computing unneeded arrays in HeightFromPressure
+!
 ! Revision 2.139  2018/02/27 16:23:12  livesey
 ! Fixed erroneous error message
 !
