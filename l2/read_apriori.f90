@@ -14,7 +14,7 @@ module ReadAPriori
 
   use Expr_M, only: Expr
   use HDF, only: Dfacc_Rdonly
-  use HighOutput, only: OutputNamedValue
+  use HighOutput, only: Dump, OutputNamedValue
   use Init_Tables_Module, only: F_AuraInstrument, &
     & F_Date, F_Dimlist, F_Downsample, &
     & F_Field, F_File, F_Grid, F_HDFVersion, F_MissingValue, F_NoPCFid, &
@@ -22,7 +22,8 @@ module ReadAPriori
     & Field_First, Field_Last, &
     & L_Climatology, L_Dao, L_Geos5, L_Geos5_7, L_Gloria, &
     & L_Merra, L_Merra_2, L_Ncep, L_None, L_Strat, L_Surfaceheight, &
-    & S_Diff, S_Dump, S_Execute, S_Gridded, S_L2aux, S_L2gp, S_ReadGriddedData
+    & S_ChangeSettings, S_Diff, S_Dump, S_Execute, S_Gridded, &
+    & S_L2aux, S_L2gp, S_ReadGriddedData
   use Intrinsic, only: L_Ascii, L_Binary, L_HDFeos, L_HDF, L_Swath, &
     & Phyq_Dimensionless
   use L2GPData, only: MaxSwathNamesBufSize
@@ -35,7 +36,8 @@ module ReadAPriori
   use MLSL2Options, only: CheckPaths, Default_HDFVersion_Read, L2CFNode, &
     & RuntimeValues, SpecialDumpFile, Toolkit, &
     & DumpMacros, MLSMessage
-  use MLSMessagemodule, only: MLSMsg_Error, MLSMsg_Warning
+  use MLSL2Timings, only: AddPhaseToPhaseNames
+  use MLSMessageModule, only: MLSMsg_Error, MLSMsg_Warning, DumpConfig
   use MLSPCF2, only: &
     & MLSPCF_L2apriori_Start, MLSPCF_L2apriori_End, &
     & MLSPCF_L2clim_Start, MLSPCF_L2clim_End, &
@@ -46,7 +48,7 @@ module ReadAPriori
   use MLSStringLists, only: CatLists, GetHashElement, SwitchDetail
   use MLSStrings, only: Lowercase
   use MoreTree, only: Get_Boolean
-  use Output_M, only: Output, RevertOutput, SwitchOutput
+  use Output_M, only: OutputOptions, StampOptions, Output, RevertOutput, SwitchOutput
   use PCFHdr, only: GlobalAttributes
   use SDPToolkit, only: Pgs_S_Success
   use String_Table, only: Get_String
@@ -234,6 +236,12 @@ contains ! =====     Public Procedures     =============================
       select case( get_spec_id(key) )
       case ( s_Boolean )
         call decorate ( key,  BooleanFromFormula ( name, key ) )
+      case ( s_changeSettings ) ! ===============================  changeSettings ==
+        ! Change settings for this phase
+        call addPhaseToPhaseNames ( 0, key )
+        ! call Dump( OutputOptions )
+        ! call Dump( StampOptions )
+        ! call DumpConfig
       case ( s_select ) ! ============ Start of select .. case ==========
         ! We'll start seeking a matching case
         call MLSSelect (key)
@@ -917,7 +925,7 @@ contains ! =====     Public Procedures     =============================
             call MLSMessage ( MLSMSG_Error, ModuleName, &
             & 'read_climatology unsuccessful--check file name and path' )
           end if
-          call outputNamedValue( 'climatology desc.', &
+          if ( Debug ) call outputNamedValue( 'climatology desc.', &
             & GriddedDatabase(size(GriddedDatabase))%description )
         end if
         if ( .not. associated(GriddedDatabase) ) go to 9  ! Last chance
@@ -1179,7 +1187,7 @@ contains ! =====     Public Procedures     =============================
       endif
       call split_path_name ( fileNameString, path, subString )
       if ( TOOLKIT .and. gotFile .and. .not. noPCFid ) then
-        call output( 'Calling getPCFromRef with ' // trim(subString), advance='yes' )
+        if ( debug ) call output( 'Calling getPCFromRef with ' // trim(subString), advance='yes' )
         pcf_id = getPCFromRef ( subString, PCFBottom, lastPCF, TOOLKIT, &
           &                     returnStatus, l2Apriori_Version, DEBUG, &
           &                     exactName = fileNameString )
@@ -1442,7 +1450,8 @@ contains ! =====     Public Procedures     =============================
     ! Local
     logical :: Just_print_it
     logical, parameter :: Default_output_by_toolkit = .true.
- 
+    logical :: verbose
+    ! Executable
     if ( present(use_toolkit) ) then
       just_print_it = .not. use_toolkit
     else if ( default_output_by_toolkit ) then
@@ -1450,6 +1459,7 @@ contains ! =====     Public Procedures     =============================
     else
       just_print_it = .true.
     end if
+    verbose = ( SwitchDetail(switches, 'apr') > -1 )
  
     if ( .not. just_print_it ) then
       error = max(error,1)
@@ -1460,13 +1470,14 @@ contains ! =====     Public Procedures     =============================
       else
         call output ( '(no lcf node available)' )
       end if
-
-      call output ( ': ' )
-      call output ( "The " );
-      if ( lcf_where > 0 ) then
-        call dump_tree_node ( lcf_where, 0 )
-      else
-        call output ( '(no lcf tree available)' )
+      if ( verbose ) then
+        call output ( ': ' )
+        call output ( "The " );
+        if ( lcf_where > 0 ) then
+          call dump_tree_node ( lcf_where, 0 )
+        else
+          call output ( '(no lcf tree available)' )
+        end if
       end if
 
       call output ( " Caused the following error: ", advance='yes', &
@@ -1507,6 +1518,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.124  2018/03/14 22:42:40  pwagner
+! May changeSettings in readApriori and MergeGrids sections
+!
 ! Revision 2.123  2017/11/15 00:11:24  pwagner
 ! Use OutputTable to Dump list of level 1 files
 !
