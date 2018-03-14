@@ -91,16 +91,15 @@ contains ! ====     Public Procedures     ==============================
       & Signals, SpectrometerTypes
     use MLSStringLists, only: ExpandStringRange, IsInList, SwitchDetail
     use MLSStrings, only: Lowercase
-    use MLSL2Timings, only: Add_To_Section_Timing, Total_Times
+    use MLSL2Timings, only: Add_To_Section_Timing
     use Next_Tree_Node_M, only: Dump, &
       & Next_Tree_Node, Next_Tree_Node_State
     use Open_Init, only: OpenAndInitialize
     use OutputAndClose, only: Output_Close
-    use Output_M, only: Blanks, Output, &
+    use Output_M, only: Output, &
       & ResumeOutput, RevertOutput, SwitchOutput
     use PointingGrid_M, only: Destroy_Pointing_Grid_Database
-    use QuantityTemplates, only: QuantityTemplate_T, &
-      & DestroyQuantityTemplateDatabase
+    use QuantityTemplates, only: QuantityTemplate_T
     use ReadApriori, only: Read_Apriori
     use RetrievalModule, only: Retrieve
     use SpectroscopyCatalog_M, only: Destroy_Line_Database, &
@@ -442,7 +441,6 @@ contains ! ====     Public Procedures     ==============================
               call CheckForCorruptFileDatabase( filedatabase )
             endif
 subtrees:   do
-              ! Start inner loop for one chunk at the current position
               ! in the outer loop
               save2 = state ! before advancing to section below
               son = next_tree_node(root,state)
@@ -459,6 +457,9 @@ subtrees:   do
                 & section_index = SECTION_FIRST - 1 ! skip
               if ( isInList( PhasesToSkip, trim(currentPhaseName), '-fc' ) ) &
                 & section_index = SECTION_FIRST - 2 ! skip
+              if ( verboser ) call MLSMessage ( MLSMSG_Info, ModuleName, &
+                & 'Innermost loop ' // trim(section_name) )
+              ! Start inner loop for one chunk at the current position
               select case ( section_index ) ! section index
               case ( z_algebra )
                 call algebra ( son, vectors, matrices, chunks(chunkNo), forwardModelConfigDatabase )
@@ -748,6 +749,9 @@ subtrees:   do
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.207  2017/01/25 17:24:22  pwagner
+! May skip certain Phases named in phasesToSkip cmdline opt
+!
 ! Revision 2.206  2016/11/08 17:31:26  pwagner
 ! Use SayTime subroutine from time_m module
 !
