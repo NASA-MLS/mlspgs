@@ -17,12 +17,13 @@ module MergeGridsModule
   ! e.g., calculating wmo tropopause pressures from eta-level temperatures
   use Allocate_Deallocate, only: Allocate_Test, Byte_Size, Bytes, &
     & Deallocate_Test, Test_Allocate, Test_Deallocate
-  use HighOutput, only: OutputNamedValue
+  use HighOutput, only: Dump, OutputNamedValue
   use, Intrinsic :: ISO_C_Binding, only: C_Intptr_T, C_Loc
   use MLSL2Options, only: MLSMessage, L2cfNode
-  use MLSMessagemodule, only: MLSMsg_Error, MLSMsg_Warning
+  use MLSL2Timings, only: AddPhaseToPhaseNames
+  use MLSMessageModule, only: MLSMsg_Error, MLSMsg_Warning, DumpConfig
   use Ncep_Dao, only: ReadGriddedData
-  use Output_M, only: Blanks, Output
+  use Output_M, only: Blanks, Output, OutputOptions, StampOptions
   implicit none
   private
 
@@ -46,9 +47,10 @@ contains ! ===================================  Public procedures  =====
       & MLSCase, MLSEndSelect, MLSSelect, MLSSelecting, Skip
     use GriddedData, only: GriddedData_T, &
       & AddGriddedDataToDatabase, DestroyGriddedData
-    use Init_Tables_Module, only: F_Grid, &
-      & S_Boolean, S_Case, S_Concatenate, S_ConcatenateGrids, S_ConvertEtaToP, &
-      & S_Delete, S_Diff, S_Dump, S_EndSelect, S_Execute, S_Gridded, &
+    use Init_Tables_Module, only: F_Grid, S_Boolean, &
+      & S_Case, S_ChangeSettings, S_Concatenate, S_ConcatenateGrids, &
+      & S_ConvertEtaToP, S_Delete, S_Diff, S_Dump, &
+      & S_EndSelect, S_Execute, S_Gridded, &
       & S_IsGridEmpty, S_Merge, S_MergeGrids, S_Reevaluate, S_Select, S_Skip, &
       & S_Wmotrop, S_Wmotropfromgrids
     use L2AUXData, only: L2auxData_T
@@ -111,6 +113,12 @@ contains ! ===================================  Public procedures  =====
       case ( s_endSelect ) ! =========== End of select .. case =========
         ! We'done with seeking a match
         call MLSEndSelect (key)
+      case ( s_changeSettings ) ! ===============================  changeSettings ==
+        ! Change settings for this phase
+        call addPhaseToPhaseNames ( 0, key )
+        ! call Dump( OutputOptions )
+        ! call Dump( StampOptions )
+        ! call DumpConfig
       case ( s_concatenate )
         call decorate ( key, AddgriddedDataToDatabase ( griddedDataBase, &
           & Concatenate ( key, griddedDataBase ) ) )
@@ -1194,6 +1202,9 @@ contains ! ===================================  Public procedures  =====
 end module MergeGridsModule
 
 ! $Log$
+! Revision 2.64  2018/03/14 22:45:51  pwagner
+! May changeSettings in readApriori and MergeGrids sections
+!
 ! Revision 2.63  2017/11/03 20:59:27  pwagner
 ! Most array gymnastics moved from MLSFillValues to HyperSlabs module
 !
