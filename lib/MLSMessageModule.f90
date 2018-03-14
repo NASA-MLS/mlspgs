@@ -15,13 +15,11 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
 
   use Call_Stack_M, only: Dump_Stack ! used in MLSMessage.f9h, but not here
                                      ! but... the Makefile maker can't see it
-  use Intrinsic, only: L_HDFeos, &   ! in MLSMessage.f9h
-    & L_HDF, L_Swath, L_Zonalavg, Lit_Indices
-
+                                     ! in MLSMessage.f9h
   use HighOutput, only: Banner
-  use Machine, only: Crash_Burn_Rude=>crash_Burn, Exit_With_Status, Nevercrash
+  use Machine, only: Crash_Burn_Rude=>Crash_Burn, Exit_With_Status, Nevercrash
   use MLSCommon, only: MLSFile_T, MLSDebug, MLSVerbose, &
-    & MLSDebugsticky, MLSVerboseSticky, DontCrashHere
+    & MLSDebugSticky, MLSVerboseSticky, DontCrashHere
   use MLSStrings, only: Capitalize
   use Printit_M, only: AssembleFullLine, Get_Config, LogUnitName, PrefixLen, &
     & MLSMSG_Allocate, MLSMSG_Deallocate, &
@@ -69,7 +67,11 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
   ! calling code.
 
   ! A lighter-weight substitute is MLSMessageSubstitute.f90 which dispenses
-  ! with most of the toolkit panoply.
+  ! with most of the toolkit panoply. Unfortunately, despite its name,
+  ! it's no substitute.
+  
+  ! For a toolkit-free substitute, look to lib/PseudoToolkit.ps90
+  ! It contains simple instructions on how to install it.
 
   include 'MLSMessage.f9h'
 
@@ -198,6 +200,9 @@ end module MLSMessageModule
 
 !
 ! $Log$
+! Revision 2.52  2018/03/14 21:51:44  pwagner
+! Removed unused stuff; corrected account of MLSMessageSubstitute.f90
+!
 ! Revision 2.51  2018/02/08 23:22:42  pwagner
 ! Added what was needed from use Intrinsic to compile properly with Dump_MLSFile
 !
