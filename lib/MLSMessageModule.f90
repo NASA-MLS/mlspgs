@@ -17,6 +17,7 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
                                      ! but... the Makefile maker can't see it
                                      ! in MLSMessage.f9h
   use HighOutput, only: Banner
+  use Intrinsic, only: L_HDFeos, L_HDF, L_Swath, L_Zonalavg, Lit_Indices
   use Machine, only: Crash_Burn_Rude=>Crash_Burn, Exit_With_Status, Nevercrash
   use MLSCommon, only: MLSFile_T, MLSDebug, MLSVerbose, &
     & MLSDebugSticky, MLSVerboseSticky, DontCrashHere
@@ -67,8 +68,9 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
   ! calling code.
 
   ! A lighter-weight substitute is MLSMessageSubstitute.f90 which dispenses
-  ! with most of the toolkit panoply. Unfortunately, despite its name,
-  ! it's no substitute.
+  ! with most of the toolkit panoply. Unfortunately, its use alone isn't enough
+  ! to free mlsl2 from the toolkit. For more on this topic see the wiki page
+  ! https://mls.jpl.nasa.gov/team/wiki/index.php?title=Toolkitless_lib
   
   ! For a toolkit-free substitute, look to lib/PseudoToolkit.ps90
   ! It contains simple instructions on how to install it.
@@ -200,6 +202,9 @@ end module MLSMessageModule
 
 !
 ! $Log$
+! Revision 2.53  2018/03/15 16:39:40  pwagner
+! Moved 'Use' statement to .f90 where make can see it
+!
 ! Revision 2.52  2018/03/14 21:51:44  pwagner
 ! Removed unused stuff; corrected account of MLSMessageSubstitute.f90
 !
