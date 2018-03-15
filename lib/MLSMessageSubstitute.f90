@@ -13,30 +13,30 @@
 module MLSMessageModule         ! Basic messaging for the MLSPGS suite
 !==============================================================================
 
-  ! use Call_stack_m, only: dump_stack
-  use Highoutput, only: banner
-  use Machine, only: crash_burn_rude=>crash_burn, exit_with_status, nevercrash
-  use MLSCommon, only: MLSFile_t, MLSDebug, MLSVerbose, &
-    & MLSDebugsticky, MLSVerboseSticky, dontCrashHere
-  use MLSStrings, only: capitalize
-  use Printit_m, only: assembleFullLine, get_config, logUnitName, prefixLen, &
-    & MLSMSG_allocate, MLSMSG_deallocate, &
-    & MLSMSG_crash, MLSMSG_debug, MLSMSG_error, MLSMSG_info, MLSMSG_success, &
-    & MLSMSG_testwarning, MLSMSG_warning, MLSMessageconfig_t, &
-    & Defaultlogunit, invalidlogunit, prefixlen, &
-    & Printitout, sniprcsfrom, &
+  use HighOutput, only: Banner
+  use Intrinsic, only: L_HDFeos, L_HDF, L_Swath, L_Zonalavg, Lit_Indices
+  use Machine, only: Crash_Burn_Rude=>crash_Burn, Exit_With_Status, Nevercrash
+  use MLSCommon, only: MLSFile_T, MLSDebug, MLSVerbose, &
+    & MLSDebugsticky, MLSVerboseSticky, DontCrashHere
+  use MLSStrings, only: Capitalize
+  use Printit_M, only: AssembleFullLine, Get_Config, LogUnitName, PrefixLen, &
+    & MLSMSG_Allocate, MLSMSG_Deallocate, &
+    & MLSMSG_Crash, MLSMSG_Debug, MLSMSG_Error, MLSMSG_Info, MLSMSG_Success, &
+    & MLSMSG_Testwarning, MLSMSG_Warning, MLSMessageconfig_T, &
+    & Defaultlogunit, Invalidlogunit, Prefixlen, &
+    & Printitout, Sniprcsfrom, &
     & Stdoutlogunit, MLSMessageconfig, &
-    & MLSMSG_severity_so_far, MLSMSG_severity_to_quit, MLSMSG_severity_to_walkback
+    & MLSMSG_Severity_So_Far, MLSMSG_Severity_To_Quit, MLSMSG_Severity_To_Walkback
   implicit none
 
   private
   
-  public :: MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
-    & MLSMSG_CRASH, MLSMSG_DEBUG, MLSMSG_ERROR, MLSMSG_INFO, MLSMSG_SUCCESS, &
-    & MLSMSG_TESTWARNING, MLSMSG_WARNING, MLSMESSAGECONFIG_T, &
-    & DEFAULTLOGUNIT, INVALIDLOGUNIT, PREFIXLEN, &
-    & STDOUTLOGUNIT, MLSMESSAGECONFIG, &
-    & MLSMSG_SEVERITY_SO_FAR, MLSMSG_SEVERITY_TO_QUIT, MLSMSG_SEVERITY_TO_WALKBACK
+  public :: MLSMSG_Allocate, MLSMSG_Deallocate, &
+   & MLSMSG_Crash, MLSMSG_Debug, MLSMSG_Error, MLSMSG_Info, MLSMSG_Success, &
+   & MLSMSG_Testwarning, MLSMSG_Warning, MLSMessageconfig_T, &
+   & Defaultlogunit, Invalidlogunit, Prefixlen, &
+   & Stdoutlogunit, MLSMessageconfig, &
+   & MLSMSG_Severity_So_Far, MLSMSG_Severity_To_Quit, MLSMSG_Severity_To_Walkback
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -152,6 +152,9 @@ end module MLSMessageModule
 
 !
 ! $Log$
+! Revision 2.19  2018/03/15 16:40:07  pwagner
+! Moved 'Use' statement to .f90 where make can see it
+!
 ! Revision 2.18  2016/10/10 22:42:06  pwagner
 ! Avoid the Call_Stack module if no toolkit
 !
