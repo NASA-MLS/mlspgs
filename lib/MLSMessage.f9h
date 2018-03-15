@@ -1083,7 +1083,6 @@ contains
   subroutine Dump_MLSFile ( MLSFile, details )
     use HighOutput, only: AddRow, AddRow_Divider, AddRow_Header, &
       & OutputTable, StartTable
-    use Intrinsic, only: L_HDFeos, L_HDF, L_Swath, L_Zonalavg, Lit_Indices
     use MLSCommon, only: AccessType, FileStringTable, Split_Path_Name
     use String_Table, only: Get_String
     ! Dummy arguments
@@ -1246,6 +1245,9 @@ contains
 
 !
 ! $Log$
+! Revision 2.50  2018/03/15 16:39:22  pwagner
+! Moved 'Use' statement to .f90 where make can see it
+!
 ! Revision 2.49  2018/03/14 21:49:34  pwagner
 ! Corrected desciptions in toc section
 !
