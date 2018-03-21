@@ -17,7 +17,7 @@ module Get_Eta_Matrix_m
 
   private
   public :: Eta_D_T, Eta_S_T
-  public :: Dump, Dump_Eta_Column_Sparse
+  public :: Dump, Dump_Eta_Column_Sparse, Dump_Eta_Transpose
   public :: Eta_Func, Eta_Func_1d, Eta_Func_2d
   public :: Get_Column_Sparsity
   public :: Get_Eta_Column_Sparse, Get_Eta_Column_Sparse_fl_nz, Get_Eta_Sparse
@@ -33,7 +33,7 @@ module Get_Eta_Matrix_m
   public :: Select_NZ_List
 
   interface Dump
-    module procedure Dump_Eta_Column_Sparse
+    module procedure Dump_Eta_Column_Sparse, Dump_Eta_Transpose
   end interface
 
   interface Eta_Func
@@ -74,8 +74,8 @@ module Get_Eta_Matrix_m
 contains
 
 ! ---------------------------------------  Dump_Eta_Column_Sparse  -----
-  subroutine Dump_Eta_Column_Sparse ( Eta, Nz, NNz, Name, Short, Show_NZ, &
-    & Grids_f, ZP_only )
+  subroutine Dump_Eta_Column_Sparse ( Eta, Nz, NNz, Grids_f, Name, Short, &
+    & Show_Z, ZP_only, Small, Width, WhichSps )
     use Array_Stuff, only: Subscripts
     use Dump_0, only: Dump
     use intrinsic, only: Lit_Indices
@@ -85,124 +85,272 @@ contains
     real(rp), intent(in) :: Eta(:,:)
     integer, intent(in) :: Nz(:,:) ! Nonzeroes in each column
     integer, intent(in) :: NNz(:)  ! Number of nonzeroes in each column
+    type (grids_t), intent(in) :: Grids_f ! to compute subscripts
     character(len=*), intent(in), optional :: Name
     logical, intent(in), optional :: Short   ! "Don't print zero columns", default false
-    logical, intent(in), optional :: Show_NZ ! "Print zeroes", default true
-    type (grids_t), intent(in), optional :: Grids_f ! to compute subscripts
+    logical, intent(in), optional :: Show_Z  ! "Print zeroes", default false
     logical, intent(in), optional :: ZP_Only ! No Freq coordinate for Eta cols
-    integer :: Dims(4), I, J, L, M, MP, Places, Q, Subs(4)
-    logical :: MyShort, MyShow_NZ, MyZP
+    real(rp), intent(in), optional :: Small  ! Don't print smaller values
+    integer, intent(in), optional :: Width   ! How many nonzeros per line
+    integer, intent(in), optional :: WhichSps ! Which species to dump
+    integer :: Dims(4), I, J, J1, J2, L, M, MP, MySps, MyWidth
+    integer :: Places, Sps, Subs(4)
+    logical :: MyShort, MyShow_Z, MyZP
+    real(rp) :: MySmall
     logical :: Saw_NZ
 
-    if ( present(name) .and. .not. present(grids_f) ) then
-      call output ( name )
-      call output ( ' state-vector-index ( path-index eta )*', advance='yes' )
-    end if
     myShort = .false.
     if ( present(short) ) myShort = short
-    myShow_NZ = .true.
-    if ( present(show_NZ) ) myShow_NZ = show_NZ
+    myShow_Z = .false.
+    if ( present(show_Z) ) myShow_Z = show_Z
     myZP = .false.
     if ( present(ZP_Only) ) myZP = ZP_Only
-    q = 0
-    m = 0
-    do j = 1, size(eta,2) ! Corresponds to elements of grids_f%l_...
-      if ( myShort .and. nnz(j) == 0 ) cycle
-      if ( present(grids_f) ) then
-        if ( j > m ) then
-          do while ( j > m ) ! In case several columns got skipped
-            mp = m
-            q = q + 1
-            if ( myZP ) then
-              m = m + ( grids_f%l_z(q) - grids_f%l_z(q-1) ) * &
-                      ( grids_f%l_p(q) - grids_f%l_p(q-1) )
-            else
-              m = grids_f%l_v(q)
+    mySmall = 0
+    if ( present(small) ) mySmall = small
+    myWidth = 5
+    if ( present(width) ) myWidth = width
+    mySps = -1
+    if ( present(whichSps) ) mySps = whichSps
+
+    j2 = 0
+    do sps = 1, ubound(grids_f%l_v,1)
+      j1 = j2
+      if ( myZP ) then
+        j2 = grids_f%l_zp(sps)
+        dims = [ size(eta,1), &
+               & grids_f%l_z(sps) - grids_f%l_z(sps-1), &
+               & grids_f%l_p(sps) - grids_f%l_p(sps-1), 1 ]
+      else
+        j2 = grids_f%l_v(sps)
+        dims = [ size(eta,1), &
+               & grids_f%l_f(sps) - grids_f%l_f(sps-1), &
+               & grids_f%l_z(sps) - grids_f%l_z(sps-1), &
+               & grids_f%l_p(sps) - grids_f%l_p(sps-1) ]
+      end if
+      if ( mySps > 0 .and. sps /= mySps ) cycle
+      if ( present(name) ) then
+        call output ( name )
+        call blanks ( 1 )
+      end if
+      if ( grids_f%mol(sps) /= 0 ) then
+        call display_string ( lit_indices(grids_f%mol(sps)) )
+        call blanks ( 1 )
+      end if
+      if ( grids_f%l_f(sps) - grids_f%l_f(sps-1) > 1 ) &
+        call output ( 'frequency dependent ' )
+      if ( grids_f%qty(sps) > 0 ) then
+        call display_string ( lit_indices(grids_f%qty(sps)), &
+          & before='quantity: ' )
+        call blanks ( 1 )
+      end if
+      call showList ( dims, dims, '')
+      dims = [dims(2:), 1]
+      call output ( ' state-vector-index ( path-index eta )*', advance='yes' )
+      if ( all(nnz(j1+1:j2) == 0) ) then
+        call output ( j1+1, before='Columns ' )
+        call output ( j2, before=':' )
+        call output ( ' are zero', advance='yes' )
+        cycle
+      end if
+      do j = j1+1, j2 ! Corresponds to elements of grids_f%l_v...
+        if ( myShort .and. nnz(j) == 0 ) cycle
+        subs = subscripts ( j-j1, dims )
+        if ( nnz(j) == size(eta,1) ) then
+          call output ( 'All rows in column ' )
+          call showList ( dims, subs, ' are nonzero')
+          call dump ( eta(nz(:nnz(j),j),j), name='Values' )
+        else
+          places = 5
+          places = sum(int(log10(real(subs)))) + count(dims/=1) + 3
+          l = 0
+          saw_nz = .false.
+          do i = 1, nnz(j)
+            if ( .not. myShow_Z .and. abs(eta(nz(i,j),j)) <= mySmall ) cycle
+            if ( abs(eta(nz(i,j),j)) > mySmall .or. myShow_Z ) then
+              if ( .not. saw_nz ) call showList ( dims, subs, '')
+              saw_nz = .true.
+              l = l + 1
+              if ( l > myWidth ) then
+                l = 1
+                call newLine
+                call blanks ( places )
+              end if
+              call output ( nz(i,j), format='(i4)' )
+              call output ( eta(nz(i,j),j), format='(1pg14.6)' )
             end if
           end do
-          if ( present(name) ) then
-            call output ( name )
-            call blanks ( 1 )
-          end if
-          if ( grids_f%mol(q) /= 0 ) then
-            call display_string ( lit_indices(grids_f%mol(q)) )
-            call blanks ( 1 )
-          end if
-          if ( grids_f%qty(q) > 0 ) then
-            call display_string ( lit_indices(grids_f%qty(q)), &
-              & before='quantity: ' )
-            call blanks ( 1 )
-          end if
-          if ( myZP ) then
-            dims = [ size(eta,1), &
-                   & grids_f%l_z(q) - grids_f%l_z(q-1), &
-                   & grids_f%l_p(q) - grids_f%l_p(q-1), 1 ]
-          else
-            dims = [ size(eta,1), &
-                   & grids_f%l_f(q) - grids_f%l_f(q-1), &
-                   & grids_f%l_z(q) - grids_f%l_z(q-1), &
-                   & grids_f%l_p(q) - grids_f%l_p(q-1) ]
-          end if
-          call showList ( dims, dims, '' )
-          dims = [dims(2:), 1]
-          call output ( ' state-vector-index ( path-index eta )*', advance='yes' )
+          if ( saw_nz ) call newLine
         end if
-      end if
-      places = 5
-      if ( present(grids_f) ) then
-        subs = subscripts ( j-mp, dims )
-        places = sum(int(log10(real(subs)))) + count(dims/=1) + 3
-      end if
-      if ( nnz(j) == size(eta,1) ) then
-        call output ( 'All rows in column ' )
-        call showList ( dims, subs, ' are nonzero' )
-        call dump ( eta(nz(:nnz(j),j),j), name='Values' )
-      else
-        l = 0
-        saw_nz = .false.
-        do i = 1, nnz(j)
-          if ( .not. myShow_NZ .and. eta(nz(i,j),j) == 0 ) cycle
-          if ( .not. saw_nz ) then
-            if ( present(grids_f) ) then
-              call showList ( dims, subs, '' )
-            else
-              call output ( j, places=4, after='#' )
-            end if
-          end if
-          saw_nz = .true.
-          l = l + 1
-          if ( l > 5 ) then
-            l = 1
-            call newLine
-            call blanks ( places )
-          end if
-          call output ( nz(i,j), format='(i4)' )
-          call output ( eta(nz(i,j),j), format='(1pg14.6)' )
-        end do
-        if ( saw_nz ) call newLine
-      end if
+      end do
     end do
   contains
     subroutine ShowList ( Dims, Subs, After )
-      ! Print "(" subs where dims/=1 ")"
-      integer, intent(in) :: Dims(4), Subs(4)
-      character(*), intent(in) :: After
-      integer :: S
-      if ( present(grids_f) ) then
-        do s = 1, 3
-          if ( dims(s) /= 1 ) exit
-        end do
-        call output ( subs(s), before="(" )
-        do while ( s < 4 )
-          s = s + 1
-          if ( dims(s) /= 1 ) call output ( subs(s), before="," )
-        end do
-        call output ( ")" )
-      else
-        call output ( j, places=4, after=after )
-      end if
+    use Output_m, only: Output
+    ! Print "(" subs where dims/=1 ")"
+    integer, intent(in) :: Dims(:), Subs(:)
+    character(*), intent(in) :: After
+    integer :: S
+    do s = 1, size(subs)-1
+      if ( dims(s) /= 1 ) exit
+    end do
+    call output ( subs(s), before="(" )
+    do while ( s < size(subs) )
+      s = s + 1
+      if ( dims(s) /= 1 ) call output ( subs(s), before="," )
+    end do
+    call output ( ")" )
     end subroutine ShowList
   end subroutine Dump_Eta_Column_Sparse
+
+! -------------------------------------------  Dump_Eta_Transpose  -----
+  subroutine Dump_Eta_Transpose ( Eta, NPF, Grids_f, Name, N, Width, ZP_Only, &
+                                & DoBig )
+    use intrinsic, only: Lit_Indices
+    use Load_SPS_Data_m, only: Grids_t
+    use Output_m, only: Blanks, NewLine, Output
+    use String_Table, only: Display_String
+    real(rp), intent(in), contiguous, target :: Eta(:,:)
+    integer, intent(in) :: NPF               ! Fine path length = how much
+                                             ! of first dimension of Eta to use
+    type (grids_t), intent(in) :: Grids_f    ! to compute subscripts
+    character(len=*), intent(in), optional :: Name
+    integer, intent(in), optional :: N       ! Which species to dump
+    integer, intent(in), optional :: Width   ! How many per line, default 5
+    logical, intent(in), optional :: ZP_Only ! Eta has no frequency spread
+    logical, intent(in), optional :: DoBig   ! Show subs for entire state vector
+    integer :: Dims(4,ubound(grids_f%l_z,1))
+    real(rp), pointer :: Eta3(:,:,:)
+    logical :: FrqDep(ubound(grids_f%l_v,1))
+    integer :: I, J, J2(0:ubound(grids_f%l_z,1)), K, L, N1, N2, NC, Sps, W
+    integer :: BigSubs(3) ! In entire state vector
+    integer :: Subs(3)    ! Only within one species
+    equivalence ( subs(1), j ), ( subs(2), k ), (subs(3), l )
+    logical :: MyBig, MyZP, SawNZ
+    integer :: MyWidth
+
+    myWidth = 5
+    if ( present(width) ) myWidth = width
+    myZP = .false.
+    if ( present(ZP_Only) ) myZP = ZP_Only
+    myBig = .false.
+    if ( present(doBig) ) myBig = .true.
+    n1 = 1
+    n2 = ubound(grids_f%l_z,1)
+    if ( present(n) ) then
+      n1 = n
+      n2 = n
+    end if
+    j2(0) = 0
+    do sps = 1, n2
+      frqDep(sps) = grids_f%l_f(sps) - grids_f%l_f(sps-1) > 1
+      if ( myZP ) then
+        dims(:,sps) = [ size(eta,1), &
+                      & grids_f%l_z(sps) - grids_f%l_z(sps-1), &
+                      & grids_f%l_p(sps) - grids_f%l_p(sps-1), 1 ]
+        j2(sps) = j2(sps-1) + dims(2,sps) * dims(3,sps)
+      else
+        dims(:,sps) = [ size(eta,1), &
+                      & grids_f%l_f(sps) - grids_f%l_f(sps-1), &
+                      & grids_f%l_z(sps) - grids_f%l_z(sps-1), &
+                      & grids_f%l_p(sps) - grids_f%l_p(sps-1) ]
+        j2(sps) = j2(sps-1) + dims(2,sps) * dims(3,sps) * dims(4,sps)
+      end if
+    end do
+    do sps = n1, n2
+      nc = merge(3,4,myZP) ! Upper bound of useful part of dims(sps,:)
+      if ( present(name) ) then
+        call output ( name )
+        call blanks ( 1 )
+      end if
+      if ( grids_f%mol(sps) /= 0 ) then
+        call display_string ( lit_indices(grids_f%mol(sps)) )
+        call blanks ( 1 )
+      end if
+      if ( frqDep(sps) ) &
+        call output ( 'frequency dependent ' )
+      if ( grids_f%qty(sps) > 0 ) then
+        call display_string ( lit_indices(grids_f%qty(sps)), &
+          & before='quantity: ' )
+        call blanks ( 1 )
+      end if
+      call showList ( dims(:nc,sps) )
+      call output ( ' state-vector-index ( path-index eta )*', advance='yes' )
+      do i = 1, npf ! path length
+        sawNZ = .false.
+        w = 0
+        eta3(1:dims(2,sps),1:dims(3,sps),1:dims(4,sps)) => eta(i,j2(sps-1)+1:j2(sps))
+        do l = 1, size(eta3,3)
+          do k = 1, size(eta3,2)
+            do j = 1, size(eta3,1)
+              if ( eta3(j,k,l) /= 0 ) then
+                if ( .not. sawNZ ) call output ( i, places=4, after='# ' )
+                sawNZ = .true.
+                if ( w >= myWidth ) then
+                  call newLine
+                  call blanks ( 5 )
+                  w = 0
+                end if
+                w = w + 1
+                if ( myBig ) then ! Show Grids_f%v subscripts as if it were 4D
+                  if ( myZP ) then
+                    bigSubs(1) = subs(1) + grids_f%l_z(sps-1)
+                    bigSubs(2) = subs(2) + grids_f%l_p(sps-1)
+                  else if ( .not. frqDep(sps) ) then
+                    bigSubs(1) = subs(2) + grids_f%l_z(sps-1)
+                    bigSubs(2) = subs(3) + grids_f%l_p(sps-1)
+                    nc = 3
+                  else
+                    bigSubs(1) = subs(1) + grids_f%l_f(sps-1)
+                    bigSubs(2) = subs(2) + grids_f%l_z(sps-1)
+                    bigSubs(3) = subs(3) + grids_f%l_p(sps-1)
+                  end if
+                  call showlist ( bigSubs(:nc-1) )
+                else ! Show subscripts for one species as if in Vector_T%value3
+                  call showlist ( subs(:nc-1) )
+                end if
+                call output ( eta3(j,k,l),  format='(1pg14.6)' )
+              end if
+            end do
+          end do
+        end do
+        if ( sawNZ ) call newLine
+      end do
+    end do
+  contains
+    subroutine ShowList ( A )
+      integer, intent(in) :: A(:)
+      integer :: S
+      call output ( a(1), before='(' )
+      do s = 2, size(a)
+        call output ( a(s), before=',' )
+      end do
+      call output ( ")" )
+    end subroutine ShowList
+  end subroutine Dump_Eta_Transpose
+
+! ---------------------------------  ShowList (for dump routines)  -----
+  subroutine ShowList ( J, Dims, Subs, After, Grids_f )
+    use Load_SPS_Data_m, only: Grids_t
+    use Output_m, only: Output
+    ! Print "(" subs where dims/=1 ")"
+    integer, intent(in) :: J, Dims(4), Subs(4)
+    character(*), intent(in) :: After
+    type (grids_t), intent(in), optional :: Grids_f ! to compute subscripts
+    integer :: S
+    if ( present(grids_f) ) then
+      do s = 1, 3
+        if ( dims(s) /= 1 ) exit
+      end do
+      call output ( subs(s), before="(" )
+      do while ( s < 4 )
+        s = s + 1
+        if ( dims(s) /= 1 ) call output ( subs(s), before="," )
+      end do
+      call output ( ")" )
+    else
+      call output ( j, places=4, after=after )
+    end if
+  end subroutine ShowList
 
 ! --------------------------------------------------  Eta_Func_1d  -----
   pure function Eta_Func_1d ( Basis, Grid_Pt ) result ( Eta )
@@ -1458,6 +1606,8 @@ contains
       &    tan_ind+ngp1, size(z_path), nz_z, nnz_z, .true. )
     call get_eta_sparse ( p_basis, p_path, eta_p, &
       &    1, size(p_path), nz_p, nnz_p, .false. )
+    ! Fine grid points between tangent points, if any, aren't used.
+    eta_p(tan_ind+1:tan_ind+ng,:) = 0.0_rp
 
     if ( present(nonZero_ZP) ) then
       call multiply_eta_column_sparse ( &
@@ -1632,6 +1782,9 @@ contains
 end module Get_Eta_Matrix_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.31  2017/11/21 00:03:42  vsnyder
+! Print the quantity name, print subscripts only for nonzer elements
+!
 ! Revision 2.30  2017/09/20 01:06:04  vsnyder
 ! Embellish the dump
 !
