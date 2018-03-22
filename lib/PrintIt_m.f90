@@ -52,12 +52,13 @@ module PrintIt_m ! Lowest-level module for printing, logging, etc.
 ! DefaultLogUnit           If tthis, Logging means using Toolkit
 
 !     (subroutines and functions)
-! assembleFullLine         Assemble the full line of output
-! get_config               Return any specified configuration setting
-! logUnitName              Return an appropriate name for the LogUnit number
+! AssembleFullLine         Assemble the full line of output
+! Get_Config               Return any specified configuration setting
+! IgnoreToolkit            Logging and printing both go to stdout
+! LogUnitName              Return an appropriate name for the LogUnit number
 ! PrintItOut               Print or log inLine; then return or quit
-! set_config               Set any specified configuration setting
-! snipRCSFrom              Trim nonsense involving RCS system from input "with"
+! Set_Config               Set any specified configuration setting
+! SnipRCSFrom              Trim nonsense involving RCS system from input "with"
 ! === (end of toc) ===
 
 ! === (start of api) ===
@@ -65,12 +66,15 @@ module PrintIt_m ! Lowest-level module for printing, logging, etc.
 !    & char* line, int line_len )
 ! Get_Config(  [ log Asciify], [ int LogFileUnit], [char* Prefix], &
 !    & [int Severity_to_Quit], [log UseDefaultFormatStdout], [log UseToolkit] )
+! IgnoreToolkit
 ! char(len=12) LogUnitName ( int LogUnit )
 ! PrintItOut( char* InLine, int severity, [int line_len], [log noPrefix], &
 !    & [int exitStatus], [log noExit] )
+! Set_Config(  [ log Asciify], [ int LogFileUnit], [char* Prefix], &
+!    & [int Severity_to_Quit], [log UseDefaultFormatStdout], [log UseToolkit] )
 ! char(len=*) SnipRCSFrom ( char* with )
 ! === (end of api) ===
-  public :: assembleFullLine, get_config, logUnitName, printItOut
+  public :: assembleFullLine, get_config, IgnoreToolkit, logUnitName, printItOut
   public :: set_config, snipRCSFrom
 
   ! These apply if we don't log messages to a Fortran unit number
@@ -163,7 +167,7 @@ module PrintIt_m ! Lowest-level module for printing, logging, etc.
   end type MLSMessageConfig_T
 
   ! This variable describes the configuration
-  type (MLSMessageConfig_T), public, save :: MLSMESSAGECONFIG
+  type (MLSMessageConfig_T), public, save :: MLSMessageConfig
  
   ! MLSMSG_Severity_to_* can be reset in a main program to cause us
   ! to become more lenient (set it higher) or strict (set it lower )
@@ -264,6 +268,24 @@ contains
     if ( present(useDefaultFormatStdout) ) useDefaultFormatStdout = MLSMessageConfig%useDefaultFormatStdout
     if ( present(useToolkit) ) useToolkit = MLSMessageConfig%useToolkit
   end subroutine Get_Config
+
+  ! -------------------------------------------------  IgnoreToolkit  -----
+  ! Don't use the toolkit for logging, just print to stdout
+  ! Also, if an error occurs, don't silently fail
+  ! Be loud, set off alarms, and print a walkback
+  ! If you build a tool using mlspgs software, you'll want
+  ! to call this right at the start to prevent errors like
+  ! Can not open LogStatus file; there may be problem with PCF file regarding the directory for LogStatus.
+  ! Can not open LogReport file; there may be problem with PCF file regarding the directory for LogReport.
+  ! Can not open LogUser file; there may be problem with PCF file regarding the directory for LogUser.
+  
+  subroutine IgnoreToolkit
+    MLSMessageConfig%logFileUnit       = STDOUTLOGUNIT
+    MLSMessageConfig%useToolkit        = .false.
+    MLSMessageConfig%CrashOnAnyError   = .true.
+    neverCrash                         = .false.
+
+  end subroutine IgnoreToolkit
 
   ! ------------------------------------------------  LogUnitName  -----
   function LogUnitName ( LogUnit ) result( name )
@@ -478,6 +500,9 @@ contains
 end module PrintIt_m
 
 ! $Log$
+! Revision 2.11  2018/03/22 16:45:35  pwagner
+! Added IgnoreToolkit to ease writing tools that use mlspgs modules
+!
 ! Revision 2.10  2018/03/14 21:48:19  pwagner
 ! Added toc and api scections to comments
 !
