@@ -18,10 +18,10 @@ program l2gpdiff ! show diffs between swaths in two different files
    use HighOutput, only: OutputNamedValue
    use Io_Stuff, only: Get_Lun
    use L2GPData, only: Diff, MaxSwathNamesBufSize
-   use Machine, only: Hp, Getarg
+   use Machine, only: Hp, Getarg, NeverCrash
    use MLSFiles, only: MLS_Exists, HDFVersion_5, MLS_InqSwath
    use MLSHDF5, only: MLS_H5Open, MLS_H5Close
-   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+   use MLSMessageModule, only: MLSMessageConfig, MLSMessage, MLSMSG_Error
    use MLSStringLists, only: CatLists, ExpandStringRange
    use MLSStrings, only: LowerCase, WriteIntsToChars
    use Output_M, only: ResumeOutput, SuspendOutput, Output
@@ -237,6 +237,10 @@ contains
         call getarg ( i+1+hp, options%chunks )
         i = i + 1
         exit
+      elseif ( filename(1:6) == '-crash' ) then
+        MLSMessageConfig%crashOnAnyError = .true.
+        neverCrash = .false.
+        exit
       elseif ( filename(1:6) == '-force' ) then
         options%force = .true.
         exit
@@ -410,6 +414,7 @@ contains
     write (*,*) '  -v          => switch on verbose mode'
     write (*,*) '  -silent     => switch on silent mode'
     write (*,*) '                    (printing only if diffs found)'
+    write (*,*) '  -crash      => crash with walkback on any error'
     write (*,*) '  -debug      => dump options, etc.'
     write (*,*) '  -ignore     => ignore bad chunks'
     write (*,*) '  -matchTimes => only matching profile times'
@@ -485,6 +490,9 @@ end program l2gpdiff
 !==================
 
 ! $Log$
+! Revision 1.29  2017/12/14 23:17:06  pwagner
+! Fixed syntax error in help screen
+!
 ! Revision 1.28  2017/10/12 20:27:44  pwagner
 ! Monkeyed with appearance of help page; removed outdated build notes
 !
