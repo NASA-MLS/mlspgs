@@ -78,8 +78,8 @@ contains ! =====     Public Procedures     =============================
     use DestroyCommand_M, only: DestroyCommand
     use DirectWrite_M, only: DirectData_T, Dump
     use DumpCommand_M, only: BooleanFromEmptySwath, BooleanFromFormula, &
-      & DumpCommand, ExecuteCommand, MLSCase, MLSEndselect, MLSSelect, MLSSelecting, &
-      & Skip
+      & DumpCommand, ExecuteCommand, MLSCase, MLSEndselect, MLSSelect, &
+      & MLSSelecting, Skip
     use Expr_M, only: Expr
     use GriddedData, only: GriddedData_T
     use HessianModule_1, only: Hessian_T
@@ -93,8 +93,8 @@ contains ! =====     Public Procedures     =============================
       & Field_First, Field_Last, &
       & L_L2aux, L_L2cf, L_L2dgg, L_L2gp, L_L2pc, &
       & S_Boolean, S_Case, S_Catenate, S_Copy, &
-      & S_Destroy, S_Diff, S_Dump, S_Dumpblocks, &
-      & S_Endselect, S_Execute, S_Hgrid, S_Isswathempty, S_L2gp, S_Output, &
+      & S_Destroy, S_Diff, S_Dump, S_Dumpblocks, S_Endselect, S_Execute, &
+      & S_Hgrid, S_IsFileAbsent, S_Isswathempty, S_L2gp, S_Output, &
       & S_Reevaluate, S_Select, S_Skip, S_Sleep, S_Time, S_WriteFileAttribute
     use Intrinsic, only: Lit_Indices
     use L2AUXData, only: L2AUXData_T
@@ -290,7 +290,7 @@ contains ! =====     Public Procedures     =============================
         call dumpCommand ( key, griddedDataBase=griddedDataBase, &
           & FiledataBase=FileDataBase, MatrixdataBase=matrices, &
           & Hessiandatabase=Hessians, HGrids=HGrids )
-      case ( s_isSwathEmpty )
+      case ( s_isFileAbsent, s_isSwathEmpty )
         if ( checkPaths ) cycle
         call decorate ( key, BooleanFromEmptySwath ( key ) )
       case ( s_copy )
@@ -2314,6 +2314,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.204  2018/03/22 18:15:05  pwagner
+! Added command IsFileAbsent; may occur in ReadApriori, MergeGrids, and Output sections
+!
 ! Revision 2.203  2017/10/11 23:58:40  pwagner
 ! Write obstructions%range as ints: 1 for T, 0 for F
 !
