@@ -39,18 +39,18 @@ contains ! ===================================  Public procedures  =====
 
   ! -------------------------------------------------  MergeGrids  -----
 
-  subroutine MergeGrids ( ROOT, L2GPDATABASE, L2AUXDATABASE, &
-    & GRIDDEDDATABASE, FILEDATABASE )
+  subroutine MergeGrids ( root, L2GPDatabase, L2AUXDatabase, &
+    & GriddedDatabase, FileDatabase )
 
-    use DumpCommand_M, only: BooleanFromEmptyGrid, BooleanFromFormula, &
-      & DumpCommand, ExecuteCommand, &
+    use DumpCommand_M, only: BooleanFromEmptyGrid, BooleanFromEmptySwath, &
+      & BooleanFromFormula, DumpCommand, ExecuteCommand, &
       & MLSCase, MLSEndSelect, MLSSelect, MLSSelecting, Skip
     use GriddedData, only: GriddedData_T, &
       & AddGriddedDataToDatabase, DestroyGriddedData
     use Init_Tables_Module, only: F_Grid, S_Boolean, &
       & S_Case, S_ChangeSettings, S_Concatenate, S_ConcatenateGrids, &
       & S_ConvertEtaToP, S_Delete, S_Diff, S_Dump, &
-      & S_EndSelect, S_Execute, S_Gridded, &
+      & S_EndSelect, S_Execute, S_Gridded, S_IsFileAbsent,  &
       & S_IsGridEmpty, S_Merge, S_MergeGrids, S_Reevaluate, S_Select, S_Skip, &
       & S_Wmotrop, S_Wmotropfromgrids
     use L2AUXData, only: L2auxData_T
@@ -68,7 +68,7 @@ contains ! ===================================  Public procedures  =====
     type (l2gpdata_t), dimension(:), pointer :: L2GPDatabase
     type (L2AUXData_T), dimension(:), pointer :: L2auxDatabase
     type (GriddedData_T), dimension(:), pointer :: GriddedDatabase 
-    type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
+    type (MLSFile_T), dimension(:), pointer ::     FileDatabase
 
     ! Local variables
     type (GriddedData_T), pointer :: Grid
@@ -141,6 +141,8 @@ contains ! ===================================  Public procedures  =====
           & LastHeightPCF  , &
           & LastNCEPPCF     &
             )
+      case ( s_isFileAbsent )
+        call decorate ( key, BooleanFromEmptySwath ( key ) )
       case ( s_isGridEmpty )
         call decorate ( key, &
           & BooleanFromEmptyGrid ( key, griddedDataBase ) )
@@ -1202,6 +1204,9 @@ contains ! ===================================  Public procedures  =====
 end module MergeGridsModule
 
 ! $Log$
+! Revision 2.65  2018/03/22 18:15:34  pwagner
+! Added command IsFileAbsent; may occur in ReadApriori, MergeGrids, and Output sections
+!
 ! Revision 2.64  2018/03/14 22:45:51  pwagner
 ! May changeSettings in readApriori and MergeGrids sections
 !
