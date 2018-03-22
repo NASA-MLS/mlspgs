@@ -23,7 +23,7 @@ module ReadAPriori
     & L_Climatology, L_Dao, L_Geos5, L_Geos5_7, L_Gloria, &
     & L_Merra, L_Merra_2, L_Ncep, L_None, L_Strat, L_Surfaceheight, &
     & S_ChangeSettings, S_Diff, S_Dump, S_Execute, S_Gridded, &
-    & S_L2aux, S_L2gp, S_ReadGriddedData
+    & S_IsFileAbsent, S_L2aux, S_L2gp, S_ReadGriddedData
   use Intrinsic, only: L_Ascii, L_Binary, L_HDFeos, L_HDF, L_Swath, &
     & Phyq_Dimensionless
   use L2GPData, only: MaxSwathNamesBufSize
@@ -148,8 +148,8 @@ contains ! =====     Public Procedures     =============================
 
   subroutine Read_apriori ( Root, L2GPDatabase, L2auxDatabase, GriddedDatabase, &
     & fileDataBase )
-    use DumpCommand_M, only: BooleanFromFormula, ExecuteCommand, &
-      & MLSCase, MLSEndSelect, MLSSelect, MLSSelecting, Skip
+    use DumpCommand_M, only: BooleanFromEmptySwath, BooleanFromFormula, &
+      & ExecuteCommand, MLSCase, MLSEndSelect, MLSSelect, MLSSelecting, Skip
     use GriddedData, only: GriddedData_T, Dump
     use Init_Tables_Module, only: S_Boolean, S_Case, S_Endselect, &
       & S_Select, S_Skip
@@ -242,6 +242,8 @@ contains ! =====     Public Procedures     =============================
         ! call Dump( OutputOptions )
         ! call Dump( StampOptions )
         ! call DumpConfig
+      case ( s_isFileAbsent )
+        call decorate ( key, BooleanFromEmptySwath ( key ) )
       case ( s_select ) ! ============ Start of select .. case ==========
         ! We'll start seeking a matching case
         call MLSSelect (key)
@@ -1518,6 +1520,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.125  2018/03/22 18:14:28  pwagner
+! Added command IsFileAbsent; may occur in ReadApriori, MergeGrids, and Output sections
+!
 ! Revision 2.124  2018/03/14 22:42:40  pwagner
 ! May changeSettings in readApriori and MergeGrids sections
 !
