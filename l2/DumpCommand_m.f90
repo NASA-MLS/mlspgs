@@ -14,6 +14,8 @@ module DumpCommand_M
 ! Process a "dump" command. Or a flow control command.
 ! Or functions to set a run-time "Boolean" flag.
 ! (Should these latter functions be moved into a special run-time module?)
+! Our wiki pages have a writeup on the l2cf control structures in
+! https://mls.jpl.nasa.gov/team/wiki/index.php/L2cf_Control_Structures
 
   use HighOutput, only: Banner, BeVerbose, HeadLine, &
     & NumToChars, OutputNamedValue
@@ -46,8 +48,8 @@ module DumpCommand_M
 ! MLSSelecting  true if in a Select .. Case .. EndSelect control structure
 !               and the present Case doesn't match
 !     (subroutines and functions)
-! The following functions do much the same thing: They add to the
-! runtime Boolean datase a pair (key => named_Boolean, value => its_value)
+! The following functions do much the same thing: they add to the
+! runtime Boolean database a pair (key => named_Boolean, value => its_value)
 ! where the value is determined by whether condition is true or false
 !    function                 condition
 ! BooleanFromAnyGoodRadiances
@@ -736,29 +738,37 @@ contains
   end function BooleanFromEmptyGrid
 
   ! ------------------------------------- BooleanFromEmptySwath --
-  ! Returns TRUE if there are no useable data points in the swath
+  ! Returns TRUE if, according to use case (a) or (b)
+  ! (a) there are no useable data points in the swath
   ! (or if the swath is not in the file at all)
   ! The useablility criterion is
   ! (1) Precision non-negative; and
   ! (2) Status even
   ! If even one point is useable (a very low bar, admittedly) then
   ! return FALSE
+  ! or
+  ! (b) the file named in the file= field does not exist at all
   function BooleanFromEmptySwath ( root ) result( thesize )
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
     use Dump_0, only: Dump
-    use Init_Tables_Module, only: F_Boolean, F_File, F_Swath, F_Type, &
-      & L_L2dgg, L_L2gp
+    use Init_Tables_Module, only: F_Boolean, F_File, F_NoPCFid, &
+      & F_Swath, F_Type, &
+      & Field_First, Field_Last, &
+      & L_DAO, L_GEOS5, L_GEOS5_7, L_Merra, L_Merra_2, L_L2dgg, L_L2gp, L_None
     use L2GPData, only: L2GPData_T, Rgp, L2GPNameLen, &
       & ReadL2GPData, DestroyL2GPContents
     use MLSCommon, only: Filenamelen
-    use MLSFiles, only: HDFversion_5
+    use MLSFiles, only: HDFversion_5, MLS_Exists
     use MLSHDFeos, only: MLS_Swath_In_File
     use MLSMessageModule, only: MLSMessage, MLSMSG_Warning
     use MLSL2Options, only: RuntimeValues
     use MLSPCF2, only: MLSPCF_L2GP_End, MLSPCF_L2GP_Start, &
-      & MLSPCF_L2DGG_Start, MLSPCF_L2DGG_End
+      & MLSPCF_L2DGG_Start, MLSPCF_L2DGG_End, &
+      & MLSPCF_L2DAO_Start, MLSPCF_L2DAO_End, &
+      & MLSPCF_L2GEOS5_Start, MLSPCF_L2GEOS5_End
     use MLSStringLists, only: NumStringElements, PutHashElement
     use MLSStrings, only: Lowercase
+    use MoreTree, only: Get_Boolean
     use String_Table, only: Get_String
     use Tree, only: Decoration, Nsons, Sub_Rosa, Subtree
     ! Dummy args
@@ -771,10 +781,12 @@ contains
     integer :: fileType
     character (len=FileNameLen) :: FILE_BASE    ! From the FILE= field
     character(len=FileNameLen) :: filename          ! filename
+    logical, dimension(field_first:field_last) :: GOT
     character(len=L2GPNAMELEN) :: swathname         ! swathname
     integer :: i
     integer :: keyNo
     character(len=32) :: nameString
+    logical :: noPCFid
     integer :: son
     logical :: tvalue
     integer :: value
@@ -786,6 +798,7 @@ contains
     ! Executable
     verbose = BeVerbose ( 'bool', -1 )
     verboser = BeVerbose ( 'bool', 0 )
+    noPCFid = .false.
     do keyNo = 2, nsons(root)
       son = subtree(keyNo,root)
       field = subtree(1,son)
@@ -796,18 +809,21 @@ contains
         fieldValue = son
       end if
       field_index = decoration(field)
-
+      got(field_Index) = .true.
       select case ( field_index )
       case ( f_Boolean )
         call get_string( sub_rosa(subtree(2,son)), nameString )
       case ( f_file )
         call get_string ( sub_rosa(subtree(2,son)), file_base, strip=.true. )
+      case ( f_noPCFid )
+        noPCFid = get_boolean(son)
       case ( f_swath )
         call get_string ( sub_rosa(subtree(2,son)), swathname, strip=.true. )
       case ( f_type )
         filetype = decoration(subtree(2, son))
       end select
     end do
+    if ( .not. got(f_type) .or. noPCFid ) fileType = l_none
     select case (fileType)
     case ( l_l2dgg )
       call returnFullFileName( file_base, Filename, &
@@ -815,12 +831,23 @@ contains
     case ( l_l2gp )
       call returnFullFileName( file_base, Filename, &
         & MLSPCF_l2gp_start, MLSPCF_l2gp_end )
+    case ( l_dao )
+      call returnFullFileName( file_base, Filename, &
+        & mlspcf_l2dao_start, mlspcf_l2dao_end )
+    case ( l_geos5, l_geos5_7, l_merra, l_merra_2 ) ! --- GMAO Data (GEOS5*)
+      call returnFullFileName( file_base, Filename, &
+        & mlspcf_l2geos5_start, mlspcf_l2geos5_end )
+    case ( l_none )
+      Filename = file_base
     case default
       call MLSMessage( MLSMSG_Warning, ModuleName, &
       & "type should have been either l2gp or dgg; assume you meant dgg" )
     end select
     tvalue = .true.
-    if ( mls_swath_in_file( filename, swathname, HDFVERSION_5 ) ) then
+    if ( fileType == l_none ) then
+      tvalue = ( mls_exists ( Filename ) /= 0 )
+    elseif ( mls_swath_in_file( filename, swathname, HDFVERSION_5 ) ) then
+      call output( 'Reading swath ' // trim(swathname), advance='yes' )
       call ReadL2GPData ( trim(filename), trim(swathname), l2gp, &
         & hdfVersion=HDFVERSION_5 )
       call allocate_test( negativePrec, l2gp%nTimes, 'negativePrec', ModuleName )
@@ -1610,12 +1637,12 @@ contains
           & inseparator=runTimeValues%sep )
         if ( label == runTimeValues%sep ) then
           ! Do we s[kip] the key?
-          if ( index( 's', optionsString ) < 1 ) &
-            & call output( trim(booleanString) // ' = ', advance='no' )
           call GetHashElement( runTimeValues%lkeys, runTimeValues%lvalues, &
             & booleanString, label, countEmpty, &
             & inseparator=runTimeValues%sep )
           text = label
+          if ( index( 's', optionsString ) < 1 ) &
+            text = trim(booleanString) // ' = ' // label
           call outputNow
         else
           ! OK, we're asked to dump an array-valued one
@@ -2582,7 +2609,9 @@ contains
     integer :: GSON, J
     integer :: Me = -1          ! String index for trace cacheing
     integer :: Son
+    logical :: verbose! , verboser
     ! Executable
+    verbose = BeVerbose ( 'bool', -1 )
     MLSSelectedAlready = .false.
     call trace_begin ( me, 'MLSEndSelect', root, cond=toggle(gen) )
     label = ' '
@@ -2600,8 +2629,12 @@ contains
       end select
     enddo
     MLSSelecting = .false.
-    if ( len_trim(label) > 0 ) call MLSMessage (MLSMSG_Info, moduleName, &
-        & 'End selecting for ' // trim(label) // '::' // trim(SelectLabel) )
+    if ( verbose ) then
+      call output( 'End Selecting ', advance='no' )
+      if ( len_trim(label) > 0 ) &
+        & call output( 'label = ' // trim(label), advance='no' )
+      call NewLine
+    end if
     call trace_end ( 'MLSEndSelect', cond=toggle(gen) )
   end subroutine MLSEndSelect
 
@@ -3134,6 +3167,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.136  2018/03/22 18:17:00  pwagner
+! Added command IsFileAbsent; may occur in ReadApriori, MergeGrids, and Output sections
+!
 ! Revision 2.135  2018/03/05 19:49:38  pwagner
 ! Consistent with details arg to Dump_Signals now being an int
 !
