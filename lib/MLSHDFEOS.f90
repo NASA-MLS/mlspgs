@@ -17,54 +17,55 @@ module MLSHDFEOS
   ! We are in mid-transition between the older FileID/FileName interfaces
   ! and the newer MLSFile defined-type interfaces
 
-  use Hdf, only: DFNT_CHAR8, DFNT_FLOAT32, DFNT_FLOAT64, &
-    & DFNT_INT8, DFNT_INT16, DFNT_INT32, DFNT_INT64
-  use HDFEOS, only: gdattach, gdcreate, &
-    & swattach, swcreate, swdefdfld, swdefgfld, swdefdim, swdetach, &
-    & swdiminfo, swinqdflds, swinqswath
-  use HDFEOS5, only: HE5T_NATIVE_FLOAT, HE5T_NATIVE_DOUBLE, &
-    & HE5T_NATIVE_INT, HE5T_NATIVE_INT8, HE5T_NATIVE_INT16, HE5T_NATIVE_INT64
-  use HDFEOS5, only: HE5_GDattach, HE5_GDcreate, &
-    & HE5_SWattach, HE5_SWcreate, HE5_SWdefchunk, HE5_SWdetach, HE5_swdefdfld, &
-    & HE5_SWdefgfld, HE5_swdefdim, HE5_swdiminfo, HE5_swinqdflds, &
-    & HE5_swinqswath, MLS_charType
-  use HE5_SWAPI, only: HE5_SWSETFILL, HE5_SWWRATTR, HE5_SWWRLATTR
-  use HE5_SWAPI_CHARACTER_ARRAY, only: HE5_EHWRGLATT_CHARACTER_ARRAY, &
-    & HE5_EHRDGLATT_CHARACTER_ARRAY
-  use HE5_SWAPI_CHARACTER_SCALAR, only: HE5_EHWRGLATT_CHARACTER_SCALAR, &
-    & HE5_EHRDGLATT_CHARACTER_SCALAR
-  use HE5_SWAPI_DOUBLE, only: HE5_EHWRGLATT_DOUBLE, HE5_EHRDGLATT_DOUBLE, &
-    & HE5_SWRDFLD_DOUBLE, HE5_SWRDFLD_DOUBLE_2D, HE5_SWRDFLD_DOUBLE_3D, &
-    & HE5_SWWRFLD_DOUBLE, HE5_SWWRFLD_DOUBLE_2D, HE5_SWWRFLD_DOUBLE_3D
-  use HE5_SWAPI_INTEGER, only: HE5_EHWRGLATT_INTEGER, &
-    & HE5_SWRDFLD_INTEGER, HE5_SWWRFLD_INTEGER, HE5_EHRDGLATT
-  use HE5_SWAPI_REAL, only: HE5_EHWRGLATT_REAL, HE5_EHRDGLATT_REAL, &
-    & HE5_SWRDFLD_REAL, HE5_SWRDFLD_REAL_2D, HE5_SWRDFLD_REAL_3D, &
-    & HE5_SWWRFLD_REAL, HE5_SWWRFLD_REAL_2D, HE5_SWWRFLD_REAL_3D
+  use HDF, only: Dfnt_Char8, Dfnt_Float32, Dfnt_Float64, &
+    & Dfnt_Int8, Dfnt_Int16, Dfnt_Int32, Dfnt_Int64
+  use HDFEOS, only: Gdattach, Gdcreate, &
+    & Swattach, Swcreate, Swdefdfld, Swdefgfld, Swdefdim, Swdetach, &
+    & Swdiminfo, Swinqdflds, Swinqswath
+  use HDFEOS5, only: HE5t_Native_Float, HE5t_Native_Double, &
+    & HE5t_Native_Int, HE5t_Native_Int8, HE5t_Native_Int16, HE5t_Native_Int64
+  use HDFEOS5, only: HE5_Gdattach, HE5_Gdcreate, &
+    & HE5_Swattach, HE5_Swcreate, HE5_Swdefchunk, HE5_Swdetach, HE5_Swdefdfld, &
+    & HE5_Swdefgfld, HE5_Swdefdim, HE5_Swdiminfo, HE5_Swinqdflds, &
+    & HE5_Swinqswath, MLS_Chartype
+  use HE5_Swapi, only: HE5_Swsetfill, HE5_Swwrattr, HE5_Swwrlattr
+  use HE5_Swapi_Character_Array, only: HE5_Ehwrglatt_Character_Array, &
+    & HE5_Ehrdglatt_Character_Array
+  use HE5_Swapi_Character_Scalar, only: HE5_Ehwrglatt_Character_Scalar, &
+    & HE5_Ehrdglatt_Character_Scalar
+  use HE5_Swapi_Double, only: HE5_Ehwrglatt_Double, HE5_Ehrdglatt_Double, &
+    & HE5_Swrdfld_Double, HE5_Swrdfld_Double_2d, HE5_Swrdfld_Double_3d, &
+    & HE5_Swwrfld_Double, HE5_Swwrfld_Double_2d, HE5_Swwrfld_Double_3d
+  use HE5_Swapi_Integer, only: HE5_Ehwrglatt_Integer, &
+    & HE5_Swrdfld_Integer, HE5_Swwrfld_Integer, HE5_Ehrdglatt
+  use HE5_Swapi_Real, only: HE5_Ehwrglatt_Real, HE5_Ehrdglatt_Real, &
+    & HE5_Swrdfld_Real, HE5_Swrdfld_Real_2d, HE5_Swrdfld_Real_3d, &
+    & HE5_Swwrfld_Real, HE5_Swwrfld_Real_2d, HE5_Swwrfld_Real_3d
+  use HighOutput, only: OutputnamedValue
   use MLSCommon, only: MLSFile_T
-  use MLSFiles, only: HDFVERSION_4, HDFVERSION_5, WILDCARDHDFVERSION, &
-    & MLS_hdf_version
-  use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning, MLSMessage
-  use MLSStringLists, only: StringElementNum
+  use MLSFiles, only: HDFversion_4, HDFversion_5, WildcardHDFversion, &
+    & MLS_HDF_Version
+  use MLSMessagemodule, only: MLSMSG_Error, MLSMSG_Warning, MLSMessage
+  use MLSStringlists, only: StringElementnum
   use MLSStrings, only: Replace
-  use SWAPI_DOUBLE, only: SWRDFLD_DOUBLE, SWRDFLD_DOUBLE_2D, SWRDFLD_DOUBLE_3D, &
-    &                     SWWRFLD_DOUBLE, SWWRFLD_DOUBLE_2D, SWWRFLD_DOUBLE_3D
-  use SWAPI_INTEGER, only: SWRDFLD_INTEGER, &
-    &                      SWWRFLD_INTEGER
-  use SWAPI_REAL, only: SWRDFLD_REAL, SWRDFLD_REAL_2D, SWRDFLD_REAL_3D, &
-    &                   SWWRFLD_REAL, SWWRFLD_REAL_2D, SWWRFLD_REAL_3D
-  use TRACE_M, only: TRACE_BEGIN, TRACE_END
+  use Swapi_Double, only: Swrdfld_Double, Swrdfld_Double_2d, Swrdfld_Double_3d, &
+    & Swwrfld_Double, Swwrfld_Double_2d, Swwrfld_Double_3d
+  use Swapi_Integer, only: Swrdfld_Integer, &
+    & Swwrfld_Integer
+  use Swapi_Real, only: Swrdfld_Real, Swrdfld_Real_2d, Swrdfld_Real_3d, &
+    & Swwrfld_Real, Swwrfld_Real_2d, Swwrfld_Real_3d
+  use Trace_M, only: Trace_Begin, Trace_End
 
-  implicit NONE
+  implicit none
   private
 
-  public :: HE5_EHWRGLATT, HE5_EHRDGLATT, HSIZE, HSIZES, &
-    & MLS_EHWRGLATT, MLS_ISGLATT, &
-    & MLS_DFLDSETUP, MLS_GFLDSETUP, &
-    & MLS_SWDEFDIM, MLS_SWDIMINFO, MLS_SWRDFLD, MLS_SWWRFLD, &
-    & MLS_SWATTACH, MLS_SWCREATE, MLS_SWDETACH, MLS_GDCREATE, MLS_GDWRATTR, &
-    & MLS_SWWRATTR, MLS_SWWRLATTR, &
-    & MLS_SWATH_IN_FILE
+  public :: He5_Ehwrglatt, He5_Ehrdglatt, Hsize, Hsizes, &
+    & MLS_Ehwrglatt, MLS_Isglatt, &
+    & MLS_Dfldsetup, MLS_Gfldsetup, &
+    & MLS_Swdefdim, MLS_Swdiminfo, MLS_Swrdfld, MLS_Swwrfld, &
+    & MLS_Swattach, MLS_Swcreate, MLS_Swdetach, MLS_Gdcreate, MLS_Gdwrattr, &
+    & MLS_Swwrattr, MLS_Swwrlattr, &
+    & MLS_Swath_In_File
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -205,7 +206,6 @@ module MLSHDFEOS
   integer, public, parameter :: MAXNODFIELDS = 1000
   integer, public, parameter :: MAXDLISTLENGTH = 400000
   integer, parameter         :: DFLTMAXLINELENGTH = 1024
-  ! integer, parameter         :: DFLTMAXLINES = 200000
 
   ! Print debugging stuff?
   logical, parameter :: DEEBUG = .false.  
@@ -2144,6 +2144,7 @@ contains ! ======================= Public Procedures =========================
     integer, optional, intent(out) :: error
 
     ! Internal variables
+    logical, parameter               :: deebug = .false.
     character(len=MAXDLISTLENGTH)    :: fieldlist
     integer(kind=size_t)             :: hlistsize
     integer :: Me = -1               ! String index for trace cacheing
@@ -2164,6 +2165,10 @@ contains ! ======================= Public Procedures =========================
     case (HDFVERSION_5)
       nswaths = HE5_swinqswath(trim(filename), fieldlist, hlistsize)
     end select
+    if ( deebug ) then
+      call outputnamedValue ( 'nswaths', nswaths )
+      call outputnamedValue ( 'fieldlist', trim(fieldlist) )
+    endif
     if ( present(error) ) error = min(0, nswaths)
     if ( nswaths < 1 ) then
       call trace_end ( cond=.false. )
@@ -2385,6 +2390,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDFEOS
 
 ! $Log$
+! Revision 2.47  2018/03/22 16:56:35  pwagner
+! Debug printing in MLS_swath_in_file_sca; CamelCase use statements
+!
 ! Revision 2.46  2013/08/31 01:24:53  vsnyder
 ! Replace MLSMessageCalls with trace_begin and trace_end
 !
