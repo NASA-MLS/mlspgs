@@ -175,7 +175,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_GRIDDED            = s_forwardModelGlobal + 1
   integer, parameter :: S_HESSIAN            = s_gridded + 1
   integer, parameter :: S_HGRID              = s_hessian + 1
-  integer, parameter :: S_ISGRIDEMPTY        = s_hgrid + 1
+  integer, parameter :: S_IsFileAbsent       = s_hgrid + 1
+  integer, parameter :: S_ISGRIDEMPTY        = S_IsFileAbsent + 1
   integer, parameter :: S_ISSWATHEMPTY       = s_isGridEmpty + 1
   integer, parameter :: S_L1BRAD             = s_isSwathEmpty + 1
   integer, parameter :: S_L1BOA              = s_l1brad + 1
@@ -394,6 +395,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_gridded) =                add_ident ( 'gridded' )
     spec_indices(s_hessian) =                add_ident ( 'hessian' )
     spec_indices(s_hgrid) =                  add_ident ( 'hgrid' )
+    spec_indices(s_isFileAbsent) =           add_ident ( 'isFileAbsent' )
     spec_indices(s_isGridEmpty) =            add_ident ( 'isGridEmpty' )
     spec_indices(s_isSwathEmpty) =           add_ident ( 'isSwathEmpty' )
     spec_indices(s_l1brad) =                 add_ident ( 'l1brad' )
@@ -1188,6 +1190,12 @@ contains ! =====     Public procedures     =============================
              np+n_spec_def /) )
 
     call make_tree( (/ &
+      begin, s+s_isFileAbsent, &
+             begin, f+f_file, string(), &
+             begin, f+f_Boolean, field_spec(s_Boolean,req=req), &
+             np+n_spec_def /) )
+
+    call make_tree( (/ &
       begin, s+s_isGridEmpty, &
              begin, f+f_grid, field_spec(s_Gridded,s_concatenate,req=req), &
              begin, f+f_Boolean, field_spec(s_Boolean,req=req), &
@@ -1198,6 +1206,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_file, string(), &
              begin, f+f_swath, string(), &
              begin, f+f_type, field_type(t_outputType,req=req), &
+             begin, f+f_noPCFid, boolean(), &
              begin, f+f_Boolean, field_spec(s_Boolean,req=req), &
              np+n_spec_def /) )
 
@@ -1855,12 +1864,12 @@ contains ! =====     Public procedures     =============================
              s+s_l2parsf, s+s_makePFA, s+s_pfaData, s+s_readPFA, &
              s+s_tGrid, s+s_time, s+s_vGrid, s+s_writePFA, n+n_section, &
       begin, z+z_readapriori, s+s_time, s+s_changeSettings, &
-             s+s_diff, s+s_dump, s+s_gridded, &
+             s+s_diff, s+s_dump, s+s_gridded, s+s_isFileAbsent, &
              s+s_l2aux, s+s_l2gp, s+s_readGriddedData, s+s_snoop, s+s_case, &
              s+s_Boolean, s+s_endSelect, s+s_execute, s+s_select, n+n_section, &
       begin, z+z_mergegrids, s+s_Boolean, s+s_case, s+s_changeSettings, &
              s+s_concatenate, s+s_concatenateGrids, s+s_ConvertEtaToP,&
-             s+s_delete, s+s_diff, s+s_dump, &
+             s+s_delete, s+s_diff, s+s_dump, s+s_IsFileAbsent, &
              s+s_endSelect, s+s_execute, s+s_Gridded, s+s_merge, &
              s+s_reevaluate, s+s_select, s+s_skip, s+s_time, s+s_isGridEmpty, &
              s+s_mergeGrids, s+s_vgrid, s+s_wmoTrop, s+s_wmoTropFromGrids, &
@@ -1900,7 +1909,8 @@ contains ! =====     Public procedures     =============================
              s+s_regularization, s+s_rowScale, nc+n_section, &
       begin, z+z_output, s+s_Boolean, s+s_case, s+s_catenate, s+s_copy, &
              s+s_destroy, s+s_diff, s+s_dump, s+s_dumpblocks, s+s_endSelect, &
-             s+s_execute, s+s_hgrid, s+s_isSwathEmpty, s+s_output, s+s_Reevaluate, &
+             s+s_execute, s+s_hgrid, s+s_isFileAbsent, s+s_isSwathEmpty, &
+             s+s_output, s+s_Reevaluate, &
              s+s_select, s+s_Skip, s+s_Sleep, s+s_time, s+s_writeFileAttribute, s+s_subSample, &
              n+n_section /) )
 
@@ -2111,6 +2121,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.639  2018/03/22 18:13:49  pwagner
+! Added command IsFileAbsent; may occur in ReadApriori, MergeGrids, and Output sections
+!
 ! Revision 2.638  2018/03/14 22:18:15  pwagner
 ! May changeSettings in readApriori and MergeGrids sections
 !
