@@ -1192,6 +1192,7 @@ contains ! =====     Public procedures     =============================
     call make_tree( (/ &
       begin, s+s_isFileAbsent, &
              begin, f+f_file, string(), &
+             begin, f+f_type, field_type(t_griddedOrigin), &
              begin, f+f_Boolean, field_spec(s_Boolean,req=req), &
              np+n_spec_def /) )
 
@@ -1863,10 +1864,10 @@ contains ! =====     Public procedures     =============================
              s+s_forwardModelGlobal, s+s_l1brad, s+s_l1boa, &
              s+s_l2parsf, s+s_makePFA, s+s_pfaData, s+s_readPFA, &
              s+s_tGrid, s+s_time, s+s_vGrid, s+s_writePFA, n+n_section, &
-      begin, z+z_readapriori, s+s_time, s+s_changeSettings, &
-             s+s_diff, s+s_dump, s+s_gridded, s+s_isFileAbsent, &
-             s+s_l2aux, s+s_l2gp, s+s_readGriddedData, s+s_snoop, s+s_case, &
-             s+s_Boolean, s+s_endSelect, s+s_execute, s+s_select, n+n_section, &
+      begin, z+z_readapriori, s+s_Boolean, s+s_case, s+s_changeSettings, &
+             s+s_diff, s+s_dump, s+s_gridded, s+s_isFileAbsent, s+s_time, &
+             s+s_l2aux, s+s_l2gp, s+s_readGriddedData, s+s_skip, s+s_snoop, &
+             s+s_endSelect, s+s_execute, s+s_reevaluate, s+s_select, n+n_section, &
       begin, z+z_mergegrids, s+s_Boolean, s+s_case, s+s_changeSettings, &
              s+s_concatenate, s+s_concatenateGrids, s+s_ConvertEtaToP,&
              s+s_delete, s+s_diff, s+s_dump, s+s_IsFileAbsent, &
@@ -2121,6 +2122,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.640  2018/03/23 20:15:01  pwagner
+! Added type field to isFileAbsent; skip and reevaluate commands to readapriori section
+!
 ! Revision 2.639  2018/03/22 18:13:49  pwagner
 ! Added command IsFileAbsent; may occur in ReadApriori, MergeGrids, and Output sections
 !
