@@ -1084,7 +1084,6 @@ contains
     use HighOutput, only: AddRow, AddRow_Divider, AddRow_Header, &
       & OutputTable, StartTable
     use MLSCommon, only: AccessType, FileStringTable, Split_Path_Name
-    use String_Table, only: Get_String
     ! Dummy arguments
     type (MLSFile_T), intent(in)         ::      MLSFile
     integer, intent(in), optional        ::      details
@@ -1245,6 +1244,9 @@ contains
 
 !
 ! $Log$
+! Revision 2.51  2018/03/27 22:08:06  pwagner
+! Where to find get_string moved to .f90 module or its substitute
+!
 ! Revision 2.50  2018/03/15 16:39:22  pwagner
 ! Moved 'Use' statement to .f90 where make can see it
 !
