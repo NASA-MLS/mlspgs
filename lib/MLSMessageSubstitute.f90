@@ -14,7 +14,7 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
 !==============================================================================
 
   use HighOutput, only: Banner
-  use Intrinsic, only: L_HDFeos, L_HDF, L_Swath, L_Zonalavg, Lit_Indices
+  ! use Intrinsic, only: L_HDFeos, L_HDF, L_Swath, L_Zonalavg, Lit_Indices
   use Machine, only: Crash_Burn_Rude=>crash_Burn, Exit_With_Status, Nevercrash
   use MLSCommon, only: MLSFile_T, MLSDebug, MLSVerbose, &
     & MLSDebugsticky, MLSVerboseSticky, DontCrashHere
@@ -27,6 +27,7 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
     & Printitout, Sniprcsfrom, &
     & Stdoutlogunit, MLSMessageconfig, &
     & MLSMSG_Severity_So_Far, MLSMSG_Severity_To_Quit, MLSMSG_Severity_To_Walkback
+  use SDPToolkit, only: PGSd_Pc_File_Path_Max, UseSDPToolkit
   implicit none
 
   private
@@ -65,6 +66,11 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
   ! MLSSTRINGS
 
   integer, public, parameter ::  PGS_S_SUCCESS = 0
+  integer, parameter :: L_HDFeos      = 0
+  integer, parameter :: L_HDF         = L_HDFeos + 1
+  integer, parameter :: L_Swath       = L_HDF + 1
+  integer, parameter :: L_Zonalavg    = L_Swath + 1
+  integer, dimension(1) :: Lit_Indices = 1
 
   include 'MLSMessage.f9h'
 
@@ -109,11 +115,24 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
   ! In the full module this is called when:
   ! We're a slave and we're about to expire
   ! Before we do, however, try to tell the master why
-  subroutine Dump_Stack ( Where, CPU )
+  subroutine Dump_Stack ( Where, CPU, StackIsEmpty )
     logical, intent(in) :: Where
     logical, intent(in) :: CPU
+    logical, intent(in) :: StackIsEmpty
     call MLSMessageCalls ( 'dump' )
   end subroutine Dump_Stack
+
+  ! -------------------- Get_String -------------------
+  ! In the full module this is called when:
+  ! We're a slave and we're about to expire
+  ! Before we do, however, try to tell the master why
+  subroutine Get_String ( strIndex, string, strip )
+    integer, intent(in)              :: strIndex
+    character(len=*), intent(out)    :: string
+    logical, intent(in), optional    :: strip
+    !
+    string = ' '
+  end subroutine Get_String
 
   ! -------------------- LastGasp -------------------
   ! In the full module this is called when:
@@ -152,6 +171,9 @@ end module MLSMessageModule
 
 !
 ! $Log$
+! Revision 2.20  2018/03/27 22:57:39  pwagner
+! updated api for Dump_Stack; Freed from use-ing modules string_table and intrinsic
+!
 ! Revision 2.19  2018/03/15 16:40:07  pwagner
 ! Moved 'Use' statement to .f90 where make can see it
 !
