@@ -32,6 +32,7 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
     & MLSMSG_Severity_So_Far, MLSMSG_Severity_To_Quit, &
     & MLSMSG_Severity_To_Walkback
   use Sdptoolkit, only: Pgs_S_Success, PGSd_Pc_File_Path_Max, UseSDPtoolkit
+  use String_Table, only: Get_String
   implicit none
   private
   
@@ -202,6 +203,9 @@ end module MLSMessageModule
 
 !
 ! $Log$
+! Revision 2.54  2018/03/27 22:55:20  pwagner
+! Where to find get_string moved to .f90 module or its substitute
+!
 ! Revision 2.53  2018/03/15 16:39:40  pwagner
 ! Moved 'Use' statement to .f90 where make can see it
 !
