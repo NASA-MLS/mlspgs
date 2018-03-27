@@ -13,7 +13,6 @@
 MODULE MLSStrings               ! Some low level string handling stuff
 !=============================================================================
   use MLSFinds, only: FindFirst, FindNext
-  use Optional_M, only: Default
   implicit none
   private
 
@@ -206,46 +205,46 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! streq                     
 ! === (end of api) ===
 
-  public :: asciify, &
-    & capitalize, catStrings, charToInt, compressString, count_words, &
-    & delete, depunctuate, flushArrayLeft, hhmmss_value, &
-    & indexes, ints2Strings, &
-    & isAllAscii, isAlphabet, isComment, isDigits, isRepeat, &
-    & lenTrimToAscii, linearSearchStringArray, lowercase, &
-    & nAppearances, nCopies, &
-    & readCompleteLineWithoutComments, readIntFromBaseN, readIntsFromChars, &
-    & readNumFromBaseN, readNumsFromChars, readRomanNumerals, &
-    & remap, replace, replaceNonAscii, reverse, reverse_trim, &
-    & rot13, &
-    & shiftlrc, size_trim, splitDetails, splitNest, splitWords, squeeze, &
-    & startCase, streq, stretch, strings2Ints, &
-    & trim_safe, trueList, unAsciify, unWrapLines, &
-    & writeIntasBaseN, writeIntsToChars, writeRomanNumerals
+  public :: Asciify, &
+    & Capitalize, CatStrings, CharToInt, CompressString, Count_Words, &
+    & Delete, Depunctuate, FlushArrayLeft, Hhmmss_Value, &
+    & Indexes, Ints2Strings, &
+    & IsAllAscii, IsAlphabet, IsComment, IsDigits, IsRepeat, &
+    & LenTrimToAscii, LinearSearchStringArray, Lowercase, &
+    & NAppearances, NCopies, &
+    & ReadCompleteLineWithoutComments, ReadIntFromBaseN, ReadIntsFromChars, &
+    & ReadNumFromBaseN, ReadNumsFromChars, ReadRomanNumerals, &
+    & Remap, Replace, ReplaceNonAscii, Reverse, Reverse_Trim, &
+    & Rot13, &
+    & Shiftlrc, Size_Trim, SplitDetails, SplitNest, SplitWords, Squeeze, &
+    & StartCase, Streq, Stretch, Strings2Ints, &
+    & Trim_Safe, TrueList, UnAsciify, UnWrapLines, &
+    & WriteIntasBaseN, WriteIntsToChars, WriteRomanNumerals
 
-  interface asciify
-    module procedure asciify_scalar, asciify_1d, asciify_2d, asciify_3d
+  interface Asciify
+    module procedure Asciify_Scalar, Asciify_1d, Asciify_2d, Asciify_3d
   end interface
 
-  interface readIntsFromChars
-    module procedure readAnIntFromChars, readIntArrayFromChars
+  interface ReadIntsFromChars
+    module procedure ReadAnIntFromChars, ReadIntArrayFromChars
   end interface
 
-  interface readNumFromBaseN
-    module procedure readFloatFromBaseN, readIntFromBaseN
+  interface ReadNumFromBaseN
+    module procedure ReadFloatFromBaseN, ReadIntFromBaseN
   end interface
 
-  interface readNumsFromChars
-    module procedure readADoubleFromChars, ReadDoubleArrayFromChars
-    module procedure readARealFromChars, ReadRealArrayFromChars
-    module procedure readAnIntFromChars, readIntArrayFromChars
+  interface ReadNumsFromChars
+    module procedure ReadADoubleFromChars, ReadDoubleArrayFromChars
+    module procedure ReadARealFromChars, ReadRealArrayFromChars
+    module procedure ReadAnIntFromChars, ReadIntArrayFromChars
   end interface
 
-  interface streq
-    module procedure streq_scalar, streq_array1, streq_array2
+  interface Streq
+    module procedure Streq_Scalar, Streq_Array1, Streq_Array2
   end interface
 
-  interface writeIntsToChars
-    module procedure writeAnIntToChars, writeIntsToChars_1d, writeIntsToChars_2d
+  interface WriteIntsToChars
+    module procedure WriteAnIntToChars, WriteIntsToChars_1d, WriteIntsToChars_2d
   end interface
 
   ! Public data
@@ -444,7 +443,9 @@ contains
     logical :: CountEmpty
     integer :: I, N, T, W
     ! Executable
-    countEmpty = ( index( Default( Options, StringOptions), 'e') > 0 )
+    !countEmpty = ( index( Default( Options, StringOptions), 'e') > 0 )
+    countEmpty = index( StringOptions, 'e' ) > 0
+    if ( present(options) ) countEmpty = index( options, 'e' ) > 0
     w = len(sep)
     l = len_trim(strings(1)) + 1
     stringsCat(:l-1) = strings(1)(:l-1)
@@ -3245,6 +3246,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.105  2018/03/27 22:06:52  pwagner
+! No longer uses Optional_m; now one less module needed to build toolkitlessly
+!
 ! Revision 2.104  2017/12/08 00:28:44  pwagner
 ! Add optional 'options' arg to CatStrings; by default will not cat empty string
 !
