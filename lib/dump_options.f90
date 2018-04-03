@@ -199,6 +199,7 @@ module Dump_Options
   logical           :: PrintNameAtLineEnd     = .false.
   logical           :: PrintNameInBanner      = .false.
   logical           :: PrintNameIfDiff        = .true.
+  logical           :: skipNewlineAfterName   = .false.
   logical           :: StatsOnOneLine         = .true.
   character(len=64) :: NameOnEachLine         = ' '
 
@@ -356,13 +357,28 @@ contains
     ! Local variables
     logical                                       :: atLineStart
     character(len=64)                             :: myName
+    integer                                       :: n
+    logical                                       :: OldPrintNameAsHeadline 
+    logical                                       :: OldPrintNameInBanner   
+    logical                                       :: OldskipNewlineAfterName
     ! Executable
     if ( present(nameHasBeenPrintedAlready) ) then
       if ( nameHasBeenPrintedAlready ) return
     endif
     myName = NameOnEachLine
     if ( present(name) ) myName = name
-    if ( len_trim(myName) < 1 ) return
+    n = len_trim(myName)
+    if ( n < 1 ) return
+    n = index(myName, '\' )
+    OldPrintNameAsHeadline =  PrintNameAsHeadline 
+    OldPrintNameInBanner   =  PrintNameInBanner   
+    OldskipNewlineAfterName=  skipNewlineAfterName
+    if ( n > 0 ) then
+      PrintNameAsHeadline  = ( index( myname(n+1:), 'h' ) > 0 )
+      PrintNameInBanner    = ( index( myname(n+1:), 'b' ) > 0 )
+      skipNewlineAfterName = ( index( myname(n+1:), 'n' ) > 0 )
+      myname(n:) = ' '
+    endif
     atLineStart = ( getOutputStatus( 'start' ) == 1 )
     if( PrintNameAsHeadline .and. atLineStart ) then
       call Headline( trim(myName), FillChar='-', before='* ', after=' *' )
@@ -371,13 +387,16 @@ contains
     elseif( PrintNameAtLineEnd ) then
       call blanksToColumn ( 80-len_trim(myName) )
       call output ( trim(myName), advance='no' )
-      if ( .not. dopts(Clean)%v ) call newLine
+      if ( .not. dopts(Clean)%v .and. .not. skipNewlineAfterName ) call newLine
     else
       if ( .not. dopts(Clean)%v .and. .not. atLineStart ) call blanks (2)
       call output ( trim(myName), advance='no' )
-      if ( .not. dopts(Clean)%v ) call newLine
+      if ( .not. dopts(Clean)%v .and. .not. skipNewlineAfterName ) call newLine
     end if
     if ( present(nameHasBeenPrintedAlready) ) nameHasBeenPrintedAlready = .true.
+    PrintNameAsHeadline  = OldPrintNameAsHeadline 
+    PrintNameInBanner    = OldPrintNameInBanner   
+    skipNewlineAfterName = OldskipNewlineAfterName
   end subroutine PrintName
 
   ! ------------------------------------------  RestoreDumpConfig  -----
@@ -499,6 +518,9 @@ contains
 end module Dump_Options
 
 ! $Log$
+! Revision 2.11  2018/04/03 23:16:36  pwagner
+! May use nbh following \ in name to modify how to print name in dump
+!
 ! Revision 2.10  2018/02/28 19:50:46  pwagner
 ! Moved PrintName here from Dump_0
 !
