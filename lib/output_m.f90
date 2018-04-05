@@ -12,7 +12,7 @@
 module OUTPUT_M
 
   ! Normal level printing and formatting
-
+  ! Directs output to either stddout or PrUnit
   ! See also dump_0 and printit_m
   ! For higher-level procedures, see highOutput
 
@@ -35,9 +35,9 @@ module OUTPUT_M
 !     c o n t e n t s
 !     - - - - - - - -
 !     (data types and parameters)
-! outputLines              If PrUnit = OUTPUTLINESPRUNIT, 
+! OutputLines              If PrUnit = OUTPUTLINESPRUNIT, 
 !                            holds output until flushed
-! outputOptions            where to send output and how to format it
+! OutputOptions            where to send output and how to format it
 ! (some components)
 ! MLSMSG_Level             MLSMessage level if so logged
 ! PrUnit                   How to direct output:
@@ -46,65 +46,65 @@ module OUTPUT_M
 !                          STDOUTPRUNIT      :: print stdout
 !                          BOTHPRUNIT        :: both stdout and logged
 !                          > 0 :: print to Fortran unit number PrUnit
-! skipMLSMSGLogging        whether to skip MLSMessage by default
-! stampOptions             whether and how to stamp each output automatically
-! timeStampOptions         how to stamp when calling timeStamp
+! SkipMLSMSGLogging        whether to skip MLSMessage by default
+! StampOptions             whether and how to stamp each output automatically
+! TimeStampOptions         how to stamp when calling timeStamp
 
 !     (subroutines and functions)
-! Advance_is_yes_or_no     parse advance=.. field
-! addToIndent              add to the number of blanks indented; subtract if < 0
+! Advance_is_yes_or_no     parse the advance=.. field
+! AddToIndent              add to the number of blanks indented; subtract if < 0
 ! Beep                     print message to error_unit
-! blanks                   print specified number of blanks [or fill chars]
-! flushOutputLines         print the current outputLines; then reset to ''
-! flushStdout              flush any buffered lines to stdout
-! getOutputStatus          returns normally private data
-! printOutputStatus        prints normally private data
-! isOutputSuspended        returns TRUE if output is suspended
-! newline                  print a newline
-! output                   print argument
-! printOutputStatus        print normally private settings and options
-! resetIndent              set indenting back to 0
-! restoreSettings          restore default settings for output, stamps, tabs
-! revertOutput             revert output to file used before switchOutput
+! Blanks                   print specified number of blanks [or fill chars]
+! FlushOutputLines         print the current outputLines; then reset to ''
+! FlushStdout              flush any buffered lines to stdout
+! GetOutputStatus          returns normally private data
+! PrintOutputStatus        prints normally private data
+! IsOutputSuspended        returns TRUE if output is suspended; i.e. running silent
+! Newline                  print a newline
+! Output                   print argument
+! PrintOutputStatus        print normally private settings and options
+! ResetIndent              set indenting back to 0
+! RestoreSettings          restore default settings for output, stamps, tabs
+! RevertOutput             revert output to file used before switchOutput
 !                           if you will revert, keepOldUnitOpen when switching
-! resumeOutput             resume suspended output
-! setFillPattern           set a special Fill pattern 
+! ResumeOutput             resume suspended output
+! SetFillPattern           set a special Fill pattern 
 !                           (that can be used in call to blanks, banner, etc.)
-! setOutputStatus          sets normally private data
-! suspendOutput            suspend output
-! switchOutput             switch output to a new named file, 
+! SetOutputStatus          sets normally private data
+! SuspendOutput            suspend output; run silent
+! SwitchOutput             switch output to a new named file, 
 !                            or else to 'stdout'
 ! === (end of toc) ===
 
 ! === (start of api) ===
 ! char* Advance_is_yes_or_no ( [char* chars] )
 ! Beep ( [char* chars] )
-! blanks ( int n_blanks, [char fillChar], [char* advance] )
-! flushStdout
-! flushOutputLines ( [int prUnit] )
+! Blanks ( int n_blanks, [char fillChar], [char* advance] )
+! FlushStdout
+! FlushOutputLines ( [int prUnit] )
 ! int getOutputStatus( char* name )
 ! log isOutputSuspended ()
 ! NewLine ( [log dont_make_blank_line] )
-! output ( char* chars, [char* advance], [char* from_where], 
+! Output ( char* chars, [char* advance], [char* from_where], 
 !          [log dont_log], [char* log_chars], [char* insteadOfBlank],
 !          [log dont_stamp], [int newlineval] )
-! output ( char* chars(:), [char* advance],
+! Output ( char* chars(:), [char* advance],
 !          [char* insteadOfBlank], [int newlineval] )
-! output ( value, [char* format], [char* advance],
+! Output ( value, [char* format], [char* advance],
 !          [char* Before], [char* After] )
 !       where value can be any numerical type, either scalar or 1-d array
 !       advance may be
 !       'y[es]', 't[rue]'  advance to next line after printing
 !       'n[o]', 'f[alse]'  don't advance to next line after printing
 !       'stderr'  print to stderr instead of default
-! printOutputStatus ( [char* keywords] )
-! resumeOutput
-! revertOutput
-! restoreSettings ( [char* settings] )
-! setFillPattern ( pattern, [fillChar] )
-! setOutputStatus( char* name, int value )
-! suspendOutput
-! switchOutput ( char* filename, [int unit] )
+! PrintOutputStatus ( [char* keywords] )
+! ResumeOutput
+! RevertOutput
+! RestoreSettings ( [char* settings] )
+! SetFillPattern ( pattern, [fillChar] )
+! SetOutputStatus( char* name, int value )
+! SuspendOutput
+! SwitchOutput ( char* filename, [int unit] )
 ! === (end of api) ===
 !
 ! Notes:
@@ -124,32 +124,34 @@ module OUTPUT_M
   ! Where to output?
   ! These apply if we don't output to a fortran unit number (which is > 0)
   ! See also Beep command, and advance='stderr' or advance='arg1 ..'
+  ! Possible values for PrUnit
   integer, parameter, public :: INVALIDPRUNIT      = 0
   integer, parameter, public :: STDOUTPRUNIT       = INVALIDPRUNIT - 1
   integer, parameter, public :: MSGLOGPRUNIT       = STDOUTPRUNIT - 1
   integer, parameter, public :: BOTHPRUNIT         = MSGLOGPRUNIT - 1
   integer, parameter, public :: OUTPUTLINESPRUNIT  = BOTHPRUNIT - 1
 
+  ! Which of the above would involve stdout
   logical, parameter, private :: UseStdout(OUTPUTLINESPRUNIT:INVALIDPRUNIT) = &
     !    OUTPUTLINESPRUNIT  BOTHPRUNIT  MSGLOGPRUNIT  STDOUTPRUNIT
     & (/ .false.,           .true.,     .false.,      .true., &
     !    INVALIDPRUNIT
     &    .false. /)
 
-  integer, save, private :: OLDUNIT = -1 ! Previous Unit for output.
+  integer, save, private :: OLDUNIT = -1 ! Previous PrUnit for output.
   logical, save, private :: OLDUNITSTILLOPEN = .TRUE.
 
-  public :: addToIndent, Advance_is_yes_or_no, Beep, blanks, &
-    & flushOutputLines, flushStdout, getOutputStatus, newline, &
-    & output, output_char_nocr, printOutputStatus, &
-    & resetIndent, restoreSettings, resumeOutput, revertOutput, &
-    & setFillPattern, setOutputStatus, suspendOutput, switchOutput
+  public :: AddToIndent, Advance_Is_Yes_Or_No, Beep, Blanks, &
+    & FlushOutputLines, FlushStdout, GetOutputStatus, Newline, &
+    & Output, Output_Char_Nocr, PrintOutputStatus, &
+    & ResetIndent, RestoreSettings, ResumeOutput, RevertOutput, &
+    & SetFillPattern, SetOutputStatus, SuspendOutput, SwitchOutput
 
   ! These types made public because the class instances are public
-  public :: outputOptions_t
-  public :: patternOptions_t
-  public :: stampOptions_t
-  public :: timestampOptions_t
+  public :: OutputOptions_t
+  public :: PatternOptions_t
+  public :: StampOptions_t
+  public :: TimestampOptions_t
 
   ! We can use the advance=.. mechanism to convey extra formatting info
   interface getOption
@@ -362,7 +364,7 @@ contains
     !    unit n        set print unit to n
     !    level k       set severity level to k if calling MLSMessage
     !   newline m      use achar(m) as character for newLine
-    !    stretch       s t r e t c h  charcaters before printing
+    !    stretch       s t r e t c h  characters before printing
     !                  * -------------------------------------- *
     !    banner        *   surround characters with a banner    *
     !                  * -------------------------------------- *
@@ -436,7 +438,7 @@ contains
   end subroutine Beep
 
   ! -----------------------------------------------------  BLANKS  -----
-  subroutine BLANKS ( N_BLANKS, FILLCHAR, ADVANCE, DONT_STAMP )
+  subroutine Blanks ( N_Blanks, Fillchar, Advance, Dont_Stamp )
   ! Output N_BLANKS blanks to PRUNIT.
   ! or optionally that many copies of fillChar.
   ! If FillChar is one of the SpecialFillChars maintained in outputOptions
@@ -524,9 +526,8 @@ contains
     outputOptions%prUnit = oldPrUnit
   end subroutine flushOutputLines
 
-  ! ----------------------------------------------  flushOutputLines  -----
-  ! print or log OutputLines
-  ! then reset to ''
+  ! ----------------------------------------------  Output_Unit  -----
+  ! Flush Output_Unit
   subroutine flushStdout
     use, intrinsic :: ISO_Fortran_Env, only: Output_Unit
     ! Executable
@@ -608,6 +609,8 @@ contains
 
   ! ----------------------------------------------------  NewLine  -----
   subroutine NewLine ( dont_make_blank_line )
+    ! Go on to the next printed line
+    ! unless already at column 1 and dont_make_blank_line is true
     ! Args
     ! If the following is TRUE, avoid
     ! adding a blank line; that means don't add
@@ -1356,6 +1359,7 @@ contains
   ! ----------------------------------------------  resumeOutput  -----
   subroutine resumeOutput 
   ! resume outputting to PRUNIT.
+  ! Revreses effect of suspendOutput
     silentRunning = .false.
   end subroutine resumeOutput
 
@@ -1430,7 +1434,8 @@ contains
 
   ! ----------------------------------------------  suspendOutput  -----
   subroutine suspendOutput 
-  ! suspend outputting to PRUNIT.
+  ! suspend outputting to PRUNIT. Run silent.
+  ! Reversible by calling resumeOutput
     silentRunning = .true.
   end subroutine suspendOutput
 
@@ -1732,6 +1737,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.136  2018/04/05 16:55:05  pwagner
+! Corrected comments; hopefully made them clearer, too
+!
 ! Revision 2.135  2017/12/22 00:23:23  pwagner
 ! Move some items from output to new patternOptions; add flushOutputLines
 !
