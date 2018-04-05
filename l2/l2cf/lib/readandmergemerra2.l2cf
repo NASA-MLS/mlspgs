@@ -72,7 +72,20 @@ begin ReadApriori
     dimList='XDim,YDim,Height,Time' , date='00:00:00', /sum 
 end ReadApriori
 
+!ifdef(flagMustHaveMeteorology,{
+; This stops unless we succeeded in reading the merra2 T
 begin MergeGrids
+  merra2Meteorology: Boolean, formula="false"
+  isGridEmpty, grid=nvmerra2TemperatureInput1, Boolean=merra2Meteorology
+  Reevaluate, Boolean=merra2Meteorology, formula="not merra2Meteorology"
+  Skip, formula="merra2Meteorology"
+  Dump, text="No merra2 found; so must quit"
+  Dump, /CrashBurn
+end MergeGrids 
+})
+
+begin MergeGrids
+
   merra2Converted1: ConvertEtaToP, $
     a=nvmerra2TemperatureInput1, b=nvmerra2PressureInput1, Grid=gridTemperature
     delete, grid=nvmerra2TemperatureInput1
@@ -153,6 +166,9 @@ begin MergeGrids
 end MergeGrids 
 })
 ;$Log$
+;Revision 1.2  2017/06/02 18:12:12  pwagner
+;Repaired non-PCF file names
+;
 ;Revision 1.1  2017/05/01 20:51:53  pwagner
 ;First commit
 ;
