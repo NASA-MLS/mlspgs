@@ -84,6 +84,7 @@ program COMPARE
   RelAtAmaxG = NaNvalue
   avgsr = NaNvalue
   avgsa = NaNvalue
+  same = .true. ! in case files are identical, even without -i option
   stdevr = NaNvalue
   stdeva = NaNvalue
 
@@ -366,6 +367,9 @@ contains
 end program
 
 ! $Log$
+! Revision 1.28  2017/11/29 01:35:44  vsnyder
+! Don't print 'Identical' if a file was empty
+!
 ! Revision 1.27  2017/11/28 21:51:48  vsnyder
 ! Make AT fields wider
 !
