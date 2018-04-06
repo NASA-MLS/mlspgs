@@ -1,0 +1,94 @@
+!divert(-1)
+; $Id$
+
+; This is a new l2cf fragement that defines all the (mainly vertical)
+; grids.
+
+!divert!dnl
+!ifdef(flagSkipVGridStandard,{},{
+vGridStandard: vGrid, type=Logarithmic, coordinate=Zeta, $
+  start=1000mb, formula=[25:6,12:3]})
+vGridHiRes: vGrid, type=Logarithmic, coordinate=Zeta, $
+  start=1000mb, formula=[25:6,12:3]
+vGridrhisngllyr: vGrid, type=Logarithmic, coordinate=Zeta, $
+  start=100mb, formula=[2:6]
+vGridutrhi: vGrid, type=Logarithmic, coordinate=Zeta, $
+  start=100mb, formula=[1:1]
+vGridrhiprfl: vGrid, type=Logarithmic, coordinate=Zeta, $
+  start=316.2278mb, formula=[22:6]
+
+vGridBaseline: vGrid, type=Logarithmic, coordinate=Zeta, $
+  start=1000mb, formula=[25:12,4:1]
+vGridMAFBaseline: vGrid, type=Logarithmic, coordinate=Zeta, $
+  start=1mb, formula=[1:1]
+vGridExtinction: vGrid, type=Logarithmic, coordinate=Zeta, $
+  start=1000mb, formula=[21:12,14:6,12:3]
+vGridRefGPHumls: vGrid, type=Explicit, coordinate=Zeta, values=10mb
+vGridRefGPH: vGrid, type=Explicit, coordinate=Zeta, values=100mb
+vGridRefIWC: vGrid, type=Explicit, coordinate=Zeta, values=32mb
+vGridRefIWP: vGrid, type=Explicit, coordinate=Zeta, values=650mb
+vGridOH: vGrid, type=Logarithmic, coordinate=Zeta, $
+  start=1000mb, formula=[49:6]
+
+!ifdef(flagPrecisionEstimates,{
+  vGridTangent: vGrid, type=Logarithmic, coordinate=Zeta, $
+    start=1000mb, formula=[73:12]
+},{
+  vGridTangent: vGrid, type=Logarithmic, coordinate=Zeta, $
+    start=1000mb, formula=[2:6,12:12,41:6]
+})
+vGridTangentSids: vGrid, type=Logarithmic, coordinate=Zeta, $
+  start=1000mb, formula=[19:12]
+vGridDiag: vGrid, type=Logarithmic, coordinate=Zeta, $
+  start=1000mb, formula=[10:1]
+
+;; These ones are specifically for diagnostic quantities.
+vGridGlobal: vGrid, type=Explicit, coordinate=Zeta, values=1000mb
+
+vGridLowCloudR1A:  vGrid, type=Explicit, coordinate=Zeta, values=[1000mb,700mb]
+vGridHighCloudR1A: vGrid, type=Explicit, coordinate=Zeta, values=[215mb, 46mb], resolution=6
+vGridLowCloudR1B:  vGrid, type=Explicit, coordinate=Zeta, values=[1000mb,700mb]
+vGridHighCloudR1B: vGrid, type=Explicit, coordinate=Zeta, values=[215mb, 46mb], resolution=6
+
+vGridLowCloudR2:   vGrid, type=Explicit, coordinate=Zeta, values=[1000mb,700mb]
+vGridHighCloudR2:  vGrid, type=Explicit, coordinate=Zeta, values=[215mb, 46mb], resolution=6
+
+vGridLowCloudR3:   vGrid, type=Explicit, coordinate=Zeta, values=[316mb,215mb], resolution=6
+vGridHighCloudR3:  vGrid, type=Explicit, coordinate=Zeta, values=[316mb, 46mb], resolution=6
+
+vGridLowCloudR4:   vGrid, type=Explicit, coordinate=Zeta, values=[1000mb,146mb], resolution=6
+vGridHighCloudR4:  vGrid, type=Explicit, coordinate=Zeta, values=[146mb, 46mb], resolution=6
+
+vGridLowCloudR5H:  vGrid, type=Explicit, coordinate=Zeta, values=[1000mb,68mb], resolution=6
+vGridHighCloudR5H: vGrid, type=Explicit, coordinate=Zeta, values=[68mb,46mb], resolution=6
+vGridLowCloudR5V:  vGrid, type=Explicit, coordinate=Zeta, values=[1000mb,68mb], resolution=6
+vGridHighCloudR5V: vGrid, type=Explicit, coordinate=Zeta, values=[68mb,46mb], resolution=6
+
+!define(allIterationLevels,{!forloop({i},1,19,{!i, })20}) ; 1,2,3..20
+!define(allPhaseLevels,{!forloop({i},1,99,{!i, })100}) ; 1,2,3..100
+                                                                                
+vGridIterations: vGrid, type=Explicit, coordinate=Integer, $
+    values=[!allIterationLevels]
+vGridPhases: vGrid, type=Explicit, coordinate=Integer, $
+    values=[!allPhaseLevels]
+
+;!ifdef(flagMagneticFieldOnHeightGrid,{!dnl
+!ifelse(!substr(!MagneticFieldGrid,0,3), {Alt},
+{!dnl
+vGridMag: vGrid, type=Linear, coordinate=geodAltitude, $
+  start=-10 km, stop=150 km, number=17
+})
+sGridStandard:  vGrid, type=Explicit,   $
+       values=[20,40,60,80,100,120,140,160,180,200,$
+               220,240,260,280,300,320,340,360,380,400,420,440,460,480,500,$
+               520,540,560,580,600,620,640,660,680,700,720,740,760,780,800]
+vGridIWC: vGrid, type=Logarithmic, coordinate=Zeta, $
+  start= 464.158872744048438mb, formula=[7:6]
+
+vGridWMO: VGrid, type=Logarithmic, coordinate=Zeta, $
+  start=1000mb, formula=[97:48]
+!divert(-1)
+
+; $Log$
+;
+!divert!dnl
