@@ -211,7 +211,7 @@ CONTAINS
        ! as I can see, it's only for diagnostic purposes and isn't used by any
        ! other part of the Level 1 code. This file written as a fortran
        ! unformated sequential file. EngMAF%Eng%value is the EU values for the
-       ! counts contained in EngPkt. EngPkt is just the 6 1024 byte arrays, as
+       ! counts contained in EngPkt. EngPkt is just the 6 256 byte arrays, as
        ! read from telemetry. EngMAF contains the converted data. It's a user
        ! type (Eng_MAF_T) defined in EngTbls: ~line 150. EngMAF%Eng%Value stores
        ! the converted counts. Unfortunately, the mnemonic isn't stored in this
@@ -453,6 +453,9 @@ CONTAINS
 END MODULE CalibWeightsFlags
 !=============================================================================
 ! $Log$
+! Revision 2.12  2018/04/09 22:12:29  whdaffer
+! Documentation
+!
 ! Revision 2.11  2016/03/15 22:17:59  whdaffer
 ! Merged whd-rel-1-0 back onto main branch. Most changes
 ! are to comments, but there's some modification to Calibration.f90
