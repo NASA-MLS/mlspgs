@@ -18,7 +18,7 @@ MODULE MLSL1Config  ! Level 1 Configuration
   USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Info
   USE Init_tables_module, ONLY: First_Parm, Last_Parm
   USE INTRINSIC, ONLY: parm_indices
-  USE Output_m, ONLY: OutputOptions, Output, BOTHPRUNIT
+  USE Output_m, ONLY: OutputOptions, Output, BOTHPRUNIT, STDOUTPRUNIT
   USE STRING_TABLE, ONLY: Get_string
 
   IMPLICIT NONE
@@ -175,7 +175,9 @@ MODULE MLSL1Config  ! Level 1 Configuration
 
 !! Check tree syntax
 
-      OutputOptions%prunit = BOTHPRUNIT  ! to output to MLSMessage (and terminal)
+      ! This may be causing problems, so I'm resetting it to STDOUTPRUNIT
+      !OutputOptions%prunit = BOTHPRUNIT  ! to output to MLSMessage (and terminal)
+      OutputOptions%prunit = STDOUTPRUNIT
 
       CALL Check_tree (root, error, first_section)
 
@@ -881,6 +883,9 @@ MODULE MLSL1Config  ! Level 1 Configuration
 END MODULE MLSL1Config
 
 ! $Log$
+! Revision 2.36  2018/04/09 22:15:02  whdaffer
+! STDOUTPRUNIT
+!
 ! Revision 2.35  2016/05/10 20:30:57  mmadatya
 ! To get the error-checking parameters from the l1 configuration file instead of them being hard-coded into the source code
 !
