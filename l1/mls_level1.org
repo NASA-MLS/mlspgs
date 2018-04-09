@@ -3327,6 +3327,119 @@ it remains with the value of 1.
 
    
 
+* Trace through the code
+** MLSL0SN
+*** OpenInitBsw
+*** ExamineSciData
+    All this routine does is check and/or update the BandSwitches file!
+*** CloseFiles
+** MLSL1log
+   
+   + OpenAndInitializeLog
+   + BandSwitchesUpdate::ExamineData
+     After calling NextSciMAF, check the GSN for changes. That's about
+     it!
+     + SciUtils::NextSciMAF
+
+       By calling GetSciPkt(-> ReadL0Sci->ReadL0Packet) until the MAF
+       number changes, pull out the positions fo the pointing mirrors,
+       'process' DACS data, convert the DN for the pointing mirros to
+       anglesand return.
+
+       + SciUtils::GetSciPkt
+	 Reads the science packets
+	 + SciUtils::ReadL0Packet. Reads a packet (agnostic towards eng/sci?)
+
+       + ProcessDACSdata: DACS data is in some packed, compressed
+         format. The following undoes all that.
+
+	 + UnpackDACSdata : unpacks the DACS data, which is some
+           compressed packed format
+
+	   + UnpackUncompDACS
+
+	 + ProcessUnpackedDACS : Crap, I don't know. Coefficients
+           looks like a combination of a Taylor and a Fourier
+           series. Then runs them through a fourier transform.
+
+       + GetScAngles : Converts the DN for the mirrors
+
+   + DetermineWeightsFlags
+
+   + CloseFiles
+
+   + LogStatus
+** MLSL1G
+   + OpenInitialize
+   + LOOP: Do until there's no more good data
+
+     + SortQualify::SortAndQualify(more_data,do_calib)
+
+       The following four routines are only called if SortAndQualify
+       returns a flag (do_calib) that says there's enough good data to
+       do a calibration.
+
+       + UpdateCalWindow : Initializes BankWall, WallCnt, LimAltNo,
+     MinCalFlag variables, Reads WeightFlags,EngMAF and SciMAf from
+     MAF_dat_tmp.dat, which is created by MLSL1log then shifts data
+     around in arrays. If the data is inside the processing interval,
+     call...
+
+	 + OutputL1BOAData for this MAF
+
+       + QualifyCurrentMAF: This is the routine that does most of the
+     work.. It initializes various control variabls (MIFprecSign) and
+     the actual data (CurMAFdata%ChanType(MIF)%{FB,MB,WF,DACS},
+     Declares are BankWall (which only affects 2 MAFs) if the
+     Attenuation is over the maximum or has too much of a change and
+     marks individual MIFs as unuable (D == discard) if their GHz
+     mirror position isn't what's predicted in the L1CF file. Does
+     some quality checking on the space/target counts to see if they
+     make sense. If they're too 'close', suggesting that one or the
+     other of them are mislabeled, declare a WALL. Looks for Bright
+     Objects (e.g. the moon) and declares are WALL if any are
+     found. Looks for changes in the GSN (Ghz Switch network) and
+     declares a wall if there are any. If there haven't been any
+     change, find which channel ('banks' in the L1 code) each switch
+     is going to. (Need to put the Lock state code here, since we need
+     the information about the current GSN configuration)
+
+       + if (CalWinFull) QualifyWindow
+       + UpdateCalVecctors
+       + do_calib==CalWinFull
+     + if (only do the following if SortQualify returns `do_calib'==TRUE)
+       + Calibrate
+       + CalcLimbRads
+       + OutputL1BData
+       + LatBinRads
+     + ENDIF
+     + If no more_data==FALSE, exit
+   + ENDLOOP
+   + FinaliseDACSData
+   + UpdateBaseLines
+   + UpdateBaseLinesRads
+   + CloseFiles
+   + CloseMLSL1DebugFiles
+
+     
+** MLSL1T
+* Bands/Radiomters/Switch mappings
+** Radiometers
+   + R1A/R1B : Bands 1, 21, 22, 26, 32 and 34
+   + R2 : Bands 2-6, 23 and 27
+   + R3 : Bands 7-9, 25-26 and 33
+   + R4 : Bands 10-14, 28-31
+   + R5 : Bands 15-20 (Thz)
+** Bands
+** GSN Switch
+   1) Band 25 and 26 (DACS). Band 25 is pulled off of Bands 9 (R3),
+      Band 26 comes from Band21 (R1B). Whichever is passed through
+      Switch 1 is to DACS1.
+   2) Bands 2,3,5,6,8 and 9. Sent to FB 3.
+   3) Bands 1,4,7,8,13 and 21. Sent to FB 8.
+   4) Bands 10-12, 14, 20 and 21. Sent to FB 12.
+   5) Bands 15-20, Sent to FB 25 (THz bands!)
+
 * Lock states
 
   The lock states are stored in the Science5 section of Engineering
@@ -3361,13 +3474,17 @@ it remains with the value of 1.
 |  212 | GM07(msb) | RCO2 | [194,12] | Bands 2-6. See [1]       | (All of R2)                     |
 |      |           |      |          |                          |                                 |
 |      |           |      |          |                          | Band 2: FB2                     |
+|      |           |      |          |                          | FB3 (GSN sw 2, non-nominal)     |
 |      |           |      |          |                          | Band 3: FB3 (GSN sw 2, nominal) |
 |      |           |      |          |                          | null, if GSN sw2 doesn't        |
 |      |           |      |          |                          | pass Band 3                     |
+|      |           |      |          |                          |                                 |
 |      |           |      |          |                          | Band 4: FB4                     |
 |      |           |      |          |                          | FB8 (GSN sw3, non-nominal)      |
+|      |           |      |          |                          |                                 |
 |      |           |      |          |                          | Band 5: FB5                     |
 |      |           |      |          |                          | FB3 (GSN sw2, non-noninal)      |
+|      |           |      |          |                          |                                 |
 |      |           |      |          |                          | Band 6: FB6                     |
 |      |           |      |          |                          | FB3 (GSN sw2, non-nominal)      |
 |  213 | GM07(lsb) | RCO2 |          |                          | Same-same                       |
@@ -3381,23 +3498,29 @@ it remains with the value of 1.
 |  214 | GM08(msb) | RCO3 | [194,12] | Bands 7-9.See [1]        | All of R3                       |
 |      |           |      |          |                          | Band 7: FB7                     |
 |      |           |      |          |                          | FB8 (GSN sw3, non-nominal)      |
+|      |           |      |          |                          |                                 |
 |      |           |      |          |                          | Band 8: FB8                     |
 |      |           |      |          |                          | null (if GSN sw doesn't         |
 |      |           |      |          |                          | pass Band 8)                    |
+|      |           |      |          |                          |                                 |
 |      |           |      |          |                          | Band 9: FB9                     |
 |      |           |      |          |                          | FB3 (GSN sw2, non-nominal)      |
 |  215 | GM08(lsb) | RCO3 |          |                          | same-same                       |
 |      |           |      |          |                          |                                 |
 |  216 | GM09(msb) | RCO4 | [129,12] | Bands 10-14.See [1]      | Band 10: FB10                   |
 |      |           |      |          |                          | FB8 (GSN sw3, non-nominal)      |
+|      |           |      |          |                          |                                 |
 |      |           |      |          |                          | Band 11: FB11                   |
+|      |           |      |          |                          |                                 |
 |      |           |      |          |                          | Band 12: FB12 (GSN sw4,         |
 |      |           |      |          |                          | non-nominal)                    |
 |      |           |      |          |                          | FB12 (GSN sw4, non-nominal)     |
 |      |           |      |          |                          | null (if GSN sw4 doesn't        |
 |      |           |      |          |                          | pass band 12                    |
+|      |           |      |          |                          |                                 |
 |      |           |      |          |                          | Band 13: FB13                   |
 |      |           |      |          |                          | FB8 (GSN sw3, non-nominal)      |
+|      |           |      |          |                          |                                 |
 |      |           |      |          |                          | Band 14: FB14                   |
 |      |           |      |          |                          | FB12 (GSN sw4, non-nominal)     |
 |  217 | GM09(lsb) | RCO4 |          |                          | same-same                       |
@@ -3431,7 +3554,7 @@ it remains with the value of 1.
       + And so on...
 
 
-* Footnotes
+Footnotes
 
 [1] These are two byte quantities. The first byte in the list is
 the MSB, the seconds the LSB. They both must match their nominal
