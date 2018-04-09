@@ -339,6 +339,12 @@ CONTAINS
 
     IF (ALL (CalSwSeq == ComVecSwSeq)) RETURN  ! Check with current sequence
 
+    PRINT *,'Found differences between CalSwSeq and ComVecSwSeq!'
+    DO n=0,max_cal_index-1 
+      IF ( CalSwSeq(n) /= ComVecSwSeq(n) ) THEN 
+        PRINT *,n,CalSwSeq(n),', ',ComVecSwSeq(n)
+      ENDIF
+    ENDDO
     WRITE(msg,'("Doing comvecs: UTC: ",a27,", MAF/index=",i4,"/",i3)') &
          &       asciiUTC,dbMAF,dbStartIndex
     PRINT *,TRIM(msg)
@@ -359,6 +365,8 @@ CONTAINS
 
     comVecRecType="S "
     n=-1
+    ! This routine does nothing unless MLSL1Debug is set!
+    ! See MLSL1Debug module
     CALL writeComVecInfo(n,dbMAF,&
          &               dbtai93,CalSwSeq,cal_qual,cal_weight,&
          &               cal_time,errmul,comVec)
@@ -376,6 +384,8 @@ CONTAINS
     ENDDO
     comVecRecType="T "
     n=-1
+    ! This routine does nothing unless MLSL1Debug is set!
+    ! See MLSL1Debug module
     CALL writeComVecInfo(n,dbMAF,&
          &               dbtai93,CalSwSeq,cal_qual,cal_weight,&
          &               cal_time,errmul,comVec)
@@ -446,14 +456,15 @@ CONTAINS
     
     ! <whd>
     !
-    ! Set the calibration vectors for a particular data type and MAF. Pulls data out of
-    ! CurMAFdata%SciPkt(MIF)%X (X=FB,MB,WF or DACS), depending on `cal_type' and
-    ! puts it into the proper location of cal_cnts.  This `unwraps' the data
-    ! (which is nMAFsPerMIF x WinMAFs) and puts it into an vector that is
-    ! maxMIFs*WinMIFs (maxMIFs=150, normally). The data is concatenated, so if
-    ! there are (as is normally the case) 148 MIFs in all the MAFs in the
-    ! calibration window, than then usable data in cal_cnts is between indices 0
-    ! and 1479.
+    ! Set the calibration vectors for a particular data type and
+    ! MAF. Pulls data out of CurMAFdata%SciPkt(MIF)%X (X=FB,MB,WF or
+    ! DACS), depending on `cal_type' and puts it into the proper
+    ! location of cal_cnts.  This `unwraps' the data (which is
+    ! nMAFsPerMIF x WinMAFs) and puts it into an vector that is
+    ! maxMIFs*WinMIFs (maxMIFs=150, normally). The data is
+    ! concatenated, so if there are (as is normally the case) 148 MIFs
+    ! in all the MAFs in the calibration window, than then usable data
+    ! in cal_cnts is between indices 0 and 1479.
     !
     ! </whd>
 
@@ -536,8 +547,9 @@ CONTAINS
   SUBROUTINE UpdateCalVectors
 !=============================================================================
 
-!! Update the Calibration Vectors used by the interpolator. Called from SortQualify::SortAndQualify
-
+    !! Update the Calibration Vectors used by the interpolator. Called
+    !! from SortQualify::SortAndQualify
+    
     INTEGER :: windx, MIF_offset, last_MIF, start_index, end_index
     INTEGER :: bankno, channo, AltNo
 
@@ -1082,6 +1094,8 @@ CONTAINS
     cal_index(1) = start_index - CalWin%MAFdata(windex-1)%EMAF%MIFsPerMAF
     cal_index(2) = start_index + CalWin%MAFdata(windex)%EMAF%MIFsPerMAF
 
+    !PRINT *,'{start,end}_index = ',start_index,end_index
+    !PRINT *,'cal_index = ',cal_index
     ! Indices of MIFs with good altitudes.(???)
     LimbAltIndx => CalWin%MAFdata(windex)%LimbAltIndx
     ! <whd:comment>
@@ -1236,6 +1250,9 @@ END MODULE Calibration
 !=============================================================================
 
 ! $Log$
+! Revision 2.26  2018/04/09 22:12:58  whdaffer
+! Mostly documentation, and some reportage
+!
 ! Revision 2.25  2016/03/18 19:07:22  whdaffer
 ! Took out extraneous ',' that NAG complained about
 !
