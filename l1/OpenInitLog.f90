@@ -89,10 +89,18 @@ CONTAINS
     CALL GetL1Config
 
 !! Check output versions from CF and PCF
-
+    PRINT *,"About to check CF/L1PCF versions!"
     IF (L1Config%Globals%OutputVersionString /= L1PCF%OutputVersion) THEN
-       CALL MLSMessage (MLSMSG_Error, ModuleName, &
-            & "CF and PCF OutputVersions do not match!")
+      PRINT *,"CF and PCF OutputVersions do not match!"
+      PRINT *,"CF version: "//TRIM(L1Config%Globals%OutputVersionString)
+      PRINT *,"PCF version: "//TRIM(L1PCF%OutputVersion))
+      CALL MLSMessage (MLSMSG_Info, ModuleName, &
+           & "CF and PCF OutputVersions do not match!")
+      CALL MLSMessage (MLSMSG_Info, ModuleName, &
+           & "CF version: "//TRIM(L1Config%Globals%OutputVersionString))
+      CALL MLSMessage (MLSMSG_Error, ModuleName, &
+           & "PCF version: "//TRIM(L1PCF%OutputVersion))
+
     ENDIF
 
 !! TAI Processing range
@@ -322,6 +330,9 @@ CONTAINS
             PhysicalFilename)
     ENDIF
 
+    ! the file read by EngMAF_unit is a temporary file created by
+    ! MLSL1log, typically named engMAF_tmp.dat (PCF ID 921). There's
+    ! also one for the science data named sciMAF_tmp.dat (PCF ID 920)
     returnStatus = PGS_IO_Gen_Track_LUN (L1BFileInfo%EngMAF_unit, 0)
 
     OPEN (unit=L1BFileInfo%EngMAF_unit, file=PhysicalFilename, &
@@ -483,6 +494,11 @@ END MODULE OpenInitLog
 !=============================================================================
 
 ! $Log$
+! Revision 2.10  2018/04/09 22:18:34  whdaffer
+! Print out disagreement between l1cf versions, as that failure has
+! bitten me several times and I've had to spend *way* to much time
+! re-figuring it out.
+!
 ! Revision 2.9  2016/03/15 22:17:59  whdaffer
 ! Merged whd-rel-1-0 back onto main branch. Most changes
 ! are to comments, but there's some modification to Calibration.f90
