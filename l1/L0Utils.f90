@@ -262,7 +262,7 @@ CONTAINS
           data_OK = .FALSE.
           n = PGS_TD_TAItoUTC (engtime, asciiUTC)
           WRITE (msg, &
-               '("Bad Checksum: Eng Pkt ", i1, ", UTC: ", A27)') i, asciiUTC
+               '("Bad Checksum: Eng Pkt ", i1, ",MAF: ",i, ", UTC: ", A27)') i, MAFno, asciiUTC
           PRINT *, TRIM(msg)
           WRITE (L1BFileInfo%LogId, *) ''
           WRITE (L1BFileInfo%LogId, *) '### Info: '//TRIM(msg)
@@ -304,6 +304,9 @@ END MODULE L0Utils
 !=============================================================================
 
 ! $Log$
+! Revision 2.14  2018/04/09 22:13:21  whdaffer
+! Reportage
+!
 ! Revision 2.13  2016/03/15 22:17:59  whdaffer
 ! Merged whd-rel-1-0 back onto main branch. Most changes
 ! are to comments, but there's some modification to Calibration.f90
