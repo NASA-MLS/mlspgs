@@ -108,9 +108,12 @@ CONTAINS
 
 !=============================================================================
   SUBROUTINE ExamineSciData
-    
+
 !=============================================================================
 
+!! Despite the name, all this routine really does is check and/or
+!! update the Band Switches file, which stores the state of the GSN
+!! switching network.
 
 
     USE MLSL1Common, ONLY: BandSwitch
@@ -189,6 +192,9 @@ CONTAINS
 END MODULE BandSwitchesUpdate
 !=============================================================================
 ! $Log$
+! Revision 2.4  2018/04/09 22:12:19  whdaffer
+! Documentation
+!
 ! Revision 2.3  2016/03/15 22:17:59  whdaffer
 ! Merged whd-rel-1-0 back onto main branch. Most changes
 ! are to comments, but there's some modification to Calibration.f90
