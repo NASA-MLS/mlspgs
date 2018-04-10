@@ -50,6 +50,7 @@ program COMPARE
   logical :: DoStats = .false.    ! -s option specified
   logical :: END
   character(127) :: Errmsg
+  logical :: Error
   character(127) :: File1, File2
   integer :: I, I1, I2, J
   logical :: Same = .false.       ! Print "Identical" if files are the same
@@ -126,21 +127,24 @@ program COMPARE
     i = i + 1
   end do
 
+  error = .false.
   call get_command_argument ( i, file1 )
   open ( 10, file=file1, form='formatted', status='old', iostat=status, &
     & iomsg=errmsg )
   if ( status /= 0 ) then
-    print '("Unable to open input file ",a)', trim(file1)
-    print '("Status = ", i0, ", Message = ",a)', status, trim(errmsg)
-    stop
+    print 1, trim(file1), i, status, trim(errmsg)
+1   format ( 'Unable to open input file "', a, '" in argument ', i0 / &
+      & 'Status = ', i0, ', Message = ', a )
+    error = .true.
   end if
   call get_command_argument ( i+1, file2 )
-  open ( 11, file=file2, form='formatted', status='old', iostat=status )
+  open ( 11, file=file2, form='formatted', status='old', iostat=status, &
+    & iomsg=errmsg )
   if ( status /= 0 ) then
-    print '("Unable to open input file ",a)', trim(file2)
-    print '("Status = ", i0, ", Message = ",a)', status, trim(errmsg)
-    stop
+    print 1, trim(file2), i+1, status, trim(errmsg)
+    error = .true.
   end if
+  if ( error ) stop
 
   if ( all ) then
     print '(a)', '   Max Abs     Max Abs            Rel at Max  Max Rel            Abs at Max  Rel to Max'
@@ -367,6 +371,9 @@ contains
 end program
 
 ! $Log$
+! Revision 1.29  2018/04/05 01:34:34  vsnyder
+! Don't claim file sizes are different if files are identical
+!
 ! Revision 1.28  2017/11/29 01:35:44  vsnyder
 ! Don't print 'Identical' if a file was empty
 !
