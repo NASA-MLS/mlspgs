@@ -329,6 +329,7 @@ contains
         l = len_trim(bounds)
       else
         l = 0
+        bounds(1:1) = ''
       end if
       if ( status /= 0 ) then
         if ( present(ermsg) ) then
@@ -2113,6 +2114,9 @@ contains
 end module Allocate_Deallocate
 
 ! $Log$
+! Revision 2.54  2018/04/10 22:51:33  vsnyder
+! Don't leave bounds(1:1) undefined for messages about scalars
+!
 ! Revision 2.53  2017/10/31 23:42:57  vsnyder
 ! Add allocatable logical array support
 !
