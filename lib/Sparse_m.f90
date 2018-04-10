@@ -45,7 +45,9 @@ module Sparse_m
     generic :: Add_Element => Add_Element_Stru, Add_Element_Value, Add_Elements_Stru
     procedure :: Check_Column_Dup
     procedure :: Clear_All_Flags => Sparse_Clear_All_Flags
-    procedure :: Clear_Col => Sparse_Clear_Col ! Clear a column vector
+    procedure :: Clear_Col_Vec => Sparse_Clear_Col ! Clear a column vector
+    procedure :: Clear_Col_And_Flags => Sparse_Clear_Col_And_Flags
+    generic :: Clear_Col => Clear_Col_Vec, Clear_Col_And_Flags
     procedure :: Clear_Col_Flags => Sparse_Clear_Col_Flags
     procedure :: Clear_Vec => Sparse_Clear_Vec ! Clear a row vector
     generic :: Clear_Flags => Clear_All_Flags, Clear_Col_Flags
@@ -57,8 +59,10 @@ module Sparse_m
     procedure :: Get_All_Flags => Sparse_Get_All_Flags
     procedure :: Get_Col_Flags => Sparse_Get_Col_Flags
     procedure :: Get_Col_Vec => Sparse_Get_Col
+    procedure :: Get_Col_Vec_And_Flags => Sparse_Get_Col_And_Flags
     procedure :: Get_Col_Vec_And_Sparsity => Sparse_Get_Col_And_Sparsity
-    generic :: Get_Col => Get_Col_Vec, Get_Col_Vec_And_Sparsity
+    generic :: Get_Col => Get_Col_Vec, Get_Col_Vec_And_Flags, &
+             & Get_Col_Vec_And_Sparsity
     generic :: Get_Flags => Get_All_Flags, Get_Col_Flags
     procedure :: Invert_Column_Indices
     procedure :: List => List_Sparse
@@ -144,7 +148,7 @@ contains
   ! ----------------------------------------------  Create_Sparse  -----
   subroutine Create_Sparse ( Sparse, NR, NC, NE, UBnd, LBnd, What )
     ! Create a sparse matrix representation
-    use Allocate_Deallocate, only: Allocate_Test, Test_Allocate
+    use Allocate_Deallocate, only: Allocate_Test, Test_Allocate, Test_DeAllocate
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     class(sparse_t), intent(inout) :: Sparse  ! The sparse matrix
     integer, intent(in) :: NR                 ! Number of rows
@@ -191,6 +195,10 @@ contains
       reCreate = .not. allocated(sparse%e)
       if ( .not. reCreate ) reCreate = size(sparse%e) < ne
       if ( reCreate ) then
+        if ( allocated(sparse%e) ) then
+          deallocate ( sparse%e, stat=stat, errmsg=msg )
+          call test_deallocate ( stat, moduleName, "Sparse%E", ermsg=msg )
+        end if
         allocate ( sparse%e(ne), stat=stat, errmsg=msg )
         call test_allocate ( stat, moduleName, "Sparse%E", ermsg=msg )
       end if
@@ -598,7 +606,7 @@ contains
     character(127) :: Msg
 
     n = sparse%ne
-    if ( present(ne) ) n = ne
+    if ( present(ne) ) n = max(ne,n)
     allocate ( e(n), stat=stat, errmsg=msg )
     call test_allocate ( stat, moduleName, "E", ermsg=msg )
     e(1:sparse%ne) = sparse%e(1:sparse%ne)
@@ -679,6 +687,33 @@ contains
       if ( j == sparse%cols(c) ) exit
     end do
   end subroutine Sparse_Clear_Col
+
+  ! ---------------------------------  Sparse_Clear_Col_And_Flags  -----
+  subroutine Sparse_Clear_Col_And_Flags ( Sparse, C, Vector, Flags, Last )
+    ! Clear elements of Vector that correspond to nonzero elements of column C
+    ! of Sparse.
+    class(sparse_t), intent(in) :: Sparse  ! The sparse matrix
+    integer, intent(in) :: C               ! Which row to multiply by Vector
+    real(rp), intent(inout) :: Vector(:)   ! The vector
+    logical, intent(inout) :: Flags(:)     ! Set false where vector is set to
+                                           ! zero here
+    integer, intent(in), optional :: Last  ! Do not process rows > Last
+    integer :: J, MyLast, R
+
+    j = sparse%cols(c)     ! Last element in column c
+    if ( j == 0 ) return
+    myLast = sparse%nRows
+    if ( present(last) ) myLast = last
+    do
+      j = sparse%e(j)%nc   ! Element in next column of column c
+      r = sparse%e(j)%r
+      if ( r <= myLast ) then
+        vector(r) = 0
+        flags(r) = .false.
+      end if
+      if ( j == sparse%cols(c) ) exit
+    end do
+  end subroutine Sparse_Clear_Col_And_Flags
 
   ! -------------------------------------  Sparse_Clear_Col_Flags  -----
   subroutine Sparse_Clear_Col_Flags ( Sparse, C, Flags )
@@ -763,7 +798,7 @@ contains
 
   end subroutine Sparse_Get_All_Flags
 
-  ! -------------------------------------------  Sparse_Get_Col  -----
+  ! ---------------------------------------------  Sparse_Get_Col  -----
   subroutine Sparse_Get_Col ( Sparse, C, Vector )
     ! Get elements of Vector that correspond to nonzero elements of column C
     ! of Sparse.  Vector is not initially made zero.
@@ -774,11 +809,38 @@ contains
     j = sparse%cols(c)     ! Last element in column c
     if ( j == 0 ) return
     do
-      j = sparse%e(j)%nc   ! Element in next column of column c
+      j = sparse%e(j)%nc   ! Element in next row of column c
       vector(sparse%e(j)%r) = sparse%e(j)%v
       if ( j == sparse%cols(c) ) exit
     end do
   end subroutine Sparse_Get_Col
+
+  ! -----------------------------------  Sparse_Get_Col_And_Flags  -----
+  subroutine Sparse_Get_Col_And_Flags ( Sparse, C, Vector, Flags, Last )
+    ! Get elements of Vector that correspond to nonzero elements of column C
+    ! of Sparse.  Vector is not initially made zero.
+    class(sparse_t), intent(in) :: Sparse  ! The sparse matrix
+    integer, intent(in) :: C               ! Which row to multiply by Vector
+    real(rp), intent(inout) :: Vector(:)   ! The vector
+    logical, intent(inout) :: Flags(:)     ! True where Vector gets a value;
+                                           ! Not initially set false here
+    integer, intent(in), optional :: Last  ! Do not get rows beyond Last
+    integer :: J, MyLast, R
+
+    j = sparse%cols(c)     ! Last element in column c
+    if ( j == 0 ) return
+    myLast = sparse%nRows
+    if ( present(last) ) myLast = last
+    do
+      j = sparse%e(j)%nc   ! Element in next column of column c
+      r = sparse%e(j)%r
+      if ( r <= myLast ) then
+        vector(r) = sparse%e(j)%v
+        flags(r) = .true.
+      end if
+      if ( j == sparse%cols(c) ) exit
+    end do
+  end subroutine Sparse_Get_Col_And_Flags
 
   ! --------------------------------  Sparse_Get_Col_And_Sparsity  -----
   subroutine Sparse_Get_Col_And_Sparsity ( Sparse, C, Vector, NNZ, NZ )
@@ -870,6 +932,10 @@ contains
 end module Sparse_m
 
 ! $Log$
+! Revision 2.4  2018/04/10 23:27:23  vsnyder
+! Add Sparse_Clear_Col_And_Flags, Sparse_Get_Col_And_Flags.  Deallocate old
+! Sparse%E before attempting to allocate one of a different size.
+!
 ! Revision 2.3  2018/03/07 00:19:08  vsnyder
 ! Don't make names of procedures that are type-bound public.  Add
 ! Dump_Sparse_Array, Copy_Sparse, Invert_Column_Indices, Sparse_Clear_All_Flags,
