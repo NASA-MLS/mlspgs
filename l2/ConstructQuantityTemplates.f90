@@ -576,7 +576,8 @@ contains ! ============= Public procedures ===================================
     type :: Item_T
       Integer :: Type
       character(15) :: Name
-      logical :: Modular = .true.
+      logical :: Modular = .true. ! Tangent qty?
+      logical :: Bare = .true.  ! Not under any groupname?
     end type Item_T
     enum, bind(C)
       enumerator :: FirstSCItem = 1, scGeodLat = 1, scLon, &
@@ -588,15 +589,15 @@ contains ! ============= Public procedures ===================================
     ! First, SC items, then instrument items
     type (item_t), parameter :: L1bItemsToRead(firstSCItem:lastL1BItem) = (/ &
       !        Type              Name              Modular
-      & item_t(scGeodLat,       "scGeodLat      ", .false.), & ! Not tangent qty
-      & item_t(scLon,           "scLon          ", .false.), & ! Not tangent qty
-      & item_t(MAFStartTimeTAI, "MAFStartTimeTAI", .false.), & ! Not tangent qty
-      & item_t(tpGeodLat,       "tpGeodLat      "), &
-      & item_t(tpLon,           "tpLon          "), &
-      & item_t(tpGeodAngle,     "tpGeodAngle    "), &
-      & item_t(tpSolarZenith,   "tpSolarZenith  "), &
-      & item_t(tpSolarTime,     "tpSolarTime    "), &
-      & item_t(tpLosAngle,      "tpLosAngle     ") /)
+      & item_t(scGeodLat,       "scGeodLat      ", .false., .false.), &
+      & item_t(scLon,           "scLon          ", .false., .false.), &
+      & item_t(MAFStartTimeTAI, "MAFStartTimeTAI", .false.,  .true.), &
+      & item_t(tpGeodLat,       "tpGeodLat      ", .true.,  .false.), &
+      & item_t(tpLon,           "tpLon          ", .true.,  .false.), &
+      & item_t(tpGeodAngle,     "tpGeodAngle    ", .true.,  .false.), &
+      & item_t(tpSolarZenith,   "tpSolarZenith  ", .true.,  .false.), &
+      & item_t(tpSolarTime,     "tpSolarTime    ", .true.,  .false.), &
+      & item_t(tpLosAngle,      "tpLosAngle     ", .true.,  .false.) /)
 
     ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -626,6 +627,7 @@ contains ! ============= Public procedures ===================================
     MissingOK = .false. ! .not. AURA_L1BFILES
     verbose = BeVerbose( 'qtmp', -1 )
     verboser = LetsDebug( 'qtmp', 0 )
+    MissingOK = BeVerbose( 'missOK', -1 )
 
     call GetModuleName( instrumentModule, instrumentModuleName )
     if ( verbose ) then
@@ -790,22 +792,28 @@ contains ! ============= Public procedures ===================================
         ! Get the name of the item to read
         l1bItemName = L1bItemsToRead(l1bItem)%name
         if ( verbose ) call outputNamedValue ( 'its name', trim(l1bItemName) )
-        if ( L1bItemsToRead(l1bItem)%modular ) then
+        if ( L1bItemsToRead(l1bItem)%Bare ) then
+          ! This should be the name as stored in the l1boa file
+        elseif ( L1bItemsToRead(l1bItem)%modular ) then
           if ( verbose ) call output ( 'it is modular', advance='yes' )
           call GetModuleName ( instrumentModule, l1bItemName )
           if ( IsModuleSpacecraft(instrumentModule) ) &
-            & call GetModuleName ( instrumentModule+1, l1bItemName )
-          l1bItemName = trim(l1bItemName)//'.'//L1bItemsToRead(l1bItem)%name
+            & call GetModuleName ( instrumentModule+1, instrumentModuleName )
+          l1bItemName = trim(instrumentModuleName)//'.'//L1bItemsToRead(l1bItem)%name
+          if ( verboser ) call outputnamedValue ( 'before assembly', trim(l1bItemName) )
+          l1bItemName = AssembleL1BQtyName ( l1bItemName, hdfVersion, .false. )
         elseif ( .not. isAnyModuleSpacecraft() ) then
           cycle
         else
           l1bItemName = L1bItemsToRead(l1bItem)%name
+          if ( verboser ) call outputnamedValue ( 'before assembly', trim(l1bItemName) )
+          if ( l1bItemName(1:2) == 'sc' ) l1bItemName = l1bItemName(3:)
+          l1bItemName = AssembleL1BQtyName ( l1bItemName, hdfVersion, .false., &
+            & instrumentModuleName )
         end if
 
         ! Read it from the l1boa file
-        if ( verboser ) call outputnamedValue ( 'before assembly', trim(l1bItemName) )
-        l1bItemName = AssembleL1BQtyName ( l1bItemName, hdfVersion, .false. )
-        if ( verboser ) call outputnamedValue ( 'l1bItemName#2', trim(l1bItemName) )
+        if ( verboser ) call outputNamedValue ( 'MissingOK', MissingOK )
         call ReadL1BData ( L1BFile, l1bItemName, l1bField, noMAFs, &
           & l1bFlag, firstMAF=chunk%firstMafIndex, &
           & lastMAF=chunk%lastMafIndex, neverfail=MissingOK )
@@ -1600,6 +1608,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.207  2018/04/11 17:47:05  pwagner
+! Should work better with ASMLS mif geolocations
+!
 ! Revision 2.206  2018/02/23 22:04:45  mmadatya
 ! Added l_instECR for ASMLS
 !
