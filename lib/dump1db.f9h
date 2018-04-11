@@ -61,12 +61,15 @@
           numZeroRows = 0
         end if
       end do ! j
-      call say_fill ( (/ j-myWidth, size(array) /), numZeroRows, myFillValue, &
+      call say_fill ( (/ j-2*myWidth+base, size(array) /), numZeroRows, myFillValue, &
         & format=myFormat )
     end if
     call theDumpEnds
 !   end subroutine DUMP_1D_COMPLEX
 ! $Log$
+! Revision 2.7  2018/04/11 19:25:57  vsnyder
+! Correct fill width calculation
+!
 ! Revision 2.6  2017/07/31 23:18:55  pwagner
 ! Try to avoid printing unwanted blank lines
 !
