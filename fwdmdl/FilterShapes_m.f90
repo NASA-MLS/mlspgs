@@ -405,7 +405,6 @@ contains
     ! doesn't yet exist
 
     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
-    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
 
     ! Dummy arguments
     type (FilterShape_T), dimension(:), pointer :: database
@@ -426,7 +425,6 @@ contains
     ! doesn't yet exist
 
     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
-    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
 
     ! Dummy arguments
     type (DACSFilterShape_T), dimension(:), pointer :: database
@@ -595,6 +593,9 @@ contains
 end module FilterShapes_m
 
 ! $Log$
+! Revision 2.30  2017/06/02 18:29:58  pwagner
+! Repaired bug that crashed when number_in_shape was 1
+!
 ! Revision 2.29  2015/03/28 01:58:31  vsnyder
 ! Added stuff to trace allocate/deallocate addresses
 !

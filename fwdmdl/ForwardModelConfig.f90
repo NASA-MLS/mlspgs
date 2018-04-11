@@ -255,7 +255,6 @@ contains
     ! doesn't yet exist
 
     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
-    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
 
     ! Dummy arguments
     type (ForwardModelConfig_T), dimension(:), pointer :: Database
@@ -1578,6 +1577,10 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.140  2017/09/20 01:07:57  vsnyder
+! Add check that filter shapes are provided if frequency averaging is
+! selected.
+!
 ! Revision 2.139  2017/09/15 15:45:18  livesey
 ! Modified to allow omission of filter shapes file under appropriate circumstances
 !
