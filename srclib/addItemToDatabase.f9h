@@ -10,14 +10,12 @@
 ! foreign countries or providing access to foreign persons.
 
 ! Needs: 
-  ! use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
-  !            & MLSMSG_Error
+  ! use Allocate_Deallocate, only: Test_Allocate, Test_DeAllocate
 ! in the including scoping unit or its host.
 
 ! $Id$
 
-    integer :: newSize, status
-    integer(selected_int_kind(18)) :: Addr
+    integer :: NewSize, Status
     character(127) :: ERMSG
 
     ! Executable code
@@ -31,7 +29,7 @@
     block
       use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
       integer(C_Intptr_t) :: Addr
-      allocate ( tempDatabase(newSize), STAT=status, ERRMSG=ERMSG )
+      allocate ( tempDatabase(newSize), STAT=status, ERRMSG=ermsg )
       addr = 0
       if ( status == 0 ) addr = transfer ( c_loc(tempDatabase(1)), addr )
       call test_allocate ( status, moduleName, "tempDatabase", uBounds = newSize, &
@@ -43,7 +41,7 @@
         addr = 0
         if ( size(database) > 0 ) &
           & addr = transfer ( c_loc(Database(lbound(database,1))), addr )
-        deallocate ( database, stat=status, ERRMSG=ERMSG )
+        deallocate ( database, STAT=status, ERRMSG=ermsg )
         call test_deallocate ( status, moduleName, "database", &
           & (newSize-1) * storage_size(tempDatabase) / 8, ermsg, addr )
       end if
@@ -52,6 +50,9 @@
     end block
 
 ! $Log$
+! Revision 1.9  2018/04/11 20:32:04  vsnyder
+! Compute the address for allocate/deallocate logging
+!
 ! Revision 1.8  2015/03/28 00:54:34  vsnyder
 ! Stuff to trace allocate/deallocate addresses -- mostly commented out
 ! because NAG build 1017 doesn't yet allow arrays as arguments to C_LOC.
