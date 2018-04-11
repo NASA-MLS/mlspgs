@@ -85,7 +85,6 @@ contains
   ! if necessary.
 
     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
-    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
 
     ! Dummy arguments
     type(line_T), pointer, dimension(:) :: Database
@@ -114,6 +113,9 @@ contains
 end module Spectroscopy_Types
 
 ! $Log$
+! Revision 2.7  2018/04/11 22:25:23  vsnyder
+! Remove USE for unused names
+!
 ! Revision 2.6  2015/03/28 02:06:20  vsnyder
 ! Added stuff to trace allocate/deallocate addresses
 !
