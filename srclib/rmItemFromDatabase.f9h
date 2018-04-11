@@ -29,7 +29,6 @@
   !   forcing the subprogram to find rmItemNumber itself prior)
     integer :: newSize, oldSize, status
     integer :: rmItemNumber, i
-    integer(selected_int_kind(18)) :: Addr
     character(127) :: ERMSG
 
     ! Executable code
@@ -40,11 +39,9 @@
       if( Item%name == database(i)%name ) rmItemNumber=i
     end do
 
-!     block
-!       Intel ifort 15.0 doesn't allow USE inside BLOCK, so put it in
-!       every subprogram that includes this file, at least for now (2015/02/13).
-!       use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
-!       integer(C_Intptr_t) :: Addr
+    block
+      use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
+      integer(C_Intptr_t) :: Addr
       newSize=0
       if ( .not. associated(database) ) then
         call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -57,19 +54,19 @@
           oldSize = size(database) * storage_size(database) / 8
           addr = 0
           if ( oldSize > 0 ) addr = transfer ( c_loc ( database(1) ), addr )
-          deallocate ( database, stat=status, ERRMSG=ERMSG )
+          deallocate ( database, STAT=status, ERRMSG=ermsg )
           call test_deallocate ( status, ModuleName, "database", oldSize, &
-            & ERMSG=ERMSG, address=addr )
+            & ermsg=ermsg, address=addr )
         end if
       else
-        allocate ( tempDatabase(SIZE(database)-1), STAT=status, ERRMSG=ERMSG )
+        allocate ( tempDatabase(SIZE(database)-1), STAT=status, ERRMSG=ermsg )
         addr = 0
         if ( status == 0 ) then
           if ( size(tempDatabase) > 0 ) addr = transfer ( c_loc ( tempDatabase(1) ), addr )
         end if
         call test_allocate ( status, ModuleName, "tempDatabase", &
           uBounds = SIZE(database)-1, elementSize = storage_size(tempDatabase) / 8, &
-          ERMSG=ERMSG, address=addr )
+          ermsg=ermsg, address=addr )
         do i=1, SIZE(database)
           if (i /= rmItemNumber) then
             newSize = newSize+1
@@ -77,16 +74,20 @@
           end if
         end do
         oldSize = size(database) * storage_size(database) / 8
-        deallocate ( database, stat=status, ERRMSG=ERMSG )
+        deallocate ( database, STAT=status, ERRMSG=ermsg )
         addr = 0
         if ( oldSize > 0 ) addr = transfer ( c_loc ( database(1) ), addr )
         call test_deallocate ( status, ModuleName, "database", oldSize, &
-          & ERMSG=ERMSG, address=addr )
+          & ermsg=ermsg, address=addr )
         database => tempDatabase
       end if
-!     end block
+    end block
 
 ! $Log$
+! Revision 1.6  2015/03/28 00:54:34  vsnyder
+! Stuff to trace allocate/deallocate addresses -- mostly commented out
+! because NAG build 1017 doesn't yet allow arrays as arguments to C_LOC.
+!
 ! Revision 1.5  2014/09/04 23:55:17  vsnyder
 ! Add allocate/deallocate size tracking
 !
