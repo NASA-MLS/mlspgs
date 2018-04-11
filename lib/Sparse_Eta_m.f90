@@ -292,13 +292,13 @@ contains
         if ( k /= 0 ) then
           do
             fl = l%rows(lr)
-            j = l%e(fl)%nr       ! First element of L in row I
+            j = l%e(fl)%nr       ! First element of L in row LR
             if ( j /= 0 ) then
               do
                 v = l%e(j)%v * r%e(k)%v
                 if ( v /= 0.0 ) &
                   & call p%add_element ( v, i, m*(r%e(k)%c-1) + l%e(j)%c )
-                j = l%e(j)%nr             ! Next element of L in row I
+                j = l%e(j)%nr             ! Next element of L in row LR
                 if ( j == l%e(fl)%nr ) exit ! Back to the first element?
               end do
             end if
@@ -312,7 +312,7 @@ contains
     p%nRows = r%nRows
 
     if ( present(resize) ) then
-      if ( resize ) call p%resize ( p%ne )
+      if ( resize ) call p%resize
     end if
 
   end subroutine Sparse_Eta_nD
@@ -330,6 +330,9 @@ contains
 end module Sparse_Eta_m
 
 ! $Log$
+! Revision 2.4  2018/04/11 19:30:29  vsnyder
+! Call p%resize without argument. Repair some comments
+!
 ! Revision 2.3  2018/03/07 00:21:19  vsnyder
 ! Don't make names of procedures that are type-bound public.  Add Eta generic
 ! for Sparse_Eta_1D and Sparse_Eta_nD.  Allow the left factor in Sparse_Eta_nD
