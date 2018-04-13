@@ -3305,11 +3305,11 @@ contains ! =====     Public Procedures     =============================
       mypcfEndCode = 0
       lun = 0
       version = 1
-      call outputNamedValue( 'About to get_string for file name', fileIndex )
+      if ( deebug ) call outputNamedValue( 'About to get_string for file name', fileIndex )
       call get_string ( fileIndex, shortName, strip=.true. )
       fileName = shortName
-      call outputNamedValue( 'Result', fileName )
-      call outputNamedValue( 'About to get_string for file type', lit_indices(fileType) )
+      if ( deebug ) call outputNamedValue( 'Result', fileName )
+      if ( deebug ) call outputNamedValue( 'About to get_string for file type', lit_indices(fileType) )
       call get_string ( lit_indices(fileType), fileTypeStr, strip=.true. )
       call outputNamedValue( 'Result', fileTypeStr )
       if ( noPCFid ) then
@@ -3364,6 +3364,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.475  2018/04/13 00:17:39  pwagner
+! Reduced non-debug printing
+!
 ! Revision 2.474  2018/03/14 22:52:32  pwagner
 ! Reduce output when changing settings
 !
