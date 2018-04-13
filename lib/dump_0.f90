@@ -21,9 +21,6 @@ module Dump_0
 ! Instead of a whole array, or in addition, one may dump a condensed summary
 ! showing min, max, percentages of non-zero values, etc.
 
-! This has become too long--we may split it, putting diffs into a higher-level
-! and separate Dump_1.f90 module
-
   use HyperSlabs, only: Bandwidth, Collapse
   use BitStuff, only: MaxBitNumber, WhichBitsAreSet
   use Dump_Options, only: AfterSub, AuBrick, MyBandwidth=>Bandwidth, &
@@ -68,7 +65,7 @@ module Dump_0
 ! === (end of toc) ===
 
 ! === (start of api) ===
-! dump ( Array, char* name,
+! Dump ( Array, char* name,
 !      [fillvalue], [int width], [char* format],
 !      [int lbound], [char* options] ) 
 !       where array can be a 1, 2, or 3d array of
@@ -83,6 +80,21 @@ module Dump_0
 ! PrintRMSetc ( char* Name, num min, num max, num rms, num mean )
 !
 ! Options are described in Dump_Options
+! By their judicious use you might choose to print an entire array or
+! instead just a statistical sampling.
+!
+! Note that the appearance of Name may be affected by the use
+! of any of 3 possible flags in the Name field of Dump. The method
+! of appending the flags has an air of hackery-quackery about it. E.g.,
+! If Name = 'MyName\h'
+! then Dump might print this
+! ---------------------------MyName---------------------
+!    (:) all 3500 values are 0
+! So the flags are separated from the final character of Name by a '\'
+! flag             effect
+!  b               print Name in a Banner
+!  h               print Name as a Headline
+!  n               omit Newline after printing name
 ! === (end of api) ===
 
   public :: &
@@ -1729,6 +1741,9 @@ contains
 end module Dump_0
 
 ! $Log$
+! Revision 2.154  2018/04/13 00:22:49  pwagner
+! Improved comments; explain use of appearance flags like 'MyName\h'
+!
 ! Revision 2.153  2018/02/28 19:51:35  pwagner
 ! Moved PrintName to dump_options
 !
