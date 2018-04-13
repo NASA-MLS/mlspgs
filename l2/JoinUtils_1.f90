@@ -362,7 +362,8 @@ contains ! =====     Public Procedures     =============================
     & sourceVectors, sourceQuantities, &
     & precisionVectors, precisionQuantities, &
     & vectors, DirectDatabase, directfiles, &
-    & directfile, thisDirect, chunks, FWModelConfig, single )
+    & directfile, thisDirect, chunks, FWModelConfig, single, &
+    & L2Aux )
     ! Args
     integer, intent(in)            :: Son
     integer, intent(in)            :: Node
@@ -393,6 +394,7 @@ contains ! =====     Public Procedures     =============================
     type (MLSChunk_T), dimension(:), intent(in) :: chunks
     type(ForwardModelConfig_T), dimension(:), pointer :: FWModelConfig
     logical, intent(in)            :: single
+    logical, intent(in)            :: L2Aux  ! Is the file an L2Aux type?
     
     ! Local variables
     character(len=1024)           :: HDFNAME      ! Output swath/sd name
@@ -423,10 +425,18 @@ contains ! =====     Public Procedures     =============================
         NumPermitted = NumPermitted + 1
         if ( sourceQuantities(source) < 1 ) then
           ! This is the case where we write an entire vector
+          vector => vectors(sourceVectors(source))
+          if ( L2Aux ) then
+            ! L2Aux
             call DirectWrite ( directFile, vector, &
               & chunkNo, chunks, FWModelConfig, &
               & lowerOverlap=lowerOverlap, upperOverlap=upperOverlap, &
               & single=single, options=options, groupName=groupName )
+          else
+            ! Plain hdf
+            call DirectWrite ( directFile, vector, &
+              & options=options, groupName=groupName )
+          endif
           cycle
         end if
         qty => GetVectorQtyByTemplateIndex ( vectors(sourceVectors(source)), &
@@ -463,7 +473,11 @@ contains ! =====     Public Procedures     =============================
 
         ! Do the actual DirectWrite
         ! (Why do we need to redefine fileType? Is add_metadata so stupid?)
-          if ( inputFile /= 'undefined' ) then
+          if ( .not. L2Aux ) then
+            ! Plain hdf
+            call DirectWrite ( directFile, qty, precQty, hdfName, &
+              & options=options )
+          elseif ( inputFile /= 'undefined' ) then
             ! Write the ascii file as if it contained the quantity's values
             call DirectWrite ( directFile, qty, hdfName, &
               & chunkNo, options=options, rank=rank, inputFile=inputFile  )
@@ -721,6 +735,9 @@ end module JoinUtils_1
 
 !
 ! $Log$
+! Revision 2.2  2018/04/13 00:20:12  pwagner
+! Plain hdf DirectWrites and -Reads are now 'auto'
+!
 ! Revision 2.1  2018/01/12 00:20:25  pwagner
 ! First commit
 !
