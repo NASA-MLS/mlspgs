@@ -7714,7 +7714,8 @@ contains ! =====     Public Procedures     =============================
     ! -----------------------------------------  NamedQtyFromFile  -----
     subroutine NamedQtyFromFile ( key, quantity, MLSFile, &
       & filetype, name, spread, interpolate, homogeneous )
-      use MLSHDF5, only: GetHDF5Attribute, GetHDF5DSDims, LoadFromHDF5DS
+      use MLSHDF5, only: GetHDF5Attribute, GetHDF5DSDims, GetHDF5DSRank, &
+        & LoadFromHDF5DS
       integer, intent(in) :: KEY        ! Tree node
       type (VectorValue_T), intent(inout) :: QUANTITY ! Radiance quantity to modify
       type (MLSFile_T), pointer   :: MLSFile
@@ -7725,6 +7726,7 @@ contains ! =====     Public Procedures     =============================
       logical, intent(in)                    :: homogeneous
 
       ! Local variables
+      character(len=8)    :: caseName
       integer, dimension(3) :: dimInts
       integer(kind=hSize_t), dimension(3) :: dims
       integer, parameter :: globalUnit = 0
@@ -7735,6 +7737,7 @@ contains ! =====     Public Procedures     =============================
       integer :: Me = -1           ! String index for trace
       integer :: noSurfs
       type (VectorValue_T), pointer :: PTAN => null()
+      integer :: rank
       integer :: status
       real(r8), dimension(:), pointer :: surfs  => null()
       real(rv), dimension(:,:,:), pointer :: values => null()
@@ -7743,10 +7746,21 @@ contains ! =====     Public Procedures     =============================
       ! Executable code
       call trace_begin ( me, 'FillUtils_1.NamedQtyFromFile', key, &
         & cond=toggle(gen) .and. levels(gen) > 2 )
-      verbose = ( switchDetail(switches, 'fill') > 0 )
+      verbose = ( switchDetail(switches, 'fill') > -1 )
       call GetHDF5DSDims ( MLSFile, name, DIMS )
       dimInts = max(dims, int(1,hsize_t))
-      select case (lowercase(fileType))
+      caseName = lowercase(fileType)
+      if ( any( casename == (/ 'l2aux   ', 'swath  ', 'l2gp    ' /) ) ) then
+        ! Keep your old casename
+      else
+        call GetHDF5DSRank ( MLSFile, name, rank )
+        if ( verbose ) call outputNamedvalue ( 'rank', rank )
+        if ( verbose ) call outputNamedvalue ( 'dimInts', dimInts )
+        if ( rank == 2 .and. .not. interpolate .and. .not. spread ) &
+          & casename = 'auto' ! Assume you wrote it as you'll read it
+      endif
+      if ( verbose ) call outputNamedValue( 'fileType', trim(fileType) )
+      select case ( caseName )
       case ('l2aux')
         if ( spread ) call Announce_Error ( key, no_Error_Code, &
           &   'Unable to use spread when filling from L2AUX file' )
@@ -7759,10 +7773,14 @@ contains ! =====     Public Procedures     =============================
         call ReadL2GPData( MLSFile, name, L2GP )
         call FromL2GP ( quantity, L2GP, .false., -1, status, .true., .false. )
         call DestroyL2GPContents ( L2GP )
-      case default ! E.g., 'hdf'
-        call Allocate_test ( values, dimInts(1), dimInts(2), dimInts(3), 'values read from file', ModuleName )
-        call loadFromHDF5DS ( MLSFile, &
-          & trim(Name), values ) ! quantity%values )
+      case ('auto')
+        ! Simplest
+        call LoadfromHDF5DS ( MLSFile, trim(Name), quantity%values )
+      case default ! E.g., 'hdf' but not 'auto'
+        call Allocate_test ( values, dimInts(1), dimInts(2), dimInts(3), &
+          & 'values read from file', ModuleName )
+        call LoadMyHDF5DS ( MLSFile, &
+          & trim(Name), values, rank, dimInts ) ! quantity%values )
         if ( verbose ) then
           call outputNamedValue( 'name', trim(name) )
           call outputNamedValue( 'spread', spread )
@@ -7828,6 +7846,25 @@ contains ! =====     Public Procedures     =============================
         & cond=toggle(gen) .and. levels(gen) > 2 )
 
     contains
+      subroutine LoadMyHDF5DS ( MLSFile, &
+           & Name, values, rank, dimInts )
+        ! Load the values from MLSFile depending on the rank by which it was stored
+        type (MLSFile_T), pointer   :: MLSFile
+        character(len=*), intent(in) :: name
+        real(rv), dimension(:,:,:) :: values
+        integer, intent(in) :: rank
+        integer, dimension(3), intent(in) :: dimInts
+        select case ( rank )
+        case ( 3 )
+          call LoadfromHDF5DS ( MLSFile, trim(Name), values )
+        case ( 2 )
+          call LoadfromHDF5DS ( MLSFile, trim(Name), values(:,:,1) )
+        case ( 1 )
+          call LoadfromHDF5DS ( MLSFile, trim(Name), values(:,1,1) )
+        case default
+          ! ?
+        end select
+      end subroutine LoadMyHDF5DS
 
       subroutine FillMyInstances ( values1, values2 )
         ! Handle the following cases:
@@ -7906,6 +7943,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.141  2018/04/13 00:19:18  pwagner
+! Plain hdf DirectWrites and -Reads are now 'auto'
+!
 ! Revision 2.140  2018/03/14 22:54:12  pwagner
 ! Stop computing unneeded arrays in HeightFromPressure
 !
