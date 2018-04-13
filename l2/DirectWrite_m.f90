@@ -113,11 +113,13 @@ module DirectWrite_m  ! alternative to Join/OutputAndClose methods
   end interface
 
   interface DirectWrite
-    module procedure DirectWrite_L2Aux_MF
-    module procedure DirectWrite_L2GP_MF
+    module procedure DirectWrite_Hdf
+    module procedure DirectWrite_L2Aux
+    module procedure DirectWrite_L2GP
     module procedure DirectWrite_Quantity
-    module procedure DirectWriteVector_L2GP_MF
-    module procedure DirectWriteVector_L2Aux_MF
+    module procedure DirectWriteVector_Hdf
+    module procedure DirectWriteVector_L2GP
+    module procedure DirectWriteVector_L2Aux
     module procedure DirectWriteVector_EveryQuantity
   end interface
 
@@ -436,8 +438,8 @@ contains ! ======================= Public Procedures =========================
     enddo
   end subroutine DirectWriteVector_EveryQuantity
 
-  ! ------------------------------------------ DirectWriteVector_L2GP_MF --------
-  subroutine DirectWriteVector_L2GP_MF ( L2gpFile, &
+  ! ------------------------------------------ DirectWriteVector_L2GP --------
+  subroutine DirectWriteVector_L2GP ( L2gpFile, &
     & vector, &
     & chunkNo, createSwath, lowerOverlap, upperOverlap, maxChunkSize )
 
@@ -468,15 +470,15 @@ contains ! ======================= Public Procedures =========================
     do j = 1, size(vector%quantities)
       quantity => vector%quantities(j)
       call get_string( quantity%template%name, sdname )
-      call DirectWrite_L2GP_MF ( L2gpFile, &
+      call DirectWrite_L2GP ( L2gpFile, &
         & quantity, precision, quality, status, Convergence, AscDescMode, &
         & sdName, chunkNo, createSwath, lowerOverlap, upperOverlap, &
         & maxChunkSize )
     enddo
-  end subroutine DirectWriteVector_L2GP_MF
+  end subroutine DirectWriteVector_L2GP
 
-  ! ------------------------------------------ DirectWrite_L2GP_MF --------
-  subroutine DirectWrite_L2GP_MF ( L2gpFile, &
+  ! ------------------------------------------ DirectWrite_L2GP --------
+  subroutine DirectWrite_L2GP ( L2gpFile, &
     & quantity, precision, quality, status, Convergence, AscDescMode, &
     & sdName, chunkNo, createSwath, lowerOverlap, upperOverlap, &
     & maxChunkSize )
@@ -628,10 +630,10 @@ contains ! ======================= Public Procedures =========================
     if ( switchDetail(switches, 'l2gp') > -1 ) call dump(l2gp)
     ! Clear up our temporary l2gp
     call DestroyL2GPContents(l2gp)
-  end subroutine DirectWrite_L2GP_MF
+  end subroutine DirectWrite_L2GP
 
-  ! ------------------------------------------- DirectWriteVector_L2Aux_MF --------
-  subroutine DirectWriteVector_L2Aux_MF ( L2AUXFile, Vector, &
+  ! ------------------------------------------- DirectWriteVector_L2Aux --------
+  subroutine DirectWriteVector_L2Aux ( L2AUXFile, Vector, &
     & chunkNo, chunks, FWModelConfig, &
     & lowerOverlap, upperOverlap, single, options, groupName )
 
@@ -690,15 +692,120 @@ contains ! ======================= Public Procedures =========================
         sdName = 'Quantity ' // trim(sdName)
       endif
       if ( useGroupName ) sdName = trim(groupName) // '/' // sdName
-      call DirectWrite_L2Aux_MF ( L2AUXFile, quantity, precision, sdName, &
+      call DirectWrite_L2Aux ( L2AUXFile, quantity, precision, sdName, &
         & chunkNo, chunks, FWModelConfig, &
         & lowerOverlap, upperOverlap, single, options )
     enddo
-  end subroutine DirectWriteVector_L2Aux_MF
+  end subroutine DirectWriteVector_L2Aux
 
+  ! ------------------------------------------- DirectWriteVector_Hdf --------
+  subroutine DirectWriteVector_Hdf ( L2AUXFile, Vector, &
+    & options, groupName )
 
-  ! ------------------------------------------- DirectWrite_L2Aux_MF --------
-  subroutine DirectWrite_L2Aux_MF ( L2AUXFile, quantity, precision, sdName, &
+    ! Purpose:
+    ! Write plain hdf-formatted files ala l2aux for datasets that
+    ! are too big to keep all chunks stored in memory
+    ! so instead write them out chunk-by-chunk
+    
+    ! Despite the name the routine takes vector quantities, not l2aux ones
+    ! It dooes so an entrire vector's worth of vector quantities
+    use MLSStrings, only: WriteIntsToChars
+    ! Args:
+    type (Vector_T), intent(in)   :: VECTOR
+    type(MLSFile_T)               :: L2AUXFile
+    character(len=*), intent(in), optional :: options
+    character(len=*), intent(in), optional :: groupName
+    ! Local parameters
+    integer                       :: j
+    logical                       :: nameQtyByTemplate
+    type (VectorValue_T), pointer :: QUANTITY
+    type (VectorValue_T), pointer :: PRECISION
+    character(len=32)             :: SDNAME       ! Name of sd in output file
+    logical                       :: useGroupName
+    logical                       :: verbose
+    ! Executable
+    verbose = BeVerbose ( 'direct', 0 )
+    nameQtyByTemplate = .true.
+    if ( present(options) ) nameQtyByTemplate = &
+      & .not. ( index(options, 'num') > 0 )
+    useGroupName = .false.
+    if ( present(options) ) useGroupName = &
+      & ( index(options, 'g') > 0 ) .and. present( groupName )
+    nullify(precision)
+    if ( verbose ) then
+      if ( vector%name > 0 ) then
+        call get_string( vector%name, sdName )
+      else
+        sdname = '(unknown)'
+      endif
+      call outputNamedValue( 'DW L2AUX vector name', trim(sdName) )
+    endif
+    do j = 1, size(vector%quantities)
+      quantity => vector%quantities(j)
+      if ( nameQtyByTemplate ) then
+        call get_string( quantity%template%name, sdname )
+      else
+        call writeIntsToChars ( j, sdName )
+        sdName = 'Quantity ' // trim(sdName)
+      endif
+      if ( useGroupName ) sdName = trim(groupName) // '/' // sdName
+      call DirectWrite_Hdf ( L2AUXFile, quantity, precision, sdName, &
+        & options )
+    enddo
+  end subroutine DirectWriteVector_Hdf
+
+  ! ------------------------------------------- DirectWrite_Hdf --------
+  subroutine DirectWrite_Hdf ( L2AUXFile, quantity, precision, sdName, &
+    & options )
+
+    ! Purpose:
+    ! Write plain hdf-formatted files
+    use HDF, only: Dfacc_Rdonly
+    use MLSHDF5, only: SaveAsHDF5DS
+
+    ! Args:
+    type (VectorValue_T), intent(in) :: QUANTITY
+    type (VectorValue_T), pointer :: PRECISION
+    character(len=*), intent(in) :: SDNAME       ! Name of sd in output file
+    type(MLSFile_T)                :: L2AUXFile
+    character(len=*), intent(in), optional :: options
+    ! Local parameters
+    logical :: alreadyOpen
+    logical :: already_there
+    logical, parameter :: DEEBUG = .false.
+    logical :: deebughere
+    integer :: lastMAF
+    integer :: returnStatus
+    character(len=*), parameter :: sdDebug = "R1A:118.B1F:PT.S0.FB25-1 Core"
+    logical :: verbose
+    ! Executable
+    verbose = BeVerbose ( 'direct', 0 )
+    alreadyOpen = L2AUXFile%stillOpen
+    already_There = mls_exists( L2AUXFile%name ) == 0
+    if ( .not. already_There ) then
+      call outputNamedValue( '  creating file', trim(L2AUXFile%name) )
+    elseif ( verbose ) then
+      call outputNamedValue( '  no need to recreate file', trim(L2AUXFile%name) )
+      call outputNamedValue( '  already open?', alreadyOpen )
+    endif
+    deebughere = ( deebug .or. sdname == sdDebug ) .and. .false.
+    if ( .not. alreadyOpen ) then
+      call mls_openFile(L2AUXFile, returnStatus)
+      if ( returnStatus /= 0 ) &
+        call MLSMessage(MLSMSG_Error, ModuleName, &
+        & 'Unable to open l2aux file', MLSFile=L2AUXFile)
+    endif
+    call SaveAsHDF5DS ( L2AUXFile%FileID%f_id, SDname, quantity%values )
+    if ( .not. alreadyOpen )  call mls_closeFile(L2AUXFile, returnStatus)
+    L2AUXFile%errorCode = returnStatus
+    L2AUXFile%lastOperation = 'write'
+    if ( switchDetail(switches, 'l2aux') < 0 ) return
+    call dump(quantity)
+    if ( associated(precision) ) call dump(precision)
+  end subroutine DirectWrite_Hdf
+
+  ! ------------------------------------------- DirectWrite_L2Aux --------
+  subroutine DirectWrite_L2Aux ( L2AUXFile, quantity, precision, sdName, &
     & chunkNo, chunks, FWModelConfig, &
     & lowerOverlap, upperOverlap, single, options )
 
@@ -808,20 +915,20 @@ contains ! ======================= Public Procedures =========================
     endif
     select case (l2AUXFile%hdfversion)
     case (HDFVERSION_4)
-      call DirectWrite_L2Aux_MF_hdf4 ( quantity, sdName, L2AUXFile, &
+      call DirectWrite_L2Aux_hdf4 ( quantity, sdName, L2AUXFile, &
         & chunkNo, chunks, &
         & lowerOverlap=lowerOverlap, upperOverlap=upperOverlap )
       if ( associated(precision) ) & 
-        & call DirectWrite_L2Aux_MF_hdf4 ( precision, &
+        & call DirectWrite_L2Aux_hdf4 ( precision, &
         & trim(sdName) // 'precision', L2AUXFile, chunkNo, chunks, &
         & lowerOverlap=lowerOverlap, upperOverlap=upperOverlap )
     case (HDFVERSION_5)
-      call DirectWrite_L2Aux_MF_hdf5 ( quantity, sdName, L2AUXFile, &
+      call DirectWrite_L2Aux_hdf5 ( quantity, sdName, L2AUXFile, &
         & chunkNo, chunks, &
         & FWModelConfig, lowerOverlap=lowerOverlap, upperOverlap=upperOverlap, &
         & single=single, options=options )
       if ( associated(precision) ) & 
-        & call DirectWrite_L2Aux_MF_hdf5 ( precision, &
+        & call DirectWrite_L2Aux_hdf5 ( precision, &
         & trim(sdName) // 'precision', L2AUXFile, chunkNo, chunks, &
         & FWModelConfig, lowerOverlap=lowerOverlap, upperOverlap=upperOverlap, &
         & single=single, options=options )
@@ -836,10 +943,10 @@ contains ! ======================= Public Procedures =========================
     if ( switchDetail(switches, 'l2aux') < 0 ) return
     call dump(quantity)
     if ( associated(precision) ) call dump(precision)
-  end subroutine DirectWrite_L2Aux_MF
+  end subroutine DirectWrite_L2Aux
 
-  ! ------------------------------------------ DirectWrite_L2Aux_MF_hdf4 --------
-  subroutine DirectWrite_L2Aux_MF_hdf4 ( quantity, sdName, L2AUXFile, &
+  ! ------------------------------------------ DirectWrite_L2Aux_hdf4 --------
+  subroutine DirectWrite_L2Aux_hdf4 ( quantity, sdName, L2AUXFile, &
     & chunkNo, chunks, lowerOverlap, upperOverlap )
 
     use Chunks_M, only: MLSChunk_T
@@ -942,10 +1049,10 @@ contains ! ======================= Public Procedures =========================
     if ( status == -1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Error ending access to direct write sd (hdf4)', MLSFile=L2AUXFile )
 
-  end subroutine DirectWrite_L2Aux_MF_hdf4
+  end subroutine DirectWrite_L2Aux_hdf4
 
-  ! ------------------------------------------ DirectWrite_L2Aux_MF_hdf5 --------
-  subroutine DirectWrite_L2Aux_MF_hdf5 ( quantity, sdName, L2AUXFile, &
+  ! ------------------------------------------ DirectWrite_L2Aux_hdf5 --------
+  subroutine DirectWrite_L2Aux_hdf5 ( quantity, sdName, L2AUXFile, &
     & chunkNo, chunks, FWModelConfig, &
     & lowerOverlap, upperOverlap, single, options )
 
@@ -1175,7 +1282,7 @@ contains ! ======================= Public Procedures =========================
     endif
     if ( WRITEFILEATTRIBUTES ) call h5_writeMLSFileAttr(L2AUXFile, skip_if_already_there=.true.)
 
-  end subroutine DirectWrite_L2Aux_MF_hdf5
+  end subroutine DirectWrite_L2Aux_hdf5
 
   ! ------------------------------------------ DirectWrite_Quantity --------
   ! We write the quantity to a file, chunk by chunk, overlaps and all
@@ -1848,6 +1955,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.90  2018/04/13 00:20:42  pwagner
+! Plain hdf DirectWrites and -Reads are now 'auto'
+!
 ! Revision 2.89  2018/01/12 00:22:34  pwagner
 ! Reduce amount written by lowest verbose level
 !
