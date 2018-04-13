@@ -99,6 +99,17 @@ module Dump_Options
 !  ** Max. absolute: 0.000439644 ( = 4.39644e+16 fractional )
 !  ** Max. fractional: 4.39644e+16 ( = 0.000439644 absolute )
 
+! Appearance flags
+! If Name = 'MyName\h'
+! then Dump might print this
+! ---------------------------MyName---------------------
+!    (:) all 3500 values are 0
+! So the flags are separated from the final character of Name by a '\'
+! flag             effect
+!  b               print Name in a Banner
+!  h               print Name as a headline
+!  n               omit Newline after printing name
+
 
   implicit none
   public
@@ -186,7 +197,8 @@ module Dump_Options
   ! E.g., '-crt' turns on Clean, RMS, and TrimIt
   character(len=8)  :: DefaultDiffOptions     = ' '
   character(len=8)  :: DefaultDumpOptions     = ' '
-
+  ! These affect the appearance; some may be temporarily
+  ! set by use of appearance flags appended to the item's name field
   logical           :: CrashAtBeginning       = .false.
   integer           :: DefaultMaxLon          = 128
   integer           :: DefaultWidth           = 10
@@ -351,6 +363,8 @@ contains
 
   ! -------------------------------------------------  PrintName  -----
   ! Print the item name unless already done so
+  ! In case any of the appearance flags are detected, modify
+  ! The appearance of name accordingly
   subroutine PrintName ( Name, nameHasBeenPrintedAlready )
     character(len=*), intent(in), optional        :: Name
     logical, optional                             :: nameHasBeenPrintedAlready
@@ -518,6 +532,9 @@ contains
 end module Dump_Options
 
 ! $Log$
+! Revision 2.12  2018/04/13 00:23:27  pwagner
+! Improved comments; explain use of appearance flags like 'MyName\h'
+!
 ! Revision 2.11  2018/04/03 23:16:36  pwagner
 ! May use nbh following \ in name to modify how to print name in dump
 !
