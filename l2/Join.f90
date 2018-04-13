@@ -275,13 +275,20 @@ contains
           end if
         case ( s_directWrite )
           ! if ( SKIPDIRECTWRITES ) exit
+          if ( DEEBUG ) then
+            call output ( 'Now have a DirectWrite Command', advance='yes' )
+            call outputNamedValue ( 'pass', pass )
+            call outputNamedValue ( 'parallel%slave', parallel%slave )
+            call outputNamedValue ( 'autoDirectWrite', autoDirectWrite )
+            call outputNamedValue ( 'explicitFile(son)', explicitFile(son) )
+          endif
           call time_now ( dwt1 )
           if ( pass == 1 ) then
             ! On the first pass just count the number of direct writes
             noDirectWrites = noDirectWrites + 1
             ! Unless we're not a slave in which case just get on with it.
             if ( .not. parallel%slave ) then
-              if(DEEBUG)print*,'Calling DirectWrite, not slave'
+              if( DEEBUG ) print*,'Calling DirectWrite, not slave'
               call time_now ( dwt2 )
               if ( autoDirectWrite .and. .not. explicitFile(son) ) then
                 ! Pretend we're given permission to write to each of the files
@@ -297,6 +304,7 @@ contains
                   if ( namedFile ) exit
                 end do
               else
+                if( DEEBUG ) print*,'Calling DirectWrite, ready to write'
                 call DirectWriteCommand ( son, ticket, vectors, &
                   & DirectdataBase, filedatabase, &
                   & chunkNo, chunks, outputTyp, FWModelConfig, HGrids )
@@ -414,6 +422,7 @@ contains
       case ( s_diff, s_dump ) ! ======================= Diff, Dump ==========
         ! Handle disassociated pointers by allocating them with zero size
         status = 0
+        call outputNamedValue( 'CHECKPATHS in Join%Dump', CHECKPATHS )
         if ( CHECKPATHS ) cycle
         if ( .not. associated(vectors) ) allocate ( vectors(0), stat=status )
         call test_allocate ( status, moduleName, 'Vectors', (/0/), (/0/) )
@@ -640,10 +649,12 @@ contains
     real :: TimeIn, TimeSetUp, TimeWriting, timeToClose, TimeOut
 
     ! Executable code
+    ! call output ( 'We are in DirectWriteCommand now', advance='yes' )
     DEEBUG = ( switchDetail(switches, 'direct') > 0 ) ! .or. SKIPDIRECTWRITES
     SKIPDGG = ( switchDetail(switches, 'skipdgg') > -1 )
     SKIPDGM = ( switchDetail(switches, 'skipdgm') > -1 )
     outputTypeStr = 'unknown'
+    DEEBUG = .true.
     nullify(thisDirect)
 
     call trace_begin ( me, "DirectWriteCommand", node, &
@@ -757,6 +768,8 @@ contains
     end if
     myFile =  FileNameToID(trim(filename), DirectDataBase ) 
     distributingSources = (file < 1)
+    call outputNamedValue ( 'filename', trim(filename) )
+    call outputNamedValue ( 'distributingSources', distributingSources )
     ! Now identify the quantities we're after
     nullify ( sourceVectors, sourceQuantities, &
       & qualityVectors, qualityQuantities, &
@@ -1233,59 +1246,70 @@ contains
       select case ( outputType )
       case ( l_l2gp )
         call DWSwath ( Son, Node, noSources, distributingSources, TimeIn, &
-    & Rank, Options, GroupName, Ticket, InputFile, myTheFile,  &
-    & chunkNo, createFileFlag, createthisswath, lowerOverlap, upperOverlap, &
-    & NoCreatedFiles, &
-    & sourceVectors, sourceQuantities, &
-    & precisionVectors, precisionQuantities, &
-    & qualityVectors, qualityQuantities, &
-    & statusVectors, statusQuantities, &
-    & convergVectors, convergQuantities, &
-    & vectors, DirectDatabase, directfiles, &
-    & directfile, thisDirect )
+          & Rank, Options, GroupName, Ticket, InputFile, myTheFile,  &
+          & chunkNo, createFileFlag, createthisswath, &
+          & lowerOverlap, upperOverlap, NoCreatedFiles, &
+          & sourceVectors, sourceQuantities, &
+          & precisionVectors, precisionQuantities, &
+          & qualityVectors, qualityQuantities, &
+          & statusVectors, statusQuantities, &
+          & convergVectors, convergQuantities, &
+          & vectors, DirectDatabase, directfiles, &
+          & directfile, thisDirect )
       case ( l_l2dgg )
         call DWSwath ( Son, Node, noSources, distributingSources, TimeIn, &
-    & Rank, Options, GroupName, Ticket, InputFile, myTheFile,  &
-    & chunkNo, createFileFlag, createthisswath, lowerOverlap, upperOverlap, &
-    & NoCreatedFiles, &
-    & sourceVectors, sourceQuantities, &
-    & precisionVectors, precisionQuantities, &
-    & qualityVectors, qualityQuantities, &
-    & statusVectors, statusQuantities, &
-    & convergVectors, convergQuantities, &
-    & vectors, DirectDatabase, directfiles, &
-    & directfile, thisDirect )
+          & Rank, Options, GroupName, Ticket, InputFile, myTheFile,  &
+          & chunkNo, createFileFlag, createthisswath, &
+          & lowerOverlap, upperOverlap, NoCreatedFiles, &
+          & sourceVectors, sourceQuantities, &
+          & precisionVectors, precisionQuantities, &
+          & qualityVectors, qualityQuantities, &
+          & statusVectors, statusQuantities, &
+          & convergVectors, convergQuantities, &
+          & vectors, DirectDatabase, directfiles, &
+          & directfile, thisDirect )
       case ( l_l2fwm )
         if ( DeeBug ) then
           call Dump( createdFilenames(1:noCreatedFiles), 'Created Files' )
-          call OutputNamedValue ( 'NoCreatedFiles before DWHDF', NoCreatedFiles )
+          call OutputNamedValue &
+            & ( 'NoCreatedFiles before DWHDF', NoCreatedFiles )
         endif
         call DWHDF ( Son, Node, noSources, distributingSources, TimeIn, &
-    & Rank, Options, GroupName, Ticket, InputFile, myTheFile,  &
-    & chunkNo, createFileFlag, createthisswath, lowerOverlap, upperOverlap, &
-    & NoCreatedFiles, &
-    & sourceVectors, sourceQuantities, &
-    & precisionVectors, precisionQuantities, &
-    & vectors, DirectDatabase, directfiles, &
-    & directfile, thisDirect, chunks, FWModelConfig, single )
-    if ( DeeBug ) call outputNamedValue ( 'NoCreatedFiles after DWHDF', NoCreatedFiles )
-      case ( l_l2aux, l_hdf )
+          & Rank, Options, GroupName, Ticket, InputFile, myTheFile,  &
+          & chunkNo, createFileFlag, createthisswath, &
+          & lowerOverlap, upperOverlap, NoCreatedFiles, &
+          & sourceVectors, sourceQuantities, &
+          & precisionVectors, precisionQuantities, &
+          & vectors, DirectDatabase, directfiles, &
+          & directfile, thisDirect, chunks, FWModelConfig, single, L2Aux=.true. )
+        if ( DeeBug ) call outputNamedValue &
+          & ( 'NoCreatedFiles after DWHDF', NoCreatedFiles )
+      case ( l_l2aux )
         call DWHDF ( Son, Node, noSources, distributingSources, TimeIn, &
-    & Rank, Options, GroupName, Ticket, InputFile, myTheFile,  &
-    & chunkNo, createFileFlag, createthisswath, lowerOverlap, upperOverlap, &
-    & NoCreatedFiles, &
-    & sourceVectors, sourceQuantities, &
-    & precisionVectors, precisionQuantities, &
-    & vectors, DirectDatabase, directfiles, &
-    & directfile, thisDirect, chunks, FWModelConfig, single )
+          & Rank, Options, GroupName, Ticket, InputFile, myTheFile,  &
+          & chunkNo, createFileFlag, createthisswath, &
+          & lowerOverlap, upperOverlap, NoCreatedFiles, &
+          & sourceVectors, sourceQuantities, &
+          & precisionVectors, precisionQuantities, &
+          & vectors, DirectDatabase, directfiles, &
+          & directfile, thisDirect, chunks, FWModelConfig, single, L2Aux=.true. )
+      case ( l_hdf )
+        call DWHDF ( Son, Node, noSources, distributingSources, TimeIn, &
+          & Rank, Options, GroupName, Ticket, InputFile, myTheFile,  &
+          & chunkNo, createFileFlag, createthisswath, &
+          & lowerOverlap, upperOverlap, NoCreatedFiles, &
+          & sourceVectors, sourceQuantities, &
+          & precisionVectors, precisionQuantities, &
+          & vectors, DirectDatabase, directfiles, &
+          & directfile, thisDirect, chunks, FWModelConfig, single, L2Aux=.false. )
       case ( l_quantity )
         call DWQty ( Son, Node, noSources, distributingSources, TimeIn, &
-    & Rank, Options, GroupName, Ticket, InputFile, myTheFile,  &
-    & chunkNo, createFileFlag, createthisswath, lowerOverlap, upperOverlap, &
-    & NoCreatedFiles, &
-    & sourceVectors, sourceQuantities, &
-    & vectors, DirectDatabase, directfiles, &
-    & directfile, thisDirect )
+          & Rank, Options, GroupName, Ticket, InputFile, myTheFile,  &
+          & chunkNo, createFileFlag, createthisswath, &
+          & lowerOverlap, upperOverlap, NoCreatedFiles, &
+          & sourceVectors, sourceQuantities, &
+          & vectors, DirectDatabase, directfiles, &
+          & directfile, thisDirect )
       end select
       
       ! Tell the master we're done
@@ -2130,6 +2154,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.184  2018/04/13 00:19:51  pwagner
+! Plain hdf DirectWrites and -Reads are now 'auto'
+!
 ! Revision 2.183  2018/02/09 00:56:16  pwagner
 ! repaired bug that left PCBottom, PCTop undefined
 !
