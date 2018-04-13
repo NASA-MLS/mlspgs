@@ -14,15 +14,6 @@ module MLSHDF5
   ! This module contains MLS specific routines to do lowish level common HDF5
   ! tasks.
 
-  ! Usage note: due to idiosyncrasy (euphemism for bug) in Lahey f95 compiler,
-  ! don't put a "USE MLSHDF5" statement at module level in any modules that
-  ! will use this. Instead bury each "USE MLSHDF5" down inside the
-  ! procedures that need them. Otherwise, Lahey will take nearly forever
-  ! to finish compiling the highest modules.
-  
-  ! This note, like the Lahey compiler, is deprecated in our current
-  ! software. We will resume alphabetizing the used module names.
-
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
   use Dump_Options, only: Dopt_Laconic, Dopt_RMS, Dopt_Stats, Dopt_Verbose, &
     & NameOnEachLine
@@ -71,7 +62,7 @@ module MLSHDF5
     & H5tclose_F, H5tcopy_F, H5tequal_F, H5tget_Class_F, H5tget_Size_F, &
     & H5tset_Size_F
 
-  implicit NONE
+  implicit none
   private
 
   public :: CpHDF5Attribute, CpHDF5GlAttribute, &
@@ -151,12 +142,13 @@ module MLSHDF5
 !       [int start(:), int count(:), [int stride(:), int block(:)] ] )
 ! LoadPtrFromHDF5DS (int locID, char name, *value [, lowBound] )
 !       lowBound only for rank-1 arrays
-! MakeHDF5Attribute (int itemID, char name, value,
-!       [log skip_if_already_there])
-! MakeNestedGroups (int itemID, char groupnames(:))
-! MatchHDF5Attributes (MLSFile_T MLSFile, char attrnames, char attrvalues,
-!       char name)
-! SaveAsHDF5DS (int locID, char name, value)
+! MakeHDF5Attribute ( int itemID, char name, value,
+!       [log skip_if_already_there] )
+! MakeNestedGroups ( int itemID, char groupnames(:) )
+! MatchHDF5Attributes ( MLSFile_T MLSFile, char attrnames, char attrvalues,
+!       char name )
+! SaveAsHDF5DS ( int locID, char name, value,
+!       [int start(:), int count(:), [int stride(:), int block(:)] ] )
 !     value can be one of:
 !    {char* value, int value, real value, double precision value,
 !     int value(:),
@@ -164,13 +156,13 @@ module MLSHDF5
 !     double precision value(:), double precision value(:,:),
 !     double precision value(:,:,:)}
 
-! The following may also be called with the int itemID or locID arg replaced
-! by a MLSFile_T
-! GetHDF5Attribute (MLSFile_T MLSFile, char name, value)
+! Some of these may also be called with the int itemID or locID arg replaced
+! by a MLSFile_T; e.g.
+! GetHDF5Attribute ( MLSFile_T MLSFile, char name, value )
 !        The attribute will be assumed to be an attribute of
 !         MLSFile%FileID%sd_id
 !         unless that component is zero, when it will try ..%grp_id
-! LoadFromHDF5DS (MLSFile_T MLSFile, char name, value,
+! LoadFromHDF5DS ( MLSFile_T MLSFile, char name, value,
 !       [int start(:), int count(:), [int stride(:), int block(:)] ] )
 
 ! One standard is the character flag "options" which affects how loosely
@@ -203,6 +195,12 @@ module MLSHDF5
 ! e.g., DSnames in  GetAllHDF5DSNames or attrNames in MatchHDF5Attributes,
 ! it will be a comma-separated string list, as described in the module
 ! MLSStringLists
+!
+! Bugs and Gotchas:
+! How do we know where the wildcard "*" can appear in a field 
+!    and where it is forrbidden?
+! For which procedures can the arg be an MLSFile_T? Shouldn't you make it
+!    all of them?
 !                      
 ! === (end of api) ===
   interface CpHDF5Attribute
@@ -251,6 +249,10 @@ module MLSHDF5
 
   interface GetHDF5DSDims
     module procedure GetHDF5DSDims_ID, GetHDF5DSDims_MLSFile
+  end interface
+
+  interface GetHDF5DSRank
+    module procedure GetHDF5DSRank_ID, GetHDF5DSRank_MLSFile
   end interface
 
   interface IsHDF5DSPresent
@@ -3050,7 +3052,37 @@ contains ! ======================= Public Procedures =========================
   end subroutine GetHDF5DSDims_MLSFile
 
   ! ----------------------------------------------  GetHDF5DSRank  -----
-  subroutine GetHDF5DSRank ( FileID, name, rank )
+  subroutine GetHDF5DSRank_MLSFile ( MLSFile, name, rank )
+    type (MLSFile_T)   :: MLSFile
+    character (len=*), intent(in) :: NAME ! Name of DS
+    integer, intent(out) :: rank        ! How many dimensions
+
+    ! Local variables
+    integer :: Me = -1                  ! String index for trace cacheing
+    integer :: STATUS                   ! Flag
+
+    ! Executable code
+    call trace_begin ( me, 'GetHDF5DSRank_ID', cond=.false. )
+    ! Do we have any FileID fields?
+    If ( .not. MLSFile%stillOpen .or. all( &
+      & (/ MLSFile%FileId%f_id, MLSFile%FileId%grp_id, MLSFile%FileId%sd_id /) &
+      & == 0 ) ) then
+      call h5fopen_f ( trim(MLSFile%name), H5F_ACC_RDONLY_F, MLSFile%fileID%f_id, status )
+      call GetHDF5DSRank_ID( MLSFile%fileID%f_id, name, rank )
+      call h5fclose_f ( MLSFile%fileID%f_id, status )
+      MLSFile%fileID%f_id = 0
+    elseif( MLSFile%FileId%grp_id > 0 ) then
+      call GetHDF5DSRank_ID( MLSFile%fileID%grp_id, name, rank )
+    elseif( MLSFile%FileId%f_id > 0 ) then
+      call GetHDF5DSRank_ID( MLSFile%fileID%f_id, name, rank )
+    else
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'all fields of MLSFile%Fileid are 0', MLSFile=MLSFile )
+    endif
+    call trace_end ( cond=.false. )
+  end subroutine GetHDF5DSRank_MLSFile
+
+  subroutine GetHDF5DSRank_ID ( FileID, name, rank )
     integer, intent(in) :: FILEID       ! fileID
     character (len=*), intent(in) :: NAME ! Name of DS
     integer, intent(out) :: rank        ! How many dimensions
@@ -3075,7 +3107,7 @@ contains ! ======================= Public Procedures =========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages back on after getting rank ' // trim(name) )
     call trace_end ( cond=.false. )
-  end subroutine GetHDF5DSRank
+  end subroutine GetHDF5DSRank_ID
 
   ! ---------------------------------------------  GetHDF5DSQType  -----
   subroutine GetHDF5DSQType ( FileID, name, Qtype )
@@ -5905,6 +5937,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.143  2018/04/13 00:15:41  pwagner
+! Added MLSFile_T api for GetHDF5DSRank; improved comments
+!
 ! Revision 2.142  2017/08/10 22:42:23  pwagner
 ! Make apis for d.p. SaveAsHDF5DS like s.p.
 !
