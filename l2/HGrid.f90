@@ -15,15 +15,15 @@ module HGrid                    ! Horizontal grid information
 
   use HGridsDatabase, only: HGrid_T, HGridGeolocations, &
     & L1BGeolocation, L1BSubsample
-  use MLSCommon, only: MLSFile_t, nameLen, TAI93_Range_t
+  use MLSCommon, only: MLSFile_T, NameLen, TAI93_Range_T
   use MLSFiles, only: HDFVersion_5, GetMLSFileByType
-  use MLSKinds, only: rk => r8, r8
-  use MLSSignals_m, only: GetModuleName
+  use MLSKinds, only: Rk => R8, R8
+  use MLSSignals_M, only: GetModuleName
   
   implicit none
   private
-  public :: createHGridfromMLSCFInfo, computeNextChunksHGridOffsets, &
-    & computeAllHGridOffsets, dealWithObstructions, DestroyHGridGeoLocations
+  public :: CreateHGridfromMLSCFInfo, ComputeNextChunksHGridOffsets, &
+   & ComputeAllHGridOffsets, DealWithObstructions, DestroyHGridGeoLocations
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -61,41 +61,41 @@ contains ! =====     Public Procedures     =============================
     & ( name, root, filedatabase, l2gpDatabase, &
     & processingRange, chunk, onlyComputingOffsets, check ) result ( hGrid )
 
-    use Allocate_deallocate, only: Deallocate_test
-    use Chunks_m, only: MLSChunk_t
+    use Allocate_Deallocate, only: Deallocate_Test
+    use Chunks_M, only: MLSChunk_T
     use Constants, only: Ln2
-    use Dates_module, only: tai93s2hid
-    use Expr_m, only: expr
-    use HGridsDatabase, only: HGrid_t, createEmptyHGrid, nullifyHGrid
-    use HighOutput, only: beVerbose, letsDebug, outputNamedValue
-    use Init_tables_module, only: f_coordinate, f_date, &
-      & f_extendible, f_forbidoverspill, f_fraction, f_geodangle, f_geodlat, &
-      & f_height, f_inclination, f_insetoverlaps, f_interpolationfactor, &
-      & f_lon, f_losangle, f_maxloweroverlap, f_maxupperoverlap, f_mif, &
-      & f_module, f_origin, f_QTMlevel, &
-      & f_single, f_solartime, f_solarzenith, f_sourcel2gp, f_spacing, &
-      & f_time, f_type, &
-      & field_first, field_last, &
-      & l_explicit, l_fixed, l_fractional, l_height, &
-      & l_l2gp, l_QTM, l_regular
+    use Dates_Module, only: Tai93s2hid
+    use Expr_M, only: Expr
+    use HGridsDatabase, only: HGrid_T, CreateEmptyHGrid, NullifyHGrid
+    use HighOutput, only: BeVerbose, LetsDebug, OutputNamedValue
+    use Init_Tables_Module, only: F_Coordinate, F_Date, &
+      & F_Extendible, F_Forbidoverspill, F_Fraction, F_Geodangle, F_Geodlat, &
+      & F_Height, F_Inclination, F_Insetoverlaps, F_Interpolationfactor, &
+      & F_Lon, F_Losangle, F_Maxloweroverlap, F_Maxupperoverlap, F_Mif, &
+      & F_Module, F_Origin, F_QTMlevel, &
+      & F_Single, F_Solartime, F_Solarzenith, F_Sourcel2GP, F_Spacing, &
+      & F_Time, F_Type, &
+      & Field_First, Field_Last, &
+      & L_Explicit, L_Fixed, L_Fractional, L_Height, &
+      & L_L2gp, L_QTM, L_Regular
     use Intrinsic, only: PHYQ_Angle, PHYQ_Dimensionless, PHYQ_Length
     use L1BData, only: CheckForCorruptFileDatabase
-    use L2GPData, only: L2GPData_t
+    use L2GPData, only: L2GPData_T
     use MLSHDF5, only: IsHDF5DSInFile
-    use MLSL2options, only: need_L1Bfiles
+    use MLSL2options, only: Need_L1BFiles
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-    use MLSNumerics, only: hunt
-    use MLSStringLists, only: switchDetail
+    use MLSNumerics, only: Hunt
+    use MLSStringLists, only: SwitchDetail
     use MoreMessage, only: MLSMessage
     use MoreTree, only: Get_Boolean
-    use Output_m, only: Output
-    use Polygon_m, only: Polygon_Inside, Polygon_Vertices
-    use QTM_m, only: QTM_Depth ! Maximum depth that will fit in one integer
-!     use string_table, only: get_string
-    use Time_m, only: SayTime, time_now
-    use Toggles, only: gen, levels, switches, toggle
-    use Trace_m, only: trace_begin, trace_end
-    use Tree, only: Decoration, NSons, Sub_rosa, Subtree, Where
+    use Output_M, only: Output
+    use Polygon_M, only: Polygon_Inside, Polygon_Vertices
+    use QTM_M, only: QTM_Depth ! Maximum Depth That Will Fit In One Integer
+    ! use String_Table, only: Get_String
+    use Time_M, only: SayTime, Time_Now
+    use Toggles, only: Gen, Levels, Switches, Toggle
+    use Trace_M, only: Trace_Begin, Trace_End
+    use Tree, only: Decoration, NSons, Sub_Rosa, Subtree, Where
 
   ! This routine creates an hGrid based on the user requests.
 
@@ -480,19 +480,19 @@ contains ! =====     Public Procedures     =============================
         & solarTimeNode, solarZenithNode, lonNode, losAngleNode, incline, &
         & Time, timeNode, hGrid )
 
-    use Dates_module, only: UTC2TAI93s
+    use Dates_Module, only: UTC2TAI93s
     use Error_Handler, only: Simple, Error_Intro
-    use Expr_m, only: expr
+    use Expr_M, only: Expr
     use HighOutput, only: BeVerbose, OutputNamedValue
     use Geometry, only: Phi_To_Lat_Deg
-    use Global_settings, only: LeapSecFilename
-    use HgridsDatabase, only: CreateEmptyHGrid, HGrid_t
-    use MLSKinds, only: rk => r8
+    use Global_Settings, only: LeapSecFilename
+    use HgridsDatabase, only: CreateEmptyHGrid, HGrid_T
+    use MLSKinds, only: Rk => R8
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use SDPToolkit, only: MLS_UTCtoTAI
-    use String_table, only: Get_String
-    use Toggles, only: gen, levels, toggle
-    use Trace_m, only: Trace_Begin, Trace_End
+    use String_Table, only: Get_String
+    use Toggles, only: Gen, Levels, Toggle
+    use Trace_M, only: Trace_Begin, Trace_End
     use Tree, only: NSons, Source_Ref, Subtree
 
     ! dummy arguments
@@ -647,23 +647,23 @@ contains ! =====     Public Procedures     =============================
     & instrumentModuleName, mif, maxLowerOverlap, maxUpperOverlap, hGrid )
     ! This is part of ConstructHGridFromMLSCFInfo
 
-    use allocate_deallocate, only: allocate_test, deallocate_test
-    use chunks_m, only: MLSCHunk_t
-    use dump_0, only: dump
-    use HGridsdatabase, only: createEmptyHGrid, Dump, HGrid_t, trimHGrid
-    use highOutput, only: letsDebug, outputNamedValue
-    use init_tables_module, only: f_fraction, f_geodangle, f_geodlat, f_height, &
-      & f_lon, f_losangle, f_mif, f_time, &
-      & f_solartime, f_solarzenith, l_fixed, l_fractional, l_height, l_mif
-    use L1BData, only: deallocateL1BData, L1BData_t, readL1BData, &
-      & assembleL1BQtyName, CheckForCorruptFileDatabase
+    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+    use Chunks_M, only: MLSCHunk_T
+    use Dump_0, only: Dump
+    use HGridsDatabase, only: CreateEmptyHGrid, Dump, HGrid_T, TrimHGrid
+    use HighOutput, only: LetsDebug, OutputNamedValue
+    use Init_Tables_Module, only: F_Fraction, F_Geodangle, F_Geodlat, F_Height, &
+      & F_Lon, F_Losangle, F_Mif, F_Time, &
+      & F_Solartime, F_Solarzenith, L_Fixed, L_Fractional, L_Height, L_Mif
+    use L1BData, only: DeallocateL1BData, L1BData_T, ReadL1BData, &
+      & AssembleL1BQtyName, CheckForCorruptFileDatabase
     use MLSHDF5, only: IsHDF5DSInFile
-    use MLSKinds, only: rk => r8
+    use MLSKinds, only: Rk => R8
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_L1BRead, &
       & MLSMSG_Warning
-    use MLSNumerics, only: hunt, interpolateValues
-    use toggles, only: gen, levels, toggle
-    use trace_m, only: trace_begin, trace_end
+    use MLSNumerics, only: Hunt, InterpolateValues
+    use Toggles, only: Gen, Levels, Toggle
+    use Trace_M, only: Trace_Begin, Trace_End
 
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
     integer, intent(in)               :: HGRIDTYPE
@@ -1025,15 +1025,15 @@ contains ! =====     Public Procedures     =============================
     ! surface of a sphere.
 
     use Allocate_Deallocate, only: Test_Allocate
-    use Generate_QTM_m, only: Generate_QTM
-    use Geolocation_0, only: H_t
-    use HGridsdatabase, only: CreateEmptyHGrid
+    use Generate_QTM_M, only: Generate_QTM
+    use Geolocation_0, only: H_T
+    use HGridsDatabase, only: CreateEmptyHGrid
     use MLSStringLists, only: SwitchDetail
     use QTM_Output, only: Write_QTM_Unformatted
     use Toggles, only: Switches
-    use Output_m, only: Output
-    use l1bdata, only: l1bdata_t, readl1bdata, getl1bfile, namelen, &
-      & assemblel1bqtyname, precisionsuffix, deallocatel1bdata, dump
+    use Output_M, only: Output
+    use L1bData, only: L1bData_T, ReadL1BData, GetL1BFile, Namelen, &
+      & AssembleL1Bqtyname, Precisionsuffix, DeallocateL1BData, Dump
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
     use Geometry, only: To_XYZ
     
@@ -1240,25 +1240,25 @@ contains ! =====     Public Procedures     =============================
     
     ! With older l1b files (pre v2.0), some coordinates
     ! (solar time, solar zenith angle) are mean rather than apparent local
-    use Allocate_deallocate, only: allocate_test, deallocate_test
-    use ChunkDivide_m, only: chunkDivideConfig
-    use Chunks_m, only: MLSChunk_t, dump
+    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+    use ChunkDivide_M, only: ChunkDivideConfig
+    use Chunks_M, only: MLSChunk_T, Dump
     use Dump_0, only: Dump
     use Diff_1, only: Selfdiff
     use EmpiricalGeometry, only: EmpiricalLongitude, ChooseOptimumLon0
     use Geometry, only: Phi_To_Lat_Deg
-    use HGridsDatabase, only: CreateEmptyHGrid, HGrid_t, trimHGrid, FindClosestMatch
+    use HGridsDatabase, only: CreateEmptyHGrid, HGrid_T, TrimHGrid, FindClosestMatch
     use HighOutput, only: LetsDebug, OutputNamedValue
-    use MLSFillvalues, only: IsFillValue, Monotonize
-    use MLSKinds, only: rk => r8
+    use MLSFillValues, only: IsFillValue, Monotonize
+    use MLSKinds, only: Rk => R8
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
-    use MLSNumerics, only: hunt, interpolateValues
-    use MLSStringLists, only: switchDetail
+    use MLSNumerics, only: Hunt, InterpolateValues
+    use MLSStringLists, only: SwitchDetail
     use Monotone, only: IsMonotonic
-    use Output_m, only: Output
+    use Output_M, only: Output
     use String_Table, only: Display_String
     use Toggles, only: Gen, Levels, Switches, Toggle
-    use Trace_m, only: Trace_Begin, Trace_End
+    use Trace_M, only: Trace_Begin, Trace_End
 
     type (MLSFile_T), dimension(:), pointer ::     FileDatabase
     type (TAI93_Range_T), intent(in) :: ProcessingRange
@@ -1801,13 +1801,13 @@ contains ! =====     Public Procedures     =============================
 
   ! --------------------------------------- DealWithObstructions -----
   subroutine DealWithObstructions ( HGrid, obstructions, DestroyOld )
-    use allocate_deallocate, only: allocate_test, deallocate_test
-    use chunkdivide_m, only: obstruction_t
-    use hgridsdatabase, only: hgrid_t, createemptyhgrid, destroyhgridcontents
-    use highOutput, only: letsDebug
+    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+    use Chunkdivide_M, only: Obstruction_T
+    use HgridsDatabase, only: Hgrid_T, Createemptyhgrid, Destroyhgridcontents
+    use HighOutput, only: LetsDebug
     use MLSMessageModule, only: MLSMessage, MLSMSG_Warning
-    use toggles, only: gen, levels, toggle
-    use trace_m, only: trace_begin, trace_end
+    use Toggles, only: Gen, Levels, Toggle
+    use Trace_M, only: Trace_Begin, Trace_End
     ! Args
     type (HGRID_T), pointer :: HGRID
     type (Obstruction_T), dimension(:), pointer :: OBSTRUCTIONS
@@ -1900,7 +1900,7 @@ contains ! =====     Public Procedures     =============================
   ! ---------------------------------------------  DestroyHGridGeoLocations  -----
   ! Deallocate all components of HGridGeolocations.
   subroutine DestroyHGridGeoLocations
-    use allocate_deallocate, only: deallocate_test
+    use Allocate_Deallocate, only: Deallocate_Test
     call Deallocate_test ( HGridGeolocations%MAFStartTimeTAI, 'MAFStartTimeTAI', ModuleName )
     call Deallocate_test ( HGridGeolocations%GHzGeodAngle   , 'GHzGeodAngle   ', ModuleName )
     call Deallocate_test ( HGridGeolocations%Orbincl        , 'Orbincl        ', ModuleName )
@@ -1916,13 +1916,13 @@ contains ! =====     Public Procedures     =============================
     & instrumentModuleName, filedatabase )
 
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
-    use chunks_m, only: mlschunk_t
-    use hgridsdatabase, only: hgrid_t
-    use L1BData, only: deallocateL1BData, L1BData_t, readL1BData, &
-      & assemblel1bqtyname
-    use MLSKinds, only: r8
-    use output_m, only: output
-    use string_table, only: display_string
+    use Chunks_M, only: MLSChunk_T
+    use HgridsDatabase, only: Hgrid_T
+    use L1BData, only: DeallocateL1BData, L1BData_T, ReadL1BData, &
+      & AssembleL1Bqtyname
+    use MLSKinds, only: R8
+    use Output_M, only: Output
+    use String_Table, only: Display_String
 
     type (HGrid_T), intent(in) :: HGRID
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
@@ -2077,27 +2077,27 @@ contains ! =====     Public Procedures     =============================
     ! This routine goes through the L2CF up to an Output section to accumulate
     ! HGrid sizes from the Construct sections, and through the L1 file to work
     ! out how big each HGrid is going to be
-    use Allocate_deallocate, only: allocate_test, deallocate_test
-    use Chunks_m, only: MLSChunk_t
-    use ChunkDivide_m, only: chunkDivideConfig
-    use Dump_0, only: dump
-    use HGridsDatabase, only: HGrid_t, copyHGrid, destroyHGridContents, Dump
-    use HighOutput, only: beVerbose, letsDebug, outputNamedValue
-    use Init_tables_module, only: z_construct, s_hgrid, z_output
+    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+    use Chunks_M, only: MLSChunk_T
+    use ChunkDivide_M, only: ChunkDivideConfig
+    use Dump_0, only: Dump
+    use HGridsDatabase, only: HGrid_T, CopyHGrid, DestroyHGridContents, Dump
+    use HighOutput, only: BeVerbose, LetsDebug, OutputNamedValue
+    use Init_Tables_Module, only: Z_Construct, S_Hgrid, Z_Output
     use L1BData, only: CheckForCorruptFileDatabase
-    use L2GPData, only: L2GPData_t
-    use MLSKinds, only: rk => r8
-    use MLSL2Options, only: specialDumpFile
-    use Moretree, only: get_spec_id
+    use L2GPData, only: L2GPData_T
+    use MLSKinds, only: Rk => R8
+    use MLSL2Options, only: SpecialDumpFile
+    use Moretree, only: Get_Spec_Id
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-    use Next_Tree_Node_m, only: Init_Next_Tree_Node, Next_Tree_Node, &
+    use Next_Tree_Node_M, only: Init_Next_Tree_Node, Next_Tree_Node, &
       & Next_Tree_Node_State
-    use Output_m, only: blanks, output, revertOutput, switchOutput
-    use time_m, only: SayTime, time_now
-    use Toggles, only: gen, toggle
-    use Trace_m, only: trace_begin, trace_end
-    use Tree, only: subtree, node_id, decoration
-    use Tree_types, only: n_named
+    use Output_M, only: Blanks, Output, RevertOutput, SwitchOutput
+    use Time_M, only: SayTime, Time_Now
+    use Toggles, only: Gen, Toggle
+    use Trace_M, only: Trace_Begin, Trace_End
+    use Tree, only: Subtree, Node_Id, Decoration
+    use Tree_Types, only: N_Named
     ! Dummy arguments
     integer, intent(in) :: Root         ! of the entire tree
     integer, intent(in) :: First_Section ! First subtree after definitions
@@ -2471,9 +2471,9 @@ contains ! =====     Public Procedures     =============================
   ! ---------------------------------------------  ANNOUNCE_ERROR  -----
   subroutine ANNOUNCE_ERROR ( WHERE, CODE )
 
-    use lexer_core, only: print_source
-    use output_m, only: output
-    use tree, only: where_at => where
+    use Lexer_Core, only: Print_Source
+    use Output_M, only: Output
+    use Tree, only: Where_At => Where
 
     integer, intent(in) :: WHERE   ! Tree node where error was noticed
     integer, intent(in) :: CODE    ! Code for error message
@@ -2510,13 +2510,13 @@ contains ! =====     Public Procedures     =============================
   subroutine CompareWithChunk ( chunk, nextChunk, hgrid, &
     & MAFStartTimeTAI, GeodAngle, GeodAlt, GeodLat, SolarTime )
 
-    use chunks_m, only: MLSChunk_t, Dump
-    use dates_module, only: gethid
-    use HGridsDatabase, only: HGrid_T
-    use highOutput, only: blanksToColumn, outputNamedValue
-    use machine, only: crash_burn
-    use MLSKinds, only: rk => r8
-    use output_m, only: blanks, newLine, output
+     use Chunks_M, only: MLSChunk_T, Dump
+     use Dates_Module, only: Gethid
+     use HGridsDatabase, only: HGrid_T
+     use HighOutput, only: BlanksToColumn, OutputNamedValue
+     use Machine, only: Crash_Burn
+     use MLSKinds, only: Rk => R8
+     use Output_M, only: Blanks, NewLine, Output
     ! Args
     type (MLSChunk_T), intent(in)      :: chunk
     type (MLSChunk_T), intent(in)      :: nextChunk
@@ -2691,7 +2691,7 @@ contains ! =====     Public Procedures     =============================
 
   subroutine PlaceArray_r8(array1, array2, offset)
     ! place contents of array1 inside array2, possibly offset
-    use mlsmessagemodule, only: mlsmessage, mlsmsg_error
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     integer, parameter :: R8 = kind(0.0d0)
     ! Args
     real(r8), dimension(:,:), intent(in)     :: array1
@@ -2711,8 +2711,8 @@ contains ! =====     Public Procedures     =============================
   end subroutine PlaceArray_r8
 
   subroutine SayTimeHere ( What )
-    use Output_m, only: blanks, output
-    use time_m, only: time_now
+    use Output_M, only: Blanks, Output
+    use Time_M, only: Time_Now
     character(len=*), intent(in) :: What
     call time_now ( t2 )
     call output ( "Timing for " // what // " = " )
@@ -2740,6 +2740,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.150  2018/04/16 22:20:21  pwagner
+! More thorough CamelCase in use statements
+!
 ! Revision 2.149  2018/03/02 00:58:17  pwagner
 ! Reduce non-debug printing
 !
