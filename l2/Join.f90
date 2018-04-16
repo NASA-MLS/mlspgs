@@ -527,9 +527,10 @@ contains
     use MLSL2Options, only: CheckPaths, Default_HDFVersion_Write, &
       & Patch, RuntimeValues, SkipDirectWrites, Toolkit
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
-    use MLSPCF2, only: MLSPCF_L2gp_Start, MLSPCF_L2gp_End, &
-      & MLSPCF_L2dgm_Start, MLSPCF_L2dgm_End, MLSPCF_L2fwm_Full_Start, &
-      & MLSPCF_L2fwm_Full_End, &
+    use MLSPCF2, only: MLSPCF_ElevOffset_Start, MLSPCF_Misc_End, &
+      & MLSPCF_L2gp_Start, MLSPCF_L2gp_End, &
+      & MLSPCF_L2dgm_Start, MLSPCF_L2dgm_End, &
+      & MLSPCF_L2fwm_Full_Start, MLSPCF_L2fwm_Full_End, &
       & MLSPCF_L2dgg_Start, MLSPCF_L2dgg_End
     use MLSSignals_M, only: Getsignalname
     use Moretree, only: Get_Field_Id, Get_Boolean
@@ -654,7 +655,6 @@ contains
     SKIPDGG = ( switchDetail(switches, 'skipdgg') > -1 )
     SKIPDGM = ( switchDetail(switches, 'skipdgm') > -1 )
     outputTypeStr = 'unknown'
-    DEEBUG = .true.
     nullify(thisDirect)
 
     call trace_begin ( me, "DirectWriteCommand", node, &
@@ -768,8 +768,10 @@ contains
     end if
     myFile =  FileNameToID(trim(filename), DirectDataBase ) 
     distributingSources = (file < 1)
-    call outputNamedValue ( 'filename', trim(filename) )
-    call outputNamedValue ( 'distributingSources', distributingSources )
+    if ( DeeBug ) then
+      call outputNamedValue ( 'filename', trim(filename) )
+      call outputNamedValue ( 'distributingSources', distributingSources )
+    endif
     ! Now identify the quantities we're after
     nullify ( sourceVectors, sourceQuantities, &
       & qualityVectors, qualityQuantities, &
@@ -1223,6 +1225,10 @@ contains
         fileType = l_hdf
         PCBottom = mlspcf_l2dgm_start
         PCTop    = mlspcf_l2dgm_end
+        if ( len_trim(file_base) > 0 ) then
+          PCBottom = mlspcf_ElevOffset_start
+          PCTop    = mlspcf_Misc_end
+        endif
       case ( l_quantity )
         fileType = l_hdf
         PCBottom = mlspcf_l2dgm_start
@@ -2154,6 +2160,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.185  2018/04/16 22:21:41  pwagner
+! Improved how we DirectWrite plain hdf files
+!
 ! Revision 2.184  2018/04/13 00:19:51  pwagner
 ! Plain hdf DirectWrites and -Reads are now 'auto'
 !
