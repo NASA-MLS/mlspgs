@@ -214,7 +214,8 @@ contains ! =====     Public Procedures     =============================
       & AddPhaseToPhaseNames, FillTimings, FinishTimings
     use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning, &
       & MLSMsg_L1bread, MLSMessageReset
-    use MLSPcf2, only: MLSpcf_L2apriori_Start, MLSpcf_L2apriori_End
+    use MLSPCF2, only: MLSPCF_ElevOffset_Start, MLSPCF_Misc_End, &
+      & MLSpcf_L2apriori_Start, MLSpcf_L2apriori_End
     use MLSRandomNumber, only: MLS_Random_Seed, Math77_Ran_Pack
     use MLSStringlists, only: Catlists, GethashElement, &
       & NumstringElements, PuthashElement, &
@@ -485,6 +486,8 @@ contains ! =====     Public Procedures     =============================
     character(len=16) :: OPTIONS
     integer :: ORBITINCLINATIONVECTORINDEX ! In the vector database
     integer :: ORBITINCLINATIONQUANTITYINDEX ! In the quantities database
+    integer :: PCBottom
+    integer :: PCTop
     integer :: PHITANVECTORINDEX        ! In the vector database
     integer :: PHITANQUANTITYINDEX      ! In the quantities database
     real(r8) :: PHIWINDOW(2)            ! For hydrostatic ptan guesser
@@ -1428,9 +1431,17 @@ contains ! =====     Public Procedures     =============================
         & call Announce_error ( key, 0, &
         & 'Must supply one of matrix, quantity or vector' )
       if ( DEEBUG ) call output ( 'About to  get_file_name', advance='yes' )
-      call get_file_name ( file, mlspcf_l2apriori_start, &
+      if ( lowercase(fileTypeStr) == 'quantity' .or. &
+        &  lowercase(fileTypeStr) == 'hdf' ) then
+          PCBottom = mlspcf_ElevOffset_start
+          PCTop    = mlspcf_Misc_end
+      else
+          PCBottom = mlspcf_l2apriori_start
+          PCTop    = mlspcf_l2apriori_end
+      endif
+      call get_file_name ( file, PCBottom, &
             & fileType, filedatabase, MLSFile, &
-            & 'DirectRead File not found in PCF', mlspcf_l2apriori_end )
+            & 'DirectRead File not found in PCF', PCTop )
       if ( DEEBUG ) call output ( 'Done with get_file_name', advance='yes' )
       if ( got(f_quantity) ) then
         quantity => GetVectorQtyByTemplateIndex( &
@@ -3364,6 +3375,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.476  2018/04/16 22:14:48  pwagner
+! Improved how we DirectRead plain hdf files
+!
 ! Revision 2.475  2018/04/13 00:17:39  pwagner
 ! Reduced non-debug printing
 !
