@@ -110,7 +110,7 @@ module MLSFiles               ! Utility file routines
 ! mls_exists         Returns 0 if the filename exists
 ! mls_closeFile      Closes a file opened by mls_openFile
 ! mls_hdf_version    Returns one of 'hdf4', 'hdf5', or '????'
-! mls_inqswath       A wrapper for doing swingswath for versions 4 and 5
+! mls_inqswath       A wrapper for doing swinqswath for versions 4 and 5
 ! mls_openFile       Opens an MLSFile_T file
 ! mls_sfend          Closes a file opened by mls_sfstart
 ! mls_sfstart        Opens an hdf file for writing metadata
@@ -2307,6 +2307,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.111  2018/04/16 18:25:18  pwagner
+! Actually obey NEVERFAIL in ReadL1BData_MLSFile
+!
 ! Revision 2.110  2018/02/08 23:16:41  pwagner
 ! Moved Dump, accessType, and Split_path_name to other modules
 !
