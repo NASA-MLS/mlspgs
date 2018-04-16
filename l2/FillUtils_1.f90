@@ -7750,7 +7750,7 @@ contains ! =====     Public Procedures     =============================
       call GetHDF5DSDims ( MLSFile, name, DIMS )
       dimInts = max(dims, int(1,hsize_t))
       caseName = lowercase(fileType)
-      if ( any( casename == (/ 'l2aux   ', 'swath  ', 'l2gp    ' /) ) ) then
+      if ( any( casename == (/ 'l2aux   ', 'swath   ', 'l2gp    ' /) ) ) then
         ! Keep your old casename
       else
         call GetHDF5DSRank ( MLSFile, name, rank )
@@ -7943,6 +7943,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.142  2018/04/16 22:16:45  pwagner
+! fixed bug in character array constructor for non-auto casenames
+!
 ! Revision 2.141  2018/04/13 00:19:18  pwagner
 ! Plain hdf DirectWrites and -Reads are now 'auto'
 !
