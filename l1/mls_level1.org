@@ -3326,51 +3326,138 @@ it remains with the value of 1.
 
 
    
+* Engineering scripting/checking
+** L0 sci PDS Alert
+   email sent by test_sci_pdf.sh, which calls test_sci_pds.pro, whose
+   failure causes the message. The routine that writes the message
+   /Changed lock: item from a to b/ is check_eng_locks.pro
+
+* Files opened/written to by L1
+  + MLS-Aura_L1BENG_v04-20-c01_ ... .dat : L1log reads the Packet
+    files, then rewrites the data to this file. It's unclear what this
+    file does. (PCID=30003). In L1BLog code, this is accessed via the
+    field L1BFileInfo%EngId
+  + MAF_data_tmp.dat : (PCFID=922). In L1BLog this is accessed via
+    L1BFileInfo%MAF_data_unit
 
 * Trace through the code
 ** MLSL0SN
-*** OpenInitBsw
-*** ExamineSciData
-    All this routine does is check and/or update the BandSwitches file!
-*** CloseFiles
-** MLSL1log
-   
-   + OpenAndInitializeLog
-   + BandSwitchesUpdate::ExamineData
-     After calling NextSciMAF, check the GSN for changes. That's about
-     it!
-     + SciUtils::NextSciMAF
-
-       By calling GetSciPkt(-> ReadL0Sci->ReadL0Packet) until the MAF
-       number changes, pull out the positions fo the pointing mirrors,
-       'process' DACS data, convert the DN for the pointing mirros to
-       anglesand return.
-
-       + SciUtils::GetSciPkt
-	 Reads the science packets
-	 + SciUtils::ReadL0Packet. Reads a packet (agnostic towards eng/sci?)
-
-       + ProcessDACSdata: DACS data is in some packed, compressed
-         format. The following undoes all that.
-
-	 + UnpackDACSdata : unpacks the DACS data, which is some
-           compressed packed format
-
-	   + UnpackUncompDACS
-
-	 + ProcessUnpackedDACS : Crap, I don't know. Coefficients
-           looks like a combination of a Taylor and a Fourier
-           series. Then runs them through a fourier transform.
-
-       + GetScAngles : Converts the DN for the mirrors
-
-   + DetermineWeightsFlags
-
+   + OpenInitBsw
+   + ExamineSciData: All this routine does is check and/or update the BandSwitches file!
    + CloseFiles
+** MLSL1log
 
-   + LogStatus
+   + OpenAndInitializeLog In addition to calling the following
+     subroutines, lots of files are being opened in the main body of
+     this subroutine. Some (e.g. the PCF) are read and then closed,
+     while others are opened for the entirety of the run.
+
+     + GetPCFParameters
+     + GetL1Config
+     + Load_Eng_tbls
+     + OpenL0Files
+     + InitSciPointers
+     + GetBandSwitches
+     + LoadChanDefaults
+     + LoadDACSconsts
+     + InitDACS_FFT
+     + MLS_h5open
+     
+   + L1LogUtils::ExamineData: This is where the L0 data is read. 
+     + L1LogUtils::ExamineSciData
+       + SciUtils::NextSciMAF
+
+	 Processes L0 data by calling GetSciPkt(->
+	 ReadL0Sci->ReadL0Packet) until the MAF number changes. Internal
+	 to that routine and the routines called this routine, among
+	 other things, pulls out the positions fo the pointing mirrors,
+	 'process' DACS data, convert the DN for the pointing mirrors to
+	 angles and return.
+
+	 + SciUtils::GetSciPkt : Subroutine is somewhat misnamed. It
+           does much more than merely 'get' the SciPkt! After the
+           calls to ReadL0Sci, the code in this routine, gets the
+           time, converts some quantities
+           (Sci_pkt%{MAFno,MIFno,Orbit}), checks for bad checksums,
+           calculates THz_sw and GHz_sw position as well as the GHz
+           switching mirror position, looks at the GSN for
+           changes. Calls the following (notes on those in their
+           appropriate place, if needed. Most are pretty
+           self-explanatory.)
+
+	   + L0Utils::ReadL0Sci
+	     + L0Utils::ReadL0Packet : Calls the toolkit to read an L0
+               packet (PGS_IO_L0_Getpacket)
+	   + ConvertLLO
+	   + Get_PLL_DN
+	   + DetermineAttens
+	   + UncompressDACSData
+	   + ExtractDACSdata
+	 + ProcessDACSdata
+	   + ProcessDACSdata : DACS data is in some packed, compressed
+	     format. The following undoes all that.
+	     + FixLostCarryBits : have *no* idea
+	     + UnpackDACSdata : unpacks the DACS data, which is some
+	       compressed packed format
+	       + UnpackUncompDACS
+	     + ProcessUnpackedDACS : Crap, I don't know. Coefficients
+	       looks like a combination of a Taylor and a Fourier
+	       series. Then runs them through a fourier transform.
+	 + GetScAngles
+
+     + L1LogUtils::ExamineEngData
+       + EngUtils::NextEngMAF
+	 + ReadL0Eng : For each MAF in turn, assemble the data from
+	   the 6 packets by calling ReadL0Eng. Then, calculate which
+	   side of the electronics and devices are on. Finally, called
+	   ConvertEngCounts, which stores the values of engineering
+	   quantities by mnemonic given in /data/emls/l1cal/engtlm.tbl
+	   file.
+
+	   + L0Utils::ReadL0Eng : This routine loops over the 6
+             engineering packets, calling the following subroutine to
+             get the packet data for this MAF. 
+	     + L0Utils::ReadL0Packet
+	     + PGS_IO_L0_Close : to close the file if we've passed
+               outside the processing window or we've hit the end of
+               file.
+	     + OpenL0File : to open the next packet file in turn.
+	   + ConvertEngCounts : Converts engineering telemetry (.e.g
+	   temps, voltages, etc) and stores them by mnemonic.
+     + OutputLogSummary
+     + DeterminWeightFlags
+     + CloseFiles
+     + LogStatus
+
 ** MLSL1G
-   + OpenInitialize
+   + OpenInitialize : shared by MLSL1G and MLSL1T
+     + MLSL1Debug_Init
+     + openMLSL1DebugFiles
+     + GetPCFParameters
+     + CreatePCFAnnotation
+     + CreatePCFAnnotation
+     + GetL1Config
+     + GetBandSwitches
+     + Load_Eng_tbls
+     + LoadChanDefaults (called twice, once for default gains table
+       and once for the zero's file)
+     + ReadSignalsDatabase
+     + OpenL0Files
+     + OpenL1BFiles
+     + InitSciPoints
+     + InitCalWindow
+     + InitRad
+     + InitFOVConsts (if not in THz mode)
+     + InitBaseLine
+     + OutputL1BOA_create
+     + Load_Band_Tbls
+     + LoadSidebandFracs
+     + LoadSpilloverLoss
+     + LoadFourierCoefs
+     + LoadDefltChi2
+     + LoadBaselineAC
+     + LoadBandAlts
+
    + LOOP: Do until there's no more good data
 
      + SortQualify::SortAndQualify(more_data,do_calib)
@@ -3380,41 +3467,45 @@ it remains with the value of 1.
        do a calibration.
 
        + UpdateCalWindow : Initializes BankWall, WallCnt, LimAltNo,
-     MinCalFlag variables, Reads WeightFlags,EngMAF and SciMAf from
-     MAF_dat_tmp.dat, which is created by MLSL1log then shifts data
-     around in arrays. If the data is inside the processing interval,
-     call...
+         MinCalFlag variables, Reads WeightFlags,EngMAF and SciMAf
+         from MAF_dat_tmp.dat, which is created by MLSL1log then
+         shifts data around in arrays. If the data is inside the
+         processing interval, call...
 
 	 + OutputL1BOAData for this MAF
 
        + QualifyCurrentMAF: This is the routine that does most of the
-     work.. It initializes various control variabls (MIFprecSign) and
-     the actual data (CurMAFdata%ChanType(MIF)%{FB,MB,WF,DACS},
-     Declares are BankWall (which only affects 2 MAFs) if the
-     Attenuation is over the maximum or has too much of a change and
-     marks individual MIFs as unuable (D == discard) if their GHz
-     mirror position isn't what's predicted in the L1CF file. Does
-     some quality checking on the space/target counts to see if they
-     make sense. If they're too 'close', suggesting that one or the
-     other of them are mislabeled, declare a WALL. Looks for Bright
-     Objects (e.g. the moon) and declares are WALL if any are
-     found. Looks for changes in the GSN (Ghz Switch network) and
-     declares a wall if there are any. If there haven't been any
-     change, find which channel ('banks' in the L1 code) each switch
-     is going to. (Need to put the Lock state code here, since we need
-     the information about the current GSN configuration)
+         work. It initializes various control variabls (MIFprecSign)
+         and the actual data
+         (CurMAFdata%ChanType(MIF)%{FB,MB,WF,DACS}, Declares are
+         BankWall (which only affects 2 MAFs) if the Attenuation is
+         over the maximum or has too much of a change and marks
+         individual MIFs as unuable (D == discard) if their GHz mirror
+         position isn't what's predicted in the L1CF file. Does some
+         quality checking on the space/target counts to see if they
+         make sense. If they're too 'close', suggesting that one or
+         the other of them are mislabeled, declare a WALL. Looks for
+         Bright Objects (e.g. the moon) and declares are WALL if any
+         are found. Looks for changes in the GSN (Ghz Switch network)
+         and declares a wall if there are any. If there haven't been
+         any change, find which channel ('banks' in the L1 code) each
+         switch is going to. (Need to put the Lock state code here,
+         since we need the information about the current GSN
+         configuration)
 
-       + if (CalWinFull) QualifyWindow
+       + IF (CalWinFull) QualifyWindow
        + UpdateCalVecctors
        + do_calib==CalWinFull
-     + if (only do the following if SortQualify returns `do_calib'==TRUE)
+     + IF (only do the following if SortQualify returns `do_calib'==TRUE) THEN 
        + Calibrate
        + CalcLimbRads
        + OutputL1BData
        + LatBinRads
      + ENDIF
-     + If no more_data==FALSE, exit
+     + If more_data==FALSE, exit LOOP
+
    + ENDLOOP
+
    + FinaliseDACSData
    + UpdateBaseLines
    + UpdateBaseLinesRads
