@@ -262,8 +262,10 @@ CONTAINS
           data_OK = .FALSE.
           n = PGS_TD_TAItoUTC (engtime, asciiUTC)
           WRITE (msg, &
-               '("Bad Checksum: Eng Pkt ", i1, ",MAF: ",i4, &
-               ", UTC: ", A27)') i, MAFno, asciiUTC
+               '("Bad Checksum: Eng Pkt ", i1, ",MAF: ",i4,' // &
+               '", UTC: ", A27)') i, MAFno, asciiUTC
+
+
           PRINT *, TRIM(msg)
           WRITE (L1BFileInfo%LogId, *) ''
           WRITE (L1BFileInfo%LogId, *) '### Info: '//TRIM(msg)
@@ -305,6 +307,9 @@ END MODULE L0Utils
 !=============================================================================
 
 ! $Log$
+! Revision 2.16  2018/04/17 16:19:26  whdaffer
+! line 265, syntax error for NAG in write statement
+!
 ! Revision 2.15  2018/04/10 18:14:21  whdaffer
 ! Gave output field a width, to mollify NAG compiler
 !
