@@ -78,7 +78,7 @@ contains
     !         it is the same as the lookahead).
 
     logical ADEQUT
-    integer I, IBASE, IPR, IPTR, ITEMP, J, JDOT, JEND, JSTART
+    integer I, IBASE, IPR, IPTR, ITEMP, JDOT, JEND, JSTART
     integer K, L, LINK
     integer LSTHED(NUMPRD)
     logical REDUCE
@@ -167,7 +167,7 @@ contains
       l = string_length(vocab(prodcn(ibase))) + 16
 
       ! Print the right side of the production with a dot before the
-      ! IDOT'th item.  IDOT is in items(J)%dot.
+      ! IDOT'th item.  IDOT is in items(S)%dot.
 
       jdot = 1
       do k = ibase+1, prdind(prod_number+1)-1
@@ -177,7 +177,7 @@ contains
           call blanks ( 13 )
           l = 13
         end if
-        if ( jdot == items(j)%dot ) then
+        if ( jdot == items(s)%dot ) then
           call output ( ' .' )
           l = l + 2
         end if
@@ -185,7 +185,7 @@ contains
         l = l + w + 1
         jdot = jdot + 1
       end do
-      reduce = jdot == items(j)%dot
+      reduce = jdot == items(s)%dot
       if (reduce) then
         call output ( ' .' )
         if ( actions(prod_number) /= 0 ) then
@@ -229,7 +229,7 @@ contains
           call output ( red(j)%prod, 7 )
           iptr = list(red(j)%set)%next
           call pntlst (iptr, 30, 30)
-          call check_for_conflicts ! in this state
+          call check_for_conflicts ( j ) ! in state j
         end do
         if (.not. adequt) then
           if (lnadqt /= 0) then
@@ -240,7 +240,8 @@ contains
       end if
     end subroutine print_the_reductions ! from the state
 
-    subroutine check_for_conflicts ! in this state
+    subroutine check_for_conflicts ( j ) ! in state j
+      integer, intent(in) :: J
       integer :: L
       do l = basis(i)%tran, basis(i+1)%tran-1
         k = basis(tran(l))%item
@@ -316,6 +317,9 @@ contains
 end module Print_Set
 
 ! $Log$
+! Revision 1.4  2018/04/17 22:40:54  vsnyder
+! Declare local DO variables
+!
 ! Revision 1.3  2014/01/14 00:11:42  vsnyder
 ! Revised LR completely
 !
