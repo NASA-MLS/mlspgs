@@ -115,6 +115,7 @@ contains
   contains
 
     subroutine clean_up ! redundant context set references
+      integer :: I, J
       do i = 1, indbas-1
         ipr = basis(i)%item
         if ( items(ipr)%prod == 1 .and. items(ipr)%dot > 3 ) ifinal = i
@@ -125,6 +126,7 @@ contains
     end subroutine clean_up ! redundant context set references
 
     subroutine print_the_basis ! for the state
+      integer :: J
       integer :: L ! How many blanks before printing the production.
       call newLine
       call output ( i, 6 )
@@ -152,6 +154,7 @@ contains
       integer, intent(in) :: S       ! Index of configuration set item
       integer, intent(in) :: Initial ! Space before the production
 
+      integer :: K
       integer :: Prod_Number
       integer :: W ! String length of vocab item
 
@@ -214,6 +217,7 @@ contains
     end subroutine print_the_transitions ! from the state
 
     subroutine print_the_reductions ! from the state
+      integer :: J
       adequt = .true.
       jstart = basis(i)%red
       jend = basis(i+1)%red - 1
@@ -237,6 +241,7 @@ contains
     end subroutine print_the_reductions ! from the state
 
     subroutine check_for_conflicts ! in this state
+      integer :: L
       do l = basis(i)%tran, basis(i+1)%tran-1
         k = basis(tran(l))%item
         list(itemp)%item = prodcn(prdind(items(k)%prod)+items(k)%dot-1)
@@ -259,6 +264,7 @@ contains
     end subroutine check_for_conflicts ! in this state
 
     subroutine print_cross_reference ! of productions and states
+      integer :: I, J
       lsthed(1:numprd) = 0
       do i = 1, indbas-1
         do j = basis(i)%item, basis(i+1)%item - 1
@@ -310,6 +316,9 @@ contains
 end module Print_Set
 
 ! $Log$
+! Revision 1.3  2014/01/14 00:11:42  vsnyder
+! Revised LR completely
+!
 ! Revision 1.2  2013/11/27 01:33:47  vsnyder
 ! Stop with stop-code 1 if not LR
 !
