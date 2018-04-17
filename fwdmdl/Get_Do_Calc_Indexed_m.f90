@@ -48,9 +48,8 @@ contains
                                           ! boundary nearest the tangent point;
                                           ! Inds(:,2) is the other boundary index.
 
-    integer :: I, K, M, P_I, P1, P2
+    integer :: M, P_I, P1, P2
 
-    i = 1 - Ng
     n_inds = 0
     p1 = 2
     p2 = tan_pt_c
@@ -140,6 +139,9 @@ contains
 end module Get_Do_Calc_Indexed_m
 
 ! $Log$
+! Revision 2.3  2018/04/17 22:10:18  vsnyder
+! Remove unused declarations
+!
 ! Revision 2.2  2017/08/25 22:49:25  pwagner
 ! Removed :: that NAG hated
 !
