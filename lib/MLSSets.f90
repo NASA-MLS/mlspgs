@@ -19,19 +19,19 @@ module MLSSets
 
 ! We represent sets with arrays
 ! We usually do not check whether the elements are in fact unique
-! (you can use IsProperSet to check or FindUnique to ensure this) 
+! (you can use IsProperSet to check or FindUnique to ensure this)
 ! so some operations may not work properly if you supply arrays with
 ! duplicate elements.
 
-! You may also call Union with any args, proper or not, 
+! You may also call Union with any args, proper or not,
 ! sure that it will return only unique elements.
 
 ! A point about null sets:
 ! Not all operations have been checked thoroughly for correctness
 ! when one or more arguments are null sets, i.e. 0-sized
 ! IsProperSet, IsProperSubset, and IsSubset do give correct results:
-! The null set is 
-!  (1) a proper set, 
+! The null set is
+!  (1) a proper set,
 !  (2) a proper subset of any set except itself
 !  (3) a subset of itself, but not a proper subset of itself
 
@@ -51,18 +51,18 @@ module MLSSets
   implicit none
   private
 
-! === (start of toc) ===                                                 
-!     c o n t e n t s                                                    
-!     - - - - - - - -                                                    
+! === (start of toc) ===
+!     c o n t e n t s
+!     - - - - - - - -
 
 !     (subroutines and functions)
-! FindIntersection  
+! FindIntersection
 !               Compute indices of elements in intersection of two sets
 ! Intersect     Return true if two sets represented by arrays of integers have
 !               a common element
 ! Intersection  Compute intersection of two sets
 ! IsProperSet   Check that each element is unique
-! IsProperSubset 
+! IsProperSubset
 !               Check that each element in A is within larger B
 ! IsSubset      Check that each element in A is within B
 ! RelativeComplement
@@ -146,7 +146,7 @@ module MLSSets
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
-  private :: not_used_here 
+  private :: not_used_here
 !---------------------------------------------------------------------------
 
 contains ! =====     Public Procedures     =============================
@@ -155,10 +155,10 @@ contains ! =====     Public Procedures     =============================
   ! This family of routines finds the indices of the intersection between
   ! two similarly montonic sets
   ! e.g. given set1 = /(1, 3, 5, 7 )/, set2 = /(1, 2, 3, 4, 5)/
-  ! produces which1 = /(1, 2, 3)/, 
-  !      which2 = /(1, 3, 5)/, 
+  ! produces which1 = /(1, 2, 3)/,
+  !      which2 = /(1, 3, 5)/,
   ! and the optional arg      how_many = 3
-  
+
   ! Note that which1 and which2 are arrays of array indices
   ! and that they will be monotonically increasing
   subroutine FindIntersectionInteger ( set1, set2, WHICH1, which2, &
@@ -301,8 +301,8 @@ contains ! =====     Public Procedures     =============================
   ! -----------------------------------------------  Intersection  -----
   ! Compute the intersection C of the sets A and B, each represented by
   ! arrays of integers, characters, or reals
-  
-  ! options, if present, can modify this behavior: 
+
+  ! options, if present, can modify this behavior:
   !   char    effect
   !  ------   ------
   !    r      The set of elements in a or b but not in both
@@ -311,19 +311,18 @@ contains ! =====     Public Procedures     =============================
   !            which is A - B, or as our notation has it, RC ( B, A )
   ! The 'c' option exists only to allow the family of functions
   ! to be reused internally for finding the relative complement of two sets
-  
+
   function IntersectionInteger ( A, B, options ) result ( C )
     ! A faster algorithm is used if we're not reversing
 
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error
     use Sort_M, only: SORT
 
     integer, dimension(:), intent(in)      :: A, B
     integer, dimension(:), allocatable     :: C ! Intent(out) -- allocated here
     character(len=*), optional, intent(in) :: options
 
-    integer :: size_c, status
-    integer :: I, J, K, Stat, TA(size(a)), TB(size(b)), TC(size(a)+size(b))
+    integer :: size_c
+    integer :: I, J, K, TA(size(a)), TB(size(b)), TC(size(a)+size(b))
     logical :: myComplement
     logical :: myReverse
     logical :: stdIntersection
@@ -367,12 +366,12 @@ contains ! =====     Public Procedures     =============================
     character(len=len(a)), allocatable :: C(:) ! Intent(out) -- allocated here
     character(len=*), optional, intent(in)       :: options
     ! Local variables
-    integer :: i, j, size_c, status
+    integer :: i, j, size_c
     character(len=len(a)), dimension(size(a)+size(b)) :: TC
     logical :: myComplement
     logical :: myReverse
     logical :: stdIntersection
-    
+
     include 'Intersection.f9h'
   end function IntersectionCharacter
 
@@ -382,15 +381,15 @@ contains ! =====     Public Procedures     =============================
     ! If  so found, add the element
 
     double precision, dimension(:), intent(in)  :: A, B
-    double precision, dimension(:), allocatable :: C ! Intent(out) -- nullified and then allocated here
+    double precision, dimension(:), allocatable :: C ! Intent(out) -- allocated here
     character(len=*), optional, intent(in)      :: options
     ! Local variables
-    integer :: i, j, size_c, status
+    integer :: i, j, size_c
     double precision, dimension(size(a)+size(b)) :: TC
     logical :: myComplement
     logical :: myReverse
     logical :: stdIntersection
-    
+
     include 'Intersection.f9h'
   end function IntersectionDouble
 
@@ -400,15 +399,15 @@ contains ! =====     Public Procedures     =============================
     ! If  so found, add the element
 
     real, dimension(:), intent(in)         :: A, B
-    real, dimension(:), allocatable        :: C ! Intent(out) -- nullified and
-    character(len=*), optional, intent(in) :: options  ! then allocated here
+    real, dimension(:), allocatable        :: C ! Intent(out) -- allocated here
+    character(len=*), optional, intent(in) :: options
     ! Local variables
-    integer :: i, j, size_c, status
+    integer :: i, j, size_c
     real, dimension(size(a)+size(b)) :: TC
     logical :: myComplement
     logical :: myReverse
     logical :: stdIntersection
-    
+
     include 'Intersection.f9h'
   end function IntersectionReal
 
@@ -426,7 +425,7 @@ contains ! =====     Public Procedures     =============================
     logical :: myComplement
     logical :: myReverse
     logical :: stdIntersection
-    
+
     ! Executable
     myComplement = .false.
     myReverse = .false.
@@ -462,7 +461,7 @@ contains ! =====     Public Procedures     =============================
         endif
       enddo
     endif
-    ! print *, 'size(c): ', size_c    
+    ! print *, 'size(c): ', size_c
     ! print *, 'tc: ', tc(1:size_c)
     if ( size_c < 1 ) return
     c = tc(:,:size_c)
@@ -642,9 +641,9 @@ contains ! =====     Public Procedures     =============================
     ! Local variables
     integer :: i, j, size_c
     character(len=len(a)), dimension(size(a)+size(b)) :: TC
-    
+
     ! Executable
-    ! print *, 'size(a): ', size(a)    
+    ! print *, 'size(a): ', size(a)
     ! print *, 'a: ', a(1:size(a))
     size_c = 0
     do i=1, size(a)
@@ -657,7 +656,7 @@ contains ! =====     Public Procedures     =============================
       TC(size_c) = a(i)
     end do
 
-    ! print *, 'size(b): ', size(b)    
+    ! print *, 'size(b): ', size(b)
     ! print *, 'b: ', b(1:size(b))
     do i=1, size(b)
       ! Don't redo an already-added element
@@ -668,7 +667,7 @@ contains ! =====     Public Procedures     =============================
       size_c = size_c + 1
       TC(size_c) = b(i)
     end do
-    ! print *, 'size(c): ', size_c    
+    ! print *, 'size(c): ', size_c
     ! print *, 'tc: ', tc(1:size_c)
     c = tc(:size_c)
   end function UnionCharacter
@@ -713,9 +712,9 @@ contains ! =====     Public Procedures     =============================
     ! Local variables
     integer :: i, j, size_c
     integer, dimension(size(a,1),size(a,2)+size(b,2)) :: TC
-    
+
     ! Executable
-    ! print *, 'size(a): ', size(a)    
+    ! print *, 'size(a): ', size(a)
     ! print *, 'a: ', a(1:size(a))
     size_c = 0
     do i=1, size(a,2)
@@ -728,7 +727,7 @@ contains ! =====     Public Procedures     =============================
       TC(:,size_c) = a(:,i)
     end do
 
-    ! print *, 'size(b): ', size(b)    
+    ! print *, 'size(b): ', size(b)
     ! print *, 'b: ', b(1:size(b))
     do i=1, size(b,2)
       ! Don't redo an already-added element
@@ -739,7 +738,7 @@ contains ! =====     Public Procedures     =============================
       size_c = size_c + 1
       TC(:,size_c) = b(:,i)
     end do
-    ! print *, 'size(c): ', size_c    
+    ! print *, 'size(c): ', size_c
     ! print *, 'tc: ', tc(1:size_c)
     c = tc(:,:size_c)
   end function UnionVector
@@ -759,6 +758,9 @@ contains ! =====     Public Procedures     =============================
 end module MLSSets
 
 ! $Log$
+! Revision 2.38  2018/04/18 23:15:44  vsnyder
+! Remove declarations of unused variables
+!
 ! Revision 2.37  2018/04/18 22:38:07  vsnyder
 ! Make results of IntersectionDouble and IntersectionReal allocatable instead
 ! of pointer, so they don't leak.  Return zero-size instead of unallocated
