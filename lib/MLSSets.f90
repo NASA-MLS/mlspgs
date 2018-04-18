@@ -335,7 +335,7 @@ contains ! =====     Public Procedures     =============================
     if ( present(options) ) myReverse = index( options, 'r' ) > 0
     stdIntersection = .not. (myComplement .or. myReverse )
     if ( .not. stdIntersection ) then
-    include 'Intersection.f9h'
+      include 'Intersection.f9h'
     else
       ta = a
       tb = b
@@ -354,9 +354,6 @@ contains ! =====     Public Procedures     =============================
         end if
       end do
 
-      allocate ( c(k), stat=stat )
-      if ( stat /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-        MLSMSG_Allocate // 'C in IntersectionInteger' )
       c = tc(:k)
     end if
   end function IntersectionInteger
@@ -365,7 +362,6 @@ contains ! =====     Public Procedures     =============================
     ! method:
     ! Go though a, checking for each element whether a match is found in (b)
     ! If  so found, add the element
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error
 
     character(len=*), dimension(:), intent(in)   :: A, B
     character(len=len(a)), allocatable :: C(:) ! Intent(out) -- allocated here
@@ -384,11 +380,10 @@ contains ! =====     Public Procedures     =============================
     ! method:
     ! Go though a, checking for each element whether a match is found in (b)
     ! If  so found, add the element
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error
 
-    double precision, dimension(:), intent(in) :: A, B
-    double precision, dimension(:), pointer    :: C ! Intent(out) -- nullified and then allocated here
-    character(len=*), optional, intent(in)     :: options
+    double precision, dimension(:), intent(in)  :: A, B
+    double precision, dimension(:), allocatable :: C ! Intent(out) -- nullified and then allocated here
+    character(len=*), optional, intent(in)      :: options
     ! Local variables
     integer :: i, j, size_c, status
     double precision, dimension(size(a)+size(b)) :: TC
@@ -401,12 +396,11 @@ contains ! =====     Public Procedures     =============================
 
   function IntersectionReal ( A, B, options ) result ( C )
     ! method:
-    ! Go though a, checking for each element whether a match is found in (b)
+    ! Go though A, checking for each element whether a match is found in (B)
     ! If  so found, add the element
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error
 
     real, dimension(:), intent(in)         :: A, B
-    real, dimension(:), pointer            :: C ! Intent(out) -- nullified and
+    real, dimension(:), allocatable        :: C ! Intent(out) -- nullified and
     character(len=*), optional, intent(in) :: options  ! then allocated here
     ! Local variables
     integer :: i, j, size_c, status
@@ -422,13 +416,12 @@ contains ! =====     Public Procedures     =============================
     ! A vector is represented as an array of integers (1d)
     ! Thus an array of vectors is a 2d array of integers
     ! A and B must have the same lower and upper bounds for their first index
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error
 
     integer, dimension(:,:), intent(in) :: A, B
     integer, allocatable :: C(:,:) ! Intent(out) -- allocated here
     character(len=*), optional, intent(in) :: options  ! then allocated here
     ! Local variables
-    integer :: i, j, size_c, status
+    integer :: i, j, size_c
     integer, dimension(size(a,1),size(a,2)+size(b,2)) :: TC
     logical :: myComplement
     logical :: myReverse
@@ -766,6 +759,11 @@ contains ! =====     Public Procedures     =============================
 end module MLSSets
 
 ! $Log$
+! Revision 2.37  2018/04/18 22:38:07  vsnyder
+! Make results of IntersectionDouble and IntersectionReal allocatable instead
+! of pointer, so they don't leak.  Return zero-size instead of unallocated
+! array for zero-size set result.
+!
 ! Revision 2.36  2017/11/02 00:07:52  pwagner
 ! Intersection and Union can now take vectors as args
 !
