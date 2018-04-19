@@ -20,15 +20,22 @@
     integer :: STATUS
     integer :: S
     character(127) :: ERMSG
+    target :: To_Deallocate
     if ( allocated(To_Deallocate) ) then
-!      addr = transfer ( c_loc(to_deallocate), addr )
+! Fortran 2008 prohibits the argument of C_LOC to be a non-interoperable array.
+! LOGICAL isn't interoperable.  Unfortunately, NAG 6201 calls this an error,
+! not a warning.
+addr = 0
+!       addr = transfer ( c_loc(to_deallocate), addr )
       if ( mod(trackallocates,2) > 0 ) &
         & call trackDeAllocate ( to_deAllocate, itsName, moduleName )
       s = byte_size(to_deallocate)
       deallocate ( To_Deallocate, stat=status, errmsg=ermsg )
-      call test_deallocate ( status, moduleName, itsName, s, ermsg=ermsg &
-!        & , address=addr &
-        )
+      call test_deallocate ( status, moduleName, itsName, s, ermsg=ermsg, &
+        & address=addr )
     end if
 
 ! $Log$
+! Revision 1.1  2015/05/29 00:32:34  vsnyder
+! Initial commit
+!

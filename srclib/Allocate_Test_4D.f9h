@@ -40,8 +40,8 @@
         else if ( clearOnAllocate ) then
           to_allocate = default
         end if
-!         if ( size(to_allocate) > 0 ) &
-!           & addr = transfer ( c_loc(to_allocate(myLow1,myLow2,myLow3,myLow4)), addr )
+        if ( size(to_allocate) > 0 ) &
+          & addr = transfer ( c_loc(to_allocate(myLow1,myLow2,myLow3,myLow4)), addr )
       end if
       call test_allocate ( status, moduleName, ItsName, &
         & (/myLow1,myLow2,myLow3,myLow4/), (/dim1,dim2,dim3,dim4/), &
@@ -53,6 +53,9 @@
     end if
 
 ! $Log$
+! Revision 1.5  2015/06/04 01:54:53  vsnyder
+! Don't reallocate if bounds are the same
+!
 ! Revision 1.4  2015/03/28 00:53:02  vsnyder
 ! Stuff to trace allocate/deallocate addresses -- mostly commented out
 ! because NAG build 1017 doesn't yet allow arrays as arguments to C_LOC.

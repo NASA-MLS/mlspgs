@@ -18,7 +18,6 @@
 ! $Id$
 
     integer :: newSize, s, status, firstNewItem
-    integer(selected_int_kind(18)) :: Addr
     character(127) :: ERMSG
 
     ! Executable code
@@ -29,16 +28,14 @@
       newSize=extra
     end if
 
-!     block
-!       Intel ifort 15.0 doesn't allow USE inside BLOCK, so put it in
-!       every subprogram that includes this file, at least for now (2015/02/13).
-!       use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
-!       integer(C_Intptr_t) :: Addr
-      allocate ( tempDatabase(newSize), STAT=status, ERRMSG=ERMSG )
+    block
+      use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
+      integer(c_intptr_t) :: Addr
+      allocate ( tempDatabase(newSize), STAT=status, ERRMSG=ermsg )
       addr = 0
       if ( status == 0 ) addr = transfer ( c_loc(tempDatabase(1)), addr )
       call test_allocate ( status, ModuleName, "tempDatabase", ubounds=newSize, &
-        & elementSize = storage_size(tempDatabase) / 8, ERMSG=ERMSG, Address=addr )
+        & elementSize = storage_size(tempDatabase) / 8, ermsg=ermsg, address=addr )
 
       if ( newSize > extra ) tempDatabase(1:newSize-extra) = database
       if ( associated(database) ) then
@@ -50,9 +47,13 @@
       end if
       database => tempDatabase
       firstNewItem = newSize-extra+1
-!     end block
+    end block
 
 ! $Log$
+! Revision 1.6  2015/03/28 00:54:34  vsnyder
+! Stuff to trace allocate/deallocate addresses -- mostly commented out
+! because NAG build 1017 doesn't yet allow arrays as arguments to C_LOC.
+!
 ! Revision 1.5  2014/09/04 23:54:57  vsnyder
 ! Add allocate/deallocate size tracking
 !

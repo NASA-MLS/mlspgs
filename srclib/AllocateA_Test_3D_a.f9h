@@ -19,6 +19,7 @@
     logical :: DoAlloc
     integer :: MyLow(3), Status
     character(127) :: ERMSG
+    target :: To_Allocate
     myLow = 1
     if ( present(low) ) myLow = low
     doAlloc = .not. allocated(to_allocate)
@@ -28,7 +29,7 @@
       call deallocate_Test ( To_Allocate, ItsName, ModuleName )
       allocate ( &
         & To_Allocate(myLow(1):dim(1),myLow(2):dim(2),myLow(3):dim(3)), &
-        & stat=status, ERRMSG=ERMSG )
+        & STAT=status, ERRMSG=ermsg )
       addr = 0
       if ( status == 0 ) then
         if ( present(fill) ) then
@@ -36,13 +37,16 @@
         else if ( clearOnAllocate ) then
           to_allocate = default
         end if
-!         if ( size(to_allocate) > 0 ) &
-!           & addr = transfer ( c_loc(to_allocate(myLow(1),myLow(2),myLow(3),myLow(4))), addr )
+        if ( size(to_allocate) > 0 ) &
+          & addr = transfer ( c_loc(to_allocate(myLow(1),myLow(2),myLow(3))), addr )
       end if
       call test_allocate ( status, moduleName, ItsName, myLow, dim, &
-        & bytes(to_allocate), ERMSG, addr )
+        & bytes(to_allocate), ermsg, addr )
       if ( mod(trackallocates,2) > 0 ) &
         & call trackAllocate ( to_allocate, itsName, moduleName )
     end if
 
 ! $Log$
+! Revision 1.1  2015/06/04 00:33:38  vsnyder
+! Initial commit
+!

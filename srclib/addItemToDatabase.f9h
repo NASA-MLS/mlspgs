@@ -20,11 +20,8 @@
 
     ! Executable code
 
-    if ( associated(database) ) then ! tree_checker prevents duplicate names
-      newSize=SIZE(database)+1
-    else
-      newSize=1
-    end if
+    newSize = 1
+    if ( associated(database) )  newSize = newsize + size(database)
 
     block
       use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
@@ -50,6 +47,9 @@
     end block
 
 ! $Log$
+! Revision 1.10  2018/04/11 22:04:14  vsnyder
+! Remove declaration for unused variable
+!
 ! Revision 1.9  2018/04/11 20:32:04  vsnyder
 ! Compute the address for allocate/deallocate logging
 !

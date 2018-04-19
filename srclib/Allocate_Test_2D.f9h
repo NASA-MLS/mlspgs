@@ -27,7 +27,7 @@
                                  & size(to_allocate,2) /= dim2 - myLow2 + 1
     if ( doAlloc ) then
       call deallocate_Test ( To_Allocate, ItsName, ModuleName )
-      allocate ( To_Allocate(myLow1:dim1,myLow2:dim2), stat=status, ERRMSG=ERMSG )
+      allocate ( To_Allocate(myLow1:dim1,myLow2:dim2), STAT=status, ERRMSG=ermsg )
       addr = 0
       if ( status == 0 ) then
         if ( present(fill) ) then
@@ -35,11 +35,11 @@
         else if ( clearOnAllocate ) then
           to_allocate = default
         end if
-!         if ( size(to_allocate) > 0 ) &
-!           & addr = transfer ( c_loc(to_allocate(myLow1,myLow2)), addr )
+        if ( size(to_allocate) > 0 ) &
+          & addr = transfer ( c_loc(to_allocate(myLow1,myLow2)), addr )
       end if
       call test_allocate ( status, moduleName, ItsName, &
-        & (/myLow1,myLow2/), (/dim1,dim2/), bytes(to_allocate), ERMSG , addr)
+        & (/myLow1,myLow2/), (/dim1,dim2/), bytes(to_allocate), ermsg , addr)
       if ( mod(trackallocates,2) > 0 ) &
         & call trackAllocate ( to_allocate, itsName, moduleName )
     else
@@ -47,6 +47,9 @@
     end if
 
 ! $Log$
+! Revision 1.7  2015/06/04 01:54:53  vsnyder
+! Don't reallocate if bounds are the same
+!
 ! Revision 1.6  2015/03/28 00:53:02  vsnyder
 ! Stuff to trace allocate/deallocate addresses -- mostly commented out
 ! because NAG build 1017 doesn't yet allow arrays as arguments to C_LOC.

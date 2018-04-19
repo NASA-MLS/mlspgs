@@ -21,18 +21,24 @@
     integer :: S
     character(127) :: ERMSG
     if ( associated(To_Deallocate) ) then
-!      addr = transfer ( c_loc(to_deallocate), addr )
+! Fortran 2008 prohibits the argument of C_LOC to be a non-interoperable array.
+! LOGICAL isn't interoperable.  Unfortunately, NAG 6201 calls this an error,
+! not a warning.
+addr = 0
+!       addr = transfer ( c_loc(to_deallocate), addr )
       if ( mod(trackallocates,2) > 0 ) &
         & call trackDeAllocate ( to_deAllocate, itsName, moduleName )
-      s = ( storage_size(to_deallocate) * size(to_deallocate) ) / 8
+      s = byte_size(to_deallocate)
       deallocate ( To_Deallocate, stat=status, errmsg=ermsg )
-      call test_deallocate ( status, moduleName, itsName, s, ermsg=ermsg &
-!        & , address=addr &
-        )
+      call test_deallocate ( status, moduleName, itsName, s, ermsg=ermsg, &
+        & address=addr )
       nullify ( to_Deallocate ) ! in case of nonzero status
     end if
 
 ! $Log$
+! Revision 1.8  2016/05/25 00:18:56  vsnyder
+! Use Storage_Size and Size instead of Byte_Size
+!
 ! Revision 1.7  2015/03/28 00:53:02  vsnyder
 ! Stuff to trace allocate/deallocate addresses -- mostly commented out
 ! because NAG build 1017 doesn't yet allow arrays as arguments to C_LOC.
