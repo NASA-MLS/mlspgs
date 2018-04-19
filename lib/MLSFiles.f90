@@ -25,7 +25,7 @@ module MLSFiles               ! Utility file routines
   use Io_Stuff, only: Get_Lun
   use Machine, only: Io_Error
   use MLSCommon, only: BareFNLen, FileNameLen, FileIds_T, MLSFile_T, Range_T, &
-    & AccessType, FileStringTable, InRange, Split_Path_Name
+    & FileStringTable, InRange, Split_Path_Name
   use MLSMessageModule, only: MLSMessage, MLSMSG_Crash, MLSMSG_Error, &
     & MLSMSG_Warning, Dump_MLSFile
   use MLSFinds, only: Findfirst
@@ -286,7 +286,6 @@ contains
   ! creating the database if necessary.
 
     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
-    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
 
     ! Dummy arguments
     type (MLSFile_T), dimension(:), pointer :: DATABASE
@@ -686,7 +685,6 @@ contains
   ! first before we will be able to make it work; sorry (P. Wagner)
 
     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
-    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     ! Dummy arguments
     type (MLSFile_T), dimension(:), pointer :: DATABASE
     type (MLSFile_T), intent(in) ::            ITEM
@@ -2307,6 +2305,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.112  2018/04/19 02:09:49  vsnyder
+! Remove USE statements for unused names
+!
 ! Revision 2.111  2018/04/16 18:25:18  pwagner
 ! Actually obey NEVERFAIL in ReadL1BData_MLSFile
 !
