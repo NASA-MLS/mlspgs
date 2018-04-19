@@ -228,7 +228,6 @@ contains
   ! creating the database if necessary.
 
     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
-    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
 
     ! Dummy arguments
     type (MCGroup_T), dimension(:), pointer :: DATABASE
@@ -249,7 +248,6 @@ contains
   ! creating the database if necessary.
 
     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
-    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
 
     ! Dummy arguments
     type (MCParam_T), dimension(:), pointer :: DATABASE
@@ -2135,6 +2133,9 @@ contains
 
 end module WriteMetadata 
 ! $Log$
+! Revision 2.83  2018/04/19 01:14:16  vsnyder
+! Remove USE statements for unused names
+!
 ! Revision 2.82  2015/03/28 02:56:12  vsnyder
 ! Added stuff to trace allocate/deallocate addresses
 !
