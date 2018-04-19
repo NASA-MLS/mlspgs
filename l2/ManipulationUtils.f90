@@ -620,7 +620,6 @@ contains ! =====     Public Procedures     =============================
     ! the size -- where it was put.
 
     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
-    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
 
     ! Dummy arguments
     type (arrayTemp_T), dimension(:), pointer :: DATABASE
@@ -1353,9 +1352,7 @@ contains ! =====     Public Procedures     =============================
     ! put '( ' or ') ' in place of them
     ! Internal variables
     integer :: col
-    integer :: dbInd
     integer :: firstBl
-    integer :: lastBl
     integer :: lenFunName
     ! Executable
     lenFunName = len(Fun)
@@ -1382,9 +1379,7 @@ contains ! =====     Public Procedures     =============================
     ! put '( ' or ') ' in place of them
     ! Internal variables
     integer :: col
-    integer :: dbInd
     integer :: firstBl
-    integer :: lastBl
     newStr = str
     col = index( str, 'val:' )
     if ( col < 1 ) return
@@ -1409,7 +1404,6 @@ contains ! =====     Public Procedures     =============================
     integer :: NLOCBI
     character(len=1) :: a, b
     character(len=len(str)+8), dimension(24) :: stringArray
-    character(len=len(str)+8)                :: stringElm
     ! logical, parameter                       :: DEEBUG = .true.
     ! Executable
     n = NumStringElements( str, countEmpty, &
@@ -1494,6 +1488,9 @@ end module ManipulationUtils
 
 !
 ! $Log$
+! Revision 2.21  2018/04/19 00:53:57  vsnyder
+! Remove USE statements and declarations for unused names
+!
 ! Revision 2.20  2017/11/03 21:01:57  pwagner
 ! Fixed another bug, this time for similar function names (e.g., cos and acos)
 !
