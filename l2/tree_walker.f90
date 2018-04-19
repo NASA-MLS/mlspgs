@@ -96,10 +96,10 @@ contains ! ====     Public Procedures     ==============================
       & Next_Tree_Node, Next_Tree_Node_State
     use Open_Init, only: OpenAndInitialize
     use OutputAndClose, only: Output_Close
-    use Output_M, only: Output, &
-      & ResumeOutput, RevertOutput, SwitchOutput
+    use Output_M, only: Output, ResumeOutput, RevertOutput, SwitchOutput
     use PointingGrid_M, only: Destroy_Pointing_Grid_Database
-    use QuantityTemplates, only: QuantityTemplate_T
+    use QuantityTemplates, only: QuantityTemplate_T ! , &
+!       & DestroyQuantityTemplateDatabase
     use ReadApriori, only: Read_Apriori
     use RetrievalModule, only: Retrieve
     use SpectroscopyCatalog_M, only: Destroy_Line_Database, &
@@ -153,7 +153,7 @@ contains ! ====     Public Procedures     ==============================
     integer ::                                   SON     ! Son of Root
     type(next_tree_node_state) ::                State, Save1, Save2 ! of tree traverser
     logical ::                                   STOPBEFORECHUNKLOOP
-    real    ::                                   t1, t2, tChunk
+    real    ::                                   t1, tChunk
     character(len=24) ::                         textCode
     type (Vector_T), dimension(:), pointer ::    Vectors
     logical :: verbose
@@ -749,6 +749,9 @@ subtrees:   do
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.208  2018/03/14 22:08:36  pwagner
+! May print section in innemost loop if verbose enough
+!
 ! Revision 2.207  2017/01/25 17:24:22  pwagner
 ! May skip certain Phases named in phasesToSkip cmdline opt
 !
