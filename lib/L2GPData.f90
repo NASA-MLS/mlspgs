@@ -346,6 +346,8 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
     ! integer :: verticalCoordinate ! The vertical coordinate used.  These
                                   ! are l_lits of the type t_VGridCoord
                                   ! defined in Init_Tables_Module.
+  contains
+    final :: DestroyL2GPContents
   end type L2GPData_T
 
   ! Print debugging stuff?
@@ -3362,22 +3364,22 @@ contains ! =====     Public Procedures     =============================
 
     ! Executable code
 
-    call deallocate_test ( l2gp%pressures,         "l2gp%pressures",         ModuleName )
-    call deallocate_test ( l2gp%latitude,          "l2gp%latitude",          ModuleName )
-    call deallocate_test ( l2gp%longitude,         "l2gp%longitude",         ModuleName )
-    call deallocate_test ( l2gp%solarTime,         "l2gp%solarTime",         ModuleName )
-    call deallocate_test ( l2gp%solarZenith,       "l2gp%solarZenith",       ModuleName )
-    call deallocate_test ( l2gp%losAngle,          "l2gp%losAngle",          ModuleName )
-    call deallocate_test ( l2gp%geodAngle,         "l2gp%geodAngle",         ModuleName )
-    call deallocate_test ( l2gp%chunkNumber,       "l2gp%chunkNumber",       ModuleName )
-    call deallocate_test ( l2gp%time,              "l2gp%time",              ModuleName )
-    call deallocate_test ( l2gp%frequency,         "l2gp%frequency",         ModuleName )
-    call deallocate_test ( l2gp%l2gpValue,         "l2gp%l2gpValue",         ModuleName )
-    call deallocate_test ( l2gp%l2gpPrecision,     "l2gp%l2gpPrecision",     ModuleName )
-    call deallocate_test ( l2gp%status,            "l2gp%status",            ModuleName )
-    call deallocate_test ( l2gp%quality,           "l2gp%quality",           ModuleName )
-    call deallocate_test ( l2gp%convergence,       "l2gp%convergence",       ModuleName )
-    call deallocate_test ( l2gp%AscDescMode,         "l2gp%AscDescMode",       ModuleName )
+    call deallocate_test ( l2gp%pressures,     "l2gp%pressures",     ModuleName )
+    call deallocate_test ( l2gp%latitude,      "l2gp%latitude",      ModuleName )
+    call deallocate_test ( l2gp%longitude,     "l2gp%longitude",     ModuleName )
+    call deallocate_test ( l2gp%solarTime,     "l2gp%solarTime",     ModuleName )
+    call deallocate_test ( l2gp%solarZenith,   "l2gp%solarZenith",   ModuleName )
+    call deallocate_test ( l2gp%losAngle,      "l2gp%losAngle",      ModuleName )
+    call deallocate_test ( l2gp%geodAngle,     "l2gp%geodAngle",     ModuleName )
+    call deallocate_test ( l2gp%chunkNumber,   "l2gp%chunkNumber",   ModuleName )
+    call deallocate_test ( l2gp%time,          "l2gp%time",          ModuleName )
+    call deallocate_test ( l2gp%frequency,     "l2gp%frequency",     ModuleName )
+    call deallocate_test ( l2gp%l2gpValue,     "l2gp%l2gpValue",     ModuleName )
+    call deallocate_test ( l2gp%l2gpPrecision, "l2gp%l2gpPrecision", ModuleName )
+    call deallocate_test ( l2gp%status,        "l2gp%status",        ModuleName )
+    call deallocate_test ( l2gp%quality,       "l2gp%quality",       ModuleName )
+    call deallocate_test ( l2gp%convergence,   "l2gp%convergence",   ModuleName )
+    call deallocate_test ( l2gp%AscDescMode,   "l2gp%AscDescMode",   ModuleName )
     l2gp%nTimes = 0
     l2gp%nTimesTotal = 0
     l2gp%nLevels = 0
@@ -3529,7 +3531,6 @@ contains ! =====     Public Procedures     =============================
     ! the size -- where L2gp is put.
 
     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
-    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
 
     ! Dummy arguments
     type (l2gpdata_t), dimension(:), pointer :: DATABASE
@@ -5441,6 +5442,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.232  2018/02/28 19:54:26  pwagner
+! Tries to prevent unwanted names on each line
+!
 ! Revision 2.231  2018/02/03 00:24:49  pwagner
 ! Correct Status Bit names; add post-processed
 !
