@@ -16,7 +16,6 @@ module MLSSignals_M
 
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
   use Dump_0, only: Dump
-  use Dump_1, only: DumpLists
   use Expr_M, only: Expr
   use HighOutput, only: HeadLine, OutputNamedValue, OutputTable, Tab
   use Init_MLSSignals_M ! Everything
@@ -25,7 +24,7 @@ module MLSSignals_M
   use MLSKinds, only: R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, PVMErrorMessage
   use MLSStrings, only: Lowercase, Capitalize
-  use Output_M, only: Blanks, Newline, Output
+  use Output_M, only: Newline, Output
   use String_Table, only: Display_String, Get_String
 
   implicit none
@@ -732,7 +731,6 @@ contains
   integer function AddBandToDatabase ( Database, Item )
 
     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
-    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
 
     type(band_T), dimension(:), pointer :: Database
     type(band_T), intent(in) :: Item
@@ -749,7 +747,6 @@ contains
   integer function AddModuleToDatabase ( Database, Item )
 
     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
-    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
 
     type(module_T), dimension(:), pointer :: Database
     type(module_T), intent(in) :: Item
@@ -766,7 +763,6 @@ contains
   integer function AddRadiometerToDatabase ( Database, Item )
 
     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
-    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
 
     type(radiometer_T), dimension(:), pointer :: Database
     type(radiometer_T), intent(in) :: Item
@@ -783,7 +779,6 @@ contains
   integer function AddSignalToDatabase ( Database, Item )
 
     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
-    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
 
     type(signal_T), dimension(:), pointer :: Database
     type(signal_T), intent(in) :: Item
@@ -800,7 +795,6 @@ contains
   integer function AddSpectrometerTypeToDatabase ( Database, Item )
 
     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
-    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
 
     type(spectrometerType_T), dimension(:), pointer :: Database
     type(spectrometerType_T), intent(in) :: Item
@@ -959,7 +953,8 @@ contains
     integer, intent(in), optional :: Sideband ! Use this instead of Signal's
     integer, intent(in), optional :: Channel  ! Use this instead of Signal's
     logical, pointer, optional :: OtherChannels(:) ! Use these instead of Signal's
-    call displaySignalName ( signals(signal), advance, before, sideband, channel )
+    call displaySignalName ( signals(signal), advance, before, sideband, channel, &
+                           & otherChannels )
    end subroutine DisplaySignalName_index
 
   ! -----------------------------------  DisplaySignalName_signal  -----
@@ -1239,7 +1234,6 @@ oc:       do
     logical, dimension(:), intent(in), optional :: isSignalCritical
     integer, intent(in), optional               :: Details ! How verbose?
     logical, pointer, optional                  :: OtherChannels(:)
-    logical, pointer                            :: Channels(:)
     integer :: I
     character(len=*), parameter                 :: The80 = &
       & '12345678901234567890123456789012345678901234567890123456789012345678901234567890'
@@ -1276,7 +1270,6 @@ oc:       do
     endif
     call NewLine
     do i = 1, size(signals)
-      channels => signals(i)%channels
       call output ( i )
       call tab
       call displaySignalName ( signals(i), otherChannels=otherChannels )
@@ -2178,6 +2171,11 @@ oc:       do
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.115  2018/04/19 00:53:09  vsnyder
+! Remove USE statements and declarations for unused names.  Add OtherChannels
+! to call to displaySignalName in DisplaySignalName_index.  Remove Channels
+! pointer in Dump_Signals because it's not used.
+!
 ! Revision 2.114  2018/03/05 19:24:39  pwagner
 ! Improved DUMP_SIGNALS
 !
