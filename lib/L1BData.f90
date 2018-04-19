@@ -2177,8 +2177,8 @@ contains ! ============================ MODULE PROCEDURES ======================
       end if
       ! Account for the allocation size
       addr = 0
-!       if ( size(l1bData%charField) > 0 ) &
-!         & addr = transfer(c_loc(l1bData%charField(1,1,1)), addr)
+      if ( size(l1bData%charField) > 0 ) &
+        & addr = transfer(c_loc(l1bData%charField(1,1,1)), addr)
       call test_allocate ( alloc_err, ModuleName, "l1bData%charField", &
         & uBounds = [l1bData%noAuxInds,l1bData%maxMIFs], &
         & elementSize = storage_size(l1bData%charField) / 8, address=addr )
@@ -3015,6 +3015,10 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.122  2018/04/19 02:00:36  vsnyder
+! Compute address for allocate/deallocate tracking.  Remove USE statements for
+! unused names.
+!
 ! Revision 2.121  2018/03/05 19:25:38  pwagner
 ! Reduce non-debug printing
 !
