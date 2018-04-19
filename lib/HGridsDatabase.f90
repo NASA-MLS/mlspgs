@@ -104,7 +104,6 @@ contains ! =========== Public procedures ===================================
     ! destroy the original one, just nullify all its pointers.
 
     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
-    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
 
     ! Dummy arguments
     type (HGrids_T), dimension(:), pointer :: Database
@@ -219,7 +218,6 @@ contains ! =========== Public procedures ===================================
     use HighOutput, only: outputNamedValue
     use L1BData, only: L1BData_t, &
       & AssembleL1BQtyName, ConvertL1BData, deallocateL1BData, readL1BData
-    use machine, only: crash_burn
     use MLSCommon, only: MLSFile_t
     use MLSFiles, only: getMLSFileByType
     use MLSFillValues, only: isFillValue, Monotonize
@@ -315,7 +313,6 @@ contains ! =========== Public procedures ===================================
       call output( 'We should have stopped specifying GHz by now', advance='yes' )
       call outputNamedValue( 'name', trim(Name) )
       call outputNamedValue( 'moduleStr', trim(moduleStr) )
-      ! call crash_burn
       if ( moduleStr /= 'none' .and. moduleStr /= 'GHz' .and. &
         & len_trim(moduleStr) > 1 ) then
         readItemName = trim(moduleStr) // '/' // snipModuleStr(Name, 'GHz')
@@ -793,6 +790,10 @@ contains ! =========== Public procedures ===================================
 end module HGridsDatabase
 
 ! $Log$
+! Revision 2.41  2018/04/19 02:00:36  vsnyder
+! Compute address for allocate/deallocate tracking.  Remove USE statements for
+! unused names.
+!
 ! Revision 2.40  2016/10/19 00:11:51  pwagner
 ! Try to avoid certain crashes QTM HGrids and ASMLS data
 !
