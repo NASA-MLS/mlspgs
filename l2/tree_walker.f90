@@ -75,7 +75,7 @@ contains ! ====     Public Procedures     ==============================
     use MergeGridsModule, only: MergeGrids
     use MLSCommon, only: TAI93_Range_T, MLSFile_T
     use MLSL2Options, only: Aura_L1BFiles, &
-      & CheckPaths, CurrentChunkNumber, CurrentPhaseName, &
+      & CheckPaths, CurrentChunkNumber, CurrentPhaseName, ExitToNextChunk, &
       & L2CFNode, MLSMessage, Need_L1BFiles, PhasesToSkip, &
       & SectionsToSkip, SkipDirectWrites, SkipDirectWritesOriginal, &
       & SkipRetrieval, SlavesCleanUpSelves, SpecialDumpFile, StopAfterSection, &
@@ -426,7 +426,7 @@ contains ! ====     Public Procedures     ==============================
             call resumeOutput ! In case the last phase was  silent
             if ( chunksSkipped(chunkNo) ) cycle
             call time_now ( tChunk )
-            if ( switchDetail(switches,'chu') > -1 .or. verbose ) then
+            if ( BeVerbose( (/ 'chu', 'pro' /), 0) .or. verbose ) then
               call output ( " ================ Starting processing for chunk " )
               call output ( chunkNo )
               call output ( " ================ ", advance='yes' )
@@ -440,12 +440,17 @@ contains ! ====     Public Procedures     ==============================
               call output( 'Now in loop of chunks', advance='yes' )
               call CheckForCorruptFileDatabase( filedatabase )
             endif
+            exitToNextChunk = .false.
 subtrees:   do
               ! in the outer loop
               save2 = state ! before advancing to section below
               son = next_tree_node(root,state)
               if ( verboser ) call Dump ( state, 'inner state' )
-              if ( son == 0 ) exit subtrees
+              if ( exitToNextChunk ) &
+                & call output ( &
+                & 'Commanded to Skip remaining sections of this chunk', &
+                & advance='yes' )
+              if ( son == 0 .or. exitToNextChunk ) exit subtrees
               L2CFNODE = son
               section_index = decoration(subtree(1,son))
               call get_string ( section_indices(section_index), section_name, &
@@ -749,6 +754,9 @@ subtrees:   do
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.209  2018/04/19 00:49:44  vsnyder
+! Remove USE statements and declarations for unused names
+!
 ! Revision 2.208  2018/03/14 22:08:36  pwagner
 ! May print section in innemost loop if verbose enough
 !
