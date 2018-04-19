@@ -303,7 +303,6 @@ contains
   ! doesn't yet exist
 
     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
-    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
 
     ! Dummy arguments
     type (QuantityTemplate_T), dimension(:), pointer :: database
@@ -868,7 +867,6 @@ contains
     ! Return index of first new element
 
     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
-    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
 
     ! Dummy arguments
     type (QuantityTemplate_T), dimension(:), pointer :: DATABASE
@@ -1508,8 +1506,9 @@ contains
 
     ! First the vertical coordinates
     if ( .not. qty%sharedVGrid ) then
+      what = trim(what) // "%surfs"
       call allocate_test ( qty%surfs, qty%noSurfs, noInstancesToAllocate, &
-        & trim(what) // "%surfs", ModuleName )
+        & trim(what), ModuleName )
     end if
 
     ! Now the horizontal coordinates
@@ -2287,6 +2286,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.120  2017/11/03 19:57:01  pwagner
+! Most array gymnastics moved from MLSFillValues to HyperSlabs module
+!
 ! Revision 2.119  2017/09/18 19:30:41  vsnyder
 ! Spiff the dump
 !
