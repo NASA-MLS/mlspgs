@@ -310,6 +310,7 @@ nameFragment
 nazimuthangles
 ncloudspecies
 negateSD
+nextChunk
 nmodelsurfs
 noAbsent # Don't dump absent blocks
 noChunks
@@ -551,6 +552,9 @@ yStar
 ZOT # Tells dump of HGrid whether to print QTM coordinates in ZOT or Geo
 
 # $Log$
+# Revision 2.268  2018/04/19 23:43:21  pwagner
+# Skip may take /nextChunk flag
+#
 # Revision 2.267  2017/12/15 18:31:32  mmadatya
 # Added geoHeight as new quantity template
 #
