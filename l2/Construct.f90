@@ -171,12 +171,11 @@ contains ! =====     Public Procedures     =============================
     use L2GPData, only: L2GPData_T
     use MLSCommon, only: MLSFile_T, Tai93_Range_T
     use MLSL2Options, only: L2cfnode, Need_L1bFiles, SpecialDumpFile
-    use MLSL2Timings, only: Section_Times, Total_Times, AddphaseToPhaseNames
+    use MLSL2Timings, only: Section_Times, AddphaseToPhaseNames
     use MLSMessageModule, only: MLSMessageReset
     use Moretree, only: Get_Field_Id, Get_Boolean, Get_Label_And_Spec, Get_Spec_Id
     use Next_Tree_Node_M, only: Next_Tree_Node, Next_Tree_Node_State
-    use Output_M, only: Blanks, Output, &
-      & RevertOutput, SwitchOutput
+    use Output_M, only:  RevertOutput, SwitchOutput
     use QuantityTemplates, only: AddQuantityTemplateToDatabase, &
       & QuantityTemplate_T
     use Time_M, only: SayTime, Time_Now
@@ -213,7 +212,7 @@ contains ! =====     Public Procedures     =============================
     logical :: reset
     integer :: SON              ! Son or grandson of Root
     type(next_tree_node_state) :: State ! of tree traverser
-    real :: T1, T2              ! for timing
+    real :: T1                  ! for timing
     logical :: TIMING
 
     ! Executable code
@@ -362,6 +361,9 @@ end module Construct
 
 !
 ! $Log$
+! Revision 2.84  2018/04/19 00:48:38  vsnyder
+! Remove USE statements and declarations for unused names
+!
 ! Revision 2.83  2017/02/23 21:45:18  pwagner
 ! Removed unused internal subroutine; added toc and api
 !
