@@ -678,7 +678,6 @@ contains ! =====     Public Procedures     =============================
   ! the length of the database -- where L2aux is put.
 
     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
-    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
 
     ! Dummy arguments
     type (L2AUXData_T), dimension(:), pointer :: DATABASE
@@ -2101,6 +2100,9 @@ end module L2AUXData
 
 
 ! $Log$
+! Revision 2.104  2018/04/19 01:14:16  vsnyder
+! Remove USE statements for unused names
+!
 ! Revision 2.103  2017/10/20 20:05:07  pwagner
 ! Reduce default printing
 !
