@@ -83,55 +83,55 @@ module HighOutput
 ! === (end of toc) ===
 
 ! === (start of api) ===
-! addRow ( char* name, value )
-! addRow_header ( char* name, char alignment )
-! addRow_divider ( char char )
-! alignToFit ( char* chars, int columnRange(2), char alignment, [int skips] )
-! banner ( char* chars, [int columnRange(2)], [char alignment], [int skips], 
+! AddRow ( char* name, value )
+! AddRow_header ( char* name, char alignment )
+! AddRow_divider ( char char )
+! AlignToFit ( char* chars, int columnRange(2), char alignment, [int skips] )
+! Banner ( char* chars, [int columnRange(2)], [char alignment], [int skips], 
 !    [int lineLength], [char mode], [char pattern] )
-! log BeVerbose ( char* switch, threshold )
-! blanksToColumn ( int column, [char fillChar], [char* advance] )
-! blanksToTab ( [int tabn], [char* fillChar] )
+! log BeVerbose ( char* switch[(:)], threshold )
+! BlanksToColumn ( int column, [char fillChar], [char* advance] )
+! BlanksToTab ( [int tabn], [char* fillChar] )
 ! Dump ( options )
 ! DumpSize ( n, [char* advance], [units] )
 !       where n can be an int or a real, and 
 !       units is a scalar of the same type, if present
 ! DumpTabs ( [int tabs(:)] )
-! getStamp ( [char* textCode], [log post], [int interval],
+! GetStamp ( [char* textCode], [log post], [int interval],
 !          [log showTime], [char* dateFormat], [char* timeFormat] )
-! headLine ( char* chars, 
+! HeadLine ( char* chars, 
 !          [char fillChar], [char* Before], [char* After], 
 !          [int columnRange(2)], [char alignment], [int skips] )
-! log LetsDebug ( char* switch, threshold )
-! char* numNeedsFormat ( value )
-! char* numToChars ( value, [char* format] )
-! output_date_and_time ( [log date], [log time], [char* from_where], 
+! log LetsDebug ( char* switch[(:)], threshold )
+! char* NumNeedsFormat ( value )
+! char* NumToChars ( value, [char* format] )
+! Output_date_and_time ( [log date], [log time], [char* from_where], 
 !          [char* msg], [char* dateFormat], [char* timeFormat], 
 !          [double CPU_seconds], [int wallClock_seconds], [char* advance] )
-! outputCalendar ( [char* date], [char* datenote], [char* notes(:)], 
+! OutputCalendar ( [char* date], [char* datenote], [char* notes(:)], 
 !          [log dontwrap, [log moonPhases] ] )
-! outputList ( values(:), [char* sep], [char* delims] )
-! outputNamedValue ( char* name, value, [char* advance],
+! OutputList ( values(:), [char* sep], [char* delims] )
+! OutputNamedValue ( char* name, value, [char* advance],
 !          [char colon], [char fillChar], [char* Before], [char* After], 
 !          [integer tabn], [integer tabc], [integer taba], log dont_stamp],
 !          [char* options] )
-! outputTable ( [array(:,:)], [char sep], [char border], [int cellWidth],
+! OutputTable ( [array(:,:)], [char sep], [char border], [int cellWidth],
 !          [char interior], [char headliner], [char alignment] )
-! resetTabs ( [int tabs(:)] )
-! restoreSettings ( [log useToolkit] )
-! setStamp ( [char* textCode], [log post], [int interval],
+! ResetTabs ( [int tabs(:)] )
+! RestoreSettings ( [log useToolkit] )
+! SetStamp ( [char* textCode], [log post], [int interval],
 !          [log showTime], [char* dateFormat], [char* timeFormat] )
-! setTabs ( [char* Range], [int tabs(:)] )
-! startTable
-! styledOutput ( char* chars, [char* options] )
-! tab ( [int tabn], [char* fillChar] )
-! timeStamp ( char* chars, [char* advance], [char* from_where], 
+! SetTabs ( [char* Range], [int tabs(:)] )
+! StartTable
+! StyledOutput ( char* chars, [char* options] )
+! Tab ( [int tabn], [char* fillChar] )
+! TimeStamp ( char* chars, [char* advance], [char* from_where], 
 !          [log dont_log], [char* log_chars], [char* insteadOfBlank],
 !          [char*8 style], [log date] )
-! timeStamp ( log value, [char* advance], [char* from_where], 
+! TimeStamp ( log value, [char* advance], [char* from_where], 
 !          [log dont_log], [char* log_chars], [char* insteadOfBlank],
 !          [char*8 style], [log date] )
-! timeStamp ( int int, [int places], [char* advance],
+! TimeStamp ( int int, [int places], [char* advance],
 !          [log fill], [char* format], [char* Before], [char* After],
 !          [char*8 style], [log date] )
 ! === (end of api) ===
@@ -154,89 +154,102 @@ module HighOutput
 !     (a) call AddRow
 !     (b) call AddRow_Divider
 ! (5) Call OutputTable
-  public :: addRow, addRow_divider, addRow_header, alignToFit, &
-    & banner, beVerbose, blanksToColumn, blanksToTab, &
-    & dump, dumpSize, dumpTabs, getStamp, headLine, &
-    & letsDebug, nextColumn, nextTab, numNeedsFormat, numToChars, &
-    & output_date_and_time, outputCalendar, outputList, outputTable, &
-    & outputAnyNamedValue, outputNamedValue, &
-    & resetTabs, restoreSettings, &
-    & setStamp, setTabs, startTable, styledOutput, tab, timeStamp
+!
+! (see CellDatabase)
+  public :: AddRow, AddRow_Divider, AddRow_Header, AlignToFit, &
+    & Banner, BeVerbose, BlanksToColumn, BlanksToTab, &
+    & Dump, DumpSize, DumpTabs, GetStamp, HeadLine, &
+    & LetsDebug, NextColumn, NextTab, NumNeedsFormat, NumToChars, &
+    & Output_Date_And_Time, OutputCalendar, OutputList, OutputTable, &
+    & OutputAnyNamedValue, OutputNamedValue, &
+    & ResetTabs, RestoreSettings, &
+    & SetStamp, SetTabs, StartTable, StyledOutput, Tab, TimeStamp
 
   ! These types must be made public because the class instances are public
-  public :: outputOptions_T
-  public :: stampOptions_T
-  public :: timeStampOptions_T
+  public :: OutputOptions_T
+  public :: StampOptions_T
+  public :: TimeStampOptions_T
 
-  interface addRow
-    module procedure addRow_character
-    module procedure addRow_complex
-    module procedure addRow_dbl_array, addRow_double
-    module procedure addRow_int_array, addRow_integer
-    module procedure addRow_log_array, addRow_logical
-    module procedure addRow_sngl_array, addRow_single
+  interface AddRow
+    module procedure AddRow_Character
+    module procedure AddRow_Complex
+    module procedure AddRow_Dbl_Array, AddRow_Double
+    module procedure AddRow_Int_Array, AddRow_Integer
+    module procedure AddRow_Log_Array, AddRow_Logical
+    module procedure AddRow_Sngl_Array, AddRow_Single
   end interface
 
-  interface ALIGNTOFIT
-    module procedure aligntofit_chars, aligntofit_double, aligntofit_single
-    module procedure aligntofit_integer
+  interface Aligntofit
+    module procedure Aligntofit_Chars, Aligntofit_Double, Aligntofit_Single
+    module procedure Aligntofit_Integer
   end interface
 
-  interface BANNER
-    module procedure banner_chars
-    module procedure banner_chararray
+  interface Banner
+    module procedure Banner_Chars
+    module procedure Banner_Chararray
   end interface
 
-  interface DUMP
-    module procedure DumpOutputOptions, DumpPatternOptions, &
-      & DumpStampOptions, DumpTimeStampOptions
+  interface Beverbose
+    module procedure Beverbose_Chars
+    module procedure Beverbose_Chararray
   end interface
 
-  interface DUMPSIZE
-    module procedure DUMPSIZE_DOUBLE, DUMPSIZE_INTEGER, DUMPSIZE_REAL
+  interface Dump
+    module procedure DumpOutputoptions, Dumppatternoptions, &
+      & Dumpstampoptions, Dumptimestampoptions
   end interface
 
-  interface GETOPTION
-    module procedure getOption_char, getOption_log
+  interface Dumpsize
+    module procedure Dumpsize_Double, Dumpsize_Integer, Dumpsize_Real
   end interface
 
-  interface NUMNEEDSFORMAT
-    module procedure numNeedsFormat_double, numNeedsFormat_integer, numNeedsFormat_single
-    module procedure numNeedsFormat_complex, numNeedsFormat_dcomplx
+  interface Getoption
+    module procedure Getoption_Char, Getoption_Log
   end interface
 
-  interface NUMTOCHARS
-    module procedure numtochars_double, numtochars_integer, numtochars_single
+  interface Letsdebug
+    module procedure Letsdebug_Chars
+    module procedure Letsdebug_Chararray
   end interface
 
-  interface OUTPUTLIST
-    module procedure OUTPUTLIST_INTS, OUTPUTLIST_CHARS
+  interface Numneedsformat
+    module procedure Numneedsformat_Double, Numneedsformat_Integer, Numneedsformat_Single
+    module procedure Numneedsformat_Complex, Numneedsformat_Dcomplx
   end interface
 
-  interface OUTPUTNAMEDVALUE
-    module procedure output_nvp_character
-    module procedure output_nvp_complex
-    module procedure output_nvp_dbl_array, output_nvp_double
-    module procedure output_nvp_int_array, output_nvp_integer
-    module procedure output_nvp_log_array, output_nvp_logical
-    module procedure output_nvp_sngl_array, output_nvp_single
+  interface Numtochars
+    module procedure Numtochars_Double, Numtochars_Integer, Numtochars_Single
   end interface
 
-  interface OUTPUTANYNAMEDVALUE
-    module procedure output_nvp_whatever
+  interface Outputlist
+    module procedure Outputlist_Ints, Outputlist_Chars
   end interface
 
-  interface TAB
-    module procedure blanksToTab
+  interface OutputnamedValue
+    module procedure Output_Nvp_Character
+    module procedure Output_Nvp_Complex
+    module procedure Output_Nvp_Dbl_Array, Output_Nvp_Double
+    module procedure Output_Nvp_Int_Array, Output_Nvp_Integer
+    module procedure Output_Nvp_Log_Array, Output_Nvp_Logical
+    module procedure Output_Nvp_Sngl_Array, Output_Nvp_Single
+  end interface
+
+  interface OutputanynamedValue
+    module procedure Output_Nvp_Whatever
+  end interface
+
+  interface Tab
+    module procedure Blankstotab
   end interface
   
-  interface TIMESTAMP
-    module procedure timestamp_char, timestamp_integer, timestamp_logical
+  interface Timestamp
+    module procedure Timestamp_Char, Timestamp_Integer, Timestamp_Logical
   end interface
   
   ! When Calling OutputNamedValue with character values, should we trim them?
   logical, public                      :: TrimCharacterValues = .true.
   
+  ! -------------------------------------------------------------------------
   ! Used for automatic assembly of a table to be neatly formatted and output
   ! The table holds two columns:
   ! names and values  
@@ -250,7 +263,8 @@ module HighOutput
   ! - l2cf   /users/mmadatya/l2tests/ASMLS/AS-01-009-QTM.l2cf  -
   ! ------------------------------------------------------------
   integer, parameter :: MAXCELLSIZE = 128 ! How many chars can 1 cell hold
-  character(len=MAXCELLSIZE), dimension(:,:), pointer :: cellDatabase => null()
+  character(len=MAXCELLSIZE), dimension(:,:), pointer :: CellDatabase => null()
+  ! -------------------------------------------------------------------------
 
   integer, private, parameter :: MAXNUMTABSTOPS = 24
   logical, save, private :: OldNeverStamp
@@ -705,14 +719,29 @@ contains
     stampOptions%neverStamp = OldNeverStamp
   end subroutine BANNER_CHARARRAY
 
-  ! -----------------------------------------------------  BEVERBOSE  -----
-  logical function BEVERBOSE ( SWITCH, THRESHOLD )
+  ! -----------------------------------------------------  Beverbose_Chars  -----
+  logical function Beverbose_Chars ( switch, threshold )
     ! Args
     character(len=*), intent(in) :: SWITCH
     integer, intent(in)          :: THRESHOLD
     ! Executable
-    BeVerbose = switchDetail( switches, switch ) > threshold .or. MLSVerbose
-  end function BEVERBOSE
+    Beverbose_Chars = switchDetail( switches, switch ) > threshold .or. MLSVerbose
+  end function Beverbose_Chars
+
+  logical function Beverbose_CharArray ( switcharray, threshold )
+    ! Args
+    character(len=*), dimension(:), intent(in) :: switcharray
+    integer, intent(in)                        :: THRESHOLD
+    ! Internal variables
+    integer                                    :: i
+    ! Executable
+    Beverbose_CharArray = MLSVerbose
+    if ( Beverbose_CharArray ) return
+    do i=1, size(switcharray)
+      Beverbose_CharArray = Beverbose_CharArray .or. &
+        & switchDetail( switches, switcharray(i) ) > threshold
+    enddo
+  end function Beverbose_CharArray
 
   ! -----------------------------------------------------  BLANKSTOCOLUMN  -----
   subroutine BLANKSTOCOLUMN ( column, fillchar, advance, dont_stamp )
@@ -1114,14 +1143,29 @@ contains
     call newLine
   end subroutine HEADLINE
 
-  ! -----------------------------------------------------  LETSDEBUG  -----
-  logical function LETSDEBUG ( SWITCH, THRESHOLD )
+  ! -----------------------------------------------------  Letsdebug  -----
+  logical function Letsdebug_Chars ( switch, threshold )
     ! Args
     character(len=*), intent(in) :: SWITCH
     integer, intent(in)          :: THRESHOLD
     ! Executable
-    letsDebug = switchDetail( switches, switch ) > threshold .or. MLSDebug
-  end function LETSDEBUG
+    Letsdebug_Chars = switchDetail( switches, switch ) > threshold .or. MLSDebug
+  end function Letsdebug_Chars
+
+  logical function Letsdebug_CharArray ( switcharray, threshold )
+    ! Args
+    character(len=*), dimension(:), intent(in) :: switcharray
+    integer, intent(in)                        :: THRESHOLD
+    ! Internal variables
+    integer                                    :: i
+    ! Executable
+    Letsdebug_CharArray = MLSVerbose
+    if ( Letsdebug_CharArray ) return
+    do i=1, size(SwitchArray)
+      Letsdebug_CharArray = Letsdebug_CharArray .or. &
+        & switchDetail( switches, switcharray(i) ) > threshold
+    enddo
+  end function Letsdebug_CharArray
 
   ! ----------------------------------------------------  NextColumn  -----
   function NextColumn() result(Column)
@@ -2528,6 +2572,9 @@ contains
 end module HIGHOUTPUT
 
 ! $Log$
+! Revision 2.26  2018/04/19 23:42:20  pwagner
+! Switch arg may be array in BeVerbose and LetsDebug
+!
 ! Revision 2.25  2018/01/05 01:21:16  pwagner
 ! Corrected data type for OldNeverStamp
 !
