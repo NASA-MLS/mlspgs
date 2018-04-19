@@ -1838,6 +1838,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     & FirstMAF, LastMAF, NEVERFAIL, dontPad, L2AUX )
     use MLSFiles, only: Dump
     use MLSFillValues, only: IsFillValue
+    use Optional_m, only: Default
     use PCFHdr, only: GlobalAttributes
     ! Dummy arguments
     character(len=*), intent(in)   :: QUANTITYNAME ! Name of SD to read
@@ -1918,7 +1919,7 @@ contains ! ============================ MODULE PROCEDURES ======================
         call Dump ( L1BFile, details=2 )
         call GetAllHDF5DSNames( L1BFile, DSNames )
         call Dump ( DSNames, 'DSNames' )
-        call crash_burn
+        if ( .not. Default( NEVERFAIL, .false. ) ) call crash_burn
         NOMAFS = -1
         go to 9
       end if
@@ -3015,6 +3016,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.123  2018/04/19 23:41:09  pwagner
+! Dont crash in ReadL1BData if NeverFail set
+!
 ! Revision 2.122  2018/04/19 02:00:36  vsnyder
 ! Compute address for allocate/deallocate tracking.  Remove USE statements for
 ! unused names.
