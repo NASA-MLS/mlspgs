@@ -2510,13 +2510,14 @@ contains ! =====     Public Procedures     =============================
   subroutine CompareWithChunk ( chunk, nextChunk, hgrid, &
     & MAFStartTimeTAI, GeodAngle, GeodAlt, GeodLat, SolarTime )
 
-     use Chunks_M, only: MLSChunk_T, Dump
+     use Chunks_M, only: MLSChunk_T ! , Dump
      use Dates_Module, only: Gethid
      use HGridsDatabase, only: HGrid_T
      use HighOutput, only: BlanksToColumn, OutputNamedValue
      use Machine, only: Crash_Burn
      use MLSKinds, only: Rk => R8
      use Output_M, only: Blanks, NewLine, Output
+
     ! Args
     type (MLSChunk_T), intent(in)      :: chunk
     type (MLSChunk_T), intent(in)      :: nextChunk
@@ -2546,7 +2547,7 @@ contains ! =====     Public Procedures     =============================
     call blanks ( 3 )
     call output ( lastVal, format='(f9.4)', advance='no' )
     call newLine
-    ! call crash_burn
+!     call crash_burn
     firstMAF = chunk%firstMAFIndex + chunk%noMAFsLowerOverlap
     lastMAF = chunk%lastMAFIndex - chunk%noMAFsUpperOverlap
     firstProfile = 1 + chunk%HGridOffsets(1)
@@ -2740,6 +2741,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.151  2018/04/19 00:49:06  vsnyder
+! Remove USE statements for unused names
+!
 ! Revision 2.150  2018/04/16 22:20:21  pwagner
 ! More thorough CamelCase in use statements
 !
