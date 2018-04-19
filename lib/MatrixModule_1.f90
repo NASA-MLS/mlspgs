@@ -2660,7 +2660,6 @@ contains ! =====     Public Procedures     =============================
   ! AddKroneckerToDatabase or AddSPDToDatabase.
 
     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
-    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
 
     type(Matrix_Database_T), dimension(:), pointer :: Database
     type(Matrix_Database_T) :: Item
@@ -3192,6 +3191,10 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.145  2018/04/19 02:00:36  vsnyder
+! Compute address for allocate/deallocate tracking.  Remove USE statements for
+! unused names.
+!
 ! Revision 2.144  2016/07/27 23:02:42  vsnyder
 ! Add QuantityType argument to Dump_Matrix
 !
