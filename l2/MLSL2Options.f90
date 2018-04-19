@@ -165,6 +165,7 @@ module MLSL2Options              !  Options and Settings for the MLSL2 program
   logical :: COUNTCHUNKS = .false. ! Just count the chunks and quit
   integer :: DO_DUMP = 0           ! Dump declaration table if > 0
   integer :: DUMP_TREE = -1        ! Dump tree after parsing
+  logical :: ExitToNextChunk = .false.   ! Skip rest of current chunk
   ! Wouldn't it be better to use get_lun at the moment we open the l2cf?
   integer, parameter :: L2CF_Unit = 20  ! Unit # if L2CF is opened by Fortran
   integer :: L2CFNode        = 0        ! Line #, Col # of L2CF being executed
@@ -1410,6 +1411,9 @@ end module MLSL2Options
 
 !
 ! $Log$
+! Revision 2.115  2018/04/19 23:44:55  pwagner
+! Skip may take /nextChunk flag
+!
 ! Revision 2.114  2018/02/09 01:05:40  pwagner
 ! Improved comments
 !
