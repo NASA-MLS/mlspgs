@@ -2655,11 +2655,11 @@ contains
   ! counts(n)      strn
   ! countsn        n
   logical function skip ( root, name )
-    use Init_Tables_Module, only: F_Boolean, F_Formula, F_Values
-    use MLSL2Options, only: RuntimeValues
+    use Init_Tables_Module, only: F_Boolean, F_Formula, F_NextChunk, F_Values
+    use MLSL2Options, only: ExitToNextChunk, RuntimeValues
     use MLSStringLists, only: BooleanValue, GetHashElement, PutHashElement
     use MLSStrings, only: Lowercase, ReadintsFromChars, WriteIntsToChars
-    use Moretree, only: Get_Field_Id
+    use Moretree, only: Get_Boolean, Get_Field_Id
     use String_Table, only: Get_String
     use Toggles, only: Gen, Toggle
     use Trace_M, only: Trace_Begin, Trace_End
@@ -2688,6 +2688,7 @@ contains
     if ( present(name) ) myName = name
     call trace_begin ( me, myName, root, cond=toggle(gen) )
     booleanString = ' '
+    exitToNextChunk = .false. ! Defaults to not skipping rest current chunk
     skip = .true. ! Defaults to skipping rest of section
     value_field = 0
     do j = 2, nsons(root)
@@ -2710,6 +2711,8 @@ contains
         call get_string ( sub_rosa(gson), booleanString, strip=.true. )
         if ( verboser ) call outputNamedValue( 'formula', trim(booleanString) )
         skip = myBooleanValue ( booleanString )
+      case ( f_nextChunk )
+        exitToNextChunk = Get_Boolean ( gson )
       case ( f_values )
         value_field = son
       case default
@@ -3167,6 +3170,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.137  2018/04/19 23:44:09  pwagner
+! Skip may take /nextChunk flag
+!
 ! Revision 2.136  2018/03/22 18:17:00  pwagner
 ! Added command IsFileAbsent; may occur in ReadApriori, MergeGrids, and Output sections
 !
