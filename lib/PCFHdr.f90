@@ -220,7 +220,7 @@ contains
    SUBROUTINE CreatePCFAnnotation ( mlspcfN_pcf_start, anText )
 !--------------------------------------------------------------
 
-      use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+      use Allocate_Deallocate, only: Allocate_Test
 
 ! Brief description of subroutine
 ! This subroutine stores the PCF as an annotation for writing to file headers.
@@ -1845,6 +1845,9 @@ end module PCFHdr
 !================
 
 !# $Log$
+!# Revision 2.70  2018/04/19 00:47:54  vsnyder
+!# Remove USE statements for unused names
+!#
 !# Revision 2.69  2017/07/25 22:29:35  pwagner
 !# Made 4 functions public that return granules day, month, dayofyear, year
 !#
