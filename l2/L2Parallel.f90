@@ -1329,7 +1329,6 @@ contains
     ! doesn't yet exist
 
     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
-    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
 
     ! Dummy arguments
     type (StoredResult_T), dimension(:), pointer :: database
@@ -1809,6 +1808,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.117  2018/04/19 01:14:16  vsnyder
+! Remove USE statements for unused names
+!
 ! Revision 2.116  2018/02/09 01:27:31  pwagner
 ! Output the meaning along with the signal number
 !
