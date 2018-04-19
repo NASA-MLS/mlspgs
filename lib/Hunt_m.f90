@@ -15,12 +15,11 @@ module Hunt_m
 
   use Diff_1, only: SelfDiff
   use Dump_0, only: Dump
-  use HighOutput, only: OutputNamedValue
   use MLSCommon, only : UndefinedValue
   use MLSFillValues, only: IsFillValue, ReplaceFillValues
   use MLSFinds, only: FindFirst, FindLast
   use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning, &
-    & Crash_burn, MLSMessage
+    & MLSMessage
   use Optional_m, only: Default, HowWeHandle_log
   use Pure_Hunt_m, only: PureHunt ! because others get it from here
 
@@ -225,6 +224,9 @@ end module Hunt_m
 !=============================================================================
 
 ! $Log$
+! Revision 2.6  2018/04/19 00:47:33  vsnyder
+! Remove USE statements for unused names
+!
 ! Revision 2.5  2017/01/13 23:52:17  pwagner
 ! Let procedures from Optional_m handle exceptions
 !
