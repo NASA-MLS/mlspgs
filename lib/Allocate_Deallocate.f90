@@ -37,7 +37,7 @@ module Allocate_Deallocate
   use TRACK_M, only: TRACKALLOCATE, TRACKDEALLOCATE
 
   implicit NONE
-  private
+!   private
 
   public :: Byte_Size, BYTES, Allocate_Test, Deallocate_Test, DEALLOC_STATUS, & 
     & SET_GARBAGE_COLLECTION, REPORTALLOCATEDEALLOCATE, &
@@ -2114,6 +2114,10 @@ contains
 end module Allocate_Deallocate
 
 ! $Log$
+! Revision 2.55  2018/04/19 02:00:36  vsnyder
+! Compute address for allocate/deallocate tracking.  Remove USE statements for
+! unused names.
+!
 ! Revision 2.54  2018/04/10 22:51:33  vsnyder
 ! Don't leave bounds(1:1) undefined for messages about scalars
 !
