@@ -159,7 +159,6 @@ contains ! ======================= Public Procedures =========================
     ! the size -- where it is put.
 
     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
-    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
 
     ! Dummy arguments
     type (DirectData_T), dimension(:), pointer :: DATABASE
@@ -1955,6 +1954,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.91  2018/04/19 01:14:16  vsnyder
+! Remove USE statements for unused names
+!
 ! Revision 2.90  2018/04/13 00:20:42  pwagner
 ! Plain hdf DirectWrites and -Reads are now 'auto'
 !
