@@ -324,7 +324,6 @@ contains ! ========  Public Procedures =========================================
   integer function AddSnooperToDatabase ( database, item )
 
     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
-    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     type (SnooperInfo_T), dimension(:), pointer :: DATABASE
     type (SnooperInfo_T), intent(in) :: ITEM
     ! Local variables
@@ -1021,6 +1020,9 @@ contains ! ========  Public Procedures =========================================
 end module SnoopMLSL2
 
 ! $Log$
+! Revision 2.52  2018/04/19 01:14:16  vsnyder
+! Remove USE statements for unused names
+!
 ! Revision 2.51  2016/02/29 19:51:38  pwagner
 ! Usleep got from machine module instead of being an external
 !
