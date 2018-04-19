@@ -1556,6 +1556,7 @@ contains ! =====     Public procedures     =============================
       begin, s+s_skip, &
              begin, f+f_Boolean, field_spec(s_Boolean), &
              begin, f+f_formula, string(), &
+             begin, f+f_nextChunk, boolean(), &
              ndp+n_spec_def /) )
     call make_tree ( (/ & ! Must be AFTER s_vector,s_vectorTemplate, etc.
       begin, s+s_diff, &
@@ -2122,6 +2123,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.641  2018/04/19 23:43:39  pwagner
+! Skip may take /nextChunk flag
+!
 ! Revision 2.640  2018/03/23 20:15:01  pwagner
 ! Added type field to isFileAbsent; skip and reevaluate commands to readapriori section
 !
