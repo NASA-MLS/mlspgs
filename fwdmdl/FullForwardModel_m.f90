@@ -259,7 +259,9 @@ contains
       ! The third column of ECRtoFOV is an unit vector in the direction of
       ! the line of sight from the instrument.
       ECRtoFOV => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
-        & quantityType=l_ECRtoFOV, config=fwdModelConf )
+        & quantityType=l_ECRtoFOV, &
+        & instrumentModule=fwdModelConf%signals(1)%instrumentModule, &
+        & config=fwdModelConf )
       allocate ( Q_LOS(ECRtoFOV%template%noSurfs), stat=stat, errmsg=ermsg )
       call test_allocate ( stat, moduleName, "Q_LOS", 1, 1, &
         & ermsg=ermsg )
@@ -4790,6 +4792,9 @@ call comp_eta_docalc_no_frq ( Grids_f, z_path(1:npf), &
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.390  2017/11/01 00:11:32  vsnyder
+! Comment out a bunch of testing stuff, soon to disappear entierly
+!
 ! Revision 2.389  2017/11/01 00:09:32  vsnyder
 ! Remove recently-added ScECR because it's not needed
 !
