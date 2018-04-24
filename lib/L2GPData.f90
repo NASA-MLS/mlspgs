@@ -346,8 +346,10 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
     ! integer :: verticalCoordinate ! The vertical coordinate used.  These
                                   ! are l_lits of the type t_VGridCoord
                                   ! defined in Init_Tables_Module.
-  contains
-    final :: DestroyL2GPContents
+  ! The following final method caused he sids tests
+  ! in the nightly gold brick to bomb. A symptom of a deeper problem?
+  ! contains
+    ! final :: DestroyL2GPContents
   end type L2GPData_T
 
   ! Print debugging stuff?
@@ -5442,6 +5444,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.233  2018/04/19 00:50:43  vsnyder
+! Remove USE statements for unused names, add final subroutine
+!
 ! Revision 2.232  2018/02/28 19:54:26  pwagner
 ! Tries to prevent unwanted names on each line
 !
