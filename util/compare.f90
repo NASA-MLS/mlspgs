@@ -309,7 +309,7 @@ program COMPARE
 
   if ( rmaxvg > 0.0 .or. zero .or. anyNan(3) ) then
     print '(a/1p,5g13.6,1x,a)', &
-      & " RelMaxVal    MaxRel       where MaxAbs MaxAbs       where MaxRel RelMaxVal block", &
+      & " RelMaxVal    MaxRel       where MaxAbs MaxAbs       where MaxRel block", &
       & rmaxvg, rmaxg, absAtRmaxG, amaxG, relAtAmaxG, trim(rmaxb)
     if ( doStats ) &
       & print '(a/1p,8g13.6)', &
@@ -371,6 +371,10 @@ contains
 end program
 
 ! $Log$
+! Revision 1.30  2018/04/10 22:19:32  vsnyder
+! Check both input files' availability before stopping if one is not
+! available.  Report the argument number(s) of missing input files.
+!
 ! Revision 1.29  2018/04/05 01:34:34  vsnyder
 ! Don't claim file sizes are different if files are identical
 !
