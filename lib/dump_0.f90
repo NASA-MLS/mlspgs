@@ -98,7 +98,7 @@ module Dump_0
 ! === (end of api) ===
 
   public :: &
-    & Dump, Dump_2x2xN, Empty, FinishLine, ILog10, Name_And_Size, &
+    & Dump, Dump_Sparse, Dump_2x2xN, Empty, FinishLine, ILog10, Name_And_Size, &
     & PrintName, PrintRMSEtc
 
   ! =====     Public Generics     ======================================
@@ -115,7 +115,11 @@ module Dump_0
     module procedure Dump_4D_Double, Dump_4D_Real
   end interface
 
-  interface Dump_2x2xN ! For polarized incremental optical depth
+  interface Dump_Sparse ! Dump only the nonzeroes in 1D arrays
+    module procedure Dump_1D_Sparse_Double, Dump_1D_Sparse_Real
+  end interface
+
+  interface Dump_2x2xN  ! For polarized incremental optical depth
     module procedure Dump_2x2xN_Complex, Dump_2x2xN_DComplex
   end interface
 
@@ -878,6 +882,70 @@ contains
     include 'dump2d.f9h'
     include 'dump2db.f9h'
   end subroutine Dump_2D_Real
+
+  ! --------------------------------------  Dump_1D_Sparse_Double  -----
+  subroutine Dump_1D_Sparse_Double ( Array, Name, Format, Width )
+    double precision, intent(in) :: Array(:)
+    character(len=*), intent(in), optional :: Name
+    character(len=*), intent(in), optional :: Format
+    integer, intent(in), optional :: Width ! Items per line, default 5
+
+    integer :: J, N, W
+    character(len=64) :: MyFormat
+
+    myFormat = sdFormatDefault
+    if ( present(format) ) myFormat = format
+    w = 5
+    if ( present(width) ) w = width
+    if ( present(name) ) call output ( trim(name), advance='yes' )
+
+    n = 0 ! Number on the line so far
+    do j = 1, size(array)
+      if ( array(j) /= 0 ) then
+        call output ( j, places=4, after=': ' )
+        call output ( array(j), format=myFormat )
+        n = n + 1
+        if ( n >= w ) then
+          call newLine
+          n = 0
+        end if
+      end if
+    end do
+    if ( n /= 0 ) call newLine
+
+  end subroutine Dump_1D_Sparse_Double
+
+  ! ----------------------------------------  Dump_1D_Sparse_Real  -----
+  subroutine Dump_1D_Sparse_Real ( Array, Name, Format, Width )
+    real, intent(in) :: Array(:)
+    character(len=*), intent(in), optional :: Name
+    character(len=*), intent(in), optional :: Format
+    integer, intent(in), optional :: Width ! Items per line, default 5
+
+    integer :: J, N, W
+    character(len=64) :: MyFormat
+
+    myFormat = sdFormatDefault
+    if ( present(format) ) myFormat = format
+    w = 5
+    if ( present(width) ) w = width
+    if ( present(name) ) call output ( trim(name), advance='yes' )
+
+    n = 0 ! Number on the line so far
+    do j = 1, size(array)
+      if ( array(j) /= 0 ) then
+        call output ( j, places=4, after=': ' )
+        call output ( array(j), format=myFormat )
+        n = n + 1
+        if ( n >= w ) then
+          call newLine
+          n = 0
+        end if
+      end if
+    end do
+    if ( n /= 0 ) call newLine
+
+  end subroutine Dump_1D_Sparse_Real
 
   ! -----------------------------------------  Dump_2x2xN_Complex  -----
   subroutine Dump_2x2xN_Complex ( Array, Name, Format, Options )
@@ -1741,6 +1809,9 @@ contains
 end module Dump_0
 
 ! $Log$
+! Revision 2.155  2018/04/25 01:47:43  vsnyder
+! Add 1D sparse real and double precision dumps
+!
 ! Revision 2.154  2018/04/13 00:22:49  pwagner
 ! Improved comments; explain use of appearance flags like 'MyName\h'
 !
