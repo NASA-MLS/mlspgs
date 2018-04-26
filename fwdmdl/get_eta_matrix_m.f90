@@ -261,7 +261,6 @@ contains
     if ( present(p_only) ) myP = p_only
     n1 = 1
     n2 = ubound(grids_f%l_z,1)
-    if ( myP ) n2 = ubound(grids_f%l_p,1)
     if ( present(n) ) then
       n1 = n
       n2 = n
@@ -1817,6 +1816,9 @@ contains
 end module Get_Eta_Matrix_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.33  2018/04/26 00:09:38  vsnyder
+! Add Clean_Out_Nonzeroes, add P_Only to Dump_Eta_Transpose
+!
 ! Revision 2.32  2018/03/21 01:58:10  vsnyder
 ! Restore NC for each sps in case it was changed by .not. frqDep
 !
