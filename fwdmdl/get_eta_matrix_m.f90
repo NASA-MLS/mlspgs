@@ -17,7 +17,7 @@ module Get_Eta_Matrix_m
 
   private
   public :: Eta_D_T, Eta_S_T
-  public :: Dump, Dump_Eta_Column_Sparse, Dump_Eta_Transpose
+  public :: Clean_Out_Nonzeros, Dump, Dump_Eta_Column_Sparse, Dump_Eta_Transpose
   public :: Eta_Func, Eta_Func_1d, Eta_Func_2d
   public :: Get_Column_Sparsity
   public :: Get_Eta_Column_Sparse, Get_Eta_Column_Sparse_fl_nz, Get_Eta_Sparse
@@ -72,6 +72,27 @@ module Get_Eta_Matrix_m
   private :: not_used_here 
 !---------------------------------------------------------------------------
 contains
+
+! -------------------------------------------  Clean_Out_Nonzeros  -----
+  subroutine Clean_Out_Nonzeros ( Eta_Array, Do_Calc, NZ, NNZ )
+    ! Clean out old nonzeros in Eta_Array and old true values in Do_Calc
+    use MLSKinds, only: RP
+    real(rp), intent(inout) :: Eta_Array(:,:)
+    logical, intent(inout), optional :: Do_Calc(:,:) ! Same shape as Eta_Array
+    integer, intent(inout), optional :: NZ(:,:)      ! Row subscripts of nonzeros
+    integer, intent(inout), optional :: NNZ(:)       ! How many nonzeros in a column
+    integer :: I
+    if ( present(nz) ) then
+      do i = 1, size(eta_array,2)
+        eta_array(nz(:nnz(i),i),i) = 0
+        if ( present(do_calc) ) do_calc(nz(:nnz(i),i),i) = .false.
+        nnz(i) = 0
+      end do
+    else
+      eta_array = 0
+      if ( present(do_calc) ) do_calc=.false.
+    end if
+  end subroutine Clean_Out_Nonzeros
 
 ! ---------------------------------------  Dump_Eta_Column_Sparse  -----
   subroutine Dump_Eta_Column_Sparse ( Eta, Nz, NNz, Grids_f, Name, Short, &
@@ -204,7 +225,7 @@ contains
 
 ! -------------------------------------------  Dump_Eta_Transpose  -----
   subroutine Dump_Eta_Transpose ( Eta, NPF, Grids_f, Name, N, Width, ZP_Only, &
-                                & DoBig )
+                                & DoBig, P_only )
     use intrinsic, only: Lit_Indices
     use Load_SPS_Data_m, only: Grids_t
     use Output_m, only: Blanks, NewLine, Output
@@ -218,6 +239,8 @@ contains
     integer, intent(in), optional :: Width   ! How many per line, default 5
     logical, intent(in), optional :: ZP_Only ! Eta has no frequency spread
     logical, intent(in), optional :: DoBig   ! Show subs for entire state vector
+    logical, intent(in), optional :: P_only  ! Second dimension of Eta is P,
+                                             ! not Z, overrides ZP_Only
     integer :: Dims(4,ubound(grids_f%l_z,1))
     real(rp), pointer :: Eta3(:,:,:)
     logical :: FrqDep(ubound(grids_f%l_v,1))
@@ -225,7 +248,7 @@ contains
     integer :: BigSubs(3) ! In entire state vector
     integer :: Subs(3)    ! Only within one species
     equivalence ( subs(1), j ), ( subs(2), k ), (subs(3), l )
-    logical :: MyBig, MyZP, SawNZ
+    logical :: MyBig, MyP, MyZP, SawNZ
     integer :: MyWidth
 
     myWidth = 5
@@ -234,8 +257,11 @@ contains
     if ( present(ZP_Only) ) myZP = ZP_Only
     myBig = .false.
     if ( present(doBig) ) myBig = .true.
+    myP = .false.
+    if ( present(p_only) ) myP = p_only
     n1 = 1
     n2 = ubound(grids_f%l_z,1)
+    if ( myP ) n2 = ubound(grids_f%l_p,1)
     if ( present(n) ) then
       n1 = n
       n2 = n
@@ -243,7 +269,11 @@ contains
     j2(0) = 0
     do sps = 1, n2
       frqDep(sps) = grids_f%l_f(sps) - grids_f%l_f(sps-1) > 1
-      if ( myZP ) then
+      if ( myP ) then
+        dims(:,sps) = [ size(eta,1), &
+                      & grids_f%l_p(sps) - grids_f%l_p(sps-1), 1, 1 ]
+        j2(sps) = j2(sps-1) + dims(2,sps)
+      else if ( myZP ) then
         dims(:,sps) = [ size(eta,1), &
                       & grids_f%l_z(sps) - grids_f%l_z(sps-1), &
                       & grids_f%l_p(sps) - grids_f%l_p(sps-1), 1 ]
@@ -257,7 +287,12 @@ contains
       end if
     end do
     do sps = n1, n2
-      nc = merge(3,4,myZP) ! Upper bound of useful part of dims(sps,:)
+      nc = 4 ! Upper bound of useful part of dims(sps,:)
+      if ( myP ) then
+        nc = 2
+      else if ( myZP ) then
+        nc = 3
+      end if
       if ( present(name) ) then
         call output ( name )
         call blanks ( 1 )
@@ -1782,6 +1817,9 @@ contains
 end module Get_Eta_Matrix_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.32  2018/03/21 01:58:10  vsnyder
+! Restore NC for each sps in case it was changed by .not. frqDep
+!
 ! Revision 2.31  2017/11/21 00:03:42  vsnyder
 ! Print the quantity name, print subscripts only for nonzer elements
 !
