@@ -14,7 +14,7 @@ program dateconverter
 !=================================
 
    use Dates_Module, only: AddDaysToUTC, AddHoursToUTC, AddSecondsToUTC, &
-     & Dateform, DayOfWeek, FromUARSDate, HoursInDay, &
+     & Dateform, DayOfWeek, FromUARSDate, HoursInDay, PrecedesUTC, &
      & ReformatDate, ResetStartingDate, SecondsInDay, SplitDateTime, &
      & Tai93s2utc, ToUARSDate, Yyyymmdd_To_Dai
    use Machine, only: Hp, Getarg
@@ -24,9 +24,9 @@ program dateconverter
    implicit none
 
 !------------------- RCS Ident Info -----------------------
-   CHARACTER(LEN=130) :: Id = &                                                    
+   character(len=130) :: Id = &                                                    
    "$Id$"
-   CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile$"
+   character (len=*), parameter :: ModuleName= "$RCSfile$"
 !----------------------------------------------------------
 
 ! Brief description of program
@@ -44,6 +44,7 @@ program dateconverter
     double precision :: secondsOffset = 0.d0   ! How many seconds to add/subtract
     logical     :: leapsec = .false.           ! account for leap seconds?
     logical     :: utcFormat = .false.         ! output date+time?
+    logical     :: compare = .false.           ! compare pairs of dates
     logical     :: debug = .false.
     logical     :: verbose = .false.
     character(len=255) :: outputFormat= ' '    ! output format
@@ -64,18 +65,19 @@ program dateconverter
 
    integer, parameter :: MAXLISTLENGTH=24
    integer, parameter ::          MAXDATES = 100
-   character (LEN=MAXLISTLENGTH) :: converted_date
-   character (LEN=MAXLISTLENGTH) :: converted_time
-   character (LEN=MAXLISTLENGTH) :: date
+   character (len=2)             :: comparison
+   character (len=MAXLISTLENGTH) :: converted_date
+   character (len=MAXLISTLENGTH) :: converted_time
+   character (len=MAXLISTLENGTH) :: date
    character(len=MAXLISTLENGTH), dimension(MAXDATES) :: dates
    logical, dimension(MAXDATES)  :: doThisDate
    character(len=*), parameter   :: DOYFORMAT = 'yyyy-doy'
    integer                       :: ErrTyp
-   character (LEN=MAXLISTLENGTH) :: fromForm
+   character (len=MAXLISTLENGTH) :: fromForm
    double precision              :: hours
    integer                       :: i
-   character (LEN=MAXLISTLENGTH) :: intermediate_date
-   ! character (LEN=*), parameter  :: intermediateForm = 'yyyymmdd'
+   character (len=MAXLISTLENGTH) :: intermediate_date
+   ! character (len=*), parameter  :: intermediateForm = 'yyyymmdd'
    character(len=*), parameter   :: MFORMAT = 'yyyy M dd'
    integer                       :: n_dates = 0
    integer                       :: nDays
@@ -83,10 +85,10 @@ program dateconverter
    double precision              :: seconds
    double precision              :: secondsperday = 24*3600.
    double precision              :: tai
-   character (LEN=MAXLISTLENGTH) :: time
-   character (LEN=MAXLISTLENGTH) :: toForm
-   character (LEN=MAXLISTLENGTH) :: uars_date
-   character (LEN=16           ) :: weekday
+   character (len=MAXLISTLENGTH) :: time
+   character (len=MAXLISTLENGTH) :: toForm
+   character (len=MAXLISTLENGTH) :: uars_date
+   character (len=16           ) :: weekday
   ! Executable
   do      ! Loop over options
      call get_date(date, n_dates, options)
@@ -165,7 +167,34 @@ program dateconverter
       print *, 'Offset hours is ', options%hoursoffset
       print *, 'Offset seconds is ', options%secondsoffset
     endif
-    
+    dates(i) = date    
+  enddo
+  ! Are we comparing pairs of dates?
+  if ( options%compare ) then
+    do i=1, n_dates, 2
+      ! A slight complication:
+      ! if the two dates are equal, then neither precedes the other
+      ! +: date1 < date2
+      ! -: date2 < date1
+      ! A hint of hackery-quackery now follows
+      ! We set the comparison string to one of 4 values
+      ! value           meaning
+      ! -----           -------
+      ! (blank)      date1 = date2
+      !    +         date1 < date2
+      !    -         date2 < date1
+      !    +-        date1 = date2
+      comparison = ' '
+      if ( PrecedesUTC( dates(i), dates(i+1) ) ) comparison = '+'
+      if ( PrecedesUTC( dates(i+1), dates(i) ) ) comparison = trim(comparison) // '-'
+      if ( len_trim(comparison) /= 1 ) comparison = '='
+      call print_string( trim(comparison) )
+    enddo
+  endif
+  stop
+  do i=1, n_dates
+    if ( .not. doThisDate(i)) cycle
+    date = dates(i)
     ! Process date
     ! First: three special codes
     if ( index(options%outputFormat, 'sec') > 0 ) then
@@ -174,7 +203,8 @@ program dateconverter
       write(*,'(f9.1, " s")') seconds
       cycle
     elseif ( index(lowercase(options%inputFormat), 'uars' ) > 0 ) then
-      ! Convert the date to its uars format; e.g. 'd0007'
+      ! Convert the date from its uars format; e.g. 'd0007'
+      ! Have you tested this yet?
       call resetStartingdate( newMLSDate='1980-01-01' )
       converted_date = reFormatDate(date, &
         & fromForm='yyyy-mm-dd', toForm=trim(toForm))
@@ -257,11 +287,11 @@ contains
 !------------------------- get_date ---------------------
     subroutine get_date(date, n_dates, options)
     ! Added for command-line processing
-     character(LEN=*), intent(out) :: date          ! date
+     character(len=*), intent(out) :: date          ! date
      integer, intent(in)             :: n_dates
      type ( options_T ), intent(inout) :: options
      ! Local variables
-     character(LEN=255) ::              arg
+     character(len=255) ::              arg
      integer ::                         error = 1
      integer, save ::                   i = 1
   ! Get date, process command-line args
@@ -318,6 +348,9 @@ contains
         exit
       elseif ( date(1:5) == '-leap' ) then
         options%leapsec = .true.
+        exit
+      elseif ( date(1:3) == '-c ' ) then
+        options%compare = .true.
         exit
       elseif ( date(1:3) == '-d ' ) then
         options%debug = .true.
@@ -397,6 +430,11 @@ contains
       write (*,*) '       e.g., 7 means run only the 7th of the dates, '
       write (*,*) '           1,3-9+2,12 means run dates 1,3,5,7,9,12'
       write (*,*) ' -leapsec    => account for leap seconds; e.g. for "tai"'
+      write (*,*) ' -c          => compare date1 with date2:'
+      write (*,*) '                  condition         returns'
+      write (*,*) '                date1 < date2          +'
+      write (*,*) '                date2 < date1          -'
+      write (*,*) '                date1 = date2          ='
       write (*,*) ' -d          => switch on debug mode'
       write (*,*) ' -v          => switch on verbose mode'
       write (*,*) ' -w          => print day-of-week in 2 characters'
@@ -416,6 +454,9 @@ END PROGRAM dateconverter
 !==================
 
 ! $Log$
+! Revision 1.11  2017/03/30 23:35:29  pwagner
+! Add explanation of special uars formatting to help page
+!
 ! Revision 1.10  2015/06/24 18:03:01  pwagner
 ! Fix some bugs related to uars input
 !
