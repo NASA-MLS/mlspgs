@@ -12,7 +12,7 @@
 \topmargin -0.5in
 \textheight 9in
 
-\newcommand{\docname}{wvs-148r1}
+\newcommand{\docname}{wvs-148r2}
 \newcommand{\docdate}{27 November 2017}
 
 \ifx\pdfoutput\undefined
@@ -134,10 +134,14 @@ direction, and one for the vertical direction, or two Chebychev
 polynomials in the EMLS case -- one for the horizontal direction (along
 the orbit track) and one for the vertical direction.
 
-\begin{equation}
+\begin{equation}\begin{array}{ll}
 f^k(s) = \sum_{ij\ell} \eta^k_{ij\ell}\, C_i(\phi(s))\, C_j(\theta(s))\,
-C_\ell(\zeta(s))
-\end{equation}
+C_\ell(\zeta(s)) & \phi \text{ is longitude, } \theta \text{ is latitude,
+}\zeta\\
+\text{or} \\[5pt]
+f^k(s) = \sum_{i\ell} \eta^k_{i\ell}\, C_i(\phi(s))\,
+C_\ell(\zeta(s)) & \phi \text{ is orbit angle, } \zeta\\
+\end{array}\end{equation}
 
 where $C_i$ etc.\ are Chebyshev polynomials.  Chebyshev polynomials are
 attractive because an error estimate can be calculated from the first
@@ -164,32 +168,44 @@ selected for the most information using EOF.
 Derivatives of radiance with respect to expansion coefficients would be
 computed using the chain rule:
 
-\begin{equation}
-\frac{\partial I(s)}{\partial \eta^{ck}_{ij\ell}} =
+\begin{equation} \begin{split}
+\frac{\partial I(s)}{\partial \eta^{ck}_{ij\ell}} = \,&
 \frac{\partial I(s)}{\partial f^k(s)}
  \frac{\partial f^k(s)}{\partial \eta^{ck}_{ij\ell}} =
 \frac{\partial I(s)}{\partial f^k(s)}\,
- Y^{ic}_j ( \theta(s), \phi(s))\, C_\ell(\zeta(s))
-\end{equation}
-
-or
-
-\begin{equation}
-\frac{\partial I(s)}{\partial \eta^k_{ij\ell}} =
+ Y^{ic}_j ( \theta(s), \phi(s))\, C_\ell(\zeta(s)) \,\,\, \text{ and}\\
+\frac{\partial I(s)}{\partial \eta^{sk}_{ij\ell}} = \,&
+\frac{\partial I(s)}{\partial f^k(s)}
+ \frac{\partial f^k(s)}{\partial \eta^{sk}_{ij\ell}} =
+\frac{\partial I(s)}{\partial f^k(s)}\,
+ Y^{ic}_j ( \theta(s), \phi(s))\, C_\ell(\zeta(s))\\
+\text{or} \,& \\
+\frac{\partial I(s)}{\partial \eta^k_{ij\ell}} = \,&
 \frac{\partial I(s)}{\partial f^k(s)}
  \frac{\partial f^k(s)}{\partial \eta^k_{ij\ell}} =
 \frac{\partial I(s)}{\partial f^k(s)}\,
- C_i(\phi(s))\, C_j(\theta(s))\, C_\ell(\zeta(s))
-\end{equation}
+ C_i(\phi(s))\, C_j(\theta(s))\, C_\ell(\zeta(s)) \\
+\text{or} \,& \\
+\frac{\partial I(s)}{\partial \eta^k_{i\ell}} = \,&
+\frac{\partial I(s)}{\partial f^k(s)}
+ \frac{\partial f^k(s)}{\partial \eta^k_{i\ell}} =
+\frac{\partial I(s)}{\partial f^k(s)}\,
+ C_i(\phi(s))\, C_\ell(\zeta(s)) \\
+\end{split}\end{equation}
 
-and similarly for other coefficients.  The $Y^{ic}_j ( \theta(s),
+and similarly for temperature coefficients.  The $Y^{ic}_j ( \theta(s),
 \phi(s))\, C_\ell(\zeta(s))$ or $C_i(\phi(s))\, C_j(\theta(s))\,
-C_\ell(\zeta(s))$ factor is the same for every species and temperature.
+C_\ell(\zeta(s))$ or $C_i(\phi(s))\, C_\ell(\zeta(s))$ factor is the same
+for every species and temperature.
 
 Once the expansion coefficients are in hand, values of the geophysical
-products could be computed on any specified grid.  Because the integration
-path and the geometry of the final representation are independent, the
-``metrics'' problem in the present forward model would be eliminated.
+products could be computed on any specified grid by evaluating the basis
+functions for specified values of $(\phi, \theta, \zeta)$ or $(\phi,
+\zeta)$.
+
+Because the integration path and the geometry of the final representation
+are independent, the ``metrics'' problem in the present forward model
+would be eliminated.
 
 In the present forward model, the effect of refraction is approximated by
 ``stretching'' the path by increasing the difference of the $\phi$
@@ -204,6 +220,9 @@ geometric path using a smooth function instead of a straight line.
 % $Id$
 
 % $Log$
+% Revision 1.2  2017/11/28 01:33:32  vsnyder
+% Repair blunder in Equation 3
+%
 % Revision 1.1  2017/11/28 01:29:12  vsnyder
 % Initial commit
 %
