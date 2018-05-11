@@ -22,9 +22,11 @@ module MLSHDF5
   use Hdf, only: DFACC_RDOnly
   use HighOutput, only: OutputNamedValue
   use Intrinsic, only: L_Hdf
+  use Machine, only: Crash_Burn
   use MLSCommon, only: MLSFile_T
   use MLSDataInfo, only: MLSDataInfo_T, Query_MLSData
-  use MLSFiles, only: HDFVersion_5, Dump, InitializeMLSFile, MLS_Openfile
+  use MLSFiles, only: HDFVersion_5, &
+    & Dump, InitializeMLSFile, MLS_CloseFile, MLS_OpenFile
   use MLSKinds, only: R8
   use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Info, MLSMSG_Warning, &
     & MLSMessage
@@ -50,7 +52,7 @@ module MLSHDF5
     & H5aread_F, H5awrite_F, H5adelete_F, &
     & H5dcreate_F, H5dextend_F, H5dget_Space_F, H5dget_Type_F, H5dopen_F, &
     & H5dread_F, H5dwrite_F, H5dclose_F, H5dget_Create_Plist_F, &
-    & H5eset_Auto_F, &
+    & H5eSet_Auto_F, &
     & H5fopen_F, H5fclose_F, &
     & H5gopen_F, H5gclose_F, h5gCreate_f, &
     & H5gn_Members_F, H5gget_Obj_Info_Idx_F, &
@@ -338,6 +340,8 @@ module MLSHDF5
   integer, parameter :: MAXATTRIBUTESIZE =   40000
   integer, parameter :: MAXTEXTSIZE      = 2000000
   integer, parameter :: MAXNAMELEN = 64
+  logical, public    :: hdfVerbose = .false.
+  ! logical, public    :: MayCrash = .false.
   character(len=*), dimension(2), parameter :: DONTDUMPTHESEDSNAMES = (/ &
     & 'wtfcoremetadata', 'wtfxmlmetadata ' /)
   ! Local variables
@@ -873,7 +877,7 @@ contains ! ======================= Public Procedures =========================
     ! Executable code
     call trace_begin ( me, 'GetAllHDF5AttrNames', cond=.false. )
     namelength = len(name)
-    call h5eSet_auto_f ( 0, status )
+    call mls_eSet_auto ( 0, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages off before looking for all attr names' )
     if ( present(groupName) ) then
@@ -920,7 +924,7 @@ contains ! ======================= Public Procedures =========================
         & 'Unable to close DS' // trim(DSname) // &
         & ' while looking for all its attr names' )
     endif
-    call h5eSet_auto_f ( 1, status )
+    call mls_eSet_auto ( 1, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages back on after looking for all attr names' )
   9 call trace_end ( 'GetAllHDF5AttrNames', cond=.false. )
@@ -947,7 +951,7 @@ contains ! ======================= Public Procedures =========================
     if ( present(andSlash) ) omitSlash = .not. andSlash
     ! Initializing values returned if there was trouble
     DSNames = ''
-    call h5eSet_auto_f ( 0, status )
+    call mls_eSet_auto ( 0, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages off before getting DSNames' )
 ! The structure, dataset_info, is initialized below.
@@ -957,8 +961,6 @@ contains ! ======================= Public Procedures =========================
       & moduleName )
     dataset_info%name = ''
     dataset_info%number_of_entries = 0
-    ! call outputNamedValue( 'fileid', fileid )
-    ! call output('About to check on ' // trim(gname), advance='yes' )
     call Query_MLSData ( fileid, trim(gname), dataset_info )
     if ( dataset_info%number_of_entries < 0 ) then
       call MLSMessage ( MLSMSG_Warning, ModuleName, &
@@ -975,7 +977,7 @@ contains ! ======================= Public Procedures =========================
         DSNames = catLists(trim(DSNames), dataset_info%name(i))
       end do
     end if
-    call h5eSet_auto_f ( 1, status )
+    call mls_eSet_auto ( 1, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages back on after getting DSNames' )
     call deallocate_test ( dataset_info%name, 'dataset_info%name', moduleName )
@@ -996,22 +998,22 @@ contains ! ======================= Public Procedures =========================
 
     ! Executable code
     call trace_begin ( me, 'GetAllHDF5DSNames_filename', cond=.false. )
-    call h5eSet_auto_f ( 0, status )
+    call mls_eSet_auto ( 0, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages off before getting DSNames ' // trim(filename) )
     call h5fopen_f ( trim(filename), H5F_ACC_RDONLY_F, fileID, status )
     if ( status == 0 ) then
-      call h5eSet_auto_f ( 1, status )
+      call mls_eSet_auto ( 1, status )
       call GetAllHDF5DSNames_fileID ( fileID, gname, DSNames, andSlash )
     else
       call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to open file for getting DSNames ' // trim(filename) )
     end if
-    call h5eSet_auto_f ( 0, status )
+    call mls_eSet_auto ( 0, status )
     call h5fclose_f ( fileID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close file after getting DSNames ' // trim(filename) )
-    call h5eSet_auto_f ( 1, status )
+    call mls_eSet_auto ( 1, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages back on after getting DSNames ' // trim(filename) )
     call trace_end ( cond=.false. )
@@ -1029,10 +1031,6 @@ contains ! ======================= Public Procedures =========================
 
     ! Executable code
     call trace_begin ( me, 'GetAllHDF5DSNames_MLSFile', cond=.false. )
-    ! Do we have any FileID fields?
-    ! If ( .not. MLSFile%stillOpen .or. all( &
-    !  & (/ MLSFile%FileId%f_id, MLSFile%FileId%grp_id, MLSFile%FileId%sd_id /) &
-    !   & == 0 ) ) then
     if ( .not. MLSFile%stillOpen ) then
       call GetAllHDF5DSNames( MLSFile%Name, gname, DSNames, andSlash )
     elseif( MLSFile%FileId%grp_id > 0 ) then
@@ -2648,7 +2646,7 @@ contains ! ======================= Public Procedures =========================
     ! Executable code
     call trace_begin ( me, 'GetAllHDF5GroupNames', cond=.false. )
     GroupNames = ' '
-    call h5eSet_auto_f ( 0, status )
+    call mls_eSet_auto ( 0, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages off before looking for all grp names' )
     call h5gn_members_f( FileID, '/', nsubmembers, h5error )
@@ -2668,7 +2666,7 @@ contains ! ======================= Public Procedures =========================
         GroupNames = trim(GroupNames) // ',' // objName
       endif
     enddo
-    call h5eSet_auto_f ( 1, status )
+    call mls_eSet_auto ( 1, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages back on after looking for all grp names' )
     call trace_end ( cond=.false. )
@@ -2941,7 +2939,7 @@ contains ! ======================= Public Procedures =========================
     ! Initializing values returned if there was trouble
     dims = -1
     if ( present(maxDims)) maxDims = -1
-    call h5eSet_auto_f ( 0, status )
+    call mls_eSet_auto ( 0, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages off before getting dims of ' // trim(name) )
     call h5aOpen_name_f ( itemID, trim(name), attrID, status )
@@ -2973,7 +2971,7 @@ contains ! ======================= Public Procedures =========================
     call h5aClose_f ( attrID, status )
     if ( present(maxDims) ) maxdims = maxdims_ptr(1:my_rank)
     deallocate ( maxdims_ptr )
-    call h5eSet_auto_f ( 1, status )
+    call mls_eSet_auto ( 1, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages back on after getting dims of ' // trim(name) )
     call trace_end ( cond=.false. )
@@ -2999,7 +2997,7 @@ contains ! ======================= Public Procedures =========================
     ! Initializing values returned if there was trouble
     dims = -1
     if ( present(maxDims)) maxDims = -1
-    call h5eSet_auto_f ( 0, status )
+    call mls_eSet_auto ( 0, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages off before getting dims ' // trim(name) )
     call h5dOpen_f ( FileID, trim(name), setID, status )
@@ -3014,7 +3012,7 @@ contains ! ======================= Public Procedures =========================
     call h5dClose_f ( setID, status )
     if ( present(maxDims) ) maxdims = maxdims_ptr
     deallocate ( maxdims_ptr )
-    call h5eSet_auto_f ( 1, status )
+    call mls_eSet_auto ( 1, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages back on after getting dims ' // trim(name) )
     call trace_end ( cond=.false. )
@@ -3031,7 +3029,7 @@ contains ! ======================= Public Procedures =========================
     integer :: STATUS                   ! Flag
 
     ! Executable code
-    call trace_begin ( me, 'GetHDF5DSDims_ID', cond=.false. )
+    call trace_begin ( me, 'GetHDF5DSDims_MLSFile', cond=.false. )
     ! Do we have any FileID fields?
     If ( .not. MLSFile%stillOpen .or. all( &
       & (/ MLSFile%FileId%f_id, MLSFile%FileId%grp_id, MLSFile%FileId%sd_id /) &
@@ -3041,7 +3039,9 @@ contains ! ======================= Public Procedures =========================
       call h5fclose_f ( MLSFile%fileID%f_id, status )
       MLSFile%fileID%f_id = 0
     elseif( MLSFile%FileId%grp_id > 0 ) then
-      call GetHDF5DSDims( MLSFile%fileID%grp_id, name, DIMS, maxDims )
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'How can we read Dimensions from a group?', MLSFile=MLSFile )
+      ! call GetHDF5DSDims( MLSFile%fileID%grp_id, name, DIMS, maxDims )
     elseif( MLSFile%FileId%f_id > 0 ) then
       call GetHDF5DSDims( MLSFile%fileID%f_id, name, DIMS, maxDims )
     else
@@ -3062,7 +3062,7 @@ contains ! ======================= Public Procedures =========================
     integer :: STATUS                   ! Flag
 
     ! Executable code
-    call trace_begin ( me, 'GetHDF5DSRank_ID', cond=.false. )
+    call trace_begin ( me, 'GetHDF5DSRank_MLSFile', cond=.false. )
     ! Do we have any FileID fields?
     If ( .not. MLSFile%stillOpen .or. all( &
       & (/ MLSFile%FileId%f_id, MLSFile%FileId%grp_id, MLSFile%FileId%sd_id /) &
@@ -3072,7 +3072,9 @@ contains ! ======================= Public Procedures =========================
       call h5fclose_f ( MLSFile%fileID%f_id, status )
       MLSFile%fileID%f_id = 0
     elseif( MLSFile%FileId%grp_id > 0 ) then
-      call GetHDF5DSRank_ID( MLSFile%fileID%grp_id, name, rank )
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'How can we read rank from a group?', MLSFile=MLSFile )
+      ! call GetHDF5DSRank_ID( MLSFile%fileID%grp_id, name, rank )
     elseif( MLSFile%FileId%f_id > 0 ) then
       call GetHDF5DSRank_ID( MLSFile%fileID%f_id, name, rank )
     else
@@ -3096,14 +3098,14 @@ contains ! ======================= Public Procedures =========================
     ! Executable code
     call trace_begin ( me, 'GetHDF5DSRank', cond=.false. )
     rank = -1                           ! means trouble
-    call h5eSet_auto_f ( 0, status )
+    call mls_eSet_auto ( 0, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages off before getting rank ' // trim(name) )
     call h5dOpen_f ( FileID, trim(name), setID, status )
     call h5dget_space_f(setID,dspace_id,status)
     call h5sget_simple_extent_ndims_f(dspace_id,rank,status)
     call h5dClose_f ( setID, status )
-    call h5eSet_auto_f ( 1, status )
+    call mls_eSet_auto ( 1, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages back on after getting rank ' // trim(name) )
     call trace_end ( cond=.false. )
@@ -3124,7 +3126,7 @@ contains ! ======================= Public Procedures =========================
     ! Executable code
     call trace_begin ( me, 'GetHDF5DSQType', cond=.false. )
     Qtype = 'unknown'                   ! means trouble
-    call h5eSet_auto_f ( 0, status )
+    call mls_eSet_auto ( 0, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages off before getting datatype of ' // trim(name) )
     call h5dOpen_f ( FileID, trim(name), setID, status )
@@ -3137,7 +3139,7 @@ contains ! ======================= Public Procedures =========================
     call h5dClose_f ( setID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close after datatype ' // trim(name) )
-    call h5eSet_auto_f ( 1, status )
+    call mls_eSet_auto ( 1, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages back on after getting rank ' // trim(name))
     call trace_end ( cond=.false. )
@@ -3164,7 +3166,7 @@ contains ! ======================= Public Procedures =========================
     ! Executable code
     call trace_begin ( me, 'IsHDF5AttributeInFile_DS', cond=.false. )
     SooDesu = .false.
-    call h5eSet_auto_f ( 0, status )
+    call mls_eSet_auto ( 0, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages off before looking for attribute ' // trim(name) )
     call h5fopen_f(trim(filename), H5F_ACC_RDONLY_F, fileID, status)
@@ -3180,7 +3182,7 @@ contains ! ======================= Public Procedures =========================
       end if
       call h5fclose_f(fileID, status)
     end if
-    call h5eSet_auto_f ( 1, status )
+    call mls_eSet_auto ( 1, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages back on after looking for attribute ' // trim(name) )
     call trace_end ( cond=.false. )
@@ -3206,7 +3208,7 @@ contains ! ======================= Public Procedures =========================
     ! Executable code
     call trace_begin ( me, 'IsHDF5AttributeInFile_Grp', cond=.false. )
     SooDesu = .false.
-    call h5eSet_auto_f ( 0, status )
+    call mls_eSet_auto ( 0, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages off before looking for attribute ' // trim(name) )
     call h5fopen_f(trim(filename), H5F_ACC_RDONLY_F, fileID, status)
@@ -3222,7 +3224,7 @@ contains ! ======================= Public Procedures =========================
       end if
       call h5fclose_f(fileID, status)
     end if
-    call h5eSet_auto_f ( 1, status )
+    call mls_eSet_auto ( 1, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages back on after looking for attribute ' // trim(name) )
     call trace_end ( cond=.false. )
@@ -3243,7 +3245,7 @@ contains ! ======================= Public Procedures =========================
     ! Executable code
     call trace_begin ( me, 'IsHDF5DSInFile', cond=.false. )
     IsHDF5DSInFile = .false.
-    call h5eSet_auto_f ( 0, status )
+    call mls_eSet_auto ( 0, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages off before looking for DS ' // trim(name) )
     call h5fopen_f(trim(filename), H5F_ACC_RDONLY_F, fileID, status)
@@ -3255,7 +3257,7 @@ contains ! ======================= Public Procedures =========================
       end if
       call h5fclose_f(fileID, status)
     end if
-    call h5eSet_auto_f ( 1, status )
+    call mls_eSet_auto ( 1, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages back on after looking for DS ' // trim(name) )
     call trace_end ( cond=.false. )
@@ -3274,7 +3276,7 @@ contains ! ======================= Public Procedures =========================
 
     ! Executable code
     call trace_begin ( me, 'IsHDF5AttributePresent_in_DSID', cond=.false. )
-    call h5eSet_auto_f ( 0, status )
+    call mls_eSet_auto ( 0, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages off before looking for attribute ' // trim(name) )
     call h5aOpen_name_f ( SETID, name, attrID, status )
@@ -3284,7 +3286,7 @@ contains ! ======================= Public Procedures =========================
       IsHDF5AttributePresent_in_DSID = .true.
       call h5aClose_f ( attrID, status )
     end if
-    call h5eSet_auto_f ( 1, status )
+    call mls_eSet_auto ( 1, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages back on after looking for attribute ' // trim(name) )
     call trace_end ( cond=.false. )
@@ -3317,7 +3319,7 @@ contains ! ======================= Public Procedures =========================
         & DSname, fileID, name)
       go to 9
     end if
-    call h5eSet_auto_f ( 0, status )
+    call mls_eSet_auto ( 0, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages off before looking for attribute ' // trim(name) )
     call h5dOpen_f ( fileid, trim(DSname), setID, status )
@@ -3333,7 +3335,7 @@ contains ! ======================= Public Procedures =========================
       end if
       call h5dClose_f ( setID, status )
     end if
-    call h5eSet_auto_f ( 1, status )
+    call mls_eSet_auto ( 1, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages back on after looking for attribute ' // trim(name) )
   9 call trace_end ( cond=.false. )
@@ -3355,7 +3357,7 @@ contains ! ======================= Public Procedures =========================
 
     ! Executable code
     call trace_begin ( me, 'IsHDF5AttributePresent_in_grp', cond=.false. )
-    call h5eSet_auto_f ( 0, status )
+    call mls_eSet_auto ( 0, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages off before looking for attribute ' // trim(name) )
     call h5gopen_f(fileID, trim(grpName), grpid, status)
@@ -3371,7 +3373,7 @@ contains ! ======================= Public Procedures =========================
       end if
       call h5gclose_f(grpid, status)
     end if
-    call h5eSet_auto_f ( 1, status )
+    call mls_eSet_auto ( 1, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages back on after looking for attribute ' // trim(name) )
     call trace_end ( cond=.false. )
@@ -3391,7 +3393,7 @@ contains ! ======================= Public Procedures =========================
 
     ! Executable code
     call trace_begin ( me, 'IsHDF5AttributePresent_in_MLSFile', cond=.false. )
-    call h5eSet_auto_f ( 0, status )
+    call mls_eSet_auto ( 0, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages off before looking for attribute ' // trim(name) )
     if ( MLSFile%fileID%sd_ID > 0 ) then
@@ -3402,7 +3404,7 @@ contains ! ======================= Public Procedures =========================
       status = -1
     endif
     IsHDF5AttributePresent_in_MLSFile = ( status == 0 )
-    call h5eSet_auto_f ( 1, status )
+    call mls_eSet_auto ( 1, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages back on after looking for attribute ' // trim(name) )
     call trace_end ( cond=.false. )
@@ -3470,7 +3472,7 @@ contains ! ======================= Public Procedures =========================
     call trace_begin ( me, 'IsHDF5DSPresent_in_fID', cond=.false. )
     myOptions = ' ' ! By default, match name exactly
     if (present(options)) myOptions = options
-    call h5eSet_auto_f ( 0, status )
+    call mls_eSet_auto ( 0, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages off before looking for DS ' // trim(name) )
     if ( myOptions == ' ' ) then
@@ -3489,7 +3491,7 @@ contains ! ======================= Public Procedures =========================
       call GetAllHDF5AttrNames( locID, DSNames )
       IsHDF5DSPresent_in_fID = IsInList( DSNames, name, options )
     endif
-    call h5eSet_auto_f ( 1, status )
+    call mls_eSet_auto ( 1, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages back on after looking for DS ' // trim(name) )
     call trace_end ( cond=.false. )
@@ -3508,13 +3510,13 @@ contains ! ======================= Public Procedures =========================
 
     ! Executable code
     call trace_begin ( me, 'IsHDF5GroupPresent', cond=.false. )
-    call h5eSet_auto_f ( 0, status )
+    call mls_eSet_auto ( 0, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages off before looking for Group ' // trim(name) )
     call h5GOpen_f ( locID, name, setID, status )
     IsHDF5groupPresent = status == 0
     if ( IsHDF5groupPresent ) call h5GClose_f ( setID, status )
-    call h5eSet_auto_f ( 1, status )
+    call mls_eSet_auto ( 1, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages back on after looking for Group ' // trim(name) )
     call trace_end ( cond=.false. )
@@ -3541,7 +3543,7 @@ contains ! ======================= Public Procedures =========================
     call trace_begin ( me, 'IsHDF5ItemPresent', cond=.false. )
     myOptions = ' ' ! By default, match name exactly, search for sd names
     if (present(options)) myOptions = options
-    call h5eSet_auto_f ( 0, status )
+    call mls_eSet_auto ( 0, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages off before looking for item ' // trim(name) )
     if ( myOptions == ' ' .or. myOptions == '-d' ) then
@@ -3559,21 +3561,24 @@ contains ! ======================= Public Procedures =========================
       IsHDF5ItemPresent = IsInList( DSNames, name, options )
       ! print *, 'attr Names ', trim(DSNames)
     endif
-    call h5eSet_auto_f ( 1, status )
+    call mls_eSet_auto ( 1, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages back on after looking for item ' // trim(name) )
     call trace_end ( cond=.false. )
   end function IsHDF5ItemPresent
 
   ! --------------------------------------  SaveAsHDF5DS_charsclr  -----
-  subroutine SaveAsHDF5DS_charsclr ( locID, name, value )
+  subroutine SaveAsHDF5DS_charsclr ( locID, name, value, adding_to )
     ! This routine does the initial work of creating a dataset
     integer, intent(in) :: LOCID           ! Where to place it (group/file)
     character (len=*), intent(in) :: NAME  ! Name for this dataset
     character (len=*), intent(in) :: VALUE ! The scalar char string
+    logical, optional, intent(in)     :: adding_to
 
     ! Local variables
     integer :: Me = -1                  ! String index for trace cacheing
+    logical :: myAddingTo
+    integer :: nsubmembers
     integer (HID_T) :: setID            ! ID for dataset
     integer(kind=hsize_t), dimension(1) :: SHP        ! Shape
     integer :: spaceID                  ! ID for dataspace
@@ -3584,6 +3589,8 @@ contains ! ======================= Public Procedures =========================
     ! Executable code
     call trace_begin ( me, 'SaveAsHDF5DS_charsclr', cond=.false. )
     ! Create the dataspace
+    myAddingTo = .false.
+    if ( present(adding_to) ) myAddingTo = adding_to
     shp = 1
     call h5sCreate_simple_f ( 1, int(shp,hSize_T), spaceID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -3592,14 +3599,18 @@ contains ! ======================= Public Procedures =========================
     call h5tcopy_f ( type_id, s_type_id, status )
     call h5tset_size_f ( s_type_id, int(len(value), size_t), status )
     ! Create the dataset
-    call h5dCreate_f ( locID, trim(name), s_type_id, spaceID, setID, &
-      & status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to create dataset for scalar character ' // trim(name) )
+    if ( myAddingTo ) then
+      call h5dOpen_f ( locID, trim(name), setID, status )
+    else
+      call h5dCreate_f ( locID, trim(name), s_type_id, spaceID, setID, &
+        & status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to create dataset for scalar character ' // trim(name) )
+    endif
     ! Write the data
     call h5dWrite_f ( setID, s_type_id, value, &
       & int ( (/ shp, ones(1:6) /), hsize_t ), status )
-    call finishSaveDS ( name, status, setID, spaceID )
+    call finishSaveDS ( Name, status, setID, spaceID )
     call trace_end ( cond=.false. )
   end subroutine SaveAsHDF5DS_charsclr
 
@@ -3635,7 +3646,7 @@ contains ! ======================= Public Procedures =========================
 
   ! --------------------------------------  SaveAsHDF5DS_textFile  -----
   subroutine SaveAsHDF5DS_textFile ( textFile, locID, name, &
-    & maxLineLen, fromNull )
+    & maxLineLen, fromNull, adding_to )
     use IO_Stuff, only: Read_TextFile
     ! This routine writes the contents of a textfile as a char-valued dataset
     integer, intent(in) :: LOCID           ! Where to place it (group/file)
@@ -3643,9 +3654,11 @@ contains ! ======================= Public Procedures =========================
     character (len=*), intent(in) :: textFile ! Name of the textfile
     integer, optional, intent(in) :: maxLineLen
     character(len=1), optional, intent(in) :: fromNull
+    logical, optional, intent(in)     :: adding_to
 
     ! Local variables
     integer :: Me = -1                  ! String index for trace cacheing
+    logical :: myAddingTo
     integer :: myMaxLineLen
     integer :: spaceID                  ! ID for dataspace
     integer (HID_T) :: setID            ! ID for dataset
@@ -3662,6 +3675,8 @@ contains ! ======================= Public Procedures =========================
     if ( present(maxLineLen) ) myMaxLineLen = maxLineLen
     wasNull = char(32) ! blank space
     if ( present(fromNull) ) wasNull = fromNull
+    myAddingTo = .false.
+    if ( present(adding_to) ) myAddingTo = adding_to
     ! Try to read the textfile
     value = ' '
     call read_textFile( trim(textFile), value, myMaxLineLen )
@@ -3676,11 +3691,16 @@ contains ! ======================= Public Procedures =========================
     type_id = H5T_NATIVE_CHARACTER
     call h5tcopy_f ( type_id, s_type_id, status )
     call h5tset_size_f ( s_type_id, int(len_trim(value), size_t), status )
-    ! Create the dataset
-    call h5dCreate_f ( locID, trim(name), s_type_id, spaceID, setID, &
-      & status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to create dataset for scalar character ' // trim(name) )
+
+    if ( myAddingTo ) then
+      call h5dOpen_f ( locID, trim(name), setID, status )
+    else
+      ! Create the dataset
+      call h5dCreate_f ( locID, trim(name), s_type_id, spaceID, setID, &
+        & status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to create dataset for scalar character ' // trim(name) )
+    endif
     ! Write the data
     call h5dWrite_f ( setID, s_type_id, trim(value), &
       & int ( (/ shp, ones(1:6) /), hsize_t ), status )
@@ -5546,6 +5566,21 @@ contains ! ======================= Public Procedures =========================
     call trace_end ( cond=.false. )
   end subroutine Get_DS_Shape
 
+! ---------------------------------------------------  MLS_eSet_auto  -----
+  subroutine MLS_eSet_auto ( value, status )
+  ! Calls h5eSet_auto_f to turn on (if value==1) or off (if value==0)
+  ! error messages printed by the hdf5 library
+  ! Unless hdfVerbose, in which case always print
+    integer, intent(in)                 :: value
+    integer, intent(out)                :: status
+    !
+    integer                             :: myValue
+    ! Executable
+    myValue = value
+    if ( hdfVerbose ) myValue = 1
+    call h5eSet_auto_f ( myvalue, status )
+  end subroutine MLS_eSet_auto
+
 ! ---------------------------------------------------  MLS_extend  -----
   subroutine MLS_extend ( setID, newCount, start, dataSpaceID )
   ! Checks whether we need to extend setID to accommodate newDims
@@ -5937,6 +5972,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.144  2018/05/11 21:29:52  pwagner
+! May be adding_to during SaveAsHDF5DS_textFile; if hdfVerbose print all warnings and quibbles
+!
 ! Revision 2.143  2018/04/13 00:15:41  pwagner
 ! Added MLSFile_T api for GetHDF5DSRank; improved comments
 !
