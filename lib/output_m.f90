@@ -176,7 +176,7 @@ module OUTPUT_M
   ! We can use the OutputLines mechanism for user-controlled
   ! buffering, filtering, grep-ing, or whatever
   integer, parameter :: numPatterns = 13 ! How many special patterns may we store
-  integer, parameter :: MAXOUTPUTLINESLEN = 2048 ! How many chars it can hold
+  integer, public, parameter :: MAXOUTPUTLINESLEN = 2048 ! How many chars it can hold
   character(len=MAXOUTPUTLINESLEN), public, save     :: OUTPUTLINES = ' '
 
   ! This is the type for configuring how to automatically format
@@ -1737,6 +1737,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.137  2018/05/11 20:33:05  pwagner
+! make MAXOUTPUTLINESLEN public
+!
 ! Revision 2.136  2018/04/05 16:55:05  pwagner
 ! Corrected comments; hopefully made them clearer, too
 !
