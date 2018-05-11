@@ -25,7 +25,7 @@ module HighOutput
   use MLSStrings, only: Asciify, Lowercase, Ncopies, &
     & Trim_Safe, WriteIntsToChars
   use Output_M, only: Advance_Is_Yes_Or_No, Blanks, GetOutputStatus, &
-    & Newline, &
+    & MaxOutputLineslen, Newline, &
     & Output, Output_ => Output_Char_Nocr, &
     & RestoreOutputSettings => RestoreSettings, &
     & OutputOptions, OutputOptions_T, PatternOptions, PatternOptions_T, &
@@ -2572,6 +2572,9 @@ contains
 end module HIGHOUTPUT
 
 ! $Log$
+! Revision 2.27  2018/05/11 20:33:36  pwagner
+! Make sure myChars long enough; reinitialize outputLines after use
+!
 ! Revision 2.26  2018/04/19 23:42:20  pwagner
 ! Switch arg may be array in BeVerbose and LetsDebug
 !
