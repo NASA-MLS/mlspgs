@@ -123,6 +123,8 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   use HighOutput, only: OutputNamedValue
   use Intrinsic, only: Lit_Indices, Phyq_Invalid, L_Vmr
   use Lexer_Core, only: Where_T
+  use MLSCommon, only: M_Cloud, M_Fill, M_FullDerivatives, M_Ignore, &
+    & M_LinAlg, M_Spare, M_Tikhonov
   use MLSFinds, only: FindFirst, FindUnique
   use MLSKinds, only: R8, Rv
   use MLSMessageModule, only: MLSMessage, MLSMessageConfig, MLSMSG_Error, &
@@ -360,15 +362,6 @@ module VectorsModule            ! Vectors in the MLS PGS suite
     ! approach to direct writes.
     character(len=40) :: AllocationName = 'None'
   end type VectorValue_T
-
-  ! Bit of MASK field of VectorValue_T
-  integer, parameter :: M_Cloud = 2**4
-  integer, parameter :: M_Fill = 2**2
-  integer, parameter :: M_FullDerivatives = 2**1
-  integer, parameter :: M_Ignore = 2**5
-  integer, parameter :: M_LinAlg = 2**0      ! Don't use in linear algebra
-  integer, parameter :: M_Spare = 2**6
-  integer, parameter :: M_Tikhonov = 2**3    ! Where to do Tikhonov regularization
 
   character(len=16), dimension(7), parameter :: maskBitNames = (/ &
     & 'linear algebra  ', 'full derivatives', 'fill            ' , &
@@ -3505,6 +3498,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.209  2018/02/27 00:50:33  livesey
+! Added the supportedInstrumentModule argument to the various search routines to support A-SMLS
+!
 ! Revision 2.208  2017/11/03 19:57:59  pwagner
 ! Most array gymnastics moved from MLSFillValues to HyperSlabs module
 !
