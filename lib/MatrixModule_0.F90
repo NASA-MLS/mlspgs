@@ -25,7 +25,7 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
   use MLSKinds, only: RM, R4, R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
   use Output_m, only: Output
-  use VectorsModule, only: M_Linalg
+  use MLSCommon, only: M_Linalg
 
   implicit NONE
   private
@@ -3615,6 +3615,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.28  2018/05/11 21:25:35  pwagner
+! Get MatrixModule_0.F90 from MLSCommon
+!
 ! Revision 2.27  2018/03/07 00:14:42  vsnyder
 ! Made some pointers allocatable.  Converted some OMP loops to DO CONCURRENT
 !
