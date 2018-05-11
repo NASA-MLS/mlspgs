@@ -13,7 +13,6 @@
 module MLSCommon                ! Common definitions for the MLS software
 !=============================================================================
 
-  use HDF, only: Dfacc_Create, Dfacc_Rdonly, Dfacc_Rdwr
   use IEEE_Arithmetic, only: IEEE_Is_Finite, IEEE_Is_Nan
   use MLSKinds ! everything
   use MLSStrings,  only: Lowercase
@@ -21,47 +20,62 @@ module MLSCommon                ! Common definitions for the MLS software
   implicit none
   private
 
+! Keep common parameters, flags, datatypes, and procedures here so
+! that they may be shared by many higher-level modules
 ! === (start of toc) ===                                                 
 !     c o n t e n t s                                                    
 !     - - - - - - - -                                                    
 
 !     (data types and parameters)
 
-! i1, i2, i4    integer types
-! r4, r8        floating point types
-! ip, rp        integer, floating point types used in forward model
-! rv            floating point type used in vector quantity values
-! rm            floating point type used in matrix values
-! rt            floating point type used in topo-set values
-! LineLen       character-length of most input
-! FileNameLen   character-length of path/filenames
-! BareFNLen     character-length of filenames
-! namelen       Max length of hdf sds array name
-! fill_signal   signal to is_what_ieee to check for undefined (fill) values
-! finite_signal signal to is_what_ieee to check for finite
-! inf_signal    signal to is_what_ieee to check for inf
-! nan_signal    signal to is_what_ieee to check for NaN
-! ShortNameLen  character-length of short names (e.g., 'H2O')
+! i1, i2, i4       integer types
+! r4, r8           floating point types
+! ip, rp           integer, floating point types used in forward model
+! rv               floating point type used in vector quantity values
+! rm               floating point type used in matrix values
+! rt               floating point type used in topo-set values
+! LineLen          character-length of most input
+! FileNameLen      character-length of path/filenames
+! BareFNLen        character-length of filenames
+! namelen          Max length of hdf sds array name
+! fill_signal      signal to is_what_ieee to check for undefined (fill) values
+! finite_signal    signal to is_what_ieee to check for finite
+! inf_signal       signal to is_what_ieee to check for inf
+! nan_signal       signal to is_what_ieee to check for NaN
+! ShortNameLen     character-length of short names (e.g., 'H2O')
 ! DEFAULTUNDEFINEDVALUE 
-!               default fill values, e.g. when creating hdf arrays
-! UNDEFINEDVALUE 
-!               value to check for by is_what_ieee
-! FileIDs_T     id numbers for file, group, swath or dataset
-! L1BInfo_T     L1B data file names, etc. 
-!                (Should we replace these with FileIDs?)
-! L2Metadata_T  Coords of (lon,lat) box to write as metadata
-! MLSFile_T     File name, type, id, etc.
-! MLSFill_T     Fill value data type
-! MLSFills      database of MLSFill values
-! Range_T       Bottom, Top of PCFID range
-! Interval_T    Bottom, Top of a real interval (open)
-! TAI93_Range_T start, end times in TAI93 formatted r8
-! MLSVerbose    Should we print extra stuff?
-! MLSDebug      Should we print even more stuff?
+!                  default fill values, e.g. when creating hdf arrays
+! UNDEFINEDVALUE    
+!                  value to check for by is_what_ieee
+! HDF_Acc_Create   signal to create the hdf file
+! HDF_Acc_Rdonly   signal to open the hdf file for reading only
+! HDF_Acc_RdWr     signal to open the hdf file for both reading and writing
+!            Bits of MASK field as used in VectorValue_T
+! M_Cloud = 2**4
+! M_Fill = 2**2
+! M_FullDerivatives = 2**1
+! M_Ignore = 2**5
+! M_LinAlg = 2**0      ! Don't use in linear algebra
+! M_Spare = 2**6
+! M_Tikhonov = 2**3    ! Where to do Tikhonov regularization
+!            Derived Types
+! FileIDs_T        id numbers for file, group, swath or dataset
+! L1BInfo_T        L1B data file names, etc. 
+!                   (Should we replace these with FileIDs?)
+! L2Metadata_T     Coords of (lon,lat) box to write as metadata
+! MLSFile_T        File name, type, id, etc.
+! MLSFill_T        Fill value data type
+! MLSFills         database of MLSFill values
+! Range_T          Bottom, Top of PCFID range
+! Interval_T       Bottom, Top of a real interval (open)
+! TAI93_Range_T    start, end times in TAI93 formatted r8
+!       State-defining flags
+! MLSVerbose       Should we print extra stuff?
+! MLSDebug         Should we print even more stuff?
 ! MLSVerboseSticky
-!               Retain value of MLSVerbose thoughout pahse
+!                  Retain value of MLSVerbose thoughout phase
 ! MLSDebugSticky
-!               Retain value of MLSDebug thoughout pahse
+!                  Retain value of MLSDebug thoughout phase
 
 !     (subroutines and functions)
 ! accessType       Converts DFACC_* <-> {l_create, l_rdwr, l_rdonly}
@@ -71,10 +85,13 @@ module MLSCommon                ! Common definitions for the MLS software
 ! split_path_name  splits the input path/name into path and name
 ! === (end of toc) ===                                                   
 ! === (start of api) ===
+! char* accessType ( int dfacc )
+! int accessType ( char* str )
+! log dontCrashHere( char* arge )
 ! log inRange( int arg, Range_T range )
 ! log inRange( real arg, Interval_T range )
 ! log is_what_ieee( type_signal what, num arg )
-! split_path_name (char* full_file_name, char* path, char* name, [char slash])
+! split_path_name ( char* full_file_name, char* path, char* name, [char slash] )
 ! === (end of api) ===
 
 !---------------------------- RCS Module Info ------------------------------
@@ -129,6 +146,22 @@ module MLSCommon                ! Common definitions for the MLS software
   integer, public, parameter :: NAN_SIGNAL    = INF_SIGNAL + 1
   integer, public, parameter :: FILL_SIGNAL   = NAN_SIGNAL + 1
   integer, public, parameter :: OLDFILL_SIGNAL= FILL_SIGNAL + 1
+
+  ! The following are integer flags that should be consistent
+  ! with hdf settings; e.g. /software/toolkit/ifc17/hdf/include/hdf.inc
+  ! You may overwrite them if you wish (and have a good reason to do so)
+  integer, public, parameter :: HDF_Acc_Create = 4
+  integer, public, parameter :: HDF_Acc_Rdonly = 1
+  integer, public, parameter :: HDF_Acc_RdWr   = 3
+
+  ! Bit of MASK field of VectorValue_T
+  integer, public, parameter :: M_Cloud = 2**4
+  integer, public, parameter :: M_Fill = 2**2
+  integer, public, parameter :: M_FullDerivatives = 2**1
+  integer, public, parameter :: M_Ignore = 2**5
+  integer, public, parameter :: M_LinAlg = 2**0      ! Don't use in linear algebra
+  integer, public, parameter :: M_Spare = 2**6
+  integer, public, parameter :: M_Tikhonov = 2**3    ! Where to do Tikhonov regularization
 
   ! Unless you fill the string table with l_ quantities from intrinsic
   ! make sure the next entry is .false. 
@@ -246,9 +279,8 @@ module MLSCommon                ! Common definitions for the MLS software
     real(rp) :: phiEnd   = 0.
   end type MLSChunk_T
 
-  ! Moved here from MLSFiles module
   ! Information describing the files used by the mls software
-  ! Stop passing file handles or names back & forth between routines
+  ! Instead of passing file handles or names back & forth between routines
   ! -- pass one of these instead
   type MLSFile_T
     character (len=16) :: content=""  ! e.g., 'l1brad', 'l2gp', 'l2aux', ..
@@ -267,8 +299,7 @@ module MLSCommon                ! Common definitions for the MLS software
     type(Fileids_T) :: FileID = FileIDs_T()
   end type MLSFile_T
 
-  ! The next datatype describes the information on the L1B data files in use
-
+  ! This datatype describes the information on the L1B data files in use
   type L1BInfo_T
     integer :: L1BOAId=0     ! The HDF ID (handle) for the L1BOA file
     ! Id(s) for the L1BRAD file(s)
@@ -298,7 +329,7 @@ module MLSCommon                ! Common definitions for the MLS software
   end type L2Metadata_T
 
   ! --------------------------------------------------------------------------
-  ! Datatype for the Fill 
+  ! Datatype for the Fill or undefined value
   ! (its value(s), whether Fills
   ! mean a value greater than or equal to, etc.)
   ! We will be migrating older is-Fill tests to use this instead
@@ -309,7 +340,7 @@ module MLSCommon                ! Common definitions for the MLS software
   ! This is an obvious generalization of the older test where we
   ! tested only whether it equaled one specified reference value
   
-  ! Why do this? We use -999.99, both in level 1 and level 2
+  ! Why do this? We use -999.99, both in mls level 1 and level 2
   ! Gloria uses 10^12
   ! GMAO uses 10^15
 
@@ -334,6 +365,8 @@ module MLSCommon                ! Common definitions for the MLS software
 
 contains
   ! Now any public procedures and functions
+  ! Should we keep procedures and ffunctions here, or
+  ! keep break them out to a separate module?
   !--------------------------------------------  accessType  -----
   function accessDFACCToStr ( dfacc ) result(str)
 
@@ -345,11 +378,11 @@ contains
   character(len=8)              :: str
   ! Executable
   select case (dfacc)
-  case (DFACC_CREATE)
+  case (HDF_Acc_Create)
     str = 'create'
-  case (DFACC_RDONLY)
+  case (HDF_Acc_Rdonly)
     str = 'rdonly'
-  case (DFACC_RDWR)
+  case (HDF_Acc_RdWr)
     str = 'rdwrite'
   case default
     str = 'unknown' ! Why not ' '? Or '?'
@@ -367,11 +400,11 @@ contains
   ! Executable
   select case (lowercase(str(1:4)))
   case ('crea')
-    dfacc = DFACC_CREATE
+    dfacc = HDF_Acc_Create
   case ('rdon')
-    dfacc = DFACC_RDONLY
+    dfacc = HDF_Acc_Rdonly
   case ('rdwr')
-    dfacc = DFACC_RDWR
+    dfacc = HDF_Acc_RdWr
   case default
     dfacc = -999 ! why not DFACC_RDWR?
   end select
@@ -654,6 +687,9 @@ end module MLSCommon
 
 !
 ! $Log$
+! Revision 2.48  2018/05/11 21:23:27  pwagner
+! Stop Use-ing HDF; Moved M_ mask bit fields here
+!
 ! Revision 2.47  2018/02/08 23:18:00  pwagner
 ! moved accessType and split_path_name here from MLSFiles
 !
