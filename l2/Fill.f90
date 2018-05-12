@@ -3322,7 +3322,7 @@ contains ! =====     Public Procedures     =============================
       if ( deebug ) call outputNamedValue( 'Result', fileName )
       if ( deebug ) call outputNamedValue( 'About to get_string for file type', lit_indices(fileType) )
       call get_string ( lit_indices(fileType), fileTypeStr, strip=.true. )
-      call outputNamedValue( 'Result', fileTypeStr )
+      if ( deebug ) call outputNamedValue( 'Result', fileTypeStr )
       if ( noPCFid ) then
         ! Already have fileName; must trust it's OK and not just a fragment
       elseif ( TOOLKIT .and. index (fileName, '/') < 1 ) then
@@ -3375,6 +3375,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.477  2018/05/12 00:10:24  pwagner
+! Print less if not deebugging
+!
 ! Revision 2.476  2018/04/16 22:14:48  pwagner
 ! Improved how we DirectRead plain hdf files
 !
