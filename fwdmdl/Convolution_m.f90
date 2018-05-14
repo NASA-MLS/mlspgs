@@ -44,7 +44,7 @@ contains
     use Intrinsic, only: L_ElevOffset, L_LimbSidebandFraction
     use Constants, only: Deg2Rad
     use Convolve_All_m, only: Convolve_Radiance, Convolve_Temperature_Deriv, &
-      & Convolve_Other_Deriv, Convolve_Other_Second_Deriv, Interpolate_Radiance, &
+      & Convolve_Other_Deriv, Interpolate_Radiance, &
       & Interpolate_Temperature_Deriv, Interpolate_Other_Deriv
 !     use Convolve_All_m, only: Convolve_Temperature_Deriv_Normalization, &
 !       & Convolve_Radiance_Normalization
@@ -56,6 +56,7 @@ contains
       & FOV_Convolve_Teardown, No_FFT
     use Geometry, only: Get_R_EQ
     use HessianModule_1, only: Hessian_T
+    use Hessians_m, only: Convolve_Other_Second_Deriv
     use Intrinsic, only: L_Radiance
     use Load_SPS_Data_M, only: Grids_T
     use MatrixModule_1, only: Matrix_T
@@ -529,6 +530,9 @@ contains
 end module Convolution_m
 
 ! $Log$
+! Revision 2.11  2018/05/14 23:42:42  vsnyder
+! Move Hessians stuff to Hessians_m
+!
 ! Revision 2.10  2017/10/31 23:49:35  vsnyder
 ! Make Coefficients a parameterized type
 !
