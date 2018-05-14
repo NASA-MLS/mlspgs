@@ -9,11 +9,11 @@
 ! export authority as may be required before exporting such information to
 ! foreign countries or providing access to foreign persons.
 
-module Get_D_Deltau_Pol_M
+module Get_d_Deltau_Pol_M
 
   implicit NONE
   private
-  public :: Get_D_Deltau_Pol_DF, Get_D_Deltau_Pol_DT
+  public :: Get_d_Deltau_Pol_dF, Get_d_Deltau_Pol_dT
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -22,23 +22,23 @@ module Get_D_Deltau_Pol_M
 !---------------------------------------------------------------------------
 contains
 
-! ------------------------------------------  Get_D_Deltau_Pol_DF  -----
-  subroutine Get_D_Deltau_Pol_DF ( CT, STCP, STSP, Grids_f, Tan_pt_c,      &
-               &  Beta_Path_Pol, Tanh1_c, Eta_zxp, Do_Calc_f, Sps_Path,    &
-               &  Del_S, IncOptDepth, Ref_Cor, d_Delta_df, nz_d_Delta_df,  &
-               &  nnz_d_Delta_df, d_Deltau_Pol_dF  )
+! ------------------------------------------  Get_d_Deltau_Pol_DF  -----
+  subroutine Get_d_Deltau_Pol_dF ( CT, STCP, STSP, Grids_f, Tan_pt_c, &
+               &  Beta_Path_Pol, Tanh1_c, Eta_zxp, Sps_Path, Del_S,   &
+               &  IncOptDepth, Ref_Cor, d_Delta_df, d_Deltau_Pol_dF  )
 
     use DExdT_m, only: dExdT
-    use Get_Do_Calc_Indexed_m, only: Get_Do_Calc_Indexed_Coarse
+    use Get_do_Calc_Indexed_m, only: Get_do_Calc_Indexed_Coarse
     use GLNP, only: NG, NGP1
     use Load_Sps_Data_m, Only: Grids_t
     use MLSKinds, only: RP
     use Opacity_m, only: Opacity
+    use Sparse_m, only: Sparse_t
 
     ! SVE == # of state vector elements
-    real(rp), intent(in) :: CT(:)           ! Cos(Theta), where theta
+    real(rp), intent(in) :: CT(:)             ! Cos(Theta), where theta
       ! is the angle between the line of sight and magnetic field vectors.
-    real(rp), intent(in) :: STCP(:)         ! Sin(Theta) Cos(Phi) where
+    real(rp), intent(in) :: STCP(:)           ! Sin(Theta) Cos(Phi) where
       ! theta is as for CT and phi (for this purpose only) is the angle
       ! between the plane defined by the line of sight and the magnetic
       ! field vector, and the "instrument field of view plane polarized"
@@ -50,10 +50,10 @@ contains
                                               ! cross section for each species
                                               ! on coarse grid.
     real(rp), intent(in) :: Tanh1_c(:)        ! tanh(h nu / k T) on coarse path
-    real(rp), intent(in) :: Eta_zxp(:,:)      ! composite path x sve
-                                              ! representation basis function.
-    logical, intent(in) :: Do_Calc_f(:,:)     ! A logical indicating where
-                                              ! eta_zxp is not zero.
+    class(sparse_t), intent(in) :: Eta_ZXP(:) ! Interpolating coefficients
+                                              ! from state vector coordinates to
+                                              ! combined coarse & fine path for
+                                              ! each sps.
     real(rp), intent(in) :: Sps_Path(:,:)     ! fine path x species.
                                               ! Path species function.
     real(rp), intent(in) :: Del_S(:)          ! unrefracted path length.  This
@@ -64,11 +64,9 @@ contains
     real(rp), intent(in) :: Ref_Cor(:)        ! refracted to unrefracted path
                                               ! length ratios, only up to the
                                               ! black-out point, on coarse path.
-    real(rp), intent(in) :: d_Delta_df(:,:)   ! derivative of delta wrt
+    class (sparse_t), intent(in) :: d_Delta_df(:) ! derivative of delta wrt
                                               ! mixing ratio state vector
-                                              ! element.  Coarse path x SV.
-    integer, intent(in) :: nz_d_Delta_df(:,:) ! Nonzeros in d_delta_df
-    integer, intent(in) :: nnz_d_Delta_df(:)  ! Column lengths in nz_delta_df
+                                              ! element.  One per SPS.
 
 ! Outputs
 
@@ -82,16 +80,24 @@ contains
     integer :: B                             ! Which boundary of the layer
     complex(rp) :: Beta(-1:1,size(ref_cor))  ! Either Beta or Beta*f*exp(f)
                                              ! on a boundary
-    complex(rp) :: D_Delta_DF_Pol(-1:1,size(ref_cor)) ! Layer integral
-    complex(rp) :: D_Incoptdepth_df(2,2,size(ref_cor))
+    complex(rp) :: d_Delta_df_Pol(-1:1,size(ref_cor)) ! Layer integral
+    complex(rp) :: d_Incoptdepth_df(2,2,size(ref_cor))
+!! The (:) in the next declaration is not required by the standard, but
+!! ifort 17 produces an error complaining that eta_zxp needs to be an array
+!  if it's omitted.
+    logical :: Do_Calc_f(maxval(eta_zxp(:)%nRows))    ! Where Eta_ZXP_Col /= 0
+    real(rp) :: Eta_ZXP_Col(maxval(eta_zxp(:)%nRows))
     integer :: I_Stop                        ! Length of coarse path
     integer :: II                            ! inds(p_i)
     integer :: Inds(size(ref_cor),2)         ! Where on the path to calc
     integer :: N_Inds                        ! Effective size of Inds
     integer :: P_I                           ! Path index
+    integer :: Sparse_Col
     integer :: SPS_I                         ! Species index
     integer :: SV_I                          ! State vector index
 
+    do_calc_f = .false.
+    eta_zxp_col = 0
     i_stop = size(ref_cor)
 
 ! initialize entire array to zero
@@ -100,14 +106,18 @@ contains
     do sps_i = 1, ubound(grids_f%l_v,1)
 
       do sv_i = Grids_f%l_v(sps_i-1)+1, Grids_f%l_v(sps_i)
+        sparse_col = sv_i - Grids_f%l_v(sps_i-1)
 
 ! Skip the masked derivatives, according to the l2cf inputs
 
         if ( .not. Grids_f%deriv_flags(sv_i) ) cycle
 
+        if ( eta_zxp(sps_i)%cols(sparse_col) == 0 ) cycle ! Zero column
+        call eta_zxp(sps_i)%get_col ( sparse_col, eta_zxp_col, do_calc_f )
+
         ! Get indices for layers for which the interpolating coefficient
         ! is nonzero at either boundary.
-        call get_do_calc_indexed_coarse ( i_stop, tan_pt_c, do_calc_f(:,sv_i), &
+        call Get_do_calc_indexed_coarse ( i_stop, tan_pt_c, do_calc_f, &
           & n_inds, inds )
 
         if ( n_inds == 0 ) cycle
@@ -140,24 +150,30 @@ contains
 
         ! Finish the integration.  Include the factor of tanh(h nu / k T)
         ! that was not included in the beta computation.
+!??? Should we (can we) also do GL here?
         do p_i = 1, n_inds
           ii = inds(p_i,1)
           b = inds(p_i,2)
           d_delta_df_pol(:,ii) = &
-            & ( beta(:,ii) * ( eta_zxp(ii*ngp1-ng,sv_i) * tanh1_c(ii) ) + &
-            &   beta(:,b) * ( eta_zxp(b*ngp1-ng,sv_i) * tanh1_c(b) ) ) * &
+            & ( beta(:,ii) * ( eta_zxp_col(ii*ngp1-ng) * tanh1_c(ii) ) + &
+            &   beta(:,b) * ( eta_zxp_col(b*ngp1-ng) * tanh1_c(b) ) ) * &
             & 0.5 * del_s(ii) * ref_cor(ii)
         end do ! p_i
 
         ! Now add in contribution from scalar model, 0.25 for sigma +/-,
         ! 0.5 for pi.  We only need the nonzeros from d_delta_df.
-        do ii = 1, nnz_d_delta_df(sv_i)
-          p_i = nz_d_delta_df(ii,sv_i)
-          d_delta_df_pol(:,p_i) = d_delta_df_pol(:,p_i) + &
-            & 0.25_rp * d_delta_df(p_i,sv_i)
-          d_delta_df_pol(0,p_i) = d_delta_df_pol(0,p_i) + &
-            & 0.25_rp * d_delta_df(p_i,sv_i)
-        end do ! ii
+        ii = d_delta_df(sps_i)%cols(sparse_col) ! Last element in the column
+        if ( ii /= 0 ) then
+          do
+            ii = d_delta_df(sps_i)%e(ii)%nc ! Element in next row in the column
+            p_i = d_delta_df(sps_i)%e(ii)%r ! Row number of element
+            d_delta_df_pol(:,p_i) = d_delta_df_pol(:,p_i) + &
+              & 0.25_rp * d_delta_df(sps_i)%e(ii)%v
+            d_delta_df_pol(0,p_i) = d_delta_df_pol(0,p_i) + &
+              & 0.25_rp * d_delta_df(sps_i)%e(ii)%v
+            if ( ii == d_delta_df(sps_i)%cols(sparse_col) ) exit
+          end do ! ii
+        end if
         ! d_delta_df_pol is now \int (d incremental opacity / df) ds.
 
         call opacity ( ct, stcp, stsp, d_delta_df_pol, d_incoptdepth_df )
@@ -168,10 +184,10 @@ contains
 ! I think these are mostly redundant to each other so WGR has
 ! replaced them with only one (left original uncommented in case I
 ! am wrong)
-!          if ( eta_zxp(p_i*ngp1-ng,sv_i) /= 0.0 &
+!          if ( eta_zxp_col(p_i*ngp1-ng,sv_i) /= 0.0 &
 !            & .or. d_delta_df(p_i,sv_i) /= 0.0 &
-!            & .or. do_calc_f(p_i*ngp1-ng,sv_i) ) then
-!           if ( do_calc_f(p_i*ngp1-ng,sv_i) ) then
+!            & .or. do_calc_f(p_i*ngp1-ng) ) then
+!           if ( do_calc_f(p_i*ngp1-ng) ) then
           ! Compare to D_Delta_Pol_dT, which looks at the input to Opacity:
           if ( any ( d_delta_df_pol(:,p_i) /= 0 ) ) then
             call dExdT ( incoptdepth(:,:,p_i), -d_incoptdepth_df(:,:,p_i), &
@@ -182,13 +198,15 @@ contains
 
         end do ! p_i
 
+        call eta_zxp(sps_i)%clear_col ( sparse_col, eta_zxp_col, do_calc_f )
+
       end do ! sv_i
 
     end do ! sps_i
 
-  end subroutine Get_D_Deltau_Pol_DF
+  end subroutine Get_d_Deltau_Pol_dF
 
-! ------------------------------------------  Get_D_Deltau_Pol_DT  -----
+! ------------------------------------------  Get_d_Deltau_Pol_dT  -----
 
 !{Compute {\tt D\_Deltau\_Pol\_DT}.
 !
@@ -230,21 +248,19 @@ contains
 ! $\frac{\partial \Delta \delta_{i \rightarrow i-1}^k}{\partial T_m}$
 ! and the {\tt dExDt} routine.
 
-  subroutine Get_D_Deltau_Pol_DT ( CT, STCP, STSP, Tan_PT, T_Path_F, &
-                & Alpha_Path_C, Alpha_Path_F, &
-                & dAlpha_dT_path_c, dAlpha_dT_path_f, &
-                & dAlpha_dT_polarized_path_c, dAlpha_dT_polarized_path_f, &
-                & Eta_zxp_c, Eta_zxp, Del_S, GL_Inds, &
-                & Del_Zeta, Do_Calc_T_c, Do_Calc_T_f, Do_GL, &
+  subroutine Get_d_Deltau_Pol_dT ( CT, STCP, STSP, Tan_PT, T_Path, &
+                & Alpha_Path, dAlpha_dT_path, dAlpha_dT_polarized_path, &
+                & Eta_zxp, P_Stop, Del_S, GL_Inds, Del_Zeta, Do_GL, &
                 & ds_dh, dh_dz_gw, ds_dz_gw, Incoptdepth, Ref_cor, &
-                & H_path_c, H_path_f, dH_dt_path_c, dH_dt_path_f, H_tan, dH_dt_tan, &
+                & H_path, dH_dt_path, H_tan, dH_dt_tan, &
                 & Do_calc_hyd_c, Deriv_Flags, D_Deltau_Pol_DT )
 
     use DExdT_m, only: dExdT
-    use GLNP, only: NG
-    use MLSCommon, only: RP, IP
+    use GLNP, only: NG, NGP1
+    use MLSKinds, only: RP, IP
     use Opacity_m, only: Opacity
-    use Rad_Tran_m, only: Get_Do_Calc
+    use Rad_Tran_m, only: Get_do_Calc
+    use Sparse_m, only: Sparse_t
 
   ! Arguments
     ! SVE == # of state vector elements
@@ -258,109 +274,126 @@ contains
     real(rp), intent(in) :: STSP(:)         ! Sin(Theta) Sin(Phi)
     integer, intent(in) :: Tan_PT           ! tangent index along the coarse
                                             ! path, usually N_Path/2
-    real(rp), intent(in) :: T_Path_f(:)     ! path temperatures on GL grid
-    complex(rp), intent(in) :: Alpha_Path_c(-1:,:) ! -1:1 x path on coarse grid
-    complex(rp), intent(in) :: Alpha_Path_f(-1:,:) ! -1:1 x path on fine grid
-    complex(rp), intent(in) :: dAlpha_dT_polarized_path_c(-1:,:) ! -1:1 x path
-    complex(rp), intent(in) :: dAlpha_dT_polarized_path_f(-1:,:) ! -1:1 x path
-    real(rp), intent(in) :: dAlpha_dT_path_c(:) ! nonpolarized dAlpha_dT
-    real(rp), intent(in) :: dAlpha_dT_path_f(:) ! nonpolarized dAlpha_dT
-    real(rp), intent(in) :: Eta_zxp_c(:,:)  ! representation basis function
-      !                                       on coarse grid.  path x sve
-    real(rp), intent(in) :: Eta_zxp(:,:)    ! representation basis function
-      !                                       on composite grid.  path x sve
+    real(rp), intent(in) :: T_Path(:)       ! path temperatures on composite
+                                            ! coarse & fine grid
+    complex(rp), intent(in), target :: Alpha_Path(-1:,:) ! -1:1 x path on 
+                                            ! composite coarse & fine path
+    complex(rp), intent(in), target :: dAlpha_dT_polarized_path(-1:,:) ! -1:1 x path on 
+                                            ! composite coarse & fine path path
+    real(rp), intent(in), target :: dAlpha_dT_path(:) ! nonpolarized dAlpha_dT
+                                            ! on composite coarse & fine path
+    class(sparse_t), intent(in) :: Eta_ZXP  ! Interpolating coefficients from
+                                            ! state vector to path
+    integer, intent(in) :: P_Stop           ! Where to stop on coarse path
     real(rp), intent(in) :: Del_S(:)        ! unrefracted path length.  This
-      !                                       is for the whole coarse path, not
-      !                                       just the part up to the black-out
+                                            ! is for the whole coarse path, not
+                                            ! just the part up to the black-out
     integer(ip), intent(in) :: GL_Inds(:)   ! indices for reading fine path
-      !                                       elements from sps_path
-    real(rp), intent(in) :: del_zeta(:)     ! path -log(P) differences on the
-      !              main grid.  This is for the whole coarse path, not just
-      !              the part up to the black-out
-    logical, intent(in) :: do_calc_t_c(:,:) ! Indicates where the
-      !              representation basis function is not zero on main grid.
-    logical, intent(in) :: do_calc_t_f(:,:) ! Indicates where the
-      !              representation basis function is not zero on gl grid.
-    logical, intent(in) :: do_gl(:)         ! Indicates where on the coarse path
-      !                                       to do gl integrations.
+                                            ! elements from sps_path
+    real(rp), intent(in) :: Del_Zeta(:)     ! path -log(P) differences on the
+                                            ! main grid.  This is for the whole
+                                            ! coarse path, not just the part up
+                                            ! to the black-out
+    logical, intent(in) :: Do_gl(:)         ! Indicates where on the coarse path
+                                            ! to do gl integrations.
     real(rp), intent(in) :: ds_dh(:)        ! path length wrt height derivative
-      !                                       on entire grid.  Only the
-      !                                       gl_inds part is used.
+                                            ! on entire grid.  Only the
+                                            ! gl_inds part is used.
     real(rp), intent(in) :: dh_dz_gw(:)     ! path height wrt zeta derivative * gw.
-      !                                       on entire grid.  Only the
-      !                                       gl_inds part is used.
+                                            ! on entire grid.  Only the
+                                            ! gl_inds part is used.
     real(rp), intent(in) :: ds_dz_gw(:)     ! path length wrt zeta derivative * gw.
-      !                                       on entire grid.  Only the
-      !                                       gl_inds part is used.
+                                            ! on entire grid.  Only the
+                                            ! gl_inds part is used.
     complex(rp), intent(in) :: Incoptdepth(:,:,:) ! negative of incremental
-      !                                       optical depth.  2 x 2 x path
+                                            ! optical depth.  2 x 2 x path
     real(rp), intent(in) :: Ref_cor(:)      ! refracted to unrefracted path
-    !                                         length ratios.
+                                            ! length ratios.
 
     ! For hydrostatic
-    real(rp), intent(in) :: H_path_c(:)     ! path heights + req on the main
-      !              grid km. This is for the whole coarse path, not just
-      !              the part up to the black-out
-    real(rp), intent(in) :: H_path_f(:)     ! path heights + req on find grid
-    real(rp), intent(in) :: dH_dt_path_c(:,:) ! derivative of coarse path height
-    !                                         wrt temperature(km/K) on main grid.
-    real(rp), intent(in) :: dH_dt_path_f(:,:) ! derivative of fine path height
-    !                                         wrt temperature(km/K) on main grid.
+    real(rp), intent(in), target :: H_path(:) ! path heights + req on composite
+                                            ! coarse & fine grid
+    real(rp), intent(in), target :: dH_dt_path(:,:) ! derivative of fine path
+                                            ! height wrt temperature(km/K) on
+                                            ! composite coarse & fine grid
     real(rp), intent(in) :: H_tan           ! tangent height + req (km).
     real(rp), intent(in) :: dH_dt_tan(:)    ! derivative of path height wrt
-    !                                         temperature at the tangent (km/K).
+                                            ! temperature at the tangent (km/K).
     logical, intent(in) :: Do_calc_hyd_c(:,:) ! Where is the dh_dt function not
-    !                                         zero on main grid?
-    logical, intent(in) :: deriv_flags(:)   ! Indicates which temperature
-!                                             derivatives to do
+                                            ! zero on main grid?
+    logical, intent(in) :: Deriv_flags(:)   ! Indicates which temperature
+                                            ! derivatives to do
 
 ! Outputs
 
     complex(rp), intent(out) :: D_Deltau_Pol_DT(:,:,:,:) ! 2 x 2 x path x sve.
-!                                              derivative of delta Tau wrt
-!                                              temperature state vector
-!                                              element. (K)
+                                            ! derivative of delta Tau wrt
+                                            ! temperature state vector
+                                            ! element. (K)
 
   ! Local variables
-    integer :: A, B                  ! Indices for GL points
-    complex(rp):: D_Alpha_DT_eta(-1:1,size(dAlpha_dT_path_c)) ! Singularity * Del_S
-    complex(rp) :: D_Incoptdepth_dT(2,2,size(dAlpha_dT_path_c))
-    logical :: Do_calc(1:size(dAlpha_dT_path_c)) ! do_calc_t_c .or. ( do_gl .and. any
-                                     ! of the corresponding do_calc_t_f ).
+    integer :: A                     ! Index for GL points
+    complex(rp), pointer :: Alpha_Path_c(:,:) ! -1:1 x path on coarse grid
+    complex(rp):: D_Alpha_DT_eta(-1:1,size(do_calc_hyd_c,1)) ! Singularity * Del_S
+    real(rp), pointer :: dAlpha_dT_path_c(:) ! nonpolarized dAlpha_dT on
+                                     ! coarse path
+    complex(rp), pointer :: dAlpha_dT_polarized_path_c(:,:)
+    real(rp), pointer :: dH_dt_path_c(:,:) ! derivative of coarse path height
+                                     ! wrt temperature(km/K) on coarse path.
+    complex(rp) :: D_Incoptdepth_dT(2,2,size(do_calc_hyd_c,1))
+    logical :: Do_calc(1:size(do_calc_hyd_c,1)) ! do_calc_t_c .or. ( do_gl .and.
+                                     ! any of the corresponding do_calc_t_f ).
+    logical :: Do_Calc_Col(eta_zxp%nRows)  ! Where Eta_ZXP /= 0
+    logical :: Do_Calc_Col_f ( size(gl_inds) )
+    real(rp), target :: Eta_ZXP_Col(eta_zxp%nRows) ! One column of Eta_ZXP
+    real(rp), pointer :: Eta_ZXP_Col_C(:)
     real(rp) :: F(ng)                ! Factor in GL that doesn't depend on
                                      ! sigma +/- or pi.
     real(rp) :: Fa, Fb               ! Hydrostatic integrand at ends of
                                      ! path segment
     integer :: GA                    ! GL_inds(a)
+    real(rp), pointer :: H_path_c(:) ! path heights + req (km) on the coarse
+                                     ! grid. This is for the whole coarse path,
+                                     ! not just the part up to the black-out
     integer :: H_Stop                ! Stop point for hydrostatic parts
     integer :: I_stop                ! Stop point, which may be before N_Path
     integer :: L
     integer :: N_Path                ! Total coarse path length.
     logical :: NeedFA                ! Need FA in hydrostatic calculation
-    integer :: P_i                   ! Index on the path
+    integer :: P_i                   ! Index on the coarse path
+    integer :: P_Stop_f              ! P_Stop on fine path
     real(rp) :: S_Del_S              ! Sum of Del_S
-    complex(rp) :: Singularity(-1:1,size(dAlpha_dT_path_c)) ! n/T * Alpha * Eta on the
-                                     ! coarse path
+    complex(rp) :: Singularity(-1:1,size(do_calc_hyd_c,1)) ! n/T * Alpha * Eta
+                                     ! on the coarse path
     integer :: SV_i                  ! Index of state vector element
 
-    i_stop = size(dAlpha_dT_path_c)
+    i_stop = size(do_calc_hyd_c,1)
     n_path = size(del_zeta)
+    h_path_c => h_path ( 1 :: ngp1 )
+    alpha_path_c(-1:,1:) => alpha_path ( :, 1 :: ngp1 )
+    dAlpha_dT_polarized_path_c(-1:,1:) => dAlpha_dT_polarized_path ( :, 1 :: ngp1 )
+    dH_dt_path_c => dH_dt_path ( 1 :: ngp1, : )
+    dAlpha_dT_path_c => dAlpha_dT_path ( 1 :: ngp1 )
+    do_calc_col = .false.
+    eta_zxp_col = 0
+    eta_zxp_col_c => eta_zxp_col(1::ngp1)
+    p_stop_f = (p_stop - 1) * ngp1 + 1
 
-    a = 1
-    b = 1 + ng
-
-    do sv_i = 1, size(eta_zxp_c,2) ! state vector elements
+    do sv_i = 1, size(eta_zxp%cols,1) ! state vector elements
       if ( .not. deriv_flags(sv_i)) then
         d_deltau_pol_dT(:,:,:,sv_i) = 0.0_rp
         cycle
       end if
+
+      call eta_zxp%get_col ( sv_i, eta_zxp_col, do_calc_col ) !, last=p_stop_f )
+      do_calc_col_f = do_calc_col(gl_inds) ! only the GL points, no coarse points
 
       ! do the absorption part
       ! combine non zeros flags for both the main and gl parts
       ! Add in contribution from scalar model, 0.25 for +/- sigma,
       ! 0.5 for pi.
 
-      call get_do_calc ( do_calc_t_c(:,sv_i), do_calc_t_f(:,sv_i), do_gl, &
+      call Get_do_calc ( do_calc_col(::ngp1), do_calc_col_f, do_gl, &
         & do_calc )
 
       a = 1
@@ -371,7 +404,7 @@ contains
           !    \frac{\partial \alpha}{\partial T}
           !    \frac{\partial T}{\partial T_i} \text{d}s =
           !    \frac{\partial \alpha}{\partial T} \eta_i \text{d}s$
-          singularity(:,p_i) = eta_zxp_c(p_i,sv_i) * &
+          singularity(:,p_i) = eta_zxp_col_c(p_i) * &
             & ( dAlpha_dT_polarized_path_c(:,p_i) + &
             &   (/ 0.25, 0.50, 0.25 /) * dAlpha_dT_path_c(p_i) )
           d_alpha_dT_eta(:,p_i) = singularity(:,p_i) * del_s(p_i)
@@ -381,20 +414,19 @@ contains
         end if
         ! Do GL if needed here
         if ( do_gl(p_i) ) then
-          b = a + ng
           ga = gl_inds(a)
           if ( do_calc(p_i) ) then
             f = ds_dz_gw(ga:ga+ng-1)
             do l = -1, 1
               d_alpha_dT_eta(l,p_i) = d_alpha_dT_eta(l,p_i) + &
                  & del_zeta(p_i) * &
-                 & sum( ( ( dAlpha_dT_polarized_path_f(l,a:b-1) + &
-                 &          (0.5-0.25*abs(l)) * dAlpha_dT_path_f(a:b-1) ) * &
-                 &        eta_zxp(ga:ga+ng-1,sv_i) - &
+                 & sum( ( ( dAlpha_dT_polarized_path(l,ga:ga+ng-1) + &
+                 &          (0.5-0.25*abs(l)) * dAlpha_dT_path(ga:ga+ng-1) ) * &
+                 &        eta_zxp_col(ga:ga+ng-1) - &
                  &        singularity(l,p_i) ) * f )
             end do ! l
           end if
-          a = b
+          a = a + ng
         end if
       end do ! p_i
 
@@ -405,7 +437,7 @@ contains
       ! First combine boundary flags
       do_calc = do_calc_hyd_c(:,sv_i)
       if ( i_stop < tan_pt ) then           
-        do_calc(2:i_stop) =                      do_calc(2:i_stop) .or. do_calc(1:i_stop-1)
+        do_calc(2:i_stop) = do_calc(2:i_stop) .or. do_calc(1:i_stop-1)
         h_stop = i_stop
       else
         do_calc(2:tan_pt) = do_calc(tan_pt) .or. do_calc(2:tan_pt) .or. do_calc(1:tan_pt-1)
@@ -483,22 +515,21 @@ contains
       a = 1
       do p_i = 1, i_stop             ! along the path
         if ( do_gl(p_i) ) then
-          b = a + ng
           ga = gl_inds(a)
-          ! Don't test do_calc: There may be GL corrections even if
+          ! Don't test do_calc: There might be GL corrections even if
           ! dh_dt_path_c (from whence came do_calc) is zero.
-          f = (((2.0_rp*h_path_f(a:b-1)**2 - 3.0_rp*h_tan**2)      &     
-            &   * dh_dt_path_f(a:b-1,sv_i) +                       &     
-            &   h_path_f(a:b-1) * h_tan * dh_dt_tan(sv_i)) /       &     
-            &  (sqrt(h_path_f(a:b-1)**2 - h_tan**2))**3            &     
-            &  + eta_zxp(ga:ga+ng-1,sv_i) * ds_dh(ga:ga+ng-1) /   &     
-            &  t_path_f(a:b-1)) * dh_dz_gw(ga:ga+ng-1)
+          f = (((2.0_rp*h_path(ga:ga+ng-1)**2 - 3.0_rp*h_tan**2) &     
+            &   * dh_dt_path(ga:ga+ng-1,sv_i) +                  &     
+            &   h_path(ga:ga+ng-1) * h_tan * dh_dt_tan(sv_i)) /  &     
+            &  (sqrt(h_path(ga:ga+ng-1)**2 - h_tan**2))**3       &     
+            &  + eta_zxp_col(ga:ga+ng-1) * ds_dh(ga:ga+ng-1) /   &     
+            &  t_path(ga:ga+ng-1)) * dh_dz_gw(ga:ga+ng-1)
           do l = -1, 1
             d_alpha_dT_eta(l,p_i) = d_alpha_dT_eta(l,p_i) + &
                & del_zeta(p_i) * &
-               & sum( ( alpha_path_f(l,a:b-1) - alpha_path_c(l,p_i) ) * f )
+               & sum( ( alpha_path(l,ga:ga+ng-1) - alpha_path_c(l,p_i) ) * f )
           end do ! l
-          a = b
+          a = a + ng
         end if
 
         d_alpha_dT_eta(:,p_i) = d_alpha_dT_eta(:,p_i) * ref_cor(p_i)
@@ -525,9 +556,11 @@ contains
         end if
       end do ! p_i
 
+      call eta_zxp%clear_col ( sv_i, eta_zxp_col, do_calc_col ) !, last=p_stop_f )
+
     end do ! sv_i
 
-  end subroutine Get_D_Deltau_Pol_DT
+  end subroutine Get_d_Deltau_Pol_dT
 
 !-----------------------------------------------------------------------
 !--------------------------- end bloc --------------------------------------
@@ -540,9 +573,12 @@ contains
   end function not_used_here
 !---------------------------------------------------------------------------
 
-end module Get_D_Deltau_Pol_M
+end module Get_d_Deltau_Pol_M
 
 ! $Log$
+! Revision 2.45  2018/05/14 23:40:58  vsnyder
+! Change to sparse eta representation
+!
 ! Revision 2.44  2017/08/09 20:53:13  vsnyder
 ! Decide which panels to integrate for the mixing-ration case in a way that
 ! is similar to how it's done for the temperature case.  The old way was wrong.
