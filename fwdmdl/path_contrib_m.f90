@@ -13,10 +13,14 @@ module Path_Contrib_M
 
   implicit NONE
   private
-  public :: Get_GL_Inds, PATH_CONTRIB
+  public :: Get_GL_Inds, Path_Contrib
 
-  interface PATH_CONTRIB
-    module procedure PATH_CONTRIB_SCALAR, PATH_CONTRIB_POLARIZED
+  interface Get_GL_Inds
+    module procedure Get_GL_Inds_and_Where, Get_GL_Inds_Etc, Get_GL_Inds_Only
+  end interface
+
+  interface Path_Contrib
+    module procedure Path_Contrib_Scalar, Path_Contrib_Polarized
   end interface
 
 !---------------------------- RCS Module Info ------------------------------
@@ -83,8 +87,8 @@ o:  block
         dtaudn(last) = dtaudn(last-1) - incoptdepth(last-1)
         if ( dtaudn(last) < black_out ) exit o
       end do
+      last = i_end
     end block o
-    last = last - 1 ! either i_end or one before the black out
 
     ! compute the tau path derivative dTau/ds ~ exp(delta) d delta/ds.
 
@@ -190,72 +194,160 @@ o:  block
 
   end subroutine Path_Contrib_Polarized
 
-  ! ------------------------------------------------  Get_GL_inds  -----
-  subroutine Get_GL_inds ( Do_GL, Tan_pt, GL_Inds, NGL, CG_Inds, NCG )
+  ! --------------------------------------  Get_GL_Inds_and_Where  -----
+  subroutine Get_GL_Inds_and_Where ( Do_GL, Tan_pt, GL_Inds, NGL, CG_Inds, NCG, Where_GL )
   ! Fill the arrays that control application of GL
 
     use GLnp, only: NG, NGP1
     use MLSCommon, only: IP
 
-    logical, intent(inout) :: DO_GL(:)         ! Set true for indices in coarse
-                                               ! path to do gl computation. 
-                                               ! First and last are set false
-                                               ! here.
-    integer, intent(in) :: Tan_Pt              ! Index of tangent point in Do_GL
-    integer(ip), intent(out) :: GL_INDS(:)     ! Indices of where to do GL
-    integer(ip), intent(out) :: NGL            ! How much of GL_INDS to use
-    integer(ip), intent(out), optional :: CG_INDS(:) ! Indices on coarse path of
-                                               ! where to do GL
-    integer(ip), intent(out), optional :: NCG  ! How much of CG_INDS to use
+    logical, intent(in) :: DO_GL(:)         ! Set true for indices in coarse
+                                            ! path to do gl computation. 
+                                            ! First and last are set false
+                                            ! here.
+    integer, intent(in) :: Tan_Pt           ! Index of tangent point in Do_GL
+    integer(ip), intent(out) :: GL_Inds(:)  ! Indices of GL points within
+                                            ! coarse & fine path.
+    integer(ip), intent(out) :: NGL         ! How much of GL_Inds to use
+    integer(ip), intent(out) :: CG_Inds(:)  ! If K=CG_Inds(i) <= Tan_Pt then
+                                            ! panel(k-1:k) on the coarse path
+                                            ! needs GL, else panel(k:k+1) needs
+                                            ! GL.
+    integer(ip), intent(out) :: NCG         ! How much of CG_Inds to use
+    integer(ip), intent(out) :: Where_GL(:) ! K = Where_GL(i) indicates
+                                            ! GL_Inds(k:k+ng-1) are GL_Inds
+                                            ! for panel(i:i+1) in the coarse
+                                            ! path.
 
-    integer :: I, I1, I2, J, N_PATH
+    integer :: I, I1, I2, J, N_Path, Offset
 
     integer, parameter :: GLIX(ng) = (/ (i ,i = 1-ng, 0) /)
 
     n_path = size(do_gl)
 
-  ! The first and last index must be false
+    ngl = 0
+    ncg = 0
+    ! The complication here arises from two sources.  First, we never do
+    ! GL between the two tangent points, so we never insert GL points
+    ! between tan_pt and tan_pt+1.  Second, before the tangent point, Do_GL(k)
+    ! indicates that we need GL on panel(i-1:i), while after the tangent
+    ! point, DO_GL indicates that we need GL on panel(i:i+1).
+    where_gl(tan_pt) = 0 ! panel(tan_pt:tan_pt+1) never needs GL
+    i1 = 2
+    i2 = tan_pt
+    offset = 1
+    do j = 0, ngp1, ngp1
+      do i = i1, i2
+        if ( do_gl(i) ) then
+          where_gl(i - offset) = ngl + 1
+          ngl = ngl + ng
+          gl_inds(ngl-ng+1:ngl) = Ngp1 * (i - 1) + glix + j
+          ncg = ncg + 1
+          cg_inds(ncg) = i
+        else
+          where_gl(i - offset) = 0
+        end if
+      end do
+      i1 = tan_pt+1
+      i2 = n_path - 1
+      offset = 0
+    end do
 
-    do_gl(1:n_path:n_path-1) = .FALSE.
+  end subroutine Get_GL_Inds_and_Where
+
+  ! --------------------------------------------  Get_GL_Inds_Etc  -----
+  subroutine Get_GL_Inds_Etc ( Do_GL, Tan_pt, GL_Inds, NGL, CG_Inds, NCG )
+  ! Fill the arrays that control application of GL
+
+    use GLnp, only: NG, NGP1
+    use MLSCommon, only: IP
+
+    logical, intent(in) :: DO_GL(:)         ! Set true for indices in coarse
+                                            ! path to do gl computation. 
+                                            ! First and last are set false
+                                            ! here.
+    integer, intent(in) :: Tan_Pt           ! Index of tangent point in Do_GL
+    integer(ip), intent(out) :: GL_Inds(:)  ! Indices of GL points within
+                                            ! coarse & fine path.
+    integer(ip), intent(out) :: NGL         ! How much of GL_Inds to use
+    integer(ip), intent(out) :: CG_Inds(:)  ! If K=CG_Inds(i) <= Tan_Pt then
+                                            ! panel(k-1:k) on the coarse path
+                                            ! needs GL, else panel(k:k+1) needs
+                                            ! GL.
+    integer(ip), intent(out) :: NCG         ! How much of CG_Inds to use
+
+    integer :: I, I1, I2, J, N_Path
+
+    integer, parameter :: GLIX(ng) = (/ (i ,i = 1-ng, 0) /)
+
+    n_path = size(do_gl)
+
+    ngl = 0
+    ncg = 0
+    ! The complication here arises from two sources.  First, we never do
+    ! GL between the two tangent points, so we never insert GL points
+    ! between tan_pt and tan_pt+1.  Second, before the tangent point, Do_GL(k)
+    ! indicates that we need GL on panel(i-1:i), while after the tangent
+    ! point, DO_GL indicates that we need GL on panel(i:i+1).
+    i1 = 2
+    i2 = tan_pt
+    do j = 0, ngp1, ngp1
+      do i = i1, i2
+        if ( do_gl(i) ) then
+          ngl = ngl + ng
+          gl_inds(ngl-ng+1:ngl) = Ngp1 * (i - 1) + glix + j
+          ncg = ncg + 1
+          cg_inds(ncg) = i
+        end if
+      end do
+      i1 = tan_pt+1
+      i2 = n_path - 1
+    end do
+
+  end subroutine Get_GL_Inds_Etc
+
+  ! -------------------------------------------  Get_GL_Inds_Only  -----
+  subroutine Get_GL_Inds_Only ( Do_GL, Tan_pt, GL_Inds, NGL )
+  ! Fill the arrays that control application of GL
+
+    use GLnp, only: NG, NGP1
+    use MLSCommon, only: IP
+
+    logical, intent(in) :: DO_GL(:)            ! Set true for indices in coarse
+                                               ! path to do gl computation. 
+                                               ! First and last are set false
+                                               ! here.
+    integer, intent(in) :: Tan_Pt              ! Index of tangent point in Do_GL
+    integer(ip), intent(out) :: GL_Inds(:)     ! Indices of GL points within
+                                               ! coarse & fine path.
+    integer(ip), intent(out) :: NGL            ! How much of GL_INDS to use
+
+    integer :: I, I1, I2, J, N_Path
+
+    integer, parameter :: GLIX(ng) = (/ (i ,i = 1-ng, 0) /)
+
+    n_path = size(do_gl)
 
     ngl = 0
     ! The complication here arises from two sources.  First, we never do
     ! GL between the two tangent points, so we never insert GL points
-    ! between tan_pt and tan_pt+1.  Second, before the tangent point, DO_GL
-    ! indicates that we need GL in the previous panel, while after the tangent
-    ! point, DO_GL indicates that we need GL in the next panel.
-    if ( present(ncg) ) then ! Implies present(cg_inds)
-      ncg = 0
-      i1 = 2
-      i2 = tan_pt
-      do j = 0, ngp1, ngp1
-        do i = i1, i2
-          if ( do_gl(i) ) then
-            ngl = ngl + ng
-            gl_inds(ngl-ng+1:ngl) = Ngp1 * (i - 1) + glix + j
-            ncg = ncg + 1
-            cg_inds(ncg) = i
-          end if
-        end do
-        i1 = tan_pt+1
-        i2 = n_path - 1
+    ! between tan_pt and tan_pt+1.  Second, before the tangent point, Do_GL(k)
+    ! indicates that we need GL on panel(i-1:i), while after the tangent
+    ! point, DO_GL indicates that we need GL on panel(i:i+1).
+    i1 = 2
+    i2 = tan_pt
+    do j = 0, ngp1, ngp1
+      do i = i1, i2
+        if ( do_gl(i) ) then
+          ngl = ngl + ng
+          gl_inds(ngl-ng+1:ngl) = Ngp1 * (i - 1) + glix + j
+        end if
       end do
-    else
-      i1 = 2
-      i2 = tan_pt
-      do j = 0, ngp1, ngp1
-        do i = i1, i2
-          if ( do_gl(i) ) then
-            ngl = ngl + ng
-            gl_inds(ngl-ng+1:ngl) = Ngp1 * (i - 1) + glix + j
-          end if
-        end do
-        i1 = tan_pt+1
-        i2 = n_path - 1
-      end do
-    end if
+      i1 = tan_pt+1
+      i2 = n_path - 1
+    end do
 
-  end subroutine Get_GL_inds
+  end subroutine Get_GL_Inds_Only
 
 !-----------------------------------------------------------------------
 !--------------------------- end bloc --------------------------------------
@@ -271,6 +363,10 @@ o:  block
 end module Path_Contrib_M
 
 ! $Log$
+! Revision 2.27  2017/08/09 20:37:43  vsnyder
+! Use a BLOCK with EXIT to eliminate some GO TO statements and a label.
+! Hoist test for optional argument out of a loop, making two versions of it.
+!
 ! Revision 2.26  2013/05/18 00:34:44  vsnyder
 ! Insert NG fine-grid (GL) points between tangent points, thereby
 ! regularizing coarse-grid spacing, and reducing significantly the need
