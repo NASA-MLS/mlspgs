@@ -676,7 +676,7 @@ contains
     ! Clear elements of Vector that correspond to nonzero elements of column C
     ! of Sparse.
     class(sparse_t), intent(in) :: Sparse  ! The sparse matrix
-    integer, intent(in) :: C               ! Which row to multiply by Vector
+    integer, intent(in) :: C               ! Which column
     real(rp), intent(inout) :: Vector(:)   ! The vector
     integer :: J
     j = sparse%cols(c)     ! Last element in column c
@@ -693,7 +693,7 @@ contains
     ! Clear elements of Vector that correspond to nonzero elements of column C
     ! of Sparse.
     class(sparse_t), intent(in) :: Sparse  ! The sparse matrix
-    integer, intent(in) :: C               ! Which row to multiply by Vector
+    integer, intent(in) :: C               ! Which column
     real(rp), intent(inout) :: Vector(:)   ! The vector
     logical, intent(inout) :: Flags(:)     ! Set false where vector is set to
                                            ! zero here
@@ -720,7 +720,7 @@ contains
     ! Set elements of Flags that correspond to nonzero elements of column C
     ! of Sparse to be false.
     class(sparse_t), intent(in) :: Sparse  ! The sparse matrix
-    integer, intent(in) :: C               ! Which row to multiply by Vector
+    integer, intent(in) :: C               ! Which column
     logical, intent(inout) :: Flags(:)     ! The flags
     integer :: J
     j = sparse%cols(c)     ! Last element in column c
@@ -820,7 +820,7 @@ contains
     ! Get elements of Vector that correspond to nonzero elements of column C
     ! of Sparse.  Vector is not initially made zero.
     class(sparse_t), intent(in) :: Sparse  ! The sparse matrix
-    integer, intent(in) :: C               ! Which row to multiply by Vector
+    integer, intent(in) :: C               ! Which column
     real(rp), intent(inout) :: Vector(:)   ! The vector
     logical, intent(inout) :: Flags(:)     ! True where Vector gets a value;
                                            ! Not initially set false here
@@ -848,7 +848,7 @@ contains
     ! of Sparse.  Vector is not initially made zero.  Set NNZ to the number of
     ! nonzeroes.  Set NZ to the row numbers of nonzeroes
     class(sparse_t), intent(in) :: Sparse  ! The sparse matrix
-    integer, intent(in) :: C               ! Which row to multiply by Vector
+    integer, intent(in) :: C               ! Which column
     real(rp), intent(inout) :: Vector(:)   ! The vector
     integer, intent(out) :: NNZ            ! Number of nonzeroes
     integer, intent(out) :: NZ(:)
@@ -871,7 +871,7 @@ contains
     ! of Sparse to be true.  Flags is not initially made false -- see
     ! Sparse_Clear_Col_Flags.
     class(sparse_t), intent(in) :: Sparse  ! The sparse matrix
-    integer, intent(in) :: C               ! Which row to multiply by Vector
+    integer, intent(in) :: C               ! Which column
     logical, intent(inout) :: Flags(:)     ! The vector
     integer :: J
     j = sparse%cols(c)     ! Last element in column c
@@ -932,6 +932,9 @@ contains
 end module Sparse_m
 
 ! $Log$
+! Revision 2.5  2018/05/14 23:25:29  vsnyder
+! Change to sparse eta representation
+!
 ! Revision 2.4  2018/04/10 23:27:23  vsnyder
 ! Add Sparse_Clear_Col_And_Flags, Sparse_Get_Col_And_Flags.  Deallocate old
 ! Sparse%E before attempting to allocate one of a different size.
