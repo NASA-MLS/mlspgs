@@ -275,7 +275,7 @@ contains
   ! --------------------------------------------------  Get_dB_dT  -----
   subroutine Get_dB_dT ( Alpha, B, T, Nu, Beta_c_e, dAlpha_dT, &
     &                    dBeta_c_a_dT, dBeta_c_s_dT, TScat, dTScat_dT, W0, &
-    &                    Eta_zxp, NZ_ZXP, NNZ_ZXP, d_delta_B_dT )
+    &                    Eta_zxp, I_Start, I_Stop, d_delta_B_dT )
 
 !{ \raggedright
 !   {\tt d_delta_B_dT(i)} =
@@ -329,9 +329,10 @@ contains
 !  $\frac{\text{d} B}{\text{d} T} =
 !   \frac{B}{T^2} \left( \frac{h\nu}k + B \right)$.
 
-    use d_t_script_dtnp_m, only: dT_script
+    use d_t_script_dtnp_m, only: dT_Script
     use MLSKinds, only: Rp, R8
     use Physics, only: H_O_K => h_over_k
+    use Sparse_m, only: Sparse_t
 
     real(rp), intent(in) :: Alpha(:)     ! on the path
     real(rp), intent(in) :: B(:)         ! T_Script in some notes
@@ -344,9 +345,9 @@ contains
     real(rp), intent(in) :: TScat(:)     ! on the path
     real(rp), intent(in) :: dTScat_dT(:,:) ! dTScat on the path / dT everywhere
     real(rp), intent(in) :: W0(:)        ! on the path
-    real(rp), intent(in) :: Eta_zxp(:,:) ! from the grid to the path
-    integer, intent(in) :: NZ_ZXP(:,:)   ! path X 1 SV
-    integer, intent(in) :: NNZ_ZXP(:)    ! SV
+    class(sparse_t), intent(in) :: Eta_zxp ! Interpolating coefficients from
+                                           ! state vector to path
+    integer, intent(in) :: I_Start, I_Stop ! Range of dB_dT etc to use
     real(rp), intent(out) :: d_delta_B_dT(:,:) ! on the path, w.r.t. T on the grid
 
     real(rp) :: dB_dT(size(TScat)) ! on the path, w.r.t. T on the path
@@ -358,7 +359,7 @@ contains
           & ( TScat - B ) + &
           & ( 1.0 - W0 ) * B * ( h_o_k * nu + B ) / T**2
 
-    call dt_script ( dB_dT, eta_zxp, nz_zxp, nnz_zxp, d_delta_B_dT )
+    call dt_script ( dB_dT, eta_zxp, i_start, i_stop, d_delta_B_dT )
 
     !{ add $\Delta \omega_{0_i} \frac{\partial T_{\text{scat}_i}}
     !                                {\partial T_{lm}(\zeta_i)}$
@@ -904,6 +905,9 @@ contains
 end module TScat_Support_m
 
 ! $Log$
+! Revision 2.15  2018/05/14 23:40:58  vsnyder
+! Change to sparse eta representation
+!
 ! Revision 2.14  2017/10/31 23:49:36  vsnyder
 ! Make Coefficients a parameterized type
 !
