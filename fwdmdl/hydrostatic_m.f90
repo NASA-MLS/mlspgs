@@ -309,11 +309,10 @@ module Hydrostatic_m
 ! geometric heights. Reference height is now an input
 
     use Geometry, only: EarthRadA, EarthRadB, GM, J2, J4, W
-    use Indexed_Values_m, only: Interpolate_Polymorphic, Value_List, &
-      & Value_1D_List_t, Value_1D_p_t
     use MLSKinds, only: RP, IP
     use Physics, only: BoltzMeters => Boltz ! Avogadro * k * ln10 / mmm m^2/(K s^2)
     use Piq_int_m, only: piq_int
+    use Sparse_m, only: Sparse_t
     use Toggles, only: Emit, Levels, Toggle
     use Trace_m, only: Trace_Begin, Trace_End
 
@@ -326,7 +325,7 @@ module Hydrostatic_m
 !                                         heights are needed
     real(rp), intent(in) :: Z_Ref       ! reference pressure in zeta = -log10(P)
     real(rp), intent(in) :: H_Ref       ! reference geopotential height in km
-    class(value_list), intent(in) :: Eta_ZZ(:) ! Interpolation coefficients
+    class(sparse_t), intent(in) :: Eta_ZZ ! Interpolation coefficients
                                         ! from T_Basis to Z_Grid
 
 ! Outputs
@@ -379,8 +378,8 @@ module Hydrostatic_m
       mass_corr = 1.0_rp
     end where
 
-! compute t_grid using what is effectively a sparse matrix multiply
-    call interpolate_polymorphic ( t_coeffs, eta_zz, t_grid )
+! compute t_grid using a sparse matrix-vector multiply
+    call eta_zz%sparse_dot_vec ( t_coeffs, t_grid )
 
 !{ Compute surface acceleration and effective earth radius.  First,
 !  evaluate the Legendre polynomials $P_2(\sin\lambda) = \frac32 \sin^2\lambda
@@ -546,21 +545,11 @@ module Hydrostatic_m
 ! this derivative is useful for antenna derivatives
       if ( present(ddhdhdtq) ) then
         ddHdHdTq = (2.0_rp/(spread(h_grid,2,n_coeffs)+r_eff)) * dhidtq
-        select type ( eta_zz )
-        type is ( value_1d_p_t )
-          do k = 1, size(eta_zz)
-            i = eta_zz(k)%p
-            j = eta_zz(k)%j
-            ddHdHdTq(i,j) = ddHdHdTq(i,j) + eta_zz(k)%v / t_grid(i)
-          end do
-        type is ( value_1d_list_t )
-          do k = 1, size(eta_zz) ! Assumed to be same size as T_Grid
-            do i = 1, eta_zz(k)%n
-              j = eta_zz(k)%v(i)%j
-              ddHdHdTq(k,j) = ddHdHdTq(k,j) + eta_zz(k)%v(i)%v / t_grid(k)
-            end do
-          end do
-        end select
+        do k = 1, eta_zz%ne ! All the nonzero elements
+            i = eta_zz%e(k)%r
+            j = eta_zz%e(k)%c
+            ddHdHdTq(i,j) = ddHdHdTq(i,j) + eta_zz%e(k)%v / t_grid(i)
+        end do
       end if
     end if
 
@@ -778,6 +767,9 @@ module Hydrostatic_m
 end module Hydrostatic_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.31  2017/08/28 20:28:08  livesey
+! Changed the n,nf,np,nz elements to j,jf,...
+!
 ! Revision 2.30  2017/01/14 02:57:11  vsnyder
 ! Make Eta_ZZ polymorphic
 !
