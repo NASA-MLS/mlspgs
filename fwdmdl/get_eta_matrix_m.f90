@@ -114,7 +114,7 @@ contains
     real(rp), intent(in), optional :: Small  ! Don't print smaller values
     integer, intent(in), optional :: Width   ! How many nonzeros per line
     integer, intent(in), optional :: WhichSps ! Which species to dump
-    integer :: Dims(4), I, J, J1, J2, L, M, MP, MySps, MyWidth
+    integer :: Dims(4), I, J, J1, J2, L, MySps, MyWidth
     integer :: Places, Sps, Subs(4)
     logical :: MyShort, MyShow_Z, MyZP
     real(rp) :: MySmall
@@ -1816,6 +1816,9 @@ contains
 end module Get_Eta_Matrix_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.34  2018/04/26 02:58:13  vsnyder
+! size(Grids_f%l_z)==size(Grids_f%l_p) so N2 doesn't need to depend on myP
+!
 ! Revision 2.33  2018/04/26 00:09:38  vsnyder
 ! Add Clean_Out_Nonzeroes, add P_Only to Dump_Eta_Transpose
 !
