@@ -11,8 +11,6 @@
 
 module Comp_Sps_Path_Sparse_m
 
-  use Indexed_Values_m, only: Value_2D_Lists_t, Value_3D_Lists_t
-
   implicit NONE
 
   private
@@ -42,28 +40,29 @@ contains
 
     use Load_Sps_Data_m, only: Grids_t
     use MLSKinds, only: RP, R8
+    use Sparse_Eta_m, only: Sparse_Eta_t
 
-    type(grids_t), intent(in) :: Grids_f         ! Quantity values
-    real(r8), intent(in) :: Frq                  ! Frequency at which to compute
-                                                 ! values in Sps_Path.
-    type(value_2d_lists_t), intent(in) :: Eta_ZP(:) ! Interpolate Zeta X H
-                                                 ! to Sps_Path, same size as
-                                                 ! Grids_f%Mol
-    type(value_3d_lists_t), intent(inout) :: Eta_FZP(:) ! Interpolate
-                                                 ! F X Zeta X H to Sps_Path, size
-                                                 ! is number of quantities in
-                                                 ! Grids_f that have more than one
-                                                 ! element in Frq_Basis.
-    real(rp), intent(inout) :: Sps_Path(:,:)     ! Path X Sps -- VMR values.
-    real(r8), intent(in) :: LO                   ! Local oscillator frequency, GHz
-    integer, intent(in) :: Sideband              ! -1, 1, or 0.  Zero means
-                                                 ! quantities' frequency bases
-                                                 ! absolute, not I.F.
+    type(grids_t), intent(in) :: Grids_f        ! Quantity values
+    real(r8), intent(in) :: Frq                 ! Frequency at which to compute
+                                                ! values in Sps_Path.
+    type(sparse_eta_t), intent(in) :: Eta_ZP(:) ! Interpolate Zeta X H
+                                                ! to Sps_Path, same size as
+                                                ! Grids_f%Mol
+    type(sparse_eta_t), intent(inout) :: Eta_FZP(:) ! Interpolate
+                                                ! F X Zeta X H to Sps_Path, size
+                                                ! is number of quantities in
+                                                ! Grids_f that have more than one
+                                                ! element in Frq_Basis.
+    real(rp), intent(inout) :: Sps_Path(:,:)    ! Path X Sps -- VMR values.
+    real(r8), intent(in) :: LO                  ! Local oscillator frequency, GHz
+    integer, intent(in) :: Sideband             ! -1, 1, or 0.  Zero means
+                                                ! quantities' frequency bases
+                                                ! absolute, not I.F.
 
     integer :: I
 
     do i = 1, size(eta_fzp)
-      if ( .not. allocated(eta_fzp(i)%eta) ) cycle ! No frequency dependency for this species
+      if ( grids_f%l_f(i-1)+1 == grids_f%l_f(i) ) cycle ! No frequency dependency for this species
       call comp_1_sps_path_sparse_frq ( grids_f, i, Frq, Eta_ZP(i), Eta_FZP(i), &
                                       & Sps_Path(:,i), LO, Sideband )
     end do
@@ -77,46 +76,57 @@ contains
     ! This assumes that it has already been computed for species that
     ! are not frequency dependent.
 
-    use Get_Eta_List_m, only: Get_Eta_List
-    use Indexed_Values_m, only: Interpolate, Value_1D_List_t
     use Load_Sps_Data_m, only: Grids_t
     use MLSKinds, only: RP, R8
+    use Sparse_Eta_m, only: Sparse_Eta_t
 
-    type(grids_t), intent(in) :: grids_f         ! Quantity values
-    integer, intent(in) :: N                     ! Which quantity
-    real(r8), intent(in) :: Frq                  ! Frequency at which to compute
-                                                 ! values in Sps_Path.
-    type(value_2d_lists_t), intent(in) :: Eta_ZP ! Interpolate Zeta X H
-                                                 ! to Sps_Path.
-    type(value_3d_lists_t), intent(inout) :: Eta_FZP ! Interpolate F X Zeta X H
-                                                 ! to Sps_Path.
-    real(rp), intent(inout) :: Sps_Path(:)       ! Path for 1 Sps -- VMR values.
-    real(r8), intent(in) :: LO                   ! Local oscillator frequency, GHz
-    integer, intent(in) :: Sideband              ! -1, 1, or 0.  Zero means
-                                                 ! quantities' frequency bases
-                                                 ! absolute, not I.F.
+    type(grids_t), intent(in) :: grids_f     ! Quantity values
+    integer, intent(in) :: N                 ! Which quantity
+    real(r8), intent(in) :: Frq              ! Frequency at which to compute
+                                             ! values in Sps_Path.
+    type(sparse_eta_t), intent(in) :: Eta_ZP ! Interpolate Zeta X H to Sps_Path.
+    type(sparse_eta_t), intent(inout) :: Eta_FZP ! Interpolate F X Zeta X H to
+                                             ! Sps_Path.
+    real(rp), intent(inout) :: Sps_Path(:)   ! Path for 1 Sps -- VMR values.
+    real(r8), intent(in) :: LO               ! Local oscillator frequency, GHz
+    integer, intent(in) :: Sideband          ! -1, 1, or 0.  Zero means
+                                             ! quantities' frequency bases
+                                             ! absolute, not I.F.
 
-    type(value_1D_list_t) :: Eta_F(1)
+    type(sparse_eta_t) :: Eta_F
     integer :: F1, F2
+    integer :: What
 
-    ! Compute Eta_F for quantity N.  We don't need it for anything else.
+    what = grids_f%qtyStuff(n)%qty%template%name
+
+    ! Compute Eta_F for quantity N.  We don't need it for anything other than
+    ! computing Eta_FZP.
     f1 = grids_f%l_f(n-1)+1
     f2 = grids_f%l_f(n)
-    select case ( sideband )
-    case ( -1 )
-      call get_eta_list ( lo-grids_f%frq_basis(f2:f1:-1), [ frq ], eta_f, rev=.true. )
-    case ( +1 )
-      call get_eta_list ( lo+grids_f%frq_basis(f1:f2), [ frq ], eta_f )
-    case ( 0 )
-      call get_eta_list ( grids_f%frq_basis(f1:f2), [ frq ], eta_f )
-    end select
+    ! Eta_1D isn't prepared to work with a basis that's not in increasing
+    ! order.  lo - grids_f%frq_basis(f1:f2) would be in decreasing order.
+    ! lo - grids_f%frq_basis(f2:f1:-1) would be in increasing order, but the
+    ! column subscripts in Eta would be inverted.  So for the lower sideband,
+    ! we use -(lo-grids_f%frq_basis(f1:f2)) and -Frq, which produces the
+    ! correct coefficients, in the correct order.
 
-    eta_fzp%n = eta_zp%n
-    call get_eta_list ( eta_f(1), eta_zp%eta(:eta_zp%n), &
-                      & eta_fzp%eta(:eta_fzp%n) )
+    ! The brackets around the first argument aren't strictly necessary because
+    ! the first term is an array, but without them ifort 17 appears to believe
+    ! the result is a zero-size array, so Eta_f%Eta_1D doesn't do anything.
+!! Even with brackets, ifort 17 doesn't work, but this apparent opportunity
+!! to use grids_f%frq_basis(f1:f2)+sideband*lo as the actual argument to another
+!! subroutine convinces it to do the right thing.  The call doesn't ever happen
+!! because array dimension extents are never negative.  If ifort 18 works....
+if ( size(sps_path,1) < 0 ) print '(1p5g15.6)', grids_f%frq_basis(f1:f2)+sideband*lo
+    call eta_f%eta_1d ( [ grids_f%frq_basis(f1:f2) + sideband*lo ], &
+                      & [ merge(frq, sideband*frq, sideband==0) ], what=what )
+!! and this one appears to be necessary too
+if ( size(sps_path,1) < 0 ) call eta_f%dump ( name='Eta_F', width=4 )
+    call eta_fzp%eta_nd ( eta_f, eta_zp, what=what, resize=.true., one_row_ok=.true. )
 
     ! Now that we have Eta_FZP, we can finally interpolate.
-    call interpolate ( grids_f%c(n)%v4(:,:,:,1), eta_fzp, sps_path )
+    ! Sps_path = Eta_fzp .dot. Grids_f%c(n)%v1
+    call eta_fzp%sparse_dot_vec ( grids_f%c(n)%v1, sps_path )
     if ( grids_f%lin_log(n) ) sps_path = exp(sps_path)
 
   end subroutine Comp_1_Sps_Path_Sparse_Frq
@@ -128,26 +138,27 @@ contains
     ! quantities.
 
     use Load_Sps_Data_m, only: Grids_t
-    use Indexed_Values_m, only: Interpolate
     use MLSKinds, only: RP
+    use Sparse_Eta_m, only: Sparse_Eta_t
 
-    type(grids_t), intent(in) :: Grids_f         ! Quantity values
-    type(value_2d_lists_t), intent(inout) :: Eta_ZP(:) ! Interpolate Zeta X H
-                                                 ! to Sps_Path, same size as
-                                                 ! Grids_f%Mol.
-    type(value_3d_lists_t), intent(inout) :: Eta_FZP(:) ! Interpolate F X Zeta X H
-                                                 ! to Sps_Path, size is the
-                                                 ! number of quantities in
-                                                 ! Grids_f that have more than
-                                                 ! one element in Frq_Basis.
-    real(rp), intent(inout) :: Sps_Path(:,:)     ! Path X Sps -- VMR values.
+    type(grids_t), intent(in) :: Grids_f           ! Quantity values
+    type(sparse_eta_t), intent(inout) :: Eta_ZP(:) ! Interpolate Zeta X H
+                                                   ! to Sps_Path, same size as
+                                                   ! Grids_f%Mol.
+    type(sparse_eta_t), intent(inout) :: Eta_FZP(:)  ! Interpolate F X Zeta X H
+                                                   ! to Sps_Path, size is the
+                                                   ! number of quantities in
+                                                   ! Grids_f that have more than
+                                                   ! one element in Frq_Basis.
+    real(rp), intent(inout) :: Sps_Path(:,:)       ! Path X Sps -- VMR values.
 
-    integer :: I
+    integer :: Sps
 
-    do i = 1, size(eta_zp)
-      if ( .not. allocated(eta_fzp(i)%eta) ) & ! Not frequency dependent
-        & call interpolate ( grids_f%c(i)%v4(1,:,:,1), eta_zp(i), sps_path(:,i) )
-      if ( grids_f%lin_log(i) ) sps_path(:,i) = exp(sps_path(:,i))
+    do sps = 1, size(eta_zp)
+      if ( grids_f%l_f(sps-1)+1 == grids_f%l_f(sps) ) & ! Not frequency dependent
+        ! Sps_path(:,sps) = Eta_zp(sps) .dot. Grids_f%c(sps)%v1
+        & call eta_fzp(sps)%sparse_dot_vec ( grids_f%c(sps)%v1, sps_path(:,sps) )
+      if ( grids_f%lin_log(sps) ) sps_path(:,sps) = exp(sps_path(:,sps))
     end do
 
   end subroutine Comp_Sps_Path_Sparse_No_Frq
@@ -156,18 +167,17 @@ contains
 
     ! Compute the Sps_Path for one species that is not frequency dependent.
 
-    use Indexed_Values_m, only: Interpolate => Interpolate_Polymorphic
     use Load_Sps_Data_m, only: Grids_t
     use MLSKinds, only: RP
+    use Sparse_Eta_m, only: Sparse_Eta_t
 
-    type(grids_t), intent(in) :: Grids_f         ! Quantity values
-    integer, intent(in) :: N                     ! Which species
-    type(value_2d_lists_t), intent(inout) :: Eta_ZP ! Interpolate Zeta X H
-                                                 ! to Sps_Path, same size as
-                                                 ! Grids_f%Mol
-    real(rp), intent(inout) :: Sps_Path(:)       ! Path for 1 Sps -- VMR values.
+    type(grids_t), intent(in) :: Grids_f    ! Quantity values
+    integer, intent(in) :: N                ! Which species
+    type(sparse_eta_t), intent(inout) :: Eta_ZP ! Interpolate Zeta X H to Sps_Path,
+                                            ! same size as Grids_f%Mol
+    real(rp), intent(inout) :: Sps_Path(:)  ! Path for 1 Sps -- VMR values.
 
-    call interpolate ( grids_f%c(n)%v4(1,:,:,1), eta_zp%eta(:eta_zp%n), sps_path )
+    call eta_zp%sparse_dot_vec ( grids_f%c(n)%v1, sps_path )
     if ( grids_f%lin_log(n) ) sps_path = exp(sps_path)
 
   end subroutine Comp_1_Sps_Path_Sparse_No_Frq
@@ -185,6 +195,9 @@ contains
 end module Comp_Sps_Path_Sparse_m
 
 ! $Log$
+! Revision 2.3  2018/05/14 23:40:58  vsnyder
+! Change to sparse eta representation
+!
 ! Revision 2.2  2017/03/11 00:53:05  vsnyder
 ! Use Grids_f instead of Qty_Stuff, remove Lists_F_t types
 !
