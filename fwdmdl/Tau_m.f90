@@ -21,6 +21,11 @@ module Tau_M
   type, public :: Tau_T
     real(rp), pointer :: Tau(:,:) => NULL() ! Path X Frequencies
     integer, pointer :: I_Stop(:) => NULL() ! Amount of path to use, size = #Frequencies
+  contains
+    procedure :: Destroy_Tau
+    generic :: Destroy => Destroy_Tau
+    procedure :: Dump_Tau
+    generic :: Dump => Dump_Tau
   end type Tau_T
 
   interface Dump; module procedure Dump_Tau; end interface Dump
@@ -37,8 +42,8 @@ contains
 
   ! ----------------------------------------------------  Get_Tau  -----
   subroutine Get_Tau ( Frq_i, gl_inds, more_inds, i_start, e_rflty,  &
-                     & del_zeta, alpha_path_c, ref_cor, incoptdepth, &
-                     & tan_pt, alpha_path_gl, ds_dz_gw, tau )
+                     & del_zeta, alpha_path, ref_cor, incoptdepth, &
+                     & tan_pt, ds_dz_gw, tau )
 
   !{ Evaluate {\tt Tau(j)} = $\tau(s_j,s_m) = \int_{s_j}^{s_m}
   !  \alpha(s) \, \text{d} s$, where $s_m$ is the location of the instrument.
@@ -52,7 +57,7 @@ contains
 
   ! This is just Rad_Tran without Inc_Rad_Path and Radiance calculations
 
-    use GLNP, only: NG
+    use GL_Update_Incoptdepth_m
     use MLSCommon, only: RP, IP
 
   ! inputs
@@ -60,70 +65,43 @@ contains
     integer(ip), intent(in) :: Frq_I         ! Which frequency slice in Tau_T?
     integer(ip), intent(in) :: gl_inds(:)    ! Gauss-Legendre grid indices
     integer(ip), intent(in) :: more_inds(:)  ! Places in the coarse path
-  !                                            where GL is needed
+                                             ! where GL is needed
     integer, intent(in) :: I_Start           ! Where in path to start integrating
-    real(rp), intent(in) :: e_rflty          ! earth reflectivity value (0--1).
-    real(rp), intent(in) :: del_zeta(:)      ! path -log(P) differences on the
-      !              main grid.  This is for the whole coarse path, not just
-      !              the part up to the black-out
-    real(rp), intent(in) :: alpha_path_c(:)  ! absorption coefficient on coarse
-  !                                            grid.
-    real(rp), intent(in) :: ref_cor(:)       ! refracted to unrefracted path
-  !                                            length ratios.
-    real(rp), intent(inout) :: incoptdepth(:) ! incremental path opacities
-  !                            from one-sided layer calculation on output.
-  !                            it is the full integrated layer opacity.
+    real(rp), intent(in) :: e_rflty          ! Earth reflectivity value (0--1).
+    real(rp), intent(in) :: del_zeta(:)      ! Path -log(P) differences on the
+                                             ! main grid.  This is for the whole
+                                             ! coarse path, not just the part up
+                                             ! to the black-out
+    real(rp), intent(in) :: alpha_path(:)    ! Absorption coefficient on
+                                             ! composite coarse & fine grid.
+    real(rp), intent(in) :: ref_cor(:)       ! Refracted to unrefracted path
+                                             ! length ratios.
+    real(rp), intent(inout) :: incoptdepth(:) ! Incremental path opacities
+                                             ! from one-sided layer calculation
+                                             ! on output. It is the full
+                                             ! integrated layer opacity.
     integer, intent(in) :: tan_pt            ! Tangent point index in IncOptDepth
-    real(rp), intent(in) :: alpha_path_gl(:) ! absorption coefficient on gl
-  !                                            grid.
-    real(rp), intent(in) :: ds_dz_gw(:)      ! path length wrt zeta derivative * gw.
+    real(rp), intent(in) :: ds_dz_gw(:)      ! Path length wrt zeta derivative * gw.
 
   ! outputs
 
-    type(tau_t), intent(inout) :: tau        ! transmission function.  inout so
-  !                            as not to clobber the association status of its
-  !                            components.  Initial values not used.
+    type(tau_t), intent(inout) :: tau        ! Transmission function.  inout so
+                                             ! as not to clobber the association
+                                             ! status of its components. 
+                                             ! Initial values not used.
 
   ! Internals
 
-    integer :: A, AA, I, II, I_Stop, N_Path
+    integer :: I_Stop, N_Path
     real(rp) :: Total_Opacity
 
   ! Begin code
 
   ! see if anything needs to be gl-d
 
-    if ( size(gl_inds) > 0 ) then
-
-      !{ Apply Gauss-Legendre quadrature to the panels indicated by
-      !  {\tt more\_inds}.  We remove a singularity (which actually only
-      !  occurs at the tangent point) by writing
-      !  $\int_{\zeta_i}^{\zeta_{i-1}} G(\zeta) \frac{\text{d}s}{\text{d}h}
-      !   \frac{\text{d}h}{\text{d}\zeta} \text{d}\zeta =
-      !  G(\zeta_i) \int_{\zeta_i}^{\zeta_{i-1}} \frac{\text{d}s}{\text{d}h}
-      !   \frac{\text{d}h}{\text{d}\zeta} \text{d}\zeta +
-      !  \int_{\zeta_i}^{\zeta_{i-1}} \left[ G(\zeta) - G(\zeta_i) \right]
-      !   \frac{\text{d}s}{\text{d}h} \frac{\text{d}h}{\text{d}\zeta}
-      !   \text{d}\zeta$.  The first integral is easy -- it's just
-      !  $G(\zeta_i) (\zeta_{i-1}-\zeta_i)$.  Here, it is {\tt incoptdepth}.
-      !  In the second integral, $G(\zeta)$ is {\tt alpha\_path\_gl} --
-      !  which has already been evaluated at the appropriate abscissae -- and
-      !  $G(\zeta_i)$ is {\tt alpha\_path\_c}.  The weights are {\tt gw}.
-
-      a = 1
-      do i = 1, size(more_inds)
-        aa = gl_inds(a)
-        ii = more_inds(i)
-        incoptdepth(ii) = incoptdepth(ii) + &
-          & del_zeta(ii) * &
-          & dot_product( (alpha_path_gl(a:a+ng-1) - alpha_path_c(ii)), &
-               & ds_dz_gw(aa:aa+ng-1) )
-        a = a + ng
-      end do ! i
-
-    end if
-
-    incoptdepth(i_start:) = ref_cor(i_start:) * incoptdepth(i_start:)
+    call GL_update_incoptdepth ( gl_inds, more_inds, i_start, del_zeta, &
+                               & alpha_path, ds_dz_gw, ref_cor, &
+                               & incoptdepth )
 
   ! Compute Tau = exp(-indefinite sum of IncOptDepth)
 
@@ -185,7 +163,7 @@ contains
 ! --------------------------------------------------  Destroy_Tau  -----
   subroutine Destroy_Tau ( Tau, What, Where )
     use Allocate_Deallocate, only: Deallocate_test
-    type(tau_t), intent(inout) :: Tau
+    class(tau_t), intent(inout) :: Tau
     character(len=*), intent(in) :: What, Where
     call deallocate_test ( tau%tau, what//"%Tau", where )
     call deallocate_test ( tau%i_stop, what//"%I_Stop", where )
@@ -196,7 +174,7 @@ contains
     use Dump_0, only: Dump
     use Output_m, only: Output
 
-    type(tau_t), intent(in) :: Tau
+    class(tau_t), intent(in) :: Tau
     integer, intent(in) :: NoFreqs ! Number of frequences
     character(len=*), intent(in), optional :: What
     integer, intent(in), optional :: I_Start
@@ -226,6 +204,9 @@ contains
 end module Tau_M
 
 ! $Log$
+! Revision 2.16  2018/05/14 23:29:41  vsnyder
+! Make some procedures type bound, use GL_Update_Incoptdepth_m
+!
 ! Revision 2.15  2014/07/18 23:16:08  pwagner
 ! Aimed for consistency in names passed to allocate_test
 !
