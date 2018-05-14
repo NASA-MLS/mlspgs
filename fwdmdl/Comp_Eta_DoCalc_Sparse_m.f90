@@ -18,6 +18,7 @@ module Comp_Eta_DoCalc_Sparse_m
   public :: Comp_Eta_Docalc_Sparse
   public :: Comp_All_Eta_2D,  Comp_One_Eta_2D
   public :: Comp_All_Eta_QTM, Comp_One_Eta_QTM
+  public :: Comp_One_Eta_Z
   public :: Get_Eta_DoCalc_FZP
   ! Be careful with Get_One_Eta_DoCalc_ZP to send only the columns of
   ! Eta, Do_Calc, NZ and NNZ that are gemane to the species.
@@ -349,7 +350,7 @@ contains
   ! Compute Eta_FZP and Do_Calc_FZP from Eta_FZP_Sparse for one species.  When the
   ! forward model no longer needs these, this subroutine can be deleted.
 
-    use Get_Do_Calc_m, only: Clean_Out_Nonzeros
+    use Get_Eta_Matrix_m, only: Clean_Out_Nonzeros
     use MLSKinds, only: RP
     use Sparse_Eta_m, only: Sparse_Eta_t
 
@@ -404,6 +405,9 @@ contains
 end module Comp_Eta_DoCalc_Sparse_m
 
 ! $Log$
+! Revision 2.7  2018/05/14 23:40:58  vsnyder
+! Change to sparse eta representation
+!
 ! Revision 2.6  2018/03/07 17:43:57  pwagner
 ! Made consistent with new Sparse_t datatype
 !
