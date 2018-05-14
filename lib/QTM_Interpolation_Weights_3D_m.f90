@@ -14,9 +14,8 @@ module QTM_Interpolation_Weights_3D_m
 !=============================================================================
 
   use Geolocation_0, only: RG, S_t
-  use QTM_Interpolation_Weights_m, only: QTM_Interpolation_Weights
-  use Indexed_Values_m, only: Value_QTM_1D_List_t, Value_QTM_2D_List_t, &
-    & Value_QTM_2D_t
+  use QTM_Interpolation_Weights_m, only: QTM_Interpolation_Weights, &
+    & Value_QTM_1D_List_t, Value_QTM_2D_List_t, Value_QTM_2D_t
   use Weight_1D_m, only: Weight_1D
 
   implicit NONE
@@ -41,7 +40,9 @@ module QTM_Interpolation_Weights_3D_m
     type(value_QTM_1D_List_t) :: Coeff = value_QTM_1D_List_t()
                      ! Horizontal interpolation coefficients, along with the
                      ! indices of the QTM, or an extract of it adjacent to
-                     ! the path, to which the coefficients apply.
+                     ! the path, to which the coefficients apply.  This is just
+                     ! a temp used by Metrics_3D to store up to three
+                     ! coefficients per path point.
     integer :: Face  ! Cone_Face => latitude cone face, bounded horizontally
                      !      by two non-polar vertices of facet QID.
                      ! X_face => vertical face bounded horizontally by the
@@ -630,6 +631,9 @@ contains
 end module QTM_Interpolation_Weights_3D_m
 
 ! $Log$
+! Revision 2.14  2018/05/14 23:25:29  vsnyder
+! Change to sparse eta representation
+!
 ! Revision 2.13  2017/08/28 20:27:47  livesey
 ! Changed the n,nf,np,nz elements to j,jf,...
 !
