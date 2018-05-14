@@ -13,7 +13,8 @@ module DO_DELTA_M
 
   implicit NONE
   private
-  public :: PATH_OPACITY, HYD_OPACITY, POLARIZED_PATH_OPACITY
+! public :: PATH_OPACITY, HYD_OPACITY ! Inlined, no longer used anywhere
+  public :: Polarized_Path_Opacity
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -85,35 +86,35 @@ contains
 
   end subroutine PATH_OPACITY
 
-! ---------------------------------------  POLARIZED_PATH_OPACITY  -----
+! ---------------------------------------  Polarized_Path_Opacity  -----
 
-  subroutine POLARIZED_PATH_OPACITY ( DEL_ZETA, SINGULARITY, &
-                     &      FUNCT, DS_DZ_GW, &
-                     &      INTEGRAL, C_Inds, F_Inds )
+  subroutine Polarized_Path_Opacity ( Del_Zeta, Singularity, &
+                                    & Funct, ds_dz_Gw, &
+                                    & Integral, C_Inds, F_Inds )
     use GLNP, only: NG
     use MLSCommon, only: IP, RP
 
 ! Inputs
 
-    real(rp), intent(in) :: del_zeta(:) ! difference in integration boundary
+    real(rp), intent(in) :: Del_Zeta(:) ! difference in integration boundary
                                         ! in -log(p) units
 !   logical, intent(in) :: do_gl(:)  ! Where INTEGRAL needs to be evaluated
-    complex(rp), intent(in) :: singularity(-1:,:) ! value of function at lower
-    complex(rp), intent(in) :: funct(-1:,:)    ! function evaluated on gl integration
-                                        ! grid
-    real(rp), intent(in) :: ds_dz_gw(:) ! path length derivative wrt zeta * gw
+    complex(rp), intent(in) :: Singularity(-1:,:) ! value of function at lower
+    complex(rp), intent(in) :: Funct(-1:,:)    ! function evaluated on coarse &
+                                        ! gl integration grid
+    real(rp), intent(in) :: ds_dz_Gw(:) ! path length derivative wrt zeta * gw
                                         ! on entire grid.  Only the gl_inds part
                                         ! is used.
 
 ! Output
 
-    complex(rp), intent(out) :: integral(-1:,:) ! result from integration
+    complex(rp), intent(out) :: Integral(-1:,:) ! result from integration
 
 ! Optional
 
     integer(ip), intent(in) :: C_inds(:) ! Coarse path inds, for
                                          ! Singularity
-    integer(ip), intent(in) :: F_Inds(:) ! Subset of ds_dh, dh_dz
+    integer(ip), intent(in) :: F_Inds(:) ! Subset of funct, ds_dh, dh_dz
 
 ! Internals
 
@@ -140,14 +141,14 @@ contains
     do i = 1, size(c_inds)
       aa = f_inds(a)
       do j = -1, 1
-        integral(j,i) = del_zeta(c_inds(i)) *                           &
-               &  sum( (funct(j,a:a+ng-1) - singularity(j,c_inds(i))) * &
+        integral(j,i) = del_zeta(c_inds(i)) *                             &
+               &  sum( (funct(j,aa:aa+ng-1) - singularity(j,c_inds(i))) * &
                &       ds_dz_gw(aa:aa+ng-1) )
       end do 
       a = a + ng
     end do
 
-  end subroutine POLARIZED_PATH_OPACITY
+  end subroutine Polarized_Path_Opacity
 
 
 !---------------------------------------------------  HYD_OPACITY  -----
@@ -223,6 +224,9 @@ contains
 end module DO_DELTA_M
 !---------------------------------------------------
 ! $Log$
+! Revision 2.14  2009/06/23 18:26:11  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 2.13  2005/06/22 18:08:18  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
