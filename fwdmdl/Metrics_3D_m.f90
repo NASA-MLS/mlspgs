@@ -46,7 +46,7 @@ module Metrics_3D_m
 contains
 
   subroutine Metrics_3D_QTM ( Path, QTM_Tree, H, S, Tangent_Index, Pad, F_and_V, &
-                            & Which )
+                            & Eta_P, Eta_P_T, Which )
     ! Given a line defined by a point in ECR, and a vector in ECR parallel
     ! to that line, compute all intersections of that line with a face of
     ! the grid whose horizontal grid is QTM_Tree.  It is assumed the vertical
@@ -72,6 +72,7 @@ contains
     use Generate_QTM_m, only: QTM_Tree_t
     use Path_Representation_m, only: Facets_and_Vertices_t, Path_t
     use QTM_Interpolation_Weights_3D_m, only: S_QTM_t
+    use Sparse_m, only: Sparse_t
 
     type(path_t), intent(inout) :: Path ! Path%Lines(1,1) + s * Path%Lines(2,1)
                                    ! defines the initial line, i.e., before
@@ -92,6 +93,10 @@ contains
                                    ! under Path
     integer, intent(in) :: Pad     ! Amount of padding to introduce in S between
                                    ! before-the-tangent and after-the-tangent.
+    class(sparse_t), intent(inout) :: Eta_P(:) ! Horizontal iterpolation
+                                   ! coefficients for mixing ratios
+    class(sparse_t), intent(inout) :: Eta_P_T ! Horizontal interpolation
+                                   ! coefficients for temperature
     integer, intent(in), optional :: Which ! Which intersections to detect,
                                    ! default all
 
@@ -117,6 +122,28 @@ contains
     tangent_index = size(s_int(1)%s,1)
     allocate ( s, source=[ s_int(1)%s, spread(s_int(2)%s(1),1,pad), &
                          & s_int(2)%s ] )
+
+    ! Copy the horizontal interpolation coefficients from S%Coeff to Eta_P
+    ! and Eta_P_T.  For QTM, all the horizontal bases are the same.
+
+    call copy_coeff_to_eta ( eta_p_T )
+    do i = 1, size(eta_p)
+      call copy_coeff_to_eta ( eta_p(i) )
+    end do
+
+  contains
+
+    subroutine Copy_Coeff_to_Eta ( Eta )
+      class(sparse_t), intent(inout) :: Eta ! Interpolation coefficients
+      integer :: J, K
+      call eta%empty ! Sets Eta%NE, Eta%Rows and Eta%Cols to zero
+      do j = 1, size(s)
+        do k = 1, s(j)%coeff%n
+          call eta%add_element ( s(j)%coeff%v(k)%v, j, &
+                               & QTM_Tree%path_vertices(s(j)%coeff%v(k)%j) )
+        end do
+      end do
+    end subroutine Copy_Coeff_to_Eta
 
   end subroutine Metrics_3D_QTM
 
@@ -158,7 +185,8 @@ contains
     use Center_of_Sphere_m, only: Center_of_Sphere, Circumcenter
     use Generate_QTM_m, only: QTM_Tree_t
     use Geolocation_0, only: H_Geod, H_V_Geoc, H_V_Geod, H_V_t
-    use Indexed_Values_m, only: Value_QTM_1D_List_t
+!Q    use Indexed_Values_m, only: Value_QTM_1D_List_t
+    use QTM_Interpolation_Weights_m, only: Value_QTM_1D_List_t
     use Line_And_Cone_m, only: Line_And_Cone
     use Line_And_Ellipsoid_m, only: Line_And_Sphere
     use Line_And_Plane_m, only: Line_And_Plane
@@ -664,6 +692,9 @@ contains
 end module Metrics_3D_m
 
 ! $Log$
+! Revision 2.13  2018/05/14 23:40:58  vsnyder
+! Change to sparse eta representation
+!
 ! Revision 2.12  2017/12/07 02:43:57  vsnyder
 ! Don't use host-associated DO indices; make them local
 !
