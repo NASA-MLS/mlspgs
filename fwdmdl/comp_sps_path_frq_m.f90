@@ -232,7 +232,9 @@ contains
       ! copying the same values for all frequencies for frequency-dependent
       ! species
       & call Spread_Eta_FZP_from_Eta_ZP ( grids_x, eta_zp, do_calc_zp, &
-                                        &          eta_fzp, do_calc_fzp )
+                                        &          eta_fzp, do_calc_fzp, &
+                                        &          nz_zp, nnz_zp, &
+                                        &          nz_fzp, nnz_fzp )
 
     ! Clear nonzero entries of eta_fzp
     do v_inda = 1, size(nnz_fzp)
@@ -578,6 +580,9 @@ contains
 end module Comp_Sps_Path_Frq_m
 !
 ! $Log$
+! Revision 2.37  2018/05/14 23:46:45  vsnyder
+! Add old eta sparsity representation to Spread_Eta_FZP_from_Eta_ZP for debugging
+!
 ! Revision 2.36  2016/11/17 03:13:23  vsnyder
 ! Repair errors calculating subscripts for Eta_zp in Comp_1_Sps_Path_No_Frq
 !
