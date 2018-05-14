@@ -83,7 +83,7 @@ module ChunkDivide_m
   ! The chunk divide methods are:
   !
   ! Fixed - Ignore the L1B file, just give a fixed set of chunks as described
-  !  
+  !
   ! Polygon - Used for QTM, ASMLS
   !
   ! PE - One chunk centred on the given orbit geodetic angle.
@@ -504,7 +504,7 @@ contains ! ===================================== Public Procedures =====
       end do
 
     end subroutine ChunkDivide_Fixed
-    
+
     !------------------------------------------- ChunkDivide_Polygon -----
     subroutine ChunkDivide_Polygon ( mafRange, filedatabase, chunks, InstrumentModuleName )
       ! integer, dimension(2), intent(in) :: MAFRANGE
@@ -513,13 +513,13 @@ contains ! ===================================== Public Procedures =====
       use Dump_Geolocation_m, only: Dump_H_t
       use Geometry, only: To_XYZ
       use PnPoly_m, only: PnPoly
-     
+
       type (MAFRange_T) :: MAFRange
       type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
       type (MLSChunk_T), dimension(:), pointer :: CHUNKS
       character (len=NameLen) :: InstrumentModuleName
-      
-    
+
+
       ! Local variables
       integer(c_intptr_t) :: Addr         ! For tracing
       integer :: I                        ! Loop inductor
@@ -571,60 +571,58 @@ contains ! ===================================== Public Procedures =====
       n = size(polygon_vertices)
       ALLOCATE(Vertices_XX(n))
       ALLOCATE(Vertices_YY(n))
-      
-      
-      
+
+
+
       do i = 1, n
         PolyVert_XYZ = to_xyz(polygon_vertices(i)%lat, polygon_vertices(i)%lon%d)
         call output ( polygon_vertices(i)%lon%d )
-	Vertices_XX(i)= PolyVert_XYZ(1)
-	call output ('   ')
+        Vertices_XX(i)= PolyVert_XYZ(1)
+        call output ('   ')
         call output ( polygon_vertices(i)%lat, advance='yes' )
-	Vertices_YY(i) = PolyVert_XYZ(2)
-	call output ('Vertices_XX,  Vertices_YY for polygon is ')
-	call output (Vertices_XX(i))
-	call output ('   ')
-	call output (Vertices_YY(i), advance='yes')
-	
+        Vertices_YY(i) = PolyVert_XYZ(2)
+        call output ('Vertices_XX,  Vertices_YY for polygon is ')
+        call output (Vertices_XX(i))
+        call output ('   ')
+        call output (Vertices_YY(i), advance='yes')
       end do
-   
-    
+
       ! Now we'll check for whether the points are inside or outside the PolyGon
       call output ('before do MAF loop', advance='yes')
       !pointTest = 0
       do MAF=1, NoMAFs
          call output('lat = ')
          call output( lats%dpField(1,1,MAF) )
-	 call output ('  lon = ')   
-	 call output( lons%dpField(1,1,MAF), advance='yes')
-	 xyz = to_xyz ( lats%dpField(1,1,MAF), lons%dpField(1,1,MAF))
-	 call output ('xyz is ')
-	 call output (xyz, advance='yes')
-	 call output(PnPoly(xyz(1), xyz(2), Vertices_XX, Vertices_YY ), advance='yes')
-	 if ((PnPoly(xyz(1), xyz(2), Vertices_XX, Vertices_YY )) == 1)  then
-	     ptsInPolygon(MAF) = .true.
-	     !pointTest = pointTest + 1
-	   !  if (MAF == 70) then
-	   !    ptsInPolygon(MAF) = .false.
-	   !  end if
-	   !  if (MAF == 100) then
-	    !    ptsInPolygon(MAF) = .false.
-	   !  end if
-	   !  if (MAF == 200) then
-	   !     ptsInPolygon(MAF) = .false.
-	   !  end if
-	   !  if (MAF == 240) then
-	   !     ptsInPolygon(MAF) = .false.
-	   !  end if
-	   !  if (MAF == 300) then
-	   !     ptsInPolygon(MAF) = .false.
-	  !   end if
-	 else
-	     !ptsInPolygon(MAF) = pointTest
-	     !pointTest = 0 
-	     ptsInPolygon(MAF) = .false.
-	 end if
-	 
+         call output ('  lon = ')
+         call output( lons%dpField(1,1,MAF), advance='yes')
+         xyz = to_xyz ( lats%dpField(1,1,MAF), lons%dpField(1,1,MAF))
+         call output ('xyz is ')
+         call output (xyz, advance='yes')
+         call output(PnPoly(xyz(1), xyz(2), Vertices_XX, Vertices_YY ), advance='yes')
+         if ((PnPoly(xyz(1), xyz(2), Vertices_XX, Vertices_YY )) == 1)  then
+             ptsInPolygon(MAF) = .true.
+             !pointTest = pointTest + 1
+           !  if (MAF == 70) then
+           !    ptsInPolygon(MAF) = .false.
+           !  end if
+           !  if (MAF == 100) then
+            !    ptsInPolygon(MAF) = .false.
+           !  end if
+           !  if (MAF == 200) then
+           !     ptsInPolygon(MAF) = .false.
+           !  end if
+           !  if (MAF == 240) then
+           !     ptsInPolygon(MAF) = .false.
+           !  end if
+           !  if (MAF == 300) then
+           !     ptsInPolygon(MAF) = .false.
+          !   end if
+         else
+             !ptsInPolygon(MAF) = pointTest
+             !pointTest = 0
+             ptsInPolygon(MAF) = .false.
+         end if
+
         ! Use To_XYZ to get XX, YY, ZZ
         ! The send XX, YY through Pn_Poly
         ! Set to true or false depending on retrun value (-1 outside, +1 inside)
@@ -637,12 +635,12 @@ contains ! ===================================== Public Procedures =====
       call output ( 'vertices \n')
       call dump_h_t ( polygon_vertices, &
       & 'Polygon boundary vertices (lon,lat):', format='(f8.3)' )
-     
+
       call output ( 'Polygon_Inside \n')
       call output ( polygon_inside%lon%d, before='Point inside polygon (lon,lat): (' )
       call output ( polygon_inside%lat, before=',', after=')', advance='yes' )
-       
-      call output ( 'mafRange ', advance='yes')  
+
+      call output ( 'mafRange ', advance='yes')
        call output ( 'Corresponding MAF range ')
         call output ( mafRange%L2Cover(1) )
         call output ( ' : ' )
@@ -655,14 +653,14 @@ contains ! ===================================== Public Procedures =====
         call output ( mafRange%Expanded(1) )
         call output ( ' : ' )
         call output ( mafRange%Expanded(2), advance='yes' )
-	
-	call output ( 'before  FindLongestRange  call ', advance='yes')
-	call FindLongestRange (ptsInPolygon, .true., range)
-	call output ('range is ')
-	call output (range, advance='yes')
-	
-	call output ( 'after  FindLongestRange  call ')
-	
+
+        call output ( 'before  FindLongestRange  call ', advance='yes')
+        call FindLongestRange (ptsInPolygon, .true., range)
+        call output ('range is ')
+        call output (range, advance='yes')
+
+        call output ( 'after  FindLongestRange  call ')
+
       swlevel = switchDetail(switches, 'chu' )
       allocate ( chunks(ChunkDivideConfig%noChunks), stat=status )
       addr = 0
@@ -840,14 +838,14 @@ contains ! ===================================== Public Procedures =====
       integer, target, dimension(7) :: NotWantedForFixed = &
         & (/ f_noSlaves, f_homeModule, f_homeGeodAngle, f_scanLowerLimit, &
         &    f_scanUpperLimit, f_criticalModules, f_maxGap /)
-        
+
       !added for Polygon
-      integer, target, dimension(0) :: NeededForPolygon 
+      integer, target, dimension(0) :: NeededForPolygon
       integer, target, dimension(10) :: NotWantedForPolygon = &
         & (/ f_noSlaves, f_homeModule, f_homeGeodAngle, f_scanLowerLimit, &
         &    f_scanUpperLimit, f_criticalModules, f_maxGap, f_noChunks, f_maxLength, f_overlap /)
       !ended for Polygon
-       
+
       integer, target, dimension(3) :: NeededForPE = &
         & (/ f_maxLength, f_homeModule, f_homeGeodAngle /)
       integer, target, dimension(7) :: NotWantedForPE = &
@@ -924,15 +922,15 @@ contains ! ===================================== Public Procedures =====
         case ( f_method )
           ChunkDivideConfig%method = decoration ( gson )
         case ( f_module )
-	  call output ('Inside case f_module', advance='yes')
+          call output ('Inside case f_module', advance='yes')
           !ChunkDivideConfig%module = decoration ( gson )
-	  instrumentModule = decoration(decoration(subtree(2,son)))
+          instrumentModule = decoration(decoration(subtree(2,son)))
           call GetModuleName ( instrumentModule , instrumentModuleName )
-	  call output ('insturmentModule name is   ')
-	  call output (instrumentModule , advance='yes')
-	  call output ('insturmentModuleNAME name is   ')
-	  call output (instrumentModuleName , advance='yes')
-	  ChunkDivideConfig%module = instrumentModule
+          call output ('insturmentModule name is   ')
+          call output (instrumentModule , advance='yes')
+          call output ('insturmentModuleNAME name is   ')
+          call output (instrumentModuleName , advance='yes')
+          ChunkDivideConfig%module = instrumentModule
         case ( f_noChunks )
           ChunkDivideConfig%noChunks = nint ( value(1) )
         case ( f_maxLength )
@@ -955,7 +953,7 @@ contains ! ===================================== Public Procedures =====
           ChunkDivideConfig%noSlaves = value(1)
         case ( f_homeModule )
           ChunkDivideConfig%homeModule = decoration ( gson )
-	  !instrumentModule = decoration(decoration(subtree(2,son)))
+          !instrumentModule = decoration(decoration(subtree(2,son)))
           !call GetModuleName ( instrumentModule , instrumentModuleName )
           !ChunkDivideConfig%homeModule = instrumentModule
         case ( f_homeGeodAngle )
@@ -1022,7 +1020,7 @@ contains ! ===================================== Public Procedures =====
         call trace_end ( 'ChunkDivideL2CF.loop', &
           & cond=toggle(gen) .and. levels(gen) > 1 )
       end do
-    
+
       ! Now check the sanity of what we've been given, this varies a bit
       ! depending on the method
       if ( ChunkDivideConfig%skipL1BCheck .and. &
@@ -1045,7 +1043,7 @@ contains ! ===================================== Public Procedures =====
           & ChunkDivideConfig%maxLength
       case ( l_polygon )
         needed => NeededForFixed
-        notWanted => NotWantedForFixed  
+        notWanted => NotWantedForFixed
       case ( l_PE )
         needed => NeededForPE
         notWanted => NotWantedForPE
@@ -1056,7 +1054,7 @@ contains ! ===================================== Public Procedures =====
         needed => NeededForEven
         notWanted => NotWantedForEven
       end select
-    
+
       ! Some special thought for overlap cases
       if ( any ( got ( (/ f_lowerOverlap, f_upperOverlap /) ) ) ) then
         if ( .not. all ( got ( (/ f_lowerOverlap, f_upperOverlap /) ) ) ) &
@@ -1077,7 +1075,7 @@ contains ! ===================================== Public Procedures =====
           ChunkDivideConfig%upperOverlapFamily = ChunkDivideConfig%overlapFamily
         end if
       end if
-    
+
       ! Check we've got all the arguments we need
       do i = 1, size(needed)
         if ( .not. got(needed(i) ) ) &
@@ -1088,7 +1086,7 @@ contains ! ===================================== Public Procedures =====
         if ( got(notWanted(i) ) ) &
           & call AnnounceError ( root, unnecessary, notWanted(i) )
       end do
-    
+
       ! Make other checks of parameters
       if ( ChunkDivideConfig%criticalModules /= l_none ) then
         if ( .not. got(f_scanLowerLimit) ) &
@@ -1101,7 +1099,7 @@ contains ! ===================================== Public Procedures =====
         if ( got (f_scanUpperLimit) ) &
           & call AnnounceError ( root, unnecessary, f_scanUpperLimit )
       end if
-    
+
       ! Now check the units for various cases
       if ( got(f_maxgap) .and. all ( ChunkDivideConfig%maxGapFamily /= &
         & (/ PHYQ_MAFs, PHYQ_Angle, PHYQ_Time /))) &
@@ -1125,7 +1123,7 @@ contains ! ===================================== Public Procedures =====
         if ( ChunkDivideConfig%upperOverlapFamily /= PHYQ_MAFs ) &
           & call AnnounceError ( root, badUnits, f_upperOverlap )
       end select
-    
+
       if ( error /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Problem with ChunkDivide command' )
 
@@ -1758,7 +1756,7 @@ contains ! ===================================== Public Procedures =====
       if ( associated(ChunkDivideConfig%criticalSignals) ) then
         criticalSignals => ChunkDivideConfig%criticalSignals
         if ( swLevel > -1 ) then
-          call output('Critical Signals from config', advance='yes' ) 
+          call output('Critical Signals from config', advance='yes' )
           call Dump (  criticalSignals )
         endif
       elseif ( ChunkDivideConfig%chooseCriticalSignals ) then
@@ -1767,7 +1765,7 @@ contains ! ===================================== Public Procedures =====
         call chooseCriticalSignals( criticalSignals )
         choseCriticalSignals = .true.
         if ( swLevel > -1 ) then
-          call output('Critical Signals you chose', advance='yes' ) 
+          call output('Critical Signals you chose', advance='yes' )
           call Dump (  criticalSignals )
         endif
       endif
@@ -2969,6 +2967,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.131  2018/05/14 23:23:58  vsnyder
+! Remove tab formatting (again) to eliminate compiler warnings
+!
 ! Revision 2.130  2018/04/19 01:14:16  vsnyder
 ! Remove USE statements for unused names
 !
