@@ -13,6 +13,8 @@
 module QTM_Interpolation_Weights_m
 !=============================================================================
 
+  use MLSKinds, only: RK => RP
+
   implicit NONE
   private
 
@@ -35,6 +37,65 @@ module QTM_Interpolation_Weights_m
       & QTM_Interpolation_Weights_ZOT_list_2d
   end interface QTM_Interpolation_Weights
 
+  public :: Value_QTM_1D_List_t, Value_QTM_2D_List_t, Value_QTM_2D_t
+
+  type :: Value_List ! ( RK ) ! Base type for Value_*List_t
+!     integer, kind :: RK
+  end type Value_List
+
+  ! For one interpolation weight from a 1D array
+  type :: Value_1D_t ! ( RK )
+!     integer, kind :: RK
+    real(rk) :: V = 0.0    ! Value to be applied at N
+    integer :: J = 0       ! Subscript at which to apply V
+  end type Value_1D_t
+
+  ! For one interpolation weight from a QTM, or an extract of it onto
+  ! an array of profiles adjacent to an integration path, e.g., in Grids_t.
+  type, extends(value_1D_t) :: Value_QTM_1D_t
+  ! real(rk) :: V = 0.0    ! Value to be applied at N or NP
+  ! integer :: J = 0       ! Index in QTM at which to apply V
+    integer :: JP = 0      ! Index of path-adjacent part of QTM at which to
+                           ! apply V, e.g., in Grids_t.  This is intentionally
+                           ! the same name as the second (probably Phi) subscript
+                           ! in Value_2D_t so that Interpolate_2D_List.f9h can be
+                           ! used for both interpolations.
+  end type Value_QTM_1D_t
+
+  ! For interpolating to a list (probably an integration path) from a QTM,
+  ! or an extract of it onto an array of profiles adjacent to an integration
+  ! path.
+  type, extends(Value_List) :: Value_QTM_1D_List_t ! ( RK )
+!     integer, kind :: RK
+    integer :: N = 3       ! Number of useful elements of V
+!     type(value_QTM_1d_t(rk)) :: V(3) = value_QTM_1d_t(rk)()
+    type(value_QTM_1d_t) :: V(3) = value_QTM_1d_t()
+  end type Value_QTM_1D_List_t
+
+  ! For one interpolation weight from a QTM, or an extract of it onto
+  ! an array of profiles adjacent to an integration path, with a zeta basis
+  ! at each vertex.
+  type, extends(value_QTM_1D_t) :: Value_QTM_2D_t
+  ! real(rk) :: V = 0.0    ! Value to be applied at (NZ, N or NP)
+  ! integer :: J = 0       ! Index in QTM at which to apply V
+  ! integer :: JP = 0      ! Index of path-adjacent part of QTM at which to
+                           ! apply V, e.g., in Grids_t.  This is intentionally
+                           ! the same name as the second (probably Phi) subscript
+                           ! in Value_2D_t so that Interpolate_2D_List.f9h can be
+                           ! used for both interpolations.
+    integer :: JZ = 0      ! Vertical (probably zeta) index
+  end type Value_QTM_2D_t
+
+  ! For interpolating to a list (probably an integration path) from a QTM,
+  ! or an extract of it onto an array of profiles adjacent to an integration
+  ! path, with a zeta basis at each profile.
+  type, extends(Value_List) :: Value_QTM_2D_List_t ! ( RK )
+!     integer, kind :: RK
+    integer :: N = 6       ! Number of useful elements of V
+!     type(value_QTM_2d_t(rk)) :: V(6) = value_QTM_2d_t(rk)()
+    type(value_QTM_2d_t) :: V(6) = value_QTM_2d_t()
+  end type Value_QTM_2D_List_t
+
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
@@ -53,7 +114,6 @@ contains
     use Generate_QTM_m, only: QTM_Tree_t
     use Geolocation_0, only: H_t! , RG
     use Nearest_Polygon_Point_m, only: Nearest_Polygon_Point
-    use Indexed_Values_m, only: Value_QTM_1D_List_t
     use QTM_m, only: Geo_to_ZOT, Stack_t, ZOT_t
     use Triangle_Interpolate_m, only: Triangle_Interpolate
 
@@ -117,7 +177,6 @@ contains
 
     use Generate_QTM_m, only: QTM_Tree_t
     use Geolocation_0, only: H_t! , RG
-    use Indexed_Values_m, only: Value_QTM_1D_list_t
     use QTM_m, only: Stack_t
 
     type(QTM_tree_t), intent(in) :: QTM_Tree
@@ -153,7 +212,6 @@ contains
     use Generate_QTM_m, only: QTM_Tree_t
 !     use Geolocation_0, only: RG
     use Nearest_Polygon_Point_m, only: Nearest_Polygon_Point
-    use Indexed_Values_m, only: Value_QTM_1D_list_t
     use Triangle_Interpolate_m, only: Triangle_Interpolate
 
     type(QTM_tree_t), intent(in) :: QTM_Tree
@@ -207,7 +265,6 @@ contains
     use QTM_m, only: Stack_T, ZOT_t
     use Generate_QTM_m, only: QTM_Tree_t
 !     use Geolocation_0, only: RG
-    use Indexed_Values_m, only: Value_QTM_1D_list_t
 
     type(QTM_tree_t), intent(in) :: QTM_Tree
     type(ZOT_t), intent(in) :: Point(:)            ! Assume size(point) ==
@@ -243,7 +300,6 @@ contains
     use Generate_QTM_m, only: QTM_Tree_t
     use Geolocation_0, only: H_t! , RG
     use Nearest_Polygon_Point_m, only: Nearest_Polygon_Point
-    use Indexed_Values_m, only: Value_QTM_2D_List_t
     use QTM_m, only: Geo_to_ZOT, Stack_t, ZOT_t
     use Triangle_Interpolate_m, only: Triangle_Interpolate
 
@@ -308,7 +364,6 @@ contains
 
     use Generate_QTM_m, only: QTM_Tree_t
     use Geolocation_0, only: H_t! , RG
-    use Indexed_Values_m, only: value_QTM_2D_List_t
     use QTM_m, only: Stack_t
 
     type(QTM_tree_t), intent(in) :: QTM_Tree
@@ -345,7 +400,6 @@ contains
     use Generate_QTM_m, only: QTM_Tree_t
 !     use Geolocation_0, only: RG
     use Nearest_Polygon_Point_m, only: Nearest_Polygon_Point
-    use Indexed_Values_m, only: value_QTM_2D_List_t
     use Triangle_Interpolate_m, only: Triangle_Interpolate
 
     type(QTM_tree_t), intent(in) :: QTM_Tree
@@ -400,7 +454,6 @@ contains
     use QTM_m, only: Stack_T, ZOT_t
     use Generate_QTM_m, only: QTM_Tree_t
 !     use Geolocation_0, only: RG
-    use Indexed_Values_m, only: value_QTM_2D_List_t
 
     type(QTM_tree_t), intent(in) :: QTM_Tree
     type(ZOT_t), intent(in) :: Point(:)            ! Assume size(point) ==
@@ -439,6 +492,9 @@ contains
 end module QTM_Interpolation_Weights_m
 
 ! $Log$
+! Revision 2.11  2018/05/14 23:25:29  vsnyder
+! Change to sparse eta representation
+!
 ! Revision 2.10  2017/08/28 20:27:47  livesey
 ! Changed the n,nf,np,nz elements to j,jf,...
 !
