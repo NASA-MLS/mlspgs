@@ -74,7 +74,7 @@ module MLSHDF5
     & GetHDF5DSRank, GetHDF5DSDims, GetHDF5DSQType, &
     & IsHDF5AttributeInFile, IsHDF5AttributePresent, IsHDF5DSInFile, &
     & IsHDF5DSPresent, IsHDF5GroupPresent, IsHDF5ItemPresent, &
-    & LoadFromHDF5DS, LoadPtrFromHDF5DS, &
+    & LoadAllocFromHDF5DS, LoadFromHDF5DS, LoadPtrFromHDF5DS, &
     & MakeHDF5Attribute, MakeNestedGroups, MatchHDF5Attributes, &
     & MLS_H5Open, MLS_H5Close, ReadHDF5Attribute, &
     & ReadLitIndexFromHDF5Attr, ReadStringIndexFromHDF5Attr, SaveAsHDF5DS, &
@@ -140,6 +140,8 @@ module MLSHDF5
 ! log IsHDF5DSPresent (int locID, char name, [options])
 ! log IsHDF5GroupPresent (int locID, char name)
 ! log IsHDF5ItemPresent (int locID, char name, [options])
+! LoadAllocFromHDF5DS (int locID, char name, *value [, lowBound] )
+!       lowBound only for rank-1 arrays
 ! LoadFromHDF5DS (int locID, char name, value,
 !       [int start(:), int count(:), [int stride(:), int block(:)] ] )
 ! LoadPtrFromHDF5DS (int locID, char name, *value [, lowBound] )
@@ -265,6 +267,17 @@ module MLSHDF5
     module procedure IsHDF5AttributePresent_in_fID, &
       & IsHDF5AttributePresent_in_MLSFile, &
       & IsHDF5AttributePresent_in_DSID, IsHDF5AttributePresent_in_grp
+  end interface
+
+  interface LoadAllocFromHDF5DS
+    module procedure LoadAllocFromHDF5DS_chararr1, LoadAllocFromHDF5DS_chararr2, &
+      & LoadAllocFromHDF5DS_intarr1, LoadAllocFromHDF5DS_intarr2, &
+      & LoadAllocFromHDF5DS_intarr3, LoadAllocFromHDF5DS_intarr4, &
+      & LoadAllocFromHDF5DS_logarr1, &
+      & LoadAllocFromHDF5DS_dblarr1, LoadAllocFromHDF5DS_dblarr2, &
+      & LoadAllocFromHDF5DS_dblarr3, LoadAllocFromHDF5DS_dblarr4, &
+      & LoadAllocFromHDF5DS_snglarr1, LoadAllocFromHDF5DS_snglarr2, &
+      & LoadAllocFromHDF5DS_snglarr3, LoadAllocFromHDF5DS_snglarr4
   end interface
 
   interface LoadFromHDF5DS
@@ -4815,6 +4828,351 @@ contains ! ======================= Public Procedures =========================
 
   end subroutine LoadFromHDF5DS_snglarr4
 
+  ! ---------------------------------  LoadAllocFromHDF5DS_chararr1  -----
+  subroutine LoadAllocFromHDF5DS_chararr1 ( locID, name, value, lowBound )
+    ! This routine allocates an array and loads it with values from a DS
+    use Allocate_Deallocate, only: Allocate_Test
+    integer, intent(in) :: LOCID          ! Where to place it (group/file)
+    character (len=*), intent(in) :: NAME ! Name for this dataset
+    character (len=*), allocatable :: VALUE(:) ! The array itself
+    integer, intent(in), optional :: LowBound
+
+    ! Local variables
+    integer :: LB, UB
+    integer :: Me = -1                  ! String index for trace cacheing
+    integer :: SETID                    ! ID of dataset
+    integer(hsize_t) :: SHP(1)          ! Shape of value
+    integer :: STATUS                   ! Flag from HDF5
+    integer :: SPACEID                  ! ID of dataspace
+    integer(kind=Size_t) :: STRINGSIZE               ! String size
+    integer :: STRINGTYPE               ! String type
+
+    ! Executable code
+    call trace_begin ( me, 'LoadAllocFromHDF5DS_chararr1', cond=.false. )
+    call h5dOpen_f ( locID, name, setID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open dataset ' // trim(name) )
+    call h5dGet_type_f ( setID, stringType, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to get type for 1D char array ' // trim(name) )
+    call h5tGet_size_f ( stringType, stringSize, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to get string size for 1D char array ' // trim(name) )
+    if ( stringSize > len(value) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Value too long to fit in space given for 1D char array ' // trim(name) )
+    call h5dget_space_f ( setID, spaceID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open dataspace for dataset ' // trim(name) )
+    call get_DS_shape ( spaceID, shp, name )
+    lb = 1
+    if ( present(lowBound) ) lb = lowBound
+    ub = lb - 1 + shp(1)
+    call allocate_test ( value, ub, name, moduleName, lowBound=lb )
+    call h5dread_f ( setID, stringtype, value, (/ shp(1), ones(1:6) /), status )
+    call finishLoad ( name, status, spaceID, setID, stringType=stringType )
+    call trace_end ( cond=.false. )
+  end subroutine LoadAllocFromHDF5DS_chararr1
+
+  ! ---------------------------------  LoadAllocFromHDF5DS_chararr2  -----
+  subroutine LoadAllocFromHDF5DS_chararr2 ( locID, name, value )
+    ! This routine allocates an array and loads it with values from a DS
+    use Allocate_Deallocate, only: Allocate_Test
+    integer, intent(in) :: LOCID          ! Where to place it (group/file)
+    character (len=*), intent(in) :: NAME ! Name for this dataset
+    character (len=*), allocatable :: VALUE(:,:) ! The array itself
+
+    ! Local variables
+    integer :: Me = -1                  ! String index for trace cacheing
+    integer :: SETID                    ! ID of dataset
+    integer(hsize_t) :: SHP(2)          ! Shape of value
+    integer :: SPACEID                  ! ID of dataspace
+    integer :: STATUS                   ! Flag from HDF5
+    integer(kind=Size_t) :: STRINGSIZE               ! String size
+    integer :: STRINGTYPE               ! String type
+
+    ! Executable code
+    call trace_begin ( me, 'LoadAllocFromHDF5DS_chararr2', cond=.false. )
+    call h5dOpen_f ( locID, name, setID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open dataset ' // trim(name) )
+    call h5dGet_type_f ( setID, stringType, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to get type for 1D char array ' // trim(name) )
+    call h5tGet_size_f ( stringType, stringSize, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to get size for 1D char array ' // trim(name) )
+    if ( stringSize > len(value) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Value too long to fit in space given for 1D char array ' // trim(name) )
+    call h5dget_space_f ( setID, spaceID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open dataspace for dataset ' // trim(name) )
+    call get_DS_shape ( spaceID, shp, name )
+    call allocate_test ( value, int(shp(1)), int(shp(2)), name, moduleName )
+    call h5dread_f ( setID, stringtype, value, (/ shp, ones(1:5) /), status )
+    call finishLoad ( name, status, spaceID, setID, stringType=stringType )
+    call trace_end ( cond=.false. )
+  end subroutine LoadAllocFromHDF5DS_chararr2
+
+  ! ----------------------------------  LoadAllocFromHDF5DS_intarr1  -----
+  subroutine LoadAllocFromHDF5DS_intarr1 ( locID, name, value, lowBound )
+    ! This routine allocates an array and loads it with values from a DS
+    use Allocate_Deallocate, only: Allocate_Test
+    integer, intent(in) :: LOCID          ! Where to place it (group/file)
+    character (len=*), intent(in) :: NAME ! Name for this dataset
+    integer, allocatable :: VALUE(:)          ! The array itself
+    integer, intent(in), optional :: LowBound
+
+    ! Local variables
+    integer :: LB, UB
+    integer :: Me = -1                  ! String index for trace cacheing
+    integer :: SETID                    ! ID of dataset
+    integer(hsize_t) :: SHP(1)          ! Shape of value
+    integer :: SPACEID                  ! ID of dataspace
+    integer :: STATUS                   ! Flag from HDF5
+
+    ! Executable code
+    call trace_begin ( me, 'LoadAllocFromHDF5DS_intarr1', cond=.false. )
+    call h5dOpen_f ( locID, name, setID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open dataset ' // trim(name) )
+    call h5dget_space_f ( setID, spaceID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open dataspace for dataset ' // trim(name) )
+    call get_ds_shape ( spaceID, shp, name )
+    lb = 1
+    if ( present(lowBound) ) lb = lowBound
+    ub = lb - 1 + shp(1)
+    call allocate_test ( value, ub, name, moduleName, lowBound=lb )
+    call h5dread_f ( setID, H5T_NATIVE_INTEGER, value, &
+      & (/ shp, ones(1:6) /), status )
+    call finishLoad ( name, status, spaceID, setID )
+    call trace_end ( cond=.false. )
+  end subroutine LoadAllocFromHDF5DS_intarr1
+
+  ! ----------------------------------  LoadAllocFromHDF5DS_intarr2  -----
+  subroutine LoadAllocFromHDF5DS_intarr2 ( locID, name, value )
+    ! This routine allocates a allocatable array and loads it with values from a DS
+    use Allocate_Deallocate, only: Allocate_Test
+    use H5Global, only: H5T =>  H5T_Native_Integer ! hdf type
+    integer, intent(in) :: LOCID          ! Where to place it (group/file)
+    character (len=*), intent(in) :: NAME ! Name for this dataset
+    integer, allocatable :: VALUE(:,:)        ! The array itself
+    character(len=*), parameter :: Sfx = 'intarr2'
+
+    include 'LoadAllocFromHDF5DS.f9h'
+
+  end subroutine LoadAllocFromHDF5DS_intarr2
+
+  ! ----------------------------------  LoadAllocFromHDF5DS_intarr3  -----
+  subroutine LoadAllocFromHDF5DS_intarr3 ( locID, name, value )
+    ! This routine allocates a allocatable array and loads it with values from a DS
+    use Allocate_Deallocate, only: Allocate_Test
+    use H5Global, only: H5T =>  H5T_Native_Integer ! hdf type
+    integer, intent(in) :: LOCID          ! Where to place it (group/file)
+    character (len=*), intent(in) :: NAME ! Name for this dataset
+    integer, allocatable :: VALUE(:,:,:)      ! The array itself
+    character(len=*), parameter :: Sfx = 'intarr3'
+
+    include 'LoadAllocFromHDF5DS.f9h'
+
+  end subroutine LoadAllocFromHDF5DS_intarr3
+
+  ! ----------------------------------  LoadAllocFromHDF5DS_intarr4  -----
+  subroutine LoadAllocFromHDF5DS_intarr4 ( locID, name, value )
+    ! This routine allocates a allocatable array and loads it with values from a DS
+    use Allocate_Deallocate, only: Allocate_Test
+    use H5Global, only: H5T =>  H5T_Native_Integer ! hdf type
+    integer, intent(in) :: LOCID          ! Where to place it (group/file)
+    character (len=*), intent(in) :: NAME ! Name for this dataset
+    integer, allocatable :: VALUE(:,:,:,:)    ! The array itself
+    character(len=*), parameter :: Sfx = 'intarr4'
+
+    include 'LoadAllocFromHDF5DS.f9h'
+
+  end subroutine LoadAllocFromHDF5DS_intarr4
+
+  ! ----------------------------------  LoadAllocFromHDF5DS_logarr1  -----
+  subroutine LoadAllocFromHDF5DS_logarr1 ( locID, name, value, lowBound )
+    ! This routine allocates an array and loads it with values from a DS
+    use Allocate_Deallocate, only: Allocate_Test, DeAllocate_Test
+    integer, intent(in) :: LOCID          ! Where to place it (group/file)
+    character (len=*), intent(in) :: NAME ! Name for this dataset
+    logical, allocatable :: VALUE(:)          ! The array itself
+    integer, intent(in), optional :: LowBound
+
+    ! Local variables
+    integer :: LB, UB
+    integer :: Me = -1                  ! String index for trace cacheing
+    character, allocatable :: MyValue(:)      ! 'F' = false, 'T' = true
+
+    ! Executable code
+    call trace_begin ( me, 'LoadAllocFromHDF5DS_logarr1', cond=.false. )
+    call LoadAllocFromHDF5DS ( locID, name, myValue )
+    lb = 1
+    if ( present(lowBound) ) lb = lowBound
+    ub = lb - 1 + size(myValue)
+    call allocate_test ( value, ub, name, moduleName, lowBound=lb )
+    value = myValue == 'T'
+    call deallocate_test ( myValue, name, moduleName )
+    call trace_end ( cond=.false. )
+  end subroutine LoadAllocFromHDF5DS_logarr1
+
+  ! ----------------------------------  LoadAllocFromHDF5DS_dblarr1  -----
+  subroutine LoadAllocFromHDF5DS_dblarr1 ( locID, name, value, lowBound )
+    ! This routine allocates an array and loads it with values from a DS
+    use Allocate_Deallocate, only: Allocate_Test
+    integer, intent(in) :: LOCID          ! Where to place it (group/file)
+    character (len=*), intent(in) :: NAME ! Name for this dataset
+    double precision, allocatable :: VALUE(:) ! The array itself
+    integer, intent(in), optional :: LowBound
+
+    ! Local variables
+    integer :: LB, UB
+    integer :: Me = -1                  ! String index for trace cacheing
+    integer :: SETID                    ! ID of dataset
+    integer(hsize_t) :: SHP(1)          ! Shape of value
+    integer :: SPACEID                  ! ID of dataspace
+    integer :: STATUS                   ! Flag from HDF5
+
+    ! Executable code
+    call trace_begin ( me, 'LoadAllocFromHDF5DS_dblarr1', cond=.false. )
+    call h5dOpen_f ( locID, name, setID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open dataset ' // trim(name) )
+    call h5dget_space_f ( setID, spaceID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open dataspace for dataset ' // trim(name) )
+    call get_ds_shape ( spaceID, shp, name )
+    lb = 1
+    if ( present(lowBound) ) lb = lowBound
+    ub = lb - 1 + shp(1)
+    call allocate_test ( value, ub, name, moduleName, lowBound=lb )
+    call h5dread_f ( setID, H5T_NATIVE_DOUBLE, value, &
+      & (/ shp, ones(1:6) /), status )
+    call finishLoad ( name, status, spaceID, setID )
+    call trace_end ( cond=.false. )
+  end subroutine LoadAllocFromHDF5DS_dblarr1
+
+  ! ----------------------------------  LoadAllocFromHDF5DS_dblarr2  -----
+  subroutine LoadAllocFromHDF5DS_dblarr2 ( locID, name, value )
+    ! This routine allocates a allocatable array and loads it with values from a DS
+    use Allocate_Deallocate, only: Allocate_Test
+    use H5Global, only: H5T =>  H5T_Native_Double ! hdf type
+    integer, intent(in) :: LOCID          ! Where to place it (group/file)
+    character (len=*), intent(in) :: NAME ! Name for this dataset
+    double precision, allocatable :: VALUE(:,:) ! The array itself
+    character(len=*), parameter :: Sfx = 'dblarr2'
+
+    include 'LoadAllocFromHDF5DS.f9h'
+
+  end subroutine LoadAllocFromHDF5DS_dblarr2
+
+  ! ----------------------------------  LoadAllocFromHDF5DS_dblarr3  -----
+  subroutine LoadAllocFromHDF5DS_dblarr3 ( locID, name, value )
+    ! This routine allocates a allocatable array and loads it with values from a DS
+    use Allocate_Deallocate, only: Allocate_Test
+    use H5Global, only: H5T =>  H5T_Native_Double ! hdf type
+    integer, intent(in) :: LOCID          ! Where to place it (group/file)
+    character (len=*), intent(in) :: NAME ! Name for this dataset
+    double precision, allocatable :: VALUE(:,:,:) ! The array itself
+    character(len=*), parameter :: Sfx = 'dblarr3'
+
+    include 'LoadAllocFromHDF5DS.f9h'
+
+  end subroutine LoadAllocFromHDF5DS_dblarr3
+
+  ! ----------------------------------  LoadAllocFromHDF5DS_dblarr4  -----
+  subroutine LoadAllocFromHDF5DS_dblarr4 ( locID, name, value )
+    ! This routine allocates a allocatable array and loads it with values from a DS
+    use Allocate_Deallocate, only: Allocate_Test
+    use H5Global, only: H5T =>  H5T_Native_Double ! hdf type
+    integer, intent(in) :: LOCID          ! Where to place it (group/file)
+    character (len=*), intent(in) :: NAME ! Name for this dataset
+    double precision, allocatable :: VALUE(:,:,:,:) ! The array itself
+    character(len=*), parameter :: Sfx = 'dblarr4'
+
+    include 'LoadAllocFromHDF5DS.f9h'
+
+  end subroutine LoadAllocFromHDF5DS_dblarr4
+
+  ! ---------------------------------  LoadAllocFromHDF5DS_snglarr1  -----
+  subroutine LoadAllocFromHDF5DS_snglarr1 ( locID, name, value, lowBound )
+    ! This routine allocates an array and loads it with values from a DS
+    use Allocate_Deallocate, only: Allocate_Test
+    integer, intent(in) :: LOCID          ! Where to place it (group/file)
+    character (len=*), intent(in) :: NAME ! Name for this dataset
+    real, allocatable :: VALUE(:)             ! The array itself
+    integer, intent(in), optional :: LowBound
+
+    ! Local variables
+    integer :: LB, UB
+    integer :: Me = -1                  ! String index for trace cacheing
+    integer :: SETID                    ! ID of dataset
+    integer(hsize_t) :: SHP(1)          ! Shape of value
+    integer :: SPACEID                  ! ID of dataspace
+    integer :: STATUS                   ! Flag from HDF5
+
+    ! Executable code
+    call trace_begin ( me, 'LoadAllocFromHDF5DS_snglarr1', cond=.false. )
+    call h5dOpen_f ( locID, name, setID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open dataset ' // trim(name) )
+    call h5dget_space_f ( setID, spaceID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open dataspace for dataset ' // trim(name) )
+    call get_ds_shape ( spaceID, shp, name )
+    lb = 1
+    if ( present(lowBound) ) lb = lowBound
+    ub = lb - 1 + shp(1)
+    call allocate_test ( value, ub, name, moduleName, lowBound=lb )
+    call h5dread_f ( setID, H5T_NATIVE_REAL, value, &
+      & (/ shp, ones(1:6) /), status )
+    call finishLoad ( name, status, spaceID, setID )
+    call trace_end ( cond=.false. )
+  end subroutine LoadAllocFromHDF5DS_snglarr1
+
+  ! ---------------------------------  LoadAllocFromHDF5DS_snglarr2  -----
+  subroutine LoadAllocFromHDF5DS_snglarr2 ( locID, name, value )
+    ! This routine allocates a allocatable array and loads it with values from a DS
+    use Allocate_Deallocate, only: Allocate_Test
+    use H5Global, only: H5T =>  H5T_Native_Real ! hdf type
+    integer, intent(in) :: LOCID          ! Where to place it (group/file)
+    character (len=*), intent(in) :: NAME ! Name for this dataset
+    real, allocatable :: VALUE(:,:)           ! The array itself
+    character(len=*), parameter :: Sfx = 'snglarr2'
+
+    include 'LoadAllocFromHDF5DS.f9h'
+
+  end subroutine LoadAllocFromHDF5DS_snglarr2
+
+  ! ---------------------------------  LoadAllocFromHDF5DS_snglarr3  -----
+  subroutine LoadAllocFromHDF5DS_snglarr3 ( locID, name, value )
+    ! This routine allocates a allocatable array and loads it with values from a DS
+    use Allocate_Deallocate, only: Allocate_Test
+    use H5Global, only: H5T =>  H5T_Native_Real ! hdf type
+    integer, intent(in) :: LOCID          ! Where to place it (group/file)
+    character (len=*), intent(in) :: NAME ! Name for this dataset
+    real, allocatable :: VALUE(:,:,:)         ! The array itself
+    character(len=*), parameter :: Sfx = 'snglarr3'
+
+    include 'LoadAllocFromHDF5DS.f9h'
+
+  end subroutine LoadAllocFromHDF5DS_snglarr3
+
+  ! ---------------------------------  LoadAllocFromHDF5DS_snglarr4  -----
+  subroutine LoadAllocFromHDF5DS_snglarr4 ( locID, name, value )
+    ! This routine allocates a allocatable array and loads it with values from a DS
+    use Allocate_Deallocate, only: Allocate_Test
+    use H5Global, only: H5T =>  H5T_Native_Real ! hdf type
+    integer, intent(in) :: LOCID          ! Where to place it (group/file)
+    character (len=*), intent(in) :: NAME ! Name for this dataset
+    real, allocatable :: VALUE(:,:,:,:)       ! The array itself
+    character(len=*), parameter :: Sfx = 'snglarr4'
+
+    include 'LoadAllocFromHDF5DS.f9h'
+
+  end subroutine LoadAllocFromHDF5DS_snglarr4
+
   ! ---------------------------------  LoadPtrFromHDF5DS_chararr1  -----
   subroutine LoadPtrFromHDF5DS_chararr1 ( locID, name, value, lowBound )
     ! This routine allocates an array and loads it with values from a DS
@@ -5972,6 +6330,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.145  2018/05/15 03:16:59  vsnyder
+! Add LoadAllocFromHDF5DS
+!
 ! Revision 2.144  2018/05/11 21:29:52  pwagner
 ! May be adding_to during SaveAsHDF5DS_textFile; if hdfVerbose print all warnings and quibbles
 !
