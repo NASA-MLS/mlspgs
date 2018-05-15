@@ -4424,7 +4424,7 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
       if ( fwdModelConf%useTScat ) then
         ! Get interpolating coefficients for Mie tables onto path
         ! Make sure Mie tables have been loaded.
-        if ( .not. associated(t_s) ) call MLSMessage ( MLSMSG_Error, &
+        if ( .not. allocated(t_s) ) call MLSMessage ( MLSMSG_Error, &
           & moduleName, "UseTScat requested but no Mie tables loaded" )
         call get_eta_stru ( t_s, t_path_c, eta_T_path_c )
         call get_eta_stru ( iwc_s, iwc_path(1:npf:ngp1,1), eta_IWC_path_c )
@@ -4688,6 +4688,9 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.392  2018/05/14 23:40:58  vsnyder
+! Change to sparse eta representation
+!
 ! Revision 2.390  2017/11/01 00:11:32  vsnyder
 ! Comment out a bunch of testing stuff, soon to disappear entierly
 !

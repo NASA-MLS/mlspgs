@@ -311,7 +311,7 @@ contains
     ! it separately for each forward model run.
     call PFA_Stuff ! Below
 
-    if ( fwdModelConf%useTScat .and. .not. associated(f_s) ) then
+    if ( fwdModelConf%useTScat .and. .not. allocated(f_s) ) then
       call output ( 'UseTScat requested but no Mie tables loaded', advance='yes' )
       error = .true.
     end if
@@ -495,11 +495,11 @@ contains
             & 'Beta_group(b)%PFA(sx)%data', moduleName, fill=0 )
           do p = 1, size(fwdModelConf%beta_group(b)%pfa(sx)%molecules)
             if ( fwdModelConf%beta_group(b)%pfa(sx)%molecules(p) == l_cloudIce ) then
-              if ( .not. associated(beta_c_a) ) &
+              if ( .not. allocated(beta_c_a) ) &
                 call MLSMessage ( MLSMSG_Error, moduleName, &
                   'No Mie tables for Cloud_A beta' )
               cycle
-              if ( .not. associated(beta_c_s) )  &
+              if ( .not. allocated(beta_c_s) )  &
                 call MLSMessage ( MLSMSG_Error, moduleName, &
                   'No Mie tables for Cloud_S beta' )
               cycle
@@ -1577,6 +1577,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.141  2018/04/11 22:25:23  vsnyder
+! Remove USE for unused names
+!
 ! Revision 2.140  2017/09/20 01:07:57  vsnyder
 ! Add check that filter shapes are provided if frequency averaging is
 ! selected.
