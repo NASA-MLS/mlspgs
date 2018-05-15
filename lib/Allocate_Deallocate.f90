@@ -60,6 +60,7 @@ module Allocate_Deallocate
     module procedure Allocate_Test_RealR8_1D, Allocate_Test_RealR8_2D
     module procedure Allocate_Test_RealR8_3D, Allocate_Test_RealR8_4D
     ! For allocatable instead of pointer, with scalar arguments for bounds
+    module procedure AllocateA_Test_Character_1D, AllocateA_Test_Character_2D
     module procedure AllocateA_Test_Integer_1D, AllocateA_Test_Integer_2D
     module procedure AllocateA_Test_Integer_3D, AllocateA_Test_Integer_4D
     module procedure AllocateA_Test_Logical_1D, AllocateA_Test_Logical_2D
@@ -104,6 +105,7 @@ module Allocate_Deallocate
     module procedure Deallocate_Test_RealR8_1D, Deallocate_Test_RealR8_2D
     module procedure Deallocate_Test_RealR8_3D, Deallocate_Test_RealR8_4D
     ! For allocatable instead of pointer argument
+    module procedure DeallocateA_Test_Character_1D, DeallocateA_Test_Character_2D
     module procedure DeallocateA_Test_Integer_1D, DeallocateA_Test_Integer_2D
     module procedure DeallocateA_Test_Integer_3D, DeallocateA_Test_Integer_4D
     module procedure DeallocateA_Test_Logical_1D, DeallocateA_Test_Logical_2D
@@ -963,6 +965,29 @@ contains
   end subroutine Allocate_Test_RealR4_4d_a
 
   ! For allocatable instead of pointer To_Allocate
+  ! ---------------------------------  Allocate_Test_Character_1d  -----
+  subroutine AllocateA_Test_Character_1d ( To_Allocate, Dim1, &
+    & ItsName, ModuleName, LowBound, Fill )
+    character(len=*), allocatable, dimension(:) :: To_Allocate
+    integer, intent(in) :: Dim1    ! Upper bound of first dim. of To_Allocate
+    character(len=*), intent(in) :: ItsName, ModuleName
+    integer, intent(in), optional :: LowBound     ! Lower bound, default 1
+    character(len=*), intent(in), optional :: Fill
+    character(len=1), parameter :: Default = ''
+    include "AllocateA_Test_1D.f9h"
+  end subroutine AllocateA_Test_Character_1d
+  ! ---------------------------------  Allocate_Test_Character_2d  -----
+  subroutine AllocateA_Test_Character_2d ( To_Allocate, Dim1, Dim2, &
+    & ItsName, ModuleName, Low1, Low2, Fill )
+    character(len=*), allocatable, dimension(:,:) :: To_Allocate
+    integer, intent(in) :: Dim1    ! Upper bound of first dim. of To_Allocate
+    integer, intent(in) :: Dim2    ! Upper bound of second dim. of To_Allocate
+    character(len=*), intent(in) :: ItsName, ModuleName
+    integer, intent(in), optional :: Low1, Low2 ! default 1
+    character(len=*), intent(in), optional :: Fill ! To fill allocated array
+    character(len=1), parameter :: Default = ''
+    include "AllocateA_Test_2D.f9h"
+  end subroutine AllocateA_Test_Character_2d
   ! -----------------------------------  Allocate_Test_Integer_1d  -----
   subroutine AllocateA_Test_Integer_1d ( To_Allocate, Dim1, &
     & ItsName, ModuleName, LowBound, Fill )
@@ -1436,6 +1461,16 @@ contains
 
 ! For allocatable instead of pointer arguments
 
+  ! -------------------------------  Deallocate_Test_Character_1d  -----
+  subroutine DeallocateA_Test_Character_1d ( To_Deallocate, ItsName, ModuleName )
+    character(len=*), allocatable, dimension(:) :: To_Deallocate
+    include "DeallocateA_Test.f9h"
+  end subroutine DeallocateA_Test_Character_1d
+  ! -------------------------------  Deallocate_Test_Character_2d  -----
+  subroutine DeallocateA_Test_Character_2d ( To_Deallocate, ItsName, ModuleName )
+    character(len=*), allocatable, dimension(:,:) :: To_Deallocate
+    include "DeallocateA_Test.f9h"
+  end subroutine DeallocateA_Test_Character_2d
   ! --------------------------------  DeallocateA_Test_Integer_1d  -----
   subroutine DeallocateA_Test_Integer_1d ( To_Deallocate, ItsName, ModuleName )
     integer, allocatable, dimension(:) :: To_Deallocate
@@ -2114,6 +2149,9 @@ contains
 end module Allocate_Deallocate
 
 ! $Log$
+! Revision 2.56  2018/05/15 03:17:36  vsnyder
+! Add 1D and 2D character allocatable versions
+!
 ! Revision 2.55  2018/04/19 02:00:36  vsnyder
 ! Compute address for allocate/deallocate tracking.  Remove USE statements for
 ! unused names.
