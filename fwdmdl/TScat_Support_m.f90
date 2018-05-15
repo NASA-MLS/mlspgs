@@ -812,8 +812,8 @@ contains
     integer :: Q ! Loop index
     type (Channels_T), pointer, dimension(:) :: Channels
     type (VectorValue_T), pointer :: TScat, TScat2
-    if ( .not. associated(p) .or. .not. associated(F_s) .or. &
-      &  .not. associated(dP_dT) ) &
+    if ( .not. allocated(p) .or. .not. allocated(F_s) .or. &
+      &  .not. allocated(dP_dT) ) &
       & call announce_error ( 'TScat table computation requires Mie tables.' )
     if ( FwdModelConf%do_conv ) call announce_error ( &
       & 'Convolution and TScat computation are incompatible.' )
@@ -905,6 +905,9 @@ contains
 end module TScat_Support_m
 
 ! $Log$
+! Revision 2.16  2018/05/15 03:26:25  vsnyder
+! Change Mie tables from pointer to allocatable
+!
 ! Revision 2.15  2018/05/14 23:40:58  vsnyder
 ! Change to sparse eta representation
 !
