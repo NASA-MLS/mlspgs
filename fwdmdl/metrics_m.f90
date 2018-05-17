@@ -64,8 +64,8 @@ contains
 
   ! Compute the surface height and the tangent height at Phi_T.
 
-    use Get_Eta_Matrix_M, only: Get_Eta_Sparse
     use MLSKinds, only: RP
+    use Sparse_Eta_m, only: Sparse_Eta_t
 
     ! inputs:
 
@@ -102,22 +102,21 @@ contains
                                        ! above mean sea level (whatever that
                                        ! means) on P_Basis.
 
-    integer :: First, Last             ! Nonzeros in Eta_T
-    real(rp) :: ETA_T(size(p_basis))   ! Interpolating coefficients
+    type(sparse_eta_t) :: ETA_T        ! Interpolating coefficients
 
     ! Get interpolating coefficients (eta_t) from p_basis to phi_t
-    call get_eta_sparse ( p_basis, phi_t, eta_t, first, last )
+    call eta_t%eta ( p_basis, phi_t )
 
     if ( present(surf_height) ) then
       ! We set the surface reference at the actual surface height if we
       ! have it, and adjust r_eq and h_tan relative to this, and adjust
       ! h_ref accordingly.
-      h_surf = dot_product(surf_height(first:last), eta_t(first:last))
+      h_surf = eta_t%row_dot_vec ( 1, surf_height )
     else
       ! If we don't have the actual surface height, we set the surface
       ! reference at the input z_ref and adjust r_eq and h_tan relative
       ! to this, and adjust h_ref accordingly.
-      h_surf = dot_product(h_ref(1,first:last), eta_t(first:last))
+      h_surf = eta_t%row_dot_vec ( 1, h_ref(1,:) )
     end if
 
     ! compute the tangent height above H_surf.
@@ -127,10 +126,9 @@ contains
       ! below surface. This will be negative because tan_press < z_ref.
       ! present(tan_press) requires present(surf_temp).  We don't need to
       ! subtract h_surf here because this gives km from the z_ref surface.
-      h_tan = dot_product(surf_temp(first:last),eta_t(first:last)) * &
-        &     (tan_press-z_ref)/14.8
+      h_tan = eta_t%row_dot_vec ( 1, surf_temp ) * (tan_press-z_ref)/14.8
     else
-      h_tan = dot_product(h_ref(tan_ind_f,first:last),eta_t(first:last)) - h_surf
+      h_tan = eta_t%row_dot_vec ( 1, h_ref(tan_ind_f,:) ) - h_surf
     end if
 
   end subroutine Tangent_Metrics
@@ -156,38 +154,38 @@ contains
 
     use Constants, only: Pi, Rad2Deg
     use Dump_0, only: Dump
-    use Get_Eta_Matrix_M, only: Get_Eta_Sparse
     use GLNP, only: NG, NGP1
     use IEEE_Arithmetic, only: IEEE_Is_NaN
     use MLSKinds, only: RP
     use MLSMessageModule, only: MLSMessage, MLSMsg_Error, MLSMsg_Warning
     use MLSStringLists, only: SwitchDetail
     use Output_M, only: Output
+    use Sparse_Eta_m, only: Sparse_Eta_t
     use Toggles, only: Switches
 
     ! inputs:
 
     real(rp), intent(in) :: Phi_t      ! Orbit projected tangent geodetic angle
     integer, intent(in) :: Tan_ind     ! Tangent height index, 1 = center of
-    !                                    longest path
+                                       ! longest path
     real(rp), intent(in) :: P_basis(:) ! Horizontal temperature representation
-    !                                    basis, radians
+                                       ! basis, radians
     real(rp), intent(in) :: H_ref(:,:) ! Geodetic heights (above R_Eq) by z_ref
                                        ! and p_basis, km
     real(rp), intent(in) :: H_Surf     ! Height of the pressure reference
-    !                                    surface z_ref(1) above R_eq at phi_t, km
+                                       ! surface z_ref(1) above R_eq at phi_t, km
     real(rp), intent(in) :: Tan_Ht_s   ! Tangent height above H_Surf -- negative
-    !                                    for Earth-intersecting ray, km
+                                       ! for Earth-intersecting ray, km
     real(rp), intent(in) :: Z_ref(:)   ! -log pressures (zetas) for which
-    !                                    heights/temps are needed.  Only used
-    !                                    where H/Phi iteration fails.
+                                       ! heights/temps are needed.  Only used
+                                       ! where H/Phi iteration fails.
     real(rp), intent(in) :: R_Eq       ! Equivalent circular earth radius of
-    !                                    true surface at Phi_T, km
+                                       ! true surface at Phi_T, km
 
     ! outputs:
     real(rp), intent(out) :: Req_s     ! H_Surf + R_Eq, Equivalent circular
-    !                                    earth radius of pressure reference
-    !                                    surface at Phi_T, km
+                                       ! earth radius of pressure reference
+                                       ! surface at Phi_T, km
     integer, intent(out) :: Vert_Inds(:) ! What to use in h_ref, 1:n_path
     real(rp), intent(out) :: H_Path(:) ! computed path heights, referenced to
                                        ! equivalent circular Earth center, km
@@ -227,7 +225,7 @@ contains
     real(rp) :: Theta      ! 2.0_rp*Acos(tan_ht/req_s), angle between incident
                            ! and reflected ray for subsurface tangent height
 
-    real(rp) :: Eta_T(size(p_basis)) ! Interpolating coefficients
+    type(sparse_eta_t) :: ETA_T        ! Interpolating coefficients
     real(rp) :: Phi_Offset(size(vert_inds)) ! Orbit projected tangent geodetic
                            ! angle if the ray is not an earth intersecting
                            ! ray.  Otherwise the orbit projected tangent
@@ -474,11 +472,12 @@ path: do i = i1, i2
       ! We shouldn't get here at all, so don't worry about efficiency
       if ( stat(1) < good .or. stat(n_path) < good ) then
         call MLSMessage ( MLSMSG_Warning, moduleName, 'Resorting to 1d' )
-        call get_eta_sparse ( p_basis, phi_t, eta_t )
+        ! Get interpolating coefficients (eta_t) from p_basis to phi_t
+        call eta_t%eta ( p_basis, phi_t )
         do i1 = 1, n_path
           if ( stat(i1) < good ) then
             ! Interpolate to tangent phi as a first guess
-            h_path(i1) = dot_product(h_ref(vert_inds(i1),:),eta_t) + r_eq
+            h_path(i1) = eta_t%row_dot_vec ( 1, h_ref(vert_inds(i1),:) ) + r_eq
           end if
         end do
         ! Make sure H is monotone increasing away from the tangent point
@@ -868,11 +867,11 @@ path: do i = i1, i2
     ! inputs:
 
     integer, intent(in) :: Tan_Ind      ! Tangent height index, 1 = center of
-    !                                     longest path
+                                        ! longest path
     integer, intent(in) :: N_Tan        ! Tangent index in path, usually n_path/2
     type(grids_t), intent(in) :: T_Sv   ! Temperature state vector stuff
     integer, intent(in) :: Vert_Inds(:) ! First (vertical) subscripts for
-    !                                    [zt]_ref  at points on the path
+                                        ![zt]_ref  at points on the path
     real(rp), intent(in) :: T_Ref(:,:)  ! Temperatures at Z_Ref X t_sv%phi_basis
     real(rp), intent(in) :: dHidZij(:,:)! Vertical derivative at Z_Ref X t_sv%phi_basis
     real(rp), intent(in) :: P_Path(:)   ! Phi's on the path
@@ -885,38 +884,38 @@ path: do i = i1, i2
 
     real(rp), intent(out) :: T_Path(:)  ! computed temperatures on the path                            
     real(rp), intent(out) :: dHitdZi(:) ! derivative of height wrt zeta
-    !                                    --may be useful in future computations
+                                        !--may be useful in future computations
 
     ! optional inputs
 
     real(rp), optional, intent(in) :: ddHidHidTl0(:,:,:) ! second order
-    !          reference temperature derivatives. This is (height, phi_basis,
-    !          zeta_basis). Needed only if present(dHidTlm).
+             ! reference temperature derivatives. This is (height, phi_basis,
+             ! zeta_basis). Needed only if present(dHidTlm).
     real(rp), optional, intent(inout) :: dHidTlm(:,:,:) ! reference temperature
-    !          derivatives. This gets adjusted so that at ref_h(1,@tan phi)) is
-    !          0.0 for all temperature coefficients.
-    !          This is height X zeta_basis X phi_basis
+             ! derivatives. This gets adjusted so that at ref_h(1,@tan phi)) is
+             ! 0.0 for all temperature coefficients.
+             ! This is height X zeta_basis X phi_basis
     real(rp), optional, intent(in) :: Z_Ref(:)   ! -log pressures (zetas) for
-    !          which derivatives are needed.  Only the parts from the tangent
-    !          outward are used.  Needed only if present(dHidTlm).
+             ! which derivatives are needed.  Only the parts from the tangent
+             ! outward are used.  Needed only if present(dHidTlm).
 
     ! Optional outputs.
 
     real(rp), optional, intent(out), target :: ddHtdHtdTl0(:)  ! Second order
-    !          derivatives of height w.r.t T_Ref at the tangent only -- used
-    !          for antenna affects. Computed if present(dHidTlm).
+             ! derivatives of height w.r.t T_Ref at the tangent only -- used
+             ! for antenna affects. Computed if present(dHidTlm).
     real(rp), optional, intent(out) :: dHitdTlm(:,:)   ! Derivative of path
-    !          position wrt temperature state vector (t_sv%zet_basis X t_sv%phi_basis)
+             ! position wrt temperature state vector (t_sv%zet_basis X t_sv%phi_basis)
     real(rp), optional, intent(out), target :: dHtdTl0(:)      ! First order derivatives
-    !          of height w.r.t T_Ref at the tangent only.  Computed if
-    !          present(dHidTlm).
+             ! of height w.r.t T_Ref at the tangent only.  Computed if
+             ! present(dHidTlm).
     real(rp), optional, intent(out) :: dHtdZt          ! Height derivative wrt
-    !          pressure at the tangent.  Computed if present(dHidTlm).
+             ! pressure at the tangent.  Computed if present(dHidTlm).
     type(sparse_eta_t), optional, intent(inout) :: Eta_ZP ! Interpolating
-    !          coefficients for Temperature from Zeta X Phi to the path
+             ! coefficients for Temperature from Zeta X Phi to the path
     logical, optional, intent(out) :: Do_Calc_Hyd(:,:) ! Nonzero locator for
-    !          hydrostatic calculations.  Computed if present(dHidTlm).
-    !          This is Path X StateVector = Path X ( Zeta * Phi )
+             ! hydrostatic calculations.  Computed if present(dHidTlm).
+             ! This is Path X StateVector = Path X ( Zeta * Phi )
     real(rp), optional, intent(out) :: Tan_Phi_t ! temperature at the tangent
 
     ! Local variables.
@@ -1088,9 +1087,9 @@ path: do i = i1, i2
 
     real(rp), intent(in) :: phi_t      ! Orbit projected tangent geodetic angle
     integer, intent(in) :: tan_ind     ! Tangent height index, 1 = center of
-    !                                     longest path
+                                       !  longest path
     real(rp), intent(in) :: p_basis(:) ! Horizontal temperature representation
-    !                                     basis
+                                       !  basis
     real(rp), intent(in) :: z_ref(:)   ! Reference zetas
     real(rp), intent(in) :: h_ref(:,:) ! Heights by z_ref and p_basis
     real(rp), intent(in) :: R_eq       ! equivalent elliptical earth radius at
@@ -1098,7 +1097,7 @@ path: do i = i1, i2
     real(rp), intent(in) :: H_Surf     ! Height of the pressure reference
                                        ! surface
     real(rp), intent(in) :: H_Tan      ! Tangent height above H_Surf -- negative
-    !                                     for Earth-intersecting ray
+                                       !  for Earth-intersecting ray
     real(rp), intent(in) :: p_path(:)  ! From Height_Metrics
 
     ! outputs:
@@ -1198,6 +1197,9 @@ path: do i = i1, i2
 end module Metrics_m
 
 ! $Log$
+! Revision 2.87  2018/05/14 23:37:35  vsnyder
+! Change to sparse eta representation
+!
 ! Revision 2.86  2017/09/20 01:16:22  vsnyder
 ! Revise some dumping, delete a redundant dump
 !

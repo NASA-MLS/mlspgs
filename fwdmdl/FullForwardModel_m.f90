@@ -580,7 +580,6 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
     use ForwardModelVectorTools, only: GetQuantityForForwardModel
     use Geolocation_0, only: H_V_Geod
     use Geometry, only: Get_R_EQ
-    use Get_ETA_Matrix_M, only: Eta_D_T ! Type for Eta struct
     use Get_IEEE_NaN_m, only: Fill_IEEE_NaN
     use HessianModule_1, only: Hessian_T
 !Q    use HGridsDatabase, only: HGrid_T
@@ -604,6 +603,7 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
     use Physics, only: SpeedOfLight
     use PointingGrid_M, only: PointingGrids, PointingGrid_T
     use QTM_Interpolation_Weights_3D_m, only: S_QTM_t
+    use Read_Mie_m, only: IWC_S, T_S
     use Slabs_sw_m, only: AllocateSLABS, DestroyCompleteSLABS, SLABS_Struct
     use Sparse_Eta_m, only: Sparse_Eta_t
     use Sparse_m, only: Sparse_t
@@ -1036,9 +1036,10 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
     ! Tangent point coordinates on GL zeta grid.  Used only for QTM.
     type (H_V_Geod) :: Tan_Pt_Geod(max_f)
 
-    ! Interpolation factors for Temperature and IWC (not geometric interpolation
-    ! factors) to put Mie Beta_c_a and Beta_c_s into path
-    type (Eta_d_t), dimension(s_ts*max_c) :: Eta_IWC_path_C, Eta_T_path_C
+    ! Interpolation factors for Temperature, IWC, and Temperature X IWC (not
+    ! geometric interpolation factors) to put Mie Beta_c_a and Beta_c_s into
+    ! path
+    type (Sparse_Eta_t) :: Eta_IWC_Path_c, Eta_T_IWC_Path_c, Eta_T_Path_c
 
 ! Channel information from the signals database as specified by fwdModelConf
     type (Channels_T), pointer, dimension(:) :: Channels
@@ -1065,9 +1066,6 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
     ! Interpolation coefficients from Freq X Zeta X Horizontal (phi or QTM)
     ! basis to path for all species
     type (Sparse_Eta_t) :: Eta_fzp(size(fwdModelConf%beta_group))
-!Q    type (Value_QTM_3D_Lists_t) :: Eta_fzQ(n_frq_dep) ! Interpolation coefficients
-!Q                                  ! for frequency-dependent species, computed
-!Q                                  ! from Eta_zQ and frequency grids.
     ! Interpolation from horizontal (phi or QTM) basis to path for each VMR.
     type (Sparse_Eta_t) :: Eta_p(size(fwdModelConf%beta_group))
     ! Interpolation coefficients from horizontal (phi or QTM) basis to path
@@ -1078,13 +1076,6 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
     type (Sparse_Eta_t) :: Eta_zp_T
     ! Interpolation coefficients from zeta X phi basis to path for all species
     type (Sparse_Eta_t) :: Eta_zp(size(fwdModelConf%beta_group))
-!Q    type (value_QTM_2D_lists_t) :: Eta_zQ(s_qtm*size(grids_f%values)) ! Interpolation
-!Q                                  ! coefficients from 3D QTM state vector to
-!Q                                  ! path for VMRs, taking only zeta and QTM
-!Q                                  ! position into account.  For each frequency-
-!Q                                  ! dependent VMR, there's an index into Eta_fzQ.
-!Q    type (Value_QTM_2D_Lists_t) :: Eta_zQT ! Interpolation coefficients
-!Q                                  ! from 3D QTM to path for temperature.
     ! Interpolation coefficients from zeta for each VMR to path GL zeta.
     type (Sparse_Eta_t) :: Eta_z(size(fwdModelConf%beta_group))
     type (Sparse_Eta_t) :: Eta_zzT ! Interpolation coefficients from
@@ -1336,7 +1327,7 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
 !         end if
 !       end do
 !       allocate ( eta_zqT%eta(max_f) )
-    else
+!     else
       ! Interpolation coefficients for Phi for temperature
       call eta_p_T%create ( max_f, no_sv_p_T, 2*max_f, what=grids_tmp%mol(1) )
       ! Interpolation coefficients for Zeta X Phi for temperature
@@ -1360,6 +1351,15 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
                               & ( grids_f%l_p(i) - grids_f%l_p(i-1) ), &
                               & 2*max_f, what=grids_f%mol(i) )
       end do
+    end if
+    if ( fwdModelConf%useTScat ) then
+      ! Create them here instead of in One_Pointing so as not to need to
+      ! do it for each pointing.
+      if ( .not. allocated(t_s) ) call MLSMessage ( MLSMSG_Error, &
+        & moduleName, "UseTScat requested but no Mie tables loaded" )
+      call eta_IWC_path_c%create ( max_c, size(IWC_s)*size(T_s), 2*max_c )
+      call eta_T_path_c%create ( max_c, size(IWC_s)*size(T_s), 2*max_c )
+      call eta_T_IWC_path_c%create ( max_c, size(IWC_s)*size(T_s), 2*max_c )
     end if
 
     ! Loop over sidebands ----------------------------------------------------
@@ -1436,7 +1436,7 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
 
       else
         ! Do ray tracing at specified scattering angles
-        call generate_TScat
+        call generate_TScat ( fwdModelConf )
       end if
 
       call Trace_End ( 'ForwardModel.PointingLoop', &
@@ -2367,15 +2367,14 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
     end subroutine Frequency_Setup_2
 
   ! .............................................  Generate_TScat  .....
-    subroutine Generate_TScat
+    subroutine Generate_TScat ( FwdModelConf )
 
       ! Generate tables of TScat and its derivatives w.r.t. temperature
       ! and IWC.  The geometric calculations are described in wvs_074.
 
       use Constants, only: PI
       use Convolve_All_m, only: Store_Other_Deriv, Store_Temperature_Deriv
-      use ForwardModelConfig, only: QtyStuff_t
-      use Get_Eta_Matrix_m, only: Get_Eta_Sparse, Get_Eta_1D_Hunt
+      use ForwardModelConfig, only: ForwardModelConfig_T, QtyStuff_t
       USE Load_SPS_Data_m, only: FindInGrid
       use MLSNumerics, only: Coefficients, InterpolateArraySetup, &
         & InterpolateArrayTeardown
@@ -2383,13 +2382,16 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
       use Molecules, only: L_CloudIce
       use Read_Mie_m, only: DP_DIWC, DP_DT, F_S, IWC_S, P, T_S, Theta_S
       use Sort_m, only: Sortp
+      use Sparse_Eta_m, only: Sparse_Eta_t
       use Tscat_Support_m, only: Interpolate_P_To_Theta_E
       use VectorsModule, only: Dump
+
+      type(forwardModelConfig_T), intent(in) :: FwdModelConf
 
       real(rp) :: DPhi         ! Scat_Phi - Phi_Ref
       real(rp) :: DPhi_Xi      ! dPhi - xi = psi in wvs-074
       real(rp) :: DXi          ! acos(cos(xis(sort_xi(ptg_i)) - xis(sort_xi(ptg_i-1))))
-      real(rp) :: Eta_s(size(Grids_tmp%phi_basis)) ! Coeffs to Scat_Tan_Phi
+      type(sparse_eta_t) :: Eta_s ! Coeffs to Scat_Tan_Phi
       real(rp) :: Phi_Old      ! Used during iteration for Scat_Tan_Phi
       real(rp) :: Phi_Ref      ! Tangent phi for the scattered ray
       real(rp) :: Rads(noUsedChannels,4*nlvl+2*scatteringAngles%template%noSurfs)
@@ -2398,8 +2400,12 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
       real(r4) :: K_Temp_TScat(noUsedChannels,size(rads,2),s_t*sv_t_len)
       real(rp) :: K_Temp_p(s_t*sv_t_len) ! K_Temp convolved with P
       real(rp) :: LogIWC       ! log10(iwc)
+      real(rp) :: P_On_T_IWC(size(p,3)) ! P interpolated to T and IWC for one
+                               ! frequency and several Theta_e's.
       real(rp) :: P_On_Xi(size(rads,2)) ! P * sin(abs(theta)) interpolated
                                ! to scattering point IWC and T for each xi
+      real(rp), pointer :: P_T_IWC(:) ! 1D pointer to P(:,:,theta_i,frq_i):
+                               ! the T x IWC space for particular theta and frq
       real(rp) :: dP_dIWC_On_Xi(size(rads,2)) ! dP/dIWC * sin(abs(theta)) interpolated
                                ! to scattering point IWC and T for each xi
       real(rp) :: dP_dT_On_Xi(size(rads,2)) ! dP/dT * sin(abs(theta)) interpolated
@@ -2421,16 +2427,13 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
       real(rp) :: Xis(size(rads,2))
 
       ! Interpolating factors
-      real(rp) :: Eta_IWC(0:1) ! for current IWC - for Mie tables
-      real(rp) :: Eta_T(0:1)   ! for current temperature
-      real(rp) :: Eta_T_IWC(0:1,0:1) ! for both
+      type(sparse_eta_t) :: Eta_IWC, Eta_T, Eta_T_IWC
 
       integer :: Beg_Pos_Theta ! 1 if theta_s(1) /= 0, else 2
       integer :: IWC_IX        ! Which IWC index for phase function to use
       integer :: T_IX          ! Which Temperature index for phase functio to use
 
       integer :: F_I           ! Frequency (channel) index
-      integer :: First_s, Last_s ! How much of Eta_s to use
       logical :: Forward       ! Half-ray is an earth-intersecting ray
                                ! in the forward direction, xi >= xi_sub
       integer :: Freq_Ix(noUsedChannels) ! Frequency indices for phase tables
@@ -2576,15 +2579,17 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
             ! Get interpolating factors for scattering-point IWC to phase function
             ! IWC_s for Mie tables.
             ! IWC_s(iwc_ix) <= logIWC < IWC_s(iwc_ix+1_).
-            call get_eta_1d_hunt ( IWC_s, logIWC, eta_iwc, iwc_ix )
-            ! Get interpolating factors for scattering-point temperature to phase
-            ! function temperatures.
-            ! T_s(T_ix) <= temp%values(zeta_i,phi_i) < T_s(T_ix+1).
-            call get_eta_1d_hunt ( T_s, temp%values(zeta_i,phi_i), eta_t, t_ix )
+            reject = logIWC < IWC_s(1) .or. logIWC > IWC_s(size(IWC_s))
+            if ( .not. reject ) then
+              ! Get interpolating factors for scattering-point temperature to phase
+              ! function temperatures.
+              ! T_s(T_ix) <= temp%values(zeta_i,phi_i) < T_s(T_ix+1).
+              reject = temp%values(zeta_i,phi_i) < T_s(1) .or. &
+                     & temp%values(zeta_i,phi_i) > T_s(size(T_s))
+            end if
 
             ! Reject the scattering point if IWC or T is outside the Mie table range.
-            if ( iwc_ix < 1 .or. iwc_ix >= size(IWC_s) .or. &
-               & t_ix < 1 .or. t_ix >= size(T_s) ) then
+            if ( reject ) then
               call output ( phi_i, before='Scattering point at (' )
               call output ( zeta_f, before=',' )
               call output ( mod(real(TScat%template%phi(1,phi_i)),360.0), before=') = (' )
@@ -2592,13 +2597,10 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
                 & after=') rejected because T or IWC is outside Mie table range.' )
               call output ( temp%values(zeta_i,phi_i), format='(f6.2)', before='  T = ' )
               call output ( logIWC, before=', log10(IWC) = ', advance='yes' )
-              reject = .true.
             end if
           end if
 
           if ( .not. reject ) then
-            forall ( ptg_i=0:1, ptg_j = 0:1 ) &
-              & eta_t_iwc(ptg_i,ptg_j) = eta_t(ptg_i) * eta_iwc(ptg_j)
 
             scat_phi = mod(TScat%template%phi(1,phi_i),360.0_r8) * deg2rad
 
@@ -2607,10 +2609,8 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
 
             dPhi = scat_phi - phi_ref
             ! Interpolate in H_GLGrid at (phi_i,zeta_f) to get Scat_Ht
-            call get_eta_sparse ( Grids_tmp%phi_basis, scat_phi, &
-                                & eta_s, first_s, last_s )
-            scat_ht = dot_product(h_glgrid(zeta_f,first_s:last_s), &
-                   &             eta_s(first_s:last_s)) + r_eq
+            call eta_s%eta ( Grids_tmp%phi_basis, scat_phi )
+            scat_ht = eta_s%row_dot_vec ( 1, h_glgrid(zeta_f,:) )
 
             ! Subsurface scattering points handled by explicit angles
             if ( scat_ht < r_eq ) then
@@ -2668,11 +2668,10 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
             do i = 1, 20
               phi_old = scat_tan_phi
 
-              call get_eta_sparse ( Grids_tmp%phi_basis, scat_tan_phi, &
-                                  & eta_s, first_s, last_s )
-
-              scat_tan_ht = dot_product(h_glgrid(ptg_f,first_s:last_s), &
-                          &             eta_s(first_s:last_s)) + r_eq
+              ! Interpolate in H_GLGrid at (phi_i,zeta_f) to get Scat_Tan_Ht
+              call eta_s%eta ( Grids_tmp%phi_basis, scat_tan_phi )
+              scat_tan_ht = eta_s%row_dot_vec ( 1, h_glgrid(zeta_f,:) ) + &
+                          & r_eq
 
               ! Compute scattering angle and tan phi for the ray to be
               ! scattered.  This is measured anti clockwise from the ray from
@@ -2861,6 +2860,13 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
           !%
           ! which can be expressed in matrix-vector form as $\xi^T Z \eta$.
 
+          ! Get bilinear interpolation coefficients from T_s X IWC_s to LogIWC
+          ! and temp%values(zeta_i,phi_i)
+          call eta_iwc%eta ( IWC_s, logIWC )
+          call eta_t%eta ( T_s, temp%values(zeta_i,phi_i) )
+          call eta_t_iwc%eta ( eta_t, eta_iwc )
+
+          ! Get spline interpolation coefficients from Theta_e to Xis
           call interpolateArraySetup ( theta_e(:n_theta_e), xis(sort_xi(:i_r)), &
             & method='S', coeffs=coeffs_Theta_e_Xi, extrapolate='P' )
           do f_i = 1, noUsedChannels
@@ -2870,24 +2876,20 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
             ! Interpolate P to scattering point IWC and temperature, and
             ! angles Xi at which radiative transfer was done.  The normalizing
             ! factor of abs(sin(theta)) is applied in interpolate_P_to_theta_e.
-            call interpolate_P_to_theta_e ( &
-              & p(t_ix+0:t_ix+1,iwc_ix+0:iwc_ix+1,:,freq_ix(f_i)), &
-              & Eta_t_iwc, Theta_e(:n_theta_e), Beg_Pos_Theta, &
-              & Xis(sort_xi(:i_r)), coeffs_Theta_e_Xi, &
-              & P_on_Xi(:i_r) )
+            call interpolate_P_to_theta_e ( p(:,:,:,freq_ix(f_i)), Eta_t_iwc, &
+              & Theta_e(:n_theta_e), Beg_Pos_Theta, Xis(sort_xi(:i_r)), &
+              & coeffs_Theta_e_Xi, P_on_Xi(:i_r) )
+            ! Interpolate P's derivatives
             if ( atmos_der ) &
-              & call interpolate_P_to_theta_e ( &
-                & dP_dIWC(t_ix+0:t_ix+1,iwc_ix+0:iwc_ix+1,:,freq_ix(f_i)), &
+              & call interpolate_P_to_theta_e ( dP_dIWC(:,:,:,freq_ix(f_i)), &
                 & Eta_t_iwc, Theta_e(:n_theta_e), Beg_Pos_Theta, &
                 & Xis(sort_xi(:i_r)), coeffs_Theta_e_Xi, &
                 & dP_dIWC_on_Xi(:i_r) )
-            if ( temp_der ) then
-              call interpolate_P_to_theta_e ( &
-                & dP_dT(t_ix+0:t_ix+1,iwc_ix+0:iwc_ix+1,:,freq_ix(f_i)), &
+            if ( temp_der ) &
+              & call interpolate_P_to_theta_e ( dP_dT(:,:,:,freq_ix(f_i)), &
                 & Eta_t_iwc, Theta_e(:n_theta_e), Beg_Pos_Theta, &
                 & Xis(sort_xi(:i_r)), coeffs_Theta_e_Xi, &
                 & dP_dT_on_Xi(:i_r) )
-            end if
 
             !{ Compute $\int_{-\pi}^\pi \, f(\xi) P(\xi)\, \text{d}\xi$ using
             ! trapezoidal quadrature, without assuming equal abscissa spacing,
@@ -3271,11 +3273,11 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
           ! Each Mie table applies to many frequencies, so don't interpolate
           ! again if not needed.
           if ( Mie_frq_index /= prev_Mie_frq_ind ) then
-            call interpolate_Mie ( Mie_frq_index, eta_T_path_c,           &
-              & eta_IWC_path_c, atmos_der, temp_der,                      &
-              & beta_c_e_path_c(:npc), beta_c_s_path_c(:npc),             &
-              & dBeta_c_a_dIWC_path_c(:npc), dBeta_c_s_dIWC_path_c(:npc), &
-              & dBeta_c_a_dT_path_c(:npc), dBeta_c_s_dT_path_c(:npc) )
+            call interpolate_Mie ( Mie_frq_index, eta_T_IWC_path_c,       &
+              & atmos_der, temp_der, beta_c_e_path_c(:npc),               &
+              & beta_c_s_path_c(:npc), dBeta_c_a_dIWC_path_c(:npc),       &
+              & dBeta_c_s_dIWC_path_c(:npc), dBeta_c_a_dT_path_c(:npc),   &
+              & dBeta_c_s_dT_path_c(:npc) )
             prev_Mie_frq_ind = Mie_frq_index
           end if
           ! Ignore contribution of PFA Alpha to w0.
@@ -3846,7 +3848,6 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
       use Comp_Sps_Path_Sparse_m, only: Comp_1_Sps_Path_Sparse_No_Frq
       use Generate_QTM_m, only: QTM_Tree_t
       use Get_Chi_Angles_M, only: Get_Chi_Angles
-      use Get_Eta_Matrix_M, only: Get_Eta_Stru
       use GLNP, only: GW
       use Load_SPS_Data_M, only: Load_One_Item_Grid, Load_SPS_Data
       use Metrics_m, only: Height_Metrics, More_Metrics, Tangent_Metrics
@@ -4426,9 +4427,14 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
         ! Make sure Mie tables have been loaded.
         if ( .not. allocated(t_s) ) call MLSMessage ( MLSMSG_Error, &
           & moduleName, "UseTScat requested but no Mie tables loaded" )
-        call get_eta_stru ( t_s, t_path_c, eta_T_path_c )
-        call get_eta_stru ( iwc_s, iwc_path(1:npf:ngp1,1), eta_IWC_path_c )
-        ! We don't have Mie tables for this path
+        ! Get interpolation coefficients for IWC
+        call eta_IWC_path_c%eta ( iwc_s, iwc_path(1:npf:ngp1,1) )
+        ! Get interpolation coefficients for Temperature
+        call eta_T_path_c%eta ( t_s, t_path_c )
+        ! Get interpolation coefficients for Temperature X IWC
+        call eta_T_IWC_path_c%eta ( eta_T_path_c, eta_IWC_path_c )
+
+        ! Indicate we don't have Mie tables for this path
         prev_Mie_frq_ind = -1
       end if
 
@@ -4688,6 +4694,9 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.393  2018/05/15 03:26:25  vsnyder
+! Change Mie tables from pointer to allocatable
+!
 ! Revision 2.392  2018/05/14 23:40:58  vsnyder
 ! Change to sparse eta representation
 !
