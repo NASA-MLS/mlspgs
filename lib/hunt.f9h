@@ -14,64 +14,81 @@
     integer, intent(in) :: N
 
 !   real(rk), intent(in) :: ELEMENT, ARRAY(n)
-    real(rk), intent(in) :: ELEMENT, ARRAY(*)
+    real(rk), intent(in) :: ELEMENT
+    real(rk), contiguous, intent(in) :: ARRAY(:)
 
-    integer, intent(in out) :: JLO
-    integer, intent(out)    :: JHI
+    integer, intent(inout) :: JLO
+    integer, intent(out)   :: JHI
 
-    integer :: INC, JM
-    logical :: ASCND
+    real(rk) :: Delta
 
     if (n < 2) then
       jlo = 1
       jhi = 1
-      return
-    end if
-
-    ascnd = (array(n) > array(1))
-
-    if (jlo <= 0 .or. jlo > n) then
-      jlo = 1
-      jhi = n
     else
-
-      inc = 1
-
-      if ( element >= array(jlo) .eqv. ascnd ) then
- 10     jhi = jlo + inc
-        if (jhi > n) then
-          jhi = n
-          if (jlo == n) jlo = n-1
-        else if ( element >= array(jhi) .eqv. ascnd ) then
-          jlo = jhi
-          inc = inc + inc
-          goto 10
-        end if
-      else
-        jhi = jlo
- 20     jlo = jhi - inc
-        if (jlo < 1) then
-          jlo = 1
-          if (jhi == 1) jhi = 2
-        else if ( element < array(jlo) .eqv. ascnd ) then
-          jhi = jlo
-          inc = inc + inc
-          goto 20
-        end if
+      delta = array(n) - array(1)
+      if ( delta > 0 ) then
+        call AscendingHunt ( Array(1:n) )
+        jhi = min(jlo+1,n)
+      else if ( delta < 0 ) then
+        call AscendingHunt ( Array(n:1:-1) )
+        jhi = n - jlo + 1
+        jlo = min(jhi+1,n)
+      else ! All the same, first element is as good as any
+        jlo = 1
+        jhi = 2
       end if
     end if
 
-    do while ( jhi-jlo > 1 )
-      jm = (jhi + jlo) / 2
-      if ( element > array(jm) .eqv. ascnd ) then
-        jlo = jm
-      else
-        jhi = jm
+  contains
+    pure subroutine AscendingHunt ( Array )
+      real(rk), contiguous, intent(in) :: Array(:)
+      integer :: Inc, JM
+
+      if (jlo <= 0 .or. jlo > n) then ! Start with a secant estimate
+        jlo = min(max(int(( ( element - array(1) ) / abs(delta) ) * n),1),n)
+        jhi = min(jlo + 1,n)
       end if
-    end do
+      inc = 1                                   
+
+      if ( element >= array(jlo) ) then         
+ 10     jhi = jlo + inc                         
+        if (jhi > n) then                       
+          jhi = n                               
+          if (jlo == n) jlo = n-1               
+        else if ( element >= array(jhi) ) then  
+          jlo = jhi                             
+          inc = inc + inc                       
+          goto 10                               
+        end if                                  
+      else                                      
+        jhi = jlo                               
+ 20     jlo = jhi - inc                         
+        if (jlo < 1) then                       
+          jlo = 1                               
+          if (jhi == 1) jhi = 2                 
+        else if ( element < array(jlo) ) then   
+          jhi = jlo                             
+          inc = inc + inc                       
+          goto 20                               
+        end if                                  
+      end if                                    
+
+      do while ( jhi-jlo > 1 )
+        jm = (jhi + jlo) / 2
+        if ( element > array(jm) ) then
+          jlo = jm
+        else
+          jhi = jm
+        end if
+      end do
+    end subroutine AscendingHunt
 
 ! end subroutine ?_HUNT
 ! $Log$
+! Revision 2.2  2018/05/17 01:30:42  vsnyder
+! Start hunt with a secant estimate instead of 1:n
+!
 ! Revision 2.1  2011/08/26 17:51:30  pwagner
 ! Moved here from fwdmdl
 !
