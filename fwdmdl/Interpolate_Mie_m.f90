@@ -23,20 +23,19 @@ module Interpolate_Mie_m
 contains
 !-----------------------------------------------  Interpolate_Mie  -----
 
-  subroutine Interpolate_Mie ( Frq_Ind, Eta_T_Path, Eta_IWC_Path, Atmos_Der, &
-                             & Temp_Der, Beta_c_e_path, Beta_c_s_path,       &
+  subroutine Interpolate_Mie ( Frq_Ind, Eta_T_IWC_Path, Atmos_Der, Temp_Der, &
+                             & Beta_c_e_path, Beta_c_s_path,                 &
                              & dBeta_c_e_dIWC_path, dBeta_c_s_dIWC_path,     &
                              & dBeta_c_e_dT_path, dBeta_c_s_dT_path )
 
-    ! Interpolate the Mie tables for Frq_Ind to path IWC and Temperature
-    use Get_Eta_Matrix_m, only: Eta_D_T, Interpolate_Stru
+    ! Interpolate the Mie tables for Frq_Ind to path Temperature and IWC
     use MLSKinds, only: RP
     use Read_Mie_m, only: dBeta_dIWC_c_a, dBeta_dIWC_c_s, &
       & dBeta_dT_c_a, dBeta_dT_c_s, Log_Beta_c_a, Log_Beta_c_s, Log_Mie
+    use Sparse_Eta_m, only: Sparse_Eta_t
 
-    integer, intent(in) :: Frq_Ind     ! Frequency index for Mie tables
-    type(eta_d_t), intent(in) :: Eta_IWC_Path(:), & ! IWC Coeffs
-      & Eta_T_Path(:) ! T coeffs
+    integer, intent(in) :: Frq_Ind       ! Frequency index for Mie tables
+    type(sparse_eta_t) :: Eta_T_IWC_Path ! T x IWC interpolating coeffs
     logical, intent(in) :: Atmos_Der, Temp_Der ! Compute derivatives?
     real(rp), intent(out) :: Beta_c_s_path(:), Beta_c_e_path(:)
     real(rp), intent(out) :: dBeta_c_s_dIWC_path(:), dBeta_c_e_dIWC_path(:)
@@ -45,39 +44,37 @@ contains
     real(rp) :: Beta_c_a_path(size(Beta_c_s_path))
     real(rp) :: dBeta_c_a_dIWC_path(size(Beta_c_s_path))
     real(rp) :: dBeta_c_a_dT_path(size(Beta_c_s_path))
+    integer :: NT ! Mie table T x IWC sizes (they're all the same size)
+    real(rp), pointer :: Temp_1D(:)
 
     call log_mie ! Get log_beta_c_a and log_beta_c_s if not done yet
 
-    ! Interpolate Mie beta_c_a and beta_c_s to T and IWC on path
-    ! using interpolating coefficients from Mie tables to T and IWC.
-    call interpolate_stru ( log_beta_c_a(:,:,frq_ind), &
-      & eta_t_path, eta_iwc_path, &
-      & beta_c_a_path ) ! Actually getting log(beta_c_a_path)
+    nt = size(log_beta_c_a(:,:,frq_ind))
+    ! Interpolate Mie log_beta_c_a and log_beta_c_s to T and IWC on path
+    ! using interpolating coefficients from Mie tables to T and IWC, then
+    ! exponentiate to get beta_c_a_path and beta_c_s_path.
+    temp_1d(1:nt) => log_beta_c_a(:,:,frq_ind)
+    call eta_T_IWC_path%sparse_dot_vec ( temp_1d, beta_c_a_path )
     beta_c_a_path = exp(beta_c_a_path)
-    call interpolate_stru ( log_beta_c_s(:,:,frq_ind), &
-      & eta_t_path, eta_iwc_path, &
-      & beta_c_s_path ) ! Actually getting log(beta_c_s_path)
+    temp_1d(1:nt) => log_beta_c_s(:,:,frq_ind)
+    call eta_T_IWC_path%sparse_dot_vec ( temp_1d, beta_c_s_path )
     beta_c_s_path = exp(beta_c_s_path)
 
     beta_c_e_path = beta_c_a_path + beta_c_s_path
 
     if ( atmos_der ) then
-      call interpolate_stru ( dBeta_dIWC_c_a(:,:,frq_ind), &
-        & eta_t_path, eta_iwc_path, &
-        & dBeta_c_a_dIWC_path )
-      call interpolate_stru ( dBeta_dIWC_c_s(:,:,frq_ind), &
-        & eta_t_path, eta_iwc_path, &
-        & dBeta_c_s_dIWC_path )
+      temp_1d(1:nt) => dBeta_dIWC_c_a(:,:,frq_ind)
+      call eta_T_IWC_path%sparse_dot_vec ( temp_1d, dBeta_c_a_dIWC_path )
+      temp_1d(1:nt) => dBeta_dIWC_c_s(:,:,frq_ind)
+      call eta_T_IWC_path%sparse_dot_vec ( temp_1d, dBeta_c_s_dIWC_path )
       dBeta_c_e_dIWC_path = dBeta_c_a_dIWC_path + dBeta_c_s_dIWC_path
     end if
 
     if ( temp_der ) then
-      call interpolate_stru ( dBeta_dT_c_a(:,:,frq_ind), &
-        & eta_t_path, eta_iwc_path, &
-        & dBeta_c_a_dT_path )
-      call interpolate_stru ( dBeta_dT_c_s(:,:,frq_ind), &
-        & eta_t_path, eta_iwc_path, &
-        & dBeta_c_s_dT_path )
+      temp_1d(1:nt) => dBeta_dT_c_a(:,:,frq_ind)
+      call eta_T_IWC_path%sparse_dot_vec ( temp_1d, dBeta_c_a_dT_path )
+      temp_1d(1:nt) => dBeta_dT_c_s(:,:,frq_ind)
+      call eta_T_IWC_path%sparse_dot_vec ( temp_1d, dBeta_c_s_dT_path )
       dBeta_c_e_dT_path = dBeta_c_a_dT_path + dBeta_c_s_dT_path
     end if
 
@@ -96,6 +93,9 @@ contains
 end module Interpolate_Mie_m
 
 ! $Log$
+! Revision 2.5  2018/05/17 02:15:45  vsnyder
+! Use sparse instead of dense interpolation
+!
 ! Revision 2.4  2011/07/29 01:57:04  vsnyder
 ! Only IWC instead of IWC_A and IWC_S
 !

@@ -24,9 +24,10 @@ module Sparse_Eta_m
   type, extends(sparse_t) :: Sparse_Eta_t
     ! No new components
   contains
+    procedure, pass(eta) :: Eta_0D => Sparse_Eta_0D
     procedure, pass(eta) :: Eta_1D => Sparse_Eta_1D
     procedure, pass(p) :: Eta_nD => Sparse_Eta_nD
-    generic :: Eta => Eta_1D, Eta_nD
+    generic :: Eta => Eta_0D, Eta_1D, Eta_nD
   end type Sparse_Eta_t
 
 !---------------------------- RCS Module Info ------------------------------
@@ -36,6 +37,76 @@ module Sparse_Eta_m
 !---------------------------------------------------------------------------
 
 contains
+
+  subroutine Sparse_Eta_0D ( Basis, Grid, Eta, What, Create, Resize )
+
+    ! Compute Eta for linear interpolation from 1D Basis to a single point.
+    use Allocate_Deallocate, only: Test_Allocate
+    use Pure_Hunt_m, only: PureHunt
+
+    real(rp), intent(in) :: Basis(:)
+    real(rp), intent(in) :: Grid
+    class(sparse_eta_t), intent(inout) :: Eta ! Might not be created here
+    integer, intent(in), optional :: What     ! String index for dumps
+    logical, intent(in), optional :: Create   ! Force Eta to be created, default
+                                              ! false.  Eta is created anyway if
+                                              ! rows or cols are not allocated
+                                              ! or the wrong sizes.
+    logical, intent(in), optional :: Resize   ! Re-size Eta%E to Eta%NE --
+                                              ! default false
+
+    real(rp) :: Del_Basis
+    integer :: JLO, JHI
+    character(127) :: Msg
+    logical :: MyCreate
+    integer :: N_Basis
+    integer :: Stat
+    real(rp) :: V   ! Value of coefficient
+
+    n_basis = size(basis)
+ 
+    myCreate = .false.
+    if ( present(create) ) myCreate = create
+
+    if ( allocated(eta%rows) .and. allocated(eta%cols) ) then
+      if ( size(eta%rows) < 1 .or. size(eta%cols) /= n_basis ) &
+        & myCreate = .true.
+    else
+      myCreate = .true.
+    end if
+
+    if ( myCreate ) then
+      call eta%create ( 1, n_basis, 2, what=what )
+    else if ( .not. allocated(eta%e) ) then
+      allocate ( eta%e(2), stat=stat, errmsg=msg )
+      call test_allocate ( stat, moduleName, "Sparse%E", ermsg=msg )
+    end if
+
+    eta%nRows = 1
+
+    if ( grid <= basis(1) ) then
+      ! Coefficient below Basis(1) is 1.0
+      call eta%add_element ( 1.0_rp, 1, 1 )
+    else if ( grid >= basis(n_basis) ) then
+      ! Coefficient above Basis(n_basis) is 1.0
+      call eta%add_element ( 1.0_rp, 1, n_basis )
+    else
+      call purehunt ( grid, basis, n_basis, jlo, jhi )
+      ! Assume Basis is increasing.  Basis(JLO) <= Grid <= Basis(JHI) here.
+      jhi = jlo + 1 ! In case PureHunt returned JHI == JLO
+      ! "Hat" function between Basis(JLO) and Basis(JHI)
+      del_basis = 1.0_rp / ( basis(jhi) - basis(jlo) )
+      v = ( basis(jhi)-grid ) * del_basis
+      if ( v /= 0 ) call eta%add_element ( v, 1, jlo )
+      v = (grid-basis(jlo)) * del_basis
+      if ( v /= 0 ) call eta%add_element ( v, 1, jhi )
+    end if
+
+    if ( present(resize) ) then
+      if ( resize ) call eta%resize
+    end if
+
+  end subroutine Sparse_Eta_0D
 
   subroutine Sparse_Eta_1D ( Basis, Grid, Eta, What, Row1, Rown, Create, &
                            & Sorted, Resize )
@@ -87,7 +158,7 @@ contains
     end if
 
     if ( myCreate ) then
-      call eta%create ( n_grid, n_basis, 2*size(grid), what=what )
+      call eta%create ( n_grid, n_basis, 2*n_grid, what=what )
     else if ( .not. allocated(eta%e) ) then
       allocate ( eta%e(2*n_grid), stat=stat, errmsg=msg )
       call test_allocate ( stat, moduleName, "Sparse%E", ermsg=msg )
@@ -130,6 +201,7 @@ contains
         end block
       end if
 
+      pr = 0
       if ( myRow1 <= myRowN ) then ! Process grid in increasing order
         ! Coefficients below Basis(1) are all 1.0
         do i = myRow1, myRowN
@@ -330,6 +402,9 @@ contains
 end module Sparse_Eta_m
 
 ! $Log$
+! Revision 2.5  2018/05/17 02:16:48  vsnyder
+! Add Sparse_Eta_0D
+!
 ! Revision 2.4  2018/04/11 19:30:29  vsnyder
 ! Call p%resize without argument. Repair some comments
 !
