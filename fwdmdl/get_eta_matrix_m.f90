@@ -637,7 +637,7 @@ contains
 ! Outputs
 
     real(rp), intent(out) :: Eta(:)  ! representation basis function
-    integer, intent(out) :: First, Last ! First and last where Etae is not zero
+    integer, intent(out) :: First, Last ! First and last where Eta is not zero
 
 ! Internals
 
@@ -1816,6 +1816,9 @@ contains
 end module Get_Eta_Matrix_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.35  2018/05/14 23:30:19  vsnyder
+! Cannonball polishing
+!
 ! Revision 2.34  2018/04/26 02:58:13  vsnyder
 ! size(Grids_f%l_z)==size(Grids_f%l_p) so N2 doesn't need to depend on myP
 !
