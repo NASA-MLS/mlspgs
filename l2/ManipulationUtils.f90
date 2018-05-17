@@ -144,7 +144,16 @@ contains ! =====     Public Procedures     =============================
     call markDigits( lowerCase(mstr), collapsedstr )
     if ( DEEBUG ) call outputNamedValue( 'collapsedstr', collapsedstr )
 
-    ! 1st--make sure spaces surround each operator
+    ! We'll allow both '||' and '|' to mean 'or'
+    ! and also both '&&' and '&' to mean 'and'
+    mstr = collapsedstr
+    call ReplaceSubString( mstr, collapsedstr, '||', '|', &
+      & which='all', no_trim=.true. )
+    mstr = collapsedstr
+    call ReplaceSubString( mstr, collapsedstr, '&&', '&', &
+      & which='all', no_trim=.true. )
+
+    ! Next--make sure spaces surround each operator
     mstr = collapsedstr
     call stretchOperators ( mstr )
 
@@ -164,9 +173,6 @@ contains ! =====     Public Procedures     =============================
       print *, 'after reordering precedence ', collapsedstr
     endif
     mstr = collapsedstr
-
-    ! 1st--make sure spaces surround each operator
-    ! (It takes two steps for each to avoid threat of infinite loop)
 
     collapsedstr = lowerCase(mstr)
     if ( DEEBUG ) call outputNamedValue( 'collapsedstr', collapsedstr )
@@ -446,6 +452,7 @@ contains ! =====     Public Procedures     =============================
     integer :: n
     character(len=(len(mstr)+3)) :: element
     character(len=(len(mstr)+3)) :: temp
+    character(len=1), parameter  :: null = achar(0) ! formerly '&'
     ! Executable
     ! Nah--just return
     ! collapsedstr = mstr
@@ -453,19 +460,19 @@ contains ! =====     Public Procedures     =============================
     ! 1st -- replace each '-' with '+-'
     ! (Don't worry--we'll undo this before returning)
     ! (It takes two steps for each to avoid threat of infinite loop)
-    call ReplaceSubString( mstr, collapsedstr, '-', '&', &
+    call ReplaceSubString( mstr, collapsedstr, '-', null, &
       & which='all', no_trim=.true. )
-    call ReplaceSubString( collapsedstr, temp, '&', '+-', &
-      & which='all', no_trim=.true. )
-
-    call ReplaceSubString( temp, collapsedstr, '<', '&', &
-      & which='all', no_trim=.true. )
-    call ReplaceSubString( collapsedstr, temp, '&', '+<', &
+    call ReplaceSubString( collapsedstr, temp, null, '+-', &
       & which='all', no_trim=.true. )
 
-    call ReplaceSubString( temp, collapsedstr, '>', '&', &
+    call ReplaceSubString( temp, collapsedstr, '<', null, &
       & which='all', no_trim=.true. )
-    call ReplaceSubString( collapsedstr, temp, '&', '+>', &
+    call ReplaceSubString( collapsedstr, temp, null, '+<', &
+      & which='all', no_trim=.true. )
+
+    call ReplaceSubString( temp, collapsedstr, '>', null, &
+      & which='all', no_trim=.true. )
+    call ReplaceSubString( collapsedstr, temp, null, '+>', &
       & which='all', no_trim=.true. )
     ! Now loop over terms
     n = NumStringElements( temp, COUNTEMPTY, inseparator='+' )
@@ -529,39 +536,39 @@ contains ! =====     Public Procedures     =============================
     character(len=*), intent(inout) :: str
     character(len=maxManipulationLen) :: tempStr
     ! Executable
-    call ReplaceSubString( str, tempStr, '+', ' & ', &
+    call ReplaceSubString( str, tempStr, '+', ' @ ', &
       & which='all', no_trim=.true. )
-    call ReplaceSubString( tempStr, str, '&', '+', &
-      & which='all', no_trim=.true. )
-
-    call ReplaceSubString( str, tempStr, '*', ' & ', &
-      & which='all', no_trim=.true. )
-    call ReplaceSubString( tempStr, str, '&', '*', &
+    call ReplaceSubString( tempStr, str, '@', '+', &
       & which='all', no_trim=.true. )
 
-    call ReplaceSubString( str, tempStr, '-', ' & ', &
+    call ReplaceSubString( str, tempStr, '*', ' @ ', &
       & which='all', no_trim=.true. )
-    call ReplaceSubString( tempStr, str, '&', '-', &
-      & which='all', no_trim=.true. )
-
-    call ReplaceSubString( str, tempStr, '/', ' & ', &
-      & which='all', no_trim=.true. )
-    call ReplaceSubString( tempStr, str, '&', '/', &
+    call ReplaceSubString( tempStr, str, '@', '*', &
       & which='all', no_trim=.true. )
 
-    call ReplaceSubString( str, tempStr, '<', ' & ', &
+    call ReplaceSubString( str, tempStr, '-', ' @ ', &
       & which='all', no_trim=.true. )
-    call ReplaceSubString( tempStr, str, '&', '<', &
-      & which='all', no_trim=.true. )
-
-    call ReplaceSubString( str, tempStr, '>', ' & ', &
-      & which='all', no_trim=.true. )
-    call ReplaceSubString( tempStr, str, '&', '>', &
+    call ReplaceSubString( tempStr, str, '@', '-', &
       & which='all', no_trim=.true. )
 
-    call ReplaceSubString( str, tempStr, '^', ' & ', &
+    call ReplaceSubString( str, tempStr, '/', ' @ ', &
       & which='all', no_trim=.true. )
-    call ReplaceSubString( tempStr, str, '&', '^', &
+    call ReplaceSubString( tempStr, str, '@', '/', &
+      & which='all', no_trim=.true. )
+
+    call ReplaceSubString( str, tempStr, '<', ' @ ', &
+      & which='all', no_trim=.true. )
+    call ReplaceSubString( tempStr, str, '@', '<', &
+      & which='all', no_trim=.true. )
+
+    call ReplaceSubString( str, tempStr, '>', ' @ ', &
+      & which='all', no_trim=.true. )
+    call ReplaceSubString( tempStr, str, '@', '>', &
+      & which='all', no_trim=.true. )
+
+    call ReplaceSubString( str, tempStr, '^', ' @ ', &
+      & which='all', no_trim=.true. )
+    call ReplaceSubString( tempStr, str, '@', '^', &
       & which='all', no_trim=.true. )
   end subroutine stretchOperators
   
@@ -634,21 +641,22 @@ contains ! =====     Public Procedures     =============================
     AddPrimitiveToDatabase = newSize
   end function AddPrimitiveToDatabase
 
-  function evaluatePrimitive( STR, A, B, C, &
-    & SPREADFLAG, DIMLIST ) result(VALUE)
+  function evaluatePrimitive( str, a, b, c, &
+    & spreadflag, dimlist ) result(value)
     use Constants, only: Rad2Deg
     ! Evaluate an expression composed entirely of
     ! (0) constants ('c')
     ! (1) primitives (e.g., '2')
     ! (2) unary operators ('-')
-    ! (3) binary operators {'+', '-', '*', '/','<','>'}
+    ! (3) binary operators {'+', '-', '*', '/', '<', '>', '|', '&'}
     ! (4) recognized functions {'map:', 'exp:', ..}
     ! -- Note the following conventions, which are not intuitive --
     ! The word "binary" above means the op takes two args, not that its 
     !     values are binary
     ! The word "primitive" means that the integer, say "2" is an index into the 
     !     array Primitives(:); see part%values = primitives(partID)%values
-    ! A bare numerical value, like "6" has to be prefixed by "$" to protect
+    ! A bare numerical value, like "6" has to be prefixed by "$" before
+    !     arriving here to protect
     !     it from being interpreted as such a primitive
     ! All recognized functions have been suffixed by a colon ":" before
     !     arriving here; this was done automatically to distinguish "("
@@ -781,6 +789,12 @@ contains ! =====     Public Procedures     =============================
       case ('>')
         lastOp = '>'
         hit = .false.
+      case ('|')
+        lastOp = '|'
+        hit = .false.
+      case ('&')
+        lastOp = '&'
+        hit = .false.
       case (' ')
         call Announce_Error ( 'parse error of:' // trim(str) )
       case default
@@ -861,6 +875,10 @@ contains ! =====     Public Procedures     =============================
             newone%values = min( newone%values, part%values )
         case ('>')
             newone%values = max( newone%values, part%values )
+        case ('|')
+            newone%values = ior( int(newone%values), int(part%values) )
+        case ('&')
+            newone%values = iand( int(newone%values), int(part%values) )
         ! Now the functions
         case ('val')
             newone%values = part%values
@@ -957,6 +975,8 @@ contains ! =====     Public Procedures     =============================
             newone%values = part%values
             ! call ReshapeVectorValue( newone, sourceValues=part%values )
             ! call output( 'Calling function map', advance='yes' )
+        ! The following are related in some way to Filling
+        ! quantities with their own geolocations or geolocations of other quantities
         case ( 'channel', 'surface', 'instance', 'height', 'lon', 'lat', 'sza', &
           & 'phi', 'soltime', 'losangle', 'hid' )
           ! These might be useful for filling arrays with indexes
@@ -1086,7 +1106,7 @@ contains ! =====     Public Procedures     =============================
         ! statistical function cases
         case ( 'count', 'min', 'max', 'mean', 'median', 'rms', 'stddev' )
           ! These are harder--we must interpret how to gather
-          ! or "average" the data
+          ! or "average" the sampled data
           ! By default we average over channels, not surfaces or instances
           ! but dimList may cause us to pick out
           ! different choises; e.g., dimList='c,s' tells us to average
@@ -1488,6 +1508,9 @@ end module ManipulationUtils
 
 !
 ! $Log$
+! Revision 2.22  2018/05/17 17:02:57  pwagner
+! Added logical operators '||' and '&&'
+!
 ! Revision 2.21  2018/04/19 00:53:57  vsnyder
 ! Remove USE statements and declarations for unused names
 !
