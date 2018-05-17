@@ -19,10 +19,6 @@ module Comp_Eta_DoCalc_Sparse_m
   public :: Comp_All_Eta_2D,  Comp_One_Eta_2D
   public :: Comp_All_Eta_QTM, Comp_One_Eta_QTM
   public :: Comp_One_Eta_Z
-  public :: Get_Eta_DoCalc_FZP
-  ! Be careful with Get_One_Eta_DoCalc_ZP to send only the columns of
-  ! Eta, Do_Calc, NZ and NNZ that are gemane to the species.
-  public :: Get_One_Eta_DoCalc_FZP
 
   interface Comp_Eta_Docalc_Sparse
     module procedure Comp_All_Eta_2D,  Comp_One_Eta_2D
@@ -232,166 +228,6 @@ contains
 
   end subroutine Comp_One_Eta_Z
 
-  ! -----------------------------------------  Get_Eta_DoCalc_FZP  -----
-
-  subroutine Get_Eta_DoCalc_FZP ( Eta_FZP_Sparse, Eta_FZP, Grids_f, &
-                                & Do_Calc_FZP, NZ_FZP, NNZ_FZP, One_Sps, &
-                                & Eta_ZP_Sparse, Spread )
-
-  ! Compute Eta_FZP and Do_Calc_FZP from Eta_FZP_Sparse and Eta_ZP_Sparse.
-  ! Where Grids_f%deriv_flags is false, don't set Do_Calc_FZP 
-  ! When the forward model no longer needs these, this subroutine can be
-  ! deleted.
-
-    use Comp_Eta_Docalc_No_Frq_m, only: Spread_Eta_FZP_from_Eta_ZP
-    use Load_Sps_Data_m, only: Grids_t
-    use MLSKinds, only: RP
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-    use Sparse_Eta_m, only: Sparse_Eta_t
-
-    class(sparse_eta_t), intent(in) :: Eta_FZP_Sparse(:) ! Created by Comp_*_Eta_* above
-    real(rp), intent(inout) :: Eta_FZP(:,:) ! Eta_z * Eta_phi for each state
-                           ! vector element. Marked inout so that we can clear
-                           ! only the nonzeros without making the rest of it
-                           ! undefined.
-    type(grids_t), intent(in) :: Grids_f
-    logical, intent(inout), optional :: Do_Calc_FZP(:,:) ! Do_Calc_FZP(p,v)
-                           ! indicates whether there is a contribution for 
-                           ! state vector element V at point P on the path.
-    integer, intent(inout), optional, target :: NZ_FZP(:,:) ! Nonzeros in eta_FZP
-    integer, intent(inout), optional, target :: NNZ_FZP(:)  ! Number of nonzeros in eta_FZP
-    integer, intent(in), optional :: One_Sps ! Do extraction for only this species
-    class(sparse_eta_t), intent(in), optional :: Eta_ZP_Sparse(:) ! Created by Comp_*_Eta_* above
-    logical, intent(in), optional :: Spread  ! For a frequency-dependent species,
-                                             ! spread the columns from
-                                             ! Eta_ZP_Sparse
-
-    integer :: C, L        ! Column, Last column of Eta_FZP before species S
-    logical :: MySpread
-    integer :: N_Eta_ZP2   ! Second dimension of Eta_ZP
-    integer :: NC          ! Number of columns of Eta_FZP for species S
-    integer :: NP          ! Path length, first dimension of Eta_FZP
-    integer :: S, S1, S2   ! Species index = index in Eta_FZP_Sparse
-    logical :: SpreadIt
-
-    if ( present(one_sps) ) then
-      s1 = one_sps
-      s2 = one_sps
-    else
-      s1 = 1
-      s2 = size(eta_fzp_sparse,1)
-    end if
-
-    mySpread = .false.
-    n_eta_zp2 = 0
-    if ( present(spread) .and. present(eta_zp_sparse) ) then
-      mySpread = spread
-      n_eta_zp2 = merge(grids_f%p_len,0,mySpread)
-    end if
-
-    np = size(eta_fzp,1)
-
-    block
-
-      real(rp) :: Eta_ZP(np,n_eta_zp2)
-      logical :: Do_Calc_ZP(np,n_eta_zp2)
-      integer :: NZ_ZP(np,n_eta_zp2)
-      integer :: NNZ_ZP(n_eta_zp2)
-
-      do_calc_zp = .false.
-      eta_zp = 0
-      nnz_zp = 0
-      nz_zp = 0
-      do s = s1, s2
-        if ( .not. allocated(eta_fzp_sparse(s)%rows) .or. &
-           & .not. allocated(eta_fzp_sparse(s)%cols) ) then
-          call MLSMessage ( MLSMSG_Error, ModuleName, &
-            & 'Rows or Cols of eta_fzp_sparse(s) not allocated in Get_Eta_DoCalc_fzp' )
-          return
-        end if
-        if ( mySpread ) spreadIt =  grids_f%l_f(s-1)+1 /= grids_f%l_f(s)
-        if ( spreadIt ) then
-          l = grids_f%l_zp(s-1)
-          nc = grids_f%l_zp(s)
-          do_calc_zp(:,l+1:nc) = .false.
-          eta_zp(:,l+1:nc) = 0
-          nnz_zp(l+1:nc) = 0
-          nz_zp(:,l+1:nc) = 0
-
-          call get_one_eta_docalc_fzp ( eta_zp_sparse(s), eta_zp(:,l+1:nc), &
-                                      & do_calc_zp(:,l+1:nc), &
-                                      & nz_zp(:,l+1:nc), nnz_zp(l+1:nc) )
-          call  spread_eta_fzp_from_eta_zp ( grids_f, eta_zp(:np,:), &
-            & do_calc_zp(:np,:), eta_fzp(:np,:), do_calc_fzp(:np,:), &
-            & nz_zp(:np,:), nnz_zp, nz_fzp(:np,:), nnz_fzp, s )
-
-        else
-          l = grids_f%l_v(s-1)
-          nc = grids_f%l_v(s)
-          call get_one_eta_docalc_fzp ( eta_fzp_sparse(s), eta_fzp(:,l+1:nc), &
-                                      & do_calc_fzp(:,l+1:nc), &
-                                      & nz_fzp(:,l+1:nc), nnz_fzp(l+1:nc) )
-          if ( present(do_calc_fzp) ) then
-            do c = l+1, nc
-              do_calc_fzp(:,c) = do_calc_fzp(:,c) .and. &
-                               & grids_f%deriv_flags(c)
-            end do
-          end if
-        end if
-      end do ! s
- 
-    end block
-
-  end subroutine Get_Eta_DoCalc_FZP
-
-  subroutine Get_One_Eta_DoCalc_FZP ( Eta_FZP_Sparse, Eta_FZP, &
-                                    & Do_Calc_FZP, NZ_FZP, NNZ_FZP )
-
-  ! Compute Eta_FZP and Do_Calc_FZP from Eta_FZP_Sparse for one species.  When the
-  ! forward model no longer needs these, this subroutine can be deleted.
-
-    use Get_Eta_Matrix_m, only: Clean_Out_Nonzeros
-    use MLSKinds, only: RP
-    use Sparse_Eta_m, only: Sparse_Eta_t
-
-    class(sparse_eta_t), intent(in) :: Eta_FZP_Sparse ! Created by Comp_*_Eta_* above
-    real(rp), intent(inout) :: Eta_FZP(:,:) ! The columns of Eta_z * Eta_phi
-                           ! for one species.  Each column is for one state
-                           ! vector element.  Marked inout so that we can clear
-                           ! only the nonzeros without making the rest of it
-                           ! undefined.
-    logical, intent(inout), optional :: Do_Calc_FZP(:,:) ! Do_Calc_FZP(p,v)
-                           ! indicates whether there is a contribution for 
-                           ! state vector element V at point P on the path.
-                           ! Same shape and correspondence for state vector.
-    integer, intent(inout), optional, target :: NZ_FZP(:,:) ! Nonzeros in eta_FZP
-                           ! Same shape and correspondence for state vector.
-    integer, intent(inout), optional, target :: NNZ_FZP(:)  ! Number of nonzeros
-                           ! in eta_FZP.  Same columns as Eta_FZP.
-
-    integer :: I, J, K
-    integer :: NC 
-
-    nc = size(eta_fzp_sparse%cols)
-    call clean_out_nonzeros ( eta_fzp, do_calc_fzp, nz_fzp, nnz_fzp )
-    do j = 1, nc
-      k = eta_fzp_sparse%cols(j)
-      if ( k == 0 ) cycle ! Column is empty
-      i = k
-      do
-        i = eta_fzp_sparse%e(i)%nc ! Next row in this column
-        eta_fzp ( eta_fzp_sparse%e(i)%r,j) = eta_fzp_sparse%e(i)%v
-        if ( present(nz_fzp) ) then
-          nnz_fzp(j) = nnz_fzp(j) + 1
-          nz_fzp(nnz_fzp(j),j) = eta_fzp_sparse%e(i)%r
-        end if
-        if ( present(do_calc_fzp) ) do_calc_fzp ( eta_fzp_sparse%e(i)%r,j ) = .true.
-        if ( i == k ) exit        ! No more rows in this column
-      end do
-    end do
-
-  end subroutine Get_One_Eta_DoCalc_FZP
-
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
   character (len=*), parameter :: IdParm = &
@@ -405,6 +241,9 @@ contains
 end module Comp_Eta_DoCalc_Sparse_m
 
 ! $Log$
+! Revision 2.8  2018/05/17 01:31:52  vsnyder
+! Remove no-longer-used routines
+!
 ! Revision 2.7  2018/05/14 23:40:58  vsnyder
 ! Change to sparse eta representation
 !
