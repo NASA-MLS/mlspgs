@@ -717,7 +717,7 @@ contains
   end subroutine Get_TScat_Teardown
 
   ! ---------------------------------  Interpolate_P_to_theta_e  -----
-  subroutine Interpolate_P_to_theta_e ( P, Eta_t_iwc, Theta_e, Beg_Pos_Theta, &
+  subroutine Interpolate_P_to_theta_e ( P, Eta, Theta_e, Beg_Pos_Theta, &
     &                                   Xis, Coeffs, P_on_Xi )
 
     ! Interpolate P or dP_dT or dP_dIWC from Theta to Xi, for TScat
@@ -725,9 +725,11 @@ contains
 
     use MLSKinds, only: Rp
     use MLSNumerics, only: Coefficients, InterpolateValues
+    use Sparse_m, only: Sparse_t
 
-    real(rp), intent(in) :: P(0:,0:,:) ! P or dP_dT or dP_dIWC on T x IWC x Theta
-    real(rp), intent(in) :: Eta_T_IWC(0:,0:) ! 2x2, to interpolate to T, IWC
+    real(rp), intent(in), contiguous, target :: P(:,:,:) ! P or dP_dT or dP_dIWC
+                                       ! on T x IWC x Theta
+    class(sparse_t), intent(in) :: Eta ! to interpolate to T, IWC
     real(rp), intent(in) :: Theta_e(:) ! Theta extended to negative values
     integer, intent(in) :: Beg_Pos_Theta ! 1 or 2, depending on whether
                                        ! theta_e(1) is nonzero or zero
@@ -740,14 +742,18 @@ contains
                              ! interpolated to scattering point IWC and T for
                              ! each theta (including negative theta), intermediary
                              ! to getting P_On_Xi
+    real(rp), pointer :: T_X_IWC(:) ! One-D pointer to P(:,:,i)
 
     integer :: I
 
-    ! Interpolate P to scattering point IWC and temperature and
-    ! multiply that by sin(theta)
+    ! Interpolate P to scattering point IWC and temperature, and
+    ! multiply that by sin(theta).  This is done one P_T_IWC at a time because
+    ! Eta only has one row, because it interpolates to one IWC and
+    ! Temperature.
     do i = 1, size(p_t_iwc)
-      p_t_iwc(i) = &
-        & sum(eta_t_iwc(0:1,0:1) * p(0:1,0:1,i) ) * abs(sin(theta_e(i)))
+      t_x_iwc(1:size(p,1)*size(p,2)) => p(:,:,i) ! Get 1-D pointer
+      ! P_T_IWC(i) = sparse Eta .dot. T_X_IWC
+      p_t_iwc(i) = eta%row_dot_vec ( 1, t_x_iwc ) * abs(sin(theta_e(i)))
     end do
 
     ! The phase function is symmetric in theta, but the radiances
@@ -905,6 +911,9 @@ contains
 end module TScat_Support_m
 
 ! $Log$
+! Revision 2.17  2018/05/17 02:15:45  vsnyder
+! Use sparse instead of dense interpolation
+!
 ! Revision 2.16  2018/05/15 03:26:25  vsnyder
 ! Change Mie tables from pointer to allocatable
 !
