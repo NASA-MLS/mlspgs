@@ -1167,6 +1167,7 @@ contains
   ! Process a "dump" command
 
     use AntennaPatterns_M, only: Dump_Antenna_Patterns_Database
+    use BitStuff, only: DumpBitCounts, DumpBitNames
     use Calendar, only: Duration_Formatted, Time_T, Tk
     use Call_Stack_M, only: Dump_Stack
     use ChunkDivideConfig_M, only: ChunkDivideConfig, Dump
@@ -1212,7 +1213,7 @@ contains
       & Diff, Dump, GetFromMatrixDatabase, MatricesMemoryInUse
     use MLSCommon, only: MLSFile_T
     use MLSFiles, only: DumpMLSFile => Dump, GetMLSFilebyname
-    use MLSFinds, only: Findfirst
+    use MLSFinds, only: Findfirst, FindUnique
     use MLSKinds, only: R8, Rv
     use MLSL2Options, only: Command_Line, CurrentChunkNumber, CurrentPhaseName, &
       & L2cfnode, Normal_Exit_Status, RuntimeValues, &
@@ -1285,6 +1286,7 @@ contains
     integer :: hessianIndex
     integer :: hessianIndex2
     integer :: HSLABRANK ! Rank of hyperslab; i.e. size(count)
+    integer :: ii
     integer :: JJ
     character(len=80) :: KEYSTRING  ! E.g., 'BAND13_OK'
     character(len=80) :: Label  ! E.g., 'BAND8'
@@ -1297,6 +1299,7 @@ contains
     integer :: MUL
     integer :: N
     character(len=80) :: NAMESTRING  ! E.g., 'L2PC-band15-SZASCALARHIRES'
+    integer :: nUnique
     logical :: oldPrintNameAsHeadline
     logical :: oldPrintNameInBanner
     type (MLSFile_T), pointer :: OneMLSFile
@@ -1316,6 +1319,7 @@ contains
     type(time_t) :: Time
     character(10) :: TimeOfDay
     logical :: truncate
+    integer, dimension(1000) :: uniqueVals
     type (vector_T), pointer  :: Vector
     integer :: VectorIndex
     integer :: VectorIndex2
@@ -1327,6 +1331,12 @@ contains
     integer :: What
     type(where_t) :: Where_At
     logical :: ZOT
+    character(len=16), dimension(10), parameter :: StatusBitNames = (/ &
+      & 'do not use      ', 'beware          ', 'inform          ', &
+      & 'post-processed  ', 'high clouds     ', 'low clouds      ', &
+      & 'no meteorology  ', 'abandoned chunk ', 'too few radiance', &
+      & 'mlsl2 crashed   ' /)
+  !      123456789012345678901234567890123456789012345678901234567890
 
     ! Executable
     call trace_begin ( me, 'DumpCommand', root, cond=toggle(gen) )
@@ -1903,13 +1913,21 @@ contains
               call DestroyVectorQuantityValue( VectorValue, destroyMask=.true., &
                 & destroyTemplate=.true. )
             ! Special options handling
+            ! 'b' means show bit names
             ! 'c' means clean
             ! '0' means dump template
             ! '1' means dump values
             ! '2' means dump mask
-            elseif ( .not. any(indexes(optionsString, (/'0','1','2'/)) > 0 ) ) then
+            elseif ( .not. any(indexes(optionsString, (/'0','1','2','b'/)) > 0 ) ) then
               call dump ( qty1, details=details, &
                 & vector=vectors(vectorIndex), options=optionsString )
+            else if ( index(optionsString, 'b') > 0 ) then
+              call FindUnique( int(qty1%value1), uniqueVals, nUnique )
+              call outputNamedValue(' Number unique values', nUnique )
+              do ii=1, nUnique
+                call DumpBitNames( uniqueVals(ii), StatusBitNames )
+              enddo
+              call DumpBitCounts( int(qty1%value1), showPct=.true. )
             else if ( index(optionsString, '1') > 0 ) then
               if ( verbose ) then
                 call outputnamedValue ( 'rank field', rank )
@@ -3170,6 +3188,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.138  2018/05/17 17:05:53  pwagner
+! May Dump quantity values bitwise
+!
 ! Revision 2.137  2018/04/19 23:44:09  pwagner
 ! Skip may take /nextChunk flag
 !
