@@ -2774,7 +2774,8 @@ contains ! =====     Public Procedures     =============================
   subroutine DumpL2GP_attributes_hdf5( l2FileHandle, l2gp, swathName )
   use HE5_SWAPI, only: HE5_SWRdattr, HE5_SWRdlattr
   use MLSHDFEOS, only: MLS_SWAttach, MLS_SWDetach, HE5_EHRdglatt
-  use PCFHdr, only:  GlobalAttributes_T, HE5_ReadGlobalAttr
+  use PCFHdr, only:  GlobalAttributes_T, HE5_ReadGlobalAttr, &
+    & DumpGlobalAttributes
     ! Brief description of subroutine
     ! This subroutine dumps the attributes for an l2gp
     ! These include
@@ -2863,23 +2864,7 @@ contains ! =====     Public Procedures     =============================
       status = he5_EHrdglatt( l2FileHandle, &
       & 'MiscNotes', &
       &  gAttributes%MiscNotes )
-      call dump(gAttributes%orbNum, 'Orbit numbers')
-      call dump(gAttributes%orbPeriod, 'Orbit Periods')
-      call output ('InstrumentName: ' // trim( gAttributes%InstrumentName  ), &
-        & advance='yes' )
-      call output ('Process level: ' // trim(  gAttributes%ProcessLevel    ), &
-        & advance='yes' )
-      call output ('PGE version: ' // trim(    gAttributes%PGEVersion      ), &
-        & advance='yes' )
-      call output ('Misc Notes: ' // trim(     gAttributes%MiscNotes      ), &
-        & advance='yes' )
-      call output ('Start UTC: ' // trim(      gAttributes%StartUTC        ), &
-        & advance='yes' )
-      call output ('End UTC: ' // trim(        gAttributes%EndUTC          ), &
-        & advance='yes' )
-      call dump_int ( gAttributes%GranuleMonth, 'Granule month:' )
-      call dump_int ( gAttributes%GranuleDay, 'Granule day:' )
-      call dump_int ( gAttributes%GranuleYear, 'Granule year:' )
+      call dumpGlobalAttributes ( gAttributes ) 
       call dump_int ( DayOfYear, 'Granule day of year:' )
       call dump_r8 ( TAI93At0zOfGranule, 'Equator crossing time (tai93):' )
     endif
@@ -5444,6 +5429,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.234  2018/04/24 18:25:11  pwagner
+! Commented out the final method; it caused gold brick crashes
+!
 ! Revision 2.233  2018/04/19 00:50:43  vsnyder
 ! Remove USE statements for unused names, add final subroutine
 !
