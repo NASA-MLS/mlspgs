@@ -61,6 +61,7 @@ program MLSL2
   use Parser, only: Clean_Up_Parser, Configuration
   use Parser_Table_M, only: Destroy_Parser_Table, Parser_Table_T
   use Parser_Tables_L2cf, only: Init_Parser_Table
+  use PCFHdr, only: DumpGlobalAttributes
   use Printit_M, only: Set_Config, StdoutLogUnit
   use PVM, only: ClearPVMArgs, FreePVMArgs
   use SDPToolkit, only: PGSD_DEM_30arc, PGSD_DEM_90arc, &
@@ -810,6 +811,7 @@ contains
       call Dump( StampOptions )
       call DumpConfig
       call Blanks( 80, fillChar='-', advance='yes' )
+      call DumpGlobalAttributes
     end if
   end subroutine Dump_settings
 
@@ -850,6 +852,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.225  2018/05/22 23:08:40  pwagner
+! Dumped settings include GlobalAttributes
+!
 ! Revision 2.224  2017/12/22 00:32:00  pwagner
 ! Try harder to make slaves flush stdout buffer
 !
