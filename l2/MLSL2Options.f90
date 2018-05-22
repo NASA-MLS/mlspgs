@@ -636,6 +636,10 @@ cmds: do
         else if ( line(3+n:9+n) == 'idents ' ) then
           i = i + 1
           call myNextArgument( i, inLine, entireLine, line )
+        else if ( line(3+n:7+n) == 'inst ' ) then
+          i = i + 1
+          call myNextArgument( i, inLine, entireLine, line )
+          GlobalAttributes%InstrumentName = trim(line)
         else if ( line(3+n:6+n) == 'l1b=' ) then
           arg_rhs = line(7+n:7+n)
           select case(arg_rhs)
@@ -1411,6 +1415,9 @@ end module MLSL2Options
 
 !
 ! $Log$
+! Revision 2.116  2018/05/22 23:07:29  pwagner
+! May set InstrumentName by cmdline option
+!
 ! Revision 2.115  2018/04/19 23:44:55  pwagner
 ! Skip may take /nextChunk flag
 !
