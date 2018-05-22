@@ -190,8 +190,8 @@ program dateconverter
       if ( len_trim(comparison) /= 1 ) comparison = '='
       call print_string( trim(comparison) )
     enddo
+    stop
   endif
-  stop
   do i=1, n_dates
     if ( .not. doThisDate(i)) cycle
     date = dates(i)
@@ -454,6 +454,9 @@ END PROGRAM dateconverter
 !==================
 
 ! $Log$
+! Revision 1.12  2018/05/04 16:38:11  pwagner
+! Added new commandline option -c comparing 2 dates
+!
 ! Revision 1.11  2017/03/30 23:35:29  pwagner
 ! Add explanation of special uars formatting to help page
 !
