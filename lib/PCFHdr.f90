@@ -56,28 +56,28 @@ module PCFHdr
 !     - - - - - - - -                                                    
 
 !     (data types and parameters)
-! inputptr_string_length   string length used by Inputpointer procedures
-! ga_value_length          string length used by GlobalAttributes_T
+! Inputptr_string_length   string length used by Inputpointer procedures
+! Ga_value_length          string length used by GlobalAttributes_T
 ! MiscNotesLength          string length used by MiscNotes field
-! utc_a_value_length       string length used to encode utc version 'a'
-! utc_b_value_length       string length used to encode utc version 'b'
+! Utc_a_value_length       string length used to encode utc version 'a'
+! Utc_b_value_length       string length used to encode utc version 'b'
 ! GlobalAttributes         which attributes to write to product files
 
 !     (subroutines and functions)
 ! CreatePCFAnnotation      read the PCF file into a character array
-! dumpGlobalAttributes     dumps the global attributes
+! DumpGlobalAttributes     dumps the global attributes
 ! FillTAI93Attribute       Fill the TAI93 component of the global attribute 
 !                           based on theStartUTC component
 ! GranuleDay               Return the granule's day in its month
 ! GranuleDayOfYear         Return the granule's day in its year
 ! GranuleMonth             Return the granule's month
 ! GranuleYear              Return the granule's year
-! h5_readglobalattr        reads the global attributes from an hdf5-formatted file
-! h5_writeglobalattr       writes the global attributes to an hdf5-formatted file
-! he5_writeglobalattr      writes the global attributes to an hdfeos5-formatted file
-! he5_readglobalattr       reads the global attributes from an hdfeos5-formatted file
+! H5_readglobalattr        reads the global attributes from an hdf5-formatted file
+! H5_writeglobalattr       writes the global attributes to an hdf5-formatted file
+! He5_writeglobalattr      writes the global attributes to an hdfeos5-formatted file
+! He5_readglobalattr       reads the global attributes from an hdfeos5-formatted file
 ! InputInputpointer        Prepare Input for WriteInputpointer
-! sw_writeglobalattr       writes the global attributes for an hdfeos5 swath
+! Sw_writeglobalattr       writes the global attributes for an hdfeos5 swath
 ! WriteInputpointer        Write Inputpointer metadata
 ! WriteLeapSecHDFEOSAttr   Write contents of leapsec file as hdfeos5 attribute
 ! WriteLeapSecHDF5DS       Write contents of leapsec file as hdf5 dataset
@@ -88,19 +88,19 @@ module PCFHdr
                                              
 ! === (start of api) ===
 ! CreatePCFAnnotation ( int mlspcfN_pcf_start, char* anText(:) )
-! dumpGlobalAttributes     dumps the global attributes
+! DumpGlobalAttributes     dumps the global attributes
 ! FillTAI93Attribute       Fill the TAI93 component of the global attribute 
 !                           based on theStartUTC component
 ! GranuleDay               Return the granule's day in its month
 ! GranuleDayOfYear         Return the granule's day in its year
 ! GranuleMonth             Return the granule's month
 ! GranuleYear              Return the granule's year
-! h5_readglobalattr        reads the global attributes from an hdf5-formatted file
-! h5_writeglobalattr       writes the global attributes to an hdf5-formatted file
-! he5_writeglobalattr      writes the global attributes to an hdfeos5-formatted file
-! he5_readglobalattr       reads the global attributes from an hdfeos5-formatted file
+! H5_readglobalattr        reads the global attributes from an hdf5-formatted file
+! H5_writeglobalattr       writes the global attributes to an hdf5-formatted file
+! He5_writeglobalattr      writes the global attributes to an hdfeos5-formatted file
+! He5_readglobalattr       reads the global attributes from an hdfeos5-formatted file
 ! InputInputpointer        Prepare Input for WriteInputpointer
-! sw_writeglobalattr       writes the global attributes for an hdfeos5 swath
+! Sw_writeglobalattr       writes the global attributes for an hdfeos5 swath
 ! WriteInputpointer        Write Inputpointer metadata
 ! WriteLeapSecHDFEOSAttr   Write contents of leapsec file as hdfeos5 attribute
 ! WriteLeapSecHDF5DS       Write contents of leapsec file as hdf5 dataset
@@ -178,7 +178,7 @@ module PCFHdr
     character(len=GA_VALUE_LENGTH) :: ProductionLocation            = ''
     integer                        :: NumCompletedChunks            = 0
     integer                        :: NumFailedChunks               = 0
-    character(len=GA_VALUE_LENGTH) :: FailedChunks                  = 'MLS Aura'
+    character(len=GA_VALUE_LENGTH) :: FailedChunks                  = ''
     character(len=GA_VALUE_LENGTH) :: FailedMachines                = ''
     character(len=GA_VALUE_LENGTH) :: FailedMsgs                    = ''
   end type GlobalAttributes_T
@@ -190,6 +190,10 @@ module PCFHdr
   integer, public, save            :: PCFHDR_DEFAULT_HDFVERSION = HDFVERSION_5
   logical, parameter               :: DEBUG = .false.
 
+  interface DumpGlobalAttributes
+    module procedure DumpGlobalAttributes_global, dumpGlobalAttributes_local
+  end interface
+  
   interface GranuleDay
     module procedure GranuleDay_Fun
   end interface
@@ -217,7 +221,7 @@ module PCFHdr
 contains
 
 !--------------------------------------------------------------
-   SUBROUTINE CreatePCFAnnotation ( mlspcfN_pcf_start, anText )
+   subroutine CreatePCFAnnotation ( mlspcfN_pcf_start, anText )
 !--------------------------------------------------------------
 
       use Allocate_Deallocate, only: Allocate_Test
@@ -275,12 +279,17 @@ contains
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 !------------------------------------
-   END SUBROUTINE CreatePCFAnnotation
+   end subroutine CreatePCFAnnotation
 !------------------------------------
 
 !----------------------------------------
-   SUBROUTINE dumpGlobalAttributes
+   subroutine DumpGlobalAttributes_global
+     call DumpGlobalAttributes_local ( GlobalAttributes )
+   end subroutine DumpGlobalAttributes_global
+   
+   subroutine DumpGlobalAttributes_local ( GlobalAttributes )
 !----------------------------------------
+      type(GlobalAttributes_T), intent(in)       :: GlobalAttributes
       integer                           :: DayofYear
       DayOfYear = GranuleDayOfYear_fun()
       call outputNamedValue('Orbit numbers', GlobalAttributes%orbNum)
@@ -307,10 +316,10 @@ contains
       call output ('FailedMachines: '    // trim(         GlobalAttributes%FailedMachines      ), advance='yes' )
       call output ('FailedMsgs: '        // trim(         GlobalAttributes%FailedMsgs          ), advance='yes' )
       call output ('FileAttributesCopiedFrom: ' // trim(  GlobalAttributes%FileAttributesCopiedFrom ), advance='yes' )
-   end SUBROUTINE dumpGlobalAttributes
+   end subroutine DumpGlobalAttributes_local
 
 !----------------------------------------
-   SUBROUTINE FillTAI93Attribute ( LeapSecFileName )
+   subroutine FillTAI93Attribute ( LeapSecFileName )
 !----------------------------------------
 
     use SDPToolkit, only: MLS_UTCToTAI, PGS_TD_UTCToTAI
@@ -352,7 +361,7 @@ contains
       & GlobalAttributes%TAI93At0zOfGranule )
 
 !------------------------------------
-   END SUBROUTINE FillTAI93Attribute
+   end subroutine FillTAI93Attribute
 !------------------------------------
 
   ! ------------ GranuleDayOfYear ---------------
@@ -494,7 +503,7 @@ contains
   end function GranuleYear_fun
 
 !------------------------------------------------------------
-   SUBROUTINE h5_readMLSFileAttr ( MLSFile )
+   subroutine h5_readMLSFileAttr ( MLSFile )
 !------------------------------------------------------------
 
       use HDF5, only: H5GClose_f, H5GOpen_f
@@ -552,11 +561,11 @@ contains
       call h5gclose_f(grp_id, status)
 
 !------------------------------------------------------------
-   END SUBROUTINE h5_readMLSFileAttr
+   end subroutine h5_readMLSFileAttr
 !------------------------------------------------------------
 
 !------------------------------------------------------------
-   SUBROUTINE he5_readMLSFileAttr (MLSFile)
+   subroutine he5_readMLSFileAttr (MLSFile)
 !------------------------------------------------------------
 
     use MLSHDFEOS, only: HE5_EHRDGlAtt
@@ -609,11 +618,11 @@ contains
       MLSFile%PCFIDRange%Top    = ints(2)
 
 !------------------------------------------------------------
-   END SUBROUTINE he5_readMLSFileAttr
+   end subroutine he5_readMLSFileAttr
 !------------------------------------------------------------
 
 !------------------------------------------------------------
-   SUBROUTINE h5_ReadGlobalAttr ( MLSFile )
+   subroutine h5_ReadGlobalAttr ( MLSFile )
 !------------------------------------------------------------
 
       use HDF5, only: H5GClose_f, H5GOpen_f
@@ -671,11 +680,11 @@ contains
       call h5gclose_f(grp_id, status)
 
 !------------------------------------------------------------
-   END SUBROUTINE h5_ReadGlobalAttr
+   end subroutine h5_ReadGlobalAttr
 !------------------------------------------------------------
 
 !------------------------------------------------------------
-   SUBROUTINE h5_writeglobalattr_fileID ( fileID, skip_if_already_there, DOI )
+   subroutine h5_writeglobalattr_fileID ( fileID, skip_if_already_there, DOI )
 !------------------------------------------------------------
 
       use HDF5, only: H5GClose_f, H5GOpen_f
@@ -772,11 +781,11 @@ contains
       call h5gclose_f(grp_id, status)
 
 !------------------------------------------------------------
-   END SUBROUTINE h5_writeglobalattr_fileID
+   end subroutine h5_writeglobalattr_fileID
 !------------------------------------------------------------
 
 !------------------------------------------------------------
-   SUBROUTINE h5_writeglobalattr_MLSFile ( MLSFile, skip_if_already_there, DOI )
+   subroutine h5_writeglobalattr_MLSFile ( MLSFile, skip_if_already_there, DOI )
 !------------------------------------------------------------
 
       ! Brief description of subroutine
@@ -802,10 +811,10 @@ contains
       call h5_writeglobalattr_fileID ( MLSFile%fileID%f_id, &
         & skip_if_already_there, DOI )
       if ( .not. alreadyOpen ) call mls_closeFile( MLSFile, returnStatus )
-   end SUBROUTINE h5_writeglobalattr_MLSFile
+   end subroutine h5_writeglobalattr_MLSFile
 
 !------------------------------------------------------------
-   SUBROUTINE h5_writeMLSFileAttr ( MLSFile, skip_if_already_there )
+   subroutine h5_writeMLSFileAttr ( MLSFile, skip_if_already_there )
 !------------------------------------------------------------
 
       use HDF5, only:  H5GClose_f, H5GOpen_f
@@ -880,11 +889,11 @@ contains
       call h5gclose_f(grp_id, status)
 
 !------------------------------------------------------------
-   END SUBROUTINE h5_writeMLSFileAttr
+   end subroutine h5_writeMLSFileAttr
 !------------------------------------------------------------
 
 !------------------------------------------------------------
-   SUBROUTINE he5_writeglobalattr_MLSFile ( MLSFile, dayNum, DOI, skip_if_already_there )
+   subroutine he5_writeglobalattr_MLSFile ( MLSFile, dayNum, DOI, skip_if_already_there )
 !------------------------------------------------------------
 
 ! Brief description of subroutine
@@ -910,10 +919,10 @@ contains
       call he5_writeglobalattr_FileID ( MLSFile%fileID%f_id, &
         & dayNum, DOI, skip_if_already_there )
       if ( .not. alreadyOpen ) call mls_closeFile( MLSFile, returnStatus )
-   end SUBROUTINE he5_writeglobalattr_MLSFile
+   end subroutine he5_writeglobalattr_MLSFile
 
 !------------------------------------------------------------
-   SUBROUTINE he5_writeglobalattr_FileID ( fileID, dayNum, DOI, skip_if_already_there )
+   subroutine he5_writeglobalattr_FileID ( fileID, dayNum, DOI, skip_if_already_there )
 !------------------------------------------------------------
 
     use HDFEOS5, only: HE5T_Native_Int, &
@@ -1028,11 +1037,11 @@ contains
       ! & 'MiscNotes', MLS_CHARTYPE, 1, &
       !  &  GlobalAttributes%MiscNotes)
 !------------------------------------------------------------
-   END SUBROUTINE he5_writeglobalattr_FileID
+   end subroutine he5_writeglobalattr_FileID
 !------------------------------------------------------------
 
 !------------------------------------------------------------
-   SUBROUTINE he5_writeMLSFileAttr ( MLSFile )
+   subroutine he5_writeMLSFileAttr ( MLSFile )
 !------------------------------------------------------------
 
    use HDFeos5, only: He5t_Native_Int, MLS_Chartype
@@ -1096,11 +1105,11 @@ contains
        &  (/MLSFile%FileID%f_id, MLSFile%FileID%grp_id, MLSFile%FileID%sd_id/) )
 
 !------------------------------------------------------------
-   END SUBROUTINE he5_writeMLSFileAttr
+   end subroutine he5_writeMLSFileAttr
 !------------------------------------------------------------
 
 !------------------------------------------------------------
-   SUBROUTINE he5_readglobalattr (fileID, gAttributes, &
+   subroutine he5_readglobalattr (fileID, gAttributes, &
      & ProcessLevel, DayofYear, TAI93At0zOfGranule, returnStatus)
 !------------------------------------------------------------
 
@@ -1199,11 +1208,11 @@ contains
       if ( present(returnStatus) ) returnStatus = status
       if ( DEBUG ) call dumpGlobalAttributes
 !------------------------------------------------------------
-   END SUBROUTINE he5_readglobalattr
+   end subroutine he5_readglobalattr
 !------------------------------------------------------------
 
 !----------------------------------------
-   SUBROUTINE InputInputpointer (urefs, fileIDArray, fileNameArray, &
+   subroutine InputInputpointer (urefs, fileIDArray, fileNameArray, &
      & PCBottom, PCTop )
 !----------------------------------------
 !  Prepare Input for WriteInputpointer consisting of universal refs
@@ -1287,11 +1296,11 @@ contains
    endif
 
 !------------------------------------
-   END SUBROUTINE InputInputpointer
+   end subroutine InputInputpointer
 !------------------------------------
 
 !------------------------------------------------------------
-   SUBROUTINE sw_writeglobalattr (swathID)
+   subroutine sw_writeglobalattr (swathID)
 !------------------------------------------------------------
 
      use HDFeos5, only: He5t_Native_Int, He5t_Native_Double, MLS_Chartype
@@ -1377,7 +1386,7 @@ contains
       ! & 'MiscNotes', MLS_CHARTYPE, hsize(1), &
       !  &  GlobalAttributes%MiscNotes)
 !------------------------------------------------------------
-   END SUBROUTINE sw_writeglobalattr
+   end subroutine sw_writeglobalattr
 !------------------------------------------------------------
 
 !----------------------------------------
@@ -1468,7 +1477,7 @@ contains
    end subroutine WriteLeapSecHDF5DS
 
 !----------------------------------------
-   SUBROUTINE WritePCF2Hdr (file, anText, hdfVersion, fileType, name)
+   subroutine WritePCF2Hdr (file, anText, hdfVersion, fileType, name)
 !----------------------------------------
       use HDF5, only: H5F_ACC_RDWR_F, &
         & H5FOPEN_F, H5FCLOSE_F
@@ -1555,11 +1564,11 @@ contains
            & 'Unrecognized hdfVersion in WritePCF2Hdr')
       end select
 !-----------------------------
-   END SUBROUTINE WritePCF2Hdr
+   end subroutine WritePCF2Hdr
 !-----------------------------
 
 !----------------------------------------
-   SUBROUTINE WritePCF2Hdr_hdf4 (file, anText)
+   subroutine WritePCF2Hdr_hdf4 (file, anText)
 !----------------------------------------
 
 ! Brief description of subroutine
@@ -1627,11 +1636,11 @@ contains
                                                        &close the HDF file.')
 
 !-----------------------------
-   END SUBROUTINE WritePCF2Hdr_hdf4
+   end subroutine WritePCF2Hdr_hdf4
 !-----------------------------
 
 !----------------------------------------
-   SUBROUTINE WritePCF2Hdr_hdf5 (fileID, anText, name)
+   subroutine WritePCF2Hdr_hdf5 (fileID, anText, name)
 !----------------------------------------
 
      use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
@@ -1697,11 +1706,11 @@ contains
         & CALL MLSMessage(MLSMSG_Error, ModuleName, &
         & 'Error closing hdf5 file root group for annotating with PCF' )
 !-----------------------------
-   END SUBROUTINE WritePCF2Hdr_hdf5
+   end subroutine WritePCF2Hdr_hdf5
 !-----------------------------
 
 !----------------------------------------
-   SUBROUTINE WritePCF2Hdr_hdfeos5 (fileID, anText)
+   subroutine WritePCF2Hdr_hdfeos5 (fileID, anText)
 !----------------------------------------
 
      use HDFeos5, only: MLS_Chartype
@@ -1752,7 +1761,7 @@ contains
       end do
 
 !-----------------------------
-   END SUBROUTINE WritePCF2Hdr_hdfeos5
+   end subroutine WritePCF2Hdr_hdfeos5
 !-----------------------------
 
    subroutine WriteutcPoleHDFEOSAttr (fileID)
@@ -1845,6 +1854,9 @@ end module PCFHdr
 !================
 
 !# $Log$
+!# Revision 2.71  2018/05/22 23:04:41  pwagner
+!# Correct initial value of FailedChunks; may dump user-supplied GlobalAttribute_T
+!#
 !# Revision 2.70  2018/04/19 00:47:54  vsnyder
 !# Remove USE statements for unused names
 !#
