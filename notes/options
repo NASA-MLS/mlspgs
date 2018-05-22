@@ -70,6 +70,8 @@ Note: use "-T2" and not "--T2" because -T2 has one 'letter'
   --idents <filename>: idents of the master task in a PVM setup that may be
       compared with the slave's for verifying they run the same version
      (in the next 3, n may be one of {4, 5, b} where b means both 4 and 5)
+  --inst <name>: Fill InstrumentName attribute with "name" in all product files
+      defaults to MLS-Aura
   --l1b=n:   Assume hdfn when reading l1b files
   --l2gpr=n: Assume hdfeosn when reading l2gp files
   --l2gpw=n: Assume hdfeosn when writing l2gp files
@@ -177,6 +179,9 @@ by the equal-signs -- stuff outside that space, like these
 comments, will be ignored when responding to mlsl2 -?)
 
  $Log$
+ Revision 1.74  2018/02/28 20:01:16  pwagner
+ Explain other advantages of -setf opts_file
+
  Revision 1.73  2017/01/25 17:25:01  pwagner
  May skip certain Phases named in phasesToSkip cmdline opt
 
