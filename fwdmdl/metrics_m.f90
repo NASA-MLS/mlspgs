@@ -851,7 +851,7 @@ path: do i = i1, i2
           & ddHidHidTl0, dHidTlm, Z_Ref,                               &
           ! Optional outputs:
           & ddHtdHtdTl0, dHitdTlm, dHtdTl0, dHtdZt,                    &
-          & Eta_ZP, Do_Calc_Hyd, Tan_Phi_t )
+          & Eta_ZP, Tan_Phi_t )
 
     ! This subroutine computes metrics-related things after H_Path and
     ! P_Path are computed by Height_Metrics, and then perhaps augmented
@@ -862,6 +862,7 @@ path: do i = i1, i2
     use MLSKinds, only: RP
     use MLSStringLists, only: SwitchDetail
     use Sparse_Eta_m, only: Sparse_Eta_t
+    use Sparse_m, only: Sparse_t
     use Toggles, only: Switches
 
     ! inputs:
@@ -904,8 +905,9 @@ path: do i = i1, i2
     real(rp), optional, intent(out), target :: ddHtdHtdTl0(:)  ! Second order
              ! derivatives of height w.r.t T_Ref at the tangent only -- used
              ! for antenna affects. Computed if present(dHidTlm).
-    real(rp), optional, intent(out) :: dHitdTlm(:,:)   ! Derivative of path
-             ! position wrt temperature state vector (t_sv%zet_basis X t_sv%phi_basis)
+    type(sparse_t), optional, intent(inout) :: dHitdTlm        ! Derivative of
+             ! path position wrt temperature state vector
+             ! (t_sv%zet_basis X t_sv%phi_basis)
     real(rp), optional, intent(out), target :: dHtdTl0(:)      ! First order derivatives
              ! of height w.r.t T_Ref at the tangent only.  Computed if
              ! present(dHidTlm).
@@ -913,9 +915,6 @@ path: do i = i1, i2
              ! pressure at the tangent.  Computed if present(dHidTlm).
     type(sparse_eta_t), optional, intent(inout) :: Eta_ZP ! Interpolating
              ! coefficients for Temperature from Zeta X Phi to the path
-    logical, optional, intent(out) :: Do_Calc_Hyd(:,:) ! Nonzero locator for
-             ! hydrostatic calculations.  Computed if present(dHidTlm).
-             ! This is Path X StateVector = Path X ( Zeta * Phi )
     real(rp), optional, intent(out) :: Tan_Phi_t ! temperature at the tangent
 
     ! Local variables.
@@ -940,7 +939,7 @@ path: do i = i1, i2
     call eta_p%eta_1d ( t_sv%phi_basis, p_path(:n_path), &
                       & create=.false., sorted=.true. )
     do i = 1, n_path
-      ! Interolate to t_path and dHitdZi one row at a time because
+      ! Interpolate to t_path and dHitdZi one row at a time because
       ! t_ref(vert_inds,:) would be a big copy.
       t_path(i) = eta_p%row_dot_vec ( i, t_ref(vert_inds(i),:) )
       dHitdZi(i) = eta_p%row_dot_vec ( i, dHidZij(vert_inds(i),:) )
@@ -980,6 +979,7 @@ path: do i = i1, i2
       integer :: P_Coeffs                    ! # of phi's, t_sv%l_p(1)
       integer :: Two_D_Bounds(2)             ! [ Z_Coeffs, P_Coeffs ]
       integer :: Two_Subs(2)                 ! [ Sv_Z, Sv_P ]
+      real(rp) :: V                          ! Value to store in dHitdTlm
       integer :: WS                          ! t_sv%window_start(1)
       integer :: Z_Coeffs                    ! # of zetas, t_sv%l_z(1)
       real(rp) :: Z_Path(n_path)             ! Z_Ref(vert_inds(1:n_path))
@@ -1007,6 +1007,7 @@ path: do i = i1, i2
       dHtdTl0_2 = 0
       ddHtdHtdTl0_2 = 0
       ! Now fill the places that have nonzero Phi interpolating coefficients
+      ! in the tangent row.
       do i = 1, z_coeffs
         call eta_p%row_times_vec ( n_tan, dHidTlm(tan_ind,i,:), dHtdTl0_2(i,:) )
         call eta_p%row_times_vec ( n_tan, ddHidHidTl0(tan_ind,i,:), &
@@ -1021,11 +1022,12 @@ path: do i = i1, i2
 
       ! Compute interpolation coefficients from Zeta X Phi to the path.
       call eta_zp%empty ! clean it out but don't deallocate components
-      call eta_zp%eta_nD ( eta_z, eta_p ) ! Eta_ZP = outer product Eta_Z * Eta_P
+      ! Compute Eta_ZP =  Eta_Z x Eta_P^T where t_sv%deriv_flags is true
+      call eta_zp%eta_nD ( eta_z, eta_p, flags=t_sv%deriv_flags )
       ! Compute the path temperature derivative, noting where the nonzeros are
-      dHitdTlm = 0
+      call dHitdTlm%empty ! Clean it out but don't deallocate components
+      dHitdTlm%nRows = n_path ! usually filled by Sparse_Eta%*D
       do i = 1, n_path
-        change = .false.
         ! An iterator to traverse a row of a sparse_t would be helpful
         j = eta_p%rows(i) ! Last element in the row
         if ( j /= 0 ) then
@@ -1036,35 +1038,15 @@ path: do i = i1, i2
               sv_t = element_position ( two_subs, two_d_bounds )
             ! sv_t = element_position ( [ sv_z, sv_p ], [ z_coeffs, p_coeffs ] )
               if ( t_sv%deriv_flags(sv_t) ) then
-                dHitdTlm(i,sv_t) = max(dHidTlm(vert_inds(i),sv_z,sv_p),0.0_rp) * &
-                    & eta_p%e(j)%v
-              else
-                change = .true.
-                dHitdTlm(i,sv_t) = 0.0
+!               v = max(dHidTlm(vert_inds(i),sv_z,sv_p),0.0_rp) * eta_p%e(j)%v
+                v = dHidTlm(vert_inds(i),sv_z,sv_p) * eta_p%e(j)%v
+                if ( v > 0 ) call dHitdTlm%add_element ( v, i, sv_t )
               end if
             end do
             if ( j == eta_p%rows(i) ) exit ! just processed the last element
           end do
         end if
-        if ( change ) then ! Make some interpolators zero because
-                           ! t_sv%deriv_flags was false
-          ! An iterator to traverse a row of a sparse_t would be helpful
-          j = eta_zp%rows(i) ! Last element in the row
-          if ( j /= 0 ) then
-            ws = t_sv%windowStart(1)
-            do
-              j = eta_zp%e(j)%nr   ! Next element in the row
-              k = eta_zp%e(j)%c    ! Column subscript of the element
-              two_subs = subscripts ( k, two_d_bounds ) ! [ sv_z, sv_p ]
-              ! L4 is associated with Deriv_Flags
-              if ( .not. t_sv%c(1)%l4(1,sv_z,ws+sv_p-1,1) ) &
-                & eta_zp%e(j)%v = 0
-              if ( j == eta_zp%rows(i) ) exit ! just processed the last element
-            end do
-          end if
-        end if
       end do
-      do_calc_hyd = dHitdTlm /= 0.0_rp
 
     end subroutine Temperature_Derivatives
 
@@ -1197,6 +1179,9 @@ path: do i = i1, i2
 end module Metrics_m
 
 ! $Log$
+! Revision 2.88  2018/05/17 02:15:45  vsnyder
+! Use sparse instead of dense interpolation
+!
 ! Revision 2.87  2018/05/14 23:37:35  vsnyder
 ! Change to sparse eta representation
 !
