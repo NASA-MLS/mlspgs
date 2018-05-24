@@ -308,7 +308,7 @@ program COMPARE
   end do
 
   if ( rmaxvg > 0.0 .or. zero .or. anyNan(3) ) then
-    print '(a/1p,5g13.6,1x,a)', &
+    print '(a/1p,5g13.5,1x,a)', &
       & " RelMaxVal    MaxRel       where MaxAbs MaxAbs       where MaxRel block", &
       & rmaxvg, rmaxg, absAtRmaxG, amaxG, relAtAmaxG, trim(rmaxb)
     if ( doStats ) &
@@ -371,6 +371,9 @@ contains
 end program
 
 ! $Log$
+! Revision 1.31  2018/04/25 20:53:24  vsnyder
+! Repair header for summary-only case
+!
 ! Revision 1.30  2018/04/10 22:19:32  vsnyder
 ! Check both input files' availability before stopping if one is not
 ! available.  Report the argument number(s) of missing input files.
