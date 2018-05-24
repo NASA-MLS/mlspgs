@@ -1508,7 +1508,7 @@ contains
     if ( .not. qty%sharedVGrid ) then
       what = trim(what) // "%surfs"
       call allocate_test ( qty%surfs, qty%noSurfs, noInstancesToAllocate, &
-        & trim(what), ModuleName )
+        & what(1:len_trim(what)), ModuleName )
     end if
 
     ! Now the horizontal coordinates
@@ -2286,6 +2286,10 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.121  2018/04/19 02:00:36  vsnyder
+! Compute address for allocate/deallocate tracking.  Remove USE statements for
+! unused names.
+!
 ! Revision 2.120  2017/11/03 19:57:01  pwagner
 ! Most array gymnastics moved from MLSFillValues to HyperSlabs module
 !
