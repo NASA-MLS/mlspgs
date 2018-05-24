@@ -304,7 +304,7 @@ contains
 
   end subroutine Sparse_Eta_1D
 
-  subroutine Sparse_Eta_nD ( L, R, P, What, Resize, One_Row_OK )
+  subroutine Sparse_Eta_nD ( L, R, P, What, Resize, One_Row_OK, Flags )
 
     ! Compute P as the product of L and R, e.g. Freq and Zeta x Phi, for
     ! linear interpolation from an nD Basis (e.g. Freq x Zeta x Phi, to 1D
@@ -321,7 +321,10 @@ contains
     logical, intent(in), optional :: One_Row_OK ! OK if L has only one row,
                                             ! e.g., for Frequency.  Apply that
                                             ! row of L to every row of R.
+    logical, intent(in), optional :: Flags(:)   ! Don't produce elements of P
+                                            ! in columns for which Flags is false
 
+    integer :: Col     ! Column index to put into P%E(j)%C
     integer :: I       ! Row index
     integer :: J, K    ! Column indices
     integer :: FL, FR  ! Index of final column in row of left, right factors
@@ -367,9 +370,14 @@ contains
             j = l%e(fl)%nr       ! First element of L in row LR
             if ( j /= 0 ) then
               do
-                v = l%e(j)%v * r%e(k)%v
-                if ( v /= 0.0 ) &
-                  & call p%add_element ( v, i, m*(r%e(k)%c-1) + l%e(j)%c )
+                col = m*(r%e(k)%c-1) + l%e(j)%c
+                v = 0
+                if ( present(flags) ) then
+                  if ( flags(col) ) v = l%e(j)%v * r%e(k)%v
+                else
+                  v = l%e(j)%v * r%e(k)%v
+                end if
+                if ( v /= 0.0 ) call p%add_element ( v, i, col )
                 j = l%e(j)%nr             ! Next element of L in row LR
                 if ( j == l%e(fl)%nr ) exit ! Back to the first element?
               end do
@@ -402,6 +410,9 @@ contains
 end module Sparse_Eta_m
 
 ! $Log$
+! Revision 2.6  2018/05/24 03:21:43  vsnyder
+! Add flags to allow saying 'don\'t bother with this column'
+!
 ! Revision 2.5  2018/05/17 02:16:48  vsnyder
 ! Add Sparse_Eta_0D
 !

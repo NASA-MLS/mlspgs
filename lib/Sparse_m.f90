@@ -362,7 +362,7 @@ contains
     MyOffset = .false.
     if ( present(offset) ) MyOffset = offset
     MyTranspose = .false.
-    if ( present(Transpose) ) MyTranspose = transpose .and. size(cs,1) > 1
+    if ( present(Transpose) ) MyTranspose = transpose !.and. size(cs,1) > 1
     myWidth = 5
     if ( present(width) ) myWidth = width
 
@@ -424,7 +424,7 @@ contains
           places = sum(int(log10(real(cs)))) + size(cs) + 3
           k = 0
           do
-            if ( k == myWidth ) then
+            if ( k >= myWidth ) then
               call newLine
               call blanks ( places )
               k = 0
@@ -432,6 +432,7 @@ contains
             j = sparse%e(j)%nc                   ! Next row in this column
             k = k + 1
             call output ( sparse%e(j)%r, places=4 )
+            if ( myColon ) call output ( ':' )
             call output ( sparse%e(j)%v, format=myFormat )
             if ( j == sparse%cols(i) ) exit      ! No more columns this row
           end do ! Rows
@@ -453,9 +454,10 @@ contains
           call output ( i, places=4, after="#" ) ! Row number
           k = 0
           do
-            if ( k == myWidth ) then
+            if ( k >= myWidth ) then
               call newLine
               call blanks ( 5 )
+              k = 0
             end if
             j = sparse%e(j)%nr                   ! Next column in this row
             k = k + 1
@@ -932,6 +934,10 @@ contains
 end module Sparse_m
 
 ! $Log$
+! Revision 2.6  2018/05/24 03:20:26  vsnyder
+! Respect the Width argument in the non-transpose dump case.  Do some
+! cannonball polishing.
+!
 ! Revision 2.5  2018/05/14 23:25:29  vsnyder
 ! Change to sparse eta representation
 !
