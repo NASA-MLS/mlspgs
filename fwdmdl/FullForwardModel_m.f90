@@ -71,7 +71,6 @@ contains
     use Interpolate_MIF_to_Tan_Press_m, only: Get_Lines_of_Sight
     use Intrinsic, only: Lit_Indices, L_ECRtoFOV, L_PhiTan, L_PTan, L_ScECR, &
       & L_TScat, L_VMR
-!Q    use Intrinsic, only: L_None
     use Load_SPS_Data_M, only: DestroyGrids_T, Dump, EmptyGrids_T, Grids_T, &
       & Load_One_Item_Grid, Load_SPS_Data
     use MatrixModule_1, only: Matrix_T
@@ -149,7 +148,6 @@ contains
     integer :: No_sv_p_T        ! number of phi basis for temperature
     integer :: No_Tan_Hts       ! Number of tangent heights
     integer :: NoUsedChannels   ! Number of channels used
-!Q    integer :: N_Frq_Dep        ! Number of frequency-dependent VMRs
     integer :: N_T_zeta         ! Number of zetas for temperature
     integer :: Stat             ! From allocate
     integer :: SurfaceTangentIndex  ! Index in tangent grid of earth's
@@ -446,14 +444,6 @@ contains
       max_f = 2 * maxVert + ngp1   ! Maximum fine path, including minimum Zeta panel
     end if
 
-!Q    n_frq_dep = 0
-!Q    if ( usingQTM ) then
-!Q      do k = 1, size(fwdModelConf%beta_group)
-!Q        if ( fwdModelConf%beta_group(k)%qty%qty%template% &
-!Q           & frequencyCoordinate /= l_none ) n_frq_dep = n_frq_dep + 1
-!Q      end do
-!Q    end if
-
     ! Allocate and fill spectroscopy derivative grids.  They'll be empty
     ! if fwdModelConf%line* has size zero.
     call load_sps_data ( FwdModelConf, phitan, fmStat%maf, grids_v, &
@@ -497,7 +487,6 @@ contains
                               & Q_LOS,          &
                               & QTM_Paths, f_and_v, no_mol, noUsedChannels,    &
                               & no_sv_p_T, &
-!Q                              & n_frq_dep, &
                               & n_t_zeta, sv_t_len, nlvl,&
                               & no_tan_hts, surfaceTangentIndex,  max_c,       &
                               & maxVert, max_f, ptan_der,                      &
@@ -547,7 +536,6 @@ contains
 !Q                             & QTM_HGrid, &
                              & Q_LOS, QTM_Paths,      &
                              & f_and_v, no_mol, noUsedChannels, No_sv_p_T,     &
-!Q                             & n_frq_dep, &
                              & n_t_zeta, sv_t_len, nlvl, no_tan_hts,&
                              & surfaceTangentIndex,                            &
                              & max_c, maxVert, max_f, ptan_der,                &
@@ -583,10 +571,8 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
     use Get_IEEE_NaN_m, only: Fill_IEEE_NaN
     use HessianModule_1, only: Hessian_T
 !Q    use HGridsDatabase, only: HGrid_T
-!Q    use Indexed_Values_m, only: Value_QTM_2D_Lists_t, Value_QTM_3D_Lists_t
     use Intrinsic, only: L_A, L_GeocAltitude, L_GeodAltitude, L_Radiance, &
       & L_TScat, L_VMR, L_Zeta
-!Q    use Intrinsic, only: L_None
     use Load_SPS_Data_M, only: DestroyGrids_T, Dump, Grids_T
     use MatrixModule_1, only: Matrix_T
     use MLSKinds, only: R4, R8, RP, RV
@@ -647,7 +633,6 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
     integer, intent(in) :: No_Mol           ! Number of molecules
     integer, intent(in) :: NoUsedChannels   ! Number of channels used
     integer, intent(in) :: No_sv_p_T        ! number of phi basis for temperature
-!Q    integer, intent(in) :: N_Frq_Dep        ! Number of frequency-dependent VMRs
     integer, intent(in) :: N_T_zeta         ! Number of zetas for temperature
     integer, intent(in) :: Sv_T_len         ! Number of t_phi*t_zeta in the window
     integer, intent(in) :: Nlvl             ! Number of levels in coarse zeta grid
@@ -705,6 +690,7 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
     integer :: Me_SidebandLoop = -1 ! String index for trace
     integer :: MIF                ! MIF number for tan_press(ptg_i)
     integer :: N_More             ! Effective size of More_*_Path
+    integer :: N_Phi              ! Number of phi values for one species
     integer :: NGLMax             ! NGL if all panels need GL
     integer :: NoFreqs            ! Number of frequencies for a pointing
     integer :: NoUsedDACS         ! Number of different DACS in this run.
@@ -859,21 +845,19 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
     real(rp) :: DBeta_DV_Path_F(max_f,s_lc*size(fwdModelConf%lineCenter)) ! dBeta_dv on fine grid
     real(rp) :: DBeta_DW_Path_C(max_c,s_lw*size(fwdModelConf%lineWidth)) ! dBeta_dw on coarse grid
     real(rp) :: DBeta_DW_Path_F(max_f,s_lw*size(fwdModelConf%lineWidth)) ! dBeta_dw on fine grid
-    real(rp), target :: DH_DT_Path_1(s_t*max_f*sv_t_len) ! for dH/dT on path Zeta X Phi
-    real(rp), pointer :: DH_DT_Path(:,:)           ! dH/dT on path X (Zeta * Phi)
-    real(rp) :: DH_DT_Path_C(max_c,s_t*sv_t_len)   ! DH_DT_Path on coarse grid
+    type(sparse_t) :: DH_dT_Path               ! dH/dT on path X (Zeta * Phi)
     real(rp) :: DHDZ_GLGrid(maxVert,no_sv_p_T) ! dH/dZ on glGrid surfs
-    real(rp) :: DX_DT(no_tan_hts,s_t*sv_t_len)     ! (No_tan_hts, nz*np)
+    real(rp) :: DX_DT(no_tan_hts,s_t*sv_t_len) ! (No_tan_hts, nz*np)
     real(rp) :: Eta_IWC_ZP(max_f,max(s_i,s_ts)*grids_iwc%p_len)
     real(rp) :: Eta_Mag_ZP(max_f,grids_mag%p_len)  ! Eta_z x Eta_p x Eta_x
     real(rp) :: Eta_ZXP_N(max_f,size(grids_n%values)) ! Eta_z x Eta_p for N
     real(rp) :: Eta_ZXP_V(max_f,size(grids_v%values)) ! Eta_z x Eta_p for V
     real(rp) :: Eta_ZXP_W(max_f,size(grids_w%values)) ! Eta_z x Eta_p for W
-    real(rp) :: H_GLGrid(maxVert,no_sv_p_T)        ! H on glGrid surfs (km)
+    real(rp) :: H_GLGrid(maxVert,no_sv_p_T)    ! H on glGrid surfs (km)
     real(rp) :: IWC_Path(max_f,max(max(s_i,s_ts),s_ts)) ! IWC on path
-    real(rp), target :: Mag_Path(s_p*max_f,4)      ! Magnetic field on path
+    real(rp), target :: Mag_Path(s_p*max_f,4)  ! Magnetic field on path
     real(rp), target :: Rad_Avg_Path(max_c,s_pfa*noUsedChannels) ! Freq. Avgd.
-                                                   ! LBL radiance along the path
+                                               ! LBL radiance along the path
     real(rp) :: R_Eq  ! Radius of equivalent circular Earth tangent to the surface
                       ! of the Earth reference ellipsoid at the surface location
                       ! of the tangent point, in the plane defined by the line of
@@ -883,13 +867,13 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
     real(rp) :: Spect_N_Path(max_f,size(fwdModelConf%lineWidth_TDep)) ! Line Width Temperature Dependence
     real(rp) :: Spect_V_Path(max_f,size(fwdModelConf%lineCenter)) ! Line Center
     real(rp) :: Spect_W_Path(max_f,size(fwdModelConf%lineWidth)) ! Line Width
-    real(rp) :: SPS_Path(max_f,no_mol)             ! species on path
-    real(rp) :: SPS_Path_C(max_c,no_mol)           ! species on coarse path
-    real(rp) :: SPS_Path_F(max_f,no_mol)           ! species on GL path
-    real(rp) :: TT_Path(max_f,max(s_i,s_ts))       ! TScat on path along the LOS
-    real(rp) :: T_GLGrid(maxVert,no_sv_p_T)        ! Temp on glGrid surfs
+    real(rp) :: SPS_Path(max_f,no_mol)         ! species on path
+    real(rp) :: SPS_Path_C(max_c,no_mol)       ! species on coarse path
+    real(rp) :: SPS_Path_F(max_f,no_mol)       ! species on GL path
+    real(rp) :: TT_Path(max_f,max(s_i,s_ts))   ! TScat on path along the LOS
+    real(rp) :: T_GLGrid(maxVert,no_sv_p_T)    ! Temp on glGrid surfs
     real(rp) :: T_Script_PFA(max_c,s_pfa*noUsedChannels) ! Delta_B in some notes
-    real(r8) :: VMRArray(s_i*n_t_zeta,no_mol)      ! The VMRs for H2O, O3, N2
+    real(r8) :: VMRArray(s_i*n_t_zeta,no_mol)  ! The VMRs for H2O, O3, N2
 
     ! Temporary space for DACS radiances if we're doing frequency averaging
     ! and there are any LBL molecules and any derivatives are calculated
@@ -955,9 +939,6 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
       ! Only useful when subsetting temperature derivatives.
 
     ! 'Avoid zeros' indicators
-    logical, target :: Do_Calc_Hyd_1(s_t * max_f * sv_t_len) ! dH_dT_Path /= 0
-    logical, pointer :: Do_Calc_Hyd(:,:)     ! dH_dT_Path /= 0 on path X (Zeta * Phi)
-    logical, pointer :: Do_Calc_Hyd_C(:,:)   ! DO_Calc_Hyd on coarse grid
     logical :: Do_Calc_N(max_f, size(grids_n%values) ) ! on entire grid
     logical, target :: Do_Calc_T_1(s_t* max_f * sv_t_len)
     logical, pointer :: Do_Calc_T(:,:)         ! path Z X temp (Z * phi )
@@ -1072,7 +1053,7 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
     ! for temperature
     type (Sparse_Eta_t) :: Eta_p_T
     ! Interpolation coefficients from zeta X horizontal (phi or QTM) basis to
-    ! path for temperature
+    ! path for temperature; only needed for temperature derivatives
     type (Sparse_Eta_t) :: Eta_zp_T
     ! Interpolation coefficients from zeta X phi basis to path for all species
     type (Sparse_Eta_t) :: Eta_zp(size(fwdModelConf%beta_group))
@@ -1131,9 +1112,6 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
 
     alpha_path_polarized_c(-1:,1:) => alpha_path_polarized ( -1:1, 1 :: ngp1 )
     dAlpha_dT_polarized_path_c(-1:,1:) => dAlpha_dT_polarized_path ( -1:1, 1 :: ngp1 )
-    ! Get two-D pointer to dh_dt_path_1, do_calc_hyd_1 and do_calc_t_1
-    dh_dt_path(1:max_f,1:s_t*sv_t_len) => dh_dt_path_1
-    do_calc_hyd(1:max_f,1:s_t*sv_t_len) => do_calc_hyd_1
     do_calc_t(1:max_f,1:s_t*sv_t_len) => do_calc_t_1
 
     ! Get pointer to Alpha_Path_C, the coarse-path part of Alpha_Path
@@ -1170,8 +1148,7 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
         & d2Alpha_df2_path_c, d2Alpha_df2_path_f, dBeta_df_path_c, &
         & dBeta_df_path_f, dBeta_dIWC_path_c, dBeta_dIWC_path_f, &
         & dBeta_dn_path_c, dBeta_dn_path_f, dBeta_dT_path_c, dBeta_dT_path_f, &
-        & dBeta_dv_path_c, dBeta_dv_path_f, dBeta_dw_path_c, dBeta_dw_path_f, &
-        & dh_dT_path, dh_dT_path_c )
+        & dBeta_dv_path_c, dBeta_dv_path_f, dBeta_dw_path_c, dBeta_dw_path_f )
       call fill_IEEE_NaN ( dhdz_glgrid, dx_dT, eta_IWC_zp, eta_mag_zp, &
         & eta_zxp_n, eta_zxp_v, &
         & eta_zxp_w, h_glgrid, IWC_path, mag_path, rad_avg_path, radiances, &
@@ -1318,40 +1295,36 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
     ! Allocate space for the interpolator components for each quantity, and the
     ! components for each frequency-dependent quantity.  We create them here
     ! with enough rows for the longest path.  The number of columns is constant.
-    if ( usingQTM .or. .not. usingQTM ) then
-!     if ( usingQTM ) then
-!       do i = 1, size(beta_group)
-!         allocate ( eta_zQ(i)%eta(max_f) )
-!         if ( beta_group(i)%qty%qty%template%frequencyCoordinate /= l_none ) then
-!           allocate ( eta_fzQ(i)%eta(max_f) )
-!         end if
-!       end do
-!       allocate ( eta_zqT%eta(max_f) )
-!     else
-      ! Interpolation coefficients for Phi for temperature
-      call eta_p_T%create ( max_f, no_sv_p_T, 2*max_f, what=grids_tmp%mol(1) )
-      ! Interpolation coefficients for Zeta X Phi for temperature
+
+    ! Interpolation coefficients for Phi for temperature
+    call eta_p_T%create ( max_f, no_sv_p_T, 2*max_f, what=grids_tmp%mol(1) )
+    ! Interpolation coefficients for Zeta X Phi for temperature
+    if ( temp_der ) then
       call eta_zp_T%create ( max_f, sv_t_len, 2*max_f, what=grids_tmp%mol(1) )
-      do i = 1, size(beta_group)
-        ! Interpolation coefficients for Zeta for all VMR
-        call eta_z(i)%create ( max_f, grids_f%l_z(i) - grids_f%l_z(i-1), &
-                             & 2*max_f, what=grids_f%mol(i) )
-        ! Interpolation coefficients for Zeta X Phi for all VMR
-        call eta_zp(i)%create ( max_f, &
-                              & ( grids_f%l_z(i) - grids_f%l_z(i-1) ) * &
-                              & ( grids_f%l_p(i) - grids_f%l_p(i-1) ), &
-                              & 2*max_f, what=grids_f%mol(i) )
-        ! Interpolation coefficients for Frequency X Zeta X Phi
-        call eta_fzp(i)%create ( max_f, &
-                               & grids_f%l_v(i) - grids_f%l_v(i-1), &
-                               & 2*max_f, what=grids_f%mol(i) )
-        ! Representation of d_delta_df for Get_d_Deltau_Pol_df
-        if ( s_p > 0 ) call d_delta_df(i)%create ( max_f, &
-                              & ( grids_f%l_z(i) - grids_f%l_z(i-1) ) * &
-                              & ( grids_f%l_p(i) - grids_f%l_p(i-1) ), &
-                              & 2*max_f, what=grids_f%mol(i) )
-      end do
+      call dh_dt_path%create ( max_f, sv_t_len, 2*max_f, what=grids_tmp%mol(1) )
     end if
+    do i = 1, size(beta_group)
+      ! For QTM, everything has the same horizontal grid.  The values of
+      ! grids_f%l_p are computed from the longest path through the QTM.
+      n_phi = grids_f%l_p(i) - grids_f%l_p(i-1)
+      ! Interpolation coefficients for Zeta for all VMR
+      call eta_z(i)%create ( max_f, grids_f%l_z(i) - grids_f%l_z(i-1), &
+                           & 2*max_f, what=grids_f%mol(i) )
+      ! Interpolation coefficients for Phi for all VMR
+      call eta_p(i)%create ( max_f, n_phi, 2*max_f, what=grids_f%mol(i) )
+      ! Interpolation coefficients for Zeta X Phi for all VMR
+      call eta_zp(i)%create ( max_f, &
+                            & ( grids_f%l_z(i) - grids_f%l_z(i-1) ) * n_phi, &
+                            & 2*max_f, what=grids_f%mol(i) )
+      ! Interpolation coefficients for Frequency X Zeta X Phi
+      call eta_fzp(i)%create ( max_f, &
+                             & grids_f%l_v(i) - grids_f%l_v(i-1), &
+                             & 2*max_f, what=grids_f%mol(i) )
+      ! Representation of d_delta_df for Get_d_Deltau_Pol_df (polarized)
+      if ( s_p > 0 ) call d_delta_df(i)%create ( max_f, &
+                            & ( grids_f%l_z(i) - grids_f%l_z(i-1) ) * n_phi, &
+                            & 2*max_f, what=grids_f%mol(i) )
+    end do
     if ( fwdModelConf%useTScat ) then
       ! Create them here instead of in One_Pointing so as not to need to
       ! do it for each pointing.
@@ -3541,7 +3514,8 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
 
       ! Compute POLARIZED radiative transfer -----------------------------
 
-        i_stop = npc ! needed by drad_tran_df
+        i_stop = npc ! needed by drad_tran_df.  We don't compute a total opacity
+                     ! black out point for polarized like we do for scalar.
 
         ! Get the corrections to integrals for layers that need GL for
         ! the polarized species.
@@ -3726,13 +3700,12 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
 
         if ( pfa_or_not_pol ) then
 
-          call drad_tran_dt ( gl_inds, del_zeta, h_path_c, dh_dt_path(1:npf,:), &
-            & alpha_path(1:npf), dAlpha_dT_path(:npf), eta_zp_T,                &
-            & do_calc_hyd_c(1:npc,:), del_s, ref_corr, tan_ht,                  &
-            & dh_dt_path(tan_pt_f,:), do_gl, h_path(:npf), t_path(:npf),        &
-            & dsdh_path, dhdz_gw_path, dsdz_gw_path, d_t_scr_dt(1:npc,:),       &
-            & tau%tau(:npc,frq_i), inc_rad_path, i_start, tan_pt_c, i_stop,     &
-            & grids_tmp%deriv_flags, &
+          call drad_tran_dt ( gl_inds, del_zeta, h_path_c, dh_dt_path, &
+            & alpha_path(1:npf), dAlpha_dT_path(:npf), eta_zp_T,       &
+            & del_s, ref_corr, tan_ht, tan_pt_f, do_gl, h_path(:npf),  &
+            & t_path(:npf), dsdh_path, dhdz_gw_path,dsdz_gw_path,      &
+            & d_t_scr_dt(1:npc,:), tau%tau(:npc,frq_i), inc_rad_path,  &
+            & i_start, tan_pt_c, i_stop,  grids_tmp%deriv_flags,       &
             & pfa .and. iand(frq_avg_sel,7) == 7, k_temp_frq )
 
             ! pfa .and. iand(frq_avg_sel,7) == 7 means doing PFA and did LBL
@@ -3774,8 +3747,7 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
             & eta_zp_T, p_stop, del_s, gl_inds, del_zeta,                 &
             & do_gl(1:p_stop), dsdh_path, dhdz_gw_path, dsdz_gw_path,     &
             & incoptdepth_pol(:,:,1:p_stop), ref_corr(1:p_stop),          &
-            & h_path(:npf), dh_dt_path(:npf,:), tan_ht,                   &
-            & dh_dt_path(tan_pt_f,:), do_calc_hyd_c(1:p_stop,:),          &
+            & h_path(:npf), dh_dt_path, tan_ht, tan_pt_f,                 &
             & grids_tmp%deriv_flags, de_dt(:,:,1:p_stop,:) )
 
           ! Compute D radiance / DT from Tau, Prod, T_Script, D_T_Scr_dT
@@ -4153,55 +4125,22 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
       end if
 
       ! Get other metrics-related quantities: t_path, dhdz_path, dh_dt_path...
-      if ( .not. present(QTM) .or. present(QTM) ) then
-!       if ( .not. present(QTM) ) then
-        if ( temp_der ) then
-          call more_metrics ( tan_ind_f, tan_pt_f, Grids_tmp,              &
-            &  vert_inds(1:npf), t_glgrid, dhdz_glgrid, phi_path(1:npf),   &
-            &  eta_p_T, t_path(1:npf), dhdz_path(1:npf),                   &
-            !  Stuff for temperature derivatives:
-            &  ddHidHidTl0 = ddhidhidtl0, dHidTlm = dh_dt_glgrid,          &
-            &  Z_Ref=z_glgrid,                                             &
-            &  ddHtdHtdTl0 = tan_d2h_dhdt, dHitdTlm = dh_dt_path(1:npf,:), &
-            &  dHtdTl0 = tan_dh_dt, Do_Calc_Hyd = do_calc_hyd(1:npf,:),    &
-            &  eta_zp = eta_zp_T )
-          dh_dt_path_c(1:npc,:) = dh_dt_path(1:npf:ngp1,:)
-          if ( print_tscat_detail > 0 ) &
-             & call dump ( dh_dt_path_c(:npc,:), name='dh_dT_path_c' )
-          do_calc_hyd(:i_start*ngp1-ngp1,:) = .false.
-          do_calc_hyd(i_end*ngp1-ng+1:npf,:) = .false.
-          do_calc_hyd_c => do_calc_hyd(1:npf:ngp1,:)
-          t_der_path_flags(1:npf) = any(do_calc_t(1:npf,:),2)
-        else
-          call more_metrics ( tan_ind_f, tan_pt_f, Grids_tmp ,             &
-            &  vert_inds(1:npf), t_glgrid, dhdz_glgrid, phi_path(1:npf),   &
-            &  eta_p_T, t_path(1:npf), dhdz_path(1:npf) )
-        end if
-!Q      else ! QTM
-!Q        block
-!Q          use More_Metrics_3D_m, only: More_Metrics_3D
-!Q          real(rp), pointer :: DH_DT_Path_3(:,:,:) ! dH/dT on path X Zeta X Phi
-!Q          logical, pointer :: Do_Calc_Hyd_3(:,:,:) ! dH_dT_Path /= 0 on path X Zeta X Phi
-!Q          logical, pointer :: Do_Calc_T_3(:,:,:)   ! path Z X temp Z X temp phi
-!Q          if ( temp_der ) then
-!Q            dh_dt_path_3(1:max_f,1:n_t_zeta,1:s_t*no_sv_p_T) => dh_dt_path_1
-!Q            do_calc_hyd_3(1:max_f,1:n_t_zeta,1:s_t*no_sv_p_T) => do_calc_hyd_1
-!Q            do_calc_t_3(1:max_f,1:n_t_zeta,1:s_t*no_sv_p_T) => do_calc_t_1
-!Q            call more_metrics_3d ( S, tan_pt_f, t_glgrid, dhdz_glgrid,         &
-!Q              &  t_path(1:npf), dhdz_path(1:npf),                              &
-!Q              !  Stuff for temperature derivatives:
-!Q              &  QTM_hGrid%QTM_tree, ddHidHidTl0 = ddhidhidtl0,                &
-!Q              &  dHidTlm = dh_dt_glgrid, T_Sv = Grids_tmp, Z_Ref=z_glgrid,     &
-!Q              &  ddHtdHtdTl0 = tan_d2h_dhdt, dHitdTlm = dh_dt_path_3(1:npf,:,:), &
-!Q              &  dHtdTl0 = tan_dh_dt, Eta_zQT = eta_zQT%eta, &
-!Q              &  do_calc_t = do_calc_t_3(1:npf,:,:), &
-!Q              &  do_calc_hyd = do_calc_hyd_3(1:npf,:,:) )
-!Q          else
-!Q            call more_metrics_3d ( S, tan_pt_f, t_glgrid, dhdz_glgrid, &
-!Q              & t_path(1:npf), dhdz_path(1:npf) )
-!Q          end if
-!Q        end block
-      end if ! QTM
+      ! This also works for QTM because Eta_p_T and Eta_zp_T also work for QTM.
+      if ( temp_der ) then
+        call more_metrics ( tan_ind_f, tan_pt_f, Grids_tmp,              &
+          &  vert_inds(1:npf), t_glgrid, dhdz_glgrid, phi_path(1:npf),   &
+          &  eta_p_T, t_path(1:npf), dhdz_path(1:npf),                   &
+          !  Stuff for temperature derivatives:
+          &  ddHidHidTl0 = ddhidhidtl0, dHidTlm = dh_dt_glgrid,          &
+          &  Z_Ref=z_glgrid,                                             &
+          &  ddHtdHtdTl0 = tan_d2h_dhdt, dHitdTlm = dh_dt_path,          &
+          &  dHtdTl0 = tan_dh_dt, eta_zp = eta_zp_T )
+        t_der_path_flags(1:npf) = any(do_calc_t(1:npf,:),2)
+      else
+        call more_metrics ( tan_ind_f, tan_pt_f, Grids_tmp ,             &
+          &  vert_inds(1:npf), t_glgrid, dhdz_glgrid, phi_path(1:npf),   &
+          &  eta_p_T, t_path(1:npf), dhdz_path(1:npf) )
+      end if
 
       h_path_c(1:npc) = h_path(1:npf:ngp1)
       t_path_c(1:npc) = t_path(1:npf:ngp1)
@@ -4694,6 +4633,9 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.394  2018/05/17 02:15:45  vsnyder
+! Use sparse instead of dense interpolation
+!
 ! Revision 2.393  2018/05/15 03:26:25  vsnyder
 ! Change Mie tables from pointer to allocatable
 !
