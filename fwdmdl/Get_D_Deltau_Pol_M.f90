@@ -252,8 +252,8 @@ contains
                 & Alpha_Path, dAlpha_dT_path, dAlpha_dT_polarized_path, &
                 & Eta_zxp, P_Stop, Del_S, GL_Inds, Del_Zeta, Do_GL, &
                 & ds_dh, dh_dz_gw, ds_dz_gw, Incoptdepth, Ref_cor, &
-                & H_path, dH_dt_path, H_tan, dH_dt_tan, &
-                & Do_calc_hyd_c, Deriv_Flags, D_Deltau_Pol_DT )
+                & H_path, dH_dt_path, H_tan, tan_pt_f, &
+                & Deriv_Flags, D_Deltau_Pol_DT )
 
     use DExdT_m, only: dExdT
     use GLNP, only: NG, NGP1
@@ -313,14 +313,11 @@ contains
     ! For hydrostatic
     real(rp), intent(in), target :: H_path(:) ! path heights + req on composite
                                             ! coarse & fine grid
-    real(rp), intent(in), target :: dH_dt_path(:,:) ! derivative of fine path
+    type(sparse_t), intent(in) :: dH_dt_path ! derivative of fine path
                                             ! height wrt temperature(km/K) on
                                             ! composite coarse & fine grid
     real(rp), intent(in) :: H_tan           ! tangent height + req (km).
-    real(rp), intent(in) :: dH_dt_tan(:)    ! derivative of path height wrt
-                                            ! temperature at the tangent (km/K).
-    logical, intent(in) :: Do_calc_hyd_c(:,:) ! Where is the dh_dt function not
-                                            ! zero on main grid?
+    integer, intent(in) :: tan_pt_f         ! tangent point in dh_dt_path
     logical, intent(in) :: Deriv_flags(:)   ! Indicates which temperature
                                             ! derivatives to do
 
@@ -334,17 +331,21 @@ contains
   ! Local variables
     integer :: A                     ! Index for GL points
     complex(rp), pointer :: Alpha_Path_c(:,:) ! -1:1 x path on coarse grid
-    complex(rp):: D_Alpha_DT_eta(-1:1,size(do_calc_hyd_c,1)) ! Singularity * Del_S
+    complex(rp):: D_Alpha_DT_eta(-1:1,p_stop) ! Singularity * Del_S
     real(rp), pointer :: dAlpha_dT_path_c(:) ! nonpolarized dAlpha_dT on
                                      ! coarse path
     complex(rp), pointer :: dAlpha_dT_polarized_path_c(:,:)
-    real(rp), pointer :: dH_dt_path_c(:,:) ! derivative of coarse path height
+    real(rp), target :: dH_dt_path_col(dh_dt_path%nRows)
+    real(rp), pointer :: dH_dt_path_c(:) ! derivative of coarse path height
                                      ! wrt temperature(km/K) on coarse path.
-    complex(rp) :: D_Incoptdepth_dT(2,2,size(do_calc_hyd_c,1))
-    logical :: Do_calc(1:size(do_calc_hyd_c,1)) ! do_calc_t_c .or. ( do_gl .and.
+    real(rp) :: dh_dt_tan            ! dh_dt_path at the tangent point
+    complex(rp) :: D_Incoptdepth_dT(2,2,p_stop)
+    logical :: Do_Calc(1:p_stop) ! do_calc_t_c .or. ( do_gl .and.
                                      ! any of the corresponding do_calc_t_f ).
     logical :: Do_Calc_Col(eta_zxp%nRows)  ! Where Eta_ZXP /= 0
     logical :: Do_Calc_Col_f ( size(gl_inds) )
+    logical, target :: Do_Calc_Hyd(dh_dt_path%nRows) ! On the whole path
+    logical, pointer :: Do_Calc_Hyd_c(:)             ! On the coarse path
     real(rp), target :: Eta_ZXP_Col(eta_zxp%nRows) ! One column of Eta_ZXP
     real(rp), pointer :: Eta_ZXP_Col_C(:)
     real(rp) :: F(ng)                ! Factor in GL that doesn't depend on
@@ -361,29 +362,35 @@ contains
     integer :: N_Path                ! Total coarse path length.
     logical :: NeedFA                ! Need FA in hydrostatic calculation
     integer :: P_i                   ! Index on the coarse path
-    integer :: P_Stop_f              ! P_Stop on fine path
+!   integer :: P_Stop_f              ! P_Stop on fine path
     real(rp) :: S_Del_S              ! Sum of Del_S
-    complex(rp) :: Singularity(-1:1,size(do_calc_hyd_c,1)) ! n/T * Alpha * Eta
+    complex(rp) :: Singularity(-1:1,p_stop) ! n/T * Alpha * Eta
                                      ! on the coarse path
     integer :: SV_i                  ! Index of state vector element
 
-    i_stop = size(do_calc_hyd_c,1)
+    i_stop = p_stop
     n_path = size(del_zeta)
     h_path_c => h_path ( 1 :: ngp1 )
     alpha_path_c(-1:,1:) => alpha_path ( :, 1 :: ngp1 )
     dAlpha_dT_polarized_path_c(-1:,1:) => dAlpha_dT_polarized_path ( :, 1 :: ngp1 )
-    dH_dt_path_c => dH_dt_path ( 1 :: ngp1, : )
+    dh_dt_path_col = 0
+    dH_dt_path_c => dH_dt_path_col ( 1 :: ngp1 )
     dAlpha_dT_path_c => dAlpha_dT_path ( 1 :: ngp1 )
     do_calc_col = .false.
+    do_calc_hyd_c => do_calc_hyd ( 1 :: ngp1 )
+    do_calc_hyd_c = .false.
     eta_zxp_col = 0
     eta_zxp_col_c => eta_zxp_col(1::ngp1)
-    p_stop_f = (p_stop - 1) * ngp1 + 1
+!   p_stop_f = (p_stop - 1) * ngp1 + 1
 
     do sv_i = 1, size(eta_zxp%cols,1) ! state vector elements
       if ( .not. deriv_flags(sv_i)) then
         d_deltau_pol_dT(:,:,:,sv_i) = 0.0_rp
         cycle
       end if
+
+      call dh_dt_path%get_col ( sv_i, dh_dt_path_col, do_calc_hyd )
+      dh_dt_tan = dh_dt_path_col(tan_pt_f)
 
       call eta_zxp%get_col ( sv_i, eta_zxp_col, do_calc_col ) !, last=p_stop_f )
       do_calc_col_f = do_calc_col(gl_inds) ! only the GL points, no coarse points
@@ -435,7 +442,7 @@ contains
       !??? want to do it this way in DRad_Tran_dT also. ???
 
       ! First combine boundary flags
-      do_calc = do_calc_hyd_c(:,sv_i)
+      do_calc = do_calc_hyd_c
       if ( i_stop < tan_pt ) then           
         do_calc(2:i_stop) = do_calc(2:i_stop) .or. do_calc(1:i_stop-1)
         h_stop = i_stop
@@ -450,13 +457,13 @@ contains
       do p_i = 2 , h_stop
         if ( do_calc(p_i) ) then
           if ( needFA ) then
-            fa = (h_path_c(p_i-1) * dh_dt_path_c(p_i-1,sv_i) &
-            &   - h_tan * dh_dt_tan(sv_i)) / s_del_s
+            fa = (h_path_c(p_i-1) * dh_dt_path_c(p_i-1) &
+            &   - h_tan * dh_dt_tan) / s_del_s
             needFA = .false.
           end if
           s_del_s = s_del_s - del_s(p_i)
-          fb = (h_path_c(p_i) * dh_dt_path_c(p_i,sv_i) &
-            & - h_tan * dh_dt_tan(sv_i)) / s_del_s
+          fb = (h_path_c(p_i) * dh_dt_path_c(p_i) &
+            & - h_tan * dh_dt_tan) / s_del_s
           d_alpha_dT_eta(:,p_i) = d_alpha_dT_eta(:,p_i) + alpha_path_c(:,p_i) * (fa - fb)
           fa = fb
         else
@@ -485,8 +492,8 @@ contains
         needFA = .not. do_calc(tan_pt+1)
         s_del_s = del_s(tan_pt+1)
         if ( do_calc(tan_pt+1) ) then
-          fa = (h_path_c(tan_pt+2) * dh_dt_path_c(tan_pt+2,sv_i) &
-            & - h_tan * dh_dt_tan(sv_i)) / s_del_s
+          fa = (h_path_c(tan_pt+2) * dh_dt_path_c(tan_pt+2) &
+            & - h_tan * dh_dt_tan) / s_del_s
           d_alpha_dT_eta(:,tan_pt+1) = d_alpha_dT_eta(:,tan_pt+1) + alpha_path_c(:,tan_pt+1) * fa
         end if
 
@@ -494,13 +501,13 @@ contains
         do p_i = tan_pt + 2, h_stop
           if ( do_calc(p_i) ) then
             if ( needFA ) then
-              fa = (h_path_c(p_i) * dh_dt_path_c(p_i,sv_i) &
-                & - h_tan * dh_dt_tan(sv_i)) / s_del_s
+              fa = (h_path_c(p_i) * dh_dt_path_c(p_i) &
+                & - h_tan * dh_dt_tan) / s_del_s
               needFA = .false.
             end if
             s_del_s = s_del_s + del_s(p_i)
-            fb = (h_path_c(p_i+1) * dh_dt_path_c(p_i+1,sv_i) &
-              & - h_tan * dh_dt_tan(sv_i)) / s_del_s
+            fb = (h_path_c(p_i+1) * dh_dt_path_c(p_i+1) &
+              & - h_tan * dh_dt_tan) / s_del_s
             d_alpha_dT_eta(:,p_i) = d_alpha_dT_eta(:,p_i) + alpha_path_c(:,p_i)*(fb - fa)
             fa = fb
           else
@@ -518,11 +525,11 @@ contains
           ga = gl_inds(a)
           ! Don't test do_calc: There might be GL corrections even if
           ! dh_dt_path_c (from whence came do_calc) is zero.
-          f = (((2.0_rp*h_path(ga:ga+ng-1)**2 - 3.0_rp*h_tan**2) &     
-            &   * dh_dt_path(ga:ga+ng-1,sv_i) +                  &     
-            &   h_path(ga:ga+ng-1) * h_tan * dh_dt_tan(sv_i)) /  &     
-            &  (sqrt(h_path(ga:ga+ng-1)**2 - h_tan**2))**3       &     
-            &  + eta_zxp_col(ga:ga+ng-1) * ds_dh(ga:ga+ng-1) /   &     
+          f = (((2.0_rp*h_path(ga:ga+ng-1)**2 - 3.0_rp*h_tan**2)           &
+            &   * dh_dt_path_col(ga:ga+ng-1) +                             &
+            &   h_path(ga:ga+ng-1) * h_tan * dh_dt_tan) /                  &     
+            &  (sqrt(h_path(ga:ga+ng-1)**2 - h_tan**2))**3                 &
+            &  + eta_zxp_col(ga:ga+ng-1) * ds_dh(ga:ga+ng-1) /             &
             &  t_path(ga:ga+ng-1)) * dh_dz_gw(ga:ga+ng-1)
           do l = -1, 1
             d_alpha_dT_eta(l,p_i) = d_alpha_dT_eta(l,p_i) + &
@@ -556,6 +563,7 @@ contains
         end if
       end do ! p_i
 
+      call dh_dt_path%clear_col ( sv_i, dh_dt_path_col, do_calc_hyd )
       call eta_zxp%clear_col ( sv_i, eta_zxp_col, do_calc_col ) !, last=p_stop_f )
 
     end do ! sv_i
@@ -576,6 +584,9 @@ contains
 end module Get_d_Deltau_Pol_M
 
 ! $Log$
+! Revision 2.46  2018/05/24 03:24:36  vsnyder
+! Use sparse representation for dh_dt_path
+!
 ! Revision 2.45  2018/05/14 23:40:58  vsnyder
 ! Change to sparse eta representation
 !
