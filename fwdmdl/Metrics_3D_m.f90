@@ -93,7 +93,7 @@ contains
                                    ! under Path
     integer, intent(in) :: Pad     ! Amount of padding to introduce in S between
                                    ! before-the-tangent and after-the-tangent.
-    class(sparse_t), intent(inout) :: Eta_P(:) ! Horizontal iterpolation
+    class(sparse_t), intent(inout) :: Eta_P(:) ! Horizontal interpolation
                                    ! coefficients for mixing ratios
     class(sparse_t), intent(inout) :: Eta_P_T ! Horizontal interpolation
                                    ! coefficients for temperature
@@ -185,7 +185,6 @@ contains
     use Center_of_Sphere_m, only: Center_of_Sphere, Circumcenter
     use Generate_QTM_m, only: QTM_Tree_t
     use Geolocation_0, only: H_Geod, H_V_Geoc, H_V_Geod, H_V_t
-!Q    use Indexed_Values_m, only: Value_QTM_1D_List_t
     use QTM_Interpolation_Weights_m, only: Value_QTM_1D_List_t
     use Line_And_Cone_m, only: Line_And_Cone
     use Line_And_Ellipsoid_m, only: Line_And_Sphere
@@ -264,11 +263,11 @@ contains
       call Intersect_Line_And_Latitude_Cone
 
       ! A vertical face of a prism can be intersected by the line only if its
-      ! cone face is or one of its horizontal boundaries is.  The intersected
-      ! faces might be in the same prism, the one above it, the one below it, or
-      ! the ones below and above it on the opposite facet of its latitude cone.
-      ! For now, it's simpler just to check all the vertical faces than to check
-      ! the eight possible faces while avoiding duplicates.
+      ! cone face is or one of its horizontal boundaries is intersected.  The
+      ! intersected faces might be in the same prism, the one above it, the one
+      ! below it, or the ones below and above it on the opposite facet of its
+      ! latitude cone. For now, it's simpler just to check all the vertical
+      ! faces than to check the eight possible faces while avoiding duplicates.
       call Intersect_Line_And_Vertical_Boundary
     else
       allocate ( cone_int(1:0) )
@@ -692,6 +691,9 @@ contains
 end module Metrics_3D_m
 
 ! $Log$
+! Revision 2.14  2018/05/24 03:23:19  vsnyder
+! Spiff some comments
+!
 ! Revision 2.13  2018/05/14 23:40:58  vsnyder
 ! Change to sparse eta representation
 !
