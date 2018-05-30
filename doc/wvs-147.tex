@@ -59,7 +59,7 @@
 
 \author{Van Snyder}
 
-\date{1 November 2017}
+\date{8 May 2018}
 
 
 \begin{document}
@@ -88,6 +88,15 @@ Configuration file processing consists of
 \item traversing the internal representation to drive program operations.
 
 \end{itemize}
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Configuration File Processing}
+
+\vspace*{-0.5in}
+\includegraphics[scale=0.55,angle=270]{wvs-147-0}
 
 \end{frame}
 
@@ -390,6 +399,39 @@ Otherwise, end-of-line denotes the end of a statement.
 
 % -----------------------------------------------------------------------------
 
+\newframe{Token representation}
+
+A token is represented by its token index (in {\tt symbol\_types}), its
+{\bf string index}, and its position in the input file.
+
+The lexer reads characters by way of the {\tt get\_char} subroutine in
+the {\tt string\_table} module.
+
+As they are read, they are added to the end of the character table.  When
+the lexer finds the end of a token, its text is searched using the hash
+table.
+
+If it is found, the found string index is used and the characters are
+erased from the character table.  Otherwise, it's added to the string
+table and the new string index is used.
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Token representation (cont.)}
+
+The texts of tokens are stored in the {\bf character table}.  Each element
+of the {\bf string table} contains the index in the character table of the
+last character of the token.  Tokens are found quickly using the {\bf hash
+table}.
+
+\hspace*{0.25in}\includegraphics[scale=0.6]{wvs-147-2-5}
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
 \newframe{Configuration File Grammar}
 
 A configuration file is divided into sections that begin with the word
@@ -407,7 +449,8 @@ Within a section, there are three kinds of statements:
     values, are specified by the program.
 
   \item A variable definition of the form \emph{name := expression}.  The
-    set of valid variable names is not specified by the program. Once a
+    set of valid variable names is not specified by the program. A variable's
+    type is determined by the expression first assigned to it.  Once a
     variable has been assigned a value, a subsequent assignment cannot
     change its type.
 
@@ -803,12 +846,13 @@ mlspgs/util/lr/l2cf.grm} and {\tt mlspgs/doc/wvs-004}.
 
 The {\tt =$>$} notation at the end of a production specifies an internal
 vertex to generate in the abstract syntax tree.  Its sons are translations
-of the right-hand-side of the production.  If a production does not
-generate an internal vertex, the translation of its left-hand-side
-nonterminal symbol is the sequence of translations of the right-hand side.
-The translation of a pseudo-terminal is its string index, called
-\emph{sub-rosa} information because it is passed ``under the table''
-through the parser, from the lexer to subsequent phases.
+of symbols in the right-hand-side of the production, in the order they
+appear.  If a production does not generate an internal vertex, the
+translation of its left-hand-side nonterminal symbol is the sequence of
+translations of the right-hand side. The translation of a pseudo-terminal
+is its string index, called \emph{sub-rosa} information because it is
+passed ``under the table'' through the parser, from the lexer to
+subsequent phases.
 
 True terminal symbols, such as operators or punctuation, do not have any
 automatic translation.
@@ -875,6 +919,29 @@ $E \Rightarrow E + T \Rightarrow E + T * N \Rightarrow E + T * c
 
 % -----------------------------------------------------------------------------
 
+\newframe{Tree representation}
+
+{\parskip 5pt
+The abstract syntax tree is represented in the {\tt tree} module.
+
+It is stored using {\bf cdr code}.  Sibling vertices are stored in
+consecutive elements of {\tt the\_tree} (a private array in the {\tt tree}
+module).  Their parent vertex is stored later.  It is represented by a
+tree vertex kind, a tree node index (in {\tt tree\_types}), the location
+of the first son, and the number of sons.
+
+Instead of the tree vertex location of the first son, a pseudo-terminal
+vertex has its string index, called \emph{sub-rosa} because the parser
+passes it ``under the table'' into the tree.
+
+Vertices of the tree can be examined, and some aspects modified, using
+procedures in the {\tt tree} module.
+}
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
 \newframe{Type checking}
 
 Type checking verifies that
@@ -896,7 +963,7 @@ Type checking also constructs symbol and declaration tables, and connects
 references to declarations.
 
 Symbol table entries are indexed by the string index passed through the
-parser as ``sub-rosa'' information for pseudo-terminal symbols.
+parser as \emph{sub-rosa} information for pseudo-terminal symbols.
 
 A symbol might have several declarations, which are linked from the symbol
 table entry.
@@ -925,9 +992,12 @@ The type checker then traverses the entire tree.
 \newframe{Type checking -- (cont).}
 
 Different kinds of type checking requirements are represented by different
-trees.  An enumeration type is represented by $<$ {\tt dt\_def type-name
-enumerator \dots} $>$.  For example, the type ``{\tt module}'' is
-represented by
+trees.  An enumeration type is represented by
+
+$<$ {\tt dt\_def type-name enumerator \dots} $>$.
+
+For example, the type ``{\tt module}'' is
+represented by\\[5pt]
 
 \begin{centering}
 \includegraphics[scale=0.5]{wvs-147-5}\\[5pt]
@@ -939,10 +1009,12 @@ represented by
 
 \newframe{Type checking -- (cont).}
 
-In the figure, the notation beside a tree vertex, e.g. {\tt t\_module}, is
-an integer called a \emph{decoration}.  It is added by the type checker. 
-For ``{\tt module}'' it is the index of a type name.  For ``{\tt ghz}''
-and {\tt thz}'' it is the index of an enumeration literal.
+In the figure, the notation beside a tree vertex and preceded by a colon,
+e.g. {\tt t\_module}, is an integer called a \emph{decoration}.  It is
+added by the type checker (but decorations can be and are created or
+replaced by later processes).  For ``{\tt module}'' it is the index of a
+type name.  For ``{\tt ghz}'' and {\tt thz}'' it is the index of an
+enumeration literal\dots.
 
 \vspace*{0.1in}
 The dotted lines indicate indexing in the symbol table using the string
@@ -955,8 +1027,125 @@ vertex of type ``{\tt dt\_def}'').
 
 \end{frame}
 
+% -----------------------------------------------------------------------------
+
+\newframe{Type checking -- Complicated examples}
+
+%\vspace*{0.38in}
+\includegraphics[scale=0.5,angle=270]{wvs-147-6}
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Type checking -- Complicated examples}
+
+\vspace*{1in}
+\includegraphics[bb=17 71 466 716,scale=0.50,angle=90]{tree-1}
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Type checking -- Complicated examples}
+
+\vspace*{-0.2in}
+
+\includegraphics[scale=0.45,angle=270]{wvs-147-7}
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Traversing the tree -- sections}
+
+{\tt root} is the root of the subtree; {\tt first\_section} is the subtree
+index of the next son to process.
+
+Get the next son and update the state (which one to do next):
+
+{\tt son = next\_tree\_node(root,state,start=first\_section)
+}\\[5pt]
+
+{\tt son} is now the index of a {\tt cf} vertex.  Its first son is the
+section name vertex.  Get the literal index of the section name:
+
+{\tt section\_index = decoration(subtree(1,son))
+}
+
+The decoration was put into the section name vertex by the type
+checker\\[5pt]
+
+Decide which section to process:
+
+{\tt {\bf select case} ( section\_index )
+}\\[5pt]
+
+Process MLS signals (for instance):
+
+{\tt {\bf case} ( z\_mlsSignals )\\
+{\bf call} MLSSignals ( son )
+}\\[5pt]
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Traversing the tree -- within a section}
+
+{\tt root} is the root of the subtree.  Its sons are either specifications
+or parameter assignments.  (In MLSSignals we know they're all
+specifications.)  Get the next son:
+
+{\tt son = next\_tree\_node ( root, state )
+}\\[5pt]
+
+Get the label and the tree node index of the
+specification or parameter assignment:
+
+{\tt {\bf call} get\_label\_and\_spec ( soon, name, key )\\
+! node\_id(key) is now n\_spec\_args
+}\\[5pt]
+
+Get the identity of the next son:
+
+{\tt\small {\bf select~case}~(~decoration(subtree(1,decoration(subtree(1,key))))~)
+}\\[5pt]
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Traversing the tree -- process the fields}
+
+In {\tt MLSSignals}, for example:\\[5pt]
+
+{\tt {\bf do} j = 2, nsons(key)\\
+\hspace*{0.1in}son = subtree(j,key)\\
+\hspace*{0.1in}gson = subtree(2,son) ! tree index of the subtree\\
+\hspace*{0.1in}! after the ``='' sign after the field name\\
+\hspace*{0.1in}{\small field = decoration(subtree(1,son) ! of the field
+name}\\
+\hspace*{0.1in}{\bf select case} ( field )\\
+\hspace*{0.1in}{\bf case} ( f\_centerFrequency )\\
+\hspace*{0.2in}! Evaluate gson expression and check units\\
+\hspace*{0.2in}{\small{\bf~call}~expr\_check~(~gson,~units,~value,~field,~phyq\_frequency~)}\\
+\hspace*{0.2in}band\%centerFrequency = value(1)\\
+\hspace*{0.1in}{\bf case} ( f\_suffix )\\
+\hspace*{0.2in}{\small band\%suffix = sub\_rosa(gson) ! string index of
+suffix}\\
+\hspace*{0.1in}{\bf case} ( f\_radiometer )\\
+\hspace*{0.2in}{\small band\%radiometer = decoration(decoration(gson))}\\
+\hspace*{0.2in}! lit index of radiometer
+}
+
+\end{frame}
+
 \end{document}
 
 % $Id$
 
 % $Log$
+% Revision 1.1  2017/11/28 01:29:07  vsnyder
+% Initial commit -- incomplete
+%
