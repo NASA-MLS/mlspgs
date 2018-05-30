@@ -59,7 +59,7 @@
 
 \author{Van Snyder}
 
-\date{8 May 2018}
+\date{30 May 2018}
 
 
 \begin{document}
@@ -432,6 +432,48 @@ table}.
 
 % -----------------------------------------------------------------------------
 
+\newframe{Configuration File Lexicon (cont.)}
+
+Reserved words such as {\tt begin}, operator symbols such as +, and
+punctuation marks such as (, are put into the string table before the
+lexer runs by {\tt Init\_Symbol\_Table} in the {\tt symbol\_table} module.
+The types and texts of the sybols specified are in the {\tt symbol\_types}
+module.\\[5pt]
+
+The hash table, character table, and string table are initialized by {\tt
+Init\_Lexer} in the {\tt lexer\_core} module, which is called from the main
+program in {\tt mlsl2} (I don't know where it's done in {\tt mlsl1}.)
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Configuration File Lexicon (cont.)}
+
+The lexer is the subroutine {\tt lexer} in the {\tt lexer\_m}
+module.\\[5pt]
+
+It is a DFA, or \emph{deterministic finite automaton}.  Think of it as a
+directed graph, where each state is represented by a vertex, and each edge
+is labeled by a set of symbols from the alphabet.  It has a distinguished
+starting state (a starting vertex in the graph).  Every time it is called,
+it starts in the starting state.\\[5pt]
+
+When a character is read, if it is the label of an edge, the character is
+consumed, and the state of the lexer changes to the next vertex.\\[5pt]
+
+When the lexer reaches a state identified as a final state, and there are
+no transitions possible, the token specified by that state is returned to
+the parser.  If the next character is not part of the token, the lexer
+remembers it.\\[5pt]
+
+If the lexer cannot make a transition from a non-final state, an error is
+announced.
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
 \newframe{Configuration File Grammar}
 
 A configuration file is divided into sections that begin with the word
@@ -453,6 +495,8 @@ Within a section, there are three kinds of statements:
     type is determined by the expression first assigned to it.  Once a
     variable has been assigned a value, a subsequent assignment cannot
     change its type.
+
+  \item (next page)
 
 \end{itemize}
 
@@ -507,16 +551,6 @@ An {\tt exit} or {\tt cycle} statement may appear within a {\tt do}
 construct, with the same semantics as in Fortran, except that if the
 statement is within a section, the label referenced in the statement may
 not refer to a {\tt do} construct enclosing a section.
-
-\end{frame}
-
-% -----------------------------------------------------------------------------
-
-\newframe{Configuration File Grammar}
-
-\Large
-Complete formal specification of the Configuration File grammar is in {\tt
-mlspgs/util/lr/l2cf.grm} and {\tt mlspgs/doc/wvs-004}.
 
 \end{frame}
 
@@ -919,16 +953,57 @@ $E \Rightarrow E + T \Rightarrow E + T * N \Rightarrow E + T * c
 
 % -----------------------------------------------------------------------------
 
+\newframe{Translation (cont.)}
+
+\dots\ resulting in
+
+\begin{centering}
+\includegraphics*[scale=0.8]{wvs-147-2} \\
+\end{centering}
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Configuration File Parsing and Translation}
+
+The parser is the subroutine {\tt LR\_Parser} or {\tt LR\_Parser\_TX}
+(depending upon which representation of the root of the abstract syntax
+tree is desired).  These subroutines are identified by the generic name
+{\tt Configuration}, in the {\tt parser} module.\\[5pt]
+
+The parser is a \emph{pushdown automaton}.  It has a stack of states. 
+When it reads a token, it can either make a transition, which pushes a new
+state on the stack, or recognize the end of the right-hand-side of a
+production, which causes it to do a reduction, which removes the
+right-hand-side from the stack, generates a translation if one is
+specified, and then makes a transition using the left-hand-side of the
+recognized production.\\[5pt]
+
+The pushdown automaton is calculated from the grammar by the {\tt LR}
+program, and represented by a table produced by that program.
+\\[5pt]
+
+Complete formal specification of the Configuration File grammar is in {\tt
+mlspgs/util/lr/l2cf.grm} and {\tt mlspgs/doc/wvs-004}.
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
 \newframe{Tree representation}
 
 {\parskip 5pt
-The abstract syntax tree is represented in the {\tt tree} module.
+The abstract syntax tree is represented in the {\tt tree} module.  Its
+vertex indices are specified in the {\tt tree\_types} module.  The names
+of its vertices are used in the formal grammar in {\tt
+mlspgs/util/lr/l2cf.grm}
 
-It is stored using {\bf cdr code}.  Sibling vertices are stored in
-consecutive elements of {\tt the\_tree} (a private array in the {\tt tree}
-module).  Their parent vertex is stored later.  It is represented by a
-tree vertex kind, a tree node index (in {\tt tree\_types}), the location
-of the first son, and the number of sons.
+It is stored using {\bf cdr code} (developed by McCarthy at MIT for
+lisp).  Sibling vertices are stored in consecutive elements of {\tt
+the\_tree} (a private array in the {\tt tree} module).  Their parent
+vertex is stored later.  It is represented by a tree vertex kind, a tree
+node index, the location of the first son, and the number of sons.
 
 Instead of the tree vertex location of the first son, a pseudo-terminal
 vertex has its string index, called \emph{sub-rosa} because the parser
@@ -1057,6 +1132,20 @@ vertex of type ``{\tt dt\_def}'').
 
 % -----------------------------------------------------------------------------
 
+\newframe{Type checking}
+
+The type checker is the subroutine {\tt Check\_Tree} in the {\tt
+tree\_checker} module.  This module is in {\tt mlspgs/srclib}.  It depends
+upon named constants that are defined in {\tt init\_tables\_module}.  The
+{\tt mlsl1} and {\tt mlsl2} programs have different versions of that
+module, in {\tt mlspgs/l1} and {\tt mlspgs/l2}.  The named constants have
+different values in those programs.  Therefore it cannot be in {\tt
+mlspgs/lib}.
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
 \newframe{Traversing the tree -- sections}
 
 {\tt root} is the root of the subtree; {\tt first\_section} is the subtree
@@ -1103,7 +1192,7 @@ specifications.)  Get the next son:
 Get the label and the tree node index of the
 specification or parameter assignment:
 
-{\tt {\bf call} get\_label\_and\_spec ( soon, name, key )\\
+{\tt {\bf call} get\_label\_and\_spec ( son, name, key )\\
 ! node\_id(key) is now n\_spec\_args
 }\\[5pt]
 
@@ -1121,11 +1210,11 @@ Get the identity of the next son:
 In {\tt MLSSignals}, for example:\\[5pt]
 
 {\tt {\bf do} j = 2, nsons(key)\\
-\hspace*{0.1in}son = subtree(j,key)\\
-\hspace*{0.1in}gson = subtree(2,son) ! tree index of the subtree\\
-\hspace*{0.1in}! after the ``='' sign after the field name\\
+\hspace*{0.1in}son = subtree(j,key) ! n\_Asg (assign) vertex \\
 \hspace*{0.1in}{\small field = decoration(subtree(1,son) ! of the field
 name}\\
+\hspace*{0.1in}gson = subtree(2,son) ! tree index of the subtree\\
+\hspace*{0.1in}! after the ``='' sign after the field name\\
 \hspace*{0.1in}{\bf select case} ( field )\\
 \hspace*{0.1in}{\bf case} ( f\_centerFrequency )\\
 \hspace*{0.2in}! Evaluate gson expression and check units\\
@@ -1146,6 +1235,9 @@ suffix}\\
 % $Id$
 
 % $Log$
+% Revision 1.2  2018/05/30 17:37:41  vsnyder
+% Updated for presentation
+%
 % Revision 1.1  2017/11/28 01:29:07  vsnyder
 % Initial commit -- incomplete
 %
