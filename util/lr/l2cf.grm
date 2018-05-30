@@ -79,9 +79,9 @@ string     = t_string
 ;       EOS means "end of statement", which is end of line or the
 ;           beginning of a comment, unless the production is continued by
 ;           a "$".
-;       '?' means "do the action iff the RHS generated more than one tree node.
-;       ? means "can appear zero or one times.
-;       + means "can appear more than one time.
+;       '?' means "do the action iff the RHS generated more than one tree node."
+;       ? means "can appear zero or one times."
+;       + means "can appear more than one time."
 
 ; A comment beginning with semicolon continues to the end of the line.
 ; If it appears and "$" does not appear before it, it is an end of statement.
@@ -272,6 +272,9 @@ dots ->
      -> dot name dots
 
 ; $Log$
+; Revision 1.6  2016/07/28 01:46:38  vsnyder
+; Refactor diff and dump
+;
 ; Revision 1.5  2014/01/14 00:52:30  vsnyder
 ; Replace n_dots with n_dot
 ;
