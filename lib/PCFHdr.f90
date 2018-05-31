@@ -39,7 +39,7 @@ module PCFHdr
     & Pgs_Td_Asciitime_Atob, Pgs_Td_Asciitime_Btoa, &
     & Usesdptoolkit, Max_Orbits
   implicit none
-  public :: GlobalAttributes_T, &
+  public :: GlobalAttributes_T, SomeGlobalAttributes_T, &
     & CreatePCFAnnotation, DumpGlobalAttributes, &
     & FillTAI93Attribute, &
     & GranuleDay, GranuleDayOfYear, GranuleMonth, GranuleYear, &
@@ -47,6 +47,7 @@ module PCFHdr
     & H5_WriteGlobalAttr, He5_WriteglobalAttr, He5_ReadGlobalAttr, &
     & H5_WriteMLSFileAttr, He5_WriteMLSFileAttr, &
     & InputInputPointer, WriteInputPointer, &
+    & SomeToGlobalAttributes, &
     & WriteLeapSecHDFEOSAttr, WriteLeapSecHDF5DS, WritePCF2Hdr, &
     & WriteUTCPoleHDFEOSAttr, WriteUTCPoleHDF5DS
    private
@@ -62,6 +63,7 @@ module PCFHdr
 ! Utc_a_value_length       string length used to encode utc version 'a'
 ! Utc_b_value_length       string length used to encode utc version 'b'
 ! GlobalAttributes         which attributes to write to product files
+! SomeGlobalAttributes     which of them can be read from an opts file
 
 !     (subroutines and functions)
 ! CreatePCFAnnotation      read the PCF file into a character array
@@ -77,6 +79,7 @@ module PCFHdr
 ! He5_writeglobalattr      writes the global attributes to an hdfeos5-formatted file
 ! He5_readglobalattr       reads the global attributes from an hdfeos5-formatted file
 ! InputInputpointer        Prepare Input for WriteInputpointer
+! SomeToGlobalAttributes   Copy some of the attributes read into the global ones
 ! Sw_writeglobalattr       writes the global attributes for an hdfeos5 swath
 ! WriteInputpointer        Write Inputpointer metadata
 ! WriteLeapSecHDFEOSAttr   Write contents of leapsec file as hdfeos5 attribute
@@ -148,6 +151,22 @@ module PCFHdr
   integer, parameter :: BIGGESTMAFCTR = huge(0)/2
 
    ! May we get some of these from a new module, e.g. MLSLibOptions? 
+  type SomeGlobalAttributes_T
+    character(len=GA_VALUE_LENGTH) :: InstrumentName = 'MLS Aura'
+    character(len=GA_VALUE_LENGTH) :: ProcessLevel   = ''
+    character(len=GA_VALUE_LENGTH) :: HostName       = ''  ! E.g. 'lightspeed'
+    character(len=GA_VALUE_LENGTH) :: PGEVersion     = ''
+    character(len=MiscNotesLENGTH) :: MiscNotes      = ''
+    character(len=GA_VALUE_LENGTH) :: StartUTC       = ''
+    character(len=GA_VALUE_LENGTH) :: EndUTC         = ''
+    character(len=GA_VALUE_LENGTH) :: DOI            = '' ! E.g., '10.5083/AURA/MLS/DATA201'
+    character(len=GA_VALUE_LENGTH) :: productionLoc  = ' '
+  end type SomeGlobalAttributes_T
+
+  ! Note that we repeat some of the above
+  ! Sad but necessary because we want to be able to read some
+  ! global attributes from a text file
+  ! yet Fortran in its mighty wisdom forbids io if  any list item is a pointer
   type GlobalAttributes_T
     character(len=FileNameLen) :: FileAttributesCopiedFrom = ' '
     integer :: OrbNum(max_orbits)
@@ -184,6 +203,7 @@ module PCFHdr
   end type GlobalAttributes_T
 
   ! This variable describes the global attributes
+  type (SomeGlobalAttributes_T), public, save :: SomeGlobalAttributes
   type (GlobalAttributes_T), public, save :: GlobalAttributes
   ! use this in case hdfVersion omitted from call to WritePCF2Hdr
   ! E.g., in level 3 prior to conversion
@@ -1300,6 +1320,28 @@ contains
 !------------------------------------
 
 !------------------------------------------------------------
+  subroutine SomeToGlobalAttributes
+    ! Copy SomeGlobalAttribues into the whole enchilada
+    ! (But only where Some is non-blank)
+    call CopyIfNonBlank ( SomeGlobalAttributes%InstrumentName  , GlobalAttributes%InstrumentName  )
+    call CopyIfNonBlank ( SomeGlobalAttributes%ProcessLevel    , GlobalAttributes%ProcessLevel    )
+    call CopyIfNonBlank ( SomeGlobalAttributes%HostName        , GlobalAttributes%HostName        )
+    call CopyIfNonBlank ( SomeGlobalAttributes%PGEVersion      , GlobalAttributes%PGEVersion      )
+    call CopyIfNonBlank ( SomeGlobalAttributes%MiscNotes       , GlobalAttributes%MiscNotes       )
+    call CopyIfNonBlank ( SomeGlobalAttributes%StartUTC        , GlobalAttributes%StartUTC        )
+    call CopyIfNonBlank ( SomeGlobalAttributes%EndUTC          , GlobalAttributes%EndUTC          )
+    call CopyIfNonBlank ( SomeGlobalAttributes%DOI             , GlobalAttributes%DOI             )
+    call CopyIfNonBlank ( SomeGlobalAttributes%productionLoc   , GlobalAttributes%productionLoc   )
+  contains
+    subroutine CopyIfNonBlank( FromMe, ToMe )
+      character(len=*), intent(in)    :: FromMe
+      character(len=*), intent(inout) :: ToMe
+      !
+      if ( len_trim(FromMe) > 0 ) ToMe = FromMe
+    end subroutine CopyIfNonBlank
+  end subroutine SomeToGlobalAttributes
+
+!------------------------------------------------------------
    subroutine sw_writeglobalattr (swathID)
 !------------------------------------------------------------
 
@@ -1390,7 +1432,7 @@ contains
 !------------------------------------------------------------
 
 !----------------------------------------
-   FUNCTION WriteInputpointer (groups, attrName, inpt, fileType)
+   function WriteInputpointer (groups, attrName, inpt, fileType)
 !----------------------------------------
 
 !  Write Inputpointer metadata
@@ -1424,7 +1466,7 @@ contains
     end select      
     
 !------------------------------------
-   END FUNCTION WriteInputpointer
+   end function WriteInputpointer
 !------------------------------------
 
    subroutine WriteLeapSecHDFEOSAttr (fileID)
@@ -1854,6 +1896,9 @@ end module PCFHdr
 !================
 
 !# $Log$
+!# Revision 2.72  2018/05/31 18:06:49  pwagner
+!# We can now copy over globalattributes
+!#
 !# Revision 2.71  2018/05/22 23:04:41  pwagner
 !# Correct initial value of FailedChunks; may dump user-supplied GlobalAttribute_T
 !#
