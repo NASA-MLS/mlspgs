@@ -920,7 +920,7 @@ contains ! =====     Public Procedures     =============================
     use MLSStrings, only: Lowercase
     use Moretree, only: Get_Boolean
     use Output_M, only: Output
-    use PCFHdr, only: Globalattributes, &
+    use PCFHdr, only: Globalattributes, DumpGlobalAttributes, &
       & H5_Writeglobalattr, He5_WriteMLSFileattr, He5_WriteGlobalAttr
     use ReadAPriori, only: ReadAPrioriattributes, WriteAPrioriAttributes
     use Tree, only: Decoration, Nsons, Subtree, Sub_Rosa
@@ -1273,12 +1273,14 @@ contains ! =====     Public Procedures     =============================
         call outputNamedValue( 'ProductionLocation', trim(GlobalAttributes%productionLoc) )
         call h5_writeGlobalAttr ( outputFile, &
           & skip_if_already_there=.false., doi=.true. )
+        call DumpGlobalAttributes
       case ( l_l2gp, l_l2dgg ) ! --------------------- Copying l2gp files -----
         call output( 'Writing file level attributes to he5 ' // &
           & trim(PhysicalFilename), advance='yes' )
-        call outputNamedValue( 'identifier_product_DOI', trim(GlobalAttributes%DOI) )
+        call outputNamedValue( 'identifier_product_doi', trim(GlobalAttributes%DOI) )
         call outputNamedValue( 'ProductionLocation', trim(GlobalAttributes%productionLoc) )
         call he5_writeglobalattr( outputFile, doi=.true. )
+        call DumpGlobalAttributes
       end select
     endif
   end subroutine CopyQuantity
@@ -1936,7 +1938,7 @@ contains ! =====     Public Procedures     =============================
     use MLSStrings, only: Trim_Safe
     use MoreTree, only: Get_Boolean
     use Output_M, only: Blanks, Output
-    use PCFHdr, only: Globalattributes, &
+    use PCFHdr, only: Globalattributes, DumpGlobalAttributes, &
       & H5_WriteMLSFileattr, H5_Writeglobalattr, &
       & He5_Writeglobalattr, He5_WriteMLSFileattr, &
       & WriteleapsecHDFeosattr, WriteleapsecHDF5ds, &
@@ -2110,10 +2112,11 @@ contains ! =====     Public Procedures     =============================
       if ( madeFile ) then
          call output( 'Writing file level attributes to he5 ' // &
           & trim(l2gpPhysicalFilename), advance='yes' )
-         call outputNamedValue( 'identifier_product_DOI', trim(GlobalAttributes%DOI) )
+         call outputNamedValue( 'identifier_product_doi', trim(GlobalAttributes%DOI) )
          call outputNamedValue( 'ProductionLocation', trim(GlobalAttributes%productionLoc) )
          call he5_writeglobalattr( outputFile, &
            & doi=.true., skip_if_already_there=.true. )
+         call DumpGlobalAttributes
        ! (2) File level attributes
         if ( WRITEFILEATTRIBUTES ) call he5_writeMLSFileAttr( outputFile )
         ! Is the next line necessary?
@@ -2241,10 +2244,11 @@ contains ! =====     Public Procedures     =============================
         & 'unable to addmetadata to ' // trim(l2auxPhysicalFilename) )
         call output( 'Writing file level attributes to h5 ' // &
           & trim(l2auxPhysicalFilename), advance='yes' )
-        call outputNamedValue( 'identifier_product_DOI', trim(GlobalAttributes%DOI) )
+        call outputNamedValue( 'identifier_product_doi', trim(GlobalAttributes%DOI) )
         call outputNamedValue( 'ProductionLocation', trim(GlobalAttributes%productionLoc) )
         call h5_writeGlobalAttr ( outputFile, &
           & skip_if_already_there=.false., doi=.true. )
+        call DumpGlobalAttributes
       end if
       
       ! Now we can write any last-minute attributes or datasets to the l2aux
@@ -2314,6 +2318,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.205  2018/05/31 22:49:27  pwagner
+! Changed name of attribute to identifier_product_doi to please DAAC
+!
 ! Revision 2.204  2018/03/22 18:15:05  pwagner
 ! Added command IsFileAbsent; may occur in ReadApriori, MergeGrids, and Output sections
 !
