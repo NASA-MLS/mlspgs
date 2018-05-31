@@ -2864,6 +2864,15 @@ contains ! =====     Public Procedures     =============================
       status = he5_EHrdglatt( l2FileHandle, &
       & 'MiscNotes', &
       &  gAttributes%MiscNotes )
+      status = he5_EHrdglatt( l2FileHandle, &
+      & 'ProductionLocation', &
+      &  gAttributes%ProductionLoc )
+      status = he5_EHrdglatt( l2FileHandle, &
+      & 'HostName', &
+      &  gAttributes%HostName )
+      status = he5_EHrdglatt( l2FileHandle, &
+      & 'identifier_product_doi', &
+      &  gAttributes%DOI )
       call dumpGlobalAttributes ( gAttributes ) 
       call dump_int ( DayOfYear, 'Granule day of year:' )
       call dump_r8 ( TAI93At0zOfGranule, 'Equator crossing time (tai93):' )
@@ -5429,6 +5438,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.235  2018/05/22 23:41:14  pwagner
+! Use dumpGlobalAttributes when Dumping L2GP Attributes
+!
 ! Revision 2.234  2018/04/24 18:25:11  pwagner
 ! Commented out the final method; it caused gold brick crashes
 !
