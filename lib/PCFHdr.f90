@@ -689,7 +689,7 @@ contains
       call GetHDF5Attribute( MLSFile, 'PhaseNames            ', GlobalAttributes%PhaseNames            )
       call GetHDF5Attribute( MLSFile, 'ForwardModelNames     ', GlobalAttributes%ForwardModelNames     )
       call GetHDF5Attribute( MLSFile, 'MiscNotes             ', GlobalAttributes%MiscNotes             )
-      call GetHDF5Attribute( MLSFile, 'identifier_product_DOI', GlobalAttributes%DOI                   )
+      call GetHDF5Attribute( MLSFile, 'identifier_product_doi', GlobalAttributes%DOI                   )
       call GetHDF5Attribute( MLSFile, 'ProductionLocation    ', GlobalAttributes%ProductionLocation    )
       call GetHDF5Attribute( MLSFile, 'NumCompletedChunks    ', GlobalAttributes%NumCompletedChunks    )
       call GetHDF5Attribute( MLSFile, 'NumFailedChunks       ', GlobalAttributes%NumFailedChunks       )
@@ -794,7 +794,7 @@ contains
       !  & 'MiscNotes', GlobalAttributes%MiscNotes, .true.)
       if ( len_trim(GlobalAttributes%DOI) > 0 .and. myDOI ) &
         & call MakeHDF5Attribute(grp_id, &
-        & 'identifier_product_DOI', GlobalAttributes%DOI, .false.)
+        & 'identifier_product_doi', GlobalAttributes%DOI, .false.)
       if ( len_trim(GlobalAttributes%productionLoc) > 0 .and. myDOI ) &
         & call MakeHDF5Attribute(grp_id, &
         & 'ProductionLocation', GlobalAttributes%productionLoc, .false.)
@@ -974,7 +974,7 @@ contains
       endif
       if ( len_trim(GlobalAttributes%DOI) > 0 .and. myDOI ) &
        & status = mls_EHwrglatt(fileID, &
-       & 'identifier_product_DOI', MLS_CHARTYPE, 1, &
+       & 'identifier_product_doi', MLS_CHARTYPE, 1, &
        &  GlobalAttributes%DOI)
       if ( len_trim(GlobalAttributes%productionLoc) > 0 .and. myDOI ) &
        & status = mls_EHwrglatt(fileID, &
@@ -1225,6 +1225,10 @@ contains
          &  ibuf  )
         gAttributes%LastMAFCtr = ibuf(1)
       endif
+      ! status = he5_EHrdglatt(fileID, &
+      ! & 'identifier_product_doi', &
+      ! &  gAttributes%DOI)
+      ! if ( DEBUG ) call outputNamedValue('identifier_product_doi ', trim(gAttributes%DOI) )
       if ( present(returnStatus) ) returnStatus = status
       if ( DEBUG ) call dumpGlobalAttributes
 !------------------------------------------------------------
@@ -1896,6 +1900,9 @@ end module PCFHdr
 !================
 
 !# $Log$
+!# Revision 2.73  2018/05/31 22:43:56  pwagner
+!# Changed name of attribute to identifier_product_doi to please DAAC
+!#
 !# Revision 2.72  2018/05/31 18:06:49  pwagner
 !# We can now copy over globalattributes
 !#
