@@ -29,7 +29,8 @@ module MLSL2Options              !  Options and Settings for the MLSL2 program
   use MLSStringLists, only: EvaluateFormula
   use MLSStrings, only: IsComment, IsDigits, LowerCase, &
     & ReadIntsFromChars, Replace, WriteIntsToChars
-  use PCFHdr, only: GlobalAttributes
+  use PCFHdr, only: GlobalAttributes, SomeGlobalAttributes, &
+    & SomeToGlobalAttributes
   use Output_M, only: AdvancedOptions, OutputOptions, StampOptions, &
     & TimeStampOptions, InvalidPrUnit, StdoutPrUnit, MSGLogPrUnit, BothPrUnit, &
     & Output
@@ -1204,6 +1205,10 @@ jloop:do while ( j < len_trim(line) )
       elseif ( lowercase(name) == 'timestampoptions' ) then
         read(valu,*) TimeStampOptions
         return
+      elseif ( lowercase(name) == 'globalattributes' ) then
+        read(valu,*) SomeGlobalAttributes
+        call SomeToGlobalAttributes
+        return
       endif
       ! ---------------------------------------------------------------
 
@@ -1415,6 +1420,9 @@ end module MLSL2Options
 
 !
 ! $Log$
+! Revision 2.117  2018/05/31 18:04:29  pwagner
+! The opts file can now override globalattributes
+!
 ! Revision 2.116  2018/05/22 23:07:29  pwagner
 ! May set InstrumentName by cmdline option
 !
