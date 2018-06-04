@@ -559,6 +559,16 @@ wvs-137-3.eps: wvs-137-3.obj
 wvs-137-3.pdf: wvs-137-3.obj
 	tgif -print -pdf -page 1 -color wvs-137-3.obj
 
+wvs-138.dvi: wvs-138.tex wvs-138-1.eps
+
+wvs-138.pdf: wvs-138.tex wvs-138-1.pdf
+
+wvs-138-1.eps: wvs-138-1.obj
+	tgif -print -eps -page 1 -color wvs-138-1.obj
+
+wvs-138-1.pdf: wvs-138-1.obj
+	tgif -print -pdf -page 1 -color wvs-138-1.obj
+
 wvs-141.dvi: wvs-141.tex wvs-141-1.eps
 
 wvs-141.pdf: wvs-141.tex wvs-141-1.pdf
@@ -623,6 +633,9 @@ wvs-145-2.pdf: wvs-145-2.obj
 
 endif # end shortn_name == doc
 # $Log$
+# Revision 1.31  2017/10/20 18:16:27  pwagner
+# Added build cmds for wvs-145.tex
+#
 # Revision 1.30  2017/10/13 16:33:48  pwagner
 # Added build cmds for wvs-143
 #
