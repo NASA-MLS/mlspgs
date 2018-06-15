@@ -1,0 +1,10 @@
+begin Fill
+  Repeat, values=["a", "amigo", "3", "4-sassafras"]
+  Reevaluate, Boolean=OKIter, formula="current value: counts(n)", /evaluate, /literal
+  dump, Boolean=OKIter
+  ; stdout should contain
+  ;                             okiter = current value: a
+  ;                             okiter = current value: amigo
+  ;                             okiter = current value: 3
+  ;                             okiter = current value: 4-sassafras
+end Fill

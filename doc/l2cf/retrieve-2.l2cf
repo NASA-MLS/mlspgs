@@ -1,0 +1,7 @@
+; Example with the sids command
+; input: the fwdModelIn vector state
+; output: the fwdModelOut vector cloudOutput
+begin retrieve
+  sids, fwdModelIn=state, fwdModelOut=cloudOutput, $
+    forwardModel= [ clrskyFwmR3 ]
+end retrieve

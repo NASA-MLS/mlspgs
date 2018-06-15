@@ -1,0 +1,20 @@
+; Example with the Retrieve command
+; input: the measurement vector yInitPtan
+; output: the state vector xInitPtan
+begin Retrieve
+  Snoop, comment='Inside retreival', phaseName='InitPtan'
+  Retrieve, $
+  state=xInitPtan, fwdModelExtra=state, $
+  measurements=yInitPtan, measurementSD=yNoiseInitPtan, $
+  apriori=aInitPtan, covariance=SaInitPtan, $
+  outputSD=sdOutInitPtan, fwdModelOut=fInitPtan, $
+  vRegWeightVec=vrInitPtan, hRegWeightVec=hrInitPtan, $
+      lowBound=lbInitPtan, highBound=hbInitPtan, diagnostics=diagInitPtan, $
+    forwardModel = [l2pcRetFwm1,  l2pcRetFwm32, l2pcRetFwm34, $
+    FwmBaselineMAFR1AX, FwmBaselineMAFR1BX, scanFwmGHz ], $
+    columnScale=norm, maxJ=8, lambda=0.0, Ftolerance=0.01, $
+    vRegOrders=2, regAfter=false, hRegOrders=2, regApriori=true, $
+    vRegQuants=[temperature_hr],hRegQuants=[temperature_hr, refGPH]
+  dump, details= -3, /allVectors
+  dumpBlocks, details= -3, /allMatrices
+end Retrieve

@@ -1,0 +1,5 @@
+begin Construct
+  BArray: Boolean, values=["aa", "bb", "cc", "dd"], /literal
+  CArray: Boolean, values=["aa", "bb", "cc", "dd"], /literal
+end Construct
+

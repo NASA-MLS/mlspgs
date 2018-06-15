@@ -1,0 +1,19 @@
+begin Fill
+  Repeat
+  dump, Boolean=OKIter
+  Reevaluate, Boolean=OKIter, manipulation="c+1", $
+    inputBoolean=OKIter, /literal
+  ; The following should be true until the 10th repetition
+  Skip, formula="10 < count"
+  ; stdout should contain
+  ;                        okiter = 0
+  ;                        okiter = 1.0
+  ;                        okiter = 2.0
+  ;                        okiter = 3.0
+  ;                        okiter = 4.0
+  ;                        okiter = 5.0
+  ;                        okiter = 6.0
+  ;                        okiter = 7.0
+  ;                        okiter = 8.0
+  ;                        okiter = 9.0
+end Fill

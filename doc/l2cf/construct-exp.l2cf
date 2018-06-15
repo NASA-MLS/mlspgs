@@ -1,0 +1,41 @@
+begin Construct
+  ;; This is a QuantityTemplate of the type that might be in
+  ;; the state vector
+  temperature: Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=temperature
+
+  ;; This is a QuantityTemplate of the type that might be in
+  ;; the measurement vector
+  band1: Quantity, type=radiance, signal='R1A:118.B1F:PT'
+  
+  ;; This a VectorTemplate for the measurement vector
+  measurementTemplate: VectorTemplate, quantities = [ $
+    band1, band2, band3, band4, band5, band6, band7, band8, band9, band10, band11, band12, band13, band14, band15, band16, $
+    . . .
+  
+  ;; This a VectorTemplate for the state vector
+  stateTemplate: VectorTemplate, quantities = [ $
+    ptanGHZ, ptanTHz, phitanGHz, phitanTHz, $
+    temperature, temperature_HR, $
+    . . .
+  ;; This a ForwardModel of the linear type
+  l2pcODFwm1: ForwardModel, type=linear, signals='R1A:118.B1F:PT', $
+    molecules=[ EXTINCTION, EXTINCTIONV2, H2O, HNO3, N2, O2, O3 ], $
+    specificQuantities=[temperature_hr, h2o_hr],$
+    phiWindow=100 profiles, /lockBins, $
+    binSelectors=[latbin, scalarbin, hrBin,latcost]
+
+  ;; This a ForwardModel of the full type
+  r1LSetupModel_HR: ForwardModel, type=full, $
+    signals=['R1A:118.B1F:PT.C1:11', 'R1A:118.B32W:PT.C3:4', $
+             'R1B:118.B34W:PT.C3:4'], $ 
+    phiWindow=4 degrees, $
+    molecules=[[ H2O, H2O, H2O_R1A, H2O_V2 ],$
+    [ N2, N2 ], [ O2, O2, O2_V1, O_17_O, O_18_O ], $
+    [ O3, O3, O3_R1A, O3_V1_3, O3_V2, O3_2V2]], $ 
+    specificQuantities=[temperature_HR, h2o_HR], $    
+    integrationGrid=vGridTangent, $
+    tangentGrid=vGridTangent, $
+    tolerance= 0.2K,$
+    /do_conv, /do_freq_avg ;; We skip the baseline deliberately
+end Construct
+

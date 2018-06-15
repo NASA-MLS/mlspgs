@@ -1,0 +1,36 @@
+begin ReadApriori
+
+  ;; List the species for which we currently have climatologies  
+  
+  ;; This macro reads one entry from grid format file into the gridded
+  ;; quantity grid<x>
+  
+  ;; Now invoke that macro for all species defined above.
+  gridTEMPERATURE: gridded,field='TEMPERATURE', origin=climatology, $
+       file='Climatologies'
+gridH2O: gridded,field='H2O', origin=climatology, $
+       file='Climatologies'
+gridO3: gridded,field='O3', origin=climatology, $
+       file='Climatologies'
+gridN2O: gridded,field='N2O', origin=climatology, $
+       file='Climatologies'
+gridHNO3: gridded,field='HNO3', origin=climatology, $
+       file='Climatologies'
+gridHCL: gridded,field='HCL', origin=climatology, $
+       file='Climatologies'
+gridCLO: gridded,field='CLO', origin=climatology, $
+       file='Climatologies'
+gridCO: gridded,field='CO', origin=climatology, $
+       file='Climatologies'
+gridHCN: gridded,field='HCN', origin=climatology, $
+       file='Climatologies'
+gridCH3CL: gridded,field='CH3CL', origin=climatology, $
+       file='Climatologies'
+gridCH3CN: gridded,field='CH3CN', origin=climatology, $
+       file='Climatologies'
+gridOH: gridded,field='OH', origin=climatology, $
+       file='Climatologies'
+
+  ;; Put up a macro to indicate we have the climatology
+  
+end ReadApriori

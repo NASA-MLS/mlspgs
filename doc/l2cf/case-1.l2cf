@@ -1,0 +1,4 @@
+;   Example (1)
+begin ReadApriori
+  Case, Boolean=name
+end ReadApriori

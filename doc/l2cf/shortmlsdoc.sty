@@ -1,0 +1,66 @@
+% This is LaTeX 2e file designed for producing short `white paper' style
+% EOS documents
+%
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{shortmlsdoc}[1998/06/24 Style for short EOS MLS documents]
+%
+\RequirePackage{graphicx}
+\RequirePackage{fancyhdr}
+\RequirePackage{ifthen}
+\RequirePackage{geometry}
+\RequirePackage{calc}
+%
+\ProcessOptions\relax
+%
+% First set up the page sizes etc.
+%
+\geometry{%
+  paperwidth=8.5in,%
+  paperheight=11in,%
+  top=1in,%
+  bottom=1in,%
+  left=1in,%
+  right=1in}
+\pagestyle{fancy}
+%
+% Now redefine the maketitle command
+%
+\newcommand{\@seriestitle}{** seriestitle macro not defined **}
+\newcommand{\@version}{** version not defined **}
+\newcommand{\seriestitle}[1]{\renewcommand{\@seriestitle}{#1}}
+\newcommand{\version}[1]{\renewcommand{\@version}{#1}}
+\renewcommand{\maketitle}{%
+   \suppressfloats
+   \noindent\begin{tabular}{@{}l@{}l@{}}%
+     \noindent\parbox[m]{\linewidth-1in}{\raggedright
+       \Large\bfseries\@seriestitle\\
+       \@title\\\vspace{2mm}
+       \large\mdseries\@author\\
+       \@version} &
+     \parbox[m]{1in}{\includegraphics[width=\linewidth]{jpllogo-red}}%
+   \end{tabular}
+   % 
+   \lhead{\fancyplain{}\normalsize\textit{\@title}}
+   \chead{}\rhead{\fancyplain{}\normalsize\textit{\today}}
+   \cfoot{\thepage}\lfoot{}\rfoot{}
+   \thispagestyle{plain}%
+%   \setlength{\headrulewidth}{0pt}
+%   \setlength{\plainheadrulewidth}{0pt}
+}
+%
+\long\def\@makecaption#1#2{%
+  \small\vskip\abovecaptionskip
+  \rightskip=1cm \leftskip=1cm
+  \sbox\@tempboxa{{\bfseries #1:} #2}%
+  \ifdim \wd\@tempboxa >\hsize
+    {\bfseries #1:} #2\par
+  \else
+    \hbox to\hsize{\hfil\box\@tempboxa\hfil}%
+  \fi
+  \vskip\belowcaptionskip}
+%
+\endinput
+%
+%% End of file 'shorteos.sty'
+
+

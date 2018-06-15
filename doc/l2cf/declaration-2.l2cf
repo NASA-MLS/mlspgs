@@ -1,0 +1,4 @@
+begin Output
+  SOMEGOODOH: Boolean, formula="not Band15OFFALLDAY"
+end Output
+
