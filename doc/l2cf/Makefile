@@ -28,7 +28,7 @@ UTILDIR=$(CONFDIR)/util
 REECHO=$(UTILDIR)/reecho.sh
 
 # Most source files match one of the following patterns
-f9h_sources := $(shell ${REECHO} *.f9*)
+l2cf_sources := $(shell ${REECHO} *.l2cf)
 tex_sources := $(shell ${REECHO} *.tex)
 
 # Set paths for finding source files
@@ -79,7 +79,7 @@ l2cf:
 
 all: l2cf
 
-l2cf: ${NEAROBJS} ${OBJS} ${BBL}
+l2cf: ${NEAROBJS} ${OBJS} ${BBL} $(tex_sources) $(l2cf_sources)
 	date > l2cf; echo $(OBJS) >> l2cf; \
    touch ${BBL}; touch $(DVIDIR)/*; touch $(PDFDIR)/*
 
@@ -89,7 +89,7 @@ ${AUX}: l2cf.tex
 ${BBL}: ${BIB} ${AUX}
 	bibtex l2cf
 
-${NEAROBJS}: ${BBL} ${f9h_sources}
+${NEAROBJS}: ${BBL} ${l2cf_sources}
 # ========================================================================
 
 clean:
@@ -124,3 +124,6 @@ update:
 
 # ========================================================================
 # $Log$
+# Revision 1.1  2018/06/15 23:09:24  pwagner
+# First commit
+#
