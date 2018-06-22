@@ -2759,6 +2759,13 @@ contains ! ===================================== Public Procedures =====
 
       ! Delete any zero length or all overlapped chunks
       call PruneChunks ( chunks )
+      if ( .not. associated(chunks) ) then
+        call MLSMessage ( MLSMSG_Error, moduleName, &
+          & 'No chunks remaining after we pruned them for zero length; bad day?' )
+      elseif ( size(chunks) < 1 ) then
+        call MLSMessage ( MLSMSG_Error, moduleName, &
+          & 'No chunks remaining after we pruned them for zero length; bad day?' )
+      endif
 
 !       ! Forcibly zero out number of lower (upper) overlaps on 1st (last) chunks
       noChunks = size ( chunks )
@@ -2967,6 +2974,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.132  2018/06/22 23:22:08  pwagner
+! Say why we stop if none remain after 2nd PruneChunks
+!
 ! Revision 2.131  2018/05/14 23:23:58  vsnyder
 ! Remove tab formatting (again) to eliminate compiler warnings
 !
