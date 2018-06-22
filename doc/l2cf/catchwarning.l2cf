@@ -1,0 +1,32 @@
+;; An example showing how to set a Boolean to catch
+;; a Warning message
+;; This shows how to use 
+;;           --- CatchWarning ---
+begin Construct
+  BadFill: Boolean, formula="false"
+  BadFill2: Boolean, formula="false"
+end Construct
+;; The first Fill will succeed
+;; The second will generate a Warning message because
+;; explicitValues has too few elements
+begin Fill
+  Fill, quantity=man2.temperature_M, method=explicit, explicitValues=2K, /spread
+  Fill, quantity=man1.temperature_M, method=explicit, explicitValues=[ $
+    0, 1, -2, $
+    0, 1, 2, $
+    0, 1, 2, $
+    0, 1, 2, $
+    0, 1, 2, $
+    0, 1, 2, $
+    0, 1, -2 $
+  ]
+  ;; The first CatchWarning will pull in an empty fishing net
+  ;; because the actual Warning message will not contain the
+  ;; entire string "Calling ANNOUNCE_ERROR plus bogus"
+  ;; BadFill will be set to "false"
+  CatchWarning, message='Calling ANNOUNCE_ERROR plus bogus', Boolean=BadFill
+  ;; The second CatchWarning will set BadFill2 to "true"
+  ;; The actual warning message needs only to contain the partial
+  ;; string "ANNOUNCE_ER"; it is not case-sensitive
+  CatchWarning, message='ANNOUNCE_ER', Boolean=BadFill2
+end Fill
