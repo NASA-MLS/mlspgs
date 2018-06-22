@@ -4,8 +4,7 @@
 With the exception of the cursory treatment meted out to
  \snippet{MLSSignals}, and  \snippet{Spectroscopy} 
  our goal is to explain the purpose and use of each Section type in enough detail
- so that you can read an l2cf with understanding and one day write one
- yourself.
+ so that you can read an l2cf with understanding and one day write your own.
  
 Let's assume you're already familiar with terminology like \emph{l2cf, template,
 expand, macro, include, toolkit}.
@@ -45,34 +44,33 @@ Before being expanded, here is the \snippet{readclimatology.l2cf}
 After being expanded it becomes
 \lstinputlisting{readclimatology-exp.l2cf}
 
-The above examples declare and read the GriddedData type with a single line. It
-is sometimes better to declare the GriddedData on one line but read it on a
-later line. That's especially true when coping with the possibility that the
-meteorology might be read from any one of four different file types.
+The above examples declare and read the \snippet{GriddedData\_T} type with a
+single line. It is sometimes better to declare the \snippet{GriddedData\_T} on
+one line but read it on a later line. That's how we cope with the possibility
+that the meteorology might be read from any one of four different file types.
 
 \lstinputlisting{readandmergegeos59.l2cf}
 
 \subsection{\snippet{MergeGrids}}
-That last example furnishes examples of the \snippet{MergeGrids} section type.
-although prematurely. Like the \snippet{ReadApriori} section,
-\snippet{MergeGrids} can declare a new \snippet{GriddedData\_T}. Instead
-of reading it directly from an external file, the special tricks \snippet{MergeGrids}
-can play are \snippet{MergeGrids}, \snippet{Concatenate}, \snippet{ConvertEtaToP},
-and \snippet{wmoTropFromGrids}.
+The last example furnished previews of the \snippet{MergeGrids} section type.
+Like the \snippet{ReadApriori} section, \snippet{MergeGrids} can declare a new
+\snippet{GriddedData\_T}. Instead of reading it directly from an external file,
+the special tricks \snippet{MergeGrids} can play are \snippet{MergeGrids},
+\snippet{Concatenate}, \snippet{ConvertEtaToP}, and \snippet{wmoTropFromGrids}.
 
 \subsubsection{\snippet{Special commands}}
 So far we omitted mentioning the following:
 
 \subsubsection{\snippet{ChangeSettings}}
 This command can appear in either \snippet{ReadApriori} or \snippet{MergeGrids}.
-Among the setting it allows you to change, the \snippet{/silent} flag
+Among the settings it allows you to change, the \snippet{/silent} flag
 turns off the warning messages printed by the hdf library as your l2cf feels
 around to decide what kind of meteorology files it was given.
 
 \subsubsection{\snippet{ReadGriddedData}}
 Tries to read the values field of the \snippet{GriddedData\_T}. If it fails it
-will fail gracefully, leaving the \snippet{GriddedData\_T} in a state of
-\snippet{empty}.
+will fail gracefully, leaving the \snippet{GriddedData\_T} in an
+\snippet{empty} state.
 
 \subsubsection{\snippet{IsGridEmpty}}
 Sets the value of the \snippet{Run-time flag} given in the Boolean
@@ -80,16 +78,24 @@ field. The flag is set to \snippet{true} if the \snippet{GriddedData\_T} is
 \snippet{empty}. Otherwise it is set to \snippet{false}.
 
 \subsubsection{\snippet{Delete}}
-Deallocates the values field of a \snippet{GriddedData\_T}. Afterwards it is
+Deallocates the values field of a \snippet{GriddedData\_T}. Afterward it is
 \snippet{empty}.
 
+More than that, it is a very flexible command, able to free up memory by
+\snippet{Delete}-ing other derived data types.
+
 \subsubsection{\snippet{Dump, Diff}}
-Prints the values field of a \snippet{GriddedData\_T}. Actually it is a very
-flexible command, able
-to print almost any data type, and even basic data types like strings and
-numbers.
+Prints the values field of a \snippet{GriddedData\_T}. 
+
+More than that, it is a very flexible command, able to print almost any derived
+type, and even basic data types like strings and numbers.
 
 \subsection{\snippet{GlobalSettings}}
+This section sets values and settings affecting the entire run. Unless you are
+using the \emph{toolkit} panoply, here is where you set the \emph{date, start} and
+\emph{end times},
+names and locations of the level 1 files, \emph{etc}.
+
 We have worked hard to enable this section to be completed automatically. Unless
 we failed, the relevant lines in your template will be simply
 
@@ -100,9 +106,12 @@ Otherwise you'll need to edit a section looking like the following
 \lstinputlisting{globalsettings.l2cf}
 
 \subsection{\snippet{ChunkDivide}}
+This section determines how \emph{mlsl2} divides the level 1 data into independent
+\snippet{chunks}.
+
 You will always include the same \snippet{ChunkDivide} section. In fact we have
 made it so that you can easily switch between a \emph{Snoop} size chunk and
-standard production size by setting or unsetting an \emph{m4 macros},
+standard production size by setting or unsetting an \emph{m4 macro}, namely
 \snippet{flagDoingSnoop}.
 
 Here is an example drawn from a template
@@ -110,51 +119,48 @@ Here is an example drawn from a template
 
 \lstinputlisting{chunkdivideplushgrid.l2cf}
 
-Here is that example after being expanded
+Here is the same example after being expanded
 \lstinputlisting{chunkdivide-exp.l2cf}
 After the \snippet{ChunkDivide} section, every section before \snippet{Output}
-is
-within the loop of \emph{chunks}. That means that for a \emph{serial} run, the
-sections are looped over as many times as there are chunks. For a
-\emph{parallel} run the master ignores the l2cf and instead organizes and
-manages \emph{slave} tasks. Each \emph{slave} carries out the commands
-in the l2cf for just its chunk of data.
+is within the loop of \emph{chunks}. That means that for a \emph{serial} run,
+the sections are looped over as many times as there are chunks. For a
+\emph{parallel} run the master ignores the loop and instead organizes and
+manages \emph{slave} tasks. Each \emph{slave} carries out the commands in the
+l2cf for just its chunk of data.
 
 \subsection{\snippet{Construct}}
 The last examples stole a little bit of our thunder. The \snippet{Construct} is
 indeed the section where you can define the \snippet{HGrid}. It is also where
-you can define many other data templates, in particular QuantityTemplates and
-VectorTemplates.
+you can define many other data templates, in particular
+\snippet{QuantityTemplates} and
+\snippet{VectorTemplates}.
 
 The \emph{include} statement at the end of the example above does all this for
 \emph{standard species}.
 
-The following example is artificial, but it does show some of the types of
-command and definitions that can appear in this section type.
+The following highly artificial example shows some of the types of
+commands and definitions that can appear in this section type.
 \lstinputlisting{construct-exp.l2cf}
 
-Note that these would never appear in the same \snippet{Construct} or even in
-the same \emph{phase}.
-
 \subsection{\snippet{Fill}}
-The most flexible type of section, it is also the most common. There are more
+Compared with other section types, there are more
 \snippet{Fill} sections in the average l2cf and there are more types of commands that can
-appear in a \snippet{Fill} than in any other type of section.
+appear in a \snippet{Fill} section.
 
-The following example is artificial but hopefully illustrative.
+The following artificial example is hopefully illustrative.
 \lstinputlisting{fill-exp.l2cf}
 
 
 \subsection{\snippet{Join}}
 Almost as common as the \snippet{Fill}, \snippet{Join} is primarily where
 \emph{mlsl2} has a chance to write its results to product files. The following
-example is artificial, too.
+artificial example may show this.
 
 \lstinputlisting{join-exp.l2cf}
 
 \subsection{\snippet{Retrieve}}
-Where the heavy work is done. Despite that, \snippet{Retrieve} is the least
-documented part of l2cf, meriting no pages in our wiki. For the sake of
+Where the heavy lifting is done. Despite that, \snippet{Retrieve} is the least
+documented part of the l2cf, meriting no pages in our wiki. For the sake of
 completeness and to salve a sore conscience we will include two examples
 below without comment
 

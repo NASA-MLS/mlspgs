@@ -10,7 +10,7 @@ can hold strings or numerical data, too. They can be used in control structures 
 to assign values to data internal to mlsl2.
 
 There are still places in the code and in the wiki pages where we refer to them
-as Runtime Booleans. The evolution hasn't always been smooth and it's not yet
+as Runtime Booleans. Their evolution hasn't always been smooth and it's not yet
 complete.
 
 \citet{MLSWikiBooleans}
@@ -26,44 +26,68 @@ The \snippet{formula} field is optional. If present it can refer to a
 previously-defined flag like this
 \lstinputlisting{declaration-2.l2cf}
 In most cases mlsl2 will automatically attempt to evaluate any names it finds in
-\snippet{formula} until it can't find any more. The \snippet{formula} must contain only
+\snippet{formula} it has seen before. The \snippet{formula} must contain only
 previously-defined \snippet{Boolean}, \emph{true}, \emph{false}, the logical
 operators \emph{and, or, not}, and the logical relations 
  \[
- ==     equals
+ ==     \ equals
  \]
  \[
- /=   does\ not\ equal
+ /=   \ does\ not\ equal
  \]
  \[
- <    is\ less\ than
+ <    \ is\ less\ than
  \]
  \[
- >    is\ greater\ than     
+ >    \ is\ greater\ than     
  \]
 
 \subsection{\snippet{Literal}}
-To prevent mlsl2 from interpreting \snippet{formula} as a logical use
-the \snippet{/literal} flag. 
+To prevent mlsl2 attempting to interpret  \snippet{formula} as a logical value
+use the \snippet{/literal} flag. 
 \lstinputlisting{declaration-4.l2cf}
 
-If you combine the \snippet{/literal} and \snippet{/reevaluate} flags you can
+If you combine the \snippet{/literal} and \snippet{/evaluate} flags you can
 achieve unique results, as in the next example which places the name of the
 current l2cf file in the \snippet{l2cf} Runtime Flag.
 \lstinputlisting{declaration-3.l2cf}
 
+This magic depends on the fact that there are \emph{special} Runtime Flags.
+
 \subsection{\snippet{Reevaluate}}
-You can change the value stored in a Runtime Flags using this command which
-looks a lot like a declaration 
+You can change the value stored in a Runtime Flag using this command. 
 \lstinputlisting{reevaluate.l2cf}
+
+\subsection{\snippet{Other commands}}
+There are some other commands that can change the value stored in a Runtime
+Flag.
+\lstinputlisting{reevaluate.l2cf}
+
+\subsubsection{\snippet{IsGridEmpty, IsFileAbsent, AnyGoodRadiances, AnyGoodValues,
+IsSwathEmpty}}
+Except for the particular data type being tested, and the section type in which
+each can appear, these commands are very similar. The following examples attempt
+to demonstrate their use. 
+
+\lstinputlisting{readradiances.l2cf}
+
+\subsubsection{\snippet{CatchWarning}}
+This lets you set a Runtime Flag if the last warning message matches your
+supplied string. 
+
+\lstinputlisting{catchwarning.l2cf}
+
+\subsubsection{\snippet{Compare}}
+This lets you set a Runtime Flag by comparing one or more vector quantities.
+
+\lstinputlisting{compare.l2cf}
 
 \subsection{\snippet{Arrays}}
 You can store arrays in Runtime Flags. 
 
 \lstinputlisting{declaration-5.l2cf}
 
-Then you can use the arrays, assign new
-values to them, and even resize them.
+Then you can use the arrays, assign new values to them, and even resize them.
 \lstinputlisting{reevaluate-2.l2cf}
 
 \subsection{\snippet{Skip}}
@@ -72,7 +96,7 @@ without any fields, it results in mlsl2 skipping unconditionally to the end of
 the current section.
 
 A more useful application is to supply the \snippet{Boolean} field in which case
-it skips to the end of the current sction if the \snippet{Boolean} evaluates to
+it skips to the end of the current section if the \snippet{Boolean} is
 \emph{true}.
 \lstinputlisting{skip-1.l2cf}
 Similar is the effect of the \snippet{formula} field which causes mlsl2 to skip
@@ -93,15 +117,20 @@ exit the endless loop as in this example combining the two commands
 You can include the \snippet{formula} field on the same line as \snippet{Repeat}
 as this example shows
 \lstinputlisting{repeat-1.l2cf}
+in which case mlsl2 \snippet{Repeats} the section as long as \snippet{formula}
+is emph{true}.
+
 The final way \snippet{Repeat} can appear is with explicit values given in a
 \snippet{values} field as the following example shows
 \lstinputlisting{repeat-2.l2cf}
 
 \subsection{\snippet{Select .. Case .. End Select}}
-These span sections. Similar to Fortran's select case structure, they provide a clearer layout for a multiple branch decision.
+These span sections. Similar to Fortran's select case structure, they provide a
+clear layout for a multiple branch decision.
 
-While they may span sections, each of these special commands must appear within a section.
+While they may span sections, each of the special commands must appear within a section.
 
+\subsubsection{\snippet{Select}}
 \snippet{Select} begins the structure. It can take one of the following example forms 
 
 \lstinputlisting{select-1.l2cf}
@@ -109,12 +138,13 @@ or
 
 \lstinputlisting{select-2.l2cf}
 After \snippet{Select}, all the subsequent l2cf lines will be skipped until a
-\snippet{Select} statement appears that matches the string in example (1) or the
+\snippet{Case} statement appears that matches the string in example (1) or the
 value of name in example (2). 
 
+\subsubsection{\snippet{Case}}
 The \snippet{Case} statement supplies a possible match for the string being
-sought. Assume the string set by the \snippet{Select} statement is "faro". Then if the
-\snippet{Case} statement supplies "faro", all the subsequent l2cf lines will be
+sought. Assume the string set by the \snippet{Select} statement is \emph{faro}. Then if the
+\snippet{Case} statement supplies \emph{faro}, all the subsequent l2cf lines will be
 executed, until either another \snippet{Case} statement or a concluding
 \snippet{EndSelect} statement appears. If the \snippet{Case} statement supplies a
 different string, all the subsequent l2cf lines will be skipped, until either
@@ -132,8 +162,9 @@ which should be clear from the explanation supplied about the two usages of
 
 
 There is a special value for string: if string=="default" it will match any
-pattern we are currently seeking. In other words, it is a \emph{wild card}. 
-
+pattern we are currently seeking. In other words, it acts like a \emph{wild card}. 
+\subsubsection{\snippet{EndSelect}}
+\snippet{EndSelect} terminates the control structure.
 %%% Local Variables: 
 %%% mode: latex
 %%% TeX-master: "cfm"
