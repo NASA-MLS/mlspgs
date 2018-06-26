@@ -386,10 +386,10 @@ contains
   subroutine Array2List ( inArray, outList, inseparator, ordering, leftRight )
     ! Dummy arguments
     character (len=*), intent(out)                :: outList
-    character (len=*), DIMENSION(:), intent(in)   :: inArray
+    character (len=*), dimension(:), intent(in)   :: inArray
     character (len=*), optional, intent(in)       :: inseparator
-    integer, DIMENSION(:), OPTIONAL, intent(in)   :: ordering
-    character (len=1), OPTIONAL, intent(in)       :: leftRight
+    integer, dimension(:), optional, intent(in)   :: ordering
+    character (len=1), optional, intent(in)       :: leftRight
 
     ! Local variables
     integer :: listElem, arrayElem, nElems
@@ -1360,13 +1360,19 @@ contains
 
     if(nElement.LE.0) then
       outElement = separator
+      return
     elseif(len(inList) < nElement) then
       outElement = separator
+      return
     endif
     i = 1
     elem = 1
     if ( present(separatorLocation) ) separatorLocation = -1
     do
+      if ( i > len(inList) ) then
+        outElement = separator
+        return
+      endif
       nextseparator = i - 1 + SCAN(inList(i:), separator)
 
       ! No more separators
@@ -2278,7 +2284,7 @@ contains
     logical, intent(in)                       :: countEmpty
     integer                                   :: nElements
     character (len=*), optional, intent(in)       :: inseparator
-    integer, OPTIONAL, intent(out)            :: Longestlen  ! LENGTH of longest
+    integer, optional, intent(out)            :: Longestlen  ! LENGTH of longest
 
     ! Local variables
     integer :: i, sinceLastseparated           ! Loop counters
@@ -3454,7 +3460,7 @@ contains
     integer :: i, istr, irev, elem, iBuf
     integer, parameter :: MAXWORDLENGTH=80
     character (len=1)               :: separator
-    character (len=1), DIMENSION(:), ALLOCATABLE :: charBuf
+    character (len=1), dimension(:), allocatable :: charBuf
     character (len=MAXWORDLENGTH) :: word
 ! Treat consecutive separators as if enclosing an empty element
     logical, parameter :: countEmpty = .TRUE.    
@@ -3765,7 +3771,7 @@ contains
     integer :: nElems, status, Longestlen
 
     character (len=1)               :: separator
-    character (len=MAXSTRELEMENTLENGTH), DIMENSION(:), ALLOCATABLE    &
+    character (len=MAXSTRELEMENTLENGTH), dimension(:), allocatable    &
       &                             :: stringArray
     logical, parameter              :: DeeBUG = .false.
     ! Executable code
@@ -3890,7 +3896,7 @@ contains
     logical, intent(in)                       :: countEmpty
     integer                                   :: elem
     character (len=*), optional, intent(in)       :: inseparator
-    logical, OPTIONAL, intent(in)             :: part_match
+    logical, optional, intent(in)             :: part_match
 
     ! Local variables
     integer :: nElements
@@ -4656,6 +4662,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.79  2018/06/26 23:59:09  pwagner
+! Dont go past end of inList in GetStringElement
+!
 ! Revision 2.78  2017/12/12 21:22:12  pwagner
 ! Remove limit on character lengths in SortArray
 !
