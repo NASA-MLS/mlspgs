@@ -40,7 +40,7 @@ module ChunkDivide_m
   use MLSKinds, only: R8, Rp
   use MLSMessageModule, only: MLSMessage, MLSMsg_Error, MLSMsg_Warning
   use MLSNumerics, only: Hunt
-  use MLSFinds, only: Findfirst, FindLongestStretch
+  use MLSFinds, only: FindFirst
   use MLSSignals_M, only: Dump, Modules, GetModuleName
   use MLSStringlists, only: SwitchDetail
   use Output_M, only: Blanks, Output, &
@@ -536,12 +536,11 @@ contains ! ===================================== Public Procedures =====
       character (len=NameLen) :: L1BItemName
       logical, dimension(:), pointer :: ptsInPolygon => null()
       real(r8), dimension(3)         :: xyz
-      real(r8)                       :: xx, yy
-      real(r8), dimension(:), ALLOCATABLE :: Vertices_XX, Vertices_YY
+      real(r8), dimension(:), allocatable :: Vertices_XX, Vertices_YY
       real(r8), dimension(3)         :: PolyVert_XYZ
-      integer :: M1, M2, n
+      integer :: n
       integer, dimension(2) :: range
-      integer :: pointTest
+      ! integer :: pointTest
 
       ! Executable code
       ! 1st-- read lats and lons from the l1b file
@@ -569,8 +568,8 @@ contains ! ===================================== Public Procedures =====
       call allocate_test( ptsInPolygon, noMAFs, 'ptsInPolygon', &
         & ModuleName )
       n = size(polygon_vertices)
-      ALLOCATE(Vertices_XX(n))
-      ALLOCATE(Vertices_YY(n))
+      allocate(Vertices_XX(n))
+      allocate(Vertices_YY(n))
 
 
 
@@ -838,13 +837,6 @@ contains ! ===================================== Public Procedures =====
       integer, target, dimension(7) :: NotWantedForFixed = &
         & (/ f_noSlaves, f_homeModule, f_homeGeodAngle, f_scanLowerLimit, &
         &    f_scanUpperLimit, f_criticalModules, f_maxGap /)
-
-      !added for Polygon
-      integer, target, dimension(0) :: NeededForPolygon
-      integer, target, dimension(10) :: NotWantedForPolygon = &
-        & (/ f_noSlaves, f_homeModule, f_homeGeodAngle, f_scanLowerLimit, &
-        &    f_scanUpperLimit, f_criticalModules, f_maxGap, f_noChunks, f_maxLength, f_overlap /)
-      !ended for Polygon
 
       integer, target, dimension(3) :: NeededForPE = &
         & (/ f_maxLength, f_homeModule, f_homeGeodAngle /)
@@ -2063,7 +2055,7 @@ contains ! ===================================== Public Procedures =====
     subroutine SurveyL1BData ( processingRange, filedatabase, mafRange )
       ! This goes through the L1B data files and tries to spot possible
       ! obstructions.
-      use MLSL2Options, only: sharedPCF
+      ! use MLSL2Options, only: sharedPCF
       use Monotone, only: isMonotonic
       type (TAI93_Range_T), intent(in) :: PROCESSINGRANGE
       type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
@@ -2863,7 +2855,7 @@ contains ! ===================================== Public Procedures =====
       swlevel = switchDetail(switches, 'chu' )
       allocate ( temp ( size(chunks) - 1 ), stat=status )
       addr = 0
-      if ( status == 0 .and. size(chunks) > 0 ) addr = transfer(c_loc(temp(1)), addr)
+      if ( status == 0 .and. size(chunks) > 1 ) addr = transfer(c_loc(temp(1)), addr)
       call test_allocate ( status, ModuleName, 'temp', &
         & uBounds = size(chunks) - 1, elementSize = storage_size(temp) / 8, &
         & address=addr )
@@ -2974,6 +2966,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.133  2018/06/26 00:12:32  pwagner
+! Avoids accessing index=1 of 0-sized temp in DeleteChunk
+!
 ! Revision 2.132  2018/06/22 23:22:08  pwagner
 ! Say why we stop if none remain after 2nd PruneChunks
 !
