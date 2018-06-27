@@ -95,7 +95,7 @@ module FillUtils_1                     ! Procedures used by Fill
   use VectorsModule, only: &
     & ClearUnderMask, CloneVectorQuantity, CopyVector, CreateMask, &
     & DestroyVectorinfo, DestroyVectorQuantityMask, &
-    & DestroyVectorQuantityValue, Dump, DumpQuantityMask, &
+    & DestroyVectorQuantityValue, Dump, &
     & GetVectorqtyByTemplateIndex, GetVectorQuantityByType, &
     & IsVectorqtyMasked, MaskVectorqty, &
     & ValidateVectorQuantity, Vector_T, &
@@ -439,7 +439,6 @@ contains ! =====     Public Procedures     =============================
     ! ------------------------------------------- ApplyBaseline ----------
     subroutine ApplyBaseline ( key, quantity, baselineQuantity, &
       & quadrature, dontMask, ignoreTemplate )
-      use HighOutput, only: outputNamedValue
       integer, intent(in) :: KEY        ! Tree node
       type (VectorValue_T), intent(inout) :: QUANTITY ! Radiance quantity to modify
       type (VectorValue_T), intent(in) :: BASELINEQUANTITY ! L1B MAF baseline to use
@@ -4211,8 +4210,8 @@ contains ! =====     Public Procedures     =============================
     ! radiances are named the same independent of hdf version
     subroutine FromL1B ( Root, Quantity, Chunk, FileDatabase, &
       & IsPrecision, Suffix, Geolocation, PrecisionQuantity, BOMask, sdName )
-      use BitStuff, only: negativeIfBitPatternSet
-      use Init_Tables_Module, only: l_ECR, l_geocentric, l_geodetic, l_none
+      use BitStuff, only: NegativeIfBitPatternSet
+      use Init_Tables_Module, only: L_ECR, L_geocentric, L_geodetic, L_none
       integer, intent(in)                        :: Root
       type (VectorValue_T), intent(inout)        :: Quantity
       type (MLSChunk_T), intent(in)              :: Chunk
@@ -5313,8 +5312,8 @@ contains ! =====     Public Procedures     =============================
 
     ! ----------------------------------------  WithReichlerWMOTP  -----
     subroutine WithReichlerWMOTP ( tpPres, temperature )
-
-      use WMOTropopause, only: extraTropics, TWMO
+      use HighOutput, only: LetsDebug
+      use WMOTropopause, only: ExtraTropics, TWMO
       ! Implements the algorithm published in GRL
       ! Loosely called the "Reichler" algorithm
       ! Ideas the same as in WithWMOTropopause
@@ -5326,6 +5325,7 @@ contains ! =====     Public Procedures     =============================
       ! Local variables
 
       logical :: AlreadyDumped
+      logical :: deebug
       integer :: Instance
       integer :: Invert
       integer :: Me = -1                   ! String index for trace
@@ -5342,7 +5342,7 @@ contains ! =====     Public Procedures     =============================
       ! logical, parameter :: DEEBUG = .false.
 
       ! Executable
-
+      DEEBUG = LetsDebug ( 'wmo', 0 )
       call trace_begin ( me, 'FillUtils_1.WithReichlerWMOTP', &
         & cond=toggle(gen) .and. levels(gen) > 1 )
       nullify( xyTemp, xyPress )
@@ -5376,7 +5376,7 @@ contains ! =====     Public Procedures     =============================
         if ( any ( &
           & temperature%values(:,instance) < 10.0 .or. &
           & temperature%values(:,instance) > 1000.0 ) ) then
-          call output('invalid temperatures in this instance', advance='yes' )
+          if ( DEEBUG ) call output('invalid temperatures in this instance', advance='yes' )
           cycle instanceLoop
         end if
         ! check vertical orientation of data
@@ -5434,8 +5434,8 @@ contains ! =====     Public Procedures     =============================
 
     ! ------------------------------------------  WithWMOTropopause  -----
     subroutine WithWMOTropopause ( tpPres, temperature, refGPH, grid )
-      use Geometry, only: geodToGeocLat
-      use Hydrostatic_M, only: hydrostatic
+      use Geometry, only: GeodToGeocLat
+      use Hydrostatic_M, only: Hydrostatic
 
       type (VectorValue_T), intent(inout) :: TPPRES ! Result
       type (VectorValue_T), intent(in) :: TEMPERATURE
@@ -7943,6 +7943,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.143  2018/06/27 00:01:14  pwagner
+! Dont complain about invalid temperatures in WithReichlerWMOTP
+!
 ! Revision 2.142  2018/04/16 22:16:45  pwagner
 ! fixed bug in character array constructor for non-auto casenames
 !
