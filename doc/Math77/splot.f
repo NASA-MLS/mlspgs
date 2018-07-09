@@ -2,10 +2,9 @@ C++ CODE for .C. is inactive
 C%% static FILE *inunit, *iotemp, *iotmp1, *iotmp2, *iofil;
 C++ END
       subroutine SPLOT (XSIZE, YSIZE, X, NX, Y, OPT, COPT)
-c Copyright (c) 1996, California Institute of Technology. U.S.
-c Government Sponsorship under NASA Contract NAS7-1260 is acknowledged.
-c>> 2011-12-02 SPLOT Krogh -- Put in checks to avoid log of nonpositives
-c>> 2011-12-01 SPLOT Krogh -- Changed runaway test on COPT.
+c Copyright (c) 1996 California Institute of Technology, Pasadena, CA.
+c ALL RIGHTS RESERVED.
+c Based on Government Sponsored Research NAS7-03001.
 c>> 2009-10-30 SPLOT Krogh -- Initialized ARRLEN & CAPLOC(5:6)
 c>> 2009-10-27 SPLOT Krogh -- BSLAS1 => BSLAS1(1:1) for NAG compiler.
 c>> 2009-10-18 SPLOT Krogh -- Added "save adjin" in splota
@@ -149,7 +148,7 @@ c     30   Flags that data for the current set follows.
 c     31   Data for one abscissa follows.
 c     32   Flags a bad data point, next location gives the index for Y.
 c     33   Flags the end of a data set.
- 
+
 c IAX    Used when an axis direction is implied.  1 for x-axis
 c   (horizontal), 2 for y-axis (vertical).
 c IERR   Used for an error index.
@@ -288,7 +287,7 @@ c LRULE  See IRULE (and NRULE).
 c K      Temporary index.
 c KASE   1-4 for bottom, left, top,right borders, 5 and 6 for x and y
 c   axis, 8 for words, 10-15 for captions, 16 for output text.
- 
+
 c        Indicees, 1-16, are for: Borders (bottom, left, top, right),
 c   x-axis, y-axis, word alignment (e.g. for option 14), number
 c   formatting for option 15, Captions (as for borders), alignment
@@ -462,7 +461,7 @@ c    coordinates.  Entries correspond to either an x or a y data set.
 c    Let v be the x or y corresponding to XYU2PF(I) (see NXYLIM).  Then
 c    v_{physical} = XYBASE(IAX) + v_{user} * XYU2PF(IAX).  If an entry
 c    here is nonzero, its value has been determined.
- 
+
 c Parameter defs (integers) (in IP):
 c NEXT   10^0 of Opt. 1 -- Units, continue, etc., sets LAST.
 c INTERP 10^1 of Opt. 1 -- Connecting points of a curve
@@ -584,10 +583,10 @@ c
       character*4 TXTTS1, TXTTS2, TXTTS3, TXTTS4
       parameter (TXTTS1=BSLASH//']]]', TXTTS2=BSLASH//')))',
      1   TXTTS3=BSLASH//'{#}', TXTTS4=BSLASH//'{{}')
- 
+
 c         For debug printing
       character DB*1
- 
+
 C++ CODE for .C. is inactive
 C      character BSLASH
 C      parameter (BSLASH='\\')
@@ -598,29 +597,29 @@ C      save IOSTA, LCURVE, LAST, LSET, XYMAX, XYMIN
 C++ CODE for ~.C. is active
       save INUNIT, IOSTA, IOTEMP, LCURVE, LAST, LSET, XYMAX, XYMIN
 C++ END
- 
+
 c Option Index:    1  2  3  4  5   6   7   8   9  10  11  12  13  14
 c       15  16  17  18  19  20  21  22  23  24  25  26  27 <end flag>
       data IRULE / 1, 2, 4, 5, 8, 10, 12, 16, 17, 18, 18, 19, 20, 21,
      2  23, 25, 27, 28, 28, 29, 30, 31, 32, 33, 34, 35, 35, 36 /
- 
+
 c Index from IRULE:1   2    4  5        8    10    12         16  17
 c       18  19  20  21    23    25    27  28  29  30  31  32  33  34 35
       data LRULE / 2,  7,7, 7, 7,15,12, 7,-2, 7,-2, 6,4,9,-2, -2, -2,
      1  -2, -1, -5, -2,6, -3,6, -1,5, -2, -4, -4, -5, -4, -4, -5, 5, 7 /
- 
+
 c                 1   2   3   4   5   6  7   8    9   10 11   12  13 14
 c        15  16   17 18
       data NRULE/10, 10, 10, 10, 10, 10, 0, 10, 100, 100, 0, 100, 10, 0,
      1   10, 10, 100, 0 /
- 
+
 c                   1   2   3   4   5   6   7   8   9  10  11  12  13
 c       14  15  16  17  18  19  20  21  22  23   24   25   26   27   28
 c       29,  30   31   32   33 end
       data LINACT / 1, 10, 15, 19, 20, 21, 22, 23, 24, 25, 26, 27, 31,
      1  40, 50, 60, 70, 74, 75, 80, 85, 90, 95, 100, 105, 106, 107, 111,
      2 111, 112, 113, 113, 114, 115 /
- 
+
       data INACT / 1, 14,7,3,NEXT, 14,1,1,LTYPE,
      1   6, 14,2,3,LYDIM,
      2  14,1,2,LPEN,
@@ -639,7 +638,7 @@ c       29,  30   31   32   33 end
      G  17,
      H  14,1,1,LDEBUG,
      I  17, 20, 21, 22 /
- 
+
       data LAST / 0 /
 c                             11111111112222222222333333333
 c                    12345678901234567890123456789012345678
@@ -655,7 +654,7 @@ C++ END
       data HLET / 'lcrLCR' /
 c Initial FP.        1    2     3    4   5     6      7
       data FPDAT / 4.E0,100.E0,.7E0,.5E0,60.E0,30.E0,-1.E0 /
- 
+
       data LBOUND / LBNDP, LBNDF, LBNDT /
 c
 c To get TOPTS.
@@ -692,7 +691,7 @@ C%%   const char fmt125[]= "%15.7e";
 C%%   const char fmt130[]= "New data set, Curve=%3li  KX=%3li  KY=%3li\
 C%%   MODE=%2li   IY=%2li  NY=%2li\n";
 C++ END
- 
+
 c
 c ************************ Start of Executable Code ********************
 c
@@ -756,7 +755,7 @@ c     Default tick lengths, no captions
                TICKS(4, I) = 0.0E0
                LENCAP(I) = 0
   170       continue
- 
+
 c                              Initialize IP and FP
             do 180 I = 1, LASTIP
               IP(I) = 0
@@ -817,7 +816,7 @@ c                Got an A, set to save data in first border.
 c                Defaults for captions
             K = 10
          end if
- 
+
       else if (K .ge. 8) then
          NTYP = 1
       end if
@@ -862,7 +861,7 @@ c                        Error -- Bad start of COPT option
       LPAR = 1
       J = LTEXT
   240 LTEXT = LTEXT + 1
-      if (LTEXT .gt. len(COPT)) then
+      if (LTEXT - I1 .gt. 100) then
 c                 Error -- Runaway in COPT, unbalanced (), [], or {}?
          J = I1
          IERR = 12
@@ -1114,7 +1113,7 @@ C%%  if (l3>0) memcpy(splotc.txtdef[j-1],splotc.txtdef[i-1],(size_t)l3);
       go to 200
 c         Reduce count by 1 if not a "Q", then save next text pointer.
   290 if (K .ne. 1) LTEXT = LTEXT - 1
- 
+
 c
 c ******************** Process the options in OPT **********************
 c
@@ -1245,7 +1244,7 @@ c         Error -- Only digits 1 to 6 can be used for borders.
       I = I / 10
       if (I .ne. 0) go to 436
       go to 300
- 
+
 c =5  Set ?MAX / ?MIN for current set. Options 8 and 9
   450 if (FPIN(1) .lt. FPIN(2)) then
          K = IAOPT - 7
@@ -1258,7 +1257,7 @@ c             Error -- min/max on x or y specified twice.
          XYMAX(K) = FPIN(2)
       end if
       go to 300
- 
+
 c =6  Check NY. Option 2
   460 if (IP(LNY) .ne. ININ(2)) then
          if (LAST .eq. 5) then
@@ -1301,7 +1300,7 @@ c                        Set up for new data set.
       PHYUSE(1, IAX) = FPIN(1)
       PHYUSE(2, IAX) = FPIN(2)
       go to 300
- 
+
 c =8  Set defaults for widths on out of range values.
   480 FPIN(LWIDTH+1) = mod(FPIN(LWIDTH+1)/10.E0, 100.E0) / 10.E0
       FPIN(LWIDTH+2) = mod(FPIN(LWIDTH+2)/10.E0, 100.E0) / 10.E0
@@ -1343,7 +1342,7 @@ C++ CODE for ~.C. is active
      1  print 50, DB, IOTEMP, IAOPT, (nint(abs(OPT(K))), K = I,J)
 C++ END
       go to 300
- 
+
 c =10  Single symbol (may require extra args.)
   500 J = 1
       K = abs(nint(OPT(IOP+1)))
@@ -1381,7 +1380,7 @@ c%%     printf ("\n");}
 C++ END
       IOP = IOP + J
       go to 300
- 
+
 c =11  For filling (may have up to 3 for each curve type) (scratch)
   510 J = 0
       if (ININ(1) .gt. 2) J = ININ(1) - 1
@@ -1413,7 +1412,7 @@ C++ END
 c =? Invalid option (or maybe a bug in this code?)
   520 IERR = 20
       go to 1430
- 
+
 c =14  There follows in INACT, n, w, p, where
 c     n = number of integers
 c     w = defines where they go when processing options: 1 storage,
@@ -1449,7 +1448,7 @@ C++ END
       end if
       IACT = IACT + 3
       go to 400
- 
+
 c =15  As for 14, except for floating point data in FPIN().
   550 if (INACT(IACT+2) .ge. 2) then
          if (NOTOUT) then
@@ -1480,7 +1479,7 @@ C++ END
       end if
       IACT = IACT + 3
       go to 400
- 
+
 c =16  Processing for text pointer.  In all cases here, the text is
 c      acted upon immediately when read from the scratch file.
 c      There follows in INACT, k
@@ -1517,11 +1516,9 @@ c        I1 is count of data to get when getting it from (X, Y).
       do 705 K = 1, 2
          SETLIM(1,K) = XYMIN(K)
          SETLIM(2,K) = XYMAX(K)
-c                               Take logs of limits if necessary.
+c                               Take logs of limmits if necessary.
          if (XYMIN(K) .lt. XYMAX(K)) then
             if (IP(LCOOX) .eq. 2) then
-              if ((XYMIN(K) .le. 0.E0) .or. (XYMAX(K) .le. 0.E0))
-     1         go to 1390
                SETLIM(1, K) = log10(XYMIN(K))
                SETLIM(2, K) = log10(XYMAX(K))
             end if
@@ -1583,13 +1580,9 @@ C++ CODE for ~.C. is active
 C++ END
       end if
 c                           Check if want logs
-      if (IP(LCOOX) .eq. 2) then
-        if (FPIN(1) .le. 0.E0) go to 1390
-        FPIN(1) = log10(FPIN(1))
-      end if
+      if (IP(LCOOX) .eq. 2) FPIN(1) = log10(FPIN(1))
       if (IP(LCOOY) .eq. 2) then
          do 740 I = 1, NY
-            if (FPIN(I+1) .le. 0.E0) go to 1390
             FPIN(I+1) = log10(FPIN(I+1))
   740    continue
       end if
@@ -1638,7 +1631,7 @@ C%%     fclose(inunit);
         close(INUNIT)
 C%%   }
       end if
- 
+
       if (IP(NEXT) .lt. 5) LCURVE = LCURVE + 1
   780 LAST = IP(NEXT)
       FPIN(1) = LAST
@@ -1707,7 +1700,7 @@ c
 c                     Points are connected, take care of them.
   860 MOREIY = .false.
       IP(INTERP) = 0
- 
+
       if (IOSTA .le. 0) then
         if (IP(LDEBUG) .gt. 1) print '(''Rewind IOTEMP'')'
 C%%     rewind(iotemp);
@@ -2053,7 +2046,6 @@ C%%                   splotb.lentxt[l1-1][2]);
             end if
             do 975 J = 0, 1
                if (IP(LCOOX+J) .eq. 2) then
-                  if (FP(LVALS+J) .le. 0.E0) go to 1390
                   FP(LVALS+J) = log10(FP(LVALS+J))
                end if
   975       continue
@@ -2090,7 +2082,7 @@ c Rectangles ellipses and lines.
 c            Convert to physical coordinates (only first two for ellipse
          XOUT(1) = XYBASE(KX) + XYU2PF(KX) * FP(LVALS)
          YOUT(1) = XYBASE(KY) + XYU2PF(KY) * FP(LVALS+1)
- 
+
          if (IAOPT .ne. 21) then
             XOUT(2) = XYBASE(KX) + XYU2PF(KX) * FP(LVALS+2)
             YOUT(2) = XYBASE(KY) + XYU2PF(KY) * FP(LVALS+3)
@@ -2197,7 +2189,7 @@ c                 Points have been provided, but they are not plotted.
       end if
 c               Consume till get to the end of a data set.
  1010 continue
- 
+
 C%%   fread(&iaopt, sizeof(iaopt), (size_t)1, iotemp);
 C%%   fread(fpin, sizeof(fpin[0]), (size_t)(ny+1), iotemp);
       read (IOTEMP) IAOPT, (FPIN(J), J = 1, NY+1)
@@ -2237,7 +2229,7 @@ C%%   exit(0);
       KPT = 0
       KY = I
 c Set up for type of curve, clipping, etc.
- 
+
  1080 BADPT = .false.
       LKLIP = .false.
       if (MODE .lt. 5) then
@@ -2479,7 +2471,7 @@ c                      Close out this mfpic group and start next.
             call SPLOT9
          end if
          IOSTA = 1
- 
+
          if (IP(LDEBUG) .gt. 1) print '(''Rewind IOTEMP'')'
 C++ CODE for ~.C. is active
          rewind (IOTEMP)
@@ -2529,11 +2521,6 @@ C%%   fclose(iotemp);
 c
 c   **************************** Error Processing **********************
 c
-c Enter here for error on attempt to take log of negative number.
-1390  continue
-      ierr = 36
-      go to 1430
- 
 c                     Set Limits for COPT error message.
  1400 J = LTEXT - 1
  1410 IERR3 = J
@@ -2547,8 +2534,8 @@ c                     Error on inner subroutine
  1510 OPT(1) = -100 - IOP1
       return
       end
- 
- 
+
+
       subroutine SPLOTA(IB)
 c Output the single border or axes with index IB, including tick marks,
 c labels and captions.  Do any preliminary checks on scaling required
@@ -2661,7 +2648,7 @@ c Locals
       integer IB
       real             ARREXT, CAPSEP, SEPLAB
       parameter (ARREXT=3.E0, CAPSEP = 2.E0, SEPLAB = 3.5E0)
- 
+
       integer I, I1, I2, IAX, IAXP, IBCAP(6), J, K, KB, KDIG, KLOG,
      1   MINTIC
       real             ADJIN(6), ADJOUT(6), AXADJ(6), CAPLOC(6), FAC(4),
@@ -2727,11 +2714,9 @@ c                         Get space for labels.
                   TP1 = anint(TP)
                   J = -I
                else
-                  if (TP .le. 0.E0) go to 1390
                   K = log10(TP)
                   TP1 = 10.E0 ** K
                   TLEN = TPMAX - TPMIN
-                  if (TP .le. 0.E0) go to 1390
                   J = log10(TP / TLEN)
                   if (J .gt. 1) then
                      TP1 = TP1 * 1.1E0**J
@@ -2741,7 +2726,7 @@ c                         Get space for labels.
                call SPLOTN(sign(TP1,TPMIN), J, XYPOS)
                TP1 = TLENV
                if (IAX .eq. 2) TP1 = TLENH
- 
+
                POSLAB(I) = ADJOUT(I) + SEPLAB
                ADJOUT(I) = POSLAB(I) + TP1
                if ((I.eq.1) .or. (I.eq.5)) then
@@ -2907,7 +2892,6 @@ c   TP1 = minimum x_physical, TP2 = loc. user, TP3 = loc. physical
          TP2 = PHYUSE(2, IAX)
          TP3 = PHYUSE(1, IAX) * TOPTS
 c                  Convert to logs if requested
-         if (TP2 .le. 0.E0) go to 1390
          if (IP(LCOOX+IAX-1) .eq. 2) TP2 = log10(TP2)
 c   TP = maps loc. user to loc. physical with current settings.
          TP = TP1 + XFAC * (TP2 - XYLIM(1,IAX))
@@ -2949,7 +2933,6 @@ c                            Major ticks all specified
             KDIG = TICMAJ
             if (KDIG .ne. 1) KLOG = 1
          else
-            if (TBASE .le. 0.E0) go to 1390
             KDIG = log10(.98E0 * TBASE)
             KDIG = TICMAJ / 10**KDIG
          end if
@@ -2966,7 +2949,6 @@ c                       Logarithmic spacing with minor ticks.
 c                       Not enough room for minor log ticks
             KLOG = 1
          end if
-         if (TLEN .le. 0.E0) go to 1390
          K =log10(.4 * TLEN)
 c    TICMAJ = first candidate increment (no bigger than needed)
          TICMAJ = 10.E0 ** K
@@ -2978,7 +2960,7 @@ c    TICMAJ = first candidate increment (no bigger than needed)
          TP2 = TICMAJ
 c Now TP2 is smallest increment (in user coordinates) for major ticks.
 c We now decide whether to increase initial size it by 1, 2, 5, or 10.
- 
+
    80    TP1 = TLEN / TICMAJ
          if (SIZEP .lt. FAC(KDIG) * TP1) then
 c   There are less than FAC(KDIG) points per major interval, want more
@@ -3147,12 +3129,12 @@ c                     Now the Border/axis line
           XYPOS1(3-IAX) = BORLOC(IB)
           XYPOS2(3-IAX) = BORLOC(IB)
       end if
- 
+
       if (MBORD(2, IB) .ne. 0) then
          ARRLEN = MBORD(2, IB)
          XYPOS2(IAX) = XYPOS2(IAX) + ARRLEN + ARREXT
       end if
- 
+
       call SPLOT2 (XYPOS1(1), XYPOS1(2), XYPOS2(1), XYPOS2(2))
       K = MBORD(1, IB)
       if (K .gt. 1) then
@@ -3225,7 +3207,6 @@ c
       I = IB - 10
       IAX = 2 - mod(I, 2)
 c                         Convert to physical coordinates
-      if (FP(LVALS) .le. 0.E0) go to 1390
       if (IP(LCOOX + IAX - 1) .eq. 2) FP(LVALS) = log10(FP(LVALS))
       XYPOS1(IAX) = XYBASE(IAX) + XYU2PF(IAX) * FP(LVALS)
       if (J .ne. 0) then
@@ -3248,15 +3229,8 @@ c                Have an  annotation.
       XYPOS1(3-IAX) = BORLOC(I) - AXADJ(I) * POSLAB(I)
       call SPLOTT( I, XYPOS1)
       return
-c  Same label here for error message on log of nonpositive number.
-1390  continue
-      IERR = 36
-      IERR2 = IOP
-c                     Output Fatal Error Message
-      call SPLOTE(IERR, XYPOS, ' ')
-      return
       end
- 
+
       subroutine SPLOTE(IERR, OPT, COPT)
 c                               Prints Error Messages
 c IERR   indicates the error as follows.
@@ -3292,7 +3266,6 @@ c  32 Digit 10^0 for option 19, must be < 5.
 c  33 Not enough room for plot.
 c  34 Unable to find unused I/O unit number in 10..100.
 c  35 Unable to open output file:
-c  36 About to take log of nonpositive number.
 c  40 Internal -- Adding points (in SPLOTF) without initialization.
 c  41 Internal -- N < -4 on call to SPLOTF.
 c  42 Internal -- N < 0 and not in initial state in SPLOTF.
@@ -3333,14 +3306,13 @@ c          Parameter for various sizes.
      3  MBORD, NTEXT, NXYLIM, KLIP, MFILL, NOOUT, OPAQUE
 c Locals
       integer I, IEARR(1), J, J1, J2, K, LCOPT(10:19), LOPT(20:31),
-     1   LOTHER(33:40), LWARN(7), MACT1(5), MACT2(5), MACT3(2),
+     1   LOTHER(33:39), LWARN(7), MACT1(5), MACT2(5), MACT3(2),
      2   MACT4(2), MACT5(7)
       character TXTCOP(1)*200, TXTOPT(1)*40
 c Parameters for error messages
       integer MENTXT, MECONT, MERET, MEEMES, METEXT, MEFVEC
       parameter (MENTXT=23, MECONT=50, MERET=51, MEEMES=52, METEXT=53,
      1   MEFVEC=61)
- 
 c ********* Error message text ***************
 c[Last 2 letters of Param. name]  [Text generating message.]
 cAA SPLOT$B
@@ -3383,17 +3355,15 @@ cBH SPLOT$B
 cBI Not enough room for plot.$E
 cBJ Unable to find unused I/O unit number in 10..100.$E
 cBK Unable to open output file: $B
-cBL Abort prior to taking log of nonpositive number.  Check option $C
-c   1 for values of 2 or 3 in digits for 10^2 and 10^3.$E
-cBM Internal Error -- Adding point (in SPLOTF) without initialization.$E
-cBN Internal Error -- N < -4 on call to SPLOTF.$E
-cBO Internal Error -- N < 0 and not in initial state in SPLOTF.$E
-cBP Internal Error -- S values must be increasing in SPLOTF.$E
+cBL Internal Error -- Adding point (in SPLOTF) without initialization.$E
+cBM Internal Error -- N < -4 on call to SPLOTF.$E
+cBN Internal Error -- N < 0 and not in initial state in SPLOTF.$E
+cBO Internal Error -- S values must be increasing in SPLOTF.$E
       integer LTXTAA,LTXTAB,LTXTAC,LTXTAD,LTXTAE,LTXTAF,LTXTAG,LTXTAH,
      * LTXTAI,LTXTAJ,LTXTAK,LTXTAL,LTXTAM,LTXTAN,LTXTAO,LTXTAP,LTXTAQ,
      * LTXTAR,LTXTAS,LTXTAT,LTXTAU,LTXTAV,LTXTAW,LTXTAX,LTXTAY,LTXTAZ,
      * LTXTBA,LTXTBB,LTXTBC,LTXTBD,LTXTBE,LTXTBF,LTXTBG,LTXTBH,LTXTBI,
-     * LTXTBJ,LTXTBK,LTXTBL,LTXTBM,LTXTBN,LTXTBO,LTXTBP
+     * LTXTBJ,LTXTBK,LTXTBL,LTXTBM,LTXTBN,LTXTBO
       parameter (LTXTAA=  1,LTXTAB=  8,LTXTAC= 59,LTXTAD=109,LTXTAE=158,
      * LTXTAF=199,LTXTAG=242,LTXTAH=302,LTXTAI=  1,LTXTAJ=  8,
      * LTXTAK= 31,LTXTAL= 58,LTXTAM=102,LTXTAN=116,LTXTAO=150,
@@ -3401,12 +3371,12 @@ cBP Internal Error -- S values must be increasing in SPLOTF.$E
      * LTXTAU=  8,LTXTAV= 27,LTXTAW= 60,LTXTAX=103,LTXTAY=139,
      * LTXTAZ=166,LTXTBA=228,LTXTBB=273,LTXTBC=309,LTXTBD=341,
      * LTXTBE=396,LTXTBF=419,LTXTBG=451,LTXTBH=  1,LTXTBI=  8,
-     * LTXTBJ= 35,LTXTBK= 86,LTXTBL=116,LTXTBM=232,LTXTBN=300,
-     * LTXTBO=346,LTXTBP=408)
+     * LTXTBJ= 35,LTXTBK= 86,LTXTBL=116,LTXTBM=184,LTXTBN=229,
+     * LTXTBO=291)
       character MTXTAA(2) * (180)
       character MTXTAB(2) * (183)
       character MTXTAC(2) * (245)
-      character MTXTAD(2) * (233)
+      character MTXTAD(2) * (174)
       data MTXTAA/'SPLOT$BWarning -- Points provided are not being plott
      *ed.$EWarning -- Centering on x or y axis not allowed.$EWarning --$
      * Too much space wasted at border $I.$EWarning -- Format numbe','r$
@@ -3428,28 +3398,26 @@ cBP Internal Error -- S values must be increasing in SPLOTF.$E
      *oviding data.$EMore than NY symbols.$EBad value for symbol plottin
      *g.$EDigit 10^0 for option 19, must be < 5.$E'/
       data MTXTAD/'SPLOT$BNot enough room for plot.$EUnable to find unus
-     *ed I/O unit number in 10..100.$EUnable to open output file: $BAbor
-     *t prior to taking log of nonpositive number.  Check option 1 for v
-     *alues of 2 or 3 in digits for 10^2 and 10^3.$EIn','ternal Error --
-     * Adding point (in SPLOTF) without initialization.$EInternal Error$
-     * -- N < -4 on call to SPLOTF.$EInternal Error -- N < 0 and not in$
-     * initial state in SPLOTF.$EInternal Error -- S values must be incr
-     *easing in SPLOTF.$E '/
-c **** End of automatically generated text
+     *ed I/O unit number in 10..100.$EUnable to open output file: $BInte
+     *rnal Error -- Adding point (in SPLOTF) without initiali','zation.$
+     *EInternal Error -- N < -4 on call to SPLOTF.$EInternal Error -- N$
+     * < 0 and not in initial state in SPLOTF.$EInternal Error -- S valu
+     *es must be increasing in SPLOTF.$E'/
+c ********* End of Error message text ***************
 c
 c                    123456789012345678901
       data TXTOPT / ' O.K. part of OPT:$BError part of OPT:$B' /
- 
+
       data LWARN / LTXTAB,LTXTAC,LTXTAD,LTXTAE,LTXTAF,LTXTAG,LTXTAH /
- 
+
       data LCOPT / LTXTAJ, LTXTAK, LTXTAL, LTXTAM, LTXTAN, LTXTAO,
      1   LTXTAP, LTXTAQ, LTXTAR, LTXTAS /
- 
+
       data LOPT / LTXTAU, LTXTAV, LTXTAW, LTXTAX, LTXTAY, LTXTAZ,
      1   LTXTBA, LTXTBB, LTXTBC, LTXTBD, LTXTBF, LTXTBG /
- 
+
       data LOTHER / LTXTBI, LTXTBJ, LTXTBK, LTXTBL, LTXTBM, LTXTBN,
-     1   LTXTBO, LTXTBP /
+     1   LTXTBO /
 c                       1  2  3  4      5
       data MACT1 / MEEMES, 0, 0, 0, MERET /
       data MACT2 / MEEMES,47, 0, 0, MECONT /
@@ -3484,7 +3452,7 @@ c
          MACT1(2) = 47
          MACT1(3) = IERR
          I = IERR
-         if (I .gt. 36) I = I - 3
+         if (I .gt. 35) I = I - 4
          if (I .gt. 39) go to 300
          MACT1(4) = LOTHER(I)
          call MESS(MACT1, MTXTAD, IEARR)
@@ -3548,7 +3516,7 @@ C%%   puts( "[Stop]" );
 C%%   exit(0);
       stop 'Internal error in SPLOT, bad error index.'
       end
- 
+
       subroutine SPLOTF(N, S, X, Y)
 c### Want to add provision for polar coordinates.
 c
@@ -4122,8 +4090,8 @@ c              Set up to start over.
       if (I1 .gt. NI) return
       go to 400
       end
- 
- 
+
+
       subroutine SPLOTN(VAL, IKASE, XYPOS)
 c For output of numeric labels, F. T. Krogh, JPL, July 18, 1997.
 c
@@ -4340,7 +4308,7 @@ C%%            splote( 5, xypos, fmtsav );
             end if
          end if
       end if
- 
+
 c          Convert value to string
   100 TLENH = 0.E0
       V = VAL
@@ -4481,7 +4449,7 @@ C%%         memcpy(splotc.text+splotb.ntext, dig+k, (size_t)(ndig-k));
          NTEXT = NTEXT + 1
          TEXT(NTEXT:NTEXT) = '$'
       end if
- 
+
 c     Convert TLENH to physical distance
       PTSIZ = NPTSIZ
       TLENH = .5E0 * TLENH * PTSIZ
@@ -4505,7 +4473,7 @@ c                               Set the new overlap
       LKASE = KASE
       return
       end
- 
+
       subroutine SPLOTT( KASE, XYPOS)
 c Copyright (c) 1997, California Institute of Technology. U.S.
 c Government Sponsorship under NASA Contract NAS7-1260 is acknowledged.
@@ -4516,13 +4484,13 @@ c ************************* Calling Sequence variables *****************
 c
 c KASE   1-4 for bottom, left, top,right borders, 5 and 6 for x and y
 c   axis, 8 for words, 10-15 for captions, 16 for output text.
- 
+
 c        Indices, 1-16, are for: Borders (bottom, left, top, right),
 c   x-axis, y-axis, word alignment (e.g. for option 14), number
 c   formatting for option 15, Captions (as for borders), alignment
 c   rule for option 16.
- 
- 
+
+
 c XYPOS  Gives (x,y), the position for the text in physical coordinates.
 c TEXT   The Text to output.
 c
@@ -4819,7 +4787,7 @@ C%%   splot4( Xypos[1], Xypos[2], outtxt+i-1, splotc.pos+kase*4-4);
       call SPLOT4(XYPOS(1),XYPOS(2),OUTTXT(I:J),POS(4*KASE-3:4*KASE-2))
       return
       end
- 
+
       subroutine SPLOTR(XY, KSYMB, KX, KY)
 c     Gets XY converted for call to SPLOTS (Symbols, error bars, arrows)
       real             XY(*)
@@ -4902,7 +4870,7 @@ c       Convert to points.
       call SPLOTS(XY, abs(KSYMB))
       return
       end
- 
+
 C++ CODE for ~.C. is active
       subroutine SPLOTU (NEWU, FILNAM)
 c Get an unused unit number, open it for unformatted sequential scratch
@@ -4942,17 +4910,16 @@ c          Parameter for various sizes.
      3  MBORD, NTEXT, NXYLIM, KLIP, MFILL, NOOUT, OPAQUE
 c
       data NEXTU / 10 /
+
 c
-      inquire ( file=FILNAM, number=NEWU )
-      if ( newu < 0 ) then
-        do 100 NEWU = NEXTU, 100
-            inquire (unit=NEWU, opened=OPENED)
-            if (.not. OPENED) then
-              if (FILNAM(1:1) .eq. ' ') then
-                open (unit=NEWU, status='SCRATCH', access='SEQUENTIAL'
+      do 100 NEWU = NEXTU, 100
+          inquire (unit=NEWU, opened=OPENED)
+          if (.not. OPENED) then
+            if (FILNAM(1:1) .eq. ' ') then
+               open (unit=NEWU, status='SCRATCH', access='SEQUENTIAL'
      1,           form='UNFORMATTED', iostat=IORES)
-                if (IORES .eq. 0) go to 300
-                close (unit=NEWU)
+               if (IORES .eq. 0) go to 300
+               close (unit=NEWU)
             else
               open (unit=NEWU, FILE=FILNAM, status='UNKNOWN'
      1,       form='FORMATTED', access='SEQUENTIAL', iostat=IORES
@@ -4960,22 +4927,21 @@ c
               go to 300
             end if
           end if
-  100   continue
+  100 continue
 c          Unable to find unused I/O unit number in 10..100
-        call SPLOTE(34, SPACE, ' ')
-        return
+      call SPLOTE(34, SPACE, ' ')
+      return
 c                  Unable to open output file
-  200   IERR1 = len(FILNAM)
-        call SPLOTE(35, SPACE, FILNAM)
-        return
+  200 IERR1 = len(FILNAM)
+      call SPLOTE(35, SPACE, FILNAM)
+      return
 c                 "Success" exit
-  300   NEXTU = NEWU + 1
-        return
-      end if
+  300 NEXTU = NEWU + 1
+      return
 C++ END
 C%%
       end
- 
+
       subroutine SPLOT0
 c Copyright (c) 1996, California Institute of Technology. U.S.
 c Government Sponsorship under NASA Contract NAS7-1260 is acknowledged.
@@ -5067,7 +5033,7 @@ C++ END
       LASPEN = 50
       return
       end
- 
+
 c==================================================     SPLOT1     =====
       subroutine SPLOT1
 c Specify the pen characteristics
@@ -5134,7 +5100,7 @@ c on SGI Fortran compilers
       character*(*) BDASH, BDOT
       parameter (BDASH='('''//BSLASH//'dashed'')',
      1  BDOT='('''//BSLASH//'dashed'')')
- 
+
 C++ CODE for .C. is inactive
 C%%   const char fmt10[] = "\\arrow[l %6.3fpt]\n";
 C%%   const char fmt20[] = "\\pen{%6.3fpt}\n";
@@ -5206,13 +5172,13 @@ C%%      fprintf(iofil, "\\dotted\n");
       end if
       return
       end
- 
+
 c==================================================     SPLOT2     =====
       subroutine SPLOT2 (X1, Y1, X2, Y2)
- 
+
 c Draw a single straight line from (X1,Y1) to (X2,Y2) in physical
 c coordinates.
- 
+
 c IOFIL*  (In common) Gives Fortran I/O unit number for output file
 c
       real             X1, Y1, X2, Y2
@@ -5251,19 +5217,19 @@ C%%   fprintf(iofil, fmt10,x1, y1, x2, y2);
       write (IOFIL, BFMT1)  X1, Y1, X2, Y2
       return
       end
- 
+
 c==================================================     SPLOT4     =====
       subroutine SPLOT4 (X, Y, OTEXT, ALIGN)
- 
+
 c Output an annotation at (X,Y) in physical coordinates.
- 
+
 c X, Y    Physical coordinates of the annotation.
 c OTEXT   The annotation
 c ALIGN   Characters to control alignment.  The first is for vertical
 c         alignment, and may be t (top), c (center) or b (bottom).  The
 c         second is for horizontal alignment, and may be l (left),
 c         r (right) or c (center).  Otherwise, ALIGN is blank.
- 
+
       real             X, Y
       character ALIGN*2, OTEXT*(*)
 c
@@ -5313,15 +5279,15 @@ C%%     fprintf(iofil, fmt20, x, y, otext);
 C++ END
       return
       end
- 
+
 c==================================================     SPLOT5     =====
       subroutine SPLOT5 (X1, Y1, X2, Y2)
- 
+
 c Draw a rectangle with corners at (X1,Y1) and (X2,Y2) in physical
 c coordinates, with the fill type, and PENWID given.
- 
+
 c (X1,Y1), (X2,Y2)  Physical coordinates of corners of rectangle.
- 
+
       real             X1, Y1, X2, Y2
 c
 c Common
@@ -5350,29 +5316,29 @@ c on SGI Fortran compilers
 C++ CODE for .C. is inactive
 C%%   const char fmt10[] = " \\rect{(%9.3f,%9.3f),(%9.3f,%9.3f)}\n";
 C++ END
- 
+
 c *********     Executable Statements     ******************************
- 
+
       call SPLOT1
 C%%   fprintf(iofil, fmt10, x1, y1, x2, y2);
       write (IOFIL,BFMT1) x1, y1, x2, y2
       return
       end
- 
+
 c==================================================     SPLOT6     =====
       subroutine SPLOT6 (X, Y, A, B, ANGLE)
- 
+
 c Draw an ellipse with center at (X,Y) with axes A and B in physical
 c coordinates, with axis A rotated ANGLE degrees counterclockwise from
 c the positive X-axis direction.
- 
+
 c (X,Y)   Physical coordinates of the center of the ellipse
 c A, B    Axis lengths of the ellipse
 c ANGLE   A axis is rotated ANGLE degrees counterclockwise from
 c         the positive X-axis direction
- 
+
       real             X, Y, A, B, ANGLE
- 
+
 c Common
 c  For SPLOT0
       real             ARRLEN, PXO, PXSIZE, PYO, PYSIZE
@@ -5416,7 +5382,7 @@ C%%      fprintf(iofil, fmt20, x, y, a, b);
       end if
       return
       end
- 
+
 c =================================================     SPLOT7     =====
       subroutine SPLOT7(M, LOCFIL, FILDEF)
 c                       Takes care of fill requests
@@ -5494,7 +5460,7 @@ c
       do 200 J = 1, abs(M)
          K = LOCFIL(J)
          if (K .le. 2) then
- 
+
 C%%     fprintf(iofil, " %.*s\n",(int)(jfill[k]-jfill[k-1]),
 C%%         sfill+jfill[k-1]-1);
             write (IOFIL, '(1X, A)') SFILL(JFILL(K):JFILL(K+1)-1)
@@ -5519,7 +5485,7 @@ C%%         fprintf(iofil, fmt10, fildef[3*j + 4], fildef[3*j + 5]);
       M = min(M, 0)
       return
       end
- 
+
 c ==========================     SPLOT8     ============================
       subroutine SPLOT8(PENWID,BASE,STEP,TILL,TBEG,TEND,IAX, STRLOG)
 c  Outputs tick marks for MFPIC (actually for METAFONT)
@@ -5587,7 +5553,7 @@ C%% endfor;\n  endfor;}\n";
 C%%   const char fmt60[]="  draw(%11.3f, y)*pt..(%11.3f, y)*pt;\n  fi\n\
 C%% endfor;\n  endfor;}\n";
 C++ END
- 
+
 c
       if (STRLOG .lt. 0.E0) then
 c                           Regular ticks
@@ -5616,7 +5582,7 @@ C%%         fprintf(iofil, fmt60, tbeg, tend);
       end if
       return
       end
- 
+
 c==================================================     SPLOT9     =====
       subroutine SPLOT9
 c                       Finish the plot.
@@ -5668,7 +5634,7 @@ C++ END
 c  Format below works for both TeX and LaTeX  (LaTeX could use \hspace).
 c
 c *********     Executable Statements     ******************************
- 
+
       if (IPLOT .lt. 0) then
          IPLOT = -100 - IPLOT
          if (IPLOT .gt. 1) return
@@ -5684,14 +5650,14 @@ C%%         ifin[splotd.iplot]), fin + ifin[splotd.iplot] - 1);
       end if
       return
       end
- 
+
 c==================================================     SPLOTL     =====
       subroutine SPLOTL (MANY, X, Y)
- 
+
 c     Plot a line through a sequence of points.
- 
+
 c>> 1996-12-18 SPLOTL Snyder  Initial code for MFPIC
- 
+
 c MANY [in] Defines action
 c   .le. 0  End previous curve if any -- X and Y not used.  Then
 c       if -1 start a new open curve.
@@ -5705,16 +5671,16 @@ c   MANY is used silently.
 c X [in] is an array of one or more abscissae.
 c Y [in] is an array of one or more ordinates.  The number of ordinates
 c        must be the same as the number of abscissae.
- 
+
       integer MANY
       real             X(*), Y(*)
- 
+
 c     *****     External References     ********************************
- 
+
 c ERMSG   Print error messages.
- 
+
 c     *****     Local Variables     ************************************
- 
+
 c FORMAT  output format when finishing a curve.
 c I       is a loop inductor and subscript.
 c IXPREF  index of PREFIX and LPREFX to use.
@@ -5725,7 +5691,7 @@ c OLDX, OLDY the last X and Y value on the previous call.
 c PREFIX  Character strings used for headers.
 c STATE   The number of points saved.  If -1, no curve is started.
 c         Else 0 <= STATE <= 3.
- 
+
       integer I, IXPREF, K, LPREFX(-5:1)
       save IXPREF, LPREFX
       real             OLDX(3), OLDY(3)
@@ -5745,9 +5711,9 @@ C      common / SPLOTD / ARRLEN, PXO, PXSIZE, PYO, PYSIZE,
 C     1   IPLOT, KURPEN, LASPEN
 C++ END
       save /SPLOTD/
- 
+
 c     *****     Data Statements     ************************************
- 
+
 C++ CODE for ~.C. is active
       character*(62) FORMAT(3)
       save FORMAT
@@ -5782,9 +5748,9 @@ C++ CODE for ~.C. is active
    10 format (a, '(', f9.4, ',', f9.4, ')',2(',(', f9.4, ',', f9.4, ')'
      1:)/(3(',(', f9.4, ',', f9.4, ')')))
 C++ END
- 
+
 c     *****     Executable Statements     ******************************
- 
+
       if (MANY .le. 0) then
 C++ CODE for ~.C. is active
         if (STATE .gt. 0) write (IOFIL, FORMAT(STATE))
@@ -5837,7 +5803,7 @@ C++ END
       end if
       return
       end
- 
+
 c==================================================     SPLOTS     =====
       subroutine SPLOTS (XY, KSYMB)
 c Plot a symbol or error bars or vectors at (XY(1), XY(2).  XY contains
@@ -6159,5 +6125,5 @@ C%%         fprintf(iofil, fmt10, xy[0], xy[1], sizcir);
       end if
       return
       end
- 
- 
+
+

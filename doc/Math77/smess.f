@@ -1,7 +1,7 @@
       subroutine SMESS (MACT, TEXT, IDAT, FDAT)
-c     .  Copyright (C) 1991, California Institute of Technology.
-c     .  All rights reserved.  U. S. Government sponsorship under
-c     .  NASA contract NAS7-918 is acknowledged.
+c Copyright (c) 1996 California Institute of Technology, Pasadena, CA.
+c ALL RIGHTS RESERVED.
+c Based on Government Sponsored Research NAS7-03001.
 c>> 2009-09-27 SMESS Krogh  Same as below, in another place.
 c>> 2009-07-23 SMESS Krogh  Changed ,1x to :1x in write to FMTF.
 c>> 2008-06-13 SMESS Krogh  Changed -0's to 0.
@@ -153,7 +153,7 @@ c
 c
       data LDFDEF / 0 /
 c
- 
+
 c ************************* Start of Executable Code *******************
 c
       XARGOK = .true.
@@ -201,7 +201,7 @@ c               Must be a Nan
         IWF = 2
         go to 40
       end if
- 
+
       FBIG = abs(FOUT)
       FSMA = FBIG
       IWF = 2
@@ -320,7 +320,7 @@ c               Must be a Nan
         FSMA = 1.0
         go to 110
       end if
- 
+
       FBIG = abs(FDAT(LOCBEG))
       FSMA = FBIG
   110 do 120 J = LOCBEG, LASTI, INC
@@ -362,10 +362,10 @@ C%%   sprintf(&cmessc.buf[messcc.lbeg], cmessc.fmtf,
 C%%    cmessi.iwf+neg, messcc.lfprec, fdat[cmessi.inc*j-1]);
 C%%   if ((kexe == 3) || ((kexe == 5) && neg)) smessxc(kexe); }
       write(BUF(LSTRT:LBUF),FMTF)(FDAT(K),K=MPT,MPT+INC*(KLINE-1),INC)
- 
- 
+
+
 c      print '(/A/)', BUF(1:LBUF)
- 
+
       MPT = MPT + KLINE * INC
       go to 10
 c                                    Floating point matrix output
@@ -401,8 +401,8 @@ C%%    sprintf(&cmessc.buf[messcc.lbeg], cmessc.fmtf,
 C%%       cmessi.iwf+neg, messcc.lfprec, fdat[j-1]); }
       write (BUF(LSTRT:LBUF), FMTF) (FDAT(K), K = MPT, MPT+KLINE-1)
       go to 10
- 
- 
+
+
 c                                   Sparse vector output
  500  continue
 C%%  messcc.lend = -1;
@@ -420,9 +420,9 @@ C%%     if ((kexe == 3) || ((kexe == 5) && neg)) smessxc(kexe); }
       write (BUF(1:LBUF), FMTSP) (IDAT(K),FDAT(K),K=MPT,MPT+KLINE-1)
       MPT = MPT + KLINE
       go to 10
- 
+
       end
- 
+
 c%%  void smessxc(long int kexe)
 c%%{
 c%%  /* Adjust for lack of control on digits in exponent */

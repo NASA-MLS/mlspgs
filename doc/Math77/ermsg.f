@@ -1,7 +1,7 @@
       SUBROUTINE ERMSG(SUBNAM,INDIC,LEVEL,MSG,FLAG)
-C     .  Copyright (C) 1989, California Institute of Technology.
-C     .  U. S. Government sponsorship under
-C     .  NASA contract NAS7-918 is acknowledged.
+c Copyright (c) 1996 California Institute of Technology, Pasadena, CA.
+c ALL RIGHTS RESERVED.
+c Based on Government Sponsored Research NAS7-03001.
 c>> 1995-11-22 ERMSG  Krogh Got rid of multiple entries.
 c>> 1995-09-15 ERMSG  Krogh Remove '0' in format.
 C>> 1994-11-11 ERMSG  Krogh   Declared all vars.

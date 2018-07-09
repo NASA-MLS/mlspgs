@@ -1,7 +1,7 @@
       SUBROUTINE ERFIN
-C     .  Copyright (C) 1989, California Institute of Technology.
-C     .  U. S. Government sponsorship under
-C     .  NASA contract NAS7-918 is acknowledged.
+c Copyright (c) 1996 California Institute of Technology, Pasadena, CA.
+c ALL RIGHTS RESERVED.
+c Based on Government Sponsored Research NAS7-03001.
 C>> 1994-11-11 CLL Typing all variables.
 C>> 1985-09-23 ERFIN  Lawson  Initial code.
 C

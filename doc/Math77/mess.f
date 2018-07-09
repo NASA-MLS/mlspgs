@@ -4,9 +4,10 @@ C%% static char *c_fname[2]={"MESSF-xx", "MESSF-xx"};
 C%% char *ctmp;
 c++ END
       subroutine MESS(MACT, TEXT, IDAT)
-c     .  Copyright (C) 1991, California Institute of Technology.
-c     .  All rights reserved.  U. S. Government sponsorship under
-c     .  NASA contract NAS7-918 is acknowledged.
+c Copyright (c) 1996 California Institute of Technology, Pasadena, CA.
+c ALL RIGHTS RESERVED.
+c Based on Government Sponsored Research NAS7-03001.
+c>> 2010-02-22 MESS  Krogh  Moved NSKIP=0 to start of code.
 c>> 2009-10-30 MESS  Krogh  Defined DSCRN.
 c>> 2009-02-28 MESS  Krogh  Added FMTT = ' ' for NAG compiler.
 c>> 2009-02-28 MESS  Krogh  Fixed "f" format for C code.
@@ -660,6 +661,7 @@ c
 c ************************* Start of Executable Code *******************
 c
 c
+      NSKIP = 0
       if (FIRST) then
          FIRST = .false.
 c Initialize common block
@@ -681,7 +683,6 @@ c Initialize common block
          LENLIN = LNMSG
          LENTRY = 1
          OUNIT = 0
-         NSKIP = 0
 c++ CODE for ~.C. is active
          DOLS(1:40) = '$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$'
          DOLS(41:72) ='$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$'
@@ -897,7 +898,7 @@ c Action METEXT -- Print string from TEXT
 c                  Continue with print from TEXT
 c K     take at most K-1 chars., but if 0 take max number
 c K1    is last loc. used from TEXT if LENTXT is BIG.
-c NEXT  is first character location in TEXT(ITEXT)      
+c NEXT  is first character location in TEXT(ITEXT)
 c K2    is last character location in TEXT(ITEXT)
 c LSTRT is first character position in BUF
 c LBUF  is last used character position in BUF
@@ -986,7 +987,7 @@ c               No match  -- Check for setting NSKIP
             go to 415
          end if
       end if
-c      
+c
 c Continue with the text.
   440 LBUF = LBUF + 1
       BUF(LBUF:LBUF) = C

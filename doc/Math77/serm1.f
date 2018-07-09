@@ -1,7 +1,7 @@
       SUBROUTINE SERM1(SUBNAM,INDIC,LEVEL,MSG,LABEL,VALUE,FLAG)
-C     .  Copyright (C) 1989, California Institute of Technology.
-C     .  U. S. Government sponsorship under
-C     .  NASA contract NAS7-918 is acknowledged.
+c Copyright (c) 1996 California Institute of Technology, Pasadena, CA.
+c ALL RIGHTS RESERVED.
+c Based on Government Sponsored Research NAS7-03001.
 C>> 1994-10-20 SERM1  Krogh  Changes to use M77CON
 C>> 1994-04-20 SERM1  CLL Edited to make DP & SP files similar.
 C>> 1985-08-02 SERM1  Lawson  Initial code.
@@ -17,4 +17,4 @@ C
 C
       RETURN
       END
- 
+

@@ -1,6 +1,7 @@
       subroutine SINITS (DOS, NOS, ETA, NTERMS)
-C Copyright (c) 1996, California Institute of Technology. U.S.
-C Government Sponsorship under NASA Contract NAS7-1260 is acknowledged.
+c Copyright (c) 1996 California Institute of Technology, Pasadena, CA.
+c ALL RIGHTS RESERVED.
+c Based on Government Sponsored Research NAS7-03001.
 C>> 1995-11-22 SINITS Krogh  Simplified the DO Loop.
 C>> 1994-10-20 SINITS Krogh  Changes to use M77CON
 C>> 1990-11-28 SINITS CLL Changed name and usage from fcn to subr.

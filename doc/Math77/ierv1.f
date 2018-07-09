@@ -1,7 +1,7 @@
       SUBROUTINE IERV1(LABEL,VALUE,FLAG)
-C     .  Copyright (C) 1989, California Institute of Technology.
-C     .  U. S. Government sponsorship under
-C     .  NASA contract NAS7-918 is acknowledged.
+c Copyright (c) 1996 California Institute of Technology, Pasadena, CA.
+c ALL RIGHTS RESERVED.
+c Based on Government Sponsored Research NAS7-03001.
 c>> 1995-11-15 IERV1 Krogh  Moved format up for C conversion.
 C>> 1985-09-20 IERV1  Lawson  Initial code.
 C

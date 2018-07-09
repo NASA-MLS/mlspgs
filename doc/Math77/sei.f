@@ -1,6 +1,7 @@
       REAL             FUNCTION SEI (XIN)
-c Copyright (c) 1996, California Institute of Technology. U.S.
-c Government Sponsorship under NASA Contract NAS7-1260 is acknowledged.
+c Copyright (c) 1996 California Institute of Technology, Pasadena, CA.
+c ALL RIGHTS RESERVED.
+c Based on Government Sponsored Research NAS7-03001.
 c>> 1996-04-27 SEI Krogh  Changes to use .C. and C%%.
 c>> 1996-03-30 SEI Krogh  Added external statements.
 C>> 1995-11-28 SEI Krogh  GO TO's => blodk IF's, removed multiple entry.

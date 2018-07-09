@@ -1,6 +1,7 @@
       subroutine AMACH(MODE, I, I1, R1, D1)
-c Copyright (c) 1996, California Institute of Technology. U.S.
-c Government Sponsorship under NASA Contract NAS7-1260 is acknowledged.
+c Copyright (c) 1996 California Institute of Technology, Pasadena, CA.
+c ALL RIGHTS RESERVED.
+c Based on Government Sponsored Research NAS7-03001.
 c>> 2003-04-25 AMACH  Krogh   Added comment for the Absoft compiler.
 c>> 2001-03-13 AMACH  Krogh   Fixed HOW for case when not set in m77job.
 c>> 1997-04-16 AMACH  Krogh   Remove blank lines -- was confusing m77con
@@ -635,7 +636,6 @@ C              go to 100
 C           end if
 c++   END
             print*,'AMACH has bad parameters for current environment.'
-            print*,'TEST =', test, ', DM1 =', dm1
             stop
          end if
 c++   Code for HOW = RUN is INACTIVE

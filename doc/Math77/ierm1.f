@@ -1,7 +1,7 @@
       subroutine IERM1(SUBNAM,INDIC,LEVEL,MSG,LABEL,VALUE,FLAG)
-C     .  Copyright (C) 1989, California Institute of Technology.
-C     .  U. S. Government sponsorship under
-C     .  NASA contract NAS7-918 is acknowledged.
+c Copyright (c) 1996 California Institute of Technology, Pasadena, CA.
+c ALL RIGHTS RESERVED.
+c Based on Government Sponsored Research NAS7-03001.
 C>> 1990-01-18 CLL Added Integer stmt for VALUE.  Typed all variables.
 C>> 1985-08-02 IERM1  Lawson  Initial code.
 C

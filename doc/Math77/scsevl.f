@@ -1,6 +1,7 @@
       real             function SCSEVL(X,A,N)
-C Copyright (c) 1996, California Institute of Technology. U.S.
-C Government Sponsorship under NASA Contract NAS7-1260 is acknowledged.
+c Copyright (c) 1996 California Institute of Technology, Pasadena, CA.
+c ALL RIGHTS RESERVED.
+c Based on Government Sponsored Research NAS7-03001.
 C>> 1994-10-20 SCSEVL Krogh  Changes to use M77CON
 C>> 1990-11-29 SCSEVL CLL Changing name of single precision version.
 C>> 1989-10-30 CLL
