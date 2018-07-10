@@ -93,8 +93,23 @@ program WVS_149
     i = i + 1
     call get_command_argument ( i, copt )
     if ( copt == '' ) exit
-    if ( copt == '-n' ) plotIt = .false.
-    if ( copt == '-p' ) printIt = .true.
+    if ( copt == '-g' ) then
+      plotIt = .true.
+    else if ( copt == '-n' ) then
+      plotIt = .false.
+    else if ( copt == '-nt' ) then
+      printIt = .false.
+    else if ( copt == '-t' ) then
+      printIt = .true.
+    else
+      call get_command_argument ( 0, copt )
+      print '(a)', 'Usage: ' // trim(copt) // ' [options]'
+      print '(a)', ' Options: -g  => make plots (graphics), default true'
+      print '(a)', '          -n  => do not make plots'
+      print '(a)', '          -nt => do not print results'
+      print '(a)', '          -t  => print results, default false'
+      stop
+    end if
   end do
 
   alpha = [ ( (i-1) * delta, i = 1, nv) ]
@@ -120,7 +135,7 @@ program WVS_149
   y(:,2) = evp - ev
 
   if ( printit ) &
-    & print '(7a8/(7f8.4))', 'Alpha', 'Y1', 'Y2', 'EU', 'EUP', 'EVP', 'EV', &
+    & print '(7a8/(7f8.4))', 'Alpha', 'EU-EUP', 'EVP_EV', 'EU', 'EUP', 'EVP', 'EV', &
      & ( alpha(i), y(i,1), y(i,2), eu(i), eup(i), evp(i), ev(i), &
      & i = 1, nv, 5 )
 
@@ -164,8 +179,8 @@ program WVS_149
   end do
 
   if ( printit ) &
-    & print '(3a8/(3f8.4))', 'Alpha', 'UV-U', 'SV-S', &
-      & ( alpha(i), euv(i)-eu(i), esv(i)-es(i), i = 1, nv, 5 )
+    & print '(5a8/(5f8.4))', 'Alpha', 'EUV', 'EUV-EU', 'ESV', 'ESV-ES', &
+      & ( alpha(i), euv(i), euv(i)-eu(i), esv(i), esv(i)-es(i), i = 1, nv, 5 )
 
   y(:,1) = euv - eu
   y(:,2) = esv - es
@@ -223,3 +238,6 @@ contains
 end program WVS_149
 
 ! $Log$
+! Revision 1.1  2018/07/10 00:15:06  vsnyder
+! Initial commit
+!
