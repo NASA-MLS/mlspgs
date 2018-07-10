@@ -12,8 +12,8 @@
 \topmargin -0.5in
 \textheight 9in
 
-\newcommand{\docname}{wvs-149}
-\newcommand{\docdate}{9 July 2018}
+\newcommand{\docname}{wvs-149r1}
+\newcommand{\docdate}{10 July 2018}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
@@ -77,7 +77,7 @@
 \vspace{-10pt}
 \begin{tabbing}
 \phantom{References: }\= \\
-To: \>Van\\
+To: \>MLS Group\\
 Subject: \>Hashing\\
 From: \>Van Snyder\\
 %Reference: \\
@@ -86,7 +86,9 @@ From: \>Van Snyder\\
 \parindent 0pt \parskip 6pt
 \vspace{-20pt}
 
-This is from a memo Fred Krogh and I wrote in 1983
+During a presentation about how MLS programs processes configuration
+files, a question was asked ``what is this hashing stuff?'' This
+description is from a memo that Fred Krogh and I wrote in 1983.
 
 \begin{centering}
 A Re-examination of Hashing Using Separate chains\\[5pt]
@@ -640,7 +642,13 @@ E[L(\alpha)] = E[L^\prime(\alpha)] =
 
 \section*{Appendix \\ Equations from \cite[p 924]{Vitter:1982}}
 
-\begin{equation}
+In \cite[p 924]{Vitter:1982}, Vitter gives expressions for $U_V(\alpha)$
+and $S_V(\alpha)$, which are repeated here as Equations (\ref{UV}) and
+(\ref{SV}).  Vitter does not provide formulae for expected values
+$E[U_V(\alpha)]$ and $E[S_V(\alpha)]$, which are provided here as
+Equations (\ref{EUV}) and (\ref{SUV}).
+
+\begin{equation}\label{UV}
 U_V(\alpha) = \left\{ \begin{array}{ll}
  U_{V \leq}(\alpha) & \alpha \leq \zeta \\
  U_{V \geq}(\alpha) & \alpha \geq \zeta \\
@@ -675,7 +683,7 @@ U_{V \geq}(\alpha) =\,&
 For purposes of these derivations, let $\mu = \text{min}(\alpha,\zeta)$. 
 Then
 
-\begin{equation}\begin{split}
+\begin{equation}\begin{split}\label{EUV}
 E[U_V(\alpha)] =\,& \frac1\alpha \left(
  \int_0^\mu U_{V\leq}(a)\, \text{d}a +
  \int_\mu^\alpha U_{V\geq}(a)\, \text{d}a
@@ -692,7 +700,7 @@ E[U_V(\alpha)] =\,& \frac1\alpha \left(
 \,. \\
 \end{split}\end{equation}
 
-\begin{equation}
+\begin{equation}\label{SV}
 S_V(\alpha) = \left\{ \begin{array}{ll}
  S_{V\leq}(\alpha) & \alpha \leq \lambda \beta \\
  S_{V\geq}(\alpha) & \alpha \geq \lambda \beta \\
@@ -712,7 +720,7 @@ S_{V\geq}(\alpha) =\,&1 + \frac18 \frac{\beta}\alpha
   + \frac14 \lambda \left( 1 - \frac{\lambda\beta}\alpha \right)\,. \\
 \end{split}\end{equation}
 
-\begin{equation}\begin{split}
+\begin{equation}\begin{split}\label{SUV}
 E[S_V(\alpha)] = \,&
  \frac1\alpha \left( \int_0^\mu S_{V\leq}(a)\, \text{d}a +
  \int_\mu^\alpha S_{V\geq}(a)\, \text{d}a \right) \\
@@ -741,6 +749,9 @@ $\lambda \approx 0.63$ and $\zeta = \lambda \beta \approx 0.542$.
 % $Id$
 
 % $Log$
+% Revision 1.1  2018/07/10 00:15:06  vsnyder
+% Initial commit
+%
 % Revision 1.2  2017/10/13 19:10:51  vsnyder
 % Add CVS stuff
 %
