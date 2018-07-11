@@ -33,6 +33,13 @@ $(INSTALLDIR)/lr: $(UTILDIR)/lr/*.f90
         $(UTILDIR)/lr/*.[Ff]9[0h] $(UTILDIR)/lr/*.grm \
         $(CONFDIR)/lib/symbol_table.f90 $(CONFDIR)/lib/tree.f90
 
+# Used only by wvs-149.tex
+$(INSTALLDIR)/wvs-149: $(DOCDIR)/*.f90 $(DOCDIR)/Math77/*.f
+	$(UTILDIR)/build_f90_in_misc.sh -d $(INSTALLDIR) -t $(TESTSDIR) \
+	-c $(MLSCONFG) -p wvs-149 -M $(MAKE)  \
+	-C $(MLSCFILE) \
+        $(DOCDIR)/wvs-149.f90 $(DOCDIR)/Math77/*.f
+
 ifneq ($(short_name),doc)
 ifndef CASCADE
 #	l1
@@ -631,8 +638,30 @@ wvs-145-2.eps: wvs-145-2.obj
 wvs-145-2.pdf: wvs-145-2.obj
 	tgif -print -pdf -page 1 -color wvs-145-2.obj
 
+wvs-149.dvi: wvs-149.tex wvs-149-1.txp wvs-149.bbl wvs-149-1.600pk
+
+wvs-149.pdf: wvs-149.tex wvs-149-1.txp wvs-149.bbl wvs-149-1.600pk
+
+wvs-149-1.txp: $(INSTALLDIR)/wvs-149
+	$(INSTALLDIR)/wvs-149
+
+wvs-149.aux: wvs-149.tex
+	latex wvs-149.tex
+
+wvs-149.bbl: wvs-149.bib wvs-149.aux
+	bibtex wvs-149
+
+wvs-149-1.600gf: wvs-149-1.txp
+	mf '\mode=localfont; ' input wvs-149-1
+
+wvs-149-1.600pk: wvs-149-1.600gf
+	gftopk wvs-149-1.600gf
+
 endif # end shortn_name == doc
 # $Log$
+# Revision 1.32  2018/06/04 23:04:05  pwagner
+# Incorporates changes to build wvs-138
+#
 # Revision 1.31  2017/10/20 18:16:27  pwagner
 # Added build cmds for wvs-145.tex
 #
