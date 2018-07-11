@@ -94,6 +94,15 @@ OMIT_SRCS_SUB := 'iy-001-\*.tex' \
 OMIT_PREFXD_REV := $(shell ${REECHO} -prefix=-d -escape -nlast $(OMIT_SRCS_REV))
 OMIT_PREFXD_SUB := $(shell ${REECHO} -prefix=-d -escape $(OMIT_SRCS_SUB))
 
+# also where to install mls programs by default
+ifdef MLSINSTALLDIR
+   INSTALLDIR=$(MLSINSTALLDIR)
+else
+   INSTALLDIR=$(CONFDIR)/bin/$(MLSCONFG)
+endif
+
+TESTSDIR=$(CONFDIR)/tests
+
 # Set paths for finding source files
 
 # DOCDIR = $(CONFDIR)/doc
@@ -102,7 +111,9 @@ TEXDIR = $(DOCDIR)/tex
 DVIDIR = $(DOCDIR)/dvi
 LOGDIR = $(DOCDIR)/log
 PDFDIR = $(DOCDIR)/pdf
+MATH77DIR = $(DOCDIR)/Math77
 
+vpath %.f $(MATH77DIR)
 vpath %.tex $(DOCDIR)
 vpath %.dvi $(DVIDIR)
 vpath %.l2cf $(CONFDIR)/l2/l2cf/lib
@@ -113,7 +124,7 @@ vpath %.eps $(DOCDIR)
 # Define some suffix rules
 
 .SUFFIXES:
-.SUFFIXES: .tex .dvi .pdf .eps
+.SUFFIXES: .o .tex .dvi .pdf .eps .f
 .tex.dvi:
 	echo "\def\dvidir{$(DVIDIR)}" | cat - $< > $*.temp
 	echo "\def\pdfdir{$(PDFDIR)}" | cat - $*.temp > $(TEXDIR)/$<
@@ -134,6 +145,9 @@ vpath %.eps $(DOCDIR)
 	mv $@ $(PDFDIR)
 	mv `${REECHO} $*.log $*.aux $*.out` $(LOGDIR)
 	rm -f $*.dvi $*.temp
+
+.f.o:
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< $(FAFTER)
 
 all doc:
 
@@ -174,7 +188,7 @@ depends:
 	if [ ! -d $(LOGDIR) ] ; then \
 	  		mkdir $(LOGDIR) ;\
 			fi
-	 for dir in $(shell ${REECHO} -d cfm icfm); do \
+	 for dir in $(shell ${REECHO} -d cfm icfm l2cf); do \
 	  $(MAKE) -f $(MakeFName) -C $$dir DOCDIR=$(DOCDIR)/$$dir depends; \
 	done
 
@@ -204,6 +218,9 @@ icfm: $(DOCDIR)/icfm $(DOCDIR)/icfm/Makefile
 l2:
 	$(MAKE) -f $(MakeFName) -C $@  DOCDIR=$(DOCDIR)/l2
 
+l2cf: $(DOCDIR)/l2cf $(DOCDIR)/l2cf/Makefile
+	$(MAKE) -f $(MakeFName) -C $@ DOCDIR=$(DOCDIR)/l2cf
+
 tar:
 	rm -f doc.tgz
 	tar hcvzf docs.tgz * --exclude \*.dvi --exclude \*.pdf --exclude doc
@@ -215,6 +232,9 @@ update:
 
 # ========================================================================
 # $Log$
+# Revision 1.1  2015/08/10 23:21:49  pwagner
+# After switching away from MakeFC
+#
 # Revision 1.20  2014/11/21 21:20:00  pwagner
 # OMIT_SRCS now got from tex.omitted
 #
