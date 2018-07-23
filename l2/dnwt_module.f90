@@ -36,7 +36,7 @@ module DNWT_MODULE
 ! Assign values to XOPT( ) and NOPT( ).
 
 ! *************************************************
-! **  CALL NWT ( NFLAG, XOPT, NOPT)                 **
+! **  CALL NWT ( NFLAG, AJ, XOPT, NOPT)          **
 ! *************************************************
 
 !     You will need a Matrix J, and seven vectors:  F, X, "Best X", DX,
@@ -1393,6 +1393,9 @@ contains
 end module DNWT_MODULE
 
 ! $Log$
+! Revision 2.55  2018/07/23 22:23:30  vsnyder
+! Correct the comment about initial call to include AJ
+!
 ! Revision 2.54  2018/07/23 22:20:21  vsnyder
 ! Add AJ to all argument lists for nwt* so the options can be (eventually)
 ! stored there instead of as saved module variables.
