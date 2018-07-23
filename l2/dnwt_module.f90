@@ -258,7 +258,7 @@ module DNWT_MODULE
 
 contains
 ! ***************************************************     DNWT     *****
-  subroutine DNWT ( NFLAG, XOPT, NOPT )
+  subroutine DNWT ( NFLAG, AJ, XOPT, NOPT )
 
 !>> 2000-03-21 W. V. Snyder Converted to Fortran 90.
 !>> 1988-07-21 C. L. Lawson adapting code for the MATH77 library.
@@ -272,6 +272,7 @@ contains
 ! Variables in the calling sequence are of the following type
 
     integer, intent(out) :: NFLAG
+    type(nwt_t), intent(inout) :: AJ
     real(rk), intent(in) :: XOPT(*)
     integer, intent(in), optional :: NOPT(*)
 
@@ -349,8 +350,8 @@ contains
 
     ifl = nf_start
     nflag = ifl
-    if ( present(nopt) ) call nwtop ( nopt, xopt )
-    call nwtop ( ) ! default initialization
+    if ( present(nopt) ) call nwtop ( aj, nopt, xopt )
+    call nwtop ( aj ) ! default initialization
     return
   end subroutine DNWT
 
@@ -1012,9 +1013,10 @@ contains
   end subroutine DNWTA
 
 ! *************************************************     DNWTOP     *****
-  subroutine DNWTOP ( NOPT, XOPT )
+  subroutine DNWTOP ( AJ, NOPT, XOPT )
     ! Process option vector for DNWT.  With no arguments, does default
     ! initialization.
+    type (NWT_T), intent(in) :: AJ
     integer, intent(in), optional :: NOPT(*)
     real(rk), intent(in), optional :: XOPT(*)
 
@@ -1391,6 +1393,10 @@ contains
 end module DNWT_MODULE
 
 ! $Log$
+! Revision 2.54  2018/07/23 22:20:21  vsnyder
+! Add AJ to all argument lists for nwt* so the options can be (eventually)
+! stored there instead of as saved module variables.
+!
 ! Revision 2.53  2015/05/15 23:41:01  vsnyder
 ! Add FNORMB to AJ
 !
