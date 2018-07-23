@@ -1,3 +1,4 @@
+!*==dnwt_module.f    processed by SPAG 7.20RA at 19:07 on 16 Jul 2018
 ! Copyright 2005, by the California Institute of Technology. ALL
 ! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
 ! commercial use must be negotiated with the Office of Technology Transfer
@@ -9,9 +10,10 @@
 ! export authority as may be required before exporting such information to
 ! foreign countries or providing access to foreign persons.
 
-module DNWT_MODULE
+module DNWT_Module
 !>> 2000-12-19 W. V. Snyder Removed fwd communication and linear algebra
-!>> 2000-03-21 DNWT_MODULE W. V. Snyder Converted to Fortran 90
+!>> 2000-03-21 DNWT_Module W. V. Snyder Converted to Fortran 90
+!>> 2018-07-17 W. V. Snyder Restructured
 !--D replaces "?": ?NWT_MODULE, ?NWT_TYPE, ?NWT, ?NWTA, ?NWTDB, ?NWTOP
 
 ! All versions use ERMSG.
@@ -21,8 +23,8 @@ module DNWT_MODULE
 
 !****************** Program description ********************************
 
-! These subroutines solve f(x)=0 (or find the least square solution)
-! where f is a vector with NF components, and x is a vector with NX
+! These subroutines solve F(X)=0 (or find the least square solution)
+! where F is a vector with NF components, and X is a vector with NX
 ! components.
 
 ! Reverse communication is used.  Reverse communication means that a
@@ -36,7 +38,7 @@ module DNWT_MODULE
 ! Assign values to XOPT( ) and NOPT( ).
 
 ! *************************************************
-! **  CALL NWT ( NFLAG, AJ, XOPT, NOPT)          **
+! **  CALL NWT ( NFLAG, AJ, XOPT, NOPT)                 **
 ! *************************************************
 
 !     You will need a Matrix J, and seven vectors:  F, X, "Best X", DX,
@@ -51,34 +53,36 @@ module DNWT_MODULE
 !       SELECT CASE ( NFLAG ) ! NFLAG > 0 means "Done", <0 means "Continue"
 !       CASE ( NF_EVALF )
 !         IF ( too many function values ) EXIT
-!         Compute f(x)
+!         Compute F(X)
 !         Compute the Jacobian matrix J if you feel like it
-!         Set AJ%FNORM = L2 norm of f(x)
+!         Set AJ%FNORM = L2 norm of F(X)
 !         IF ( AJ%FNORM is small enough ) EXIT
 !       CASE ( NF_EVALJ )
 !         IF ( too many Jacobian values ) EXIT
 !         Compute the Jacobian matrix J if you didn't do it when NFLAG
 !         was NF_EVALF:
 !           J(K,L) = Partial of F(K) / W.R.T. X(L), K = 1, NF, L = 1, NX
-!         Triangularize J, and compute (negative of the) gradient =
+!         Compute (negative of the) gradient =
 !         -(Jacobian)**T * F.  This is the RHS of the normal equations
 !         J**T * J * "Candidate DX" = -J**T * F.
+!         Triangularize J.
 !         Set
 !           AJ%DIAG = element on diagonal with smallest absolute value,
 !                   after triangularization,
 !           AJ%AJN = maximum L1 norm of column in upper triangle
 !                   after triangularization,
-!           AJ%FNMIN = L2 norm of residual, ||F + J * "Candidate DX"||
-!                   (which can be gotten without solving for
-!                   "Candidate DX": if -F is put as the last column of
-!                   J before triangularization, either by Householder
-!                   or by Cholesky factoring the normal equations,
+!           AJ%FNMIN = L2 Norm of F not in column space of the Jacobian after
+!                   stabilization, ||F + J * "Candidate DX"||, (which can be
+!                   gotten without solving for "Candidate DX": if -F is put as
+!                   the last column of J before triangularization, either by
+!                   Householder or by Cholesky factoring the normal equations,
 !                   this is J(N+1,N+1)),
 !           AJ%GRADN = L2 norm of Gradient.
 !       CASE ( NF_LEV )
 !         Compute quantities necessary to determine the Levenberg-Marquardt
 !         stabilization parameter: Solve U^T q = dX where U is the Cholesky
-!         factor of J^T J, compute |q|**2 and store it in AJ%QNSQ.
+!         factor of J^T J, compute |q|**2 and store it in AJ%QNSQ.  This is
+!         for the Moré-Sorensen algorithm.
 !       CASE ( NF_SOLVE )
 !         Apply Levenberg-Marquardt stabilization with parameter = AJ%SQ,
 !         and solve (Jacobian) * "candidate DX" ~ -F for "candidate DX".
@@ -95,6 +99,7 @@ module DNWT_MODULE
 !         Set X = "Best X"
 !             DX = AJ%GFAC * "Best Gradient"
 !       CASE ( NF_BEST )
+!         Best solution so far.
 !         Set "Best X" = X, "Best Gradient" = Gradient
 !       CASE ( NF_AITKEN )
 !         Set DX = DX - "Candidate DX",
@@ -116,66 +121,30 @@ module DNWT_MODULE
 !       CASE ( NF_FANDJ )
 !         There is probably an error in the way F or J is computed.
 !         A warning has been printed by the error processor.
-!         IF ( you have confidence in F and J ) CYCLE
-!         STOP
+!         IF ( you don't have confidence in F and J ) STOP
+!         If you don't stop, a gradient move is forced
+!           (next NFLAG == NF_Gmove).
 !       END SELECT
 !       IF ( you want to return to a previous best X ) NFLAG = NF_START
 !     END DO
 
-  use ERMSG_M, only: ERMSG, ERVN
-  use DNWT_TYPE, only: RK
-  use OUTPUT_M, only: OUTPUT
+  use ERMSG_M, only: Ermsg, Ervn
+  use DNWT_Type, only: RK
+  use Output_M, only: NewLine, Output
 
   implicit NONE
 
   private
   public :: RK, DNWT, DNWTA, DNWTDB, DNWTOP, DNWT_GUTS
-  public :: NWT, NWTA, NWTDB, NWTOP, NWT_GUTS, NWT_T
+  public ::     NWT,  NWTA,  NWTDB,  NWTOP,  NWT_GUTS, NWT_T
   public :: FlagName
-
-  type NWT_T               ! Stuff about the problem, neatly packaged.  This
-                           ! is the type of the AJ argument of NWTA.  Unless
-                           ! otherwise noted, components are inputs to ?NWTA.
-                           ! See usage instructions above.
-    real(rk) :: AJN        ! Largest L1 norm of column in upper triangle
-                           ! of factored Jacobian matrix
-    real(rk) :: AXMAX      ! MAXVAL(ABS(X))
-    real(rk) :: CAIT = 0.0 ! Aitken parameter -- intent(out)
-    real(rk) :: CHISQMINNORM ! FNMIN^2 / no degrees of freedom
-    real(rk) :: CHISQNORM  ! FNORM^2 / no degrees of freedom
-    real(rk) :: DIAG       ! Smallest | diagonal element | after factoring
-    real(rk) :: DXBAD      ! This size for DX is likely a disaster (Temporary)
-    real(rk) :: DXDX       ! dot_product( DX, DX )
-    real(rk) :: DXDXL      ! dot_product( "candidate DX", DX )
-    real(rk) :: DXFAIL     ! Like DXINC, but more so.  (Temporary)
-    real(rk) :: DXN        ! L2 Norm of candidate DX
-    real(rk) :: DXNL = 0.0 ! L2 Norm of last candidate DX -- intent(out)
-    real(rk) :: FNMIN      ! L2 Norm of F not in column space of the Jacobian
-    real(rk) :: FNORM      ! L2 Norm of F at current X
-    real(rk) :: FNORMB     ! L2 Norm of F at best X
-    real(rk) :: GDX        ! dot_product( Gradient, "Candidate DX" )
-    real(rk) :: GFAC       ! Amount of best gradient to use for DX
-    real(rk) :: GRADN      ! L2 norm of Gradient
-    real(rk) :: GRADNB     ! L2 norm of Gradient at best F
-    real(rk) :: QNSQ       ! Square of norm of solution of U^T q = x
-    real(rk) :: SQ = 0.0   ! Levenberg-Marquardt parameter -- intent(out)
-    real(rk) :: SQMIN = 0.0 ! Value of SQ above which function tolerance is
-                           ! not allowed -- intent(in); recommen to use this
-                           ! as a floor for Levenberg-Marquardt stabilization
-                           ! in the caller
-    real(rk) :: SQT        ! Total Levenberg-Marquardt stabilization -- intent(out)
-    integer :: KFAIL       ! Failure count: 0 nofailures; k > 0 we have successfully
-                           ! taken k - 1 steps of size DXBAD. (Temporary)
-    logical :: BIG         ! ANY( DX > 10.0 * epsilon(X) * X )
-    logical :: STARTING = .true. ! NWTA is still in "starting up" phase -- intent(out)
-  end type NWT_T
 
   ! Start or restart:
   integer, parameter, public :: NF_START = 0
   ! Reasons for returning to user.  See description of usage above.
   ! Reasons to continue
   !      Evaluate F and AJ%FNORM:
-  integer, parameter, public :: NF_EVALF = -1
+  integer, parameter, public :: NF_EVALF = NF_START - 1
   !      Evaluate J and do other things:
   integer, parameter, public :: NF_EVALJ = nf_evalf-1
   !      Calculate quantities necessary to determine the Levenberg-Marquardt
@@ -200,9 +169,10 @@ module DNWT_MODULE
   integer, parameter, public :: NF_DX = nf_aitken-1
   !      Set DX = AJ%CAIT * "Candidate DX"
   integer, parameter, public :: NF_DX_AITKEN = nf_dx-1
+
   ! Reasons to stop
   !      Convergence due to TOLXA and TOLXR tests:
-  integer, parameter, public :: NF_TOLX = 1
+  integer, parameter, public :: NF_TOLX = NF_START + 1
   !      Convergence due to TOLXA and TOLXR tests, but solution
   !      is saved "best X":
   integer, parameter, public :: NF_TOLX_BEST = nf_tolx+1
@@ -212,39 +182,155 @@ module DNWT_MODULE
   integer, parameter, public :: NF_TOO_SMALL = nf_tolf+1
   !      F and J appear not to be consistent:
   integer, parameter, public :: NF_FANDJ = nf_too_small+1
+  !      Indicate not ready to return:
+  integer, parameter, private :: NF_NOTHING = nf_fandj+1
   !      In case you want to add some flags of your own...
-  integer, parameter, public :: NF_BIGGEST_FLAG = NF_FANDJ
+  integer, parameter, public :: NF_BIGGEST_FLAG = NF_NOTHING
   integer, parameter, public :: NF_SMALLEST_FLAG = NF_DX_AITKEN
 
-  interface NWT; module procedure DNWT; end interface
-  interface NWTA; module procedure DNWTA; end interface
-  interface NWTDB; module procedure DNWTDB; end interface
-  interface NWTOP; module procedure DNWTOP; end interface
+  real(rk), parameter, private :: EPS = epsilon(1.0_rk), CBIG = huge(1.0_rk)
+
+  type NWT_Options    ! Options that can be set by DNWTOP
+    real(rk) :: AJSCAL = eps         ! Approximate absolute error in computing the
+                                     ! Jacobian
+    real(rk) :: DXMAXI = 0.1*cbig    ! Largest value permitted for DXINC at any time
+    real(rk) :: DXNOIS = 0.0         ! 1.0E-4_rk * largest move that gives a new best X
+                                     ! (used to see if increase in AJ%FNORM might be
+                                     ! due to too small a step)
+    integer :: K1IT = 0              ! Number of iterations to give basic internal output
+    real(rk) :: RELSF = max(0.01_rk,eps) ! Convergence is indicated with NFLAG = NF_TOLF if
+                                     ! AJ%FNORM - AJ%FNMIN < RELSF*AJ%FNMIN
+    real(rk) :: SPMINI = eps         ! Nominal minimum value for normalized Marquardt
+                                     ! parameter
+    real(rk) :: SPSTRT = 0.1_rk      ! Starting value for normalized Marquardt parameter
+    real(rk) :: TOLXA = 0.0          ! Absolute tolerance on X.  Convergence is indicated
+                                     ! with NFLAG = NF_TOLX* if the (possibly scaled)
+                                     ! norm of the difference between the current x and
+                                     ! the solution is estimated to be <= TOLXA.
+    real(rk) :: TOLXR = 0.0          ! Relative tolerance on X.  Convergence is indicated
+                                     ! with NFLAG = NF_TOLX* if the (possibly scaled)
+                                     ! norm of the difference between the current x and
+                                     ! the solution is estimated to be <= TOLXR * max
+                                     ! (abs(X(i))).
+  end type NWT_Options
+
+  type(nwt_options), parameter :: Default_Options = NWT_options()
+
+  type NWT_T               ! Stuff about the problem, neatly packaged.  This
+                           ! is the type of the AJ argument of NWTA.
+    ! Inputs to ?NWTA.  See usage instructions above.
+    real(rk) :: AJN        ! Largest L1 norm of column in upper triangle
+                           ! of factored Jacobian matrix
+    real(rk) :: AXMAX      ! MAXVAL(ABS(X))
+    real(rk) :: DIAG       ! Smallest | diagonal element | after factoring
+    real(rk) :: DXDX       ! dot_product( DX, DX )
+    real(rk) :: DXDXL      ! dot_product( "candidate DX", DX )
+    real(rk) :: DXN        ! L2 Norm of candidate DX (Newton step length)
+    real(rk) :: FNMIN      ! L2 Norm of F not in column space of the Jacobian
+    real(rk) :: FNORM      ! L2 Norm of F at current X
+    real(rk) :: GDX        ! dot_product( Gradient, "Candidate DX" )
+    real(rk) :: GFAC       ! Factor by which the gradient is to be multiplied
+                           ! when taking a gradient move from the best X
+    real(rk) :: GRADN      ! L2 norm of Gradient
+    real(rk) :: QNSQ       ! Square of norm of solution of U^T q = x
+    real(rk) :: SQMIN = 0.0 ! Current minimum value of SQ ; recommend to use
+                           ! this as a floor for Levenberg-Marquardt
+                           ! stabilization in the caller
+    logical :: BIG         ! ANY( DX > 10.0 * epsilon(X) * X )
+    ! Outputs from ?NWTA
+    real(rk) :: CAIT = 0.0 ! Candidate factor for Aitken acceleration
+    real(rk) :: DXINC      ! Largest value for DXN currently allowed
+    real(rk) :: SQ = 0.0   ! Actual value of Marquardt parameter. If SQ < 0,
+                           ! modified Aitken acceleration is being used and
+                           ! ABS(SQ) gives the acceleration factor
+    real(rk) :: SQT = 0.0  ! Total Levenberg-Marquardt stabilization
+    logical :: STARTING = .true. ! NWTA is still in "starting up" phase
+    ! Values retained from return until next call
+    real(rk) :: AXMAXB     ! AXMAX at best X (not actually used)
+    real(rk) :: CDXDXL     ! COS of angle between DX (current move) and
+                           ! DXL (previous move)
+    real(rk) :: CONDAI     ! Crude estimate of reciprocal of condition number
+                           ! of the Jacobian
+    real(rk) :: DXBAD      ! This size for DX is likely a disaster
+    real(rk) :: DXFAIL     ! Like DXINC, but more so.
+    real(rk) :: DXI        ! Largest factor by which stepsize is allowed to
+                           ! increase
+    real(rk) :: DXNBIG     ! A size of move that should be safe.
+    real(rk) :: DXNL       ! L2 Norm of last candidate DX
+    real(rk) :: FNMINB     ! FNMIN at best X, not best FNMIN
+    real(rk) :: FNORMB     ! L2 Norm of F at best X
+    real(rk) :: FNORML     ! Last value of AJ%FNORM
+    real(rk) :: FNXE       ! Used to test if F is behaving with near linearity.
+                           ! If ( FNORM**2 on the next iteration ) <= FNXE
+                           ! then linear behavior is assumed.
+    real(rk) :: FRZ        ! Norm of projection of F into the column space of
+                           ! the Jacobian
+    real(rk) :: FRZB       ! FRZ at best X (not actually used)
+    real(rk) :: FRZL       ! Last value of FRZ
+    real(rk) :: GRADNB     ! L2 norm of Gradient at best F
+    real(rk) :: GRADNL     ! Last value of GRADN
+    integer :: KFAIL       ! Failure count: 0 no failures; k > 0 we have
+                           ! successfully taken k - 1 steps of size DXBAD.
+    real(rk) :: SP         ! Current normalized Marquardt parameter
+    real(rk) :: SPACT      ! Set to 0.25 * CONDAI after evaluating J (but not
+                           ! after CONDAI is calculated after solving for DX).
+                           ! If SP <SPACT, SQ is set = SQMIN
+    real(rk) :: SPB        ! Normalized Marquardt parameter used to get best X
+    real(rk) :: SPFAC      ! Factor multiplying last normalized Marquardt
+                           ! parameter to get one estimate to use for current
+                           ! normalized Marquardt parameter
+    real(rk) :: SPG        ! Used to initialize SPL after taking a gradient
+                           ! move from best X after a previous failure
+    real(rk) :: SPINC      ! Lower bound permitted for normalized Marquardt
+                           ! parameter based on past behavior
+    real(rk) :: SPL        ! Normalized Marquardt parameter from last
+                           ! iteration, and then the current one
+    real(rk) :: SQB        ! Value of SQL from last best X
+    real(rk) :: SQL        ! 0.9 * AJN * SPL 
+                           ! (frequently = 0.9 * last Marquardt parameter)
+    integer :: WHERE_TO = NF_Start   ! Internal value of NFLAG, to remember
+                           ! reason for return, and therefore where to go next.
+
+    ! Temporary only, but here for printing by ?NWTDB
+    real(rk) :: CGDX       ! COS of angle between gradient and DX
+  end type NWT_T
+
+  interface NWT
+    module procedure DNWT
+  end interface
+  interface NWTA
+    module procedure DNWTA
+  end interface
+  interface NWTDB
+    module procedure DNWTDB
+  end interface
+  interface NWTOP
+    module procedure DNWTOP
+  end interface
 
 ! *****     Private data     *******************************************
   save
 
-  real(rk) :: AJN, AJSCAL, AXMAX, AXMAXB, CAIT, CDXDXL, CGDX, CONDAI
-  real(rk) :: DIAG, DXI, DXINC, DXMAXI, DXN, DXNBIG, DXNL, DXNOIS
-  real(rk) :: FN, FNB, FNL, FNMIN, FNMINB, FNXE, FRZ, FRZB
-  real(rk) :: FRZL, GFAC, GRADN, GRADNB, GRADNL
-  integer :: IFL, INC, ITER, ITKEN
-  integer :: K1IT, KB
-  integer :: NFL
-  real(rk) :: RELSF, SP, SPACT, SPB, SPFAC, SPG, SPINC, SPL, SPMINI
-  real(rk) :: SPSTRT, SQ, SQB, SQL, SQMIN
+  ! Variables that can be set from the option vector:
+
+  real(rk) :: AJSCAL
+  real(rk) :: DXMAXI
+  real(rk) :: DXNOIS
+  real(rk) :: RELSF
+  real(rk) :: SPMINI, SPSTRT
   real(rk) :: TOLXA, TOLXR      ! WVS added 2000-04-05
+  integer :: K1IT
+
+  integer :: INC, ITER, ITKEN
+  integer :: KB
 
   type NWT_GUTS    ! Public type returned by DNWT_GUTS
-    real(rk) :: AJN, AJSCAL, AXMAX, AXMAXB, CAIT, CDXDXL, CGDX, CONDAI
-    real(rk) :: DIAG, DXI, DXINC, DXMAXI, DXN, DXNBIG, DXNL, DXNOIS
-    real(rk) :: FN, FNB, FNL, FNMIN, FNMINB, FNXE, FRZ, FRZB
-    real(rk) :: FRZL, GFAC, GRADN, GRADNB, GRADNL
-    integer :: IFL, INC, ITER, ITKEN
+    real(rk) :: AJSCAL
+    real(rk) :: DXMAXI, DXNOIS
+    integer :: INC, ITER, ITKEN
     integer :: K1IT, KB
-    integer :: NFL
-    real(rk) :: RELSF, SP, SPACT, SPB, SPFAC, SPG, SPINC, SPL, SPMINI
-    real(rk) :: SPSTRT, SQ, SQB, SQL, SQMIN
+    real(rk) :: RELSF, SPMINI
+    real(rk) :: SPSTRT
     real(rk) :: TOLXA, TOLXR      ! WVS added 2000-04-05
   end type NWT_GUTS
 
@@ -253,7 +339,7 @@ module DNWT_MODULE
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
-  private :: not_used_here 
+  private :: not_used_here
 !---------------------------------------------------------------------------
 
 contains
@@ -268,15 +354,16 @@ contains
 ! Modifications for new usage coded by S. SINGLETARY
 ! Modifications to add bounds, JULY 1977
 ! JET PROPULSION LAB, PASADENA    JULY, 1974
+! Re-structured by VAN SNYDER, JPL, 17 July 2018
 
-! Variables in the calling sequence are of the following type
+! Variables in the calling sequence are of the following types
 
     integer, intent(out) :: NFLAG
     type(nwt_t), intent(inout) :: AJ
     real(rk), intent(in) :: XOPT(*)
     integer, intent(in), optional :: NOPT(*)
 
-! The above parameters are used as follows:
+! The above arguments are used as follows:
 
 ! NFLAG  = Integer used for communication with the user.  NWT sets NFLAG =
 !     NF_START.  NFLAG is used by NWTA.  When NWTA returns control to the
@@ -322,20 +409,20 @@ contains
 !           permitted for DXINC at any time. NOPT(I)= -14 gives
 !           DXMAXI = 10**30  .
 !    = 15   Set RELSF = XOPT(NOPT(I+1)), where convergence is indicated
-!           with NFLAG = NF_TOLF if FN - FNMIN < RELSF * FNMIN .
+!           with NFLAG = NF_TOLF if AJ%FNORM - AJ%FNMIN < RELSF * AJ%FNMIN .
 !           NOPT(I) = -15 gives RELSF = 0.01  .
 !    = 16   Set DXNIOS = XOPT(NOPT(I+1)), where DXNOIS is the smallest move
 !           considered to be significant when the norm of f increases.
-!           The initial default is 0, but DXNOIS if updated later.
+!           The initial default is 0, but DXNOIS is updated later.
 !    = 17   Set TOLXA = XOPT(NOPT(I+1)), where convergence is indicated
 !           with NFLAG = NF_TOLX* if the (possibly scaled) norm of the
 !           difference between the current x and the solution is
-!           estimated to be .le. TOLXA.  The default value is
+!           estimated to be <= TOLXA.  The default value is
 !           (underflow limit) ** .75.
 !    = 18   Set TOLXR = XOPT(NOPT(I+1)), where convergence is indicated
 !           with NFLAG = NF_TOLX* if the (possibly scaled) norm of the
 !           difference between the current x and the solution is
-!           estimated to be .le. TOLXR * max (abs(X(i))).  The default
+!           estimated to be <= TOLXR * max (abs(X(i))).  The default
 !           value is (relative precision) ** .75.
 !    = 19   Not used.  Do not use.
 
@@ -348,89 +435,41 @@ contains
 
 !****************** END OF INITIAL COMMENTS ****************
 
-    ifl = nf_start
-    nflag = ifl
+    nflag = nf_start
+    aj%where_to = nf_start
     if ( present(nopt) ) call nwtop ( aj, nopt, xopt )
     call nwtop ( aj ) ! default initialization
-    return
+
   end subroutine DNWT
 
 ! **************************************************     DNWTA     *****
 
   subroutine DNWTA ( NFLAG, AJ )
 
-! **************************************************************
+! **********************************************************************
 
 ! This subroutine is referenced by the user.
-! Variables in the calling sequence are defined below.
+! Arguments in the calling sequence are defined below.
 
-    integer, intent(inout) :: NFLAG
+    integer, intent(inout) :: NFLAG ! See usage instructions above
     type(nwt_t), intent(inout) :: AJ
 
 !                V A R I A B L E   D E F I N I T I O N S
 
 
 ! AJ       About the Jacobian.  See usage instructions above.
-! AJN      Norm of the Jacobian
 ! AJSCAL   Approximate absolute error in computing the Jacobian
-! AXMAX    MAXVAL(ABS(X))
-! AXMAXB   AXMAX at best X.
 
-! C0       Constant 0
-! C1       Constant 1
-! C10      Constant 10
-! C100     Constant 100
-! C1PXM4   Constant 1.E-4
-! C4       Constant 4
-! CAIT     Candidate factor for Aitken acceleration
 ! CBIG     Constant 'BIG' = HUGE()
-! CDXDXL   COS of angle between DX and DXL ! ??? DX and DXL aren't defined
-! CGDX     COS of angle between gradient and DX
-! CONDAI   Crude estimate of reciprocal of condition number of the Jacobian
-! CP01     constant .01
-! CP125    constant .125
-! CP25     constant .25
-! CP5      constant .5
-! CP76     constant .76
-! CP9      constant .9
 
-! DIAG     Minimum diagonal element of triangularized Jacobian
-! DXI      Largest factor by which stepsize is allowed to increase
-! DXINC    Largest value for DXN currently allowed
 ! DXMAXI   Largest value permitted for DXINC at any time
-! DXN      Norm of current DX (=stepsize)
-! DXNBIG   A move of size that should be safe.
-! DXNL     Last value of DXN
-! DXNOIS   C1PXM4 * largest move that gives a new best X (used to
-!          see if increase in FN might be due to too small a step)
+! DXNOIS   1.0E-4_rk * largest move that gives a new best X (used to
+!          see if increase in AJ%FNORM might be due to too small a step)
 
-! ERMSG    Error message routine
-
-! FN       Norm of F at X from which next step is being taken
-! FNB      Value of FN at best X (smallest FN obtained up to this point)
-! FNL      Last value of FN
-! FNMIN    Norm of component of F orthogonal to the column space of
-!          the Jacobian after stabilization
-! FNMINB   FNMIN at best X, not best FNMIN
-! FNXE     Used to test if F is behaving with near linearity. If
-!          FNORM on the next iteration satisfies FNORM**2 <= FNXE
-!          then linear behavior is assumed.
-! FRZ      Norm of projection of F into the column space of the Jacobian
-! FRZB     FRZ at best X
-! FRZL     Last value of FRZ
-
-! GFAC     Factor by which the gradient is multiplied when taking a
-!          move from the best X
-! GRADN    Norm of the gradient
-! GRADNB   Value of GRADN at the best X
-! GRADNL   Last value of GRADN
-
-! IFL      Internal flag (NFLAG is usually set same as IFL)
-!          See NF_... parameters above that have negative values.
 ! INC      Flag set to indicate some past history
 !          =-1  Starting
 !          =0   Last X == best X
-!          =J>0 FN > FNL  J times since last best X
+!          =J>0 AJ%FNORM > AJ%FNORML  J times since last best X
 ! ITER     Number of current iteration
 ! ITKEN    Index used to keep track of Aitken accelerations
 
@@ -444,390 +483,299 @@ contains
 !                best X
 !          =0    (INC =0) new best X
 
-! NFL      Internal flag to indicate reason for returning to user.
-!          See positive values of NF_... parameters above.
-! NFLAG    Set same as NFL or same as IFL.
-
-! RELSF    Convergence is indicated with NFLAG=NF_TOLF if
-!          FN-FNMIN < RELSF*FNMIN
+! RELSF    Convergence is indicated with NFLAG = NF_TOLF if
+!          AJ%FNORM - AJ%FNMIN < RELSF*AJ%FNMIN
 ! RND      Used to decide if answer has been determined to machine
 !          accuracy (RND is 10 times the round-off level)
 
-! SP       Value of current normalized Marquardt parameter
-! SPACT    If SP<SPACT, SQ is set = SQMIN
-! SPB      Normalized Marquardt parameter used to get best X
-! SPFAC    Factor multiplying last normalized Marquardt parameter
-!          to get one estimate to use for current normalized
-!          Marquardt parameter
-! SPG      Used to initialize SPL after taking a move from best X
-!          after a previous failure
-! SPINC    Lower bound permitted for normalized Marquardt parameter
-!          based on past behavior
-! SPL      Used to store normalized Marquardt parameter from last
-!          iteration and also the current one
 ! SPMINI   Nominal minimum value for normalized Marquardt parameter
 ! SPSTRT   Starting value for normalized Marquardt parameter
-! SQ       Actual value of Marquardt parameter. If SQ < 0, modified
-!          Aitken acceleration is being used and ABS(SQ) gives the
-!          acceleration factor
-! SQB      Value of SQL from last best X
-! SQL      CP9*AJN*SQL (frequently = CP9* last Marquardt parameter)
-! SQMIN    Current minimum value of SQ
 
 ! TOLXA    absolute tolerance on X
 ! TOLXC    tolerance on X
 ! TP       Temporary storage
 
-!-----     Local Variables     ------------------------------------
+!-----     Parameters and Unsaved Local Variables     ------------------
 
-    real(rk), parameter :: C0 = 0.0_rk
-    real(rk), parameter :: C1 = 1.0_rk
-    real(rk), parameter :: C10 = 10.0_rk
-    real(rk), parameter :: C100 = 100.0_rk
-    real(rk), parameter :: C1PXM4 = 1.0E-4_rk
-    real(rk), parameter :: C4 = 4.0_rk
-    real(rk), parameter :: CBIG = huge(1.0_rk)
-    real(rk), parameter :: CP01 = 0.01_rk
-    real(rk), parameter :: CP125 = 0.125_rk
-    real(rk), parameter :: CP25 = 0.25_rk
-    real(rk), parameter :: CP5 = 0.5_rk
-    real(rk), parameter :: CP76 = 0.76_rk
-    real(rk), parameter :: CP9 = 0.9_rk
     integer, parameter :: INCBIG = huge(inc) / 2
 
-    real(rk) :: TP
+    real(rk) :: TP       ! Widely used temporary variable
 
-    real(rk), parameter :: RND = 10.0_rk * epsilon(c0)
+    real(rk), parameter :: RND = 10.0_rk * epsilon(0.0)
 
-!-----     Executable Statements     ------------------------------
+    ! Values for Before_Solve argument of Do_NF_Solve
+    integer, parameter :: Solve_Only = 0
+    integer, parameter :: Set_New_Marquardt = 1 + 2 * Solve_Only
+    integer, parameter :: Test_GradN_Increase = 1 + 2 * Set_New_Marquardt
+    integer, parameter :: Test_F_Linear = 1 + Test_GradN_Increase
 
-! Continuing after return that was expected to be final:
-      if ( nflag > 0 ) &
-!                nf_tolx nf_tolx_best nf_tolf nf_too_small nf_fandj
-        & go to (735,    735,         470,    230,         228), nfl
+!-----     Executable Statements     -----------------------------------
 
-! Continuing after return for reverse communication:
-      if ( nflag < 0 ) &
-!                nf_evalf nf_evalj nf_lev nf_solve nf_newx nf_gmove nf_best
-        & go to (160,     260,     600,   540,     850,    240,     740, &
-!                nf_aitken nf_dx nf_dx_aitken
-        &        750,      770,  770), -ifl
+    if ( nflag == nf_start ) then
+      ! Either initialization, or user is forcing retreat to best X
+      ! followed by gradient move
 
-! Initialization
-   10 if ( ifl /= nf_start ) go to 222 ! User forcing retreat to best X
-      ajn = c0
-      condai = c0
-      dxnl = c1
-      aj%dxnl = c1
-      fnb = sqrt(huge(fnb))
-      aj%dxfail = huge(aj%dxfail)
-      aj%dxbad = aj%dxfail
-      aj%kfail = 0
-      fnl = c0
-      inc = -1 ! Starting
-!     inc = 0  ! Pretend we're at a "best"
-      iter = 0
-      itken = 0
-      kb = 2
-      spl = c0
-      sq = c0
-      axmax = aj%axmax
-      aj%dxdxl = c0 ! So it's not undefined, because the user isn't expected
-      ! to set it when starting.
-   20 ifl = nf_evalf
-      nflag = ifl
-      return
+      if ( aj%where_to == nf_start ) then
+      ! Initialization
+        aj%ajn = 0.0
+        aj%condai = 0.0
+        aj%dxnl = 1.0
+        aj%fnormb = sqrt(huge(aj%fnormb))
+        aj%dxfail = huge(aj%dxfail)
+        aj%dxbad = aj%dxfail
+        aj%kfail = 0
+        aj%fnorml = 0.0
+        inc = -1 ! Starting
+      ! inc = 0  ! Pretend we're at a "best"
+        iter = 0
+        itken = 0
+        kb = 2
+        aj%spl = 0.0
+        aj%sq = 0.0
+        aj%dxdxl = 0.0 ! So it's not undefined, because the user isn't expected
+                       ! to set it when starting.
+        call do_NF_Evalf
+      else
+        ! User forcing retreat to best X followed by gradient move
+        call Do_NF_GMove_First
+      end if
 
-! Re-enter after evaluating F.
+    else if ( nflag /= aj%where_to ) then
 
-  160 iter = iter + 1
-      fn = aj%fnorm
+      call ermsg ( me, 99, 2, &
+        & 'NFLAG was changed to be inconsistent with AJ%WHERE_TO', '.' )
 
-! Test if a retreat to a previous -- best -- X should be made
+    else
 
-      tp = spl*ajn*cp9 ! .9 time sql on previous iteration
-      if ( fn < fnl ) then ! Things are getting better
-        if ( fn >= fnb ) then ! But no better than the best x
-! If our Marquardt parameter is small and fn does not appear to be
-! getting close to smaller than fnb, and we are not making a move
-! in a quite different direction we give up and go back to previous best.
+      ! Continuing after return for reverse communication for the caller
+      ! to do some computation:
 
-          if ( (max(tp, sql) <= aj%sqmin) .and. &
-               ((fn*(fn/fnl)**2) > fnb) .and. (cdxdxl >= cp25) ) go to 222
-        end if
-      else ! ( fn >= fnl )
+      select case ( aj%where_to )        ! Reason for returning
+      case ( nf_evalf )                  ! Resumed after evaluating F
 
-! FNL will have been set to zero if there are four consecutive gradient moves
-! Test for X convergence
+        ! Re-enter after evaluating F.
 
-        if ( x_converge() ) return
-        if ( inc >= 0 ) then ! We are not starting
-          if ( inc == 0 ) then ! Last X == Best X
-            dxnbig = max(dxnl, dxnois)
+        iter = iter + 1
 
-          else      ! inc > 0 -- Not starting, Last X not Best X
-            if ( kb == 0 ) then
-              if ( fn < fnb ) then
-                gfac = -gfac
-                if ( gfac >=  0 ) then
-                  ! Error processing
-                  call ermsg ( me, 2, 0, 'J or F may be in error', '.' )
-                  nfl = nf_fandj
-                  nflag = nfl
-                  return
+        ! Test if a retreat to a previous -- best -- X should be made
+
+        tp = 0.9_rk * aj%spl * aj%ajn     ! .9 times sql on previous iteration
+        if ( aj%fnorm >= aj%fnorml ) then ! Things are not getting better
+
+        ! AJ%FNORML will have been set to zero if there are four consecutive
+        ! gradient moves.
+        ! Test for X convergence
+
+          if ( x_converge() ) return
+          if ( inc >= 0 ) then   ! We are not starting
+            if ( inc == 0 ) then ! Last X == Best X
+              aj%dxnbig = max(aj%dxnl,dxnois)
+
+            else  ! inc > 0 -- Not starting, Last X not Best X
+              if ( kb == 0 ) then
+                if ( aj%fnorm < aj%fnormb ) then ! New best |F|
+                  aj%gfac = -aj%gfac
+                  if ( aj%gfac >= 0 ) then
+                    ! Error processing
+                    call ermsg ( me, 2, 0, 'J or F may be in error', '.' )
+                    nflag = nf_fandj
+                    aj%where_to = nflag
+                    return
+                  end if
                 end if
+                call Do_NF_GMove_Small
+                return
               end if
-              go to 228
-            end if
-            if ( dxnl <= dxnois ) go to 219 ! Last Newton move tiny?
-            if ( kb < 0 ) go to 224 ! Gradient move last time?
+              if ( aj%dxnl <= dxnois ) then ! Last Newton move tiny?
+                call do_NF_EvalJ ( tp )
+                return
+              end if
+              if ( kb < 0 ) then ! Gradient move last time
+                call do_NF_Gmove_second
+                return
+              end if
 ! WVS revised this 2012-08-27 based upon advice from FTK
-!           if ( (tp >= min(sql,sqb+sqb)) .or. (inc >= incbig) ) go to 222
-            if ( fnmin > (c1+0.5*relsf)*fnminb .or. inc >= incbig ) go to 222
-          end if
-          sqmin = min(sqb, max(spl, spact)*ajn*c4)
-          dxinc = max(dxnl*cp5, dxnois)
-          inc = inc + 1
-        end if
-      end if
-
-  219 sql = tp
-      ifl = nf_evalj
-      nflag = ifl
-      return
-
-! Retreat to a previous -- best -- X and step in gradient direction.  An
-! alternative is to use the gradients at the best X and the current X to
-! compute the directional derivatives along the line from the best X to the
-! current X, fit a cubic polynomial to F using Hermite interpolation, and
-! go to the minimum of that polynomial if it's less than the best F.
-
-  222 kb = -1
-      aj%dxbad = 0.75_rk * min(aj%dxn, aj%dxbad)
-      aj%dxfail = 0.125_rk * aj%dxbad
-      aj%kfail = 1
-  224 kb = kb - 1
-      if ( kb <= (-4) ) then ! Four consecutive gradient moves !
-
-! Setup to test if Jacobian matrix is being computed properly
-
-        kb = 0
-        fnl = c0
-        gfac = -gfac*c100
-      end if
-      go to 230
-  228 gfac = -gfac*cp01
-      kb = -1
-! Return to best X and step in gradient direction
-  230 aj%gfac = gfac
-      ifl = nf_gmove
-      nflag = ifl
-      return
-
-! Re-enter after computing gradient step from best X
-
-  240 continue
-      aj%dxn = gradnb*gfac ! In case the caller wants to compute cosines
-      if ( gfac <= c0 ) go to 780
-      axmax = axmaxb
-      dxn = aj%dxn
-      gfac = gfac*cp125
-      spl = spg
-      spg = spl/cp125
-      fn = fnb
-      fnxe = cp5 * fn **2
-      frz = frzb
-      gradn = gradnb
-      go to 775
-
-! Re-enter after computing Jacobian
-
-  260 diag = aj%diag     ! Smallest | diagonal element | after factoring
-      ajn = aj%ajn       ! Largest L1 norm of column in upper triangle
-      fnmin = aj%fnmin   ! L2 Norm of F not in column space of the Jacobian
-      gradn = aj%gradn   ! L2 norm of gradient
-      if ( gradn <= c0 ) then
-         gradn = c1
-         if ( ajn <= c0 ) ajn = c1
-      end if
-      condai = max(min(condai, diag/ajn), (diag/ajn)**2)
-      spact = cp25*condai
-      frz = sqrt(abs((fn-fnmin)*(fn+fnmin)))
-
-      if ( iter == 1 ) then ! First iteration
-        sp = spstrt
-        spinc = sp
-        if ( frz <= rnd*fnmin ) go to 465
-        dxi = cp125
-      else
-        if ( fn >= fnl ) then
-
-! Select new stabilizing parameter for case when F has increased
-
-          kb = 1
-          if ( dxnl < dxnois ) then
-            sp = c1pxm4*sp
-            sqmin = min(sqmin, sp*ajn)
-!           dxnl = dxnl * c100
-            go to 520
-          end if
-          spfac = max((fn/fnl)**2, c10)
-          spinc = spl + spl + spact
-          dxi = c1
-          go to 515
-        end if
-        if ( fn >= fnb ) go to 460
-      end if
-
-! New best X
-
-      if ( aj%kfail /= 0 ) then
-         if ( kb == 0 ) then ! Got new best immediately
-            if ( aj%dxn >= 0.9_rk * aj%dxbad ) then
-               aj%dxbad = aj%dxbad * (1.25_rk ** aj%kfail)
-               aj%dxfail = aj%dxbad
-               aj%kfail = aj%kfail + 1
-            else
-               aj%dxfail = 0.75_rk * aj%dxfail + 0.25_rk * aj%dxbad
-               aj%kfail = 1
+!             if ( (tp >= min(aj%sql,aj%sqb+aj%sqb)) .or. (inc >= incbig) ) then
+              if ( aj%fnmin > (1.0+0.5*relsf)*aj%fnminb .or. &
+                 & inc >= incbig ) then
+                call do_NF_GMove_First
+                return
+              end if
             end if
-         else
-            aj%dxfail = min(1.0625_rk * aj%dxfail, aj%dxbad)
-         end if
-         dxinc = min(dxmaxi, aj%dxfail)
-      else
-         dxinc = dxmaxi
-      end if
-
-      spinc = min(spinc, max(spmini, abs(ajscal)/ajn))
-      sqmin = c0
-      spb = spl
-      sqb = sql
-      if ( inc < 0 ) go to 520
-      if ( inc /= 0 ) then
-        if ( kb < 0 ) then
-          dxi = cp25
-        else if ( kb == 1 ) then ! We had a function increase
-          dxi = cp25*dxnl/dxnbig ! prior to getting a new best.
-        end if
-        kb = 0
-        inc = 0
-      end if
-
-! Test for convergence in sense of FN < (RELSF*FNMIN)
-
-  460 if ( inc == 0 ) then
-        tp = fn - (c1+relsf)*fnmin
-        if ( (tp < c0 ) ) then
-          go to 465 ! WVS changed this 2012-09-10 to allow convergence
-                    ! with nonzero Levenberg-Marquardt parameter
-!           if ( (sq <= aj%sqmin) .or. (spl <= spmini) .or. &
-!            &   (tp <= -(c1+relsf)*spl*fn) ) go to 465
-        end if
-      end if
-      go to 470
-
-  465 nfl = nf_tolf
-      nflag = nfl
-      return
-
-! Select new stabilizing parameter.  Also comes back here if user continues
-! after TOLF convergence.
-
-  470 tp = min((frz/frzl), (fn/fnl))
-
-! Test if F appears almost linear over last step
-
-      if ( fn**2 < 1.125_rk * fnxe ) then ! F appears almost linear.
-        spfac = cp125*(1.025_rk-cdxdxl)*tp**2
-        if ( spl <= spinc ) spinc = cp25*spinc
-        dxi = min(dxi,cp25)
-      else ! F not linear over last step
-      ! spfac = tp*(fn**2)/fnxe
-      ! if ( cdxdxl >= cp9) spfac = min(spfac,cp5)
-      ! On 2002/07/25, FTK recommended:
-        spfac = min(tp*(fn**2)/fnxe, 32.0_rk*(1.025_rk - cdxdxl)**2)
-        dxi = c1
-      end if
-  515 if ( gradn > gradnl ) spfac = spfac*gradnl/gradn
-      sp = max(spinc, min(spb, spl*spfac))
-  520 sp = max(sp, sqmin/ajn)
-!     if ( inc == 0 ) sp = min(sp, 0.5_rk*spl)
-      spl = sp
-      sq = sp*ajn
-      aj%sqt = sq
-      if ( sp < spact .and. inc >= 0 ) sq = sqmin
-      gradnl = gradn
-
-! Do Levenberg-Marquardt stabilization, solve for "Candidate DX"
-
-  530 aj%sq = sq
-      aj%starting = inc < 0
-      ifl = nf_solve
-      nflag = ifl
-      return
-
-! Re-enter after doing Levenberg-Marquardt stabilization and solving for
-! candidate DX
-
-  540 fnmin = aj%fnmin
-      dxn = aj%dxn
-      cgdx = aj%gdx/(gradn*dxn) ! Cosine ( gradient, dx )
-      condai = min(cgdx, gradn/(dxn*ajn**2), diag/ajn)
-      fnxe = fnmin**2
-      if ( sq /= c0 ) fnxe = fnxe - (sq*dxn)**2
-      if ( inc < 0 ) then
-        if ( dxn <= dxinc ) then ! Move length OK?
-          inc = incbig
-          cdxdxl = c0 ! Don't think about Aitken
-          go to 735   ! Go save best X, then use Newton's DX
-        end if
-      else
-        cdxdxl = aj%dxdxl/(dxn*dxnl)
-        if ( fnxe > fnb**2 ) then
-          if ( k1it /= 0 ) call nwtdb ( width=9, level=0, why='Give up' )
-          go to 222 ! Go do a gradient move
-        end if
-        if ( dxn < 1.1_rk * dxinc )  then
-          if ( sq <= c0 .or. dxn > 0.90_rk * dxinc ) then
-             if ( inc == 0 ) then
-               if ( x_converge() ) return
-               go to 735 ! Go save best X, then either DX or Aitken
-             end if
-             cait = cbig
-             go to 755   ! Go use DX
+            aj%sqmin = min(aj%sqb, max(aj%spl, aj%spact) * 4.0 * aj%ajn)
+            aj%dxinc = max(aj%dxnl * 0.5,dxnois)
+            inc = inc + 1
           end if
-!! WVS: was          dxinc = dxi * dxn * (c1 - cdxdxl)**2
+        else if ( aj%fnorm >= aj%fnormb ) then ! Things are getting better, but
+                                               ! no better than at the best X
+          ! If our Marquardt parameter is small and AJ%FNORM does not appear to
+          ! be getting close to or smaller than AJ%FNORMB, and we are not
+          ! making a move in a quite different direction we give up and go back
+          ! to the previous best X and take a gradient move.
+
+          if ( (max(tp,aj%sql) <= aj%sqmin) .and. &
+             & ((aj%fnorm*(aj%fnorm/aj%fnorml)**2) > aj%fnormb) .and. &
+             & (aj%cdxdxl >= 0.25_rk) ) then
+            call Do_NF_GMove_First
+            return
+          end if
+        end if
+
+        call do_NF_EvalJ ( tp )
+
+      case ( nf_evalj )              ! Resumed after evaluating J
+
+        ! Re-enter after evaluating Jacobian
+
+        ! diag =  Smallest | diagonal element | after factoring
+        ! ajn =   Largest L1 norm of column in upper triangle
+        ! fnmin = L2 Norm of F not in column space of the Jacobian
+        ! gradn = L2 norm of gradient
+        if ( aj%gradn <= 0.0 ) then
+          aj%gradn = 1.0
+          if ( aj%ajn <= 0.0 ) aj%ajn = 1.0
+        end if
+        tp = aj%diag/aj%ajn
+        aj%condai = max(min(aj%condai,tp),tp**2)
+        aj%spact = 0.25 * aj%condai
+        aj%frz = sqrt(abs((aj%fnorm-aj%fnmin)*(aj%fnorm+aj%fnmin)))
+
+        if ( iter == 1 ) then ! First iteration
+          aj%sp = spstrt
+          aj%spinc = aj%sp
+          if ( aj%frz <= rnd*aj%fnmin ) then
+            call do_nf_tolf
+            return
+          end if
+          aj%dxi = 0.125_rk
+        else
+          if ( aj%fnorm >= aj%fnorml ) then  ! AJ%FNORM increased
+
+            ! Select new stabilizing parameter for case when AJ%FNORM has
+            ! increased
+
+            kb = 1
+            if ( aj%dxnl < dxnois ) then
+              aj%sp = 1.0E-4_rk * aj%sp
+              aj%sqmin = min(aj%sqmin, aj%sp * aj%ajn)
+            ! aj%dxnl = aj%dxnl * 100.0
+              call do_NF_Solve ( before_Solve = set_new_marquardt )
+            end if
+            aj%spfac = max( (aj%fnorm / aj%fnorml)**2, 10.0_rk )
+            aj%spinc = aj%spl + aj%spl + aj%spact
+            aj%dxi = 1.0
+            call do_NF_Solve ( before_Solve = test_gradn_increase )
+          end if
+          if ( aj%fnorm >= aj%fnormb ) then ! Is function norm larger than best?
+            if ( .not. f_converge() ) &
+              & call do_NF_Solve ( before_Solve = test_f_linear )
+            return
+          end if
+        end if
+
+        ! New best X
+
+        if ( aj%kfail /= 0 ) then
+          if ( kb /=0 ) then ! Got new best immediately
+            aj%dxfail = min(1.0625_rk*aj%dxfail,aj%dxbad)
+          else if ( aj%dxn >= 0.9_rk*aj%dxbad ) then
+            aj%dxbad = aj%dxbad*(1.25_rk**aj%kfail)
+            aj%dxfail = aj%dxbad
+            aj%kfail = aj%kfail + 1
+          else
+            aj%dxfail = 0.75_rk*aj%dxfail + 0.25_rk*aj%dxbad
+            aj%kfail = 1
+          end if
+          aj%dxinc = min(dxmaxi,aj%dxfail)
+        else
+          aj%dxinc = dxmaxi
+        end if
+
+        aj%spinc = min(aj%spinc, max(spmini, abs(ajscal) / aj%ajn))
+        aj%sqmin = 0.0
+        aj%spb = aj%spl
+        aj%sqb = aj%sql
+        if ( inc < 0 ) then ! Starting
+          call do_NF_Solve ( before_Solve = set_new_marquardt )
+          return
+        end if
+        if ( inc /= 0 ) then
+          if ( kb < 0 ) then
+            aj%dxi = 0.25
+          else if ( kb == 1 ) then
+          ! We had a function increase prior to getting a new best.
+            aj%dxi = 0.25 * aj%dxnl / aj%dxnbig
+          end if
+          kb = 0
+          inc = 0
+        end if
+        if ( .not. f_converge() ) &
+          & call do_NF_Solve ( before_Solve = test_f_linear )
+
+      case ( nf_solve )              ! Resumed after solving for DX
+
+      ! Re-enter after doing Levenberg-Marquardt stabilization and solving for
+      ! candidate DX
+
+        ! fnmin = L2 Norm of F not in column space of the Jacobian
+        aj%cgdx = aj%gdx/(aj%gradn*aj%dxn) ! Cosine ( gradient, dx )
+        aj%condai = min(aj%cgdx,aj%gradn/(aj%dxn*aj%ajn**2),aj%diag/aj%ajn)
+        aj%fnxe = aj%fnmin**2 - (aj%sq*aj%dxn)**2
+        if ( inc >= 0 ) then
+          aj%cdxdxl = aj%dxdxl/(aj%dxn*aj%dxnl) ! cosine between DX and last DX
+          if ( aj%fnxe > aj%fnormb**2 ) then
+            if ( k1it /= 0 ) call nwtdb ( width=9, level=0, why='Give up' )
+            call Do_NF_GMove_First
+            return
+          end if
+          if ( aj%dxn < 1.1_rk*aj%dxinc ) then
+            if ( aj%sq <= 0.0 .or. aj%dxn > 0.90_rk*aj%dxinc ) then
+              if ( inc==0 ) then
+                if ( .not. x_converge() ) call do_nf_best
+                return
+              end if
+              aj%cait = cbig
+              call do_NF_DX
+              return
+            end if
+!! WVS: was          dxinc = aj%dxi * aj%dxn * (1.0 - aj%cdxdxl)**2
 !! This was clearly wrong, since it says "If consecutive Newton moves are in
 !! the same direction, take shorter steps"
-          dxinc = dxi * dxn / (1.025 - cdxdxl)**2
+            aj%dxinc = aj%dxi * aj%dxn / (1.025 - aj%cdxdxl)**2
+          end if
+        else if ( aj%dxn <= aj%dxinc ) then ! Move length OK?
+          inc = incbig
+          aj%cdxdxl = 0.0 ! Don't think about Aitken
+          call do_nf_best
+          return
         end if
-      end if
 
-! Newton step length is too large or too small
+        ! Newton step length is too large or too small
 
-      if ( k1it /= 0 ) call nwtdb ( width=9, level=0, why='Step length' )
+        if ( k1it /= 0 ) call nwtdb ( width=9, level=0, why='Step length' )
 
-!{ Calculate {\tt qn}$^2 = {\bf q}^T{\bf q} = ||{\bf q}||^2$, used to
-!  determine the Levenberg-Marquardt parameter $\lambda$, where ${\bf q} =
-!  {\bf U}^{-T} {\delta\bf x}$ and ${\delta\bf x}$ is the Newton step
-!  computed with the current value of $\lambda$.  The method to determine
-!  $\lambda$ and the reason for being interested in ${\bf q}^T{\bf q}$ are
-!  explained below.
+        !{ Calculate {\tt qn}$^2 = {\bf q}^T{\bf q} = ||{\bf q}||^2$, used
+        !  to determine the Levenberg-Marquardt parameter $\lambda$, where
+        !  ${\bf q} = {\bf U}^{-T} {\delta\bf x}$ and ${\delta\bf x}$ is the
+        !  Newton step computed with the current value of $\lambda$.  The
+        !  method to determine $\lambda$ and the reason for being interested
+        !  in ${\bf q}^T{\bf q}$ are explained below.
 
-      ifl = nf_lev
-      nflag = ifl
-      return
+        nflag = nf_lev
+        aj%where_to = nflag
 
-!{ Determine the Levenberg-Marquardt parameter $\lambda$, known here as SQ.
-!  The last Marquardt parameter used was SQ, which means that SQ**2 was
-!  added to the diagonal of the normal equations.  A little bit of 
+      case ( nf_lev )              ! Resumed after doing the calculations for
+                                   ! the Moré-Sorensen algorithm
+
+!{ Determine the Levenberg-Marquardt parameter $\lambda$, known here as AJ%SQ.
+!  The last Marquardt parameter used was AJ%SQ, which means that AJ%SQ**2 was
+!  added to the diagonal of the normal equations.  A little bit of
 !  derivation so you have some idea of what is going on.  Start with
 !
 !  $({\bf H} + \lambda {\bf I}) {\delta\bf x} = -{\bf g}$,
 !
 !  where ${\bf H}$ is the Hessian matrix.  In our case, ${\bf J}^T {\bf J}$,
-!  where ${\bf J}$ is the Jacobian matrix, is an approximate Hessian. 
+!  where ${\bf J}$ is the Jacobian matrix, is an approximate Hessian.
 !  Differentiating both sides with respect to $\lambda$ gives
 !
 !  $({\bf H} + \lambda {\bf I}) \frac{\text{d}{\delta\bf x}}{\text{d}\lambda}
@@ -871,8 +819,8 @@ contains
 !    = \lambda_{\text{old}} - \frac{|| {\delta\bf x} ||^2}{|| {\bf q} ||^2}
 !      \left(1 - \frac{|| {\bf \delta x} ||}{\rho}\right)$
 !
-! If you have been looking at Mor\'e and Sorensen, this update is the 
-! negative of theirs since they define $\lambda$ as the negative of the 
+! If you have been looking at Mor\'e and Sorensen, this update is the
+! negative of theirs since they define $\lambda$ as the negative of the
 ! $\lambda$ above.  Also, Mor\'e and Sorensen write $\lambda$ as the quantity
 ! added to the diagonal of the normal equations, which we call $\lambda^2$, so
 ! the iteration above and the code below are really iterating on what we call
@@ -889,126 +837,341 @@ contains
 ! which, in normal-equations form is $({\bf J}^T {\bf J} + \lambda^2 {\bf I})
 ! {\delta\bf x} = -{\bf J}^T {\bf f} = -{\bf g}$.
 
-  600 continue
-      sq = sqrt(max( 0.0_rk, sq**2 - (dxn**2 / aj%qnsq) * (1.0_rk - dxn / dxinc) ))
-      sp = sq / ajn
-      go to 530
+        aj%sq = sqrt(max(0.0_rk, &
+                         aj%sq**2-(aj%dxn**2/aj%qnsq)*(1.0 - aj%dxn/aj%dxinc)))
+        aj%sp = aj%sq / aj%ajn
+        ! Solve again with new Marquardt parameter
+        call do_NF_Solve ( before_Solve = solve_only )
 
-! Store best X, the gradient, and other constants used if a
-! return needs to be made to the best X
+      case ( nf_newx )               ! Resumed after calculating new X
 
-  735 aj%fnormb = aj%fnorm
-      ifl = nf_best
-      nflag = ifl
-      return
+        ! Re-enter after computing new X
 
-! Re-enter here after saving X as "best X" and Gradient as "Best gradient"
+        if ( .not. aj%big ) then ! All dx's are very small
+          if ( (aj%spl <= spmini) .or. (aj%sq == 0.0) ) then
 
-  740 axmaxb = axmax
-      dxnois = max( dxnois, c1pxm4*dxnl)
-      gfac = min(cp125*dxn/gradn, ajn**(-2))
-      spg = spl + cp01
-      fnb = fn
-      frzb = frz
-      fnminb = fnmin
-      gradnb = gradn
-      aj%gradnb = gradnb
-      if ( abs(cdxdxl) < cp9 .or. sq /= c0 .or. dxn >= dxnl ) go to 755
+            if ( (inc > 0) .and. (kb /= 0) ) then ! Go do gradient move
+              call Do_NF_GMove_First
+              return
+            end if
 
-! Compute scalar factor for (modified) Aitken acceleration
+            ! Convergence -- move too small
 
-      ifl = nf_aitken
-      nflag = ifl
-      return
-
-! Re-enter here after computing some numbers needed for (modified)
-! Aitken acceleration
-
-  750 tp = aj%dxdx
-      if ( tp /= c0 ) then
-         tp = c1 + aj%dxdxl/tp
-         tp = min(c10, max(tp,cp01))
-         if ( abs(cait-tp) < abs(cp25*(cait+tp)-cp5) ) then
-            ! Set DX = Aitken-modified DX = CAIT * "Candidate DX"
-            cait = tp
-            itken = iter + 2
-            sq = -cait
-            dxn = cait*dxn
-            aj%dxn = dxn ! In case the caller wants to compute cosines
-            aj%cait = cait
-            ifl = nf_dx_aitken
-            nflag = ifl
+            nflag = nf_too_small
+            aj%where_to = nflag
             return
-         end if
-         if ( itken < iter ) cait = tp
+          else
+            dxnois = max(dxnois,10.0_rk*aj%dxn) ! Set so steps don't get too small.
+          end if
+        end if
+
+        call do_NF_Evalf
+
+      case ( nf_gmove )              ! Resumed after gradient move from best X
+
+        ! Re-enter after computing gradient step from best X
+
+        aj%dxn = aj%gradnb * aj%gfac ! In case the caller wants to compute cosines
+        if ( aj%gfac <= 0.0 ) then
+          call do_NF_NewX ( .true. )
+          return
+        end if
+        aj%axmax = aj%axmaxb
+        aj%gfac = 0.125 * aj%gfac
+        aj%spl = aj%spg
+        aj%spg = 8.0 * aj%spl
+        aj%fnxe = 0.5 * aj%fnorm**2
+        aj%frz = aj%frzb
+        aj%gradn = aj%gradnb
+        call do_NF_NewX
+
+      case ( nf_best )               ! Resumed after saving X as best X
+
+        ! Re-enter here after saving X as "best X" and Gradient as
+        ! "Best gradient"
+
+        aj%axmaxb = aj%axmax
+        dxnois = max(dxnois,1.0E-4_rk*aj%dxnl)
+        aj%gfac = min(0.125*aj%dxn/aj%gradn,aj%ajn**(-2))
+        aj%spg = aj%spl + 0.01
+        aj%fnormb = aj%fnorm
+        aj%frzb = aj%frz
+        aj%fnminb = aj%fnmin
+        aj%gradnb = aj%gradn
+        if ( abs(aj%cdxdxl) < 0.9_rk .or. aj%sq /= 0.0 .or. &
+           & aj%dxn >= aj%dxnl ) then
+          call do_NF_DX
+        else
+
+          ! Compute scalar factor for (modified) Aitken acceleration
+
+          nflag = nf_aitken
+          aj%where_to = nflag
+        end if
+
+      case ( nf_aitken )             ! Resumed after computing some numbers
+                                     ! needed for (modified) Aitken
+                                     ! acceleration
+
+        tp = aj%dxdx     ! | dX | **2
+        if ( tp /= 0.0 ) then
+          tp = 1.0 + aj%dxdxl/tp
+          tp = min(10.0_rk,max(tp,0.01_rk))
+          if ( abs(aj%cait-tp) < abs(0.25_rk*(aj%cait+tp)-0.5_rk) ) then
+          ! Set DX = Aitken-modified DX = AJ%CAIT * "Candidate DX"
+            aj%cait = tp
+            itken = iter + 2
+            aj%sq = -aj%cait
+            aj%dxn = aj%cait*aj%dxn
+            nflag = nf_dx_aitken
+            aj%where_to = nflag
+            return
+          end if
+          if ( itken < iter ) aj%cait = tp
+        end if
+        call do_NF_DX
+
+        ! End of logic for Aitken acceleration
+
+      case ( nf_dx, nf_dx_aitken )   ! Resumed after DX = "Candidate DX" or
+                                     ! DX = AJ%CAIT * "Candidate DX"
+
+        aj%dxnl = aj%dxn
+        call do_NF_NewX
+
+      ! Continuing after return that was expected to be final:
+      case ( nf_tolx, nf_tolx_best ) ! Converged because distance from C to
+                                     ! solution was estimated to be small and
+                                     ! DX is small
+        call do_nf_best
+      case ( nf_tolf )               ! Converged because |F| is small
+        call do_NF_Solve ( before_Solve = test_f_linear )
+      case ( nf_too_small )          ! Converged because DX was too small
+        call do_NF_GMove
+      case ( nf_fandj )              ! F and J appeared not to be consistent
+        call Do_NF_GMove_Small
+      end select
+
+    end if
+
+  contains
+
+    ! ...............................................  Do_NF_Best  .....
+    subroutine Do_NF_Best
+
+    ! Store best X, the gradient, and other constants used if a
+    ! return needs to be made to the best X
+
+      aj%fnormb = aj%fnorm
+      nflag = nf_best
+      aj%where_to = nflag 
+    end subroutine Do_NF_Best
+
+    ! .................................................  Do_NF_DX  .....
+    subroutine Do_NF_DX
+
+    ! Store Candidate DX as DX
+
+      nflag = nf_dx
+      aj%where_to = nflag
+    end subroutine Do_NF_DX
+
+    ! ..............................................  Do_NF_EvalF  .....
+    subroutine Do_NF_EvalF
+
+    ! Evaluate F
+
+      nflag = nf_evalf
+      aj%where_to = nflag
+    end subroutine Do_NF_EvalF
+
+    ! ..............................................  Do_NF_EvalJ  .....
+    subroutine Do_NF_EvalJ ( New_SQL )
+      real(rk), intent(in) :: New_SQL
+
+    ! Evaluate J
+
+      aj%sql = new_sql
+      nflag = nf_evalj
+      aj%where_to = nflag
+    end subroutine Do_NF_EvalJ
+
+    ! ..............................................  Do_NF_GMove  .....
+    subroutine Do_NF_GMove
+
+    ! Retreat to a previous -- best -- X and step in gradient direction.  An
+    ! alternative is to use the gradients at the best X and the current X to
+    ! compute the directional derivatives along the line from the best X to the
+    ! current X, fit a cubic polynomial to F using Hermite interpolation, and
+    ! go to the minimum of that polynomial if it's between the current X and
+    ! the best X.
+
+      nflag = nf_gmove
+      aj%where_to = nflag
+    end subroutine Do_NF_GMove
+
+    ! ........................................  Do_NF_GMove_First  .....
+    subroutine Do_NF_GMove_First
+
+    ! Set up for the first gradient move after a successful Newton move
+
+      kb = -1 ! Set consecutive gradient move counter
+      aj%dxbad = 0.75_rk*min(aj%dxn,aj%dxbad)
+      aj%dxfail = 0.125_rk*aj%dxbad
+      aj%kfail = 1
+      call do_NF_GMove_Second
+    end subroutine Do_NF_GMove_First
+
+    ! .......................................  Do_NF_GMove_Second  .....
+    subroutine Do_NF_GMove_Second
+
+    ! Set up for a gradient move after a previous gradient move, or
+    ! finish setting up for a first gradient move.
+
+      kb = kb - 1
+      if ( kb <= -4 ) then   ! Four consecutive gradient moves !
+
+        ! Setup to test if Jacobian matrix is being computed properly
+
+        kb = 0
+        aj%fnorml = 0.0
+        aj%gfac = -100.0 * aj%gfac
       end if
+      call do_NF_GMove
+    end subroutine Do_NF_GMove_Second
 
-! End of logic for Aitken acceleration
+    ! ........................................  Do_NF_GMove_Small  .....
+    subroutine Do_NF_GMove_Small
 
-! Store Candidate DX as DX
+    ! Set up for a really small gradient move.
 
-  755 ifl = nf_dx
-      nflag = ifl
-      return
+      kb = -1 ! Restart consecutive gradient move counter
+      aj%gfac = -0.01 * aj%gfac
+      call do_NF_GMove
+    end subroutine Do_NF_GMove_Small
 
-! Re-enter here after DX = "Candidate DX" or DX = CAIT * "Candidate DX"
+    ! ...............................................  Do_NF_NewX  .....
+    subroutine Do_NF_NewX ( Gfac_Negative )
+      logical, intent(in), optional :: Gfac_Negative ! Present means true
 
-  770 dxnl = dxn
-      aj%dxnl = dxnl
-      ! Come here after returning from a gradient move
-  775 fnl = fn
-      frzl = frz
-      fnxe = cp25*fn**2 + cp76*fnxe
-  780 if ( k1it /= 0 ) then
+    ! Compute new X and test for too small a correction
+
+      if ( .not. present(gfac_negative) ) then
+        aj%fnorml = aj%fnorm
+        aj%frzl = aj%frz
+        aj%fnxe = 0.25_rk*aj%fnorm**2 + 0.76_rk*aj%fnxe
+      end if
+      if ( k1it /= 0 ) then ! Do requested debugging output
         k1it = k1it - 1
         call nwtdb ( width=9, level=0, why='Before new X' )
       end if
 
-! Compute new X and test for too small a correction
-
       aj%starting = inc < 0
-      ifl = nf_newx
-      nflag = ifl
-      return
+      nflag = nf_newx
+      aj%where_to = nflag
+    end subroutine Do_NF_NewX
 
-! Re-enter after computing new X
+    ! ..............................................  Do_NF_Solve  .....
 
-  850 if ( .not. aj%big ) then ! All dx's are very small
-         if ( (spl <= spmini).or.(sq == c0) ) go to 870
-         dxnois = max(dxnois, c10*dxn) ! Set so steps don't get too small.
+    subroutine Do_NF_Solve ( Before_Solve )
+      integer, intent(in) :: Before_Solve
+
+      ! Select new stabilizing parameter.  Also comes back here if user
+      ! continues after TOLF convergence.
+
+      if ( before_solve >= test_F_Linear ) then
+
+        tp = min((aj%frz/aj%frzl),(aj%fnorm/aj%fnorml))
+
+        ! Test if F appears almost linear over last step
+
+        if ( aj%fnorm**2 < 1.125 * aj%fnxe ) then ! F appears almost linear.
+          aj%spfac = 0.125 * (1.025 - aj%cdxdxl) * tp**2
+          if ( aj%spl <= aj%spinc ) aj%spinc = 0.25 * aj%spinc
+          aj%dxi = min(aj%dxi,0.25_rk)
+        else ! F not linear over last step
+        ! aj%spfac = tp*(aj%fnorm**2)/aj%fnxe
+        ! if ( aj%cdxdxl >= 0.9_rk) aj%spfac = min(aj%spfac,0.5_rk)
+        ! On 2002/07/25, FTK recommended:
+          aj%spfac = min( tp*(aj%fnorm**2)/aj%fnxe, &
+                        & 32.0 * (1.025 - aj%cdxdxl)**2 )
+          aj%dxi = 1.0
+        end if
       end if
-      axmax = aj%axmax
-      go to 20
+      if ( before_solve >= test_GradN_Increase ) then
+        if ( aj%gradn > aj%gradnl ) aj%spfac = aj%spfac * aj%gradnl / aj%gradn
+        aj%sp = max(aj%spinc, min(aj%spb, aj%spl * aj%spfac))
+      end if
+      if ( before_solve >= set_New_Marquardt ) then
+        aj%sp = max(aj%sp,aj%sqmin / aj%ajn)
+    !   if ( inc == 0 ) aj%sp = min(aj%sp, 0.5 * aj%spl)
+        aj%spl = aj%sp
+        aj%sq = aj%sp * aj%ajn
+        aj%sqt = aj%sq
+        if ( aj%sp < aj%spact .and. inc >= 0 ) aj%sq = aj%sqmin
+      end if
 
-  870 if ( (inc > 0) .and. (kb /= 0) ) go to 222 ! Go do gradient move
+    ! Do Levenberg-Marquardt stabilization, solve for "Candidate DX"
 
-! Convergence -- move too small
+      aj%starting = inc<0
+      nflag = nf_solve
+      aj%where_to = nflag
+    end subroutine Do_NF_Solve
 
-      nfl = nf_too_small
-      nflag = nfl
-      return
+    ! ...............................................  Do_NF_Tolf  .....
 
-  contains
+    subroutine Do_NF_Tolf
 
-    ! ...............................................  X_CONVERGE  .....
-    logical function X_CONVERGE ( )
+    ! Announce function (not DX) convergence
+
+      nflag = nf_tolf
+      aj%where_to = nflag
+    end subroutine Do_NF_Tolf
+
+    ! ...............................................  F_Converge  .....
+    logical function F_Converge ( )
+
+    ! Test for convergence in sense of AJ%FNORM < (1 + RELSF)*AJ%FNMIN
+
+      f_converge = .false.
+      if ( inc==0 ) then
+        tp = aj%fnorm - (1.0+relsf)*aj%fnmin
+        if ( tp < 0.0 ) then
+                    ! WVS changed this 2012-09-10 to allow convergence
+                    ! with nonzero Levenberg-Marquardt parameter
+!           if ( (aj%sq <= aj%sqmin) .or. (aj%spl <= spmini) .or. &
+!            &   (tp <= -(1.0+relsf)*aj%spl*aj%fnorm) ) then
+          call do_nf_tolf
+          f_converge = .true.
+        end if
+      end if
+
+    end function F_Converge
+
+    ! ...............................................  X_Converge  .....
+    logical function X_Converge ( )
+
     ! Test whether convergence has occurred due to very small \delta X
+
       x_converge = .false.
-      if ( fnl > c0 ) then ! Not doing gradient moves from the best X
-        if ( dxn <= tolxa .or. &
-          & ((sq == c0).or.(spl <= spmini)) .and. dxn <= tolxr * axmax ) then
-! Convergence if dxn is small enough or we have a suffiently small
-! Levenberg-Marquardt parameter and we had a very small move.
-          nfl = nf_tolx
-          if ( kb /= 0 ) then
-            aj%fnorm = fnb
-            nfl = nf_tolx_best
+      if ( aj%fnorml > 0.0 ) then
+      ! Didn't just do four gradient moves from the best X
+        if ( aj%dxn <= tolxa .or. &
+           & ( (aj%sq == 0.0) .or. (aj%spl <= spmini) ) .and. &
+           &   aj%dxn <= tolxr*aj%axmax ) then
+        ! Convergence if aj%dxn is small enough or we have a suffiently small
+        ! Levenberg-Marquardt parameter and we had a very small move.
+          nflag = nf_tolx
+          if ( kb /= 0 ) then  ! Made gradient move, or F increased
+            aj%fnorm = aj%fnormb
+            nflag = nf_tolx_best ! Solution is at best X, not current X
           end if
-          nflag = nfl
+          aj%where_to = nflag
           x_converge = .true.
         end if
       end if
-    end function X_CONVERGE
+
+    end function X_Converge
 
   end subroutine DNWTA
 
@@ -1016,7 +1179,7 @@ contains
   subroutine DNWTOP ( AJ, NOPT, XOPT )
     ! Process option vector for DNWT.  With no arguments, does default
     ! initialization.
-    type (NWT_T), intent(in) :: AJ
+    type(nwt_t), intent(inout) :: AJ
     integer, intent(in), optional :: NOPT(*)
     real(rk), intent(in), optional :: XOPT(*)
 
@@ -1026,23 +1189,23 @@ contains
     character(len=4), parameter :: LABL(2) = (/ '(I) ', 'NOPT' /)
     ! ??? Defaults aren't what comments say
     real(rk),save :: VALUES(9) = (/ 0.1_rk, epsilon(values), epsilon(values), &
-                                    0.1*huge(values), 0.01_rk, 0.0_rk, 0.0_rk, &
-                                    0.0_rk, 0.0_rk /)
+                                  & 0.1*huge(values), 0.01_rk, 0.0_rk, 0.0_rk, &
+                                  & 0.0_rk, 0.0_rk /)
     real(rk),save :: VALNOM(9) = (/ 0.1_rk, epsilon(values), epsilon(values), &
-                                    0.1*huge(values), 0.01_rk, 0.0_rk, 0.0_rk, &
-                                    0.0_rk, 0.0_rk /)
+                                  & 0.1*huge(values), 0.01_rk, 0.0_rk, 0.0_rk, &
+                                  & 0.0_rk, 0.0_rk /)
     integer :: IVAL(2) ! for error messages
 
 !*************** Start of executable code ******************
 
     if ( first ) then
-      valnom(7) = sqrt(sqrt(tiny(values))) ** 3
-      valnom(8) = sqrt(sqrt(epsilon(values))) ** 3
+      valnom(7) = sqrt(sqrt(tiny(values)))**3
+      valnom(8) = sqrt(sqrt(epsilon(values)))**3
       values(7:8) = valnom(7:8)
       first = .false.
     end if
     if ( present(nopt) ) then
-      if ( .not. present(xopt) ) then
+      if ( .not.present(xopt) ) then
         call ermsg ( me, 99, 2, 'NOPT present but XOPT absent', '.' )
         return
       end if
@@ -1050,28 +1213,28 @@ contains
       do while ( nopt(i) /= 0 )
         k = nopt(i)
         ka = abs(k)
-        select case ( ka )
+        select case (ka)
 !****************** Change *DATA* values *******************
-        case ( 1, 2 ) ! Set K1IT
+        case ( 1, 2 )      ! Set K1IT
           if ( k > 0 ) iopts(ka) = nopt(i+1)
           k1it = max(iopts(1),iopts(2))
-        case ( 3, 4, 7, 8 ) ! Change XSCAL and FSCAL indexes in data
-                            ! or set up bounds option in data
+        case ( 3, 4, 7, 8) ! Change XSCAL and FSCAL indices in data
+                           ! or set up bounds option in data
           if ( k > 0 ) iopts(ka) = nopt(i+1)
-        case ( 5, 6 ) ! Set flags in data for reverse communi-
-                      ! cation and special matrix operations
+        case ( 5, 6 )      ! Set flags in data for reverse communi-
+                           ! cation and special matrix operations
           if ( k > 0 ) iopts(ka) = 1
           i = i - 1
-        case ( 9, 10 ) ! Set to default values
+        case ( 9, 10 )     ! Set to default values
           iopts = 0
           iopts(8) = 150
           values = valnom
           i = i - 1
-        case ( 11:19 ) ! Set in data SPSTRT, SPMINI, AJSCAL,
-                       ! DXMAXI, RELSF, and DXNOIS
+        case ( 11: 19 )    ! Set in data SPSTRT, SPMINI, AJSCAL,
+                           ! DXMAXI, RELSF, and DXNOIS
           values(ka-10) = valnom(ka-10) ! Reset to nominal value
           if ( k > 0 ) & ! If indicated, set to user input value
-            values(ka-10) = xopt(nopt(i+1))
+          values(ka-10) = xopt(nopt(i+1))
         case default
           indic = 1
           nact = 2
@@ -1085,6 +1248,7 @@ contains
       end do
     else
       k1it = max(iopts(1),iopts(2))
+      aj%where_to = nf_start
     end if
 !                     Reset every time one of them changes
     spmini = values(2)
@@ -1112,25 +1276,28 @@ contains
     type (NWT_T), intent(in), optional :: AJ
     integer, intent(in), optional :: WIDTH
     integer, intent(in), optional :: LEVEL ! Absent, do everything
-    ! Present and 1 do everything
-    ! Present and 0 do CDXDXL, CGDX, DXN, FN, FNMIN, INC, SP, SQ, SQRT(FNXE)
+    ! Present and 1 (default) do everything
+    ! Present and 0 don't do internal variables,
+    ! and if AJ is present skip AXMAX, AXMAXB, CAIT, DXI, DXNL, FNMINB,
+    !   FNORMB, FNORML, FRZB, FRZL, GRADNB, GRADNL, from AJ
     character(len=*), intent(in), optional :: WHY ! printed if present
 
-!   namelist /DNWTDB_OUT/ AJN, AJSCAL, CAIT, CDXDXL, CONDAI, DIAG
-!   namelist /DNWTDB_OUT/ DXI, DXINC, DXMAXI, DXN, DXNBIG, DXNL, DXNOIS
-!   namelist /DNWTDB_OUT/ FN, FNB, FNL, FNMIN, FNXE, FRZ, FRZB
-!   namelist /DNWTDB_OUT/ FRZL, GFAC, GRADN, GRADNB, GRADNL
-!   namelist /DNWTDB_OUT/ IFL, INC, ITER, ITKEN
+!   namelist /DNWTDB_OUT/ AJSCAL
+!   namelist /DNWTDB_OUT/ DXMAXI, DXNOIS
+!   namelist /DNWTDB_OUT/ INC, ITER, ITKEN
 !   namelist /DNWTDB_OUT/ K1IT, KB
-!   namelist /DNWTDB_OUT/ NFL
-!   namelist /DNWTDB_OUT/ RELSF, SPACT, SPB, SPFAC, SPG, SPINC, SPL, SPMINI
-!   namelist /DNWTDB_OUT/ SPSTRT, SQB, SQL, SQMIN
+!   namelist /DNWTDB_OUT/ RELSF, SPMINI
+!   namelist /DNWTDB_OUT/ SPSTRT
 
     integer :: I                        ! Which one in the line is being worked
-    character(len=9) :: IFLname, NFLname
+    character(len=9) :: Where_To_Name
     integer :: MyLevel, MyWidth
     character(len=132) :: Name_Line     ! For names
     character(len=132) :: Output_Line   ! For values
+
+    interface Add_To_Line
+      procedure Add_To_Line_I, Add_To_Line_L, Add_To_Line_R
+    end interface
 
     myLevel = 1
     if ( present(level) ) myLevel = level
@@ -1139,70 +1306,33 @@ contains
     if ( myLevel == 0 ) myWidth = min(8,myWidth)
 
     output_line = '-----     DNWT internal variables     ----------------------&
-      &------------------------------------------------------------------'
+    &------------------------------------------------------------------'
     call output ( output_line(1:14*myWidth), advance='yes' )
 
-    call flagName ( ifl, iflName ); call flagName ( nfl, nflName )
+    call flagName ( aj%where_to, where_to_name )
 
-!   write ( *, '(a)' ) &
-    call output( &
-      & '       IFL        INC    ITER   ITKEN    K1IT      KB       NFL' )
+    call output (  &
+      & '  WHERE_TO        INC    ITER   ITKEN    K1IT      KB' )
     if ( present(why) ) call output ( '  WHY' )
-    call output ( '', advance='yes' )
-    write ( output_line, '(1x,a9,i11,4i8,1x,a9)' ) adjustr(iflName), INC, ITER, &
-      & ITKEN, K1IT, KB, adjustr(nflName)
+    call newLine
+    write ( output_line, '(1x,a9,i11,4i8,1x,a9)' ) adjustr(where_to_name), INC, &
+         & ITER, ITKEN, K1IT, KB
     call output ( trim(output_line) )
-    if ( present(why) ) call output ( '  ' // trim(why) )
-    call output ( '', advance='yes' )
+    if ( present(why) ) call output ( '  '//trim(why) )
+    call newLine
 
     i = 1
     name_line = ''
     output_line = ''
-    call add_to_line ( ajn,    'AJN' )
     if ( myLevel > 0 ) call add_to_line ( ajscal, 'AJSCAL' )
-    if ( myLevel > 0 ) call add_to_line ( axmax,  'AXMAX' )
-    if ( myLevel > 0 ) call add_to_line ( axmaxb, 'AXMAXB' )
-    if ( myLevel > 0 ) call add_to_line ( cait,   'CAIT' )
-    call add_to_line ( cdxdxl, 'CDXDXL' )
-    call add_to_line ( cgdx,   'CGDX' )
-    call add_to_line ( condai, 'CONDAI' )
-    call add_to_line ( diag,   'DIAG' )
-    if ( myLevel > 0 ) call add_to_line ( dxi,    'DXI' )
-    call add_to_line ( dxinc,  'DXINC' )
     if ( myLevel > 0 ) call add_to_line ( dxmaxi, 'DXMAXI' )
-    call add_to_line ( dxn,    'DXN' )
-    if ( myLevel > 0 ) call add_to_line ( dxnbig, 'DXNBIG' )
-    if ( myLevel > 0 ) call add_to_line ( dxnl,   'DXNL' )
     if ( myLevel > 0 ) call add_to_line ( dxnois, 'DXNOIS' )
-    call add_to_line ( fn,     'FN ')
-    if ( myLevel > 0 ) call add_to_line ( fnb,    'FNB' )
-    if ( myLevel > 0 ) call add_to_line ( fnl,    'FNL' )
-    call add_to_line ( fnmin,  'FNMIN' )
-    if ( myLevel > 0 ) call add_to_line ( fnminb,  'FNMINB' )
-    call add_to_line ( sqrt(fnxe),   'FNXE**.5' )
-    call add_to_line ( frz,    'FRZ' )
-    if ( myLevel > 0 ) call add_to_line ( frzb,   'FRZB' )
-    if ( myLevel > 0 ) call add_to_line ( frzl ,  'FRZL' )
-    if ( myLevel > 0 ) call add_to_line ( gfac,   'GFAC' )
-    call add_to_line ( gradn,  'GRADN' )
-    if ( myLevel > 0 ) call add_to_line ( gradnb, 'GRADNB' )
-    if ( myLevel > 0 ) call add_to_line ( gradnl, 'GRADNL' )
     if ( myLevel > 0 ) call add_to_line ( relsf,  'RELSF' )
-    call add_to_line ( sp,     'SP ')
-    if ( myLevel > 0 ) call add_to_line ( spact,  'SPACT' )
-    if ( myLevel > 0 ) call add_to_line ( spb,    'SPB' )
-    if ( myLevel > 0 ) call add_to_line ( spfac,  'SPFAC' )
-    if ( myLevel > 0 ) call add_to_line ( spg,    'SPG' )
-    if ( myLevel > 0 ) call add_to_line ( spinc,  'SPINC' )
-    call add_to_line ( spl,    'SPL' )
     if ( myLevel > 0 ) call add_to_line ( spmini, 'SPMINI' )
     if ( myLevel > 0 ) call add_to_line ( spstrt, 'SPSTRT' )
-    call add_to_line ( sq,     'SQ ')
-    if ( myLevel > 0 ) call add_to_line ( sqb,    'SQB' )
-    if ( myLevel > 0 ) call add_to_line ( sql,    'SQL' )
     if ( myLevel > 0 ) call add_to_line ( tolxa,  'TOLXA' )
     if ( myLevel > 0 ) call add_to_line ( tolxr,  'TOLXR' )
-    if ( i /= 1 ) call print_lines
+    if ( i/=1 ) call print_lines
 
     if ( present(aj) ) then
       output_line = '-----     DNWT external variables     ----------------------&
@@ -1210,29 +1340,55 @@ contains
       call output ( output_line(1:14*myWidth), advance='yes' )
       output_line = ''
 
-      call add_to_line ( aj%ajn,    'AJN' )
-      call add_to_line ( aj%axmax,  'AXMAX' )
-      call add_to_line ( aj%cait,   'CAIT' )
-      call add_to_line ( aj%diag,   'DIAG' )
-      call add_to_line ( aj%dxbad,  'DXBAD' )
-      call add_to_line ( aj%dxfail, 'DXFAIL' )
-      call add_to_line ( aj%dxdx,   'DXDX' )
-      call add_to_line ( aj%dxdxl,  'DXDXL' )
-      call add_to_line ( aj%dxn,    'DXN' )
-      call add_to_line ( aj%dxnl,   'DXNL' )
-      call add_to_line ( aj%fnmin,  'FNMIN' )
-      call add_to_line ( aj%fnorm,  'FNORM' )
-      call add_to_line ( aj%gdx,    'GDX' )
-      call add_to_line ( aj%gfac,   'GFAC' )
-      call add_to_line ( aj%gradn,  'GRADN' )
-      call add_to_line ( aj%qnsq,   'QNSQ' )
-      call add_to_line ( aj%sq,     'SQ' )
-      call add_to_line ( aj%sqmin,  'SQMIN' )
-      call add_to_line ( aj%sqt,    'SQT' )
-      call add_to_line_I ( aj%kfail,    'KFAIL' )
-      call add_to_line_L ( aj%big,      'BIG' )
-      call add_to_line_L ( aj%starting, 'STARTING' )
-      if ( i /= 1 ) call print_lines
+      call add_to_line ( aj%ajn,        'AJN' )
+      if ( myLevel > 0 ) call add_to_line ( aj%axmax,      'AXMAX' )
+      if ( myLevel > 0 ) call add_to_line ( aj%axmaxb,     'AXMAXB' )
+      if ( myLevel > 0 ) call add_to_line ( aj%cait,       'CAIT' )
+      call add_to_line ( aj%cdxdxl,     'CDXDXL' )
+      call add_to_line ( aj%cgdx,       'CGDX' )
+      call add_to_line ( aj%condai,     'CONDAI' )
+      call add_to_line ( aj%diag,       'DIAG' )
+      call add_to_line ( aj%dxbad,      'DXBAD' )
+      if ( myLevel > 0 ) call add_to_line ( aj%dxi,        'DXI' )
+      call add_to_line ( aj%dxinc,      'DXINC' )
+      if ( myLevel > 0 ) call add_to_line ( aj%dxnbig,     'DXNBIG' )
+      call add_to_line ( aj%dxfail,     'DXFAIL' )
+      call add_to_line ( aj%dxdx,       'DXDX' )
+      call add_to_line ( aj%dxdxl,      'DXDXL' )
+      call add_to_line ( aj%dxn,        'DXN' )
+      if ( myLevel > 0 ) call add_to_line ( aj%dxnl,       'DXNL' )
+      call add_to_line ( aj%fnmin,      'FNMIN' )
+      if ( myLevel > 0 ) call add_to_line ( aj%fnminb,     'FNMINB' )
+      call add_to_line ( aj%fnorm,      'FNORM' )
+      if ( myLevel > 0 ) call add_to_line ( aj%fnormb,     'FNORMB' )
+      if ( myLevel > 0 ) call add_to_line ( aj%fnorml,     'FNORML' )
+      call add_to_line ( sqrt(aj%fnxe), 'FNXE**.5')
+      call add_to_line ( aj%frz,        'FRZ' )
+      if ( myLevel > 0 ) call add_to_line ( aj%frzb,       'FRZB' )
+      if ( myLevel > 0 ) call add_to_line ( aj%frzl,       'FRZL' )
+      call add_to_line ( aj%gdx,        'GDX' )
+      if ( myLevel > 0 ) call add_to_line ( aj%gfac,       'GFAC' )
+      call add_to_line ( aj%gradn,      'GRADN' )
+      if ( myLevel > 0 ) call add_to_line ( aj%gradnb,     'GRADNB' )
+      if ( myLevel > 0 ) call add_to_line ( aj%gradnl,     'GRADNL' )
+      call add_to_line ( aj%kfail,      'KFAIL' )
+      call add_to_line ( aj%qnsq,       'QNSQ' )
+      call add_to_line ( aj%sp,         'SP ' )
+      if ( myLevel > 0 ) call add_to_line ( aj%spact,      'SPACT' )
+      if ( myLevel > 0 ) call add_to_line ( aj%spb,        'SPB' )
+      if ( myLevel > 0 ) call add_to_line ( aj%spfac,      'SPFAC' )
+      if ( myLevel > 0 ) call add_to_line ( aj%spg,        'SPG' )
+      if ( myLevel > 0 ) call add_to_line ( aj%spinc,      'SPINC' )
+      call add_to_line ( aj%spl,        'SPL' )
+      call add_to_line ( aj%sq,         'SQ' )
+      if ( myLevel > 0 ) call add_to_line ( aj%sqb,        'SQB' )
+      if ( myLevel > 0 ) call add_to_line ( aj%sql,        'SQL' )
+      call add_to_line ( aj%sqmin,      'SQMIN' )
+      call add_to_line ( aj%sqt,        'SQT' )
+      call add_to_line ( aj%kfail,      'KFAIL' )
+      call add_to_line ( aj%big,        'BIG' )
+      call add_to_line ( aj%starting,   'STARTING' )
+      if ( i /=1 ) call print_lines
 
     end if
     output_line = '------------------------------------------------------------&
@@ -1240,20 +1396,12 @@ contains
     call output ( output_line(1:14*myWidth), advance='yes' )
 
   contains
-    subroutine Add_To_Line ( Value, Name )
-      real(rk), intent(in) :: Value
-      character(len=*), intent(in) :: Name
-      name_line(1+14*(i-1):10+14*(i-1)) = name
-      name_line(1+14*(i-1):10+14*(i-1)) = adjustr(name_line(1+14*(i-1):10+14*(i-1)))
-      write ( output_line(1+14*(i-1):14*i), '(es14.7)' ) value
-      i = i + 1
-      if ( i > myWidth ) call print_lines
-    end subroutine Add_To_Line
     subroutine Add_To_Line_I ( Value, Name )
       integer, intent(in) :: Value
       character(len=*), intent(in) :: Name
       name_line(1+14*(i-1):10+14*(i-1)) = name
-      name_line(1+14*(i-1):10+14*(i-1)) = adjustr(name_line(1+14*(i-1):10+14*(i-1)))
+      name_line(1+14*(i-1):10+14*(i-1)) &
+        & = adjustr(name_line(1+14*(i-1):10+14*(i-1)))
       write ( output_line(1+14*(i-1):10+14*(i-1)), '(I10)' ) value
       i = i + 1
       if ( i > myWidth ) call print_lines
@@ -1262,15 +1410,27 @@ contains
       logical, intent(in) :: Value
       character(len=*), intent(in) :: Name
       name_line(1+14*(i-1):10+14*(i-1)) = name
-      name_line(1+14*(i-1):10+14*(i-1)) = adjustr(name_line(1+14*(i-1):10+14*(i-1)))
+      name_line(1+14*(i-1):10+14*(i-1)) &
+        & = adjustr(name_line(1+14*(i-1):10+14*(i-1)))
       write ( output_line(1+14*(i-1):1+14*(i-1)), '(L1)' ) value
-      output_line(1+14*(i-1):10+14*(i-1)) = adjustr(output_line(1+14*(i-1):10+14*(i-1)))
+      output_line(1+14*(i-1):10+14*(i-1)) &
+        & = adjustr(output_line(1+14*(i-1):10+14*(i-1)))
       i = i + 1
       if ( i > myWidth ) call print_lines
     end subroutine Add_To_Line_L
+    subroutine Add_To_Line_R ( Value, Name )
+      real(rk), intent(in) :: Value
+      character(len=*), intent(in) :: Name
+      name_line(1+14*(i-1):10+14*(i-1)) = name
+      name_line(1+14*(i-1):10+14*(i-1)) &
+        & = adjustr(name_line(1+14*(i-1):10+14*(i-1)))
+      write ( output_line(1+14*(i-1):14*i), '(es14.7)' ) value
+      i = i + 1
+      if ( i > myWidth ) call print_lines
+    end subroutine Add_To_Line_R
     subroutine Print_Lines
-      call output ( trim(name_line), advance='yes' )
-      call output ( trim(output_line), advance='yes' )
+      call output(trim(name_line),advance='yes')
+      call output(trim(output_line),advance='yes')
       i = 1
       name_line = ''
       output_line = ''
@@ -1283,55 +1443,17 @@ contains
   ! Get the private saved variables of DNWT, for debugging purposes
     type(NWT_GUTS), intent(out) :: GUTS
 
-    guts%ajn = ajn
     guts%ajscal = ajscal
-    guts%axmax = axmax
-    guts%axmaxb = axmaxb
-    guts%cait = cait
-    guts%cdxdxl = cdxdxl
-    guts%cgdx = cgdx
-    guts%condai = condai
-    guts%diag = diag
-    guts%dxi = dxi
-    guts%dxinc = dxinc
     guts%dxmaxi = dxmaxi
-    guts%dxn = dxn
-    guts%dxnbig = dxnbig
-    guts%dxnl = dxnl
     guts%dxnois = dxnois
-    guts%fn = fn
-    guts%fnb = fnb
-    guts%fnl = fnl
-    guts%fnmin = fnmin
-    guts%fnminb = fnminb
-    guts%fnxe = fnxe
-    guts%frz = frz
-    guts%frzb = frzb
-    guts%frzl = frzl
-    guts%gfac = gfac
-    guts%gradn = gradn
-    guts%gradnb = gradnb
-    guts%gradnl = gradnl
-    guts%ifl = ifl
     guts%inc = inc
     guts%iter = iter
     guts%itken = itken
     guts%k1it = k1it
     guts%kb = kb
-    guts%nfl = nfl
     guts%relsf = relsf
-    guts%sp = sp
-    guts%spact = spact
-    guts%spb = spb
-    guts%spfac = spfac
-    guts%spg = spg
-    guts%spinc = spinc
-    guts%spl = spl
     guts%spmini = spmini
     guts%spstrt = spstrt
-    guts%sq = sq
-    guts%sqb = sqb
-    guts%sql = sql
     guts%tolxa = tolxa
     guts%tolxr = tolxr
   end subroutine DNWT_GUTS
@@ -1342,63 +1464,60 @@ contains
   ! Return the name of *NWTA's flag
     integer, intent(in) :: NFlag
     character(len=*), intent(out) :: ItsName
-    select case ( nflag )
-    case ( NF_EVALF )
+    select case (nflag)
+    case (NF_EVALF)
       itsName = 'EVALF'
-    case ( NF_EVALJ )
+    case (NF_EVALJ)
       itsName = 'EVALJ'
-    case ( NF_LEV )
+    case (NF_LEV)
       itsName = 'LEV'
-    case ( NF_SOLVE )
+    case (NF_SOLVE)
       itsName = 'SOLVE'
-    case ( NF_NEWX )
+    case (NF_NEWX)
       itsName = 'NEWX'
-    case ( NF_GMOVE )
+    case (NF_GMOVE)
       itsName = 'GMOVE'
-    case ( NF_BEST )
+    case (NF_BEST)
       itsName = 'BEST'
-    case ( NF_AITKEN )
+    case (NF_AITKEN)
       itsName = 'AITKEN'
-    case ( NF_DX )
+    case (NF_DX)
       itsName = 'DX'
-    case ( NF_DX_AITKEN )
+    case (NF_DX_AITKEN)
       itsName = 'DX_AITKEN'
-    case ( NF_START )
+    case (NF_START)
       itsName = 'START'
-    case ( NF_TOLX )
+    case (NF_TOLX)
       itsName = 'TOLX'
-    case ( NF_TOLX_BEST )
+    case (NF_TOLX_BEST)
       itsName = 'TOLX_BEST'
-    case ( NF_TOLF )
+    case (NF_TOLF)
       itsName = 'TOLF'
-    case ( NF_TOO_SMALL )
+    case (NF_TOO_SMALL)
       itsName = 'TOO_SMALL'
-    case ( NF_FANDJ )
+    case (NF_FANDJ)
       itsName = 'FANDJ'
     case default
       itsName = 'What???'
     end select
-  end subroutine FlagName
+  end subroutine FLAGNAME
 
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
-  character (len=*), parameter :: IdParm = &
+    character (len=*), parameter :: IdParm = &
        "$Id$"
-  character (len=len(idParm)) :: Id = idParm
-    not_used_here = (id(1:1) == ModuleName(1:1))
+    character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1)==ModuleName(1:1))
     print *, Id ! .mod files sometimes change if PRINT is added
-  end function not_used_here
+  end function NOT_USED_HERE
 !---------------------------------------------------------------------------
 
-end module DNWT_MODULE
+end module DNWT_Module
 
 ! $Log$
-! Revision 2.55  2018/07/23 22:23:30  vsnyder
-! Correct the comment about initial call to include AJ
-!
-! Revision 2.54  2018/07/23 22:20:21  vsnyder
-! Add AJ to all argument lists for nwt* so the options can be (eventually)
-! stored there instead of as saved module variables.
+! Revision 2.56  2018/07/23 23:29:56  vsnyder
+! Remove ChiSqMinNorm and ChiSqNorm from DNWT AJ structure because DNWT
+! doesn't compute them or use them.
 !
 ! Revision 2.53  2015/05/15 23:41:01  vsnyder
 ! Add FNORMB to AJ
