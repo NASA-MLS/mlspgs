@@ -1638,9 +1638,9 @@ repeat_loop: do ! RepeatLoop
       nwt_opt(1:9) = (/  15, 1,      17, 2,      18, 3,      11, 4, 0 /)
       nwt_xopt(1:4) = (/ toleranceF, toleranceA, toleranceR, initLambda /)
       if ( method == l_newtonian ) then
-        call nwt ( nwt_flag, nwt_xopt, nwt_opt )
+        call nwt ( nwt_flag, aj, nwt_xopt, nwt_opt )
       else
-        call alt_nwt ( nwt_flag, nwt_xopt, nwt_opt )
+        call alt_nwt ( nwt_flag, aj, nwt_xopt, nwt_opt )
       end if
       ! Create the matrix for the Cholesky factor of the normal equations
       call createEmptyMatrix ( factored%m, &
@@ -1742,9 +1742,9 @@ NEWT: do ! Newton iteration
         else ! not taking a special iteration to get J
             if ( d_nin ) then ! Turn on NWTA's internal output
               if ( method == l_newtonian ) then
-                call nwtop ( (/ 1, 1, 0 /), nwt_xopt )
+                call nwtop ( aj, (/ 1, 1, 0 /), nwt_xopt )
               else
-                call alt_nwtop ( (/ 1, 1, 0 /), nwt_xopt )
+                call alt_nwtop ( aj, (/ 1, 1, 0 /), nwt_xopt )
               end if
             end if
           if ( method == l_newtonian ) then
@@ -2999,6 +2999,10 @@ NEWT: do ! Newton iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.358  2018/07/23 22:20:21  vsnyder
+! Add AJ to all argument lists for nwt* so the options can be (eventually)
+! stored there instead of as saved module variables.
+!
 ! Revision 2.357  2017/12/07 01:01:23  vsnyder
 ! Don't use host-associated variable as a DO index
 !
