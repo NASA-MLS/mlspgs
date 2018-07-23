@@ -48,15 +48,16 @@ module DNWT_CLONE
 
 contains
 ! ***************************************************     DNWT     *****
-  subroutine DNWT ( NFLAG, XOPT, NOPT )
+  subroutine DNWT ( NFLAG, AJ, XOPT, NOPT )
 
     integer, intent(out) :: NFLAG
+    type(nwt_t), intent(inout) :: AJ
     real(rk), intent(in) :: XOPT(*)
     integer, intent(in), optional :: NOPT(*)
     nflag = nf_start
     dxn_prev = huge(dxn_prev)
-    if ( present(nopt) ) call alt_nwtop ( nopt, xopt )
-    call alt_nwtop ( ) ! default initialization
+    if ( present(nopt) ) call alt_nwtop ( aj, nopt, xopt )
+    call alt_nwtop ( aj ) ! default initialization
     return
   end subroutine DNWT
 
@@ -108,10 +109,11 @@ contains
   end subroutine DNWTDB
 
 ! *************************************************     DNWTOP     *****
-  subroutine DNWTOP ( NOPT, XOPT )
+  subroutine DNWTOP ( AJ, NOPT, XOPT )
     ! Process option vector for DNWT.  With no arguments, does default
     ! initialization.
     use ERMSG_M, only: ERMSG, ERVN
+    type (NWT_T), intent(in) :: AJ
     integer, intent(in), optional :: NOPT(*)
     real(rk), intent(in), optional :: XOPT(*)
 
@@ -208,6 +210,10 @@ contains
 end module DNWT_CLONE
 
 ! $Log$
+! Revision 2.10  2018/07/23 22:20:21  vsnyder
+! Add AJ to all argument lists for nwt* so the options can be (eventually)
+! stored there instead of as saved module variables.
+!
 ! Revision 2.9  2009/06/23 18:46:18  pwagner
 ! Prevent Intel from optimizing ident string away
 !
