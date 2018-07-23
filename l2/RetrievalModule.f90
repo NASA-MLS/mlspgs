@@ -139,6 +139,8 @@ contains
     type(vector_T), pointer :: Apriori  ! A priori estimate of state
     type(vector_T), pointer :: AprioriFraction ! How much of result is apriori, in [0..1]
     real(r8) :: AprioriScale            ! Weight for apriori, default 1.0
+    real(r8) :: ChiSqMinNorm            ! AJ%FNMIN / no degrees of freedom
+    real(r8) :: ChiSqNorm               ! AJ%FNORM / no degrees of freedom
     integer :: ColumnScaling            ! one of l_apriori, l_covariance,
                                         ! l_none or l_norm
     integer, pointer, dimension(:) :: ConfigIndices    ! In ConfigDatabase
@@ -1367,8 +1369,8 @@ repeat_loop: do ! RepeatLoop
       call fillDiagQty ( diagnostics,  l_dnwt_ajn, aj%ajn )
       call fillDiagQty ( diagnostics,  l_dnwt_axmax, aj%axmax )
       call fillDiagQty ( diagnostics,  l_dnwt_cait, aj%cait )
-      call fillDiagQty ( diagnostics,  l_dnwt_chiSqMinNorm, aj%chiSqMinNorm )
-      call fillDiagQty ( diagnostics,  l_dnwt_chiSqNorm, aj%chiSqNorm )
+      call fillDiagQty ( diagnostics,  l_dnwt_chiSqMinNorm, chiSqMinNorm )
+      call fillDiagQty ( diagnostics,  l_dnwt_chiSqNorm, chiSqNorm )
       call fillDiagQty ( diagnostics,  l_dnwt_diag, aj%diag )
       call fillDiagQty ( diagnostics,  l_dnwt_dxdx, aj%dxdx )
       call fillDiagQty ( diagnostics,  l_dnwt_dxdxl, aj%dxdxl )
@@ -2321,8 +2323,8 @@ NEWT: do ! Newton iteration
           end if
           ! Compute the normalised chiSquared statistics etc.
           dof = max ( jacobian_rows - jacobian_cols, 1 )
-          aj%chiSqMinNorm = aj%fnmin / dof
-          aj%chiSqNorm = aj%fnorm / dof
+          chiSqMinNorm = aj%fnmin / dof
+          chiSqNorm = aj%fnorm / dof
           aj%fnmin = sqrt(aj%fnmin)
           aj%fnorm = sqrt(aj%fnorm)
           call copyVectorMask ( v(gradient), v(x) )
@@ -2331,7 +2333,7 @@ NEWT: do ! Newton iteration
               call dump ( (/ aj%fnorm, aj%fnmin, aj%diag, aj%ajn, aj%gradn /), &
                 & '     | F |      aj%fnmin       aj%diag      L1| FAC |        | G |', &
                 & options='c' )
-              call dump ( (/ aj%chiSqNorm, aj%chiSqMinNorm, dof /), &
+              call dump ( (/ chiSqNorm, chiSqMinNorm, dof /), &
                 & ' chi^2/DOF  chimin^2/DOF           DOF ', options='c' )
             end if
         case ( nf_lev ) ! ..................................  LEV  .....
@@ -2739,10 +2741,10 @@ NEWT: do ! Newton iteration
       end do NEWT ! Newton iteration
 
       dof = max ( jacobian_rows - jacobian_cols, 1 )
-      aj%chiSqNorm = aj%fnorm / dof
+      chiSqNorm = aj%fnorm / dof
       aj%fnorm = sqrt(aj%fnorm)
         if ( d_sca ) &
-          & call dump ( (/ aj%fnorm, aj%chiSqNorm, dof /) , &
+          & call dump ( (/ aj%fnorm, chiSqNorm, dof /) , &
           & '     | F |    chi^2/DOF           DOF ', options='c' )
 
         if ( d_ndb >= 1 ) then
@@ -2999,6 +3001,10 @@ NEWT: do ! Newton iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.359  2018/07/23 23:29:56  vsnyder
+! Remove ChiSqMinNorm and ChiSqNorm from DNWT AJ structure because DNWT
+! doesn't compute them or use them.
+!
 ! Revision 2.358  2018/07/23 22:20:21  vsnyder
 ! Add AJ to all argument lists for nwt* so the options can be (eventually)
 ! stored there instead of as saved module variables.
