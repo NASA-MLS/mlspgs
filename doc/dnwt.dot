@@ -1,0 +1,70 @@
+digraph DNWT
+
+{
+
+size = "5.7,7.5";
+ratio = auto;
+layout = dot;
+
+Start [ style=filled, color=lawngreen, fontsize = 24 ] ;
+
+TolF [ style=filled, fillcolor = lightblue ] ;
+TolX [ style=filled, fillcolor = lightblue ] ;
+TolX_Best [ style=filled, fillcolor = lightblue label="TolX Best" ] ;
+
+too_small [ style=filled, fillcolor = pink label="Too Small" ] ;
+FandJ [ style=filled, fillcolor = pink ] ;
+
+Start -> EvalF ;
+Start -> Gmove ;
+
+EvalF -> FandJ ;
+EvalF -> Gmove ;
+EvalF -> EvalJ ;
+EvalF -> TolX ;
+EvalF -> TolX_Best ;
+
+EvalJ -> TolF ;
+EvalJ -> Solve ;
+
+Solve -> Gmove ;
+Solve -> Best ;
+Solve -> dx ;
+Solve -> Lev ;
+Solve -> TolX ;
+Solve -> TolX_Best ;
+
+Lev -> Solve ;
+
+NewX -> Gmove ;
+NewX -> too_small ;
+NewX -> EvalF ;
+
+Gmove -> NewX ;
+
+Best -> dx ;
+Best -> Aitken ;
+
+Aitken -> dx_Aitken ;
+Aitken -> dx ;
+
+dx -> NewX ;
+
+dx_Aitken [ label="dx Aitken" ] ;
+dx_Aitken -> NewX ;
+
+TolX -> Best ;
+
+TolX_Best -> Best ;
+
+TolF -> Solve ;
+
+too_small -> Gmove ;
+
+FandJ -> Gmove ;
+
+}
+
+// $Id$
+
+// $Log$
