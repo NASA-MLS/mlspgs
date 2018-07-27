@@ -35,7 +35,7 @@ module ReadAPriori
     & MLS_HDF_Version, MLS_Inqswath, MLS_OpenFile, Split_Path_Name
   use MLSL2Options, only: CheckPaths, Default_HDFVersion_Read, L2CFNode, &
     & RuntimeValues, SpecialDumpFile, Toolkit, &
-    & DumpMacros, MLSMessage
+    & DumpMacros, MLSL2Message
   use MLSL2Timings, only: AddPhaseToPhaseNames
   use MLSMessageModule, only: MLSMsg_Error, MLSMsg_Warning, DumpConfig
   use MLSPCF2, only: &
@@ -284,8 +284,8 @@ contains ! =====     Public Procedures     =============================
       call dump( trim(APrioriFiles%geos5), 'geos5 files' )
     end if
     if ( ERROR/=0 ) then
-      call MLSMessage(MLSMSG_Error,ModuleName, &
-        & 'Problem with read_apriori section')
+      call MLSL2Message ( MLSMSG_Error,ModuleName, &
+        & 'Problem with read_apriori section' )
     end if
 
     call trace_end( "read_apriori", cond=section_times .or. toggle(gen) )
@@ -596,7 +596,7 @@ contains ! =====     Public Procedures     =============================
       select case ( griddedOrigin )
       case ( l_none ) ! ----------- Just a declaration to use later
         ! Should not have come here with readGriddedData command
-        if ( associated(grid) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        if ( associated(grid) ) call MLSL2Message ( MLSMSG_Error, ModuleName, &
           & 'origin should be sensible for readGriddeddata, "none" is not' )
         description = 'none'
         ! The gridded data needs to part of the database, even if the file
@@ -924,7 +924,7 @@ contains ! =====     Public Procedures     =============================
             & 'read_climatology unsuccessful--check file name and path' )
             ! Now crash gracefully instead of getting a reference to a
             ! disassociated GriddedDatabase pointer.
-            call MLSMessage ( MLSMSG_Error, ModuleName, &
+            call MLSL2Message ( MLSMSG_Error, ModuleName, &
             & 'read_climatology unsuccessful--check file name and path' )
           end if
           if ( Debug ) call outputNamedValue( 'climatology desc.', &
@@ -1106,11 +1106,11 @@ contains ! =====     Public Procedures     =============================
       noSwaths = mls_InqSwath ( fileNameString, allSwathNames, listSize, &
        & hdfVersion=hdfVersion )
       if ( listSize == FILENOTFOUND ) then
-        call MLSMessage ( MLSMSG_Error, ModuleName, &
+        call MLSL2Message ( MLSMSG_Error, ModuleName, &
           & 'File not found; make sure the name and path are correct' &
           & // trim(fileNameString), MLSFile=L2GPFile )
       else if ( listSize < 1 ) then
-        call MLSMessage ( MLSMSG_Error, ModuleName, &
+        call MLSL2Message ( MLSMSG_Error, ModuleName, &
           & 'Failed to determine swath names, perhaps none in file ' &
           & // trim(fileNameString), MLSFile=L2GPFile )
       else if ( listSize < len(allSwathNames) ) then
@@ -1118,7 +1118,7 @@ contains ! =====     Public Procedures     =============================
         if ( commaPos == 0 ) then
           commaPos = len_trim(allSwathNames)
         else if ( commaPos == 1 ) then
-          call MLSMessage ( MLSMSG_Error, ModuleName, &
+          call MLSL2Message ( MLSMSG_Error, ModuleName, &
           & 'Failed to determine swath name, allswathnames begin with , ' &
           & // trim(fileNameString), MLSFile=L2GPFile )
         else
@@ -1126,13 +1126,13 @@ contains ! =====     Public Procedures     =============================
         end if
         swathNameString = allSwathNames ( 1:commaPos )
       else
-        call MLSMessage ( MLSMSG_Error, ModuleName, &
+        call MLSL2Message ( MLSMSG_Error, ModuleName, &
           & 'Failed to determine swath names, string too long.' &
           & // trim(fileNameString), MLSFile=L2GPFile )
       end if
     end if
     if ( swathNameString == ' ' ) then
-      call MLSMessage ( MLSMSG_Error, ModuleName, &
+      call MLSL2Message ( MLSMSG_Error, ModuleName, &
         & 'Failed to determine swath name, obscure error on ' &
         & // trim(fileNameString), MLSFile=L2GPFile )
     end if
@@ -1217,7 +1217,7 @@ contains ! =====     Public Procedures     =============================
     verbose = ( switchDetail(switches, 'apr') > 0 )
     if ( verbose ) call dump( MLSFile )
     if ( MLSFile%hdfVersion /= HDFVERSION_5 ) then
-      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+      call MLSL2Message ( MLSMSG_Warning, ModuleName, &
         & 'Wrong hdfVersion--can read apriori attributes for hdf5 only', &
         & MLSFile=MLSFile )
       return ! Can only do this for hdf5 files
@@ -1252,7 +1252,7 @@ contains ! =====     Public Procedures     =============================
     verbose = ( switchDetail(switches, 'apr') > 0 )
     if ( verbose ) call output( 'Reading apriori attributes', advance='yes' )
     if ( hdfVersion /= HDFVERSION_5 ) then
-      call MLSMessage ( MLSMSG_Warning, whereami, &
+      call MLSL2Message ( MLSMSG_Warning, whereami, &
         & 'Wrong hdfVersion--can read apriori attributes for hdf5 only' )
       return ! Can only do this for hdf5 files
     end if
@@ -1264,38 +1264,38 @@ contains ! =====     Public Procedures     =============================
     status = HE5_EHRDGLATT(fileID, &
      & 'A Priori l2gp', APrioriFiles%l2gp)
     if ( status /= 0 ) &
-      &  call MLSMessage ( MLSMSG_Warning, whereami, &
+      &  call MLSL2Message ( MLSMSG_Warning, whereami, &
       & 'Problem reading APrioriFiles%l2gp' // trim(APrioriFiles%l2gp) )
     status = HE5_EHRDGLATT(fileID, &
      & 'A Priori l2aux', APrioriFiles%l2aux)
     if ( status /= 0 ) &
-      &  call MLSMessage ( MLSMSG_Warning, whereami, &
+      &  call MLSL2Message ( MLSMSG_Warning, whereami, &
       & 'Problem reading APrioriFiles%l2aux' // trim(APrioriFiles%l2aux) )
     status = HE5_EHRDGLATT(fileID, &
      & 'A Priori ncep', APrioriFiles%ncep)
     if ( status /= 0 ) &
-      &  call MLSMessage ( MLSMSG_Warning, whereami, &
+      &  call MLSL2Message ( MLSMSG_Warning, whereami, &
       & 'Problem reading APrioriFiles%ncep' // trim(APrioriFiles%ncep) )
     status = HE5_EHRDGLATT(fileID, &
      & 'A Priori gmao', APrioriFiles%dao)
     if ( status /= 0 ) &
-      &  call MLSMessage ( MLSMSG_Warning, whereami, &
+      &  call MLSL2Message ( MLSMSG_Warning, whereami, &
       & 'Problem reading APrioriFiles%dao' // trim(APrioriFiles%dao) )
     status = HE5_EHRDGLATT(fileID, &
      & 'A Priori geos5', APrioriFiles%geos5)
     if ( status /= 0 ) &
-      &  call MLSMessage ( MLSMSG_Warning, whereami, &
+      &  call MLSL2Message ( MLSMSG_Warning, whereami, &
       & 'Problem reading APrioriFiles%geos5' // trim(APrioriFiles%geos5) )
     status = HE5_EHRDGLATT(fileID, &
      &  'geos5 type', APrioriFiles%geos5description)
     if ( status /= 0 ) &
-      &  call MLSMessage ( MLSMSG_Warning, whereami, &
+      &  call MLSL2Message ( MLSMSG_Warning, whereami, &
       & 'Problem reading APrioriFiles%geos5description' // &
       &  trim(APrioriFiles%geos5description) )
     status = HE5_EHRDGLATT(fileID, &
      &  'MiscNotes', GlobalAttributes%MiscNotes)
     if ( status /= 0 ) &
-      &  call MLSMessage ( MLSMSG_Warning, whereami, &
+      &  call MLSL2Message ( MLSMSG_Warning, whereami, &
       & 'Problem reading GlobalAttributes%MiscNotes' // &
       &  trim(GlobalAttributes%MiscNotes) )
   end subroutine readAPrioriAttributes_ID
@@ -1306,7 +1306,7 @@ contains ! =====     Public Procedures     =============================
     logical, optional, intent(in) :: DontReplace
     ! Executable
     if ( MLSFile%hdfVersion /= HDFVERSION_5 ) then
-      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+      call MLSL2Message ( MLSMSG_Warning, ModuleName, &
         & 'Wrong hdfVersion--can write apriori attributes for hdf5 only', &
         & MLSFile=MLSFile )
       return ! Can only do this for hdf5 files
@@ -1338,7 +1338,7 @@ contains ! =====     Public Procedures     =============================
     verbose = ( switchDetail(switches, 'apr') > 0 )
     if ( verbose ) call output( 'Writing apriori attributes', advance='yes' )
     if ( hdfVersion /= HDFVERSION_5 ) then
-      call MLSMessage ( MLSMSG_Warning, whereami, &
+      call MLSL2Message ( MLSMSG_Warning, whereami, &
         & 'Wrong hdfVersion--can write apriori attributes for hdf5 only' )
       return ! Can only do this for hdf5 files
     end if
@@ -1355,44 +1355,44 @@ contains ! =====     Public Procedures     =============================
      & 'A Priori l2gp', MLS_CHARTYPE, 1, &
      &  trim(APrioriFiles%l2gp))
     if ( status /= 0 ) &
-      &  call MLSMessage ( MLSMSG_Warning, whereami, &
+      &  call MLSL2Message ( MLSMSG_Warning, whereami, &
       & 'Problem writing APrioriFiles%l2gp' // trim(APrioriFiles%l2gp) )
     status = mls_EHwrglatt(fileID, &
      & 'A Priori l2aux', MLS_CHARTYPE, 1, &
      &  trim(APrioriFiles%l2aux))
     if ( status /= 0 ) &
-      &  call MLSMessage ( MLSMSG_Warning, whereami, &
+      &  call MLSL2Message ( MLSMSG_Warning, whereami, &
       & 'Problem writing APrioriFiles%l2aux' // trim(APrioriFiles%l2aux) )
     status = mls_EHwrglatt(fileID, &
      & 'A Priori ncep', MLS_CHARTYPE, 1, &
      &  trim(APrioriFiles%ncep))
     if ( status /= 0 ) &
-      &  call MLSMessage ( MLSMSG_Warning, whereami, &
+      &  call MLSL2Message ( MLSMSG_Warning, whereami, &
       & 'Problem writing APrioriFiles%ncep' // trim(APrioriFiles%ncep) )
     status = mls_EHwrglatt(fileID, &
      & 'A Priori gmao', MLS_CHARTYPE, 1, &
      &  trim(APrioriFiles%dao))
     if ( status /= 0 ) &
-      &  call MLSMessage ( MLSMSG_Warning, whereami, &
+      &  call MLSL2Message ( MLSMSG_Warning, whereami, &
       & 'Problem writing APrioriFiles%dao' // trim(APrioriFiles%dao) )
     status = mls_EHwrglatt(fileID, &
      & 'A Priori geos5', MLS_CHARTYPE, 1, &
      &  trim(APrioriFiles%geos5))
     if ( status /= 0 ) &
-      &  call MLSMessage ( MLSMSG_Warning, whereami, &
+      &  call MLSL2Message ( MLSMSG_Warning, whereami, &
       & 'Problem writing APrioriFiles%geos5' // trim(APrioriFiles%geos5) )
     status = mls_EHwrglatt(fileID, &
      & 'geos5 type', MLS_CHARTYPE, 1, &
      &  trim(APrioriFiles%geos5description))
     if ( status /= 0 ) &
-      &  call MLSMessage ( MLSMSG_Warning, whereami, &
+      &  call MLSL2Message ( MLSMSG_Warning, whereami, &
       & 'Problem writing APrioriFiles%geos5description' // &
       & trim(APrioriFiles%geos5description) )
     status = mls_EHwrglatt(fileID, &
       & 'MiscNotes', MLS_CHARTYPE, 1, &
       &  GlobalAttributes%MiscNotes)
     if ( status /= 0 ) &
-      &  call MLSMessage ( MLSMSG_Warning, whereami, &
+      &  call MLSL2Message ( MLSMSG_Warning, whereami, &
       & 'Problem writing MiscNotes' // &
       & trim(GlobalAttributes%MiscNotes) )
   end subroutine writeAPrioriAttributes_ID
@@ -1520,6 +1520,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.126  2018/07/27 23:19:53  pwagner
+! Renamed level 2-savvy MLSMessage MLSL2Message
+!
 ! Revision 2.125  2018/03/22 18:14:28  pwagner
 ! Added command IsFileAbsent; may occur in ReadApriori, MergeGrids, and Output sections
 !
