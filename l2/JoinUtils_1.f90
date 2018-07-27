@@ -28,7 +28,7 @@ module JoinUtils_1                     ! Direct write chunk by chunk
    use MLSFiles, only: MLS_CloseFile
    use MLSFinds, only: FindFirst
    use MLSHDFeos, only: MLS_Swath_In_File
-   use MLSL2Options, only: MaxChunkSize, MLSMessage, &
+   use MLSL2Options, only: MaxChunkSize, MLSL2Message, &
      & Toolkit
    use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning
    use MLSStringLists, only: SwitchDetail
@@ -163,7 +163,7 @@ contains ! =====     Public Procedures     =============================
         & createThisSource, returnStatus )
       if(DEEBUG)print*,'Got out of MLS_SWATH_IN_FILE'
       if ( returnStatus /= 0 ) then
-        call MLSMessage(MLSMSG_Warning, ModuleName, &
+        call MLSL2Message ( MLSMSG_Warning, ModuleName, &
           & 'Unable to check on swath in ' // trim(thisDirect%FileNameBase) )
       end if
       if(DEEBUG) call dump( createThisSource, 'createThisSource' )
@@ -323,7 +323,7 @@ contains ! =====     Public Procedures     =============================
         if ( parallel%slave) then
           call Announce_Error ( son, no_error_code, &
             & "NumPermitted=0", penalty=0 )
-          call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          call MLSL2Message ( MLSMSG_Warning, ModuleName, &
             & 'No sources permitted for writing to  ' // trim(thisDirect%FileNameBase) )
           call FinishedDirectWrite ( ticket )
         else
@@ -347,7 +347,7 @@ contains ! =====     Public Procedures     =============================
         call add_metadata ( node, thisDirect%fileNameBase, L2MetaData, &
           & DirectFile%hdfVersion, l_swath, errortype, NumPermitted, &
           & thisDirect%sdNames )
-        if ( errortype /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        if ( errortype /= 0 ) call MLSL2Message ( MLSMSG_Error, ModuleName, &
           & 'DirectWriteCommand unable to addmetadata to ' // trim(thisDirect%FileNameBase), &
           & MLSFile=directFile )
       end if
@@ -517,7 +517,7 @@ contains ! =====     Public Procedures     =============================
         if ( parallel%slave) then
           call Announce_Error ( son, no_error_code, &
             & "NumPermitted=0", penalty=0 )
-          call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          call MLSL2Message ( MLSMSG_Warning, ModuleName, &
             & 'No sources permitted for writing to  ' // trim(thisDirect%FileNameBase) )
           call FinishedDirectWrite ( ticket )
         else
@@ -661,7 +661,7 @@ contains ! =====     Public Procedures     =============================
         if ( parallel%slave) then
           call Announce_Error ( son, no_error_code, &
             & "NumPermitted=0", penalty=0 )
-          call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          call MLSL2Message ( MLSMSG_Warning, ModuleName, &
             & 'No sources permitted for writing to  ' // trim(thisDirect%FileNameBase) )
           call FinishedDirectWrite ( ticket )
         else
@@ -735,6 +735,9 @@ end module JoinUtils_1
 
 !
 ! $Log$
+! Revision 2.3  2018/07/27 23:18:48  pwagner
+! Renamed level 2-savvy MLSMessage MLSL2Message
+!
 ! Revision 2.2  2018/04/13 00:20:12  pwagner
 ! Plain hdf DirectWrites and -Reads are now 'auto'
 !
