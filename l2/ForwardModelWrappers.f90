@@ -441,8 +441,8 @@ contains ! ============= Public Procedures ==========================
     use MatrixModule_0, only: DestroyBlock, M_Absent, M_Banded, M_Full
     use MatrixModule_1, only: FindBlock, CreateBlock, Dump, Matrix_t
     use MLSKinds, only: RM, RV
-    use MLSL2Options, only: MLSMessage
-    use MLSMessageModule, only: MLSMSG_Error
+    use MLSL2Options, only: MLSL2Message
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use Output_m, only: Output
     use Toggles, only: EMIT, Levels, Toggle
     use Trace_m, only: Trace_Begin, Trace_End
@@ -553,10 +553,10 @@ contains ! ============= Public Procedures ==========================
           case ( m_banded )
             if ( ubound(Jacobian%block(jRow,jCols(jCol))%values,1) /= &
                & Jacobian%row%nelts(jRow) ) &
-                 & call MLSMessage ( MLSMSG_Error, moduleName, &
+                 & call MLSL2Message ( MLSMSG_Error, moduleName, &
                    & 'Band structure wrong for Transformed MIF block' )
           case default
-            call MLSMessage ( MLSMSG_Error, moduleName, &
+            call MLSL2Message ( MLSMSG_Error, moduleName, &
               & 'Transformed MIF block neither absent or banded' )
           end select
           do vSurf = 1, size(ptan%values,1) ! i in wvs-107 and wvs-114,
@@ -603,7 +603,7 @@ contains ! ============= Public Procedures ==========================
                     & extraJacobian%block(jRow,fCols(inst))%values(cz,surf)
                 case ( m_absent )
                 case default
-                  call MLSMessage ( MLSMSG_Error, moduleName, &
+                  call MLSL2Message ( MLSMSG_Error, moduleName, &
                     & "Transform_FWM_Qty cannot handle sparse or banded blocks" )
                 end select
               end do ! inst
@@ -792,6 +792,9 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelWrappers
 
 ! $Log$
+! Revision 2.81  2018/07/27 23:18:48  pwagner
+! Renamed level 2-savvy MLSMessage MLSL2Message
+!
 ! Revision 2.80  2017/08/10 22:49:05  pwagner
 ! Redirects any SScan forward model call to Scan2D
 !
