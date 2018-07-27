@@ -27,7 +27,7 @@ module OutputAndClose ! outputs all data from the Join module to the
   use MLSHDF5, only: GetHDF5Attribute, MakeHDF5Attribute
   use MLSL2Options, only: Checkpaths, Default_HDFVersion_Write, L2cfnode, &
     & SpecialDumpFile, SkipDirectwrites, Toolkit, &
-    & MLSMessage, WriteFileAttributes
+    & MLSL2Message, WriteFileAttributes
   use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Info, MLSMSG_Warning
   use String_Table, only: Display_String, Get_String
   use Toggles, only: Gen, Toggle, Switches
@@ -356,7 +356,7 @@ contains ! =====     Public Procedures     =============================
         ! Unless outputting l2cf, you must have supplied a quantities field
         ! (parser used to catch this)
         if ( .not. got(f_quantities) .and. output_type /= l_l2cf ) &
-          & call MLSMessage(MLSMSG_Error, ModuleName, &
+          & call MLSL2Message ( MLSMSG_Error, ModuleName, &
           & 'No quantities field in Output command' )
         ! Otherwise--normal output commands
         select case ( output_type )
@@ -381,7 +381,7 @@ contains ! =====     Public Procedures     =============================
           ! I intend to completely ignore the PCF file in this case,
           ! it's not worth the effort!
           ! In that case, I will ignore the possibility of checkPaths being true
-          if ( .not. canWriteL2PC ) call MLSMessage( MLSMSG_Error, ModuleName, &
+          if ( .not. canWriteL2PC ) call MLSL2Message( MLSMSG_Error, ModuleName, &
             & "Cannot write l2pc files with multi chunk l2cf's" )
           destroy = .false.
           packed = .false.
@@ -493,7 +493,7 @@ contains ! =====     Public Procedures     =============================
             & output_type, MLSPCF_L2DGG_Start, MLSPCF_L2DGG_End, &
             & filedatabase, additional )       
         case default
-          call MLSMessage( MLSMSG_Warning, ModuleName, &
+          call MLSL2Message( MLSMSG_Warning, ModuleName, &
           & 'Not yet able to write file attributes to this file type' )
         end select
 
@@ -532,7 +532,7 @@ contains ! =====     Public Procedures     =============================
     end if
 
     if ( error /= 0 ) then
-      call MLSMessage ( MLSMSG_Error, ModuleName, &
+      call MLSL2Message ( MLSMSG_Error, ModuleName, &
         & 'Problem with Output_Close section' )
     end if
 
@@ -699,14 +699,14 @@ contains ! =====     Public Procedures     =============================
          & l2metaData%doiIdentifier )
      end if
      if (returnStatus /= 0) then
-         call MLSMessage ( MLSMSG_Error, ModuleName, &
+         call MLSL2Message ( MLSMSG_Error, ModuleName, &
            &  "While adding metadata failed to GetPCFromRef for " // trim(fileName) )
      else if ( l2gp_mcf <= -999 ) then
-         call MLSMessage ( MLSMSG_Warning, ModuleName, &
+         call MLSL2Message ( MLSMSG_Warning, ModuleName, &
            &  "no mcf for this l2gp species in" // trim(file_base) )
          return
      else if (l2gp_mcf <= 0) then
-         call MLSMessage ( MLSMSG_Error, ModuleName, &
+         call MLSL2Message ( MLSMSG_Error, ModuleName, &
            &  "no mcf for this l2gp species in" // trim(file_base) )
      end if
      
@@ -765,7 +765,7 @@ contains ! =====     Public Procedures     =============================
        & .true., returnStatus, Version, DEBUG, &
        & exactName=PhysicalFilename)
      if (returnStatus /= 0) then
-         call MLSMessage ( MLSMSG_Error, ModuleName, &
+         call MLSL2Message ( MLSMSG_Error, ModuleName, &
            &  "While adding metadata failed to GetPCFromRef for " // trim(fileName) )
      end if
      if ( present(quantityNamesInput) .and. present(numquantitiesperfileInput) ) then
@@ -806,13 +806,13 @@ contains ! =====     Public Procedures     =============================
        & hdfVersion=hdfVersion, metadata_error=metadata_error, &
        & filetype=filetype  )
   case ( l_quantity )
-    call MLSMessage( MLSMSG_Warning, ModuleName, &
+    call MLSL2Message( MLSMSG_Warning, ModuleName, &
       & "Unable to add metadata for the file type of "&
       & // trim(filename) )
   case default
     call announce_error ( node, &
       &  "Error--filetype unrecognized", filetype)
-    call MLSMessage( MLSMSG_Error, ModuleName, &
+    call MLSL2Message( MLSMSG_Error, ModuleName, &
       & "Unrecognized filetype in add_metadata (must be swath or hdf) "&
       & // trim(filename) )
   end select
@@ -1035,24 +1035,24 @@ contains ! =====     Public Procedures     =============================
     end do
     ! Make certain we have everything we need
     if ( ( got(f_repairGeoLocations) .and. .not. got(f_hgrid) ) ) &
-      & call MLSMessage(MLSMSG_Error, ModuleName, &
-      & "Cannot repair Geolocs w/o an HGrid to copy from")
+      & call MLSL2Message ( MLSMSG_Error, ModuleName, &
+      & "Cannot repair Geolocs w/o an HGrid to copy from" )
     if ( .not. associated(HGrids) ) then
       if ( got(f_hgrid) ) &
-      & call MLSMessage(MLSMSG_Error, ModuleName, &
-      & "No HGrids defined yet")
+      & call MLSL2Message ( MLSMSG_Error, ModuleName, &
+      & "No HGrids defined yet" )
     else
       if ( ( size(HGrids) < 1 .and. got(f_hgrid) ) ) &
-      & call MLSMessage(MLSMSG_Error, ModuleName, &
-      & "No HGrids defined yet")
+      & call MLSL2Message ( MLSMSG_Error, ModuleName, &
+      & "No HGrids defined yet" )
     endif
     if ( ( got(f_swath) .and. got(f_exclude) ) ) &
-      & call MLSMessage(MLSMSG_Error, ModuleName, &
-      & "Cannot copy specifying both swaths and excludes")
+      & call MLSL2Message ( MLSMSG_Error, ModuleName, &
+      & "Cannot copy specifying both swaths and excludes" )
     ! To skip or not to skip
     if ( skipCopy ) then
-      call MLSMessage(MLSMSG_Info, ModuleName, &
-      & "No crashed chunks so skipping this copy")
+      call MLSL2Message ( MLSMSG_Info, ModuleName, &
+      & "No crashed chunks so skipping this copy" )
       return
     endif
     if ( .not. got(f_inputtype) ) input_type = output_type
@@ -1098,7 +1098,7 @@ contains ! =====     Public Procedures     =============================
     end select
 
     if ( .not. associated(outputFile) ) then
-      call MLSMessage(MLSMSG_Error, ModuleName, &
+      call MLSL2Message ( MLSMSG_Error, ModuleName, &
         & 'Unable to Copy to ' // trim(PhysicalFilename) )
     endif
     if ( DEBUG ) call dump( outputFile, details=2 )
@@ -1109,7 +1109,7 @@ contains ! =====     Public Procedures     =============================
         & MLSPCF_L2DGM_Start, MLSPCF_L2DGM_End)
       inputFile => GetMLSFileByName(filedatabase, inputPhysicalFilename)
       if ( .not. associated(inputFile) ) then
-        call MLSMessage(MLSMSG_Error, ModuleName, &
+        call MLSL2Message ( MLSMSG_Error, ModuleName, &
           & 'No entry in filedatabase for ' // trim(inputPhysicalFilename) )
       endif
     case ( l_l2gp ) ! --------------------- Copying l2gp files -----
@@ -1117,7 +1117,7 @@ contains ! =====     Public Procedures     =============================
         & MLSPCF_L2GP_Start, MLSPCF_L2GP_End)
       inputFile => GetMLSFileByName(filedatabase, inputPhysicalFilename)
       if ( .not. associated(inputFile) ) then
-        call MLSMessage(MLSMSG_Error, ModuleName, &
+        call MLSL2Message ( MLSMSG_Error, ModuleName, &
           & 'No entry in filedatabase for ' // trim(inputPhysicalFilename) )
       endif
     case ( l_l2dgg ) ! --------------------- Copying l2dgg files -----
@@ -1134,7 +1134,7 @@ contains ! =====     Public Procedures     =============================
         call output( ' input file ', advance='no' )
         call output( '(not associated)', advance='yes' )
         call dump(filedatabase)
-        call MLSMessage(MLSMSG_Error, ModuleName, &
+        call MLSL2Message ( MLSMSG_Error, ModuleName, &
           & 'No entry in filedatabase for ' // trim(inputPhysicalFilename) )
       endif
     case ( l_ascii, l_l2cf ) ! --------------------- Copying ascii files -----
@@ -1146,7 +1146,7 @@ contains ! =====     Public Procedures     =============================
           & type=l_ascii, access=DFACC_RDWR, &
           & PCBottom=MLSPCF_l2ascii_start, PCTop=MLSPCF_l2ascii_end )
       if ( .not. associated(inputFile) ) then
-        call MLSMessage(MLSMSG_Warning, ModuleName, &
+        call MLSL2Message ( MLSMSG_Warning, ModuleName, &
           & 'No entry in filedatabase for ' // trim(inputPhysicalFilename) )
         return
       endif
@@ -1176,7 +1176,7 @@ contains ! =====     Public Procedures     =============================
       if ( input_type /= output_type ) then
         ! So far we only allow copying text files
         if ( .not. any( input_type == (/ l_ascii, l_l2cf /) ) ) then
-          call MLSMessage(MLSMSG_Warning, ModuleName, &
+          call MLSL2Message ( MLSMSG_Warning, ModuleName, &
           & 'Unable to copy to l2aux file file type for' // trim(inputPhysicalFilename) )
           return
         endif
@@ -1259,7 +1259,7 @@ contains ! =====     Public Procedures     =============================
       call add_metadata ( son, file_base, l2metaData, &
         & outputfile%hdfVersion, formattype, metadata_error )
       if ( len_trim(l2metaData%doiIdentifier) < 1 ) then
-        call MLSMessage( MLSMSG_Warning, ModuleName, &
+        call MLSL2Message( MLSMSG_Warning, ModuleName, &
           & 'empty doiIdentidier for ' // trim(PhysicalFilename) )
         return
       endif
@@ -1335,7 +1335,7 @@ contains ! =====     Public Procedures     =============================
 
     if ( mls_exists(trim(FullFilename)) /= 0 ) then
       if( DEBUG .or.  switchDetail(switches, 'pro') > -1 ) &
-        & call MLSMessage(MLSMSG_Warning, ModuleName, &
+        & call MLSL2Message ( MLSMSG_Warning, ModuleName, &
         & 'Its non-existence prevented writing attribute to ' &
         & // trim(FullFilename) )
       return
@@ -1344,7 +1344,7 @@ contains ! =====     Public Procedures     =============================
       outputFile => GetMLSFileByName(filedatabase, FullFilename)
       if ( .not. associated(outputFile) ) then
       if( DEBUG .or.  switchDetail(switches, 'pro') > -1 ) &
-          & call MLSMessage(MLSMSG_Warning, ModuleName, &
+          & call MLSL2Message ( MLSMSG_Warning, ModuleName, &
           & 'No entry in filedatabase for ' // trim(FullFilename) )
         outputFile => AddInitializeMLSFile( filedatabase, &
           & content=outputTypeStr, &
@@ -1430,7 +1430,7 @@ contains ! =====     Public Procedures     =============================
 
     if ( mls_exists(trim(FullFilename)) /= 0 ) then
       if( DEBUG .or.  switchDetail(switches, 'pro') > -1 ) &
-        & call MLSMessage(MLSMSG_Warning, ModuleName, &
+        & call MLSL2Message ( MLSMSG_Warning, ModuleName, &
           & 'Its non-existence prevented writing attribute to ' &
           & // trim(FullFilename) )
       return
@@ -1439,7 +1439,7 @@ contains ! =====     Public Procedures     =============================
       outputFile => GetMLSFileByName(filedatabase, FullFilename)
       if ( .not. associated(outputFile) ) then
       if( DEBUG .or.  switchDetail(switches, 'pro') > -1 ) &
-        & call MLSMessage(MLSMSG_Warning, ModuleName, &
+        & call MLSL2Message ( MLSMSG_Warning, ModuleName, &
           & 'No entry in filedatabase for ' // trim(FullFilename) )
         outputFile => AddInitializeMLSFile(filedatabase, &
           & content=outputTypeStr, &
@@ -1455,17 +1455,17 @@ contains ! =====     Public Procedures     =============================
       ! We first close it as an hdfeos file and reopen it as plain hdf5
       if ( outputFile%stillOpen ) then
         call mls_closeFile( outputFile, returnStatus )
-        if ( returnStatus /= 0 ) call MLSMessage(MLSMSG_Warning, ModuleName, &
+        if ( returnStatus /= 0 ) call MLSL2Message ( MLSMSG_Warning, ModuleName, &
             & 'Unable to hdfeos_close ' // trim(FullFilename) )
       endif
       call h5fopen_f ( trim(outputFile%name), H5F_ACC_RDWR_F, &
         & outputFile%FileID%f_id, returnStatus )
-      if ( returnStatus /= 0 ) call MLSMessage(MLSMSG_Warning, ModuleName, &
+      if ( returnStatus /= 0 ) call MLSL2Message ( MLSMSG_Warning, ModuleName, &
           & 'Unable to open ' // trim(FullFilename) )
       call h5gopen_f( outputFile%FileID%f_id, &
         & '/HDFEOS/ADDITIONAL/FILE_ATTRIBUTES', outputFile%FileID%grp_id, &
         & returnStatus )
-      if ( returnStatus /= 0 ) call MLSMessage(MLSMSG_Warning, ModuleName, &
+      if ( returnStatus /= 0 ) call MLSL2Message ( MLSMSG_Warning, ModuleName, &
           & 'Unable to open group /HDFEOS/ADDITIONAL/FILE_ATTRIBUTES for ' // &
           & trim(FullFilename) )
       outputFile%FileID%sd_id = 0 ! To ensure we read from the grp_id
@@ -1481,10 +1481,10 @@ contains ! =====     Public Procedures     =============================
       call MakeHDF5Attribute( outputFile%FileID%grp_id, &
         & attrName, str, skip_if_already_there = .false. )
       call h5gclose_f( outputFile%FileID%grp_id, returnStatus )
-      if ( returnStatus /= 0 ) call MLSMessage(MLSMSG_Warning, ModuleName, &
+      if ( returnStatus /= 0 ) call MLSL2Message ( MLSMSG_Warning, ModuleName, &
           & 'Unable to close group ' // trim(FullFilename) )
       call h5fclose_f ( outputFile%FileID%f_id, returnStatus )
-      if ( returnStatus /= 0 ) call MLSMessage(MLSMSG_Warning, ModuleName, &
+      if ( returnStatus /= 0 ) call MLSL2Message ( MLSMSG_Warning, ModuleName, &
           & 'Unable to close  ' // trim(FullFilename) )
       return
     endif
@@ -1563,7 +1563,7 @@ contains ! =====     Public Procedures     =============================
       ! Open the HDF file and write l2aux data
       outputFile => GetMLSFileByName(filedatabase, FullFilename)
       if ( .not. associated(outputFile) ) then
-        if(DEBUG) call MLSMessage(MLSMSG_Warning, ModuleName, &
+        if(DEBUG) call MLSL2Message ( MLSMSG_Warning, ModuleName, &
           & 'No entry in filedatabase for ' // trim(FullFilename) )
         outputFile => AddInitializeMLSFile(filedatabase, &
           & content=outputTypeStr, &
@@ -1597,7 +1597,7 @@ contains ! =====     Public Procedures     =============================
                 & ( L2AUXDatabase(db_index)%name, &
                 &     QuantityNames(numquantitiesperfile) )
             else
-              call MLSMessage ( MLSMSG_Warning, ModuleName, &
+              call MLSL2Message ( MLSMSG_Warning, ModuleName, &
                 & 'Unable to write quantity to l2aux file, ' // &
                 & 'perhaps no chunks processed' )
             end if
@@ -1658,13 +1658,13 @@ contains ! =====     Public Procedures     =============================
       MLSL2CF => GetMLSFileByType(filedatabase, content='l2cf')
     endif
     if ( .not. associated(MLSL2CF) ) then
-      call MLSMessage(MLSMSG_Warning, ModuleName, &
+      call MLSL2Message ( MLSMSG_Warning, ModuleName, &
         & 'Unable to write dataset--no entry in filedatabase for text file' )
       return
     endif
     if ( MLSL2CF%stillOpen ) call mls_closeFile( MLSL2CF, status )
     if ( MLSL2CF%name == '<STDIN>' ) then
-      call MLSMessage(MLSMSG_Warning, ModuleName, &
+      call MLSL2Message ( MLSMSG_Warning, ModuleName, &
         & 'Unable to write dataset--stdin has been used for text file' )
       return
     endif
@@ -1686,7 +1686,7 @@ contains ! =====     Public Procedures     =============================
 
     if ( mls_exists(trim(FullFilename)) /= 0 ) then
       if( DEBUG .or.  switchDetail(switches, 'pro') > -1 ) &
-        & call MLSMessage(MLSMSG_Warning, ModuleName, &
+        & call MLSL2Message ( MLSMSG_Warning, ModuleName, &
         & 'Its non-existence prevented any copying to ' &
         & // trim(FullFilename) )
       return
@@ -1695,7 +1695,7 @@ contains ! =====     Public Procedures     =============================
       outputFile => GetMLSFileByName(filedatabase, FullFilename)
       if ( .not. associated(outputFile) ) then
         if( DEBUG .or.  switchDetail(switches, 'pro') > -1 ) &
-          & call MLSMessage(MLSMSG_Warning, ModuleName, &
+          & call MLSL2Message ( MLSMSG_Warning, ModuleName, &
           & 'No entry in filedatabase for ' // trim(FullFilename) )
         outputFile => AddInitializeMLSFile(filedatabase, &
           & content=outputTypeStr, &
@@ -1781,7 +1781,7 @@ contains ! =====     Public Procedures     =============================
       ! Open the HDF-EOS file and write swath data
       outputFile => GetMLSFileByName(filedatabase, FullFilename)
       if ( .not. associated(outputFile) ) then
-        if(DEBUG) call MLSMessage(MLSMSG_Warning, ModuleName, &
+        if(DEBUG) call MLSL2Message ( MLSMSG_Warning, ModuleName, &
           & 'No entry in filedatabase for ' // trim(FullFilename) )
         outputFile => AddInitializeMLSFile(filedatabase, &
           & content=outputTypeStr, &
@@ -1810,7 +1810,7 @@ contains ! =====     Public Procedures     =============================
               end if
               quantityNames(numquantitiesperfile) = L2GPDatabase(db_index)%name
             else
-              call MLSMessage ( MLSMSG_Warning, ModuleName, &
+              call MLSL2Message ( MLSMSG_Warning, ModuleName, &
                 & 'Unable to write quantity to ' // trim(outputTypeStr) // &
                 & ' file, ' // &
                 & 'perhaps no chunks processed' )
@@ -2031,7 +2031,7 @@ contains ! =====     Public Procedures     =============================
         returnStatus = 0
       end if
       if ( any(DirectDatabase%fileName == l2gpPhysicalFilename) ) then
-        call MLSMessage ( MLSMSG_Error, ModuleName, &
+        call MLSL2Message ( MLSMSG_Error, ModuleName, &
           & "Cannot unsplit dgg dw to existing file " // &
           & trim(l2gpPhysicalFilename) )
       end if
@@ -2062,7 +2062,7 @@ contains ! =====     Public Procedures     =============================
         inputFile => GetMLSFileByName(filedatabase, &
           & DirectDatabase(DB_index)%fileName)
         if ( .not. associated(inputFile) ) then
-          call MLSMessage(MLSMSG_Error, ModuleName, &
+          call MLSL2Message ( MLSMSG_Error, ModuleName, &
             & 'No entry in filedatabase for ' // &
             & trim(DirectDatabase(DB_index)%fileName) )
         endif
@@ -2100,10 +2100,10 @@ contains ! =====     Public Procedures     =============================
         ! (1) Catalog metadata
         call add_metadata ( 0, trim(l2gpPhysicalFilename), l2metaData, &
           & HDFVERSION_5, l_l2dgg, returnStatus, 1, (/'dgg'/) )
-        if ( returnStatus /= 0 ) call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        if ( returnStatus /= 0 ) call MLSL2Message ( MLSMSG_Warning, ModuleName, &
         & 'unable to addmetadata to ' // trim(l2gpPhysicalFilename) )
         if ( len_trim(l2metaData%doiIdentifier) < 1 ) then
-          call MLSMessage( MLSMSG_Warning, ModuleName, &
+          call MLSL2Message( MLSMSG_Warning, ModuleName, &
             & 'empty doiIdentidier for ' // trim(l2gpPhysicalFilename) )
         endif
         ! Set the file-level attribute DOI to its metadata value
@@ -2168,7 +2168,7 @@ contains ! =====     Public Procedures     =============================
         returnStatus = 0
       end if
       if ( any(DirectDatabase%fileName == l2auxPhysicalFilename) ) then
-        call MLSMessage ( MLSMSG_Error, ModuleName, &
+        call MLSL2Message ( MLSMSG_Error, ModuleName, &
           &  "Must not unsplit dgm dw to " // trim(l2auxPhysicalFilename) )
       end if
       outputFile => GetMLSFileByName(filedatabase, l2auxPhysicalFilename)
@@ -2186,7 +2186,7 @@ contains ! =====     Public Procedures     =============================
         if ( DirectDatabase(DB_index)%autoType /= l_l2aux ) cycle
         if ( .not. associated(DirectDatabase(DB_index)%sdNames) ) then
           ! Someday, go back in Join and find out why these aren't saved
-          ! call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          ! call MLSL2Message ( MLSMSG_Warning, ModuleName, &
           !   &  "no sd known for " // trim(DirectDatabase(DB_index)%fileName) )
           sdList = ' '
         else
@@ -2209,7 +2209,7 @@ contains ! =====     Public Procedures     =============================
         inputFile => GetMLSFileByName(filedatabase, &
           & DirectDatabase(DB_index)%fileName)
         if ( .not. associated(inputFile) ) then
-          call MLSMessage(MLSMSG_Error, ModuleName, &
+          call MLSL2Message ( MLSMSG_Error, ModuleName, &
             & 'No entry in filedatabase for ' // &
             & trim(DirectDatabase(DB_index)%fileName) )
         endif
@@ -2240,7 +2240,7 @@ contains ! =====     Public Procedures     =============================
         call add_metadata ( 0, trim(l2auxPhysicalFilename), l2metaData, &
           & HDFVERSION_5, l_hdf, returnStatus, 1, (/'dgm'/) )
         GlobalAttributes%DOI = l2metaData%doiIdentifier
-        if ( returnStatus /= 0 ) call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        if ( returnStatus /= 0 ) call MLSL2Message ( MLSMSG_Warning, ModuleName, &
         & 'unable to addmetadata to ' // trim(l2auxPhysicalFilename) )
         call output( 'Writing file level attributes to h5 ' // &
           & trim(l2auxPhysicalFilename), advance='yes' )
@@ -2318,6 +2318,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.206  2018/07/27 23:19:53  pwagner
+! Renamed level 2-savvy MLSMessage MLSL2Message
+!
 ! Revision 2.205  2018/05/31 22:49:27  pwagner
 ! Changed name of attribute to identifier_product_doi to please DAAC
 !
