@@ -657,8 +657,24 @@ wvs-149-1.600gf: wvs-149-1.txp
 wvs-149-1.600pk: wvs-149-1.600gf
 	gftopk wvs-149-1.600gf
 
+dnwt.ps: dnwt.dot
+	dot -Tps dnwt.dot > dnwt.ps
+
+dnwt.pdf: dnwt.ps
+	ps2pdf dnwt.ps dnwt.pdf
+
+wvs-150.dvi: wvs-150.tex dnwt.epsi
+
+wvs-150.pdf: wvs-150.tex dnwt.pdf
+
+dnwt.epsi: dnwt.ps
+	ps2epsi dnwt.ps
+
 endif # end shortn_name == doc
 # $Log$
+# Revision 1.33  2018/07/11 16:46:07  pwagner
+# Can now build wvs-149
+#
 # Revision 1.32  2018/06/04 23:04:05  pwagner
 # Incorporates changes to build wvs-138
 #
