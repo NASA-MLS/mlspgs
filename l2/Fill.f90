@@ -209,7 +209,7 @@ contains ! =====     Public Procedures     =============================
     ! Carefully Check Out The Code Around The Call To Snoop.
     use MLSFiles, only: HDFVersion_5, GetMLSFileByType
     use MLSL2Options, only: L2cfnode, &
-      & RuntimeValues, SkipRetrieval, SpecialDumpFile, MLSMessage
+      & RuntimeValues, SkipRetrieval, SpecialDumpFile, MLSL2Message
     use MLSL2Timings, only: Section_Times, &
       & AddPhaseToPhaseNames, FillTimings, FinishTimings
     use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning, &
@@ -1000,7 +1000,7 @@ contains ! =====     Public Procedures     =============================
 
         call getFromMatrixDatabase ( matrices(matrixToFill), covariance )
         if ( SKIPRETRIEVAL ) then
-          call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          call MLSL2Message ( MLSMSG_Warning, ModuleName, &
             & 'Unable to fill covariance when skipping retrievals' )
         else
           call FillCovariance ( covariance, &
@@ -1194,7 +1194,7 @@ contains ! =====     Public Procedures     =============================
             & vectors(destinationVectorIndex), &
             & expandMask, skipMask, skipValues, interpolate, booleanName )
         else
-          call MLSMessage ( MLSMSG_Error, ModuleName, &
+          call MLSL2Message ( MLSMSG_Error, ModuleName, &
             & 'Transfer command requires either source or a to be present' )
         end if
         call trace_end ( "Fill.Transfer", cond=toggle(gen) .and. levels(gen) > 1 )
@@ -1266,7 +1266,7 @@ contains ! =====     Public Procedures     =============================
     end do  repeat_loop!  RepeatLoop
 
     if ( fillError /= 0 ) then
-      call MLSMessage ( MLSMSG_Error, ModuleName, 'Problem with Fill section' )
+      call MLSL2Message ( MLSMSG_Error, ModuleName, 'Problem with Fill section' )
     end if
 
     if ( specialDumpFile /= ' ' ) call revertOutput
@@ -2081,7 +2081,7 @@ contains ! =====     Public Procedures     =============================
 
       case ( l_ascenddescend )
         if ( .not. got(f_sourceType) ) &
-          & call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          & call MLSL2Message ( MLSMSG_Warning, ModuleName, &
           & 'Defaulting to read sc/VelECI from L1BOA file for Asc/Desc mode Fill' )
         call WithAscOrDesc ( key, quantity, chunks(chunkNo), fileDatabase, &
           & hgrids, ptanQuantity, sourceType )
@@ -2139,13 +2139,13 @@ contains ! =====     Public Procedures     =============================
         if ( .not. got ( f_width ) ) call Announce_Error ( key, no_Error_Code, &
           & 'Must supply width for boxcar fill' )
         if ( width == 1 ) then
-          call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          call MLSL2Message ( MLSMSG_Warning, ModuleName, &
             & 'Boxcar Fill with width=1 results in straightforward copy' )
           call FromAnother ( quantity, sourceQuantity, ptanQuantity, &
             & key, ignoreTemplate=.true., spreadflag=.false., &
             & interpolate=.false., force=.false., sourceMask=.false. )
         elseif (  mod ( width, 2 ) == 0 ) then
-          call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          call MLSL2Message ( MLSMSG_Warning, ModuleName, &
             & 'Boxcar Fill called with even width: adding one to make it odd' )
           call WithBoxcarFunction ( key, quantity, sourceQuantity, width+1, &
             & boxCarMethod, ignoreTemplate )
@@ -2385,7 +2385,7 @@ contains ! =====     Public Procedures     =============================
             & l1bFlag, firstMAF=Chunks(ChunkNo)%firstMAFIndex, &
             & lastMAF=Chunks(ChunkNo)%lastMAFIndex, &
             & dontPad=DONTPAD )
-          if ( l1bFlag == -1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          if ( l1bFlag == -1 ) call MLSL2Message ( MLSMSG_Error, ModuleName, &
             & MLSMSG_L1BRead//trim(GLStr) )
           ! call Announce_error ( key, no_Error_Code, trim(GLStr) // &
           !  & 'geolocation not recognized' )
@@ -2459,7 +2459,7 @@ contains ! =====     Public Procedures     =============================
           & (/ f_height, f_heightRange, f_surface, f_instances, &
           & f_maxValue, f_minValue /) &
           & ) ) ) then
-          call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          call MLSL2Message ( MLSMSG_Warning, ModuleName, &
             & 'Mask bits set during l1b Fill are sticky--use Subset to clear them' )
         endif
         if ( got(f_precision) ) then
@@ -2866,7 +2866,7 @@ contains ! =====     Public Procedures     =============================
       case ( l_phaseTiming ) ! ---------  Fill timings for phases  -----
         call finishTimings('phases', returnStatus=status)
         if ( status /= 0 ) then
-          call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          call MLSL2Message ( MLSMSG_Warning, ModuleName, &
             & 'Unable to finish phases timings (Is this still ariori?)' )
         else
           call fillTimings ( quantity%values(:,1), 'phases', 'all', .true. )
@@ -2876,7 +2876,7 @@ contains ! =====     Public Procedures     =============================
       case ( l_sectionTiming ) ! ---------  Fill timings for sections  -----
         call finishTimings('sections', returnStatus=status)
         if ( status /= 0 ) then
-          call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          call MLSL2Message ( MLSMSG_Warning, ModuleName, &
             & 'Unable to finish sections timings (Is this still ariori?)' )
         else
           call fillTimings ( quantity%values(:,1), 'sections', 'all', .true. )
@@ -3375,6 +3375,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.478  2018/07/27 23:18:48  pwagner
+! Renamed level 2-savvy MLSMessage MLSL2Message
+!
 ! Revision 2.477  2018/05/12 00:10:24  pwagner
 ! Print less if not deebugging
 !
