@@ -19,6 +19,7 @@ module DumpCommand_M
 
   use HighOutput, only: Banner, BeVerbose, HeadLine, &
     & NumToChars, OutputNamedValue
+  use MLSL2Options, only: MLSL2Message
   use Output_m, only: Beep, Blanks, NewLine, Output, RevertOutput, SwitchOutput
 
   implicit none
@@ -440,7 +441,7 @@ contains
     use Init_Tables_Module, only: F_A, F_B, F_C, F_Boolean, F_Formula
     use MLSKinds, only: R8, Rv
     use MLSL2Options, only: RuntimeValues
-    use MLSMessagemodule, only: MLSMessage, MLSMSG_Error
+    use MLSMessageModule, only: MLSMSG_Error
     use MLSStats1, only: MLSMax, MLSMin, MLSMean, MLSMedian
     use MLSStringLists, only: GetStringElement, NumStringElements, &
       & PutHashElement, ReplaceSubstring
@@ -558,10 +559,10 @@ contains
     arg(1) = lowerCase(arg(1))
     arg(2) = lowerCase(arg(2))
     if ( arg(1) /= 'a' ) then
-      call MLSMessage (MLSMSG_Error, moduleName, &
+      call MLSL2Message (MLSMSG_Error, moduleName, &
         & 'Formula in compare must be "flattening a op [b][c]".' )
     else if( index('<>=', trim(op)) < 1 ) then
-      call MLSMessage (MLSMSG_Error, moduleName, &
+      call MLSL2Message (MLSMSG_Error, moduleName, &
         & 'Formula in compare found unrecognized relation: ' // trim(op) )
     end if
     ! What kind of flattening?
@@ -597,7 +598,7 @@ contains
         & b = statFun( trim(flattening), bQuantity%values, aQuantity%mask )
       tvalue = isRelation( trim(op), a, b )
     case default
-      call MLSMessage (MLSMSG_Error, moduleName, &
+      call MLSL2Message (MLSMSG_Error, moduleName, &
         & 'Formula in compare found unrecognized op: ' // trim(op) )
     end select
     if ( verbose ) then
@@ -760,7 +761,7 @@ contains
     use MLSCommon, only: Filenamelen
     use MLSFiles, only: HDFversion_5, MLS_Exists
     use MLSHDFeos, only: MLS_Swath_In_File
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Warning
+    use MLSMessageModule, only: MLSMSG_Warning
     use MLSL2Options, only: RuntimeValues
     use MLSPCF2, only: MLSPCF_L2GP_End, MLSPCF_L2GP_Start, &
       & MLSPCF_L2DGG_Start, MLSPCF_L2DGG_End, &
@@ -840,7 +841,7 @@ contains
     case ( l_none )
       Filename = file_base
     case default
-      call MLSMessage( MLSMSG_Warning, ModuleName, &
+      call MLSL2Message( MLSMSG_Warning, ModuleName, &
       & "type should have been either l2gp or dgg; assume you meant dgg" )
     end select
     tvalue = .true.
@@ -904,7 +905,7 @@ contains
     use Manipulationutils, only: Manipulate
     use MLSKinds, only: R8, Rv
     use MLSL2Options, only: RuntimeValues
-    use MLSMessageModule, only: MLSMSG_Error, MLSMessage
+    use MLSMessageModule, only: MLSMSG_Error
     use MLSStringLists, only: EvaluateFormula, GetHashElement, &
       & InsertHashElement, NumStringElements, PutHashElement
     use MLSStrings, only: Lowercase, ReadNumsFromChars, WriteIntsToChars
@@ -1014,7 +1015,7 @@ contains
         evaluate = get_boolean ( fieldValue )
         if ( verbose ) call outputNamedValue( 'evaluate', evaluate )
       case ( f_expr )
-        call MLSMessage ( MLSMSG_Error, moduleName, &
+        call MLSL2Message ( MLSMSG_Error, moduleName, &
           & 'No code yet to handle "expr" field.' )
       case ( f_formula, f_manipulation )
         call get_string ( sub_rosa(subtree(2,son)), formula, strip=.true. )
@@ -1111,7 +1112,7 @@ contains
     elseif ( got(f_manipulation) ) then
       ! print *, 'Oops-you dummy! code this missing piece'
       if ( .not. present(vectors) ) &
-        & call MLSMessage ( MLSMSG_Error, moduleName, &
+        & call MLSL2Message ( MLSMSG_Error, moduleName, &
         & 'Cant set manipulation from this section--only Fill or Retrieval' )
       if ( .not. got ( f_a ) ) then
         call setupNewquantitytemplate( tTemplate )
@@ -1216,8 +1217,7 @@ contains
     use MLSFinds, only: Findfirst, FindUnique
     use MLSKinds, only: R8, Rv
     use MLSL2Options, only: Command_Line, CurrentChunkNumber, CurrentPhaseName, &
-      & L2cfnode, Normal_Exit_Status, RuntimeValues, &
-      & MLSMessage
+      & L2cfnode, Normal_Exit_Status, RuntimeValues  !,  MLSMessage
     use MLSL2Timings, only: Dump_Section_Timings
     use MLSMessagemodule, only: MLSMSG_Crash, MLSMSG_Error, MLSMessageCalls, &
       & MLSMessageExit
@@ -1346,7 +1346,7 @@ contains
     ! The following must be one of (/ s_dump, s_diff /)
     DiffOrDump = get_spec_id(root)
     if ( .not. any( DiffOrDump == (/ s_dump, s_diff /) ) ) &
-    &  call MLSMessage( MLSMSG_Error, moduleName, &
+    &  call MLSL2Message( MLSMSG_Error, moduleName, &
         & "Expected either Diff or Dump command to get here")
     haveForwardModelConfigs = present(forwardModelConfigs)
     if ( haveForwardModelConfigs ) &
@@ -1550,7 +1550,7 @@ contains
           case ( f_crashBurn )
             call finish ( 'ending mlsl2' )
             NEVERCRASH = .false.
-            call MLSMessage( MLSMSG_CRASH, moduleName, &
+            call MLSL2Message( MLSMSG_CRASH, moduleName, &
               & "Program stopped by /crashBurn field on DUMP statement.")
           case ( f_DACSfilterShapes )
             call dump_dacs_filter_database ( son )
@@ -1907,7 +1907,7 @@ contains
               case (3)
                 call dump( VectorValue%value3, 'values as 3-d array' )
               case default
-                call MLSMessage (MLSMSG_Error, moduleName, &
+                call MLSL2Message (MLSMSG_Error, moduleName, &
                   & 'rand of hyperslab must be one of 1,2, or 3' )
               end select
               call DestroyVectorQuantityValue( VectorValue, destroyMask=.true., &
@@ -2209,8 +2209,7 @@ contains
     use L2parinfo, only: Parallel, CloseParallel
     use Lexer_Core, only: Get_Where, Where_T
     use Machine, only: Create_Script, Execute, NeverCrash, Usleep
-    use MLSL2Options, only: L2CFNode, Normal_Exit_Status, &
-      & MLSMessage
+    use MLSL2Options, only: L2CFNode, Normal_Exit_Status  !, MLSMessage
     use MLSL2Timings, only: Dump_Section_Timings
     use MLSMessageModule, only: MLSMSG_Crash, MLSMSG_Warning, &
       & MLSMessageExit
@@ -2305,7 +2304,7 @@ contains
         end select
       end do
       if ( .not. (got(f_command) .or. got(f_fileName)) ) then
-        call MLSMessage( MLSMSG_Warning, moduleName, &
+        call MLSL2Message( MLSMSG_Warning, moduleName, &
           & "Execute must have either command or fileName present.")
         return
       endif
@@ -2328,13 +2327,13 @@ contains
         call outputNamedValue( 'Command to Execute', trim(command) )
         call execute( command, status, delay=delay )
       else
-        call MLSMessage( MLSMSG_Warning, moduleName, &
+        call MLSL2Message( MLSMSG_Warning, moduleName, &
           & "Execute command must have either command or lines field.")
       endif
       ! Have we been commanded to stop? wait? crash?
       if ( got(f_stop) ) then
         call finish ( 'ending mlsl2' )
-        call MLSMessage( MLSMSG_Warning, moduleName, &
+        call MLSL2Message( MLSMSG_Warning, moduleName, &
           & "Program stopped by /stop field on DUMP statement.")
           if ( switchDetail(switches, 'time') >= 0 ) then
             call output('(Now for the timings summary)', advance='yes')
@@ -2369,7 +2368,7 @@ contains
       elseif ( got(f_crashBurn) ) then
         call finish ( 'ending mlsl2' )
         NEVERCRASH = .false.
-        call MLSMessage( MLSMSG_Crash, moduleName, &
+        call MLSL2Message( MLSMSG_Crash, moduleName, &
           & "Program stopped by /crashBurn field on DUMP statement.")
       endif
     call trace_end ( 'ExecuteCommand', cond=toggle(gen) )
@@ -2408,7 +2407,7 @@ contains
         lines(1:nLines-1) = inLines
         lines(nLines) = 'rm -f ' // sentinelName
       else
-        call MLSMessage( MLSMSG_Warning, moduleName, &
+        call MLSL2Message( MLSMSG_Warning, moduleName, &
           & "Execute_then_wait must have either command or inlines present.")
         return
       endif
@@ -2612,7 +2611,7 @@ contains
   ! Resets the global variable MLSSelecting
   ! Optionally puts note about end of selecting in log file
     use Init_Tables_Module, only: F_Label
-    use MLSMessagemodule, only: MLSMEssage, MLSMSG_Info
+    use MLSMessageModule, only: MLSMSG_Info
     use MLSStrings, only: Lowercase
     use Moretree, only: Get_Field_Id
     use String_Table, only: Get_String
@@ -3188,6 +3187,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.139  2018/07/27 23:18:48  pwagner
+! Renamed level 2-savvy MLSMessage MLSL2Message
+!
 ! Revision 2.138  2018/05/17 17:05:53  pwagner
 ! May Dump quantity values bitwise
 !
