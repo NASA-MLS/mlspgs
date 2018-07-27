@@ -18,8 +18,8 @@ module ManipulationUtils        ! operations to manipulate quantities
   use Dump_0, only: Dump
   use HighOutput, only: OutputNamedValue
   use MLSKinds, only: Rv
-  use MLSL2Options, only: MLSMessage
-  use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning
+  use MLSL2Options, only: MLSL2Message
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
   use MLSFinds, only: FindFirst, FindLast, FindNext
   use MLSStats1, only: MLSCount, MLSMin, MLSMax, MLSMean, MLSMedian, &
     & MLSRMS, MLSStddev
@@ -326,10 +326,10 @@ contains ! =====     Public Procedures     =============================
 
     ! fillerror = max(fillerror,1)
     if ( present(extraMessage) ) then
-      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+      call MLSL2Message ( MLSMSG_Warning, ModuleName, &
       & trim(extraMessage) )
     else
-      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+      call MLSL2Message ( MLSMSG_Warning, ModuleName, &
       & 'Calling ANNOUNCE_ERROR' )
     endif
     call output ( " command caused an unrecognized programming error", advance='yes' )
@@ -1235,7 +1235,7 @@ contains ! =====     Public Procedures     =============================
           end select
         case default
           ! How could this happen?
-            call MLSMessage( MLSMSG_Error, ModuleName, &
+            call MLSL2Message( MLSMSG_Error, ModuleName, &
               & avg // ' not recognized as a list of averageable dims' )
         end select
         fun = ' '
@@ -1508,6 +1508,9 @@ end module ManipulationUtils
 
 !
 ! $Log$
+! Revision 2.23  2018/07/27 23:19:53  pwagner
+! Renamed level 2-savvy MLSMessage MLSL2Message
+!
 ! Revision 2.22  2018/05/17 17:02:57  pwagner
 ! Added logical operators '||' and '&&'
 !
