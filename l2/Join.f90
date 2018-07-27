@@ -13,9 +13,11 @@
 module Join                     ! Join together chunk based data.
 !=============================================================================
 
+  use JoinUtils_1, only: Error, Announce_Error, DWSwath, DWHDF, DWQty
+  use MLSL2Options, only: CheckPaths, L2CFNode, &
+    & SkipDirectWrites, SpecialDumpFile, MLSL2Message
   use MLSStringLists, only: GetHashElement, SwitchDetail
   use MLSStrings, only: LowerCase
-  use JoinUtils_1, only: Error, Announce_Error, DWSwath, DWHDF, DWQty
   ! This module performs the 'join' task in the MLS level 2 software.
 
   implicit none
@@ -74,8 +76,6 @@ contains ! =====     Public Procedures     =============================
    use Lexer_Core, only: Print_Source
    use MatrixModule_1, only: Matrix_Database_T
    use MLSCommon, only: MLSFile_T
-   use MLSL2Options, only: CheckPaths, L2CFNode, &
-     & SkipDirectWrites, SpecialDumpFile, MLSMessage
    use MLSL2Timings, only: Section_Times, &
      & Add_To_DirectWrite_Timing, Add_To_Section_Timing
    use MLSMessageModule, only: MLSMSG_Error
@@ -168,7 +168,7 @@ contains ! =====     Public Procedures     =============================
       & call revertOutput
     ! Check for errors
     if ( error /= 0 ) &
-      & call MLSMessage ( MLSMSG_Error, ModuleName, 'Error in Join section' )
+      & call MLSL2Message ( MLSMSG_Error, ModuleName, 'Error in Join section' )
 
     call trace_end ( "MLSL2Join", cond=toggle(gen) )
     if ( timing ) call sayTime ( 'Join', t1=t1, cumulative=.false. )
@@ -382,7 +382,7 @@ contains
         print *, 'ghost node: ', directWriteNodeGranted
         print*,'noDirectWritesCompleted: ', noDirectWritesCompleted, &
                 & 'noDirectWrites: ', noDirectWrites        
-        call MLSMessage ( MLSMSG_Error, ModuleName, &
+        call MLSL2Message ( MLSMSG_Error, ModuleName, &
           & 'We received permission to write, but could not find node' )
       end if
     end do passLoop                     ! End loop over passes
@@ -1040,14 +1040,14 @@ contains
         call LogDirectWriteRequest ( file, node )
       end if
     else if ( skipdgg .and. any ( outputType == (/ l_l2dgg /) ) ) then
-      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+      call MLSL2Message ( MLSMSG_Warning, ModuleName, &
       & 'DirectWriteCommand skipping all dgg writes ' // trim(filename) )
       call DeallocateStuff
       call trace_end ( "DirectWriteCommand", &
         & cond=toggle(gen) .and. switchDetail(switches, 'dwreq') > -1 )
       return
     else if ( skipdgm .and. any ( outputType == (/ l_l2fwm, l_l2aux, l_hdf /) ) ) then
-      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+      call MLSL2Message ( MLSMSG_Warning, ModuleName, &
       & 'DirectWriteCommand skipping all dgm/fwm writes ' // trim(filename) )
       call DeallocateStuff
       call trace_end ( "DirectWriteCommand", &
@@ -1062,7 +1062,7 @@ contains
       else if ( distributingSources ) then
         ! Short-circuit this direct write if outputType fails to match
         if ( myFile < 1 ) then
-          call MLSMessage ( MLSMSG_Error, ModuleName, &
+          call MLSL2Message ( MLSMSG_Error, ModuleName, &
           & 'DirectWriteCommand unable to auto-direct write ' // trim(filename) )
         else if ( outputType /= DirectDataBase(myFile)%type ) then
           call DeallocateStuff
@@ -1075,7 +1075,7 @@ contains
         if ( createFileFlag ) then
           noCreatedFiles = noCreatedFiles + 1
           if ( DeeBug ) call outputNamedValue( 'Incrementing noCreatedFiles', noCreatedFiles )
-          if ( noCreatedFiles > maxFiles ) call MLSMessage ( &
+          if ( noCreatedFiles > maxFiles ) call MLSL2Message ( &
             & MLSMSG_Error, ModuleName, 'Too many direct write files' )
           createdFilenames ( noCreatedFiles ) = myFile
         end if
@@ -1084,7 +1084,7 @@ contains
         if ( createFileFlag ) then
           noCreatedFiles = noCreatedFiles + 1
           if ( DeeBug ) call outputNamedValue( 'Incrementing noCreatedFiles', noCreatedFiles )
-          if ( noCreatedFiles > maxFiles ) call MLSMessage ( &
+          if ( noCreatedFiles > maxFiles ) call MLSL2Message ( &
             & MLSMSG_Error, ModuleName, 'Too many direct write files' )
           createdFilenames ( noCreatedFiles ) = file
         end if
@@ -1106,7 +1106,7 @@ contains
           call Announce_Error ( son, NO_ERROR_CODE, &
               & 'ExpandDirectDB returned unassociated thisDirect' )
           call dump(DirectDatabase)
-          call MLSMessage( MLSMSG_Error, ModuleName, &
+          call MLSL2Message( MLSMSG_Error, ModuleName, &
           & 'ExpandDirectDB returned unassociated thisDirect' )
         end if
       end if
@@ -1143,7 +1143,7 @@ contains
       if ( returnStatus /= 0 ) then
           call Announce_Error ( node, NO_ERROR_CODE, &
           & 'Uh-oh' )
-         call MLSMessage ( &
+         call MLSL2Message ( &
          & MLSMSG_Error, ModuleName, &
          & 'Failed in GetPCFromRef for ' // trim(filename) )
       end if
@@ -1154,7 +1154,7 @@ contains
       if ( isnewdirect .and. distributingSources ) then
           call Announce_Error ( node, NO_ERROR_CODE, &
           & 'Uh-oh' )
-        call MLSMessage( MLSMSG_Error, ModuleName, &
+        call MLSL2Message( MLSMSG_Error, ModuleName, &
           & 'ExpandDirectDB thinks we need a new directFile; ' // &
           & 'did you enter any in global settings?' )
       end if
@@ -1187,7 +1187,7 @@ contains
           call outputNamedValue ( 'outputType', outputType )
           call outputNamedValue ( 'thisDirect%type', thisDirect%type )
           call dump ( thisDirect )
-          call MLSMessage ( MLSMSG_Error, ModuleName, &
+          call MLSL2Message ( MLSMSG_Error, ModuleName, &
             & 'DirectWriteCommand mismatched outputTypes for ' // trim(filename) )
         end if
       end if
@@ -1235,7 +1235,7 @@ contains
         PCTop    = mlspcf_l2dgm_end
       end select
       if ( .not. associated(directFile) ) then
-        if(DEEBUG) call MLSMessage(MLSMSG_Warning, ModuleName, &
+        if(DEEBUG) call MLSL2Message ( MLSMSG_Warning, ModuleName, &
           & 'No entry in filedatabase for ' // trim(filename) )
         directFile => AddInitializeMLSFile(filedatabase, &
           & content=outputTypeStr, &
@@ -1341,7 +1341,7 @@ contains
       integer :: NumSuitablesFiles   ! How many with matching types
       integer :: source
       ! Executable
-      if ( size(DirectDataBase) < 1 ) call MLSMessage ( &
+      if ( size(DirectDataBase) < 1 ) call MLSL2Message ( &
         & MLSMSG_Error, ModuleName, &
         & 'No files in directDatabase to distribute sources among' )
       NumSuitablesFiles = 0
@@ -1356,7 +1356,7 @@ contains
         call output(outputType, advance='yes')
         call display_string ( lit_indices(outputType), advance='yes' )
         call output(DirectDataBase%autoType)
-        call MLSMessage ( &
+        call MLSL2Message ( &
         & MLSMSG_Error, ModuleName, &
         & 'No suitable files in directDatabase to distribute sources among' )
       end if
@@ -1633,7 +1633,7 @@ contains
     !   & call Announce_Error ( key, NO_ERROR_CODE, &
     !  & 'File or hdfVersion not appropriate arguments for output l2aux/l2gp' )
 
-    if ( error /= 0 ) call MLSMessage ( MLSMSG_Error, &
+    if ( error /= 0 ) call MLSL2Message ( MLSMSG_Error, &
       & ModuleName, "Errors in configuration prevent proceeding" )
 
     ! Identify the quantity
@@ -1674,8 +1674,8 @@ contains
         if ( get_spec_id(key) /= s_l2gp ) then
           call Announce_Error ( key, NO_ERROR_CODE, &
             & 'This quantity should be joined as an l2gp' )
-          call MLSMessage ( MLSMSG_Error,&
-            & ModuleName, 'This quantity should be joined as an l2gp')
+          call MLSL2Message ( MLSMSG_Error,&
+            & ModuleName, 'This quantity should be joined as an l2gp' )
         end if
         call JoinL2GPQuantities ( key, hdfNameIndex, quantity, &
           & precisionQuantity, l2gpDatabase, chunkNo )
@@ -1684,8 +1684,8 @@ contains
         if ( get_spec_id(key) /= s_l2aux ) then
           call Announce_Error ( key, NO_ERROR_CODE, &
             & 'This quantity should be joined as an l2aux' )
-          call MLSMessage ( MLSMSG_Error,&
-            & ModuleName, 'This quantity should be joined as an l2aux')
+          call MLSL2Message ( MLSMSG_Error,&
+            & ModuleName, 'This quantity should be joined as an l2aux' )
         end if
         call JoinL2AUXQuantities ( key, hdfNameIndex, quantity, &
           & l2auxDatabase, chunks )
@@ -2101,11 +2101,11 @@ contains
     end if
     if ( size(thisL2AUX%values, 1)*size(thisL2AUX%values, 2) &
      & /= thisL2AUX%dimensions(1)%noValues*thisL2AUX%dimensions(2)%noValues ) &
-     & call MLSMessage ( MLSMSG_Error, &
+     & call MLSL2Message ( MLSMSG_Error, &
      & ModuleName, "Reshape fails: size mismatch betw. dims and values" )
     if ( size(thisL2AUX%values, 1)*size(thisL2AUX%values, 2)*(lastProfile-firstProfile+1) &
      & /= size(quantity%values, 1)*(useLastInstance-useFirstInstance+1) ) &
-     & call MLSMessage ( MLSMSG_Error, &
+     & call MLSL2Message ( MLSMSG_Error, &
      & ModuleName, "Reshape fails: size mismatch betw. quantity and l2aux" )
     thisL2AUX%values(:,:,firstProfile:lastProfile) = &
       & reshape ( max ( -hugeR4, min ( hugeR4, &
@@ -2160,6 +2160,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.186  2018/07/27 23:18:48  pwagner
+! Renamed level 2-savvy MLSMessage MLSL2Message
+!
 ! Revision 2.185  2018/04/16 22:21:41  pwagner
 ! Improved how we DirectWrite plain hdf files
 !
