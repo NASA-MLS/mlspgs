@@ -38,7 +38,7 @@ module DirectWrite_m  ! alternative to Join/OutputAndClose methods
     & MLS_CloseFile, MLS_OpenFile, Split_Path_Name
   use MLSFinds, only: FindFirst
   use MLSHDFEOS, only: MLS_Swath_In_File
-  use MLSL2Options, only: WriteFileAttributes
+  use MLSL2Options, only: MLSL2Message, WriteFileAttributes
   use MLSStringLists, only: List2Array, NumStringElements, SwitchDetail
   use Output_M, only: Blanks, Output
   use PCFHdr, only: GlobalAttributes
@@ -291,7 +291,7 @@ contains ! ======================= Public Procedures =========================
     ! call outputNamedValue ( 'rank', myRank )
     call GetHDF5DSRank ( grp_id, 'values', itsRank )
     if ( myRank > 0 .and. myRank /= itsRank ) &
-      & call MLSMessage ( MLSMSG_Warning, ModuleName // '%DirectRead', &
+      & call MLSL2Message ( MLSMSG_Warning, ModuleName // '%DirectRead', &
       & 'ranks differ for ' // trim(qtyName), &
       & MLSFile=File )
     select case ( myRank )
@@ -580,14 +580,14 @@ contains ! ======================= Public Procedures =========================
       call output(noToWrite, advance='no')
       call output('   grandTotalInstances: ', advance='no')
       call output(grandTotalInstances, advance='yes')
-      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+      call MLSL2Message ( MLSMSG_Warning, ModuleName, &
         & 'last profile > grandTotalInstances for ' // trim(sdName), &
         & MLSFile=L2GPFile )
       ! Last-ditch effort resets offset
       offset = max(0, min(offset, grandTotalInstances - noToWrite))
     endif
     if ( L2GPFile%access == DFACC_RDONLY )  &
-      & call MLSMessage(MLSMSG_Error, ModuleName, &
+      & call MLSL2Message(MLSMSG_Error, ModuleName, &
       & 'l2gp file is rdonly', MLSFile=L2GPFile)
     ! Convert vector quantity to l2gp
     call vectorValue_to_l2gp( quantity, &
@@ -791,8 +791,8 @@ contains ! ======================= Public Procedures =========================
     if ( .not. alreadyOpen ) then
       call mls_openFile(L2AUXFile, returnStatus)
       if ( returnStatus /= 0 ) &
-        call MLSMessage(MLSMSG_Error, ModuleName, &
-        & 'Unable to open l2aux file', MLSFile=L2AUXFile)
+        call MLSL2Message ( MLSMSG_Error, ModuleName, &
+        & 'Unable to open l2aux file', MLSFile=L2AUXFile )
     endif
     call SaveAsHDF5DS ( L2AUXFile%FileID%f_id, SDname, quantity%values )
     if ( .not. alreadyOpen )  call mls_closeFile(L2AUXFile, returnStatus)
@@ -861,12 +861,12 @@ contains ! ======================= Public Procedures =========================
     if ( .not. alreadyOpen ) then
       call mls_openFile(L2AUXFile, returnStatus)
       if ( returnStatus /= 0 ) &
-        call MLSMessage(MLSMSG_Error, ModuleName, &
-        & 'Unable to open l2aux file', MLSFile=L2AUXFile)
+        call MLSL2Message ( MLSMSG_Error, ModuleName, &
+        & 'Unable to open l2aux file', MLSFile=L2AUXFile )
     endif
     if ( L2AUXFile%access == DFACC_RDONLY )  &
-      & call MLSMessage(MLSMSG_Error, ModuleName, &
-      & 'l2aux file is rdonly', MLSFile=L2AUXFile)
+      & call MLSL2Message ( MLSMSG_Error, ModuleName, &
+      & 'l2aux file is rdonly', MLSFile=L2AUXFile )
     if ( (lastProfTooBigWarns <= MAXNUMWARNS) &
       & .and. &
       & (quantity%template%instanceOffset+quantity%template%noInstances - &
@@ -877,7 +877,7 @@ contains ! ======================= Public Procedures =========================
       & .and. &
       & quantity%template%grandTotalInstances > 0 ) then
       lastProfTooBigWarns = lastProfTooBigWarns + 1
-      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+      call MLSL2Message ( MLSMSG_Warning, ModuleName, &
           & 'last profile > grandTotalInstances for ' // trim(sdName), &
           & MLSFile=L2AUXFile)
       call output('instanceOffset: ', advance='no')
@@ -893,7 +893,7 @@ contains ! ======================= Public Procedures =========================
       call output('grandTotalInstances: ', advance='no')
       call output(quantity%template%grandTotalInstances, advance='yes')
       if ( lastProfTooBigWarns > MAXNUMWARNS ) &
-          & call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          & call MLSL2Message ( MLSMSG_Warning, ModuleName, &
           & 'Max no. of warnings reached--suppressing further ones')
     endif
     if ( deebughere ) then
@@ -932,7 +932,7 @@ contains ! ======================= Public Procedures =========================
         & FWModelConfig, lowerOverlap=lowerOverlap, upperOverlap=upperOverlap, &
         & single=single, options=options )
     case default
-      call MLSMessage ( MLSMSG_Error, ModuleName, &
+      call MLSL2Message ( MLSMSG_Error, ModuleName, &
         & 'Unsupported hdfVersion for DirectWrite_L2Aux (currently only 4 or 5)' )
     end select
     if ( verbose ) call outputNamedValue( 'DW L2AUX qty name', trim(sdName) )
@@ -997,7 +997,7 @@ contains ! ======================= Public Procedures =========================
     else
       sdId = sfSelect ( L2AUXFile%fileID%f_id, sdIndex )
     end if
-    if ( sdId == -1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+    if ( sdId == -1 ) call MLSL2Message ( MLSMSG_Error, ModuleName, &
      & 'Error accessing SD '//trim(sdName) // ' (hdf4)', MLSFile=L2AUXFile)
 
     ! What exactly will be our contribution
@@ -1045,7 +1045,7 @@ contains ! ======================= Public Procedures =========================
 
     ! End access to the SD and close the file
     status = sfEndAcc ( sdId )
-    if ( status == -1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+    if ( status == -1 ) call MLSL2Message ( MLSMSG_Error, ModuleName, &
         & 'Error ending access to direct write sd (hdf4)', MLSFile=L2AUXFile )
 
   end subroutine DirectWrite_L2Aux_hdf4
@@ -1206,7 +1206,7 @@ contains ! ======================= Public Procedures =========================
         print *, 'Num_qty_values ', Num_qty_values
       endif
       if ( total_DS_size > Num_qty_values ) &
-        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & call MLSL2Message ( MLSMSG_Error, ModuleName, &
         & 'Number of 3d array elements to write > number stored in qty values', &
         & MLSFile=L2AUXFile )
       call WriteHDF5Data (  real( &
@@ -1221,7 +1221,7 @@ contains ! ======================= Public Procedures =========================
         print *, 'Num_qty_values ', Num_qty_values
       endif
       if ( total_DS_size > Num_qty_values ) &
-        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & call MLSL2Message ( MLSMSG_Error, ModuleName, &
         & 'Number of 2d array elements to write > number stored in qty values', &
         & MLSFile=L2AUXFile )
       call WriteHDF5Data (  real( &
@@ -1240,7 +1240,7 @@ contains ! ======================= Public Procedures =========================
       if ( DeeBUG ) call dump(L2AUXFile, details=1)
       call h5gopen_f(L2AUXFile%fileID%f_id, '/', grp_id, returnstatus)
       if ( returnstatus /= 0 ) &
-        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & call MLSL2Message ( MLSMSG_Error, ModuleName, &
         & 'Unable to open group "/" to write attribute', &
         & MLSFile=L2AUXFile )
       if ( associated ( FWModelConfig ) ) then
@@ -1310,7 +1310,7 @@ contains ! ======================= Public Procedures =========================
     use Intrinsic, only: Lit_Indices
     use MLSHDF5, only: IsHDF5grouppresent, &
       & MakeHDF5attribute, SaveasHDF5ds
-    use MLSL2Options, only: MLSMessage
+    use MLSL2Options, only: MLSL2Message
     use MLSSTrings, only: Writeintstochars
     use MoreMessage, only: MoreMLSMessage => MLSMessage
     ! Args:
@@ -1353,19 +1353,19 @@ contains ! ======================= Public Procedures =========================
       if ( verbose ) call outputNamedValue( '  creating file', trim(File%name) )
       call h5GCreate_f ( File%fileID%f_id, qtyName, grp_id, returnStatus )
       if ( returnStatus /= 0 ) &
-        & call MLSMessage(MLSMSG_Error, ModuleName, &
+        & call MLSL2Message ( MLSMSG_Error, ModuleName, &
         & 'Unable to create group ' // trim(qtyName), MLSFile=File )
       call writeQuantityAttributes ( grp_id, quantity )
     else
       call h5GOpen_f ( File%fileID%f_id, qtyName, grp_id, returnStatus )
       if ( returnStatus /= 0 ) &
-        & call MLSMessage(MLSMSG_Error, ModuleName, &
+        & call MLSL2Message ( MLSMSG_Error, ModuleName, &
         & 'Unable to open group ' // trim(qtyName), MLSFile=File )
     end if
     File%fileID%grp_id = grp_id
     call h5GCreate_f ( File%fileID%grp_id, chunkStr, grp_id, returnStatus )
     if ( returnStatus /= 0 ) &
-      & call MLSMessage(MLSMSG_Error, ModuleName, &
+      & call MLSL2Message ( MLSMSG_Error, ModuleName, &
       & 'Unable to create group ' // trim(chunkStr), MLSFile=File )
     ! Begin the writes
     ! Values
@@ -1421,11 +1421,11 @@ contains ! ======================= Public Procedures =========================
     ! Close everything up
     call h5GClose_f ( grp_id, returnStatus )
     if ( returnStatus /= 0 ) &
-      & call MLSMessage(MLSMSG_Error, ModuleName, &
+      & call MLSL2Message ( MLSMSG_Error, ModuleName, &
       & 'Unable to close chunk group ' // trim(chunkStr), MLSFile=File )
     call h5GClose_f ( File%fileID%grp_id, returnStatus )
     if ( returnStatus /= 0 ) &
-      & call MLSMessage(MLSMSG_Error, ModuleName, &
+      & call MLSL2Message ( MLSMSG_Error, ModuleName, &
       & 'Unable to close qty group ' // trim(qtyName), MLSFile=File )
 
     call mls_CloseFile( File )
@@ -1787,7 +1787,7 @@ contains ! ======================= Public Procedures =========================
     case default
       call get_string( lit_indices(quantity%template%verticalCoordinate ), l2gp%verticalCoordinate, strip=.true. )      
       if ( noSurfsInL2GP > 0 ) l2gp%pressures = quantity%template%surfs(:,1)
-      call MLSMessage( MLSMSG_Warning, ModuleName, &
+      call MLSL2Message( MLSMSG_Warning, ModuleName, &
         & 'Converting qty with non-pressure vertical coordinate ' // l2gp%verticalCoordinate )
       if ( verbose ) call dump( l2gp%pressures, 'vertical coordinates' )
       if ( deebug  ) call dump( quantity%template )
@@ -1954,6 +1954,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.92  2018/07/27 23:17:16  pwagner
+! Renamed level 2-savvy MLSMessage MLSL2Message
+!
 ! Revision 2.91  2018/04/19 01:14:16  vsnyder
 ! Remove USE statements for unused names
 !
