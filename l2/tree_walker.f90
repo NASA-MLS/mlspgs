@@ -76,7 +76,7 @@ contains ! ====     Public Procedures     ==============================
     use MLSCommon, only: TAI93_Range_T, MLSFile_T
     use MLSL2Options, only: Aura_L1BFiles, &
       & CheckPaths, CurrentChunkNumber, CurrentPhaseName, ExitToNextChunk, &
-      & L2CFNode, MLSMessage, Need_L1BFiles, PhasesToSkip, &
+      & L2CFNode, MLSL2Message, Need_L1BFiles, PhasesToSkip, &
       & SectionsToSkip, SkipDirectWrites, SkipDirectWritesOriginal, &
       & SkipRetrieval, SlavesCleanUpSelves, SpecialDumpFile, StopAfterSection, &
       & Toolkit
@@ -180,10 +180,10 @@ contains ! ====     Public Procedures     ==============================
     ! associated.  This allows to remove the pointer attribute in several
     ! places.
     allocate ( vectors(0), stat=error_flag )
-    if ( error_flag /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+    if ( error_flag /= 0 ) call MLSL2Message ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate // 'vectors' )
     allocate ( directDatabase(0), stat=error_flag )
-    if ( error_flag /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+    if ( error_flag /= 0 ) call MLSL2Message ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate // 'direct write files' )
 
     nullify ( chunksSkipped )
@@ -246,7 +246,7 @@ contains ! ====     Public Procedures     ==============================
         call MLSSignals ( son )
         if ( switchDetail(switches,'tps') > -1 ) then
           ! call test_parse_signals
-          call MLSMessage ( MLSMSG_Info, ModuleName, &
+          call MLSL2Message ( MLSMSG_Info, ModuleName, &
             & 'Go back and uncomment the previous line in tree_walker' )
         end if
         ! Here's one way for the l2cf to set Aura to .false.
@@ -321,7 +321,7 @@ contains ! ====     Public Procedures     ==============================
             endif
           else
             allocate ( chunks(1), stat=error_flag )
-            if ( error_flag /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+            if ( error_flag /= 0 ) call MLSL2Message ( MLSMSG_Error, ModuleName, &
               & MLSMSG_Allocate // 'chunks' )
             if ( .not. NEED_L1BFILES ) then
               call output( 'Creating artificial chunk', advance='yes' )
@@ -356,7 +356,7 @@ contains ! ====     Public Procedures     ==============================
         ! no chunks.
         if ( .not. associated(chunks) ) then
           allocate(chunks(1), stat=error_flag)
-          if ( error_flag /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          if ( error_flag /= 0 ) call MLSL2Message ( MLSMSG_Error, ModuleName, &
             & 'unable to allocate chunks' )
           firstChunk = 1
           lastChunk = size(chunks)
@@ -411,14 +411,14 @@ contains ! ====     Public Procedures     ==============================
           canWriteL2PC = ( count(.not. chunksSkipped) < 2 )
           if ( .not. associated(chunks) ) then
             allocate(chunks(1), stat=error_flag)
-            if ( error_flag /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+            if ( error_flag /= 0 ) call MLSL2Message ( MLSMSG_Error, ModuleName, &
               & 'unable to allocate chunks' )
             firstChunk = 1
             lastChunk = size(chunks)
           end if
           if ( FindFirst( .not. chunksSkipped(firstChunk:lastChunk) ) < 1 .and. &
             & COMPLAINIFSKIPPEDEVERYCHUNK ) &
-              & call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & call MLSL2Message ( MLSMSG_Error, ModuleName, &
               & 'We have skipped every chunk' )
           if ( verboser ) call Dump( save1, 'save1' )
           do chunkNo = firstChunk, lastChunk ! --------------------- Chunk loop
@@ -462,7 +462,7 @@ subtrees:   do
                 & section_index = SECTION_FIRST - 1 ! skip
               if ( isInList( PhasesToSkip, trim(currentPhaseName), '-fc' ) ) &
                 & section_index = SECTION_FIRST - 2 ! skip
-              if ( verboser ) call MLSMessage ( MLSMSG_Info, ModuleName, &
+              if ( verboser ) call MLSL2Message ( MLSMSG_Info, ModuleName, &
                 & 'Innermost loop ' // trim(section_name) )
               ! Start inner loop for one chunk at the current position
               select case ( section_index ) ! section index
@@ -754,6 +754,9 @@ subtrees:   do
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.210  2018/04/19 23:44:36  pwagner
+! Skip may take /nextChunk flag
+!
 ! Revision 2.209  2018/04/19 00:49:44  vsnyder
 ! Remove USE statements and declarations for unused names
 !

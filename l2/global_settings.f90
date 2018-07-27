@@ -15,6 +15,9 @@ module GLOBAL_SETTINGS
   use HighOutput, only: AddRow, AddRow_Divider, AddRow_Header, &
     & BeVerbose, OutputCalendar, OutputNamedValue, OutputTable, StartTable, &
     & StyledOutput
+  use MLSL2Options, only: CheckPaths, L2CFNode, Level1_HDFVersion, &
+    & Need_L1BFiles, SpecialDumpFile, StopAfterSection, Toolkit, &
+    & MLSL2Message
   use Output_M, only: Blanks, NewLine, Output, &
     & RevertOutput, SwitchOutput
 
@@ -38,7 +41,7 @@ module GLOBAL_SETTINGS
 
   public :: L1MAFTOL2PROFILE, L2PROFILETOL1MAF, SET_GLOBAL_SETTINGS
 
-  character(LEN=FileNameLen), public :: LEAPSECFILENAME = ''
+  character(len=FileNameLen), public :: LEAPSECFILENAME = ''
 
   ! These must be values consistent with level 1
   ! (Some canny coding below could make this more robust)
@@ -107,7 +110,7 @@ contains
     ! 1st--read the MAF times
     L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
     if ( .not. associated(L1BFile) ) then
-      call MLSMessage ( MLSMSG_Warning, ModuleName // 'L1MAFToL2Profile', &                      
+      call MLSL2Message ( MLSMSG_Warning, ModuleName // 'L1MAFToL2Profile', &                      
       & 'l1boa File not found--hope you dont need one' )
       return
     endif
@@ -170,7 +173,7 @@ contains
     ! 1st--read the MAF times
     L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
     if ( .not. associated(L1BFile) ) then
-      call MLSMessage ( MLSMSG_Warning, ModuleName // 'L2ProfileToL1MAF', &                      
+      call MLSL2Message ( MLSMSG_Warning, ModuleName // 'L2ProfileToL1MAF', &                      
       & 'l1boa File not found--hope you dont need one' )
       return
     end if
@@ -189,7 +192,7 @@ contains
     call ReadL2GPData ( L2GPFile, trim(swath), l2gp )
     if ( DEEBUG ) call dump( l2gp%time, 'l2gp%time' )
     if ( l2gp%time(profile) < 0.d0 ) then
-      call MLSMessage ( MLSMSG_Warning, ModuleName // 'L2ProfileToL1MAF', &                      
+      call MLSL2Message ( MLSMSG_Warning, ModuleName // 'L2ProfileToL1MAF', &                      
       & 'time for this profile < 0; did the chunk crash?' )
       call deallocatel1bdata( l1bfield )
       call destroyl2gpcontents( l2gp )
@@ -245,9 +248,6 @@ contains
       & InitializeMLSFile, MLS_CloseFile, MLS_OpenFile, Split_Path_Name
     use MLSHDF5, only: GetAllHDF5GroupNames
     use MLSKinds, only: R8
-    use MLSL2Options, only: CheckPaths, L2CFNode, Level1_HDFVersion, &
-      & Need_L1BFiles, SpecialDumpFile, StopAfterSection, Toolkit, &
-      & MLSMessage
     use MLSL2Timings, only: Section_Times
     use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning
     use MLSPCF2, only: MLSPCF_L2GP_Start, MLSPCF_L2GP_End, &
@@ -474,7 +474,7 @@ contains
             & '*** Leap Second File ' // trim(LeapSecFileName) // &
             & ' not found', &
             & just_a_warning = .false.)
-            call MLSMessage ( MLSMSG_Error, ModuleName, &                      
+            call MLSL2Message ( MLSMSG_Error, ModuleName, &                      
             & '(Please check file name and path)' )    
           end if
         case ( p_output_version_string )
@@ -561,7 +561,7 @@ contains
         case ( s_l1boa )
           if ( restricted ) call notAllowed ( son, spec_restricted )
           if ( .not. NEED_L1BFILES ) then
-            call MLSMessage ( MLSMSG_Warning, ModuleName, &                      
+            call MLSL2Message ( MLSMSG_Warning, ModuleName, &                      
             & 'l1boa File not needed -- and so ignored' )
             cycle
           endif
@@ -599,7 +599,7 @@ contains
         case ( s_l1brad )
           if ( restricted ) call notAllowed ( son, spec_restricted )
           if ( .not. NEED_L1BFILES ) then
-            call MLSMessage ( MLSMSG_Warning, ModuleName, &                      
+            call MLSL2Message ( MLSMSG_Warning, ModuleName, &                      
             & 'l1brad File not needed -- and so ignored' )
             cycle
           endif
@@ -619,7 +619,7 @@ contains
             & just_a_warning = .true.)
           end if
         case ( s_l2parsf )
-          call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          call MLSL2Message ( MLSMSG_Warning, ModuleName, &
             & 'This version does not use staging file for slave Join commands' )
         case ( s_makePFA )
           call Make_PFAData ( son, returnStatus )
@@ -665,7 +665,7 @@ contains
         & got(p_starttime) .and. got(p_endtime) ) &
         & ) then
         error = 1
-        call MLSMessage( MLSMSG_Warning, ModuleName, &
+        call MLSL2Message( MLSMSG_Warning, ModuleName, &
           & 'start, end times must be supplied if there is no l1boa file' )
       elseif ( LeapSecFileName /= '' ) then
         call ToolkitTimeConversion
@@ -679,12 +679,12 @@ contains
 
     L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
     if ( .not. associated(L1BFile) ) then
-      call MLSMessage ( MLSMSG_Warning, ModuleName, &                      
+      call MLSL2Message ( MLSMSG_Warning, ModuleName, &                      
       & 'l1boa File not found--hope you dont need one' )
       call FinishUp
       return
     elseif ( L1BFile%hdfVersion /= hdfversion_5 ) then
-      call MLSMessage ( MLSMSG_Warning, ModuleName, &                      
+      call MLSL2Message ( MLSMSG_Warning, ModuleName, &                      
       & 'l1boa File is the older hdf4' )
     else
       ! Check on module names--do they agree with group names in L1BOA file?
@@ -716,11 +716,11 @@ contains
     the_hdf_version = &
       & L1BFile%HDFVersion
     if ( the_hdf_version == FILENOTFOUND ) then                                          
-      call MLSMessage ( MLSMSG_Error, ModuleName, &                      
+      call MLSL2Message ( MLSMSG_Error, ModuleName, &                      
       & 'File not found; make sure the name and path are correct' &
       & // trim(L1BFile%Name) )
     else if ( the_hdf_version <= 0 ) then                                          
-      call MLSMessage ( MLSMSG_Error, ModuleName, &                      
+      call MLSL2Message ( MLSMSG_Error, ModuleName, &                      
       & 'Illegal hdf version for l1boa file (file missing or non-hdf?)' )    
     end if
 
@@ -771,13 +771,13 @@ contains
 
     ! Have we overridden the Bright Object names? Can we find them in l1boa?
     if ( got(p_brightObjects) ) then
-      call MLSMessage ( MLSMSG_Warning, ModuleName, &                      
+      call MLSL2Message ( MLSMSG_Warning, ModuleName, &                      
       & 'You overrode names of Bright objects found in l1boa file' )    
     elseif( L1BFile%hdfVersion /= HDFVERSION_5 ) then
-      call MLSMessage ( MLSMSG_Warning, ModuleName, &                      
+      call MLSL2Message ( MLSMSG_Warning, ModuleName, &                      
       & 'Names of Bright objects missing from (hdf4) l1boa file' )    
     elseif( .not. IsHDF5AttributeInFile(L1BFile%name, 'BO_name') ) then
-      call MLSMessage ( MLSMSG_Warning, ModuleName, &                      
+      call MLSL2Message ( MLSMSG_Warning, ModuleName, &                      
       & 'Names of Bright objects missing from l1boa file' )    
     else
       if ( DEEBUG ) call output( 'About to read Bright Objects', advance='yes' )
@@ -860,11 +860,11 @@ contains
     ! Any last minute housekeeping tasks
     subroutine FinishUp
       if ( error /= 0 ) &
-        & call MLSMessage(MLSMSG_Error,ModuleName, &
-        & 'Problem with global settings section')
+        & call MLSL2Message ( MLSMSG_Error,ModuleName, &
+        & 'Problem with global settings section' )
       if ( warning /= 0 ) &
-        & call MLSMessage(MLSMSG_Warning,ModuleName, &
-        & 'Possible problem with global settings section')
+        & call MLSL2Message ( MLSMSG_Warning,ModuleName, &
+        & 'Possible problem with global settings section' )
 
       if ( specialDumpFile /= ' ' ) &
         & call revertOutput
@@ -885,7 +885,7 @@ contains
         error = 1
         call outputNamedValue ( 'start time', trim(start_time_string) )
         call outputNamedValue ( 'end time', trim(end_time_string) )
-        call MLSMessage( MLSMSG_Warning, ModuleName, &
+        call MLSL2Message( MLSMSG_Warning, ModuleName, &
           & 'start, end times not in range' )
       endif
     end subroutine datesModuleTimeConversion
@@ -1039,7 +1039,7 @@ contains
       ! Arguments
 
       integer, intent(in) :: Lcf_where
-      character(LEN=*), intent(in) :: Full_message
+      character(len=*), intent(in) :: Full_message
       logical, intent(in), optional :: Use_toolkit
       integer, intent(in), optional :: Error_number
       logical, intent(in), optional :: just_a_warning
@@ -1144,7 +1144,7 @@ contains
       L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
       hdfVersion = L1BFile%HDFVersion
       if ( hdfversion <= 0 ) &                                          
-        & call MLSMessage ( MLSMSG_Error, ModuleName, &                    
+        & call MLSL2Message ( MLSMSG_Error, ModuleName, &                    
         & 'Illegal hdf version for l1boa file (file missing or non-hdf?)' )  
       ! version = 1
 
@@ -1216,7 +1216,7 @@ contains
         call display_string( spec_indices(spec_id) )
       end select
       call output ( ' is not allowed.', advance='yes' )
-      call MLSMessage ( MLSMSG_Error, moduleName, &
+      call MLSL2Message ( MLSMSG_Error, moduleName, &
         'Prohibited parameter or specification in GlobalSettings section' )
     end subroutine NotAllowed
 
@@ -1332,7 +1332,7 @@ contains
         & type=l_hdf, access=DFACC_CREATE, HDFVersion=HDFVERSION_5, &
         & PCBottom=mlspcf_l2dgm_start, PCTop=mlspcf_l2dgm_end)
     end if
-    if ( returnStatus /= 0 ) call MLSMessage ( &
+    if ( returnStatus /= 0 ) call MLSL2Message ( &
        & MLSMSG_Error, ModuleName, &
        & 'Failed in GetPCFromRef for ' // trim(filename) )
 
@@ -1355,6 +1355,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.176  2017/11/15 00:11:44  pwagner
+! Use OutputTable to Dump list of level 1 files
+!
 ! Revision 2.175  2017/07/27 16:42:38  pwagner
 ! If yyyy-Doy, store actual actual month number as neg int. in GlobalAttributes%GranuleMonth
 !
