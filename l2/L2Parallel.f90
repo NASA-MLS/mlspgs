@@ -37,7 +37,7 @@ module L2Parallel
     & AddmachinetoDatabase, SigToName
   use Machine, only: Shell_Command, Usleep
   use MLSKinds, only: R8
-  use MLSL2options, only: MLSMessage
+  use MLSL2options, only: MLSL2Message
   use MLSMessagemodule, only: MLSMSG_Error, MLSMSG_Warning, PVMErrorMessage
   use MLSFinds, only: Findall, Findfirst
   use MLSStringlists, only: Catlists, Expandstringrange, Removenumfromlist, &
@@ -123,7 +123,7 @@ contains
 
     ! Executable code
     if ( .not. parallel%slave ) &
-      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & call MLSL2Message ( MLSMSG_Error, ModuleName, &
       & 'Only slave tasks can receive a chunk' )
 
     call PVMFrecv ( parallel%masterTid, ChunkTAG, bufferID )
@@ -310,18 +310,18 @@ contains
     if ( usingL2Q ) then
       call RegisterWithL2Q(noChunks, machines, L2QTID)
       noMachines = size(machines)
-      if ( noMachines < 1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      if ( noMachines < 1 ) call MLSL2Message ( MLSMSG_Error, ModuleName, &
       & 'No machines available for master to assign to slave tasks' )
-      if ( .not. any(machines%OK) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      if ( .not. any(machines%OK) ) call MLSL2Message ( MLSMSG_Error, ModuleName, &
       & 'No machines OK for master to assign to slave tasks' )
       if ( BeVerbose( 'mach', -1 ) .or. &
         & parallel%verbosity > 1 ) call dump ( machines )
     elseif ( .not. usingSubmit ) then
       call GetMachines ( machines )
       noMachines = size(machines)
-      if ( noMachines < 1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      if ( noMachines < 1 ) call MLSL2Message ( MLSMSG_Error, ModuleName, &
       & 'No machines available for master to assign to slave tasks' )
-      if ( .not. any(machines%OK) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      if ( .not. any(machines%OK) ) call MLSL2Message ( MLSMSG_Error, ModuleName, &
       & 'No machines OK for master to assign to slave tasks' )
       if ( BeVerbose( 'mach', -1 ).or. &
         & parallel%verbosity > 1 ) call dump ( machines )
@@ -520,8 +520,8 @@ contains
             call outputNamedValue ( ' meaning', SigToName(signal) )
             call TimeStamp ( ' Tid: ' // trim ( GetNiceTidString ( slaveTid ) ), &
               & advance='yes' )
-            call MLSMessage ( MLSMSG_Warning, ModuleName, &
-              & "Got a message from an unknown slave")
+            call MLSL2Message ( MLSMSG_Warning, ModuleName, &
+              & "Got a message from an unknown slave" )
           endif
         ! if ( chunk == 0 .and. &
         elseif ( machine == 0 ) then
@@ -530,8 +530,8 @@ contains
           call outputNamedValue ( ' meaning', SigToName(signal) )
           call TimeStamp ( ' Tid: ' // trim ( GetNiceTidString ( slaveTid ) ), &
             & advance='yes' )
-          call MLSMessage ( MLSMSG_Warning, ModuleName, &
-            & "Got a message from an unknown slave")
+          call MLSL2Message ( MLSMSG_Warning, ModuleName, &
+            & "Got a message from an unknown slave" )
           call dump ( chunkNiceTids, 'chunkNiceTids', options='t' )
           call TimeStamp ( slaveTid, advance='yes' )
           call dump ( chunkTids, 'chunkTids', format='places=10' )
@@ -597,7 +597,7 @@ contains
           endif
 
         case ( sig_tojoin ) ! --------------- Got a join request ---------
-          call MLSMessage ( MLSMSG_Error, ModuleName, &
+          call MLSL2Message ( MLSMSG_Error, ModuleName, &
             & 'This version does not support slave Join commands' )
 
         case ( sig_RequestDirectWrite ) ! ------- Direct write permission --
@@ -801,7 +801,7 @@ contains
         if ( info /= 0 ) &
           & call PVMErrorMessage ( info, 'unpacking machine fixed message' )
         if ( USINGOLDSUBMIT ) then
-          call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          call MLSL2Message ( MLSMSG_Warning, ModuleName, &
             & 'Got unexpected MachineFixed message but using submit method' )
         else
           if ( parallel%verbosity > 0 ) then
@@ -1143,7 +1143,7 @@ contains
     end where
 
     if ( count(chunksCompleted) == 0 ) &
-      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & call MLSL2Message ( MLSMSG_Error, ModuleName, &
       & 'No chunks were processed successfully.' )
 
     if ( BeVerbose( 'dwtime', -1 ) ) then
@@ -1316,7 +1316,7 @@ contains
       end do
 
       if (isKillMaster) &
-        & call MLSMessage ( MLSMSG_Error, ModuleName, killMasterMsg )
+        & call MLSL2Message ( MLSMSG_Error, ModuleName, killMasterMsg )
 
     end subroutine KillSlaves
 
@@ -1506,7 +1506,7 @@ contains
           call PVMErrorMessage ( info, "unpacking machine name" )
         endif
         if ( len_trim(machineName) < 1 ) &
-          & call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & call MLSL2Message ( MLSMSG_Error, ModuleName, &
           & 'granted blank host name' )
         return
       else
@@ -1532,7 +1532,7 @@ contains
     !
     call pvmfgettid(GROUPNAME, 0, L2Qtid)
     if ( L2Qtid < 1 ) then
-      call MLSMessage( MLSMSG_Error, ModuleName, &
+      call MLSL2Message( MLSMSG_Error, ModuleName, &
         & 'l2q queue manager not running--dead or not started yet?' )
     else
       write ( L2QSTRING, * ) L2QTID
@@ -1808,6 +1808,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.118  2018/07/27 23:18:48  pwagner
+! Renamed level 2-savvy MLSMessage MLSL2Message
+!
 ! Revision 2.117  2018/04/19 01:14:16  vsnyder
 ! Remove USE statements for unused names
 !

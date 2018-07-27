@@ -249,7 +249,7 @@ module MLSL2Options              !  Options and Settings for the MLSL2 program
   
   ! The following list of public procedures is for convenience only
   public :: dumpMacros
-  public :: MLSMessage
+  public :: MLSL2Message
   public :: processOptions
   public :: removeRuntimeBoolean
   public :: restoreDefaults
@@ -258,7 +258,7 @@ module MLSL2Options              !  Options and Settings for the MLSL2 program
   
 !=============================================================================
 contains 
-  ! -------------------------------------------------  MLSMessage  -----
+  ! -------------------------------------------------  MLSL2Message  -----
   ! Process the level 2-savvy MLSMessage call
   ! Optionally give l2cf line #, dump an item, and so on before summoning
   ! regular MLSMessage
@@ -270,9 +270,9 @@ contains
   ! output module's commands
   
   ! The above is too vague. What determines these cases? Specifically
-  ! (a) When  do we call output instead of MLSMessage? When are we mute?
-  ! (b) When must we call output and MLSMessage both?
-  subroutine MLSMessage ( Severity, ModuleNameIn, Message, &
+  ! (a) When  do we call output instead of MLSL2Message? When are we mute?
+  ! (b) When must we call output and MLSL2Message both?
+  subroutine MLSL2Message ( Severity, ModuleNameIn, Message, &
     & Advance, MLSFile, Status, Item )
     use Lexer_Core, only: Get_Where
     use MLSStringLists, only: SwitchDetail
@@ -379,7 +379,7 @@ contains
   contains
     subroutine SayIt ( It )
       ! Say it with MLSMessage
-      ! and possibly rpeat it with output
+      ! and possibly repeat it with output
       character (len=*), intent(in) :: It
       character(len=256)            :: mesg
       integer, parameter            :: LineLength = 40
@@ -395,7 +395,7 @@ contains
         if ( mustRepeat ) call output( trim(It), advance='yes' )
       endif
     end subroutine SayIt
-  end subroutine MLSMessage
+  end subroutine MLSL2Message
 
   ! ---------------------------------------------  ProcessOptions  -----
   ! Process the command line options; either from
@@ -865,7 +865,7 @@ cmds: do
           call get_nLines ( optsFile, nLines )
           if ( nLines < 0 ) then
             print *, 'Sorry, unable to open opts file ' // trim(optsFile)
-            call MLSMessage( MLSMSG_Error, ModuleName, &
+            call MLSL2Message( MLSMSG_Error, ModuleName, &
             & 'Sorry, unable to open opts file ' // trim(optsFile) )
           endif
           call allocate_test ( optLines, nLines, 'optLines', &
@@ -1420,6 +1420,9 @@ end module MLSL2Options
 
 !
 ! $Log$
+! Revision 2.118  2018/07/27 23:15:40  pwagner
+! Renamed MLSMessage MLSL2Message
+!
 ! Revision 2.117  2018/05/31 18:04:29  pwagner
 ! The opts file can now override globalattributes
 !
