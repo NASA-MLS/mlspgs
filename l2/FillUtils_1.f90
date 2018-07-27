@@ -7498,6 +7498,7 @@ contains ! =====     Public Procedures     =============================
       & filetype, options, spread, interpolate, groupName )
       use Dump_1, only: Dump
       use MLSHDF5, only: GetAllHDF5DSNames, MatchHDF5Attributes
+      use MLSMessageModule, only: MLSMSG_info
       integer, intent(in)            :: KEY        ! Tree node
       type (Vector_T), intent(inout) :: Vector
       type (MLSFile_T), pointer      :: MLSFile
@@ -7538,8 +7539,13 @@ contains ! =====     Public Procedures     =============================
           & cond=toggle(gen) .and. levels(gen) > 1 )
         return
       endif
+      call LogMyData ( mesg='NumStringElements( trim(DSNames), countEmpty )', data=NumStringElements( trim(DSNames), countEmpty ) )
+      call LogMyData ( mesg='size ( vector%quantities )', data=size ( vector%quantities ) )
       do dsi=1, NumStringElements( trim(DSNames), countEmpty )
+        call LogMyData ( mesg='dsi', data=dsi )
         do sqi = 1, size ( vector%quantities )
+          if ( dsi > 123 .and. sqi > 120 ) &
+            & call LogMyData ( mesg='sqi', data=sqi )
           quantity => vector%quantities(sqi)
           ! How do we access the dataset to read? By name or by num?
           if ( index(lowercase(options), 'num') < 1 ) then
@@ -7548,11 +7554,15 @@ contains ! =====     Public Procedures     =============================
               & call Announce_Error ( key, no_Error_Code, &
               &   'template name is 0?' )
             call get_string( quantity%template%name, Name )
+            ! if ( dsi > 123 ) &
+              ! & call LogMyData ( mesg='Made it out of get_string', data=sqi )
           else
           ! By num
             call writeIntsToChars ( sqi, Name )
             Name = 'Quantity ' // trim(Name)
           end if
+          if ( dsi > 123 .and. sqi > 123 ) &
+            & call LogMyData ( mesg='Deciding about sqi', data=sqi )
           if ( lowercase(trim(name)) /= &
             & lowercase(StringElement( DSNames, dsi, countEmpty )) ) &
             & cycle
@@ -7565,14 +7575,31 @@ contains ! =====     Public Procedures     =============================
           if ( len_trim(name) > 0 ) then
             if ( len_trim(groupName) > 0 ) &
               & name = trim(groupName) // '/' // name
+            call LogMyData ( mesg='sqi', data=sqi )
             call NamedQtyFromFile ( key, quantity, MLSFile, &
               & filetype, name, spread, interpolate, homogeneous )
           endif
         end do
       end do
+      call LogMyData ( mesg='Whew! Barely made it.' )
       call trace_end ( 'FillUtils_1.VectorFromFile', &
         & cond=toggle(gen) .and. levels(gen) > 1 )
     contains
+      subroutine LogMyData ( mesg, data )
+        character(len=*), intent(in), optional       :: mesg
+        integer, intent(in), optional                :: data
+        ! Internal
+        character(len=1024)                          :: chars
+        character(len=8)                             :: dchars
+        ! Executable
+        chars = ' '
+        if ( present(mesg) ) chars = trim(chars) // mesg
+        if ( present(data) ) then
+          write( dchars, * ) data
+          chars = trim(chars) // ': ' // dchars
+        endif
+        call MLSMessage ( MLSMSG_Info, ModuleName, trim(chars) )
+      end subroutine LogMyData
       subroutine ByAttribute
         ! By attribute
         integer :: SQI ! Loop index
@@ -7716,6 +7743,7 @@ contains ! =====     Public Procedures     =============================
       & filetype, name, spread, interpolate, homogeneous )
       use MLSHDF5, only: GetHDF5Attribute, GetHDF5DSDims, GetHDF5DSRank, &
         & LoadFromHDF5DS
+      use MLSMessageModule, only: MLSMSG_info
       integer, intent(in) :: KEY        ! Tree node
       type (VectorValue_T), intent(inout) :: QUANTITY ! Radiance quantity to modify
       type (MLSFile_T), pointer   :: MLSFile
@@ -7747,6 +7775,10 @@ contains ! =====     Public Procedures     =============================
       call trace_begin ( me, 'FillUtils_1.NamedQtyFromFile', key, &
         & cond=toggle(gen) .and. levels(gen) > 2 )
       verbose = ( switchDetail(switches, 'fill') > -1 )
+      if ( verbose ) &
+          & call MLSMessage ( MLSMSG_Info, ModuleName, &
+          & trim(name) // ' will be read from file' )
+      goto 999
       call GetHDF5DSDims ( MLSFile, name, DIMS )
       dimInts = max(dims, int(1,hsize_t))
       caseName = lowercase(fileType)
@@ -7842,7 +7874,7 @@ contains ! =====     Public Procedures     =============================
         end if
         call DeAllocate_test ( values, 'values read from file', ModuleName )
       end select
-      call trace_end ( 'FillUtils_1.NamedQtyFromFile', &
+999      call trace_end ( 'FillUtils_1.NamedQtyFromFile', &
         & cond=toggle(gen) .and. levels(gen) > 2 )
 
     contains
@@ -7943,6 +7975,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.144  2018/07/27 23:18:48  pwagner
+! Renamed level 2-savvy MLSMessage MLSL2Message
+!
 ! Revision 2.143  2018/06/27 00:01:14  pwagner
 ! Dont complain about invalid temperatures in WithReichlerWMOTP
 !
