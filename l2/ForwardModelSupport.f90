@@ -13,6 +13,7 @@
 module ForwardModelSupport
 
   ! Set up the forward model stuff.
+  use MLSL2Options, only: MLSL2Message
 
   implicit none
   private
@@ -422,8 +423,8 @@ contains ! =====     Public Procedures     =============================
     use L2pc_M, only: Binselectors, Defaultselector_Latitude, L2pcDatabase, &
       & Createdefaultbinselectors
     use MLSKinds, only: R8
-    use MLSL2options, only: L2cfnode, MLSMessage
-    use MLSMessagemodule, only: MLSMSG_Error, MLSMSG_Warning
+    use MLSL2options, only: L2cfnode
+    use MLSMessagemodule, only: MLSMSG_Error, MLSMSG_Warning, MLSMessage
     use MLSNumerics, only: Hunt
     use MLSSignals_M, only: Signals
     use Molecules, only: L_Cloudice
@@ -1128,7 +1129,7 @@ op:     do j = 2, nsons(theTree)
         & call AnnounceError ( IncompleteFullFwm, root )
 
       if ( .not. associated(info%integrationGrid%surfs) ) &
-        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & call MLSL2Message ( MLSMSG_Error, ModuleName, &
         &   'How can the integration grid not be associated?' )
 
       ! Now identify the Earth's surface in the tangent grid
@@ -1149,7 +1150,7 @@ op:     do j = 2, nsons(theTree)
 
       if ( info%sidebandStart == 1 .and. info%anyPFA(1) .or. &
          & info%sidebandStop == -1 .and. info%anyPFA(2) ) &
-         & call MLSMessage ( MLSMSG_Warning, ModuleName, &
+         & call MLSL2Message ( MLSMSG_Warning, ModuleName, &
          & 'Signal is SSB, but PFA is requested for the other sideband' )
 
       ! Cannot specify allLinesInCatalog and polarized
@@ -1207,7 +1208,7 @@ op:     do j = 2, nsons(theTree)
 
     if ( error /= 0 ) then
       call dump ( info, 'ConstructForwardModelConfig' )
-      call MLSMessage ( MLSMSG_Error, ModuleName, &
+      call MLSL2Message ( MLSMSG_Error, ModuleName, &
         & 'An error occured; see **** above' )
     end if
 
@@ -1252,10 +1253,10 @@ op:     do j = 2, nsons(theTree)
       ! Make sure all the signals we're dealing with are same module,
       ! radiometer and sideband.
       if ( any( info%signals%sideband /= info%signals(1)%sideband ) ) &
-        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & call MLSL2Message ( MLSMSG_Error, ModuleName, &
         &  "Can't have mixed sidebands in forward model config" )
       if ( .not. all ( EssentiallyEqual ( info%signals%lo, info%signals(1)%lo ) ) ) &
-        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & call MLSL2Message ( MLSMSG_Error, ModuleName, &
         &  "Can't have mixed radiometers in forward model config" )
 
       ! Think about sidebands
@@ -1575,6 +1576,9 @@ op:     do j = 2, nsons(theTree)
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.189  2018/07/27 23:18:48  pwagner
+! Renamed level 2-savvy MLSMessage MLSL2Message
+!
 ! Revision 2.188  2017/11/03 20:59:08  pwagner
 ! Most array gymnastics moved from MLSFillValues to HyperSlabs module
 !
