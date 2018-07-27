@@ -86,12 +86,12 @@ contains
     use MatrixTools, only: DumpBlocks
     use MLSKinds, only: R8, RV
     use MLSCommon, only: MLSFile_t
-    use MLSL2options, only: L2CFNode, SkipRetrieval, SpecialDumpFile, &
+    use MLSL2Options, only: L2CFNode, SkipRetrieval, SpecialDumpFile, &
       & StateFilledBySkippedRetrievals, &
-      & MLSMessage, &
       & CurrentChunkNumber, CurrentPhaseName
     use MLSL2timings, only: Section_Times, Total_Times, Add_To_Retrieval_Timing
-    use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning, MLSMessageReset
+    use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning, MLSMessageReset, &
+      & MLSMessage
     use MoreTree, only: Get_Boolean, Get_Label_And_Spec, Get_Field_Id, &
       & Get_Spec_Id
     use MLSStringlists, only: SwitchDetail
@@ -3001,6 +3001,9 @@ NEWT: do ! Newton iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.360  2018/07/27 23:19:53  pwagner
+! Renamed level 2-savvy MLSMessage MLSL2Message
+!
 ! Revision 2.359  2018/07/23 23:29:56  vsnyder
 ! Remove ChiSqMinNorm and ChiSqNorm from DNWT AJ structure because DNWT
 ! doesn't compute them or use them.
