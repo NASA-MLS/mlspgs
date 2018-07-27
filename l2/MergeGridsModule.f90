@@ -19,7 +19,7 @@ module MergeGridsModule
     & Deallocate_Test, Test_Allocate, Test_Deallocate
   use HighOutput, only: Dump, OutputNamedValue
   use, Intrinsic :: ISO_C_Binding, only: C_Intptr_T, C_Loc
-  use MLSL2Options, only: MLSMessage, L2cfNode
+  use MLSL2Options, only: MLSL2Message, L2cfNode
   use MLSL2Timings, only: AddPhaseToPhaseNames
   use MLSMessageModule, only: MLSMsg_Error, MLSMsg_Warning, DumpConfig
   use Ncep_Dao, only: ReadGriddedData
@@ -195,7 +195,7 @@ contains ! ===================================  Public procedures  =====
         grid = wmoTropFromGrid ( key, griddedDataBase )
       case default
         ! Shouldn't get here if parser worked?
-        call MLSMessage ( MLSMSG_Error, ModuleName, &
+        call MLSL2Message ( MLSMSG_Error, ModuleName, &
           & 'Unrecognized command in MergeGrids section' )
       end select
     end do
@@ -273,7 +273,7 @@ contains ! ===================================  Public procedures  =====
       case ( f_grid )
         v => griddedDataBase ( decoration ( decoration ( value ) ) )
         ! Did we fail reading v?
-        if ( .not. associated(v) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        if ( .not. associated(v) ) call MLSL2Message ( MLSMSG_Error, ModuleName, &
           & 'The v (climatology?) grid for the conversion is not associated' )
         ! Did we defer reading v?
         if ( v%empty .and. v%deferReading ) then
@@ -282,7 +282,7 @@ contains ! ===================================  Public procedures  =====
             & v%dimList, TRIM(v%fieldNames), v%missingValue )
         endif
         ! Did we succeed in reading v (at last?)
-        if ( v%empty )  call MLSMessage ( MLSMSG_Error, ModuleName, &
+        if ( v%empty )  call MLSL2Message ( MLSMSG_Error, ModuleName, &
           & 'The v (climatology?) grid for the conversion is empty' )
 !       case ( f_VGrid )
 !         v => VGrids ( decoration ( decoration ( value ) ) )
@@ -621,11 +621,11 @@ contains ! ===================================  Public procedures  =====
     end do
 
     ! Think about cases where one or other grid is empty
-    if ( climatology%empty ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+    if ( climatology%empty ) call MLSL2Message ( MLSMSG_Error, ModuleName, &
       & 'The climatology grid for the merge is empty' )
 
     if ( operational%empty ) then
-      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+      call MLSL2Message ( MLSMSG_Warning, ModuleName, &
       & 'The meteorology grid for the merge is empty' )
       ! If no operational data, then just use climatology
       call CopyGrid ( newGrid, climatology )
@@ -635,13 +635,13 @@ contains ! ===================================  Public procedures  =====
     call finishUp ( done = .false. )
     ! Do some final sanity checks
     if ( operational%verticalCoordinate /= v_is_pressure ) &
-      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & call MLSL2Message ( MLSMSG_Error, ModuleName, &
       & 'Operational grid not on pressure surfaces' )
     if ( climatology%verticalCoordinate /= v_is_pressure ) &
-      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & call MLSL2Message ( MLSMSG_Error, ModuleName, &
       & 'Climatology grid not on pressure surfaces' )
     !  if ( climatology%units /= operational%units ) &
-    !    & call MLSMessage ( MLSMSG_Error, ModuleName, &
+    !    & call MLSL2Message ( MLSMSG_Error, ModuleName, &
     !    & 'The climatology and operational data describe different physical quantities' )
     if ( climatology%equivalentLatitude .neqv. &
       & operational%equivalentLatitude ) then
@@ -653,7 +653,7 @@ contains ! ===================================  Public procedures  =====
       call outputNamedValue( 'operational%equivalentLatitude', operational%equivalentLatitude )
       call outputNamedValue( '=?', &
         & Climatology%equivalentLatitude .eqv. operational%equivalentLatitude )
-      call MLSMessage ( MLSMSG_Error, ModuleName, &
+      call MLSL2Message ( MLSMSG_Error, ModuleName, &
       & 'Climatology, operational data are mixed latitude/equivalent latitude.' )
     endif
     ! OK, now we're ready to go.
@@ -694,7 +694,7 @@ contains ! ===================================  Public procedures  =====
       & newGrid%noHeights, newGrid%noLats, newGrid%noLons, &
       & newGrid%noLsts, newGrid%noSzas, 1 ), stat=status )
       !& newGrid%noLsts, newGrid%noSzas, newGrid%noDates ), stat=status )
-    ! if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+    ! if ( status /= 0 ) call MLSL2Message ( MLSMSG_Error, ModuleName, &
     !  & MLSMSG_Allocate//'operMapped' )
     addr = 0
     if ( status == 0 ) then
@@ -707,7 +707,7 @@ contains ! ===================================  Public procedures  =====
       & newGrid%noHeights, newGrid%noLats, newGrid%noLons, &
       & newGrid%noLsts, newGrid%noSzas, 1 ), stat=status )
       !& newGrid%noLsts, newGrid%noSzas, newGrid%noDates ), stat=status )
-    ! if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+    ! if ( status /= 0 ) call MLSL2Message ( MLSMSG_Error, ModuleName, &
     !   & MLSMSG_Allocate//'operMapped' )
     if ( status == 0 ) then
       if ( size(cliMapped) > 0 ) addr = transfer(c_loc(cliMapped(1,1,1,1,1,1)), addr)
@@ -767,7 +767,7 @@ contains ! ===================================  Public procedures  =====
 
                 ! Check for bad data in the climatology
                 if ( EssentiallyEqual ( cliVal, real(newGrid%missingValue, r8) ) ) then
-                  call MLSMessage ( MLSMSG_Error, ModuleName, &
+                  call MLSL2Message ( MLSMSG_Error, ModuleName, &
                   & 'There is a bad data point in the climatology field' )
                   numMissingClimatology = numMissingClimatology + 1
                 endif
@@ -967,12 +967,12 @@ contains ! ===================================  Public procedures  =====
         Temperatures => Placeholder
       endif
       if ( Temperatures%empty ) then
-        call MLSMessage ( MLSMSG_Warning, moduleName, &
+        call MLSL2Message ( MLSMSG_Warning, moduleName, &
           & 'Empty Temperatures grid for calculating wmo tropopause' )
         call trace_end ( "wmoTropFromGrid", cond=toggle(gen) )
         return
       elseif ( Pressures%empty ) then
-        call MLSMessage ( MLSMSG_Warning, moduleName, &
+        call MLSL2Message ( MLSMSG_Warning, moduleName, &
           & 'Empty Pressures grid for calculating wmo tropopause' )
         call trace_end ( "wmoTropFromGrid", cond=toggle(gen) )
         return
@@ -1013,7 +1013,7 @@ contains ! ===================================  Public procedures  =====
         call dump( Temperatures, details=0 )
         call output( 'Dumping Pressures grid', advance='yes' )
         call dump( Pressures, details=0 )
-        call MLSMessage ( MLSMSG_Error, ModuleName, &
+        call MLSL2Message ( MLSMSG_Error, ModuleName, &
         & 'Gridded T,P data must match to calculate wmo Tropopause' )
       endif
     endif
@@ -1032,7 +1032,7 @@ contains ! ===================================  Public procedures  =====
     ! call outputNamedValue( 'Temperatures grid empty?', Temperatures%empty )
     ! call outputNamedValue( 'Pressures grid empty?   ', Pressures%empty )
     if ( .not. associated(Temperatures) ) then
-      call MLSMessage ( MLSMSG_Warning, moduleName, &
+      call MLSL2Message ( MLSMSG_Warning, moduleName, &
         & 'No associated Temperatures grid for calculating wmo tropopause' )
       call trace_end ( "wmoTropFromGrid", cond=toggle(gen) )
       return
@@ -1050,13 +1050,13 @@ contains ! ===================================  Public procedures  =====
     nlev = Temperatures%noHeights
     if ( Temperatures%empty ) then
       newGrid%empty = .true.
-      call MLSMessage ( MLSMSG_Warning, moduleName, &
+      call MLSL2Message ( MLSMSG_Warning, moduleName, &
         & 'Temperatures grid was empty' )
       call trace_end ( "wmoTropFromGrid", cond=toggle(gen) )
       return
     elseif ( Pressures%empty ) then
       newGrid%empty = .true.
-      call MLSMessage ( MLSMSG_Warning, moduleName, &
+      call MLSL2Message ( MLSMSG_Warning, moduleName, &
         & 'Pressures grid was empty' )
       call trace_end ( "wmoTropFromGrid", cond=toggle(gen) )
       return
@@ -1072,7 +1072,7 @@ contains ! ===================================  Public procedures  =====
     ! call outputNamedValue( 'Temperatures grid empty?', Temperatures%empty )
     ! call outputNamedValue( 'Pressures grid empty?   ', Pressures%empty )
     if ( nlev < 2 ) then
-      call MLSMessage ( MLSMSG_Warning, moduleName, &
+      call MLSL2Message ( MLSMSG_Warning, moduleName, &
         & 'Too few levels on Temperatures grid for calculating wmo tropopause' )
       call trace_end ( "wmoTropFromGrid", cond=toggle(gen) )
       return
@@ -1082,17 +1082,17 @@ contains ! ===================================  Public procedures  =====
     ! Must read eta-level files
     if ( .not. any( &
       & Temperatures%verticalCoordinate == (/ v_is_pressure, v_is_eta /) ) ) &
-      & call MLSMessage ( MLSMSG_Error, moduleName, &
+      & call MLSL2Message ( MLSMSG_Error, moduleName, &
         & 'Temperatures must be on eta or pressure calculating wmo tropopause' )
     if (  Temperatures%verticalCoordinate /= v_is_pressure  .and. &
       & .not. associated(Pressures) ) &
-      & call MLSMessage ( MLSMSG_Error, moduleName, &
+      & call MLSL2Message ( MLSMSG_Error, moduleName, &
         & 'Temperatures illegal verticalcoordinate calculating wmo tropopause' )
     ! For now, just crudely assume the heights is in units of Pa
     ! If not, we'll need to check heightsUnits
     if ( lowercase(Temperatures%heightsUnits) /= 'pa' .and. &
       & .not. associated(Pressures) ) &
-      & call MLSMessage ( MLSMSG_Error, moduleName, &
+      & call MLSL2Message ( MLSMSG_Error, moduleName, &
         & 'Temperatures illegal heightsUnits calculating wmo tropopause' )
 
     call Allocate_test (h, nlev, 'h', ModuleName )
@@ -1127,7 +1127,7 @@ contains ! ===================================  Public procedures  =====
                 case default
                   call output( 'Pressures%units: ', advance='no' )
                   call output( trim(Pressures%units), advance='yes' )
-                  call MLSMessage ( MLSMSG_Error, moduleName, &
+                  call MLSL2Message ( MLSMSG_Error, moduleName, &
                     & 'Pressures units must be Pa, hPa, or mb calculating wmo tropopause' )
                 end select
                 h = Pressures%field(1:nlev,lat,lon,iLst,iSza,idate)
@@ -1204,6 +1204,9 @@ contains ! ===================================  Public procedures  =====
 end module MergeGridsModule
 
 ! $Log$
+! Revision 2.66  2018/07/27 23:19:53  pwagner
+! Renamed level 2-savvy MLSMessage MLSL2Message
+!
 ! Revision 2.65  2018/03/22 18:15:34  pwagner
 ! Added command IsFileAbsent; may occur in ReadApriori, MergeGrids, and Output sections
 !
