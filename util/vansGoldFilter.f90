@@ -19,9 +19,10 @@ program FilterGold
   character(255) :: Hunt = 'MLS-Aura' ! What to look for to identify run
   character(255) :: WhatMaxAbsDiff    ! Block containing MaxMaxAbsDiff
   integer :: I, J
-  real :: MaxAbsDiff, MaxAbsVal, MaxMaxAbsDiff = 0, MaxRadDiff
+  real :: MaxAbsDiff, MaxAbsVal, MaxMaxAbsDiff = 0
   real :: RelMaxAbsDiff ! = maxAbsDiff / maxAbsVal
-  logical :: NeedHead = .true., SawOne = .true., Summary = .false.
+  real :: RelMaxAbsDiffPrint ! might be log10(relMaxAbsDiff)
+  logical :: DoLog = .false., NeedHead = .true., SawOne = .true., Summary = .false.
   real :: Ref(2) ! Min, Max
 
 !---------------------------- RCS Module Info ------------------------------
@@ -38,6 +39,8 @@ program FilterGold
     if ( line == '' ) exit
     if ( line(1:3) == '-a' ) then
       summary = .false.
+    else if  ( line(1:3) == '-l' ) then
+      doLog = .true.
     else if ( line(1:3) == '-s' ) then
       summary = .true.
     else if ( line(1:1) == '-' ) then
@@ -58,10 +61,18 @@ program FilterGold
       if ( .not. sawOne .and. ReadyForIt ) then
         call print_line ( 'File is identical to reference' )
         ReadyForIt = .false.
-      endif
+      end if
       if ( maxMaxAbsDiff > 0 ) then
-        write ( *, '(1p,g12.5,a38,t50,a60)' ) maxMaxAbsDiff, &
-          & ' is maximum Rel Max Val in ', trim(whatMaxAbsDiff)
+        if ( doLog ) then
+          maxMaxAbsDiff = log10(maxMaxAbsDiff)
+          write ( *, 3 ) maxMaxAbsDiff, &
+            & ' log10(maximum Rel Max Abs Val), in', adjustl(trim(whatMaxAbsDiff))
+      3 format (f8.4,a37,t47,a)
+        else
+          write ( *, 4 ) maxMaxAbsDiff, &
+            & ' is maximum Rel Max Abs Val, in', adjustl(trim(whatMaxAbsDiff))
+        end if
+      4 format (1p,g12.5,a33,t47,a)
       end if
       call print_line ( trim(line(i:)) )
       needHead = .true.
@@ -101,18 +112,6 @@ program FilterGold
         maxAbsVal = 1
       end if
     end if
-    if ( index ( line, 'Radiances' ) /= 0 ) then
-      if ( index ( line, 'identical' ) /= 0 ) then
-        maxRadDiff = 0
-      else
-        i = index ( line, 'at most' )
-        if ( i /= 0 ) then
-          read ( line(i+7:), * ) maxRadDiff
-        else
-          maxRadDiff = -1
-        end if
-      end if
-    end if
     if ( index ( line, 'Reference' ) /= 0 ) then
       i = index ( line, ':' )
       if ( i /= 0 ) then
@@ -135,31 +134,42 @@ program FilterGold
       call print_line (  trim(line(i:)) )
       sawOne = .true.
     end if
-    i = index ( line, 'Radiances different by at most' )
-    if ( summary .and. i /= 0 ) call print_line (  trim(line(i:)) )
     if ( index ( line, 'Max. absolute:' ) /= 0 ) then
       i = index ( line, ':' )
       if ( i /= 0 ) then
         if ( needHead ) then
-          if ( .not. summary ) write ( *, 1 )
-        1 format ( ' Rel Max Val Max Diff    Max Val     Max Rad     Block' )
+          if ( .not. summary ) then
+            if ( doLog ) then
+              write ( *, 11 )
+           11 format ( ' Log10(Max Diff /' / &
+                     & ' Max Abs Val )    Max Diff      Max Abs Val   Jacobian Block' )
+            else
+              write ( *, 12 )
+           12 format ( ' Max Diff /' / &
+                     & ' Max Abs Val      Max Diff      Max Abs Val   Jacobian Block' )
+            end if
+          end if
           needHead = .false.
           sawOne = .true.
         end if
         read ( line(i+1:), * ) maxAbsDiff
         if ( maxAbsVal == 0 ) maxAbsVal = 1
         relMaxAbsDiff = maxAbsDiff / maxAbsVal
-        write ( line, 2 ) relMaxAbsDiff, maxAbsDiff, maxAbsVal, &
-          & maxRadDiff, trim(block)
-      2 format ( 1p4g12.5, 1x, a )
+        RelMaxAbsDiffPrint = relMaxAbsDiff
+        if ( doLog .and. relMaxAbsDiff > 0 ) relMaxAbsDiffPrint = log10(relMaxAbsDiff) 
+        write ( line, 13 ) relMaxAbsDiffPrint, maxAbsDiff, maxAbsVal, &
+          & trim(block)
+     13 format ( 1pg12.5, 3x, 2g14.5, t47, a )
         if ( maxAbsDiff == 0 ) line(1:12) = 'identical'
-        if ( maxRadDiff == 0 ) line(37:48) = 'identical'
         if ( .not. summary ) call print_line ( trim(line) )
         if ( relMaxAbsDiff > maxMaxAbsDiff ) then
           maxMaxAbsDiff = relMaxAbsDiff
           whatMaxAbsDiff = block
         end if
       end if
+    else
+      i = index ( line, 'Radiances' )
+      if ( i /= 0 ) call print_line (  trim(line(i-1:)) )
     end if
 
   end do
@@ -191,3 +201,6 @@ contains
 end program
 
 ! $Log$
+! Revision 1.1  2018/04/27 00:08:38  pwagner
+! First commit
+!
