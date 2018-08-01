@@ -56,7 +56,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   public :: L2GPdata_t
   public :: L2GPnamelen
   public :: AddL2GPToDatabase, AppendL2GPData, &
-    & ContractL2GPRecord, ConvertL2GPToQuantity, &
+    & CompactL2GPRecord, ContractL2GPRecord, ConvertL2GPToQuantity, &
     & CpHE5GlobalAttrs, CpL2GPData, CpL2GPDataToAttribute, &
     & DestroyL2GPContents, DestroyL2GPDatabase, &
     & Diff, DiffRange, Dump, DumpRange, &
@@ -100,6 +100,10 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
     module procedure DumpL2GPData_Ranges
   end interface
 
+  interface ExtractL2GPRecord
+    module procedure ExtractL2GPRecord_range, ExtractL2GPRecord_which
+  end interface
+
   interface ReadL2GPData
     module procedure ReadL2GPData_fileID
     module procedure ReadL2GPData_fileName
@@ -138,7 +142,9 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
 
 ! AddL2GPToDatabase       Adds an l2gp data type to a database
 ! AppendL2GPData          Appends L2GP onto end of existing swath file
-! ContractL2GPRecord      Gather a reduced L2GP from an existing L2GP
+! CompactL2GPRecord       Reduce a L2GP from an existing L2GP
+!                           to just the non-Fill instances
+! ContractL2GPRecord      Subsample an existing L2GP using geolocation ranges
 ! ConvertL2GPToQuantity   Convert an L2GP data type into a Vector Quantity
 ! cpHE5GlobalAttrs        Copies global attributes from one l2gp file to another
 ! cpL2GPData              Copies swaths from one l2gp file to another
@@ -150,7 +156,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
 ! Dump                    Reveals info about an L2GP or a database of L2GP
 !                            to any desired level of detail
 ! ExpandL2GPDataInPlace   Adds more profiles to an existing L2GP
-! ExtractL2GPRecord       Extract a reduced L2GP from an existing L2GP
+! ExtractL2GPRecord       Subsample an existing L2GP using index ranges
 ! isL2GPSetUp             Returns TRUE if all L2GP arrays allocated
 ! ReadL2GPData            Reads L2GP from existing swath file
 ! RepairL2GP              Replaces fillValues in one L2GP with either
@@ -644,6 +650,64 @@ contains ! =====     Public Procedures     =============================
     call trace_end ( 'AppendL2GPData_MLSFile', cond=.false. )
   end subroutine AppendL2GPData_MLSFile
 
+  !------------------------------------------  CompactL2GPRecord  -----
+  ! Trim all the flabby FillValues from an L2GP record producing a slim
+  ! athletic record suitable for Olympic tryouts
+
+  subroutine CompactL2GPRecord ( ol2gp, l2gp )
+    ! Dummy arguments
+    type (L2GPData_T), intent(in)   ::     ol2gp
+    type (L2GPData_T), intent(out)  ::     l2gp
+    ! Local variables
+    integer, parameter              :: MaxFreqs  = 150
+    integer, parameter              :: MaxLevels = 150
+    integer, parameter              :: MaxTimes  = 7200
+    integer, dimension(MaxFreqs )   :: whichFreqs  ! which freqs        
+    integer, dimension(MaxLevels)   :: whichLevels ! which levels       
+    integer, dimension(MaxTimes )   :: whichTimes  ! which times        
+    integer                         :: useFreqs  ! how many freqs
+    integer                         :: useLevels ! how many levels
+    integer                         :: useTimes  ! how many times
+    integer                         :: k
+    ! Executable
+    useFreqs  = 0
+    useLevels = 0
+    useTimes  = 0
+    ! Discover which values are non-Fill
+    if (associated(ol2gp%frequency) ) then
+      do k=1, size(ol2gp%frequency)
+        if ( .not. isFillValue( ol2gp%frequency(k) ) ) then
+          useFreqs = useFreqs + 1
+          whichFreqs(useFreqs) = k
+        endif
+      enddo
+    endif
+    if (associated(ol2gp%pressures) ) then
+      do k=1, size(ol2gp%pressures)
+        if ( .not. isFillValue( ol2gp%pressures(k) ) ) then
+          useLevels = useLevels + 1
+          whichLevels(useLevels) = k
+        endif
+      enddo
+    endif
+    if (associated(ol2gp%time) ) then
+      do k=1, size(ol2gp%time)
+        if ( .not. isFillValue( ol2gp%time(k) ) ) then
+          useTimes = useTimes + 1
+          whichTimes(useTimes) = k
+        endif
+      enddo
+    endif
+    if ( DeeBug ) then
+      call outputnamedValue ( 'useFreqs ', useFreqs  )
+      call outputnamedValue ( 'useLevels', useLevels )
+      call outputnamedValue ( 'useTimes ', useTimes  )
+    endif
+    call ExtractL2GPRecord ( ol2gp, l2gp, &
+      & whichFreqs, whichLevels, whichTimes, &
+      & useFreqs, useLevels, useTimes )
+  end subroutine CompactL2GPRecord
+
   !------------------------------------------  ContractL2GPRecord  -----
   ! Gather a reduced copy of an original l2gp record
   ! picking out a set of subscripts for freqs, level2, times
@@ -828,61 +892,8 @@ contains ! =====     Public Procedures     =============================
       endif
       call deallocate_test( intrsctn, 'intersection with times', ModuleName )
     endif
-    call SetupNewL2GPRecord ( l2gp, &
-      & ol2gp%nFreqs, &
-      & useLevels, &
-      & useTimes )
-
-    l2gp%name               = ol2gp%name    
-    l2gp%nameIndex          = ol2gp%nameIndex    
-    ! l2gp%quantitytype       = ol2gp%quantitytype 
-    l2gp%MissingValue       = ol2gp%MissingValue 
-    l2gp%MissingStatus      = ol2gp%MissingStatus
-    l2gp%verticalCoordinate = ol2gp%verticalCoordinate    
-    ! Now fill the actual arrays
-    if ( DeeBug ) then
-      call outputNamedValue( 'UseFreqs', useFreqs )
-      call outputNamedValue( 'UseLevels', useLevels )
-      call outputNamedValue( 'UseTimes', useTimes )
-      call dump( whichFreqs(1:useFreqs), 'whichFreqs' )
-      call dump( whichLevels(1:useLevels), 'whichLevels' )
-      call dump( whichTimes(1:useTimes), 'whichTimes' )
-    endif
-    call GatherBloc ( l2gp%pressures    , ol2gp%pressures    , &
-      & whichLevels(1:useLevels) )
-    call GatherBloc ( l2gp%frequency    , ol2gp%frequency    , &
-      & whichFreqs(1:useFreqs) )
-    call GatherBloc ( l2gp%latitude     , ol2gp%latitude     , &
-      & whichTimes(1:useTimes) )
-    call GatherBloc ( l2gp%longitude    , ol2gp%longitude    , &
-      & whichTimes(1:useTimes) )
-    call GatherBloc ( l2gp%solarTime    , ol2gp%solarTime    , &
-      & whichTimes(1:useTimes) )
-    call GatherBloc ( l2gp%solarZenith  , ol2gp%solarZenith  , &
-      & whichTimes(1:useTimes) )
-    call GatherBloc ( l2gp%losAngle     , ol2gp%losAngle     , &
-      & whichTimes(1:useTimes) )
-    call GatherBloc ( l2gp%geodAngle    , ol2gp%geodAngle    , &
-      & whichTimes(1:useTimes) )
-    call GatherBloc ( l2gp%time         , ol2gp%time         , &
-      & whichTimes(1:useTimes) )
-    call GatherBloc ( l2gp%chunkNumber  , ol2gp%chunkNumber  , &
-      & whichTimes(1:useTimes) )
-    call GatherBloc ( l2gp%l2gpValue    , ol2gp%l2gpValue    , &
-      & whichFreqs(1:useFreqs), whichLevels(1:useLevels), whichTimes(1:useTimes) )
-    call GatherBloc ( l2gp%l2gpPrecision, ol2gp%l2gpPrecision, &
-      & whichFreqs(1:useFreqs), whichLevels(1:useLevels), whichTimes(1:useTimes) )
-    call GatherBloc ( l2gp%status       , ol2gp%status       , &
-      & whichTimes(1:useTimes) )
-    call GatherBloc ( l2gp%quality      , ol2gp%quality      , &
-      & whichTimes(1:useTimes) )
-    call GatherBloc ( l2gp%convergence  , ol2gp%convergence  , &
-      & whichTimes(1:useTimes) )
-    ! call GatherBloc ( l2gp%AscDescMode    , ol2gp%AscDescMode    , &
-    !   & whichTimes(1:useTimes) )
-    do i=1, useTimes
-      l2gp%AscDescMode(i) = ol2gp%AscDescMode(whichTimes(i))
-    enddo
+    call ExtractL2GPRecord ( ol2gp, l2gp, whichFreqs, whichLevels, whichTimes, &
+    & useFreqs, useLevels, useTimes )
   end subroutine ContractL2GPRecord_opt
 
   !------------------------------------------  ConvertL2GPToQuantity  -----
@@ -1606,8 +1617,10 @@ contains ! =====     Public Procedures     =============================
     integer :: how_many
     logical :: myMatchTimes
     logical :: mySilent
-    type (L2GPData_T) :: tl2gp1, tl2gp2
+    type (L2GPData_T) :: cl2gp1, cl2gp2 ! Compacted l2gps
+    type (L2GPData_T) :: tl2gp1, tl2gp2 ! Synchronized l2gps
     integer, dimension(MAXNUMTIMES) :: which1, which2
+    integer :: i
     ! Executable
     myMatchTimes = .false.
     if ( present(matchTimes) ) mymatchTimes = matchTimes
@@ -1616,14 +1629,27 @@ contains ! =====     Public Procedures     =============================
     if ( present(numDiffs) ) numDiffs = 0
     if ( DEEBUG ) call outputNamedValue( 'match times?', myMatchTimes )
     if ( myMatchTimes .or. L2gp1%nTimes /= L2gp2%nTimes ) then
+      call CompactL2GPRecord ( L2gp1, cL2gp1 )
+      call CompactL2GPRecord ( L2gp2, cL2gp2 )
       ! 1st, find which profile times match (to within 0.1 s)
-      call FindIntersection( l2gp1%time, l2gp2%time, which1, which2, how_many, &
+      call FindIntersection( cl2gp1%time, cl2gp2%time, which1, which2, how_many, &
         & tol=1.d-1 )
+      if ( .not. mySilent ) then
+        ! call dump( cl2gp1 )
+        ! call dump( cl2gp2 )
+        call OutputNamedValue ( 'how many times matched', how_many )
+        call dump( which1(1:how_many), 'which1' )
+        call dump( which2(1:how_many), 'which2' )
+        do i = 1, how_many
+          write(*,*) timeToHoursInDay ( cl2gp1%time(which1(i)) ), &
+            & timeToHoursInDay ( cl2gp2%time(which2(i)) )
+        enddo
+      endif
       if ( how_many == 0 ) then
         ! 2nd chance--try to match Geod. Ang. to within 1/2 deg.
         if ( .not. mySilent ) call output( &
           & 'No matching times found in l2gp1, l2gp2', advance='yes' )
-        call FindIntersection( l2gp1%GeodAngle, l2gp2%GeodAngle, which1, which2, how_many, &
+        call FindIntersection( cl2gp1%GeodAngle, cl2gp2%GeodAngle, which1, which2, how_many, &
           & tol=0.5 )
         if ( how_many == 0 ) then
           if ( .not. mySilent ) call output( &
@@ -1631,11 +1657,13 @@ contains ! =====     Public Procedures     =============================
           return
         endif
       endif
-      call SetupNewL2GPRecord ( tl2gp1, proto=l2gp1, which=which1(1:how_many) )
-      call SetupNewL2GPRecord ( tl2gp2, proto=l2gp2, which=which2(1:how_many) )
+      call SetupNewL2GPRecord ( tl2gp1, proto=cl2gp1, which=which1(1:how_many) )
+      call SetupNewL2GPRecord ( tl2gp2, proto=cl2gp2, which=which2(1:how_many) )
       if ( DEEBUG ) print *, 'About to enter ..atLast having matched times'
       call DiffThis ( tL2gp1, tL2gp2, &
       & Details, options, fields, numDiffs )
+      call DestroyL2GPContents( cL2gp1 )
+      call DestroyL2GPContents( cL2gp2 )
       call DestroyL2GPContents( tL2gp1 )
       call DestroyL2GPContents( tL2gp2 )
     else
@@ -3010,25 +3038,25 @@ contains ! =====     Public Procedures     =============================
   !-------------------------------------
 
   !------------------------------------------  ExtractL2GPRecord  -----
-  subroutine ExtractL2GPRecord ( ol2gp, l2gp, rFreqs, rLevels, rTimes )
-    ! Extract a reduced copy of an original l2gp record
-    ! picking out a range of subscripts for freqs, level2, times
-    ! Omitted ranges will be same range as original l2gp
-    
-    ! Note that this does not do the more useful task:
-    ! Reposition an l2gp record onto a new set of geolocations
-    ! via multi-dimensional or repeated interpolation
+  ! Extract a reduced copy of an original l2gp record
+  ! picking out a range of subscripts for freqs, level2, times
+  ! Omitted ranges will be same range as original l2gp
 
-    ! Nor does it (yet) do another potentially useful task:
-    ! Extract the range of profiles within a box of times, lats, lons
-    ! and a range of levels within a range of pressures
-    
-    ! These last tasks aren't too difficult, since we could define
-    ! myTimes and myLevels based on HuntRange.
+  ! Note that this does not do the more useful task:
+  ! Reposition an l2gp record onto a new set of geolocations
+  ! via multi-dimensional or repeated interpolation
 
-    ! A tricky point: invalid ranges (i.e. upper limit < 1) will
-    ! be treated as if they were omitted
+  ! Nor does it (yet) do another potentially useful task:
+  ! Extract the range of profiles within a box of times, lats, lons
+  ! and a range of levels within a range of pressures
 
+  ! These last tasks aren't too difficult, since we could define
+  ! myTimes and myLevels based on HuntRange.
+
+  ! A tricky point: invalid ranges (i.e. upper limit < 1) will
+  ! be treated as if they were omitted
+
+  subroutine ExtractL2GPRecord_range ( ol2gp, l2gp, rFreqs, rLevels, rTimes )
     ! Dummy arguments
     type (L2GPData_T), intent(in)   :: ol2gp
     type (L2GPData_T), intent(out)  :: l2gp
@@ -3130,7 +3158,101 @@ contains ! =====     Public Procedures     =============================
     do i=1, count(3)
       l2gp%AscDescMode(i) = ol2gp%AscDescMode(myTimes(1) + i - 1)
     enddo
-  end subroutine ExtractL2GPRecord
+  end subroutine ExtractL2GPRecord_range
+
+  subroutine ExtractL2GPRecord_which ( ol2gp, l2gp, &
+    & whichFreqsIn, whichLevels, whichTimes, &
+    & useFreqs, useLevels, useTimes )
+    ! Like the above but with sets of which indexes to choose
+    ! instead of their ranges
+    ! Dummy arguments
+    type (L2GPData_T), intent(in)   :: ol2gp
+    type (L2GPData_T), intent(out)  :: l2gp
+    integer, dimension(:), intent(in), target :: whichFreqsIn! which freqs
+    integer, dimension(:), intent(in) :: whichLevels ! which levels
+    integer, dimension(:), intent(in) :: whichTimes  ! which times
+    integer, intent(in)               :: useFreqs    ! how many freqs
+    integer, intent(in)               :: useLevels   ! how many levels
+    integer, intent(in)               :: useTimes    ! how many times
+    ! Local variables
+    integer :: i
+
+    integer, dimension(3) :: start
+    integer, dimension(3) :: count
+    integer, dimension(3) :: block
+    integer, dimension(3) :: stride
+    integer               :: numFreqs  ! how many freqs
+    integer               :: numLevels ! how many levels
+    integer               :: numTimes  ! how many times
+    integer, dimension(:), pointer :: whichFreqs
+    
+    ! Executable
+    call SetupNewL2GPRecord ( l2gp, &
+      & ol2gp%nFreqs, &
+      & useLevels, &
+      & useTimes )
+    
+    numFreqs                = max ( useFreqs , 1 )
+    numLevels               = max ( useLevels, 1 )
+    numTimes                = max ( useTimes , 1 )
+    l2gp%name               = ol2gp%name    
+    l2gp%nameIndex          = ol2gp%nameIndex    
+    ! l2gp%quantitytype       = ol2gp%quantitytype 
+    l2gp%MissingValue       = ol2gp%MissingValue 
+    l2gp%MissingStatus      = ol2gp%MissingStatus
+    l2gp%verticalCoordinate = ol2gp%verticalCoordinate    
+    if ( usefreqs > 0 ) then
+      whichFreqs => whichFreqsIn
+    else
+      allocate( whichFreqs(1) )
+      whichFreqs = 1
+    endif
+    ! Now fill the actual arrays
+    if ( DeeBug ) then
+      call outputNamedValue( 'UseFreqs', useFreqs )
+      call outputNamedValue( 'UseLevels', useLevels )
+      call outputNamedValue( 'UseTimes', useTimes )
+      call dump( whichFreqs(1:useFreqs), 'whichFreqs' )
+      call dump( whichLevels(1:useLevels), 'whichLevels' )
+      call dump( whichTimes(1:useTimes), 'whichTimes' )
+    endif
+    call GatherBloc ( l2gp%pressures    , ol2gp%pressures    , &
+      & whichLevels(1:numLevels) )
+    call GatherBloc ( l2gp%frequency    , ol2gp%frequency    , &
+      & whichFreqs(1:numFreqs) )
+    call GatherBloc ( l2gp%latitude     , ol2gp%latitude     , &
+      & whichTimes(1:numTimes) )
+    call GatherBloc ( l2gp%longitude    , ol2gp%longitude    , &
+      & whichTimes(1:numTimes) )
+    call GatherBloc ( l2gp%solarTime    , ol2gp%solarTime    , &
+      & whichTimes(1:numTimes) )
+    call GatherBloc ( l2gp%solarZenith  , ol2gp%solarZenith  , &
+      & whichTimes(1:numTimes) )
+    call GatherBloc ( l2gp%losAngle     , ol2gp%losAngle     , &
+      & whichTimes(1:numTimes) )
+    call GatherBloc ( l2gp%geodAngle    , ol2gp%geodAngle    , &
+      & whichTimes(1:numTimes) )
+    call GatherBloc ( l2gp%time         , ol2gp%time         , &
+      & whichTimes(1:numTimes) )
+    call GatherBloc ( l2gp%chunkNumber  , ol2gp%chunkNumber  , &
+      & whichTimes(1:numTimes) )
+    call GatherBloc ( l2gp%l2gpValue    , ol2gp%l2gpValue    , &
+      & whichFreqs(1:numFreqs), whichLevels(1:numLevels), whichTimes(1:numTimes) )
+    call GatherBloc ( l2gp%l2gpPrecision, ol2gp%l2gpPrecision, &
+      & whichFreqs(1:numFreqs), whichLevels(1:numLevels), whichTimes(1:numTimes) )
+    call GatherBloc ( l2gp%status       , ol2gp%status       , &
+      & whichTimes(1:numTimes) )
+    call GatherBloc ( l2gp%quality      , ol2gp%quality      , &
+      & whichTimes(1:numTimes) )
+    call GatherBloc ( l2gp%convergence  , ol2gp%convergence  , &
+      & whichTimes(1:numTimes) )
+    do i=1, numTimes
+      l2gp%AscDescMode(i) = ol2gp%AscDescMode(whichTimes(i))
+    enddo
+    if ( usefreqs == 0 ) then
+      deallocate( whichFreqs )
+    endif
+  end subroutine ExtractL2GPRecord_which
 
   !------------------------------------------  IsL2GPSetUp  -----
   function IsL2GPSetUp ( l2gp ) result( sooDesu )
@@ -5438,6 +5560,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.236  2018/05/31 22:47:45  pwagner
+! Read ProductionLocation, HostName, identifier_product_doi when dumping global attrs
+!
 ! Revision 2.235  2018/05/22 23:41:14  pwagner
 ! Use dumpGlobalAttributes when Dumping L2GP Attributes
 !
