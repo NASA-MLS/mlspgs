@@ -45,7 +45,7 @@ module MLSSets
 ! Furthermore, a mathematical set's elements need not all be of the same type
 ! while a sequence's elements are necessarily homogeneous. From this
 ! standpoint, we might say that all the procedures in this module
-! treat sequences, not sets
+! treat sequences, not sets, even when order is immaterial
   use MLSFinds, only: FindFirst, FindUnique
 
   implicit none
@@ -56,10 +56,10 @@ module MLSSets
 !     - - - - - - - -
 
 !     (subroutines and functions)
+! AreSetsEqual  Check that two sets are equal, i.e. have the same elements
 ! FindIntersection
 !               Compute indices of elements in intersection of two sets
-! Intersect     Return true if two sets represented by arrays of integers have
-!               a common element
+! Intersect     Return true if two sets share at least one common element
 ! Intersection  Compute intersection of two sets
 ! IsProperSet   Check that each element is unique
 ! IsProperSubset
@@ -73,6 +73,7 @@ module MLSSets
 ! === (end of toc) ===
 
 ! === (start of api) ===
+! log AreSetsEqual ( set A, set B )
 ! FindIntersection ( set1(:), set2(:), int which1(:), int which2(:),
 !      [int how_many] )
 ! log Intersect ( set A, set B )
@@ -102,10 +103,14 @@ module MLSSets
 
 ! === (end of api) ===
 
-  public :: FindIntersection, &
+  public :: AreSetsEqual, FindIntersection, &
     & Intersect, Intersection, IsProperSet, IsProperSubset, IsSubset, &
     & RelativeComplement, &
     & Union, Unionsize
+
+  interface AreSetsEqual
+    module procedure AreSetsEqualInteger, AreSetsEqualCharacter
+  end interface
 
   interface FindIntersection
     module procedure FindIntersectionInteger, FindIntersectionReal, &
@@ -150,6 +155,20 @@ module MLSSets
 !---------------------------------------------------------------------------
 
 contains ! =====     Public Procedures     =============================
+
+  ! --------------------------------------------------  AreSetsEqual  -----
+  ! This family of functions returns TRUE if the sets A and B are the same
+  ! i.e., each element of A is in B and vice versa
+  logical function AreSetsEqualInteger ( A, B )
+    integer, intent(in) :: A(:), B(:)
+    AreSetsEqualInteger = IsSubset( A, B ) .and. IsSubset( B, A )
+  end function AreSetsEqualInteger
+
+  logical function AreSetsEqualCharacter ( A, B )
+  ! Return true if the character arrays A and B have a common element
+    character(len=*), intent(in) :: A(:), B(:)
+    AreSetsEqualCharacter = IsSubset( A, B ) .and. IsSubset( B, A )
+  end function AreSetsEqualCharacter
 
   ! ---------------------------------------------  FindIntersection  -----
   ! This family of routines finds the indices of the intersection between
@@ -315,7 +334,7 @@ contains ! =====     Public Procedures     =============================
   function IntersectionInteger ( A, B, options ) result ( C )
     ! A faster algorithm is used if we're not reversing
 
-    use Sort_M, only: SORT
+    use Sort_M, only: Sort
 
     integer, dimension(:), intent(in)      :: A, B
     integer, dimension(:), allocatable     :: C ! Intent(out) -- allocated here
@@ -605,7 +624,7 @@ contains ! =====     Public Procedures     =============================
   ! arrays of integers, characters
   function UnionInteger ( A, B ) result ( C )
 
-    use Sort_M, only: SORT
+    use Sort_M, only: Sort
 
     integer, intent(in) :: A(:), B(:)
     integer, allocatable :: C(:) ! Intent(out) -- allocated here
@@ -677,7 +696,7 @@ contains ! =====     Public Procedures     =============================
   ! Compute the size of the union of the sets A and B, each represented by
   ! arrays of integers.
 
-    use Sort_M, only: SORT
+    use Sort_M, only: Sort
 
     integer, intent(in) :: A(:), B(:)
 
@@ -758,6 +777,9 @@ contains ! =====     Public Procedures     =============================
 end module MLSSets
 
 ! $Log$
+! Revision 2.39  2018/08/02 23:09:10  pwagner
+! Added AreSetsEqual
+!
 ! Revision 2.38  2018/04/18 23:15:44  vsnyder
 ! Remove declarations of unused variables
 !
