@@ -2094,7 +2094,7 @@ contains ! =====     Public Procedures     =============================
       & Next_Tree_Node_State
     use Output_M, only: Blanks, Output, RevertOutput, SwitchOutput
     use Time_M, only: SayTime, Time_Now
-    use Toggles, only: Gen, Toggle
+    use Toggles, only: Gen, Levels, Toggle
     use Trace_M, only: Trace_Begin, Trace_End
     use Tree, only: Subtree, Node_Id, Decoration
     use Tree_Types, only: N_Named
@@ -2167,6 +2167,8 @@ contains ! =====     Public Procedures     =============================
         nsections = nsections + 1
         son = next_tree_node ( root, state1, start=first_section, traceLevel=4 )
         if ( son == 0 ) exit
+        call trace_begin ( me, "ComputeAllHGridOffsets.loop", son, &
+          & cond=toggle(gen) .and. levels(gen) > 1 )
         select case ( decoration ( subtree ( 1, son ) ) )
         case ( z_construct )
           ! Now loop through the construct section and identify the hGrids
@@ -2263,11 +2265,13 @@ contains ! =====     Public Procedures     =============================
           exit sectionLoop
         case default
         end select
+        call trace_end ( "ComputeAllHGridOffsets.loop", &
+          & cond=toggle(gen) .and. levels(gen) > 1 )
       end do sectionLoop
       if ( verbose ) then
-        call outputNamedValue( 'number of keys', nkeys )
-        call outputNamedValue( 'number of sections', nsections )
-        call Dump ( keyArray, 'keys', width=5 )
+        call outputNamedValue( 'number of keys', nKeys )
+        call outputNamedValue( 'number of sections', nSections )
+        call Dump ( keyArray(:nKeys), 'keys', width=5 )
       endif
 
       ! If this is the first time round, we now know how many hGrids there
@@ -2288,7 +2292,7 @@ contains ! =====     Public Procedures     =============================
           call CheckForCorruptFileDatabase( filedatabase )
         endif
       elseif ( nkeys /= noHGrids ) then
-        call outputnamedValue ( 'nkeys, noHGrids', (/ nkeys, noHGrids /) )
+        call outputnamedValue ( 'nKeys, noHGrids', (/ nkeys, noHGrids /) )
         call MLSMessage ( MLSMSG_Error, ModuleName, &
           & 'Got a different number of hGrids than expected!' )
       elseif ( chunk < 10 .and. deebug ) then
@@ -2306,25 +2310,31 @@ contains ! =====     Public Procedures     =============================
       sum3 = 0
       call output ( "number of profiles in each chunk/grid: " , advance='yes')
       do chunk = 1, size ( chunks )
-        call output ( chunk )
-        call blanks ( 3 )
+        call output ( chunk, before='Chunk ', after=': ' )
         call output ( chunks(chunk)%hGridOffsets, advance='yes' )
         sum1 = sum1 + chunks(chunk)%hGridOffsets(1)
-        sum2 = sum2 + chunks(chunk)%hGridOffsets(2)
-        sum3 = sum3 + chunks(chunk)%hGridOffsets(3)
+        if ( size(chunks(chunk)%hGridOffsets) > 1 ) then
+          sum2 = sum2 + chunks(chunk)%hGridOffsets(2)
+          if ( size(chunks(chunk)%hGridOffsets) > 2 ) &
+            & sum3 = sum3 + chunks(chunk)%hGridOffsets(3)
+        end if
       end do
       call output ( "Total number of profiles" , advance='yes')
       call output ( (/ sum1, sum2, sum3 /), advance='yes' )
     end if
     ! Now accumulate hGridOffsets which currently contains the number
-    ! of non-overlap profiles each chunk/hGrid.  After this it will contain
+    ! of non-overlap profiles in each chunk/hGrid.  After this it will contain
     ! the accumulated number.  This is equivalent to storing the
     ! index of the last profile in each chunk.
-    if ( verbose ) call output( (/ 1, chunks(1)%hGridOffsets(1) /), advance='yes' )
+    if ( verbose ) &
+      & call output( chunks(1)%hGridOffsets(1), before='Chunk 1: ', advance='yes' )
     do chunk = 2, size ( chunks )
       chunks(chunk)%hGridOffsets = chunks(chunk)%hGridOffsets + &
         & chunks(chunk-1)%hGridOffsets
-      if ( verbose ) call output( (/ chunk, chunks(chunk)%hGridOffsets(1) /), advance='yes' )
+      if ( verbose ) then
+        call output ( chunk, before='Chunk ', after=': ' )
+        call output ( chunks(chunk)%hGridOffsets(1), advance='yes' )
+      end if
     end do
     ! Now fill (i.e. spread) the hGridTotals array
     do chunk = 1, size ( chunks )
@@ -2358,10 +2368,9 @@ contains ! =====     Public Procedures     =============================
       call output ( "Dumping offsets, hgridTotals for all chunks: " , &
         & advance='yes')
       do chunk = 1, size ( chunks )
-        call output ( chunk )
-        call blanks ( 3 )
+        call output ( chunk, before='Chunk ', after=': ' )
         call output ( chunks(chunk)%hGridOffsets )
-        call blanks ( 3 )
+        call output ( ' totals ' )
         call output ( chunks(chunk)%hGridTotals, advance='yes' )
       end do
     end if
@@ -2373,26 +2382,29 @@ contains ! =====     Public Procedures     =============================
       ! Read the l1boa items we will need
       nullify( MAFStartTimeTAI, GeodAngle, GeodAlt, GeodLat, &
         & LosAngle, OrbIncl, SolarTime, SolarZenith )
-      call L1BGeoLocation ( filedatabase, 'MAFStartTimeTAI  ', instrumentModuleName,  MAFStartTimeTAI )
-      call L1BGeoLocation ( filedatabase, 'GHz/GeodAngle    ', instrumentModuleName,  GeodAngle )
-      call L1BGeoLocation ( filedatabase, 'GHz/GeodAlt      ', instrumentModuleName,  GeodAlt )
-      call L1BGeoLocation ( filedatabase, 'GHz/GeodLat      ', instrumentModuleName,  GeodLat )
-      call L1BGeoLocation ( filedatabase, 'GHz/Lon          ', instrumentModuleName,  Lon )
-      call L1BGeoLocation ( filedatabase, 'GHz/LosAngle     ', instrumentModuleName,  LosAngle )
-      ! call L1BGeoLocation ( filedatabase, 'sc/OrbIncl       ', instrumentModuleName,  OrbIncl )
-      call L1BGeoLocation ( filedatabase, 'GHz/SolarTime    ', instrumentModuleName,  SolarTime )
-      call L1BGeoLocation ( filedatabase, 'GHz/SolarZenith  ', instrumentModuleName,  SolarZenith )
+      call L1BGeoLocation ( filedatabase, 'MAFStartTimeTAI  ', instrumentModuleName,  MAFStartTimeTAI, neverFail=.true. )
+      call L1BGeoLocation ( filedatabase, 'GHz/GeodAngle    ', instrumentModuleName,  GeodAngle, neverFail=.true. )
+      call L1BGeoLocation ( filedatabase, 'GHz/GeodAlt      ', instrumentModuleName,  GeodAlt, neverFail=.true. )
+      call L1BGeoLocation ( filedatabase, 'GHz/GeodLat      ', instrumentModuleName,  GeodLat, neverFail=.true. )
+      call L1BGeoLocation ( filedatabase, 'GHz/Lon          ', instrumentModuleName,  Lon, neverFail=.true. )
+      call L1BGeoLocation ( filedatabase, 'GHz/LosAngle     ', instrumentModuleName,  LosAngle, neverFail=.true. )
+      ! call L1BGeoLocation ( filedatabase, 'sc/OrbIncl       ', instrumentModuleName,  OrbIncl, neverFail=.true. )
+      call L1BGeoLocation ( filedatabase, 'GHz/SolarTime    ', instrumentModuleName,  SolarTime, neverFail=.true. )
+      call L1BGeoLocation ( filedatabase, 'GHz/SolarZenith  ', instrumentModuleName,  SolarZenith, neverFail=.true. )
       call output ( "Comparing start, end geolocations all chunks: " , &
         & advance='yes')
       do chunk = 1, size ( chunks )
-        call outputnamedValue( 'chunk', chunk )
+        call outputnamedValue( 'Chunk', chunk )
         if ( firstHGrid(chunk)%noProfs < 1 ) then
           call output ( '(No profiles in this chunk', advance='yes' )
         else
-          call CompareWithChunk( chunks(chunk), &
-            & chunks(min(size ( chunks ), chunk+1)), firstHGrid(chunk), &
-            & MAFStartTimeTAI, GeodAngle, GeodAlt, GeodLat, SolarTime )
-        endif
+          if ( all ( [ associated(MAFStartTimeTAI), associated(GeodAngle), &
+                     & associated(GeodAlt), associated(GeodLat), &
+                     & associated(SolarTime) ] ) ) &
+            & call CompareWithChunk( chunks(chunk), &
+                & chunks(min(size ( chunks ), chunk+1)), firstHGrid(chunk), &
+                & MAFStartTimeTAI, GeodAngle, GeodAlt, GeodLat, SolarTime )
+        end if
       end do
       call deAllocate_Test ( MAFStartTimeTAI, 'MAFStartTimeTAI', ModuleName )
       ! call deAllocate_Test ( OrbIncl        , 'OrbIncl        ', ModuleName )
@@ -2741,6 +2753,11 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.152  2018/08/03 23:45:43  vsnyder
+! Add tracing to several routines.  Improve some debugging output.  Add
+! NeverFail=.true. to L1BGeolcation calls in verbose case to prevent crashing
+! if irrelevant stuff is attempted to be found.
+!
 ! Revision 2.151  2018/04/19 00:49:06  vsnyder
 ! Remove USE statements for unused names
 !
