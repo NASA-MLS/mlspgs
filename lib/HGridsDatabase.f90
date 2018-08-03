@@ -211,7 +211,8 @@ contains ! =========== Public procedures ===================================
   ! In all subsequent times, simply copy the stored values.
   
   ! We check for stored values by whether the component is associated
-  subroutine L1BGeoLocation ( filedatabase, name, moduleStr, values, values2d )
+  subroutine L1BGeoLocation ( filedatabase, name, moduleStr, values, values2d, &
+                            & root, NeverFail )
 
     use Allocate_Deallocate, only: Allocate_Test
     use Dump_0, only: Dump
@@ -225,28 +226,38 @@ contains ! =========== Public procedures ===================================
     use MLSMessageModule, only: MLSMessage, MLSMSG_Warning 
     use MLSStrings, only: lowercase
     use Output_m, only: output
+    use Toggles, only: Gen, Levels, Toggle
+    use Trace_m, only: Trace_Begin, Trace_End
     ! Args
     type (MLSFile_T), dimension(:), pointer     :: fileDatabase
     character(len=*), intent(in)                :: name
     character(len=*), intent(in)                :: moduleStr
     real(rk), dimension(:), pointer, optional   :: values
     real(rk), dimension(:,:), pointer, optional :: values2d
+    integer, intent(in), optional :: Root ! For tracing
+    logical, intent(in), optional :: NeverFail ! For ReadL1BData
     ! Local variables
     type (L1BData_T) :: l1bField ! L1B data
-    integer                               :: hdfVersion
-    type (MLSFile_T), pointer             :: L1BFile
-    character(len=64)                     :: l1bItemName
-    integer                               :: noFreqs
-    integer                               :: noMAFs
-    character(len=64)                     :: readItemName
-    character(len=64)                     :: snippedName
-    integer                               :: status
     logical, parameter                    :: DeeBug = .false.
-    logical                               :: verbose 
+    integer                               :: HdfVersion
+    type (MLSFile_T), pointer             :: L1BFile
+    character(len=64)                     :: L1bItemName
+    integer                               :: Me = -1 ! String index for tracing
+    logical                               :: MyNeverFail
+    integer                               :: NoFreqs
+    integer                               :: NoMAFs
+    character(len=64)                     :: ReadItemName
     logical, parameter                    :: ShowName = .false.
+    character(len=64)                     :: SnippedName
+    integer                               :: Status
+    logical                               :: Verbose 
     ! Executable
+    if ( present(root) ) call trace_begin ( me, "L1BGeoLocation", root, &
+      & cond=toggle(gen) .and. levels(gen) > 2 )
+    myNeverFail = .false.
+    if ( present(neverFail) ) myNeverFail = neverFail
     l1bItemName = adjustl(lowercase(name))
-    ! Sometimes we're called as GHz/Name; othertimes as tpName
+    ! Sometimes we're called as GHz/Name; other times as tpName
     if ( l1bItemName(1:2) == 'tp' ) l1bItemName = trim(moduleStr) // l1bItemName(3:)
     if ( l1bItemName(1:2) == 'sc' ) l1bItemName = 'sc/' // l1bItemName(3:)
     ! `1st--check if we have already read this from the l1boa file
@@ -259,47 +270,47 @@ contains ! =========== Public procedures ===================================
     case ('mafstarttimetai')
       if ( associated ( HGridGeolocations%MAFStartTimeTAI ) ) then
         call recallValues( HGridGeolocations%MAFStartTimeTAI, values, values2d )
-        return
+        go to 9
       endif
     case ('orbincl')
       if ( associated ( HGridGeolocations%OrbIncl ) ) then
         call recallValues( HGridGeolocations%OrbIncl, values, values2d )
-        return
+        go to 9
       endif
     case ('geodangle   ')
       if ( associated ( HGridGeolocations%GHzGeodAngle ) ) then
         call recallValues( HGridGeolocations%GHzGeodAngle, values, values2d )
-        return
+        go to 9
       endif
     case ('geodalt     ')
       if ( associated ( HGridGeolocations%GHzGeodAlt ) ) then
         call recallValues( HGridGeolocations%GHzGeodAlt, values, values2d )
-        return
+        go to 9
       endif
     case ('geodlat     ')
       if ( associated ( HGridGeolocations%GHzGeodLat ) ) then
         call recallValues( HGridGeolocations%GHzGeodLat, values, values2d )
-        return
+        go to 9
       endif
     case ('solartime   ')
       if ( associated ( HGridGeolocations%GHzSolarTime ) ) then
         call recallValues( HGridGeolocations%GHzSolarTime, values, values2d )
-        return
+        go to 9
       endif
     case ('solarzenith   ')
       if ( associated ( HGridGeolocations%GHzSolarZenith ) ) then
         call recallValues( HGridGeolocations%GHzSolarZenith, values, values2d )
-        return
+        go to 9
       endif
     case ('losangle   ')
       if ( associated ( HGridGeolocations%GHzlosAngle ) ) then
         call recallValues( HGridGeolocations%GHzlosAngle, values, values2d )
-        return
+        go to 9
       endif
     case ('lon   ')
       if ( associated ( HGridGeolocations%GHzlon ) ) then
         call recallValues( HGridGeolocations%GHzlon, values, values2d )
-        return
+        go to 9
       endif
     end select
     ! If we got here, 
@@ -333,7 +344,8 @@ contains ! =========== Public procedures ===================================
     ! chunk's worth of l1b data by setting FirstMAF and lastMAF
     ! which auttomatically set dontPad=.true.
     call ReadL1BData ( L1BFile, readItemName, l1bField, noMAFs, status, &
-      & dontpad=.true. )
+      & dontpad=.true., neverFail=neverFail )
+    if ( myNeverFail .and. status /= 0 ) go to 9
     if ( .not. associated(l1bField%dpField) ) call ConvertL1BData( l1bField )
     if ( any(isFillValue(l1bField%dpField) ) .and. & 
       & trim(readItemname) /= '/GHz/Lon') then 
@@ -399,6 +411,8 @@ contains ! =========== Public procedures ===================================
       HGridGeolocations%GHzsolarzenith = l1bField%dpField(1,:,:)
     end select
     call deallocateL1BData ( l1bField ) ! Avoid memory leaks
+9   if ( present(root) ) call trace_end ( "L1BGeoLocation", &
+      & cond=toggle(gen) .and. levels(gen) > 2 )
   contains
     function snipModuleStr ( itemName, moduleGHz ) result ( bareName )
       character(len=*), intent(in)                    :: itemname
@@ -790,6 +804,11 @@ contains ! =========== Public procedures ===================================
 end module HGridsDatabase
 
 ! $Log$
+! Revision 2.42  2018/08/03 23:26:10  vsnyder
+! Add Root (for tracing) and NeverFail (for debug printing) to L1BGeoLocation.
+! Alphabetize local variable declarations.  Pass NeverFail to ReadL1BData.
+! Make sure always to end tracing.
+!
 ! Revision 2.41  2018/04/19 02:00:36  vsnyder
 ! Compute address for allocate/deallocate tracking.  Remove USE statements for
 ! unused names.
