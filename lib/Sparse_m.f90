@@ -18,7 +18,7 @@ module Sparse_m
   implicit NONE
 
   private
-  public :: Sparse_t
+  public :: Sparse_t, Sparse_Element_t
 
   type :: Sparse_Element_t ! One element in a sparse matrix
     real(rp) :: V
@@ -934,6 +934,9 @@ contains
 end module Sparse_m
 
 ! $Log$
+! Revision 2.7  2018/08/03 23:17:49  vsnyder
+! Make Sparse_Element_t public
+!
 ! Revision 2.6  2018/05/24 03:20:26  vsnyder
 ! Respect the Width argument in the non-transpose dump case.  Do some
 ! cannonball polishing.
