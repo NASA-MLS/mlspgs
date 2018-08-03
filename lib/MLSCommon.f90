@@ -14,6 +14,9 @@ module MLSCommon                ! Common definitions for the MLS software
 !=============================================================================
 
   use IEEE_Arithmetic, only: IEEE_Is_Finite, IEEE_Is_Nan
+!   This results in a circular dependence.  The type MLSFile_T ought to be
+!   defined in a different module.
+!   use Lexer_Core, only: Where_T ! Where is something in the L2CF
   use MLSKinds ! everything
   use MLSStrings,  only: Lowercase
 
@@ -297,6 +300,11 @@ module MLSCommon                ! Common definitions for the MLS software
     logical :: StillOpen=.false.
     type(Range_T) :: PCFidRange = Range_T()
     type(Fileids_T) :: FileID = FileIDs_T()
+!     type(where_t) :: Where  ! in l2cf, using Where function in Tree module
+    ! Until MLSFile_T is moved out of MLSCommon, get these from a tree node
+    ! using Source_Ref and The_File from the Tree module.
+    integer :: L2CF = 0       ! String index of L2CF
+    integer :: Source = 0     ! 256*line + column, in L2CF
   end type MLSFile_T
 
   ! This datatype describes the information on the L1B data files in use
@@ -687,6 +695,9 @@ end module MLSCommon
 
 !
 ! $Log$
+! Revision 2.49  2018/08/03 23:18:56  vsnyder
+! Add L2CF and Source components to MLSFile_t
+!
 ! Revision 2.48  2018/05/11 21:23:27  pwagner
 ! Stop Use-ing HDF; Moved M_ mask bit fields here
 !
