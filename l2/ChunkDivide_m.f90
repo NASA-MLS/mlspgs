@@ -314,12 +314,13 @@ contains ! ===================================== Public Procedures =====
     ! Now go place the chunks.
     select case ( ChunkDivideConfig%method )
     case ( l_fixed )
-      call ChunkDivide_Fixed ( chunks )
+      call ChunkDivide_Fixed ( chunks, root )
     case ( l_polygon )
       if ( .not. NEED_L1BFILES ) then
         call AnnounceError ( root, invalid, ChunkDivideConfig%method )
       else
-        call ChunkDivide_Polygon ( mafRange, filedatabase, chunks, InstrumentModuleName  )
+        call ChunkDivide_Polygon ( mafRange, filedatabase, chunks, &
+                                 & InstrumentModuleName, root )
       endif
     case ( l_PE )
       if ( .not. NEED_L1BFILES ) then
@@ -331,7 +332,7 @@ contains ! ===================================== Public Procedures =====
       if ( .not. NEED_L1BFILES ) then
         call AnnounceError ( root, invalid, ChunkDivideConfig%method )
       else
-        call ChunkDivide_Orbital ( mafRange, filedatabase, chunks )
+        call ChunkDivide_Orbital ( mafRange, filedatabase, chunks, root )
       endif
     case ( l_even )
       if ( .not. NEED_L1BFILES ) then
@@ -452,34 +453,44 @@ contains ! ===================================== Public Procedures =====
     end subroutine AnnounceError
 
     !-------------------------------------------- ChunkDivide_Even -----
-    subroutine ChunkDivide_Even ( mafRange, filedatabase, chunks )
+    subroutine ChunkDivide_Even ( mafRange, filedatabase, chunks, root )
       integer, dimension(2), intent(in) :: MAFRANGE
       type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
       type (MLSChunk_T), dimension(:), pointer :: CHUNKS
+      integer, intent(in), optional :: Root ! in l2cf tree, for tracing
 
       ! Local variables
+      integer :: Me = -1             ! String index for trace
 
       ! Exectuable code
       call MLSMessage ( MLSMSG_Error, ModuleName, &
         & "I'm sorry, we haven't written the code for even chunk divides yet" )
+      if ( present(root) ) call trace_begin ( me, 'ChunkDivide_even', root, &
+          & cond=toggle(gen) .and. levels(gen) > 2 )
+      if ( present(root) ) call trace_end ( &
+        & 'ChunkDivide_even', cond=toggle(gen) .and. levels(gen) > 2 )
     end subroutine ChunkDivide_Even
 
     !------------------------------------------- ChunkDivide_Fixed -----
-    subroutine ChunkDivide_Fixed ( chunks )
+    subroutine ChunkDivide_Fixed ( chunks, root )
       ! type (ChunkDivideConfig_T), intent(in) :: CONFIG
       use Allocate_Deallocate, only: Test_Allocate
       use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
       type (MLSChunk_T), dimension(:), pointer :: CHUNKS
+      integer, intent(in), optional :: Root ! in l2cf tree, for tracing
 
       ! Local variables
       integer(c_intptr_t) :: Addr         ! For tracing
       integer :: I                        ! Loop inductor
+      integer :: Me = -1                  ! String index for trace
       integer :: STATUS                   ! From allocate
       integer :: MAXLENGTH                ! nint(config%maxLength)
       integer :: LOWEROVERLAP             ! nint(config%lowerOverlap)
       integer :: UPPEROVERLAP             ! nint(config%upperOverlap)
 
       ! Executable code
+      if ( present(root) ) call trace_begin ( me, 'ChunkDivide_fixed', root, &
+          & cond=toggle(gen) .and. levels(gen) > 2 )
       swlevel = switchDetail(switches, 'chu' )
       allocate ( chunks(ChunkDivideConfig%noChunks), stat=status )
       addr = 0
@@ -502,11 +513,14 @@ contains ! ===================================== Public Procedures =====
           chunks(i)%noMAFsLowerOverlap = 0
         end if
       end do
+      if ( present(root) ) call trace_end ( &
+        & 'ChunkDivide_fixed', cond=toggle(gen) .and. levels(gen) > 2 )
 
     end subroutine ChunkDivide_Fixed
 
     !------------------------------------------- ChunkDivide_Polygon -----
-    subroutine ChunkDivide_Polygon ( mafRange, filedatabase, chunks, InstrumentModuleName )
+    subroutine ChunkDivide_Polygon ( mafRange, filedatabase, chunks, &
+                                   & InstrumentModuleName, root )
       ! integer, dimension(2), intent(in) :: MAFRANGE
       use Allocate_Deallocate, only: Test_Allocate
       use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
@@ -518,12 +532,14 @@ contains ! ===================================== Public Procedures =====
       type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
       type (MLSChunk_T), dimension(:), pointer :: CHUNKS
       character (len=NameLen) :: InstrumentModuleName
+      integer, intent(in), optional :: Root ! in l2cf tree, for tracing
 
 
       ! Local variables
       integer(c_intptr_t) :: Addr         ! For tracing
       integer :: I                        ! Loop inductor
       integer :: MAF
+      integer :: Me = -1                  ! String index for trace
       integer :: STATUS                   ! From allocate
       integer :: MAXLENGTH                ! nint(config%maxLength)
       integer :: LOWEROVERLAP             ! nint(config%lowerOverlap)
@@ -543,6 +559,8 @@ contains ! ===================================== Public Procedures =====
       ! integer :: pointTest
 
       ! Executable code
+      if ( present(root) ) call trace_begin ( me, 'ChunkDivide_polygon', root, &
+          & cond=toggle(gen) .and. levels(gen) > 2 )
       ! 1st-- read lats and lons from the l1b file
       L1BFile => GetMLSFileByType( filedatabase, content='l1boa' )
       if ( .not. associated(L1BFile) ) &
@@ -682,17 +700,20 @@ contains ! ===================================== Public Procedures =====
           chunks(i)%noMAFsLowerOverlap = 0
         end if
       end do
+      if ( present(root) ) call trace_end ( &
+        & 'ChunkDivide_Polygon', cond=toggle(gen) .and. levels(gen) > 2 )
 
     end subroutine ChunkDivide_Polygon
 
     !---------------------------------------------- ChunkDivide_PE -----
-    subroutine ChunkDivide_PE ( mafRange, filedatabase, chunks )
+    subroutine ChunkDivide_PE ( mafRange, filedatabase, chunks, root )
       ! type (ChunkDivideConfig_T), intent(in) :: CONFIG
       use Allocate_Deallocate, only: Test_Allocate
       use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
       integer, dimension(2), intent(in) :: MAFRANGE
       type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
       type (MLSChunk_T), dimension(:), pointer :: CHUNKS
+      integer, intent(in), optional :: Root ! in l2cf tree, for tracing
 
       ! Local parameters
       real(r8), parameter :: HOMEACCURACY = 3.0 ! Try to hit homeGeodAngle within this
@@ -707,6 +728,7 @@ contains ! ===================================== Public Procedures =====
       integer :: FLAG                     ! From ReadL1B
       integer :: HOMEMAF                  ! first MAF after homeGeodAngle
       integer :: HOME                     ! Index of home MAF in array
+      integer :: Me = -1                  ! String index for trace
       integer :: M1, M2                   ! MafRange + 1
       integer :: NOMAFS                   ! Number of MAFs to consider
       integer :: NOMAFSREAD               ! From ReadL1B
@@ -720,11 +742,13 @@ contains ! ===================================== Public Procedures =====
       real(r8) :: MINANGLE                ! Of range in data
       real(r8) :: TESTANGLE               ! Angle to check for
 
-      integer   ::                       l1b_hdf_version
-      character(len=namelen) ::         MAF_start, tp_angle
-      type (MLSFile_T), pointer             :: L1BFile
+      integer   ::                 l1b_hdf_version
+      character(len=namelen) ::    MAF_start, tp_angle
+      type (MLSFile_T), pointer :: L1BFile
 
       ! Executable code
+      if ( present(root) ) call trace_begin ( me, 'ChunkDivide_PE', root, &
+          & cond=toggle(gen) .and. levels(gen) > 2 )
       swlevel = switchDetail(switches, 'chu' )
 
       ! Read in the data we're going to need
@@ -818,6 +842,8 @@ contains ! ===================================== Public Procedures =====
 
       call DeallocateL1BData ( tpGeodAngle )
       call DeallocateL1BData ( taiTime )
+      if ( present(root) ) call trace_end ( &
+        & 'ChunkDivide_PE', cond=toggle(gen) .and. levels(gen) > 2 )
 
     end subroutine ChunkDivide_PE
 
@@ -1336,7 +1362,7 @@ contains ! ===================================== Public Procedures =====
   subroutine smoothOutDroppedMAFs(field, wasSmoothed, monotonize)
     ! detect any fillValues--replace them with nearest neighbor values
     ! or, optionally, detect and correct any departures from monotone growth
-  use MLSFillValues, only: IsFillValue
+    use MLSFillValues, only: IsFillValue
     ! Args
     real(r8), intent(inout)                      :: field(:,:,:)
     logical, dimension(:), optional, intent(out) :: wasSmoothed
@@ -1372,1569 +1398,1580 @@ contains ! ===================================== Public Procedures =====
     enddo
   end subroutine smoothOutDroppedMAFs
 
-    ! --------------------------------------- DealWithObstructions -----
-    subroutine DealWithObstructions ( chunks, obstructions )
-      type (MLSChunk_T), dimension(:), pointer :: CHUNKS
-      type (Obstruction_T), dimension(:), intent(in) :: OBSTRUCTIONS
-      ! This routine modifies the chunks according to the information
-      ! given in the obstructions.
+  ! ----------------------------------------- DealWithObstructions -----
+  subroutine DealWithObstructions ( chunks, obstructions )
+    type (MLSChunk_T), dimension(:), pointer :: CHUNKS
+    type (Obstruction_T), dimension(:), intent(in) :: OBSTRUCTIONS
+    ! This routine modifies the chunks according to the information
+    ! given in the obstructions.
 
-      ! Local variables
-      type (MLSChunk_T) :: NEWCHUNK       ! A chunk to create
-      integer :: CHUNK                    ! Index of chunk under some consideration
-      integer :: DEADCHUNK                ! Index of chunk to kill
-      integer :: FIRSTMAF                 ! Index of first MAF in range
-      integer :: LASTMAF                  ! Index of last MAF in range
-      integer :: MAF                      ! Index of MAF for wall
-      integer :: OBSTRUCTION              ! Loop counter
+    ! Local variables
+    type (MLSChunk_T) :: NEWCHUNK       ! A chunk to create
+    integer :: CHUNK                    ! Index of chunk under some consideration
+    integer :: DEADCHUNK                ! Index of chunk to kill
+    integer :: FIRSTMAF                 ! Index of first MAF in range
+    integer :: LASTMAF                  ! Index of last MAF in range
+    integer :: MAF                      ! Index of MAF for wall
+    integer :: OBSTRUCTION              ! Loop counter
 
-      ! Executable code
-      swlevel = switchDetail(switches, 'chu' )
+    ! Executable code
+    swlevel = switchDetail(switches, 'chu' )
 
-      do obstruction = 1, size ( obstructions )
-        ! Find chunk where this obstruction is/starts
-        if ( obstructions(obstruction)%range ) then
-          ! A range obstruction
+    do obstruction = 1, size ( obstructions )
+      ! Find chunk where this obstruction is/starts
+      if ( obstructions(obstruction)%range ) then
+        ! A range obstruction
 
-          ! first identify the chunks whose non overlapped portion falls completely
-          ! within the range and delete them
-          firstMAF = obstructions(obstruction)%mafs(1)
-          lastMAF = obstructions(obstruction)%mafs(2)
-          insideRange: do
-            deadChunk = FindFirst ( &
-              & chunks%firstMAFIndex + chunks%noMAFsLowerOverlap >= firstMAF .and. &
-              & chunks%lastMAFIndex - chunks%noMAFsUpperOverlap <= lastMAF )
-            if ( deadChunk == 0 ) exit insideRange
-            call DeleteChunk ( chunks, deadChunk )
-          end do insideRange
+        ! first identify the chunks whose non overlapped portion falls completely
+        ! within the range and delete them
+        firstMAF = obstructions(obstruction)%mafs(1)
+        lastMAF = obstructions(obstruction)%mafs(2)
+        insideRange: do
+          deadChunk = FindFirst ( &
+            & chunks%firstMAFIndex + chunks%noMAFsLowerOverlap >= firstMAF .and. &
+            & chunks%lastMAFIndex - chunks%noMAFsUpperOverlap <= lastMAF )
+          if ( deadChunk == 0 ) exit insideRange
+          call DeleteChunk ( chunks, deadChunk )
+        end do insideRange
 
-          ! Now think about chunks whose non overlapped part completely
-          ! encompass the range, and split them.
-          ! (we'll deal with the issue of ranges spilling into overlap regions below)
-          chunk = FindFirst ( &
-            & ( chunks%firstMAFIndex + chunks%noMAFsLowerOverlap <= firstMAF ) .and. &
-            & ( chunks%lastMAFIndex - chunks%noMAFsUpperOverlap >= lastMAF ) )
-          if ( chunk /= 0 ) then
-            ! Create two new chunks with the wall between, first the lower portion
-            newChunk = chunks ( chunk )
-            newChunk%lastMAFIndex = firstMAF - 1
-            newChunk%noMAFsUpperOverlap = 0
-            if ( newChunk%lastMAFIndex /= newChunk%firstMAFIndex ) &
-              & call AddChunkToDatabase ( chunks, newChunk )
-            ! Now the upper portion
-            newChunk = chunks ( chunk )
-            newChunk%firstMAFIndex = lastMAF + 1
-            newChunk%noMAFsLowerOverlap = 0
-            if ( newChunk%lastMAFIndex /= newChunk%firstMAFIndex ) &
-              & call AddChunkToDatabase ( chunks, newChunk )
-            ! Delete the old chunk
-            call DeleteChunk ( chunks, chunk )
-          endif
-
-          ! So the cases we have left do not involve deleting or creating new
-          ! chunks, just modifying existing ones.  Note that this includes
-          ! cases where a range starts end ends in a chunk but one or other boundary
-          ! is in the overlap regions.
-
-          ! Look for chunks where the range starts in the chunk
-          moveEnd: do
-            chunk = FindFirst ( &
-              & chunks%firstMAFIndex <= firstMAF .and. &
-              & chunks%lastMAFIndex >= firstMAF )
-            if ( chunk == 0 ) exit moveEnd
-            chunks(chunk)%noMAFsUpperOverlap = max ( 0, &
-              & chunks(chunk)%noMAFsUpperOverlap - &
-              &    ( chunks(chunk)%lastMAFIndex - (firstMAF-1) ) )
-            chunks(chunk)%lastMAFIndex = firstMAF - 1
-          end do moveEnd
-
-          ! Look for chunks where the range ends in the chunk
-          moveStart: do
-            chunk = FindFirst ( &
-              & chunks%firstMAFIndex <= lastMAF .and. &
-              & chunks%lastMAFIndex >= lastMAF )
-            if ( chunk == 0 ) exit moveStart
-            chunks(chunk)%noMAFsLowerOverlap = max ( 0, &
-              & chunks(chunk)%noMAFsLowerOverlap - &
-              &    ( (lastMAF+1) - chunks(chunk)%firstMafIndex ) )
-            chunks(chunk)%firstMAFIndex = lastMAF + 1
-          end do moveStart
-
-        else ! - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-          ! A wall obstruction
-          maf = obstructions(obstruction)%mafs(1)
-
-          ! First look for where the wall occurs in the non overlapped part
-          chunk = FindFirst ( &
-            & ( chunks%firstMAFIndex + chunks%noMAFsLowerOverlap <= maf ) .and. &
-            & ( chunks%lastMAFIndex - chunks%noMAFsUpperOverlap >= maf ) )
-
-          if ( chunk /= 0 ) then
-            ! Create two new chunks with the wall between, first the lower portion
-            newChunk = chunks ( chunk )
-            newChunk%lastMAFIndex = maf - 1
-            newChunk%noMAFsUpperOverlap = 0
-            if ( newChunk%lastMAFIndex /= newChunk%firstMAFIndex ) &
-              & call AddChunkToDatabase ( chunks, newChunk )
-            ! Now the upper portion
-            newChunk = chunks ( chunk )
-            newChunk%firstMAFIndex = maf
-            newChunk%noMAFsLowerOverlap = 0
-            if ( newChunk%lastMAFIndex /= newChunk%firstMAFIndex ) &
-              & call AddChunkToDatabase ( chunks, newChunk )
-            ! Now delete the original chunk
-            call DeleteChunk ( chunks, chunk )
-          endif
-
-          ! For chunks where the wall is in the overlap, just make the
-          ! overlap shorter
-          ! First the lower overlap
-          wallInLower: do
-            chunk = FindFirst ( &
-              & ( chunks%firstMAFIndex < maf ) .and. &
-              & ( chunks%firstMAFIndex + chunks%noMAFsLowerOverlap > maf ) )
-            if ( chunk == 0 ) exit wallInLower
-            chunks(chunk)%noMAFsLowerOverlap = &
-            & max ( chunks(chunk)%noMAFsLowerOverlap - &
-            & ( maf - chunks(chunk)%firstMAFIndex ), 0 )
-            chunks(chunk)%firstMAFIndex = maf
-          end do wallInLower
-          ! Now the upper overlap
-          wallInUpper: do
-            chunk = FindFirst ( &
-              & ( chunks%lastMAFIndex - chunks%noMAFsUpperOverlap < maf ) .and. &
-              & ( chunks%lastMAFIndex > maf ) )
-            if ( chunk == 0 ) exit wallInUpper
-            chunks(chunk)%noMAFsUpperOverlap = &
-              & max ( chunks(chunk)%noMAFsUpperOverlap - &
-              & ( chunks(chunk)%lastMAFIndex - (maf-1) ), 0 )
-            chunks(chunk)%lastMAFIndex = maf - 1
-          end do wallInUpper
-        end if  ! - - - - - - - - - - - - ! Wall obstructions
-
-      end do                              ! Loop over obstructions
-
-      ! Sort the chunks back into order
-      call SortChunks ( chunks )
-
-    end subroutine DealWithObstructions
-
-    ! ------------------------------------------- SortObstructions -----
-    subroutine SortObstructions ( obstructions )
-      ! Sort the obstructions into order of increasing
-      ! mafs(1) (start/wall MAF index)
-      type (Obstruction_T), dimension(:), intent(inout) :: OBSTRUCTIONS
-
-      ! Local variables
-      type (Obstruction_T) :: TEMP
-      integer :: I                        ! Loop counters
-      integer, dimension(1) :: TOSWAP     ! Index
-
-      ! Executable code
-      swlevel = switchDetail(switches, 'chu' )
-      do i = 1, size(obstructions) - 1
-        toSwap = minloc ( obstructions(i:)%mafs(1) ) + (/ i-1 /)
-        if ( toSwap(1) /= i ) then
-          temp = obstructions(i)
-          obstructions(i) = obstructions(toSwap(1))
-          obstructions(toSwap(1)) = temp
-        end if
-      end do
-    end subroutine SortObstructions
-
-    ! ------------------------------------------ DeleteObstruction -----
-    subroutine DeleteObstruction ( obstructions, index )
-      ! Dummy arguments
-      use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
-      use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
-      type (Obstruction_T), pointer, dimension(:) :: OBSTRUCTIONS
-      integer, intent(in) :: INDEX
-
-      ! Local variables
-      type (Obstruction_T), pointer, dimension(:) :: TEMP
-      integer(c_intptr_t) :: Addr    ! For tracing
-      integer :: S                   ! Size in bytes of object to deallocate
-      integer :: STATUS              ! From allocate
-
-      ! Executable code
-      swlevel = switchDetail(switches, 'chu' )
-      allocate ( temp ( size(obstructions) - 1 ), stat=status )
-      addr = 0
-      if ( status == 0 .and. size(obstructions) > 0 ) addr = transfer(c_loc(temp(1)), addr )
-      call test_allocate ( status, ModuleName, 'temp', &
-        & uBounds = size(obstructions) - 1, &
-        & elementSize = storage_size(temp) / 8, address=addr )
-
-      if ( index > 1 ) temp(1:index-1) = obstructions(1:index-1)
-      if ( index < size(obstructions) .and. size(obstructions) > 1 ) &
-        & temp(index:) = obstructions(index+1:)
-
-      s = size(obstructions) * storage_size(obstructions) / 8
-      addr = 0
-      if ( s > 0 ) addr = transfer(c_loc(obstructions(1)), addr )
-      deallocate ( obstructions, stat=status )
-      call test_deallocate ( status, moduleName, 'obstructions', s, address=addr )
-
-      obstructions => temp
-
-    end subroutine DeleteObstruction
-
-    ! ----------------------------------------- ChooseCriticalSignals -----------
-    subroutine ChooseCriticalSignals ( criticalSignals )
-      use MLSSignals_m, only: Dump_Signals, GetSignalName, Signals
-      use MLSStringLists, only: CatLists, List2Array
-      use MLSStrings, only: Lowercase
-
-      ! Args
-      character(len=160), dimension(:), pointer :: criticalSignals
-      ! Internal variables
-      character(len=40) :: critical_module_str
-      integer, parameter :: MAXCRITICALSIGNALLENGTH = 40000
-      character(len=MAXCRITICALSIGNALLENGTH) :: criticalSignalStr
-      character(len=40) :: module_str
-      integer :: numCriticalSignals
-      character(len=40) :: signal_full
-      integer :: signalIndex
-      logical, dimension(:), pointer :: isSignalcritical => null()
-      ! Executable
-      swlevel = switchDetail(switches, 'chu' )
-      if ( ChunkDivideConfig%criticalModules == l_none .and. &
-        & len_trim(ChunkDivideConfig%criticalBands) < 1 ) return
-      critical_module_str = ' '
-      if ( ChunkDivideConfig%criticalModules /= l_none ) then
-        call get_string( lit_indices(ChunkDivideConfig%criticalModules), signal_full, &
-          & strip=.true. )
-        critical_module_str = lowercase(signal_full)
-        if ( critical_module_str /= 'ghz' ) return
-      endif
-      criticalSignalStr = ' '
-      numCriticalSignals = 0
-      if ( swLevel > -1 ) &
-        & call outputNamedValue( 'critical module', critical_module_str )
-      if ( swLevel > -1 ) &
-        & call outputNamedValue( 'critical bands', ChunkDivideConfig%criticalBands )
-      if ( swLevel > -1 ) &
-        & call outputNamedValue( 'size(signals)', size(signals) )
-      call allocate_test( isSignalCritical, size(signals), 'isSignalCritical', &
-        & ModuleName )
-      do signalIndex=1, size(signals)
-        isSignalCritical(signalIndex) = &
-          & .not. isNotACriticalBand( signals(signalIndex)%Band )
-        if ( swLevel > -1 .and. .false. ) then
-          call outputNamedValue( 'signal index', signalIndex )
-          call GetSignalName( signalIndex, signal_full )
-          call outputNamedValue( 'signal', signal_full )
-          call outputNamedValue( 'band', signals(signalIndex)%Band )
-          call outputNamedValue( 'critical?', &
-            & .not. isNotACriticalBand( signals(signalIndex)%Band ) )
-          call get_string( modules(signals(signalIndex)%instrumentModule)%name, &
-            &  module_str, strip=.true. )
-          call outputNamedValue( 'module', module_str )
+        ! Now think about chunks whose non overlapped part completely
+        ! encompass the range, and split them.
+        ! (we'll deal with the issue of ranges spilling into overlap regions below)
+        chunk = FindFirst ( &
+          & ( chunks%firstMAFIndex + chunks%noMAFsLowerOverlap <= firstMAF ) .and. &
+          & ( chunks%lastMAFIndex - chunks%noMAFsUpperOverlap >= lastMAF ) )
+        if ( chunk /= 0 ) then
+          ! Create two new chunks with the wall between, first the lower portion
+          newChunk = chunks ( chunk )
+          newChunk%lastMAFIndex = firstMAF - 1
+          newChunk%noMAFsUpperOverlap = 0
+          if ( newChunk%lastMAFIndex /= newChunk%firstMAFIndex ) &
+            & call AddChunkToDatabase ( chunks, newChunk )
+          ! Now the upper portion
+          newChunk = chunks ( chunk )
+          newChunk%firstMAFIndex = lastMAF + 1
+          newChunk%noMAFsLowerOverlap = 0
+          if ( newChunk%lastMAFIndex /= newChunk%firstMAFIndex ) &
+            & call AddChunkToDatabase ( chunks, newChunk )
+          ! Delete the old chunk
+          call DeleteChunk ( chunks, chunk )
         endif
-        if ( len_trim(ChunkDivideConfig%criticalBands) > 0 ) then
-          ! See if the band is one of the critical bands
-          if ( isNotACriticalBand( signals(signalIndex)%Band ) ) cycle
-        elseif ( len_trim(critical_module_str) > 0 ) then
-          call get_string( modules(signals(signalIndex)%instrumentModule)%name, &
-            & signal_full, strip=.true. )
-          module_str = lowercase(signal_full)
-          if ( module_str /= critical_module_str ) cycle
+
+        ! So the cases we have left do not involve deleting or creating new
+        ! chunks, just modifying existing ones.  Note that this includes
+        ! cases where a range starts end ends in a chunk but one or other boundary
+        ! is in the overlap regions.
+
+        ! Look for chunks where the range starts in the chunk
+        moveEnd: do
+          chunk = FindFirst ( &
+            & chunks%firstMAFIndex <= firstMAF .and. &
+            & chunks%lastMAFIndex >= firstMAF )
+          if ( chunk == 0 ) exit moveEnd
+          chunks(chunk)%noMAFsUpperOverlap = max ( 0, &
+            & chunks(chunk)%noMAFsUpperOverlap - &
+            &    ( chunks(chunk)%lastMAFIndex - (firstMAF-1) ) )
+          chunks(chunk)%lastMAFIndex = firstMAF - 1
+        end do moveEnd
+
+        ! Look for chunks where the range ends in the chunk
+        moveStart: do
+          chunk = FindFirst ( &
+            & chunks%firstMAFIndex <= lastMAF .and. &
+            & chunks%lastMAFIndex >= lastMAF )
+          if ( chunk == 0 ) exit moveStart
+          chunks(chunk)%noMAFsLowerOverlap = max ( 0, &
+            & chunks(chunk)%noMAFsLowerOverlap - &
+            &    ( (lastMAF+1) - chunks(chunk)%firstMafIndex ) )
+          chunks(chunk)%firstMAFIndex = lastMAF + 1
+        end do moveStart
+
+      else ! - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+        ! A wall obstruction
+        maf = obstructions(obstruction)%mafs(1)
+
+        ! First look for where the wall occurs in the non overlapped part
+        chunk = FindFirst ( &
+          & ( chunks%firstMAFIndex + chunks%noMAFsLowerOverlap <= maf ) .and. &
+          & ( chunks%lastMAFIndex - chunks%noMAFsUpperOverlap >= maf ) )
+
+        if ( chunk /= 0 ) then
+          ! Create two new chunks with the wall between, first the lower portion
+          newChunk = chunks ( chunk )
+          newChunk%lastMAFIndex = maf - 1
+          newChunk%noMAFsUpperOverlap = 0
+          if ( newChunk%lastMAFIndex /= newChunk%firstMAFIndex ) &
+            & call AddChunkToDatabase ( chunks, newChunk )
+          ! Now the upper portion
+          newChunk = chunks ( chunk )
+          newChunk%firstMAFIndex = maf
+          newChunk%noMAFsLowerOverlap = 0
+          if ( newChunk%lastMAFIndex /= newChunk%firstMAFIndex ) &
+            & call AddChunkToDatabase ( chunks, newChunk )
+          ! Now delete the original chunk
+          call DeleteChunk ( chunks, chunk )
         endif
-        numCriticalSignals = numCriticalSignals + 1
+
+        ! For chunks where the wall is in the overlap, just make the
+        ! overlap shorter
+        ! First the lower overlap
+        wallInLower: do
+          chunk = FindFirst ( &
+            & ( chunks%firstMAFIndex < maf ) .and. &
+            & ( chunks%firstMAFIndex + chunks%noMAFsLowerOverlap > maf ) )
+          if ( chunk == 0 ) exit wallInLower
+          chunks(chunk)%noMAFsLowerOverlap = &
+          & max ( chunks(chunk)%noMAFsLowerOverlap - &
+          & ( maf - chunks(chunk)%firstMAFIndex ), 0 )
+          chunks(chunk)%firstMAFIndex = maf
+        end do wallInLower
+        ! Now the upper overlap
+        wallInUpper: do
+          chunk = FindFirst ( &
+            & ( chunks%lastMAFIndex - chunks%noMAFsUpperOverlap < maf ) .and. &
+            & ( chunks%lastMAFIndex > maf ) )
+          if ( chunk == 0 ) exit wallInUpper
+          chunks(chunk)%noMAFsUpperOverlap = &
+            & max ( chunks(chunk)%noMAFsUpperOverlap - &
+            & ( chunks(chunk)%lastMAFIndex - (maf-1) ), 0 )
+          chunks(chunk)%lastMAFIndex = maf - 1
+        end do wallInUpper
+      end if  ! - - - - - - - - - - - - ! Wall obstructions
+
+    end do                              ! Loop over obstructions
+
+    ! Sort the chunks back into order
+    call SortChunks ( chunks )
+
+  end subroutine DealWithObstructions
+
+  ! --------------------------------------------- SortObstructions -----
+  subroutine SortObstructions ( obstructions )
+    ! Sort the obstructions into order of increasing
+    ! mafs(1) (start/wall MAF index)
+    type (Obstruction_T), dimension(:), intent(inout) :: OBSTRUCTIONS
+
+    ! Local variables
+    type (Obstruction_T) :: TEMP
+    integer :: I                        ! Loop counters
+    integer, dimension(1) :: TOSWAP     ! Index
+
+    ! Executable code
+    swlevel = switchDetail(switches, 'chu' )
+    do i = 1, size(obstructions) - 1
+      toSwap = minloc ( obstructions(i:)%mafs(1) ) + (/ i-1 /)
+      if ( toSwap(1) /= i ) then
+        temp = obstructions(i)
+        obstructions(i) = obstructions(toSwap(1))
+        obstructions(toSwap(1)) = temp
+      end if
+    end do
+  end subroutine SortObstructions
+
+  ! -------------------------------------------- DeleteObstruction -----
+  subroutine DeleteObstruction ( obstructions, index )
+    ! Dummy arguments
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
+    type (Obstruction_T), pointer, dimension(:) :: OBSTRUCTIONS
+    integer, intent(in) :: INDEX
+
+    ! Local variables
+    type (Obstruction_T), pointer, dimension(:) :: TEMP
+    integer(c_intptr_t) :: Addr    ! For tracing
+    integer :: S                   ! Size in bytes of object to deallocate
+    integer :: STATUS              ! From allocate
+
+    ! Executable code
+    swlevel = switchDetail(switches, 'chu' )
+    allocate ( temp ( size(obstructions) - 1 ), stat=status )
+    addr = 0
+    if ( status == 0 .and. size(obstructions) > 0 ) addr = transfer(c_loc(temp(1)), addr )
+    call test_allocate ( status, ModuleName, 'temp', &
+      & uBounds = size(obstructions) - 1, &
+      & elementSize = storage_size(temp) / 8, address=addr )
+
+    if ( index > 1 ) temp(1:index-1) = obstructions(1:index-1)
+    if ( index < size(obstructions) .and. size(obstructions) > 1 ) &
+      & temp(index:) = obstructions(index+1:)
+
+    s = size(obstructions) * storage_size(obstructions) / 8
+    addr = 0
+    if ( s > 0 ) addr = transfer(c_loc(obstructions(1)), addr )
+    deallocate ( obstructions, stat=status )
+    call test_deallocate ( status, moduleName, 'obstructions', s, address=addr )
+
+    obstructions => temp
+
+  end subroutine DeleteObstruction
+
+  ! ---------------------------------------- ChooseCriticalSignals -----
+  subroutine ChooseCriticalSignals ( criticalSignals )
+    use MLSSignals_m, only: Dump_Signals, GetSignalName, Signals
+    use MLSStringLists, only: CatLists, List2Array
+    use MLSStrings, only: Lowercase
+
+    ! Args
+    character(len=160), dimension(:), pointer :: criticalSignals
+    ! Internal variables
+    character(len=40) :: critical_module_str
+    integer, parameter :: MAXCRITICALSIGNALLENGTH = 40000
+    character(len=MAXCRITICALSIGNALLENGTH) :: criticalSignalStr
+    character(len=40) :: module_str
+    integer :: numCriticalSignals
+    character(len=40) :: signal_full
+    integer :: signalIndex
+    logical, dimension(:), pointer :: isSignalcritical => null()
+    ! Executable
+    swlevel = switchDetail(switches, 'chu' )
+    if ( ChunkDivideConfig%criticalModules == l_none .and. &
+      & len_trim(ChunkDivideConfig%criticalBands) < 1 ) return
+    critical_module_str = ' '
+    if ( ChunkDivideConfig%criticalModules /= l_none ) then
+      call get_string( lit_indices(ChunkDivideConfig%criticalModules), signal_full, &
+        & strip=.true. )
+      critical_module_str = lowercase(signal_full)
+      if ( critical_module_str /= 'ghz' ) return
+    endif
+    criticalSignalStr = ' '
+    numCriticalSignals = 0
+    if ( swLevel > -1 ) &
+      & call outputNamedValue( 'critical module', critical_module_str )
+    if ( swLevel > -1 ) &
+      & call outputNamedValue( 'critical bands', ChunkDivideConfig%criticalBands )
+    if ( swLevel > -1 ) &
+      & call outputNamedValue( 'size(signals)', size(signals) )
+    call allocate_test( isSignalCritical, size(signals), 'isSignalCritical', &
+      & ModuleName )
+    do signalIndex=1, size(signals)
+      isSignalCritical(signalIndex) = &
+        & .not. isNotACriticalBand( signals(signalIndex)%Band )
+      if ( swLevel > -1 .and. .false. ) then
+        call outputNamedValue( 'signal index', signalIndex )
         call GetSignalName( signalIndex, signal_full )
-        criticalSignalStr = catLists( criticalSignalStr, signal_full )
-      enddo
-      if ( swLevel > -1 ) &
-        call Dump_Signals( signals, isSignalCritical, 1 )
-      call deallocate_test( isSignalCritical,'isSignalCritical', &
-        & ModuleName )
-      if ( numCriticalSignals < 1 ) return
-      call allocate_test( criticalSignals, numCriticalSignals, 'criticalSignals', &
-        & ModuleName )
-      call List2Array (criticalSignalStr, criticalSignals,  countEmpty=.true. )
-      if ( swLevel > -1 ) &
-        & call dump( criticalSignals, 'critical Signals chosen', &
-        & options=what_options(trim=.true.) )
-    end subroutine ChooseCriticalSignals
-
-    ! ----------------------------------------- NoteL1BRADChanges -----
-    subroutine NoteL1BRADChanges ( obstructions, mafRange, filedatabase )
-      use MLSSignals_M, only: Dumpsignals=>dump, Getsignalindex, Getsignalname, &
-        & GetNameofsignal, Signals
-      use MLSStringlists, only: NumstringElements, GetstringElement
-      use MLSStrings, only: Lowercase
-      use Parse_Signal_M, only: Parse_Signal
-      ! This routine notes any lack of good data for one of the
-      ! signals, and, depending on sensitivity,
-      ! augments the database of obstructions
-      type (Obstruction_T), dimension(:), pointer :: OBSTRUCTIONS
-      type (Obstruction_T) :: NEWOBSTRUCTION ! In progrss
-      type (MAFRange_T) :: MAFRange
-      type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
-
-      ! Local variables
-      ! This next sets the threshold of what it takes to be an obstruction
-      ! At the most sensitive, hair-trigger level, any change in goodness
-      ! of any signal would suffice
-      ! Otherwise, a dead-zone in any signal must persist for at least a
-      ! duration of config%maxGap before we declare it an obstruction
-      ! and add it to the database
-      logical, parameter :: ANYCHANGEISOBSTRUCTION = .false.
-      logical :: choseCriticalSignals
-      integer :: critical_index
-      character(len=40) :: critical_module_str
-      integer, dimension(:), pointer            :: criticalIndices => null() ! taken from config or criticalModules
-      character(len=160), dimension(:), pointer :: criticalSignals => null() ! taken from config or criticalModules
-      integer :: critical_sub_index
-      integer, pointer, dimension(:) :: goods_after_gap
-      integer, pointer, dimension(:) :: goodness_changes
-      logical, dimension(size(signals)) :: good_after_maxgap
-      logical, dimension(size(signals)) :: good_signals_now
-      logical, dimension(size(signals)) :: good_signals_last
-      integer, dimension(size(signals)) :: howlong_nogood
-      integer :: i
-      integer :: maf              ! mafrange(1) <= maf <= mafrange(2)
-      integer :: maf_index   ! 1 <= maf_index <= mafrange(2)-mafrange(1)+1
-      integer :: mafset
-      integer :: mafset_end
-      integer :: mafset_start
-      integer, parameter :: MAXMAFSINSET = 250
-      character(len=40) :: module_str
-      integer :: nmafs
-      integer :: nmafsets
-      integer :: num_goods_after_gap
-      integer :: num_goodness_changes
-      logical, dimension(:), pointer  :: or_valids_buffer
-      integer :: SignalIndex
-      character(len=40) :: signal_full
-      character(len=40) :: signal_str
-      integer, pointer :: Signal_Indices(:)         ! Indices in the signals
-      logical, dimension(:,:), pointer  :: signals_buffer
-      logical :: this_maf_valid
-      logical, dimension(:), pointer  :: valids_buffer
-      ! Won't check if there are no files at all
-      if ( .not. associated(filedatabase) ) return
-      ! Won't check if there are no radiance files
-      if ( .not. any(filedatabase%content == 'l1brad') ) return
-      swlevel = SwitchDetail(switches, 'chu')
-      nmafs = mafRange%Expanded(2) - mafRange%Expanded(1) + 1
-      choseCriticalSignals = .false.
-      ! Here we will loop over the signals database
-      ! Searching for
-      ! (1) mafs where there is no good data for any of the signals
-      ! (2) mafs where the good data is switched from one signal to another
-      ! (See Construct QuantityTemplates below line 253)
-
-      ! (Possibly) time-consuming step:
-      ! Read through the l1b radiance files for all signals,
-      ! noting which ones are good, which not
-
-      nullify ( signals_buffer, goods_after_gap, goodness_changes )
-      call allocate_test( &
-        & signals_buffer, nmafs , size(signals), &
-        & 'signals_buffer', ModuleName )
-      call allocate_test( goods_after_gap, nmafs,&
-        & 'goods_after_gap', ModuleName )
-      call allocate_test( goodness_changes, nmafs,&
-        & 'goodness_changes', ModuleName )
-      good_signals_now = .false.   ! Initializing
-      signals_buffer = .false.
-      if ( swLevel > -1 ) then
-        call outputNamedValue ( 'shape(signals_buffer)', shape(signals_buffer) )
-        call outputNamedValue ( 'shape(goods_after_gap)', shape(goods_after_gap) )
-        call outputNamedValue ( 'shape(goodness_changes)', shape(goodness_changes) )
-      endif
-      if ( associated(ChunkDivideConfig%criticalSignals) ) then
-        criticalSignals => ChunkDivideConfig%criticalSignals
-        if ( swLevel > -1 ) then
-          call output('Critical Signals from config', advance='yes' )
-          call Dump (  criticalSignals )
-        endif
-      elseif ( ChunkDivideConfig%chooseCriticalSignals ) then
-        ! We can choose as critical signals all the signals belonging
-        ! to a critical module
-        call chooseCriticalSignals( criticalSignals )
-        choseCriticalSignals = .true.
-        if ( swLevel > -1 ) then
-          call output('Critical Signals you chose', advance='yes' )
-          call Dump (  criticalSignals )
-        endif
-      endif
-      ! We'll need the index number for each of the critical signals
-      call allocate_test( criticalIndices, size(criticalSignals),&
-        & 'critical indices', ModuleName )
-      do critical_index = 1, size(criticalSignals)
-        call GetSignalIndex( criticalSignals(critical_index), &
-          & criticalIndices(critical_index) )
-        if ( swLevel < VERBOSETHRESHOLD ) cycle
-        call outputnamedValue( 'critical signal string', criticalSignals(critical_index) )
-        call outputnamedValue( 'its index', criticalIndices(critical_index) )
-      enddo
-      if ( swLevel >= VERBOSETHRESHOLD ) then
-        ! call dumpSignals( signals )
-        call GetNameOfSignal ( signals(1), signal_str )
-        call outputnamedValue( 'signal(1)%name', signal_str )
-        call dump( criticalSignals, 'criticalSignals' )
-        call dump( criticalIndices, 'criticalIndices' )
-      endif
-      do signalIndex=1, size(signals)
-        call get_string( lit_indices(ChunkDivideConfig%criticalModules), &
-          & signal_full, &
-          & strip=.true. )
-        critical_module_str = lowercase(signal_full)
+        call outputNamedValue( 'signal', signal_full )
+        call outputNamedValue( 'band', signals(signalIndex)%Band )
+        call outputNamedValue( 'critical?', &
+          & .not. isNotACriticalBand( signals(signalIndex)%Band ) )
         call get_string( modules(signals(signalIndex)%instrumentModule)%name, &
-          & signal_full, &
-          & strip=.true. )
+          &  module_str, strip=.true. )
+        call outputNamedValue( 'module', module_str )
+      endif
+      if ( len_trim(ChunkDivideConfig%criticalBands) > 0 ) then
+        ! See if the band is one of the critical bands
+        if ( isNotACriticalBand( signals(signalIndex)%Band ) ) cycle
+      elseif ( len_trim(critical_module_str) > 0 ) then
+        call get_string( modules(signals(signalIndex)%instrumentModule)%name, &
+          & signal_full, strip=.true. )
         module_str = lowercase(signal_full)
-        if ( swLevel >= VERBOSETHRESHOLD ) &
-          & call outputNamedValue( 'module', module_str )
-        if ( ChunkDivideConfig%criticalModules == l_none ) then
-          ! No module is critical for signal data being good
-        elseif ( module_str /= critical_module_str ) then
-          cycle
-        elseif ( .not. any(signalIndex == criticalIndices) ) then
-          cycle
-        endif
-        if ( swLevel >= VERBOSETHRESHOLD ) &
-          & call dumpSignals( signals(signalIndex) )
-        if ( swLevel >= VERBOSETHRESHOLD ) &
-          & call outputNamedValue( 'critical module', critical_module_str )
-        if ( nmafs <= MAXMAFSINSET ) then
+        if ( module_str /= critical_module_str ) cycle
+      endif
+      numCriticalSignals = numCriticalSignals + 1
+      call GetSignalName( signalIndex, signal_full )
+      criticalSignalStr = catLists( criticalSignalStr, signal_full )
+    enddo
+    if ( swLevel > -1 ) &
+      call Dump_Signals( signals, isSignalCritical, 1 )
+    call deallocate_test( isSignalCritical,'isSignalCritical', &
+      & ModuleName )
+    if ( numCriticalSignals < 1 ) return
+    call allocate_test( criticalSignals, numCriticalSignals, 'criticalSignals', &
+      & ModuleName )
+    call List2Array (criticalSignalStr, criticalSignals,  countEmpty=.true. )
+    if ( swLevel > -1 ) &
+      & call dump( criticalSignals, 'critical Signals chosen', &
+      & options=what_options(trim=.true.) )
+  end subroutine ChooseCriticalSignals
+
+  ! -------------------------------------------- NoteL1BRADChanges -----
+  subroutine NoteL1BRADChanges ( obstructions, mafRange, filedatabase )
+    use MLSSignals_M, only: Dumpsignals=>dump, Getsignalindex, Getsignalname, &
+      & GetNameofsignal, Signals
+    use MLSStringlists, only: NumstringElements, GetstringElement
+    use MLSStrings, only: Lowercase
+    use Parse_Signal_M, only: Parse_Signal
+    ! This routine notes any lack of good data for one of the
+    ! signals, and, depending on sensitivity,
+    ! augments the database of obstructions
+    type (Obstruction_T), dimension(:), pointer :: OBSTRUCTIONS
+    type (Obstruction_T) :: NEWOBSTRUCTION ! In progrss
+    type (MAFRange_T) :: MAFRange
+    type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
+
+    ! Local variables
+    ! This next sets the threshold of what it takes to be an obstruction
+    ! At the most sensitive, hair-trigger level, any change in goodness
+    ! of any signal would suffice
+    ! Otherwise, a dead-zone in any signal must persist for at least a
+    ! duration of config%maxGap before we declare it an obstruction
+    ! and add it to the database
+    logical, parameter :: ANYCHANGEISOBSTRUCTION = .false.
+    logical :: choseCriticalSignals
+    integer :: critical_index
+    character(len=40) :: critical_module_str
+    integer, dimension(:), pointer            :: criticalIndices => null() ! taken from config or criticalModules
+    character(len=160), dimension(:), pointer :: criticalSignals => null() ! taken from config or criticalModules
+    integer :: critical_sub_index
+    integer, pointer, dimension(:) :: goods_after_gap
+    integer, pointer, dimension(:) :: goodness_changes
+    logical, dimension(size(signals)) :: good_after_maxgap
+    logical, dimension(size(signals)) :: good_signals_now
+    logical, dimension(size(signals)) :: good_signals_last
+    integer, dimension(size(signals)) :: howlong_nogood
+    integer :: i
+    integer :: maf              ! mafrange(1) <= maf <= mafrange(2)
+    integer :: maf_index   ! 1 <= maf_index <= mafrange(2)-mafrange(1)+1
+    integer :: mafset
+    integer :: mafset_end
+    integer :: mafset_start
+    integer, parameter :: MAXMAFSINSET = 250
+    character(len=40) :: module_str
+    integer :: nmafs
+    integer :: nmafsets
+    integer :: num_goods_after_gap
+    integer :: num_goodness_changes
+    logical, dimension(:), pointer  :: or_valids_buffer
+    integer :: SignalIndex
+    character(len=40) :: signal_full
+    character(len=40) :: signal_str
+    integer, pointer :: Signal_Indices(:)         ! Indices in the signals
+    logical, dimension(:,:), pointer  :: signals_buffer
+    logical :: this_maf_valid
+    logical, dimension(:), pointer  :: valids_buffer
+    ! Won't check if there are no files at all
+    if ( .not. associated(filedatabase) ) return
+    ! Won't check if there are no radiance files
+    if ( .not. any(filedatabase%content == 'l1brad') ) return
+    swlevel = SwitchDetail(switches, 'chu')
+    nmafs = mafRange%Expanded(2) - mafRange%Expanded(1) + 1
+    choseCriticalSignals = .false.
+    ! Here we will loop over the signals database
+    ! Searching for
+    ! (1) mafs where there is no good data for any of the signals
+    ! (2) mafs where the good data is switched from one signal to another
+    ! (See Construct QuantityTemplates below line 253)
+
+    ! (Possibly) time-consuming step:
+    ! Read through the l1b radiance files for all signals,
+    ! noting which ones are good, which not
+
+    nullify ( signals_buffer, goods_after_gap, goodness_changes )
+    call allocate_test( &
+      & signals_buffer, nmafs , size(signals), &
+      & 'signals_buffer', ModuleName )
+    call allocate_test( goods_after_gap, nmafs,&
+      & 'goods_after_gap', ModuleName )
+    call allocate_test( goodness_changes, nmafs,&
+      & 'goodness_changes', ModuleName )
+    good_signals_now = .false.   ! Initializing
+    signals_buffer = .false.
+    if ( swLevel > -1 ) then
+      call outputNamedValue ( 'shape(signals_buffer)', shape(signals_buffer) )
+      call outputNamedValue ( 'shape(goods_after_gap)', shape(goods_after_gap) )
+      call outputNamedValue ( 'shape(goodness_changes)', shape(goodness_changes) )
+    endif
+    if ( associated(ChunkDivideConfig%criticalSignals) ) then
+      criticalSignals => ChunkDivideConfig%criticalSignals
+      if ( swLevel > -1 ) then
+        call output('Critical Signals from config', advance='yes' )
+        call Dump (  criticalSignals )
+      endif
+    elseif ( ChunkDivideConfig%chooseCriticalSignals ) then
+      ! We can choose as critical signals all the signals belonging
+      ! to a critical module
+      call chooseCriticalSignals( criticalSignals )
+      choseCriticalSignals = .true.
+      if ( swLevel > -1 ) then
+        call output('Critical Signals you chose', advance='yes' )
+        call Dump (  criticalSignals )
+      endif
+    endif
+    ! We'll need the index number for each of the critical signals
+    call allocate_test( criticalIndices, size(criticalSignals),&
+      & 'critical indices', ModuleName )
+    do critical_index = 1, size(criticalSignals)
+      call GetSignalIndex( criticalSignals(critical_index), &
+        & criticalIndices(critical_index) )
+      if ( swLevel < VERBOSETHRESHOLD ) cycle
+      call outputnamedValue( 'critical signal string', criticalSignals(critical_index) )
+      call outputnamedValue( 'its index', criticalIndices(critical_index) )
+    enddo
+    if ( swLevel >= VERBOSETHRESHOLD ) then
+      ! call dumpSignals( signals )
+      call GetNameOfSignal ( signals(1), signal_str )
+      call outputnamedValue( 'signal(1)%name', signal_str )
+      call dump( criticalSignals, 'criticalSignals' )
+      call dump( criticalIndices, 'criticalIndices' )
+    endif
+    do signalIndex=1, size(signals)
+      call get_string( lit_indices(ChunkDivideConfig%criticalModules), &
+        & signal_full, &
+        & strip=.true. )
+      critical_module_str = lowercase(signal_full)
+      call get_string( modules(signals(signalIndex)%instrumentModule)%name, &
+        & signal_full, &
+        & strip=.true. )
+      module_str = lowercase(signal_full)
+      if ( swLevel >= VERBOSETHRESHOLD ) &
+        & call outputNamedValue( 'module', module_str )
+      if ( ChunkDivideConfig%criticalModules == l_none ) then
+        ! No module is critical for signal data being good
+      elseif ( module_str /= critical_module_str ) then
+        cycle
+      elseif ( .not. any(signalIndex == criticalIndices) ) then
+        cycle
+      endif
+      if ( swLevel >= VERBOSETHRESHOLD ) &
+        & call dumpSignals( signals(signalIndex) )
+      if ( swLevel >= VERBOSETHRESHOLD ) &
+        & call outputNamedValue( 'critical module', critical_module_str )
+      if ( nmafs <= MAXMAFSINSET ) then
+        good_signals_now(signalIndex) = &
+          & any_good_signaldata ( signalIndex, signals(signalIndex)%sideband, &
+          &   filedatabase, mafRange%Expanded(1), mafRange%Expanded(2), &
+          &   signals_buffer(:,signalIndex), mafRange%Expanded )
+      else
+        nmafsets = (nmafs-1)/MAXMAFSINSET + 1   ! A trick--mafset_start
+        mafset_end = mafRange%Expanded(1) - 1   ! is mafRange(1)
+        do mafset=1, nmafsets
+          mafset_start = mafset_end + 1
+          mafset_end = min ( mafRange%Expanded(2), mafset_end + MAXMAFSINSET )
           good_signals_now(signalIndex) = &
-            & any_good_signaldata ( signalIndex, signals(signalIndex)%sideband, &
-            &   filedatabase, mafRange%Expanded(1), mafRange%Expanded(2), &
+            &   any_good_signaldata ( signalIndex, &
+            &   signals(signalIndex)%sideband, &
+            &   filedatabase, mafset_start, mafset_end, &
             &   signals_buffer(:,signalIndex), mafRange%Expanded )
-        else
-          nmafsets = (nmafs-1)/MAXMAFSINSET + 1   ! A trick--mafset_start
-          mafset_end = mafRange%Expanded(1) - 1   ! is mafRange(1)
-          do mafset=1, nmafsets
-            mafset_start = mafset_end + 1
-            mafset_end = min ( mafRange%Expanded(2), mafset_end + MAXMAFSINSET )
-            good_signals_now(signalIndex) = &
-              &   any_good_signaldata ( signalIndex, &
-              &   signals(signalIndex)%sideband, &
-              &   filedatabase, mafset_start, mafset_end, &
-              &   signals_buffer(:,signalIndex), mafRange%Expanded )
-          enddo
-        endif
-      enddo
-      if ( swlevel > -1 ) &
-        & call outputNamedValue ( 'shape(signals_buffer)', shape(signals_buffer) )
-      if ( swlevel >= VERBOSETHRESHOLD ) &
-        & call dump ( signals_buffer, 'signals_buffer' )
-
-      ! Task (1a): Find mafs where there is at least one signal which
-      ! changes from either nogood to good or from good to nogood
-      ! compared with the last maf
-      ! Task (1b): Find mafs where there is at least one signal which
-      ! changes from nogood to good after a dead zone
-      ! lasting at least maxGap mafs
-      num_goodness_changes = 0
-      num_goods_after_gap = 0
-      howlong_nogood       = 0
-      good_after_maxgap = .false.
-      do maf = mafRange%Expanded(1), mafRange%Expanded(2)
-        maf_index = maf - mafRange%Expanded(1) + 1
-        do signalIndex=1, size(signals)
-          if ( .not. any(signalIndex == criticalIndices) ) cycle
-          good_signals_now(signalIndex) = signals_buffer(maf_index, signalIndex)
-          if ( .not. good_signals_now(signalIndex) ) &
-            & howlong_nogood(signalIndex) = howlong_nogood(signalIndex) + 1
-          good_after_maxgap(signalIndex) = &
-            & good_signals_now(signalIndex) &
-            & .and. &
-            & ( howlong_nogood(signalIndex) > ChunkDivideConfig%maxGap )
-          if ( good_signals_now(signalIndex) ) howlong_nogood(signalIndex) = 0
         enddo
-        if ( maf /= mafRange%Expanded(1) ) then
-          if ( Any(good_signals_now .neqv. good_signals_last) ) then
-            num_goodness_changes = num_goodness_changes + 1
-            goodness_changes(num_goodness_changes) = maf
-          endif
-        endif
-        if ( Any(good_after_maxgap) ) then
-          num_goods_after_gap = num_goods_after_gap + 1
-          goods_after_gap(num_goods_after_gap) = maf
-        endif
-        good_signals_last = good_signals_now
-      enddo
-      call outputNamedValue( 'num_goods_after_gap', num_goods_after_gap )
+      endif
+    enddo
+    if ( swlevel > -1 ) &
+      & call outputNamedValue ( 'shape(signals_buffer)', shape(signals_buffer) )
+    if ( swlevel >= VERBOSETHRESHOLD ) &
+      & call dump ( signals_buffer, 'signals_buffer' )
 
-      ! Task (2): Find regions where there is no signal among at least one
-      ! of the critical signals
-      if ( associated(criticalSignals) ) then
-        ! What we're about to do is:
-        ! Assume we're given an array of char strings
-        ! array = [str_1, str_2, ..]
-        ! and each string contains comma-separated signals
-        ! str_1 = 'sig_1,sig_2,..'
-        ! Then the rule is that for a maf to pass the critical signals test,
-        ! for each array element at least one of the signals within that
-        ! string must be turned on for that maf
-        ! Thus the shorthand formula that we're and-ing the array elements
-        ! and or-ing the list elements
-        ! You might prefer the formula that a maf is invalid if for any of the
-        ! array elements, none of its signals is turned on
-        !
-        ! Unfortunately, if we chose our critical signals based on a critical module
-        ! the role the string containing comma-separated signals is played by
-        ! by the array so in that case we'll need to be or-ing the array elements,
-        ! not and-ing them
-        nullify ( valids_buffer )
-        call allocate_test( &
-          & valids_buffer, nmafs , &
-          & 'valids_buffer', ModuleName)
-        nullify ( or_valids_buffer )
-        call allocate_test( &
-          & or_valids_buffer, nmafs , &
-          & 'or_valids_buffer', ModuleName)
-        !
-        valids_buffer = .not. choseCriticalSignals ! .true.
-        if ( SwLevel >= VERBOSETHRESHOLD ) then
-          call output ( 'Checking for critical signals: ')
-          do critical_index=1, size(criticalSignals)
-            call output ( trim(criticalSignals(critical_index)), &
-              & advance='yes')
-          enddo
-          call output ( &
-            & 'Which signals match the incomplete signal string ' &
-            &  // 'weve been given', advance='yes')
+    ! Task (1a): Find mafs where there is at least one signal which
+    ! changes from either nogood to good or from good to nogood
+    ! compared with the last maf
+    ! Task (1b): Find mafs where there is at least one signal which
+    ! changes from nogood to good after a dead zone
+    ! lasting at least maxGap mafs
+    num_goodness_changes = 0
+    num_goods_after_gap = 0
+    howlong_nogood       = 0
+    good_after_maxgap = .false.
+    do maf = mafRange%Expanded(1), mafRange%Expanded(2)
+      maf_index = maf - mafRange%Expanded(1) + 1
+      do signalIndex=1, size(signals)
+        if ( .not. any(signalIndex == criticalIndices) ) cycle
+        good_signals_now(signalIndex) = signals_buffer(maf_index, signalIndex)
+        if ( .not. good_signals_now(signalIndex) ) &
+          & howlong_nogood(signalIndex) = howlong_nogood(signalIndex) + 1
+        good_after_maxgap(signalIndex) = &
+          & good_signals_now(signalIndex) &
+          & .and. &
+          & ( howlong_nogood(signalIndex) > ChunkDivideConfig%maxGap )
+        if ( good_signals_now(signalIndex) ) howlong_nogood(signalIndex) = 0
+      enddo
+      if ( maf /= mafRange%Expanded(1) ) then
+        if ( Any(good_signals_now .neqv. good_signals_last) ) then
+          num_goodness_changes = num_goodness_changes + 1
+          goodness_changes(num_goodness_changes) = maf
         endif
+      endif
+      if ( Any(good_after_maxgap) ) then
+        num_goods_after_gap = num_goods_after_gap + 1
+        goods_after_gap(num_goods_after_gap) = maf
+      endif
+      good_signals_last = good_signals_now
+    enddo
+    call outputNamedValue( 'num_goods_after_gap', num_goods_after_gap )
+
+    ! Task (2): Find regions where there is no signal among at least one
+    ! of the critical signals
+    if ( associated(criticalSignals) ) then
+      ! What we're about to do is:
+      ! Assume we're given an array of char strings
+      ! array = [str_1, str_2, ..]
+      ! and each string contains comma-separated signals
+      ! str_1 = 'sig_1,sig_2,..'
+      ! Then the rule is that for a maf to pass the critical signals test,
+      ! for each array element at least one of the signals within that
+      ! string must be turned on for that maf
+      ! Thus the shorthand formula that we're and-ing the array elements
+      ! and or-ing the list elements
+      ! You might prefer the formula that a maf is invalid if for any of the
+      ! array elements, none of its signals is turned on
+      !
+      ! Unfortunately, if we chose our critical signals based on a critical module
+      ! the role the string containing comma-separated signals is played by
+      ! by the array so in that case we'll need to be or-ing the array elements,
+      ! not and-ing them
+      nullify ( valids_buffer )
+      call allocate_test( &
+        & valids_buffer, nmafs , &
+        & 'valids_buffer', ModuleName)
+      nullify ( or_valids_buffer )
+      call allocate_test( &
+        & or_valids_buffer, nmafs , &
+        & 'or_valids_buffer', ModuleName)
+      !
+      valids_buffer = .not. choseCriticalSignals ! .true.
+      if ( SwLevel >= VERBOSETHRESHOLD ) then
+        call output ( 'Checking for critical signals: ')
         do critical_index=1, size(criticalSignals)
-          or_valids_buffer = .false.
-          do critical_sub_index=1, NumStringElements( &
-            & trim(criticalSignals(critical_index)), .FALSE.)
-            call GetStringElement( &
-              & trim(criticalSignals(critical_index)), signal_str, &
-              & critical_sub_index, .FALSE. )
-            ! Which signals match the incomplete signal string we've been given?
-            nullify(Signal_Indices)
-            call Parse_signal(signal_str, signal_indices)
-            if ( .not. associated(Signal_Indices) ) exit
-            if ( SwLevel >= VERBOSETHRESHOLD ) then
-              call output ( 'Signal_Indices: ')
-              call output ( Signal_Indices, advance='yes')
-              do i=1, size(Signal_Indices)
-                call GetSignalName(Signal_Indices(i), signal_full)
-                call output ( 'Full Signal Name: ')
-                call output ( trim(signal_full), advance='yes')
-              enddo
-            endif
-            do maf = mafRange%Expanded(1), mafRange%Expanded(2)
-              maf_index = maf - mafRange%Expanded(1) + 1
-              this_maf_valid = .false.   ! not valid unless at least one signal
-              do i=1, size(Signal_Indices)
-                signalIndex = Signal_Indices(i)
-                this_maf_valid = &
-                  & this_maf_valid .or. signals_buffer(maf_index, signalIndex)
-              enddo
-              or_valids_buffer(maf_index) = &
-                & or_valids_buffer(maf_index) .or. this_maf_valid
+          call output ( trim(criticalSignals(critical_index)), &
+            & advance='yes')
+        enddo
+        call output ( &
+          & 'Which signals match the incomplete signal string ' &
+          &  // 'weve been given', advance='yes')
+      endif
+      do critical_index=1, size(criticalSignals)
+        or_valids_buffer = .false.
+        do critical_sub_index=1, NumStringElements( &
+          & trim(criticalSignals(critical_index)), .FALSE.)
+          call GetStringElement( &
+            & trim(criticalSignals(critical_index)), signal_str, &
+            & critical_sub_index, .FALSE. )
+          ! Which signals match the incomplete signal string we've been given?
+          nullify(Signal_Indices)
+          call Parse_signal(signal_str, signal_indices)
+          if ( .not. associated(Signal_Indices) ) exit
+          if ( SwLevel >= VERBOSETHRESHOLD ) then
+            call output ( 'Signal_Indices: ')
+            call output ( Signal_Indices, advance='yes')
+            do i=1, size(Signal_Indices)
+              call GetSignalName(Signal_Indices(i), signal_full)
+              call output ( 'Full Signal Name: ')
+              call output ( trim(signal_full), advance='yes')
             enddo
-            call deallocate_test(Signal_Indices, 'Signal_Indices', ModuleName)
-          enddo
-          ! An ad-hoc filter to ignore bands that are simply switched off
-          ! if ( swLevel > -1 ) call outputNamedValue ( 'count(or_valids_buffer)', count(or_valids_buffer), advance='yes')
-          ! if ( count(or_valids_buffer) < &
-          !  & ( mafRange%Expanded(2) - mafRange%Expanded(1) ) / 50 ) cycle
-          ! call dump ( or_valids_buffer, 'or_valids_buffer' )
-          if ( choseCriticalSignals ) then
-            valids_buffer = &
-              & valids_buffer .or. or_valids_buffer
-          else
-            valids_buffer = &
-              & valids_buffer .and. or_valids_buffer
           endif
+          do maf = mafRange%Expanded(1), mafRange%Expanded(2)
+            maf_index = maf - mafRange%Expanded(1) + 1
+            this_maf_valid = .false.   ! not valid unless at least one signal
+            do i=1, size(Signal_Indices)
+              signalIndex = Signal_Indices(i)
+              this_maf_valid = &
+                & this_maf_valid .or. signals_buffer(maf_index, signalIndex)
+            enddo
+            or_valids_buffer(maf_index) = &
+              & or_valids_buffer(maf_index) .or. this_maf_valid
+          enddo
+          call deallocate_test(Signal_Indices, 'Signal_Indices', ModuleName)
         enddo
-        if ( swLevel >= VERBOSETHRESHOLD ) call dump ( valids_buffer, 'valids_buffer' )
-        if ( swLevel > -1 ) then
-          call outputNamedValue ( 'count(valids_buffer)', count(valids_buffer), advance='yes')
-          call output ( 'Before converting valids to obstructions', advance='yes' )
-          call dump(obstructions)
+        ! An ad-hoc filter to ignore bands that are simply switched off
+        ! if ( swLevel > -1 ) call outputNamedValue ( 'count(or_valids_buffer)', count(or_valids_buffer), advance='yes')
+        ! if ( count(or_valids_buffer) < &
+        !  & ( mafRange%Expanded(2) - mafRange%Expanded(1) ) / 50 ) cycle
+        ! call dump ( or_valids_buffer, 'or_valids_buffer' )
+        if ( choseCriticalSignals ) then
+          valids_buffer = &
+            & valids_buffer .or. or_valids_buffer
+        else
+          valids_buffer = &
+            & valids_buffer .and. or_valids_buffer
         endif
-        call ConvertFlagsToObstructions ( valids_buffer, obstructions, &
-          & mafRange%Expanded, obstructionType='critical radiances' )
-        if ( swLevel > -1 ) then
-          call output ( 'After converting valids to obstructions', advance='yes' )
-          call dump(obstructions)
-        endif
-        call deallocate_test(valids_buffer, 'valids_buffer', ModuleName)
-        call deallocate_test(or_valids_buffer, 'or_valids_buffer', ModuleName)
-        if ( .not. associated(ChunkDivideConfig%criticalSignals) )  &
-          & call deallocate_test( criticalSignals, 'criticalSignals', &
-          & ModuleName )
+      enddo
+      if ( swLevel >= VERBOSETHRESHOLD ) call dump ( valids_buffer, 'valids_buffer' )
+      if ( swLevel > -1 ) then
+        call outputNamedValue ( 'count(valids_buffer)', count(valids_buffer), advance='yes')
+        call output ( 'Before converting valids to obstructions', advance='yes' )
+        call dump(obstructions)
       endif
-
-      ! Depending on sensitivity, add these to Obstructions database
-      if ( ANYCHANGEISOBSTRUCTION .and. num_goodness_changes > 0 ) then
-        do mafset = 1, num_goodness_changes
-          newObstruction%range = .false.
-          newObstruction%mafs(1) = goodness_changes(mafset)
-          newObstruction%mafs(2) = 0    ! For overzealous Lahey uninitialized checking
-          call AddObstructionToDatabase ( obstructions, newObstruction )
-          if ( swLevel > -1 ) &
-            call outputNamedValue( &
-            & 'maf where any change made obstruction', goodness_changes(mafset) )
-        enddo
-      elseif ( num_goods_after_gap > 0 ) then
-        do mafset = 1, num_goods_after_gap
-          newObstruction%range = .false.
-          newObstruction%mafs(1) = goods_after_gap(mafset)
-          newObstruction%mafs(2) = 0    ! For overzealous Lahey uninitialized checking
-          call AddObstructionToDatabase ( obstructions, newObstruction )
-          if ( swLevel > -1 ) &
-            call outputNamedValue( &
-            & 'maf where num goods after gap made obstruction', goods_after_gap(mafset) )
-        enddo
+      call ConvertFlagsToObstructions ( valids_buffer, obstructions, &
+        & mafRange%Expanded, obstructionType='critical radiances' )
+      if ( swLevel > -1 ) then
+        call output ( 'After converting valids to obstructions', advance='yes' )
+        call dump(obstructions)
       endif
-      ! OK, we have the mafs where the goodness changes, now what?
-      call deallocate_test( signals_buffer, 'signals_buffer', ModuleName )
-      call deallocate_test( goods_after_gap, 'goods_after_gap', ModuleName )
-      call deallocate_test( goodness_changes, 'goodness_changes', ModuleName )
-      call deallocate_test( criticalIndices, 'critical indices', ModuleName )
-    end subroutine NoteL1BRADChanges
+      call deallocate_test(valids_buffer, 'valids_buffer', ModuleName)
+      call deallocate_test(or_valids_buffer, 'or_valids_buffer', ModuleName)
+      if ( .not. associated(ChunkDivideConfig%criticalSignals) )  &
+        & call deallocate_test( criticalSignals, 'criticalSignals', &
+        & ModuleName )
+    endif
 
-    ! --------------------------------- ConvertFlagsToObstructions -----
-    subroutine ConvertFlagsToObstructions ( valid, obstructions, &
-      & mafRange, obstructionType )
-      ! This routine takes an array of logicals indicating good/bad data
-      ! and converts it into obstruction information.
-      logical, dimension(:), intent(in)           :: VALID
-      type (Obstruction_T), dimension(:), pointer :: OBSTRUCTIONS
-      integer, dimension(:), intent(in), optional :: MAFRANGE
-      character(len=*), intent(in), optional      :: obstructionType
-
-      ! Local variables
-      logical :: LASTONEVALID           ! Flag
-      integer :: MAF                    ! Loop counter
-      type (Obstruction_T) :: NEWOBSTRUCTION ! In progrss
-      character(len=64)    :: obstructionTrigger
-      integer :: OFFSET                 ! MAF index offset
-
-      ! Executable code
-      swlevel = switchDetail(switches, 'chu' )
-      lastOneValid = .true.
-      offset = 0
-      if ( present(mafRange) ) offset = mafRange(1)
-      obstructionTrigger = &
-        & 'maf where transition from bad to good made obstruction'
-      if ( present(obstructionType) ) obstructionTrigger = &
-        & 'maf where transition from bad to good ' // trim(obstructionType) // &
-        & 'made obstruction'
-
-      do maf = 1, size(valid)
-        if ( valid(maf) .neqv. lastOneValid ) then
-          ! A transition either from good to bad or bad to good
-          if ( .not. valid(maf) ) then
-            ! From good to bad
-            newObstruction%range = .true.
-            newObstruction%mafs(1) = maf - 1 + offset
-          else
-            newObstruction%mafs(2) = maf - 2 + offset
-            call AddObstructionToDatabase ( obstructions, newObstruction )
-            if ( swLevel > -1 ) &
-              call outputNamedValue( &
-              & trim(obstructionTrigger), maf )
-          end if
-        end if
-        lastOneValid = valid(maf)
-      end do
-
-      ! Make sure any range at the end gets added
-      if ( .not. lastOneValid ) then
-        newObstruction%mafs(2) = size(valid) - 1 + offset
+    ! Depending on sensitivity, add these to Obstructions database
+    if ( ANYCHANGEISOBSTRUCTION .and. num_goodness_changes > 0 ) then
+      do mafset = 1, num_goodness_changes
+        newObstruction%range = .false.
+        newObstruction%mafs(1) = goodness_changes(mafset)
+        newObstruction%mafs(2) = 0    ! For overzealous Lahey uninitialized checking
         call AddObstructionToDatabase ( obstructions, newObstruction )
         if ( swLevel > -1 ) &
           call outputNamedValue( &
-          & trim(obstructionTrigger), size(valid)-1 )
-      end if
-    end subroutine ConvertFlagsToObstructions
+          & 'maf where any change made obstruction', goodness_changes(mafset) )
+      enddo
+    elseif ( num_goods_after_gap > 0 ) then
+      do mafset = 1, num_goods_after_gap
+        newObstruction%range = .false.
+        newObstruction%mafs(1) = goods_after_gap(mafset)
+        newObstruction%mafs(2) = 0    ! For overzealous Lahey uninitialized checking
+        call AddObstructionToDatabase ( obstructions, newObstruction )
+        if ( swLevel > -1 ) &
+          call outputNamedValue( &
+          & 'maf where num goods after gap made obstruction', goods_after_gap(mafset) )
+      enddo
+    endif
+    ! OK, we have the mafs where the goodness changes, now what?
+    call deallocate_test( signals_buffer, 'signals_buffer', ModuleName )
+    call deallocate_test( goods_after_gap, 'goods_after_gap', ModuleName )
+    call deallocate_test( goodness_changes, 'goodness_changes', ModuleName )
+    call deallocate_test( criticalIndices, 'critical indices', ModuleName )
+  end subroutine NoteL1BRADChanges
 
-    ! ---------------------------------------------- SurveyL1BData -----
-    subroutine SurveyL1BData ( processingRange, filedatabase, mafRange )
-      ! This goes through the L1B data files and tries to spot possible
-      ! obstructions.
-      ! use MLSL2Options, only: sharedPCF
-      use Monotone, only: isMonotonic
-      type (TAI93_Range_T), intent(in) :: PROCESSINGRANGE
-      type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
-      type (MAFRange_T), intent(out) :: MAFRange
+  ! ----------------------------------- ConvertFlagsToObstructions -----
+  subroutine ConvertFlagsToObstructions ( valid, obstructions, &
+    & mafRange, obstructionType )
+    ! This routine takes an array of logicals indicating good/bad data
+    ! and converts it into obstruction information.
+    logical, dimension(:), intent(in)           :: VALID
+    type (Obstruction_T), dimension(:), pointer :: OBSTRUCTIONS
+    integer, dimension(:), intent(in), optional :: MAFRANGE
+    character(len=*), intent(in), optional      :: obstructionType
 
-      ! Local variables
-      type (L1BData_T) :: TAITIME         ! Read from L1BOA file
-      type (L1BData_T) :: TPGEODALT       ! Read from L1BOA file
-      type (L1BData_T) :: TPGEODANGLE     ! Read from L1BOA file
-      type (L1BData_T) :: TPORBY          ! Read from L1BOA file
+    ! Local variables
+    logical :: LASTONEVALID           ! Flag
+    integer :: MAF                    ! Loop counter
+    type (Obstruction_T) :: NEWOBSTRUCTION ! In progrss
+    character(len=64)    :: obstructionTrigger
+    integer :: OFFSET                 ! MAF index offset
 
-      character(len=10) :: MODNAMESTR     ! Module name
+    ! Executable code
+    swlevel = switchDetail(switches, 'chu' )
+    lastOneValid = .true.
+    offset = 0
+    if ( present(mafRange) ) offset = mafRange(1)
+    obstructionTrigger = &
+      & 'maf where transition from bad to good made obstruction'
+    if ( present(obstructionType) ) obstructionTrigger = &
+      & 'maf where transition from bad to good ' // trim(obstructionType) // &
+      & 'made obstruction'
 
-      integer :: FLAG                     ! From L1B
-      integer :: MAF                      ! Loop inductor
-      integer :: MOD                      ! Loop inductor
-      integer :: NOMAFS                   ! Number of MAFs in processing range
-      integer :: NOMAFSREAD               ! From L1B
-
-      logical :: THISONEVALID             ! To go into valid
-      logical, dimension(:), pointer :: VALID ! Flag for each MAF
-      logical, dimension(:), pointer :: WASSMOOTHED ! Flag for each MAF
-      logical, dimension(:), pointer :: ANGLEWASSMOOTHED ! Flag for each MAF
-
-      real(r8) :: SCANMAX                 ! Range of scan each maf
-      real(r8) :: SCANMIN                 ! Range of scan each maf
-      real(r8) :: ORBYMAX                 ! Maximum value of orbY each maf
-
-      integer   ::                       l1b_hdf_version
-      character(len=namelen) ::         MAF_start, tp_alt, tp_orbY, tp_angle
-      type (MLSFile_T), pointer             :: L1BFile
-      ! Executable code
-      swlevel = switchDetail(switches, 'chu' )
-
-      L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
-      if ( .not. associated(L1BFile) ) &
-        & call MLSMessage  ( MLSMSG_Error, ModuleName, &
-          & "Can't make progress in SurveyL1BData without L1BOA files" )
-      if ( swLevel > -1 ) then
-        call output( 'here is the L1BOA', advance='yes' )
-        call dump( L1BFile )
-      endif
-      l1b_hdf_version = L1BFile%HDFVersion
-      MAF_start = AssembleL1BQtyName ( 'MAFStartTimeTAI', l1b_hdf_version, &
-        .false. )
-      ! tp_angle = &
-      !  & AssembleL1BQtyName ( trim(modNameStr)//'.tpGeodAngle', &
-      !  & l1b_hdf_version, &
-      !  & .false. )
-      ! Read time from the L1BOA file
-      call ReadL1BData ( L1BFile, trim(MAF_start), taiTime, &
-        & noMAFsRead, flag, &
-        & dontPad=DONTPAD )
-      call smoothOutDroppedMAFs(taiTime%dpField)
-
-      ! We shall assume that all l1b files cover this range
-      mafRange%L1BCover(1) = taiTime%FirstMAF
-      mafRange%L1BCover(2) = taiTime%NoMAFs - 1 ! Because it starts with 0
-
-      ! Deduce the first and last MAFs covered the L2 Processing Range
-      call Hunt ( taiTime%dpField(1,1,:), &
-        & (/ processingRange%startTime, processingRange%endTime /), &
-        & mafRange%L2Cover, allowTopValue=.true., allowBelowValue=.true. )
-
-      ! Check the validity of the MAF range returned
-      if ( mafRange%L2Cover(1) == taiTime%noMAFs ) then
-        call outputNamedValue ( 'processingRange', &
-          & (/ processingRange%startTime, processingRange%endTime /) )
-        call outputNamedValue ( 'noMAFsRead', noMAFsRead )
-        call dump ( taiTime%dpField(1,1,:), 'MAF_start' )
-        call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & 'L1B data ends before requested processing range' )
-      endif
-      if ( mafRange%L2Cover(1) == taiTime%noMAFs ) &
-        & call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & 'L1B data ends before requested processing range' )
-      mafRange%L2Cover = min ( noMAFsRead-1, max ( 0, mafRange%L2Cover - 1 ) )          ! Index from zero
-      if ( mafRange%L2Cover(2) < mafRange%L2Cover(1) ) then
-        call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & 'L2 mafRange(2) < L2 mafRange(1)' )
-      elseif ( mafRange%L2Cover(2) < 1 ) then
-        call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & 'L2 mafRange(2) < 1' )
-      endif
-
-      mafRange%Expanded(1) = mafRange%L2Cover(1)
-      mafRange%Expanded(2) = mafRange%L2Cover(2)
-      ! Expand the range covered by L2 with possible overlaps
-      if ( ChunkDivideConfig%allowPriorOverlaps ) then
-        mafRange%Expanded(1) = max( mafRange%L1BCover(1), &
-          & mafRange%L2Cover(1) - nint(ChunkDivideConfig%lowerOverlap) )
-      endif
-      if ( ChunkDivideConfig%allowPostOverlaps ) then
-        mafRange%Expanded(2) = min( mafRange%L1BCover(2), &
-          & mafRange%L2Cover(2) + nint(ChunkDivideConfig%upperOverlap) )
-      endif
-      ! Why was this here? if ( sharedPCF ) return
-      noMAFS = mafRange%Expanded(2) - mafRange%Expanded(1) + 1
-      ! Now look through the L1B data, first look for scan problems
-      if ( ChunkDivideConfig%criticalModules /= l_none ) then
-        call outputNamedValue( 'Looking for scan problems; swLevel ', swlevel )
-        nullify ( valid )
-        nullify ( anglewasSmoothed )
-        nullify ( wasSmoothed )
-        call Allocate_test ( valid, noMAFs, 'valid', ModuleName )
-        call Allocate_test ( anglewasSmoothed, noMAFs, 'angleWasSmoothed', ModuleName )
-        call Allocate_test ( wasSmoothed, noMAFs, 'wasSmoothed', ModuleName )
-        if ( ChunkDivideConfig%criticalModules == l_both ) then
-          valid = .true.
+    do maf = 1, size(valid)
+      if ( valid(maf) .neqv. lastOneValid ) then
+        ! A transition either from good to bad or bad to good
+        if ( .not. valid(maf) ) then
+          ! From good to bad
+          newObstruction%range = .true.
+          newObstruction%mafs(1) = maf - 1 + offset
         else
-          valid = .false.
-        endif
-        do mod = 1, size(modules)
-          call get_string ( modules(mod)%name, modNameStr, strip=.true. )
-          tp_alt = AssembleL1BQtyName ( trim(modNameStr)//'.tpGeodAlt', &
-            & l1b_hdf_version, .false. )
-          tp_orby = AssembleL1BQtyName ( trim(modNameStr)//'.tpOrbY', &
-            & l1b_hdf_version, .false. )
-          tp_angle = AssembleL1BQtyName ( trim(modNameStr)//'.tpGeodAngle', &
-            & l1b_hdf_version, .false. )
-          if ( .not. modules(mod)%spacecraft .and. &
-            & ( any ( ChunkDivideConfig%criticalModules == (/ l_either, l_both /) ) .or. &
-            &   lit_indices(ChunkDivideConfig%criticalModules) == modules(mod)%name ) ) then
-            ! Read the tangent point altitude
-            call ReadL1BData ( L1BFile, trim(tp_alt), &
-              & tpGeodAlt, noMAFsRead, flag, &
-              & firstMAF=mafRange%Expanded(1), lastMAF=mafRange%Expanded(2), &
-              & dontPad=DONTPAD )
-            ! Read the out of plane distance
-            call ReadL1BData ( L1BFile, trim(tp_orby), &
-              & tpOrbY, noMAFsRead, flag, &
-              & firstMAF=mafRange%Expanded(1), lastMAF=mafRange%Expanded(2), &
-              & dontPad=DONTPAD )
-            call ReadL1BData ( L1BFile, trim(tp_angle), &
-              & tpGeodAngle, noMAFsRead, flag, &
-              & firstMAF=mafRange%Expanded(1), lastMAF=mafRange%Expanded(2), &
-              & dontPad=DONTPAD )
-            if ( .not. ChunkDivideConfig%skipL1BCheck ) then
-              if ( .not. isMonotonic(tpGeodAngle%dpField(1,1,1:noMAFsRead) ) &
-                & ) then
-                call MLSMessage ( PhiNotMonotonicFun(), ModuleName, &
-                  & 'tpGeodAngle is not monotonic--may quit', MLSFile=L1BFile )
-              endif
-            endif
-            call smoothOutDroppedMAFs(tpGeodAngle%dpField, angleWasSmoothed, &
-              & monotonize=.true.)
-            call smoothOutDroppedMAFs(tpGeodAlt%dpField, wasSmoothed)
-            call smoothOutDroppedMAFs(tpOrbY%dpField)
-            if ( swLevel > -1 ) then
-              call dump( angleWasSmoothed, 'smoothed because of geodetic angle' )
-              call dump( wasSmoothed, 'smoothed because of geodetic altitude' )
-            endif
-            wasSmoothed = (wasSmoothed .or. angleWasSmoothed)
-            ! Consider the scan range in each MAF in turn
-            do maf = 1, noMAFs
-              scanMax = maxval ( tpGeodAlt%dpField(1,:,maf) )
-              scanMin = minval ( tpGeodAlt%dpField(1,:,maf) )
-              orbyMax = maxval ( tpOrbY%dpField(1,:,maf) )
-
-              thisOneValid = ( &
-                &   scanMin >= ChunkDivideConfig%scanLowerLimit(1) .and. &
-                &   scanMin <= ChunkDivideConfig%scanLowerLimit(2) ) .and. ( &
-                &   scanMax >= ChunkDivideConfig%scanUpperLimit(1) .and. &
-                &   scanMax <= ChunkDivideConfig%scanUpperLimit(2) )
-              if ( ChunkDivideConfig%maxOrbY > 0.0 ) then
-                thisOneValid = thisOneValid .and. orbYMax < ChunkDivideConfig%maxOrbY
-              end if
-              ! this one is not valid if it's valid only by virtue
-              ! of having been smoothed
-              thisOneValid = thisOneValid .and. .not. wasSmoothed(maf)
-              if ( ChunkDivideConfig%criticalModules == l_both ) then
-                valid(maf) = valid(maf) .and. thisOneValid
-              else
-                valid(maf) = valid(maf) .or. thisOneValid
-              end if
-            end do                        ! Maf loop
-            call DeallocateL1BData ( taiTime )
-            call DeallocateL1BData ( tpgeodalt )
-            call DeallocateL1BData ( tpgeodangle )
-            call DeallocateL1BData ( tporby )
-          end if                          ! Consider this module
-        end do                            ! Module Loop
-        ! Convert this information into obstructions and tidy up.
-        call ConvertFlagsToObstructions ( valid, obstructions, &
-          & obstructionType='scan' )
-        call Deallocate_test ( valid, 'valid', ModuleName )
-        call Deallocate_test ( wasSmoothed, 'wasSmoothed', ModuleName )
-        call Deallocate_test ( angleWasSmoothed, 'angleWasSmoothed', ModuleName )
-      end if                              ! Consider scan issues
-
-      ! Here we look at radiances and switch changes.
-      if ( swLevel > -1 ) call output ( 'NoteL1BRADChanges', advance='yes' )
-      if ( .not. ChunkDivideConfig%skipL1BCheck ) &
-        call NoteL1BRADChanges ( obstructions, mafRange, filedatabase )
-
-      ! Sort the obstructions into order; prune them of repeats, overlaps etc.
-      call PruneObstructions ( obstructions )
-
-      ! Tidy up
-      call DeallocateL1BData ( taiTime )
-
-    contains
-      function PhiNotMonotonicFun() result( SEVERITY )
-      ! Default severity (probably ERROR) incurred
-      ! if config options set the crashIfPhiNotMono flag
-      ! Args
-      integer :: SEVERITY
-      ! if ( switchDetail(switches,'nmono') > -1 ) then ! be lenient
-      if ( ChunkDivideConfig%crashIfPhiNotMono ) then ! be lenient
-        severity = severityifphinotmono
-      else
-        severity = min( MLSMSG_Warning, severityifphinotmono )
-      endif
-      end function PhiNotMonotonicFun
-    end subroutine SurveyL1BData
-
-    ! ----------------------------------------- PruneObstructions -----
-    subroutine PruneObstructions ( obstructions )
-      ! This routine merges overlapping range obstructions and deletes
-      ! wall obstructions inside ranges.  The job is made easier
-      ! by sorting the obstructions into order
-      use Allocate_Deallocate, only: Test_Allocate
-      type(Obstruction_T), dimension(:), pointer :: OBSTRUCTIONS
-
-      ! Local variables
-      integer :: I,J                  ! Loop counters
-      type (Obstruction_T) :: newObs  ! New Obstruction
-      logical :: FOUNDONE             ! Found at least one
-      integer :: STATUS               ! Flag from allocate
-
-      ! Executable code
-      swlevel = switchDetail(switches, 'chu' )
-      ! If no obstructions make sure allocate to size zero, not just unassociated pointer
-      if ( .not. associated(obstructions) ) then
-        allocate ( obstructions(0), stat=status )
-        call test_allocate ( status, ModuleName, 'obstructions', &
-          & uBounds = 0, elementSize = storage_size(obstructions) / 8 )
-        return
+          newObstruction%mafs(2) = maf - 2 + offset
+          call AddObstructionToDatabase ( obstructions, newObstruction )
+          if ( swLevel > -1 ) &
+            call outputNamedValue( &
+            & trim(obstructionTrigger), maf )
+        end if
       end if
+      lastOneValid = valid(maf)
+    end do
 
-      ! Otherwise, do the tidying up
-      outerLoop: do
-        foundOne = .false.
-        i = 0
-        call SortObstructions(obstructions)
-        middleLoop: do
-          i = i + 1
-          if ( i >= size(obstructions) ) exit middleLoop
-          j = i
-          innerLoop: do
-            j = j + 1
-            if ( j > size(obstructions) ) exit innerLoop
-            if ( all ( obstructions((/i,j/))%range ) ) then
-              ! --------------------------- ( Range, range )
-              if ( obstructions(j)%mafs(1) <= obstructions(i)%mafs(2) + 1 ) then
-                ! Combine overlapping range obstructions
-                newObs%range = .true.
-                newObs%mafs(1) = obstructions(i)%mafs(1)
-                newObs%mafs(2) = &
-                  & max ( obstructions(i)%mafs(2), obstructions(j)%mafs(2) )
-                ! Must delete these in order: otherwise
-                ! if deleted i first where i < j, index would
-                ! no longer be "j" afterwards
-                call DeleteObstruction ( obstructions, j )
-                call DeleteObstruction ( obstructions, i )
-                call AddObstructionToDatabase ( obstructions, newObs )
-                call SortObstructions ( obstructions )
-                foundOne = .true.
-                exit middleLoop
-              end if
-            else if ( obstructions(i)%range .and. .not. obstructions(j)%range ) then
-              ! --------------------------- ( Range, wall )
-              if ( obstructions(j)%mafs(1) >= obstructions(i)%mafs(1) .and. &
-                &  obstructions(j)%mafs(1) <= obstructions(i)%mafs(2) + 1 ) then
-                ! Delete wall obstruction inside range
-                call DeleteObstruction ( obstructions, j )
-                foundOne = .true.
-                exit middleLoop
-              end if
-            else
-              ! --------------------------- ( Wall, range ) or ( Wall, wall )
-              ! Becuase the obstructions are in order, we know in the wall, range
-              ! case that the wall must be at the start of the range, not inside it.
-              if ( obstructions(i)%mafs(1) == obstructions(j)%mafs(1) ) then
-                ! Delete wall obstruction at start of a range or at another wall
-                call DeleteObstruction ( obstructions, i )
-                foundOne = .true.
-                exit middleLoop
-              end if
+    ! Make sure any range at the end gets added
+    if ( .not. lastOneValid ) then
+      newObstruction%mafs(2) = size(valid) - 1 + offset
+      call AddObstructionToDatabase ( obstructions, newObstruction )
+      if ( swLevel > -1 ) &
+        call outputNamedValue( &
+        & trim(obstructionTrigger), size(valid)-1 )
+    end if
+  end subroutine ConvertFlagsToObstructions
+
+  ! ------------------------------------------------ SurveyL1BData -----
+  subroutine SurveyL1BData ( processingRange, filedatabase, mafRange )
+    ! This goes through the L1B data files and tries to spot possible
+    ! obstructions.
+    ! use MLSL2Options, only: sharedPCF
+    use Monotone, only: isMonotonic
+    type (TAI93_Range_T), intent(in) :: PROCESSINGRANGE
+    type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
+    type (MAFRange_T), intent(out) :: MAFRange
+
+    ! Local variables
+    type (L1BData_T) :: TAITIME         ! Read from L1BOA file
+    type (L1BData_T) :: TPGEODALT       ! Read from L1BOA file
+    type (L1BData_T) :: TPGEODANGLE     ! Read from L1BOA file
+    type (L1BData_T) :: TPORBY          ! Read from L1BOA file
+
+    character(len=10) :: MODNAMESTR     ! Module name
+
+    integer :: FLAG                     ! From L1B
+    integer :: MAF                      ! Loop inductor
+    integer :: MOD                      ! Loop inductor
+    integer :: NOMAFS                   ! Number of MAFs in processing range
+    integer :: NOMAFSREAD               ! From L1B
+
+    logical :: THISONEVALID             ! To go into valid
+    logical, dimension(:), pointer :: VALID ! Flag for each MAF
+    logical, dimension(:), pointer :: WASSMOOTHED ! Flag for each MAF
+    logical, dimension(:), pointer :: ANGLEWASSMOOTHED ! Flag for each MAF
+
+    real(r8) :: SCANMAX                 ! Range of scan each maf
+    real(r8) :: SCANMIN                 ! Range of scan each maf
+    real(r8) :: ORBYMAX                 ! Maximum value of orbY each maf
+
+    integer   ::                       l1b_hdf_version
+    character(len=namelen) ::         MAF_start, tp_alt, tp_orbY, tp_angle
+    type (MLSFile_T), pointer             :: L1BFile
+    ! Executable code
+    swlevel = switchDetail(switches, 'chu' )
+
+    L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
+    if ( .not. associated(L1BFile) ) &
+      & call MLSMessage  ( MLSMSG_Error, ModuleName, &
+        & "Can't make progress in SurveyL1BData without L1BOA files" )
+    if ( swLevel > -1 ) then
+      call output( 'here is the L1BOA', advance='yes' )
+      call dump( L1BFile )
+    endif
+    l1b_hdf_version = L1BFile%HDFVersion
+    MAF_start = AssembleL1BQtyName ( 'MAFStartTimeTAI', l1b_hdf_version, &
+      .false. )
+    ! tp_angle = &
+    !  & AssembleL1BQtyName ( trim(modNameStr)//'.tpGeodAngle', &
+    !  & l1b_hdf_version, &
+    !  & .false. )
+    ! Read time from the L1BOA file
+    call ReadL1BData ( L1BFile, trim(MAF_start), taiTime, &
+      & noMAFsRead, flag, &
+      & dontPad=DONTPAD )
+    call smoothOutDroppedMAFs(taiTime%dpField)
+
+    ! We shall assume that all l1b files cover this range
+    mafRange%L1BCover(1) = taiTime%FirstMAF
+    mafRange%L1BCover(2) = taiTime%NoMAFs - 1 ! Because it starts with 0
+
+    ! Deduce the first and last MAFs covered the L2 Processing Range
+    call Hunt ( taiTime%dpField(1,1,:), &
+      & (/ processingRange%startTime, processingRange%endTime /), &
+      & mafRange%L2Cover, allowTopValue=.true., allowBelowValue=.true. )
+
+    ! Check the validity of the MAF range returned
+    if ( mafRange%L2Cover(1) == taiTime%noMAFs ) then
+      call outputNamedValue ( 'processingRange', &
+        & (/ processingRange%startTime, processingRange%endTime /) )
+      call outputNamedValue ( 'noMAFsRead', noMAFsRead )
+      call dump ( taiTime%dpField(1,1,:), 'MAF_start' )
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'L1B data ends before requested processing range' )
+    endif
+    if ( mafRange%L2Cover(1) == taiTime%noMAFs ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'L1B data ends before requested processing range' )
+    mafRange%L2Cover = min ( noMAFsRead-1, max ( 0, mafRange%L2Cover - 1 ) )          ! Index from zero
+    if ( mafRange%L2Cover(2) < mafRange%L2Cover(1) ) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'L2 mafRange(2) < L2 mafRange(1)' )
+    elseif ( mafRange%L2Cover(2) < 1 ) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'L2 mafRange(2) < 1' )
+    endif
+
+    mafRange%Expanded(1) = mafRange%L2Cover(1)
+    mafRange%Expanded(2) = mafRange%L2Cover(2)
+    ! Expand the range covered by L2 with possible overlaps
+    if ( ChunkDivideConfig%allowPriorOverlaps ) then
+      mafRange%Expanded(1) = max( mafRange%L1BCover(1), &
+        & mafRange%L2Cover(1) - nint(ChunkDivideConfig%lowerOverlap) )
+    endif
+    if ( ChunkDivideConfig%allowPostOverlaps ) then
+      mafRange%Expanded(2) = min( mafRange%L1BCover(2), &
+        & mafRange%L2Cover(2) + nint(ChunkDivideConfig%upperOverlap) )
+    endif
+    ! Why was this here? if ( sharedPCF ) return
+    noMAFS = mafRange%Expanded(2) - mafRange%Expanded(1) + 1
+    ! Now look through the L1B data, first look for scan problems
+    if ( ChunkDivideConfig%criticalModules /= l_none ) then
+      call outputNamedValue( 'Looking for scan problems; swLevel ', swlevel )
+      nullify ( valid )
+      nullify ( anglewasSmoothed )
+      nullify ( wasSmoothed )
+      call Allocate_test ( valid, noMAFs, 'valid', ModuleName )
+      call Allocate_test ( anglewasSmoothed, noMAFs, 'angleWasSmoothed', ModuleName )
+      call Allocate_test ( wasSmoothed, noMAFs, 'wasSmoothed', ModuleName )
+      if ( ChunkDivideConfig%criticalModules == l_both ) then
+        valid = .true.
+      else
+        valid = .false.
+      endif
+      do mod = 1, size(modules)
+        call get_string ( modules(mod)%name, modNameStr, strip=.true. )
+        tp_alt = AssembleL1BQtyName ( trim(modNameStr)//'.tpGeodAlt', &
+          & l1b_hdf_version, .false. )
+        tp_orby = AssembleL1BQtyName ( trim(modNameStr)//'.tpOrbY', &
+          & l1b_hdf_version, .false. )
+        tp_angle = AssembleL1BQtyName ( trim(modNameStr)//'.tpGeodAngle', &
+          & l1b_hdf_version, .false. )
+        if ( .not. modules(mod)%spacecraft .and. &
+          & ( any ( ChunkDivideConfig%criticalModules == (/ l_either, l_both /) ) .or. &
+          &   lit_indices(ChunkDivideConfig%criticalModules) == modules(mod)%name ) ) then
+          ! Read the tangent point altitude
+          call ReadL1BData ( L1BFile, trim(tp_alt), &
+            & tpGeodAlt, noMAFsRead, flag, &
+            & firstMAF=mafRange%Expanded(1), lastMAF=mafRange%Expanded(2), &
+            & dontPad=DONTPAD )
+          ! Read the out of plane distance
+          call ReadL1BData ( L1BFile, trim(tp_orby), &
+            & tpOrbY, noMAFsRead, flag, &
+            & firstMAF=mafRange%Expanded(1), lastMAF=mafRange%Expanded(2), &
+            & dontPad=DONTPAD )
+          call ReadL1BData ( L1BFile, trim(tp_angle), &
+            & tpGeodAngle, noMAFsRead, flag, &
+            & firstMAF=mafRange%Expanded(1), lastMAF=mafRange%Expanded(2), &
+            & dontPad=DONTPAD )
+          if ( .not. ChunkDivideConfig%skipL1BCheck ) then
+            if ( .not. isMonotonic(tpGeodAngle%dpField(1,1,1:noMAFsRead) ) &
+              & ) then
+              call MLSMessage ( PhiNotMonotonicFun(), ModuleName, &
+                & 'tpGeodAngle is not monotonic--may quit', MLSFile=L1BFile )
+            endif
+          endif
+          call smoothOutDroppedMAFs(tpGeodAngle%dpField, angleWasSmoothed, &
+            & monotonize=.true.)
+          call smoothOutDroppedMAFs(tpGeodAlt%dpField, wasSmoothed)
+          call smoothOutDroppedMAFs(tpOrbY%dpField)
+          if ( swLevel > -1 ) then
+            call dump( angleWasSmoothed, 'smoothed because of geodetic angle' )
+            call dump( wasSmoothed, 'smoothed because of geodetic altitude' )
+          endif
+          wasSmoothed = (wasSmoothed .or. angleWasSmoothed)
+          ! Consider the scan range in each MAF in turn
+          do maf = 1, noMAFs
+            scanMax = maxval ( tpGeodAlt%dpField(1,:,maf) )
+            scanMin = minval ( tpGeodAlt%dpField(1,:,maf) )
+            orbyMax = maxval ( tpOrbY%dpField(1,:,maf) )
+
+            thisOneValid = ( &
+              &   scanMin >= ChunkDivideConfig%scanLowerLimit(1) .and. &
+              &   scanMin <= ChunkDivideConfig%scanLowerLimit(2) ) .and. ( &
+              &   scanMax >= ChunkDivideConfig%scanUpperLimit(1) .and. &
+              &   scanMax <= ChunkDivideConfig%scanUpperLimit(2) )
+            if ( ChunkDivideConfig%maxOrbY > 0.0 ) then
+              thisOneValid = thisOneValid .and. orbYMax < ChunkDivideConfig%maxOrbY
             end if
-            ! I'm pretty sure this covers all the possibilities.  It might seem
-            ! not at first glance, but I think the fact that I always re-sort the
-            ! obstructions into order means that the above code does catch everything.
+            ! this one is not valid if it's valid only by virtue
+            ! of having been smoothed
+            thisOneValid = thisOneValid .and. .not. wasSmoothed(maf)
+            if ( ChunkDivideConfig%criticalModules == l_both ) then
+              valid(maf) = valid(maf) .and. thisOneValid
+            else
+              valid(maf) = valid(maf) .or. thisOneValid
+            end if
+          end do                        ! Maf loop
+          call DeallocateL1BData ( taiTime )
+          call DeallocateL1BData ( tpgeodalt )
+          call DeallocateL1BData ( tpgeodangle )
+          call DeallocateL1BData ( tporby )
+        end if                          ! Consider this module
+      end do                            ! Module Loop
+      ! Convert this information into obstructions and tidy up.
+      call ConvertFlagsToObstructions ( valid, obstructions, &
+        & obstructionType='scan' )
+      call Deallocate_test ( valid, 'valid', ModuleName )
+      call Deallocate_test ( wasSmoothed, 'wasSmoothed', ModuleName )
+      call Deallocate_test ( angleWasSmoothed, 'angleWasSmoothed', ModuleName )
+    end if                              ! Consider scan issues
 
-          end do innerLoop
-        end do middleLoop
-        if ( .not. foundOne ) exit outerLoop
-      end do outerLoop
+    ! Here we look at radiances and switch changes.
+    if ( swLevel > -1 ) call output ( 'NoteL1BRADChanges', advance='yes' )
+    if ( .not. ChunkDivideConfig%skipL1BCheck ) &
+      call NoteL1BRADChanges ( obstructions, mafRange, filedatabase )
 
-    end subroutine PruneObstructions
+    ! Sort the obstructions into order; prune them of repeats, overlaps etc.
+    call PruneObstructions ( obstructions )
 
-    !----------------------------------------- ChunkDivide_Orbital -----
-    subroutine ChunkDivide_Orbital ( mafRange, filedatabase, chunks )
-      ! integer, dimension(2), intent(in) :: MAFRANGE
-      use Allocate_Deallocate, only: Test_Allocate
-      use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
-      type (MAFRange_T) :: MAFRange
-      type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
-      type (MLSChunk_T), dimension(:), pointer :: CHUNKS
+    ! Tidy up
+    call DeallocateL1BData ( taiTime )
 
-      ! Local parameters
-      real(r8), parameter :: HOMEACCURACY = 3.0 ! Try to hit homeGeodAngle within this
-      ! (see homeHuntLoop warning below)
-      ! Local variables
-      type (L1BData_T) :: TAITIME         ! From L1BOA
-      type (L1BData_T) :: TPGEODANGLE     ! From L1BOA
+  contains
+    function PhiNotMonotonicFun() result( SEVERITY )
+    ! Default severity (probably ERROR) incurred
+    ! if config options set the crashIfPhiNotMono flag
+    ! Args
+    integer :: SEVERITY
+    ! if ( switchDetail(switches,'nmono') > -1 ) then ! be lenient
+    if ( ChunkDivideConfig%crashIfPhiNotMono ) then ! be lenient
+      severity = severityifphinotmono
+    else
+      severity = min( MLSMSG_Warning, severityifphinotmono )
+    endif
+    end function PhiNotMonotonicFun
+  end subroutine SurveyL1BData
 
-      character(len=10) :: MODNAMESTR     ! Home module name as string
+  ! -------------------------------------------- PruneObstructions -----
+  subroutine PruneObstructions ( obstructions )
+    ! This routine merges overlapping range obstructions and deletes
+    ! wall obstructions inside ranges.  The job is made easier
+    ! by sorting the obstructions into order
+    use Allocate_Deallocate, only: Test_Allocate
+    type(Obstruction_T), dimension(:), pointer :: OBSTRUCTIONS
 
-      integer(c_intptr_t) :: Addr         ! For tracing
-      integer :: CHUNK                    ! Loop counter
-      integer :: FLAG                     ! From ReadL1B
-      integer :: HOME                     ! Index of home MAF in array
-      integer :: M1, M2                   ! MafRange%L2Cover + 1
-      integer :: MEXP1, MEXP2             ! MafRange%Expanded + 1
-      integer :: NOCHUNKSBELOWHOME        ! Used for placing chunks
-      integer :: NOMAFSATORABOVEHOME      ! Fairly self descriptive
-      integer :: NOMAFSBELOWHOME          ! Fairly self descriptive
-      ! integer :: NOMAFS                   ! Number of MAFs to consider
-      integer :: NOMAFSREAD               ! From ReadL1B
-      integer :: ORBIT                    ! Used to locate home
-      integer :: STATUS                   ! From allocate etc.
-      integer :: NOCHUNKS                 ! Number of chunks
-      integer :: MAXLENGTH                ! Max length as integer (MAFs)
+    ! Local variables
+    integer :: I,J                  ! Loop counters
+    type (Obstruction_T) :: newObs  ! New Obstruction
+    logical :: FOUNDONE             ! Found at least one
+    integer :: STATUS               ! Flag from allocate
 
-      integer, dimension(:), pointer :: NEWFIRSTMAFS ! For thinking about overlaps
-      integer, dimension(:), pointer :: NEWLASTMAFS ! For thinking about overlaps
+    ! Executable code
+    swlevel = switchDetail(switches, 'chu' )
+    ! If no obstructions make sure allocate to size zero, not just unassociated pointer
+    if ( .not. associated(obstructions) ) then
+      allocate ( obstructions(0), stat=status )
+      call test_allocate ( status, ModuleName, 'obstructions', &
+        & uBounds = 0, elementSize = storage_size(obstructions) / 8 )
+      return
+    end if
 
-      real(r8) :: ANGLEINCREMENT          ! Increment in hunt for home
-      real(r8) :: MAXANGLE                ! Of range in data
-      real(r8) :: MAXTIME                 ! Time range in data
-      real(r8) :: MAXV                    ! Either minTime or minAngle
-      real(r8) :: MINANGLE                ! Of range in data
-      real(r8) :: MINTIME                 ! Time range in data
-      real(r8) :: MINV                    ! Either minTime or minAngle
-      real(r8) :: TESTANGLE               ! Angle to check for
-      real(r8) :: HOMEV                   ! Value of angle/time at home
+    ! Otherwise, do the tidying up
+    outerLoop: do
+      foundOne = .false.
+      i = 0
+      call SortObstructions(obstructions)
+      middleLoop: do
+        i = i + 1
+        if ( i >= size(obstructions) ) exit middleLoop
+        j = i
+        innerLoop: do
+          j = j + 1
+          if ( j > size(obstructions) ) exit innerLoop
+          if ( all ( obstructions((/i,j/))%range ) ) then
+            ! --------------------------- ( Range, range )
+            if ( obstructions(j)%mafs(1) <= obstructions(i)%mafs(2) + 1 ) then
+              ! Combine overlapping range obstructions
+              newObs%range = .true.
+              newObs%mafs(1) = obstructions(i)%mafs(1)
+              newObs%mafs(2) = &
+                & max ( obstructions(i)%mafs(2), obstructions(j)%mafs(2) )
+              ! Must delete these in order: otherwise
+              ! if deleted i first where i < j, index would
+              ! no longer be "j" afterwards
+              call DeleteObstruction ( obstructions, j )
+              call DeleteObstruction ( obstructions, i )
+              call AddObstructionToDatabase ( obstructions, newObs )
+              call SortObstructions ( obstructions )
+              foundOne = .true.
+              exit middleLoop
+            end if
+          else if ( obstructions(i)%range .and. .not. obstructions(j)%range ) then
+            ! --------------------------- ( Range, wall )
+            if ( obstructions(j)%mafs(1) >= obstructions(i)%mafs(1) .and. &
+              &  obstructions(j)%mafs(1) <= obstructions(i)%mafs(2) + 1 ) then
+              ! Delete wall obstruction inside range
+              call DeleteObstruction ( obstructions, j )
+              foundOne = .true.
+              exit middleLoop
+            end if
+          else
+            ! --------------------------- ( Wall, range ) or ( Wall, wall )
+            ! Becuase the obstructions are in order, we know in the wall, range
+            ! case that the wall must be at the start of the range, not inside it.
+            if ( obstructions(i)%mafs(1) == obstructions(j)%mafs(1) ) then
+              ! Delete wall obstruction at start of a range or at another wall
+              call DeleteObstruction ( obstructions, i )
+              foundOne = .true.
+              exit middleLoop
+            end if
+          end if
+          ! I'm pretty sure this covers all the possibilities.  It might seem
+          ! not at first glance, but I think the fact that I always re-sort the
+          ! obstructions into order means that the above code does catch everything.
 
-      real(r8), dimension(:), pointer :: BOUNDARIES ! Used in placing chunks
-      real(r8), dimension(:), pointer :: FIELD ! Used in placing chunks
+        end do innerLoop
+      end do middleLoop
+      if ( .not. foundOne ) exit outerLoop
+    end do outerLoop
 
-      integer   ::                       l1b_hdf_version
-      character(len=namelen) ::         MAF_start, tp_angle
-      type (MLSFile_T), pointer             :: L1BFile
+  end subroutine PruneObstructions
 
-      ! Executable code
-      swlevel = switchDetail(switches, 'chu' )
-      if ( swLevel > -1 ) then
-        call output('Entering Orbital Chunk Divide', advance='yes')
-        call dump( obstructions )
-      endif
-      ! Read in the data we're going to need
-      call get_string ( lit_indices(ChunkDivideConfig%homeModule), modNameStr, strip=.true. )
-      L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
-      if ( .not. associated(L1BFile) ) &
-        & call MLSMessage  ( MLSMSG_Error, ModuleName, &
-          & "Can't make progress in ChunkDivide_Orbital without L1BOA files" )
-      ! call dump(L1BFile)
-      l1b_hdf_version = L1BFile%HDFVersion
-      MAF_start = AssembleL1BQtyName ( 'MAFStartTimeTAI', l1b_hdf_version, &
-        .false. )
-      tp_angle = AssembleL1BQtyName ( trim(modNameStr)//'.tpGeodAngle', &
-        & l1b_hdf_version, &
-        & .false. )
-      if ( swLevel > -1 ) &
-        & call output('Reading Geod Angle', advance='yes')
-      call ReadL1BData ( L1BFile, trim(tp_angle), &
-        & tpGeodAngle, noMAFsRead, flag, &
-        & dontPad=DONTPAD )
-      if ( swLevel > -1 ) &
-        & call output('1st smoothing', advance='yes')
-      call smoothOutDroppedMAFs(tpGeodAngle%dpField)
-      if ( swLevel > -1 ) &
-        & call output('2nd smoothing', advance='yes')
-      call smoothOutDroppedMAFs(tpGeodAngle%dpField, monotonize=.true.)
-      if ( swLevel > -1 ) &
-        & call output('Reading tai Time', advance='yes')
-      call ReadL1BData ( L1BFile, trim(MAF_start), &
-        & taiTime, noMAFsRead, flag, &
-        & dontPad=DONTPAD )
-      call smoothOutDroppedMAFs(taiTime%dpField)
-      ! noMAFs = mafRange%L2Cover(2) - mafRange%L2Cover(1) + 1
-      m1 = mafRange%L2Cover(1) + 1
-      m2 = mafRange%L2Cover(2) + 1
-      mexp1 = mafRange%Expanded(1) + 1
-      mexp2 = mafRange%Expanded(2) + 1
+  !------------------------------------------- ChunkDivide_Orbital -----
+  subroutine ChunkDivide_Orbital ( mafRange, filedatabase, chunks, root )
+    ! integer, dimension(2), intent(in) :: MAFRANGE
+    use Allocate_Deallocate, only: Test_Allocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
+    use Trace_m, only: Trace_Begin, Trace_End
+    type (MAFRange_T) :: MAFRange
+    type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
+    type (MLSChunk_T), dimension(:), pointer :: CHUNKS
+    integer, intent(in), optional :: Root ! of the l2cf tree, for tracing
 
-      minAngle = minval ( tpGeodAngle%dpField(1,1,m1:m2) )
-      maxAngle = maxval ( tpGeodAngle%dpField(1,1,m1:m2) )
-      minTime = minval ( taiTime%dpField(1,1,m1:m2) )
-      maxTime = maxval ( taiTime%dpField(1,1,m1:m2) )
-      if ( swLevel > -1 ) then
-        call output ( 'Num MAFs in file: ' )
-        call output ( noMAFsRead, advance='yes' )
-        call output ( 'MAF time range: ' )
-        call output ( minTime )
-        call output ( ' : ' )
-        call output ( maxTime, advance='yes' )
-        call output ( 'Angle range: ' )
-        call output ( minAngle )
-        call output ( ' : ' )
-        call output ( maxAngle, advance='yes' )
-      end if
+    ! Local parameters
+    real(r8), parameter :: HOMEACCURACY = 3.0 ! Try to hit homeGeodAngle within this
+    ! (see homeHuntLoop warning below)
+    ! Local variables
+    type (L1BData_T) :: TAITIME         ! From L1BOA
+    type (L1BData_T) :: TPGEODANGLE     ! From L1BOA
 
-      ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-      ! First try to locate the last MAF before the homeGeodAngle
-      orbit = int ( tpGeodAngle%dpField(1,1,m1)/360.0 )
-      if ( tpGeodAngle%dpField(1,1,m1) < 0.0 ) orbit = orbit - 1
-      testAngle = ChunkDivideConfig%homeGeodAngle + orbit*360.0
-      if ( ChunkDivideConfig%maxLengthFamily == PHYQ_Angle ) then
-        angleIncrement = ChunkDivideConfig%maxLength
-      else
-        angleIncrement = 360.0
-      end if
+    character(len=10) :: MODNAMESTR     ! Home module name as string
 
-      if ( swLevel > -1 ) then
-        call output ( ' orbit  ', advance='no' )
-        call output ( orbit , advance='no' )
-        call output ( '    testAngle  ', advance='no' )
-        call output ( testAngle , advance='no' )
-        call output ( '    angleIncrement  ', advance='no' )
-        call output ( angleIncrement , advance='yes' )
-      end if
-      ! In my opinion (paw) here's what the following loop should do:
-      ! Find the 1st MAF within HOMEACCURACY of home_angle
-      ! where home_angle has been corrected for the starting orbit number
-      ! Afterwards, the preceding MAFs must be divided among one or more
-      ! chunks, and the same done with subsequent MAFs
-      !
-      ! Instead what it actually does is
-      ! Find the 1st MAF within HOMEACCURACY of (home_angle + n*angleIncrement)
-      ! where home_angle has been corrected for the starting orbit number
-      ! In effect the home_angle is set only within an unknown number
-      ! of angleIncrements
-      ! While there may be few cases in which they don't do about as well
-      ! let this be a warning
-      homeHuntLoop: do
-        if ( testAngle < minAngle ) then
-          testAngle = testAngle + angleIncrement
-          cycle
-        endif
-        if ( testAngle > maxAngle ) then
-          call MLSMessage ( MLSMSG_Warning, ModuleName, &
-            & 'Unable to establish a home major frame, using the first in your range' )
-          home = m1
-          exit homeHuntLoop
-        end if
-        ! Find MAF which starts before this test angle
-        call Hunt ( tpGeodAngle%dpField(1,1,:), testAngle, home, nearest=.true.,&
-          & allowTopValue = .true. )
-        ! Now if this is close enough, accept it
-        if ( abs ( tpGeodAngle%dpField(1,1,home) - &
-          & testAngle ) < HomeAccuracy ) exit homeHuntLoop
-        ! Otherwise, keep looking
+    integer(c_intptr_t) :: Addr         ! For tracing
+    integer :: CHUNK                    ! Loop counter
+    integer :: FLAG                     ! From ReadL1B
+    integer :: HOME                     ! Index of home MAF in array
+    integer :: M1, M2                   ! MafRange%L2Cover + 1
+    integer :: Me = -1                  ! String index for trace
+    integer :: MEXP1, MEXP2             ! MafRange%Expanded + 1
+    integer :: NOCHUNKSBELOWHOME        ! Used for placing chunks
+    integer :: NOMAFSATORABOVEHOME      ! Fairly self descriptive
+    integer :: NOMAFSBELOWHOME          ! Fairly self descriptive
+    ! integer :: NOMAFS                   ! Number of MAFs to consider
+    integer :: NOMAFSREAD               ! From ReadL1B
+    integer :: ORBIT                    ! Used to locate home
+    integer :: STATUS                   ! From allocate etc.
+    integer :: NOCHUNKS                 ! Number of chunks
+    integer :: MAXLENGTH                ! Max length as integer (MAFs)
+
+    integer, dimension(:), pointer :: NEWFIRSTMAFS ! For thinking about overlaps
+    integer, dimension(:), pointer :: NEWLASTMAFS ! For thinking about overlaps
+
+    real(r8) :: ANGLEINCREMENT          ! Increment in hunt for home
+    real(r8) :: MAXANGLE                ! Of range in data
+    real(r8) :: MAXTIME                 ! Time range in data
+    real(r8) :: MAXV                    ! Either minTime or minAngle
+    real(r8) :: MINANGLE                ! Of range in data
+    real(r8) :: MINTIME                 ! Time range in data
+    real(r8) :: MINV                    ! Either minTime or minAngle
+    real(r8) :: TESTANGLE               ! Angle to check for
+    real(r8) :: HOMEV                   ! Value of angle/time at home
+
+    real(r8), dimension(:), pointer :: BOUNDARIES ! Used in placing chunks
+    real(r8), dimension(:), pointer :: FIELD ! Used in placing chunks
+
+    integer   ::                       l1b_hdf_version
+    character(len=namelen) ::         MAF_start, tp_angle
+    type (MLSFile_T), pointer             :: L1BFile
+
+    ! Executable code
+    if ( present(root) ) call trace_begin ( me, 'ChunkDivide_orbital', root, &
+        & cond=toggle(gen) .and. levels(gen) > 2 )
+
+    swlevel = switchDetail(switches, 'chu' )
+    if ( swLevel > -1 ) then
+      call output('Entering Orbital Chunk Divide', advance='yes')
+      call dump( obstructions )
+    endif
+    ! Read in the data we're going to need
+    call get_string ( lit_indices(ChunkDivideConfig%homeModule), modNameStr, strip=.true. )
+    L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
+    if ( .not. associated(L1BFile) ) &
+      & call MLSMessage  ( MLSMSG_Error, ModuleName, &
+        & "Can't make progress in ChunkDivide_Orbital without L1BOA files" )
+    ! call dump(L1BFile)
+    l1b_hdf_version = L1BFile%HDFVersion
+    MAF_start = AssembleL1BQtyName ( 'MAFStartTimeTAI', l1b_hdf_version, &
+      .false. )
+    tp_angle = AssembleL1BQtyName ( trim(modNameStr)//'.tpGeodAngle', &
+      & l1b_hdf_version, &
+      & .false. )
+    if ( swLevel > -1 ) &
+      & call output('Reading Geod Angle', advance='yes')
+    call ReadL1BData ( L1BFile, trim(tp_angle), &
+      & tpGeodAngle, noMAFsRead, flag, &
+      & dontPad=DONTPAD )
+    if ( swLevel > -1 ) &
+      & call output('1st smoothing', advance='yes')
+    call smoothOutDroppedMAFs(tpGeodAngle%dpField)
+    if ( swLevel > -1 ) &
+      & call output('2nd smoothing', advance='yes')
+    call smoothOutDroppedMAFs(tpGeodAngle%dpField, monotonize=.true.)
+    if ( swLevel > -1 ) &
+      & call output('Reading tai Time', advance='yes')
+    call ReadL1BData ( L1BFile, trim(MAF_start), &
+      & taiTime, noMAFsRead, flag, &
+      & dontPad=DONTPAD )
+    call smoothOutDroppedMAFs(taiTime%dpField)
+    ! noMAFs = mafRange%L2Cover(2) - mafRange%L2Cover(1) + 1
+    m1 = mafRange%L2Cover(1) + 1
+    m2 = mafRange%L2Cover(2) + 1
+    mexp1 = mafRange%Expanded(1) + 1
+    mexp2 = mafRange%Expanded(2) + 1
+
+    minAngle = minval ( tpGeodAngle%dpField(1,1,m1:m2) )
+    maxAngle = maxval ( tpGeodAngle%dpField(1,1,m1:m2) )
+    minTime = minval ( taiTime%dpField(1,1,m1:m2) )
+    maxTime = maxval ( taiTime%dpField(1,1,m1:m2) )
+    if ( swLevel > -1 ) then
+      call output ( 'Num MAFs in file: ' )
+      call output ( noMAFsRead, advance='yes' )
+      call output ( 'MAF time range: ' )
+      call output ( minTime )
+      call output ( ' : ' )
+      call output ( maxTime, advance='yes' )
+      call output ( 'Angle range: ' )
+      call output ( minAngle )
+      call output ( ' : ' )
+      call output ( maxAngle, advance='yes' )
+    end if
+
+    ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    ! First try to locate the last MAF before the homeGeodAngle
+    orbit = int ( tpGeodAngle%dpField(1,1,m1)/360.0 )
+    if ( tpGeodAngle%dpField(1,1,m1) < 0.0 ) orbit = orbit - 1
+    testAngle = ChunkDivideConfig%homeGeodAngle + orbit*360.0
+    if ( ChunkDivideConfig%maxLengthFamily == PHYQ_Angle ) then
+      angleIncrement = ChunkDivideConfig%maxLength
+    else
+      angleIncrement = 360.0
+    end if
+
+    if ( swLevel > -1 ) then
+      call output ( ' orbit  ', advance='no' )
+      call output ( orbit , advance='no' )
+      call output ( '    testAngle  ', advance='no' )
+      call output ( testAngle , advance='no' )
+      call output ( '    angleIncrement  ', advance='no' )
+      call output ( angleIncrement , advance='yes' )
+    end if
+    ! In my opinion (paw) here's what the following loop should do:
+    ! Find the 1st MAF within HOMEACCURACY of home_angle
+    ! where home_angle has been corrected for the starting orbit number
+    ! Afterwards, the preceding MAFs must be divided among one or more
+    ! chunks, and the same done with subsequent MAFs
+    !
+    ! Instead what it actually does is
+    ! Find the 1st MAF within HOMEACCURACY of (home_angle + n*angleIncrement)
+    ! where home_angle has been corrected for the starting orbit number
+    ! In effect the home_angle is set only within an unknown number
+    ! of angleIncrements
+    ! While there may be few cases in which they don't do about as well
+    ! let this be a warning
+    homeHuntLoop: do
+      if ( testAngle < minAngle ) then
         testAngle = testAngle + angleIncrement
-      end do homeHuntLoop
-      if ( swLevel > -1 ) then
-        call output ( 'Test Angle  ' )
-        call output ( testAngle , advance='yes' )
-        call output ( 'Angle(home)  ' )
-        call output ( tpGeodAngle%dpField(1,1,home) , advance='yes' )
-        call output ( 'Home  ' )
-        call output ( home  )
-        call output ( 'Difference  ' )
-        call output (  abs ( tpGeodAngle%dpField(1,1,home) - &
-          & testAngle ) , advance='yes' )
+        cycle
+      endif
+      if ( testAngle > maxAngle ) then
+        call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          & 'Unable to establish a home major frame, using the first in your range' )
+        home = m1
+        exit homeHuntLoop
+      end if
+      ! Find MAF which starts before this test angle
+      call Hunt ( tpGeodAngle%dpField(1,1,:), testAngle, home, nearest=.true.,&
+        & allowTopValue = .true. )
+      ! Now if this is close enough, accept it
+      if ( abs ( tpGeodAngle%dpField(1,1,home) - &
+        & testAngle ) < HomeAccuracy ) exit homeHuntLoop
+      ! Otherwise, keep looking
+      testAngle = testAngle + angleIncrement
+    end do homeHuntLoop
+    if ( swLevel > -1 ) then
+      call output ( 'Test Angle  ' )
+      call output ( testAngle , advance='yes' )
+      call output ( 'Angle(home)  ' )
+      call output ( tpGeodAngle%dpField(1,1,home) , advance='yes' )
+      call output ( 'Home  ' )
+      call output ( home  )
+      call output ( 'Difference  ' )
+      call output (  abs ( tpGeodAngle%dpField(1,1,home) - &
+        & testAngle ) , advance='yes' )
+    end if
+
+    ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    ! OK, now we have a home MAF, get a first cut for the chunks
+    ! We work out the chunk ends for each chunk according to how the
+    ! maxLength field is specified.
+    if ( ChunkDivideConfig%maxLengthFamily == PHYQ_MAFs ) then
+      maxLength = nint ( ChunkDivideConfig%maxLength )
+      noMAFsBelowHome = home - m1
+      noChunksBelowHome = noMAFsBelowHome / maxLength
+      if ( mod ( noMAFsBelowHome, maxLength ) /= 0 ) noChunksBelowHome = noChunksBelowHome + 1
+      noMAFsAtOrAboveHome = m2 - home + 1
+      if ( ChunkDivideConfig%noChunks == 0 ) then
+         ! If user did not request specific number of chunks choose them
+         noChunks = noChunksBelowHome + noMAFsAtOrAboveHome / maxLength
+         if ( mod ( noMAFsAtOrAboveHome, maxLength ) /= 0 ) &
+            & noChunks = noChunks + 1
+      else
+        ! User requested specific number of chunks
+        noChunks = ChunkDivideConfig%noChunks
       end if
 
-      ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-      ! OK, now we have a home MAF, get a first cut for the chunks
-      ! We work out the chunk ends for each chunk according to how the
-      ! maxLength field is specified.
-      if ( ChunkDivideConfig%maxLengthFamily == PHYQ_MAFs ) then
-        maxLength = nint ( ChunkDivideConfig%maxLength )
-        noMAFsBelowHome = home - m1
-        noChunksBelowHome = noMAFsBelowHome / maxLength
-        if ( mod ( noMAFsBelowHome, maxLength ) /= 0 ) noChunksBelowHome = noChunksBelowHome + 1
-        noMAFsAtOrAboveHome = m2 - home + 1
-        if ( ChunkDivideConfig%noChunks == 0 ) then
-           ! If user did not request specific number of chunks choose them
-           noChunks = noChunksBelowHome + noMAFsAtOrAboveHome / maxLength
-           if ( mod ( noMAFsAtOrAboveHome, maxLength ) /= 0 ) &
-              & noChunks = noChunks + 1
-        else
-          ! User requested specific number of chunks
-          noChunks = ChunkDivideConfig%noChunks
-        end if
+      ! Allocate the chunks
+      allocate ( chunks(noChunks), stat=status )
+      addr = 0
+      if ( status == 0 .and. noChunks > 0 ) addr = transfer(c_loc(chunks(1)), addr)
+      call test_allocate ( status, ModuleName, 'chunks', &
+        & uBounds = noChunks, elementSize = storage_size(chunks) / 8, address=addr )
 
-        ! Allocate the chunks
-        allocate ( chunks(noChunks), stat=status )
-        addr = 0
-        if ( status == 0 .and. noChunks > 0 ) addr = transfer(c_loc(chunks(1)), addr)
-        call test_allocate ( status, ModuleName, 'chunks', &
-          & uBounds = noChunks, elementSize = storage_size(chunks) / 8, address=addr )
+      ! Work out their positions
+      do chunk = 1, noChunks
+        chunks(chunk)%lastMAFIndex = home + &
+          & ( chunk - noChunksBelowHome ) * maxLength - 1
+        ! Subtract one to convert from index in array to index in file
+      end do
+    else
+      ! For angle and time, they are similar enough we'll just do some stuff
+      ! with pointers to allow us to use common code to sort them out
+      select case ( ChunkDivideConfig%maxLengthFamily )
+      case ( PHYQ_Angle )
+        field => tpGeodAngle%dpField(1,1,:)
+        minV = minAngle
+        maxV = maxAngle
+      case ( PHYQ_Time )
+        field => taiTime%dpField(1,1,:)
+        minV = minTime
+        maxV = maxTime
+      case ( PHYQ_MAFs)
+      end select
+      homeV = field(home)
 
-        ! Work out their positions
+      noMAFsBelowHome = -999
+      noMAFsAtOrAboveHome = -999
+      noChunksBelowHome = int ( &
+        & ( homeV - minV ) / ChunkDivideConfig%maxLength )
+      if ( homeV > minV ) noChunksBelowHome = noChunksBelowHome + 1
+      if ( ChunkDivideConfig%noChunks == 0 ) then
+        ! Choose the number of chunks ourselves
+        noChunks = noChunksBelowHome + int ( &
+          & ( maxV - homeV ) / ChunkDivideConfig%maxLength )
+        if ( homeV + ChunkDivideConfig%maxLength * &
+          & ( noChunks - noChunksBelowHome ) < maxV ) &
+          & noChunks = noChunks + 1
+        if ( (mexp1 < m1) .and. ( &
+          & homeV + (ChunkDivideConfig%maxLength-1) + &
+          & ChunkDivideConfig%maxLength * &
+          & ( noChunks - 1 - noChunksBelowHome ) < maxV ) ) &
+          & noChunks = noChunks + 1
+      else
+        noChunks = ChunkDivideConfig%noChunks
+      end if
+
+      ! Allocate the chunks
+      allocate ( chunks(noChunks), stat=status )
+      addr = 0
+      if ( status == 0 .and. noChunks > 0 ) addr = transfer(c_loc(chunks(1)), addr )
+      call test_allocate ( status, ModuleName, 'chunks', &
+        & uBounds = noChunks, elementSize = storage_size(chunks) / 8, address=addr )
+
+      ! Work out their positions
+      ! Boundaries are the angles/times at the end of the chunks
+      nullify ( boundaries )
+      call Allocate_test ( boundaries, noChunks, 'boundaries', ModuleName )
+      ! When we allow prior overlaps, the first chunk
+      ! sometimes has 1 too many MAFs unless we take extra care
+      if ( mexp1 == m1 ) then
         do chunk = 1, noChunks
-          chunks(chunk)%lastMAFIndex = home + &
-            & ( chunk - noChunksBelowHome ) * maxLength - 1
-          ! Subtract one to convert from index in array to index in file
+          boundaries(chunk) = homeV + &
+            & ( chunk - noChunksBelowHome ) * ChunkDivideConfig%maxLength
         end do
       else
-        ! For angle and time, they are similar enough we'll just do some stuff
-        ! with pointers to allow us to use common code to sort them out
-        select case ( ChunkDivideConfig%maxLengthFamily )
-        case ( PHYQ_Angle )
-          field => tpGeodAngle%dpField(1,1,:)
-          minV = minAngle
-          maxV = maxAngle
-        case ( PHYQ_Time )
-          field => taiTime%dpField(1,1,:)
-          minV = minTime
-          maxV = maxTime
-        case ( PHYQ_MAFs)
-        end select
-        homeV = field(home)
-
-        noMAFsBelowHome = -999
-        noMAFsAtOrAboveHome = -999
-        noChunksBelowHome = int ( &
-          & ( homeV - minV ) / ChunkDivideConfig%maxLength )
-        if ( homeV > minV ) noChunksBelowHome = noChunksBelowHome + 1
-        if ( ChunkDivideConfig%noChunks == 0 ) then
-          ! Choose the number of chunks ourselves
-          noChunks = noChunksBelowHome + int ( &
-            & ( maxV - homeV ) / ChunkDivideConfig%maxLength )
-          if ( homeV + ChunkDivideConfig%maxLength * &
-            & ( noChunks - noChunksBelowHome ) < maxV ) &
-            & noChunks = noChunks + 1
-          if ( (mexp1 < m1) .and. ( &
-            & homeV + (ChunkDivideConfig%maxLength-1) + &
-            & ChunkDivideConfig%maxLength * &
-            & ( noChunks - 1 - noChunksBelowHome ) < maxV ) ) &
-            & noChunks = noChunks + 1
-        else
-          noChunks = ChunkDivideConfig%noChunks
-        end if
-
-        ! Allocate the chunks
-        allocate ( chunks(noChunks), stat=status )
-        addr = 0
-        if ( status == 0 .and. noChunks > 0 ) addr = transfer(c_loc(chunks(1)), addr )
-        call test_allocate ( status, ModuleName, 'chunks', &
-          & uBounds = noChunks, elementSize = storage_size(chunks) / 8, address=addr )
-
-        ! Work out their positions
-        ! Boundaries are the angles/times at the end of the chunks
-        nullify ( boundaries )
-        call Allocate_test ( boundaries, noChunks, 'boundaries', ModuleName )
-        ! When we allow prior overlaps, the first chunk
-        ! sometimes has 1 too many MAFs unless we take extra care
-        if ( mexp1 == m1 ) then
-          do chunk = 1, noChunks
-            boundaries(chunk) = homeV + &
-              & ( chunk - noChunksBelowHome ) * ChunkDivideConfig%maxLength
-          end do
-        else
-          boundaries(1) = homeV + &
-            & ( 1 - noChunksBelowHome ) * (ChunkDivideConfig%maxLength - 1)
-          do chunk = 2, noChunks
-            boundaries(chunk) = boundaries(chunk-1) + &
-              & ChunkDivideConfig%maxLength
-          end do
-        endif
-        boundaries = min ( boundaries, maxV )
-        boundaries = max ( boundaries, minV )
-        if ( ChunkDivideConfig%maxLengthFamily == PHYQ_Angle ) then
-          chunks(1)%phiStart = homeV
-          chunks%phiEnd = boundaries
-          chunks(2:noChunks)%phiStart = chunks(1:noChunks-1)%phiEnd
-        else
-          call MLSMessage ( MLSMSG_Warning, ModuleName, &
-          & 'Regular HGrids will be unable to exploit chunk Geodetic Range' )
-        endif
-
-        ! Do some dumping
-        if ( swLevel > -1 ) then
-          call output ( ' minV: ' )
-          call output ( minV  )
-          call output ( ' maxV: ' )
-          call output ( maxV , advance='yes' )
-          call output ( ' homeV: ' )
-          call output ( homeV , advance='yes' )
-          call output ( ' noMAFSBelowHome: ' )
-          call output ( noMAFsBelowHome, advance='yes' )
-          call output ( ' noMAFSAtOrAboveHome: ' )
-          call output ( noMAFsAtOrAboveHome, advance='yes' )
-          call output ( ' NoChunks: ' )
-          call output ( NoChunks, advance='yes' )
-          call output ( ' noChunksBelowHome: ' )
-          call output ( noChunksBelowHome , advance='yes' )
-          call dump ( boundaries , 'boundaries' )
-          call dump ( chunks%phiStart , 'phiStarts' )
-          call dump ( chunks%phiEnd ,   'phiEnds' )
-          call dump ( field, 'field' )
-        end if
-
-        call Hunt ( field, boundaries, chunks%lastMAFIndex, start=m1, &
-          & allowTopValue=.true., nearest=.true. )
-        call Deallocate_test ( boundaries, 'boundaries', ModuleName )
-      end if
-
-      ! Now deduce the chunk starts from the ends of their predecessors
-      if ( noChunks > 1 ) &
-        & chunks(2:noChunks)%firstMAFIndex = &
-        & chunks(1:noChunks-1)%lastMAFIndex + 1
-      chunks(1)%firstMAFIndex = m1
-
-      ! Now bound the chunks to be within the processing range
-      chunks%firstMAFIndex = min ( max ( chunks%firstMAFIndex, m1 ), m2 )
-      chunks%lastMAFIndex = min ( max ( chunks%lastMAFIndex, m1 ), m2 )
-
-      ! Now offset these to the index in the file not the array
-      ! chunks%firstMAFIndex = chunks%firstMAFIndex + mafRange(1) - 1
-      ! chunks%lastMAFIndex = chunks%lastMAFIndex + mafRange(1) - 1
-      chunks%firstMAFIndex = chunks%firstMAFIndex - 1
-      chunks%lastMAFIndex = chunks%lastMAFIndex - 1
-
-      ! If at this point the last two chunks end in the same place, this is
-      ! a subtle defect in our chunking algorihtm, lets avoid it
-      if ( noChunks > 1 ) then
-        if ( chunks(noChunks-1)%lastMAFIndex == chunks(noChunks)%lastMAFIndex ) then
-          call DeleteChunk ( chunks, noChunks )
-          noChunks = noChunks - 1
-        end if
-      end if
+        boundaries(1) = homeV + &
+          & ( 1 - noChunksBelowHome ) * (ChunkDivideConfig%maxLength - 1)
+        do chunk = 2, noChunks
+          boundaries(chunk) = boundaries(chunk-1) + &
+            & ChunkDivideConfig%maxLength
+        end do
+      endif
+      boundaries = min ( boundaries, maxV )
+      boundaries = max ( boundaries, minV )
+      if ( ChunkDivideConfig%maxLengthFamily == PHYQ_Angle ) then
+        chunks(1)%phiStart = homeV
+        chunks%phiEnd = boundaries
+        chunks(2:noChunks)%phiStart = chunks(1:noChunks-1)%phiEnd
+      else
+        call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        & 'Regular HGrids will be unable to exploit chunk Geodetic Range' )
+      endif
 
       ! Do some dumping
       if ( swLevel > -1 ) then
-        call dump ( chunks%lastMAFIndex , 'chunks%lastMAFIndex' )
-        call dump ( chunks%firstMAFIndex , 'chunks%firstMAFIndex' )
-      end if
-
-      ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-      ! Think about overlaps
-      nullify ( newFirstMAFs, newLastMAFs )
-      call Allocate_test ( newFirstMAFs, noChunks, 'newFirstMAFs', ModuleName )
-      call Allocate_test ( newLastMAFs, noChunks, 'newLastMAFs', ModuleName )
-      ! We could split things out to deal with mixed unit, but lets make life easier
-      ! for ourselves.  ChunkDivideL2PC has already insisted that
-      ! lowerOverlapFamily == upperOverlapFamily.
-      if ( ChunkDivideConfig%lowerOverlapFamily == PHYQ_MAFs ) then
-        newFirstMAFs = max(chunks%firstMAFIndex - nint(ChunkDivideConfig%lowerOverlap), &
-          & m1 - 1 )
-        newLastMAFs = min(chunks%lastMAFIndex + nint(ChunkDivideConfig%upperOverlap), &
-          & m2 - 1 )
-      else
-        call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & 'The bit of code that deals with non-MAF overlaps is probably broken' )
-      end if
-      chunks%noMAFsLowerOverlap = chunks%firstMAFIndex - newFirstMAFs
-      chunks%noMAFsUpperOverlap = newLastMAFs - chunks%lastMAFIndex
-      chunks%firstMAFIndex = newFirstMAFs
-      chunks%lastMAFIndex = newLastMAFs
-      if ( swLevel > -1 ) then
-        call dump ( newFirstMAFs , 'newFirstMAFs' )
-        call dump ( newLastMAFs , 'newLastMAFs' )
-        call dump ( chunks%noMAFsLowerOverlap , 'chunks%noMAFsLowerOverlap' )
-        call dump ( chunks%noMAFsUpperOverlap , 'chunks%noMAFsUpperOverlap' )
-      endif
-      call Deallocate_test ( newFirstMAFs, 'newFirstMAFs', ModuleName )
-      call Deallocate_test ( newLastMAFs, 'newLastMAFs', ModuleName )
-
-      ! Delete any zero length or all overlapped chunks
-      call PruneChunks ( chunks )
-      if ( .not. associated(chunks) ) then
-        call MLSMessage ( MLSMSG_Error, moduleName, &
-          & 'No chunks remaining after we pruned them for bad radiances; bad day?' )
-      elseif ( size(chunks) < 1 ) then
-        call MLSMessage ( MLSMSG_Error, moduleName, &
-          & 'No chunks remaining after we pruned them for bad radiances; bad day?' )
-      endif
-
-      if ( swLevel > -1 ) then
-        call output ( 'Before dealing with obstructions', advance='yes' )
-        call Dump ( chunks )
-      end if
-
-      ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-      ! Now think about the obstructions
-      if ( associated(obstructions) ) &
-        & call DealWithObstructions ( chunks, obstructions )
-
-      ! Delete any zero length or all overlapped chunks
-      call PruneChunks ( chunks )
-      if ( .not. associated(chunks) ) then
-        call MLSMessage ( MLSMSG_Error, moduleName, &
-          & 'No chunks remaining after we pruned them for zero length; bad day?' )
-      elseif ( size(chunks) < 1 ) then
-        call MLSMessage ( MLSMSG_Error, moduleName, &
-          & 'No chunks remaining after we pruned them for zero length; bad day?' )
-      endif
-
-!       ! Forcibly zero out number of lower (upper) overlaps on 1st (last) chunks
-      noChunks = size ( chunks )
-!       chunks(1)%noMAFsLowerOverlap = 0
-!       chunks(noChunks)%noMAFsUpperOverlap = 0
-
-      ! Add lower overlap to first chunk if allowed
-      if ( mexp1 < m1 ) then
-        chunks(1)%firstMAFIndex = chunks(1)%firstMAFIndex + mexp1 - m1
-        chunks(1)%noMAFsLowerOverlap = m1 - mexp1
-      endif
-
-      ! Add upper overlap to last chunk if allowed
-      if ( mexp2 > m2 ) then
-        chunks(noChunks)%lastMAFIndex = chunks(noChunks)%lastMAFIndex + mexp2 - m2
-        chunks(noChunks)%noMAFsUpperOverlap = mexp2 - m2
-      endif
-
-      ! Now we assign phiStarts and phiEnds to each chunk
-      do chunk = 1, noChunks
-        m1 = max( chunks(chunk)%firstMAFIndex + 1, mafRange%L2Cover(1) + 1 )
-        m2 = min( chunks(chunk)%lastMAFIndex + 1,  mafRange%L2Cover(2) + 1 )
-        chunks(chunk)%phiStart = tpGeodAngle%dpField(1,1,m1)
-        chunks(chunk)%phiEnd = tpGeodAngle%dpField(1,1,m2)
-      enddo
-      if ( swLevel > -1 ) then
-        call output ( 'After dealing with obstructions', advance='no' )
-        call output ( ', poss. overlaps outside proc. range', advance='yes' )
-        call Dump ( chunks )
+        call output ( ' minV: ' )
+        call output ( minV  )
+        call output ( ' maxV: ' )
+        call output ( maxV , advance='yes' )
+        call output ( ' homeV: ' )
+        call output ( homeV , advance='yes' )
+        call output ( ' noMAFSBelowHome: ' )
+        call output ( noMAFsBelowHome, advance='yes' )
+        call output ( ' noMAFSAtOrAboveHome: ' )
+        call output ( noMAFsAtOrAboveHome, advance='yes' )
+        call output ( ' NoChunks: ' )
+        call output ( NoChunks, advance='yes' )
+        call output ( ' noChunksBelowHome: ' )
+        call output ( noChunksBelowHome , advance='yes' )
+        call dump ( boundaries , 'boundaries' )
         call dump ( chunks%phiStart , 'phiStarts' )
         call dump ( chunks%phiEnd ,   'phiEnds' )
-      endif
-      ! Tidy up
-      call DeallocateL1BData ( tpGeodAngle )
-      call DeallocateL1BData ( taiTime )
+        call dump ( field, 'field' )
+      end if
 
-    end subroutine ChunkDivide_Orbital
+      call Hunt ( field, boundaries, chunks%lastMAFIndex, start=m1, &
+        & allowTopValue=.true., nearest=.true. )
+      call Deallocate_test ( boundaries, 'boundaries', ModuleName )
+    end if
 
-    ! ------------------------------------------------- SortChunks -----
-    subroutine SortChunks ( chunks )
-      ! Sort the chunks into order of increasing firstMAFIndex
-      type (MLSChunk_T), dimension(:), intent(inout) :: CHUNKS
+    ! Now deduce the chunk starts from the ends of their predecessors
+    if ( noChunks > 1 ) &
+      & chunks(2:noChunks)%firstMAFIndex = &
+      & chunks(1:noChunks-1)%lastMAFIndex + 1
+    chunks(1)%firstMAFIndex = m1
 
-      ! Local variables
-      type (MLSChunk_T) :: TEMP
-      integer :: I                        ! Loop counters
-      integer, dimension(1) :: TOSWAP     ! Index
+    ! Now bound the chunks to be within the processing range
+    chunks%firstMAFIndex = min ( max ( chunks%firstMAFIndex, m1 ), m2 )
+    chunks%lastMAFIndex = min ( max ( chunks%lastMAFIndex, m1 ), m2 )
 
-      ! Executable code
-      swlevel = switchDetail(switches, 'chu' )
-      do i = 1, size(chunks) - 1
-        toSwap = minloc ( chunks(i:)%firstMAFIndex + &
-          & chunks(i:)%noMAFsLowerOverlap ) + (/ i-1 /)
-        if ( toSwap(1) /= i ) then
-          temp = chunks(i)
-          chunks(i) = chunks(toSwap(1))
-          chunks(toSwap(1)) = temp
-        end if
-      end do
-    end subroutine SortChunks
+    ! Now offset these to the index in the file not the array
+    ! chunks%firstMAFIndex = chunks%firstMAFIndex + mafRange(1) - 1
+    ! chunks%lastMAFIndex = chunks%lastMAFIndex + mafRange(1) - 1
+    chunks%firstMAFIndex = chunks%firstMAFIndex - 1
+    chunks%lastMAFIndex = chunks%lastMAFIndex - 1
 
-    ! ----------------------------------------- PruneChunks -----------
-    subroutine PruneChunks ( chunks )
-       type (MLSChunk_T), dimension(:), pointer :: CHUNKS
-       integer :: CHUNK
-       ! Now delete chunks that either:
-       !  1 - Are nothing but overlap
-       !  2 - Have <=0 MAFs
-       pruneChunksLoop: do
-          chunk = FindFirst ( &
-             & ( chunks%noMAFsLowerOverlap + chunks%noMAFsUpperOverlap ) >= &
-             & ( chunks%lastMAFIndex - chunks%firstMAFIndex + 1 ) &
-             & .or.&
-             & ( chunks%firstMAFIndex > chunks%lastMAFIndex ) )
-          if ( chunk == 0 ) exit pruneChunksLoop
-          call DeleteChunk ( chunks, chunk )
-       end do pruneChunksLoop
-    end subroutine PruneChunks
+    ! If at this point the last two chunks end in the same place, this is
+    ! a subtle defect in our chunking algorihtm, lets avoid it
+    if ( noChunks > 1 ) then
+      if ( chunks(noChunks-1)%lastMAFIndex == chunks(noChunks)%lastMAFIndex ) then
+        call DeleteChunk ( chunks, noChunks )
+        noChunks = noChunks - 1
+      end if
+    end if
 
-    ! ------------------------------------------------ DeleteChunk -----
-    subroutine DeleteChunk ( chunks, index )
-      use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
-      use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
-      ! Dummy arguments
-      type (MLSChunk_T), pointer, dimension(:) :: CHUNKS
-      integer, intent(in) :: INDEX
+    ! Do some dumping
+    if ( swLevel > -1 ) then
+      call dump ( chunks%lastMAFIndex , 'chunks%lastMAFIndex' )
+      call dump ( chunks%firstMAFIndex , 'chunks%firstMAFIndex' )
+    end if
 
-      ! Local variables
-      type (MLSChunk_T), pointer, dimension(:) :: TEMP
-      integer(c_intptr_t) :: Addr ! For tracing
-      integer :: S                ! Size in bytes of object to deallocate
-      integer :: STATUS           ! From allocate
+    ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    ! Think about overlaps
+    nullify ( newFirstMAFs, newLastMAFs )
+    call Allocate_test ( newFirstMAFs, noChunks, 'newFirstMAFs', ModuleName )
+    call Allocate_test ( newLastMAFs, noChunks, 'newLastMAFs', ModuleName )
+    ! We could split things out to deal with mixed unit, but lets make life easier
+    ! for ourselves.  ChunkDivideL2PC has already insisted that
+    ! lowerOverlapFamily == upperOverlapFamily.
+    if ( ChunkDivideConfig%lowerOverlapFamily == PHYQ_MAFs ) then
+      newFirstMAFs = max(chunks%firstMAFIndex - nint(ChunkDivideConfig%lowerOverlap), &
+        & m1 - 1 )
+      newLastMAFs = min(chunks%lastMAFIndex + nint(ChunkDivideConfig%upperOverlap), &
+        & m2 - 1 )
+    else
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'The bit of code that deals with non-MAF overlaps is probably broken' )
+    end if
+    chunks%noMAFsLowerOverlap = chunks%firstMAFIndex - newFirstMAFs
+    chunks%noMAFsUpperOverlap = newLastMAFs - chunks%lastMAFIndex
+    chunks%firstMAFIndex = newFirstMAFs
+    chunks%lastMAFIndex = newLastMAFs
+    if ( swLevel > -1 ) then
+      call dump ( newFirstMAFs , 'newFirstMAFs' )
+      call dump ( newLastMAFs , 'newLastMAFs' )
+      call dump ( chunks%noMAFsLowerOverlap , 'chunks%noMAFsLowerOverlap' )
+      call dump ( chunks%noMAFsUpperOverlap , 'chunks%noMAFsUpperOverlap' )
+    endif
+    call Deallocate_test ( newFirstMAFs, 'newFirstMAFs', ModuleName )
+    call Deallocate_test ( newLastMAFs, 'newLastMAFs', ModuleName )
 
-      ! Executable code
-      swlevel = switchDetail(switches, 'chu' )
-      allocate ( temp ( size(chunks) - 1 ), stat=status )
-      addr = 0
-      if ( status == 0 .and. size(chunks) > 1 ) addr = transfer(c_loc(temp(1)), addr)
-      call test_allocate ( status, ModuleName, 'temp', &
-        & uBounds = size(chunks) - 1, elementSize = storage_size(temp) / 8, &
-        & address=addr )
+    ! Delete any zero length or all overlapped chunks
+    call PruneChunks ( chunks )
+    if ( .not. associated(chunks) ) then
+      call MLSMessage ( MLSMSG_Error, moduleName, &
+        & 'No chunks remaining after we pruned them for bad radiances; bad day?' )
+    else if ( size(chunks) < 1 ) then
+      call MLSMessage ( MLSMSG_Error, moduleName, &
+        & 'No chunks remaining after we pruned them for bad radiances; bad day?' )
+    end if
 
-      if ( index > 1 ) temp(1:index-1) = chunks(1:index-1)
-      if ( index < size(chunks) .and. size(chunks) > 1 ) &
-         & temp(index:) = chunks(index+1:)
+    if ( swLevel > -1 ) then
+      call output ( 'Before dealing with obstructions', advance='yes' )
+      call Dump ( chunks )
+    end if
 
-      s = size(chunks) * storage_size(chunks) / 8
-      addr = 0
-      if ( s > 0 ) addr = transfer(c_loc(chunks(1)), addr)
-      deallocate ( chunks, stat=status )
-      call test_deallocate ( status, moduleName, 'chunks', s, address=addr )
+    ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    ! Now think about the obstructions
+    if ( associated(obstructions) ) &
+      & call DealWithObstructions ( chunks, obstructions )
 
-      chunks => temp
+    ! Delete any zero length or all overlapped chunks
+    call PruneChunks ( chunks )
+    if ( .not. associated(chunks) ) then
+      call MLSMessage ( MLSMSG_Error, moduleName, &
+        & 'No chunks remaining after we pruned them for zero length; bad day?' )
+    else if ( size(chunks) < 1 ) then
+      call MLSMessage ( MLSMSG_Error, moduleName, &
+        & 'No chunks remaining after we pruned them for zero length; bad day?' )
+    end if
 
-    end subroutine DeleteChunk
+!     ! Forcibly zero out number of lower (upper) overlaps on 1st (last) chunks
+    noChunks = size ( chunks )
+!     chunks(1)%noMAFsLowerOverlap = 0
+!     chunks(noChunks)%noMAFsUpperOverlap = 0
 
-    !--------------------------------- Add obstruction to database -----
-    subroutine AddObstructionToDatabase ( database, item )
+    ! Add lower overlap to first chunk if allowed
+    if ( mexp1 < m1 ) then
+      chunks(1)%firstMAFIndex = chunks(1)%firstMAFIndex + mexp1 - m1
+      chunks(1)%noMAFsLowerOverlap = m1 - mexp1
+    endif
 
-       use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+    ! Add upper overlap to last chunk if allowed
+    if ( mexp2 > m2 ) then
+      chunks(noChunks)%lastMAFIndex = chunks(noChunks)%lastMAFIndex + mexp2 - m2
+      chunks(noChunks)%noMAFsUpperOverlap = mexp2 - m2
+    endif
 
-       ! Dummy arguments
-       type (Obstruction_T), dimension(:), pointer :: DATABASE
-       type (Obstruction_T), intent(in) :: ITEM
+    ! Now we assign phiStarts and phiEnds to each chunk
+    do chunk = 1, noChunks
+      m1 = max( chunks(chunk)%firstMAFIndex + 1, mafRange%L2Cover(1) + 1 )
+      m2 = min( chunks(chunk)%lastMAFIndex + 1,  mafRange%L2Cover(2) + 1 )
+      chunks(chunk)%phiStart = tpGeodAngle%dpField(1,1,m1)
+      chunks(chunk)%phiEnd = tpGeodAngle%dpField(1,1,m2)
+    enddo
+    if ( swLevel > -1 ) then
+      call output ( 'After dealing with obstructions', advance='no' )
+      call output ( ', poss. overlaps outside proc. range', advance='yes' )
+      call Dump ( chunks )
+      call dump ( chunks%phiStart , 'phiStarts' )
+      call dump ( chunks%phiEnd ,   'phiEnds' )
+    endif
+    ! Tidy up
+    call DeallocateL1BData ( tpGeodAngle )
+    call DeallocateL1BData ( taiTime )
 
-       ! Local variables
-       type (Obstruction_T), dimension(:), pointer :: TEMPDATABASE
+    if ( present(root) ) call trace_end ( &
+      & 'ChunkDivide_orbital', cond=toggle(gen) .and. levels(gen) > 2 )
 
-       include "addItemToDatabase.f9h"
+  end subroutine ChunkDivide_Orbital
 
-    end subroutine AddObstructionToDatabase
+  ! --------------------------------------------------- SortChunks -----
+  subroutine SortChunks ( chunks )
+    ! Sort the chunks into order of increasing firstMAFIndex
+    type (MLSChunk_T), dimension(:), intent(inout) :: CHUNKS
 
-    !--------------------------------------- Add chunk to database -----
-    subroutine AddChunkToDatabase ( database, item )
+    ! Local variables
+    type (MLSChunk_T) :: TEMP
+    integer :: I                        ! Loop counters
+    integer, dimension(1) :: TOSWAP     ! Index
 
-      use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+    ! Executable code
+    swlevel = switchDetail(switches, 'chu' )
+    do i = 1, size(chunks) - 1
+      toSwap = minloc ( chunks(i:)%firstMAFIndex + &
+        & chunks(i:)%noMAFsLowerOverlap ) + (/ i-1 /)
+      if ( toSwap(1) /= i ) then
+        temp = chunks(i)
+        chunks(i) = chunks(toSwap(1))
+        chunks(toSwap(1)) = temp
+      end if
+    end do
+  end subroutine SortChunks
 
-      ! Dummy arguments
-      type (MLSChunk_T), dimension(:), pointer :: DATABASE
-      type (MLSChunk_T), intent(in) :: ITEM
+  ! -------------------------------------------------- PruneChunks -----
+  subroutine PruneChunks ( chunks )
+     type (MLSChunk_T), dimension(:), pointer :: CHUNKS
+     integer :: CHUNK
+     ! Now delete chunks that either:
+     !  1 - Are nothing but overlap
+     !  2 - Have <=0 MAFs
+     pruneChunksLoop: do
+        chunk = FindFirst ( &
+           & ( chunks%noMAFsLowerOverlap + chunks%noMAFsUpperOverlap ) >= &
+           & ( chunks%lastMAFIndex - chunks%firstMAFIndex + 1 ) &
+           & .or.&
+           & ( chunks%firstMAFIndex > chunks%lastMAFIndex ) )
+        if ( chunk == 0 ) exit pruneChunksLoop
+        call DeleteChunk ( chunks, chunk )
+     end do pruneChunksLoop
+  end subroutine PruneChunks
 
-      ! Local variables
-      type (MLSChunk_T), dimension(:), pointer :: TEMPDATABASE
+  ! -------------------------------------------------- DeleteChunk -----
+  subroutine DeleteChunk ( chunks, index )
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
+    ! Dummy arguments
+    type (MLSChunk_T), pointer, dimension(:) :: CHUNKS
+    integer, intent(in) :: INDEX
 
-      include "addItemToDatabase.f9h"
+    ! Local variables
+    type (MLSChunk_T), pointer, dimension(:) :: TEMP
+    integer(c_intptr_t) :: Addr ! For tracing
+    integer :: S                ! Size in bytes of object to deallocate
+    integer :: STATUS           ! From allocate
 
-    end subroutine AddChunkToDatabase
+    ! Executable code
+    swlevel = switchDetail(switches, 'chu' )
+    allocate ( temp ( size(chunks) - 1 ), stat=status )
+    addr = 0
+    if ( status == 0 .and. size(chunks) > 1 ) addr = transfer(c_loc(temp(1)), addr)
+    call test_allocate ( status, ModuleName, 'temp', &
+      & uBounds = size(chunks) - 1, elementSize = storage_size(temp) / 8, &
+      & address=addr )
 
-     type(MLSChunk_T) function CFM_ChunkDivide (processingRange, &
-        filedatabase, config) result(chunk)
+    if ( index > 1 ) temp(1:index-1) = chunks(1:index-1)
+    if ( index < size(chunks) .and. size(chunks) > 1 ) &
+       & temp(index:) = chunks(index+1:)
 
-        type (TAI93_Range_T), intent(in) :: processingRange
-        type (MLSFile_T), dimension(:), pointer :: filedatabase
-        type(ChunkDivideConfig_T), intent(in) :: config
+    s = size(chunks) * storage_size(chunks) / 8
+    addr = 0
+    if ( s > 0 ) addr = transfer(c_loc(chunks(1)), addr)
+    deallocate ( chunks, stat=status )
+    call test_deallocate ( status, moduleName, 'chunks', s, address=addr )
 
-        type (MAFRange_T) :: MAFRange
-        type(MLSChunk_T), dimension(:), pointer :: chunks => null()
+    chunks => temp
 
-        ! Executables
-        chunkDivideConfig = config
+  end subroutine DeleteChunk
 
-        nullify(chunkDivideConfig%criticalSignals)   ! Just for Sun's compiler
-        nullify(obstructions)
+  !----------------------------------- Add obstruction to database -----
+  subroutine AddObstructionToDatabase ( database, item )
 
-        ! not sure how to deal with obstruction, ignore it
-        if (chunkDivideConfig%method /= l_fixed) then
-           call SurveyL1BData ( processingRange, filedatabase, mafRange)
-        end if
+     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
 
-        if (chunkdivideconfig%method == l_orbital) then
-           call ChunkDivide_Orbital (mafRange, filedatabase, chunks)
-           chunk = chunks(1)
-        else
-           print *, "chunk divide method is unsupported"
-        end if
-     end function
+     ! Dummy arguments
+     type (Obstruction_T), dimension(:), pointer :: DATABASE
+     type (Obstruction_T), intent(in) :: ITEM
 
+     ! Local variables
+     type (Obstruction_T), dimension(:), pointer :: TEMPDATABASE
+
+     include "addItemToDatabase.f9h"
+
+  end subroutine AddObstructionToDatabase
+
+  !----------------------------------------- Add chunk to database -----
+  subroutine AddChunkToDatabase ( database, item )
+
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+
+    ! Dummy arguments
+    type (MLSChunk_T), dimension(:), pointer :: DATABASE
+    type (MLSChunk_T), intent(in) :: ITEM
+
+    ! Local variables
+    type (MLSChunk_T), dimension(:), pointer :: TEMPDATABASE
+
+    include "addItemToDatabase.f9h"
+
+  end subroutine AddChunkToDatabase
+
+  ! --------------------------------------------  CFM_ChunkDivide  -----
+  type(MLSChunk_T) function CFM_ChunkDivide (processingRange, &
+     filedatabase, config) result(chunk)
+
+     type (TAI93_Range_T), intent(in) :: processingRange
+     type (MLSFile_T), dimension(:), pointer :: filedatabase
+     type(ChunkDivideConfig_T), intent(in) :: config
+
+     type (MAFRange_T) :: MAFRange
+     type(MLSChunk_T), dimension(:), pointer :: chunks => null()
+
+     ! Executables
+     chunkDivideConfig = config
+
+     nullify(chunkDivideConfig%criticalSignals)   ! Just for Sun's compiler
+     nullify(obstructions)
+
+     ! not sure how to deal with obstruction, ignore it
+     if (chunkDivideConfig%method /= l_fixed) then
+        call SurveyL1BData ( processingRange, filedatabase, mafRange)
+     end if
+
+     if (chunkdivideconfig%method == l_orbital) then
+        call ChunkDivide_Orbital (mafRange, filedatabase, chunks)
+        chunk = chunks(1)
+     else
+        print *, "chunk divide method is unsupported"
+     end if
+  end function CFM_ChunkDivide
+
+  !------------------------------------------------  what_options  -----
   function what_options( clean, transpose, trim ) result( options )
     use MLSStrings, only: Trim_Safe
     logical, optional, intent(in) :: clean
@@ -2966,6 +3003,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.134  2018/08/03 23:43:42  vsnyder
+! Add tracing to several routines.  Some cannonball polishing
+!
 ! Revision 2.133  2018/06/26 00:12:32  pwagner
 ! Avoids accessing index=1 of 0-sized temp in DeleteChunk
 !
