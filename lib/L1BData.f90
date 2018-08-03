@@ -472,15 +472,20 @@ contains ! ============================ MODULE PROCEDURES ======================
     type (MLSFile_T), pointer :: L1BFile
 
     ! Executable code
-    call output( 'Checking for corrupt file database', advance='yes' )
     L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
-    call GetAllHDF5DSNames ( L1BFile, DSNames )
-    call Dump ( DSNames, 'DSNames from MLSFile type' )
-    call newLine
-    !call GetAllHDF5DSNames ( L1BFile%name, '/', DSNames )
-    !call Dump ( DSNames, 'DSNames from MLSFile name' )
-    !call newLine
-    ! call crash_burn
+    call output ( 'Checking file ' // trim(L1BFile%name) // ' for corrupt database', &
+                & advance='yes' )
+    if ( L1BFile%HDFVersion == HDFVersion_5 ) then
+      call GetAllHDF5DSNames ( L1BFile, DSNames )
+      call Dump ( DSNames, 'DSNames from MLSFile type' )
+      call newLine
+      !call GetAllHDF5DSNames ( L1BFile%name, '/', DSNames )
+      !call Dump ( DSNames, 'DSNames from MLSFile name' )
+      !call newLine
+      ! call crash_burn
+    else
+      call output ( 'Unable to check HDF4 file', advance='yes' )
+    end if
   end subroutine CheckForCorruptFileDatabase
 
   ! --------------------------------------------  ContractL1BData  -----
@@ -1788,7 +1793,7 @@ contains ! ============================ MODULE PROCEDURES ======================
   ! -------------------------------------  ReadL1BData_fileHandle  -----
   ! In time we will do away with most file-handle based interfaces
   subroutine ReadL1BData_fileHandle ( L1FileHandle, QuantityName, L1bData, NoMAFs, Flag, &
-    & FirstMAF, LastMAF, NEVERFAIL, hdfVersion, dontPad, L2AUX )
+    & FirstMAF, LastMAF, NeverFail, hdfVersion, dontPad, L2AUX )
     ! Dummy arguments
     character(len=*), intent(in)   :: QUANTITYNAME ! Name of SD to read
     integer, intent(in)            :: L1FILEHANDLE ! From HDF
@@ -1828,14 +1833,14 @@ contains ! ============================ MODULE PROCEDURES ======================
     f%hdfVersion = myhdfVersion
     fp => f
     call ReadL1BData_MLSFile ( fp, QuantityName, L1bData, NoMAFs, Flag, &
-      & FirstMAF, LastMAF, NEVERFAIL, dontPad, L2AUX )
+      & FirstMAF, LastMAF, NeverFail, dontPad, L2AUX )
     call trace_end ( "ReadL1BData_fileHandle", &
       & cond=toggle(gen) .and. levels(gen) > 1 )
   end subroutine ReadL1BData_fileHandle
 
   ! ----------------------------------------  ReadL1BData_MLSFile  -----
   subroutine ReadL1BData_MLSFile ( L1BFile, QuantityName, L1bData, NoMAFs, Flag, &
-    & FirstMAF, LastMAF, NEVERFAIL, dontPad, L2AUX )
+    & FirstMAF, LastMAF, NeverFail, dontPad, L2AUX )
     use MLSFiles, only: Dump
     use MLSFillValues, only: IsFillValue
     use Optional_m, only: Default
@@ -1899,11 +1904,11 @@ contains ! ============================ MODULE PROCEDURES ======================
 
     if ( myhdfVersion == HDFVERSION_4 ) then
       call ReadL1BData_MF_hdf4 ( L1BFile, trim(QuantityName), L1bData, &
-      & NoMAFs, Flag, FirstMAF, LastMAF, NEVERFAIL, L2AUX )
+      & NoMAFs, Flag, FirstMAF, LastMAF, NeverFail, L2AUX )
       if ( flag /= 0 ) noMAFs = -1
     else
       call ReadL1BData_MF_hdf5 ( L1BFile, trim(QuantityName), L1bData, &
-      & NoMAFs, Flag, FirstMAF, LastMAF, NEVERFAIL, L2AUX )
+      & NoMAFs, Flag, FirstMAF, LastMAF, NeverFail, L2AUX )
       !Unfortunately, hdf5-formatted l1b data have different shapes from hdf4
       ! E.g., for MAFStartTimeTAI we obtain the following
       !  hdfVERSION      shape
@@ -1919,7 +1924,7 @@ contains ! ============================ MODULE PROCEDURES ======================
         call Dump ( L1BFile, details=2 )
         call GetAllHDF5DSNames( L1BFile, DSNames )
         call Dump ( DSNames, 'DSNames' )
-        if ( .not. Default( NEVERFAIL, .false. ) ) call crash_burn
+        if ( .not. Default( neverFail, .false. ) ) call crash_burn
         NOMAFS = -1
         go to 9
       end if
@@ -1979,7 +1984,7 @@ contains ! ============================ MODULE PROCEDURES ======================
 
   ! ----------------------------------------  ReadL1BData_MF_hdf4  -----
   subroutine ReadL1BData_MF_hdf4 ( L1BFile, QuantityName, L1bData, &
-    & NoMAFs, Flag, FirstMAF, LastMAF, NEVERFAIL, L2AUX )
+    & NoMAFs, Flag, FirstMAF, LastMAF, NeverFail, L2AUX )
 
     ! Dummy arguments
     character(len=*), intent(in)   :: QUANTITYNAME ! Name of SD to read
@@ -2008,6 +2013,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     integer :: I
     integer :: L1FileHandle
     integer :: Me = -1                  ! String index for trace
+    integer :: MLSMsgLevel              ! Eigher MLSMSG_Error or MLSMSG_Warning
     logical :: MyNeverFail
     integer :: N_ATTRS
     integer :: NUMMAFS
@@ -2032,6 +2038,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     flag = 0
     MyNeverFail = .false.
     if ( present(NeverFail) ) MyNeverFail = NeverFail
+    MLSMsgLevel = merge(MLSMSG_Warning, MLSMSG_Error, myNeverFail)
 
     ! Find data sets for counterMAF & quantity by name
 
@@ -2039,41 +2046,37 @@ contains ! ============================ MODULE PROCEDURES ======================
     if ( sds_index == -1 ) then
       if ( .not. JUSTLIKEL2AUX ) then
         flag = NOCOUNTERMAFINDX
-        if ( MyNeverFail ) go to 9
-        call MLSMessage ( MLSMSG_Error, ModuleName, &
+        call MLSMessage ( MLSMsgLevel, ModuleName, &
         & 'Failed to find index of counterMAF data set.', MLSFile=L1BFile)
-      else
-        sds1_id = SD_NO_COUNTERMAF
+        go to 9
       end if
+      sds1_id = SD_NO_COUNTERMAF
     else
 
       sds1_id = sfselect(L1FileHandle, sds_index)
       if ( sds1_id == -1 ) then
         flag = NOCOUNTERMAFID
-        if ( MyNeverFail ) go to 9
-        call MLSMessage ( MLSMSG_Error, ModuleName, &
+        call MLSMessage ( MLSMsgLevel, ModuleName, &
         & 'Failed to find identifier of counterMAF data set.', MLSFile=L1BFile)
-        return
+        go to 9
       end if
     end if
 
     sds_index = sfn2index(L1FileHandle, quantityName)
     if ( sds_index == -1 ) then
       flag = NOQUANTITYINDEX
-      if ( MyNeverFail ) go to 9
       dummy = 'Failed to find index of quantity "' // trim(quantityName) // &
         & '" data set.'
-      call MLSMessage ( MLSMSG_Error, ModuleName, dummy, MLSFile=L1BFile )
-      return
+      call MLSMessage ( MLSMsgLevel, ModuleName, dummy, MLSFile=L1BFile )
+      go to 9
     end if
 
     sds2_id = sfselect(L1FileHandle, sds_index)
     if ( sds2_id == -1 ) then
       flag = NODATASETID
-      if ( MyNeverFail ) go to 9
-      call MLSMessage ( MLSMSG_Error, ModuleName, &
+      call MLSMessage ( MLSMsgLevel, ModuleName, &
       & 'Failed to find identifier of data set matching the index.', MLSFile=L1BFile)
-      return
+      go to 9
     end if
 
     ! Find rank (# of dimensions), dimension sizes of quantity data set
@@ -2082,10 +2085,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 
     if ( status == -1 ) then
       flag = NODATASETRANK
-      if ( MyNeverFail ) go to 9
-      call MLSMessage ( MLSMSG_Error, ModuleName,&
+      call MLSMessage ( MLSMsgLevel, ModuleName,&
       & 'Failed to find rank of data set.', MLSFile=L1BFile)
-      return
+      go to 9
     end if
 
     ! allocate, based on above SD, dim info; don't track allocatable sizes
@@ -2113,9 +2115,9 @@ contains ! ============================ MODULE PROCEDURES ======================
     if ( present ( firstMAF ) ) then
       if ( (firstMAF >= numMAFs) .or. (firstMAF < 0) ) then
         flag = FIRSTMAFNOTFOUND
-        if ( MyNeverFail ) go to 9
-        call MLSMEssage ( MLSMSG_Error, ModuleName, &
+        call MLSMEssage ( MLSMsgLevel, ModuleName, &
         & input_err // 'firstMAF (bad chunkNo?)', MLSFile=L1BFile )
+        go to 9
       end if
       l1bData%firstMAF = firstMAF
     else
@@ -2125,9 +2127,9 @@ contains ! ============================ MODULE PROCEDURES ======================
     if ( present (lastMAF) ) then
       if ( lastMAF < l1bData%firstMAF ) then
         flag = LASTMAFNOTFOUND
-        if ( MyNeverFail ) go to 9
-        call MLSMEssage ( MLSMSG_Error, ModuleName, &
+        call MLSMEssage ( MLSMsgLevel, ModuleName, &
         & input_err // 'last' , MLSFile=L1BFile)
+        go to 9
       end if
       if ( lastMAF >= numMAFs ) then
         l1bData%noMAFs = numMAFs - l1bData%firstMAF
@@ -2150,10 +2152,9 @@ contains ! ============================ MODULE PROCEDURES ======================
         & (/l1bData%noMAFs/), l1bData%counterMAF )
       if ( status == -1 ) then
         flag = CANTREADCOUNTERMAF
-        if ( MyNeverFail ) go to 9
-        call MLSMessage ( MLSMSG_Error, ModuleName, &
+        call MLSMessage ( MLSMsgLevel, ModuleName, &
         & MLSMSG_L1BRead // 'counterMAF.', MLSFile=L1BFile )
-        return
+        go to 9
       end if
     else
       ! Since we aren't reading these, just make them internally consistent
@@ -2172,9 +2173,9 @@ contains ! ============================ MODULE PROCEDURES ======================
         & l1bData%noMAFs), STAT=alloc_err )
       if ( alloc_err /= 0 ) then
         flag = CANTALLOCATECHARS
-        if ( MyNeverFail ) go to 9
         ! Announce the error
         call test_allocate ( alloc_err, ModuleName, "l1bData%charField" )
+        go to 9
       end if
       ! Account for the allocation size
       addr = 0
@@ -2228,16 +2229,14 @@ contains ! ============================ MODULE PROCEDURES ======================
 
     if ( status == -1 ) then
       flag = CANTREAD3DFIELD
-      if ( MyNeverFail ) go to 9
-      call MLSMessage ( MLSMSG_Error, ModuleName, &
+      call MLSMessage ( MLSMsgLevel, ModuleName, &
       & MLSMSG_L1BRead // quantityName, MLSFile=L1BFile )
-      return
+      go to 9
     else if ( status == -2 ) then
       flag = UNKNOWNDATATYPE
-      if ( MyNeverFail ) go to 9
-      call MLSMessage ( MLSMSG_Error, ModuleName, &
+      call MLSMessage ( MLSMsgLevel, ModuleName, &
       & 'Unknown data type in readl1bData', MLSFile=L1BFile   )
-      return
+      go to 9
     end if
 
     ! Terminate access to the data sets
@@ -2246,17 +2245,16 @@ contains ! ============================ MODULE PROCEDURES ======================
       status = sfendacc(sds1_id)
       if ( status == -1 ) then
         flag = CANTENDCOUNTERMAF
-        if ( MyNeverFail ) go to 9
         call MLSMessage ( MLSMSG_Warning, ModuleName, &
           & 'Failed to terminate access to data sets.', MLSFile=L1BFile )
         flag = -1
+        if ( MyNeverFail ) go to 9
       end if
     end if
 
     status = sfendacc(sds2_id)
     if ( status == -1 ) then
       flag = CANTENDQUANTITY
-      if ( MyNeverFail ) go to 9
       call MLSMessage ( MLSMSG_Warning, ModuleName, &
         & 'Failed to terminate access to data sets.', MLSFile=L1BFile )
       flag = -1
@@ -2271,7 +2269,7 @@ contains ! ============================ MODULE PROCEDURES ======================
 
   ! ----------------------------------------  ReadL1BData_MF_hdf5  -----
   subroutine ReadL1BData_MF_hdf5 ( L1BFile, QuantityName, L1bData, NoMAFs, &
-    & Flag, FirstMAF, LastMAF, NEVERFAIL, L2AUX )
+    & Flag, FirstMAF, LastMAF, NeverFail, L2AUX )
     use MLSFillValues, only: IsFillValue
     use HDF5, only: HSize_T
     use MLSHDF5, only: IsHDF5DSPresent, LoadFromHDF5DS, &
@@ -2300,6 +2298,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     integer :: L1FileHandle
     integer :: MAFoffset
     integer :: Me = -1                  ! String index for trace
+    integer :: MLSMsgLevel              ! Eigher MLSMSG_Error or MLSMSG_Warning
     logical :: MyNeverFail
     integer :: NUMMAFS
     integer :: RANK
@@ -2335,17 +2334,17 @@ contains ! ============================ MODULE PROCEDURES ======================
     flag = 0
     MyNeverFail = .false.
     if ( present(NeverFail) ) MyNeverFail = NeverFail
+    MLSMsgLevel = merge(MLSMSG_Warning, MLSMSG_Error, myNeverFail)
     isL2AUX = .false.
     if ( present(l2AUX) ) isL2AUX = L2AUX
 
     if ( .not. IsHDF5DSPresent(L1FileHandle, QuantityName) ) then
       flag = NOQUANTITYINDEX
       print *, 'Oops--' // trim(QuantityName) // ' not here'
-      if ( MyNeverFail ) go to 9
       dummy = 'Failed to find index of quantity "' // trim(quantityName) // &
         & '" data set.'
-      call MLSMessage ( MLSMSG_Error, ModuleName, dummy, MLSFile=L1BFile )
-      return
+      call MLSMessage ( MLSMsgLevel, ModuleName, dummy, MLSFile=L1BFile )
+      go to 9
     end if
 
     ! Find Qtype, rank and dimensions of QuantityName
@@ -2380,8 +2379,9 @@ contains ! ============================ MODULE PROCEDURES ======================
       if ( (firstMAF >= numMAFs) .or. (firstMAF < 0) ) then
         flag = FIRSTMAFNOTFOUND
         if ( MyNeverFail ) go to 9
-        call MLSMEssage ( MLSMSG_Error, ModuleName, &
+        call MLSMEssage ( MLSMsgLevel, ModuleName, &
         & input_err // 'firstMAF (bad chunkNo?)', MLSFile=L1BFile )
+        go to 9
       end if
       l1bData%firstMAF = firstMAF
     else
@@ -2391,10 +2391,10 @@ contains ! ============================ MODULE PROCEDURES ======================
     if ( present (lastMAF) ) then
       if ( lastMAF < l1bData%firstMAF ) then
         flag = LASTMAFNOTFOUND
-        if ( MyNeverFail ) go to 9
         call dump( (/lastMAF, l1bData%firstMAF/), 'lastMAF, l1bData%firstMAF')
-        call MLSMEssage ( MLSMSG_Error, ModuleName, &
+        call MLSMEssage ( MLSMsgLevel, ModuleName, &
         & input_err // 'last', MLSFile=L1BFile )
+        go to 9
       end if
       if ( lastMAF >= numMAFs ) then
         l1bData%noMAFs = numMAFs - l1bData%firstMAF
@@ -2419,9 +2419,9 @@ contains ! ============================ MODULE PROCEDURES ======================
       if ( DEEBUG ) print *, 'no counterMAF array in file'
       if ( .not. JUSTLIKEL2AUX ) then
         flag = NOCOUNTERMAFINDX
-        if ( MyNeverFail ) go to 9
-        call MLSMessage ( MLSMSG_Error, ModuleName, &
+        call MLSMessage ( MLSMsgLevel, ModuleName, &
         & 'Failed to find index of counterMAF data set.', MLSFile=L1BFile)
+        go to 9
       else
         if ( .not. isL2AUX ) call MLSMessage ( MLSMSG_Warning, ModuleName, &
         & 'Failed to find index of counterMAF data set.')
@@ -2681,10 +2681,10 @@ contains ! ============================ MODULE PROCEDURES ======================
       l1bdata%data_type = trim(Qtype) // Char_rank ! 'unknown'
       flag = UNKNOWNDATATYPE
       deallocate(dims, maxDims)
-      if ( MyNeverFail ) go to 9
-      call MLSMessage ( MLSMSG_Error, ModuleName, &
+      call MLSMessage ( MLSMsgLevel, ModuleName, &
         & 'Sorry--ReadL1BData_hdf5 has encountered an unknown data type: ' &
         & // trim(Qtype) // Char_rank, MLSFile=L1BFile)
+      go to 9
     end select
     if ( DEEBUG ) call dump(l1bData, 0)
 
@@ -3016,6 +3016,11 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.124  2018/08/03 23:23:08  vsnyder
+! Announce which file is being checked in CheckForCorruptFileDatabase.
+! Instead of ignoring errors in ReadL1BData_MF_... if NeverFail is present
+! and true, reduce message level from MLSMSG_Error to MLSMSG_Warning.
+!
 ! Revision 2.123  2018/04/19 23:41:09  pwagner
 ! Dont crash in ReadL1BData if NeverFail set
 !
