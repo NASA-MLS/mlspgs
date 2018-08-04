@@ -313,8 +313,8 @@ contains ! =========== Public procedures ===================================
         go to 9
       endif
     end select
-    ! If we got here, 
-    ! it was because we hadn't read and saved the proper data type
+    ! If we get here, 
+    ! it is because we hadn't read and saved the proper data type
     L1BFile => GetMLSFileByType( filedatabase, content='l1boa' )
     hdfversion = L1BFile%HDFVersion
     if ( DeeBug ) call outputnamedValue( 'name', name )
@@ -350,7 +350,7 @@ contains ! =========== Public procedures ===================================
     if ( any(isFillValue(l1bField%dpField) ) .and. & 
       & trim(readItemname) /= '/GHz/Lon') then 
       call output( 'Fill values among ' // trim(readItemName), advance='yes' ) 
-      call MLSMessage ( MLSMSG_Warning, trim(ModuleName) // 'L1BGeoLocation', & 
+      call MLSMessage ( MLSMSG_Warning, trim(ModuleName) // '%L1BGeoLocation', & 
         & 'Required monotonization' ) 
       verbose = ( trim(readItemname) == '/GHz/Lon' ) & 
         & .or. ( trim(readItemname) == '/GHz/GeodAngle' ) 
@@ -804,6 +804,9 @@ contains ! =========== Public procedures ===================================
 end module HGridsDatabase
 
 ! $Log$
+! Revision 2.43  2018/08/04 00:44:16  vsnyder
+! Spiff a warning message
+!
 ! Revision 2.42  2018/08/03 23:26:10  vsnyder
 ! Add Root (for tracing) and NeverFail (for debug printing) to L1BGeoLocation.
 ! Alphabetize local variable declarations.  Pass NeverFail to ReadL1BData.
