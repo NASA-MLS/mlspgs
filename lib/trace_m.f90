@@ -32,8 +32,8 @@ module TRACE_M
 
 contains ! ====     Public Procedures     ==============================
 
-! ------------------------------------------------  TRACE_BEGIN_B  -----
-  subroutine TRACE_BEGIN_B ( NAME_INPUT, NAME_C, ROOT, INDEX, String, Cond, Advance )
+! ------------------------------------------------  Trace_Begin_B  -----
+  subroutine Trace_Begin_B ( Name_Input, Name_C, Root, Index, String, Cond, Advance )
   ! If Name_I <= 0, use Create_String ( Name_C ) to give it a value.
   ! We assume the actual argument is a SAVE variable.  Thereby, if
   ! Name_I is positive, we assume it's the result of entering Name_C,
@@ -42,42 +42,41 @@ contains ! ====     Public Procedures     ==============================
   ! Print "ENTER NAME with ROOT = <node_id(root)>" with DEPTH dots in
   ! front.  Increment DEPTH.
 
-    use highoutput, only: outputnamedValue
-    use OUTPUT_M, only: OUTPUT
-    use STRING_TABLE, only: CREATE_STRING, STRING_TABLE_SIZE
+    use Output_m, only: Output
+    use String_Table, only: Create_String, String_Table_Size
 
-    integer, intent(in          ) :: NAME_INPUT
-    character(len=*), intent(in)  :: NAME_C
-    integer, intent(in), optional :: ROOT
-    integer, intent(in), optional :: INDEX
+    integer, intent(in          ) :: Name_Input
+    character(len=*), intent(in)  :: Name_C
+    integer, intent(in), optional :: Root
+    integer, intent(in), optional :: Index
     integer, intent(in), optional :: String ! To display after Name_I
     logical, intent(in), optional :: Cond   ! Print if true, default true
     character(len=*), intent(in), optional :: Advance
-    integer                       :: name_i
+    integer                       :: Name_i
     name_i = name_input
     if ( Verbose ) then
       call output( string_table_size(), &
         & before='Trace_Begin_B ' // trim(Name_c) // ' ', advance='yes' )
-      call outputnamedValue( 'name_i', name_i )
-      call outputnamedValue( 'name_c', name_c )
+      call output ( name_i, before='name_i: ' )
+      call output ( ' name_c: ' // trim(name_c), advance='yes' )
     endif
     if ( string_table_size() < 1 ) return
     if ( name_i <= 0 ) name_i = create_string ( trim(name_c) )
     call trace_begin ( name_i, root, index, string, cond, advance )
 
-  end subroutine TRACE_BEGIN_B
+  end subroutine Trace_Begin_B
 
-! ------------------------------------------------  TRACE_BEGIN_C  -----
-  subroutine TRACE_BEGIN_C ( NAME_C, ROOT, INDEX, String, Cond, Advance )
+! ------------------------------------------------  Trace_Begin_C  -----
+  subroutine Trace_Begin_C ( Name_C, Root, Index, String, Cond, Advance )
   ! Print "ENTER NAME with ROOT = <node_id(root)>" with DEPTH dots in
   ! front.  Increment DEPTH.
 
-    use OUTPUT_M, only: OUTPUT
-    use STRING_TABLE, only: CREATE_STRING, STRING_TABLE_SIZE
+    use Output_m, only: Output
+    use String_Table, only: Create_String, String_Table_Size
 
-    character(len=*), intent(in) :: NAME_C
-    integer, intent(in), optional :: ROOT
-    integer, intent(in), optional :: INDEX
+    character(len=*), intent(in) :: Name_C
+    integer, intent(in), optional :: Root
+    integer, intent(in), optional :: Index
     integer, intent(in), optional :: String ! To display after Name_C
     logical, intent(in), optional :: Cond   ! Print if true, default true
     character(len=*), intent(in), optional :: Advance
@@ -92,32 +91,31 @@ contains ! ====     Public Procedures     ==============================
 
     call trace_begin ( name_i, root, index, string, cond, advance )
 
-  end subroutine TRACE_BEGIN_C
+  end subroutine Trace_Begin_C
 
-! ------------------------------------------------  TRACE_BEGIN_I  -----
-  subroutine TRACE_BEGIN_I ( NAME, ROOT, INDEX, String, Cond, Advance )
-  ! Print "ENTER NAME with ROOT = <node_id(root)>" with DEPTH dots in
+! ------------------------------------------------  Trace_Begin_I  -----
+  subroutine Trace_Begin_I ( Name, Root, Index, String, Cond, Advance )
+  ! Print "Enter NAME with ROOT = <node_id(root)>" with DEPTH dots in
   ! front.  Increment DEPTH.
 
-    use highoutput, only: outputanynamedvalue
-    use CALL_STACK_M, only: STACK_T, PUSH_STACK, TOP_STACK
+    use Call_Stack_m, only: Stack_t, Push_Stack, Top_Stack
     use MLSCommon, only: MLSDebug, MLSVerbose, &
       & MLSDebugSticky, MLSVerboseSticky, MLSNamesAreVerbose, MLSNamesAreDebug
-    use MLSMESSAGEMODULE, only: MLSMESSAGECALLS
-    use MLSSTRINGLISTS, only: SWITCHDETAIL
-    use OUTPUT_M, only: Output, OUTPUTOPTIONS
-    use STRING_TABLE, only: GET_STRING, STRING_TABLE_SIZE
+    use MLSMessageModule, only: MLSMessageCalls
+    use MLSStringLists, only: SwitchDetail
+    use Output_m, only: NewLine, Output, OutputOptions
+    use String_Table, only: Get_String, String_Table_Size
 
-    integer, intent(in) :: NAME
-    integer, intent(in), optional :: ROOT
-    integer, intent(in), optional :: INDEX
+    integer, intent(in) :: Name
+    integer, intent(in), optional :: Root
+    integer, intent(in), optional :: Index
     integer, intent(in), optional :: String ! To display after Name_I
     logical, intent(in), optional :: Cond   ! Print if true, default true
     character(len=*), intent(in), optional :: Advance
 
     type(stack_t) :: Frame
     logical :: MyCond
-    character(32) :: PARENTNAME
+    character(32) :: ParentName
 
     ! Executable
     if ( Verbose ) &
@@ -134,10 +132,11 @@ contains ! ====     Public Procedures     ==============================
         & where=.true., advance=advance )
     else
       if ( verbose ) then
-        call outputanynamedvalue ( 'name', ivalue=name )
-        call outputanynamedvalue ( 'root', ivalue=root )
-        call outputanynamedvalue ( 'index', ivalue=index )
-        call outputanynamedvalue ( 'string', ivalue=string )
+        call output ( name, before='name: ' )
+        if ( present(root) ) call output ( root, before=' root: ' )
+        if ( present(index) ) call output ( index, before=' index: ' )
+        if ( present(string) ) call output ( string, before=' string: ' )
+        call newLine
       end if
       call push_stack ( name, root, index, string )
     end if
@@ -157,10 +156,10 @@ contains ! ====     Public Procedures     ==============================
     call get_string ( name, outputOptions%parentName )
     call MLSMessageCalls( 'push', name=outputOptions%parentName )
 
-  end subroutine TRACE_BEGIN_I
+  end subroutine Trace_Begin_I
 
-! --------------------------------------------------    TRACE_END  -----
-  subroutine TRACE_END ( NAME, INDEX, String, StringIndex, Cond )
+! --------------------------------------------------    Trace_End  -----
+  subroutine Trace_End ( Name, Index, String, StringIndex, Cond )
   ! Decrement DEPTH.  Print "EXIT NAME" with DEPTH dots in front.
 
   ! The only reason to provide Name is if you want to check whether stack
@@ -168,15 +167,15 @@ contains ! ====     Public Procedures     ==============================
   ! bother with this if you can see both Trace_Begin and Trace_end, and
   ! they're invoked with the same condition.
 
-    use CALL_STACK_M, only: POP_STACK, STACK_T, STACK_DEPTH ! , TOP_STACK
-    use MLSMESSAGEMODULE, only: MLSMESSAGECALLS
-    use MLSSTRINGLISTS, only: SWITCHDETAIL
-    use OUTPUT_M, only: NEWLINE, OUTPUT, OUTPUTOPTIONS
-    use STRING_TABLE, only: CREATE_STRING, DISPLAY_STRING, STRING_TABLE_SIZE
-    use TOGGLES, only: SWITCHES
+    use Call_Stack_m, only: Pop_Stack, Stack_T, Stack_Depth ! , Top_Stack
+    use MLSMessageModule, only: MLSMessageCalls
+    use MLSStringLists, only: SwitchDetail
+    use Output_m, only: NewLine, Output, OutputOptions
+    use String_Table, only: create_String, Display_String, String_Table_Size
+    use Toggles, only: Switches
 
-    character(len=*), optional, intent(in) :: NAME ! Checked but taken from stack
-    integer, intent(in), optional :: INDEX ! Use value from stack if not present
+    character(len=*), optional, intent(in) :: Name ! Checked but taken from stack
+    integer, intent(in), optional :: Index ! Use value from stack if not present
     character(len=*), intent(in), optional :: String
     integer, intent(in), optional :: StringIndex
     logical, intent(in), optional :: Cond  ! Print if true, default true
@@ -236,7 +235,7 @@ contains ! ====     Public Procedures     ==============================
     call MLSMessageCalls( 'pop' )
     call MLSMessageCalls( 'top', outputOptions%parentName )  
 
-  end subroutine TRACE_END
+  end subroutine Trace_End
 
 !------------------------ private procedures ---------------------
   ! -- CheckDate
@@ -281,6 +280,9 @@ contains ! ====     Public Procedures     ==============================
 end module TRACE_M
 
 ! $Log$
+! Revision 2.44  2018/08/04 00:30:16  vsnyder
+! Undo ALL CAPSing.  Remove dependence upon HighOutput
+!
 ! Revision 2.43  2016/03/25 00:38:43  pwagner
 ! Must not change name input to TRACE_BEGIN_B
 !
