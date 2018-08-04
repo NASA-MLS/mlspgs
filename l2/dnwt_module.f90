@@ -1295,9 +1295,10 @@ contains
     character(len=132) :: Name_Line     ! For names
     character(len=132) :: Output_Line   ! For values
 
-    interface Add_To_Line
-      procedure Add_To_Line_I, Add_To_Line_L, Add_To_Line_R
-    end interface
+!     Some processors don't accept this yet.
+!     interface Add_To_Line
+!       procedure Add_To_Line_I, Add_To_Line_L, Add_To_Line_R
+!     end interface
 
     myLevel = 1
     if ( present(level) ) myLevel = level
@@ -1324,14 +1325,14 @@ contains
     i = 1
     name_line = ''
     output_line = ''
-    if ( myLevel > 0 ) call add_to_line ( ajscal, 'AJSCAL' )
-    if ( myLevel > 0 ) call add_to_line ( dxmaxi, 'DXMAXI' )
-    if ( myLevel > 0 ) call add_to_line ( dxnois, 'DXNOIS' )
-    if ( myLevel > 0 ) call add_to_line ( relsf,  'RELSF' )
-    if ( myLevel > 0 ) call add_to_line ( spmini, 'SPMINI' )
-    if ( myLevel > 0 ) call add_to_line ( spstrt, 'SPSTRT' )
-    if ( myLevel > 0 ) call add_to_line ( tolxa,  'TOLXA' )
-    if ( myLevel > 0 ) call add_to_line ( tolxr,  'TOLXR' )
+    if ( myLevel > 0 ) call add_to_line_R ( ajscal, 'AJSCAL' )
+    if ( myLevel > 0 ) call add_to_line_R ( dxmaxi, 'DXMAXI' )
+    if ( myLevel > 0 ) call add_to_line_R ( dxnois, 'DXNOIS' )
+    if ( myLevel > 0 ) call add_to_line_R ( relsf,  'RELSF' )
+    if ( myLevel > 0 ) call add_to_line_R ( spmini, 'SPMINI' )
+    if ( myLevel > 0 ) call add_to_line_R ( spstrt, 'SPSTRT' )
+    if ( myLevel > 0 ) call add_to_line_R ( tolxa,  'TOLXA' )
+    if ( myLevel > 0 ) call add_to_line_R ( tolxr,  'TOLXR' )
     if ( i/=1 ) call print_lines
 
     if ( present(aj) ) then
@@ -1340,54 +1341,53 @@ contains
       call output ( output_line(1:14*myWidth), advance='yes' )
       output_line = ''
 
-      call add_to_line ( aj%ajn,        'AJN' )
-      if ( myLevel > 0 ) call add_to_line ( aj%axmax,      'AXMAX' )
-      if ( myLevel > 0 ) call add_to_line ( aj%axmaxb,     'AXMAXB' )
-      if ( myLevel > 0 ) call add_to_line ( aj%cait,       'CAIT' )
-      call add_to_line ( aj%cdxdxl,     'CDXDXL' )
-      call add_to_line ( aj%cgdx,       'CGDX' )
-      call add_to_line ( aj%condai,     'CONDAI' )
-      call add_to_line ( aj%diag,       'DIAG' )
-      call add_to_line ( aj%dxbad,      'DXBAD' )
-      if ( myLevel > 0 ) call add_to_line ( aj%dxi,        'DXI' )
-      call add_to_line ( aj%dxinc,      'DXINC' )
-      if ( myLevel > 0 ) call add_to_line ( aj%dxnbig,     'DXNBIG' )
-      call add_to_line ( aj%dxfail,     'DXFAIL' )
-      call add_to_line ( aj%dxdx,       'DXDX' )
-      call add_to_line ( aj%dxdxl,      'DXDXL' )
-      call add_to_line ( aj%dxn,        'DXN' )
-      if ( myLevel > 0 ) call add_to_line ( aj%dxnl,       'DXNL' )
-      call add_to_line ( aj%fnmin,      'FNMIN' )
-      if ( myLevel > 0 ) call add_to_line ( aj%fnminb,     'FNMINB' )
-      call add_to_line ( aj%fnorm,      'FNORM' )
-      if ( myLevel > 0 ) call add_to_line ( aj%fnormb,     'FNORMB' )
-      if ( myLevel > 0 ) call add_to_line ( aj%fnorml,     'FNORML' )
-      call add_to_line ( sqrt(aj%fnxe), 'FNXE**.5')
-      call add_to_line ( aj%frz,        'FRZ' )
-      if ( myLevel > 0 ) call add_to_line ( aj%frzb,       'FRZB' )
-      if ( myLevel > 0 ) call add_to_line ( aj%frzl,       'FRZL' )
-      call add_to_line ( aj%gdx,        'GDX' )
-      if ( myLevel > 0 ) call add_to_line ( aj%gfac,       'GFAC' )
-      call add_to_line ( aj%gradn,      'GRADN' )
-      if ( myLevel > 0 ) call add_to_line ( aj%gradnb,     'GRADNB' )
-      if ( myLevel > 0 ) call add_to_line ( aj%gradnl,     'GRADNL' )
-      call add_to_line ( aj%kfail,      'KFAIL' )
-      call add_to_line ( aj%qnsq,       'QNSQ' )
-      call add_to_line ( aj%sp,         'SP ' )
-      if ( myLevel > 0 ) call add_to_line ( aj%spact,      'SPACT' )
-      if ( myLevel > 0 ) call add_to_line ( aj%spb,        'SPB' )
-      if ( myLevel > 0 ) call add_to_line ( aj%spfac,      'SPFAC' )
-      if ( myLevel > 0 ) call add_to_line ( aj%spg,        'SPG' )
-      if ( myLevel > 0 ) call add_to_line ( aj%spinc,      'SPINC' )
-      call add_to_line ( aj%spl,        'SPL' )
-      call add_to_line ( aj%sq,         'SQ' )
-      if ( myLevel > 0 ) call add_to_line ( aj%sqb,        'SQB' )
-      if ( myLevel > 0 ) call add_to_line ( aj%sql,        'SQL' )
-      call add_to_line ( aj%sqmin,      'SQMIN' )
-      call add_to_line ( aj%sqt,        'SQT' )
-      call add_to_line ( aj%kfail,      'KFAIL' )
-      call add_to_line ( aj%big,        'BIG' )
-      call add_to_line ( aj%starting,   'STARTING' )
+      call add_to_line_R ( aj%ajn,        'AJN' )
+      if ( myLevel > 0 ) call add_to_line_R ( aj%axmax,      'AXMAX' )
+      if ( myLevel > 0 ) call add_to_line_R ( aj%axmaxb,     'AXMAXB' )
+      if ( myLevel > 0 ) call add_to_line_L ( aj%big,        'BIG' )
+      if ( myLevel > 0 ) call add_to_line_R ( aj%cait,       'CAIT' )
+      call add_to_line_R ( aj%cdxdxl,     'CDXDXL' )
+      call add_to_line_R ( aj%cgdx,       'CGDX' )
+      call add_to_line_R ( aj%condai,     'CONDAI' )
+      call add_to_line_R ( aj%diag,       'DIAG' )
+      call add_to_line_R ( aj%dxbad,      'DXBAD' )
+      if ( myLevel > 0 ) call add_to_line_R ( aj%dxi,        'DXI' )
+      call add_to_line_R ( aj%dxinc,      'DXINC' )
+      if ( myLevel > 0 ) call add_to_line_R ( aj%dxnbig,     'DXNBIG' )
+      call add_to_line_R ( aj%dxfail,     'DXFAIL' )
+      call add_to_line_R ( aj%dxdx,       'DXDX' )
+      call add_to_line_R ( aj%dxdxl,      'DXDXL' )
+      call add_to_line_R ( aj%dxn,        'DXN' )
+      if ( myLevel > 0 ) call add_to_line_R ( aj%dxnl,       'DXNL' )
+      call add_to_line_R ( aj%fnmin,      'FNMIN' )
+      if ( myLevel > 0 ) call add_to_line_R ( aj%fnminb,     'FNMINB' )
+      call add_to_line_R ( aj%fnorm,      'FNORM' )
+      if ( myLevel > 0 ) call add_to_line_R ( aj%fnormb,     'FNORMB' )
+      if ( myLevel > 0 ) call add_to_line_R ( aj%fnorml,     'FNORML' )
+      call add_to_line_R ( sqrt(aj%fnxe), 'FNXE**.5')
+      call add_to_line_R ( aj%frz,        'FRZ' )
+      if ( myLevel > 0 ) call add_to_line_R ( aj%frzb,       'FRZB' )
+      if ( myLevel > 0 ) call add_to_line_R ( aj%frzl,       'FRZL' )
+      call add_to_line_R ( aj%gdx,        'GDX' )
+      if ( myLevel > 0 ) call add_to_line_R ( aj%gfac,       'GFAC' )
+      call add_to_line_R ( aj%gradn,      'GRADN' )
+      if ( myLevel > 0 ) call add_to_line_R ( aj%gradnb,     'GRADNB' )
+      if ( myLevel > 0 ) call add_to_line_R ( aj%gradnl,     'GRADNL' )
+      call add_to_line_I ( aj%kfail,      'KFAIL' )
+      call add_to_line_R ( aj%qnsq,       'QNSQ' )
+      call add_to_line_R ( aj%sp,         'SP ' )
+      if ( myLevel > 0 ) call add_to_line_R ( aj%spact,      'SPACT' )
+      if ( myLevel > 0 ) call add_to_line_R ( aj%spb,        'SPB' )
+      if ( myLevel > 0 ) call add_to_line_R ( aj%spfac,      'SPFAC' )
+      if ( myLevel > 0 ) call add_to_line_R ( aj%spg,        'SPG' )
+      if ( myLevel > 0 ) call add_to_line_R ( aj%spinc,      'SPINC' )
+      call add_to_line_R ( aj%spl,        'SPL' )
+      call add_to_line_R ( aj%sq,         'SQ' )
+      if ( myLevel > 0 ) call add_to_line_R ( aj%sqb,        'SQB' )
+      if ( myLevel > 0 ) call add_to_line_R ( aj%sql,        'SQL' )
+      call add_to_line_R ( aj%sqmin,      'SQMIN' )
+      call add_to_line_R ( aj%sqt,        'SQT' )
+      call add_to_line_L ( aj%starting,   'STARTING' )
       if ( i /=1 ) call print_lines
 
     end if
@@ -1396,6 +1396,7 @@ contains
     call output ( output_line(1:14*myWidth), advance='yes' )
 
   contains
+
     subroutine Add_To_Line_I ( Value, Name )
       integer, intent(in) :: Value
       character(len=*), intent(in) :: Name
@@ -1515,6 +1516,10 @@ contains
 end module DNWT_Module
 
 ! $Log$
+! Revision 2.57  2018/08/04 02:06:51  vsnyder
+! Use specific Add_To_Line_? routines because some processors still don't
+! allow internal procedures to be specifics for generics.
+!
 ! Revision 2.56  2018/07/23 23:29:56  vsnyder
 ! Remove ChiSqMinNorm and ChiSqNorm from DNWT AJ structure because DNWT
 ! doesn't compute them or use them.
