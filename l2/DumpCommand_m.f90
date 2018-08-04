@@ -1462,7 +1462,7 @@ contains
           case ( f_allL2PCs )
             call dumpL2PC( L2PCDataBase, details, options=optionsString )
           case ( f_allLines )
-            if ( associated(lines) ) then
+            if ( allocated(lines) ) then
               call dump_lines_database
             else
               call announceError ( son, noLines )
@@ -3187,6 +3187,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.140  2018/08/04 02:10:27  vsnyder
+! Make Lines database allocatable instead of a pointer
+!
 ! Revision 2.139  2018/07/27 23:18:48  pwagner
 ! Renamed level 2-savvy MLSMessage MLSL2Message
 !
