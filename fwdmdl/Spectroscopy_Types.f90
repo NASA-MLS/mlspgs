@@ -69,7 +69,11 @@ module Spectroscopy_Types
   end type Catalog_T
 
   ! The lines database:
-  type(Line_T), pointer, public, save :: Lines(:) => NULL()
+  type(Line_T), allocatable, target, public, save :: Lines(:)
+
+  interface AddLineToDatabase
+    module procedure AddLineToDatabase_A, AddLineToDatabase_P
+  end interface AddLineToDatabase
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -79,8 +83,28 @@ module Spectroscopy_Types
 
 contains
 
-  ! ------------------------------------------  AddLineToDatabase  -----
-  integer function AddLineToDatabase ( Database, Item )
+  ! ----------------------------------------  AddLineToDatabase_A  -----
+  integer function AddLineToDatabase_A ( Database, Item ) result ( addLineToDatabase )
+  ! Add a line to the Lines database, creating the database
+  ! if necessary.
+
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+
+    ! Dummy arguments
+    type(line_T), allocatable, dimension(:) :: Database
+    type(line_T), intent(in) :: Item
+
+
+    ! Local variables
+    type(line_T), allocatable, dimension(:) :: tempDatabase
+
+    include "addItemToDatabase_A.f9h"
+
+    AddLineToDatabase = newSize
+  end function AddLineToDatabase_A
+
+  ! ----------------------------------------  AddLineToDatabase_P  -----
+  integer function AddLineToDatabase_P ( Database, Item ) result ( addLineToDatabase )
   ! Add a line to the Lines database, creating the database
   ! if necessary.
 
@@ -92,12 +116,12 @@ contains
 
 
     ! Local variables
-    type(line_T), dimension(:), pointer :: tempDatabase
+    type(line_T), pointer, dimension(:) :: tempDatabase
 
     include "addItemToDatabase.f9h"
 
     AddLineToDatabase = newSize
-  end function AddLineToDatabase
+  end function AddLineToDatabase_P
 
 ! ------------------------------------------------  not_used_here  -----
 !--------------------------- end bloc --------------------------------------
@@ -113,6 +137,9 @@ contains
 end module Spectroscopy_Types
 
 ! $Log$
+! Revision 2.8  2018/08/04 02:10:00  vsnyder
+! Make Lines database allocatable instead of a pointer
+!
 ! Revision 2.7  2018/04/11 22:25:23  vsnyder
 ! Remove USE for unused names
 !
