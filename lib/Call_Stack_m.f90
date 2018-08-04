@@ -184,16 +184,16 @@ contains ! ====     Public Procedures     ==============================
       end do
       if ( present(before) ) call output ( before )
       if ( stack(depth)%text > 0 ) call display_string ( stack(depth)%text )
+      if ( present(index) ) then
+        call output ( index, before=' ' )
+      else if ( stack(depth)%index >= 0 ) then
+        call output ( stack(depth)%index, before=' ' )
+      end if
       if ( stack(depth)%string > 0 ) &
         & call display_string ( stack(depth)%string, before=' ' )
       if ( say_when .or. myShowTime ) then
         call show_when
         if ( present(used) ) call output ( ' used ' // trim(adjustl(used)) //  ' cpu' )
-      end if
-      if ( present(index) ) then
-        call output ( index, before=' ' )
-      else if ( stack(depth)%index >= 0 ) then
-        call output ( stack(depth)%index, before=' ' )
       end if
       if ( present(string) ) call output ( ' ' // string )
       if ( present(stringIndex) ) then
@@ -519,6 +519,9 @@ contains ! ====     Public Procedures     ==============================
 end module Call_Stack_m
 
 ! $Log$
+! Revision 2.34  2018/08/04 00:29:16  vsnyder
+! Output Index after Name or Text instead of after When
+!
 ! Revision 2.33  2017/01/04 19:16:53  pwagner
 ! Optional arg StackIsEmpty to Dump_Stack prevents printing if stackIsEmpty
 !
