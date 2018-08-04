@@ -129,7 +129,7 @@ contains ! =====  Public Procedures  ===================================
     character ( len=80 ) :: SIGNAME     ! The signal
     integer :: Son                      ! Of root or key
     integer :: Status                   ! From Allocate or Deallocate
-    type(line_t), pointer, dimension(:) :: TempLines
+    type(line_t), allocatable :: TempLines(:)
     integer :: TheSignal                ! SubRosa for a signal
     integer :: THISMANY                 ! Conted up to noSignals
     logical :: TIMING                   ! For S_Time
@@ -162,7 +162,7 @@ contains ! =====  Public Procedures  ===================================
 
     ! Determine size of created or expanded lines database.
     offsetLines = 0
-    if ( associated(lines) ) offsetLines = size(lines)
+    if ( allocated(lines) ) offsetLines = size(lines)
     numLines = offsetLines
     do i = 2, nsons(root)-1             ! Skip names of section
       son = subtree(i,root)
@@ -175,20 +175,20 @@ contains ! =====  Public Procedures  ===================================
     end do
 
     ! Create or expand the Lines database
-    tempLines => Lines
-    allocate ( lines(numLines), stat=status )
+    allocate ( tempLines(numLines), stat=status )
     addr = 0
-    if ( status == 0 .and. numLines > 0 ) addr = transfer(c_loc(lines(1)), addr)
-    call test_allocate ( status, moduleName, "Lines", ubounds=numLines, &
-      & elementSize = storage_size(lines) / 8, address=addr )
-    if ( associated(tempLines) ) then
-      lines(:offsetLines) = tempLines
-      s = size(tempLines) * storage_size(tempLines) / 8
+    if ( status == 0 .and. numLines > 0 ) addr = transfer(c_loc(tempLines(1)), addr)
+    call test_allocate ( status, moduleName, "TempLines", ubounds=numLines, &
+      & elementSize = storage_size(tempLines) / 8, address=addr )
+    if ( allocated(lines) ) then
+      tempLines(:offsetLines) = lines
+      s = size(lines) * storage_size(lines) / 8
       addr = 0
-      if ( s > 0 ) addr = transfer(c_loc(tempLines(1)), addr)
-      deallocate ( tempLines, stat=status )
+      if ( s > 0 ) addr = transfer(c_loc(lines(1)), addr)
+      deallocate ( lines, stat=status )
       call test_deallocate ( status, moduleName, "TempLines", s, address=addr )
     end if
+    call move_alloc ( tempLines, lines )
 
     numLines = offsetLines
     do i = 2, nsons(root)-1             ! Skip names of section
@@ -541,7 +541,7 @@ contains ! =====  Public Procedures  ===================================
 
     integer(c_intptr_t) :: Addr         ! For tracing
     integer :: I, S, Status                   ! From deallocate
-    if ( .not. associated(lines) ) return
+    if ( .not. allocated(lines) ) return
     do i = 1, size(lines)
       call deallocate_test ( lines(i)%qn, "Lines(i)%QN", moduleName )
       call deallocate_test ( lines(i)%signals, "Lines(i)%Signals", moduleName )
@@ -610,7 +610,7 @@ contains ! =====  Public Procedures  ===================================
     integer :: MyStart, MyEnd
     logical :: MyNumber
 
-    if ( .not. associated(lines) ) then
+    if ( .not. allocated(lines) ) then
       call output ( 'Spectroscopy lines database is not allocated', advance='yes' )
       return
     end if
@@ -839,7 +839,7 @@ contains ! =====  Public Procedures  ===================================
     character(len=63) :: MoleculeName
     real, dimension(1,1,1) :: values
 
-    if (.not. associated(lines)) &
+    if (.not. allocated(lines)) &
        call MLSMessage( MLSMSG_Error, moduleName // '%ReadIsotopeRatios', &
          & 'lines is still unassociated' )
 
@@ -907,7 +907,7 @@ contains ! =====  Public Procedures  ===================================
     character(len=maxSigLen), pointer :: LineNames(:)
     type (MLSFile_T)   :: MLSFile
     type(catalog_t), pointer :: MyCatalog(:)
-    type(line_t), pointer :: MyLines(:)
+    type(line_t), allocatable :: MyLines(:)
     character(len=63) :: MoleculeName
     character(len=63), pointer :: MoleculeNames(:)
     integer :: NCat              ! Number of catalog items
@@ -937,7 +937,7 @@ contains ! =====  Public Procedures  ===================================
     character(len=5) :: What
 
 ! Should be OK now
-!     if (.not. associated(lines)) &
+!     if (.not. allocated(lines)) &
 !        call MLSMessage(MLSMSG_Error, moduleName, "lines is NULL")
 
     error = .false.
@@ -967,14 +967,14 @@ contains ! =====  Public Procedures  ===================================
       call getHDF5DSDims ( fileID, 'Delta', Shp )
       nLines = shp(1)
       line1 = 0
-      if ( associated(lines) ) line1 = size(lines)
+      if ( allocated(lines) ) line1 = size(lines)
       lineN = line1 + nLines
       allocate ( myLines(lineN), stat=iostat )
       addr = 0
       if ( iostat == 0 .and. lineN > 0 ) addr = transfer(c_loc(myLines(1)), addr)
       call test_allocate ( iostat, moduleName, 'Lines', ubounds=lineN, &
         & elementSize = storage_size(myLines) / 8, address=addr )
-      if ( associated(lines) ) then
+      if ( allocated(lines) ) then
         myLines(:line1) = lines
         s = size(lines) * storage_size(lines) / 8
         addr = 0
@@ -982,7 +982,7 @@ contains ! =====  Public Procedures  ===================================
         deallocate ( lines, stat=iostat )
         call test_deallocate ( iostat, moduleName, 'Lines', s, address=addr )
       end if
-      lines => myLines
+      call move_alloc ( myLines, lines )
       ! Fill in the expanded part
       nullify ( lineNames, polarizedIndices, polarizedList, &
         & qnIndices, qnList, signalIndices, signalList, &
@@ -1321,7 +1321,7 @@ contains ! =====  Public Procedures  ===================================
     character(len=63) :: SpeciesName
     character(len=5) :: What
 
-    if ( .not. associated(lines) ) then
+    if ( .not. allocated(lines) ) then
       call startErrorMessage ( where )
       call output ( ' The Lines database doesn''t exist yet.', advance='yes' )
       go to 99
@@ -1576,6 +1576,9 @@ contains ! =====  Public Procedures  ===================================
 end module SpectroscopyCatalog_m
 
 ! $Log$
+! Revision 2.64  2015/03/28 02:06:01  vsnyder
+! Added stuff to trace allocate/deallocate addresses
+!
 ! Revision 2.63  2014/09/05 20:53:50  vsnyder
 ! More complete and accurate allocate/deallocate size tracking
 !
