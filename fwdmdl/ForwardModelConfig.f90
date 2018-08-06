@@ -536,8 +536,7 @@ contains
       use MLSSignals_M, only: GetRadiometerFromSignal
       use MLSStringLists, only: SwitchDetail
       use MoreTRee, only: StartErrorMessage
-      use SpectroscopyCatalog_M, only: Catalog, Empty_Cat, Line_T, &
-        & Lines, MostLines
+      use SpectroscopyCatalog_M, only: Catalog, Empty_Cat, Lines, MostLines
       use String_Table, only: Display_String ! , Get_String
       use Toggles, only: Switches
 
@@ -558,7 +557,6 @@ contains
       integer :: S, SX     ! Indices for sidebands
       logical :: SawNoLines ! Saw a species without lines or continuum
       integer :: STAT      ! Status from allocate or deallocate
-      type (line_T), pointer :: ThisLine
       integer :: Z         ! Index for fwdModelConf%Signals
 
       if ( noLinesMsg < 0 ) noLinesMsg = switchDetail(switches, '0sl') ! Done once
@@ -612,54 +610,55 @@ contains
                 lineFlag = 1
               else
                 do l = 1, size ( catalog(n)%lines )
-                  thisLine => lines(catalog(n)%lines(l))
-                  if ( associated(thisLine%signals) ) then
-                    polarized = 1 ! not polarized
-                    ! Work out whether to do this line
-                    do z = 1, size(fwdModelConf%signals)
-                      if ( fwdModelConf%allLinesForRadiometer ) then
-                        doThis = .false.
-                        do i = 1, size(thisLine%signals)
-                          ! Tried to make GetRadiometerFromSignal elemental, but compile time
-                          ! in LF95 (optimized) for Construct.f90 went nuts! :-(
-                          if ( GetRadiometerFromSignal ( thisLine%signals(i) ) == &
-                            & fwdModelConf%signals(z)%radiometer ) then
-                            doThis = .true.
-                            if ( .not. fwdModelConf%polarized ) &
-                              exit   ! loop over signals for line -- no need to check for
-                            ! polarized lines
-                            if ( associated(thisLine%polarized) ) then
-                              if ( thisLine%polarized(i) ) then
-                                polarized = -1 ! polarized
-                                exit   ! loop over signals for line -- one signal
-                                ! that sees a polarized line is enough to turn on
-                                ! the polarized method
+                  associate ( thisLine => lines(catalog(n)%lines(l)) )
+                    if ( associated(thisLine%signals) ) then
+                      polarized = 1 ! not polarized
+                      ! Work out whether to do this line
+                      do z = 1, size(fwdModelConf%signals)
+                        if ( fwdModelConf%allLinesForRadiometer ) then
+                          doThis = .false.
+                          do i = 1, size(thisLine%signals)
+                            ! Tried to make GetRadiometerFromSignal elemental, but compile time
+                            ! in LF95 (optimized) for Construct.f90 went nuts! :-(
+                            if ( GetRadiometerFromSignal ( thisLine%signals(i) ) == &
+                              & fwdModelConf%signals(z)%radiometer ) then
+                              doThis = .true.
+                              if ( .not. fwdModelConf%polarized ) &
+                                exit   ! loop over signals for line -- no need to check for
+                              ! polarized lines
+                              if ( associated(thisLine%polarized) ) then
+                                if ( thisLine%polarized(i) ) then
+                                  polarized = -1 ! polarized
+                                  exit   ! loop over signals for line -- one signal
+                                  ! that sees a polarized line is enough to turn on
+                                  ! the polarized method
+                                end if
                               end if
                             end if
+                          end do ! End loop over signals for line
+                        else
+                          ! Not doing all lines for radiometer, be more selective
+                          doThis = any ( &
+                            & ( thisLine%signals == fwdModelConf%signals(z)%index ) .and. &
+                            & ( ( thisLine%sidebands == 0 ) .or. ( thisLine%sidebands == s ) ) )
+                          if ( fwdModelConf%polarized .and. doThis .and. &
+                            & associated(thisLine%polarized) ) then
+                            if ( any(thisLine%polarized) ) polarized = -1 ! polarized
                           end if
-                        end do ! End loop over signals for line
-                      else
-                        ! Not doing all lines for radiometer, be more selective
-                        doThis = any ( &
-                          & ( thisLine%signals == fwdModelConf%signals(z)%index ) .and. &
-                          & ( ( thisLine%sidebands == 0 ) .or. ( thisLine%sidebands == s ) ) )
-                        if ( fwdModelConf%polarized .and. doThis .and. &
-                          & associated(thisLine%polarized) ) then
-                          if ( any(thisLine%polarized) ) polarized = -1 ! polarized
                         end if
-                      end if
 
-                      if ( fwdModelConf%sidebandStart == fwdModelConf%sidebandStop ) &
-                        & doThis = doThis .and. &
-                        & any( ( thisLine%sidebands == fwdModelConf%sidebandStart ) &
-                        & .or. ( thisLine%sidebands == 0 ) )
-                      if ( doThis ) then
-                        lineFlag(l) = polarized
-                        if ( polarized < 0 .or. .not. fwdModelConf%polarized ) &
-                          exit   ! loop over signals requested in fwm
-                      end if
-                    end do ! z End loop over signals requested in fwm
-                  end if
+                        if ( fwdModelConf%sidebandStart == fwdModelConf%sidebandStop ) &
+                          & doThis = doThis .and. &
+                          & any( ( thisLine%sidebands == fwdModelConf%sidebandStart ) &
+                          & .or. ( thisLine%sidebands == 0 ) )
+                        if ( doThis ) then
+                          lineFlag(l) = polarized
+                          if ( polarized < 0 .or. .not. fwdModelConf%polarized ) &
+                            exit   ! loop over signals requested in fwm
+                        end if
+                      end do ! z End loop over signals requested in fwm
+                    end if
+                  end associate
                 end do     ! l End loop over lines
               end if       ! End case where allLinesInCatalog not set
 
@@ -1577,6 +1576,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.142  2018/05/15 03:26:25  vsnyder
+! Change Mie tables from pointer to allocatable
+!
 ! Revision 2.141  2018/04/11 22:25:23  vsnyder
 ! Remove USE for unused names
 !
