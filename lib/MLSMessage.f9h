@@ -1198,9 +1198,9 @@ contains
     if ( my_adv .and. severity >= MLSMSG_Severity_to_quit ) then
       ! Here's a chance to dump facts about last file we were reading/writing
       if ( present(MLSFile) ) then
-        call DumpFile_old( MLSFile )
+        call Dump_MLSFile( MLSFile )
       else if ( MLSMessageConfig%MLSFile%name /= ' ' ) then
-        call DumpFile_old( MLSMessageConfig%MLSFile )
+        call Dump_MLSFile( MLSMessageConfig%MLSFile )
       end if
       ! Here's a chance to use our (separate) call stack
       call dump_stack( where=.true., CPU=.true., StackIsEmpty=StackIsEmpty )
@@ -1218,6 +1218,9 @@ contains
 
 !
 ! $Log$
+! Revision 2.53  2018/08/06 22:41:28  pwagner
+! Reorient DumpFile_old to Dump_MLSFile
+!
 ! Revision 2.52  2018/08/06 20:22:55  pwagner
 ! Warn and Dump if CallStack about to burst
 !
