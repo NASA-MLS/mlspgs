@@ -484,11 +484,13 @@ contains ! ====     Public Procedures     ==============================
 
 ! ----------------------------------------------------  Deallocate_Stack  -----
   subroutine Deallocate_Stack
+    use Allocate_Deallocate, only: Test_Deallocate
     ! internal variables
     integer :: stat
     ! Executable
     if ( .not. allocated(stack) ) return
     deallocate ( stack, stat=stat )
+    call test_deallocate ( stat, ModuleName, 'Stack' )
     stack_ptr = 0
     Stack_Doublings = 0
   end subroutine Deallocate_Stack
@@ -519,6 +521,9 @@ contains ! ====     Public Procedures     ==============================
 end module Call_Stack_m
 
 ! $Log$
+! Revision 2.35  2018/08/06 20:00:59  vsnyder
+! Test the status Deallocate_Stack
+!
 ! Revision 2.34  2018/08/04 00:29:16  vsnyder
 ! Output Index after Name or Text instead of after When
 !
