@@ -2262,7 +2262,7 @@ contains ! =====     Public Procedures     =============================
             end if
           end do
         case ( z_output )
-          exit sectionLoop
+          ! exit sectionLoop ! No, don't exit the section loop w/o trace_end
         case default
         end select
         call trace_end ( "ComputeAllHGridOffsets.loop", &
@@ -2753,6 +2753,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.153  2018/08/06 20:24:15  pwagner
+! Dont exit section loop in ComputeAllHGridOffsets w/o trace_end
+!
 ! Revision 2.152  2018/08/03 23:45:43  vsnyder
 ! Add tracing to several routines.  Improve some debugging output.  Add
 ! NeverFail=.true. to L1BGeolcation calls in verbose case to prevent crashing
