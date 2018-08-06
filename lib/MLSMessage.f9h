@@ -602,6 +602,11 @@ contains
           ! name = MLSCallStack%txt(MLSCallStack%ind(oldSize)+1: &
           !                        MLSCallStack%ind(oldSize+1))
           m = min(oldSize,maxStackDepth) + 1
+          if ( MLSCallStack%ind(m-1) > len(MLSCallStack%txt) ) then
+            call printitout( 'Bad news--call stack is bursting', &
+              & MLSMSG_Error, 40, NoExit =.true. )
+            call DumpStack
+          endif
           name = MLSCallStack%txt(MLSCallStack%ind(m-2)+1: &
                                     MLSCallStack%ind(m-1))
         end if
@@ -1047,37 +1052,6 @@ contains
     call PrintItOut( trim(line), MLSMSG_Info )
   end subroutine dump
 
-  ! ---------------------------------------------------  DumpFile_old  -----
-  subroutine DumpFile_old ( MLSFile  )
-    ! Show everything about it
-    type(MLSFile_T)      :: MLSFile
-    ! integer, parameter :: SEVERE = MLSMSG_Error
-    logical, parameter   :: UseMLSFileModuleDump = .true.
-    ! Executable code
-    if ( UseMLSFileModuleDump ) then
-      call Dump_MLSFile( MLSFile )
-      return
-    endif
-    call printitout ( 'MLS File Info: ', MLSMSG_Info )                                  
-    call dump ( '(name) ', charValue=trim(MLSFile%Name))                                  
-    call dump ( 'short name ', charValue=trim(MLSFile%shortName))                                  
-    call dump ( '    Type (int)   : ', MLSFile%Type)
-    call dump ( '    Type         : ', charValue=trim(MLSFile%TypeStr))
-    call dump ( '    Access       : ', charValue=trim(accessDFACCToStr(MLSFile%access)))
-    call dump ( '    content      : ', charValue=trim(MLSFile%content))
-    call dump ( '    last Operatn : ', charValue=trim(MLSFile%lastOperation))
-    call dump ( '    File ID      : ', MLSFile%FileId%f_id)
-    call dump ( '    Group ID     : ', MLSFile%FileId%grp_id)
-    call dump ( '    DataSet ID   : ', MLSFile%FileId%sd_id)
-    call dump ( '    PCF ID       : ', MLSFile%PCFId)
-    call dump ( '    PCF Range    : ', MLSFile%PCFidRange%Bottom)
-    call dump ( '                 : ', MLSFile%PCFidRange%Top)
-    call dump ( '    hdf version  : ', MLSFile%HDFVersion)
-    call dump ( '    record length: ', MLSFile%recordLength)
-    call dump ( '    Open?        : ', logValue= MLSFile%StillOpen)
-    call dump ( '    error code   : ', MLSFile%errorCode)
-  end subroutine DumpFile_old
-
   ! ------------------------------------------ Dump_MLSFile ------------
   ! Uses  OutputTable 
   subroutine Dump_MLSFile ( MLSFile, details )
@@ -1244,6 +1218,9 @@ contains
 
 !
 ! $Log$
+! Revision 2.52  2018/08/06 20:22:55  pwagner
+! Warn and Dump if CallStack about to burst
+!
 ! Revision 2.51  2018/03/27 22:08:06  pwagner
 ! Where to find get_string moved to .f90 module or its substitute
 !
