@@ -1217,7 +1217,6 @@ clean_config_test:
       exit 2 ; \
     elif [ ! -d "lib/machines/$(MLSCONFG)" ] ; then \
       echo "Unrecognized configuration name" ; \
-      exit 2 ; \
     fi ; \
 	 mv $(CONFDIR)/$(MLSCFILE) $(CONFDIR)/temp.configure; \
 	 echo "MLSCONFG=$(MLSCONFG)" > $(CONFDIR)/$(MLSCFILE); \
@@ -1234,7 +1233,6 @@ clean_config:
       exit 2 ; \
     elif [ ! -d "lib/machines/$(MLSCONFG)" ] ; then \
       echo "Unrecognized configuration name" ; \
-      exit 2 ; \
     fi ; \
 	 mv $(CONFDIR)/$(MLSCFILE) $(CONFDIR)/temp.configure; \
 	 echo "MLSCONFG=$(MLSCONFG)" > $(CONFDIR)/$(MLSCFILE); \
@@ -1490,6 +1488,9 @@ tools: chunktimes checkpvmup compare dateconverter extinctionmaker \
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.22  2018/02/09 19:10:23  pwagner
+# Added build command for resetl2gpstatus
+#
 # Revision 1.21  2017/08/30 23:01:48  pwagner
 # A bare 'make' now makes 'all'
 #
