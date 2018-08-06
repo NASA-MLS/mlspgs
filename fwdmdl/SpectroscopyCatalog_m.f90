@@ -13,14 +13,14 @@ module SpectroscopyCatalog_m
 
 ! Process the Spectroscopy section.  Read the "old format" spectroscopy catalog
 
-  use INTRINSIC, only: L_NONE, L_HDF
-  use MLSKINDS, only: R8
-  use MLSCOMMON, only: MLSFILE_T
-  use MLSFILES, only: HDFVERSION_5, &
-    & INITIALIZEMLSFILE, MLS_CLOSEFILE, MLS_OPENFILE
-  use MOLECULES, only: FIRST_MOLECULE, LAST_MOLECULE
-  use SPECTROSCOPY_TYPES, only: LINE_T, LINES, CATALOG_T, MAXCONTINUUM , &
-    & ADDLINETODATABASE
+  use Intrinsic, only: L_None, L_HDF
+  use MLSKinds, only: R8
+  use MLSCommon, only: MLSFile_t
+  use MLSFiles, only: HDFVersion_5, &
+    & InitializeMLSFile, MLS_CloseFile, MLS_OpenFile
+  use Molecules, only: First_Molecule, Last_Molecule
+  use Spectroscopy_Types, only: Get_C_Loc, Line_t, Lines, Catalog_t, &
+    & MaxContinuum, AddLineToDatabase
 
   ! More USEs below in each procedure.
 
@@ -28,10 +28,11 @@ module SpectroscopyCatalog_m
 
   private
   ! Public procedures:
-  public :: SPECTROSCOPY, SEARCHBYQN
-  public :: DESTROY_LINE_DATABASE, DESTROY_SPECTCAT_DATABASE
-  public :: DUMP_LINES_DATABASE, DUMP_SPECTCAT_DATABASE, DUMP_SPECTCAT_ITEM, DUMP
-  public :: READISOTOPERATIOS, READ_SPECTROSCOPY, WRITE_SPECTROSCOPY
+  public :: Spectroscopy, SearchByQN
+  public :: Destroy_Line_Database, Destroy_SpectCat_Database
+  public :: Dump_Lines_Database, Dump_SpectCat_Database, Dump_SpectCat_item
+  public :: Dump
+  public :: ReadIsotopeRatios, Read_Spectroscopy, Write_Spectroscopy
 
   ! Public types:
   public :: Line_T, Catalog_T ! From Spectroscopy_Types
@@ -65,42 +66,42 @@ module SpectroscopyCatalog_m
 contains ! =====  Public Procedures  ===================================
 
   ! -----------------------------------------------  Spectroscopy  -----
-  subroutine Spectroscopy ( Root, TOOLKIT, pcfID, fileDatabase )
+  subroutine Spectroscopy ( Root, Toolkit, pcfID, FileDatabase )
   ! Process the spectroscopy section.
 
-    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST, &
-      & TEST_ALLOCATE, TEST_DEALLOCATE
+    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test, &
+      & Test_Allocate, Test_Deallocate
     ! We need a lot of names from Init_Spectroscopy_Module.  First, the spec
     ! ID's:
-    use EVALUATE_VARIABLE_M, only: EVALUATE_VARIABLE
-    use INIT_SPECTROSCOPY_M, only: S_LINE, S_SPECTRA, S_READSPECTROSCOPY, &
-      & S_READISOTOPERATIOS, S_WRITESPECTROSCOPY, &
+    use Evaluate_Variable_m, only: Evaluate_Variable
+    use Init_Spectroscopy_m, only: S_Line, S_Spectra, S_ReadSpectroscopy, &
+      & S_ReadIsotopeRatios, S_WriteSpectroscopy, &
     ! NOW THE FIELDS:
       & First_Spectroscopy_Field, Last_Spectroscopy_Field, &
-      & F_CONTINUUM, F_DELTA, F_DEFAULTISOTOPERATIO, &
-      & F_EL, F_EMLSSIGNALS, F_EMLSSIGNALSPOL, F_GAMMA, F_LINES, F_MASS, &
-      & F_MOLECULE, F_XPTL1SIGNALS, F_N, F_N1, F_N2, F_NS, F_PS, F_QLOG, F_QN, &
-      & F_Signals, F_SignalsPol, F_STR, F_UMLSSIGNALS, F_V0, F_W
+      & F_Continuum, F_Delta, F_DefaultIsotopeRatio, &
+      & F_EL, F_EMLSSignals, F_EMLSSignalsPol, F_Gamma, F_Lines, F_Mass, &
+      & F_Molecule, F_XPTL1Signals, F_N, F_N1, F_N2, F_NS, F_PS, F_Qlog, F_QN, &
+      & F_Signals, F_SignalsPol, F_STR, F_UMLSSignals, F_V0, F_W
     use INTRINSIC, only: L_EMLS, L_UMLS, L_XPTL1, &
-      & PHYQ_DIMLESS => PHYQ_DIMENSIONLESS, PHYQ_FREQUENCY, S_TIME
-    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
-    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
-    use MLSSTRINGLISTS, only: SWITCHDETAIL
-    use MORETREE, only: GET_FIELD_ID, GET_SPEC_ID
-    use PARSE_SIGNAL_M, only: PARSE_SIGNAL
-    use STRING_TABLE, only: GET_STRING
-    use TIME_M, only: TIME_NOW
-    use TOGGLES, only: GEN, SWITCHES, TOGGLE
-    use TRACE_M, only: TRACE_BEGIN, TRACE_END
-    use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, SUB_ROSA, SUBTREE
-    use TREE_TYPES, only: N_NAMED, N_STRING, N_VARIABLE
-    use MLSSIGNALS_M, only: INSTRUMENT
+      & PHYQ_Dimless => PHYQ_Dimensionless, PHYQ_Frequency, S_Time
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use MLSStringLists, only: SwitchDetail
+    use MoreTree, only: Get_Field_ID, Get_Spec_ID
+    use Parse_Signal_m, only: Parse_Signal
+    use String_Table, only: Get_String
+    use Time_m, only: Time_Now
+    use Toggles, only: Gen, Switches, Toggle
+    use Trace_m, only: Trace_Begin, Trace_End
+    use Tree, only: Decorate, Decoration, Node_ID, NSons, Sub_Rosa, SubTree
+    use Tree_Types, only: N_Named, N_String, N_Variable
+    use MLSSignals_m, only: Instrument
 
     ! Dummy argument
     integer, intent(in) :: Root         ! Of the AST for the section
     logical, intent(in) :: toolkit      ! Do we use the toolkit panoply
     integer, intent(in) :: pcfID        ! What pcfid if we do
-    type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
+    type (MLSFile_T), dimension(:), pointer ::     FileDatabase
 
     ! Local Variables
     integer(c_intptr_t) :: Addr         ! For tracing
@@ -116,25 +117,25 @@ contains ! =====  Public Procedures  ===================================
     type (MLSFile_T), pointer   :: MLSFile
     integer :: Molecule                 ! Molecule for which the catalog applies
     integer :: Name                     ! Index of name in string table
-    integer :: NOSIGNALS                ! For the bands part
+    integer :: NoSignals                ! For the bands part
     integer :: NumLines                 ! Number of lines in catalog
     integer :: OffsetLines              ! Number of lines previously in catalog
     real(r8) :: QN                      ! for call to expr_check for QN field
     integer :: S                        ! Size in bytes of an object to deallocate
-    integer :: SIDEBAND                 ! A single sideband
+    integer :: Sideband                 ! A single sideband
     integer :: SignalsNode              ! Tree node for emls/umls bands
     integer :: SignalsNodePol           ! Tree node for emls/umls bands for
                                         ! Zeeman-split lines
-    integer, dimension(:), pointer :: SIGINDS ! From Parse_signal
-    character ( len=80 ) :: SIGNAME     ! The signal
+    integer, dimension(:), pointer :: SIGInds ! From Parse_signal
+    character ( len=80 ) :: SIGName     ! The signal
     integer :: Son                      ! Of root or key
     integer :: Status                   ! From Allocate or Deallocate
     type(line_t), allocatable :: TempLines(:)
     integer :: TheSignal                ! SubRosa for a signal
-    integer :: THISMANY                 ! Conted up to noSignals
-    logical :: TIMING                   ! For S_Time
+    integer :: ThisMany                 ! Conted up to noSignals
+    logical :: Timing                   ! For S_Time
     real :: T1, T2                      ! For S_Time
-    real(r8) :: VALUE                   ! From Expr_Check
+    real(r8) :: Value                   ! From Expr_Check
 
     ! Error message codes
     integer, parameter :: ConflictingSignals = 1       ! more than one of
@@ -177,14 +178,14 @@ contains ! =====  Public Procedures  ===================================
     ! Create or expand the Lines database
     allocate ( tempLines(numLines), stat=status )
     addr = 0
-    if ( status == 0 .and. numLines > 0 ) addr = transfer(c_loc(tempLines(1)), addr)
+    if ( status == 0 .and. numLines > 0 ) addr = get_c_loc(tempLines)
     call test_allocate ( status, moduleName, "TempLines", ubounds=numLines, &
       & elementSize = storage_size(tempLines) / 8, address=addr )
     if ( allocated(lines) ) then
       tempLines(:offsetLines) = lines
       s = size(lines) * storage_size(lines) / 8
       addr = 0
-      if ( s > 0 ) addr = transfer(c_loc(lines(1)), addr)
+      if ( s > 0 ) addr = get_c_loc(lines)
       deallocate ( lines, stat=status )
       call test_deallocate ( status, moduleName, "TempLines", s, address=addr )
     end if
@@ -537,7 +538,7 @@ contains ! =====  Public Procedures  ===================================
   subroutine Destroy_Line_Database
 
     use ALLOCATE_DEALLOCATE, only: DEALLOCATE_TEST, TEST_DEALLOCATE
-    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t
 
     integer(c_intptr_t) :: Addr         ! For tracing
     integer :: I, S, Status                   ! From deallocate
@@ -550,7 +551,7 @@ contains ! =====  Public Procedures  ===================================
     end do
     s = size(lines) * storage_size(lines) / 8
     addr = 0
-    if ( s > 0 ) addr = transfer(c_loc(lines(1)), addr)
+    if ( s > 0 ) addr = get_c_loc(lines)
     deallocate ( lines, stat=status )
     call test_deallocate ( status, moduleName, "Lines", s, address=addr )
   end subroutine Destroy_Line_Database
@@ -747,7 +748,7 @@ contains ! =====  Public Procedures  ===================================
 
   ! ----------------------------------  Dump_SpectCat_Database_2D  -----
   subroutine Dump_SpectCat_Database_2d ( Catalog, Name, Details )
-    type(catalog_T), pointer :: Catalog(:,:)
+    type(catalog_T) :: Catalog(:,:)
     character(len=*), intent(in), optional :: Name
     integer, optional, intent(in) :: Details ! <= 0 => Don't dump lines, default 0
     integer :: Sideband
@@ -874,7 +875,7 @@ contains ! =====  Public Procedures  ===================================
     use HDF, only: DFACC_RDONLY
     use INTRINSIC, only: LIT_INDICES ! , PHYQ_INVALID
     use IO_STUFF, only: GET_LUN
-    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t
     use MACHINE, only: IO_ERROR
     use MLSHDF5, only: GETHDF5ATTRIBUTE, GETHDF5DSDIMS, &
       & ISHDF5ATTRIBUTEPRESENT, ISHDF5DSPRESENT, LOADFROMHDF5DS, LOADPTRFROMHDF5DS
@@ -971,14 +972,14 @@ contains ! =====  Public Procedures  ===================================
       lineN = line1 + nLines
       allocate ( myLines(lineN), stat=iostat )
       addr = 0
-      if ( iostat == 0 .and. lineN > 0 ) addr = transfer(c_loc(myLines(1)), addr)
+      if ( iostat == 0 .and. lineN > 0 ) addr = get_c_loc(myLines)
       call test_allocate ( iostat, moduleName, 'Lines', ubounds=lineN, &
         & elementSize = storage_size(myLines) / 8, address=addr )
       if ( allocated(lines) ) then
         myLines(:line1) = lines
         s = size(lines) * storage_size(lines) / 8
         addr = 0
-         if ( s > 0 ) addr = transfer(c_loc(lines(1)), addr)
+         if ( s > 0 ) addr = get_c_loc(lines)
         deallocate ( lines, stat=iostat )
         call test_deallocate ( iostat, moduleName, 'Lines', s, address=addr )
       end if
@@ -1083,7 +1084,7 @@ contains ! =====  Public Procedures  ===================================
         & 'Second dimension of continuum field of catalog has changed.' )
       allocate ( myCatalog(shp2(1)), stat=iostat )
       addr = 0
-      if ( iostat == 0 .and. shp2(1) > 0 ) addr = transfer(c_loc(myCatalog(1)), addr)
+      if ( iostat == 0 .and. shp2(1) > 0 ) addr = get_c_loc(myCatalog)
       call test_allocate ( iostat, moduleName, 'MyCatalog', &
         & ubounds=int(shp2(1)), elementSize = storage_size(myCatalog) / 8, &
         & address=addr )
@@ -1121,7 +1122,7 @@ contains ! =====  Public Procedures  ===================================
       end do
       s = size(myCatalog) * storage_size(myCatalog) / 8
       addr = 0
-      if ( s > 0 ) addr = transfer(c_loc(myCatalog(1)), addr)
+      if ( s > 0 ) addr = get_c_loc(myCatalog)
       deallocate ( myCatalog, stat=iostat )
       call test_deallocate ( iostat, moduleName, 'MyCatalog', s, address=addr )
       call deallocate_test ( catNames,      'CatNames', moduleName )
@@ -1576,6 +1577,9 @@ contains ! =====  Public Procedures  ===================================
 end module SpectroscopyCatalog_m
 
 ! $Log$
+! Revision 2.65  2018/08/04 02:10:00  vsnyder
+! Make Lines database allocatable instead of a pointer
+!
 ! Revision 2.64  2015/03/28 02:06:01  vsnyder
 ! Added stuff to trace allocate/deallocate addresses
 !
