@@ -424,7 +424,7 @@ contains ! =====     Public Procedures     =============================
       & Createdefaultbinselectors
     use MLSKinds, only: R8
     use MLSL2options, only: L2cfnode
-    use MLSMessagemodule, only: MLSMSG_Error, MLSMSG_Warning, MLSMessage
+    use MLSMessagemodule, only: MLSMSG_Error, MLSMSG_Warning
     use MLSNumerics, only: Hunt
     use MLSSignals_M, only: Signals
     use Molecules, only: L_Cloudice
@@ -1576,6 +1576,9 @@ op:     do j = 2, nsons(theTree)
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.190  2018/08/06 19:59:49  vsnyder
+! Remove unreferenced USE name
+!
 ! Revision 2.189  2018/07/27 23:18:48  pwagner
 ! Renamed level 2-savvy MLSMessage MLSL2Message
 !
