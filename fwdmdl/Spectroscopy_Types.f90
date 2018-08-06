@@ -16,8 +16,8 @@ module Spectroscopy_Types
   implicit NONE
   private
 
-  ! Public procedure
-  public :: AddLineToDatabase
+  ! Public procedures
+  public :: AddLineToDatabase, Get_C_Loc
 
   ! Parameters
   integer, public, parameter :: MaxContinuum = 6
@@ -69,11 +69,22 @@ module Spectroscopy_Types
   end type Catalog_T
 
   ! The lines database:
-  type(Line_T), allocatable, target, public, save :: Lines(:)
+  type(Line_T), allocatable, public, save :: Lines(:)
 
   interface AddLineToDatabase
     module procedure AddLineToDatabase_A, AddLineToDatabase_P
   end interface AddLineToDatabase
+
+  interface Get_C_Loc
+! Uncomment this when processors can distinguish between specifics using
+! allocatable vs. pointer
+!     module procedure Get_C_Loc_Catalog_A
+    module procedure Get_C_Loc_Catalog_P
+    module procedure Get_C_Loc_Line_A
+! Uncomment this when processors can distinguish between specifics using
+! allocatable vs. pointer
+!     module procedure Get_C_Loc_Line_P
+  end interface Get_C_Loc
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -87,8 +98,6 @@ contains
   integer function AddLineToDatabase_A ( Database, Item ) result ( addLineToDatabase )
   ! Add a line to the Lines database, creating the database
   ! if necessary.
-
-    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
 
     ! Dummy arguments
     type(line_T), allocatable, dimension(:) :: Database
@@ -123,7 +132,32 @@ contains
     AddLineToDatabase = newSize
   end function AddLineToDatabase_P
 
-! ------------------------------------------------  not_used_here  -----
+  ! --------------------------------------------------  Get_C_Loc  -----
+
+  integer(c_intptr_t) function Get_C_Loc_Catalog_A ( Catalog ) result (addr)
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
+    type(catalog_t), allocatable, intent(in), target :: Catalog(:)
+    addr = transfer(c_loc(Catalog(lbound(Catalog,1))), addr)
+  end function Get_C_Loc_Catalog_A
+
+  integer(c_intptr_t) function Get_C_Loc_Catalog_P ( Catalog ) result (addr)
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
+    type(catalog_t), pointer, intent(in) :: Catalog(:)
+    addr = transfer(c_loc(Catalog(lbound(Catalog,1))), addr)
+  end function Get_C_Loc_Catalog_P
+
+  integer(c_intptr_t) function Get_C_Loc_Line_A ( Line ) result (addr)
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
+    type(line_t), allocatable, intent(in), target :: Line(:)
+    addr = transfer(c_loc(line(lbound(line,1))), addr)
+  end function Get_C_Loc_Line_A
+
+  integer(c_intptr_t) function Get_C_Loc_Line_P ( Line ) result (addr)
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
+    type(line_t), pointer, intent(in) :: Line(:)
+    addr = transfer(c_loc(line(lbound(line,1))), addr)
+  end function Get_C_Loc_Line_P
+
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
   character (len=*), parameter :: IdParm = &
@@ -137,6 +171,9 @@ contains
 end module Spectroscopy_Types
 
 ! $Log$
+! Revision 2.9  2018/08/06 19:42:42  vsnyder
+! Add Get_C_Loc functions, remove TARGET from Lines
+!
 ! Revision 2.8  2018/08/04 02:10:00  vsnyder
 ! Make Lines database allocatable instead of a pointer
 !
