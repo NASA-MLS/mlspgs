@@ -261,24 +261,25 @@ contains
     if ( present(p_only) ) myP = p_only
     n1 = 1
     n2 = ubound(grids_f%l_z,1)
+    if ( myP ) n2 = ubound(grids_f%l_p,1)
     if ( present(n) ) then
-      n1 = n
-      n2 = n
+      n1 = min(n,n2)
+      n2 = n1
     end if
     j2(0) = 0
     do sps = 1, n2
       frqDep(sps) = grids_f%l_f(sps) - grids_f%l_f(sps-1) > 1
       if ( myP ) then
-        dims(:,sps) = [ size(eta,1), &
+        dims(:,sps) = [ npf, &
                       & grids_f%l_p(sps) - grids_f%l_p(sps-1), 1, 1 ]
         j2(sps) = j2(sps-1) + dims(2,sps)
-      else if ( myZP ) then
-        dims(:,sps) = [ size(eta,1), &
+      else if ( myZP .or. .not. frqDep(sps) ) then
+        dims(:,sps) = [ npf, &
                       & grids_f%l_z(sps) - grids_f%l_z(sps-1), &
                       & grids_f%l_p(sps) - grids_f%l_p(sps-1), 1 ]
         j2(sps) = j2(sps-1) + dims(2,sps) * dims(3,sps)
       else
-        dims(:,sps) = [ size(eta,1), &
+        dims(:,sps) = [ npf, &
                       & grids_f%l_f(sps) - grids_f%l_f(sps-1), &
                       & grids_f%l_z(sps) - grids_f%l_z(sps-1), &
                       & grids_f%l_p(sps) - grids_f%l_p(sps-1) ]
@@ -286,7 +287,8 @@ contains
       end if
     end do
     do sps = n1, n2
-      nc = 4 ! Upper bound of useful part of dims(sps,:)
+      nc = 3 ! Upper bound of useful part of dims(sps,:)
+      if ( frqDep(sps) ) nc = 4
       if ( myP ) then
         nc = 2
       else if ( myZP ) then
@@ -300,8 +302,7 @@ contains
         call display_string ( lit_indices(grids_f%mol(sps)) )
         call blanks ( 1 )
       end if
-      if ( frqDep(sps) ) &
-        call output ( 'frequency dependent ' )
+      if ( frqDep(sps) ) call output ( 'frequency dependent ' )
       if ( grids_f%qty(sps) > 0 ) then
         call display_string ( lit_indices(grids_f%qty(sps)), &
           & before='quantity: ' )
@@ -317,7 +318,7 @@ contains
           do k = 1, size(eta3,2)
             do j = 1, size(eta3,1)
               if ( eta3(j,k,l) /= 0 ) then
-                if ( .not. sawNZ ) call output ( i, places=4, after='# ' )
+                if ( .not. sawNZ ) call output ( i, places=4, after='#' )
                 sawNZ = .true.
                 if ( w >= myWidth ) then
                   call newLine
@@ -342,7 +343,7 @@ contains
                 else ! Show subscripts for one species as if in Vector_T%value3
                   call showlist ( subs(:nc-1) )
                 end if
-                call output ( eta3(j,k,l),  format='(1pg14.6)' )
+                call output ( eta3(j,k,l),  format='(1x,1pg14.6)' )
               end if
             end do
           end do
@@ -354,7 +355,7 @@ contains
     subroutine ShowList ( A )
       integer, intent(in) :: A(:)
       integer :: S
-      call output ( a(1), before='(' )
+      call output ( a(1), before=' (' )
       do s = 2, size(a)
         call output ( a(s), before=',' )
       end do
@@ -1816,6 +1817,9 @@ contains
 end module Get_Eta_Matrix_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.36  2018/05/17 01:55:00  vsnyder
+! Cannonball polishing
+!
 ! Revision 2.35  2018/05/14 23:30:19  vsnyder
 ! Cannonball polishing
 !
