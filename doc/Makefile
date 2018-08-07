@@ -218,7 +218,7 @@ icfm: $(DOCDIR)/icfm $(DOCDIR)/icfm/Makefile
 l2:
 	$(MAKE) -f $(MakeFName) -C $@  DOCDIR=$(DOCDIR)/l2
 
-l2cf: $(DOCDIR)/l2cf $(DOCDIR)/l2cf/Makefile
+l2cf:
 	$(MAKE) -f $(MakeFName) -C $@ DOCDIR=$(DOCDIR)/l2cf
 
 tar:
@@ -228,10 +228,13 @@ tar:
 update: 
 	$(MAKE) -f $(MakeFName) depends
 
-.PHONY: all clean depends internalupdate tar update l2 \
+.PHONY: all clean depends internalupdate tar update l2 l2cf cfm icfm \
 
 # ========================================================================
 # $Log$
+# Revision 1.2  2018/07/11 16:45:18  pwagner
+# Can now build l2cf, wvs-149
+#
 # Revision 1.1  2015/08/10 23:21:49  pwagner
 # After switching away from MakeFC
 #
