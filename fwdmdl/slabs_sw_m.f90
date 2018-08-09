@@ -328,10 +328,10 @@ contains
 
     real(r8), intent(in) :: dnu, nu0
     real(rp), intent(in) :: x1, yi, y, w, t, tanh1, slabs1             
-    real(rp), intent(in), optional :: dslabs1_dNu0                        
+    real(rp), intent(in), optional :: dslabs1_dNu0 ! 1 / slabs1 * d(slabs1)/dNu0
 
     real(rp), intent(out) :: SwI, dSwI_dw,dSwI_dn
-    real(rp), intent(out) :: dSwI_dNu0  ! 1 / Slabs1 * d Slabs1 / d Nu0
+    real(rp), intent(out) :: dSwI_dNu0  ! 1 / Slabs1 * d Slabs1 / d Nu0 ???
 
     real(rp) :: x, u, v, du_dx, du_dy, dv_dx, dv_dy, q, b, g, z, r    
 
@@ -381,9 +381,8 @@ contains
 !    dr_dv0 = dz_dv0*OneOvSPi+yi*dv_dv0
 !    dvvw_dv0 = (du_dv0+dr_dv0)*q + dq_dv0*(u+r)
 !    dvvw_dv0 = (du_dv0+dr_dv0)*q
-!    if (present(dslabs1_dNu0)) dSwI_dNu0 = dslabs1_dNu0*vvw + slabs2*dvvw_dv0
-    if (present(dslabs1_dNu0)) dSwI_dNu0 = swi * (dslabs1_dNu0 &
-                   - 1.0_r8/Nu0) + slabs2*q*(du_dv0 + yi * dv_dv0)
+    dSwI_dNu0 = slabs2*q*(du_dv0 + yi * dv_dv0) - swi / Nu0
+    if (present(dslabs1_dNu0)) dSwI_dNu0 = dSwI_dNu0 + swi * dslabs1_dNu0
 
   end subroutine dVoigt_spectral
 
@@ -2459,7 +2458,7 @@ contains
                                      !             doppler width
     real(r8), intent(out) :: Yi      ! Interference contribution
     real(r8), intent(out) :: Slabs1  ! Frequency independent piece of slabs
-    real(r8), intent(out) :: Dslabs1_dv0 ! Derivative of slabs1 w.r.t. v0
+    real(r8), intent(out) :: Dslabs1_dv0 ! Derivative of slabs1 w.r.t. v0 / slabs1
 
 !  The above outputs along with frequency offset are used with routine
 !  SLABSWINT to compute a Single Line ABSorption in 1/Km units. With unit
@@ -2632,12 +2631,12 @@ contains
       & onedt * ( betae + z1 * betav ) ) + &
       & dWd_dT ! Remember dWd_dT is really -dWd_dT/Wd
 
-!{ $\frac{\partial S}{\partial \nu_0} =
-!   -S \left[ \left( \frac{G_1}T \frac{\partial \nu_{0_s}}{\partial \nu_0}
+!{ $\frac1S \,\frac{\partial S}{\partial \nu_0} =
+!   -\left[ \left( \frac{G_1}T
 !    + \frac{H_1}{300} \right) \frac{h}k + \frac1{\nu_0} \right] $
-!   where $H_1 = \frac{H}{1-H}$.
+!   where $G_1 = \frac{G}{1+G}$ and $H_1 = \frac{H}{1-H}$.
 
-    dslabs1_dv0 = -slabs1 * ( (z1 * onedt + expd / z2 * oned300) / boltzmhz + &
+    dslabs1_dv0 = - ( (z1 * onedt + expd / z2 * oned300) / boltzmhz + &
       & 1.0 / v0 )
 
   end subroutine Slabs_prep_dT
@@ -2781,6 +2780,10 @@ contains
 end module SLABS_SW_M
 
 ! $Log$
+! Revision 2.67  2018/04/19 01:59:16  vsnyder
+! Compute address of allocatable/deallocatable for tracking.  Remove USE
+! statements for unused names.
+!
 ! Revision 2.66  2016/10/24 22:16:38  vsnyder
 ! Make Slabs allocatable instead of a pointer
 !
