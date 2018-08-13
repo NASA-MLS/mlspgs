@@ -38,6 +38,12 @@
 ! MLSMSG_DeAllocate        deallocating an array
 ! MLSMSG_PVM               using a pvm library procedure
 
+!     (returned status values from MLSMessage_)
+! MLSMSGStatus_Normal      Everything normal
+! MLSMSGStatus_Suppressed  Did not print msg
+! MLSMSGStatus_Stopped     Called with severity >= MLSMSG_Severity_to_quit
+! MLSMSGStatus_Dumped      Called with severity >= MLSMSG_Severity_to_walkback
+
 !     (subroutines and functions)
 ! Bummer                   print error message with eye-catching effects
 ! Crash_burn               crash and burn unless called from an exempt module
@@ -52,7 +58,7 @@
 ! MLSMessageInternalFile   Returns the complete text that would be printed
 ! MLSMessageReset          reset flags, counters, etc. during runtime
 ! PVMErrorMessage          log a PVM error
-! ReportTKStatus           converts SDP status to severity, prints if needed
+! ReportTKStatus           converts SDP status to seveMLSMessage.f9hrity, prints if needed
 ! StopWithErrorMsg         report error msg, dump calling stack, stop
 ! SummarizeWarnings        show summary of how many warnings received
 ! === (end of toc) ===
@@ -86,10 +92,10 @@
   ! ---------------------------------------------------------------------------
 
   ! Returned status values of how MLSMessage fared or how message was treated
-  integer, public, parameter :: MLSMSGSTATUS_Normal = PGS_S_SUCCESS ! == 0
-  integer, public, parameter :: MLSMSGSTATUS_Suppressed = MLSMSGSTATUS_Normal + 1
-  integer, public, parameter :: MLSMSGSTATUS_Stopped = MLSMSGSTATUS_Suppressed + 1
-  integer, public, parameter :: MLSMSGSTATUS_Dumped = MLSMSGSTATUS_Stopped + 1
+  integer, public, parameter :: MLSMSGStatus_Normal     = PGS_S_SUCCESS ! == 0
+  integer, public, parameter :: MLSMSGStatus_Suppressed = MLSMSGSTATUS_Normal + 1
+  integer, public, parameter :: MLSMSGStatus_Stopped    = MLSMSGSTATUS_Suppressed + 1
+  integer, public, parameter :: MLSMSGStatus_Dumped     = MLSMSGSTATUS_Stopped + 1
 
   ! If we are asked to exit, exit with this status instead of using Fortran STOP
   integer, public, parameter :: DEFAULTSTOPEXITSTATUS = 0
@@ -109,13 +115,12 @@
     logical :: ALLCAPSSummaries    = .false. ! Print summary msgs in ALL CAPS
   end type MLSMSGWarnings_T
 
-  integer, parameter :: MAXMESSLENGTH = 255 ! Max length on one line
+  integer, parameter :: MAXMESSLENGTH = 255 ! Max length to print on one line
 
   ! This variable describes all the warnings we've recorded
   type (MLSMSGWarnings_T), save :: MLSMSGWarnings
 
   ! This set of parameters are simple prefixes for common messages
-
   character (len=*), public, parameter :: MLSMSG_Fileopen = &
      & "Failed to open file: "
   character (len=*), public, parameter :: MLSMSG_Keyword = &
@@ -147,9 +152,9 @@
   ! Each name must be shorter than (MAXSTACKNAMELEN+1) chars.
   ! Strung together, all the names must not exceed MaxTotalStackLen
   ! characters in length
-  integer, parameter    ::    MaxStackNameLen = 64
-  integer, parameter :: MaxTotalStackLen = 2048
-  integer, parameter :: MaxStackDepth = 100
+  integer, parameter    ::    MaxStackNameLen  = 64
+  integer, parameter    ::    MaxTotalStackLen = 2048
+  integer, parameter    ::    MaxStackDepth    = 100
   type :: MLSCallStack_t
     character(len=maxTotalStackLen) :: Txt ! All the names, strung together
     integer :: Ind(0:maxStackDepth) = 0  ! Ind(i) is end of ith name
@@ -252,6 +257,8 @@ contains
     logical :: Toolkit
     character(len=*), parameter                    :: colonel  = &
       & ': : : : : : : : : : : : : : : : : : :'
+    character(len=*), parameter                    :: header  = &
+      & 'dumping       :    MLS Message Config'
     ! Executable
     if ( present(config) ) then
       myConfig = config
@@ -260,7 +267,7 @@ contains
     end if
     call get_config ( logFileUnit=logFileUnit, prefix=prefix, useToolKit=toolkit )
     call PrintItOut( colonel, MLSMSG_Info )
-    call dump ( 'dumping ', charValue='MLS Message Config'                            )
+    call PrintItOut( header,  MLSMSG_Info )
     call PrintItOut( colonel, MLSMSG_Info )
     call dump ( 'logFileUnit             ', intValue= logFileUnit                     )
     call dump ( 'meaning                 ', charValue= LogUnitName(logFileUnit)       )
@@ -300,7 +307,6 @@ contains
   ! ------------------------------------------------  MLSMessage_  -----
 
   ! This first routine is the main `messaging' code.
-
   subroutine MLSMessage_( severity, ModuleNameIn, Message, &
     & Advance, MLSFile, status )
     ! A wraparound subroutine so we can 
@@ -714,7 +720,6 @@ contains
   ! ------------------------------------------  MLSMessageInquire  -----
 
   ! This routine returns requested info about Warnings
-
   subroutine MLSMessageInquire( Warning_msg, timesWarned, &
     &  totalnumwarnings, LastWarningMsg  )
     use MLSStrings, only: Lowercase
@@ -1218,6 +1223,9 @@ contains
 
 !
 ! $Log$
+! Revision 2.54  2018/08/13 22:52:26  pwagner
+! Improve DumpConfig; add items missing from toc
+!
 ! Revision 2.53  2018/08/06 22:41:28  pwagner
 ! Reorient DumpFile_old to Dump_MLSFile
 !
