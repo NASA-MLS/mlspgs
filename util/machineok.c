@@ -14,7 +14,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "/usr/share/pvm3/include/pvm3.h"
+#include <pvm3.h> 
+/* "/usr/share/pvm3/include/pvm3.h" */
 
 /* Compile me with:
 cc -o machineok machineok.c -L/usr/share/pvm3/lib/LINUX -lpvm3
@@ -45,6 +46,9 @@ main ( int argc, void *argv[] )
 
 /*
 $Log$
+Revision 1.4  2005/06/23 22:22:04  pwagner
+Reworded Copyright statement
+
 Revision 1.3  2003/01/21 19:03:29  livesey
 More bug fixes, now sends length
 

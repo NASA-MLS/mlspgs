@@ -11,7 +11,7 @@
  * foreign countries or providing access to foreign persons.
  */
 #include <stdlib.h>
-#include "/usr/share/pvm3/include/pvm3.h"
+#include <pvm3.h>
 
 /* Compile me with:
 cc -o checkpvmup checkpvmup.c -L$PVM_ROOT/lib/$PVM_ARCH -lpvm3

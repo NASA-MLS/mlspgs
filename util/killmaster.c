@@ -11,7 +11,7 @@
  * foreign countries or providing access to foreign persons.
  */
 #include <stdlib.h>
-#include "/usr/share/pvm3/include/pvm3.h"
+#include <pvm3.h>
 
 /* Compile me with:
 cc -o killmaster killmaster.c -L/usr/share/pvm3/lib/LINUX -L/usr/share/pvm3/lib/LINUXI386 -lpvm3
