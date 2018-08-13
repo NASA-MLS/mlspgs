@@ -10,18 +10,18 @@
 ! foreign countries or providing access to foreign persons.
 
 program wrapLines
-   use IO_STUFF, only: GET_LUN
-   use MACHINE, only: HP, GETARG
-   use MLSMACROS, only: DUMP_MACROS, READ_MACROS, EXPAND_LINE
-   use MLSSTRINGLISTS, only: WRAP
-   use MLSSTRINGS, only: LENTRIMTOASCII, NAPPEARANCES
-   use OUTPUT_M, only: OUTPUT
+   use Io_Stuff, only: Get_Lun
+   use Machine, only: Hp, Getarg
+   use MLSMacros, only: Dump_Macros, Read_Macros, Expand_Line
+   use MLSStringlists, only: Wrap
+   use MLSStrings, only: Lentrimtoascii, Nappearances
+   use Output_M, only: Output
    implicit none
 
 !------------------- RCS Ident Info -----------------------
-   CHARACTER(LEN=130) :: Id = &                                                    
+   CHARACTER(len=130) :: Id = &                                                    
    "$Id$"
-   CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile$"
+   CHARACTER (len=*), PARAMETER :: ModuleName= "$RCSfile$"
 !----------------------------------------------------------
   ! wrap lines in stdin
   ! so they do not exceed (by much) 128 chars in length
@@ -288,9 +288,9 @@ contains
      type ( options_T ), intent(inout) :: options
      ! Local variables
      integer ::                         error = 1
-     character(LEN=255)       :: filename
+     character(len=255)       :: filename
      integer, save ::                   i = 1
-     character(LEN=16)       :: number
+     character(len=16)       :: number
   ! Get inputfile name, process command-line args
   ! (which always start with -)
     do
@@ -392,6 +392,9 @@ contains
   end subroutine print_help
 end program wrapLines
 ! $Log$
+! Revision 1.6  2016/12/16 21:58:29  pwagner
+! Works with new wrap
+!
 ! Revision 1.5  2012/08/14 21:15:43  pwagner
 ! l2cf could have uncommented comment lines; fixed
 !

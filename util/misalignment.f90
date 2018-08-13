@@ -13,20 +13,20 @@
 program misalignment
 !=================================
 
-   use Dump_Options, only: rmsFormat
-   use HighOutput, only: outputNamedValue
-   use L2GPData, only: L2GPdata_t, maxSwathNamesBufsize, &
-     & destroyL2GPContents, readL2GPData
-   use Machine, only: hp, getarg
-   use MLSCommon, only: defaultUndefinedValue
+   use Dump_Options, only: RmsFormat
+   use HighOutput, only: OutputNamedValue
+   use L2GPData, only: L2GPData_T, MaxSwathNamesBufsize, &
+     & DestroyL2GPContents, ReadL2GPData
+   use Machine, only: Hp, Getarg
+   use MLSCommon, only: DefaultUndefinedValue
    use MLSFiles, only: MLS_Exists, HDFVersion_5, MLS_Inqswath
    use MLSFinds, only: FindFirst
    use MLSHDF5, only: MLS_H5Open, MLS_H5Close
-   use MLSHDFEOS, only: MLS_swath_in_file
+   use MLSHDFEOS, only: MLS_Swath_In_File
    use MLSStrings, only: WriteIntsToChars
-   use Output_m, only: beebeep => beep, resumeOutput, suspendOutput, output
-   use PrintIt_m, only: Set_Config
-   use Time_M, only: Time_Now, time_config
+   use Output_M, only: Beebeep => Beep, ResumeOutput, SuspendOutput, Output
+   use PrintIt_M, only: Set_Config
+   use Time_M, only: Time_Now, Time_Config
    
    implicit none
 
@@ -134,7 +134,7 @@ contains
 !------------------------- DiffThese ---------------------
     subroutine DiffThese( filename )
     ! Added for command-line processing
-      character(LEN=*), intent(in) :: filename          ! filename
+      character(len=*), intent(in) :: filename          ! filename
       ! Local variables
       type(L2GPData_T) :: l2gp1
       type(L2GPData_T) :: l2gp2
@@ -227,7 +227,7 @@ contains
 !------------------------- get_filename ---------------------
     subroutine get_filename(filename, options)
     ! Added for command-line processing
-     character(LEN=255), intent(out) :: filename          ! filename
+     character(len=255), intent(out) :: filename          ! filename
      type ( options_T ), intent(inout) :: options
      ! Local variables
      integer ::                         error = 1
@@ -338,6 +338,9 @@ end program misalignment
 !==================
 
 ! $Log$
+! Revision 1.3  2016/10/04 22:32:34  pwagner
+! Builds properly with some Dumps moved to Dump_1
+!
 ! Revision 1.2  2015/11/17 19:53:30  pwagner
 ! Fill values put in bad profiles to reduce number of false positives
 !
