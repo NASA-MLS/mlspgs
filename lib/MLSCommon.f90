@@ -17,6 +17,8 @@ module MLSCommon                ! Common definitions for the MLS software
 !   This results in a circular dependence.  The type MLSFile_T ought to be
 !   defined in a different module.
 !   use Lexer_Core, only: Where_T ! Where is something in the L2CF
+!   ** MLSCommon is about as common as our lib modules get              **
+!   ** only machine, IEEE_Aritmetic, MLSKinds, and MLSStrings are lower **
   use MLSKinds ! everything
   use MLSStrings,  only: Lowercase
 
@@ -66,6 +68,7 @@ module MLSCommon                ! Common definitions for the MLS software
 ! L1BInfo_T        L1B data file names, etc. 
 !                   (Should we replace these with FileIDs?)
 ! L2Metadata_T     Coords of (lon,lat) box to write as metadata
+! MLSChunk_T       Chunk of level 1 data for level 2 to process independently
 ! MLSFile_T        File name, type, id, etc.
 ! MLSFill_T        Fill value data type
 ! MLSFills         database of MLSFill values
@@ -420,7 +423,7 @@ contains
 
   !--------------------------------------------  DontCrashHere  -----
   ! May we skip otherwise obligatory crashes in named modules?
-  ! We decide on the basis of whether the mocule
+  ! We decide on the basis of whether the module
   logical function dontCrashHere( arg )
     character(len=8), intent(in) :: arg
     ! Executable
@@ -695,6 +698,9 @@ end module MLSCommon
 
 !
 ! $Log$
+! Revision 2.50  2018/08/13 22:31:28  pwagner
+! Add MLSChunk_T to toc; correct spelling error in comments
+!
 ! Revision 2.49  2018/08/03 23:18:56  vsnyder
 ! Add L2CF and Source components to MLSFile_t
 !
