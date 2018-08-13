@@ -227,11 +227,13 @@ SHELL = /bin/sh
 # --- tools ---
 # chunktimes     
 # checkpvmup     
+# compare     
 # CondenseLeakLog
 # dateconverter  
 # end_stmts      
 # extinctionmaker      
 # f90tex         
+# fixDOI  
 # h5cat          
 # Goldbrick_More
 # h5subset       
@@ -263,6 +265,7 @@ SHELL = /bin/sh
 # Spartacus
 # UnwrapList
 # utctotai       
+# vansGoldFilter  
 # WordSplit      
 # wrapLines
 # WrapList
@@ -470,6 +473,15 @@ CUSTOM_PREFXD := $(shell ${REECHO} -dir srclib -prefix=-db $(CUSTOM_BUILDS))
 # Here are some miscellaneous variables for special tools
 MIESOURCESWITHHDF = $(shell ${REECHO} -excl $(MIE)/WriteNoHDF_m.f90 $(MIE)/*.f90 $(MIE)/math77/*.f)
 MIESOURCESWOHDF = $(shell ${REECHO} -excl $(MIE)/WriteHDF_m.f90 $(MIE)/*.f90 $(MIE)/math77/*.f)
+
+MLSTOOLS = chunktimes checkpvmup compare dateconverter extinctionmaker fixDOI\
+  heconvert h5subset h5cat hl Goldbrick_More \
+  killmaster \
+  l1bcat l1bdiff l1bdump l1h5subset \
+  l2auxcat l2auxchi l2auxdump l2gpcat l2gpdiff l2gpdump \
+  l2pcdiff l2pcdump l2q lr \
+  machineok misalignment resetl2gpstatus Spartacus tellMasterToQuit \
+  vansGoldFilter WordSplit wrapLines
 
 ifdef HDFINC
    IHDFINC := -I $(HDFINC)
@@ -792,6 +804,11 @@ install-l3d: l3 l3m
 
 install-l3m: l3m
 	@$(MAKE) -f $(MakeFName) install LEVELS=l3m
+        
+# Make and then install mls tools from their source files
+# and the shell scripts that go along with them
+# Note the trickery where we rename a copy of zeros.sh its pseudonym
+# misalignment.sh. Summoned by this name it performs a different action.
 # The following assumes you have somewhere defined MLSTOOLSDIR
 install-mlstools:
 	@if [ "$(MLSTOOLSDIR)" = "" ] ; then \
@@ -800,17 +817,10 @@ install-mlstools:
   fi; \
   $(MAKE) -f $(MakeFName) tools; \
   cd $(INSTALLDIR); \
-  cp chunktimes checkpvmup compare dateconverter extinctionmaker \
-  heconvert h5subset h5cat hl Goldbrick_More \
-  killmaster \
-  l1bcat l1bdiff l1bdump l1h5subset \
-  l2auxcat l2auxchi l2auxdump l2gpcat l2gpdiff l2gpdump \
-  l2pcdiff l2pcdump l2q lr \
-  machineok misalignment Spartacus tellMasterToQuit WordSplit wrapLines \
-  $(MLSTOOLSDIR); \
+  cp $(MLSTOOLS)  $(MLSTOOLSDIR); \
   cd $(MLSHOME); \
   cd util; \
-  cp jobstat-sips.sh resetl2gpstatus ronin.sh slavetmpltntk.sh slavetmplt.sh \
+  cp jobstat-sips.sh ronin.sh slavetmpltntk.sh slavetmplt.sh \
   tkreset.sh zeros.sh $(MLSTOOLSDIR); \
   cp zeros.sh $(MLSTOOLSDIR)/misalignment.sh; \
   cd ../scripts; \
@@ -885,6 +895,7 @@ withoutmlsmessage: $(CONFDIR)/$(MLSCFILE) $(MY_PROG) ps90tof90
 checkpvmup: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/checkpvmup.c
 	   $(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
       -c $(MLSCONFG) -p $@ -M $(MAKE) \
+      -I $(PVM_ROOT)/include \
 	   -C $(MLSCFILE) $(MLSBIN)/$@.c \
       $(UTIL_OPTS) -main checkpvmup.c
 
@@ -952,6 +963,11 @@ f90tex: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/f90tex.f90
    -c $(MLSCONFG) -p $@ -M $(MAKE) \
 	-C $(MLSCFILE) $(MLSBIN)/$@.f90
 
+fixDOI: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/fixDOI.f90 l1--itm
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) -m lib \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
+
 genmet: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/genmet.f90 l2
 	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
    -c $(MLSCONFG) -p $@ -M $(MAKE) -m l2 \
@@ -1003,6 +1019,7 @@ hl: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/hl.c
 killmaster: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/killmaster.c
 	   $(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
       -c $(MLSCONFG) -p $@ -M $(MAKE) \
+      -I $(PVM_ROOT)/include \
 	   -C $(MLSCFILE) $(MLSBIN)/$@.c \
       $(UTIL_OPTS) -main killmaster.c
 
@@ -1083,6 +1100,7 @@ lr: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/lr/*.f9[0h] utctotai lib
 machineok: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/machineok.c
 	   $(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
       -c $(MLSCONFG) -p $@ -M $(MAKE) \
+      -I $(PVM_ROOT)/include \
 	   -C $(MLSCFILE) $(MLSBIN)/$@.c \
       $(UTIL_OPTS) -main machineok.c
 
@@ -1174,6 +1192,11 @@ utctotai: $(CONFDIR)/$(MLSCFILE) $(utctotai_sources)
 	-c $(MLSCONFG) -p $@ -M $(MAKE) -T lib -ni\
 	-C $(MLSCFILE) $(utctotai_sources)
 	mv ./tests/misc/$(MLSCONFG)/libmisc.a $(INSTALLDIR)/libutctotai.a
+
+vansGoldFilter: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/vansGoldFilter.f90
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
 
 WordSplit: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/WordSplit.f90
 	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
@@ -1455,17 +1478,11 @@ install-all: install tools install-cfm install-fullcfm install-idlcfm
 update:
 
 # Make these source-file tools from the util directory
-tools: chunktimes checkpvmup compare dateconverter extinctionmaker \
-  heconvert h5subset h5cat hl Goldbrick_More \
-  killmaster \
-  l1bcat l1bdiff l1bdump l1h5subset \
-  l2auxcat l2auxchi l2auxdump l2gpcat l2gpdiff l2gpdump \
-  l2pcdiff l2pcdump l2q lr \
-  machineok misalignment resetl2gpstatus Spartacus tellMasterToQuit WordSplit wrapLines
+tools: $(MLSTOOLS)
 
 .PHONY: all alltargets configure clean clean_config conv_uars\
   configure_pvm configure_fopts configure_full configure_help configure_subdirs\
-  dateconverter depends distclean disttar distarz distarg disthelp \
+  depends distclean disttar distarz distarg disthelp \
   doc doc--api doc--toc extinctionmaker \
   firsthelp  ghostbuster help--brief help--convert help--depends help--fopts\
   help help--ghostbuster help--mlsconfigure --platform\
@@ -1473,21 +1490,20 @@ tools: chunktimes checkpvmup compare dateconverter extinctionmaker \
   install install-all install-cfm install-fullcfm \
   install-l1 install-l2 install-l3 install-l3d install-l3m install-nrt \
   internalcleanup internaldepends internalmftests \
-  internaladd_copy show_copy internalupdate levels l2q \
-  mostlyclean partialclean Spartacus $(SUBDIRS) subdirs\
+  internaladd_copy show_copy internalupdate levels \
+  mostlyclean partialclean $(SUBDIRS) subdirs\
   substar substarz substarg substars tar targ tarz update\
   nomlsmessagetar notoolkittar \
-  checkpvmup chunktimes CondenseLeakLog end_stmts f90tex Goldbrick_More \
-  heconvert h5subset h5cat hl init_gen killmaster \
-  l1bcat l1bdiff l1bdump l1h5subset \
-  l2auxcat l2auxchi l2auxdump l2gpcat l2gpdiff l2gpdump l2pcdump lr \
-  machineok Mie_Tables Mie_Tables_nohdf misalignment MLS_h5ls moonscan \
-  tellMasterToQuit UnwrapList utctotai \
-  WordSplit wrapLines WrapList tools
+  end_stmts Goldbrick_More \
+  lr Mie_Tables Mie_Tables_nohdf moonscan \
+  utctotai tools $(MLSTOOLS)
   
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.23  2018/08/06 16:35:44  pwagner
+# Persevere when cleaning configurations
+#
 # Revision 1.22  2018/02/09 19:10:23  pwagner
 # Added build command for resetl2gpstatus
 #
