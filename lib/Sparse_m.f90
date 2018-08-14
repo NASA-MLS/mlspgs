@@ -53,6 +53,7 @@ module Sparse_m
     generic :: Clear_Flags => Clear_All_Flags, Clear_Col_Flags
     procedure :: Copy => Copy_Sparse
     procedure :: Create => Create_Sparse
+    procedure :: Densify
     procedure :: Destroy => Destroy_Sparse
     procedure :: Dump => Dump_Sparse
     procedure :: Empty => Empty_Sparse
@@ -322,7 +323,22 @@ contains
       end do
     end do
   end subroutine Check_Column_Dup
-  
+
+  ! ----------------------------------------------------  Densify  -----
+  subroutine Densify ( Sparse, Dense )
+    ! Copy Sparse to a dense representation in Dense, probably for dumping
+    use Allocate_Deallocate, only: Allocate_test
+    class(sparse_t), intent(in) :: Sparse            ! The sparse matrix
+    real(rp), allocatable, intent(out) :: Dense(:,:) ! Dense representation
+    integer :: J ! Column subscript
+    if ( .not. allocated(sparse%rows) .or. .not. allocated(sparse%cols) ) return
+    call allocate_test ( dense, size(sparse%rows,1), size(sparse%cols,1), &
+      & 'Dense', moduleName, fill=0.0_rp )
+    do j = 1, size(sparse%cols)
+      call sparse%get_col_vec ( j, dense(:,j) )
+    end do
+  end subroutine Densify
+
   ! ------------------------------------------------  Dump_Sparse  -----
   subroutine Dump_Sparse ( Sparse, Name, Format, Colon, This, Offset, Transpose, &
                          & Width )
@@ -934,6 +950,9 @@ contains
 end module Sparse_m
 
 ! $Log$
+! Revision 2.8  2018/08/14 23:35:31  vsnyder
+! Add Densify
+!
 ! Revision 2.7  2018/08/03 23:17:49  vsnyder
 ! Make Sparse_Element_t public
 !
