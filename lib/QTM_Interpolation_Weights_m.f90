@@ -14,6 +14,7 @@ module QTM_Interpolation_Weights_m
 !=============================================================================
 
   use MLSKinds, only: RK => RP
+  use Sparse_m, only: Sparse_Element_t
 
   implicit NONE
   private
@@ -21,26 +22,42 @@ module QTM_Interpolation_Weights_m
   ! Determine which vertices of QTM to use for interpolation to a specified
   ! point, and calculate their horizontal interpolation weights.
 
+  public :: Fill_Weights
   public :: QTM_Interpolation_Weights
-  public :: QTM_Interpolation_Weights_Geo, QTM_Interpolation_Weights_Geo_list
-  public :: QTM_Interpolation_Weights_ZOT, QTM_Interpolation_Weights_ZOT_list
+  public :: QTM_Interpolation_Weights_Geo
+  public :: QTM_Interpolation_Weights_ZOT
+  public :: QTM_Weights_t
+
+  interface Fill_Weights
+    module procedure Fill_Weights_List
+    module procedure Fill_Weights_Sparse
+  end interface Fill_Weights
 
   interface QTM_Interpolation_Weights
-    module procedure &
-      & QTM_Interpolation_Weights_Geo, &
-      & QTM_Interpolation_Weights_ZOT, &
-      & QTM_Interpolation_Weights_Geo_list, &
-      & QTM_Interpolation_Weights_ZOT_list, &
-      & QTM_Interpolation_Weights_Geo_2d, &
-      & QTM_Interpolation_Weights_ZOT_2d, &
-      & QTM_Interpolation_Weights_Geo_list_2d, &
-      & QTM_Interpolation_Weights_ZOT_list_2d
+    module procedure QTM_Interpolation_Weights_Geo
+    module procedure QTM_Interpolation_Weights_ZOT
   end interface QTM_Interpolation_Weights
 
   public :: Value_QTM_1D_List_t, Value_QTM_2D_List_t, Value_QTM_2D_t
 
+  type :: QTM_Weights_t
+    integer :: N = 3               ! How many weights
+    ! The weights, 3 for 2D, 6 for 3D:
+    type(sparse_element_t) :: W(6) = sparse_element_t(0.0_rk,0,0,0,0)
+  contains
+    procedure :: Fill_Weights_Sparse
+    generic :: Fill_Weights => Fill_Weights_Sparse
+    procedure :: Copy => Copy_Weights_Sparse
+!????? Crashes Intel 17 17.0.0.098 Build 20160721
+!????? where call x%copy ( y ) or x = y appears.
+!     generic :: assignment ( = ) => Copy
+  end type QTM_Weights_t
+
   type :: Value_List ! ( RK ) ! Base type for Value_*List_t
 !     integer, kind :: RK
+  contains
+    procedure :: Fill_Weights_List
+    generic :: Fill_Weights => Fill_Weights_List
   end type Value_List
 
   ! For one interpolation weight from a 1D array
@@ -104,6 +121,49 @@ module QTM_Interpolation_Weights_m
 
 contains
 
+  subroutine Fill_Weights_List ( Weights, Ser, V )
+    ! Fill the Value_QTM_[12]D_List_t structures using given QTM serial numbers
+    ! Ser and weight values V.  This is only a 2D routine, but it allows the
+    ! dynamic type of Weights to be for a 3D interpolation.
+    class(value_list), intent(out) :: Weights
+    integer, intent(in) :: Ser(:)  ! Up to six serial numbers
+    real(rk), intent(in) :: V(:)   ! One weight for each Ser
+    integer :: N
+    n = size(ser)
+    select type ( weights )
+    type is (value_QTM_1D_List_t)
+      weights%n = 3
+      weights%v(:n)%j = ser
+      weights%v(:n)%v = v
+    type is (value_QTM_2D_List_t)
+      weights%n = 3
+      weights%v(:n)%j = ser
+      weights%v(:n)%v = v
+    end select
+  end subroutine Fill_Weights_List
+
+  subroutine Copy_Weights_Sparse ( To_Weights, From_Weights )
+    ! Only copy From_Weights%w(1:From_Weights%n)
+    class( QTM_Weights_t ), intent(inout) :: To_Weights
+    class( QTM_Weights_t ), intent(in) :: From_Weights
+    to_weights%n = from_weights%n
+    to_weights%w(1:to_weights%n) = from_weights%w(1:from_weights%n)
+  end subroutine Copy_Weights_Sparse
+
+  subroutine Fill_Weights_Sparse ( Weights, Ser, V )
+    ! Fill the QTM_Weights_t structure using given QTM serial numbers Ser and
+    ! weight values V.
+    class( QTM_Weights_t ), intent(out) :: Weights
+    integer, intent(in) :: Ser(:)  ! Up to six serial numbers
+    real(rk), intent(in) :: V(:)   ! One weight for each Ser
+    integer :: N
+    n = size(ser)
+    weights%n = n
+    weights%w(:n)%r = 0            ! Row number (path position) not known yet
+    weights%w(:n)%c = ser          ! Column numbers are QTM serial numbers
+    weights%w(:n)%v = v
+  end subroutine Fill_Weights_Sparse
+
   subroutine QTM_Interpolation_Weights_Geo ( QTM_Tree, Point, Weights, Facet, &
                                            & Stack, Used )
 
@@ -120,9 +180,10 @@ contains
     type(QTM_tree_t), intent(in) :: QTM_Tree
     class(h_t), intent(in) :: Point
 !     type(value_QTM_1D_List_t(rg)), intent(out) :: Weights
-    type(value_QTM_1D_List_t), intent(out) :: Weights
+    class(value_list), intent(out) :: Weights
     integer, intent(in), optional :: Facet
     type(stack_t), intent(inout), optional :: Stack
+    real(rk) :: V(3)
     class(h_t), intent(out), optional :: Used ! The point used for interpolation
 
     logical :: Inside ! Point is inside a facet with three serial numbers.
@@ -139,13 +200,6 @@ contains
     if ( inside ) inside = all(QTM_tree%Q(f)%ser > 0)
     if ( inside ) then
       z = geo_to_ZOT ( point )
-      weights%v%j = QTM_tree%Q(f)%ser
-      call triangle_interpolate ( QTM_tree%Q(f)%z%x, QTM_tree%Q(f)%z%y, &
-                                & z%x, z%y, weights%v%v )
-      if ( present(used) ) then
-        used%lon = point%lon
-        used%lat = point%lat
-      end if
     else
       call nearest_polygon_point ( point, QTM_tree%polygon_geo, p )
       z = geo_to_ZOT ( p )
@@ -153,54 +207,20 @@ contains
       ! P should be inside!
       inside = f > 0
       if ( inside ) inside = all(QTM_tree%Q(f)%ser > 0)
-      if ( inside ) then
-        weights%v%j = QTM_tree%Q(f)%ser
-        call triangle_interpolate ( QTM_tree%Q(f)%z%x, QTM_tree%Q(f)%z%y, &
-                                  & z%x, z%y, weights%v%v )
-      else ! Shouldn't get here
-!         weights = value_QTM_1D_List_t(rg)(n=1) ! Default weight is zero
-        weights = value_QTM_1D_List_t(n=1) ! Default weight is zero
-      end if
-      if ( present(used) ) then
-        used%lon = p%lon
-        used%lat = p%lat
-      end if
+    end if
+    if ( inside ) then
+      call triangle_interpolate ( QTM_tree%Q(f)%z%x, QTM_tree%Q(f)%z%y, &
+                                & z%x, z%y, v )
+      call weights%fill_weights ( QTM_tree%Q(f)%ser, v )
+    else ! Shouldn't get here
+      call weights%fill_weights ( [0], [0.0_rk] )
+    end if
+    if ( present(used) ) then
+      used%lon = p%lon
+      used%lat = p%lat
     end if
 
   end subroutine QTM_Interpolation_Weights_Geo
-
-  subroutine QTM_Interpolation_Weights_Geo_list ( QTM_Tree, Point, Weights, Stack )
-
-    ! Get the horizontal interpolation weights for Point in the QTM.  This is
-    ! the routine that actually does the work for Point being in some kind of
-    ! Geo coordinates.  This is a 2D-only routine.
-
-    use Generate_QTM_m, only: QTM_Tree_t
-    use Geolocation_0, only: H_t! , RG
-    use QTM_m, only: Stack_t
-
-    type(QTM_tree_t), intent(in) :: QTM_Tree
-    class(h_t), intent(in) :: Point(:)             ! Assume size(point) ==
-!     type(value_QTM_1D_list_t(rg)), intent(out) :: Weights(:) ! size(weights), and
-    type(value_QTM_1D_list_t), intent(out) :: Weights(:) ! size(weights), and
-    type(stack_t), intent(inout), optional :: Stack
-
-    integer :: I
-    type(stack_t) :: MyStack
-
-    if ( present(stack) ) then
-      do i = 1, size(point) ! Assume size(point) == size(weights)
-        call QTM_Interpolation_Weights ( QTM_Tree, point(i), weights(i), &
-          & stack=stack )
-      end do
-    else
-      do i = 1, size(point) ! Assume size(point) == size(weights)
-        call QTM_Interpolation_Weights ( QTM_Tree, point(i), weights(i), &
-          & stack=myStack )
-      end do
-    end if
-
-  end subroutine QTM_Interpolation_Weights_Geo_list
 
   subroutine QTM_Interpolation_Weights_ZOT ( QTM_Tree, Point, Weights, Facet, &
                                            & Stack, Used )
@@ -216,8 +236,7 @@ contains
 
     type(QTM_tree_t), intent(in) :: QTM_Tree
     type(ZOT_t), intent(in) :: Point
-!     type(value_QTM_1D_list_t(rg)), intent(out) :: Weights
-    type(value_QTM_1D_list_t), intent(out) :: Weights
+    class(value_list), intent(out) :: Weights
     integer, intent(in), optional :: Facet
     type(stack_t), intent(inout), optional :: Stack
     type(ZOT_t), intent(out), optional :: Used ! The point used for interpolation
@@ -225,6 +244,7 @@ contains
     logical :: Inside ! Point is inside a facet with three serial numbers.
     integer :: F      ! Index in QTM_Tree of facet containing Point, if any.
     type(ZOT_t) :: P  ! Coordinates of boundary point nearest to Point.
+    real(rk) :: V(3)
 
     if ( present(facet) ) then
       f = facet
@@ -233,250 +253,23 @@ contains
     end if
     inside = f > 0
     if ( inside ) inside = all(QTM_tree%Q(f)%ser > 0)
-    if ( inside ) then
-      weights%v%j = QTM_tree%Q(f)%ser
-      call triangle_interpolate ( QTM_tree%Q(f)%z%x, QTM_tree%Q(f)%z%y, &
-                                & point%x, point%y, weights%v%v )
-      if ( present(used) ) used = point
-    else
+    if ( .not. inside ) then
       call nearest_polygon_point ( point, QTM_tree%polygon_zot, p )
       f = QTM_tree%find_facet ( p, stack )
       ! It should be inside!
       inside = f > 0
       if ( inside ) inside = all(QTM_tree%Q(f)%ser > 0)
-      if ( inside ) then
-        weights%v%j = QTM_tree%Q(f)%ser
-        call triangle_interpolate ( QTM_tree%Q(f)%z%x, QTM_tree%Q(f)%z%y, &
-                                  & point%x, point%y, weights%v%v )
-      else ! Shouldn't get here
-!         weights = value_QTM_1D_List_t(rg)(n=1) ! Default weight is zero
-        weights = value_QTM_1D_List_t(n=1) ! Default weight is zero
-      end if
-      if ( present(used) ) used = p
     end if
+    if ( inside ) then
+      call triangle_interpolate ( QTM_tree%Q(f)%z%x, QTM_tree%Q(f)%z%y, &
+                                & point%x, point%y, v )
+      call weights%fill_weights ( QTM_tree%Q(f)%ser, v )
+    else ! Shouldn't get here
+      call weights%fill_weights ( [0], [0.0_rk] )
+    end if
+    if ( present(used) ) used = p
 
   end subroutine QTM_Interpolation_Weights_ZOT
-
-  subroutine QTM_Interpolation_Weights_ZOT_list ( QTM_Tree, Point, Weights, Stack  )
-
-    ! Get the horizontal interpolation weights for Point in the QTM.
-    ! This is a 2D-only routine.
-
-    use QTM_m, only: Stack_T, ZOT_t
-    use Generate_QTM_m, only: QTM_Tree_t
-!     use Geolocation_0, only: RG
-
-    type(QTM_tree_t), intent(in) :: QTM_Tree
-    type(ZOT_t), intent(in) :: Point(:)            ! Assume size(point) ==
-!     type(value_QTM_1D_list_t(rg)), intent(out) :: Weights(:) ! size(weights), and
-    type(value_QTM_1D_list_t), intent(out) :: Weights(:) ! size(weights), and
-    type(stack_t), intent(inout), optional :: Stack
-
-    integer :: I
-    type(stack_t) :: MyStack
-
-    if ( present(stack) ) then
-      do i = 1, size(point) ! Assume size(point) == size(weights,2)
-        call QTM_Interpolation_Weights ( QTM_Tree, point(i), weights(i), &
-          & stack=stack )
-      end do
-    else
-      do i = 1, size(point) ! Assume size(point) == size(weights)
-        call QTM_Interpolation_Weights ( QTM_Tree, point(i), weights(i), &
-          & stack=myStack )
-      end do
-    end if
-
-  end subroutine QTM_Interpolation_Weights_ZOT_list
-
-  subroutine QTM_Interpolation_Weights_Geo_2d ( QTM_Tree, Point, Weights, Facet, &
-                                           & Stack, Used )
-
-    ! Get the horizontal interpolation weights for Point in the QTM.  This is
-    ! the routine that actually does the work for Point being in some kind of
-    ! Geo coordinates.  This is a 2D-only routine, but the Weights argument
-    ! is for 3D.
-
-    use Generate_QTM_m, only: QTM_Tree_t
-    use Geolocation_0, only: H_t! , RG
-    use Nearest_Polygon_Point_m, only: Nearest_Polygon_Point
-    use QTM_m, only: Geo_to_ZOT, Stack_t, ZOT_t
-    use Triangle_Interpolate_m, only: Triangle_Interpolate
-
-    type(QTM_tree_t), intent(in) :: QTM_Tree
-    class(h_t), intent(in) :: Point
-!     type(value_QTM_2D_List_t(rg)), intent(out) :: Weights
-    type(value_QTM_2D_List_t), intent(out) :: Weights
-    integer, intent(in), optional :: Facet
-    type(stack_t), intent(inout), optional :: Stack
-    class(h_t), intent(out), optional :: Used ! The point used for interpolation
-
-    logical :: Inside ! Point is inside a facet with three serial numbers.
-    integer :: F      ! Index in QTM_Tree of facet containing Point, if any.
-    type(h_t) :: P    ! Coordinates of boundary point nearest to Point.
-    type(ZOT_t) :: Z  ! ZOT coordinates of Point.
-
-    if ( present(facet) ) then
-      f = facet
-    else
-      f = QTM_tree%find_facet ( point, stack )
-    end if
-    inside = f > 0
-    if ( inside ) inside = all(QTM_tree%Q(f)%ser > 0)
-    if ( inside ) then
-      z = geo_to_ZOT ( point )
-      weights%v(1:3)%j = QTM_tree%Q(f)%ser
-      call triangle_interpolate ( QTM_tree%Q(f)%z%x, QTM_tree%Q(f)%z%y, &
-                                & z%x, z%y, weights%v(1:3)%v )
-      if ( present(used) ) then
-        used%lon = point%lon
-        used%lat = point%lat
-      end if
-    else
-      call nearest_polygon_point ( point, QTM_tree%polygon_geo, p )
-      z = geo_to_ZOT ( p )
-      f = QTM_tree%find_facet ( z, stack )
-      ! P should be inside!
-      inside = f > 0
-      if ( inside ) inside = all(QTM_tree%Q(f)%ser > 0)
-      if ( inside ) then
-        weights%v(1:3)%j = QTM_tree%Q(f)%ser
-        call triangle_interpolate ( QTM_tree%Q(f)%z%x, QTM_tree%Q(f)%z%y, &
-                                  & z%x, z%y, weights%v(1:3)%v )
-      else ! Shouldn't get here
-!         weights = value_QTM_2D_List_t(rg)(n=1) ! Default weight is zero
-        weights = value_QTM_2D_List_t(n=1) ! Default weight is zero
-      end if
-      if ( present(used) ) then
-        used%lon = p%lon
-        used%lat = p%lat
-      end if
-    end if
-
-  end subroutine QTM_Interpolation_Weights_Geo_2d
-
-  subroutine QTM_Interpolation_Weights_Geo_list_2d ( QTM_Tree, Point, Weights, Stack )
-
-    ! Get the horizontal interpolation weights for Point in the QTM.  This is
-    ! the routine that actually does the work for Point being in some kind of
-    ! Geo coordinates.  This is a 2D-only routine, but the Weights argument
-    ! is for 3D.
-
-    use Generate_QTM_m, only: QTM_Tree_t
-    use Geolocation_0, only: H_t! , RG
-    use QTM_m, only: Stack_t
-
-    type(QTM_tree_t), intent(in) :: QTM_Tree
-    class(h_t), intent(in) :: Point(:)             ! Assume size(point) ==
-!     type(value_QTM_2D_List_t(rg)), intent(out) :: Weights(:) ! size(weights), and
-    type(value_QTM_2D_List_t), intent(out) :: Weights(:) ! size(weights), and
-    type(stack_t), intent(inout), optional :: Stack
-
-    integer :: I
-    type(stack_t) :: MyStack
-
-    if ( present(stack) ) then
-      do i = 1, size(point) ! Assume size(point) == size(weights)
-        call QTM_Interpolation_Weights ( QTM_Tree, point(i), weights(i), &
-          & stack=stack )
-      end do
-    else
-      do i = 1, size(point) ! Assume size(point) == size(weights)
-        call QTM_Interpolation_Weights ( QTM_Tree, point(i), weights(i), &
-          & stack=myStack )
-      end do
-    end if
-
-  end subroutine QTM_Interpolation_Weights_Geo_list_2d
-
-  subroutine QTM_Interpolation_Weights_ZOT_2d ( QTM_Tree, Point, Weights, Facet, &
-                                           & Stack, Used )
-
-    ! Get the horizontal interpolation weights for Point in the QTM.
-    ! This is a 2D-only routine, but the Weights argument
-    ! is for 3D.
-
-    use QTM_m, only: Stack_T, ZOT_t
-    use Generate_QTM_m, only: QTM_Tree_t
-!     use Geolocation_0, only: RG
-    use Nearest_Polygon_Point_m, only: Nearest_Polygon_Point
-    use Triangle_Interpolate_m, only: Triangle_Interpolate
-
-    type(QTM_tree_t), intent(in) :: QTM_Tree
-    type(ZOT_t), intent(in) :: Point
-!     type(value_QTM_2D_List_t(rg)), intent(out) :: Weights
-    type(value_QTM_2D_List_t), intent(out) :: Weights
-    integer, intent(in), optional :: Facet
-    type(stack_t), intent(inout), optional :: Stack
-    type(ZOT_t), intent(out), optional :: Used ! The point used for interpolation
-
-    logical :: Inside ! Point is inside a facet with three serial numbers.
-    integer :: F      ! Index in QTM_Tree of facet containing Point, if any.
-    type(ZOT_t) :: P  ! Coordinates of boundary point nearest to Point.
-
-    if ( present(facet) ) then
-      f = facet
-    else
-      f = QTM_tree%find_facet ( point, stack )
-    end if
-    inside = f > 0
-    if ( inside ) inside = all(QTM_tree%Q(f)%ser > 0)
-    if ( inside ) then
-      weights%v(1:3)%j = QTM_tree%Q(f)%ser
-      call triangle_interpolate ( QTM_tree%Q(f)%z%x, QTM_tree%Q(f)%z%y, &
-                                & point%x, point%y, weights%v(1:3)%v )
-      if ( present(used) ) used = point
-    else
-      call nearest_polygon_point ( point, QTM_tree%polygon_zot, p )
-      f = QTM_tree%find_facet ( p, stack )
-      ! It should be inside!
-      inside = f > 0
-      if ( inside ) inside = all(QTM_tree%Q(f)%ser > 0)
-      if ( inside ) then
-        weights%v(1:3)%j = QTM_tree%Q(f)%ser
-        call triangle_interpolate ( QTM_tree%Q(f)%z%x, QTM_tree%Q(f)%z%y, &
-                                  & point%x, point%y, weights%v(1:3)%v )
-      else ! Shouldn't get here
-!         weights = value_QTM_2D_List_t(rg)(n=1) ! Default weight is zero
-        weights = value_QTM_2D_List_t(n=1) ! Default weight is zero
-      end if
-      if ( present(used) ) used = p
-    end if
-
-  end subroutine QTM_Interpolation_Weights_ZOT_2d
-
-  subroutine QTM_Interpolation_Weights_ZOT_list_2d ( QTM_Tree, Point, Weights, Stack  )
-
-    ! Get the horizontal interpolation weights for Point in the QTM.
-    ! This is a 2D-only routine, but the Weights argument
-    ! is for 3D.
-
-    use QTM_m, only: Stack_T, ZOT_t
-    use Generate_QTM_m, only: QTM_Tree_t
-!     use Geolocation_0, only: RG
-
-    type(QTM_tree_t), intent(in) :: QTM_Tree
-    type(ZOT_t), intent(in) :: Point(:)            ! Assume size(point) ==
-!     type(value_QTM_2D_List_t(rg)), intent(out) :: Weights(:) ! size(weights), and
-    type(value_QTM_2D_List_t), intent(out) :: Weights(:) ! size(weights), and
-    type(stack_t), intent(inout), optional :: Stack
-
-    integer :: I
-    type(stack_t) :: MyStack
-
-    if ( present(stack) ) then
-      do i = 1, size(point) ! Assume size(point) == size(weights,2)
-        call QTM_Interpolation_Weights ( QTM_Tree, point(i), weights(i), &
-          & stack=stack )
-      end do
-    else
-      do i = 1, size(point) ! Assume size(point) == size(weights)
-        call QTM_Interpolation_Weights ( QTM_Tree, point(i), weights(i), &
-          & stack=myStack )
-      end do
-    end if
-
-  end subroutine QTM_Interpolation_Weights_ZOT_list_2d
 
 !=============================================================================
 !--------------------------- end bloc --------------------------------------
@@ -492,6 +285,9 @@ contains
 end module QTM_Interpolation_Weights_m
 
 ! $Log$
+! Revision 2.12  2018/08/15 17:45:14  vsnyder
+! Rieve
+!
 ! Revision 2.11  2018/05/14 23:25:29  vsnyder
 ! Change to sparse eta representation
 !
