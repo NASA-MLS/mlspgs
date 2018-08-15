@@ -575,6 +575,7 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
       & L_TScat, L_VMR, L_Zeta
     use Load_SPS_Data_M, only: DestroyGrids_T, Dump, Grids_T
     use MatrixModule_1, only: Matrix_T
+    use Metrics_3D_m, only: S_QTM_t
     use MLSKinds, only: R4, R8, RP, RV
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use MLSNumerics, only: Hunt, InterpolateValues, PureHunt
@@ -588,7 +589,6 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
     use Path_Representation_m, only: Facets_and_Vertices_t, Path_t
     use Physics, only: SpeedOfLight
     use PointingGrid_M, only: PointingGrids, PointingGrid_T
-    use QTM_Interpolation_Weights_3D_m, only: S_QTM_t
     use Read_Mie_m, only: IWC_S, T_S
     use Slabs_sw_m, only: AllocateSLABS, DestroyCompleteSLABS, SLABS_Struct
     use Sparse_Eta_m, only: Sparse_Eta_t
@@ -789,7 +789,6 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
     real(rp) :: DHDZ_Path(max_f)      ! dH/dZ on fine path (1:npf)
     real(rp) :: DHDZ_GW_Path(max_f)   ! dH/dZ * GW on fine path (1:npf)
     real(rp) :: DSDH_Path(max_f)      ! dS/dH on fine path (1:tan_pt_f-1,tan_pt_f+ngp1+1:npf)
-    real(rp) :: DSDZ_C(max_c)         ! ds/dH * dH/dZ on coarse path (1:tan_pt_c-1,tan_pt_c+2:npc)
     real(rp) :: DSDZ_GW_Path(max_f)   ! ds/dH * dH/dZ * GW on path
     real(rp) :: DTanh_DT_C(max_c)     ! 1/tanh1_c d/dT tanh1_c
     real(rp) :: DTanh_DT_F(max_f)     ! 1/tanh1_f d/dT tanh1_f
@@ -940,8 +939,6 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
 
     ! 'Avoid zeros' indicators
     logical :: Do_Calc_N(max_f, size(grids_n%values) ) ! on entire grid
-    logical, target :: Do_Calc_T_1(s_t* max_f * sv_t_len)
-    logical, pointer :: Do_Calc_T(:,:)         ! path Z X temp (Z * phi )
     logical :: Do_Calc_V(max_f, size(grids_v%values) ) ! on entire grid
     logical :: Do_Calc_W(max_f, size(grids_w%values) ) ! on entire grid
 
@@ -1060,7 +1057,7 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
     ! Interpolation coefficients from zeta for each VMR to path GL zeta.
     type (Sparse_Eta_t) :: Eta_z(size(fwdModelConf%beta_group))
     type (Sparse_Eta_t) :: Eta_zzT ! Interpolation coefficients from
-                                  ! temperature Zeta to GL zeta.
+                                   ! temperature Zeta to GL zeta.
     type (VectorValue_T), pointer :: BoundaryPressure
     type (VectorValue_T), pointer :: EarthRefl     ! Earth reflectivity
     type (VectorValue_T), pointer :: ECRtoFOV      ! Rotation matrices
@@ -1112,7 +1109,6 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
 
     alpha_path_polarized_c(-1:,1:) => alpha_path_polarized ( -1:1, 1 :: ngp1 )
     dAlpha_dT_polarized_path_c(-1:,1:) => dAlpha_dT_polarized_path ( -1:1, 1 :: ngp1 )
-    do_calc_t(1:max_f,1:s_t*sv_t_len) => do_calc_t_1
 
     ! Get pointer to Alpha_Path_C, the coarse-path part of Alpha_Path
     alpha_path_c => alpha_path ( 1::ngp1 )
@@ -1130,7 +1126,7 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
         & beta_path_cloud_c, beta_c_e_path_c, beta_c_s_path_c, &
         & dAlpha_dT_path_f, del_s, del_zeta, dBeta_c_a_dIWC_path_C, &
         & dBeta_c_s_dIWC_path_C, dBeta_c_a_dT_path_C, dBeta_c_s_dT_path_C, &
-        & dhdz_path, dhdz_gw_path, dsdh_path, dsdz_c, dsdz_gw_path, dTanh_dT_c, &
+        & dhdz_path, dhdz_gw_path, dsdh_path, dsdz_gw_path, dTanh_dT_c, &
         & dTanh_dT_f, h_path, h_path_c, n_path_f, phi_path, &
         & ptg_angles, ref_corr )
       call fill_IEEE_NaN ( tan_dh_dT, tanh1_c, tanh1_f, t_path, t_path_c, &
@@ -4134,8 +4130,8 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
           &  ddHidHidTl0 = ddhidhidtl0, dHidTlm = dh_dt_glgrid,          &
           &  Z_Ref=z_glgrid,                                             &
           &  ddHtdHtdTl0 = tan_d2h_dhdt, dHitdTlm = dh_dt_path,          &
-          &  dHtdTl0 = tan_dh_dt, eta_zp = eta_zp_T )
-        t_der_path_flags(1:npf) = any(do_calc_t(1:npf,:),2)
+          &  dHtdTl0 = tan_dh_dt, eta_zp = eta_zp_T,                     &
+          &  t_der_path_flags = t_der_path_flags )
       else
         call more_metrics ( tan_ind_f, tan_pt_f, Grids_tmp ,             &
           &  vert_inds(1:npf), t_glgrid, dhdz_glgrid, phi_path(1:npf),   &
@@ -4148,7 +4144,6 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
       call comp_eta_docalc_sparse ( grids_f, tan_pt_f, z_path(1:npf), eta_z, &
                                   & phi_path(1:npf), eta_p, eta_zp, eta_fzp, &
                                   & skip=ngp1 )
-
 
       ! Compute sps_path for all those with no frequency component, especially
       ! to get WATER (H2O) contribution for refraction calculations.
@@ -4280,7 +4275,7 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
             & call dump ( eta_mag_zp(1:npf,:), 'Eta_Mag_zp', options=clean )
         end if
 
-      end if
+      end if ! polarized
 
       if ( present(est_scGeocAlt) .and. .not. fwdModelConf%generateTScat ) then
         ! Compute the pointing angles.  These are needed for antenna
@@ -4328,10 +4323,6 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
 
         dsdz_gw_path(f_inds(:nglMax)) = dsdh_path(f_inds(:nglMax)) * &
           & dhdz_gw_path(f_inds(:nglMax))
-
-        ! We need dsdz = ds/dh * dh/dz, not multiplied by GW, for
-        ! trapezoidal quadrature on the coarse grid.
-        dsdz_c(:npc) = dsdh_path(1:npf:ngp1) * dhdz_path(1:npf:ngp1)
 
         ! Multiply dhdz_path by ds / ( sum( ds/dh dh/dz gw ) d zeta ) =
         ! del_s / ( sum (dsdz_gw_path) * del_zeta ), which ought to be 1.0
@@ -4633,6 +4624,9 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.395  2018/05/24 03:24:36  vsnyder
+! Use sparse representation for dh_dt_path
+!
 ! Revision 2.394  2018/05/17 02:15:45  vsnyder
 ! Use sparse instead of dense interpolation
 !
