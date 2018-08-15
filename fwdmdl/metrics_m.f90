@@ -851,7 +851,7 @@ path: do i = i1, i2
           & ddHidHidTl0, dHidTlm, Z_Ref,                               &
           ! Optional outputs:
           & ddHtdHtdTl0, dHitdTlm, dHtdTl0, dHtdZt,                    &
-          & Eta_ZP, Tan_Phi_t )
+          & Eta_ZP, T_Der_Path_Flags, Tan_Phi_t )
 
     ! This subroutine computes metrics-related things after H_Path and
     ! P_Path are computed by Height_Metrics, and then perhaps augmented
@@ -915,6 +915,9 @@ path: do i = i1, i2
              ! pressure at the tangent.  Computed if present(dHidTlm).
     type(sparse_eta_t), optional, intent(inout) :: Eta_ZP ! Interpolating
              ! coefficients for Temperature from Zeta X Phi to the path
+    logical, optional, intent(out) :: T_Der_Path_Flags(:) ! An element in any
+             ! column of row I of Eta_ZP is nonzero. Computed if
+             ! present(dHidTlm).
     real(rp), optional, intent(out) :: Tan_Phi_t ! temperature at the tangent
 
     ! Local variables.
@@ -970,7 +973,7 @@ path: do i = i1, i2
 
       use Array_Stuff, only: Element_Position, Subscripts
       use Comp_Eta_DoCalc_Sparse_m, only: Comp_One_Eta_Z
-      use GLNP, only: NGP1
+      use GLNP, only: NG, NGP1
       logical :: Change                      ! Interpolator got set to zero
       real(rp), pointer :: ddHtdHtdTl0_2(:,:) ! Zeta X Path
       real(rp), pointer :: dHtdTl0_2(:,:)    ! Zeta X Path
@@ -1024,10 +1027,14 @@ path: do i = i1, i2
       call eta_zp%empty ! clean it out but don't deallocate components
       ! Compute Eta_ZP =  Eta_Z x Eta_P^T where t_sv%deriv_flags is true
       call eta_zp%eta_nD ( eta_z, eta_p, flags=t_sv%deriv_flags )
+      ! Don't need Eta_ZP at GL points between two coarse tangent points
+      if ( n_path > n_tan ) eta_zp%rows(n_tan+1:n_tan+ng) = 0
       ! Compute the path temperature derivative, noting where the nonzeros are
       call dHitdTlm%empty ! Clean it out but don't deallocate components
       dHitdTlm%nRows = n_path ! usually filled by Sparse_Eta%*D
+      t_der_path_flags = .false.
       do i = 1, n_path
+        t_der_path_flags(i) = eta_zp%rows(i) /= 0
         ! An iterator to traverse a row of a sparse_t would be helpful
         j = eta_p%rows(i) ! Last element in the row
         if ( j /= 0 ) then
@@ -1179,6 +1186,9 @@ path: do i = i1, i2
 end module Metrics_m
 
 ! $Log$
+! Revision 2.89  2018/05/24 03:24:09  vsnyder
+! Use sparse representation for dHitdTlm
+!
 ! Revision 2.88  2018/05/17 02:15:45  vsnyder
 ! Use sparse instead of dense interpolation
 !
