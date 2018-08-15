@@ -13,7 +13,9 @@
 module Metrics_3D_m
 !=============================================================================
 
-  use Geolocation_0, only: ECR_t, RG
+  use Geolocation_0, only: ECR_t, RG, S_t
+  use QTM_Interpolation_Weights_m, only: QTM_Interpolation_Weights, &
+    & QTM_Weights_t, Value_QTM_1D_List_t, Value_QTM_2D_List_t, Value_QTM_2D_t
 
   implicit NONE
 
@@ -37,6 +39,66 @@ module Metrics_3D_m
     enumerator :: Vertical   ! Vertical surfaces (planes and latitude cones)
   end enum
 
+  ! Type that represents a path through a QTM, with horizontal interpolation
+  ! coefficients.
+  type, extends(S_t), public :: S_QTM_t ! Descriptors of points along a line
+                     ! through a stacked but not necessarily coherent 3D grid
+                     ! built atop a QTM surface grid.  The grid consists of
+                     ! triangular prisms resting upon the QTM.  The horizontal
+                     ! boundaries of the prisms are spherical caps.  One
+                     ! vertical face is a latitude cone; the other two are
+                     ! planes.
+  ! real(rg) :: S    ! Distance along Line(1) in the direction of Line(2);
+                     ! Inherited from parent type.
+!     type(value_QTM_1D_List_t(rg)) :: Coeff = value_QTM_1D_List_t(rg)()
+    type(value_QTM_1D_List_t) :: Coeff = value_QTM_1D_List_t()
+                     ! Horizontal interpolation coefficients, along with the
+                     ! indices of the QTM, or an extract of it adjacent to
+                     ! the path, to which the coefficients apply.  This is just
+                     ! a temp used by Metrics_3D to store up to three
+                     ! coefficients per path point.
+    type(QTM_Weights_t) :: Eta = QTM_Weights_t()
+    integer :: Face  ! Cone_Face => latitude cone face, bounded horizontally
+                     !      by two non-polar vertices of facet QID.
+                     ! X_face => vertical face bounded horizontally by the
+                     !      polar vertex and the X-node vertex of facet QID.
+                     ! Y_face => vertical face bounded horizontally by the
+                     !      polar vertex and the Y-node vertex of facet QID.
+                     ! Top_Face => horizontal face of facet QID at height
+                     !      indexed by H.
+                     ! Inside_Prism => The intersection is inside a prism
+                     !      resting on the surface QTM instead of with one
+                     !      of its faces.
+                     ! If the point is outside the QTM, this will be the
+                     ! negative of one of the above values, other than
+                     ! Inside_Prism; it will be whatever face the extrapolated
+                     ! line intersects.  The coordinates indexed by Coeff%v%n
+                     ! are those where the line intersects the QTM, not where
+                     ! it intersects a surface of a height equal to one of the
+                     ! heights in the intersection of all heights in the state
+                     ! vector.  The H component probably isn't useful.
+    integer :: Facet = 0 ! Index in Grid%QTM_Tree of QTM facet intersected at
+                     ! the point.
+    real(rg) :: H    ! Height at which the point intersects a face.  This is
+                     ! the height where the extrapolated line intersects a face
+                     ! of the QTM for points outside the QTM.
+    integer :: H_ind = 0 ! Index in height grid.  If |Face| /= Top_Face, H_Ind
+                     ! is the index of the next lower height surface.  If
+                     ! |Face| == Top_Face but the point is below the first
+                     ! element of the height grid, H_ind is zero.  This could
+                     ! happen if the ray is an Earth-reflecting ray and the
+                     ! minimum height in the height-reference array is above
+                     ! the Earth surface.
+  contains
+    procedure :: Fill
+  end type S_QTM_t
+
+  integer, parameter, public :: Cone_Face = 1
+  integer, parameter, public :: X_face = cone_face + 1
+  integer, parameter, public :: Y_face = x_face + 1
+  integer, parameter, public :: Top_Face = y_face + 1
+  integer, parameter, public :: Inside_Prism = top_face + 1
+
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
@@ -45,6 +107,7 @@ module Metrics_3D_m
 
 contains
 
+  !----------------------------------------------  Metrics_3D_QTM  -----
   subroutine Metrics_3D_QTM ( Path, QTM_Tree, H, S, Tangent_Index, Pad, F_and_V, &
                             & Eta_P, Eta_P_T, Which )
     ! Given a line defined by a point in ECR, and a vector in ECR parallel
@@ -71,7 +134,6 @@ contains
 
     use Generate_QTM_m, only: QTM_Tree_t
     use Path_Representation_m, only: Facets_and_Vertices_t, Path_t
-    use QTM_Interpolation_Weights_3D_m, only: S_QTM_t
     use Sparse_m, only: Sparse_t
 
     type(path_t), intent(inout) :: Path ! Path%Lines(1,1) + s * Path%Lines(2,1)
@@ -145,8 +207,18 @@ contains
       end do
     end subroutine Copy_Coeff_to_Eta
 
+    subroutine Copy_Eta_to_Eta ( Eta )
+      class(sparse_t), intent(inout) :: Eta ! Interpolation coefficients
+      integer :: J
+      call eta%empty ! Sets Eta%NE, Eta%Rows and Eta%Cols to zero
+      do j = 1, size(s)
+        call eta%add_element ( s(j)%eta%w(1:s(j)%eta%n) )
+      end do
+    end subroutine Copy_Eta_to_Eta
+
   end subroutine Metrics_3D_QTM
 
+  !--------------------------------------------  Metrics_3D_QTM_1  -----
   subroutine Metrics_3D_QTM_1 ( Line, SMin, SMax, QTM_Tree, H, Intersections, &
                               & F_and_V, Which )
 
@@ -191,8 +263,6 @@ contains
     use Line_And_Plane_m, only: Line_And_Plane
     use Path_Representation_m, only: Facets_and_Vertices_t
     use QTM_m, only: Stack_t
-    use QTM_Interpolation_Weights_3D_m, only: S_QTM_t, Cone_Face, &
-      & Top_Face, X_Face, Y_Face
     use Radius_of_Curvature_m, only: Radius_of_Curvature_Mean
     use Sort_m, only: SortP
 
@@ -211,6 +281,7 @@ contains
     integer, intent(in), optional :: Which ! Which intersections to detect,
                                            ! default all
 
+    type(value_QTM_1D_List_t) :: Coeff     ! Interpolating coefficients
     type(S_QTM_t), allocatable :: Cone_Int(:) ! All intersections of Line with
                                            ! a latitude cone of the QTM
     integer :: K
@@ -399,12 +470,10 @@ contains
         do j = 1, size(test_int)
           if ( s(j) >= sMin .and. s(j) <= sMax ) then
             n_out = n_out + 1
-            outside(n_out) = S_QTM_t( s=s(j), face=-inside(i_edge)%face,  &
-                                    & facet=f, h=want_h, h_ind=j, &
-!                                     & coeff=value_QTM_1D_List_t(rg)(n_h) )
-                                    & coeff=value_QTM_1D_List_t(n_h) )
-            outside(n_out)%coeff%v(:n_h)%v = eta(:n_h)
-            outside(n_out)%coeff%v(:n_h)%j = ser(:n_h)
+            call coeff%fill_weights ( ser(:n_h), eta(:n_h) )
+            call outside(n_out)%fill ( s=s(j), face=-inside(i_edge)%face,  &
+                                     & facet=f, h=want_h, h_ind=j, &
+                                     & coeff=coeff )
           end if
         end do
       end do
@@ -493,7 +562,7 @@ contains
             end if
             if ( keep ) then
               n_top = n_top + 1
-              top_int(n_top) = S_QTM_t(s=s_int(k), facet=f, h=geod%v, &
+              call top_int(n_top)%fill ( s=s_int(k), facet=f, h=geod%v, &
                              & face=top_face, h_ind=j, &
 !                              & coeff=value_QTM_1D_List_t(rg)() )
                              & coeff=value_QTM_1D_List_t(n=3) )
@@ -661,10 +730,10 @@ contains
                 if ( geod_int%v >= h1 .and. geod_int%v <= h2 ) then
                   ! Intersection is within vertical range too
                   n_vert = n_vert + 1
-                  v_int(n_vert) = S_QTM_t( s=s_int, facet=f, h=geod_int%v, &
-                                         & face=faces(m), &
-!                                          & coeff=value_QTM_1D_List_t(rg)(n=2) )
-                                         & coeff=value_QTM_1D_List_t(n=2) )
+                  call coeff%fill_weights ( [0,0], eta_h )
+                  call v_int(n_vert)%fill ( s=s_int, facet=f, h=geod_int%v, &
+                                          & face=faces(m), &
+                                          & coeff=coeff )
                   ! Interpolation coefficients are in latitude only.
                   v_int(n_vert)%coeff%v(:2)%v = eta_h
                   hit(j,v(2,k)) = .true.
@@ -677,6 +746,27 @@ contains
     end subroutine Intersect_Line_And_Vertical_Boundary
 
   end subroutine Metrics_3D_QTM_1
+
+  !--------------------------------------------------------  Fill  -----
+  subroutine Fill ( S_QTM, S, Coeff, Eta, Face, Facet, H, H_Ind )
+    class(S_QTM_t), intent(inout) :: S_QTM
+    real(rg), intent(in) :: S
+    type(value_QTM_1D_List_t), intent(in), optional :: Coeff
+    type(QTM_Weights_t), intent(in), optional :: Eta
+    integer, intent(in) :: Face
+    integer, intent(in), optional :: Facet
+    real(rg), intent(in), optional :: H
+    integer, intent(in), optional :: H_Ind
+    s_QTM%s = s
+    if ( present(coeff) ) s_QTM%coeff = coeff
+    if ( present(eta) ) s_QTM%eta = eta
+!????? Crashes Intel 17.0.0.098 Build 20160721
+!     if ( present(eta) ) call s_QTM%eta%copy ( eta )
+    s_QTM%face = face
+    if ( present(facet) ) s_QTM%facet = facet
+    if ( present(h) ) s_QTM%h = h
+    if ( present(h_ind) ) s_QTM%h_ind = h_ind
+  end subroutine Fill
 
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
@@ -691,6 +781,11 @@ contains
 end module Metrics_3D_m
 
 ! $Log$
+! Revision 2.15  2018/08/15 01:14:54  vsnyder
+! Move S_QTM_t here from QTM_Interpolation_Weights_3D_m.  Add Copy_Eta_to_Eta.
+! Add Fill.  Revise calculations that depended upon list representation of
+! interpolation coefficients.
+!
 ! Revision 2.14  2018/05/24 03:23:19  vsnyder
 ! Spiff some comments
 !
