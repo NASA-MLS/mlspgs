@@ -344,6 +344,7 @@ contains
                          & Width )
     use Array_Stuff, only: Subscripts
     use Dump_Options, only: SDFormatDefault
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use Output_m, only: Blanks, NewLine, Output
     use String_Table, only: Display_String
     class(sparse_t), intent(in) :: Sparse         ! The sparse matrix
@@ -370,6 +371,9 @@ contains
     logical :: MyTranspose
     integer :: MyWidth
     integer :: Places
+
+    if ( .not. allocated(sparse%rows) .or. .not. allocated(sparse%cols) ) &
+      call MLSMessage ( MLSMSG_Error, moduleName, "Can't dump Eta that's not created" )
 
     myColon = .false.
     if ( present(colon) ) myColon = colon
@@ -950,6 +954,9 @@ contains
 end module Sparse_m
 
 ! $Log$
+! Revision 2.9  2018/08/16 02:16:41  vsnyder
+! Announce error on attempt to dump un-created Sparse_t
+!
 ! Revision 2.8  2018/08/14 23:35:31  vsnyder
 ! Add Densify
 !
