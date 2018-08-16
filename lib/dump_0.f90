@@ -117,6 +117,7 @@ module Dump_0
 
   interface Dump_Sparse ! Dump only the nonzeroes in 1D arrays
     module procedure Dump_1D_Sparse_Double, Dump_1D_Sparse_Real
+    module procedure Dump_2D_Row_Sparse_Double, Dump_2D_Row_Sparse_Real
   end interface
 
   interface Dump_2x2xN  ! For polarized incremental optical depth
@@ -884,11 +885,13 @@ contains
   end subroutine Dump_2D_Real
 
   ! --------------------------------------  Dump_1D_Sparse_Double  -----
-  subroutine Dump_1D_Sparse_Double ( Array, Name, Format, Width )
+  subroutine Dump_1D_Sparse_Double ( Array, Name, Format, Width, Parens )
     double precision, intent(in) :: Array(:)
     character(len=*), intent(in), optional :: Name
     character(len=*), intent(in), optional :: Format
     integer, intent(in), optional :: Width ! Items per line, default 5
+    logical, intent(in), optional :: Parens
+    logical :: MyParens ! Enclose element number in parens instead of colon after
 
     integer :: J, N, W
     character(len=64) :: MyFormat
@@ -897,12 +900,18 @@ contains
     if ( present(format) ) myFormat = format
     w = 5
     if ( present(width) ) w = width
+    myParens = .false.
+    if ( present(parens) ) myParens = parens
     if ( present(name) ) call output ( trim(name), advance='yes' )
 
     n = 0 ! Number on the line so far
     do j = 1, size(array)
       if ( array(j) /= 0 ) then
-        call output ( j, places=4, after=': ' )
+        if ( myParens ) then
+          call output ( j, before=' (', after=') ' )
+        else
+          call output ( j, places=4, after=': ' )
+        end if
         call output ( array(j), format=myFormat )
         n = n + 1
         if ( n >= w ) then
@@ -916,25 +925,33 @@ contains
   end subroutine Dump_1D_Sparse_Double
 
   ! ----------------------------------------  Dump_1D_Sparse_Real  -----
-  subroutine Dump_1D_Sparse_Real ( Array, Name, Format, Width )
+  subroutine Dump_1D_Sparse_Real ( Array, Name, Format, Width, Parens )
     real, intent(in) :: Array(:)
     character(len=*), intent(in), optional :: Name
     character(len=*), intent(in), optional :: Format
     integer, intent(in), optional :: Width ! Items per line, default 5
+    logical, intent(in), optional :: Parens
 
     integer :: J, N, W
     character(len=64) :: MyFormat
+    logical :: MyParens ! Enclose element number in parens instead of colon after
 
     myFormat = sdFormatDefault
     if ( present(format) ) myFormat = format
     w = 5
     if ( present(width) ) w = width
+    myParens = .false.
+    if ( present(parens) ) myParens = parens
     if ( present(name) ) call output ( trim(name), advance='yes' )
 
     n = 0 ! Number on the line so far
     do j = 1, size(array)
       if ( array(j) /= 0 ) then
-        call output ( j, places=4, after=': ' )
+        if ( myParens ) then
+          call output ( j, before=' (', after=') ' )
+        else
+          call output ( j, places=4, after=': ' )
+        end if
         call output ( array(j), format=myFormat )
         n = n + 1
         if ( n >= w ) then
@@ -946,6 +963,40 @@ contains
     if ( n /= 0 ) call newLine
 
   end subroutine Dump_1D_Sparse_Real
+
+  ! ----------------------------------  Dump_2D_Row_Sparse_Double  -----
+  subroutine Dump_2D_Row_Sparse_Double ( Array, Name, Format, Width )
+    double precision, intent(in) :: Array(:,:)
+    character(len=*), intent(in), optional :: Name
+    character(len=*), intent(in), optional :: Format
+    integer, intent(in), optional :: Width ! Items per line, default 5
+
+    integer :: I ! Row number
+
+    if ( present(name) ) call output ( trim(name), advance='yes' )
+    do i = 1, size(array,1)
+      call output ( i, places=4, after='#' )
+      call dump_sparse ( array(i,:), format=format, width=width, parens=.true. )
+    end do
+
+  end subroutine Dump_2D_Row_Sparse_Double
+
+  ! ------------------------------------  Dump_2D_Row_Sparse_Real  -----
+  subroutine Dump_2D_Row_Sparse_Real ( Array, Name, Format, Width )
+    real, intent(in) :: Array(:,:)
+    character(len=*), intent(in), optional :: Name
+    character(len=*), intent(in), optional :: Format
+    integer, intent(in), optional :: Width ! Items per line, default 5
+
+    integer :: I ! Row number
+
+    if ( present(name) ) call output ( trim(name), advance='yes' )
+    do i = 1, size(array,1)
+      call output ( i, places=4, after='#' )
+      call dump_sparse ( array(i,:), format=format, width=width, parens=.true. )
+    end do
+
+  end subroutine Dump_2D_Row_Sparse_Real
 
   ! -----------------------------------------  Dump_2x2xN_Complex  -----
   subroutine Dump_2x2xN_Complex ( Array, Name, Format, Options )
@@ -1809,6 +1860,9 @@ contains
 end module Dump_0
 
 ! $Log$
+! Revision 2.156  2018/08/16 02:17:43  vsnyder
+! Add row sparse dump
+!
 ! Revision 2.155  2018/04/25 01:47:43  vsnyder
 ! Add 1D sparse real and double precision dumps
 !
