@@ -134,6 +134,7 @@ contains ! =====     Public Procedures     =============================
     ! and which ones need to be created
     DEEBUG = LetsDebug ( 'direct', 0 )
     verbose = BeVerbose( 'direct', -1 )
+    call time_now ( timeSetup ) ! In case there were no datasets to write out
     if ( DeeBUG ) print *, 'Allocating ', noSources
     nullify(createThisSource, nameBuffer)
     call Allocate_test ( createThisSource, noSources, 'createThisSource', &
@@ -408,6 +409,7 @@ contains ! =====     Public Procedures     =============================
     ! Executable  
     DEEBUG = LetsDebug ( 'direct', 0 )
     verbose = BeVerbose( 'direct', -1 )
+    call time_now ( timeSetup ) ! In case there were no datasets to write out
       ! Loop over the quantities to output
       NumPermitted = 0
       NumOutput = 0
@@ -585,6 +587,7 @@ contains ! =====     Public Procedures     =============================
     ! Executable  
     DEEBUG = LetsDebug ( 'direct', 0 )
     verbose = BeVerbose( 'direct', -1 )
+    call time_now ( timeSetup ) ! In case there were no datasets to write out
       ! Loop over the quantities to output
       NumPermitted = 0
       NumOutput = 0
@@ -735,6 +738,9 @@ end module JoinUtils_1
 
 !
 ! $Log$
+! Revision 2.4  2018/08/17 21:36:44  pwagner
+! Initialize timeSetup in case there were no datasets
+!
 ! Revision 2.3  2018/07/27 23:18:48  pwagner
 ! Renamed level 2-savvy MLSMessage MLSL2Message
 !
