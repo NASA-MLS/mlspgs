@@ -14,11 +14,8 @@ module MLSCommon                ! Common definitions for the MLS software
 !=============================================================================
 
   use IEEE_Arithmetic, only: IEEE_Is_Finite, IEEE_Is_Nan
-!   This results in a circular dependence.  The type MLSFile_T ought to be
-!   defined in a different module.
-!   use Lexer_Core, only: Where_T ! Where is something in the L2CF
-!   ** MLSCommon is about as common as our lib modules get              **
-!   ** only machine, IEEE_Aritmetic, MLSKinds, and MLSStrings are lower **
+  !   This doesn't results in a circular dependence.
+  use Lexer_Types, only: Where_T ! Where is something in the L2CF
   use MLSKinds ! everything
   use MLSStrings,  only: Lowercase
 
@@ -303,7 +300,7 @@ module MLSCommon                ! Common definitions for the MLS software
     logical :: StillOpen=.false.
     type(Range_T) :: PCFidRange = Range_T()
     type(Fileids_T) :: FileID = FileIDs_T()
-!     type(where_t) :: Where  ! in l2cf, using Where function in Tree module
+    type(where_t) :: Where  ! in l2cf, using Where function in Tree module
     ! Until MLSFile_T is moved out of MLSCommon, get these from a tree node
     ! using Source_Ref and The_File from the Tree module.
     integer :: L2CF = 0       ! String index of L2CF
@@ -698,6 +695,9 @@ end module MLSCommon
 
 !
 ! $Log$
+! Revision 2.51  2018/08/17 23:51:41  pwagner
+! May use Where component in MLSFile_T
+!
 ! Revision 2.50  2018/08/13 22:31:28  pwagner
 ! Add MLSChunk_T to toc; correct spelling error in comments
 !
