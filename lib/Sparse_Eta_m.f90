@@ -266,33 +266,37 @@ contains
       block
         use Sort_m, only: SortP
         integer :: P(n_grid)
+        integer :: Pi ! p(i)
         call sortp ( grid, 1, n_grid, p ) ! grid(p(:)) are now sorted
         ! Coefficients below Basis(1) are all 1.0
         do i = myRow1, myRowN
-          if ( grid(p(i)) > basis(1) ) exit
-          call eta%add_element ( 1.0_rp, p(i), 1 )
+          pi = p(i)
+          if ( grid(pi) > basis(1) ) exit
+          call eta%add_element ( 1.0_rp, pi, 1 )
           pr = i
         end do
         ! Coefficients between basis(1) and Basis(n_basis) are "hat" functions
         do j = 2, n_basis
           del_basis = 1.0_rp / ( basis(j) - basis(j-1) )
           do while ( i <= myRowN )
-            if ( grid(p(i)) > basis(j) ) exit
-            if ( basis(j-1) < grid(p(i)) .and. i /= pr ) then
-              v = ( basis(j)-grid(i) ) * del_basis
-              if ( v /= 0 ) call eta%add_element ( v, i, j-1 )
-              v = (grid(i)-basis(j-1)) * del_basis
-              if ( v /= 0 ) call eta%add_element ( v, i, j )
+            pi = p(i)
+            if ( grid(pi) > basis(j) ) exit
+            if ( basis(j-1) < grid(pi) .and. i /= pr ) then
+              v = ( basis(j)-grid(pi) ) * del_basis
+              if ( v /= 0 ) call eta%add_element ( v, pi, j-1 )
+              v = (grid(pi)-basis(j-1)) * del_basis
+              if ( v /= 0 ) call eta%add_element ( v, pi, j )
             end if
             i = i + 1
           end do
         end do
         ! Coefficients above Basis(n_basis) are all 1.0
         do i = myRowN, i, -1
+          pi = p(i)
           ! I think ">" ought to be ">=" to avoid duplicates, but it somehow
           ! sometimes neglects to do one, so we check for duplicates.
-          if ( basis(n_basis) > grid(p(i)) ) exit
-          if ( i /= pr ) call eta%add_element ( 1.0_rp, p(i), n_basis )
+          if ( basis(n_basis) > grid(pi) ) exit
+          if ( i /= pr ) call eta%add_element ( 1.0_rp, pi, n_basis )
           pr = i
         end do
       end block
@@ -410,6 +414,9 @@ contains
 end module Sparse_Eta_m
 
 ! $Log$
+! Revision 2.7  2018/08/20 23:40:03  vsnyder
+! Correct error in the case that the grid needs to be sorted
+!
 ! Revision 2.6  2018/05/24 03:21:43  vsnyder
 ! Add flags to allow saying 'don\'t bother with this column'
 !
