@@ -341,7 +341,7 @@ contains
 
   ! ------------------------------------------------  Dump_Sparse  -----
   subroutine Dump_Sparse ( Sparse, Name, Format, Colon, This, Offset, Transpose, &
-                         & Width )
+                         & Width, Exclude )
     use Array_Stuff, only: Subscripts
     use Dump_Options, only: SDFormatDefault
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
@@ -361,10 +361,13 @@ contains
     logical, intent(in), optional :: Transpose    ! Dump transpose -- each row
                                                   ! of output is a column
     integer, intent(in), optional :: Width        ! How many per line, default 5
+    real(rp), intent(in), optional :: Exclude     ! Don't print these
 
     integer :: CS(size(sparse%uBnd,1))
     integer :: C1, C2, I, J, K, L, R1, R2, S
-    logical :: More  ! Can print more than the name
+    logical :: DidOne
+    logical :: DoThis ! Do this row or column
+    logical :: More   ! Can print more than the name
     logical :: MyColon
     character(len=64) :: MyFormat
     logical :: MyOffset
@@ -421,6 +424,7 @@ contains
       call output ( ' Sparse%NE <= 0' )
       more=.false.
     end if
+    didOne = .false.
     if ( more ) then
       if ( myTranspose ) then
         ! Print the nonzero array elements, their column sub-dimension
@@ -432,8 +436,20 @@ contains
           c2 = this
         end if
         do i = c1, c2
-          j = sparse%cols(i)                     ! First row
+          j = sparse%cols(i)                     ! Last row this column
           if ( j == 0 ) cycle                    ! Don't dump an empty column
+          doThis = .not. present(exclude)
+          if ( .not. doThis ) then
+            do
+              j = sparse%e(j)%nc                 ! Next row in this column
+              doThis = sparse%e(j)%v /= exclude
+              if ( doThis ) exit
+              if ( j == sparse%cols(i) ) exit    ! No more columns this row
+            end do
+            j = sparse%cols(i)
+          end if
+          if ( .not. doThis ) cycle
+          didOne = .true.
           cs = subscripts ( sparse%e(j)%c, sparse%uBnd, sparse%lBnd )
           if ( myOffset ) cs = cs - sparse%lBnd + 1
           call output ( cs(1), before="(" )
@@ -469,8 +485,20 @@ contains
           r2 = this
         end if
         do i = r1, r2
-          j = sparse%rows(i)                     ! First column
+          j = sparse%rows(i)                     ! Last column this row
           if ( j == 0 ) cycle                    ! Don't dump an empty row
+          doThis = .not. present(exclude)
+          if ( .not. doThis ) then
+            do
+              j = sparse%e(j)%nr                 ! Next column in this row
+              doThis = sparse%e(j)%v /= exclude
+              if ( doThis ) exit
+              if ( j == sparse%rows(i) ) exit    ! No more rows this column
+            end do
+            j = sparse%rows(i)
+          end if
+          if ( .not. doThis ) cycle
+          didOne = .true.
           call output ( i, places=4, after="#" ) ! Row number
           k = 0
           do
@@ -500,6 +528,16 @@ contains
       end if
     else
       call newLine
+    end if
+
+    if ( .not. didOne ) then
+      if ( present(exclude) ) then
+        call output ( exclude, &
+          & before="Either there are no elements, or they're all = ", &
+          & advance="yes" )
+      else
+        call output ( "There are no nonzero elements", advance="yes" )
+      end if
     end if
 
   end subroutine Dump_Sparse
@@ -954,6 +992,9 @@ contains
 end module Sparse_m
 
 ! $Log$
+! Revision 2.10  2018/08/21 01:52:14  vsnyder
+! Add Exclude argument to sparse dumps
+!
 ! Revision 2.9  2018/08/16 02:16:41  vsnyder
 ! Announce error on attempt to dump un-created Sparse_t
 !
