@@ -37,9 +37,9 @@ module Hydrostatic_m
 
     use MLSKinds, only: RP, IP
     use Geometry, only: EarthRadA, EarthRadB, GM, J2, J4, W
-    use Get_Eta_Matrix_m, only: Get_Eta_Sparse
     use Piq_Int_m, only: Piq_Int
     use Physics, only: BoltzMeters => Boltz ! Avogadro * k * ln10 / mmm m^2/(K s^2)
+    use Sparse_eta_m, only: Sparse_Eta_t
     use Toggles, only: Emit, Levels, Toggle
     use Trace_m, only: Trace_Begin, Trace_End
 
@@ -68,6 +68,7 @@ module Hydrostatic_m
 ! Internal stuff
 
     real(rp), parameter :: ERadAsq = EarthRadA**2, ERadBsq = EarthRadB**2
+    ! Boltzmann constant in kilometers:
     real(rp), parameter :: Boltz = boltzMeters/1.0e6_rp ! = kln10/m km^2/(K sec^2)
 
     integer :: Me = -1          ! String index for trace
@@ -79,10 +80,10 @@ module Hydrostatic_m
     real(rp) :: P2, P4    ! Legendre polynomials, for oblateness model
 !   real(rp) :: dp2, dp4  ! Derivatives of P2 and P4
     real(rp) :: dh_dz_S, H_calc, Z_old
-    real(rp), dimension(size(t_grid),size(t_basis)) :: Eta
     real(rp), dimension(size(h_grid),size(t_basis)) :: Piq
     real(rp), dimension(1,size(t_coeffs)) :: Piqa, Piqb
     real(rp), dimension(size(z_grid)) :: Mass_corr
+    type(sparse_eta_t) :: Eta
 
 ! begin the code
 
@@ -103,9 +104,10 @@ module Hydrostatic_m
       mass_corr = 1.0_rp
     end where
 
-! compute t_grid
-    call get_eta_sparse ( t_basis, z_grid, eta )
-    t_grid = matmul(eta,t_coeffs)
+! compute Eta (interpolation coefficients) from T_Basis to Z_Grid, and
+! use them to compute t_grid
+    call eta%eta_1d ( t_basis, z_grid, create=.true., sorted=.false. )
+    call eta%sparse_dot_vec ( t_coeffs, t_grid )
 
 !{ Compute surface acceleration and effective earth radius.  First,
 !  evaluate the Legendre polynomials $P_2(\sin\lambda) = \frac32 \sin^2\lambda
@@ -188,7 +190,7 @@ module Hydrostatic_m
 !{ Compute the {\tt piq} integrals with mass reduction compensation relative to the
 !  surface.  Here, {\tt piq} = $P_l(\zeta) = P(\zeta_l,\phi_m)$.
 
-    call piq_int ( z_grid,t_basis,z_surf,piq,Z_MASS=2.5_rp,C_MASS=0.02_rp )
+    call piq_int ( z_grid, t_basis, z_surf, piq, Z_MASS=2.5_rp, C_MASS=0.02_rp )
 
 ! compute the height vector
 
@@ -269,9 +271,17 @@ module Hydrostatic_m
 
       dhidtq = spread(dhidzi,2,n_coeffs) * piq
 ! this derivative is useful for antenna derivatives
-      if ( present(ddhdhdtq) ) &
-        & ddhdhdtq = (2.0_rp/(spread(h_grid,2,n_coeffs)+r_eff)) * dhidtq &
-                 & + eta / spread(t_grid,2,n_coeffs)
+      if ( present(ddhdhdtq) ) then
+        ddhdhdtq = (2.0_rp/(spread(h_grid,2,n_coeffs)+r_eff)) * dhidtq
+        block
+          integer :: i, j, k
+          do k = 1, eta%ne
+            i = eta%e(k)%r
+            j = eta%e(k)%c
+            ddhdhdtq(i,j) = ddhdhdtq(i,j) + eta%e(k)%v / t_grid(i)
+          end do
+        end block
+      end if
     end if
 
 !{ \begin{equation*}
@@ -343,6 +353,7 @@ module Hydrostatic_m
 ! Internal stuff
 
     real(rp), parameter :: ERadAsq = EarthRadA**2, ERadBsq = EarthRadB**2
+    ! Boltzmann constant in kilometers:
     real(rp), parameter :: Boltz = boltzMeters/1.0e6_rp ! = kln10/m km^2/(K sec^2)
 
     integer :: I, J, K
@@ -462,7 +473,7 @@ module Hydrostatic_m
 !{ Compute the {\tt piq} integrals with mass reduction compensation relative to the
 !  surface.  Here, {\tt piq} = $P_l(\zeta) = P(\zeta_l,\phi_m)$.
 
-    call piq_int ( z_grid,t_basis,z_surf,piq,Z_MASS=2.5_rp,C_MASS=0.02_rp )
+    call piq_int ( z_grid, t_basis, z_surf, piq, Z_MASS=2.5_rp, C_MASS=0.02_rp )
 
 ! compute the height vector
 
@@ -609,6 +620,7 @@ module Hydrostatic_m
 ! Internal stuff
 
     real(rp), parameter :: ERadAsq = EarthRadA**2, ERadBsq = EarthRadB**2
+    ! Boltzmann constant in kilometers:
     real(rp), parameter :: Boltz = boltzMeters/1.0e6_rp ! = kln10/m km^2/(K sec^2)
 
     integer(ip) :: iter
@@ -718,7 +730,7 @@ module Hydrostatic_m
 !{ Compute the {\tt piq} integrals with mass reduction compensation relative to the
 !  surface.  Here, {\tt piq} = $P_l(\zeta) = P(\zeta_l,\phi_m)$.
 
-    call piq_int ( z_grid,t_basis,z_surf,piq,Z_MASS=2.5_rp,C_MASS=0.02_rp )
+    call piq_int ( z_grid, t_basis, z_surf, piq, Z_MASS=2.5_rp, C_MASS=0.02_rp )
 
 ! compute the height vector
 
@@ -767,6 +779,9 @@ module Hydrostatic_m
 end module Hydrostatic_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.32  2018/05/14 23:36:36  vsnyder
+! Change to sparse eta representation
+!
 ! Revision 2.31  2017/08/28 20:28:08  livesey
 ! Changed the n,nf,np,nz elements to j,jf,...
 !
