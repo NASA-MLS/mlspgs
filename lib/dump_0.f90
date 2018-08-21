@@ -885,16 +885,21 @@ contains
   end subroutine Dump_2D_Real
 
   ! --------------------------------------  Dump_1D_Sparse_Double  -----
-  subroutine Dump_1D_Sparse_Double ( Array, Name, Format, Width, Parens )
+  subroutine Dump_1D_Sparse_Double ( Array, Name, Format, Width, Parens, &
+                                   & RowNum, Exclude, DidOne )
     double precision, intent(in) :: Array(:)
     character(len=*), intent(in), optional :: Name
     character(len=*), intent(in), optional :: Format
-    integer, intent(in), optional :: Width ! Items per line, default 5
+    integer, intent(in), optional :: Width   ! Items per line, default 5
     logical, intent(in), optional :: Parens
-    logical :: MyParens ! Enclose element number in parens instead of colon after
+    integer, intent(in), optional :: RowNum  ! Print this first
+    double precision, intent(in), optional :: Exclude ! Don't print these
+    logical, intent(out), optional :: DidOne ! Printed a value
 
+    logical :: NeedRow ! Need to print RowNum
     integer :: J, N, W
     character(len=64) :: MyFormat
+    logical :: MyParens ! Enclose element number in parens instead of colon after
 
     myFormat = sdFormatDefault
     if ( present(format) ) myFormat = format
@@ -903,21 +908,28 @@ contains
     myParens = .false.
     if ( present(parens) ) myParens = parens
     if ( present(name) ) call output ( trim(name), advance='yes' )
+    needRow = present(rowNum)
 
     n = 0 ! Number on the line so far
+    if ( present(didOne) ) didOne = .false.
     do j = 1, size(array)
-      if ( array(j) /= 0 ) then
-        if ( myParens ) then
-          call output ( j, before=' (', after=') ' )
-        else
-          call output ( j, places=4, after=': ' )
-        end if
-        call output ( array(j), format=myFormat )
-        n = n + 1
-        if ( n >= w ) then
-          call newLine
-          n = 0
-        end if
+      if ( array(j) == 0 ) cycle
+      if ( present(exclude) ) then
+        if ( array(j) == exclude ) cycle
+      end if
+      if ( needRow ) call output ( rowNum, places=4, after='#' )
+      needRow = .false.
+      if ( myParens ) then
+        call output ( j, before=' (', after=') ' )
+      else
+        call output ( j, places=4, after=': ' )
+      end if
+      call output ( array(j), format=myFormat )
+      if ( present(didOne) ) didOne = .true.
+      n = n + 1
+      if ( n >= w ) then
+        call newLine
+        n = 0
       end if
     end do
     if ( n /= 0 ) call newLine
@@ -925,16 +937,22 @@ contains
   end subroutine Dump_1D_Sparse_Double
 
   ! ----------------------------------------  Dump_1D_Sparse_Real  -----
-  subroutine Dump_1D_Sparse_Real ( Array, Name, Format, Width, Parens )
+  subroutine Dump_1D_Sparse_Real ( Array, Name, Format, Width, Parens, &
+                                 & RowNum, Exclude, DidOne )
     real, intent(in) :: Array(:)
     character(len=*), intent(in), optional :: Name
     character(len=*), intent(in), optional :: Format
-    integer, intent(in), optional :: Width ! Items per line, default 5
+    integer, intent(in), optional :: Width  ! Items per line, default 5
     logical, intent(in), optional :: Parens
+    integer, intent(in), optional :: RowNum ! Print this first
+    real, intent(in), optional :: Exclude   ! Don't print these
+    logical, intent(out), optional :: DidOne ! Printed a value
 
+    logical :: NeedRow ! Need to print RowNum
     integer :: J, N, W
     character(len=64) :: MyFormat
     logical :: MyParens ! Enclose element number in parens instead of colon after
+    needRow = present(rowNum)
 
     myFormat = sdFormatDefault
     if ( present(format) ) myFormat = format
@@ -945,19 +963,25 @@ contains
     if ( present(name) ) call output ( trim(name), advance='yes' )
 
     n = 0 ! Number on the line so far
+    if ( present(didOne) ) didOne = .false.
     do j = 1, size(array)
-      if ( array(j) /= 0 ) then
-        if ( myParens ) then
-          call output ( j, before=' (', after=') ' )
-        else
-          call output ( j, places=4, after=': ' )
-        end if
-        call output ( array(j), format=myFormat )
-        n = n + 1
-        if ( n >= w ) then
-          call newLine
-          n = 0
-        end if
+      if ( array(j) == 0 ) cycle
+      if ( present(exclude) ) then
+        if ( array(j) == exclude ) cycle
+      end if
+      if ( needRow ) call output ( rowNum, places=4, after='#' )
+      needRow = .false.
+      if ( myParens ) then
+        call output ( j, before=' (', after=') ' )
+      else
+        call output ( j, places=4, after=': ' )
+      end if
+      call output ( array(j), format=myFormat )
+      if ( present(didOne) ) didOne = .true.
+      n = n + 1
+      if ( n >= w ) then
+        call newLine
+        n = 0
       end if
     end do
     if ( n /= 0 ) call newLine
@@ -965,36 +989,62 @@ contains
   end subroutine Dump_1D_Sparse_Real
 
   ! ----------------------------------  Dump_2D_Row_Sparse_Double  -----
-  subroutine Dump_2D_Row_Sparse_Double ( Array, Name, Format, Width )
+  subroutine Dump_2D_Row_Sparse_Double ( Array, Name, Format, Width, Exclude )
     double precision, intent(in) :: Array(:,:)
     character(len=*), intent(in), optional :: Name
     character(len=*), intent(in), optional :: Format
     integer, intent(in), optional :: Width ! Items per line, default 5
+    double precision, intent(in), optional :: Exclude ! Don't print these
 
+    logical :: DidAnyRow, DidOne
     integer :: I ! Row number
 
     if ( present(name) ) call output ( trim(name), advance='yes' )
+    didAnyRow = .false.
     do i = 1, size(array,1)
-      call output ( i, places=4, after='#' )
-      call dump_sparse ( array(i,:), format=format, width=width, parens=.true. )
+      call dump_sparse ( array(i,:), format=format, width=width, parens=.true., &
+        & rowNum=i, exclude=exclude, didOne = didOne )
+      didAnyRow = didAnyRow .or. didOne
     end do
+    if ( .not. didAnyRow ) then
+      if ( present(exclude) ) then
+        call output ( exclude, &
+          & before="Either there are no nonzero elements, or they're all = ", &
+          & advance="yes" )
+      else
+        call output ( "There are no nonzero elements", advance="yes" )
+      end if
+    end if
 
   end subroutine Dump_2D_Row_Sparse_Double
 
   ! ------------------------------------  Dump_2D_Row_Sparse_Real  -----
-  subroutine Dump_2D_Row_Sparse_Real ( Array, Name, Format, Width )
+  subroutine Dump_2D_Row_Sparse_Real ( Array, Name, Format, Width, Exclude )
     real, intent(in) :: Array(:,:)
     character(len=*), intent(in), optional :: Name
     character(len=*), intent(in), optional :: Format
     integer, intent(in), optional :: Width ! Items per line, default 5
+    real, intent(in), optional :: Exclude  ! Don't print these
 
+    logical :: DidAnyRow, DidOne
     integer :: I ! Row number
 
     if ( present(name) ) call output ( trim(name), advance='yes' )
+    didAnyRow = .false.
     do i = 1, size(array,1)
-      call output ( i, places=4, after='#' )
-      call dump_sparse ( array(i,:), format=format, width=width, parens=.true. )
+      call dump_sparse ( array(i,:), format=format, width=width, parens=.true., &
+        & rowNum=i, exclude=exclude, didOne = didOne )
+      didAnyRow = didAnyRow .or. didOne
     end do
+    if ( .not. didAnyRow ) then
+      if ( present(exclude) ) then
+        call output ( exclude, &
+          & before="Either there are no nonzero elements, or they're all = ", &
+          & advance="yes" )
+      else
+        call output ( "There are no nonzero elements", advance="yes" )
+      end if
+    end if
 
   end subroutine Dump_2D_Row_Sparse_Real
 
@@ -1860,6 +1910,9 @@ contains
 end module Dump_0
 
 ! $Log$
+! Revision 2.157  2018/08/21 01:52:14  vsnyder
+! Add Exclude argument to sparse dumps
+!
 ! Revision 2.156  2018/08/16 02:17:43  vsnyder
 ! Add row sparse dump
 !
