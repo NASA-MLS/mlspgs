@@ -23,75 +23,73 @@ module Get_Chi_Out_m
 
 contains
 
-  subroutine Get_Chi_Out ( zetatan, phitan, scgeocalt, Grids_tmp, ref_zeta, &
-           & ref_gph, elev_offset, req, grids_f, h2o_ind, &
-           & tan_chi_out, dhdz_out, dx_dh_out, dxdt_tan, d2xdxdt_tan )
+  subroutine Get_Chi_Out ( ZetaTan, PhiTan, SCgeocAlt, Grids_tmp, Ref_zeta, &
+           & Ref_gph, Elev_offset, Req, Grids_f, H2O_ind, &
+           & Tan_Chi_Out, dhdz_out, dx_dh_out, dxdt_tan, d2xdxdt_tan )
 
 ! Compute the output angles to interpolate to
 
-    use Get_chi_angles_m, only: Get_chi_angles
-    use Get_eta_matrix_m, only: Get_eta_sparse
+    use Get_Chi_Angles_m, only: Get_Chi_Angles
     use Load_sps_data_m, only: Grids_T
-    use MLSCommon, only: RP
-    use Refraction_m, only: MaxRefraction, Refractive_index
-    use Two_d_hydrostatic_m, only: Two_d_hydrostatic
+    use MLSKinds, only: RP
+    use Refraction_m, only: MaxRefraction, Refractive_Index
+    use Sparse_Eta_m, only: Sparse_Eta_t
+    use Two_D_Hydrostatic_m, only: Two_D_Hydrostatic
 
 ! Inputs
 
-    real(rp), intent(in) :: zetatan(:)   ! tangent zeta profle for input mmaf
-    real(rp), intent(in) :: phitan(:)    ! tangent phi profle for input mmaf
-!                                          (in radians)
-    real(rp), intent(in) :: scgeocalt(:) ! spacecraft geocentric altitude
+    real(rp), intent(in) :: ZetaTan(:)   ! Tangent zeta profle for input mmaf
+    real(rp), intent(in) :: PhiTan(:)    ! Tangent phi profle for input mmaf
+                                         ! (in radians)
+    real(rp), intent(in) :: SCgeocAlt(:) ! Spacecraft geocentric altitude
                                          ! profile in METERS
     type (grids_t), intent(in) :: Grids_tmp  ! All Temperature's coordinates
 
-    real(rp), intent(in) :: ref_zeta(:)  ! zetas for inputted gph's
-    real(rp), intent(in) :: ref_gph(:)   ! reference geopotential heights along the
-!                            temperature horizontal basis in METERS
-    real(rp), intent(in) :: elev_offset  ! elevation offset in radians
-    real(rp), intent(in) :: req(:)       ! Earth radius in equivalent circle
+    real(rp), intent(in) :: Ref_zeta(:)  ! Zetas for inputted gph's
+    real(rp), intent(in) :: Ref_gph(:)   ! Reference geopotential heights along the
+                           ! temperature horizontal basis in METERS
+    real(rp), intent(in) :: Elev_offset  ! Elevation offset in radians
+    real(rp), intent(in) :: Req(:)       ! Earth radius (M) in equivalent circle
     type(grids_t), intent(in) :: Grids_f ! Grids other than temperature
-    integer, intent(in) :: H2O_ind       ! Where is h2o_ind in Grids_F?
+    integer, intent(in) :: H2O_ind       ! Where is H2O in Grids_F?
 
 ! Outputs
 
-    real(rp), intent(out) :: tan_chi_out(:) ! computed tangent pointing angles
-!                                 in radians, corrected for refraction
+    real(rp), intent(out) :: Tan_Chi_Out(:) ! Computed tangent pointing angles
+                                ! in radians, corrected for refraction
     real(rp), intent(out) :: dhdz_out(:)    ! dh/dz on the output grid
     real(rp), intent(out) :: dx_dh_out(:)   ! d(chi)/dh on the output grid
 
 ! Outputs not computed if size(dxdt_tan) is zero
-    real(rp), intent(out), optional :: dxdt_tan(:,:)      ! computed dchi dt.
-    real(rp), intent(out), optional :: d2xdxdt_tan(:,:)   ! computed d2chi dxdt.
-!                                  ! at each phi value representation (km)
+    real(rp), intent(out), optional :: dxdt_tan(:,:)      ! Computed dchi dt.
+    real(rp), intent(out), optional :: d2xdxdt_tan(:,:)   ! Computed d2chi dxdt.
+                                   ! at each phi value representation (km)
 
-! the matrix hierarchy is n_out,phi,zeta
+! The matrix hierarchy is n_out,n_t_zeta,n_t_phi
 
-! internal variables
+! Internal variables
 
-    integer :: beg_p, beg_v, beg_z  ! One less than begin of h2o info in grids_f
-    integer :: end_p, end_z         ! End of h2o info in grids_f
     integer :: ht_i, n_out, n_t_phi, n_t_zeta
-    integer :: sv_p, sv_z
 
     logical :: Derivs ! Compute dxdt_tan and d2xdxdt_tan
 
     real(rp) :: d2hdhdt_tan(size(zetatan), grids_tmp%l_z(1), grids_tmp%l_p(1))
     real(rp) :: dhdt_tan(size(zetatan), grids_tmp%l_z(1), grids_tmp%l_p(1))
     real(rp) :: dhdz_tan(size(zetatan), grids_tmp%l_p(1))
-    real(rp) :: eta_p(size(zetatan),merge(grids_f%l_p(max(h2o_ind-1,0)) + 1,1,h2o_ind>0): &
-                                    merge(grids_f%l_p(h2o_ind),0,h2o_ind>0))
-    real(rp) :: eta_t(size(zetatan), grids_tmp%l_p(1))
-    real(rp) :: eta_z(size(zetatan),merge(grids_f%l_z(max(h2o_ind-1,0)) + 1,1,h2o_ind>0): &
-                                    merge(grids_f%l_z(h2o_ind),0,h2o_ind>0))
-    real(rp) :: h2o_tan_out(merge(size(zetatan),0,h2o_ind>0))
-    real(rp) :: height_tan(size(zetatan), grids_tmp%l_p(1))
-    real(rp) :: h_tan_out(size(zetatan))
-    real(rp) :: n_tan_out(size(zetatan))
-    real(rp) :: temp_tan(size(zetatan), grids_tmp%l_p(1))
-    real(rp) :: t_tan_out(size(zetatan))
+! ifort 17 complains about this, but gets different answers if this is deleted
+real(rp) :: h2o_tan_out(merge(size(zetatan),0,h2o_ind>0))
+! or if the declaration is changed to
+! real(rp) :: h2o_tan_out(0)
+    real(rp) :: Height_Tan(size(zetatan), grids_tmp%l_p(1))
+    real(rp) :: H_Tan_Out(size(zetatan))
+    real(rp) :: N_Tan_Out(size(zetatan))
+    real(rp) :: Temp_Tan(size(zetatan), grids_tmp%l_p(1))
+    real(rp) :: T_Tan_Out(size(zetatan))
 
-! dimensions we use
+    type(sparse_eta_t) :: Eta_T ! Interpolation coefficients from temperature
+                                ! phi basis to PhiTan
+
+! Dimensions we use
 
     n_out = size(zetatan)
     n_t_phi = grids_tmp%l_p(1)  ! Size of temperature phi basis
@@ -100,71 +98,109 @@ contains
     call two_d_hydrostatic ( grids_tmp, ref_zeta, ref_gph, zetatan, &
              & temp_tan, height_tan, dhdz_tan, dhdt_tan, d2hdhdt_tan )
 
-! tangent heights for input pressures along phi
+! Tangent heights, temperatures, and dhdz, for tangent pressures along phi
 
-    call get_eta_sparse ( grids_tmp%phi_basis, phitan, eta_t )
+    call eta_t%eta ( grids_tmp%phi_basis, phitan, sorted=.false. )
 
-    h_tan_out = sum(height_tan * eta_t, dim=2)
-    t_tan_out = sum(temp_tan * eta_t, dim=2)
-    dhdz_out = sum(dhdz_tan * eta_t, dim=2)
+    do ht_i = 1, n_out
+      h_tan_out(ht_i) = eta_t%row_dot_vec ( ht_i, height_tan(ht_i,:) )
+      t_tan_out(ht_i) = eta_t%row_dot_vec ( ht_i, temp_tan(ht_i,:) )
+      dhdz_out(ht_i) = eta_t%row_dot_vec ( ht_i, dhdz_tan(ht_i,:) )
+    end do
 
-! compute refractive index
+! Compute refractive index
 
     if ( h2o_ind > 0 ) then
-      ! compute the tangent water vapor profile along input phi_tan
-      end_z = grids_f%l_z(h2o_ind)
-      beg_z = grids_f%l_z(h2o_ind-1) + 1
-      end_p = grids_f%l_p(h2o_ind)
-      beg_p = grids_f%l_p(h2o_ind-1) + 1
+      block
+        integer :: beg_p, beg_z  ! Begin of h2o info in grids_f
+        integer :: end_p, end_z  ! End of h2o info in grids_f
+        type(sparse_eta_t) :: Eta_P, Eta_Z, Eta_ZP
+        real(rp) :: h2o_tan_out(n_out)
+        ! Compute the tangent water vapor profile along input phi_tan
+        beg_z = grids_f%l_z(h2o_ind-1) + 1
+        end_z = grids_f%l_z(h2o_ind)
+        beg_p = grids_f%l_p(h2o_ind-1) + 1
+        end_p = grids_f%l_p(h2o_ind)
 
-      call get_eta_sparse ( grids_f%phi_basis(beg_p:end_p), phitan, eta_p )
-      call get_eta_sparse ( grids_f%zet_basis(beg_z:end_z), zetatan, eta_z )
+        call eta_p%eta ( grids_f%phi_basis(beg_p:end_p), phitan, sorted=.false. )
+        call eta_z%eta ( grids_f%zet_basis(beg_z:end_z), zetatan, sorted=.false. )
 
-! beg_v starts at one less than the true start index
-      beg_v = grids_f%l_v(h2o_ind-1)
+        call eta_zp%eta_nd ( eta_z, eta_p )
+        call eta_zp%sparse_dot_vec ( grids_f%c(h2o_ind)%v1, h2o_tan_out )
 
-      h2o_tan_out(:) = 0.0_rp
-      do sv_p = beg_p, end_p
-        do sv_z = beg_z, end_z
-          beg_v = beg_v + 1
-          h2o_tan_out = h2o_tan_out + &
-            & grids_f%values(beg_v) * eta_z(:,sv_z) * eta_p(:,sv_p)
-        end do
-      end do
+        if ( grids_f%lin_log(h2o_ind) ) h2o_tan_out = exp(h2o_tan_out)
 
-      if ( grids_f%lin_log(h2o_ind) ) h2o_tan_out = exp(h2o_tan_out)
+! Compute refractive index depending on h2o
 
-! compute refractive index depending on h2o
-
-      call refractive_index ( 10.0**(-zetatan), t_tan_out, n_tan_out, &
-                            & h2o_path=h2o_tan_out )
-      n_tan_out = min ( n_tan_out, maxRefraction )
+        call refractive_index ( 10.0**(-zetatan), t_tan_out, n_tan_out, &
+                              & h2o_path=h2o_tan_out )
+      end block
 
     else
 
-! compute refractive index not depending on h2o
+! Compute refractive index not depending on h2o
 
       call refractive_index ( 10.0**(-zetatan), t_tan_out, n_tan_out )
-      n_tan_out = min ( n_tan_out, maxRefraction )
 
     end if
+    n_tan_out = min ( n_tan_out, maxRefraction )
 
-! compute output angles to interpolate to
+! Compute output angles to interpolate to
 
     derivs = present(dxdt_tan)
     if ( derivs ) derivs = size(dxdt_tan) > 0
     if ( derivs ) then
 
-      dhdt_tan = dhdt_tan * spread(eta_t,2,n_t_zeta)
-      d2hdhdt_tan = d2hdhdt_tan * spread(eta_t,2,n_t_zeta)
-      do ht_i = 1, n_out
-        call get_chi_angles ( 0.001_rp*scgeocalt(ht_i), n_tan_out(ht_i), &
-           & h_tan_out(ht_i), phitan(ht_i), req(ht_i), elev_offset, &
-           & tan_chi_out(ht_i), dx_dh_out(ht_i), dhdz_out(ht_i), &
-           & reshape(dhdt_tan(ht_i,:,:),(/n_t_zeta*n_t_phi/)), &
-           & reshape(d2hdhdt_tan(ht_i,:,:),(/n_t_zeta*n_t_phi/)), &
-           & dxdt_tan(ht_i,:), d2xdxdt_tan(ht_i,:) )
-      end do
+      block
+        ! Variables for one tangent phi's derivatives w.r.t.
+        ! temperature zeta and phi.  Get_Chi_Angles wants derivatives at the
+        ! tangent as one-D zeta*phi instead of two-D zeta X phi.
+        real(rp), target :: dhdt_1_tan_1(n_t_zeta*n_t_phi)
+        real(rp), pointer :: dhdt_1_tan(:,:)
+        real(rp), target :: d2hdhdt_1_tan_1(n_t_zeta*n_t_phi)
+        real(rp), pointer :: d2hdhdt_1_tan(:,:)
+        integer :: J, K       ! Subscripts
+
+        dhdt_1_tan_1 = 0
+        dhdt_1_tan(1:n_t_zeta,1:n_t_phi) => dhdt_1_tan_1
+        d2hdhdt_1_tan_1 = 0
+        d2hdhdt_1_tan(1:n_t_zeta,1:n_t_phi) => d2hdhdt_1_tan_1
+
+        do ht_i = 1, n_out
+          ! Interpolate derivatives to phi for Ht_i
+          ! An iterator to traverse a row of a Sparse_t would be useful here
+          k = eta_t%rows(ht_i)                  ! Last element in the row
+          if ( k /= 0 ) then                    ! Row isn't empty
+            do
+              j = eta_t%e(k)%c                  ! Element's column subscript
+              dhdt_1_tan(:,j)    = dhdt_tan(ht_i,:,j)    * eta_t%e(k)%v
+              d2hdhdt_1_tan(:,j) = d2hdhdt_tan(ht_i,:,j) * eta_t%e(k)%v
+              k = eta_t%e(k)%nr                 ! Next element in the row
+              if ( k == eta_t%rows(ht_i) ) exit ! Back to the last one?
+            end do
+          end if
+
+          call get_chi_angles ( 0.001_rp*scgeocalt(ht_i), n_tan_out(ht_i), &
+             & h_tan_out(ht_i), phitan(ht_i), req(ht_i), elev_offset, &
+             & tan_chi_out(ht_i), dx_dh_out(ht_i), dhdz_out(ht_i), &
+             & dhdt_1_tan_1, d2hdhdt_1_tan_1, &
+             & dxdt_tan(ht_i,:), d2xdxdt_tan(ht_i,:) )
+
+          ! Put zeroes back where we put nonzeroes above
+          ! An iterator to traverse a row of a Sparse_t would be useful here
+          k = eta_t%rows(ht_i)                  ! Last element in the row
+          if ( k /= 0 ) then                    ! Row isn't empty
+            do
+              j = eta_t%e(k)%c                  ! Element's column subscript
+              dhdt_1_tan(:,j) = 0
+              d2hdhdt_1_tan(:,j) = 0
+              k = eta_t%e(k)%nr                 ! Next element in the row
+              if ( k == eta_t%rows(ht_i) ) exit ! Back to the last one?
+            end do
+          end if
+        end do
+
+      end block
 
     else
 
@@ -191,6 +227,9 @@ contains
 end module Get_Chi_Out_m
 
 ! $Log$
+! Revision 2.26  2018/08/22 01:40:27  vsnyder
+! Convert to sparse interpolators
+!
 ! Revision 2.25  2016/11/11 01:52:23  vsnyder
 ! Change units for ScGeocAlt and Ref_GPH from km to m, and do the conversion
 ! from m to km here instead of in callers, to avoid the need for an array
