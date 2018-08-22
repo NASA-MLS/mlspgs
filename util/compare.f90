@@ -57,6 +57,7 @@ program COMPARE
   integer :: LAMAX, LRMAX         ! Locations of absolute, relative max. diffs.
   logical :: LOUD = .true.        ! Messages about unequal file lengths etc.
   character(127) :: Line1, line2
+  integer :: Loc1, Loc2           ! Line numbers in files
   logical, allocatable, dimension(:) :: M    ! abs(r1+r2) > 0.0
   integer :: N, N1, N2            ! Numbers of values
   character(len=3) :: NaNString
@@ -151,9 +152,13 @@ program COMPARE
     print '(a)', '   Value       Diff          At   Abs Diff    Diff          At   Rel Diff    Abs Value'
   end if
 
+  loc1 = 0
+  loc2 = 0
+
   do
 
     do
+      loc1 = loc1 + 1
       read ( 10, '(a)', iostat=status ) line1
       end = status /= 0
       if ( end ) exit
@@ -162,6 +167,7 @@ program COMPARE
     end do
 
     do
+      loc2 = loc2 + 1
       read ( 11, '(a)', iostat=status ) line2
       if ( status /= 0 ) exit
       i2 = index(line2,'\')
@@ -178,28 +184,30 @@ program COMPARE
     if ( line1 /= line2 ) then
       if ( loud ) then
         print '(a)', 'Control lines differ:'
-        print '(a)', trim(line1)
-        print '(a)', trim(line2)
+        print '(i5,2a)', loc1, ': ', trim(line1)
+        print '(i5,2a)', loc2, ': ', trim(line2)
       end if
       if ( .not. cont ) exit
     end if
 
     read ( line1(i1+1:), *, iostat=status, iomsg=errmsg ) n1
     if ( status /= 0 ) then
-      print '("Unable to read number N from ",a)', trim(line1(i1+1:))
+      print '(a,i0,2a)', 'Unable to read number N from ', loc1, ': ', &
+        & trim(line1(i1+1:))
       print '("Status = ", i0, ", Message = ",a)', status, trim(errmsg)
       exit
     end if
     read ( line2(i2+1:), *, iostat=status, iomsg=errmsg ) n2
     if ( status /= 0 ) then
-      print '("Unable to read number N from ",a)', trim(line2(i2+1:))
+      print '(a,i0,2a)', 'Unable to read number N from ', loc2, ': ', &
+        & trim(line2(i2+1:))
       print '("Status = ", i0, ", Message = ",a)', status, trim(errmsg)
       exit
     end if
 
     if ( n1 /= n2 ) then
-      print '("Block sizes ", i0, " and ", i1, " differ"/a/a)', n1, n2, &
-        & trim(line1(i1+1:)), trim(line2(i2+1:))
+      print '(2(a,i0),a,2(/i5,2a))', 'Block sizes ', n1, ' and ', n2, ' differ', &
+        & loc1, ': ', trim(line1(i1+1:)), loc2, ': ', trim(line2(i2+1:))
       exit
     end if
 
@@ -210,26 +218,32 @@ program COMPARE
     if ( n == 1 ) then
       read ( line1(i1+1:), *, iostat=status ) n, r1
       if ( status /= 0 ) then
-        print '("Unable to read numbers N, R1 from ",a)', trim(line2(i1+1:))
+        print '(a,i0,2a)', 'Unable to read numbers N, R1 from ', loc1, &
+          & ': ', trim(line1(i1+1:))
         print '("Status = ", i0, ", Message = ",a)', status, trim(errmsg)
         exit
       end if
       read ( line2(i2+1:), *, iostat=status ) n, r2
       if ( status /= 0 ) then
-        print '("Unable to read numbers N, R2 from ",a)', trim(line2(i1+1:))
+        print '(a,i0,2a)', 'Unable to read numbers N, R1 from ', loc2, &
+          & ': ', trim(line2(i2+1:))
         print '("Status = ", i0, ", Message = ",a)', status, trim(errmsg)
         exit
       end if
     else
+      loc1 = loc1 + 1
       read ( 10, *, iostat=status ) r1
       if ( status /= 0 ) then
-        print '("Unable to read number R1 from input file")'
+        print '(a,i0)', 'Unable to read number R1 from first input file at line ', &
+          & loc1
         print '("Status = ", i0, ", Message = ",a)', status, trim(errmsg)
         exit
       end if
+      loc2 = loc2 + 1
       read ( 11, *, iostat=status ) r2
       if ( status /= 0 ) then
-        print '("Unable to read number R2 from input file")'
+        print '(a,i0)', 'Unable to read number R1 from second input file at line ', &
+          & loc2
         print '("Status = ", i0, ", Message = ",a)', status, trim(errmsg)
         exit
       end if
@@ -371,6 +385,9 @@ contains
 end program
 
 ! $Log$
+! Revision 1.32  2018/05/24 03:25:39  vsnyder
+! Use the same precision in all output
+!
 ! Revision 1.31  2018/04/25 20:53:24  vsnyder
 ! Repair header for summary-only case
 !
