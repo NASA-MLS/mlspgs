@@ -47,6 +47,14 @@ module FullForwardModel_m
     ! state vector in each pointing.  Sizes of automatic arrays in
     ! FullForwardModelAuto demend upon them
 
+  logical, parameter, private :: WrongTrapezoidal = .true. ! If GL is not used
+    ! on a panel, the rectangular estimate used to cancel the singularity at
+    ! the tangent point is replaced by a trapezoidal estimate.  Originally,
+    ! this was done incorrectly, using delta s ~ ds/dh dh/dz delta z, which is
+    ! a rectangular quadrature approximation of delta s.  We have delta s, so
+    ! we ought to use it.  This flag indicates whether the incorrect computation
+    ! ought to be preserved.
+
 contains
 
   ! -------------------------------------------- FullForwardModel -----
@@ -789,6 +797,7 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
     real(rp) :: DHDZ_Path(max_f)      ! dH/dZ on fine path (1:npf)
     real(rp) :: DHDZ_GW_Path(max_f)   ! dH/dZ * GW on fine path (1:npf)
     real(rp) :: DSDH_Path(max_f)      ! dS/dH on fine path (1:tan_pt_f-1,tan_pt_f+ngp1+1:npf)
+    real(rp) :: DSDZ_C(merge(max_c,0,WrongTrapezoidal)) ! ds/dH * dH/dZ on coarse path (1:tan_pt_c-1,tan_pt_c+2:npc)
     real(rp) :: DSDZ_GW_Path(max_f)   ! ds/dH * dH/dZ * GW on path
     real(rp) :: DTanh_DT_C(max_c)     ! 1/tanh1_c d/dT tanh1_c
     real(rp) :: DTanh_DT_F(max_f)     ! 1/tanh1_f d/dT tanh1_f
@@ -1126,7 +1135,7 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
         & beta_path_cloud_c, beta_c_e_path_c, beta_c_s_path_c, &
         & dAlpha_dT_path_f, del_s, del_zeta, dBeta_c_a_dIWC_path_C, &
         & dBeta_c_s_dIWC_path_C, dBeta_c_a_dT_path_C, dBeta_c_s_dT_path_C, &
-        & dhdz_path, dhdz_gw_path, dsdh_path, dsdz_gw_path, dTanh_dT_c, &
+        & dhdz_path, dhdz_gw_path, dsdh_path, dsdz_c, dsdz_gw_path, dTanh_dT_c, &
         & dTanh_dT_f, h_path, h_path_c, n_path_f, phi_path, &
         & ptg_angles, ref_corr )
       call fill_IEEE_NaN ( tan_dh_dT, tanh1_c, tanh1_f, t_path, t_path_c, &
@@ -3157,12 +3166,17 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
         call load_one_item_grid ( grids_tscat, scat_src, maf, phitan, &
           & fwdModelConf, SetDerivFlags=.false., SetTscatFlag=.true. )
 
-        call comp_eta_docalc_no_frq ( grids_tscat, z_path, &
-          &  phi_path(1:npf), eta_tscat_zp(1:npf,:),       &
-          &  do_calc_tscat_zp(1:npf,:), tan_pt=tan_pt_f )
-
-        call comp_sps_path_no_frq ( Grids_tscat, eta_tscat_zp(1:npf,:), &
-          & tscat_path(1:npf,:) )
+        block
+          use Comp_Eta_DoCalc_Sparse_m, only: Comp_Eta_Docalc_Sparse
+          type (Sparse_Eta_t) :: Eta_TScat_ZP
+          call comp_eta_docalc_sparse ( grids_tscat, tan_pt_f, z_path(1:npf), &
+                                      & phi_path(1:npf), eta_tscat_zp )
+          do i = 1, size(tscat_path,2)
+            ! There's only one Zeta X Phi grid for all the scattering angles.
+            call comp_sps_path_sparse ( grids_tscat, eta_tscat_zp, &
+                                      & tscat_path(1:npf,i) )
+          end do
+        end block
 
         ! project Tscat onto LOS
         call interp_tscat ( tscat_path(1:npf,:), Scat_ang(:), &
@@ -3375,18 +3389,31 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
       ! estimate of $\int \frac{\text{d}s}{\text{d}h}
       ! \frac{\text{d}h}{\text{d}\zeta}\,{\text{d}\zeta}$, but del_s is simpler.
 
-      ! Before the tangent point, del_s(j) is the path length from J-1 to J
-      do j = i_start+1, tan_pt_c
-        if ( .not. do_gl(j) ) &
-          & incoptdepth(j) = &
-            & ( alpha_path_c(j-1) + alpha_path_c(j) ) * 0.5 * del_s(j)
-      end do
-      ! After the tangent point, del_s(j) is the path length from J to J+1
-      do j = tan_pt_c+1, i_end-1
-        if ( .not. do_gl(j) ) &
-          & incoptdepth(j) = &
-            & ( alpha_path_c(j+1) + alpha_path_c(j) ) * 0.5 * del_s(j)
-      end do
+      if ( WrongTrapezoidal ) then
+        do j = i_start+1, tan_pt_c
+          if ( .not. do_gl(j) ) &
+            & incoptdepth(j) = incoptdepth(j) + &
+              & ( alpha_path_c(j-1) - alpha_path_c(j) ) * dsdz_c(j-1) * del_zeta(j)
+        end do
+        do j = tan_pt_c+1, i_end-1
+          if ( .not. do_gl(j) ) &
+            & incoptdepth(j) = incoptdepth(j) + &
+              & ( alpha_path_c(j+1) - alpha_path_c(j) ) * dsdz_c(j+1) * del_zeta(j)
+        end do
+      else
+        ! Before the tangent point, del_s(j) is the path length from J-1 to J
+        do j = i_start+1, tan_pt_c
+          if ( .not. do_gl(j) ) &
+            & incoptdepth(j) = &
+              & ( alpha_path_c(j-1) + alpha_path_c(j) ) * 0.5 * del_s(j)
+        end do
+        ! After the tangent point, del_s(j) is the path length from J to J+1
+        do j = tan_pt_c+1, i_end-1
+          if ( .not. do_gl(j) ) &
+            & incoptdepth(j) = &
+              & ( alpha_path_c(j+1) + alpha_path_c(j) ) * 0.5 * del_s(j)
+        end do
+      end if
 
       ! Get indices for GL points only for panels that need GL, then copy
       ! temperature and mixing ratios only for those points to T_Path_f and
@@ -3668,6 +3695,14 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
 
       if ( temp_der ) then
 
+        dAlpha_dT_path_c(:npc) = sum( sps_path_c(:npc,:) *  &
+                                      dBeta_dT_path_c(1:npc,:),dim=2 )
+        dAlpha_dT_path_f(:ngl) = sum( sps_path_f(:ngl,:) * &
+                                      dBeta_dT_path_f(1:ngl,:),dim=2 )
+        ! Put dAlpha_dT_path_f, values for GL points only, back into the
+        ! composite path
+        dAlpha_dT_path(gl_inds) = dAlpha_dT_path_f(:ngl)
+
         ! get d Delta B / d T * d T / eta
         if ( fwdModelConf%useTScat ) then
 
@@ -3686,20 +3721,12 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
 
         end if
 
-        dAlpha_dT_path_c(:npc) = sum( sps_path_c(:npc,:) *  &
-                                      dBeta_dT_path_c(1:npc,:),dim=2 )
-        dAlpha_dT_path_f(:ngl) = sum( sps_path_f(:ngl,:) * &
-                                      dBeta_dT_path_f(1:ngl,:),dim=2 )
-        ! Put dAlpha_dT_path_f, values for GL points only, back into the
-        ! composite path
-        dAlpha_dT_path(gl_inds) = dAlpha_dT_path_f(:ngl)
-
         if ( pfa_or_not_pol ) then
 
           call drad_tran_dt ( gl_inds, del_zeta, h_path_c, dh_dt_path, &
             & alpha_path(1:npf), dAlpha_dT_path(:npf), eta_zp_T,       &
             & del_s, ref_corr, tan_ht, tan_pt_f, do_gl, h_path(:npf),  &
-            & t_path(:npf), dsdh_path, dhdz_gw_path,dsdz_gw_path,      &
+            & t_path(:npf), dsdh_path, dhdz_gw_path, dsdz_gw_path,     &
             & d_t_scr_dt(1:npc,:), tau%tau(:npc,frq_i), inc_rad_path,  &
             & i_start, tan_pt_c, i_stop,  grids_tmp%deriv_flags,       &
             & pfa .and. iand(frq_avg_sel,7) == 7, k_temp_frq )
@@ -4095,13 +4122,13 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
         ! Compute refractive index on the path.
         if ( h2o_ind > 0 ) then
           ! Compute eta_fzp (Zeta & Phi only) for water.
-          call comp_eta_docalc_sparse ( grids_f, h2o_ind, tan_pt_f,      &
-                                      & z_path(1:npf), eta_z(h2o_ind),   &
-                                      & phi_path(1:npf), eta_p(h2o_ind), &
-                                      & eta_fzp(h2o_ind), skip=ngp1 )
-          call comp_1_sps_path_sparse_no_frq ( grids_f, h2o_ind, &
-                                             & eta_fzp(h2o_ind), &
-                                             & sps_path(1:npf,h2o_ind) )
+          call comp_eta_docalc_sparse ( grids_f, tan_pt_f, z_path(1:npf), &
+                                      & eta_z(h2o_ind), phi_path(1:npf),  &
+                                      & eta_p(h2o_ind), eta_fzp(h2o_ind), &
+                                      & n=h2o_ind, skip=ngp1 )
+          call comp_1_sps_path_sparse_no_frq ( grids_f, eta_fzp(h2o_ind), &
+                                             & sps_path(1:npf,h2o_ind),   &
+                                             & n=h2o_ind )
           call refractive_index ( p_path(1:npf), t_path(1:npf), n_path_f(1:npf), &
             &  h2o_path=sps_path(1:npf, h2o_ind) )
         else
@@ -4147,8 +4174,7 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
 
       ! Compute sps_path for all those with no frequency component, especially
       ! to get WATER (H2O) contribution for refraction calculations.
-      call comp_sps_path_sparse ( Grids_f, eta_zp, eta_fzp, &
-                                & sps_path(1:npf,:) )
+      call comp_sps_path_sparse ( Grids_f, eta_zp, sps_path(1:npf,:), eta_fzp )
 
       ! Compute the refractive index - 1
       if ( h2o_ind > 0 ) then
@@ -4323,6 +4349,11 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
 
         dsdz_gw_path(f_inds(:nglMax)) = dsdh_path(f_inds(:nglMax)) * &
           & dhdz_gw_path(f_inds(:nglMax))
+
+        ! We need dsdz = ds/dh * dh/dz, not multiplied by GW, for
+        ! trapezoidal quadrature on the coarse grid.
+        if ( WrongTrapezoidal ) &
+          & dsdz_c(:npc) = dsdh_path(1:npf:ngp1) * dhdz_path(1:npf:ngp1)
 
         ! Multiply dhdz_path by ds / ( sum( ds/dh dh/dz gw ) d zeta ) =
         ! del_s / ( sum (dsdz_gw_path) * del_zeta ), which ought to be 1.0
@@ -4624,6 +4655,11 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.396  2018/08/15 01:18:50  vsnyder
+! Get S_QTM_t from Metrics_2D_m instead of QTM_Interpolation_Weights_3D_m.
+! Eliminate dSdZ_C.  Eliminate Do_Clac_T and Do_Calc_T_1.  Get T_Der_Path_Flags
+! from More_Metrics.
+!
 ! Revision 2.395  2018/05/24 03:24:36  vsnyder
 ! Use sparse representation for dh_dt_path
 !
