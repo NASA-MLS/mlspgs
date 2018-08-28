@@ -2309,16 +2309,22 @@ NEWT: do ! Newton iteration
           ! or $\bf y$ in {\tt wvs-014}.
           aj%fnmin = aj%fnorm - (v(candidateDX) .mdot. v(candidateDX))
           if ( aj%fnmin < 0.0 ) then
-            call output ( aj%fnmin, before='How can aj%fnmin be negative?  aj%fnmin = ', &
-              & advance='yes' )
-            call output ( aj%fnorm, before='aj%fnorm**2 = ', advance='yes' )
-            call output ( v(candidateDX) .mdot. v(candidateDX), &
-              & before='norm(candidateDX)**2 = ', advance='yes' )
-            if ( d_fnmin > 1 ) &
-              & call dump ( v(candidateDX), name='v(candidateDX)', details=d_fnmin )
-            if ( aj%fnmin < -10.0 * aj%fnorm * sqrt(epsilon(aj%fnorm)) ) &
-              & call MLSMessage ( MLSMSG_Warning, ModuleName, &
-                & "Norm of residual not in Jacobian's column space is imaginary!" )
+            if ( abs(aj%fnmin) > &
+               & (aj%fnorm + (v(candidateDX) .mdot. v(candidateDX))) * &
+                   & sqrt(sqrt(epsilon(1.0e0)))**3 ) then
+              ! Relative to aj%fnorm and v(candidateDX)**2, it's more than
+              ! single-precision round_off**(0.75).
+              call output ( aj%fnmin, before='How can aj%fnmin be negative?  aj%fnmin = ', &
+                & advance='yes' )
+              call output ( aj%fnorm, before='aj%fnorm**2 = ', advance='yes' )
+              call output ( v(candidateDX) .mdot. v(candidateDX), &
+                & before='norm(candidateDX)**2 = ', advance='yes' )
+              if ( d_fnmin > 1 ) &
+                & call dump ( v(candidateDX), name='v(candidateDX)', details=d_fnmin )
+              if ( aj%fnmin < -10.0 * aj%fnorm * sqrt(epsilon(aj%fnorm)) ) &
+                & call MLSMessage ( MLSMSG_Warning, ModuleName, &
+                  & "Norm of residual not in Jacobian's column space is imaginary!" )
+            end if
             aj%fnmin = tiny ( aj%fnmin )
           end if
           ! Compute the normalised chiSquared statistics etc.
@@ -2458,16 +2464,22 @@ NEWT: do ! Newton iteration
           end if
 
           if ( aj%fnmin < 0.0 ) then
-            call output ( aj%fnmin, before='How can aj%fnmin be negative?  aj%fnmin = ', &
-              & advance='yes' )
-            call output ( aj%fnorm**2, before='aj%fnorm**2 = ', advance='yes' )
-            call output ( v(candidateDX) .mdot. v(candidateDX), &
-              & before='norm(candidateDX)**2 = ', advance='yes' )
-            if ( d_fnmin > 1 ) &
-              & call dump ( v(candidateDX), name='v(candidateDX)', details=d_fnmin )
-            if ( aj%fnmin < -10.0 * aj%fnorm * sqrt(epsilon(aj%fnorm)) ) &
-              & call MLSMessage ( MLSMSG_Warning, ModuleName, &
-                & "Norm of residual not in Jacobian's column space is imaginary!" )
+            if ( abs(aj%fnmin) > &
+               & (aj%fnorm + (v(candidateDX) .mdot. v(candidateDX))) * &
+                   & sqrt(sqrt(epsilon(1.0e0)))**3 ) then
+              ! Relative to aj%fnorm and v(candidateDX)**2, it's more than
+              ! single-precision round_off**(0.75).
+              call output ( aj%fnmin, before='How can aj%fnmin be negative?  aj%fnmin = ', &
+                & advance='yes' )
+              call output ( aj%fnorm**2, before='aj%fnorm**2 = ', advance='yes' )
+              call output ( v(candidateDX) .mdot. v(candidateDX), &
+                & before='norm(candidateDX)**2 = ', advance='yes' )
+              if ( d_fnmin > 1 ) &
+                & call dump ( v(candidateDX), name='v(candidateDX)', details=d_fnmin )
+              if ( aj%fnmin < -10.0 * aj%fnorm * sqrt(epsilon(aj%fnorm)) ) &
+                & call MLSMessage ( MLSMSG_Warning, ModuleName, &
+                  & "Norm of residual not in Jacobian's column space is imaginary!" )
+            end if
             aj%fnmin = tiny ( aj%fnmin )
           end if
           aj%fnmin = sqrt(aj%fnmin)
@@ -3001,6 +3013,9 @@ NEWT: do ! Newton iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.361  2018/08/28 20:50:10  vsnyder
+! Don't print message about fnmin being negative if |fnmin| is small
+!
 ! Revision 2.360  2018/07/27 23:19:53  pwagner
 ! Renamed level 2-savvy MLSMessage MLSL2Message
 !
