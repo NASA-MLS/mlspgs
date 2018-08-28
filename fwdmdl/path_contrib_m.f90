@@ -23,6 +23,13 @@ module Path_Contrib_M
     module procedure Path_Contrib_Scalar, Path_Contrib_Polarized
   end interface
 
+  ! If dTaudn < Black_Out, we haven't been using GL, even if Tol < 0.  To do
+  ! GL everywhere, even where delta < Black_Out (dTaudn is at first used for
+  ! delta), except where dTaudn = exp(delta) is zero, set GL_Everywhere true.
+  ! I tried this on a few cases, and it didn't make a noticeable difference in
+  ! radiances or derivatives.
+  logical, parameter, private :: GL_Everywhere = .false.
+
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
@@ -68,6 +75,9 @@ contains
     real(rk), parameter :: TolScale = 2.0_rk / temp ! 2.0 comes from centered
                                            ! difference used to compute dtaudn
 
+    real(rk), parameter :: My_Black_Out = &
+      & merge(-log(huge(1.0_rk)),black_out,GL_Everywhere)
+
   ! start code
 
     myTol = - tolScale * tol ! Negative because we're summing -incoptdepth
@@ -78,14 +88,14 @@ o:  block
       dtaudn(i_start) = 0.0_rk
       do last = i_start+1, min(tan_pt, i_end)
         dtaudn(last) = dtaudn(last-1) - incoptdepth(last)
-        if ( dtaudn(last) < black_out ) exit o
+        if ( dtaudn(last) < my_black_out ) exit o
       end do
 
       if ( last == tan_pt+1 ) dtaudn(tan_pt+1) = dtaudn(tan_pt)
 
       do last = max(i_start+1,tan_pt+2), i_end
         dtaudn(last) = dtaudn(last-1) - incoptdepth(last-1)
-        if ( dtaudn(last) < black_out ) exit o
+        if ( dtaudn(last) < my_black_out ) exit o
       end do
       last = i_end
     end block o
@@ -363,6 +373,9 @@ o:  block
 end module Path_Contrib_M
 
 ! $Log$
+! Revision 2.28  2018/05/14 23:31:54  vsnyder
+! Add several more Get_GL_Inds routines, make generic for them
+!
 ! Revision 2.27  2017/08/09 20:37:43  vsnyder
 ! Use a BLOCK with EXIT to eliminate some GO TO statements and a label.
 ! Hoist test for optional argument out of a loop, making two versions of it.
