@@ -131,7 +131,7 @@ if ( size(sps_path,1) < 0 ) call eta_f%dump ( name='Eta_F', width=4 )
 
   end subroutine Comp_1_Sps_Path_Sparse_Frq
 
-  subroutine Comp_Sps_Path_Sparse_No_Frq ( Grids_f, Eta_ZP, Eta_FZP, Sps_Path )
+  subroutine Comp_Sps_Path_Sparse_No_Frq ( Grids_f, Eta_ZP, Sps_Path, Eta_FZP )
 
     ! Compute the Sps_Path for species that are not frequency dependent.
     ! Compute the indices between Eta_ZP and Eta_FZP for frequency-dependent
@@ -145,25 +145,33 @@ if ( size(sps_path,1) < 0 ) call eta_f%dump ( name='Eta_F', width=4 )
     type(sparse_eta_t), intent(inout) :: Eta_ZP(:) ! Interpolate Zeta X H
                                                    ! to Sps_Path, same size as
                                                    ! Grids_f%Mol.
-    type(sparse_eta_t), intent(inout) :: Eta_FZP(:)  ! Interpolate F X Zeta X H
-                                                   ! to Sps_Path, size is the
-                                                   ! number of quantities in
-                                                   ! Grids_f that have more than
-                                                   ! one element in Frq_Basis.
     real(rp), intent(inout) :: Sps_Path(:,:)       ! Path X Sps -- VMR values.
+    type(sparse_eta_t), intent(inout), optional :: Eta_FZP(:)  ! Interpolate F X
+                                                   ! Zeta X H to Sps_Path, size
+                                                   ! is the number of quantities
+                                                   ! in Grids_f that have more
+                                                   ! than one element in
+                                                   ! Frq_Basis.
 
     integer :: Sps
 
-    do sps = 1, size(eta_zp)
-      if ( grids_f%l_f(sps-1)+1 == grids_f%l_f(sps) ) & ! Not frequency dependent
-        ! Sps_path(:,sps) = Eta_zp(sps) .dot. Grids_f%c(sps)%v1
-        & call eta_fzp(sps)%sparse_dot_vec ( grids_f%c(sps)%v1, sps_path(:,sps) )
-      if ( grids_f%lin_log(sps) ) sps_path(:,sps) = exp(sps_path(:,sps))
-    end do
+    if ( present(eta_fzp) ) then
+      do sps = 1, size(eta_zp)
+        if ( grids_f%l_f(sps-1)+1 == grids_f%l_f(sps) ) & ! Not frequency dependent
+          ! Sps_path(:,sps) = Eta_zp(sps) .dot. Grids_f%c(sps)%v1
+          & call eta_fzp(sps)%sparse_dot_vec ( grids_f%c(sps)%v1, sps_path(:,sps) )
+        if ( grids_f%lin_log(sps) ) sps_path(:,sps) = exp(sps_path(:,sps))
+      end do
+    else
+      do sps = 1, size(eta_zp)
+        call eta_zp(sps)%sparse_dot_vec ( grids_f%c(sps)%v1, sps_path(:,sps) )
+        if ( grids_f%lin_log(sps) ) sps_path(:,sps) = exp(sps_path(:,sps))
+      end do
+    end if
 
   end subroutine Comp_Sps_Path_Sparse_No_Frq
 
-  subroutine Comp_1_Sps_Path_Sparse_No_Frq ( Grids_f, N, Eta_ZP, Sps_Path )
+  subroutine Comp_1_Sps_Path_Sparse_No_Frq ( Grids_f, Eta_ZP, Sps_Path, N )
 
     ! Compute the Sps_Path for one species that is not frequency dependent.
 
@@ -172,13 +180,18 @@ if ( size(sps_path,1) < 0 ) call eta_f%dump ( name='Eta_F', width=4 )
     use Sparse_Eta_m, only: Sparse_Eta_t
 
     type(grids_t), intent(in) :: Grids_f    ! Quantity values
-    integer, intent(in) :: N                ! Which species
     type(sparse_eta_t), intent(inout) :: Eta_ZP ! Interpolate Zeta X H to Sps_Path,
                                             ! same size as Grids_f%Mol
     real(rp), intent(inout) :: Sps_Path(:)  ! Path for 1 Sps -- VMR values.
+    integer, intent(in), optional :: N      ! Which species, default 1
 
-    call eta_zp%sparse_dot_vec ( grids_f%c(n)%v1, sps_path )
-    if ( grids_f%lin_log(n) ) sps_path = exp(sps_path)
+    integer :: MyN
+
+    myN = 1
+    if ( present(n) ) myN = n
+
+    call eta_zp%sparse_dot_vec ( grids_f%c(myN)%v1, sps_path )
+    if ( grids_f%lin_log(myN) ) sps_path = exp(sps_path)
 
   end subroutine Comp_1_Sps_Path_Sparse_No_Frq
 
@@ -195,6 +208,9 @@ if ( size(sps_path,1) < 0 ) call eta_f%dump ( name='Eta_F', width=4 )
 end module Comp_Sps_Path_Sparse_m
 
 ! $Log$
+! Revision 2.4  2018/08/28 22:15:04  vsnyder
+! Make Eta_FZP optional in Comp_Sps_Path_Sparse_No_Frq
+!
 ! Revision 2.3  2018/05/14 23:40:58  vsnyder
 ! Change to sparse eta representation
 !
