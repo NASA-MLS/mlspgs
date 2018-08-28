@@ -1021,7 +1021,7 @@ path: do i = i1, i2
       ! basis to path zetas.
 
       z_path = z_ref(vert_inds(1:n_path))
-      call comp_one_eta_z ( t_sv, 1, n_tan, z_path, eta_z, ngp1 )
+      call comp_one_eta_z ( t_sv, n_tan, z_path, eta_z, skip=ngp1 )
 
       ! Compute interpolation coefficients from Zeta X Phi to the path.
       call eta_zp%empty ! clean it out but don't deallocate components
@@ -1186,6 +1186,9 @@ path: do i = i1, i2
 end module Metrics_m
 
 ! $Log$
+! Revision 2.90  2018/08/15 01:15:47  vsnyder
+! Add calculation of T_Der_Path_Flags for temperature derivatives
+!
 ! Revision 2.89  2018/05/24 03:24:09  vsnyder
 ! Use sparse representation for dHitdTlm
 !
