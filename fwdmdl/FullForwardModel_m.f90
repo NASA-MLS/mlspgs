@@ -563,7 +563,7 @@ contains
 
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
     use Comp_Eta_DoCalc_No_Frq_M, only: Comp_Eta_DoCalc_No_Frq
-use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
+use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path_No_Frq
     use Comp_Sps_Path_Sparse_m, only: Comp_Sps_Path_Sparse
     use Compute_GL_Grid_M, only: Compute_GL_Grid
     use Constants, only: Deg2Rad, Rad2Deg
@@ -579,8 +579,7 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
     use Get_IEEE_NaN_m, only: Fill_IEEE_NaN
     use HessianModule_1, only: Hessian_T
 !Q    use HGridsDatabase, only: HGrid_T
-    use Intrinsic, only: L_A, L_GeocAltitude, L_GeodAltitude, L_Radiance, &
-      & L_TScat, L_VMR, L_Zeta
+    use Intrinsic, only: L_A, L_Radiance, L_TScat, L_VMR
     use Load_SPS_Data_M, only: DestroyGrids_T, Dump, Grids_T
     use MatrixModule_1, only: Matrix_T
     use Metrics_3D_m, only: S_QTM_t
@@ -696,7 +695,9 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
     integer :: Me_PointingLoop = -1 ! String index for trace
     integer :: Me_Sideband = -1   ! String index for trace
     integer :: Me_SidebandLoop = -1 ! String index for trace
-    integer :: MIF                ! MIF number for tan_press(ptg_i)
+    integer :: MIF                ! MIF number for tan_press(ptg_i) and rotation
+                                  ! matrix from ECR to IFOVPP (R1A) for magnetic
+                                  ! field
     integer :: N_More             ! Effective size of More_*_Path
     integer :: N_Phi              ! Number of phi values for one species
     integer :: NGLMax             ! NGL if all panels need GL
@@ -768,7 +769,6 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
                                         ! path.
 
     ! Cloud arrays are on the same grids as temperature
-    logical :: Do_Calc_Tscat_ZP(max_f,s_i*sv_t_len) ! 'Avoid zeros' indicator
     logical :: Do_Calc_Salb_ZP(max_f,s_i*sv_t_len)  ! 'Avoid zeros' indicator
     logical :: Do_Calc_Cext_ZP(max_f,s_i*sv_t_len)  ! 'Avoid zeros' indicator
 
@@ -857,7 +857,6 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
     real(rp) :: DHDZ_GLGrid(maxVert,no_sv_p_T) ! dH/dZ on glGrid surfs
     real(rp) :: DX_DT(no_tan_hts,s_t*sv_t_len) ! (No_tan_hts, nz*np)
     real(rp) :: Eta_IWC_ZP(max_f,max(s_i,s_ts)*grids_iwc%p_len)
-    real(rp) :: Eta_Mag_ZP(max_f,grids_mag%p_len)  ! Eta_z x Eta_p x Eta_x
     real(rp) :: Eta_ZXP_N(max_f,size(grids_n%values)) ! Eta_z x Eta_p for N
     real(rp) :: Eta_ZXP_V(max_f,size(grids_v%values)) ! Eta_z x Eta_p for V
     real(rp) :: Eta_ZXP_W(max_f,size(grids_w%values)) ! Eta_z x Eta_p for W
@@ -1154,7 +1153,7 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
         & dBeta_df_path_f, dBeta_dIWC_path_c, dBeta_dIWC_path_f, &
         & dBeta_dn_path_c, dBeta_dn_path_f, dBeta_dT_path_c, dBeta_dT_path_f, &
         & dBeta_dv_path_c, dBeta_dv_path_f, dBeta_dw_path_c, dBeta_dw_path_f )
-      call fill_IEEE_NaN ( dhdz_glgrid, dx_dT, eta_IWC_zp, eta_mag_zp, &
+      call fill_IEEE_NaN ( dhdz_glgrid, dx_dT, eta_IWC_zp, &
         & eta_zxp_n, eta_zxp_v, &
         & eta_zxp_w, h_glgrid, IWC_path, mag_path, rad_avg_path, radiances, &
         & spect_n_path, spect_v_path, spect_w_path, sps_path, sps_path_c, &
@@ -2378,12 +2377,8 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
       real(r4) :: K_Temp_TScat(noUsedChannels,size(rads,2),s_t*sv_t_len)
       real(rp) :: K_Temp_p(s_t*sv_t_len) ! K_Temp convolved with P
       real(rp) :: LogIWC       ! log10(iwc)
-      real(rp) :: P_On_T_IWC(size(p,3)) ! P interpolated to T and IWC for one
-                               ! frequency and several Theta_e's.
       real(rp) :: P_On_Xi(size(rads,2)) ! P * sin(abs(theta)) interpolated
                                ! to scattering point IWC and T for each xi
-      real(rp), pointer :: P_T_IWC(:) ! 1D pointer to P(:,:,theta_i,frq_i):
-                               ! the T x IWC space for particular theta and frq
       real(rp) :: dP_dIWC_On_Xi(size(rads,2)) ! dP/dIWC * sin(abs(theta)) interpolated
                                ! to scattering point IWC and T for each xi
       real(rp) :: dP_dT_On_Xi(size(rads,2)) ! dP/dT * sin(abs(theta)) interpolated
@@ -2408,8 +2403,8 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
       type(sparse_eta_t) :: Eta_IWC, Eta_T, Eta_T_IWC
 
       integer :: Beg_Pos_Theta ! 1 if theta_s(1) /= 0, else 2
-      integer :: IWC_IX        ! Which IWC index for phase function to use
-      integer :: T_IX          ! Which Temperature index for phase functio to use
+!       integer :: IWC_IX        ! Which IWC index to use for phase function
+!       integer :: T_IX          ! Which Temperature index to use for phase functio
 
       integer :: F_I           ! Frequency (channel) index
       logical :: Forward       ! Half-ray is an earth-intersecting ray
@@ -2425,7 +2420,6 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
                                ! upon whether theta_e covers 0..360 or lacks one
       integer :: Phi_i         ! Loop inductor and subscript
       integer :: Ptg_i, Ptg_j  ! Loop inductors and subscripts
-      integer :: Ptg_f         ! Ptg_i, Ptg_j on fine grid
       logical :: Reject        ! Reject the scattering point
       integer :: Sort_Xi(size(Xis)) ! Permutation vector to sort Xis
       integer :: Surf_i        ! Surface (first) subscript for TScat%values,
@@ -2636,8 +2630,6 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
 
             ! Handle earth-intersecting rays using explicit angles
             if ( ptg_i < surfaceTangentIndex ) cycle
-
-            ptg_f = (ptg_i-1) * ngp1 + 1 ! On Z_GLgrid, for H_GLGrid
 
             ! Compute scat_tan_ht and scat_tan_phi for the ray to be scattered.
             ! Start with scat_tan_phi == phi_ref and iterate.
@@ -3171,11 +3163,9 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
           type (Sparse_Eta_t) :: Eta_TScat_ZP
           call comp_eta_docalc_sparse ( grids_tscat, tan_pt_f, z_path(1:npf), &
                                       & phi_path(1:npf), eta_tscat_zp )
-          do i = 1, size(tscat_path,2)
-            ! There's only one Zeta X Phi grid for all the scattering angles.
-            call comp_sps_path_sparse ( grids_tscat, eta_tscat_zp, &
-                                      & tscat_path(1:npf,i) )
-          end do
+          ! There's only one Zeta X Phi grid for all the scattering angles.
+          call comp_sps_path_sparse ( grids_tscat, eta_tscat_zp, &
+                                      & tscat_path(1:npf,:) )
         end block
 
         ! project Tscat onto LOS
@@ -4234,52 +4224,27 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
         end if
       end if
 
-      ! Special path quantities for Polarized (magnetic) model
       if ( FwdModelConf%polarized ) then
+      ! Magnetic field on the path, for Polarized (magnetic) model
 
-        select case ( grids_mag%z_coord(1) ) ! grids_mag is a one-quantity grid
-        case ( l_geocAltitude, l_geodAltitude )
-          ! load_sps_data_m%Fill_Grids_2 has converted geocentric height
-          ! to geodetic altitude above the geoid, and converted to km.
-          ! H_Path is km above the equivalent Earth center, so subtract R_Eq
-          ! to get it on the same basis as Grids_Mag%zet_basis, which is
-          ! altitude in km here, not zeta.
-          call comp_eta_docalc_no_frq ( grids_mag, h_path(1:npf) - r_eq, &
-            &  phi_path(1:npf), eta_mag_zp(1:npf,:), tan_pt=tan_pt_f )
-        case ( l_zeta )
-          call comp_eta_docalc_no_frq ( grids_mag, z_path(1:npf), &
-            &  phi_path(1:npf), eta_mag_zp(1:npf,:), tan_pt=tan_pt_f )
-        end select
+        block
+          use Magnetic_Field_On_Path_m, only: Magnetic_Field_On_Path
 
-        ! Compute the first three components of MAG_Path
-        call comp_sps_path ( grids_mag, 1, eta_mag_zp(1:npf,:), &
-          & mag_path(1:npf,1:3) )
+          ! Get the rotation matrix for the magnetic field.  Use the
+          ! matrix for the MIF having ptan nearest to tan_press.  They are
+          ! nearly identical anyway.
+          mif = minloc(abs(tan_press - &
+              &            ptan%values(:ptan%template%nosurfs,maf)),1)
 
-        ! Get the rotation matrix for the magnetic field.  Use the
-        ! matrix for the MIF having ptan nearest to tan_press.
-        mif = minloc(abs(tan_press - &
-            &            ptan%values(:ptan%template%nosurfs,maf)),1)
+          ! Dimensions of ECRtoFOV%value3 are ( chans, surfs,
+          ! instances*cross angles ). Chans is actually 3x3, so we need to
+          ! reform it.
+          rot = reshape ( ECRtoFOV%value3(1:9,mif,maf), [ 3, 3 ] )
 
-        ! Dimensions of ECRtoFOV%value3 are ( chans, surfs, instances*cross angles ).
-        ! Chans is actually 3x3, so we need to reform it.
-        rot = reshape ( ECRtoFOV%value3(1:9,mif,maf), [ 3, 3 ] )
-
-        do j = 1, npf
-          ! Rotate mag_path from ECR to IFOVPP (R1A) coordinates.  Use
-          ! the rotation matrix for the MIF nearest to the current
-          ! pointing angle instead of interpolating.  They are nearly
-          ! identical anyway.
-          mag_path(j,1:3) = matmul ( rot, mag_path(j,1:3) )
-          ! Put the magnitude of mag_path(j,1:3) in mag_path(j,4)
-          mag_path(j,4) = norm2(mag_path(j,1:3))
-          ! Normalize mag_path(j,1:3).
-          if ( mag_path(j,4) /= 0.0_rp ) then
-            mag_path(j,1:3) = mag_path(j,1:3) / mag_path(j,4)
-          else
-            mag_path(j,1:3) = 0.0_rp
-            mag_path(j,3) = 1.0_rp ! arbitrarily, theta=0 for zero field
-          end if
-        end do
+          call magnetic_field_on_path ( grids_mag, tan_pt_f, &
+            & h_path(1:npf), r_eq, z_path(1:npf), phi_path(1:npf), &
+            & rot, mag_path(1:npf,1:4) )
+        end block
 
         ct => mag_path(1:npf,3)   ! cos(theta)
         stcp => mag_path(1:npf,1) ! sin(theta) cos(phi)
@@ -4297,8 +4262,6 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
           call dump ( stsp, 'Sin(theta) Sin(phi)', options=clean )
           if ( iand(print_Mag,1) > 0 ) &
             & call dump ( mag_path(1:npf,1:3), 'Mag_Path', options=clean )
-          if ( iand(print_Mag,2) > 0 ) &
-            & call dump ( eta_mag_zp(1:npf,:), 'Eta_Mag_zp', options=clean )
         end if
 
       end if ! polarized
@@ -4655,6 +4618,12 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path, Comp_SPS_Path_No_Frq
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.397  2018/08/28 22:17:53  vsnyder
+! Add WrongTrapezoidal with the value .true. to indicate the incorrect
+! trapezoid rule is used to calculate incOptDepth.  Some changes because of
+! rearranged argument lists in Comp_Sps_Path_Sparse_m and
+! Comp_Eta_DoCalc_Sparse_m.
+!
 ! Revision 2.396  2018/08/15 01:18:50  vsnyder
 ! Get S_QTM_t from Metrics_2D_m instead of QTM_Interpolation_Weights_3D_m.
 ! Eliminate dSdZ_C.  Eliminate Do_Clac_T and Do_Calc_T_1.  Get T_Der_Path_Flags
