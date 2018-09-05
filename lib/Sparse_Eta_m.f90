@@ -241,7 +241,7 @@ contains
         ! Coefficients between Basis(1) and Basis(n_basis) are "hat" functions
         do j = 2, n_basis
           del_basis = 1.0_rp / ( basis(j) - basis(j-1) )
-          do while ( i > myRowN )
+          do while ( i >= myRowN )
             if ( grid(i) > basis(j) ) exit
             if ( basis(j-1) < grid(i) .and. i /= pr ) then
               v = ( basis(j)-grid(i) ) * del_basis
@@ -414,6 +414,10 @@ contains
 end module Sparse_Eta_m
 
 ! $Log$
+! Revision 2.8  2018/09/05 21:01:30  vsnyder
+! Correct off-by-one error that only occurs if basis is in descending order
+! and the grid does not extend beyond the bases.
+!
 ! Revision 2.7  2018/08/20 23:40:03  vsnyder
 ! Correct error in the case that the grid needs to be sorted
 !
