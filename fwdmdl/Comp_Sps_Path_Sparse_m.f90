@@ -17,10 +17,14 @@ module Comp_Sps_Path_Sparse_m
   public :: Comp_Sps_Path_Sparse
   public :: Comp_Sps_Path_Sparse_Frq, Comp_1_Sps_Path_Sparse_Frq
   public :: Comp_Sps_Path_Sparse_No_Frq, Comp_1_Sps_Path_Sparse_No_Frq
+  public :: Comp_1_Sps_Path_Sparse_No_Frq_No_Eta
+  public :: Comp_1_Sps_Path_Sparse_No_Frq_2D
 
   interface Comp_Sps_Path_Sparse
     module procedure Comp_Sps_Path_Sparse_Frq, Comp_1_Sps_Path_Sparse_Frq
     module procedure Comp_Sps_Path_Sparse_No_Frq, Comp_1_Sps_Path_Sparse_No_Frq
+    module procedure Comp_1_Sps_Path_Sparse_No_Frq_No_Eta
+    module procedure Comp_1_Sps_Path_Sparse_No_Frq_2D
   end interface
 
 !---------------------------- RCS Module Info ------------------------------
@@ -180,8 +184,7 @@ if ( size(sps_path,1) < 0 ) call eta_f%dump ( name='Eta_F', width=4 )
     use Sparse_Eta_m, only: Sparse_Eta_t
 
     type(grids_t), intent(in) :: Grids_f    ! Quantity values
-    type(sparse_eta_t), intent(inout) :: Eta_ZP ! Interpolate Zeta X H to Sps_Path,
-                                            ! same size as Grids_f%Mol
+    type(sparse_eta_t), intent(inout) :: Eta_ZP ! Interpolate Zeta X H to Sps_Path
     real(rp), intent(inout) :: Sps_Path(:)  ! Path for 1 Sps -- VMR values.
     integer, intent(in), optional :: N      ! Which species, default 1
 
@@ -194,6 +197,68 @@ if ( size(sps_path,1) < 0 ) call eta_f%dump ( name='Eta_F', width=4 )
     if ( grids_f%lin_log(myN) ) sps_path = exp(sps_path)
 
   end subroutine Comp_1_Sps_Path_Sparse_No_Frq
+
+  subroutine Comp_1_Sps_Path_Sparse_No_Frq_No_Eta ( Grids_f, Tan_Pt, Z_Path, &
+                                                  & Phi_Path, Sps_Path, N )
+
+    ! Compute the Sps_Path for one species that is not frequency dependent.
+
+    use Comp_Eta_Docalc_Sparse_m, only: Comp_Eta_DoCalc_Sparse
+    use Load_Sps_Data_m, only: Grids_t
+    use MLSKinds, only: RP
+    use Sparse_Eta_m, only: Sparse_Eta_t
+
+    type(grids_t), intent(in) :: Grids_f    ! Quantity values
+    integer, intent(in) :: Tan_Pt           ! To split Z_Path into two
+                                            ! monotone halves
+    real(rp), intent(in) :: Z_Path(:)       ! Zetas on the path
+    real(rp), intent(in) :: Phi_Path(:)     ! Phis on the path, Radians
+    real(rp), intent(inout) :: Sps_Path(:)  ! Path for 1 Sps -- VMR values.
+    integer, intent(in), optional :: N      ! Which species, default 1
+
+    type(sparse_eta_t) :: Eta_ZP            ! Interpolate Zeta X H to Sps_Path
+    integer :: MyN
+
+    myN = 1
+    if ( present(n) ) myN = n
+
+    call comp_eta_docalc_sparse ( grids_f, tan_pt, z_path, phi_path, eta_zp )
+    call eta_zp%sparse_dot_vec ( grids_f%c(myN)%v1, sps_path )
+    if ( grids_f%lin_log(myN) ) sps_path = exp(sps_path)
+
+  end subroutine Comp_1_Sps_Path_Sparse_No_Frq_No_Eta
+
+  subroutine Comp_1_Sps_Path_Sparse_No_Frq_2D ( Grids_f, Eta_ZP, Sps_Path, N )
+
+    ! Compute the Sps_Path for all the columns of one species that is not
+    ! frequency dependent, but is represented as if it were, e.g. magnetic
+    ! field, for which Sps_Path has three columns, but Grids_f%c(n)%v4 has
+    ! three ROWS.
+
+    use Load_Sps_Data_m, only: Grids_t
+    use MLSKinds, only: RP
+    use Sparse_Eta_m, only: Sparse_Eta_t
+
+    type(grids_t), intent(in) :: Grids_f     ! Quantity values
+    type(sparse_eta_t), intent(inout) :: Eta_ZP ! Interpolate Zeta X H to Sps_Path,
+    real(rp), intent(inout) :: Sps_Path(:,:) ! Path for 1 Sps, e.g. magnetic field
+    integer, intent(in), optional :: N       ! Which species, default 1
+
+    integer :: I, MyN, NC
+
+    myN = 1
+    if ( present(n) ) myN = n
+
+    nc = grids_f%l_f(myN) - grids_f%l_f(myN-1)
+    ! v4 is Frequency X Zeta X Phi.  We want to compute the product
+    ! Eta * v4(i,:,:,1) and put it in sps_path(:,i).  We can't take a 1-D
+    ! pointer to v4(i,:,:) because it's not contiguous.
+    do i = 1, size(sps_path,2) ! should be the same as size(grids_f%c(myN)%v4,1)
+      call eta_zp%sparse_dot_vec_2d ( grids_f%c(myN)%v4(i,:,:,1), sps_path(:,i) )
+    end do
+    if ( grids_f%lin_log(myN) ) sps_path = exp(sps_path)
+
+  end subroutine Comp_1_Sps_Path_Sparse_No_Frq_2D
 
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
@@ -208,6 +273,9 @@ if ( size(sps_path,1) < 0 ) call eta_f%dump ( name='Eta_F', width=4 )
 end module Comp_Sps_Path_Sparse_m
 
 ! $Log$
+! Revision 2.5  2018/09/05 20:54:58  vsnyder
+! Add Comp_1_Sps_Path_Sparse_No_Frq_No_Eta and Comp_1_Sps_Path_Sparse_No_Frq_2D
+!
 ! Revision 2.4  2018/08/28 22:15:04  vsnyder
 ! Make Eta_FZP optional in Comp_Sps_Path_Sparse_No_Frq
 !
