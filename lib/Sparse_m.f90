@@ -68,9 +68,13 @@ module Sparse_m
     procedure :: Invert_Column_Indices
     procedure :: List => List_Sparse
     procedure :: Resize => Resize_Sparse
-    procedure :: Row_Dot_Vec
+    procedure :: Row_Dot_Vec_1D
+    procedure :: Row_Dot_Vec_2D
+    generic :: Row_Dot_Vec => Row_Dot_Vec_1D, Row_Dot_Vec_2D
     procedure :: Row_Times_Vec
-    procedure :: Sparse_Dot_Vec
+    procedure :: Sparse_Dot_Vec_1D
+    procedure :: Sparse_Dot_Vec_2D
+    generic :: Sparse_Dot_Vec => Sparse_Dot_Vec_1D, Sparse_Dot_Vec_2D
     procedure, pass(sparse) :: Vec_Dot_Col
     procedure, pass(sparse) :: Vec_Dot_Sparse
   end type Sparse_t
@@ -474,7 +478,7 @@ contains
           end do ! Rows
           call newLine
         end do ! Columns
-      else
+      else ! .not. myTranspose
         ! Print the nonzero array elements, their row numbers and their
         ! column sub-dimension subscripts.
         r1 = 1
@@ -605,7 +609,7 @@ contains
   end subroutine Invert_Column_Indices
 
   ! ------------------------------------------------  List_Sparse  -----
-  subroutine List_Sparse ( Sparse, Name )
+  subroutine List_Sparse ( Sparse, Name, Details )
     ! List the contents of Sparse_t without trying to follow the links for
     ! rows and columns.  Useful for debugging if the structure is messed up.
     use Dump_0, only: Dump
@@ -613,8 +617,11 @@ contains
     use String_Table, only: Display_String
     class(sparse_t), intent(in) :: Sparse
     character(*), intent(in), optional :: Name
+    integer, intent(in), optional :: Details ! <= 0 => Only the structure
+                                             ! > 0 => The elements too.
+                                             ! Default 1
     integer :: F, L ! Locations of first, last nonzeros in sparse%col
-    integer :: I
+    integer :: I, MyDetails
 
     if ( present(name) ) call output ( name )
     if ( sparse%what /= 0 ) then
@@ -622,6 +629,8 @@ contains
       call display_string ( sparse%what )
     end if
     if ( present(name) .or. sparse%what /= 0 ) call newLine
+    myDetails = 1
+    if ( present(details) ) myDetails = details
     if ( .not. allocated(sparse%rows) ) then
       call output ( 'Sparse matrix not initialized', advance='yes' )
       return
@@ -637,7 +646,7 @@ contains
     call dump ( sparse%lbnd, name='Lbnd' )
     call dump ( sparse%ubnd, name='Ubnd' )
     call output ( sparse%nRows, before='NRows ', advance='yes' )
-    if ( sparse%ne /= 0 ) then
+    if ( sparse%ne /= 0 .and. myDetails > 0 ) then
       call output ( sparse%ne, before='         R    C   NR   NC   V  NE = ', &
                   & advance='yes' )
       do i = 1, sparse%ne
@@ -648,7 +657,7 @@ contains
         call output ( sparse%e(i)%nc, places=5 )
         call output ( sparse%e(i)%v, before='  ', advance='yes' )
       end do
-    else
+    else if ( sparse%ne == 0 ) then
       call output ( 'NE is zero', advance='yes' )
     end if
   end subroutine List_Sparse
@@ -676,8 +685,8 @@ contains
 
   end subroutine Resize_Sparse
 
-  ! ------------------------------------------------  Row_Dot_Vec  -----
-  pure real(rp) function Row_Dot_Vec ( Sparse, R, Vector ) result ( D )
+  ! ---------------------------------------------  Row_Dot_Vec_1D  -----
+  pure real(rp) function Row_Dot_Vec_1D ( Sparse, R, Vector ) result ( D )
     ! Compute dot product of row R of Sparse with Vector
     class(sparse_t), intent(in) :: Sparse  ! The sparse matrix
     integer, intent(in) :: R               ! Which row to multiply by Vector
@@ -695,7 +704,36 @@ contains
       end do
     end if
 
-  end function Row_Dot_Vec
+  end function Row_Dot_Vec_1D
+
+  ! ---------------------------------------------  Row_Dot_Vec_2D  -----
+!  pure &
+  real(rp) function Row_Dot_Vec_2D ( Sparse, R, Vector ) result ( D )
+    ! Compute dot product of row R of Sparse with Vector
+    use Array_Stuff, only: Subscripts
+    class(sparse_t), intent(in) :: Sparse  ! The sparse matrix
+    integer, intent(in) :: R               ! Which row to multiply by Vector
+    real(rp), intent(in) :: Vector(:,:)    ! The vector.  Sparse%e(j)%c is
+                                           ! the array-element order index.
+
+    integer :: C                           ! Array-element order subscript for
+                                           ! Vector
+    integer :: J                           ! Column index in the row
+    integer :: S(2)                        ! Subscripts of Vector
+
+    d = 0.0
+    j = sparse%rows(r)                     ! Last element in the row
+    if ( j /= 0 ) then                     ! Any columns in this row?
+      do
+        c = sparse%e(j)%c
+        s = subscripts ( c, shape(vector) )
+        d = d + sparse%e(j)%v * vector(s(1),s(2))
+        j = sparse%e(j)%nr                ! Next column in the row
+        if ( j == sparse%rows(r) ) exit   ! back to the last one?
+      end do
+    end if
+
+  end function Row_Dot_Vec_2D
 
   ! ----------------------------------------------  Row_Times_Vec  -----
   subroutine Row_Times_Vec ( Sparse, R, Vector, Product )
@@ -820,14 +858,14 @@ contains
 
     do r = 1, size(sparse%rows)
       do c = 1, size(matrix,2)
-        prod(r,c) = row_dot_vec ( sparse, r, matrix(:,c) )
+        prod(r,c) = sparse%row_dot_vec ( r, matrix(:,c) )
       end do
     end do
 
   end subroutine Sparse_Dot_Matrix
 
-  ! ---------------------------------------------  Sparse_Dot_Vec  -----
-  subroutine Sparse_Dot_Vec ( Sparse, Vector, Prod )
+  ! ------------------------------------------  Sparse_Dot_Vec_1D  -----
+  subroutine Sparse_Dot_Vec_1D ( Sparse, Vector, Prod )
     ! Multiply Sparse by Vector producing Product
     class(sparse_t), intent(in) :: Sparse  ! The sparse matrix
     real(rp), intent(in) :: Vector(:)      ! The vector Sparse is to multiply
@@ -839,10 +877,32 @@ contains
     n = sparse%nRows
     if ( n == 0 ) n = size(sparse%rows)
     do r = 1, min(n,ubound(prod,1))
-      prod(r) = row_dot_vec ( sparse, r, vector )
+      prod(r) = sparse%row_dot_vec ( r, vector )
     end do
 
-  end subroutine Sparse_Dot_Vec
+  end subroutine Sparse_Dot_Vec_1D
+
+  ! ------------------------------------------  Sparse_Dot_Vec_2D  -----
+  subroutine Sparse_Dot_Vec_2D ( Sparse, Vector, Prod )
+    ! Multiply Sparse by Vector producing Product
+    class(sparse_t), intent(in) :: Sparse  ! The sparse matrix
+    real(rp), intent(in), target :: Vector(:,:) ! The vector Sparse is to
+                                           ! multiply. Sparse%e(j)%c is the
+                                           ! array-element order index.
+    real(rp), intent(out), target :: Prod(:) ! The size of Prod should be same
+                                           ! as the row dimension of Sparse
+
+    integer :: N                           ! Number of rows to use
+    integer :: R
+                                           ! to R
+
+    n = sparse%nRows
+    if ( n == 0 ) n = size(sparse%rows)
+    do r = 1, min(n,ubound(prod,1))
+      prod(r) = row_dot_vec_2d ( sparse, r, vector )
+    end do
+
+  end subroutine Sparse_Dot_Vec_2D
 
   ! ---------------------------------------  Sparse_Get_All_Flags  -----
   subroutine Sparse_Get_All_Flags ( Sparse, Flags )
@@ -992,6 +1052,11 @@ contains
 end module Sparse_m
 
 ! $Log$
+! Revision 2.11  2018/09/05 20:59:32  vsnyder
+! Rename Row_Dot_Vec to Row_Dot_Vec_1D.  Add Row_Dot_Vec_2D and Row_Dot_Vec
+! generic.  Rename Sparse_Dot_Vec to Sparse_Dot_Vec_1D.  Add Sparse_Dot_Vec_2D
+! and Sparse_Dot_Vec generic.  Add Details argument ot List_Sparse.
+!
 ! Revision 2.10  2018/08/21 01:52:14  vsnyder
 ! Add Exclude argument to sparse dumps
 !
