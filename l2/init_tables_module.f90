@@ -1,3 +1,4 @@
+
 ! Copyright 2005, by the California Institute of Technology. ALL
 ! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
 ! commercial use must be negotiated with the Office of Technology Transfer
@@ -1177,6 +1178,7 @@ contains ! =====     Public procedures     =============================
     call make_tree( (/ &
       begin, s+s_anyGoodRadiances, &
              begin, f+f_signal, string(req), &
+             begin, f+f_reverse, boolean(), &
              begin, f+f_Boolean, field_spec(s_Boolean,req=req), &
              np+n_spec_def /) )
 
@@ -1185,6 +1187,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_quantity, vectorQuantity(), &
              begin, f+f_precision, vectorQuantity(), &
              begin, f+f_quality, vectorQuantity(), &
+             begin, f+f_reverse, boolean(), &
              begin, f+f_status, vectorQuantity(), &
              begin, f+f_Boolean, field_spec(s_Boolean,req=req), &
              np+n_spec_def /) )
@@ -1194,12 +1197,14 @@ contains ! =====     Public procedures     =============================
              begin, f+f_file, string(), &
              begin, f+f_type, field_type(t_griddedOrigin), &
              begin, f+f_Boolean, field_spec(s_Boolean,req=req), &
+             begin, f+f_reverse, boolean(), &
              np+n_spec_def /) )
 
     call make_tree( (/ &
       begin, s+s_isGridEmpty, &
              begin, f+f_grid, field_spec(s_Gridded,s_concatenate,req=req), &
              begin, f+f_Boolean, field_spec(s_Boolean,req=req), &
+             begin, f+f_reverse, boolean(), &
              np+n_spec_def /) )
 
     call make_tree( (/ &
@@ -1209,6 +1214,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_type, field_type(t_outputType,req=req), &
              begin, f+f_noPCFid, boolean(), &
              begin, f+f_Boolean, field_spec(s_Boolean,req=req), &
+             begin, f+f_reverse, boolean(), &
              np+n_spec_def /) )
 
     call make_tree( (/ &
@@ -2123,6 +2129,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.642  2018/09/06 23:59:43  pwagner
+! More commands that set a runtime flag can now take /reverse
+!
 ! Revision 2.641  2018/04/19 23:43:39  pwagner
 ! Skip may take /nextChunk flag
 !
