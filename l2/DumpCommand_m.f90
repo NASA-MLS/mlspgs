@@ -29,7 +29,7 @@ module DumpCommand_M
   public :: BooleanFromAnyGoodValues
   public :: BooleanFromCatchWarning
   public :: BooleanFromComparingQtys
-  public :: BooleanFromEmptygrid, BooleanFromEmptySwath
+  public :: BooleanFromEmptyGrid, BooleanFromEmptySwath
   public :: BooleanFromFormula
   public :: DumpCommand, ExecuteCommand
   public :: InitializeRepeat, NextRepeat
@@ -65,7 +65,8 @@ module DumpCommand_M
 ! BooleanFromEmptyGrid
 !               The specified GriddedData is empty
 ! BooleanFromEmptySwath
-!               The specified swath in the specified file has no useable data
+!               (a) That named swath in that named file has no useable data
+!               (b) The specified file can't be found
 ! BooleanFromFormula
 !               (a) Evaluate the formula; it may be one of the forms
 !               (1) Contains only "or", "and", "not" => logical result
@@ -97,7 +98,7 @@ module DumpCommand_M
 ! int BooleanFromEmptyGrid ( int root, type (griddeddata_t) grids(:) )
 ! int BooleanFromEmptySwath ( int root )
 ! int BooleanFromFormula ( int name, int root, type (vector_t) vectors(:) )
-! DumpCommand ( int root, type (quantityTemplate_t) quantityTemplatesDB(:), &
+! DumpCommand ( int root, type (QuantityTemplate_T) quantityTemplatesDB(:), &
 !    type (vectorTemplate_T) vectorTemplates(:), &
 !    type (vector_t) vectors(:), type (forwardModelConfig_t) forwardModelConfigs(:), &
 !    type (HGrids_T) HGrids(:), &
@@ -156,18 +157,19 @@ module DumpCommand_M
 contains
 
   ! --------------------------------  BooleanFromAnyGoodRadiances  -----
-  function booleanFromAnyGoodRadiances ( root, chunk, filedatabase ) &
+  function BooleanFromAnyGoodRadiances ( root, chunk, filedatabase ) &
     & result( hashsize )
     use Allocate_Deallocate, only: Deallocate_Test
     use ConstructQuantityTemplates, only: AnyGoodSignalData
     use Chunks_M, only: MLSChunk_T
-    use Init_Tables_Module, only: F_Signal, F_Boolean
+    use Init_Tables_Module, only: F_Signal, F_Boolean, F_Reverse
     use MLSCommon, only: MLSFile_T
     use MLSL2Options, only: RuntimeValues
     use MLSSignals_M, only: GetSignalName, &
       & Signals
     use MLSStringLists, only: NumStringElements, PutHashElement
     use MLSStrings, only: Lowercase
+    use MoreTree, only: Get_Boolean
     use Parse_Signal_M, only: Parse_Signal
     use String_Table, only: Get_String
     use Tree, only: Decoration, Nsons, Sub_Rosa, Subtree
@@ -175,7 +177,7 @@ contains
     ! integer, intent(in) :: name
     integer, intent(in) :: root
     type (MLSChunk_T), intent(in) :: chunk
-    type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
+    type (MLSFile_T), dimension(:), pointer ::     Filedatabase
     integer             :: hashsize
     ! Internal variables
     integer :: field
@@ -183,6 +185,7 @@ contains
     integer :: fieldValue
     integer :: keyNo
     character(len=32) :: nameString
+    logical :: reverse
     integer :: s
     integer :: signalIndex
     integer, pointer :: Signal_Indices(:)         ! Indices in the signals
@@ -192,6 +195,7 @@ contains
     logical :: tvalue
     logical :: verbose, verboser
     ! Executable
+    reverse = .false.
     verbose = BeVerbose ( 'bool', -1 )
     verboser = BeVerbose ( 'bool', 0 )
     nullify(Signal_Indices)
@@ -246,6 +250,10 @@ contains
       print *, 'Sorry-unable to parse ', trim(signalString)
       tvalue = .false.
     end if
+    ! The following could be expressed via: tvalue =
+    !    ( reverse .and. tvalue ) .or. (.not. reverse .and. .not. tvalue )
+    ! but is it clearer that way? I think .not.
+    if ( reverse ) tvalue = .not. tvalue
     if ( verbose ) then
       call output( trim(nameString) // ' = ', advance='no' )
       call output( tvalue, advance='yes' )
@@ -263,12 +271,13 @@ contains
   ! -----------------------------------  BooleanFromAnyGoodValues  -----
   function BooleanFromAnyGoodValues ( root, vectors ) result( thesize )
     use Init_Tables_Module, only: F_Precision, F_Quality, &
-      & F_Quantity, F_Boolean, F_Status
+      & F_Quantity, F_Boolean, F_Status, F_Reverse
     use ManipulateVectorQuantities, only: AnyGoodDatainQty
     use MLSKinds, only: Rv
     use MLSL2Options, only: RuntimeValues
     use MLSStringLists, only: NumStringElements, PutHashElement
     use MLSStrings, only: Lowercase
+    use MoreTree, only: Get_Boolean
     use String_Table, only: Get_String
     use Tree, only: Decoration, Nsons, Sub_Rosa, Subtree
     use VectorsModule, only: Vector_T, VectorValue_T, &
@@ -283,18 +292,20 @@ contains
     integer :: fieldValue
     integer :: keyNo
     character(len=32) :: nameString
-    type (vectorValue_T), pointer :: PRECISIONQUANTITY
-    integer :: QUANTITYINDEX
-    real(rv) :: QUALITY_MIN
-    type (vectorValue_T), pointer :: QUALITYQUANTITY
-    type (vectorValue_T), pointer :: Quantity
+    type (VectorValue_T), pointer :: Precisionquantity
+    integer  :: Quantityindex
+    real(rv) :: Quality_min
+    type (VectorValue_T), pointer :: Qualityquantity
+    type (VectorValue_T), pointer :: Quantity
+    logical :: reverse
     integer :: son
     integer :: source
-    type (vectorValue_T), pointer :: STATUSQUANTITY
+    type (VectorValue_T), pointer :: Statusquantity
     logical :: tvalue
-    integer :: VECTORINDEX
+    integer :: Vectorindex
     logical :: verbose, verboser
     ! Executable
+    reverse = .false.
     verbose = BeVerbose ( 'bool', -1 )
     verboser = BeVerbose ( 'bool', 0 )
     nullify( precisionquantity, qualityquantity, Quantity, statusquantity )
@@ -334,12 +345,18 @@ contains
         QuantityIndex = decoration(decoration(decoration(subtree(2,source))))
         statusQuantity => GetVectorQtyByTemplateIndex( &
           & vectors(VectorIndex), QuantityIndex )
+      case ( f_reverse )
+        reverse = Get_Boolean ( son )
       case default ! Can't get here if tree_checker works correctly
       end select
     end do
     tvalue = AnyGoodDataInQty ( a=Quantity, &
       & precision=precisionQuantity, quality=qualityQuantity, &
       & status=statusQuantity, quality_min=quality_min )
+    ! The following could be expressed via: tvalue =
+    !    ( reverse .and. tvalue ) .or. (.not. reverse .and. .not. tvalue )
+    ! but is it clearer that way? I think .not.
+    if ( reverse ) tvalue = .not. tvalue
     if ( verbose ) then
       call output( trim(nameString) // ' = ', advance='no' )
       call output( tvalue, advance='yes' )
@@ -470,8 +487,8 @@ contains
     type (vector_T), dimension(:) :: Vectors
     integer             :: thesize
     ! Internal variables
-    type (vectorValue_T), pointer :: AQUANTITY
-    type (vectorValue_T), pointer :: BQUANTITY
+    type (VectorValue_T), pointer :: AQuantity
+    type (VectorValue_T), pointer :: BQuantity
     real(rv) :: A, B, C                       ! constant "c" in formula
     integer :: field
     integer :: field_index
@@ -677,39 +694,43 @@ contains
   ! ------------------------------------- BooleanFromEmptyGrid --
   function BooleanFromEmptyGrid ( root, grids ) result( thesize )
     use Dump_0, only: Dump
-    use Init_Tables_Module, only: F_Boolean, F_Grid
+    use Init_Tables_Module, only: F_Boolean, F_Grid, F_Reverse
     use GriddedData, only: GriddedData_T, Dump
     use MLSL2Options, only: RuntimeValues
     use MLSStringLists, only: NumStringElements, PutHashElement
     use MLSStrings, only: Lowercase
+    use MoreTree, only: Get_Boolean
     use String_Table, only: Get_String
     use Tree, only: Decoration, Nsons, Sub_Rosa, Subtree
     ! Dummy args
     integer, intent(in) :: root
-    type (GRIDDEDDATA_T), dimension(:), pointer :: Grids
+    type (Griddeddata_T), dimension(:), pointer :: Grids
     integer             :: thesize
     ! Internal variables
     integer :: field
     integer :: field_index
     integer :: fieldValue
-    type (GRIDDEDDATA_T), pointer :: grid
+    type (Griddeddata_T), pointer :: grid
     integer :: keyNo
     character(len=32) :: nameString
+    logical :: reverse
     integer :: son
     logical :: tvalue
     integer :: value
     logical :: verbose, verboser
     ! Executable
+    reverse = .false.
     verbose = BeVerbose ( 'bool', -1 )
     verboser = BeVerbose ( 'bool', 0 )
     do keyNo = 2, nsons(root)
       son = subtree(keyNo,root)
       field = subtree(1,son)
-      value = subtree(2,son)
       if ( nsons(son) > 1 ) then
         fieldValue = decoration(subtree(2,son)) ! The field's value
+        value = subtree(2,son)
       else
         fieldValue = son
+        value = 0
       end if
       field_index = decoration(field)
 
@@ -718,10 +739,16 @@ contains
         call get_string( sub_rosa(subtree(2,son)), nameString )
       case ( f_grid )
         grid => grids ( decoration ( decoration ( value ) ) )
+      case ( f_reverse )
+        reverse = Get_Boolean ( son )
       end select
     end do
     tvalue = .true.
     if ( associated(grid) ) tvalue = grid%empty
+    ! The following could be expressed via: tvalue =
+    !    ( reverse .and. tvalue ) .or. (.not. reverse .and. .not. tvalue )
+    ! but is it clearer that way? I think .not.
+    if ( reverse ) tvalue = .not. tvalue
     if ( verbose ) then
       if ( verboser ) call headLine( 'Checking for empty grid' )
       call output( trim(nameString) // ' = ', advance='no' )
@@ -753,7 +780,7 @@ contains
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
     use Dump_0, only: Dump
     use Init_Tables_Module, only: F_Boolean, F_File, F_NoPCFid, &
-      & F_Swath, F_Type, &
+      & F_Reverse, F_Swath, F_Type, &
       & Field_First, Field_Last, &
       & L_DAO, L_GEOS5, L_GEOS5_7, L_Merra, L_Merra_2, L_L2dgg, L_L2gp, L_None
     use L2GPData, only: L2GPData_T, Rgp, L2GPNameLen, &
@@ -780,14 +807,15 @@ contains
     integer :: field_index
     integer :: fieldValue
     integer :: fileType
-    character (len=FileNameLen) :: FILE_BASE    ! From the FILE= field
+    character (len=FileNameLen) :: File_base    ! From the FILE= field
     character(len=FileNameLen) :: filename          ! filename
-    logical, dimension(field_first:field_last) :: GOT
+    logical, dimension(field_first:field_last) :: got
     character(len=L2GPNAMELEN) :: swathname         ! swathname
     integer :: i
     integer :: keyNo
     character(len=32) :: nameString
     logical :: noPCFid
+    logical :: reverse
     integer :: son
     logical :: tvalue
     integer :: value
@@ -800,14 +828,17 @@ contains
     verbose = BeVerbose ( 'bool', -1 )
     verboser = BeVerbose ( 'bool', 0 )
     noPCFid = .false.
+    reverse = .false.
+    got     = .false.
     do keyNo = 2, nsons(root)
       son = subtree(keyNo,root)
       field = subtree(1,son)
-      value = subtree(2,son)
       if ( nsons(son) > 1 ) then
         fieldValue = decoration(subtree(2,son)) ! The field's value
+        value = subtree(2,son)
       else
         fieldValue = son
+        value = 0
       end if
       field_index = decoration(field)
       got(field_Index) = .true.
@@ -817,7 +848,9 @@ contains
       case ( f_file )
         call get_string ( sub_rosa(subtree(2,son)), file_base, strip=.true. )
       case ( f_noPCFid )
-        noPCFid = get_boolean(son)
+        noPCFid = get_Boolean(son)
+      case ( f_reverse )
+        reverse = Get_Boolean ( son )
       case ( f_swath )
         call get_string ( sub_rosa(subtree(2,son)), swathname, strip=.true. )
       case ( f_type )
@@ -871,6 +904,7 @@ contains
       call deallocate_test( oddStatus, 'oddStatus', ModuleName )
       call DestroyL2GPContents ( l2gp )
     end if
+    if ( reverse ) tvalue = .not. tvalue
     if ( verbose ) then
       call output( trim(nameString) // ' = ', advance='no' )
       call output( tvalue, advance='yes' )
@@ -899,7 +933,7 @@ contains
     use Expr_M, only: Expr
     use Init_Tables_Module, only: F_A, F_B, F_Boolean, F_C, &
       & F_Evaluate, F_Expr, &
-      & F_Formula, F_Inputboolean, F_Truncate, &
+      & F_Formula, F_InputBoolean, F_Truncate, &
       & F_Label, F_Literal, F_Manipulation, F_Values, &
       & Field_First, Field_Last
     use Manipulationutils, only: Manipulate
@@ -918,16 +952,16 @@ contains
       & DestroyVectorQuantityValue, Dump, &
       & GetVectorQtyByTemplateIndex
     ! Dummy args
-    integer, intent(in) :: NAME
-    integer, intent(in) :: ROOT
+    integer, intent(in) :: Name
+    integer, intent(in) :: Root
     type (vector_T), dimension(:), optional, target :: VECTORS
     integer             :: SIZE
     ! Internal variables
-    character(len=80) :: BOOLEANSTRING  ! E.g., 'BAND13_OK'
+    character(len=80) :: Booleanstring  ! E.g., 'BAND8'
     real(rv) :: C                       ! constant "c" in formula
-    type (vectorValue_T), pointer :: AQUANTITY
-    type (vectorValue_T), target  :: ATARGET
-    type (vectorValue_T), pointer :: BQUANTITY
+    type (VectorValue_T), pointer :: AQuantity
+    type (VectorValue_T), target  :: ATarget
+    type (VectorValue_T), pointer :: BQuantity
     character(len=32) :: cnameString
     character(len=32) :: cvalue
     logical :: evaluate
@@ -939,20 +973,20 @@ contains
     logical :: truncate
     integer :: J
     integer :: keyNo
-    character(len=80) :: KEYSTRING
+    character(len=80) :: Keystring
     logical :: literal
     character(len=32) :: nameString
-    integer :: NVALUES
-    integer :: QUANTITYINDEX
+    integer :: Nvalues
+    integer :: Quantityindex
     integer :: son
     integer :: source
-    type (vectorValue_T) :: TQUANTITY ! Temporary
-    type(QUANTITYTEMPLATE_T) :: TTEMPLATE
+    type (VectorValue_T) :: TQuantity ! Temporary
+    type(QuantityTemplate_T) :: TTemplate
     logical :: tvalue
     integer :: value_field
-    integer, dimension(2) :: UNITASARRAY ! From expr
-    real(r8), dimension(2) :: VALUEASARRAY ! From expr
-    integer :: VECTORINDEX
+    integer, dimension(2)  :: Unitasarray ! From expr
+    real(r8), dimension(2) :: Valueasarray ! From expr
+    integer :: Vectorindex
     logical :: verbose, verboser
     ! Executable
     verbose = BeVerbose ( 'bool', -1 )
@@ -1012,7 +1046,7 @@ contains
         nameString = lowerCase(nameString)
       case ( f_evaluate )
         ! call output( 'processing evaluate', advance='yes' )
-        evaluate = get_boolean ( fieldValue )
+        evaluate = get_Boolean ( fieldValue )
         if ( verbose ) call outputNamedValue( 'evaluate', evaluate )
       case ( f_expr )
         call MLSL2Message ( MLSMSG_Error, moduleName, &
@@ -1023,14 +1057,14 @@ contains
         if ( verbose ) call outputNamedValue ( 'tvalue', trim(formula) )
       case ( f_truncate )
         ! call output( 'processing truncate', advance='yes' )
-        truncate = get_boolean ( fieldValue )
+        truncate = get_Boolean ( fieldValue )
         if ( verbose ) call outputNamedValue( 'truncate', truncate )
       case ( f_label )
         call get_string ( sub_rosa(subtree(2,son)), formula, strip=.true. )
         literal = .true.
       case ( f_literal )
         ! call output( 'processing literal', advance='yes' )
-        literal = get_boolean ( fieldValue )
+        literal = get_Boolean ( fieldValue )
         if ( verbose ) call outputNamedValue( 'literal', literal )
       case ( f_values )
         value_field = son
@@ -1071,10 +1105,10 @@ contains
     if ( nvalues == 1 ) then
       ! We just treat this as a normal definition or reevaluation of
       ! the named Boolean treated as a scalar
-      call get_string( sub_rosa(subtree(2, value_field)), booleanString, &
+      call get_string( sub_rosa(subtree(2, value_field)), BooleanString, &
         & strip=.true. )
       call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
-        & lowercase(trim(nameString)), booleanString, &
+        & lowercase(trim(nameString)), BooleanString, &
         & countEmpty=countEmpty, &
         & inseparator=runTimeValues%sep )
     elseif ( nvalues > 1 ) then
@@ -1088,7 +1122,7 @@ contains
       call writeIntsToChars( nvalues, BooleanString )
       keyString = trim(nameString) // 'n'
       call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
-        & keyString, booleanString, &
+        & keyString, BooleanString, &
         & countEmpty=countEmpty, &
         & inseparator=runTimeValues%sep )
       if ( verboser ) then
@@ -1099,13 +1133,13 @@ contains
       do j=2, nvalues+1
         call writeIntsToChars( j-1, keyString )
         keyString = trim(nameString) // '(' // trim(adjustl(keystring)) // ')'
-        call get_string( sub_rosa(subtree(j, value_field)), booleanString, strip=.true. )
+        call get_string( sub_rosa(subtree(j, value_field)), BooleanString, strip=.true. )
         if ( verboser ) then
           call outputnamedValue( 'keyString', trim(keyString) )
           call outputnamedValue( 'BooleanString', trim(BooleanString) )
         end if
         call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
-          & keyString, booleanString, &
+          & keyString, BooleanString, &
           & countEmpty=countEmpty, &
           & inseparator=runTimeValues%sep )
       enddo
@@ -1120,19 +1154,19 @@ contains
         aQuantity%template = tTemplate
         call CreateVectorValue ( aQuantity, 'a' )
       end if
-      call CloneVectorQuantity ( tQuantity, aQuantity )
+      call CloneVectorQuantity ( TQuantity, aQuantity )
       if ( verboser ) then
         call output( trim(nameString) // ' = ', advance='no' )
         call output( trim(formula), advance='yes' )
       end if
-      call Manipulate( tQuantity, AQuantity, BQuantity, C, formula, &
+      call Manipulate( TQuantity, AQuantity, BQuantity, C, formula, &
         & .false., '' )
-      formula = numToChars ( tQuantity%values(1,1) )
-      if ( truncate ) formula = numToChars ( int(tQuantity%values(1,1)) )
+      formula = numToChars ( TQuantity%values(1,1) )
+      if ( truncate ) formula = numToChars ( int(TQuantity%values(1,1)) )
       call insertHashElement ( nameString, formula, &
         & runTimeValues%lkeys, runTimeValues%lvalues, &
         & inseparator=runTimeValues%sep )
-      call destroyVectorQuantityValue ( tQuantity, &
+      call destroyVectorQuantityValue ( TQuantity, &
         & destroyMask=.true., destroyTemplate=.false. )
     elseif ( literal ) then
       ! print *, 'Oops-you dummy! code this missing piece'
@@ -1184,7 +1218,7 @@ contains
     use HessianModule_1, only: Hessian_T, Diff, Dump
     use HGridsDatabase, only: Dump, HGrids_T
     use Igrf_Int, only: Dump_Gh
-    use Init_Tables_Module, only: F_Allbooleans, F_AllFiles, &
+    use Init_Tables_Module, only: F_AllBooleans, F_AllFiles, &
       & F_Allforwardmodels, F_AllgriddedData, F_Allhessians, F_Allhgrids, &
       & F_Alll2pcs, F_Alllines, F_Allmatrices, F_Allpfa, &
       & F_AllquantityTemplates, F_Allradiometers, F_Allsignals, F_Allspectra, &
@@ -1250,7 +1284,7 @@ contains
 
     integer, intent(in) :: Root ! Root of the parse tree for the dump command
     ! Databases:
-    type (quantityTemplate_t), dimension(:), pointer, optional   :: QuantityTemplatesDB
+    type (QuantityTemplate_T), dimension(:), pointer, optional   :: QuantityTemplatesDB
     type (forwardModelConfig_t), dimension(:), pointer, optional :: ForwardModelConfigs
     type (vectorTemplate_T), dimension(:), pointer, optional     :: VectorTemplates
     type (vector_T), dimension(:), target, optional              :: Vectors
@@ -1260,7 +1294,7 @@ contains
     type (matrix_Database_T), dimension(:), pointer, optional    :: MatrixDataBase
     type (Hessian_T), dimension(:), pointer, optional            :: HessianDataBase
 
-    character(len=80) :: BOOLEANSTRING  ! E.g., 'BAND13_OK'
+    character(len=80) :: Booleanstring  ! E.g., 'BAND8'
     logical :: Clean
     real(tk) :: CPUTime, CPUTimeBase = 0.0_tk
     character(8) :: Date
@@ -1288,7 +1322,7 @@ contains
     integer :: HSLABRANK ! Rank of hyperslab; i.e. size(count)
     integer :: ii
     integer :: JJ
-    character(len=80) :: KEYSTRING  ! E.g., 'BAND13_OK'
+    character(len=80) :: Keystring  ! E.g., 'BAND13_OK'
     character(len=80) :: Label  ! E.g., 'BAND8'
     character(len=8) :: lineLenChars
     type (Matrix_T), pointer :: matrix
@@ -1298,22 +1332,22 @@ contains
     integer :: Me = -1               ! String index for trace cacheing
     integer :: MUL
     integer :: N
-    character(len=80) :: NAMESTRING  ! E.g., 'L2PC-band15-SZASCALARHIRES'
+    character(len=80) :: Namestring  ! E.g., 'L2PC-band15-SZASCALARHIRES'
     integer :: nUnique
     logical :: oldPrintNameAsHeadline
     logical :: oldPrintNameInBanner
     type (MLSFile_T), pointer :: OneMLSFile
     character(len=80) :: optionsString  ! E.g., '-rbs' (see dump_0.f90)
-    type (vectorValue_T), pointer :: QUANTITY
+    type (VectorValue_T), pointer :: Quantity
     integer :: QuantityIndex
     integer :: QuantityIndex2
-    type (VectorValue_T), pointer :: QTY1, QTY2
+    type (VectorValue_T), pointer :: Qty1, Qty2
     type (VectorValue_T) :: VectorValue
     logical :: reset
     integer :: rank
     integer :: Son
-    integer, dimension(3) :: START, COUNT, STRIDE, BLOCK
-    integer :: STARTNODE
+    integer, dimension(3) :: start, count, stride, block
+    integer :: Startnode
     character(len=80) :: TempOptionsString  ! E.g., '-rbs' (see dump_0.f90)
     character(20) :: TempText
     type(time_t) :: Time
@@ -1422,7 +1456,7 @@ contains
         & f_MieTables, f_pfaFiles, f_pfaStru, f_phaseName, f_pointingGrids, &
         & f_polygon, f_stop, f_stopWithError, f_time, f_totalMatrixSizes, &
         & f_totalVectorSizes, f_ZOT )
-        if ( get_boolean(son) ) then
+        if ( get_Boolean(son) ) then
           select case ( fieldIndex )
           case ( f_allBooleans )
             call dumpBooleans
@@ -1633,38 +1667,38 @@ contains
           end select
         end if
       case ( f_dumpFile )
-        call get_string ( sub_rosa(gson), booleanString, strip=.true. )
-        if ( truncate ) call truncate_textFile( booleanString )
-        call switchOutput ( booleanString )
+        call get_string ( sub_rosa(gson), BooleanString, strip=.true. )
+        if ( truncate ) call truncate_textFile( BooleanString )
+        call switchOutput ( BooleanString )
       case ( f_truncate )
-        truncate = get_boolean(son)
+        truncate = get_Boolean(son)
       case ( f_Boolean )
-        call get_string ( sub_rosa(gson), booleanString, strip=.true. )
-        booleanString = lowerCase(booleanString)
+        call get_string ( sub_rosa(gson), BooleanString, strip=.true. )
+        BooleanString = lowerCase(BooleanString)
         ! 1st--check whether we're dumping an array-valued run-time Boolean
         call GetHashElement( runTimeValues%lkeys, runTimeValues%lvalues, &
-          & trim(booleanString) // 'n', label, countEmpty, &
+          & trim(BooleanString) // 'n', label, countEmpty, &
           & inseparator=runTimeValues%sep )
         if ( label == runTimeValues%sep ) then
           ! Do we s[kip] the key?
           call GetHashElement( runTimeValues%lkeys, runTimeValues%lvalues, &
-            & booleanString, label, countEmpty, &
+            & BooleanString, label, countEmpty, &
             & inseparator=runTimeValues%sep )
           text = label
           if ( index( 's', optionsString ) < 1 ) &
-            text = trim(booleanString) // ' = ' // label
+            text = trim(BooleanString) // ' = ' // label
           call outputNow
         else
           ! OK, we're asked to dump an array-valued one
           call readIntsFromChars ( label, n )
-          call output( 'array-valued run-time Boolean ' // trim(booleanString), &
+          call output( 'array-valued run-time Boolean ' // trim(BooleanString), &
             & advance='yes' )
           call output ( '  i          value', advance='yes' )
           do i=1, n
             call writeIntsToChars ( i, label )
             call output ( i, advance='no' )
             call blanks ( 4, advance='no' )
-            keyString = trim(booleanString) // '(' // trim(adjustl(label)) // ')'
+            keyString = trim(BooleanString) // '(' // trim(adjustl(label)) // ')'
             call GetHashElement( runTimeValues%lkeys, runTimeValues%lvalues, &
               & keyString, label, countEmpty, &
               & inseparator=runTimeValues%sep )
@@ -1682,7 +1716,7 @@ contains
           enddo
         end if
       case ( f_clean )
-        clean = get_boolean(son)
+        clean = get_Boolean(son)
         if ( clean ) optionsString = trim(optionsString) // 'c'
       case ( f_details )
         call expr ( gson, units, values )
@@ -1693,7 +1727,7 @@ contains
         call expr ( gson, units, values )
         rank = nint(values(1))
       case ( f_reset )
-        reset = get_boolean(son)
+        reset = get_Boolean(son)
       case ( f_start, f_count, f_stride, f_block ) ! For selecting hyperslab
         startNode = subtree(j, root)
         ! Either start = [a, b] or start = b are possible
@@ -1836,7 +1870,7 @@ contains
           call dump ( lines(what) )
         end do
       case ( f_mark )
-        if ( get_boolean(son) ) call cpu_time ( cpuTimeBase )
+        if ( get_Boolean(son) ) call cpu_time ( cpuTimeBase )
       case ( f_mask, f_quantity ) ! Diff or Dump vector quantities
         if ( details < -2 ) cycle
         do i = 2, nsons(son)
@@ -2275,7 +2309,7 @@ contains
       got(fieldIndex) = .true.
       select case ( fieldIndex )
         case ( f_wait )
-          wait = get_boolean(son)
+          wait = get_Boolean(son)
         case ( f_crashBurn )
         case ( f_delay )
           call expr ( gson, units, values )
@@ -2478,7 +2512,7 @@ contains
 
   end subroutine  NextRepeat
 
-  subroutine  MLSCASE ( ROOT )
+  subroutine  MLSCase ( ROOT )
   ! Returns TRUE if the label or Boolean field of the last Select command
   ! matches the label or Boolean field of the current Case command
   ! or if the current Case command is given the special label 'default',
@@ -2495,7 +2529,7 @@ contains
     ! Args
     integer, intent(in) :: root
     ! Internal variables
-    character(len=80) :: BOOLEANSTRING  ! E.g., 'BAND8'
+    character(len=80) :: Booleanstring  ! E.g., 'BAND8'
     integer :: FieldIndex
     integer :: GSON, J
     character(len=80) :: Label  ! E.g., 'BAND8'
@@ -2521,10 +2555,10 @@ contains
       if (nsons(son) > 1) gson = subtree(2,son) ! Now value of said argument
       select case ( fieldIndex )
       case (f_Boolean)
-        call get_string ( sub_rosa(gson), booleanString, strip=.true. )
-        booleanString = lowerCase(booleanString)
+        call get_string ( sub_rosa(gson), BooleanString, strip=.true. )
+        BooleanString = lowerCase(BooleanString)
         call GetHashElement( runTimeValues%lkeys, runTimeValues%lvalues, &
-          & booleanString, label, countEmpty, &
+          & BooleanString, label, countEmpty, &
           & inseparator=runTimeValues%sep )
       case (f_label)
         call get_string ( sub_rosa(gson), label, strip=.true. )
@@ -2552,7 +2586,7 @@ contains
     call trace_end ( 'MLSCase', cond=toggle(gen) )
   end subroutine  MLSCase
 
-  subroutine  MLSSELECT ( ROOT )
+  subroutine  MLSSelect ( root )
   ! Fills the global variable selectLabel with
   ! the Label field or value of the Boolean field
     use Init_Tables_Module, only: F_Boolean, F_Label
@@ -2567,7 +2601,7 @@ contains
     ! Args
     integer, intent(in) :: root
     ! Internal variables
-    character(len=80) :: BOOLEANSTRING  ! E.g., 'BAND8'
+    character(len=80) :: Booleanstring  ! E.g., 'BAND8'
     integer :: FieldIndex
     integer :: GSON, J
     character(len=80) :: Label          ! E.g., 'BAND8'
@@ -2587,10 +2621,10 @@ contains
       if (nsons(son) > 1) gson = subtree(2,son) ! Now value of said argument
       select case ( fieldIndex )
       case (f_Boolean)
-        call get_string ( sub_rosa(gson), booleanString, strip=.true. )
-        booleanString = lowerCase(booleanString)
+        call get_string ( sub_rosa(gson), BooleanString, strip=.true. )
+        BooleanString = lowerCase(BooleanString)
         call GetHashElement( runTimeValues%lkeys, runTimeValues%lvalues, &
-          & booleanString, label, countEmpty, &
+          & BooleanString, label, countEmpty, &
           & inseparator=runTimeValues%sep )
       case (f_label)
         call get_string ( sub_rosa(gson), label, strip=.true. )
@@ -2671,7 +2705,7 @@ contains
   !   .    .    .
   ! counts(n)      strn
   ! countsn        n
-  logical function skip ( root, name )
+  logical function Skip ( root, name )
     use Init_Tables_Module, only: F_Boolean, F_Formula, F_NextChunk, F_Values
     use MLSL2Options, only: ExitToNextChunk, RuntimeValues
     use MLSStringLists, only: BooleanValue, GetHashElement, PutHashElement
@@ -2685,7 +2719,7 @@ contains
     integer, intent(in)                    :: ROOT ! Root of the parse tree
     character(len=*), intent(in), optional :: NAME
     ! Internal variables
-    character(len=80) :: BOOLEANSTRING  ! E.g., 'BAND13_OK'
+    character(len=80) :: Booleanstring  ! E.g., 'BAND8'
     character(len=64) :: cvalue
     integer :: c
     integer :: FieldIndex
@@ -2704,7 +2738,7 @@ contains
     myName = 'Skip'
     if ( present(name) ) myName = name
     call trace_begin ( me, myName, root, cond=toggle(gen) )
-    booleanString = ' '
+    BooleanString = ' '
     exitToNextChunk = .false. ! Defaults to not skipping rest current chunk
     skip = .true. ! Defaults to skipping rest of section
     value_field = 0
@@ -2715,19 +2749,19 @@ contains
       if (nsons(son) > 1) gson = subtree(2,son) ! Now value of said argument
       select case ( fieldIndex )
       case (f_Boolean)
-        call get_string ( sub_rosa(gson), booleanString, strip=.true. )
-        booleanString = lowerCase(booleanString)
+        call get_string ( sub_rosa(gson), BooleanString, strip=.true. )
+        BooleanString = lowerCase(BooleanString)
         if ( verboser ) then
           call output( 'Calling BooleanValue', advance='yes' )
           call output( runTimeValues%lkeys, advance='yes' )
           call output( runTimeValues%lvalues, advance='yes' )
         end if
-        skip = BooleanValue ( trim(booleanString), &
+        skip = BooleanValue ( trim(BooleanString), &
           & runTimeValues%lkeys, runTimeValues%lvalues, runTimeValues%sep )
       case ( f_formula )
-        call get_string ( sub_rosa(gson), booleanString, strip=.true. )
-        if ( verboser ) call outputNamedValue( 'formula', trim(booleanString) )
-        skip = myBooleanValue ( booleanString )
+        call get_string ( sub_rosa(gson), BooleanString, strip=.true. )
+        if ( verboser ) call outputNamedValue( 'formula', trim(BooleanString) )
+        skip = myBooleanValue ( BooleanString )
       case ( f_nextChunk )
         exitToNextChunk = Get_Boolean ( gson )
       case ( f_values )
@@ -2735,8 +2769,8 @@ contains
       case default
         ! Should not have got here if parser worked correctly
       end select
-      if ( verboser .and. len_trim(booleanString) > 0 ) then
-        call output( trim(booleanString) // ' = ', advance='no' )
+      if ( verboser .and. len_trim(BooleanString) > 0 ) then
+        call output( trim(BooleanString) // ' = ', advance='no' )
         call output( skip, advance='yes' )
       end if
       if ( skip ) &
@@ -2761,21 +2795,21 @@ contains
         ! The first time through, so try to grok values field
         ! and then store the number of values as 'countsn' and the individual
         ! values as 'counts(1)' 'counts(2)' ..
-        call writeIntsToChars( nvalues, booleanString )
+        call writeIntsToChars( nvalues, BooleanString )
         call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
-          & 'countsn', booleanString, &
+          & 'countsn', BooleanString, &
           & countEmpty=countEmpty, &
           & inseparator=runTimeValues%sep )
         do j=2, nvalues+1
           call writeIntsToChars( j-1, keyString )
           keyString = 'counts(' // trim(adjustl(keystring)) // ')'
-          call get_string( sub_rosa(subtree(j, value_field)), booleanString, strip=.true. )
+          call get_string( sub_rosa(subtree(j, value_field)), BooleanString, strip=.true. )
           if ( verboser ) then
             call outputnamedValue( 'keyString', trim(keyString) )
             call outputnamedValue( 'BooleanString', trim(BooleanString) )
           end if
           call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
-            & keyString, booleanString, &
+            & keyString, BooleanString, &
             & countEmpty=countEmpty, &
             & inseparator=runTimeValues%sep )
         enddo
@@ -2836,7 +2870,7 @@ contains
     use MLSL2Options, only: RuntimeValues
     use MLSStringLists, only: BooleanValue, GetStringElement
     use MLSStrings, only: Lowercase, ReadNumsFromChars
-    ! Calculate the boolean value according to
+    ! Calculate the Boolean value according to
     ! (1) The logical value of its formula, if the formula
     !     does not contain the special operators "==" or "/="
     ! (2) if the formula is "variable == value" and variable is
@@ -3187,6 +3221,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.141  2018/09/07 00:00:15  pwagner
+! More commands that set a runtime flag can now take /reverse
+!
 ! Revision 2.140  2018/08/04 02:10:27  vsnyder
 ! Make Lines database allocatable instead of a pointer
 !
@@ -3312,7 +3349,7 @@ end module DumpCommand_M
 ! Add Variable field
 !
 ! Revision 2.101  2013/10/08 23:52:48  pwagner
-! Fixed call to BOOLEANVALUE--must use trim
+! Fixed call to BooleanVALUE--must use trim
 !
 ! Revision 2.100  2013/09/27 00:38:12  pwagner
 ! May select hyperslab when dumping quantity
@@ -3435,7 +3472,7 @@ end module DumpCommand_M
 ! May dump allRadiometers
 !
 ! Revision 2.61  2011/05/09 18:08:57  pwagner
-! Print notice of changed runtime booleans only when "bool" switch is set
+! Print notice of changed runtime Booleans only when "bool" switch is set
 !
 ! Revision 2.60  2011/04/20 16:47:54  pwagner
 ! Added BooleanFromEmptyGrid
@@ -3480,7 +3517,7 @@ end module DumpCommand_M
 ! Implemented new Diff command; so far only of vector quantities
 !
 ! Revision 2.46  2009/09/15 20:03:48  pwagner
-! Dump commands take boolean fields /stop, /stopWithError, /crashBurn
+! Dump commands take Boolean fields /stop, /stopWithError, /crashBurn
 !
 ! Revision 2.45  2009/06/23 18:46:18  pwagner
 ! Prevent Intel from optimizing ident string away
