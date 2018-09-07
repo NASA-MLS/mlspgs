@@ -11,7 +11,8 @@
 
 module Get_Chi_Out_m
 
-  implicit NONE
+  use Sparse_m, only: Sparse_t
+  implicit none
   private
   public :: Get_Chi_Out
 
@@ -227,6 +228,9 @@ real(rp) :: h2o_tan_out(merge(size(zetatan),0,h2o_ind>0))
 end module Get_Chi_Out_m
 
 ! $Log$
+! Revision 2.27  2018/09/07 17:15:20  pwagner
+! Code around a NAG-6.1 compiler bug
+!
 ! Revision 2.26  2018/08/22 01:40:27  vsnyder
 ! Convert to sparse interpolators
 !
