@@ -14,7 +14,7 @@ module Rad_Tran_m
   implicit NONE
   private
   public :: Rad_Tran, Rad_Tran_Pol
-  public :: dRad_Tran_dF, dRad_Tran_dT, dRad_Tran_dX
+  public :: dRad_Tran_dF, dRad_Tran_dT, dRad_Tran_dX, dRad_Tran_dX_Sparse
   public :: Get_Do_Calc
 
   public :: Get_Do_Calc_Indexed, Get_Inds ! Used only by Hessians_m
@@ -95,7 +95,6 @@ contains
     ! Polarized radiative transfer.  Radiances only, no derivatives.
 
     use CS_Expmat_m, only: CS_Expmat
-    use Do_Delta_m, ONLY: Polarized_Path_Opacity
     use Dump_0, only: Dump, Dump_2x2xN
     use GLNP, ONLY: NG, NGP1
     use MCRT_M, ONLY: MCRT
@@ -147,10 +146,12 @@ contains
 
   ! Internals
 
+    integer :: A, AA
     complex(rp), pointer :: Alpha_Path_c(:,:)
     real(rp), save :: E_Stop  = 1.0_rp ! X for which Exp(X) is too small to worry
     complex(rp) :: gl_Delta_Polarized(-1:1,size(gl_inds)/ng)
     complex(rp) :: Incoptdepth_Pol_gl(2,2,size(gl_inds)/ng)
+    integer :: I, J
     integer :: N_Path
     integer :: Status ! from cs_expmat
 
@@ -165,10 +166,32 @@ contains
 
     if ( size(gl_inds) > 0 ) then
 
-      call polarized_path_opacity ( del_zeta,    &
-                 &  alpha_path_c, alpha_path,    &
-                 &  ds_dz_gw,                    &
-                 &  gl_delta_polarized, more_inds, gl_inds )
+      !{ Apply Gauss-Legendre quadrature to the panels indicated by
+      !  {\tt More\_inds}.  We remove a singularity (which actually only
+      !  occurs at the tangent point) by writing
+      !  $\int_{\zeta_i}^{\zeta_{i-1}} G(\zeta) \frac{\text{d}s}{\text{d}h}
+      !   \frac{\text{d}h}{\text{d}\zeta} \text{d}\zeta =
+      !  G(\zeta_i) \int_{\zeta_i}^{\zeta_{i-1}} \frac{\text{d}s}{\text{d}h}
+      !   \frac{\text{d}h}{\text{d}\zeta} \text{d}\zeta +
+      !  \int_{\zeta_i}^{\zeta_{i-1}} \left[ G(\zeta) - G(\zeta_i) \right]
+      !   \frac{\text{d}s}{\text{d}h} \frac{\text{d}h}{\text{d}\zeta}
+      !   \text{d}\zeta$.  The first integral is easy -- it's just
+      !  $G(\zeta_i) (\zeta_{i-1}-\zeta_i)$.  We don't use it here.
+      !  In the second integral, $G(\zeta)$ is {\tt funct} -- which has
+      !  already been evaluated at the appropriate abscissae -- and
+      !  $G(\zeta_i)$ is {\tt singularity}.  The weights are {\tt gw}.
+
+      a = 1
+      do i = 1, size(more_inds)
+        aa = gl_inds(a)
+        do j = -1, 1
+          gl_delta_polarized(j,i) = del_zeta(more_inds(i)) *                             &
+                 &  sum( ( alpha_path(j,aa:aa+ng-1) - &
+                 &         alpha_path_c(j,more_inds(i))) * &
+                 &       ds_dz_gw(aa:aa+ng-1) )
+        end do 
+        a = a + ng
+      end do
 
       ! Turn sigma-, pi, sigma+ GL corrections into 2X2 matrix of
       ! GL corrections to incoptdepth_pol
@@ -304,11 +327,12 @@ contains
                                       ! Indices on GL grid for stuff
                                       ! used to make GL corrections
     integer, target :: All_inds_B(1:size(del_s))
-    real(rp) :: d_delta_B_df(size(dB_df))
+    real(rp) :: d_Delta_B_df(size(dB_df))
     real(rp) :: d_Delta_df(1:size(del_s)) ! 1:max_c
-    logical :: Do_calc(1:size(del_s)) ! Flags on coarse path where do_calc_c
-                                      ! or (do_gl and any corresponding
-                                      ! do_calc_fzp).
+    logical :: Do_Calc(1:size(del_s)) ! Flags on coarse path where do_calc_fzp
+                                      ! for the coarse path or (do_gl and any
+                                      ! corresponding do_calc_fzp on the fine
+                                      ! path).
     logical :: Do_Calc_FZP(n_eta_rows(eta_fzp,.true.))
     logical :: Do_TScat                   ! Include dependence upon dB_df
     real(rp) :: Eta_FZP_Col(n_eta_rows(eta_fzp,.true.))
@@ -328,7 +352,7 @@ contains
     logical :: Save_Sparse            ! Save d_delta_df in sparse_d_delta_df
     real(rp) :: Singularity(1:size(del_s)) ! integrand on left edge of coarse
                                       ! grid panel -- singular at tangent pt.
-    integer :: Sparse_Col                 ! Column index in Eta_FZP(sps_i)
+    integer :: Sparse_Col             ! Column index in Eta_FZP(sps_i)
 
 ! Begin code
 
@@ -935,6 +959,153 @@ contains
     end do
 
   end subroutine DRad_Tran_dx
+
+!-------------------------------------------  DRad_Tran_dx_Sparse  -----
+! This is the radiative transfer derivative wrt spectroscopy model
+!  (Here dx could be: dw, dn or dv (dNu0) )
+
+  subroutine DRad_Tran_dx_Sparse ( GL_Inds, Del_Zeta, Grids_f, Eta_fzp,    &
+                         &  Sps_Path, Sps_Map, dBeta_Path_c, dBeta_Path_f, &
+                         &  Do_GL, Del_S, Ref_Cor, ds_dz_gw, Inc_Rad_Path, &
+                         &  Tan_Pt, I_Stop, dRad_dx )
+
+    use Load_SPS_Data_m, ONLY: Grids_t
+    use MLSKinds, only: RP
+    use SCRT_dN_m, ONLY: dSCRT_dx
+    use Sparse_m, only: Sparse_t
+
+! Inputs
+
+    integer, intent(in) :: GL_Inds(:)        ! Gauss-Legendre grid indicies
+    real(rp), intent(in) :: Del_Zeta(:)      ! path -log(P) differences on the
+                                             ! main grid.  This is for the whole
+                                             ! coarse path, not just the part up
+                                             ! to the black-out
+    type (Grids_T), intent(in) :: Grids_f    ! All the coordinates
+    class(sparse_t), intent(in) :: Eta_FZP(:) ! Interpolating coefficients
+                                             ! from state vector to combined
+                                             ! coarse & fine path for each sps
+    real(rp), intent(in) :: Sps_Path(:,:)    ! Path species function, path X species.
+    integer, intent(in) :: Sps_Map(:)        ! second-dimension subscripts for sps_path.
+    real(rp), intent(in) :: dBeta_Path_c(:,:) ! derivative of beta wrt dx
+                                             ! on main grid.
+    real(rp), intent(in) :: dBeta_Path_f(:,:) ! derivative of beta wrt dx
+    logical, intent(in) :: Do_GL(:)          ! A logical indicating where to
+                                             ! do gl integrations
+    real(rp), intent(in) :: Del_S(:)         ! unrefracted path length.
+    real(rp), intent(in) :: Ref_Cor(:)       ! refracted to unrefracted path
+                                             ! length ratios.
+    real(rp), intent(in) :: ds_dz_gw(:)      ! path length wrt zeta derivative *
+                                             ! gw on the entire grid.  Only the
+                                             ! gl_inds part is used.
+    real(rp), intent(in) :: Inc_Rad_Path(:)  ! incremental radiance along the
+                                             ! path.  t_script * tau.
+    integer, intent(in) :: Tan_pt            ! Tangent point index in inc_rad_path
+    integer, intent(in) :: I_Stop            ! path stop index
+
+! Outputs
+
+    real(rp), intent(out) :: dRad_dx(:)      ! derivative of radiances wrt x
+!                                              state vector element. (K)
+! Internals
+
+    integer :: n_inds, no_to_gl, sps_i, sps_m, sps_n, sv_i
+    integer, target, dimension(1:size(inc_rad_path)) :: all_inds_B
+    integer, target, dimension(1:size(inc_rad_path)) :: inds_B, more_inds_B
+    integer, pointer :: all_inds(:)  ! all_inds => part of all_inds_B;
+                                     ! Indices on GL grid for stuff
+                                     ! used to make GL corrections
+    real(rp) :: d_delta_dx(1:size(inc_rad_path))  ! derivative of delta
+      !              wrt spectroscopy parameter. (K)
+    logical :: do_calc(1:size(inc_rad_path)) ! Flags on coarse path where
+                                     ! do_calc_fzp on the coarse path or (do_gl
+                                     ! and any corresponding do_calc_fzp on the
+                                     ! fine path).
+    logical :: Do_Calc_FZP(n_eta_rows(eta_fzp,.true.))
+    real(rp) :: Eta_FZP_Col(n_eta_rows(eta_fzp,.true.))
+    integer, pointer :: inds(:)      ! inds => part_of_inds_B;  Indices
+                                     ! on coarse path where do_calc.
+    integer, pointer :: more_inds(:) ! more_inds => part of more_inds_B;
+                                     ! Indices on the coarse path where GL
+                                     ! corrections get applied.
+    integer :: NNZ_d_Delta_dx
+    integer, target :: NZ_d_Delta_dx(1:size(d_Delta_dx))
+    real(rp) :: singularity(1:size(inc_rad_path)) ! integrand on left edge of coarse
+                                         ! grid panel -- singular at tangent pt.
+    integer :: Sparse_Col
+
+! Begin code
+
+    d_delta_dx = 0.0_rp
+    do_calc_fzp = .false.
+    eta_fzp_col = 0
+    nnz_d_delta_dx = 0
+    nz_d_delta_dx = 0
+    sps_n = ubound(grids_f%l_z,1)
+
+    do sps_i = 1 , sps_n
+      sparse_col = 0
+      sps_m = sps_map(sps_i)
+
+      do sv_i = Grids_f%l_v(sps_i-1)+1, Grids_f%l_v(sps_i)
+        sparse_col = sparse_col + 1
+
+        ! We keep track of where we create nonzeros in d_delta_dx, and replace
+        ! them by zeros on the next iteration.  This is done because the vast
+        ! majority of d_delta_dx elements are zero, and setting all of
+        ! d_Delta_dx was found to be a significant expense.
+
+        ! Everything in d_delta_dx not indexed by nz_d_delta_dx is already zero
+
+        d_delta_dx(nz_d_delta_dx(:nnz_d_delta_dx)) = 0
+        nnz_d_delta_dx = 0
+
+        ! Skip the masked derivatives, according to the l2cf inputs
+
+        drad_dx(sv_i) = 0.0
+
+        ! Get the interpolating coefficients along the path
+        call eta_fzp(sps_i)%get_flags ( sparse_col, do_calc_fzp )
+        call get_do_calc_indexed ( size(do_gl), tan_pt, do_calc_fzp, gl_inds, &
+          & do_gl, do_calc, nnz_d_delta_dx, nz_d_delta_dx )
+        call eta_fzp(sps_i)%clear_flags ( sparse_col, do_calc_fzp )
+        if ( nnz_d_delta_dx == 0 ) cycle
+
+        inds => nz_d_delta_dx(1:nnz_d_delta_dx)
+        all_inds => all_inds_B(1:no_to_gl)
+        more_inds => more_inds_B(1:no_to_gl)
+
+        ! see if anything needs to be gl-d
+        if ( no_to_gl > 0 ) &
+          & call get_inds ( do_gl, do_calc, more_inds, all_inds )
+
+! see if anything needs to be gl-d
+        if ( no_to_gl > 0 ) &
+          & call get_inds ( do_gl, do_calc, more_inds, all_inds )
+
+        ! Get d_Delta_dx for one state-vector element.
+
+        if ( eta_fzp(sps_i)%cols(sparse_col) /= 0 ) then
+          ! process only non-empty columns
+          call eta_fzp(sps_i)%get_col ( sparse_col, eta_fzp_col )
+          ! We're not really computing d_delta_df for lin-log mixing
+          ! ratio.  It turns out that get_d_delta_df_linlog does the
+          ! correct computation if we substitute dbeta_path for beta_path.
+          call get_d_delta_df_linlog ( inds, gl_inds, all_inds, more_inds, &
+            & eta_fzp_col, sps_path(:,sps_m), dbeta_path_c(:,sps_i),   &
+            & dbeta_path_f(:,sps_i), del_s, del_zeta, ds_dz_gw, ref_cor,   &
+            & grids_f%values(sv_i), singularity, d_delta_dx )
+          call eta_fzp(sps_i)%clear_col ( sparse_col, eta_fzp_col )
+        end if
+
+        call dscrt_dx ( tan_pt, d_delta_dx, inc_rad_path, &
+                      & 1, i_stop, drad_dx(sv_i))
+
+      end do
+
+    end do
+
+  end subroutine DRad_Tran_dx_Sparse
 
   ! ------------------------------------------------  Get_Do_Calc  -----
   subroutine Get_Do_Calc ( Do_Calc_c, Do_Calc_fzp, Do_GL, Do_Calc, N_Inds, Inds )
@@ -1618,6 +1789,9 @@ contains
 end module RAD_TRAN_M
 
 ! $Log$
+! Revision 2.38  2018/09/12 22:03:38  vsnyder
+! Add dRad_Tran_dX_Sparse.  Inline code from do_delta_m.
+!
 ! Revision 2.37  2018/05/24 03:24:36  vsnyder
 ! Use sparse representation for dh_dt_path
 !
