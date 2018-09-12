@@ -203,7 +203,7 @@ if ( size(sps_path,1) < 0 ) call eta_f%dump ( name='Eta_F', width=4 )
 
     ! Compute the Sps_Path for one species that is not frequency dependent.
 
-    use Comp_Eta_Docalc_Sparse_m, only: Comp_Eta_DoCalc_Sparse
+    use Comp_Eta_Docalc_Sparse_m, only: Comp_Eta
     use Load_Sps_Data_m, only: Grids_t
     use MLSKinds, only: RP
     use Sparse_Eta_m, only: Sparse_Eta_t
@@ -222,7 +222,7 @@ if ( size(sps_path,1) < 0 ) call eta_f%dump ( name='Eta_F', width=4 )
     myN = 1
     if ( present(n) ) myN = n
 
-    call comp_eta_docalc_sparse ( grids_f, tan_pt, z_path, phi_path, eta_zp )
+    call comp_eta ( grids_f, tan_pt, z_path, phi_path, eta_zp )
     call eta_zp%sparse_dot_vec ( grids_f%c(myN)%v1, sps_path )
     if ( grids_f%lin_log(myN) ) sps_path = exp(sps_path)
 
@@ -273,6 +273,9 @@ if ( size(sps_path,1) < 0 ) call eta_f%dump ( name='Eta_F', width=4 )
 end module Comp_Sps_Path_Sparse_m
 
 ! $Log$
+! Revision 2.6  2018/09/12 22:02:13  vsnyder
+! Use Comp_Eta instead of Comp_Eta_DoCalc_Sparse
+!
 ! Revision 2.5  2018/09/05 20:54:58  vsnyder
 ! Add Comp_1_Sps_Path_Sparse_No_Frq_No_Eta and Comp_1_Sps_Path_Sparse_No_Frq_2D
 !
