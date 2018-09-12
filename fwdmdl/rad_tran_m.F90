@@ -14,7 +14,7 @@ module Rad_Tran_m
   implicit NONE
   private
   public :: Rad_Tran, Rad_Tran_Pol
-  public :: dRad_Tran_dF, dRad_Tran_dT, dRad_Tran_dX, dRad_Tran_dX_Sparse
+  public :: dRad_Tran_dF, dRad_Tran_dT, dRad_Tran_dX
   public :: Get_Do_Calc
 
   public :: Get_Do_Calc_Indexed, Get_Inds ! Used only by Hessians_m
@@ -838,136 +838,14 @@ contains
 
   end subroutine DRad_Tran_dT
 
-!--------------------------------------------------  DRad_Tran_dx  -----
+!-----------------------------------------_______--  dRad_Tran_dX  -----
 ! This is the radiative transfer derivative wrt spectroscopy model
 !  (Here dx could be: dw, dn or dv (dNu0) )
 
-  subroutine DRad_Tran_dx ( GL_Inds, Del_Zeta, Grids_f, Eta_fzp, Sps_Path,    &
-                         &  Sps_Map, Do_Calc_fzp, dBeta_Path_c, dBeta_Path_f, &
-                         &  Do_GL, Del_S, Ref_Cor, ds_dz_gw, Inc_Rad_Path,    &
-                         &  Tan_Pt, I_Stop, dRad_dx )
-
-    use Load_SPS_Data_m, ONLY: Grids_t
-    use MLSKinds, only: RP
-    use SCRT_dN_m, ONLY: dSCRT_dx
-
-! Inputs
-
-    integer, intent(in) :: GL_Inds(:)        ! Gauss-Legendre grid indicies
-    real(rp), intent(in) :: Del_Zeta(:)      ! path -log(P) differences on the
-                                             ! main grid.  This is for the whole
-                                             ! coarse path, not just the part up
-                                             ! to the black-out
-    type (Grids_T), intent(in) :: Grids_f    ! All the coordinates
-    real(rp), intent(in) :: Eta_fzp(:,:)     ! representation basis function,
-      !                                        composite path.
-    real(rp), intent(in) :: Sps_Path(:,:)    ! Path species function, path X species.
-    integer, intent(in) :: Sps_Map(:)        ! second-dimension subscripts for sps_path.
-    logical, intent(in) :: Do_Calc_fzp(:,:)  ! Where the representation basis
-                                             ! function is not zero, composite
-                                             ! path.
-    real(rp), intent(in) :: dBeta_Path_c(:,:) ! derivative of beta wrt dx
-                                             ! on main grid.
-    real(rp), intent(in) :: dBeta_Path_f(:,:) ! derivative of beta wrt dx
-    logical, intent(in) :: Do_GL(:)          ! A logical indicating where to
-                                             ! do gl integrations
-    real(rp), intent(in) :: Del_S(:)         ! unrefracted path length.
-    real(rp), intent(in) :: Ref_Cor(:)       ! refracted to unrefracted path
-                                             ! length ratios.
-    real(rp), intent(in) :: ds_dz_gw(:)      ! path length wrt zeta derivative *
-                                             ! gw on the entire grid.  Only the
-                                             ! gl_inds part is used.
-    real(rp), intent(in) :: Inc_Rad_Path(:)  ! incremental radiance along the
-                                             ! path.  t_script * tau.
-    integer, intent(in) :: Tan_pt            ! Tangent point index in inc_rad_path
-    integer, intent(in) :: I_Stop            ! path stop index
-
-! Outputs
-
-    real(rp), intent(out) :: dRad_dx(:)      ! derivative of radiances wrt x
-!                                              state vector element. (K)
-! Internals
-
-    integer :: n_inds, no_to_gl, sps_i, sps_m, sps_n, sv_i
-    integer, target, dimension(1:size(inc_rad_path)) :: all_inds_B
-    integer, target, dimension(1:size(inc_rad_path)) :: inds_B, more_inds_B
-    integer, pointer :: all_inds(:)  ! all_inds => part of all_inds_B;
-                                     ! Indices on GL grid for stuff
-                                     ! used to make GL corrections
-    integer, pointer :: inds(:)      ! inds => part_of_inds_B;  Indices
-                                     ! on coarse path where do_calc.
-    integer, pointer :: more_inds(:) ! more_inds => part of more_inds_B;
-                                     ! Indices on the coarse path where GL
-                                     ! corrections get applied.
-
-    real(rp) :: d_delta_dx(1:size(inc_rad_path))  ! derivative of delta
-      !              wrt spectroscopy parameter. (K)
-
-    real(rp) :: singularity(1:size(inc_rad_path)) ! integrand on left edge of coarse
-                                         ! grid panel -- singular at tangent pt.
-
-    logical :: do_calc(1:size(inc_rad_path))      ! Flags on coarse path where
-                                         ! do_calc_c or (do_gl and any
-                                         ! corresponding do_calc_fzp).
-
-! Begin code
-
-    sps_n = ubound(grids_f%l_z,1)
-
-    do sps_i = 1 , sps_n
-      sps_m = sps_map(sps_i)
-
-      do sv_i = Grids_f%l_v(sps_i-1)+1, Grids_f%l_v(sps_i)
-
-! find where the non zeros are along the path
-
-        call get_do_calc_indexed ( size(do_gl), tan_pt, do_calc_fzp(:,sv_i), &
-          & gl_inds, do_gl, do_calc, n_inds, inds_B )
-
-        d_delta_dx = 0.0_rp
-
-        if ( n_inds == 0 ) then
-           drad_dx(sv_i) = 0.0
-           cycle
-        end if
-
-
-        inds => inds_B(1:n_inds)
-
-        no_to_gl = count(do_gl(inds))
-
-        all_inds => all_inds_B(1:no_to_gl)
-        more_inds => more_inds_B(1:no_to_gl)
-
-! see if anything needs to be gl-d
-        if ( no_to_gl > 0 ) &
-          & call get_inds ( do_gl, do_calc, more_inds, all_inds )
-
-        ! We're not really computing d_delta_df for lin-log mixing
-        ! ratio.  It turns out that get_d_delta_df_linlog does the
-        ! correct computation if we substitute dbeta_path for beta_path.
-        call get_d_delta_df_linlog ( inds, gl_inds, all_inds, more_inds, &
-          & eta_fzp(:,sv_i), sps_path(:,sps_m), dbeta_path_c(:,sps_i),   &
-          & dbeta_path_f(:,sps_i), del_s, del_zeta, ds_dz_gw, ref_cor,   &
-          & grids_f%values(sv_i), singularity, d_delta_dx )
-
-        call dscrt_dx ( tan_pt, d_delta_dx, inc_rad_path, &
-                     &  1, i_stop, drad_dx(sv_i))
-
-      end do
-
-    end do
-
-  end subroutine DRad_Tran_dx
-
-!-------------------------------------------  DRad_Tran_dx_Sparse  -----
-! This is the radiative transfer derivative wrt spectroscopy model
-!  (Here dx could be: dw, dn or dv (dNu0) )
-
-  subroutine DRad_Tran_dx_Sparse ( GL_Inds, Del_Zeta, Grids_f, Eta_fzp,    &
-                         &  Sps_Path, Sps_Map, dBeta_Path_c, dBeta_Path_f, &
-                         &  Do_GL, Del_S, Ref_Cor, ds_dz_gw, Inc_Rad_Path, &
-                         &  Tan_Pt, I_Stop, dRad_dx )
+  subroutine dRad_Tran_dX ( GL_Inds, Del_Zeta, Grids_f, Eta_fzp, Sps_Path,     &
+                          & Sps_Map, dBeta_Path_c, dBeta_Path_f, Do_GL, Del_S, &
+                          & Ref_Cor, ds_dz_gw, Inc_Rad_Path, Tan_Pt, I_Stop,   &
+                          & dRad_dx )
 
     use Load_SPS_Data_m, ONLY: Grids_t
     use MLSKinds, only: RP
@@ -1105,7 +983,7 @@ contains
 
     end do
 
-  end subroutine DRad_Tran_dx_Sparse
+  end subroutine dRad_Tran_dX
 
   ! ------------------------------------------------  Get_Do_Calc  -----
   subroutine Get_Do_Calc ( Do_Calc_c, Do_Calc_fzp, Do_GL, Do_Calc, N_Inds, Inds )
@@ -1766,9 +1644,9 @@ contains
   pure integer function N_Eta_Rows ( Eta_FZP, Need ) result ( N )
     use Sparse_m, only: Sparse_t
     class(sparse_t), intent(in) :: Eta_FZP(:) ! Interpolating coefficients
-                                           ! from state vector to combined
-                                           ! coarse & fine path for each sps
-    logical, intent(in) :: Need            ! Need to do the computation
+                                              ! from state vector to combined
+                                              ! coarse & fine path for each sps.
+    logical, intent(in) :: Need               ! Need to do the computation
     n = 0
     if ( need ) then ! need space for stuff; Some stuff is needed only for TScat
       n = maxval(eta_fzp%nRows)
@@ -1789,6 +1667,9 @@ contains
 end module RAD_TRAN_M
 
 ! $Log$
+! Revision 2.39  2018/09/12 22:50:44  vsnyder
+! Delete dRad_Tran_dX.  Change the name of dRad_Tran_dX_Sparse to dRad_Tran_dX.
+!
 ! Revision 2.38  2018/09/12 22:03:38  vsnyder
 ! Add dRad_Tran_dX_Sparse.  Inline code from do_delta_m.
 !
