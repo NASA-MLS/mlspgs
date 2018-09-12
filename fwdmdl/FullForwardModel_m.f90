@@ -562,8 +562,6 @@ contains
   ! manager.
 
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
-    use Comp_Eta_DoCalc_No_Frq_M, only: Comp_Eta_DoCalc_No_Frq
-use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path_No_Frq
     use Comp_Sps_Path_Sparse_m, only: Comp_Sps_Path_Sparse
     use Compute_GL_Grid_M, only: Compute_GL_Grid
     use Constants, only: Deg2Rad, Rad2Deg
@@ -578,7 +576,6 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path_No_Frq
     use Geometry, only: Get_R_EQ
     use Get_IEEE_NaN_m, only: Fill_IEEE_NaN
     use HessianModule_1, only: Hessian_T
-!Q    use HGridsDatabase, only: HGrid_T
     use Intrinsic, only: L_A, L_Radiance, L_TScat, L_VMR
     use Load_SPS_Data_M, only: DestroyGrids_T, Dump, Grids_T
     use MatrixModule_1, only: Matrix_T
@@ -633,7 +630,6 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path_No_Frq
     type (VectorValue_T), intent(in) :: PTan ! Tangent pressure component of
                                             ! state vector (minor frame quantity)
     type (VectorValue_T), intent(in) :: Temp ! Temperature component of state vector
-!Q    type (HGrid_T), pointer, intent(in) :: QTM_HGrid ! HGrid that has finest QTM resolution.
     type (Path_t), allocatable :: Q_LOS(:)  ! Minor-frame lines of sight for QTM
     type (Path_t), intent(inout) :: QTM_Paths(:) ! LOS through QTM
     type (Facets_and_Vertices_t), intent(in) :: F_and_V(:) ! of QTM under path
@@ -768,10 +764,6 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path_No_Frq
                                         ! for panel(i:i+1) in the coarse
                                         ! path.
 
-    ! Cloud arrays are on the same grids as temperature
-    logical :: Do_Calc_Salb_ZP(max_f,s_i*sv_t_len)  ! 'Avoid zeros' indicator
-    logical :: Do_Calc_Cext_ZP(max_f,s_i*sv_t_len)  ! 'Avoid zeros' indicator
-
     real(r8) :: WC(s_i*fwdModelConf%no_cloud_species, max_f)
     real(r8) :: Scat_ang(s_i*fwdModelConf%num_scattering_angles)
 
@@ -856,10 +848,9 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path_No_Frq
     type(sparse_t) :: DH_dT_Path               ! dH/dT on path X (Zeta * Phi)
     real(rp) :: DHDZ_GLGrid(maxVert,no_sv_p_T) ! dH/dZ on glGrid surfs
     real(rp) :: DX_DT(no_tan_hts,s_t*sv_t_len) ! (No_tan_hts, nz*np)
-    real(rp) :: Eta_IWC_ZP(max_f,max(s_i,s_ts)*grids_iwc%p_len)
-    real(rp) :: Eta_ZXP_N(max_f,size(grids_n%values)) ! Eta_z x Eta_p for N
-    real(rp) :: Eta_ZXP_V(max_f,size(grids_v%values)) ! Eta_z x Eta_p for V
-    real(rp) :: Eta_ZXP_W(max_f,size(grids_w%values)) ! Eta_z x Eta_p for W
+    type (Sparse_Eta_t) :: Eta_ZP_N(size(grids_n%values)) ! Eta_z x Eta_p for N
+    type (Sparse_Eta_t) :: Eta_ZP_V(size(grids_v%values)) ! Eta_z x Eta_p for V
+    type (Sparse_Eta_t) :: Eta_ZP_W(size(grids_w%values)) ! Eta_z x Eta_p for W
     real(rp) :: H_GLGrid(maxVert,no_sv_p_T)    ! H on glGrid surfs (km)
     real(rp) :: IWC_Path(max_f,max(max(s_i,s_ts),s_ts)) ! IWC on path
     real(rp), target :: Mag_Path(s_p*max_f,4)  ! Magnetic field on path
@@ -945,11 +936,6 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path_No_Frq
       ! absorption coefficient is needed for a temperature derivative.
       ! Only useful when subsetting temperature derivatives.
 
-    ! 'Avoid zeros' indicators
-    logical :: Do_Calc_N(max_f, size(grids_n%values) ) ! on entire grid
-    logical :: Do_Calc_V(max_f, size(grids_v%values) ) ! on entire grid
-    logical :: Do_Calc_W(max_f, size(grids_w%values) ) ! on entire grid
-
     integer, pointer :: C_Inds(:)        ! Indices of coarse grid in combined
                                          ! coarse & fine path
     integer, pointer :: LineCenter_IX(:) ! Where are line center offsets?
@@ -982,12 +968,6 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path_No_Frq
     real(rp), pointer :: DACsStaging(:,:) ! Temporary space for DACS radiances
 
     ! Cloud arrays have the same grids as temperature
-    real(rp) :: Eta_Tscat(max_f,s_i*sv_t_len)
-    real(rp) :: Eta_Tscat_ZP(max_f,s_i*sv_t_len)
-    real(rp) :: Eta_Salb(max_f,s_i*sv_t_len)
-    real(rp) :: Eta_Salb_ZP(max_f,s_i*sv_t_len)
-    real(rp) :: Eta_Cext(max_f,s_i*sv_t_len)
-    real(rp) :: Eta_Cext_ZP(max_f,s_i*sv_t_len)
     real(rp) :: Cext_Path(max_f,s_i)    ! Cloud extinction on path
     real(rp) :: Salb_Path(max_f,s_i)    ! Single Scattering Albedo on path
     real(rp) :: Tscat_Path(max_f,s_i*fwdModelConf%num_scattering_angles) ! TScat on path
@@ -1153,14 +1133,12 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path_No_Frq
         & dBeta_df_path_f, dBeta_dIWC_path_c, dBeta_dIWC_path_f, &
         & dBeta_dn_path_c, dBeta_dn_path_f, dBeta_dT_path_c, dBeta_dT_path_f, &
         & dBeta_dv_path_c, dBeta_dv_path_f, dBeta_dw_path_c, dBeta_dw_path_f )
-      call fill_IEEE_NaN ( dhdz_glgrid, dx_dT, eta_IWC_zp, &
-        & eta_zxp_n, eta_zxp_v, &
-        & eta_zxp_w, h_glgrid, IWC_path, mag_path, rad_avg_path, radiances, &
+      call fill_IEEE_NaN ( dhdz_glgrid, dx_dT, &
+        & h_glgrid, IWC_path, mag_path, rad_avg_path, radiances, &
         & spect_n_path, spect_v_path, spect_w_path, sps_path, sps_path_c, &
         & sps_path_f )
       call fill_IEEE_NaN ( tt_path, t_glgrid, t_script_PFA, rot )
-      call fill_IEEE_NaN ( eta_TScat, eta_TScat_zp, eta_salb, eta_salb_zp, &
-        & eta_cext, cext_path, salb_path, TScat_path )
+      call fill_IEEE_NaN (  cext_path, salb_path, TScat_path )
       call fill_IEEE_NaN ( dxdT_surface, dxdT_tan )
       ! Rank 2 R8:
       call fill_IEEE_NaN ( wc, vmrArray )
@@ -1337,6 +1315,31 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path_No_Frq
       call eta_IWC_path_c%create ( max_c, size(IWC_s)*size(T_s), 2*max_c )
       call eta_T_path_c%create ( max_c, size(IWC_s)*size(T_s), 2*max_c )
       call eta_T_IWC_path_c%create ( max_c, size(IWC_s)*size(T_s), 2*max_c )
+    end if
+    ! Create empty interpolation coefficients for spectroscopy derivatives
+    if ( size(fwdModelConf%lineCenter) > 0 ) then
+      do i = 1, size(grids_v%values)
+        call eta_zp_v(i)%create ( max_f, &
+                                & ( grids_v%l_z(i)-grids_v%l_z(i-1) ) * &
+                                & ( grids_v%l_p(i)-grids_v%l_p(i-1) ), &
+                                & 2*max_f, what=grids_v%mol(i) )
+      end do
+    end if
+    if ( size(fwdModelConf%lineWidth) > 0 ) then
+      do i = 1, size(grids_w%values)
+        call eta_zp_v(i)%create ( max_f, &
+                                & ( grids_w%l_z(i)-grids_w%l_z(i-1) ) * &
+                                & ( grids_w%l_p(i)-grids_w%l_p(i-1) ), &
+                                & 2*max_f, what=grids_v%mol(i) )
+      end do
+    end if
+    if ( size(fwdModelConf%lineWidth_TDep) > 0 ) then
+      do i = 1, size(grids_n%values)
+        call eta_zp_v(i)%create ( max_f, &
+                                & ( grids_n%l_z(i)-grids_n%l_z(i-1) ) * &
+                                & ( grids_n%l_p(i)-grids_n%l_p(i-1) ), &
+                                & 2*max_f, what=grids_v%mol(i) )
+      end do
     end if
 
     ! Loop over sidebands ----------------------------------------------------
@@ -2403,8 +2406,8 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path_No_Frq
       type(sparse_eta_t) :: Eta_IWC, Eta_T, Eta_T_IWC
 
       integer :: Beg_Pos_Theta ! 1 if theta_s(1) /= 0, else 2
-!       integer :: IWC_IX        ! Which IWC index to use for phase function
-!       integer :: T_IX          ! Which Temperature index to use for phase functio
+!       integer :: IWC_IX        ! Which IWC index for phase function
+!       integer :: T_IX          ! Which Temperature index for phase function
 
       integer :: F_I           ! Frequency (channel) index
       logical :: Forward       ! Half-ray is an earth-intersecting ray
@@ -3002,6 +3005,7 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path_No_Frq
       ! purposes:  The array sizes are implicit, so we don't need explicitly
       ! to mention them, and the pointer attribute gets stripped during the
       ! trip through the CALL statement -- hopefully thereby helping optimizers.
+      use Comp_Eta_And_Sps_m, only: Comp_Sps
       use Comp_Sps_Path_Sparse_m, only: Comp_Sps_Path_Sparse
       use CS_ExpMat_m, only: CS_ExpMat
       use Do_T_Script_m, only: Two_D_T_Script, Two_D_T_Script_Cloud
@@ -3021,7 +3025,7 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path_No_Frq
       use Path_Contrib_m, only: Path_Contrib
       use Physics, only: H_Over_K
       use Rad_Tran_m, only: Rad_Tran_Pol, dRad_Tran_dF, dRad_Tran_dT, &
-        & dRad_Tran_dX
+        & dRad_Tran_dX_Sparse
       use ScatSourceFunc, only: T_Scat, Interp_TScat
       use Tau_m, only: Get_Tau
       use TScat_Support_m, only: Get_dB_dT, Get_TScat, Get_TScat_Setup, &
@@ -3158,15 +3162,8 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path_No_Frq
         call load_one_item_grid ( grids_tscat, scat_src, maf, phitan, &
           & fwdModelConf, SetDerivFlags=.false., SetTscatFlag=.true. )
 
-        block
-          use Comp_Eta_DoCalc_Sparse_m, only: Comp_Eta_Docalc_Sparse
-          type (Sparse_Eta_t) :: Eta_TScat_ZP
-          call comp_eta_docalc_sparse ( grids_tscat, tan_pt_f, z_path(1:npf), &
-                                      & phi_path(1:npf), eta_tscat_zp )
-          ! There's only one Zeta X Phi grid for all the scattering angles.
-          call comp_sps_path_sparse ( grids_tscat, eta_tscat_zp, &
-                                      & tscat_path(1:npf,:) )
-        end block
+        call comp_sps ( grids_tscat, tan_pt_f, z_path(1:npf), &
+                      & phi_path(1:npf), tscat_path(1:npf,:) )
 
         ! project Tscat onto LOS
         call interp_tscat ( tscat_path(1:npf,:), Scat_ang(:), &
@@ -3183,19 +3180,11 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path_No_Frq
           where ( abs(grids_salb%values) < TOL ) grids_salb%values = 0.0
           where ( abs(grids_cext%values) < TOL ) grids_cext%values = 0.0
 
-          call comp_eta_docalc_no_frq ( Grids_salb, z_path, &
-            &  phi_path(1:npf), eta_salb_zp(1:npf,:),       &
-            &  do_calc_salb_zp(1:npf,:), tan_pt=tan_pt_f )
+          call comp_sps ( Grids_salb, tan_pt_f, z_path(1:npf), &
+            &  phi_path(1:npf), salb_path(1:npf,:) )
 
-          call comp_sps_path_no_frq ( Grids_salb, eta_salb_zp(1:npf,:), &
-            & salb_path(1:npf,:) )
-
-          call comp_eta_docalc_no_frq ( Grids_cext, z_path, &
-            &  phi_path(1:npf), eta_cext_zp(1:npf,:),       &
-            &  do_calc_cext_zp(1:npf,:), tan_pt=tan_pt_f )
-
-          call comp_sps_path_no_frq ( Grids_cext,  eta_cext_zp(1:npf,:), &
-            & cext_path(1:npf,:) )
+          call comp_sps ( Grids_cext, tan_pt_f, z_path(1:npf), &
+            &  phi_path(1:npf), cext_path(1:npf,:) )
 
           beta_path_cloud_c(1:npc) = cext_path(1:npf:ngp1,1)
           w0_path_c(1:npc) = salb_path(1:npf:ngp1,1)
@@ -3792,26 +3781,23 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path_No_Frq
         else
 
           ! Spectroscopic derivative  wrt: W
-
           if ( spect_der_width ) &
-            & call drad_tran_dx ( gl_inds, del_zeta, grids_w, eta_zxp_w,   &
-              &  sps_path, fwdModelConf%lineWidth%beta(sx), do_calc_w,     &
+            & call drad_tran_dx_sparse ( gl_inds, del_zeta, grids_w,       &
+              &  eta_zp_w, sps_path, fwdModelConf%lineWidth%beta(sx),      &
               &  dBeta_dw_path_c, dBeta_dw_path_f, do_gl, del_s, ref_corr, &
               &  dhdz_gw_path, inc_rad_path, tan_pt_c, i_stop, k_spect_dw_frq )
 
           ! Spectroscopic derivative  wrt: N
-
           if ( spect_der_width_TDep ) &
-            & call drad_tran_dx ( gl_inds, del_zeta, grids_n, eta_zxp_n,    &
-              &  sps_path, fwdModelConf%lineWidth_tDep%beta(sx), do_calc_n, &
-              &  dBeta_dn_path_c, dBeta_dn_path_f, do_gl, del_s, ref_corr,  &
+            & call drad_tran_dx_sparse ( gl_inds, del_zeta, grids_n,       &
+              &  eta_zp_n, sps_path, fwdModelConf%lineWidth_tDep%beta(sx), &
+              &  dBeta_dn_path_c, dBeta_dn_path_f, do_gl, del_s, ref_corr, &
               &  dhdz_gw_path, inc_rad_path, tan_pt_c, i_stop, k_spect_dn_frq )
 
           ! Spectroscopic derivative  wrt: Nu0
-
           if ( spect_der_center ) &
-            & call drad_tran_dx ( gl_inds, del_zeta, grids_v, eta_zxp_v,   &
-              &  sps_path, fwdModelConf%lineCenter%beta(sx), do_calc_v,    &
+            & call drad_tran_dx_sparse ( gl_inds, del_zeta, grids_v,       &
+              &  eta_zp_v, sps_path, fwdModelConf%lineCenter%beta(sx),     &
               &  dBeta_dv_path_c, dBeta_dv_path_f, do_gl, del_s, ref_corr, &
               &  dhdz_gw_path, inc_rad_path, tan_pt_c, i_stop, k_spect_dv_frq )
 
@@ -3829,7 +3815,8 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path_No_Frq
       & Tan_Press, Est_SCGeocAlt, Path, S, F_and_V, Scat_Zeta, Scat_Phi, &
       & Scat_Ht, Xi, Scat_Index, Scat_Tan_Ht, Forward, Rev, Which )
 
-      use Comp_Eta_Docalc_Sparse_m, only: Comp_Eta_Docalc_Sparse
+      use Comp_Eta_And_Sps_m, only: Comp_Sps
+      use Comp_Eta_Docalc_Sparse_m, only: Comp_Eta
       use Comp_Sps_Path_Sparse_m, only: Comp_1_Sps_Path_Sparse_No_Frq
       use Generate_QTM_m, only: QTM_Tree_t
       use Get_Chi_Angles_M, only: Get_Chi_Angles
@@ -4112,10 +4099,10 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path_No_Frq
         ! Compute refractive index on the path.
         if ( h2o_ind > 0 ) then
           ! Compute eta_fzp (Zeta & Phi only) for water.
-          call comp_eta_docalc_sparse ( grids_f, tan_pt_f, z_path(1:npf), &
-                                      & eta_z(h2o_ind), phi_path(1:npf),  &
-                                      & eta_p(h2o_ind), eta_fzp(h2o_ind), &
-                                      & n=h2o_ind, skip=ngp1 )
+          call comp_eta ( grids_f, tan_pt_f, z_path(1:npf), &
+                        & eta_z(h2o_ind), phi_path(1:npf),  &
+                        & eta_p(h2o_ind), eta_fzp(h2o_ind), &
+                        & n=h2o_ind, skip=ngp1 )
           call comp_1_sps_path_sparse_no_frq ( grids_f, eta_fzp(h2o_ind), &
                                              & sps_path(1:npf,h2o_ind),   &
                                              & n=h2o_ind )
@@ -4158,9 +4145,10 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path_No_Frq
       h_path_c(1:npc) = h_path(1:npf:ngp1)
       t_path_c(1:npc) = t_path(1:npf:ngp1)
 
-      call comp_eta_docalc_sparse ( grids_f, tan_pt_f, z_path(1:npf), eta_z, &
-                                  & phi_path(1:npf), eta_p, eta_zp, eta_fzp, &
-                                  & skip=ngp1 )
+      ! Compute Eta_ZP and Eta_FZP for all species
+      call comp_eta ( grids_f, tan_pt_f, z_path(1:npf), eta_z, &
+                    & phi_path(1:npf), eta_p, eta_zp, eta_fzp, &
+                    & skip=ngp1 )
 
       ! Compute sps_path for all those with no frequency component, especially
       ! to get WATER (H2O) contribution for refraction calculations.
@@ -4186,36 +4174,27 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path_No_Frq
 
       ! Special path quantities for spectroscopy derivatives
       if ( size(fwdModelConf%lineCenter) > 0 ) then
-        call comp_eta_docalc_no_frq ( grids_v, z_path(1:npf), &
-          & phi_path(1:npf), eta_zxp_v(1:npf,:), do_calc_v(1:npf,:), tan_pt=tan_pt_f )
-        call comp_sps_path_no_frq ( grids_v, eta_zxp_v(1:npf,:), &
-          & spect_v_path(1:npf,:) )
+        call comp_sps ( grids_v, tan_pt_f, z_path(1:npf), &
+          & phi_path(1:npf), eta_zp_v, spect_v_path(1:npf,:) )
         lineCenter_ix => beta_group%lbl(sx)%spect_der_ix(lineCenter)
       end if
       if ( size(fwdModelConf%lineWidth) > 0 ) then
-        call comp_eta_docalc_no_frq ( grids_w, z_path(1:npf), &
-          & phi_path(1:npf), eta_zxp_w(1:npf,:), do_calc_w(1:npf,:), tan_pt=tan_pt_f )
-        call comp_sps_path_no_frq ( grids_w, eta_zxp_w(1:npf,:), &
-          & spect_w_path(1:npf,:) )
+        call comp_sps ( grids_w, tan_pt_f, z_path(1:npf), &
+          & phi_path(1:npf), eta_zp_w, spect_w_path(1:npf,:) )
         lineWidth_ix => beta_group%lbl(sx)%spect_der_ix(lineWidth)
       end if
       if ( size(fwdModelConf%lineWidth_TDep) > 0 ) then
-        call comp_eta_docalc_no_frq ( grids_n, z_path(1:npf), &
-          & phi_path(1:npf), eta_zxp_n(1:npf,:), do_calc_n(1:npf,:), tan_pt=tan_pt_f )
-        call comp_sps_path_no_frq ( grids_n, eta_zxp_n(1:npf,:), &
-          & spect_n_path(1:npf,:) )
+        call comp_sps ( grids_n, tan_pt_f, z_path(1:npf), &
+          & phi_path(1:npf), eta_zp_n, spect_n_path(1:npf,:) )
         lineWidth_TDep_ix => beta_group%lbl(sx)%spect_der_ix(lineWidth_TDep)
       end if
 
       ! Special path quantities for cloud model
       if ( fwdModelConf%Incl_Cld .or. fwdModelConf%useTScat ) then ! s_i == 1 or s_ts == 1 here
 
-        call comp_eta_docalc_no_frq ( grids_IWC, z_path(1:npf), &
-          &  phi_path(1:npf), eta_IWC_zp(1:npf,:), tan_pt=tan_pt_f )
+        call comp_sps ( grids_IWC, tan_pt_f, z_path(1:npf), phi_path(1:npf), &
+                      & iwc_path(1:npf,:) )
 
-        ! Compute IWC_Path
-        call comp_sps_path_no_frq ( Grids_IWC, eta_IWC_zp(1:npf,:), &
-          & iwc_path(1:npf,:) )
         if ( fwdModelConf%Incl_Cld ) then
           !set some cloud parameters to zero
           WC(1,1:npf)=iwc_path(1:npf,1)
@@ -4225,7 +4204,6 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path_No_Frq
       end if
 
       if ( FwdModelConf%polarized ) then
-      ! Magnetic field on the path, for Polarized (magnetic) model
 
         block
           use Magnetic_Field_On_Path_m, only: Magnetic_Field_On_Path
@@ -4618,6 +4596,9 @@ use Comp_SPS_Path_Frq_M, only: Comp_SPS_Path_No_Frq
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.398  2018/09/05 20:56:10  vsnyder
+! Use sparse interpolation for magnetic field on path
+!
 ! Revision 2.397  2018/08/28 22:17:53  vsnyder
 ! Add WrongTrapezoidal with the value .true. to indicate the incorrect
 ! trapezoid rule is used to calculate incOptDepth.  Some changes because of
