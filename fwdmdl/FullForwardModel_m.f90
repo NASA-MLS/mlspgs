@@ -3025,7 +3025,7 @@ contains
       use Path_Contrib_m, only: Path_Contrib
       use Physics, only: H_Over_K
       use Rad_Tran_m, only: Rad_Tran_Pol, dRad_Tran_dF, dRad_Tran_dT, &
-        & dRad_Tran_dX_Sparse
+        & dRad_Tran_dX
       use ScatSourceFunc, only: T_Scat, Interp_TScat
       use Tau_m, only: Get_Tau
       use TScat_Support_m, only: Get_dB_dT, Get_TScat, Get_TScat_Setup, &
@@ -3782,22 +3782,22 @@ contains
 
           ! Spectroscopic derivative  wrt: W
           if ( spect_der_width ) &
-            & call drad_tran_dx_sparse ( gl_inds, del_zeta, grids_w,       &
-              &  eta_zp_w, sps_path, fwdModelConf%lineWidth%beta(sx),      &
+            & call dRad_Tran_dX ( gl_inds, del_zeta, grids_w, eta_zp_w,    &
+              &  sps_path, fwdModelConf%lineWidth%beta(sx),                &
               &  dBeta_dw_path_c, dBeta_dw_path_f, do_gl, del_s, ref_corr, &
               &  dhdz_gw_path, inc_rad_path, tan_pt_c, i_stop, k_spect_dw_frq )
 
           ! Spectroscopic derivative  wrt: N
           if ( spect_der_width_TDep ) &
-            & call drad_tran_dx_sparse ( gl_inds, del_zeta, grids_n,       &
-              &  eta_zp_n, sps_path, fwdModelConf%lineWidth_tDep%beta(sx), &
+            & call dRad_Tran_dX ( gl_inds, del_zeta, grids_n, eta_zp_n,    &
+              &  sps_path, fwdModelConf%lineWidth_tDep%beta(sx),           &
               &  dBeta_dn_path_c, dBeta_dn_path_f, do_gl, del_s, ref_corr, &
               &  dhdz_gw_path, inc_rad_path, tan_pt_c, i_stop, k_spect_dn_frq )
 
           ! Spectroscopic derivative  wrt: Nu0
           if ( spect_der_center ) &
-            & call drad_tran_dx_sparse ( gl_inds, del_zeta, grids_v,       &
-              &  eta_zp_v, sps_path, fwdModelConf%lineCenter%beta(sx),     &
+            & call dRad_Tran_dX ( gl_inds, del_zeta, grids_v, eta_zp_v,    &
+              &  sps_path, fwdModelConf%lineCenter%beta(sx),               &
               &  dBeta_dv_path_c, dBeta_dv_path_f, do_gl, del_s, ref_corr, &
               &  dhdz_gw_path, inc_rad_path, tan_pt_c, i_stop, k_spect_dv_frq )
 
@@ -4596,6 +4596,13 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.399  2018/09/12 22:07:42  vsnyder
+! Convert interpolators for full cloud forward model from dense to sparse.
+! Convert interpolators for spectroscopy derivatives from dense to sparse.
+! Use Comp_Sps.  use dRad_Tran_dX_Sparse instead of dRad_Tran_dX.  Use
+! Comp_Eta instead of Comp_Eta_DoCalc_Sparse (because we no longer calculate
+! Do_Calc -- which Comp_Eta_DoCalc_Sparse didn't calculate anyway).
+!
 ! Revision 2.398  2018/09/05 20:56:10  vsnyder
 ! Use sparse interpolation for magnetic field on path
 !
