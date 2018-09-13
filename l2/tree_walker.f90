@@ -75,10 +75,10 @@ contains ! ====     Public Procedures     ==============================
     use MergeGridsModule, only: MergeGrids
     use MLSCommon, only: TAI93_Range_T, MLSFile_T
     use MLSL2Options, only: Aura_L1BFiles, &
-      & CheckPaths, CurrentChunkNumber, CurrentPhaseName, ExitToNextChunk, &
+      & CheckPaths, L2Options, ExitToNextChunk, &
       & L2CFNode, MLSL2Message, Need_L1BFiles, PhasesToSkip, &
       & SectionsToSkip, SkipDirectWrites, SkipDirectWritesOriginal, &
-      & SkipRetrieval, SlavesCleanUpSelves, SpecialDumpFile, StopAfterSection, &
+      & SlavesCleanUpSelves, SpecialDumpFile, StopAfterSection, &
       & Toolkit
     use MLSMessageModule, only: MLSMSG_Allocate, MLSMSG_Info, &
       & MLSMSG_Error, SummarizeWarnings
@@ -299,7 +299,7 @@ contains ! ====     Public Procedures     ==============================
           firstChunk = chunkNo
           lastChunk = chunkNo
           parallel%ChunkNo = chunkNo
-          currentChunkNumber = chunkNo
+          L2Options%CurrentChunkNumber = chunkNo
         else
           if ( (.not. checkPaths .or. parallel%chunkRange /= '') .and. &
             & NEED_L1BFILES ) then
@@ -434,7 +434,7 @@ contains ! ====     Public Procedures     ==============================
             if ( parallel%master .and. parallel%fwmParallel ) then
               call LaunchFWMSlaves ( chunks ( chunkNo ) )
             elseif( .not. parallel%slave ) then
-              currentChunkNumber = chunkNo  ! Stored for dumping
+              L2Options%CurrentChunkNumber = chunkNo  ! Stored for dumping
             endif
             if ( verbose .and. MustCheckForCorruptFileDatabase ) then
               call output( 'Now in loop of chunks', advance='yes' )
@@ -460,7 +460,7 @@ subtrees:   do
               ! (2) The phase is one we've been asked to skip
               if( skipSections(section_index) ) &
                 & section_index = SECTION_FIRST - 1 ! skip
-              if ( isInList( PhasesToSkip, trim(currentPhaseName), '-fc' ) ) &
+              if ( isInList( PhasesToSkip, trim(L2Options%CurrentPhaseName), '-fc' ) ) &
                 & section_index = SECTION_FIRST - 2 ! skip
               if ( verboser ) call MLSL2Message ( MLSMSG_Info, ModuleName, &
                 & 'Innermost loop ' // trim(section_name) )
@@ -510,7 +510,7 @@ subtrees:   do
                   if ( section_index == SECTION_FIRST - 1 ) then
                     call output ( 'Skipping this section', advance='yes' )
                   else
-                    call output ( 'Skipping ' // trim(currentPhaseName), advance='yes' )
+                    call output ( 'Skipping ' // trim(L2Options%CurrentPhaseName), advance='yes' )
                   endif
                 endif
               end select
@@ -689,7 +689,7 @@ subtrees:   do
       ! Let's try to deallocate all the module-scope pointers
       ! trusting each module to know what they are
       if ( parallel%slave .and. .not. slavesCleanUpSelves ) return
-      if ( .not. (myEarly .or. skipRetrieval .or. checkPaths) ) then
+      if ( .not. (myEarly .or. L2Options%SkipRetrieval .or. checkPaths) ) then
         call trace_begin ( 'Destroying databases', cond=toggle(gen) )
         if ( parallel%slave ) then
           ! Some things a slave can safely destroy
@@ -754,6 +754,9 @@ subtrees:   do
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.211  2018/07/27 23:19:53  pwagner
+! Renamed level 2-savvy MLSMessage MLSL2Message
+!
 ! Revision 2.210  2018/04/19 23:44:36  pwagner
 ! Skip may take /nextChunk flag
 !
