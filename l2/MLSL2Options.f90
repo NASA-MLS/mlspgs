@@ -16,7 +16,7 @@ module MLSL2Options              !  Options and Settings for the MLSL2 program
   use Dump_0, only: Dump
   use Dump_1, only: Dump
   use HDF, only: Dfacc_Rdwr
-  use HighOutput, only: Banner, OutputNamedValue
+  use HighOutput, only: Banner, OutputNamedValue, StyledOutput
   use Intrinsic, only: L_Ascii, L_Hours, L_Minutes, L_Seconds
   use, Intrinsic :: ISO_Fortran_Env, only: Error_Unit
   use MLSCommon, only: MLSFile_T, MLSNamesAreDebug, MLSNamesAreVerbose
@@ -33,7 +33,7 @@ module MLSL2Options              !  Options and Settings for the MLSL2 program
     & SomeToGlobalAttributes
   use Output_M, only: AdvancedOptions, OutputOptions, StampOptions, &
     & TimeStampOptions, InvalidPrUnit, StdoutPrUnit, MSGLogPrUnit, BothPrUnit, &
-    & Output
+    & Output, PrUnitName
   use Printit_M, only: DefaultLogUnit, Get_Config, StdoutLogUnit
 
   implicit none
@@ -67,20 +67,11 @@ module MLSL2Options              !  Options and Settings for the MLSL2 program
   ! Update these lines before delivery to sips
   ! id to print out in response to "--version" command-line option    
   integer, parameter                        :: versIDLen = 32
-  character(LEN=versIDLen), dimension(2)    :: current_version_id = (/ &
+  character(len=versIDLen), dimension(2)    :: current_version_id = (/ &
     & 'v4.23 swdev team               ' , & 
     & 'See license terms for copyright'/)
-  character(LEN=32)    :: UniqueID                    = ' '
+  character(len=32)    :: UniqueID                    = ' '
      
-  ! Set the following to MSGLOGPRUNIT before delivering to sips;
-  ! (its possible values and their effects on normal output:
-  ! INVALIDPRUNIT  on MUTE, no output
-  ! STDOUTPRUNIT   sent to stdout (via print *, '...')
-  ! MSGLOGPRUNIT   sent to Log file (via MLSMessage)
-  ! BOTHPRUNIT     both stdout and Log file
-  ! > 0            Fortran 'unit=OUTPUT_PRINT_UNIT')
-  integer            :: Output_print_unit             = MSGLOGPRUNIT ! -2
-
   ! Set the following to MLSMSG_Error before delivering to sips;
   ! when set higher, it allows program keep going despite errors
   ! when set lower, the program would quit even on warnings
@@ -120,16 +111,10 @@ module MLSL2Options              !  Options and Settings for the MLSL2 program
   character(len=255) :: NoteFile                      = ' '
   ! What units to use in summarizing timings at end of run
   integer            :: SectionTimingUnits            = L_seconds
-  character(len=32)  :: CurrentPhaseName              = ' '
-  integer            :: CurrentChunkNumber            = 0
   
   ! Whether to skip doing the direct writes--quicker when snooping
   logical            :: SkipDirectWrites              = .false.    
   logical            :: SkipDirectwritesOriginal      = .false.    
-  ! Whether to skip doing the retrieval--a pre-flight checkout of paths, etc.
-  logical            :: SkipRetrieval                 = .false.        
-  ! A holding place for the above, allowing us to skip for some phases only
-  logical            :: SkipRetrievalOriginal         = .false. 
   ! Whether each slave deallocates all its arrays, pointers, etc.
   ! Sometimes slaves die or take too long to finish cleaning up
   ! But if system fails to reclaim memory properly, subsequent slaves
@@ -155,11 +140,8 @@ module MLSL2Options              !  Options and Settings for the MLSL2 program
 
   logical            :: Toolkit                       = .true. ! SIPS_VERSION 
   logical, parameter :: WriteFileAttributes           = .false.               
-  logical            :: MLSL2Debug                    = .false.               
   ! --------------------------------------------------------------------------
 
-  character(len=2048) :: command_line ! All the opts
-  character(len=2048) :: ORIGINALCMDS ! As set when executed
   ! The following will be used only by MLSL2
   logical :: CHECKL2CF = .false.   ! Just check the l2cf and quit
   logical :: CHECKLEAK = .false.   ! Check parse tree for potential memory leaks
@@ -184,10 +166,35 @@ module MLSL2Options              !  Options and Settings for the MLSL2 program
   ! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
   ! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+  ! This is the type to store the level 2 options that can be overridden
+  ! by the l2cf commands Phase or ChangeSettings
+  type :: L2Options_T
+    character(len=2048) :: Command_Line ! All the opts
+    character(len=2048) :: Originalcmds ! As set when executed
+    character(len=32)  :: CurrentPhaseName              = ' '
+    integer            :: CurrentChunkNumber            = 0
+    ! Whether to skip doing the retrieval--a pre-flight checkout of paths, etc.
+    logical            :: SkipRetrieval                 = .false.        
+    ! A holding place for the above, allowing us to skip for some phases only
+    logical            :: SkipRetrievalOriginal         = .false. 
+    logical            :: MLSL2Debug                    = .false.               
+    ! Set the following to MSGLOGPRUNIT before delivering to sips;
+    ! (its possible values and their effects on normal output:
+    ! INVALIDPRUNIT  on MUTE, no output
+    ! STDOUTPRUNIT   sent to stdout (via print *, '...')
+    ! MSGLOGPRUNIT   sent to Log file (via MLSMessage)
+    ! BOTHPRUNIT     both stdout and Log file
+    ! > 0            Fortran 'unit=OUTPUT_PRINT_UNIT')
+    integer            :: Output_print_unit             = MSGLOGPRUNIT ! -2
+
+  end type L2Options_T
+  ! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+  ! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
   ! This is the type to store runtime Booleans set and used by the l2cf
   ! We sometimes call these runtime values or runtime macros
 
-  ! Suggestion: settle on a standard name and use it exclusively
+  ! Suggestion: settle on just one name and use it exclusively
   integer, parameter :: RTVStringLength               = 1024
   integer, parameter :: RTVArrayLength                = 128
   
@@ -199,7 +206,9 @@ module MLSL2Options              !  Options and Settings for the MLSL2 program
     character(len=RTVSTRINGLENGTH)     :: lvalues     = &
       & 'true' // achar(0) // 'false' // achar(0) // 'count' 
   end type runTimeValues_T
+  ! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
     
+  type(L2Options_T), save :: L2Options, OriginalOptions
   type(runTimeValues_T), save :: runTimeValues
   type (MLSFile_T), save      :: AllocFile
 
@@ -248,11 +257,12 @@ module MLSL2Options              !  Options and Settings for the MLSL2 program
   ! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
   
   ! The following list of public procedures is for convenience only
-  public :: dumpMacros
+  public :: DumpOptions
+  public :: DumpMacros
   public :: MLSL2Message
-  public :: processOptions
-  public :: removeRuntimeBoolean
-  public :: restoreDefaults
+  public :: ProcessOptions
+  public :: RemoveRuntimeBoolean
+  public :: RestoreDefaults
 
   logical, private, parameter :: countEmpty = .true. ! Except where overriden locally
   
@@ -309,7 +319,7 @@ contains
       outputInstead = ( severity < LogThreshold .and. &
         & mustRepeat )
     end if
-    if ( MLSL2DEBUG ) then
+    if ( L2Options%MLSL2Debug ) then
       print *, 'mustRepeat ', mustRepeat
       print *, 'outputInstead ', outputInstead
       print *, 'STDOUTPRUNIT ', STDOUTPRUNIT
@@ -334,14 +344,14 @@ contains
     ! in hopes of figuring out what went wrong, where, and why
     myMessage = message
     ! Do we have a current phase name?
-    if ( len_trim(currentPhaseName) > 0 &
+    if ( len_trim(L2Options%currentPhaseName) > 0 &
       & .and. severity >= MLSMSG_Severity_to_quit ) then
-      myMessage = ' (' // trim(currentPhaseName) // ') ' // myMessage
+      myMessage = ' (' // trim(L2Options%currentPhaseName) // ') ' // myMessage
     end if
     ! Do we have a current chunk number?
-    if ( currentChunkNumber > 0 &
+    if ( L2Options%CurrentChunkNumber > 0 &
       & .and. severity >= MLSMSG_Severity_to_quit ) then
-      call writeIntsToChars( currentChunkNumber, chunkChars )
+      call writeIntsToChars( L2Options%CurrentChunkNumber, chunkChars )
       myMessage = ' (chunk ' // trim(chunkChars) // ') ' // myMessage
     end if
     ! Do we have an l2cf node we were processing?
@@ -481,7 +491,7 @@ contains
       i = i + 1
     end do
     ! Now process the other options
-    command_line = ' '
+    L2Options%command_line = ' '
     field_is_include = .false.
 cmds: do
       call getNextArg ( i, line )
@@ -534,7 +544,7 @@ cmds: do
     if ( switchDetail(switches, 'walk') > -1 ) &
       & MLSMSG_Severity_to_walkback = MLSMSG_Warning
     if ( outputOptions%prunit /= INVALIDPRUNIT ) &
-      & outputOptions%prunit = OUTPUT_PRINT_UNIT
+      & outputOptions%prunit = L2Options%Output_print_unit
     ! print *, 'Ended processing options'
     contains
     subroutine getNextArg( i, line )
@@ -556,7 +566,7 @@ cmds: do
       if ( index(trim(line), ' ') > 0 ) then
         line = "'" // trim(line) // "'"
       endif
-      command_line = trim(command_line) // ' ' // trim(line)
+      L2Options%command_line = trim(L2Options%command_line) // ' ' // trim(line)
       call AccumulateSlaveArguments(line) ! pass them to slave processes
     end subroutine getNextArg
 
@@ -896,7 +906,7 @@ cmds: do
         else if ( line(3+n:9+n)  == 'skipdir' ) then
           SKIPDIRECTWRITES = switch
         else if ( line(3+n:10+n) == 'skipretr' ) then
-          SKIPRETRIEVAL = switch
+          L2Options%Skipretrieval = switch
         else if ( line(3+n:8+n) == 'skipph' ) then
           i = i + 1
           call myNextArgument( i, inLine, entireLine, line )
@@ -954,7 +964,7 @@ cmds: do
         else if ( line(3+n:9+n) == 'stdout ' ) then
           ! print *, 'Got --stdout option'
           if ( .not. switch ) then
-            OUTPUT_PRINT_UNIT = INVALIDPRUNIT
+            L2Options%Output_print_unit = INVALIDPRUNIT
             return
           end if
           i = i + 1
@@ -962,11 +972,11 @@ cmds: do
           ! print *, 'Its arg: ', trim(line)
           select case ( lowercase(line) )
           case ( 'log' )
-            OUTPUT_PRINT_UNIT = MSGLOGPRUNIT
+            L2Options%Output_print_unit = MSGLOGPRUNIT
           case ( 'out' )
-            OUTPUT_PRINT_UNIT = STDOUTPRUNIT
+            L2Options%Output_print_unit = STDOUTPRUNIT
           case ( 'both' )
-            OUTPUT_PRINT_UNIT = BOTHPRUNIT
+            L2Options%Output_print_unit = BOTHPRUNIT
             ! MLSMessageConfig%logFileUnit = STDOUTLOGUNIT
           case ( 'error' ) ! Output usually sent to stdout goes to stderr
             outputOptions%prUnit = error_unit
@@ -983,10 +993,10 @@ cmds: do
             call get_lun ( OutputOptions%prUnit, msg=.false. )
             close( unit=l2cf_unit )
             inquire( unit=OutputOptions%prUnit, exist=exist, opened=opened )
-            OUTPUT_PRINT_UNIT = OutputOptions%prUnit
+            L2Options%Output_print_unit = OutputOptions%prUnit
           end select
           if ( outputOptions%prunit /= INVALIDPRUNIT ) &
-            & outputOptions%prunit = OUTPUT_PRINT_UNIT
+            & outputOptions%prunit = L2Options%Output_print_unit
         else if ( line(3+n:12+n) ==  'stopafter ' ) then
           i = i + 1
           call myNextArgument( i, inLine, entireLine, stopAfterSection )
@@ -1302,31 +1312,88 @@ jloop:do while ( j < len_trim(line) )
     myComplete                               = present(complete)
     if ( myComplete )   myComplete           = complete
     print *, 'Entered restoreDefaults; myComplete ', myComplete
-    OUTPUT_PRINT_UNIT             = -2
-    DEFAULT_HDFVERSION_WRITE      = HDFVERSION_5
-    DEFAULT_HDFVERSION_READ       = WILDCARDHDFVERSION
-    LEVEL1_HDFVERSION             = WILDCARDHDFVERSION
-    RESTARTWARNINGS               = .true.
-    SECTIONTIMINGUNITS            = L_SECONDS
-    SKIPDIRECTWRITES              = .false.    
-    SKIPDIRECTWRITESORIGINAL      = .false.    
-    SKIPRETRIEVAL                 = .false.        
-    SKIPRETRIEVALORIGINAL         = .false. 
-    slavesCleanUpSelves           = .true.
-    SPECIALDUMPFILE               = ' '
-    STATEFILLEDBYSKIPPEDRETRIEVALS = 0.
-    STOPAFTERSECTION              = ' ' ! Blank means 
-    STOPWITHERROR                 = .false.         
+    L2Options%Output_print_unit             = -2
+    Default_hdfversion_write      = HDFVERSION_5
+    Default_hdfversion_read       = WILDCARDHDFVERSION
+    Level1_hdfversion             = WILDCARDHDFVERSION
+    Restartwarnings               = .true.
+    Sectiontimingunits            = L_SECONDS
+    Skipdirectwrites              = .false.    
+    Skipdirectwritesoriginal      = .false.    
+    ! Skipretrieval                 = .false.        
+    ! Skipretrievaloriginal         = .false. 
+    SlavesCleanUpSelves           = .true.
+    Specialdumpfile               = ' '
+    Statefilledbyskippedretrievals = 0.
+    Stopaftersection              = ' ' ! Blank means 
+    Stopwitherror                 = .false.         
     call init_toggle
 
     if ( .not. myComplete ) return
-    NEED_L1BFILES                 = .true.
-    AURA_L1BFILES                 = .true.
-    PATCH                         = .false. 
-    CHECKPATHS                    = .false.         
-    TOOLKIT                       =  .true. ! SIPS_VERSION
+    Need_L1BFiles                 = .true.
+    Aura_L1BFiles                 = .true.
+    Patch                         = .false. 
+    Checkpaths                    = .false.         
+    Toolkit                       =  .true. ! SIPS_VERSION
     call restoreConfig ( complete )
   end subroutine restoreDefaults
+
+  ! -------------------------------------------------  DumpOptions  -----
+  ! Dump the L2 Options
+  ! Print the cmd line in blocs of BlocLength characters
+  ! We have not yet decided how to use the details arg
+  subroutine DumpOptions ( details )
+    use HighOutput, only: OutputTable
+    use MLSStringLists, only: SwitchDetail
+    use Toggles, only: Switches
+    integer, optional, intent(in)                :: Details ! Not used at present
+    ! Internal variables
+    integer, parameter                           :: BlocLength = 56
+    integer                                      :: c1, c2
+    integer                                      :: i
+    integer                                      :: MyDetails
+    integer                                      :: NBlocs
+    integer                                      :: NValues ! num of rows in table
+    character(len=BlocLength), dimension(48, 2)  :: KeysValues
+    ! Executable
+    myDetails = SwitchDetail( switches, 'opt' )
+    if ( present(details) ) myDetails = details
+    call StyledOutput ( 'Current Level 2 Options', options="--Banner" )
+    
+    ! The first row will be the header
+    keysValues(1,1) = 'names'
+    keysValues(1,2) = 'values'
+
+    keysValues(2,1) = 'phase'
+    keysValues(2,2) = L2Options%CurrentPhaseName
+
+    keysValues(3,1) = 'chunk'
+    write( keysvalues(3,2), * ) L2Options%CurrentChunkNumber
+
+    keysValues(4,1) = 'SkipRetrieval'
+    write( keysValues(4,2), * ) L2Options%Skipretrieval
+
+    keysValues(5,1) = 'Output_print_unit'
+    ! write( keysValues(5,2), * ) L2Options%Output_print_unit
+    keysValues(5,2) = PrUnitname( L2Options%Output_print_unit )
+    
+    ! The remaining rows will be blocs of the cmd line
+    nBlocs = (len_trim(L2Options%Command_line)-1)/BlocLength + 1
+    nValues = 6
+    keysValues(6,1) = 'cmdline'
+    keysValues(6,2) = L2Options%Command_line(1:BlocLength)
+    c2 = BlocLength
+    do i=2, nBlocs
+      nValues = nValues + 1
+      c1 = c2 + 1
+      c2 = min(c2 + BlocLength, len_trim(L2Options%Command_line) )
+
+      keysValues(nValues,1) = ' '
+      keysValues(nValues,2) = L2Options%Command_line(c1:c2)
+    enddo
+
+    call outputTable( keysValues(1:nValues, :), border='-', headliner='-' )
+  end subroutine DumpOptions
 
   ! -------------------------------------------------  DumpMacros  -----
   ! Dump the runtime macros
@@ -1420,6 +1487,9 @@ end module MLSL2Options
 
 !
 ! $Log$
+! Revision 2.119  2018/09/13 20:20:18  pwagner
+! Moved changeable options to new L2Options; added DumpOptions
+!
 ! Revision 2.118  2018/07/27 23:15:40  pwagner
 ! Renamed MLSMessage MLSL2Message
 !
