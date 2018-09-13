@@ -15,20 +15,19 @@ module MLSL2Timings              !  Timings for the MLSL2 program sections
 
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
   use Call_Stack_M, only: Sys_Memory_Ch, Sys_Memory_Convert, Sys_Memory_Max
-  use HighOutput, only: Banner, OutputNamedValue
-  use Init_Tables_Module, only: F_Additional, F_Debug, F_Options, F_Silent, &
-    & F_Skipdirectwrites, F_Skipdirectwritesif, &
+  use HighOutput, only: Banner, BeVerbose, OutputNamedValue
+  use Init_Tables_Module, only: F_Additional, F_Debug, F_Options, F_Reset, &
+    & F_Silent, F_Skipdirectwrites, F_Skipdirectwritesif, &
     & F_Skipretrieval, F_Skipretrievalif, F_Stamp, F_Verbose, &
     & Field_First, Field_Last
   use Intrinsic, only: L_Hours, L_Minutes, L_Seconds
   use L2Parinfo, only: Parallel
   use MLSCommon, only: MLSDebug, MLSVerbose, &
     & MLSDebugSticky, MLSVerboseSticky
-  use MLSL2Options, only: Command_Line, CurrentPhaseName, &
-    & DumpMacros, OriginalCmds, &
+  use MLSL2Options, only: L2Options, OriginalOptions, &
+    & DumpOptions, DumpMacros, &
     & ProcessOptions, RestartWarnings, RestoreDefaults, RuntimeValues, &
     & SectionTimingUnits, SkipDirectwrites, SkipDirectwritesOriginal, &
-    & SkipRetrieval, SkipRetrievalOriginal, &
     & StopAfterSection
   use MLSMessageModule, only: MLSMessageConfig, MLSMessage, MLSMessageReset, &
     & MLSMSG_Error
@@ -354,18 +353,20 @@ contains ! =====     Public Procedures     =============================
     character(len=80) :: PHASESTRING    ! E.g., 'Core'
     character(len=80) :: BOOLEANSTRING  ! E.g., 'BAND13_OK'
     character(len=8)  :: CHUNKSTRING  ! E.g., '257'
+    logical :: reset
     logical :: silent
     integer :: son
     logical :: stamp
     logical :: verbose
     ! Executable
+    L2Options = OriginalOptions ! Restore Original Options
     additional = .false.
     detail = switchDetail( switches, 'phase' )
     null = achar(0)
     silent = .false.
     stamp = detail > 1 ! E.g., -Sphase2; was .false.
     skipDirectwrites = skipDirectWritesoriginal
-    skipRetrieval = skipRetrievalOriginal
+    ! skipRetrieval = skipRetrievalOriginal
     options = ' '
     Phasestring = ' '
     Chunkstring = ' '
@@ -388,6 +389,8 @@ contains ! =====     Public Procedures     =============================
         if ( stamp ) call output( 'Processing debug field', advance='yes' )
       case ( f_options )
         call get_string ( sub_rosa(subtree(2,son)), options, strip=.true. )
+      case ( f_reset )
+        reset = get_boolean ( fieldValue )
       case ( f_silent )
         silent = get_boolean ( fieldValue )
       case ( f_skipDirectwrites )
@@ -405,19 +408,17 @@ contains ! =====     Public Procedures     =============================
         call output( 'skipDirectwrites: ', advance='no' )
         call output( skipDirectwrites, advance='yes' )
       case ( f_skipRetrieval )
-        skipRetrieval = skipRetrievalOriginal .or. &
-          & get_boolean ( fieldValue )
+        L2Options%SkipRetrieval = get_boolean ( fieldValue )
       case ( f_skipRetrievalif )
         call get_string( sub_rosa(subtree(2,son)), booleanString )
         if ( stamp ) call output( 'told to skipRetrieval: ', advance='no' )
         if ( stamp ) call output( BooleanValue ( lowercase(booleanString), &
           & runTimeValues%lkeys, runTimeValues%lvalues, runTimeValues%sep ), &
           & advance='yes' )
-        skipRetrieval = skipRetrievalOriginal .or. &
-          & BooleanValue ( lowercase(booleanString), &
+        L2Options%SkipRetrieval =  BooleanValue ( lowercase(booleanString), &
           & runTimeValues%lkeys, runTimeValues%lvalues, runTimeValues%sep )
         if ( stamp ) call output( 'skipRetrieval: ', advance='no' )
-        if ( stamp ) call output( skipRetrieval, advance='yes' )
+        if ( stamp ) call output( L2Options%SkipRetrieval, advance='yes' )
         if ( stamp ) call output( trim(booleanString), advance='yes' )
       case ( f_stamp )
         stamp = stamp .or. get_boolean ( fieldValue )
@@ -429,16 +430,16 @@ contains ! =====     Public Procedures     =============================
     end do
     if ( name > 0 ) then
       call get_string(name, phaseString)
-      currentPhaseName = phaseString
+      L2Options%CurrentPhaseName = phaseString
     endif
     ! Restore settings if last one overwrote them (unless additional)
     if ( LASTPHASEOVERWROTEOPTS .and. .not. additional ) then
       call restoredefaults
-      booleanstring = processOptions( trim( ORIGINALCMDS ), null )
+      booleanstring = processOptions( trim( L2Options%Originalcmds ), null )
       MLSDebugSticky = .false.
       MLSVerboseSticky = .false.
       call output( 'Restoring default command-line args', advance='yes' )
-      call outputNamedValue( 'command_line', trim(command_line) )
+      call outputNamedValue( 'command_line', trim(L2Options%Command_line) )
       call outputNamedValue( 'Switches', trim(Switches) )
     endif
     ! Does this phase overwrite settings?
@@ -447,7 +448,7 @@ contains ! =====     Public Procedures     =============================
       booleanstring = processOptions( trim(options ) )
       LASTPHASEOVERWROTEOPTS = .true.
       call output( 'Overwriting default command-line args', advance='yes' )
-      call outputNamedValue( 'command_line', trim(command_line) )
+      call outputNamedValue( 'command_line', trim(L2Options%Command_line) )
       call outputNamedValue( 'Switches', trim(Switches) )
     endif
     if( got(f_debug) ) then
@@ -493,6 +494,9 @@ contains ! =====     Public Procedures     =============================
       ! -Sphase3 or more
       StampOptions%interval = 1 ! stamp every line with time, phase name
     endif
+
+    If ( reset ) OriginalOptions = L2Options ! Make these Original Options
+    if ( BeVerbose('opt', -1) ) call DumpOptions
     
     if ( name < 1 ) return
     if ( got(f_stamp) ) then
@@ -626,7 +630,7 @@ contains ! =====     Public Procedures     =============================
       return
     endif
     retrFinal = section_timings(retrElem) 
-    if ( SKIPRETRIEVAL ) then
+    if ( L2Options%SkipRetrieval ) then
       call output ( '(Retrieval section skipped) ', advance='yes' )
     elseif ( retrFinal == 0.0 ) then
       call output ( '(Retrieval section number ', advance='no' )
@@ -1037,6 +1041,9 @@ END MODULE MLSL2Timings
 
 !
 ! $Log$
+! Revision 2.72  2018/09/13 20:27:46  pwagner
+! Moved changeable options to new L2Options; added DumpOptions; added /reset flag to phase commands to make current l2Options permanent
+!
 ! Revision 2.71  2018/03/14 22:16:43  pwagner
 ! Initialize Phasestring, Chunkstring to prevent printing nulls
 !
