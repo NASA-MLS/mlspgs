@@ -209,7 +209,7 @@ contains ! =====     Public Procedures     =============================
     ! Carefully Check Out The Code Around The Call To Snoop.
     use MLSFiles, only: HDFVersion_5, GetMLSFileByType
     use MLSL2Options, only: L2cfnode, &
-      & RuntimeValues, SkipRetrieval, SpecialDumpFile, MLSL2Message
+      & RuntimeValues, L2Options, SpecialDumpFile, MLSL2Message
     use MLSL2Timings, only: Section_Times, &
       & AddPhaseToPhaseNames, FillTimings, FinishTimings
     use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning, &
@@ -999,7 +999,7 @@ contains ! =====     Public Procedures     =============================
         end do
 
         call getFromMatrixDatabase ( matrices(matrixToFill), covariance )
-        if ( SKIPRETRIEVAL ) then
+        if ( L2Options%Skipretrieval ) then
           call MLSL2Message ( MLSMSG_Warning, ModuleName, &
             & 'Unable to fill covariance when skipping retrievals' )
         else
@@ -3375,6 +3375,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.479  2018/09/13 20:24:17  pwagner
+! Moved changeable options to new L2Options; added DumpOptions
+!
 ! Revision 2.478  2018/07/27 23:18:48  pwagner
 ! Renamed level 2-savvy MLSMessage MLSL2Message
 !
