@@ -38,13 +38,13 @@ program MLSL2
     & Default_HDFVersion_Read, Default_HDFVersion_Write, Do_Dump, Dump_Tree, &
     & L2cf_Unit, Level1_HDFVersion, MaxChunkSize, Need_L1BFiles, &
     & Normal_Exit_Status, NoteFile, NumSwitches, &
-    & OriginalCmds, Output_Print_Unit, &
+    & L2Options, OriginalOptions, &
     & Patch, PhasesToSkip, ProcessOptions, Quit_Error_Threshold, &
     & Recl, RestartWarnings, RunTimeValues, &
     & SectionsToSkip, SectionTimes, SectionTimingUnits, &
     & SharedPCF, ShowDefaults, & ! Sips_Version, &
     & SkipDirectWrites, SkipDirectWritesOriginal, &
-    & SkipRetrieval, SkipRetrievalOriginal, SlavesCleanUpSelves, SlaveMAF, &
+    & SlavesCleanUpSelves, SlaveMAF, &
     & SpecialDumpFile, StateFilledBySkippedRetrievals, &
     & StopAfterSection, StopWithError, &
     & Timing, Toolkit, TotalTimes, UniqueID
@@ -57,7 +57,8 @@ program MLSL2
   use MLSStrings, only: Trim_Safe
   use MLSStringLists, only: ExpandStringRange, PutHashElement, SwitchDetail
   use Output_M, only: Beep, Blanks, flushStdout, Output, &
-    & InvalidPrUnit, MSGLogPrUnit, OutputOptions, StampOptions, StdoutPrUnit
+    & InvalidPrUnit, MSGLogPrUnit, OutputOptions, PrUnitName, &
+    & StampOptions, StdoutPrUnit
   use Parser, only: Clean_Up_Parser, Configuration
   use Parser_Table_M, only: Destroy_Parser_Table, Parser_Table_T
   use Parser_Tables_L2cf, only: Init_Parser_Table
@@ -65,7 +66,7 @@ program MLSL2
   use Printit_M, only: Set_Config, StdoutLogUnit
   use PVM, only: ClearPVMArgs, FreePVMArgs
   use SDPToolkit, only: PGSD_DEM_30arc, PGSD_DEM_90arc, &
-    & PGSD_DEM_Elev, PGSD_DEM_Water_Land, useSDPToolkit, PGS_DEM_Close
+    & PGSD_DEM_Elev, PGSD_DEM_Water_Land, UseSDPToolkit, PGS_DEM_Close
   use String_Table, only: Destroy_Char_Table, Destroy_Hash_Table, &
     & Destroy_String_Table, Get_String, AddinUnit
   use Symbol_Table, only: Destroy_Symbol_Table
@@ -203,7 +204,7 @@ program MLSL2
   FILESTRINGTABLE = .true.
   !---------------- Task (2) ------------------
 ! Where to send output, how severe an error to quit
-  outputOptions%prunit = OUTPUT_PRINT_UNIT
+  outputOptions%prunit = L2Options%Output_print_unit
   MLSMSG_Severity_to_quit = MAX(QUIT_ERROR_THRESHOLD, MLSMSG_Debug+1)
   call set_config ( severity_to_quit = MLSMSG_Severity_to_quit )
 
@@ -216,7 +217,7 @@ program MLSL2
 
   !---------------- Task (3) ------------------
   i = 1+hp
-  ORIGINALCMDS = ' '
+  L2Options%Originalcmds = ' '
   do ! Process Lahey/Fujitsu run-time options; they begin with "-Wl,"
     call getarg ( i, line )
     if ( line(1:4) /= '-Wl,' ) exit
@@ -228,9 +229,10 @@ program MLSL2
     ! print *, trim(line)
     if ( len_trim(line) < 1 ) exit
     i = i + 1
-    ORIGINALCMDS = trim(ORIGINALCMDS) // null // trim(line)
+    L2Options%Originalcmds = trim(L2Options%Originalcmds) // null // trim(line)
   enddo
-  line = processOptions( trim(ORIGINALCMDS), null )
+  line = processOptions( trim(L2Options%Originalcmds), null )
+  OriginalOptions = L2Options
   ! stop
   if ( line == 'help' ) then
     call option_usage
@@ -496,9 +498,10 @@ program MLSL2
       ! Now do the L2 processing.
       ! stop-early flags => no writing, no retrieval
       skipDirectwrites = ( skipDirectwrites .or. stopAfterSection /= ' ' )
-      skipRetrieval = ( skipRetrieval .or.  stopAfterSection /= ' ' )
+      L2Options%SkipRetrieval = ( L2Options%SkipRetrieval .or.  stopAfterSection /= ' ' )
       skipDirectwritesOriginal = skipDirectwrites
-      skipRetrievalOriginal = skipRetrieval
+      ! skipRetrievalOriginal = skipRetrieval
+      OriginalOptions = L2Options
       call time_now ( t1 )
       if ( timing ) &
         & call output ( "-------- Processing Begun ------ ", advance='yes' )
@@ -544,7 +547,7 @@ program MLSL2
     call FreePVMArgs
     call output('Freed PVM args', advance='yes')
     if ( parallel%slave .and. &
-      & (SKIPDIRECTWRITES .or. SKIPRETRIEVAL .or. sectionsToSkip /= ' ' ) ) then
+      & (SKIPDIRECTWRITES .or. L2Options%SkipRetrieval .or. sectionsToSkip /= ' ' ) ) then
       ! call mls_h5close(error)
       ! call MLSMessageExit
     else if ( error == 0 ) then
@@ -678,7 +681,7 @@ contains
       call output ( trim(command), advance='yes' )
     end if
     call output ( ' mlsl2 called with command line options: ', advance='no' )
-    call output ( trim(ORIGINALCMDS), advance='yes' )
+    call output ( trim(L2Options%Originalcmds), advance='yes' )
     call output ( ' l2cf file:', advance='no' )
     call blanks ( 4, advance='no' )
     call output ( trim(MLSL2CF%name), advance='yes' )
@@ -743,7 +746,7 @@ contains
         & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       call outputNamedValue ( 'Skip all direct writes?', SKIPDIRECTWRITES, advance='yes', &
         & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-      call outputNamedValue ( 'Skip all retrievals?', SKIPRETRIEVAL, advance='yes', &
+      call outputNamedValue ( 'Skip all retrievals?', L2Options%SkipRetrieval, advance='yes', &
         & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       call outputNamedValue ( 'Unretrieved states fill', STATEFILLEDBYSKIPPEDRETRIEVALS, advance='yes', &
         & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
@@ -754,10 +757,10 @@ contains
         & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       call outputNamedValue ( 'Number of switches set', numSwitches, advance='yes', &
         & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-      call outputNamedValue ( 'Standard output unit', outputOptions%prunit, advance='yes', &
+      call outputNamedValue ( 'Standard output unit', PrUnitName(outputOptions%prunit), advance='yes', &
         & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       call get_config ( logFileUnit = logFileUnit )
-      call outputNamedValue ( 'Log file unit', logFileUnit, advance='yes', &
+      call outputNamedValue ( 'Log file unit', PrUnitname(logFileUnit), advance='yes', &
         & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       call outputNamedValue ( 'Crash on any error?', MLSMessageConfig%crashOnAnyError, advance='yes', &
         & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
@@ -852,6 +855,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.226  2018/09/13 20:25:19  pwagner
+! Moved changeable options to new L2Options; added DumpOptions
+!
 ! Revision 2.225  2018/05/22 23:08:40  pwagner
 ! Dumped settings include GlobalAttributes
 !
