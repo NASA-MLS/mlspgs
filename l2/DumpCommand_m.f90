@@ -1250,7 +1250,7 @@ contains
     use MLSFiles, only: DumpMLSFile => Dump, GetMLSFilebyname
     use MLSFinds, only: Findfirst, FindUnique
     use MLSKinds, only: R8, Rv
-    use MLSL2Options, only: Command_Line, CurrentChunkNumber, CurrentPhaseName, &
+    use MLSL2Options, only: L2Options, &
       & L2cfnode, Normal_Exit_Status, RuntimeValues  !,  MLSMessage
     use MLSL2Timings, only: Dump_Section_Timings
     use MLSMessagemodule, only: MLSMSG_Crash, MLSMSG_Error, MLSMessageCalls, &
@@ -1578,9 +1578,9 @@ contains
           case ( f_chunkDivide )
             call dump ( chunkDivideConfig )
           case ( f_chunkNumber )
-            call outputNamedValue ( 'chunk number', currentChunkNumber )
+            call outputNamedValue ( 'chunk number', L2Options%currentChunkNumber )
           case ( f_commandLine )
-            call outputNamedValue ( 'command line', command_line )
+            call outputNamedValue ( 'command line', L2Options%command_line )
           case ( f_crashBurn )
             call finish ( 'ending mlsl2' )
             NEVERCRASH = .false.
@@ -1604,7 +1604,7 @@ contains
           case ( f_pfaStru )
             call dump_PFAStructure ( details )
           case ( f_phaseName )
-            call outputNamedValue ( 'phase name', currentphaseName )
+            call outputNamedValue ( 'phase name', L2Options%currentphaseName )
           case ( f_pointingGrids )
             call dump_pointing_grid_database ( son )
           case ( f_polygon )
@@ -3039,8 +3039,8 @@ contains
   ! ----------------------------------------------  Evaluator_sca  -----
   function Evaluator_sca ( ARG ) result( ITSVALUE )
     use MLSL2Options, only: Checkpaths, Need_L1bFiles, &
-      & RuntimeValues, Skipretrieval
-    use MLSL2Options, only: CurrentChunkNumber, CurrentPhaseName
+      & RuntimeValues, L2Options
+    use MLSL2Options, only: L2Options
     use MLSStringLists, only: GetHashElement
     use MLSStrings, only: Lowercase, WriteIntsToChars
     ! Args
@@ -3051,17 +3051,17 @@ contains
     case ('checkpaths')
       itsValue = merge( 'true ', 'false', checkpaths )
     case ('chunknumber')
-      call writeIntsToChars ( currentChunkNumber, itsValue )
+      call writeIntsToChars ( L2Options%currentChunkNumber, itsValue )
     case ('count')
       call GetHashElement( runTimeValues%lkeys, runTimeValues%lvalues, &
         & arg, itsValue, countEmpty=countEmpty, &
         & inseparator=runTimeValues%sep )
     case ('phasename')
-      itsValue = lowercase(currentPhaseName)
+      itsValue = lowercase(L2Options%currentphaseName)
     case ('need_l1bfiles')
       itsValue = merge( 'true ', 'false', need_l1bfiles )
     case ('skipretrieval')
-      itsValue = merge( 'true ', 'false', skipretrieval )
+      itsValue = merge( 'true ', 'false', L2Options%skipretrieval )
     case default
       ! What did you mean?
       ! Maybe just whether two character strings are the same
@@ -3221,6 +3221,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.142  2018/09/13 20:22:32  pwagner
+! Moved changeable options to new L2Options; added DumpOptions
+!
 ! Revision 2.141  2018/09/07 00:00:15  pwagner
 ! More commands that set a runtime flag can now take /reverse
 !
