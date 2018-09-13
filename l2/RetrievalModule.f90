@@ -86,9 +86,8 @@ contains
     use MatrixTools, only: DumpBlocks
     use MLSKinds, only: R8, RV
     use MLSCommon, only: MLSFile_t
-    use MLSL2Options, only: L2CFNode, SkipRetrieval, SpecialDumpFile, &
-      & StateFilledBySkippedRetrievals, &
-      & CurrentChunkNumber, CurrentPhaseName
+    use MLSL2Options, only: L2CFNode, L2Options, SpecialDumpFile, &
+      & StateFilledBySkippedRetrievals
     use MLSL2timings, only: Section_Times, Total_Times, Add_To_Retrieval_Timing
     use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning, MLSMessageReset, &
       & MLSMessage
@@ -341,12 +340,12 @@ repeat_loop: do ! RepeatLoop
         case ( s_compare )
           call decorate ( key,  BooleanFromComparingQtys ( key, vectorDatabase ) )
         case ( s_diff, s_dump )
-          if ( .not. SKIPRETRIEVAL ) &
+          if ( .not. L2Options%SkipRetrieval ) &
             & call dumpCommand ( key, forwardModelConfigs=configDatabase, &
             & vectors=vectorDatabase, FileDataBase=FileDataBase, &
             & MatrixDatabase=MatrixDatabase, Hessiandatabase=HessianDatabase )
         case ( s_dumpblocks )
-          if ( .not. SKIPRETRIEVAL ) &
+          if ( .not. L2Options%SkipRetrieval ) &
             & call DumpBlocks ( key, matrixDatabase, hessianDatabase )
         case ( s_flagCloud )
           call trace_begin ( me_flagCloud, "Retrieve.flagCloud", root, &
@@ -373,7 +372,7 @@ repeat_loop: do ! RepeatLoop
         case ( s_Reevaluate )
           call decorate ( key,  BooleanFromFormula ( 0, key, vectorDatabase ) )
         case ( s_retrieve )
-          if ( SKIPRETRIEVAL .and. STATEFILLEDBYSKIPPEDRETRIEVALS == 0. ) cycle
+          if ( L2Options%SkipRetrieval .and. STATEFILLEDBYSKIPPEDRETRIEVALS == 0. ) cycle
           call trace_begin ( me_retrieve, "Retrieve.retrieve", root, &
             & cond=toggle(gen) )
           saveLevels = levels
@@ -543,7 +542,7 @@ repeat_loop: do ! RepeatLoop
             end select
           end do ! ! fields of the "retrieve" specification
 
-          if ( skipRetrieval ) then
+          if ( L2Options%SkipRetrieval ) then
             if ( got(f_state) ) then
               call ClearVector( state, real(statefilledbyskippedretrievals, rv) )
               call output ( 'Clearing retrieval state vector name: ' )
@@ -770,7 +769,7 @@ repeat_loop: do ! RepeatLoop
           toggle = saveToggle
           call trace_end ( "Retrieve.retrieve", cond=toggle(gen) )
         case ( s_sids )
-          if ( skipRetrieval .and. switchDetail( switches, 'fiw' ) < 0 ) cycle
+          if ( L2Options%SkipRetrieval .and. switchDetail( switches, 'fiw' ) < 0 ) cycle
           call time_now ( t1 )
           call sids ( key, VectorDatabase, MatrixDatabase, HessianDatabase, configDatabase, chunk)
         case ( s_select ) ! ============ Start of select .. case ==========
@@ -1729,8 +1728,8 @@ NEWT: do ! Newton iteration
         loopCounter = loopCounter + 1
         if ( loopCounter > max(50, 50 * maxJacobians) ) then
           chunk%abandoned = .true.
-          call writeIntsToChars( currentChunkNumber, mesgChunkNo )
-          mesg = '(' // trim(CurrentPhaseName) // ')' // &
+          call writeIntsToChars( L2Options%CurrentChunkNumber, mesgChunkNo )
+          mesg = '(' // trim(L2Options%CurrentPhaseName) // ')' // &
             & ' (' // trim(mesgChunkNo) // ') ' // &
             & 'Retrieval abandoned because DNWT appears to be looping.'
           call MLSMessage ( MLSMSG_Warning, ModuleName, &
@@ -3013,6 +3012,9 @@ NEWT: do ! Newton iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.362  2018/09/13 20:23:49  pwagner
+! Moved changeable options to new L2Options; added DumpOptions
+!
 ! Revision 2.361  2018/08/28 20:50:10  vsnyder
 ! Don't print message about fnmin being negative if |fnmin| is small
 !
