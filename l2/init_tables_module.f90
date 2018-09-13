@@ -870,10 +870,11 @@ contains ! =====     Public procedures     =============================
              begin, f+f_molecules, field_type(t_molecule), &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
-      begin, s+s_changeSettings, & ! Ignores rest of stuff
+      begin, s+s_changeSettings, & ! Ignores rest of stuff (Why do you say that?)
              begin, f+f_additional, boolean(), &
              begin, f+f_debug, boolean(), &
              begin, f+f_options, string(), &
+             begin, f+f_reset, boolean(), &
              begin, f+f_silent, boolean(), &
              begin, f+f_skipDirectWrites, boolean(), &
              begin, f+f_skipDirectWritesif, field_spec(s_Boolean), &
@@ -883,10 +884,11 @@ contains ! =====     Public procedures     =============================
              begin, f+f_verbose, boolean(), &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
-      begin, s+s_phase, & ! Ignores rest of stuff
+      begin, s+s_phase, & ! Ignores rest of stuff (Why do you say that?)
              begin, f+f_additional, boolean(), &
              begin, f+f_debug, boolean(), &
              begin, f+f_options, string(), &
+             begin, f+f_reset, boolean(), &
              begin, f+f_silent, boolean(), &
              begin, f+f_skipDirectWrites, boolean(), &
              begin, f+f_skipDirectWritesif, field_spec(s_Boolean), &
@@ -2129,6 +2131,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.643  2018/09/13 20:22:02  pwagner
+! Added /reset flag to phase command
+!
 ! Revision 2.642  2018/09/06 23:59:43  pwagner
 ! More commands that set a runtime flag can now take /reverse
 !
