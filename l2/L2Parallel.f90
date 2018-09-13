@@ -37,7 +37,7 @@ module L2Parallel
     & AddmachinetoDatabase, SigToName
   use Machine, only: Shell_Command, Usleep
   use MLSKinds, only: R8
-  use MLSL2options, only: MLSL2Message
+  use MLSL2options, only: L2Options, OriginalOptions, MLSL2Message
   use MLSMessagemodule, only: MLSMSG_Error, MLSMSG_Warning, PVMErrorMessage
   use MLSFinds, only: Findall, Findfirst
   use MLSStringlists, only: Catlists, Expandstringrange, Removenumfromlist, &
@@ -190,6 +190,8 @@ contains
       call output(ChunkDivideConfig%allowPostOverlaps, advance='yes')
     endif
     if ( BeVerbose( 'chu', -1 ) ) call dump ( chunks )
+     L2Options%currentChunkNumber = chunkno
+     OriginalOptions%currentChunkNumber = chunkno
 
   end subroutine GetChunkInfoFromMaster
 
@@ -1808,6 +1810,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.119  2018/09/13 20:26:07  pwagner
+! Now properly sets L2Options%currentChunkNumber
+!
 ! Revision 2.118  2018/07/27 23:18:48  pwagner
 ! Renamed level 2-savvy MLSMessage MLSL2Message
 !
