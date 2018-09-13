@@ -82,6 +82,8 @@ module PrintIt_m ! Lowest-level module for printing, logging, etc.
   integer, parameter, public :: InvalidLogUnit      = 0 ! max(0,stdoutLogUnit+1)
   integer, parameter, public :: StdoutLogUnit       = InvalidLogUnit - 1 ! Output_Unit
   integer, parameter, public :: DefaultLogUnit      = StdoutLogUnit - 1 ! Error_Unit
+  integer, parameter, public :: BothLogUnit         = DefaultLogUnit - 1 ! Error_Unit
+  integer, parameter, public :: BufferedLogUnit     = BothLogUnit - 1 ! Error_Unit
 
   integer, parameter, public :: PGS_S_SUCCESS = 0
   integer, parameter, public :: PrefixLen = 32
@@ -287,8 +289,8 @@ contains
 
   end subroutine IgnoreToolkit
 
-  ! ------------------------------------------------  LogUnitName  -----
-  function LogUnitName ( LogUnit ) result( name )
+  ! ------------------------------------------------  LogUnitName_old  -----
+  function LogUnitName_old ( LogUnit ) result( name )
     ! Return an appropriate name for the LogUnit number
     ! Args
     integer, intent(in) :: LogUnit
@@ -303,6 +305,35 @@ contains
       name = 'invalid'
     case default ! > 0
       name = 'Fortran unit'
+    end select
+  end function LogUnitName_old
+
+  ! ---------------------------------------------- LogUnitName
+  ! Prints certain normally private data
+  ! revealing what settings and options are in force
+  function LogUnitName ( unit ) result ( name )
+    ! Args
+    integer, intent(in)     :: unit
+    character(len=16)       :: name
+    ! Internal variables
+    ! Executable
+    select case ( unit )
+    case ( BufferedLogUnit )
+      name = 'lines buffer'
+    case ( BothLogUnit )
+      name = 'stdout+log'
+    case ( DefaultLogUnit )
+      name = 'msg log'
+    case ( StdoutLogUnit )
+      name = 'stdout'
+    case ( InvalidLogUnit )
+      name = 'invalid'
+    case default
+      if ( unit > 0 ) then
+        write ( name, '(a8, i8) ' ) 'unit', unit
+      else
+        name = 'illegal unit'
+      endif
     end select
   end function LogUnitName
 
@@ -500,6 +531,9 @@ contains
 end module PrintIt_m
 
 ! $Log$
+! Revision 2.12  2018/09/13 20:15:40  pwagner
+! Added new LogUnits to fit in with needs of output_m
+!
 ! Revision 2.11  2018/03/22 16:45:35  pwagner
 ! Added IgnoreToolkit to ease writing tools that use mlspgs modules
 !
