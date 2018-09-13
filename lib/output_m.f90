@@ -9,11 +9,11 @@
 ! export authority as may be required before exporting such information to
 ! foreign countries or providing access to foreign persons.
 
-module OUTPUT_M
+module Output_M
 
   ! Normal level printing and formatting
   ! Directs output to either stddout or PrUnit
-  ! See also dump_0 and printit_m
+  ! See also dump_0 and Printit_m
   ! For higher-level procedures, see highOutput
 
   use Dates_Module, only: ReformatDate, ReformatTime
@@ -25,7 +25,13 @@ module OUTPUT_M
     & Readintsfromchars, Stretch, Trim_Safe
   use PrintIt_M, only: Assemblefullline, Get_Config, &
     & MLSMSG_Crash, MLSMSG_Debug, MLSMSG_Info, MLSMSG_Error, &
-    & MLSMSG_Severity_To_Quit, PrintItOut, &
+    & MLSMSG_Severity_To_Quit, &
+    & InvalidPrUnit          => InvalidLogUnit, &  
+    & StdoutPrUnit           => StdoutLogUnit, &   
+    & MsgLogPrUnit           => DefaultLogUnit, &  
+    & BothPrUnit             => BothLogUnit, &     
+    & OutputLinesPrUnit      => BufferedLogUnit, & 
+    & PrintItOut, PrUnitName => LogUnitName, &
     & MLSMessageConfig
 
   implicit none
@@ -58,11 +64,11 @@ module OUTPUT_M
 ! FlushOutputLines         print the current outputLines; then reset to ''
 ! FlushStdout              flush any buffered lines to stdout
 ! GetOutputStatus          returns normally private data
-! PrintOutputStatus        prints normally private data
 ! IsOutputSuspended        returns TRUE if output is suspended; i.e. running silent
 ! Newline                  print a newline
 ! Output                   print argument
 ! PrintOutputStatus        print normally private settings and options
+! PrUnitName               Where output is directed
 ! ResetIndent              set indenting back to 0
 ! RestoreSettings          restore default settings for output, stamps, tabs
 ! RevertOutput             revert output to file used before switchOutput
@@ -125,14 +131,14 @@ module OUTPUT_M
   ! These apply if we don't output to a fortran unit number (which is > 0)
   ! See also Beep command, and advance='stderr' or advance='arg1 ..'
   ! Possible values for PrUnit
-  integer, parameter, public :: INVALIDPRUNIT      = 0
-  integer, parameter, public :: STDOUTPRUNIT       = INVALIDPRUNIT - 1
-  integer, parameter, public :: MSGLOGPRUNIT       = STDOUTPRUNIT - 1
-  integer, parameter, public :: BOTHPRUNIT         = MSGLOGPRUNIT - 1
-  integer, parameter, public :: OUTPUTLINESPRUNIT  = BOTHPRUNIT - 1
+  public :: InvalidPrUnit    
+  public :: StdoutPrUnit     
+  public :: MsglogPrUnit     
+  public :: BothPrUnit       
+  public :: OutputlinesPrUnit
 
   ! Which of the above would involve stdout
-  logical, parameter, private :: UseStdout(OUTPUTLINESPRUNIT:INVALIDPRUNIT) = &
+  logical, parameter, private :: UseStdout(OutputlinesPrUnit:InvalidPrUnit) = &
     !    OUTPUTLINESPRUNIT  BOTHPRUNIT  MSGLOGPRUNIT  STDOUTPRUNIT
     & (/ .false.,           .true.,     .false.,      .true., &
     !    INVALIDPRUNIT
@@ -143,7 +149,7 @@ module OUTPUT_M
 
   public :: AddToIndent, Advance_Is_Yes_Or_No, Beep, Blanks, &
     & FlushOutputLines, FlushStdout, GetOutputStatus, Newline, &
-    & Output, Output_Char_Nocr, PrintOutputStatus, &
+    & Output, Output_Char_Nocr, PrintOutputStatus, PrUnitName, &
     & ResetIndent, RestoreSettings, ResumeOutput, RevertOutput, &
     & SetFillPattern, SetOutputStatus, SuspendOutput, SwitchOutput
 
@@ -176,27 +182,27 @@ module OUTPUT_M
   ! We can use the OutputLines mechanism for user-controlled
   ! buffering, filtering, grep-ing, or whatever
   integer, parameter :: numPatterns = 13 ! How many special patterns may we store
-  integer, public, parameter :: MAXOUTPUTLINESLEN = 2048 ! How many chars it can hold
-  character(len=MAXOUTPUTLINESLEN), public, save     :: OUTPUTLINES = ' '
+  integer, public, parameter :: MaxOutputlinesLen = 2048 ! How many chars it can hold
+  character(len=MAXOUTPUTLINESLEN), public, save     :: OutputLines = ' '
 
   ! This is the type for configuring how to automatically format
   ! lines and whether they should be sent to stdout or elsewhere
   ! The default values are chosen well; override them at your own risk!
   type outputOptions_T
-    integer :: prUnit = STDOUTPRUNIT    ! Unit for output (see comments above).  
+    integer :: PrUnit = StdoutPrUnit    ! Unit for output (see comments above).  
     integer :: MLSMSG_Level        = MLSMSG_Info ! What level if logging
-    integer :: newLineVal          = 10 ! 13 means <cr> becomes new line; -999 means ignore
-    integer :: nArrayElmntsPerLine = 7
-    integer :: nBlanksBtwnElmnts   = 3
-    logical :: buffered            = .true.
-    logical :: logParent           = .false. ! Show who called output, not output
-    logical :: prUnitLiteral       = .false. ! output to prUnit even if < 0
-    logical :: skipMLSMsgLogging   = .false.
+    integer :: NewLineVal          = 10 ! 13 means <cr> becomes new line; -999 means ignore
+    integer :: NArrayElmntsPerLine = 7
+    integer :: NBlanksBtwnElmnts   = 3
+    logical :: Buffered            = .true.
+    logical :: LogParent           = .false. ! Show who called output, not output
+    logical :: PrUnitLiteral       = .false. ! output to prUnit even if < 0
+    logical :: SkipMLSMsgLogging   = .false.
     character(len=FileNameLen) :: name = 'stdout'
-    character(len=3)  :: advanceDefault = 'no' ! if advance=.. missing
-    character(len=12) :: sdFormatDefault = '*' ! * means default format spec
-    character(len=1)  :: arrayElmntSeparator = ' '
-    character(len=27) :: parentName = "$RCSfile$"
+    character(len=3)  :: AdvanceDefault = 'no' ! if advance=.. missing
+    character(len=12) :: SdFormatDefault = '*' ! * means default format spec
+    character(len=1)  :: ArrayElmntSeparator = ' '
+    character(len=27) :: ParentName = "$RCSfile$"
   end type
 
   ! This is the type for advanced formatting options from the advance=..
@@ -248,10 +254,10 @@ module OUTPUT_M
     !  C  = ~ = ~ = ~ = ~ = ~ = ~ = ~ = ~ = ~ = ~ = ~ = ~ = ~ = ~ = ~    
   end type
 
-  type(advancedOptions_T), public, save :: advancedOptions
-  type(outputOptions_T), public, save   :: outputOptions
-  type(patternOptions_T), public, save  :: patternOptions
-  type(outputOptions_T), private, save  :: DefaultOutputOptions
+  type(AdvancedOptions_T), public, save :: AdvancedOptions
+  type(OutputOptions_T), public, save   :: OutputOptions
+  type(PatternOptions_T), public, save  :: PatternOptions
+  type(OutputOptions_T), private, save  :: DefaultOutputOptions
 
   ! This is the type for configuring whether and how to automatically stamp
   ! lines sent to stdout
@@ -601,6 +607,35 @@ contains
     end function ok
   end subroutine printOutputStatus
 
+  ! ---------------------------------------------- PrUnitName
+  ! Prints certain normally private data
+  ! revealing what settings and options are in force
+  function PrUnitName_old ( unit ) result ( name )
+    ! Args
+    integer, intent(in)     :: unit
+    character(len=16)       :: name
+    ! Internal variables
+    ! Executable
+    select case ( unit )
+    case ( OutputLinesPrunit )
+      name = 'lines buffer'
+    case ( BothPrunit )
+      name = 'stdout+log'
+    case ( MsgLogPrunit )
+      name = 'msg log'
+    case ( StdoutPrunit )
+      name = 'stdout'
+    case ( InvalidPrunit )
+      name = 'invalid'
+    case default
+      if ( unit > 0 ) then
+        write ( name, '(a8, i8) ' ) 'unit', unit
+      else
+        name = 'illegal unit'
+      endif
+    end select
+  end function PrUnitName_old
+
   ! ----------------------------------------------  isOutputSuspended  -----
   logical function isOutputSuspended ()
   ! Have we suspended outputting to PRUNIT?
@@ -758,7 +793,7 @@ contains
     ! (1) print to stderr if advance = 'stderr' or 'beep'
     ! (2) go silent if we are skipping all output
     ! (3) write to a file unit if PrUnit is to be taken literally
-    ! (4) append to our accumulated outputLines if we are deferring output
+    ! (4) append to our accumulated OutputLines if we are deferring output
     ! (5) print immediately if we have been switched to stdout
     ! (6) wade through a thicket of sub-choices involving possibly
     !     (a) time stamps, either individually or grouped
@@ -803,12 +838,12 @@ contains
     ! print *, 'outputOptions%prUnit: ', outputOptions%prUnit
     ! print *, 'outputOptions%prUnitLiteral: ', outputOptions%prUnitLiteral
     ! Do any special orders apply to this output?
-    if ( outputOptions%prunit ==  OUTPUTLINESPRUNIT ) then
-      ! Append to outputLines; maybe print later on
-      call append_chars( outputLines, chars )
+    if ( outputOptions%prunit ==  OutputLinesPrUnit ) then
+      ! Append to OutputLines; maybe print later on
+      call append_chars( OutputLines, chars )
       if ( my_adv == 'yes' ) &
-        &  call append_chars( outputLines, achar(outputOptions%NewLineVal) )
-      ! print *, 'Appending to outputlines; now ', trim(outputLines)
+        &  call append_chars( OutputLines, achar(outputOptions%NewLineVal) )
+      ! print *, 'Appending to OutputLines; now ', trim(OutputLines)
       go to 9
     elseif ( outputOptions%prUnitLiteral ) then
       write( outputOptions%prUnit, '(a)', advance=my_adv ) chars
@@ -1734,9 +1769,12 @@ contains
   end function not_used_here
 !---------------------------------------------------------------------------
 
-end module OUTPUT_M
+end module Output_M
 
 ! $Log$
+! Revision 2.138  2018/09/13 20:18:20  pwagner
+! Now gets PrUnits from similarly-named units of PrintIt_m; PrUnitname, too
+!
 ! Revision 2.137  2018/05/11 20:33:05  pwagner
 ! make MAXOUTPUTLINESLEN public
 !
