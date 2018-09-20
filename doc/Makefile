@@ -21,6 +21,7 @@
 # tex files in this directory         'make help--doc'
 # tex files in cfm                    'make help--cfm'
 # tex files in icfm                   'make help--icfm'
+# tex files in icfm                   'make help--l2cf'
 # --------------- End main help
 # --------------- doc help
 # To build all the tex files in this directory type
@@ -41,6 +42,12 @@
 # or else cd to the icfm subdirectory and just type 'make'
 # From there look in the subdirectories named 'dvi' and 'pdf'
 # --------------- End icfm help
+# --------------- l2cf help
+# To build the documentation for the l2cf, type
+# 'make l2cf'
+# or else cd to the l2cf subdirectory and just type 'make'
+# From there look in the subdirectories named 'dvi' and 'pdf'
+# --------------- End l2cf help
 # ---------------------- The name of this file (is the right-hand-side below)
 MakeFName = Makefile
 # If the right-hand-side is not Makefile
@@ -81,10 +88,8 @@ short_name=doc
 # l2 won't build yet (it lacks certain files, e.g. l2cf_Fill_BinMax.tex)
 #SUBDIRS := $(shell ${REECHO} -d cfm)
 
-# Errors in the .tex sources require us to omit the following
-# OMIT_SRCS := wvs-004.tex wvs-051-neural_body.tex wvs-111.tex wvs-118.tex \
-#     iy-002.tex iy-003.tex iy-008.tex iy-009.tex \
-#     iy-010.tex iy-011.tex texmacros.tex
+# Errors in the .tex sources require us to omit the files named in
+# tex.omitted
 OMIT_SRCS := $(shell cat tex.omitted)
 OMIT_PREFXD := $(shell ${REECHO} -prefix=-d $(OMIT_SRCS))
 OMIT_SRCS_REV := 'wvs-004\*.tex' 'wvs-051\*.tex' 'wvs-063\*.tex'
@@ -208,6 +213,10 @@ help--icfm:
 	@TOPIC=icfm; sed -n '/'$$TOPIC' help/,/End '$$TOPIC' help/ p' $(DOCDIR)/Makefile \
 		| sed -n 's/^..//p' | sed '1 d; $$ d'
 
+help--l2cf:
+	@TOPIC=l2cf; sed -n '/'$$TOPIC' help/,/End '$$TOPIC' help/ p' $(DOCDIR)/Makefile \
+		| sed -n 's/^..//p' | sed '1 d; $$ d'
+
 
 cfm: $(DOCDIR)/cfm $(DOCDIR)/cfm/Makefile
 	$(MAKE) -f $(MakeFName) -C $@ DOCDIR=$(DOCDIR)/cfm
@@ -232,6 +241,9 @@ update:
 
 # ========================================================================
 # $Log$
+# Revision 1.3  2018/08/07 20:36:48  pwagner
+# Expanded list of .PHONY targets
+#
 # Revision 1.2  2018/07/11 16:45:18  pwagner
 # Can now build l2cf, wvs-149
 #
