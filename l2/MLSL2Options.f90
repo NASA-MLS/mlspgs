@@ -335,7 +335,7 @@ contains
       return
     else if ( severity == MLSMSG_Warning ) then
       ! This trickery is to determine whether this warning would be suppressed
-      call SAYMESSAGE ( MLSMSG_TestWarning, ModuleNameIn, MyMessage, &
+      call SayMessage ( MLSMSG_TestWarning, ModuleNameIn, MyMessage, &
         & Advance, MLSFile, myStatus )
       if ( present(status) ) status = myStatus
       if ( myStatus /= 0 ) return
@@ -400,7 +400,7 @@ contains
         if ( .not. outputInstead ) call Bummer ( mesg, &
           & LineLength=LineLength, severity=severity )
       else
-        if ( .not. outputInstead ) call SAYMESSAGE ( severity, ModuleNameIn, It, &
+        if ( .not. outputInstead ) call SayMessage ( severity, ModuleNameIn, It, &
           & Advance, MLSFile, status )
         if ( mustRepeat ) call output( trim(It), advance='yes' )
       endif
@@ -546,7 +546,7 @@ cmds: do
     if ( outputOptions%prunit /= INVALIDPRUNIT ) &
       & outputOptions%prunit = L2Options%Output_print_unit
     ! print *, 'Ended processing options'
-    contains
+  contains
     subroutine getNextArg( i, line )
       ! Args
       integer, intent(in)           :: i
@@ -1102,7 +1102,7 @@ jloop:do while ( j < len_trim(line) )
           case ( 'm' ); outputOptions%prunit = STDOUTPRUNIT ! -1
           case ( 'R' ) ! This does the opposite of what S does
             removeSwitches = catLists(trim(removeSwitches), line(j+1:))
-            call Dump ( removeSwitches, 'switches to be removed' )
+            if ( DeeBug ) call Dump ( removeSwitches, 'switches to be removed' )
             exit ! Took the rest of the string, so there can't be more options
           case ( 'S' )
             switches = catLists(trim(switches), line(j+1:))
@@ -1487,6 +1487,9 @@ end module MLSL2Options
 
 !
 ! $Log$
+! Revision 2.120  2018/10/05 20:49:21  pwagner
+! Dont mention switches to be removed unless dbugging
+!
 ! Revision 2.119  2018/09/13 20:20:18  pwagner
 ! Moved changeable options to new L2Options; added DumpOptions
 !
