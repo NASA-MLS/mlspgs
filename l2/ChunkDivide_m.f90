@@ -1783,8 +1783,8 @@ contains ! ===================================== Public Procedures =====
       call chooseCriticalSignals( criticalSignals )
       choseCriticalSignals = .true.
       if ( swLevel > -1 ) then
-        call output('Critical Signals you chose', advance='yes' )
-        call Dump (  criticalSignals )
+        call Dump (  criticalSignals, 'Critical Signals you chose', &
+          & options=what_options(trim=.true.) )
       endif
     endif
     ! We'll need the index number for each of the critical signals
@@ -3003,6 +3003,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.135  2018/10/05 20:42:21  pwagner
+! Improved appearance of how we Dump Critical Signals
+!
 ! Revision 2.134  2018/08/03 23:43:42  vsnyder
 ! Add tracing to several routines.  Some cannonball polishing
 !
