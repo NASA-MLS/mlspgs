@@ -19,7 +19,9 @@
 #                as an alternative to "-c command", you may use the next pair
 # -os oldstring string to be replaced
 # -rs oldstring string to replace it with
-# -g            "globally" repalce old string with new
+# -Of os_file   file with list of old strings to be replaced
+# -Rf rs_file   file with list of replacement strings
+# -g            "globally" replace old string with new
 # -f file       file of commands to pass through to sed
 # -d1 dir1      operate on every file in dir1
 # -d2 dir2      storing results in dir2 (if dir2 doesn't exist, it creates it)
@@ -57,6 +59,10 @@
 # (5) The options -name=xxx and -sufffix=xxx are mutually exclusive
 # (6) With the option -d1 dir1 don't name any files on the command line
 #     -- they will be ignored
+# (7) Unless you supply one of options -d2, -rn, or -ro resed will overwrite
+#     each filen it modifies. This could be dangerous. You have been warned.
+# (8) Using -Of and -Rf lets you you replace not just a single string
+#     with another in each filen, but as many as you have in os_file and rs_file
 # 
 # Result:
 # Files in the list may be modified or new files created
@@ -75,6 +81,49 @@
 
 # "$Id$"
 
+#---------------------------- read_file_into_array
+#
+# read each line of stdin
+# catenating them into an array which we will return
+# Ignore any entries beginning with '#' character
+# In fact, only first entry in each line is kept
+# Possible improvements:
+#   Other comment signifiers
+#   Choose field number other than 1
+
+read_file_into_array()
+{
+  array_result=''
+  while read line; do
+    element=`echo $line | awk '$1 !~ /^#/ {print $1}'`
+    if [ "$element" != "" ]
+    then
+      array_result="$array_result $element"
+    fi
+  done
+  echo $array_result
+}
+
+#---------------------------- print_nth_array_element
+#
+# Function to print the nth element in a space-delimited list
+# where n is the first arg, the list is the second arg, 
+# print_nth_array_element 3 'a b c d'
+# writes 'c' to standard output
+
+print_nth_array_element()
+{
+
+   # Do we have enough args?
+      if [ $# -lt 2 ]
+      then
+         echo "Usage: print_nth_array_element n 'a b c ..'"
+         exit 1
+      fi
+      
+      perl -e '@parts=split(" ","$ARGV[0]"); print $parts[$ARGV[1]-1]' "$2" "$1"
+}
+
 #
 #------------------------------- Main Program ------------
 
@@ -83,7 +132,7 @@
 #                  * * * Main Program  * * *                    *
 #                                                               *
 #                                                               *
-#	The entry point where control is given to the script         *
+#	The entry point where control is given to the script    *
 #****************************************************************
 #
 #   Notes
@@ -163,6 +212,7 @@ reecho_opt=""
 command_file=""
 the_command=""
 the_opt=""
+all_the_opts="$@"
 more_opts="yes"
 # Possible values for rename_which: {new, old, neither, diff}
 rename_which="neither"
@@ -172,6 +222,8 @@ dir2=""
 new_name=""
 old_string=""
 new_string=""
+os_file=""
+rs_file=""
 dryrun="no"
 globally="no"
 SED="sed"
@@ -196,6 +248,16 @@ while [ "$more_opts" = "yes" ] ; do
        ;;
     -rs )
        new_string="$2"
+       shift
+       shift
+       ;;
+    -Of )
+       os_file="$2"
+       shift
+       shift
+       ;;
+    -Rf )
+       rs_file="$2"
        shift
        shift
        ;;
@@ -282,6 +344,8 @@ then
    echo "the_command $the_command"
    echo "old_string $old_string"
    echo "new_string $new_string"
+   echo "os_file $os_file"
+   echo "rs_file $rs_file"
    echo "the_suffix $the_suffix"
    echo "new_name $new_name"
    echo "rename_which? $rename_which"
@@ -289,7 +353,7 @@ then
    echo "sed command to use $SED"
    echo "remaining args $@"
 fi
-# Check for forbidden arguments
+# Check for forbidden arguments or inconsistencies
 if [ "$the_command" != "" -a "$command_file" != "" ]
 then
   echo 'You cannot have both a command file and command-line'
@@ -297,6 +361,18 @@ then
 elif [ "$command_file" != "" ]
 then
   the_opt="$the_opt -f $command_file"
+elif [ "$old_string" != "" -a "$os_file" != "" ]
+then
+  echo 'You cannot have both an old string and a file of them'
+  exit
+elif [ "$new_string" != "" -a "$rs_file" != "" ]
+then
+  echo 'You cannot have both a replacement string and a file of them'
+  exit
+elif [ "$rs_file" != "" ]
+then
+  # We'll check later
+  echo "$rs_file" > /dev/null
 elif [ "$old_string" != "" ]
 then
   # Which delimiter shall we use? / or : ?
@@ -333,6 +409,47 @@ then
     exit
   fi
 fi
+
+# Were we given -Of and -Rf?
+# ------------------------------------------------------------
+# Method: Create a new commandline for each old string and its replacement
+# Then call ourself ($0) once for each new commandline
+if [ "$os_file" != "" -a "$rs_file" != "" ]
+then
+  # Create arrays of old and replacement strings
+  os_array=`read_file_into_array < "$os_file"`
+  rs_array=`read_file_into_array < "$rs_file"`
+  # Snip -Of and -Rf from the commandline to pass to $0
+  temp_opts=$all_the_opts
+  all_the_opts=`echo "$temp_opts" | sed "s/-Of $os_file//"`
+  temp_opts=$all_the_opts
+  all_the_opts=`echo "$temp_opts" | sed "s/-Rf $rs_file//"`
+  # Iteratively call $0 with each old string and its replacement
+  n=1
+  for old_string in $os_array
+  do
+    new_string=`print_nth_array_element $n "$rs_array"`
+    if [ $DEEBUG = "on" ]
+    then
+      echo "old_string $old_string"
+      echo "new_string $new_string"
+      echo "$0 -os $old_string -rs $new_string $all_the_opts"
+    fi
+    $0 -os $old_string -rs $new_string $all_the_opts
+    n=`expr $n + 1`
+  done
+  # That's it
+  exit 0
+elif [ "$os_file" != "" ]
+then
+  echo "you must specify both -Of and -Rf files or neither"
+  exit 1
+elif [ "$rs_file" != "" ]
+then
+  echo "you must specify both -Of and -Rf files or neither"
+  exit 1
+fi
+# ------------------------------------------------------------
 
 if [ "$rename_which" = "new" -a "$the_suffix" = "" ]
 then
@@ -475,6 +592,9 @@ do
 done                                                       
 exit
 # $Log$
+# Revision 1.11  2009/12/10 18:50:16  pwagner
+# Added debugging
+#
 # Revision 1.10  2009/07/28 21:57:23  pwagner
 # print origin of error mesg
 #
