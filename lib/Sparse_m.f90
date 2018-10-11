@@ -345,7 +345,7 @@ contains
 
   ! ------------------------------------------------  Dump_Sparse  -----
   subroutine Dump_Sparse ( Sparse, Name, Format, Colon, This, Offset, Transpose, &
-                         & Width, Exclude )
+                         & Width, Exclude, One_D_Col )
     use Array_Stuff, only: Subscripts
     use Dump_Options, only: SDFormatDefault
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
@@ -366,6 +366,7 @@ contains
                                                   ! of output is a column
     integer, intent(in), optional :: Width        ! How many per line, default 5
     real(rp), intent(in), optional :: Exclude     ! Don't print these
+    logical, intent(in), optional :: One_D_Col    ! Print 1D column subscript
 
     integer :: CS(size(sparse%uBnd,1))
     integer :: C1, C2, I, J, K, L, R1, R2, S
@@ -375,6 +376,7 @@ contains
     logical :: MyColon
     character(len=64) :: MyFormat
     logical :: MyOffset
+    logical :: MyOne_D_Col
     logical :: MyTranspose
     integer :: MyWidth
     integer :: Places
@@ -388,6 +390,8 @@ contains
     if ( present(format) ) myFormat = format
     MyOffset = .false.
     if ( present(offset) ) MyOffset = offset
+    myOne_d_col = .false.
+    if ( present(one_d_col) ) myOne_d_col = one_d_col
     MyTranspose = .false.
     if ( present(Transpose) ) MyTranspose = transpose !.and. size(cs,1) > 1
     myWidth = 5
@@ -454,13 +458,17 @@ contains
           end if
           if ( .not. doThis ) cycle
           didOne = .true.
-          cs = subscripts ( sparse%e(j)%c, sparse%uBnd, sparse%lBnd )
-          if ( myOffset ) cs = cs - sparse%lBnd + 1
-          call output ( cs(1), before="(" )
-          do l = 2, size(cs)
-            call output ( cs(l), before="," )
-          end do
-          call output ( ")" )
+          if ( myOne_d_col ) then
+            call output ( sparse%e(j)%c, before='(', after=')' )
+          else
+            cs = subscripts ( sparse%e(j)%c, sparse%uBnd, sparse%lBnd )
+            if ( myOffset ) cs = cs - sparse%lBnd + 1
+            call output ( cs(1), before="(" )
+            do l = 2, size(cs)
+              call output ( cs(l), before="," )
+            end do
+            call output ( ")" )
+          end if
           places = sum(int(log10(real(cs)))) + size(cs) + 3
           k = 0
           do
@@ -513,16 +521,20 @@ contains
             end if
             j = sparse%e(j)%nr                   ! Next column in this row
             k = k + 1
-            cs = subscripts ( sparse%e(j)%c, sparse%uBnd, sparse%lBnd )
-            if ( myOffset ) cs = cs - sparse%lBnd + 1
-            if ( size(cs) == 1 .and. myColon ) then
-              call output ( cs(1), places=5, after=": " )
+            if ( myOne_d_col ) then
+              call output ( sparse%e(j)%c, before='(', after=')' )
             else
-              call output ( cs(1), before=" (" )
-              do l = 2, size(cs)
-                call output ( cs(l), before="," )
-              end do
-              call output ( ") " )
+              cs = subscripts ( sparse%e(j)%c, sparse%uBnd, sparse%lBnd )
+              if ( myOffset ) cs = cs - sparse%lBnd + 1
+              if ( size(cs) == 1 .and. myColon ) then
+                call output ( cs(1), places=5, after=": " )
+              else
+                call output ( cs(1), before=" (" )
+                do l = 2, size(cs)
+                  call output ( cs(l), before="," )
+                end do
+                call output ( ") " )
+              end if
             end if
             call output ( sparse%e(j)%v, format=myFormat )
             if ( j == sparse%rows(i) ) exit      ! No more columns this row
@@ -1052,6 +1064,9 @@ contains
 end module Sparse_m
 
 ! $Log$
+! Revision 2.12  2018/10/11 00:33:31  vsnyder
+! Add One_D_Col option to print 1D column subscript in Dump_Sparse
+!
 ! Revision 2.11  2018/09/05 20:59:32  vsnyder
 ! Rename Row_Dot_Vec to Row_Dot_Vec_1D.  Add Row_Dot_Vec_2D and Row_Dot_Vec
 ! generic.  Rename Sparse_Dot_Vec to Sparse_Dot_Vec_1D.  Add Sparse_Dot_Vec_2D
