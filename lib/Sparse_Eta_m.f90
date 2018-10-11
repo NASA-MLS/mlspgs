@@ -287,6 +287,7 @@ contains
               v = (grid(pi)-basis(j-1)) * del_basis
               if ( v /= 0 ) call eta%add_element ( v, pi, j )
             end if
+            pr = i
             i = i + 1
           end do
         end do
@@ -414,6 +415,10 @@ contains
 end module Sparse_Eta_m
 
 ! $Log$
+! Revision 2.9  2018/10/11 00:32:26  vsnyder
+! Give PR a value in the loop wherein the grid and basis are within ranges.
+! Otherwise, I might be compared to an unitialized value, and skip a row.
+!
 ! Revision 2.8  2018/09/05 21:01:30  vsnyder
 ! Correct off-by-one error that only occurs if basis is in descending order
 ! and the grid does not extend beyond the bases.
