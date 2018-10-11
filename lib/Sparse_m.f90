@@ -459,11 +459,11 @@ contains
           if ( .not. doThis ) cycle
           didOne = .true.
           if ( myOne_d_col ) then
-            call output ( sparse%e(j)%c, before='(', after=')' )
+            call output ( sparse%e(j)%c, before=' (', after=')' )
           else
             cs = subscripts ( sparse%e(j)%c, sparse%uBnd, sparse%lBnd )
             if ( myOffset ) cs = cs - sparse%lBnd + 1
-            call output ( cs(1), before="(" )
+            call output ( cs(1), before=" (" )
             do l = 2, size(cs)
               call output ( cs(l), before="," )
             end do
@@ -522,7 +522,7 @@ contains
             j = sparse%e(j)%nr                   ! Next column in this row
             k = k + 1
             if ( myOne_d_col ) then
-              call output ( sparse%e(j)%c, before='(', after=')' )
+              call output ( sparse%e(j)%c, before=' (', after=')' )
             else
               cs = subscripts ( sparse%e(j)%c, sparse%uBnd, sparse%lBnd )
               if ( myOffset ) cs = cs - sparse%lBnd + 1
@@ -1064,6 +1064,9 @@ contains
 end module Sparse_m
 
 ! $Log$
+! Revision 2.13  2018/10/11 00:43:29  vsnyder
+! Inadvertently omitted a space in Dump_Sparse
+!
 ! Revision 2.12  2018/10/11 00:33:31  vsnyder
 ! Add One_D_Col option to print 1D column subscript in Dump_Sparse
 !
