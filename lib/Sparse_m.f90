@@ -459,7 +459,7 @@ contains
           if ( .not. doThis ) cycle
           didOne = .true.
           if ( myOne_d_col ) then
-            call output ( sparse%e(j)%c, before=' (', after=')' )
+            call output ( sparse%e(j)%c, before=' (', after=') ' )
           else
             cs = subscripts ( sparse%e(j)%c, sparse%uBnd, sparse%lBnd )
             if ( myOffset ) cs = cs - sparse%lBnd + 1
@@ -467,7 +467,7 @@ contains
             do l = 2, size(cs)
               call output ( cs(l), before="," )
             end do
-            call output ( ")" )
+            call output ( ") " )
           end if
           places = sum(int(log10(real(cs)))) + size(cs) + 3
           k = 0
@@ -522,7 +522,7 @@ contains
             j = sparse%e(j)%nr                   ! Next column in this row
             k = k + 1
             if ( myOne_d_col ) then
-              call output ( sparse%e(j)%c, before=' (', after=')' )
+              call output ( sparse%e(j)%c, before=' (', after=') ' )
             else
               cs = subscripts ( sparse%e(j)%c, sparse%uBnd, sparse%lBnd )
               if ( myOffset ) cs = cs - sparse%lBnd + 1
@@ -1064,6 +1064,9 @@ contains
 end module Sparse_m
 
 ! $Log$
+! Revision 2.14  2018/10/11 01:01:42  vsnyder
+! More blank stuff to make transpose and non-transpose dumps more alike
+!
 ! Revision 2.13  2018/10/11 00:43:29  vsnyder
 ! Inadvertently omitted a space in Dump_Sparse
 !
