@@ -19,6 +19,7 @@
     logical :: DoAlloc
     integer :: MyLow1, MyLow2, MyLow3, MyLow4, Status
     character(127) :: ERMSG
+    status = 0 ! In case we don't need to allocate
     myLow1 = 1; myLow2 = 1; myLow3 = 1; myLow4 = 1
     if ( present(low1) ) myLow1 = low1
     if ( present(low2) ) myLow2 = low2
@@ -35,11 +36,6 @@
         & stat=status, ERRMSG=ERMSG )
       addr = 0
       if ( status == 0 ) then
-        if ( present(fill) ) then
-          to_allocate = fill
-        else if ( clearOnAllocate ) then
-          to_allocate = default
-        end if
         if ( size(to_allocate) > 0 ) &
           & addr = transfer ( c_loc(to_allocate(myLow1,myLow2,myLow3,myLow4)), addr )
       end if
@@ -51,8 +47,18 @@
     else
       to_allocate(myLow1:,myLow2:,myLow3:,myLow4:) => to_allocate
     end if
+    if ( status == 0 ) then
+      if ( present(fill) ) then
+        to_allocate = fill
+      else if ( clearOnAllocate ) then
+        to_allocate = default
+      end if
+    end if
 
 ! $Log$
+! Revision 1.6  2018/04/19 00:43:00  vsnyder
+! Turn on address computation for tracking
+!
 ! Revision 1.5  2015/06/04 01:54:53  vsnyder
 ! Don't reallocate if bounds are the same
 !

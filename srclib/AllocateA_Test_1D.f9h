@@ -20,6 +20,7 @@
     integer :: MyLow, Status
     character(127) :: ERMSG
     target :: To_Allocate
+    status = 0 ! In case we don't need to allocate
     myLow = 1
     if ( present(lowBound) ) myLow = lowBound
     doAlloc = .not. allocated(to_allocate)
@@ -30,11 +31,6 @@
       allocate ( To_Allocate(myLow:dim1), STAT=status, ERRMSG=ermsg )
       addr = 0
       if ( status == 0 ) then
-        if ( present(fill) ) then
-          to_allocate = fill
-        else if ( clearOnAllocate ) then
-          to_allocate = default
-        end if
         if ( size(to_allocate) > 0 ) addr = transfer ( c_loc(to_allocate(myLow)), addr )
       end if
       call test_allocate ( status, moduleName, ItsName, &
@@ -42,8 +38,18 @@
       if ( mod(trackallocates,2) > 0 ) &
         & call trackAllocate ( to_allocate, itsName, moduleName )
     end if
+    if ( status == 0 ) then
+      if ( present(fill) ) then
+        to_allocate = fill
+      else if ( clearOnAllocate ) then
+        to_allocate = default
+      end if
+    end if
 
 ! $Log$
+! Revision 1.2  2018/04/19 00:43:00  vsnyder
+! Turn on address computation for tracking
+!
 ! Revision 1.1  2015/06/04 00:33:38  vsnyder
 ! Initial commit
 !

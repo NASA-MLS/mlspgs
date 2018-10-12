@@ -20,6 +20,7 @@
     integer :: MyLow1, MyLow2, MyLow3, MyLow4, Status
     character(127) :: ERMSG
     target :: To_Allocate
+    status = 0 ! In case we don't need to allocate
     myLow1 = 1; myLow2 = 1; myLow3 = 1; myLow4 = 1
     if ( present(low1) ) myLow1 = low1
     if ( present(low2) ) myLow2 = low2
@@ -40,11 +41,6 @@
         & STAT=status, ERRMSG=ermsg )
       addr = 0
       if ( status == 0 ) then
-        if ( present(fill) ) then
-          to_allocate = fill
-        else if ( clearOnAllocate ) then
-          to_allocate = default
-        end if
         if ( size(to_allocate) > 0 ) &
           & addr = transfer ( c_loc(to_allocate(myLow1,myLow2,myLow3,myLow4)), addr )
       end if
@@ -54,8 +50,18 @@
       if ( mod(trackallocates,2) > 0 ) &
         & call trackAllocate ( to_allocate, itsName, moduleName )
     end if
+    if ( status == 0 ) then
+      if ( present(fill) ) then
+        to_allocate = fill
+      else if ( clearOnAllocate ) then
+        to_allocate = default
+      end if
+    end if
 
 ! $Log$
+! Revision 1.2  2018/04/19 00:43:00  vsnyder
+! Turn on address computation for tracking
+!
 ! Revision 1.1  2015/06/04 00:33:38  vsnyder
 ! Initial commit
 !

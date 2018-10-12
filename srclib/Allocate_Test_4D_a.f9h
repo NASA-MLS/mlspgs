@@ -19,6 +19,7 @@
     logical :: DoAlloc
     integer :: MyLow(4), Status
     character(127) :: ERMSG
+    status = 0 ! In case we don't need to allocate
     myLow = 1
     if ( present(low) ) myLow = low
     doAlloc = .not. associated(to_allocate)
@@ -30,11 +31,6 @@
         & STAT=status, ERRMSG=ermsg )
       addr = 0
       if ( status == 0 ) then
-        if ( present(fill) ) then
-          to_allocate = fill
-        else if ( clearOnAllocate ) then
-          to_allocate = default
-        end if
         if ( size(to_allocate) > 0 ) &
           & addr = transfer ( c_loc(to_allocate(myLow(1),myLow(2),myLow(3),myLow(4))), addr )
       end if
@@ -45,8 +41,18 @@
     else
       to_allocate(myLow(1):,myLow(2):,myLow(3):,myLow(4):) => to_allocate
     end if
+    if ( status == 0 ) then
+      if ( present(fill) ) then
+        to_allocate = fill
+      else if ( clearOnAllocate ) then
+        to_allocate = default
+      end if
+    end if
 
 ! $Log$
+! Revision 1.6  2018/04/19 00:43:00  vsnyder
+! Turn on address computation for tracking
+!
 ! Revision 1.5  2015/06/04 01:54:53  vsnyder
 ! Don't reallocate if bounds are the same
 !
