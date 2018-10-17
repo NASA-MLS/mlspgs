@@ -9,43 +9,43 @@
 ! export authority as may be required before exporting such information to
 ! foreign countries or providing access to foreign persons.
 
-module IO_STUFF
+module IO_Stuff
 
 ! Useful, low-level stuff for mostly formatted I/O
-  use MLSFinds, only: findFirstCharacter => FindFirst, &
-    &                 findFirstSubstring => FindFirst
+  use MLSFinds, only: FindFirstCharacter => FindFirst, &
+    &                 FindFirstSubstring => FindFirst
 
   implicit none
 
   private
-  public :: get_lun
-  public :: get_nLines
-  public :: read_stdin
-  public :: read_textFile
-  public :: truncate_textFile
-  public :: write_textFile
+  public :: Get_lun
+  public :: Get_nLines
+  public :: Read_stdin
+  public :: Read_Textfile
+  public :: Truncate_Textfile
+  public :: Write_Textfile
 
 ! === (start of toc) ===                                                 
 !     c o n t e n t s                                                    
 !     - - - - - - - -                                                    
 
 !     (subroutines and functions)
-! get_lun           Find a Fortran logical unit number that's not in use.
+! Get_lun           Find a Fortran logical unit number that's not in use.
 !                     Fortran 2008 allows use of newunit= field in open
-! get_nLines        Find how many lines are in a text file
-! read_stdin        Read standard input into characters scalar or array
-! read_textfile     Read contents of a textfile into characters scalar or array
-! truncate_textFile Delete contents of a text file
-! write_textfile    Write characters scalar or array out to a textfile
+! Get_nLines        Find how many lines are in a text file
+! Read_stdin        Read standard input into characters scalar or array
+! Read_Textfile     Read contents of a textfile into characters scalar or array
+! Truncate_Textfile Delete contents of a text file
+! Write_Textfile    Write characters scalar or array out to a textfile
 ! === (end of toc) ===
 
 ! === (start of api) ===
 ! get_lun( int lun, [log msg], [int bottom], [int top] )
 ! get_nLines( char* File, int nLines, [int maxLineLen] )
-! read_stdin( str string, [int maxLineLen], [int nLines] )
-! read_textfile( char* File, str string, [int maxLineLen], [int nLines] )
-! write_textfile( char* File, str string, [int maxLineLen], [int nLines] )
-! truncate_textFile( str string )
+! Read_stdin( str string, [int maxLineLen], [int nLines] )
+! Read_Textfile( char* File, str string, [int maxLineLen], [int nLines] )
+! write_Textfile( char* File, str string, [int maxLineLen], [int nLines] )
+! truncate_Textfile( str string )
 ! str can be any of
 ! character(len=*)                 a scalar character string of any length
 ! character(len=*), dimension(:)   a 1d character array of any length
@@ -68,16 +68,16 @@ module IO_STUFF
   private :: not_used_here 
 !---------------------------------------------------------------------------
 
-  interface read_stdin
-    module procedure read_stdin_arr, read_stdin_arr2d, read_stdin_sca
+  interface Read_stdin
+    module procedure Read_stdin_arr, Read_stdin_arr2d, Read_stdin_sca
   end interface
 
-  interface read_textfile
-    module procedure read_textfile_arr, read_textfile_arr2d, read_textfile_sca
+  interface Read_Textfile
+    module procedure Read_Textfile_arr, Read_Textfile_arr2d, Read_Textfile_sca
   end interface
 
-  interface write_textfile
-    module procedure write_textfile_arr, write_textfile_arr2d, write_textfile_sca
+  interface write_Textfile
+    module procedure write_Textfile_arr, write_Textfile_arr2d, write_Textfile_sca
   end interface
 
   ! The only legal unit numbers that files may be assigned
@@ -89,9 +89,9 @@ module IO_STUFF
 
 contains
 
-! ================================================     GET_LUN     =====
+! ================================================     get_lun     =====
 
-  subroutine GET_LUN ( LUN, MSG, BOTTOM, TOP )
+  subroutine Get_lun ( lun, msg, bottom, top )
     ! Find a Fortran logical unit number that's not in use.
     ! In Fortran 2008, this can be replaced by use of the newunit field in open
     ! E.g., instead of
@@ -100,10 +100,10 @@ contains
     ! you can simply
     !    open ( newunit=lun, file=.. )
     ! Args
-    integer, intent(out)          :: LUN    ! The logical unit number
-    logical, intent(in), optional :: MSG ! Print failure message? (default: T)
-    integer, intent(in), optional :: BOTTOM ! Where to begin
-    integer, intent(in), optional :: TOP    ! Where to end
+    integer, intent(out)          :: Lun    ! The logical unit number
+    logical, intent(in), optional :: Msg    ! Print failure message? (default: T)
+    integer, intent(in), optional :: Bottom ! Where to begin
+    integer, intent(in), optional :: Top    ! Where to end
     ! Internal variables
     logical :: EXIST, OPENED             ! Used to inquire about the unit
     integer :: myBottom
@@ -123,7 +123,7 @@ contains
     end if
     write(*,*) 'IO_STUFF%GET_LUN-E- Unable to get a logical unit number'
     return
-  end subroutine GET_LUN
+  end subroutine get_lun
 
   !------------------ get_nLines
   ! Notes and limitations:
@@ -177,7 +177,7 @@ contains
     close( UNIT=lun, iostat=status )
   end subroutine get_nLines
 
-  !------------------ read_stdin
+  !------------------ Read_stdin
   ! Notes and limitations:
   ! Won't change unread elements (so you can prefill with nulls)
   ! formatted io
@@ -185,7 +185,7 @@ contains
   ! (To get around that limitation supply optional arg maxLineLen)
   ! Even then certain compilers impose limitations
   ! E.g., NAG can't read a line longer than 1024 from stdin
-  subroutine READ_stdin_arr ( string, maxLineLen, nLines )
+  subroutine Read_stdin_arr ( string, maxLineLen, nLines )
   ! read stdin into string array, one line per element
     character(len=*), dimension(:), intent(inout) :: string    ! its contents
     integer, optional, intent(in) :: maxLineLen
@@ -230,9 +230,9 @@ contains
       string(recrd) = transfer( cArray, string(recrd) )
     enddo
     if ( present(nLines) ) nLines = recrd
-  end subroutine READ_stdin_arr
+  end subroutine Read_stdin_arr
 
-  subroutine READ_stdin_arr2d ( chars, LineLen, nLines )
+  subroutine Read_stdin_arr2d ( chars, LineLen, nLines )
   ! read stdin into a 2d char array, one line per row
   ! leaving unread elements unchanged
   ! (So you can prefill with nulls)
@@ -276,9 +276,9 @@ contains
     enddo
     if ( present(nLines) ) nLines = recrd
     if ( present(LineLen) ) LineLen = N
-  end subroutine READ_stdin_arr2d
+  end subroutine Read_stdin_arr2d
 
-  subroutine READ_stdin_sca ( string, maxLineLen, nLines )
+  subroutine Read_stdin_sca ( string, maxLineLen, nLines )
   ! read stdin into a single string
     character(len=*), intent(inout) :: string    ! its contents
     integer, optional, intent(in) :: maxLineLen
@@ -325,15 +325,15 @@ contains
       string(i:i) = achar(13)
     enddo
     if ( present(nLines) ) nLines = recrd
-  end subroutine READ_stdin_sca
+  end subroutine Read_stdin_sca
 
-  !------------------ read_textfile
+  !------------------ Read_Textfile
   ! Notes and limitations:
   ! Won't change unread elements (so you can prefill with nulls)
   ! formatted io
   ! No line should be longer than len(string)
   ! (To get around that limitation supply optional arg maxLineLen)
-  subroutine READ_TEXTFILE_arr ( File, string, maxLineLen, nLines )
+  subroutine Read_Textfile_arr ( File, string, maxLineLen, nLines )
   ! read a textfile into string array, one line per element
     character(len=*), intent(in)  :: File ! its path and name
     character(len=*), dimension(:), intent(inout) :: string    ! its contents
@@ -365,7 +365,7 @@ contains
     open(UNIT=lun, form='formatted', &
       & file=trim(File), status='old', iostat=status )
     if ( status /= 0 ) then
-      write(*,*) 'IO_STUFF%READ_TEXTFILE_ARR-E- Unable to open textfile ' // &
+      write(*,*) 'IO_STUFF%Read_Textfile_ARR-E- Unable to open textfile ' // &
         & trim(File)
       return
     endif
@@ -389,9 +389,9 @@ contains
     enddo
     if ( present(nLines) ) nLines = recrd
     close( UNIT=lun, iostat=status )
-  end subroutine READ_TEXTFILE_arr
+  end subroutine Read_Textfile_arr
 
-  subroutine READ_TEXTFILE_arr2d ( File, chars, LineLen, nLines )
+  subroutine Read_Textfile_arr2d ( File, chars, LineLen, nLines )
   ! read a textfile into a 2d char array, one line per row
   ! leaving unread elements unchanged
   ! (So you can prefill with nulls)
@@ -420,7 +420,7 @@ contains
     open(UNIT=lun, form='formatted', &
       & file=trim(File), status='old', iostat=status )
     if ( status /= 0 ) then
-      write(*,*) 'IO_STUFF%READ_TEXTFILE_ARR2D-E- Unable to open textfile ' // &
+      write(*,*) 'IO_STUFF%Read_Textfile_ARR2D-E- Unable to open textfile ' // &
         & trim(File)
       return
     endif
@@ -446,9 +446,9 @@ contains
     if ( present(nLines) ) nLines = recrd
     if ( present(LineLen) ) LineLen = N
     close( UNIT=lun, iostat=status )
-  end subroutine READ_TEXTFILE_arr2d
+  end subroutine Read_Textfile_arr2d
 
-  subroutine READ_TEXTFILE_sca ( File, string, maxLineLen, nLines )
+  subroutine Read_Textfile_sca ( File, string, maxLineLen, nLines )
   ! read a textfile into a single string
     character(len=*), intent(in)  :: File ! its path and name
     character(len=*), intent(inout) :: string    ! its contents
@@ -480,7 +480,7 @@ contains
     open(UNIT=lun, form='formatted', &
       & file=trim(File), status='old', iostat=status )
     if ( status /= 0 ) then
-      write(*,*) 'IO_STUFF%READ_TEXTFILE_ARR-E- Unable to open textfile ' // &
+      write(*,*) 'IO_STUFF%Read_Textfile_ARR-E- Unable to open textfile ' // &
         & trim(File)
       return
     endif
@@ -505,28 +505,32 @@ contains
     enddo
     if ( present(nLines) ) nLines = recrd
     close( UNIT=lun, iostat=status )
-  end subroutine READ_TEXTFILE_sca
+  end subroutine Read_Textfile_sca
   
-  !------------------ truncate_textFile
-  subroutine truncate_textFile( filename )
+  !------------------ truncate_Textfile
+  subroutine truncate_Textfile( filename )
     character(len=*), intent(in) :: filename
     integer :: unitnum
     call get_lun( unitnum )
     open( unit=unitnum, file=filename, form='formatted', status='replace' )
     close( unitnum )
-  end subroutine truncate_textFile
+  end subroutine truncate_Textfile
 
-  !------------------ write_textfile
+  !------------------ write_Textfile
   ! We assume line feeds are already in string
-  subroutine write_TEXTFILE_arr ( File, string )
+  subroutine write_Textfile_arr ( File, string, AsIs )
   ! write a string array out to a textfile, one line per element
-    character(len=*), intent(in)  :: File ! its path and name
+    character(len=*), intent(in)               :: File ! its path and name
     character(len=*), dimension(:), intent(in) :: string    ! its contents
+    logical, intent(in), optional              :: AsIs ! Skip Test of nulls
     ! Internal variables
     integer :: i, n
     integer :: lun
+    logical :: myAsIs
     integer :: status
     ! print *, 'Name of textfile: ', trim(File)
+    myAsIs = .false.
+    if ( present(AsIs) ) myAsIs = AsIs
     ! What format do we use for writing each line?
     ! Try to write the textfile
     call GET_LUN ( LUN )
@@ -534,22 +538,24 @@ contains
       & file=trim(File), status='unknown', access='sequential', &
       & recl=size(string)*len(string(1)) + 1, iostat=status )
     if ( status /= 0 ) then
-      write(*,*) 'IO_STUFF%write_TEXTFILE_ARR-E- Unable to open textfile ' // &
+      write(*,*) 'IO_STUFF%write_Textfile_ARR-E- Unable to open textfile ' // &
         & trim(File)
       return
     endif
     do i=1, size(string)
       n = FindFirstSubString( string(i), achar(0) )
-      if ( n < 2 ) then
+      if ( myAsIs ) then
+        write ( lun, '(a)', advance='yes' ) trim(string(i))
+      elseif ( n < 2 ) then
         write ( lun, '(a)', advance='yes' ) ''
       else
         write ( lun, '(a)', advance='yes' ) string(i)(:n-1)
       endif
     enddo
     close( UNIT=lun, iostat=status )
-  end subroutine write_TEXTFILE_arr
+  end subroutine write_Textfile_arr
 
-  subroutine write_TEXTFILE_arr2d ( File, chars )
+  subroutine write_Textfile_arr2d ( File, chars )
   ! write a 2-d array out to a textfile, one line per row
     character(len=*), intent(in)  :: File ! its path and name
     character(len=1), dimension(:,:), intent(in) :: chars    ! its contents
@@ -565,7 +571,7 @@ contains
       & file=trim(File), status='unknown', access='sequential', &
       & recl=size(chars) + 1, iostat=status )
     if ( status /= 0 ) then
-      write(*,*) 'IO_STUFF%write_TEXTFILE_arr2d-E- Unable to open textfile ' // &
+      write(*,*) 'IO_STUFF%write_Textfile_arr2d-E- Unable to open textfile ' // &
         & trim(File)
       return
     endif
@@ -578,9 +584,9 @@ contains
       endif
     enddo
     close( UNIT=lun, iostat=status )
-  end subroutine write_TEXTFILE_arr2d
+  end subroutine write_Textfile_arr2d
 
-  subroutine write_TEXTFILE_sca ( File, string )
+  subroutine write_Textfile_sca ( File, string )
   ! write a textfile into string array, one line per element
     character(len=*), intent(in)  :: File ! its path and name
     character(len=*), intent(in) :: string    ! its contents
@@ -595,13 +601,13 @@ contains
       & file=trim(File), status='unknown', access='sequential', &
       & recl=len(string) + 1, iostat=status )
     if ( status /= 0 ) then
-      write(*,*) 'IO_STUFF%write_TEXTFILE_sca-E- Unable to open textfile ' // &
+      write(*,*) 'IO_STUFF%write_Textfile_sca-E- Unable to open textfile ' // &
         & trim(File)
       return
     endif
     write ( lun, '(a)', advance='no' ) string
     close( UNIT=lun, iostat=status )
-  end subroutine write_TEXTFILE_sca
+  end subroutine write_Textfile_sca
 
 !------------ Private procedures
   subroutine null_fill_1d( array, nullChar )
@@ -649,11 +655,14 @@ contains
 end module IO_STUFF
 
 ! $Log$
+! Revision 2.23  2018/10/17 00:57:58  pwagner
+! New optional arg AsIs to write_Textfile_arr
+!
 ! Revision 2.22  2015/08/12 20:20:54  pwagner
-! A needed close staement had been omitted from READ_TEXTFILE_sca; fixed
+! A needed close staement had been omitted from Read_Textfile_sca; fixed
 !
 ! Revision 2.21  2015/07/14 23:10:56  pwagner
-! Added a routine to truncate_textFile
+! Added a routine to truncate_Textfile
 !
 ! Revision 2.20  2014/07/31 20:19:08  pwagner
 ! Improved comments; get_nLines returns 0 for an empty file, and -1 if cant open
@@ -671,7 +680,7 @@ end module IO_STUFF
 ! Fixed typos in commets; removed unused variables
 !
 ! Revision 2.15  2013/04/12 00:01:07  pwagner
-! Added write_textfile like existing read_ routines
+! Added write_Textfile like existing Read_ routines
 !
 ! Revision 2.14  2012/08/14 00:22:09  pwagner
 ! get_lun can take optional Bottom, Top args
@@ -683,7 +692,7 @@ end module IO_STUFF
 ! Added routines to read stdin into string variables
 !
 ! Revision 2.11  2009/06/30 15:21:21  pwagner
-! Changed intent to prevent READ_TEXTFILE_sca from leaving undefineds in string
+! Changed intent to prevent Read_Textfile_sca from leaving undefineds in string
 !
 ! Revision 2.10  2009/06/23 18:25:43  pwagner
 ! Prevent Intel from optimizing ident string away
@@ -698,7 +707,7 @@ end module IO_STUFF
 ! Now works properly with NAG, Lahey, and Intel
 !
 ! Revision 2.6  2008/03/11 00:09:11  pwagner
-! Added read_textfile; should work for more compilers
+! Added Read_Textfile; should work for more compilers
 !
 ! Revision 2.5  2005/06/22 17:25:49  pwagner
 ! Reworded Copyright statement, moved rcs id
