@@ -14,7 +14,25 @@ module Output_M
   ! Normal level printing and formatting
   ! Directs output to either stddout or PrUnit
   ! See also dump_0 and Printit_m
-  ! For higher-level procedures, see highOutput
+  ! For higher-level procedures, see HighOutput
+  
+  ! Overview:
+  ! Text, scalars, and arrays of numbers may be output
+  ! in a controlled way according a number of settings
+  ! contained in ..Options  datatypes or by arguments
+  ! passed during the call
+  ! Major features include whether or when to
+  !   (*) direct output to stdout or elsewhere @
+  !   (*) time stamp each line #
+  !   (*) indent each line
+  !   (*) apply a special format
+  !   (*) advance to the next line after printing
+  !   (*) store up output in a temporary buffer
+  !   (*) pause, exit, or crash hard after printing
+  !   (*) go 'silent' until commanded to resume printing
+  !   (@) If we don't print to stdout, we may use the MLSMessaging facility
+  !       or we may do both
+  !   (#) Stamping may be applied automatically or at command
 
   use Dates_Module, only: ReformatDate, ReformatTime
   use Machine, only: Crash_Burn, Exit_With_Status, NeverCrash
@@ -124,8 +142,7 @@ module Output_M
 ! (3) Another example is the advance argument which may be composed of multiple
 ! sub-arguments, each to set an advanced feature
 ! (see advancedOptions below)
-! (4)
-! To understand the codes for dateformat and timeFormat, see the dates_module
+! (4) To understand the codes for dateformat and timeFormat, see dates_module
 ! 
   ! Where to output?
   ! These apply if we don't output to a fortran unit number (which is > 0)
@@ -149,7 +166,7 @@ module Output_M
 
   public :: AddToIndent, Advance_Is_Yes_Or_No, Beep, Blanks, &
     & FlushOutputLines, FlushStdout, GetOutputStatus, Newline, &
-    & Output, Output_Char_Nocr, PrintOutputStatus, PrUnitName, &
+    & Output, Output_Char_NoCR, PrintOutputStatus, PrUnitName, &
     & ResetIndent, RestoreSettings, ResumeOutput, RevertOutput, &
     & SetFillPattern, SetOutputStatus, SuspendOutput, SwitchOutput
 
@@ -176,7 +193,7 @@ module Output_M
 
   ! This won't filter for <cr>
   interface OUTPUT_
-    module procedure OUTPUT_CHAR_NOCR
+    module procedure Output_Char_NoCR
   end interface
 
   ! We can use the OutputLines mechanism for user-controlled
@@ -206,10 +223,16 @@ module Output_M
   end type
 
   ! This is the type for advanced formatting options from the advance=..
+  ! Note:
+  ! Pausing to wait for user input may hang that job running at the sips
+  ! Remember to strip out any debugging use of 
+  ! advance='.. pause ..'
+  ! before delivery
   type advancedOptions_T
     logical :: stretch             = .false. ! p r i n t  l i k e  t h i s   ?
     logical :: bannered            = .false. ! print as a banner
     logical :: headered            = .false. ! print as a headline
+    logical :: pause               = .false. ! pause and wait for user input
     type(outputOptions_T) :: originalOptions
   end type
 
@@ -370,6 +393,7 @@ contains
     !    unit n        set print unit to n
     !    level k       set severity level to k if calling MLSMessage
     !   newline m      use achar(m) as character for newLine
+    !     pause        pause and wait for user input
     !    stretch       s t r e t c h  characters before printing
     !                  * -------------------------------------- *
     !    banner        *   surround characters with a banner    *
@@ -429,6 +453,9 @@ contains
     call getOption ( str, 'stretch', advancedOptions%stretch )
     call getOption ( str, 'banner', advancedOptions%bannered )
     call getOption ( str, 'header', advancedOptions%headered )
+    if ( .not. advancedOptions%pause ) &
+      & call getOption ( str, 'pause', advancedOptions%pause )
+    ! print *, 'pause: ', advancedOptions%pause
   end function Advance_is_yes_or_no
 
   ! -----------------------------------------------------  Beep  -----
@@ -659,9 +686,9 @@ contains
 
   ! ------------------------------------------------  OUTPUT_CHAR  -----
   ! Output CHARS to PRUNIT.
-  subroutine OUTPUT_CHAR ( CHARS, &
-    & ADVANCE, FROM_WHERE, DONT_LOG, LOG_CHARS, INSTEADOFBLANK, DONT_STAMP, &
-    & NEWLINEVAL, DONT_ASCIIFY, format )
+  subroutine Output_char ( Chars, &
+    & advance, from_where, dont_log, log_chars, insteadofblank, dont_stamp, &
+    & newlineval, dont_asciify, format )
     ! We will 1st check to see whether any internal characters are
     ! codes for newlines
     ! If any are, we will call newLine in place of printing
@@ -701,9 +728,9 @@ contains
     newChars = chars
     i = index( chars, achar(myNewLineVal) )
     if ( advancedOptions%bannered ) then
-      call OUTPUT_CHAR_NOCR ( '*', advance='no' )
-      call OUTPUT_CHAR_NOCR ( Repeat('-', BannerLen-2 ), advance='no' )
-      call OUTPUT_CHAR_NOCR ( '*', advance='yes' )
+      call Output_Char_NoCR ( '*', advance='no' )
+      call Output_Char_NoCR ( Repeat('-', BannerLen-2 ), advance='no' )
+      call Output_Char_NoCR ( '*', advance='yes' )
     endif
     if ( advancedOptions%headered ) then
       newChars = '* ---- ' // newChars(:LineLen) // ' ---- *'
@@ -726,25 +753,25 @@ contains
     if ( i < 1 ) then
       if ( myAsciify ) newChars = ReplaceNonAscii( newChars, '@', exceptions=achar(9))
       if ( myAsciify ) then
-        call OUTPUT_CHAR_NOCR ( newChars(:LineLen), &
-          & ADVANCE, FROM_WHERE, DONT_LOG, LOG_CHARS, INSTEADOFBLANK, DONT_STAMP )
+        call Output_Char_NoCR ( newChars(:LineLen), &
+          & advance, from_where, dont_log, log_chars, insteadofblank, dont_stamp )
       else
-        call OUTPUT_CHAR_NOCR ( newChars(:LineLen), &
-          & ADVANCE, FROM_WHERE, DONT_LOG, LOG_CHARS, INSTEADOFBLANK, DONT_STAMP )
+        call Output_Char_NoCR ( newChars(:LineLen), &
+          & advance, from_where, dont_log, log_chars, insteadofblank, dont_stamp )
       endif
     else
       do i=1, len(chars)
         if ( chars(i:i) /= achar(myNewLineVal) ) then
           if ( myAsciify ) then
-            call OUTPUT_CHAR_NOCR ( ReplaceNonAscii(CHARS(i:i), '@', exceptions=achar(9)), &
-              & ADVANCE='no', FROM_WHERE=FROM_WHERE, DONT_LOG=DONT_LOG, &
-              & LOG_CHARS=LOG_CHARS, INSTEADOFBLANK=INSTEADOFBLANK, &
-              & DONT_STAMP=DONT_STAMP )
+            call Output_Char_NoCR ( ReplaceNonAscii(CHARS(i:i), '@', exceptions=achar(9)), &
+              & advance='no', from_where=from_where, dont_log=dont_log, &
+              & log_chars=log_chars, insteadofblank=insteadofblank, &
+              & dont_stamp=dont_stamp )
           else
-            call OUTPUT_CHAR_NOCR ( CHARS(i:i), &
-              & ADVANCE='no', FROM_WHERE=FROM_WHERE, DONT_LOG=DONT_LOG, &
-              & LOG_CHARS=LOG_CHARS, INSTEADOFBLANK=INSTEADOFBLANK, &
-              & DONT_STAMP=DONT_STAMP )
+            call Output_Char_NoCR ( CHARS(i:i), &
+              & advance='no', from_where=from_where, dont_log=dont_log, &
+              & log_chars=log_chars, insteadofblank=insteadofblank, &
+              & dont_stamp=dont_stamp )
           endif
         else
           call newLine
@@ -754,14 +781,14 @@ contains
     endif
     ! write (*,*) 'bannered            =  ', advancedOptions%bannered 
     if ( advancedOptions%bannered ) then
-      call OUTPUT_CHAR_NOCR ( '*', advance='no' )
-      call OUTPUT_CHAR_NOCR ( Repeat('-', BannerLen-2 ), advance='no' )
-      call OUTPUT_CHAR_NOCR ( '*', advance='yes' )
+      call Output_Char_NoCR ( '*', advance='no' )
+      call Output_Char_NoCR ( Repeat('-', BannerLen-2 ), advance='no' )
+      call Output_Char_NoCR ( '*', advance='yes' )
     endif
-  end subroutine OUTPUT_CHAR
+  end subroutine Output_Char
 
-  subroutine OUTPUT_CHAR_NOCR ( CHARS, &
-    & ADVANCE, FROM_WHERE, DONT_LOG, LOG_CHARS, INSTEADOFBLANK, DONT_STAMP )
+  subroutine Output_Char_NoCR ( Chars, &
+    & advance, from_where, dont_log, log_chars, insteadofblank, dont_stamp )
     character(len=*), intent(in) :: CHARS
     character(len=*), intent(in), optional :: ADVANCE
     character(len=*), intent(in), optional :: FROM_WHERE
@@ -775,16 +802,27 @@ contains
     my_adv = Advance_is_yes_or_no(advance)
     atLineStart = (my_adv == 'yes')
     if ( indentBy > 0 .and. atColumnNumber == 1 ) then
-      call output_char_nocr_indented ( repeat( ' ', indentby ) // chars, &
+      call Output_Char_NoCR_indented ( repeat( ' ', indentby ) // chars, &
         & advance, from_where, dont_log, log_chars, insteadofblank, dont_stamp )
     else
-      call output_char_nocr_indented ( chars, &
+      call Output_Char_NoCR_indented ( chars, &
         & advance, from_where, dont_log, log_chars, insteadofblank, dont_stamp )
     endif
-  end subroutine OUTPUT_CHAR_NOCR
+    ! Were we asked to Pause?
+    ! If so read 1 char from stdin
+    ! Note: this may hang a job running under sips control so strip
+    ! out any debugging use of this before delivery
+    ! print *, 'pause: ', advancedOptions%pause
+    if ( advancedOptions%pause ) then
+      print *, '(P a u s e d .. e n t e r   o k   t o   r e s u m e, p   t o   s t e p)'
+      read (*,'(a)') my_adv(1:1)
+      ! Reset--unless told to ste'p', must explicitly request next pause
+      if ( index('pP', my_adv(1:1)) < 1 ) advancedOptions%pause = .false. 
+    endif
+  end subroutine Output_Char_NoCR
 
-  subroutine OUTPUT_CHAR_NOCR_INDENTED ( CHARS, &
-    & ADVANCE, FROM_WHERE, DONT_LOG, LOG_CHARS, INSTEADOFBLANK, DONT_STAMP )
+  subroutine Output_Char_NoCR_Indented ( chars, &
+    & advance, from_where, dont_log, log_chars, insteadofblank, dont_stamp )
     ! -------------------------------------------------------------------
     ! We have arrived
     ! The workhorse
@@ -1023,7 +1061,7 @@ contains
         str(kNull-1:) = chars // achar(0)
       endif
     end subroutine append_chars
-  end subroutine OUTPUT_CHAR_NOCR_INDENTED
+  end subroutine Output_Char_NoCR_INDENTED
 
   ! ------------------------------------------  OUTPUT_CHAR_ARRAY  -----
   subroutine OUTPUT_CHAR_ARRAY ( CHARS, ADVANCE_AFTER_EACH, ADVANCE, &
@@ -1772,6 +1810,9 @@ contains
 end module Output_M
 
 ! $Log$
+! Revision 2.139  2018/10/17 23:03:10  pwagner
+! advance=.. can be used to make program pause, e.g. for debugging
+!
 ! Revision 2.138  2018/09/13 20:18:20  pwagner
 ! Now gets PrUnits from similarly-named units of PrintIt_m; PrUnitname, too
 !
@@ -1830,7 +1871,7 @@ end module Output_M
 ! "%n" in output string could trigger unintended new line; fixed
 !
 ! Revision 2.119  2015/02/13 00:16:24  pwagner
-! Reordered tests in OUTPUT_CHAR_NOCR_INDENTED more understandably, we hope
+! Reordered tests in Output_Char_NoCR_INDENTED more understandably, we hope
 !
 ! Revision 2.118  2015/02/10 00:59:36  pwagner
 ! Repaired error introduced by last change
