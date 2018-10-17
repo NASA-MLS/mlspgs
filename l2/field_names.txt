@@ -345,6 +345,7 @@ oversample # oversampling factor for filter grid for PFA generation
 
 packed
 pathNorm # Normalize path length in the full forward model
+pause
 perturbation
 pfaData
 pfaFiles
@@ -552,6 +553,9 @@ yStar
 ZOT # Tells dump of HGrid whether to print QTM coordinates in ZOT or Geo
 
 # $Log$
+# Revision 2.269  2018/10/17 23:05:04  pwagner
+# Dump command can take /pause field to wait for user input for, e.g. debugging
+#
 # Revision 2.268  2018/04/19 23:43:21  pwagner
 # Skip may take /nextChunk flag
 #
