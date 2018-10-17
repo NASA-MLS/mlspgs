@@ -1230,7 +1230,8 @@ contains
       & F_File, F_Filtershapes, F_Forwardmodel, F_GlobalAttributes, F_Grid, &
       & F_Hessian, F_Hgrid, F_Igrf, &
       & F_L2pc, F_Lines, F_Mark, F_Mask, F_Matrix, F_Memory, &
-      & F_Mietables, F_Options, F_PfaData, F_PfaFiles, F_Pfanum, F_Pfastru, &
+      & F_Mietables, F_Options, &
+      & F_Pause, F_PfaData, F_PfaFiles, F_Pfanum, F_Pfastru, &
       & F_Phasename, F_Pointinggrids, F_Polygon, F_Quantity, F_Rank, F_Reset, &
       & F_Signals, F_Spectroscopy, F_Stack, F_Start, F_Stop, F_Stride, &
       & F_Stopwitherror, F_Surface, &
@@ -1452,8 +1453,9 @@ contains
         & f_allRadiometers, f_allSignals, f_allSpectra, &
         & f_allVectors, f_allVectorTemplates, f_allVGrids, f_antennaPatterns, &
         & f_callStack, f_chunkDivide, f_chunkNumber, f_commandLine, f_crashBurn, &
-        & f_DACSfilterShapes, f_filterShapes, f_globalAttributes, f_igrf, f_memory, &
-        & f_MieTables, f_pfaFiles, f_pfaStru, f_phaseName, f_pointingGrids, &
+        & f_DACSfilterShapes, f_filterShapes, f_globalAttributes, f_igrf,&
+        &  f_memory, f_MieTables, &
+        & f_pause, f_pfaFiles, f_pfaStru, f_phaseName, f_pointingGrids, &
         & f_polygon, f_stop, f_stopWithError, f_time, f_totalMatrixSizes, &
         & f_totalVectorSizes, f_ZOT )
         if ( get_Boolean(son) ) then
@@ -1599,6 +1601,9 @@ contains
             if ( reset ) TotalMemory1 = TotalMemory2
           case ( f_MieTables )
             call dump_Mie ( details )
+          case ( f_pause )
+            call output ( 'Program paused by /pause field on DUMP statement.', &
+              & advance='yes pause' )
           case ( f_pfaFiles )
             call dump_PFAFileDatabase ( details )
           case ( f_pfaStru )
@@ -3221,6 +3226,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.143  2018/10/17 23:05:04  pwagner
+! Dump command can take /pause field to wait for user input for, e.g. debugging
+!
 ! Revision 2.142  2018/09/13 20:22:32  pwagner
 ! Moved changeable options to new L2Options; added DumpOptions
 !
