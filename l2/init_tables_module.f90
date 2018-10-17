@@ -1633,6 +1633,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_memory, boolean(), &
              begin, f+f_MieTables, boolean(), &
              begin, f+f_options, string(), &
+             begin, f+f_pause, boolean(), &
              begin, f+f_pfaData, field_spec(s_makePFA,s_pfaData,s_readPFA), &
              begin, f+f_pfaFiles, boolean(), &
              begin, f+f_pfaNum, numeric(phyq_dimensionless), &
@@ -2131,6 +2132,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.644  2018/10/17 23:05:04  pwagner
+! Dump command can take /pause field to wait for user input for, e.g. debugging
+!
 ! Revision 2.643  2018/09/13 20:22:02  pwagner
 ! Added /reset flag to phase command
 !
