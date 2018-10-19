@@ -18,12 +18,14 @@ program wrapLines
    use Output_M, only: Output
    implicit none
 
-!------------------- RCS Ident Info -----------------------
-   CHARACTER(len=130) :: Id = &                                                    
-   "$Id$"
-   CHARACTER (len=*), PARAMETER :: ModuleName= "$RCSfile$"
-!----------------------------------------------------------
-  ! wrap lines in stdin
+!---------------------------- RCS Ident Info ------------------------------
+  character (len=*), parameter :: ModuleName= &
+       "$RCSfile$"
+  character (len=*), parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)) :: Id = idParm
+!---------------------------------------------------------------------------
+  ! wrap lines in stdin (or -i inputFile)
   ! so they do not exceed (by much) 128 chars in length
   
   ! Suggested use:
@@ -32,11 +34,13 @@ program wrapLines
   
   ! Notes and limitations
   ! Input line must not exceed MAXLINELEN (24000) chars
-  ! (bug in NAG makes it even less (1000), so .. don't build with NAG)
+  ! (a bug in NAG makes it even less (1000), so .. don't build with NAG)
 
-  ! Lines will be split at a BREAK (','), neglecting to check whether the comma
-  ! may be embedded within quotes
-  ! which could be trouble if you have directory/file names with commas
+  ! Lines will be split at a BREAK (','), unless that line contains quotes
+  ! In case you're wondering why we don't wrap lines with quoted strings,
+  ! it's because we're not smart enough to tell when a BREAK is embedded
+  ! within quotes
+  ! which could be trouble if you have directory/file names with BREAKs
   ! in them.
   
   ! E.g., a line with 
@@ -382,6 +386,7 @@ contains
       write (*,*) '          -[n]wrap      => do [not] wrap long lines'     
       write (*,*) '                            (default is to wrap)'
       write (*,*) '          -q chars      => let chars delimit quoted strings'     
+      write (*,*) '                           (a line with quotes will not wrap)'     
       write (*,*) '                          (defaults are ''")'         
       write (*,*) '          -mode mode    => set wrap mode'
       write (*,*) '                            (default is "s" for soft)'
@@ -392,6 +397,9 @@ contains
   end subroutine print_help
 end program wrapLines
 ! $Log$
+! Revision 1.7  2018/08/13 23:14:16  pwagner
+! Use statements made Camel Case
+!
 ! Revision 1.6  2016/12/16 21:58:29  pwagner
 ! Works with new wrap
 !
