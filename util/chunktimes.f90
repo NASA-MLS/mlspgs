@@ -13,31 +13,31 @@
 program chunktimes ! Reads chunk times from l2aux file(s)
 !=================================
 
-   use Dump_0, only: Dump
-   use Dump_1, only: Dump
-   use HDF, only: dfacc_rdonly
-   use HDF5, only: hsize_t, H5FIs_HDF5_f, H5GClose_f, H5GOpen_f
-   use HighOutput, only: output_date_and_time
-   use L1BData, only: namelen
-   use Machine, only: hp, getarg
-   use MLSKinds, only: r4, r8
-   use MLSFiles, only: MLS_Exists, MLS_SFStart, MLS_SFEnd, &
-     & HDFVersion_4, HDFVersion_5
-   use MLSHDF5, only: &
-     & GetAllHDF5DSNames, getHDF5Attribute, getHDF5DSDims, &
-     & ISHDf5AttributePresent, loadFromHDF5DS, MLS_H5Open, MLS_H5Close
-   use MLSFinds, only: findall, findfirst, findlast, findnext
-   use MLSStats1, only: stat_t, statsononeline, &
-     & DumpStat=>dump, statistics
-   use MLSStringLists, only: catLists, getStringElement, getUniqueList, &
-     & NUMStringelements, stringElement, stringElementNum
-   use MLSStrings, only: lowercase
-   use Output_m, only: outputOptions, &
-     & Blanks, newline, output
-   use Printit_m, only: set_config
-   use Time_m, only: time_now, time_config
+  use Dump_0, only: Dump
+  use Dump_1, only: Dump
+  use HDF, only: Dfacc_Rdonly
+  use HDF5, only: Hsize_T, H5FIs_HDF5_F, H5GClose_F, H5GOpen_F
+  use HighOutput, only: Output_Date_And_Time
+  use L1BData, only: Namelen
+  use Machine, only: Hp, Getarg
+  use MLSKinds, only: R4, R8
+  use MLSFiles, only: MLS_Exists, MLS_SFStart, MLS_SFEnd, &
+    & HDFVersion_4, HDFVersion_5
+  use MLSHDF5, only: &
+    & GetAllHDF5DSNames, GetHDF5Attribute, GetHDF5DSDims, &
+    & ISHDf5AttributePresent, LoadFromHDF5DS, MLS_H5Open, MLS_H5Close
+  use MLSFinds, only: Findall, Findfirst, Findlast, Findnext
+  use MLSStats1, only: Stat_T, Statsononeline, &
+    & DumpStat=>dump, Statistics
+  use MLSStringLists, only: CatLists, GetStringElement, GetUniqueList, &
+    & NUMStringElements, StringElement, StringElementNum
+  use MLSStrings, only: Lowercase
+  use Output_M, only: OutputOptions, &
+    & Blanks, Newline, Output
+  use Printit_M, only: Set_Config
+  use Time_M, only: Time_Now, Time_Config
    
-   implicit none
+  implicit none
 
 !---------------------------- RCS Ident Info ------------------------------
   character (len=*), parameter :: ModuleName= &
@@ -50,13 +50,6 @@ program chunktimes ! Reads chunk times from l2aux file(s)
 ! Brief description of program
 ! Reads chunk times and failures from list of input files
 
-! To use this, copy it into
-! mlspgs/tests/lib
-! then enter "make depends" followed by "make"
-
-
-! Then run it
-! LF95.Linux/test [options] [input files]
   type options_T
     logical            :: verbose = .false.
     logical            :: merge = .false.           ! Merge data from files
@@ -79,8 +72,8 @@ program chunktimes ! Reads chunk times from l2aux file(s)
     real(r4)           :: longChunks = 0._r4
   end type options_T
   
-  type ( options_T ) :: options
-  type(STAT_T)       :: statistic
+  type ( options_T ) :: Options
+  type(Stat_T)       :: Statistic
 
   logical, parameter ::          COUNTEMPTY = .true.
   logical, parameter ::          SHOWDATEANDTIME = .false.
@@ -817,6 +810,9 @@ end program chunktimes
 !==================
 
 ! $Log$
+! Revision 1.30  2016/10/04 22:13:34  pwagner
+! Builds properly with some Dumps moved to Dump_1
+!
 ! Revision 1.29  2014/03/07 21:42:59  pwagner
 ! Name_Len changed to nameLen; got from MLSCommon
 !
