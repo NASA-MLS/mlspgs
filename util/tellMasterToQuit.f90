@@ -10,40 +10,16 @@
 ! foreign countries or providing access to foreign persons.
 
 program tellMasterToQuit
-  use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
-  use dates_module, only: DATEFORM, REFORMATDATE
-  use highOutput, only: OUTPUT_DATE_AND_TIME, outputNamedValue, &
-    & TIMESTAMP
-  use L2PARINFO, only: PARALLEL, INITPARALLEL
-  use L2ParInfo, only: MACHINE_T, PARALLEL, &
-    & PETITIONTAG, GIVEUPTAG, GRANTEDTAG, NOTIFYTAG, &
-    & SIG_FINISHED, SIG_REGISTER, SIG_SWEARALLEGIANCE, SIG_SWITCHALLEGIANCE, &
-    & SIG_HOSTDIED, SIG_RELEASEHOST, SIG_REQUESTHOST, SIG_THANKSHOST, &
-    & MACHINENAMELEN, GETMACHINENAMES, &
-    & DUMP, ADDMACHINETODATABASE
-  use MACHINE ! At least HP for command lines, and maybe GETARG, too
-  use MLSCOMMON, only: FILENAMELEN
-  use MLSL2Options, only: CURRENT_VERSION_ID
-  use MLSMessageModule, only: MLSMessage, MLSMessageConfig, MLSMessageExit, &
-    & MLSMSG_Allocate, MLSMSG_DeAllocate, MLSMSG_Debug, MLSMSG_Error, &
-    & MLSMSG_Info, MLSMSG_Success, MLSMSG_Warning, PVMERRORMESSAGE
-  use MLSFINDS, only: FINDFIRST
-  use MLSSTRINGLISTS, only: CATLISTS, GETSTRINGELEMENT, NUMSTRINGELEMENTS, &
-    & STRINGELEMENTNUM
-  use MLSSTRINGS, only: LOWERCASE, READINTSFROMCHARS, STREQ
-  use OUTPUT_M, only: BLANKS, NEWLINE, &
-    & OUTPUT, OutputOptions
-  use PrintIt_m, only: Set_Config
-  use PVM, only: PVMOK, &
-    & ClearPVMArgs, GETMACHINENAMEFROMTID, &
-    & PVMDATADEFAULT, PVMFINITSEND, PVMF90PACK, PVMFKILL, PVMFMYTID, &
-    & PVMF90UNPACK, PVMFPSTAT, &
-    & PVMFSEND, PVMFNOTIFY, PVMTASKEXIT, &
-    & PVMFFREEBUF
-  use Sort_M, only: SORT
-  use Time_M, only: Time_Now, time_config
-  use TOGGLES, only: GEN, LEVELS, &
-    & TOGGLE
+  use HighOutput, only: Timestamp
+  use L2parinfo, only: Parallel, &
+    & Giveuptag, Machinenamelen
+  use Machine ! At Least Hp For Command Lines, And Maybe Getarg, Too
+  use MLSMessagemodule, only: MLSMessageconfig
+  use Output_M, only: Output
+  use Printit_M, only: Set_Config
+  use Pvm, only: PvmDatadefault, Pvmfinitsend, Pvmf90pack, &
+    & Pvmfsend
+  use Time_M, only: Time_Config
 
   ! === (start of toc) ===
   !     c o n t e n t s
@@ -63,53 +39,10 @@ program tellMasterToQuit
   implicit none
 
   integer :: BUFFERID
-  character(len=2048) :: command_line ! All the opts
-  logical, parameter :: COUNTEMPTY = .true.
-  logical, parameter :: DEEBUG = .false.
-  logical, parameter :: DUMPDBSONDEBUG = .false.
-  integer :: ERROR
-  integer :: I
   integer :: INFO
-  integer :: INUNIT = -1       ! Input unit, * if < 0
-  character(len=2048) :: LINE      ! Into which is read the command args
-  integer, parameter :: LIST_UNIT = 20  ! Unit # for hosts file if not stdin
-  character(len=MachineNameLen), dimension(:), pointer :: MACHINENAMES => null()
-  integer, parameter :: MAXNUMMASTERS = 100 ! Mas num running simultaneously
-  integer, parameter :: MAXNUMMULTIPROCS = 8 ! For some architectures > 1000 
-  integer :: RECL = 10000          ! Record length for list
-  integer :: STATUS                ! From OPEN
-  logical :: SWITCH                ! "First letter after -- was not n"
-  real :: T0, T1, T2, T_CONVERSION ! For timing
-  integer :: TAG
   integer :: TID                   ! TID of master
-  character(len=32) :: TIDSTR
 
   character(len=*), parameter :: GROUPNAME = "mlsl2"
-  character(len=*), parameter :: LISTNAMEEXTENSION = ".txt"
-  integer, parameter          :: AVOIDSELECTEDHOSTSTAG = GIVEUPTAG - 1
-  integer, parameter          :: CHECKREVIVEDHOSTSTAG = AVOIDSELECTEDHOSTSTAG - 1
-  integer, parameter          :: CHECKSELECTEDHOSTSTAG = CHECKREVIVEDHOSTSTAG - 1
-  integer, parameter          :: CLEANMASTERDBTAG = CHECKSELECTEDHOSTSTAG - 1
-  integer, parameter          :: DUMPDBTAG = CLEANMASTERDBTAG - 1
-  integer, parameter          :: DUMPMASTERSDBTAG = DUMPDBTAG - 1
-  integer, parameter          :: DUMPHOSTSDBTAG = DUMPMASTERSDBTAG - 1
-  integer, parameter          :: FREEANYHOSTSTAG = DUMPHOSTSDBTAG - 1
-  integer, parameter          :: FREEHOSTSTAG = FREEANYHOSTSTAG - 1
-  integer, parameter          :: KILLMASTERSTAG = FREEHOSTSTAG - 1
-  integer, parameter          :: SUICIDETAG = KILLMASTERSTAG - 1
-  integer, parameter          :: SWITCHDUMPFILETAG = SUICIDETAG - 1
-  integer, parameter          :: TURNREVIVALSONTAG = SWITCHDUMPFILETAG - 1
-  integer, parameter          :: TURNREVIVALSOFFTAG = TURNREVIVALSONTAG - 1
-
-  ! These are special tid values
-  integer, parameter          :: UNASSIGNED = -1
-  integer, parameter          :: AWAITINGREVIVAL = UNASSIGNED - 1
-  integer, parameter          :: AWAITINGTHANKS = AWAITINGREVIVAL - 1
-
-  integer, parameter          :: DUMPUNIT = LIST_UNIT + 1
-  integer, parameter          :: TEMPUNIT = DUMPUNIT + 1
-  integer, parameter          :: HDBUNIT = TEMPUNIT + 1
-  integer, parameter          :: MDBUNIT = HDBUNIT + 1
 !---------------------------- RCS Ident Info ------------------------------
   character (len=*), parameter :: ModuleName= &
        "$RCSfile$"
@@ -117,14 +50,6 @@ program tellMasterToQuit
        "$Id$"
   character (len=len(idParm)) :: Id = idParm
 !---------------------------------------------------------------------------
-
-! To use this, copy it into
-! mlspgs/tests/lib
-! then enter "make depends" followed by "make"
-
-
-! Then run it
-! LF95.Linux/test [options] [input files]
 
   ! Our data type for the master tasks we'll be communicating with via pvm
   type master_T
@@ -160,6 +85,9 @@ program tellMasterToQuit
 end program tellMasterToQuit
 
 ! $Log$
+! Revision 1.5  2014/04/29 23:19:15  pwagner
+! Fixed bug in last commit
+!
 ! Revision 1.4  2014/04/29 23:15:16  pwagner
 ! Builds successfully with highOutput module
 !

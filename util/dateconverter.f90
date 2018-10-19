@@ -16,18 +16,20 @@ program dateconverter
    use Dates_Module, only: AddDaysToUTC, AddHoursToUTC, AddSecondsToUTC, &
      & Dateform, DayOfWeek, FromUARSDate, HoursInDay, PrecedesUTC, &
      & ReformatDate, ResetStartingDate, SecondsInDay, SplitDateTime, &
-     & Tai93s2utc, ToUARSDate, Yyyymmdd_To_Dai
+     & Tai93s2utc, ToUARSDate
    use Machine, only: Hp, Getarg
    use MLSStringLists, only: ExpandStringRange
    use MLSStrings, only: Lowercase, Ncopies, ReadNumsFromChars
 
    implicit none
 
-!------------------- RCS Ident Info -----------------------
-   character(len=130) :: Id = &                                                    
-   "$Id$"
-   character (len=*), parameter :: ModuleName= "$RCSfile$"
-!----------------------------------------------------------
+!---------------------------- RCS Ident Info ------------------------------
+  character (len=*), parameter :: ModuleName= &
+       "$RCSfile$"
+  character (len=*), parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)) :: Id = idParm
+!---------------------------------------------------------------------------
 
 ! Brief description of program
 ! This program converts an input date to a different format
@@ -54,15 +56,8 @@ program dateconverter
   end type options_T
 
   type ( options_T ) :: options
-! To use this, copy it into
-! mlspgs/tests/lib
-! then enter "make depends" followed by "make"
-
-
-! Then run it, entering quote-surrounded strings of chars; a blank line terminates
 
 ! Variables
-
    integer, parameter :: MAXLISTLENGTH=24
    integer, parameter ::          MAXDATES = 100
    character (len=2)             :: comparison
@@ -80,8 +75,6 @@ program dateconverter
    ! character (len=*), parameter  :: intermediateForm = 'yyyymmdd'
    character(len=*), parameter   :: MFORMAT = 'yyyy M dd'
    integer                       :: n_dates = 0
-   integer                       :: nDays
-   integer                       :: nDaysOffset
    double precision              :: seconds
    double precision              :: secondsperday = 24*3600.
    double precision              :: tai
@@ -124,21 +117,7 @@ program dateconverter
       if ( options%debug ) print *, 'date: ', date
     elseif ( options%inputFormat == 'tai' ) then
       call readNumsFromChars ( date, tai )
-      ! print *, 'tai: ', tai
-      !if ( options%leapsec ) then
       date = tai93s2utc( tai, options%leapsec )
-      !else
-      ! call yyyymmdd_to_dai( 2001, 1, 1, nDaysOffset, startingDate='19930101' )
-      ! ! print *, 'nDaysOffset: ', nDaysOffset
-      ! nDays = tai/secondsperday - nDaysOffset
-      ! ! print *, 'nDays: ', nDays
-      ! intermediate_date = adddaystoutc( '2001-01-01T00:00:00', nDays )
-      ! ! print *, 'date (no seconds): ', intermediate_date
-      ! tai = tai - (nDays+nDaysOffset)*secondsperday
-      ! ! print *, '(+ seconds): ', tai
-      ! date = addsecondstoutc( intermediate_date, tai )
-      !endif
-      ! print *, 'date (+ seconds): ', date
       fromForm = 'yyyy-mm-dd'
       options%utcFormat = .true.
       call splitDateTime ( date, ErrTyp, intermediate_date, converted_time )
@@ -450,10 +429,13 @@ contains
   end subroutine print_string
 
 !==================
-END PROGRAM dateconverter
+end program dateconverter
 !==================
 
 ! $Log$
+! Revision 1.13  2018/05/22 23:25:33  pwagner
+! Last update broke all cases except -c usage; ffixed
+!
 ! Revision 1.12  2018/05/04 16:38:11  pwagner
 ! Added new commandline option -c comparing 2 dates
 !
