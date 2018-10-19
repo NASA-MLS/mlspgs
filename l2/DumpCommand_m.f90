@@ -131,6 +131,7 @@ module DumpCommand_M
   logical, save               :: MLSSelectedAlready = .false.
   character(len=MAXRESULTLEN), save :: selectLabel  = ' '
 
+  character(len=80)  :: InputFileName ! e.g., '/tmp/pause.txt'
   character(len=255) :: Text
   logical :: toStderr
   integer, save :: TotalMemory1 = 0   ! For memory usage, in kB
@@ -1228,7 +1229,7 @@ contains
       & F_Commandline, F_Count, F_Crashburn, &
       & F_Details, F_Dacsfiltershapes, F_DumpFile, &
       & F_File, F_Filtershapes, F_Forwardmodel, F_GlobalAttributes, F_Grid, &
-      & F_Hessian, F_Hgrid, F_Igrf, &
+      & F_Hessian, F_Hgrid, F_Igrf, F_InputFile, &
       & F_L2pc, F_Lines, F_Mark, F_Mask, F_Matrix, F_Memory, &
       & F_Mietables, F_Options, &
       & F_Pause, F_PfaData, F_PfaFiles, F_Pfanum, F_Pfastru, &
@@ -1248,7 +1249,7 @@ contains
     use MatrixModule_1, only: Matrix_T, Matrix_Database_T, &
       & Diff, Dump, GetFromMatrixDatabase, MatricesMemoryInUse
     use MLSCommon, only: MLSFile_T
-    use MLSFiles, only: DumpMLSFile => Dump, GetMLSFilebyname
+    use MLSFiles, only: DumpMLSFile => Dump, GetMLSFilebyname, MLS_Exists
     use MLSFinds, only: Findfirst, FindUnique
     use MLSKinds, only: R8, Rv
     use MLSL2Options, only: L2Options, &
@@ -1272,7 +1273,7 @@ contains
     use Read_Mie_M, only: Dump_Mie
     use SpectroscopyCatalog_M, only: Catalog, Dump, Dump_Lines_Database, Lines
     use String_Table, only: Display_String, Get_String
-    use Time_M, only: Finish
+    use Time_M, only: Finish, Time_Config, Wait_For_Event
     use Toggles, only: Gen, Switches, Toggle
     use Trace_M, only: Trace_Begin, Trace_End
     use Tree, only: Decoration, Node_Id, Nsons, Sub_Rosa, Subtree, Where
@@ -1333,6 +1334,7 @@ contains
     integer :: Me = -1               ! String index for trace cacheing
     integer :: MUL
     integer :: N
+    character(len=80) :: mesg
     character(len=80) :: Namestring  ! E.g., 'L2PC-band15-SZASCALARHIRES'
     integer :: nUnique
     logical :: oldPrintNameAsHeadline
@@ -1413,6 +1415,7 @@ contains
       DetailReduction = 2
     end if
 
+    Time_Config%wait_time = 5 ! Wait just 5s before trying to read inputFile
     clean = .false.
     truncate = .false.
     reset = .false.
@@ -1435,6 +1438,8 @@ contains
     doStretchier = .false.
     lineLength = 40
     text = ' '
+    mesg = ' '
+    Namestring = ' '
     ZOT = .false.
 
     do j = 2, nsons(root)
@@ -1602,8 +1607,21 @@ contains
           case ( f_MieTables )
             call dump_Mie ( details )
           case ( f_pause )
-            call output ( 'Program paused by /pause field on DUMP statement.', &
-              & advance='yes pause' )
+            ! Do we wait for a command read from inputFile or one from stdin?
+            ! If from an inputFile we will wait patiently for you to create it
+            ! If from stdin we will wait for you to enetr "by hand"
+            ! (which may not always be possible--thus the inputFile option)
+            if ( got( f_inputFile ) ) then
+              call output ( 'Program paused by /pause field on Dump statement' &
+                & // ' .. to read command from ' // trim(nameString), &
+                & advance='yes' )
+              call Wait_then_read_mesg( nameString, mesg )
+              call output ( 'Resuming after reading ' // trim(mesg), &
+                & advance='yes' )
+            else
+              call output ( 'Program paused by /pause field on Dump statement.', &
+                & advance='yes pause' )
+            endif
           case ( f_pfaFiles )
             call dump_PFAFileDatabase ( details )
           case ( f_pfaStru )
@@ -1760,13 +1778,15 @@ contains
           call output('index ', advance='no')
           call output(trim(fieldName), advance='yes')
         end if
-      case ( f_file )
+      case ( f_file, f_inputfile )
         if ( present(fileDataBase) ) then
           do i = 2, nsons(son)
             gson = subtree(i,son)
             call get_string ( sub_rosa(gson), nameString, strip=.true. )
             oneMLSFile => getMLSFileByName ( fileDataBase, nameString )
-            if ( associated(oneMLSFile) ) then
+            if ( fieldIndex == f_inputfile ) then
+              ! This is just a file to input further commands
+            elseif ( associated(oneMLSFile) ) then
               call dumpMLSFile ( oneMLSFile )
             else
               call announceError ( gson, noFile, trim(nameString) )
@@ -2232,7 +2252,27 @@ contains
     PrintNameInBanner = oldPrintNameInBanner
 
     call trace_end ( 'DumpCommand', cond=toggle(gen) )
+contains
+    subroutine Wait_then_read_mesg ( filename, mesg )
+      character(len=*), intent(in)  :: filename
+      character(len=*), intent(out) :: mesg
+      integer                       :: unitnum, status
+      ! Executable
+      InputFileName = filename
+      call wait_for_event( File_There_Now, 1 )
+      open ( newunit=unitnum, form='formatted', &
+        & file=trim(FileName), status='old', iostat=status )
+      read ( unitnum, '(a80)' ) mesg
+    end subroutine Wait_then_read_mesg
 
+    function File_There_Now( id ) result ( now )
+      ! Returns
+      ! 0 if filename exists
+      ! 1 otherwise
+      integer, intent(in)          :: id ! Ignored
+      integer                      :: now
+      now = mls_exists ( trim(InputFileName) )
+    end function File_There_Now
   end subroutine DumpCommand
 
   ! ---------------------------------------------  ExecuteCommand  -----
@@ -2646,11 +2686,10 @@ contains
     call trace_end ( 'MLSSelect', cond=toggle(gen) )
   end subroutine MLSSelect
 
-  subroutine  MLSENDSELECT ( ROOT )
+  subroutine  MLSEndSelect ( ROOT )
   ! Resets the global variable MLSSelecting
   ! Optionally puts note about end of selecting in log file
     use Init_Tables_Module, only: F_Label
-    use MLSMessageModule, only: MLSMSG_Info
     use MLSStrings, only: Lowercase
     use Moretree, only: Get_Field_Id
     use String_Table, only: Get_String
@@ -3226,6 +3265,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.144  2018/10/19 00:03:46  pwagner
+! inputFile= with /pause pauses to read from inputFile instead of stdin
+!
 ! Revision 2.143  2018/10/17 23:05:04  pwagner
 ! Dump command can take /pause field to wait for user input for, e.g. debugging
 !
