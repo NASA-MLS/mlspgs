@@ -9,42 +9,42 @@
 ! export authority as may be required before exporting such information to
 ! foreign countries or providing access to foreign persons.
 
-program L2Q
-  use Allocate_Deallocate, only: allocate_test, deallocate_test, &
-    & NoBytesAllocated, test_allocate, test_deallocate
-  use dates_module, only: dateform, reformatdate
+program l2q
+  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test, &
+    & Test_Allocate, Test_Deallocate
+  use Dates_Module, only: Dateform, Reformatdate
   use Dump_1, only: Dump
-  use highOutput, only: output_date_and_time, outputNamedValue, timeStamp
-  use L2ParInfo, only: parallel, initParallel
-  use L2ParInfo, only: machine_t, parallel, &
-    & petitiontag, giveuptag, grantedtag, masterdumptag, notifytag, &
-    & sig_finished, sig_register, sig_swearallegiance, sig_switchallegiance, &
-    & sig_hostdied, sig_releasehost, sig_requesthost, sig_thankshost, &
-    & machinenamelen, getmachinenames, &
-    & dump, addmachinetodatabase
-  use machine ! at least hp for command lines, and maybe getarg, too
-  use MLSCommon, only: fileNameLen
-  use MLSL2Options, only: current_version_id
+  use HighOutput, only: Output_Date_And_Time, OutputNamedValue, TimeStamp
+  use L2ParInfo, only: Parallel, InitParallel
+  use L2ParInfo, only: Machine_T, Parallel, &
+    & Petitiontag, Giveuptag, Grantedtag, Masterdumptag, Notifytag, &
+    & Sig_Finished, Sig_Register, Sig_Swearallegiance, Sig_Switchallegiance, &
+    & Sig_Hostdied, Sig_Releasehost, Sig_Requesthost, Sig_Thankshost, &
+    & Machinenamelen, Getmachinenames, &
+    & Dump, AddmachinetoDatabase
+  use Machine ! At Least Hp For Command Lines, And Maybe Getarg, Too
+  use MLSCommon, only: FileNameLen
+  use MLSL2Options, only: Current_Version_Id
   use MLSMessageModule, only: MLSMessage, MLSMessageConfig, MLSMessageExit, &
-    & MLSMSG_Allocate, MLSMSG_DeAllocate, MLSMSG_Debug, MLSMSG_Error, &
+    & MLSMSG_Debug, MLSMSG_Error, &
     & MLSMSG_Info, MLSMSG_Success, MLSMSG_Warning, PVMErrorMessage
   use MLSFinds, only: Findfirst
-  use MLSStringLists, only: catLists, getStringElement, numStringElements, &
-    & stringelementnum
-  use MLSStrings, only: lowercase, readIntsFromChars, streq
-  use output_m, only: blanks, newline, &
-    & output, OutputOptions
-  use PrintIt_m, only: Set_Config
+  use MLSStringLists, only: CatLists, GetStringElement, NumStringElements, &
+    & StringElementnum
+  use MLSStrings, only: Lowercase, ReadIntsFromChars, Streq
+  use Output_M, only: Blanks, Newline, &
+    & Output, OutputOptions
+  use PrintIt_M, only: Set_Config
   use PVM, only: PVMOK, &
-    & ClearPVMArgs, getmachinenamefromtid, &
-    & pvmdatadefault, pvmfinitsend, pvmf90pack, pvmfkill, pvmfmytid, &
-    & pvmf90unpack, pvmfpstat, &
-    & pvmfsend, pvmfnotify, pvmtaskexit, &
-    & pvmffreebuf
+    & ClearPVMArgs, Getmachinenamefromtid, &
+    & PvmDatadefault, Pvmfinitsend, Pvmf90pack, Pvmfkill, Pvmfmytid, &
+    & Pvmf90unpack, Pvmfpstat, &
+    & Pvmfsend, Pvmfnotify, Pvmtaskexit, &
+    & Pvmffreebuf
   use Sort_M, only: Sort
-  use Time_M, only: Time_Now, time_config
-  use toggles, only: gen, levels, &
-    & toggle
+  use Time_M, only: Time_Now, Time_Config
+  use Toggles, only: Gen, Levels, &
+    & Toggle
 
   ! === (start of toc) ===
   !     c o n t e n t s
@@ -90,7 +90,6 @@ program L2Q
   integer, parameter :: MASTERNAMELEN = 16
   character(len=MasterNameLen) :: MASTERSNAME
   integer, parameter :: MAXNUMMASTERS = 100 ! Mas num running simultaneously
-  integer, parameter :: MAXNUMMULTIPROCS = 8 ! For some architectures > 1000 
   integer :: RECL = 10000          ! Record length for list
   integer :: STATUS                ! From OPEN
   logical :: SWITCH                ! "First letter after -- was not n"
@@ -133,14 +132,6 @@ program L2Q
        "$Id$"
   character (len=len(idParm)) :: Id = idParm
 !---------------------------------------------------------------------------
-
-! To use this, copy it into
-! mlspgs/tests/lib
-! then enter "make depends" followed by "make"
-
-
-! Then run it
-! LF95.Linux/test [options] [input files]
 
   ! Our data type for the master tasks we'll be communicating with via pvm
   type master_T
@@ -365,9 +356,7 @@ program L2Q
   call output_date_and_time( msg='starting l2q  TID=' // trim(tidStr) )
   call time_now ( t1 )
 
-  if( options%verbose .or. .true. ) then
-    call dump_settings
-  end if
+  if( options%verbose  ) call dump_settings
 
   ! Read list of prospective hosts that will run slave tasks for masters
   call read_list
@@ -769,6 +758,7 @@ contains
     integer :: grandMastersID           ! index into database of an older master
     integer :: host
     integer :: hostsID                  ! index into database of a host
+    integer :: i
     integer, dimension(MAXNUMMASTERS) :: IDs
     integer :: INFO                     ! From PVM
     character(len=MachineNameLen)  :: MACHINENAME
@@ -2084,7 +2074,7 @@ contains
     ! Executable
     last = ' '
     line = ' '
-    do
+    ! do
     read ( unit, '(a)', advance='no', eor=100, end=200, err=400, &
       & iostat=status ) line
     if ( DEEBUG ) call output( 'oneline: ' // trim(line), advance='yes' )
@@ -2110,7 +2100,7 @@ contains
     call timestamp(status, advance='yes')
     endif
     return
-    enddo
+    ! enddo
 200 status = 99
     if ( .not. DEEBUG ) return
     call output(trim(line), advance='no')
@@ -2412,6 +2402,9 @@ contains
 end program L2Q
 
 ! $Log$
+! Revision 1.39  2016/08/12 16:18:03  pwagner
+! Made consistent with our split of Dump_0
+!
 ! Revision 1.38  2015/04/29 16:18:17  pwagner
 ! Fixed bug due to changes in rmItemFromDatabase.f9h
 !
