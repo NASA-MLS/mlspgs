@@ -1625,6 +1625,7 @@ contains ! =====     Public procedures     =============================
     call make_tree ( (/ & ! Continuing for s_dump...
              begin, f+f_hessian, field_spec(s_hessian), &
              begin, f+f_igrf, boolean(), &
+             begin, f+f_inputfile, string(), &
              begin, f+f_l2pc, string(), &
              begin, f+f_lines, field_spec(s_line), &
              begin, f+f_mark, boolean(), &
@@ -2132,6 +2133,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.645  2018/10/19 00:03:47  pwagner
+! inputFile= with /pause pauses to read from inputFile instead of stdin
+!
 ! Revision 2.644  2018/10/17 23:05:04  pwagner
 ! Dump command can take /pause field to wait for user input for, e.g. debugging
 !
