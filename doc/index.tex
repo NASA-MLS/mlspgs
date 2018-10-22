@@ -52,6 +52,11 @@
 \newcommand\hrpdf[1]{\href{#1.pdf}{pdf}}
 \newcommand\hpdf[1]{#1 \hrpdf{#1}}
 
+% #2 in these macros is the path relative to the index, which might be
+% deeper than ./ or ./\dvidir/ or ./\pdfdir/
+\newcommand\hrlongdvi[2]{#1 \href{#2/#1.dvi}{dvi}}
+\newcommand\hrlongpdf[2]{#1 \href{#2/#1.pdf}{pdf}}
+
 \begin{document}
 
 \makeatletter
@@ -73,6 +78,9 @@
 
 \begin{longtable}[l]{l|p{5in}}
 \hh{l2cf}{l2cfquickreference} & l2cf quick reference (very old)\\
+% This doesn't work, and I don't know why not
+%\hrlongpdf{l2cf}{pdf/l2cf/} & l2cf: Sections and Run-time Flags \\
+l2cf \href{pdf/l2cf/l2cf.pdf}{pdf} & l2cf: Sections and Run-time Flags \\
 \h{wvs-001} & Observations Concerning Code in the {\tt mlspgs/l2} Directory\\
 \h{wvs-002} & The retrieval iteration in the form of a least-squares problem\\
 \h{wvs-003} & The Forward Model\\
@@ -253,6 +261,9 @@ its radius \\
 % $Id$
 
 % $Log$
+% Revision 1.66  2018/07/25 19:42:34  vsnyder
+% Add wvs-150
+%
 % Revision 1.65  2018/07/10 00:21:05  vsnyder
 % Add wvs-149
 %
