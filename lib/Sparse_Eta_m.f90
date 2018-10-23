@@ -173,6 +173,8 @@ contains
     if ( present(row1) ) myRow1 = min(row1,n_grid)
     if ( present(rowN) ) myRowN = min(rowN,n_grid)
 
+    pr = 0 ! Make sure first row is not believed to be a duplicate
+
     if ( mySorted ) then
       if ( grid(myRow1) > grid(myRowN) ) then ! Grid is in the opposite order
         i = myRow1
@@ -201,7 +203,6 @@ contains
         end block
       end if
 
-      pr = 0
       if ( myRow1 <= myRowN ) then ! Process grid in increasing order
         ! Coefficients below Basis(1) are all 1.0
         do i = myRow1, myRowN
@@ -415,6 +416,9 @@ contains
 end module Sparse_Eta_m
 
 ! $Log$
+! Revision 2.10  2018/10/23 20:44:38  vsnyder
+! Make sure PR is defined everywhere in Sparse_Eta_1D
+!
 ! Revision 2.9  2018/10/11 00:32:26  vsnyder
 ! Give PR a value in the loop wherein the grid and basis are within ranges.
 ! Otherwise, I might be compared to an unitialized value, and skip a row.
