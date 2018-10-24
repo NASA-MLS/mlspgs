@@ -843,6 +843,7 @@ contains
   end subroutine Sparse_Clear_Col_Flags
 
   ! -------------------------------------------  Sparse_Clear_Vec  -----
+!  pure &
   subroutine Sparse_Clear_Vec ( Sparse, R, Vector )
     ! Clear elements of Vector that correspond to nonzero elements of row R
     ! of Sparse.  This is used to clean up after Row_Times_Vec.
@@ -860,8 +861,9 @@ contains
   end subroutine Sparse_Clear_Vec
 
   ! ------------------------------------------  Sparse_Dot_Matrix  -----
+!  pure &
   subroutine Sparse_Dot_Matrix ( Sparse, Matrix, Prod )
-    ! Multiply Sparse by Matrix producing Product
+    ! Multiply Sparse by Matrix producing Prod
     class(sparse_t), intent(in) :: Sparse  ! The sparse matrix
     real(rp), intent(in) :: Matrix(:,:)    ! The matrix Sparse is to multiply
     real(rp), intent(out) :: Prod(:,:)
@@ -877,26 +879,26 @@ contains
   end subroutine Sparse_Dot_Matrix
 
   ! ------------------------------------------  Sparse_Dot_Vec_1D  -----
+!  pure &
   subroutine Sparse_Dot_Vec_1D ( Sparse, Vector, Prod )
-    ! Multiply Sparse by Vector producing Product
+    ! Multiply Sparse by Vector producing Prod
     class(sparse_t), intent(in) :: Sparse  ! The sparse matrix
     real(rp), intent(in) :: Vector(:)      ! The vector Sparse is to multiply
     real(rp), intent(out) :: Prod(:)
 
-    integer :: N  ! Number of rows to use
-    integer :: R
-
-    n = sparse%nRows
-    if ( n == 0 ) n = size(sparse%rows)
-    do r = 1, min(n,ubound(prod,1))
-      prod(r) = sparse%row_dot_vec ( r, vector )
+    integer :: I
+    integer :: R ! Row subscripts of Sparse%E and Prod
+    prod = 0
+    do i = 1, sparse%ne
+      r = sparse%e(i)%r
+      prod(r) = prod(r) + sparse%e(i)%v * vector(sparse%e(i)%c)
     end do
 
   end subroutine Sparse_Dot_Vec_1D
 
   ! ------------------------------------------  Sparse_Dot_Vec_2D  -----
   subroutine Sparse_Dot_Vec_2D ( Sparse, Vector, Prod )
-    ! Multiply Sparse by Vector producing Product
+    ! Multiply Sparse by Vector producing Prod
     class(sparse_t), intent(in) :: Sparse  ! The sparse matrix
     real(rp), intent(in), target :: Vector(:,:) ! The vector Sparse is to
                                            ! multiply. Sparse%e(j)%c is the
@@ -917,6 +919,7 @@ contains
   end subroutine Sparse_Dot_Vec_2D
 
   ! ---------------------------------------  Sparse_Get_All_Flags  -----
+!  pure &
   subroutine Sparse_Get_All_Flags ( Sparse, Flags )
     ! Make values of Flags that correspond to nonzeroes of Sparse true.
     class(sparse_t), intent(in) :: Sparse
@@ -931,6 +934,7 @@ contains
   end subroutine Sparse_Get_All_Flags
 
   ! ---------------------------------------------  Sparse_Get_Col  -----
+!  pure &
   subroutine Sparse_Get_Col ( Sparse, C, Vector )
     ! Get elements of Vector that correspond to nonzero elements of column C
     ! of Sparse.  Vector is not initially made zero.
@@ -948,6 +952,7 @@ contains
   end subroutine Sparse_Get_Col
 
   ! -----------------------------------  Sparse_Get_Col_And_Flags  -----
+!  pure &
   subroutine Sparse_Get_Col_And_Flags ( Sparse, C, Vector, Flags, Last )
     ! Get elements of Vector that correspond to nonzero elements of column C
     ! of Sparse.  Vector is not initially made zero.
@@ -975,6 +980,7 @@ contains
   end subroutine Sparse_Get_Col_And_Flags
 
   ! --------------------------------  Sparse_Get_Col_And_Sparsity  -----
+!  pure &
   subroutine Sparse_Get_Col_And_Sparsity ( Sparse, C, Vector, NNZ, NZ )
     ! Get elements of Vector that correspond to nonzero elements of column C
     ! of Sparse.  Vector is not initially made zero.  Set NNZ to the number of
@@ -998,6 +1004,7 @@ contains
   end subroutine Sparse_Get_Col_And_Sparsity
 
   ! -------------------------------------  Sparse_Get_Col_Flags  -----
+!  pure &
   subroutine Sparse_Get_Col_Flags ( Sparse, C, Flags )
     ! Set elements of Flags that correspond to nonzero elements of column C
     ! of Sparse to be true.  Flags is not initially made false -- see
@@ -1016,6 +1023,7 @@ contains
   end subroutine Sparse_Get_Col_Flags
 
   ! ------------------------------------------------  Vec_Dot_Col  -----
+!  pure &
   pure real(rp) function Vec_Dot_Col ( Vector, Sparse, C ) result ( D )
     ! Compute dot product of Vector with column C of Sparse
     real(rp), intent(in) :: Vector(:)      ! The vector
@@ -1037,6 +1045,7 @@ contains
   end function Vec_Dot_Col
 
   ! ---------------------------------------------  Vec_Dot_Sparse  -----
+!  pure &
   subroutine Vec_Dot_Sparse ( Vector, Sparse, Prod )
     ! Multiply Sparse by Vector producing Product
     real(rp), intent(in) :: Vector(:)      ! The vector Sparse is to multiply
@@ -1064,6 +1073,9 @@ contains
 end module Sparse_m
 
 ! $Log$
+! Revision 2.15  2018/10/24 19:53:32  vsnyder
+! Faster matrix-vector product
+!
 ! Revision 2.14  2018/10/11 01:01:42  vsnyder
 ! More blank stuff to make transpose and non-transpose dumps more alike
 !
