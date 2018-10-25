@@ -511,7 +511,8 @@ contains
           end if
           if ( .not. doThis ) cycle
           didOne = .true.
-          call output ( i, places=4, after="#" ) ! Row number
+          if ( sparse%nRows > 1 ) &
+            & call output ( i, places=4, after="#" ) ! Row number
           k = 0
           do
             if ( k >= myWidth ) then
@@ -527,7 +528,7 @@ contains
               cs = subscripts ( sparse%e(j)%c, sparse%uBnd, sparse%lBnd )
               if ( myOffset ) cs = cs - sparse%lBnd + 1
               if ( size(cs) == 1 .and. myColon ) then
-                call output ( cs(1), places=5, after=": " )
+                call output ( cs(1), places=4, after=": " )
               else
                 call output ( cs(1), before=" (" )
                 do l = 2, size(cs)
@@ -1073,6 +1074,9 @@ contains
 end module Sparse_m
 
 ! $Log$
+! Revision 2.16  2018/10/25 19:00:51  vsnyder
+! Spiff a dump
+!
 ! Revision 2.15  2018/10/24 19:53:32  vsnyder
 ! Faster matrix-vector product
 !
