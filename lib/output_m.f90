@@ -51,6 +51,7 @@ module Output_M
     & OutputLinesPrUnit      => BufferedLogUnit, & 
     & PrintItOut, PrUnitName => LogUnitName, &
     & MLSMessageConfig
+  use IO_Stuff, only: Pause
 
   implicit none
   private
@@ -814,9 +815,12 @@ contains
     ! out any debugging use of this before delivery
     ! print *, 'pause: ', advancedOptions%pause
     if ( advancedOptions%pause ) then
-      print *, '(P a u s e d .. e n t e r   o k   t o   r e s u m e, p   t o   s t e p)'
-      read (*,'(a)') my_adv(1:1)
+      ! print *, '(P a u s e d .. e n t e r   o k   t o   r e s u m e, p   t o   s t e p)'
+      ! read (*,'(a)') my_adv(1:1)
       ! Reset--unless told to ste'p', must explicitly request next pause
+      call Pause ( my_adv, Prompts=(/ &
+        & '(P a u s e d .. e n t e r   o k   t o   r e s u m e, p   t o   s t e p)' &
+        & /) )
       if ( index('pP', my_adv(1:1)) < 1 ) advancedOptions%pause = .false. 
     endif
   end subroutine Output_Char_NoCR
@@ -1810,6 +1814,9 @@ contains
 end module Output_M
 
 ! $Log$
+! Revision 2.140  2018/10/25 23:25:20  pwagner
+! Uses Pause from Io_Stuff
+!
 ! Revision 2.139  2018/10/17 23:03:10  pwagner
 ! advance=.. can be used to make program pause, e.g. for debugging
 !
