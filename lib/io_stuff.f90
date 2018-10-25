@@ -20,6 +20,7 @@ module IO_Stuff
   private
   public :: Get_lun
   public :: Get_nLines
+  public :: Pause
   public :: Read_stdin
   public :: Read_Textfile
   public :: Truncate_Textfile
@@ -33,6 +34,7 @@ module IO_Stuff
 ! Get_lun           Find a Fortran logical unit number that's not in use.
 !                     Fortran 2008 allows use of newunit= field in open
 ! Get_nLines        Find how many lines are in a text file
+! Pause             Wait for user input via stdin
 ! Read_stdin        Read standard input into characters scalar or array
 ! Read_Textfile     Read contents of a textfile into characters scalar or array
 ! Truncate_Textfile Delete contents of a text file
@@ -42,6 +44,7 @@ module IO_Stuff
 ! === (start of api) ===
 ! get_lun( int lun, [log msg], [int bottom], [int top] )
 ! get_nLines( char* File, int nLines, [int maxLineLen] )
+! Pause ( char* mesg , [char* Prompts(:) )] )
 ! Read_stdin( str string, [int maxLineLen], [int nLines] )
 ! Read_Textfile( char* File, str string, [int maxLineLen], [int nLines] )
 ! write_Textfile( char* File, str string, [int maxLineLen], [int nLines] )
@@ -176,6 +179,28 @@ contains
     enddo
     close( UNIT=lun, iostat=status )
   end subroutine get_nLines
+
+  subroutine Pause ( mesg, Prompts )
+
+    ! Wait to read mesg from  stdin 
+
+    character(len=*), intent (out)                        :: mesg            
+    character(len=*), intent (in), dimension(:), optional :: Prompts
+    ! Internal variables
+    integer                                               :: i
+    character(len=80)                                     :: myMesg
+    ! Executable
+    if ( present(Prompts) ) then
+      do i=1, size(Prompts)
+        print *, trim(Prompts(i))
+      enddo
+      read (*,'(a80)') myMesg
+    else
+      print *, '(P a u s e d .. e n t e r   m e s s a g e'
+      read (*,'(a80)') myMesg
+    endif
+    mesg = myMesg
+  end subroutine Pause
 
   !------------------ Read_stdin
   ! Notes and limitations:
@@ -655,6 +680,9 @@ contains
 end module IO_STUFF
 
 ! $Log$
+! Revision 2.24  2018/10/25 23:23:40  pwagner
+! Added Pause command
+!
 ! Revision 2.23  2018/10/17 00:57:58  pwagner
 ! New optional arg AsIs to write_Textfile_arr
 !
