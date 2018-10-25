@@ -10,13 +10,14 @@
 ! foreign countries or providing access to foreign persons.
 
 !=============================================================================
-module TIME_M
+module Time_M
 !=============================================================================
 
 ! Compute or print either CPU time, in arbitrary units, or wall-clock time, in
 ! seconds since midnight.  And some other time-related actions.
 
   use Dates_module, only: YYYYMMDD_to_DAI
+  use IO_Stuff, only: Pause_Stdin => Pause
   use Machine, only: USleep
   use Optional_m, only: Default
   use PrintIt_m, only: MLSMSG_Warning, PrintItOut
@@ -27,18 +28,19 @@ module TIME_M
 !     c o n t e n t s
 !     - - - - - - - -
 !   datatypes
-! retry_config_t          retry configuration type
-! sayTime_config_t        say time configuration type
-! time_config_t           time configuration type
+! Retry_config_t          retry configuration type
+! SayTime_config_t        say time configuration type
+! Time_config_t           time configuration type
 
-!   subrouttines and functions
-! begin                   announce the time of day at beginning
-! dump                    dump either of the time of day configurations
-! finish                  announce the time of day and consumed CPU time at finish
-! ms_to_hms               convert millisec to (hour,minute,sec)
+!   subroutines and functions
+! Begin                   announce the time of day at Beginning
+! Dump                    dump either of the time of day configurations
+! Finish                  announce the time of day and consumed CPU time at Finish
+! Ms_to_hms               convert millisec to (hour,minute,sec)
 
-! init_retry              Initialize the retry mechanism
-! retry                   Engage retry mechanism that monitors iterations,
+! Init_retry              Initialize the retry mechanism
+! Pause                   wait for user input, either via stdin or InputFileName
+! Retry                   Engage retry mechanism that monitors iterations,
 !                         exception handling, or synchronizing events
 !     Example:
 !     Assume you want to keep calling home until you get a successful result "0"
@@ -52,44 +54,45 @@ module TIME_M
 !     if ( shall_i /= RETRY_SUCCESS ) 
 !        call exception_handler ( shall_i )
 !     endif
-! sayTime                  print a stepwise and cumulative timing line
-! configureSayTime         set a start time, units, etc. to be used to say timings times
-! set_time_config          Explicitly set start time in time_config_t
+! SayTime                  print a stepwise and cumulative timing line
+! ConfigureSayTime         set a start time, units, etc. to be used to say timings times
+! Set_time_config          Explicitly set start time in time_config_t
 !                            formatted as array of integer values returned 
 !                            by intrinsic date_and_time
 !                          (/ year,month,day,t-t_utc,hour,minutes,s,ms /)
 !                          E.g., input (/ -1, i=1,8 /) to make next call
 !                          to time_now return 0
-! time_now                 Returns time according to time_config: as
+! Time_now                 Returns time according to time_config: as
 !                          (1) Arbitrary units if cpu time
 !                          (2) s since midnight if wall clock time
 !                          (3) s since 1st call to time_now (so 1st returns 0)
-! wait                     Wait for supplied interval to elapse
-! wait_for_event           Wait for an event to occur
+! Wait                     Wait for supplied interval to elapse
+! Wait_for_event           Wait for an event to occur
 ! === (end of toc) ===
 
 ! === (start of api) ===
-! begin ( char* string )
-! finish ( char* string )
-! init_retry ( [int successful_result], [int failed_result] )
-! int retry ( int trial_value, [real delay], [int max_retries], &
+! Begin ( char* string )
+! Finish ( char* string )
+! Init_retry ( [int successful_result], [int failed_result] )
+! Int retry ( int trial_value, [real delay], [int max_retries], &
 !   [real max_retrying_time] )
-! ms_to_hms ( int ms, int hrs, int mins, int secs )
-! sayTime ( [char* Operation], [real t1], [real t2], [log cumulative] )
-! configureSayTime ( [real t1], [char timingUnits], [log reset], &
+! Ms_to_hms ( int ms, int hrs, int mins, int secs )
+! Pause ( char* mesg , [char* InputFileName )] )
+! SayTime ( [char* Operation], [real t1], [real t2], [log cumulative] )
+! ConfigureSayTime ( [real t1], [char timingUnits], [log reset], &
 !     [log showTimingUnits], [char* Preamble], [char* Coda] )
-! set_time_config ( real values(8) )
-! time_now ( float t, [int invalues(8)] )
-! wait ( float t, [int err] )
-! wait_for_event ( integer function event, int id, [int err] )
-! wait_for_event ( logical function event, int id )
-! wait_for_event ( logical function event, int id(:), theId )
+! Set_time_config ( real values(8) )
+! Time_now ( float t, [int invalues(8)] )
+! Wait ( float t, [int err] )
+! Wait_for_event ( integer function event, int id, [int err] )
+! Wait_for_event ( logical function event, int id )
+! Wait_for_event ( logical function event, int id(:), theId )
 !
 ! Note:
 ! float means either real or double precision types
 ! === (end of api) ===
-  public :: begin, dump, finish, &
-   & init_retry, ms_to_hms, retry, retry_success, &
+  public :: Begin, dump, Finish, &
+   & init_retry, ms_to_hms, retry, Pause, retry_success, &
    & sayTime, configureSayTime, set_time_config, &
    & time_now, time_now_d, time_now_s, &
    & too_many_retries, try_again, &
@@ -100,17 +103,17 @@ module TIME_M
     module procedure Dump_TimeConfig
   end interface
 
-  interface TIME_NOW
-    module procedure TIME_NOW_D
-    module procedure TIME_NOW_S
+  interface time_now
+    module procedure time_now_d
+    module procedure time_now_s
   end interface
 
-  interface WAIT
-    module procedure WAIT_D
-    module procedure WAIT_S
+  interface wait
+    module procedure wait_d
+    module procedure wait_s
   end interface
 
-  interface WAIT_FOR_EVENT
+  interface wait_for_event
     module procedure wait_for_event_int
     module procedure wait_for_event_log
     module procedure wait_for_events
@@ -119,10 +122,10 @@ module TIME_M
   ! This is the retry configuration type
   public :: retry_config_t
   type retry_config_t
-    integer :: try_number
-    integer :: successful_result
-    integer :: failed_result
-    real    :: init_t0
+    integer :: Try_number
+    integer :: Successful_result
+    integer :: Failed_result
+    real    :: Init_t0
   end type retry_config_t
 
   ! There are two time configurations:
@@ -130,8 +133,8 @@ module TIME_M
   public :: sayTime_config_t
   type sayTime_config_t
     character(len=1)     :: TimingUnits = 's'
-    real                 :: startT1     = 0.
-    logical              :: sayUnits    = .false.
+    real                 :: StartT1     = 0.
+    logical              :: SayUnits    = .false.
     character(len=16)    :: Preamble    = ''  ! Instead of 'Timing for' at start
     character(len=16)    :: Coda        = ''      ! Print at end of line
   end type sayTime_config_t
@@ -140,20 +143,20 @@ module TIME_M
   public :: time_config_t
   type time_config_t
     ! Divide by time_divisor before returning time_now or waiting
-    integer, dimension(8) :: starttime                   = -1  ! Reset on first call to time_now
-    integer               :: startdaysoff                = 0
-    integer               :: time_divisor                = 1  
-    logical               :: use_wall_clock              = .false.
-    integer               :: wait_time                   = 100 ! How many mus to sleep waiting for event
-    logical               :: wallClockIsElapsedFromStart = .true. ! return 0 for 1st call
+    integer, dimension(8) :: Starttime                   = -1  ! Reset on first call to time_now
+    integer               :: Startdaysoff                = 0
+    integer               :: Time_divisor                = 1  
+    logical               :: Use_wall_clock              = .false.
+    integer               :: Wait_time                   = 100 ! How many s to sleep waiting for event
+    logical               :: WallClockIsElapsedFromStart = .true. ! return 0 for 1st call
   end type time_config_t
 
-  integer, parameter :: MICROSPERS = 1000000 ! How many micros in a s
-  integer, parameter :: SUCCESSFUL_DEFAULT = 0
-  integer, parameter :: FAILED_DEFAULT = 999
-  integer, parameter :: TRY_AGAIN = 1
-  integer, parameter :: RETRY_SUCCESS = TRY_AGAIN - 1
-  integer, parameter :: TOO_MANY_RETRIES = RETRY_SUCCESS - 1
+  integer, parameter :: Microspers         = 1000000 ! How many micros in a s
+  integer, parameter :: Failed_default     = 999
+  integer, parameter :: Try_again          = 1
+  integer, parameter :: Retry_success      = TRY_AGAIN - 1
+  integer, parameter :: Successful_default = 0
+  integer, parameter :: Too_many_retries   = RETRY_SUCCESS - 1
   !                                              so first value is 0.0
   type(retry_config_t), public, save :: retry_config
   type(time_config_t), public, save :: time_config
@@ -170,21 +173,21 @@ module TIME_M
 
 contains
 
-  subroutine BEGIN ( SHOW )
+  subroutine Begin ( SHOW )
     ! Announce the time of day of starting; set start time
-    ! for calculating elapsed cpu when calling finish
-    use highOutput, only: Output_Date_and_Time
+    ! for calculating elapsed cpu when calling Finish
+    use HighOutput, only: Output_Date_and_Time
     character(len=*), intent(in) :: SHOW
     double precision :: dt2
     call cpu_time ( start_CPU_time )
     call time_Now( dt2 )
     Start_WallClockSeconds = dt2
     call Output_Date_and_Time ( msg=show )
-  end subroutine BEGIN
+  end subroutine Begin
 
   subroutine Dump_SayTime ( config )
     ! Dump the SayTime config
-    use highOutput, only: headLine, outputNamedValue
+    use HighOutput, only: headLine, outputNamedValue
     type(sayTime_config_t), intent(in) :: config
     call headLine ( 'SayTime Configuration' )
     call outputNamedValue ( 'timing units', config%TimingUnits )
@@ -196,7 +199,7 @@ contains
 
   subroutine Dump_TimeConfig ( config )
     ! Dump the SayTime config
-    use highOutput, only: headLine, outputNamedValue
+    use HighOutput, only: headLine, outputNamedValue
     type(time_config_t), intent(in) :: config
     call headLine ( 'Time Configuration' )
     call outputNamedValue ( 'start (date)            ', config%starttime(1:3)              )
@@ -208,20 +211,20 @@ contains
     call outputNamedValue ( 'start wall clock from 0?', config%wallClockIsElapsedFromStart )
   end subroutine Dump_TimeConfig
 
-  subroutine FINISH ( SHOW )
-    ! Announce the time of day and CPU time of finishing
-    use highOutput, only: Output_Date_and_Time
+  subroutine Finish ( SHOW )
+    ! Announce the time of day and CPU time of Finishing
+    use HighOutput, only: Output_Date_and_Time
     character(len=*), intent(in) :: SHOW
     double precision :: Finish_CPU_time
     double precision :: Finish_WallClockSeconds
-    call cpu_time ( finish_CPU_time )
+    call cpu_time ( Finish_CPU_time )
     call time_now ( Finish_WallClockSeconds )
     call Output_Date_and_Time ( msg=show, &
-      & CPU_seconds = finish_CPU_time - start_CPU_time, &
+      & CPU_seconds = Finish_CPU_time - start_CPU_time, &
       & WallClock_Seconds = int(Finish_WallClockSeconds-Start_WallClockSeconds) )
-  end subroutine FINISH
+  end subroutine Finish
 
-  subroutine INIT_RETRY ( SUCCESSFUL_RESULT, FAILED_RESULT )
+  subroutine Init_retry ( successful_result, failed_result )
     integer, intent(in), optional :: SUCCESSFUL_RESULT
     integer, intent(in), optional :: FAILED_RESULT
     ! As long as retry_config%FAILED_RESULT is default, try for success
@@ -241,7 +244,7 @@ contains
     
     call time_now (retry_config%init_t0)
     retry_config%try_number = 0
-  end subroutine INIT_RETRY
+  end subroutine Init_retry
 
   subroutine MS_to_HMS (ms, hrs, mins, secs)
 
@@ -256,12 +259,69 @@ contains
 
   end subroutine MS_to_HMS
 
-  function RETRY ( TRIAL_VALUE, DELAY, MAX_RETRIES, MAX_RETRYING_TIME )
-    integer, intent(in)           :: TRIAL_VALUE
-    integer, intent(in), optional :: MAX_RETRIES
-    real, intent(in), optional    :: DELAY
-    real, intent(in), optional    :: MAX_RETRYING_TIME
-    integer                       :: RETRY
+  subroutine Pause ( mesg, InputFileName, Prompts )
+    use MLSCommon, only: Filenamelen
+
+    ! Wait to read mesg from InputFileName
+    ! or stdin (if InputFileName not present)
+
+    character(len=8), intent (out)                        :: mesg            
+    character(len=*), intent (in), optional               :: InputFileName   
+    character(len=*), intent (in), dimension(:), optional :: Prompts
+    ! Internal variables
+    character(len=Filenamelen), save                      :: FileName
+    integer                                               :: i
+    character(len=80)                                     :: myMesg
+    integer                                               :: OldWaitTime
+    ! Executable
+    OldWaitTime = Time_Config%wait_time
+    Time_Config%wait_time = 5
+    if ( present(InputFileName) ) then
+      print *, '(P a u s e d .. w a i t i n g   f o r: ', trim(InputFileName)
+      FileName = InputFileName
+      call Wait_then_read_mesg ( myMesg )
+    else
+      call Pause_stdin( mesg, Prompts )
+    endif
+    mesg = myMesg
+    Time_Config%wait_time = OldWaitTime
+  contains
+    subroutine Wait_then_read_mesg ( mesg )
+      character(len=*), intent(out) :: mesg
+      integer                       :: unitnum, status
+      call wait_for_event( File_There_Now, 1 )
+      open ( newunit=unitnum, form='formatted', &
+        & file=trim(FileName), status='old', iostat=status )
+      read ( unitnum, '(a80)' ) MyMesg
+      mesg = MyMesg
+      close ( unitnum )
+    end subroutine Wait_then_read_mesg
+
+    function File_There_Now( id ) result ( now )
+      ! Returns
+      ! 0 if filename exists
+      ! 1 otherwise
+      integer, intent(in)          :: id ! Ignored
+      logical                      :: exist
+      integer                      :: now
+      ! Use-ing MLSFiles might create a circular dependence
+      ! now = mls_exists ( trim(FileName) )
+      if ( len_trim(FileName) < 1 ) then
+        print *, 'Was FileName ever defined?'
+        stop
+      endif
+      inquire( file=trim(FileName), exist=exist )
+      now = merge( 0, 1, exist )
+      ! print *, trim(FileName) // ':', exist
+    end function File_There_Now
+  end subroutine Pause
+
+  function Retry ( Trial_value, delay, max_retries, max_retrying_time )
+    integer, intent(in)           :: Trial_value
+    integer, intent(in), optional :: Max_retries
+    real, intent(in), optional    :: Delay
+    real, intent(in), optional    :: Max_retrying_time
+    integer                       :: Retry
     real                          :: T1
     ! Return one of three values
     ! TRY_AGAIN if TRIAL_VALUE not yet successful (or still failure)
@@ -322,7 +382,7 @@ contains
     call wait (delay)
     retry_config%try_number = retry_config%try_number + 1
     retry = TRY_AGAIN
-  end function RETRY
+  end function Retry
 
   ! ----------------------------------------------  sayTime  -----
   subroutine sayTime ( Operation, t1, t2, cumulative )
@@ -531,9 +591,12 @@ contains
   end function not_used_here
 !---------------------------------------------------------------------------
 
-end module TIME_M
+end module Time_M
 
 !$Log$
+!Revision 2.21  2018/10/25 22:43:51  pwagner
+!Added Pause command with optional InputFilename arg
+!
 !Revision 2.20  2017/01/11 23:25:02  pwagner
 !May now Dump the two time configs
 !
