@@ -30,6 +30,15 @@ module Path_Contrib_M
   ! radiances or derivatives.
   logical, parameter, private :: GL_Everywhere = .false.
 
+  ! The dummy argument I_End could be updated to stop worrying about
+  ! incremental optical depth after black out.  At some time in the
+  ! distant past, a comment was added above the call in the full forward
+  ! model that calculates Tau from incremental optical depth that "this
+  ! breaks the gold brick."  Tau re-calculates delta, and might black out
+  ! at a different point on the path.  Set this parameter to update I_End
+  ! anyway.
+  logical, parameter, private :: Update_I_End = .false.
+
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
@@ -47,14 +56,15 @@ contains
   subroutine Path_Contrib_Scalar ( incoptdepth, tan_pt, i_start, i_end, &
     &                              e_rflty, tol, do_gl )
 
-    use MLSCommon, only: RK => RP, IP
+    use MLSKinds, only: RK => RP, IP
     use Tau_m, only: Black_Out
 
   ! inputs
 
     real(rk), intent(in) :: IncOptDepth(:) ! layer optical depth
     integer, intent(in) :: tan_pt          ! Tangent point index in IncOptDepth
-    integer, intent(in) :: i_start, i_end  ! How much of path to worry about
+    integer, intent(in) :: i_start         ! Start of path to worry about
+    integer, intent(inout) :: i_end        ! End of path to worry about
     real(rk), intent(in) :: e_rflty        ! earth reflectivity
     real(rk), intent(in) :: tol            ! accuracy target in K
 
@@ -101,7 +111,6 @@ o:  block
     end block o
 
     ! compute the tau path derivative dTau/ds ~ exp(delta) d delta/ds.
-
     dtaudn(i_start:last) = &
       & (eoshift(dtaudn(i_start:last),1,dtaudn(last)) -             &
       &  eoshift(dtaudn(i_start:last),-1,dtaudn(i_start))) * &
@@ -115,6 +124,7 @@ o:  block
     do_gl(:i_start) = .false. ! irrelevant
     do_gl(i_start+1:last) = dtaudn(i_start+1:last) < myTol
     do_gl(last+1:) = .false.  ! Tau is blacked out, so no point in doing GL
+    if ( update_i_end ) i_end = last
 
   end subroutine Path_Contrib_Scalar
 
@@ -373,6 +383,9 @@ o:  block
 end module Path_Contrib_M
 
 ! $Log$
+! Revision 2.29  2018/08/28 20:25:58  vsnyder
+! Add a named constant to change black out to -log(huge(1.0_rk))
+!
 ! Revision 2.28  2018/05/14 23:31:54  vsnyder
 ! Add several more Get_GL_Inds routines, make generic for them
 !
