@@ -3056,7 +3056,8 @@ contains
       real(rp), intent(out) :: Tanh1_c(:) ! tanh(frqhk/t_path_c)
       real(rp), intent(out) :: W0_Path_c(:) ! w0 on coarse path
       real(rp), intent(in) :: Z_Path(:)   ! -Log10(Pressures) along complete path
-      integer, intent(in) :: I_Start, I_End ! Bounds for coarse path integration
+      integer, intent(in) :: I_Start      ! Start of coarse path integration
+      integer, intent(inout) :: I_End     ! End of coarse path integration
       ! INC_RAD_Path is (out) if .not. PFA, and (inout) if PFA
       real(rp), intent(inout) :: Inc_Rad_Path(:) ! Incremental radiance along the path
       real(rp), intent(out) :: RadV       ! Radiance
@@ -3302,7 +3303,7 @@ contains
         ! the hope a clever compiler will do better optimization with
         ! a constant extent.
         ! Add contributions from nonpolarized molecules 1/4 1/2 1/4
-        ! to Alpha here
+        ! to Alpha here.
 
         do j = 1, npc
           alpha_path_polarized_c(-1:1,j) = &
@@ -3369,7 +3370,7 @@ contains
       ! \frac{\text{d}h}{\text{d}\zeta}\,{\text{d}\zeta}$, but del_s is simpler.
 
       if ( WrongTrapezoidal ) then
-        do j = i_start+1, tan_pt_c
+        do j = i_start+1, min(i_end,tan_pt_c)
           if ( .not. do_gl(j) ) &
             & incoptdepth(j) = incoptdepth(j) + &
               & ( alpha_path_c(j-1) - alpha_path_c(j) ) * dsdz_c(j-1) * del_zeta(j)
@@ -3381,7 +3382,7 @@ contains
         end do
       else
         ! Before the tangent point, del_s(j) is the path length from J-1 to J
-        do j = i_start+1, tan_pt_c
+        do j = i_start+1, min(i_end,tan_pt_c)
           if ( .not. do_gl(j) ) &
             & incoptdepth(j) = &
               & ( alpha_path_c(j-1) + alpha_path_c(j) ) * 0.5 * del_s(j)
@@ -4596,6 +4597,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.400  2018/09/12 22:51:16  vsnyder
+! Changed name of dRad_Tran_dX_Sparse to dRad_Tran_dX
+!
 ! Revision 2.399  2018/09/12 22:07:42  vsnyder
 ! Convert interpolators for full cloud forward model from dense to sparse.
 ! Convert interpolators for spectroscopy derivatives from dense to sparse.
