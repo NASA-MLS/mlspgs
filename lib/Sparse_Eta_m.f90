@@ -109,7 +109,7 @@ contains
   end subroutine Sparse_Eta_0D
 
   subroutine Sparse_Eta_1D ( Basis, Grid, Eta, What, Row1, Rown, Create, &
-                           & Sorted, Resize )
+                           & Empty, Sorted, Resize )
 
     ! Compute Eta for linear interpolation from 1D Basis to 1D Grid.
     use Allocate_Deallocate, only: Test_Allocate
@@ -124,6 +124,10 @@ contains
                                               ! false.  Eta is created anyway if
                                               ! rows or cols are not allocated
                                               ! or the wrong sizes.
+    logical, intent(in), optional :: Empty    ! Make Eta empty before starting,
+                                              ! default false.  If absent or
+                                              ! false, add new ones.  Not quite
+                                              ! as traumatic as Create=.true.
     logical, intent(in), optional :: Sorted   ! "Grid is sorted" -- default true
     logical, intent(in), optional :: Resize   ! Re-size Eta%E to Eta%NE --
                                               ! default false
@@ -149,6 +153,10 @@ contains
  
     myCreate = .false.
     if ( present(create) ) myCreate = create
+
+    if ( present(empty) ) then
+      if ( empty ) call eta%empty
+    end if
 
     if ( allocated(eta%rows) .and. allocated(eta%cols) ) then
       if ( size(eta%rows) < n_grid .or. size(eta%cols) /= n_basis ) &
@@ -416,6 +424,9 @@ contains
 end module Sparse_Eta_m
 
 ! $Log$
+! Revision 2.11  2018/10/26 02:52:59  vsnyder
+! Add Empty optional argument to Sparse_Eta_1D
+!
 ! Revision 2.10  2018/10/23 20:44:38  vsnyder
 ! Make sure PR is defined everywhere in Sparse_Eta_1D
 !
