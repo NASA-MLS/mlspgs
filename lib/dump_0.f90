@@ -919,6 +919,12 @@ contains
       end if
       if ( needRow ) call output ( rowNum, places=4, after='#' )
       needRow = .false.
+      if ( n >= w ) then
+        call newLine
+        call blanks ( 5 )
+        n = 0
+      end if
+      n = n + 1
       if ( myParens ) then
         call output ( j, before=' (', after=') ' )
       else
@@ -926,11 +932,6 @@ contains
       end if
       call output ( array(j), format=myFormat )
       if ( present(didOne) ) didOne = .true.
-      n = n + 1
-      if ( n >= w ) then
-        call newLine
-        n = 0
-      end if
     end do
     if ( n /= 0 ) call newLine
 
@@ -971,6 +972,12 @@ contains
       end if
       if ( needRow ) call output ( rowNum, places=4, after='#' )
       needRow = .false.
+      if ( n >= w ) then
+        call newLine
+        call blanks ( 5 )
+        n = 0
+      end if
+      n = n + 1
       if ( myParens ) then
         call output ( j, before=' (', after=') ' )
       else
@@ -978,11 +985,6 @@ contains
       end if
       call output ( array(j), format=myFormat )
       if ( present(didOne) ) didOne = .true.
-      n = n + 1
-      if ( n >= w ) then
-        call newLine
-        n = 0
-      end if
     end do
     if ( n /= 0 ) call newLine
 
@@ -1910,6 +1912,9 @@ contains
 end module Dump_0
 
 ! $Log$
+! Revision 2.158  2018/10/27 01:37:20  vsnyder
+! Spiff sparse dumps
+!
 ! Revision 2.157  2018/08/21 01:52:14  vsnyder
 ! Add Exclude argument to sparse dumps
 !
