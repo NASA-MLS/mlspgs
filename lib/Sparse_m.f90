@@ -699,52 +699,99 @@ contains
   end subroutine Resize_Sparse
 
   ! ---------------------------------------------  Row_Dot_Vec_1D  -----
-  pure real(rp) function Row_Dot_Vec_1D ( Sparse, R, Vector ) result ( D )
+  pure real(rp) function Row_Dot_Vec_1D ( Sparse, R, Vector, ExpLog, LogOnly ) &
+    & result ( D )
     ! Compute dot product of row R of Sparse with Vector
     class(sparse_t), intent(in) :: Sparse  ! The sparse matrix
     integer, intent(in) :: R               ! Which row to multiply by Vector
     real(rp), intent(in) :: Vector(:)      ! The vector
+    logical, intent(in), optional :: ExpLog ! compute exp(dot product(sparse, 
+                                           ! log(max(vector,1.0e-9_rp)))
+    logical, intent(in), optional :: LogOnly ! compute dot product(sparse, 
+                                           ! log(max(vector,1.0e-9_rp));
+                                           ! ExpLog takes priority
 
     integer :: J                           ! Column index in the row
+    logical :: MyExpLog, MyLog
+
+    myLog = .false.
+    if ( present(logOnly) ) myLog = logOnly
+    myExpLog = .false.
+    if ( present(expLog) ) myExpLog = expLog
+    myLog = myLog .or. myExpLog
 
     d = 0.0
     j = sparse%rows(r)                     ! Last element in the row
     if ( j /= 0 ) then                     ! Any columns in this row?
-      do
-        d = d + sparse%e(j)%v * vector(sparse%e(j)%c)
-        j = sparse%e(j)%nr                ! Next column in the row
-        if ( j == sparse%rows(r) ) exit   ! back to the last one?
-      end do
+      if ( myLog ) then
+        do
+          d = d + sparse%e(j)%v * log(max(vector(sparse%e(j)%c),1.0e-9_rp))
+          j = sparse%e(j)%nr                ! Next column in the row
+          if ( j == sparse%rows(r) ) exit   ! back to the last one?
+        end do
+      else
+        do
+          d = d + sparse%e(j)%v * vector(sparse%e(j)%c)
+          j = sparse%e(j)%nr                ! Next column in the row
+          if ( j == sparse%rows(r) ) exit   ! back to the last one?
+        end do
+      end if
     end if
+    if ( myExpLog ) d = exp(d)
 
   end function Row_Dot_Vec_1D
 
   ! ---------------------------------------------  Row_Dot_Vec_2D  -----
 !  pure &
-  real(rp) function Row_Dot_Vec_2D ( Sparse, R, Vector ) result ( D )
+  real(rp) function Row_Dot_Vec_2D ( Sparse, R, Vector, ExpLog, LogOnly ) &
+    & result ( D )
     ! Compute dot product of row R of Sparse with Vector
     use Array_Stuff, only: Subscripts
     class(sparse_t), intent(in) :: Sparse  ! The sparse matrix
     integer, intent(in) :: R               ! Which row to multiply by Vector
     real(rp), intent(in) :: Vector(:,:)    ! The vector.  Sparse%e(j)%c is
                                            ! the array-element order index.
+    logical, intent(in), optional :: ExpLog ! compute exp(dot product(sparse, 
+                                           ! log(max(vector,1.0e-9_rp)))
+    logical, intent(in), optional :: LogOnly ! compute dot product(sparse, 
+                                           ! log(max(vector,1.0e-9_rp));
+                                           ! ExpLog takes priority
 
     integer :: C                           ! Array-element order subscript for
                                            ! Vector
     integer :: J                           ! Column index in the row
+    logical :: MyExpLog, MyLog
     integer :: S(2)                        ! Subscripts of Vector
+
+    myLog = .false.
+    if ( present(logOnly) ) myLog = logOnly
+    myExpLog = .false.
+    if ( present(expLog) ) myExpLog = expLog
+    myLog = myLog .or. myExpLog
 
     d = 0.0
     j = sparse%rows(r)                     ! Last element in the row
     if ( j /= 0 ) then                     ! Any columns in this row?
-      do
-        c = sparse%e(j)%c
-        s = subscripts ( c, shape(vector) )
-        d = d + sparse%e(j)%v * vector(s(1),s(2))
-        j = sparse%e(j)%nr                ! Next column in the row
-        if ( j == sparse%rows(r) ) exit   ! back to the last one?
-      end do
+      if ( myLog ) then
+        do
+          c = sparse%e(j)%c
+          s = subscripts ( c, shape(vector) )
+          d = d + sparse%e(j)%v * log(max(vector(s(1),s(2)),1.0e-9_rp))
+          j = sparse%e(j)%nr                ! Next column in the row
+          if ( j == sparse%rows(r) ) exit   ! back to the last one?
+        end do
+      else
+        do
+          c = sparse%e(j)%c
+          s = subscripts ( c, shape(vector) )
+          d = d + sparse%e(j)%v * vector(s(1),s(2))
+          j = sparse%e(j)%nr                ! Next column in the row
+          if ( j == sparse%rows(r) ) exit   ! back to the last one?
+        end do
+      end if
     end if
+    if ( myExpLog ) d = exp(d)
+
 
   end function Row_Dot_Vec_2D
 
@@ -863,17 +910,22 @@ contains
 
   ! ------------------------------------------  Sparse_Dot_Matrix  -----
 !  pure &
-  subroutine Sparse_Dot_Matrix ( Sparse, Matrix, Prod )
+  subroutine Sparse_Dot_Matrix ( Sparse, Matrix, Prod, ExpLog, LogOnly )
     ! Multiply Sparse by Matrix producing Prod
     class(sparse_t), intent(in) :: Sparse  ! The sparse matrix
     real(rp), intent(in) :: Matrix(:,:)    ! The matrix Sparse is to multiply
     real(rp), intent(out) :: Prod(:,:)
+    logical, intent(in), optional :: ExpLog ! compute exp(dot product(sparse, 
+                                           ! log(max(vector,1.0e-9_rp)))
+    logical, intent(in), optional :: LogOnly ! compute dot product(sparse, 
+                                           ! log(max(vector,1.0e-9_rp));
+                                           ! ExpLog takes priority
 
     integer :: C, R
 
     do r = 1, size(sparse%rows)
       do c = 1, size(matrix,2)
-        prod(r,c) = sparse%row_dot_vec ( r, matrix(:,c) )
+        prod(r,c) = sparse%row_dot_vec ( r, matrix(:,c), expLog, logOnly )
       end do
     end do
 
@@ -881,24 +933,45 @@ contains
 
   ! ------------------------------------------  Sparse_Dot_Vec_1D  -----
 !  pure &
-  subroutine Sparse_Dot_Vec_1D ( Sparse, Vector, Prod )
+  subroutine Sparse_Dot_Vec_1D ( Sparse, Vector, Prod, ExpLog, LogOnly )
     ! Multiply Sparse by Vector producing Prod
     class(sparse_t), intent(in) :: Sparse  ! The sparse matrix
     real(rp), intent(in) :: Vector(:)      ! The vector Sparse is to multiply
     real(rp), intent(out) :: Prod(:)
+    logical, intent(in), optional :: ExpLog ! compute exp(dot product(sparse, 
+                                           ! log(max(vector,1.0e-9_rp)))
+    logical, intent(in), optional :: LogOnly ! compute dot product(sparse, 
+                                           ! log(max(vector,1.0e-9_rp));
+                                           ! ExpLog takes priority
 
     integer :: I
+    logical :: MyExpLog, MyLog
     integer :: R ! Row subscripts of Sparse%E and Prod
+
+    myLog = .false.
+    if ( present(logOnly) ) myLog = logOnly
+    myExpLog = .false.
+    if ( present(expLog) ) myExpLog = expLog
+    myLog = myLog .or. myExpLog
+
     prod = 0
-    do i = 1, sparse%ne
-      r = sparse%e(i)%r
-      prod(r) = prod(r) + sparse%e(i)%v * vector(sparse%e(i)%c)
-    end do
+    if ( myLog ) then
+      do i = 1, sparse%ne
+        r = sparse%e(i)%r
+        prod(r) = prod(r) + sparse%e(i)%v * log(max(vector(sparse%e(i)%c),1.0e-9_rp))
+      end do
+    else
+      do i = 1, sparse%ne
+        r = sparse%e(i)%r
+        prod(r) = prod(r) + sparse%e(i)%v * vector(sparse%e(i)%c)
+      end do
+    end if
+    if ( myExpLog ) prod = exp(prod)
 
   end subroutine Sparse_Dot_Vec_1D
 
   ! ------------------------------------------  Sparse_Dot_Vec_2D  -----
-  subroutine Sparse_Dot_Vec_2D ( Sparse, Vector, Prod )
+  subroutine Sparse_Dot_Vec_2D ( Sparse, Vector, Prod, ExpLog, LogOnly )
     ! Multiply Sparse by Vector producing Prod
     class(sparse_t), intent(in) :: Sparse  ! The sparse matrix
     real(rp), intent(in), target :: Vector(:,:) ! The vector Sparse is to
@@ -906,6 +979,11 @@ contains
                                            ! array-element order index.
     real(rp), intent(out), target :: Prod(:) ! The size of Prod should be same
                                            ! as the row dimension of Sparse
+    logical, intent(in), optional :: ExpLog ! compute exp(dot product(sparse, 
+                                           ! log(max(vector,1.0e-9_rp)))
+    logical, intent(in), optional :: LogOnly ! compute dot product(sparse, 
+                                           ! log(max(vector,1.0e-9_rp));
+                                           ! ExpLog takes priority
 
     integer :: N                           ! Number of rows to use
     integer :: R
@@ -914,7 +992,7 @@ contains
     n = sparse%nRows
     if ( n == 0 ) n = size(sparse%rows)
     do r = 1, min(n,ubound(prod,1))
-      prod(r) = row_dot_vec_2d ( sparse, r, vector )
+      prod(r) = row_dot_vec_2d ( sparse, r, vector, expLog, logOnly )
     end do
 
   end subroutine Sparse_Dot_Vec_2D
@@ -1074,6 +1152,9 @@ contains
 end module Sparse_m
 
 ! $Log$
+! Revision 2.17  2018/10/27 01:35:57  vsnyder
+! Add ExpLog and LogOnly arguments to dot products
+!
 ! Revision 2.16  2018/10/25 19:00:51  vsnyder
 ! Spiff a dump
 !
