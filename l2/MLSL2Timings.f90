@@ -363,6 +363,7 @@ contains ! =====     Public Procedures     =============================
     additional = .false.
     detail = switchDetail( switches, 'phase' )
     null = achar(0)
+    reset = .false.
     silent = .false.
     stamp = detail > 1 ! E.g., -Sphase2; was .false.
     skipDirectwrites = skipDirectWritesoriginal
@@ -1041,6 +1042,9 @@ END MODULE MLSL2Timings
 
 !
 ! $Log$
+! Revision 2.73  2018/10/27 01:20:08  vsnyder
+! Give initial value to Reset, so undefined-checking runs don't bomb
+!
 ! Revision 2.72  2018/09/13 20:27:46  pwagner
 ! Moved changeable options to new L2Options; added DumpOptions; added /reset flag to phase commands to make current l2Options permanent
 !
