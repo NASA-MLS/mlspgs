@@ -3468,13 +3468,13 @@ contains
 
         i_stop = tau%i_stop(frq_i) ! total_opacity(i_stop) < underflow for exp
 
+        radV = 0.0
         if ( .not. pfa .or. .not. fwdModelConf%anyLBL(sx) ) then
           ! Not doing PFA, or doing PFA but haven't done LBL.
           ! Get incremental radiance and radiance from Tau and T_Script.
           ! Don't clobber them if doing PFA and already did LBL.  If
           ! doing LBL, inc_rad_path will be frequency averaged to give
           ! Rad_Avg_Path.
-          radV = 0.0
           do j = i_start, i_stop
             inc_rad_path(j) = t_script(j) * tau%tau(j,frq_i)
             radV = radV + inc_rad_path(j)
@@ -3487,7 +3487,6 @@ contains
           ! Inc_Rad_Path is channel(-averaged) LBL radiance. Remember, when
           ! doing PFA, Frq_I is a channel number, and tau is tau_PFA.  See
           ! wvs-026 and wvs-027.
-          radV = 0.0
           do j = i_start, i_stop
             inc_rad_path(j) = inc_rad_path(j) * tau%tau(j,frq_i)
             radV = radV + inc_rad_path(j)
@@ -4597,6 +4596,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.401  2018/10/26 22:05:47  vsnyder
+! Don't do the trapezoidal update beyond I_End if it's before the tangent.
+!
 ! Revision 2.400  2018/09/12 22:51:16  vsnyder
 ! Changed name of dRad_Tran_dX_Sparse to dRad_Tran_dX
 !
