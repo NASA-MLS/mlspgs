@@ -31,11 +31,11 @@ module Path_Contrib_M
   logical, parameter, private :: GL_Everywhere = .false.
 
   ! The dummy argument I_End could be updated to stop worrying about
-  ! incremental optical depth after black out.  At some time in the
-  ! distant past, a comment was added above the call in the full forward
-  ! model that calculates Tau from incremental optical depth that "this
-  ! breaks the gold brick."  Tau re-calculates delta, and might black out
-  ! at a different point on the path.  Set this parameter to update I_End
+  ! incremental optical depth after black out.  At some time in the distant
+  ! past, a comment was added above the call in the full forward model to
+  ! Tau_m%Get_Tau that calculates Tau from incremental optical depth: "this
+  ! breaks the gold brick."  Tau_m%Get_Tau re-calculates delta, and might black
+  ! out at a different point on the path.  Set this .true. to update I_End
   ! anyway.
   logical, parameter, private :: Update_I_End = .false.
 
@@ -122,8 +122,8 @@ o:  block
     ! decreasing, so "large" means "large and negative."
 
     do_gl(:i_start) = .false. ! irrelevant
-    do_gl(i_start+1:last) = dtaudn(i_start+1:last) < myTol
-    do_gl(last+1:) = .false.  ! Tau is blacked out, so no point in doing GL
+    do_gl(i_start+1:last) = dtaudn(i_start+1:last) < myTol .or. GL_Everywhere
+    do_gl(last+1:) = GL_Everywhere  ! Tau is blacked out, so no point in doing GL
     if ( update_i_end ) i_end = last
 
   end subroutine Path_Contrib_Scalar
@@ -383,6 +383,10 @@ o:  block
 end module Path_Contrib_M
 
 ! $Log$
+! Revision 2.30  2018/10/26 22:04:09  vsnyder
+! Make I_End INOUT, add a switch to control whether to update it.  Get
+! kinds from MLSKinds instead of MLSCommon.
+!
 ! Revision 2.29  2018/08/28 20:25:58  vsnyder
 ! Add a named constant to change black out to -log(huge(1.0_rk))
 !
