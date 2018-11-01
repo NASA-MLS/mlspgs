@@ -9,7 +9,7 @@
 ! export authority as may be required before exporting such information to
 ! foreign countries or providing access to foreign persons.
 
-module GLOBAL_SETTINGS
+module Global_Settings
 
   use MLSCommon, only: FileNameLen, MLSFile_T, NameLen, Tai93_Range_T
   use HighOutput, only: AddRow, AddRow_Divider, AddRow_Header, &
@@ -30,23 +30,23 @@ module GLOBAL_SETTINGS
 !     - - - - - - - -
 
 !     (data types and parameters)
-! LEAPSECFILENAME                 For time conversions (if avoiding PCF)
-! brightObjects                   As determined by l1b
+! Leapsecfilename                 For time conversions (if avoiding PCF)
+! BrightObjects                   As determined by l1b
 
 !     (subroutines and functions)
-! SET_GLOBAL_SETTINGS             Get global settings from l2cf
+! Set_Global_Settings             Get global settings from l2cf
 ! L1MAFToL2Profile                Find profile number closest to a MAF
 ! L2ProfileToL1MAF                Find MAF closest to a profile number
 ! === (end of toc) ===
 
-  public :: L1MAFTOL2PROFILE, L2PROFILETOL1MAF, SET_GLOBAL_SETTINGS
+  public :: L1maftol2profile, L2Profiletol1maf, Set_Global_Settings
 
   character(len=FileNameLen), public :: LEAPSECFILENAME = ''
 
   ! These must be values consistent with level 1
   ! (Some canny coding below could make this more robust)
   integer, parameter :: BO_NAMEDIMS = 14
-  integer, parameter :: BO_NAMELEN = 14
+  integer, parameter :: BO_NAMELEN  = 14
 
   ! This next should be large enough to hold the entire list of BO names
   integer, parameter :: BONAMELISTLEN = 256
@@ -86,8 +86,7 @@ contains
     use MLSFiles, only: HDFVersion_5, &
       & MLS_InqSwath, GetMLSFileByType
     use MLSKinds, only: R8
-    use MLSMessageModule, only: MLSMessage, &
-      & MLSMSG_Warning
+    use MLSMessageModule, only: MLSMSG_Warning
     use MLSNumerics, only: ClosestElement
     use MLSStringLists, only: GetStringElement
     ! Args
@@ -149,8 +148,7 @@ contains
     use MLSFiles, only: HDFVersion_5, &
       & MLS_InqSwath, GetMLSFileByType
     use MLSKinds, only: R8
-    use MLSMessageModule, only: MLSMessage, &
-      & MLSMSG_Warning
+    use MLSMessageModule, only: MLSMSG_Warning
     use MLSNumerics, only: ClosestElement
     use MLSStringLists, only: GetStringElement
     ! Args
@@ -208,7 +206,7 @@ contains
     call destroyl2gpcontents( l2gp )
   end function L2ProfileToL1MAF
 
-  subroutine SET_GLOBAL_SETTINGS ( root, forwardModelConfigDatabase, &
+  subroutine Set_Global_Settings ( root, forwardModelConfigDatabase, &
     & fileDatabase, FGrids, L2GPDatabase, directDatabase, processingRange )
 
     use BitStuff, only: IsBitSet
@@ -743,6 +741,9 @@ contains
     ! call outputNamedValue( 'processingRange%EndTime', processingRange%EndTime )
 
     if ( .not. TOOLKIT ) then
+      call startTable
+      call addRow_header ( 'Global Settings', 'c' )
+      call addRow_divider ( '-' )
       ! Store appropriate user input as global attributes
       GlobalAttributes%StartUTC = l2pcf%StartUTC
       GlobalAttributes%EndUTC = l2pcf%EndUTC
@@ -765,8 +766,11 @@ contains
       ! Later you may look also in l1brad files
       GlobalAttributes%LastMAFCtr = FindMaxMAF ( L1BFile, &
         & GlobalAttributes%FirstMAFCtr )
-      call outputNamedValue ( 'Last MAF', GlobalAttributes%LastMAFCtr )
-      call outputNamedValue ( 'First MAF', GlobalAttributes%FirstMAFCtr )
+      ! call outputNamedValue ( 'Last MAF', GlobalAttributes%LastMAFCtr )
+      ! call outputNamedValue ( 'First MAF', GlobalAttributes%FirstMAFCtr )
+      call addRow ( 'Last MAF', GlobalAttributes%LastMAFCtr )
+      call addRow ( 'First MAF', GlobalAttributes%FirstMAFCtr )
+      call outputTable ( sep='|', border='-' )
     end if
 
     ! Have we overridden the Bright Object names? Can we find them in l1boa?
@@ -1338,7 +1342,7 @@ contains
 
     end function CreateDirectTypeFromMLSCFInfo
 
-  end subroutine SET_GLOBAL_SETTINGS
+  end subroutine Set_Global_Settings
 
 ! =====     Private Procedures     =====================================
 
@@ -1352,9 +1356,12 @@ contains
   end function not_used_here
 !---------------------------------------------------------------------------
 
-end module GLOBAL_SETTINGS
+end module Global_Settings
 
 ! $Log$
+! Revision 2.177  2018/07/27 23:19:53  pwagner
+! Renamed level 2-savvy MLSMessage MLSL2Message
+!
 ! Revision 2.176  2017/11/15 00:11:44  pwagner
 ! Use OutputTable to Dump list of level 1 files
 !
