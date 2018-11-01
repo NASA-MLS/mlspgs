@@ -39,7 +39,7 @@ module ScanModelModule          ! Scan model and associated calculations
   use MatrixModule_0, only: DestroyBlock, MatrixElement_T, M_Absent, &
     & M_Full, UpdateDiagonal
   use MatrixModule_1, only: CreateBlock, FindBlock, Matrix_T, &
-    & CreateEmptyMatrix, DestroyMatrix, ClearMatrix
+    & CreateEmptyMatrix, DestroyMatrix, ClearMatrix, RM
   use MLSKinds, only: R8, RP, RV
   use MLSMessagemodule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
   use MLSNumerics, Only : Hunt, InterpolateValues
@@ -1508,8 +1508,8 @@ contains ! =============== Subroutines and functions ==========================
 
   end subroutine ScanForwardModel
   ! ---------------------------------------  TwodScanForwardModel  -----
-  subroutine TwoDScanForwardModel ( fmConf, state, extra, fwmOut, &
-                                  & fmStat, Jacobian, chunkNo )
+  subroutine TwoDScanForwardModel ( FmConf, State, Extra, FwmOut, &
+                                  & FmStat, Jacobian, ChunkNo )
 
     use Array_Stuff, only: Subscripts
     use MatrixModule_0, only: MatrixElement_t
@@ -1521,14 +1521,14 @@ contains ! =============== Subroutines and functions ==========================
 
   ! This is a two D version of ScanForwardModel
   ! inputs
-    type (ForwardModelConfig_T), intent(in) :: FMConf ! Configuration options
+    type (ForwardModelConfig_T), intent(in) :: FmConf ! Configuration options
     type (Vector_T), intent(in) :: State ! The state vector
     type (Vector_T), intent(in) :: Extra ! Other stuff in the state vector
   ! outputs
-    type (Vector_T), intent(inout) :: FWMOut ! Output vector, residual filled
-    type (ForwardModelStatus_T), intent(inout) :: FMStat ! Which maf etc.
+    type (Vector_T), intent(inout) :: FwmOut ! Output vector, residual filled
+    type (ForwardModelStatus_T), intent(inout) :: FmStat ! Which maf etc.
     type (Matrix_T), intent(inout), optional :: Jacobian ! The derivative matrix
-    integer, intent(in), optional :: chunkNo
+    integer, intent(in), optional :: ChunkNo
 
     ! To make an array of pointers to MatrixElement_t blocks
     type :: Blocks_t
@@ -1862,12 +1862,14 @@ contains ! =============== Subroutines and functions ==========================
           block
             real(rp) :: dScandz(ptan%template%nosurfs)
             !{ $\frac{\text{d Scan}}{\text{d} z} = 
-            !  \frac{k}{g_0} \, \eta_{z \times p}^T \cdot T \,\times\, $mass\_corr
+            !  \frac{k}{g_0} \, \eta_{\zeta \times p}^T \cdot T \,\times\, $
+            !  mass\_corr
             call eta_zxp_t%sparse_dot_vec ( &
               & temp%values(:,windowstart_t:windowfinish_t), dScandz )
             dscandz = ( boltz / g0 ) * mass_corr * dscandz
             where ( ptan%values(:,fmStat%maf) > z_surf ) dscandz = dscandz + &
               & dgphdr*l1altrefr*tan_refr_indx*ln10 / (1.0_rp + tan_refr_indx)
+              ! UpdateDiagonal creates a banded block
             if ( fmConf%differentialScan ) then
               call updateDiagonal ( block, EOSHIFT(dscandz, 1, &
               & dscandz(ptan%template%nosurfs)) - dscandz)
@@ -1888,21 +1890,25 @@ contains ! =============== Subroutines and functions ==========================
               call DestroyBlock ( blocks(sv_p)%b )
             end if
             if ( any(eta_p_t%e%r == sv_p ) ) &
-              call CreateBlock ( jacobian, row, col, M_Full )
+              call CreateBlock ( jacobian, row, col, M_Full, init=0.0_rm )
           end do
           work = (GM * (1.0_rp - 3.0_rp*j2*p2*ratio2_gph &
                & - 5.0_rp*j4*p4*ratio4_gph) / l1refalt**2 &
                & + omega**2*l1refalt*coslat2) * &
                & (l1refalt+eff_earth_radius - earth_radius) / &
                & refgeomalt_denom
+          !{ The dot product $\eta_p^T \cdot $ work is done ``the hard way''
+          !  because the column index in eta_p_t\%e(e)\%c needs to be offset
+          !  by WindowStart_t, and it gives the block index, not a subscript.
           do e = 1, eta_p_t%ne
             r = eta_p_t%e(e)%r
-            sv_p = eta_p_t%e(e)%c + windowstart_t - 1
-            blocks(sv_p)%b%values(r,1) =  work(r) * eta_p_t%e(e)%v
+            sv_p = eta_p_t%e(e)%c + windowStart_t - 1
+            blocks(sv_p)%b%values(r,1) =  blocks(sv_p)%b%values(r,1) + &
+              & work(r) * eta_p_t%e(e)%v
           end do
           if ( fmConf%differentialScan ) then
     ! ------------- Differential model
-            do sv_p = windowstart_t, windowfinish_t
+            do sv_p = windowStart_t, windowFinish_t
               blocks(sv_p)%b%values = EOSHIFT(blocks(sv_p)%b%values, &
                 & SPREAD(1, 1, ptan%template%nosurfs), &
                 & RESHAPE(blocks(sv_p)%b%values(ptan%template%nosurfs,:), &
@@ -1929,11 +1935,16 @@ contains ! =============== Subroutines and functions ==========================
                 call DestroyBlock ( blocks(sv_p)%b )
               end if
               if ( any(eta_zxp_t%e%r == sv_p) ) &
-                call CreateBlock ( jacobian, row, col, M_Full )
+                call CreateBlock ( jacobian, row, col, M_Full, init=0.0_rm )
               blocks(sv_p)%b%values = (boltz/g0) * eta_piqxp(:,:,sv_p-windowstart_t+1)
             end do
             work = dgphdr * l1altrefr * tan_refr_indx / &
                  & ((1.0_rp + tan_refr_indx) * tan_temp)
+            !{ The dot product $\eta_{\zeta \times p}^T \cdot$ work is done
+            !  ``the hard way'' because the column index in eta_p_t\%e(e)\%c is
+            !  actually the array-order index of a two-dimensional array, one of
+            !  which needs to be offset by WindowStart_t, and gives the block
+            !  index, not a subscript.
             do e = 1, eta_zxp_t%ne
               r = eta_zxp_t%e(e)%r
               c = eta_zxp_t%e(e)%c
@@ -1944,7 +1955,7 @@ contains ! =============== Subroutines and functions ==========================
             end do
             if ( fmConf%differentialScan ) then
     ! ------------- Differential model
-              do sv_p = windowstart_t, windowfinish_t
+              do sv_p = windowStart_t, windowFinish_t
                 blocks(sv_p)%b%values = EOSHIFT(blocks(sv_p)%b%values, &
                 & SPREAD(1, 1, ptan%template%nosurfs), &
                 & RESHAPE(blocks(sv_p)%b%values(ptan%template%nosurfs,:), &
@@ -2050,6 +2061,9 @@ contains ! =============== Subroutines and functions ==========================
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.91  2018/11/01 00:43:21  vsnyder
+! Make sure there are no uninitialized elements of Jacobian blocks
+!
 ! Revision 2.90  2018/10/30 20:59:14  vsnyder
 ! Completely revised.  Use sparse interpolators.  Convert allocatable
 ! variables to automatic variables.
