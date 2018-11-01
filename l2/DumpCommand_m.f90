@@ -163,14 +163,13 @@ contains
     use Allocate_Deallocate, only: Deallocate_Test
     use ConstructQuantityTemplates, only: AnyGoodSignalData
     use Chunks_M, only: MLSChunk_T
-    use Init_Tables_Module, only: F_Signal, F_Boolean, F_Reverse
+    use Init_Tables_Module, only: F_Signal, F_Boolean
     use MLSCommon, only: MLSFile_T
     use MLSL2Options, only: RuntimeValues
     use MLSSignals_M, only: GetSignalName, &
       & Signals
     use MLSStringLists, only: NumStringElements, PutHashElement
     use MLSStrings, only: Lowercase
-    use MoreTree, only: Get_Boolean
     use Parse_Signal_M, only: Parse_Signal
     use String_Table, only: Get_String
     use Tree, only: Decoration, Nsons, Sub_Rosa, Subtree
@@ -183,7 +182,6 @@ contains
     ! Internal variables
     integer :: field
     integer :: field_index
-    integer :: fieldValue
     integer :: keyNo
     character(len=32) :: nameString
     logical :: reverse
@@ -206,11 +204,6 @@ contains
     do keyNo = 2, nsons(root)
       son = subtree(keyNo,root)
       field = subtree(1,son)
-      if ( nsons(son) > 1 ) then
-        fieldValue = decoration(subtree(2,son)) ! The field's value
-      else
-        fieldValue = son
-      end if
       field_index = decoration(field)
 
       select case ( field_index )
@@ -290,7 +283,6 @@ contains
     ! Internal variables
     integer :: field
     integer :: field_index
-    integer :: fieldValue
     integer :: keyNo
     character(len=32) :: nameString
     type (VectorValue_T), pointer :: Precisionquantity
@@ -315,11 +307,6 @@ contains
     do keyNo = 2, nsons(root)
       son = subtree(keyNo,root)
       field = subtree(1,son)
-      if ( nsons(son) > 1 ) then
-        fieldValue = decoration(subtree(2,son)) ! The field's value
-      else
-        fieldValue = son
-      end if
       field_index = decoration(field)
       source = subtree(2,son) ! required to be an n_dot vertex
 
@@ -392,7 +379,6 @@ contains
     ! Internal variables
     integer :: field
     integer :: field_index
-    integer :: fieldValue
     character(len=255) :: LastWarningMsg
     character(len=255) :: message
     integer :: keyNo
@@ -408,11 +394,6 @@ contains
     do keyNo = 2, nsons(root)
       son = subtree(keyNo,root)
       field = subtree(1,son)
-      if ( nsons(son) > 1 ) then
-        fieldValue = decoration(subtree(2,son)) ! The field's value
-      else
-        fieldValue = son
-      end if
       field_index = decoration(field)
 
       select case ( field_index )
@@ -493,7 +474,6 @@ contains
     real(rv) :: A, B, C                       ! constant "c" in formula
     integer :: field
     integer :: field_index
-    integer :: fieldValue
     character(len=8) :: flattening, arg(2), op
     character(len=255) :: formula
     character(len=255) :: formulaTemp
@@ -517,11 +497,6 @@ contains
     do keyNo = 2, nsons(root)
       son = subtree(keyNo,root)
       field = subtree(1,son)
-      if ( nsons(son) > 1 ) then
-        fieldValue = decoration(subtree(2,son)) ! The field's value
-      else
-        fieldValue = son
-      end if
       field_index = decoration(field)
       source = subtree(2,son) ! required to be an n_dot vertex
 
@@ -1273,7 +1248,7 @@ contains
     use Read_Mie_M, only: Dump_Mie
     use SpectroscopyCatalog_M, only: Catalog, Dump, Dump_Lines_Database, Lines
     use String_Table, only: Display_String, Get_String
-    use Time_M, only: Finish, Time_Config, Wait_For_Event
+    use Time_M, only: Finish, Time_Config, Wait_For_Event, Pause
     use Toggles, only: Gen, Switches, Toggle
     use Trace_M, only: Trace_Begin, Trace_End
     use Tree, only: Decoration, Node_Id, Nsons, Sub_Rosa, Subtree, Where
@@ -1612,15 +1587,17 @@ contains
             ! If from stdin we will wait for you to enetr "by hand"
             ! (which may not always be possible--thus the inputFile option)
             if ( got( f_inputFile ) ) then
-              call output ( 'Program paused by /pause field on Dump statement' &
-                & // ' .. to read command from ' // trim(nameString), &
-                & advance='yes' )
-              call Wait_then_read_mesg( nameString, mesg )
+              ! call output ( 'Program paused by /pause field on Dump statement' &
+              !   & // ' .. to read command from ' // trim(nameString), &
+              !   & advance='yes' )
+              ! call Wait_then_read_mesg( nameString, mesg )
+              call Pause ( mesg, nameString )
               call output ( 'Resuming after reading ' // trim(mesg), &
                 & advance='yes' )
             else
-              call output ( 'Program paused by /pause field on Dump statement.', &
-                & advance='yes pause' )
+              ! call output ( 'Program paused by /pause field on Dump statement.', &
+              !   & advance='yes pause' )
+              call Pause ( mesg )
             endif
           case ( f_pfaFiles )
             call dump_PFAFileDatabase ( details )
@@ -2508,8 +2485,8 @@ contains
     end subroutine Execute_then_wait
   end subroutine ExecuteCommand
 
-  ! ------------------------------------------------  INITIALIZEREPEAT  -----
-  subroutine  INITIALIZEREPEAT
+  ! ------------------------------------------------  InitializeRepeat  -----
+  subroutine  InitializeRepeat
     use MLSL2Options, only: RuntimeValues
     use MLSStringLists, only: PutHashElement
     call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
@@ -2520,7 +2497,7 @@ contains
       & inseparator=runTimeValues%sep )
   end subroutine  InitializeRepeat
 
-  subroutine  NEXTREPEAT
+  subroutine  NextRepeat
     use MLSL2Options, only: RuntimeValues
     use MLSStringLists, only: GetHashElement, PutHashElement
     use MLSStrings, only: Readintsfromchars, Writeintstochars
@@ -3265,6 +3242,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.145  2018/11/01 23:19:13  pwagner
+! Use Pause from Time_M
+!
 ! Revision 2.144  2018/10/19 00:03:46  pwagner
 ! inputFile= with /pause pauses to read from inputFile instead of stdin
 !
