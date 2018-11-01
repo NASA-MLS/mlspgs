@@ -37,7 +37,7 @@ module ReadAPriori
     & RuntimeValues, SpecialDumpFile, Toolkit, &
     & DumpMacros, MLSL2Message
   use MLSL2Timings, only: AddPhaseToPhaseNames
-  use MLSMessageModule, only: MLSMsg_Error, MLSMsg_Warning, DumpConfig
+  use MLSMessageModule, only: MLSMsg_Error, MLSMsg_Warning
   use MLSPCF2, only: &
     & MLSPCF_L2apriori_Start, MLSPCF_L2apriori_End, &
     & MLSPCF_L2clim_Start, MLSPCF_L2clim_End, &
@@ -48,7 +48,7 @@ module ReadAPriori
   use MLSStringLists, only: CatLists, GetHashElement, SwitchDetail
   use MLSStrings, only: Lowercase
   use MoreTree, only: Get_Boolean
-  use Output_M, only: OutputOptions, StampOptions, Output, RevertOutput, SwitchOutput
+  use Output_M, only: Output, RevertOutput, SwitchOutput
   use PCFHdr, only: GlobalAttributes
   use SDPToolkit, only: Pgs_S_Success
   use String_Table, only: Get_String
@@ -74,22 +74,22 @@ module ReadAPriori
 ! APrioriFiles                actual names of apriori files used
 
 !     (subroutines and functions)
-! dumpAPrioriAttributes       dump types and names of apriori files used
-! processOneAprioriFile       read one apriori file into a gridded data type
-! processOneL2AUXFile         read one l2aux file into a gridded data type
-! processOneL2GPFile          read one l2gp file into a gridded data type
-! read_apriori                entry point for apriori section; process l2cf
-! readAPrioriAttributes       read attributes from a file to which they were written
-! writeAPrioriAttributes      write as attributes info about apriori files used
+! DumpAPrioriAttributes       dump types and names of apriori files used
+! ProcessOneAprioriFile       read one apriori file into a gridded data type
+! ProcessOneL2AUXFile         read one l2aux file into a gridded data type
+! ProcessOneL2GPFile          read one l2gp file into a gridded data type
+! Read_apriori                entry point for apriori section; process l2cf
+! ReadAPrioriAttributes       read attributes from a file to which they were written
+! WriteAPrioriAttributes      write as attributes info about apriori files used
 ! === (end of toc) ===
 
 
 
-  public ::  aprioriFiles, aprioriFiles_t, &
-    & dumpAPrioriAttributes, processOneAPrioriFile, &
-    & processOneL2AUXFile, processOneL2GPFile, &
-    & read_apriori, readAPrioriAttributes, &
-    & writeAPrioriAttributes
+  public ::  aprioriFiles, AprioriFiles_t, &
+    & DumpAPrioriAttributes, ProcessOneAPrioriFile, &
+    & ProcessOneL2AUXFile, ProcessOneL2GPFile, &
+    & Read_apriori, ReadAPrioriAttributes, &
+    & WriteAPrioriAttributes
   private ::  announce_error
   logical, parameter :: countEmpty = .true. ! Except where overriden locally
   integer, private :: ERROR
@@ -239,9 +239,6 @@ contains ! =====     Public Procedures     =============================
       case ( s_changeSettings ) ! ===============================  changeSettings ==
         ! Change settings for this phase
         call addPhaseToPhaseNames ( 0, key )
-        ! call Dump( OutputOptions )
-        ! call Dump( StampOptions )
-        ! call DumpConfig
       case ( s_isFileAbsent )
         call decorate ( key, BooleanFromEmptySwath ( key ) )
       case ( s_select ) ! ============ Start of select .. case ==========
@@ -410,7 +407,9 @@ contains ! =====     Public Procedures     =============================
     FileType = get_spec_id(key)
 
     if ( any( fileType == (/s_diff, s_dump/) ) ) then
-      if ( .not. CHECKPATHS ) call dumpCommand ( key, griddedDataBase=griddedDataBase )
+      if ( .not. CHECKPATHS ) &
+        & call dumpCommand ( key, griddedDataBase=griddedDataBase, &
+        & FileDatabase=FileDatabase )
       go to 9
     end if
 
@@ -451,12 +450,14 @@ contains ! =====     Public Procedures     =============================
       case ( f_missingValue )
         call expr ( subtree(2,field), expr_units, expr_value )
         missingValue = expr_value(1)
-      case ( f_hdfVersion )           
+      case ( f_hdfVersion ) ! hdfVersion is never used
         call expr ( subtree(2,field), units, value, type )             
         if ( units(1) /= phyq_dimensionless ) &                        
           & call Announce_error ( field, &                               
             & 'No units allowed for hdfVersion: just integer 4 or 5')  
-        hdfVersion = value(1)                                          
+        hdfVersion = value(1)
+        call MLSL2Message ( MLSMSG_Warning, ModuleName, &
+          & 'HdfVersion is never used by the ReadAPriori command' )
       case ( f_noPCFid )
         noPCFid = get_boolean(field)
       case ( f_origin )
@@ -562,7 +563,7 @@ contains ! =====     Public Procedures     =============================
 
       l2Index = AddL2AUXToDatabase( L2AUXDatabase, l2aux )
       call processOneL2AUXFile ( FileNameString, sdNameString, &
-        & noPCFid, mlspcf_l2apriori_start, mlspcf_l2apriori_end, quantityType, &
+        & noPCFid, quantityType, &
         & LastAprioriPCF, Debug, &
         & L2AUXDatabase(l2Index), L2AUXFile, fileDatabase )
 
@@ -1001,7 +1002,7 @@ contains ! =====     Public Procedures     =============================
   end subroutine processOneAprioriFile
 
   subroutine processOneL2AUXFile ( FileNameString, sdNameString, &
-    & noPCFid, PCBottom, PCTop, quantityType, &
+    & noPCFid, quantityType, &
     & LastAprioriPCF, Debug, &
     & L2AUX, L2AUXFile, fileDatabase )
    use L2AUXData, only: L2AUXData_T, ReadL2AUXData
@@ -1010,8 +1011,6 @@ contains ! =====     Public Procedures     =============================
     character(len=FileNameLen)              :: FileNameString   ! actual literal file name
     character(len=FileNameLen)              :: sdNameString ! actual literal swath name
     logical, intent(in)                     :: noPCFid
-    integer, intent(in)                     :: PCBottom
-    integer, intent(in)                     :: PCTop
     integer, intent(in)                     :: QUANTITYTYPE  ! Lit index of quantity type
     integer, intent(inout)                  :: LastAprioriPCF
     logical, intent(in)                     :: Debug
@@ -1303,7 +1302,7 @@ contains ! =====     Public Procedures     =============================
   ! ------------------------------------------  writeAPrioriAttributes_MF  -----
   subroutine writeAPrioriAttributes_MF ( MLSFile, DontReplace )
     type(MLSFile_T) :: MLSFile
-    logical, optional, intent(in) :: DontReplace
+    logical, optional, intent(in) :: DontReplace ! Don't overwrite attributes
     ! Executable
     if ( MLSFile%hdfVersion /= HDFVERSION_5 ) then
       call MLSL2Message ( MLSMSG_Warning, ModuleName, &
@@ -1311,17 +1310,19 @@ contains ! =====     Public Procedures     =============================
         & MLSFile=MLSFile )
       return ! Can only do this for hdf5 files
     else if ( MLSFile%StillOpen ) then
-      call writeAPrioriAttributes_ID(MLSFile%fileID%f_id, HDFVERSION_5)
+      call writeAPrioriAttributes_ID( MLSFile%fileID%f_id, HDFVERSION_5, &
+        & DontReplace )
     else
       call MLS_OpenFile( MLSFile )
       ! call writeAPrioriAttributes_name(MLSFile%name, HDFVERSION_5)
-      call writeAPrioriAttributes_ID(MLSFile%fileID%f_id, HDFVERSION_5)
+      call writeAPrioriAttributes_ID( MLSFile%fileID%f_id, HDFVERSION_5, &
+        & DontReplace )
       call MLS_CloseFile( MLSFile )
     end if
   end subroutine writeAPrioriAttributes_MF
 
   ! ------------------------------------------  writeAPrioriAttributes_ID  -----
-  subroutine writeAPrioriAttributes_ID ( fileID, hdfVersion , DontReplace )
+  subroutine writeAPrioriAttributes_ID ( fileID, hdfVersion, DontReplace )
     ! Write info about what apriori files were used
     ! Storing them as hdfeos5 attributes
     use HDFEOS5, only: MLS_Chartype
@@ -1329,7 +1330,7 @@ contains ! =====     Public Procedures     =============================
     ! Args
     integer, intent(in) :: fileID
     integer, intent(in) :: hdfVersion  ! Must be 5 to work properly
-    logical, optional, intent(in) :: DontReplace
+    logical, optional, intent(in) :: DontReplace ! Don't overwrite attributes
     character(len=*), parameter  :: whereami = 'readAPrioriAttributes_ID'
     ! Internal variables
     integer             :: status
@@ -1520,6 +1521,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.127  2018/11/01 23:18:13  pwagner
+! Removed unused stuff
+!
 ! Revision 2.126  2018/07/27 23:19:53  pwagner
 ! Renamed level 2-savvy MLSMessage MLSL2Message
 !
