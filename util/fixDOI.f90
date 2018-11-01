@@ -10,7 +10,7 @@
 ! foreign countries or providing access to foreign persons.
 
 !=================================
-PROGRAM fixDOI ! tests MLSHDF5 routines
+program fixDOI ! tests MLSHDF5 routines
 !=================================
 
   use Dump_0, only: Dump
@@ -33,11 +33,13 @@ PROGRAM fixDOI ! tests MLSHDF5 routines
    
    implicit none
 
-!------------------- RCS Ident Info -----------------------
-   character(len=130) :: Id = &                                                    
-   "$Id$"
-   character (len=*), parameter :: ModuleName= "$RCSfile$"
-!----------------------------------------------------------
+!---------------------------- RCS Ident Info ------------------------------
+  character (len=*), parameter :: ModuleName= &
+       "$RCSfile$"
+  character (len=*), parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)) :: Id = idParm
+!---------------------------------------------------------------------------
 
 ! Brief description of program
 ! This program fixes level 2 v4.2x products with erroneous DOI identifiers
@@ -349,7 +351,10 @@ contains
     end subroutine dumpSettings
 
 !==================
-END PROGRAM fixDOI
+end program fixDOI
 !==================
 
 ! $Log$
+! Revision 1.1  2018/05/04 16:36:39  pwagner
+! First commit
+!

@@ -10,7 +10,7 @@
 ! foreign countries or providing access to foreign persons.
 
 !=================================
-PROGRAM L2GPDump ! dumps L2GPData files
+program L2GPDump ! dumps L2GPData files
 !=================================
 
    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
@@ -45,11 +45,13 @@ PROGRAM L2GPDump ! dumps L2GPData files
    
    implicit none
 
-!------------------- RCS Ident Info -----------------------
-   character(len=130) :: Id = &                                                    
-   "$Id$"
-   character (len=*), parameter :: ModuleName= "$RCSfile$"
-!----------------------------------------------------------
+!---------------------------- RCS Ident Info ------------------------------
+  character (len=*), parameter :: ModuleName= &
+       "$RCSfile$"
+  character (len=*), parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)) :: Id = idParm
+!---------------------------------------------------------------------------
 
 ! Brief description of program
 ! This program dumps L2GPData files
@@ -805,6 +807,9 @@ end program L2GPDump
 !==================
 
 ! $Log$
+! Revision 1.25  2018/02/21 21:19:30  pwagner
+! Ignore precision sign when counting Status bits
+!
 ! Revision 1.24  2018/02/03 00:25:48  pwagner
 ! Correct Status Bit names; add post-processed
 !
