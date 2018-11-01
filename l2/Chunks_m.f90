@@ -24,7 +24,7 @@ module Chunks_m
   private :: not_used_here 
 !---------------------------------------------------------------------------
 
-  interface DUMP
+  interface Dump
     module procedure Dump_Chunks, Dump_one_chunk
   end interface
 
@@ -44,8 +44,8 @@ contains ! =====     Private Procedures     ============================
     character(len=*), parameter :: TheDecades = &
       & '         1         2         3         4         5         6         7         8'
     call outputNamedValue ( 'Size(chunks)', size(chunk), options='--Headline' )
-    call output( The80, advance='yes' )
-    call output( TheDecades, advance='yes' )
+    ! call output( The80, advance='yes' )
+    ! call output( TheDecades, advance='yes' )
     ! Column headers: 3 lines
     !                       MAF 
     !            Index      Overlaps  Non-overlap        chunk non-overlap      phi
@@ -201,6 +201,9 @@ contains ! =====     Private Procedures     ============================
 end module Chunks_m
 
 ! $Log$
+! Revision 2.12  2018/11/01 23:17:33  pwagner
+! Dont need to print column numbers any more
+!
 ! Revision 2.11  2018/03/02 00:59:44  pwagner
 ! Improve how ChunkDivide appears when Dump-ed
 !
