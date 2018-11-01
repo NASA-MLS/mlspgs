@@ -303,10 +303,15 @@ contains ! =====     Public Procedures     =============================
     ! if gaps occur
     ! For now, just look for them in l1boa
     ! Later you may look also in l1brad files
+    call startTable
+    call addRow_header ( 'Open_Init Settings', 'c' )
+    call addRow_divider ( '-' )
     GlobalAttributes%LastMAFCtr = FindMaxMAF ( L1BPtr, &
       & GlobalAttributes%FirstMAFCtr )
-    call outputNamedValue ( 'Last MAF', GlobalAttributes%LastMAFCtr )
-    call outputNamedValue ( 'First MAF', GlobalAttributes%FirstMAFCtr )
+    ! call outputNamedValue ( 'Last MAF', GlobalAttributes%LastMAFCtr )
+    ! call outputNamedValue ( 'First MAF', GlobalAttributes%FirstMAFCtr )
+    call addRow ( 'Last MAF', GlobalAttributes%LastMAFCtr )
+    call addRow ( 'First MAF', GlobalAttributes%FirstMAFCtr )
     ! Get the Start and End Times from PCF
 
     returnStatus = pgs_pc_getConfigData( mlspcf_l2_param_CCSDSStartId, &
@@ -325,7 +330,7 @@ contains ! =====     Public Procedures     =============================
       & 'No leap second information' )
 
    ! Is CCSDSStartTime before tai93 onset?
-   call outputNamedValue ( 'CCSDSStartTime', CCSDSStartTime )
+   ! call outputNamedValue ( 'CCSDSStartTime', CCSDSStartTime )
    if ( precedesUTC ( CCSDSStartTime, '1993-01-01' ) ) then
      call outputNamedValue ( 'StartTime precedes tai93 onset', CCSDSStartTime )
      if ( .false. ) call ResetStartingDate( '1961-01-01' )
@@ -337,12 +342,15 @@ contains ! =====     Public Procedures     =============================
     end if
 
     returnStatus = pgs_td_utctotai ( CCSDSEndTime, processingrange%endtime )
-    call outputNamedValue ( 'CCSDSEndTime', CCSDSEndTime )
+    ! call outputNamedValue ( 'CCSDSEndTime', CCSDSEndTime )
     !   ??? Is PGSTD_E_NO_LEAP_SECS an OK status ???
     if ( returnstatus /= PGS_S_SUCCESS .and. &
       & returnstatus /= PGSTD_E_NO_LEAP_SECS) &
         & call announce_error ( "Could not convert UTC End time to TAI" )
 
+    call addRow ( 'CCSDSStartTime', CCSDSStartTime )
+    call addRow ( 'CCSDSEndTime', CCSDSEndTime )
+    call outputTable ( sep='|', border='-' )
     l2pcf%startutc = CCSDSStartTime
     l2pcf%endutc = CCSDSEndTime
 
@@ -729,6 +737,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.118  2018/11/01 23:16:25  pwagner
+! Improve appearance of settings when dumped
+!
 ! Revision 2.117  2017/11/15 00:15:49  pwagner
 ! Use OutputTable to Dump list of level 1 files
 !
