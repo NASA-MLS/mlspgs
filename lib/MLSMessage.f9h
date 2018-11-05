@@ -346,7 +346,12 @@ contains
       & MLSMSGWarnings%totalnumwarnings = &
       & min( TOTALNUMWARNINGSMAX, MLSMSGWarnings%totalnumwarnings + 1 )
     if ( any( severity == (/MLSMSG_Warning, MLSMSG_TestWarning/) ) .and. &
-      & ( MLSMSGWarnings%totalnumwarnings > TOTALNUMWARNINGSMAX - 1 ) ) then
+      & ( &
+      &  ( MLSMSGWarnings%totalnumwarnings > TOTALNUMWARNINGSMAX - 1 ) &
+      & .or. &
+      &  ( MLSMSGWarnings%numwarnings >= MAXNUMWARNINGS - 1 ) &
+      & ) &
+      & ) then
       if ( present(status) ) status = myStatus
       if ( MessageMeansCrash ( Message ) ) call Crash_Burn ( Message=Message )
       return
@@ -1223,6 +1228,9 @@ contains
 
 !
 ! $Log$
+! Revision 2.55  2018/11/05 18:17:57  pwagner
+! Prevent warning messages from overfilling %warningmessages array
+!
 ! Revision 2.54  2018/08/13 22:52:26  pwagner
 ! Improve DumpConfig; add items missing from toc
 !
