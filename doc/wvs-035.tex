@@ -1,26 +1,67 @@
 \documentclass[11pt]{article}
-\usepackage[fleqn]{amsmath}\textwidth 6.5in
+\usepackage{alltt}
+\usepackage[fleqn]{amsmath}
+\usepackage{floatflt}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage[strings]{underscore}
+
+\textwidth 6.5in
 \oddsidemargin -0.25in
 %\evensidemargin -0.5in
 %\topmargin -0.65in
 %\textheight 9.3in
 
-\newcommand{\docname}{\bf wvs-035}
-\newcommand{\docdate}{13 June 2006}
+\newcommand{\docname}{\bf wvs-035r1}
+\newcommand{\docdate}{5 November 2018}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+    \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
 
 \begin{document}
 
 %\tracingcommands=1
 \newlength{\hW} % heading box width
 \newlength{\pW} % page number field width
-\settowidth{\hW}{\docname}
+\settowidth{\hW}{\bf\docname}
 \settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
 \ifdim \pW > \hW \setlength{\hW}{\pW} \fi
 \makeatletter
 \def\@biblabel#1{#1.}
 \newcommand{\ps@twolines}{%
   \renewcommand{\@oddhead}{%
-    \docdate\hfill\parbox[t]{\hW}{{\hfill\docname}\newline
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\bf\docname}\newline
                           Page \thepage\ of \pageref{lastpage}}}%
 \renewcommand{\@evenhead}{}%
 \renewcommand{\@oddfoot}{}%
@@ -32,9 +73,10 @@
 \vspace{-10pt}
 \begin{tabbing}
 \phantom{References: }\= \\
-To: \>Bill, Fred, Herb, Nathaniel\\
+To: \>Bill, Nathaniel\\
 Subject: \>Alternative to gradient move in DNWT\\
 From: \>Van Snyder\\
+Refences: \> \h{wvs-111}\\
 \end{tabbing}
 
 \parindent 0pt \parskip 6pt
@@ -54,10 +96,10 @@ $\mathbf{x}_c$, usually because the linear neighborhood of $\mathbf{x}_c$
 appears not to have a solution better than $F_b$.
 
 At present, when DNWT finds itself in this situation, it computes
-successively smaller values of $g$ until $F(\mathbf{x}_b + g \nabla F_b)
-< F_b$, then takes Newton moves starting from $\mathbf{x}_b + g \nabla
-F_b$ with initially substantial and later decreasing restrictions on
-their lengths, the restrictions being imposed by Levenberg-Marquardt
+successively smaller values of $g$ until $F(\mathbf{x}_b + g \nabla F_b) <
+F_b$, then takes Newton moves starting from $\mathbf{x}_b + g \nabla F_b$
+with initially substantial and later decreasing restrictions on their
+lengths, the restrictions being imposed by Levenberg-Marquardt
 stabilization that initially depends upon $g||\nabla F_b||$ and then
 decreases with each successful Newton move.  The rationale for this is
 that a sufficiently short gradient move will reduce $F$, and gradient
@@ -68,9 +110,12 @@ one does need to compute $F(\mathbf{x}_b + g \nabla F_b)$.  Since we
 compute $\mathbf{F}$ and its Jacobian matrix at the same time, one hopes
 that the initial choice of $g$ results in a decrease in $F$.  An
 alternative is to revise DNWT so that its {\tt EVALF} return means
-``evaluate $F$ only, and I promise not to ask for a Newton move'' and
-have a different return that means ``Compute $F$ and $\mathbf{J}$.'' 
-This would be a substantial revision, both in DNWT and the retriever.
+``evaluate $F$ only, and I promise not to ask for a Newton move'' and have
+a different return that means ``Compute $F$ and $\mathbf{J}$.''  The 13
+June 2006 version said ``This would be a substantial revision, both in
+DNWT and the retriever,'' but DNWT already works this way.  The forward
+model is not able to compute derivatives without computing radiances, so
+the retriever computes them both at the same time.
 
 Herb has suggested to search along the line from $\mathbf{x}_b$ to
 $\mathbf{x}_c$, to find a state for which the solution is better than
@@ -101,13 +146,12 @@ that $0 < \hat\xi < 1$ and $F(\mathbf{x}_c - \hat\xi \delta
 Having $F_b$, $\nabla F_b$, $\mathbf{x}_b$, $F_c$, $\nabla F_c$, and
 $\mathbf{x}_c$, it is possible to interpolate a cubic polynomial
 $P_3(\xi)$ along the line from $\mathbf{x}_b$ to $\mathbf{x}_c$ using
-Hermite interpolation, where $0 < \xi < 1$ is the fraction of the
-distance from $\mathbf{x}_b$ to $\mathbf{x}_c$.  Under the above
-conditions, there is one zero $\hat\xi$ of $P_3^\prime(\xi)$,
-equivalently one minimum of $P_3(\xi)$ such that $0 < \hat\xi < 1$.  One
-can hope that, if $P_3(\xi)$ is a reasonable model for $F$ along that
-line, $\hat\xi$ will be such that $F(\mathbf{x}_b + \hat\xi \delta
-\mathbf{x}) < F_b$.
+Hermite interpolation, where $0 < \xi < 1$ is the fraction of the distance
+from $\mathbf{x}_b$ to $\mathbf{x}_c$.  Under the above conditions, there
+is one zero $\hat\xi$ of $P_3^\prime(\xi)$, equivalently one minimum of
+$P_3(\xi)$ such that $0 < \hat\xi < 1$.  One can hope that, if $P_3(\xi)$
+is a reasonable model for $F$ along that line, there is a $\hat\xi$
+such that $F(\mathbf{x}_b + \hat\xi \delta \mathbf{x}) < F_b$.
 
 To compute $\hat\xi$ let $\delta \mathbf{\hat x} = \delta \mathbf{x} /
 ||\delta \mathbf{x}||$, and write $P_3^\prime(\xi)$ as $3 a_3 \xi^2 + 2
@@ -123,7 +167,10 @@ there is one value $0 < \hat\xi_\vee < 1$ at which $P_3(\xi)$ has a
 minimum (and one uninteresting value $\hat\xi_\wedge$ outside that range
 at which $P_3(\xi)$ has a local maximum).
 
-Compute $F_t = F(\mathbf{x}_b + \hat\xi_\vee \delta \mathbf{x})$.
+Compute $\mathbf{x}_t = \mathbf{x}_b + \hat\xi_\vee \delta \mathbf{x}$. 
+This can be done when DNWT requests a gradient move.  Instead of taking a
+gradient move to $\mathbf{x}_b + g \nabla F_b$, move to $\mathbf{x}_t$ and
+compute $F_t = F(\mathbf{x}_t)$.
 
 If $F_t < F_b$ set $\mathbf{x}_b := \mathbf{x}_t$ and
 $F_b := F_t$, and continue from $\mathbf{x}_t$ using
@@ -138,13 +185,18 @@ $(\mathbf{x}_t,F_t)$ and $(\mathbf{x}_c,F_c)$, and find a value
 $\tilde{\mathbf{x}}_t$ at which $P_2$ is minimal.  The latter process can
 be iterated using values of $F$ alone, that is, without computing $\nabla
 F$ or the Jacobian matrix.  As above, exploiting this would require
-substantial revision of both DNWT and the solver.
+substantial revision of the solver, and might require changes in the
+forward model.
 
-We should wait to do anything along these lines until we observe that
-DNWT takes gradient moves when the retriever is properly configured,
-i.e., when bounds are properly specified.  If that is ever observed, it
-may be worthwhile at that time to investigate whether this approach is
-fruitful.
+The 13 June 2006 version said ``We should wait to do anything along these
+lines until we observe that DNWT takes gradient moves when the retriever
+is properly configured, i.e., when bounds are properly specified.  If that
+is ever observed, it may be worthwhile at that time to investigate whether
+this approach is fruitful.''  As described in \h{wvs-111}, a cycle of
+alternating Newton and gradient moves has been observed.  \h{wvs-111}
+proposes to reduce the length of Newton moves by imposing a minimum value
+on the Levenberg-Marquardt parameter.  A first step ought to be to compute
+a new trial position using the above methods.
 
 \label{lastpage}
 \end{document}
