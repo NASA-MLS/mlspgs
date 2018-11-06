@@ -10,10 +10,10 @@
 \oddsidemargin -0.25in
 %\evensidemargin -0.5in
 \topmargin -0.5in
-\textheight 9in
+\textheight 9.1in
 
-\newcommand{\docname}{wvs-111}
-\newcommand{\docdate}{30 August 2012}
+\newcommand{\docname}{wvs-111r1}
+\newcommand{\docdate}{5 November 2018}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
@@ -84,7 +84,7 @@
 To: \>Bill, Nathaniel, Paul, Alyn, Van\\
 Subject: \>Effect of minimum value of $\lambda$ on convergence\\
 From: \>Van Snyder\\
-Reference: \> \h{wvs-110}
+Reference: \> \h{wvs-035}, \h{wvs-110}
 \end{tabbing}
 
 \parindent 0pt \parskip 6pt
@@ -123,8 +123,12 @@ allowing the state vector to enter regions where the forward model is not
 physically realistic.  Another is that the problem is strongly nonlinear. 
 In this case, ignoring Hessian information that would be used in a full
 Newton iteration (as described in \h{wvs-110} might produce undesirable
-Newton moves.  Another is that the Jacobian is ill conditioned.  Forcing a
-minimum value for $\lambda$ improves the condition.
+Newton moves.  Another possibility is that the gradient moves do not have
+a useful length.  In 2006, Herb suggested a strategy to calculate a
+gradient move length.  This is described in \h{wvs-035}.
+
+Another is that the Jacobian is ill conditioned.  Forcing a minimum value
+for $\lambda$ improves the condition.
 
 An alternative to cope with ill conditioning is to factor the problem
 using Householder transformations, instead of forming normal equations,
@@ -139,3 +143,6 @@ twice as much work as the latter method.  It is not presently supported by
 % $Id$
 
 % $Log$
+% Revision 1.1  2012/08/31 23:37:31  vsnyder
+% Original commit
+%
