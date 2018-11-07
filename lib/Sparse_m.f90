@@ -83,6 +83,14 @@ module Sparse_m
     module procedure Add_Element_Stru, Add_Element_Value, Add_Elements_Stru
   end interface Add_Element
 
+  interface Allocate_Test
+    module procedure Allocate_Test_Elements
+  end interface
+
+  interface DeAllocate_Test
+    module procedure DeAllocate_Test_Elements
+  end interface
+
   interface Dump
     module procedure Dump_Sparse, Dump_Sparse_Array
   end interface Dump
@@ -95,65 +103,10 @@ module Sparse_m
 
 contains
 
-  ! ------------------------------------------------  Copy_Sparse  -----
-  subroutine Copy_Sparse ( To_Sparse, From_Sparse )
-  ! Copy From_Sparse to To_Sparse without fiddling with allocations
-  ! any more than necessary
-    use Allocate_Deallocate, only: Deallocate_Test, Test_DeAllocate
-    class(sparse_t), intent(inout) :: To_Sparse  ! The "To" sparse matrix
-    class(sparse_t), intent(in) :: From_Sparse  ! The "From" sparse matrix
-    character(127) :: Msg ! From deallocation
-    integer :: Stat       ! From deallocation
-
-    if ( allocated(from_sparse%rows) ) then
-      to_sparse%rows = from_sparse%rows
-    else
-      call deallocate_test ( to_sparse%rows, 'To_Sparse%rows', moduleName )
-    end if
-
-    if ( allocated(from_sparse%cols) ) then
-      to_sparse%cols = from_sparse%cols
-    else
-      call deallocate_test ( to_sparse%cols, 'To_Sparse%Cols', moduleName )
-    end if
-
-    if ( allocated(from_sparse%lbnd) ) then
-      to_sparse%lbnd = from_sparse%lbnd
-    else
-      call deallocate_test ( to_sparse%lbnd, 'To_Sparse%Lbnd', moduleName )
-    end if
-
-    if ( allocated(from_sparse%ubnd) ) then
-      to_sparse%ubnd = from_sparse%ubnd
-    else
-      call deallocate_test ( to_sparse%ubnd, 'To_Sparse%Ubnd', moduleName )
-    end if
-
-    to_sparse%ne = from_sparse%ne
-    to_sparse%nRows = from_sparse%nRows
-    to_sparse%what = from_sparse%what
-
-    if ( allocated(from_sparse%e) ) then
-      if ( allocated(to_sparse%e) ) then
-        if ( size(to_sparse%e) < size(from_sparse%e) ) then
-          to_sparse%e = from_sparse%e
-        else
-          to_sparse%e(:size(from_sparse%e)) = from_sparse%e
-        end if
-      else
-        to_sparse%e = from_sparse%e
-      end if
-    else
-      deallocate ( to_sparse%e, stat=stat, errmsg=msg )
-      call test_deallocate ( stat, moduleName, 'To_Sparse%E', ermsg=msg )
-    end if
-
-  end subroutine Copy_Sparse
-
   ! ----------------------------------------------  Create_Sparse  -----
   subroutine Create_Sparse ( Sparse, NR, NC, NE, UBnd, LBnd, What )
     ! Create a sparse matrix representation
-    use Allocate_Deallocate, only: Allocate_Test, Test_Allocate, Test_DeAllocate
+    use Allocate_Deallocate, only: Allocate_Test
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     class(sparse_t), intent(inout) :: Sparse  ! The sparse matrix
     integer, intent(in) :: NR                 ! Number of rows
@@ -164,9 +117,7 @@ contains
                                               ! Not used if UBnd not present
     integer, intent(in), optional :: What     ! A string index, for dumps
 
-    character(127) :: Msg
     logical :: ReCreate ! Allocate or reallocate
-    integer :: Stat
 
     reCreate = .not. allocated(sparse%rows)
     if ( .not. reCreate ) reCreate = size(sparse%rows) /= nr
@@ -200,12 +151,8 @@ contains
       reCreate = .not. allocated(sparse%e)
       if ( .not. reCreate ) reCreate = size(sparse%e) < ne
       if ( reCreate ) then
-        if ( allocated(sparse%e) ) then
-          deallocate ( sparse%e, stat=stat, errmsg=msg )
-          call test_deallocate ( stat, moduleName, "Sparse%E", ermsg=msg )
-        end if
-        allocate ( sparse%e(ne), stat=stat, errmsg=msg )
-        call test_allocate ( stat, moduleName, "Sparse%E", ermsg=msg )
+        call deallocate_test ( sparse%e, "Sparse%E in Create_Sparse" )
+        call allocate_test ( sparse%e, ne, "Sparse%E in Create_Sparse" )
       end if
     end if
     sparse%ne = 0
@@ -227,19 +174,20 @@ contains
   ! ------------------------------------------  Add_Element_Value  -----
   subroutine Add_Element_Value ( Sparse, V, R, C )
     ! Add an element with value V at row R and column C of Sparse
-    use Allocate_Deallocate, only: Test_Allocate
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
 
     class(sparse_t), intent(inout) :: Sparse ! The sparse matrix
     real(rp), intent(in) :: V                ! The value of the element
     integer, intent(in) :: R                 ! The row of the element
     integer, intent(in) :: C                 ! The col of the element
 
-    integer :: FC, FR, NC, NE, New, NR, Stat
-    character(127) :: Msg
+    integer :: FC, FR, NC, NE, New, NR
 
     if ( .not. allocated(sparse%e) ) then
-      allocate ( sparse%e(2*size(sparse%rows)), stat=stat, errmsg=msg )
-      call test_allocate ( stat, moduleName, "Sparse%E", ermsg=msg )
+      if ( .not. allocated(sparse%rows) ) call MLSMessage ( MLSMSG_Error, &
+        & moduleName, "Sparse not created in Add_Element_Value" )
+      call allocate_test ( sparse%e, 2*size(sparse%rows), &
+        & "Sparse%E in Add_Element_Value" )
     end if
 
     ne = size(sparse%e)
@@ -284,6 +232,19 @@ contains
 
   end subroutine Add_Elements_Stru
 
+  ! -------------------------------------  Allocate_Test_Elements  -----
+  subroutine Allocate_Test_Elements ( Elements, Size, What )
+    use Allocate_Deallocate, only: Test_Allocate
+    type(sparse_element_t), allocatable, intent(inout) :: Elements(:)
+    integer, intent(in) :: Size
+    character(*), intent(in) :: What
+    integer :: Stat
+    character(127) :: Msg
+    call deallocate_test ( elements, what )
+    allocate ( elements(size), stat=stat, errmsg=msg )
+    call test_allocate ( stat, moduleName, what, ermsg=msg )
+  end subroutine Allocate_Test_Elements
+
   ! -------------------------------------------  Check_Column_Dup  -----
   subroutine Check_Column_Dup ( Sparse, Name, Found )
     use Output_m, only: Output
@@ -327,6 +288,71 @@ contains
       end do
     end do
   end subroutine Check_Column_Dup
+
+  ! ------------------------------------------------  Copy_Sparse  -----
+  subroutine Copy_Sparse ( To_Sparse, From_Sparse )
+  ! Copy From_Sparse to To_Sparse without fiddling with allocations
+  ! any more than necessary
+    use Allocate_Deallocate, only: Deallocate_Test
+    class(sparse_t), intent(inout) :: To_Sparse  ! The "To" sparse matrix
+    class(sparse_t), intent(in) :: From_Sparse  ! The "From" sparse matrix
+
+    if ( allocated(from_sparse%rows) ) then
+      to_sparse%rows = from_sparse%rows
+    else
+      call deallocate_test ( to_sparse%rows, 'To_Sparse%rows', moduleName )
+    end if
+
+    if ( allocated(from_sparse%cols) ) then
+      to_sparse%cols = from_sparse%cols
+    else
+      call deallocate_test ( to_sparse%cols, 'To_Sparse%Cols', moduleName )
+    end if
+
+    if ( allocated(from_sparse%lbnd) ) then
+      to_sparse%lbnd = from_sparse%lbnd
+    else
+      call deallocate_test ( to_sparse%lbnd, 'To_Sparse%Lbnd', moduleName )
+    end if
+
+    if ( allocated(from_sparse%ubnd) ) then
+      to_sparse%ubnd = from_sparse%ubnd
+    else
+      call deallocate_test ( to_sparse%ubnd, 'To_Sparse%Ubnd', moduleName )
+    end if
+
+    to_sparse%ne = from_sparse%ne
+    to_sparse%nRows = from_sparse%nRows
+    to_sparse%what = from_sparse%what
+
+    if ( allocated(from_sparse%e) ) then
+      if ( allocated(to_sparse%e) ) then
+        if ( size(to_sparse%e) < size(from_sparse%e) ) then
+          to_sparse%e = from_sparse%e ! Re-allocates to_sparse%e
+        else
+          to_sparse%e(:size(from_sparse%e)) = from_sparse%e
+        end if
+      else
+        to_sparse%e = from_sparse%e
+      end if
+    else
+      call deallocate_test ( to_sparse%e, 'To_Sparse%E in Copy_Sparse' )
+    end if
+
+  end subroutine Copy_Sparse
+
+  ! -----------------------------------  DeAllocate_Test_Elements  -----
+  subroutine DeAllocate_Test_Elements ( Elements, What )
+    use Allocate_Deallocate, only: Test_DeAllocate
+    type(sparse_element_t), allocatable, intent(inout) :: Elements(:)
+    character(*), intent(in) :: What
+    integer :: Stat
+    character(127) :: Msg
+    if ( allocated(elements) ) then
+      deallocate ( elements, stat=stat, errmsg=msg )
+      call test_deallocate ( stat, moduleName, what, ermsg=msg )
+    end if
+  end subroutine DeAllocate_Test_Elements
 
   ! ----------------------------------------------------  Densify  -----
   subroutine Densify ( Sparse, Dense )
@@ -592,14 +618,20 @@ contains
   end subroutine Destroy_Sparse
 
   ! -----------------------------------------------  Empty_Sparse  -----
-  subroutine Empty_Sparse ( Sparse )
+  subroutine Empty_Sparse ( Sparse, Resize )
     ! Set Sparse%ne, sparse%rows, and sparse%cols to zero to make it effectively
     ! empty, but without deallocating everything.  Useful if the next time it's
     ! used it will have the same number (or fewer) of rows and columns.
     class(sparse_t), intent(inout) :: Sparse
+    logical, intent(in), optional :: Resize ! Resize Sparse%E to
+                                            ! 2*size(sparse%rows)
     sparse%ne = 0
     if ( allocated(sparse%rows) ) sparse%rows = 0
     if ( allocated(sparse%cols) ) sparse%cols = 0
+    if ( present(resize) ) then
+      if ( resize ) call allocate_test ( sparse%e, 2*size(sparse%rows), &
+        & "Sparse%E in Empty_Sparse" )
+    end if
   end subroutine Empty_Sparse
 
   ! --------------------------------------  Invert_Column_Indices  -----
@@ -678,22 +710,18 @@ contains
   ! ----------------------------------------------  Resize_Sparse  -----
   subroutine Resize_Sparse ( Sparse, NE )
     ! Resize Sparse%E with new size NE
-    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
     class(sparse_t), intent(inout) :: Sparse  ! The sparse matrix
     integer, intent(in), optional :: NE       ! New size for Sparse%E,
                                               ! Default Sparse%NE
 
     type(sparse_element_t), allocatable :: E(:)
-    integer :: N, Stat
-    character(127) :: Msg
+    integer :: N
 
     n = sparse%ne
     if ( present(ne) ) n = max(ne,n)
-    allocate ( e(n), stat=stat, errmsg=msg )
-    call test_allocate ( stat, moduleName, "E", ermsg=msg )
+    call allocate_test ( e, n, "E in Resize_Sparse" )
     e(1:sparse%ne) = sparse%e(1:sparse%ne)
-    deallocate ( sparse%e, stat=stat, errmsg=msg )
-    call test_deallocate ( stat, moduleName, "E", ermsg=msg )
+    call deallocate_test ( sparse%e, "Sparse%E in Resize_Sparse" )
     call move_alloc ( e, sparse%e )
 
   end subroutine Resize_Sparse
@@ -1152,6 +1180,10 @@ contains
 end module Sparse_m
 
 ! $Log$
+! Revision 2.18  2018/11/07 21:22:32  vsnyder
+! Add Allocate_Test and Deallocate_Test for Sparse_Element_t as private
+! procedures.  Use them throughout.  Add "resize" option to Empty_Sparse.
+!
 ! Revision 2.17  2018/10/27 01:35:57  vsnyder
 ! Add ExpLog and LogOnly arguments to dot products
 !
