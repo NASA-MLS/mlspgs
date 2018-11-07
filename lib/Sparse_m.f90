@@ -621,7 +621,9 @@ contains
   subroutine Empty_Sparse ( Sparse, Resize )
     ! Set Sparse%ne, sparse%rows, and sparse%cols to zero to make it effectively
     ! empty, but without deallocating everything.  Useful if the next time it's
-    ! used it will have the same number (or fewer) of rows and columns.
+    ! used it will have the same number (or fewer) of rows.  If the number of
+    ! columns might be different, it ought to be destroyed because so many
+    ! things depend upon the size of Sparse%Cols.
     class(sparse_t), intent(inout) :: Sparse
     logical, intent(in), optional :: Resize ! Resize Sparse%E to
                                             ! 2*size(sparse%rows)
@@ -1180,6 +1182,9 @@ contains
 end module Sparse_m
 
 ! $Log$
+! Revision 2.19  2018/11/07 21:24:09  vsnyder
+! Checked it in last time before saving some changes to comments
+!
 ! Revision 2.18  2018/11/07 21:22:32  vsnyder
 ! Add Allocate_Test and Deallocate_Test for Sparse_Element_t as private
 ! procedures.  Use them throughout.  Add "resize" option to Empty_Sparse.
