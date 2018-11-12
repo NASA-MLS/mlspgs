@@ -267,6 +267,9 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
 
   ! Do you want to pre-fill arrays with MissingValue by default?
   logical, parameter :: ALWAYSFILLWITHMISSINGVALUE = .true.  
+  
+  ! Deprecated, demoted, doomed
+  logical, parameter, public :: AscDescModeIsField = .false.  
 
   ! The following pair, keys and hash, tell what value the units attribute
   ! will be given when writing column abundances in hdfeos5-formatted files
@@ -341,6 +344,8 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
      !                (status is a reserved word in F90)
      real (rgp), pointer, dimension(:) :: quality=>NULL()
      real (rgp), pointer, dimension(:) :: convergence=>NULL()
+     
+     ! We have deprecated this field
      integer, pointer, dimension(:)    :: AscDescMode=>NULL()
      ! All the above dimensioned (nTimes)
 
@@ -1875,7 +1880,8 @@ contains ! =====     Public Procedures     =============================
           l2gp2Temp%status(instance) = l2gp1%status(instance)
           l2gp2Temp%quality(instance) = l2gp1%quality(instance)
           l2gp2Temp%convergence(instance) = l2gp1%convergence(instance)
-          l2gp2Temp%AscDescMode(instance) = l2gp1%AscDescMode(instance)
+          if ( AscDescModeIsField ) &
+            & l2gp2Temp%AscDescMode(instance) = l2gp1%AscDescMode(instance)
           ! Also geolocations will be reset to avoid displaying bogus diffs
           l2gp2Temp%latitude(instance) = l2gp1%latitude(instance)
           l2gp2Temp%longitude(instance) = l2gp1%longitude(instance)
@@ -2776,7 +2782,7 @@ contains ! =====     Public Procedures     =============================
       & call dump ( l2gp%convergence, 'Convergence:', &
         & FillValue=FillValueGP, options=options )
       
-    if ( showMe(myDetails > 0, myFields, 'AscDescMode ') ) &
+    if ( showMe(myDetails > 0, myFields, 'AscDescMode ') .and. AscDescModeIsField ) &
       & call dump ( l2gp%AscDescMode, 'AscDescMode :', &
         & width=width, options=options )
       
@@ -3155,9 +3161,11 @@ contains ! =====     Public Procedures     =============================
     call ExtractArray ( l2gp%convergence  , ol2gp%convergence  , start(3:3), count(3:3), stride(3:3), block(3:3) )
     ! We may implement this field as either an integer or a char
     ! call ExtractArray ( l2gp%AscDescMode    , ol2gp%AscDescMode    , start(2:2), count(2:2), stride(2:2), block(2:2) )
-    do i=1, count(3)
-      l2gp%AscDescMode(i) = ol2gp%AscDescMode(myTimes(1) + i - 1)
-    enddo
+    if ( AscDescModeIsField ) then
+      do i=1, count(3)
+        l2gp%AscDescMode(i) = ol2gp%AscDescMode(myTimes(1) + i - 1)
+      enddo
+    endif
   end subroutine ExtractL2GPRecord_range
 
   subroutine ExtractL2GPRecord_which ( ol2gp, l2gp, &
@@ -3246,9 +3254,11 @@ contains ! =====     Public Procedures     =============================
       & whichTimes(1:numTimes) )
     call GatherBloc ( l2gp%convergence  , ol2gp%convergence  , &
       & whichTimes(1:numTimes) )
-    do i=1, numTimes
-      l2gp%AscDescMode(i) = ol2gp%AscDescMode(whichTimes(i))
-    enddo
+    if ( AscDescModeIsField ) then
+      do i=1, numTimes
+        l2gp%AscDescMode(i) = ol2gp%AscDescMode(whichTimes(i))
+      enddo
+    endif
     if ( usefreqs == 0 ) then
       deallocate( whichFreqs )
     endif
@@ -3279,7 +3289,8 @@ contains ! =====     Public Procedures     =============================
     sooDesu = sooDesu .and. ( size(l2gp%status          )     > 0 )
     sooDesu = sooDesu .and. ( size(l2gp%quality         )     > 0 )
     sooDesu = sooDesu .and. ( size(l2gp%convergence     )     > 0 )
-    sooDesu = sooDesu .and. ( size(l2gp%AscDescMode       )     > 0 )
+    if ( AscDescModeIsField ) &
+      & sooDesu = sooDesu .and. ( size(l2gp%AscDescMode       )     > 0 )
   end function IsL2GPSetUp
 
   !------------------------------------------  SetupNewL2GPRecord  -----
@@ -3413,7 +3424,8 @@ contains ! =====     Public Procedures     =============================
       l2gp%status       = l2gp%MissingStatus ! l2gp%MissingValue
       l2gp%quality      = l2gp%MissingValue
       l2gp%convergence  = l2gp%MissingValue
-      l2gp%AscDescMode    = 0
+      if ( AscDescModeIsField ) &
+        & l2gp%AscDescMode    = 0
     elseif ( present(proto) ) then
       nn                = proto%nTimes
       l2gp%name         = proto%name
@@ -3437,7 +3449,8 @@ contains ! =====     Public Procedures     =============================
       l2gp%status         (1:nn) = proto%status       
       l2gp%quality        (1:nn) = proto%quality      
       l2gp%convergence    (1:nn) = proto%convergence  
-      l2gp%AscDescMode      (1:nn) = proto%AscDescMode  
+      if ( AscDescModeIsField ) &
+        & l2gp%AscDescMode      (1:nn) = proto%AscDescMode  
       elseif ( present( which ) ) then
       l2gp%latitude     = proto%latitude     (which)
       l2gp%longitude    = proto%longitude    (which)
@@ -3452,7 +3465,8 @@ contains ! =====     Public Procedures     =============================
       l2gp%status       = proto%status       (which)
       l2gp%quality      = proto%quality      (which)
       l2gp%convergence  = proto%convergence  (which)
-      l2gp%AscDescMode    = proto%AscDescMode  (which)
+      if ( AscDescModeIsField ) &
+        & l2gp%AscDescMode    = proto%AscDescMode  (which)
       else
       l2gp%latitude     = proto%latitude     
       l2gp%longitude    = proto%longitude    
@@ -3467,7 +3481,8 @@ contains ! =====     Public Procedures     =============================
       l2gp%status       = proto%status       
       l2gp%quality      = proto%quality      
       l2gp%convergence  = proto%convergence  
-      l2gp%AscDescMode    = proto%AscDescMode  
+      if ( AscDescModeIsField ) &
+        & l2gp%AscDescMode    = proto%AscDescMode  
       endif
     endif
   end subroutine SetupNewL2GPRecord
@@ -3634,7 +3649,8 @@ contains ! =====     Public Procedures     =============================
     l2gp%status(1:templ2gp%nTimes) = templ2gp%status(1:templ2gp%nTimes)
     l2gp%quality(1:templ2gp%nTimes) = templ2gp%quality(1:templ2gp%nTimes)
     l2gp%convergence(1:templ2gp%nTimes) = templ2gp%convergence(1:templ2gp%nTimes)
-    l2gp%AscDescMode(1:templ2gp%nTimes) = templ2gp%AscDescMode(1:templ2gp%nTimes)
+    if ( AscDescModeIsField ) &
+      & l2gp%AscDescMode(1:templ2gp%nTimes) = templ2gp%AscDescMode(1:templ2gp%nTimes)
     
     ! Deallocate the old arrays
     call DestroyL2GPContents(templ2gp)
@@ -4214,10 +4230,12 @@ contains ! =====     Public Procedures     =============================
       & status = mls_swrdfld( swid, 'Convergence',start(3:3),stride(3:3),edge(3:3),&
       & l2gp%convergence, hdfVersion=hdfVersion, dontfail=.true. )
 
-    l2gp%AscDescMode = 0 ! l2gp%MissingValue ! So it has a value.
-    if ( ReadingAscDescMode ) &
-      & status = mls_swrdfld( swid, 'AscDescMode ',start(3:3),stride(3:3),edge(3:3),&
-      & l2gp%AscDescMode, hdfVersion=hdfVersion, dontfail=.true. )
+    if ( AscDescModeIsField ) then
+      l2gp%AscDescMode = 0 ! l2gp%MissingValue ! So it has a value.
+      if ( ReadingAscDescMode ) &
+        & status = mls_swrdfld( swid, 'AscDescMode ',start(3:3),stride(3:3),edge(3:3),&
+        & l2gp%AscDescMode, hdfVersion=hdfVersion, dontfail=.true. )
+    endif
 
     ! Deallocate local variables
     call Deallocate_test ( realProf, 'realProf', ModuleName )
@@ -4519,13 +4537,14 @@ contains ! =====     Public Procedures     =============================
     & MYDIM1, &
     & DFNT_FLOAT32, HDFE_NOMERGE, chunk_rank, chunk_dims, &
     & hdfVersion=hdfVersion, rFill=l2gp%MissingValue)
-
-    chunk_rank=1
-    chunk_dims(1)=CHUNKTIMES
-    status = mls_dfldsetup(swid, 'AscDescMode ', 'nTimes', &
-    & MYDIM1, &
-    & DFNT_INT32, HDFE_NOMERGE, chunk_rank, chunk_dims, &
-    & hdfVersion=hdfVersion, iFill=int(l2gp%MissingValue) )
+    if ( AscDescModeIsField ) then
+      chunk_rank=1
+      chunk_dims(1)=CHUNKTIMES
+      status = mls_dfldsetup(swid, 'AscDescMode ', 'nTimes', &
+      & MYDIM1, &
+      & DFNT_INT32, HDFE_NOMERGE, chunk_rank, chunk_dims, &
+      & hdfVersion=hdfVersion, iFill=int(l2gp%MissingValue) )
+    endif
 
     ! Detach from the HE5_SWath interface.This stores the swath info within the
     ! file and must be done before writing or reading data to or from the
@@ -4767,8 +4786,10 @@ contains ! =====     Public Procedures     =============================
     status = mls_SWwrfld(swid, 'Convergence', start(3:3), stride(3:3), edge(3:3), &
          real(l2gp%convergence), hdfVersion=hdfVersion)
 
-    status = mls_SWwrfld(swid, 'AscDescMode ', start(3:3), stride(3:3), edge(3:3), &
+    if ( AscDescModeIsField ) then
+      status = mls_SWwrfld(swid, 'AscDescMode ', start(3:3), stride(3:3), edge(3:3), &
          l2gp%AscDescMode, hdfVersion=hdfVersion)
+    endif
 
     if ( DEEBUG ) then
       call sayTime( 'Witing 1d status, Quality, Asc/Desc', tFile, t2 )
@@ -5063,16 +5084,17 @@ contains ! =====     Public Procedures     =============================
     status = mls_swwrlattr(swid, 'Convergence', &
       & 'UniqueFieldDefinition', &
       & MLS_CHARTYPE, 1, 'MLS-Specific')
-    
-    status = mls_swwrlattr(swid, 'AscDescMode', 'Title', &
-      & MLS_CHARTYPE, 1, trim(field_name)//'AscDescMode ')
-    status = mls_swwrlattr(swid, 'AscDescMode', 'Units', &
-      & MLS_CHARTYPE, 1, NOUNITS)
-    status = he5_swwrlattr(swid, 'AscDescMode', 'MissingValue', &
-      & HE5T_NATIVE_INT, hsize(1), (/ 0 /) )
-    status = mls_swwrlattr(swid, 'AscDescMode', &
-      & 'UniqueFieldDefinition', &
-      & MLS_CHARTYPE, 1, 'MLS-Specific')
+    if ( AscDescModeIsField ) then
+      status = mls_swwrlattr(swid, 'AscDescMode', 'Title', &
+        & MLS_CHARTYPE, 1, trim(field_name)//'AscDescMode ')
+      status = mls_swwrlattr(swid, 'AscDescMode', 'Units', &
+        & MLS_CHARTYPE, 1, NOUNITS)
+      status = he5_swwrlattr(swid, 'AscDescMode', 'MissingValue', &
+        & HE5T_NATIVE_INT, hsize(1), (/ 0 /) )
+      status = mls_swwrlattr(swid, 'AscDescMode', &
+        & 'UniqueFieldDefinition', &
+        & MLS_CHARTYPE, 1, 'MLS-Specific')
+      endif
     
     status = mls_SWdetach(swid, hdfVersion=HDFVERSION_5)
     if ( status == -1 ) then
@@ -5560,6 +5582,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.237  2018/08/01 22:14:27  pwagner
+! Added CompactL2GPRecord; corrected errors in ExtractL2GPRecord and Diff-ing with matchTimes
+!
 ! Revision 2.236  2018/05/31 22:47:45  pwagner
 ! Read ProductionLocation, HostName, identifier_product_doi when dumping global attrs
 !
