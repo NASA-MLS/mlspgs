@@ -3659,7 +3659,7 @@ contains ! ======================= Public Procedures =========================
 
   ! --------------------------------------  SaveAsHDF5DS_textFile  -----
   subroutine SaveAsHDF5DS_textFile ( textFile, locID, name, &
-    & maxLineLen, fromNull, adding_to )
+    & maxLineLen, fromNull, adding_to, cr2lf )
     use IO_Stuff, only: Read_TextFile
     ! This routine writes the contents of a textfile as a char-valued dataset
     integer, intent(in) :: LOCID           ! Where to place it (group/file)
@@ -3667,11 +3667,13 @@ contains ! ======================= Public Procedures =========================
     character (len=*), intent(in) :: textFile ! Name of the textfile
     integer, optional, intent(in) :: maxLineLen
     character(len=1), optional, intent(in) :: fromNull
-    logical, optional, intent(in)     :: adding_to
+    logical, optional, intent(in)     :: adding_to ! name may already exits
+    logical, optional, intent(in)     :: cr2lf ! convert <cr> to <lf>
 
     ! Local variables
     integer :: Me = -1                  ! String index for trace cacheing
     logical :: myAddingTo
+    logical :: myConvertCR
     integer :: myMaxLineLen
     integer :: spaceID                  ! ID for dataspace
     integer (HID_T) :: setID            ! ID for dataset
@@ -3690,11 +3692,15 @@ contains ! ======================= Public Procedures =========================
     if ( present(fromNull) ) wasNull = fromNull
     myAddingTo = .false.
     if ( present(adding_to) ) myAddingTo = adding_to
+    myConvertCR = .false.
+    if ( present(cr2lf) ) myConvertCR = cr2lf
     ! Try to read the textfile
     value = ' '
     call read_textFile( trim(textFile), value, myMaxLineLen )
     ! Unfortunately, a lot of null characters sneak into this
     value = Replace( value, char(0), wasNull ) ! Replace null with wasNull
+    if ( myConvertCR ) &
+      & value = Replace( value, char(13), char(10) ) ! Replace null with wasNull
     
     ! Create the dataspace
     shp = 1
@@ -6330,6 +6336,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.146  2018/11/12 23:12:27  pwagner
+! Added arg to convert carriagereturns to linefeeds
+!
 ! Revision 2.145  2018/05/15 03:16:59  vsnyder
 ! Add LoadAllocFromHDF5DS
 !
