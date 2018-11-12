@@ -11,8 +11,8 @@
 
 !=======================================================================================
 
-module DirectWrite_m  ! alternative to Join/OutputAndClose methods
-                      ! appropriate L2 Files
+module DirectWrite_m  ! Write l2gp and l2aux products out to files 
+                      ! chunk-by-chunk
 
 !=======================================================================================
 
@@ -1703,7 +1703,7 @@ contains ! ======================= Public Procedures =========================
     & l2gp, name, chunkNo, offset, firstInstance, lastInstance )
     use Dump_0, only: Dump
     use Intrinsic, only: L_None, Lit_Indices
-    use L2GPData, only: DescendingRange, L2GPData_T, RGP, &
+    use L2GPData, only: AscDescModeIsField, DescendingRange, L2GPData_T, RGP, &
       & SetupNewL2GPRecord
     use QuantityTemplates, only: Dump
     ! Args:
@@ -1868,7 +1868,9 @@ contains ! ======================= Public Procedures =========================
     else
       l2gp%convergence(firstProfile:lastProfile) = 0.0
     endif
-    if (associated(AscDescMode)) then
+    if ( .not. AscDescModeIsField ) then
+      ! The field has been dropped from l2gp swaths
+    elseif (associated(AscDescMode)) then
       ! This sets the AscDescMode field to 
       ! +1 for values of +1
       ! -1 for values of -1
@@ -1954,6 +1956,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.93  2018/11/12 23:13:26  pwagner
+! Deprecated AscDescMode
+!
 ! Revision 2.92  2018/07/27 23:17:16  pwagner
 ! Renamed level 2-savvy MLSMessage MLSL2Message
 !
