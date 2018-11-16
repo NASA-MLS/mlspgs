@@ -183,9 +183,11 @@ contains
 
     integer :: FC, FR, NC, NE, New, NR
 
+    if ( v == 0 ) return ! Don't add zero elements!
+
     if ( .not. allocated(sparse%e) ) then
       if ( .not. allocated(sparse%rows) ) call MLSMessage ( MLSMSG_Error, &
-        & moduleName, "Sparse not created in Add_Element_Value" )
+        & moduleName, "In Add_Element_Value, Sparse not yet created" )
       call allocate_test ( sparse%e, 2*size(sparse%rows), &
         & "Sparse%E in Add_Element_Value" )
     end if
@@ -1182,6 +1184,9 @@ contains
 end module Sparse_m
 
 ! $Log$
+! Revision 2.20  2018/11/16 22:52:46  vsnyder
+! Don't add zero elements
+!
 ! Revision 2.19  2018/11/07 21:24:09  vsnyder
 ! Checked it in last time before saving some changes to comments
 !
