@@ -77,7 +77,12 @@ contains
 
 ! Internals
 
-    integer :: B                             ! Which boundary of the layer
+    integer :: B                             ! Which boundary of the layer, (1
+                                             ! or 2 for near, far from tangent)
+                                             ! or other boundary of the layer,
+                                             ! on fine path
+    integer :: BC                            ! B on coarse path when B is a
+                                             ! boundary, not a boundary index
     complex(rp) :: Beta(-1:1,size(ref_cor))  ! Either Beta or Beta*f*exp(f)
                                              ! on a boundary
     complex(rp) :: d_Delta_df_Pol(-1:1,size(ref_cor)) ! Layer integral
@@ -88,6 +93,7 @@ contains
     logical :: Do_Calc_f(maxval(eta_zxp(:)%nRows))    ! Where Eta_ZXP_Col /= 0
     real(rp) :: Eta_ZXP_Col(maxval(eta_zxp(:)%nRows))
     integer :: I_Stop                        ! Length of coarse path
+    integer :: IC                            ! inds(p_i) converted to coarse path
     integer :: II                            ! inds(p_i)
     integer :: Inds(size(ref_cor),2)         ! Where on the path to calc
     integer :: N_Inds                        ! Effective size of Inds
@@ -117,6 +123,7 @@ contains
 
         ! Get indices for layers for which the interpolating coefficient
         ! is nonzero at either boundary.
+        !????? Maybe could use Get_Do_Calc_Sparse, but it hasn't been tested
         call Get_do_calc_indexed_coarse ( i_stop, tan_pt_c, do_calc_f, &
           & n_inds, inds )
 
@@ -134,8 +141,9 @@ contains
 
             do b = 1, 2 ! b is boundary index
               ii = inds(p_i,b)
-              beta(:,ii) = beta_path_pol(:,ii,sps_i) &
-                         & * sps_path(ii*ngp1-ng,sps_i) &
+              ic = 1 + ( ii + ng ) / ngp1 ! On coarse path
+              beta(:,ic) = beta_path_pol(:,ic,sps_i) &
+                         & * sps_path(ii,sps_i) &
                          & * exp(-grids_f%values(sv_i))
 
             end do ! b
@@ -143,21 +151,23 @@ contains
 
         else
 
-          beta(:,[inds(:n_inds,1:2)]) = &
-            & beta_path_pol(:,[inds(:n_inds,1:2)],sps_i)
+          beta(:,[1 + ( inds(:n_inds,1:2) + ng ) / ngp1]) = &
+            & beta_path_pol(:,[1 + ( inds(:n_inds,1:2) + ng ) / ngp1],sps_i)
 
         end if
 
         ! Finish the integration.  Include the factor of tanh(h nu / k T)
         ! that was not included in the beta computation.
-!??? Should we (can we) also do GL here?
+!??? Should we (can we) also do GL here?  (We don't have Beta on the fine path)
         do p_i = 1, n_inds
           ii = inds(p_i,1)
+          ic = 1 + ( ii + ng ) / ngp1 ! On coarse path
           b = inds(p_i,2)
+          bc = 1 + ( b + ng ) / ngp1 ! On coarse path
           d_delta_df_pol(:,ii) = &
-            & ( beta(:,ii) * ( eta_zxp_col(ii*ngp1-ng) * tanh1_c(ii) ) + &
-            &   beta(:,b) * ( eta_zxp_col(b*ngp1-ng) * tanh1_c(b) ) ) * &
-            & 0.5 * del_s(ii) * ref_cor(ii)
+            & ( beta(:,ic) * ( eta_zxp_col(ii) * tanh1_c(ic) ) + &
+            &   beta(:,bc) * ( eta_zxp_col(b) * tanh1_c(bc) ) ) * &
+            & 0.5 * del_s(ic) * ref_cor(ic)
         end do ! p_i
 
         ! Now add in contribution from scalar model, 0.25 for sigma +/-,
@@ -584,6 +594,10 @@ contains
 end module Get_d_Deltau_Pol_M
 
 ! $Log$
+! Revision 2.47  2018/11/19 21:53:33  vsnyder
+! Correct confusion between coarse and fine path indexing in
+! Get_d_Deltau_Pol_dF, which has apparently so far not been used.
+!
 ! Revision 2.46  2018/05/24 03:24:36  vsnyder
 ! Use sparse representation for dh_dt_path
 !
