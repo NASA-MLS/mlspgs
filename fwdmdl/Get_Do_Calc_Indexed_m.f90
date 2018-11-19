@@ -59,7 +59,7 @@ contains
         if ( do_calc_all(ngp1*p_i-ng) .or. &
              do_calc_all(ngp1*(p_i+m) - ng) ) then
           n_inds = n_inds + 1
-          inds(n_inds,1:2) = [p_i,p_i+m]
+          inds(n_inds,1:2) = [p_i,p_i+m*ngp1]
         end if
       end do ! p_i
       p1 = tan_pt_c + 1
@@ -116,7 +116,7 @@ contains
         end if
         if ( do_calc(p_i) ) then
           n_inds = n_inds + 1
-          inds(n_inds,1:2) = [p_i,p_i+m]
+          inds(n_inds,1:2) = [p_i,p_i+m*ngp1]
         end if
       end do ! p_i
       p1 = tan_pt_c + 1
@@ -139,6 +139,9 @@ contains
 end module Get_Do_Calc_Indexed_m
 
 ! $Log$
+! Revision 2.4  2018/11/19 21:52:36  vsnyder
+! Correct confusion between coarse and fine path indexing
+!
 ! Revision 2.3  2018/04/17 22:10:18  vsnyder
 ! Remove unused declarations
 !
