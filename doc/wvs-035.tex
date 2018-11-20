@@ -12,8 +12,8 @@
 %\topmargin -0.65in
 %\textheight 9.3in
 
-\newcommand{\docname}{\bf wvs-035r1}
-\newcommand{\docdate}{5 November 2018}
+\newcommand{\docname}{\bf wvs-035r2}
+\newcommand{\docdate}{19 November 2018}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
@@ -159,8 +159,8 @@ a_2 \xi +a_1$.  The coefficients $a_1$, $a_2$ and $a_3$ are gotten by
 Hermite interpolation, having the values $a_1 = \delta \mathbf{\hat x}
 \cdot \nabla F_b$, $a_2 = 3 ( F_c - F_b ) - 2 \delta \mathbf{\hat x}
 \cdot \nabla F_b - \delta \mathbf{\hat x} \cdot \nabla F_c$ and $a_3 = -
-2 ( F_c - F_b ) + \delta \mathbf{\hat x} \cdot \nabla F_b + \delta
-\mathbf{\hat x} \cdot \nabla F_c$.  At the zeros of $P_3^\prime(\xi)$, we
+3 [ 2 ( F_c - F_b ) + \delta \mathbf{\hat x} \cdot \nabla F_b + \delta
+\mathbf{\hat x} \cdot \nabla F_c ]$.  At the zeros of $P_3^\prime(\xi)$, we
 have $\hat\xi = -\frac13 \frac{a_2 \pm \sqrt{a_2^2 - 3 a_1 a_3}}{a_3}$. 
 Under the conditions stated above, both values of $\hat\xi$ are real, and
 there is one value $0 < \hat\xi_\vee < 1$ at which $P_3(\xi)$ has a
@@ -201,3 +201,5 @@ a new trial position using the above methods.
 \label{lastpage}
 \end{document}
 % $Id$
+
+% $Log$
