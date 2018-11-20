@@ -1458,7 +1458,7 @@ repeat_loop: do ! RepeatLoop
     subroutine My_NWTDB ( AJ, Width, Level, Why )
       use DNWT_Module, only: NWT_T, NWTDB
       use DNWT_Clone, only: ALT_NWTDB
-      type (NWT_T), intent(in), optional :: AJ
+      type (NWT_T), intent(in) :: AJ
       integer, intent(in), optional :: Width
       integer, intent(in), optional :: Level
       character(len=*), intent(in), optional :: Why
@@ -2547,7 +2547,7 @@ NEWT: do ! Newton iteration
               if ( d_sca .or.  d_ndb >= 1 ) then
                 call my_nwtdb ( aj, width=9, why='After Solve' )
               else
-                call my_nwtdb ( width=9, level=0, why='After Solve' )
+                call my_nwtdb ( aj, width=9, level=0, why='After Solve' )
               end if
             end if
         case ( nf_newx ) ! ................................  NEWX  .....
@@ -2762,7 +2762,7 @@ NEWT: do ! Newton iteration
           if ( d_sca .or. d_ndb >= 2 ) then
             call my_nwtdb ( aj, width=9, why = "After Newton iteration" )
           else
-            call my_nwtdb ( width=9, why = "After Newton iteration" )
+            call my_nwtdb ( aj, width=9, why = "After Newton iteration" )
           end if
         end if
 
@@ -3012,6 +3012,9 @@ NEWT: do ! Newton iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.363  2018/11/20 01:09:43  vsnyder
+! Always pass AJ to My_NWTDB.  It's no longer optional to DNWTDB
+!
 ! Revision 2.362  2018/09/13 20:23:49  pwagner
 ! Moved changeable options to new L2Options; added DumpOptions
 !
