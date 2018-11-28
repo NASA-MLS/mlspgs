@@ -1099,7 +1099,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_status, numeric(phyq_dimensionless), &
              begin, f+f_stride, numeric(phyq_dimensionless), &
              begin, f+f_suffix, string() , &
-             begin, f+f_surface, numeric_range(), &
+             begin, f+f_surface, numeric_or_range(), &
              begin, f+f_systemTemperature, vectorQuantity() /), &
              continue = .true. )
     call make_tree ( (/ & ! STILL Continuing for s_fill...
@@ -1424,7 +1424,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_mask, field_type(t_masks), &
              begin, f+f_maxValue, numeric(), &
              begin, f+f_minValue, numeric(), &
-             begin, f+f_surface, numeric_range(), &
+             begin, f+f_surface, numeric_or_range(), &
              begin, f+f_opticalDepth, vectorQuantity(), &
              begin, f+f_opticalDepthCutoff, numeric(phyq_dimensionless), &
              begin, f+f_reverse, boolean(), &
@@ -2133,6 +2133,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.646  2018/11/28 21:09:54  pwagner
+! Now the surface field may be a numeric instead of a range
+!
 ! Revision 2.645  2018/10/19 00:03:47  pwagner
 ! inputFile= with /pause pauses to read from inputFile instead of stdin
 !
