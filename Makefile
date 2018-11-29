@@ -691,16 +691,16 @@ install: $(LEVELS)
 	case "$$dir" in \
 	"l1") \
 	   if [ -f $$dir/$(MLSCONFG)/mlsl0sn ] ; then \
-	      mv $$dir/$(MLSCONFG)/mlsl0sn $(INSTALLDIR) ; \
+	      cp $$dir/$(MLSCONFG)/mlsl0sn $(INSTALLDIR) ; \
 	   fi ; \
 	   if [ -f $$dir/$(MLSCONFG)/mlsl1log ] ; then \
-	      mv $$dir/$(MLSCONFG)/mlsl1log $(INSTALLDIR) ; \
+	      cp $$dir/$(MLSCONFG)/mlsl1log $(INSTALLDIR) ; \
 	   fi ; \
 	   if [ -f $$dir/$(MLSCONFG)/mlsl1t ] ; then \
-	      mv $$dir/$(MLSCONFG)/mlsl1t $(INSTALLDIR) ; \
+	      cp $$dir/$(MLSCONFG)/mlsl1t $(INSTALLDIR) ; \
 	   fi ; \
 	   if [ -f $$dir/$(MLSCONFG)/mlsl1g ] ; then \
-	      mv $$dir/$(MLSCONFG)/mlsl1g $(INSTALLDIR) ; \
+	      cp $$dir/$(MLSCONFG)/mlsl1g $(INSTALLDIR) ; \
          rm -f $(INSTALLDIR)/mlsl1.sh ; \
 	      sed "s=mlsxxyyzz_1=mlsl1log=; s=mlsxxyyzz_2=mlsl1g=; \
            s=mlsxxyyzz_3=mlsl1t=; s=mlsbbiinn=$(INSTALLDIR)=; \
@@ -712,7 +712,7 @@ install: $(LEVELS)
 		;; \
 	"l2") \
 			if [ -f $$dir/$(MLSCONFG)/mls$$dir ] ; then \
-	mv $$dir/$(MLSCONFG)/mls$$dir $(INSTALLDIR) ; \
+	cp $$dir/$(MLSCONFG)/mls$$dir $(INSTALLDIR) ; \
             rm -f $(INSTALLDIR)/mls$$dir.sh ; \
 	         sed "s=mlsxxyyzz=mls$$dir=; s=mlsbbiinn=$(INSTALLDIR)=; \
               s=mlshhoommee=$(MLSHOME)=; s=mlseexxttrraa==; \
@@ -735,7 +735,7 @@ install: $(LEVELS)
 		;; \
 	"l3") \
 			if [ -f $$dir/$(MLSCONFG)/mlsl3d ] ; then \
-	         mv $$dir/$(MLSCONFG)/mlsl3d $(INSTALLDIR) ; \
+	         cp $$dir/$(MLSCONFG)/mlsl3d $(INSTALLDIR) ; \
             rm -f $(INSTALLDIR)/mlsl3d.sh ; \
 	         sed "s=mlsxxyyzz=mlsl3d=; s=mlsbbiinn=$(INSTALLDIR)=; \
               s=mlshhoommee=$(MLSHOME)=; s=mlseexxttrraa==; \
@@ -746,7 +746,7 @@ install: $(LEVELS)
 		;; \
 	"l3m") \
 			if [ -f $$dir/$(MLSCONFG)/mlsl3m ] ; then \
-	         mv $$dir/$(MLSCONFG)/mlsl3m $(INSTALLDIR) ; \
+	         cp $$dir/$(MLSCONFG)/mlsl3m $(INSTALLDIR) ; \
             rm -f $(INSTALLDIR)/mlsl3m.sh ; \
 	         sed "s=mlsxxyyzz=mlsl3m=; s=mlsbbiinn=$(INSTALLDIR)=; \
               s=mlshhoommee=$(MLSHOME)=; s=mlseexxttrraa==; \
@@ -757,7 +757,7 @@ install: $(LEVELS)
 		;; \
 	*) \
 			if [ -f $$dir/$(MLSCONFG)/mls$$dir ] ; then \
-	mv $$dir/$(MLSCONFG)/mls$$dir $(INSTALLDIR) ; \
+	cp $$dir/$(MLSCONFG)/mls$$dir $(INSTALLDIR) ; \
             rm -f $(INSTALLDIR)/mls$$dir.sh ; \
 	         sed "s=mlsxxyyzz=mls$$dir=; s=mlsbbiinn=$(INSTALLDIR)=; \
               s=mlshhoommee=$(MLSHOME)=; s=mlseexxttrraa==" \
@@ -1501,6 +1501,9 @@ tools: $(MLSTOOLS)
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.24  2018/08/13 23:16:21  pwagner
+# Use MLSTOOLS; correct errors in install-mlstools
+#
 # Revision 1.23  2018/08/06 16:35:44  pwagner
 # Persevere when cleaning configurations
 #
