@@ -7539,13 +7539,13 @@ contains ! =====     Public Procedures     =============================
           & cond=toggle(gen) .and. levels(gen) > 1 )
         return
       endif
-      call LogMyData ( mesg='NumStringElements( trim(DSNames), countEmpty )', data=NumStringElements( trim(DSNames), countEmpty ) )
-      call LogMyData ( mesg='size ( vector%quantities )', data=size ( vector%quantities ) )
+      ! call LogMyData ( mesg='NumStringElements( trim(DSNames), countEmpty )', data=NumStringElements( trim(DSNames), countEmpty ) )
+      ! call LogMyData ( mesg='size ( vector%quantities )', data=size ( vector%quantities ) )
       do dsi=1, NumStringElements( trim(DSNames), countEmpty )
-        call LogMyData ( mesg='dsi', data=dsi )
+        ! call LogMyData ( mesg='dsi', data=dsi )
         do sqi = 1, size ( vector%quantities )
-          if ( dsi > 123 .and. sqi > 120 ) &
-            & call LogMyData ( mesg='sqi', data=sqi )
+          ! if ( dsi > 123 .and. sqi > 120 ) &
+            ! & call LogMyData ( mesg='sqi', data=sqi )
           quantity => vector%quantities(sqi)
           ! How do we access the dataset to read? By name or by num?
           if ( index(lowercase(options), 'num') < 1 ) then
@@ -7561,8 +7561,8 @@ contains ! =====     Public Procedures     =============================
             call writeIntsToChars ( sqi, Name )
             Name = 'Quantity ' // trim(Name)
           end if
-          if ( dsi > 123 .and. sqi > 123 ) &
-            & call LogMyData ( mesg='Deciding about sqi', data=sqi )
+          ! if ( dsi > 123 .and. sqi > 123 ) &
+            ! & call LogMyData ( mesg='Deciding about sqi', data=sqi )
           if ( lowercase(trim(name)) /= &
             & lowercase(StringElement( DSNames, dsi, countEmpty )) ) &
             & cycle
@@ -7575,13 +7575,13 @@ contains ! =====     Public Procedures     =============================
           if ( len_trim(name) > 0 ) then
             if ( len_trim(groupName) > 0 ) &
               & name = trim(groupName) // '/' // name
-            call LogMyData ( mesg='sqi', data=sqi )
+            ! call LogMyData ( mesg='sqi', data=sqi )
             call NamedQtyFromFile ( key, quantity, MLSFile, &
               & filetype, name, spread, interpolate, homogeneous )
           endif
         end do
       end do
-      call LogMyData ( mesg='Whew! Barely made it.' )
+      ! call LogMyData ( mesg='Whew! Barely made it.' )
       call trace_end ( 'FillUtils_1.VectorFromFile', &
         & cond=toggle(gen) .and. levels(gen) > 1 )
     contains
@@ -7975,6 +7975,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.145  2018/11/30 17:48:25  pwagner
+! These calls to LogMyData caused crashes; need investigation before being restored
+!
 ! Revision 2.144  2018/07/27 23:18:48  pwagner
 ! Renamed level 2-savvy MLSMessage MLSL2Message
 !
