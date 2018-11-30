@@ -158,8 +158,17 @@ contains ! =============== Subroutines and functions ==========================
 
   ! ------------------------------------------------  GetBasisGPH  -----
   subroutine GetBasisGPH ( temp, refGPH, gph, R, RT, belowRef )
-    ! This function takes a state vector, containing one and only one
-    ! temperature and reference geopotential height quantity, and returns
+    ! This function calculates gph based on
+    ! temperature temp
+    ! reference gph refgph
+    !
+    ! It also marks with FillValues any levels affected
+    ! by FillValues among the Temperatures
+    use Dump_0, only: Dump
+    use HighOutput, only: OutputNamedValue
+    use MLSCommon, only: UndefinedValue
+    use MLSFillValues, only: IsFillValue
+    use MLSFinds, only: FindFirst
     use Physics, only: Boltz
     use Trace_M, only: Trace_Begin, Trace_End
 
@@ -202,6 +211,7 @@ contains ! =============== Subroutines and functions ==========================
 !    real (r8) :: BASISCUTOFF            ! Threshold level for gas constant
     real (r8) :: REFLOGP                ! Log p of pressure reference surface
     real (r8) :: BASISGAP               ! Space between adjacent surfaces
+    logical, parameter :: DEEBUG = .false.
 
     call trace_begin ( me, 'GetBasisGPH', cond=.false. )
     nullify ( myR, myRT )
@@ -293,6 +303,22 @@ contains ! =============== Subroutines and functions ==========================
     end if
 
     if ( present(belowRef) ) belowRef = myBelowRef
+    if ( any(IsFillValue(temp%values) ) ) then
+      if ( DEEBUG ) call outputNamedValue ( 'myBelowRef', myBelowRef )
+      ! We will reset gph to FillValue for any ..
+      do instance=1, temp%template%noInstances
+        if ( DEEBUG ) call ouputNamedValue ( 'instance', instance )
+        if ( DEEBUG ) call dump( temp%values(:, instance), 'Temperatures' )
+        ! heights above the 1st neg T starting at the refGPH and going up
+        surf = FindFirst ( isFillValue(temp%values(myBelowRef:, instance) ) )
+        if ( DEEBUG ) call ouputNamedValue ( 'upper -999.99 surf', surf )
+        if ( surf > 0 ) gph(myBelowRef+surf-1:,instance) = UndefinedValue
+        ! heights below the 1st neg T starting at the refGPH and going down
+        surf = FindFirst ( isFillValue(temp%values(myBelowRef:1:-1, instance) ) )
+        if ( DEEBUG ) call ouputNamedValue ( 'lower -999.99 surf', surf )
+        if ( surf > 0 ) gph(myBelowRef-surf+1:1:-1,instance) = UndefinedValue
+      enddo
+    endif
          
     call trace_end ( 'GetBasisGPH', cond=.false. )
     ! That's it  
@@ -2061,6 +2087,9 @@ contains ! =============== Subroutines and functions ==========================
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.92  2018/11/30 00:13:28  pwagner
+! Resets gph to Fill Values where Temperatures do, too
+!
 ! Revision 2.91  2018/11/01 00:43:21  vsnyder
 ! Make sure there are no uninitialized elements of Jacobian blocks
 !
