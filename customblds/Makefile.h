@@ -638,6 +638,71 @@ wvs-145-2.eps: wvs-145-2.obj
 wvs-145-2.pdf: wvs-145-2.obj
 	tgif -print -pdf -page 1 -color wvs-145-2.obj
 
+
+wvs-147.dvi: wvs-147.tex \
+             wvs-147-1.eps wvs-147-2.eps wvs-147-3.eps \
+             wvs-147-4.eps wvs-147-5.eps wvs-147-6.eps \
+             wvs-147-7.eps wvs-147-2-5.eps wvs-147-0.eps 
+
+wvs-147.pdf: wvs-147.tex \
+             wvs-147-1.pdf wvs-147-2.pdf wvs-147-3.pdf \
+             wvs-147-4.pdf wvs-147-5.pdf wvs-147-6.pdf \
+             wvs-147-7.pdf wvs-147-2-5.pdf wvs-147-0.pdf 
+
+wvs-147-1.eps: wvs-147-1.obj
+	tgif -print -eps -page 1 -color wvs-147-1.obj
+
+wvs-147-1.pdf: wvs-147-1.obj
+	tgif -print -pdf -page 1 -color wvs-147-1.obj
+
+wvs-147-2.eps: wvs-147-2.obj
+	tgif -print -eps -page 1 -color wvs-147-2.obj
+
+wvs-147-2.pdf: wvs-147-2.obj
+	tgif -print -pdf -page 1 -color wvs-147-2.obj
+
+wvs-147-3.eps: wvs-147-3.obj
+	tgif -print -eps -page 1 -color wvs-147-3.obj
+
+wvs-147-3.pdf: wvs-147-3.obj
+	tgif -print -pdf -page 1 -color wvs-147-3.obj
+
+wvs-147-0.eps: wvs-147-0.obj
+	tgif -print -eps -page 1 -color wvs-147-0.obj
+
+wvs-147-0.pdf: wvs-147-0.obj
+	tgif -print -pdf -page 1 -color wvs-147-0.obj
+
+wvs-147-4.eps: wvs-147-4.obj
+	tgif -print -eps -page 1 -color wvs-147-4.obj
+
+wvs-147-4.pdf: wvs-147-4.obj
+	tgif -print -pdf -page 1 -color wvs-147-4.obj
+
+wvs-147-5.eps: wvs-147-5.obj
+	tgif -print -eps -page 1 -color wvs-147-5.obj
+
+wvs-147-5.pdf: wvs-147-5.obj
+	tgif -print -pdf -page 1 -color wvs-147-5.obj
+
+wvs-147-6.eps: wvs-147-6.obj
+	tgif -print -eps -page 1 -color wvs-147-6.obj
+
+wvs-147-6.pdf: wvs-147-6.obj
+	tgif -print -pdf -page 1 -color wvs-147-6.obj
+
+wvs-147-7.eps: wvs-147-7.obj
+	tgif -print -eps -page 1 -color wvs-147-7.obj
+
+wvs-147-7.pdf: wvs-147-7.obj
+	tgif -print -pdf -page 1 -color wvs-147-7.obj
+
+wvs-147-2-5.eps: wvs-147-2-5.obj
+	tgif -print -eps -page 1 -color wvs-147-2-5.obj
+
+wvs-147-2-5.pdf: wvs-147-2-5.obj
+	tgif -print -pdf -page 1 -color wvs-147-2-5.obj
+
 wvs-149.dvi: wvs-149.tex wvs-149-1.txp wvs-149.bbl wvs-149-1.600pk
 
 wvs-149.pdf: wvs-149.tex wvs-149-1.txp wvs-149.bbl wvs-149-1.600pk
@@ -667,11 +732,36 @@ wvs-150.dvi: wvs-150.tex dnwt.epsi
 
 wvs-150.pdf: wvs-150.tex dnwt.pdf
 
+wvs-151.dvi: wvs-151.tex wvs-151-1.eps wvs-151-2.eps wvs-151-3.eps
+
+wvs-151.pdf: wvs-151.tex wvs-151-1.pdf wvs-151-2.pdf wvs-151-3.pdf
+
+wvs-151-1.eps: wvs-151-1.obj
+	tgif -print -eps -page 1 -color wvs-151-1.obj
+
+wvs-151-1.pdf: wvs-151-1.obj
+	tgif -print -pdf -page 1 -color wvs-151-1.obj
+
+wvs-151-2.eps: wvs-151-2.obj
+	tgif -print -eps -page 1 -color wvs-151-2.obj
+
+wvs-151-2.pdf: wvs-151-2.obj
+	tgif -print -pdf -page 1 -color wvs-151-2.obj
+
+wvs-151-3.eps: wvs-151-3.obj
+	tgif -print -eps -page 1 -color wvs-151-3.obj
+
+wvs-151-3.pdf: wvs-151-3.obj
+	tgif -print -pdf -page 1 -color wvs-151-3.obj
+
 dnwt.epsi: dnwt.ps
 	ps2epsi dnwt.ps
 
 endif # end shortn_name == doc
 # $Log$
+# Revision 1.34  2018/07/27 00:21:02  pwagner
+# Now builds wvs-150.tex
+#
 # Revision 1.33  2018/07/11 16:46:07  pwagner
 # Can now build wvs-149
 #
