@@ -45,7 +45,7 @@ module MLSNumerics              ! Some low level numerical stuff
   ! by assembling a lookup table of precomputed values
   ! (a) Using an array of its values at regularly spaced arguments
   ! (b) Using an array of its values at an array of specified arguments
-  ! (c) Like (a) but using a user-defined datatype, the UnifDiscreteFn
+  ! (c) Like (a) but using a user-defined datatype, the LookUpTable_0
   !
 ! === (start of toc) ===
 !     c o n t e n t s
@@ -54,18 +54,19 @@ module MLSNumerics              ! Some low level numerical stuff
 !     (parameters and datatypes)
 ! Coefficients_nprec       Coefficients to speed up interpolation
 !                            (See InterpolateArraySetup)
-! UnifDiscreteFn_nprec    Uniformly discretized function
+! LookUpTable_0_nprec    Uniformly discretized function
 !                            y(x[i]) where x[i+1] - x[i] = constant
 
 !         Functions, operations, routines
 ! Average                  Compute the average of a rank-one real array
 ! Battleship               By ever-widening evaluations find integer root
 !                             or floating root to within a given tolerance
+!                             (Generalized Binary Search)
 ! ClosestElement           Find index(es) in array closest to test value
 !                           (array may be multidimensional, non-monotonic)
-! Destroy                  Deallocate y values in UnifDiscreteFn
-! d2Fdx2Approximate        Compute 2nd derivative using UnifDiscreteFn
-! dFdxApproximate          Compute derivative using UnifDiscreteFn
+! Destroy                  Deallocate y values in LookUpTable_0
+! d2Fdx2Approximate        Compute 2nd derivative using LookUpTable_0
+! dFdxApproximate          Compute derivative using LookUpTable_0
 ! Dump                     Dump Coefficients structure
 ! Dump                     Dump uniform discrete function structure
 ! F_Of_X                   Use any recognized method to approximate f
@@ -82,7 +83,7 @@ module MLSNumerics              ! Some low level numerical stuff
 ! HuntBox                  Finds indices of n-dimensional box enclosing coords
 ! HuntRange                Finds index range between which
 !                           all item(s) in list lie within range of values
-! IFApproximate            Compute integral using UnifDiscreteFn
+! IFApproximate            Compute integral using LookUpTable_0
 ! InterpolateArraySetup    Compute coefficients for InterpolateUsingSetup
 ! InterpolateArrayTeardown Deallocate tables created by InterpolateArraySetup
 ! InterpolateExtrapolate   Like InterpolateValues, but extrapolate using
@@ -115,15 +116,15 @@ module MLSNumerics              ! Some low level numerical stuff
 ! BivariateLinearInterpolation ( real X_Basis(:), real Y_Basis(:),
 !    real Table_2d(:,:), real X_Grid(:), real Y_Grid(:), real Out(:) )
 ! ClosestElement ( nprec test, nprec array, int indices, [char* options] )
-! Destroy ( UnifDiscreteFn_nprec UDF )
-! nprec  dFdxApproximate ( nprec x, UnifDiscreteFn_nprec UDF )
-! nprec  d2Fdx2Approximate ( nprec x, UnifDiscreteFn_nprec UDF )
+! Destroy ( LookUpTable_0_nprec UDF )
+! nprec  dFdxApproximate ( nprec x, LookUpTable_0_nprec UDF )
+! nprec  d2Fdx2Approximate ( nprec x, LookUpTable_0_nprec UDF )
 ! Dump ( coefficients_nprec Coeffs )
-! Dump ( UnifDiscreteFn_nprec UDF, [int Details] )
+! Dump ( LookUpTable_0_nprec UDF, [int Details] )
 ! nprec  F_Of_X
 !         (see FApproximate and UseLookupTable)
-! nprec  FApproximate ( nprec x, UnifDiscreteFn_nprec UDF )
-! nprec  FInvApproximate ( nprec y, UnifDiscreteFn_nprec UDF, &
+! nprec  FApproximate ( nprec x, LookUpTable_0_nprec UDF )
+! nprec  FInvApproximate ( nprec y, LookUpTable_0_nprec UDF, &
 !     [nprec xS], [nprec xE] )
 ! FillLookUpTable ( nprec extern fun, nprec table(:), nprec x1, nprec x2, &
 !   [int N], [nprec xtable(:)] )
@@ -135,7 +136,7 @@ module MLSNumerics              ! Some low level numerical stuff
 ! HuntBox ( nprec gridPoints, int MGridPoints(:), nprec coords, int indices(:), &
 !   [nprec vertices] )
 ! HuntRange ( num list(:), num vrange(2), int irange(2), options )
-! nprec  IFApproximate ( UnifDiscreteFn_nprec UDF, &
+! nprec  IFApproximate ( LookUpTable_0_nprec UDF, &
 !     [nprec xS], [nprec xE] )
 ! InterpolateValues ( nprec oldX(:), nprec oldY(:), &
 !   nprec newX(:), nprec newY(:), char* method, [char* extrapolate], &
@@ -157,7 +158,7 @@ module MLSNumerics              ! Some low level numerical stuff
 !    nprec verts(:,:,..,:) )
 ! PureHunt ( nprec element, nprec array, int n, int jlo, int jhi )
 ! ReadLookUpTable ( char* filename, int n, nprec x(:), nprec y(:) )
-! Setup ( UnifDiscreteFn_nprec UDF, int N, nprec x1, nprec x2, [ nprec y(:)], &
+! Setup ( LookUpTable_0_nprec UDF, int N, nprec x1, nprec x2, [ nprec y(:)], &
 !    [char* BC], [nprec yLeft], [nprec yRight], [extern nprec fun] )
 ! nprec Simpsons ( int n, nprec h, nprec y(:) )
 ! SimpsonsSub ( nprec y(:), nprec h, int n, nprec r )
@@ -284,7 +285,7 @@ module MLSNumerics              ! Some low level numerical stuff
   ! Another BC type may someday be needed,
   !    which would permit extrapolating x values outside [x1, x2] range
 
-  type, public :: UnifDiscreteFn ( RK )
+  type, public :: LookUpTable_0 ( RK )
     integer, kind :: RK
     integer :: N = 0                               ! The number of values xi
     character(len=8) :: BC = 'clamped'             ! boundary conditions
@@ -295,10 +296,30 @@ module MLSNumerics              ! Some low level numerical stuff
     real(rk) :: yRight = 0.                        ! Assume all x > x2 are this
     real(rk), dimension(:), pointer :: y => null() ! y(xi)
     ! type(Coefficients(rk)) :: Coeffs                ! in case we'll use splines
-  end type UnifDiscreteFn
+  end type LookUpTable_0
 
-  ! No use for a class member of this datatype yet
-  ! type(UnifDiscreteFn(r8)), save :: MLSUDF
+  ! No need yet for a class member of this datatype yet
+  ! type(LookUpTable_0(r8)), save :: MLSUDF
+
+  ! This data type
+  ! (1) Relaxes the rquirement that the x values are uniformly spaced
+  !     although they must be sorted from smallest to largest
+  ! (2) Includes optional polynomial interpolation via
+  ! y[x] = a_0 + a_1 x + a_2 x^2 + .. + a_P x^P
+  ! which is used only if P > 1
+  
+  ! However, we must decide, if N > P, among options (a) or (b)
+  ! (a) choose only the P closest x values to uniquely determine a
+  ! each time we are givin a new x
+  ! (b) do a least squares over all y and x to cakculate a
+  ! While similar in spirit to how we might imagine generalizing linear
+  ! interpolation, (a) would be costly and sems to offer little value
+  ! which (b) says we can calculate a just once and then go to town
+  type, public, extends(LookUpTable_0) :: LookUpTable_1
+    integer :: P = 0                               ! The degree of the polynomial
+    real(rk), dimension(:), pointer :: x => null() ! the x values
+    real(rk), dimension(:), pointer :: a => null() ! the a values
+  end type LookUpTable_1
 
   interface Average
     module procedure Average_D, Average_S
@@ -323,12 +344,12 @@ module MLSNumerics              ! Some low level numerical stuff
     module procedure CreateXArray_r4, CreateXArray_r8
   end interface
 
-  interface CSPLINE
-    module procedure D_CSPLINE, S_CSPLINE
+  interface CSpline
+    module procedure D_CSpline, S_CSpline
   end interface
 
   interface Destroy
-    module procedure destroyUnifDiscreteFn_r4, destroyUnifDiscreteFn_r8
+    module procedure destroyLookUpTable_0_r4, destroyLookUpTable_0_r8
   end interface
 
   interface d2Fdx2Approximate
@@ -341,7 +362,7 @@ module MLSNumerics              ! Some low level numerical stuff
 
   interface Dump
     module procedure DumpCoefficients_r4, DumpCoefficients_r8
-    module procedure DumpUnifDiscreteFn_r4, DumpUnifDiscreteFn_r8
+    module procedure DumpLookUpTable_0_r4, DumpLookUpTable_0_r8
   end interface
 
   interface F_Of_X
@@ -426,7 +447,7 @@ module MLSNumerics              ! Some low level numerical stuff
   
   interface SetUp
     module procedure InterpolateArraySetup_r4, InterpolateArraySetup_r8
-    module procedure setUpUnifDiscreteFn_r4, setUpUnifDiscreteFn_r8
+    module procedure setUpLookUpTable_0_r4, setUpLookUpTable_0_r8
   end interface
 
   interface Simpsons
@@ -519,6 +540,9 @@ contains
   ! desired to be found within a tolerance of delta
   ! The real-valued version won't be as precise or as efficient
   ! as, say, the Zero subroutine in the Zero_m module
+  
+  ! A generalization of the Binary Search Algorithm to
+  ! two phases (outbound to first bracket the target, then inbound)
 
   subroutine Battleship_int( fun, root, n1, maxPhase1, ns, b, options, status )
     ! Args
@@ -951,21 +975,21 @@ contains
 ! ------------------------------------------------------  Destroy  -----
 
   ! This family of routines deallocates a uniDiscFunction's arrays
-  subroutine destroyUnifDiscreteFn_r4 ( UDF )
+  subroutine destroyLookUpTable_0_r4 ( UDF )
     ! Args
-    type(UnifDiscreteFn(r4)) :: UDF ! Intent(out) would clobber retainable values
+    type(LookUpTable_0(r4)) :: UDF ! Intent(out) would clobber retainable values
     ! Executable
     UDF%N       = 0
     call deallocate_test ( UDF%y, "UDF%y", ModuleName )
-  end subroutine destroyUnifDiscreteFn_r4
+  end subroutine destroyLookUpTable_0_r4
 
-  subroutine destroyUnifDiscreteFn_r8 ( UDF )
+  subroutine destroyLookUpTable_0_r8 ( UDF )
     ! Args
-    type(UnifDiscreteFn(r8)) :: UDF ! Intent(out) would clobber retainable values
+    type(LookUpTable_0(r8)) :: UDF ! Intent(out) would clobber retainable values
     ! Executable
     UDF%N       = 0
     call deallocate_test ( UDF%y, "UDF%y", ModuleName )
-  end subroutine destroyUnifDiscreteFn_r8
+  end subroutine destroyLookUpTable_0_r8
 
 ! --------------------------------------------  d2Fdx2Approximate  -----
 
@@ -980,7 +1004,7 @@ contains
     integer, parameter :: RK = kind(0.0e0)
     ! Args
     real(rk), intent(in)                 :: x
-    type(UnifDiscreteFn(r4)), intent(in)       :: UDF
+    type(LookUpTable_0(r4)), intent(in)       :: UDF
     real(rk)                             :: value
     ! Internal variables
     real(rk) :: arg
@@ -1011,7 +1035,7 @@ contains
     integer, parameter :: RK = kind(0.0d0)
     ! Args
     real(rk), intent(in)                 :: x
-    type(UnifDiscreteFn(r8)), intent(in)       :: UDF
+    type(LookUpTable_0(r8)), intent(in)       :: UDF
     real(rk)                             :: value
     ! Internal variables
     real(rk) :: arg
@@ -1051,7 +1075,7 @@ contains
     integer, parameter :: RK = kind(0.0e0)
     ! Args
     real(rk), intent(in)                 :: x
-    type(UnifDiscreteFn(r4)), intent(in)       :: UDF
+    type(LookUpTable_0(r4)), intent(in)       :: UDF
     real(rk)                             :: value
     ! Internal variables
     real(rk) :: arg
@@ -1082,7 +1106,7 @@ contains
     integer, parameter :: RK = kind(0.0d0)
     ! Args
     real(rk), intent(in)                 :: x
-    type(UnifDiscreteFn(r8)), intent(in)       :: UDF
+    type(LookUpTable_0(r8)), intent(in)       :: UDF
     real(rk)                             :: value
     ! Internal variables
     real(rk) :: arg
@@ -1122,9 +1146,9 @@ contains
     include 'DumpCoefficients.f9h'
   end subroutine DumpCoefficients_r8
 
-  subroutine DumpUnifDiscreteFn_r4 ( UDF, name, details )
+  subroutine DumpLookUpTable_0_r4 ( UDF, name, details )
     ! Args
-    type(UnifDiscreteFn(r4)) :: UDF ! Intent(out) would clobber retainable values
+    type(LookUpTable_0(r4)) :: UDF ! Intent(out) would clobber retainable values
     character(len=*), optional, intent(in) :: name
     integer, optional, intent(in) :: details
     ! Internal variables
@@ -1152,11 +1176,11 @@ contains
       return
     end if
     call dump ( UDF%y, name='y' )
-  end subroutine DumpUnifDiscreteFn_r4
+  end subroutine DumpLookUpTable_0_r4
 
-  subroutine DumpUnifDiscreteFn_r8 ( UDF, name, details )
+  subroutine DumpLookUpTable_0_r8 ( UDF, name, details )
     ! Args
-    type(UnifDiscreteFn(r8)) :: UDF ! Intent(out) would clobber retainable values
+    type(LookUpTable_0(r8)) :: UDF ! Intent(out) would clobber retainable values
     character(len=*), optional, intent(in) :: name
     integer, optional, intent(in) :: details
     ! Internal variables
@@ -1184,7 +1208,7 @@ contains
       return
     end if
     call dump ( UDF%y, name='y' )
-  end subroutine DumpUnifDiscreteFn_r8
+  end subroutine DumpLookUpTable_0_r8
 ! -------------------------------------------------  FLookup_r4  -----
 
   ! This family of routines uses lookup tables to approximate F
@@ -1256,7 +1280,7 @@ contains
     integer, parameter :: RK = kind(0.0e0)
     ! Args
     real(rk), intent(in)                 :: x
-    type(UnifDiscreteFn(r4)), intent(in)       :: UDF
+    type(LookUpTable_0(r4)), intent(in)       :: UDF
     real(rk)                             :: value
     ! Internal variables
     real(rk) :: arg
@@ -1294,7 +1318,7 @@ contains
     integer, parameter :: RK = kind(0.0d0)
     ! Args
     real(rk), intent(in)                 :: x
-    type(UnifDiscreteFn(r8)), intent(in)       :: UDF
+    type(LookUpTable_0(r8)), intent(in)       :: UDF
     real(rk)                             :: value
     ! Internal variables
     real(rk) :: arg
@@ -1344,7 +1368,7 @@ contains
     integer, parameter :: RK = kind(0.0e0)
     ! Args
     real(rk), intent(in)                 :: y
-    type(UnifDiscreteFn(r4)), intent(in)  :: UDF
+    type(LookUpTable_0(r4)), intent(in)  :: UDF
     real(rk), optional, intent(in)       :: xS
     real(rk), optional, intent(in)       :: xE
     real(rk)                             :: x
@@ -1360,7 +1384,7 @@ contains
     integer, parameter :: RK = kind(0.0d0)
     ! Args
     real(rk), intent(in)                 :: y
-    type(UnifDiscreteFn(r8)), intent(in)  :: UDF
+    type(LookUpTable_0(r8)), intent(in)  :: UDF
     real(rk), optional, intent(in)       :: xS
     real(rk), optional, intent(in)       :: xE
     real(rk)                             :: x
@@ -1469,7 +1493,7 @@ contains
   function IFApproximate_r4 ( UDF, xS, xE ) result(value)
     integer, parameter :: RK = kind(0.0e0)
     ! Args
-    type(UnifDiscreteFn(r4)), intent(in)  :: UDF
+    type(LookUpTable_0(r4)), intent(in)  :: UDF
     real(rk), optional, intent(in)       :: xS
     real(rk), optional, intent(in)       :: xE
     real(rk)                             :: value
@@ -1503,7 +1527,7 @@ contains
   function IFApproximate_r8 ( UDF, xS, xE ) result(value)
     integer, parameter :: RK = kind(0.0d0)
     ! Args
-    type(UnifDiscreteFn(r8)), intent(in)  :: UDF
+    type(LookUpTable_0(r8)), intent(in)  :: UDF
     real(rk), optional, intent(in)       :: xS
     real(rk), optional, intent(in)       :: xE
     real(rk)                             :: value
@@ -2128,11 +2152,11 @@ contains
 ! --------------------------------------------------------  SetUp  -----
 
   ! This family of routines sets up a uniDiscFunction of the appropriate type
-  subroutine setUpUnifDiscreteFn_r4 ( UDF, N, x1, x2, &
+  subroutine setUpLookUpTable_0_r4 ( UDF, N, x1, x2, &
     & y, BC, method, yLeft, yRight, fun )
     integer, parameter :: RK = kind(0.0e0)
     ! Args
-    type(UnifDiscreteFn(r4)) :: UDF ! Intent(out) would clobber defaults
+    type(LookUpTable_0(r4)) :: UDF ! Intent(out) would clobber defaults
     integer, intent(in)  :: N
     real(rk), intent(in) :: x1
     real(rk), intent(in) :: x2
@@ -2158,13 +2182,13 @@ contains
     do i=1, N
       UDF%y(i) = fun( x1 + (i-1)*(x2-x1)/(N-1) )
     enddo
-  end subroutine setUpUnifDiscreteFn_r4
+  end subroutine setUpLookUpTable_0_r4
 
-  subroutine setUpUnifDiscreteFn_r8 ( UDF, N, x1, x2, &
+  subroutine setUpLookUpTable_0_r8 ( UDF, N, x1, x2, &
     & y, BC, method, yLeft, yRight, fun )
     integer, parameter :: RK = kind(0.0d0)
     ! Args
-    type(UnifDiscreteFn(r8)) :: UDF ! Intent(out) would clobber defaults
+    type(LookUpTable_0(r8)) :: UDF ! Intent(out) would clobber defaults
     integer, intent(in)  :: N
     real(rk), intent(in) :: x1
     real(rk), intent(in) :: x2
@@ -2190,7 +2214,7 @@ contains
     do i=1, N
       UDF%y(i) = fun( x1 + (i-1)*(x2-x1)/(N-1) )
     enddo
-  end subroutine setUpUnifDiscreteFn_r8
+  end subroutine setUpLookUpTable_0_r8
 
 ! ------------------------------------------------  SimSubroutine  -----
   ! This family provides subroutine apis to integration by Simpson's rule
@@ -2369,7 +2393,7 @@ contains
     integer, parameter :: RK = R4
     ! Args
     real(rk), dimension(:), pointer      :: xArray
-    type(UnifDiscreteFn(r4)), intent(in)       :: UDF
+    type(LookUpTable_0(r4)), intent(in)       :: UDF
     ! Internal variables
     integer :: i
     ! Executable
@@ -2384,7 +2408,7 @@ contains
     integer, parameter :: RK = R8
     ! Args
     real(rk), dimension(:), pointer      :: xArray
-    type(UnifDiscreteFn(r8)), intent(in)       :: UDF
+    type(LookUpTable_0(r8)), intent(in)       :: UDF
     ! Internal variables
     integer :: i
     ! Executable
@@ -2469,7 +2493,7 @@ contains
     integer, parameter :: RK = R4
     ! Args
     real(rk), intent(in)                 :: x ! Given this x
-    type(UnifDiscreteFn(r4)), intent(in)       :: UDF
+    type(LookUpTable_0(r4)), intent(in)       :: UDF
     real(rk), intent(out)                :: p ! reposition it here
     integer, intent(out)                 :: itsSign
     ! Internal variables
@@ -2512,7 +2536,7 @@ contains
     integer, parameter :: RK = R8
     ! Args
     real(rk), intent(in)                 :: x ! Given this x
-    type(UnifDiscreteFn(r8)), intent(in)       :: UDF
+    type(LookUpTable_0(r8)), intent(in)       :: UDF
     real(rk), intent(out)                :: p ! reposition it here
     integer, intent(out)                 :: itsSign
     ! Internal variables
@@ -2574,21 +2598,21 @@ contains
     call SimpsonsSub( y, h, n, sum )
   end function Simpsons_r8
 
-! ....................................................  D_CSPLINE  .....
+! ....................................................  D_CSpline  .....
   ! This family was moved here from fwdmdl
-  subroutine D_CSPLINE (XIN, XOUT, YIN, YOUT, NIN, NOUT, YMIN, YMAX)
-    integer, parameter :: RK = kind(0.0d0)
+  subroutine D_CSpline (xin, xout, yin, yout, nin, nout, ymin, ymax)
+    integer, parameter :: rk = kind(0.0d0)
     include 'cspline.f9h'
-  end subroutine D_CSPLINE
+  end subroutine D_CSpline
 
-! ....................................................  S_CSPLINE  .....
-  subroutine S_CSPLINE (XIN, XOUT, YIN, YOUT, NIN, NOUT, YMIN, YMAX)
-    integer, parameter :: RK = kind(0.0e0)
+! ....................................................  s_cspline  .....
+  subroutine S_CSpline (xin, xout, yin, yout, nin, nout, ymin, ymax)
+    integer, parameter :: rk = kind(0.0e0)
     include 'cspline.f9h'
-  end subroutine S_CSPLINE
+  end subroutine S_CSpline
 
 ! ......................................................  D_PCSPL  .....
-  subroutine D_PCSPL ( TAU, C, N, IBCBEG, IBCEND )
+  subroutine D_PCSpl ( tau, c, n, ibcbeg, ibcend )
     integer, parameter :: RK = kind(0.0d0)
     include 'pcspl.f9h'
   end subroutine D_PCSPL
@@ -2614,6 +2638,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.99  2018/12/03 23:19:58  pwagner
+! Changed name of datatype to more natural LookUpTable
+!
 ! Revision 2.98  2017/12/07 02:22:11  vsnyder
 ! Remove unused parameter declaration
 !
@@ -2627,7 +2654,7 @@ end module MLSNumerics
 ! Added Read,WriteLookupTable, 2d versions of FindInRange, and F_Of_X
 !
 ! Revision 2.94  2017/10/31 23:46:29  vsnyder
-! Make Coefficients and UnifDiscreteFn parameterized types
+! Make Coefficients and LookUpTable_0 parameterized types
 !
 ! Revision 2.93  2017/10/17 23:41:31  pwagner
 ! Removed unused stuff
