@@ -307,15 +307,15 @@ contains ! =============== Subroutines and functions ==========================
       if ( DEEBUG ) call outputNamedValue ( 'myBelowRef', myBelowRef )
       ! We will reset gph to FillValue for any ..
       do instance=1, temp%template%noInstances
-        if ( DEEBUG ) call ouputNamedValue ( 'instance', instance )
+        if ( DEEBUG ) call outputNamedValue ( 'instance', instance )
         if ( DEEBUG ) call dump( temp%values(:, instance), 'Temperatures' )
         ! heights above the 1st neg T starting at the refGPH and going up
         surf = FindFirst ( isFillValue(temp%values(myBelowRef:, instance) ) )
-        if ( DEEBUG ) call ouputNamedValue ( 'upper -999.99 surf', surf )
+        if ( DEEBUG ) call outputNamedValue ( 'upper -999.99 surf', surf )
         if ( surf > 0 ) gph(myBelowRef+surf-1:,instance) = UndefinedValue
         ! heights below the 1st neg T starting at the refGPH and going down
         surf = FindFirst ( isFillValue(temp%values(myBelowRef:1:-1, instance) ) )
-        if ( DEEBUG ) call ouputNamedValue ( 'lower -999.99 surf', surf )
+        if ( DEEBUG ) call outputNamedValue ( 'lower -999.99 surf', surf )
         if ( surf > 0 ) gph(myBelowRef-surf+1:1:-1,instance) = UndefinedValue
       enddo
     endif
@@ -1538,6 +1538,9 @@ contains ! =============== Subroutines and functions ==========================
                                   & FmStat, Jacobian, ChunkNo )
 
     use Array_Stuff, only: Subscripts
+    use Check_QTM_m, only: Check_QTM
+    use Get_Species_Data_M, only:  Get_Species_Data
+    use HGridsDatabase, only: HGrid_T
     use MatrixModule_0, only: MatrixElement_t
     use Output_M, only: Blanks, Output
     use Physics, only: Boltz
@@ -1547,7 +1550,7 @@ contains ! =============== Subroutines and functions ==========================
 
   ! This is a two D version of ScanForwardModel
   ! inputs
-    type (ForwardModelConfig_T), intent(in) :: FmConf ! Configuration options
+    type (ForwardModelConfig_T), intent(inout) :: FmConf ! Configuration options
     type (Vector_T), intent(in) :: State ! The state vector
     type (Vector_T), intent(in) :: Extra ! Other stuff in the state vector
   ! outputs
@@ -1562,6 +1565,7 @@ contains ! =============== Subroutines and functions ==========================
     end type Blocks_t
 
   ! local variables
+    type (HGrid_t), pointer :: QTM_HGrid        ! QTM with finest resolution
     type (VectorValue_T), pointer :: OrbIncline ! Orbital inclination
     type (VectorValue_T), pointer :: Temp       ! Temperature component of state
     type (VectorValue_T), pointer :: PTAN       ! Ptan component of state
@@ -1572,10 +1576,11 @@ contains ! =============== Subroutines and functions ==========================
     type (VectorValue_T), pointer :: Residual   ! Resulting component of fwmOut
     type (MatrixElement_T), pointer :: Block    ! A matrix block
 
-    logical :: TempInState           ! Set if temp in state not extra
-    logical :: RefGPHInState         ! Set if refGPH in state not extra
+    logical :: TempInState           ! Set if Temp in state not extra
+    logical :: RefGPHInState         ! Set if RefGPH in state not extra
     logical :: H2OInState            ! Set if H2O in state, not extra
-    logical :: PTANInState           ! Set if ptan in state, not extra
+    logical :: PTANInState           ! Set if PTan in state, not extra
+    logical :: UsingQTM              ! Set if Temp and all species are QTM
 
     integer :: E                     ! Index of Sparse_t E component
     integer :: Me = -1               ! String index for trace
@@ -1595,7 +1600,7 @@ contains ! =============== Subroutines and functions ==========================
 
     type(sparse_eta_t) :: Eta_Z
     type(sparse_eta_t) :: Eta_P_T
-    type(sparse_eta_t) :: Eta_P_h2o
+    type(sparse_eta_t) :: Eta_P_H2O
     type(sparse_eta_t) :: Eta_ZXP_T
     type(sparse_eta_t) :: Eta_ZXP_H2O
     type(sparse_eta_t) :: Eta_At_One_Phi
@@ -1604,8 +1609,7 @@ contains ! =============== Subroutines and functions ==========================
     real :: T0, T1, T2                     ! For timing
     logical, parameter :: always_timing = .false.  ! if worried about NAG taking so long
     logical :: Timing  ! if worried about NAG taking so long
-    logical, parameter :: total_times = .true.
-    integer :: isurf
+    logical, parameter :: Total_Times = .true.
 
     call trace_begin ( me, 'TwoDScanForwardModel, MAF=', index=fmstat%maf, &
       & cond=toggle(emit) ) ! set by -f command-line switch
@@ -1644,13 +1648,32 @@ contains ! =============== Subroutines and functions ==========================
       & config=fmConf)
     if ( timing ) call sayTime ( 'Getting vector quantities' )
     call time_now ( t1 )
-  ! get window
-    call FindInstanceWindow ( temp, phitan, fmStat%maf, FMConf%phiWindow, &
-      & FMConf%windowUnits, windowstart_t, windowfinish_t )
-    call FindInstanceWindow( h2o, phitan, fmStat%maf, FMConf%phiWindow, &
-      & FMConf%windowUnits, windowstart_h2o, windowfinish_h2o )
-     ! if( timing ) print *, 'T window  : ', windowstart_t, windowfinish_t
-     ! if( timing ) print *, 'H2O window: ', windowstart_h2o, windowfinish_h2o
+
+    ! Get pointers to the temperature and other quantities from the state
+    ! vector into the configuration. This has to be done AFTER
+    ! DeriveFromForwardModelConfig, which is invoked from ForwardModelWrappers.
+
+    call get_species_data ( fmConf, state, extra )
+
+    ! Check whether temperature and all the mixing ratios either all have QTM
+    ! HGrid, or none do.  If so, find the QTM HGrid with the finest resolution.
+    ! (We currently require that if they're QTM they all have the same grid.)
+
+    call check_QTM ( fmConf, QTM_HGrid, usingQTM )
+
+    ! Get windows
+    if ( usingQTM ) then
+      windowstart_t = 1
+      windowfinish_t = size(temp%template%the_hGrid%QTM_tree%geo_in)
+      windowstart_h2o = 1
+      windowfinish_h2o = size(h2o%template%the_hGrid%QTM_tree%geo_in)
+    else
+      call FindInstanceWindow ( temp, phitan, fmStat%maf, FMConf%phiWindow, &
+        & FMConf%windowUnits, windowstart_t, windowfinish_t )
+      call FindInstanceWindow( h2o, phitan, fmStat%maf, FMConf%phiWindow, &
+        & FMConf%windowUnits, windowstart_h2o, windowfinish_h2o )
+    end if
+
     if ( timing ) call sayTime ( 'Finding instance windows' )
     call time_now ( t1 )
 
@@ -1680,7 +1703,7 @@ contains ! =============== Subroutines and functions ==========================
       real(rp) :: Tan_temp(ptan%template%nosurfs)
       real(rp) :: Work(ptan%template%nosurfs)
 
-      block ! So that some more local arrays are automatic
+      block ! So that some even-more local arrays are automatic
         real(rp) :: earthradc(ptan%template%nosurfs)  ! square of minor axis of
     !                       earth ellipsoid in orbit plane projected system
         real(rp) :: red_phi_t(ptan%template%nosurfs)
@@ -1731,10 +1754,30 @@ contains ! =============== Subroutines and functions ==========================
           & + omega**2*coslat2)
       ! deallocate things we don't need
       end block
-    ! compute temperature function
-      ! get eta functions
-      call eta_p_t%eta_1d ( temp%template%phi(1,windowstart_t:windowfinish_t), &
-                          & phitan%values(:,fmStat%maf), sorted=.false. )
+
+      ! Get horizontal Eta functions.
+      if ( usingQTM) then
+        ! Use phitan%template%geodLat(:,fmConf%MAF) and
+        ! phitan%template%lon(:,fmConf%MAF) to find QTM
+        ! facets and compute interpolation coefficients.
+        call eta_p_t%eta_QTM ( temp%template%the_Hgrid%QTM_Tree, &
+                             & phitan%template%lon(:,fmStat%maf), &
+                             & phitan%template%geodLat(:,fmStat%maf), &
+                             & what=l_temperature )
+        call eta_p_h2o%eta_QTM ( h2o%template%the_Hgrid%QTM_Tree, &
+                               & phitan%template%lon(:,fmStat%maf), &
+                               & phitan%template%geodLat(:,fmStat%maf), &
+                               & what=l_h2o )
+      else
+        ! Eta_p_*%Eta_1D allocates components -- no need to call eta_p_*%create
+        call eta_p_t%eta_1d ( temp%template%phi(1,windowstart_t:windowfinish_t), &
+                            & phitan%values(:,fmStat%maf), sorted=.false. )
+        call eta_p_h2o%eta_1d ( h2o%template%phi(1,windowstart_h2o:windowfinish_h2o), &
+                              & phitan%values(:,fmStat%maf), sorted=.false. )
+      end if
+
+      ! compute temperature function
+      ! Get remaining eta functions.
       call eta_z%eta_1d ( temp%template%surfs(:,1), &
                         & ptan%values(:,fmStat%maf), sorted=.false. )
       if ( timing ) call sayTime ( 'getting etas functions' )
@@ -1744,7 +1787,7 @@ contains ! =============== Subroutines and functions ==========================
         & refGPH%template%surfs(1,1), piq, Z_MASS = 2.5_rp, C_MASS = 0.02_rp)
       if ( timing ) call sayTime ( 'constructing piq integral' )
       call time_now ( t1 )
-    ! convert level 1 reference geopotential height into geometric altitude
+    ! Convert level 1 reference geopotential height into geometric altitude.
     ! This assumes that the reference ellipsoid is equivalent to a reference
     ! geopotential height of 0 meters.
       call eta_p_t%sparse_dot_vec ( &
@@ -1764,8 +1807,7 @@ contains ! =============== Subroutines and functions ==========================
       if ( timing ) call sayTime ( 'constructing geometric altitude' )
       call time_now ( t1 )
     ! compute water vapor function
-      call eta_p_h2o%eta_1d ( h2o%template%phi(1,windowstart_h2o:windowfinish_h2o), &
-                            & phitan%values(:,fmStat%maf), sorted=.false. )
+      call eta_z%empty ! Remove temperature's vertical interpolation coefficients
       call eta_z%eta_1d ( h2o%template%surfs(:,1), &
                         & ptan%values(:,fmStat%maf), empty=.true., sorted=.false. )
       call eta_zxp_h2o%eta_nd ( eta_z, eta_p_h2o )
@@ -2087,6 +2129,9 @@ contains ! =============== Subroutines and functions ==========================
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.93  2018/12/04 23:22:33  vsnyder
+! Add QTM horizontal interpolation.  Spell outputNamedValue correctly.
+!
 ! Revision 2.92  2018/11/30 00:13:28  pwagner
 ! Resets gph to Fill Values where Temperatures do, too
 !
