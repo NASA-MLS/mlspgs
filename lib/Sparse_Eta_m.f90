@@ -27,7 +27,8 @@ module Sparse_Eta_m
     procedure, pass(eta) :: Eta_0D => Sparse_Eta_0D
     procedure, pass(eta) :: Eta_1D => Sparse_Eta_1D
     procedure, pass(p) :: Eta_nD => Sparse_Eta_nD
-    generic :: Eta => Eta_0D, Eta_1D, Eta_nD
+    procedure, pass(eta) :: Eta_QTM => Sparse_Eta_QTM
+    generic :: Eta => Eta_0D, Eta_1D, Eta_nD, Eta_QTM
   end type Sparse_Eta_t
 
 !---------------------------- RCS Module Info ------------------------------
@@ -318,6 +319,90 @@ contains
 
   end subroutine Sparse_Eta_1D
 
+  subroutine Sparse_Eta_QTM ( Basis, Lon, GeodLat, Eta, What, Row1, Rown, &
+                            & Create, Empty, Resize )
+
+    ! Compute interpolation coefficients from a QTM Basis to a 2D Grid
+    ! represented by longitude and latitude.  The latitude can be geodetic or
+    ! geocentric, which will get the wrong answer if Basis and Grid differ.
+
+    use Allocate_Deallocate, only: Test_Allocate
+    use Generate_QTM_m, only: QTM_Tree_t
+    use Geolocation_0, only: H_Geod
+    use QTM_m, only: Stack_t
+    use QuantityTemplates, only: RT
+    use Triangle_Interpolate_m, only: Triangle_Interpolate
+
+    type (QTM_Tree_t), intent(in) :: Basis
+    real (rt), intent(in) :: Lon(:)     ! Degrees
+    real (rt), intent(in) :: GeodLat(:) ! Degrees, same size as Lon
+    class(sparse_eta_t), intent(inout) :: Eta ! Might not be created here
+    integer, intent(in), optional :: What     ! String index for dumps
+    integer, intent(in), optional :: Row1, RowN ! Part of Grid to use,
+                                              ! default all
+    logical, intent(in), optional :: Create   ! Force Eta to be created, default
+                                              ! false.  Eta is created anyway if
+                                              ! rows or cols are not allocated
+                                              ! or the wrong sizes.
+    logical, intent(in), optional :: Empty    ! Make Eta empty before starting,
+                                              ! default false.  If absent or
+                                              ! false, add new ones.  Not quite
+                                              ! as traumatic as Create=.true.
+    logical, intent(in), optional :: Resize   ! Re-size Eta%E to Eta%NE --
+                                              ! default false
+
+    integer :: Facet       ! Facet index in Basis
+    type (h_geod) :: Geod  ! One Lon and GeodLat
+    integer :: I           ! Index in Lon and GeodLat
+    integer :: J           ! Indices of vertices within Facet
+    character(127) :: Msg
+    logical :: MyCreate
+    integer :: MyRow1, MyRowN
+    integer :: N_Basis, N_Grid
+    type(stack_t) :: Stack ! To make QTM searches faster
+    integer :: Stat
+    real(rp) :: W(3)       ! Barycentric interpolation weights
+
+    n_basis = basis%n_in   ! Vertices within or adjacent to the polygon
+    n_grid = size(lon)
+
+    myCreate = .false.
+    if ( present(create) ) myCreate = create
+
+    if ( present(empty) ) then
+      if ( empty ) call eta%empty
+    end if
+
+    if ( allocated(eta%rows) .and. allocated(eta%cols) ) then
+      if ( size(eta%rows) < n_grid .or. size(eta%cols) /= n_basis ) &
+        & myCreate = .true.
+    else
+      myCreate = .true.
+    end if
+
+    if ( myCreate ) then
+      call eta%create ( n_grid, n_basis, 2*n_grid, what=what )
+    else if ( .not. allocated(eta%e) ) then
+      allocate ( eta%e(2*n_grid), stat=stat, errmsg=msg )
+      call test_allocate ( stat, moduleName, "Sparse%E", ermsg=msg )
+    end if
+
+    do i = 1, n_grid
+      geod%lon%d = lon(i)   ! h_geod components have different kind, so the
+      geod%lat = geodLat(i) !   h_geod() constructor cannot be used.
+      facet = basis%find_facet ( geod, stack )
+      if ( facet /= 0 ) then ! No interpolation coefficient outside the QTM
+        call triangle_interpolate ( basis%Q(facet)%geo%lon%d, &
+                                  & basis%Q(facet)%geo%lat, &
+                                  & lon(i), geodLat(i), w )
+        do j = 1, 3
+          call eta%add_element ( w(j), i, basis%Q(facet)%ser(j) )
+        end do
+      end if
+    end do
+
+  end subroutine Sparse_Eta_QTM
+
   subroutine Sparse_Eta_nD ( L, R, P, What, Resize, One_Row_OK, Flags )
 
     ! Compute P as the product of L and R, e.g. Freq and Zeta x Phi, for
@@ -424,6 +509,9 @@ contains
 end module Sparse_Eta_m
 
 ! $Log$
+! Revision 2.12  2018/12/04 02:42:11  vsnyder
+! Add Sparse_Eta_QTM
+!
 ! Revision 2.11  2018/10/26 02:52:59  vsnyder
 ! Add Empty optional argument to Sparse_Eta_1D
 !
