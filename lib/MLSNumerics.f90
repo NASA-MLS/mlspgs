@@ -97,7 +97,7 @@ module MLSNumerics              ! Some low level numerical stuff
 ! LinearInterpolate        Do a single linear interpolation in n dimensions
 ! PureHunt                 Like Hunt, but may be quicker due to optimization
 ! ReadLookUpTable          Read a LookUpTable from a text file
-! Setup                    Fill y values in UniDiscFunction
+! Setup                    Fill y values in LookUpTable
 ! Simpsons                 Apply Simpson's rule to integrate--function form
 ! SimpsonsSub              Apply Simpson's rule to integrate--a subroutine
 ! UseLookUpTable           Use LookUpTable to approximate function
@@ -294,15 +294,25 @@ module MLSNumerics              ! Some low level numerical stuff
     real(rk) :: x2
     real(rk) :: yLeft  = 0.                        ! Assume all x < x1 are this
     real(rk) :: yRight = 0.                        ! Assume all x > x2 are this
-    real(rk), dimension(:), pointer :: y => null() ! y(xi)
-    ! type(Coefficients(rk)) :: Coeffs                ! in case we'll use splines
+    real(rk), dimension(:), allocatable :: y       ! y(xi)
+    ! type(Coefficients(rk)) :: Coeffs             ! in case we'll use splines
+  contains
+    procedure :: DestroyLookUpTable_0_r4
+    procedure :: DestroyLookUpTable_0_r8
+    generic   :: Destroy => destroyLookUpTable_0_r4, destroyLookUpTable_0_r8
+    procedure :: DumpLookUpTable_0_r4
+    procedure :: DumpLookUpTable_0_r8
+    generic   :: Dump => DumpLookUpTable_0_r4, DumpLookUpTable_0_r8
+    procedure :: setUpLookUpTable_0_r4
+    procedure :: setUpLookUpTable_0_r8
+    generic   :: Setup => setUpLookUpTable_0_r4, setUpLookUpTable_0_r8
   end type LookUpTable_0
 
   ! No need yet for a class member of this datatype yet
   ! type(LookUpTable_0(r8)), save :: MLSUDF
 
   ! This data type
-  ! (1) Relaxes the rquirement that the x values are uniformly spaced
+  ! (1) Relaxes the requirement that the x values are uniformly spaced
   !     although they must be sorted from smallest to largest
   ! (2) Includes optional polynomial interpolation via
   ! y[x] = a_0 + a_1 x + a_2 x^2 + .. + a_P x^P
@@ -317,8 +327,8 @@ module MLSNumerics              ! Some low level numerical stuff
   ! which (b) says we can calculate a just once and then go to town
   type, public, extends(LookUpTable_0) :: LookUpTable_1
     integer :: P = 0                               ! The degree of the polynomial
-    real(rk), dimension(:), pointer :: x => null() ! the x values
-    real(rk), dimension(:), pointer :: a => null() ! the a values
+    real(rk), dimension(:), allocatable :: x       ! the x values
+    real(rk), dimension(:), allocatable :: a       ! the a values
   end type LookUpTable_1
 
   interface Average
@@ -974,10 +984,11 @@ contains
 
 ! ------------------------------------------------------  Destroy  -----
 
-  ! This family of routines deallocates a uniDiscFunction's arrays
+  ! This family of routines deallocates a LookUpTable's arrays
+  ! We ought to do this for both _0 and _1 levels
   subroutine destroyLookUpTable_0_r4 ( UDF )
     ! Args
-    type(LookUpTable_0(r4)) :: UDF ! Intent(out) would clobber retainable values
+    class(LookUpTable_0(r4)) :: UDF ! Intent(out) would clobber retainable values
     ! Executable
     UDF%N       = 0
     call deallocate_test ( UDF%y, "UDF%y", ModuleName )
@@ -985,7 +996,7 @@ contains
 
   subroutine destroyLookUpTable_0_r8 ( UDF )
     ! Args
-    type(LookUpTable_0(r8)) :: UDF ! Intent(out) would clobber retainable values
+    class(LookUpTable_0(r8)) :: UDF ! Intent(out) would clobber retainable values
     ! Executable
     UDF%N       = 0
     call deallocate_test ( UDF%y, "UDF%y", ModuleName )
@@ -993,7 +1004,7 @@ contains
 
 ! --------------------------------------------  d2Fdx2Approximate  -----
 
-  ! This family of routines use a uniDiscFunction to approximate a 
+  ! This family of routines use a LookUpTable to approximate a 
   ! function's 2nd derivative
 
   ! Args: (* means optional)
@@ -1064,7 +1075,7 @@ contains
 
 ! ----------------------------------------------  dFdxApproximate  -----
 
-  ! This family of routines use a uniDiscFunction to approximate a 
+  ! This family of routines use a LookUpTable to approximate a 
   ! function's derivative
 
   ! Args: (* means optional)
@@ -1146,9 +1157,10 @@ contains
     include 'DumpCoefficients.f9h'
   end subroutine DumpCoefficients_r8
 
+  ! We ought to do this for both _0 and _1 levels
   subroutine DumpLookUpTable_0_r4 ( UDF, name, details )
     ! Args
-    type(LookUpTable_0(r4)) :: UDF ! Intent(out) would clobber retainable values
+    class(LookUpTable_0(r4)) :: UDF ! Intent(out) would clobber retainable values
     character(len=*), optional, intent(in) :: name
     integer, optional, intent(in) :: details
     ! Internal variables
@@ -1166,7 +1178,7 @@ contains
     call outputNamedValue( 'method      ', UDF%method        )
     call outputNamedValue( 'yLeft       ', UDF%yLeft         )
     call outputNamedValue( 'yRight      ', UDF%yRight        )
-    if ( .not. associated(UDF%y) ) then
+    if ( .not. allocated(UDF%y) ) then
       call output( '(y values not associated)', advance='yes' )
       return
     end if
@@ -1180,7 +1192,7 @@ contains
 
   subroutine DumpLookUpTable_0_r8 ( UDF, name, details )
     ! Args
-    type(LookUpTable_0(r8)) :: UDF ! Intent(out) would clobber retainable values
+    class(LookUpTable_0(r8)) :: UDF ! Intent(out) would clobber retainable values
     character(len=*), optional, intent(in) :: name
     integer, optional, intent(in) :: details
     ! Internal variables
@@ -1198,7 +1210,7 @@ contains
     call outputNamedValue( 'method      ', UDF%method        )
     call outputNamedValue( 'yLeft       ', UDF%yLeft         )
     call outputNamedValue( 'yRight      ', UDF%yRight        )
-    if ( .not. associated(UDF%y) ) then
+    if ( .not. allocated(UDF%y) ) then
       call output( '(y values not associated)', advance='yes' )
       return
     end if
@@ -1269,7 +1281,7 @@ contains
     
 ! -------------------------------------------------  FApproximate  -----
 
-  ! This family of routines use a uniDiscFunction to approximate a 
+  ! This family of routines use a LookUpTable to approximate a 
   ! (costly-to-evaluate) function based on its values at a set of points
 
   ! Args: (* means optional)
@@ -1354,7 +1366,7 @@ contains
 
 ! ----------------------------------------------  FInvApproximate  -----
 
-  ! This family of routines use a uniDiscFunction to approximately invert 
+  ! This family of routines use a LookUpTable to approximately invert 
   ! a function possibly restricting the search to a range [xS, xE]
 
   ! Args: (* means optional)
@@ -1483,7 +1495,7 @@ contains
 
 ! ------------------------------------------------  IFApproximate  -----
 
-  ! This family of routines use a uniDiscFunction to approximate a 
+  ! This family of routines use a LookUpTable to approximate a 
   ! function's integral
 
   ! Args: (* means optional)
@@ -2151,12 +2163,13 @@ contains
 
 ! --------------------------------------------------------  SetUp  -----
 
-  ! This family of routines sets up a uniDiscFunction of the appropriate type
+  ! This family of routines sets up a LookUpTable of the appropriate type
+  ! We ought to do this for both _0 and _1 levels
   subroutine setUpLookUpTable_0_r4 ( UDF, N, x1, x2, &
     & y, BC, method, yLeft, yRight, fun )
     integer, parameter :: RK = kind(0.0e0)
     ! Args
-    type(LookUpTable_0(r4)) :: UDF ! Intent(out) would clobber defaults
+    class(LookUpTable_0(r4)) :: UDF ! Intent(out) would clobber defaults
     integer, intent(in)  :: N
     real(rk), intent(in) :: x1
     real(rk), intent(in) :: x2
@@ -2188,7 +2201,7 @@ contains
     & y, BC, method, yLeft, yRight, fun )
     integer, parameter :: RK = kind(0.0d0)
     ! Args
-    type(LookUpTable_0(r8)) :: UDF ! Intent(out) would clobber defaults
+    class(LookUpTable_0(r8)) :: UDF ! Intent(out) would clobber defaults
     integer, intent(in)  :: N
     real(rk), intent(in) :: x1
     real(rk), intent(in) :: x2
@@ -2638,6 +2651,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.100  2018/12/05 01:00:46  pwagner
+! Made Destroy, Dump, and SetUp typebound procedures
+!
 ! Revision 2.99  2018/12/03 23:19:58  pwagner
 ! Changed name of datatype to more natural LookUpTable
 !
