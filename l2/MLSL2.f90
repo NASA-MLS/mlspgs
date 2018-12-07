@@ -425,6 +425,9 @@ program MLSL2
     if ( .not. parallel%slave ) call dump_settings
   end if
   if ( showDefaults ) stop
+  ! In case we set skip retrievals on the commandline
+  ! we won't want to accidentally override it later
+  L2Options%SkipRetrievalOriginal = L2Options%SkipRetrieval
   call begin('starting mlsl2')
   !---------------- Task (5) ------------------
   if (error == 0) then
@@ -500,7 +503,6 @@ program MLSL2
       skipDirectwrites = ( skipDirectwrites .or. stopAfterSection /= ' ' )
       L2Options%SkipRetrieval = ( L2Options%SkipRetrieval .or.  stopAfterSection /= ' ' )
       skipDirectwritesOriginal = skipDirectwrites
-      ! skipRetrievalOriginal = skipRetrieval
       OriginalOptions = L2Options
       call time_now ( t1 )
       if ( timing ) &
@@ -855,6 +857,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.227  2018/12/07 00:20:47  pwagner
+! If cmdline says to skip retrievals, must skip even if l2cf says otherwise
+!
 ! Revision 2.226  2018/09/13 20:25:19  pwagner
 ! Moved changeable options to new L2Options; added DumpOptions
 !
