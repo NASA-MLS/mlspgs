@@ -906,7 +906,7 @@ cmds: do
         else if ( line(3+n:9+n)  == 'skipdir' ) then
           SKIPDIRECTWRITES = switch
         else if ( line(3+n:10+n) == 'skipretr' ) then
-          L2Options%Skipretrieval = switch
+          L2Options%SkipRetrieval = switch .or. L2Options%SkipRetrievalOriginal
         else if ( line(3+n:8+n) == 'skipph' ) then
           i = i + 1
           call myNextArgument( i, inLine, entireLine, line )
@@ -1487,6 +1487,9 @@ end module MLSL2Options
 
 !
 ! $Log$
+! Revision 2.121  2018/12/07 00:20:26  pwagner
+! If cmdline says to skip retrievals, must skip even if l2cf says otherwise
+!
 ! Revision 2.120  2018/10/05 20:49:21  pwagner
 ! Dont mention switches to be removed unless dbugging
 !
