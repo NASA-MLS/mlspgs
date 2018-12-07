@@ -12,6 +12,7 @@
 module PrintIt_m ! Lowest-level module for printing, logging, etc.
 
   ! use ISO_FORTRAN_ENV, only: ERROR_UNIT, OUTPUT_UNIT
+  use IO_Stuff, only: Pause
   use Machine, only: Crash_Burn, Exit_With_Status, NeverCrash
   use MLSCommon, only: MLSFile_T
   use SDPToolkit, only: UseSDPToolkit, Pgs_Smf_GenerateStatusReport
@@ -27,12 +28,13 @@ module PrintIt_m ! Lowest-level module for printing, logging, etc.
 ! MLSMessageConfig         configuration controlling where to print, etc.
 !     (severity levels)
 ! MLSMSG_Success           status returned when all went well
+! MLSMSG_Pause             pause execution waiting for user input
 ! MLSMSG_Debug             should print only if debugging turned on
 ! MLSMSG_Info              fyi only
+! MLSMSG_Testwarning       test to see if we would print this warning
 ! MLSMSG_Warning           not fatal, but deserving of attention
 ! MLSMSG_Error             quits after printing
 ! MLSMSG_Crash             should give traceback before quitting
-! MLSMSG_Testwarning       test to see if we would print this warning
 ! MLSMSG_Severity_so_far   worst severity level noted so far in this run
 ! MLSMSG_Severity_to_quit  severity level needed to quit
 ! MLSMSG_Severity_to_walkback
@@ -99,12 +101,14 @@ module PrintIt_m ! Lowest-level module for printing, logging, etc.
   ! See also MLSMessageConfig%crashOnAnyError
 
   integer, public, parameter :: MLSMSG_Success     = PGS_S_SUCCESS ! == 0
-  integer, public, parameter :: MLSMSG_Debug       = MLSMSG_Success + 1
+  integer, public, parameter :: MLSMSG_Pause       = MLSMSG_Success + 1
+  integer, public, parameter :: MLSMSG_Debug       = MLSMSG_Pause + 1
   integer, public, parameter :: MLSMSG_Info        = MLSMSG_Debug + 1
-  integer, public, parameter :: MLSMSG_Warning     = MLSMSG_Info + 1
+  integer, public, parameter :: MLSMSG_TestWarning = MLSMSG_Info + 1
+  ! The next 3 should always be the highest, i.e. most sevre
+  integer, public, parameter :: MLSMSG_Warning     = MLSMSG_TestWarning + 1
   integer, public, parameter :: MLSMSG_Error       = MLSMSG_Warning + 1
   integer, public, parameter :: MLSMSG_Crash       = MLSMSG_Error + 1
-  integer, public, parameter :: MLSMSG_TestWarning = MLSMSG_Crash + 1
 
   character (len=*), public, parameter :: MLSMSG_Allocate = &
      & "Allocation failed: "
@@ -180,12 +184,14 @@ module PrintIt_m ! Lowest-level module for printing, logging, etc.
   private :: SeverityNames
   character (len=*), dimension(MLSMSG_Success:MLSMSG_Crash), parameter :: &
      & SeverityNames = (/&
-     & "Success", &
-     & "Debug  ", &
-     & "Info   ", &
-     & "Warning", &
-     & "Error  ", &
-     & "Crash  "  &
+     & "Success    ", &
+     & "Pause      ", &
+     & "Debug      ", &
+     & "Info       ", &
+     & "TestWarning", &
+     & "Warning    ", &
+     & "Error      ", &
+     & "Crash      "  &
      /)
 
 !---------------------------- RCS Module Info ------------------------------
@@ -401,9 +407,18 @@ contains
       write ( UNIT=max(MLSMessageConfig%logFileUnit,1), FMT=* ) trim(line)
     end select
     ! Have we been tasked with something more?
-    ! Exit? Crash?
-    if ( myNoExit ) return
-    if ( severity >= MLSMSG_Crash .or. &
+    ! Pause? Exit? Crash?
+    if ( severity == MLSMSG_Pause ) then
+    ! We ignore what the user enters here
+    ! Even more limiting, we have not yet implemented a way
+    ! for the user input to be done by an external file instead of stdin
+    ! e.g., 
+    !  echo "Continue" > /tmp/Pausedmessage.txt"
+      call Pause ( line )
+      return
+    elseif ( myNoExit ) then
+      return
+    elseif ( severity == MLSMSG_Crash .or. &
       & (severity > MLSMSG_Warning .and. MLSMessageConfig%CrashOnAnyError) &
       & ) then
       NEVERCRASH = .false.
@@ -531,6 +546,9 @@ contains
 end module PrintIt_m
 
 ! $Log$
+! Revision 2.13  2018/12/07 00:24:05  pwagner
+! Added MLSMSG_Pause; corrected order of other severities
+!
 ! Revision 2.12  2018/09/13 20:15:40  pwagner
 ! Added new LogUnits to fit in with needs of output_m
 !
