@@ -179,28 +179,26 @@ module FillUtils_1                     ! Procedures used by Fill
 
   logical :: UNITSERROR               ! From expr
 
-  public :: addGaussianNoise, applyBaseline, autoFillVector, &
-      & computeTotalpower, &
-      & extractsinglechannel, fillcovariance, fromanother, fromgrid, &
-      & froml2gp, fromprofile, gather, geoiddata, losvelocity, &
-      & chisqchan, chisqmmaf, chisqmmif, chisqratio, &
-      & colabundance, derivativeofsource, foldedradiance, phitanwithrefraction, heightFromPressure, &
-      & iwcfromextinction, rhifromortoh2o, noradspermif, &
-      & rhiprecisionfromortoh2o, withestnoise, &
-      & Hydrostatically_GPH, Hydrostatically_PTan, fromSplitSideband, &
-      & GPHPrecision, fromIsotope, fromAsciiFile, rotateMagneticField, &
-      & explicit, froml1b, &
-      & froml2aux, usingmagneticmodel, &
-      & frominterpolatedqty, fromlosgrid, &
-      & bymanipulation, manipulatevectors, NearestProfiles, &
-      & withreflectortemperature, withascordesc, withreichlerwmotp, &
-      & withwmotropopause, withbinresults, withboxcarfunction, &
-      & statusquantity, qualityfromchisq, convergencefromchisq, &
-      & usingleastsquares, offsetradiancequantity, resetunusedradiances, &
-      & scaleoverlaps, scatter, spreadchannelfill, &
-      & transfervectors, transfervectorsbymethod, &
-      & uncompressradiance, &
-      & announce_error, qtyfromfile, vectorfromfile
+  public :: AddGaussianNoise, ApplyBaseline, AutoFillVector, &
+    & ComputeTotalpower, &
+    & ExtractsingleChannel, Fillcovariance, Fromanother, Fromgrid, &
+    & Froml2GP, FromproFile, Gather, GeoidData, Losvelocity, &
+    & Chisqchan, ChisqmMAF, ChisqmMIF, Chisqratio, &
+    & Colabundance, Derivativeofsource, FoldedRadiance, Phitanwithrefraction, &
+    & HeightFromPressure, Iwcfromextinction, Rhifromortoh2o, NoradsperMIF, &
+    & Rhiprecisionfromortoh2o, Withestnoise, &
+    & Hydrostatically_GPH, Hydrostatically_PTan, FromSplitSideband, &
+    & GPHPrecision, FromIsotope, FromAsciiFile, RotateMagneticField, &
+    & Explicit, FromL1B, Froml2aux, Usingmagneticmodel, &
+    & Frominterpolatedqty, Fromlosgrid, &
+    & Bymanipulation, ManipulateVectors, NearestProFiles, &
+    & Withreflectortemperature, Withascordesc, Withreichlerwmotp, &
+    & Withwmotropopause, Withbinresults, Withboxcarfunction, &
+    & Statusquantity, Qualityfromchisq, Convergencefromchisq, &
+    & Usingleastsquares, OffsetRadiancequantity, ResetunusedRadiances, &
+    & Scaleoverlaps, Scatter, SpreadChannelfill, &
+    & TransferVectors, TransferVectorsbymethod, UncompressRadiance, &
+    & Announce_Error, QtyfromFile, VectorfromFile
 
   interface FromProfile
     module procedure FromProfile_node, FromProfile_values
@@ -7456,8 +7454,8 @@ contains ! =====     Public Procedures     =============================
 
       ! Local variables
       integer, parameter                      :: MAXLISTLENGTH=256
-      character (LEN=10*MAXLISTLENGTH)        :: attrnames
-      character (LEN=10*MAXLISTLENGTH)        :: attrvalues
+      character (len=10*MAXLISTLENGTH)        :: attrnames
+      character (len=10*MAXLISTLENGTH)        :: attrvalues
       logical homogeneous
       integer :: Me = -1                      ! String index for trace
       character(len=80) :: name
@@ -7516,8 +7514,8 @@ contains ! =====     Public Procedures     =============================
       character(len=64) :: name
       type (VectorValue_T), pointer :: quantity
       integer, parameter                      :: MAXLISTLENGTH=256
-      character (LEN=10*MAXLISTLENGTH)        :: attrnames
-      character (LEN=10*MAXLISTLENGTH)        :: attrvalues
+      character (len=10*MAXLISTLENGTH)        :: attrnames
+      character (len=10*MAXLISTLENGTH)        :: attrvalues
       integer :: SQI                      ! Quantity index in source
       character (len=80) :: Str
       logical :: verbose
@@ -7526,7 +7524,8 @@ contains ! =====     Public Procedures     =============================
       call trace_begin ( me, 'FillUtils_1.VectorFromFile', key, &
         & cond=toggle(gen) .and. levels(gen) > 1 )
       homogeneous = index(lowercase(options), 'h') > 0
-      verbose = index(lowercase(options), 'v') > 0
+      verbose = index(lowercase(options), 'v') > 0 &
+        & .or. BeVerbose( 'vect', 0 )
       call GetAllHDF5DSNames( MLSFile, DSNames )
       if ( verbose ) then
         call output( 'Now in VectorFromFile', advance='yes' )
@@ -7539,10 +7538,12 @@ contains ! =====     Public Procedures     =============================
           & cond=toggle(gen) .and. levels(gen) > 1 )
         return
       endif
-      ! call LogMyData ( mesg='NumStringElements( trim(DSNames), countEmpty )', data=NumStringElements( trim(DSNames), countEmpty ) )
-      ! call LogMyData ( mesg='size ( vector%quantities )', data=size ( vector%quantities ) )
+      call LogMyData ( mesg='NumStringElements( trim(DSNames), countEmpty )', &
+        & data=NumStringElements( trim(DSNames), countEmpty ) )
+      call LogMyData ( mesg='size ( vector%quantities )', &
+        & data=size ( vector%quantities ) )
       do dsi=1, NumStringElements( trim(DSNames), countEmpty )
-        ! call LogMyData ( mesg='dsi', data=dsi )
+        call LogMyData ( mesg='dsi', data=dsi )
         do sqi = 1, size ( vector%quantities )
           ! if ( dsi > 123 .and. sqi > 120 ) &
             ! & call LogMyData ( mesg='sqi', data=sqi )
@@ -7575,13 +7576,13 @@ contains ! =====     Public Procedures     =============================
           if ( len_trim(name) > 0 ) then
             if ( len_trim(groupName) > 0 ) &
               & name = trim(groupName) // '/' // name
-            ! call LogMyData ( mesg='sqi', data=sqi )
+            call LogMyData ( mesg='sqi', data=sqi )
             call NamedQtyFromFile ( key, quantity, MLSFile, &
               & filetype, name, spread, interpolate, homogeneous )
           endif
         end do
       end do
-      ! call LogMyData ( mesg='Whew! Barely made it.' )
+      call LogMyData ( mesg='Whew! Barely made it.' )
       call trace_end ( 'FillUtils_1.VectorFromFile', &
         & cond=toggle(gen) .and. levels(gen) > 1 )
     contains
@@ -7590,13 +7591,16 @@ contains ! =====     Public Procedures     =============================
         integer, intent(in), optional                :: data
         ! Internal
         character(len=1024)                          :: chars
-        character(len=8)                             :: dchars
+        character(len=16)                            :: dchars
         ! Executable
+        if ( .not. verbose ) return
         chars = ' '
         if ( present(mesg) ) chars = trim(chars) // mesg
         if ( present(data) ) then
           write( dchars, * ) data
-          chars = trim(chars) // ': ' // dchars
+          if ( len(chars) >= &
+            & ( len_trim(chars) + 2 + len_trim(dchars) ) ) &
+            & chars = trim(chars) // ': ' // trim(dchars)
         endif
         call MLSMessage ( MLSMSG_Info, ModuleName, trim(chars) )
       end subroutine LogMyData
@@ -7975,6 +7979,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.146  2018/12/07 00:21:58  pwagner
+! Corrected error in LogMyData; will log only if verbose
+!
 ! Revision 2.145  2018/11/30 17:48:25  pwagner
 ! These calls to LogMyData caused crashes; need investigation before being restored
 !
