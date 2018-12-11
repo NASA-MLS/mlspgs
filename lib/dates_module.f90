@@ -18,13 +18,14 @@ module dates_module
   ! time representations (TAI93) while this module maintains
   ! its own internal database of leap seconds.
 
-  use MLSCommon, only: NameLen
+  use IO_Stuff, only: PrintMessage
+  use Machine, only: Exit_With_Status
+  use MLSCommon, only: NameLen, MLSMSG_Warning
   use MLSFinds, only: FindFirst
   use MLSStringlists, only: GetStringElement, NumStringElements
   use MLSStrings, only: Capitalize, CharToInt, Depunctuate, &
     & Indexes, IsAlphabet, IsDigits, Lowercase, &
     & Reverse_Trim, ReadIntsFromChars, SplitWords, WriteIntsToChars
-  use Printit_M, only: MLSMSG_Warning, PrintItOut
 
   implicit none
   private
@@ -928,7 +929,7 @@ contains
     integer,intent(in)::imonth
     integer::day
     if(imonth < 1 .or. imonth >12) then
-       call myMessage( MLSMSG_Warning, ModuleName,&
+       call PrintMessage( MLSMSG_Warning, ModuleName,&
        "in function lastday: month is out of range")
        day=31
     else
@@ -1078,9 +1079,9 @@ contains
     year=eudtf/1000
     dayofyear=modulo(eudtf,1000)
     if(year <1) then ! Trap bad year
-       call myMessage(MLSMSG_Warning,ModuleName,&
+       call PrintMessage( MLSMSG_Warning,ModuleName,&
             "Module dates_module,function eudtf2cal: year <1" // &
-            "I Can not do BC dates. Why on earth do you want one?") 
+            "I Can not do BC dates. Why on earth do you want one?" ) 
        cal="01 Jan 0001"
        return
     endif
@@ -1096,7 +1097,7 @@ contains
        dayofyear=max(1,dayofyear)
        dayofyear=min(dayofyear,daysinyear)
        write(str2,fmt="(i5)")dayofyear
-       call myMessage( MLSMSG_Warning,ModuleName,&
+       call PrintMessage( MLSMSG_Warning,ModuleName,&
        " in function eudtf2cal: day "//str1//" is out of range."//&
        "Setting it to "//str2 )
     endif
@@ -1169,8 +1170,8 @@ contains
            iw=iw+1
         endif
         if (iw > 3) then
-           call myMessage( MLSMSG_Warning,ModuleName,&
-           "in fn cal2eudtf: Warning: date"//caldate//" contains >3 words")
+           call PrintMessage( MLSMSG_Warning,ModuleName,&
+           "in fn cal2eudtf: Warning: date"//caldate//" contains >3 words" )
            exit l1
         endif
         tmpstring(order(iw))(j:j)=tchar
@@ -1183,7 +1184,7 @@ contains
     read(unit=tmpstring(3),fmt=*)year
     !    print*,"dayofmonth=",dayofmonth,"Month= -->",monthstring,"<--","yr=",year
     if(year <1) then ! Trap bad year
-       call myMessage( MLSMSG_Warning,ModuleName,&
+       call PrintMessage( MLSMSG_Warning,ModuleName,&
             "Module dates_module,function cal2eudtf: year <1" // &
             "I Can not do BC dates. Why on earth do you want one?" ) 
        year=0000
@@ -1209,15 +1210,15 @@ contains
            endif
        enddo mcloop
        if(month==0) then 
-          call myMessage(MLSMSG_Warning,ModuleName,&
-               "in function cal2eudtf: Cannot interpret month "//monthstring)
+          call PrintMessage( MLSMSG_Warning,ModuleName,&
+               "in function cal2eudtf: Cannot interpret month "//monthstring )
        endif
     endif
     if (month < 1 .or. month > 12) then
        write(unit=errstr,fmt="(i5)")month
-        call myMessage(MLSMSG_Warning,ModuleName,&
+        call PrintMessage( MLSMSG_Warning,ModuleName,&
              "in function cal2eudtf Month "//errstr//" Not valid. "//&
-             "Setting it to 1 (==Jan)")
+             "Setting it to 1 (==Jan)" )
         month=1
     endif
 
@@ -2988,32 +2989,6 @@ contains
     dateTime%leapSeconds = HowManyleapSeconds ( datetime%dai )
   end function utc2datetime
 
-  ! ------------------------------------  myMessage  -----
-  subroutine myMessage ( severity, name, line, advance )
-    ! Args
-    integer, intent(in)           :: severity
-    character(len=*), intent(in) :: name
-    character(len=*), intent(in) :: line
-    character (len=*), intent(in), optional :: Advance ! Do not advance
-    !                                 if present and the first character is 'N'
-    !                                 or 'n'
-    ! Local variables
-    integer :: nChars
-    character(len=len(line) + len(name) + 3) :: thus
-    ! Executable
-    nChars = len(line)
-    thus = line
-    if ( len_trim(name) > 0 ) then
-      nChars = len(line) + len(name) + 3
-      thus = '(' // trim(name) // ') ' // line
-    endif
-    if ( severity > MLSMSG_Warning ) then
-      call PrintItOut( thus(1:nChars), SEVERITY, exitStatus = 1  )
-    else
-      call PrintItOut( thus(1:nChars), SEVERITY  )
-    endif
-  end subroutine myMessage
-
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
   character (len=*), parameter :: IdParm = &
@@ -3026,6 +3001,9 @@ contains
 
 end module dates_module
 ! $Log$
+! Revision 2.43  2017/07/10 18:37:08  pwagner
+! Correct error in dai_to_yyyymmdd_ints that arose when dai < 0; added GetStartingDate
+!
 ! Revision 2.42  2016/09/14 00:23:14  pwagner
 ! Added isUTCInRange so we can check for invalid utc values
 !
@@ -3063,7 +3041,7 @@ end module dates_module
 ! Repaired bugs in Reformatting dates containing month names
 !
 ! Revision 2.30  2013/08/28 00:38:17  pwagner
-! Added a local version of MyMessage to evade possible circular dependency
+! Added a local version of PrintMessage to evade possible circular dependency
 !
 ! Revision 2.29  2013/08/21 00:21:58  pwagner
 ! Added a function to tell whether one utcdate precedes another
