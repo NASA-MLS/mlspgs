@@ -12,6 +12,8 @@
 module IO_Stuff
 
 ! Useful, low-level stuff for mostly formatted I/O
+  use Machine, only: Crash_Burn, Exit_With_Status, NeverCrash
+  use MLSCommon, only: MLSMSG_Crash, MLSMSG_Warning
   use MLSFinds, only: FindFirstCharacter => FindFirst, &
     &                 FindFirstSubstring => FindFirst
 
@@ -21,6 +23,7 @@ module IO_Stuff
   public :: Get_lun
   public :: Get_nLines
   public :: Pause
+  public :: PrintMessage
   public :: Read_stdin
   public :: Read_Textfile
   public :: Truncate_Textfile
@@ -35,6 +38,7 @@ module IO_Stuff
 !                     Fortran 2008 allows use of newunit= field in open
 ! Get_nLines        Find how many lines are in a text file
 ! Pause             Wait for user input via stdin
+! PrintMessage      Print a message and optionally exit with status
 ! Read_stdin        Read standard input into characters scalar or array
 ! Read_Textfile     Read contents of a textfile into characters scalar or array
 ! Truncate_Textfile Delete contents of a text file
@@ -45,6 +49,7 @@ module IO_Stuff
 ! get_lun( int lun, [log msg], [int bottom], [int top] )
 ! get_nLines( char* File, int nLines, [int maxLineLen] )
 ! Pause ( char* mesg , [char* Prompts(:) )] )
+! PrintMessage ( int severity, char* name, char* line, [char* advance] )
 ! Read_stdin( str string, [int maxLineLen], [int nLines] )
 ! Read_Textfile( char* File, str string, [int maxLineLen], [int nLines] )
 ! write_Textfile( char* File, str string, [int maxLineLen], [int nLines] )
@@ -201,6 +206,36 @@ contains
     endif
     mesg = myMesg
   end subroutine Pause
+
+  ! ------------------------------------  PrintMessage  -----
+  subroutine PrintMessage ( severity, name, line, advance )
+    ! Args
+    integer, intent(in)           :: severity
+    character(len=*), intent(in) :: name
+    character(len=*), intent(in) :: line
+    character (len=*), intent(in), optional :: Advance ! Do not advance
+    !                                 if present and the first character is 'N'
+    !                                 or 'n'
+    ! Local variables
+    integer :: nChars
+    character(len=len(line) + len(name) + 3) :: thus
+    ! Executable
+    nChars = len(line)
+    thus = line
+    if ( len_trim(name) > 0 ) then
+      nChars = len(line) + len(name) + 3
+      thus = '(' // trim(name) // ') ' // line
+    endif
+    print *, 'thus(1:nChars)'
+    ! Really, should we allow even PrintMessage to trigger a crash?
+    ! For now, yes, we do.
+    if ( severity == MLSMSG_Crash ) then
+      NeverCrash = .false.
+      call Crash_Burn
+    elseif ( severity > MLSMSG_Warning ) then
+      call exit_with_status ( 1  )
+    endif
+  end subroutine PrintMessage
 
   !------------------ Read_stdin
   ! Notes and limitations:
@@ -680,6 +715,9 @@ contains
 end module IO_STUFF
 
 ! $Log$
+! Revision 2.25  2018/12/11 01:19:54  pwagner
+! Moved unconditional stdout PrintMessage here
+!
 ! Revision 2.24  2018/10/25 23:23:40  pwagner
 ! Added Pause command
 !
