@@ -60,6 +60,17 @@ module MLSCommon                ! Common definitions for the MLS software
 ! M_LinAlg = 2**0      ! Don't use in linear algebra
 ! M_Spare = 2**6
 ! M_Tikhonov = 2**3    ! Where to do Tikhonov regularization
+!
+!     (severity levels)
+! PGS_S_Success            if status not this, then something went wrong
+! MLSMSG_Success           status returned when all went well
+! MLSMSG_Pause             pause execution waiting for user input
+! MLSMSG_Debug             should print only if debugging turned on
+! MLSMSG_Info              fyi only
+! MLSMSG_Testwarning       test to see if we would print this warning
+! MLSMSG_Warning           not fatal, but deserving of attention
+! MLSMSG_Error             quits after printing
+! MLSMSG_Crash             should give traceback before quitting
 !            Derived Types
 ! FileIDs_T        id numbers for file, group, swath or dataset
 ! L1BInfo_T        L1B data file names, etc. 
@@ -165,6 +176,26 @@ module MLSCommon                ! Common definitions for the MLS software
   integer, public, parameter :: M_LinAlg = 2**0      ! Don't use in linear algebra
   integer, public, parameter :: M_Spare = 2**6
   integer, public, parameter :: M_Tikhonov = 2**3    ! Where to do Tikhonov regularization
+
+  ! Define some low level parameters.  These are used by the calling code to
+  ! indicate the severity or otherwise of the messages.
+  ! Normally, we treat any severity of Error or worse as reason to stop.
+  ! Any Warning is worth recording, and suppressed when too numerous.
+  ! Info may be customized to show, phase name, chunk number, etc.
+  ! Be advised, Crash may not properly close files opened by your run.
+  ! Use it only for specific debugging where you need a walkback.
+  ! See also MLSMessageConfig%crashOnAnyError
+
+  integer, public, parameter :: PGS_S_SUCCESS = 0
+  integer, public, parameter :: MLSMSG_Success     = PGS_S_SUCCESS ! == 0
+  integer, public, parameter :: MLSMSG_Pause       = MLSMSG_Success + 1
+  integer, public, parameter :: MLSMSG_Debug       = MLSMSG_Pause + 1
+  integer, public, parameter :: MLSMSG_Info        = MLSMSG_Debug + 1
+  integer, public, parameter :: MLSMSG_TestWarning = MLSMSG_Info + 1
+  ! The next 3 should always be the highest, i.e. most sevre
+  integer, public, parameter :: MLSMSG_Warning     = MLSMSG_TestWarning + 1
+  integer, public, parameter :: MLSMSG_Error       = MLSMSG_Warning + 1
+  integer, public, parameter :: MLSMSG_Crash       = MLSMSG_Error + 1
 
   ! Unless you fill the string table with l_ quantities from intrinsic
   ! make sure the next entry is .false. 
@@ -695,6 +726,9 @@ end module MLSCommon
 
 !
 ! $Log$
+! Revision 2.52  2018/12/11 01:19:01  pwagner
+! moved MLSMSG_sevrity parameters here
+!
 ! Revision 2.51  2018/08/17 23:51:41  pwagner
 ! May use Where component in MLSFile_T
 !
