@@ -17,7 +17,7 @@ module PrintIt_m ! Lowest-level module for printing, logging, etc.
   use MLSCommon, only: Filenamelen, MLSFile_T, &
     & MLSMSG_Success, MLSMSG_Pause, MLSMSG_Debug, MLSMSG_Info, &
     & MLSMSG_TestWarning, MLSMSG_Warning, MLSMSG_Error, MLSMSG_Crash, &
-    & PGS_S_Success
+    & MLS_S_Success
   use SDPToolkit, only: UseSDPToolkit, Pgs_Smf_GenerateStatusReport
   use Wait_M, only: Pause
 
@@ -44,7 +44,7 @@ module PrintIt_m ! Lowest-level module for printing, logging, etc.
 ! MLSMSG_DeAllocate        deallocating an array
 ! MLSMSG_PVM               using a pvm library procedure
 !    (parameters)
-! PGS_S_Success            if status not this, then something went wrong
+! MLS_S_Success            if status not this, then something went wrong
 ! InvalidLogUnit           Log Unit must not be this
 ! StdoutLogUnit            If tthis, Logging means printing to stdout
 ! DefaultLogUnit           If tthis, Logging means using Toolkit
@@ -158,7 +158,7 @@ module PrintIt_m ! Lowest-level module for printing, logging, etc.
   ! to become more lenient (set it higher) or strict (set it lower )
   integer, public, save      :: MLSMSG_Severity_to_quit     = MLSMSG_Error
   integer, public, save      :: MLSMSG_Severity_to_walkback = MLSMSG_Error
-  integer, public, save      :: MLSMSG_Severity_so_far      = PGS_S_SUCCESS
+  integer, public, save      :: MLSMSG_Severity_so_far      = MLS_S_Success
 
   private :: SeverityNames
   character (len=*), dimension(MLSMSG_Success:MLSMSG_Crash), parameter :: &
@@ -525,6 +525,9 @@ contains
 end module PrintIt_m
 
 ! $Log$
+! Revision 2.15  2018/12/11 16:46:47  pwagner
+! Changed parameter name to MLS_S_Success to avoid conflict in level 1
+!
 ! Revision 2.14  2018/12/11 01:25:02  pwagner
 ! Moved MLSMSG_severity parameters to MLSCommon; Pause may await PausedInputFile
 !
