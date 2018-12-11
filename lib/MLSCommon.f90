@@ -62,7 +62,7 @@ module MLSCommon                ! Common definitions for the MLS software
 ! M_Tikhonov = 2**3    ! Where to do Tikhonov regularization
 !
 !     (severity levels)
-! PGS_S_Success            if status not this, then something went wrong
+! MLS_S_Success            if status not this, then something went wrong
 ! MLSMSG_Success           status returned when all went well
 ! MLSMSG_Pause             pause execution waiting for user input
 ! MLSMSG_Debug             should print only if debugging turned on
@@ -186,8 +186,8 @@ module MLSCommon                ! Common definitions for the MLS software
   ! Use it only for specific debugging where you need a walkback.
   ! See also MLSMessageConfig%crashOnAnyError
 
-  integer, public, parameter :: PGS_S_SUCCESS = 0
-  integer, public, parameter :: MLSMSG_Success     = PGS_S_SUCCESS ! == 0
+  integer, public, parameter :: MLS_S_Success = 0
+  integer, public, parameter :: MLSMSG_Success     = MLS_S_Success ! == 0
   integer, public, parameter :: MLSMSG_Pause       = MLSMSG_Success + 1
   integer, public, parameter :: MLSMSG_Debug       = MLSMSG_Pause + 1
   integer, public, parameter :: MLSMSG_Info        = MLSMSG_Debug + 1
@@ -726,6 +726,9 @@ end module MLSCommon
 
 !
 ! $Log$
+! Revision 2.53  2018/12/11 16:46:30  pwagner
+! Changed parameter name to MLS_S_Success to avoid conflict in level 1
+!
 ! Revision 2.52  2018/12/11 01:19:01  pwagner
 ! moved MLSMSG_sevrity parameters here
 !
