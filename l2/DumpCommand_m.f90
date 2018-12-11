@@ -1248,7 +1248,7 @@ contains
     use Read_Mie_M, only: Dump_Mie
     use SpectroscopyCatalog_M, only: Catalog, Dump, Dump_Lines_Database, Lines
     use String_Table, only: Display_String, Get_String
-    use Time_M, only: Finish, Time_Config, Wait_For_Event, Pause
+    use Time_M, only: Finish, Time_Config
     use Toggles, only: Gen, Switches, Toggle
     use Trace_M, only: Trace_Begin, Trace_End
     use Tree, only: Decoration, Node_Id, Nsons, Sub_Rosa, Subtree, Where
@@ -1258,6 +1258,7 @@ contains
       & GatherVectorQuantity, GetVectorQuantity, GetVectorQtyByTemplateIndex, &
       & GetVectorQuantityIndexByName, VectorsMemoryInUse
     use VGridsDatabase, only: Dump, VGrids
+    use Wait_M, only: Wait_For_Event, Pause
 
     integer, intent(in) :: Root ! Root of the parse tree for the dump command
     ! Databases:
@@ -3242,6 +3243,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.146  2018/12/11 01:26:13  pwagner
+! Uses Wait_M
+!
 ! Revision 2.145  2018/11/01 23:19:13  pwagner
 ! Use Pause from Time_M
 !
