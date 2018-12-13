@@ -732,7 +732,8 @@ contains
   end subroutine Resize_Sparse
 
   ! ---------------------------------------------  Row_Dot_Matrix  -----
-  pure subroutine Row_Dot_Matrix ( Sparse, R, Matrix, Prod, ExpLog, LogOnly )
+  pure subroutine Row_Dot_Matrix ( Sparse, R, Matrix, Prod, ExpLog, LogOnly, &
+                                 & Rows )
     ! Compute vector-matrix product, where the vector is row R of Sparse.
     class(sparse_t), intent(in) :: Sparse  ! The sparse matrix
     integer, intent(in) :: R               ! Which row to multiply by Vector
@@ -743,12 +744,24 @@ contains
     logical, intent(in), optional :: LogOnly ! compute dot product(sparse, 
                                            ! log(max(vector,1.0e-9_rp));
                                            ! ExpLog takes priority
+    class(sparse_t), intent(in), optional :: Rows ! It's only necessary to
+                                           ! compute elements of the product
+                                           ! where Rows%cols is not zero,
+                                           ! usually because Prod will later
+                                           ! be used in rows%row_dot_vec.
 
     integer :: J                           ! Column index in the row
 
-    do j = 1, size(matrix,1)
-      prod(j) = sparse%row_dot_vec ( r, matrix(j,:), expLog, logOnly )
-    end do
+    if ( present(rows) ) then
+      do j = 1, size(matrix,1)
+        if ( rows%cols(j) /= 0 ) &
+          prod(j) = sparse%row_dot_vec ( r, matrix(j,:), expLog, logOnly )
+      end do
+    else
+      do j = 1, size(matrix,1)
+        prod(j) = sparse%row_dot_vec ( r, matrix(j,:), expLog, logOnly )
+      end do
+    end if
 
   end subroutine Row_Dot_Matrix
 
@@ -1206,6 +1219,9 @@ contains
 end module Sparse_m
 
 ! $Log$
+! Revision 2.22  2018/12/13 01:15:27  vsnyder
+! Add Rows argument to Row_Dot_Matrix
+!
 ! Revision 2.21  2018/12/13 00:26:26  vsnyder
 ! Add Row_Dot_Matrix
 !
