@@ -1546,6 +1546,7 @@ contains ! =============== Subroutines and functions ==========================
     use Physics, only: Boltz
     use Piq_Int_M, only: Piq_Int
     use Sparse_Eta_m, only: Sparse_Eta_t
+    use Tangent_Qty_m, only: Tangent_Qty
     use Time_M, only: Time_Now
 
   ! This is a two D version of ScanForwardModel
@@ -1598,13 +1599,10 @@ contains ! =============== Subroutines and functions ==========================
     real(rp) :: surf_temp
     real(rp) :: surf_refr_indx(1)
 
-    type(sparse_eta_t) :: Eta_Z
-    type(sparse_eta_t) :: Eta_P_T
-    type(sparse_eta_t) :: Eta_P_H2O
-    type(sparse_eta_t) :: Eta_ZXP_T
-    type(sparse_eta_t) :: Eta_ZXP_H2O
-    type(sparse_eta_t) :: Eta_At_One_Phi
-    type(sparse_eta_t) :: Eta_At_One_Zeta
+    type(sparse_eta_t) :: Eta_P_H2O     ! H2O horizontal
+    type(sparse_eta_t) :: Eta_P_T       ! Temperature horizontal
+    type(sparse_eta_t) :: Eta_ZXP_T     ! Temperature zeta X horizontal
+    type(sparse_eta_t) :: Eta_ZXP_H2O   ! Water zeta X horizontal
 
     real :: T0, T1, T2                     ! For timing
     logical, parameter :: always_timing = .false.  ! if worried about NAG taking so long
@@ -1703,6 +1701,7 @@ contains ! =============== Subroutines and functions ==========================
       real(rp) :: Tan_temp(ptan%template%nosurfs)
       real(rp) :: Work(ptan%template%nosurfs)
 
+      ! Geometry calculations
       block ! So that some even-more local arrays are automatic
         real(rp) :: earthradc(ptan%template%nosurfs)  ! square of minor axis of
     !                       earth ellipsoid in orbit plane projected system
@@ -1737,12 +1736,12 @@ contains ! =============== Subroutines and functions ==========================
       ! convert phitan into geocentric latitude
         geoclats = asin(earthradc * sin(red_phi_t) * sinbeta / &
           & sqrt(earthrada**4*cosphi2 + earthradc**2*sinphi2))
-        sinlat2 = SIN(geoclats)**2
+        sinlat2 = sin(geoclats)**2
         coslat2 = 1.0_rp - sinlat2
         p2=0.5_rp * (3.0_rp*sinlat2 - 1.0_rp)
         p4=0.125_rp * (35.0_rp*sinlat2**2 - 30.0_rp*sinlat2 + 3.0_rp)
       ! compute the local gravitational acceleration at the surface
-        earth_radius = SQRT((earthrada**4*cosphi2 + earthradc**2*sinphi2) &
+        earth_radius = sqrt((earthrada**4*cosphi2 + earthradc**2*sinphi2) &
                      &    / (earthrada**2*cosphi2 + earthradc*sinphi2))
         ratio2=(earthRadA/earth_radius)**2
         ratio4=ratio2**2
@@ -1752,53 +1751,38 @@ contains ! =============== Subroutines and functions ==========================
         eff_earth_radius = 2.0_rp * g_ref / (2.0_rp * gm * (1.0_rp-6.0_rp*j2*p2 &
           & * ratio2 - 15.0_rp*j4*p4*ratio4) / earth_radius**3 &
           & + omega**2*coslat2)
-      ! deallocate things we don't need
       end block
 
-      ! Get horizontal Eta functions.
-      if ( usingQTM) then
-        ! Use phitan%template%geodLat(:,fmConf%MAF) and
-        ! phitan%template%lon(:,fmConf%MAF) to find QTM
-        ! facets and compute interpolation coefficients.
-        call eta_p_t%eta_QTM ( temp%template%the_Hgrid%QTM_Tree, &
-                             & phitan%template%lon(:,fmStat%maf), &
-                             & phitan%template%geodLat(:,fmStat%maf), &
-                             & what=l_temperature )
-        call eta_p_h2o%eta_QTM ( h2o%template%the_Hgrid%QTM_Tree, &
-                               & phitan%template%lon(:,fmStat%maf), &
-                               & phitan%template%geodLat(:,fmStat%maf), &
-                               & what=l_h2o )
-      else
-        ! Eta_p_*%Eta_1D allocates components -- no need to call eta_p_*%create
-        call eta_p_t%eta_1d ( temp%template%phi(1,windowstart_t:windowfinish_t), &
-                            & phitan%values(:,fmStat%maf), sorted=.false. )
-        call eta_p_h2o%eta_1d ( h2o%template%phi(1,windowstart_h2o:windowfinish_h2o), &
-                              & phitan%values(:,fmStat%maf), sorted=.false. )
-      end if
+      ! Get Eta functions, and H2O and temperature tangent profiles.
+      call tangent_qty ( fmConf, usingQTM, fmStat%MAF, ptan, phiTan, &
+                       & h2o, windowStart_h2o, windowFinish_h2o, tan_h2o, &
+                       & eta_zxp_h2o, eta_p_h2o, logLin=.true. )
+      call tangent_qty ( fmConf, usingQTM, fmStat%MAF, ptan, phiTan, &
+                       & temp, windowStart_t, windowFinish_t, tan_temp, &
+                       & eta_zxp_t, eta_p_t )
 
-      ! compute temperature function
-      ! Get remaining eta functions.
-      call eta_z%eta_1d ( temp%template%surfs(:,1), &
-                        & ptan%values(:,fmStat%maf), sorted=.false. )
-      if ( timing ) call sayTime ( 'getting etas functions' )
+    ! compute refractive index at the MIF tangent points
+      call refractive_index ( 10.0_rp**(-max(-10.0_rp,ptan%values(:,fmStat%maf))), &
+                            & tan_temp, tan_refr_indx, h2o_path = tan_h2o )
+
+      if ( timing ) call sayTime ( 'getting etas etc.' )
       call time_now ( t1 )
+
     ! construct piq integral
       call piq_int ( ptan%values(:,fmStat%maf), temp%template%surfs(:,1), &
         & refGPH%template%surfs(1,1), piq, Z_MASS = 2.5_rp, C_MASS = 0.02_rp)
       if ( timing ) call sayTime ( 'constructing piq integral' )
       call time_now ( t1 )
+
     ! Convert level 1 reference geopotential height into geometric altitude.
     ! This assumes that the reference ellipsoid is equivalent to a reference
     ! geopotential height of 0 meters.
+    ! Assume RefGPH and Temperature have the same horizontal basis.
       call eta_p_t%sparse_dot_vec ( &
         & refgph%values(1,windowstart_t:windowfinish_t), refgph_surfs )
       refgeomalt_denom = g_ref*eff_earth_radius - g0*refgph_surfs
       l1refalt = g_ref*eff_earth_radius**2 / refgeomalt_denom - eff_earth_radius &
         & + earth_radius
-      tan_temp = 0.0_rp
-      call eta_zxp_t%eta_nd ( eta_z, eta_p_t )
-      call eta_zxp_t%sparse_dot_vec ( &
-        & temp%values(:,windowstart_t:windowfinish_t), tan_temp )
       eta_piqxp = 0
       do e = 1, eta_p_t%ne
         r = eta_p_t%e(e)%r
@@ -1806,70 +1790,44 @@ contains ! =============== Subroutines and functions ==========================
       end do
       if ( timing ) call sayTime ( 'constructing geometric altitude' )
       call time_now ( t1 )
-    ! compute water vapor function
-      call eta_z%empty ! Remove temperature's vertical interpolation coefficients
-      call eta_z%eta_1d ( h2o%template%surfs(:,1), &
-                        & ptan%values(:,fmStat%maf), empty=.true., sorted=.false. )
-      call eta_zxp_h2o%eta_nd ( eta_z, eta_p_h2o )
-      ! we use logarithmic interpolation here:
-      ! tan_h2o = exp( eta_zxp_h2o .dot. log(max(h2o%values,1.0e-9_rp)) )
-      call eta_zxp_h2o%sparse_dot_vec ( &
-        & h2o%values(:,windowstart_h2o:windowfinish_h2o), &
-        & tan_h2o, expLog = .true. )
-      if ( timing ) call sayTime ( 'computing water vapor functions' )
-      call time_now ( t1 )
-    ! compute refractive index
-      call refractive_index ( 10.0_rp**(-max(-10.0_rp,ptan%values(:,fmStat%maf))), &
-        & tan_temp, tan_refr_indx, h2o_path = tan_h2o )
-    ! compute surface pressure
-      block
-        real(rp) :: temp_at_surf_phi(temp%template%nosurfs)
-        call eta_at_one_phi%eta_1d ( &
-          & temp%template%phi(1,windowstart_t:windowfinish_t), &
-          & phitan%values(1:1,fmStat%maf) )
-        do sv_z = 1, temp%template%nosurfs
-        temp_at_surf_phi(sv_z) = eta_at_one_phi%row_dot_vec ( 1, &
-          & temp%values(sv_z,windowstart_t:windowfinish_t) )
-        end do
 
-        z_surf = z_surface( temp%template%surfs(:,1),temp_at_surf_phi,g_ref(1), &
-                          & refgph_surfs(1), refGPH%template%surfs(1,1), boltz )
-      ! compute refractive index at the surface
-        call eta_at_one_zeta%eta_1d ( temp%template%surfs(:,1), [z_surf] )
-        surf_temp = eta_at_one_zeta%row_dot_vec ( 1, temp_at_surf_phi )
-      end block
-      call eta_at_one_phi%eta_1d ( &
-        & h2o%template%phi(1,windowstart_h2o:windowfinish_h2o), &
-        & phitan%values(1:1,fmStat%maf), empty=.true. )
-      call eta_at_one_zeta%eta_1d ( h2o%template%surfs(:,1), [z_surf], empty=.true. )
+      ! Compute surface pressure. Compute temperature at surface phi.
+      ! Compute H2O at surface phi and surface pressure.
       block
+        type(sparse_eta_t) :: Eta_At_Z_Surf
+        real(rp) :: Temp_At_Surf_Phi(temp%template%nosurfs)
         real(rp) :: Surf_H2O(h2o%template%nosurfs)
+
+        call eta_p_t%row_dot_matrix ( 1, &
+          & temp%values(:,windowstart_t:windowfinish_t), temp_at_surf_phi )
+
+        z_surf = z_surface( temp%template%surfs(:,1),temp_at_surf_phi, g_ref(1), &
+                          & refgph_surfs(1), refGPH%template%surfs(1,1), boltz )
+      ! compute temperature at Z_Surf
+        call eta_at_z_surf%eta_1d ( temp%template%surfs(:,1), [z_surf] )
+        surf_temp = eta_at_z_surf%row_dot_vec ( 1, temp_at_surf_phi )
+        ! Compute H2O at Z_Surf
         ! Logarithmic interpolation:
-        ! First surf_h2o = eta_at_one_phi .dot. log(max(h2o%values,1.0e-9_rp)),
-        ! then h2o_path = exp(eta_at_one_zeta .dot. surf_h2o)
-        call eta_at_one_phi%sparse_dot_vec ( &
-          & h2o%values(:,windowstart_h2o:windowfinish_h2o), &
-          & surf_h2o, logOnly = .true. )
+        ! First surf_h2o = eta_p_h2o .dot. log(max(h2o%values,1.0e-9_rp)),
+        ! then h2o_path = exp(eta_at_z_surf .dot. surf_h2o)
         ! surf_h2o = 0 ! not necessary because most elements won't be used
-        do sv_z = 1, h2o%template%nosurfs
-          if ( eta_at_one_zeta%cols(sv_z) /= 0 ) then
-            ! Surf_H2O will be an operand in a dot product with Eta_At_One_Zeta,
-            ! so we only need it where Eta_At_One_Zeta has a nonzero column
-            surf_h2o(sv_z) = 0
-            do e = 1, eta_at_one_phi%ne
-              sv_p = eta_at_one_phi%e(e)%c + windowStart_h2o - 1
-              ! Each element of Surf_H2O is the dot product of eta_at_one_phi with the
-              ! corresponding row of the logarithm of H2O%Values.  We do this "the
-              ! hard way" to avoid computing the logarithm of all of H2O%Values and
-              ! then use only the ones corresponding to nonzeroes of eta_at_one_phi.
-              surf_h2o(sv_z) = surf_h2o(sv_z) + &
-                & eta_at_one_phi%e(e)%v * LOG(max(h2o%values(sv_z,sv_p),1e-9_rp))
-            end do
-          end if
-        end do
-        call refractive_index(10.0_rp**([ -z_surf ]), [ surf_temp ], &
-          & surf_refr_indx, &
-          & h2o_path = [ EXP(eta_at_one_zeta%row_dot_vec(1,surf_h2o)) ] )
+        if ( eta_p_h2o%rows(1) /= 0 ) then
+          call eta_at_z_surf%eta_1d ( h2o%template%surfs(:,1), [z_surf], &
+            & empty=.true. )
+          ! Surf_H2O is log(H2O at Z_Surf).  It will be an operand in a dot
+          ! product with Eta_At_Z_Surf, so we only need it where Eta_At_Z_Surf
+          ! has a nonzero column -- and there are only two of those.
+          call eta_p_h2o%row_dot_matrix ( 1, h2o%values, surf_h2o, &
+                                        & logOnly = .true., rows=eta_at_z_surf )
+          ! Compute refractive index at Z_Surf
+          call refractive_index(10.0_rp**([ -z_surf ]), [ surf_temp ], &
+            & surf_refr_indx, &
+            & h2o_path = [ exp(eta_at_z_surf%row_dot_vec(1,surf_h2o)) ] )
+        else
+          ! Compute refractive index at Z_Surf
+          call refractive_index(10.0_rp**([ -z_surf ]), [ surf_temp ], &
+            & surf_refr_indx )
+        end if
       end block
     ! set all refr indicies below the surface to the surface value
       where(ptan%values(:,fmStat%maf) < z_surf) 
@@ -2129,6 +2087,9 @@ contains ! =============== Subroutines and functions ==========================
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.94  2018/12/13 01:45:28  vsnyder
+! More QTM work -- hopefully the last of it
+!
 ! Revision 2.93  2018/12/04 23:22:33  vsnyder
 ! Add QTM horizontal interpolation.  Spell outputNamedValue correctly.
 !
