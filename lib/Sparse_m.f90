@@ -68,6 +68,7 @@ module Sparse_m
     procedure :: Invert_Column_Indices
     procedure :: List => List_Sparse
     procedure :: Resize => Resize_Sparse
+    procedure :: Row_Dot_Matrix
     procedure :: Row_Dot_Vec_1D
     procedure :: Row_Dot_Vec_2D
     generic :: Row_Dot_Vec => Row_Dot_Vec_1D, Row_Dot_Vec_2D
@@ -730,6 +731,27 @@ contains
 
   end subroutine Resize_Sparse
 
+  ! ---------------------------------------------  Row_Dot_Matrix  -----
+  pure subroutine Row_Dot_Matrix ( Sparse, R, Matrix, Prod, ExpLog, LogOnly )
+    ! Compute vector-matrix product, where the vector is row R of Sparse.
+    class(sparse_t), intent(in) :: Sparse  ! The sparse matrix
+    integer, intent(in) :: R               ! Which row to multiply by Vector
+    real(rp), intent(in) :: Matrix(:,:)    ! The matrix
+    real(rp), intent(out) :: Prod(:)       ! Same extent as size(matrix,1)
+    logical, intent(in), optional :: ExpLog ! compute exp(dot product(sparse, 
+                                           ! log(max(vector,1.0e-9_rp)))
+    logical, intent(in), optional :: LogOnly ! compute dot product(sparse, 
+                                           ! log(max(vector,1.0e-9_rp));
+                                           ! ExpLog takes priority
+
+    integer :: J                           ! Column index in the row
+
+    do j = 1, size(matrix,1)
+      prod(j) = sparse%row_dot_vec ( r, matrix(j,:), expLog, logOnly )
+    end do
+
+  end subroutine Row_Dot_Matrix
+
   ! ---------------------------------------------  Row_Dot_Vec_1D  -----
   pure real(rp) function Row_Dot_Vec_1D ( Sparse, R, Vector, ExpLog, LogOnly ) &
     & result ( D )
@@ -1184,6 +1206,9 @@ contains
 end module Sparse_m
 
 ! $Log$
+! Revision 2.21  2018/12/13 00:26:26  vsnyder
+! Add Row_Dot_Matrix
+!
 ! Revision 2.20  2018/11/16 22:52:46  vsnyder
 ! Don't add zero elements
 !
