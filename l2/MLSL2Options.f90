@@ -429,7 +429,7 @@ contains
     use MLSStringLists, only: Catlists, &
       & Getstringelement, Getuniquelist, &
       & Numstringelements, Removeswitchfromlist, &
-      & Sortlist, Stringelement, Switchdetail, Unquote
+      & Stringelement, Switchdetail, Unquote
     use PCFHdr, only: GlobalAttributes
     use Printit_M, only: Set_Config
     use Set_Toggles_M, only: Set_Toggles
@@ -448,7 +448,6 @@ contains
     logical :: EXIST
     logical :: exitLoop
     logical :: Field_Is_Include      ! Field is include file path, not L2CF name
-    integer, dimension(100)           :: iarray
     integer :: I, J
     character(len=2048) :: LINE      ! Into which is read the command args
     integer :: N
@@ -522,12 +521,8 @@ cmds: do
     call GetUniqueList( tempSwitches, removeSwitches, numSwitches, &
           & ignoreLeadingSpaces=.true., options='-eSL' )
     ! Remove any quote marks from switches array
-    tempSwitches = unquote(switches, quotes=quotes, options='-p')
-    ! Now we want to keep only the swich with the highest details level
-    call sortList( tempSwitches, iarray, ',', switches )
     tempSwitches = switches
-    call GetUniqueList( tempSwitches, Switches, numSwitches, &
-          & ignoreLeadingSpaces=.true., options='-eSL' )
+    Switches = unquote(tempSwitches, quotes=quotes, options='-p')
     ! Remove any switches embedded in the removeSwitches option 'R'
     if ( DEEBUG ) print *, 'starting List ', trim(switches) 
     if ( DEEBUG ) print *, 'to remove ', trim(removeSwitches) 
@@ -1487,6 +1482,9 @@ end module MLSL2Options
 
 !
 ! $Log$
+! Revision 2.122  2019/01/10 21:45:59  pwagner
+! SwitchDetail behaviot means no need to discard multiple switches
+!
 ! Revision 2.121  2018/12/07 00:20:26  pwagner
 ! If cmdline says to skip retrievals, must skip even if l2cf says otherwise
 !
