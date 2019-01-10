@@ -16,8 +16,8 @@ module MLSStringLists               ! Module to treat string lists
   use IO_Stuff, only: PrintMessage
   use MLSCommon, only: BareFNLen, MLSMSG_Error
   use MLSFinds, only: FindFirst, FindLast
-  use MLSStrings, only: Capitalize, IsAlphabet, LowerCase, NCopies, &
-    & ReadIntsFromChars, ReadNumsFromChars, Replace, Reverse, &
+  use MLSStrings, only: Capitalize, CompressString, IsAlphabet, LowerCase, &
+    & NCopies, ReadIntsFromChars, ReadNumsFromChars, Replace, Reverse, &
     & SplitDetails, SplitNest, Squeeze, StrEq, Trim_Safe, WriteIntsToChars
   use Sort_M, only: Sortp
   implicit none
@@ -270,22 +270,22 @@ module MLSStringLists               ! Module to treat string lists
 !     first w/o the extra arg, and the second time with the extra arg
 ! === (end of api) ===
 
-  public :: array2List, booleanValue, buildHash, &
-   & CapitalizeArray, CapitalizeList, catLists, &
-   & evaluateFormula, expandStringRange, extractSubstring, &
-   & getHashElement, getStringElement, &
-   & getUniqueInts, getUniqueStrings, getUniqueList, &
-   & insertHashElement, intersection, isInList, &
-   & list2Array, loopOverFormula, listMatches, &
-   & nCharsInFormat, numStringElements, &
-   & optionDetail, parseOptions, putHashElement, &
-   & readIntsFromList, ReadNumsFromList, &
-   & removeElemFromList, removeListFromList, removeNumFromList, &
-   & removeHashArray, removeHashElement, removeOption, removeSwitchFromList, &
-   & replaceSubstring, reverseList, reverseStrings, &
-   & snipList, sortArray, sortList, stringElement, stringElementNum, &
-   & switchDetail, &
-   & unquote, unwrap, wrap
+  public :: Array2List, BooleanValue, BuildHash, &
+    & CapitalizeArray, CapitalizeList, CatLists, &
+    & EvaluateFormula, ExpandStringRange, ExtractSubstring, &
+    & GetHashElement, GetStringElement, &
+    & GetUniqueInts, GetUniqueStrings, GetUniqueList, &
+    & InsertHashElement, Intersection, IsInList, &
+    & List2Array, LoopOverFormula, ListMatches, &
+    & NCharsInFormat, NumStringElements, &
+    & OptionDetail, ParseOptions, PutHashElement, &
+    & ReadIntsFromList, ReadNumsFromList, &
+    & RemoveElemFromList, RemoveListFromList, RemoveNumFromList, &
+    & RemoveHashArray, RemoveHashElement, RemoveOption, RemoveSwitchFromList, &
+    & ReplaceSubstring, ReverseList, ReverseStrings, &
+    & SnipList, SortArray, SortList, StringElement, StringElementNum, &
+    & SwitchDetail, &
+    & Unquote, Unwrap, Wrap
 
   interface BooleanValue
     module procedure BooleanValue_log, BooleanValue_str
@@ -339,8 +339,8 @@ module MLSStringLists               ! Module to treat string lists
     ! module procedure RemoveHashElement_log
   end interface
 
-  interface unwrap
-    module procedure unwrap_array, unwrap_list
+  interface Unwrap
+    module procedure Unwrap_array, Unwrap_list
   end interface
 
   ! Public data
@@ -354,7 +354,8 @@ module MLSStringLists               ! Module to treat string lists
   integer, public, parameter      :: lenORSIZETOOSMALL = -999
   
   ! A limitation among string list operations
-  integer, private, parameter     :: MaxNumStrings       = 4096
+  integer , parameter             :: MAXELEMENTLENGTH    = 80
+  integer, private, parameter     :: MaxNumSwitches      = 256
   integer, private, parameter     :: MAXSTRLISTLENGTH    = 4*4096
   integer, private, parameter     :: MAXSTRELEMENTLENGTH = BareFNlen
 
@@ -739,7 +740,6 @@ contains
     !----------Local vars----------!
     integer                             :: i
     integer                             :: j
-    integer                             :: k
     integer                             :: m
     integer                             :: n
     character (len=len(str)+9)          :: temp
@@ -2591,7 +2591,7 @@ contains
     end select
   end function optionDetail
 
-  ! ---------------------------------------------  parseOptions  -----
+  ! ---------------------------------------------  ParseOptions  -----
 
   ! Parse a commandline, checking for the presence of single-character
   ! options or multi-character options, returning in opts_out for each
@@ -2612,7 +2612,7 @@ contains
   ! Notes:
   ! (1) See also optionDetail, switchDetail
   
-  subroutine parseOptions( cmdline, opts_out, pattern, single_options, &
+  subroutine ParseOptions( cmdline, opts_out, pattern, single_options, &
     & multi_options, needs_arg, delims, cmdargs )
     ! Dummy arguments
     character (len=*), intent(in)                  :: cmdline
@@ -2677,7 +2677,7 @@ contains
       i = i + 1
       cmdargs(i) = StringElement( cmdline(k+1:), j, countEmpty, inseparator=' ' )
     enddo
-  end subroutine parseOptions
+  end subroutine ParseOptions
 
   ! ---------------------------------------------  PutHashElement  -----
 
@@ -2876,7 +2876,6 @@ contains
     ! Method:
     ! (1) Turn list to an array
     ! (2) Read each array element separately into a float
-    integer                                              :: elem
     integer                                              :: nElems
     character(len=16), dimension(MAXSTRELEMENTLENGTH)    :: strArray
     !
@@ -2904,7 +2903,6 @@ contains
     ! Method:
     ! (1) Turn list to an array
     ! (2) Read each array element separately into a float
-    integer                                              :: elem
     integer                                              :: nElems
     character(len=16), dimension(MAXSTRELEMENTLENGTH)    :: strArray
     !
@@ -3159,7 +3157,6 @@ contains
     ! Internal variables
     integer :: bloc
     logical, parameter :: COUNTEMPTY = .true.
-    character :: cquotes, quotes
     character (len=len(inOptions))             :: listBloc ! space-separated
     integer :: j
     integer :: myPattern
@@ -3172,12 +3169,6 @@ contains
     if ( present(pattern) ) then
       if ( any(Pattern == (/0, 1, 2, 3, 4 /)) &  ! accept legal values only
         & ) myPattern = pattern
-    endif
-    quotes = '['
-    cquotes = ']'
-    if ( present(delims) ) then
-      quotes = delims(1)
-      cquotes = delims(2)
     endif
     if ( option(1:2) == '--' ) then
       numDashes = 2
@@ -3635,7 +3626,6 @@ contains
     character(len=1)                       :: LeftRight
     logical                                :: shorterfirst
     logical                                :: switchable
-    integer, parameter                     :: MAXCHARVALUE = 256
     integer, dimension(:), allocatable     :: invBinNumber 
     integer                                :: maxStrPos
     character (len=16)                     :: myOptions  
@@ -3891,18 +3881,17 @@ contains
   ! See also GetStringElement, NumStringElements
 
   function StringElementNum(inList, test_string, countEmpty, &
-    & inseparator, part_match) RESULT (elem)
+    & inseparator, part_match) result (elem)
     ! Dummy arguments
     character (len=*), intent(in)             :: inList
     character (len=*), intent(in)             :: test_string
     logical, intent(in)                       :: countEmpty
     integer                                   :: elem
-    character (len=*), optional, intent(in)       :: inseparator
+    character (len=*), optional, intent(in)   :: inseparator
     logical, optional, intent(in)             :: part_match
 
     ! Local variables
     integer :: nElements
-    integer , parameter :: MAXELEMENTLENGTH = 80
 
     character (len=MAXELEMENTLENGTH)           :: listElement
     logical ::                                    match
@@ -3936,7 +3925,7 @@ contains
 
   ! This function takes a (usually) comma-separated string list, interprets it
   ! as a list of individual switches, and a test switch
-  ! It returns the detail number of the test switch in the list
+  ! It returns the greatest detail number of the test switch in the list
   ! or, -1 if it is not found
   
   ! As an example, say the list of switches is
@@ -3950,6 +3939,10 @@ contains
   
   ! The behavior may be modified by options flag
   ! For which see comment above
+  ! A special option is -R which restores an older behavior
+  ! finding the Detail of the first matched string in Inlist
+  ! instead of the current method which begins by sorting Inlist
+  ! and then removing any duplicate switches.
   
   ! Note:
   ! By default, options automatically includes "f", for backwards compatibility
@@ -3959,23 +3952,26 @@ contains
   ! if the string list contains a "*" and one of the options is "w" then
   ! the test switch is automatically present
   
-  function SwitchDetail( INLIST, TEST_SWITCH, OPTIONS ) result ( DETAIL )
+  function SwitchDetail( Inlist, Test_switch, Options ) result ( Detail )
     ! Dummy arguments
-    character (len=*), intent(in)             :: INLIST
-    character (len=*), intent(in)             :: TEST_SWITCH
-    character (len=*), intent(in), optional   :: OPTIONS
-    integer                                   :: DETAIL
+    character (len=*), intent(in)             :: Inlist
+    character (len=*), intent(in)             :: Test_switch
+    character (len=*), intent(in), optional   :: Options
+    integer                                   :: Detail
 
     ! Local variables
-    logical :: back
-    logical, parameter :: COUNTEMPTY = .true.
-    integer :: elem
-    integer, parameter :: MAXELEMENTLENGTH = 80
-    character (len=MAXELEMENTLENGTH)           :: listElement
-    character(len=8) :: myOptions
-    integer :: nElements
-    integer :: startOfDetails     ! index where the detail number would start
-    character (len=len(test_switch))           :: switch
+    logical, parameter                        :: COUNTEMPTY = .true.
+    logical                                   :: back     
+    logical                                   :: dontsort 
+    integer                                   :: elem     
+    integer, dimension(MaxNumSwitches)        :: iarray
+    character (len=MAXELEMENTLENGTH)          :: listElement
+    character(len=8)                          :: myOptions
+    integer                                   :: nElements
+    integer                                   :: startOfDetails  ! index where 
+    character (len=len(test_switch))          :: switch          ! the detail number 
+    character (len=len(Inlist))               :: Switches        ! would start
+    character (len=len(Inlist))               :: tempSwitches
 
     ! Executable code
     myOptions = '-f'
@@ -3993,13 +3989,25 @@ contains
       switch = test_switch
     endif
     if ( index(myOptions, 'f') > 0 ) switch = adjustl(switch)
+    dontsort = ( index(myOptions, 'R') > 0 )
+    if ( dontsort ) then
+      Switches = InList
+    else
+    ! Now we want to keep only the switch with the highest details level
+    ! Sort the switches to pick out the highest detail
+    ! if multiple matches are found
+      call sortList( CompressString(InList), iarray, ',', switches )
+      tempSwitches = switches
+      call GetUniqueList( tempSwitches, Switches, nElements, &
+            & ignoreLeadingSpaces=.true., options='-eSL' )
+    endif
 
    ! Check for matches
     do elem=1, nElements
       if ( back ) then
-        call GetStringElement(inList, listElement, nElements-elem+1, countEmpty)
+        call GetStringElement( Switches, listElement, nElements-elem+1, countEmpty )
       else
-        call GetStringElement(inList, listElement, elem, countEmpty)
+        call GetStringElement( Switches, listElement, elem, countEmpty )
       endif
       if ( index(myOptions, 'c') > 0 ) listElement = lowercase(listElement)
       if ( index(myOptions, 'f') > 0 ) listElement = adjustl(listElement)
@@ -4638,6 +4646,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.81  2019/01/10 21:42:39  pwagner
+! SwitchDetail returns the greatest Detail if multiple matches
+!
 ! Revision 2.80  2018/12/11 01:21:43  pwagner
 ! No longer uses Printit_M
 !
