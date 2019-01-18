@@ -22,9 +22,17 @@ MakeFName = Makefile
 # The name of this file must be used in each of $(SUBDIRS)
 # i.e., if you are calling make with a different Makefile name,
 #        say: make -f $(MakeFName)
-# then (re)name the Makefiles in /l2 /lib etc. also $(MakeFName)
+# then (re)name the Makefiles in /l2 /lib etc. also to be $(MakeFName)
 
 # "$Id$"
+#
+# ---------------------- Conventions
+# With a few exceptions, NAMES in ALLCAPS are settings which you
+# can override on the commandline like this
+#   make NAME=yourvalue ..
+# names in lowercase will usually be targets which you
+# can instruct make to build like this
+#   make name
 
 # ------------------- Automatic internalcleanup
 # We use COPY_NUMBER to keep track of the number of times
@@ -78,6 +86,7 @@ endif
 # where the following utility scripts 
 # (necessary to build the mls software) are stored
 #   Script                        Function
+#  ------------            -----------------------------------
 #   add_idents.sh          (1) Adds $id, $rcs lines to source files
 #                          (2) Prints toc/api for source files
 #   batch_hcnvrt.sh        Convert a group of hdfeos2 files to hdfeos5
@@ -107,6 +116,7 @@ endif
 #
 #  More info on some of these scripts is available via
 #  Command                      for help on 
+#  ------------            -----------------------------------
 #  make help--convert           batch_hcnvrt.sh and heconvert
 #  make help--depends           makemakedep.sh
 #  make help--ghostbuster       ghostbuster.sh
@@ -280,9 +290,18 @@ SHELL = /bin/sh
 #   make
 #
 # The script util/build_f90_in_misc.sh was written to automate this process
-# Two additional targets
-# withouttoolkit
-# withoutmlsmessage
+# Two special-purpose targets
+#   withouttoolkit
+#   withoutmlsmessage
+# can be used to build a lightweight tool based on a subset of the ponderous mlslib.
+# (a) to build and install your own executable without the whole toolkit panoply
+# type
+#    make MY_PROG=/path/to/it/myprog.f90 withouttoolkit
+# (b) to omit even MLSMessage
+#    make MY_PROG=/path/to/it/myprog.f90 withoutmlsmessage
+#
+#
+#
 #
 #    The following are useful if you stored multiple configurations
 #     besides current one
@@ -380,19 +399,20 @@ EVERY_MLSCONFG = $(shell ${REECHO} -d -dirn lib/machines -excl CVS -excl NAG.nog
 EXCL_MLSCONFG = $(shell ${REECHO} -d -dirn lib/machines -prefix='--exclude' -suffixn='/\*' -excl CVS)
 
 # OTHER_SUBDIRS are *not* built automatically:
-# you must either name them individually, or use the "all" target
+# you must either name them individually on your make cmdline,
+# or use
+#   make all
 OTHER_SUBDIRS = fwdmdl cloudfwdm cfm idlcfm
 #         All the subdirectories
 
 #You may build all the subdirectories via the "all" target; i.e.,
 #by entering
-
-# make all
+#   make all
 
 #SUBDIRS = blas lib $(LEVELS) $(OTHER_SUBDIRS)
 SUBDIRS := $(shell ${REECHO} -d blas lib $(LEVELS) $(OTHER_SUBDIRS))
 
-# This isn't really everything, just everything the SIPS might need
+# The next isn't really everything, just everything the SIPS might need
 # so it will be bundled up by tar
 # Note that it does *not* include the Toolkit nor PVM nor FFTW 
 # because they are outside mlspgs
@@ -401,18 +421,18 @@ EVERYTHING = $(SUBDIRS)  srclib \
    cfm conv_uars doc idlcfm \
    $(MakeFName) README.$(MakeFName) BEFORE.mls license.txt
      
-# This is in case tar doesn't summon GNU tar, you may still use it via
+# This is in case tar doesn't auotmatically mean GNU tar, you may still use it via
 # something like
 #    make tar TAR=/usr/local/gnu/bin/tar
 TAR=tar
 
 # These definitions allow us to tar up smaller portions of our software
-# for code reuse of debugging
+# for code reuse or debugging
 # They allow us to forego the toolkit and associated hdf libraries
 NO_MLSMESS_LIB := $(shell ${REECHO} -dir lib -path lib \
-dates_module.f90  MLSFinds.f90        numToChars.f9h  PseudoToolkit.ps90\
-findunique.f9h    MLSKinds.f90        output_m.f90    ReadANumFromChars.f9h\
-isafillvalue.f9h  MLSStringLists.f90  \
+MLSFinds.f90      numToChars.f9h      PseudoToolkit.ps90\
+findunique.f9h    MLSKinds.f90        output_m.f90       ReadANumFromChars.f9h\
+io_stuff.f90      isafillvalue.f9h    lexer_types.f90\
 MLSCommon.f90     MLSStrings.f90      PrintIt_m.f90\
 )
 NO_MLSMESS_SRCLIB := $(shell ${REECHO} -dir srclib -path srclib \
@@ -422,13 +442,12 @@ NO_MLSMESS_SRCLIB := $(shell ${REECHO} -dir srclib -path srclib \
 NO_MLSMESS := $(NO_MLSMESS_LIB) $(NO_MLSMESS_SRCLIB)
 
 NO_TOOLKIT_LIB := $(shell ${REECHO} -dir lib -path lib \
-addRow.f9h        MLSKinds.f90              output_m.f90\
-dates_module.f90  MLSMessage.f9h            output_name_value_pair.f9h\
-findunique.f9h    MLSMessageSubstitute.f90  PrintIt_m.f90\
-highOutput.f90    mlsmessagetest.f90        PseudoToolkit.ps90\
-isafillvalue.f9h  MLSStringLists.f90        ReadANumFromChars.f9h\
-MLSCommon.f90     MLSStrings.f90            \
-MLSFinds.f90      numToChars.f9h            toggles_core.f90\
+findunique.f9h    MLSMessageSubstitute.f90 output_m.f90\
+isafillvalue.f9h  PrintIt_m.f90            io_stuff.f90 \
+lexer_types.f90   MLSCommon.f90            MLSStrings.f90\
+MLSFinds.f90      numToChars.f9h           PseudoToolkit.ps90\
+MLSKinds.f90      ReadANumFromChars.f9h    toggles_core.f90\
+MLSMessage.f9h\
 )
 NO_TOOLKIT_SRCLIB := $(shell ${REECHO} -dir srclib -path srclib \
   ReadNumFromBaseN.f9h\
@@ -864,12 +883,7 @@ $(utctotai_sources): $(MLSBIN)/utctotai.shar
 	cd $(UTCDIR); \
 	/bin/sh utctotai.shar
 
-# to build and install your own executable without toolkit panoply
-# type
-#    make MY_PROG=/path/to/it/myprog.f90 withouttoolkit
-# to omit even MLSMessage
-#    make MY_PROG=/path/to/it/myprog.f90 withoutmlsmessage
-#
+# * Building lightweight tools w/o ponderous mlslib *
 # This next sequence is a bit of quackery-hackery needed
 # to make PseudoToolkit available as a fortran source file
 # only when needed, but hidden behind the gauzy guise of its ps90
@@ -1501,6 +1515,9 @@ tools: $(MLSTOOLS)
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.25  2018/11/29 21:17:06  pwagner
+# install now cps instead of mving executables to INSTALLDIR
+#
 # Revision 1.24  2018/08/13 23:16:21  pwagner
 # Use MLSTOOLS; correct errors in install-mlstools
 #
