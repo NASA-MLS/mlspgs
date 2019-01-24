@@ -45,7 +45,6 @@
 ! MLSMSGStatus_Dumped      Called with severity >= MLSMSG_Severity_to_walkback
 
 !     (subroutines and functions)
-! Bummer                   print error message with eye-catching effects
 ! Crash_burn               crash and burn unless called from an exempt module
 ! DumpConfig               dump configuration
 ! RestoreConfig            restore configuration to its default state
@@ -64,9 +63,6 @@
 ! === (end of toc) ===
 
 ! === (start of api) ===
-! Bummer ( char* chars, &
-!  [int columnRange(2)], [char alignment], [int skips], &
-!  [int severity] )
 ! Crash_burn ( [char* module_name] )
 ! DumpConfig ( [MLSMessageConfig_T config] )
 ! RestoreConfig
@@ -1065,8 +1061,6 @@ contains
   ! ------------------------------------------ Dump_MLSFile ------------
   ! Uses  OutputTable 
   subroutine Dump_MLSFile ( MLSFile, details )
-    use HighOutput, only: AddRow, AddRow_Divider, AddRow_Header, &
-      & OutputTable, StartTable
     use MLSCommon, only: AccessType, FileStringTable, Split_Path_Name
     ! Dummy arguments
     type (MLSFile_T), intent(in)         ::      MLSFile
@@ -1228,6 +1222,9 @@ contains
 
 !
 ! $Log$
+! Revision 2.56  2019/01/24 18:29:45  pwagner
+! Reorganized modules that print to simplify toolkit-free builds
+!
 ! Revision 2.55  2018/11/05 18:17:57  pwagner
 ! Prevent warning messages from overfilling %warningmessages array
 !
