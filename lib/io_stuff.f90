@@ -226,7 +226,8 @@ contains
       nChars = len(line) + len(name) + 3
       thus = '(' // trim(name) // ') ' // line
     endif
-    print *, 'thus(1:nChars)'
+    print *, 'thus(1:nChars): ' 
+    print *, thus(1:nChars)
     ! Really, should we allow even PrintMessage to trigger a crash?
     ! For now, yes, we do.
     if ( severity == MLSMSG_Crash ) then
@@ -715,6 +716,9 @@ contains
 end module IO_STUFF
 
 ! $Log$
+! Revision 2.26  2019/01/24 18:35:49  pwagner
+! When asked to PrintMessage actually print message
+!
 ! Revision 2.25  2018/12/11 01:19:54  pwagner
 ! Moved unconditional stdout PrintMessage here
 !
