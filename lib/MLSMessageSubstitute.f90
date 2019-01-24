@@ -13,7 +13,7 @@
 module MLSMessageModule         ! Basic messaging for the MLSPGS suite
 !==============================================================================
 
-  use HighOutput, only: Banner
+  ! use HighOutput, only: Banner
   ! use Intrinsic, only: L_HDFeos, L_HDF, L_Swath, L_Zonalavg, Lit_Indices
   use Machine, only: Crash_Burn_Rude=>crash_Burn, Exit_With_Status, Nevercrash
   use MLSCommon, only: MLSFile_T, MLSDebug, MLSVerbose, &
@@ -72,6 +72,18 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
   integer, parameter :: L_Zonalavg    = L_Swath + 1
   integer, dimension(1) :: Lit_Indices = 1
 
+  interface AddRow
+    module procedure AddRow_Chars
+    module procedure AddRow_int
+    module procedure AddRow_intarray
+    module procedure AddRow_log
+  end interface
+
+  interface Banner
+    module procedure Banner_Chars
+    module procedure Banner_Chararray
+  end interface
+
   include 'MLSMessage.f9h'
 
   ! --------------------------------------------  ReportTKStatus  -----
@@ -110,6 +122,89 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
       str = 'unknown' ! Why not ' '? Or '?'
     end select
   end function accessDFACCToStr
+  
+  subroutine AddRow_chars ( chars, how )
+    character(len=*), intent(in) :: chars
+    character(len=*), intent(in) :: how
+  end subroutine AddRow_chars
+
+  subroutine AddRow_intarray ( chars, how )
+    character(len=*), intent(in) :: chars
+    integer, dimension(:), intent(in) :: how
+  end subroutine AddRow_intarray
+
+  subroutine AddRow_int ( chars, how )
+    character(len=*), intent(in) :: chars
+    integer, intent(in) :: how
+  end subroutine AddRow_int
+
+  subroutine AddRow_log ( chars, how )
+    character(len=*), intent(in) :: chars
+    logical, intent(in) :: how
+  end subroutine AddRow_log
+
+  subroutine AddRow_header ( sep, border )
+    character(len=*), intent(in) :: sep
+    character(len=*), intent(in) :: border
+  end subroutine AddRow_header
+
+  subroutine AddRow_divider ( chars )
+    character(len=*), intent(in) :: chars
+  end subroutine AddRow_divider
+
+  subroutine startTable
+  end subroutine startTable
+
+  subroutine outputTable ( sep, border )
+    character(len=*), intent(in) :: sep
+    character(len=*), intent(in) :: border
+  end subroutine outputTable
+
+  ! -----------------------------------------------------  BANNER  -----
+  ! We put a simpler version of thsi family of routines here to avoid
+  ! dragging in highOutput and everything else that entails
+  !
+  ! Surround your message with stars and stripes; e.g.,
+  ! *-----------------------------------------------*
+  ! *            Your message here                  *
+  ! *-----------------------------------------------*
+  ! proclaiming its great importance to an uncaring world.
+  ! For multiline messages, you may divide them into elements of
+  ! a character array, or else a longer character scalar and
+  ! supply LineLength asking the routine to wrap at word boundaries
+  subroutine BANNER_chars ( chars, &
+    & columnRange, alignment, skips, lineLength, mode, pattern )
+    character(len=*), intent(in)                :: CHARS
+    ! If columnRange(1) < 1, just use starting columns; otherwise move to
+    integer, dimension(2), optional, intent(in) :: COLUMNRANGE
+    character(len=1), intent(in), optional      :: ALIGNMENT ! L, R, C, or J
+    integer, optional, intent(in)               :: SKIPS ! How many spaces between chars
+    integer, optional, intent(in)               :: LINELENGTH
+    character (len=*), optional, intent(in)     :: mode ! if not 'hard'
+    character (len=1), optional, intent(in)     :: pattern ! if not stripes
+    !
+    call PrintItOut ( '*-----------------------------------------------*', MLSMSG_Info )
+    call PrintItOut ( chars, MLSMSG_Info )
+    call PrintItOut ( '*-----------------------------------------------*', MLSMSG_Info )
+  end subroutine BANNER_chars
+
+  subroutine Banner_chararray ( charArray, &
+    & columnRange, alignment, skips, pattern )
+    character(len=*), dimension(:), intent(in)  :: CHARARRAY
+    ! If columnRange(1) < 1, just use starting columns; otherwise move to
+    integer, dimension(2), optional, intent(in) :: COLUMNRANGE
+    character(len=1), intent(in), optional      :: ALIGNMENT ! L, R, C, or J
+    integer, optional, intent(in)               :: SKIPS ! How many spaces between chars
+    character (len=1), optional, intent(in)     :: pattern ! if not stripes
+    ! Internal variables
+    integer :: i
+    ! Executable
+    call PrintItOut ( '*-----------------------------------------------*', MLSMSG_Info )
+    do i = 1, size(chararray)
+      call PrintItOut ( charArray(i), MLSMSG_Info )
+    enddo
+    call PrintItOut ( '*-----------------------------------------------*', MLSMSG_Info )
+  end subroutine Banner_chararray
 
   ! -------------------- Dump_Stack -------------------
   ! In the full module this is called when:
@@ -171,6 +266,9 @@ end module MLSMessageModule
 
 !
 ! $Log$
+! Revision 2.21  2019/01/24 18:30:21  pwagner
+! Reorganized modules that print to simplify toolkit-free builds
+!
 ! Revision 2.20  2018/03/27 22:57:39  pwagner
 ! updated api for Dump_Stack; Freed from use-ing modules string_table and intrinsic
 !
