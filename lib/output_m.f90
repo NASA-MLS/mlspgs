@@ -34,12 +34,10 @@ module Output_M
   !       or we may do both
   !   (#) Stamping may be applied automatically or at command
 
-  use Dates_Module, only: ReformatDate, ReformatTime
   use Machine, only: Crash_Burn, Exit_With_Status, NeverCrash
   use MLSCommon, only: Filenamelen, Finite_Signal, &
     & Is_What_Ieee
-  use MLSStringLists, only: NCharsInFormat
-  use MLSStrings, only: ReplaceNonAscii, Lowercase, &
+  use MLSStrings, only: NCharsInFormat, ReplaceNonAscii, Lowercase, &
     & Readintsfromchars, Stretch, Trim_Safe
   use PrintIt_M, only: Assemblefullline, Get_Config, &
     & MLSMSG_Crash, MLSMSG_Debug, MLSMSG_Info, MLSMSG_Error, &
@@ -696,16 +694,16 @@ contains
     ! them
     ! (This is a new default behavior; you can restore
     ! the old by passing an impossible value for NewLineVal, e.g. -999)
-    character(len=*), intent(in) :: CHARS
-    character(len=*), intent(in), optional :: ADVANCE
-    character(len=*), intent(in), optional :: FROM_WHERE
-    logical, intent(in), optional          :: DONT_LOG ! Prevent double-logging
-    character(len=*), intent(in), optional :: LOG_CHARS
-    character(len=*), intent(in), optional :: INSTEADOFBLANK ! What to output
-    logical, intent(in), optional          :: DONT_STAMP ! Prevent double-stamping
-    integer, intent(in), optional :: NEWLINEVAL ! What char val to treat as <cr>
-    logical, intent(in), optional          :: DONT_ASCIIFY ! output binary
-    character(len=*), intent(in), optional :: format ! consistent with generic
+    character(len=*), intent(in)           :: Chars
+    character(len=*), intent(in), optional :: Advance
+    character(len=*), intent(in), optional :: From_Where
+    logical, intent(in), optional          :: Dont_Log ! prevent double-logging
+    character(len=*), intent(in), optional :: Log_Chars
+    character(len=*), intent(in), optional :: InsteadOfBlank ! What to output
+    logical, intent(in), optional          :: Dont_Stamp ! prevent double-stamping
+    integer, intent(in), optional          :: Newlineval ! What char val to treat as <cr>
+    logical, intent(in), optional          :: Dont_asciify ! output binary
+    character(len=*), intent(in), optional :: Format ! consistent with generic
     ! Internal variables
     integer :: I ! loop inductor
     integer :: BannerLen
@@ -790,13 +788,13 @@ contains
 
   subroutine Output_Char_NoCR ( Chars, &
     & advance, from_where, dont_log, log_chars, insteadofblank, dont_stamp )
-    character(len=*), intent(in) :: CHARS
-    character(len=*), intent(in), optional :: ADVANCE
-    character(len=*), intent(in), optional :: FROM_WHERE
-    logical, intent(in), optional          :: DONT_LOG ! Prevent double-logging
-    character(len=*), intent(in), optional :: LOG_CHARS
-    character(len=*), intent(in), optional :: INSTEADOFBLANK ! What to output
-    logical, intent(in), optional          :: DONT_STAMP ! Prevent double-stamping
+    character(len=*), intent(in)           :: Chars
+    character(len=*), intent(in), optional :: Advance
+    character(len=*), intent(in), optional :: From_Where
+    logical, intent(in), optional          :: Dont_Log ! prevent double-logging
+    character(len=*), intent(in), optional :: Log_Chars
+    character(len=*), intent(in), optional :: InsteadOfBlank ! What to output
+    logical, intent(in), optional          :: Dont_Stamp ! prevent double-stamping
     !
     character(len=4) :: MY_ADV
     ! Executable
@@ -842,13 +840,14 @@ contains
     !     (b) logging, either instead of printing or in addition
     ! -------------------------------------------------------------------
     use, intrinsic :: ISO_Fortran_Env, only: Output_Unit
-    character(len=*), intent(in) :: CHARS
-    character(len=*), intent(in), optional :: ADVANCE
-    character(len=*), intent(in), optional :: FROM_WHERE
-    logical, intent(in), optional          :: DONT_LOG ! Prevent double-logging
-    character(len=*), intent(in), optional :: LOG_CHARS
-    character(len=*), intent(in), optional :: INSTEADOFBLANK ! What to output
-    logical, intent(in), optional          :: DONT_STAMP ! Prevent double-stamping
+    use SDPToolkit, only: Stamp
+    character(len=*), intent(in)           :: Chars
+    character(len=*), intent(in), optional :: Advance
+    character(len=*), intent(in), optional :: From_Where
+    logical, intent(in), optional          :: Dont_Log ! prevent double-logging
+    character(len=*), intent(in), optional :: Log_Chars
+    character(len=*), intent(in), optional :: InsteadOfBlank ! What to output
+    logical, intent(in), optional          :: Dont_Stamp ! prevent double-stamping
     !
     logical :: alreadyLogged
     logical :: DoIt    ! TheUnit /= 0 .or. outputOptions%prUnitLiteral
@@ -928,11 +927,15 @@ contains
       stamp_header = (my_adv == 'yes')
     elseif ( stampoptions%post ) then
       if ( my_adv == 'yes' ) then
-        stamped_chars = stamp(chars)
+        stamped_chars = stamp ( chars, stampOptions%dateFormat, &
+          & stampOptions%timeFormat, stampOptions%textCode, &
+          & stampOptions%post, stampOptions%showTime )
         stamped = .true.
       end if
     elseif( ATLINESTART ) then
-      stamped_chars = stamp(chars)
+      stamped_chars = stamp ( chars, stampOptions%dateFormat, &
+          & stampOptions%timeFormat, stampOptions%textCode, &
+          & stampOptions%post, stampOptions%showTime )
       stamped = .true.
     end if
 
@@ -1029,7 +1032,9 @@ contains
       endif
       if ( stamp_header ) then
         ! Time to add stamp as a page header on its own line
-        stamped_chars = stamp(' ')
+        stamped_chars = stamp ( ' ', stampOptions%dateFormat, &
+          & stampOptions%timeFormat, stampOptions%textCode, &
+          & stampOptions%post, stampOptions%showTime )
         stamped = .true.
         if ( doIt .and. len_trim(stamped_chars) > 0 ) then
           write ( theUnit, '(a)', advance='yes' ) trim(stamped_chars)
@@ -1760,46 +1765,6 @@ contains
     end do
   end subroutine PR_BLANKS
 
-  ! ----------------------------------------------  stamp  -----
-  function stamp( chars )
-  ! stamp input chars before outputting to PRUNIT.
-  ! Args
-    character(len=*), intent(in) :: chars
-    character(len=len(chars)+64) :: stamp
-    character(len=16) :: dateString
-    character(len=16) :: timeString
-    ! Executable
-    stamp = chars
-    if ( stampOptions%showTime ) then
-      dateString = '' ! Intel 12 and earlier doesn't fill with blanks
-      timeString = '' ! Intel 12 and earlier doesn't fill with blanks
-      call date_and_time ( date=dateString, time=timeString )
-      dateString = reFormatDate(trim(dateString), toForm=stampOptions%dateFormat)
-      timeString = reFormatTime(trim(timeString), stampOptions%timeFormat)
-      if ( stampOptions%dateFormat /= ' ' ) &
-      & stamp = catStrings( stamp, dateString )
-      if ( stampOptions%timeFormat /= ' ' ) &
-      & stamp = catStrings( stamp, timeString )
-    end if
-    if ( stampOptions%textCode /= ' ' ) &
-        & stamp = catStrings( stamp, stampOptions%textCode )
-  contains
-    function catStrings(a, b) result(c)
-      ! Catenates strings a and b with intervening space
-      ! if post then a before b
-      ! otherwise b before a
-      character(len=*), intent(in) :: a
-      character(len=*), intent(in) :: b
-      character(len = (len(a)+len(b)+1) ) :: c
-      if ( stampOptions%post ) then
-        c = trim(a) // ' ' // b
-      else
-        c = trim(b) // ' ' // a
-      end if
-    end function catStrings
-
-  end function stamp 
-
   ! ..............................................  not_used_here  .....
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
@@ -1814,6 +1779,9 @@ contains
 end module Output_M
 
 ! $Log$
+! Revision 2.141  2019/01/24 18:38:05  pwagner
+! Reorganized modules that print to simplify toolkit-free builds
+!
 ! Revision 2.140  2018/10/25 23:25:20  pwagner
 ! Uses Pause from Io_Stuff
 !
