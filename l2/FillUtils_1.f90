@@ -78,7 +78,7 @@ module FillUtils_1                     ! Procedures used by Fill
   use MLSSignals_M, only: GetFirstChannel, GetSignalName, GetModuleName, &
     & GetSignal, IsModuleSpacecraft, Signal_T, Signals
   use MLSStringLists, only: GetHashElement, NumStringElements, &
-    & StringElement, SwitchDetail
+    & StringElement, StringElementNum, SwitchDetail
   use MLSStrings, only: Indexes, LowerCase, WriteIntsToChars
   use Molecules, only: L_H2O
   use Monotone, only: IsMonotonic
@@ -7512,6 +7512,8 @@ contains ! =====     Public Procedures     =============================
       logical :: homogeneous
       integer :: Me = -1                  ! String index for trace
       character(len=64) :: name
+      integer :: NDSs
+      integer :: NSQs
       type (VectorValue_T), pointer :: quantity
       integer, parameter                      :: MAXLISTLENGTH=256
       character (len=10*MAXLISTLENGTH)        :: attrnames
@@ -7542,9 +7544,11 @@ contains ! =====     Public Procedures     =============================
         & data=NumStringElements( trim(DSNames), countEmpty ) )
       call LogMyData ( mesg='size ( vector%quantities )', &
         & data=size ( vector%quantities ) )
-      do dsi=1, NumStringElements( trim(DSNames), countEmpty )
-        call LogMyData ( mesg='dsi', data=dsi )
-        do sqi = 1, size ( vector%quantities )
+      NDSs = NumStringElements( trim(DSNames), countEmpty )
+      NSQs = size ( vector%quantities )
+      ! do dsi=1, NDSs
+        ! call LogMyData ( mesg='dsi', data=dsi )
+        sqiloop: do sqi = 1, NSQs
           ! if ( dsi > 123 .and. sqi > 120 ) &
             ! & call LogMyData ( mesg='sqi', data=sqi )
           quantity => vector%quantities(sqi)
@@ -7564,9 +7568,12 @@ contains ! =====     Public Procedures     =============================
           end if
           ! if ( dsi > 123 .and. sqi > 123 ) &
             ! & call LogMyData ( mesg='Deciding about sqi', data=sqi )
-          if ( lowercase(trim(name)) /= &
-            & lowercase(StringElement( DSNames, dsi, countEmpty )) ) &
-            & cycle
+          ! if ( lowercase(trim(name)) /= &
+          !  & lowercase(StringElement( DSNames, dsi, countEmpty )) ) &
+          !  & cycle
+          dsi = StringElementNum( lowercase(DSNames), lowercase(name), &
+            & countEmpty=.true. )
+          if ( dsi < 1 ) cycle
           if ( addSlash ) Name = '/' // Name
           if ( DEEBUG ) then
             call outputNamedValue( 'shape(values)' // trim(name), &
@@ -7579,9 +7586,11 @@ contains ! =====     Public Procedures     =============================
             call LogMyData ( mesg='sqi', data=sqi )
             call NamedQtyFromFile ( key, quantity, MLSFile, &
               & filetype, name, spread, interpolate, homogeneous )
+            call LogMyData ( mesg='Returned from reading ' // trim(name) )
+            ! exit sqiloop
           endif
-        end do
-      end do
+        end do sqiloop
+      ! end do
       call LogMyData ( mesg='Whew! Barely made it.' )
       call trace_end ( 'FillUtils_1.VectorFromFile', &
         & cond=toggle(gen) .and. levels(gen) > 1 )
@@ -7979,6 +7988,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.147  2019/01/24 00:02:27  pwagner
+! Coded around a strange NAG error
+!
 ! Revision 2.146  2018/12/07 00:21:58  pwagner
 ! Corrected error in LogMyData; will log only if verbose
 !
