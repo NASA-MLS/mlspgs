@@ -21,8 +21,8 @@ module HighOutput
   use MLSCommon, only: MLSDebug, MLSVerbose
   use MLSFinds, only: FindFirst
   use MLSStringLists, only: ExpandStringRange, GetStringElement, &
-    & List2Array, NCharsInFormat, NumStringElements, SwitchDetail, Wrap
-  use MLSStrings, only: Asciify, Lowercase, Ncopies, &
+    & List2Array, NumStringElements, SwitchDetail, Wrap
+  use MLSStrings, only: Asciify, Lowercase, NCharsInFormat, Ncopies, &
     & Trim_Safe, WriteIntsToChars
   use Output_M, only: Advance_Is_Yes_Or_No, Blanks, GetOutputStatus, &
     & MaxOutputLineslen, Newline, &
@@ -2572,6 +2572,9 @@ contains
 end module HIGHOUTPUT
 
 ! $Log$
+! Revision 2.28  2019/01/24 18:33:20  pwagner
+! Reorganized modules that print to simplify toolkit-free builds
+!
 ! Revision 2.27  2018/05/11 20:33:36  pwagner
 ! Make sure myChars long enough; reinitialize outputLines after use
 !
