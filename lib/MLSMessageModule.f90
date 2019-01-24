@@ -16,7 +16,8 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
   use Call_Stack_M, only: Dump_Stack ! used in MLSMessage.f9h, but not here
                                      ! but... the Makefile maker can't see it
                                      ! in MLSMessage.f9h
-  use HighOutput, only: Banner
+  use HighOutput, only: AddRow, AddRow_Divider, AddRow_Header, Banner, &
+    & OutputTable, StartTable
   use Intrinsic, only: L_HDFeos, L_HDF, L_Swath, L_Zonalavg, Lit_Indices
   use Machine, only: Crash_Burn_Rude=>Crash_Burn, Exit_With_Status, Nevercrash
   use MLSCommon, only: MLSFile_T, MLSDebug, MLSVerbose, &
@@ -203,6 +204,9 @@ end module MLSMessageModule
 
 !
 ! $Log$
+! Revision 2.55  2019/01/24 18:30:01  pwagner
+! Reorganized modules that print to simplify toolkit-free builds
+!
 ! Revision 2.54  2018/03/27 22:55:20  pwagner
 ! Where to find get_string moved to .f90 module or its substitute
 !
