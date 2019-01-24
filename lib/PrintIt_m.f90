@@ -13,13 +13,13 @@ module PrintIt_m ! Lowest-level module for printing, logging, etc.
 
   ! use ISO_FORTRAN_ENV, only: ERROR_UNIT, OUTPUT_UNIT
   ! use IO_Stuff, only: Pause
-  use Machine, only: Crash_Burn, Exit_With_Status, NeverCrash
+  use Machine, only: Crash_Burn, Exit_With_Status, NeverCrash, USleep
   use MLSCommon, only: Filenamelen, MLSFile_T, &
     & MLSMSG_Success, MLSMSG_Pause, MLSMSG_Debug, MLSMSG_Info, &
     & MLSMSG_TestWarning, MLSMSG_Warning, MLSMSG_Error, MLSMSG_Crash, &
     & MLS_S_Success
   use SDPToolkit, only: UseSDPToolkit, Pgs_Smf_GenerateStatusReport
-  use Wait_M, only: Pause
+  use IO_Stuff, only: Pause
 
   implicit none
   private
@@ -335,15 +335,18 @@ contains
     integer, intent(in), optional :: exitStatus  ! Exit with this status
     logical, optional, intent(in) :: noExit      ! No, just return no matter what
     ! Local variables
+    logical :: exist
     character(len=len(inline)) :: Line
     logical :: log_it
     integer :: loggedLength
     character(len=len(inline)+len(MLSMessageConfig%prefix)) :: loggedLine
     integer :: ioerror
     integer :: maxLineLength
+    character(len=128) :: Mesg
     logical :: myNoExit
     logical :: myNoPrefix
     logical, parameter :: DEEBUG = .false.
+    integer :: unitnum
     ! Executable
     if ( MLSMessageConfig%AsciifyMessages ) then
       line = asciify(inLine)
@@ -392,7 +395,15 @@ contains
       if ( len_trim(MLSMessageConfig%PausedInputFile) < 1 ) then
         call Pause ( line )
       else
-        call Pause ( line, trim(MLSMessageConfig%PausedInputFile) )
+        do
+          call USleep ( 50000 )
+          inquire( file=trim(MLSMessageConfig%PausedInputFile), exist=exist )
+          if ( exist ) exit
+        enddo
+        open ( newunit=unitnum, form='formatted', &
+          & file=trim(MLSMessageConfig%PausedInputFile), status='old', iostat=ioerror )
+        read ( unitnum, '(a80)' ) Mesg
+        close ( unitnum )
       endif
       return
     elseif ( myNoExit ) then
@@ -525,6 +536,9 @@ contains
 end module PrintIt_m
 
 ! $Log$
+! Revision 2.16  2019/01/24 18:31:47  pwagner
+! Reorganized modules that print to simplify toolkit-free builds
+!
 ! Revision 2.15  2018/12/11 16:46:47  pwagner
 ! Changed parameter name to MLS_S_Success to avoid conflict in level 1
 !
