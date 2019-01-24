@@ -10,8 +10,9 @@
 ! foreign countries or providing access to foreign persons.
 
 !=============================================================================
-MODULE MLSStrings               ! Some low level string handling stuff
+module MLSStrings               ! Some low level string handling stuff
 !=============================================================================
+  use Machine, only: Crash_Burn, Exit_With_Status, NeverCrash
   use MLSFinds, only: FindFirst, FindNext
   implicit none
   private
@@ -33,8 +34,8 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! STRINGOPTIONS      Default options string
 
 !     (subroutines and functions)
-! asciify            purify chars to be within printing range [32,126]
-!                      (no binary) (see also ReplaceNonAscii, unasciify)
+! Asciify            purify chars to be within printing range [32,126]
+!                      (no binary) (see also ReplaceNonAscii, unAsciify)
 ! Capitalize         tr[a-z] -> [A-Z]
 ! CatStrings         Concatenate strings with a specified separator
 ! CharToInt          Convert a single char to its corresponding integer
@@ -61,6 +62,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
 !                    Finds string index of substring in array of strings
 ! LowerCase          tr[A-Z] -> [a-z]
 ! NAppearances       The number of times each substring appears in string
+! NCharsInFormat     How many characters in a format spec
 ! NCopies            How many copies of a substring in a string
 ! ReadCompleteLineWithoutComments     
 !                    Knits continuations, snips comments
@@ -71,7 +73,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! ReadRomanNumerals  Converts a Roman numeral (e.g. 'ix') to its integer value
 ! Replace            Replaces every instance of oldChar with newChar
 ! remap              Replaces every instance of char in old with corresponding nw
-! ReplaceNonAscii    Replaces every non-ascii char with newChar (see also asciify)
+! ReplaceNonAscii    Replaces every non-ascii char with newChar (see also Asciify)
 ! Reverse            Turns 'a string' -> 'gnirts a'
 ! Reverse_trim       (Reverses after trimming its argument)
 ! Rot13              Like ROT13 but for general integer nn
@@ -87,8 +89,8 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! Strings2Ints       Converts an array of strings to ints using "ichar" ftn
 ! trim_safe          trims string down, but never to length 0
 ! TrueList           describe where elements of an array are true
-! unasciify          restore non-ascii characters in place of their coded forms
-!                       (see asciify)
+! unAsciify          restore non-ascii characters in place of their coded forms
+!                       (see Asciify)
 ! unWrapLines        undo the splitting of commands across multiple lines
 ! WriteIntAsBaseN    Converts an integer to base n representation
 ! WriteIntsToChars   Converts an array of ints to strings using Fortran write
@@ -96,7 +98,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! === (end of toc) ===
 
 ! === (start of api) ===
-! char* asciify ( char* str, [char* how] )
+! char* Asciify ( char* str, [char* how] )
 ! char* Capitalize (char* str)
 ! CatStrings ( char* strings(:), char* sep, char* stringsCat, &
 !      & int L, [char* options] )
@@ -120,6 +122,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
 !   [log caseInsensitive, [log testSubstring], [log listInString])
 ! char* LowerCase (char* str)
 ! int(:) NAppearances (char* string, char* substrings)
+! int nCharsinFormat ( char* Format )
 ! int NCopies (char* str, char* substring, [log overlap])
 ! ReadCompleteLineWithoutComments (int unit, char* fullLine, [log eof], &
 !       & [char commentChar], [char continuationChar])
@@ -151,7 +154,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! strings2Ints ( char* strs(:), int ints(:,:) )
 ! char* trim_safe ( char* str )
 ! TrueList ( logical* list, char* str )
-! char* unasciify ( char* str, [char* how] )
+! char* unAsciify ( char* str, [char* how] )
 ! unWrapLines ( char* inLines(:), char* outLines(:), &
 !              [int nout], [char escape], [char comment] )
 ! writeIntAsBaseN (int int, int N, char* strs, [char* options])
@@ -211,7 +214,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
     & Indexes, Ints2Strings, &
     & IsAllAscii, IsAlphabet, IsComment, IsDigits, IsRepeat, &
     & LenTrimToAscii, LinearSearchStringArray, Lowercase, &
-    & NAppearances, NCopies, &
+    & NAppearances, NCharsInFormat, NCopies, &
     & ReadCompleteLineWithoutComments, ReadIntFromBaseN, ReadIntsFromChars, &
     & ReadNumFromBaseN, ReadNumsFromChars, ReadRomanNumerals, &
     & Remap, Replace, ReplaceNonAscii, Reverse, Reverse_Trim, &
@@ -303,7 +306,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
   
 contains
 
-  ! -------------------------------------------------  ASCIIFY  -----
+  ! -------------------------------------------------  Asciify  -----
   ! takes input string and replaces any non-printing characters
   ! with corresponding ones in range [32,126]
   ! leaving other chars alone
@@ -312,7 +315,7 @@ contains
   !    how         meaning
   !    ---         -------
   !  'shift'       shift to the character with matching modulus (default)
-  !                  (a poor choice for default, in my opinion)
+  !                  (a poor choice for a default, in my opinion)
   !  'snip'        remove the offending character (shortening the string)
   !  'decimal'     return <nnn> where nnn is the decimal value (e.g. 0)
   !  'octal'       return <nnn> where nnn is the octal value (e.g. 000)
@@ -320,8 +323,8 @@ contains
   !  '*'           replace with whatever character how was (e.g., '*')
   ! Note that some of these options may output a longer string than the input
 
-  ! (see also ReplaceNonAscii, unasciify)
-  function ASCIIFY_scalar (STR, HOW) result (OUTSTR)
+  ! (see also ReplaceNonAscii, unAsciify)
+  function Asciify_scalar (STR, HOW) result (OUTSTR)
     !--------Argument--------!
     character (len=*), intent(in)           :: STR
     character (len=5*len(str))              :: OUTSTR
@@ -375,38 +378,38 @@ contains
         endif
       end do
     end select
-  end function ASCIIFY_scalar
+  end function Asciify_scalar
 
-  function ASCIIFY_1d (STR, HOW) result (OUTSTR)
+  function Asciify_1d (STR, HOW) result (OUTSTR)
     character (len=*), dimension(:), intent(in)           :: STR
     character (len=5*len(str)), dimension(size(str))      :: OUTSTR
     character (len=*), optional, intent(in) :: HOW
     integer :: i
     do i=1, size(str)
-      outstr(i) = asciify( str(i), how )
+      outstr(i) = Asciify( str(i), how )
     enddo
-  end function ASCIIFY_1d
+  end function Asciify_1d
 
-  function ASCIIFY_2d (STR, HOW) result (OUTSTR)
+  function Asciify_2d (STR, HOW) result (OUTSTR)
     character (len=*), dimension(:,:), intent(in)                  :: STR
     character (len=5*len(str)), dimension(size(str,1),size(str,2)) :: OUTSTR
     character (len=*), optional, intent(in) :: HOW
     integer :: i
     do i=1, size(str,2)
-      outstr(:,i) = asciify( str(:,i), how )
+      outstr(:,i) = Asciify( str(:,i), how )
     enddo
-  end function ASCIIFY_2d
+  end function Asciify_2d
 
-  function ASCIIFY_3d (STR, HOW) result (OUTSTR)
+  function Asciify_3d (STR, HOW) result (OUTSTR)
     character (len=*), dimension(:,:,:), intent(in)                  :: STR
     character (len=5*len(str)), dimension(size(str,1),size(str,2),size(str,3))&
       &  :: OUTSTR
     character (len=*), optional, intent(in) :: HOW
     integer :: i
     do i=1, size(str,3)
-      outstr(:,:,i) = asciify( str(:,:,i), how )
+      outstr(:,:,i) = Asciify( str(:,:,i), how )
     enddo
-  end function ASCIIFY_3d
+  end function Asciify_3d
 
   ! -------------------------------------------------  CAPITALIZE  -----
   elemental function Capitalize (STR) result (OUTSTR)
@@ -478,16 +481,16 @@ contains
   end function CHARTOINT
 
   ! ---------------------------------------------  CompressString  -----
-  FUNCTION CompressString (str) RESULT (outstr)
+  function CompressString (str) result (outstr)
 
     ! Removes all leading and embedded blanks from a string
     !--------Argument--------!
 
-    CHARACTER (LEN=*), INTENT(IN) :: str
-    CHARACTER (LEN=LEN(str)) :: outstr
+    character (len=*), INTENT(IN) :: str
+    character (len=len(str)) :: outstr
 
     !----------Local vars----------!
-    INTEGER :: i, n
+    integer :: i, n
 
     !----------Executable part----------!
 
@@ -500,10 +503,10 @@ contains
        END IF
     END DO
 
-  END FUNCTION CompressString
+  end function CompressString
 
   ! ------------------------------------------------  COUNT_quotes  -----
-  FUNCTION count_quotes ( str, lquote, rquote ) RESULT (no_of_quotes)
+  function count_quotes ( str, lquote, rquote ) result (no_of_quotes)
     ! This counts the number of quotes in a string 
     ! For our purposes, quotes consist of any non-space characters
     ! surrounded by an {lquote. rquote} pair
@@ -516,14 +519,14 @@ contains
     ! which uses string slicing and index arithmetic
     ! Should we go back and simplify the latter?
     !--------Argument--------!
-    CHARACTER (len=*), INTENT(in) :: str
-    CHARACTER (len=1), INTENT(in) :: lquote
-    CHARACTER (len=1), INTENT(in) :: rquote
+    character (len=*), INTENT(in) :: str
+    character (len=1), INTENT(in) :: lquote
+    character (len=1), INTENT(in) :: rquote
     !---------result---------!
-    INTEGER::no_of_quotes
+    integer::no_of_quotes
     !-----local-variables------!
-    INTEGER::j1
-    INTEGER::j2
+    integer::j1
+    integer::j2
     character(len=len(str)) :: remaining
     !-------Executable-code----!
     no_of_quotes = 0
@@ -538,20 +541,20 @@ contains
        if ( j2 >= len_trim(remaining) ) exit
        remaining = remaining(j2+1:)
     END DO
-  END FUNCTION count_quotes
+  end function count_quotes
 
   ! ------------------------------------------------  COUNT_WORDS  -----
-  FUNCTION count_words (str) RESULT (no_of_words)
+  function count_words (str) result (no_of_words)
     ! This counts the number of words in a string 
     ! For our purposes, words consist of any non-space characters
     ! and are separated by one or more spaces
     ! -----Added by HCP-------- 
     !--------Argument--------!
-    CHARACTER (len=*), INTENT(in) :: str
+    character (len=*), INTENT(in) :: str
     !---------result---------!
-    INTEGER::no_of_words
+    integer::no_of_words
     !-----local-variables------!
-    INTEGER::j
+    integer::j
     !-------Executable-code----!
     IF (str(1:1) /= " ") THEN
        no_of_words=1
@@ -563,11 +566,11 @@ contains
           no_of_words=no_of_words+1
        END IF
     END DO
-  END FUNCTION count_words
+  end function count_words
 
   ! ------------------------------------------------  Delete  -----
-  Function Delete ( str, ch, max ) result ( outstr )
-    ! Function that removes every instance of a char
+  function Delete ( str, ch, max ) result ( outstr )
+    ! function that removes every instance of a char
     !--------Argument--------!
     character(len=*), intent(in) :: str
     character(len=1), intent(in) :: ch
@@ -594,11 +597,11 @@ contains
       outstr(iout:iout) = str(i:i)
     end do
 
-  end Function Delete
+  end function Delete
 
   ! ------------------------------------------------  DEPUNCTUATE  -----
-  Function Depunctuate ( str ) result ( outstr )
-    ! Function that removes punctuation and replaces with blanks
+  function Depunctuate ( str ) result ( outstr )
+    ! function that removes punctuation and replaces with blanks
     ! Added by HCP. This depends on the native character set being 
     ! ASCII. 
     !--------Argument--------!
@@ -618,7 +621,7 @@ contains
         end if
     end do
 
-  end Function Depunctuate
+  end function Depunctuate
 
   ! ------------------------------------------------  FlushArrayLeft  -----
   subroutine FlushArrayLeft ( a, b, options )
@@ -660,7 +663,7 @@ contains
 
   ! ------------------------------------------------  HHMMSS_value  -----
   function HHMMSS_value ( str, ErrTyp, separator, strict ) result ( value )
-    ! Function that returns the value in seconds of a string 'hh:mm:ss'
+    ! function that returns the value in seconds of a string 'hh:mm:ss'
     ! where the field separator ':' divides the string into two
     ! integer-like strings 'hh' and 'mm', as well as one float-like
     ! string 'ss' which may have a decimal point plus fractional part
@@ -943,26 +946,26 @@ contains
   !  against the array list.
   ! If the string is not found, 0 is returned
 
-  FUNCTION LinearSearchStringArray (list, string, caseInsensitive, &
-       & testSubstring, listInString) RESULT (sindex)
+  function LinearSearchStringArray (list, string, caseInsensitive, &
+       & testSubstring, listInString) result (sindex)
 
     ! Dummy arguments
-    CHARACTER (LEN=*), DIMENSION(:) :: list
-    CHARACTER (LEN=*) :: string
-    LOGICAL, intent (in), OPTIONAL :: caseInsensitive
-    LOGICAL, intent (in), OPTIONAL :: testSubstring
-    LOGICAL, intent (in), OPTIONAL :: listInString
+    character (len=*), dimension(:) :: list
+    character (len=*) :: string
+    logical, intent (in), optional :: caseInsensitive
+    logical, intent (in), optional :: testSubstring
+    logical, intent (in), optional :: listInString
 
 
-    ! Function result
-    INTEGER :: sindex   ! matching string index (0 = not found)
+    ! function result
+    integer :: sindex   ! matching string index (0 = not found)
 
     ! Local variables
-    INTEGER :: i
-    LOGICAL :: useCaseInsensitive
-    LOGICAL :: testForSubstring
-    LOGICAL :: testForList
-    LOGICAL :: found
+    integer :: i
+    logical :: useCaseInsensitive
+    logical :: testForSubstring
+    logical :: testForList
+    logical :: found
 
     ! Executable code
 
@@ -1026,7 +1029,7 @@ contains
        END DO linSearchStringSens
     END IF
 
-  END FUNCTION LinearSearchStringArray
+  end function LinearSearchStringArray
 
   ! --------------------------------------------------  LowerCase  -----
   elemental function LowerCase (str) result (outstr)
@@ -1049,7 +1052,7 @@ contains
        END IF
     END DO
 
-  END FUNCTION LowerCase
+  end function LowerCase
 
   ! ---------------------------------------------------  NAppearances  -----
   function NAppearances( str, substrings, dontTrim ) result(array)
@@ -1089,6 +1092,65 @@ contains
       array(i) = count( tmpArray > 0 )
     enddo
   end function NAppearances
+
+  ! ---------------------------------------------------  nCharsinFormat  -----
+  function nCharsinFormat ( Format ) result(nplusm)
+    ! Utility to calculate how many characters in a format spec:         
+    ! [n{xX}][,]{DEFGdefg}m.b                                             
+    ! where n, m, and b are digits (we care only about n and m)           
+    ! return (n+m)
+    ! Tested for specs: sci. format esm.b and eng. format enm.b
+    ! Also for min. width spec: 'f0.b' it will silently return 0
+    ! (It's up to you to handle that correctly)
+    ! Args                                                                
+    character(len=*), intent(in) ::  Format                               
+    integer :: nplusm                                                     
+    ! Local variables                                                     
+    character(len=20) :: kChar, myFormat                                  
+    integer :: n, m, p, q
+    ! Executable                                                          
+    nplusm = 0                                                            
+    kChar=lowerCase(Format)
+    if ( index( KChar, 'es' ) > 0 ) then
+      p = index( KChar, 'es' )
+      kChar = kChar(:p-1) // 'f' // KChar(p+2:)
+    elseif ( index( KChar, 'en' ) > 0 ) then
+      p = index( KChar, 'en' )
+      kChar = kChar(:p-1) // 'f' // KChar(p+2:)
+    elseif ( index( KChar, 'g' ) > 0 ) then
+      p = index( KChar, 'g' )
+      kChar = kChar(:p-1) // 'f' // KChar(p+1:)
+    elseif ( index( KChar, 'e' ) > 0 ) then
+      p = index( KChar, 'e' )
+      kChar = kChar(:p-1) // 'f' // KChar(p+1:)
+    elseif ( index( KChar, 'd' ) > 0 ) then
+      p = index( KChar, 'd' )
+      kChar = kChar(:p-1) // 'f' // KChar(p+1:)
+    endif
+    p = index( KChar, 'f' )
+    if ( p < 1 ) return
+    call readIntsFromChars ( KChar(p+1:), m, ignore='.,*' )
+    if (m < 1) then
+      print *, 'Format: ', trim(Format)
+      call PrintMessage ( ModuleName, &              
+      & 'Bad conversion to m in OUTPUT_xxxLE (format not "{defg}"' )      
+    endif
+    if ( index(TRIM(myFormat), 'x' ) == 0 ) then                          
+      n = 0                                                               
+    else                                                                  
+      p = index( KChar, '(' )
+      q = index( KChar, 'x' )
+      call readIntsFromChars ( KChar(p+1:q-1), n, ignore='.,*' )
+      if (n < 1) then                                                     
+        print *, 'Format: ', trim(Format)
+        print *, trim(kChar)                                              
+        print *, trim(myFormat)                                           
+        call PrintMessage ( ModuleName, &                     
+          & 'Bad conversion to n in OUTPUT_xxxLE (format not "(nx)"' )  
+      end if                                                              
+    end if                                                                 
+    nplusm = n + m                                                        
+  end function nCharsinFormat
 
   ! ---------------------------------------------------  ncopies  -----
   integer function ncopies(str, substr, overlap)
@@ -1135,29 +1197,29 @@ contains
   ! strings are considered comments, and continuation marks can apply within
   ! quoted strings.  Later versions of this routine may be more intelligent.
 
-  SUBROUTINE ReadCompleteLineWithoutComments(unit,fullLine,eof, &
+  subroutine ReadCompleteLineWithoutComments(unit,fullLine,eof, &
        & commentChar,continuationChar)
 
     ! Dummy arguments
 
-    INTEGER, INTENT(IN) :: unit ! Input file unit
+    integer, INTENT(IN) :: unit ! Input file unit
     ! fullLine changed to intent InOut by HCP. Some (but not all) 
     ! F90 compilers won't let this be intent(out) because the declaration
     ! of inputLine makes use of the length of fullLine even if its _contents_
     ! are immaterial
     CHARACTER(LEN=*), INTENT(INOUT) :: fullLine ! Output line
-    CHARACTER(LEN=*), OPTIONAL :: commentChar
-    CHARACTER(LEN=*), OPTIONAL :: continuationChar
-    LOGICAL, INTENT(OUT), OPTIONAL :: eof ! Set if got to eof
+    CHARACTER(LEN=*), optional :: commentChar
+    CHARACTER(LEN=*), optional :: continuationChar
+    logical, INTENT(OUT), optional :: eof ! Set if got to eof
 
     ! Local variables
 
-    INTEGER :: ioInfo           ! IOSTAT result
-    CHARACTER(LEN=LEN(fullLine)) :: inputLine ! One line from file
-    INTEGER :: commentStart     ! Start of a comment in line
-    INTEGER :: lastChar         ! Last character position in line
-    INTEGER :: gotContinuation  ! 1 if continuation needed, 0 if not
-    LOGICAL :: firstLine        ! A correction to be applied
+    integer :: ioInfo           ! IOSTAT result
+    CHARACTER(LEN=len(fullLine)) :: inputLine ! One line from file
+    integer :: commentStart     ! Start of a comment in line
+    integer :: lastChar         ! Last character position in line
+    integer :: gotContinuation  ! 1 if continuation needed, 0 if not
+    logical :: firstLine        ! A correction to be applied
 
     CHARACTER(LEN=1) :: useCommentChar
     CHARACTER(LEN=1) :: useContinuationChar
@@ -1236,7 +1298,7 @@ contains
 
     fullLine=TRIM(ADJUSTL(fullLine))
 
-  END SUBROUTINE ReadCompleteLineWithoutComments
+  end subroutine ReadCompleteLineWithoutComments
 
   ! ----------------  readNumFromBaseN  -----
   ! read a number which had been reexpressed in base n from a string
@@ -1326,7 +1388,7 @@ contains
     ! the int is STRINGCONTAINSFORBIDDENS
     
     ! Then snip away any from the set ignore before the first digit
-    ! if ingore is present.
+    ! if ignore is present.
     ! If ignore is '*', that means ignore all alphabetical chars
     ! If ignore contains '*', that means ignore all alphabetical chars
     ! plus any other chars among ignore.
@@ -1351,12 +1413,12 @@ contains
     ! a * in it somewhere
     !
     !--------Argument--------!
-    CHARACTER (LEN=*), INTENT(in) ::   str
+    character (len=*), INTENT(in) ::   str
     integer, intent(out)          ::   num
     include 'ReadANumFromChars.f9h'
   end subroutine readAnIntFromChars
 
-  SUBROUTINE readIntArrayFromChars (strs, ints, forbiddens, ignore)
+  subroutine readIntArrayFromChars (strs, ints, forbiddens, ignore)
     ! takes an array of strings and returns integer array
     ! using Fortran "read"
     ! If any element of string array is blank or contains one of forbiddens
@@ -1365,13 +1427,13 @@ contains
     !
     !--------Argument--------!
     !    dimensions are (len(strs(1)), size(strs(:)))
-    CHARACTER (LEN=*), INTENT(in), dimension(:) ::   strs
+    character (len=*), INTENT(in), dimension(:) ::   strs
     integer, intent(out), dimension(:)          ::   ints
-    CHARACTER (LEN=*), INTENT(in), optional     ::   forbiddens
+    character (len=*), INTENT(in), optional     ::   forbiddens
     character (len=*), optional, intent(in)     :: ignore
 
     !----------Local vars----------!
-    INTEGER :: i, arrSize
+    integer :: i, arrSize
     !----------Executable part----------!
 
    ! Check that all is well (if not returns blanks)
@@ -1384,23 +1446,23 @@ contains
      call readAnIntFromChars(strs(i), ints(i), forbiddens, ignore)
    enddo
 
-  END SUBROUTINE readIntArrayFromChars
+  end subroutine readIntArrayFromChars
 
   subroutine readARealFromChars (str, num, forbiddens, ignore)
     !--------Argument--------!
-    CHARACTER (LEN=*), INTENT(in) ::   str
+    character (len=*), INTENT(in) ::   str
     real, intent(out)             ::   num
     include 'ReadANumFromChars.f9h'
   end subroutine readARealFromChars
 
   subroutine readADoubleFromChars (str, num, forbiddens, ignore)
     !--------Argument--------!
-    CHARACTER (LEN=*), INTENT(in) ::   str
+    character (len=*), INTENT(in) ::   str
     double precision, intent(out)             ::   num
     include 'ReadANumFromChars.f9h'
   end subroutine readADoubleFromChars
 
-  SUBROUTINE ReadRealArrayFromChars (strs, nums, forbiddens, ignore)
+  subroutine ReadRealArrayFromChars (strs, nums, forbiddens, ignore)
     character (len=*), intent(in), dimension(:) ::   strs
     real, intent(out), dimension(:)             ::   nums
     character (len=*), intent(in), optional     ::   forbiddens
@@ -1420,9 +1482,9 @@ contains
      call readARealFromChars(strs(i), nums(i), forbiddens, ignore)
    enddo
 
-  END SUBROUTINE ReadRealArrayFromChars
+  end subroutine ReadRealArrayFromChars
 
-  SUBROUTINE ReadDoubleArrayFromChars (strs, nums, forbiddens, ignore)
+  subroutine ReadDoubleArrayFromChars (strs, nums, forbiddens, ignore)
     character (len=*), intent(in), dimension(:) ::   strs
     double precision, intent(out), dimension(:) ::   nums
     character (len=*), intent(in), optional     ::   forbiddens
@@ -1442,7 +1504,7 @@ contains
      call readADoubleFromChars(strs(i), nums(i), forbiddens, ignore)
    enddo
 
-  END SUBROUTINE ReadDoubleArrayFromChars
+  end subroutine ReadDoubleArrayFromChars
 
   ! ----------------  readRomanNumerals  -----
   ! Read a string composed of roman numerals into an int
@@ -1530,7 +1592,7 @@ contains
   end function remap
 
    ! --------------------------------------------------  Replace  -----
-  function Replace (str, oldChar, newchar, max) RESULT (outstr)
+  function Replace (str, oldChar, newchar, max) result (outstr)
     ! takes a string and returns one with oldChar replaced by newChar
     ! E.g., to replace every char(0), which is the NUL character, with a blank
     ! arg = Replace( arg, char(0), char(32) )
@@ -1561,7 +1623,7 @@ contains
   end function Replace
 
    ! --------------------------------------------------  ReplaceNonAscii  -----
-  function ReplaceNonAscii (str, newchar, exceptions) RESULT (outstr)
+  function ReplaceNonAscii (str, newchar, exceptions) result (outstr)
     ! takes a string and returns one with non-ascii chars replaced by newChar
     ! E.g., to replace every char(0), which is the NUL character, 
     ! and a trailing char(13), which is a line feed,
@@ -1570,7 +1632,7 @@ contains
     
     ! If exceptions are present, don't replace them
     
-    ! (see also asciify)
+    ! (see also Asciify)
     character(len=*), intent(in)           :: str
     character(len=1), intent(in)           :: newChar
     character(len=*), intent(in), optional :: exceptions
@@ -1588,7 +1650,7 @@ contains
   end function ReplaceNonAscii
 
    ! --------------------------------------------------  Reverse  -----
-  elemental function Reverse (str) RESULT (outstr)
+  elemental function Reverse (str) result (outstr)
     ! takes a string and returns one with chars in reversed order
     ! Useful in certain contexts:
     ! e.g., to remove leading blanks
@@ -1596,12 +1658,12 @@ contains
     !
     ! See also Reverse_trim, ReverseList
     !--------Argument--------!
-    CHARACTER (LEN=*), INTENT(IN) :: str
-    CHARACTER (LEN=LEN(str)) :: outstr
+    character (len=*), INTENT(IN) :: str
+    character (len=len(str)) :: outstr
 
     !----------Local vars----------!
-    INTEGER :: i, istr, irev
-    CHARACTER (LEN=1) :: strChar
+    integer :: i, istr, irev
+    character (len=1) :: strChar
     !----------Executable part----------!
     outstr=str
     IF(LEN(str) == 1) RETURN
@@ -1623,7 +1685,7 @@ contains
   end function Reverse
 
    ! --------------------------------------------------  Reverse_trim  -----
-  function Reverse_trim (str) RESULT (outstr)
+  function Reverse_trim (str) result (outstr)
     ! takes a string, trims it then returns one with chars in reversed order
     ! See also Reverse which omits the trim step
     !
@@ -1942,21 +2004,21 @@ contains
 
     ! Dummy arguments
 
-    CHARACTER (LEN=*), INTENT(IN) :: line
-    CHARACTER (LEN=*), INTENT(OUT) :: first
-    CHARACTER (LEN=*), INTENT(OUT) :: rest
-    CHARACTER (LEN=*), INTENT(OUT), OPTIONAL :: last
+    character (len=*), INTENT(IN) :: line
+    character (len=*), INTENT(OUT) :: first
+    character (len=*), INTENT(OUT) :: rest
+    character (len=*), INTENT(OUT), optional :: last
 
-    LOGICAL, INTENT(IN), OPTIONAL :: threeWay
-    CHARACTER (LEN=*), INTENT(IN), OPTIONAL :: delimiter ! really separator
+    logical, INTENT(IN), optional :: threeWay
+    character (len=*), INTENT(IN), optional :: delimiter ! really separator
 
     ! Local variables
 
-    CHARACTER (LEN=1) :: useseparator
-    LOGICAL :: useThreeWay
-    CHARACTER (LEN=LEN(line)) useLine ! Line with leading spaces removed
+    character (len=1) :: useseparator
+    logical :: useThreeWay
+    character (len=len(line)) useLine ! Line with leading spaces removed
 
-    INTEGER :: firstseparatorPos,lastseparatorPos,trimmedLen
+    integer :: firstseparatorPos,lastseparatorPos,trimmedLen
 
     ! Executable code
 
@@ -2005,12 +2067,12 @@ contains
        END IF
     END IF
 
-  END SUBROUTINE SplitWords
+  end subroutine SplitWords
   
   ! ------------------------------------------------- squeeze --------
   ! Snip excess spaces between words
   ! E.g., turns ' a   man   from   Sai- Pan' into ' a man from Sai- Pan'
-  ! Optionally snips all spaces making it 'amanfromSai-Pan'
+  ! optionally snips all spaces making it 'amanfromSai-Pan'
   
   ! options, if present, can contain the following characters
   !  character                 effect
@@ -2368,7 +2430,7 @@ contains
   ! ------------------------------------------------- stretch --------
   ! Insert extra spaces between words
   ! E.g., turns 'How long, America' into 'How  long,  America'
-  ! Optionally inserts a space after every character
+  ! optionally inserts a space after every character
   ! making it 'H o w   l o n g ,   A m e r i c a'
   
   ! options, if present, can contain the following characters
@@ -2453,7 +2515,7 @@ contains
   end function stretch
        
   ! --------------------------------------------------  strings2Ints  -----
-  SUBROUTINE strings2Ints (strs, ints)
+  subroutine strings2Ints (strs, ints)
     ! takes an array of strings and returns integer array
     ! using "ichar"
     ! Useful due to bug in toolbox swrfld
@@ -2461,11 +2523,11 @@ contains
     ! See also ints2Strings
     !--------Argument--------!
     !    dimensions are (len(strs(1)), size(strs(:)))
-    CHARACTER (LEN=*), INTENT(in), dimension(:) ::   strs
+    character (len=*), INTENT(in), dimension(:) ::   strs
     integer, intent(out), dimension(:,:) ::          ints
 
     !----------Local vars----------!
-    INTEGER :: i, substr, strLen, arrSize
+    integer :: i, substr, strLen, arrSize
     !----------Executable part----------!
 
    ! Check that all is well (if not returns blanks)
@@ -2480,7 +2542,7 @@ contains
       enddo
    enddo
 
-  END SUBROUTINE strings2Ints
+  end subroutine strings2Ints
 
   ! --------------------------------------------------  TrueList  -----
   subroutine TrueList ( Array, Str )
@@ -2536,7 +2598,7 @@ contains
   ! takes input string and replaces any coded forms non-printing characters
   ! with corresponding binary characters outside ascii range
   ! leaving other chars alone
-  ! This reverses the effect of the asciify procedure which recoded
+  ! This reverses the effect of the Asciify procedure which recoded
   ! non-ascii characters as '<something>'
   !
   ! How the decoding is done is according to the optional arg
@@ -2557,7 +2619,7 @@ contains
   ! which uses string slicing and index arithmetic
   ! Should we go back and simplify the latter?
 
-  ! (see also ReplaceNonAscii, asciify)
+  ! (see also ReplaceNonAscii, Asciify)
     !--------Argument--------!
     character (len=*), intent(in)           :: STR
     character (len=len(str))                :: OUTSTR
@@ -2602,7 +2664,7 @@ contains
     enddo
     if ( len_trim(remaining) > 1 ) &
       & outstr = trim(outstr) // remaining
-    ! print *, 'unasciify returning char-valued ', iachar(outstr(1:1))
+    ! print *, 'unAsciify returning char-valued ', iachar(outstr(1:1))
   end function unAsciify
 
   ! --------------------------------------------------  unWrapLines  -----
@@ -2610,13 +2672,13 @@ contains
   ! i.e, a special escape character at line's end to denote a continuation
   ! to the following line
   ! optionally remove comment lines, i.e. lines beginning with comment character
-  SUBROUTINE unWrapLines ( inLines, outLines, nOut, escape, comment )
+  subroutine unWrapLines ( inLines, outLines, nOut, escape, comment )
     !
-    character (LEN=*), dimension(:), intent(in)            ::   inLines
-    character (LEN=*), dimension(:), intent(out)           ::   outLines
+    character (len=*), dimension(:), intent(in)            ::   inLines
+    character (len=*), dimension(:), intent(out)           ::   outLines
     integer, optional, intent(out)                         ::   nOut
-    character (LEN=*), optional, intent(in)                ::   escape
-    character (LEN=*), optional, intent(in)                ::   comment
+    character (len=*), optional, intent(in)                ::   escape
+    character (len=*), optional, intent(in)                ::   comment
 
     !----------Local vars----------!
     integer                      :: i, j, k, line
@@ -2665,7 +2727,7 @@ contains
       endif
     enddo
     if ( present(nOut) ) nOut = line
-  END SUBROUTINE unWrapLines
+  end subroutine unWrapLines
 
   ! --------------------------------------------------  writeAnIntToChars  -----
   ! takes an integer and returns a string
@@ -2675,13 +2737,13 @@ contains
   ! (So that we can treat -1 as "unlimited' or -999 as 'FillValue')
   ! We'll just assume both special arrays are of same size
   ! and, in case of array versions of 
-  SUBROUTINE writeAnIntToChars (int, str, fmt, specialInts, specialChars)
+  subroutine writeAnIntToChars (int, str, fmt, specialInts, specialChars)
     !
     integer, intent(in)                                    ::   int
-    character (LEN=*), intent(out)                         ::   str
-    character (LEN=*), optional, intent(in)                ::   fmt
+    character (len=*), intent(out)                         ::   str
+    character (len=*), optional, intent(in)                ::   fmt
     integer, intent(in), dimension(:), optional            ::   specialInts
-    character (LEN=*), intent(in), dimension(:), optional  ::   specialChars
+    character (len=*), intent(in), dimension(:), optional  ::   specialChars
 
     !----------Local vars----------!
     integer :: i
@@ -2704,15 +2766,15 @@ contains
      str = adjustl(myStr)
    endif
 
-  END SUBROUTINE writeAnIntToChars
+  end subroutine writeAnIntToChars
 
-  SUBROUTINE writeIntsToChars_1d (ints, strs, fmt, specialInts, specialChars)
+  subroutine writeIntsToChars_1d (ints, strs, fmt, specialInts, specialChars)
     ! takes an array of integers and returns string array
     integer, intent(in), dimension(:)            ::   ints
-    character (LEN=*), intent(out), dimension(:) ::   strs
-    character (LEN=*), intent(in), optional      ::   fmt
+    character (len=*), intent(out), dimension(:) ::   strs
+    character (len=*), intent(in), optional      ::   fmt
     integer, intent(in), dimension(:), optional  ::   specialInts
-    character (LEN=*), intent(in), dimension(:), optional  ::   specialChars
+    character (len=*), intent(in), dimension(:), optional  ::   specialChars
 
     !----------Local vars----------!
     integer :: i, arrSize
@@ -2728,14 +2790,14 @@ contains
       call writeAnIntToChars(ints(i), strs(i), fmt, specialInts, specialChars)
    enddo
 
-  END SUBROUTINE writeIntsToChars_1d
+  end subroutine writeIntsToChars_1d
 
-  SUBROUTINE writeIntsToChars_2d (ints, strs, fmt, specialInts, specialChars)
+  subroutine writeIntsToChars_2d (ints, strs, fmt, specialInts, specialChars)
     integer, intent(in), dimension(:,:)            ::   ints
-    character (LEN=*), intent(out), dimension(:,:) ::   strs
-    character (LEN=*), intent(in), optional      ::   fmt
+    character (len=*), intent(out), dimension(:,:) ::   strs
+    character (len=*), intent(in), optional      ::   fmt
     integer, intent(in), dimension(:), optional  ::   specialInts
-    character (LEN=*), intent(in), dimension(:), optional  ::   specialChars
+    character (len=*), intent(in), dimension(:), optional  ::   specialChars
 
     !----------Local vars----------!
     integer :: i, j, shp(2)
@@ -2754,7 +2816,7 @@ contains
      enddo
    enddo
 
-  END SUBROUTINE writeIntsToChars_2d
+  end subroutine writeIntsToChars_2d
 
   ! ----------------  writeIntAsBaseN  -----
   ! write an integer reexpressed in base n as a string
@@ -2862,10 +2924,10 @@ contains
     if ( index(myOptions, 'a') > 0 .or. index(myOptions, 'A') > 0 ) then
       do j = m, 0, -1
         if ( c(j) < 177 ) str = trim(str) // ' ' // achar(c(j))
-        ! print *, 'str ', asciify(str)
+        ! print *, 'str ', Asciify(str)
       end do
       str = adjustl(str)
-      if ( index(myOptions, 'A') > 0 ) str = asciify(str, 'mnemonic')
+      if ( index(myOptions, 'A') > 0 ) str = Asciify(str, 'mnemonic')
     else if ( index(myOptions, 'x') > 0 ) then
       do j = m, 0, -1
         if ( c(j) < 71 ) str = trim(str) // ' ' // xtended(c(j)+1:c(j)+1)
@@ -2945,6 +3007,30 @@ contains
 
   ! Private procedures and functions
 !============================ Private ==============================
+  ! ------------------------------------  PrintMessage  -----
+  subroutine PrintMessage ( name, line, advance )
+    ! Args
+    character(len=*), intent(in) :: name
+    character(len=*), intent(in) :: line
+    character (len=*), intent(in), optional :: Advance ! Do not advance
+    !                                 if present and the first character is 'N'
+    !                                 or 'n'
+    ! Local variables
+    integer :: nChars
+    character(len=len(line) + len(name) + 3) :: thus
+    ! Executable
+    nChars = len(line)
+    thus = line
+    if ( len_trim(name) > 0 ) then
+      nChars = len(line) + len(name) + 3
+      thus = '(' // trim(name) // ') ' // line
+    endif
+    print *, 'thus(1:nChars): ' 
+    print *, thus(1:nChars)
+    NeverCrash = .false.
+    call Crash_Burn
+  end subroutine PrintMessage
+
   subroutine prepOptions( options )
     ! Process options into separate optional args
     ! You should call this at the start of every procedure
@@ -3246,8 +3332,11 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.106  2019/01/24 18:31:12  pwagner
+! Reorganized modules that print to simplify toolkit-free builds
+!
 ! Revision 2.105  2018/03/27 22:06:52  pwagner
-! No longer uses Optional_m; now one less module needed to build toolkitlessly
+! No longer uses optional_m; now one less module needed to build toolkitlessly
 !
 ! Revision 2.104  2017/12/08 00:28:44  pwagner
 ! Add optional 'options' arg to CatStrings; by default will not cat empty string
@@ -3277,7 +3366,7 @@ end module MLSStrings
 ! FindSomethings moved to MLSFinds module
 !
 ! Revision 2.95  2013/08/09 00:43:06  pwagner
-! Added count_quotes and unasciify
+! Added count_quotes and unAsciify
 !
 ! Revision 2.94  2013/07/30 23:26:44  pwagner
 ! New procedures to read/write base N integers
@@ -3348,13 +3437,13 @@ end module MLSStrings
 ! Nappearances has new optional arg to not trim substrings
 !
 ! Revision 2.72  2008/02/07 18:46:55  pwagner
-! isAllAscii, isAscii now public; asciify generic
+! isAllAscii, isAscii now public; Asciify generic
 !
 ! Revision 2.71  2007/09/13 21:06:25  pwagner
 ! Added 2-d array interface for writeIntsToChars
 !
 ! Revision 2.70  2007/08/29 19:52:18  pwagner
-! Added asciify function
+! Added Asciify function
 !
 ! Revision 2.69  2007/07/31 22:46:08  pwagner
 ! undefined status now defined in readAnIntFromChars ;'n' option added to streq
