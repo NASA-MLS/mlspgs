@@ -33,7 +33,7 @@ module readGriddedUtils ! Collection of subroutines to read TYPE GriddedData_T
     & Split_Path_Name, MLS_OpenFile, MLS_CloseFile
   use MLSKinds, only: R4, R8
   use MLSMessageModule, only: MLSMsg_Error, MLSMsg_Info, MLSMsg_Warning, &
-    & DumpConfig, MLSMessage
+    & MLSMessage
   use MLSStrings, only: Capitalize, HHMMSS_Value, Lowercase
   use MLSStringLists, only: GetStringElement, NumStringElements, &
     & List2array, ReplaceSubstring, StringElementNum, SwitchDetail
@@ -89,20 +89,12 @@ module readGriddedUtils ! Collection of subroutines to read TYPE GriddedData_T
   character (len=*), parameter :: DEFAULTDAODIMLIST = 'XDim,YDim,Height,Time'
   character (len=*), parameter :: DEFAULTDAOFIELDNAME = 'TMPU'
   character (len=*), parameter :: DEFAULTGEOS5FIELDNAME = 'T'
-  character (len=*), parameter :: DEFAULTNCEPDIMLIST = 'YDim,XDim'
   character (len=*), parameter :: DEFAULTNCEPGRIDNAME = 'TMP_3'
   character (len=*), parameter :: DEFAULTNCEPSTRATFIELDNAME = 'Temperature'
-  character (len=*), parameter :: GEO_FIELD1 = 'Latitude'
-  character (len=*), parameter :: GEO_FIELD2 = 'Longitude'
-  character (len=*), parameter :: GEO_FIELD3 = 'Height'
-  character (len=*), parameter :: GEO_FIELD4 = 'Time'
-
-  logical, parameter :: GEOS5MAYBEMERRATOO = .false. ! Causes confusion if true
 
   character (len=*), parameter :: lit_dao = 'dao'
   character (len=*), parameter :: lit_ncep = 'ncep'
   character (len=*), parameter :: lit_strat = 'strat'
-  character (len=*), parameter :: lit_clim = 'clim'
   character (len=*), parameter :: lit_geos5 = 'geos5'
   integer, parameter :: MAXLISTLENGTH=Linelen ! Max length list of grid names
   integer, parameter :: NENTRIESMAX=200 ! Max num of entries
@@ -192,7 +184,6 @@ contains
   subroutine Read_GEOS5_7( GEOS5File, lcf_where, v_type, &
     & the_g_data, GeoDimList, fieldName, date, sumDelp )
 
-    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
     use Dates_module, only: UTC2TAI93s
     use Dump_1, only: Dump
     use HDF5, only: Hsize_t
@@ -226,7 +217,6 @@ contains
     integer(kind=hsize_t) :: dim1(1), dim4(4)
     integer :: error, rank
     character(len=256) :: errormsg
-    integer :: i1, i2, i3            ! looping indexes
     integer, dimension(4) :: idim4
     character (len=MAXSDNAMESBUFSIZE) :: mySdList
     integer :: S                     ! Size in bytes of an object to deallocate
@@ -492,10 +482,6 @@ contains
     integer                        :: timeIndex
     !                                  These start out initialized to one
     integer                        :: nlon=1, nlat=1, nlev=1, ntime=1
-    integer, parameter             :: i_longitude=1
-    integer, parameter             :: i_latitude=i_longitude+1
-    integer, parameter             :: i_vertical=i_latitude+1
-    integer, parameter             :: i_time=i_vertical+1
     integer, external :: GDRDFLD
     real(r4), parameter :: FILLVALUE = 1.e15
     real(r4), dimension(:,:,:,:), pointer :: all_the_fields => null()
@@ -846,7 +832,6 @@ contains
   subroutine Read_DAO(DAOFile, lcf_where, v_type, &
     & the_g_data, GeoDimList, fieldName)
 
-    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
 
     ! What was once called 'dao' now better known as 'gmao'
     ! This routine reads a gmao file, named something like
@@ -899,10 +884,6 @@ contains
     integer :: status
     !                                  These start out initialized to one
     integer                        :: nlon=1, nlat=1, nlev=1, ntime=1
-    integer, parameter             :: i_longitude=1
-    integer, parameter             :: i_latitude=i_longitude+1
-    integer, parameter             :: i_vertical=i_latitude+1
-    integer, parameter             :: i_time=i_vertical+1
     integer, external :: GDRDFLD
     real(r4), parameter :: FILLVALUE = 1.e15
     real(r4), dimension(:,:,:,:), pointer :: all_the_fields
@@ -1132,7 +1113,6 @@ contains
   subroutine Read_MERRA_2( GEOS5File, lcf_where, v_type, &
     & the_g_data, GeoDimList, fieldName, date, sumDelp )
 
-  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
   use Dates_Module, only: GetStartingDate, UTC2TAI93s
   use Dump_1, only: Dump
   use HDF5, only: Hsize_T
@@ -1166,7 +1146,7 @@ contains
     integer(kind=hsize_t) :: dim1(1), dim4(4)
     integer :: error, rank
     character(len=256) :: errormsg
-    integer :: i, i1, i2, i3            ! looping indexes
+    integer :: i
     integer :: itime, ilat, ilon, ilev
     integer, dimension(4) :: idim4
     character (len=MAXSDNAMESBUFSIZE) :: mySdList
@@ -1422,8 +1402,6 @@ contains
   subroutine Read_NCEP_GDAs ( NCEPFile, lcf_where, v_type, &
     & the_g_data, GeoDimList, gridName, missingValue )
 
-    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
-
     ! This routine reads a ncep global assimilation model product
     ! (GDAS) file, named something like
     ! 6207ea2e-1dd2-11b2-b61e-ae069991db9a.hdfeos 
@@ -1478,10 +1456,6 @@ contains
     integer :: field
     !                                  These start out initialized to one
     integer                        :: nlon=1, nlat=1, nlev=1
-    integer, parameter             :: i_longitude=1
-    integer, parameter             :: i_latitude=i_longitude+1
-    integer, parameter             :: i_vertical=i_latitude+1
-    integer, parameter             :: i_time=i_vertical+1
     integer, external :: GDRDFLD
     logical, parameter :: USEPROJECTFORDIMS = .false. ! This doesn't work, yet
     real(r4), dimension(:), pointer     :: pressures
@@ -1496,7 +1470,6 @@ contains
     integer, external :: gdgridinfo, GDprojinfo, PGS_GCT_Init
     integer, parameter :: Lon_offset = -180  ! Longitude start in degrees
     integer, parameter :: Lat_offset = -90   ! Latitude start in degrees
-    real(r4), parameter :: FILLVALUE = 0.e0
     logical, parameter :: CHECKFORDIMSANYWAY = .false.
     logical, parameter :: DEEBUG = .false.
     ! Executable
@@ -1742,7 +1715,6 @@ contains
   ! --------------------------------------------  Read_NCEP_Strat  -----
   subroutine Read_NCEP_Strat(NCEPFile, lcf_where, v_type, &
     & the_g_data, GeoDimList, fieldName)
-    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
     use HDFeos5, only: He5_HDFe_Nentdim, He5f_Acc_Rdonly, &
       & He5_Gdopen, He5_Gdattach, He5_Gddetach, He5_Gdclose, &
       & He5_Gdnentries, He5_Gdinqgrid, He5_Gdinqdims, He5_Gdinqflds, &
@@ -1806,10 +1778,6 @@ contains
     integer :: status, j
     !                                  These start out initialized to one
     integer                        :: nlon=0, nlat=0, nlev=0, ntime=1
-    integer, parameter             :: i_longitude=1
-    integer, parameter             :: i_latitude=i_longitude+1
-    integer, parameter             :: i_vertical=i_latitude+1
-    integer, parameter             :: i_time=i_vertical+1
     real(r4), parameter :: FILLVALUE = 1.e15
     !real(r4), dimension(:,:,:,:), pointer :: all_the_fields
     real(r4), dimension(:,:,:), pointer :: all_the_fields
@@ -2439,20 +2407,12 @@ contains
 
     ! Local Variables
     integer :: file_id, gd_id
-    logical,  parameter       :: CASESENSITIVE = .false.
-    integer, parameter :: GRIDORDER=1   ! What order grid written to file
-    integer, parameter :: MAXNAMELENGTH=NameLen         ! Max length of grid name
     integer, dimension(NENTRIESMAX) :: dims
 
     integer :: start(4), stride(4), edge(4)
     integer :: status
-    integer, parameter             :: i_longitude=1
-    integer, parameter             :: i_latitude=i_longitude+1
-    integer, parameter             :: i_vertical=i_latitude+1
-    integer, parameter             :: i_time=i_vertical+1
     character(len=*), parameter    :: GridName = "EOSGRID"
     integer, parameter :: gctp_geo = 0
-    real(r4), parameter :: FILLVALUE = 1.e15
     real(r8) :: uplft(2), lowrgt(2)
     real(r8) :: projparm(13)
     logical, parameter :: DEEBUG = .false.
@@ -2542,6 +2502,9 @@ contains
 end module readGriddedUtils
 
 ! $Log$
+! Revision 2.5  2019/01/29 21:48:23  pwagner
+! Removed more unused stuff
+!
 ! Revision 2.4  2018/03/14 17:14:25  pwagner
 ! Unless verbose, omit useless part of error mesg; correct toc desc of subroutines
 !
