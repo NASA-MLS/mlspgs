@@ -3946,6 +3946,11 @@ contains ! =====     Public Procedures     =============================
     ReadingAscDescMode = .false.
     ! Attach to the swath for reading
     l2gp%Name = swathname
+    ! We have suffered surprises when hefeos character fields 
+    ! were not initialized
+    dimlist = ' '
+    fieldlist = ' '
+    list = ' '
     
     select case (HMOT)
     case ('H')
@@ -5582,6 +5587,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.238  2018/11/12 23:11:12  pwagner
+! Deprecated AscDescMode
+!
 ! Revision 2.237  2018/08/01 22:14:27  pwagner
 ! Added CompactL2GPRecord; corrected errors in ExtractL2GPRecord and Diff-ing with matchTimes
 !
