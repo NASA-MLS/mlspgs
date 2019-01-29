@@ -37,7 +37,7 @@ module PCFHdr
     & Pgsd_Met_Group_Name_L, Pgs_Io_Gen_Closef, Pgs_Io_Gen_Openf, &
     & Pgsd_Io_Gen_Rdirunf, Pgs_Pc_Getreference, &
     & Pgs_Td_Asciitime_Atob, Pgs_Td_Asciitime_Btoa, &
-    & Usesdptoolkit, Max_Orbits
+    & Max_Orbits
   implicit none
   public :: GlobalAttributes_T, SomeGlobalAttributes_T, &
     & CreatePCFAnnotation, DumpGlobalAttributes, &
@@ -57,30 +57,30 @@ module PCFHdr
 !     - - - - - - - -                                                    
 
 !     (data types and parameters)
-! Inputptr_string_length   string length used by Inputpointer procedures
-! Ga_value_length          string length used by GlobalAttributes_T
-! MiscNotesLength          string length used by MiscNotes field
-! Utc_a_value_length       string length used to encode utc version 'a'
-! Utc_b_value_length       string length used to encode utc version 'b'
-! GlobalAttributes         which attributes to write to product files
-! SomeGlobalAttributes     which of them can be read from an opts file
+! Inputptr_string_length   String length used by Inputpointer procedures
+! Ga_value_length          String length used by GlobalAttributes_T
+! MiscNotesLength          String length used by MiscNotes field
+! Utc_a_value_length       String length used to encode utc version 'a'
+! Utc_b_value_length       String length used to encode utc version 'b'
+! GlobalAttributes         Which attributes to write to product files
+! SomeGlobalAttributes     Which of them can be read from an opts file
 
 !     (subroutines and functions)
-! CreatePCFAnnotation      read the PCF file into a character array
-! DumpGlobalAttributes     dumps the global attributes
+! CreatePCFAnnotation      Read the PCF file into a character array
+! DumpGlobalAttributes     Dumps the global attributes
 ! FillTAI93Attribute       Fill the TAI93 component of the global attribute 
 !                           based on theStartUTC component
 ! GranuleDay               Return the granule's day in its month
 ! GranuleDayOfYear         Return the granule's day in its year
 ! GranuleMonth             Return the granule's month
 ! GranuleYear              Return the granule's year
-! H5_readglobalattr        reads the global attributes from an hdf5-formatted file
-! H5_writeglobalattr       writes the global attributes to an hdf5-formatted file
-! He5_writeglobalattr      writes the global attributes to an hdfeos5-formatted file
-! He5_readglobalattr       reads the global attributes from an hdfeos5-formatted file
+! H5_readglobalattr        Reads the global attributes from an hdf5-formatted file
+! H5_writeglobalattr       Writes the global attributes to an hdf5-formatted file
+! He5_writeglobalattr      Writes the global attributes to an hdfeos5-formatted file
+! He5_readglobalattr       Reads the global attributes from an hdfeos5-formatted file
 ! InputInputpointer        Prepare Input for WriteInputpointer
 ! SomeToGlobalAttributes   Copy some of the attributes read into the global ones
-! Sw_writeglobalattr       writes the global attributes for an hdfeos5 swath
+! Sw_writeglobalattr       Writes the global attributes for an hdfeos5 swath
 ! WriteInputpointer        Write Inputpointer metadata
 ! WriteLeapSecHDFEOSAttr   Write contents of leapsec file as hdfeos5 attribute
 ! WriteLeapSecHDF5DS       Write contents of leapsec file as hdf5 dataset
@@ -91,19 +91,19 @@ module PCFHdr
                                              
 ! === (start of api) ===
 ! CreatePCFAnnotation ( int mlspcfN_pcf_start, char* anText(:) )
-! DumpGlobalAttributes     dumps the global attributes
+! DumpGlobalAttributes     Dumps the global attributes
 ! FillTAI93Attribute       Fill the TAI93 component of the global attribute 
 !                           based on theStartUTC component
 ! GranuleDay               Return the granule's day in its month
 ! GranuleDayOfYear         Return the granule's day in its year
 ! GranuleMonth             Return the granule's month
 ! GranuleYear              Return the granule's year
-! H5_readglobalattr        reads the global attributes from an hdf5-formatted file
-! H5_writeglobalattr       writes the global attributes to an hdf5-formatted file
-! He5_writeglobalattr      writes the global attributes to an hdfeos5-formatted file
-! He5_readglobalattr       reads the global attributes from an hdfeos5-formatted file
+! H5_readglobalattr        Reads the global attributes from an hdf5-formatted file
+! H5_writeglobalattr       Writes the global attributes to an hdf5-formatted file
+! He5_writeglobalattr      Writes the global attributes to an hdfeos5-formatted file
+! He5_readglobalattr       Reads the global attributes from an hdfeos5-formatted file
 ! InputInputpointer        Prepare Input for WriteInputpointer
-! Sw_writeglobalattr       writes the global attributes for an hdfeos5 swath
+! Sw_writeglobalattr       Writes the global attributes for an hdfeos5 swath
 ! WriteInputpointer        Write Inputpointer metadata
 ! WriteLeapSecHDFEOSAttr   Write contents of leapsec file as hdfeos5 attribute
 ! WriteLeapSecHDF5DS       Write contents of leapsec file as hdf5 dataset
@@ -132,7 +132,7 @@ module PCFHdr
 ! (c) functions returning the day, month, etc. of the data date, aka granule
 
 ! Suggestion:
-! Create a brrand new module, named something like GlobalAttributes.f90
+! Create a brand new module, named something like GlobalAttributes.f90
 ! and move the non-obsolete procedures and datatypes there.
   integer, parameter, public :: INPUTPTR_STRING_LENGTH = PGSd_PC_UREF_LENGTH_MAX
   integer, parameter, public :: GA_VALUE_LENGTH = 40
@@ -859,7 +859,6 @@ contains
       integer :: grp_id
       integer :: status
       logical :: my_skip
-      logical, parameter :: WRITE_ORBIT = .false.
 
       ! Executable code
       Deebug = BeVerbose ( 'file', 0 )
@@ -1077,7 +1076,6 @@ contains
 ! Local variables
       integer :: fileID
       integer :: status
-      logical, parameter :: WRITE_ORBIT = .false.
 
       ! Executable code
       if ( .not. MLSFile%stillOpen ) then
@@ -1133,8 +1131,7 @@ contains
      & ProcessLevel, DayofYear, TAI93At0zOfGranule, returnStatus)
 !------------------------------------------------------------
 
-     use HDFeos5, only: He5_Ehinqglatts
-     use MLSHDFeos, only: Maxdlistlength, He5_Ehrdglatt
+     use MLSHDFeos, only: Maxdlistlength, He5_Ehrdglatt, MLS_IsGlatt
 ! Brief description of subroutine
 ! This subroutine reads the global attributes from an hdf-eos5 file
 
@@ -1150,19 +1147,17 @@ contains
       integer :: status
       integer, dimension(1) :: ibuf
       real(r8), dimension(1) :: dbuf
-      character(len=MAXDLISTLENGTH) :: attrList
-      integer :: listSize
+      ! character(len=MAXDLISTLENGTH) :: attrList
+      ! integer :: listSize
 ! Executable
       if ( DEBUG ) call output( 'Reading global attributes', advance='yes' )
-      status = he5_EHinqglatts(fileID, attrList, listSize)
-      status = 0
-      if ( status /= 0 ) then
-        if ( present(returnStatus) ) then
-          returnStatus = 1
-        else
-          call MLSMessage(MLSMSG_Warning, ModuleName, &
+      !status = he5_EHinqglatts(fileID, attrList, listSize)
+      !status = 0
+      ! if ( status /= 0 ) then
+      if ( present(returnStatus) ) returnStatus = 1
+      if ( .not. MLS_IsGlatt ( FileID, 'OrbitNumber') ) then
+        call MLSMessage(MLSMSG_Warning, ModuleName, &
             & 'No global attributes in file: ' )
-        endif
         return
       endif
       status = he5_EHrdglatt(fileID, &
@@ -1229,8 +1224,9 @@ contains
       ! & 'identifier_product_doi', &
       ! &  gAttributes%DOI)
       ! if ( DEBUG ) call outputNamedValue('identifier_product_doi ', trim(gAttributes%DOI) )
-      if ( present(returnStatus) ) returnStatus = status
+      ! if ( present(returnStatus) ) returnStatus = status
       if ( DEBUG ) call dumpGlobalAttributes
+      if ( present(returnStatus) ) returnStatus = 0
 !------------------------------------------------------------
    end subroutine he5_readglobalattr
 !------------------------------------------------------------
@@ -1525,8 +1521,8 @@ contains
 !----------------------------------------
    subroutine WritePCF2Hdr (file, anText, hdfVersion, fileType, name)
 !----------------------------------------
-      use HDF5, only: H5F_ACC_RDWR_F, &
-        & H5FOPEN_F, H5FCLOSE_F
+      use HDF5, only: H5F_AcC_Rdwr_F, &
+        & H5FOpen_F, H5FClosE_F
 
 ! Brief description of subroutine
 ! This subroutine writes the PCF into an HDF-EOS file as an annotation.
@@ -1816,7 +1812,6 @@ contains
      ! Args
      integer, intent(in) :: fileID
      ! Internal variables
-     integer, parameter :: maxheadersize = 40000
      character(len=FileNameLen) :: utcPoleFile
      integer, parameter :: PCFid = 10401
      integer :: status
@@ -1900,6 +1895,9 @@ end module PCFHdr
 !================
 
 !# $Log$
+!# Revision 2.74  2019/01/29 21:47:37  pwagner
+!# Uses MLS_IsGlatt; light housekeeping
+!#
 !# Revision 2.73  2018/05/31 22:43:56  pwagner
 !# Changed name of attribute to identifier_product_doi to please DAAC
 !#
