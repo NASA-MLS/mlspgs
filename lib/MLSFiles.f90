@@ -78,7 +78,7 @@ module MLSFiles               ! Utility file routines
 !     (parameters)
 ! HDFVERSION_4       integer corresponding to hdf4
 ! HDFVERSION_5       integer corresponding to hdf5
-! WILDCARDHDFVERSION integer corresponding to autorecognize hdf4/hdf5
+! WILDCARDHDFVERSION integer corresponding to automatically recognize hdf4/hdf5
 ! NAMENOTFOUND       GetPCFromRef unable to find named file
 ! INVALIDPCRANGE     GetPCFromRef given invalid pc range
 ! CANTALLOCATENAMEARRAY
@@ -106,22 +106,22 @@ module MLSFiles               ! Utility file routines
 ! GetMLSFileByType   Returns pointer to MLSFile matching fileType
 ! GetPCFromRef       Turns a FileName into the corresponding PC
 ! InitializeMLSFile  Initializes an MLSFile
-! maskname           Add stuff to file_name so parser can't recognize it
-! mls_exists         Returns 0 if the filename exists
-! mls_closeFile      Closes a file opened by mls_openFile
-! mls_hdf_version    Returns one of 'hdf4', 'hdf5', or '????'
-! mls_inqswath       A wrapper for doing swinqswath for versions 4 and 5
-! mls_openFile       Opens an MLSFile_T file
-! mls_sfend          Closes a file opened by mls_sfstart
-! mls_sfstart        Opens an hdf file for writing metadata
-! release_MLSFile    undoes what reserve_MLSFile does
-! reserve_MLSFile    initializes an mls file 
+! Maskname           Add stuff to file_name so parser can't recognize it
+! MLS_Exists         Returns 0 if the filename exists
+! MLS_CloseFile      Closes a file opened by MLS_openFile
+! MLS_Hdf_version    Returns one of 'hdf4', 'hdf5', or '????'
+! MLS_Inqswath       A wrapper for doing swinqswath for versions 4 and 5
+! MLS_OpenFile       Opens an MLSFile_T file
+! MLS_Sfend          Closes a file opened by MLS_sfstart
+! MLS_Sfstart        Opens an hdf file for writing metadata
+! Release_MLSFile    undoes what reserve_MLSFile does
+! Reserve_MLSFile    initializes an MLS file 
 !                      (to be operated on by single-argument functions)
 ! RmFileFromDataBase Removes a FileName, id, etc. from the database
-! split_path_name    splits the input path/name into path and name
-! transfer_MLSFile   Changes the path of an mlsFile
-! unmaskname         Recover file name from masked form
-! unsplitname        Split File name -> catenated: '..DGG13..' -> 'DGG'
+! Split_path_name    splits the input path/name into path and name
+! Transfer_MLSFile   Changes the path of an MLSFile
+! Unmaskname         Recover file name from masked form
+! Unsplitname        Split File name -> catenated: '..DGG13..' -> 'DGG'
 ! === (end of toc) ===
 
 ! (The following 2 are currently private, but could be made public if needed)
@@ -156,8 +156,8 @@ module MLSFiles               ! Utility file routines
 !    GetMLSFileByName
 !    GetMLSFileByType
 !    InitializeMLSFile
-!    mls_closeFile
-!    mls_openFile
+!    Mls_closeFile
+!    Mls_openFile
 !    RmFileFromDataBase
 ! int AddFileToDataBase (MLSFile *dataBase(:), MLSFile(item) )
 ! MLSFile *AddInitializeMLSFile (MLSFile *dataBase(:), [int type],
@@ -182,17 +182,19 @@ module MLSFiles               ! Utility file routines
 ! be made to one of the above procedures and removing the public attribute
 ! of the other procedures
 
-   ! Assume hdf files w/o explicit hdfVersion field are this
+   ! ---------------- Module Parameters ------------------
    ! 4 corresponds to hdf4, 5 to hdf5 in L2GP, L2AUX, etc.
-   ! MAKE SURE that HDFVersions are consecutive, as they're used for subscripts!
+   ! *** HDFVersions must be consecutive, ***
+   !     as they're used for subscripts!
    integer, parameter, public :: HDFVERSION_4 = 4
    integer, parameter, public :: HDFVERSION_5 = 5
+   ! Assume hdf files w/o explicit hdfVersion field are DEFAULT_HDFVERSION
+   ! (Does anyone still use it? Should we deprecate it?)
    integer, parameter         :: DEFAULT_HDFVERSION = HDFVERSION_4
    
-  ! Given this hdfVersion, try to autorecognize hdfversion
+  ! Given this WILDCARDHDFVERSION, try to automatically recognize hdfversion
   ! then perform appropriate version of open/close; i.e., forgiving
-  ! (must *not* be 4 or 5)
-  integer, parameter, public :: WILDCARDHDFVERSION=HDFVERSION_4+HDFVERSION_5
+  integer, parameter, public :: WILDCARDHDFVERSION = HDFVERSION_4+HDFVERSION_5
 
   ! This isn't NameLen because it may have a path prefixed
   integer, parameter :: MAXFILENAMELENGTH=PGSd_PC_FILE_PATH_MAX
@@ -247,10 +249,10 @@ module MLSFiles               ! Utility file routines
 
   ! ------------- Warning--trickery ahead -----------
   ! Character(s) added to file name so parser won't recognize it
-  ! (Parser might change its case if it thinks it has seen the name before)
+  ! (Parser sometimes changes its case if it thinks it has seen the name before)
   character (len=*), parameter :: MASKINGTAPE = ')('
 
-  interface DUMP
+  interface Dump
     module procedure Dump_MLSFile
     module procedure Dump_FileDatabase
   end interface
@@ -267,6 +269,10 @@ module MLSFiles               ! Utility file routines
 
   ! The following parameters may some day be used
   ! but, not so far
+  !   Don't remember what we intended. Were they to be keys and values
+  !   for clever hashes? To be used in functions beginning with
+  !      Mls_io_gen_..
+  !   How exactly would they make our life simpler?
   ! character (len=*), parameter :: accesses = 'rdonly,write,rdwrite,create,nonhdf'
   ! integer, dimension(5), parameter :: accessTypes = &
   !   & (/ DFACC_RDONLY, DFACC_RDWR, DFACC_RDWR, DFACC_CREATE, PGSd_IO_Gen_RSeqFrm/)
@@ -282,7 +288,7 @@ contains
   !-------------------------------------------  AddFileToDatabase  -----
   integer function AddFileToDatabase ( DATABASE, ITEM )
 
-  ! This routine adds a vector to a database of such vectors, 
+  ! This routine adds an MLSFile to a database of such MLSFiles, 
   ! creating the database if necessary.
 
     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
@@ -424,21 +430,24 @@ contains
   ! Optionally you may pass in a version number and a debug flag
 
   ! optionally returns the exact name of the matching file
+  
+  ! You might see the term PCFId used for thePC elsewhere
+  ! Someday we should enforce uniform nomenclature here
 
   function GetPCFromRef(FileName, PCBottom, PCTop, &
     & caseSensitive, ErrType, versionNum, debugOption, path, ExactName) &
     & result (thePC)
 
     ! Dummy arguments
-    character (LEN=*), intent(IN)            :: FileName
-    integer,  intent(IN)                 :: PCBottom, PCTop
-    integer                              :: thePC, notThePC
-    integer,  intent(OUT)                :: ErrType
-    logical,  intent(IN)                     :: caseSensitive
-    integer,  optional                   :: versionNum
-    logical,  optional, intent(IN)           :: debugOption
-    character (LEN=*),  optional, intent(IN) :: path
-    character (LEN=*), optional, intent(out) :: ExactName
+    character (len=*), intent(in)            :: FileName
+    integer,  intent(in)                     :: PCBottom, PCTop
+    integer                                  :: thePC, notThePC
+    integer,  intent(out)                    :: ErrType
+    logical,  intent(in)                     :: caseSensitive
+    integer,  optional                       :: versionNum
+    logical,  optional, intent(in)           :: debugOption
+    character (len=*),  optional, intent(in) :: path
+    character (len=*), optional, intent(out) :: ExactName
 
     ! Local variables
     logical ::                           debug
@@ -450,7 +459,7 @@ contains
     integer                           :: numberPCs
     character(len=8)                  :: options
     character (LEN=MAXFILENAMELENGTH) :: PhysicalName, MatchPath
-    character (LEN=*), parameter      :: UNASSIGNEDFILENAME = '*'
+    character (len=*), parameter      :: UNASSIGNEDFILENAME = '*'
     character (LEN=BareFNLen), dimension(:), allocatable &
      &                                :: unsortedArray
     integer                           :: version, returnStatus
@@ -816,8 +825,8 @@ contains
   ! These functions can be called to operate on MLSFile_save
   function readnchars ( n )  result( status )
     ! Tries to read n chars
-    ! Our success orr failure determines the resulting status
-    ! We don't actually care what the chars are
+    ! Our success or failure determines the resulting status
+    ! We don't actually care what the chars are, merely whether we can read them
     ! Args
     integer, intent(in) :: n
     integer :: status
@@ -844,7 +853,7 @@ contains
 
     ! Arguments
 
-    integer, intent(IN)       :: FileAccesshdf4
+    integer, intent(in)       :: FileAccesshdf4
     integer                   :: FileAccesshdf5
     
 !    integer, parameter        :: H5F_ACC_RDONLY = 0
@@ -878,7 +887,7 @@ contains
       & H5f_Acc_Rdonly_F, H5f_Acc_Rdwr_F, H5f_Acc_Excl_F
     ! Arguments
 
-    integer, intent(IN)       :: FileAccesshdf4
+    integer, intent(in)       :: FileAccesshdf4
     integer(kind(H5F_ACC_EXCL_F)) :: FileAccesshdf5
     
     ! begin
@@ -899,17 +908,18 @@ contains
 
   ! -----------------------------------------------  mls_inqswath  -----
 
-  ! This function acts as a wrapper to allow hdf5 or hdf4 routines to be called
+  ! This function acts as a wrapper to allow 
+  ! either hdf5 or hdf4 routines to be called
 
   function mls_inqswath(FileName, swathList, strBufSize, hdfVersion)
 
     ! Arguments
 
-    character (len=*), intent(in) :: FILENAME
-    character (len=*), intent(out) :: SWATHLIST
-    integer, intent(out):: STRBUFSIZE
-    integer :: mls_inqswath
-    integer, optional, intent(in) :: hdfVersion
+    character (len=*), intent(in)  :: Filename
+    character (len=*), intent(out) :: Swathlist
+    integer, intent(out)           :: Strbufsize
+    integer                        :: MLS_Inqswath
+    integer, optional, intent(in)  :: HDFVersion
 
     ! Local
     integer :: myhdfVersion
@@ -975,8 +985,8 @@ contains
       & H5f_Acc_Rdonly_F, H5f_Acc_Rdwr_F, H5f_Acc_Trunc_F
     ! Arguments
 
-    character (len=*), intent(in) :: FILENAME
-    integer, intent(IN)       :: FileAccess ! (one of the hdf4 types)
+    character (len=*), intent(in) :: Filename
+    integer, intent(in)           :: FileAccess ! (one of the hdf4 types)
     integer, optional, intent(in) :: hdfVersion
     logical, optional, intent(in) :: addingmetadata
     ! Local variables
@@ -1088,13 +1098,13 @@ contains
     use HDF5, only: H5FClose_F
     ! Arguments
 
-    integer, intent(IN)       :: sdid  
-    integer :: mls_sfend            
-    integer, optional, intent(in) :: hdfVersion
-    logical, optional, intent(in) :: addingmetadata
+    integer, intent(in)           :: Sdid  
+    integer                       :: Mls_sfend            
+    integer, optional, intent(in) :: HdfVersion
+    logical, optional, intent(in) :: Addingmetadata
     ! Local variables
-    logical                       :: myaddingmetadata
-    integer                       :: myhdfVersion
+    logical                       :: Myaddingmetadata
+    integer                       :: MyhdfVersion
     integer, external :: PGS_MET_SFend
     logical, parameter :: DEBUG = .false.
 
@@ -1351,7 +1361,6 @@ contains
     if ( MLSFile%type == l_tkgen .and. MLSFile%recordLength /= 0 ) then
       if( PCTop > PCBottom ) then
         if ( DeeBug )  print *, '1'
-        ! MLSFile%FileId%f_id = Mls_io_gen_openF ( 'pg', CASESENSITIVE, &
         MLSFile%FileId%f_id = Mls_io_gen_openF ( l_tkgen, CASESENSITIVE, &
         & ioerror, record_length, &
         & PGSd_IO_Gen_RSeqFrm, &
@@ -1371,7 +1380,6 @@ contains
       endif
     elseif ( MLSFile%recordLength /= 0 ) then
       if ( DeeBug )  print *, '3'
-      ! MLSFile%FileId%f_id = mls_io_gen_openF(toolbox_mode, CASESENSITIVE, &
       MLSFile%FileId%f_id = mls_io_gen_openF(MLSFile%type, CASESENSITIVE, &
       & ioerror, record_length, MLSFile%access, &
       & MLSFile%Name, inp_rec_length=MLSFile%recordLength)
@@ -1473,13 +1481,11 @@ contains
     integer :: ioerror
     !
     if ( MLSFile%hdfVersion < 1 ) then
-      ! ioerror = mls_io_gen_closeF(toolbox_mode, MLSFile%FileID%f_id)
       ioerror = mls_io_gen_closeF(MLSFile%type, MLSFile%FileID%f_id)
     else
       ! print *, 'Trying to close ', trim(MLSFile%Name)
       ! print *, 'Toolbox mode ', trim(toolbox_mode)
       ! print *, 'hdf version ', MLSFile%hdfVersion
-      ! ioerror = mls_io_gen_closeF(toolbox_mode, MLSFile%FileID%f_id, &
       ioerror = mls_io_gen_closeF(MLSFile%type, MLSFile%FileID%f_id, &
        MLSFile%Name, MLSFile%hdfVersion)
     endif
@@ -1504,7 +1510,10 @@ contains
   !--------------------------------------------  transfer_MLSFile  -----
   integer function transfer_MLSFile ( ITEM, path, name )
 
-  ! This routine transforms an MLSFile, e.g. relocating its path
+  ! This routine transfers an MLSFile, e.g. resetting its path
+  ! --- Don't be fooled, it does not physically relocate the file ---
+  !     To do something like that see
+  !     Execute or Shell_Command in the machine module
 
     ! Dummy arguments
     type (MLSFile_T)                       :: ITEM
@@ -1650,21 +1659,18 @@ contains
   ! It must be given a FileHandle as an arg
   ! (A later version may allow choice between file handle and file name)
   ! (This version only uses a file name in autodetecting its hdf version)
-  ! function mls_io_gen_closeF( toolbox_mode, theFileHandle, &
   function mls_io_gen_closeF( mode, theFileHandle, &
     & FileName, hdfVersion, debugOption ) &
     &  result (ErrType)
 
     use HDF5, only: H5FClose_F
     ! Dummy arguments
-    integer  :: ErrType
-    integer, intent(IN)  :: theFileHandle
-    ! character (LEN=*), intent(IN)   :: toolbox_mode
-    integer, intent(IN)   :: mode
-    character (LEN=*), optional, intent(IN)   :: FileName
-
-    integer, optional, intent(in) :: hdfVersion
-    logical, optional, intent(in) :: debugOption
+    integer                                   :: ErrType
+    integer, intent(in)                       :: Mode
+    integer, intent(in)                       :: TheFileHandle
+    character (len=*), optional, intent(in)   :: FileName
+    integer, optional, intent(in)             :: HdfVersion
+    logical, optional, intent(in)             :: DebugOption
 
     ! Local
     logical ::                            debug
@@ -1837,7 +1843,6 @@ contains
   ! This is useful because all the Toolbox routines refer to files
   ! by their PC numbers, not their names
 
-  !  function mls_io_gen_openF(toolbox_mode, caseSensitive, ErrType, &
   function mls_io_gen_openF(mode, caseSensitive, ErrType, &
     & record_length, FileAccessType, &
     & FileName, PCBottom, PCTop, versionNum, unknown, thePC, &
@@ -1847,22 +1852,20 @@ contains
     use IO_Stuff, only: Get_Lun
 
     ! Dummy arguments
-    integer,  intent(OUT)  :: ErrType
-    integer,  intent(IN)  :: record_length
-    logical,  intent(IN)       :: caseSensitive
-    ! character (LEN=*), intent(IN) :: toolbox_mode
-    integer, intent(IN) :: mode
-    integer, intent(IN)       :: FileAccessType ! One of hdf4 dfacc*
-    integer  :: theFileHandle
-    character (LEN=*), optional, intent(IN)   :: FileName
-    integer,  optional, intent(IN)   :: PCBottom, PCTop
-    integer, optional, intent(IN)                :: thePC
-    integer,  optional     :: versionNum
-    logical, optional, intent(in) :: unknown
-    logical, optional, intent(in) :: debugOption
-
-    integer, optional, intent(in) :: hdfVersion
-    integer, optional, intent(in) :: inp_rec_length
+    integer                                 :: TheFileHandle
+    integer, intent(in)                     :: Mode
+    logical,  intent(in)                    :: CaseSensitive
+    integer,  intent(out)                   :: ErrType
+    integer,  intent(in)                    :: Record_length
+    integer, intent(in)                     :: FileAccessType ! One of hdf4 dfacc*
+    character (len=*), optional, intent(in) :: FileName  
+    integer,  optional, intent(in)          :: PCBottom, PCTop
+    integer,  optional                      :: VersionNum
+    logical, optional, intent(in)           :: Unknown
+    integer, optional, intent(in)           :: ThePC     
+    integer, optional, intent(in)           :: HdfVersion
+    logical, optional, intent(in)           :: DebugOption
+    integer, optional, intent(in)           :: Inp_rec_length
 
     ! Local
     integer :: myhdfVersion
@@ -2305,6 +2308,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.113  2019/01/30 23:56:39  pwagner
+! Corrected various comments
+!
 ! Revision 2.112  2018/04/19 02:09:49  vsnyder
 ! Remove USE statements for unused names
 !
