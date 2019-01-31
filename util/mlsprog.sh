@@ -133,6 +133,16 @@ fi
 EXTRA_OPTIONS="$OTHEROPTS mlseexxttrraa"
 
 MLSPROG=mlsxxyyzz
+
+# So far only mlsl2 can accept cmdline options
+# If 
+# (1) we are invoked as mlsl2; and if 
+# (2) HOSTNAME is defined 
+# it will be stored in metadata as ProductionLocation
+if [ "$MLSPROG" = "mlsl2"  -a "$HOSTNAME" != "" ]
+then
+  EXTRA_OPTIONS="--loc $HOSTNAME $EXTRA_OPTIONS"
+fi
 # This directory may be a relative path or an absolute one
 MLSBIN=mlsbbiinn
 # If relative, it must be relative to the following absolute path
@@ -241,6 +251,9 @@ else
 fi
 
 # $Log$
+# Revision 1.15  2017/02/09 23:33:17  pwagner
+# Avoid stomping on any already-selected PCF
+#
 # Revision 1.14  2016/05/17 17:07:14  pwagner
 # 'dot' job.env if found
 #
