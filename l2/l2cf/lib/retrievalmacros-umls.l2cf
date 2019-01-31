@@ -55,8 +55,10 @@
 !ProcessParValCS(pBottom,$@)!dnl
 })
 
-!setPTopBySpecies(Temperature=0.000464mb, GPH=0.000464mb)
-!setPBottomBySpecies(Temperature=383mb, GPH=383mb)
+;; This caused the STdProd precisions to depart from the initPtan
+;; (At some point we wanted them to--later we changed our mind)
+;; !setPTopBySpecies(Temperature=0.000464mb, GPH=0.000464mb)
+;; !setPBottomBySpecies(Temperature=383mb, GPH=383mb)
 
 ; Macros used by other macros
 ;; We may optionally count valid radiances as % of those available
@@ -1183,6 +1185,9 @@ Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, $
 })})
 
 ; $Log$
+; Revision 1.3  2017/06/16 16:58:47  pwagner
+; Now wont generate erroneous refGPH DirectWrites
+;
 ; Revision 1.2  2017/03/09 01:50:19  mjschwar
 ; *** empty log message ***
 ;
