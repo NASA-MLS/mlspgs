@@ -24,7 +24,7 @@ program MLSL2
   use Intrinsic, only: Get_Type, L_Ascii, L_Tkgen, Lit_Indices
   use L2GPData, only: AvoidUnlimitedDims
   use L2ParInfo, only: Parallel, InitParallel, AccumulateSlaveArguments, &
-    & SlaveArguments, TransmitSlaveArguments
+    & TransmitSlaveArguments
   use LeakCheck_M, only: LeakCheck
   use Lexer_Core, only: Init_Lexer
   use Machine, only: Getarg, Hp, Io_Error, USleep
@@ -56,7 +56,7 @@ program MLSL2
   use MLSPCF2 ! Everything
   use MLSStrings, only: Trim_Safe
   use MLSStringLists, only: ExpandStringRange, PutHashElement, SwitchDetail
-  use Output_M, only: Beep, Blanks, flushStdout, Output, &
+  use Output_M, only: Blanks, flushStdout, Output, &
     & InvalidPrUnit, MSGLogPrUnit, OutputOptions, PrUnitName, &
     & StampOptions, StdoutPrUnit
   use Parser, only: Clean_Up_Parser, Configuration
@@ -70,8 +70,8 @@ program MLSL2
   use String_Table, only: Destroy_Char_Table, Destroy_Hash_Table, &
     & Destroy_String_Table, Get_String, AddinUnit
   use Symbol_Table, only: Destroy_Symbol_Table
-  use Time_M, only: SayTime_Config, Time_Config, Begin, ConfigureSayTime, Dump, Finish, &
-    & SayTime, Time_Now
+  use Time_M, only: SayTime_Config, Time_Config, &
+    & Begin, Dump, Finish, SayTime, Time_Now
   use Toggles, only: Levels, Syn, Switches, Toggle
   use Track_M, only: ReportLeaks
   use Tree, only: Allocate_Tree, DeAllocate_Tree, NSons, SubTree
@@ -158,14 +158,11 @@ program MLSL2
   integer :: I                     ! counter for command line arguments
   integer, dimension(1) :: ICHUNKS
   integer :: J                     ! index within option
-  ! integer :: LastCHUNK = 0         ! Just run range [SINGLECHUNK-LastCHUNK]
   character(len=2048) :: LINE      ! Into which is read the command args
   character(len=1) :: null
   integer :: NUMFILES
   type(Parser_Table_t) :: Parser_Table
-  ! integer :: RECL = 20000          ! Record length for l2cf (but see --recl opt)
   integer :: ROOT                  ! of the abstract syntax tree
-  integer, parameter :: sleepSeconds = 1000000 ! 1 second in microseconds
   integer :: STATUS                ! From OPEN
   real :: T0, T1, T2               ! For timing
   integer :: inunit = -1
@@ -857,6 +854,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.228  2019/01/31 19:23:05  pwagner
+! Removed more unused stuff
+!
 ! Revision 2.227  2018/12/07 00:20:47  pwagner
 ! If cmdline says to skip retrievals, must skip even if l2cf says otherwise
 !
