@@ -1089,9 +1089,11 @@ contains ! =====     Public Procedures     =============================
       case ( s_changeSettings ) ! ===============================  changeSettings ==
         ! Change settings for this phase
         call addPhaseToPhaseNames ( 0, key )
-        ! call Dump( OutputOptions )
-        ! call Dump( StampOptions )
-        ! call DumpConfig
+        if ( debug ) then
+          call Dump( OutputOptions )
+          call Dump( StampOptions )
+          call DumpConfig
+        endif
 
       case ( s_transfer ) ! ===============================  Transfer ==
         ! Here we're on a transfer instruction
@@ -2867,7 +2869,7 @@ contains ! =====     Public Procedures     =============================
         call finishTimings('phases', returnStatus=status)
         if ( status /= 0 ) then
           call MLSL2Message ( MLSMSG_Warning, ModuleName, &
-            & 'Unable to finish phases timings (Is this still ariori?)' )
+            & 'Unable to finish phases timings (Is this still apriori?)' )
         else
           call fillTimings ( quantity%values(:,1), 'phases', 'all', .true. )
           ! call dump( quantity%values(:,1), 'phases' )
@@ -2877,7 +2879,7 @@ contains ! =====     Public Procedures     =============================
         call finishTimings('sections', returnStatus=status)
         if ( status /= 0 ) then
           call MLSL2Message ( MLSMSG_Warning, ModuleName, &
-            & 'Unable to finish sections timings (Is this still ariori?)' )
+            & 'Unable to finish sections timings (Is this still apriori?)' )
         else
           call fillTimings ( quantity%values(:,1), 'sections', 'all', .true. )
           ! call dump( quantity%values(:,1), 'sections' )
@@ -3375,6 +3377,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.480  2019/02/13 18:59:44  pwagner
+! Corrected mispelling, added debug Dumps
+!
 ! Revision 2.479  2018/09/13 20:24:17  pwagner
 ! Moved changeable options to new L2Options; added DumpOptions
 !
