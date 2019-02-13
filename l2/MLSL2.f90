@@ -57,7 +57,7 @@ program MLSL2
   use MLSStrings, only: Trim_Safe
   use MLSStringLists, only: ExpandStringRange, PutHashElement, SwitchDetail
   use Output_M, only: Blanks, flushStdout, Output, &
-    & InvalidPrUnit, MSGLogPrUnit, OutputOptions, PrUnitName, &
+    & BothPrUnit, InvalidPrUnit, MSGLogPrUnit, OutputOptions, PrUnitName, &
     & StampOptions, StdoutPrUnit
   use Parser, only: Clean_Up_Parser, Configuration
   use Parser_Table_M, only: Destroy_Parser_Table, Parser_Table_T
@@ -251,9 +251,9 @@ program MLSL2
   else if ( outputOptions%prunit == INVALIDPRUNIT ) then
      call MLSMessage( MLSMSG_Warning, ModuleName, &
       & 'Avoding all output except possibly MLSMessages' )
-  else if (parallel%master) then
-     outputOptions%prunit = MSGLOGPRUNIT   ! output both logged, not sent to stdout
-  else if (parallel%slave) then
+  else if ( parallel%master .and. .not. L2Options%Overriden ) then
+     outputOptions%prunit = BothPrUnit ! MSGLOGPRUNIT   ! output both logged, not sent to stdout
+  else if ( parallel%slave .and. .not. L2Options%Overriden ) then
      outputOptions%prunit = STDOUTPRUNIT   ! output sent only to stdout, not logged
      call set_config( useToolkit=.false. )
   end if
@@ -854,6 +854,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.229  2019/02/13 17:31:27  pwagner
+! change outputOptions%prunit to L2Options only if default value is Overriden
+!
 ! Revision 2.228  2019/01/31 19:23:05  pwagner
 ! Removed more unused stuff
 !
