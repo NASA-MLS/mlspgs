@@ -521,12 +521,12 @@ contains
     use MLSCommon, only: FileNameLen, MLSFile_T
     use MLSFiles, only: HDFVersion_5, &
       & AddInitializeMLSFile, Dump, GetMLSFileByName, GetPCFromRef, &
-      & MLS_OpenFile, Split_Path_Name
+      & Split_Path_Name
     use MLSFinds, only: FindFirst, FindNext
     use MLSKinds, only: R8
     use MLSL2Options, only: CheckPaths, Default_HDFVersion_Write, &
       & Patch, RuntimeValues, SkipDirectWrites, Toolkit
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
+    use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning
     use MLSPCF2, only: MLSPCF_ElevOffset_Start, MLSPCF_Misc_End, &
       & MLSPCF_L2gp_Start, MLSPCF_L2gp_End, &
       & MLSPCF_L2dgm_Start, MLSPCF_L2dgm_End, &
@@ -647,7 +647,7 @@ contains
     type(VectorValue_T), pointer :: STATUSQTY ! The quantities status
     type(VectorValue_T), pointer :: AscDescModeQTY ! The shared quantity AscDescMode
     type(DirectData_T), pointer  :: thisDirect ! => null()
-    real :: TimeIn, TimeSetUp, TimeWriting, timeToClose, TimeOut
+    real :: TimeIn, TimeToClose, TimeOut
 
     ! Executable code
     ! call output ( 'We are in DirectWriteCommand now', advance='yes' )
@@ -660,8 +660,6 @@ contains
     call trace_begin ( me, "DirectWriteCommand", node, &
       & cond=toggle(gen) .and. switchDetail(switches,'dwreq') > -1 )
     call time_now ( timeIn )
-    TimeSetUp = TimeIn
-    TimeWriting = TimeIn
     timeToClose = TimeIn
     timeOut = TimeIn
     myMakeRequest = .false.
@@ -1536,8 +1534,7 @@ contains
     use L2auxData, only: L2auxData_T
     use L2gpData, only: L2gpData_T
     use L2parinfo, only: Parallel, Slavejoin
-    ! use MLSKinds, only: R8
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use MLSMessageModule, only: MLSMSG_Error
     use MLSSignals_M, only: Getsignalname
     use Moretree, only: Get_Boolean, Get_Field_Id, Get_Spec_Id
     use String_Table, only: Get_String
@@ -1899,7 +1896,7 @@ contains
     use L2auxData, only: Addl2auxtoDatabase, Resizel2auxData, &
       & L2auxData_T, L2auxrank, Setupnewl2auxrecord
     use MLSKinds, only: R4, R8
-    use MLSMessagemodule, only: MLSMessage, MLSMSG_Error
+    use MLSMessagemodule, only: MLSMSG_Error
     use Output_M, only: Output
     use String_Table, only: Display_String
     use Toggles, only: Gen, Toggle, Levels, Switches
@@ -2170,6 +2167,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.188  2019/02/13 19:15:46  pwagner
+! Removed more unused stuff
+!
 ! Revision 2.187  2019/02/13 17:29:33  pwagner
 ! New GPH_MissingValue field of L2Options can now be st to a value other than default -999.99
 !
