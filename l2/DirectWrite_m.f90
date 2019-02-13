@@ -30,16 +30,17 @@ module DirectWrite_m  ! Write l2gp and l2aux products out to files
     & L_L2gp, L_L2aux, L_L2dgg, L_L2fwm
   use L2ParInfo, only: Parallel
   use Machine, only: USleep
-  use MLSCommon, only: DefaultUndefinedValue, Interval_T, MLSFile_T, &
+  use MLSCommon, only: Interval_T, MLSFile_T, &
     & InRange
   use MLSKinds, only: Rv
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
+  use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning
   use MLSFiles, only: HDFversion_4, HDFversion_5, Dump, MLS_Exists, &
     & MLS_CloseFile, MLS_OpenFile, Split_Path_Name
   use MLSFinds, only: FindFirst
   use MLSHDFEOS, only: MLS_Swath_In_File
-  use MLSL2Options, only: MLSL2Message, WriteFileAttributes
-  use MLSStringLists, only: List2Array, NumStringElements, SwitchDetail
+  use MLSL2Options, only: L2Options, MLSL2Message, WriteFileAttributes
+  use MLSStringLists, only: SwitchDetail
+  use MLSStrings, only: LowerCase
   use Output_M, only: Blanks, Output
   use PCFHdr, only: GlobalAttributes
   use String_Table, only: Get_String
@@ -139,8 +140,8 @@ module DirectWrite_m  ! Write l2gp and l2aux products out to files
     character(len=1024) :: fileName ! E.g., '/data/../MLS..H2O...he5'
   end type DirectData_T
   
-  logical, parameter :: countEmpty = .true.
-  integer, parameter :: S2US  = 1000000 ! How many microseconds in a s
+  ! logical, parameter :: countEmpty = .true.
+  ! integer, parameter :: S2US  = 1000000 ! How many microseconds in a s
   ! integer, parameter :: DELAY = 1*S2US  ! How long to sleep in microseconds
   logical, parameter :: DEEBUG = .false.
   logical, parameter :: MAYWRITEPOSTOVERLAPS = .true.
@@ -759,7 +760,6 @@ contains ! ======================= Public Procedures =========================
 
     ! Purpose:
     ! Write plain hdf-formatted files
-    use HDF, only: Dfacc_Rdonly
     use MLSHDF5, only: SaveAsHDF5DS
 
     ! Args:
@@ -771,11 +771,10 @@ contains ! ======================= Public Procedures =========================
     ! Local parameters
     logical :: alreadyOpen
     logical :: already_there
-    logical, parameter :: DEEBUG = .false.
-    logical :: deebughere
-    integer :: lastMAF
+    ! logical, parameter :: DEEBUG = .false.
+    ! logical :: deebughere
     integer :: returnStatus
-    character(len=*), parameter :: sdDebug = "R1A:118.B1F:PT.S0.FB25-1 Core"
+    ! character(len=*), parameter :: sdDebug = "R1A:118.B1F:PT.S0.FB25-1 Core"
     logical :: verbose
     ! Executable
     verbose = BeVerbose ( 'direct', 0 )
@@ -787,7 +786,7 @@ contains ! ======================= Public Procedures =========================
       call outputNamedValue( '  no need to recreate file', trim(L2AUXFile%name) )
       call outputNamedValue( '  already open?', alreadyOpen )
     endif
-    deebughere = ( deebug .or. sdname == sdDebug ) .and. .false.
+    ! deebughere = ( deebug .or. sdname == sdDebug ) .and. .false.
     if ( .not. alreadyOpen ) then
       call mls_openFile(L2AUXFile, returnStatus)
       if ( returnStatus /= 0 ) &
@@ -1065,8 +1064,7 @@ contains ! ======================= Public Procedures =========================
       & DestroyL2Auxcontents, &
       & SetupnewL2Auxrecord, WriteL2Auxattributes, WriteHDF5Data
     use MLSHDF5, only: IsHDF5attributepresent, IsHDF5dspresent, &
-      & IsHDF5GroupPresent, &
-      & MakeHDF5Attribute, MakeNestedGroups
+      & MakeHDF5Attribute
     use MLSL2Timings, only: ShowTimingNames
     use PCFHdr, only: H5_WriteMLSFileattr, H5_Writeglobalattr
     use QuantityTemplates, only: WriteAttributes
@@ -1087,19 +1085,19 @@ contains ! ======================= Public Procedures =========================
     logical :: addQtyAttributes
     logical :: already_there
     ! logical :: attributes_there
-    character(len=128) :: barename
+    ! character(len=128) :: barename
     integer :: first_maf
-    character(len=128), dimension(25) :: groupNames
+    ! character(len=128), dimension(25) :: groupNames
     integer :: grp_id
     type (L2AUXData_T) :: l2aux
     integer :: last_maf
     type ( MLSChunk_T ) :: LASTCHUNK    ! The last chunk in the file
     logical :: mySingle
-    integer :: n
+    ! integer :: n
     integer :: NODIMS                   ! Also index of maf dimension
     integer :: Num_qty_values
     character(len=8) :: overlaps        ! 'lower', 'upper', or 'none'
-    character(len=1024) :: path
+    ! character(len=1024) :: path
     integer :: returnStatus
     integer :: SIZES(3)                 ! HDF array sizes
     integer :: START(3)                 ! HDF array starting position
@@ -1702,7 +1700,7 @@ contains ! ======================= Public Procedures =========================
     & precision, quality, status, convergence, AscDescMode, &
     & l2gp, name, chunkNo, offset, firstInstance, lastInstance )
     use Dump_0, only: Dump
-    use Intrinsic, only: L_None, Lit_Indices
+    use Intrinsic, only: L_None, Lit_Indices, L_GPH
     use L2GPData, only: AscDescModeIsField, DescendingRange, L2GPData_T, RGP, &
       & SetupNewL2GPRecord
     use QuantityTemplates, only: Dump
@@ -1792,6 +1790,12 @@ contains ! ======================= Public Procedures =========================
       if ( verbose ) call dump( l2gp%pressures, 'vertical coordinates' )
       if ( deebug  ) call dump( quantity%template )
     end select
+    
+    ! We must choose a custom FillValue for GPH because
+    ! -999.99 is a possibly legitimate value
+    if ( quantity%template%QuantityType == l_gph .or. &
+      & index( lowercase(name), 'gph' ) > 0 ) &
+      & l2gp%MissingValue = L2Options%GPH_MissingValue
     ! It inherits its quantity type from the quantity template
     ! l2gp%quantityType=quantity%template%quantityType
     ! Do something about frequency
@@ -1956,6 +1960,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.94  2019/02/13 18:58:42  pwagner
+! New GPH_MissingValue field of L2Options can now be st to a value other than default -999.99
+!
 ! Revision 2.93  2018/11/12 23:13:26  pwagner
 ! Deprecated AscDescMode
 !
