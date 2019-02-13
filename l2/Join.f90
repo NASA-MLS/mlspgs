@@ -14,7 +14,7 @@ module Join                     ! Join together chunk based data.
 !=============================================================================
 
   use JoinUtils_1, only: Error, Announce_Error, DWSwath, DWHDF, DWQty
-  use MLSL2Options, only: CheckPaths, L2CFNode, &
+  use MLSL2Options, only: CheckPaths, L2Options, L2CFNode, &
     & SkipDirectWrites, SpecialDumpFile, MLSL2Message
   use MLSStringLists, only: GetHashElement, SwitchDetail
   use MLSStrings, only: LowerCase
@@ -1713,7 +1713,7 @@ contains
     & firstInstance, lastInstance, nameString )
 
     use Init_Tables_Module, only: L_Pressure, L_Zeta
-    use Intrinsic, only: L_None
+    use Intrinsic, only: L_None, L_GPH
     use L2gpData, only: Addl2GPtoDatabase, Expandl2GPDatainplace, &
       & L2gpData_T, Setupnewl2GPrecord, Rgp
     use MLSKinds, only: Rv
@@ -1730,21 +1730,23 @@ contains
     type (VectorValue_T), pointer :: precision ! Optional vector quantity
     type (L2GPData_T), dimension(:), pointer :: L2GPDATABASE
     integer, intent(in) :: CHUNKNO
-    integer, intent(in), optional :: FIRSTINSTANCE, LASTINSTANCE
-    character(len=*), intent(in), optional :: nameString
-    ! The last two are set if only part (e.g. overlap regions) of the quantity
+    integer, intent(in), optional :: Firstinstance, Lastinstance
+    !                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ! These two are set if only part (e.g. overlap regions) of the quantity
     ! is to be stored in the l2gp data.
+    character(len=*), intent(in), optional :: nameString
 
     ! Local variables
     type (L2GPData_T) :: NewL2GP
     type (L2GPData_T), pointer :: ThisL2GP
-    integer :: Index
+    integer :: Indx
     integer :: FirstProfile, LastProfile ! Profile range in the l2gp to output to
     real(rv) :: HUGERGP
     integer :: Me = -1                   ! String index for trace
     integer :: NoSurfsInL2GP, NoFreqsInL2GP
     integer :: UseFirstInstance, UseLastInstance, NoOutputInstances
     logical :: L2gpDataIsNew
+    character(len=64)         :: myNameString
    
     hugeRgp = real ( huge(0.0_rgp), rv )
     call trace_begin ( me, "JoinL2GPQuantities", key, &
@@ -1754,8 +1756,8 @@ contains
     ! scratch.  Otherwise, we expand it and fill up our part of it.
     l2gpDataIsNew = (.not. associated(l2gpDatabase))
     if ( .not. l2gpDataIsNew ) then
-      index = decoration(key)
-      l2gpDataIsNew = (index>=0)
+      Indx = decoration(key)
+      l2gpDataIsNew = (Indx>=0)
     end if
 
     ! Work out what to do with the first and last instance information
@@ -1772,6 +1774,9 @@ contains
       useLastInstance = quantity%template%noInstances- &
         & quantity%template%noInstancesUpperOverlap
     end if
+    
+    myNameString = ' '
+    if ( present(NameString) ) myNameString = NameString
 
     noOutputInstances = useLastInstance-useFirstInstance+1
     ! If we've not been asked to output anything then don't carry on
@@ -1807,15 +1812,20 @@ contains
         newL2GP%frequency = 0.0
       end if
 
+      ! We must choose a custom FillValue for GPH because
+      ! -999.99 is a possibly legitimate value
+      if ( quantity%template%QuantityType == l_gph .or. &
+        & index( lowercase(myNameString), 'gph' ) > 0 ) &
+        & newL2GP%MissingValue = L2Options%GPH_MissingValue
       ! Add it to the database of l2gp quantities
-      index = AddL2GPToDatabase ( l2gpDatabase, newL2GP )
+      Indx = AddL2GPToDatabase ( l2gpDatabase, newL2GP )
       ! Setup the pointer and index to be used later
-      call decorate ( key, -index ) ! Remember where it is
-      thisL2GP => l2gpDatabase(index)
+      call decorate ( key, -Indx ) ! Remember where it is
+      thisL2GP => l2gpDatabase(Indx)
 
     else
       ! Setup the index and pointer
-      thisL2GP => l2gpDatabase(-index)
+      thisL2GP => l2gpDatabase(-Indx)
     end if
 
     ! Expand l2gp (initially all zero-size arrays) to take the new information
@@ -2160,6 +2170,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.187  2019/02/13 17:29:33  pwagner
+! New GPH_MissingValue field of L2Options can now be st to a value other than default -999.99
+!
 ! Revision 2.186  2018/07/27 23:18:48  pwagner
 ! Renamed level 2-savvy MLSMessage MLSL2Message
 !
