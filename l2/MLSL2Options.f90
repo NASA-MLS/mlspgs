@@ -177,7 +177,10 @@ module MLSL2Options              !  Options and Settings for the MLSL2 program
     logical            :: SkipRetrieval                 = .false.        
     ! A holding place for the above, allowing us to skip for some phases only
     logical            :: SkipRetrievalOriginal         = .false. 
-    logical            :: MLSL2Debug                    = .false.               
+    logical            :: MLSL2Debug                    = .false. 
+    logical            :: Overriden                     = .false. ! Did we ovrrid?         
+    ! Set the following to MSGLOGPRUNIT before delivering to sips;
+    ! Set the following to MSGLOGPRUNIT before delivering to sips;
     ! Set the following to MSGLOGPRUNIT before delivering to sips;
     ! (its possible values and their effects on normal output:
     ! INVALIDPRUNIT  on MUTE, no output
@@ -186,6 +189,7 @@ module MLSL2Options              !  Options and Settings for the MLSL2 program
     ! BOTHPRUNIT     both stdout and Log file
     ! > 0            Fortran 'unit=OUTPUT_PRINT_UNIT')
     integer            :: Output_print_unit             = MSGLOGPRUNIT ! -2
+    real               :: GPH_MissingValue              = -1.e15 ! -999.99
 
   end type L2Options_T
   ! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -266,6 +270,26 @@ module MLSL2Options              !  Options and Settings for the MLSL2 program
 
   logical, private, parameter :: countEmpty = .true. ! Except where overriden locally
   
+  type :: SomeL2Options_T
+    ! Whether to skip doing the retrieval--a pre-flight checkout of paths, etc.
+    logical            :: SkipRetrieval                 = .false.        
+    ! A holding place for the above, allowing us to skip for some phases only
+    logical            :: SkipRetrievalOriginal         = .false. 
+    logical            :: MLSL2Debug                    = .false.               
+    ! Set the following to MSGLOGPRUNIT before delivering to sips;
+    ! (its possible values and their effects on normal output:
+    ! INVALIDPRUNIT  on MUTE, no output
+    ! STDOUTPRUNIT   sent to stdout (via print *, '...')
+    ! MSGLOGPRUNIT   sent to Log file (via MLSMessage)
+    ! BOTHPRUNIT     both stdout and Log file
+    ! > 0            Fortran 'unit=OUTPUT_PRINT_UNIT')
+    integer            :: Output_print_unit             = MSGLOGPRUNIT ! -2
+    real               :: GPH_MissingValue              = -1.e15 ! -999.99
+
+  end type SomeL2Options_T
+
+  type(SomeL2Options_T), save :: SomeL2Options
+
 !=============================================================================
 contains 
   ! -------------------------------------------------  MLSL2Message  -----
@@ -538,8 +562,8 @@ cmds: do
     parallel%verbosity = switchDetail(switches, 'mas') + 1
     if ( switchDetail(switches, 'walk') > -1 ) &
       & MLSMSG_Severity_to_walkback = MLSMSG_Warning
-    if ( outputOptions%prunit /= INVALIDPRUNIT ) &
-      & outputOptions%prunit = L2Options%Output_print_unit
+    if (  L2Options%Overriden ) &
+      & outputOptions%prunit =  L2Options%Output_print_unit
     ! print *, 'Ended processing options'
   contains
     subroutine getNextArg( i, line )
@@ -990,8 +1014,8 @@ cmds: do
             inquire( unit=OutputOptions%prUnit, exist=exist, opened=opened )
             L2Options%Output_print_unit = OutputOptions%prUnit
           end select
-          if ( outputOptions%prunit /= INVALIDPRUNIT ) &
-            & outputOptions%prunit = L2Options%Output_print_unit
+        if (  L2Options%Overriden ) &
+          & outputOptions%prunit =  L2Options%Output_print_unit
         else if ( line(3+n:12+n) ==  'stopafter ' ) then
           i = i + 1
           call myNextArgument( i, inLine, entireLine, stopAfterSection )
@@ -1214,6 +1238,11 @@ jloop:do while ( j < len_trim(line) )
         read(valu,*) SomeGlobalAttributes
         call SomeToGlobalAttributes
         return
+      elseif ( lowercase(name) == 'l2options' ) then
+        print *, 'Reading SomeL2Options'
+        read(valu,*) SomeL2Options
+        call SomeToL2Options
+        return
       endif
       ! ---------------------------------------------------------------
 
@@ -1332,6 +1361,21 @@ jloop:do while ( j < len_trim(line) )
     Toolkit                       =  .true. ! SIPS_VERSION
     call restoreConfig ( complete )
   end subroutine restoreDefaults
+
+  ! --------------------------------------------  SomeToL2Options  -----
+  ! Restore the options to their default values
+  ! Now some things it makes no sense to overwrite, so it makes
+  ! no sense to restore them either; e.g., CHECKPATHS, parallel, etc.
+  subroutine SomeToL2Options
+    ! Executable
+    print *, 'Entered SomeToL2Options'
+    L2Options%SkipRetrieval           =  SomeL2Options%SkipRetrieval        
+    L2Options%SkipRetrievalOriginal   =  SomeL2Options%SkipRetrievalOriginal
+    L2Options%MLSL2Debug              =  SomeL2Options%MLSL2Debug           
+    L2Options%Output_print_unit       =  SomeL2Options%Output_print_unit    
+    L2Options%GPH_MissingValue        =  SomeL2Options%GPH_MissingValue     
+    L2Options%Overriden               =   .true.
+  end subroutine SomeToL2Options
 
   ! -------------------------------------------------  DumpOptions  -----
   ! Dump the L2 Options
@@ -1482,6 +1526,9 @@ end module MLSL2Options
 
 !
 ! $Log$
+! Revision 2.123  2019/02/13 17:33:22  pwagner
+! May override L2Options at runtime; added fields GPH_MissingValue and Overriden
+!
 ! Revision 2.122  2019/01/10 21:45:59  pwagner
 ! SwitchDetail behaviot means no need to discard multiple switches
 !
