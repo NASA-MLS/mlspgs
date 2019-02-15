@@ -67,7 +67,9 @@ program l2auxdump ! dumps datasets, attributes from L2AUX files
     logical             :: la                 = .false.
     logical             :: ls                 = .false.
     logical             :: anyNaNs            = .false. ! Just say if any NaNs
+    logical             :: printMaxVal        = .false. ! Just print maxval
     logical             :: timereads          = .false. ! Just time how long to read
+    logical             :: isL1BOA            = .false.
     logical             :: radiances          = .false.
     logical             :: TAI                = .false.
     logical             :: useFillValue       = .false.
@@ -163,8 +165,9 @@ program l2auxdump ! dumps datasets, attributes from L2AUX files
       end if
     end if
     if ( options%datasets /= ' ' ) then
-      if ( options%radiances .or.  options%TAI .or. &
-        & options%timereads .or. options%anyNaNs .or. options%firstMAF > 0 ) then
+      if ( options%radiances .or.  options%TAI .or. options%timereads &
+        & .or. options%anyNaNs .or. options%printMaxVal &
+        & .or. options%firstMAF > 0 ) then
         call dumpRadiances ( filenames(i), hdfVersion, options )
         sdfid1 = mls_sfstart( filenames(i), DFACC_READ, hdfVersion=hdfVersion )
       elseif ( options%useFillValue ) then
@@ -207,6 +210,7 @@ contains
      print *, 'list attributes  ?  ', options%la   
      print *, 'list datasets  ?    ', options%ls
      print *, 'say if any NaNs?    ', options%anyNaNs
+     print *, 'print max value?    ', options%printMaxVal
      print *, 'just time reads?    ', options%timereads
      print *, 'radiances only    ? ', options%radiances
      print *, 'TAI only          ? ', options%TAI
@@ -337,6 +341,10 @@ contains
       else if ( lowercase(filename(1:4)) == '-nan' ) then
         options%anyNaNs = .true.
         exit
+      else if ( lowercase(filename(1:4)) == '-max' ) then
+        options%printMaxVal = .true.
+        options%isL1BOA = .true. ! So we don't try to read precisions
+        exit
       elseif ( filename(1:6) == '-skip ' ) then
         call getarg ( i+1+hp, options%skipList )
         i = i + 1
@@ -377,6 +385,7 @@ contains
       write (*,*) '  -la             => just list attribute names in files'
       write (*,*) '  -ls             => just list sd names in files'
       write (*,*) '  -skip list      => skip dumping the SDs in list'
+      write (*,*) '  -max            => print just max value'
       write (*,*) '  -NaN            => just say if there are any NaNs'
       write (*,*) '  -t              => just time reads'
       write (*,*) '  -radiances      => show radiances only'
@@ -384,7 +393,7 @@ contains
       write (*,*) '  -o opts         => pass opts to dump routines'
       write (*,*) '                  e.g., "-rs" to dump only rms, stats'
       write (*,*) '                  e.g., "?" to list available ones'
-      write (*,*) '  -one        => print statistics on one line (dont)'
+      write (*,*) '  -one            => print statistics on one line (dont)'
       write (*,*) '  -r root         => limit to group based at root'
       write (*,*) '                     (default is "/")'
       write (*,*) '  -rd DSName      => limit attributes to root/DSName'
@@ -477,10 +486,10 @@ contains
       if ( options%verbose ) call dump(mysdList, 'DS names')
     endif
 
-    isl1boa = (index(trim(mysdList), 'GHz/') > 0)
-    if ( isl1boa .and. .not. &
+    options%isl1boa = options%isl1boa .or. (index(trim(mysdList), 'GHz/') > 0)
+    if ( options%isl1boa .and. .not. &
       & ( &
-      & options%timereads .or. options%anyNaNs .or. &
+      & options%timereads .or. options%anyNaNs .or. options%printMaxVal .or. &
       & options%TAI .or. options%firstMAF > 0 ) &
       & ) then
       call MLSMessage ( MLSMSG_Warning, ModuleName, &
@@ -503,13 +512,16 @@ contains
         & 'No sdNames cp to file--unable to count sdNames in ' // trim(mysdList) )
     endif
     ! Loop over sdNames in file 1
+    ! print *, 'Looping over ', noSds
     do i = 1, noSds
       call GetStringElement (trim(mysdList), sdName, i, countEmpty )
+      ! print *, trim(sdName)
       if ( index( lowercase(trim(sdName)), PRECISIONSUFFIX ) > 0 ) cycle
       if ( options%TAI .and. index( lowercase(trim(sdName)), 'tai' ) < 1 ) cycle
       iPrec = StringElementNum( mysdList, trim(sdName) // PRECISIONSUFFIX, &
         & countEmpty )
-      if ( iPrec < 1 .and. .not. isL1BOA ) cycle
+      ! print *, iPrec, options%isl1boa
+      if ( iPrec < 1 .and. .not. options%isl1boa ) cycle
       ! We won't try to dump metadata or obvious non-radiance data
       if ( any( &
         & streq( &
@@ -540,17 +552,19 @@ contains
           & 'Unable to find ' // trim(sdName) // ' in ' // trim(File1) )
         cycle
       endif
-      if ( options%verbose ) print *, 'About to read ', trim(sdName) // PRECISIONSUFFIX
-      if ( isL1BOA ) then
+      if ( options%isl1boa ) then
         status = 0 ! No radiance precisions in l1boa
-      elseif ( options%firstMAF > -1 ) then
-        call ReadL1BData ( sdfid1, trim(sdName)  // PRECISIONSUFFIX, L1bPrecision, &
-          & NoMAFs, status, firstMAF=options%firstMAF, lastMAF=options%lastMAF, &
-          & hdfVersion=the_hdfVersion, NEVERFAIL=.true., L2AUX=.true. )
       else
-        call ReadL1BData ( sdfid1, trim(sdName)  // PRECISIONSUFFIX, L1bPrecision, &
-          & NoMAFs, status, &
-          & hdfVersion=the_hdfVersion, NEVERFAIL=.true., L2AUX=.true. )
+        if ( options%verbose ) print *, 'About to read ', trim(sdName) // PRECISIONSUFFIX
+        if ( options%firstMAF > -1 ) then
+          call ReadL1BData ( sdfid1, trim(sdName)  // PRECISIONSUFFIX, L1bPrecision, &
+            & NoMAFs, status, firstMAF=options%firstMAF, lastMAF=options%lastMAF, &
+            & hdfVersion=the_hdfVersion, NEVERFAIL=.true., L2AUX=.true. )
+        else
+          call ReadL1BData ( sdfid1, trim(sdName)  // PRECISIONSUFFIX, L1bPrecision, &
+            & NoMAFs, status, &
+            & hdfVersion=the_hdfVersion, NEVERFAIL=.true., L2AUX=.true. )
+        endif
       endif
       if ( status /= 0 ) then
         call MLSMessage ( MLSMSG_Warning, ModuleName, &
@@ -571,6 +585,16 @@ contains
           print *, 'NaNs found in ', trim(sdName)
         elseif ( options%verbose ) then
           print *, 'no NaNs found in ', trim(sdName)
+        endif
+        cycle
+      elseif ( options%printMaxVal ) then
+        if ( .not. associated(L1bRadiance%DpField) ) then
+          print *, trim(sdName), ' not d.p. and so not checked'
+        elseif ( options%verbose ) then
+          print *, 'max(' // trim(sdName) // ')', &
+            & maxval(L1bRadiance%DpField)
+        else
+          print *, maxval(L1bRadiance%DpField)
         endif
         cycle
       endif
@@ -639,6 +663,9 @@ end program l2auxdump
 !==================
 
 ! $Log$
+! Revision 1.24  2017/12/01 00:28:06  pwagner
+! Now obeys -maf1, -maf2 cmdline options
+!
 ! Revision 1.23  2016/08/09 22:45:26  pwagner
 ! Consistent with splitting of Dunp_0
 !
