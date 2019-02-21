@@ -46,15 +46,16 @@ module PrintIt_m ! Lowest-level module for printing, logging, etc.
 !    (parameters)
 ! MLS_S_Success            if status not this, then something went wrong
 ! InvalidLogUnit           Log Unit must not be this
-! StdoutLogUnit            If tthis, Logging means printing to stdout
-! DefaultLogUnit           If tthis, Logging means using Toolkit
+! StdoutLogUnit            If this, Logging means printing to stdout
+! DefaultLogUnit           If this, Logging means using Toolkit
 
 !     (subroutines and functions)
 ! AssembleFullLine         Assemble the full line of output
 ! Get_Config               Return any specified configuration setting
 ! IgnoreToolkit            Logging and printing both go to stdout
-! LogUnitName              Return an appropriate name for the LogUnit number
+! LogUnitName              Convert integer LogUnit number to its name string
 ! PrintItOut               Print or log inLine; then return or quit
+! SeverityNamesFun         Convert integer severity to its name string
 ! Set_Config               Set any specified configuration setting
 ! SnipRCSFrom              Trim nonsense involving RCS system from input "with"
 ! === (end of toc) ===
@@ -68,12 +69,13 @@ module PrintIt_m ! Lowest-level module for printing, logging, etc.
 ! char(len=12) LogUnitName ( int LogUnit )
 ! PrintItOut( char* InLine, int severity, [int line_len], [log noPrefix], &
 !    & [int exitStatus], [log noExit] )
+! char(len=12) SeverityNamesFun ( int Severity )
 ! Set_Config(  [ log Asciify], [ int LogFileUnit], [char* Prefix], &
 !    & [int Severity_to_Quit], [log UseDefaultFormatStdout], [log UseToolkit] )
 ! char(len=*) SnipRCSFrom ( char* with )
 ! === (end of api) ===
-  public :: assembleFullLine, get_config, IgnoreToolkit, logUnitName, printItOut
-  public :: set_config, snipRCSFrom
+  public :: AssembleFullLine, Get_config, IgnoreToolkit, LogUnitName
+  public :: PrintItOut, Set_config, SnipRCSFrom, SeverityNamesFun
 
   ! These apply if we don't log messages to a Fortran unit number
   ! other than Error_Unit or Output_Unit
@@ -368,8 +370,12 @@ contains
     maxLineLength = min( loggedLength, len(loggedLine) )
     log_it = (MLSMessageConfig%useToolkit .and. UseSDPToolkit) .or. &
       & severity >= MLSMessageConfig%severity_to_quit
+    if ( DEEBUG ) print *, 'log it: ', log_it
     if ( DEEBUG .and. log_it ) then
       print *, 'trim(loggedLine) ', trim(loggedLine)
+      print *, 'maxLineLength ', maxLineLength
+      print *, 'logFileUnit ', MLSMessageConfig%logFileUnit
+      print *, 'useToolkit ', MLSMessageConfig%useToolkit
       print *, 'maxLineLength ', maxLineLength
     endif
     if( log_it .and. maxLineLength > 0 .and. MLSMessageConfig%useToolkit ) then
@@ -378,13 +384,13 @@ contains
 
     ! Now, if we're also logging to a file then write to that too.
     select case ( MLSMessageConfig%logFileUnit  )
-    case ( StdoutLogUnit  )
+    case ( StdoutLogUnit )
       if ( MLSMessageConfig%useDefaultFormatStdout ) then
         write ( unit=*, fmt=* ) trim(line)
       else
         write ( unit=*, fmt='(a)' ) trim(line)
       end if
-    case ( defaultLogUnit )
+    case ( defaultLogUnit, BothLogUnit )
     case default
       write ( UNIT=max(MLSMessageConfig%logFileUnit,1), FMT=* ) trim(line)
     end select
@@ -536,6 +542,9 @@ contains
 end module PrintIt_m
 
 ! $Log$
+! Revision 2.17  2019/02/21 22:32:26  pwagner
+! Prevent strange crashes in PrintItOut; made SeverityNamesFun public
+!
 ! Revision 2.16  2019/01/24 18:31:47  pwagner
 ! Reorganized modules that print to simplify toolkit-free builds
 !
