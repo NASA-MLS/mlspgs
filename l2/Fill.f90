@@ -10,34 +10,37 @@
 ! foreign countries or providing access to foreign persons.
 
 !=============================================================================
-module Fill                     ! Create vectors and fill them.
-  !=============================================================================
+module Fill                     ! Create vector quantities and fill them.
+!=============================================================================
 
   use MLSCommon, only: MLSFile_T, DefaultUndefinedValue
   use MLSKinds, only: R8, Rv
   use HighOutput, only: Dump
-  use Output_M, only: OutputOptions, StampOptions
+  use Output_M, only: OutputOptions, StampOptions, SwitchOutput, RevertOutput
   use MLSMessageModule, only: DumpConfig
   ! This module performs the Fill operation in the Level 2 software.
-  ! This takes a vector template, and creates and fills an appropriate vector
+  ! This takes a quantity template, 
+  ! then creates and fills an appropriate vector quantity
 
   implicit none
   private
   public :: MLSL2Fill
 
 ! === (start of toc) ===
-! MLSL2Fill          given a vector template, and creates and fills a vector
+! MLSL2Fill          given a quantity template, then creates and fills a 
+!                      vector  quantity
 ! === (end of toc) ===
 
 ! === (start of api) ===
-! MLSL2Fill (int root, *MLSFile_T fileDataBase(:), 
-!        *griddedData_T GriddedDataBase(:),
-!        *vectorTemplate_T VectorTemplates(:),
-!        *vector_t Vectors(:), *quantityTemplate_T QtyTemplates(:),
-!        *matrix_database_T Matrices(:),
-!        *l2GPData_T L2GPDatabase(:), *l2AUXData_T L2AUXDatabase(:),
+! MLSL2Fill ( int root, 
+!        *MLSFile_T fileDataBase(:), 
+!        *GriddedData_T GriddedDataBase(:),
+!        *VectorTemplate_T VectorTemplates(:),
+!        *Vector_t Vectors(:), *quantityTemplate_T QtyTemplates(:),
+!        *Matrix_database_T Matrices(:),
+!        *L2GPData_T L2GPDatabase(:), *l2AUXData_T L2AUXDatabase(:),
 !        *ForwardModelConfig_T FWModelConfig(:),
-!        *mlSChunk_T Chunks(:), int ChunkNo )
+!        *MlSChunk_T Chunks(:), int ChunkNo, *HGrid_T HGrids(:) )
 ! === (end of api) ===
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: ModuleName= "$RCSfile$"
@@ -1081,18 +1084,23 @@ contains ! =====     Public Procedures     =============================
         debug = LetsDebug ( 'phase', 4 )
         call addPhaseToPhaseNames ( vectorname, key )
         if ( debug ) then
+          call SwitchOutput ( 'stdout' )
           call Dump( OutputOptions )
           call Dump( StampOptions )
           call DumpConfig
+          call RevertOutput
         endif
  
       case ( s_changeSettings ) ! ===============================  changeSettings ==
         ! Change settings for this phase
         call addPhaseToPhaseNames ( 0, key )
+        debug = LetsDebug ( 'phase', 4 )
         if ( debug ) then
+          call SwitchOutput ( 'stdout' )
           call Dump( OutputOptions )
           call Dump( StampOptions )
           call DumpConfig
+          call RevertOutput
         endif
 
       case ( s_transfer ) ! ===============================  Transfer ==
@@ -3377,6 +3385,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.481  2019/02/21 22:37:22  pwagner
+! Assure Dumps are sent to stdout
+!
 ! Revision 2.480  2019/02/13 18:59:44  pwagner
 ! Corrected mispelling, added debug Dumps
 !
