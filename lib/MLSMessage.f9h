@@ -244,9 +244,10 @@ contains
   ! dump the configuration
 
   subroutine DumpConfig( config )
-    ! arg
+    use PrintIt_m, only: Set_Config
+    ! Arg
     type(MLSMessageConfig_T), optional, intent(in) :: config
-    ! Internal args
+    ! Internal variables
     integer :: LogFileUnit
     type(MLSMessageConfig_T) :: myConfig
     character(len=prefixLen) :: Prefix
@@ -255,18 +256,20 @@ contains
       & ': : : : : : : : : : : : : : : : : : :'
     character(len=*), parameter                    :: header  = &
       & 'dumping       :    MLS Message Config'
+    integer :: OldLogFileUnit
     ! Executable
     if ( present(config) ) then
       myConfig = config
     else
       myConfig = MLSMessageConfig
     end if
-    call get_config ( logFileUnit=logFileUnit, prefix=prefix, useToolKit=toolkit )
+    call get_config ( logFileUnit=OldLogFileUnit, prefix=prefix, useToolKit=toolkit )
+    call set_config ( logFileUnit=StdoutLogUnit )
     call PrintItOut( colonel, MLSMSG_Info )
     call PrintItOut( header,  MLSMSG_Info )
     call PrintItOut( colonel, MLSMSG_Info )
-    call dump ( 'logFileUnit             ', intValue= logFileUnit                     )
-    call dump ( 'meaning                 ', charValue= LogUnitName(logFileUnit)       )
+    call dump ( 'logFileUnit             ', intValue= OldLogFileUnit                     )
+    call dump ( 'meaning                 ', charValue= LogUnitName(OldLogFileUnit)       )
     call dump ( 'limitWarnings           ', intValue= myConfig%limitWarnings          )
     call dump ( 'masterTID               ', intValue= myConfig%masterTID              )
     call dump ( 'extra prefix            ', charValue=prefix                          )
@@ -298,6 +301,7 @@ contains
     call dump ( 'Crash on any error      ', logValue= myConfig%CrashOnAnyError        )
     call dump ( 'Crash on this message   ', charValue= myConfig%CrashIfMsgSays        )
     call PrintItOut( colonel, MLSMSG_Info )
+    call set_config ( logFileUnit=OldLogFileUnit )
   end subroutine DumpConfig
 
   ! ------------------------------------------------  MLSMessage_  -----
@@ -1222,6 +1226,9 @@ contains
 
 !
 ! $Log$
+! Revision 2.57  2019/02/21 22:33:30  pwagner
+! Improved DumpConfig
+!
 ! Revision 2.56  2019/01/24 18:29:45  pwagner
 ! Reorganized modules that print to simplify toolkit-free builds
 !
