@@ -37,7 +37,7 @@ module HighOutput
     & MLSMSG_Crash, MLSMSG_Debug, &
     & MLSMSG_Severity_To_Quit, &
     & MLSMSG_Warning, &
-    & PrintItOut, MLSMessageConfig
+    & PrintItOut, MLSMessageConfig, SeverityNamesFun
   use Toggles, only: Switches
   implicit none
   private
@@ -814,7 +814,8 @@ contains
     end if
     call outputNamedValue ( 'file name', trim(options%name), advance='yes', &
       & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-    call outputNamedValue ( 'logging level', options%MLSMSG_Level, advance='yes', &
+    call outputNamedValue ( 'logging level', &
+      & SeverityNamesFun(options%MLSMSG_Level), advance='yes', &
       & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
     call outputNamedValue ( 'buffered?', options%buffered, advance='yes', &
       & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
@@ -2572,6 +2573,9 @@ contains
 end module HIGHOUTPUT
 
 ! $Log$
+! Revision 2.29  2019/02/21 22:35:26  pwagner
+! Improved DumpOutputOptions
+!
 ! Revision 2.28  2019/01/24 18:33:20  pwagner
 ! Reorganized modules that print to simplify toolkit-free builds
 !
