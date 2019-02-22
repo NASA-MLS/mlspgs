@@ -38,8 +38,8 @@ begin Fill
   !makeStatusForOneProduct(product=SO2,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -20K)
 
   ;; ------------------------------------- Temperature-CorePlusR3
-  !define(flaggingBands,{8})
-  !define(flaggingRadiometers,{R3})!dnl
+  !define(flaggingBands,{1,8})
+  !define(flaggingRadiometers,{R1A,R1B,R3})!dnl
   !makeQualityForOneProduct(product=Temperature,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -20K)
   !makeStatusForOneProduct(product=Temperature,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -20K)
 
@@ -52,6 +52,9 @@ begin Fill
 end Fill
 
 ; $Log$
+; Revision 1.18  2015/01/30 19:48:30  pwagner
+; Restore flagging for low clouds
+;
 ; Revision 1.17  2009/07/28 20:03:21  pwagner
 ; Removed Band 33
 ;
