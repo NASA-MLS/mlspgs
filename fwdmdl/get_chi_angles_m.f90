@@ -83,24 +83,25 @@ contains
     ht = Req + tan_ht
     Np1 = 1.0_rp + tan_index_refr
 
-    !{ Empirical formula (8.5): $H_s = R_s + 38.9014\, \sin 2(\phi_t-51^{\circ}.6814 )$
+    !{ Empirical formula (8.5): $H_s = R_s + 38.9014\,
+    !  \sin 2(\phi_t-51^\circ\hspace{-4.2pt}.\hspace{1pt}6814 )$
 
     hs = sc_geoc_alt + ampl * sin(2.0*(phi_tan-phas))
     x = min ( Np1 * ht / hs, 1.0_rp )
 
     !{ $\sin \chi^{\text{refr}}_{\text{eq}} =
     !    \frac{\mathcal{N}_t}{\mathcal{N}_s} \frac{H_t}{H_s}
-    !    \frac{ \text{min} ( H_t, H^{\oplus} ) }{H^{\oplus}}$,
+    !    \frac{ \text{min} ( H_t, H^{\oplus}_t ) }{H^{\oplus}_t}$,
     !  where $\mathcal{N}_s$ is the index of refraction at the spacecraft,
     !  which is 1.0, and therefore need not be written explicitly.  This is
     !  a bit different from Equation (8.3) in the 19 Aug 2004 ATBD because
-    !  that equation does not consider the case of $H_t < H^{\oplus}$.
+    !  that equation does not consider the case of $H_t < H^{\oplus}_t$.
 
     ! ptg_angle = asin(x * min(ht,Req)/Req) - elev_offset
 
     if ( tan_ht >= 0.0_rp ) then      ! min(ht,Req)/Req = 1
 
-      !{ $H_t \geq H^{\oplus}: ~
+      !{ $H_t \geq H^{\oplus}_t: ~
       !  \sin \chi^{\text{refr}}_{\text{eq}} = N_t \frac{ H_t }{ H_s }; ~
       !  \frac{ \text{d} \chi^{\text{refr}}_{\text{eq}} }{ \text{d} H_t}
       !    \cos \chi^{\text{refr}}_{\text{eq}} =
@@ -116,14 +117,14 @@ contains
       q = Np1 - ht * tan_index_refr * Ln10 / dh_dz
     else                              ! min(ht,Req)/Req = ht/Req
 
-      !{ $H_t < H^{\oplus}: ~~
+      !{ $H_t < H^{\oplus}_t: ~~
       !  \sin \chi^{\text{refr}}_{\text{eq}} = 
-      !    N_t \frac{ H_t^2 }{ H_s H^{\oplus} }; ~~
+      !    N_t \frac{ H_t^2 }{ H_s H^{\oplus}_t }; ~~
       !  \frac{ \text{d} N_t }{ \text{d} H_t} = 0 ~~
       !  \Rightarrow ~~
       !  \frac{ \text{d} \chi^{\text{refr}}_{\text{eq}} }{ \text{d} H_t}
       !    \cos \chi^{\text{refr}}_{\text{eq}} =
-      !    2 \frac{ N_t H_t }{ H_s H^{\oplus} }$
+      !    2 \frac{ N_t H_t }{ H_s H^{\oplus}_t }$
 
       sinChi = x*ht/Req
       q = 2.0_rp * ht * Np1 / Req
@@ -195,7 +196,7 @@ contains
 
     !{ $\sin \chi^{\text{refr}}_{\text{eq}} =
     !    \frac{\mathcal{N}_t}{\mathcal{N}_s} \frac{H_t}{H_s}
-    !    \frac{ \text{min} ( H_t, H^{\oplus} ) }{H^{\oplus}}$,
+    !    \frac{ \text{min} ( H_t, H^{\oplus}_t ) }{H^{\oplus}_t}$,
     !  where $\mathcal{N}_s$ is the index of refraction at the spacecraft,
     !  which is 1.0, and therefore need not be written explicitly.
 
@@ -203,7 +204,7 @@ contains
 
     if ( tan_ht >= 0.0_rp ) then      ! min(ht,Req)/Req = 1
 
-      !{ $H_t \geq H^{\oplus}: ~~
+      !{ $H_t \geq H^{\oplus}_t: ~~
       !  \sin \chi^{\text{refr}}_{\text{eq}} = N_t \frac{ H_t }{ H_s }; ~~
       !  \frac{ \text{d} \chi^{\text{refr}}_{\text{eq}} }{ \text{d} H_t}
       !    \cos \chi^{\text{refr}}_{\text{eq}} =\frac{1}{H_s} \left ( N_t +
@@ -215,14 +216,14 @@ contains
       sinChi = x
     else                              ! min(ht,Req)/Req = ht/Req
 
-      !{ $H_t < H^{\oplus}: ~~
+      !{ $H_t < H^{\oplus}_t: ~~
       !  \sin \chi^{\text{refr}}_{\text{eq}} = 
-      !    N_t \frac{ H_t^2 }{ H_s H^{\oplus} }; ~~
+      !    N_t \frac{ H_t^2 }{ H_s H^{\oplus}_t }; ~~
       !  \frac{ \text{d} N_t }{ \text{d} H_t} = 0 ~~
       !  \Rightarrow ~~
       !  \frac{ \text{d} \chi^{\text{refr}}_{\text{eq}} }{ \text{d} H_t}
       !    \cos \chi^{\text{refr}}_{\text{eq}} =
-      !    2 \frac{ N_t H_t }{ H_s H^{\oplus} }$
+      !    2 \frac{ N_t H_t }{ H_s H^{\oplus}_t }$
 
       sinChi = x*ht/Req
     end if
@@ -286,7 +287,7 @@ contains
 
     !{ $\sin \chi^{\text{refr}}_{\text{eq}} =
     !    \frac{\mathcal{N}_t}{\mathcal{N}_s} \frac{H_t}{H_s}
-    !    \frac{ \text{min} ( H_t, H^{\oplus} ) }{H^{\oplus}}$,
+    !    \frac{ \text{min} ( H_t, H^{\oplus}_t ) }{H^{\oplus}_t}$,
     !  where $\mathcal{N}_s$ is the index of refraction at the spacecraft,
     !  which is 1.0, and therefore need not be written explicitly.
 
@@ -294,7 +295,7 @@ contains
 
     if ( tan_ht >= 0.0_rp ) then      ! min(ht,Req)/Req = 1
 
-      !{ $H_t \geq H^{\oplus}: ~~
+      !{ $H_t \geq H^{\oplus}_t: ~~
       !  \sin \chi^{\text{refr}}_{\text{eq}} = N_t \frac{ H_t }{ H_s }; ~~
       !  \frac{ \text{d} \chi^{\text{refr}}_{\text{eq}} }{ \text{d} H_t}
       !    \cos \chi^{\text{refr}}_{\text{eq}} =\frac{1}{H_s} \left ( N_t +
@@ -306,14 +307,14 @@ contains
       sinChi = x
     else                              ! min(ht,Req)/Req = ht/Req
 
-      !{ $H_t < H^{\oplus}: ~~
+      !{ $H_t < H^{\oplus}_t: ~~
       !  \sin \chi^{\text{refr}}_{\text{eq}} = 
-      !    N_t \frac{ H_t^2 }{ H_s H^{\oplus} }; ~~
+      !    N_t \frac{ H_t^2 }{ H_s H^{\oplus}_t }; ~~
       !  \frac{ \text{d} N_t }{ \text{d} H_t} = 0 ~~
       !  \Rightarrow ~~
       !  \frac{ \text{d} \chi^{\text{refr}}_{\text{eq}} }{ \text{d} H_t}
       !    \cos \chi^{\text{refr}}_{\text{eq}} =
-      !    2 \frac{ N_t H_t }{ H_s H^{\oplus} }$
+      !    2 \frac{ N_t H_t }{ H_s H^{\oplus}_t }$
 
       sinChi = x*ht/Req
     end if
@@ -342,6 +343,9 @@ contains
 
 end module Get_Chi_Angles_m
 ! $Log$
+! Revision 2.22  2016/05/27 01:25:28  vsnyder
+! TeXnicalities
+!
 ! Revision 2.21  2013/06/12 02:25:43  vsnyder
 ! Cruft removal
 !
