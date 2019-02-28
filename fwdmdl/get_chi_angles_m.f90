@@ -189,7 +189,8 @@ contains
     ht = Req + tan_ht
     Np1 = 1.0_rp + tan_index_refr
 
-    !{ Empirical formula: $H_s = R_s + 38.9014\, \sin 2(\phi_t-51^{\circ}.6814 )$
+    !{ Empirical formula: $H_s = R_s + 38.9014\,
+    !  \sin 2(\phi_t-51^\circ\hspace{-4.2pt}.\hspace{1pt}6814 )$
 
     hs = sc_geoc_alt + ampl * sin(2.0*(phi_tan-phas))
     x = min ( Np1 * ht / hs, 1.0_rp )
@@ -280,7 +281,8 @@ contains
     ht = Req + tan_ht
     Np1 = 1.0_rp + tan_index_refr
 
-    !{ Empirical formula: $H_s = R_s + 38.9014\, \sin 2(\phi_t-51^{\circ}.6814 )$
+    !{ Empirical formula: $H_s = R_s + 38.9014\,
+    !  \sin 2(\phi_t-51^\circ\hspace{-4.2pt}.\hspace{1pt}6814 )$
 
     hs = sc_geoc_alt + ampl * sin(2.0*(phi_tan-phas))
     x = min ( Np1 * ht / hs, 1.0_rp )
@@ -343,6 +345,9 @@ contains
 
 end module Get_Chi_Angles_m
 ! $Log$
+! Revision 2.23  2019/02/28 01:45:14  vsnyder
+! TeXnicalities only
+!
 ! Revision 2.22  2016/05/27 01:25:28  vsnyder
 ! TeXnicalities
 !
