@@ -36,7 +36,7 @@ program MLSL2
   use MLSL2Options, only: AllocFile, Aura_L1BFiles, &
     & CheckL2CF, CheckLeak, CheckPaths, CountChunks, Current_Version_Id, &
     & Default_HDFVersion_Read, Default_HDFVersion_Write, Do_Dump, Dump_Tree, &
-    & L2cf_Unit, Level1_HDFVersion, MaxChunkSize, Need_L1BFiles, &
+    & DumpOptions, L2cf_Unit, Level1_HDFVersion, MaxChunkSize, Need_L1BFiles, &
     & Normal_Exit_Status, NoteFile, NumSwitches, &
     & L2Options, OriginalOptions, &
     & Patch, PhasesToSkip, ProcessOptions, Quit_Error_Threshold, &
@@ -58,7 +58,7 @@ program MLSL2
   use MLSStringLists, only: ExpandStringRange, PutHashElement, SwitchDetail
   use Output_M, only: Blanks, flushStdout, Output, &
     & BothPrUnit, InvalidPrUnit, MSGLogPrUnit, OutputOptions, PrUnitName, &
-    & StampOptions, StdoutPrUnit
+    & StampOptions, StdoutPrUnit, SwitchOutput, RevertOutput
   use Parser, only: Clean_Up_Parser, Configuration
   use Parser_Table_M, only: Destroy_Parser_Table, Parser_Table_T
   use Parser_Tables_L2cf, only: Init_Parser_Table
@@ -201,6 +201,10 @@ program MLSL2
   FILESTRINGTABLE = .true.
   !---------------- Task (2) ------------------
 ! Where to send output, how severe an error to quit
+call SwitchOutput ( 'stdout' )
+call Dump( OutputOptions )
+call DumpConfig
+call RevertOutput
   outputOptions%prunit = L2Options%Output_print_unit
   MLSMSG_Severity_to_quit = MAX(QUIT_ERROR_THRESHOLD, MLSMSG_Debug+1)
   call set_config ( severity_to_quit = MLSMSG_Severity_to_quit )
@@ -230,7 +234,11 @@ program MLSL2
   enddo
   line = processOptions( trim(L2Options%Originalcmds), null )
   OriginalOptions = L2Options
-  ! stop
+! call SwitchOutput ( 'stdout' )
+! call Dump( OutputOptions )
+! call DumpConfig
+! call RevertOutput
+! stop
   if ( line == 'help' ) then
     call option_usage
   elseif( switchDetail(switches, '?') > -1 .or. &
@@ -244,21 +252,31 @@ program MLSL2
 
 ! Done with command-line parameters; enforce cascading negative options
 ! (waited til here in case any were (re)set on command line)
+! print *, 'Enforcing output destinations'
+! print *, 'tookit: ', toolkit
+! print *, 'showDefaults: ', showDefaults
+! print *, 'switches: ', trim(switches)
 
-  if ( .not. toolkit .or. showDefaults ) then
+  if ( L2Options%Overridden .and. .not. parallel%slave ) then
+    ! Getting these things from L2Options
+     call MLSMessage( MLSMSG_Warning, ModuleName, &
+      & 'Setting output destination based on L2Options' )
+  elseif ( .not. toolkit .or. showDefaults ) then
      outputOptions%prunit = max( STDOUTPRUNIT, &
        & outputOptions%prunit)   ! stdout or Fortran unit
   else if ( outputOptions%prunit == INVALIDPRUNIT ) then
      call MLSMessage( MLSMSG_Warning, ModuleName, &
       & 'Avoding all output except possibly MLSMessages' )
-  else if ( parallel%master .and. .not. L2Options%Overriden ) then
+  else if ( parallel%master ) then
      outputOptions%prunit = BothPrUnit ! MSGLOGPRUNIT   ! output both logged, not sent to stdout
-  else if ( parallel%slave .and. .not. L2Options%Overriden ) then
+     call set_config( LogFileUnit=BothPrUnit )
+  else if ( parallel%slave ) then
      outputOptions%prunit = STDOUTPRUNIT   ! output sent only to stdout, not logged
      call set_config( useToolkit=.false. )
   end if
   i = SwitchDetail(switches, 'log')
-  if( i == 0 .or. i > 5 .or. .not. toolkit ) then
+! print *, 'i: ', i
+  if( .not. L2Options%Overridden .and. (i == 0 .or. i > 5 .or. .not. toolkit) ) then
      call set_config ( LogFileUnit = STDOUTLOGUNIT ) ! -1
   end if
   if ( i > 9 ) then
@@ -294,6 +312,10 @@ program MLSL2
   total_times = totaltimes
 
   UseSDPToolkit = toolkit    ! Redundant, but may be needed in lib
+  ! Try to prevent calls to output being lost 
+  ! between output_m and MLSMessage modules
+  if ( MLSMessageConfig%LogFileUnit == STDOUTLOGUNIT ) &
+    & outputOptions%prunit = STDOUTPRUNIT
 
   if ( time_config%use_wall_clock ) call time_now( run_start_time )
   ! If checking paths, run as a single-chunk case in serial mode
@@ -493,7 +515,12 @@ program MLSL2
       call add_to_section_timing( 'main', t2 )
     end if
 
-  !---------------- Task (7) ------------------
+! call SwitchOutput ( 'stdout' )
+! call Dump( OutputOptions )
+! call DumpConfig
+! call RevertOutput
+
+    !---------------- Task (7) ------------------
     if ( error == 0 .and. first_section /= 0 .and. .not. checkl2cf ) then
       ! Now do the L2 processing.
       ! stop-early flags => no writing, no retrieval
@@ -809,9 +836,12 @@ contains
         & call Dump( SectionsToSkip, 'Sections to Skip' )
       if ( len_trim(PhasesToSkip) > 0 ) &
         & call Dump( PhasesToSkip, 'Phases to Skip' )
+      if ( L2Options%Overridden ) call DumpOptions
+      call SwitchOutput ( 'stdout' )
       call Dump( OutputOptions )
       call Dump( StampOptions )
       call DumpConfig
+      call RevertOutput
       call Blanks( 80, fillChar='-', advance='yes' )
       call DumpGlobalAttributes
     end if
@@ -854,6 +884,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.230  2019/03/08 17:15:49  pwagner
+! Still correcting mis-directed output
+!
 ! Revision 2.229  2019/02/13 17:31:27  pwagner
 ! change outputOptions%prunit to L2Options only if default value is Overriden
 !
