@@ -81,7 +81,7 @@ module PrintIt_m ! Lowest-level module for printing, logging, etc.
   ! other than Error_Unit or Output_Unit
   integer, parameter, public :: InvalidLogUnit      = 0 ! max(0,stdoutLogUnit+1)
   integer, parameter, public :: StdoutLogUnit       = InvalidLogUnit - 1 ! Output_Unit
-  integer, parameter, public :: DefaultLogUnit      = StdoutLogUnit - 1 ! Error_Unit
+  integer, parameter, public :: DefaultLogUnit      = StdoutLogUnit - 1 ! Log_Unit
   integer, parameter, public :: BothLogUnit         = DefaultLogUnit - 1 ! Error_Unit
   integer, parameter, public :: BufferedLogUnit     = BothLogUnit - 1 ! Error_Unit
 
@@ -542,6 +542,9 @@ contains
 end module PrintIt_m
 
 ! $Log$
+! Revision 2.18  2019/03/08 00:04:40  pwagner
+! Corrected false comment concerning StdoutLogUnit
+!
 ! Revision 2.17  2019/02/21 22:32:26  pwagner
 ! Prevent strange crashes in PrintItOut; made SeverityNamesFun public
 !
