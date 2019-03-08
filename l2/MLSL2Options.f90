@@ -178,10 +178,8 @@ module MLSL2Options              !  Options and Settings for the MLSL2 program
     ! A holding place for the above, allowing us to skip for some phases only
     logical            :: SkipRetrievalOriginal         = .false. 
     logical            :: MLSL2Debug                    = .false. 
-    logical            :: Overriden                     = .false. ! Did we ovrrid?         
-    ! Set the following to MSGLOGPRUNIT before delivering to sips;
-    ! Set the following to MSGLOGPRUNIT before delivering to sips;
-    ! Set the following to MSGLOGPRUNIT before delivering to sips;
+    logical            :: Overridden                    = .false. ! Did we 
+    ! Set the following to MSGLOGPRUNIT before delivering to sips;  override?
     ! (its possible values and their effects on normal output:
     ! INVALIDPRUNIT  on MUTE, no output
     ! STDOUTPRUNIT   sent to stdout (via print *, '...')
@@ -268,7 +266,7 @@ module MLSL2Options              !  Options and Settings for the MLSL2 program
   public :: RemoveRuntimeBoolean
   public :: RestoreDefaults
 
-  logical, private, parameter :: countEmpty = .true. ! Except where overriden locally
+  logical, private, parameter :: countEmpty = .true. ! Except where Overridden locally
   
   type :: SomeL2Options_T
     ! Whether to skip doing the retrieval--a pre-flight checkout of paths, etc.
@@ -562,8 +560,13 @@ cmds: do
     parallel%verbosity = switchDetail(switches, 'mas') + 1
     if ( switchDetail(switches, 'walk') > -1 ) &
       & MLSMSG_Severity_to_walkback = MLSMSG_Warning
-    if (  L2Options%Overriden ) &
-      & outputOptions%prunit =  L2Options%Output_print_unit
+    if (  L2Options%Overridden ) then
+      outputOptions%prunit =  L2Options%Output_print_unit
+      MLSMessageConfig%logFileUnit =  L2Options%Output_print_unit
+      print *, 'Setting logFileUnit ', MLSMessageConfig%logFileUnit
+      if ( any( L2Options%Output_print_unit == &
+        & (/ MSGLOGPRUNIT, BOTHPRUNIT /) ) ) MLSMessageConfig%useToolkit = .true.
+    endif
     ! print *, 'Ended processing options'
   contains
     subroutine getNextArg( i, line )
@@ -725,7 +728,7 @@ cmds: do
             call io_error ( "After --lac[onic] option", status, line )
             stop
           end if
-          MLSMessageConfig%suppressDebugs = (degree > 0)
+          ! MLSMessageConfig%suppressDebugs = (degree > 0) ! Why do this?
           ! MLSMessageConfig%AbbreviateModSevNames = (degree == 0)
           if ( degree == 0 ) then
             MLSMessageConfig%MaxModuleNameLength     = 3
@@ -1014,8 +1017,13 @@ cmds: do
             inquire( unit=OutputOptions%prUnit, exist=exist, opened=opened )
             L2Options%Output_print_unit = OutputOptions%prUnit
           end select
-        if (  L2Options%Overriden ) &
-          & outputOptions%prunit =  L2Options%Output_print_unit
+          if (  L2Options%Overridden ) then
+            outputOptions%prunit =  L2Options%Output_print_unit
+            MLSMessageConfig%logFileUnit =  L2Options%Output_print_unit
+            if ( any( L2Options%Output_print_unit == &
+              & (/ MSGLOGPRUNIT, BOTHPRUNIT /) ) ) MLSMessageConfig%useToolkit = .true.
+            print *, 'Setting logFileUnit ', MLSMessageConfig%logFileUnit
+          endif
         else if ( line(3+n:12+n) ==  'stopafter ' ) then
           i = i + 1
           call myNextArgument( i, inLine, entireLine, stopAfterSection )
@@ -1242,6 +1250,7 @@ jloop:do while ( j < len_trim(line) )
         print *, 'Reading SomeL2Options'
         read(valu,*) SomeL2Options
         call SomeToL2Options
+        call DumpOptions
         return
       endif
       ! ---------------------------------------------------------------
@@ -1374,7 +1383,7 @@ jloop:do while ( j < len_trim(line) )
     L2Options%MLSL2Debug              =  SomeL2Options%MLSL2Debug           
     L2Options%Output_print_unit       =  SomeL2Options%Output_print_unit    
     L2Options%GPH_MissingValue        =  SomeL2Options%GPH_MissingValue     
-    L2Options%Overriden               =   .true.
+    L2Options%Overridden              =   .true.
   end subroutine SomeToL2Options
 
   ! -------------------------------------------------  DumpOptions  -----
@@ -1412,15 +1421,28 @@ jloop:do while ( j < len_trim(line) )
     keysValues(4,1) = 'SkipRetrieval'
     write( keysValues(4,2), * ) L2Options%Skipretrieval
 
-    keysValues(5,1) = 'Output_print_unit'
+    keysValues(5,1) = 'Send output to'
     ! write( keysValues(5,2), * ) L2Options%Output_print_unit
     keysValues(5,2) = PrUnitname( L2Options%Output_print_unit )
     
-    ! The remaining rows will be blocs of the cmd line
-    nBlocs = (len_trim(L2Options%Command_line)-1)/BlocLength + 1
     nValues = 6
-    keysValues(6,1) = 'cmdline'
-    keysValues(6,2) = L2Options%Command_line(1:BlocLength)
+    keysValues(nValues,1) = 'MLSL2Debug'
+    write( keysValues(nValues,2), * ) L2Options%MLSL2Debug
+
+    nValues = nValues + 1
+    keysValues(nValues,1) = 'Overridden'
+    write( keysValues(nValues,2), * ) L2Options%Overridden
+
+    nValues = nValues + 1
+    keysValues(nValues,1) = 'GPH MissingValue'
+    write( keysValues(nValues,2), '(1pe12.5)' ) L2Options%GPH_MissingValue
+
+    ! The remaining rows will be blocs of the cmd line
+    nBlocs = ( len_trim(L2Options%Command_line)-1 )/BlocLength + 1
+    nBlocs = min( 48-nValues, NBlocs )
+    nValues = nValues + 1
+    keysValues(nValues,1) = 'cmdline'
+    keysValues(nValues,2) = L2Options%Command_line(1:BlocLength)
     c2 = BlocLength
     do i=2, nBlocs
       nValues = nValues + 1
@@ -1526,6 +1548,9 @@ end module MLSL2Options
 
 !
 ! $Log$
+! Revision 2.124  2019/03/08 00:08:55  pwagner
+! Various improvements; logging now works properly more reliably
+!
 ! Revision 2.123  2019/02/13 17:33:22  pwagner
 ! May override L2Options at runtime; added fields GPH_MissingValue and Overriden
 !
