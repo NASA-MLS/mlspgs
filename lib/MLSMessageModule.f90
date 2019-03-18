@@ -27,7 +27,7 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
     & MLSMSG_Allocate, MLSMSG_Deallocate, &
     & MLSMSG_Crash, MLSMSG_Debug, MLSMSG_Error, MLSMSG_Info, MLSMSG_Success, &
     & MLSMSG_Testwarning, MLSMSG_Warning, MLSMessageconfig_T, &
-    & Defaultlogunit, Invalidlogunit, Prefixlen, &
+    & Bothlogunit, Defaultlogunit, Invalidlogunit, Prefixlen, &
     & Printitout, Sniprcsfrom, &
     & Stdoutlogunit, MLSMEssageconfig, &
     & MLSMSG_Severity_So_Far, MLSMSG_Severity_To_Quit, &
@@ -204,6 +204,9 @@ end module MLSMessageModule
 
 !
 ! $Log$
+! Revision 2.56  2019/03/18 22:04:40  pwagner
+! Try harder to Print Errors to stdout
+!
 ! Revision 2.55  2019/01/24 18:30:01  pwagner
 ! Reorganized modules that print to simplify toolkit-free builds
 !
