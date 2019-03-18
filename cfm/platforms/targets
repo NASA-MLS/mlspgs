@@ -290,7 +290,7 @@ $(PROG_NAME): $(prereqs)
 $(PROG2_NAME): $(prereqs) libcfm_all.a
 		$(FC) $(LDOPTS) -o $(PROG2_NAME) $(PROG_NAME).o $(PVM_OBJS)  \
                       -L./ -lcfm_all \
-        $(l_specials) $(LAFTER) \
+                      -L${HDF}  $(l_specials) $(LAFTER) \
 
 # ========================================================================
 # Now we must teach make some trickery involving the ar command 
@@ -388,6 +388,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.7  2011/05/16 22:23:08  pwagner
+# Now builds with tk5.2.17
+#
 # Revision 1.6  2010/10/02 00:46:38  pwagner
 # Should be able to build shared objects no matter what
 #

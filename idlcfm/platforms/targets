@@ -149,7 +149,8 @@ include $(srclib)/targets.h
 server client: $(AllOBJS) $(libcfm)/libcfm_all.a $(OBJS)
 		$(FC) $(LDOPTS) -o $@ $@.o $(OBJS)  \
                       -L$(libcfm) -lcfm_all \
-        $(l_specials) $(LAFTER) \
+                      -L$(HDFLIB) $(l_specials) \
+                      $(LAFTER) \
 
 # ========================================================================
 
@@ -169,3 +170,6 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.1  2011/05/16 22:25:43  pwagner
+# First commit
+#
