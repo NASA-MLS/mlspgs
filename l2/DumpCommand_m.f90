@@ -1248,7 +1248,7 @@ contains
     use Read_Mie_M, only: Dump_Mie
     use SpectroscopyCatalog_M, only: Catalog, Dump, Dump_Lines_Database, Lines
     use String_Table, only: Display_String, Get_String
-    use Time_M, only: Finish, Time_Config
+    use Time_M, only: Time_Config
     use Toggles, only: Gen, Switches, Toggle
     use Trace_M, only: Trace_Begin, Trace_End
     use Tree, only: Decoration, Node_Id, Nsons, Sub_Rosa, Subtree, Where
@@ -1565,7 +1565,7 @@ contains
           case ( f_commandLine )
             call outputNamedValue ( 'command line', L2Options%command_line )
           case ( f_crashBurn )
-            call finish ( 'ending mlsl2' )
+            call FinishMLSL2 ( 'ending mlsl2' )
             NEVERCRASH = .false.
             call MLSL2Message( MLSMSG_CRASH, moduleName, &
               & "Program stopped by /crashBurn field on DUMP statement.")
@@ -1611,7 +1611,7 @@ contains
           case ( f_polygon )
             call dump_polygon_database
           case ( f_stop )
-            call finish ( 'ending mlsl2' )
+            call FinishMLSL2 ( 'ending mlsl2' )
             if ( switchDetail(switches, 'time') >= 0 ) then
               call output('(Now for the timings summary)', advance='yes')
               call dump_section_timings
@@ -2273,7 +2273,6 @@ contains
     use MLSStringLists, only: SwitchDetail
     use MoreTree, only: Get_Boolean, Get_Field_ID
     use String_Table, only: Get_String
-    use Time_M, only: Finish
     use Toggles, only: Gen, Switches, Toggle
     use Trace_M, only: Trace_Begin, Trace_End
     use Tree, only: NSons, Sub_Rosa, SubTree, Where
@@ -2389,7 +2388,7 @@ contains
       endif
       ! Have we been commanded to stop? wait? crash?
       if ( got(f_stop) ) then
-        call finish ( 'ending mlsl2' )
+        call FinishMLSL2 ( 'ending mlsl2' )
         call MLSL2Message( MLSMSG_Warning, moduleName, &
           & "Program stopped by /stop field on DUMP statement.")
           if ( switchDetail(switches, 'time') >= 0 ) then
@@ -2423,7 +2422,7 @@ contains
             & after="." )
         call MLSMessageExit( 1, farewell=farewell )
       elseif ( got(f_crashBurn) ) then
-        call finish ( 'ending mlsl2' )
+        call FinishMLSL2 ( 'ending mlsl2' )
         NEVERCRASH = .false.
         call MLSL2Message( MLSMSG_Crash, moduleName, &
           & "Program stopped by /crashBurn field on DUMP statement.")
@@ -2887,6 +2886,17 @@ contains
     call newLine
   end subroutine AnnounceError
 
+  ! --------------------------------------------  BooleanToString  -----
+  function BooleanToString ( BOOL ) result ( STR )
+    ! Convert a Boolean argument to a character-valued string
+    ! I.e., .true. -> 'true'
+    !       .false. -> 'false'
+    ! Args
+    logical, intent(in) :: Bool
+    character(len=6)    :: str
+    str = merge( 'true ', 'false', Bool )
+  end function BooleanToString
+
   ! ---------------------------------------------  myBooleanValue  -----
   function myBooleanValue ( FORMULA ) result ( BVALUE )
     use MLSL2Options, only: RuntimeValues
@@ -3096,16 +3106,19 @@ contains
     end select
   end function Evaluator_sca
 
-  ! --------------------------------------------  BooleanToString  -----
-  function BooleanToString ( BOOL ) result ( STR )
-    ! Convert a Boolean argument to a character-valued string
-    ! I.e., .true. -> 'true'
-    !       .false. -> 'false'
-    ! Args
-    logical, intent(in) :: Bool
-    character(len=6)    :: str
-    str = merge( 'true ', 'false', Bool )
-  end function BooleanToString
+  ! ------------------------------------------------  FinishMLSL2  -----
+  subroutine FinishMLSL2 ( Show )
+    use Output_M, only: OutputOptions
+    use PrintIt_M, only: BothLogUnit, MLSMessageConfig
+    use Time_M, only: Finish
+    character(len=*), intent(in) :: Show
+    ! Print to stdout and, if using Toolkit, log it, too
+    if ( MLSMessageConfig%UseToolkit )  then
+      OutputOptions%PrUnit = BothLogUnit
+      MLSMessageConfig%LogFileUnit = BothLogUnit
+    endif
+    call Finish ( Show )
+  end subroutine FinishMLSL2
 
   ! ------------------------------------------------  insertSpace  -----
   subroutine insertSpace
@@ -3243,6 +3256,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.147  2019/03/18 22:09:34  pwagner
+! Ensure finishing messages are both printed and logged
+!
 ! Revision 2.146  2018/12/11 01:26:13  pwagner
 ! Uses Wait_M
 !
