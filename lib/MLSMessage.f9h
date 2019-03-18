@@ -335,6 +335,13 @@ contains
     msgPlusNotice = message
     myStatus = MLSMSGSTATUS_Suppressed
 
+    ! Have we been asked to print an error message?
+    ! If so, try harder to print that error msg to stdout, too
+    if ( severity >= MLSMSG_Severity_to_quit ) then
+      if ( MLSMessageConfig%LogFileUnit == DefaultLogUnit .or. &
+        MLSMessageConfig%UseToolkit )  &
+        & MLSMessageConfig%LogFileUnit = BothLogUnit
+    endif
     ! This is the smaller of the actual length and what we allow to be printed
     msgLength = min( len(message), MAXMESSLENGTH )
     msgLength = max( msgLength, 1 )
@@ -1226,6 +1233,9 @@ contains
 
 !
 ! $Log$
+! Revision 2.58  2019/03/18 22:04:40  pwagner
+! Try harder to Print Errors to stdout
+!
 ! Revision 2.57  2019/02/21 22:33:30  pwagner
 ! Improved DumpConfig
 !
