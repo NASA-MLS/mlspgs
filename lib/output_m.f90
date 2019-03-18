@@ -317,6 +317,7 @@ module Output_M
   type(timeStampOptions_T), private, save :: DefaultTimeStampOptions
 
   ! Private parameters
+  logical :: alreadyLogged ! Would we ned to print again?
   character(len=2), parameter :: defaultNewLineCode = achar(0) // 'n' ! not '%n'
   logical, save, private :: SWITCHTOSTDOUT = .false.! Temp'ly all to stdout
   logical, save, private :: SILENTRUNNING  = .false. ! Suspend all further output
@@ -849,7 +850,7 @@ contains
     character(len=*), intent(in), optional :: InsteadOfBlank ! What to output
     logical, intent(in), optional          :: Dont_Stamp ! prevent double-stamping
     !
-    logical :: alreadyLogged
+    ! logical :: alreadyLogged
     logical :: DoIt    ! TheUnit /= 0 .or. outputOptions%prUnitLiteral
     integer :: i1, i2
     integer :: IOBloc
@@ -1702,7 +1703,8 @@ contains
          ! rather than from output module )
 
         if ( my_adv .or. .not. allOfIt ) then
-          call printitout( line, severity, line_len )
+          call PrintItOut( line, severity, line_len, &
+            & alreadyLogged=alreadyLogged )
           line_len = 0
           line = ' '
         end if
@@ -1779,6 +1781,9 @@ contains
 end module Output_M
 
 ! $Log$
+! Revision 2.142  2019/03/18 22:05:12  pwagner
+! Dont print again if alreadylogged
+!
 ! Revision 2.141  2019/01/24 18:38:05  pwagner
 ! Reorganized modules that print to simplify toolkit-free builds
 !
