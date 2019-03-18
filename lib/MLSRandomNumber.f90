@@ -13,13 +13,14 @@
 module MLSRandomNumber              ! Some random number-generating things
   !=============================================================================
 
-  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
+  ! use Machine, only: USleep
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error
 
   implicit none
 
   private
-  public :: SRANG, DRANG
-  public :: MLS_LOTTERY,  MLS_RANDOM_NUMBER, MLS_RANDOM_SEED, MLS_SCRAMBLE
+  public :: Srang, Drang
+  public :: MLS_lottery,  MLS_random_number, MLS_random_seed, MLS_scramble
   
   ! Calculate random numbers via MATH77 routines from ran_pack (if true)
   ! or else via the f95 intrinsic (if false)
@@ -33,16 +34,17 @@ module MLSRandomNumber              ! Some random number-generating things
 
   integer, private, parameter          ::      haystack =        97
   real, private, dimension(haystack), save  :: harvest
+  integer, private, save               ::      lastcount =       0
 
   ! The following recapture the effects of ranpk common blocs
-  real, private, save  ::                      XCURSP =          123456789.0e0
-  double precision, private, save  ::          XCURDP =          123456789.0D0
-  integer, private, save  ::                   MODE
-  integer, private, save  ::                   DPTR =            1
-  logical, private, save  ::                   DGFLAG =          .false.
-  integer, private, save  ::                   SPTR =            1
-  logical, private, save  ::                   SGFLAG =          .false.
-  logical, private, save  ::                   FIRST =           .true.
+  real, private, save  ::                      Xcursp =          123456789.0e0
+  double precision, private, save  ::          Xcurdp =          123456789.0D0
+  integer, private, save  ::                   Mode
+  integer, private, save  ::                   Dptr =            1
+  logical, private, save  ::                   Dgflag =          .false.
+  integer, private, save  ::                   Sptr =            1
+  logical, private, save  ::                   Sgflag =          .false.
+  logical, private, save  ::                   First =           .true.
   logical, private, save  ::                   was_last_time_m77 = .true.
 
 !     c o n t e n t s
@@ -52,12 +54,12 @@ module MLSRandomNumber              ! Some random number-generating things
 ! MATH77_RAN_PACK   Whether to use MATH77 routines (if TRUE) or intrinsic f95
 
 !      functions and subroutines
-! drang             gauss. distribution: 0 mean, 1 s.d. (double)
-! srang             gauss. distribution: 0 mean, 1 s.d. (single)
-! mls_lottery       random integer(s) in supplied range
-! mls_random_number uniform distribution in interval [0,1]
-! mls_random_seed   put or set or size seed
-! mls_scramble      randomly permute a sequence of integers 1 2 3 .. N
+! Drang             gauss. distribution: 0 mean, 1 s.d. (double)
+! Srang             gauss. distribution: 0 mean, 1 s.d. (single)
+! MLS_Lottery       random integer(s) in supplied range
+! MLS_Random_number uniform distribution in interval [0,1]
+! MLS_Random_seed   put or set or size seed
+! MLS_Scramble      randomly permute a sequence of integers 1 2 3 .. N
 
 ! Modified to use f95 intrinsic random_number instead of ranpk1 and ranpk2
 ! Unfortunately, using NAG f95, this has side-effect of making test case
@@ -67,8 +69,8 @@ module MLSRandomNumber              ! Some random number-generating things
 ! However, its current use is for testing whether diagnostic products
 ! were correctly coded
 
-! Note: recent tests reveal that ranpk1 and ranpk2 ignore putting a new seed
-! Therefore each new random sequence is alike
+! Note: discovered why ranpk1 and ranpk2 ignored putting a new seed
+! Attempted a patch using the Lastcount mechanism (is there something better?)
 contains
 
 !     -------------- mls_lottery -----------------------
@@ -80,10 +82,10 @@ contains
     ! (iv) multiply by N                                      
     ! (v) use the leading coefficient of the fractional part  
     !     i.e., first "decimal"                               
-    subroutine mls_lottery( array_arg, range, verbose )
-      use DUMP_0, only: DUMP
-      use MLSSTRINGLISTS, only: READINTSFROMLIST
-      use MLSSTRINGS, only: WRITEINTASBASEN
+    subroutine MLS_Lottery( array_arg, range, verbose )
+      use Dump_0, only: Dump
+      use MLSStringlists, only: Readintsfromlist
+      use MLSStrings, only: Writeintasbasen
       ! Formal arguments
       integer, intent(inout) :: array_arg(:)
       integer, intent(in)    :: range(2)
@@ -91,6 +93,7 @@ contains
       ! Internal variables
       real                   :: real_args(size(array_arg))
       integer                :: arg
+      ! integer, parameter     :: FIVE = 5 ! How long to sleep before reading system clock
       integer                :: i
       integer, dimension(10) :: ints
       logical                :: myVerbose
@@ -98,18 +101,27 @@ contains
       integer, dimension(630):: new_seed = 0
       character(len=16)      :: strs
       ! Executable
+      myVerbose = .false.
+      if ( present(verbose) ) myVerbose = verbose
       N = range(2) - range(1) + 1
       if ( N <= 1 ) then
+        if ( myVerbose ) print *, 'N too small, just ', N
         array_arg = range(1)
         return
       endif
-      myVerbose = .false.
-      if ( present(verbose) ) myVerbose = verbose
-      call mls_random_seed( new_seed=new_seed )
-      call mls_random_seed( gget=new_seed )
-      if ( myVerbose ) call dump( new_seed, 'new_seed' )
+      if ( myVerbose ) print *, 'Getting new seed'
+      ! call USleep ( FIVE )
+      call mls_random_seed( new_seed=new_seed, verbose=verbose )
+      call mls_random_seed( gget=new_seed, verbose=verbose )
+      if ( myVerbose ) then
+        call dump( new_seed, 'new_seed' )
+        print *, 'xcurdp ', xcurdp
+      endif
       call mls_random_number( real_args )
-      if ( myVerbose ) call dump( real_args, 'real_args' )
+      if ( myVerbose ) then
+        call dump( real_args, 'real_args' )
+        print *, 'Mod ', Mode
+      endif
       do i=1, size(array_arg)
         real_args(i) = 10*real_args(i)
         real_args(i) = real_args(i) - floor(real_args(i))
@@ -128,7 +140,7 @@ contains
     end subroutine mls_lottery
 
 !     -------------- mls_random_number -----------------------
-      subroutine MLS_RANDOM_NUMBER(array_arg)
+      subroutine MLS_Random_number(array_arg)
       ! Formal arguments
       real, intent(inout) :: array_arg(:)
 
@@ -139,22 +151,24 @@ contains
       endif
       was_last_time_m77 = MATH77_RAN_PACK
       return
-      end subroutine mls_random_number
+      end subroutine MLS_Random_number
 
 !     -------------- mls_random_seed -----------------------
-      subroutine MLS_RANDOM_SEED(ssize, pput, gget, new_seed)
+      subroutine MLS_Random_Seed( ssize, pput, gget, new_seed, verbose )
       ! Formal arguments
       ! (Esssentially stammerings of random_zeed's)
-      integer, optional, intent(out) :: ssize
-      integer, optional, intent(in) ::  pput(:)
-      integer, optional, intent(out) :: gget(:)
+      integer, optional, intent(out)   :: ssize
+      integer, optional, intent(in)    :: pput(:)
+      integer, optional, intent(out)   :: gget(:)
       integer, optional, intent(inout) :: new_seed(:)
-      ! (Use MATH77's implementation of random numbers (if true),
-      ! or switch to f95 intrinsic)
-      
+      logical, optional, intent(in)    :: verbose
       ! Local variables
       integer               ::          count
       integer, dimension(8) ::          values
+      logical               ::          verboseHere
+      verboseHere = .false.
+      if ( present(verbose) ) verboseHere = verbose
+      ! stop
       
       if ( present(ssize) ) then
         if ( MATH77_RAN_PACK ) then
@@ -175,18 +189,25 @@ contains
           call random_seed(get=gget(1:))
         endif
       elseif ( present(new_seed) ) then
+        ! We try hard to avoid choosing
+        ! the same random seed over and over
         call date_and_time(values=values)
         call system_clock(count=count)
-        new_seed(1) = count
+        if ( count == lastcount ) count = count + 1
+        lastcount = count
+        new_seed(1) = mod( count, 100 )
         new_seed(2) = 1000*values(8) + values(1)
+        ! if ( mod(new_seed(2), 2) < 1 ) new_seed(1) = new_seed(1) + 1
         if ( count == 0 ) new_seed(1) = new_seed(2) - 60*values(6)
+        if ( verboseHere ) then
+          print *, 'count, values ', count, values(1), values(8)
+          print *, 'new_seed(1,2) ', new_seed(1:2)
+        endif
         if ( MATH77_RAN_PACK ) then
           call RANPUT(new_seed(1:2))
         else
           call random_seed(put=new_seed(1:))
         endif
-      ! elseif ( present(MATH77_ranpack) ) then
-      !  MATH77_RAN_PACK = MATH77_ranpack
       else
         if ( MATH77_RAN_PACK ) then
           call RAN1
@@ -195,7 +216,7 @@ contains
         endif
       endif
       return
-      end subroutine mls_random_seed
+      end subroutine MLS_Random_seed
 
 !     -------------- mls_scramble -----------------------
     ! Method:                                                 
@@ -203,9 +224,10 @@ contains
     ! s[1] = c[1]
     ! Then after each such assignment 
     ! collapse the remaining array into a smaller remaining one
-    subroutine mls_scramble( array_arg )
+    subroutine MLS_Scramble( array_arg, verbose )
       ! Formal arguments
       integer, intent(inout) :: array_arg(:)
+      logical, optional, intent(in) :: verbose
       ! Internal variables
       integer                :: lots(size(array_arg))
       integer                :: remaining(size(array_arg))
@@ -219,7 +241,7 @@ contains
         array_arg = 1
         return
       endif
-      call mls_lottery( lots, (/1, N/) )
+      call mls_lottery( lots, (/1, N/), verbose )
       remaining = (/ (i, i=1, N) /)
       do i=1, N
         ind = lots(i)
@@ -234,7 +256,7 @@ contains
         call collapse( ind, remaining(1:N-i+1), temp_args(1:N-i+1) )
         remaining(1:N-i) = temp_args(1:N-i)
       enddo
-    end subroutine mls_scramble
+    end subroutine MLS_Scramble
 
     subroutine collapse( k, incoming, outgoing )
       ! Set all the elements of outgoing to those of incoming
@@ -1121,6 +1143,9 @@ end module MLSRandomNumber
 
 !
 ! $Log$
+! Revision 2.14  2019/03/18 22:07:31  pwagner
+! Repaired error where a new seed had no effect
+!
 ! Revision 2.13  2014/08/06 23:18:34  vsnyder
 ! Remove declaration of unused local variable
 !
