@@ -251,25 +251,25 @@ module MLSStrings               ! Some low level string handling stuff
   end interface
 
   ! Public data
-  character(len=16), public, save :: STRINGOPTIONS = ' '
+  character(len=16), public, save :: Stringoptions = ' '
 
   ! hhmmss_value
-  integer, public, parameter :: INVALIDHHMMSSSTRING = 1
+  integer, public, parameter      :: Invalidhhmmssstring = 1
   ! readAnIntFromChars
-  integer, public, parameter :: STRINGCONTAINSFORBIDDENS=-999
+  integer, public, parameter      :: Stringcontainsforbiddens=-999
   ! strings2Ints
-  integer, public, parameter :: LENORSIZETOOSMALL=-999
+  integer, public, parameter      :: Lenorsizetoosmall=-999
   ! streq max input str lengths
   ! (We had to resort to this hard-wired limit after we made
   ! the possibly bone-headed decision to let
   ! str1 and str2 be optional args)
-  integer, public, parameter :: MaxStreqLen  = 2048
-  integer, public, parameter :: MaxSubstrLen = 256
+  integer, public, parameter      :: MaxStreqLen  = 2048
+  integer, public, parameter      :: MaxSubstrLen = 256
 
-  logical, private, save          :: caseSensitive       
-  logical, private, save          :: ignoreLeadingSpaces
+  logical, private, save          :: CaseSensitive       
+  logical, private, save          :: IgnoreLeadingSpaces
   ! The following array is used to encode non-ascii characters mnemonically
-  character(len=*), dimension(33), private, parameter :: MNEMONICCODES = (/ &
+  character(len=*), dimension(33), private, parameter :: MnemonicCodes = (/ &
    & 'nul', &
    & 'soh', &
    & 'stx', &
@@ -486,7 +486,7 @@ contains
     ! Removes all leading and embedded blanks from a string
     !--------Argument--------!
 
-    character (len=*), INTENT(IN) :: str
+    character (len=*), intent(in) :: str
     character (len=len(str)) :: outstr
 
     !----------Local vars----------!
@@ -519,9 +519,9 @@ contains
     ! which uses string slicing and index arithmetic
     ! Should we go back and simplify the latter?
     !--------Argument--------!
-    character (len=*), INTENT(in) :: str
-    character (len=1), INTENT(in) :: lquote
-    character (len=1), INTENT(in) :: rquote
+    character (len=*), intent(in) :: str
+    character (len=1), intent(in) :: lquote
+    character (len=1), intent(in) :: rquote
     !---------result---------!
     integer::no_of_quotes
     !-----local-variables------!
@@ -550,7 +550,7 @@ contains
     ! and are separated by one or more spaces
     ! -----Added by HCP-------- 
     !--------Argument--------!
-    character (len=*), INTENT(in) :: str
+    character (len=*), intent(in) :: str
     !---------result---------!
     integer::no_of_words
     !-----local-variables------!
@@ -1094,7 +1094,7 @@ contains
   end function NAppearances
 
   ! ---------------------------------------------------  nCharsinFormat  -----
-  function nCharsinFormat ( Format ) result(nplusm)
+  function nCharsinFormat ( Format ) result( nplusm )
     ! Utility to calculate how many characters in a format spec:         
     ! [n{xX}][,]{DEFGdefg}m.b                                             
     ! where n, m, and b are digits (we care only about n and m)           
@@ -1106,7 +1106,7 @@ contains
     character(len=*), intent(in) ::  Format                               
     integer :: nplusm                                                     
     ! Local variables                                                     
-    character(len=20) :: kChar, myFormat                                  
+    character(len=20) :: kChar                               
     integer :: n, m, p, q
     ! Executable                                                          
     nplusm = 0                                                            
@@ -1135,7 +1135,7 @@ contains
       call PrintMessage ( ModuleName, &              
       & 'Bad conversion to m in OUTPUT_xxxLE (format not "{defg}"' )      
     endif
-    if ( index(TRIM(myFormat), 'x' ) == 0 ) then                          
+    if ( index(TRIM(Format), 'x' ) == 0 ) then                          
       n = 0                                                               
     else                                                                  
       p = index( KChar, '(' )
@@ -1144,7 +1144,7 @@ contains
       if (n < 1) then                                                     
         print *, 'Format: ', trim(Format)
         print *, trim(kChar)                                              
-        print *, trim(myFormat)                                           
+        print *, trim(Format)                                           
         call PrintMessage ( ModuleName, &                     
           & 'Bad conversion to n in OUTPUT_xxxLE (format not "(nx)"' )  
       end if                                                              
@@ -1202,27 +1202,27 @@ contains
 
     ! Dummy arguments
 
-    integer, INTENT(IN) :: unit ! Input file unit
+    integer, intent(in) :: unit ! Input file unit
     ! fullLine changed to intent InOut by HCP. Some (but not all) 
     ! F90 compilers won't let this be intent(out) because the declaration
     ! of inputLine makes use of the length of fullLine even if its _contents_
     ! are immaterial
-    CHARACTER(LEN=*), INTENT(INOUT) :: fullLine ! Output line
-    CHARACTER(LEN=*), optional :: commentChar
-    CHARACTER(LEN=*), optional :: continuationChar
-    logical, INTENT(OUT), optional :: eof ! Set if got to eof
+    character(len=*), intent(inout) :: fullLine ! Output line
+    character(len=*), optional :: commentChar
+    character(len=*), optional :: continuationChar
+    logical, intent(out), optional :: eof ! Set if got to eof
 
     ! Local variables
 
     integer :: ioInfo           ! IOSTAT result
-    CHARACTER(LEN=len(fullLine)) :: inputLine ! One line from file
+    character(len=len(fullLine)) :: inputLine ! One line from file
     integer :: commentStart     ! Start of a comment in line
     integer :: lastChar         ! Last character position in line
     integer :: gotContinuation  ! 1 if continuation needed, 0 if not
     logical :: firstLine        ! A correction to be applied
 
-    CHARACTER(LEN=1) :: useCommentChar
-    CHARACTER(LEN=1) :: useContinuationChar
+    character(len=1) :: useCommentChar
+    character(len=1) :: useContinuationChar
 
     ! Executable code
 
@@ -1392,10 +1392,10 @@ contains
     ! If ignore is '*', that means ignore all alphabetical chars
     ! If ignore contains '*', that means ignore all alphabetical chars
     ! plus any other chars among ignore.
-    ! Note that '*' will only escape alphabetical chars, if you want
-    ! to escape any other chars in addition to alphabeticals, you
-    ! should add that char to the escape string (e.g. ':*' to escape
-    ! alphabeticals and ':')
+    ! Note that '*' will only escape alphabetical chars.
+    ! If you want to escape any other chars in addition to alphabeticals,
+    ! you should add that char to the escape string 
+    ! (e.g. ':*' to escape all alphabeticals and to escape ':', too)
     ! If the string is composed entirely of ignorable chars, int is 0
     ! If the string contains multiple numbers, separated by ignorables.
     ! only the first number is returned.
@@ -1406,6 +1406,7 @@ contains
     ! Examples:
     ! (1) if str='band13a' and ignore='*', int will be 13
     ! (2) if str='3 cm' and forbiddens='c', int will be left undefined
+    !     because of the 'm'
     ! (3) if str='b7f2' and ignore='*', int will be 7
 
     ! Limitation: you're unable to "escape" a * so you'll have to
@@ -1413,7 +1414,7 @@ contains
     ! a * in it somewhere
     !
     !--------Argument--------!
-    character (len=*), INTENT(in) ::   str
+    character (len=*), intent(in) ::   str
     integer, intent(out)          ::   num
     include 'ReadANumFromChars.f9h'
   end subroutine readAnIntFromChars
@@ -1427,10 +1428,10 @@ contains
     !
     !--------Argument--------!
     !    dimensions are (len(strs(1)), size(strs(:)))
-    character (len=*), INTENT(in), dimension(:) ::   strs
+    character (len=*), intent(in), dimension(:) ::   strs
     integer, intent(out), dimension(:)          ::   ints
-    character (len=*), INTENT(in), optional     ::   forbiddens
-    character (len=*), optional, intent(in)     :: ignore
+    character (len=*), intent(in), optional     ::   forbiddens
+    character (len=*), optional, intent(in)     ::   ignore
 
     !----------Local vars----------!
     integer :: i, arrSize
@@ -1450,14 +1451,14 @@ contains
 
   subroutine readARealFromChars (str, num, forbiddens, ignore)
     !--------Argument--------!
-    character (len=*), INTENT(in) ::   str
+    character (len=*), intent(in) ::   str
     real, intent(out)             ::   num
     include 'ReadANumFromChars.f9h'
   end subroutine readARealFromChars
 
   subroutine readADoubleFromChars (str, num, forbiddens, ignore)
     !--------Argument--------!
-    character (len=*), INTENT(in) ::   str
+    character (len=*), intent(in) ::   str
     double precision, intent(out)             ::   num
     include 'ReadANumFromChars.f9h'
   end subroutine readADoubleFromChars
@@ -1658,7 +1659,7 @@ contains
     !
     ! See also Reverse_trim, ReverseList
     !--------Argument--------!
-    character (len=*), INTENT(IN) :: str
+    character (len=*), intent(in) :: str
     character (len=len(str)) :: outstr
 
     !----------Local vars----------!
@@ -2004,13 +2005,13 @@ contains
 
     ! Dummy arguments
 
-    character (len=*), INTENT(IN) :: line
-    character (len=*), INTENT(OUT) :: first
-    character (len=*), INTENT(OUT) :: rest
-    character (len=*), INTENT(OUT), optional :: last
+    character (len=*), intent(in) :: line
+    character (len=*), intent(out) :: first
+    character (len=*), intent(out) :: rest
+    character (len=*), intent(out), optional :: last
 
-    logical, INTENT(IN), optional :: threeWay
-    character (len=*), INTENT(IN), optional :: delimiter ! really separator
+    logical, intent(in), optional :: threeWay
+    character (len=*), intent(in), optional :: delimiter ! really separator
 
     ! Local variables
 
@@ -2523,7 +2524,7 @@ contains
     ! See also ints2Strings
     !--------Argument--------!
     !    dimensions are (len(strs(1)), size(strs(:)))
-    character (len=*), INTENT(in), dimension(:) ::   strs
+    character (len=*), intent(in), dimension(:) ::   strs
     integer, intent(out), dimension(:,:) ::          ints
 
     !----------Local vars----------!
@@ -3332,6 +3333,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.107  2019/03/21 23:44:38  pwagner
+! Fixed error in nCharsinFormat; cosmetic improvements
+!
 ! Revision 2.106  2019/01/24 18:31:12  pwagner
 ! Reorganized modules that print to simplify toolkit-free builds
 !
