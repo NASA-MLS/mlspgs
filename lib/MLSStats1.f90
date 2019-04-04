@@ -14,6 +14,7 @@ module MLSStats1                 ! Calculate statistics of rank n arrays
 !=============================================================================
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
   use HighOutput, only: OutputNamedValue
+  use MLSCommon, only: Interval_T
   use MLSKinds, only: R4, R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use MLSFinds, only: FindAll, FindFirst, FindLast
@@ -28,34 +29,38 @@ module MLSStats1                 ! Calculate statistics of rank n arrays
 !     - - - - - - - -
 
 !     (data types and parameters)
-! STAT_T                          Basic user-defined data type containing
+! Stat_t                          Basic user-defined data type containing
 !                                  all standard statistics
-! FILLVALUERELATION               Whether to use '=' (default) or '<', '>'
+! FillValueRelation               Whether to use '=' (default) or '<', '>'
 
 !     (subroutines and functions)
-! ALLSTATS                        Computes some or all standard statistics
-! DUMP                            Prints a STAT_T with all standard statistics
-! MLSMIN                          Finds min of an array
+! AllStats                        Computes some or all standard statistics
+! ConfidInterval                  Computes the confidence interval
+! Dump                            Prints a STAT_T with all standard statistics
+! SetUp                           Initialize and set up arrays for the Stat_T datatype
+! MLSMin                          Finds min of an array
 !                                   (excluding FillValues or negative precisions)
-! MLSMAX, MLSMEAN, MLSMEDIAN,
-!    MLSSTDDEV, MLSRMS            Similar to MLSMIN for other statistics
-! HOWNEAR                         Finds how near 2 arrays are in %
-! HOWFAR                          Inverse of hownear--given a % finds stats of 
+! MLSMax, MLSMean, MLSMedian,
+!    MLSstddev, MLSrms            Similar to MLSMIN for other statistics
+! Hownear                         Finds how near 2 arrays are in %
+! Howfar                          Inverse of hownear--given a % finds stats of 
 !                                   diffs of nearest %
-! PDF                             Finds the pdf for a sample x given a STAT_T
+!                                 If mode='median' finds stats of array1
+!                                   fifferences from its median value
+! Pdf                             Finds the pdf for a sample x given a Stat_T
 !                                   or with x1, x2 its integral over [x1, x2]
-! RATIOS                          Statistics of ratio between 2 arrays;
+! Ratios                          Statistics of ratio between 2 arrays;
 !                                    can be used to track changes to a reference
 !                                    goldbrick standard
-! RESET                           Resets a STAT_T
-! STATFUNCTION                    Given a set of values it returns a STAT_T
-! STATISTICS                      Similar to STATFUNCTION, but may accumulate
+! Reset                           Resets or Destroys a Stat_T
+! Statfunction                    Given a set of values it returns a STAT_T
+! Statistics                      Similar to STATFUNCTION, but may accumulate
 !                                   statistics in STAT_T over multiple calls
 ! === (end of toc) ===
 
 ! === (start of api) ===
 !     (user-defined types)
-! STAT_T 
+! Stat_T 
 !             (
 !             int   count, 
 !             int   fillcount, 
@@ -78,9 +83,12 @@ module MLSStats1                 ! Calculate statistics of rank n arrays
 !      & [min], [max], [mean], [stddev], [rms], [median], [int indexing(3)], &
 !      & [int bincount], [log doDump] )
 !      values may go up to rank 4, typed either r4 or r8
+! confidInterval( values, pct(:), intervals(:), &
+!      & [char* mode], [type(values) estimate] )
 ! dump( stat_t statistic, [char which] )
 ! type(values) mls$fun( values, [fillvalue] )
-! howfar( array1, array2, pct(:), stat_t gaps, char * mode )
+! howfar( array1, array2, pct(:), stat_t gaps, char* mode, &
+!      & [array1AtN(3,:)],  [array2AtN(3,:)] )
 ! hownear( array1, array2, pct, [type(array1) gaps(:)], [type(array1) gapratios(:)] )
 ! r8 pdf( r8 x, stat_t statistic )
 ! r8 pdf( r8 x1, r8 x2, stat_t statistic )
@@ -90,12 +98,13 @@ module MLSStats1                 ! Calculate statistics of rank n arrays
 !      & type(array1) medianratio, &
 !      & [fillValue], [char op] )
 ! reset( stat_t statistic )
+! SetUp( stat_t statistic, [int NBins], [r8 Bounds(2)], [log verbose] )
 ! stat_t statFunction( r8 values(:), [r8 fillValue], [r8 precision(:) )
 ! statistics( r8 values(:), stat_t statistic, [r8 fillValue], [r8 precision(:) )
 !
 ! Notes:
-! (1) Unless specified explicitly, 'values', 'precision',
-! 'array1', and 'array2' may be any numerically typed array with
+! (1) Unless specified explicitly, 'values', 'precision', 'pct',,
+! 'array1', 'array2', etc. may be any numerically typed array with
 ! 0 < rank < 4 except complex
 ! (2) 'fillvalue', 'min', 'max', 'mean', 'stddev', 'rms', and 'median'
 ! are scalars with the same numerical type as 'values'
@@ -104,11 +113,11 @@ module MLSStats1                 ! Calculate statistics of rank n arrays
   private
   
   public :: Stat_t             ! the data type
-  public :: Allstats, Dump, Howfar, Hownear, Ratios, Statistics  ! subroutines
-  public :: MLScount ! another function
-  public :: MLSmin, MLSmax, MLSmean, MLSmedian, MLSstddev, MLSrms ! functions
+  public :: Allstats, ConfidInterval, Dump, Howfar, Hownear, Ratios, Statistics
+  public :: MLScount
+  public :: MLSmin, MLSmax, MLSmean, MLSmedian, MLSstddev, MLSrms
   public :: Pdf
-  public :: Reset
+  public :: Reset, SetUp
   public :: Statfunction
   
 !---------------------------- RCS Module Info ------------------------------
@@ -208,6 +217,10 @@ module MLSStats1                 ! Calculate statistics of rank n arrays
     module procedure filterValues_r8
   end interface
   
+  interface ConfidInterval
+    module procedure ConfidInterval_int, ConfidInterval_r4, ConfidInterval_r8
+  end interface
+
   interface howfar
     module procedure howfar_d1int, howfar_d2int, howfar_d3int
     module procedure howfar_d1r4, howfar_d2r4, howfar_d3r4, howfar_d4r4
@@ -1255,6 +1268,85 @@ contains
         include 'stats0.f9h'
       end function mlsrms_d3r8
       
+      ! ------------------- ConfidInterval -----------------------
+      ! This family of routines, given a confidence measured as a percentage,
+      ! returns the lower and upper bounds of a conffidence interval
+      ! within which the data match an estimate
+      ! By default the estimate will be the mean, but you may specify
+      ! another estimate
+      subroutine ConfidInterval_int( values, &
+        & pct, intervals, mode, estimate )
+        integer, parameter                             :: KINDVALUE = r4
+        integer, dimension(:), intent(in)                   :: values
+        real(KINDVALUE), dimension(:), intent(in)           :: pct
+        type(interval_t), dimension(:), intent(out)         :: intervals
+        character(len=*), intent(in), optional              :: mode
+        integer, intent(in), optional                       :: estimate
+        ! Internal variables
+        ! Executable
+        if ( present(estimate) ) then
+          call ConfidInterval_r4( real(values, kind=kindvalue), pct, intervals, &
+            & mode, real(estimate, kind=kindvalue) )
+        else
+          call ConfidInterval_r4( real(values, kind=kindvalue), pct, intervals, &
+            & mode )
+        endif
+      end subroutine ConfidInterval_int
+
+      subroutine ConfidInterval_r4( values, &
+        & pct, intervals, mode, estimate )
+        integer, parameter                             :: KINDVALUE = r4
+        real(KINDVALUE), dimension(:), intent(in)           :: values
+        real(KINDVALUE), dimension(:), intent(in)           :: pct
+        type(interval_t), dimension(:), intent(out)         :: intervals
+        character(len=*), intent(in), optional              :: mode
+        real(KINDVALUE), intent(in), optional               :: estimate
+        ! Internal variables
+        character(len=8)                                    :: myMode
+        real(KINDVALUE), dimension(1)                       :: array2
+        type(Stat_T), dimension(size(pct))                  :: gaps
+        ! Executable
+        myMode = 'mean'
+        if ( present(mode) ) myMode = mode
+        if ( lowercase(myMode(1:4)) == 'esti' .and. .not. present(estimate) ) &
+          & call MLSMessage ( MLSMSG_Error, moduleName,  &
+          & "This mode of ConfidInterval requires an explicit estimate " )
+        if ( present(estimate) ) then
+          myMode = 'esti'
+          array2(1) = estimate
+        endif
+        call howfar_d1r4( values, array2, pct, gaps, mode )
+        intervals%Bottom = gaps%min
+        intervals%Top    = gaps%max
+      end subroutine ConfidInterval_r4
+
+      subroutine ConfidInterval_r8( values, &
+        & pct, intervals, mode, estimate )
+        integer, parameter                             :: KINDVALUE = r8
+        real(KINDVALUE), dimension(:), intent(in)           :: values
+        real(KINDVALUE), dimension(:), intent(in)           :: pct
+        type(interval_t), dimension(:), intent(out)         :: intervals
+        character(len=*), intent(in), optional              :: mode
+        real(KINDVALUE), intent(in), optional               :: estimate
+        ! Internal variables
+        character(len=8)                                    :: myMode
+        real(KINDVALUE), dimension(1)                       :: array2
+        type(Stat_T), dimension(size(pct))                  :: gaps
+        ! Executable
+        myMode = 'mean'
+        if ( present(mode) ) myMode = mode
+        if ( lowercase(myMode(1:4)) == 'esti' .and. .not. present(estimate) ) &
+          & call MLSMessage ( MLSMSG_Error, moduleName,  &
+          & "This mode of ConfidInterval requires an explicit estimate " )
+        if ( present(estimate) ) then
+          myMode = 'esti'
+          array2(1) = estimate
+        endif
+        call howfar_d1r8( values, array2, pct, gaps, mode )
+        intervals%Bottom = gaps%min
+        intervals%Top    = gaps%max
+      end subroutine ConfidInterval_r8
+
       ! ------------------- howfar -----------------------
       ! This family of routines, keeping a given percentage of points
       ! in two arrays "near" each other in value,
@@ -1262,13 +1354,38 @@ contains
       ! where nearness is defined as within a gap according to mode; either
       !  mode      gap
       !  'abs'  absolute value
+      !  'med'  absolute value of difference of array1 from its median
+      !           (ignoring array2)
       !  'rel'  relative value
+      
       ! i.e., if absolute gap
       ! | array1(i) - array2(i) | < gap
       ! if relative gap
       ! | array1(i) - array2(i) | < gap * max( abs(array1(i)), abs(array2(i)) )
       
+      ! ----------- Update ----------------------
+      ! There are 5 possible values for mode
+      !  value          meaning
+      !  -----          -------
+      !   abs           how far apart |array1 - array2|
+      !   rel           how far apart |array1 - array2| / max(|array1|,|array2|)
+      !   esti          set estimate = array2(1)
+      !   mean          set estimate = mean(array1)
+      !   medi          set estimate = median(array1)
+      !
+      ! Where an estimate is set, we find 2 values alpha, beta such that
+      ! alpha < pct of array1 < beta
+      !  gaps%min = alpha
+      !  gaps%max = beta
+      
       ! An inverse, in a sense, of the hownear procedures
+      ! In another sense, this a different view of the histogram's
+      ! bincount of our usual Stat_T type
+      ! because if pct=90% => min, max of 90% of our date
+      ! because if pct=10% => min, max of 10% of our date
+      
+      ! Some of the updated usage is for convenience in
+      ! calculating confidence intervals (see ConfidInterval)
       
       ! Note that the statistic returned is inout--otherwise
       ! we would clobber nbins, bounds, bincount, etc.
@@ -1992,6 +2109,41 @@ contains
           & fillValue, op )
       end subroutine ratios_d4r8
       
+      ! ------------------ SetUp -------------------------
+      ! Sets up a stat_t by setting counters to zero 
+      ! and optionally allocating a pointer
+      subroutine SetUp( statistic, NBins, Bounds, verbose )
+        ! Arg
+        type(stat_t)                                 :: statistic
+        integer, optional, intent(in)                :: NBins
+        real(r8), dimension(2), optional, intent(in) :: Bounds
+        logical, optional, intent(in)                :: verbose
+        ! Internal variables
+        integer                                      :: bin
+        real(r8)                                     :: dx
+        logical                                      :: myVerbose
+        ! Executable
+        myVerbose = .false.
+        if ( present(verbose) ) myVerbose = verbose
+        if ( myVerbose ) &
+          & call Output ( 'Setting up a Stat_T data type', advance='yes' )
+        statistic%count = 0
+        statistic%fillcount = 0
+        statistic%nbins = 0
+        if ( associated(statistic%bincount) ) &
+          & call deallocate_test( statistic%bincount, 'xbins', moduleName )
+        if ( present(NBins) .and. present(Bounds) ) then
+          if ( NBins < 1 ) return
+          call allocate_test( statistic%bincount, NBins, 'xbins', moduleName )
+          if ( .not. myVerbose ) return
+          dx = (Bounds(2) - Bounds(1)) / max( 1, (NBins - 1) )
+          call OutputNamedValue ( 'Containing bins', NBins )
+          do bin=1, NBins
+            call OutputNamedValue ( 'bin', (/ (bin-1)*dx, bin*dx /) )
+          enddo
+        endif
+      end subroutine SetUp
+
       ! ------------------ reset -------------------------
       ! resets a stat_t by setting counters to zero and deallocating a pointer
       subroutine reset( statistic )
@@ -2433,6 +2585,9 @@ end module MLSStats1
 
 !
 ! $Log$
+! Revision 2.28  2019/04/04 23:50:20  pwagner
+! Added ConfidInterval and SetUp routines
+!
 ! Revision 2.27  2017/12/01 01:22:08  pwagner
 ! CamelCase use statements; improved comments
 !
