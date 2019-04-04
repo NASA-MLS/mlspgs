@@ -17,12 +17,26 @@
       real(KINDVALUE), dimension(:), intent(in) :: array1, array2                 
       real(KINDVALUE), dimension(:), intent(in) :: pct                            
       type(Stat_T), dimension(:), intent(inout) :: gaps
-      character(len=*), intent(in)              :: mode ! 'rel' or 'abs'          
+      ! There are 5 possible values for mode
+      !  value          meaning
+      !  -----          -------
+      !   abs           how far apart |array1 - array2|
+      !   rel           how far apart |array1 - array2| / max(|array1|,|array2|)
+      !   esti          set estimate = array2(1)
+      !   mean          set estimate = mean(array1)
+      !   medi          set estimate = median(array1)
+      !
+      ! Where an estimate is set, we find 2 values alpha, beta such that
+      ! alpha < pct of array1 < beta
+      !  gaps%min = alpha
+      !  gaps%max = beta
+      character(len=*), intent(in)              :: mode         
       real(KINDVALUE), dimension(:, :), &
         & optional, intent(out)                 :: array1AtN, array2AtN
       ! Internal variables
       logical, parameter                        :: DEEBUG = .false.
       real(KINDVALUE)                           :: denominator                    
+      real(KINDVALUE)                           :: estimate                    
       integer                                   :: i, j, n, nkeep                    
       real(r8), dimension(size(array1))         :: diffs
       ! real(r8), dimension(size(array1))         :: sdiffs
@@ -30,21 +44,71 @@
       ! diffs(p)   -> sorted   sdiffs (i.e. sdiffs[i-1] < sdiffs[i])
       ! sdiffs(ip) -> presorted diffs
       integer, dimension(size(array1))          :: p
-      ! integer, dimension(size(array1))          :: ip
+      integer                                   :: nless                  
+      integer                                   :: nmore
+      integer, dimension(size(array1))          :: lesses
+      integer, dimension(size(array1))          :: mores
       ! Executable
       ! call output( 'sizes of array1, array2', advance='yes' )
       ! call output( (/ size(array1), size(array2) /), advance='yes' )
       ! It is necessary that 
       ! array1 and array2 have the same size
-      if ( size(array1) /= size(array2) ) return
+      if ( size(array1) /= size(array2) .and. &
+        & index( 'abs,rel', lowercase(mode(1:3)) ) > 0 )  return
       if ( size(pct) < 1 .or. size(gaps) < 1 ) return
       n = size(array1)
       
-      select case (lowercase(mode(1:3)))
+      ! Are we interested in how far array1 is from
+      ! an estimate value?
+      ! This is an alternative to its former use:
+      ! how far is array1 from array2
+      select case (lowercase(mode(1:4)))
+      case ('esti')
+        estimate = array2(1)
+      case ('mean')
+        estimate = MLSMean(array1)
+      case ('medi')
+        estimate = MLSMedian(array1)
+      end select
+      
+      select case (lowercase(mode(1:4)))
       case ('abs')
         ! 1st--deal with absolute differences
         diffs = abs(array1-array2)
         call sortp( diffs, 1, n, p )
+      case ('esti', 'mean', 'medi')
+        ! Deal with differences from array1's estimate
+        ! We ignore array2
+        ! estimate = MLSMedian(array1)
+        gaps%min = estimate
+        gaps%max = estimate
+        call FindAll( array1 <= estimate, lesses, nless, &
+          & which_not=mores )
+        nmore = n - nless
+        ! Start with the lesses
+        do i=1, nless
+          diffs(i) = array1( lesses(i) )
+        enddo
+        call sortp( diffs, 1, nless, p )
+        do i=1, min( size(pct), size(gaps) )
+          nkeep = nless - (pct(i)*nless)/100
+          nkeep = max(nkeep, 1)
+          nkeep = min(nkeep, nless)
+          gaps(i)%min = diffs(p(nkeep))
+        enddo
+        ! Next with the mores
+        if ( nmore < 1 ) return
+        do i=1, nmore
+          diffs(i) = array1( mores(i) )
+        enddo
+        call sortp( diffs, 1, nmore, p )
+        do i=1, min( size(pct), size(gaps) )
+          nkeep = (pct(i)*nmore)/100
+          nkeep = max(nkeep, 1)
+          nkeep = min(nkeep, nmore)
+          gaps(i)%max = diffs(p(nkeep))
+        enddo
+        return
       case ('rel')
         ! 2nd--deal with relative differences
         diffs = 0.
@@ -97,6 +161,9 @@
         if ( present(array2Atn) ) array2Atn(:,i) = array2(gaps(i)%indexing)
       enddo
 ! $Log$
+! Revision 2.5  2019/04/04 23:48:57  pwagner
+! Can now calculate confidence interval
+!
 ! Revision 2.4  2012/06/22 20:26:49  pwagner
 ! Specify advance arg because we may now set default to 'yes'
 !
