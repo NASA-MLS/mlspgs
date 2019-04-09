@@ -37,7 +37,7 @@ module Output_M
   use Machine, only: Crash_Burn, Exit_With_Status, NeverCrash
   use MLSCommon, only: Filenamelen, Finite_Signal, &
     & Is_What_Ieee
-  use MLSStrings, only: NCharsInFormat, ReplaceNonAscii, Lowercase, &
+  use MLSStrings_0, only: NCharsInFormat, ReplaceNonAscii, Lowercase, &
     & Readintsfromchars, Stretch, Trim_Safe
   use PrintIt_M, only: Assemblefullline, Get_Config, &
     & MLSMSG_Crash, MLSMSG_Debug, MLSMSG_Info, MLSMSG_Error, &
@@ -1781,6 +1781,9 @@ contains
 end module Output_M
 
 ! $Log$
+! Revision 2.143  2019/04/09 20:30:40  pwagner
+! Moved some procedures from MLSStrings to new MLSStrings_0
+!
 ! Revision 2.142  2019/03/18 22:05:12  pwagner
 ! Dont print again if alreadylogged
 !
