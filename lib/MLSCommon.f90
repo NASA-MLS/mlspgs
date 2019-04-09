@@ -17,7 +17,7 @@ module MLSCommon                ! Common definitions for the MLS software
   !   This doesn't results in a circular dependence.
   use Lexer_Types, only: Where_T ! Where is something in the L2CF
   use MLSKinds ! everything
-  use MLSStrings,  only: Lowercase
+  use MLSStrings_0,  only: Lowercase
 
   implicit none
   private
@@ -726,6 +726,9 @@ end module MLSCommon
 
 !
 ! $Log$
+! Revision 2.54  2019/04/09 20:30:59  pwagner
+! Moved some procedures from MLSStrings to new MLSStrings_0
+!
 ! Revision 2.53  2018/12/11 16:46:30  pwagner
 ! Changed parameter name to MLS_S_Success to avoid conflict in level 1
 !
