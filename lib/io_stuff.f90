@@ -14,8 +14,8 @@ module IO_Stuff
 ! Useful, low-level stuff for mostly formatted I/O
   use Machine, only: Crash_Burn, Exit_With_Status, NeverCrash
   use MLSCommon, only: MLSMSG_Crash, MLSMSG_Warning
-  use MLSFinds, only: FindFirstCharacter => FindFirst, &
-    &                 FindFirstSubstring => FindFirst
+  ! use MLSFinds, only: FindFirstCharacter => FindFirst, &
+  !   &                 FindFirstSubstring => FindFirst
 
   implicit none
 
@@ -46,14 +46,14 @@ module IO_Stuff
 ! === (end of toc) ===
 
 ! === (start of api) ===
-! get_lun( int lun, [log msg], [int bottom], [int top] )
-! get_nLines( char* File, int nLines, [int maxLineLen] )
+! Get_lun( int lun, [log msg], [int bottom], [int top] )
+! Get_nLines( char* File, int nLines, [int maxLineLen] )
 ! Pause ( char* mesg , [char* Prompts(:) )] )
 ! PrintMessage ( int severity, char* name, char* line, [char* advance] )
 ! Read_stdin( str string, [int maxLineLen], [int nLines] )
 ! Read_Textfile( char* File, str string, [int maxLineLen], [int nLines] )
-! write_Textfile( char* File, str string, [int maxLineLen], [int nLines] )
-! truncate_Textfile( str string )
+! Write_Textfile( char* File, str string, [int maxLineLen], [int nLines] )
+! Truncate_Textfile( str string )
 ! str can be any of
 ! character(len=*)                 a scalar character string of any length
 ! character(len=*), dimension(:)   a 1d character array of any length
@@ -594,7 +594,7 @@ contains
     if ( present(AsIs) ) myAsIs = AsIs
     ! What format do we use for writing each line?
     ! Try to write the textfile
-    call GET_LUN ( LUN )
+    call get_lun ( LUN )
     open(UNIT=lun, form='formatted', &
       & file=trim(File), status='unknown', access='sequential', &
       & recl=size(string)*len(string(1)) + 1, iostat=status )
@@ -604,7 +604,11 @@ contains
       return
     endif
     do i=1, size(string)
-      n = FindFirstSubString( string(i), achar(0) )
+      ! We'll avoid using the MLSFinds module
+      ! n = FindFirstSubString( string(i), achar(0) )
+      do n=1, len(string(i))
+        if ( string(i)(n:n) == achar(0) ) exit
+      enddo
       if ( myAsIs ) then
         write ( lun, '(a)', advance='yes' ) trim(string(i))
       elseif ( n < 2 ) then
@@ -627,7 +631,7 @@ contains
     ! print *, 'Name of textfile: ', trim(File)
     ! What format do we use for writeing each line?
     ! Try to write the textfile
-    call GET_LUN ( LUN )
+    call get_lun ( LUN )
     open(UNIT=lun, form='formatted', &
       & file=trim(File), status='unknown', access='sequential', &
       & recl=size(chars) + 1, iostat=status )
@@ -637,7 +641,11 @@ contains
       return
     endif
     do i=1, size(chars,1)
-      n = FindFirstCharacter( chars(i,:), achar(0) )
+      ! Avoid USE of the MLSFinds module
+      ! n = FindFirstCharacter( chars(i,:), achar(0) )
+      do n=1, size(chars(i,:))
+        if ( chars(i,n) == achar(0) ) exit
+      enddo
       if ( n < 2 ) then
         write ( lun, '(a)', advance='yes' ) ''
       else
@@ -657,7 +665,7 @@ contains
     ! print *, 'Name of textfile: ', trim(File)
     ! What format do we use for writeing each line?
     ! Try to write the textfile
-    call GET_LUN ( LUN )
+    call get_lun ( LUN )
     open(UNIT=lun, form='formatted', &
       & file=trim(File), status='unknown', access='sequential', &
       & recl=len(string) + 1, iostat=status )
@@ -716,6 +724,9 @@ contains
 end module IO_STUFF
 
 ! $Log$
+! Revision 2.27  2019/04/09 20:32:09  pwagner
+! Avoid use MLSFinds modul
+!
 ! Revision 2.26  2019/01/24 18:35:49  pwagner
 ! When asked to PrintMessage actually print message
 !
