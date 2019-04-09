@@ -734,7 +734,6 @@ contains
   ! This routine returns requested info about Warnings
   subroutine MLSMessageInquire( Warning_msg, timesWarned, &
     &  totalnumwarnings, LastWarningMsg  )
-    use MLSStrings, only: Lowercase
     ! Args
     integer, optional, intent(out)          :: timesWarned ! how many times 
     character(len=*), optional, intent(in)  :: Warning_msg ! this happened
@@ -1233,6 +1232,9 @@ contains
 
 !
 ! $Log$
+! Revision 2.59  2019/04/09 20:33:56  pwagner
+! Remove redundant USE statement
+!
 ! Revision 2.58  2019/03/18 22:04:40  pwagner
 ! Try harder to Print Errors to stdout
 !
