@@ -18,7 +18,7 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
   use Machine, only: Crash_Burn_Rude=>crash_Burn, Exit_With_Status, Nevercrash
   use MLSCommon, only: MLSFile_T, MLSDebug, MLSVerbose, &
     & MLSDebugsticky, MLSVerboseSticky, DontCrashHere
-  use MLSStrings, only: Capitalize
+  use MLSStrings_0, only: Capitalize, Lowercase
   use Printit_M, only: AssembleFullLine, Get_Config, LogUnitName, PrefixLen, &
     & MLSMSG_Allocate, MLSMSG_Deallocate, &
     & MLSMSG_Crash, MLSMSG_Debug, MLSMSG_Error, MLSMSG_Info, MLSMSG_Success, &
@@ -266,6 +266,9 @@ end module MLSMessageModule
 
 !
 ! $Log$
+! Revision 2.23  2019/04/09 20:34:50  pwagner
+! Moved some procedures from MLSStrings to new MLSStrings_0
+!
 ! Revision 2.22  2019/03/18 22:04:40  pwagner
 ! Try harder to Print Errors to stdout
 !
