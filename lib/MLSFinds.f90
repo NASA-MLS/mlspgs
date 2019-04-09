@@ -10,6 +10,7 @@
 ! foreign countries or providing access to foreign persons.
 
 module MLSFinds
+  use MLSStrings_0, only: LowerCase
 
 ! Ignore the module's name, these are just the simplest Finds
 ! For actual set operations, see MLSSets_1
@@ -1256,31 +1257,6 @@ contains ! =====     Public Procedures     =============================
     if ( present(counts) ) counts(1:num) = myCounts(1:num)
   end subroutine FindUniqueCharacterSubString
 
-
-  ! --------------------------------------------------  LowerCase  -----
-  ! Needed here because MLSStrings uses MLSFinds
-  elemental function LowerCase (str) result (outstr)
-    ! takes A-Z  and replaces with a-z
-    ! leaving other chars alone
-    !--------Argument--------!
-    character (len=*), intent(in) :: STR
-    character (len=len(str))      :: OUTSTR
-
-    !----------Local vars----------!
-    integer            :: i, icode
-    integer, parameter :: offset=IACHAR("a")-IACHAR("A")
-    !----------Executable part----------!
-    outstr=str
-
-    DO i = 1, LEN(str)
-       icode=IACHAR(outstr(i:i))
-       IF ( icode >=IACHAR("A") .AND. icode <= IACHAR("Z")) THEN
-          outstr(i:i)=achar(icode+offset)
-       END IF
-    END DO
-
-  END FUNCTION LowerCase
-
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
   character (len=*), parameter :: IdParm = &
@@ -1294,6 +1270,9 @@ contains ! =====     Public Procedures     =============================
 end module MLSFinds
 
 ! $Log$
+! Revision 2.5  2019/04/09 20:33:04  pwagner
+! Now USEs LowerCase from MLSStrings_0
+!
 ! Revision 2.4  2017/11/03 21:12:06  uid9452
 ! Must update lastWhich in FindLongestStretch
 !
