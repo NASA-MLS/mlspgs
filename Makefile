@@ -430,28 +430,27 @@ TAR=tar
 # for code reuse or debugging
 # They allow us to forego the toolkit and associated hdf libraries
 NO_MLSMESS_LIB := $(shell ${REECHO} -dir lib -path lib \
-MLSFinds.f90      numToChars.f9h      PseudoToolkit.ps90\
-findunique.f9h    MLSKinds.f90        output_m.f90       ReadANumFromChars.f9h\
+numToChars.f9h    PseudoToolkit.ps90\
+MLSKinds.f90      output_m.f90        ReadANumFromChars.f9h\
 io_stuff.f90      isafillvalue.f9h    lexer_types.f90\
-MLSCommon.f90     MLSStrings.f90      PrintIt_m.f90\
+MLSCommon.f90     MLSStrings_0.f90    PrintIt_m.f90\
 )
-NO_MLSMESS_SRCLIB := $(shell ${REECHO} -dir srclib -path srclib \
-  ReadNumFromBaseN.f9h\
-)
+# NO_MLSMESS_SRCLIB := $(shell ${REECHO} -dir srclib -path srclib \
+#  ReadNumFromBaseN.f9h\
+#)
 
 NO_MLSMESS := $(NO_MLSMESS_LIB) $(NO_MLSMESS_SRCLIB)
 
 NO_TOOLKIT_LIB := $(shell ${REECHO} -dir lib -path lib \
-findunique.f9h    MLSMessageSubstitute.f90 output_m.f90\
+MLSMessage.f9h    MLSMessageSubstitute.f90 output_m.f90\
 isafillvalue.f9h  PrintIt_m.f90            io_stuff.f90 \
-lexer_types.f90   MLSCommon.f90            MLSStrings.f90\
-MLSFinds.f90      numToChars.f9h           PseudoToolkit.ps90\
+lexer_types.f90   MLSCommon.f90            MLSStrings_0.f90\
+                  numToChars.f9h           PseudoToolkit.ps90\
 MLSKinds.f90      ReadANumFromChars.f9h    toggles_core.f90\
-MLSMessage.f9h\
 )
-NO_TOOLKIT_SRCLIB := $(shell ${REECHO} -dir srclib -path srclib \
-  ReadNumFromBaseN.f9h\
-)
+#NO_TOOLKIT_SRCLIB := $(shell ${REECHO} -dir srclib -path srclib \
+#  ReadNumFromBaseN.f9h\
+#)
 
 NO_TOOLKIT := $(NO_TOOLKIT_LIB) $(NO_TOOLKIT_SRCLIB)
 
@@ -1515,6 +1514,9 @@ tools: $(MLSTOOLS)
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.26  2019/01/18 18:51:40  pwagner
+# Updated lists of modules needed to build w/o toolkit
+#
 # Revision 1.25  2018/11/29 21:17:06  pwagner
 # install now cps instead of mving executables to INSTALLDIR
 #
