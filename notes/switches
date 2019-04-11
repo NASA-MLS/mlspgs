@@ -176,6 +176,7 @@ Switches (set by -S option in mlsl2's command line):
  ZMOR    => Print while adding more zeta points
 ========================= end mlsl2 =========================
 
+Programmers' notes:
 The general pattern is to use upper-case letters for single-letter ones,
 and lower-case letters for strings. Switches are case-sensitive.
 
@@ -186,7 +187,7 @@ else by commas in a single string. Thus to turn on both 'abc' and 'def',
 either use -Sabc -Sdef or -S"abc,def". Among other good things, this
 prevents accidentally turning on an unwanted 'cde' switch.
 
-An alternate way to turn on switches is via the --setf opts-file mecchanism
+An alternate way to turn on switches is via the --setf opts-file mechanism
 Include a line in your opts-file like this
  switches=abc,def
 to turn on the 2 switches 'abc' and 'def'.
@@ -233,9 +234,14 @@ or separate sections for mlsl1 or mlsl3)
 (The equal signs in the section dividers above are to help
 sed dynamically update mlsl2 to show changes in the switch
 usage automatically. Thus you only need to edit this file,
-not MLSL2.f90)
+not MLSL2.f90. Add your changes inside the space book-ended
+by the equal-signs -- stuff outside that space, like these
+comments, will be ignored when responding to mlsl2 -S"?")
 
  $Log$
+ Revision 1.103  2018/02/28 20:02:16  pwagner
+ Explain how to use -setf opts_file to turn on switches
+
  Revision 1.102  2017/03/10 17:20:45  pwagner
  Added -Smerra_2
 
