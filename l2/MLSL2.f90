@@ -201,10 +201,10 @@ program MLSL2
   FILESTRINGTABLE = .true.
   !---------------- Task (2) ------------------
 ! Where to send output, how severe an error to quit
-call SwitchOutput ( 'stdout' )
-call Dump( OutputOptions )
-call DumpConfig
-call RevertOutput
+! call SwitchOutput ( 'stdout' )
+! call Dump( OutputOptions )
+! call DumpConfig
+! call RevertOutput
   outputOptions%prunit = L2Options%Output_print_unit
   MLSMSG_Severity_to_quit = MAX(QUIT_ERROR_THRESHOLD, MLSMSG_Debug+1)
   call set_config ( severity_to_quit = MLSMSG_Severity_to_quit )
@@ -252,7 +252,7 @@ call RevertOutput
 
 ! Done with command-line parameters; enforce cascading negative options
 ! (waited til here in case any were (re)set on command line)
-! print *, 'Enforcing output destinations'
+! print *, 'Enforcing output destinations'! 
 ! print *, 'tookit: ', toolkit
 ! print *, 'showDefaults: ', showDefaults
 ! print *, 'switches: ', trim(switches)
@@ -843,7 +843,9 @@ contains
       call DumpConfig
       call RevertOutput
       call Blanks( 80, fillChar='-', advance='yes' )
-      call DumpGlobalAttributes
+      ! Many of these are defined in the PCF or in the global settings
+      ! Neither of these sections have been complted yet
+      ! call DumpGlobalAttributes
     end if
   end subroutine Dump_settings
 
@@ -884,6 +886,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.231  2019/04/11 23:43:43  pwagner
+! cmdline options --help,--version, and -S'?' now print only relevant stuff
+!
 ! Revision 2.230  2019/03/08 17:15:49  pwagner
 ! Still correcting mis-directed output
 !
