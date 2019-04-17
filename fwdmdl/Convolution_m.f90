@@ -478,7 +478,6 @@ contains
     ! Temperature's windowStart:windowFinish are correct here.
     ! RefGPH and Temperature have the same horizontal basis.
     ! Grids_F is only needed for H2O, for calculating refractive index.
-    ! SCgeocAlt and RefGPH are in meters, but Get_Chi_Out wants them in km.
     ! This is only used for convolution, which is done for both sidebands.
     call get_chi_out ( ptan%values(:,maf), phitan%values(:,maf)*deg2rad,  &
        & scGeocAlt%values(:,maf), Grids_tmp,                              &
@@ -491,7 +490,6 @@ contains
     ! Temperature's windowStart:windowFinish are correct here.
     ! refGPH and temperature have the same horizontal basis.
     ! Grids_tmp is only needed for H2O, for calculating refractive index.
-    ! Est_scgeocalt and RefGPH are in meters, but Get_Chi_Out wants them in km.
     ! This is only used for convolution, which is done for both sidebands.
     call get_chi_out ( tan_press(1:1), tan_phi(1:1),                      &
        & est_scgeocalt(1:1), Grids_tmp,                                   &
@@ -530,6 +528,9 @@ contains
 end module Convolution_m
 
 ! $Log$
+! Revision 2.12  2019/04/17 00:08:50  vsnyder
+! Remove obsolete comments about units of SCgeocAlt and RefGPH
+!
 ! Revision 2.11  2018/05/14 23:42:42  vsnyder
 ! Move Hessians stuff to Hessians_m
 !
