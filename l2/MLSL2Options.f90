@@ -267,6 +267,7 @@ module MLSL2Options              !  Options and Settings for the MLSL2 program
   public :: RestoreDefaults
 
   logical, private, parameter :: countEmpty = .true. ! Except where Overridden locally
+  logical, private, parameter :: AllowEnvInOpts = .true. ! Like "USEOPTSENV"
   
   type :: SomeL2Options_T
     ! Whether to skip doing the retrieval--a pre-flight checkout of paths, etc.
@@ -465,53 +466,57 @@ contains
     ! Internal variables
     character(len=1) :: arg_rhs      ! 'n' part of 'arg=n'
     character(len=16) :: aSwitch
-    integer :: DEGREE                ! index affecting degree of option
+    integer :: Degree                ! index affecting degree of option
     logical, parameter :: DEEBUG = .false.
-    logical :: EXIST
+    logical :: Exist
     logical :: exitLoop
     logical :: Field_Is_Include      ! Field is include file path, not L2CF name
     integer :: I, J
     character(len=2048) :: LINE      ! Into which is read the command args
     integer :: N
     integer :: nLines
-    logical :: OPENED
+    logical :: Opened
     character(len=FileNameLen)             :: optsFile
     character(len=FileNameLen), dimension(:), pointer  :: optLines => null()
     character(len=2) :: quotes
-    integer :: RECL = 256          ! Record length for allocation log
+    integer :: Recl = 256          ! Record length for allocation log
     character(len=len(switches)) :: removeSwitches = ''
-    integer :: STATUS
-    logical :: SWITCH                ! "First letter after -- was not n"
+    integer :: Status
+    logical :: Switch                ! "First letter after -- was not n"
     character(len=len(switches)) :: tempSwitches
     integer :: V
-    character(len=2048) :: WORD      ! Some text
+    character(len=2048) :: Word      ! Some text
     ! Executable
     quotes = char(34) // char(39)   ! {'"}
     filename = 'helphelphelp' ! This means abnormal options--should dump help mesg
     if ( present( cmdline ) .and. DEEBUG ) then
       print *, 'cmdline: ', trim(cmdline)
     end if
-  ! Before looking at command-line options, TOOLKIT is set to SIPS_VERSION
-  ! So here's a good place to put any SIPS-specific settings overriding defaults
-    ! SIPS_VERSION
+    ! Before looking at command-line options, TOOLKIT is set to true
+    ! So here's a good place to put any SIPS-specific settings
+    ! --- SIPS_VERSION ---
     parallel%maxFailuresPerMachine = 2
     parallel%maxFailuresPerChunk = 1
     removeSwitches='slv' ! Since slave output already saved to separate files
     ! switches='red'  ! No longer a good idea
     DEFAULT_HDFVERSION_WRITE = HDFVERSION_5
-    MLSMessageConfig%limitWarnings = 4 ! 50 ! Why print all that stuff?
+    MLSMessageConfig%limitWarnings = 4 ! Print less
     time_config%use_wall_clock = .true. ! SIPS_VERSION
     i = 1 + hp
-    do ! Process Lahey/Fujitsu run-time options; they begin with "-Wl,"
-      call getNextArg ( i, line )
-      if ( line(1:4) /= '-Wl,' ) then
-        call SnipLastSlaveArgument ! Don't want slaves to see this
-        exit
-      end if
-      call AccumulateSlaveArguments(line) ! pass them to slave processes
-      i = i + 1
-    end do
+    ! ----------------- deprecated and deplored ----------------------------
+    ! Man, we couldn't use the Lahey compiler even if we wanted to!
+    ! Next time, let's remove these commented-out lines
+    ! do ! Process Lahey/Fujitsu run-time options; they begin with "-Wl,"
+    !   call getNextArg ( i, line )
+    !   if ( line(1:4) /= '-Wl,' ) then
+    !     call SnipLastSlaveArgument ! Don't want slaves to see this
+    !     exit
+    !   end if
+    !   call AccumulateSlaveArguments(line) ! pass them to slave processes
+    !   i = i + 1
+    ! end do
     ! Now process the other options
+    ! -------------------------------------------------------------
     L2Options%command_line = ' '
     field_is_include = .false.
 cmds: do
@@ -521,17 +526,17 @@ cmds: do
         exit
       end if
       call processLine( line, filename, exitLoop, entireLine=.false. )
-     if ( DEEBUG ) print *, 'filename: ', trim(filename)
+      if ( DEEBUG ) print *, 'filename: ', trim(filename)
       if ( exitLoop ) exit
       i = i + 1
     enddo cmds
     ! Did we somehow miss the filename among the args?
     if ( filename == 'helphelphelp' ) then
-     if ( DEEBUG ) print *, 'did we miss the filename?'
+      if ( DEEBUG ) print *, 'did we miss the filename?'
       i = i + 1
       call getNextArg ( i, line )
       filename = line
-     if ( DEEBUG ) print *, 'filename: ', trim(filename)
+      if ( DEEBUG ) print *, 'filename: ', trim(filename)
     end if
   ! Are any switches inappropriate for master or for slave?
     if ( parallel%master ) &
@@ -539,18 +544,19 @@ cmds: do
     if ( parallel%slave ) &
       & removeSwitches = catLists( trim(removeSwitches), 'chu,l2q,mas,slv' )
     ! Remove any quote marks from RemoveSwitches array
-    tempSwitches = unquote(removeSwitches, quotes=quotes, options='-p')
+    tempSwitches = unquote( removeSwitches, quotes=quotes, options='-p' )
     call GetUniqueList( tempSwitches, removeSwitches, numSwitches, &
           & ignoreLeadingSpaces=.true., options='-eSL' )
     ! Remove any quote marks from switches array
     tempSwitches = switches
-    Switches = unquote(tempSwitches, quotes=quotes, options='-p')
+    Switches = unquote( tempSwitches, quotes=quotes, options='-p' )
     ! Remove any switches embedded in the removeSwitches option 'R'
     if ( DEEBUG ) print *, 'starting List ', trim(switches) 
     if ( DEEBUG ) print *, 'to remove ', trim(removeSwitches) 
-    do i=1, NumStringElements(removeSwitches, countEmpty=.true.)
-      call GetStringElement(trim(removeSwitches), aSwitch, i, countEmpty=.true.)
-      call RemoveSwitchFromList(switches, tempSwitches, trim(aSwitch))
+    do i=1, NumStringElements( removeSwitches, countEmpty=.true. )
+      call GetStringElement( trim(removeSwitches), aSwitch, i, &
+        & countEmpty=.true. )
+      call RemoveSwitchFromList( switches, tempSwitches, trim(aSwitch) )
       switches = tempSwitches
     end do
     if ( DEEBUG ) print *, 'result List ', trim(switches) 
@@ -563,7 +569,7 @@ cmds: do
     if (  L2Options%Overridden ) then
       outputOptions%prunit =  L2Options%Output_print_unit
       MLSMessageConfig%logFileUnit =  L2Options%Output_print_unit
-      print *, 'Setting logFileUnit ', MLSMessageConfig%logFileUnit
+      if ( DEEBUG ) print *, 'Setting logFileUnit ', MLSMessageConfig%logFileUnit
       if ( any( L2Options%Output_print_unit == &
         & (/ MSGLOGPRUNIT, BOTHPRUNIT /) ) ) MLSMessageConfig%useToolkit = .true.
     endif
@@ -589,7 +595,7 @@ cmds: do
         line = "'" // trim(line) // "'"
       endif
       L2Options%command_line = trim(L2Options%command_line) // ' ' // trim(line)
-      call AccumulateSlaveArguments(line) ! pass them to slave processes
+      call AccumulateSlaveArguments( line ) ! pass them to slave processes
     end subroutine getNextArg
 
     ! process the portion of the whole cmdline beginning with the 
@@ -898,7 +904,7 @@ cmds: do
           if ( nLines < 0 ) then
             print *, 'Sorry, unable to open opts file ' // trim(optsFile)
             call MLSL2Message( MLSMSG_Error, ModuleName, &
-            & 'Sorry, unable to open opts file ' // trim(optsFile) )
+              & 'Sorry, unable to open opts file ' // trim(optsFile) )
           endif
           call allocate_test ( optLines, nLines, 'optLines', &
             & trim(ModuleName) // 'processLine' )
@@ -917,6 +923,29 @@ cmds: do
             if ( DEEBUG ) print *, 'is Comment', isComment( optLines(k), '#' ) 
             if ( len_trim(optLines(k)) < 1 .or. &
               & isComment( optLines(k), '#' ) ) cycle
+            ! Do we ignore lines w/o the "=" sign?
+            ! They could be used to turn on special flags to pre-process
+            ! the .opts file
+            ! e.g.
+            !   USEOPTSENV
+            !   nightday=$NIGHTDAY
+            ! and if you set the global environmental parameter
+            !    NIGHTDAY=day
+            ! then mlsl2 would see
+            !   nightday=day
+            !
+            ! If we don't ignore such lines, they will cause a parse error
+            if ( index( optLines(k), '=' ) < 1 ) then
+              if ( ALLOWENVINOPTS ) then
+                cycle
+              else
+                print *, 'Sorry, unable to parse this opts line'
+                print *, '(expected something like lhs=rhs)'
+                print *, trim(optLines(k))
+                call MLSL2Message( MLSMSG_Error, ModuleName, &
+                  & 'Sorry, Parse error in opts file ' // trim(optsFile) )
+              endif
+            endif
             if ( DEEBUG ) print *, 'optLines(k)', trim(optLines(k)) 
             call parseNameValue( optLines(k) )
           enddo
@@ -1063,6 +1092,7 @@ cmds: do
           call myNextArgument( i, inLine, entireLine, line )
           ! Undo the substitution of '%' for space done during parseNameValue
           current_version_id(1) = Replace( trim(line), '%', ' ' )
+          GlobalAttributes%PGEVersion = current_version_id(1)
           ! print *, 'Changed current version id'
           ! do j=1, size(current_version_id)
           !   print *, current_version_id(j)
@@ -1195,6 +1225,7 @@ jloop:do while ( j < len_trim(line) )
     recursive subroutine parseNameValue( inLine )
       character(len=*), intent(in) :: inLine
       ! Local variables
+      logical, parameter :: DEEBUG = .false.
       logical :: exitLoop
       character(len=fileNameLen)      :: filename
       character(len=len(inLine)+32)   :: line
@@ -1247,7 +1278,7 @@ jloop:do while ( j < len_trim(line) )
         call SomeToGlobalAttributes
         return
       elseif ( lowercase(name) == 'l2options' ) then
-        print *, 'Reading SomeL2Options'
+        if ( DEEBUG ) print *, 'Reading SomeL2Options'
         read(valu,*) SomeL2Options
         call SomeToL2Options
         call DumpOptions
@@ -1255,7 +1286,7 @@ jloop:do while ( j < len_trim(line) )
       endif
       ! ---------------------------------------------------------------
 
-      ! Beware of cases where valu conatins an embedded space
+      ! Beware of cases where valu contains an embedded space
       ! Replace such spaces with '%'
       if ( len_trim(name) < 1 .or. name == eqls ) return
       if ( len_trim(valu) > 0 ) valu = Replace ( trim(valu), ' ', '%' )
@@ -1340,11 +1371,12 @@ jloop:do while ( j < len_trim(line) )
   use Toggles, only: Init_Toggle
     logical, intent(in), optional            :: complete ! Restore even quit, crash!
     ! Internal variables
+    logical, parameter :: DEEBUG = .false.
     logical                                  :: myComplete
     ! Executable
     myComplete                               = present(complete)
     if ( myComplete )   myComplete           = complete
-    print *, 'Entered restoreDefaults; myComplete ', myComplete
+    if ( DEEBUG ) print *, 'Entered restoreDefaults; myComplete ', myComplete
     L2Options%Output_print_unit             = -2
     Default_hdfversion_write      = HDFVERSION_5
     Default_hdfversion_read       = WILDCARDHDFVERSION
@@ -1376,8 +1408,9 @@ jloop:do while ( j < len_trim(line) )
   ! Now some things it makes no sense to overwrite, so it makes
   ! no sense to restore them either; e.g., CHECKPATHS, parallel, etc.
   subroutine SomeToL2Options
+    logical, parameter :: DEEBUG = .false.
     ! Executable
-    print *, 'Entered SomeToL2Options'
+    if ( DEEBUG ) print *, 'Entered SomeToL2Options'
     L2Options%SkipRetrieval           =  SomeL2Options%SkipRetrieval        
     L2Options%SkipRetrievalOriginal   =  SomeL2Options%SkipRetrievalOriginal
     L2Options%MLSL2Debug              =  SomeL2Options%MLSL2Debug           
@@ -1399,13 +1432,10 @@ jloop:do while ( j < len_trim(line) )
     integer, parameter                           :: BlocLength = 56
     integer                                      :: c1, c2
     integer                                      :: i
-    integer                                      :: MyDetails
     integer                                      :: NBlocs
     integer                                      :: NValues ! num of rows in table
     character(len=BlocLength), dimension(48, 2)  :: KeysValues
     ! Executable
-    myDetails = SwitchDetail( switches, 'opt' )
-    if ( present(details) ) myDetails = details
     call StyledOutput ( 'Current Level 2 Options', options="--Banner" )
     
     ! The first row will be the header
@@ -1548,6 +1578,9 @@ end module MLSL2Options
 
 !
 ! $Log$
+! Revision 2.125  2019/04/18 16:25:40  pwagner
+! Allow env lines in opts file (which have no '=' sign)
+!
 ! Revision 2.124  2019/03/08 00:08:55  pwagner
 ! Various improvements; logging now works properly more reliably
 !
