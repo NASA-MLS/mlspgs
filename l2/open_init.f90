@@ -465,7 +465,8 @@ contains ! =====     Public Procedures     =============================
     ! Store appropriate user input as global attributes
     GlobalAttributes%StartUTC = l2pcf%StartUTC
     GlobalAttributes%EndUTC = l2pcf%EndUTC
-    GlobalAttributes%PGEVersion = l2pcf%PGEVersion
+    if ( len_trim(GlobalAttributes%PGEVersion) < 1 ) &
+      & GlobalAttributes%PGEVersion = l2pcf%PGEVersion
     call utc_to_yyyymmdd(GlobalAttributes%StartUTC, returnStatus, &
       & GlobalAttributes%GranuleYear, GlobalAttributes%GranuleMonth, &
       & GlobalAttributes%GranuleDay) 
@@ -737,6 +738,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.119  2019/04/18 16:29:53  pwagner
+! Overwrite GlobalAttributes%PGEVersion only if currently blank
+!
 ! Revision 2.118  2018/11/01 23:16:25  pwagner
 ! Improve appearance of settings when dumped
 !
