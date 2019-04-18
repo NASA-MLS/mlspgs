@@ -77,6 +77,33 @@ Exit_With_Status()
    exit $1
 }
 
+#-------------- mycp ----------------
+# read each line of stdin
+# and then echo it to stdout
+# Why?
+# Lines like
+#   b=$a
+# will be echoed as
+#   b=100
+# if the env variable a has been set to 100
+mycp()
+{
+  set -o noglob
+  while read line; do
+    # Does line begin with a '#'?
+    acomment=`echo $line | grep '^#'`
+    if [ "$acomment" != "" ]
+    then
+      # Dont do anything special--just a comment
+      echo $line
+    else
+      # May need to evaluate twice if line contains a $variable
+      eval echo $line
+    fi
+  done
+  set +o noglob
+}
+
 #---------------------------- prepend_option
 # Accumulate a list of commandline options one-by-one
 # Useful to prevent adding the same option if it's already present
@@ -300,7 +327,9 @@ pgekilldelay=120
 # **************************************************
 if [ -r "$JOBDIR/job.env"  ]
 then
+  # SETREAD=`which set_read_env.sh`
   . $JOBDIR/job.env
+  # . $SETREAD < $JOBDIR/job.env
 elif [ -r "$PGE_ROOT/science_env.sh"  ]
 then
   . ${PGE_ROOT}/science_env.sh
@@ -503,6 +532,16 @@ while [ "$more_opts" = "yes" ] ; do
        then
          CAPTURE_STDERR="yes"
        fi
+       # Are we pre-processing the opts using environment variables?
+       a=`grep '^USEOPTSENV' $OPTSFILE`
+       echo "a is $a" >> "$LOGFILE"
+       ls $JOBDIR/job.env  >> "$LOGFILE"
+       if [ "$a" != "" ]
+       then
+         mv $OPTSFILE $OPTSFILE.1
+         mycp < $OPTSFILE.1 > $OPTSFILE
+         rm $OPTSFILE.1
+       fi
        shift
        shift
        ;;
@@ -682,6 +721,9 @@ do_the_call $all_my_opts
 Exit_With_Status 0
 
 # $Log$
+# Revision 1.46  2018/02/28 21:05:30  pwagner
+# This version handles both --tk and --ntk cases
+#
 # Revision 1.45  2018/02/21 21:20:23  pwagner
 # Remove unised exits
 #
