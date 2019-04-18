@@ -747,7 +747,8 @@ contains
       ! Store appropriate user input as global attributes
       GlobalAttributes%StartUTC = l2pcf%StartUTC
       GlobalAttributes%EndUTC = l2pcf%EndUTC
-      GlobalAttributes%PGEVersion = l2pcf%PGEVersion
+      if ( len_trim(GlobalAttributes%PGEVersion) < 1 ) &
+        & GlobalAttributes%PGEVersion = l2pcf%PGEVersion
       if ( LeapSecFileName /= '' ) call FillTAI93Attribute ( LeapSecFileName )
       ! We don't check on returnStatus--dateless or absolute utc are ok
       call utc_to_yyyymmdd(GlobalAttributes%StartUTC, returnStatus, &
@@ -1359,6 +1360,9 @@ contains
 end module Global_Settings
 
 ! $Log$
+! Revision 2.178  2018/11/01 23:16:00  pwagner
+! Improve appearance of settings when dumped
+!
 ! Revision 2.177  2018/07/27 23:19:53  pwagner
 ! Renamed level 2-savvy MLSMessage MLSL2Message
 !
