@@ -100,6 +100,33 @@ hide_files()
    mv $hide_files_result hidden
 }
 
+#-------------- mycp ----------------
+# read each line of stdin
+# and then echo it to stdout
+# Why?
+# Lines like
+#   b=$a
+# will be echoed as
+#   b=100
+# if the env variable a has been set to 100
+mycp()
+{
+  set -o noglob
+  while read line; do
+    # Does line begin with a '#'?
+    acomment=`echo $line | grep '^#'`
+    if [ "$acomment" != "" ]
+    then
+      # Dont do anything special--just a comment
+      echo $line
+    else
+      # May need to evaluate twice if line contains a $variable
+      eval echo $line
+    fi
+  done
+  set +o noglob
+}
+
 #------------------------------- run_mlsl2_ntk ------------
 #
 # Function to do one level 2 run after expanding an l2cf template
@@ -126,9 +153,6 @@ run_mlsl2_ntk()
                                                                         
        echo "Preflight checkPaths run ended badly"                      
        echo "Possibly an error in pathnames; please check your l2cf"    
-                                                                        
-                                                                        
-                                                                        
        exit 1                                                           
     fi                                                                  
   fi                                                                    
@@ -142,9 +166,18 @@ run_mlsl2_ntk()
   else                                                                  
     IDENTFILE="none"                                                    
   fi         
+
+  # HOSTNAME will be stored in metadata as ProductionLocation
+  # to trace provenance
+  if [ "$HOSTNAME" = "" ]
+  then
+    HOSTNAME=local
+  fi
+
   # Now we launch the master task itself to set everything in motion  
   $PGE_BINARY --pge $slave_script --ntk --master $PVM_HOSTS_INFO \
-    --idents "$IDENTFILE" $otheropts $l2cf 2> $JOBDIR/master.l2cfname
+    --idents "$IDENTFILE" --loc "$HOSTNAME" \
+    $otheropts $l2cf 2> $JOBDIR/master.l2cfname
   return_status=`expr $?`
 }
 
@@ -391,6 +424,11 @@ fi
 
 export FLIB_DVT_BUFFER=0
 
+if [ "$MASTEROPTSFILE" != "" ]
+then
+  mycp < $MASTEROPTSFILE > ${JOBDIR}/master.opts
+  otheropts="-g --wall -S'mas,chu,opt1,log,pro,time' --setf ${JOBDIR}/master.opts"
+fi
 env
 env | sort >> "$MLSL2PLOG"
 ulimit -s unlimited
@@ -418,11 +456,11 @@ then
   run_mlsl2_tk
   l2cf=$L2CF
 else
-  # Use sed to convert slavetmpltntk.sh into an executable script
-  # The resulting script sets some toolkit-savvy environment variables
+  # Use sed to convert slavetmplt.sh into an executable script
+  # The resulting script sets some toolkitless environment variables
   # and then launches the regular mlsl2 binary when summoned to do so.
   l2cf=$1
-  # Check that we were called prroperly
+  # Check that we were called properly
   if [ ! -f "$l2cf" ]
   then
     echo 'Usage (w/o toolkit): mlsl2p.sh l2cf_file'
@@ -438,7 +476,7 @@ else
   s=ppggeebbiinnaarryy=${PGE_BINARY}=;
   s=ppggssbbiinn=${PGSBIN}=;
   s=jjoobbddiirr=${JOBDIR}=;
-  s=ppggeerroott=${PGE_ROOT}=;" $PGE_SCRIPT_DIR/slavetmpltntk.sh > $slave_script
+  s=ppggeerroott=${PGE_ROOT}=;" $PGE_SCRIPT_DIR/slavetmplt.sh > $slave_script
   chmod a+x $slave_script
 
   run_mlsl2_ntk
@@ -575,6 +613,9 @@ else
 fi
 
 # $Log$
+# Revision 1.37  2018/03/01 00:21:24  pwagner
+# Now handles both --tk and --ntk cases
+#
 # Revision 1.36  2017/12/07 22:49:20  pwagner
 # Try harder not to stomp on choice of PCF
 #
