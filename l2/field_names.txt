@@ -294,6 +294,7 @@ method
 model
 MieTables
 mif
+MIFTangent # ECRtoFOV or PTAN, default PTAN
 minChannels
 minNormQty
 minValue
@@ -553,6 +554,9 @@ yStar
 ZOT # Tells dump of HGrid whether to print QTM coordinates in ZOT or Geo
 
 # $Log$
+# Revision 2.270  2019/04/24 19:15:25  vsnyder
+# Add MIFTangent field to forwardModel
+#
 # Revision 2.269  2018/10/17 23:05:04  pwagner
 # Dump command can take /pause field to wait for user input for, e.g. debugging
 #
