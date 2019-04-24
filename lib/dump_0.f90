@@ -363,7 +363,7 @@ contains
 
  ! ---------------------------------------------  Dump_1D_Double  -----
   subroutine Dump_1D_Double ( Array, Name, &
-    & FillValue, Width, Format, Lbound, Options, TheShape )
+    & FillValue, Width, Format, Lbound, Options, TheShape, Unit )
     double precision, intent(in) :: Array(:)
     character(len=*), intent(in), optional :: Name
     double precision, intent(in), optional :: FillValue
@@ -372,6 +372,7 @@ contains
     integer, intent(in), optional :: Lbound ! Low bound for Array
     character(len=*), optional, intent(in) :: Options
     character(len=*), intent(in), optional :: TheShape
+    integer, intent(in), optional :: Unit
 
     integer, dimension(MaxNumElements) :: Counts
     double precision, dimension(MaxNumElements) :: Elements
@@ -381,16 +382,20 @@ contains
     integer :: MyWidth
     integer :: NumZeroRows
     integer :: nUnique
+    integer :: SU                ! Save unit
+    su = outputOptions%prUnit
+    if ( present(unit) ) outputOptions%prUnit = unit
     myFillValue = 0.
     if ( present(FillValue) ) myFillValue=FillValue
     myFormat = sdFormatDefault
     include 'dump1d.f9h'
     include 'dump1db.f9h'
+    outputOptions%prUnit = su
   end subroutine Dump_1D_Double
 
   ! --------------------------------------------  Dump_1D_Integer  -----
   subroutine Dump_1D_Integer ( Array, Name, &
-    & FillValue, Format, Width, Lbound, Options, TheShape )
+    & FillValue, Format, Width, Lbound, Options, TheShape, Unit )
     integer, intent(in) :: Array(:)
     character(len=*), intent(in), optional :: Name
     integer, intent(in), optional :: FillValue
@@ -399,6 +404,7 @@ contains
     integer, intent(in), optional :: Lbound ! Low bound for Array
     character(len=*), optional, intent(in) :: Options
     character(len=*), intent(in), optional :: TheShape
+    integer, intent(in), optional :: Unit
 
     integer, dimension(MaxNumElements) :: counts
     integer, dimension(MaxNumElements) :: elements
@@ -408,17 +414,21 @@ contains
     integer :: MyWidth
     integer :: NumZeroRows
     integer :: nUnique
+    integer :: SU                ! Save unit
     if ( present( Format ) ) call outputNamedValue ( 'format', format )
+    su = outputOptions%prUnit
+    if ( present(unit) ) outputOptions%prUnit = unit
     myFillValue = 0.
     if ( present(FillValue) ) myFillValue=FillValue
     myFormat = 'places=' // INTPLACES ! To sneak places arg into call to output
     include 'dump1d.f9h'
     include 'dump1db.f9h'
+    outputOptions%prUnit = su
   end subroutine Dump_1D_Integer
 
   ! --------------------------------------------  Dump_1D_Integer_2B  -----
   subroutine Dump_1D_Integer_2B ( Array, Name, &
-    & FillValue, Format, Width, Lbound, Options, TheShape )
+    & FillValue, Format, Width, Lbound, Options, TheShape, Unit )
     use ISO_C_BINDING, only: C_int16_t
     integer(C_int16_t), intent(in) :: Array(:)
     character(len=*), intent(in), optional :: Name
@@ -428,9 +438,10 @@ contains
     integer, intent(in), optional :: Lbound ! Low bound for Array
     character(len=*), optional, intent(in) :: Options
     character(len=*), intent(in), optional :: TheShape
+    integer, intent(in), optional :: Unit
 
     call dump( int(array), Name, &
-    & FillValue, Format, Width, Lbound, Options, TheShape )
+    & FillValue, Format, Width, Lbound, Options, TheShape, Unit )
   end subroutine Dump_1D_Integer_2B
 
   ! ----------------------------------------------  Dump_1D_Logical ----
@@ -517,7 +528,7 @@ contains
 
   ! -----------------------------------------------  Dump_1D_Real  -----
   subroutine Dump_1D_Real ( Array, Name, &
-    & FillValue, Width, Format, Lbound, Options, TheShape )
+    & FillValue, Width, Format, Lbound, Options, TheShape, Unit )
     real, intent(in) :: Array(:)
     character(len=*), intent(in), optional :: Name
     real, intent(in), optional :: FillValue
@@ -526,6 +537,7 @@ contains
     integer, intent(in), optional :: Lbound ! Low bound for Array
     character(len=*), optional, intent(in) :: Options
     character(len=*), intent(in), optional :: TheShape
+    integer, intent(in), optional :: Unit
 
     integer, dimension(MaxNumElements) :: Counts
     real, dimension(MaxNumElements) :: Elements
@@ -535,11 +547,15 @@ contains
     integer :: MyWidth
     integer :: NumZeroRows
     integer :: nUnique
+    integer :: SU                ! Save unit
+    su = outputOptions%prUnit
+    if ( present(unit) ) outputOptions%prUnit = unit
     myFillValue = 0.
     if ( present(FillValue) ) myFillValue=FillValue
     myFormat = sdFormatDefault
     include 'dump1d.f9h'
     include 'dump1db.f9h'
+    outputOptions%prUnit = su
   end subroutine Dump_1D_Real
 
   ! -----------------------------------------------  Dump_2D_Char  -----
@@ -711,7 +727,7 @@ contains
 
   ! ---------------------------------------------  Dump_2D_Double  -----
  recursive subroutine Dump_2D_Double ( Array, Name, &
-    & FillValue, Width, Format, Lbound, Options, TheShape )
+    & FillValue, Width, Format, Lbound, Options, TheShape, Unit )
     double precision, intent(in) :: Array(:,:)
     character(len=*), intent(in), optional :: Name
     double precision, intent(in), optional :: FillValue
@@ -720,6 +736,7 @@ contains
     integer, intent(in), optional :: Lbound ! to print for first dimension
     character(len=*), intent(in), optional :: Options
     character(len=*), intent(in), optional :: TheShape
+    integer, intent(in), optional :: Unit
 
     integer :: Base, I, J, K
     integer :: NumZeroRows
@@ -729,20 +746,24 @@ contains
     integer :: MyWidth
     integer, dimension(MaxNumElements) :: Counts
     double precision, dimension(MaxNumElements) :: Elements
+    integer :: SU                ! Save unit
 
     myFormat = sdFormatDefault
     myFillValue = 0.
     if ( present(FillValue) ) myFillValue=FillValue
 
+    su = outputOptions%prUnit
+    if ( present(unit) ) outputOptions%prUnit = unit
     base = 1
     if ( present(lbound) ) base = lbound
     include 'dump2d.f9h'
     include 'dump2db.f9h'
+    outputOptions%prUnit = su
   end subroutine Dump_2D_Double
 
   ! --------------------------------------------  Dump_2D_Integer  -----
   recursive subroutine Dump_2D_Integer ( Array, Name, &
-    & FillValue, Width, Format, Lbound, Options, TheShape )
+    & FillValue, Width, Format, Lbound, Options, TheShape, Unit )
     integer, intent(in) :: Array(:,:)
     character(len=*), intent(in), optional :: Name
     integer, intent(in), optional :: FillValue
@@ -751,6 +772,7 @@ contains
     integer, intent(in), optional :: Lbound ! to print for first dimension
     character(len=*), intent(in), optional :: Options
     character(len=*), intent(in), optional :: TheShape
+    integer, intent(in), optional :: Unit
 
     integer :: Base, I, J, K
     integer :: MyWidth
@@ -760,21 +782,25 @@ contains
     integer :: nUnique
     integer, dimension(MaxNumElements) :: Counts
     integer, dimension(MaxNumElements) :: Elements
+    integer :: SU                ! Save unit
 
     myFormat = 'places=' // INTPLACES ! To sneak places arg into call to output
     myFillValue = 0.
     if ( present(FillValue) ) myFillValue=FillValue
 
+    su = outputOptions%prUnit
+    if ( present(unit) ) outputOptions%prUnit = unit
     base = 1
     if ( present(lbound) ) base = lbound
 
     include 'dump2d.f9h'
     include 'dump2db.f9h'
+    outputOptions%prUnit = su
   end subroutine Dump_2D_Integer
 
   ! --------------------------------------------  Dump_2D_Integer_2B  -----
   recursive subroutine Dump_2D_Integer_2B ( Array, Name, &
-    & FillValue, Width, Format, Lbound, Options, TheShape )
+    & FillValue, Width, Format, Lbound, Options, TheShape, Unit )
     use ISO_C_BINDING, only: C_int16_t
     integer(C_int16_t), intent(in) :: Array(:,:)
     character(len=*), intent(in), optional :: Name
@@ -784,9 +810,10 @@ contains
     integer, intent(in), optional :: Lbound ! to print for first dimension
     character(len=*), intent(in), optional :: Options
     character(len=*), intent(in), optional :: TheShape
+    integer, intent(in), optional :: Unit
 
     call dump( int(array), Name, &
-    & FillValue, Width, Format, Lbound, Options, TheShape )
+    & FillValue, Width, Format, Lbound, Options, TheShape, Unit )
   end subroutine Dump_2D_Integer_2B
 
   ! --------------------------------------------  Dump_2D_Logical  -----
@@ -854,7 +881,7 @@ contains
 
   ! -----------------------------------------------  Dump_2D_Real  -----
   recursive subroutine Dump_2D_Real ( Array, Name, &
-    & FillValue, Width, Format, Lbound, Options, TheShape )
+    & FillValue, Width, Format, Lbound, Options, TheShape, Unit )
     real, intent(in) :: Array(:,:)
     character(len=*), intent(in), optional :: Name
     real, intent(in), optional :: FillValue
@@ -863,6 +890,7 @@ contains
     integer, intent(in), optional :: Lbound
     character(len=*), intent(in), optional :: Options
     character(len=*), intent(in), optional :: TheShape
+    integer, intent(in), optional :: Unit
 
     integer :: Base, I, J, K
     integer :: NumZeroRows
@@ -872,16 +900,20 @@ contains
     integer :: MyWidth
     integer, dimension(MaxNumElements) :: Counts
     real, dimension(MaxNumElements) :: Elements
+    integer :: SU                ! Save unit
 
     myFormat = sdFormatDefault
     myFillValue = 0.
     if ( present(FillValue) ) myFillValue=FillValue
 
+    su = outputOptions%prUnit
+    if ( present(unit) ) outputOptions%prUnit = unit
     base = 1
     if ( present(lbound) ) base = lbound
 
     include 'dump2d.f9h'
     include 'dump2db.f9h'
+    outputOptions%prUnit = su
   end subroutine Dump_2D_Real
 
   ! --------------------------------------  Dump_1D_Sparse_Double  -----
@@ -1912,6 +1944,9 @@ contains
 end module Dump_0
 
 ! $Log$
+! Revision 2.159  2019/04/24 19:17:01  vsnyder
+! Add Unit argument to several dumps
+!
 ! Revision 2.158  2018/10/27 01:37:20  vsnyder
 ! Spiff sparse dumps
 !
