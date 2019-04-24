@@ -150,6 +150,7 @@ module ForwardModelConfig
     ! Now the other integers
     integer :: Cat_Size(2)            ! Catalog size, by sideband, 1 = LSB, 2 = USB
     integer :: LinearSideband         ! For hybrid model, which SB is linear?
+    integer :: MIFTangent             ! L_ECRtoFOV or L_PTAN
     integer :: No_cloud_species       ! No of Cloud Species '2'
     integer :: No_model_surfs         ! No of Model surfaces '640'
     integer :: NoUsedChannels         ! Total in all signals
@@ -1416,6 +1417,7 @@ contains
       & call display_string ( modules(config%instrumentModule)%name, &
         & before=' - ' )
     call newline
+    call display_string ( lit_indices(config%MIFTangent), before=' MIFTangent: ', advance='yes' )
     ! Integer scalars
     call output ( config%LinearSideband, before='  LinearSideband: ', advance='yes' )
     call output ( config%No_cloud_species, before='  No_cloud_species: ', advance='yes' )
@@ -1576,6 +1578,10 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.143  2018/08/06 19:58:24  vsnyder
+! Use ASSOCIATE construct to avoid necessity for Lines database to have the
+! TARGET attribute.  Some cannonball polishing.
+!
 ! Revision 2.142  2018/05/15 03:26:25  vsnyder
 ! Change Mie tables from pointer to allocatable
 !
