@@ -408,17 +408,18 @@ contains ! =====     Public Procedures     =============================
       & F_Do_Freq_Avg, F_Forcesidebandfraction, F_Frequency, F_Frqtol, &
       & F_Ignorehessian, F_Incl_Cld, F_Integrationgrid, F_I_Saturation, &
       & F_Linearsideband, F_Linecenter, F_Linewidth, F_Linewidth_Tdep, &
-      & F_Lockbins, F_Lsblblmolecules, F_Lsbpfamolecules, F_Module, &
-      & F_Moleculederivatives, F_Molecules, F_Moleculesecondderivatives, &
-      & F_Nabterms, F_Nazimuthangles, F_Ncloudspecies, F_Nmodelsurfs, &
-      & F_No_Dup_Mol, F_Nscatteringangles, F_Nsizebins, F_Pathnorm, &
-      & F_Phiwindow, F_Nomagneticfield, F_Polarized, F_ReferenceMIF, F_Refract, &
-      & F_Scanaverage, F_Signals, F_Skipoverlaps, F_Specificquantities, &
-      & F_Spect_Der, F_Switchingmirror, F_Tangentgrid, F_Temp_Der, F_Tolerance, &
-      & F_TransformMIFextinction, F_TransformMIFrhi, F_TscatMIF, F_Type, &
-      & F_Usblblmolecules, F_Usbpfamolecules, F_Usetscat, F_Xstar, F_Ystar
-    use Intrinsic, only: L_None, L_Clear, Phyq_Angle, Phyq_Dimensionless, &
-      & Phyq_ProFiles
+      & F_Lockbins, F_Lsblblmolecules, F_Lsbpfamolecules, F_MIFTangent, &
+      & F_Module, F_Moleculederivatives, F_Molecules, &
+      & F_Moleculesecondderivatives, F_Nabterms, F_Nazimuthangles, &
+      & F_Ncloudspecies, F_Nmodelsurfs, F_No_Dup_Mol, F_Nscatteringangles, &
+      & F_Nsizebins, F_Pathnorm, F_Phiwindow, F_Nomagneticfield, F_Polarized, &
+      & F_ReferenceMIF, F_Refract, F_Scanaverage, F_Signals, F_Skipoverlaps, &
+      & F_Specificquantities, F_Spect_Der, F_Switchingmirror, F_Tangentgrid, &
+      & F_Temp_Der, F_Tolerance, F_TransformMIFextinction, F_TransformMIFrhi, &
+      & F_TscatMIF, F_Type, F_Usblblmolecules, F_Usbpfamolecules, F_Usetscat, &
+      & F_Xstar, F_Ystar
+    use Intrinsic, only: L_None, L_Clear, L_PTAN, Phyq_Angle, &
+      & Phyq_Dimensionless, Phyq_ProFiles
     use, Intrinsic :: Iso_C_Binding, only: C_Intptr_T, C_Loc
     use L2pc_M, only: Binselectors, Defaultselector_Latitude, L2pcDatabase, &
       & Createdefaultbinselectors
@@ -518,6 +519,7 @@ contains ! =====     Public Procedures     =============================
     info%i_saturation = l_clear
     info%lockBins = .false.
     info%linearSideband = 0
+    info%MIFTangent = l_ptan
     info%name = name
     info%no_cloud_species = 2
     info%no_model_surfs = 640
@@ -614,6 +616,8 @@ contains ! =====     Public Procedures     =============================
         LBLTrees(1) = son
       case ( f_lsbPFAMolecules )
         PFATrees(1) = son
+      case ( f_MIFTangent )
+        info%MIFTangent = decoration(decoration(subtree(2,son)))
       case ( f_module )
         info%instrumentModule = decoration(decoration(subtree(2,son)))
       case ( f_moleculeDerivatives )
@@ -1576,6 +1580,9 @@ op:     do j = 2, nsons(theTree)
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.191  2019/04/24 19:15:25  vsnyder
+! Add MIFTangent field to forwardModel
+!
 ! Revision 2.190  2018/08/06 19:59:49  vsnyder
 ! Remove unreferenced USE name
 !
