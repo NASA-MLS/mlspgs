@@ -89,7 +89,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: T_MASKUPDATES    = t_masks+1
   integer, parameter :: T_MATRIX         = t_maskUpdates+1
   integer, parameter :: T_METHOD         = t_matrix+1
-  integer, parameter :: T_MODULE         = t_method+1
+  integer, parameter :: T_MIFTangent     = t_method+1
+  integer, parameter :: T_MODULE         = t_MIFTangent+1
   integer, parameter :: T_OUTPUTTYPE     = t_module+1
   integer, parameter :: T_QUANTITYTYPE   = t_outputtype+1
   integer, parameter :: T_REFLECTOR      = t_quantitytype+1
@@ -304,6 +305,7 @@ contains ! =====     Public procedures     =============================
     data_type_indices(t_maskUpdates) =       add_ident ( 'maskUpdates' )
     data_type_indices(t_matrix) =            add_ident ( 'matrixType' )
     data_type_indices(t_method) =            add_ident ( 'method' )
+    data_type_indices(t_MIFTangent) =        add_ident ( 'miftangent' )
     data_type_indices(t_module) =            add_ident ( 'module' )
     data_type_indices(t_outputtype) =        add_ident ( 'outputType' )
     data_type_indices(t_quantitytype) =      add_ident ( 'quantityType' )
@@ -529,6 +531,7 @@ contains ! =====     Public procedures     =============================
              n+n_dt_def, &
       begin, t+t_method, l+l_highcloud,l+l_lowcloud, l+l_newtonian, &
              l+l_simple, n+n_dt_def, &
+      begin, t+t_MIFTangent, l+l_ECRtoFOV, l+l_ptan, n+n_dt_def, &
       begin, t+t_module, l+l_ghz, l+l_thz, n+n_dt_def, &
       begin, t+t_outputType, l+l_ascii, l+l_hdf, l+l_l2aux, l+l_l2cf, &
              l+l_l2dgg, l+l_l2fwm, l+l_l2gp, l+l_l2pc, l+l_quantity, n+n_dt_def /) )
@@ -1488,6 +1491,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_lockBins, boolean(), &
              begin, f+f_lsbLBLMolecules, field_type(t_molecule,empty=empty), &
              begin, f+f_lsbPFAMolecules, field_type(t_molecule,empty=empty), &
+             begin, f+f_MIFTangent, field_type(t_MIFTangent), &
              begin, f+f_module, field_spec(s_module), &
              begin, f+f_moleculeDerivatives, field_type(t_molecule), &
              begin, f+f_moleculeSecondDerivatives, field_type(t_molecule), &
@@ -2133,6 +2137,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.647  2019/04/24 19:15:25  vsnyder
+! Add MIFTangent field to forwardModel
+!
 ! Revision 2.646  2018/11/28 21:09:54  pwagner
 ! Now the surface field may be a numeric instead of a range
 !
