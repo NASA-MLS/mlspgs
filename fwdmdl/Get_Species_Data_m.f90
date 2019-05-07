@@ -32,16 +32,16 @@ contains
     ! Fill in the Beta_Groups' isotope ratios in FwdModelConf.
     ! Get vector quantities.
 
-    use FORWARDMODELCONFIG, only: DUMP, FORWARDMODELCONFIG_T
-    use FORWARDMODELVECTORTOOLS, only: GETQUANTITYFORFORWARDMODEL, &
+    use ForwardModelConfig, only: Dump, ForwardModelConfig_t
+    use ForwardModelVectorTools, only: GetQuantityForForwardModel, &
       GetQtyStuffForForwardModel
-    use INTRINSIC, only: L_ISOTOPERATIO, L_LINECENTER, L_LINEWIDTH, &
-      & L_LINEWIDTH_TDEP, L_Temperature, L_VMR
-    use MLSSTRINGLISTS, only: SWITCHDETAIL
-    use SPECTROSCOPYCATALOG_M, only: Catalog, DUMP
-    use TOGGLES, only: EMIT, LEVELS, SWITCHES, TOGGLE
-    use TRACE_M, only: TRACE_BEGIN, TRACE_END
-    use VECTORSMODULE, only: GETVECTORQUANTITYBYTYPE, VECTOR_T, VECTORVALUE_T
+    use Intrinsic, only: L_IsotopeRatio, L_LineCenter, L_LineWidth, &
+      & L_LineWidth_TDep, L_Temperature, L_VMR
+    use MLSStringLists, only: SwitchDetail
+    use SpectroscopyCatalog_m, only: Catalog, Dump
+    use Toggles, only: Emit, Levels, Switches, Toggle
+    use Trace_m, only: Trace_Begin, Trace_End
+    use VectorsModule, only: GetVectorQuantityByType, Vector_t, VectorValue_t
 
     type(forwardModelConfig_t), intent(inout) :: FwdModelConf ! Fills Beta_Group
     type(vector_T), intent(in) ::  FwdModelIn, FwdModelExtra
@@ -65,53 +65,55 @@ contains
 
     s1 = (fwdModelConf%sidebandStart+3)/2; s2 = (fwdModelConf%sidebandStop+3)/2
 
-    ! Get isotope ratios for molecules in a beta group, else 1.0 if not a group
-    do b = 1, size(fwdModelConf%beta_group)
-      if ( fwdModelConf%beta_group(b)%group ) then ! A molecule group
-        ! First LBL molecules' ratios
-        do s = s1, s2
-          do m = 1, size(fwdModelConf%beta_group(b)%lbl(s)%molecules)
-            mol = fwdModelConf%beta_group(b)%lbl(s)%molecules(m)
-            f => getQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
-              & quantityType=l_isotopeRatio,                             &
-              & molecule=mol, noError=.TRUE., config=fwdModelConf )
-            fwdModelConf%beta_group(b)%lbl(s)%ratio(m) = &
-              & catalog(mol)%defaultIsotopeRatio
-            if ( associated ( f ) ) & ! Have an isotope ratio
-              & fwdModelConf%beta_group(b)%lbl(s)%ratio(m) = f%values(1,1)
-          end do ! m
-          if ( associated(fwdModelConf%beta_group(b)%pfa(s)%molecules) ) then
-            ! Now PFA molecules' ratios
-            do m = 1, size(fwdModelConf%beta_group(b)%pfa(s)%molecules)
-              mol = fwdModelConf%beta_group(b)%pfa(s)%molecules(m)
+    if ( associated(fwdModelConf%beta_group) ) then
+      ! Get isotope ratios for molecules in a beta group, else 1.0 if not a group
+      do b = 1, size(fwdModelConf%beta_group)
+        if ( fwdModelConf%beta_group(b)%group ) then ! A molecule group
+          ! First LBL molecules' ratios
+          do s = s1, s2
+            do m = 1, size(fwdModelConf%beta_group(b)%lbl(s)%molecules)
+              mol = fwdModelConf%beta_group(b)%lbl(s)%molecules(m)
               f => getQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
                 & quantityType=l_isotopeRatio,                             &
                 & molecule=mol, noError=.TRUE., config=fwdModelConf )
-              fwdModelConf%beta_group(b)%pfa(s)%ratio(m) = &
+              fwdModelConf%beta_group(b)%lbl(s)%ratio(m) = &
                 & catalog(mol)%defaultIsotopeRatio
               if ( associated ( f ) ) & ! Have an isotope ratio
-                & fwdModelConf%beta_group(b)%pfa(s)%ratio(m) = f%values(1,1)
+                & fwdModelConf%beta_group(b)%lbl(s)%ratio(m) = f%values(1,1)
             end do ! m
-          end if
-        end do ! s
-!     else ! Not a molecule group, but this is handled in ForwardModelSupport
-!       fwdModelConf%beta_group(b)%lbl_ratio(1)     = 1.0
-!       fwdModelConf%beta_group(b)%pfa_ratio(1)     = 1.0
-      end if
-    end do ! b
+            if ( associated(fwdModelConf%beta_group(b)%pfa(s)%molecules) ) then
+              ! Now PFA molecules' ratios
+              do m = 1, size(fwdModelConf%beta_group(b)%pfa(s)%molecules)
+                mol = fwdModelConf%beta_group(b)%pfa(s)%molecules(m)
+                f => getQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
+                  & quantityType=l_isotopeRatio,                             &
+                  & molecule=mol, noError=.TRUE., config=fwdModelConf )
+                fwdModelConf%beta_group(b)%pfa(s)%ratio(m) = &
+                  & catalog(mol)%defaultIsotopeRatio
+                if ( associated ( f ) ) & ! Have an isotope ratio
+                  & fwdModelConf%beta_group(b)%pfa(s)%ratio(m) = f%values(1,1)
+              end do ! m
+            end if
+          end do ! s
+  !     else ! Not a molecule group, but this is handled in ForwardModelSupport
+  !       fwdModelConf%beta_group(b)%lbl_ratio(1)     = 1.0
+  !       fwdModelConf%beta_group(b)%pfa_ratio(1)     = 1.0
+        end if
+
+      ! Get state vector quantity for species
+        fwdModelConf%beta_group(b)%qty = GetQtyStuffForForwardModel ( &
+          &  fwdModelIn, fwdModelExtra, quantityType=l_vmr, molIndex=b,    &
+          &  config=fwdModelConf, radiometer=fwdModelConf%signals(1)%radiometer, &
+          &  noError=.false. )
+      end do ! b
+    ! else
+      ! No species, maybe doing a hydrostatic fill
+    end if
 
     ! Get temperature vector quantity
     fwdModelConf%temp = GetQtyStuffForForwardModel ( &
         &  fwdModelIn, fwdModelExtra, quantityType=l_temperature, &
         &  config=fwdModelConf )
-
-    ! Get state vector quantities for species
-    do b = 1, size(fwdModelConf%beta_group)
-      fwdModelConf%beta_group(b)%qty = GetQtyStuffForForwardModel ( &
-        &  fwdModelIn, fwdModelExtra, quantityType=l_vmr, molIndex=b,    &
-        &  config=fwdModelConf, radiometer=fwdModelConf%signals(1)%radiometer, &
-        &  noError=.false. )
-    end do ! b
 
     ! Get state vector quantities for spectral parameters
     ! fwdModelConf%line..._ix have indices into these
@@ -180,6 +182,9 @@ contains
 end module Get_Species_Data_m
 
 ! $Log$
+! Revision 2.40  2016/05/05 23:29:45  vsnyder
+! Get temperature the same way it used to be gotten in FullForwardModel
+!
 ! Revision 2.39  2016/05/02 23:33:53  vsnyder
 ! Get the temperature QtyStuff into FwdModelConf
 !
