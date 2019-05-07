@@ -171,6 +171,7 @@ contains
     else if ( .not. allocated(eta%e) ) then
       allocate ( eta%e(2*n_grid), stat=stat, errmsg=msg )
       call test_allocate ( stat, moduleName, "Sparse%E", ermsg=msg )
+      eta%ne = 0
     end if
 
     eta%nRows = n_grid
@@ -509,6 +510,9 @@ contains
 end module Sparse_Eta_m
 
 ! $Log$
+! Revision 2.13  2019/05/07 20:06:53  vsnyder
+! Set NE=0 if Eta%E is allocated here when .not. myCreate
+!
 ! Revision 2.12  2018/12/04 02:42:11  vsnyder
 ! Add Sparse_Eta_QTM
 !
