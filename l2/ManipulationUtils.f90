@@ -188,10 +188,12 @@ contains ! =====     Public Procedures     =============================
       collapsedstr = stretch( collapsedstr, options='o[(]' )
       call SplitNest ( collapsedstr, part1, part2, part3 )
       if ( DEEBug ) then
+        print *, '(After SplitNest)'
         print *, 'part1: ', trim(part1)
         print *, 'part2: ', trim(part2)
         print *, 'part3: ', trim(part3)
       endif
+      part2 = adjustl(part2)
       ! For Pete's sake, is this a bug you're coding around?
       if ( ncopies( trim(part2), ':' ) > 1 ) then
         call ParensForAll ( collapsedstr, mstr )
@@ -207,10 +209,10 @@ contains ! =====     Public Procedures     =============================
         endif
         collapsedstr = mstr
         cycle
-      elseif ( any( indexes( trim(part2), FunColons) > 1 ) .and. &
+      elseif ( any( indexes( trim(part2), FunColons(:)(2:)) > 1 ) .and. &
         &  .not. alreadyValParens ) then
         alreadyValParens = .true.
-        iFun = FindFirst( indexes( ':' // trim(part2), FunColons) > 1 )
+        iFun = FindFirst( indexes( trim(part2), FunColons(:)(2:)) > 1 )
         mstr = ParenthesizeFun( collapsedstr, trim(FunNames(iFun)) )
         if ( DeeBUG ) then
           print *, 'Adding parens to Fun ', part2, FunNames(iFun)
@@ -221,8 +223,22 @@ contains ! =====     Public Procedures     =============================
         cycle
       endif
       alreadyValParens = .false.
+      ! Last chance to catch a Function needing to be parenthesized
+      if ( any( indexes( trim(part2), FunColons(:)(2:)) > 1 ) ) then
+        alreadyValParens = .true.
+        iFun = FindFirst( indexes( trim(part2), FunColons(:)(2:)) > 1 )
+        mstr = ParenthesizeFun( collapsedstr, trim(FunNames(iFun)) )
+        if ( DeeBUG ) then
+          print *, 'Adding parens to Fun ', part2, FunNames(iFun)
+          print *, 'before ', trim(collapsedstr)
+          print *, 'after ', trim(mstr)
+        endif
+        collapsedstr = mstr
+        cycle
+      endif
       ! Now evaluate the part2
       if ( DeeBUG ) then
+        print *, '(Before evaluating part2)'
         print *, 'collapsedstr ', collapsedstr
         print *, 'part1 ', trim(part1)
         print *, 'part2 ', trim(part2)
@@ -261,7 +277,7 @@ contains ! =====     Public Procedures     =============================
           & part3 )
         if ( DeeBUG ) then
           print *, 'part1 ', trim(part1)
-          print *, 'vchar ', trim(part2)
+          print *, 'vchar ', trim(vchar)
           print *, 'part3 ', trim(part3)
         endif
       endif
@@ -585,7 +601,7 @@ contains ! =====     Public Procedures     =============================
     enddo
   end subroutine destroyPrimitives
 
-  subroutine dumpAPrimitive(primitive)
+  subroutine dumpAPrimitive( primitive )
     ! dump all the values in the array
     type(arrayTemp_T), intent(in) :: primitive
     if ( .not. associated(primitive%values) ) then
@@ -599,10 +615,15 @@ contains ! =====     Public Procedures     =============================
     call dump( primitive%values, 'values' )
   end subroutine dumpAPrimitive
 
-  subroutine dumpPrimitives(primitives)
+  subroutine dumpPrimitives( primitives, details )
     ! dump all the arrays we created
     type(arrayTemp_T), dimension(:), pointer :: primitives
+    integer, optional, intent(in)            :: details
     integer :: i
+    integer :: myDetails
+    !
+    myDetails = 0
+    if ( present(details) ) myDetails = details
     if ( .not. associated(primitives) ) then
       call output( 'database not associated ', advance='yes' )
       return
@@ -613,6 +634,7 @@ contains ! =====     Public Procedures     =============================
     endif
     call output( 'size of primitives database: ', advance='no' )
     call output( size(primitives), advance='yes' )
+    if ( myDetails < 1 ) return
     do i=1, size(primitives)
       call output ( ' index of primitive: ', advance='no' )
       call output ( i, advance='yes' )
@@ -1508,6 +1530,9 @@ end module ManipulationUtils
 
 !
 ! $Log$
+! Revision 2.24  2019/05/09 20:40:38  pwagner
+! Needed 2nd chance to detect and Parenthesize FunNames
+!
 ! Revision 2.23  2018/07/27 23:19:53  pwagner
 ! Renamed level 2-savvy MLSMessage MLSL2Message
 !
