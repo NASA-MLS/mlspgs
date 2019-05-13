@@ -14,7 +14,7 @@ module MLSCommon                ! Common definitions for the MLS software
 !=============================================================================
 
   use IEEE_Arithmetic, only: IEEE_Is_Finite, IEEE_Is_Nan
-  !   This doesn't results in a circular dependence.
+  !   This doesn't result in a circular dependence.
   use Lexer_Types, only: Where_T ! Where is something in the L2CF
   use MLSKinds ! everything
   use MLSStrings_0,  only: Lowercase
@@ -45,9 +45,9 @@ module MLSCommon                ! Common definitions for the MLS software
 ! inf_signal       signal to is_what_ieee to check for inf
 ! nan_signal       signal to is_what_ieee to check for NaN
 ! ShortNameLen     character-length of short names (e.g., 'H2O')
-! DEFAULTUNDEFINEDVALUE 
+! DefaultUndefinedValue 
 !                  default fill values, e.g. when creating hdf arrays
-! UNDEFINEDVALUE    
+! UndefinedValue    
 !                  value to check for by is_what_ieee
 ! HDF_Acc_Create   signal to create the hdf file
 ! HDF_Acc_Rdonly   signal to open the hdf file for reading only
@@ -155,11 +155,11 @@ module MLSCommon                ! Common definitions for the MLS software
   ! Their principal use is as args to is_what_ieee
   ! Note that the same test value can be finite and a Fill value
   ! simultaneously
-  integer, public, parameter :: FINITE_SIGNAL = 0
-  integer, public, parameter :: INF_SIGNAL    = FINITE_SIGNAL + 1
-  integer, public, parameter :: NAN_SIGNAL    = INF_SIGNAL + 1
-  integer, public, parameter :: FILL_SIGNAL   = NAN_SIGNAL + 1
-  integer, public, parameter :: OLDFILL_SIGNAL= FILL_SIGNAL + 1
+  integer, public, parameter :: Finite_Signal = 0
+  integer, public, parameter :: Inf_Signal    = Finite_Signal + 1
+  integer, public, parameter :: Nan_Signal    = Inf_Signal + 1
+  integer, public, parameter :: Fill_Signal   = Nan_Signal + 1
+  integer, public, parameter :: Oldfill_Signal= Fill_Signal + 1
 
   ! The following are integer flags that should be consistent
   ! with hdf settings; e.g. /software/toolkit/ifc17/hdf/include/hdf.inc
@@ -263,10 +263,11 @@ module MLSCommon                ! Common definitions for the MLS software
   
   ! On the other hand, we may phase (2) out in favor of the MLSFills
   ! mechanism; see below
-  real(r4), public, parameter :: DEFAULTUNDEFINEDVALUE = -999.99 ! Try to use in lib, l2
-  real(r4), public, parameter :: UNDEFINEDTOLERANCE = 0.2 ! Poss. could make it 1
+  real(r4), public, parameter :: DefaultUndefinedValue = -999.99 ! Try to use in lib, l2
+  integer, public, parameter  :: UndefinedIntegerValue = -999 ! Use for int fields
+  real(r4), public, parameter :: UndefinedTolerance    = 0.2 ! Poss. could make it 1
 
-  real(r4), public, save      ::    UNDEFINEDVALUE = DEFAULTUNDEFINEDVALUE
+  real(r4), public, save      :: UndefinedValue        = DefaultUnDefinedValue
   ! --------------------------------------------------------------------------
 
   ! A type to hold the hdf file ids
@@ -506,8 +507,8 @@ contains
     case (nan_signal)
       itIs = ieee_is_nan(arg)
     case (oldfill_signal)
-      itIs = abs(arg - undefinedValue) < &
-        & max( Real(undefinedTolerance, r8), abs(undefinedValue/100000._r8) )
+      itIs = abs(arg - UndefinedValue) < &
+        & max( Real(undefinedTolerance, r8), abs(UndefinedValue/100000._r8) )
     case (fill_signal)
       itIs = is_a_fill_value( arg )
     case default
@@ -529,8 +530,8 @@ contains
     case (nan_signal)
       itIs = ieee_is_nan(arg)
     case (oldfill_signal)
-      itIs = ( abs(arg-int(undefinedvalue)) < &
-        & max(undefinedTolerance, abs(undefinedvalue/100000)) )
+      itIs = ( abs(arg-int(UndefinedValue)) < &
+        & max(undefinedTolerance, abs(UndefinedValue/100000)) )
     case (fill_signal)
       itIs = is_a_fill_value( arg )
     case default
@@ -552,7 +553,7 @@ contains
     case (nan_signal)
       itIs = .false. ! ieee_is_nan(arg)
     case (oldfill_signal)
-      itIs = ( abs(arg-int(undefinedvalue)) < 1 )
+      itIs = ( abs(arg-int(UndefinedValue)) < 1 )
     case (fill_signal)
       itIs = is_a_fill_value( arg )
     case default
@@ -586,7 +587,11 @@ contains
     logical :: itIs
     integer :: k
     integer :: x
-    include 'isafillvalue.f9h'
+    ! We can't use the standard real-valued undefined values because
+    ! we may wish them to have values (like -1.e15) so big
+    ! that the int function will fail
+    ! include 'isafillvalue.f9h'
+    itIs = ( abs(arg-UndefinedIntegerValue) < 1 )
   end function is_a_fill_value_int
   
   elemental function is_a_fill_value_r4( arg ) result ( itIs )
@@ -726,6 +731,9 @@ end module MLSCommon
 
 !
 ! $Log$
+! Revision 2.55  2019/05/13 23:31:15  pwagner
+! Introduced UndefinedIntegerValue
+!
 ! Revision 2.54  2019/04/09 20:30:59  pwagner
 ! Moved some procedures from MLSStrings to new MLSStrings_0
 !
