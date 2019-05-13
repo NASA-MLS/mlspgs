@@ -27,7 +27,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   use HighOutput, only: BeVerbose, OutputNamedValue, StyledOutput
   use Intrinsic ! "units" Type Literals, Beginning With L
   use MLSCommon, only: DefaultUndefinedValue, Interval_T, &
-    & MLSFile_T, L2MetaData_T
+    & MLSFile_T, L2MetaData_T, UndefinedIntegerValue
   use MLSFiles, only: FileNotFound, &
     & HDFVersion_4, HDFversion_5, WildcardHDFversion, &
     & Dump, InitializeMLSFile, MLS_CloseFile, MLS_Exists, MLS_OpenFile, &
@@ -3418,7 +3418,7 @@ contains ! =====     Public Procedures     =============================
       l2gp%losAngle     = l2gp%MissingValue
       l2gp%geodAngle    = l2gp%MissingValue
       l2gp%time         = l2gp%MissingValue
-      l2gp%chunkNumber  = l2gp%MissingValue
+      l2gp%chunkNumber  = UndefinedIntegerValue
       l2gp%l2gpValue    = l2gp%MissingValue
       l2gp%l2gpPrecision= l2gp%MissingValue
       l2gp%status       = l2gp%MissingStatus ! l2gp%MissingValue
@@ -4453,7 +4453,7 @@ contains ! =====     Public Procedures     =============================
 
     status = mls_gfldsetup(swid, 'ChunkNumber', 'nTimes', MYDIM1, &
       & DFNT_INT32, HDFE_NOMERGE, chunk_rank, chunk_dims, &
-      & hdfVersion=hdfVersion, iFill=int(l2gp%MissingValue))
+      & hdfVersion=hdfVersion, iFill=UndefinedIntegerValue)
 
     if ( l2gp%nLevels > 0 ) then
 
@@ -4952,7 +4952,7 @@ contains ! =====     Public Procedures     =============================
         elseif ( trim(theTitles(field)) == 'ChunkNumber' ) then
           status = he5_swwrlattr(swid, trim(theTitles(field)), &
             & 'MissingValue', &
-            & HE5T_NATIVE_INT, hsize(1), (/ int(l2gp%MissingValue) /) )
+            & HE5T_NATIVE_INT, hsize(1), (/ UndefinedIntegerValue /) )
         else
           status = he5_swwrlattr(swid, trim(theTitles(field)), &
             & 'MissingValue', &
@@ -5265,7 +5265,7 @@ contains ! =====     Public Procedures     =============================
         & l2gp2%time )
     endif
     if ( SwitchDetail(myFields, 'chunknumber', '-wfc') > -1 ) then
-      call ReplaceFillValues ( l2gp1%chunknumber, int(l2gp1%MissingValue), &
+      call ReplaceFillValues ( l2gp1%chunknumber, UndefinedIntegerValue, &
         & l2gp2%chunknumber )
     endif
     if ( SwitchDetail(myFields, 'frequency', '-wfc') > -1 ) then
@@ -5587,6 +5587,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.239  2019/01/29 21:45:47  pwagner
+! Initializes some hdfeos character fields to prevent bleed-thru
+!
 ! Revision 2.238  2018/11/12 23:11:12  pwagner
 ! Deprecated AscDescMode
 !
