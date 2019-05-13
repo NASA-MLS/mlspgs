@@ -1494,10 +1494,10 @@ jloop:do while ( j < len_trim(line) )
     use HighOutput, only: OutputTable
     use MLSStringLists, only: List2Array, NumStringElements, SwitchDetail
     use Toggles, only: Switches
-    integer, optional, intent(in)         :: Details
-    character(len=64), dimension(1024, 2) :: KeysValues
-    integer                               :: MyDetails
-    integer                               :: NValues
+    integer, optional, intent(in)           :: Details
+    character(len=256), dimension(1024, 2)  :: KeysValues
+    integer                                 :: MyDetails
+    integer                                 :: NValues
     ! Executable
     myDetails = SwitchDetail( switches, 'bool' )
     if ( present(details) ) myDetails = details
@@ -1578,6 +1578,9 @@ end module MLSL2Options
 
 !
 ! $Log$
+! Revision 2.126  2019/05/13 23:34:52  pwagner
+! lengthened KeysValues; can usually hold full l2cf path_name now
+!
 ! Revision 2.125  2019/04/18 16:25:40  pwagner
 ! Allow env lines in opts file (which have no '=' sign)
 !
