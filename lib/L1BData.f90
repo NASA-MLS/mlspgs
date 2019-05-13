@@ -1285,7 +1285,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     integer :: myMinMAF
     integer :: noMAFs
     integer :: status
-    logical :: haveCtrMAF
+    logical :: haveCounterMAF
     logical :: haveMAFStartTimeTAI
     logical, parameter :: DEEBug = .false.
     character(len=1024) :: DSNames
@@ -1296,17 +1296,17 @@ contains ! ============================ MODULE PROCEDURES ======================
       & call mls_openFile( L1BFile, status )
     myHDFVersion = L1BFile%HDFVersion
     if ( myhdfVersion == HDFVERSION_4 ) then
-      haveCtrMAF = sfn2index(L1BFile%FileID%f_id,trim(fieldName)) /= -1
-      if ( haveCtrMAF ) then
+      haveCounterMAF = sfn2index(L1BFile%FileID%f_id,trim(fieldName)) /= -1
+      if ( haveCounterMAF ) then
         call ReadL1BData ( L1BFile, fieldName, L1bData, noMAFs, status, &
           & dontPad=.true. )
       end if
     else
-      haveCtrMAF = IsHDF5DSPresent( L1BFile, trim(fieldName) )
+      haveCounterMAF = IsHDF5DSPresent( L1BFile, trim(fieldName) )
       haveMAFStartTimeTAI = IsHDF5DSPresent( L1BFile, 'MAFStartTimeTAI' )
-      call outputNamedValue( 'haveCtrMAF', haveCtrMAF )
-      call outputNamedValue( 'haveMAFStartTimeTAI', haveMAFStartTimeTAI )
-      if ( haveCtrMAF ) then
+      if ( DEEBug ) call outputNamedValue( 'haveCounterMAF', haveCounterMAF )
+      if ( DEEBug )  call outputNamedValue( 'haveMAFStartTimeTAI', haveMAFStartTimeTAI )
+      if ( haveCounterMAF ) then
         call ReadL1BData ( L1BFile, fieldName, L1bData, noMAFs, status, &
           & dontPad=.true.)
       elseif ( haveMAFStartTimeTAI ) then
@@ -1314,7 +1314,7 @@ contains ! ============================ MODULE PROCEDURES ======================
           & dontPad=.true.)
       end if
     end if
-    if ( haveCtrMAF ) then
+    if ( haveCounterMAF ) then
       FindMaxMAF_sca =  maxval(l1bData%counterMAF)
       myMinMAF =  myminval(l1bData%counterMAF)
       if ( DEEBug ) print *, 'counterMAF ', l1bData%counterMAF
@@ -3016,6 +3016,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.125  2019/05/13 20:55:49  pwagner
+! Prints less unless debugging
+!
 ! Revision 2.124  2018/08/03 23:23:08  vsnyder
 ! Announce which file is being checked in CheckForCorruptFileDatabase.
 ! Instead of ignoring errors in ReadL1BData_MF_... if NeverFail is present
