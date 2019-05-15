@@ -148,8 +148,8 @@ module HighOutput
 ! 
 ! To use this module to build a 2d table of names and values
 ! (1) Call startTable
-! (2) Optionally call addRow_header
-! (3) Optionally call addRow_divider
+! (2) Optionally call AddRow_header
+! (3) Optionally call AddRow_divider
 ! (4) For each name, value pair
 !     (a) call AddRow
 !     (b) call AddRow_Divider
@@ -179,9 +179,9 @@ module HighOutput
     module procedure AddRow_Sngl_Array, AddRow_Single
   end interface
 
-  interface Aligntofit
-    module procedure Aligntofit_Chars, Aligntofit_Double, Aligntofit_Single
-    module procedure Aligntofit_Integer
+  interface AlignToFit
+    module procedure AlignToFit_Chars, AlignToFit_Double, AlignToFit_Single
+    module procedure AlignToFit_Integer
   end interface
 
   interface Banner
@@ -221,8 +221,8 @@ module HighOutput
     module procedure Numtochars_Double, Numtochars_Integer, Numtochars_Single
   end interface
 
-  interface Outputlist
-    module procedure Outputlist_Ints, Outputlist_Chars
+  interface OutputList
+    module procedure OutputList_Ints, OutputList_Chars
   end interface
 
   interface OutputnamedValue
@@ -289,7 +289,7 @@ module HighOutput
   ! This is the type for configuring how to automatically style 
   ! special output formats; e.g., Banner
   ! Note the effect on the "bars" part of "stars and bars"
-  ! of choosing different HeadlineFill or BannerPattern characters:
+  ! of choosing different HeadLineFill or BannerPattern characters:
 !------------------------------------------------------------------------------*
 !                            Test Banner Pattern: -                            *
 !------------------------------------------------------------------------------*
@@ -343,7 +343,7 @@ module HighOutput
 ! = ~ = ~ = ~ = ~ = ~ = ~ = ~ = ~ = ~ = ~ = ~ = ~ = ~ = ~ = ~ = ~ = ~ = ~ = ~  *
 
   type StyleOptions_T
-    ! Headline
+    ! HeadLine
     character(len=1) :: HeadLineAlignment        = 'C'
     character(len=1) :: HeadLineFill             = ' '
     character(len=8) :: HeadLineBefore           = ' '
@@ -368,98 +368,98 @@ module HighOutput
 
 contains
 
-  ! ----------------------------------------------  addRow  -----
+  ! ----------------------------------------------  AddRow  -----
   ! This family of routines adds a paired name and value
   ! as a new row to the cellDatabase
   
   ! later to be printed as a neatly-formatted table to stdout
   ! By means of optional args you can create a line like
   ! *   name                   value   *
-  subroutine addRow_character ( name, value, format )
+  subroutine AddRow_character ( name, value, format )
     character(len=*), intent(in)          :: name
     character(len=*), intent(in)          :: value
     include 'addRow.f9h'
-  end subroutine addRow_character
+  end subroutine AddRow_character
 
-  subroutine addRow_complex ( name, value, format )
+  subroutine AddRow_complex ( name, value, format )
     character(len=*), intent(in)          :: name
     complex, intent(in)                   :: value
     include 'addRow.f9h'
-  end subroutine addRow_complex
+  end subroutine AddRow_complex
 
-  subroutine addRow_double ( name, value, format )
+  subroutine AddRow_double ( name, value, format )
     character(len=*), intent(in)          :: name
     double precision, intent(in)                   :: value
     include 'addRow.f9h'
-  end subroutine addRow_double
+  end subroutine AddRow_double
 
-  subroutine addRow_dbl_array ( name, value, format )
+  subroutine AddRow_dbl_array ( name, value, format )
     character(len=*), intent(in)          :: name
     double precision, dimension(:), intent(in)     :: value
     include 'addRow.f9h'
-  end subroutine addRow_dbl_array
+  end subroutine AddRow_dbl_array
 
-  subroutine addRow_int_array ( name, value, format )
+  subroutine AddRow_int_array ( name, value, format )
     character(len=*), intent(in)          :: name
     integer, dimension(:), intent(in)     :: value
     include 'addRow.f9h'
-  end subroutine addRow_int_array
+  end subroutine AddRow_int_array
 
-  subroutine addRow_integer ( name, value, format )
+  subroutine AddRow_integer ( name, value, format )
     character(len=*), intent(in)          :: name
     integer, intent(in)                   :: value
     include 'addRow.f9h'
-  end subroutine addRow_integer
+  end subroutine AddRow_integer
 
-  subroutine addRow_log_array ( name, value, format )
+  subroutine AddRow_log_array ( name, value, format )
     character(len=*), intent(in)          :: name
     logical, dimension(:), intent(in)     :: value
     include 'addRow.f9h'
-  end subroutine addRow_log_array
+  end subroutine AddRow_log_array
 
-  subroutine addRow_logical ( name, value, format )
+  subroutine AddRow_logical ( name, value, format )
     character(len=*), intent(in)          :: name
     logical, intent(in)                   :: value
     include 'addRow.f9h'
-  end subroutine addRow_logical
+  end subroutine AddRow_logical
 
-  subroutine addRow_single ( name, value, format )
+  subroutine AddRow_single ( name, value, format )
     character(len=*), intent(in)          :: name
     real, intent(in)                      :: value
     include 'addRow.f9h'
-  end subroutine addRow_single
+  end subroutine AddRow_single
 
-  subroutine addRow_sngl_array ( name, value, format )
+  subroutine AddRow_sngl_array ( name, value, format )
     character(len=*), intent(in)          :: name
     real, dimension(:), intent(in)     :: value
     include 'addRow.f9h'
-  end subroutine addRow_sngl_array
+  end subroutine AddRow_sngl_array
 
-  subroutine addRow_header ( name, alignment )
+  subroutine AddRow_header ( name, alignment )
     character(len=*), intent(in)          :: name
     character(len=1), intent(in)          :: alignment !: 'l(eft)', 'c', or 'r'
     character(len=MAXCELLSIZE), dimension(2)   :: item = ' '
     integer                                    :: newSize
     item(1) = '<<' // alignment // '>>' // name
     newSize = addCellRowToDatabase( cellDatabase, item )
-  end subroutine addRow_header
+  end subroutine AddRow_header
 
-  subroutine addRow_divider ( char )
+  subroutine AddRow_divider ( char )
     character(len=1), intent(in)          :: char
     character(len=MAXCELLSIZE), dimension(2)   :: item = ' '
     integer                                    :: newSize
     item(1) = '<<' // 'd' // '>>' // char
     newSize = addCellRowToDatabase( cellDatabase, item )
-  end subroutine addRow_divider
+  end subroutine AddRow_divider
 
-  ! -----------------------------------------------------  ALIGNTOFIT  -----
+  ! -----------------------------------------------------  AlignToFit  -----
   ! Align chars to fit within column range
   ! Alignment controls whether the chars are
   ! L    Flushed left
   ! R    Flushed right
   ! C    Centered
   ! J    Justified (padding spaces to any existing spaces)
-  subroutine ALIGNTOFIT_CHARS ( CHARS, COLUMNRANGE, ALIGNMENT, SKIPS )
+  subroutine AlignToFit_CHARS ( CHARS, COLUMNRANGE, ALIGNMENT, SKIPS )
     character(len=*), intent(in)      :: CHARS
     ! If columnRange(1) < 1, just use starting columns; otherwise move to
     integer, dimension(2), intent(in) :: COLUMNRANGE
@@ -523,9 +523,9 @@ contains
       call output_( allChars(char1:char2) )
       call blanks( padRight )
     end if
-  end subroutine ALIGNTOFIT_CHARS
+  end subroutine AlignToFit_CHARS
 
-  subroutine ALIGNTOFIT_DOUBLE ( value, COLUMNRANGE, ALIGNMENT, FORMAT )
+  subroutine AlignToFit_DOUBLE ( value, COLUMNRANGE, ALIGNMENT, FORMAT )
     double precision, intent(in)      :: value
     ! If columnRange(1) < 1, just use starting columns; otherwise move to
     integer, dimension(2), intent(in) :: COLUMNRANGE
@@ -536,10 +536,10 @@ contains
     character(len=30) :: line
     ! Executable
     line = numToChars( value, format )
-    call alignToFit( trim(line), columnRange, alignment )
-  end subroutine ALIGNTOFIT_DOUBLE
+    call AlignToFit( trim(line), columnRange, alignment )
+  end subroutine AlignToFit_DOUBLE
 
-  subroutine ALIGNTOFIT_INTEGER ( value, COLUMNRANGE, ALIGNMENT, FORMAT )
+  subroutine AlignToFit_INTEGER ( value, COLUMNRANGE, ALIGNMENT, FORMAT )
     integer, intent(in)               :: value
     ! If columnRange(1) < 1, just use starting columns; otherwise move to
     integer, dimension(2), intent(in) :: COLUMNRANGE
@@ -550,10 +550,10 @@ contains
     character(len=30) :: line
     ! Executable
     line = numToChars( value, format )
-    call alignToFit( trim(line), columnRange, alignment )
-  end subroutine ALIGNTOFIT_INTEGER
+    call AlignToFit( trim(line), columnRange, alignment )
+  end subroutine AlignToFit_INTEGER
 
-  subroutine ALIGNTOFIT_SINGLE ( value, COLUMNRANGE, ALIGNMENT, FORMAT )
+  subroutine AlignToFit_SINGLE ( value, COLUMNRANGE, ALIGNMENT, FORMAT )
     real, intent(in)      :: value
     ! If columnRange(1) < 1, just use starting columns; otherwise move to
     integer, dimension(2), intent(in) :: COLUMNRANGE
@@ -564,10 +564,10 @@ contains
     character(len=30) :: line
     ! Executable
     line = numToChars( value, format )
-    call alignToFit( trim(line), columnRange, alignment )
-  end subroutine ALIGNTOFIT_SINGLE
+    call AlignToFit( trim(line), columnRange, alignment )
+  end subroutine AlignToFit_SINGLE
 
-  ! -----------------------------------------------------  BANNER  -----
+  ! -----------------------------------------------------  Banner  -----
   ! Surround your message with stars and stripes; e.g.,
   ! *-----------------------------------------------*
   ! *            Your message here                  *
@@ -576,7 +576,7 @@ contains
   ! For multiline messages, you may divide them into elements of
   ! a character array, or else a longer character scalar and
   ! supply LineLength asking the routine to wrap at word boundaries
-  subroutine BANNER_CHARS ( chars, &
+  subroutine Banner_Chars ( chars, &
     & columnRange, alignment, skips, lineLength, mode, pattern )
     character(len=*), intent(in)                :: CHARS
     ! If columnRange(1) < 1, just use starting columns; otherwise move to
@@ -645,7 +645,7 @@ contains
     call output( '*', advance = 'yes' )
     ! Left star, then message, then right star
     call output( '*' )
-    call alignToFit( chars, myColumnRange, myAlignment, skips )
+    call AlignToFit( chars, myColumnRange, myAlignment, skips )
     call blanksToColumn( lineLen )
     call output( '*', advance = 'yes' )
     ! Bottom border
@@ -654,9 +654,9 @@ contains
     call output( '*', advance = 'yes' )
     ! Restore Stamping
     stampOptions%neverStamp = OldNeverStamp
-  end subroutine BANNER_CHARS
+  end subroutine Banner_Chars
 
-  subroutine BANNER_CHARARRAY ( charArray, &
+  subroutine Banner_Chararray ( charArray, &
     & columnRange, alignment, skips, pattern )
     character(len=*), dimension(:), intent(in)  :: CHARARRAY
     ! If columnRange(1) < 1, just use starting columns; otherwise move to
@@ -707,7 +707,7 @@ contains
     do i = 1, size(chararray)
       ! Left star, then message, then right star
       call output( '*' )
-      call alignToFit( chararray(i), myColumnRange, myAlignment, skips )
+      call AlignToFit( chararray(i), myColumnRange, myAlignment, skips )
       call blanksToColumn( lineLen )
       call output( '*', advance = 'yes' )
     end do
@@ -717,7 +717,7 @@ contains
     call output( '*', advance = 'yes' )
     ! Restore Stamping
     stampOptions%neverStamp = OldNeverStamp
-  end subroutine BANNER_CHARARRAY
+  end subroutine Banner_Chararray
 
   ! -----------------------------------------------------  Beverbose_Chars  -----
   logical function Beverbose_Chars ( switch, threshold )
@@ -792,7 +792,7 @@ contains
     end if
   end subroutine blanksToTab
 
-  ! ---------------------------------------------- DumpOuputOptions -----
+  ! ---------------------------------------------- DumpOutputOptions -----
   subroutine DumpOutputOptions( options )
     ! Show output options
     type(outputOptions_T), intent(in) :: options
@@ -803,7 +803,7 @@ contains
     integer :: i
     ! Executable
     call blanks(80, fillChar='-', advance='yes')
-    call headline( 'Summary of output options', &
+    call HeadLine( 'Summary of output options', &
       & fillChar='-', before='*', after='*' )
     call outputNamedValue ( 'unit number', options%prUnit, advance='yes', &
       & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
@@ -830,7 +830,7 @@ contains
     call outputNamedValue ( 'tab stops', tabstops, advance='yes', &
       & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
     do i=1, MAXNUMTABSTOPS
-      call tab( fillChar=fillChar )
+      call tab( fillChar='.' )
       call output_( '^', advance='no' )
     end do
     call newline
@@ -886,7 +886,7 @@ contains
     integer :: i
     ! Executable
     call blanks(80, fillChar='-', advance='yes')
-    call headline( 'Summary of pattern options', &
+    call HeadLine( 'Summary of pattern options', &
       & fillChar='-', before='*', after='*' )
     call outputNamedValue ( 'use patterned blanks?', options%usePatternedBlanks, advance='yes', &
       & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
@@ -904,7 +904,7 @@ contains
     type(StampOptions_T), intent(in) :: options
     character(len=1), parameter :: fillChar = '1' ! fill blanks with '. .'
      call blanks(80, fillChar='-', advance='yes')
-    call headline( 'Summary of automatic stamp options', &
+    call HeadLine( 'Summary of automatic stamp options', &
       & fillChar='-', before='*', after='*' )
      call outputNamedValue ( 'never stamp', options%neverStamp, advance='yes', &
        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
@@ -925,13 +925,13 @@ contains
     call blanks(80, fillChar='-', advance='yes')
   end subroutine DumpStampOptions
 
-  ! ---------------------------------------------- DUMPTIMESTAMPOPTIONS -----
-  subroutine DUMPTIMESTAMPOPTIONS( options )
+  ! ---------------------------------------------- DumpTimeStampOptions -----
+  subroutine DumpTimeStampOptions( options )
     ! Show output options
     type(TimeStampOptions_T), intent(in) :: options
     character(len=1), parameter :: fillChar = '1' ! fill blanks with '. .'
      call blanks(80, fillChar='-', advance='yes')
-    call headline( 'Summary of time stamp options', &
+    call HeadLine( 'Summary of time stamp options', &
       & fillChar='-', before='*', after='*' )
      call outputNamedValue ( 'stamp end of line', options%post, advance='yes', &
        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
@@ -946,7 +946,7 @@ contains
      call outputNamedValue ( 'style of timeStamps', trim_safe(options%timestampstyle), advance='yes', &
        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
     call blanks(80, fillChar='-', advance='yes')
-  end subroutine DUMPTIMESTAMPOPTIONS
+  end subroutine DumpTimeStampOptions
 
   ! ---------------------------------------------- DumpSize_double -----
   subroutine DumpSize_double ( n, advance, units, Before, After, Signed )
@@ -1074,13 +1074,13 @@ contains
     if ( present(interval) )   interval   = stampOptions%interval
   end subroutine getStamp
 
-  ! -----------------------------------------------------  HEADLINE  -----
+  ! -----------------------------------------------------  HeadLine  -----
   ! Print your message with extra formatting features; e.g.,
   ! *----------------  Your message here   ----------------*
   ! See also banner
-  subroutine HEADLINE ( CHARS, fillChar, Before, After, &
+  subroutine HeadLine ( Chars, fillChar, Before, After, &
     & ColumnRange, Alignment, Skips )
-    character(len=*), intent(in)                :: CHARS
+    character(len=*), intent(in)                :: Chars
     character(len=1), intent(in), optional      :: fillChar      ! For padding
     character(len=*), intent(in), optional      :: Before, After ! text to print
     ! If columnRange(1) < 1, just use starting columns; otherwise move to
@@ -1100,18 +1100,18 @@ contains
     if ( present(columnRange) ) then
       myFullColumnRange = columnRange
     else
-      myFullColumnRange = StyleOptions%HeadlineColumnRange ! (/ 1, 80 /)
+      myFullColumnRange = StyleOptions%HeadLineColumnRange ! (/ 1, 80 /)
     end if
     ! print *, 'myFullColumnRange ', myFullColumnRange 
     myColumnRange = myFullColumnRange
-    mySkips = StyleOptions%HeadlineSkips ! 0
+    mySkips = StyleOptions%HeadLineSkips ! 0
     if ( present(skips) ) mySkips = skips
-    myFillChar = StyleOptions%Headlinefill ! ' '
+    myFillChar = StyleOptions%HeadLinefill ! ' '
     if ( present(fillChar) ) myFillChar = fillChar
-    myAlignment = StyleOptions%HeadlineAlignment ! 'C'
+    myAlignment = StyleOptions%HeadLineAlignment ! 'C'
     if ( present(alignment) ) myAlignment = alignment
-    myBefore = StyleOptions%HeadlineBefore
-    myAfter = StyleOptions%HeadlineAfter
+    myBefore = StyleOptions%HeadLineBefore
+    myAfter = StyleOptions%HeadLineAfter
     ! call outputNamedValue ( 'myFullColumnRange', myFullColumnRange )
     ! call outputNamedValue ( 'myColumnRange', myColumnRange )
     ! call outputNamedValue ( 'mySkips', mySkips )
@@ -1132,17 +1132,17 @@ contains
       myColumnRange(2) =  myColumnRange(1) - 1 + len(chars)
       ! print *, 'myColumnRange ', myColumnRange
       call blanksToColumn( myColumnRange(1), fillChar=myFillChar, advance='no' )
-      call aligntofit( chars, myColumnRange, myAlignment, skips )
+      call AlignToFit( chars, myColumnRange, myAlignment, skips )
       call blanksToColumn( myFullColumnRange(2)-rightpadding, &
         & fillChar=myFillChar, advance='no' )
       if ( len_trim(myAfter) > 0 ) call output( trim(myAfter), advance='no' )
     else
-      call aligntofit( chars, myColumnRange, myAlignment, skips )
+      call AlignToFit( chars, myColumnRange, myAlignment, skips )
       call blanksToColumn( myFullColumnRange(2)-rightpadding, advance='no' )
       if ( len_trim(myAfter) > 0 ) call output( trim(myAfter), advance='no' )
     end if
     call newLine
-  end subroutine HEADLINE
+  end subroutine HeadLine
 
   ! -----------------------------------------------------  Letsdebug  -----
   logical function Letsdebug_Chars ( switch, threshold )
@@ -1332,8 +1332,8 @@ contains
     include 'numToChars.f9h'
   end function numToChars_single
 
-  ! ---------------------------------------  OUTPUTCALENDAR  -----
-  subroutine OUTPUTCALENDAR ( date, datenote, notes, dontWrap, moonPhases )
+  ! ---------------------------------------  OutputCalendar  -----
+  subroutine OutputCalendar ( date, datenote, notes, dontWrap, moonPhases )
     use Dates_Module, only: NextMoon
     use MLSStringLists, only: CatLists
     ! output a nicely-formatted calendar of the current month with
@@ -1440,13 +1440,13 @@ contains
     OldNeverStamp = stampOptions%neverStamp
     stampOptions%neverStamp = .true.
     call newline
-    call alignToFit( trim(monthName(month)), (/ 1, 100 /), 'c', skips=1 )
+    call AlignToFit( trim(monthName(month)), (/ 1, 100 /), 'c', skips=1 )
     call newline
     col2 = 0
     do wkdy=1, 7
       col1 = col2 + 1
       col2 = tabStops(wkdy)
-      call alignToFit( trim(daysOfWeek(wkdy)), (/ col1, col2 /), 'c' )
+      call AlignToFit( trim(daysOfWeek(wkdy)), (/ col1, col2 /), 'c' )
     end do
     call newline
     numWeeks = 4
@@ -1496,11 +1496,11 @@ contains
           else if ( row == 1 ) then
             call writeIntsToChars( days(iwk, wkdy), dateString )
             dateString = adjustl(dateString)
-            call alignToFit( trim(dateString), (/ col1, col2-1 /), 'r' )
+            call AlignToFit( trim(dateString), (/ col1, col2-1 /), 'r' )
           else if( row == numRows ) then
             call writeIntsToChars( daysOfYear(iwk, wkdy), dateString )
             dateString = adjustl(dateString)
-            call alignToFit( 'd' // trim(dateString), (/ col1, col2-1 /), 'r' )
+            call AlignToFit( 'd' // trim(dateString), (/ col1, col2-1 /), 'r' )
           else if( present(dateNote) .and. today ) then
             if ( myDontWrap ) then
               wrappedNote = dateNote
@@ -1545,10 +1545,10 @@ contains
     ! Restore tabstops, Stamping
     call settabs( '5-120+5' )
     stampOptions%neverStamp = OldNeverStamp
-  end subroutine OUTPUTCALENDAR
+  end subroutine OutputCalendar
 
-  ! ---------------------------------------  OUTPUT_DATE_AND_TIME  -----
-  subroutine OUTPUT_DATE_AND_TIME ( date, time, &
+  ! ---------------------------------------  Output_Date_And_Time  -----
+  subroutine Output_Date_And_Time ( date, time, &
     & from_where, msg, dateFormat, timeFormat, &
     & CPU_Seconds, wallClock_Seconds, advance )
     ! Output nicely-formatted date, time, and extra message
@@ -1632,14 +1632,14 @@ contains
       call output_ ( '   wall clock time ' // trim(timeString), from_where=from_where, &
         & advance=my_adv, DONT_STAMP=DONT_STAMP )
     end if
-  end subroutine OUTPUT_DATE_AND_TIME
+  end subroutine Output_Date_And_Time
 
-  ! ----------------------------------------------  OUTPUTLIST  -----
+  ! ----------------------------------------------  OutputList  -----
   ! This family of routines outputs an array as a comma-separated list
   ! E.g., given the array (/ 1, 2, 3, .. /) outputs
   ! '(1, 2, 3, .. )'
   ! optionally using sep instead of ',' and delims instead of '()'
-  subroutine OUTPUTLIST_CHARS ( array, sep, delims )
+  subroutine OutputList_Chars ( array, sep, delims )
     ! Args
     character(len=*), dimension(:), intent(in)      :: array
     character(len=*), optional, intent(in) :: sep
@@ -1660,9 +1660,9 @@ contains
       if ( i < size(array) ) call output( comma )
     end do
     call output( parens(2:2) )
-  end subroutine OUTPUTLIST_CHARS
+  end subroutine OutputList_Chars
 
-  subroutine OUTPUTLIST_INTS ( array, sep, delims )
+  subroutine OutputList_Ints ( array, sep, delims )
     ! Args
     integer, dimension(:), intent(in)      :: array
     character(len=*), optional, intent(in) :: sep
@@ -1683,9 +1683,9 @@ contains
       if ( i < size(array) ) call output( comma )
     end do
     call output( parens(2:2) )
-  end subroutine OUTPUTLIST_INTS
+  end subroutine OutputList_Ints
 
-  ! ----------------------------------------------  outputNamedValue  -----
+  ! ----------------------------------------------  OutputNamedValue  -----
   ! This family of routines outputs a paired name and value
   ! (Basically saving you a few lines over the idiom
   !  call output ( trim(name), advance='no' )
@@ -1706,8 +1706,8 @@ contains
   ! dont_stamp: override setting to stamp end of each line
   ! By means of optional args you can create a line like
   ! *   name                   value   *
-  ! See also startTable, addRow, outputTable
-  subroutine output_nvp_whatever ( name, &
+  ! See also startTable, AddRow, outputTable
+  subroutine Output_Nvp_whatever ( name, &
    & chvalue, ivalue, cmvalue, dbvalue, snvalue, &
    & ADVANCE, colon, fillChar, Before, After, TABN, TABC, TABA, DONT_STAMP, options )
     character(len=*), intent(in)          :: name
@@ -1727,24 +1727,24 @@ contains
     character(len=*), intent(in), optional :: options
     ! Local variables
     if ( present(chvalue) ) then
-      call output_nvp_character ( name, chvalue, &
+      call Output_Nvp_character ( name, chvalue, &
         & ADVANCE, colon, fillChar, Before, After, TABN, TABC, TABA, DONT_STAMP, options )
     elseif ( present(cmvalue) ) then
-      call output_nvp_complex ( name, cmvalue, &
+      call Output_Nvp_complex ( name, cmvalue, &
         & ADVANCE, colon, fillChar, Before, After, TABN, TABC, TABA, DONT_STAMP, options )
     elseif ( present(dbvalue) ) then
-      call output_nvp_double ( name, dbvalue, &
+      call Output_Nvp_double ( name, dbvalue, &
         & ADVANCE, colon, fillChar, Before, After, TABN, TABC, TABA, DONT_STAMP, options )
     elseif ( present(ivalue) ) then
-      call output_nvp_integer ( name, ivalue, &
+      call Output_Nvp_integer ( name, ivalue, &
         & ADVANCE, colon, fillChar, Before, After, TABN, TABC, TABA, DONT_STAMP, options )
     elseif ( present(snvalue) ) then
-      call output_nvp_single ( name, snvalue, &
+      call Output_Nvp_single ( name, snvalue, &
         & ADVANCE, colon, fillChar, Before, After, TABN, TABC, TABA, DONT_STAMP, options )
     endif
-  end subroutine output_nvp_whatever
+  end subroutine Output_Nvp_whatever
 
-  subroutine output_nvp_character ( name, value, &
+  subroutine Output_Nvp_character ( name, value, &
    & ADVANCE, colon, fillChar, Before, After, TABN, TABC, TABA, DONT_STAMP, options )
     character(len=*), intent(in)          :: name
     character(len=*), intent(in)          :: value
@@ -1771,72 +1771,72 @@ contains
       character(len=*), intent(in)          :: value
       include 'output_name_value_pair.f9h'
     end subroutine possiblyTrimmedvalue
-  end subroutine output_nvp_character
+  end subroutine Output_Nvp_character
 
-  subroutine output_nvp_complex ( name, value, &
+  subroutine Output_Nvp_complex ( name, value, &
    & ADVANCE, colon, fillChar, Before, After, TABN, TABC, TABA, DONT_STAMP, options )
     character(len=*), intent(in)          :: name
     complex, intent(in)                   :: value
     include 'output_name_value_pair.f9h'
-  end subroutine output_nvp_complex
+  end subroutine Output_Nvp_complex
 
-  subroutine output_nvp_double ( name, value, &
+  subroutine Output_Nvp_double ( name, value, &
    & ADVANCE, colon, fillChar, Before, After, TABN, TABC, TABA, DONT_STAMP, options )
     character(len=*), intent(in)          :: name
     double precision, intent(in)                   :: value
     include 'output_name_value_pair.f9h'
-  end subroutine output_nvp_double
+  end subroutine Output_Nvp_double
 
-  subroutine output_nvp_dbl_array ( name, value, &
+  subroutine Output_Nvp_dbl_array ( name, value, &
    & ADVANCE, colon, fillChar, Before, After, TABN, TABC, TABA, DONT_STAMP, options )
     character(len=*), intent(in)          :: name
     double precision, dimension(:), intent(in)     :: value
     include 'output_name_value_pair.f9h'
-  end subroutine output_nvp_dbl_array
+  end subroutine Output_Nvp_dbl_array
 
-  subroutine output_nvp_int_array ( name, value, &
+  subroutine Output_Nvp_int_array ( name, value, &
    & ADVANCE, colon, fillChar, Before, After, TABN, TABC, TABA, DONT_STAMP, options )
     character(len=*), intent(in)          :: name
     integer, dimension(:), intent(in)     :: value
     include 'output_name_value_pair.f9h'
-  end subroutine output_nvp_int_array
+  end subroutine Output_Nvp_int_array
 
-  subroutine output_nvp_integer ( name, value, &
+  subroutine Output_Nvp_integer ( name, value, &
    & ADVANCE, colon, fillChar, Before, After, TABN, TABC, TABA, DONT_STAMP, options )
     character(len=*), intent(in)          :: name
     integer, intent(in)                   :: value
     include 'output_name_value_pair.f9h'
-  end subroutine output_nvp_integer
+  end subroutine Output_Nvp_integer
 
-  subroutine output_nvp_log_array ( name, value, &
+  subroutine Output_Nvp_log_array ( name, value, &
    & ADVANCE, colon, fillChar, Before, After, TABN, TABC, TABA, DONT_STAMP, options )
     character(len=*), intent(in)          :: name
     logical, dimension(:), intent(in)     :: value
     include 'output_name_value_pair.f9h'
-  end subroutine output_nvp_log_array
+  end subroutine Output_Nvp_log_array
 
-  subroutine output_nvp_logical ( name, value, &
+  subroutine Output_Nvp_logical ( name, value, &
    & ADVANCE, colon, fillChar, Before, After, TABN, TABC, TABA, DONT_STAMP, options )
     character(len=*), intent(in)          :: name
     logical, intent(in)                   :: value
     include 'output_name_value_pair.f9h'
-  end subroutine output_nvp_logical
+  end subroutine Output_Nvp_logical
 
-  subroutine output_nvp_single ( name, value, &
+  subroutine Output_Nvp_single ( name, value, &
    & ADVANCE, colon, fillChar, Before, After, TABN, TABC, TABA, DONT_STAMP, options )
     character(len=*), intent(in)          :: name
     real, intent(in)                      :: value
     include 'output_name_value_pair.f9h'
-  end subroutine output_nvp_single
+  end subroutine Output_Nvp_single
 
-  subroutine output_nvp_sngl_array ( name, value, &
+  subroutine Output_Nvp_sngl_array ( name, value, &
    & ADVANCE, colon, fillChar, Before, After, TABN, TABC, TABA, DONT_STAMP, options )
     character(len=*), intent(in)          :: name
     real, dimension(:), intent(in)     :: value
     include 'output_name_value_pair.f9h'
-  end subroutine output_nvp_sngl_array
+  end subroutine Output_Nvp_sngl_array
 
-  ! ----------------------------------------------  outputTable  -----
+  ! ----------------------------------------------  OutputTable  -----
   ! Outputs a 2d character array as a table
   ! Optionally, 
   ! (1)  you may supply the arry; otherwise, dellDatabase will be used
@@ -1850,9 +1850,9 @@ contains
   !      by default they are consecutive
   !      a special value of interior, null (achar(0)) inserts an empty line
   ! (6)  the first row can be treated as special, and separated from the second
-  !      by a wall of special headliner characters
+  !      by a wall of special HeadLiner characters
   subroutine outputTable ( array, sep, border, cellWidth, &
-    & interior, headliner, alignment )
+    & interior, HeadLiner, alignment )
     ! Args
     character(len=*), dimension(:,:), optional, intent(in)   &
       &                                            :: array
@@ -1860,25 +1860,25 @@ contains
     character(len=1), optional, intent(in)         :: border    ! outside
     integer, optional, intent(in)                  :: cellWidth
     character(len=1), optional, intent(in)         :: interior  ! between rows
-    character(len=1), optional, intent(in)         :: headliner ! 1st row are headers
+    character(len=1), optional, intent(in)         :: HeadLiner ! 1st row are headers
     character(len=1), optional, intent(in)         :: alignment ! L, R, or C
     ! Local variables
     integer                                        :: status
     ! Executable
     if ( present( array ) ) then
       call outputTableArray ( array, sep, border, cellWidth, &
-        & interior, headliner, alignment )
+        & interior, HeadLiner, alignment )
     elseif ( .not. associated ( cellDatabase ) ) then
       call banner ( 'Empty table' )
     else
       call outputTableArray ( cellDatabase, sep, border, cellWidth, &
-        & interior, headliner, alignment )
+        & interior, HeadLiner, alignment )
       deallocate( cellDatabase, stat=status )
       nullify( cellDatabase )
     endif
   end subroutine outputTable
 
-  ! ----------------------------------------------  resetTabs  -----
+  ! ----------------------------------------------  ResetTabs  -----
   ! Restore tab stops to what was in effect at start
   ! Optionally returning them as an integer array
   subroutine resetTabs ( tabs )
@@ -1971,7 +1971,7 @@ contains
   !      by default they are consecutive
   !      a special value of interior, null (achar(0)) inserts an empty line
   ! (5)  the first row can be treated as special, and separated from the second
-  !      by a wall of special headliner characters
+  !      by a wall of special HeadLiner characters
   subroutine startTable 
     ! Internal variables
     integer :: status
@@ -1997,23 +1997,23 @@ contains
     character(len=*), intent(in), optional      :: options
     ! Internal variables
     logical :: asBanner
-    logical :: asHeadline
+    logical :: asHeadLine
     ! Executable
     asBanner   = .false.
-    asHeadline = .false.
+    asHeadLine = .false.
     if ( .not. present(options ) ) then
       call output( chars, advance='yes' )
       return
     endif
     asBanner   = index( options, 'B' ) > 0
-    asHeadline = index( options, 'H' ) > 0
+    asHeadLine = index( options, 'H' ) > 0
     if ( asBanner ) then
       call Banner( chars ) 
-    elseif ( asHeadline ) then
+    elseif ( asHeadLine ) then
       StyleOptions%HeadLineFill = '-'
       StyleOptions%HeadLineBefore = '*'
       StyleOptions%HeadLineAfter = '*'
-      call Headline( chars ) 
+      call HeadLine( chars ) 
       StyleOptions = DefaultStyleOptions
     else
       call output( chars, advance='yes' )
@@ -2302,7 +2302,7 @@ contains
   !      by default they are consecutive
   !      a special value of interior, null (achar(0)) inserts an empty line
   ! (5)  the first row can be treated as special, and separated from the second
-  !      by a wall of special headliner characters
+  !      by a wall of special HeadLiner characters
   ! (6)  If any row begins with the special formatting sequence '<<', then
   !      one of the following occurs:
   !      special format             action
@@ -2311,7 +2311,7 @@ contains
   !          <<r>>xxxx       merge:  right-aligned xxx stretched across table
   !          <<d>>x          divider: inserts a wall of x's
   subroutine outputTableArray ( array, sep, border, cellWidth, &
-    & interior, headliner, alignment )
+    & interior, HeadLiner, alignment )
     ! use Dump_0, only: Dump
     ! Args
     character(len=*), dimension(:,:),intent(in)    :: array
@@ -2319,7 +2319,7 @@ contains
     character(len=1), optional, intent(in)         :: border    ! outside
     integer, optional, intent(in)                  :: cellWidth
     character(len=1), optional, intent(in)         :: interior  ! between rows
-    character(len=1), optional, intent(in)         :: headliner ! 1st row are headers
+    character(len=1), optional, intent(in)         :: HeadLiner ! 1st row are headers
     character(len=1), optional, intent(in)         :: alignment ! L, R, or C
     ! Local variables
     character(len=1)                               :: align
@@ -2332,7 +2332,7 @@ contains
     character(len=1)                               :: myAlignment
     character(len=1)                               :: myBorder
     character(len=1)                               :: mySep
-    character(len=1)                               :: myHeadliner
+    character(len=1)                               :: myHeadLiner
     character(len=1)                               :: myInterior
     integer                                        :: right
     integer, dimension(size(array,2))              :: widths
@@ -2351,8 +2351,8 @@ contains
     myInterior = ' '
     if ( present(Interior) ) myInterior = Interior
     
-    myHeadliner = myInterior
-    if ( present(headliner) ) myHeadliner = headliner
+    myHeadLiner = myInterior
+    if ( present(HeadLiner) ) myHeadLiner = HeadLiner
     
     myAlignment = 'L'
     if ( present(alignment) ) myAlignment = alignment
@@ -2401,10 +2401,10 @@ contains
           call blanks ( leftPadding )
           call output( trim(array(i,1)(k+5:)), advance='no' )
         case ('c') ! centered merge
-          call aligntofit ( trim(array(i,1)(k+5:)), &
+          call AlignToFit ( trim(array(i,1)(k+5:)), &
             & (/ right, totalWidth /), 'c' )
         case ('r') ! right-aligned merge
-          call aligntofit ( trim(array(i,1)(k+5:)), &
+          call AlignToFit ( trim(array(i,1)(k+5:)), &
             & (/ right, totalWidth /), 'r' )
         case ('d') ! wall of chars
           call blanksToColumn( totalWidth, fillChar=array(i,1)(k+5:k+5) )
@@ -2420,7 +2420,7 @@ contains
       do j=1, size(array,2)
         left = right + 1 + leftPadding
         right = left + widths(j) ! Don't know why, but this works
-        call alignToFit ( trim(array(i,j)), (/ left, right /), myAlignment )
+        call AlignToFit ( trim(array(i,j)), (/ left, right /), myAlignment )
         call blanks ( rightPadding )
         if ( len_trim(mySep) > 0 .and. j < size(array,2) ) then
           call output( mySep, advance='no' )
@@ -2433,10 +2433,10 @@ contains
       else
         call newLine
       endif
-      ! Interior cell walls or headliners
-      if ( len_trim(myheadliner) > 0 .and. i == 1 .and. &
-        & myheadliner /= achar(0) ) then
-        call output( repeat( myheadliner, totalWidth ), advance='yes' )
+      ! Interior cell walls or HeadLiners
+      if ( len_trim(myHeadLiner) > 0 .and. i == 1 .and. &
+        & myHeadLiner /= achar(0) ) then
+        call output( repeat( myHeadLiner, totalWidth ), advance='yes' )
       elseif ( myInterior == achar(0) .and. i < size(array,1) ) then
         call output( myBorder, advance='no' )
         call blanksToColumn( totalWidth )
@@ -2570,9 +2570,12 @@ contains
   end function not_used_here
 !---------------------------------------------------------------------------
 
-end module HIGHOUTPUT
+end module HighOutput
 
 ! $Log$
+! Revision 2.30  2019/05/15 23:20:43  pwagner
+! Non-essential housekeeping
+!
 ! Revision 2.29  2019/02/21 22:35:26  pwagner
 ! Improved DumpOutputOptions
 !
@@ -2625,7 +2628,7 @@ end module HIGHOUTPUT
 ! May print elapsed WallClock_seconds at Finish
 !
 ! Revision 2.12  2016/09/22 22:21:16  pwagner
-! May specify format in call to addRow
+! May specify format in call to AddRow
 !
 ! Revision 2.11  2016/03/25 00:37:06  pwagner
 ! Added OUTPUTANYNAMEDVALUE
@@ -2634,7 +2637,7 @@ end module HIGHOUTPUT
 ! May choose different pattern for stripes in banner
 !
 ! Revision 2.9  2015/05/18 17:42:50  pwagner
-! addRow and startTable maintains an internal Table for outputTable to output
+! AddRow and startTable maintains an internal Table for outputTable to output
 !
 ! Revision 2.8  2015/02/24 23:32:22  pwagner
 ! Make sure rightpadding defined in headLine
