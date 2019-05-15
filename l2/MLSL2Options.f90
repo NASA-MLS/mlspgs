@@ -905,6 +905,10 @@ cmds: do
             print *, 'Sorry, unable to open opts file ' // trim(optsFile)
             call MLSL2Message( MLSMSG_Error, ModuleName, &
               & 'Sorry, unable to open opts file ' // trim(optsFile) )
+          elseif ( nLines < 1 ) then
+            print *, '0 lines in opts file ' // trim(optsFile)
+            call MLSL2Message( MLSMSG_Warning, ModuleName, &
+              & 'Unexpectedly empty opts file ' // trim(optsFile) )
           endif
           call allocate_test ( optLines, nLines, 'optLines', &
             & trim(ModuleName) // 'processLine' )
@@ -1425,8 +1429,6 @@ jloop:do while ( j < len_trim(line) )
   ! We have not yet decided how to use the details arg
   subroutine DumpOptions ( details )
     use HighOutput, only: OutputTable
-    use MLSStringLists, only: SwitchDetail
-    use Toggles, only: Switches
     integer, optional, intent(in)                :: Details ! Not used at present
     ! Internal variables
     integer, parameter                           :: BlocLength = 56
@@ -1578,6 +1580,9 @@ end module MLSL2Options
 
 !
 ! $Log$
+! Revision 2.127  2019/05/15 17:28:39  pwagner
+! Warns if opts file is empty
+!
 ! Revision 2.126  2019/05/13 23:34:52  pwagner
 ! lengthened KeysValues; can usually hold full l2cf path_name now
 !
