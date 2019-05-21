@@ -9,13 +9,13 @@
 
 %\tracingcommands=1
 \newlength{\hW} % heading box width
-\settowidth{\hW}{\bf wvs-016r2}
+\settowidth{\hW}{\bf wvs-016r3}
 %\settowidth{\hW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
 \makeatletter
 \def\@biblabel#1{#1.}
 \newcommand{\ps@twolines}{%
   \renewcommand{\@oddhead}{%
-    8 September 2003\hfill\parbox[t]{\hW}{{\bf wvs-016r2}\newline
+    21 May 2019\hfill\parbox[t]{\hW}{{\bf wvs-016r2}\newline
                           Page \thepage\ of \pageref{lastpage}}}%
 \renewcommand{\@evenhead}{}%
 \renewcommand{\@oddfoot}{}%
@@ -64,21 +64,21 @@ identity.  Therefore, we start with $\mathbf{E}_2$.
 Applying Laplace's differentiation rule to $\mathbf{P}_i = \prod_{k=2}^i
 {\bf E}_k$, we had written
 
-{\begin{equation}\label{mess}
+\begin{equation}\label{mess}
  \begin{split}
   \frac{\partial\mathbf{\tau}_i}{\partial x}
-  = & \sum_{k=2}^i \left [ \mathbf{E}_2 \dots \mathbf{E}_{k-1}
+  =\, & \sum_{k=2}^i \left [ \mathbf{E}_2 \dots \mathbf{E}_{k-1}
        \frac{\partial\mathbf{E}_k}{\partial x} \mathbf{E}_{k+1} \dots
        {\bf E}_i {\bf P}_i^\dagger +
        {\bf P}_i {\bf E}_i^\dagger \dots {\bf E}_{k+1}
        \frac{\partial\mathbf{E}_k^\dagger}{\partial x}
        \mathbf{E}_{k-1}^\dagger \dots \mathbf{E}_2^\dagger \right ]
 \\
-  = & \sum_{k=2}^i \left [ {\bf P}_{k-1}
+  =\, & \sum_{k=2}^i \left [ {\bf P}_{k-1}
        \frac{\partial\mathbf{E}_k}{\partial x} \mathbf{P}_k^{-1} {\bf \tau}_i
      + \mathbf{\tau}_i^\dagger \mathbf{P}_k^{-\dagger}
-       \frac{\partial\mathbf{E}_k^\dagger}{\partial x} \mathbf{P}_{k-1}^\dagger \right ]
-       \text{ .}
+       \frac{\partial\mathbf{E}_k^\dagger}{\partial x} \mathbf{P}_{k-1}^\dagger
+       \right ] \text{ .} \\
  \end{split}
 \end{equation}
 
@@ -120,3 +120,5 @@ element.
 \label{lastpage}
 \end{document}
 % $Id$
+
+% $Log$
