@@ -9,13 +9,13 @@
 
 %\tracingcommands=1
 \newlength{\hW} % heading box width
-%\settowidth{\hW}{\bf wvs-022}
-\settowidth{\hW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\settowidth{\hW}{\bf wvs-022r1}
+%\settowidth{\hW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
 \makeatletter
 \def\@biblabel#1{#1.}
 \newcommand{\ps@twolines}{%
   \renewcommand{\@oddhead}{%
-    16 June 2005\hfill\parbox[t]{\hW}{{\bf wvs-022}\newline
+    21 May 2019\hfill\parbox[t]{\hW}{{\bf wvs-022r1}\newline
                           Page \thepage\ of \pageref{lastpage}}}%
 \renewcommand{\@evenhead}{}%
 \renewcommand{\@oddfoot}{}%
@@ -86,6 +86,16 @@ and, by applying the Cauchy-Riemann equations
    \Re\, \frac{\text{d} w}{\text{d} z}\,.
 \end{equation}
 
+Using $\frac{\text{d} w}{\text{d} z} = - 2 z w + \frac{2i}{\sqrt{\pi}}$,
+
+\begin{equation}
+ \frac{\partial u}{\partial y} = - \Im\, \frac{\text{d} w}{\text{d} z} =
+ 2 \Im\, (zw) - \frac2{\sqrt{\pi}} \text{ and }
+ \frac{\partial u}{\partial v} = \Re\, \frac{\text{d} w}{\text{d} z} =
+ -2 \Re\, (zw)\,.
+\end{equation}
+
+\newpage
 The derivative w.r.t. $\nu_0$ is more complicated:
 
 \begin{equation}\begin{split}
@@ -161,3 +171,5 @@ $G \frac{\partial H_2}{\partial \nu_0}$ cancel, we finally have
 \label{lastpage}
 \end{document}
 % $Id$
+
+% $Log$
