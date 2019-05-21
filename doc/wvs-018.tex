@@ -1,6 +1,7 @@
 \documentclass[12pt]{article}
 
-\usepackage[fleqn]{amsmath}\textwidth 6.25in
+\usepackage[fleqn]{amsmath}
+\textwidth 6.25in
 \oddsidemargin -0.25in
 \evensidemargin -0.25in
 \topmargin -0.5in
@@ -10,13 +11,13 @@
 
 %\tracingcommands=1
 \newlength{\hW} % heading box width
-\settowidth{\hW}{\bf wvs-016r2}
+\settowidth{\hW}{\bf wvs-018r1}
 %\settowidth{\hW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
 \makeatletter
 \def\@biblabel#1{#1.}
 \newcommand{\ps@twolines}{%
   \renewcommand{\@oddhead}{%
-    29 April 2004\hfill\parbox[t]{\hW}{{\bf wvs-018}\newline
+    21 May 2019\hfill\parbox[t]{\hW}{{\bf wvs-018r1}\newline
                           Page \thepage\ of \pageref{lastpage}}}%
 \renewcommand{\@evenhead}{}%
 \renewcommand{\@oddfoot}{}%
@@ -41,7 +42,7 @@ From: \>Van Snyder\\
 Let $V(a,y)$ be the Voigt function, $\delta = \nu-\nu_{0_s}$,
 $\sigma = \nu + \nu_{0_s}$, $a = x_1 \delta$, and
 $D = \frac1{\sigma^2 x_1^2 + y^2}$.
-Then {\tt Slabs = } $ S_1 \frac{\nu}{\nu_0}
+Then $\text{\tt Slabs} =  S = S_1 \frac{\nu}{\nu_0}
 \tanh(\frac{h \nu}{2 k T}) \left( V(a,y) + \frac{y D}{\sqrt{\pi}} \right)$.
 
 The Fadeeva function $w(z)$, where $z = a + i y$, can be written as $V(a,y) + i
@@ -72,7 +73,10 @@ $\frac1{S_b}\frac{\partial S_b}{\partial T} =
   $\frac1{S_a}\frac{\partial S_a}{\partial T}$ and
   $\frac1{S_b}\frac{\partial S_b}{\partial T}$ are the same.
 
-For $\Re \frac{\partial w(z)}{\partial T}$ we need
+$\frac{\partial w(z)}{\partial T} = \frac{\text{d} w(z)}{\text{d} z}
+\frac{\partial z}{\partial T}$, and $\frac{\text{d} w(z)}{\text{d} z} =
+-2 z w(z) + \frac{2i}{\sqrt{\pi}}$.
+Therefore, for $\Re \frac{\partial w(z)}{\partial T}$ we need
 $\frac{\partial a}{\partial T} = -x_1 \frac{\partial \nu_{0_s}}{\partial T} +
  \delta \frac{\partial x_1}{\partial T}$ and $\frac{\partial y}{\partial T}$.
 
@@ -233,7 +237,7 @@ $\frac1z \frac{\partial z}{\partial T}
 Finally, we have
 $\frac{\partial W}{\partial T} =
    R_1 \left( \frac1{R_1}\frac{\partial R_1}{\partial T} \right)
- + R_2 \left( \frac1{R_1}\frac{\partial R_2}{\partial T} \right)
+ + R_2 \left( \frac1{R_2}\frac{\partial R_2}{\partial T} \right)
  + i \left[
    I_1 \left( \frac1{I_1}\frac{\partial I_1}{\partial T} \right)
  + I_2 \left( \frac1{I_2}\frac{\partial I_2}{\partial T} \right)
@@ -270,3 +274,5 @@ $\Im \frac{\partial A}{\partial T} =
 \label{lastpage}
 \end{document}
 % $Id$
+
+% $Log$
