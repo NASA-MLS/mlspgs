@@ -1,34 +1,20 @@
-\documentclass[landscape]{slides}
-\usepackage[final]{epsfig}
-\usepackage[mathbf]{euler}
-\usepackage{optima}
+\documentclass[landscape]{beamer}
 \usepackage[nofancy,notoday]{rcsinfo}
-\usepackage{pstcol,pst-plot,pst-char,pst-node}
+% \usepackage{pstcol,pst-plot,pst-char,pst-node}
 \usepackage{color}
+\usepackage[final]{epsfig}
 \usepackage{amsmath}
-\usepackage{moreverb}
-\usepackage[dvips,% pdftoolbar=false, pdfmenubar=false, 
-  pdfwindowui=false, pdffitwindow=true, pdfborder={0 0 0}]{hyperref}
-\usepackage[screen]{njlslides}
-%
+
+\usepackage{graphicx}
+
 \renewcommand{\b}{\mathbf}
 \newcommand{\T}{^{T}}
 \newcommand{\cs}[1]{$_{\text{#1}}$}
 \newcommand{\inv}{^{\mathrm -1}}
 \newcommand{\cp}[1]{$^{\text{#1}}$}
 \newcommand{\degsym}{\ensuremath{^\circ}}
-%
-\renewcommand{\footerfont}{\tiny}
-\renewcommand{\slidetitlefont}{\Large\bfseries}
-%
-\newenvironment{smallitemize}{\par\begin{small}\begin{itemize}\vspace{2mm}}%
-   {\end{itemize}\end{small}}
-%
-\newpsobject{showgrid}{psgrid}{subgriddiv=1,griddots=10,gridlabels=6pt}
-%
-\newlength{\halfwidth}
-\setlength{\halfwidth}{4.5in}
-%
+\newcommand{\newframe}[2][]{\begin{frame}\frametitle{\hfill #2 \hfil}}
+
 \hypersetup{pdfborder={0 0 0}}
 %
 % -----------------------------------------------------------------------------
@@ -36,16 +22,23 @@
 \title{Summary of Retriever}
 \subtitle{wvs-050}
 \author{Van Snyder}
-\talkdate{\today}
-\email{van.snyder@jpl.nasa.gov}
-\logo{\begin{center}\epsfig{file=eos_mls_logo_onpink.eps,width=1.0in}\end{center}}
+\date{11 July 2008} 
+\titlegraphic{\includegraphics[width=1.0in]{eos_mls_logo_onpink}}
 \begin{document}
 \sloppy
-\maketitle
+
 %
 % -----------------------------------------------------------------------------
 %
-\slidetitle[Least squares]{Nomenclature for next slides}
+\begin{frame}
+ \titlepage
+\end{frame}
+
+% \maketitle
+%
+% -----------------------------------------------------------------------------
+%
+\newframe{Nomenclature for next slides}
 \begin{itemize}
 \item $i$: MAF number
 \item $\b{C}$: Column scaling matrix
@@ -68,17 +61,17 @@
 \item $\mu_a$, $\mu_R$: Scalar ``intensity'' parameters
 \item $-\b{f}$: Entire right-hand-side vector of the least-squares problem
 \end{itemize}
-\clearpage
+\end{frame}
 %
 % ----------------------------------------------------------------------------
 %
-\slidetitle{Introduction to Newtonian iteration}
+\newframe{Introduction to Newton iteration}
 For a scalar function, say $f$, of a scalar argument, say $x$, the Taylor series
 truncated to first order is
 \begin{equation}
 f(x) \approx f(x_0) + (x-x_0) f^{\,\prime}(x0)
 \end{equation}
-The Newtonian iteration for finding a zero of $f$ is gotten by setting $f(x)$
+The Newton iteration for finding a zero of $f$ is gotten by setting $f(x)$
 to zero and solving for $x$.  It is usually written
 \begin{equation}
   x_{n+1} = x_n - \frac{f(x_n)}{f^{\,\prime}(x_n)}\;,
@@ -88,11 +81,11 @@ where $n$ is initially zero.  Rearranging terms, we have
   f^{\,\prime}(x_n) ( x_{n+1} - x_n ) = f^\prime(x_n) \,\delta x = -
   f(x_n)\;.
 \end{equation}
-\clearpage
+\end{frame}
 %
 % ----------------------------------------------------------------------------
 %
-\slidetitle{Least-squares view of problem (1)}
+\newframe{Least-squares view of problem (1)}
 In the case of a vector function of a vector argument, the derivative
 $f^{\,\prime}(x_n)$ is replaced by the Jacobian matrix $\b{J} =
 \frac{\partial \b{f}(\b{x}_n)}{\partial \b{x}_n}$, so equation
@@ -104,12 +97,12 @@ solve at each iteration, instead of an equation.
 
 If the least-squares problem is poorly conditioned, as it is in our case,
 one needs to add extra constraints to make a solution tractable.
-\clearpage
+\end{frame}
 %
 % ----------------------------------------------------------------------------
 %
-\slidetitle{Least-squares view of problem (2)}
-In broad outline, the least-squares problem to be solved in each Newtonian
+\newframe{Least-squares view of problem (2)}
+In broad outline, the least-squares problem to be solved in each Newton
 iteration consists of four parts:
 \begin{equation}
  \begin{split}
@@ -121,7 +114,7 @@ iteration consists of four parts:
 \end{equation}
 \begin{itemize}
 \item The first part you know already
-\item The second part is ``The solution should approximate the a priori''
+\item The second part is ``The solution should approximate the a~priori''
 \item The third part is ``The solution has a particular functional form''
   (this is called \emph{regularization})
 \item The fourth part is ``The Jacobian is a good linear approximation on
@@ -130,12 +123,12 @@ iteration consists of four parts:
 \end{itemize}
 
 Putting these all together, weighting them, scaling, ... we have ...
-\clearpage
+\end{frame}
 %
 % ----------------------------------------------------------------------------
 %
-\slidetitle{Least-squares view of problem (3)}
-The Newtonian iteration consists of evaluating $\b{K}$ and $\b{f}$ at
+\newframe{Least-squares view of problem (3)}
+The Newton iteration consists of evaluating $\b{K}$ and $\b{f}$ at
 $\b{x}_n$, solving $\b{K}\delta\b{x}=-\b{f}$ to get $\b{x}_{n+1}$, and
 repeating until $|\b{f}|$ or $|\delta\b{x}|$ is ``small enough''.  In
 detail:
@@ -157,6 +150,11 @@ detail:
                           \b{0}
  \end{array} \right ] = -\b{f}
 \end{equation*}
+\end{frame}
+%
+% ----------------------------------------------------------------------------
+%
+\newframe{Least-squares view of problem (4)}
 After multiplying by $\b{\tilde K}^T$ to form normal equations, this becomes:
 \begin{equation*}
 \begin{split}
@@ -165,8 +163,8 @@ After multiplying by $\b{\tilde K}^T$ to form normal equations, this becomes:
   \b{C}^T \b{K}^T \b{K} \b{C} \; \b{C}^{-1} \delta \b{x} = \\
    &= \b{C}^T \left [ \Sigma_i \b{J}_i^T \b{S}_{{\epsilon}_i}^{-1} \b{J}_i +
    \mu_a^2 \b{S}_a^{-1} + \mu_R^2 \b{R}^T \b{R} + \lambda^2 \b{I} \right ] \b{C} \,
-   \b{C}^{-1} \delta \b{x}=
-   -\b{C}^T \b{K}^T \b{f} =\\
+   \b{C}^{-1} \delta \b{x}= \\
+  &= -\b{C}^T \b{K}^T \b{f} =\\
   &= \b{C}^T \left [ \Sigma_i \b{J}_i^T \b{S}_{{\epsilon}_i}^{-1}
      (\b{y}_i-\b{\hat y}_i) + \mu_a^2 \b{S}_a^{-1} ( \b{a}-\b{x}_n ) -
      \mu_R^2 \b{R}^T \b{R} \b{x}_n
@@ -177,11 +175,11 @@ After multiplying by $\b{\tilde K}^T$ to form normal equations, this becomes:
 where $\b{C}$ is chosen either to minimize the condition number of
 $\b{\tilde K}^T \b{\tilde K}$ or to make the expected errors in
 $\delta\b{x}$ roughly the same.
-\clearpage
+\end{frame}
 %
 % ----------------------------------------------------------------------------
 %
-\slidetitle[Solving]{Solving the least-squares problem}
+\newframe[Solving]{Solving the least-squares problem (1)}
 The retriever uses Cholesky factorization to solve the least-squares problem. 
 It has the advantages that it is guaranteed to produce an answer if the normal
 equations are non-singular, it doesn't need pivoting to maintain stability, and
@@ -194,7 +192,14 @@ Alternatives are
   converge after a few matrix-vector multiplies, but has the disadvantages that
   it may not converge at all if finite arithmetic is used, and calculating
   the covariance matrix doubles the work.
+\end{itemize}
 
+\end{frame}
+%
+% ----------------------------------------------------------------------------
+%
+\newframe[Solving]{Solving the least-squares problem (2)}
+\begin{itemize}
 \item Householder triangularization, which has the advantages that it works
   directly on the least-squares problem (i.e.\ doesn't need to form normal
   equations) and therefore doesn't square the condition number, but it
@@ -204,12 +209,13 @@ Alternatives are
   disadvantage of requiring about twice as much work as forming normal
   equations followed by Cholesky factorization.
 \end{itemize}
-\clearpage
+\end{frame}
 %
 % ----------------------------------------------------------------------------
 %
-\slidetitle{Accumulating normal equations little-by-little}
+\newframe{Accumulating normal equations little-by-little}
 
+\small
 \begin{itemize}
 \item In the left-hand side of the normal equations $\b{\tilde K}^T
   \b{\tilde K} \delta \b{\tilde x} = -\b{\tilde K}^T \b{f}$, the matrix
@@ -235,11 +241,12 @@ Alternatives are
   scale the rows and columns of the normal equations instead of column
   scaling the Jacobian.
 \end{itemize}
-\clearpage
+
+\end{frame}
 %
 % ----------------------------------------------------------------------------
 %
-\slidetitle[Algebra]{Organization of the linear algebra software}
+\newframe[Algebra]{Organization of the linear algebra software (1)}
 \begin{itemize}
 \item The Jacobian matrix is sparse -- mostly zeroes -- and we know the
   pattern of its sparsity -- roughly diagonal plus a block column on the
@@ -255,11 +262,11 @@ Alternatives are
 \item The high level software performs matrix--matrix and matrix--vector
   operations using submatrix blocks.
 \end{itemize}
-\clearpage
+\end{frame}
 %
 % ----------------------------------------------------------------------------
 %
-\slidetitle{Organization of the linear algebra software (cont.)}
+\newframe{Organization of the linear algebra software (2)}
 
 The low level software performs operations on the matrix blocks using one
 of four representations:
@@ -277,8 +284,8 @@ the whole.
 The forward models usually know which representation to use.  Just in
 case, a procedure that takes a full block as input, and produces the
 appropriate representation as output, is provided.
-\clearpage
-%
+\end{frame}
+
 \end{document}
 
 %%% Local Variables: 
@@ -287,6 +294,9 @@ appropriate representation as output, is provided.
 %%% End: 
 
 % $Log$
+% Revision 1.1  2008/06/11 20:14:53  vsnyder
+% Initial commit
+%
 % Revision 1.1  2008/06/11 20:14:53  vsnyder
 % Initial commit
 %
