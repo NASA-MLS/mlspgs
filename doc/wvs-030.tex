@@ -10,8 +10,8 @@
 \topmargin -0.5in
 \textheight 9.00in
 
-\newcommand{\docname}{\bf wvs-030r3}
-\newcommand{\docdate}{2 September 2016}
+\newcommand{\docname}{\bf wvs-030r4}
+\newcommand{\docdate}{21 May 2019}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
@@ -289,43 +289,47 @@ $\mathbf{U}^T \mathbf{M} \mathbf{X} = 0\,.
 Solving Equation (\ref{intersect}) for $\mathbf{X}$ gives
 %
 \begin{equation}\label{X}
-\mathbf{X} = ( h\, \mathbf{M} + \mathbf{I} )^{-1} \mathcal{L}(t)
+\mathbf{X} = \mathbf{Y}(h) \mathcal{L}(t) \text{ where }
+ \mathbf{Y}(h) = ( h\, \mathbf{M} + \mathbf{I} )^{-1}
 \end{equation}
 
 Inserting Equation (\ref{X}) into Equations (\ref{ellipsoid}) and
-(\ref{normal}) gives two equations for $h$ and $t$:
+(\ref{normal}) gives two equations $\{E=0,\, N=0\}$ for $h$ and $t$, where:
 %
 \begin{equation}\label{five}
 E =
-\mathcal{L}(t)^T ( h\, \mathbf{M} + \mathbf{I} )^{-T} \mathbf{M}
- ( h \mathbf{M} + \mathbf{I} )^{-1} \mathcal{L}(t) = 1
+\mathcal{L}(t)^T \mathbf{Y}(h)^T \mathbf{M}
+ \mathbf{Y}(h) \mathcal{L}(t) - 1 =
+ \mathcal{L}(t)^T \mathbf{Y}(h)^2 \mathbf{M} \mathcal{L}(t) - 1
 \end{equation}
 \vspace*{-20pt}
 \begin{equation}\label{six}
 N =
-\mathbf{U}^T \mathbf{M} ( h\, \mathbf{M} + \mathbf{I} )^{-1}
+\mathbf{U}^T \mathbf{M} \mathbf{Y}(h)
  \mathcal{L}(t) =
-\mathbf{U}^T \mathbf{M} ( h\, \mathbf{M} + \mathbf{I} )^{-1}
- ( \mathbf{C} + t\, \mathbf{U} ) = 0
+\mathbf{U}^T \mathbf{M} \mathbf{Y}(h)
+ ( \mathbf{C} + t\, \mathbf{U} ) \,,
 \end{equation}
 
-In component form, these become
+where the second form of Equation (\ref{five}) arises because
+$\mathbf{Y}(h)$ and $\mathbf{M}$ are diagonal, and can therefore be
+permuted. In component form, these become
 %
 \begin{equation}\label{ellipsoid-c}
 E =
 \frac{a^2(C_x + t\, U_x)^2}{(a^2+h)^2} +
 \frac{b^2(C_y + t\, U_y)^2}{(b^2+h)^2} +
-\frac{c^2(C_z + t\, U_z)^2}{(c^2+h)^2} = 1
+\frac{c^2(C_z + t\, U_z)^2}{(c^2+h)^2} - 1
 \end{equation}
 %
 \begin{equation}\label{normal-c}
 N =
 \frac{(C_x + t\, U_x)\, U_x}{a^2+h} +
 \frac{(C_y + t\, U_y)\, U_y}{b^2+h} +
-\frac{(C_z + t\, U_z)\, U_z}{c^2+h} = 0 \,.
+\frac{(C_z + t\, U_z)\, U_z}{c^2+h} \,.
 \end{equation}
 
-Solving Equation (\ref{six}) for $t$ gives
+Solving $N=0$ using Equation (\ref{six}) for $t$ gives
 %
 \begin{equation}
 t = -\frac{ \mathbf{U}^T \mathbf{M} ( h\, \mathbf{M} + \mathbf{I} )^{-1}
@@ -338,9 +342,39 @@ t = -\frac{ \mathbf{U}^T \mathbf{M} ( h\, \mathbf{M} + \mathbf{I} )^{-1}
             \mathbf{U} }
 \end{equation}
 
-Equation (\ref{ellipsoid-c}) quadratic in $t$ and sixth order in $h$,
+Equation (\ref{ellipsoid-c}) is quadratic in $t$ and sixth order in $h$,
 while Equation (\ref{normal-c}) is linear in $t$ and quadratic in $h$. 
 All we really need is $t$, but we can't get it without solving for $h$.
+
+Equations (\ref{five}) and (\ref{six}) can be solved using a Newton
+iteration.  Using $\frac{\partial \mathcal{L}(t)}{\partial t} =
+\mathbf{U}$ and $\frac{\partial \mathbf{Y}(h)}{\partial h} = - \mathbf{M}
+\mathbf{Y}(h)^2$, the Jacobian matrix is
+
+\begin{equation}\begin{split}
+\mathbf{J} = \left[ \begin{array}{cc}
+ \frac{\partial E}{\partial t} & \frac{\partial E}{\partial h} \\ & \\
+ \frac{\partial N}{\partial t} & \frac{\partial N}{\partial h} \\
+ \end{array} \right] =\,&
+ \left[ \begin{array}{cc}
+ \mathcal{L}(t)^T \mathbf{Y}(h)^2 \mathbf{M} \frac{\partial
+ \mathcal{L}(t)}{\partial t} &
+ \mathcal{L}(t)^T \mathbf{Y}(h) \frac{\partial Y(h)}{\partial h}
+  \mathbf{M} \mathcal{L}(t) \\
+ & \\
+ \mathbf{U}^T \mathbf{M} \mathbf{Y}\frac{\partial \mathbf{L}(t)^T}{\partial t} &
+ -2 \mathbf{U}^T \mathbf{M} \frac{\partial \mathbf{Y}(h)}{\partial h}
+  \mathcal{L}(t) \\
+  \end{array} \right] \\ \,& \\
+= \,&
+\left[ \begin{array}{cc}
+ 2 \mathcal{L}(t)^T \mathbf{Y}(h)^2 \mathbf{M} \mathbf{U} &
+ -2 \mathcal{L}(t)^T \mathbf{M}^2 \mathbf{Y}(h)^3 \mathcal{L}(t) \\ & \\
+ \mathbf{U}^T \mathbf{M} \mathbf{Y} \mathbf{U} &
+ - \mathbf{U}^T \mathbf{M}^2 \mathbf{Y}(h)^2 \mathbf{U} \\
+ \end{array} \right]
+\end{split}
+\end{equation}
 
 \section{Approximation using an ellipsoid with slightly different axes}
 
@@ -545,6 +579,9 @@ described in wvs-131 \hr{wvs-131}.
 % $Id$
 
 % $Log$
+% Revision 1.4  2016/09/02 20:41:06  vsnyder
+% Correct equation for ellipsoid in Section 2
+%
 % Revision 1.3  2016/05/19 01:15:09  vsnyder
 % Include three exact methods in addition to the approximation
 %
