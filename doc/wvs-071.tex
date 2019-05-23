@@ -1,17 +1,10 @@
-\documentclass[landscape]{slides}
-\usepackage[final]{epsfig}
-\usepackage[mathbf]{euler}
-%\usepackage{optima}
+\documentclass[landscape]{beamer}
 \usepackage[nofancy,notoday]{rcsinfo}
 %\usepackage{pstcol,pst-plot,pst-char,pst-node}
-\usepackage{pstricks}
 \usepackage{color}
 \usepackage{amsmath}
 %\usepackage{moreverb}
 %\usepackage{multicol}
-\usepackage[dvips,% pdftoolbar=false, pdfmenubar=false, 
-  pdfwindowui=false, pdffitwindow=true, pdfborder={0 0 0}]{hyperref}
-\usepackage[screen]{njlslides}
 \usepackage{graphicx}
 \usepackage{floatflt}
 %
@@ -21,36 +14,29 @@
 \newcommand{\inv}{^{\mathrm -1}}
 \newcommand{\cp}[1]{$^{\text{#1}}$}
 \newcommand{\degsym}{\ensuremath{^\circ}}
-%
-\renewcommand{\footerfont}{\tiny}
-\renewcommand{\slidetitlefont}{\Large\bfseries}
-%
-\newenvironment{smallitemize}{\par\begin{small}\begin{itemize}\vspace{2mm}}%
-   {\end{itemize}\end{small}}
-%
-\newpsobject{showgrid}{psgrid}{subgriddiv=1,griddots=10,gridlabels=6pt}
-%
-\newlength{\halfwidth}
-\setlength{\halfwidth}{4.5in}
-%
-\hypersetup{pdfborder={0 0 0}}
+\newcommand{\newframe}[2][]{\begin{frame}\frametitle{\hfill #2 \hfil}}
+
 %
 % -----------------------------------------------------------------------------
 %
 \title{Accurate and efficient computation of Mie parameters}
 \subtitle{wvs-071}
 \author{Van Snyder}
-\talkdate{22 February 2008}
-\email{van.snyder@jpl.nasa.gov}
-\logo{\begin{center}\epsfig{file=eos_mls_logo_onpink.eps,width=1.0in}\end{center}}
+\date{22 February 2008}
+\titlegraphic{\includegraphics[width=1.0in]{eos_mls_logo_onpink}}
 
 \begin{document}
 \sloppy
-\maketitle
 %
 % -----------------------------------------------------------------------------
 %
-\slidetitle[Quantities]{Quantities to be computed}
+\begin{frame}
+ \titlepage
+\end{frame}
+%
+% -----------------------------------------------------------------------------
+%
+\newframe[Quantities]{Quantities to be computed}
 The quantities to be computed are
 %
 \begin{equation}\begin{split}\label{def}
@@ -76,11 +62,11 @@ n(r) = N_1\, r \exp(-2 \alpha r) +
 $N_1$ and $\alpha$ depend upon IWC, and $N_2$, $\mu$ and $\sigma$ depend upon
 temperature and IWC, but not on $\theta$ or $r$.
 %
-\clearpage
+\end{frame}
 %
 % -----------------------------------------------------------------------------
 %
-\slidetitle[Efficiencies]{Mie efficiencies}
+\newframe[Efficiencies]{Mie efficiencies}
 The Mie efficiencies $\xi_e$ and $\xi_s$ are given by
 %
 \begin{equation}\begin{split}
@@ -104,12 +90,13 @@ wherein $\chi = \frac{2 \pi r}\lambda$, $m$ is the complex index of refraction,
 which depends upon temperature, $r$ is the particle radius, and $\lambda$ is
 the wavelength of radiation.
 %
-\clearpage
+\end{frame}
 %
 % -----------------------------------------------------------------------------
 %
-\slidetitle[Hankel]{The Bessel and Hankel functions}
+\newframe[Hankel]{The Bessel and Hankel functions}
 %
+\small
 The quantities $W_n$ and $A_n$ that appear in the definitions of $a_n$ and
 $b_n$ in Equation (\ref{anbn}) are defined by Ulaby, Moore and Fung using the
 recurrences
@@ -133,12 +120,13 @@ $j_n$ and $y_n$ are spherical Bessel functions of the first and second kind,
 respectively.  The spherical Hankel and Bessel functions are related to
 cylindrical Hankel and Bessel functions of half-integer order.
 %
-\clearpage
+\end{frame}
 %
 % -----------------------------------------------------------------------------
 %
-\slidetitle{The Bessel and Hankel functions (cont.)}
+\newframe{The Bessel and Hankel functions (cont.)}
 
+\small
 The recurrence for $W_n$ is a second-order recurrence.  As for second-order
 differential equations, it has two fundamental solutions, any linear
 combination of which is also a solution.  Even if one starts with the first
@@ -159,11 +147,11 @@ can be evaluated by a Miller algorithm, i.e., by recurring forward until
 overflow, followed by backward recurrence from arbitrary values, say zero and
 one, to the given boundary conditions, followed by normalization.
 
-\clearpage
+\end{frame}
 %
 % -----------------------------------------------------------------------------
 %
-\slidetitle[Phase]{The integrated phase function}
+\newframe[Phase]{The integrated phase function}
 %
 The quantity $p_0(\theta,r)$ that appears in Equation (\ref{def}) is defined by
 %
@@ -196,11 +184,11 @@ P(\theta) = \frac{\lambda^2}{2 \pi \beta_{c\_s}}
  \int_0^\infty n(r) \, p_0(\theta,r) \, \text{d} r\,.
 \end{equation}
 %
-\clearpage
+\end{frame}
 %
 % -----------------------------------------------------------------------------
 %
-\slidetitle[Legendre]{The associated Legendre function}
+\newframe[Legendre]{The associated Legendre function}
 %
 The function  $P_n^1$ satisfies the recurrence
 %
@@ -221,11 +209,11 @@ to the function by the relation
 which is computationally more stable than differentiating Equation
 (\ref{Legendre}).
 %
-\clearpage
+\end{frame}
 %
 % -----------------------------------------------------------------------------
 %
-\slidetitle[Quadrature]{Quadratures}
+\newframe[Quadrature]{Quadratures}
 %
 The integrals in Equation (\ref{def}) and their derivatives with respect to
 temperature and IWC are evaluated by an automatic adaptive quadrature package
@@ -244,11 +232,11 @@ $\frac{3n+1}2$, that is, it integrates polynomials up to degree $\frac{3n+1}2$
 exactly, assuming infinite-precision arithmetic.  The package {\tt DINT} uses
 formulae with up to 255 points.
 %
-\clearpage
+\end{frame}
 %
 % -----------------------------------------------------------------------------
 %
-\slidetitle{Quadratures (cont.)}
+\newframe{Quadratures (cont.)}
 
 The term ``automatic adaptive'' means that the quadrature package DINT
 automatically selects the stepsize and formula to use.
@@ -268,11 +256,11 @@ reduced.  This continues until the entire interval is covered.
 
 For multidimensional problems, one-dimensional rules are composed.
 %
-\clearpage
+\end{frame}
 %
 % -----------------------------------------------------------------------------
 %
-\slidetitle{Quadratures (cont.)}
+\newframe{Quadratures (cont.)}
 
 Before discovering the simplification of the integral in Equation (\ref{C}),
 the integrals defining $P(\theta)$ and its derivatives were evaluated as double
@@ -281,24 +269,24 @@ given in Equation (\ref{def})).  Up to six million inner integrand values were
 required for 12-digit answers.  After the simplification, the most expensive
 integrals require roughly 4000 integrand values.
 %
-\clearpage
+\end{frame}
 %
 % -----------------------------------------------------------------------------
 %
-\slidetitle[Results]{Plots of $P(\theta)$}
+\newframe[Results]{Plots of $P(\theta)$}
 %
 The figures below show polar plots of $P(\theta)$ at ten temperatures between
 $-100^\circ$C and $-15^\circ$C, ten values of IWC on a logarithmic scale from
 $10^{-5}$ to 1 gm/m$^3$, and ten frequencies within each band.
 
-{\parskip 0pt\hfill\includegraphics[scale=0.65,angle=90]{./wvs-071-plot.eps}\hfill}
+{\parskip 0pt\hfill\includegraphics[scale=0.4,angle=90]{wvs-071-plot}\hfill}
 
 %
-\clearpage
+\end{frame}
 %
 % -----------------------------------------------------------------------------
 %
-\slidetitle[Derivatives]{Derivatives}
+\newframe[Derivatives]{Derivatives}
 %
 It is straight-forward to compute derivatives of $\beta_{c\_e}$,
 $\beta_{c\_s}$, and $P(\theta)$, defined by Equation (\ref{def}), in terms of
@@ -321,11 +309,11 @@ j_n(\chi) y_{n-1}(\chi) - j_{n-1}(\chi) y_n(\chi) = \frac1{\chi^2}\,
 %
 we have \dots
 %
-\clearpage
+\end{frame}
 %
 % -----------------------------------------------------------------------------
 %
-\slidetitle{Derivatives (cont.)}
+\newframe{Derivatives (cont.)}
 %
 \begin{equation}\begin{split}
 \frac{\partial A_n}{\partial m} =\,&
@@ -347,7 +335,7 @@ we have \dots
 %
 An obvious application of the chain rule gives derivatives with respect to
 temperature.
-\clearpage
+\end{frame}
 %
 % ----------------------------------------------------------------------------
 %
@@ -359,6 +347,9 @@ temperature.
 %%% End: 
 
 % $Log$
+% Revision 1.2  2016/02/05 00:29:40  vsnyder
+% A few trivial corrections
+%
 % Revision 1.1  2008/06/11 20:14:55  vsnyder
 % Initial commit
 %
