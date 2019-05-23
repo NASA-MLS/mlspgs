@@ -1,55 +1,40 @@
-\documentclass[landscape]{slides}
-\usepackage[final]{epsfig}
-\usepackage[mathbf]{euler}
-\usepackage{optima}
+\documentclass[landscape]{beamer}
 \usepackage[nofancy,notoday]{rcsinfo}
-\usepackage{pstcol,pst-plot,pst-char,pst-node}
 \usepackage{color}
 \usepackage{amsmath}
-\usepackage{moreverb}
 \usepackage{multicol}
-\usepackage[dvips,% pdftoolbar=false, pdfmenubar=false, 
-  pdfwindowui=false, pdffitwindow=true, pdfborder={0 0 0}]{hyperref}
-\usepackage[screen]{njlslides}
 \usepackage{graphicx}
 \usepackage{floatflt}
-%
+
 \renewcommand{\b}{\mathbf}
 \newcommand{\T}{^{T}}
 \newcommand{\cs}[1]{$_{\text{#1}}$}
 \newcommand{\inv}{^{\mathrm -1}}
 \newcommand{\cp}[1]{$^{\text{#1}}$}
 \newcommand{\degsym}{\ensuremath{^\circ}}
-%
-\renewcommand{\footerfont}{\tiny}
-\renewcommand{\slidetitlefont}{\Large\bfseries}
-%
-\newenvironment{smallitemize}{\par\begin{small}\begin{itemize}\vspace{2mm}}%
-   {\end{itemize}\end{small}}
-%
-\newpsobject{showgrid}{psgrid}{subgriddiv=1,griddots=10,gridlabels=6pt}
-%
-\newlength{\halfwidth}
-\setlength{\halfwidth}{4.5in}
-%
-\hypersetup{pdfborder={0 0 0}}
+\newcommand{\newframe}[2][]{\begin{frame}\frametitle{\hfill #2 \hfil}}
+
 %
 % -----------------------------------------------------------------------------
 %
 \title{Variable projection and retrievals}
 \subtitle{wvs-072}
 \author{Van Snyder}
-\talkdate{25 February 2008}
-\email{van.snyder@jpl.nasa.gov}
-\logo{\begin{center}\epsfig{file=eos_mls_logo_onpink.eps,width=1.0in}\end{center}}
+\date{25 February 2008}
+\titlegraphic{\includegraphics[width=1.0in]{eos_mls_logo_onpink}}
 
 \begin{document}
 \sloppy
-\maketitle
 %
 % -----------------------------------------------------------------------------
 %
-\slidetitle[Summary]{Variable Projection}
+\begin{frame}
+ \titlepage
+\end{frame}
+%
+% -----------------------------------------------------------------------------
+%
+\newframe{Variable Projection}
 %
 The Variable Projection method to solve parameter estimation problems,
 described by Golub and Pereyra in {\bf SIAM J. Numer Anal 10}: 413-432 (1973),
@@ -72,11 +57,11 @@ Equivalently, in matrix form, we have
  || \mathbf{y} - \mathbf{\Phi}(\alpha)\mathbf{a} ||^2_2\,.
 \end{equation}
 %
-\clearpage
+\end{frame}
 %
 % -----------------------------------------------------------------------------
 %
-\slidetitle{Variable Projection}
+\newframe{Variable Projection}
 If we knew the nonlinear parameters $\alpha$, the linear parameters
 $\mathbf{a}$ could be obtained by solving the linear least-squares problem
 (\ref{ref}) for $\mathbf{a}$, giving
@@ -105,12 +90,13 @@ It has been proven theoretically that this substitution results in a
 better-characterized minimum of the LS functional in Equation (\ref{matrix}),
 and faster convergence to solutions for the nonlinear parameters.
 %
-\clearpage
+\end{frame}
 %
 % -----------------------------------------------------------------------------
 %
-\slidetitle[MLS]{Application to MLS retrieval}
-%
+\newframe{Application to MLS retrieval}
+
+\small
 The radiative transfer equation as posed in MLS is
 %
 \begin{equation}\label{RT}
@@ -135,11 +121,11 @@ ratios, since their statistics now follow a log-normal distribution.
 Furthermore, the two solutions for temperature follow different statistics, and
 so might differ.
 %
-\clearpage
+\end{frame}
 %
 % -----------------------------------------------------------------------------
 %
-\slidetitle{Application to MLS retrieval (Cont.)}
+\newframe{Application to MLS retrieval (Cont.)}
 %
 Since temperature appears in both $\Delta B_i$ and $\mathcal{T}_i$, it would be
 necessary to alternate between the two solutions.  This is the method first
@@ -155,7 +141,7 @@ results in faster (and better) convergence than the present method.
 In any case, the best we can hope for using this method is a small factor of
 improvement in run time, say 3-6, not the 1000 or so needed for SMLS.
 %
-\clearpage
+\end{frame}
 %
 % ----------------------------------------------------------------------------
 %
