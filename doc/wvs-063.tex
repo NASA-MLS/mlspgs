@@ -1,16 +1,9 @@
-\documentclass[landscape]{slides}
-\usepackage[final]{epsfig}
-\usepackage[mathbf]{euler}
-\usepackage{optima}
+\documentclass[landscape]{beamer}
 \usepackage[nofancy,notoday]{rcsinfo}
-\usepackage{pstcol,pst-plot,pst-char,pst-node}
 \usepackage{color}
 \usepackage{amsmath}
 \usepackage{moreverb}
 \usepackage{multicol}
-\usepackage[dvips,% pdftoolbar=false, pdfmenubar=false, 
-  pdfwindowui=false, pdffitwindow=true, pdfborder={0 0 0}]{hyperref}
-\usepackage[screen]{njlslides}
 \usepackage{graphicx}
 \usepackage{floatflt}
 %
@@ -20,36 +13,30 @@
 \newcommand{\inv}{^{\mathrm -1}}
 \newcommand{\cp}[1]{$^{\text{#1}}$}
 \newcommand{\degsym}{\ensuremath{^\circ}}
-%
-\renewcommand{\footerfont}{\tiny}
-\renewcommand{\slidetitlefont}{\Large\bfseries}
-%
-\newenvironment{smallitemize}{\par\begin{small}\begin{itemize}\vspace{2mm}}%
-   {\end{itemize}\end{small}}
-%
-\newpsobject{showgrid}{psgrid}{subgriddiv=1,griddots=10,gridlabels=6pt}
-%
-\newlength{\halfwidth}
-\setlength{\halfwidth}{4.5in}
-%
-\hypersetup{pdfborder={0 0 0}}
+\newcommand{\newframe}[2][]{\begin{frame}\frametitle{\hfill #2 \hfil}}
+
+\parskip 2pt
 %
 % -----------------------------------------------------------------------------
 %
 \title{Summary of Full Forward Model}
-\subtitle{wvs-063r1}
+\subtitle{wvs-063r2}
 \author{Van Snyder}
-\talkdate{4 December 2007}
-\email{van.snyder@jpl.nasa.gov}
-\logo{\begin{center}\epsfig{file=eos_mls_logo_onpink.eps,width=1.0in}\end{center}}
+\date{4 December 2007}
+\titlegraphic{\includegraphics[width=1.0in]{eos_mls_logo_onpink}}
 
 \begin{document}
 \sloppy
-\maketitle
 %
 % -----------------------------------------------------------------------------
 %
-\slidetitle[Loop]{Overview of {\tt mlsl2} program loop structure}
+\begin{frame}
+ \titlepage
+\end{frame}
+%
+% -----------------------------------------------------------------------------
+%
+\newframe{Overview of {\tt mlsl2} program loop structure}
 The {\tt mlsl2} program has nine levels of loops:
 \begin{itemize}
 \item The Chunk loop -- this is in the tree walker
@@ -70,20 +57,20 @@ The remaining four levels of loops are in the forward models:
 
 This presentation is limited to the full forward model.  See JPL D-18130.
 
-\clearpage
+\end{frame}
 %
 % -----------------------------------------------------------------------------
 %
-\slidetitle{Overview of {\tt mlsl2} program loop structure}
+\newframe{Overview of {\tt mlsl2} program loop structure}
 
-{\hfill \includegraphics[scale=0.85,angle=270]{./wvs-063-diag.eps}
+{\hfill \includegraphics[scale=0.45,angle=270]{wvs-063-diag}
 \hfill}
 
-\clearpage
+\end{frame}
 %
 % -----------------------------------------------------------------------------
 %
-\slidetitle[Data]{Data structures --- overview and arrays}
+\newframe{Data structures --- overview and arrays}
 
 Most of the data structures in the full forward model are arrays.  In addition,
 the {\tt Vector\_T}, {\tt VectorValue\_T}, {\tt ForwardModelConfig\_T} and {\tt
@@ -105,44 +92,29 @@ $\zeta$ values specified in the configuration (and a few others that metrics
 calculations might add), and a ``fine'' grid consisting of Gauss-Legendre (GL)
 points inserted to allow higher-accuracy line-of-sight integration.
 
-\clearpage
+\end{frame}
 %
 % -----------------------------------------------------------------------------
 %
-\slidetitle{Data structures --- more arrays}
+\newframe{Data structures --- more arrays}
 
-Path $\times$ species arrays represent derivatives.  A few of these use a
-column-sparse representation, which requires two additional integer arrays. 
-The first of these is a number-of-nonzeros array, which is a rank-one array of
-the same size as the number of columns of the data array.  The second is an
-integer array of the same shape as the data array.  Each column of this array,
-from the first row to the number of rows indicated by the element of the
-number-of-nonzeros array for the column, represents the row subscripts for
-nonzero elements of the corresponding column of the data array.
+Derivatives are Path $\times$ species quantities.  Some of these use the
+same representation as used for interpolation coefficients, which are
+sparse because we use bilinear interpolation.  Interpolation coefficients
+are used for the chain rule.
 
-The data array and the number-of-zeros array are initially filled with zeros. 
-When the data array is to be evaluated, the nonzero elements, as indicated by
-the two integer arrays, are replaced with zeros.  Then nonzero elements are
-computed and their positions recorded.  This is done because these arrays are
-extremely sparse, and just filling them with zeros was taking 15\% of our run
-time!
+Derivatives and related quantities were originally represented by Path
+$\times$ species arrays.  Just filling them with zeros was taking 15\% of
+our run time!
 
-\clearpage
+The sparse representation for interpolation coefficients is described in
+wvs-151.
+
+\end{frame}
 %
 % -----------------------------------------------------------------------------
 %
-\slidetitle{Data structures --- more arrays}
-
-{\hfill\Large\bfseries Column-sparse arrays\hfill}
-
-{\hfill \includegraphics[angle=270]{./wvs-063-zero.eps}
-\hfill}
-
-\clearpage
-%
-% -----------------------------------------------------------------------------
-%
-\slidetitle{Data structures --- Configuration and {\tt Grids\_T}}
+\newframe{Data structures --- Configuration and {\tt Grids\_T}}
 
 The {\tt ForwardModelConfig\_T} structure specifies for which species and
 signals the forward model is to be evaluated, whether line-by-line (LBL) or
@@ -158,26 +130,26 @@ and values on grids for one or more species from the state or extra vectors.
 The coordinate grids, and indeed whether a dimension is present, can be
 different for each species, so this is a complicated structure.
 
-\clearpage
+\end{frame}
 %
 % -----------------------------------------------------------------------------
 %
-\slidetitle{Data structures --- {\tt Grids\_T}}
+\newframe{Data structures --- {\tt Grids\_T}}
 
-{\hfill\bfseries\Large Same structure for $f$, $\phi$, $\zeta$ grids, and data
-values\hfill}
-
-{\hfill \includegraphics[width=4.3in,height=6.3in,angle=270]{./wvs-063-grids_t.eps}
-\hfill}
+\begin{centering}
+\bfseries\large Same structure for $f$, $\phi$, $\zeta$ grids, and data
+values\\
+\includegraphics[width=2.15in,height=3.15in,angle=270]{wvs-063-grids_t}\\
+\end{centering}
 
 2-d or 3-d arrays of data values are stored in column-major order in a 1-d
 array.  Explicit multidimensional subscript calculations are necessary.
 
-\clearpage
+\end{frame}
 %
 % -----------------------------------------------------------------------------
 %
-\slidetitle[Full]{Overview of {\tt FullForwardModel\_m}}
+\newframe{Overview of {\tt FullForwardModel\_m}}
 The {\tt FullForwardModel\_m} module has two module procedures,
 a public one and a private one.
 
@@ -193,11 +165,11 @@ avoids explicit allocation.  This makes the code somewhat smaller, makes it
 impossible to forget deallocation, and might be more efficient than explicit
 allocation for some compilers.
 
-\clearpage
+\end{frame}
 %
 % -----------------------------------------------------------------------------
 %
-\slidetitle[Auto]{{\tt FullForwardModelAuto}}
+\newframe{{\tt FullForwardModelAuto}}
 
 {\tt FullForwardModelAuto} does some initialization, then the sideband loop,
 then some cleaning up.
@@ -216,11 +188,11 @@ $\zeta$ grid.
 Cleaning up consists of some debug printing and deallocating the few arrays that
 are explicitly allocated.
 
-\clearpage
+\end{frame}
 %
 % -----------------------------------------------------------------------------
 %
-\slidetitle[Sideband]{Sideband loop}
+\newframe{Sideband loop}
 
 The sideband loop uses {\tt AllocateSlabs} to allocate data structures --
 mostly spectroscopy catalog extracts -- used for single-line absorption (SLAbs)
@@ -239,11 +211,11 @@ metrics calculations might add some $\zeta$'s.
 After the pointing loop, the sideband loop calls the internal subroutine {\tt
 Convolution}, which either does antenna convolution, or interpolates to PTan.
 
-\clearpage
+\end{frame}
 %
 % -----------------------------------------------------------------------------
 %
-\slidetitle[Pointing]{Pointing loop}
+\newframe{Pointing loop (1)}
 
 The body of the pointing loop is the {\tt One\_Pointing} internal subroutine.
 It does
@@ -256,21 +228,36 @@ It does
 \item SLAbs preparation
 \item Calls the internal subroutine {\tt Frequency\_Setup\_2} to get the
 frequencies needed for the current pointing
+\end{enumerate}
+\dots
+\end{frame}
+%
+% -----------------------------------------------------------------------------
+%
+\newframe{Pointing loop (2)}
+
+\dots
+\begin{enumerate}
+\setcounter{enumi}{7}
+\item Interpolates mixing ratios from {\tt Grids\_T} to the line-of-sight path
+giving $f^k_i$, for species that do not depend upon frequency.
 \item Calls the internal subroutine {\tt Frequency\_Loop}, separately for LBL
 and PFA, to do the radiative transfer
+\item Combines LBL and PFA results
 \item Either does frequency averaging using the filter shapes, or just stores
 the result of monochromatic or pure PFA (no LBL molecules) calculations.
 \end{enumerate}
 
-\clearpage
+\end{frame}
 %
 % -----------------------------------------------------------------------------
 %
-\slidetitle{Metrics}
+\newframe{Metrics}
 
+\small
 Metrics calculations are done in several steps
 \begin{enumerate}
-
+\itemsep -0.5pt
 \item The subroutine {\tt Tangent\_Metrics} calculates the equivalent earth
 radius at the tangent point, the height of the first $\zeta$ (usually 1000 mb)
 reference surface, the height of the tangent point, and the subset of
@@ -298,14 +285,14 @@ points.
 
 \end{enumerate}
 
-\clearpage
+\end{frame}
 %
 % -----------------------------------------------------------------------------
 %
-\slidetitle{Metrics --- {\tt Height\_Metrics}}
+\newframe{Metrics --- {\tt Height\_Metrics}}
 
 \begin{multicols}{2}
-
+\small
 This is the problem solved by {\tt Height\_Metrics}.
 
 Green lines are the heights of surfaces of constant $\zeta$, represented as
@@ -316,18 +303,18 @@ Red lines are the line of sight -- supposed to be the secant curve $H = H_t \sec
 \phi$.
 
 {\tt Height\_Metrics} solves for the intersections of the red and green
-lines.\\[1pt]
+lines (see wvs-048).\\[1pt]
 
 \vspace*{-0.2in}
-{\includegraphics[width=4in,height=5in]{./wvs-048-grid2.eps}}\\
+{\includegraphics[width=2.25in,height=2.8125in]{wvs-048-grid2}}\\
 
 \end{multicols}
 
-\clearpage
+\end{frame}
 %
 % -----------------------------------------------------------------------------
 %
-\slidetitle{SLAbs preparation}
+\newframe{SLAbs preparation}
 
 SLAbs (Single Line Absorption) preparation consists of filling the structures
 allocated by {\tt AllocateSlabs} with values that depend upon the spectroscopic
@@ -349,20 +336,21 @@ $\frac{\text{d}{\text{\tt Slabs1}}}{\text{d}T}$ if temperature derivatives are
 requested.
 \end{itemize}
 
-\clearpage
+\end{frame}
 %
 % -----------------------------------------------------------------------------
 %
-\slidetitle[Frequency]{Frequency loop --- overview}
+\newframe{Frequency loop --- overview}
 
 The frequency loop does the radiative transfer for each requested frequency. 
 Frequencies are either from the pointing frequency grid (for the LBL
 frequency-averaging case), or the channel centers (for monochromatic or PFA
 calculations). The steps for each frequency are
-
+\small
 \begin{enumerate}
+\itemsep 0pt
 \item Interpolate mixing ratios from {\tt Grids\_T} to the line-of-sight path
-giving $f^k_i$.
+giving $f^k_i$, for species (extinction) that depend upon frequency.
 \item Evaluate $\beta^k_i$ and $\alpha_i$ for each species $k$ and each point
 $i$ on the coarse path, and $\Delta\delta_{i \rightarrow i-1}$ for each layer
 using a rectangular quadrature formula.
@@ -373,7 +361,8 @@ trapezoidal estimate.
 \item Evaluate $\beta^k_i$ and $\alpha_i$ for GL, and $\Delta\delta_{i \rightarrow i-1}$
 using GL, where necessary.
 \item Compute $\tau_i = \exp\left(-\sum_{j=2}^i \Delta\delta_{j \rightarrow
-j-1}\right)$.
+j-1}\right) \approx \exp \left( -\int_{\zeta_1}^{\zeta_i} \alpha(\zeta) \,
+\text{d} \zeta \right)$.
 \item Compute radiance $I = \sum_{i \in \text{layers}} \Delta B_i \tau_i$,
 where $B_i = \frac{h \nu}{k \left(\exp\left(\frac{h \nu}{k
 T_i}\right)-1\right)}$ is the Planck function.
@@ -381,11 +370,11 @@ T_i}\right)-1\right)}$ is the Planck function.
 I}{\partial f^k_i}$ ($f^k_i$ is mixing ratio for $k^\text{th}$ species).
 \end{enumerate}
 
-\clearpage
+\end{frame}
 %
 % -----------------------------------------------------------------------------
 %
-\slidetitle{Frequency loop --- $\beta$ and $\alpha$}
+\newframe{Frequency loop --- $\beta$ and $\alpha$}
 
 For each frequency and species, $\beta^k_i$ is computed using a method that
 depends upon whether the calculation is LBL or PFA, scalar or polarized, or
@@ -404,12 +393,13 @@ the line of sight.  For GL calculations, $\alpha_{ij} = \sum_{k \in
 \text{species}} f^k_{ij} \beta^k_{ij}$, where $j$ indexes the GL point in the
 $i^{\text{th}}$ layer.
 
-\clearpage
+\end{frame}
 %
 % -----------------------------------------------------------------------------
 %
-\slidetitle{Frequency loop --- $\Delta\delta_{i \rightarrow i-1}$ and $\tau_i$}
+\newframe{Frequency loop --- $\Delta\delta_{i \rightarrow i-1}$ and $\tau_i$}
 
+\small
 The incremental optical depth $\Delta\delta_{i \rightarrow i-1} =
 \int_{s_i}^{s_{i-1}} \alpha_i \text{d} s$.  The contribution from the $k^\text{th}$ species
 is $\Delta\delta^k_{i \rightarrow i-1} =
@@ -445,15 +435,16 @@ for $\zeta = \zeta_i$, which cancels the singularity in
 $\frac{\text{d}s}{\text{d}h}$ at the tangent point if $\zeta_i = \zeta_t$.
 
 $\tau_i = \exp \left( - \sum_{j=2}^i \Delta\delta_{i \rightarrow i-1}
-\right)$.  The running sum is only taken until it exceeds $\ln \Omega$, where
-$\Omega$ is the largest floating-point number, after which $\exp$ underflows,
-so $\tau_i = 0$ thereafter.
+\right)$.  The running sum of $\Delta \delta_{i \rightarrow i-1}$ is only
+taken until it exceeds $\ln \Omega$, where $\Omega$ is the largest
+floating-point number, after which $\exp$ underflows, so $\tau_i = 0$
+thereafter.
 
-\clearpage
+\end{frame}
 %
 % -----------------------------------------------------------------------------
 %
-\slidetitle[Derivatives]{Frequency loop --- Derivatives}
+\newframe{Frequency loop --- Derivatives}
 
 $\frac{\partial I}{\partial f^k_i}$ is computed by {\tt DRad\_Tran\_df} from
 the {\tt Rad\_Tran} module.  This is a fairly straight-forward computation. 
@@ -471,11 +462,11 @@ complicated by the need to take the derivatives of hydrostatic equilibrium
 w.r.t.\ temperature.  At the end the individual integrals are added up using
 {\tt Dscrt\_dT}.  $\frac{\partial \Delta B_i}{\partial T_i}$ is not zero.
 
-\clearpage
+\end{frame}
 %
 % -----------------------------------------------------------------------------
 %
-\slidetitle[Average]{Pointing loop --- Frequency averaging}
+\newframe{Pointing loop --- Frequency averaging}
 
 If a configuration requests frequency averaging, has both LBL and PFA $\beta$'s,
 and requests derivatives, some preliminary work on frequency averaging is done
@@ -492,11 +483,11 @@ module to combine $\tau_i$ for LBL and PFA molecules.
 subroutines {\tt Freq\_Avg} and {\tt Freq\_Avg\_DACS} from the {\tt
 Freq\_Avg\_m} module.
 
-\clearpage
+\end{frame}
 %
 % -----------------------------------------------------------------------------
 %
-\slidetitle{Pointing loop --- Frequency averaging (cont.)}
+\newframe{Pointing loop --- Frequency averaging (cont.)}
 
 The subroutine {\tt Freq\_Avg} first uses {\tt Freq\_Avg\_Setup} to find the
 position in the frequency grid of the minimum and maximum frequency in the
@@ -510,11 +501,11 @@ The subroutine {\tt Freq\_Avg\_DACS} uses the Math77 subroutine {\tt DTCST} to
 convolve DACS radiances or derivatives with the filter, using a cosine-sine
 transform.
 
-\clearpage
+\end{frame}
 %
 % -----------------------------------------------------------------------------
 %
-\slidetitle[PFA]{Pointing loop --- PFA}
+\newframe{Pointing loop --- PFA}
 
 The frequency loop is run separately, first for LBL species (if any) and then
 for PFA species (if any). If there are any PFA species, the radiances from LBL
@@ -525,18 +516,18 @@ spectroscopic modeling.
 
 $\tau_i$ for PFA is multiplied by the frequency-averaged radiance from the LBL
 calculation, and the product summed to give combined LBL and PFA radiance for
-the channel.
+the channel.  See wvs-028 and its references.
 
 Temperature derivatives are computed as if they were mixing-ratio derivatives,
 to avoid including the Planck function twice.
 
 LBL and PFA derivatives are simply added during the frequency-averaging step.
 
-\clearpage
+\end{frame}
 %
 % -----------------------------------------------------------------------------
 %
-\slidetitle[Convolution]{Sideband loop --- Antenna convolution}
+\newframe{Sideband loop --- Antenna convolution}
 
 The internal subroutine {\tt Convolution} either convolves the radiances and
 derivatives from all the pointings with the antenna pattern, or just
@@ -552,12 +543,13 @@ Then it uses {\tt FOV\_Convolve\_Setup} from the
 {\tt FOV\_Convolve\_m} module to fill the {\tt Convolve\_Support} structure with
 data that depend only on pointing angles.
 
-\clearpage
+\end{frame}
 %
 % -----------------------------------------------------------------------------
 %
-\slidetitle{Sideband loop --- Antenna convolution (cont.)}
+\newframe{Sideband loop --- Antenna convolution (cont.)}
 
+\small
 Using the {\tt Convolve\_Support} structure, the radiances are convolved using
 the following subroutines from the {\tt Convolve\_All\_m} module:
 \begin{itemize}
@@ -580,11 +572,11 @@ The subroutines in the module {\tt FOV\_Convolve\_m} use the Math77 subroutines
 {\tt DTCST} to compute a cosine transform, and {\tt DRFT1} to compute a full
 FFT.
 
-\clearpage
+\end{frame}
 %
 % -----------------------------------------------------------------------------
 %
-\slidetitle{Sideband loop --- No antenna convolution}
+\newframe{Sideband loop --- No antenna convolution}
 
 If antenna convolution is not requested, the subroutine {\tt
 Inter\-po\-late\_\-Array\_Setup} from the module {\tt MLSNumerics} is used. 
@@ -597,11 +589,11 @@ derivatives
 spectroscopy-parameter derivatives
 \end{itemize}
 
-\clearpage
+\end{frame}
 %
 % -----------------------------------------------------------------------------
 %
-\slidetitle[Clean up]{Sideband loop --- Cleaning up}
+\newframe{Sideband loop --- Cleaning up}
 
 After antenna convolution or interpolation to PTan, the subroutines {\tt
 ScanAverage\_1d} and {\tt ScanAverage\_2d} from the module {\tt ScanAverage\_m}
@@ -616,12 +608,13 @@ MIF\_Times} grid using an eighth-order Gauss-Legendre quadrature.
 Finally, some arrays explicitly allocated in {\tt FullForwardModelAuto} are
 deallocated, and some debug printing is done if requested.
 
-\clearpage
+\end{frame}
 %
 % -----------------------------------------------------------------------------
 %
-\slidetitle[References]{References}
+\newframe{References (1)}
 
+\small
 The primary reference is the Full Forward Model ATBD, JPL D-18130.
 
 Many of the modules have embedded \LaTeX-isms, and can be turned into \LaTeX\
@@ -640,6 +633,14 @@ Several of my memos (in $\sim${\tt vsnyder/mls/doc/}) might be helpful:
 \item wvs-026: Simplifying assumption to combine line-by-line and PFA
 \item wvs-027: Revised method to combine line-by-line and PFA
 \item wvs-028: Summary of line-by-line and PFA radiance and derivatives
+\end{itemize}
+\end{frame}
+%
+% -----------------------------------------------------------------------------
+%
+\newframe{References (2)}
+
+\begin{itemize}
 \item wvs-029: Refractive correction for $\phi$
 \item wvs-033: Path integrations [a proposal, not a description]
 \item wvs-037: Updated non-GL correction in forward model
@@ -655,11 +656,21 @@ $\zeta_{\text{min}}$]
 \item wvs-047: Revised metrics plan
 \item wvs-048: Different solution for $\phi$--$H$ calculation in {\tt metrics\_m}
 \item wvs-053: Alternative minimum $\zeta$ calculation
+\end{itemize}
+\end{frame}
+%
+% -----------------------------------------------------------------------------
+%
+\newframe{References (3)}
+
+\begin{itemize}
 \item wvs-056: Refractive correction
 \item wvs-059: Another look at metrics [turned out to be a bad idea]
 \item wvs-060: Trouble with GL correction in the forward model
 \item wvs-061: Trouble with path length in the forward model
 \end{itemize}
+
+\end{frame}
 %
 % ----------------------------------------------------------------------------
 %
@@ -671,6 +682,9 @@ $\zeta_{\text{min}}$]
 %%% End: 
 
 % $Log$
+% Revision 1.1  2008/06/11 20:14:54  vsnyder
+% Initial commit
+%
 % Revision 1.1  2008/06/11 20:14:54  vsnyder
 % Initial commit
 %
