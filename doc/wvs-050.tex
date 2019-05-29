@@ -20,9 +20,9 @@
 % -----------------------------------------------------------------------------
 %
 \title{Summary of Retriever}
-\subtitle{wvs-050}
+\subtitle{wvs-050r1}
 \author{Van Snyder}
-\date{11 July 2008} 
+\date{28 May 2019} 
 \titlegraphic{\includegraphics[width=1.0in]{eos_mls_logo_onpink}}
 \begin{document}
 \sloppy
@@ -104,11 +104,11 @@ one needs to add extra constraints to make a solution tractable.
 \newframe{Least-squares view of problem (2)}
 In broad outline, the least-squares problem to be solved in each Newton
 iteration consists of four parts:
-\begin{equation}
+\begin{equation}\label{four}
  \begin{split}
    \b{J} \delta \b{x}         &\simeq - \b{f} \\
-   \b{F} \b{x_{n+1}}          &\simeq \b{F a} \\
-   \b{R} \b{x_{n+1}}          &\simeq 0 \\
+   \b{F} \b{x}_{n+1}          &\simeq \b{F\, a} \\
+   \b{R} \b{x}_{n+1}          &\simeq 0 \\
    \lambda \b{I} \delta \b{x} &\simeq 0
   \end{split}
 \end{equation}
@@ -121,17 +121,55 @@ iteration consists of four parts:
   a scale given by $\lambda^{-1}$'' (this is known as
   \emph{Levenberg-Marquardt stabilization}).
 \end{itemize}
+\end{frame}
+%
+% ----------------------------------------------------------------------------
+%
+\newframe{Least-squares view of problem (3)}
+
+Equations (\ref{four}) are not all equations to solve for
+$\delta\b{x}$.  Re-writing the second and third relations, we have
+
+\begin{equation*}
+ \begin{split}
+   \b{J}\, \delta \b{x}                  &\simeq - \b{f} \\
+   \b{F}\, \b{x}_{n+1} - \b{F}\, \b{x}_n &\simeq \b{F\, a} - \b{F}\, \b{x}_n \\
+   \b{R}\, \b{x}_{n+1} - \b{R}\, \b{x}_n &\simeq - \b{R}\, \b{x}_n \\
+   \lambda \b{I}\, \delta\, \b{x}        &\simeq 0
+  \end{split}
+\end{equation*}
+
+or
+
+\begin{equation*}
+\left[ \begin{array}{l}
+  \b{J} \\
+  \b{F} \\
+  \b{R} \\
+  \lambda \b{I}\\
+\end{array} \right] \delta \b{x}
+\simeq
+\left[
+\begin{array}{l}
+  - \b{f} \\
+  \b{F}\, ( \b{a} - \b{x}_n) \\
+  - \b{R}\, \b{x}_n \\
+  0\\
+\end{array} \right]
+\end{equation*}
 
 Putting these all together, weighting them, scaling, ... we have ...
 \end{frame}
 %
 % ----------------------------------------------------------------------------
 %
-\newframe{Least-squares view of problem (3)}
+\newframe{Least-squares view of problem (4)}
+
 The Newton iteration consists of evaluating $\b{K}$ and $\b{f}$ at
-$\b{x}_n$, solving $\b{K}\delta\b{x}=-\b{f}$ to get $\b{x}_{n+1}$, and
-repeating until $|\b{f}|$ or $|\delta\b{x}|$ is ``small enough''.  In
-detail:
+$\b{x}_n$, solving $\b{\tilde K}\delta\b{ \tilde x} \simeq -\b{f}$ to get
+$\b{x}_{n+1}$, and repeating until $|\b{f}|$ or $|\delta\b{x}|$ is ``small
+enough''.  In detail:
+
 \begin{equation*}
 \b{\tilde K} \delta \b{\tilde x} = \b{K} \b{C} \; \b{C}^{-1} \delta\b{x} =
  \left [ \begin{array}{c} \text{...} \\
@@ -143,18 +181,22 @@ detail:
  \end{array} \right ]
  \b{C} \; \b{C}^{-1} \delta\b{x} \simeq
  \left [ \begin{array}{c} \text{...} \\
-                          \b{W}_i ( \b{y}_i - \b{\hat y}_i ) \\
+                          \b{W}_i \, ( \b{y}_i - \b{\hat y}_i ) \\
                           \text{...} \\
-                          \mu_a \b{F} ( \b{a} - \b{x}_n ) \\
-                          -\mu_R \b{R}\b{x}_n \\
+                          \mu_a \b{F}\, ( \b{a} - \b{x}_n ) \\
+                          -\mu_R \b{R} \, \b{x}_n \\
                           \b{0}
  \end{array} \right ] = -\b{f}
 \end{equation*}
+
+where $\b{\tilde K} = \b{K\,C}$ and $\delta \b{\tilde x} = \b{C}^{-1}
+\delta \b{x}$.
+
 \end{frame}
 %
 % ----------------------------------------------------------------------------
 %
-\newframe{Least-squares view of problem (4)}
+\newframe{Least-squares view of problem (5)}
 After multiplying by $\b{\tilde K}^T$ to form normal equations, this becomes:
 \begin{equation*}
 \begin{split}
@@ -175,6 +217,13 @@ After multiplying by $\b{\tilde K}^T$ to form normal equations, this becomes:
 where $\b{C}$ is chosen either to minimize the condition number of
 $\b{\tilde K}^T \b{\tilde K}$ or to make the expected errors in
 $\delta\b{x}$ roughly the same.
+
+Finally
+
+\begin{equation*}
+\delta \b{x} = \b{C} \, \delta \b{\tilde x} \,.
+\end{equation*}
+
 \end{frame}
 %
 % ----------------------------------------------------------------------------
@@ -184,7 +233,8 @@ The retriever uses Cholesky factorization to solve the least-squares problem.
 It has the advantages that it is guaranteed to produce an answer if the normal
 equations are non-singular, it doesn't need pivoting to maintain stability, and
 it is easy to take advantage of our sparsity pattern.  It has the disadvantage
-of needing to form the normal equations.
+of needing to form the normal equations, which squares the condition
+number.
 %
 Alternatives are
 \begin{itemize}
@@ -224,9 +274,9 @@ Alternatives are
   is, $\b{N}_{ij} = \Sigma_{k=1}^m \b{\tilde K}_{ik} \b{\tilde K}_{jk}$
 
 \item Accumulating normal equations little-by-little amounts to nothing
-  more than running the summation from $1$ to $m_1$ for all $i$ and $j$,
-  then from $m_1+1$ to $m_2$ for all $i$ and $j$, etc., i.e.\ changing the
-  order of addition.
+  more than running the summation for $k$ from $1$ to $m_1$ for all $i$
+  and $j$, then from $m_1+1$ to $m_2$ for all $i$ and $j$, etc., i.e.\
+  changing the order of addition.
 
 \item A similar perspective applies in forming the right-hand-side vector
   $-\b{\tilde K}^T \b{f}$ little-by-little.
@@ -294,6 +344,9 @@ appropriate representation as output, is provided.
 %%% End: 
 
 % $Log$
+% Revision 1.2  2019/05/22 20:40:03  vsnyder
+% Convert from slides class to beamer class
+%
 % Revision 1.1  2008/06/11 20:14:53  vsnyder
 % Initial commit
 %
