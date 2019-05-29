@@ -1,0 +1,283 @@
+\documentclass[11pt]{article}
+\usepackage{alltt}
+\usepackage[fleqn]{amsmath}
+\usepackage{floatflt}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage[strings]{underscore}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9in
+
+\newcommand{\docname}{wvs-152}
+\newcommand{\docdate}{30 April 2019}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+   
+\usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
+
+\renewcommand\d{\text{d}}
+\newcommand\T{\mathcal{T}}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\bf\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\bf\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>MLS group\\
+Subject: \>Solving for Transmissivity\\
+From: \>Van Snyder\\
+Reference: \h{wvs-051}, \h{wvs-069}, \h{wvs-073}\\
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+
+Let the path of radiative transfer be divided into segments $[s_0,s_1],
+\dots, [s_{i-1},s_i], \dots, [s_{n-1},s_n]$ where $s_0$ is the starting
+point (usually space), and $s_n$ is the position of the observer.
+
+The solution of the non-scattering radiative transfer equation,
+
+\begin{equation}\label{one}
+\frac{\d I(\nu,s)}{\d s} + \alpha(\nu,s)\, I(\nu,s) = \alpha(\nu,s) B(\nu,s)
+\end{equation}
+
+integrated on $[s_0,s_n]$, can be written
+
+\begin{equation}\label{two}
+I(\nu,s_n) = I(\nu,s_0)\, \T(\nu,s_0,s_n) +
+             \int_{s_0}^{s_n} B(\nu,\sigma)\,\alpha(\nu,\sigma)\,
+                                 \T(\nu,s_0,\sigma)\, \d \sigma
+\end{equation}
+
+where $I(s_0)$ is assumed to be indendependent of frequency (about 2.3
+Kelvin), $B(\nu,\sigma)$ is the Planck radiation function (which depends
+also upon temperature), $\alpha(\nu,\sigma)$ is the absortion cross
+section (which depends also upon temperature), and
+
+\begin{equation}\label{three}
+\T(\nu,a,b) = \exp \left( - \int_a^b \alpha(\nu,s^\prime) \,\d s^\prime
+                 \right) \,.
+\end{equation}
+ 
+The channel-averaged solution, the observed radiance, can be written
+
+\begin{equation}
+I_c(s_n) = \sum_{j \in c} c_j \left[ I(s_0)\, \T(\nu_j,s_0,s_n) +
+           \int_{s_0}^{s_n} B(\nu_j,\sigma)\, \alpha(\nu_j,\sigma)\,
+            \T(\nu_j,s_0,\sigma)\, \d \sigma \right]
+\end{equation}
+
+or
+
+\begin{equation}\begin{split}\label{five}
+I_c(s_n) =\,& \sum_j c_j \left[ \sum_{i=1}^n \left( I(s_0)\, 
+                       \T(\nu_j,s_{i-1},s_i) +
+                       \int_{s_{i-1}}^{s_i} B(\nu_j,\sigma)\,
+                            \alpha(\nu_j,\sigma)\, \T(\sigma)\,
+                            \d \sigma \right) \right] \\
+       \approx\,& \sum_j c_j \left[
+        \sum_{i=1}^n \left( I(s_0)\,  \T(\nu_j,s_{i-1},s_i) +
+         \delta s_i \sum_k \omega_k B(\nu_j,s_k)\, \alpha(\nu_j,s_k)\,
+          \T(\nu_j,s_0,s_k) \right) \right] \\
+\end{split}\end{equation}
+
+where $c_j$ is channel response at frequency $\nu_j$, $s_{i-1} \leq s_k
+\leq s_i$, $\delta s_i = s_i - s_{i-1}$, and $\omega_k$ is a weight for a
+quadrature formula.  We also assume $\sum_j c_j = 1$.
+
+In the second term in Equation(\ref{five}),
+
+\begin{equation}
+\T(\nu_j,s_0,s_k) = \sum_{\ell=1}^{i-1} \T(\nu_j,s_{\ell-1},s_\ell) +
+ \T(\nu_j,s_{i-1},s_k) \,.
+\end{equation}
+
+If trapezoidal quadrature is used, Equation(\ref{five}) becomes
+
+\begin{equation}
+I_c(s_n) = \sum_j c_j \left[
+ \sum_{i=1}^n \left( I(s_0)\,  \T(\nu_j,s_{i-1},s_i) + I_{ij} \right) \right]
+\end{equation}
+
+where
+
+\begin{equation}\begin{split}\label{eight}
+I_{ij} = \,& \int_{s_{i-1}}^{s_i} B(\nu_j,\sigma)\, \alpha(\nu_j,\sigma)\,
+ \T(\nu_j,s_0,\sigma) \, \d \sigma \\
+ \approx \,&
+         \frac12\, \delta s_i
+          \left[ B(\nu_j,s_{i-1})\, \alpha(\nu_j,s_{i-1}) \T(\nu_j,s_0,s_{i-1}) +
+                 B(\nu_j,s_i)\, \alpha(\nu_j,s_i) \T(\nu_j,s_0,s_i) \right] \\
+ = \,& \frac12\, \delta s_i
+        \left[ \T(\nu_j,s_0,s_{i-1})
+        \left( B(\nu_j,s_{i-1})\, \alpha(\nu_j,s_{i-1}) + 
+         B(\nu_j,s_i)\, \alpha(\nu_j,s_i) \right) + \right. \\
+   \,& \hspace*{0.25in}\,\,\, \left. B(\nu_j,s_i)\, \alpha(\nu_j,s_i) \T(\nu_j,s_{i-1},s_i) \right] \\
+ = \,&
+       \frac12\, \delta s_i
+       \left[ \left(\sum_{\ell=1}^{i-1} \T(\nu_j,s_{\ell-1},s_\ell) \right)
+        \left( B(\nu_j,s_{i-1})\, \alpha(\nu_j,s_{i-1}) + 
+         B(\nu_j,s_i)\, \alpha(\nu_j,s_i) \right) + \right. \\
+   \,& \hspace*{0.3in}\,\,\,\,
+        \Big.B(\nu_j,s_i)\, \alpha(\nu_j,s_i) \T(\nu_j,s_{i-1},s_i) \Bigg]\,. \\
+\end{split}\end{equation}
+
+Denoting $A_{ij} = B(\nu_j,s_i)\, \alpha(\nu_j,s_i)$ and $T_{ij} =
+\mathcal{T}(\nu_j,s_{i-1},s_i)$, Equation (\ref{five}) becomes
+
+\begin{equation}
+I_c(s_n) \approx \sum_j c_j \left\{ \sum_{i=1}^n \left[ I(s_0) T_{ij} +
+ \frac12\, \delta s_i \left(
+ \left( A_{i-1,j} + A_{ij}\right)
+  \sum_{\ell=1}^{i-1} T_{\ell j} + A_{ij} T_{ij} \right) \right] \right\}\,.
+\end{equation}
+
+Denoting $\hat{T}_{i} = \sum_j c_j T_{ij}$ and $\hat{B}_i = \sum_j c_j A_{ij}$,
+and further approximating the average of a product by the product of the
+averages of its factors, Equation (\ref{five}) becomes
+
+\begin{equation}\label{ten}
+I_c(s_n) \approx I(s_0) \sum_{i=1}^n\hat{T}_i + \sum_{i=1}^n \left[
+ \frac12\, \delta s_i \left( (\hat{A}_{i-1}+\hat{A}_i)
+   \sum_{\ell=1}^{i-1} \hat{T}_i + \hat{A}_i \hat{T}_i \right) \right] \,,
+\end{equation}
+
+in which $\hat{T}_i$ appears linearly.
+
+$\hat{T}_i$ is an integral through a parcel of the atmosphere.  In two
+dimensions, the parcel can be taken to be a rectangle in $\phi \times
+\zeta$, or in three dimensions, it can be taken to be a triangular prism
+grounded in one QTM facet and bounded vertically by two constant-$\zeta$
+surfaces.
+
+If there are sufficient independent lines-of-sight through each parcel, a
+system of Equations (\ref{ten}) can be solved for $\hat{T}_i$.
+
+Making the further assumption that Equation (\ref{three}) can be
+approximated by
+
+\begin{equation}
+\hat{T}_i \approx \exp \left( - \int_{s_{i-1}}^{s_i}
+                            \alpha(\nu,s^\prime) \, \d s^\prime \right)
+\end{equation}
+
+for some frequency $\nu$ within the channel,
+
+\begin{equation}\label{twelve}
+\ln \hat{T}_i \approx -\int_{s_{i-1}}^{s_i} \alpha(\nu,s^\prime) \, \d s^\prime
+\end{equation}
+
+Replacing the integral in Equation (\ref{twelve}) with a cubature, and
+expanding $\alpha$ in terms of individual species, Equation (\ref{twelve})
+can be written
+
+\begin{equation}\label{thirteen}
+\ln \hat{T}_i \approx -\Delta \sum_k f_i^k \, \beta_i^k(\nu) \,,
+\end{equation}
+
+where $k$ is a species index and $\Delta$ is the area or volume of the
+$i^\text{th}$ parcel of atmosphere, and $\beta_i^k(\nu)$ is the absorption
+coefficient for species $k$ at some average temperature within the
+$i^\text{th}$ parcel of the atmosphere.  Notice that $f_i^k$ appears
+linearly.
+
+If the observations and estimated radiances $I_c(s_n)$ are divided into a
+number of subsets, at least as many as the number of species, Equation
+(\ref{thirteen}) can be solved for an estimate for $f_i^k$.  Using this as
+an initial estimate, It is likely that Equation (\ref{one}) could be
+solved for $f_i^k$ using the present nonlinear method with fewer
+iterations.
+
+Once a solution of Equation (\ref{thirteen}) for $f_i^k$ is in hand, there
+are two possibilities:
+
+\begin{itemize}
+
+\item If the solution of Equation (\ref{thirteen}) for $f_i^k$ is sufficiently
+accurate, the covariance of the solution would need to be converted from
+the covariance of a log-normal distribution to a normal distribution. 
+Then insert $f_i^k$ into Equation (\ref{one}) or (\ref{two}) and solve for
+temperature.
+
+\item If the solution of Equation (\ref{thirteen}) for $f_i^k$, or the
+subsequent solution of Equation (\ref{one}) or (\ref{two}) for
+temperature, is not sufficiently accurate, there are two further
+possibilities:
+
+  \begin{itemize}
+
+  \item Use $f_i^k$ as a starting point to solve Equation (\ref{one}) or
+  (\ref{two}) for temperature and a better estimate for $f_i^k$.
+
+  \item Use $f_i^k$ as a starting point to solve Equation
+  (\ref{one}) or (\ref{two}) for temperature, then use that estimate for
+  temperature to solve Equation(\ref{thirteen}) for a revised estimate for
+  $f_i^k$, and repeat.
+
+  \end{itemize}
+  
+  If a final combined solution of Equation (\ref{one}) or
+  (\ref{two}) for temperature and mixing rations is performed, the
+  covariance is the normal covariance, not log normal.
+
+\end{itemize}
+
+\vspace*{-1pt} \label{lastpage} \end{document}
+
+% $Id$
+
+% $Log$
