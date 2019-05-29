@@ -76,7 +76,22 @@
 \newcommand{\TS}{T_\text{scat}}
 \newcommand{\TSs}[1]{T_{\text{scat}_{#1}}}
 
-\begin{longtable}[l]{l|p{5in}}
+\section*{Groups of papers}
+
+\begin{itemize}
+\item \hyperref[papers]{In order by paper number}
+\item \hyperref[frontend]{Parsing, type checking, {\tt l2cf} format}
+\item \hyperref[retrieval]{Retrieval}
+\item \hyperref[forwardmodel]{Forward model}
+\item \hyperref[PFA]{PFA}
+\item \hyperref[TSCAT]{TSCAT}
+\item \hyperref[QTM]{QTM}
+\item \hyperref[geometry]{Algebra and Geometry}
+\end{itemize}
+
+\section*{In order by paper number}
+
+\begin{longtable}[l]{l|p{5in}}\label{papers}
 \hh{l2cf}{l2cfquickreference} & l2cf quick reference (very old)\\
 % This doesn't work, and I don't know why not
 %\hrlongpdf{l2cf}{pdf/l2cf/} & l2cf: Sections and Run-time Flags \\
@@ -244,7 +259,10 @@ its radius \\
 \h{wvs-149} & A Re-examination of Hashing Using Separate Chains \\
 \h{wvs-150} & State transitions in DNWT \\
 \hpdf{wvs-151} & Presentation: Sparse interpolation matrices \\
+\h{wvs-152} & Solving for Transmissivity \\
+%
 \h{ch08-01} & Math77 Documentation for zero finder \\
+%
 \h{iy-001}  & Radiative Transfer and Second Order Model for the Microwave Limb Sounder (MLS)\\
 \h{iy-002} & Comparisons of Analytical and Numerical Mixing Ratios and Temperature Jacobians\\
 \h{iy-003} & First and Second Order Taylor Approximations for Radiances\\
@@ -257,11 +275,218 @@ its radius \\
 \h{iy-011} & Radiative Transfer Equation for Cloudy Atmospheres \\
 \end{longtable}
 
+\section*{Parsing, type checking, {\tt l2cf} format}
+
+\begin{longtable}[l]{l|p{5in}}\label{frontend}
+l2cf \href{pdf/l2cf/l2cf.pdf}{pdf} & l2cf: Sections and Run-time Flags \\
+\h{wvs-004} & Configuration File Parser Users' Guide\\
+\h{wvs-006} & Changes I've made or suggest for the L2CF format, and questions
+          about it\\
+\h{wvs-007} & Changes in the {\tt MLSCF} module\\
+\h{wvs-020} & Reading and writing spectroscopy data in MLSL2\\
+\h{wvs-032} & Incoherent-to-coherent fill\\
+\h{wvs-105} & Init_Tables_Module generator\\
+\h{wvs-117} & New MLS programs configuration file (e.g., {\tt l2cf}) capabilities\\
+\h{wvs-118} & Grammar for MLS configuration files\\
+\h{wvs-123} & Magnetic field specification in l2cf \\
+\h{wvs-125} & PhiWindow is now a tuple or a number \\
+\hpdf{wvs-147} & Presentation: Configuration file processing \\
+\h{wvs-149} & A Re-examination of Hashing Using Separate Chains \\
+\end{longtable} % frontend
+
+\section*{Retrieval}
+
+\begin{longtable}[l]{l|p{5in}}\label{retrieval}
+\h{wvs-002} & The retrieval iteration in the form of a least-squares problem\\
+\h{wvs-009} & Changes in mathematical method for EOS MLS retrieval\\
+\h{wvs-011} & More remarks on solving the linear system during retrieval\\
+\h{wvs-012} & Computing the covariance matrix\\
+\h{wvs-014} & More remarks on solving the linear system during retrieval\\
+\h{wvs-035} & Alternative to gradient move in DNWT\\
+\h{wvs-036} & Retrieval diagnostic vector quantities\\
+\hpdf{wvs-050} & Presentation: Summary of Retriever\\
+\h{wvs-051} & Speeding up MLS Level 2 retrievals, with possible application to
+          SMLS\\
+\h{wvs-054} & A few more ideas for speeding up MLS Level 2 retrievals, with possible application to SMLS\\
+\h{wvs-055} & Summary of changes made to reduce MLSL2 run time\\
+\h{wvs-062} & Minimum and maximum state vector elements during retrieval\\
+\h{wvs-064} & Summary of summary of changes made to reduce MLSL2 run time\\
+\h{wvs-069} & Inverting the radiative transfer equation\\
+\hpdf{wvs-072} & Presentation: Variable projection and retrievals\\
+\h{wvs-073} & Summary of ``faster retrieval'' meeting\\
+\h{wvs-081} & Variable projection applied to retrieval\\
+\h{wvs-109} & Might be doing Tikhonov wrong\\
+\h{wvs-110} & Incorporating Hessian information into the Newton method\\
+\h{wvs-111} & Effect of minimum value of $\lambda$ on convergence\\
+\h{wvs-119} & Exploiting sparsity in Cholesky factorization\\
+\h{wvs-124} & Improvement on gradient move in the Newton solver \\
+\h{wvs-150} & State transitions in DNWT \\
+\h{wvs-152} & Solving for Transmissivity \\
+\end{longtable} % retrieval
+
+\section*{Forward model}
+
+\begin{longtable}[l]{l|p{5in}}\label{forwardmodel}
+\h{wvs-003} & The Forward Model\\
+\h{wvs-015} & Exponential of a matrix, and derivative thereof\\
+\h{wvs-016} & Alternative formulation for polarized radiance derivatives\\
+\h{wvs-017} & Pre-frequency-averaging\\
+\h{wvs-018} & Temperature derivatives\\
+\h{wvs-019} & Betas, {\tt slabs\_sw\_m}\\
+\h{wvs-022} & Spectroscopy derivatives\\
+\h{wvs-023} & Spectral parameter offsets and derivatives\\
+\h{wvs-029} & Refractive correction for $\phi$\\
+\h{wvs-031} & Relative humidity configuration\\
+\h{wvs-033} & Path integrations\\
+\h{wvs-034} & Equation 11.4 in ATBD\\
+\h{wvs-037} & Updated non-GL correction in forward model\\
+\h{wvs-038} & Modification to {\tt metrics\_m}\\
+\h{wvs-039} & Calculating $H_m$ in modification to {\tt metrics\_m}\\
+\h{wvs-040} & Calculating $\phi$ for $\zeta_{\text{max}}$\\
+\h{wvs-041} & Maximum $\zeta$\\
+\h{wvs-042} & $H$--$\phi$ iteration in {\tt metrics}\\
+\h{wvs-043} & Inverting the $\phi$ refractive correction\\
+\h{wvs-044} & What to do in {\tt metrics\_m}\\
+\h{wvs-045} & What to do in {\tt metrics\_m} to get $\zeta_\text{min}$\\
+\h{wvs-046} & Interesting result concerning $\zeta_{\text{min}}$\\
+\h{wvs-047} & Revised metrics plan\\
+\h{wvs-048} & Different solution for $\phi$--$H$ calculation in {\tt metrics\_m}\\
+\h{wvs-052} & ATBD equations\\
+\h{wvs-053} & Alternative minimum $\zeta$ calculation\\
+\h{wvs-056} & Refractive correction\\
+\h{wvs-059} & Another look at metrics\\
+\h{wvs-060} & Trouble with GL correction in the forward model\\
+\h{wvs-061} & Trouble with path length in the forward model\\
+\hpdf{wvs-063} & Presentation: Summary of Full Forward Model\\
+\h{wvs-077} & Antenna convolution as a Stieltjes integral\\
+\h{wvs-079} & Logarithm of $2 \times 2$ matrix\\
+\h{wvs-087} & Potential speedup of full forward model by nearly $4\times$\\
+\h{wvs-088} & Canceling singularity incorrectly\\
+\h{wvs-090} & Derivation of radiative transfer equation used in Forward Model\\
+\h{wvs-092} & Hessian representation and multiplication\\
+\h{wvs-093} & Computing derivatives in the MLS Full Forward Model\\
+\h{wvs-098} & Mixing-ratio derivative of radiance (oversimplified -- see wvs-093
+or wvs-099)\\
+\h{wvs-099} & Variational derivatives of first-order linear differential equations \\
+\h{wvs-100} & Reducing the cost of radiance derivatives \\
+\h{wvs-101} & Interpolating derivatives from grid to path\\
+\h{wvs-102} & Derivatives of $\alpha$ \\
+\h{wvs-103} & Error in temperature derivative of oxygen continuum\\
+\h{wvs-106} & Alternative formulation for derivatives\\
+\h{wvs-107} & MIF Extinction\\
+\h{wvs-108} & IGRF magnetic field coefficients\\
+\h{wvs-112} & New representation of temperature derivatives\\
+\h{wvs-113} & Considerations for out-of-orbit-plane modeling\\
+\h{wvs-114} & MIF RHI\\
+\h{wvs-115} & Out-of-orbit-plane modeling\\
+\h{wvs-120} & Magnetic fields\\
+\h{wvs-127} & Representing state vector quantities and line of sight geometry\\
+\h{wvs-135} & Outline of 3-dimensional forward model \\
+\h{wvs-137} & Interpolation coefficient lists OBSOLETE! \\
+\h{wvs-138} & Interpolating coefficients, index arrays, and flags in the
+forward model \\
+\hpdf{wvs-139} & Presentation: Forward model summary \\
+\h{wvs-140} & Layer quantities and boundary quantities in the forward model \\
+\h{wvs-143} & Definition of path of integration \\
+\h{wvs-144} & Sparse-matrix representation of interpolation coefficients \\
+\h{wvs-145} & Organization of the Full Forward Model \\
+\h{wvs-148} & Alternative to state-vector representation \\
+\hpdf{wvs-151} & Presentation: Sparse interpolation matrices \\
+\end{longtable} % forwardmodel
+
+\section*{PFA}
+
+\begin{longtable}[l]{l|p{5in}}\label{PFA}
+\h{wvs-021} & Pre-frequency-averaged radiance calculation\\
+\h{wvs-024} & PFA derivatives\\
+\h{wvs-025} & New frequency averaging scheme for use with PFA\\
+\h{wvs-026} & Simplifying assumption to combine line-by-line and PFA\\
+\h{wvs-027} & Revised method to combine line-by-line and PFA\\
+\h{wvs-028} & Summary of line-by-line and PFA radiance and derivatives\\
+\h{wvs-049} & Making PFA tables\\
+\h{wvs-096} & Combining LBL, PFA and $\TS$\\
+\h{wvs-097} & Full forward model changes to combine LBL, PFA and $\TS$\\
+\end{longtable} % PFA
+
+\section*{TSCAT}
+
+\begin{longtable}[l]{l|p{5in}}\label{TSCAT}
+\h{wvs-057} & Recurrences for functions related to $J_\nu(z)$, $Y_\nu(z)$\\
+\h{wvs-058} & Mie solution in terms of Bessel functions\\
+\h{wvs-065} & Summary of Mie parameters\\
+\h{wvs-066} & Derivatives for Mie $\beta$\\
+\h{wvs-067} & Summary of Mie formulae\\
+\h{wvs-068} & Mie phase function, integrated scattering, and derivatives\\
+\h{wvs-070} & Reducing Mie phase function integrated
+          scattering from double to single integrals \\
+\hpdf{wvs-071} & Presentation: Accurate and efficient computation of Mie
+          parameters\\
+\h{wvs-074} & Tangent heights and angles for scattering calculations\\
+\h{wvs-076} & Organization of changes to Full Forward Model for
+          TSCAT-com\-pu\-ta\-tion mode\\
+\h{wvs-078} & Tasks for cloud forward model\\
+\h{wvs-080} & TScat and derivatives\\
+\h{wvs-082} & Current status of scattering additions to forward model\\
+\h{wvs-084} & Total IWC\\
+\h{wvs-085} & Scattered brightness temperature\\
+\h{wvs-089} & TScat derivatives w.r.t. T and IWC\\
+\h{wvs-091} & Accessing the TScat Jacobian as a {\tt Matrix\_T} object\\
+\h{wvs-095} & Radiance and derivatives incorporating $\TSs{i}$\\
+\h{wvs-096} & Combining LBL, PFA and $\TS$\\
+\h{wvs-097} & Full forward model changes to combine LBL, PFA and $\TS$\\
+\end{longtable} % TSCAT
+
+\section*{QTM}
+
+\begin{longtable}[l]{l|p{5in}}\label{QTM}
+\h{wvs-128} & Quaternary Triagular Mesh\\
+\h{wvs-129} & Intersections of a line with a cone\\
+\h{wvs-130} & Intersection of a line with a plane\\
+\h{wvs-131} & Intersection of a line with an ellipsoid\\
+\h{wvs-132} & Center of a sphere (or circle) defined by three (or two) points
+and its radius\\
+\h{wvs-133} & Reflection of a line from a plane\\
+\h{wvs-134} & Intersection of a line with a surface at constant height above
+the Earth reference ellipsoid\\
+\h{wvs-135} & Outline of 3-dimensional forward model \\
+\end{longtable} % QTM
+
+\section*{Algebra and Geometry}
+
+\begin{longtable}[l]{l|p{5in}}\label{geometry}
+\h{wvs-015} & Exponential of a matrix, and derivative thereof\\
+\h{wvs-030} & Points on line and surface of ellipsoid that are nearest
+          to each other\\
+\h{wvs-079} & Logarithm of $2 \times 2$ matrix\\
+\h{wvs-083} & 2-d interpolation\\
+\h{wvs-086} & Periodic cubic spline interpolation with unequally spaced abscissae\\
+\h{wvs-104} & Revisiting $2\times2$ matrix exponential and derivatives, for polarized model\\
+\h{wvs-121} & Three-dimensional rotation about a specified axis\\
+\h{wvs-122} & Computing cross-orbit viewing geometry \\
+\h{wvs-126} & Calculate node of great circle and angular distance from a node \\
+\h{wvs-129} & Intersections of a line with a cone\\
+\h{wvs-130} & Intersection of a line with a plane\\
+\h{wvs-131} & Intersection of a line with an ellipsoid\\
+\h{wvs-132} & Center of a sphere (or circle) defined by three (or two) points
+and its radius\\
+\h{wvs-133} & Reflection of a line from a plane\\
+\h{wvs-134} & Intersection of a line with a surface at constant height above
+the Earth reference ellipsoid\\
+\h{wvs-136} & Closest approach between two lines \\
+\h{wvs-141} & Intersection of a line with a circle defined by two points and
+its radius \\
+\h{wvs-142} & Point on line nearest to a given point \\
+\h{wvs-146} & Radii of curvature of an oblate spheroid \\
+\end{longtable} % geometry
+
 \end{document}
 
 % $Id$
 
 % $Log$
+% Revision 1.68  2018/11/29 21:35:17  vsnyder
+% Add wvs-151
+%
 % Revision 1.67  2018/10/22 23:27:58  vsnyder
 % Trying to make some other-directory macros
 %
