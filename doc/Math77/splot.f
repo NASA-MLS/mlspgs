@@ -5,6 +5,7 @@ C++ END
 c Copyright (c) 1996 California Institute of Technology, Pasadena, CA.
 c ALL RIGHTS RESERVED.
 c Based on Government Sponsored Research NAS7-03001.
+c>> 2019-04-02 DPLOT Krogh -- Fixes for logarithmic plots by Van Snyder      
 c>> 2009-10-30 SPLOT Krogh -- Initialized ARRLEN & CAPLOC(5:6)
 c>> 2009-10-27 SPLOT Krogh -- BSLAS1 => BSLAS1(1:1) for NAG compiler.
 c>> 2009-10-18 SPLOT Krogh -- Added "save adjin" in splota
@@ -769,7 +770,6 @@ c                              Open the scratch file.
 C++ CODE for ~.C. is active
             call SPLOTU (IOTEMP, ' ')
             if (IOP1 .le. -100) go to 1500
-            DB = 'W'
 C++ CODE for .C. is inactive
 C%%         iotemp = tmpfile();
 C%%         if (iotemp == NULL) goto L_1500;
@@ -782,6 +782,7 @@ C++ END
       end if
       FP(LXYSIZ) = XSIZE
       FP(LXYSIZ+1) = YSIZE
+      DB = 'W'
 c
 c ********************** Process the options in COPT *******************
 c
@@ -861,7 +862,7 @@ c                        Error -- Bad start of COPT option
       LPAR = 1
       J = LTEXT
   240 LTEXT = LTEXT + 1
-      if (LTEXT - I1 .gt. 100) then
+      if (LTEXT - I1 .gt. len(copt)) then
 c                 Error -- Runaway in COPT, unbalanced (), [], or {}?
          J = I1
          IERR = 12
@@ -1041,7 +1042,9 @@ c                              Error -- In third/forth position of [...]
          if (L .ne. 0) then
             if (NTYP .eq. 2) then
 C%%            memcpy(splotc.fmtnum[k-1], copt+j,(size_t)(ltext-j-1));
-               FMTNUM(K) = COPT(J+1:LTEXT-1)
+              FMTNUM(K) = COPT(J+1:LTEXT-1)
+C  Next line added by Krogh 2019-04-05              
+              NTYP = 0
             else
 C%%            memcpy(splotc.txtdef[k-1], copt+j,(size_t)(ltext-j-1));
                TXTDEF(K) = COPT(J+1:LTEXT-1)
@@ -1508,7 +1511,8 @@ C%%          printf (fmt10, iaopt, (long)0, "  ..");
 c
 c ***********  Done processing options, take care of X, Y, data ********
 c
-  700 IOP1 = -1
+ 700  if (IP(LDEBUG).gt.1) print '(" Option COPT: ", A)', trim(COPT)
+      IOP1 = -1
       I1 = 1
 c        I1 is count of data to get when getting it from (X, Y).
       NY = IP(LNY)
@@ -1898,7 +1902,7 @@ C++ END
 C++ CODE for ~.C. is active
             read (IOTEMP) FMTNUM(16)(1:LENTXT(1,16))
             if (IOSTA .gt. 0) write (IOTMP2) FMTNUM(16)(1:LENTXT(1,16))
-            if (IP(LDEBUG).gt.1) print 20,
+            if (IP(LDEBUG).gt.1) print 20, db,
      1         IOTMP2, IAOPT,FMTNUM(16)(1:LENTXT(1,16))
 C++ CODE for .C. is inactive
 C%%         fread(splotc.fmtnum[15], (size_t)1,
@@ -2079,16 +2083,22 @@ c Rectangles ellipses and lines.
          go to 900
       end if
       if (IAOPT .le. 21) then
-c            Convert to physical coordinates (only first two for ellipse
+c           Convert to physical coordinates (only first two for ellipse)
+c        Convert to logarithms if necessary WVS 2019-04-01
+         if ( ip(lcoox+0) == 2 ) fp(lvals+0) = log10(fp(lvals+0))
+         if ( ip(lcoox+1) == 2 ) fp(lvals+1) = log10(fp(lvals+1))
          XOUT(1) = XYBASE(KX) + XYU2PF(KX) * FP(LVALS)
          YOUT(1) = XYBASE(KY) + XYU2PF(KY) * FP(LVALS+1)
 
          if (IAOPT .ne. 21) then
+c           Convert to logarithms if necessary WVS 2019-04-01
+            if ( ip(lcoox+0) == 2 ) fp(lvals+2) = log10(fp(lvals+2))
+            if ( ip(lcoox+1) == 2 ) fp(lvals+3) = log10(fp(lvals+3))
             XOUT(2) = XYBASE(KX) + XYU2PF(KX) * FP(LVALS+2)
             YOUT(2) = XYBASE(KY) + XYU2PF(KY) * FP(LVALS+3)
          end if
       else
-c            Conver physical coordinates to points.
+c            Convert physical coordinates to points.
          IAOPT = IAOPT - 3
          XOUT(1) = TOPTS * FP(LVALS)
          YOUT(1) = TOPTS * FP(LVALS+1)
@@ -4619,7 +4629,7 @@ C%%  if (memcmp(splotc.fmtnum[kase-1],fmtsav,(size_t)l)==0) goto L_60;
             if (L .gt. 0) then
 C%%            memcpy(fmtsav, splotc.fmtnum[kase-1], (size_t)l);
                FMTSAV(1:L) = FMTNUM(KASE)(1:L)
-               K = 0
+               K = 1
    20          if (K .lt. L) then
                   if ((FMTNUM(KASE)(K:K) .eq. 'F') .or.
      1               (FMTNUM(KASE)(K:K).eq.'f')) then
@@ -4880,6 +4890,7 @@ c usage if FILNAM is ' ', else open for formatted sequential output.
       real             SPACE(1)
       logical OPENED
       integer IORES, NEXTU
+      character(127) IOMSG
       save NEXTU
 c Common  Variables
 c
@@ -4912,6 +4923,10 @@ c
       data NEXTU / 10 /
 
 c
+      if ( filnam(1:1) /= ' ') then
+        inquire ( file=FILNAM, number=NEWU, opened=OPENED )
+        if ( opened ) return
+      end if
       do 100 NEWU = NEXTU, 100
           inquire (unit=NEWU, opened=OPENED)
           if (.not. OPENED) then
@@ -4923,7 +4938,7 @@ c
             else
               open (unit=NEWU, FILE=FILNAM, status='UNKNOWN'
      1,       form='FORMATTED', access='SEQUENTIAL', iostat=IORES
-     2,       err=200)
+     2,       iomsg=IOMSG, err=200)
               go to 300
             end if
           end if
@@ -4933,6 +4948,7 @@ c          Unable to find unused I/O unit number in 10..100
       return
 c                  Unable to open output file
   200 IERR1 = len(FILNAM)
+      print '(a,i0/a)', "IOSTAT ", IORES, trim(iomsg)
       call SPLOTE(35, SPACE, FILNAM)
       return
 c                 "Success" exit
@@ -5205,7 +5221,7 @@ c on SGI Fortran compilers
       parameter (BSLASH = BSLAS1(1:1))
       character*(*) BFMT1
       parameter (BFMT1='('' '//BSLASH//
-     1  'lines{('',F9.3,'','',F9.3,''),('',F9.3,'','',F9.3,'')}'')')
+     1  'lines{('',F12.3,'','',F12.3,''),('',F12.3,'','',F12.3,'')}'')')
 C++ CODE for .C. is inactive
 C%%   const char fmt10[] = " \\lines{(%9.3f,%9.3f),(%9.3f,%9.3f)}\n";
 C++ END
