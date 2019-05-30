@@ -38,8 +38,15 @@ begin Fill
   !makeStatusForOneProduct(product=SO2,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -20K)
 
   ;; ------------------------------------- Temperature-CorePlusR3
+  !ifdef(flagAddBand1ToTempQual, {
+  ;; By special request, its quality depends on both Bands 1 and 8
   !define(flaggingBands,{1,8})
   !define(flaggingRadiometers,{R1A,R1B,R3})!dnl
+  }, {
+  ;; Unless specially requested, its quality depends only on Band 8
+  !define(flaggingBands,{8})
+  !define(flaggingRadiometers,{R3})!dnl
+  })
   !makeQualityForOneProduct(product=Temperature,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -20K)
   !makeStatusForOneProduct(product=Temperature,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -20K)
 
@@ -52,6 +59,9 @@ begin Fill
 end Fill
 
 ; $Log$
+; Revision 1.19  2019/02/22 21:30:32  pwagner
+; Added Band 1 to the Temperature-StdProds flagging Bands
+;
 ; Revision 1.18  2015/01/30 19:48:30  pwagner
 ; Restore flagging for low clouds
 ;
