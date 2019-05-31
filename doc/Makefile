@@ -143,7 +143,7 @@ vpath %.eps $(DOCDIR)
 	  echo "\end" | latex $(TEXDIR)/$*.tex; \
 	  echo "\end" | latex $(TEXDIR)/$*.tex; \
 	  mv $*.dvi $(DVIDIR); \
-	  dvipdf $(DVIDIR)/$<; \
+	  dvipdf $(DVIDIR)/$*.dvi; \
 	else \
 	  pdflatex $(TEXDIR)/$*.tex; \
 	fi
@@ -241,6 +241,9 @@ update:
 
 # ========================================================================
 # $Log$
+# Revision 1.4  2018/09/20 22:53:21  pwagner
+# Added new help--l2cf
+#
 # Revision 1.3  2018/08/07 20:36:48  pwagner
 # Expanded list of .PHONY targets
 #
