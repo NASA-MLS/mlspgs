@@ -576,6 +576,16 @@ wvs-138-1.eps: wvs-138-1.obj
 wvs-138-1.pdf: wvs-138-1.obj
 	tgif -print -pdf -page 1 -color wvs-138-1.obj
 
+wvs-139.dvi: wvs-139.tex wvs-139-1.eps
+
+wvs-139.pdf: wvs-139.tex wvs-139-1.pdf
+
+wvs-139-1.eps: wvs-139-1.obj
+	tgif -print -eps -page 1 -color wvs-139-1.obj
+
+wvs-139-1.pdf: wvs-139-1.obj
+	tgif -print -pdf -page 1 -color wvs-139-1.obj
+
 wvs-141.dvi: wvs-141.tex wvs-141-1.eps
 
 wvs-141.pdf: wvs-141.tex wvs-141-1.pdf
@@ -759,6 +769,9 @@ dnwt.epsi: dnwt.ps
 
 endif # end shortn_name == doc
 # $Log$
+# Revision 1.35  2018/11/30 22:31:43  pwagner
+# Can now build wvs-147 and wvs-151
+#
 # Revision 1.34  2018/07/27 00:21:02  pwagner
 # Now builds wvs-150.tex
 #
