@@ -125,11 +125,12 @@ vpath %.l2cf $(CONFDIR)/l2/l2cf/lib
 vpath %.log $(LOGDIR)
 vpath %.pdf $(PDFDIR)
 vpath %.eps $(DOCDIR)
+vpath %.jpg $(DOCDIR)
 
 # Define some suffix rules
 
 .SUFFIXES:
-.SUFFIXES: .o .tex .dvi .pdf .eps .f
+.SUFFIXES: .o .tex .dvi .pdf .eps .f .jpg
 .tex.dvi:
 	echo "\def\dvidir{$(DVIDIR)}" | cat - $< > $*.temp
 	echo "\def\pdfdir{$(PDFDIR)}" | cat - $*.temp > $(TEXDIR)/$<
@@ -153,6 +154,9 @@ vpath %.eps $(DOCDIR)
 
 .f.o:
 	$(FC) -c $(FOPTS) $(INC_PATHS) $< $(FAFTER)
+
+.jpg.eps:
+	convert $*.jpg $*.eps
 
 all doc:
 
@@ -241,6 +245,9 @@ update:
 
 # ========================================================================
 # $Log$
+# Revision 1.5  2019/05/31 17:14:40  pwagner
+# Fixed a problem preventing pdfs being built properly
+#
 # Revision 1.4  2018/09/20 22:53:21  pwagner
 # Added new help--l2cf
 #
