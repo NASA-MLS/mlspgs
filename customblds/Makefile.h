@@ -487,6 +487,14 @@ wvs-095.pdf: wvs-095.tex wvs-095-eta.pdf
 #	pdflatex wvs-095
 #	pdflatex wvs-095
 
+wvs-111-MinLambda-not=0.eps: wvs-111-MinLambda-not=0.jpg
+
+wvs-111-MinLambda=0.eps: wvs-111-MinLambda=0.jpg
+
+wvs-111.dvi: wvs-111.tex wvs-111-MinLambda=0.eps wvs-111-MinLambda-not=0.eps
+
+wvs-111.pdf: wvs-111.tex wvs-111-MinLambda=0.eps wvs-111-MinLambda-not=0.eps
+
 wvs-126.dvi: wvs-126.tex wvs-126-1.eps
 
 wvs-126.pdf: wvs-126.tex wvs-126-1.pdf
@@ -769,6 +777,9 @@ dnwt.epsi: dnwt.ps
 
 endif # end shortn_name == doc
 # $Log$
+# Revision 1.36  2019/05/31 17:19:10  pwagner
+# We can now build wvs-111 and wvs-139
+#
 # Revision 1.35  2018/11/30 22:31:43  pwagner
 # Can now build wvs-147 and wvs-151
 #
