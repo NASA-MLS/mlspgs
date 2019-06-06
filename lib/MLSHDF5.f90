@@ -457,7 +457,7 @@ contains ! ======================= Public Procedures =========================
     integer :: attrID
     integer :: classID
     character(len=MAXCHFIELDLENGTH) :: chValue ! 1024; len may become MAXCHFIELDLENGTH
-    ! logical, parameter :: DEEBUG = .false.
+    ! logical, parameter :: DEEBUG = .true.
     integer, dimension(7) :: dims
     double precision, dimension(1024) :: dValue
     integer(kind=hSize_t), dimension(7) :: hdims
@@ -1909,6 +1909,8 @@ contains ! ======================= Public Procedures =========================
 
   ! ------------------------------------  GetHDF5Attribute_string  -----
   subroutine GetHDF5Attribute_string ( MLSFile, name, value )
+    use HDF5, only: H5TIs_Variable_Str_F
+    use, intrinsic :: Iso_C_Binding
     type (MLSFile_T)   :: MLSFile
     character (len=*), intent(in) :: NAME   ! Name of attribute
     character (len=*), intent(out) :: VALUE ! Result
@@ -1917,11 +1919,15 @@ contains ! ======================= Public Procedures =========================
     integer :: ATTRID                   ! ID for attribute
     ! logical, parameter :: DEEBUG = .true.
     integer :: Me = -1                  ! String index for trace cacheing
+    logical :: VarLenStr                ! Is the string length variable?
+    integer :: dspace_id
+    integer(kind=Size_t) :: n_pts
     integer :: STATUS                   ! Flag from HDF5
     integer(kind=Size_t) :: STRINGSIZE               ! String size
     integer :: STRINGTYPE               ! String type
 
     ! Executable code
+    value = ''
     call trace_begin ( me, 'GetHDF5Attribute_string', cond=.false. )
     if ( MLSFile%fileID%sd_ID > 0 ) then
       call h5aOpen_name_f ( MLSFile%fileID%sd_ID, name, attrID, status )
@@ -1943,6 +1949,14 @@ contains ! ======================= Public Procedures =========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to get size for attribute ' // trim(name), &
       & MLSFile=MLSFile )
+    call h5tis_variable_str_f ( stringType, VarLenStr, Status )
+    if ( DEEBug ) then
+      call outputnamedvalue ( 'string length variable?', VarLenStr )
+      call h5aget_space_f ( attrID, dspace_id, status )
+      call outputnamedvalue ( 'dspace_id', dspace_id )
+      call h5sget_simple_extent_npoints_f ( dspace_id, n_pts, status )
+      call outputnamedvalue ( 'n_pts', int(n_pts) )
+    endif
     if ( stringSize > len(value) ) then
       call outputnamedValue( 'stringSize', int(stringSize) )
       call outputnamedValue( 'len(value)', len(value) )
@@ -1955,11 +1969,12 @@ contains ! ======================= Public Procedures =========================
     endif
 
     ! Now actually read the data!
-    value = ''
-    call h5aread_f ( attrID, stringType, value(1:stringSize), ones, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to read attribute ' // trim(name), &
-      & MLSFile=MLSFile )
+    if ( VarLenStr ) then
+      call VariableStringLength
+    else
+      call FixedStringLength
+    endif
+    if( DEEBUG ) print *, trim(value)
     call h5aClose_f ( attrID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close attribute ' // trim(name), &
@@ -1969,16 +1984,66 @@ contains ! ======================= Public Procedures =========================
       & 'Unable to close string type for attribute ' // trim(name), &
       & MLSFile=MLSFile )
   9 call trace_end ( cond=.false. )
+  contains
+    subroutine FixedStringLength
+      call h5aread_f ( attrID, stringType, value, ones, status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to read attribute ' // trim(name), &
+        & MLSFile=MLSFile )
+      ! In case there are any nulls, we will replace them with blanks
+      status = FindFirst( value, achar(0) )
+      if ( status > 0 ) value( status: ) = ' '
+    end subroutine FixedStringLength
+    subroutine VariableStringLength
+      integer, parameter :: max_len = 132
+      character(len=max_len, kind=c_char), pointer :: cdata ! A pointer to a Fortran string
+      integer(hsize_t), dimension(1:1) :: dims = (/1/)
+      type(c_ptr) :: f_ptr
+      integer :: length
+      integer :: i
+      integer(hsize_t), dimension(1:1) :: maxdims
+      integer :: mem_space_id
+      type(c_ptr), dimension(:), allocatable, target :: rdata ! Read buffer
+      call h5aget_space_f ( attrID, mem_space_id, status )
+      call h5sget_simple_extent_dims_f ( mem_space_id, dims, maxdims, status )
+
+      allocate(rdata(1:dims(1)))
+      !
+      ! Read the data.
+      !
+      f_ptr = C_LOC( rdata(1) )
+      CALL H5aread_f( attrID, H5T_STRING, f_ptr, status )
+      !
+      ! Output the variable-length data to the screen.
+      !
+      do i = 1, dims(1)
+         call c_f_pointer( rdata(i), cdata )
+         length = 0
+         do while( cdata(length+1:length+1) .ne. c_null_char )
+            length = length + 1
+            value(length:length) = cdata(length:length)
+         enddo
+         if( DEEBUG ) write( *,'(a)' ) cdata( 1:length )
+      end do
+      !
+      ! Close and release resources.
+      !
+      call h5sclose_f( mem_space_id, status )
+
+    end subroutine VariableStringLength
   end subroutine GetHDF5Attribute_string
 
   ! --------------------------------  GetHDF5Attribute_stringarr1  -----
   subroutine GetHDF5Attribute_stringarr1 ( MLSFile, name, value )
+    use HDF5, only: H5TIs_Variable_Str_F
+    use, intrinsic :: Iso_C_Binding
     type (MLSFile_T)   :: MLSFile
     character (len=*), intent(in) :: NAME ! Name of attribute
     character (len=*), intent(out) :: VALUE(:) ! Result
 
     ! Local variables
     integer :: ATTRID                   ! ID for attribute
+    logical :: VarLenStr                ! Is the string length variable?
     integer :: Me = -1                  ! String index for trace cacheing
     integer(kind=hsize_t), dimension(1) :: SHP        ! Shape
     integer :: STATUS                   ! Flag from HDF5
@@ -1986,6 +2051,7 @@ contains ! ======================= Public Procedures =========================
     integer :: STRINGTYPE               ! String type
 
     ! Executable code
+    value = ''
     call trace_begin ( me, 'GetHDF5Attribute_stringarr1', cond=.false. )
     shp = shape(value)
     if ( MLSFile%fileID%sd_ID > 0 ) then
@@ -2014,11 +2080,14 @@ contains ! ======================= Public Procedures =========================
     ! Note we're going to assume here that the attribute indeed represents the
     ! right type, and that we won't overflow memory etc. by accidentally trying
     ! to read an array into our one value.
-    call h5aread_f ( attrID, stringType, value, &
-      & int ( (/ shp, ones(1:6) /), hsize_t ), status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to read attribute ' // trim(name), &
-      & MLSFile=MLSFile )
+    call h5tis_variable_str_f ( stringType, VarLenStr, Status )
+
+    ! Now actually read the data!
+    if ( VarLenStr ) then
+      call VariableStringLength
+    else
+      call FixedStringLength
+    endif
     call h5aClose_f ( attrID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close attribute ' // trim(name), &
@@ -2028,6 +2097,51 @@ contains ! ======================= Public Procedures =========================
       & 'Unable to close string type for attribute ' // trim(name), &
       & MLSFile=MLSFile )
   9 call trace_end ( cond=.false. )
+  contains
+    subroutine FixedStringLength
+      call h5aread_f ( attrID, stringType, value, &
+        & int ( (/ shp, ones(1:6) /), hsize_t ), status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to read attribute ' // trim(name), &
+        & MLSFile=MLSFile )
+    end subroutine FixedStringLength
+    subroutine VariableStringLength
+      integer, parameter :: max_len = 132
+      character(len=max_len, kind=c_char), pointer :: cdata ! A pointer to a Fortran string
+      integer(hsize_t), dimension(1:1) :: dims = (/1/)
+      type(c_ptr) :: f_ptr
+      integer :: length
+      integer :: i
+      integer(hsize_t), dimension(1:1) :: maxdims
+      integer :: mem_space_id
+      type(c_ptr), dimension(:), allocatable, target :: rdata ! Read buffer
+      call h5aget_space_f ( attrID, mem_space_id, status )
+      call h5sget_simple_extent_dims_f ( mem_space_id, dims, maxdims, status )
+
+      allocate(rdata(1:dims(1)))
+      !
+      ! Read the data.
+      !
+      f_ptr = C_LOC( rdata(1) )
+      CALL H5aread_f( attrID, H5T_STRING, f_ptr, status )
+      !
+      ! Output the variable-length data to the screen.
+      !
+      do i = 1, dims(1)
+         call c_f_pointer( rdata(i), cdata )
+         length = 0
+         do while( cdata(length+1:length+1) .ne. c_null_char )
+            length = length + 1
+            value(length) = cdata(length:length)
+         enddo
+         if( DEEBUG ) write( *,'(a)' ) cdata( 1:length )
+      end do
+      !
+      ! Close and release resources.
+      !
+      call h5sclose_f( mem_space_id, status )
+
+    end subroutine VariableStringLength
   end subroutine GetHDF5Attribute_stringarr1
 
   ! -----------------------------------  GetHDF5Attribute_logical  -----
@@ -6336,6 +6450,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.147  2019/06/06 23:50:31  pwagner
+! Can now read string-valued attributes with variable lengths
+!
 ! Revision 2.146  2018/11/12 23:12:27  pwagner
 ! Added arg to convert carriagereturns to linefeeds
 !
