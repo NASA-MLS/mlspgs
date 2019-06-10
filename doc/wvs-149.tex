@@ -12,8 +12,8 @@
 \topmargin -0.5in
 \textheight 9in
 
-\newcommand{\docname}{wvs-149r3}
-\newcommand{\docdate}{29 May 2019}
+\newcommand{\docname}{wvs-149r4}
+\newcommand{\docdate}{10 June 2019}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
@@ -160,11 +160,11 @@ $A$ at $P$, the hash value of $G$:
 
 \begin{enumerate}
 
-\item $A$ is an empty entry, in which case $G$ may be stored at $P$;
+\item $A$ is an empty entry, in which case $G$ may be stored at $P\,$;
 
 \item the hash value of $A$ is equal to $P$, in which case $G$ may be
 stored in any empty location, but must be made a member of the chain that
-starts at $P$;
+starts at $P\,$;
 
 \item the hash value of $A$ is different from $P$, in which case the entry
 at $P$ must be moved to any empty location, resulting in the first
@@ -545,8 +545,9 @@ p_k(\alpha),\, p_0(\alpha) = 1,\, p_k(0) = 0 \text{ for } k > 0.
 The solution of Equation (\ref{eq2}) is
 
 \begin{equation}
-p_k(\alpha) = 1 - e^{-\alpha} \sum_{i=0}^{k-1}\, \frac{\alpha^i}{i!},\,
-k > 0.
+p_k(\alpha) = 1 - e^{-\alpha} \sum_{i=0}^{k-1}\, \frac{\alpha^i}{i!} =
+1 - e^{-\alpha}\, e^\alpha_{k-1} = 1 - \frac{\Gamma(k,\alpha)}{(k-1)!}
+,\,k > 0.
 \end{equation}
 
 Clearly, the probability $q_k(\alpha)$ that a given entry starts a chain
@@ -749,6 +750,9 @@ $\lambda \approx 0.63$ and $\zeta = \lambda \beta \approx 0.542$.
 % $Id$
 
 % $Log$
+% Revision 1.5  2019/05/30 02:14:05  vsnyder
+% Correct a typo in Equation(9)
+%
 % Revision 1.4  2019/05/30 01:32:20  vsnyder
 % Forgot to change revision number and date
 %
