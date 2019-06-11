@@ -69,17 +69,20 @@ string     = t_string
 ; LHS ( -> RHS ( => ACT '?' ? ) ? EOS )+
 ; where LHS is a nonterminal symbol.
 ;       RHS is a sequence of terminal and nonterminal symbols,
-;       ACT is the name of a tree node from the Tree_Types module of a
+;       ACT is the name of a tree node from the Tree_Types module or a
 ;           number.  If a number, the low-order digit specifies the action:
 ;             1 => build a tree node given by the high-order digits,
 ;             2 => build a tree node given by the high-order digits iff
 ;                  the RHS generated more than one tree node,
 ;             9 => open an include file,
 ;             else do nothing.
+;             The "number" method is not recommended because it requires one
+;             to calculate the numeric values of tree node named constants.
 ;       EOS means "end of statement", which is end of line or the
 ;           beginning of a comment, unless the production is continued by
 ;           a "$".
-;       '?' means "do the action iff the RHS generated more than one tree node."
+;       '?' means "do the action iff the RHS generated more than one tree node"
+;           (this is the same as the low-order digit above being 2).
 ;       ? means "can appear zero or one times."
 ;       + means "can appear more than one time."
 
@@ -272,6 +275,9 @@ dots ->
      -> dot name dots
 
 ; $Log$
+; Revision 1.7  2018/05/30 20:45:55  vsnyder
+; Repair some comments
+;
 ; Revision 1.6  2016/07/28 01:46:38  vsnyder
 ; Refactor diff and dump
 ;
