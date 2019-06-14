@@ -132,8 +132,8 @@ vpath %.jpg $(DOCDIR)
 .SUFFIXES:
 .SUFFIXES: .o .tex .dvi .pdf .eps .f .jpg
 .tex.dvi:
-	echo "\def\dvidir{$(DVIDIR)}" | cat - $< > $*.temp
-	echo "\def\pdfdir{$(PDFDIR)}" | cat - $*.temp > $(TEXDIR)/$<
+	echo "\def\dvidir{../dvi}" | cat - $< > $*.temp
+	echo "\def\pdfdir{../pdf}" | cat - $*.temp > $(TEXDIR)/$<
 	echo "\end" | latex $(TEXDIR)/$<; \
 	echo "\end" | latex $(TEXDIR)/$<
 	mv $@ $(DVIDIR)
@@ -245,6 +245,9 @@ update:
 
 # ========================================================================
 # $Log$
+# Revision 1.6  2019/05/31 20:05:13  pwagner
+# May build eps filees from jpg (assuming convert is in path)
+#
 # Revision 1.5  2019/05/31 17:14:40  pwagner
 # Fixed a problem preventing pdfs being built properly
 #
