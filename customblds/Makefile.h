@@ -774,9 +774,23 @@ wvs-151-3.pdf: wvs-151-3.obj
 
 dnwt.epsi: dnwt.ps
 	ps2epsi dnwt.ps
+        
+iy-006.aux: iy-006.tex
+	latex iy-006.tex
+
+iy-006.dvi: iy-006.tex iy-006.bbl
+
+iy-006.pdf: iy-006.tex iy-006.bbl
+
+iy-006.bbl: yanovsky.bib iy-006.aux
+	bibtex iy-006
+
 
 endif # end shortn_name == doc
 # $Log$
+# Revision 1.37  2019/05/31 20:07:51  pwagner
+# Needed actual build cmds for wvs-111
+#
 # Revision 1.36  2019/05/31 17:19:10  pwagner
 # We can now build wvs-111 and wvs-139
 #
