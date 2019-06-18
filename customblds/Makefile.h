@@ -775,6 +775,16 @@ wvs-151-3.pdf: wvs-151-3.obj
 dnwt.epsi: dnwt.ps
 	ps2epsi dnwt.ps
         
+iy-005.aux: iy-005.tex
+	latex iy-005.tex
+
+iy-005.dvi: iy-005.tex iy-005.bbl
+
+iy-005.pdf: iy-005.tex iy-005.bbl
+
+iy-005.bbl: yanovsky.bib iy-005.aux
+	bibtex iy-005
+
 iy-006.aux: iy-006.tex
 	latex iy-006.tex
 
@@ -788,6 +798,9 @@ iy-006.bbl: yanovsky.bib iy-006.aux
 
 endif # end shortn_name == doc
 # $Log$
+# Revision 1.38  2019/06/18 20:26:51  pwagner
+# Added cmds to build iy-006.tex in doc
+#
 # Revision 1.37  2019/05/31 20:07:51  pwagner
 # Needed actual build cmds for wvs-111
 #
