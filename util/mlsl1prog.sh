@@ -39,7 +39,9 @@ Successful_codes="000 001"
 # MLSPROG. The script version returns a status of 0 only if 
 # the MLSPROG goes past some "finish" line in the code
 # causing it to exit with status=NORMAL_STATUS
-# MakeFC sed's this file to replace xxyyzz, hhoommee, etc. as appropriate
+# Typing 
+#    make install
+# sed's this file to replace xxyyzz, hhoommee, etc. as appropriate
 
 # Now if the tool h5repack in the same directory as the three level 1 programs
 # and if the current working directory houses the l1b files created by
@@ -60,6 +62,13 @@ MLSPROG_3=mlsxxyyzz_3
 MLSBIN=mlsbbiinn
 # If relative, it must be relative to the following absolute path
 MLSHOME=mlshhoommee
+
+# Did we create an env file to be sourced by this job?
+JOBENV=job.env
+if [ -f "$JOBENV" ]
+then
+  . ./$JOBENV
+fi
 
 if [ "$PGE_BINARY_DIR" = "" ]
 then
@@ -178,6 +187,9 @@ else
 fi
 
 # $Log$
+# Revision 1.13  2016/09/07 00:33:30  pwagner
+# Should work better when running goldbrick with prebuilt binaries
+#
 # Revision 1.12  2015/01/16 17:16:17  pwagner
 # stack size limit lifted
 #
