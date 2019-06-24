@@ -46,7 +46,7 @@ contains
                                          ! profile in METERS
     type (grids_t), intent(in) :: Grids_tmp  ! All Temperature's coordinates
 
-    real(rp), intent(in) :: Ref_zeta(:)  ! Zetas for inputted gph's
+    real(rp), intent(in) :: Ref_zeta     ! Zeta for input gph's
     real(rp), intent(in) :: Ref_gph(:)   ! Reference geopotential heights along the
                            ! temperature horizontal basis in METERS
     real(rp), intent(in) :: Elev_offset  ! Elevation offset in radians
@@ -97,7 +97,8 @@ real(rp) :: h2o_tan_out(merge(size(zetatan),0,h2o_ind>0))
     n_t_zeta = grids_tmp%l_z(1) ! Size of temperature zeta basis
 
     call two_d_hydrostatic ( grids_tmp, ref_zeta, ref_gph, zetatan, &
-             & temp_tan, height_tan, dhdz_tan, dhdt_tan, d2hdhdt_tan )
+             & temp_tan, height_tan, dhdz_tan, dHidTlm=dhdt_tan, &
+             & ddHdHdTl0=d2hdhdt_tan )
 
 ! Tangent heights, temperatures, and dhdz, for tangent pressures along phi
 
@@ -181,12 +182,15 @@ real(rp) :: h2o_tan_out(merge(size(zetatan),0,h2o_ind>0))
             end do
           end if
 
-          call get_chi_angles ( 0.001_rp*scgeocalt(ht_i), n_tan_out(ht_i), &
+          ! We can't compute the index of refraction at the instrument
+          ! (actually index - 1.0), so use zero.
+          ! SCgeocAlt and RefGPH are in meters, but Get_Chi_Angles wants them
+          ! in km.
+          call get_chi_angles ( 0.001_rp*scgeocalt(ht_i), n_tan_out(ht_i), 0.0_rp, &
              & h_tan_out(ht_i), phitan(ht_i), req(ht_i), elev_offset, &
              & tan_chi_out(ht_i), dx_dh_out(ht_i), dhdz_out(ht_i), &
              & dhdt_1_tan_1, d2hdhdt_1_tan_1, &
              & dxdt_tan(ht_i,:), d2xdxdt_tan(ht_i,:) )
-
           ! Put zeroes back where we put nonzeroes above
           ! An iterator to traverse a row of a Sparse_t would be useful here
           k = eta_t%rows(ht_i)                  ! Last element in the row
@@ -206,7 +210,9 @@ real(rp) :: h2o_tan_out(merge(size(zetatan),0,h2o_ind>0))
     else
 
        do ht_i = 1, n_out
-         call get_chi_angles( 0.001_rp*scgeocalt(ht_i), n_tan_out(ht_i), &
+          ! We can't compute the index of refraction at the instrument, so
+          ! pretend it's 1.0 by setting the instrument index to zero.
+         call get_chi_angles( 0.001_rp*scgeocalt(ht_i), n_tan_out(ht_i), 0.0_rp, &
            & h_tan_out(ht_i), phitan(ht_i), req(ht_i), elev_offset, &
            & tan_chi_out(ht_i), dx_dh_out(ht_i), dhdz_out(ht_i) )
        end do
@@ -228,6 +234,9 @@ real(rp) :: h2o_tan_out(merge(size(zetatan),0,h2o_ind>0))
 end module Get_Chi_Out_m
 
 ! $Log$
+! Revision 2.28  2019/06/24 23:28:17  pwagner
+! Updated to reflect TA-01-143
+!
 ! Revision 2.27  2018/09/07 17:15:20  pwagner
 ! Code around a NAG-6.1 compiler bug
 !
