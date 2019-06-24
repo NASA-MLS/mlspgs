@@ -34,7 +34,8 @@ contains
                                & T_Grid, H_Grid, dHidZij, &
                                & Eta_ZZ, Vertices, dHidTlm, ddHdHdTl0 )
 
-    ! Compute the 2 dimensional hydrostatic stuff.
+    ! Compute the 2 dimensional hydrostatic stuff.  Assumes all the
+    ! RefGPH are at the same Zeta.
 
     use Constants, only: Deg2Rad
     use Geometry, only: GeodToGeocLat
@@ -60,20 +61,23 @@ contains
                                            ! from Grids_Tmp to Z_Grid.
     real(rp), intent(out):: H_Grid(:,:)    ! Computed heights (km).
     real(rp), intent(out):: dHidZij(:,:)   ! Derivative of height wrt zeta.
-    real(rp), optional, intent(out):: dHidTlm(:,:,:) ! Derivative of height wrt
-                                           ! temperatures on output phi grid.
-    real(rp), optional, intent(out):: ddHdHdTl0(:,:,:) ! second order derivative
-                                           ! at the tangent only---used for
-                                           ! antenna effects.
 
     ! Optional inputs
 
-    class(sparse_t), intent(in), optional :: Eta_ZZ ! Interpolation
+    class(sparse_t), optional, intent(in) :: Eta_ZZ ! Interpolation
                                            ! coefficients from
                                            ! Grids_tmp%Zet_Basis to Z_Grid
     integer, optional, intent(in) :: Vertices(:) ! to select a subset of
                                            ! the horizontal basis for Grids_Tmp,
                                            ! usually for QTM.
+
+    ! Optional outputs
+
+    real(rp), optional, intent(out):: dHidTlm(:,:,:) ! Derivative of height wrt
+                                           ! temperatures on output phi grid.
+    real(rp), optional, intent(out):: ddHdHdTl0(:,:,:) ! second order derivative
+                                           ! at the tangent only---used for
+                                           ! antenna effects.
 
     ! Internal stuff
 
@@ -157,11 +161,12 @@ contains
   end subroutine Two_D_Hydrostatic_Coherent
 
   ! ----------------------------------  Two_D_Hydrostatic_General  -----
-  subroutine Two_D_Hydrostatic_General ( Grids_tmp, z_refs, h_refs, z_grid, &
-                               & t_grid, h_grid, dhidzij, dhidtlm, ddhdhdtl0, &
-                               & Vertices )
+  subroutine Two_D_Hydrostatic_General ( Grids_tmp, Z_Refs, H_Refs, Z_Grid, &
+                               & T_Grid, H_Grid, dHidZij, &
+                               & Eta_ZZ, Vertices, dHidTlm, ddHdHdTl0 )
 
-    ! Compute the 2 dimensional hydrostatic stuff.
+    ! Compute the 2 dimensional hydrostatic stuff.  Doesn't assume all the
+    ! RefGPH are at the same Zeta, unless size(Z_Refs) == 1.
 
     use Constants, only: Deg2Rad
     use Geometry, only: GeodToGeocLat
@@ -169,6 +174,7 @@ contains
     use Intrinsic, only: L_Geodetic
     use Load_sps_data_m, only: Grids_T
     use MLSKinds, only: RP, IP
+    use Sparse_m, only: Sparse_t
 
     ! Inputs:
 
@@ -186,21 +192,27 @@ contains
                                            ! from Grids_Tmp to Z_Grid.
     real(rp), intent(out):: H_Grid(:,:)    ! Computed heights (km).
     real(rp), intent(out):: dHidZij(:,:)   ! Derivative of height wrt zeta.
+
+    ! Optional inputs
+
+    class(sparse_t), optional, intent(in) :: Eta_ZZ ! Interpolation
+                                           ! coefficients from
+                                           ! Grids_tmp%Zet_Basis to Z_Grid
+    integer, optional, intent(in) :: Vertices(:) ! to select a subset of
+                                           ! the horizontal basis for Grids_Tmp,
+                                           ! usually for QTM.
+
+    ! Optional outputs
+
     real(rp), optional, intent(out):: dHidTlm(:,:,:) ! Derivative of height wrt
                                            ! temperatures on output phi grid.
     real(rp), optional, intent(out):: ddHdHdTl0(:,:,:) ! second order derivative
                                            ! at the tangent only---used for
                                            ! antenna effects.
 
-    ! Optional input
-
-    integer, optional, intent(in) :: Vertices(:) ! to select a subset of
-                                           ! the horizontal basis for Grids_Tmp,
-                                           ! usually for QTM.
-
     ! Internal stuff
 
-    integer(ip) :: I, J, N
+    integer(ip) :: I, J, K, N
     integer(ip) :: P_Coeffs ! Size of interesting part of Grids_tmp%phi_basis
     logical :: QTM          ! ...%the_Hgrid%type == l_QTM
     integer(ip) :: Z_Coeffs ! Size of interesting part of Grids_tmp%zet_basis
@@ -243,18 +255,37 @@ contains
           lat = lat * deg2rad
         end if
 
-        if ( present(ddhdhdtl0) ) then ! needs dhidtlm
-          call hydrostatic ( lat, Grids_tmp%zet_basis, t(:,j), &
-             & z_grid, z_refs(i), 0.001_rp*h_refs(j), t_grid(:,i), h_grid(:,i), &
-             & dhidzij(:,i), dhidtlm(:,:,i), ddhdhdtl0(:,:,i) )
-        else if ( present(dhidtlm) ) then
-          call hydrostatic ( lat, Grids_tmp%zet_basis, t(:,j), &
-             & z_grid, z_refs(i), 0.001_rp*h_refs(j), t_grid(:,i), h_grid(:,i), &
-             & dhidzij(:,i), dhidtlm(:,:,i) )
+        k = min(i,ubound(z_refs,1))
+        if ( present(eta_zz) ) then
+          if ( present(ddhdhdtl0) ) then ! needs dhidtlm
+            call hydrostatic ( lat, Grids_tmp%zet_basis, t(:,j), &
+               & z_grid, z_refs(k), 0.001_rp*h_refs(j), eta_zz, &
+               & t_grid(:,i), h_grid(:,i), dhidzij(:,i), &
+               & dhidtlm(:,:,i), ddhdhdtl0(:,:,i) )
+          else if ( present(dhidtlm) ) then
+            call hydrostatic ( lat, Grids_tmp%zet_basis, t(:,j), &
+               & z_grid, z_refs(k), 0.001_rp*h_refs(j), eta_zz, &
+               & t_grid(:,i), h_grid(:,i), dhidzij(:,i), &
+               & dhidtlm(:,:,i) )
+          else
+            call hydrostatic ( lat, Grids_tmp%zet_basis, t(:,j), &
+               & z_grid, z_refs(k), 0.001_rp*h_refs(j), eta_zz, &
+               & t_grid(:,i), h_grid(:,i), dhidzij(:,i) )
+          end if
         else
-          call hydrostatic ( lat, Grids_tmp%zet_basis, t(:,j), &
-             & z_grid, z_refs(i), 0.001_rp*h_refs(j), t_grid(:,i), h_grid(:,i), &
-             & dhidzij(:,i) )
+          if ( present(ddhdhdtl0) ) then ! needs dhidtlm
+            call hydrostatic ( lat, Grids_tmp%zet_basis, t(:,j), &
+               & z_grid, z_refs(k), 0.001_rp*h_refs(j), t_grid(:,i), h_grid(:,i), &
+               & dhidzij(:,i), dhidtlm(:,:,i), ddhdhdtl0(:,:,i) )
+          else if ( present(dhidtlm) ) then
+            call hydrostatic ( lat, Grids_tmp%zet_basis, t(:,j), &
+               & z_grid, z_refs(k), 0.001_rp*h_refs(j), t_grid(:,i), h_grid(:,i), &
+               & dhidzij(:,i), dhidtlm(:,:,i) )
+          else
+            call hydrostatic ( lat, Grids_tmp%zet_basis, t(:,j), &
+               & z_grid, z_refs(k), 0.001_rp*h_refs(j), t_grid(:,i), h_grid(:,i), &
+               & dhidzij(:,i) )
+          end if
         end if
       end do
     end associate
@@ -274,6 +305,9 @@ contains
 end module Two_D_Hydrostatic_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.32  2018/05/14 23:32:40  vsnyder
+! Change to sparse eta representation
+!
 ! Revision 2.31  2017/01/14 02:57:11  vsnyder
 ! Make Eta_ZZ polymorphic
 !

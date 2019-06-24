@@ -30,9 +30,9 @@ contains
 !---------------------------------------------------------------------------
 
   ! -----------------------------------------  Get_Chi_Angles_All  -----
-  subroutine Get_Chi_Angles_All ( sc_geoc_alt, tan_index_refr, tan_ht, &
-             & phi_tan, Req, elev_offset, ptg_angle, dx_dh, dh_dz, tan_dh_dt, &
-             & tan_d2h_dhdt, dx_dt, d2x_dxdt )
+  subroutine Get_Chi_Angles_All ( SC_Geoc_Alt, Tan_Refr_Index, Inst_Refr_Index, &
+             & Tan_Ht, Phi_Tan, Req, Elev_Offset, Ptg_Angle, dX_dH, dH_dZ, &
+             & Tan_dH_dT, Tan_d2H_dHdT, dX_dT, d2X_dXdT )
 
   ! Set up array of pointing angles
 
@@ -43,7 +43,8 @@ contains
 
     real(rp), intent(in) :: SC_geoc_alt ! geocentric spacecraft(observer)
                                         ! altitude in km
-    real(rp), intent(in) :: Tan_index_refr ! tangent index of refraction - 1
+    real(rp), intent(in) :: Tan_Refr_Index ! Index of refraction - 1 at tangent
+    real(rp), intent(in) :: Inst_Refr_Index ! Index of refraction - 1 at instrument
     real(rp), intent(in) :: Tan_ht      ! tangent height relative to Req
     real(rp), intent(in) :: Phi_tan     ! tangent orbit plane projected
                                         ! geodetic angle in radians
@@ -81,7 +82,7 @@ contains
   ! Start code:
 
     ht = Req + tan_ht
-    Np1 = 1.0_rp + tan_index_refr
+    Np1 = 1.0_rp + tan_refr_index
 
     !{ Empirical formula (8.5): $H_s = R_s + 38.9014\,
     !  \sin 2(\phi_t-51^\circ\hspace{-4.2pt}.\hspace{1pt}6814 )$
@@ -114,7 +115,7 @@ contains
       !    \frac{ \text{d} N_t }{ \text{d} \zeta_t } = - \ln 10 ( N_t - 1 )$
 
       sinChi = x
-      q = Np1 - ht * tan_index_refr * Ln10 / dh_dz
+      q = Np1 - ht * tan_refr_index * Ln10 / dh_dz
     else                              ! min(ht,Req)/Req = ht/Req
 
       !{ $H_t < H^{\oplus}_t: ~~
@@ -150,8 +151,8 @@ contains
   end subroutine Get_Chi_Angles_All
 
   ! --------------------------------------  Get_Chi_Angles_Simple  -----
-  subroutine Get_Chi_Angles_Simple ( sc_geoc_alt, tan_index_refr, tan_ht, &
-             & phi_tan, Req, elev_offset, ptg_angle )
+  subroutine Get_Chi_Angles_Simple ( SC_Geoc_Alt, Tan_Refr_Index, Inst_Refr_Index, &
+             & Tan_Ht, Phi_Tan, Req, Elev_Offset, Ptg_Angle )
 
   ! Set up array of pointing angles
 
@@ -162,7 +163,8 @@ contains
 
     real(rp), intent(in) :: SC_geoc_alt ! geocentric spacecraft(observer)
                                         ! altitude in km
-    real(rp), intent(in) :: Tan_index_refr ! tangent index of refraction
+    real(rp), intent(in) :: Tan_Refr_Index ! Index of refraction - 1 at tangent
+    real(rp), intent(in) :: Inst_Refr_Index ! Index of refraction - 1 at instrument
     real(rp), intent(in) :: Tan_ht      ! tangent height relative to Req
     real(rp), intent(in) :: Phi_tan     ! tangent orbit plane projected
                                         ! geodetic angle in radians
@@ -187,7 +189,7 @@ contains
   ! Start code:
 
     ht = Req + tan_ht
-    Np1 = 1.0_rp + tan_index_refr
+    Np1 = 1.0_rp + tan_refr_index
 
     !{ Empirical formula: $H_s = R_s + 38.9014\,
     !  \sin 2(\phi_t-51^\circ\hspace{-4.2pt}.\hspace{1pt}6814 )$
@@ -234,9 +236,9 @@ contains
   end subroutine Get_Chi_Angles_Simple
 
   ! --------------------------------  Get_Chi_Angles_Simple_Deriv  -----
-  subroutine Get_Chi_Angles_Simple_Deriv ( sc_geoc_alt, tan_index_refr, tan_ht, &
-             & phi_tan, Req, elev_offset, ptg_angle, &
-             & tan_dh_dt, tan_d2h_dhdt, dx_dt, d2x_dxdt )
+  subroutine Get_Chi_Angles_Simple_Deriv ( SC_Geoc_Alt, Tan_Refr_Index, &
+             & Inst_Refr_Index, Tan_Ht, Phi_Tan, Req, Elev_Offset, Ptg_Angle, &
+             & Tan_dH_dT, Tan_d2H_dHdT, dX_dT, d2X_dXdT )
 
   ! Set up array of pointing angles
 
@@ -247,7 +249,8 @@ contains
 
     real(rp), intent(in) :: SC_geoc_alt ! geocentric spacecraft(observer)
                                         ! altitude in km
-    real(rp), intent(in) :: Tan_index_refr ! tangent index of refraction
+    real(rp), intent(in) :: Tan_Refr_Index ! Index of refraction - 1 at tangent
+    real(rp), intent(in) :: Inst_Refr_Index ! Index of refraction - 1 at instrument
     real(rp), intent(in) :: Tan_ht      ! tangent height relative to Req
     real(rp), intent(in) :: Phi_tan     ! tangent orbit plane projected
                                         ! geodetic angle in radians
@@ -279,7 +282,7 @@ contains
   ! Start code:
 
     ht = Req + tan_ht
-    Np1 = 1.0_rp + tan_index_refr
+    Np1 = 1.0_rp + tan_refr_index
 
     !{ Empirical formula: $H_s = R_s + 38.9014\,
     !  \sin 2(\phi_t-51^\circ\hspace{-4.2pt}.\hspace{1pt}6814 )$
@@ -327,9 +330,11 @@ contains
   ! Set up: dx_dt, d2x_dxdt arrays for temperature derivative computations
   ! (NOTE: These entities have NO PHI dimension, so take the center Phi in dh_dt)
 
-    tp = tan(ptg_angle)
-    dx_dt = tp * tan_dh_dt / ht
-    d2x_dxdt = tp * dx_dt + tan_d2h_dhdt
+    if ( present(dx_dt) .and. present(d2x_dxdt) ) then
+      tp = tan(ptg_angle)
+      dx_dt = tp * tan_dh_dt / ht
+      d2x_dxdt = tp * dx_dt + tan_d2h_dhdt
+    end if
 
   end subroutine Get_Chi_Angles_Simple_Deriv
 
@@ -345,6 +350,9 @@ contains
 
 end module Get_Chi_Angles_m
 ! $Log$
+! Revision 2.24  2019/02/28 01:58:18  vsnyder
+! More TeXnicalities only
+!
 ! Revision 2.23  2019/02/28 01:45:14  vsnyder
 ! TeXnicalities only
 !
