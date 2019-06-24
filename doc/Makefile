@@ -176,7 +176,7 @@ include $(CUSTOM)/$(MLSF95).$(MLSPLAT)
 # ========================================================================
 
 clean:
-	rm -fr *.dvi *.pdf $(DVIDIR) $(PDFDIR) $(LOGDIR) $(TEXDIR)
+	rm -fr *.dvi *.pdf *.log *.aux *.bbl $(DVIDIR) $(PDFDIR) $(LOGDIR) $(TEXDIR)
 
 depends:
 	$(UTILDIR)/makemakedep.sh -s tex -o dvi -p Makefile.dep.1 \
@@ -245,6 +245,9 @@ update:
 
 # ========================================================================
 # $Log$
+# Revision 1.7  2019/06/14 16:28:22  pwagner
+# Seems to work better this way
+#
 # Revision 1.6  2019/05/31 20:05:13  pwagner
 # May build eps filees from jpg (assuming convert is in path)
 #
