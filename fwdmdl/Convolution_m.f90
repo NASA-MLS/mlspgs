@@ -480,8 +480,7 @@ contains
     ! Grids_F is only needed for H2O, for calculating refractive index.
     ! This is only used for convolution, which is done for both sidebands.
     call get_chi_out ( ptan%values(:,maf), phitan%values(:,maf)*deg2rad,  &
-       & scGeocAlt%values(:,maf), Grids_tmp,                              &
-       & spread(refGPH%template%surfs(1,1),1,windowFinish-windowStart+1), &
+       & scGeocAlt%values(:,maf), Grids_tmp, refGPH%template%surfs(1,1),  &
        & refGPH%values(1,windowStart:windowFinish), 0.0_rp,               &
        & req_out, grids_f, h2o_ind, tan_chi_out, dh_dz_out, dx_dh_out,    &
        & dxdt_tan=dxdt_tan, d2xdxdt_tan=d2xdxdt_tan )
@@ -492,8 +491,7 @@ contains
     ! Grids_tmp is only needed for H2O, for calculating refractive index.
     ! This is only used for convolution, which is done for both sidebands.
     call get_chi_out ( tan_press(1:1), tan_phi(1:1),                      &
-       & est_scgeocalt(1:1), Grids_tmp,                                   &
-       & spread(refGPH%template%surfs(1,1),1,windowFinish-windowStart+1), &
+       & est_scgeocalt(1:1), Grids_tmp, refGPH%template%surfs(1,1),       &
        & refGPH%values(1,windowStart:windowFinish), 0.0_rp,               &
        & req_out(1:1), grids_f, h2o_ind, surf_angle, one_dhdz, one_dxdh,  &
        & dxdt_tan=dxdt_surface, d2xdxdt_tan=d2xdxdt_surface )
@@ -528,6 +526,9 @@ contains
 end module Convolution_m
 
 ! $Log$
+! Revision 2.13  2019/06/24 23:28:16  pwagner
+! Updated to reflect TA-01-143
+!
 ! Revision 2.12  2019/04/17 00:08:50  vsnyder
 ! Remove obsolete comments about units of SCgeocAlt and RefGPH
 !
