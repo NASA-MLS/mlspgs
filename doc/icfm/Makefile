@@ -58,7 +58,7 @@ vpath %.pdf $(PDFDIR)
 	mv $*.log $(LOGDIR)
 
 .dvi.pdf:
-	dvipdf $(DVIDIR)/$<
+	dvipdf $(DVIDIR)/$*.dvi
 	mv $@ $(PDFDIR)
 
 # Bugs and limitations:
@@ -124,6 +124,9 @@ update:
 
 # ========================================================================
 # $Log$
+# Revision 1.1  2015/08/11 00:26:36  pwagner
+# After switching away from MakeFC
+#
 # Revision 1.1  2011/05/31 22:10:47  pwagner
 # First commit
 #
