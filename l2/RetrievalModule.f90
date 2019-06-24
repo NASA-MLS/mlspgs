@@ -27,6 +27,11 @@ module RetrievalModule
        "$RCSfile$"
 !---------------------------------------------------------------------------
 
+  ! Aitken acceleration code was originally defective, in that DX was not
+  ! being multiplied by the Aitken parameter AJ%CAIT.  If Do_Aitken is set
+  ! true, Aitken acceleration is actually done.
+  logical, parameter :: Do_Aitken = .false.
+
 contains
 
   ! ---------------------------------------------------  Retrieve  -----
@@ -1455,29 +1460,28 @@ repeat_loop: do ! RepeatLoop
     end subroutine GetInBounds
 
     ! -------------------------------------------------  My_NWTDB  -----
-    subroutine My_NWTDB ( AJ, Width, Level, Why )
+    subroutine My_NWTDB ( AJ, Width, Why )
       use DNWT_Module, only: NWT_T, NWTDB
       use DNWT_Clone, only: ALT_NWTDB
       type (NWT_T), intent(in) :: AJ
       integer, intent(in), optional :: Width
-      integer, intent(in), optional :: Level
       character(len=*), intent(in), optional :: Why
       if ( method == l_newtonian ) then
-        call nwtdb ( aj, width, level, why )
+        call nwtdb ( aj, width, why )
       else
-        call alt_nwtdb ( aj, width, level, why )
+        call alt_nwtdb ( aj, width, why )
       end if
     end subroutine My_NWTDB
 
     ! ---------------------------------------------  NewtonSolver  -----
     subroutine NewtonSolver
 
-      use DNWT_MODULE, only: FlagName, NF_AITKEN, NF_BEST, NF_BIGGEST_FLAG, &
-      & NF_DX, NF_DX_AITKEN, NF_EVALF, NF_EVALJ, NF_FANDJ, NF_GMOVE, NF_LEV, &
-      & NF_NEWX, NF_SMALLEST_FLAG, NF_SOLVE, NF_START, NF_TOLX, NF_TOLF, &
-      & NF_TOLX_BEST, NF_TOO_SMALL, NWT_T, RK
-      use DNWT_Module, only: NWT, NWTA, NWTOP
-      use DNWT_Clone, only: ALT_NWT, ALT_NWTA, ALT_NWTOP ! SIMPLE
+      use DNWT_MODULE, only: FlagName, NF_Aitken, NF_Best, NF_Biggest_Flag, &
+      & NF_DX, NF_DX_Aitken, NF_EvalF, NF_EvalJ, NF_FandJ, NF_Gmove, NF_Lev, &
+      & NF_NewX, NF_Smallest_Flag, NF_Solve, NF_Start, NF_TolX, NF_TolF, &
+      & NF_TolX_Best, NF_Too_Small, NWT_t, NWT_Options, RK
+      use DNWT_Module, only: NWT, NWTA
+      use DNWT_Clone, only: ALT_NWT, ALT_NWTA ! SIMPLE
       use Dump_0, only: dump
       use ForwardModelWrappers, only: ForwardModel
       use Forwardmodelintermediate, only: forwardmodelstatus_t
@@ -1573,8 +1577,7 @@ repeat_loop: do ! RepeatLoop
       integer :: NumNewt                ! Number of Newton moves
       integer :: NWT_Flag               ! Signal from NWT, q.v., indicating
                                         ! the action to take.
-      integer :: NWT_Opt(20)            ! Options for NWT, q.v.
-      real(rk) :: NWT_Xopt(20)          ! Real parameters for NWT options, q.v.
+      type(nwt_options) :: NWT_Opt      ! Options for NWT, q.v.
       integer :: PreserveMatrixName     ! Temporary name store
       integer :: Prev_NWT_Flag          ! Previous value of NWT_Flag
       type(vector_T) :: Q               ! Used to calculate Marquardt parameter
@@ -1636,12 +1639,13 @@ repeat_loop: do ! RepeatLoop
       foundBetterState = ( maxJacobians == 0 )
       chunk%abandoned = .false.
       ! Set options for NWT
-      nwt_opt(1:9) = (/  15, 1,      17, 2,      18, 3,      11, 4, 0 /)
-      nwt_xopt(1:4) = (/ toleranceF, toleranceA, toleranceR, initLambda /)
+      nwt_opt = nwt_options ( relsf=toleranceF, tolxa=toleranceA, &
+                            & tolxr=toleranceR, spstrt=initLambda, &
+                            & spmini=lambdaMin )
       if ( method == l_newtonian ) then
-        call nwt ( nwt_flag, aj, nwt_xopt, nwt_opt )
+        call nwt ( nwt_flag, aj, nwt_opt )
       else
-        call alt_nwt ( nwt_flag, aj, nwt_xopt, nwt_opt )
+        call alt_nwt ( nwt_flag, aj, nwt_opt )
       end if
       ! Create the matrix for the Cholesky factor of the normal equations
       call createEmptyMatrix ( factored%m, &
@@ -1722,7 +1726,6 @@ repeat_loop: do ! RepeatLoop
       call copyVector ( v(bestX), v(x) ) ! bestX = x to start things off
       prev_nwt_flag = huge(0)
       loopCounter = 0
-      aj%sqmin = lambdaMin
       atBest = .false.
 NEWT: do ! Newton iteration
         loopCounter = loopCounter + 1
@@ -1741,13 +1744,7 @@ NEWT: do ! Newton iteration
             & numGrad=numGrad, numJ=numJ, numNewt=numNewt, nwt_flag=nwt_flag, &
             & jacobian_rows=jacobian_rows, jacobian_cols=jacobian_cols )
         else ! not taking a special iteration to get J
-            if ( d_nin ) then ! Turn on NWTA's internal output
-              if ( method == l_newtonian ) then
-                call nwtop ( aj, (/ 1, 1, 0 /), nwt_xopt )
-              else
-                call alt_nwtop ( aj, (/ 1, 1, 0 /), nwt_xopt )
-              end if
-            end if
+            if ( d_nin )aj%o%k1it = 1 ! Turn on NWTA's internal output
           if ( method == l_newtonian ) then
             call nwta ( nwt_flag, aj )
           else
@@ -2370,9 +2367,9 @@ NEWT: do ! Newton iteration
         !   \item[AJ\%DXN] = L2 norm of ``candidate DX'';
         !   \item[AJ\%GDX] = (Gradient) .dot. (``candidate DX'')
         ! \end{description}
-          aj%sq = max(aj%sq, lambdaMin)
-          call updateDiagonal ( normalEquations, aj%sq**2 - lambda**2 )
-          lambda = aj%sq
+          call updateDiagonal ( normalEquations, &
+                              & max(aj%sq, lambdaMin)**2 - lambda**2 )
+          lambda = max(aj%sq, lambdaMin)
           ! factored%m%block => normalEquations%m%block ! to save space
           ! Can't do the above because we need to keep the normal equations
           ! around, in order to subtract Levenberg-Marquardt and apriori
@@ -2543,13 +2540,7 @@ NEWT: do ! Newton iteration
               ! call output ( aj%dxdxl, format='(1pe14.7)', advance='yes' )
               end if
             end if
-            if ( d_ndb >= 0 ) then
-              if ( d_sca .or.  d_ndb >= 1 ) then
-                call my_nwtdb ( aj, width=9, why='After Solve' )
-              else
-                call my_nwtdb ( aj, width=9, level=0, why='After Solve' )
-              end if
-            end if
+            if ( d_ndb >= 0 ) call my_nwtdb ( aj, width=9, why='After Solve' )
         case ( nf_newx ) ! ................................  NEWX  .....
           ! Set X = X + DX
           !     AJ%AXMAX = MAXVAL(ABS(X)),
@@ -2640,14 +2631,14 @@ NEWT: do ! Newton iteration
               call output ( aj%gradnb * aj%gfac, advance='yes' )
             end if
             if ( d_gvec ) call dump ( v(dxUnscaled), name='Gradient move from best X' )
-        case ( nf_best ) ! ................................  BEST  .....
+        case ( nf_best ) ! ................................  Best  .....
         ! Set "Best X" = X, "Best Gradient" = Gradient
           atBest = .true.
           foundBetterState = .true.
           bestAJ = aj
           call copyVector ( v(bestX), v(x) ) ! bestX = x
           call copyVector ( v(bestGradient), v(gradient) ) ! bestGradient = gradient
-        case ( nf_aitken ) ! ............................  AITKEN  .....
+        case ( nf_aitken ) ! ............................  Aitken  .....
         ! Set DX = DX - "Candidate DX",
         !     AJ%DXDX = dot_product( DX, DX )
         ! IF ( AJ%DXDX /= 0.0 ) &
@@ -2681,17 +2672,22 @@ NEWT: do ! Newton iteration
           end if
           call copyVector ( v(dx), v(candidateDX) ) ! dx = candidateDX
           ! v(dxUnscaled) was computed during nf_solve
-        case ( nf_dx_aitken ) ! ......................  DX_AITKEN  .....
+        case ( nf_dx_aitken ) ! ......................  DX_Aitken  .....
           numNewt = numNewt + 1
           if ( got(f_diagnostics) ) call FillDiagVec ( diagnostics, aj, &
             & numGrad=numGrad, numJ=numJ, numNewt=numNewt, nwt_flag=nwt_flag, &
             & jacobian_rows=jacobian_rows, jacobian_cols=jacobian_cols )
-          ! dx = aj%cait * dxUnscaled:
-          call scaleVector ( v(dxUnscaled), aj%cait, v(dx) )
+!!! This is needed for correct Aitken acceleration, but Bill Read doesn't
+!!! like the results:
+          ! dxUnscaled = aj%cait * dxUnscaled:
+          if ( do_Aitken ) call scaleVector ( v(dxUnscaled), aj%cait )
+          ! dx = aj%cait * candidateDX:
           call scaleVector ( v(candidateDX), aj%cait, v(dx) )
-          ! We don't need to compute aj%dxdxl because we only take Aitken
-          ! accelerated moves when there is no Levenberg-Marquardt
-          ! stabilization, in which case NWTA doesn't use aj%dxdxl.
+          if ( .not. aj%starting ) then
+            call copyVectorMask ( v(dx), v(x) )
+            call copyVectorMask ( v(candidateDX), v(x) )
+            aj%dxdxl = v(dx) .mdot. v(candidateDX)
+          end if
             if ( d_sca ) then
               call output ( ' aj%cait = ' )
               call output ( aj%cait, format='(1pe14.7)', advance='yes' )
@@ -2747,7 +2743,7 @@ NEWT: do ! Newton iteration
             & matrixDatabase=(/ factored%m, normalEquations%m /) )
 
         end if
-          if ( d_ndb >= 2 ) call my_nwtdb ( aj, width=9 )
+          if ( d_ndb >= 2 ) call my_nwtdb ( aj, width=9, why='Bottom' )
         prev_nwt_flag = nwt_flag
       end do NEWT ! Newton iteration
 
@@ -2758,13 +2754,8 @@ NEWT: do ! Newton iteration
           & call dump ( (/ aj%fnorm, chiSqNorm, dof /) , &
           & '     | F |    chi^2/DOF           DOF ', options='c' )
 
-        if ( d_ndb >= 1 ) then
-          if ( d_sca .or. d_ndb >= 2 ) then
-            call my_nwtdb ( aj, width=9, why = "After Newton iteration" )
-          else
-            call my_nwtdb ( aj, width=9, why = "After Newton iteration" )
-          end if
-        end if
+        if ( d_ndb >= 1 ) &
+          & call my_nwtdb ( aj, width=9, why = "After Newton iteration" )
 
       if ( got(f_diagnostics) .and. numJ > maxJacobians ) &
         & call FillDiagVec ( diagnostics, aj, &
@@ -2978,7 +2969,7 @@ NEWT: do ! Newton iteration
 !     block ! for forced gradient move version, followed by CYCLE NEWT
         call MLSMessage ( MLSMSG_Warning, ModuleName, &
           & 'Gradient move forced due to ' // trim(why) )
-        if ( d_ndb >= 2 ) call my_nwtdb ( aj, width=9 )
+        if ( d_ndb >= 2 ) call my_nwtdb ( aj, width=9, why='Failed' )
         prev_nwt_flag = nwt_flag
         nwt_flag = nf_start ! Force gradient move
 !     end block
@@ -3012,6 +3003,9 @@ NEWT: do ! Newton iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.364  2019/06/24 23:29:26  pwagner
+! Updated to reflect TA-01-143
+!
 ! Revision 2.363  2018/11/20 01:09:43  vsnyder
 ! Always pass AJ to My_NWTDB.  It's no longer optional to DNWTDB
 !
