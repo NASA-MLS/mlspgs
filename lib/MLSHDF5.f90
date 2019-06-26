@@ -1909,7 +1909,7 @@ contains ! ======================= Public Procedures =========================
 
   ! ------------------------------------  GetHDF5Attribute_string  -----
   subroutine GetHDF5Attribute_string ( MLSFile, name, value )
-    use HDF5, only: H5TIs_Variable_Str_F
+    use HDF5, only: H5TIs_Variable_Str_F, H5SGet_Simple_Extent_NPoints_F
     use, intrinsic :: Iso_C_Binding
     type (MLSFile_T)   :: MLSFile
     character (len=*), intent(in) :: NAME   ! Name of attribute
@@ -6450,6 +6450,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.148  2019/06/26 22:56:10  pwagner
+! Needed H5SGet_Simple_Extent_NPoints_F to fix sometime link error
+!
 ! Revision 2.147  2019/06/06 23:50:31  pwagner
 ! Can now read string-valued attributes with variable lengths
 !
