@@ -4,7 +4,7 @@
 #
 # Assumes that:
 
-# (1) 
+# (1) Either
 #  ----
 # (a) It has been called from PGS_PC_Shell.sh as the (pge) in
 #  PGS_PC_Shell.sh (pge) 0111 (PCF_file) 25 -v; or
@@ -26,7 +26,7 @@
 # (5) PGE_ROOT is defined as an environment variable
 #     It should be the path where the science_env.sh script is kept
 # (6) OTHEROPTS is defined as an environment variable
-#     It would contain other meaningful runtimeoptions, 
+#     It would contain other meaningful runtime options, 
 #       e.g. OTHEROPTS="--skipRetrieval"
 #
 # Copyright 2005, by the California Institute of Technology. ALL
@@ -40,9 +40,15 @@
 # export authority as may be required before exporting such information to
 # foreign countries or providing access to foreign persons.
 
-# Now if the tool h5repack in PGE_BINARY_DIR
-# and if the current working directory houses the product files,
-# then as a final step repack them
+# At the end of the master task, if the tools
+#  h5repack 
+#  aug_hdfeos5
+# are in PGE_BINARY_DIR
+# and if either
+#   the current working directory ($cwd) or
+#   $cwd/outputs
+# houses the product files,
+# then as a final step repack and augment them with netCDF attributes.
 
 # usage: see (1) above
 
@@ -100,6 +106,31 @@ hide_files()
    mv $hide_files_result hidden
 }
 
+#---------------------------- logit
+# Either echo input string(s), or else append them to the master log file, 
+# or both
+# Which to do depends on $MUSTLOG
+
+logit()
+{
+   if [ "$dryrun" = "yes" ]
+   then
+     echo "$@"
+   else
+     case "$MUSTLOG" in
+     no )
+       echo "$@"
+       ;;
+     yes )
+       echo "$@" >> "$MLSL2PLOG"
+       ;;
+     both )
+       echo "$@" | tee -a "$MLSL2PLOG"
+       ;;
+     esac
+   fi
+}
+      
 #-------------- mycp ----------------
 # read each line of stdin
 # and then echo it to stdout
@@ -140,8 +171,8 @@ mycp()
 
 run_mlsl2_ntk()
 {
-  echo "Running mlsl2 master w/o toolkit"
-  echo "args $@"
+  logit "Running mlsl2 master w/o toolkit"
+  logit "args $@"
   # First a pre-flight run to check paths                               
   # If a problem, disclosed by exit status, exit before starting big run
   if [ "$CHECKPATHS" = "yes" ]                                          
@@ -151,8 +182,8 @@ run_mlsl2_ntk()
     if [ $return_status != $NORMAL_STATUS ]                             
     then                                                                
                                                                         
-       echo "Preflight checkPaths run ended badly"                      
-       echo "Possibly an error in pathnames; please check your l2cf"    
+       logit "Preflight checkPaths run ended badly"                      
+       logit "Possibly an error in pathnames; please check your l2cf"    
        exit 1                                                           
     fi                                                                  
   fi                                                                    
@@ -202,11 +233,9 @@ run_mlsl2_tk()
     if [ $return_status != $NORMAL_STATUS ]
     then
        cat $JOBDIR/master.l2cfname
-       echo "Preflight checkPaths run ended badly"
-       echo "Possibly an error in pathnames; please check your PCF"
+       logit "Preflight checkPaths run ended badly"
+       logit "Possibly an error in pathnames; please check your PCF"
        cat $JOBDIR/master.l2cfname >> "$MLSL2PLOG"
-       echo "Preflight checkPaths run ended badly" >> "$MLSL2PLOG"
-       echo "Possibly an error in pathnames; please check your PCF" >> "$MLSL2PLOG"
        exit 1
     fi
   fi
@@ -225,8 +254,7 @@ run_mlsl2_tk()
   # to trace provenance
   if [ "$HOSTNAME" = "" ]
   then
-    echo "Need HOSTNAME to trace provenance as ProductionLocation"
-    echo "Need HOSTNAME to trace provenance as ProductionLocation" >> "$MLSL2PLOG"
+    logit "Need HOSTNAME to trace provenance as ProductionLocation"
     exit 1
   fi
 
@@ -274,17 +302,18 @@ GZIPLEVEL="1"
 MLSL2PLOG="$JOBDIR/mlsl2p.log"
 #             ^^^---- "yes" if progress of chunks thru phases recorded
 
+MUSTLOG="both"
 if [ -f "$MLSL2PLOG" ]
 then
   mv $MLSL2PLOG $MLSL2PLOG.1
 fi
+echo "MLSL2PLOG " > "$MLSL2PLOG"
 
-echo "$MLSL2PLOG"
-echo "$MLSL2PLOG" > "$MLSL2PLOG"
+logit "$MLSL2PLOG"
 env | sort >> "$MLSL2PLOG"
 
 SAVEJOBSTATS="yes"
-#             ^^^---- "yes" if progress of chunks thru phases recorded
+#             ^^^---- "yes" if recording progress of chunks through each phase
 
 # In addition to whatever options and switches may be set by the environment
 # variable OTHEROPTS, the following are set:
@@ -303,30 +332,26 @@ verbose=`echo "$otheropts" | grep -i verbose`
 # Check that assumptions are valid
 if [ "$PGS_PC_INFO_FILE" = "" -a "$UsingPCF" != "" ]
 then
-  echo 'PGS_PC_INFO_FILE undefined' >> "$MLSL2PLOG"
-  echo 'PGS_PC_INFO_FILE undefined'
-  echo 'usage:'
-  echo 'PGS_PC_Shell.sh (pge) 0111 (PCF_file) 25 -v'
+  logit 'PGS_PC_INFO_FILE undefined'
+  logit 'usage:'
+  logit 'PGS_PC_Shell.sh (pge) 0111 (PCF_file) 25 -v'
   exit 1
 elif [ "$PVM_HOSTS_INFO" = "" ]
 then
-  echo 'PVM_HOSTS_INFO undefined' >> "$MLSL2PLOG"
-  echo 'PVM_HOSTS_INFO undefined'
-  echo 'It should be the path and name of the host file'
-  echo 'a text file containing the hosts available'
-  echo 'for running the slave tasks, one host per line'
+  logit 'PVM_HOSTS_INFO undefined' 
+  logit 'It should be the path and name of the host file'
+  logit 'a text file containing the hosts available'
+  logit 'for running the slave tasks, one host per line'
   exit 1
 elif [ "$JOBDIR" = "" ]
 then
-  echo 'JOBDIR undefined' >> "$MLSL2PLOG"
-  echo 'JOBDIR undefined'
-  echo 'It should be the path where the job is run'
+  logit 'JOBDIR undefined' 
+  logit 'It should be the path where the job is run'
   exit 1
 elif [ "$PGE_ROOT" = "" ]
 then
-  echo 'PGE_ROOT undefined' >> "$MLSL2PLOG"
-  echo 'PGE_ROOT undefined'
-  echo 'It should be the path where the science_env.sh script is kept'
+  logit 'PGE_ROOT undefined' 
+  logit 'It should be the path where the science_env.sh script is kept'
   exit 1
 fi
 
@@ -344,13 +369,11 @@ fi
 
 if [ ! -x "$PGE_BINARY"  ]
 then
-  echo "$PGE_BINARY doesn't exist!" >> "$MLSL2PLOG"
-  echo "$PGE_BINARY doesn't exist!"
+  logit "$PGE_BINARY doesn't exist!"
   exit 1
 elif [ ! -r "$PGE_SCRIPT_DIR/slavetmplt.sh"  ]
 then
-  echo "slavetmplt.sh not in $PGE_SCRIPT_DIR" >> "$MLSL2PLOG"
-  echo "slavetmplt.sh not in $PGE_SCRIPT_DIR"
+  logit "slavetmplt.sh not in $PGE_SCRIPT_DIR"
   exit 1
 fi
 
@@ -389,7 +412,7 @@ fi
 
 # Oops, this stomps on any PCF we might have selected
 # so save it to be restored
-echo "Original PCF: $PGS_PC_INFO_FILE" >> "$MLSL2PLOG"
+logit "Original PCF: $PGS_PC_INFO_FILE"
 PCF=$PGS_PC_INFO_FILE
 if [ -r "$JOBDIR/job.env"  ]
 then
@@ -404,7 +427,7 @@ then
 fi
 PGS_PC_INFO_FILE=$PCF
 export PGS_PC_INFO_FILE
-echo "new PCF: $PGS_PC_INFO_FILE" >> "$MLSL2PLOG"
+logit "new PCF: $PGS_PC_INFO_FILE" 
 
 # The logs will be written as separate files into ${JOBDIR}/pvmlog
 # before being catenated at end of run
@@ -463,7 +486,7 @@ else
   # Check that we were called properly
   if [ ! -f "$l2cf" ]
   then
-    echo 'Usage (w/o toolkit): mlsl2p.sh l2cf_file'
+    logit 'Usage (w/o toolkit): mlsl2p.sh l2cf_file'
     exit 1
   fi
   SLV_SUF=slave
@@ -481,9 +504,9 @@ else
 
   run_mlsl2_ntk
 fi
-echo SAVEJOBSTATS $SAVEJOBSTATS
-echo masterlog $masterlog
-echo PGE_SCRIPT_DIR/jobstat-sips.sh $PGE_SCRIPT_DIR/jobstat-sips.sh
+logit SAVEJOBSTATS $SAVEJOBSTATS
+logit masterlog $masterlog
+logit PGE_SCRIPT_DIR/jobstat-sips.sh $PGE_SCRIPT_DIR/jobstat-sips.sh
 # Save record of progress thru phases
 if [ -f "$masterlog" ]
 then
@@ -499,7 +522,7 @@ then
   then
     JOBSOPTS="-v $JOBSOPTS"
   fi
-  echo "$PGE_SCRIPT_DIR/jobstat-sips.sh $JOBSOPTS"
+  logit "$PGE_SCRIPT_DIR/jobstat-sips.sh $JOBSOPTS"
   $PGE_SCRIPT_DIR/jobstat-sips.sh $JOBSOPTS > "$JOBSTATSFILE"
 else
   JOBSTATSFILE="none"
@@ -509,8 +532,7 @@ fi
 LOGFILE="${JOBDIR}/pvmlog/mlsl2.log"
 if [ ! -w "$LOGFILE"  ]
 then
-  echo "catenating slave logs in $LOGFILE"
-  echo "catenating slave logs in $LOGFILE" >> "$MLSL2PLOG"
+  logit "catenating slave logs in $LOGFILE"
   echo "catenating slave logs in $LOGFILE" > "$LOGFILE".1
   # This sleep is to give slave tasks extra time to complete stdout
   sleep 20
@@ -554,10 +576,8 @@ then
       else
         filter=""
       fi
-      echo "Packing $file into $packed"
-      echo "Packing $file into $packed" >> "$MLSL2PLOG"
-      echo $H5REPACK -i "$file" -o "$packed" $filter
-      echo $H5REPACK -i "$file" -o "$packed" $filter >> "$MLSL2PLOG"
+      logit "Packing $file into $packed"
+      logit $H5REPACK -i "$file" -o "$packed" $filter
       $H5REPACK -i "$file" -o "$packed" $filter
       # Here we could insert some check involving h5diff if we were dubious
       mv "$packed" "$file"
@@ -582,8 +602,7 @@ then
   do
     if [ -w "$file" ]
     then
-      echo $NETCDFAUGMENT $file
-      echo $NETCDFAUGMENT $file >> "$MLSL2PLOG"
+      logit $NETCDFAUGMENT $file
       $NETCDFAUGMENT $file
     fi
   done
@@ -597,12 +616,19 @@ then
   a=`$MISALIGNMENT -silent $file`
   if [ "$a" != "" ]
   then
-    echo $a
-    echo "Misalignment detected"
-    echo hide_files *.he5 *.met *.xml *.h5
+    logit $a
+    logit "Misalignment detected"
+    logit hide_files *.he5 *.met *.xml *.h5
     hide_files *.he5 *.met *.xml *.h5
     return_status=99
   fi
+fi
+
+# End toolkitless run's log file with a grep-able sign-off message
+if [ "$UsingPCF" = "" ]
+then
+  logit " "
+  logit "mlsl2p.sh: return from PGE: $return_status"
 fi
 
 if [ $return_status != $NORMAL_STATUS ]
@@ -613,6 +639,9 @@ else
 fi
 
 # $Log$
+# Revision 1.38  2019/04/18 16:22:08  pwagner
+# May evaluate variables in opts file if USEOPTSENV is set; drop slavetmpltntk.sh because slavetmplt.sh now does double-duty
+#
 # Revision 1.37  2018/03/01 00:21:24  pwagner
 # Now handles both --tk and --ntk cases
 #
