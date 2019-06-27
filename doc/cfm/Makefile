@@ -93,7 +93,7 @@ ${NEAROBJS}: ${BBL} ${f9h_sources}
 # ========================================================================
 
 clean:
-	rm -fr *.dvi *.pdf $(DVIDIR) $(PDFDIR) ${AUX} ${BBL} cfm
+	rm -fr *.dvi *.pdf Makefile.dep $(DVIDIR) $(PDFDIR) ${AUX} ${BBL} cfm
 
 depends:
 	$(UTILDIR)/makemakedep.sh -s tex -o dvi -p Makefile.dep.1 -S cfm.tex \
@@ -124,6 +124,9 @@ update:
 
 # ========================================================================
 # $Log$
+# Revision 1.3  2019/06/24 17:49:53  pwagner
+# Works more reliably like this
+#
 # Revision 1.2  2015/08/11 00:25:00  pwagner
 # Fixed a few errors
 #

@@ -93,7 +93,7 @@ ${NEAROBJS}: ${BBL} ${pro_sources}
 # ========================================================================
 
 clean:
-	rm -fr *.dvi *.pdf $(DVIDIR) $(PDFDIR) ${AUX} ${BBL} icfm
+	rm -fr *.dvi *.pdf Makefile.dep $(DVIDIR) $(PDFDIR) ${AUX} ${BBL} icfm
 
 depends:
 	$(UTILDIR)/makemakedep.sh -s tex -o dvi -p Makefile.dep.1 -S icfm.tex \
@@ -124,6 +124,9 @@ update:
 
 # ========================================================================
 # $Log$
+# Revision 1.2  2019/06/24 17:45:48  pwagner
+# Works more reliably like this
+#
 # Revision 1.1  2015/08/11 00:26:36  pwagner
 # After switching away from MakeFC
 #

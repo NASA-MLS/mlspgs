@@ -21,7 +21,7 @@
 # tex files in this directory         'make help--doc'
 # tex files in cfm                    'make help--cfm'
 # tex files in icfm                   'make help--icfm'
-# tex files in icfm                   'make help--l2cf'
+# tex files in l2cf                   'make help--l2cf'
 # --------------- End main help
 # --------------- doc help
 # To build all the tex files in this directory type
@@ -176,7 +176,7 @@ include $(CUSTOM)/$(MLSF95).$(MLSPLAT)
 # ========================================================================
 
 clean:
-	rm -fr *.dvi *.pdf *.log *.aux *.bbl $(DVIDIR) $(PDFDIR) $(LOGDIR) $(TEXDIR)
+	rm -fr *.dvi *.pdf *.log *.aux *.bbl Makefile.dep $(DVIDIR) $(PDFDIR) $(LOGDIR) $(TEXDIR)
 
 depends:
 	$(UTILDIR)/makemakedep.sh -s tex -o dvi -p Makefile.dep.1 \
@@ -245,6 +245,9 @@ update:
 
 # ========================================================================
 # $Log$
+# Revision 1.8  2019/06/24 18:48:01  pwagner
+# make clean is now more thorough
+#
 # Revision 1.7  2019/06/14 16:28:22  pwagner
 # Seems to work better this way
 #
