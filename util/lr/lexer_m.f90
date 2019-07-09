@@ -24,6 +24,9 @@ module LEXER_M
                           ENTER_TERMINAL, SET_SYMBOL, SYMBOL
   use SYMBOL_TYPES ! everything
   use TOGGLES, only: CON, EMIT, GEN, LEVELS, LEX, PAR, SYN, TAB, TOGGLE
+
+  implicit NONE
+
   private
 
   public :: Lexer
@@ -151,10 +154,7 @@ contains
       else
         class = more
       end if
-      if ( levels(lex) > 0 ) then
-        call output ( state, before='State = ' )
-        call output ( class, before=' Class = ', advance='yes' )
-      end if
+      if ( levels(lex) > 0 ) call tracing ( class )
 
 !     Recognize a token according to the following DFA.  Column labels are
 !     Classes, row labels are DFA states.  Table elements are DFA states or
@@ -248,18 +248,20 @@ contains
         case ( tog_ch );           state = tog; need = .true.
         case default
           call error ( unrec_char )
-          do ! swallow unknown characters, spaces and ends-of-lines
+          do ! swallow unknown characters, spaces, ends-of-lines, and EOF
             call get_char ( ch )
+            if ( levels(lex) > 0 ) call tracing ( classes(iachar(ch)) )
             select case ( classes(iachar(ch)) )
-            case ( more, spaces, eol_in )
+            case ( more, spaces, eol_in, eof_in )
           exit
             case default
             end select
           end do
-          string_index = enter_terminal ( '<aft>', t_aft_cont )
-          the_token = token( t_aft_cont, string_index, .false., &
-                           & where_t(file, source_start) )
           need = .false.
+          string_index = terminal_strings(t_unk_ch)
+          the_token = token( t_unk_ch, string_index, .false., &
+                           & where_t(file, source_start) )
+  exit ! main lexer loop.
         end select ! class
       case ( id )
         select case ( class )
@@ -308,7 +310,11 @@ contains
         if ( toggle(lex) ) then
           call dump_1_symbol ( string_index, advance='yes' )
         end if
-        state = start
+        string_index = terminal_strings(t_unk_pun)
+        the_token = token( t_unk_pun, string_index, .false., &
+                         & where_t(file, source_start) )
+        need = .false.
+    exit ! main lexer loop
       case ( contin )
         select case ( class )
         case ( cmt )
@@ -323,7 +329,7 @@ contains
             if ( ch == eol .or. ch == eof ) then
           exit; end if
           end do
-          string_index = enter_terminal ( '<aft>', t_aft_cont )
+          string_index = terminal_strings(t_aft_cont)
           the_token = token( t_aft_cont, string_index, .false., &
                            & where_t(file, source_start) )
     exit ! main lexer loop
@@ -341,7 +347,7 @@ contains
         select case ( class )
         case ( eof_in, eol_in )
           call clear_string
-          string_index = enter_terminal ( '<inc>', t_inc_str )
+          string_index = terminal_strings(t_inc_str)
           the_token = token( t_inc_str, string_index, .false., &
                            & where_t(file, source_start) )
     exit ! main lexer loop
@@ -367,9 +373,10 @@ contains
         select case ( class )
         case ( eof_in, eol_in )
           call clear_string
-          string_index = enter_terminal ( '<inc>', t_inc_str )
+          string_index = terminal_strings(t_inc_str)
           the_token = token( t_inc_str, string_index, .false., &
                            & where_t(file, source_start) )
+          
     exit ! main lexer loop
         case ( apost )
           call add_char ( ch )
@@ -469,6 +476,22 @@ contains
       end if
     end subroutine Lookup_Op
 
+    subroutine Tracing ( Class )
+      integer, intent(in) :: Class
+      call output ( state, before='State = ' )
+      call output ( ' Ch = ' )
+      if ( ch == EOL ) then
+        call output ( 'EOL' )
+      else if ( ch == EOF ) then
+        call output ( 'EOF' )
+      else
+        call output ( ch )
+      end if
+      call output ( source_line, before=' Line = ' )
+      call output ( source_column, before=' Column = ' )
+      call output ( class, before=' Class = ', advance='yes' )
+    end subroutine Tracing
+
   end subroutine LEXER
 
 !--------------------------- end bloc --------------------------------------
@@ -484,6 +507,9 @@ contains
 end module LEXER_M
 
 ! $Log$
+! Revision 1.1  2014/01/14 00:15:01  vsnyder
+! Initial commit of new module for new LR
+!
 ! Revision 2.28  2013/12/12 02:03:22  vsnyder
 ! Add some dumps to Check_Reserved_Word
 !
