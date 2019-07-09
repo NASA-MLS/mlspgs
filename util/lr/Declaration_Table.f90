@@ -25,7 +25,8 @@ module Declaration_Table
   public :: Decls
 
   ! Public declaration types
-  public :: Action, Nonterminal, Null_Decl, Terminal, Type_Names, Vocabulary
+  public :: Action, Empty, Nonterminal, Null_Decl, Terminal, Type_Names, &
+          & Vocabulary
 
   ! The type indices for declarations are such that when the symbol table
   ! is sorted, first on type and then on string value, the order will be
@@ -232,7 +233,11 @@ contains ! ====     Procedures     =====================================
     if ( symbol > ubound(symbol_decl,1) ) & ! Assume string_table is increased
       & call increase_symbol_decl
     decl = symbol_decl(symbol)
-    if ( decl == null_decl ) call output ( ' Not declared', advance='yes' )
+    if ( decl == null_decl ) then
+      call output ( symbol, 5 ); call output ( ': ' )
+      call display_string ( symbol )
+      call output ( ' Not declared', advance='yes' )
+    end if
     do while ( decl /= null_decl )
       call output ( decl, 4 )
       call output ( symbol, 5 ); call output ( ': ' )
@@ -341,3 +346,6 @@ contains ! ====     Procedures     =====================================
 end module Declaration_Table
 
 ! $Log$
+! Revision 1.1  2014/01/14 00:14:57  vsnyder
+! Initial commit of new module for new LR
+!
