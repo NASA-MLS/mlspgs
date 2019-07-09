@@ -717,7 +717,7 @@ contains ! =====     Public Procedures     =============================
     real(rk), dimension(:), pointer :: defaultIndex
     real(rk), dimension(:), pointer :: interpolatedIndex
     integer ::  hdfVersion
-    integer ::  status
+    ! integer ::  status
     character (len=NameLen) :: L1BItemName
     type (MLSFile_T), pointer             :: L1BFile
 
@@ -1032,9 +1032,9 @@ contains ! =====     Public Procedures     =============================
     use QTM_Output, only: Write_QTM_Unformatted
     use Toggles, only: Switches
     use Output_M, only: Output
-    use L1bData, only: L1bData_T, ReadL1BData, GetL1BFile, Namelen, &
-      & AssembleL1Bqtyname, Precisionsuffix, DeallocateL1BData, Dump
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
+    use L1bData, only: L1bData_T, ReadL1BData, Namelen, &
+      & AssembleL1Bqtyname, Dump
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use Geometry, only: To_XYZ
     
     type (MLSFile_T), dimension(:), pointer ::     FileDatabase
@@ -1317,13 +1317,6 @@ contains ! =====     Public Procedures     =============================
     logical :: Verbose
     logical :: WarnIfNoProfs
 
-    real(rk) :: A
-    real(rk) :: B
-    real(rk) :: C
-    real(rk) :: ImPart
-    real(rk) :: R1
-    real(rk) :: R2
-
     ! Executable code
     deebug = LetsDebug ( 'hgrid', 1 )
     call trace_begin ( me, "CreateRegularHGrid", &
@@ -1334,7 +1327,7 @@ contains ! =====     Public Procedures     =============================
     ! call outputNamedValue ( 'warnIfNoProfs', warnIfNoProfs, options='--Banner' )
     verbose = deebughere
     if ( present(onlyComputingOffsets) ) then
-      verbose = .not. onlyComputingOffsets
+      ! verbose = .not. onlyComputingOffsets
       warnIfNoProfs = warnIfNoProfs .or. onlyComputingOffsets
       deebughere = deebug .or. ( switchDetail(switches, 'hgrid') > 1 ) ! e.g., 'hgrid2' 
       ! verbose = verbose .or. deebughere
@@ -1473,7 +1466,6 @@ contains ! =====     Public Procedures     =============================
     end if
 
     ! Done with the L1B data
-    ! call DeallocateL1BData ( l1bField )
     call Deallocate_test ( fullArray, 'fullArray', ModuleName )
     call Deallocate_test ( fullArray2d, 'fullArray2d', ModuleName )
 
@@ -1563,7 +1555,6 @@ contains ! =====     Public Procedures     =============================
     if ( deebughere ) then
       call dump( (/incline/), 'Average inclination')
     end if
-    ! call DeallocateL1BData ( l1bField )
     call Deallocate_test ( fullArray, 'fullArray', ModuleName )
     call Deallocate_test ( scOrbIncl, 'scOrbIncl', ModuleName )
     hGrid%geodLat = phi_to_lat_deg ( hGrid%phi, incline )
@@ -2092,7 +2083,7 @@ contains ! =====     Public Procedures     =============================
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use Next_Tree_Node_M, only: Init_Next_Tree_Node, Next_Tree_Node, &
       & Next_Tree_Node_State
-    use Output_M, only: Blanks, Output, RevertOutput, SwitchOutput
+    use Output_M, only: Output, RevertOutput, SwitchOutput
     use Time_M, only: SayTime, Time_Now
     use Toggles, only: Gen, Levels, Toggle
     use Trace_M, only: Trace_Begin, Trace_End
@@ -2135,6 +2126,8 @@ contains ! =====     Public Procedures     =============================
     computingOffsets = .true.
     deebug = LetsDebug ( 'hgrid', 1 )
     verbose = beVerbose ( 'hgrid', 1 )
+    call OutputnamedValue ( 'deebug', deebug )
+    call OutputnamedValue ( 'verbose', verbose )
     call trace_begin ( me, "ComputeAllHGridOffsets", root, &
       & cond=toggle(gen) )
     if ( specialDumpFile /= ' ' ) &
@@ -2145,7 +2138,7 @@ contains ! =====     Public Procedures     =============================
     ! Finally we accumulate these to get offsets.
     noHGrids = 0
     nkeys = 0
-    if ( deebug ) then
+    if ( deebug .and. .false. ) then
       call outputNamedValue ( 'size(chunks)', size(chunks) )
       call output( 'Before loop of chunks', advance='yes' )
       call CheckForCorruptFileDatabase( filedatabase )
@@ -2197,15 +2190,15 @@ contains ! =====     Public Procedures     =============================
                 call time_now( t1 )
               endif
               ! call Dump ( filedatabase, details=2 )
-              if ( chunk == 1 .and. deebug ) then
+              if ( chunk == 1 .and. deebug .and. .false. ) then
                 call outputNamedValue( 'Before making dummyHGrid', chunk )
                 call CheckForCorruptFileDatabase( filedatabase )
               endif
               dummyHGrid = CreateHGridFromMLSCFInfo ( 0, key, filedatabase, l2gpDatabase, &
                 & processingRange, chunks(chunk), onlyComputingOffsets=.true., &
-                & check=(chunk == 1) .and. deebug )
+                & check=.false. )
                 ! & check=(chunk == 1) )
-              if ( chunk == 1 .and. deebug ) then
+              if ( chunk == 1 .and. deebug.and. .false.  ) then
                 call outputNamedValue( 'During chunk#', chunk )
                 call CheckForCorruptFileDatabase( filedatabase )
               endif
@@ -2233,7 +2226,7 @@ contains ! =====     Public Procedures     =============================
                   chunks(chunk)%hGridOffsets(hGrid) = dummyHGrid%noProfs - &
                   & dummyHGrid%noProfsLowerOverlap - dummyHGrid%noProfsUpperOverlap
                 end if
-                if ( deebug ) then
+                if ( deebug .and. .false. ) then
                   call outputNamedValue( 'During chunk#', chunk )
                   call CheckForCorruptFileDatabase( filedatabase )
                 endif
@@ -2248,6 +2241,12 @@ contains ! =====     Public Procedures     =============================
               else
                 chunks(chunk)%hGridOffsets(hGrid) = dummyHGrid%noProfs - &
                 & dummyHGrid%noProfsLowerOverlap - dummyHGrid%noProfsUpperOverlap
+                if ( verbose .and. &
+                  & any( dummyHGrid%phi(1,:) /= 0.) .and. key==9927 ) then
+                  call outputNamedValue( 'num Profs', dummyHGrid%noProfs )
+                  call outputNamedValue( 'key', key )
+                  call outputNamedValue( 'phis', dummyHGrid%phi(1,:) )
+                endif
               end if
               ! Sometimes we have been computing negative offsets which is .. offsetting
               if ( chunk > 0 ) &
@@ -2287,7 +2286,7 @@ contains ! =====     Public Procedures     =============================
           call Allocate_Test ( LowerOverlaps, noHGrids, &
             & 'LowerOverlaps', ModuleName )
         end do
-        if ( deebug ) then
+        if ( deebug.and. .false.  ) then
           call output( 'After 0th chunk', advance='yes' )
           call CheckForCorruptFileDatabase( filedatabase )
         endif
@@ -2295,7 +2294,7 @@ contains ! =====     Public Procedures     =============================
         call outputnamedValue ( 'nKeys, noHGrids', (/ nkeys, noHGrids /) )
         call MLSMessage ( MLSMSG_Error, ModuleName, &
           & 'Got a different number of hGrids than expected!' )
-      elseif ( chunk < 10 .and. deebug ) then
+      elseif ( chunk < 10 .and. deebug.and. .false.  ) then
         call outputNamedValue( 'After chunk#', chunk )
         call CheckForCorruptFileDatabase( filedatabase )
       end if
@@ -2419,12 +2418,14 @@ contains ! =====     Public Procedures     =============================
     end if
 
     do chunk = 1, size ( chunks )
+      if ( verbose ) call Dump ( firstHGrid(chunk), Details=1 )
       call DestroyHGridContents ( firstHGrid(chunk) )
     enddo
     call deAllocate_Test ( LowerOverlaps, 'LowerOverlaps', ModuleName )
     if ( specialDumpFile /= ' ' ) call revertOutput
     call trace_end ( "ComputeAllHGridOffsets", &
       & cond=toggle(gen) )
+    ! stop
   end subroutine ComputeAllHGridOffsets
 
   ! ------------------------------  ComputeNextChunksHGridOffsets  -----
@@ -2526,7 +2527,7 @@ contains ! =====     Public Procedures     =============================
      use Dates_Module, only: Gethid
      use HGridsDatabase, only: HGrid_T
      use HighOutput, only: BlanksToColumn, OutputNamedValue
-     use Machine, only: Crash_Burn
+     ! use Machine, only: Crash_Burn
      use MLSKinds, only: Rk => R8
      use Output_M, only: Blanks, NewLine, Output
 
@@ -2753,6 +2754,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.154  2019/07/09 22:26:19  pwagner
+! Reduce unwanted Checks ForCorruptFileDatabase
+!
 ! Revision 2.153  2018/08/06 20:24:15  pwagner
 ! Dont exit section loop in ComputeAllHGridOffsets w/o trace_end
 !
