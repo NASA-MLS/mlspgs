@@ -138,8 +138,8 @@ contains
         if (.not.reduce) then
           iptr = list(items(j)%set)%next
           if (iptr /= 0 .and. toggle(iachar('2')) /= 0) then
-            call blanks ( 13 )
-            call output ( 'Context: ' )
+            call blanks ( 12 )
+            call output ( 'Context:' )
             call pntlst (iptr, 23, 25)
           end if
         end if
@@ -317,6 +317,10 @@ contains
 end module Print_Set
 
 ! $Log$
+! Revision 1.5  2018/04/17 23:09:06  vsnyder
+! J actually was being used as a global variable, but that's confusing, so
+! pass it around as an argument.
+!
 ! Revision 1.4  2018/04/17 22:40:54  vsnyder
 ! Declare local DO variables
 !
