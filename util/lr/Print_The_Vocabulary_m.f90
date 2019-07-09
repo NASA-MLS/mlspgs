@@ -33,8 +33,9 @@ contains ! ====     Procedures     =====================================
     ! Sort the vocabulary, first on type ( (Terminal, Nonterminal,
     ! Vocabulary name, Action) and then on symbol text.
     ! Then print the sorted vocabulary
-    use Declaration_Table, only: Action, Declaration, Decls, Get_Decl, &
-      & Nonterminal, Terminal, Vocabulary
+
+    use Declaration_Table, only: Action, Declaration, Decls, Empty, Get_Decl, &
+      & Nonterminal, Null_Decl, Terminal, Vocabulary
     use Output_m, only: Newline, Output
     use String_Table, only: Get_String, How_Many_Strings, String_Length
     use Tables, only: First_Nonterminal, First_Terminal, Last_Nonterminal, &
@@ -44,7 +45,7 @@ contains ! ====     Procedures     =====================================
     integer, allocatable, intent(out) :: P(:) ! Permutation vector for sorting the vocabulary
 
     type(decls) :: Decl
-    integer :: First_Action, First_Vocab
+    integer :: First_Action, First_Undeclared, First_Vocab
     integer :: I, J
     character(120) :: Line
     integer :: N_Nonterminal, N_Terminal
@@ -62,6 +63,7 @@ contains ! ====     Procedures     =====================================
     first_action = huge(0)
     first_nonterminal = huge(0)
     first_terminal = huge(0)
+    first_undeclared = huge(0)
     first_vocab = huge(0)
     do i = 1, size(p)
       decl = get_decl(p(i),nonterminal)
@@ -75,11 +77,13 @@ contains ! ====     Procedures     =====================================
         first_terminal = min(first_terminal,i)
       case ( vocabulary )
         first_vocab = min(first_vocab,i)
+      case ( null_decl, empty )
+        first_undeclared = min(first_undeclared,i)
       end select
     end do
-    last_nonterminal = min(first_action-1,first_vocab-1,size(p))
+    last_nonterminal = min(first_action-1,first_vocab-1,first_undeclared-1,size(p))
 
-    n_nonterminal = first_vocab - first_nonterminal
+    n_nonterminal = min(first_vocab,first_undeclared) - first_nonterminal
     n_terminal = first_nonterminal - first_terminal
 
     nnterms = last_nonterminal - first_nonterminal + 1
@@ -307,3 +311,6 @@ contains ! ====     Procedures     =====================================
 end module Print_The_Vocabulary_m
 
 ! $Log$
+! Revision 1.1  2014/01/14 00:15:05  vsnyder
+! Initial commit of new module for new LR
+!
