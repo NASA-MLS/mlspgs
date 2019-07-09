@@ -343,6 +343,10 @@ module MLSStringLists               ! Module to treat string lists
     module procedure Unwrap_array, Unwrap_list
   end interface
 
+  interface Wrap
+    module procedure Wrap_array, Wrap_sca
+  end interface
+
   ! Public data
   character(len=16), public, save :: STRINGLISTOPTIONS = ' '
 
@@ -4352,7 +4356,7 @@ contains
   ! break       --                                      ' '       
   ! mode        -- 'soft' or 'hard'                    'hard'
   ! mode        -- don't break within quoted strings   (none)     
-  subroutine wrap( str, outstr, width, &
+  subroutine wrap_sca( str, outstr, width, &
     & inseparator, break, mode, quotes, addedLines )
     ! Args
     character (len=*), intent(in)                 :: str
@@ -4379,8 +4383,8 @@ contains
     outstr = str
     if ( len_trim(str) <= width ) return
     if ( .not. present(quotes) ) then
-      call wrap_noQuotes( str, outstr, width, &
-        & inseparator, break, mode, addedLines=addedLines )
+      call wrap_noQuotes( str, width, outstr, &
+        & inseparator=inseparator, break=break, mode=mode, addedLines=addedLines )
     else
       ! We will assume that no more than one kind of quote will appear in a str
       ! if this assumption needs to be relaxed the following will be inadequate
@@ -4402,8 +4406,8 @@ contains
           call GetStringElement ( str, partstr, j, countEmpty, quote )
           if ( deebug ) print *, 'j ', j, ' part: ' // trim(partstr)
           if ( mod(j, 2) == 1 ) then
-            call wrap_noQuotes( partstr, wrpartstr, width, &
-              & inseparator, break, mode, offset=offset, lastPos=lastPos, &
+            call wrap_noQuotes( partstr, width, wrpartstr, &
+              & inseparator=inseparator, break=break, mode=mode, offset=offset, lastPos=lastPos, &
               & addedLines=addedLines )
             if ( deebug ) print *, 'wrapped part: ' // trim(wrpartstr)
             if ( j == 1 ) then
@@ -4422,17 +4426,46 @@ contains
       enddo
       ! How did we arrive here?
       if ( noQuotes ) &
-        & call wrap_noQuotes( str, outstr, width, &
-          & inseparator, break, mode, addedLines=addedLines )
+        & call wrap_noQuotes( str, width, outstr, &
+          & inseparator=inseparator, break=break, mode=mode, addedLines=addedLines )
     endif
-  end subroutine wrap
+  end subroutine wrap_sca
 
-  subroutine wrap_noQuotes( str, outstr, width, &
+  subroutine wrap_array( str, outstrs, width, &
+    & inseparator, break, mode, quotes, addedLines )
+  ! Wrap str by putting each block in separate element of output array outstrs
+  ! so no element exceeds width
+    ! Args
+    character (len=*), intent(in)                 :: str
+    character (len=*), dimension(:), intent(out)  :: outstrs
+    integer, intent(in)                           :: width
+    character (len=*), optional, intent(in)       :: inseparator ! if not ','
+    character (len=*), optional, intent(in)       :: break ! if not ' '
+    character (len=*), optional, intent(in)       :: mode ! if not 'hard'
+    character (len=*), optional, intent(in)       :: quotes ! don't break quoted
+    integer, optional, intent(out)                :: addedLines ! by wrapping
+    ! Internal variables
+    ! Executable
+    if ( present(addedLines) ) addedLines = 0
+    outstrs(1) = str
+    if ( len_trim(str) <= width ) return
+    if ( .not. present(quotes) ) then
+      call wrap_noQuotes( str, width, outstrs=outstrs, &
+        & inseparator=inseparator, break=break, mode=mode, addedLines=addedLines )
+    else
+      print *, 'We cant really wrap arrays with quotes yet'
+      call wrap_noQuotes( str, width, outstrs=outstrs, &
+        & inseparator=inseparator, break=break, mode=mode, addedLines=addedLines )
+    endif
+  end subroutine wrap_array
+
+  subroutine wrap_noQuotes( str, width, outstr, outstrs, &
     & inseparator, break, mode, offset, lastPos, addedLines )
     ! Args
     character (len=*), intent(in)                 :: str
-    character (len=*), intent(out)                :: outstr
     integer, intent(in)                           :: width
+    character (len=*), optional, intent(out)                :: outstr
+    character (len=*), dimension(:), optional, intent(out)  :: outstrs
     character (len=*), optional, intent(in)       :: inseparator ! if not ','
     character (len=*), optional, intent(in)       :: break ! if not ' '
     character (len=*), optional, intent(in)       :: mode ! if not 'hard', then 'soft'
@@ -4442,6 +4475,7 @@ contains
     ! Internal variables
     integer                                       :: dsnext    
     integer                                       :: dsp       
+    integer                                       :: istr      
     integer                                       :: ko        
     integer                                       :: kp        
     character(len=1)                              :: myBreak   
@@ -4465,7 +4499,10 @@ contains
     if ( present(mode) ) myMode = mode
     myOffset = 0
     if ( present(offset) ) myOffset = offset
-    outstr = str
+    if ( present(outstr) ) outstr = str
+    if ( present(outstrs) ) outstrs(1) = str
+    if ( present(addedLines) ) addedLines = 0
+    istr = 0
     if ( len_trim(str) <= width ) return
     so = 1 ! this is the current character number of str
     ko = 1 ! this is the current character number of outstr
@@ -4480,7 +4517,11 @@ contains
       if ( nextwidth < 1 ) exit
       ! does the rest of str fit within nextwidth? If so, copy it to outstr, and we're done
       if ( nextwidth >= len_trim(str) - so + 1 ) then
-        outstr(ko:ko + nextwidth - 1) = str(so:so + nextwidth - 1)
+        if ( present(outstr) ) outstr(ko:ko + nextwidth - 1) = str(so:so + nextwidth - 1)
+        if ( present(outstrs) ) then
+          istr = istr + 1
+          outstrs(istr) = str(so:so + nextwidth - 1)
+        endif
         myLastPos = myLastPos + nextWidth
         exit
       endif
@@ -4491,7 +4532,11 @@ contains
         myLastPos = 1
         sp = so + dsp - 2 + len_trim(separator)
         kp = ko + dsp - 2 + len_trim(separator)
-        outstr(ko:kp) = str(so:sp)
+        if ( present(outstr) ) outstr(ko:kp) = str(so:sp)
+        if ( present(outstrs) ) then
+          istr = istr + 1
+          outstrs(istr) = str(so:sp)
+        endif
         ko = kp + 1
         so = sp + 1
         if ( present(addedLines) ) addedLines = addedLines + 1
@@ -4511,7 +4556,7 @@ contains
           myLastPos = 1
           sp = so - 1 + dsp
           kp = ko + dsp - 2 + len_trim(separator)
-          outstr(ko:kp) = str(so:sp-1) // trim(separator)
+          if ( present(outstr) ) outstr(ko:kp) = str(so:sp-1) // trim(separator)
           ko = ko + dsp + len_trim(separator) - 1
           if ( present(addedLines) ) addedLines = addedLines + 1
           ! Now treat possibility that next chars might be spaces, too
@@ -4525,7 +4570,7 @@ contains
           kp = ko + nextwidth - 2 + len_trim(separator)
           ! print *, 'ko, kp ', ko, kp
           ! print *, 'so, so+nextwidth-3 ', so, so+nextwidth-3
-          outstr(ko:kp) = str(so:so+nextwidth-3) // '-' // trim(separator)
+          if ( present(outstr) ) outstr(ko:kp) = str(so:so+nextwidth-3) // '-' // trim(separator)
           ko = ko + nextwidth
           so = so + nextwidth - 2
           if ( present(addedLines) ) addedLines = addedLines + 1
@@ -4543,7 +4588,7 @@ contains
           ! Yes, so we break there
           sp = so + dsp - 1
           kp = ko + dsp - 1 + len_trim(separator)
-          outstr(ko:) = str(so:sp) // trim(separator)
+          if ( present(outstr) ) outstr(ko:) = str(so:sp) // trim(separator)
           ! print *, 'in:  ', str(so:sp)
           ! print *, 'out: ', outstr(ko:kp)
           ko = kp + 1
@@ -4564,7 +4609,7 @@ contains
             dsp = dsp + nextwidth - 1
             sp = so - 1 + dsp
             kp = ko + dsp - 2 + len_trim(separator)
-            outstr(ko:kp) = str(so:sp-1) // trim(separator)
+            if ( present(outstr) ) outstr(ko:kp) = str(so:sp-1) // trim(separator)
             ! print *, outstr(ko:kp)
             ko = ko + dsp + len_trim(separator) - 1
             if ( present(addedLines) ) addedLines = addedLines + 1
@@ -4577,7 +4622,7 @@ contains
           else
             ! No, so we must give up any further wrapping
             dsnext = min( len(str) - so, len(outstr) - ko )
-            outstr(ko:ko+dsnext) = str(so:so+dsnext)
+            if ( present(outstr) ) outstr(ko:ko+dsnext) = str(so:so+dsnext)
             ! print *, outstr(ko:ko+dsnext)
             myLastPos = myLastPos + dsnext
             exit
@@ -4589,7 +4634,7 @@ contains
     enddo
     ! Remove consecutive spaces?
     if ( len_trim(myBreak) == 0 .and. NoConsecutiveSpaces ) then
-      outstr = squeeze( outstr )
+      if ( present(outstr) ) outstr = squeeze( outstr )
     endif
     if ( present(lastPos) ) lastPos = myLastPos
   end subroutine wrap_noQuotes
@@ -4646,6 +4691,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.82  2019/07/09 22:59:54  pwagner
+! Wrap may now put its output in an array
+!
 ! Revision 2.81  2019/01/10 21:42:39  pwagner
 ! SwitchDetail returns the greatest Detail if multiple matches
 !
