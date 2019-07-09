@@ -19,7 +19,7 @@ module HighOutput
     & ReformatDate, ReformatTime, Utc_To_Yyyymmdd
   use Machine, only: Crash_Burn, Exit_With_Status, NeverCrash
   use MLSCommon, only: MLSDebug, MLSVerbose
-  use MLSFinds, only: FindFirst
+  use MLSFinds, only: FindFirst, FindNext
   use MLSStringLists, only: ExpandStringRange, GetStringElement, &
     & List2Array, NumStringElements, SwitchDetail, Wrap
   use MLSStrings, only: Asciify, Lowercase, NCharsInFormat, Ncopies, &
@@ -28,7 +28,7 @@ module HighOutput
     & MaxOutputLineslen, Newline, &
     & Output, Output_ => Output_Char_Nocr, &
     & RestoreOutputSettings => RestoreSettings, &
-    & OutputOptions, OutputOptions_T, PatternOptions, PatternOptions_T, &
+    & OutputOptions, OutputOptions_T, PatternOptions_T, &
     & StampOptions, StampOptions_T, &
     & TimeStampOptions, TimeStampOptions_T, &
     & BothPrUnit, InvalidPrUnit, MSGLogPrUnit, &
@@ -46,7 +46,7 @@ module HighOutput
 !     c o n t e n t s
 !     - - - - - - - -
 !     (subroutines and functions)
-! AddRow                   add name, value row to a 2-d table of cells
+! AddRow                   add a {name, value} row to a 2-d table of cells
 ! AddRow_header            add a single line stretched across an entire row
 ! AddRow_divider           add a row composed of a single, repeated character
 ! AlignToFit               align printed argument to fit column range
@@ -67,11 +67,12 @@ module HighOutput
 ! NumNeedsFormat           return what format is needed to output num
 ! NumToChars               return what string would be printed by output
 ! OutputCalendar           output nicely-formatted calendar page
-! Output_date_and_time     print nicely formatted date and time
+! Output_Date_And_Time     print nicely formatted date and time
 ! OutputList               output array as comma-separated list; e.g. '(1,2,..)'
 ! OutputNamedValue         print nicely formatted name and value
-! OutputTable              output 2-d array as cells in table
-! Resettabs                restore tab stops to what was in effect at start
+! OutputTable              output 2-d array as cells in table,; or else
+!                          output the 2d table of cells constucted by AddRow(s)
+! ResetTabs                restore tab stops to what was in effect at start
 ! RestoreSettings          restore default settings for output, stamps, tabs
 ! SetStamp                 set stamp to be automatically printed on every line
 ! SetTabs                  set tab stops (to be used by tab)
@@ -83,7 +84,7 @@ module HighOutput
 ! === (end of toc) ===
 
 ! === (start of api) ===
-! AddRow ( char* name, value )
+! AddRow ( char* name, value, [int BlocLen], [char* options], [char* format] )
 ! AddRow_header ( char* name, char alignment )
 ! AddRow_divider ( char char )
 ! AlignToFit ( char* chars, int columnRange(2), char alignment, [int skips] )
@@ -105,7 +106,7 @@ module HighOutput
 ! log LetsDebug ( char* switch[(:)], threshold )
 ! char* NumNeedsFormat ( value )
 ! char* NumToChars ( value, [char* format] )
-! Output_date_and_time ( [log date], [log time], [char* from_where], 
+! Output_Date_And_Time ( [log date], [log time], [char* from_where], 
 !          [char* msg], [char* dateFormat], [char* timeFormat], 
 !          [double CPU_seconds], [int wallClock_seconds], [char* advance] )
 ! OutputCalendar ( [char* date], [char* datenote], [char* notes(:)], 
@@ -142,7 +143,7 @@ module HighOutput
 ! public global parameters directly
 ! (in OO-speak they are class-level rather than instance-level)
 ! Sometimes there is more than one way to accomplish the same thing
-! E.g., calling timeStamp or using setStamp before calling output
+! E.g., calling TimeStamp or using SetStamp before calling output
 !
 ! To understand the codes for dateformat and timeFormat, see the dates_module
 ! 
@@ -171,7 +172,7 @@ module HighOutput
   public :: TimeStampOptions_T
 
   interface AddRow
-    module procedure AddRow_Character
+    module procedure AddRow_Character, AddRow_Character_Blocs
     module procedure AddRow_Complex
     module procedure AddRow_Dbl_Array, AddRow_Double
     module procedure AddRow_Int_Array, AddRow_Integer
@@ -196,7 +197,7 @@ module HighOutput
 
   interface Dump
     module procedure DumpOutputoptions, Dumppatternoptions, &
-      & Dumpstampoptions, Dumptimestampoptions
+      & Dumpstampoptions, DumpTimeStampoptions
   end interface
 
   interface Dumpsize
@@ -212,13 +213,13 @@ module HighOutput
     module procedure Letsdebug_Chararray
   end interface
 
-  interface Numneedsformat
-    module procedure Numneedsformat_Double, Numneedsformat_Integer, Numneedsformat_Single
-    module procedure Numneedsformat_Complex, Numneedsformat_Dcomplx
+  interface NumNeedsFormat
+    module procedure NumNeedsFormat_Double, NumNeedsFormat_Integer, NumNeedsFormat_Single
+    module procedure NumNeedsFormat_Complex, NumNeedsFormat_Dcomplx
   end interface
 
-  interface Numtochars
-    module procedure Numtochars_Double, Numtochars_Integer, Numtochars_Single
+  interface NumToChars
+    module procedure NumToChars_Double, NumToChars_Integer, NumToChars_Single
   end interface
 
   interface OutputList
@@ -242,8 +243,8 @@ module HighOutput
     module procedure Blankstotab
   end interface
   
-  interface Timestamp
-    module procedure Timestamp_Char, Timestamp_Integer, Timestamp_Logical
+  interface TimeStamp
+    module procedure TimeStamp_Char, TimeStamp_Integer, TimeStamp_Logical
   end interface
   
   ! When Calling OutputNamedValue with character values, should we trim them?
@@ -370,11 +371,91 @@ contains
 
   ! ----------------------------------------------  AddRow  -----
   ! This family of routines adds a paired name and value
-  ! as a new row to the cellDatabase
+  ! by inserting a new row into the CellDatabase
   
   ! later to be printed as a neatly-formatted table to stdout
   ! By means of optional args you can create a line like
   ! *   name                   value   *
+  subroutine AddRow_character_blocs ( name, value, BlocLen, options, format )
+    use MLSStrings, only: Indexes
+    ! For character values of great length, the values may
+    ! span multiple lines, which we'll call "blocs"
+    ! Method: divide value up into separate blocs, each BlocLen long
+    ! The 1st bloc will have its name in the name cell,
+    ! later blocs won't.
+    ! If options is present and contains the character 'w', the blocs
+    ! will be divided at spaces instead of arbitrarily
+    character(len=*), intent(in)             :: name
+    character(len=*), intent(in)             :: value
+    integer, intent(in)                      :: BlocLen ! How long is each bloc?
+    character(len=*), intent(in), optional   :: options
+    character(len=*), intent(in), optional   :: format
+    ! Local variables
+    integer                                  :: BlocLength
+    integer, parameter                       :: MaxNBlocs = 50
+    integer                                  :: c1, c2 ! 1st and last positions
+    integer                                  :: i
+    character(len=1)                         :: null
+    character(len=len(name))                 :: itsName
+    integer                                  :: NBlocs ! How many blocs?
+    character(len=len(value)+51)             :: wrapped
+    logical                                  :: wrapValue
+    logical, parameter                       :: DEEBug = .false.
+    ! Executable
+    BlocLength = max( BlocLen, 1)
+    BlocLength = min(MAXCELLSIZE, BlocLength)
+    wrapValue = .false.
+    if ( present(options) ) wrapValue = (index( options, 'w' ) > 0)
+    if ( wrapValue .and. any( indexes( trim(value), (/'"',  "'"/) ) > 0 ) ) then
+      call myMessage ( MLSMSG_Warning, 'AddRow_character_blocs', &
+        & 'Value contains quoted material--cannot wrap' )
+      ! wrapValue = .false.
+    endif
+    nBlocs = ( len_trim(value ) - 1)/BlocLength + 1
+    if ( wrapvalue ) then
+      null = achar(10)
+      wrapped = ' '
+      if ( DeeBug ) call output( trim(value), advance='yes' )
+      call wrap( trim(value), wrapped, BlocLength, inseparator=null, &
+        & mode='soft', addedLines=nBlocs )
+      wrapped = adjustl(wrapped) ! Still unsure why this is necessary
+      if ( DeeBug ) call output( trim(wrapped), advance='yes' )
+      nBlocs = nBlocs + 1
+      if ( DeeBug ) call outputNamedValue ( 'nBlocs', nBlocs )
+      itsName = name
+      c2 = 0
+      do i=1, nBlocs
+        c1 = c2 + 1
+        if ( i < 2 ) then
+          c2 = FindFirst( wrapped, null )
+        elseif ( c1 > len_trim(wrapped) ) then
+          exit
+        else
+          c2 = FindNext( wrapped, null, current=c1 )
+        endif
+        c2 = c2 - 1 ! Back up to last non-breaking character
+        if ( wrapped(c1:c1) == null ) c1 = c1 + 1
+        if ( c2 < c1 ) then
+          c2 = len_trim(wrapped)
+        endif
+        call AddRow_character ( itsName, wrapped(c1:c2), format )
+        if ( DeeBug ) call output( (/c1, c2/), advance='yes' )
+        if ( DeeBug ) call output( wrapped(c1:c2), advance='yes' )
+        itsName = ' ' ! A trick so blocs after 1st are nameless
+      enddo
+      return
+    endif
+    nBlocs = min( MaxNBlocs, NBlocs )
+    itsName = name
+    c2 = 0 ! A trick making 1st bloc start at position 1
+    do i=1, nBlocs
+      c1 = c2 + 1
+      c2 = min(c2 + BlocLength, len_trim(value) )
+      call AddRow_character ( itsName, value(c1:c2), format )
+      itsName = ' ' ! A trick so blocs after 1st are nameless
+    enddo
+  end subroutine AddRow_character_blocs
+
   subroutine AddRow_character ( name, value, format )
     character(len=*), intent(in)          :: name
     character(len=*), intent(in)          :: value
@@ -880,10 +961,7 @@ contains
     ! Show output options
     type(PatternOptions_T), intent(in) :: options
     ! Internal variables
-    logical, parameter :: checkingTabbing = .false.
-    character(len=10), parameter :: decade = '1234567890'
     character(len=1), parameter :: fillChar = '1' ! fill blanks with '. .'
-    integer :: i
     ! Executable
     call blanks(80, fillChar='-', advance='yes')
     call HeadLine( 'Summary of pattern options', &
@@ -920,7 +998,7 @@ contains
        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
      call outputNamedValue ( 'interval', options%interval, advance='yes', &
        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-     call outputNamedValue ( 'style of timeStamps', trim_safe(options%timestampstyle), advance='yes', &
+     call outputNamedValue ( 'style of TimeStamps', trim_safe(options%TimeStampstyle), advance='yes', &
        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
     call blanks(80, fillChar='-', advance='yes')
   end subroutine DumpStampOptions
@@ -943,7 +1021,7 @@ contains
        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
      call outputNamedValue ( 'time format', trim_safe(options%timeFormat), advance='yes', &
        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-     call outputNamedValue ( 'style of timeStamps', trim_safe(options%timestampstyle), advance='yes', &
+     call outputNamedValue ( 'style of TimeStamps', trim_safe(options%TimeStampstyle), advance='yes', &
        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
     call blanks(80, fillChar='-', advance='yes')
   end subroutine DumpTimeStampOptions
@@ -1262,7 +1340,7 @@ contains
       & // trim(adjustl(charValue)) // dotm // ',")")'
   end function numNeedsFormat_complex
 
-  function numNeedsFormat_dcomplx( value, inFormat ) result ( format )
+  function NumNeedsFormat_dcomplx( value, inFormat ) result ( format )
     ! Args
     integer, parameter :: RK = kind(0.0d0)
     complex(rk), intent(in) :: VALUE
@@ -1881,7 +1959,7 @@ contains
   ! ----------------------------------------------  ResetTabs  -----
   ! Restore tab stops to what was in effect at start
   ! Optionally returning them as an integer array
-  subroutine resetTabs ( tabs )
+  subroutine ResetTabs ( tabs )
     ! Args
     integer, dimension(:), optional, intent(out) :: tabs
     ! Internal variables
@@ -1893,7 +1971,7 @@ contains
       tabs = 0
       tabs(1:n) = TABSTOPS(1:n)
     end if
-  end subroutine resetTabs
+  end subroutine ResetTabs
 
   ! ----------------------------------------------  RestoreSettings  -----
   ! Restore tab stops to what was in effect at start
@@ -1914,8 +1992,8 @@ contains
     if ( index(mySettings, 'style') > 0 ) StyleOptions = DefaultStyleOptions
   end subroutine RestoreSettings 
 
-  ! ----------------------------------------------  setStamp  -----
-  subroutine setStamp ( textCode, showTime, dateFormat, timeFormat, &
+  ! ----------------------------------------------  SetStamp  -----
+  subroutine SetStamp ( textCode, showTime, dateFormat, timeFormat, &
     & post, interval )
   ! set stamp to be added to every output to PRUNIT.
     character(len=*), optional, intent(in) :: textCode
@@ -1930,15 +2008,16 @@ contains
     if ( present(timeFormat) ) stampOptions%timeFormat = timeFormat
     if ( present(post) )       stampOptions%post       = post
     if ( present(interval) )   stampOptions%interval   = interval
-  end subroutine setStamp
+  end subroutine SetStamp
 
   ! ----------------------------------------------  setTabs  -----
-  subroutine setTabs ( RANGE, TABS )
+  subroutine setTabs ( range, tabs )
     ! Set tabstops
     ! Methods:
     ! (1) a string range; e.g., "8, 32-100+8"
-    !     is converterd to "8, 32, 40, 48, 56, 64, 72, 80, 88, 96"
-    ! (2) an arrays of ints; e.g., (/ 4, 9, 12, 18, 22, 30, 35, 40 /)
+    !     is converted to its expanded form 
+    !      "8, 32, 40, 48, 56, 64, 72, 80, 88, 96"
+    ! (2) an array of ints; e.g., (/ 4, 9, 12, 18, 22, 30, 35, 40 /)
     ! (3) reset back to the defaults (equiv to "5-120+5")
     ! Args
     character(len=*), optional, intent(in)         :: Range
@@ -2020,15 +2099,15 @@ contains
     endif
   end subroutine StyledOutput
 
-  ! ------------------------------------------------  timeStamp  -----
+  ! ------------------------------------------------  TimeStamp  -----
   ! time-stamp output on demand, not automatic:
   ! Either in style pre or post
   ! (pre) '(HH:MM:SS) chars'
   ! (post) 'chars (HH:MM:SS)'
   ! Note that in pre-style, the time will be printed only if getOutputStatus( 'start' ) == 1 true
   ! in post-style, the time will be printed only if MY_ADV is 'yes'
-  subroutine timeStamp_char ( CHARS, &
-    & ADVANCE, FROM_WHERE, DONT_LOG, LOG_CHARS, INSTEADOFBLANK, STYLE, DATE )
+  subroutine TimeStamp_char ( chars, &
+    & advance, from_where, dont_log, log_chars, insteadofblank, style, date )
     character(len=*), intent(in) :: CHARS
     character(len=*), intent(in), optional :: ADVANCE
     character(len=*), intent(in), optional :: FROM_WHERE
@@ -2044,9 +2123,9 @@ contains
     logical  ::         myDate
     !
     my_adv = Advance_is_yes_or_no(advance)
-    my_style = timeStampOptions%Timestampstyle
+    my_style = TimeStampOptions%TimeStampstyle
     if ( present(style) ) my_style = lowercase(style)
-    myDate = timeStampOptions%showDate
+    myDate = TimeStampOptions%showDate
     if ( present(date) ) myDate = date
     if ( my_style == 'post' ) then
       call output_( CHARS, &
@@ -2054,29 +2133,29 @@ contains
         & LOG_CHARS=LOG_CHARS, INSTEADOFBLANK=INSTEADOFBLANK, DONT_STAMP=DONT_STAMP )
       if ( my_adv=='yes' ) then
         call output_(' (', ADVANCE='no', DONT_LOG=DONT_LOG, DONT_STAMP=DONT_STAMP)
-        call OUTPUT_DATE_AND_TIME( date=myDate, &
-          & dateFormat=timeStampOptions%dateFormat, &
-          & timeFormat=timeStampOptions%timeFormat, &
+        call Output_Date_And_Time( date=myDate, &
+          & dateFormat=TimeStampOptions%dateFormat, &
+          & timeFormat=TimeStampOptions%timeFormat, &
           & advance='no')
         call output_(')', ADVANCE='yes', DONT_LOG=DONT_LOG, DONT_STAMP=DONT_STAMP)
       end if
     else
       if ( getOutputStatus( 'start' ) == 1 ) then
         call output_('(', ADVANCE='no', DONT_LOG=DONT_LOG, DONT_STAMP=DONT_STAMP)
-        call OUTPUT_DATE_AND_TIME( date=myDate, &
-          & dateFormat=timeStampOptions%dateFormat, &
-          & timeFormat=timeStampOptions%timeFormat, &
+        call Output_Date_And_Time( date=myDate, &
+          & dateFormat=TimeStampOptions%dateFormat, &
+          & timeFormat=TimeStampOptions%timeFormat, &
           & advance='no')
         call output_(')', ADVANCE='no', DONT_LOG=DONT_LOG, DONT_STAMP=DONT_STAMP)
       end if
-      call output_( CHARS, &
-        & ADVANCE, FROM_WHERE, DONT_LOG, &
-        & LOG_CHARS, INSTEADOFBLANK, DONT_STAMP=DONT_STAMP )
+      call output_( chars, &
+        & advance, from_where, dont_log, &
+        & log_chars, insteadofblank, dont_stamp=dont_stamp )
     end if
-  end subroutine timeStamp_char
+  end subroutine TimeStamp_char
 
-  subroutine timeStamp_integer ( INT, &
-    & PLACES, ADVANCE, FILL, FORMAT, Before, After, style, date )
+  subroutine TimeStamp_integer ( int, &
+    & places, advance, fill, format, Before, After, style, date )
     integer, intent(in) :: INT
     integer, intent(in), optional :: PLACES
     character(len=*), intent(in), optional :: ADVANCE
@@ -2092,9 +2171,9 @@ contains
     logical  ::         myDate
     !
     my_adv = Advance_is_yes_or_no(advance)
-    my_style = timeStampOptions%Timestampstyle
+    my_style = TimeStampOptions%TimeStampstyle
     if ( present(style) ) my_style = lowercase(style)
-    myDate = timeStampOptions%showDate
+    myDate = TimeStampOptions%showDate
     if ( present(date) ) myDate = date
     if ( my_style == 'post' ) then
       call output( INT, PLACES, &
@@ -2102,28 +2181,28 @@ contains
         & DONT_STAMP=DONT_STAMP )
       if ( my_adv=='yes' ) then
         call output_(' (', ADVANCE='no', DONT_STAMP=DONT_STAMP )
-        call OUTPUT_DATE_AND_TIME( date=myDate, &
-          & dateFormat=timeStampOptions%dateFormat, &
-          & timeFormat=timeStampOptions%timeFormat, &
+        call Output_Date_And_Time( date=myDate, &
+          & dateFormat=TimeStampOptions%dateFormat, &
+          & timeFormat=TimeStampOptions%timeFormat, &
           & advance='no')
         call output_(')', ADVANCE='yes', DONT_STAMP=DONT_STAMP)
       end if
     else
       if ( getOutputStatus( 'start' ) == 1 ) then
         call output_('(', ADVANCE='no', DONT_STAMP=DONT_STAMP)
-        call OUTPUT_DATE_AND_TIME( date=myDate, &
-          & dateFormat=timeStampOptions%dateFormat, &
-          & timeFormat=timeStampOptions%timeFormat, &
+        call Output_Date_And_Time( date=myDate, &
+          & dateFormat=TimeStampOptions%dateFormat, &
+          & timeFormat=TimeStampOptions%timeFormat, &
           & advance='no')
         call output_(')', ADVANCE='no', DONT_STAMP=DONT_STAMP)
       end if
-      call output( INT, PLACES, &
-        & ADVANCE, FILL, FORMAT, BEFORE, AFTER, DONT_STAMP=DONT_STAMP )
+      call output( int, places, &
+        & advance, fill, format, before, after, dont_stamp=dont_stamp )
     end if
-  end subroutine timeStamp_integer
+  end subroutine TimeStamp_integer
 
-  subroutine timeStamp_logical ( value, &
-    & ADVANCE, FROM_WHERE, DONT_LOG, LOG_CHARS, INSTEADOFBLANK, STYLE, DATE )
+  subroutine TimeStamp_logical ( value, &
+    & advance, from_where, dont_log, log_chars, insteadofblank, style, date )
     logical, intent(in) ::                    value
     character(len=*), intent(in), optional :: ADVANCE
     character(len=*), intent(in), optional :: FROM_WHERE
@@ -2140,9 +2219,9 @@ contains
     else
       str = 'F'
     end if
-    call timeStamp_char(str, &
-    & ADVANCE, FROM_WHERE, DONT_LOG, LOG_CHARS, INSTEADOFBLANK, STYLE, DATE )
-  end subroutine timeStamp_logical
+    call TimeStamp_char(str, &
+    & advance, from_where, dont_log, log_chars, insteadofblank, style, date )
+  end subroutine TimeStamp_logical
 
   ! ------------------ Private procedures -------------------------
   ! .............................................  addCellRowToDatabase  .....
@@ -2323,7 +2402,6 @@ contains
     character(len=1), optional, intent(in)         :: alignment ! L, R, or C
     ! Local variables
     character(len=1)                               :: align
-    character(len=MAXCELLSIZE)                     :: cell
     integer                                        :: i
     integer                                        :: j
     integer                                        :: k
@@ -2573,6 +2651,9 @@ contains
 end module HighOutput
 
 ! $Log$
+! Revision 2.31  2019/07/09 23:52:17  pwagner
+! The values added by AddRow may now span several lines if needed
+!
 ! Revision 2.30  2019/05/15 23:20:43  pwagner
 ! Non-essential housekeeping
 !
