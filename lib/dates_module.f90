@@ -241,7 +241,7 @@ module dates_module
   
   ! There are two internal date formats:
   ! eudtf          -  yyyddd expressed as an integer, e.g. 1993001 is '1993-001'
-  ! MLSDATE_TIME_T - a user-defined type containing 3 fields: 
+  ! MLSDate_Time_T - a user-defined type containing 3 fields: 
   !   dai
   !   seconds
   !   leapseconds
@@ -268,72 +268,72 @@ module dates_module
 ! === (end of api) ===
 
 ! Further notes:
-! (1) We maintain a private datatype, MLSDATE_TIME_T
+! (1) We maintain a private datatype, MLSDate_Time_T
 ! it is an intermediary in various operations and conversions
 ! Would it be useful to uncloak it so callers might access it directly?
 ! (2) This module has grown rather long. Should we consider
 ! Splitting into two, and if so, what would be the criteria for
 ! grouping procedures into a common module?
 
-  !Here are the provided functions 
-  public :: adddaystoutc, addhourstoutc, addsecondstoutc, buildcalendar, &
-    & cal2eudtf, ccsds2tai, ccsds2eudtf, ccsdsa2b, ccsdsb2a, &
-    & dai_to_yyyymmdd, dateform, datesbetween2utcs, dayofweek, &
-    & daysbetween2utcs, daysinmonth, daysince2eudtf, days_in_year, &
-    & eudtf2cal, eudtf2daysince, FromUARSDate, gethid, Getstartingdate, &
-    & hoursbetween2utcs, hoursinday, isUTCInRange, &
-    & lastday, nextmoon, precedesutc, reformatdate, reformattime, &
-    & resetstartingdate, restorestartingdate, &
-    & secondsbetween2utcs, secondsinday, splitdatetime, &
-    & tai2ccsds, tai93s2hid, tai93s2utc, timeform, toUARSDate, &
-    & utcform, utc_to_date, utc_to_time, utc_to_yyyymmdd, utc2tai93s, &
-    & yyyydoy_to_mmdd, yyyymmdd_to_dai, yyyymmdd_to_doy
+  ! Here are the functions this module provides
+  public :: Adddaystoutc, Addhourstoutc, Addsecondstoutc, Buildcalendar, &
+   & Cal2eudtf, Ccsds2tai, Ccsds2eudtf, Ccsdsa2b, Ccsdsb2a, &
+   & Dai_To_Yyyymmdd, Dateform, Datesbetween2utcs, Dayofweek, &
+   & Daysbetween2utcs, Daysinmonth, Daysince2eudtf, Days_In_Year, &
+   & Eudtf2cal, Eudtf2daysince, Fromuarsdate, Gethid, Getstartingdate, &
+   & Hoursbetween2utcs, Hoursinday, Isutcinrange, &
+   & Lastday, Monthname, Nextmoon, Precedesutc, Reformatdate, Reformattime, &
+   & Resetstartingdate, Restorestartingdate, &
+   & Secondsbetween2utcs, Secondsinday, Splitdatetime, &
+   & Tai2ccsds, Tai93s2hid, Tai93s2utc, Timeform, Touarsdate, &
+   & Utcform, Utc_To_Date, Utc_To_Time, Utc_To_Yyyymmdd, Utc2tai93s, &
+   & Yyyydoy_To_Mmdd, Yyyymmdd_To_Dai, Yyyymmdd_To_Doy
 
- interface BUILDCALENDAR
-    module procedure BUILDCALENDAR_INTS, BUILDCALENDAR_STR
+ interface Buildcalendar
+    module procedure  Buildcalendar_Ints, Buildcalendar_Str
   end interface
 
-  interface DAI_TO_YYYYMMDD
-    module procedure DAI_TO_YYYYMMDD_STR, DAI_TO_YYYYMMDD_INTS
+  interface Dai_To_Yyyymmdd
+    module procedure Dai_To_Yyyymmdd_Str, Dai_To_Yyyymmdd_Ints
   end interface
 
-  interface DAYOFWEEK
-    module procedure DAYOFWEEK_INT, DAYOFWEEK_STR
+  interface Dayofweek
+    module procedure Dayofweek_Int, Dayofweek_Str
   end interface
 
-  interface DUMP
-    module procedure DUMPDATETIME
+  interface Dump
+    module procedure Dumpdatetime
   end interface
 
- interface SECONDSINDAY
-    module procedure SECONDSINDAYDBLE
+ interface Secondsinday
+    module procedure Secondsindaydble
   end interface
 
-  interface SWITCH
-    module procedure SWITCH_INTS
+  interface Switch
+    module procedure Switch_ints
   end interface
 
-  interface UTC_TO_YYYYMMDD
-    module procedure UTC_TO_YYYYMMDD_STRS, UTC_TO_YYYYMMDD_INTS
+  interface Utc_To_Yyyymmdd
+    module procedure Utc_To_Yyyymmdd_Strs, Utc_To_Yyyymmdd_Ints
   end interface
 
-  interface YYYYDOY_TO_MMDD
-    module procedure YYYYDOY_TO_MMDD_INTS
+  interface Yyyydoy_To_Mmdd
+    module procedure Yyyydoy_To_Mmdd_Ints
   end interface
 
-  interface YYYYMMDD_TO_DAI
-    module procedure YYYYMMDD_TO_DAI_STR, YYYYMMDD_TO_DAI_INTS
+  interface Yyyymmdd_To_Dai
+    module procedure Yyyymmdd_To_Dai_Str, Yyyymmdd_To_Dai_Ints
   end interface
 
-  interface YYYYMMDD_TO_DOY
-    module procedure YYYYMMDD_TO_DOY_INTS, yyyymmdd_to_doy_str
+  interface Yyyymmdd_To_Doy
+    module procedure Yyyymmdd_To_Doy_Ints, Yyyymmdd_To_Doy_Str
   end interface
 
   ! utc_to_yyyymmdd
-  integer, public, parameter :: INVALIDUTCSTRING = 1
-  integer, public, parameter :: MAXUTCSTRLENGTH = 32
+  integer, public, parameter :: Invalidutcstring = 1
+  integer, public, parameter :: Maxutcstrlength = 32
 
-  integer, private, parameter :: SECONDSINADAY = 24*60*60
+  integer, private, parameter :: Secondsinaday = 24*60*60
   
   character(len=*), dimension(41), parameter :: leapSecDates = (/ &
     '1961 JAN 1', & 
@@ -382,27 +382,30 @@ module dates_module
   ! These somewhat similar parameters are used in the separately-coded
   ! but redundant functions and procedures moved here from their
   ! original slots in MLSStrings
-  integer, parameter :: YEARMAX = 4999  ! Conversions valid until 4999 AD
+  integer, parameter :: Yearmax = 4999  ! Conversions valid until 4999 AD
 
   ! The following arrays contains the maximum permissible day for each month
+  ! indexed by month number
   ! where month=-1 means the whole year, month=1..12 means Jan, .., Dec
-  ! Months in leap-years
-  integer, dimension(-1:12), parameter :: DAYMAXLY = (/ &
+  !        Months in leap-years
+  integer, dimension(-1:12), parameter :: DayMaxLY = (/ &
     & 366, 0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 &
     & /)
-  ! Months in normal-years
-  integer, dimension(-1:12), parameter :: DAYMAXNY = (/ &
+  !        Months in normal-years
+  integer, dimension(-1:12), parameter :: DayMaxNY = (/ &
     & 365, 0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 &
     & /)
 
   ! This should be modified for internationalization; e.g. with
   ! an include statement or suchlike
-  character(len=*), dimension(12), parameter :: MONTHNAME = (/ &
+  ! E.g., include 'EnglishMonthNames.f90'
+  character(len=*), dimension(12), parameter :: MonthName = (/ &
     & 'January  ', 'February ', 'March    ', 'April    ', 'May      ', &
     & 'June     ', 'July     ', 'August   ', 'September', 'October  ', &
     & 'November ', 'December '/)
 
-  character(len=*), dimension(7), parameter :: DAYSOFWEEK = (/ &
+  ! E.g., include 'EnglishDayNames.f90'
+  character(len=*), dimension(7), parameter :: DaysOfWeek = (/ &
     & 'Sunday   ', 'Monday   ', 'Tuesday  ', 'Wednesday', 'Thursday ', &
     & 'Friday   ', 'Saturday '/)
 
@@ -410,9 +413,9 @@ module dates_module
   ! We assume that the moon's phase repeats perfectly; it would be 
   ! more accurate to use the toolkit's AA (Astronimcal Almanac) components
   ! As it is we may be off by as much as one day
-  character(len=*), parameter :: FIRSTNEWMOON = &
+  character(len=*), parameter :: Firstnewmoon = &
     & '2001-024T13:07:00.0000Z'
-  double precision, parameter :: LUNARPERIOD = 60.d0*(44 + 60.d0*( &
+  double precision, parameter :: Lunarperiod = 60.d0*(44 + 60.d0*( &
     & 12 + 24.d0*29 ) ) ! 29d 12h 44m
 
   ! These are the starting dates for the two date formats we drag around:
@@ -426,12 +429,12 @@ module dates_module
   ! which rather limits its accuracy and usefulness
   ! One easy improvement would be to incorporate the starting
   ! date--that would allow us to unify the different numerical date types
-  type MLSDATE_TIME_T
+  type MLSDate_Time_T
     integer :: dai = 0                  ! days after 1 Jan 2001
     double precision :: seconds = 0.00  ! seconds after midnight
     integer :: LeapSeconds = 0          ! optional leap seconds to be added
     ! character(len=16) :: startingDate = MLSStartingDate
-  end type MLSDATE_TIME_T
+  end type MLSDate_Time_T
   
   ! This will be the starting date for all MLSDate_Time_T
   character(len=16), save :: DTStartingDates = '2001-01-01'
@@ -465,7 +468,7 @@ contains
     integer, intent(in)          :: hours
     character(len=len(utc))      :: after
     ! Internal
-    type(MLSDate_time_T)         :: datetime
+    type(MLSDate_Time_T)         :: datetime
     ! Executable
     datetime = utc2datetime(utc)
     datetime%seconds = datetime%seconds + 60*60*hours
@@ -483,7 +486,7 @@ contains
     double precision, intent(in) :: seconds
     character(len=len(utc))      :: after
     ! Internal
-    type(MLSDate_time_T)         :: datetime
+    type(MLSDate_Time_T)         :: datetime
     ! Executable
     datetime = utc2datetime(utc)
     ! call dump ( datetime )
@@ -553,9 +556,9 @@ contains
     character(len=*), intent(in), optional   :: lower
     character(len=*), intent(in), optional   :: upper
     ! Internal variables
-    type(MLSDate_time_T)                     :: dateTime
-    type(MLSDate_time_T)                     :: lowerDT
-    type(MLSDate_time_T)                     :: upperDT
+    type(MLSDate_Time_T)                     :: dateTime
+    type(MLSDate_Time_T)                     :: lowerDT
+    type(MLSDate_Time_T)                     :: upperDT
     ! Executable
     datetime = utc2datetime( utc )
     if ( present(lower) .and. present(upper) ) then
@@ -587,7 +590,7 @@ contains
     !---function--result---!
     double precision :: hid
     !----local -----!
-    type(MLSDATE_TIME_T)           :: datetime
+    type(MLSDate_Time_T)           :: datetime
     ! integer :: THEDAY
     ! Executable
     dateTime = tai93s2datetime( tai93s, leapsec )
@@ -607,7 +610,7 @@ contains
     double precision, intent(out)  :: hid
     logical, optional, intent(in)  :: leapsec
     !----local -----!
-    type(MLSDATE_TIME_T)           :: datetime
+    type(MLSDate_Time_T)           :: datetime
     ! integer :: THEDAY
     ! Executable
     dateTime = tai93s2datetime( tai93s, leapsec )
@@ -628,7 +631,7 @@ contains
     !---function--result---!
     character(len=MAXUTCSTRLENGTH) :: utc
     !----local -----!
-    type(MLSDATE_TIME_T)           :: datetime
+    type(MLSDate_Time_T)           :: datetime
     ! Executable
     dateTime = tai93s2datetime( tai93s, leapsec )
     ! print *, 'StartingDate (TAI,MLS) ', TAIStartingDate, MLSStartingDate
@@ -639,13 +642,13 @@ contains
 
   ! ---------------------------------------------  datetime2utc  -----
   function datetime2utc( datetime, leapsec ) result(utc)
-    ! Given an mlsDate_Time_T return a utc
+    ! Given an MLSDate_Time_T return a utc
     ! Args
-    type(MLSDATE_TIME_T), intent(in)  :: datetime
+    type(MLSDate_Time_T), intent(in)  :: datetime
     logical, optional, intent(in) :: leapsec
     character(len=MAXUTCSTRLENGTH)    :: utc
     ! Internal
-    type(MLSDATE_TIME_T)         :: datetimeRdcd ! So we don't clobber datetime
+    type(MLSDate_Time_T)         :: datetimeRdcd ! So we don't clobber datetime
     integer                      :: dai93
     character(len=16)            :: hhmmss
     character(len=16)            :: yyyymmdd
@@ -706,7 +709,7 @@ contains
     double precision, intent(in)           :: tai93s
     logical, optional, intent(in)          :: leapsec
     !---function--result---!
-    type(MLSDATE_TIME_T)           :: datetime
+    type(MLSDate_Time_T)           :: datetime
     !----local -----!
     integer          :: dai93         ! Number of days after 1 Jan 1993
     logical :: myLeapSec
@@ -801,7 +804,7 @@ contains
     character(len=*), dimension(:) :: dates
     ! Internal
     integer                      :: dai, inDates
-    type(MLSDate_time_T)         :: datetime1, datetime2
+    type(MLSDate_Time_T)         :: datetime1, datetime2
     ! Executable
     datetime1 = utc2datetime(utc1)
     datetime2 = utc2datetime(utc2)
@@ -859,7 +862,7 @@ contains
     character(len=*), intent(in) :: utc1, utc2
     integer                      :: days
     ! Internal
-    type(MLSDate_time_T)         :: datetime1, datetime2
+    type(MLSDate_Time_T)         :: datetime1, datetime2
     ! Executable
     datetime1 = utc2datetime(utc1)
     datetime2 = utc2datetime(utc2)
@@ -885,7 +888,7 @@ contains
   subroutine dumpDateTime( dateTime, name )
     ! Dump an MLSDate_Time_T
     ! Args
-    type(MLSDate_time_T), intent(in)         :: datetime
+    type(MLSDate_Time_T), intent(in)         :: datetime
     character(len=*), optional, intent(in)   :: name
     ! Internal variables
     character(len=32)                         :: daiStr
@@ -919,7 +922,7 @@ contains
     character(len=*), intent(in) :: utc1
     double precision             :: hours
     ! Internal
-    type(MLSDate_time_T)         :: datetime1
+    type(MLSDate_Time_T)         :: datetime1
     ! Executable
     datetime1 = utc2datetime(utc1)
     hours = datetime1%seconds/3600
@@ -1459,7 +1462,7 @@ contains
     character(len=MAXUTCSTRLENGTH) :: myDate
     character(len=8)  :: myPhase
     character(len=16) :: dateString
-    type(MLSDATE_TIME_T)  :: datetime
+    type(MLSDate_Time_T)  :: datetime
     double precision :: s, sfirst, snext, sPrev
     character(len=16) :: timeString
     ! Executable
@@ -1550,7 +1553,7 @@ contains
     ! possibly adjusting the dai field in compensation
     ! If leapsec is present, and TRUE, account for leapseconds
     ! Args
-    type(MLSDate_time_t), intent(inout) :: datetime
+    type(MLSDate_Time_T), intent(inout) :: datetime
     logical, optional, intent(in)       :: leapsec
     ! Internal
     integer                             :: dai
@@ -1901,7 +1904,7 @@ contains
     logical, optional, intent(in) :: leapsec
     double precision             :: seconds
     ! Internal
-    type(MLSDate_time_T)         :: datetime1, datetime2
+    type(MLSDate_Time_T)         :: datetime1, datetime2
     integer                      :: days
     ! Executable
     datetime1 = utc2datetime( utc1 )
@@ -1923,7 +1926,7 @@ contains
     character(len=*), intent(in) :: utc1
     double precision             :: seconds
     ! Internal
-    type(MLSDate_time_T)         :: datetime1
+    type(MLSDate_Time_T)         :: datetime1
     ! Executable
     datetime1 = utc2datetime(utc1)
     seconds = datetime1%seconds
@@ -1992,8 +1995,8 @@ contains
     character(len=*), intent(out)  :: utc
     logical, optional, intent(in)  :: leapsec
     !----local -----!
-    type(MLSDATE_TIME_T)           :: datetime
-    type(MLSDATE_TIME_T)           :: fiducialdatetime
+    type(MLSDate_Time_T)           :: datetime
+    type(MLSDate_Time_T)           :: fiducialdatetime
     integer                        :: dai
     character(len=16)              :: daiStr
     integer                        :: ErrTyp
@@ -2027,8 +2030,8 @@ contains
     character(len=*), intent(out)  :: uars
     logical, optional, intent(in)  :: leapsec
     !----local -----!
-    type(MLSDATE_TIME_T)           :: datetime
-    type(MLSDATE_TIME_T)           :: fiducialdatetime
+    type(MLSDate_Time_T)           :: datetime
+    type(MLSDate_Time_T)           :: fiducialdatetime
     integer                        :: dai
     integer                        :: ErrTyp
     character(len=16)              :: daiStr
@@ -2321,7 +2324,7 @@ contains
     character(len=*), intent(in) :: utc
     logical, optional, intent(in) :: leapsec
     double precision             :: tai93s
-    type(MLSDATE_TIME_T)         :: datetime
+    type(MLSDate_Time_T)         :: datetime
     integer :: eudtf
     datetime = utc2datetime( utc )
     ! call dump( datetime )
@@ -2579,9 +2582,9 @@ contains
   logical function isDateTimeInRange ( dateTime, lower, upper ) result( itIs )
     ! Is the date part of dateTime within an allowable range?
     ! Args
-    type(MLSDate_time_T), intent(in)             :: datetime
-    type(MLSDate_time_T), intent(in), optional   :: lower
-    type(MLSDate_time_T), intent(in), optional   :: upper
+    type(MLSDate_Time_T), intent(in)             :: datetime
+    type(MLSDate_Time_T), intent(in), optional   :: lower
+    type(MLSDate_Time_T), intent(in), optional   :: upper
     ! Executable
     if ( present(lower) .and. present(upper) ) then
       itIs = ( dateTime%dai >= lower%dai .and. dateTime%dai <= upper%dai )
@@ -2960,10 +2963,10 @@ contains
 
   ! ---------------------------------------------  utc2datetime  -----
   function utc2datetime(arg) result(datetime)
-    ! Given a utc return an mlsDate_Time_T
+    ! Given a utc return an MLSDate_Time_T
     ! Args
     character(len=*), intent(in) :: arg
-    type(MLSDATE_TIME_T)         :: datetime
+    type(MLSDate_Time_T)         :: datetime
     ! Internal
     integer                      :: day
     integer                      :: ErrTyp
@@ -3001,6 +3004,9 @@ contains
 
 end module dates_module
 ! $Log$
+! Revision 2.44  2018/12/11 01:21:14  pwagner
+! No longer uses Printit_M
+!
 ! Revision 2.43  2017/07/10 18:37:08  pwagner
 ! Correct error in dai_to_yyyymmdd_ints that arose when dai < 0; added GetStartingDate
 !
