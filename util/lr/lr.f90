@@ -29,7 +29,7 @@ program LR
   use Print_Set, only: PNTSET
   use Print_The_Grammar_m, only: Print_The_Grammar
   use Print_The_Vocabulary_m, only: Print_The_Vocabulary ! Also sorts it
-  use String_Table, only: AddInUnit, Open_Input
+  use String_Table, only: AddInUnit, Do_Listing, Open_Input
   use Symbol_Table, only: Dump_Symbol_Table
   use Tables, only: Actions, Productions, Prod_Ind, Vocab
   use Toggles, only: GEN, Levels, LEX, PAR, Switches, TAB, Toggle
@@ -86,6 +86,8 @@ program LR
       case ( 'g' )
         toggle(gen) = .true.
         call digit_after_option ( j, gen )
+      case ( 'i' )
+        do_listing = .true.
       case ( 'l' ) ! Specify listing file
         if ( line(j+1:) == ' ' ) then
           i = i + 1
@@ -277,6 +279,7 @@ contains
     print '(a)', '  -A => Print syntax tree'
     print '(a)', '  -d[#] => Trace declaraction table actions at level #'
     print '(a)', '  -g[#] => Trace generation at level #'
+    print '(a)', '  -i => List input as it is read'
     print '(a)', '  -l[ ]file => Specify listing file, default standard output,'
     print '(a)', '               overridden by listing_file field if both specified'
     print '(a)', '  -L[#] => Trace lexer at level #'
@@ -303,6 +306,9 @@ contains
 end program LR
 
 ! $Log$
+! Revision 1.12  2017/08/07 19:59:45  vsnyder
+! Repair error in processing table file name from command line
+!
 ! Revision 1.11  2016/01/29 23:26:52  pwagner
 ! Updated to conform with newer string_table
 !
