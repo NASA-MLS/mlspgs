@@ -16,10 +16,10 @@ module ChunkDivideConfig_m
   ! The main purpose is to avoid a circular dependence between
   ! ChunkDivide_m and Dump_Command.
 
-  use INTRINSIC, only: L_NONE, PHYQ_INVALID
-  use MLSKinds, only: RP
+  use Intrinsic, only: L_None, Phyq_Invalid
+  use MLSKinds, only: Rp
 
-  implicit NONE
+  implicit none
   private
 
   public :: ChunkDivideConfig_t, Dump, Dump_Config, Dump_criticalSignals
@@ -64,10 +64,10 @@ module ChunkDivideConfig_m
     integer   :: Where = 0              ! in the l2cf tree it was defined
   end type ChunkDivideConfig_T
 
-  type(ChunkDivideConfig_T), public, save :: CHUNKDIVIDECONFIG
+  type(ChunkDivideConfig_T), public, save :: ChunkDivideConfig
 
-  interface dump
-    module procedure DUMP_CONFIG
+  interface Dump
+    module procedure Dump_config
   end interface
 
   !---------------------------- RCS Ident Info -------------------------------
@@ -81,11 +81,13 @@ contains ! ===================================  Public Procedures  =====
   ! -------------------------------------------- Dump_Config -----
   subroutine Dump_Config ( config )
 
+    use HighOutput, only: AddRow, AddRow_Divider, AddRow_Header, &
+      & OutputTable, StartTable
     use Intrinsic, only: Lit_Indices, PHYQ_Indices
-    use LEXER_CORE, only: PRINT_SOURCE
-    use Output_m, only: Output
-    use String_Table, only: Display_String
-    use TREE, only: WHERE
+    use Lexer_core, only: Print_Source
+    use MLSStrings, only: LowerCase
+    use String_Table, only: Get_String
+    use Tree, only: Where
 
     ! Args
     type(ChunkDivideConfig_T), intent(in) :: Config
@@ -93,63 +95,68 @@ contains ! ===================================  Public Procedures  =====
     ! Executable code
     call print_source ( where(config%where), &
       & before='ChunkDivide configuration at ', advance='yes' )
-    call display_string ( lit_indices(Config%method), &
-      &             strip=.true., before='  method ', advance='yes' )
-    call output ( config%maxLength, before='  max Length ', advance='yes' )
-    call display_string ( phyq_indices(Config%maxLengthFamily), &
-      &             strip=.true., before='  max Length Family ', advance='yes' )
-    call output ( config%noChunks, before='  num chunks ', advance='yes' )
-    call output ( config%overlap, before='  overlap ', advance='yes' )
-    call display_string ( phyq_indices(Config%overlapFamily), &
-      &             strip=.true., before='  overlap Family ', advance='yes' )
-    call output ( config%loweroverlap, before='  lower overlap ', advance='yes' )
-    call display_string ( phyq_indices(Config%loweroverlapFamily), &
-      &             strip=.true., before='  lower overlap Family ', advance='yes' )
-    call output ( config%upperoverlap, before='  upper overlap ', advance='yes' )
-    call display_string ( phyq_indices(Config%upperoverlapFamily), &
-      &             strip=.true., before='  upper overlap Family ', advance='yes' )
-    call output ( config%noSlaves, before='  num slaves ', advance='yes' )
-    call display_string ( lit_indices(Config%homeModule), &
-      &             strip=.true., before='  home module ', advance='yes' )
-    call output ( config%homeGeodAngle, before='  home Geod Angle ', advance='yes' )
-    call output ( config%scanLLSet, before='  set scan lower limit? ', advance='yes' )
-    if ( config%scanLLSet ) then
-      call output ( '  Bottom scan range ' )
-      call output ( config%scanLowerLimit, advance='yes' )
-    end if
-    call output ( config%scanULSet, before='  set scan upper limit? ', advance='yes' )
-    if ( config%scanULSet ) then
-      call output ( '  Top scan range ' )
-      call output ( config%scanUpperLimit, advance='yes' )
-    end if
-    call output ( config%maxOrbY, before='  max out-of-plane distance ', &
-      & advance='yes' )
-    call display_string ( lit_indices(Config%criticalModules), &
-      &             strip=.true., before='  critical modules ', advance='yes' )
-    call output ( '  critical bands ' )
-    call output ( trim(config%criticalBands), advance='yes' )
-    call output ( config%chooseCriticalSignals, &
-      & before='  use critical modules to choose critical signals? ', advance='yes' )
-    call output ( config%maxGap, before='  max gap ', advance='yes' )
-    call display_string ( phyq_indices(Config%maxGapFamily), &
-      &             strip=.true., before='  max Gap Family ', advance='yes' )
-    call output ( config%skipL1BCheck, before='  skip check of l1b files ', &
-      & advance='yes' )
-    call output ( config%allowPriorOverlaps, &
-      & before='  allow overlaps to prior day? ',advance='yes' )
-    call output ( config%allowPostOverlaps, &
-      & before='  allow overlaps to next day? ', advance='yes' )
-    call output ( config%saveObstructions, before='  save obstructions? ', &
-      & advance='yes' )
-    call output ( config%DACSDeconvolved, before='  DACS already deconvolved? ', &
-      & advance='yes' )
+    call startTable
+    call addRow_header ( 'ChunkDivide configuration', 'c' )
+    call addRow_divider ( '-' )
+    call addRow ( 'Method                    ', trim(string_function(Config%method, 'lit')  ) )
+    call addRow ( 'Max length                ', config%maxLength )
+    call addRow ( 'Max length   family       ', trim(string_function(Config%maxLengthFamily, 'phy')  ) )
+    
+    call addRow ( 'Num chunks                ', config%noChunks )
+    call addRow ( 'Overlap                   ', config%overlap )
+    call addRow ( 'Overlap  family           ', trim(string_function(Config%overlapFamily, 'phy')  ) )
+    call addRow ( 'Lower overlap             ', config%loweroverlap )
+    call addRow ( 'Its  family               ', trim(string_function(Config%loweroverlapFamily, 'phy')  ) )
+    call addRow ( 'Upper overlap             ', config%upperoverlap )
+    call addRow ( 'Its  family               ', trim(string_function(Config%upperoverlapFamily, 'phy')  ) )
+    call addRow ( 'Num slaves                ', config%noSlaves )
+    call addRow ( 'Home Module               ', trim(string_function(Config%homeModule, 'lit')  ) )
+    call addRow ( 'Home Geod Ang             ', config%homeGeodAngle )
+    call addRow ( 'Set Scan Lower Limit?     ', config%ScanLLSet )
+    if ( config%scanLLSet ) &
+  & call addRow ( 'Bottom Scan Range         ', config%scanlowerLimit )
+
+    call addRow ( 'Set Scan Upper Limit?     ', config%ScanULSet )
+    if ( config%scanULSet ) &
+  & call addRow ( 'Top Scan Range            ', config%scanUpperLimit )
+    call addRow ( 'Max Out-of-plane Dist     ', config%MaxOrbY )
+    call addRow ( 'Critical Modules          ', trim(string_function(Config%criticalModules, 'lit')  ) )
+    call addRow ( 'Critical Bands            ', trim(Config%criticalBands) )
+    call addRow ( 'Use Crit. Modules?        ', config%chooseCriticalSignals )
+    call addRow ( 'Max Gap                   ', config%MaxGap )
+    call addRow ( 'Max Gap  family           ', trim(string_function(Config%maxGapFamily, 'phy')  ) )
+    call addRow ( 'Skip L1B Check?           ', config%skipL1BCheck )
+    call addRow ( 'Allow Prior Overlaps?     ', config%allowPriorOverlaps )
+    call addRow ( 'Allow Next Day Overlaps?  ', config%allowPostOverlaps )
+    call addRow ( 'Save Obstructions?        ', config%saveObstructions )
+    call addRow ( 'DACS Already Deconvolved? ', config%DACSDeconvolved )
+    call outputTable ( sep='|', border='-' )
+    ! Critical signals?
     call Dump_criticalSignals(config%criticalSignals)
+  contains
+    function string_function ( arg, typ ) result ( the_string )
+      ! Returns the value get_string computes
+      ! Args
+      integer, intent(in)           :: arg
+      character(len=*), intent(in)  :: typ
+      character(len=128)            :: the_string
+      ! Executable
+      select case (lowercase(typ(1:3)))
+      case ( 'lit' )
+        call Get_string ( lit_indices(arg), the_string, strip=.true. )
+      case ( 'phy' )
+        call Get_string ( phyq_indices(arg), the_string, strip=.true. )
+      case default
+        call Get_string ( arg, the_string, strip=.true. )
+      end select
+    end function string_function
   end subroutine Dump_Config
 
   ! -------------------------------------------- Dump_CriticalSignals -----
   subroutine Dump_CriticalSignals(criticalSignals)
+    ! Some day we'll use the Table apis from highOutput (see Dump_Config)
 
-    use Output_M, only: OUTPUT
+    use Output_M, only: Output
 
     character(len=160), dimension(:), pointer &
       & :: criticalSignals       ! Which signals must be on
@@ -191,6 +198,9 @@ contains ! ===================================  Public Procedures  =====
 end module ChunkDivideConfig_m
 
 ! $Log$
+! Revision 2.6  2019/07/09 20:46:35  pwagner
+! Use Table ccells to Dump_Config
+!
 ! Revision 2.5  2017/09/14 23:17:26  pwagner
 ! Added module component to ChunkDivideConfig_T
 !
