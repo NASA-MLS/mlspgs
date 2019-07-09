@@ -87,6 +87,8 @@ module SYMBOL_TYPES
   !  junk      <tree>    <include>
      aft_cont, treenode, object /)
 
+  integer, protected :: Terminal_Strings(t_null: t_last_terminal)
+
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
@@ -101,27 +103,28 @@ contains
   ! aren't terminals (e.g. t_null and errors), or for things that are
   ! pseudo-terminals (e.g. identifier, integer).
 
-    use STRING_TABLE, only: ADD_CHAR
+    use Symbol_Table, only: Enter_Terminal
 
     integer, intent(in) :: TERMINAL
+
     select case ( terminal )
-    case ( t_null );              call add_char ( '' )
-    case ( t_equal );             call add_char ( '=' )
-    case ( t_produces );          call add_char ( '->' )
-    case ( t_generates );         call add_char ( '=>' )
-    case ( t_question );          call add_char ( '?' )
-    case ( t_eos );               call add_char ( '<eos>' )
-    case ( t_end_of_input );      call add_char ( '<eof>' )
-    case ( t_identifier );        call add_char ( '<identifier>' )
-    case ( t_number );            call add_char ( '<number>' )
-    case ( t_string );            call add_char ( '<string>' )
-    case ( t_unk_op );            call add_char ( '<unk_op>' )
-    case ( t_unk_pun  );          call add_char ( '<unk_pun>' )
-    case ( t_unk_ch );            call add_char ( '<unk_ch>' )
-    case ( t_inc_str  );          call add_char ( '<inc_str>' )
-    case ( t_aft_cont );          call add_char ( '<aft_cont>' )
-    case ( t_tree_node );         call add_char ( '<tree node>' )
-    case ( t_include );           call add_char ( '<include>' )
+    case ( t_null );         terminal_strings ( t_null )         = enter_terminal ( '', t_null )
+    case ( t_equal );        terminal_strings ( t_equal )        = enter_terminal ( '=', t_equal )
+    case ( t_produces );     terminal_strings ( t_produces )     = enter_terminal ( '->', t_produces )
+    case ( t_generates );    terminal_strings ( t_generates )    = enter_terminal ( '=>', t_generates )
+    case ( t_question );     terminal_strings ( t_question )     = enter_terminal ( '?', t_question )
+    case ( t_eos );          terminal_strings ( t_eos )          = enter_terminal ( '<eos>', t_eos )
+    case ( t_end_of_input ); terminal_strings ( t_end_of_input ) = enter_terminal ( '<eof>', t_end_of_input )
+    case ( t_identifier );   terminal_strings ( t_identifier )   = enter_terminal ( '<identifier>', t_identifier )
+    case ( t_number );       terminal_strings ( t_number )       = enter_terminal ( '<number>', t_number )
+    case ( t_string );       terminal_strings ( t_string )       = enter_terminal ( '<string>', t_string )
+    case ( t_unk_op );       terminal_strings ( t_unk_op )       = enter_terminal ( '<unk_op>', t_unk_op )
+    case ( t_unk_pun );      terminal_strings ( t_unk_pun )      = enter_terminal ( '<unk_pun>', t_unk_pun )
+    case ( t_unk_ch );       terminal_strings ( t_unk_ch )       = enter_terminal ( '<unk_ch>', t_unk_ch )
+    case ( t_inc_str );      terminal_strings ( t_inc_str )      = enter_terminal ( '<inc_str>', t_inc_str )
+    case ( t_aft_cont );     terminal_strings ( t_aft_cont )     = enter_terminal ( '<aft_cont>', t_aft_cont )
+    case ( t_tree_node );    terminal_strings ( t_tree_node )    = enter_terminal ( '<tree node>', t_tree_node )
+    case ( t_include );      terminal_strings ( t_include )      = enter_terminal ( '<include>', t_include )
     case default
       write ( *, * ) 'SYMBOL_TYPES%INIT_TERMINAL-E- No initializer for &
                      &terminal symbol with index ', terminal
@@ -172,6 +175,9 @@ contains
 end module SYMBOL_TYPES
 
 ! $Log$
+! Revision 1.1  2014/01/14 01:36:18  vsnyder
+! Renamed with _LR suffix
+!
 ! Revision 1.1  2014/01/14 00:15:08  vsnyder
 ! Initial commit of new module for new LR
 !
