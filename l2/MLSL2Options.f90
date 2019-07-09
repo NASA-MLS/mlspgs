@@ -1428,6 +1428,29 @@ jloop:do while ( j < len_trim(line) )
   ! Print the cmd line in blocs of BlocLength characters
   ! We have not yet decided how to use the details arg
   subroutine DumpOptions ( details )
+    use HighOutput, only: AddRow, AddRow_Divider, AddRow_Header, &
+      & OutputTable, StartTable
+    integer, optional, intent(in)                :: Details ! Not used at present
+    ! Internal variables
+    integer, parameter                           :: BlocLength = 56
+    integer                                      :: c1, c2
+    integer                                      :: i
+    call startTable
+    call addRow_header ( 'Current Level 2 Options', 'c' )
+    call addRow_divider ( '-' )
+    call addRow ('Phase            ', trim( L2Options%CurrentPhaseName        ) )
+    call addRow ('Chunk            ', L2Options%CurrentChunkNumber         )
+    call addRow ('SkipRetrieval    ', L2Options%Skipretrieval         )
+    call addRow ('Send output to   ', trim( PrUnitname( L2Options%Output_print_unit )   ) )
+    call addRow ('MLSL2Debug       ', L2Options%MLSL2Debug         )
+    call addRow ('Overridden       ', L2Options%Overridden         )
+    call addRow ('GPH MissingValue ', L2Options%GPH_MissingValue     )
+    call addRow ('Cmdline          ', trim( L2Options%Command_line        ), &
+      & BlocLen=40, options='-w' )
+    call outputTable ( sep='|', border='-' )
+  end subroutine DumpOptions
+
+  subroutine DumpOptions_old ( details )
     use HighOutput, only: OutputTable
     integer, optional, intent(in)                :: Details ! Not used at present
     ! Internal variables
@@ -1486,7 +1509,7 @@ jloop:do while ( j < len_trim(line) )
     enddo
 
     call outputTable( keysValues(1:nValues, :), border='-', headliner='-' )
-  end subroutine DumpOptions
+  end subroutine DumpOptions_old
 
   ! -------------------------------------------------  DumpMacros  -----
   ! Dump the runtime macros
@@ -1580,6 +1603,9 @@ end module MLSL2Options
 
 !
 ! $Log$
+! Revision 2.128  2019/07/09 20:53:22  pwagner
+! Use Table ccells to DumpOptions
+!
 ! Revision 2.127  2019/05/15 17:28:39  pwagner
 ! Warns if opts file is empty
 !
