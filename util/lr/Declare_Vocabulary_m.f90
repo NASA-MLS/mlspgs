@@ -76,6 +76,8 @@ contains
     total = 4  ! Includes <GOAL> -> <SOG> start <EOG>
 
     ! Declare the vocabulary symbols and the nonterminals
+    if ( watch ) &
+      & call output ( 'Declare vocabulary symbols and nonterminals', advance='yes' )
     do i = 1, nsons(root)
       son = subtree(i,root)
       select case ( node_id(son) )
@@ -107,6 +109,8 @@ contains
     end do
 
     ! Declare the terminal symbols and action symbols
+    if ( watch ) &
+      & call output ( 'Declare terminal and action symbols', advance='yes' )
     do i = 1, nsons(root)
       son = subtree(i,root)
       select case ( node_id(son) )
@@ -169,8 +173,8 @@ contains
 
     subroutine Declare_RHS ( Root )
     ! Declare undeclared symbols that are sons of Root, which is an RHS node
-    ! If it a symbol is not declared assume it's terminal.
-      use Declaration_Table, only: Declare, Decls, Get_Decl
+    ! If a symbol is not declared assume it's terminal.
+      use Declaration_Table, only: Declare, Decls, Empty, Get_Decl, Null_Decl
       integer, intent(in) :: Root
       type(decls) :: Decl ! Of a symbol
       integer :: I        ! Loop index
@@ -179,15 +183,17 @@ contains
 
       total = total + nsons(root)
       do i = 1, nsons(root)
-        symbol = sub_rosa(subtree(i,root))
+        son = subtree(i,root)
+        symbol = sub_rosa(son)
         decl = get_decl(symbol,terminal)
-        if ( decl%type /= terminal ) then
+        select case ( decl%type )
+        case ( null_decl, empty )
           if ( watch ) then
             call display_string ( symbol, before='Declare ' )
             call output ( ' as terminal.', advance='yes' )
           end if
-          call declare ( symbol, terminal, son )
-        end if
+          call redeclare ( symbol, terminal, son, 0 )
+        end select
       end do
 
     end subroutine Declare_RHS
