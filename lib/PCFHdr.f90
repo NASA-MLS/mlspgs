@@ -306,36 +306,53 @@ contains
    subroutine DumpGlobalAttributes_global
      call DumpGlobalAttributes_local ( GlobalAttributes )
    end subroutine DumpGlobalAttributes_global
+!----------------------------------------
    
    subroutine DumpGlobalAttributes_local ( GlobalAttributes )
-!----------------------------------------
-      type(GlobalAttributes_T), intent(in)       :: GlobalAttributes
-      integer                           :: DayofYear
-      DayOfYear = GranuleDayOfYear_fun()
-      call outputNamedValue('Orbit numbers', GlobalAttributes%orbNum)
-      call outputNamedValue('Orbit Periods', GlobalAttributes%orbPeriod)
-      call output ('ProductionLocation: '  // trim( GlobalAttributes%productionLoc ), advance='yes' )
-      call output ('HostName:       ' // trim( GlobalAttributes%HostName  ), advance='yes' )
-      call output ('InstrumentName: ' // trim( GlobalAttributes%InstrumentName  ), advance='yes' )
-      call output ('Process level: ' // trim(  GlobalAttributes%ProcessLevel    ), advance='yes' )
-      call output ('PGE version: ' // trim(    GlobalAttributes%PGEVersion      ), advance='yes' )
-      call output ('Misc Notes: ' // trim(     GlobalAttributes%MiscNotes      ), advance='yes' )
-      call output ('Start UTC: ' // trim(      GlobalAttributes%StartUTC        ), advance='yes' )
-      call output ('End UTC: ' // trim(        GlobalAttributes%EndUTC          ), advance='yes' )
-      call output ('DOI: '    // trim(         GlobalAttributes%DOI          ), advance='yes' )
-      call outputNamedValue ( 'Granule month:', GlobalAttributes%GranuleMonth )
-      call outputNamedValue ( 'Granule day:' , GlobalAttributes%GranuleDay  )
-      call outputNamedValue ( 'Granule year:' ,GlobalAttributes%GranuleYear )
-      call outputNamedValue ( 'Granule day of year:', DayOfYear )
-      call outputNamedValue ( 'Equator crossing time (tai93):', GlobalAttributes%TAI93At0zOfGranule )
-      call outputNamedValue ( 'FirstMAFCtr:', GlobalAttributes%FirstMAFCtr )
-      call outputNamedValue ( 'LastMAFCtr:', GlobalAttributes%LastMAFCtr )
-      call outputNamedValue ( 'NumCompletedChunks:', GlobalAttributes%NumCompletedChunks )
-      call outputNamedValue ( 'NumFailedChunks:', GlobalAttributes%NumFailedChunks )
-      call output ('FailedChunks: '      // trim(         GlobalAttributes%FailedChunks        ), advance='yes' )
-      call output ('FailedMachines: '    // trim(         GlobalAttributes%FailedMachines      ), advance='yes' )
-      call output ('FailedMsgs: '        // trim(         GlobalAttributes%FailedMsgs          ), advance='yes' )
-      call output ('FileAttributesCopiedFrom: ' // trim(  GlobalAttributes%FileAttributesCopiedFrom ), advance='yes' )
+     use Dates_Module, only: MonthName
+     use HighOutput, only: AddRow, AddRow_Divider, AddRow_Header, &
+       & OutputTable, StartTable
+     type(GlobalAttributes_T), intent(in)       :: GlobalAttributes
+     ! Local variables
+     integer                                    :: DayofYear, month
+     character(len=16)                          :: month_name
+     ! Executable
+     DayOfYear = GranuleDayOfYear_fun()
+     month_name = 'unknown'
+     month = abs(GlobalAttributes%GranuleMonth )
+     if ( month > 0 .and. month < 13) month_name = MonthName(month)
+     call startTable
+     call addRow_header ( 'Global attributes', 'c' )
+     call addRow_divider ( '-' )
+     call addRow ('Start UTC                    ', trim( GlobalAttributes%StartUTC        ) )
+     call addRow ('End UTC                      ', trim( GlobalAttributes%EndUTC          )) 
+     call addRow ('Granule day of year          ', DayOfYear )
+     call addRow ('Granule month                ', trim(Month_Name) )
+     call addRow ('Granule day                  ', GlobalAttributes%GranuleDay  )
+     call addRow ('Granule year                 ', GlobalAttributes%GranuleYear )
+     call addRow ('FirstMAFCtr                  ', GlobalAttributes%FirstMAFCtr )
+     call addRow ('LastMAFCtr                   ', GlobalAttributes%LastMAFCtr )
+     call addRow ('NumCompletedChunks           ', GlobalAttributes%NumCompletedChunks )
+     call addRow ('NumFailedChunks              ', GlobalAttributes%NumFailedChunks )
+     call addRow ('FailedMsgs                   ', trim( GlobalAttributes%FailedMsgs          ), &
+       & BlocLen=38, options='-w' )
+     call addRow ('FailedChunks                 ', trim( GlobalAttributes%FailedChunks        ), &
+       & BlocLen=38, options='-w' )
+     call addRow ('FailedMachines               ', trim( GlobalAttributes%FailedMachines      ), &
+       & BlocLen=38, options='-w' )
+     call addRow ('FileAttributesCopiedFrom     ', trim( GlobalAttributes%FileAttributesCopiedFrom ) )
+     call addRow ('Equator crossing time (tai93)', GlobalAttributes%TAI93At0zOfGranule )
+     call addRow ('ProductionLocation           ', trim( GlobalAttributes%productionLoc ))
+     call addRow ('HostName                     ', trim( GlobalAttributes%HostName  ))
+     call addRow ('InstrumentName               ', trim( GlobalAttributes%InstrumentName  ) )
+     call addRow ('Process level                ', trim( GlobalAttributes%ProcessLevel    ) )
+     call addRow ('PGE version                  ', trim( GlobalAttributes%PGEVersion      ) )
+     call addRow ('Misc Notes                   ', trim( GlobalAttributes%MiscNotes      ), &
+       & BlocLen=38, options='-w' )
+     call addRow ('DOI                          ', trim( GlobalAttributes%DOI          ))
+     call outputTable ( sep='|', border='-' )
+     call outputNamedValue('Orbit numbers       ', GlobalAttributes%orbNum)
+     call outputNamedValue('Orbit Periods       ', GlobalAttributes%orbPeriod)
    end subroutine DumpGlobalAttributes_local
 
 !----------------------------------------
@@ -1895,6 +1912,9 @@ end module PCFHdr
 !================
 
 !# $Log$
+!# Revision 2.75  2019/07/09 23:05:59  pwagner
+!# Use Table cells to DumpGlobalAttributes
+!#
 !# Revision 2.74  2019/01/29 21:47:37  pwagner
 !# Uses MLS_IsGlatt; light housekeeping
 !#
