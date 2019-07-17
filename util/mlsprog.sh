@@ -66,6 +66,15 @@ run_prog()
     PGE_BINARY=$BIN_DIR/$MLSPROG
   fi
   echo $PGE_BINARY $EXTRA_OPTIONS "$@"
+  
+  if [ ! -x "$PGE_BINARY"  ]
+  then
+    echo "************************************************************************"
+    echo "$PGE_BINARY doesn't exist!"
+    echo "Check for typos in its path and program names"
+    echo "************************************************************************"
+    exit 1
+  fi
   if [ -f $BIN_DIR/license.txt ]
   then
     cat $BIN_DIR/license.txt
@@ -251,6 +260,9 @@ else
 fi
 
 # $Log$
+# Revision 1.16  2019/01/31 19:17:11  pwagner
+# Pass HOSTNAME on commandline to mlsl2
+#
 # Revision 1.15  2017/02/09 23:33:17  pwagner
 # Avoid stomping on any already-selected PCF
 #

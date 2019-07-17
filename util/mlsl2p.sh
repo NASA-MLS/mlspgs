@@ -332,26 +332,34 @@ verbose=`echo "$otheropts" | grep -i verbose`
 # Check that assumptions are valid
 if [ "$PGS_PC_INFO_FILE" = "" -a "$UsingPCF" != "" ]
 then
+  logit "************************************************************************"
   logit 'PGS_PC_INFO_FILE undefined'
   logit 'usage:'
   logit 'PGS_PC_Shell.sh (pge) 0111 (PCF_file) 25 -v'
+  logit "************************************************************************"
   exit 1
 elif [ "$PVM_HOSTS_INFO" = "" ]
 then
+  logit "************************************************************************"
   logit 'PVM_HOSTS_INFO undefined' 
   logit 'It should be the path and name of the host file'
   logit 'a text file containing the hosts available'
   logit 'for running the slave tasks, one host per line'
+  logit "************************************************************************"
   exit 1
 elif [ "$JOBDIR" = "" ]
 then
+  logit "************************************************************************"
   logit 'JOBDIR undefined' 
   logit 'It should be the path where the job is run'
+  logit "************************************************************************"
   exit 1
 elif [ "$PGE_ROOT" = "" ]
 then
+  logit "************************************************************************"
   logit 'PGE_ROOT undefined' 
   logit 'It should be the path where the science_env.sh script is kept'
+  logit "************************************************************************"
   exit 1
 fi
 
@@ -369,11 +377,17 @@ fi
 
 if [ ! -x "$PGE_BINARY"  ]
 then
+  logit "************************************************************************"
   logit "$PGE_BINARY doesn't exist!"
+  logit "Check for typos in its path and program names"
+  logit "************************************************************************"
   exit 1
 elif [ ! -r "$PGE_SCRIPT_DIR/slavetmplt.sh"  ]
 then
+  logit "************************************************************************"
   logit "slavetmplt.sh not in $PGE_SCRIPT_DIR"
+  logit "Check for typos in its path and program names"
+  logit "************************************************************************"
   exit 1
 fi
 
@@ -486,7 +500,9 @@ else
   # Check that we were called properly
   if [ ! -f "$l2cf" ]
   then
+    logit "************************************************************************"
     logit 'Usage (w/o toolkit): mlsl2p.sh l2cf_file'
+    logit "************************************************************************"
     exit 1
   fi
   SLV_SUF=slave
@@ -639,6 +655,9 @@ else
 fi
 
 # $Log$
+# Revision 1.39  2019/06/27 21:07:05  pwagner
+# Print sign-off at end of toolkitless run; use logit mechanism
+#
 # Revision 1.38  2019/04/18 16:22:08  pwagner
 # May evaluate variables in opts file if USEOPTSENV is set; drop slavetmpltntk.sh because slavetmplt.sh now does double-duty
 #
