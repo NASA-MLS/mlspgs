@@ -22,8 +22,8 @@ module HighOutput
   use MLSFinds, only: FindFirst, FindNext
   use MLSStringLists, only: ExpandStringRange, GetStringElement, &
     & List2Array, NumStringElements, SwitchDetail, Wrap
-  use MLSStrings, only: Asciify, Lowercase, NCharsInFormat, Ncopies, &
-    & Trim_Safe, WriteIntsToChars
+  use MLSStrings, only: Asciify, Indexes, Lowercase, NCharsInFormat, Ncopies, &
+    & Replace, Stretch, Trim_Safe, WriteIntsToChars
   use Output_M, only: Advance_Is_Yes_Or_No, Blanks, GetOutputStatus, &
     & MaxOutputLineslen, Newline, &
     & Output, Output_ => Output_Char_Nocr, &
@@ -45,41 +45,43 @@ module HighOutput
 ! === (start of toc) ===
 !     c o n t e n t s
 !     - - - - - - - -
+!     (datatypes)
+! StyleOptions             How Banners and Headlines will appear
 !     (subroutines and functions)
-! AddRow                   add a {name, value} row to a 2-d table of cells
-! AddRow_header            add a single line stretched across an entire row
-! AddRow_divider           add a row composed of a single, repeated character
-! AlignToFit               align printed argument to fit column range
-! Banner                   surround message with stars and stripes; e.g.,
+! AddRow                   Add a {name, value} row to a 2-d table of cells
+! AddRow_header            Add a single line stretched across an entire row
+! AddRow_divider           Add a row composed of a single, repeated character
+! AlignToFit               Align printed argument to fit column range
+! Banner                   Surround message with stars and stripes; e.g.,
 !                            *-----------------------------------------------*
 !                            *            Your message here                  *
 !                            *-----------------------------------------------*
 ! BeVerbose                Should we do extra printing?
-! BlanksToColumn           print blanks [or fill chars] out to specified column
-! BlanksToTab              print blanks [or fill chars] out to next tab stop
-! Dump                     dump output or stamp options
-! Dumpsize                 print a nicely-formatted memory size 
-! Dumptabs                 print the current tab stop positions
-! GetStamp                 get stamp being added to every output
-! HeadLine                 print a line with eye-catching features
+! BlanksToColumn           Print blanks [or fill chars] out to specified column
+! BlanksToTab              Print blanks [or fill chars] out to next tab stop
+! Dump                     Dump output or stamp options
+! Dumpsize                 Print a nicely-formatted memory size 
+! Dumptabs                 Print the current tab stop positions
+! GetStamp                 Get stamp being added to every output
+! HeadLine                 Print a line with eye-catching features
 !                           e.g., '*-------  Your message here   -------*'
 ! LetsDebug                Should we do debug printing?
-! NumNeedsFormat           return what format is needed to output num
-! NumToChars               return what string would be printed by output
-! OutputCalendar           output nicely-formatted calendar page
-! Output_Date_And_Time     print nicely formatted date and time
-! OutputList               output array as comma-separated list; e.g. '(1,2,..)'
-! OutputNamedValue         print nicely formatted name and value
-! OutputTable              output 2-d array as cells in table,; or else
-!                          output the 2d table of cells constucted by AddRow(s)
-! ResetTabs                restore tab stops to what was in effect at start
-! RestoreSettings          restore default settings for output, stamps, tabs
-! SetStamp                 set stamp to be automatically printed on every line
-! SetTabs                  set tab stops (to be used by tab)
-! StartTable               initialize a 2-d table of cells to be output later
-! StyledOutput             output a line according to options; e.g. "--Banner"
-! Tab                      move to next tab stop
-! Timestamp                print argument with a timestamp manually
+! NumNeedsFormat           Return what format is needed to output num
+! NumToChars               Return what string would be printed by output
+! OutputCalendar           Output nicely-formatted calendar page
+! Output_Date_And_Time     Print nicely formatted date and time
+! OutputList               Output array as comma-separated list; e.g. '(1,2,..)'
+! OutputNamedValue         Print nicely formatted name and value
+! OutputTable              Output 2-d array as cells in table,; or else
+!                          Output the 2d table of cells constucted by AddRow(s)
+! ResetTabs                Restore tab stops to what was in effect at start
+! RestoreSettings          Restore default settings for output, stamps, tabs
+! SetStamp                 Set stamp to be automatically printed on every line
+! SetTabs                  Set tab stops (to be used by tab)
+! StartTable               Initialize a 2-d table of cells to be output later
+! StyledOutput             Output a line according to options; e.g. "--Banner"
+! Tab                      Move to next tab stop
+! Timestamp                Print argument with a timestamp manually
 !                            (both stdout and logged output)
 ! === (end of toc) ===
 
@@ -89,7 +91,7 @@ module HighOutput
 ! AddRow_divider ( char char )
 ! AlignToFit ( char* chars, int columnRange(2), char alignment, [int skips] )
 ! Banner ( char* chars, [int columnRange(2)], [char alignment], [int skips], 
-!    [int lineLength], [char mode], [char pattern] )
+!    [int lineLength], [char mode], [char pattern], [log underline] )
 ! log BeVerbose ( char* switch[(:)], threshold )
 ! BlanksToColumn ( int column, [char fillChar], [char* advance] )
 ! BlanksToTab ( [int tabn], [char* fillChar] )
@@ -102,7 +104,7 @@ module HighOutput
 !          [log showTime], [char* dateFormat], [char* timeFormat] )
 ! HeadLine ( char* chars, 
 !          [char fillChar], [char* Before], [char* After], 
-!          [int columnRange(2)], [char alignment], [int skips] )
+!          [int columnRange(2)], [char alignment], [int skips], [log underline] )
 ! log LetsDebug ( char* switch[(:)], threshold )
 ! char* NumNeedsFormat ( value )
 ! char* NumToChars ( value, [char* format] )
@@ -344,19 +346,22 @@ module HighOutput
 ! = ~ = ~ = ~ = ~ = ~ = ~ = ~ = ~ = ~ = ~ = ~ = ~ = ~ = ~ = ~ = ~ = ~ = ~ = ~  *
 
   type StyleOptions_T
+    logical                            :: Underline           = .false.
     ! HeadLine
-    character(len=1) :: HeadLineAlignment        = 'C'
-    character(len=1) :: HeadLineFill             = ' '
-    character(len=8) :: HeadLineBefore           = ' '
-    character(len=8) :: HeadLineAfter            = ' '
-    integer, dimension(2) :: HeadLineColumnrange = (/ 1, 80 /)
-    integer          :: HeadLineSkips            = 0
+    integer, dimension(2)              :: HeadLineColumnrange = (/ 1, 80 /)
+    integer                            :: HeadLineSkips       = 0
+    character(len=1)                   :: HeadLineAlignment   = 'C'
+    character(len=1)                   :: HeadLineFill        = ' '
+    character(len=8)                   :: HeadLineBefore      = ' '
+    character(len=8)                   :: HeadLineAfter       = ' '
+    logical                            :: HeadlineStretch     = .false.
     ! Banner
-    character(len=1) :: BannerAlignment          = 'C'
-    character(len=1) :: BannerPattern            = '-'
-    integer, dimension(2) :: BannerColumnrange   = (/ 1, 80 /)
-    integer          :: BannerSkips              = 0
-    integer          :: BannerLength             = 0
+    integer, dimension(2)              :: BannerColumnrange   = (/ 1, 80 /)
+    integer                            :: BannerSkips         = 0
+    character(len=1)                   :: BannerAlignment     = 'C'
+    character(len=1)                   :: BannerPattern       = '-'
+    integer                            :: BannerLength        = 0
+    logical                            :: BannerStretch     = .false.
   end type
   type(StyleOptions_T), private, save  :: DefaultStyleOptions
   type(StyleOptions_T), public, save   :: StyleOptions
@@ -377,7 +382,6 @@ contains
   ! By means of optional args you can create a line like
   ! *   name                   value   *
   subroutine AddRow_character_blocs ( name, value, BlocLen, options, format )
-    use MLSStrings, only: Indexes
     ! For character values of great length, the values may
     ! span multiple lines, which we'll call "blocs"
     ! Method: divide value up into separate blocs, each BlocLen long
@@ -400,7 +404,7 @@ contains
     integer                                  :: NBlocs ! How many blocs?
     character(len=len(value)+51)             :: wrapped
     logical                                  :: wrapValue
-    logical, parameter                       :: DEEBug = .false.
+    logical, parameter                       :: DeeBug = .false.
     ! Executable
     BlocLength = max( BlocLen, 1)
     BlocLength = min(MAXCELLSIZE, BlocLength)
@@ -408,7 +412,7 @@ contains
     if ( present(options) ) wrapValue = (index( options, 'w' ) > 0)
     if ( wrapValue .and. any( indexes( trim(value), (/'"',  "'"/) ) > 0 ) ) then
       call myMessage ( MLSMSG_Warning, 'AddRow_character_blocs', &
-        & 'Value contains quoted material--cannot wrap' )
+        & 'Value contains quoted material--may not wrap properly' )
       ! wrapValue = .false.
     endif
     nBlocs = ( len_trim(value ) - 1)/BlocLength + 1
@@ -540,12 +544,12 @@ contains
   ! R    Flushed right
   ! C    Centered
   ! J    Justified (padding spaces to any existing spaces)
-  subroutine AlignToFit_CHARS ( CHARS, COLUMNRANGE, ALIGNMENT, SKIPS )
-    character(len=*), intent(in)      :: CHARS
+  subroutine AlignToFit_Chars ( chars, columnrange, alignment, skips )
+    character(len=*), intent(in)                :: Chars
     ! If columnRange(1) < 1, just use starting columns; otherwise move to
-    integer, dimension(2), intent(in) :: COLUMNRANGE
-    character(len=1), intent(in)      :: ALIGNMENT ! L, R, C, or J
-    integer, optional, intent(in)     :: SKIPS ! How many spaces between chars
+    integer, dimension(2), intent(in)           :: Columnrange
+    character(len=1), intent(in), optional      :: Alignment ! L, R, C, or J
+    integer, optional, intent(in)               :: Skips ! How many spaces between chars
     !
     ! Internal variables
     character(len=max(len(chars), abs(columnRange(2)-columnRange(1)))) :: &
@@ -562,7 +566,7 @@ contains
     allChars = chars
     if ( present(skips) ) then
       if ( skips > 0 .and. len_trim(chars) > 0 ) then
-        allChars = stretch(chars, skips)
+        allChars = stretch( chars, skips, options='a' )
       end if
     end if
     if ( columnRange(1) > 0 ) then
@@ -604,49 +608,49 @@ contains
       call output_( allChars(char1:char2) )
       call blanks( padRight )
     end if
-  end subroutine AlignToFit_CHARS
+  end subroutine AlignToFit_Chars
 
-  subroutine AlignToFit_DOUBLE ( value, COLUMNRANGE, ALIGNMENT, FORMAT )
-    double precision, intent(in)      :: value
+  subroutine AlignToFit_Double ( value, columnrange, alignment, format )
+    double precision, intent(in)                :: value
     ! If columnRange(1) < 1, just use starting columns; otherwise move to
-    integer, dimension(2), intent(in) :: COLUMNRANGE
-    character(len=1), intent(in)      :: ALIGNMENT ! L, R, C, or J
-    character(len=*), optional, intent(in)     :: FORMAT
+    integer, dimension(2), optional, intent(in) :: Columnrange
+    character(len=1), intent(in), optional      :: Alignment ! L, R, C, or J
+    character(len=*), optional, intent(in)      :: FORMAT
     !
     ! Internal variables
     character(len=30) :: line
     ! Executable
     line = numToChars( value, format )
     call AlignToFit( trim(line), columnRange, alignment )
-  end subroutine AlignToFit_DOUBLE
+  end subroutine AlignToFit_Double
 
-  subroutine AlignToFit_INTEGER ( value, COLUMNRANGE, ALIGNMENT, FORMAT )
-    integer, intent(in)               :: value
+  subroutine AlignToFit_Integer ( value, columnrange, alignment, format )
+    integer, intent(in)                         :: value
     ! If columnRange(1) < 1, just use starting columns; otherwise move to
-    integer, dimension(2), intent(in) :: COLUMNRANGE
-    character(len=1), intent(in)      :: ALIGNMENT ! L, R, C, or J
-    character(len=*), optional, intent(in)     :: FORMAT
+    integer, dimension(2), optional, intent(in) :: Columnrange
+    character(len=1), intent(in), optional      :: Alignment ! L, R, C, or J
+    character(len=*), optional, intent(in)      :: FORMAT
     !
     ! Internal variables
     character(len=30) :: line
     ! Executable
     line = numToChars( value, format )
     call AlignToFit( trim(line), columnRange, alignment )
-  end subroutine AlignToFit_INTEGER
+  end subroutine AlignToFit_Integer
 
-  subroutine AlignToFit_SINGLE ( value, COLUMNRANGE, ALIGNMENT, FORMAT )
-    real, intent(in)      :: value
+  subroutine AlignToFit_Single ( value, columnrange, alignment, format )
+    real, intent(in)                            :: value
     ! If columnRange(1) < 1, just use starting columns; otherwise move to
-    integer, dimension(2), intent(in) :: COLUMNRANGE
-    character(len=1), intent(in)      :: ALIGNMENT ! L, R, C, or J
-    character(len=*), optional, intent(in)     :: FORMAT
+    integer, dimension(2), optional, intent(in) :: Columnrange
+    character(len=1), intent(in), optional      :: Alignment ! L, R, C, or J
+    character(len=*), optional, intent(in)      :: FORMAT
     !
     ! Internal variables
     character(len=30) :: line
     ! Executable
     line = numToChars( value, format )
     call AlignToFit( trim(line), columnRange, alignment )
-  end subroutine AlignToFit_SINGLE
+  end subroutine AlignToFit_Single
 
   ! -----------------------------------------------------  Banner  -----
   ! Surround your message with stars and stripes; e.g.,
@@ -657,27 +661,35 @@ contains
   ! For multiline messages, you may divide them into elements of
   ! a character array, or else a longer character scalar and
   ! supply LineLength asking the routine to wrap at word boundaries
-  subroutine Banner_Chars ( chars, &
-    & columnRange, alignment, skips, lineLength, mode, pattern )
-    character(len=*), intent(in)                :: CHARS
+  subroutine Banner_Chars ( inChars, &
+    & columnRange, alignment, skips, lineLength, &
+      & mode, pattern, underline, Stretched )
+    character(len=*), intent(in)                :: inChars
     ! If columnRange(1) < 1, just use starting columns; otherwise move to
-    integer, dimension(2), optional, intent(in) :: COLUMNRANGE
-    character(len=1), intent(in), optional      :: ALIGNMENT ! L, R, C, or J
-    integer, optional, intent(in)               :: SKIPS ! How many spaces between chars
-    integer, optional, intent(in)               :: LINELENGTH
+    integer, dimension(2), optional, intent(in) :: Columnrange
+    character(len=1), intent(in), optional      :: Alignment ! L, R, C, or J
+    integer, optional, intent(in)               :: Skips ! How many spaces between chars
+    integer, optional, intent(in)               :: Linelength
     character (len=*), optional, intent(in)     :: mode ! if not 'hard'
     character (len=1), optional, intent(in)     :: pattern ! if not stripes
+    logical, optional, intent(in)               :: underline ! beneath non-blank chars
+    logical, optional, intent(in)               :: Stretched   ! s t r e t c h
     !
     ! Internal variables
-    integer :: addedLines
-    character(len=1)      :: myAlignment
-    character(len=1)      :: myFillChar
-    integer, dimension(2) :: myColumnRange
-    integer :: lineLen, mySkips, padding
-    character(len=2*len(chars))      :: wrappedChars
+    integer                          :: addedLines
     character(len=160), dimension(:), allocatable :: lines
-    logical, parameter :: DEBUG = .false.
+    character(len=2*len(inchars))    :: Chars
+    integer                          :: lineLen, mySkips, padding
+    character(len=1)                 :: myAlignment              
+    character(len=1)                 :: myFillChar               
+    integer, dimension(2)            :: myColumnRange            
+    logical                          :: myStretched
+    logical                          :: myUnderline              
+    logical, parameter               :: DEBUG = .false.          
+    character(len=len(chars))        :: underlineChars
+    character(len=2*len(chars))      :: wrappedChars
     ! Executable
+    Chars = ' '
     myAlignment = StyleOptions%BannerAlignment ! 'C'
     if ( present(alignment) ) myAlignment = alignment
     mySkips = StyleOptions%BannerSkips ! 0
@@ -685,7 +697,17 @@ contains
     myFillChar = StyleOptions%BannerPattern ! '-'
     if ( present(pattern) ) myFillChar = pattern
     lineLen = StyleOptions%BannerLength ! 0
+    myStretched = .false.
+    if ( present(Stretched) ) myStretched = Stretched
+    myUnderline = .false.
+    if ( present(underline) ) myUnderline = underline
+
     if ( present(LineLength) ) lineLen = LineLength
+    if ( myStretched ) then
+      Chars = Stretch ( inChars, 1, options='a' )
+    else
+      Chars = inChars
+    endif
     if ( lineLen > 4 ) then
       ! We will wrap the input to fit within LineLength, but remembering
       ! the stars and padding
@@ -727,8 +749,16 @@ contains
     ! Left star, then message, then right star
     call output( '*' )
     call AlignToFit( chars, myColumnRange, myAlignment, skips )
-    call blanksToColumn( lineLen )
+    call BlanksToColumn( lineLen )
     call output( '*', advance = 'yes' )
+    if ( myUnderline .and. len_trim(chars) > 0 ) then
+      ! The next trick replaces everything with a dash except spaces
+      underlineChars = Replace( chars, ' ', '-', reverse=.true. )
+      call output( '*' )
+      call AlignToFit( underlineChars, myColumnRange, myAlignment, skips )
+      call BlanksToColumn( lineLen )
+      call output( '*', advance = 'yes' )
+    endif
     ! Bottom border
     call output( '*' )
     call blanks ( lineLen-2, FillChar=myFillChar )
@@ -743,7 +773,7 @@ contains
     ! If columnRange(1) < 1, just use starting columns; otherwise move to
     integer, dimension(2), optional, intent(in) :: COLUMNRANGE
     character(len=1), intent(in), optional      :: ALIGNMENT ! L, R, C, or J
-    integer, optional, intent(in)               :: SKIPS ! How many spaces between chars
+    integer, optional, intent(in)               :: Skips ! How many spaces between chars
     character (len=1), optional, intent(in)     :: pattern ! if not stripes
     !
     ! Internal variables
@@ -789,7 +819,7 @@ contains
       ! Left star, then message, then right star
       call output( '*' )
       call AlignToFit( chararray(i), myColumnRange, myAlignment, skips )
-      call blanksToColumn( lineLen )
+      call BlanksToColumn( lineLen )
       call output( '*', advance = 'yes' )
     end do
     ! Bottom border
@@ -824,8 +854,8 @@ contains
     enddo
   end function Beverbose_CharArray
 
-  ! -----------------------------------------------------  BLANKSTOCOLUMN  -----
-  subroutine BLANKSTOCOLUMN ( column, fillchar, advance, dont_stamp )
+  ! -----------------------------------------------------  BlanksToColumn  -----
+  subroutine BlanksToColumn ( column, fillchar, advance, dont_stamp )
   ! Output N_BLANKS blanks to PRUNIT out to column COLUMN.
   ! (or optionally that many copies of fillChar)
     integer, intent(in) :: COLUMN
@@ -843,7 +873,7 @@ contains
     endif
     if ( nblanks < 1 ) return
     call blanks( nblanks, fillChar, advance, dont_stamp )
-  end subroutine BLANKSTOCOLUMN
+  end subroutine BlanksToColumn
 
   ! ------------------------------------------------  blanksToTab  -----
   ! Print blanks out to next tabstop
@@ -1156,24 +1186,31 @@ contains
   ! Print your message with extra formatting features; e.g.,
   ! *----------------  Your message here   ----------------*
   ! See also banner
-  subroutine HeadLine ( Chars, fillChar, Before, After, &
-    & ColumnRange, Alignment, Skips )
-    character(len=*), intent(in)                :: Chars
+  subroutine HeadLine ( inChars, fillChar, Before, After, &
+    & ColumnRange, Alignment, Skips, Underline, Stretched )
+    character(len=*), intent(in)                ::inChars
     character(len=1), intent(in), optional      :: fillChar      ! For padding
     character(len=*), intent(in), optional      :: Before, After ! text to print
     ! If columnRange(1) < 1, just use starting columns; otherwise move to
-    integer, dimension(2), optional, intent(in) :: COLUMNRANGE
-    character(len=1), intent(in), optional      :: ALIGNMENT ! L, R, C, or J
-    integer, optional, intent(in)               :: SKIPS ! How many spaces between chars
+    integer, dimension(2), optional, intent(in) :: Columnrange
+    character(len=1), intent(in), optional      :: Alignment ! L, R, C, or J
+    integer, optional, intent(in)               :: Skips ! How many spaces between chars
+    logical, optional, intent(in)               :: Underline
+    logical, optional, intent(in)               :: Stretched   ! s t r e t c h
     !
     ! Internal variables
+    character(len=2*len(inchars))    :: Chars
     character(len=1)      :: myAlignment
     integer, dimension(2) :: myColumnRange      ! To fit chars
     integer, dimension(2) :: myFullColumnRange  ! Must fit before and after, too
-    integer :: mySkips,  rightpadding
-    character(len=1) :: myFillChar
-    character(len=8) :: myBefore, myAfter
+    integer               :: mySkips,  rightpadding
+    character(len=1)      :: myFillChar
+    character(len=8)      :: myBefore, myAfter
+    logical                          :: myStretched
+    logical               :: myUnderline
+    character(len=len(chars))        :: underlineChars
     ! Executable
+    Chars = ' '
     rightpadding = 0
     if ( present(columnRange) ) then
       myFullColumnRange = columnRange
@@ -1188,6 +1225,15 @@ contains
     if ( present(fillChar) ) myFillChar = fillChar
     myAlignment = StyleOptions%HeadLineAlignment ! 'C'
     if ( present(alignment) ) myAlignment = alignment
+    myStretched = .false.
+    if ( present(Stretched) ) myStretched = Stretched
+    myUnderline = .false.
+    if ( present(Underline) ) myUnderline = Underline
+    if ( myStretched ) then
+      Chars = Stretch ( inChars, 1, options='a' )
+    else
+      Chars = inChars
+    endif
     myBefore = StyleOptions%HeadLineBefore
     myAfter = StyleOptions%HeadLineAfter
     ! call outputNamedValue ( 'myFullColumnRange', myFullColumnRange )
@@ -1220,6 +1266,12 @@ contains
       if ( len_trim(myAfter) > 0 ) call output( trim(myAfter), advance='no' )
     end if
     call newLine
+    if ( myUnderline .and. len_trim(chars) > 0 ) then
+      ! The next trick replaces everything with a dash except spaces
+      underlineChars = Replace( chars, ' ', '-', reverse=.true. )
+      call AlignToFit( underlineChars, myColumnRange, myAlignment, skips )
+      call newLine
+    endif
   end subroutine HeadLine
 
   ! -----------------------------------------------------  Letsdebug  -----
@@ -2066,17 +2118,29 @@ contains
 
   ! -----------------------------------------------------  StyledOutput  -----
   ! Print your message according to the style set by options
-  ! e.g., "--Banner"
+  ! e.g., "--Banner" or "-B"
   ! See also banner
   !
-  ! We could dig more deeply into options to allow\
+  ! options contains       style
+  !    ----                -----
+  !      B               Banner
+  !      H               Headline
+  !      U               Underline
+  !      S               s t r e t c h e d
+  !
+  ! Some, though not all, of these options may be combined; e.g. "-USB"
+  !
+  ! We could dig more deeply into options to allow
   ! it to pass Alignment, Fill, After, etc.
   subroutine StyledOutput ( chars, options )
     character(len=*), intent(in)                :: chars
     character(len=*), intent(in), optional      :: options
     ! Internal variables
-    logical :: asBanner
-    logical :: asHeadLine
+    logical                                     :: AsBanner
+    logical                                     :: AsHeadLine
+    logical                                     :: Stretched
+    logical                                     :: Underline
+    character(len=4*len(chars))                 :: UnderlineChars
     ! Executable
     asBanner   = .false.
     asHeadLine = .false.
@@ -2086,14 +2150,31 @@ contains
     endif
     asBanner   = index( options, 'B' ) > 0
     asHeadLine = index( options, 'H' ) > 0
+    Stretched  = index( options, 'S' ) > 0
+    Underline  = index( options, 'U' ) > 0 .or. StyleOptions%Underline
     if ( asBanner ) then
-      call Banner( chars ) 
+      Stretched = Stretched .or. StyleOptions%BannerStretch
+      call Banner( chars, Underline=Underline, Stretched=Stretched )
     elseif ( asHeadLine ) then
       StyleOptions%HeadLineFill = '-'
       StyleOptions%HeadLineBefore = '*'
       StyleOptions%HeadLineAfter = '*'
-      call HeadLine( chars ) 
+      Stretched = Stretched .or. StyleOptions%HeadlineStretch
+      call HeadLine( chars, Underline=Underline, Stretched=Stretched ) 
       StyleOptions = DefaultStyleOptions
+    elseif ( Stretched .and. Underline ) then
+      underlineChars = Stretch( chars, 1, options='a' )
+      call output( underlineChars, advance='yes' )
+      underlineChars = Replace( underlineChars, ' ', '-', reverse=.true. )
+      call output( underlineChars, advance='yes' )
+    elseif ( Underline ) then
+      call output( chars, advance='yes' )
+      ! The next trick replaces everything with a dash except spaces
+      underlineChars = Replace( chars, ' ', '-', reverse=.true. )
+      call output( underlineChars, advance='yes' )
+    elseif ( Stretched ) then
+      underlineChars = Stretch( chars, 1, options='a' )
+      call output( underlineChars, advance='yes' )
     else
       call output( chars, advance='yes' )
     endif
@@ -2242,7 +2323,7 @@ contains
     else
       newSize = 1
     end if
-    allocate ( tempDatabase(newSize,2), STAT=status )
+    allocate ( tempDatabase(newSize,2), stat=status )
     if ( newSize>1 ) tempDatabase(1:newSize-1,:) = database
     if ( associated(database) ) then
       deallocate ( database, stat=status )
@@ -2593,26 +2674,6 @@ contains
     
   end function stamp 
 
-  ! ----------------------------------------------  stretch  -----
-  function stretch( arg, skips ) result(chars)
-  ! stretch input arg by inserting skips number of spaces
-  ! between each pair of consecutive characters
-  ! Args
-    character(len=*), intent(in)      :: arg
-    integer, intent(in)               :: skips
-    character(len=(1+skips)*len(arg)) :: chars
-    ! Internal variables
-    integer :: i, k
-    ! Executable
-    chars = ' '
-    if ( len_trim(arg) < 1 ) return
-    do i=1, len_trim(arg)
-      ! E.g., if skips==1, k ~ 1 3 5 7 ..
-      k = 1 + (skips+1)*(i-1)
-      chars(k:k) = arg(i:i)
-    end do
-  end function stretch
-
   ! ........................................  whatSDNeedsFormat
   ! parse inFormat which might be
   ! (1) absent, in which case format=sdNeedsFormat and dotm='.6'
@@ -2651,6 +2712,9 @@ contains
 end module HighOutput
 
 ! $Log$
+! Revision 2.32  2019/07/17 20:19:21  pwagner
+! StyledOutput can now underline and/or stretch, too
+!
 ! Revision 2.31  2019/07/09 23:52:17  pwagner
 ! The values added by AddRow may now span several lines if needed
 !
