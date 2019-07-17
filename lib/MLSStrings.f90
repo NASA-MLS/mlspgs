@@ -35,7 +35,7 @@ module MLSStrings               ! Some low level string handling stuff
 !     - - - - - - - -
 
 !     (parameters and data)
-! STRINGOPTIONS      Default options string
+! StringOptions      Default options string
 
 !     (subroutines and functions)
 ! Asciify            purify chars to be within printing range [32,126]
@@ -60,7 +60,7 @@ module MLSStrings               ! Some low level string handling stuff
 ! IsComment          Does the string begin with a Comment character?
 ! IsDigits           Is the string composed entirely of digits?
 ! IsRepeat           Is a string composed entirely of one substring repeated?
-! lenTrimToAscii     len_trim of string ignoring all non-ascii chars
+! LenTrimToAscii     len_trim of string ignoring all non-ascii chars
 ! LinearSearchStringArray     
 !                    Finds string index of substring in array of strings
 ! LowerCase          tr[A-Z] -> [a-z]
@@ -69,32 +69,34 @@ module MLSStrings               ! Some low level string handling stuff
 ! NCopies            How many copies of a substring in a string
 ! ReadCompleteLineWithoutComments     
 !                    Knits continuations, snips comments
-! readNumFromBaseN   Interprets a string as base n representation; returns float
+! ReadNumFromBaseN   Interprets a string as base n representation; returns float
 ! ReadIntFromBaseN   Interprets a string as base n representation
 ! ReadIntsFromChars  Converts an [array of] strings to int[s] using Fortran read
 ! ReadNumsFromChars  Converts an [array of] strings to num[s] using Fortran read
 ! ReadRomanNumerals  Converts a Roman numeral (e.g. 'ix') to its integer value
 ! Replace            Replaces every instance of oldChar with newChar
-! remap              Replaces every instance of char in old with corresponding nw
+! Remap              Replaces every instance in str of char old[k] with 
+!                       corresponding new[k]
 ! ReplaceNonAscii    Replaces every non-ascii char with newChar (see also Asciify)
 ! Reverse            Turns 'a string' -> 'gnirts a'
 ! Reverse_trim       (Reverses after trimming its argument)
 ! Rot13              Like ROT13 but for general integer nn
-! size_trim          Returns len_trim of equivalent character scalar for array
+! Size_trim          Returns len_trim of equivalent character scalar for array
 ! SplitDetails       Splits 'pro1' into 'pro' and 1
 ! SplitNest          Splits 'part 1 (part 2) part 3' -> 'part 1', 'part 2', 'part 3'
 ! SplitWords         Splits 'first, the, rest, last' -> 'first', 'the, rest', 'last'
-! squeeze            Snip excess spaces from between words; optionally snip all
+! Squeeze            Snip excess spaces from between words; optionally snip all
 ! StartCase          Capitalize first letter of each (space-separated) word
-! streq              Generalized strings "==" (optionally ignoring case,
+! Streq              Generalized strings "==" (optionally ignoring case,
 !                      leading blanks, and allowing wildcard matches)
-! stretch            Insert spaces between words; optionally between letters
+! Stretch            Insert spaces between words; optionally between letters, too
 ! Strings2Ints       Converts an array of strings to ints using "ichar" ftn
-! trim_safe          trims string down, but never to length 0
+! Swap               Swaps every instance of c1 with c2 and vice versa
+! Trim_safe          trims string down, but never to length 0
 ! TrueList           describe where elements of an array are true
-! unAsciify          restore non-ascii characters in place of their coded forms
+! UnAsciify          restore non-ascii characters in place of their coded forms
 !                       (see Asciify)
-! unWrapLines        undo the splitting of commands across multiple lines
+! UnWrapLines        undo the splitting of commands across multiple lines
 ! WriteIntAsBaseN    Converts an integer to base n representation
 ! WriteIntsToChars   Converts an array of ints to strings using Fortran write
 ! WriteRomanNumerals Converts an integer to Roman numeral (e.g. 9 to 'ix')
@@ -136,7 +138,8 @@ module MLSStrings               ! Some low level string handling stuff
 !       & [char* forbiddens], [char* ignore] )
 ! readRomanNumerals ( char* strs, int int )
 ! char* remap ( char* str, char* old, char* new )
-! char* Replace ( char* str, char oldChar, char newChar, [int max] )
+! char* Replace ( char* str, char oldChar, char newChar, &
+!      & [int max], [log reverse] )
 ! char* ReplaceNonAscii ( char* str, char newChar, [char* exceptions] )
 ! char* Reverse ( char* str )
 ! char* Reverse_trim ( char* str )
@@ -154,6 +157,7 @@ module MLSStrings               ! Some low level string handling stuff
 ! log streq ( char* str1, char* str2(:), [char* options] )
 ! char* stretch ( char* str, [char* options] )
 ! strings2Ints ( char* strs(:), int ints(:,:) )
+! char* Swap ( char* str, char c1, char c2 )
 ! char* trim_safe ( char* str )
 ! TrueList ( logical* list, char* str )
 ! char* unAsciify ( char* str, [char* how] )
@@ -223,7 +227,7 @@ module MLSStrings               ! Some low level string handling stuff
     & Rot13, &
     & Shiftlrc, Size_Trim, SplitDetails, SplitNest, SplitWords, Squeeze, &
     & StartCase, Streq, Stretch, Strings2Ints, &
-    & Trim_Safe, TrueList, UnAsciify, UnWrapLines, &
+    & Swap, Trim_Safe, TrueList, UnAsciify, UnWrapLines, &
     & WriteIntasBaseN, WriteIntsToChars, WriteRomanNumerals
 
   interface ReadNumFromBaseN
@@ -245,14 +249,14 @@ module MLSStrings               ! Some low level string handling stuff
   end interface
 
   ! Public data
-  character(len=16), public, save :: Stringoptions = ' '
+  character(len=16), public, save :: StringOptions = ' '
 
   ! hhmmss_value
   integer, public, parameter      :: Invalidhhmmssstring = 1
   ! readAnIntFromChars
-  integer, public, parameter      :: Stringcontainsforbiddens=-999
+  integer, public, parameter      :: StringContainsForbiddens=-999
   ! strings2Ints
-  integer, public, parameter      :: Lenorsizetoosmall=-999
+  integer, public, parameter      :: LenOrSizeTooSmall=-999
   ! streq max input str lengths
   ! (We had to resort to this hard-wired limit after we made
   ! the possibly bone-headed decision to let
@@ -294,8 +298,8 @@ contains
     end do
   end subroutine CatStrings
 
-  ! ------------------------------------------------  CHARTOINT  -----
-  elemental function CHARTOINT (str) result (int)
+  ! ------------------------------------------------  CharToInt  -----
+  elemental function CharToInt (str) result (int)
     ! This converts the input character to its integer value, if
     ! it has one
     ! e.g., '9' returns 9
@@ -309,7 +313,7 @@ contains
       & '123456789'
     !-------executable-code----!
     int = index( allChars, str )
-  end function CHARTOINT
+  end function CharToInt
 
   ! ---------------------------------------------  CompressString  -----
   function CompressString (str) result (outstr)
@@ -336,7 +340,7 @@ contains
 
   end function CompressString
 
-  ! ------------------------------------------------  COUNT_quotes  -----
+  ! ------------------------------------------------  count_quotes  -----
   function count_quotes ( str, lquote, rquote ) result (no_of_quotes)
     ! This counts the number of quotes in a string 
     ! For our purposes, quotes consist of any non-space characters
@@ -1259,18 +1263,24 @@ contains
   end function remap
 
    ! --------------------------------------------------  Replace  -----
-  function Replace (str, oldChar, newchar, max) result (outstr)
+  function Replace ( str, oldChar, newchar, max, reverse ) result ( outstr )
     ! takes a string and returns one with oldChar replaced by newChar
     ! E.g., to replace every char(0), which is the NUL character, with a blank
     ! arg = Replace( arg, char(0), char(32) )
+    !
+    ! If TRUE, the optional arg reverse replaces all the chars /= oldChar
+    ! E.g., the following can be used to underline chars
+    !  underlineChars = Replace( chars, ' ', '-', reverse=.true. )
     character(len=*), intent(in)  :: str
     character(len=1), intent(in)  :: oldChar
     character(len=1), intent(in)  :: newChar
     integer, optional, intent(in) :: max ! up to how many such replacements?
+    logical, optional, intent(in) :: reverse ! Replace if /= oldChar?
     character(len=len(str))       :: outstr
     ! Internal variables
     integer :: i, n
     integer :: myMax
+    logical :: myReverse
     integer :: reps
     ! Executable
     outstr = str
@@ -1278,13 +1288,24 @@ contains
     if ( index(str, oldChar) < 1 ) return
     myMax = Huge(0) / 2
     if ( present(max) ) myMax = max
+    myReverse = .false.
+    if ( present(reverse) ) myReverse = reverse
     n = len(str)
     reps = 0
     do i=1, n
-      if ( str(i:i) == oldChar ) then
-        reps = reps + 1
-        if ( reps > myMax ) exit
-        outstr(i:i) = newChar
+      if ( .not. myReverse ) then
+        if ( str(i:i) == oldChar ) then
+          reps = reps + 1
+          if ( reps > myMax ) exit
+          outstr(i:i) = newChar
+        endif
+      else
+        ! Reverse sense: replace only the chars /= oldChar
+        if ( str(i:i) /= oldChar ) then
+          reps = reps + 1
+          if ( reps > myMax ) exit
+          outstr(i:i) = newChar
+        endif
       endif
     enddo
   end function Replace
@@ -1639,7 +1660,7 @@ contains
   ! the word "separator" in a global manner, excepting only
   ! the optional last arg to this subroutine
 
-  elemental SUBROUTINE SplitWords(line,first,rest,last,&
+  elemental subroutine SplitWords(line,first,rest,last,&
        & threeWay,delimiter)
 
     ! Dummy arguments
@@ -2096,6 +2117,29 @@ contains
    enddo
 
   end subroutine strings2Ints
+
+   ! --------------------------------------------------  Swap  -----
+  function Swap ( str, c1, c2 ) result ( outstr )
+    ! Takes a string and returns one with c1 c2 swapped for each other
+    ! E.g., to Swap every 'p' with a 'q' and every 'q' with a 'p'
+    ! would transform 'perquisite' to 'qerpuisite'
+    character(len=*), intent(in)  :: str
+    character(len=1), intent(in)  :: c1
+    character(len=1), intent(in)  :: c2
+    character(len=len(str))       :: outstr
+    ! Internal variables
+    integer :: i, n
+    ! Executable
+    outstr = str
+    if ( len(str) < 1 ) return
+    do i=1, len(str)
+      if ( str(i:i) == c1 ) then
+        outstr(i:i) = c2
+      elseif ( str(i:i) == c2 ) then
+        outstr(i:i) = c1
+      endif
+    enddo
+  end function Swap
 
   ! --------------------------------------------------  TrueList  -----
   subroutine TrueList ( Array, Str )
@@ -2700,6 +2744,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.109  2019/07/17 20:13:42  pwagner
+! Replace may now take the arg reverse to replace non-matching oldChar; added Swap
+!
 ! Revision 2.108  2019/04/09 20:35:17  pwagner
 ! Moved some procedures from MLSStrings to new MLSStrings_0
 !
