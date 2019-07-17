@@ -64,6 +64,7 @@ module MLSStrings_0               ! The lowest level string handling stuff
 !       & [char* forbiddens], [char* ignore] )
 ! char* ReplaceNonAscii ( char* str, char newChar, [char* exceptions] )
 ! char* stretch ( char* str, [char* options] )
+! char* stretch ( char* str, int how_many, [char* options] )
 ! char* trim_safe ( char* str )
 ! === (end of api) ===
 
@@ -79,6 +80,10 @@ module MLSStrings_0               ! The lowest level string handling stuff
 
   interface ReadIntsFromChars
     module procedure ReadAnIntFromChars, ReadIntArrayFromChars
+  end interface
+
+  interface Stretch
+    module procedure Stretch_one, Stretch_many
   end interface
 
   ! strings2Ints
@@ -521,11 +526,27 @@ contains
   !  character                 effect
   !     a                   insert space after every character
   !    o[xyz..]             insert space only after x or y or z or ..
-  function stretch( str, options ) result( stretched )
+  function stretch_many( str, how_many, options ) result( stretched )
+    ! Insert how_many spaces instead of just one
+    ! Args
+    character(len=*), intent(in)              :: str
+    integer, intent(in)                       :: how_many
+    character(len=*), optional, intent(in)    :: options
+    character(len=(how_many+1)*(len(str)+1))  :: stretched
+    ! Internal variables
+    integer                                   :: i
+    ! Executable
+    stretched  = str
+    do i=1, how_many
+      stretched = stretch_one( stretched, options )
+    enddo
+  end function stretch_many
+
+  function stretch_one( str, options ) result( stretched )
     ! Args
     character(len=*), intent(in)           :: str
     character(len=*), optional, intent(in) :: options
-    character(len=2*len(str)+1)                :: stretched
+    character(len=2*len(str)+1)            :: stretched
     ! Internal variables
     integer                                :: cpos ! current position in str
     integer                                :: cposq ! current position in stretched
@@ -596,7 +617,7 @@ contains
         newWord = ( str(cpos:cpos) == space )
       enddo
     endif
-  end function stretch
+  end function stretch_one
        
   ! -------------------------------------------------  TRIM_SAFE  -----
   function trim_safe (STR) result (OUTSTR)
@@ -758,6 +779,9 @@ end module MLSStrings_0
 !=============================================================================
 
 ! $Log$
+! Revision 2.2  2019/07/17 20:11:49  pwagner
+! Stretch may now take an iteration arg, how_many
+!
 ! Revision 2.1  2019/04/09 20:35:47  pwagner
 ! First commit
 !
