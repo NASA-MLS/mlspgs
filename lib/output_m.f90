@@ -22,17 +22,17 @@ module Output_M
   ! contained in ..Options  datatypes or by arguments
   ! passed during the call
   ! Major features include whether or when to
-  !   (*) direct output to stdout or elsewhere @
+  !   (*) direct the output to stdout or elsewhere @
   !   (*) time stamp each line #
   !   (*) indent each line
   !   (*) apply a special format
   !   (*) advance to the next line after printing
-  !   (*) store up output in a temporary buffer
+  !   (*) defer and store up output in a temporary buffer
   !   (*) pause, exit, or crash hard after printing
   !   (*) go 'silent' until commanded to resume printing
   !   (@) If we don't print to stdout, we may use the MLSMessaging facility
   !       or we may do both
-  !   (#) Stamping may be applied automatically or at command
+  !   (#) Stamping may be applied automatically or on command
 
   use Machine, only: Crash_Burn, Exit_With_Status, NeverCrash
   use MLSCommon, only: Filenamelen, Finite_Signal, &
@@ -47,8 +47,8 @@ module Output_M
     & MsgLogPrUnit           => DefaultLogUnit, &  
     & BothPrUnit             => BothLogUnit, &     
     & OutputLinesPrUnit      => BufferedLogUnit, & 
-    & PrintItOut, PrUnitName => LogUnitName, &
-    & MLSMessageConfig
+    & PrUnitName             => LogUnitName, &
+    & PrintItOut, MLSMessageConfig
   use IO_Stuff, only: Pause
 
   implicit none
@@ -59,7 +59,7 @@ module Output_M
 !     - - - - - - - -
 !     (data types and parameters)
 ! OutputLines              If PrUnit = OUTPUTLINESPRUNIT, 
-!                            holds output until flushed
+!                            this is where we store the output until flushed
 ! OutputOptions            where to send output and how to format it
 ! (some components)
 ! MLSMSG_Level             MLSMessage level if so logged
@@ -75,6 +75,8 @@ module Output_M
 
 !     (subroutines and functions)
 ! Advance_is_yes_or_no     parse the advance=.. field
+!                            to say whether to advance to the next line
+!                            and optionally to set advanced formatting
 ! AddToIndent              add to the number of blanks indented; subtract if < 0
 ! Beep                     print message to error_unit
 ! Blanks                   print specified number of blanks [or fill chars]
@@ -106,7 +108,7 @@ module Output_M
 ! FlushStdout
 ! FlushOutputLines ( [int prUnit] )
 ! int getOutputStatus( char* name )
-! log isOutputSuspended ()
+! log IsOutputSuspended ()
 ! NewLine ( [log dont_make_blank_line] )
 ! Output ( char* chars, [char* advance], [char* from_where], 
 !          [log dont_log], [char* log_chars], [char* insteadOfBlank],
@@ -164,16 +166,16 @@ module Output_M
   logical, save, private :: OLDUNITSTILLOPEN = .TRUE.
 
   public :: AddToIndent, Advance_Is_Yes_Or_No, Beep, Blanks, &
-    & FlushOutputLines, FlushStdout, GetOutputStatus, Newline, &
-    & Output, Output_Char_NoCR, PrintOutputStatus, PrUnitName, &
+    & FlushOutputLines, FlushStdout, GetOutputStatus, IsOutputSuspended, &
+    & Newline, Output, Output_Char_NoCR, PrintOutputStatus, PrUnitName, &
     & ResetIndent, RestoreSettings, ResumeOutput, RevertOutput, &
     & SetFillPattern, SetOutputStatus, SuspendOutput, SwitchOutput
 
   ! These types made public because the class instances are public
-  public :: OutputOptions_t
-  public :: PatternOptions_t
-  public :: StampOptions_t
-  public :: TimestampOptions_t
+  public :: OutputOptions_T
+  public :: PatternOptions_T
+  public :: StampOptions_T
+  public :: TimeStampOptions_T
 
   ! We can use the advance=.. mechanism to convey extra formatting info
   interface getOption
@@ -181,7 +183,7 @@ module Output_M
   end interface
 
   ! Embeddded <cr> print multiple lines
-  interface OUTPUT
+  interface Output
     module procedure output_char, output_char_array, output_complex
     module procedure output_dcomplex, output_double
     module procedure output_integer, output_integer_array
@@ -191,7 +193,7 @@ module Output_M
   end interface
 
   ! This won't filter for <cr>
-  interface OUTPUT_
+  interface Output_
     module procedure Output_Char_NoCR
   end interface
 
@@ -204,7 +206,7 @@ module Output_M
   ! This is the type for configuring how to automatically format
   ! lines and whether they should be sent to stdout or elsewhere
   ! The default values are chosen well; override them at your own risk!
-  type outputOptions_T
+  type OutputOptions_T
     integer :: PrUnit = StdoutPrUnit    ! Unit for output (see comments above).  
     integer :: MLSMSG_Level        = MLSMSG_Info ! What level if logging
     integer :: NewLineVal          = 10 ! 13 means <cr> becomes new line; -999 means ignore
@@ -221,18 +223,19 @@ module Output_M
     character(len=27) :: ParentName = "$RCSfile$"
   end type
 
-  ! This is the type for advanced formatting options from the advance=..
+  ! This is the type for advanced formatting options from the optional arg
+  !    advance=..
   ! Note:
   ! Pausing to wait for user input may hang that job running at the sips
   ! Remember to strip out any debugging use of 
-  ! advance='.. pause ..'
+  !    advance='.. pause ..'
   ! before delivery
-  type advancedOptions_T
+  type AdvancedOptions_T
     logical :: stretch             = .false. ! p r i n t  l i k e  t h i s   ?
     logical :: bannered            = .false. ! print as a banner
     logical :: headered            = .false. ! print as a headline
     logical :: pause               = .false. ! pause and wait for user input
-    type(outputOptions_T) :: originalOptions
+    type(OutputOptions_T) :: originalOptions
   end type
 
   ! This is the type for showing special patterns in blanks or other occasions
@@ -370,26 +373,26 @@ contains
     !   call output( something, [advance='arg1 [arg2] .. [argn]' )
     ! takes '[Yy]...' or '[Nn..] and returns 'yes' or 'no' respectively
     ! also does the same with '[Tt]..' and '[Ff]..'
-    ! Returns outputoptions%advanceDefault if the argument is absent.
+    ! Returns OutputOptions%advanceDefault if the argument is absent.
     !        A d v a n c e d   u s a g e
-    ! All other patterns require a longer explanation:
+    ! All the other patterns require a longer explanation:
     ! (1)
     ! 'beep', 'stderr' or just 'err' is special case--we return 'beep'
     ! trusting that the caller will print to stderr instead of stdout
     ! (2)
     ! if the initial character isn't one of [YyNn], or (1), we return 
-    ! outputoptions%advanceDefault (just as if it were missing)
+    ! OutputOptions%advanceDefault (just as if it were missing)
     ! (3)
     ! We are allowing the argument str to do multiple duties by being
     ! composed of multiple space-separated sub-arguments, e.g. 
     !   'arg1 [arg2] .. [argn]'
     ! the first arg1 is treated as before, basically 'yes' or 'no' or 'beep'.
-    ! arg2 and beyond set advancedOptions to the
+    ! arg2 and beyond set AdvancedOptions to the
     ! output command:
     !   sub-arg                   meaning
     !   -------                   -------
-    !     save         save original outputOptions to be restored later
-    !    restore       restore original outputOptions
+    !     save         save original OutputOptions to be restored later
+    !    restore       restore original OutputOptions
     !    unit n        set print unit to n
     !    level k       set severity level to k if calling MLSMessage
     !   newline m      use achar(m) as character for newLine
@@ -434,7 +437,7 @@ contains
     if ( len_trim(str) < 4 ) return
     ! write(*,*) 'str       = ', str
     
-    ! advancedOptions%originalOptions = outputOptions
+    ! AdvancedOptions%originalOptions = outputOptions
     ! Now check for changing the advanced options
     call getOption ( str, 'save', logval )
     if ( logval ) then
@@ -470,17 +473,17 @@ contains
     endif
   end subroutine Beep
 
-  ! -----------------------------------------------------  BLANKS  -----
+  ! -----------------------------------------------------  Blanks  -----
   subroutine Blanks ( N_Blanks, Fillchar, Advance, Dont_Stamp )
-  ! Output N_BLANKS blanks to PRUNIT.
+  ! Output N_Blanks blanks to PRUNIT.
   ! or optionally that many copies of fillChar.
   ! If FillChar is one of the SpecialFillChars maintained in outputOptions
   ! we print the corresponding pattern instead of blanks.
-    integer, intent(in) :: N_BLANKS
-    character(len=*), intent(in), optional :: ADVANCE
-    character(len=*), intent(in), optional :: FILLCHAR  ! default is ' '
-    logical, intent(in), optional          :: DONT_STAMP ! Prevent double-stamping
-    integer :: I    ! Blanks to write in next WRITE statement
+    integer, intent(in) :: N_BlankS
+    character(len=*), intent(in), optional :: Advance
+    character(len=*), intent(in), optional :: Fillchar  ! default is ' '
+    logical, intent(in), optional          :: Dont_stamp ! Prevent double-stamping
+    integer :: I    ! Blanks to write in next Write statement
     logical :: lineup
     integer :: ntimes
     integer :: numSoFar
@@ -492,14 +495,14 @@ contains
     if ( present(fillChar) ) then
       if ( patternOptions%usePatternedBlanks .and. &
         & index(patternOptions%specialFillChars, FILLCHAR) > 0 ) then
-        ! We need to try to fit our called-for pattern into n_blanks
+        ! We need to try to fit our called-for pattern into n_Blanks
         ! The 1st question is, how many times could it be done?
         patternNum = index( patternOptions%specialFillChars, FillChar )
         pattern = patternOptions%patterns(patternNum)
         ! The pattern length (adjusted for enclosing parentheses)
         patternLength = len_trim(pattern) - 2
-        ! Now we assume we'll always want the first and blanks of n_blanks to be
-        ! purely blank
+        ! Now we assume we'll always want the first and Blanks of n_Blanks to be
+        ! purely Blank
         if ( patternLength > n_blanks - 2 ) then
           ! n_blanks too short--just print blanks
           call pr_blanks ( n_blanks, advance=advance, dont_stamp=dont_stamp )
@@ -533,7 +536,7 @@ contains
       end if
     end if
     call pr_blanks ( n_blanks, fillChar=fillChar, advance=advance, dont_stamp=dont_stamp )
-  end subroutine BLANKS
+  end subroutine Blanks
 
   ! ----------------------------------------------  flushOutputLines  -----
   ! print or log OutputLines
@@ -634,40 +637,11 @@ contains
     end function ok
   end subroutine printOutputStatus
 
-  ! ---------------------------------------------- PrUnitName
-  ! Prints certain normally private data
-  ! revealing what settings and options are in force
-  function PrUnitName_old ( unit ) result ( name )
-    ! Args
-    integer, intent(in)     :: unit
-    character(len=16)       :: name
-    ! Internal variables
-    ! Executable
-    select case ( unit )
-    case ( OutputLinesPrunit )
-      name = 'lines buffer'
-    case ( BothPrunit )
-      name = 'stdout+log'
-    case ( MsgLogPrunit )
-      name = 'msg log'
-    case ( StdoutPrunit )
-      name = 'stdout'
-    case ( InvalidPrunit )
-      name = 'invalid'
-    case default
-      if ( unit > 0 ) then
-        write ( name, '(a8, i8) ' ) 'unit', unit
-      else
-        name = 'illegal unit'
-      endif
-    end select
-  end function PrUnitName_old
-
-  ! ----------------------------------------------  isOutputSuspended  -----
-  logical function isOutputSuspended ()
+  ! ----------------------------------------------  IsOutputSuspended  -----
+  logical function IsOutputSuspended ()
   ! Have we suspended outputting to PRUNIT?
-    isOutputSuspended = silentRunning
-  end function isOutputSuspended
+    IsOutputSuspended = silentRunning
+  end function IsOutputSuspended
 
   ! ----------------------------------------------------  NewLine  -----
   subroutine NewLine ( dont_make_blank_line )
@@ -1442,7 +1416,7 @@ contains
   ! ----------------------------------------------  resumeOutput  -----
   subroutine resumeOutput 
   ! resume outputting to PRUNIT.
-  ! Revreses effect of suspendOutput
+  ! Reverses effect of suspendOutput
     silentRunning = .false.
   end subroutine resumeOutput
 
@@ -1781,6 +1755,9 @@ contains
 end module Output_M
 
 ! $Log$
+! Revision 2.144  2019/07/17 20:16:47  pwagner
+! Light housekeping
+!
 ! Revision 2.143  2019/04/09 20:30:40  pwagner
 ! Moved some procedures from MLSStrings to new MLSStrings_0
 !
