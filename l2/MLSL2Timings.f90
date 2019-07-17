@@ -35,8 +35,8 @@ module MLSL2Timings              !  Timings for the MLSL2 program sections
   use MLSStringLists, only: BooleanValue, Catlists, GetStringElement, &
     & NumStringElements, StringElementNum, SwitchDetail
   use MoreTree, only: Get_Boolean
-  use Output_M, only: StampOptions, Blanks, NewLine, Output, &
-    & RestoreSettings, ResumeOutput, SuspendOutput
+  use Output_M, only: StampOptions, Blanks, IsOutputSuspended, NewLine, &
+    & Output, RestoreSettings, ResumeOutput, SuspendOutput
   use String_Table, only: Get_String
   use Time_M, only: Time_Now
   use Toggles, only: Switches
@@ -64,6 +64,8 @@ module MLSL2Timings              !  Timings for the MLSL2 program sections
 !     - - - - - - - -
 !
 !     (Data)
+! run_start_time         The starting point in calculating timings;
+!                          can be reset by call to restartTimings
 ! section_times          Show times in each section
 ! total_times            Show total times from start
 !
@@ -78,7 +80,8 @@ module MLSL2Timings              !  Timings for the MLSL2 program sections
 ! dump_section_timings   dump accumulated elapsed timings with detailed breakdown
 ! finishTimings          Finish accumulating timings
 ! fillTimings            Return accumulated timings in array
-! restartTimings         Zero out accumulating timings, reinitialize flags
+! restartTimings         Zero out accumulating timings; reinitialize flags,
+!                          run_start_time
 ! showTimingNames        Return list of phase names, section names, or both
 ! === (end of toc) ===
 
@@ -497,7 +500,8 @@ contains ! =====     Public Procedures     =============================
     endif
 
     If ( reset ) OriginalOptions = L2Options ! Make these Original Options
-    if ( BeVerbose('opt', -1) ) call DumpOptions
+    if ( BeVerbose('opt', -1) .and. .not. IsOutputSuspended() ) &
+      & call DumpOptions
     
     if ( name < 1 ) return
     if ( got(f_stamp) ) then
@@ -1042,6 +1046,9 @@ END MODULE MLSL2Timings
 
 !
 ! $Log$
+! Revision 2.74  2019/07/17 20:21:11  pwagner
+! Dont DumpOptions while output is suspended
+!
 ! Revision 2.73  2018/10/27 01:20:08  vsnyder
 ! Give initial value to Reset, so undefined-checking runs don't bomb
 !
