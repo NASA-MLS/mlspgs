@@ -95,6 +95,7 @@ module Output_M
 ! ResumeOutput             resume suspended output
 ! SetFillPattern           set a special Fill pattern 
 !                           (that can be used in call to blanks, banner, etc.)
+! SetTruthPattern          set the chars that will be printed in place of 'T' 'F'
 ! SetOutputStatus          sets normally private data
 ! SuspendOutput            suspend output; run silent
 ! SwitchOutput             switch output to a new named file, 
@@ -107,7 +108,7 @@ module Output_M
 ! Blanks ( int n_blanks, [char fillChar], [char* advance] )
 ! FlushStdout
 ! FlushOutputLines ( [int prUnit] )
-! int getOutputStatus( char* name )
+! int GetOutputStatus( char* name, [char* value] )
 ! log IsOutputSuspended ()
 ! NewLine ( [log dont_make_blank_line] )
 ! Output ( char* chars, [char* advance], [char* from_where], 
@@ -127,6 +128,7 @@ module Output_M
 ! RevertOutput
 ! RestoreSettings ( [char* settings] )
 ! SetFillPattern ( pattern, [fillChar] )
+! SetTruthPattern ( char* TrueFalse[2] )
 ! SetOutputStatus( char* name, int value )
 ! SuspendOutput
 ! SwitchOutput ( char* filename, [int unit] )
@@ -169,7 +171,8 @@ module Output_M
     & FlushOutputLines, FlushStdout, GetOutputStatus, IsOutputSuspended, &
     & Newline, Output, Output_Char_NoCR, PrintOutputStatus, PrUnitName, &
     & ResetIndent, RestoreSettings, ResumeOutput, RevertOutput, &
-    & SetFillPattern, SetOutputStatus, SuspendOutput, SwitchOutput
+    & SetFillPattern, SetOutputStatus, SetTruthPattern, &
+    & SuspendOutput, SwitchOutput
 
   ! These types made public because the class instances are public
   public :: OutputOptions_T
@@ -340,7 +343,11 @@ module Output_M
   real, parameter, dimension(3) :: RPREFERDEFAULTFORMAT = &
     & (/ -1., 0., 1. /)  ! For which values to use default format '*'
   character(len=16), private, save :: NONFINITEFORMAT = '(1pg14.6)' ! 'NaN, Inf'
-
+  ! For printing logical-valued arguments
+  integer, private, parameter          :: true  = 1 ! Index in TruthValues
+  integer, private, parameter          :: false = 2
+  character(len=2), dimension(2), save :: TruthValues = &
+    & (/ 'T ', 'F ' /)
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
@@ -570,17 +577,20 @@ contains
     flush( Output_Unit )
   end subroutine flushStdout
 
-  ! ---------------------------------------------- getOutputStatus
+  ! ---------------------------------------------- GetOutputStatus
   ! Returns certain normally private data
   ! intended for modules like highOutput and maybe some others
   ! result will be an integer
   ! equal to the value of integer-valued data
   ! or to 1 if the logical-valued data is TRUE, 0 if FALSE
-  function getOutputStatus( name ) result( status )
+  function GetOutputStatus( name, value ) result( status )
     ! Args
-    character(len=*), intent(in) :: name
-    integer :: status
+    character(len=*), intent(in)            :: name
+    character(len=*), intent(out), optional :: value
+    integer                                 :: status
     ! Executable
+    status = -999 ! meaning name was not recognized
+    if ( present(value) ) value = 'value not relevant for this name'
     if ( index(lowercase(name), 'physicalcolumn' ) > 0 ) then
       status = atColumnNumber            ! This is the "physical" column
     elseif ( index(lowercase(name), 'column' ) > 0 ) then
@@ -593,8 +603,14 @@ contains
       status = linesSincelastStamp
     elseif( index(lowercase(name), 'silent' ) > 0 ) then
       status = merge(1, 0, silentRunning)
+    elseif( index(lowercase(name), 'true' ) > 0 .and. present(value)) then
+      status = true
+      value = TruthValues (true)
+    elseif( index(lowercase(name), 'false' ) > 0 .and. present(value)) then
+      status = false
+      value = TruthValues (false)
     endif
-  end function getOutputStatus
+  end function GetOutputStatus
 
   ! ---------------------------------------------- printOutputStatus
   ! Prints certain normally private data
@@ -1259,10 +1275,6 @@ contains
     logical, optional, intent(in) :: DONT_STAMP
     character(len=*), intent(in), optional :: format ! consistent with generic
     character(len=2) :: LINE
-    character(len=2), dimension(2), parameter :: TruthValues = &
-      & (/ 'T ', 'F ' /)
-    integer, parameter :: true  = 1 ! Index in TruthValues
-    integer, parameter :: false = 2
     if ( log ) then
       line = TruthValues( true ) ! ' T'
     else
@@ -1292,9 +1304,9 @@ contains
     if ( present(before) ) call output_ ( before, DONT_STAMP=DONT_STAMP )
     if ( present(onlyif) ) then
       if ( onlyif ) then
-        ifonlyWhat = 'T'
+        ifonlyWhat = TruthValues( true ) ! ' T'
       else
-        ifonlyWhat = 'F'
+        ifonlyWhat = TruthValues( false ) ! ' F'
       endif
       clogs = ' '
       where (logs .eqv. onlyif)
@@ -1449,7 +1461,7 @@ contains
   end subroutine revertOutput
 
   ! ----------------------------------------------  setFillPattern  -----
-  subroutine setFillPattern ( pattern, fillChar )
+  subroutine SetFillPattern ( pattern, fillChar )
   ! Override and set a special Fill pattern that can be used in a call to blanks
   ! e.g., by call blanks, FillChar='0' )
     character(len=1), optional, intent(in) :: fillChar
@@ -1463,7 +1475,16 @@ contains
     patternOptions%patterns(patternNum) = pattern
     if ( index( pattern, '(' ) < 1 ) &
       & patternOptions%patterns(patternNum) = '(' // pattern // ')'
-  end subroutine setFillPattern
+  end subroutine SetFillPattern
+
+  ! ----------------------------------------------  setTruthPattern  -----
+  subroutine SetTruthPattern ( TrueFalse )
+  ! Override and set a special Truth pattern that can be used in calls to
+  ! output logical-valued scalars and arrays e.g., 
+  !  call output( logs, ..)
+    character(len=2), dimension(2), intent(in) :: TrueFalse ! (/ 'T ', 'F ' /)
+    TruthValues = TrueFalse
+  end subroutine SetTruthPattern
 
   ! ---------------------------------------------- setOutputStatus
   ! Returns certain normally private data
@@ -1471,7 +1492,7 @@ contains
   ! Effect will be an integer
   ! equal to value if integer-valued data
   ! or to TRUE if value is 1
-  subroutine setOutputStatus( name, value )
+  subroutine SetOutputStatus( name, value )
     ! Args
     character(len=*), intent(in) :: name
     integer, intent(in)          :: value
@@ -1487,17 +1508,17 @@ contains
     elseif( index(lowercase(name), 'silent' ) > 0 ) then
       silentRunning = ( value == 1 )
     endif
-  end subroutine setOutputStatus
+  end subroutine SetOutputStatus
 
   ! ----------------------------------------------  suspendOutput  -----
-  subroutine suspendOutput 
+  subroutine SuspendOutput 
   ! suspend outputting to PRUNIT. Run silent.
   ! Reversible by calling resumeOutput
     silentRunning = .true.
-  end subroutine suspendOutput
+  end subroutine SuspendOutput
 
   ! ----------------------------------------------  switchOutput  -----
-  subroutine switchOutput ( filename, unit, keepOldUnitOpen )
+  subroutine SwitchOutput ( filename, unit, keepOldUnitOpen )
   ! stop outputting to PRUNIT. Switch to filename [using unit if supplied]
   ! Special use: if filename == 'stdout', just temporarily print to stdout
     ! Args
@@ -1543,7 +1564,7 @@ contains
     end if
     outputOptions%prunit = SwitchUnit
     NeedToAppend = .true.
-  end subroutine switchOutput
+  end subroutine SwitchOutput
 
   ! ------------------ Private procedures -------------------------
   ! ----------------- Dump_AdvancedOptions
@@ -1755,6 +1776,9 @@ contains
 end module Output_M
 
 ! $Log$
+! Revision 2.145  2019/07/22 22:12:43  pwagner
+! Can now setTruthPattern to something other than T and F
+!
 ! Revision 2.144  2019/07/17 20:16:47  pwagner
 ! Light housekeping
 !
