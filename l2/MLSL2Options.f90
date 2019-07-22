@@ -33,7 +33,7 @@ module MLSL2Options              !  Options and Settings for the MLSL2 program
     & SomeToGlobalAttributes
   use Output_M, only: AdvancedOptions, OutputOptions, StampOptions, &
     & TimeStampOptions, InvalidPrUnit, StdoutPrUnit, MSGLogPrUnit, BothPrUnit, &
-    & Output, PrUnitName
+    & Output, PrUnitName !, SetTruthPattern
   use Printit_M, only: DefaultLogUnit, Get_Config, StdoutLogUnit
 
   implicit none
@@ -170,7 +170,7 @@ module MLSL2Options              !  Options and Settings for the MLSL2 program
   ! by the l2cf commands Phase or ChangeSettings
   type :: L2Options_T
     character(len=2048) :: Command_Line ! All the opts
-    character(len=2048) :: Originalcmds ! As set when executed
+    character(len=2048) :: Originalcmds ! As set at launch
     character(len=32)  :: CurrentPhaseName              = ' '
     integer            :: CurrentChunkNumber            = 0
     ! Whether to skip doing the retrieval--a pre-flight checkout of paths, etc.
@@ -446,8 +446,6 @@ contains
     use Machine, only: Getarg, Hp, Io_Error, NeverCrash
     use Matrixmodule_0, only: CheckBlocks, SubblockLength
     use MLSCommon, only: FileNameLen
-    ! use MLSfiles, only: InitializeMLSfile
-    ! use MLSfiles, only: MLS_Openfile
     use MLSMessageModule, only: Setconfig
     use MLSStringLists, only: Catlists, &
       & Getstringelement, Getuniquelist, &
@@ -502,6 +500,7 @@ contains
     DEFAULT_HDFVERSION_WRITE = HDFVERSION_5
     MLSMessageConfig%limitWarnings = 4 ! Print less
     time_config%use_wall_clock = .true. ! SIPS_VERSION
+    ! call SetTruthPattern ( (/ '+ ', '- ' /) ) ! Print these instead of 'T' 'F'
     i = 1 + hp
     ! ----------------- deprecated and deplored ----------------------------
     ! Man, we couldn't use the Lahey compiler even if we wanted to!
@@ -766,10 +765,6 @@ cmds: do
           call get_lun ( AllocateLogUnit, msg=.true. )
           ! We can't call InitializeMLSFile yet because
           ! the (string, character) tables are still empty and we would seg fault
-          ! status = InitializeMLSFile( AllocFile, content = 'logAlloc', &
-          !  &  name=trim(filename), &
-          !  & type=l_ascii, access=DFACC_RDWR )
-          ! call mls_openFile( AllocFile, status )
           
           ! So instead let's do all that "by hand"
           AllocFile%name          = filename
@@ -927,6 +922,7 @@ cmds: do
             if ( DEEBUG ) print *, 'is Comment', isComment( optLines(k), '#' ) 
             if ( len_trim(optLines(k)) < 1 .or. &
               & isComment( optLines(k), '#' ) ) cycle
+            !
             ! Do we ignore lines w/o the "=" sign?
             ! They could be used to turn on special flags to pre-process
             ! the .opts file
@@ -939,12 +935,18 @@ cmds: do
             !   nightday=day
             !
             ! If we don't ignore such lines, they will cause a parse error
+            !
+            ! The parameter ALLOWENVINOPTS, if TRUE.,
+            ! allows such lines
             if ( index( optLines(k), '=' ) < 1 ) then
               if ( ALLOWENVINOPTS ) then
                 cycle
               else
                 print *, 'Sorry, unable to parse this opts line'
                 print *, '(expected something like lhs=rhs)'
+                print *, 'To allow environment flags in the opts file'
+                print *, 'MLSL2Options.f90 must be recompiled '
+                print *, 'after setting ALLOWENVINOPTS = .true. '
                 print *, trim(optLines(k))
                 call MLSL2Message( MLSMSG_Error, ModuleName, &
                   & 'Sorry, Parse error in opts file ' // trim(optsFile) )
@@ -1370,7 +1372,7 @@ jloop:do while ( j < len_trim(line) )
   ! Restore the options to their default values
   ! Now some things it makes no sense to overwrite, so it makes
   ! no sense to restore them either; e.g., CHECKPATHS, parallel, etc.
-  subroutine restoreDefaults ( complete )
+  subroutine RestoreDefaults ( complete )
   use MLSMessageModule, only: RestoreConfig
   use Toggles, only: Init_Toggle
     logical, intent(in), optional            :: complete ! Restore even quit, crash!
@@ -1380,7 +1382,7 @@ jloop:do while ( j < len_trim(line) )
     ! Executable
     myComplete                               = present(complete)
     if ( myComplete )   myComplete           = complete
-    if ( DEEBUG ) print *, 'Entered restoreDefaults; myComplete ', myComplete
+    if ( DEEBUG ) print *, 'Entered RestoreDefaults; myComplete ', myComplete
     L2Options%Output_print_unit             = -2
     Default_hdfversion_write      = HDFVERSION_5
     Default_hdfversion_read       = WILDCARDHDFVERSION
@@ -1405,7 +1407,7 @@ jloop:do while ( j < len_trim(line) )
     Checkpaths                    = .false.         
     Toolkit                       =  .true. ! SIPS_VERSION
     call restoreConfig ( complete )
-  end subroutine restoreDefaults
+  end subroutine RestoreDefaults
 
   ! --------------------------------------------  SomeToL2Options  -----
   ! Restore the options to their default values
@@ -1431,10 +1433,7 @@ jloop:do while ( j < len_trim(line) )
     use HighOutput, only: AddRow, AddRow_Divider, AddRow_Header, &
       & OutputTable, StartTable
     integer, optional, intent(in)                :: Details ! Not used at present
-    ! Internal variables
-    integer, parameter                           :: BlocLength = 56
-    integer                                      :: c1, c2
-    integer                                      :: i
+
     call startTable
     call addRow_header ( 'Current Level 2 Options', 'c' )
     call addRow_divider ( '-' )
@@ -1449,67 +1448,6 @@ jloop:do while ( j < len_trim(line) )
       & BlocLen=40, options='-w' )
     call outputTable ( sep='|', border='-' )
   end subroutine DumpOptions
-
-  subroutine DumpOptions_old ( details )
-    use HighOutput, only: OutputTable
-    integer, optional, intent(in)                :: Details ! Not used at present
-    ! Internal variables
-    integer, parameter                           :: BlocLength = 56
-    integer                                      :: c1, c2
-    integer                                      :: i
-    integer                                      :: NBlocs
-    integer                                      :: NValues ! num of rows in table
-    character(len=BlocLength), dimension(48, 2)  :: KeysValues
-    ! Executable
-    call StyledOutput ( 'Current Level 2 Options', options="--Banner" )
-    
-    ! The first row will be the header
-    keysValues(1,1) = 'names'
-    keysValues(1,2) = 'values'
-
-    keysValues(2,1) = 'phase'
-    keysValues(2,2) = L2Options%CurrentPhaseName
-
-    keysValues(3,1) = 'chunk'
-    write( keysvalues(3,2), * ) L2Options%CurrentChunkNumber
-
-    keysValues(4,1) = 'SkipRetrieval'
-    write( keysValues(4,2), * ) L2Options%Skipretrieval
-
-    keysValues(5,1) = 'Send output to'
-    ! write( keysValues(5,2), * ) L2Options%Output_print_unit
-    keysValues(5,2) = PrUnitname( L2Options%Output_print_unit )
-    
-    nValues = 6
-    keysValues(nValues,1) = 'MLSL2Debug'
-    write( keysValues(nValues,2), * ) L2Options%MLSL2Debug
-
-    nValues = nValues + 1
-    keysValues(nValues,1) = 'Overridden'
-    write( keysValues(nValues,2), * ) L2Options%Overridden
-
-    nValues = nValues + 1
-    keysValues(nValues,1) = 'GPH MissingValue'
-    write( keysValues(nValues,2), '(1pe12.5)' ) L2Options%GPH_MissingValue
-
-    ! The remaining rows will be blocs of the cmd line
-    nBlocs = ( len_trim(L2Options%Command_line)-1 )/BlocLength + 1
-    nBlocs = min( 48-nValues, NBlocs )
-    nValues = nValues + 1
-    keysValues(nValues,1) = 'cmdline'
-    keysValues(nValues,2) = L2Options%Command_line(1:BlocLength)
-    c2 = BlocLength
-    do i=2, nBlocs
-      nValues = nValues + 1
-      c1 = c2 + 1
-      c2 = min(c2 + BlocLength, len_trim(L2Options%Command_line) )
-
-      keysValues(nValues,1) = ' '
-      keysValues(nValues,2) = L2Options%Command_line(c1:c2)
-    enddo
-
-    call outputTable( keysValues(1:nValues, :), border='-', headliner='-' )
-  end subroutine DumpOptions_old
 
   ! -------------------------------------------------  DumpMacros  -----
   ! Dump the runtime macros
@@ -1541,7 +1479,7 @@ jloop:do while ( j < len_trim(line) )
         & runTimeValues%sep )
       ! The first line will be the header
       keysValues(1,1) = 'names'
-      keysValues(1,2) = 'values'
+      keysValues(1,2) = 'Level 2 run-time macro values'
       nValues = nValues + 1
       call outputTable( keysValues(1:nValues, :), border='-', headliner='-' )
     endif
@@ -1586,7 +1524,7 @@ jloop:do while ( j < len_trim(line) )
       call RemoveHashElement( runTimeValues%lkeys, runTimeValues%lvalues, name, &
         & countEmpty, runTimeValues%sep )
     end if
-  end subroutine removeRuntimeBoolean
+  end subroutine RemoveRuntimeBoolean
 
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
@@ -1603,6 +1541,9 @@ end module MLSL2Options
 
 !
 ! $Log$
+! Revision 2.129  2019/07/22 23:22:36  pwagner
+! Some light housekeeping, got rid of DumpOptions_old
+!
 ! Revision 2.128  2019/07/09 20:53:22  pwagner
 ! Use Table ccells to DumpOptions
 !
