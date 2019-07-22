@@ -359,7 +359,7 @@ contains
     if ( BeVerbose( 'l2q', -1 ) ) then
       call outputnamedValue( 'size(chunks)', size(chunks) )
       call outputnamedValue( 'parallel%chunkRange', trim(parallel%chunkRange) )
-      call dump( chunksAbandoned, 'chunksAbandoned' )
+      call dump( chunksAbandoned, 'chunksAbandoned', options='N' )
     endif
 
     machineRequestQueued = .false. ! Request one machine at a time from L2Q
@@ -1810,6 +1810,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.120  2019/07/22 22:30:29  pwagner
+! chunksAbandoned now will display the indices where true and the indices where false if array is logical-valued
+!
 ! Revision 2.119  2018/09/13 20:26:07  pwagner
 ! Now properly sets L2Options%currentChunkNumber
 !
