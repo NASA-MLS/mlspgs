@@ -12,14 +12,22 @@
 module Dump_0
 
 ! Low-level dump routines -- for some arrays of intrinsic type.
-! Should handle most combinations of rank and type
-! Behavior depends on optional parameters
-! Actual output device determined by output_m module
+! It should handle most combinations of rank and type
+! Its behavior depends on optional parameters
+! The actual output device determined by output_m module
 !
 ! In general, dumping a whole array of values will be presented as a matrix
 ! up to 10 values across
 ! Instead of a whole array, or in addition, one may dump a condensed summary
 ! showing min, max, percentages of non-zero values, etc.
+
+! We take special care when dumping arrays whose values are
+! logical-valued
+!   bit-valued
+!   character strings
+!   rank > 1 (only for integer, single, double, or complex)
+
+! See also dump_1.f90
 
   use HyperSlabs, only: Bandwidth, Collapse
   use BitStuff, only: MaxBitNumber, WhichBitsAreSet
@@ -37,7 +45,7 @@ module Dump_0
   use HighOutput, only: BlanksToColumn, NumNeedsFormat, OutputNamedValue
   use MLSFillValues, only: InfFunction, IsFinite, IsInfinite, IsNaN, NaNFunction, &
     & WhereAreTheInfs, WhereAreTheNaNs
-  use MLSFinds, only: FindUnique
+  use MLSFinds, only: FindAll, FindUnique
   use MLSStats1, only: FillValueRelation, &
     & MLSMax, MLSMean, MLSMin, MLSStdDev
   use MLSStringLists, only: CatLists, NumStringElements, OptionDetail
@@ -453,6 +461,7 @@ contains
     character(len=*), intent(in), optional :: TheShape
 
     integer :: Base, J, K, N, Ntrue, Nfalse
+    integer, dimension(size(Array))        :: whereTrue, whereFalse
 
     ! Executable
     call theDumpBegins ( options )
@@ -460,12 +469,14 @@ contains
     if ( present(lbound) ) base = lbound - 1
 
     if ( any(shape(array) == 0) ) then
-      call empty ( name )
+      call empty ( name ) ! The array appears to have no elements at all
     else if ( size(array) == 1 .and. base == 0 ) then
+      ! The array appears to have only a single element
       call name_and_size ( name, dopts(clean)%v, 1 )
       call output ( array(1), advance='no' )
       call finishLine
     else if ( all(array .eqv. .true.) ) then
+      ! The array appears to have only true elements
       call name_and_size ( name, dopts(clean)%v, size(array) )
       call output ( '(' )
       if ( present(lbound) ) call output ( lbound )
@@ -474,6 +485,7 @@ contains
       call output( ' values are T', advance='no' )
       call finishLine
     else if ( all(array .eqv. .false.) ) then
+      ! The array appears to have only false elements
       call name_and_size ( name, dopts(clean)%v, size(array) )
       call output ( '(' )
       if ( present(lbound) ) call output ( lbound )
@@ -481,7 +493,18 @@ contains
       call output( trim(arrayShapeToString(shape(array))), advance='no' )
       call output( ' values are F', advance='no' )
       call finishLine
+    else if ( dopts(NaNs)%v ) then
+      ! Display the indices where true and the indices where false
+      call PrintName ( Name, NameHasBeenPrinted )
+      call FindAll( array, whereTrue, Ntrue, whereFalse )
+      Nfalse = size(array) - Ntrue
+      NameHasBeenPrinted = .false.
+      call dump( whereTrue(1:Ntrue), 'Indices where TRUE' )
+      call dump( whereFalse(1:Nfalse), 'Indices where FALSE' )
     else if ( dopts(gaps)%v ) then
+      ! Display gaps, i.e. only the exceptional elements;
+      ! T among a host of otherwise F's
+      ! or F among a host of otherwise T's
       call name_and_size ( name, dopts(clean)%v, size(array) )
       if ( getOutputStatus( 'start' ) /= 1 ) call newLine
       k = 0
@@ -494,7 +517,12 @@ contains
         call finishLine
         ntrue = count( array(k+1 : min(k+100, size(array))) )
         nfalse = n - ntrue
-        if ( ntrue > 0 .and. ( ntrue < nfalse .or. nfalse < 1 ) ) then
+        ! Special cases if all true or all false
+        if ( nfalse < 1 ) then
+          call output( 'all values are T', advance='no' )
+        elseif ( ntrue < 1 ) then
+          call output( 'all values are F', advance='no' )
+        elseif ( ntrue > 0 .and. ( ntrue < nfalse .or. nfalse < 1 ) ) then
           call output( array(k+1 : k+N), onlyif=.true., advance='no' )
         else
           call output( array(k+1 : k+N), onlyif=.false., advance='no' )
@@ -504,6 +532,7 @@ contains
       end do
       call showColumnNums( 100 )
     else
+      ! Run-of-the-mill matrix dumps of 'T' and 'F'
       call name_and_size ( name, dopts(clean)%v, size(array) )
       if ( getOutputStatus( 'start' ) /= 1 ) call newLine
       do j = 1, size(array), 34
@@ -1944,6 +1973,9 @@ contains
 end module Dump_0
 
 ! $Log$
+! Revision 2.160  2019/07/22 22:21:38  pwagner
+! -N opt now will display the indices where true and the indices where false if array is logical-valued
+!
 ! Revision 2.159  2019/04/24 19:17:01  vsnyder
 ! Add Unit argument to several dumps
 !
