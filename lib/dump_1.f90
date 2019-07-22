@@ -36,17 +36,23 @@ module Dump_1
 !     (data types and parameters)
 
 !     (subroutines and functions)
-! DumpDates          Dump 1-d array of tai93 (s. after 1 jan 1993)
+! Dump               (1) Dump a ','-separated string list, one item per line; or
+!                    (2) Dump a hash composed of two string lists: keys and values
+!                    (3) Dump a hash composed of one string list for keys
+!                        and a logical-value array for values
+! DumpDates          Dump a 1-d array of tai93 (s. after 1 Jan 1993)
 ! DumpException      Dump an Exception datatype
 ! DumpLists          Dump a 2d array as a set of lists
 ! DumpNamedValues    Dump an array of paired names and values
 ! DumpSums           Dump after summing successive array values
 !                      ("inverse" of selfDiff)
 ! DumpTable          Dump a 2-d table of values with headers
-! DumpTextfile       Dump contents of a text file
+! DumpTextfile       Dump the contents of a text file
+! === (end of toc) ===
 
 ! === (start of api) ===
-! DumpDates ( dble dates(:), [int width], [char* dateFormat], [char* timeFormat] )
+! DumpDates ( dble dates(:), [int width], [char* dateFormat], &
+!     & [char* timeFormat], [log Leapsec] )
 ! DumpException ( exception_t Exception )
 ! DumpLists ( Array, [char* Name], [int Width], [char* Sep], [char* Delims] )
 !       where array can be a 2d array of chars or ints
@@ -64,11 +70,14 @@ module Dump_1
 !       format optionally overrides the default format for the numeric type
 !       formats allows you to specify a format separately column-by-column
 ! DumpTextfile ( char* fileName, [char* options] )
-
+!          ..Dump.. interfaces
 ! Dump_Strlist ( strlist string, char* name, [char* fillvalue],
 !      [char* options], [char* InSeparator] )
-! Dump ( log countEmpty, strlist keys, strlist values, char* name, 
+! Dump_Hash_Log ( log countEmpty, strlist keys, log values[:], char* name, 
 !       [char* separator], [char* options] )
+! Dump_Hash_Str ( log countEmpty, strlist keys, strlist values, char* name, 
+!       [char* separator], [char* options], [char* ExtraValues] )
+! === (end of api) ===
 
   interface Dump
     module procedure Dump_Hash_Log, Dump_Hash_Str, Dump_StrList
@@ -580,10 +589,13 @@ contains
   ! ----------------------------------------------------- Dump_TAI -----
   ! Dumps date (re)formatted according to Dates_Module.
   ! This is here instead of in Dates_Module to avoid a circular dependence.
-  subroutine Dump_TAI( taiDates, Name, Width, DateFormat, TimeFormat )
+  subroutine Dump_TAI( taiDates, Name, Width, DateFormat, TimeFormat, &
+    & LeapSec )
     ! Dump an array of tai dates in whatever formats the user specifies
-    ! Warning: does not bother with leap seconds
-    ! By default we dump both date and time fields
+    ! Warnings  By default:
+    ! 
+    ! (1) does not correct for leap seconds
+    ! (2) we dump both date and time fields
     ! If dateFormat is present and blank or 'none', don't print date
     ! If timeFormat is present and blank or 'none', don't print time
     ! Args
@@ -593,9 +605,10 @@ contains
     use MLSStrings, only: LowerCase
     double precision, dimension(:)       :: TAIDates ! tai93 (s)
     character(len=*), optional           :: Name
-    integer, intent(in), optional        :: WIDTH
+    integer, intent(in), optional        :: Width
     character(len=*), optional           :: DateFormat
     character(len=*), optional           :: TimeFormat
+    logical, optional                    :: Leapsec ! Correct for leap seconds?
     ! Internal variables
     character(len=16)                    :: Date, Time
     character(len=maxUTCStrLength), dimension(size(taiDates)) &
@@ -609,7 +622,7 @@ contains
       return
     end if
     do i = 1, size(taiDates)
-      dates(i) = tai93s2utc( taiDates(i) )
+      dates(i) = tai93s2utc( taiDates(i), leapsec )
     end do
     if ( Debug ) call outputNamedValue( 'last date (utc)', dates(size(taiDates)) )
     if ( present(dateFormat) .or. present(timeFormat) ) then
@@ -645,7 +658,7 @@ contains
     character(len=*), intent(in), optional :: WhereAmI ! Where are we dumping from?
     character(len=*), intent(in), optional :: Message  ! Anything else to say?
     ! Internal variables
-    ! Executebls
+    ! Executable
     call startTable
     if ( present(WhereAmI) ) then
       call addRow_header ( '(Exception Info) ' // trim(WhereAmI), 'c' )
@@ -706,6 +719,9 @@ contains
 end module Dump_1
 
 ! $Log$
+! Revision 2.8  2019/07/22 22:23:19  pwagner
+! Dump_TAI now takes optional arg LeapSec
+!
 ! Revision 2.7  2017/12/07 02:41:07  vsnyder
 ! Give DEEBUG a value, and make it a parameter
 !
