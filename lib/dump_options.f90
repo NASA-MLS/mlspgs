@@ -131,6 +131,7 @@ module Dump_Options
   character, parameter :: Dopt_Gaps        = 'g'
   character, parameter :: Dopt_Laconic     = 'L'
   character, parameter :: Dopt_NaNs        = 'N'
+  character, parameter :: Dopt_null        = ' '
   character, parameter :: Dopt_OnlyWholeArray = '' ! Set from other options
   character, parameter :: Dopt_Ratios      = 'r'
   character, parameter :: Dopt_Rms         = 'R'
@@ -325,13 +326,15 @@ contains
       call output( '     ' // dopt_bandwidth   // '              show Bandwidth, % of array that is non-zero', advance='yes' )
       call output( '     ' // dopt_shape       // '              show rank, shape of array', advance='yes' )
       call output( '     ' // dopt_laconic     // '              laconic; skip printing name, size of array', advance='yes' )
-      call output( '     ' // dopt_NaNs        // '              show where NaNs and Infs are located', advance='yes' )
+      call output( '     ' // dopt_NaNs        // '              show where ', advance='yes' )
+      call output( '     ' // dopt_null        // '              NaNs and Infs are located (only for floats)', advance='yes' )
+      call output( '     ' // dopt_null        // '              T and F are located (only for logicals)', advance='yes' )
       call output( '     ' // dopt_RMS         // '              rms       -- min, max, etc.', advance='yes' )
       call output( '     ' // dopt_table       // '              table of % vs. amount of differences (pdf)', advance='yes' )
       call output( '     ' // dopt_clean       // '              clean', advance='yes' )
       call output( '     ' // dopt_crash       // '              crash', advance='yes' )
       call output( '     ' // dopt_direct      // '              direct', advance='yes' )
-      call output( '     ' // dopt_gaps        // '              gaps      ', advance='yes' )
+      call output( '     ' // dopt_gaps        // '              show only gaps in logicals ', advance='yes' )
       call output( '     ' // dopt_collapse    // '              collapse (last index)', advance='yes' )
       call output( '     ' // dopt_ratios      // '              ratios    -- min, max, etc. of difference ratios', advance='yes' )
       call output( '     ' // dopt_stats       // '              stats     -- number, % of differences', advance='yes' )
@@ -532,6 +535,9 @@ contains
 end module Dump_Options
 
 ! $Log$
+! Revision 2.13  2019/07/22 22:18:10  pwagner
+! Improved DumpDumpOptions
+!
 ! Revision 2.12  2018/04/13 00:23:27  pwagner
 ! Improved comments; explain use of appearance flags like 'MyName\h'
 !
