@@ -9,21 +9,21 @@
 ! export authority as may be required before exporting such information to
 ! foreign countries or providing access to foreign persons.
 
-module LEXER_M
+module Lexer_m
 
 ! Lexer for LR.
 
-  use ERROR_HANDLER, only: ERROR_WALKBACK
-  use LEXER_CORE, only: NEED, PRINT_SOURCE, TOKEN, Where_t
-  use OUTPUT_M, only: OUTPUT
-  use STRING_TABLE, only: ADD_CHAR, CLEAR_STRING, DISPLAY_STRING, &
-                          EOF, EOL, GET_CHAR, INCLUDE_STACK_TOP, &
-                          LOOKUP_AND_INSERT, NEW_LINE, SOURCE_COLUMN, &
-                          SOURCE_LINE
-  use SYMBOL_TABLE, only: ADD_TERMINAL, DUMP_SYMBOL_TABLE, DUMP_1_SYMBOL, &
-                          ENTER_TERMINAL, SET_SYMBOL, SYMBOL
-  use SYMBOL_TYPES ! everything
-  use TOGGLES, only: CON, EMIT, GEN, LEVELS, LEX, PAR, SYN, TAB, TOGGLE
+  use Error_Handler, only: Error_Walkback
+  use Lexer_Core, only: Need, Print_Source, Token, Where_t
+  use Output_m, only: Output
+  use String_Table, only: Add_Char, Clear_String, Display_String, &
+                          EOF, EOL, Get_Char, Include_Stack_Top, &
+                          Lookup_and_Insert, New_Line, Source_Column, &
+                          Source_Line
+  use Symbol_Table, only: Add_Terminal, Class_Texts, Dump_Symbol_Table, &
+                          Dump_1_Symbol, Enter_Terminal, Set_Symbol, Symbol
+  use symbol_types ! everything
+  use Toggles, only: CON, EMIT, GEN, Levels, LEX, PAR, SYN, TAB, Toggle
 
   implicit NONE
 
@@ -95,22 +95,22 @@ module LEXER_M
 contains
 
   ! ------------------------------------------------------  Lexer  -----
-  subroutine LEXER ( THE_TOKEN )
-    type(token), intent(out) :: THE_TOKEN
+  subroutine Lexer ( The_Token )
+    type(token), intent(out) :: The_Token
 
     ! Parameters for ERROR routine's CODE argument
-    integer, parameter :: INCOMPLETE = 2
-    integer, parameter :: UNREC_CHAR = 3
-    integer, parameter :: UNREC_TOKEN = 4
+    integer, parameter :: Incomplete = 2
+    integer, parameter :: Unrec_Char = 3
+    integer, parameter :: Unrec_Token = 4
 
     ! Parameters for states
-    integer, parameter :: START = 1
+    integer, parameter :: Start = 1
     integer, parameter :: ID = 2
     integer, parameter :: NUM = 3    ! digit+
     integer, parameter :: OP = 4
     integer, parameter :: PUN = 5
-    integer, parameter :: CONTIN = 6
-    integer, parameter :: CONTIN2 = 7
+    integer, parameter :: Contin = 6
+    integer, parameter :: Contin2 = 7
     integer, parameter :: SQ1 = 8    ! First string-started-by-quote state
     integer, parameter :: SQ2 = 9    ! Second string-started-by-quote state
     integer, parameter :: SA1 = 10   ! First string-started-by-apost state
@@ -120,18 +120,18 @@ contains
     character, save :: CH          ! Current character
     integer :: CLASS               ! Classification of current character
     
-    integer :: COLUMN              ! Character index of start of token in
+    integer :: Column              ! Character index of start of token in
                                    ! CHAR_TABLE
-    logical :: FOUND               ! Argument for LOOKUP_AND_INSERT
+    logical :: Found               ! Argument for LOOKUP_AND_INSERT
     integer :: I                   ! Loop inductor
-    integer :: SOURCE_START        ! Source reference for start of token
+    integer :: Source_Start        ! Source reference for start of token
                                    ! ( 256*line + column )
-    integer :: STATE               ! Current state of lexer DFA
-    integer :: STRING_INDEX        ! Index of token in string table
+    integer :: State               ! Current state of lexer DFA
+    integer :: String_Index        ! Index of token in string table
 
     integer :: File                ! String index from include stack
 
-    if ( first .and. toggle(lex) .and. levels(lex) > 1 ) then
+    if ( first.and. toggle(lex) .and. levels(lex) > 1 ) then
       first = .false.
       call output ( 'Term_Types:', advance='yes' )
       do i = lbound(term_types,1), ubound(term_types,1), 7
@@ -258,7 +258,7 @@ contains
             end select
           end do
           need = .false.
-          string_index = terminal_strings(t_unk_ch)
+          string_index = Class_Texts(t_unk_ch)
           the_token = token( t_unk_ch, string_index, .false., &
                            & where_t(file, source_start) )
   exit ! main lexer loop.
@@ -310,7 +310,7 @@ contains
         if ( toggle(lex) ) then
           call dump_1_symbol ( string_index, advance='yes' )
         end if
-        string_index = terminal_strings(t_unk_pun)
+        string_index = Class_Texts(t_unk_pun)
         the_token = token( t_unk_pun, string_index, .false., &
                          & where_t(file, source_start) )
         need = .false.
@@ -329,7 +329,7 @@ contains
             if ( ch == eol .or. ch == eof ) then
           exit; end if
           end do
-          string_index = terminal_strings(t_aft_cont)
+          string_index = Class_Texts(t_aft_cont)
           the_token = token( t_aft_cont, string_index, .false., &
                            & where_t(file, source_start) )
     exit ! main lexer loop
@@ -347,7 +347,7 @@ contains
         select case ( class )
         case ( eof_in, eol_in )
           call clear_string
-          string_index = terminal_strings(t_inc_str)
+          string_index = Class_Texts(t_inc_str)
           the_token = token( t_inc_str, string_index, .false., &
                            & where_t(file, source_start) )
     exit ! main lexer loop
@@ -373,7 +373,7 @@ contains
         select case ( class )
         case ( eof_in, eol_in )
           call clear_string
-          string_index = terminal_strings(t_inc_str)
+          string_index = Class_Texts(t_inc_str)
           the_token = token( t_inc_str, string_index, .false., &
                            & where_t(file, source_start) )
           
@@ -507,6 +507,9 @@ contains
 end module LEXER_M
 
 ! $Log$
+! Revision 1.2  2019/07/09 20:27:47  vsnyder
+! Improve error handling
+!
 ! Revision 1.1  2014/01/14 00:15:01  vsnyder
 ! Initial commit of new module for new LR
 !
