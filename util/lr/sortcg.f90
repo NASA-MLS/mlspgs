@@ -13,7 +13,7 @@ module Sort_Configurations
 
   implicit NONE
   private
-  public :: SORTCG
+  public :: Sortcg
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -23,10 +23,9 @@ module Sort_Configurations
 
 contains
 
-  subroutine SORTCG ( NSETS )
+  subroutine Sortcg ( Items )
 
     use Basis_m, only: Item_t
-    use Complete, only: SCRTCH
     use Tables, only: PRDIND => Prod_Ind, PRODCN => Productions
     use Toggles, only: Gen, Levels
     use Trace, only: Trace_Begin, Trace_End
@@ -37,7 +36,7 @@ contains
     ! reducing configurations, or transitioning configurations having the
     ! same symbol after the dot, order according to production number.
 
-    integer, intent(in) :: NSETS
+    type(item_t), intent(inout) :: Items(:)
 
     !     *****     Local Variables     ************************************
 
@@ -46,14 +45,15 @@ contains
     ! IP      is the pointer to the symbol the I iterator is examining.
     !         IP is also used as a temporary variable while exchanging
     !         configurations.
-    ! ISYM    is the symbol after the dot in the production at SCRTCH(I).
+    ! ISYM    is the symbol after the dot in the production at Items(I).
     ! J       is a loop induction variable and subscript.
     ! JP      is the pointer to the symbol the J iterator is examining.
-    ! JSYM    is the symbol after the dot in the production at SCRTCH(J).
+    ! JSYM    is the symbol after the dot in the production at Items(J).
+    ! NSets   is the number of elements in Items
     ! V       is the I'th item during sorting
     ! W       is the (J-H)'th item during sorting
 
-    integer H, I, IP, ISym, J, JP, JSym
+    integer H, I, IP, ISym, J, JP, JSym, NSets
     type(item_t) :: V, W
 
     ! *****     Procedures     *********************************************
@@ -62,6 +62,7 @@ contains
 
     if ( levels(gen) > 1 ) call trace_begin ( 'SORTCG' )
 
+    nsets = size(items)
     if ( nsets <= 1 ) go to 9
     h = 1
     do while ( h <= nsets )
@@ -70,7 +71,7 @@ contains
     do while (h > 1)
       h = h/3
       do i = h+1, nsets
-        v = scrtch(i)
+        v = items(i)
         ip = prdind(v%prod)
         if ( v%dot >= prdind(v%prod+1) - ip) then
         ! The I'th configuration is a reducing configuration.
@@ -81,7 +82,7 @@ contains
         end if
         j = i
         do while ( j > h )
-          w = scrtch(j-h)
+          w = items(j-h)
           jp = prdind(w%prod)
           if ( w%dot >= prdind(w%prod+1) - jp ) then
           ! The J'th configuration is a reducing configuration.
@@ -96,16 +97,16 @@ contains
           ! configurations according to the production number.
             if ( w%prod <= v%prod ) exit
           end if
-          scrtch(j) = w
+          items(j) = w
           j = j - h
         end do
-        scrtch(j) = v
+        items(j) = v
       end do
     end do
 
   9 if ( levels(gen) > 1 ) call trace_end ( 'SORTCG' )
 
-  end subroutine SORTCG
+  end subroutine Sortcg
 
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
@@ -120,6 +121,9 @@ contains
 end module Sort_Configurations
 
 ! $Log$
+! Revision 1.2  2014/01/14 00:11:42  vsnyder
+! Revised LR completely
+!
 ! Revision 1.1  2013/10/24 22:41:14  vsnyder
 ! Initial commit
 !
