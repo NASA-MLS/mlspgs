@@ -26,7 +26,7 @@ contains
   subroutine ANALYZ
 
     use Basis_m, only: ADDBAS, DEQUE, NEWBAS
-    use Complete, only: COMPLT
+    use Complete, only: Closures_Index, Closures, Complt
     use FIRST_SETS, only: FIND_FIRST      ! Find FIRST sets
     use LISTS, only: LIST, NEW
     use New_Context_Set, only: NEWCS
@@ -61,12 +61,11 @@ contains
 
     ! I       is a loop induction variable and subscript, and pointer to the
     !         basis currently being processed.
-    ! JMAX    is the position in SCRTCH of the end of the basis being
-    !         processed.
+    ! J1, J2  are the bounds for the part of Closures to use
     ! N       is the pointer to the context set for production 1.
     ! NPTR    is the pointer to the initial context list for production 1.
 
-    integer I, JMAX, N, NPTR
+    integer I, J1, J2, N, NPTR
 
     ! *****     Procedures     *****************************************
 
@@ -87,9 +86,11 @@ contains
     call addbas ( i, 1, 1, n )         ! <GOAL> ::= . <SOG> start <EOG>
 
     do while ( i > 0 )
-       call complt ( i, jmax )
-       call sortcg ( jmax )
-       call trnred ( i, jmax )
+       call complt ( i )
+       j1 = closures_index(i-1) + 1
+       j2 = closures_index(i)
+       call sortcg ( closures(j1:j2) )
+       call trnred ( i, closures(j1:j2) )
        call deque ( i )
     end do
     if ( toggle(gen) ) call trace_end ( 'Analysis' )
@@ -109,6 +110,9 @@ contains
 end module Analysis
 
 ! $Log$
+! Revision 1.3  2014/01/14 00:11:42  vsnyder
+! Revised LR completely
+!
 ! Revision 1.2  2013/12/12 01:53:00  vsnyder
 ! Remove unused cruft
 !
