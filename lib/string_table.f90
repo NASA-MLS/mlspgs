@@ -29,7 +29,7 @@ module STRING_TABLE
   public :: allocate_hash_table, allocate_string_table, clear_string
   public :: compare_strings, create_string, destroy_char_table
   public :: destroy_hash_table, destroy_string_table, display_string
-  public :: display_string_list, dump_inunit_stack, enter_string
+  public :: display_string_list, dump_char_table, dump_inunit_stack, enter_string
 !   ifort v17 gets a seg fault if find_file is public.
 !   public :: find_file
   public :: float_value, get_char, get_string, how_many_strings, include_stack_top
@@ -408,6 +408,42 @@ contains
     call display_string ( string(size(string)), advance, strip, ierr, before=' ')
     if ( present(ierr) )  ierr = max(jerr,ierr)
   end subroutine DISPLAY_STRING_LIST
+  ! ======================================     Dump_Char_Table     =====
+  subroutine Dump_Char_Table ( Start, End )
+    ! This is for debugging, assuming you have somehow gotten hold of
+    ! how much of the character table you want to dump, probably by
+    ! inserting some dumping stuff elsewhere in this module
+    integer, intent(in) :: Start, End
+    integer :: I, J, K, MyStart, MyEnd
+    myStart = start
+    if ( start < 1 ) then
+      call output ( start, before='Requested start ' )
+      call output ( 1, before=' changed to ', advance='yes' )
+      myStart = 1
+    end if
+    myEnd = end
+    if ( myEnd > cur_end ) then
+      call output ( end, before='Requested end ' )
+      call output ( cur_end, before=' changed to ', advance='yes' )
+      myEnd = cur_end
+    end if
+    do i = myStart, myEnd, 100
+      j = min(i+99,myEnd)
+      call output ( i, before='Char_Table(' )
+      call output ( j, before=':' )
+      call output ( ') = "' )
+      do k = i, j
+        if ( char_table(k) == EOL ) then
+          call output ( 'EOL' )
+        else if ( char_table(k) == EOF ) then
+          call output ( 'EOF' )
+        else
+          call output ( char_table(k) )
+        end if
+      end do
+      call output ( '"', advance='yes' )
+    end do
+  end subroutine Dump_Char_Table
   ! ====================================     DUMP_INUNIT_STACK     =====
   subroutine DUMP_INUNIT_STACK
     integer :: I
@@ -1305,6 +1341,9 @@ contains
 end module STRING_TABLE
 
 ! $Log$
+! Revision 2.52  2019/07/31 20:03:24  vsnyder
+! Add Dump_Char_Table, which might be useful for debugging
+!
 ! Revision 2.51  2016/10/04 20:55:25  vsnyder
 ! Make Find_File private because ifort 17 crashes with it public
 !
