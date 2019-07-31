@@ -156,6 +156,10 @@ program LR
     outputOptions%prUnitLiteral = .true. ! Do output even if list_unit < 0
   end if
 
+  call get_command ( line )
+  call output ( trim(line), advance='yes' )
+  call print_version ( use_output=.true. )
+
   ! Parse the grammar, producing an abstract syntax tree
   call init_parser_table ( parser_table )
   call lr_parser ( root, parser_table )
@@ -252,7 +256,8 @@ contains
     end if
   end subroutine Digit_After_Option
 
-  subroutine Print_Version
+  subroutine Print_Version ( Use_Output )
+    logical, intent(in), optional :: Use_Output ! call output if present
     character (len=*), parameter :: IdParm = &
       "$Id$"
     character (len=len(idParm)) :: Id = idParm
@@ -262,7 +267,11 @@ contains
     i = i + 2
     j = index(idParm,":",back=.true.)
     j = min(j+2,len(idParm))
-    print '(2a)', 'Version ', trim(adjustl(idParm(i:j)))
+    if ( present(use_output) ) then
+      call output ( 'Version ' // trim(adjustl(idParm(i:j))), advance='yes' )
+    else
+      print '(2a)', 'Version ', trim(adjustl(idParm(i:j)))
+    end if
   end subroutine Print_Version
 
   subroutine Switch_Usage
@@ -307,6 +316,9 @@ contains
 end program LR
 
 ! $Log$
+! Revision 1.14  2019/07/31 20:08:14  vsnyder
+! Add 'C' option to print closures
+!
 ! Revision 1.13  2019/07/09 20:28:04  vsnyder
 ! Add option to print input as it is read
 !
