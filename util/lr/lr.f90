@@ -121,7 +121,7 @@ program LR
       case ( 'V' ) ! Print version and stop
         call print_version
         stop
-      case ( '2' : '4', 'M', 'X' )
+      case ( '2' : '4', 'C', 'M', 'X' )
         toggle_lr(iachar(line(j:j))) = 1
       case default
         call usage
@@ -277,6 +277,7 @@ contains
     print '(3a)', 'Usage: ', trim(line), ' [options] input_file [ table_file [ listing_file ] ]'
     print '(a)', ' Options:'
     print '(a)', '  -A => Print syntax tree'
+    print '(a)', '  -C => Print the closure of every set, not just the basis'
     print '(a)', '  -d[#] => Trace declaraction table actions at level #'
     print '(a)', '  -g[#] => Trace generation at level #'
     print '(a)', '  -i => List input as it is read'
@@ -306,6 +307,9 @@ contains
 end program LR
 
 ! $Log$
+! Revision 1.13  2019/07/09 20:28:04  vsnyder
+! Add option to print input as it is read
+!
 ! Revision 1.12  2017/08/07 19:59:45  vsnyder
 ! Repair error in processing table file name from command line
 !
