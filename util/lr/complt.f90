@@ -15,9 +15,17 @@ module Complete
 
   implicit NONE
   private
-  public :: COMPLT
+  public :: Complt
 
-  type(item_t), public, allocatable, save :: SCRTCH(:)
+  integer, public, allocatable, save :: Closures_Index(:) ! 0 : Number of states
+    ! Closures_Index(i) is index of last closure for state I in Closures.
+
+  type(item_t), public, allocatable, save :: Closures(:)  ! Closure for state I
+    ! is in Closures ( closures_index(i-1)+1 : closures_index(i) )
+
+  type(item_t), private, allocatable, save :: SCRTCH(:)
+
+  integer, parameter, private :: Init_Closures_Index = 1000 ! Initial size
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -27,9 +35,9 @@ module Complete
 
 contains
 
-  subroutine COMPLT ( ISTATE, MAXSET )
+  subroutine Complt ( ISTATE )
 
-    use Basis_m, only: BASIS, Increase_Items, Item_T, Items
+    use Basis_m, only: Basis, Increase_Items, Item_T, Items
     use Delete, only: DELCS
     use LISTS, only: LIST
     use Tables, only: FRSPRD => First_Production, NTERMS, NUMPRD, &
@@ -40,7 +48,7 @@ contains
 
     ! Complete the state ISTATE.
 
-    integer ISTATE, MAXSET
+    integer, intent(in) :: ISTATE
 
     ! *****     External References     ************************************
 
@@ -53,7 +61,8 @@ contains
 
     ! CHANGE  indicates whether a change to the configuration occurred
     ! CHU     is a value of CHANGE returned by CSUN.
-    ! I       is a loop inductor and subscript for BASIS.
+    ! CLOSIZ  is the size of the Closures array
+    ! I       is a loop inductor and subscript for Basis.
     !         during a loop iteration.
     ! IEND    is the upper limit for I.
     ! IPTR    is a pointer to a context set list.
@@ -68,11 +77,20 @@ contains
     ! SCRSIZ  size of scratch array.
 
     logical :: Change, CHU
+    integer :: CLOSIZ = 0  ! Closures array starts out not allocated
     integer I, IEND, IPTR, ISTART, J, K, LHS
     integer MARK(NUMPRD)
     integer :: SCRSIZ = 0  ! SRCTCH starts out not allocated
 
     !     *****     Procedures     *****************************************
+
+    ! Make room for more closures if necessary
+
+    if ( .not. allocated(closures_index) ) then
+      call increase_closures_index
+    else if ( istate > ubound(closures_index,1) ) then
+      call increase_closures_index
+    end if
 
     ! First move the set's configuration items to scratch.
 
@@ -98,7 +116,7 @@ contains
     do while ( change )
       change = .false.
       i = 1
-      do ! until ( i >= j )
+      do ! until ( i > j )
          if ( scrtch(i)%dot < prdind(scrtch(i)%prod+1)-prdind(scrtch(i)%prod)) then
            lhs = prodcn(prdind(scrtch(i)%prod) + scrtch(i)%dot)
 
@@ -118,7 +136,7 @@ contains
              ! been included.
 
              k = frsprd(lhs)
-             if ( k > 0 ) then   ! Otherwise it an unused symbol defined by
+             if ( k > 0 ) then   ! Otherwise it is an unused symbol defined by
                                  ! symbol = name in the grammar
                do while (prodcn(prdind(k)) == lhs)
                  if ( mark(k) == 0 ) then
@@ -147,15 +165,21 @@ contains
          end if
          i = i + 1
          if ( i > j ) exit
-       end do
-    end do
-    maxset = j
+       end do ! until ( i > j )
+    end do ! while ( change )
 
-  end subroutine COMPLT
+    ! Copy items from scrtch to closures
+    closures_index(istate) = closures_index(istate-1) + j
+    if ( closures_index(istate) > closiz ) &
+      & call increase_items ( closures, closiz )
+    closures(closures_index(istate-1)+1:closures_index(istate)) = &
+      & scrtch(1:j)
 
-  ! IMTRCS is private, called only by COMPLT.
+  end subroutine Complt
 
-  subroutine IMTRCS (IBASIS, IPTR)
+  ! IMTRCS is private, called only by Complt.
+
+  subroutine IMTRCS (Ibasis, IPTR)
 
     use FIRST_SETS, only: FIRST_PT        ! heads of first sets
     use LISTS, only: ADDLTL, COPYL, LIST
@@ -164,7 +188,7 @@ contains
     use Tables, only: PRDIND => Prod_Ind, PRODCN => Productions
 
   ! Construct the immediate transition context set for the
-  ! configuration at SCRTCH(IBASIS).  Return the pointer to it in
+  ! configuration at SCRTCH(Ibasis).  Return the pointer to it in
   ! IPTR.
 
   ! The immediate transition context set is the set consisting of the
@@ -172,7 +196,7 @@ contains
   ! symbol after the dot, unioned with the context set of the
   ! production if that string is null or potentially null.
 
-    integer IBASIS, IPTR
+    integer Ibasis, IPTR
 
   ! *****     External References     ********************************
 
@@ -230,6 +254,29 @@ contains
 
   end subroutine IMTRCS
 
+  subroutine Increase_Closures_Index
+
+    ! If Closures_Index is not allocated, allocate it with bounds
+    ! 0 : Init_Closures_Index.
+
+    ! If it is allocated, double its size.
+
+    integer :: N ! Upper bound of Closures_Index if it's allocated
+    integer, allocatable :: Temp(:)
+
+    if ( .not. allocated(closures_index) ) then
+      allocate ( closures_index(0:init_closures_index) )
+      closures_index(0) = 0
+      return
+    end if
+
+    n = ubound(closures_index,1)
+    allocate ( temp(0:n) )
+    temp(0:n) = closures_index
+    call move_alloc ( temp, closures_index )
+
+  end subroutine Increase_Closures_Index
+
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
   character (len=*), parameter :: IdParm = &
@@ -243,6 +290,9 @@ contains
 end module Complete
 
 ! $Log$
+! Revision 1.2  2014/01/14 00:11:42  vsnyder
+! Revised LR completely
+!
 ! Revision 1.1  2013/10/24 22:41:13  vsnyder
 ! Initial commit
 !
