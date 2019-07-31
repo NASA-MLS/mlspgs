@@ -13,7 +13,7 @@ module Transitions_And_Reductions
 
   implicit NONE
   private
-  public :: TRNRED
+  public :: Trnred
 
   ! Red_t is the type of object used to keep track of reductions
   type :: Red_t
@@ -42,24 +42,23 @@ module Transitions_And_Reductions
 
 contains
 
-  subroutine TRNRED ( IBASIS, JMAX )
+  subroutine Trnred ( Ibasis, Items )
 
-    use Basis_m, only: ADDBAS, BASIS, ENQUE, NEWBAS
-    use Complete, only: Scrtch
-    use Tables, only: PRDIND => Prod_Ind, PRODCN => Productions
+    use Basis_m, only: Addbas, Basis, Enque, Item_t, Newbas
+    use Tables, only: Prdind => Prod_Ind, Prodcn => Productions
     use Merge_Sets, only: Merge
     use Toggles, only: Gen, Levels
     use Trace, only: Trace_Begin, Trace_End
 
     implicit NONE
 
-  ! Attach lists of transitions and reductions to the state in SCRTCH.
+  ! Attach lists of transitions and reductions to the state in Items.
 
-  ! IBASIS  is the point in the BASIS array corresponding to the state in
-  !         SCRTCH.
-  ! JMAX    is the largest position in SCRTCH used by the state.
+  ! Ibasis  is the point in the BASIS array corresponding to the state in
+  !         Items.
 
-    integer, intent(in) :: IBASIS, JMAX
+    integer, intent(in) :: Ibasis
+    type(item_t), intent(in) :: Items(:)
 
   ! *****     External References     ********************************
 
@@ -77,6 +76,7 @@ contains
   !         RED.
   ! ITRAN   is the pointer to the next place a transition may be stored in
   !         TRAN.
+  ! JMAX    is the largest position in Items used by the state.
   ! LHS     is the left side of a production.
   ! NB      is the position in BASIS of a new state added by MERGE.
   ! NBASIS  is the position in BASIS of a newly constructed basis, to be
@@ -85,36 +85,37 @@ contains
   ! Temp_Red  is used to allocate a new Red array
   ! Temp_Tran is used to allocater a new Tran array
 
-    logical :: CHANGE
-    integer I, IPATH, IRED, ITRAN, LHS, NB, NBASIS
+    logical :: Change
+    integer I, Ipath, Ired, Itran, Jmax, LHS, NB, Nbasis
     type(red_t), allocatable :: Temp_Red(:)
     integer, allocatable :: Temp_Tran(:)
 
   ! *****     Procedures     *****************************************
 
   ! Calculate how much space remains in TRAN.
-  ! If space was previously allocated for the transitions from IBASIS
+  ! If space was previously allocated for the transitions from Ibasis
   ! then reuse that space.  The amount of space required will never
   ! change since the transitions depend only on the completed basis.
   ! The completed basis is never changed, but its contexts are.
 
     if ( levels(gen) > 1 ) call trace_begin ( 'TRNRED' )
 
+    jmax = size(items)
     itran = basis(ibasis)%tran   ! Start of transitions from this basis
 
     i = 1
-    if (scrtch(1)%dot < prdind(scrtch(1)%prod+1) - prdind(scrtch(1)%prod)) then
+    if (items(1)%dot < prdind(items(1)%prod+1) - prdind(items(1)%prod)) then
       ipath = 1
       do while (ipath /= 0)
-        lhs = prodcn(prdind(scrtch(i)%prod)+scrtch(i)%dot)
+        lhs = prodcn(prdind(items(i)%prod)+items(i)%dot)
         call newbas ( nbasis )
-        do while ( lhs == prodcn(prdind(scrtch(i)%prod)+scrtch(i)%dot) )
-          call addbas ( nbasis, scrtch(i)%prod, scrtch(i)%dot+1, scrtch(i)%set )
+        do while ( lhs == prodcn(prdind(items(i)%prod)+items(i)%dot) )
+          call addbas ( nbasis, items(i)%prod, items(i)%dot+1, items(i)%set )
           i = i + 1
           ipath = 0
           if ( i > jmax ) go to 10
-          if ( scrtch(i)%dot >= &
-               prdind(scrtch(i)%prod+1) - prdind(scrtch(i)%prod) ) go to 10
+          if ( items(i)%dot >= &
+               prdind(items(i)%prod+1) - prdind(items(i)%prod) ) go to 10
         end do
         ipath = 1
   10    continue
@@ -149,8 +150,8 @@ contains
     ! Construct or reconstruct reductions.
 
     do while (i <= jmax)
-    ! Add the reduction of production SCRTCH(I)%prod for context
-    ! SCRTCH(I)%set to the state at IBASIS.
+    ! Add the reduction of production Items(I)%prod for context
+    ! Items(I)%set to the state at Ibasis.
       if ( ired >= red_size ) then
         if ( .not. allocated(red) ) then
           allocate ( red(red_init) )
@@ -161,8 +162,8 @@ contains
         end if
         red_size = size(red)
       end if
-      red(ired)%prod = scrtch(i)%prod
-      red(ired)%set = scrtch(i)%set
+      red(ired)%prod = items(i)%prod
+      red(ired)%set = items(i)%set
       ired = ired + 1
       i = i + 1
     end do
@@ -171,7 +172,7 @@ contains
 
     if ( levels(gen) > 1 ) call trace_end ( 'TRNRED' )
 
-  end subroutine TRNRED
+  end subroutine Trnred
 
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
@@ -186,6 +187,9 @@ contains
 end module Transitions_And_Reductions
 
 ! $Log$
+! Revision 1.2  2014/01/14 00:11:42  vsnyder
+! Revised LR completely
+!
 ! Revision 1.1  2013/10/24 22:41:14  vsnyder
 ! Initial commit
 !
