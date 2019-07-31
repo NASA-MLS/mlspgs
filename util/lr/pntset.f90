@@ -25,7 +25,8 @@ contains
 
   subroutine PNTSET ( LNADQT )
 
-    use Basis_m, only: BASIS, IFINAL, INDBAS, Items
+    use Basis_m, only: BASIS, IFINAL, INDBAS, Items, Item_t
+    use Complete, only: Closures_Index, Closures
     use Delete, only: DELCS
     use Error_m, only: Error
     use Output_m, only: Blanks, NewLine, OUTPUT
@@ -101,6 +102,7 @@ contains
     do i = 1, indbas-1
       ipr = basis(i)%item        ! first item for the state
       call print_the_basis       ! for the state
+      if ( toggle(iachar('C')) /= 0 ) call print_the_closure
       call print_the_transitions ! from the state
       call print_the_reductions  ! from the state
     end do
@@ -119,7 +121,7 @@ contains
       do i = 1, indbas-1
         ipr = basis(i)%item
         if ( items(ipr)%prod == 1 .and. items(ipr)%dot > 3 ) ifinal = i
-        do j = ipr, basis(i+1)%item
+        do j = ipr, basis(i+1)%item-1
           call delcs (items(j)%set)
         end do
       end do
@@ -133,7 +135,7 @@ contains
       if ( items(ipr)%prod == 1 .and. items(ipr)%dot > 3 ) ifinal = i
       l = 0   ! State number has been printed; don't need initial space
       do j = ipr, basis(i+1)%item - 1
-        call print_the_production ( j, l )! with a dot in the right side
+        call print_the_production ( items(j), l )! with a dot in the right side
         l = 6 ! No state number after additional productions; need initial space
         if (.not.reduce) then
           iptr = list(items(j)%set)%next
@@ -147,18 +149,33 @@ contains
       end do
     end subroutine print_the_basis ! for the state
 
-    subroutine print_the_production ( s, initial )! with a dot in the right side
+    subroutine print_the_closure ! for the state
+      integer :: J      ! Closure to print
+      integer :: J1, J2 ! Range of Closures to print
+      integer :: NBasis ! Number of items in the basis
+      nBasis = basis(i+1)%item - basis(i)%item
+      j1 = closures_index(i-1) + nBasis + 1
+      j2 = closures_index(i)
+      if ( j1 > j2 ) return
+      call blanks ( 12 )
+      call output ( 'Closure:', advance='yes' )
+      do j = j1, j2
+        call print_the_production ( closures(j), 6 )
+      end do
+    end subroutine print_the_closure
 
-      ! Print the left side.
+    subroutine print_the_production ( Item, Initial )! with a dot in the right side
 
-      integer, intent(in) :: S       ! Index of configuration set item
-      integer, intent(in) :: Initial ! Space before the production
+      type(item_t), intent(in) :: Item  ! Configuration set item
+      integer, intent(in) :: Initial    ! Space before the production
 
       integer :: K
       integer :: Prod_Number
       integer :: W ! String length of vocab item
 
-      prod_number = items(s)%prod
+      ! Print the left side.
+
+      prod_number = item%prod
       ibase = prdind(prod_number)
       call blanks ( initial )
       call output ( prod_number, 5 )
@@ -167,7 +184,7 @@ contains
       l = string_length(vocab(prodcn(ibase))) + 16
 
       ! Print the right side of the production with a dot before the
-      ! IDOT'th item.  IDOT is in items(S)%dot.
+      ! IDOT'th item.  IDOT is in item%dot.
 
       jdot = 1
       do k = ibase+1, prdind(prod_number+1)-1
@@ -177,7 +194,7 @@ contains
           call blanks ( 13 )
           l = 13
         end if
-        if ( jdot == items(s)%dot ) then
+        if ( jdot == item%dot ) then
           call output ( ' .' )
           l = l + 2
         end if
@@ -185,7 +202,7 @@ contains
         l = l + w + 1
         jdot = jdot + 1
       end do
-      reduce = jdot == items(s)%dot
+      reduce = jdot == item%dot
       if (reduce) then
         call output ( ' .' )
         if ( actions(prod_number) /= 0 ) then
@@ -317,6 +334,9 @@ contains
 end module Print_Set
 
 ! $Log$
+! Revision 1.6  2019/07/09 22:40:52  vsnyder
+! Spiff some output
+!
 ! Revision 1.5  2018/04/17 23:09:06  vsnyder
 ! J actually was being used as a global variable, but that's confusing, so
 ! pass it around as an argument.
