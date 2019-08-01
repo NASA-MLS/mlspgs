@@ -56,13 +56,13 @@ program MLSL2
   use MLSPCF2 ! Everything
   use MLSStrings, only: Trim_Safe
   use MLSStringLists, only: ExpandStringRange, PutHashElement, SwitchDetail
-  use Output_M, only: Blanks, flushStdout, Output, &
+  use Output_M, only: Blanks, FlushStdout, Output, &
     & BothPrUnit, InvalidPrUnit, MSGLogPrUnit, OutputOptions, PrUnitName, &
-    & StampOptions, StdoutPrUnit, SwitchOutput, RevertOutput
+    & SetOutputStatus, StampOptions, StdoutPrUnit, SwitchOutput, RevertOutput
   use Parser, only: Clean_Up_Parser, Configuration
   use Parser_Table_M, only: Destroy_Parser_Table, Parser_Table_T
   use Parser_Tables_L2cf, only: Init_Parser_Table
-  use PCFHdr, only: DumpGlobalAttributes
+  ! use PCFHdr, only: DumpGlobalAttributes
   use Printit_M, only: Set_Config, StdoutLogUnit
   use PVM, only: ClearPVMArgs, FreePVMArgs
   use SDPToolkit, only: PGSD_DEM_30arc, PGSD_DEM_90arc, &
@@ -148,22 +148,26 @@ program MLSL2
   ! (b) The l2cf must be specified; you can't use stdin (the slaves wouldn't
   !     see the master's stdin)
   implicit none
+  ! ********************************************************
+  ! Should we move these next 4 to MLSL2Options?
+  character(len=*), parameter :: L2CFNameExtension = ".l2cf"
+  logical, parameter          :: WaitForscript     = .true.
+  logical, parameter          :: Wrap              = .false.
+  integer, parameter          :: WrapPastColumn    = 0 ! 140 ! 192
+  ! ********************************************************
 
-  character(len=*), parameter :: L2CFNAMEEXTENSION = ".l2cf"
-  logical, parameter          :: WAITFORSCRIPT     = .true.
-
-  integer :: ERROR                 ! Error flag from check_tree
-  integer :: FIRST_SECTION         ! Index of son of root of first n_cf node
+  integer :: Error                 ! Error flag from check_tree
+  integer :: First_Section         ! Index of son of root of first n_cf node
   logical :: garbage_collection_by_dt = .false. ! Collect garbage after each deallocate_test?
   integer :: I                     ! counter for command line arguments
-  integer, dimension(1) :: ICHUNKS
+  integer, dimension(1) :: IChunks
   integer :: J                     ! index within option
-  character(len=2048) :: LINE      ! Into which is read the command args
+  character(len=2048) :: Line      ! Into which is read the command args
   character(len=1) :: null
-  integer :: NUMFILES
+  integer :: Numfiles
   type(Parser_Table_t) :: Parser_Table
-  integer :: ROOT                  ! of the abstract syntax tree
-  integer :: STATUS                ! From OPEN
+  integer :: Root                  ! of the abstract syntax tree
+  integer :: Status                ! From OPEN
   real :: T0, T1, T2               ! For timing
   integer :: inunit = -1
 
@@ -172,7 +176,7 @@ program MLSL2
        "$RCSfile$"
 !---------------------------------------------------------------------------
 
-  type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
+  type (MLSFile_T), dimension(:), pointer ::     FileDatabase
   type (MLSFile_T)                        ::     MLSL2CF
   ! DEM nonsense
   integer, dimension(2) :: resolutionList
@@ -180,7 +184,7 @@ program MLSL2
   integer, dimension(2) :: layerList
   integer   :: numLayers
   ! Executable
-  nullify (filedatabase)
+  nullify (FileDatabase)
   null = achar(0)
   !---------------- Task (1) ------------------
 
@@ -198,7 +202,7 @@ program MLSL2
   call allocate_decl ( ndecls=8000 )
   call allocate_tree ( n_tree=2000000 )
 ! call init_tables ! Postpone this until after toggles get set
-  FILESTRINGTABLE = .true.
+  FileStringTable = .true.
   !---------------- Task (2) ------------------
 ! Where to send output, how severe an error to quit
 ! call SwitchOutput ( 'stdout' )
@@ -206,7 +210,7 @@ program MLSL2
 ! call DumpConfig
 ! call RevertOutput
   outputOptions%prunit = L2Options%Output_print_unit
-  MLSMSG_Severity_to_quit = MAX(QUIT_ERROR_THRESHOLD, MLSMSG_Debug+1)
+  MLSMSG_Severity_to_quit = MAX(Quit_Error_Threshold, MLSMSG_Debug+1)
   call set_config ( severity_to_quit = MLSMSG_Severity_to_quit )
 
 ! Clear the command line arguments we're going to accumulate to pass
@@ -217,6 +221,8 @@ program MLSL2
   call getarg ( hp, parallel%executable )
 
   !---------------- Task (3) ------------------
+  !---------------- Task (3a) ------------------
+  ! Command line options
   i = 1+hp
   L2Options%Originalcmds = ' '
   do ! Process Lahey/Fujitsu run-time options; they begin with "-Wl,"
@@ -245,7 +251,7 @@ program MLSL2
     & switchDetail(switches, 'help') > -1 ) then
     call switch_usage
   end if
-  MLSMSG_Severity_to_quit = MAX(QUIT_ERROR_THRESHOLD, MLSMSG_Debug+1)
+  MLSMSG_Severity_to_quit = MAX(Quit_Error_Threshold, MLSMSG_Debug+1)
   ! print *, 'slaveArguments: ', trim(slaveArguments)
   ! The following no longer does anything
   call Set_garbage_collection(garbage_collection_by_dt)
@@ -257,12 +263,14 @@ program MLSL2
 ! print *, 'showDefaults: ', showDefaults
 ! print *, 'switches: ', trim(switches)
 
+  !---------------- Task (3b) ------------------
+  ! Redirecting output and optional logging by the Toolkit
   if ( L2Options%Overridden .and. .not. parallel%slave ) then
     ! Getting these things from L2Options
      call MLSMessage( MLSMSG_Warning, ModuleName, &
       & 'Setting output destination based on L2Options' )
   elseif ( .not. toolkit .or. showDefaults ) then
-     outputOptions%prunit = max( STDOUTPRUNIT, &
+     outputOptions%prunit = max( StdoutPrUnit, &
        & outputOptions%prunit)   ! stdout or Fortran unit
   else if ( outputOptions%prunit == INVALIDPRUNIT ) then
      call MLSMessage( MLSMSG_Warning, ModuleName, &
@@ -271,13 +279,13 @@ program MLSL2
      outputOptions%prunit = BothPrUnit ! MSGLOGPRUNIT   ! output both logged, not sent to stdout
      call set_config( LogFileUnit=BothPrUnit )
   else if ( parallel%slave ) then
-     outputOptions%prunit = STDOUTPRUNIT   ! output sent only to stdout, not logged
+     outputOptions%prunit = StdoutPrUnit   ! output sent only to stdout, not logged
      call set_config( useToolkit=.false. )
   end if
   i = SwitchDetail(switches, 'log')
 ! print *, 'i: ', i
   if( .not. L2Options%Overridden .and. (i == 0 .or. i > 5 .or. .not. toolkit) ) then
-     call set_config ( LogFileUnit = STDOUTLOGUNIT ) ! -1
+     call set_config ( LogFileUnit = StdoutLogUnit ) ! -1
   end if
   if ( i > 9 ) then
     MLSMessageConfig%MaxModuleNameLength   = i - 10
@@ -314,8 +322,8 @@ program MLSL2
   UseSDPToolkit = toolkit    ! Redundant, but may be needed in lib
   ! Try to prevent calls to output being lost 
   ! between output_m and MLSMessage modules
-  if ( MLSMessageConfig%LogFileUnit == STDOUTLOGUNIT ) &
-    & outputOptions%prunit = STDOUTPRUNIT
+  if ( MLSMessageConfig%LogFileUnit == StdoutLogUnit ) &
+    & outputOptions%prunit = StdoutPrUnit
 
   if ( time_config%use_wall_clock ) call time_now( run_start_time )
   ! If checking paths, run as a single-chunk case in serial mode
@@ -331,7 +339,7 @@ program MLSL2
   end if
   ! If doing a range of chunks, the avoidance of unlimited dimensions
   ! in directwrites of l2gp files currently fails
-  ! (when will this be fixed?)
+  ! (when will this be fixed? By whom? HDF people or us?)
   if ( parallel%chunkRange /= ' ' ) then
     ! avoidUnlimitedDims = .false.
     call ExpandStringRange( parallel%chunkRange, iChunks )
@@ -340,6 +348,15 @@ program MLSL2
   endif
 
   outputOptions%parentName = 'MLSL2'
+  if ( Wrap ) then
+    call SetOutputStatus ( 'wrap', 1 )
+    call SetOutputStatus ( 'wrappast', WrapPastColumn )
+  endif
+  ! stop
+
+  !---------------- Task (3c) ------------------
+  ! Are we sharing our PCF with level 1?
+  ! Are we part of a parallel run? If so, master or slave?
   ! If sharing a single PCF with level 1, we need to move any "mobile" PCF ids
   if ( sharedPCF ) call MovePCFIDs
   ! Setup the parallel stuff.  Register our presence with the master if we're a
@@ -418,7 +435,7 @@ program MLSL2
       & inseparator=runTimeValues%sep )
   end if
   if (inunit /= -1) call AddInUnit(inunit)
-  numfiles = AddFileToDataBase(filedatabase, MLSL2CF)
+  numfiles = AddFileToDataBase(FileDatabase, MLSL2CF)
 
   Show_Sys_Memory = Show_Sys_Memory .or. switchDetail(switches, 'mem') > -1
   if ( switchDetail(switches, 'memkb', options='-fc') > -1 ) then
@@ -465,7 +482,7 @@ program MLSL2
 
   !---------------- Task (6) ------------------
   if ( TOOLKIT .and. error==0) then
-    call mls_closeFile ( filedatabase(numfiles), error )
+    call mls_closeFile ( FileDatabase(numfiles), error )
   else
     if ( inunit >= 0 ) close ( inunit )  ! Don't worry about the status
   end if
@@ -532,7 +549,7 @@ program MLSL2
       if ( timing ) &
         & call output ( "-------- Processing Begun ------ ", advance='yes' )
       call walk_tree_to_do_MLS_L2 ( root, error, first_section, countChunks, &
-        & filedatabase )
+        & FileDatabase )
       if ( timing ) then
         call output ( "-------- Processing Ended ------ ", advance='yes' )
         call SayTime ( 'Processing mlsl2', t1=0., cumulative=.false. )
@@ -578,8 +595,8 @@ program MLSL2
       ! call MLSMessageExit
     else if ( error == 0 ) then
       if ( .not. parallel%slave ) then
-        call Deallocate_filedatabase(filedatabase)
-        call output('Deallocated filedatabase', advance='yes')
+        call Deallocate_FileDatabase(FileDatabase)
+        call output('Deallocated FileDatabase', advance='yes')
         call mls_h5close(error)
         call output('Closed hdf5 library', advance='yes')
       else
@@ -693,7 +710,8 @@ contains
   subroutine Dump_settings
   ! Show current run-time settings resulting from
   ! command-line, MLSL2Options, etc.
-!     use, intrinsic :: ISO_FORTRAN_ENV, only: Compiler_Options, Compiler_Version
+  ! Intel's ifort does not yet support the following USE statement
+  !     use, intrinsic :: ISO_FORTRAN_ENV, only: Compiler_Options, Compiler_Version
     use Printit_m, only: Get_Config
     character(len=1), parameter :: fillChar = '1' ! fill blanks with '. .'
     character(len=255) :: Command ! Command that executed the program
@@ -721,7 +739,7 @@ contains
       call headline( 'Summary of run time options', fillChar='-', before='*', after='*' )
       call outputNamedValue ( 'Use toolkit panoply', toolkit, advance='yes', &
         & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-      call outputNamedValue ( 'Error threshold before halting', quit_error_threshold, advance='yes', &
+      call outputNamedValue ( 'Error threshold before halting', Quit_Error_Threshold, advance='yes', &
         & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       call outputNamedValue ( 'Status on normal exit', normal_exit_status, advance='yes', &
         & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
@@ -729,7 +747,7 @@ contains
         & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       call outputNamedValue ( 'Range of chunks', trim_safe(parallel%chunkRange), advance='yes', &
         & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-      call outputNamedValue ( 'uniqueID ID', trim(uniqueID), advance='yes', &
+      call outputNamedValue ( 'Unique job ID', trim(uniqueID), advance='yes', &
         & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       call outputNamedValue ( 'Show system memory usage?', &
         & Show_Sys_Memory, advance='yes', &
@@ -886,6 +904,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.232  2019/08/01 23:46:50  pwagner
+! Some Housekeeping
+!
 ! Revision 2.231  2019/04/11 23:43:43  pwagner
 ! cmdline options --help,--version, and -S'?' now print only relevant stuff
 !
