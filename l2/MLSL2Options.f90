@@ -12,6 +12,11 @@
 !=============================================================================
 module MLSL2Options              !  Options and Settings for the MLSL2 program
 !=============================================================================
+  ! Subroutines have also found their way into this module. While very handy
+  ! they go against the clean-sheet design which reserved it for
+  ! data only. We're probably too far down the path now to retreat.
+  ! A similar trespass was lib/MLSCommon which began as a data-only module
+  ! but has grown to hold lots of indispensible procedures.
 
   use Dump_0, only: Dump
   use Dump_1, only: Dump
@@ -44,15 +49,15 @@ module MLSL2Options              !  Options and Settings for the MLSL2 program
   private :: not_used_here 
 !---------------------------------------------------------------------------
 
-  ! This module contains initial or permanent settings. Values
-  ! are chosen according to what is most suitable for the environment.
+  ! This module contains initial or permanent settings. 
+  ! Choose values according to what is most suitable for the environment.
   ! For example
   ! certain settings may be appropriate during development but not
   ! for production use, i.e. sips. Therefore, this is a convenient place
   ! to hold everything that needs to be changed before delivery.
   
   ! See also MLSL2PCF, L2ParInfo.parallel, lib/toggles.switches
-
+  
   ! --------------------------------------------------------------------------
   ! The following should be adjusted before delivery to sips
 
@@ -258,7 +263,8 @@ module MLSL2Options              !  Options and Settings for the MLSL2 program
   integer, parameter :: DB_VectorTemplate     = DB_QuantityTemplate   + 1
   ! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
   
-  ! The following list of public procedures is for convenience only
+  ! The following public procedures are listed here for convenience only
+  ! since they are publi by default anyway
   public :: DumpOptions
   public :: DumpMacros
   public :: MLSL2Message
@@ -568,7 +574,8 @@ cmds: do
     if (  L2Options%Overridden ) then
       outputOptions%prunit =  L2Options%Output_print_unit
       MLSMessageConfig%logFileUnit =  L2Options%Output_print_unit
-      if ( DEEBUG ) print *, 'Setting logFileUnit ', MLSMessageConfig%logFileUnit
+      if ( DEEBUG ) &
+        & print *, 'Setting logFileUnit ', MLSMessageConfig%logFileUnit
       if ( any( L2Options%Output_print_unit == &
         & (/ MSGLOGPRUNIT, BOTHPRUNIT /) ) ) MLSMessageConfig%useToolkit = .true.
     endif
@@ -765,6 +772,7 @@ cmds: do
           call get_lun ( AllocateLogUnit, msg=.true. )
           ! We can't call InitializeMLSFile yet because
           ! the (string, character) tables are still empty and we would seg fault
+          ! (can't we fix InitializeMLSFile somehow?)
           
           ! So instead let's do all that "by hand"
           AllocFile%name          = filename
@@ -772,10 +780,12 @@ cmds: do
           AllocFile%content       = 'logAlloc'
           AllocFile%access        = DFACC_RDWR
           AllocFile%FileId%f_id  = AllocateLogUnit
-          open ( unit=AllocateLogUnit, access='sequential', action='readwrite', form='formatted', &
+          open ( unit=AllocateLogUnit, access='sequential', action='readwrite', &
+            & form='formatted', &
             & status='unknown', file=trim(fileName), recl=recl, iostat=status )
           if ( status /= 0 ) then
-            call io_error ( "Failed to open file to log allocates", status, filename )
+            call io_error ( "Failed to open file to log allocates", &
+              & status, filename )
             stop
           else
             print *, 'opened allocations log file ' // trim(fileName) &
@@ -871,7 +881,8 @@ cmds: do
           i = i + 1
           call myNextArgument( i, inLine, entireLine, noteFile )
         else if ( line(3+n:6+n) == 'quit' ) then
-          if ( .not. switch ) QUIT_ERROR_THRESHOLD = MLSMSG_Error + 10 ! Try not to quit
+          if ( .not. switch ) &
+            & QUIT_ERROR_THRESHOLD = MLSMSG_Error + 10 ! Try not to quit
         else if ( line(3+n:6+n) == 'recl' ) then
           if ( line(7+n:) /= ' ' ) then
             line(:6+n) = ' '
@@ -1035,7 +1046,7 @@ cmds: do
           case ( 'both' )
             L2Options%Output_print_unit = BOTHPRUNIT
             ! MLSMessageConfig%logFileUnit = STDOUTLOGUNIT
-          case ( 'error' ) ! Output usually sent to stdout goes to stderr
+          case ( 'error' ) ! Send Output to stderr instead of stdout
             outputOptions%prUnit = error_unit
             outputOptions%prUnitLiteral = .true. ! In case Error_Unit <= 0
             OutputOptions%buffered = .false.
@@ -1056,8 +1067,10 @@ cmds: do
             outputOptions%prunit =  L2Options%Output_print_unit
             MLSMessageConfig%logFileUnit =  L2Options%Output_print_unit
             if ( any( L2Options%Output_print_unit == &
-              & (/ MSGLOGPRUNIT, BOTHPRUNIT /) ) ) MLSMessageConfig%useToolkit = .true.
-            print *, 'Setting logFileUnit ', MLSMessageConfig%logFileUnit
+              & (/ MSGLOGPRUNIT, BOTHPRUNIT /) ) ) &
+              & MLSMessageConfig%useToolkit = .true.
+            if ( DeeBug ) &
+              & print *, 'Setting logFileUnit ', MLSMessageConfig%logFileUnit
           endif
         else if ( line(3+n:12+n) ==  'stopafter ' ) then
           i = i + 1
@@ -1541,6 +1554,9 @@ end module MLSL2Options
 
 !
 ! $Log$
+! Revision 2.130  2019/08/01 23:48:13  pwagner
+! Some light Housekeeping
+!
 ! Revision 2.129  2019/07/22 23:22:36  pwagner
 ! Some light housekeeping, got rid of DumpOptions_old
 !
