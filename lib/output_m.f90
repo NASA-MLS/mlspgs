@@ -97,13 +97,14 @@ module Output_M
 !                           (that can be used in call to blanks, banner, etc.)
 ! SetTruthPattern          set the chars that will be printed in place of 'T' 'F'
 ! SetOutputStatus          sets normally private data
+! SetAdvancedOption        sets advanced or miscellaneous option values
 ! SuspendOutput            suspend output; run silent
 ! SwitchOutput             switch output to a new named file, 
 !                            or else to 'stdout'
 ! === (end of toc) ===
 
 ! === (start of api) ===
-! char* Advance_is_yes_or_no ( [char* chars] )
+! char* Advance_is_yes_or_no ( [char* str] )
 ! Beep ( [char* chars] )
 ! Blanks ( int n_blanks, [char fillChar], [char* advance] )
 ! FlushStdout
@@ -129,6 +130,7 @@ module Output_M
 ! RestoreSettings ( [char* settings] )
 ! SetFillPattern ( pattern, [fillChar] )
 ! SetTruthPattern ( char* TrueFalse[2] )
+! SetAdvancedOption ( [char* str] )
 ! SetOutputStatus( char* name, int value )
 ! SuspendOutput
 ! SwitchOutput ( char* filename, [int unit] )
@@ -171,7 +173,7 @@ module Output_M
     & FlushOutputLines, FlushStdout, GetOutputStatus, IsOutputSuspended, &
     & Newline, Output, Output_Char_NoCR, PrintOutputStatus, PrUnitName, &
     & ResetIndent, RestoreSettings, ResumeOutput, RevertOutput, &
-    & SetFillPattern, SetOutputStatus, SetTruthPattern, &
+    & SetFillPattern, SetAdvancedOption, SetOutputStatus, SetTruthPattern, &
     & SuspendOutput, SwitchOutput
 
   ! These types made public because the class instances are public
@@ -187,12 +189,12 @@ module Output_M
 
   ! Embeddded <cr> print multiple lines
   interface Output
-    module procedure output_char, output_char_array, output_complex
-    module procedure output_dcomplex, output_double
-    module procedure output_integer, output_integer_array
-    module procedure output_logical, output_logical_array
-    module procedure output_single, output_double_array, output_single_array
-    module procedure output_string
+    module procedure Output_Char, Output_Char_array, output_complex
+    module procedure Output_Dcomplex, output_double
+    module procedure Output_Integer, output_integer_array
+    module procedure Output_Logical, output_logical_array
+    module procedure Output_Single, output_double_array, output_single_array
+    module procedure Output_String
   end interface
 
   ! This won't filter for <cr>
@@ -208,13 +210,15 @@ module Output_M
 
   ! This is the type for configuring how to automatically format
   ! lines and whether they should be sent to stdout or elsewhere
-  ! The default values are chosen well; override them at your own risk!
+  ! The default values work well; be cautious in overriding them
   type OutputOptions_T
     integer :: PrUnit = StdoutPrUnit    ! Unit for output (see comments above).  
     integer :: MLSMSG_Level        = MLSMSG_Info ! What level if logging
     integer :: NewLineVal          = 10 ! 13 means <cr> becomes new line; -999 means ignore
     integer :: NArrayElmntsPerLine = 7
     integer :: NBlanksBtwnElmnts   = 3
+    integer :: WrapPastColumn      = 0
+    logical :: AlwaysWrap          = .false. ! Lines longer than WrapPastColumn
     logical :: Buffered            = .true.
     logical :: LogParent           = .false. ! Show who called output, not output
     logical :: PrUnitLiteral       = .false. ! output to prUnit even if < 0
@@ -283,6 +287,7 @@ module Output_M
   end type
 
   type(AdvancedOptions_T), public, save :: AdvancedOptions
+  type(AdvancedOptions_T), private, save :: DefaultAdvancedOptions
   type(OutputOptions_T), public, save   :: OutputOptions
   type(PatternOptions_T), public, save  :: PatternOptions
   type(OutputOptions_T), private, save  :: DefaultOutputOptions
@@ -321,9 +326,11 @@ module Output_M
 
   type(timeStampOptions_T), public, save :: TimeStampOptions ! Could leave this private
   type(timeStampOptions_T), private, save :: DefaultTimeStampOptions
+  logical, public, save                   :: MustRestoreAdvOpts = .false.
 
   ! Private parameters
-  logical :: alreadyLogged ! Would we ned to print again?
+  logical :: alreadyLogged ! Would we need to print again?
+  logical, save :: DeeBug = .false.
   character(len=2), parameter :: defaultNewLineCode = achar(0) // 'n' ! not '%n'
   logical, save, private :: SWITCHTOSTDOUT = .false.! Temp'ly all to stdout
   logical, save, private :: SILENTRUNNING  = .false. ! Suspend all further output
@@ -334,7 +341,8 @@ module Output_M
   integer, save, private :: LINESSINCELASTSTAMP = 0
   logical, private, parameter :: LOGEXTRABLANKS = .false.
   integer, private, parameter :: RECLMAX = 1024  ! This is NAG's limit
-  integer, save, private :: WRAPPASTCOLNUM = 0  ! Don't print beyond (if > 0)
+  ! logical, save, private :: AlwaysWrap          = .false. ! once past WrapPastColumn
+  ! integer, save, private :: WrapPastColumn = 0  ! Don't print beyond (if > 0)
 
   ! For certain numerical values we will use list directed '*' format
   ! unless optional FORMAT specifier supplied
@@ -361,6 +369,13 @@ contains
   ! from the actual physical page by an amount, indentBy
   ! So if we print something to column k, it shows up
   ! printed in column (k+indentBy)
+  !
+  ! The indents will affect all calls to:
+  !   blanks
+  !   output
+  ! and subroutines in other modules that USE them.
+  ! Indents will not affect logged output or 'print *,'
+  ! or calls made directly to PrintItOut
   ! -----------------------------------------------------  addToIndent  -----
   subroutine addToIndent ( n )
   ! add n blanks To Indent
@@ -382,7 +397,7 @@ contains
     ! also does the same with '[Tt]..' and '[Ff]..'
     ! Returns OutputOptions%advanceDefault if the argument is absent.
     !        A d v a n c e d   u s a g e
-    ! All the other patterns require a longer explanation:
+    ! All the other usagess require a longer explanation:
     ! (1)
     ! 'beep', 'stderr' or just 'err' is special case--we return 'beep'
     ! trusting that the caller will print to stderr instead of stdout
@@ -398,11 +413,16 @@ contains
     ! output command:
     !   sub-arg                   meaning
     !   -------                   -------
+    !      (These options take effect permanently)
     !     save         save original OutputOptions to be restored later
     !    restore       restore original OutputOptions
     !    unit n        set print unit to n
     !    level k       set severity level to k if calling MLSMessage
     !   newline m      use achar(m) as character for newLine
+    !    wrap          Wrap lines longer than WrapPast Column
+    !    wrappast col  Set WrapPast Column to col
+    !
+    !      (These options take effect only temporarily)
     !     pause        pause and wait for user input
     !    stretch       s t r e t c h  characters before printing
     !                  * -------------------------------------- *
@@ -417,11 +437,12 @@ contains
     character (len=*), parameter :: yeses = 'YyTt'
     character (len=*), parameter :: nose = 'NnFf'
     integer                      :: kSpace
-    character (len=32)           :: val
-    logical                      :: logval
     ! Executable
     if ( .not. present(str)  ) then
       outstr = outputoptions%advanceDefault ! 'no'
+      if ( OutputOptions%AlwaysWrap .and. AtColumnNumber > OutputOptions%WrapPastColumn .and. &
+        & OutputOptions%WrapPastColumn > 0 ) &
+        & outstr = 'yes'
       return
     end if
     outstr = adjustl(str)
@@ -441,31 +462,15 @@ contains
     else
       outstr = outputoptions%advanceDefault ! str
     end if
+    if ( OutputOptions%AlwaysWrap .and. AtColumnNumber > OutputOptions%WrapPastColumn .and. &
+      & OutputOptions%WrapPastColumn > 0 ) &
+      & outstr = 'yes'
     if ( len_trim(str) < 4 ) return
     ! write(*,*) 'str       = ', str
-    
-    ! AdvancedOptions%originalOptions = outputOptions
-    ! Now check for changing the advanced options
-    call getOption ( str, 'save', logval )
-    if ( logval ) then
-      advancedOptions%originalOptions = outputOptions
-    endif
-    call getOption ( str, 'restore', logval )
-    if ( logval ) then
-      outputOptions = advancedOptions%originalOptions
-    endif
-    call getOption ( str, 'unit', val )
-    if ( len_trim(val) > 0 ) read ( val, * ) outputOptions%prUnit
-    call getOption ( str, 'level', val )
-    if ( len_trim(val) > 0 ) read ( val, * ) outputOptions%MLSMSG_Level
-    call getOption ( str, 'newline', val )
-    if ( len_trim(val) > 0 ) read ( val, * ) outputOptions%newLineVal
-    call getOption ( str, 'stretch', advancedOptions%stretch )
-    call getOption ( str, 'banner', advancedOptions%bannered )
-    call getOption ( str, 'header', advancedOptions%headered )
-    if ( .not. advancedOptions%pause ) &
-      & call getOption ( str, 'pause', advancedOptions%pause )
-    ! print *, 'pause: ', advancedOptions%pause
+    ! Now set more advanced options based on str
+    call SetAdvancedOption( str )
+    ! Remember to restore previous advanced options
+    MustRestoreAdvOpts = .true.
   end function Advance_is_yes_or_no
 
   ! -----------------------------------------------------  Beep  -----
@@ -512,7 +517,7 @@ contains
         ! purely Blank
         if ( patternLength > n_blanks - 2 ) then
           ! n_blanks too short--just print blanks
-          call pr_blanks ( n_blanks, advance=advance, dont_stamp=dont_stamp )
+          call Pr_Blanks ( n_blanks, advance=advance, dont_stamp=dont_stamp )
           return
         end if
         ntimes = (n_blanks-2)/patternLength
@@ -525,24 +530,24 @@ contains
           ! Make sure that we always begin on an even-numbered column
           ! (This only works for patterns like '. . . ' or '- - - '
           if ( mod(atColumnNumber, 2) /= 0 ) then
-            call pr_blanks ( 1, advance='no' )
+            call Pr_Blanks ( 1, advance='no' )
             numSoFar = 1
           end if
         else
-          call pr_blanks ( 1, advance='no' )
+          call Pr_Blanks ( 1, advance='no' )
           numSoFar = 1
         end if
         do i=1, ntimes
           call output_ ( pattern(2:patternLength+1), advance='no' )
-          ! if ( xtraBlanks > 0 ) call pr_blanks ( xtraBlanks, advance='no' )
+          ! if ( xtraBlanks > 0 ) call Pr_Blanks ( xtraBlanks, advance='no' )
           numSoFar = numSoFar + patternLength
         enddo
         theRest = n_blanks - numSoFar
-        if ( theRest > 0 ) call pr_blanks ( theRest, advance=advance, dont_stamp=dont_stamp )
+        if ( theRest > 0 ) call Pr_Blanks ( theRest, advance=advance, dont_stamp=dont_stamp )
         return
       end if
     end if
-    call pr_blanks ( n_blanks, fillChar=fillChar, advance=advance, dont_stamp=dont_stamp )
+    call Pr_Blanks ( n_blanks, fillChar=fillChar, advance=advance, dont_stamp=dont_stamp )
   end subroutine Blanks
 
   ! ----------------------------------------------  flushOutputLines  -----
@@ -569,13 +574,13 @@ contains
     outputOptions%prUnit = oldPrUnit
   end subroutine flushOutputLines
 
-  ! ----------------------------------------------  Output_Unit  -----
-  ! Flush Output_Unit
-  subroutine flushStdout
+  ! ----------------------------------------------  FlushStdout  -----
+  ! Flush Whichever output unit is being used
+  subroutine FlushStdout
     use, intrinsic :: ISO_Fortran_Env, only: Output_Unit
     ! Executable
     flush( Output_Unit )
-  end subroutine flushStdout
+  end subroutine FlushStdout
 
   ! ---------------------------------------------- GetOutputStatus
   ! Returns certain normally private data
@@ -603,6 +608,10 @@ contains
       status = linesSincelastStamp
     elseif( index(lowercase(name), 'silent' ) > 0 ) then
       status = merge(1, 0, silentRunning)
+    elseif( index(lowercase(name), 'wrappast' ) > 0 ) then
+      status = OutputOptions%WrapPastColumn
+    elseif( index(lowercase(name), 'wrap' ) > 0 ) then
+      status = merge(1, 0, OutputOptions%AlwaysWrap)
     elseif( index(lowercase(name), 'true' ) > 0 .and. present(value)) then
       status = true
       value = TruthValues (true)
@@ -668,23 +677,27 @@ contains
     ! adding a blank line; that means don't add
     ! a new line if at column 1
     logical, optional, intent(in) :: dont_make_blank_line
+    ! Executable
     if ( present( dont_make_blank_line ) ) then
       if ( dont_make_blank_line .and. ATCOLUMNNUMBER == 1 ) return
     endif
     call output_ ( '', advance='yes' )
   end subroutine NewLine
 
-  ! ------------------------------------------------  OUTPUT_CHAR  -----
+  ! ------------------------------------------------  Output_Char  -----
   ! Output CHARS to PRUNIT.
-  subroutine Output_char ( Chars, &
+  subroutine Output_Char ( Chars, &
     & advance, from_where, dont_log, log_chars, insteadofblank, dont_stamp, &
-    & newlineval, dont_asciify, format )
+    & NewLineVal, dont_asciify, format )
     ! We will 1st check to see whether any internal characters are
     ! codes for newlines
     ! If any are, we will call newLine in place of printing
     ! them
     ! (This is a new default behavior; you can restore
     ! the old by passing an impossible value for NewLineVal, e.g. -999)
+    !
+    ! If NewLineVal is present, we'll use it as the code for new lines
+    ! Otherwise, we default to outputOptions%newlineVal
     character(len=*), intent(in)           :: Chars
     character(len=*), intent(in), optional :: Advance
     character(len=*), intent(in), optional :: From_Where
@@ -699,7 +712,7 @@ contains
     integer :: I ! loop inductor
     integer :: BannerLen
     integer :: indent ! Should have chosen different name
-    integer :: LineLen ! How many chars tto print
+    integer :: LineLen ! How many chars to print
     character(len=4) :: MY_ADV ! 'yes' if advance
     integer :: myNewLineVal
     logical :: myAsciify ! Convert non-printing chars to ascii?
@@ -716,7 +729,6 @@ contains
     LineLen = len(chars)
     indent = ( BannerLen - LineLen ) / 2 ! spaces beetween '*' and start of chars
     newChars = chars
-    i = index( chars, achar(myNewLineVal) )
     if ( advancedOptions%bannered ) then
       call Output_Char_NoCR ( '*', advance='no' )
       call Output_Char_NoCR ( Repeat('-', BannerLen-2 ), advance='no' )
@@ -740,7 +752,10 @@ contains
       LineLen = Bannerlen
       ! print *, 'newChars ', newChars
     endif
+    ! Are any internal chars new line vals?
+    i = index( chars, achar(myNewLineVal) )
     if ( i < 1 ) then
+      ! No internal new lines
       if ( myAsciify ) newChars = ReplaceNonAscii( newChars, '@', exceptions=achar(9))
       if ( myAsciify ) then
         call Output_Char_NoCR ( newChars(:LineLen), &
@@ -750,6 +765,8 @@ contains
           & advance, from_where, dont_log, log_chars, insteadofblank, dont_stamp )
       endif
     else
+      ! Print every character one-by-one except internal new lines, at
+      ! which we'll call NewLine instead
       do i=1, len(chars)
         if ( chars(i:i) /= achar(myNewLineVal) ) then
           if ( myAsciify ) then
@@ -774,6 +791,10 @@ contains
       call Output_Char_NoCR ( '*', advance='no' )
       call Output_Char_NoCR ( Repeat('-', BannerLen-2 ), advance='no' )
       call Output_Char_NoCR ( '*', advance='yes' )
+    endif
+    if ( MustRestoreAdvOpts ) then
+      AdvancedOptions = DefaultAdvancedOptions
+      MustRestoreAdvOpts = .false.
     endif
   end subroutine Output_Char
 
@@ -812,13 +833,17 @@ contains
         & /) )
       if ( index('pP', my_adv(1:1)) < 1 ) advancedOptions%pause = .false. 
     endif
+    if ( MustRestoreAdvOpts ) then
+      AdvancedOptions = DefaultAdvancedOptions
+      MustRestoreAdvOpts = .false.
+    endif
   end subroutine Output_Char_NoCR
 
   subroutine Output_Char_NoCR_Indented ( chars, &
     & advance, from_where, dont_log, log_chars, insteadofblank, dont_stamp )
     ! -------------------------------------------------------------------
-    ! We have arrived
-    ! The workhorse
+    ! We have arrived at
+    !   T h e   w o r k h o r s e
     ! We have taken care of linefeeds, indents, and numeric conversions
     ! so now we do one of
     ! (1) print to stderr if advance = 'stderr' or 'beep'
@@ -830,6 +855,11 @@ contains
     !     (a) time stamps, either individually or grouped
     !     (b) logging, either instead of printing or in addition
     ! -------------------------------------------------------------------
+    ! Should we rename this subroutine something less opaque, less obscure?
+    ! Not precisely the lowest level, because we may call 
+    !   Beep
+    !   MyMesssage
+    !   PrintItOut
     use, intrinsic :: ISO_Fortran_Env, only: Output_Unit
     use SDPToolkit, only: Stamp
     character(len=*), intent(in)           :: Chars
@@ -864,6 +894,10 @@ contains
     ! Print to stderr instead?
     if ( my_adv == 'beep' ) then
       call Beep( chars )
+      if ( MustRestoreAdvOpts ) then
+        AdvancedOptions = DefaultAdvancedOptions
+        MustRestoreAdvOpts = .false.
+      endif
       return
     endif
     if ( SILENTRUNNING ) go to 9 ! When we skip all output
@@ -1040,6 +1074,10 @@ contains
 9   continue
     atColumnNumber = atColumnNumber + n_chars
     if ( atLineStart ) atColumnNumber = 1
+    if ( MustRestoreAdvOpts ) then
+      AdvancedOptions = DefaultAdvancedOptions
+      MustRestoreAdvOpts = .false.
+    endif
   contains
     subroutine append_chars ( str, chars )
       ! Append chars to end of str
@@ -1063,16 +1101,16 @@ contains
     end subroutine append_chars
   end subroutine Output_Char_NoCR_INDENTED
 
-  ! ------------------------------------------  OUTPUT_CHAR_ARRAY  -----
-  subroutine OUTPUT_CHAR_ARRAY ( CHARS, ADVANCE_AFTER_EACH, ADVANCE, &
+  ! ------------------------------------------  Output_Char_ARRAY  -----
+  subroutine Output_Char_ARRAY ( CHARS, ADVANCE_AFTER_EACH, ADVANCE, &
     & INSTEADOFBLANK, NEWLINEVAL, format )
   ! Output CHARS to PRUNIT.
     character(len=*), intent(in) :: CHARS(:)
-    character(len=*), intent(in), optional :: ADVANCE_AFTER_EACH
-    character(len=*), intent(in), optional :: ADVANCE
-    character(len=*), intent(in), optional :: INSTEADOFBLANK ! What to output
-    integer, intent(in), optional :: NEWLINEVAL ! What char val to treat as <cr>
-    character(len=*), intent(in), optional :: format ! consistent with generic
+    character(len=*), intent(in), optional :: Advance_after_each
+    character(len=*), intent(in), optional :: Advance
+    character(len=*), intent(in), optional :: Insteadofblank ! what to output
+    integer, intent(in), optional          :: Newlineval ! what char val to treat as <cr>
+    character(len=*), intent(in), optional :: Format ! consistent with generic
     ! Internal variables
     integer :: I ! loop inductor
     ! Executable
@@ -1086,15 +1124,15 @@ contains
     if ( present(advance)  ) then
       call output_ ( '', advance=advance )
     end if
-  end subroutine OUTPUT_CHAR_ARRAY
+  end subroutine Output_Char_ARRAY
 
   ! ---------------------------------------------  OUTPUT_COMPLEX  -----
-  subroutine OUTPUT_COMPLEX ( VALUE, Format, ADVANCE, Before, After, dont_stamp )
+  subroutine OUTPUT_COMPLEX ( VALUE, Format, Advance, Before, After, dont_stamp )
     complex, intent(in) :: VALUE
     character(len=*), intent(in), optional :: Format    ! How to print
-    character(len=*), intent(in), optional :: ADVANCE
+    character(len=*), intent(in), optional :: Advance
     character(len=*), intent(in), optional :: Before, After ! text to print
-    logical, intent(in), optional :: DONT_STAMP
+    logical, intent(in), optional :: Dont_Stamp
     character(len=60) :: LINE
 
     if ( present(Format)  ) then
@@ -1114,11 +1152,11 @@ contains
   end subroutine OUTPUT_COMPLEX
 
   ! --------------------------------------------  OUTPUT_DCOMPLEX  -----
-  subroutine OUTPUT_DCOMPLEX ( VALUE, Format, ADVANCE, Before, After )
+  subroutine OUTPUT_DCOMPLEX ( VALUE, Format, Advance, Before, After )
     integer, parameter :: RK = kind(0.0d0)
     complex(rk), intent(in) :: VALUE
     character(len=*), intent(in), optional :: Format    ! How to print
-    character(len=*), intent(in), optional :: ADVANCE
+    character(len=*), intent(in), optional :: Advance
     character(len=*), intent(in), optional :: Before, After ! text to print
     character(len=60) :: LINE
 
@@ -1137,16 +1175,16 @@ contains
   end subroutine OUTPUT_DCOMPLEX
 
   ! ----------------------------------------------  OUTPUT_DOUBLE  -----
-  subroutine OUTPUT_DOUBLE ( VALUE, Format, LogFormat, ADVANCE, &
+  subroutine OUTPUT_DOUBLE ( VALUE, Format, LogFormat, Advance, &
     & Before, After, dont_stamp )
   ! Output "double" to "prunit" using * format, trimmed of insignificant
   ! trailing zeroes, and trimmed of blanks at both ends.
     double precision, intent(in) :: VALUE
     character(len=*), intent(in), optional :: Format    ! How to print
     character(len=*), intent(in), optional :: LogFormat ! How to post to Log
-    character(len=*), intent(in), optional :: ADVANCE
+    character(len=*), intent(in), optional :: Advance
     character(len=*), intent(in), optional :: Before, After ! text to print
-    logical, intent(in), optional :: DONT_STAMP
+    logical, intent(in), optional :: Dont_Stamp
     integer :: I, J, K
     character(len=30) :: LINE, LOG_CHARS, FormatSpec
 
@@ -1174,7 +1212,7 @@ contains
   subroutine OUTPUT_DOUBLE_ARRAY ( values, FORMAT, LogFormat, ADVANCE, DONT_STAMP )
   ! Output double-precision values to PRUNIT.
     double precision, intent(in) :: values(:)
-    character(len=*), intent(in), optional :: ADVANCE
+    character(len=*), intent(in), optional :: Advance
     character(len=*), intent(in), optional :: FORMAT
     character(len=*), intent(in), optional :: LogFormat     ! How to post to Log
     logical, intent(in), optional          :: DONT_STAMP ! Prevent double-stamping
@@ -1201,11 +1239,11 @@ contains
   ! following the '=' will be taken to be places
     integer, intent(in) :: INT
     integer, intent(in), optional :: PLACES
-    character(len=*), intent(in), optional :: ADVANCE
+    character(len=*), intent(in), optional :: Advance
     logical, intent(in), optional :: FILL
     character(len=*), intent(in), optional :: FORMAT
     character(len=*), intent(in), optional :: Before, After ! text to print
-    logical, intent(in), optional :: DONT_STAMP
+    logical, intent(in), optional :: Dont_Stamp
     !
     logical :: My_Fill
     integer :: I, J
@@ -1253,7 +1291,7 @@ contains
   subroutine OUTPUT_INTEGER_ARRAY ( INTEGERS, ADVANCE, FORMAT, DONT_STAMP )
   ! Output INTEGERS to PRUNIT.
     integer, intent(in) :: INTEGERS(:)
-    character(len=*), intent(in), optional :: ADVANCE
+    character(len=*), intent(in), optional :: Advance
     character(len=*), intent(in), optional :: FORMAT
     logical, optional, intent(in) :: DONT_STAMP
     integer :: I ! loop inductor
@@ -1267,10 +1305,10 @@ contains
   end subroutine OUTPUT_INTEGER_ARRAY
 
   ! ---------------------------------------------  OUTPUT_LOGICAL  -----
-  subroutine OUTPUT_LOGICAL ( LOG, ADVANCE, BEFORE, DONT_STAMP, format )
+  subroutine OUTPUT_LOGICAL ( LOG, Advance, Before, DONT_STAMP, format )
   ! Output LOG to PRUNIT using at most PLACES (default zero) places
     logical, intent(in) :: LOG
-    character(len=*), intent(in), optional :: ADVANCE
+    character(len=*), intent(in), optional :: Advance
     character(len=*), intent(in), optional :: BEFORE
     logical, optional, intent(in) :: DONT_STAMP
     character(len=*), intent(in), optional :: format ! consistent with generic
@@ -1286,11 +1324,11 @@ contains
 
   ! ---------------------------------------------  OUTPUT_LOGICAL  -----
   subroutine OUTPUT_LOGICAL_ARRAY ( logs, &
-    & ADVANCE, BEFORE, DONT_STAMP, ONLYIF, format )
+    & Advance, Before, DONT_STAMP, ONLYIF, format )
     ! Output LOG to PRUNIT using at most PLACES (default zero) places
     ! Optionally, print non-blank only if T (or F)
     logical, dimension(:), intent(in) :: logs
-    character(len=*), intent(in), optional :: ADVANCE
+    character(len=*), intent(in), optional :: Advance
     character(len=*), intent(in), optional :: BEFORE
     logical, optional, intent(in) :: DONT_STAMP
     logical, optional, intent(in) :: ONLYIF ! Print only if true (false)
@@ -1332,7 +1370,7 @@ contains
     real, intent(in) :: VALUE
     character(len=*), intent(in), optional :: Format  ! How to print
     character(len=*), intent(in), optional :: LogFormat     ! How to post to Log
-    character(len=*), intent(in), optional :: ADVANCE
+    character(len=*), intent(in), optional :: Advance
     character(len=*), intent(in), optional :: Before, After ! text to print
     logical, optional, intent(in) :: DONT_STAMP
     integer :: I, J, K
@@ -1361,7 +1399,7 @@ contains
   subroutine OUTPUT_SINGLE_ARRAY ( values, FORMAT, LogFormat, ADVANCE, DONT_STAMP )
   ! Output single-precision values to PRUNIT.
     real, intent(in) :: values(:)
-    character(len=*), intent(in), optional :: ADVANCE
+    character(len=*), intent(in), optional :: Advance
     character(len=*), intent(in), optional :: FORMAT
     character(len=*), intent(in), optional :: LogFormat     ! How to post to Log
     logical, intent(in), optional          :: DONT_STAMP ! Prevent double-stamping
@@ -1380,7 +1418,7 @@ contains
   ! Output STRING to PRUNIT.
     character(len=*), intent(in) :: STRING
     integer, intent(in) :: LENSTRING
-    character(len=*), intent(in), optional :: ADVANCE
+    character(len=*), intent(in), optional :: Advance
     character(len=*), intent(in), optional :: FROM_WHERE
     logical, intent(in), optional          :: DONT_LOG ! Prevent double-logging
     character(len=*), intent(in), optional :: LOG_CHARS
@@ -1477,17 +1515,51 @@ contains
       & patternOptions%patterns(patternNum) = '(' // pattern // ')'
   end subroutine SetFillPattern
 
-  ! ----------------------------------------------  setTruthPattern  -----
-  subroutine SetTruthPattern ( TrueFalse )
-  ! Override and set a special Truth pattern that can be used in calls to
-  ! output logical-valued scalars and arrays e.g., 
-  !  call output( logs, ..)
-    character(len=2), dimension(2), intent(in) :: TrueFalse ! (/ 'T ', 'F ' /)
-    TruthValues = TrueFalse
-  end subroutine SetTruthPattern
+  ! -----------------------------------------------------  SetAdvancedOption  -----
+  subroutine SetAdvancedOption ( str )
+  ! Set advanced or miscellaneous options
+  
+  ! Note: these may be more conveniently done via setOutputStatus
+  ! The way we do it is to painfully try picking str apart
+  ! See how the options explained under Advance_is_yes_or_no
+    character (len=*), intent(in), optional :: Str
+    ! Local variables
+    ! character (len=3)                       :: adv
+    character (len=32)                      :: val
+    logical                                 :: logval
+    ! Executable
+    ! adv =  Advance_is_yes_or_no ( str )
+    ! AdvancedOptions%originalOptions = outputOptions
+    ! Now check for changing the advanced options
+    call getOption ( lowercase(str), 'save', logval, initialize=.true. )
+    if ( logval ) then
+      advancedOptions%originalOptions = outputOptions
+    endif
+    call getOption ( lowercase(str), 'restore', logval, initialize=.true. )
+    if ( logval ) then
+      outputOptions = advancedOptions%originalOptions
+    endif
+    call getOption ( lowercase(str), 'unit', val, initialize=.true. )
+    if ( len_trim(val) > 0 ) read ( val, * ) outputOptions%prUnit
+    call getOption ( lowercase(str), 'level', val, initialize=.true. )
+    if ( len_trim(val) > 0 ) read ( val, * ) outputOptions%MLSMSG_Level
+    call getOption ( lowercase(str), 'newline', val, initialize=.true. )
+    if ( len_trim(val) > 0 ) read ( val, * ) outputOptions%newLineVal
+    call getOption ( lowercase(str), 'wrappast', val, initialize=.true. )
+    if ( len_trim(val) > 0 ) read ( val, * ) OutputOptions%WrapPastColumn
+    call getOption ( lowercase(str), 'stretch', advancedOptions%stretch )
+    call getOption ( lowercase(str), 'banner', advancedOptions%bannered )
+    call getOption ( lowercase(str), 'header', advancedOptions%headered )
+    call getOption ( lowercase(str), 'wrap', OutputOptions%AlwaysWrap )
+    if ( .not. advancedOptions%pause ) &
+      & call getOption ( str, 'pause', advancedOptions%pause )
+    ! print *, 'pause: ', advancedOptions%pause
+    if ( DeeBug ) print *, 'WrapPastColumn: ', OutputOptions%WrapPastColumn
+    if ( DeeBug ) print *, 'AlwaysWrap: ', OutputOptions%AlwaysWrap
+  end subroutine SetAdvancedOption
 
   ! ---------------------------------------------- setOutputStatus
-  ! Returns certain normally private data
+  ! Sets certain normally private data
   ! Sets for modules like highOutput and maybe some others
   ! Effect will be an integer
   ! equal to value if integer-valued data
@@ -1507,8 +1579,21 @@ contains
       linesSincelastStamp = value
     elseif( index(lowercase(name), 'silent' ) > 0 ) then
       silentRunning = ( value == 1 )
+    elseif( index(lowercase(name), 'wrappast' ) > 0 ) then
+      OutputOptions%WrapPastColumn = value
+    elseif( index(lowercase(name), 'wrap' ) > 0 ) then
+      OutputOptions%AlwaysWrap = ( value == 1 )
     endif
   end subroutine SetOutputStatus
+
+  ! ----------------------------------------------  setTruthPattern  -----
+  subroutine SetTruthPattern ( TrueFalse )
+  ! Override and set a special Truth pattern that can be used in calls to
+  ! output logical-valued scalars and arrays e.g., 
+  !  call output( logs, ..)
+    character(len=2), dimension(2), intent(in) :: TrueFalse ! (/ 'T ', 'F ' /)
+    TruthValues = TrueFalse
+  end subroutine SetTruthPattern
 
   ! ----------------------------------------------  suspendOutput  -----
   subroutine SuspendOutput 
@@ -1585,37 +1670,51 @@ contains
   !
   ! You may optionally insert a space between S and its value, e.g.
   !                 "-S xyz" also returns "xyz"
-  subroutine getOption_char ( arg, flag, val )
+  subroutine getOption_char ( arg, flag, val, initialize )
     ! Args
-    character(len=*), intent(in)  :: arg
-    character(len=*), intent(in)  :: flag
-    character(len=*), intent(out) :: val
+    character(len=*), intent(in)      :: arg
+    character(len=*), intent(in)      :: flag
+    character(len=*), intent(inout)   :: val
+    logical, optional, intent(in)     :: initialize
     ! Local variables
     integer :: kFlag, kNext, flagLen
     ! Executable
-    val = ' '
+    if ( present(initialize) ) val = ' '
     kFlag = index( arg, trim(flag) )
+    ! DeeBug = ( index(lowercase(arg), 'wrappast' ) > 0 )
+    if ( DeeBug ) print *, 'arg: ', trim(arg)
+    if ( DeeBug ) print *, 'flag: ', trim(flag)
+    if ( DeeBug ) print *, 'kFlag: ', kFlag
     if ( kFlag < 1 ) return
+    val = ' '
     flagLen = len(flag)
+    if ( DeeBug ) print *, 'flagLen: ', flagLen
     ! Find start of next component
-    kNext = index( arg(kFlag+flagLen:), ' ' )
+    kNext = index( arg(kFlag+flagLen+1:), ' ' )
     if ( kNext < 1 ) then
-      val = arg(kFlag+flagLen:)
+      val = arg(kFlag+flagLen+1:)
     else
-      val = arg(kFlag+flagLen:kFlag+flagLen+kNext)
+      val = arg(kFlag+flagLen+1:kFlag+flagLen+kNext)
     endif
+    if ( index(arg, 'wrappast' ) < 1 ) return
+    if ( DeeBug ) print *, trim(arg), kflag, flagLen, kNext
+    if ( DeeBug ) print *, trim(flag)
+    if ( DeeBug ) print *, trim(val)
+    if ( DeeBug ) print *, 'Returning'
   end subroutine getOption_char
 
-  subroutine getOption_log ( arg, flag, val )
+  subroutine getOption_log ( arg, flag, val, initialize )
     ! Args
-    character(len=*), intent(in) :: arg
-    character(len=*), intent(in) :: flag
-    logical, intent(out)         :: val
+    character(len=*), intent(in)      :: arg  
+    character(len=*), intent(in)      :: flag 
+    logical, intent(inout)            :: val  
+    logical, optional, intent(in)     :: initialize
     ! Local variables
     integer :: kFlag
     ! Executable
+    if ( present(initialize) ) val = .false.
     kFlag = index( arg, trim(flag) )
-    val = ( kFlag > 0 )
+    if ( kFlag > 0 ) val = .true.
   end subroutine getOption_log
 
   ! ------------------------------------  SeparateElements  -----
@@ -1626,11 +1725,11 @@ contains
     integer, intent(in) :: n ! Number of elements
     ! Executable
     if ( i >= n ) return
-    if ( wrappastcolnum > 0 .and. atcolumnnumber >= wrappastcolnum ) then
+    if ( OutputOptions%WrapPastColumn > 0 .and. AtColumnNumber >= OutputOptions%WrapPastColumn ) then
       call newLine
       return
     endif
-    if ( wrappastcolnum == 0 .and. &
+    if ( OutputOptions%WrapPastColumn == 0 .and. &
       & mod(i, outputOptions%nArrayElmntsPerLine) == 0 ) then
       call output_ ( '', advance='yes', DONT_STAMP=.true. )
       return
@@ -1720,14 +1819,18 @@ contains
       endif
       call exit_with_status ( 1  )
     end if
+    if ( MustRestoreAdvOpts ) then
+      AdvancedOptions = DefaultAdvancedOptions
+      MustRestoreAdvOpts = .false.
+    endif
   end subroutine myMessage
 
-  ! -----------------------------------------------------  PR_BLANKS  -----
-  subroutine PR_BLANKS ( N_BLANKS, FILLCHAR, ADVANCE, DONT_STAMP )
+  ! -----------------------------------------------------  Pr_Blanks  -----
+  subroutine Pr_Blanks ( N_BLANKS, FILLCHAR, ADVANCE, DONT_STAMP )
   ! Output N_BLANKS blanks to PRUNIT.
   ! (or optionally that many copies of fillChar)
     integer, intent(in) :: N_BLANKS
-    character(len=*), intent(in), optional :: ADVANCE
+    character(len=*), intent(in), optional :: Advance
     character(len=*), intent(in), optional :: FILLCHAR  ! default is ' '
     logical, intent(in), optional          :: DONT_STAMP ! Prevent double-stamping
     character(len=3) :: ADV
@@ -1760,7 +1863,11 @@ contains
       call output_ ( b(:i), advance=adv )
       if ( n < 1 ) exit   ! was if n == 0, but this should be safer
     end do
-  end subroutine PR_BLANKS
+    if ( MustRestoreAdvOpts ) then
+      AdvancedOptions = DefaultAdvancedOptions
+      MustRestoreAdvOpts = .false.
+    endif
+  end subroutine Pr_Blanks
 
   ! ..............................................  not_used_here  .....
 !--------------------------- end bloc --------------------------------------
@@ -1776,6 +1883,9 @@ contains
 end module Output_M
 
 ! $Log$
+! Revision 2.146  2019/08/01 23:42:33  pwagner
+! Added SetAdvancedOption, new components to OutputOptions, numerous other changes
+!
 ! Revision 2.145  2019/07/22 22:12:43  pwagner
 ! Can now setTruthPattern to something other than T and F
 !
@@ -1969,7 +2079,7 @@ end module Output_M
 ! Remove USE or declaration for unused names
 !
 ! Revision 2.81  2010/01/26 17:49:42  pwagner
-! Fixed bug that added space before newlines; simplified output_char
+! Fixed bug that added space before newlines; simplified Output_Char
 !
 ! Revision 2.80  2009/06/24 22:35:44  pwagner
 ! Trick to pass places arg into output via format arg
@@ -2171,7 +2281,7 @@ end module Output_M
 ! Allows wider range of advance(s); my_adv implemented uniforml
 !
 ! Revision 2.14  2001/09/26 02:16:22  vsnyder
-! Simplify by using output_char internally
+! Simplify by using Output_Char internally
 !
 ! Revision 2.13  2001/05/24 22:39:07  vsnyder
 ! Make output_single work like output_double; cosmetic changes
@@ -2204,7 +2314,7 @@ end module Output_M
 ! Added output logical
 !
 ! Revision 2.3  2001/02/22 23:54:27  vsnyder
-! Added optional "from_where" argument to "output_char"
+! Added optional "from_where" argument to "Output_Char"
 !
 ! Revision 2.2  2001/02/22 23:27:16  vsnyder
 ! Correct routing of output through MLSMessage
