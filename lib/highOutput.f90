@@ -59,7 +59,7 @@ module HighOutput
 ! BeVerbose                Should we do extra printing?
 ! BlanksToColumn           Print blanks [or fill chars] out to specified column
 ! BlanksToTab              Print blanks [or fill chars] out to next tab stop
-! Dump                     Dump output or stamp options
+! Dump                     Dump output, pattern, or stamp options
 ! Dumpsize                 Print a nicely-formatted memory size 
 ! Dumptabs                 Print the current tab stop positions
 ! GetStamp                 Get stamp being added to every output
@@ -75,7 +75,7 @@ module HighOutput
 ! OutputTable              Output 2-d array as cells in table,; or else
 !                          Output the 2d table of cells constucted by AddRow(s)
 ! ResetTabs                Restore tab stops to what was in effect at start
-! RestoreSettings          Restore default settings for output, stamps, tabs
+! RestoreSettings          Restore default settings for output, styles, tabs
 ! SetStamp                 Set stamp to be automatically printed on every line
 ! SetTabs                  Set tab stops (to be used by tab)
 ! StartTable               Initialize a 2-d table of cells to be output later
@@ -121,7 +121,7 @@ module HighOutput
 ! OutputTable ( [array(:,:)], [char sep], [char border], [int cellWidth],
 !          [char interior], [char headliner], [char alignment] )
 ! ResetTabs ( [int tabs(:)] )
-! RestoreSettings ( [log useToolkit] )
+! RestoreSettings ( [char* settings] )
 ! SetStamp ( [char* textCode], [log post], [int interval],
 !          [log showTime], [char* dateFormat], [char* timeFormat] )
 ! SetTabs ( [char* Range], [int tabs(:)] )
@@ -198,8 +198,8 @@ module HighOutput
   end interface
 
   interface Dump
-    module procedure DumpOutputoptions, Dumppatternoptions, &
-      & Dumpstampoptions, DumpTimeStampoptions
+    module procedure DumpOutputOptions, DumpPatternOptions, &
+      & DumpStampOptions, DumpTimeStampOptions
   end interface
 
   interface Dumpsize
@@ -905,40 +905,56 @@ contains
 
   ! ---------------------------------------------- DumpOutputOptions -----
   subroutine DumpOutputOptions( options )
-    ! Show output options
-    type(outputOptions_T), intent(in) :: options
+    ! Show currently-active output options
+    ! We put this here because it uses other routines from HighOutput
+    ! Why aren't we using the CellDatabase?
+    type(OutputOptions_T), intent(in) :: options
     ! Internal variables
-    logical, parameter :: checkingTabbing = .false.
+    logical                      :: AlwaysWrap
+    logical, parameter           :: checkingTabbing = .false.
     character(len=10), parameter :: decade = '1234567890'
-    character(len=1), parameter :: fillChar = '1' ! fill blanks with '. .'
-    integer :: i
+    character(len=1), parameter  :: fillChar = '1' ! fill blanks with '. .'
+    integer                      :: i
+    integer                      :: IndentBy
+    integer                      :: status
+    integer                      :: WrapPastColumn
     ! Executable
+    AlwaysWrap = options%AlwaysWrap
+    WrapPastColumn = options%WrapPastColumn
+    IndentBy = GetOutputStatus ( 'indent' )
     call blanks(80, fillChar='-', advance='yes')
     call HeadLine( 'Summary of output options', &
       & fillChar='-', before='*', after='*' )
-    call outputNamedValue ( 'unit number', options%prUnit, advance='yes', &
+    call outputNamedValue ( 'Unit number', options%prUnit, advance='yes', &
       & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
     if ( options%prUnit < 0 ) then
-      call outputNamedValue ( 'meaning', prunitname(options ), &
+      call outputNamedValue ( 'Meaning', prunitname(options ), &
         & advance='yes', &
       & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
     end if
-    call outputNamedValue ( 'file name', trim(options%name), advance='yes', &
+    call outputNamedValue ( 'File name', trim(options%name), advance='yes', &
       & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-    call outputNamedValue ( 'logging level', &
+    call outputNamedValue ( 'Logging level', &
       & SeverityNamesFun(options%MLSMSG_Level), advance='yes', &
       & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-    call outputNamedValue ( 'buffered?', options%buffered, advance='yes', &
+    call outputNamedValue ( 'Buffered?', options%buffered, advance='yes', &
       & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-    call outputNamedValue ( 'skip MLSMSG logging?', options%SKIPMLSMSGLOGGING, advance='yes', &
+    call outputNamedValue ( 'Skip MLSMSG logging?', options%SKIPMLSMSGLOGGING, advance='yes', &
       & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-    call outputNamedValue ( 'log Parent Name?', options%logParent, advance='yes', &
+    call outputNamedValue ( 'Log Parent Name?', options%logParent, advance='yes', &
       & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-    call outputNamedValue ( 'advanceDefault', options%advanceDefault, advance='yes', &
+    call outputNamedValue ( 'AdvanceDefault', options%advanceDefault, advance='yes', &
       & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-    call outputNamedValue ( 'sdFormatDefault', options%sdFormatDefault, advance='yes', &
+    call outputNamedValue ( 'SdFormatDefault', options%sdFormatDefault, advance='yes', &
       & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-    call outputNamedValue ( 'tab stops', tabstops, advance='yes', &
+    call outputNamedValue ( 'Indent By', IndentBy, advance='yes', &
+      & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
+    call outputNamedValue ( 'Always Wrap', AlwaysWrap, advance='yes', &
+      & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
+    if ( AlwaysWrap ) &
+  & call outputNamedValue ( 'Wrap past column', WrapPastColumn, advance='yes', &
+      & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
+    call outputNamedValue ( 'Tab stops', tabstops, advance='yes', &
       & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
     do i=1, MAXNUMTABSTOPS
       call tab( fillChar='.' )
@@ -962,7 +978,7 @@ contains
     function PRUnitName( options ) result( name )
       ! Return an appropriate name for the prUnit number
       ! Args
-      type(outputOptions_T), intent(in) :: options
+      type(OutputOptions_T), intent(in) :: options
       character(len=12) :: name
       ! Executable
       if ( options%prUnitLiteral ) then
@@ -988,7 +1004,7 @@ contains
 
   ! ---------------------------------------------- DumpPatternOptions -----
   subroutine DumpPatternOptions( options )
-    ! Show output options
+    ! Show currently-active pattern options
     type(PatternOptions_T), intent(in) :: options
     ! Internal variables
     character(len=1), parameter :: fillChar = '1' ! fill blanks with '. .'
@@ -1008,27 +1024,27 @@ contains
 
   ! ---------------------------------------------- DumpStampOptions -----
   subroutine DumpStampOptions( options )
-    ! Show output options
+    ! Show currently-active stamp options
     type(StampOptions_T), intent(in) :: options
     character(len=1), parameter :: fillChar = '1' ! fill blanks with '. .'
      call blanks(80, fillChar='-', advance='yes')
     call HeadLine( 'Summary of automatic stamp options', &
       & fillChar='-', before='*', after='*' )
-     call outputNamedValue ( 'never stamp', options%neverStamp, advance='yes', &
+     call outputNamedValue ( 'Never stamp', options%neverStamp, advance='yes', &
        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-     call outputNamedValue ( 'stamp end of line', options%post, advance='yes', &
+     call outputNamedValue ( 'Stamp end of line', options%post, advance='yes', &
        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-     call outputNamedValue ( 'show time', options%showTime, advance='yes', &
+     call outputNamedValue ( 'Show time', options%showTime, advance='yes', &
        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-     call outputNamedValue ( 'extra text', trim_safe(options%textCode), advance='yes', &
+     call outputNamedValue ( 'Extra text', trim_safe(options%textCode), advance='yes', &
        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-     call outputNamedValue ( 'date format', trim_safe(options%dateFormat), advance='yes', &
+     call outputNamedValue ( 'Date format', trim_safe(options%dateFormat), advance='yes', &
        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-     call outputNamedValue ( 'time format', trim_safe(options%timeFormat), advance='yes', &
+     call outputNamedValue ( 'Time format', trim_safe(options%timeFormat), advance='yes', &
        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-     call outputNamedValue ( 'interval', options%interval, advance='yes', &
+     call outputNamedValue ( 'Interval', options%interval, advance='yes', &
        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-     call outputNamedValue ( 'style of TimeStamps', trim_safe(options%TimeStampstyle), advance='yes', &
+     call outputNamedValue ( 'Style of TimeStamps', trim_safe(options%TimeStampstyle), advance='yes', &
        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
     call blanks(80, fillChar='-', advance='yes')
   end subroutine DumpStampOptions
@@ -1041,17 +1057,17 @@ contains
      call blanks(80, fillChar='-', advance='yes')
     call HeadLine( 'Summary of time stamp options', &
       & fillChar='-', before='*', after='*' )
-     call outputNamedValue ( 'stamp end of line', options%post, advance='yes', &
+     call outputNamedValue ( 'Stamp end of line', options%post, advance='yes', &
        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-     call outputNamedValue ( 'show date', options%showDate, advance='yes', &
+     call outputNamedValue ( 'Show date', options%showDate, advance='yes', &
        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-     call outputNamedValue ( 'extra text', trim_safe(options%textCode), advance='yes', &
+     call outputNamedValue ( 'Extra text', trim_safe(options%textCode), advance='yes', &
        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-     call outputNamedValue ( 'date format', trim_safe(options%dateFormat), advance='yes', &
+     call outputNamedValue ( 'Date format', trim_safe(options%dateFormat), advance='yes', &
        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-     call outputNamedValue ( 'time format', trim_safe(options%timeFormat), advance='yes', &
+     call outputNamedValue ( 'Time format', trim_safe(options%timeFormat), advance='yes', &
        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-     call outputNamedValue ( 'style of TimeStamps', trim_safe(options%TimeStampstyle), advance='yes', &
+     call outputNamedValue ( 'Style of TimeStamps', trim_safe(options%TimeStampstyle), advance='yes', &
        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
     call blanks(80, fillChar='-', advance='yes')
   end subroutine DumpTimeStampOptions
@@ -1423,7 +1439,7 @@ contains
     character(len=30) :: FormatSpec
     integer :: I, J, K
     ! Executable
-    FormatSpec = outputOptions%sdFormatDefault
+    FormatSpec = OutputOptions%sdFormatDefault
     if ( any( value == DPREFERDEFAULTFORMAT ) ) FormatSpec = '*'
     if ( present(Format)  ) then
       if ( format /= '*' ) FormatSpec = Format
@@ -1454,7 +1470,7 @@ contains
     character(len=30) :: FormatSpec
     integer :: I, J, K
     ! Executable
-    FormatSpec = outputOptions%sdFormatDefault
+    FormatSpec = OutputOptions%sdFormatDefault
     if ( any( value == DPREFERDEFAULTFORMAT ) ) FormatSpec = '*'
     if ( present(Format)  ) then
       if ( format /= '*' ) FormatSpec = Format
@@ -1685,16 +1701,19 @@ contains
     ! We'll assume we won't want this line stamped with date and time
     ! (for fear of being redundant, which we fear)
     ! Optionally print CPU and wall clock usage, too.
-    logical, intent(in), optional :: date ! output date as character string
-    logical, intent(in), optional :: time ! output time as character string
-    character(len=*), intent(in), optional :: FROM_WHERE
-    character(len=*), intent(in), optional :: MSG
-    character(len=*), intent(in), optional :: DATEFORMAT
-    character(len=*), intent(in), optional :: TIMEFORMAT
-    double precision, intent(in), optional :: CPU_Seconds
-    integer, intent(in), optional          :: wallClock_Seconds
-    character(len=*), intent(in), optional :: ADVANCE
-
+    ! The first two args optionally override the defaults, which are to output
+    ! both date and time
+    logical, intent(in), optional          :: Date ! output date?
+    logical, intent(in), optional          :: Time ! output time?
+    ! Anything else to output?
+    character(len=*), intent(in), optional :: From_where
+    character(len=*), intent(in), optional :: Msg
+    character(len=*), intent(in), optional :: Dateformat
+    character(len=*), intent(in), optional :: Timeformat
+    double precision, intent(in), optional :: Cpu_seconds
+    integer, intent(in), optional          :: Wallclock_seconds
+    character(len=*), intent(in), optional :: Advance
+    ! Internal variables
     character(len=16) :: dateString
     logical, parameter :: DONT_STAMP = .true. ! Don't double-stamp
     integer :: HH, MM, MS, SS
@@ -1703,7 +1722,7 @@ contains
     character(len=3) :: MY_ADV
     real :: My_CPU, Seconds
     character(len=16) :: timeString
-
+    ! Executable
     myDate = .true.
     if ( present(date) ) myDate = date
     myTime = .true.
@@ -2026,14 +2045,13 @@ contains
   end subroutine ResetTabs
 
   ! ----------------------------------------------  RestoreSettings  -----
-  ! Restore tab stops to what was in effect at start
-  ! Optionally returning them as an integer array
+  ! Restore output settings by call to RestoreOutputSettings
+  ! Optionally restore StyleOptions and Tabs
   subroutine RestoreSettings ( settings )
     ! Args
     character(len=*), optional, intent(in) :: settings
     ! Local variables
-    character(len=*), parameter            :: allSettings = &
-      & 'style'
+    character(len=*), parameter            :: allSettings = 'style'
     character(len=64)                      :: mySettings 
     ! Executable
     call RestoreOutputSettings ( settings )
@@ -2041,6 +2059,7 @@ contains
     if ( present(settings) ) mySettings = settings
     if ( index(mySettings, '*') > 0 ) mySettings = allSettings
     mySettings = lowercase(mySettings)
+    if ( index(mySettings, 'tabs') > 0 ) call ResetTabs
     if ( index(mySettings, 'style') > 0 ) StyleOptions = DefaultStyleOptions
   end subroutine RestoreSettings 
 
@@ -2610,30 +2629,6 @@ contains
     stampOptions%neverStamp = OldNeverStamp
   end subroutine outputTableArray
 
-  ! ------------------------------------  SeparateElements  -----
-  ! insert blanks or separator between consecutive elements while outputting
-  subroutine SeparateElements (i, n )
-    ! Args
-    integer, intent(in) :: i ! Element number
-    integer, intent(in) :: n ! Number of elements
-    ! Executable
-    if ( i >= n ) return
-    if ( wrappastcolnum > 0 .and. getOutputStatus( 'column' ) >= wrappastcolnum ) then
-      call newLine
-      return
-    end if
-    if ( wrappastcolnum == 0 .and. &
-      & mod(i, outputOptions%nArrayElmntsPerLine) == 0 ) then
-      call output_ ( '', advance='yes', DONT_STAMP=.true. )
-      return
-    end if
-    if ( len_trim(outputOptions%arrayElmntSeparator) > 0 ) then
-      call output_( outputOptions%arrayElmntSeparator, advance='no' )
-    else
-      call blanks ( outputOptions%nBlanksBtwnElmnts, advance='no' )
-    end if
-  end subroutine SeparateElements
-
   ! ----------------------------------------------  stamp  -----
   function stamp( chars )
   ! stamp input chars before outputting to PRUNIT.
@@ -2712,6 +2707,9 @@ contains
 end module HighOutput
 
 ! $Log$
+! Revision 2.33  2019/08/01 23:44:25  pwagner
+! Removed unused stuff; numerous other changes
+!
 ! Revision 2.32  2019/07/17 20:19:21  pwagner
 ! StyledOutput can now underline and/or stretch, too
 !
