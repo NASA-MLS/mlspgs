@@ -186,6 +186,8 @@ contains
         options%details = 0
       elseif ( filename(1:3) == '-1 ' ) then
         options%details = -1
+      elseif ( filename(1:3) == '-ls' ) then
+        options%details = -2
       elseif ( filename(1:3) == '-2 ' ) then
         options%details = -2
       elseif ( filename(1:3) == '-a ' ) then
@@ -321,6 +323,7 @@ contains
       write (*,*) ' Options:'
       write (*,*) ' -f filename => use filename'
       write (*,*) ' -h          => print brief help'
+      write (*,*) ' -ls         => dump only swath names'
       write (*,*) ' -chunks cl  => dump only chunks named in cl'
       write (*,*) ' -geo name lo,hi  '
       write (*,*) '             => dump only geobox low <= geo <= hi'
@@ -332,7 +335,8 @@ contains
       write (*,*) '                 e.g., "-rs" to dump only rms, stats'
       write (*,*) '                 e.g., "?" to list available opts'
       write (*,*) ' -one        => print statistics on one line (dont)'
-      write (*,*) ' -format form=> format output using form'
+      write (*,*) ' -form form  => format output using form'
+      write (*,*) "                 e.g., '(1pg20.11)'"
       write (*,*) ' -[n]inqattr attr'
       write (*,*) '             => print only if attribute attr [not] present'
       write (*,*) ' -[n]inqds ds'
@@ -348,7 +352,7 @@ contains
       write (*,*) ' (details level)'
       write (*,*) ' -0          => dump only scalars, 1-d array'
       write (*,*) ' -1          => dump only scalars'
-      write (*,*) ' -2          => dump only swath names'
+      write (*,*) ' -2          => dump only swath names (same as -ls)'
 
       write (*,*) ' (The following options print only summaries)'
       write (*,*) ' -conv x     => show % nonconverged by x cutoff'
@@ -807,6 +811,9 @@ end program L2GPDump
 !==================
 
 ! $Log$
+! Revision 1.26  2018/11/01 23:22:20  pwagner
+! Housekeeping; try to keep Id from being optimized away
+!
 ! Revision 1.25  2018/02/21 21:19:30  pwagner
 ! Ignore precision sign when counting Status bits
 !
