@@ -15,7 +15,7 @@ module MLSNumbers              ! Some number theoretic datatypes, procedures
 
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
   use Dump_0, only: Dump
-  use HighOutput, only: StyledOutput
+  use HighOutput, only: OutputNamedValue, StyledOutput
   use MLSFinds, only: FindFirst, FindLast
   use MLSSets, only: Intersection, Union
   use MLSStringLists, only: ReadIntsFromList
@@ -41,6 +41,8 @@ module MLSNumbers              ! Some number theoretic datatypes, procedures
 ! RationalNum_T            The ratio between two composite numbers
 !
 !         Functions, operations, routines
+! Add                      Add two composite numbers, or
+!                              two rational numbers
 !                                                            n
 ! BinomialCoef             Compute the binomial coefficient ( )
 !                                                            m
@@ -75,7 +77,11 @@ module MLSNumbers              ! Some number theoretic datatypes, procedures
 !                            r^n = (a/b)^n = a^n / b^n
 ! Reduce                   Reduce numerator and denomincator of a rational number
 !                            by dividing out their gcd
+! Subtract                 Subtract two composite numbers, or
+!                              two rational numbers
+! IsGreaterThan            A > B ?
 ! IsEqual                  Are the two args equal?
+! IsLessThan               A < B ?
 ! IsPrime                  Is arg prime?
 ! NextPrime                Next prime > arg
 ! Prime                    nth prime (if n < 1230)
@@ -83,6 +89,8 @@ module MLSNumbers              ! Some number theoretic datatypes, procedures
 ! === (end of toc) ===
 
 ! === (start of api) ===
+! Add ( compNum A, compNum B, compNum C )
+! Add ( rationalNum A, rationalNum B, rationalNum C )
 ! int BigPrime( int n, [int primes(:)] )
 ! int BinomialCoef ( int n, int m )
 ! Copy ( compNum A, compNum C )
@@ -92,7 +100,8 @@ module MLSNumbers              ! Some number theoretic datatypes, procedures
 ! Destroy ( compNum C )
 ! Destroy ( rationalNum R )
 ! Divide ( compNum A, compNum B, compNum C, compNum D )
-! Dump ( compNum C )
+! Dump ( compNum C, [char* options] )
+! Dump ( rationalNum R, [char* options] )
 ! Estimate ( real logn, compNum C )
 ! Estimate ( real logn, rationalNum R )
 ! EvaluateCompositeNum ( int n, compNum C )
@@ -107,6 +116,10 @@ module MLSNumbers              ! Some number theoretic datatypes, procedures
 ! log IsEqual( compNum A, compNum B )
 ! log IsEqual( rationalNum A, rationalNum B )
 ! log IsEqual( int n, compNum C )
+! log IsGreaterThan( compNum A, compNum B )
+! log IsGreaterThan( rationalNum A, rationalNum B )
+! log IsLessThan( compNum A, compNum B )
+! log IsLessThan( rationalNum A, rationalNum B )
 ! log IsPrime( compNum C )
 ! LeastCommonMultiple ( compNum A, compNum B, compNum C )
 ! dble LogBinomialCoef ( int n, int m )
@@ -121,6 +134,8 @@ module MLSNumbers              ! Some number theoretic datatypes, procedures
 ! int NextPrime( int n, [int primes(:)] )
 ! int Prime( int n )
 ! int PrimeFactors( int n, int[:] factors, [int[:] powers] )
+! Subtract ( compNum A, compNum B, compNum C )
+! Subtract ( rationalNum A, rationalNum B, rationalNum C )
 !
 ! Note: This module uses only prime numbers below 10000 efficiently
 ! and correctly
@@ -132,15 +147,20 @@ module MLSNumbers              ! Some number theoretic datatypes, procedures
 ! an optional array primes. You can use FindAllPrimes to precompute them.
 ! === (end of api) ===
 
-  public :: BigPrime, FindAllPrimes, IsPrime, IsEqual, NextPrime, Prime, &
-    & PrimeFactors
+  public :: BigPrime, FindAllPrimes, IsPrime, NextPrime, Prime, PrimeFactors
+  public :: Fibonacci
   public :: CompositeNum_T, RationalNum_T
   public :: Copy, Create, Destroy, Dump, Estimate
+  public :: IsEqual, IsGreaterThan, IsLessThan
   public :: EstimateCompositeNum, EvaluateCompositeNum, InRange
   public :: GreatestCommonDivisor, LeastCommonMultiple
-  public :: Multiply, Divide, Power, Reduce, Invert
+  public :: Add, Subtract, Multiply, Divide, Power, Reduce, Invert
   public :: BinomialCoef, CompBinomialCoef, LogBinomialCoef
   public :: Factorial, IntFactorial, LogFactorial
+
+  interface Add
+    module procedure Add_composite, Add_rational
+  end interface
 
   interface Copy
     module procedure Copy_composite, Copy_rational
@@ -175,6 +195,14 @@ module MLSNumbers              ! Some number theoretic datatypes, procedures
     module procedure isEqual_int, isEqual_composite, isEqual_rational
   end interface
 
+  interface isGreaterThan
+    module procedure isGreaterThan_composite, isGreaterThan_rational
+  end interface
+
+  interface isLessThan
+    module procedure isLessThan_composite, isLessThan_rational
+  end interface
+
   interface isPrime
     module procedure isPrime_int, isPrime_composite
   end interface
@@ -191,27 +219,35 @@ module MLSNumbers              ! Some number theoretic datatypes, procedures
     module procedure Reduce_composite, Reduce_rational
   end interface
 
-  ! This datatype represents an integer as a composite of its prime factors
+  interface Subtract
+    module procedure Subtract_composite, Subtract_rational
+  end interface
+
+  ! ------------------------------------------------------------
+  ! Should we move the next two datatype and their procedures 
+  ! to a separate module?
+  ! This datatype represents a positive integer as a composite 
+  ! of its prime factors
   ! I.e., n = Product ( factors[k] ^ powers[k] )
   ! where each factors[k] is a prime number, and powers[k] > 0
   ! Why might this be useful?
-  ! (1) Represents very large non-prime integers without loss of precision
+  ! (1) Represents even very large non-prime integers without loss of precision
   ! (2) Some operations become very easy, e.g. lcm, gcd, isPrime, power
 
-  ! Beware of calling EvaluateComposteNum without first checking the size of its
+  ! Beware of calling EvaluateCompositeNum without first checking the size of its
   ! log by a call to inRange; if it is outside the range we
-  ! can represent, EvaluateComposteNum returns "-1"
+  ! can represent, EvaluateCompositeNum returns "-1"
 
   ! The Estimate procedures provide an alternate way to get at the value,
   ! returning its logarithm as either a single- or double-precision float
 
-  ! "1" is represnted by c%factors remaining unassoiated
-  ! Should we move this datatype and its procedures to a separate module?
+  ! "1" is represnted by c%factors remaining unassociated
   type CompositeNum_T
     integer, dimension(:), allocatable  :: factors
     integer, dimension(:), allocatable  :: powers
   end type
 
+  ! This datatype represents a positive non-integer as a ratio of two integers
   type RationalNum_T
     type(CompositeNum_T)  :: numerator
     type(CompositeNum_T)  :: denominator
@@ -220,6 +256,7 @@ module MLSNumbers              ! Some number theoretic datatypes, procedures
   ! How many factors can CompositeNum_T hold?
   integer, parameter :: MAXNUMFACTORS = 128
 
+  ! ------------------------------------------------------------
   ! How many Fibonacci numbers do we track?
   integer, parameter :: MAXNUMFIBS = 12
   integer, dimension(MAXNUMFIBS), save :: fibnumbers = (/ &
@@ -239,6 +276,84 @@ module MLSNumbers              ! Some number theoretic datatypes, procedures
     & /)
 
 contains
+
+  ! --------------- Add_composite --------------------
+  ! Add two composite nums; c = a + b
+  subroutine Add_composite( A, B, C, sbtrct )
+    ! Args
+    type(CompositeNum_T), intent(in)  :: A
+    type(CompositeNum_T), intent(in)  :: B
+    type(CompositeNum_T), intent(out) :: C
+    logical, optional, intent(in)     :: sbtrct ! For internal use: A - B?
+    ! Local variables
+    type(CompositeNum_T)              :: APB
+    type(CompositeNum_T)              :: AOG ! A/gcd
+    type(CompositeNum_T)              :: BOG ! B/gcd
+    type(CompositeNum_T)              :: gcd ! B/gcd
+    integer                           :: na
+    integer                           :: nb
+    integer                           :: napb
+    integer                           :: signB
+    ! Executable
+    signB = 1
+    if ( present(sbtrct) ) signB = merge(-1, 1, sbtrct)
+    ! 1st
+    ! Find the gcd
+    call GreatestCommonDivisor( A, B, gcd, AOG, BOG )
+    ! Form the sum AOG+BOG
+    call EvaluateCompositeNum( nA, AOG )
+    call EvaluateCompositeNum( nB, BOG )
+    napb = abs(nA + signB*nB)
+    ! A + B = (nA + nB)*gcd
+    call Create ( napb, APB )
+    call Multiply ( APB, gcd, C )
+  end subroutine Add_composite
+
+  ! --------------- Add_rational --------------------
+  ! Add two rational nums; cr = ar * br; Reduce result
+  ! Plan: strive to express the ratios with a common denominator
+  !   a       c       ad + bc      a LCM/b + c LCM/d
+  !   -   +   -    =     -    =            -
+  !   b       d         bd                LCM
+  subroutine Add_rational( AR, BR, CR, sbtrct )
+    ! Args
+    type(RationalNum_T), intent(in)  :: AR
+    type(RationalNum_T), intent(in)  :: BR
+    type(RationalNum_T), intent(out) :: CR
+    logical, optional, intent(in)    :: sbtrct
+    ! Local variables
+    type(CompositeNum_T)             :: A
+    type(CompositeNum_T)             :: B
+    type(CompositeNum_T)             :: C
+    type(CompositeNum_T)             :: D
+    type(CompositeNum_T)             :: LCMOB  ! LCM/B
+    type(CompositeNum_T)             :: LCMOD  ! LCM/D
+    type(CompositeNum_T)             :: LCM
+    type(CompositeNum_T)             :: T1
+    type(CompositeNum_T)             :: T2
+    type(CompositeNum_T)             :: T3
+    integer                          :: signB
+    ! Executable
+    signB = 1
+    if ( present(sbtrct) ) signB = merge(-1, 1, sbtrct)
+    call Copy ( AR%numerator  , A ) ! AR = a/b
+    call Copy ( AR%denominator, B )
+    call Copy ( BR%numerator  , C ) ! BR = c/d
+    call Copy ( BR%denominator, D )
+    ! 1st: find lcm of the two denominators
+    call LeastCommonMultiple ( B, D, LCM, LCMOB, LCMOD )
+    ! Form a LCM/b and c LCM/d
+    call Multiply ( A, LCMOB, T1 )
+    call Multiply ( C, LCMOD, T2 )
+    call Add( T1, T2, T3, sbtrct )
+    ! Express T3/LCM as A/B
+    call Destroy ( A )
+    call Destroy ( B )
+    call Divide( T3, LCM, A, B )
+    ! Now A/B is the rational CR
+    call Copy ( A, CR%numerator )
+    call Copy ( B, CR%denominator )
+  end subroutine Add_rational
 
   ! --------------- BigPrime --------------------
   function BigPrime( n, primes ) result( next )
@@ -409,7 +524,14 @@ contains
 
   ! --------------- Destroy_composite --------------------
   ! Destroy a Composite, deallocating its components
-  ! In effect reucing it to "1"
+  ! In effect reducing it to "1"
+  !
+  ! 2 common uses of ths procedure:
+  ! (1) Reclaiming the memory from a composite type before reallocating it
+  ! (2) Setting it to "1"
+  !
+  ! The use of allocatables relieves you of having to Destroy
+  ! temporary data types
   subroutine Destroy_composite( C )
     ! Args
     type(CompositeNum_T), intent(inout)    :: C
@@ -423,6 +545,13 @@ contains
   ! --------------- Destroy_rational --------------------
   ! Destroy a rational, deallocating its components
   ! In effect reucing it to "1"
+  !
+  ! 2 common uses of ths procedure:
+  ! (1) Reclaiming the memory from a rational type before reallocating it
+  ! (2) Setting it to "1"
+  !
+  ! The use of allocatables relieves you of having to Destroy
+  ! temporary data types
   subroutine Destroy_rational( R )
     ! Args
     type(RationalNum_T), intent(inout)    :: R
@@ -434,6 +563,10 @@ contains
   ! --------------- Divide --------------------
   ! Divide two composite nums; c/d = a/b
   ! where c and d have no common factors
+  !
+  ! It does not create a rational_t, however:
+  ! to do that you must 
+  !          call Create ( int numerator, int denominator, rationalNum R )
   subroutine Divide( A, B, C, D )
     ! Args
     type(CompositeNum_T), intent(in)  :: A
@@ -457,9 +590,11 @@ contains
   ! --------------- Dump_composite --------------------
   ! Dump a Composite, dumping its components
   subroutine Dump_composite( C, options )
+  ! Optionally, its estimate, too
     ! Args
-    type(CompositeNum_T), intent(in)    :: C
+    type(CompositeNum_T), intent(in)       :: C
     character(len=*), optional, intent(in) :: options
+    double precision                       :: logN
     ! Executable
     call StyledOutput( 'Dump of composite number', &
       & Default( options, '--Headline') )
@@ -469,20 +604,32 @@ contains
       call Dump( C%factors, 'prime factors' )
       call Dump( C%powers, 'their powers' )
     end if
+    if ( .not. present(options) ) return
+    if ( index(options, 'v') > 0 ) then
+      call EstimateCompositeNum ( logN, C )
+      call outputNamedValue( 'log(value)', logN )
+    endif
   end subroutine Dump_composite
 
   ! --------------- Dump_rational --------------------
   ! Dump a Rational, dumping its components
-  subroutine Dump_rational( C, options )
+  ! Optionally, its estimate, too
+  subroutine Dump_rational( R, options )
     ! Args
-    type(RationalNum_T), intent(in)    :: C
+    type(RationalNum_T), intent(in)        :: R
     character(len=*), optional, intent(in) :: options
+    double precision                       :: logN
     ! Executable
     call StyledOutput( 'Dump of rational number; first the numerator', &
       & Default( options, '--Headline') )
-    call Dump( C%numerator )
+    call Dump( R%numerator )
     call StyledOutput( 'next the denominator', Default( options, '--Headline') )
-    call Dump( C%denominator )
+    call Dump( R%denominator )
+    if ( .not. present(options) ) return
+    if ( index(options, 'v') > 0 ) then
+      call EstimateRationalNum ( logN, R )
+      call outputNamedValue( 'log(value)', logN )
+    endif
   end subroutine Dump_rational
 
   ! --------------- EstimateCompositeNum --------------------
@@ -660,7 +807,7 @@ contains
   ! using the fact that
   ! F[n] = F[n-1] + F[n-2]
   ! 
-  ! Optionally, use the generalized Fibonacci seuence
+  ! Optionally, use the generalized Fibonacci sequence
   ! where you supply F[1] and F[2]
   recursive function Fibonacci( n, f1, f2 ) result ( f )
     ! Args
@@ -736,16 +883,18 @@ contains
   !       {c%factors[i]} = {a%factors[i]} /\ {b%factors[i]}
   ! (2) For each c%factors(i), choose the smaller of the corresponding a or b
   !      power
-  subroutine GreatestCommonDivisor( A, B, C )
+  subroutine GreatestCommonDivisor( A, B, C, AOC, BOC )
     ! Args
-    type(CompositeNum_T), intent(in)  :: A
-    type(CompositeNum_T), intent(in)  :: B
-    type(CompositeNum_T), intent(out) :: C
+    type(CompositeNum_T), intent(in)                 :: A
+    type(CompositeNum_T), intent(in)                 :: B
+    type(CompositeNum_T), intent(out)                :: C
+    type(CompositeNum_T), optional, intent(out)      :: AOC ! A/C
+    type(CompositeNum_T), optional, intent(out)      :: BOC ! B/C
     ! Local variables
-    integer                           :: i
-    integer                           :: j
-    integer                           :: na
-    integer                           :: nb
+    integer                                          :: i
+    integer                                          :: j
+    integer                                          :: na
+    integer                                          :: nb
     ! Executable
     if (  allocated(a%factors) .and. allocated(b%factors) ) then
       ! c%factors = Intersection( a%factors, b%factors )
@@ -764,6 +913,8 @@ contains
         c%powers(i) = min(na, nb)
       end do
     end if
+    if ( present(AOC) ) call Reduce_Composite( A, C, AOC )
+    if ( present(BOC) ) call Reduce_Composite( B, C, BOC )
   end subroutine GreatestCommonDivisor
 
   ! --------------- InRange --------------------
@@ -852,20 +1003,72 @@ contains
     Call Reduce( D )
     isEqual_rational = isEqual( C%numerator, D%numerator ) .and. &
       & isequal( C%denominator, D%denominator )
-    call Destroy( C )
-    call Destroy( D )
   end function IsEqual_rational
 
+  ! --------------- IsGreaterThan --------------------
+  logical function IsGreaterThan_composite( A, B )
+    type(CompositeNum_T), intent(in) :: A, B
+    IsGreaterThan_composite = IsLessThan_composite (A, B, grtr=.true. )
+  end function IsGreaterThan_composite
+
+  logical function IsGreaterThan_rational( A, B )
+    type(rationalNum_T), intent(in) :: A, B
+    IsGreaterThan_rational = IsLessThan_rational (A, B, grtr=.true. )
+  end function IsGreaterThan_rational
+
+  ! --------------- IsOne --------------------
   logical function IsOne( A )
     type(CompositeNum_T), intent(in) :: A
     isOne = ( .not. allocated(A%factors) )
   end function IsOne
+
+  ! --------------- IsLessThan --------------------
+  ! A < B ?
+
+  !         *   *   *
+  ! A trick! If grtr is present, and true, we will
+  ! return whether -A < -B
+  ! (which is the same as A > B)
+  logical function IsLessThan_composite( A, B, grtr )
+    ! Args
+    type(CompositeNum_T), intent(in) :: A, B
+    logical, optional, intent(in)    :: grtr ! A > B?
+    ! Internal variables
+    double precision                 :: D_A, D_B
+    integer                          :: signB
+    ! Executable
+    signB = 1
+    if ( present(grtr) ) signB = merge(-1, 1, grtr)
+    IsLessThan_composite = .false.
+    if ( isEqual ( a, b ) ) return
+    call EstimateCompositeNum_double( D_A, A )
+    call EstimateCompositeNum_double( D_B, B )
+    IsLessThan_composite = ( signB*D_A < signB*D_B )
+  end function IsLessThan_composite
+
+  logical function IsLessThan_rational( A, B, grtr )
+    ! Args
+    type(RationalNum_T), intent(in)  :: A, B
+    logical, optional, intent(in)    :: grtr ! A > B?
+    ! Internal variables
+    double precision                 :: D_A, D_B
+    integer                          :: signB
+    ! Executable
+    signB = 1
+    if ( present(grtr) ) signB = merge(-1, 1, grtr)
+    IsLessThan_rational = .false.
+    if ( isEqual ( a, b ) ) return
+    call EstimateRationalNum_double( D_A, A )
+    call EstimateRationalNum_double( D_B, B )
+    IsLessThan_rational = ( signB*D_A < signB*D_B )
+  end function IsLessThan_rational
 
   ! --------------- IsPrime_composite --------------------
   ! A version of the function for composite arguments
   ! Returns FALSE unless both
   ! (1) size(c*factors) == 1
   ! (2) c%powers(1) == 1
+  ! See how easy that was?
   logical function IsPrime_composite( C )
     ! Args
     type(CompositeNum_T), intent(in) :: C
@@ -882,11 +1085,13 @@ contains
   !       {c%factors[i]} = {a%factors[i]} U {b%factors[i]}
   ! (2) For each c%factors(i), choose the larger of the corresponding a or b
   !      power
-  subroutine LeastCommonMultiple( A, B, C )
+  subroutine LeastCommonMultiple( A, B, C, COA, COB )
     ! Args
-    type(CompositeNum_T), intent(in)  :: A
-    type(CompositeNum_T), intent(in)  :: B
-    type(CompositeNum_T), intent(out) :: C
+    type(CompositeNum_T), intent(in)                   :: A
+    type(CompositeNum_T), intent(in)                   :: B
+    type(CompositeNum_T), intent(out)                  :: C
+    type(CompositeNum_T), optional, intent(out)        :: COA  ! C/A
+    type(CompositeNum_T), optional, intent(out)        :: COB  ! C/A
     ! Local variables
     integer                           :: i
     integer                           :: j
@@ -914,6 +1119,8 @@ contains
         c%powers(i) = max(na, nb)
       end do
     end if
+    if ( present(COA) ) call Reduce ( C, A, COA )
+    if ( present(COB) ) call Reduce ( C, B, COB )
   end subroutine LeastCommonMultiple
 
   ! --------------- LogBinomialCoef --------------------
@@ -935,7 +1142,6 @@ contains
     if ( n < 2 .or. m < 1 .or. (n-m) < 1 ) return ! m = 0 and n = m both => log10(1)
     A = CompBinomialCoef( n, m )
     call EstimateCompositeNum( c, A )
-    call Destroy( A )
   end function LogBinomialCoef
 
   ! --------------- LogFactorial --------------------
@@ -954,7 +1160,6 @@ contains
     if ( n < 2  ) return ! 0! and 1! are both 1, so logs are 0
     A = Factorial( n, k )
     call EstimateCompositeNum( c, A )
-    call Destroy( A )
   end function LogFactorial
 
   ! --------------- Multiply_composite --------------------
@@ -992,7 +1197,7 @@ contains
   end subroutine Multiply_composite
 
   ! --------------- Multiply_rational --------------------
-  ! Multiply two composite nums; c = a * b; Reduce result
+  ! Multiply two rational nums; c = a * b; Reduce result
   subroutine Multiply_rational( A, B, C )
     ! Args
     type(RationalNum_T), intent(in)  :: A
@@ -1117,7 +1322,6 @@ contains
     if ( isOne ( gcd ) ) return
     call Reduce( R%numerator, gcd, C )
     call Reduce( R%denominator, gcd, D )
-    call Destroy( gcd )
     call Destroy( R )
     R = RationalNum_T( C, D )
   end subroutine Reduce_Rational
@@ -1442,6 +1646,29 @@ contains
     i = findFirst( primenumbers > n )
   end function PrimeIndex
 
+  ! --------------- Subtract_composite --------------------
+  ! Subtract two composite nums; c = a - b
+  ! If a < b, returns b - a
+  subroutine Subtract_composite( A, B, C )
+    ! Args
+    type(CompositeNum_T), intent(in)  :: A
+    type(CompositeNum_T), intent(in)  :: B
+    type(CompositeNum_T), intent(out) :: C
+    call Add_composite( A, B, C, sbtrct=.true. )
+  end subroutine Subtract_composite
+
+  ! --------------- Subtract_rational --------------------
+  ! Subtract two rational nums; c = a - b
+  ! If a < b, returns b - a
+  subroutine Subtract_rational( AR, BR, CR )
+    ! Args
+    type(RationalNum_T), intent(in)  :: AR
+    type(RationalNum_T), intent(in)  :: BR
+    type(RationalNum_T), intent(out) :: CR
+    call Add_rational( AR, BR, CR, sbtrct=.true. )
+  end subroutine Subtract_rational
+
+  ! ------------------- Private procedures -------------------------
   subroutine AppendValues( array, chars )
     ! Append new values to end of array where new values
     ! are encoded by chars
@@ -1477,6 +1704,9 @@ end module MLSNumbers
 
 !
 ! $Log$
+! Revision 2.7  2019/08/08 17:41:09  pwagner
+! Added procedures for -Num types to Add, Subtract, islessThan, and isGreaterThan
+!
 ! Revision 2.6  2017/12/06 01:02:58  pwagner
 ! Added BigPrime, FindAllPrimes; improved performance
 !
