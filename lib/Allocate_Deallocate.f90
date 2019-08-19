@@ -28,19 +28,20 @@ module Allocate_Deallocate
 ! *****     nullified before its first use     *****
 ! **************************************************
 
-  use, intrinsic :: IEEE_Arithmetic, only: IEEE_Signaling_NaN, IEEE_Value, &
-    IEEE_Support_DataType
-  use ISO_C_Binding, only: C_intptr_t, C_Loc
-  use MACHINE, only: MLS_GC_NOW
-  use PRINTIT_M, only: MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
-    & MLSMSG_ERROR, MLSMSG_WARNING, PRINTITOUT, SnipRCSFrom
-  use TRACK_M, only: TRACKALLOCATE, TRACKDEALLOCATE
+  use, Intrinsic :: Ieee_Arithmetic, only: Ieee_Signaling_Nan, Ieee_Value, &
+    & Ieee_Support_Datatype
+  use Iso_C_Binding, only: C_Intptr_T, C_Loc
+  use Machine, only: MLS_Gc_Now
+  use MLSCommon, only: Nobytesallocated
+  use Printit_M, only: MLSMSG_Allocate, MLSMSG_Deallocate, &
+    & MLSMSG_Error, MLSMSG_Warning, Printitout, Sniprcsfrom
+  use Track_M, only: Trackallocate, Trackdeallocate
 
-  implicit NONE
+  implicit none
 !   private
 
-  public :: Byte_Size, BYTES, Allocate_Test, Deallocate_Test, DEALLOC_STATUS, & 
-    & SET_GARBAGE_COLLECTION, REPORTALLOCATEDEALLOCATE, &
+  public :: Byte_Size, Bytes, Allocate_Test, Deallocate_Test, dealloc_status, & 
+    & NoBytesAllocated, set_garbage_collection, reportallocatedeallocate, &
     & Same_Shape, Test_Allocate, Test_Deallocate
 
   interface Allocate_Test
@@ -227,10 +228,6 @@ module Allocate_Deallocate
 
   logical, save, private :: COLLECT_GARBAGE_EACH_TIME = .false.
 
-  ! The next two used for tracking allocated memory
-  ! (The 1st is public to enable reporting finer or coarser grains)
-!  real, save, public  :: MEMORY_UNITS = 1024. ! Report nothing smaller than KB
-  double precision, save, protected, public :: NoBytesAllocated=0.0d0 ! Number of MEMORY_UNITS allocated.
   double precision, parameter  :: OUTPUT_UNITS = 1.d6 ! output in MB
   logical, parameter :: DEEBUG = .false.
 
@@ -1814,6 +1811,16 @@ contains
 
   ! --------------------------------------------------  myMessage  -----
   subroutine myMessage ( severity, name, line )
+    use MLSMessageModule, only: MLSMessage
+    ! Args
+    integer, intent(in)           :: severity
+    character(len=*), intent(in) :: name
+    character(len=*), intent(in) :: line
+    call MLSMessage ( severity, ModuleName // '%' &
+      & // trim(name), trim(line) )
+  end subroutine myMessage
+
+  subroutine myMessage_old ( severity, name, line )
     ! Args
     integer, intent(in)           :: severity
     character(len=*), intent(in) :: name
@@ -1834,7 +1841,7 @@ contains
     else
       call PrintItOut( thus(1:nChars), SEVERITY  )
     end if
-  end subroutine myMessage
+  end subroutine myMessage_old
 
   ! ------------------------------------  Same_Shape_Character_1d  -----
   subroutine Same_Shape_Character_1d ( Ref, New, ItsName, ModuleName )
@@ -2149,6 +2156,9 @@ contains
 end module Allocate_Deallocate
 
 ! $Log$
+! Revision 2.57  2019/08/19 21:58:18  pwagner
+! Moved NoBytesAllocated to MLSCommon from Allocate_Deallocate; print warnings through MLSMessage
+!
 ! Revision 2.56  2018/05/15 03:17:36  vsnyder
 ! Add 1D and 2D character allocatable versions
 !
