@@ -9,13 +9,13 @@
 ! export authority as may be required before exporting such information to
 ! foreign countries or providing access to foreign persons.
 
-module INTRINSIC
+module intrinsic
 
 ! Intrinsic constants needed by Init_Tables_Module, DeclarationTable, etc.
 
 ! Declaring the definitions is handled by the tree walker.
 
-  implicit NONE
+  implicit none
   public
 
 !---------------------------- RCS Module Info ------------------------------
@@ -39,66 +39,66 @@ module INTRINSIC
   integer, parameter :: NO_CHECK_EQ = 1   ! Don't check whether the section's
                                           ! A=B contents are allowed.
 
-  integer, parameter :: T_FIRST             = 1
+  integer, parameter :: T_First             = 1
 ! Types of entities in the declaration table:
-  integer, parameter :: T_UNKNOWN           = t_first
-  integer, parameter :: T_EMPTY             = t_unknown + 1
-  integer, parameter :: T_DO_LABEL          = t_empty + 1 ! DO, CASE or IF
-  integer, parameter :: T_ENUM_NAME         = t_do_label + 1
-  integer, parameter :: T_FIELD_NAME        = t_enum_name + 1
-  integer, parameter :: T_FUNCTION_NAME     = t_field_name + 1
-  integer, parameter :: T_LABEL             = t_function_name + 1 ! of a spec
-  integer, parameter :: T_PARAM_NAME        = t_label + 1 
-  integer, parameter :: T_PHYS_UNIT_NAME    = t_param_name + 1    ! PHYS_....
-  integer, parameter :: T_SECTION_NAME      = t_phys_unit_name + 1
-  integer, parameter :: T_SPEC_NAME         = t_section_name + 1
-  integer, parameter :: T_TREE_NAME         = t_spec_name + 1     ! e.g. n_plus
-  integer, parameter :: T_TYPE_NAME         = t_tree_name + 1
-  integer, parameter :: T_UNIT_NAME         = t_type_name + 1
-  integer, parameter :: T_VARIABLE_NAME     = t_unit_name + 1
+  integer, parameter :: T_Unknown           = t_first
+  integer, parameter :: T_Empty             = t_unknown + 1
+  integer, parameter :: T_Do_label          = t_empty + 1 ! DO, CASE or IF
+  integer, parameter :: T_Enum_name         = t_do_label + 1
+  integer, parameter :: T_Field_name        = t_enum_name + 1
+  integer, parameter :: T_Function_name     = t_field_name + 1
+  integer, parameter :: T_Label             = t_function_name + 1 ! of a spec
+  integer, parameter :: T_Param_name        = t_label + 1 
+  integer, parameter :: T_Phys_unit_name    = t_param_name + 1    ! PHYS_....
+  integer, parameter :: T_Section_name      = t_phys_unit_name + 1
+  integer, parameter :: T_Spec_name         = t_section_name + 1
+  integer, parameter :: T_Tree_name         = t_spec_name + 1     ! e.g. n_plus
+  integer, parameter :: T_Type_name         = t_tree_name + 1
+  integer, parameter :: T_Unit_name         = t_type_name + 1
+  integer, parameter :: T_Variable_name     = t_unit_name + 1
 ! Result type from Vector_Qty_Expr
   integer, parameter :: T_A_DOT_B           = t_variable_name + 1
 ! Declaration table types of names of LHS entities in Algebra_m
-  integer, parameter :: T_EXPRN             = t_a_dot_b + 1 ! Scalar
-  integer, parameter :: T_EXPRN_M           = t_exprn + 1         ! Matrix
-  integer, parameter :: T_EXPRN_V           = t_exprn_m + 1       ! Vector
+  integer, parameter :: T_Exprn             = t_a_dot_b + 1 ! Scalar
+  integer, parameter :: T_Exprn_m           = t_exprn + 1         ! Matrix
+  integer, parameter :: T_Exprn_v           = t_exprn_m + 1       ! Vector
 ! Data types that don't have enumerated literals:
-  integer, parameter :: T_NUMERIC           = t_exprn_v + 1
-  integer, parameter :: T_NUMERIC_RANGE     = t_numeric + 1
-  integer, parameter :: T_STRING            = t_numeric_range + 1
-  integer, parameter :: T_STRING_RANGE      = t_string + 1
+  integer, parameter :: T_Numeric           = t_exprn_v + 1
+  integer, parameter :: T_Numeric_range     = t_numeric + 1
+  integer, parameter :: T_String            = t_numeric_range + 1
+  integer, parameter :: T_String_range      = t_string + 1
 ! Enumeration types:
-  integer, parameter :: T_BOOLEAN           = t_string_range + 1
-  integer, parameter :: T_INSTRUMENT        = t_boolean + 1
-  integer, parameter :: T_POLARIZATION      = t_instrument + 1
-  integer, parameter :: LAST_INTRINSIC_TYPE = t_polarization
+  integer, parameter :: T_Boolean           = t_string_range + 1
+  integer, parameter :: T_Instrument        = t_boolean + 1
+  integer, parameter :: T_Polarization      = t_instrument + 1
+  integer, parameter :: Last_Intrinsic_Type = t_polarization
 
 ! We don't define any fields here, but here's the first index:
   integer, parameter :: Field_First = 1
 
 ! Abstract physical quantities:
-  integer, parameter :: FIRST_PHYQ = 0
-  integer, parameter :: PHYQ_INVALID =         first_phyq ! Invalid unit given by user
-  integer, parameter :: PHYQ_DIMENSIONLESS =   phyq_invalid+1     ! Dimensionless quantity
-  integer, parameter :: PHYQ_LENGTH =          phyq_dimensionless+1  ! Default meters
-  integer, parameter :: PHYQ_TIME =            phyq_length+1         ! Default seconds
-  integer, parameter :: PHYQ_PRESSURE =        phyq_time+1        !  Default millibars
-  integer, parameter :: PHYQ_TEMPERATURE =     phyq_pressure+1    ! Default Kelvins
-  integer, parameter :: PHYQ_VMR =             phyq_temperature+1 ! Default parts-per-one
-  integer, parameter :: PHYQ_ANGLE =           phyq_vmr+1         ! Default degrees
-  integer, parameter :: PHYQ_MAFS =            phyq_angle+1       ! Default MAFs
-  integer, parameter :: PHYQ_MIFS =            phyq_mafs+1        ! Default MIFs
-  integer, parameter :: PHYQ_FREQUENCY =       phyq_mifs+1        ! Default MHz
-  integer, parameter :: PHYQ_ZETA =            phyq_frequency+1   ! log10(pressure/hPa)
-  integer, parameter :: PHYQ_VELOCITY =        phyq_zeta+1        ! Default meters/second
-  integer, parameter :: PHYQ_EXTINCTION =      phyq_velocity+1    ! Default 1/meters
-  integer, parameter :: PHYQ_ICEDENSITY =      phyq_extinction+1  ! Default g/meters^3
-  integer, parameter :: PHYQ_COLMABUNDANCE =   phyq_icedensity+1  ! Default log10 g/meters^3
-  integer, parameter :: PHYQ_PCTRHI =          phyq_colmabundance+1 ! default %RHI
-  integer, parameter :: PHYQ_GAUSS =           phyq_pctrhi + 1
-  integer, parameter :: PHYQ_PROFILES =        phyq_gauss + 1
-  integer, parameter :: LAST_PHYQ = phyq_profiles
-  integer :: PHYQ_INDICES(first_phyq:last_phyq)
+  integer, parameter :: First_PhyQ = 0
+  integer, parameter :: PhyQ_Invalid =         first_phyq ! Invalid unit given by user
+  integer, parameter :: PhyQ_Dimensionless =   phyq_invalid+1     ! Dimensionless quantity
+  integer, parameter :: PhyQ_Length =          phyq_dimensionless+1  ! Default meters
+  integer, parameter :: PhyQ_Time =            phyq_length+1         ! Default seconds
+  integer, parameter :: PhyQ_Pressure =        phyq_time+1        !  Default millibars
+  integer, parameter :: PhyQ_Temperature =     phyq_pressure+1    ! Default Kelvins
+  integer, parameter :: PhyQ_Vmr =             phyq_temperature+1 ! Default parts-per-one
+  integer, parameter :: PhyQ_Angle =           phyq_vmr+1         ! Default degrees
+  integer, parameter :: PhyQ_Mafs =            phyq_angle+1       ! Default MAFs
+  integer, parameter :: PhyQ_Mifs =            phyq_mafs+1        ! Default MIFs
+  integer, parameter :: PhyQ_Frequency =       phyq_mifs+1        ! Default MHz
+  integer, parameter :: PhyQ_Zeta =            phyq_frequency+1   ! log10(pressure/hPa)
+  integer, parameter :: PhyQ_Velocity =        phyq_zeta+1        ! Default meters/second
+  integer, parameter :: PhyQ_Extinction =      phyq_velocity+1    ! Default 1/meters
+  integer, parameter :: PhyQ_Icedensity =      phyq_extinction+1  ! Default g/meters^3
+  integer, parameter :: PhyQ_Colmabundance =   phyq_icedensity+1  ! Default log10 g/meters^3
+  integer, parameter :: PhyQ_Pctrhi =          phyq_colmabundance+1 ! default %RHI
+  integer, parameter :: PhyQ_Gauss =           phyq_pctrhi + 1
+  integer, parameter :: PhyQ_Profiles =        phyq_gauss + 1
+  integer, parameter :: Last_phyq = phyq_profiles
+  integer :: PhyQ_Indices(first_phyq:last_phyq)
 
 ! Enumeration literals:
   integer, parameter :: FIRST_LIT       = 1
@@ -139,13 +139,16 @@ module INTRINSIC
   integer, parameter :: Z = 7000    ! Section index
 
   ! Tables used for type checking:
-  integer, save, pointer, dimension(:) :: DATA_TYPE_INDICES=>NULL()
-  integer, save, pointer, dimension(:) :: FIELD_INDICES=>NULL()
-  integer, save, pointer, dimension(:) :: FUNC_INDICES=>NULL()
-  integer, save, pointer, dimension(:) :: LIT_INDICES=>NULL()
-  integer, save, pointer, dimension(:) :: PARM_INDICES=>NULL()
-  integer, save, pointer, dimension(:) :: SECTION_INDICES=>NULL()
-  integer, save, pointer, dimension(:) :: SPEC_INDICES=>NULL()
+  integer, save, pointer, dimension(:) :: Data_Type_Indices  => NULL()
+  integer, save, pointer, dimension(:) :: Field_Indices      => NULL()
+  integer, save, pointer, dimension(:) :: Func_Indices       => NULL()
+  integer, save, pointer, dimension(:) :: Lit_Indices        => NULL()
+  integer, save, pointer, dimension(:) :: Parm_Indices       => NULL()
+  integer, save, pointer, dimension(:) :: Section_Indices    => NULL()
+  integer, save, pointer, dimension(:) :: Spec_Indices       => NULL()
+  
+  ! Private procedures
+  private :: allocate_test, deallocate_test
 
 contains ! =====     Public procedures     =============================
 ! -----------------------------------------------  INIT_INTRINSIC  -----
@@ -156,9 +159,9 @@ contains ! =====     Public procedures     =============================
     ! This really belongs in make_tree, but "make depends" can't see it there
     ! (because of the "include"):
 
-    use Allocate_Deallocate, only: Allocate_Test
-    use TREE, only: ! BUILD_TREE, PUSH_PSEUDO_TERMINAL
-    use TREE_TYPES, only: N_DT_DEF
+    ! use Allocate_Deallocate, only: Allocate_Test
+    use Tree, only: ! Build_tree, Push_pseudo_terminal
+    use Tree_Types, only: N_Dt_Def
 
     integer, intent(in) :: N_DATA_TYPE_INDICES
     integer, intent(in) :: N_FIELD_INDICES
@@ -285,15 +288,15 @@ contains ! =====     Public procedures     =============================
 
   ! --------------------------------------------------  Add_Ident  -----
   integer function ADD_IDENT ( TEXT )
-    use SYMBOL_TABLE, only: ENTER_TERMINAL
-    use SYMBOL_TYPES, only: T_IDENTIFIER
+    use Symbol_Table, only: Enter_Terminal
+    use Symbol_Types, only: T_Identifier
     character(len=*), intent(in) :: TEXT
     add_ident = enter_terminal ( text, t_identifier )
   end function ADD_IDENT
 
   ! -----------------------------------  DestroyTypeCheckerTables  -----
   subroutine DestroyTypeCheckerTables
-    use Allocate_Deallocate, only: Deallocate_Test
+    ! use Allocate_Deallocate, only: Deallocate_Test
     call deallocate_test ( data_type_indices, 'DATA_TYPE_INDICES', moduleName )
     call deallocate_test ( field_indices,     'FIELD_INDICES',     moduleName )
     call deallocate_test ( lit_indices,       'LIT_INDICES',       moduleName )
@@ -315,6 +318,40 @@ contains ! =====     Public procedures     =============================
       get_type = 0
     end if
   end function Get_Type
+  
+  ! Try to avoid USE-ing Allocate_Deallocate to lift circular dependency
+  subroutine deallocate_test ( indices, type_str, whereami )
+    ! Args
+    integer, pointer, dimension(:)          :: indices
+    character(len=*), intent(in)            :: type_str, whereami
+    ! Internal variables
+    integer                                 :: status ! 0 success, ! 0 failure
+    character(len=127)                      :: ermsg  ! any clue why?
+    ! Executable
+    deallocate( indices, stat=status, errmsg=ermsg )
+    if ( status == 0 ) return
+    print *, 'Failed to deallocate ' // type_str // ' in ' // whereami
+    print *, trim(ermsg)
+  end subroutine deallocate_test
+
+  subroutine allocate_test ( indices, n, type_str, whereami, lowbound )
+    ! Args
+    integer, pointer, dimension(:)          :: indices
+    integer, intent(in)                     :: n
+    character(len=*), intent(in)            :: type_str, whereami
+    integer, intent(in), optional           :: lowbound
+    ! Internal variables
+    integer                                 :: n1 ! low bound of indices
+    integer                                 :: status ! 0 success, ! 0 failure
+    character(len=127)                      :: ermsg  ! any clue why?
+    ! Executable
+    n1 = 1
+    if ( present(lowbound) ) n1 = lowbound
+    allocate( indices(n1:n), stat=status, errmsg=ermsg )
+    if ( status == 0 ) return
+    print *, 'Failed to allocate ' // type_str // ' in ' // whereami
+    print *, trim(ermsg)
+  end subroutine allocate_test
 
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
@@ -329,6 +366,9 @@ contains ! =====     Public procedures     =============================
 end module INTRINSIC
 
 ! $Log$
+! Revision 2.75  2019/08/19 22:00:23  pwagner
+! Avoid USE-ing Allocate_Deallocate due to circular dependency
+!
 ! Revision 2.74  2016/10/21 23:28:20  vsnyder
 ! Remove unused USE name
 !
