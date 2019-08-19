@@ -10,6 +10,7 @@
 ! foreign countries or providing access to foreign persons.
 
 module Call_Stack_m
+  use MLSCommon, only: NoBytesAllocated
   ! Datatype and related procedures for a Stack capable of tracing execution
   ! may dump a walkback of callers, memory usage, timings, etc.
   
@@ -19,23 +20,24 @@ module Call_Stack_m
 !     - - - - - - - -
 
 !     (parameters)
-! Say_Date                display date at each push, pop
-! Say_When                display time at each push, pop
-! Show_Sys_Memory         display memory usage at each push, pop
-! sys_memory_ch           memory usage units (e.g., 'kb')
-! sys_memory_convert      memory usage units converted to kb
+! Say_Date                Display date at each push, pop
+! Say_When                Display time at each push, pop
+! Show_Sys_Memory         Display memory usage at each push, pop
+! Sys_memory_ch           Memory usage units (e.g., 'kb')
+! Sys_memory_convert      Memory usage units converted to kb
 !
 !     (data type)
-! Stack_t                 the stack type
+! Stack_t                 The stack type
 
 !     (subroutines and functions)
 ! Deallocate_Stack        Recover storage from stack array
-! Dump_Stack              print walkback
-! Get_Frame               get an item from within the stack without altering it
-! Pop_Stack               pop top frame off stack
-! Push_Stack              push new frame onto stack
-! Stack_Depth             get stack depth
-! Top_Stack               get the top frame from the stack without altering it
+! Dump_Stack              Print walkback
+! Get_Frame               Get an item from within the stack without altering it
+! Pop_Stack               Pop top frame off stack
+! Invert_Stack            Invert the order of frames in the stack stack
+! Push_Stack              Push new frame onto stack
+! Stack_Depth             Get stack depth
+! Top_Stack               Get the top frame from the stack without altering it
 
 ! === (end of toc) ===
   implicit none
@@ -43,7 +45,7 @@ module Call_Stack_m
 
   public :: Stack_T
   public :: Deallocate_Stack, Dump_Stack, Get_Frame
-  public :: Pop_Stack, Push_Stack, Stack_Depth, Top_Stack
+  public :: Invert_Stack, Pop_Stack, Push_Stack, Stack_Depth, Top_Stack
   public :: Show_Sys_Memory, sys_memory_ch, sys_memory_convert, sys_memory_max
 
   type :: Stack_t
@@ -236,12 +238,46 @@ contains ! ====     Public Procedures     ==============================
 
   end function Get_Frame
 
+! ----------------------------------------------------  Invert_Stack  -----
+  subroutine Invert_Stack
+    ! Invert the stack; i.e. topmost now bottommost
+    ! 2nd from top now 2nd from bottom, etc.
+    ! Method: 
+    ! One-by-one pop items from input Stack, each time pushing them onto
+    ! inverted stack
+    ! Internal variables
+    integer                               :: i, n, status
+    type(stack_t)                         :: Frame
+    type(stack_t), allocatable            :: InvertStack(:)
+    ! Executable
+    if ( .not. allocated(Stack) ) return
+    n = size(Stack)
+    if ( n < 2 ) return
+    allocate( InvertStack(n), stat = status )
+    if ( status /= 0 ) then
+      print *, 'Unable to allocate InvertStack'
+      return
+    endif
+    do i=1, n
+      call Pop_Stack( Frame=Frame, silent=.true. )
+      InvertStack(i) = Frame
+    enddo
+    call Deallocate_Stack
+    allocate( Stack(n), stat = status )
+    if ( status /= 0 ) then
+      print *, 'Unable to re-allocate Stack in Invert_Stack'
+      return
+    endif
+    Stack = InvertStack
+    deallocate( InvertStack, stat = status )
+  end subroutine Invert_Stack
+
 ! ----------------------------------------------------  Pop_Stack  -----
   subroutine Pop_Stack ( Before, Where, Frame, Index, String, StringIndex, &
     & Silent, ShowTime, SysSize )
     ! Pop the stack.  If Before or Where are present, dump the top frame first.
 
-    use Allocate_Deallocate, only: NoBytesAllocated
+    ! use Allocate_Deallocate, only: NoBytesAllocated
     use Output_m, only: FlushOutputLines, Newline, Output
     use HighOutput, only: DumpSize
     use Memory_m, only: Memory_Used
@@ -378,7 +414,7 @@ contains ! ====     Public Procedures     ==============================
 ! -------------------------------------------------  Push_Stack_I  -----
   subroutine Push_Stack_I ( Name, Root, Index, String, Before, Where, Advance )
     ! Push the stack.  If Before or Where are present, dump the new top frame.
-    use Allocate_Deallocate, only: Test_Allocate, NoBytesAllocated
+    ! use Allocate_Deallocate, only: Test_Allocate, NoBytesAllocated
     use HighOutput, only: OutputNamedValue
     use Memory_m, only: Memory_Used
     use Output_m, only: Output
@@ -410,8 +446,8 @@ contains ! ====     Public Procedures     ==============================
       elseif ( verbose ) then
         call outputnamedValue ( 'allocated stack with size', startingStackSize )
       end if
-      call test_allocate ( stat, moduleName, 'Stack', &
-        & ubounds=(/startingStackSize/), elementSize=storage_size(stack) / 8 )
+      ! call test_allocate ( stat, moduleName, 'Stack', &
+      !   & ubounds=(/startingStackSize/), elementSize=storage_size(stack) / 8 )
       stack_ptr = lbound(stack,1) - 1
     end if
     if ( stack_ptr >= ubound(stack,1) ) then
@@ -433,8 +469,8 @@ contains ! ====     Public Procedures     ==============================
       ! The increase in size will be 2*stack_ptr - size(stack) because
       ! temp_stack's allocation will be moved to stack, which will deallocate
       ! stack (without accounting for its size).
-      call test_allocate ( stat, moduleName, 'Temp_Stack', &
-        & ubounds= 2*stack_ptr - size(stack), elementSize=storage_size(stack) / 8 )
+      ! call test_allocate ( stat, moduleName, 'Temp_Stack', &
+      !   & ubounds= 2*stack_ptr - size(stack), elementSize=storage_size(stack) / 8 )
       temp_stack(:min(stack_ptr,ubound(stack,1))) = stack
       call move_alloc ( temp_stack, stack )
     end if
@@ -484,13 +520,13 @@ contains ! ====     Public Procedures     ==============================
 
 ! ----------------------------------------------------  Deallocate_Stack  -----
   subroutine Deallocate_Stack
-    use Allocate_Deallocate, only: Test_Deallocate
+    ! use Allocate_Deallocate, only: Test_Deallocate
     ! internal variables
     integer :: stat
     ! Executable
     if ( .not. allocated(stack) ) return
     deallocate ( stack, stat=stat )
-    call test_deallocate ( stat, ModuleName, 'Stack' )
+    ! call test_deallocate ( stat, ModuleName, 'Stack' )
     stack_ptr = 0
     Stack_Doublings = 0
   end subroutine Deallocate_Stack
@@ -521,6 +557,9 @@ contains ! ====     Public Procedures     ==============================
 end module Call_Stack_m
 
 ! $Log$
+! Revision 2.36  2019/08/19 22:00:48  pwagner
+! Avoid USE-ing Allocate_Deallocate due to circular dependency
+!
 ! Revision 2.35  2018/08/06 20:00:59  vsnyder
 ! Test the status Deallocate_Stack
 !
