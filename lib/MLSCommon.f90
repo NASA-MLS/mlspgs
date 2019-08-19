@@ -93,7 +93,7 @@ module MLSCommon                ! Common definitions for the MLS software
 
 !     (subroutines and functions)
 ! accessType       Converts DFACC_* <-> {l_create, l_rdwr, l_rdonly}
-! dontCrashHere    May we skip otherwise obligatory crash in named modules?
+! DontCrashHere    May we skip otherwise obligatory crash in named modules?
 ! inRange          does an argument lie within a specified range or interval
 ! is_what_ieee     is an argument a specified ieee type
 ! split_path_name  splits the input path/name into path and name
@@ -101,7 +101,7 @@ module MLSCommon                ! Common definitions for the MLS software
 ! === (start of api) ===
 ! char* accessType ( int dfacc )
 ! int accessType ( char* str )
-! log dontCrashHere( char* arge )
+! log DontCrashHere( char* arge )
 ! log inRange( int arg, Range_T range )
 ! log inRange( real arg, Interval_T range )
 ! log is_what_ieee( type_signal what, num arg )
@@ -248,6 +248,11 @@ module MLSCommon                ! Common definitions for the MLS software
   integer, public, parameter :: LineLen      = 132
   integer, public, parameter :: FileNameLen  = max(PGSd_PC_FILE_PATH_MAX, 132) ! was 132
   integer, public, parameter :: BareFNLen    = 64  ! Bare file name length (w/o path)
+
+  ! The next two used for tracking allocated memory
+  ! (The 1st is public to enable reporting finer or coarser grains)
+  !  real, save, public  :: MEMORY_UNITS = 1024. ! Report nothing smaller than KB
+  double precision, save, public :: NoBytesAllocated = 0.0d0 ! Number of MEMORY_UNITS allocated.
 
   !----------------------------------------------------------------------
   !         Undefined value
@@ -453,14 +458,14 @@ contains
   !--------------------------------------------  DontCrashHere  -----
   ! May we skip otherwise obligatory crashes in named modules?
   ! We decide on the basis of whether the module
-  logical function dontCrashHere( arg )
+  logical function DontCrashHere( arg )
     character(len=8), intent(in) :: arg
     ! Executable
-    dontCrashHere = .false.
+    DontCrashHere = .false.
     if ( len_trim(MLSNamesDontCrash ) < 1 ) return
     if ( len_trim(arg) < 1 ) return
-    dontCrashHere = index( lowercase(MLSNamesDontCrash), lowercase(trim(arg)) ) > 0
-  end function dontCrashHere
+    DontCrashHere = index( lowercase(MLSNamesDontCrash), lowercase(trim(arg)) ) > 0
+  end function DontCrashHere
 
   !--------------------------------------------  InRange  -----
   ! This family of functions returns TRUE for arg(s) within the given range
@@ -731,6 +736,9 @@ end module MLSCommon
 
 !
 ! $Log$
+! Revision 2.56  2019/08/19 21:56:39  pwagner
+! Moved NoBytesAllocated to MLSCommon from Allocate_Deallocate
+!
 ! Revision 2.55  2019/05/13 23:31:15  pwagner
 ! Introduced UndefinedIntegerValue
 !
