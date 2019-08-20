@@ -130,7 +130,7 @@ module DNWT_Module
 !       IF ( you want to return to a previous best X ) NFlag = NF_START
 !     END DO
 
-  use Ermsg_m, only: Ermsg, Ervn
+  use Ermsg_m, only: Ermsg
   use DNWT_Type, only: RK
   use Output_M, only: NewLine, Output
 
@@ -368,6 +368,14 @@ module DNWT_Module
   interface NWT; module procedure DNWT; end interface
   interface NWTA; module procedure DNWTA; end interface
   interface NWTDB; module procedure DNWTDB; end interface
+
+  ! This should be internal to DNWTDB, but as of 2 July 2019 some processors
+  ! still do not support internal procedures as specific procedures for a
+  ! generic identifier.
+
+  interface Add_To_Line
+    procedure Add_To_Line_I, Add_To_Line_L, Add_To_Line_R
+  end interface
 
 ! *****     Private data     *******************************************
 
@@ -1168,10 +1176,6 @@ contains
     character(len=132) :: Name_Line     ! For names
     character(len=132) :: Output_Line   ! For values
 
-    interface Add_To_Line
-      procedure Add_To_Line_I, Add_To_Line_L, Add_To_Line_R
-    end interface
-
     myWidth = 5
     if ( present(width) ) myWidth = max(5,min(9,width))
 
@@ -1194,112 +1198,138 @@ contains
     i = 1
     name_line = ''
     output_line = ''
-    call add_to_line ( aj%o%ajscal, 'AJSCAL' )
-    call add_to_line ( aj%o%dxmaxi, 'DXMAXI' )
-    call add_to_line ( aj%o%dxnois, 'DXNOIS' )
-    call add_to_line ( aj%o%relsf,  'RELSF' )
-    call add_to_line ( aj%o%spmini, 'SPMINI' )
-    call add_to_line ( aj%o%spstrt, 'SPSTRT' )
-    call add_to_line ( aj%o%tolxa,  'TOLXA' )
-    call add_to_line ( aj%o%tolxr,  'TOLXR' )
-    if ( i /= 1 ) call print_lines
+    call add_to_line ( aj%o%ajscal, 'AJSCAL', name_line, i, myWidth, output_Line )
+    call add_to_line ( aj%o%dxmaxi, 'DXMAXI', name_line, i, myWidth, output_Line )
+    call add_to_line ( aj%o%dxnois, 'DXNOIS', name_line, i, myWidth, output_Line )
+    call add_to_line ( aj%o%relsf,  'RELSF',  name_line, i, myWidth, output_Line )
+    call add_to_line ( aj%o%spmini, 'SPMINI', name_line, i, myWidth, output_Line )
+    call add_to_line ( aj%o%spstrt, 'SPSTRT', name_line, i, myWidth, output_Line )
+    call add_to_line ( aj%o%tolxa,  'TOLXA',  name_line, i, myWidth, output_Line )
+    call add_to_line ( aj%o%tolxr,  'TOLXR',  name_line, i, myWidth, output_Line )
+    if ( i /= 1 ) call print_lines ( name_line, output_line, i )
 
     output_line = '-----     DNWT variables     -------------------------------&
       &------------------------------------------------------------------'
     call output ( output_line(1:14*myWidth), advance='yes' )
     output_line = ''
 
-    call add_to_line ( aj%ajn,        'AJN' )
-    call add_to_line ( aj%axmax,      'AXMAX' )
-    call add_to_line ( aj%axmaxb,     'AXMAXB' )
-    call add_to_line ( aj%cait,       'CAIT' )
-    call add_to_line ( aj%cdxdxl,     'CDXDXL' )
-    call add_to_line ( aj%cgdx,       'CGDX' )
-    call add_to_line ( aj%condai,     'CONDAI' )
-    call add_to_line ( aj%diag,       'DIAG' )
-    call add_to_line ( aj%dxbad,      'DXBAD' )
-    call add_to_line ( aj%dxi,        'DXI' )
-    call add_to_line ( aj%dxinc,      'DXINC' )
-    call add_to_line ( aj%dxnbig,     'DXNBIG' )
-    call add_to_line ( aj%dxfail,     'DXFAIL' )
-    call add_to_line ( aj%dxdx,       'DXDX' )
-    call add_to_line ( aj%dxdxl,      'DXDXL' )
-    call add_to_line ( aj%dxn,        'DXN' )
-    call add_to_line ( aj%dxnl,       'DXNL' )
-    call add_to_line ( aj%fnmin,      'FNMIN' )
-    call add_to_line ( aj%fnminb,     'FNMINB' )
-    call add_to_line ( aj%fnorm,      'FNORM' )
-    call add_to_line ( aj%fnormb,     'FNORMB' )
-    call add_to_line ( aj%fnorml,     'FNORML' )
-    call add_to_line ( sqrt(aj%fnxe), 'FNXE**.5')
-    call add_to_line ( aj%frz,        'FRZ' )
-    call add_to_line ( aj%frzb,       'FRZB' )
-    call add_to_line ( aj%frzl,       'FRZL' )
-    call add_to_line ( aj%gdx,        'GDX' )
-    call add_to_line ( aj%gfac,       'GFAC' )
-    call add_to_line ( aj%gradn,      'GRADN' )
-    call add_to_line ( aj%gradnb,     'GRADNB' )
-    call add_to_line ( aj%gradnl,     'GRADNL' )
-    call add_to_line ( aj%kfail,      'KFAIL' )
-    call add_to_line ( aj%qnsq,       'QNSQ' )
-    call add_to_line ( aj%sp,         'SP ' )
-    call add_to_line ( aj%spact,      'SPACT' )
-    call add_to_line ( aj%spb,        'SPB' )
-    call add_to_line ( aj%spfac,      'SPFAC' )
-    call add_to_line ( aj%spg,        'SPG' )
-    call add_to_line ( aj%spinc,      'SPINC' )
-    call add_to_line ( aj%spl,        'SPL' )
-    call add_to_line ( aj%sq,         'SQ' )
-    call add_to_line ( aj%sqb,        'SQB' )
-    call add_to_line ( aj%sql,        'SQL' )
-    call add_to_line ( aj%sqmin,      'SQMIN' )
-    call add_to_line ( aj%sqt,        'SQT' )
-    call add_to_line ( aj%kfail,      'KFAIL' )
-    call add_to_line ( aj%big,        'BIG' )
-    call add_to_line ( aj%starting,   'STARTING' )
-    if ( i /= 1 ) call print_lines
+    call add_to_line ( aj%ajn,        'AJN',      name_line, i, myWidth, output_Line )
+    call add_to_line ( aj%axmax,      'AXMAX',    name_line, i, myWidth, output_Line )
+    call add_to_line ( aj%axmaxb,     'AXMAXB',   name_line, i, myWidth, output_Line )
+    call add_to_line ( aj%cait,       'CAIT',     name_line, i, myWidth, output_Line )
+    call add_to_line ( aj%cdxdxl,     'CDXDXL',   name_line, i, myWidth, output_Line )
+    call add_to_line ( aj%cgdx,       'CGDX',     name_line, i, myWidth, output_Line )
+    call add_to_line ( aj%condai,     'CONDAI',   name_line, i, myWidth, output_Line )
+    call add_to_line ( aj%diag,       'DIAG',     name_line, i, myWidth, output_Line )
+    call add_to_line ( aj%dxbad,      'DXBAD',    name_line, i, myWidth, output_Line )
+    call add_to_line ( aj%dxi,        'DXI',      name_line, i, myWidth, output_Line )
+    call add_to_line ( aj%dxinc,      'DXINC',    name_line, i, myWidth, output_Line )
+    call add_to_line ( aj%dxnbig,     'DXNBIG',   name_line, i, myWidth, output_Line )
+    call add_to_line ( aj%dxfail,     'DXFAIL',   name_line, i, myWidth, output_Line )
+    call add_to_line ( aj%dxdx,       'DXDX',     name_line, i, myWidth, output_Line )
+    call add_to_line ( aj%dxdxl,      'DXDXL',    name_line, i, myWidth, output_Line )
+    call add_to_line ( aj%dxn,        'DXN',      name_line, i, myWidth, output_Line )
+    call add_to_line ( aj%dxnl,       'DXNL',     name_line, i, myWidth, output_Line )
+    call add_to_line ( aj%fnmin,      'FNMIN',    name_line, i, myWidth, output_Line )
+    call add_to_line ( aj%fnminb,     'FNMINB',   name_line, i, myWidth, output_Line )
+    call add_to_line ( aj%fnorm,      'FNORM',    name_line, i, myWidth, output_Line )
+    call add_to_line ( aj%fnormb,     'FNORMB',   name_line, i, myWidth, output_Line )
+    call add_to_line ( aj%fnorml,     'FNORML',   name_line, i, myWidth, output_Line )
+    call add_to_line ( sqrt(aj%fnxe), 'FNXE**.5', name_line, i, myWidth, output_Line )
+    call add_to_line ( aj%frz,        'FRZ',      name_line, i, myWidth, output_Line )
+    call add_to_line ( aj%frzb,       'FRZB',     name_line, i, myWidth, output_Line )
+    call add_to_line ( aj%frzl,       'FRZL',     name_line, i, myWidth, output_Line )
+    call add_to_line ( aj%gdx,        'GDX',      name_line, i, myWidth, output_Line )
+    call add_to_line ( aj%gfac,       'GFAC',     name_line, i, myWidth, output_Line )
+    call add_to_line ( aj%gradn,      'GRADN',    name_line, i, myWidth, output_Line )
+    call add_to_line ( aj%gradnb,     'GRADNB',   name_line, i, myWidth, output_Line )
+    call add_to_line ( aj%gradnl,     'GRADNL',   name_line, i, myWidth, output_Line )
+    call add_to_line ( aj%kfail,      'KFAIL',    name_line, i, myWidth, output_Line )
+    call add_to_line ( aj%qnsq,       'QNSQ',     name_line, i, myWidth, output_Line )
+    call add_to_line ( aj%sp,         'SP ',      name_line, i, myWidth, output_Line )
+    call add_to_line ( aj%spact,      'SPACT',    name_line, i, myWidth, output_Line )
+    call add_to_line ( aj%spb,        'SPB',      name_line, i, myWidth, output_Line )
+    call add_to_line ( aj%spfac,      'SPFAC',    name_line, i, myWidth, output_Line )
+    call add_to_line ( aj%spg,        'SPG',      name_line, i, myWidth, output_Line )
+    call add_to_line ( aj%spinc,      'SPINC',    name_line, i, myWidth, output_Line )
+    call add_to_line ( aj%spl,        'SPL',      name_line, i, myWidth, output_Line )
+    call add_to_line ( aj%sq,         'SQ',       name_line, i, myWidth, output_Line )
+    call add_to_line ( aj%sqb,        'SQB',      name_line, i, myWidth, output_Line )
+    call add_to_line ( aj%sql,        'SQL',      name_line, i, myWidth, output_Line )
+    call add_to_line ( aj%sqmin,      'SQMIN',    name_line, i, myWidth, output_Line )
+    call add_to_line ( aj%sqt,        'SQT',      name_line, i, myWidth, output_Line )
+    call add_to_line ( aj%kfail,      'KFAIL',    name_line, i, myWidth, output_Line )
+    call add_to_line ( aj%big,        'BIG',      name_line, i, myWidth, output_Line )
+    call add_to_line ( aj%starting,   'STARTING', name_line, i, myWidth, output_Line )
+    if ( i /= 1 ) call print_lines ( name_line, output_line, i )
 
     output_line = '------------------------------------------------------------&
       &------------------------------------------------------------------'
     call output ( output_line(1:14*myWidth), advance='yes' )
 
   contains
-    subroutine Add_To_Line_R ( Value, Name )
-      real(rk), intent(in) :: Value
-      character(len=*), intent(in) :: Name
-      name_line(1+14*(i-1):10+14*(i-1)) = name
-      name_line(1+14*(i-1):10+14*(i-1)) = adjustr(name_line(1+14*(i-1):10+14*(i-1)))
-      write ( output_line(1+14*(i-1):14*i), '(es13.6)' ) value
-      i = i + 1
-      if ( i > myWidth ) call print_lines
-    end subroutine Add_To_Line_R
-    subroutine Add_To_Line_I ( Value, Name )
-      integer, intent(in) :: Value
-      character(len=*), intent(in) :: Name
-      name_line(1+14*(i-1):10+14*(i-1)) = name
-      name_line(1+14*(i-1):10+14*(i-1)) = adjustr(name_line(1+14*(i-1):10+14*(i-1)))
-      write ( output_line(1+14*(i-1):10+14*(i-1)), '(I10)' ) value
-      i = i + 1
-      if ( i > myWidth ) call print_lines
-    end subroutine Add_To_Line_I
-    subroutine Add_To_Line_L ( Value, Name )
-      logical, intent(in) :: Value
-      character(len=*), intent(in) :: Name
-      name_line(1+14*(i-1):10+14*(i-1)) = name
-      name_line(1+14*(i-1):10+14*(i-1)) = adjustr(name_line(1+14*(i-1):10+14*(i-1)))
-      write ( output_line(1+14*(i-1):1+14*(i-1)), '(L1)' ) value
-      output_line(1+14*(i-1):10+14*(i-1)) = adjustr(output_line(1+14*(i-1):10+14*(i-1)))
-      i = i + 1
-      if ( i > myWidth ) call print_lines
-    end subroutine Add_To_Line_L
-    subroutine Print_Lines
-      call output ( trim(name_line), advance='yes' )
-      call output ( trim(output_line), advance='yes' )
-      i = 1
-      name_line = ''
-      output_line = ''
-    end subroutine Print_Lines
   end subroutine DNWTDB
+
+  ! The next three subroutines ought to be internal to DNWTDB, but as of
+  ! 2 July 2019, some processors still don't support Fortran 2008.  In
+  ! Fortran 2003, internal procedures were prohibited to be specific
+  ! procedures for a generic identifier.
+
+  subroutine Add_To_Line_R ( Value, Name, Name_Line, I, MyWidth, Output_Line )
+    real(rk), intent(in) :: Value
+    character(len=*), intent(in) :: Name
+    character(len=*), intent(inout) :: Name_Line
+    integer, intent(inout) :: I
+    integer, intent(inout) :: MyWidth
+    character(len=*), intent(inout) :: Output_Line
+    name_line(1+14*(i-1):10+14*(i-1)) = name
+    name_line(1+14*(i-1):10+14*(i-1)) = adjustr(name_line(1+14*(i-1):10+14*(i-1)))
+    write ( output_line(1+14*(i-1):14*i), '(es13.6)' ) value
+    i = i + 1
+    if ( i > myWidth ) call print_lines ( name_line, output_line, i )
+  end subroutine Add_To_Line_R
+
+  subroutine Add_To_Line_I ( Value, Name, Name_Line, I, MyWidth, Output_Line )
+    integer, intent(in) :: Value
+    character(len=*), intent(in) :: Name
+    character(len=*), intent(inout) :: Name_Line
+    integer, intent(inout) :: I
+    integer, intent(inout) :: MyWidth
+    character(len=*), intent(inout) :: Output_Line
+    name_line(1+14*(i-1):10+14*(i-1)) = name
+    name_line(1+14*(i-1):10+14*(i-1)) = adjustr(name_line(1+14*(i-1):10+14*(i-1)))
+    write ( output_line(1+14*(i-1):10+14*(i-1)), '(I10)' ) value
+    i = i + 1
+    if ( i > myWidth ) call print_lines ( name_line, output_line, i )
+  end subroutine Add_To_Line_I
+
+  subroutine Add_To_Line_L ( Value, Name, Name_Line, I, MyWidth, Output_Line )
+    logical, intent(in) :: Value
+    character(len=*), intent(in) :: Name
+    character(len=*), intent(inout) :: Name_Line
+    integer, intent(inout) :: I
+    integer, intent(inout) :: MyWidth
+    character(len=*), intent(inout) :: Output_Line
+    name_line(1+14*(i-1):10+14*(i-1)) = name
+    name_line(1+14*(i-1):10+14*(i-1)) = adjustr(name_line(1+14*(i-1):10+14*(i-1)))
+    write ( output_line(1+14*(i-1):1+14*(i-1)), '(L1)' ) value
+    output_line(1+14*(i-1):10+14*(i-1)) = adjustr(output_line(1+14*(i-1):10+14*(i-1)))
+    i = i + 1
+    if ( i > myWidth ) call print_lines ( name_line, output_line, i )
+  end subroutine Add_To_Line_L
+
+  ! The next subroutine is referenced by Add_To_Line_*, and ought to be
+  ! internal to DNWTDB.
+
+  subroutine Print_Lines ( Name_Line, Output_Line, I )
+    character, intent(inout) :: Name_Line, Output_Line
+    integer, intent(out) :: I
+    call output ( trim(name_line), advance='yes' )
+    call output ( trim(output_line), advance='yes' )
+    i = 1
+    name_line = ''
+    output_line = ''
+  end subroutine Print_Lines
 
 ! ***********************************************     FlagName     *****
 
@@ -1358,6 +1388,11 @@ contains
 end module DNWT_MODULE
 
 ! $Log$
+! Revision 2.59  2019/08/20 23:52:00  vsnyder
+! Move Add_To_Line* from internal to module scope because some processors
+! (NAG in particular) do not yet support internal procedures as specific
+! procedures for a generic identifier.
+!
 ! Revision 2.58  2019/06/24 23:29:26  pwagner
 ! Updated to reflect TA-01-143
 !
