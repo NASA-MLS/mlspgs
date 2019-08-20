@@ -21,9 +21,9 @@
 % -----------------------------------------------------------------------------
 %
 \title{Summary of Retriever}
-\subtitle{wvs-050r1}
+\subtitle{wvs-050r3}
 \author{Van Snyder}
-\date{28 May 2019} 
+\date{19 August 2019} 
 \titlegraphic{\includegraphics[width=1.0in]{eos_mls_logo_onpink}}
 \begin{document}
 \sloppy
@@ -43,8 +43,8 @@
 \begin{itemize}
 \item $i$: MAF number
 \item $\b{C}$: Column scaling matrix
-\item $\b{y}_i-\b{\hat y}_i$: (Measured radiances) - (calculated radiances)
-  for the $i^{\text{th}}$ MAF
+\item $\b{y}_i-\b{\hat y}_i = -\b{f}_i$: (Measured radiances) - (calculated
+  radiances) for the $i^{\text{th}}$ MAF
 \item $\b{x}_n$: $n^{\text{th}}$: estimate of the state; $\delta\b{x} =
   \b{x}_{n+1} - \b{x}_n$; $\delta\b{\tilde x} = \b{C}^{-1} \delta \b{x}$
 \item $\b{K}$: The entire matrix of the least-squares problem; $\b{\tilde K}
@@ -60,7 +60,8 @@
 \item $\lambda$: Levenberg-Marquardt stabilization parameter
 \item $\b{R}$: Regularization matrix -- a difference operator
 \item $\mu_a$, $\mu_R$: Scalar ``intensity'' parameters
-\item $-\b{f}$: Entire right-hand-side vector of the least-squares problem
+\item $-\tilde{\b{f}}$: Entire right-hand-side vector of the least-squares
+  problem
 \end{itemize}
 \end{frame}
 %
@@ -90,14 +91,16 @@ where $n$ is initially zero.  Rearranging terms, we have
 In the case of a vector function of a vector argument, the derivative
 $f^{\,\prime}(x_n)$ is replaced by the Jacobian matrix $\b{J} =
 \frac{\partial \b{f}(\b{x}_n)}{\partial \b{x}_n}$, so equation
-(\ref{Newton}) becomes $J\,\delta \b{x} = -\b{f}(\b{x}_n)$.
+(\ref{Newton}) becomes $\b{J}\,\delta \b{x} = -\b{f}(\b{x}_n)$.
 
 When one has many more observations (values of $\b{f}$) than states for
 which to solve (values of $\b{x}_n$), one has a least-squares problem to
 solve at each iteration, instead of an equation.
 
-If the least-squares problem is poorly conditioned, as it is in our case,
-one needs to add extra constraints to make a solution tractable.
+If the radiative transfer problem is strongly nonlinear, or the
+least-squares problem is poorly conditioned, or has a large residual, one
+needs to add extra constraints to make a solution tractable.
+
 \end{frame}
 %
 % ----------------------------------------------------------------------------
@@ -107,17 +110,21 @@ In broad outline, the least-squares problem to be solved in each Newton
 iteration consists of four parts:
 \begin{equation}\label{four}
  \begin{split}
-   \b{J} \delta \b{x}         &\simeq - \b{f} \\
+   \b{W} \b{J} \delta \b{x}   &\simeq - \b{W} \b{f} \\
    \b{F} \b{x}_{n+1}          &\simeq \b{F\, a} \\
    \b{R} \b{x}_{n+1}          &\simeq 0 \\
    \lambda \b{I} \delta \b{x} &\simeq 0
   \end{split}
 \end{equation}
+\vspace*{-10pt}
 \begin{itemize}
-\item The first part you know already
-\item The second part is ``The solution should approximate the a~priori''
+\item The first part is the basic Newton iteration, scaled by the Cholesky
+   factor of the inverse of the measurement covariance
+\item The second part is ``The solution should approximate the apriori
+   $\b{a}$, for which $\b{F}$ is the Cholesky factor of the inverse of its
+   covariance''
 \item The third part is ``The solution has a particular functional form''
-  (this is called \emph{regularization})
+  (this is called \emph{Tikhonov regularization})
 \item The fourth part is ``The Jacobian is a good linear approximation on
   a scale given by $\lambda^{-1}$'' (this is known as
   \emph{Levenberg-Marquardt stabilization}).
@@ -133,7 +140,7 @@ $\delta\b{x}$.  Re-writing the second and third relations, we have
 
 \begin{equation*}
  \begin{split}
-   \b{J}\, \delta \b{x}                  &\simeq - \b{f} \\
+   \b{W} \b{J}\, \delta \b{x}            &\simeq - \b{W} \b{f} \\
    \b{F}\, \b{x}_{n+1} - \b{F}\, \b{x}_n &\simeq \b{F\, a} - \b{F}\, \b{x}_n \\
    \b{R}\, \b{x}_{n+1} - \b{R}\, \b{x}_n &\simeq - \b{R}\, \b{x}_n \\
    \lambda \b{I}\, \delta\, \b{x}        &\simeq 0
@@ -144,7 +151,7 @@ or
 
 \begin{equation*}
 \left[ \begin{array}{l}
-  \b{J} \\
+  \b{W} \b{J} \\
   \b{F} \\
   \b{R} \\
   \lambda \b{I}\\
@@ -152,11 +159,11 @@ or
 \simeq
 \left[
 \begin{array}{l}
-  - \b{f} \\
+  - \b{W} \b{f} \\
   \b{F}\, ( \b{a} - \b{x}_n) \\
   - \b{R}\, \b{x}_n \\
   0\\
-\end{array} \right]
+\end{array} \right] = -\tilde{\b{f}}
 \end{equation*}
 
 Putting these all together, weighting them, scaling, ... we have ...
@@ -187,11 +194,12 @@ enough''.  In detail:
                           \mu_a \b{F}\, ( \b{a} - \b{x}_n ) \\
                           -\mu_R \b{R} \, \b{x}_n \\
                           \b{0}
- \end{array} \right ] = -\b{f}
+ \end{array} \right ] = -\tilde{\b{f}}
 \end{equation*}
 
-where $\b{\tilde K} = \b{K\,C}$ and $\delta \b{\tilde x} = \b{C}^{-1}
-\delta \b{x}$.
+where $\b{\tilde K} = \b{K\,C}$, $\delta \b{\tilde x} = \b{C}^{-1} \delta
+\b{x}$, and $\mu_a$ and $\mu_R$ are empirical diagonal matrix scale
+factors.
 
 \end{frame}
 %
@@ -202,21 +210,22 @@ After multiplying by $\b{\tilde K}^T$ to form normal equations, this becomes:
 \begin{equation*}
 \begin{split}
 %\begin{array}{ll}
-  \b{\tilde K}^T \b{\tilde K} \delta\b{\tilde x} &= -\b{\tilde K}^T \b{f} =
+  \b{\tilde K}^T \b{\tilde K} \delta\b{\tilde x}
+   &= -\b{\tilde K}^T \tilde{\b{f}} =
   \b{C}^T \b{K}^T \b{K} \b{C} \; \b{C}^{-1} \delta \b{x} = \\
    &= \b{C}^T \left [ \Sigma_i \b{J}_i^T \b{S}_{{\epsilon}_i}^{-1} \b{J}_i +
    \mu_a^2 \b{S}_a^{-1} + \mu_R^2 \b{R}^T \b{R} + \lambda^2 \b{I} \right ] \b{C} \,
    \b{C}^{-1} \delta \b{x}= \\
-  &= -\b{C}^T \b{K}^T \b{f} =\\
+  &= -\b{C}^T \b{K}^T \tilde{\b{f}} =\\
   &= \b{C}^T \left [ \Sigma_i \b{J}_i^T \b{S}_{{\epsilon}_i}^{-1}
      (\b{y}_i-\b{\hat y}_i) + \mu_a^2 \b{S}_a^{-1} ( \b{a}-\b{x}_n ) -
-     \mu_R^2 \b{R}^T \b{R} \b{x}_n
+     \mu_R^2 \b{R}^T \b{R}\, \b{x}_n
    \right ]
 \end{split}
 %\end{array}
 \end{equation*}
-where $\b{C}$ is chosen either to minimize the condition number of
-$\b{\tilde K}^T \b{\tilde K}$ or to make the expected errors in
+where $\b{C}$ is chosen either to minimize $\kappa_2$ the condition number
+of $\b{\tilde K}^T \b{\tilde K}$ or to make the expected errors in
 $\delta\b{x}$ roughly the same.
 
 Finally
@@ -269,10 +278,11 @@ Alternatives are
 \small
 \begin{itemize}
 \item In the left-hand side of the normal equations $\b{\tilde K}^T
-  \b{\tilde K} \delta \b{\tilde x} = -\b{\tilde K}^T \b{f}$, the matrix
-  $\b{N} = \b{\tilde K}^T \b{\tilde K}$ is formed by computing the inner
-  product of each column of $\b{\tilde K}$ with every other column.  That
-  is, $\b{N}_{ij} = \Sigma_{k=1}^m \b{\tilde K}_{ik} \b{\tilde K}_{jk}$
+  \b{\tilde K} \delta \b{\tilde x} = -\b{\tilde K}^T \tilde{\b{f}}$, the
+  matrix $\b{N} = \b{\tilde K}^T \b{\tilde K}$ is formed by computing the
+  inner product of each column of $\b{\tilde K}$ with every other column. 
+  That is, $\b{N}_{ij} = \Sigma_{k=1}^m \b{\tilde K}_{ik} \b{\tilde
+  K}_{jk}$
 
 \item Accumulating normal equations little-by-little amounts to nothing
   more than running the summation for $k$ from $1$ to $m_1$ for all $i$
@@ -280,12 +290,12 @@ Alternatives are
   changing the order of addition.
 
 \item A similar perspective applies in forming the right-hand-side vector
-  $-\b{\tilde K}^T \b{f}$ little-by-little.
+  $-\b{\tilde K}^T \tilde{\b{f}}$ little-by-little.
 
 \item Accumulating normal equations little-by-little allows to compute a
   piece of the Jacobian matrix, accumulate it into the normal equations,
   and discard it.  This reduces our storage requirements by a factor of
-  10~-- from 10--40~GB to less than 4~GB.
+  at least 10~-- from 10--40~GB to less than 4~GB.
 
 \item Since the Jacobian matrix has more than twice as many rows as
   columns (actually, typically 100 times more rows than columns), we
@@ -345,6 +355,9 @@ appropriate representation as output, is provided.
 %%% End: 
 
 % $Log$
+% Revision 1.4  2019/05/31 17:17:05  pwagner
+% A workaround for building beamerclass
+%
 % Revision 1.3  2019/05/29 01:49:36  vsnyder
 % Improve development of least-squares problem
 %
