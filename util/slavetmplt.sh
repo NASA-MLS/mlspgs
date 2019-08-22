@@ -540,6 +540,8 @@ while [ "$more_opts" = "yes" ] ; do
        then
          mv $OPTSFILE $OPTSFILE.1
          mycp < $OPTSFILE.1 > $OPTSFILE
+         echo "Planning to use these opts" >> "$LOGFILE"
+         mycp < $OPTSFILE.1 >> "$LOGFILE"
          rm $OPTSFILE.1
        fi
        shift
@@ -721,6 +723,9 @@ do_the_call $all_my_opts
 Exit_With_Status 0
 
 # $Log$
+# Revision 1.47  2019/04/18 16:19:09  pwagner
+# May evaluate variables in opts file if USEOPTSENV is set
+#
 # Revision 1.46  2018/02/28 21:05:30  pwagner
 # This version handles both --tk and --ntk cases
 #
