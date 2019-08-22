@@ -757,6 +757,8 @@ Begin Fill
 
 ; ---------------------------------------------- Perhaps do fancy stuff ----- 
 !ifelse($1,{GPH}, {
+!ifdef(flagSkipGPHNeedsFancyThings, {},
+{
   ;; Do fancy things to make the GPH agree with the temperature
   Fill, quantity=tempVectorState.!theQuantity, method=hydrostatic, $
     refGPHQuantity=standardProducts.refGPH, temperatureQuantity=tempVectorState.temperature_hr
@@ -776,6 +778,7 @@ Begin Fill
 ;; and make this the new standardPrecision
   Fill, quantity=standardPrecision.!theQuantity, method=vector, $
     sourceQuantity=tempVectorPrecision.!theQuantity
+})    
 ;; Do we correct for the Geoid offset w.r.t the reference ellipsoid?
 !ifdef(flagCorrectGPHForGeoid, {
 end Fill
@@ -1232,6 +1235,9 @@ Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, $
 })})
 
 ; $Log$
+; Revision 1.159  2017/12/01 18:21:35  pwagner
+; Overwrite GPH standardPrecision whenever it is recalculated (before, it was always apriori)
+;
 ; Revision 1.158  2017/11/17 17:34:12  pwagner
 ; May prefine macors HiResStdProds, flagSkipPTrop
 ;
