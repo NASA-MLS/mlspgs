@@ -157,29 +157,12 @@ end ReadApriori
 
 ; Initialize the run-time Booleans and flags
 begin MergeGrids
-  meteorologyType: Boolean, label="none"     ;; The kind of meteorology used
+  meteorologyType: Boolean, label="geos5_9-nc4"  ;; The kind of meteorology used
   merraMeteorology: Boolean, formula="false"
-  geos59Meteorology: Boolean, formula="false"
+  geos59Meteorology: Boolean, formula="true"
   geos5Meteorology: Boolean, formula="false"
 end MergeGrids
 
-
-; (3) Try to read them as geos5_9 netcdf4/hdf5; will return "empty" if unsuccessful
-begin ReadApriori
-  ChangeSettings, /silent
-  readGriddedData, grid=gmaoPressureInput1, origin=geos5_7, field='PL', $
-    dimList='XDim,YDim,Height,Time' , date='00:00:00' !geos5PFile1
-  ChangeSettings, silent=false
-end ReadApriori
-
-; test
-begin MergeGrids
-  isGridEmpty, grid=gmaoPressureInput1, Boolean=geos59Meteorology
-  Reevaluate, Boolean=geos59Meteorology, formula="not geos59Meteorology"
-  Skip, formula="not geos59Meteorology"
-  Reevaluate, Boolean=meteorologyType, label="geos5_9-nc4"
-  Delete, grid=gmaoPressureInput1
-end MergeGrids
 !define(setgeos59dates,{!dnl
 !ProcessParVal(g59date,$@)!dnl
 })
@@ -283,3 +266,6 @@ begin MergeGrids
 end MergeGrids
 
 ;$Log$
+;Revision 1.1  2019/08/16 21:55:50  pwagner
+;First commit
+;
