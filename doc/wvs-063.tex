@@ -21,9 +21,9 @@
 % -----------------------------------------------------------------------------
 %
 \title{Summary of Full Forward Model}
-\subtitle{wvs-063r2}
+\subtitle{wvs-063r3}
 \author{Van Snyder}
-\date{18 June 2019}
+\date{28 August 2019}
 \titlegraphic{\includegraphics[width=1.0in]{eos_mls_logo_onpink}}
 
 \begin{document}
@@ -118,18 +118,20 @@ wvs-151.
 \newframe{Data structures --- Configuration and {\tt Grids\_T}}
 
 The {\tt ForwardModelConfig\_T} structure specifies for which species and
-signals the forward model is to be evaluated, whether line-by-line (LBL) or
-pre-frequency-averaged (PFA) calculations are to be done for specified species
-and signals, and numerous options, such as whether temperature derivatives are
-to be evaluated.  Part of this data structure is created when the L2CF is
-analyzed, and part of it is created and destroyed upon each invocation of and
-return from the full forward model.  The latter part isn't used by other
-models, such as the quasi-linear model, the cloud model, the scan model, \dots.
+signals the forward model is to be evaluated, whether line-by-line (LBL)
+or pre-frequency-averaged (PFA) calculations are to be done for specified
+species and signals, and numerous options, such as whether temperature
+derivatives are to be evaluated.  Part of this data structure is created
+when the L2CF is analyzed, and part of it is created and destroyed upon
+each invocation of and return from the full forward model.  The latter
+part isn't used by other models, such as the quasi-linear model, the cloud
+model, the scan model, \dots.
 
-The {\tt Grids\_T} structure represents coordinates ($f,\,\zeta$ and $\phi$)
-and values on grids for one or more species from the state or extra vectors. 
-The coordinate grids, and indeed whether a dimension is present, can be
-different for each species, so this is a complicated structure.
+The {\tt Grids\_T} structure represents coordinates ($f,\,\zeta$, $\phi$,
+and across the viewing plane, for the magnetic field) and values on grids
+for one or more species from the state or extra vectors.  The coordinate
+grids, and indeed whether a dimension is present, can be different for
+each species, so this is a complicated structure.
 
 \end{frame}
 %
@@ -138,13 +140,14 @@ different for each species, so this is a complicated structure.
 \newframe{Data structures --- {\tt Grids\_T}}
 
 \begin{centering}
-\bfseries\large Same structure for $f$, $\phi$, $\zeta$ grids, and data
-values\\
+\bfseries\large Same structure for $f$, $\phi$, $\zeta$, \emph{cross}
+grids, and data values\\
 \includegraphics[width=2.15in,height=3.15in,angle=270]{wvs-063-grids_t}\\
 \end{centering}
 
-2-d or 3-d arrays of data values are stored in column-major order in a 1-d
-array.  Explicit multidimensional subscript calculations are necessary.
+2-, 3-, or 4-d arrays of data values are stored in column-major order ($f
+\times \zeta \times \phi\, \times\,$\emph{cross}) in a 1-d array.  Explicit
+multidimensional subscript calculations are necessary.
 
 \end{frame}
 %
@@ -240,13 +243,20 @@ frequencies needed for the current pointing
 \dots
 \begin{enumerate}
 \setcounter{enumi}{7}
-\item Interpolates mixing ratios from {\tt Grids\_T} to the line-of-sight path
-giving $f^k_i$, for species that do not depend upon frequency.
-\item Calls the internal subroutine {\tt Frequency\_Loop}, separately for LBL
-and PFA, to do the radiative transfer
+
+\item Interpolates mixing ratios from {\tt Grids\_T} to the line-of-sight
+path giving $f^k_i$, for species that do not depend upon frequency.
+
+\item Calls the internal subroutine {\tt Frequency\_Loop}, once for LBL
+(if there are any LBL species) and once for PFA (if there are any PFA
+species), to do the radiative transfer
+
 \item Combines LBL and PFA results
-\item Either does frequency averaging using the filter shapes, or just stores
-the result of monochromatic or pure PFA (no LBL molecules) calculations.
+
+\item Either does frequency averaging using the filter shapes, or just
+stores the result of monochromatic or pure PFA (no LBL molecules)
+calculations.
+
 \end{enumerate}
 
 \end{frame}
@@ -315,7 +325,7 @@ lines (see wvs-048).\\[1pt]
 %
 % -----------------------------------------------------------------------------
 %
-\newframe{SLAbs preparation}
+\newframe{SLAbs Preparation}
 
 SLAbs (Single Line Absorption) preparation consists of filling the structures
 allocated by {\tt AllocateSlabs} with values that depend upon the spectroscopic
@@ -325,9 +335,9 @@ frequency.  This is ultimately done either by {\tt Slabs\_Prep} or {\tt
 Slabs\_Prep\_dT}, depending upon whether temperature derivatives are
 requested.  The computed quantities are
 \begin{itemize}
-\item $\nu_{0_s}$, the pressure- and doppler-shifted line center,
+\item $\nu_{0_s}$, the pressure- and doppler-shifted line center (MHz),
 \item $x_1$, the Doppler half-width (MHz),
-\item $y$, collision width / Doppler half-width,
+\item $y$, collision width / Doppler half-width (MHz),
 \item $y_i$, interference contribution,
 \item {\tt Slabs1}, frequency-independent part of {\tt Slabs},
 \item $\frac{\text{d {\tt Slabs1}}}{\text{d} \nu_0}$,
@@ -350,25 +360,36 @@ calculations). The steps for each frequency are
 \small
 \begin{enumerate}
 \itemsep 0pt
-\item Interpolate mixing ratios from {\tt Grids\_T} to the line-of-sight path
-giving $f^k_i$, for species (extinction) that depend upon frequency.
-\item Evaluate $\beta^k_i$ and $\alpha_i$ for each species $k$ and each point
-$i$ on the coarse path, and $\Delta\delta_{i \rightarrow i-1}$ for each layer
-using a rectangular quadrature formula.
+
+\item Interpolate mixing ratios from {\tt Grids\_T} to the line-of-sight
+path giving $f^k_i$, for species (extinction) that depend upon frequency.
+
+\item Evaluate $\beta^k_i$ and $\alpha_i = \sum_k f^k_i \beta^k_i$ for
+each species $k$ and each point $i$ on the coarse path, and
+$\Delta\delta_{i \rightarrow i-1}$ for each layer using a rectangular
+quadrature formula.
+
 \item Call {\tt Path\_Contrib} to determine where GL is needed, using
 $\Delta\tau_i$.
-\item Where GL is not needed, replace $\Delta\delta_{i \rightarrow i-1}$ by a
-trapezoidal estimate.
-\item Evaluate $\beta^k_i$ and $\alpha_i$ for GL, and $\Delta\delta_{i \rightarrow i-1}$
-using GL, where necessary.
-\item Compute $\tau_i = \exp\left(-\sum_{j=2}^i \Delta\delta_{j \rightarrow
-j-1}\right) \approx \exp \left( -\int_{\zeta_1}^{\zeta_i} \alpha(\zeta) \,
-\text{d} \zeta \right)$.
+
+\item Where GL is not needed, replace $\Delta\delta_{i \rightarrow i-1}$
+by a trapezoidal estimate.
+
+\item Evaluate $\beta^k_i$ and $\alpha_i$ for GL, and $\Delta\delta_{i
+\rightarrow i-1}$ using GL, where necessary.
+
+\item Compute $\tau_i = \exp\left(-\sum_{j=2}^i \Delta\delta_{j
+\rightarrow j-1}\right) \approx \exp \left( -\int_{\zeta_1}^{\zeta_i}
+\alpha(\zeta) \, \text{d} \zeta \right)$.
+
 \item Compute radiance $I = \sum_{i \in \text{layers}} \Delta B_i \tau_i$,
 where $B_i = \frac{h \nu}{k \left(\exp\left(\frac{h \nu}{k
 T_i}\right)-1\right)}$ is the Planck function.
-\item Compute derivatives $\frac{\partial I}{\partial T_i}$ and $\frac{\partial
-I}{\partial f^k_i}$ ($f^k_i$ is mixing ratio for $k^\text{th}$ species).
+
+\item Compute derivatives $\frac{\partial I}{\partial T_i}$ and
+$\frac{\partial I}{\partial f^k_i}$ ($f^k_i$ is mixing ratio for
+$k^\text{th}$ species).
+
 \end{enumerate}
 
 \end{frame}
@@ -402,9 +423,9 @@ $i^{\text{th}}$ layer.
 
 \small
 The incremental optical depth $\Delta\delta_{i \rightarrow i-1} =
-\int_{s_i}^{s_{i-1}} \alpha_i \text{d} s$.  The contribution from the $k^\text{th}$ species
-is $\Delta\delta^k_{i \rightarrow i-1} =
-\int_{s_i}^{s_{i-1}} f^k_i(s) \beta^k_i \text{d} s$.
+\int_{s_i}^{s_{i-1}} \alpha_i\, \text{d} s$.  The contribution from the
+$k^\text{th}$ species is $\Delta\delta^k_{i \rightarrow i-1} =
+\int_{s_i}^{s_{i-1}} f^k_i(s) \beta^k_i\, \text{d} s$.
 
 Where GL is needed, these are computed in $\zeta$ coordinates, \emph{viz.}
 $\Delta\delta_{i \rightarrow i-1}
@@ -425,11 +446,11 @@ $\frac{\text{d}s}{\text{d}h} = \frac{h}{\sqrt{h^2-h_t^2}}$, which is singular
 at the tangent point $h = h_t$; this is partially canceled using the
 rectangular estimate:\\
 $\int_{\zeta_i}^{\zeta_{i-1}} G(\zeta) \frac{\text{d}s}{\text{d}h}
-\frac{\text{d}h}{\text{d}\zeta} \text{d} \zeta =
+\frac{\text{d}h}{\text{d}\zeta}\, \text{d} \zeta =
 G(\zeta_i) \int_{\zeta_i}^{\zeta_{i-1}} \frac{\text{d}s}{\text{d}h}
-\frac{\text{d}h}{\text{d}\zeta} \text{d} \zeta +
+\frac{\text{d}h}{\text{d}\zeta}\, \text{d} \zeta +
 \int_{\zeta_i}^{\zeta_{i-1}} [G(\zeta)-G(\zeta_i) \frac{\text{d}s}{\text{d}h}
-\frac{\text{d}h}{\text{d}\zeta} \text{d} \zeta$.\\
+\frac{\text{d}h}{\text{d}\zeta}\, \text{d} \zeta$.\\
 The first integral on the right is just $\Delta s_{i \rightarrow i-1}$, so the
 first term on the right is the rectangular estimate.  $G(\zeta)-G(\zeta_i) = 0$
 for $\zeta = \zeta_i$, which cancels the singularity in
@@ -498,9 +519,11 @@ Then it uses {\tt Freq\_Avg\_Avg} to fit the radiances or derivatives with a
 spline and then integrate the spline using Simpson's rule or the Newton-Cotes
 3/8 rule.
 
-The subroutine {\tt Freq\_Avg\_DACS} uses the Math77 subroutine {\tt DTCST} to
-convolve DACS radiances or derivatives with the filter, using a cosine-sine
-transform.
+The subroutine {\tt Freq\_Avg\_DACS} uses the Math77 subroutine {\tt
+DTCST} to convolve DACS radiances or derivatives with the filter, using a
+Fourier cosine-sine transform. More modern software, e.g., {\tt FFTW},
+would be faster, but the transforms are small, and {\tt mlsl2} doesn't
+spend much time here.
 
 \end{frame}
 %
@@ -683,6 +706,9 @@ $\zeta_{\text{min}}$]
 %%% End: 
 
 % $Log$
+% Revision 1.4  2019/08/26 22:09:46  vsnyder
+% Correct the date on the title page
+%
 % Revision 1.3  2019/05/31 17:17:21  pwagner
 % A workaround for building beamerclass
 %
