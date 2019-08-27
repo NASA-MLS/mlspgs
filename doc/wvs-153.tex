@@ -1,0 +1,214 @@
+\documentclass[11pt]{article}
+\usepackage{alltt}
+\usepackage[fleqn]{amsmath}
+\usepackage{floatflt}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage[strings]{underscore}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9in
+
+\newcommand{\docname}{wvs-153}
+\newcommand{\docdate}{26 August 2019}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+   
+\usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
+
+\renewcommand\d{\text{d}}
+\newcommand\T{\mathcal{T}}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\bf\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\bf\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>MLS group\\
+Subject: \>Derivation of block Cholesky factorization\\
+From: \>Van Snyder\\
+%Reference: \\
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+
+Matrix arithmetic in {\tt mlsl2} uses a two-level representation. At the
+top level, the matrix is composed of blocks. At the bottom level there are
+four representations of blocks: absent, banded, sparse, or dense.
+
+Cholesky factorization can be organized to exploit this representation. In
+particular, absent blocks can be exploited to reduce cost.
+
+Suppose $\mathbf{A}$ is symmetric and positive definite.  Regard
+$\mathbf{A} = (A_{ij})$ and its upper-triangular Cholesky factor
+$\mathbf{U} = (U_{ij})$ as $N \times N$ matrices with square diagonal
+blocks.  By equating $(i,j)$ blocks in the equation $\mathbf{A} =
+\mathbf{U^T} \mathbf{U}$ with $i \leq j$, it follows that
+
+\begin{equation*}
+ A_{ij} = \sum_{k=1}^i U_{ki}^T U_{kj}
+\end{equation*}
+Define
+\begin{equation*}
+S_{ij} = A_{ij} - \sum_{k=1}^{i-1} U_{ki}^T U_{kj}
+       = A_{ij} - \sum_{k=1}^i U_{ki}^T U_{kj} + U_{ii}^T U_{ij}
+       = U_{ii}^T U_{ij}
+\end{equation*}
+
+Rearranging, we have the following algorithm:
+
+{\bf do} $i = 1, N$\\
+\hspace*{0.25in} $S_{ii}= A_{ii} - \sum_{k=1}^{i-1} U_{ki}^T U_{ki}$\\
+\hspace*{0.25in} $U_{ii} = $ Cholesky factor of $S_{ii}$\\
+\hspace*{0.25in} $A_{ii} = U_{ii}$ if you want A factored in-place\\
+\hspace*{0.25in} {\bf do} $j = i+1, N$\\
+\hspace*{0.5in}    $S_{ij}= A_{ij} - \sum_{k=1}^{i-1} U_{ki}^T U_{kj}$\\
+\hspace*{0.5in}    solve $U_{ii}^T U_{ij} = S_{ij}$ for $U_{ij}$\\
+\hspace*{0.5in}    $A_{ij} = U_{ij}$ if you want A factored in-place\\
+\hspace*{0.25in} {\bf end do} ! j\\
+{\bf end do} ! i
+
+Cholesky factorization of a sparse matrix $\mathbf{A}$ might unnecessarily
+produce nonzero elements of the factors. This can be avoided by permuting
+the rows and columns of $\mathbf{A}$.
+
+Consider the sparse symmetric positive-definite matrix
+
+\begin{equation*}
+\mathbf{A} = \left[ \begin{array}{rrrr}
+4 & -1 & -1 & -1 \\
+-1 & 2 &    &    \\
+-1 &   &  2 &    \\
+-1 &   &    &  2 \\
+\end{array} \right]
+\end{equation*}
+
+for which the lower-triangular Cholesky factor (with four units of
+precision) is
+
+\begin{equation*}
+\mathbf{L_A} = \mathbf{U_A^T} = \left[ \begin{array}{rrrr}
+ 2.0000 &         &         &         \\
+-0.5000 &  1.3229 &         &         \\
+-0.5000 & -0.1890 &  1.3093 &         \\
+-0.5000 & -0.1890 & -0.2182 &  1.2910 \\
+\end{array} \right] \,.
+\end{equation*}
+
+As is seen, the lower triangular matrix $\mathbf{L_A}$ is full. The
+entries of $\mathbf{L_A}$ that were zero in $\mathbf{A}$ are called
+\emph{fill-in}.  In $\mathbf{L_A}$, the (3,2), (4,2), and (4,3) elements
+are fill-ins.
+
+If $\mathbf{A}$ is multiplied by the permutation matrix
+
+\begin{equation*}
+\mathbf{P} = \left[ \begin{array}{rrrr}
+ 0 & 1 & 0 & 0 \\
+ 0 & 0 & 1 & 0 \\
+ 0 & 0 & 0 & 1 \\
+ 1 & 0 & 0 & 0 \\
+\end{array} \right]
+\end{equation*}
+
+on the left and $\mathbf{P^T}$ on the right, the symmetric
+positive-definite matrix
+
+\begin{equation*}
+\mathbf{B} = \mathbf{P A P^T} = \left[ \begin{array}{rrrr}
+  2 &    &    & -1 \\
+    &  2 &    & -1 \\
+    &    &  2 & -1 \\
+ -1 & -1 & -1 &  4 \\
+\end{array} \right]
+\end{equation*}
+
+is obtained.
+
+The lower-triangular Cholesky factor of $\mathbf{B}$, \emph{viz.}
+
+\begin{equation*}
+\mathbf{L_B} = \left[ \begin{array}{rrrr}
+  1.4142 &         &         &         \\
+         &  1.4142 &         &         \\
+         &         &  1.4142 &         \\
+ -0.7071 & -0.7071 & -0.7071 &  1.5811 \\
+\end{array} \right]
+\end{equation*}
+
+has no fill-ins.  The factorization $\mathbf{B} = \mathbf{L_B L_B^T}$ is
+clearly preferable to $\mathbf{A} = \mathbf{L_A L_A^T}$.  The solution $x$
+of $\mathbf{A}x = b$ can be calculated by first finding the solution of
+the linear system $\mathbf{B}y = \mathbf{P}b$ and then setting $x =
+\mathbf{P^T} y$.  This is described in detail in {\bf Direct methods for
+sparse matrix solution} by Prof. Iain Duff (Rutherford Appleton
+Laboratory, Chilton, Oxfordshire, UK) and Bora U\c{c}ar (CNRS and ENS,
+Lyon, France), {\tt
+http://www.scholarpedia.org/article/Direct_methods_for_sparse_matrix_solution\#Cholesky_factorization}
+
+\vspace*{5pt}
+Finding the optimal $\mathbf{P}$ is NP-complete, but there are many heuristics to
+reduce fill-in significantly.  One example is \emph{Algorithm 836: A
+Column Approximate Minimum Degree Ordering Algorithm}, {\bf ACM
+Transactions on Mathematical Software 30}, 3 (September 2004) pp 377--380,
+for which the code is available from {\tt
+http://www.netlib.org/toms/836.gz}.
+
+\vspace*{-1pt} \label{lastpage} \end{document}
+
+% $Id$
+
+% $Log$
