@@ -53,10 +53,13 @@
 
 \title{Radiative Transfer Equation \\
 in the Full Forward Model}
+\subtitle{wvs-139r1}
 
 \author{Van Snyder}
 
-\date{7 June 2017}
+\date{26 August 2019}
+
+\titlegraphic{\includegraphics[width=1.0in]{eos_mls_logo_onpink}}
 
 \begin{document}
 
@@ -181,7 +184,7 @@ It satisfies the differential equation
 \alpha(s,\mathbf{x}(s)) = \sum_{k\neq T} f^k(s)\, \beta^k(s,T(s)) \,.
 \end{equation*}
 
-$\beta^k(s,\mathbf{x}^k(s))$ usually does not depend upon the mixing ratio
+$\beta^k(s,\mathbf{x}^k(s))$ usually does not depend upon the mixing ratio.
 $f^k(s) \in \mathbf{x}(s)$ is the mixing ratio of the $k^\text{th}$
 species, and mixing ratios do not depend upon temperature.  Therefore
 
@@ -304,7 +307,9 @@ s = \sqrt{h^2 - h_t^2}
 where $h_t$ is the geocentric tangent point height, and $h$ is the height
 at the point a disance $s$ from the tangent point.
 
-\includegraphics{wvs-139-1}
+\begin{centering}
+\includegraphics[scale=0.5]{wvs-139-1}\\
+\end{centering}
 
 \end{frame}
 
@@ -314,14 +319,19 @@ at the point a disance $s$ from the tangent point.
 
 Thereby
 
-\begin{equation*}
+\begin{equation}\label{sqrt}
 \frac{\d s}{\d h} = \frac{h}{\sqrt{h^2 - h_t^2}} \,.
-\end{equation*}
+\end{equation}
 
 Therefore, the integrand in Equation (\ref{five}) has a square-root
 singularity at the tangent point.  A square-root singularity in an
 integrand exceeds the algebraic order of a quadrature formula, thereby
 reducing its accuracy, so it should be removed.
+
+\vspace*{5pt}
+To see that the singularity exceeds the algebraic order of a quadrature
+formula, observe that the Taylor-series expansion of Equation (\ref{sqrt})
+is an infinite series, not a finite polynomial.
 
 \end{frame}
 
@@ -427,6 +437,9 @@ at each frequency.
 % $Id$
 
 % $Log$
+% Revision 1.5  2017/10/31 18:16:44  vsnyder
+% Add a graphic, some cannonball polishing
+%
 % Revision 1.4  2017/10/16 17:30:22  pwagner
 % This modification was needed; dont know why
 %
