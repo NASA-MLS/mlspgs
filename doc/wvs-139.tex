@@ -53,7 +53,7 @@
 
 \title{Radiative Transfer Equation \\
 in the Full Forward Model}
-\subtitle{wvs-139r1}
+\subtitle{wvs-139r2}
 
 \author{Van Snyder}
 
@@ -76,27 +76,48 @@ is
 
 \begin{equation}\label{one}
 \frac{\d I(s,\mathbf{x})}{\d s} + \alpha(s,\mathbf{x})\, I(s,\mathbf{x}) =
- \alpha(s,\mathbf{x})\, B(T(s))
+ \alpha(s,\mathbf{x})\, B(T(s)) \,,
 \end{equation}
 
-where $\mathbf{x}$ is the state vector.  The solution can be written
+where $I$ is radiative intensity (more simply radiance), $\mathbf{x}$ is
+the state vector, $s$ is path length, $\alpha(s,\mathbf{x})$ is the
+absorption cross section,
 
+\begin{equation*}
+B(T(s)) = \frac{h \nu}k \left( \exp \left(\frac{h \nu}{k T(s)} \right)
+ - 1 \right)^{-1}
+\end{equation*}
+
+is the Planck black-body radiation function in brightness-temperature
+units, $\nu$ is frequency, $h$ is Planck's constant, $k$ is Boltzmann's
+constant, and $T(s) \in \mathbf{x}(s)$ is temperature.
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Radiative Transfer Equation}
+
+The solution to Equation (\ref{one}) can be written
+%
 \begin{equation}\label{two}
 I(s_m,\mathbf{x}) = I(s_0,\mathbf{x})\, \mathcal{T}(s_m) +
  \int_{s_0}^{s_m} \mathcal{T}(s) \,
-  \alpha(s,\mathbf{x})\, B(T(s)) \, \d s
+  \alpha(s,\mathbf{x})\, B(T(s)) \, \d s \,,
 \end{equation}
-
-where
+%
+where $s_0$ is deep space, $s_m$ is the instrument
+position,
 %
 \begin{equation*}\begin{split}
-B(T(s)) = \,& \frac{h \nu}k \left( \exp \left(\frac{h \nu}{k T(s)} \right)
- - 1 \right)^{-1} \\
 \mathcal{T}(s) = \,& \exp \left( - \int_{s_0}^s \alpha(\sigma,\mathbf{x}) \,
- \d \sigma \right) \,,
+ \d \sigma \right), \\
+\alpha(s,\mathbf{x}(s)) = \,& \sum_{k} f^k(s)\, \beta^k(s,T(s)) \,,
 \end{split}\end{equation*}
 
-$s_0$ is deep space, and $s_m$ is the instrument position.
+$f^k(s) \in \mathbf{x}(s)$ is the mixing ratio of the $k^\text{th}$
+chemical species, and $\beta^k(s,T(s))$ is the absorption coefficient for
+that species.
 
 \end{frame}
 
@@ -120,128 +141,136 @@ I(s_m,\mathbf{x}) = I(s_0,\mathbf{x})\, \mathcal{T}(s_m) -
 
 which is then integrated by parts giving
 
-\begin{equation*}
+\begin{equation}\label{three}
 I(s_m,\mathbf{x}) = \left( I(s_0,\mathbf{x}) - B(s_m) \right) \,
  \mathcal{T}(s_m) +
   \int_{s_0}^{s_m} \mathcal{T}(s) \frac{\d B(T(s))}{\d s} \, \d s \,.
-\end{equation*}
+\end{equation}
 
 These transformations do not appear to be necessary; they eliminate one
 multiply in the evaluation of the integrand in Equation (\ref{two}), which
-is replaced by a subtract to approximate $\frac{\d B(T(s))}{\d s}$.
+is replaced by two subtractions, one of which approximates $\frac{\d
+B(T(s))}{\d s}$ inaccurately.
 
 \end{frame}
 
 % -----------------------------------------------------------------------------
 
-\newframe{Derivatives of the Radiative Transfer Equation}
+\newframe{Derivatives of the Radiative Transfer Equation (1)}
 
-To solve for $\mathbf{x}$ using a Newton method, derivatives of
-$I(s_m,\mathbf{x})$ with respect to $\mathbf{x}$ are needed.  These can be
-gotten by differentiating Equation (\ref{one}) with respect to elements of
-$\mathbf{x}(s)$:
+To solve for $\mathbf{x}$ using a Newton method (see wvs-050), derivatives
+of $I(s_m,\mathbf{x})$ with respect to $\mathbf{x}$ are needed.  These can
+be gotten by differentiating Equation (\ref{one}) with respect to elements
+of $\mathbf{x}(s)$, which after re-arranging becomes
 
-\begin{equation}\label{three}
-\frac{\d I^\prime_k(s)}{\d s} + \alpha(s,\mathbf{x}(s))\, I^\prime_k(s) =
- R(s,\mathbf{x}(s))
+\begin{equation}\label{four}
+\frac{\d I_{x^\mu}(s)}{\d s} + \alpha(s,\mathbf{x}(s))\,
+ I_{x^\mu}(s) = R(s,\mathbf{x}(s)) \,,
 \end{equation}
 
 where
 
 \begin{equation*}
-I^\prime_k(s) = \frac{\partial I(s,\mathbf{x}(s))}{\partial x_k(s)}
+I_{x^\mu}(s) = \frac{\partial I(s,\mathbf{x}(s))}{\partial x^\mu(s)} \,,
 \end{equation*}
 
-and
+$x^\mu(s) \in \mathbf{x}(s)$ (either $f^k(s)$ or $T(s)$), and
 
 \begin{equation*}
 R(s,\mathbf{x}(s)) =
- \frac{\partial \alpha(s,\mathbf{x}(s))}{\partial x_k(s)}
+ \frac{\partial \alpha(s,\mathbf{x}(s))}{\partial x^\mu(s)}
  \left( B(T(s)) - I(s,\mathbf{x}) \right) +
- \alpha(s,\mathbf{x}(s)) \frac{\partial B(T(s))}{\partial x_k(s)} \,.
+ \alpha(s,\mathbf{x}(s)) \frac{\partial B(T(s))}{\partial x^\mu(s)} \,.
 \end{equation*}
 
 \end{frame}
 
 % -----------------------------------------------------------------------------
 
-\newframe{Derivatives of the Radiative Transfer Equation}
+\newframe{Derivatives of the Radiative Transfer Equation (2)}
 
 $B(T(s))$ depends upon frequency and temperature, but not any mixing ratio.
-It satisfies the differential equation
-
-\begin{equation*}
-\frac{\text{d} B(T(s))}{\text{d} T(s)} =
- \frac{B(T(s))}{T(s)^2} \left( \frac{h\nu}k + B(T(s)) \right)\,.
-\end{equation*}
-
-\begin{equation*}
-\frac{\partial B(T(s))}{\partial x^k(s)} = 0 \text{ if }
- x^k(s) \text{ is not } T(s)\,.
-\end{equation*}
-
-\begin{equation*}
-\alpha(s,\mathbf{x}(s)) = \sum_{k\neq T} f^k(s)\, \beta^k(s,T(s)) \,.
-\end{equation*}
-
-$\beta^k(s,\mathbf{x}^k(s))$ usually does not depend upon the mixing ratio.
-$f^k(s) \in \mathbf{x}(s)$ is the mixing ratio of the $k^\text{th}$
-species, and mixing ratios do not depend upon temperature.  Therefore
-
+Its derivatives are
+%
+\begin{equation*}\begin{split}
+\frac{\text{d} B(T(s))}{\text{d} T(s)} = \,&
+ \frac{B(T(s))}{T(s)^2} \left( \frac{h\nu}k + B(T(s)) \right)\, \text{and}
+ \\
+\frac{\partial B(T(s))}{\partial f^k} = \,& 0\,.
+\end{split}\end{equation*}
+%
+Remember that  $\alpha(s,\mathbf{x}(s)) = \sum_{k} f^k(s)\,
+\beta^k(s,T(s))$, observe that $\beta^k(s,\mathbf{T}(s))$ usually does not
+depend upon $f^k(s)$, and $f^k(s)$ does not depend upon temperature. 
+Therefore
+%
 \begin{equation*}
 \frac{\partial \alpha(s,\mathbf{x}(s))}{\partial f^k(s)} =
 \beta^k(s,T(s)) \text{ and }
 \frac{\partial \alpha(s,\mathbf{x}(s))}{\partial T(s)} =
-\sum_{k \neq T} f^k(s) \frac{\partial \beta^k(s,T(s))}{\partial T(s)}
+\sum_{k} f^k(s) \frac{\partial \beta^k(s,T(s))}{\partial T(s)}
 \end{equation*}
+%
+(see wvs-018 concerning temperature derivatives).
 
 \end{frame}
 
 % -----------------------------------------------------------------------------
 
-\newframe{Derivatives of the Radiative Transfer Equation}
+\newframe{Derivatives of the Radiative Transfer Equation(3)}
 
-Equation (\ref{three}) is of the same form as Equation (\ref{one}), with
-$I(s,\mathbf{x})$ replaced by $I^\prime_k(s) = \frac{\partial
-I(s_m,\mathbf{x})}{\partial x_k}$ and $\alpha(s,\mathbf{x})\, B(T(s))$
-replaced by $R(s,\mathbf{x})$.  The solution is therefore of the same form
-as Equation (\ref{two}), with $\alpha(s,\mathbf{x})\, B(T(s))$ replaced by
-$R(s,\mathbf{x})$, \emph{viz}.
+Equation (\ref{four}) is of the same form as Equation (\ref{one}), with
+$I(s,\mathbf{x})$ replaced by $I_{x^\mu}(s)$, and $\alpha(s,\mathbf{x})\,
+B(T(s))$ in the right-hand side replaced by $R(s,\mathbf{x})$.  The
+solution is therefore of the same form as Equation (\ref{two}), with
+$\alpha(s,\mathbf{x})\, B(T(s))$ replaced by $R(s,\mathbf{x})$,
+\emph{viz}.
 
-\begin{equation}\begin{split}\label{four}
-\frac{\partial I(s_m,\mathbf{x}(s))}{\partial x_k(s)} = \,&
- \left.\frac{\partial I(s,\mathbf{x}(s))}{\partial x_k(s)} \right|_{s=s_0} \,
+\begin{equation}\begin{split}\label{five}
+I_{x^\mu}(s_m) = \,&
+ I_{x^\mu}(s_0) \,
   \mathcal{T}(s_m) +
   \int_{s_0}^{s_m} \mathcal{T}(s) \, R(s,\mathbf{x}(s)) \, \d s \\
 = \,&
- \int_{s_0}^{s_m} \mathcal{T}(s) \, R(s,\mathbf{x}(s)) \, \d s \\
+ \int_{s_0}^{s_m} \mathcal{T}(s) \, R(s,\mathbf{x}(s)) \, \d s \,, \\
 \end{split}\end{equation}
 
-because the derivative of radiance at the deep-space starting point,
-$s_0$, with respect to any state-vector element, is zero.
+the last equality because the derivative of radiance at the deep-space
+starting point, $s_0$, with respect to any state-vector element $x^\mu$,
+is zero.
 
 \end{frame}
 
 % -----------------------------------------------------------------------------
 
-\newframe{Derivatives of the Radiative Transfer Equation}
+\newframe{Derivatives of the Radiative Transfer Equation (4)}
 
 We wrote $\mathbf{x}(s)$ instead of $\mathbf{x}$ to emphasize that these
-derivatives are with respect to state vector quantities on the
-integration path.  We calculate derivatives with respect to state vector
-elements in solution profiles, which are needed for the Newton method,
-using the chain rule
-
+derivatives are with respect to state vector quantities \emph{on the
+integration path}.  The Newton method needs derivatives with respect to
+state vector elements \emph{in solution profiles}, which are calculated
+using the chain rule, \emph{viz}
+%
 \begin{equation*}
-\frac{\partial \cdot}{\partial x^k_i} =
-\frac{\partial \cdot}{\partial \mathbf{x}^k(s)}
-\frac{\partial \mathbf{x}^k(s)}{\partial x^k_i} =
-\frac{\partial \cdot}{\partial \mathbf{x}^k(s)} \, \eta^k_i(s)
+\frac{\partial \cdot}{\partial x^\mu_j} =
+\frac{\partial \cdot}{\partial x^\mu_j}
+\frac{\partial x^\mu(s)}{\partial x^\mu_j} =
+\frac{\partial \cdot}{\partial x^\mu(s)} \, \eta^\mu_j(s)\,,
 \end{equation*}
+%
+where $x^\mu_j$ is the $j^\text{th}$ element of the $\mu^\text{th}$
+solution profile state vector quantity (either $f^k$ or $T$), and
+$\eta^\mu_j(s)$ is the interpolation coefficient from the geolocation of
+$x^\mu_j$ to the integration path.
 
-where $x^k_i$ is the $i^\text{th}$ element of the $k^\text{th}$ solution
-profile state vector quantity and $\eta^k_i(s)$ is the interpolation
-coefficient from its geolocation to the integration path.
+\vspace*{4pt}
+Equations (\ref{three}) and (\ref{five}) are discretized, with steps at
+$s_i$. Because we use bilinear interpolation from ($\phi \times \zeta$) to
+$s_i$, the $i^\text{th}$ row of the matrix of elements $\eta^\mu_j(s_i)$
+has only four nonzeroes for each $\mu$, and the number of nonzeroes in
+column$^\mu_j$ is $\leq 7$ because $s_i$ is on a constant-$\zeta$ surface
+and quadrature (described below) uses values on those surfaces, or at most
+three points between.
 
 \end{frame}
 
@@ -249,20 +278,21 @@ coefficient from its geolocation to the integration path.
 
 \newframe{Full Forward Model}
 
-The Full Forward Model evaluates
-$\frac{\partial I(s_m,\mathbf{x})}{\partial x^k}$ by differentiating
-Equation (\ref{two}), which leads to an expression different from Equation
-(\ref{four}), but which is necessarily equivalent as can be shown (with
+The Full Forward Model evaluates $I_{x^\mu}$ by differentiating Equation
+(\ref{two}), which leads to an expression different from Equation
+(\ref{five}), but which is necessarily equivalent as can be shown (with
 some difficulty -- see
-% \h{wvs-100}%
-wvs-100%
+% \h{wvs-093} and \h{wvs-100}%
+wvs-093 and wvs-100%
 ) by integrating by parts.
 \vspace*{0.1in}
 
 The original advantage of this approach is that $I(s,\mathbf{x})$ is not
-retained for each frequency; rather only $I(s_m,\mathbf{x})$ is retained.  For
-PFA models, however,  $I(s,\mathbf{x})$ is retained, which would allow the
-simpler expression in Equation (\ref{four}) to be used.
+retained for each frequency; rather only $I(s_m,\mathbf{x})$ is retained. 
+To combine results for line-by-line (LBL) quantities with those for
+pre-frequency-averaged (PFA) quantities (see wvs-027), however,
+$I(s,\mathbf{x})$ is retained for LBL quantities, which would allow the
+simpler expression in Equation (\ref{five}) to be used.
 
 \end{frame}
 
@@ -271,17 +301,18 @@ simpler expression in Equation (\ref{four}) to be used.
 \newframe{Full Forward Model}
 
 The Full Forward Model evaluates $\mathcal{T}(s)$ as the exponential of a
-sequence of integrals, with $\zeta = -\log_{10} P$ where $P$ is pressure, as the
-independent variable:
+sum of a sequence of integrals, with $\zeta = -\log_{10} P$ where $P$ is
+pressure, as the independent variable:
 
-\begin{equation}\label{five}
+\begin{equation}\label{six}
 \mathcal{T}(\zeta_n) =
  \exp \left( - \sum_{i=1}^n \int_{\zeta_{i-1}}^{\zeta_i}
  \alpha(\zeta,\mathbf{x}) \,
  \frac{\d s}{\d h} \frac{\d h}{\d \zeta} \, \d \zeta \right)
 \end{equation}
 
-where $\zeta_0 = \zeta_{s_0}$ and $\zeta_n = \zeta_{s_n}$.
+where $\zeta_i = \zeta(s_i) = -\log_{10} P(s_i)$.
+
 \vspace*{0.1in}
 
 Each integral is approximated by a quadrature.  The integrand is evaluated
@@ -298,14 +329,14 @@ the three-point Gauss-Legendre quadrature formula.
 
 \newframe{Full Forward Model}
 
-For limb viewing, without considering refraction directly
+For limb viewing, without considering refraction directly,
 
 \begin{equation*}
-s = \sqrt{h^2 - h_t^2}
+s = \sqrt{h^2 - h_t^2}\,,
 \end{equation*}
 
 where $h_t$ is the geocentric tangent point height, and $h$ is the height
-at the point a disance $s$ from the tangent point.
+at the point a distance $s$ from the tangent point.
 
 \begin{centering}
 \includegraphics[scale=0.5]{wvs-139-1}\\
@@ -323,15 +354,20 @@ Thereby
 \frac{\d s}{\d h} = \frac{h}{\sqrt{h^2 - h_t^2}} \,.
 \end{equation}
 
-Therefore, the integrand in Equation (\ref{five}) has a square-root
+Therefore, the integrand in Equation (\ref{six}) has a square-root
 singularity at the tangent point.  A square-root singularity in an
 integrand exceeds the algebraic order of a quadrature formula, thereby
 reducing its accuracy, so it should be removed.
 
 \vspace*{5pt}
 To see that the singularity exceeds the algebraic order of a quadrature
-formula, observe that the Taylor-series expansion of Equation (\ref{sqrt})
-is an infinite series, not a finite polynomial.
+formula, observe that the Taylor-series (or binomial) expansion of
+Equation (\ref{sqrt}) is an infinite series, not a finite polynomial.
+
+\vspace*{5pt}
+The exponential function is also not a finite polynomial, but because it
+does not have a singularity, it can be approximately well, over a short
+interval, by a polynomial.
 
 \end{frame}
 
@@ -339,7 +375,7 @@ is an infinite series, not a finite polynomial.
 
 \newframe{Full Forward Model}
 
-Using a rectangular quadrature for the integral in Equation (\ref{five})
+Using a rectangular quadrature for the integral in Equation (\ref{six}),
 
 \begin{equation*}\begin{split}
 \int_{\zeta_{i-1}}^{\zeta_i} \alpha(\zeta,\mathbf{x})
@@ -347,20 +383,22 @@ Using a rectangular quadrature for the integral in Equation (\ref{five})
 \alpha(\zeta_{i-1},\mathbf{x}) \int_{\zeta_{i-1}}^{\zeta_i} 
  \frac{\d s}{\d h} \frac{\d h}{\d \zeta} \, \d \zeta \\
  \equiv Q_{i-1} = \,&
- \alpha(\zeta_{i-1},\mathbf{x}) ( s_i - s_{i-1} ) \\
+ \alpha(\zeta_{i-1},\mathbf{x})\, \delta s_{i-1 \rightarrow i} \,, \\
 \end{split}\end{equation*}
 
-that integral can be written
+where $\delta s_{i-1 \rightarrow i} = s_i - s_{i-1}$, that integral can be
+written
 
 \begin{equation*}
 \int_{\zeta_{i-1}}^{\zeta_i} \alpha(\zeta,\mathbf{x})
  \frac{\d s}{\d h} \frac{\d h}{\d \zeta} \, \d \zeta =
  Q_{i-1} + \int_{\zeta_{i-1}}^{\zeta_i}
   \left ( \alpha(\zeta,\mathbf{x}) - \alpha(\zeta_{i-1},\mathbf{x}) \right)
- \frac{\d s}{\d h} \frac{\d h}{\d \zeta} \, \d \zeta
+ \frac{\d s}{\d h} \frac{\d h}{\d \zeta} \, \d \zeta \,,
 \end{equation*}
 
-which cancels the singularity provided $\left ( \alpha(\zeta,\mathbf{x}) -
+which cancels the singularity at the tangent point (but not in other
+integrals), provided $\left ( \alpha(\zeta,\mathbf{x}) -
 \alpha(\zeta_{i-1},\mathbf{x}) \right) \rightarrow 0$ as $\zeta
 \rightarrow \zeta_{i-1}$ faster than $\sqrt{h^2-h_t^2} \rightarrow 0$ as
 $h \rightarrow h_t$.
@@ -374,20 +412,20 @@ $h \rightarrow h_t$.
 If the error estimate for the integral is small enough, a trapezoidal
 approximation is constructed using
 
-\begin{equation*}\begin{split}
+\begin{equation}\begin{split}\label{eight}
 \int_{s_{i-1}}^{s_i} \alpha(\zeta,\mathbf{x})\, \d s \approx \,&
 Q_{i-1} + \frac12 \left ( \alpha(\zeta_i,\mathbf{x}) -
                           \alpha(\zeta_{i-1},\mathbf{x}) \right)
-                          \, ( s_i - s_{i-1} ) \\
+                          \, \delta s_{i-1 \rightarrow i} \\
 = \,& \frac12 \left ( \alpha(\zeta_{i-1},\mathbf{x}) +
                           \alpha(\zeta_i,\mathbf{x}) \right)
-                          \, ( s_i - s_{i-1} ) \\
-\end{split}\end{equation*}
+                          \, \delta s_{i-1 \rightarrow i} \,. \\
+\end{split}\end{equation}
 
 If the error estimate for the integral is not small enough, a 3-point
 Gauss-Legendre approximation is constructed using
 %
-\begin{equation}\begin{split}\label{six}
+\begin{equation}\begin{split}\label{nine}
 \int_{\zeta_{i-1}}^{\zeta_i} & \alpha(\zeta,\mathbf{x})
  \frac{\d s}{\d h} \frac{d h}{\d \zeta} \, \d \zeta \approx
 Q_{i-1} + \\
@@ -418,7 +456,7 @@ An alternative strategy is to compute $\alpha(\zeta_{in},\mathbf{x})$ from
 first principles if the error estimate is not small enough, and use
 interpolation to $\zeta_{in}$ from $\alpha(\zeta_{i-1},\mathbf{x})$ and
 $\alpha(\zeta_i,\mathbf{x})$ if it is small enough.  Then always use the
-approximation in Equation (\ref{six}) rather than trying to save a tiny
+approximation in Equation (\ref{nine}) rather than trying to save a tiny
 bit of computation by choosing whether to use the trapezoidal quadrature
 or the Gauss-Legendre quadrature. \vspace*{0.1in}
 
@@ -432,11 +470,33 @@ at each frequency.
 
 \end{frame}
 
+% -----------------------------------------------------------------------------
+
+\newframe{Full Forward Model}
+
+The Full Forward Model evaluates the trapezoidal quadrature in Equation
+(\ref{eight}) less accurately than necessary.  It uses the first
+right-hand side in Equation (\ref{eight}) instead of the second.  Further,
+instead of using $\delta s_{i-1 \rightarrow i}$, which is available, it
+uses a rectangular quadrature approximation
+
+\begin{equation*}
+\delta s_{i-1 \rightarrow i} = \int_{\zeta_{i-1}}^{\zeta_i}
+ \frac{\d s}{\d h} \frac{\d h}{\d\zeta}\, \d \zeta
+ \approx \frac{\d s_{i-1}}{\d h} \frac{\d h_{i-1}}{\d\zeta}
+         ( \zeta_i - \zeta_{i-1} ) \,.
+\end{equation*}
+
+\end{frame}
+
 \end{document}
 
 % $Id$
 
 % $Log$
+% Revision 1.6  2019/08/27 01:22:42  vsnyder
+% Minor improvements and typo corrections
+%
 % Revision 1.5  2017/10/31 18:16:44  vsnyder
 % Add a graphic, some cannonball polishing
 %
