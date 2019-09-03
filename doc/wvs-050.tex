@@ -7,7 +7,7 @@
 \usepackage{amsmath}
 
 \usepackage{graphicx}
-\usepackage[strings]{underscore}
+%\usepackage[strings]{underscore}
 
 \renewcommand{\b}{\mathbf}
 \newcommand{\T}{^{T}}
@@ -379,8 +379,12 @@ the linear system $\mathbf{B}y = \mathbf{P}b$ and then setting $x =
 This is described in detail in {\bf Direct methods for
 sparse matrix solution} by Prof. Iain Duff (Rutherford Appleton
 Laboratory, Chilton, Oxfordshire, UK) and Bora U\c{c}ar (CNRS and ENS,
-Lyon, France), {\tt
-http://www.scholarpedia.org/article/Direct_methods_for_sparse_matrix_solution\#Cholesky_factorization}
+Lyon, France), 
+\begin{tiny}
+\url{
+http://www.scholarpedia.org/article/Direct_methods_
+for_sparse_matrix_solution\#Cholesky_factorization}
+\end{tiny}
 
 \vspace*{5pt}
 Finding the optimal $\mathbf{P}$ is NP-complete, but there are many heuristics to
@@ -477,6 +481,11 @@ appropriate representation as output, is provided.
 %%% End: 
 
 % $Log$
+% Revision 1.6  2019/08/27 00:47:08  vsnyder
+% Add reference for the Moré-Sorensen algorithm to compute the Levenberg-
+% Marquardt stabilization parameter, and a discussion of unnecessary fill-in
+% during Cholesky factorization.
+%
 % Revision 1.5  2019/08/20 02:43:04  vsnyder
 % Correct some notation, add some explanation
 %
