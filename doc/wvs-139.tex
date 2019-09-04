@@ -53,11 +53,11 @@
 
 \title{Radiative Transfer Equation \\
 in the Full Forward Model}
-\subtitle{wvs-139r2}
+\subtitle{wvs-139r3}
 
 \author{Van Snyder}
 
-\date{26 August 2019}
+\date{3 September 2019}
 
 \titlegraphic{\includegraphics[width=1.0in]{eos_mls_logo_onpink}}
 
@@ -176,12 +176,12 @@ I_{x^\mu}(s) = \frac{\partial I(s,\mathbf{x}(s))}{\partial x^\mu(s)} \,,
 
 $x^\mu(s) \in \mathbf{x}(s)$ (either $f^k(s)$ or $T(s)$), and
 
-\begin{equation*}
+\begin{equation}\label{R}
 R(s,\mathbf{x}(s)) =
  \frac{\partial \alpha(s,\mathbf{x}(s))}{\partial x^\mu(s)}
  \left( B(T(s)) - I(s,\mathbf{x}) \right) +
  \alpha(s,\mathbf{x}(s)) \frac{\partial B(T(s))}{\partial x^\mu(s)} \,.
-\end{equation*}
+\end{equation}
 
 \end{frame}
 
@@ -249,11 +249,11 @@ We wrote $\mathbf{x}(s)$ instead of $\mathbf{x}$ to emphasize that these
 derivatives are with respect to state vector quantities \emph{on the
 integration path}.  The Newton method needs derivatives with respect to
 state vector elements \emph{in solution profiles}, which are calculated
-using the chain rule, \emph{viz}
+using the chain rule, \emph{viz}.
 %
 \begin{equation*}
 \frac{\partial \cdot}{\partial x^\mu_j} =
-\frac{\partial \cdot}{\partial x^\mu_j}
+\frac{\partial \cdot}{\partial x^\mu(s)}
 \frac{\partial x^\mu(s)}{\partial x^\mu_j} =
 \frac{\partial \cdot}{\partial x^\mu(s)} \, \eta^\mu_j(s)\,,
 \end{equation*}
@@ -267,10 +267,11 @@ $x^\mu_j$ to the integration path.
 Equations (\ref{three}) and (\ref{five}) are discretized, with steps at
 $s_i$. Because we use bilinear interpolation from ($\phi \times \zeta$) to
 $s_i$, the $i^\text{th}$ row of the matrix of elements $\eta^\mu_j(s_i)$
-has only four nonzeroes for each $\mu$, and the number of nonzeroes in
-column$^\mu_j$ is $\leq 7$ because $s_i$ is on a constant-$\zeta$ surface
-and quadrature (described below) uses values on those surfaces, or at most
-three points between.
+has only four nonzeroes for each $\mu$, and the number of nonzeroes in the
+$j^\text{th}$ column for the $\mu^\text{th}$ species is $\leq 7$ because
+$s_i$ is on a constant-$\zeta$ surface and quadrature (described below)
+uses values on those surfaces, or at most three points each in
+$(\zeta_{i-1},\zeta)$ and $(\zeta_i,\zeta_{i+1})$.
 
 \end{frame}
 
@@ -278,21 +279,61 @@ three points between.
 
 \newframe{Full Forward Model}
 
-The Full Forward Model evaluates $I_{x^\mu}$ by differentiating Equation
-(\ref{two}), which leads to an expression different from Equation
-(\ref{five}), but which is necessarily equivalent as can be shown (with
-some difficulty -- see
+The Full Forward Model evaluates $I_{f^\mu}(s_m)$ by differentiating
+Equation (\ref{two}) w.r.t. $f^\mu_j$, \emph{viz}.
+
+\begin{equation}\begin{split}\label{I_f}
+\frac{\partial I(s_m)}{\partial f^\mu_j} = \,&
+ -I(s_0)\, \mathcal{T}(s_m)
+  \int_{s_0}^{s_m} \beta^\mu(\sigma)\, \eta^\mu_j \d \sigma + \\
+&
+ \int_{s_0}^{s_m} \mathcal{T}(s)\, B(s)
+  \left( \beta^\mu(s)\, \eta^\mu_j(s) -
+         \alpha(s) \int_s^{s_m} \beta^\mu(\sigma)\, \eta^\mu_j(\sigma)
+          \d \sigma \right) \d s \,, \\
+\end{split}\end{equation}
+
+which leads to an expression different from Equation (\ref{five}), but
+which is necessarily equivalent as can be shown (with some difficulty --
+see
 % \h{wvs-093} and \h{wvs-100}%
 wvs-093 and wvs-100%
 ) by integrating by parts.
-\vspace*{0.1in}
 
-The original advantage of this approach is that $I(s,\mathbf{x})$ is not
-retained for each frequency; rather only $I(s_m,\mathbf{x})$ is retained. 
+\vspace*{5pt}
+
+The forward model also evaluates $I_{T_j}(s_m)$ by differentiating
+Equation (\ref{two}) w.r.t.\ $T_j$, producing an expression even more
+complicated than Equation (\ref{I_f}).
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Full Forward Model}
+
+The original advantage of differentiating Equation (\ref{two}) rather than
+solving Equation(\ref{four}), giving Equation (\ref{five}), is that
+$I(s,\mathbf{x})$ is not averaged over all frequencies within a channel
+(as specified by the pointing-frequency grid), and the average then
+retained at each $\zeta_i$.  Rather, only $I(s_m,\mathbf{x})$ is retained
+for all frequencies, and then averaged (see wvs-063, ``Pointing loop'').
+
+\vspace*{5pt}
+
+(Remember that in Equation (\ref{R}), $R(s,\mathbf{x}(s))$ depends upon
+$I(s,\mathbf{x})$.  To compute frequency-averaged derivatives using
+Equation (\ref{five}) would require to retain the frequency-averaged
+$I(s_i,\mathbf{x})$, not just the frequency-averaged $I(s_m,\mathbf{x})$.)
+
+\vspace*{5pt}
+
 To combine results for line-by-line (LBL) quantities with those for
 pre-frequency-averaged (PFA) quantities (see wvs-027), however,
-$I(s,\mathbf{x})$ is retained for LBL quantities, which would allow the
-simpler expression in Equation (\ref{five}) to be used.
+$I(s_i,\mathbf{x})$ for LBL quantities is averaged over those frequencies
+and retained for each channel, which would allow the simpler expression in
+Equation (\ref{five}) to be used.  Frequency averaging at all $s_i$ would
+be only a tiny bit slower than only at $s_m$.
 
 \end{frame}
 
@@ -313,12 +354,15 @@ pressure, as the independent variable:
 
 where $\zeta_i = \zeta(s_i) = -\log_{10} P(s_i)$.
 
-\vspace*{0.1in}
+\vspace*{5pt}
 
 Each integral is approximated by a quadrature.  The integrand is evaluated
 at $\zeta_{i-1}$ and $\zeta_i$.  An estimate of the error in a trapezoidal
-approximation of the integral is formed.  If the error is not too large,
-the trapezoidal estimate is used. \vspace*{0.1in}
+approximation of the integral is formed.  If the error is not too large
+(according to a parameter in the {\tt l2cf}), the trapezoidal estimate is
+used.
+
+\vspace*{5pt}
 
 If the error is too large, the integrand is evaluated at the abscissae of
 the three-point Gauss-Legendre quadrature formula.
@@ -355,14 +399,15 @@ Thereby
 \end{equation}
 
 Therefore, the integrand in Equation (\ref{six}) has a square-root
-singularity at the tangent point.  A square-root singularity in an
-integrand exceeds the algebraic order of a quadrature formula, thereby
-reducing its accuracy, so it should be removed.
+singularity at the tangent point.  Using either a Taylor series or a
+binomial expansion, one sees that a square-root singularity cannot be
+represented by a finite polynomial.
 
 \vspace*{5pt}
-To see that the singularity exceeds the algebraic order of a quadrature
-formula, observe that the Taylor-series (or binomial) expansion of
-Equation (\ref{sqrt}) is an infinite series, not a finite polynomial.
+In the neighborhood of the singularity, $\frac{\d s}{\d h}$ cannot be
+accurately approximated by a polynomial of any finite order, and in
+particular not by a polynomial that the quadrature formula would integrate
+exactly.
 
 \vspace*{5pt}
 The exponential function is also not a finite polynomial, but because it
@@ -465,8 +510,8 @@ a subtract, a multiply to interpolate $\alpha$ to $\zeta_{in}$, and
 multiplying by $w_{in}$.  It would definitely be simpler, especially in
 the case of computing derivatives, by eliminating numerous flags and
 indices.  Notice that $w_{in}$ is calculated once for each path, then used
-for every frequency, and both the radiance and every derivative evaluated
-at each frequency.
+for every frequency, and for both the radiance and every derivative
+evaluated at each frequency.
 
 \end{frame}
 
@@ -494,6 +539,9 @@ uses a rectangular quadrature approximation
 % $Id$
 
 % $Log$
+% Revision 1.7  2019/08/29 01:26:39  vsnyder
+% Clarify stuff, correct inconsistent notations
+%
 % Revision 1.6  2019/08/27 01:22:42  vsnyder
 % Minor improvements and typo corrections
 %
