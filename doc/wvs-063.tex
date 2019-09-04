@@ -21,9 +21,9 @@
 % -----------------------------------------------------------------------------
 %
 \title{Summary of Full Forward Model}
-\subtitle{wvs-063r3}
+\subtitle{wvs-063r4}
 \author{Van Snyder}
-\date{28 August 2019}
+\date{3 September 2019}
 \titlegraphic{\includegraphics[width=1.0in]{eos_mls_logo_onpink}}
 
 \begin{document}
@@ -310,8 +310,8 @@ Green lines are the heights of surfaces of constant $\zeta$, represented as
 piecewise-linear segments by the $\zeta\times\phi$ height reference array
 {\tt h\_glgrid}, which was computed by {\tt two\_d\_hydrostatic}.
 
-Red lines are the line of sight -- supposed to be the secant curve $H = H_t \sec
-\phi$.
+Red lines are the line of sight -- represented by the secant curve $H =
+H_t \sec \delta\phi$, where $\delta\phi = \phi - \phi_t$.
 
 {\tt Height\_Metrics} solves for the intersections of the red and green
 lines (see wvs-048).\\[1pt]
@@ -320,6 +320,27 @@ lines (see wvs-048).\\[1pt]
 {\includegraphics[width=2.25in,height=2.8125in]{wvs-048-grid2}}\\
 
 \end{multicols}
+
+\end{frame}
+%
+% -----------------------------------------------------------------------------
+%
+\newframe{Metrics (aside)}
+
+Rather than solving for the intersection of the path represented by $H =
+H_t \sec \delta\phi$ with piecewise-straight height surfaces, the QTM
+model approximates the heights of constant-pressure surfaces as segments
+of a sphere, each defined by the vertices of a facet, and the radius of
+curvature of the equivalent circular Earth at the centroid of the facet
+plus the average height of the facet's vertices (see wvs-132).  It then
+calculates the intersections of the straight-line path with those
+surfaces (see wvs-141).
+
+The same scheme could be used in the two-dimensional model by
+approximating the heights of constant-pressure surfaces as segments of
+circles. The resulting metrics calculation would be much simpler -- a
+geometric calculation instead of a Newton iteration -- but would produce
+very slightly different results.
 
 \end{frame}
 %
@@ -706,6 +727,9 @@ $\zeta_{\text{min}}$]
 %%% End: 
 
 % $Log$
+% Revision 1.5  2019/08/27 01:08:27  vsnyder
+% Modest revisions and improvements
+%
 % Revision 1.4  2019/08/26 22:09:46  vsnyder
 % Correct the date on the title page
 %
